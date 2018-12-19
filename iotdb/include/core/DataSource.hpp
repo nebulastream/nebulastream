@@ -4,10 +4,11 @@
  *  Created on: Dec 19, 2018
  *      Author: zeuchste
  */
-#include "../core/TupleBuffer.h"
+#include "TupleBuffer.hpp"
 
 #ifndef INCLUDE_DATASOURCE_H_
 #define INCLUDE_DATASOURCE_H_
+#include <thread>
 
 class DataSource {
 public:
@@ -28,5 +29,6 @@ private:
 
 protected:
 };
+typedef std::shared_ptr<DataSource> DataSourcePtr;
 
 #endif /* INCLUDE_DATASOURCE_H_ */

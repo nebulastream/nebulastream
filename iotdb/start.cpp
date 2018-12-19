@@ -1,7 +1,17 @@
+#include "core/DataSource.hpp"
+#include "core/TupleBuffer.hpp"
+#include "core/Dispatcher.hpp"
+#include "core/QueryExecutionPlan.hpp"
+#include "core/HandCodedQueryExecutionPlan.hpp"
+#include "core/GeneratorSource.hpp"
+#include <string>
+#include <assert.h>
+#include <thread>
+#include <core/ThreadPool.hpp>
+#include <iostream>
+#include <cstdint>
 
-
-#include "include/core/DataSource.h"
-#include "include/core/TupleBuffer.h"
+using namespace std;
 
 class Functor {
 public:

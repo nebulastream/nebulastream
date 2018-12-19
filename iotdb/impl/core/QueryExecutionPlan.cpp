@@ -5,7 +5,7 @@
  *      Author: zeuchste
  */
 
-#include "../include/QueryExecutionPlan.h"
+#include "core/QueryExecutionPlan.hpp"
 
 QueryExecutionPlan::QueryExecutionPlan() : sources(), stages() {}
 

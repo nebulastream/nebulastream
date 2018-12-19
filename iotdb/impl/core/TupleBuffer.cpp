@@ -4,7 +4,7 @@
  *  Created on: Dec 19, 2018
  *      Author: zeuchste
  */
-#include "../include/TupleBuffer.h"
+#include "core/TupleBuffer.hpp"
 
 TupleBuffer::TupleBuffer(void *_buffer, const uint64_t _buffer_size, const uint32_t _tuple_size_bytes,
                          const uint32_t _num_tuples)

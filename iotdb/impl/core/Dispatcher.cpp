@@ -4,8 +4,8 @@
  *  Created on: Dec 19, 2018
  *      Author: zeuchste
  */
-#include "../include/Dispatcher.h"
-
+#include "core/Dispatcher.hpp"
+#include <iostream>
 Dispatcher::Dispatcher() : sources(), task_queue(), source_to_query_map(), mutex() {
   std::cout << "Init Dispatcher" << std::endl;
 }

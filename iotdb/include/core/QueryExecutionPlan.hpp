@@ -7,6 +7,9 @@
 
 #ifndef INCLUDE_QUERYEXECUTIONPLAN_H_
 #define INCLUDE_QUERYEXECUTIONPLAN_H_
+#include <vector>
+#include "PipelineStage.hpp"
+#include "DataSource.hpp"
 
 class QueryExecutionPlan {
 public:
@@ -20,5 +23,6 @@ protected:
   std::vector<DataSourcePtr> sources;
   std::vector<PipelineStagePtr> stages;
 };
+typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 
 #endif /* INCLUDE_QUERYEXECUTIONPLAN_H_ */
