@@ -7,6 +7,11 @@
 
 #ifndef INCLUDE_TASK_H_
 #define INCLUDE_TASK_H_
+#include <memory>
+#include "TupleBuffer.hpp"
+class DataSource;
+class QueryExecutionPlan;
+typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 
 class Task {
 public:
@@ -20,7 +25,7 @@ private:
   const TupleBuffer buf;
 };
 
-Task::Task(QueryExecutionPlanPtr _qep, uint32_t _pipeline_stage_id, DataSource *_source, const TupleBuffer &_buf)
-    : qep(_qep), pipeline_stage_id(_pipeline_stage_id), source(_source), buf(_buf) {}
+typedef std::shared_ptr<Task> TaskPtr;
+
 
 #endif /* INCLUDE_TASK_H_ */

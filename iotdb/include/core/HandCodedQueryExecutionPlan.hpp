@@ -7,6 +7,9 @@
 
 #ifndef INCLUDE_HANDCODEDQUERYEXECUTIONPLAN_H_
 #define INCLUDE_HANDCODEDQUERYEXECUTIONPLAN_H_
+class TupleBuffer;
+#include "core/QueryExecutionPlan.hpp"
+#include <stdint.h>
 
 class HandCodedQueryExecutionPlan : public QueryExecutionPlan {
 public:

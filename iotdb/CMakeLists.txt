@@ -71,4 +71,5 @@ add_library(iotdb ${iotdb_SOURCE_FILES} ${iotdb_HEADER_FILES})
 target_include_directories(iotdb PUBLIC "include")
 
 add_executable(iot start.cpp)
+target_link_libraries(iot iotdb ${LIBRARIES})
 target_include_directories(iot PUBLIC "include")

@@ -8,7 +8,15 @@
 #ifndef INCLUDE_DISPATCHER_H_
 #define INCLUDE_DISPATCHER_H_
 
-#include "../core/TupleBuffer.h"
+#include "TupleBuffer.hpp"
+#include "QueryExecutionPlan.hpp"
+#include "Task.hpp"
+#include "DataSource.hpp"
+#include <thread>
+#include <vector>
+#include <condition_variable>
+#include <map>
+#include <mutex>
 
 class Dispatcher {
 public:
@@ -42,5 +50,7 @@ private:
   std::mutex mutex;
   std::condition_variable cv;
 };
+typedef std::shared_ptr<Dispatcher> DispatcherPtr;
+
 
 #endif /* INCLUDE_DISPATCHER_H_ */

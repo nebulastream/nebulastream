@@ -5,9 +5,15 @@
  *      Author: zeuchste
  */
 
-#include "../include/DataSource.h"
+#include "core/DataSource.hpp"
 
-DataSource::DataSource() : run_thread(false), thread() { std::cout << "Init Data Source!" << std::endl; }
+#include <iostream>
+#include <core/Dispatcher.hpp>
+
+DataSource::DataSource() : run_thread(false), thread()
+{
+	std::cout << "Init Data Source!" << std::endl;
+}
 
 void ass() { std::cout << "Ass" << std::endl; }
 

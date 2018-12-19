@@ -4,5 +4,7 @@
  *  Created on: Dec 19, 2018
  *      Author: zeuchste
  */
-
-HandCodedQueryExecutionPlan::HandCodedQueryExecutionPlan() : QueryExecutionPlan() {}
+#include "core/HandCodedQueryExecutionPlan.hpp"
+#include "core/QueryExecutionPlan.hpp"
+HandCodedQueryExecutionPlan::HandCodedQueryExecutionPlan() : QueryExecutionPlan()
+{}
