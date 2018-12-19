@@ -6,7 +6,7 @@
  */
 
 
-#include "../include/BinarySource.h"
+#include "core/BinarySource.h"
 
 
 BinarySource::BinarySource(const std::string& _file_path,

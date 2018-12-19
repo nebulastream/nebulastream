@@ -8,8 +8,8 @@
 #ifndef INCLUDE_BINARYSOURCE_H_
 #define INCLUDE_BINARYSOURCE_H_
 
-#include "DataSource.h"
-#include "TupleBuffer.h"
+#include "../core/DataSource.h"
+#include "../core/TupleBuffer.h"
 class BinarySource : public DataSource{
 public:
     BinarySource(const std::string& file_path, const uint64_t& num_tuples_to_process);

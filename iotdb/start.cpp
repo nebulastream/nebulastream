@@ -1,7 +1,7 @@
 
 
-#include "include/runtime/TupleBuffer.h"
-#include "include/runtime/DataSource.h"
+#include "include/core/DataSource.h"
+#include "include/core/TupleBuffer.h"
 
 
 class Functor{

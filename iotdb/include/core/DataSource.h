@@ -4,7 +4,7 @@
  *  Created on: Dec 19, 2018
  *      Author: zeuchste
  */
-#include "TupleBuffer.h"
+#include "../core/TupleBuffer.h"
 
 #ifndef INCLUDE_DATASOURCE_H_
 #define INCLUDE_DATASOURCE_H_
