@@ -8,7 +8,7 @@
 #ifndef INCLUDE_DISPATCHER_H_
 #define INCLUDE_DISPATCHER_H_
 
-#include "TupleBuffer.h"
+#include "../core/TupleBuffer.h"
 
 class Dispatcher{
 public:

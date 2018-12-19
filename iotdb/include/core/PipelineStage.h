@@ -8,7 +8,7 @@
 #ifndef INCLUDE_PIPELINESTAGE_H_
 #define INCLUDE_PIPELINESTAGE_H_
 
-#include "TupleBuffer.h"
+#include "../core/TupleBuffer.h"
 class PipelineStage{
 public:
    /** \brief process input tuple buffer */
