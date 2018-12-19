@@ -8,8 +8,4 @@
 #ifndef INCLUDE_QUERY_H_
 #define INCLUDE_QUERY_H_
 
-
-
-
-
 #endif /* INCLUDE_QUERY_H_ */

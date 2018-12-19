@@ -9,12 +9,10 @@
 #define INCLUDE_PIPELINESTAGE_H_
 
 #include "../core/TupleBuffer.h"
-class PipelineStage{
+class PipelineStage {
 public:
-   /** \brief process input tuple buffer */
-   bool execute(TupleBuffer buf);
+  /** \brief process input tuple buffer */
+  bool execute(TupleBuffer buf);
 };
-
-
 
 #endif /* INCLUDE_PIPELINESTAGE_H_ */

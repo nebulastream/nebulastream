@@ -9,24 +9,24 @@
 #ifndef INCLUDE_DATASOURCE_H_
 #define INCLUDE_DATASOURCE_H_
 
-class DataSource{
+class DataSource {
 public:
-    DataSource();
+  DataSource();
 
-    void start();
-    void stop();
-    void run();
+  void start();
+  void stop();
+  void run();
 
-    virtual TupleBuffer receiveData() = 0;
-    void submitWork(const TupleBuffer&);
+  virtual TupleBuffer receiveData() = 0;
+  void submitWork(const TupleBuffer &);
 
-    virtual ~DataSource();
+  virtual ~DataSource();
+
 private:
-    bool run_thread;
-    std::thread thread;
+  bool run_thread;
+  std::thread thread;
+
 protected:
 };
-
-
 
 #endif /* INCLUDE_DATASOURCE_H_ */
