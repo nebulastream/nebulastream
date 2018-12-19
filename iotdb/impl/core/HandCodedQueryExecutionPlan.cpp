@@ -5,9 +5,4 @@
  *      Author: zeuchste
  */
 
-
-
-HandCodedQueryExecutionPlan::HandCodedQueryExecutionPlan()
-    : QueryExecutionPlan(){
-
-}
+HandCodedQueryExecutionPlan::HandCodedQueryExecutionPlan() : QueryExecutionPlan() {}

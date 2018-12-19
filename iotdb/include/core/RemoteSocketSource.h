@@ -10,12 +10,12 @@
 
 #include "../core/DataSource.h"
 #include "../core/TupleBuffer.h"
-class RemoteSocketSource : public DataSource{
+class RemoteSocketSource : public DataSource {
 public:
-    RemoteSocketSource(int32_t port);
-    TupleBuffer receiveData();
+  RemoteSocketSource(int32_t port);
+  TupleBuffer receiveData();
+
 private:
 };
-
 
 #endif /* INCLUDE_REMOTESOCKETSOURCE_H_ */
