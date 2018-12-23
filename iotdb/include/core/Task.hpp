@@ -19,8 +19,8 @@ public:
   bool execute();
 
 private:
-  uint32_t pipeline_stage_id;
   QueryExecutionPlanPtr qep;
+  uint32_t pipeline_stage_id;
   DataSource *source;
   const TupleBuffer buf;
 };
