@@ -1,9 +1,9 @@
-#include "core/DataSource.hpp"
-#include "core/TupleBuffer.hpp"
-#include "core/Dispatcher.hpp"
-#include "core/QueryExecutionPlan.hpp"
-#include "core/HandCodedQueryExecutionPlan.hpp"
-#include "core/GeneratorSource.hpp"
+#include <core/DataSource.hpp>
+#include <core/TupleBuffer.hpp>
+#include <core/Dispatcher.hpp>
+#include <core/QueryExecutionPlan.hpp>
+#include <core/HandCodedQueryExecutionPlan.hpp>
+#include <core/GeneratorSource.hpp>
 #include <string>
 #include <assert.h>
 #include <thread>
