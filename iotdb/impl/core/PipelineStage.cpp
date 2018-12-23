@@ -5,6 +5,10 @@
  *      Author: zeuchste
  */
 
-#include "core//PipelineStage.hpp"
+#include <core/PipelineStage.hpp>
 #include <iostream>
-bool PipelineStage::execute(TupleBuffer buf) { std::cout << "Execute a Pipeline Stage!" << std::endl; }
+
+bool PipelineStage::execute(TupleBuffer buf) {
+  std::cout << "Execute a Pipeline Stage!" << std::endl;
+  return true;
+}
