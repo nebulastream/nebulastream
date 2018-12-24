@@ -14,7 +14,7 @@ namespace iotdb{
   typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
 
   class Operator;
-  typedef std::shared_ptr<Operator> OperatorPtr;
+  typedef std::unique_ptr<Operator> OperatorPtr;
 
   class CompilerArgs;
   class CodeGenArgs;

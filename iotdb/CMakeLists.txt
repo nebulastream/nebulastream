@@ -21,10 +21,10 @@ message( STATUS "Generated Code Directory: ${GENERATED_CODE_DIRECTORY}" )
 message( STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}" )
 
 # Add definitions as compile flag.
-add_definitions( -D 'CLANG_EXECUTABLE="${CLANG_EXECUTABLE}"' )
-add_definitions( -D 'CLANG_FORMAT_EXECUTABLE="${CLANG_FORMAT_EXECUTABLE}"' )
-add_definitions( -D 'GENERATED_CODE_DIRECTORY="${GENERATED_CODE_DIRECTORY}/"' )
-add_definitions( -D 'TEST_DATA_DIRECTORY="${TEST_DATA_DIRECTORY}/"' )
+add_definitions( -D 'CLANG_EXECUTABLE=\"${CLANG_EXECUTABLE}\"' )
+add_definitions( -D 'CLANG_FORMAT_EXECUTABLE=\"${CLANG_FORMAT_EXECUTABLE}\"' )
+add_definitions( -D 'GENERATED_CODE_DIRECTORY=\"${GENERATED_CODE_DIRECTORY}\"' )
+add_definitions( -D 'TEST_DATA_DIRECTORY=\"${TEST_DATA_DIRECTORY}\"' )
 
 
 # Compiler should produce specific code for system architecture
