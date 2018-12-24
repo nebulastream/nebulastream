@@ -9,3 +9,6 @@
 
 HandCodedQueryExecutionPlan::HandCodedQueryExecutionPlan() : QueryExecutionPlan()
 {}
+
+HandCodedQueryExecutionPlan::~HandCodedQueryExecutionPlan(){}
+

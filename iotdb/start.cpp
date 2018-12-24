@@ -49,9 +49,9 @@ public:
 
   bool executeStage(uint32_t pipeline_stage_id, const TupleBuffer &buf) {
     assert(pipeline_stage_id == 1);
-    uint64_t *tuples = (uint64_t *)buf.buffer;
+    uint64_t *tuples = static_cast<uint64_t *>(buf.buffer);
 
-    for (size_t i = 0; i < buf.num_tuples; ++i) {
+    for (uint64_t i = 0; i < buf.num_tuples; ++i) {
       count++;
       sum += tuples[i];
     }
@@ -81,7 +81,4 @@ int main(int argc, const char *argv[]) {
 
   test();
 
-  // source->stop();
-
-  // CompiledTestQueryExecutionPlan qep;
 }

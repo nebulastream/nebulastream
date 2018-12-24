@@ -15,7 +15,7 @@ class QueryExecutionPlan {
 public:
   virtual bool executeStage(uint32_t pipeline_stage_id, const TupleBuffer &buf);
   const std::vector<DataSourcePtr> getSources() const;
-
+  virtual ~QueryExecutionPlan();
 protected:
   QueryExecutionPlan();
   QueryExecutionPlan(const std::vector<DataSourcePtr> &_sources, const std::vector<PipelineStagePtr> &_stages);
