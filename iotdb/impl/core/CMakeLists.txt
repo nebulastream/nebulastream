@@ -1,13 +1,6 @@
 add_source_iotdb(
 	TupleBuffer.cpp
-	DataSource.cpp
-	ThreadPool.cpp
-	Dispatcher.cpp
-	Task.cpp
 	QueryExecutionPlan.cpp
 	PipelineStage.cpp
 	HandCodedQueryExecutionPlan.cpp
-	RemoteSocketSource.cpp
-	GeneratorSource.cpp
-	BinarySource.cpp
 	)

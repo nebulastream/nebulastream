@@ -8,8 +8,8 @@
 #ifndef INCLUDE_GENERATORSOURCE_H_
 #define INCLUDE_GENERATORSOURCE_H_
 
-#include "DataSource.hpp"
-#include "TupleBuffer.hpp"
+#include <Runtime/DataSource.hpp>
+#include <core/TupleBuffer.hpp>
 #include <iostream>
 template <typename F> class GeneratorSource : public DataSource {
 public:

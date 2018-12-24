@@ -8,15 +8,17 @@
 #ifndef INCLUDE_DISPATCHER_H_
 #define INCLUDE_DISPATCHER_H_
 
-#include "TupleBuffer.hpp"
-#include "QueryExecutionPlan.hpp"
-#include "Task.hpp"
-#include "DataSource.hpp"
 #include <thread>
 #include <vector>
 #include <condition_variable>
 #include <map>
 #include <mutex>
+
+#include <core/TupleBuffer.hpp>
+#include <core/QueryExecutionPlan.hpp>
+#include <Runtime/Task.hpp>
+#include <Runtime/DataSource.hpp>
+
 
 class Dispatcher {
 public:

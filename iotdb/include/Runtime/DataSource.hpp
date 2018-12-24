@@ -4,11 +4,12 @@
  *  Created on: Dec 19, 2018
  *      Author: zeuchste
  */
-#include "TupleBuffer.hpp"
+
 
 #ifndef INCLUDE_DATASOURCE_H_
 #define INCLUDE_DATASOURCE_H_
 #include <thread>
+#include <core/TupleBuffer.hpp>
 
 class DataSource {
 public:

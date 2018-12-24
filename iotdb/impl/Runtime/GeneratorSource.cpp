@@ -5,5 +5,5 @@
  *      Author: zeuchste
  */
 
-#include "core/GeneratorSource.hpp"
+#include <Runtime/GeneratorSource.hpp>
 #include <iostream>

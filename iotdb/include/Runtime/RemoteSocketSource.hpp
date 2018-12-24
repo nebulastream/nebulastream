@@ -8,8 +8,8 @@
 #ifndef INCLUDE_REMOTESOCKETSOURCE_H_
 #define INCLUDE_REMOTESOCKETSOURCE_H_
 
-#include "DataSource.hpp"
-#include "TupleBuffer.hpp"
+#include <Runtime/DataSource.hpp>
+#include <core/TupleBuffer.hpp>
 class RemoteSocketSource : public DataSource {
 public:
   RemoteSocketSource(int32_t port);

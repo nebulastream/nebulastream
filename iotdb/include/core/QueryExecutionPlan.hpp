@@ -8,8 +8,8 @@
 #ifndef INCLUDE_QUERYEXECUTIONPLAN_H_
 #define INCLUDE_QUERYEXECUTIONPLAN_H_
 #include <vector>
-#include "PipelineStage.hpp"
-#include "DataSource.hpp"
+#include <core/PipelineStage.hpp>
+#include <Runtime/DataSource.hpp>
 
 class QueryExecutionPlan {
 public:

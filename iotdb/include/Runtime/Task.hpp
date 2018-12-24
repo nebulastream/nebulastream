@@ -8,7 +8,8 @@
 #ifndef INCLUDE_TASK_H_
 #define INCLUDE_TASK_H_
 #include <memory>
-#include "TupleBuffer.hpp"
+#include <core/TupleBuffer.hpp>
+
 class DataSource;
 class QueryExecutionPlan;
 typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;

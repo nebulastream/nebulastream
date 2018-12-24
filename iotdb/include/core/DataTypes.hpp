@@ -29,6 +29,7 @@ namespace iotdb{
   class DataType{
       virtual ValueTypePtr getNullValue() const = 0;
       virtual uint32_t getSizeBytes() const = 0;
+      virtual ~DataType();
   };
 
   class AttributeField;

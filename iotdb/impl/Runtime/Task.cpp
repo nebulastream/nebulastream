@@ -5,9 +5,9 @@
  *      Author: zeuchste
  */
 
-#include <core/Task.hpp>
+#include <Runtime/Task.hpp>
 #include <core/TupleBuffer.hpp>
-#include <core/DataSource.hpp>
+#include <Runtime/DataSource.hpp>
 #include <core/QueryExecutionPlan.hpp>
 
 Task::Task(QueryExecutionPlanPtr _qep, uint32_t _pipeline_stage_id, DataSource *_source, const TupleBuffer &_buf)
