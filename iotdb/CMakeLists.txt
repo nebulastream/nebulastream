@@ -66,7 +66,7 @@ add_subdirectory(impl)
 
 # Add Library
 get_source_iotdb(iotdb_SOURCE_FILES)
-#get_header_iotdb(iotdb_HEADER_FILES)
+get_header_iotdb(iotdb_HEADER_FILES)
 add_library(iotdb ${iotdb_SOURCE_FILES} ${iotdb_HEADER_FILES})
 target_include_directories(iotdb PUBLIC "include")
 
