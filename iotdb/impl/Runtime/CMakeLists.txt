@@ -1,0 +1,9 @@
+add_source_iotdb(
+        DataSource.cpp
+        ThreadPool.cpp
+        Dispatcher.cpp
+        Task.cpp
+        RemoteSocketSource.cpp
+        GeneratorSource.cpp
+        BinarySource.cpp
+        )

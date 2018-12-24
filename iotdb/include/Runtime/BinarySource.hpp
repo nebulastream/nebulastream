@@ -8,8 +8,8 @@
 #ifndef INCLUDE_BINARYSOURCE_H_
 #define INCLUDE_BINARYSOURCE_H_
 
-#include "DataSource.hpp"
-#include "TupleBuffer.hpp"
+#include <Runtime/DataSource.hpp>
+#include <core/TupleBuffer.hpp>
 #include <fstream>
 
 class BinarySource : public DataSource {

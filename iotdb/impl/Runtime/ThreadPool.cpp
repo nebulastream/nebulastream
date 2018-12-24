@@ -5,9 +5,9 @@
  *      Author: zeuchste
  */
 
-#include <core/ThreadPool.hpp>
-#include <core/Dispatcher.hpp>
-#include <core/Task.hpp>
+#include <Runtime/ThreadPool.hpp>
+#include <Runtime/Dispatcher.hpp>
+#include <Runtime/Task.hpp>
 
 ThreadPool::ThreadPool() : run(), threads(){
 

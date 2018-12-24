@@ -5,10 +5,11 @@
  *      Author: zeuchste
  */
 
-#include "core/DataSource.hpp"
+
 
 #include <iostream>
-#include <core/Dispatcher.hpp>
+#include <Runtime/DataSource.hpp>
+#include <Runtime/Dispatcher.hpp>
 
 DataSource::DataSource() : run_thread(false), thread()
 {
