@@ -17,7 +17,7 @@ class RemoteSocketSource : public DataSource {
 public:
   RemoteSocketSource(const Schema& schema, int32_t port);
   TupleBuffer receiveData();
-
+  const std::string toString() const;
 private:
 };
 }

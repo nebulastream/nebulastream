@@ -76,7 +76,9 @@ void test() {
 
   iotdb::Query::create(iotdb::Config::create(),
                        iotdb::Schema::create().addField(createField("val",UINT64)),
-                       createGeneratorDataSource()).execute();
+                       createGeneratorDataSource())
+      .filter(PredicatePtr())
+      .execute();
 
   QueryExecutionPlanPtr qep(new CompiledTestQueryExecutionPlan());
 

@@ -11,6 +11,7 @@
 #include <Runtime/DataSource.hpp>
 #include <core/TupleBuffer.hpp>
 #include <iostream>
+#include <sstream>
 
 namespace iotdb {
 
@@ -19,7 +20,7 @@ public:
   GeneratorSource(const Schema& schema, const uint64_t &_num_tuples_to_process)
       : DataSource(schema), functor(), num_tuples_to_process(_num_tuples_to_process), generated_tuples(0) {}
   TupleBuffer receiveData();
-
+  const std::string toString() const;
 private:
   F functor;
   uint64_t num_tuples_to_process;
@@ -39,6 +40,14 @@ template <typename F> TupleBuffer GeneratorSource<F>::receiveData() {
   // std::this_thread::sleep_for(std::chrono::seconds(1)); //nanoseconds(100000));
   return TupleBuffer(NULL, 0, 0, 0);
 }
+
+template <typename F>
+  const std::string GeneratorSource<F>::toString() const{
+    std::stringstream ss;
+    ss << "GENERATOR_SOURCE(SCHEMA(" << schema.toString();
+    ss << "), NUM_TUPLES=" << num_tuples_to_process << "))";
+    return ss.str();
+  }
 }
 
 #endif /* INCLUDE_GENERATORSOURCE_H_ */
