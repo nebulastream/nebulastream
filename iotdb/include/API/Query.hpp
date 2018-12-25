@@ -2,11 +2,13 @@
 #include <core/DataTypes.hpp>
 #include <Runtime/DataSource.hpp>
 #include <Operators/Operator.hpp>
+#include <string>
 
 namespace iotdb{
 
     class Config;
     class Schema;
+
     class Predicate;
     typedef std::shared_ptr<Predicate> PredicatePtr;
 
@@ -24,7 +26,7 @@ namespace iotdb{
     class Query {
     public:
       ~Query();
-      static Query create(Config &config, Schema &schema, DataSourcePtr source);
+      static Query create(const Config &config, const Schema &schema, DataSourcePtr source);
 
       void execute();
 
@@ -47,11 +49,14 @@ namespace iotdb{
       // helper operators
       Query &printQueryPlan();
 
-      OperatorPtr root;
+
     private:
-      Query(const Config &config, const Schema &schema);
-      Schema &schema;
-      Config &config;
+      Query(const Config &config, const Schema &schema, DataSourcePtr source);
+      Query(Query&);
+      const Config &config;
+      const Schema &schema;
+      DataSourcePtr source;
+      OperatorPtr root;
       void printQueryPlan(const OperatorPtr& curr, int depth);
     };
 
