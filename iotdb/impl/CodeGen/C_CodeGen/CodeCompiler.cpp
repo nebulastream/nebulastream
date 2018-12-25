@@ -32,12 +32,12 @@
 namespace iotdb {
 
 const std::string CCodeCompiler::IncludePath =
-    PATH_TO_IOTDB_SOURCE_CODE"/lib/cogadb/include/";
+    PATH_TO_IOTDB_SOURCE_CODE"/iotdb/include/";
 
 const std::string CCodeCompiler::MinimalApiHeaderPath =
     PATH_TO_IOTDB_SOURCE_CODE
-    "/lib/cogadb/include/query_compilation/"
-    "minimal_api_c.h";
+    "/include/CodeGen/"
+    "MinimalAPI.h";
 
 CCodeCompiler::CCodeCompiler() { init(); }
 
@@ -62,9 +62,9 @@ void CCodeCompiler::init() {
   keep_last_generated_query_code_ = false;
 
 #ifndef NDEBUG
-  PrecompiledHeaderName = "minimal_api_c.debug.h.pch";
+  PrecompiledHeaderName = "MinimalAPI.debug.h.pch";
 #else
-  PrecompiledHeaderName = "minimal_api_c.release.h.pch";
+  PrecompiledHeaderName = "MinimalAPI.release.h.pch";
 #endif
   initCompilerArgs();
 }
@@ -134,9 +134,9 @@ std::vector<std::string> CCodeCompiler::getCompilerArgs() {
 
   args.push_back("-xc");
 #ifndef NDEBUG
-  args.push_back("-includeminimal_api_c.debug.h");
+  args.push_back("-includeMinimalAPI.debug.h");
 #else
-  args.push_back("-includeminimal_api_c.release.h");
+  args.push_back("-includeMinimalAPI.release.h");
 #endif
 
 #ifdef __APPLE__

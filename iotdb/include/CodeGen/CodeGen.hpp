@@ -20,6 +20,7 @@ class CompilerArgs;
 class CodeGenArgs;
 
 class CodeGenerator {
+public:
   virtual bool addOperator(OperatorPtr, const CodeGenArgs &) = 0;
   virtual PipelineStagePtr compile(const CompilerArgs &) = 0;
   virtual ~CodeGenerator();
