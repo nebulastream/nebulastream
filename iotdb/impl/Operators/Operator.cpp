@@ -22,7 +22,7 @@ public:
   void consume(CodeGeneratorPtr codegen, QueryExecutionPlanPtr qep) override {}
   std::string toString() const override {
     std::stringstream ss;
-    ss << "SCAN(" << source->getSchema().toString() << ")";
+    ss << "SCAN(" << source->toString() << ")";
     return ss.str();
   }
 
@@ -34,9 +34,31 @@ private:
   DataSourcePtr source;
 };
 
+const std::string toString(const PredicatePtr& predicate){
+  return "";
+}
 
+class Selection : public Operator {
+public:
+  Selection(PredicatePtr _predicate) : Operator (SELECTION), predicate(_predicate) {}
+
+  void produce(CodeGeneratorPtr codegen, QueryExecutionPlanPtr qep) override {}
+  void consume(CodeGeneratorPtr codegen, QueryExecutionPlanPtr qep) override {}
+  std::string toString() const override {
+    std::stringstream ss;
+    ss << "SELECTION(" << iotdb::toString(predicate) << ")";
+    return ss.str();
+  }
+
+  ~Selection() override{
+
+  }
+
+private:
+  PredicatePtr predicate;
+};
 
 OperatorPtr createScan(DataSourcePtr source) { return std::make_unique<Scan>(source); }
 
-OperatorPtr createSelection(PredicatePtr predicate) { return OperatorPtr(); }
+OperatorPtr createSelection(PredicatePtr predicate) { return std::make_unique<Selection>(predicate); }
 }

@@ -14,7 +14,12 @@ Query Query::create(const Config &config, const Schema &schema, DataSourcePtr so
 void Query::execute() { printQueryPlan(); }
 
 // relational operators
-Query &Query::filter(PredicatePtr predicate) { return *this; }
+Query &Query::filter(PredicatePtr predicate) {
+  OperatorPtr filter = createSelection(predicate);
+  filter->childs.push_back(std::move(root));
+  root = std::move(filter);
+  return *this;
+}
 Query &Query::groupBy(AttributeFieldPtr field) { return *this; }
 Query &Query::orderBy(AttributeFieldPtr field, const std::string &sortedness) { return *this; }
 Query &Query::aggregate(Aggregation &&aggregation) { return *this; }
@@ -49,7 +54,7 @@ Query::Query(Query &query)
 
 void Query::printQueryPlan(const OperatorPtr &curr, int depth) {
   if (curr) {
-    std::cout << curr->toString() << std::endl;
+    std::cout << std::string(depth*2,' ') << curr->toString() << std::endl;
     for(const auto& op : curr->childs){
       printQueryPlan(op, depth+1);
     }

@@ -23,6 +23,7 @@ public:
   void run();
 
   virtual TupleBuffer receiveData() = 0;
+  virtual const std::string toString() const = 0;
   void submitWork(const TupleBuffer &);
   const Schema& getSchema() const;
 
@@ -31,8 +32,8 @@ public:
 private:
   bool run_thread;
   std::thread thread;
-  Schema schema;
 protected:
+  Schema schema;
 };
 typedef std::shared_ptr<DataSource> DataSourcePtr;
 }

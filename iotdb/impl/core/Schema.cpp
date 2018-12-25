@@ -23,4 +23,5 @@ const std::string Schema::toString() const{
 }
 
 Schema::Schema() : fields() {}
+
 }
