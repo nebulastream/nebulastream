@@ -4,7 +4,7 @@
  *  Created on: Dec 19, 2018
  *      Author: zeuchste
  */
-#include <core/TupleBuffer.hpp>
+#include <Core/TupleBuffer.hpp>
 
 namespace iotdb {
 

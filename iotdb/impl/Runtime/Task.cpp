@@ -8,7 +8,7 @@
 #include <Runtime/DataSource.hpp>
 #include <Runtime/Task.hpp>
 #include <CodeGen/QueryExecutionPlan.hpp>
-#include <core/TupleBuffer.hpp>
+#include <Core/TupleBuffer.hpp>
 
 namespace iotdb {
 

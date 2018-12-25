@@ -9,7 +9,7 @@
 #define INCLUDE_REMOTESOCKETSOURCE_H_
 
 #include <Runtime/DataSource.hpp>
-#include <core/TupleBuffer.hpp>
+#include <Core/TupleBuffer.hpp>
 
 namespace iotdb {
 

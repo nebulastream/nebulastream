@@ -1,7 +1,7 @@
 
 #include <Operators/Operator.hpp>
 #include <Runtime/DataSource.hpp>
-#include <core/DataTypes.hpp>
+#include <Core/DataTypes.hpp>
 #include <string>
 
 namespace iotdb {

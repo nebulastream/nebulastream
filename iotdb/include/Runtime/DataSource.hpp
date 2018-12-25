@@ -9,8 +9,8 @@
 #define INCLUDE_DATASOURCE_H_
 
 #include <thread>
-#include <core/TupleBuffer.hpp>
-#include <core/Schema.hpp>
+#include <Core/TupleBuffer.hpp>
+#include <Core/Schema.hpp>
 
 namespace iotdb {
 
