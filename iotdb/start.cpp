@@ -70,7 +70,7 @@ DataSourcePtr createGeneratorDataSource() { return std::make_shared<GeneratorSou
 
 void test() {
 
-  // iotdb::Query::create(iotdb::Config::create(), iotdb::Schema::create(), createGeneratorDataSource());
+  iotdb::Query::create(iotdb::Config::create(), iotdb::Schema::create(), createGeneratorDataSource()).execute();
 
   QueryExecutionPlanPtr qep(new CompiledTestQueryExecutionPlan());
 
