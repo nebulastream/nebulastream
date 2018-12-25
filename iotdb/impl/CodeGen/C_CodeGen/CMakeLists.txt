@@ -1,3 +1,3 @@
-#add_source_iotdb(
-#        CodeCompiler.cpp
-#	)
+add_source_iotdb(
+        CodeCompiler.cpp
+        )

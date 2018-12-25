@@ -1,13 +1,14 @@
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
 
-#include <util/shared_library.hpp>
+#include <Util/SharedLibrary.hpp>
+#include <Util/ErrorHandling.hpp>
 
 #include <boost/filesystem/operations.hpp>
-#include <boost/smart_ptr.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
 #include <fstream>
+#include <sstream>
 #include <utility>
 
 #pragma GCC diagnostic push
@@ -31,10 +32,10 @@
 namespace iotdb {
 
 const std::string CCodeCompiler::IncludePath =
-    PATH_TO_COGADB_SOURCE_CODE "/lib/cogadb/include/";
+    PATH_TO_IOTDB_SOURCE_CODE"/lib/cogadb/include/";
 
 const std::string CCodeCompiler::MinimalApiHeaderPath =
-    PATH_TO_COGADB_SOURCE_CODE
+    PATH_TO_IOTDB_SOURCE_CODE
     "/lib/cogadb/include/query_compilation/"
     "minimal_api_c.h";
 
@@ -52,18 +53,13 @@ CompiledCCodePtr CCodeCompiler::compile(const std::string& source) {
 }
 
 void CCodeCompiler::init() {
-  use_clang_jit_ = VariableManager::instance().getVariableValueBoolean(
-      "code_gen.c_compiler_clang_jit");
+  use_clang_jit_ = false;
 
-  show_generated_code_ = VariableManager::instance().getVariableValueBoolean(
-      "show_generated_code");
+  show_generated_code_ = true;
 
-  debug_code_generator_ = VariableManager::instance().getVariableValueBoolean(
-      "debug_code_generator");
+  debug_code_generator_ = true;
 
-  keep_last_generated_query_code_ =
-      VariableManager::instance().getVariableValueBoolean(
-          "keep_last_generated_query_code");
+  keep_last_generated_query_code_ = false;
 
 #ifndef NDEBUG
   PrecompiledHeaderName = "minimal_api_c.debug.h.pch";
@@ -153,31 +149,27 @@ std::vector<std::string> CCodeCompiler::getCompilerArgs() {
 
 void CCodeCompiler::callSystemCompiler(const std::vector<std::string>& args) {
   std::stringstream compiler_call;
-  compiler_call << QUERY_COMPILATION_CC << " ";
+  compiler_call << CLANG_EXECUTABLE << " ";
 
   for (const auto& arg : args) {
     compiler_call << arg << " ";
   }
-  if (VariableManager::instance().getVariableValueBoolean(
-          "debug_code_generator")) {
-    std::cout << "system '" << compiler_call.str() << "'" << std::endl;
-  }
+  std::cout << "system '" << compiler_call.str() << "'" << std::endl;
   auto ret = system(compiler_call.str().c_str());
 
   if (ret != 0) {
-    COGADB_FATAL_ERROR("PrecompiledHeader compilation failed!", "");
+    IOTDB_FATAL_ERROR("PrecompiledHeader compilation failed!");
   }
 }
 
 void pretty_print_code(const std::string& source) {
   int ret = system("which clang-format > /dev/null");
   if (ret != 0) {
-    COGADB_ERROR(
+    IOTDB_ERROR(
         "Did not find external tool 'clang-format'. "
         "Please install 'clang-format' and try again."
         "If 'clang-format-X' is installed, try to create a "
-        "symbolic link.",
-        "");
+        "symbolic link.");
     return;
   }
   const std::string filename = "temporary_file.c";
@@ -238,8 +230,6 @@ class SystemCompilerCompiledCCode : public CompiledCCode {
 
  private:
   void cleanUp() {
-    if (VariableManager::instance().getVariableValueBoolean(
-            "cleanup_generated_files")) {
       if (boost::filesystem::exists(base_file_name_ + ".c")) {
         boost::filesystem::remove(base_file_name_ + ".c");
       }
@@ -255,7 +245,6 @@ class SystemCompilerCompiledCCode : public CompiledCCode {
       if (boost::filesystem::exists(base_file_name_ + ".c.orig")) {
         boost::filesystem::remove(base_file_name_ + ".c.orig");
       }
-    }
   }
 
   SharedLibraryPtr library_;
@@ -284,7 +273,7 @@ CompiledCCodePtr CCodeCompiler::compileWithSystemCompiler(
   auto end = getTimestamp();
 
   auto compile_time = end - start + pch_time;
-  return boost::make_shared<SystemCompilerCompiledCCode>(
+  return std::make_shared<SystemCompilerCompiledCCode>(
       compile_time, shared_library, basename);
 }
 
@@ -292,8 +281,8 @@ class JITCompilerCompiledCCode : public CompiledCCode {
  public:
   JITCompilerCompiledCCode(
       Timestamp compile_time,
-      const boost::shared_ptr<llvm::LLVMContext>& context,
-      const boost::shared_ptr<llvm::ExecutionEngine>& engine)
+      const std::shared_ptr<llvm::LLVMContext>& context,
+      const std::shared_ptr<llvm::ExecutionEngine>& engine)
       : CompiledCCode(compile_time), context_(context), engine_(engine) {}
 
  protected:
@@ -302,8 +291,8 @@ class JITCompilerCompiledCCode : public CompiledCCode {
   }
 
  private:
-  boost::shared_ptr<llvm::LLVMContext> context_;
-  boost::shared_ptr<llvm::ExecutionEngine> engine_;
+  std::shared_ptr<llvm::LLVMContext> context_;
+  std::shared_ptr<llvm::ExecutionEngine> engine_;
 };
 
 CompiledCCodePtr CCodeCompiler::compileWithJITCompiler(
@@ -319,15 +308,12 @@ CompiledCCodePtr CCodeCompiler::compileWithJITCompiler(
   args.push_back("-I/usr/lib/clang/" QUERY_COMPILATION_CLANG_VERSION
                  "/include");
 
-  if (VariableManager::instance().getVariableValueBoolean(
-          "debug_code_generator")) {
     std::stringstream compiler_call;
-    compiler_call << QUERY_COMPILATION_CC << " ";
+    compiler_call << CLANG_EXECUTABLE << " ";
     for (const auto& arg : args) {
       compiler_call << arg << " ";
     }
     std::cout << "JIT Compiler Options: " << compiler_call.str() << std::endl;
-  }
 
   clang::CompilerInstance compiler;
   prepareClangCompiler(source, convertStringToCharPtrVec(args), compiler);
@@ -337,7 +323,7 @@ CompiledCCodePtr CCodeCompiler::compileWithJITCompiler(
   auto end = getTimestamp();
 
   auto compile_time = end - start + pch_time;
-  return boost::make_shared<JITCompilerCompiledCCode>(
+  return std::make_shared<JITCompilerCompiledCCode>(
       compile_time, ctxt_and_engine.first, ctxt_and_engine.second);
 }
 
@@ -355,7 +341,7 @@ void CCodeCompiler::prepareClangCompiler(const std::string& source,
   std::unique_ptr<clang::CompilerInvocation> invocation(
       clang::createInvocationFromCommandLine(llvm_args));
   if (invocation.get() == nullptr) {
-    COGADB_FATAL_ERROR("Failed to create compiler invocation!", "");
+    IOTDB_FATAL_ERROR("Failed to create compiler invocation!");
   }
 
 #if LLVM_VERSION >= 39
@@ -388,17 +374,17 @@ void CCodeCompiler::prepareClangCompiler(const std::string& source,
                      llvm::MemoryBuffer::getMemBufferCopy(source).release());
 }
 
-std::pair<boost::shared_ptr<llvm::LLVMContext>,
-          boost::shared_ptr<llvm::ExecutionEngine>>
+std::pair<std::shared_ptr<llvm::LLVMContext>,
+          std::shared_ptr<llvm::ExecutionEngine>>
 CCodeCompiler::createLLVMContextAndEngine(clang::CompilerInstance& compiler) {
-  auto context = boost::make_shared<llvm::LLVMContext>();
+  auto context = std::make_shared<llvm::LLVMContext>();
   clang::EmitLLVMOnlyAction action(context.get());
   if (!compiler.ExecuteAction(action)) {
-    COGADB_FATAL_ERROR("Failed to execute action!", "");
+    IOTDB_FATAL_ERROR("Failed to execute action!");
   }
 
   std::string errStr;
-  auto engine = boost::shared_ptr<llvm::ExecutionEngine>(
+  auto engine = std::shared_ptr<llvm::ExecutionEngine>(
       llvm::EngineBuilder(action.takeModule())
           .setErrorStr(&errStr)
           .setEngineKind(llvm::EngineKind::JIT)
@@ -408,7 +394,7 @@ CCodeCompiler::createLLVMContextAndEngine(clang::CompilerInstance& compiler) {
           .create());
 
   if (!engine) {
-    COGADB_FATAL_ERROR("Could not create ExecutionEngine: " + errStr, "");
+    IOTDB_FATAL_ERROR("Could not create ExecutionEngine: " + errStr);
   }
 
   engine->finalizeObject();
@@ -428,5 +414,5 @@ std::vector<const char*> CCodeCompiler::convertStringToCharPtrVec(
   return result;
 }
 
-}  // namespace CoGaDB
+}
 
