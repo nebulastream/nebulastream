@@ -6,6 +6,9 @@
  */
 #include <Runtime/Dispatcher.hpp>
 #include <iostream>
+
+namespace iotdb{
+
 Dispatcher::Dispatcher() : sources(), task_queue(), source_to_query_map(), mutex() {
   std::cout << "Init Dispatcher" << std::endl;
 }
@@ -81,4 +84,6 @@ void Dispatcher::completedWork(TaskPtr) { std::unique_lock<std::mutex> lock(mute
 Dispatcher &Dispatcher::instance() {
   static Dispatcher instance;
   return instance;
+}
+
 }

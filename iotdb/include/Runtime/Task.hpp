@@ -10,6 +10,7 @@
 #include <memory>
 #include <core/TupleBuffer.hpp>
 
+namespace iotdb{
 class DataSource;
 class QueryExecutionPlan;
 typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
@@ -27,6 +28,6 @@ private:
 };
 
 typedef std::shared_ptr<Task> TaskPtr;
-
+}
 
 #endif /* INCLUDE_TASK_H_ */

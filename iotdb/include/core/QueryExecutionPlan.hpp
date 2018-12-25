@@ -11,6 +11,9 @@
 #include <core/PipelineStage.hpp>
 #include <Runtime/DataSource.hpp>
 
+namespace iotdb{
+
+
 class QueryExecutionPlan {
 public:
   virtual bool executeStage(uint32_t pipeline_stage_id, const TupleBuffer &buf);
@@ -24,5 +27,7 @@ protected:
   std::vector<PipelineStagePtr> stages;
 };
 typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
+
+}
 
 #endif /* INCLUDE_QUERYEXECUTIONPLAN_H_ */

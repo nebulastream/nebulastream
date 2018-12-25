@@ -11,6 +11,8 @@
 #include <Runtime/DataSource.hpp>
 #include <Runtime/Dispatcher.hpp>
 
+namespace iotdb{
+
 DataSource::DataSource() : run_thread(false), thread()
 {
 	std::cout << "Init Data Source!" << std::endl;
@@ -50,4 +52,5 @@ void DataSource::run() {
       break;
   }
   std::cout << "Data Source Finished!" << std::endl;
+}
 }

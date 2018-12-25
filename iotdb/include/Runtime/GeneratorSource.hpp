@@ -11,6 +11,9 @@
 #include <Runtime/DataSource.hpp>
 #include <core/TupleBuffer.hpp>
 #include <iostream>
+
+namespace iotdb{
+
 template <typename F> class GeneratorSource : public DataSource {
 public:
   GeneratorSource(const uint64_t &_num_tuples_to_process)
@@ -36,6 +39,6 @@ template <typename F> TupleBuffer GeneratorSource<F>::receiveData() {
   // std::this_thread::sleep_for(std::chrono::seconds(1)); //nanoseconds(100000));
   return TupleBuffer(NULL, 0, 0, 0);
 }
-
+}
 
 #endif /* INCLUDE_GENERATORSOURCE_H_ */

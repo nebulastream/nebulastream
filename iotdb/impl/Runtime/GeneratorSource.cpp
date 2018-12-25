@@ -7,3 +7,7 @@
 
 #include <Runtime/GeneratorSource.hpp>
 #include <iostream>
+
+namespace iotdb{
+
+}

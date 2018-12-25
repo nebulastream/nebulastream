@@ -5,3 +5,7 @@
  *      Author: zeuchste
  */
 #include <Runtime/RemoteSocketSource.hpp>
+
+namespace iotdb{
+
+}

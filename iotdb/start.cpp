@@ -17,6 +17,9 @@
 
 using namespace std;
 
+namespace iotdb{
+
+
 class Functor {
 public:
   Functor() : last_number(0) {}
@@ -85,11 +88,12 @@ void test() {
 
   // Dispatcher::instance().deregisterQuery(qep);
 }
+}
 
 int main(int argc, const char *argv[]) {
 
-  Dispatcher::instance();
+  iotdb::Dispatcher::instance();
 
-  test();
+  iotdb::test();
 
 }
