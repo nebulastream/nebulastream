@@ -2,19 +2,26 @@
 #define C_CODE_COMPILER_HPP
 
 
-
+#include <memory>
+#include <Util/TimeMeasurement.hpp>
+#include <vector>
 #include <clang/Basic/LLVM.h>
+
+namespace llvm {
+  class LLVMContext;
+  class ExecutionEngine;
+}
 
 namespace clang {
   class CompilerInstance;
 }
 
 namespace iotdb {
-  class Pipeline;
-  typedef boost::shared_ptr<Pipeline> PipelinePtr;
+  class PipelineStage;
+  typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
 
   class SharedLibrary;
-  typedef boost::shared_ptr<SharedLibrary> SharedLibraryPtr;
+  typedef std::shared_ptr<SharedLibrary> SharedLibraryPtr;
 
   class CompiledCCode {
    public:
@@ -53,7 +60,7 @@ namespace iotdb {
     Timestamp compile_time_in_ns_;
   };
 
-  typedef boost::shared_ptr<CompiledCCode> CompiledCCodePtr;
+  typedef std::shared_ptr<CompiledCCode> CompiledCCodePtr;
 
   class CCodeCompiler {
    public:
@@ -85,8 +92,8 @@ namespace iotdb {
                               const std::vector<const char*>& args,
                               clang::CompilerInstance& compiler);
 
-    std::pair<boost::shared_ptr<llvm::LLVMContext>,
-              boost::shared_ptr<llvm::ExecutionEngine>>
+    std::pair<std::shared_ptr<llvm::LLVMContext>,
+              std::shared_ptr<llvm::ExecutionEngine>>
     createLLVMContextAndEngine(clang::CompilerInstance& compiler);
 
     std::vector<const char*> convertStringToCharPtrVec(
