@@ -19,7 +19,7 @@ typedef std::shared_ptr<CodeGenerator> CodeGeneratorPtr;
 class QueryExecutionPlan;
 typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 
-enum OperatorType { TABLE_SCAN, STREAM_SCAN, SELECTION, PROJECTION, JOIN, AGGREGATION, CUSTOM };
+enum OperatorType { SCAN, SELECTION, PROJECTION, JOIN, AGGREGATION, CUSTOM };
 
 class Operator {
 public:
@@ -27,9 +27,11 @@ public:
   virtual void consume(CodeGeneratorPtr codegen, QueryExecutionPlanPtr qep) = 0;
   virtual std::string toString() const = 0;
   virtual ~Operator();
-
+protected:
+  Operator(OperatorType);
 private:
   OperatorType type;
+public:
   std::vector<OperatorPtr> childs;
 };
 

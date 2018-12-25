@@ -30,16 +30,30 @@ Query &Query::write(std::string file_name) { return *this; }
 Query &Query::print() { return *this; }
 
 // helper operators
-Query &Query::printQueryPlan() { return *this; }
+Query &Query::printQueryPlan() {
+  std::cout << "Query Plan: " << std::endl;
+  printQueryPlan(root,0);
+  return *this;
+}
 
 Query::Query(const Config &_config, const Schema &_schema, DataSourcePtr _source)
-    : config(_config), schema(_schema), source(_source), root(createScan(source)) {}
+    : config(_config),
+      schema(_schema),
+      source(_source),
+      root(createScan(source)) {}
 
-Query::Query(Query &query) : config(query.config), schema(query.schema), root(std::move(query.root)) {}
+Query::Query(Query &query)
+  : config(query.config),
+    schema(query.schema),
+    root(std::move(query.root)) {}
 
 void Query::printQueryPlan(const OperatorPtr &curr, int depth) {
-  if (root) {
-    std::cout << root->toString() << std::endl;
+  if (curr) {
+    std::cout << curr->toString() << std::endl;
+    for(const auto& op : curr->childs){
+      printQueryPlan(op, depth+1);
+    }
   }
 }
+
 }

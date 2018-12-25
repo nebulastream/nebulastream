@@ -28,7 +28,6 @@ public:
 private:
   bool run_thread;
   std::thread thread;
-
 protected:
 };
 typedef std::shared_ptr<DataSource> DataSourcePtr;
