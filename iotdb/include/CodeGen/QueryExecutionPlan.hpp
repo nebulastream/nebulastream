@@ -8,7 +8,7 @@
 #ifndef INCLUDE_QUERYEXECUTIONPLAN_H_
 #define INCLUDE_QUERYEXECUTIONPLAN_H_
 #include <Runtime/DataSource.hpp>
-#include <core/PipelineStage.hpp>
+#include <CodeGen/PipelineStage.hpp>
 #include <vector>
 
 namespace iotdb {

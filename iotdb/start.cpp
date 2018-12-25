@@ -3,8 +3,8 @@
 #include <Runtime/GeneratorSource.hpp>
 #include <Runtime/ThreadPool.hpp>
 #include <assert.h>
-#include <core/HandCodedQueryExecutionPlan.hpp>
-#include <core/QueryExecutionPlan.hpp>
+#include <CodeGen/HandCodedQueryExecutionPlan.hpp>
+#include <CodeGen/QueryExecutionPlan.hpp>
 #include <core/TupleBuffer.hpp>
 #include <cstdint>
 #include <iostream>
