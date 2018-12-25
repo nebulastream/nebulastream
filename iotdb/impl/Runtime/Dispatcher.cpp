@@ -7,7 +7,7 @@
 #include <Runtime/Dispatcher.hpp>
 #include <iostream>
 
-namespace iotdb{
+namespace iotdb {
 
 Dispatcher::Dispatcher() : sources(), task_queue(), source_to_query_map(), mutex() {
   std::cout << "Init Dispatcher" << std::endl;
@@ -85,5 +85,4 @@ Dispatcher &Dispatcher::instance() {
   static Dispatcher instance;
   return instance;
 }
-
 }

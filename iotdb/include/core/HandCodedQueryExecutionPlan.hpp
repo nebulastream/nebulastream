@@ -12,7 +12,7 @@
 #include <stdint.h>
 class TupleBuffer;
 
-namespace iotdb{
+namespace iotdb {
 
 class HandCodedQueryExecutionPlan : public QueryExecutionPlan {
 public:
@@ -20,7 +20,6 @@ public:
   virtual ~HandCodedQueryExecutionPlan();
   virtual bool executeStage(uint32_t pipeline_stage_id, const TupleBuffer &buf) = 0;
 };
-
 }
 
 #endif /* INCLUDE_HANDCODEDQUERYEXECUTIONPLAN_H_ */

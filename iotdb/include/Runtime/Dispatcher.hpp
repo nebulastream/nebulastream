@@ -8,19 +8,18 @@
 #ifndef INCLUDE_DISPATCHER_H_
 #define INCLUDE_DISPATCHER_H_
 
-#include <thread>
-#include <vector>
 #include <condition_variable>
 #include <map>
 #include <mutex>
+#include <thread>
+#include <vector>
 
-#include <core/TupleBuffer.hpp>
-#include <core/QueryExecutionPlan.hpp>
-#include <Runtime/Task.hpp>
 #include <Runtime/DataSource.hpp>
+#include <Runtime/Task.hpp>
+#include <core/QueryExecutionPlan.hpp>
+#include <core/TupleBuffer.hpp>
 
-namespace iotdb{
-
+namespace iotdb {
 
 class Dispatcher {
 public:
@@ -55,7 +54,6 @@ private:
   std::condition_variable cv;
 };
 typedef std::shared_ptr<Dispatcher> DispatcherPtr;
-
 }
 
 #endif /* INCLUDE_DISPATCHER_H_ */

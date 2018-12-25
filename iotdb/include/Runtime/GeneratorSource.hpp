@@ -12,7 +12,7 @@
 #include <core/TupleBuffer.hpp>
 #include <iostream>
 
-namespace iotdb{
+namespace iotdb {
 
 template <typename F> class GeneratorSource : public DataSource {
 public:

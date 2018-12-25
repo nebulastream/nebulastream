@@ -8,24 +8,24 @@
 #ifndef THREADPOOL_H_
 #define THREADPOOL_H_
 
+#include <iostream>
 #include <thread>
 #include <vector>
-#include <iostream>
-namespace iotdb{
-class ThreadPool{
+namespace iotdb {
+class ThreadPool {
 public:
-    ThreadPool();
-    void worker_thread();
+  ThreadPool();
+  void worker_thread();
 
-    void start();
+  void start();
 
-    void stop();
-    ~ThreadPool();
+  void stop();
+  ~ThreadPool();
+
 private:
-    bool run;
-    std::vector<std::thread> threads;
+  bool run;
+  std::vector<std::thread> threads;
 };
-
 }
 
 #endif /* THREADPOOL_H_ */

@@ -5,12 +5,12 @@
  *      Author: zeuchste
  */
 
-#include <Runtime/Task.hpp>
-#include <core/TupleBuffer.hpp>
 #include <Runtime/DataSource.hpp>
+#include <Runtime/Task.hpp>
 #include <core/QueryExecutionPlan.hpp>
+#include <core/TupleBuffer.hpp>
 
-namespace iotdb{
+namespace iotdb {
 
 Task::Task(QueryExecutionPlanPtr _qep, uint32_t _pipeline_stage_id, DataSource *_source, const TupleBuffer &_buf)
     : qep(_qep), pipeline_stage_id(_pipeline_stage_id), source(_source), buf(_buf) {}

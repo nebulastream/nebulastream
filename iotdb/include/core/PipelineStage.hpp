@@ -10,14 +10,13 @@
 #include <core/TupleBuffer.hpp>
 #include <memory>
 
-namespace iotdb{
+namespace iotdb {
 class PipelineStage {
 public:
   /** \brief process input tuple buffer */
   bool execute(TupleBuffer buf);
 };
 typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
-
 }
 
 #endif /* INCLUDE_PIPELINESTAGE_H_ */

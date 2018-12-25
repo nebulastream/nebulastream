@@ -5,18 +5,13 @@
  *      Author: zeuchste
  */
 
-
-
-#include <iostream>
 #include <Runtime/DataSource.hpp>
 #include <Runtime/Dispatcher.hpp>
+#include <iostream>
 
-namespace iotdb{
+namespace iotdb {
 
-DataSource::DataSource() : run_thread(false), thread()
-{
-	std::cout << "Init Data Source!" << std::endl;
-}
+DataSource::DataSource() : run_thread(false), thread() { std::cout << "Init Data Source!" << std::endl; }
 
 void ass() { std::cout << "Ass" << std::endl; }
 

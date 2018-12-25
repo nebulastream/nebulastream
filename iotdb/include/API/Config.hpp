@@ -1,8 +1,7 @@
 
 #include <string>
 
-namespace iotdb{
-
+namespace iotdb {
 
 class Config {
 public:
@@ -33,5 +32,4 @@ private:
   bool measuring;
   bool preloading;
 };
-
 }

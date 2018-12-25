@@ -6,12 +6,11 @@
  */
 
 #include <Runtime/BinarySource.hpp>
-#include <fstream>
 #include <Runtime/DataSource.hpp>
 #include <Runtime/Dispatcher.hpp>
+#include <fstream>
 
-namespace iotdb{
-
+namespace iotdb {
 
 BinarySource::BinarySource(const std::string &_file_path, const uint64_t &_num_tuples_to_process)
     : DataSource(), input(std::ifstream(_file_path.c_str())), num_tuples_to_process(_num_tuples_to_process) {}
@@ -27,5 +26,4 @@ void BinarySource::fillBuffer(TupleBuffer &buf) {
   /* read <buf.buffer_size> bytes data from file into buffer */
   /* advance internal file pointer, if we reach the file end, set to file begin */
 }
-
 }

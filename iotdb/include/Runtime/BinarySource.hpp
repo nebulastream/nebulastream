@@ -12,7 +12,7 @@
 #include <core/TupleBuffer.hpp>
 #include <fstream>
 
-namespace iotdb{
+namespace iotdb {
 
 class BinarySource : public DataSource {
 public:
@@ -24,7 +24,6 @@ private:
   std::ifstream input;
   uint64_t num_tuples_to_process;
 };
-
 }
 
 #endif /* INCLUDE_BINARYSOURCE_H_ */
