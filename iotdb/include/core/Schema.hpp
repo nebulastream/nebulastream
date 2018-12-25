@@ -1,4 +1,7 @@
 
+#ifndef CORE_SCHEMA_H
+#define CORE_SCHEMA_H
+
 #include <memory>
 #include <vector>
 
@@ -10,8 +13,8 @@ typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
 class Schema {
 public:
   static Schema create();
-  void addField(AttributeFieldPtr field);
-
+  Schema& addField(AttributeFieldPtr field);
+  const std::string toString() const;
 private:
   Schema();
   //  Schema(const Schema&);
@@ -19,3 +22,5 @@ private:
   std::vector<AttributeFieldPtr> fields;
 };
 }
+
+#endif

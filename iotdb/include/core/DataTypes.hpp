@@ -1,3 +1,5 @@
+#ifndef CORE_DATATYPES_H
+#define CORE_DATATYPES_H
 
 #include <cstdint>
 #include <memory>
@@ -15,8 +17,10 @@ class ValueType;
 typedef std::shared_ptr<ValueType> ValueTypePtr;
 
 class DataType {
+public:
   virtual ValueTypePtr getNullValue() const = 0;
   virtual uint32_t getSizeBytes() const = 0;
+  virtual const std::string toString() const = 0;
   virtual ~DataType();
 };
 
@@ -26,11 +30,16 @@ typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
 class AttributeField {
 public:
   AttributeField(const std::string &name, DataTypePtr data_type);
+  AttributeField(const std::string &name, const BasicType &);
   std::string name;
   DataTypePtr data_type;
   uint32_t getFieldSize() const;
+  const std::string toString() const;
 };
+
+const AttributeFieldPtr createField(const std::string name, const BasicType & type);
 
 const DataTypePtr createDataType(const BasicType &);
 const DataTypePtr createDataTypeVarChar(const uint32_t &max_length);
 }
+#endif

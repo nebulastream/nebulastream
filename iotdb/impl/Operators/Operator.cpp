@@ -2,6 +2,7 @@
 #include <Operators/Operator.hpp>
 
 #include <Runtime/DataSource.hpp>
+#include <sstream>
 
 namespace iotdb {
 
@@ -19,7 +20,11 @@ public:
 
   void produce(CodeGeneratorPtr codegen, QueryExecutionPlanPtr qep) override {}
   void consume(CodeGeneratorPtr codegen, QueryExecutionPlanPtr qep) override {}
-  std::string toString() const override { return std::string("SCAN"); }
+  std::string toString() const override {
+    std::stringstream ss;
+    ss << "SCAN(" << source->getSchema().toString() << ")";
+    return ss.str();
+  }
 
   ~Scan() override{
 

@@ -11,9 +11,14 @@
 
 namespace iotdb {
 
-DataSource::DataSource() : run_thread(false), thread() { std::cout << "Init Data Source!" << std::endl; }
+DataSource::DataSource(const Schema& _schema) : run_thread(false), thread(), schema(_schema) {
+  std::cout << "Init Data Source!" << std::endl;
+}
 
-void ass() { std::cout << "Ass" << std::endl; }
+const Schema& DataSource::getSchema() const{
+  return schema;
+}
+
 
 DataSource::~DataSource() {
   stop();

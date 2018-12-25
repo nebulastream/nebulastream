@@ -16,8 +16,8 @@ namespace iotdb {
 
 template <typename F> class GeneratorSource : public DataSource {
 public:
-  GeneratorSource(const uint64_t &_num_tuples_to_process)
-      : functor(), num_tuples_to_process(_num_tuples_to_process), generated_tuples(0) {}
+  GeneratorSource(const Schema& schema, const uint64_t &_num_tuples_to_process)
+      : DataSource(schema), functor(), num_tuples_to_process(_num_tuples_to_process), generated_tuples(0) {}
   TupleBuffer receiveData();
 
 private:

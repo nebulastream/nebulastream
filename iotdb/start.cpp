@@ -10,6 +10,7 @@
 #include <iostream>
 #include <string>
 #include <thread>
+#include <core/DataTypes.hpp>
 
 #include <API/Config.hpp>
 #include <API/Query.hpp>
@@ -46,8 +47,8 @@ public:
   uint64_t count;
   uint64_t sum;
   CompiledTestQueryExecutionPlan() : HandCodedQueryExecutionPlan(), count(0), sum(0) {
-
-    DataSourcePtr source(new GeneratorSource<Functor>(100));
+    Schema s = Schema::create().addField(createField("val",UINT64));
+    DataSourcePtr source(new GeneratorSource<Functor>(s, 100));
     sources.push_back(source);
   }
 
@@ -66,11 +67,16 @@ public:
   }
 };
 
-DataSourcePtr createGeneratorDataSource() { return std::make_shared<GeneratorSource<Functor>>(100); }
+DataSourcePtr createGeneratorDataSource() {
+  Schema s = Schema::create().addField(createField("val",UINT64));
+  return std::make_shared<GeneratorSource<Functor>>(s,100);
+}
 
 void test() {
 
-  iotdb::Query::create(iotdb::Config::create(), iotdb::Schema::create(), createGeneratorDataSource()).execute();
+  iotdb::Query::create(iotdb::Config::create(),
+                       iotdb::Schema::create().addField(createField("val",UINT64)),
+                       createGeneratorDataSource()).execute();
 
   QueryExecutionPlanPtr qep(new CompiledTestQueryExecutionPlan());
 
