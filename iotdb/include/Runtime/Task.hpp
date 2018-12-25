@@ -7,7 +7,7 @@
 
 #ifndef INCLUDE_TASK_H_
 #define INCLUDE_TASK_H_
-#include <core/TupleBuffer.hpp>
+#include <Core/TupleBuffer.hpp>
 #include <memory>
 
 namespace iotdb {

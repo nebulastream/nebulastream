@@ -5,16 +5,16 @@
 #include <assert.h>
 #include <CodeGen/HandCodedQueryExecutionPlan.hpp>
 #include <CodeGen/QueryExecutionPlan.hpp>
-#include <core/TupleBuffer.hpp>
+#include <Core/TupleBuffer.hpp>
 #include <cstdint>
 #include <iostream>
 #include <string>
 #include <thread>
-#include <core/DataTypes.hpp>
+#include <Core/DataTypes.hpp>
 
 #include <API/Config.hpp>
 #include <API/Query.hpp>
-#include <core/Schema.hpp>
+#include <Core/Schema.hpp>
 
 using namespace std;
 

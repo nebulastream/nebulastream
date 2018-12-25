@@ -1,5 +1,5 @@
 
-#include <core/DataTypes.hpp>
+#include <Core/DataTypes.hpp>
 #include <sstream>
 
 namespace iotdb {
@@ -44,7 +44,7 @@ namespace iotdb {
 
     }
     ValueTypePtr getNullValue() const{
-
+      return ValueTypePtr();
     }
     uint32_t getSizeBytes() const{
       switch(type){
@@ -62,6 +62,7 @@ namespace iotdb {
         case CHAR: return sizeof(char);
         case DATE: return sizeof(uint32_t);
       }
+      return 0;
     }
     const std::string toString() const{
       switch(type){
@@ -79,6 +80,7 @@ namespace iotdb {
         case CHAR: return "CHAR";
         case DATE: return "DATE";
       }
+      return "";
     }
     BasicType type;
   };

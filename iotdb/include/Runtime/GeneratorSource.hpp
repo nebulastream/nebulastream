@@ -9,7 +9,7 @@
 #define INCLUDE_GENERATORSOURCE_H_
 
 #include <Runtime/DataSource.hpp>
-#include <core/TupleBuffer.hpp>
+#include <Core/TupleBuffer.hpp>
 #include <iostream>
 #include <sstream>
 

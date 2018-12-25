@@ -9,7 +9,7 @@
 #define INCLUDE_BINARYSOURCE_H_
 
 #include <Runtime/DataSource.hpp>
-#include <core/TupleBuffer.hpp>
+#include <Core/TupleBuffer.hpp>
 #include <fstream>
 
 namespace iotdb {

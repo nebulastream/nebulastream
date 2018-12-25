@@ -1,7 +1,7 @@
 
-#include <core/Schema.hpp>
+#include <Core/Schema.hpp>
 #include <sstream>
-#include <core/DataTypes.hpp>
+#include <Core/DataTypes.hpp>
 
 namespace iotdb {
 
