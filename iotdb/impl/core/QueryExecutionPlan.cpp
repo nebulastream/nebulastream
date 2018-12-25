@@ -7,6 +7,8 @@
 
 #include <core/QueryExecutionPlan.hpp>
 
+namespace iotdb{
+
 QueryExecutionPlan::QueryExecutionPlan() : sources(), stages() {}
 
 QueryExecutionPlan::QueryExecutionPlan(const std::vector<DataSourcePtr> &_sources,
@@ -22,4 +24,6 @@ const std::vector<DataSourcePtr> QueryExecutionPlan::getSources() const { return
 bool QueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const TupleBuffer &buf) {
   bool ret = stages[pipeline_stage_id]->execute(buf);
   return ret;
+}
+
 }

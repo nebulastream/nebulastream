@@ -19,6 +19,8 @@
 #include <Runtime/Task.hpp>
 #include <Runtime/DataSource.hpp>
 
+namespace iotdb{
+
 
 class Dispatcher {
 public:
@@ -54,5 +56,6 @@ private:
 };
 typedef std::shared_ptr<Dispatcher> DispatcherPtr;
 
+}
 
 #endif /* INCLUDE_DISPATCHER_H_ */

@@ -9,6 +9,8 @@
 #include <Runtime/Dispatcher.hpp>
 #include <Runtime/Task.hpp>
 
+namespace iotdb{
+
 ThreadPool::ThreadPool() : run(), threads(){
 
 
@@ -52,4 +54,6 @@ void ThreadPool::stop(){
 	   if(thread.joinable())
 		 thread.join();
 	}
+}
+
 }

@@ -11,7 +11,7 @@
 #include <thread>
 #include <vector>
 #include <iostream>
-
+namespace iotdb{
 class ThreadPool{
 public:
     ThreadPool();
@@ -26,6 +26,6 @@ private:
     std::vector<std::thread> threads;
 };
 
-
+}
 
 #endif /* THREADPOOL_H_ */

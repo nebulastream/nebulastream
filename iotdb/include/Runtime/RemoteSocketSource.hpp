@@ -10,6 +10,10 @@
 
 #include <Runtime/DataSource.hpp>
 #include <core/TupleBuffer.hpp>
+
+namespace iotdb{
+
+
 class RemoteSocketSource : public DataSource {
 public:
   RemoteSocketSource(int32_t port);
@@ -17,5 +21,6 @@ public:
 
 private:
 };
+}
 
 #endif /* INCLUDE_REMOTESOCKETSOURCE_H_ */

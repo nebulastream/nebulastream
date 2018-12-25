@@ -11,6 +11,9 @@
 #include <thread>
 #include <core/TupleBuffer.hpp>
 
+namespace iotdb{
+
+
 class DataSource {
 public:
   DataSource();
@@ -31,5 +34,7 @@ private:
 protected:
 };
 typedef std::shared_ptr<DataSource> DataSourcePtr;
+
+}
 
 #endif /* INCLUDE_DATASOURCE_H_ */
