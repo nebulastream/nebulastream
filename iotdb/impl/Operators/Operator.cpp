@@ -3,34 +3,23 @@
 
 #include <Runtime/DataSource.hpp>
 
+namespace iotdb {
 
+class Scan : public Operator {
+public:
+  Scan(DataSourcePtr src) : source(src) {}
 
-namespace iotdb{
+  void produce(CodeGeneratorPtr codegen, QueryExecutionPlanPtr qep) override {}
+  void consume(CodeGeneratorPtr codegen, QueryExecutionPlanPtr qep) override {}
+  std::string toString() const override { return std::string("SCAN"); }
 
-  class Scan : public Operator{
-  public:
-    Scan(DataSourcePtr src) : source(src){
+  ~Scan() override;
 
-    }
+private:
+  DataSourcePtr source;
+};
 
-    void produce(CodeGeneratorPtr codegen, QueryExecutionPlanPtr qep) override{}
-    void consume(CodeGeneratorPtr codegen, QueryExecutionPlanPtr qep) override{}
-    std::string toString() const override{
-      return std::string("SCAN");
-    }
+OperatorPtr createScan(DataSourcePtr source) { return std::make_unique<Scan>(source); }
 
-    ~Scan() override;
-  private:
-    DataSourcePtr source;
-  };
-
-
-  OperatorPtr createScan(DataSourcePtr source){
-    return std::make_unique<Scan>(source);
-  }
-
-  OperatorPtr createSelection(PredicatePtr predicate){
-    return OperatorPtr();
-  }
-
+OperatorPtr createSelection(PredicatePtr predicate) { return OperatorPtr(); }
 }

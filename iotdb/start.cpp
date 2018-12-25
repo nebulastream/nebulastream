@@ -1,24 +1,23 @@
 #include <Runtime/DataSource.hpp>
-#include <core/TupleBuffer.hpp>
 #include <Runtime/Dispatcher.hpp>
-#include <core/QueryExecutionPlan.hpp>
-#include <core/HandCodedQueryExecutionPlan.hpp>
 #include <Runtime/GeneratorSource.hpp>
-#include <string>
-#include <assert.h>
-#include <thread>
 #include <Runtime/ThreadPool.hpp>
-#include <iostream>
+#include <assert.h>
+#include <core/HandCodedQueryExecutionPlan.hpp>
+#include <core/QueryExecutionPlan.hpp>
+#include <core/TupleBuffer.hpp>
 #include <cstdint>
+#include <iostream>
+#include <string>
+#include <thread>
 
-#include <API/Query.hpp>
 #include <API/Config.hpp>
+#include <API/Query.hpp>
 #include <core/Schema.hpp>
 
 using namespace std;
 
-namespace iotdb{
-
+namespace iotdb {
 
 class Functor {
 public:
@@ -67,13 +66,11 @@ public:
   }
 };
 
-DataSourcePtr createGeneratorDataSource(){
-  return std::make_shared<GeneratorSource<Functor>>(100);
-}
+DataSourcePtr createGeneratorDataSource() { return std::make_shared<GeneratorSource<Functor>>(100); }
 
 void test() {
 
-  //iotdb::Query::create(iotdb::Config::create(), iotdb::Schema::create(), createGeneratorDataSource());
+  // iotdb::Query::create(iotdb::Config::create(), iotdb::Schema::create(), createGeneratorDataSource());
 
   QueryExecutionPlanPtr qep(new CompiledTestQueryExecutionPlan());
 
@@ -95,5 +92,4 @@ int main(int argc, const char *argv[]) {
   iotdb::Dispatcher::instance();
 
   iotdb::test();
-
 }

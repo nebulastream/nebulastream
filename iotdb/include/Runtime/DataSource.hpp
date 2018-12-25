@@ -5,14 +5,12 @@
  *      Author: zeuchste
  */
 
-
 #ifndef INCLUDE_DATASOURCE_H_
 #define INCLUDE_DATASOURCE_H_
-#include <thread>
 #include <core/TupleBuffer.hpp>
+#include <thread>
 
-namespace iotdb{
-
+namespace iotdb {
 
 class DataSource {
 public:
@@ -34,7 +32,6 @@ private:
 protected:
 };
 typedef std::shared_ptr<DataSource> DataSourcePtr;
-
 }
 
 #endif /* INCLUDE_DATASOURCE_H_ */

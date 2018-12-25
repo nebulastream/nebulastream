@@ -7,11 +7,9 @@
 #include <core/HandCodedQueryExecutionPlan.hpp>
 #include <core/QueryExecutionPlan.hpp>
 
-namespace iotdb{
+namespace iotdb {
 
-HandCodedQueryExecutionPlan::HandCodedQueryExecutionPlan() : QueryExecutionPlan()
-{}
+HandCodedQueryExecutionPlan::HandCodedQueryExecutionPlan() : QueryExecutionPlan() {}
 
-HandCodedQueryExecutionPlan::~HandCodedQueryExecutionPlan(){}
-
+HandCodedQueryExecutionPlan::~HandCodedQueryExecutionPlan() {}
 }

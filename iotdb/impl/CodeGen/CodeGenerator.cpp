@@ -1,8 +1,4 @@
 
 #include <CodeGen/CodeGen.hpp>
 
-namespace iotdb{
-
-
-
-}
+namespace iotdb {}

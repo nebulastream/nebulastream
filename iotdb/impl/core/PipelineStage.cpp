@@ -8,11 +8,10 @@
 #include <core/PipelineStage.hpp>
 #include <iostream>
 
-namespace iotdb{
+namespace iotdb {
 
 bool PipelineStage::execute(TupleBuffer buf) {
   std::cout << "Execute a Pipeline Stage!" << std::endl;
   return true;
 }
-
 }

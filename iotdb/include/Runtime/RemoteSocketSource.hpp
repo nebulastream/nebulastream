@@ -11,8 +11,7 @@
 #include <Runtime/DataSource.hpp>
 #include <core/TupleBuffer.hpp>
 
-namespace iotdb{
-
+namespace iotdb {
 
 class RemoteSocketSource : public DataSource {
 public:

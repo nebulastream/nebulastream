@@ -7,10 +7,10 @@
 
 #ifndef INCLUDE_TASK_H_
 #define INCLUDE_TASK_H_
-#include <memory>
 #include <core/TupleBuffer.hpp>
+#include <memory>
 
-namespace iotdb{
+namespace iotdb {
 class DataSource;
 class QueryExecutionPlan;
 typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
