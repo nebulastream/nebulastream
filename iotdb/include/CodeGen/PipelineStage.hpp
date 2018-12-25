@@ -11,6 +11,7 @@
 #include <memory>
 
 namespace iotdb {
+
 class PipelineStage {
 public:
   /** \brief process input tuple buffer */
