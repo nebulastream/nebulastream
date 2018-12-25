@@ -14,8 +14,10 @@ Schema& Schema::addField(AttributeFieldPtr field) {
 
 const std::string Schema::toString() const{
   std::stringstream ss;
-  for(const auto& field : fields){
-    ss << field->toString() << ", ";
+  for(size_t i=0;i<fields.size();++i){
+    ss << fields[i]->toString();
+    if(i+1<fields.size())
+      ss << ", ";
   }
   return ss.str();
 }
