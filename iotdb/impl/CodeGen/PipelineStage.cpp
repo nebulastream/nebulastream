@@ -5,7 +5,7 @@
  *      Author: zeuchste
  */
 
-#include <core/PipelineStage.hpp>
+#include <CodeGen/PipelineStage.hpp>
 #include <iostream>
 
 namespace iotdb {

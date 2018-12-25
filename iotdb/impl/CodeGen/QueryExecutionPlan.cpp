@@ -5,7 +5,7 @@
  *      Author: zeuchste
  */
 
-#include <core/QueryExecutionPlan.hpp>
+#include <CodeGen/QueryExecutionPlan.hpp>
 
 namespace iotdb {
 
