@@ -11,6 +11,10 @@
 #include <iostream>
 #include <cstdint>
 
+#include <API/Query.hpp>
+#include <API/Config.hpp>
+#include <core/Schema.hpp>
+
 using namespace std;
 
 class Functor {
@@ -60,7 +64,14 @@ public:
   }
 };
 
+DataSourcePtr createGeneratorDataSource(){
+  return std::make_shared<GeneratorSource<Functor>>(100);
+}
+
 void test() {
+
+  //iotdb::Query::create(iotdb::Config::create(), iotdb::Schema::create(), createGeneratorDataSource());
+
   QueryExecutionPlanPtr qep(new CompiledTestQueryExecutionPlan());
 
   Dispatcher::instance().registerQuery(qep);

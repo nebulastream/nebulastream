@@ -3,4 +3,5 @@ add_source_iotdb(
 	QueryExecutionPlan.cpp
 	PipelineStage.cpp
 	HandCodedQueryExecutionPlan.cpp
+        Schema.cpp
 	)
