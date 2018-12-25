@@ -15,7 +15,7 @@ namespace iotdb {
 
 class RemoteSocketSource : public DataSource {
 public:
-  RemoteSocketSource(int32_t port);
+  RemoteSocketSource(const Schema& schema, int32_t port);
   TupleBuffer receiveData();
 
 private:
