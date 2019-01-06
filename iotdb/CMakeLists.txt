@@ -59,11 +59,11 @@ include_directories(${CLANG_INCLUDE_DIRS})
 include_directories(${LLVM_INCLUDE_DIRS})
 
 
-set(LIBRARIES ${LIBRARIES} ${CLANG_LIBS} ${LLVM_MODULE_LIBS})
+#set(LIBRARIES ${LIBRARIES} ${CLANG_LIBS} ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLVM_CFLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LLVM_LDFLAGS}")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LLVM_LDFLAGS}")
-
+#set(LIBRARIES ${LIBRARIES} "${CMAKE_SHARED_LINKER_FLAGS}")
 
 
 # Compiler should produce specific code for system architecture
@@ -74,9 +74,9 @@ if(COMPILER_SUPPORTS_MARCH_NATIVE)
 endif()
 
 # Threads
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
-set(LIBRARIES ${LIBRARIES} Threads::Threads)
+#set(THREADS_PREFER_PTHREAD_FLAG ON)
+#find_package(Threads REQUIRED)
+#set(LIBRARIES ${LIBRARIES} Threads::Threads)
 
 
 
@@ -105,9 +105,12 @@ add_subdirectory(impl)
 # Add Library
 get_source_iotdb(iotdb_SOURCE_FILES)
 get_header_iotdb(iotdb_HEADER_FILES)
-add_library(iotdb ${iotdb_SOURCE_FILES} ${iotdb_HEADER_FILES})
+add_library(iotdb SHARED ${iotdb_SOURCE_FILES} ${iotdb_HEADER_FILES})
 target_include_directories(iotdb PUBLIC "include")
+target_link_libraries(iotdb ${CLANG_LIBS} ${LIBRARIES} ${LLVM_LIBRARIES} ${LLVM_LDFLAGS})
+
+message( STATUS "LLVM_LIBRARIES:" ${LLVM_LIBRARIES} )
 
 add_executable(iot start.cpp)
-target_link_libraries(iot iotdb ${LIBRARIES})
+target_link_libraries(iot iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS})
 target_include_directories(iot PUBLIC "include")
