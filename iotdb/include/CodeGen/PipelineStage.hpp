@@ -12,10 +12,17 @@
 
 namespace iotdb {
 
+class PipelineStage;
+typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
+
 class PipelineStage {
 public:
   /** \brief process input tuple buffer */
   bool execute(TupleBuffer buf);
+  virtual const PipelineStagePtr copy() const = 0;
+  virtual ~PipelineStage();
+protected:
+  virtual TupleBuffer execute_impl() = 0;
 };
 typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
 }

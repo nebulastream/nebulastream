@@ -20,6 +20,8 @@ using namespace std;
 
 namespace iotdb {
 
+    void generate_LLVM_AST();
+
 class Functor {
 public:
   Functor() : last_number(0) {}
@@ -96,6 +98,8 @@ void test() {
 }
 
 int main(int argc, const char *argv[]) {
+
+  iotdb::generate_LLVM_AST();
 
   iotdb::Dispatcher::instance();
 
