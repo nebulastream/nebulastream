@@ -38,6 +38,9 @@ namespace iotdb {
 
   bool addToCode(GeneratedCodePtr code, GeneratedCodePtr code_to_add);
 
+  CodeGenerator::~CodeGenerator(){}
+
+
 
   class C_CodeGenerator : public CodeGenerator {
     bool addOperator(OperatorPtr, const CodeGenArgs &);
@@ -60,6 +63,10 @@ namespace iotdb {
 
   C_CodeGenerator::~C_CodeGenerator(){
 
+  }
+
+  CodeGeneratorPtr createCodeGenerator(){
+    return CodeGeneratorPtr();
   }
 
   void generate_LLVM_AST(){
