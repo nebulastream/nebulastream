@@ -17,6 +17,7 @@
 #include <clang/Basic/Builtins.h>
 #include <clang/Driver/Compilation.h>
 
+#include <Util/ErrorHandling.hpp>
 
 namespace iotdb {
 
@@ -74,7 +75,10 @@ namespace iotdb {
     std::string inputPath = "getinmemory.c";
 
     // Path to clang (e.g. /usr/local/bin/clang)
-    auto clangPath = llvm::sys::findProgramByName("clang++");
+//    auto clangPath = llvm::sys::findProgramByName("clang++");
+//    if(clangPath.getError()){
+//        IOTDB_FATAL_ERROR("Could not find clang++ compiler: " + clangPath.getError().message());
+//    }
 
     // Arguments to pass to the clang driver:
     //	clang getinmemory.c -lcurl -v
@@ -83,16 +87,25 @@ namespace iotdb {
     args.push_back("-o a.exe");
     args.push_back("-v");		// verbose
 
-                                                            // The clang driver needs a DiagnosticsEngine so it can report problems
+                                                // The clang driver needs a DiagnosticsEngine so it can report problems
     clang::DiagnosticOptions diagnosticOptions;
     clang::TextDiagnosticPrinter *DiagClient = new clang::TextDiagnosticPrinter(llvm::errs(), &diagnosticOptions);
+    if(!DiagClient)
+      IOTDB_FATAL_ERROR("clang::TextDiagnosticPrinter is NULL!");
     //clang::IntrusiveRefCntPtr<clang::DiagnosticIDs> DiagID(new clang::DiagnosticIDs());
+
     llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diagIds = new clang::DiagnosticIDs();
-    auto Diags = std::make_unique<clang::DiagnosticsEngine>(diagIds, &diagnosticOptions, DiagClient);
+    //auto Diags = std::make_unique<clang::DiagnosticsEngine>(diagIds, &diagnosticOptions, DiagClient);
+  //FIXME: The following line creates a memory leak.
+  // For some odd reason the program crashes when we call the destructor, this needs further investitation
+    clang::DiagnosticsEngine* Diags = new clang::DiagnosticsEngine(diagIds, &diagnosticOptions, DiagClient);
+
 
 
     // Create the clang driver
-    clang::driver::Driver TheDriver(clangPath.get().c_str(), llvm::sys::getDefaultTargetTriple(), *Diags.get());
+    //const char* const val = clangPath.get().c_str();
+    //auto val2 = Diags.get();
+    clang::driver::Driver TheDriver(CLANG_EXECUTABLE, llvm::sys::getDefaultTargetTriple(), *Diags);
 
 
     // Create the set of actions to perform
@@ -123,14 +136,10 @@ namespace iotdb {
 
     clang::Decl::Kind kind = clang::Decl::Kind::Var;
 
+    (void) vardecl;
+    (void) kind;
+
     clang::LangOptions lang_opts;
-
-    //clang::DiagnosticsEngine &Diag;
-    //clang::FileManager &FileMgr;
-
-//    clang::SourceManager src_mgr = SourceManager(Diags,
-//                                                 FileMgr,
-//                  false);
 
     clang::LangOptions LangOpts;
     clang::IdentifierTable idents(LangOpts);
@@ -140,6 +149,11 @@ namespace iotdb {
 
     clang::ASTContext context (LangOpts, *VirtualSM, idents,
                    sels, builtins);
+
+
+
+#ifdef NON
+#endif
 
     std::cout << "LLVM initialized!" << std::endl;
 
