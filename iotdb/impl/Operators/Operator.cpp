@@ -58,7 +58,7 @@ private:
   PredicatePtr predicate;
 };
 
-OperatorPtr createScan(DataSourcePtr source) { return std::make_unique<Scan>(source); }
+OperatorPtr createScan(DataSourcePtr source) { return std::make_shared<Scan>(source); }
 
-OperatorPtr createSelection(PredicatePtr predicate) { return std::make_unique<Selection>(predicate); }
+OperatorPtr createSelection(PredicatePtr predicate) { return std::make_shared<Selection>(predicate); }
 }
