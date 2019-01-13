@@ -344,7 +344,12 @@ void CCodeCompiler::prepareClangCompiler(const std::string& source,
     IOTDB_FATAL_ERROR("Failed to create compiler invocation!");
   }
 
-#if LLVM_VERSION >= 39
+#if LLVM_VERSION == 60
+  clang::CompilerInvocation::setLangDefaults(
+      *invocation->getLangOpts(), clang::InputKind::CXX,
+      llvm::Triple(invocation->getTargetOpts().Triple),
+      invocation->getPreprocessorOpts(), clang::LangStandard::lang_c11);
+#elif LLVM_VERSION >= 39
   clang::CompilerInvocation::setLangDefaults(
       *invocation->getLangOpts(), clang::IK_C,
       llvm::Triple(invocation->getTargetOpts().Triple),
