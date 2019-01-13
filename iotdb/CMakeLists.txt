@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.5)
 project (iotdb CXX)
 
+if(POLICY CMP0004)
+  cmake_policy(SET CMP0004 OLD)
+endif()
+
+
 # Custome CMake find instructions and macros
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
 include(cmake/macros.cmake)
@@ -40,7 +45,6 @@ message( STATUS "Clang Executable: ${CLANG_EXECUTABLE}" )
 message( STATUS "Clang-Format Executable: ${CLANG_FORMAT_EXECUTABLE}" )
 message( STATUS "Generated Code Directory: ${GENERATED_CODE_DIRECTORY}" )
 message( STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}" )
-
 
 # Add definitions as compile flag.
 add_definitions(-DLLVM_VERSION=${LLVM_VERSION_MAJOR}${LLVM_VERSION_MINOR})
@@ -100,8 +104,6 @@ endif(USE_PERFORMANCE_COUNTER)
 
 # Add Source Code
 add_subdirectory(impl)
-
-
 # Add Library
 get_source_iotdb(iotdb_SOURCE_FILES)
 get_header_iotdb(iotdb_HEADER_FILES)
