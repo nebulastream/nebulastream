@@ -1,4 +1,5 @@
 
+#pragma once
 #include <Operators/Operator.hpp>
 #include <Runtime/DataSource.hpp>
 #include <Core/DataTypes.hpp>

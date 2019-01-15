@@ -16,6 +16,8 @@
 #include <API/Query.hpp>
 #include <Core/Schema.hpp>
 
+#include <design.hpp>
+
 using namespace std;
 
 namespace iotdb {
@@ -104,4 +106,6 @@ int main(int argc, const char *argv[]) {
   iotdb::Dispatcher::instance();
 
   iotdb::test();
+
+  iotdb::test_design();
 }
