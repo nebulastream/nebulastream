@@ -8,6 +8,7 @@
 #include <Runtime/Dispatcher.hpp>
 #include <Runtime/Task.hpp>
 #include <Runtime/ThreadPool.hpp>
+#include <functional>
 
 namespace iotdb {
 

@@ -8,6 +8,7 @@
 #include <Runtime/DataSource.hpp>
 #include <Runtime/Dispatcher.hpp>
 #include <iostream>
+#include <functional>
 
 namespace iotdb {
 
