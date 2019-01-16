@@ -1,4 +1,4 @@
 add_source_iotdb(
-        Query.cpp
+        InputQuery.cpp
         Config.cpp
 	)

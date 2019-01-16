@@ -24,35 +24,35 @@ typedef std::shared_ptr<Window> WindowPtr;
 class Mapper;
 
 /** \brief the central abstraction for the user to define queries */
-class Query {
+class InputQuery {
 public:
-  ~Query();
-  static Query create(const Config &config, const Schema &schema, DataSourcePtr source);
+  ~InputQuery();
+  static InputQuery create(const Config &config, const Schema &schema, DataSourcePtr source);
 
   void execute();
 
   // relational operators
-  Query &filter(PredicatePtr predicate);
-  Query &groupBy(AttributeFieldPtr field);
-  Query &orderBy(AttributeFieldPtr field, const std::string &sortedness);
-  Query &aggregate(Aggregation &&aggregation);
-  Query &join(const Query &otherQuery, JoinPredicatePtr joinPred);
+  InputQuery &filter(PredicatePtr predicate);
+  InputQuery &groupBy(AttributeFieldPtr field);
+  InputQuery &orderBy(AttributeFieldPtr field, const std::string &sortedness);
+  InputQuery &aggregate(Aggregation &&aggregation);
+  InputQuery &join(const InputQuery &otherQuery, JoinPredicatePtr joinPred);
 
   // streaming operators
-  Query &window(WindowPtr &&window);
-  Query &keyBy(AttributeFieldPtr field);
-  Query &map(Mapper &&mapper);
+  InputQuery &window(WindowPtr &&window);
+  InputQuery &keyBy(AttributeFieldPtr field);
+  InputQuery &map(Mapper &&mapper);
 
   // output operators
-  Query &write(std::string file_name);
-  Query &print();
+  InputQuery &write(std::string file_name);
+  InputQuery &print();
 
   // helper operators
-  Query &printQueryPlan();
+  InputQuery &printQueryPlan();
 
 private:
-  Query(const Config &config, const Schema &schema, DataSourcePtr source);
-  Query(Query &);
+  InputQuery(const Config &config, const Schema &schema, DataSourcePtr source);
+  InputQuery(InputQuery &);
   const Config &config;
   const Schema &schema;
   DataSourcePtr source;

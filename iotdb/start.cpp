@@ -13,7 +13,7 @@
 #include <Core/DataTypes.hpp>
 
 #include <API/Config.hpp>
-#include <API/Query.hpp>
+#include <API/InputQuery.hpp>
 #include <Core/Schema.hpp>
 
 #include <design.hpp>
@@ -78,7 +78,7 @@ DataSourcePtr createGeneratorDataSource() {
 
 void test() {
 
-  iotdb::Query::create(iotdb::Config::create(),
+  iotdb::InputQuery::create(iotdb::Config::create(),
                        iotdb::Schema::create().addField(createField("val",UINT64)),
                        createGeneratorDataSource())
       .filter(PredicatePtr())
