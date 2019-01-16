@@ -16,8 +16,10 @@ namespace iotdb {
     class QueryPlan;
     typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
+    /** for deploying multiple queries at once */
     class QueryGraph;
     typedef std::shared_ptr<QueryGraph> QueryGraphPtr;
+
     class FogQueryExecutionGraph;
     typedef std::shared_ptr<FogQueryExecutionGraph> FogQueryExecutionGraphPtr;
 
