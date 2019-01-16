@@ -1,7 +1,8 @@
 
-#include <API/Query.hpp>
 #include <API/Config.hpp>
+#include <algorithm>
 
+#include "API/InputQuery.hpp"
 namespace iotdb {
 
 /** Client Side **/
@@ -15,8 +16,8 @@ namespace iotdb {
     typedef std::shared_ptr<Stream> StreamPtr;
 
 /** Master Node -- Fog Components **/    
-    class FogManager;
-    typedef std::shared_ptr<FogManager> FogManagerPtr;
+    class FogToplogyManager;
+    typedef std::shared_ptr<FogToplogyManager> FogToplogyManagerPtr;
 
     class FogTopologyPlan;
     typedef std::shared_ptr<FogTopologyPlan> FogTopologyPlanPtr;
@@ -46,8 +47,11 @@ namespace iotdb {
     class FogOptimizer;
     typedef std::shared_ptr<FogOptimizer> FogOptimizerPtr;
 
-    class FogExecutionGraph;
-    typedef std::shared_ptr<FogExecutionGraph> FogExecutionGraphPtr;
+    class FogExecutionPlan;
+    typedef std::shared_ptr<FogExecutionPlan> FogExecutionPlanPtr;
+
+    class FogRuntime;
+    typedef std::shared_ptr<FogRuntime> FogRuntimePtr;
 
 /** Master Node -- Monitoring Components **/    
     class FogMonitor;
@@ -79,8 +83,8 @@ namespace iotdb {
 
     class FogTopologyPlan{
         // how to model Links?
-        std::vector<FogNodePtr> source_nodes;
-        std::vector<FogNodePtr> sink_nodes;
+        std::vector<FogToplogyNodePtr> source_nodes;
+        std::vector<FogToplogyNodePtr> sink_nodes;
     };
 
     class FogTopologyManager{
@@ -89,15 +93,33 @@ namespace iotdb {
             static FogTopologyPlanPtr getPlan(){
                 return FogTopologyPlanPtr();
             }
-
-            static FogQueryExecutionGraphPtr map(FogTopologyPlanPtr fog, LogicalQueryGraphPtr qg){
-                return FogQueryExecutionGraphPtr();
-            }
-
-            static FogMonitorPtr deploy(FogQueryExecutionGraphPtr fqep){
-                return FogMonitorPtr();
-            }
     };
+
+    class FogOptimizer
+    {
+    public:
+    	 static FogExecutionPlanPtr map(FogTopologyPlanPtr fog, LogicalQueryGraphPtr qg){
+    		 return FogExecutionPlanPtr();
+    	 }
+
+    	  LogicalQueryGraphPtr optimizeQueryGraph(LogicalQueryGraphPtr query_graph){
+    	        /** \todo Optimizer path to determine the operator and sub-query placement on individual fog nodes */
+    	        /** \todo Optimizer path to determine the routing of data through the fog */
+
+    	        return LogicalQueryGraphPtr();
+    	    }
+
+
+    };
+
+    class FogRuntime
+    {
+    public:
+    	static FogMonitorPtr deploy(FogExecutionPlanPtr fqep){
+			return FogMonitorPtr();
+		}
+    };
+
 
     class LogicalQueryGraph{
         public:
@@ -113,16 +135,26 @@ namespace iotdb {
             std::vector<OperatorPtr> sink_nodes;
     };
 
-    LogicalQueryPlanPtr getQueryPlan(InputQuery& query){
-        return LogicalQueryPlanPtr();
-    }
+    class LogicalQueryManager
+    {
+    public:
+    	LogicalQueryGraphPtr getQueryGraph(){
+    		return logQueryGraph;
+		}
 
-    LogicalQueryGraphPtr optimizeQueryGraph(LogicalQueryGraphPtr query_graph){
-        /** \todo Optimizer path to determine the operator and sub-query placement on individual fog nodes */
-        /** \todo Optimizer path to determine the routing of data through the fog */<
+    	LogicalQueryPlanPtr createLogQueryPlan(InputQuery& query){
+            return LogicalQueryPlanPtr();
+        }
 
-        return LogicalQueryGraphPtr();
-    }
+        void addQueryToGraph(LogicalQueryPlanPtr plan)
+        {
+        }
+
+
+
+        LogicalQueryGraphPtr logQueryGraph;
+    };
+
 
     class FogEvent{
         //what to do with this?
@@ -150,24 +182,19 @@ namespace iotdb {
 
         FogTopologyPlanPtr fog = FogTopologyManager::getPlan();
 
-        //FogRoutingPlan fog_rout_plan = FogTopologyManager::computeRoutingPlan(fog);
-
-
         DataSourcePtr source;
 
-        Query&& query = std::move(Query::create(Config::create(), Schema::create(), source));
+        InputQuery&& iQuery = std::move(InputQuery::create(Config::create(), Schema::create(), source));
 
-        QueryPlanPtr query_plan = getQueryPlan(query);
+        LogicalQueryManager logQueryMgn;
 
-        QueryGraphPtr qg = QueryGraph::create();
+        LogicalQueryPlanPtr logPlan = logQueryMgn.createLogQueryPlan(iQuery);
 
-        qg->add(query_plan);
+        logQueryMgn.addQueryToGraph(logPlan);
 
-        qg = optimizeQueryGraph(qg);
+        FogExecutionPlanPtr fep = FogOptimizer::map(fog, logQueryMgn.getQueryGraph());
 
-        FogQueryExecutionGraphPtr fqep = FogTopologyManager::map(fog, qg);
-
-        FogMonitorPtr monitor = FogTopologyManager::deploy(fqep);
+        FogMonitorPtr monitor = FogRuntime::deploy(fep);
 
         while(true){
 
