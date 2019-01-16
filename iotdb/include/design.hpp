@@ -4,6 +4,8 @@
 
 namespace iotdb {
 
+    class FogNode;
+    typedef std::shared_ptr<FogNode> FogNodePtr;
 
     class FogTopologyPlan;
     typedef std::shared_ptr<FogTopologyPlan> FogTopologyPlanPtr;
@@ -31,6 +33,30 @@ namespace iotdb {
     class Optimizer;
     typedef std::shared_ptr<Optimizer> OptimizerPtr;
 
+
+    class FogNodeProperties{
+        /* compute power, memory capacity, network bandwidth and latency */
+        /* network connection quality */
+    };
+
+    class FogNode{
+    public:
+        /** \brief stores the fog nodes this fog node receives its data from */
+        std::vector<FogNodePtr> childs;
+        /** \brief stores the fog nodes this fog node transmit data to */
+        std::vector<std::weak_ptr<FogNode>> parents;
+        /** \brief stores the query sub-graph processed on this node */
+        QueryGraphPtr query_graph;
+        uint64_t node_id;
+    };
+
+    class FogTopologyPlan{
+
+        std::vector<FogNodePtr> source_nodes;
+        std::vector<FogNodePtr> sink_nodes;
+    };
+
+
     class FogTopologyManager{
     public:
 
@@ -56,6 +82,9 @@ namespace iotdb {
         void add(QueryPlanPtr query_plan){
 
         }
+
+        std::vector<OperatorPtr> source_nodes;
+        std::vector<OperatorPtr> sink_nodes;
     };
 
 
