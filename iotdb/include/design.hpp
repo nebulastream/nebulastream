@@ -28,6 +28,10 @@ namespace iotdb {
     class FogToplogyLink;
     typedef std::shared_ptr<FogToplogyLink> FogToplogyLinkPtr;
 
+    class FogToplogySensor;
+    typedef std::shared_ptr<FogToplogySensor> FogToplogySensorPtr;
+
+
     class FogNodeProperties;
     typedef std::shared_ptr<FogNodeProperties> FogNodePropertiesPtr;
 
