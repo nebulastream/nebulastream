@@ -116,3 +116,12 @@ message( STATUS "LLVM_LIBRARIES:" ${LLVM_LIBRARIES} )
 add_executable(iot start.cpp)
 target_link_libraries(iot iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS})
 target_include_directories(iot PUBLIC "include")
+
+
+#add_executable(llvm_test llvm_test.cpp)
+#target_link_libraries(llvm_test iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS})
+#target_include_directories(llvm_test PUBLIC "include")
+
+add_executable(ClangAstBuilder ClangAstBuilder.cpp)
+target_link_libraries(ClangAstBuilder iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS})
+target_include_directories(ClangAstBuilder PUBLIC "include")
