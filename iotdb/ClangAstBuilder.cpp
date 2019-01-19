@@ -25,6 +25,20 @@
 #include "clang/Frontend/ASTConsumers.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/CodeGen/CodeGenAction.h"
+
+#include <llvm/InitializePasses.h>
+#include <llvm/ExecutionEngine/ExecutionEngine.h>
+#include <llvm/ExecutionEngine/MCJIT.h>
+#include <llvm/ExecutionEngine/SectionMemoryManager.h>
+#include <llvm/IR/DataLayout.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/PassManager.h>
+#include <llvm/Passes/PassBuilder.h>
+#include <llvm/Support/MemoryBuffer.h>
+#include <llvm/Support/TargetSelect.h>
+#include <llvm/Support/raw_ostream.h>
+#include <llvm/Analysis/LoopPass.h>
 
 using namespace llvm;
 
@@ -32,7 +46,41 @@ namespace {
 
 } // namespace
 
+
+bool LLVMinit = false;
+
+ void InitializeLLVM()
+ {
+   if (LLVMinit)
+   {
+     return;
+   }
+   // We have not initialized any pass managers for any device yet.
+   // Run the global LLVM pass initialization functions.
+   llvm::InitializeNativeTarget();
+   llvm::InitializeNativeTargetAsmPrinter();
+   llvm::InitializeNativeTargetAsmParser();
+
+   auto& Registry = *llvm::PassRegistry::getPassRegistry();
+
+   llvm::initializeCore(Registry);
+   llvm::initializeScalarOpts(Registry);
+   llvm::initializeVectorization(Registry);
+   llvm::initializeIPO(Registry);
+   llvm::initializeAnalysis(Registry);
+   llvm::initializeTransformUtils(Registry);
+   llvm::initializeInstCombine(Registry);
+   llvm::initializeInstrumentation(Registry);
+   llvm::initializeTarget(Registry);
+
+   LLVMinit = true;
+ }
+
+
 int main(int argc, const char **argv) {
+
+  InitializeLLVM();
+
   //CommonOptionsParser OptionsParser(argc, argv, ClangCheckCategory);
   //ClangTool Tool(OptionsParser.getCompilations(),
   //               OptionsParser.getSourcePathList());
@@ -49,6 +97,7 @@ int main(int argc, const char **argv) {
   Clang->createASTContext();
   clang::ASTContext &Context = Clang->getASTContext();
   clang::IdentifierTable &Identifiers = Clang->getPreprocessor().getIdentifierTable();
+  clang::CodeGenOptions &codeGenOptions = Clang->getCodeGenOpts();
   
   // AST building
   clang::TranslationUnitDecl *TopDecl = Context.getTranslationUnitDecl();
@@ -102,7 +151,6 @@ int main(int argc, const char **argv) {
                                                                Context.IntTy,
                                                                clang::ExprValueKind::VK_LValue);
 
-
     clang::IntegerLiteral* intlit = clang::IntegerLiteral::Create(Context,
                                                                   llvm::APInt(32,5,true),
                                                                   Context.IntTy,
@@ -139,6 +187,76 @@ int main(int argc, const char **argv) {
   llvm::outs() << "-ast-dump: \n";
   Context.getTranslationUnitDecl()->dump(llvm::outs());
   llvm::outs() << "\n";
+
+  /* ---------------- code generation for the AST starts here! -------------------------- */
+
+  llvm::LLVMContext context;
+     std::unique_ptr<clang::CodeGenAction> action = std::make_unique<clang::EmitLLVMOnlyAction>(&context);
+
+     Clang->getTargetOpts().Triple = "x86_64-pc-linux-gnu";
+     llvm::outs() << "Triple: " <<  Clang->getTargetOpts().Triple << "\n";
+
+
+
+     if (!Clang->ExecuteAction(*action))
+     {
+        llvm::outs() << "Emitting LLVM Code Failed!\n";
+        return -1;
+     }
+
+     /* get the IR module from the previous action */
+     std::unique_ptr<llvm::Module> module = action->takeModule();
+        if (!module)
+        {
+            llvm::outs() << "Retrieving Module Failed!\n";
+            return -1;
+        }
+        module->dump();
+
+        /* LLVM IR optimization passes */
+
+        Clang->getTargetOpts().Triple = llvm::sys::getDefaultTargetTriple();
+        //targetOptions.Triple =
+
+         llvm::PassBuilder passBuilder;
+         //llvm::LoopAnalysisManager loopAnalysisManager(codeGenOptions.DebugPassManager);
+         llvm::FunctionAnalysisManager functionAnalysisManager(true);
+         llvm::CGSCCAnalysisManager cGSCCAnalysisManager(true);
+         llvm::ModuleAnalysisManager moduleAnalysisManager(true);
+
+         passBuilder.registerModuleAnalyses(moduleAnalysisManager);
+         passBuilder.registerCGSCCAnalyses(cGSCCAnalysisManager);
+         passBuilder.registerFunctionAnalyses(functionAnalysisManager);
+         //passBuilder.registerLoopAnalyses(loopAnalysisManager);
+         //passBuilder.crossRegisterProxies(loopAnalysisManager, functionAnalysisManager, cGSCCAnalysisManager, moduleAnalysisManager);
+
+         llvm::ModulePassManager modulePassManager;
+         passBuilder.parsePassPipeline(modulePassManager, "");
+         modulePassManager.run(*module);
+
+         //llvm::AssemblyAnnotationWriter asm_annotator;
+
+
+         /* compile IR to machine code, get function, execute function */
+
+         llvm::EngineBuilder builder(std::move(module));
+            builder.setMCJITMemoryManager(std::make_unique<llvm::SectionMemoryManager>());
+            builder.setOptLevel(llvm::CodeGenOpt::Level::Aggressive);
+            auto executionEngine = builder.create();
+
+            if (!executionEngine)
+            {
+            }
+
+            typedef int (*function) (double);
+            function func =  reinterpret_cast<function>(executionEngine->getFunctionAddress("myfunction"));
+
+            int ret=(*func)(double(3));
+            llvm::outs() << ret << "\n";
+
+//         llvm::ModulePassManager modulePassManager = passBuilder. buildPerModuleDefaultPipeline(llvm::PassBuilder::OptimizationLevel::O3);
+//         modulePassManager.run(*module, moduleAnalysisManager);
+
 
   return 0;
 }
