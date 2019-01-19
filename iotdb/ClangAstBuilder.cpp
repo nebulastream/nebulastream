@@ -126,8 +126,6 @@ int main(int argc, const char **argv) {
     statements.push_back(S);
 
     llvm::ArrayRef<clang::Stmt*> array_ref_s(statements);
-    //llvm::ArrayRef<clang::Stmt*> array_ref_s(&S, 1);
-    //CS->setStmts(Context, &S, 1);
     CS->setStmts(Context, array_ref_s);
     FD->setBody(CS);
     TopDecl->addDecl(FD);
