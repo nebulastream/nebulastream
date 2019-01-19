@@ -68,7 +68,16 @@ int main(int argc, const char **argv) {
     TopDecl->addDecl(FD);
   }
 
+
+    clang::VarDecl* vardecl = clang::VarDecl::Create(Context, TopDecl, clang::SourceLocation(), clang::SourceLocation(),
+                                                   &Identifiers.get("myint"), Context.IntTy, nullptr, clang::SC_None);
+    TopDecl->addDecl(vardecl);
+
+
+
   /* function body */ {
+
+    /* create function header */
     clang::FunctionDecl *FD = clang::FunctionDecl::Create(Context, TopDecl, clang::SourceLocation(), clang::SourceLocation(),
             clang::DeclarationName(&Identifiers.get("myfunction")),
             FTy, NULL, clang::SC_None, /*inline*/false);
@@ -76,11 +85,48 @@ int main(int argc, const char **argv) {
     NewParamInfo.push_back(clang::ParmVarDecl::Create(Context, FD, clang::SourceLocation(), clang::SourceLocation(),
             &Identifiers.get("arg1"), Context.DoubleTy, NULL, clang::SC_None, NULL));
     FD->setParams(ArrayRef<clang::ParmVarDecl*>(NewParamInfo));
+
+    /* create function body */
+
     clang::CompoundStmt *CS = new (Context) clang::CompoundStmt(clang::SourceLocation());
+
+
+    /* i = 5; */
+    clang::DeclarationNameLoc declnameloc (clang::DeclarationName(&Identifiers.get("myint")));
+    clang::DeclRefExpr* vardeclref = clang::DeclRefExpr::Create(Context,
+                                                               clang::NestedNameSpecifierLoc (),
+                                                               clang::SourceLocation(),
+                                                               vardecl,
+                                                               true,
+                                                               clang::SourceLocation(),
+                                                               Context.IntTy,
+                                                               clang::ExprValueKind::VK_LValue);
+
+
+    clang::IntegerLiteral* intlit = clang::IntegerLiteral::Create(Context,
+                                                                  llvm::APInt(32,5,true),
+                                                                  Context.IntTy,
+                                                                  clang::SourceLocation());
+
+    clang::BinaryOperator* bin_op = new (Context) clang::BinaryOperator(vardeclref,
+                                                              intlit,
+                                                              clang::BinaryOperator::Opcode::BO_Assign,
+                                                              Context.IntTy,
+                                                              clang::ExprValueKind::VK_LValue,
+                                                              clang::ExprObjectKind::OK_Ordinary,
+                                                              clang::SourceLocation(), false);
+
+    /* return 12.345; */
     clang::Stmt *S = new (Context) clang::ReturnStmt(clang::SourceLocation(),
             clang::FloatingLiteral::Create(Context, APFloat(12.345), true, Context.DoubleTy, clang::SourceLocation()),
             NULL);
-    llvm::ArrayRef<clang::Stmt*> array_ref_s(&S, 1);
+
+    std::vector<clang::Stmt*> statements;
+    statements.push_back(bin_op);
+    statements.push_back(S);
+
+    llvm::ArrayRef<clang::Stmt*> array_ref_s(statements);
+    //llvm::ArrayRef<clang::Stmt*> array_ref_s(&S, 1);
     //CS->setStmts(Context, &S, 1);
     CS->setStmts(Context, array_ref_s);
     FD->setBody(CS);
