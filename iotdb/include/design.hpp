@@ -152,6 +152,7 @@ namespace iotdb {
 
         void addQueryToGraph(LogicalQueryPlanPtr plan)
         {
+
         }
 
 
@@ -181,7 +182,8 @@ namespace iotdb {
     }
 
 
-    void test_design(){
+    void test_design()
+    {
 
 
         FogTopologyPlanPtr fog = FogTopologyManager::getPlan();
