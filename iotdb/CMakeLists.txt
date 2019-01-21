@@ -1,3 +1,4 @@
+
 cmake_minimum_required(VERSION 3.5)
 project (iotdb CXX)
 
@@ -113,6 +114,10 @@ target_link_libraries(iotdb ${CLANG_LIBS} ${LIBRARIES} ${LLVM_LIBRARIES} ${LLVM_
 
 message( STATUS "LLVM_LIBRARIES:" ${LLVM_LIBRARIES} )
 
-add_executable(iot start.cpp)
-target_link_libraries(iot iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS})
-target_include_directories(iot PUBLIC "include")
+add_executable(iotNode iotNode.cpp)
+target_link_libraries(iotNode iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS})
+target_include_directories(iotNode PUBLIC "include")
+
+add_executable(iotMaster iotNode.cpp)
+target_link_libraries(iotNode iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS})
+target_include_directories(iotNode PUBLIC "include")
