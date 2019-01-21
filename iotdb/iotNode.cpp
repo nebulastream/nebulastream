@@ -101,8 +101,6 @@ void test() {
 
 int main(int argc, const char *argv[]) {
 
-  iotdb::generate_LLVM_AST();
-
   iotdb::Dispatcher::instance();
 
   iotdb::test();
