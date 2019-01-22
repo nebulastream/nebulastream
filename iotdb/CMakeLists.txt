@@ -113,11 +113,6 @@ target_link_libraries(iotdb ${CLANG_LIBS} ${LIBRARIES} ${LLVM_LIBRARIES} ${LLVM_
 
 message( STATUS "LLVM_LIBRARIES:" ${LLVM_LIBRARIES} )
 
-add_executable(iot start.cpp)
-target_link_libraries(iot iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS})
-target_include_directories(iot PUBLIC "include")
-
-
 add_executable(llvm_test llvm_test.cpp)
 target_link_libraries(llvm_test iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
 target_include_directories(llvm_test PUBLIC "include")
@@ -125,3 +120,16 @@ target_include_directories(llvm_test PUBLIC "include")
 add_executable(ClangAstBuilder ClangAstBuilder.cpp)
 target_link_libraries(ClangAstBuilder iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
 target_include_directories(ClangAstBuilder PUBLIC "include")
+
+#add_executable(iotNode iotNode.cpp)
+#target_link_libraries(iotNode iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS})
+#target_include_directories(iotNode PUBLIC "include")
+
+add_executable(iotMaster iotMaster.cpp)
+target_link_libraries(iotMaster iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
+target_include_directories(iotMaster PUBLIC "include")
+ 
+#add_executable(iotClient iotClient.cpp)
+#target_link_libraries(iotClient iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
+#target_include_directories(iotClient PUBLIC "include")
+ 
