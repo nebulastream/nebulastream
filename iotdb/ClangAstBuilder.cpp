@@ -12,6 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+
+
 #include "llvm/Support/Host.h"
 
 #include "clang/AST/ASTContext.h"
@@ -27,6 +29,10 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/CodeGen/CodeGenAction.h"
 
+#include "clang/Tooling/CommonOptionsParser.h"
+#include "clang/Tooling/Tooling.h"
+#include "llvm/Support/raw_ostream.h"
+
 #include <llvm/InitializePasses.h>
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/MCJIT.h>
@@ -39,6 +45,8 @@
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Analysis/LoopPass.h>
+
+#include <iostream>
 
 using namespace llvm;
 
@@ -76,6 +84,7 @@ bool LLVMinit = false;
    LLVMinit = true;
  }
 
+static llvm::cl::OptionCategory ToolingSampleCategory("Tooling Sample");
 
 int main(int argc, const char **argv) {
 
@@ -164,13 +173,33 @@ int main(int argc, const char **argv) {
                                                               clang::ExprObjectKind::OK_Ordinary,
                                                               clang::SourceLocation(), false);
 
-    /* return 12.345; */
+    /* return 12; */
+
+
+
+//    clang::Stmt *S = new (Context) clang::ReturnStmt(clang::SourceLocation(),
+//            clang::IntegerLiteral::Create(Context, APInt(32,12), Context.IntTy, clang::SourceLocation()),
+//            NULL);
+
+    clang::IntegerLiteral* int_literal = clang::IntegerLiteral::Create(Context, APInt(32,12), Context.IntTy, clang::SourceLocation());
+
+    clang::ImplicitCastExpr* impl_cast_expr = clang::ImplicitCastExpr::Create 	(Context,
+                    Context.IntTy,
+                    clang::CastKind::CK_LValueToRValue,
+                    int_literal,
+                    nullptr,
+                    clang::ExprValueKind::VK_RValue);
+
     clang::Stmt *S = new (Context) clang::ReturnStmt(clang::SourceLocation(),
-            clang::FloatingLiteral::Create(Context, APFloat(12.345), true, Context.DoubleTy, clang::SourceLocation()),
+            impl_cast_expr,
             NULL);
 
+
+      //ReturnStmt(SourceLocation RL, Expr *E, const VarDecl *NRVOCandidate)
+
+
     std::vector<clang::Stmt*> statements;
-    statements.push_back(bin_op);
+    //statements.push_back(bin_op);
     statements.push_back(S);
 
     llvm::ArrayRef<clang::Stmt*> array_ref_s(statements);
@@ -188,10 +217,28 @@ int main(int argc, const char **argv) {
   Context.getTranslationUnitDecl()->dump(llvm::outs());
   llvm::outs() << "\n";
 
+  clang::tooling::CommonOptionsParser op(argc, argv, ToolingSampleCategory);
+  clang::tooling::ClangTool Tool(op.getCompilations(), op.getSourcePathList());
+
+
+  std::cout << "Create Clang AST" << std::endl;
+  std::shared_ptr<clang::PCHContainerOperations> PCHContainerOps = std::make_shared<clang::PCHContainerOperations>();
+  std::unique_ptr<clang::ASTUnit> ast_unit =
+  clang::tooling::buildASTFromCode("int myfunction(double arg1) { return 12; }",  "test.cpp",
+                   PCHContainerOps);
+
+  if(!ast_unit){
+    std::cerr << "Error" << std::endl;
+    return -1;
+  }
+
+
   /* ---------------- code generation for the AST starts here! -------------------------- */
 
-  llvm::LLVMContext context;
-     std::unique_ptr<clang::CodeGenAction> action = std::make_unique<clang::EmitLLVMOnlyAction>(&context);
+     llvm::LLVMContext context;
+     std::unique_ptr<clang::CodeGenAction> action = std::make_unique<clang::EmitLLVMAction>(&context);
+
+
 
      Clang->getTargetOpts().Triple = "x86_64-pc-linux-gnu";
      llvm::outs() << "Triple: " <<  Clang->getTargetOpts().Triple << "\n";
@@ -239,13 +286,15 @@ int main(int argc, const char **argv) {
 
          /* compile IR to machine code, get function, execute function */
 
-         llvm::EngineBuilder builder(std::move(module));
+            llvm::EngineBuilder builder(std::move(module));
             builder.setMCJITMemoryManager(std::make_unique<llvm::SectionMemoryManager>());
             builder.setOptLevel(llvm::CodeGenOpt::Level::Aggressive);
             auto executionEngine = builder.create();
 
             if (!executionEngine)
             {
+                llvm::outs() << "Error Building module!\n";
+                return -1;
             }
 
             typedef int (*function) (double);

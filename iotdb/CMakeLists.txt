@@ -123,5 +123,5 @@ target_link_libraries(llvm_test iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangT
 target_include_directories(llvm_test PUBLIC "include")
 
 add_executable(ClangAstBuilder ClangAstBuilder.cpp)
-target_link_libraries(ClangAstBuilder iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS})
+target_link_libraries(ClangAstBuilder iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
 target_include_directories(ClangAstBuilder PUBLIC "include")
