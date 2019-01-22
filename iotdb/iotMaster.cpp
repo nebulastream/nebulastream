@@ -7,7 +7,6 @@ void createTestTopo()
 
 	FogToplogySensorPtr s1 = std::make_shared<FogToplogySensor>(1);
 
-	s1->addParentNode(f1);
 
 
 
