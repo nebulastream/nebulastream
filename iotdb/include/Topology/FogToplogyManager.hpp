@@ -5,6 +5,8 @@
 
 typedef std::shared_ptr<FogTopologyPlan> FogTopologyPlanPtr;
 
+
+
 class FogTopologyManager{
 public:
 	FogTopologyManager()

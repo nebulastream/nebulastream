@@ -43,9 +43,6 @@
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 		</cconfiguration>
 	</storageModule>
-	<storageModule moduleId="scannerConfiguration">
-		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-	</storageModule>
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="iotdb.null.1713991410" name="iotdb"/>
 	</storageModule>
@@ -56,4 +53,14 @@
 		</configuration>
 	</storageModule>
 	<storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.62562378;cdt.managedbuild.toolchain.gnu.base.62562378.2003189396;cdt.managedbuild.tool.gnu.cpp.compiler.base.822696845;cdt.managedbuild.tool.gnu.cpp.compiler.input.777358374">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.62562378;cdt.managedbuild.toolchain.gnu.base.62562378.2003189396;cdt.managedbuild.tool.gnu.c.compiler.base.1307765615;cdt.managedbuild.tool.gnu.c.compiler.input.1881981407">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 </cproject>

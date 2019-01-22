@@ -1,41 +1,34 @@
-/*
- * FogToplogySensor.hpp
- *
- *  Created on: Jan 17, 2019
- *      Author: zeuchste
- */
-
 #ifndef INCLUDE_TOPOLOGY_FOGTOPLOGYSENSOR_HPP_
 #define INCLUDE_TOPOLOGY_FOGTOPLOGYSENSOR_HPP_
 
 class FogToplogySensor{
     public:
-		FogToplogySensor()
+		FogToplogySensor(size_t pSensorID)
 		{
-
+			sensorID = pSensorID;
 		}
 
-		void addParentNode(FogToplogyNodePtr ptr)
+//		void addParentNode(FogToplogyNodePtr ptr)
+//		{
+//			parents.push_back(ptr);
+//		}
+		void setSensorID(size_t id)
 		{
-			parents.push_back(ptr);
+			sensorID = id;
 		}
-		void setNodeId(size_t id)
+		size_t getSensorId()
 		{
-			node_id = id;
-		}
-		size_t getNodeId()
-		{
-			return node_id;
+			return sensorID;
 		}
 
 
     private:
         /** \brief stores the fog nodes this fog node transmit data to */
-        std::vector<std::weak_ptr<FogToplogyNode>> parents;
+//        std::vector<std::weak_ptr<FogToplogyNode>> parents;
         /** \brief stores the query sub-graph processed on this node */
 //        LogicalQueryGraphPtr query_graph;
-        FogNodePropertiesPtr properties;
-        size_t node_id;
+        FogTopologyNodePropertiesPtr properties;
+        size_t sensorID;
     };
 
 
