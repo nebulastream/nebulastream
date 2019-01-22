@@ -4,18 +4,17 @@
 #include <vector>
 #include <memory>
 
-#include "../Topology/FogNodeProperties.hpp"
+#include "FogTopologyNodeProperties.hpp"
 
 class FogToplogyNode;
 typedef std::shared_ptr<FogToplogyNode> FogToplogyNodePtr;
-typedef std::shared_ptr<FogNodeProperties> FogNodePropertiesPtr;
 
 
 class FogToplogyNode{
     public:
-		FogToplogyNode()
+		FogToplogyNode(size_t pNode_id)
 		{
-
+			node_id = pNode_id;
 		}
 
 		void addChildNode(FogToplogyNodePtr ptr)
@@ -43,7 +42,7 @@ class FogToplogyNode{
         std::vector<std::weak_ptr<FogToplogyNode>> parents;
         /** \brief stores the query sub-graph processed on this node */
 //        LogicalQueryGraphPtr query_graph;
-        FogNodePropertiesPtr properties;
+        FogTopologyNodePropertiesPtr properties;
         size_t node_id;
     };
 

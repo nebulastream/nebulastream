@@ -9,10 +9,11 @@
 #include "../Topology/FogToplogySensor.hpp"
 
 #define MAX_NUMBER_OF_NODES 100 //TODO: make this dynamic
-
 /**
  * TODOs:
  * 		- move functions to impl
+ * 	Assumptions
+ * 		-
  */
 
 
@@ -23,27 +24,33 @@ public:
     Graph(int pNumberOfElements)
 	{
     	numberOfElements = pNumberOfElements;
-		matrix = new FogTopologyLinkPtr*[numberOfElements];
+		matrix = new size_t*[numberOfElements];
 
 		for (int i=0; i < numberOfElements; i++)
 		{
-		   matrix[i] = new FogTopologyLinkPtr[numberOfElements];
+		   matrix[i] = new size_t[numberOfElements];
 
-		   memset(matrix[i], 0, numberOfElements*sizeof(char));//the same as nullptr?
+		   memset(matrix[i], NOT_EXISTING_LINK_ID, numberOfElements*sizeof(size_t));
 		}
 	}
 
     // function to add an edge to graph
-    void addEdge(size_t nodeID1, size_t nodeID2, FogTopologyLinkPtr ptr)
+    void addLink(size_t nodeID1, size_t nodeID2, size_t linkID)
     {
     	//TODO: what to do if already exist?
-    	matrix[nodeID1][nodeID2] = ptr;
+    	matrix[nodeID1][nodeID2] = linkID;
     }
 
-    FogTopologyLinkPtr getEdge(size_t nodeID1, size_t nodeID2)
+    size_t getLinkID(size_t nodeID1, size_t nodeID2)
     {
     	return matrix[nodeID1][nodeID2];
     }
+
+    void removeLinkID(size_t nodeID1, size_t nodeID2)
+	{
+		matrix[nodeID1][nodeID2] = NOT_EXISTING_LINK_ID;
+	}
+
     void print()
     {
 		for (int u = 0; u < numberOfElements; u++)
@@ -55,7 +62,7 @@ public:
     }
 private:
     int numberOfElements;    // No. of vertices
-    FogTopologyLinkPtr **matrix;
+    size_t **matrix;
 };
 
 class FogTopologyPlan{
@@ -102,7 +109,7 @@ public:
 
 		for(std::vector<FogToplogySensorPtr>::iterator it = fogSensors.begin(); it != fogSensors.end(); ++it)
 		{
-			if(it->get()->getNodeId() == search_id)
+			if(it->get()->getSensorId() == search_id)
 				fogSensors.erase(it);
 		}
 	}
@@ -111,19 +118,34 @@ public:
 		cout << "fogSensors:";
 		for (auto& it : fogSensors)
 		{
-			cout << it->getNodeId() << ",";
+			cout << it->getSensorId()<< ",";
 		}
 		cout << endl;
 	}
 
+	void addFogTopologyLink(FogTopologyLinkPtr linkPtr)
+	{
+		fogLinks.push_back(linkPtr);
+		linkGraph->addLink(linkPtr->getSourceNodeID(), linkPtr->getDestNodeID(), linkPtr->getLinkID());
+	}
+	void removeFogTopologyLink(FogTopologyLinkPtr linkPtr)
+	{
+		size_t search_id = linkPtr->getLinkID();
+
+		for(std::vector<FogTopologyLinkPtr>::iterator it = fogLinks.begin(); it != fogLinks.end(); ++it)
+		{
+			if(it->get()->getLinkID() == search_id)
+			{
+				linkGraph->removeLinkID(linkPtr->getSourceNodeID(), linkPtr->getDestNodeID());
+				fogLinks.erase(it);
+			}
+		}
+	}
 
 private:
-	//Basic assumption: Sensors are only connected to one node
 
 	std::vector<FogToplogyNodePtr> fogNodes;
-
 	std::vector<FogToplogySensorPtr> fogSensors;
-
 	std::vector<FogTopologyLinkPtr> fogLinks;
 
 	Graph* linkGraph;
