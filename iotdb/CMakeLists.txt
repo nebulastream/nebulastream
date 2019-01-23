@@ -9,6 +9,7 @@ endif()
 # Custome CMake find instructions and macros
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
 include(cmake/macros.cmake)
+include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 
 # C++ Standard
 set(CMAKE_CXX_STANDARD 14)
@@ -102,6 +103,58 @@ if(USE_PERFORMANCE_COUNTER)
     set(LIBRARIES ${LIBRARIES} ${PAPI_LIBRARIES})
 endif(USE_PERFORMANCE_COUNTER)
 
+
+###########################################################################################
+
+# Enable Testing with gtest ############################################################################################
+include(ExternalProject)
+ExternalProject_Add(
+    gtest
+    URL https://github.com/google/googletest/archive/release-1.8.1.zip
+    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/gtest
+    # Disable install step
+    INSTALL_COMMAND ""
+)
+
+# Get GTest source and binary directories from CMake project
+ExternalProject_Get_Property(gtest source_dir binary_dir)
+
+# Create a libgtest target to be used as a dependency by test programs
+add_library(libgtest IMPORTED STATIC GLOBAL)
+add_dependencies(libgtest gtest gtest_main)
+
+# Set libgtest properties
+set_target_properties(libgtest PROPERTIES
+    "IMPORTED_LOCATION" "${binary_dir}/googlemock/gtest/libgtest.a"
+    "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
+)
+
+add_library(libgtest_main IMPORTED STATIC GLOBAL)
+add_dependencies(libgtest_main gtest_main)
+
+set_target_properties(libgtest_main PROPERTIES
+    "IMPORTED_LOCATION" "${binary_dir}/googlemock/gtest/libgtest_main.a"
+    "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
+)
+
+# Create a libgmock target to be used as a dependency by test programs
+add_library(libgmock IMPORTED STATIC GLOBAL)
+add_dependencies(libgmock gtest)
+
+# Set libgmock properties
+set_target_properties(libgmock PROPERTIES
+    "IMPORTED_LOCATION" "${binary_dir}/googlemock/libgmock.a"
+    "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
+)
+
+# Set Include Dirs
+include_directories("${source_dir}/googletest/include"
+                    "${source_dir}/googlemock/include")
+
+
+
+###########################################################################################
+
 # Add Source Code
 add_subdirectory(impl)
 # Add Library
@@ -129,6 +182,12 @@ add_executable(iotMaster iotMaster.cpp)
 target_link_libraries(iotMaster iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
 target_include_directories(iotMaster PUBLIC "include")
  
+add_subdirectory(test)
+
+
+#add_custom_target(iotdb_tests COMMAND ${CMAKE_CTEST_COMMAND}
+ #                 DEPENDS ${UNITTESTS})
+
 #add_executable(iotClient iotClient.cpp)
 #target_link_libraries(iotClient iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
 #target_include_directories(iotClient PUBLIC "include")
