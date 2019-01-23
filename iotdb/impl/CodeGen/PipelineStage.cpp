@@ -23,17 +23,31 @@ PipelineStage::~PipelineStage(){
 class CPipelineStage : public PipelineStage{
 public:
  CPipelineStage(CompiledCCodePtr compiled_code);
+ CPipelineStage(const CPipelineStage&);
 
  const PipelineStagePtr copy() const override;
 
 protected:
- CPipelineStage(const CPipelineStage& other);
 
  TupleBuffer execute_impl() override final;
  virtual TupleBuffer callCFunction(TupleBuffer** c_tables);
 
  CompiledCCodePtr compiled_code_;
 };
+
+CPipelineStage::CPipelineStage(CompiledCCodePtr compiled_code)
+  : compiled_code_(compiled_code){
+
+}
+
+CPipelineStage::CPipelineStage(const CPipelineStage& other){
+  /* consider deep copying this! */
+  this->compiled_code_ = other.compiled_code_;
+}
+
+const PipelineStagePtr CPipelineStage::copy() const{
+    return PipelineStagePtr(new CPipelineStage(*this));
+}
 
 TupleBuffer CPipelineStage::execute_impl(){
 
@@ -46,6 +60,10 @@ TupleBuffer CPipelineStage::callCFunction(TupleBuffer** tuple_buffers){
   return (*compiled_code_->getFunctionPointer<SharedCLibPipelineQueryPtr>(
       "compiled_query"))(tuple_buffers);
 
+}
+
+PipelineStagePtr createPipelineStage(const CompiledCCodePtr compiled_code){
+   return PipelineStagePtr(new CPipelineStage(compiled_code));
 }
 
 

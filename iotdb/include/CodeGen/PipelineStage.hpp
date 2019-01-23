@@ -25,6 +25,12 @@ protected:
   virtual TupleBuffer execute_impl() = 0;
 };
 typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
+
+class CompiledCCode;
+typedef std::shared_ptr<CompiledCCode> CompiledCCodePtr;
+
+PipelineStagePtr createPipelineStage(const CompiledCCodePtr compiled_code);
+
 }
 
 #endif /* INCLUDE_PIPELINESTAGE_H_ */
