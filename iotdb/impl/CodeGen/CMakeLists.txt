@@ -1,4 +1,5 @@
 add_source_iotdb(
+        CodeExpression.cpp
         CodeGenerator.cpp
         QueryExecutionPlan.cpp
         PipelineStage.cpp

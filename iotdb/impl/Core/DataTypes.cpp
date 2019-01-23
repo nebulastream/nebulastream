@@ -1,6 +1,7 @@
 
 #include <Core/DataTypes.hpp>
 #include <sstream>
+#include <CodeGen/CodeExpression.hpp>
 
 namespace iotdb {
 
@@ -81,6 +82,24 @@ namespace iotdb {
         case DATE: return "DATE";
       }
       return "";
+    }
+    const CodeExpressionPtr getCode() const{
+      switch(type){
+        case INT8: return std::make_shared<CodeExpression>("int8_t");
+        case UINT8: return std::make_shared<CodeExpression>("uint8_t");
+        case INT16: return std::make_shared<CodeExpression>("int16_t");
+        case UINT16: return std::make_shared<CodeExpression>("uint16_t");
+        case INT32: return std::make_shared<CodeExpression>("int32_t");
+        case UINT32: return std::make_shared<CodeExpression>("uint32_t");
+        case INT64: return std::make_shared<CodeExpression>("int64_t");
+        case UINT64: return std::make_shared<CodeExpression>("uint64_t");
+        case FLOAT32: return std::make_shared<CodeExpression>("float");
+        case FLOAT64: return std::make_shared<CodeExpression>("double");
+        case BOOLEAN: return std::make_shared<CodeExpression>("bool");
+        case CHAR: return std::make_shared<CodeExpression>("char");
+        case DATE: return std::make_shared<CodeExpression>("uint32_t");
+      }
+      return 0;
     }
     BasicType type;
   };
