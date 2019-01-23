@@ -117,9 +117,7 @@ namespace iotdb {
     }
 
 
-    void CodeGenTest(){
-
-
+    int CodeGenTest(){
 
         FunctionDeclaration main_function = FunctionBuilder::create("compiled_query")
             .returns(createDataType(BasicType(INT32)))
@@ -132,7 +130,7 @@ namespace iotdb {
 
         PipelineStagePtr stage = compile(file);
 
-
+      return 0;
 
     }
 

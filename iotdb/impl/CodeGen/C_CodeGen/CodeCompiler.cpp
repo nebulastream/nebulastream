@@ -37,7 +37,7 @@ const std::string CCodeCompiler::IncludePath =
 const std::string CCodeCompiler::MinimalApiHeaderPath =
     PATH_TO_IOTDB_SOURCE_CODE
     "/include/CodeGen/"
-    "MinimalAPI.h";
+    "MinimalApi.hpp";
 
 CCodeCompiler::CCodeCompiler() { init(); }
 
@@ -62,15 +62,15 @@ void CCodeCompiler::init() {
   keep_last_generated_query_code_ = false;
 
 #ifndef NDEBUG
-  PrecompiledHeaderName = "MinimalAPI.debug.h.pch";
+  PrecompiledHeaderName = ".debug.hpp.pch";
 #else
-  PrecompiledHeaderName = "MinimalAPI.release.h.pch";
+  PrecompiledHeaderName = ".release.hpp.pch";
 #endif
   initCompilerArgs();
 }
 
 void CCodeCompiler::initCompilerArgs() {
-  compiler_args_ = {"-std=c11",        "-fno-trigraphs", "-fpic", "-Werror",
+  compiler_args_ = {"-std=c++11",        "-fno-trigraphs", "-fpic", "-Werror",
 #ifdef SSE41_FOUND
                     "-msse4.1",
 #endif
@@ -124,7 +124,7 @@ std::vector<std::string> CCodeCompiler::getPrecompiledHeaderCompilerArgs() {
   pch_option << "-o" << PrecompiledHeaderName;
   args.push_back(MinimalApiHeaderPath);
   args.push_back(pch_option.str());
-  args.push_back("-xc-header");
+  args.push_back("-xc++-header");
 
   return args;
 }
@@ -132,11 +132,11 @@ std::vector<std::string> CCodeCompiler::getPrecompiledHeaderCompilerArgs() {
 std::vector<std::string> CCodeCompiler::getCompilerArgs() {
   auto args = compiler_args_;
 
-  args.push_back("-xc");
+  args.push_back("-xc++");
 #ifndef NDEBUG
-  args.push_back("-includeMinimalAPI.debug.h");
+  args.push_back("-include.debug.hpp");
 #else
-  args.push_back("-includeMinimalAPI.release.h");
+  args.push_back("-include.release.hpp");
 #endif
 
 #ifdef __APPLE__
@@ -348,15 +348,15 @@ void CCodeCompiler::prepareClangCompiler(const std::string& source,
   clang::CompilerInvocation::setLangDefaults(
       *invocation->getLangOpts(), clang::InputKind::CXX,
       llvm::Triple(invocation->getTargetOpts().Triple),
-      invocation->getPreprocessorOpts(), clang::LangStandard::lang_c11);
+      invocation->getPreprocessorOpts(), clang::LangStandard::lang_cxx11);
 #elif LLVM_VERSION >= 39
   clang::CompilerInvocation::setLangDefaults(
       *invocation->getLangOpts(), clang::IK_C,
       llvm::Triple(invocation->getTargetOpts().Triple),
-      invocation->getPreprocessorOpts(), clang::LangStandard::lang_c11);
+      invocation->getPreprocessorOpts(), clang::LangStandard::lang_cxx11);
 #else
   clang::CompilerInvocation::setLangDefaults(
-      *invocation->getLangOpts(), clang::IK_C, clang::LangStandard::lang_c11);
+      *invocation->getLangOpts(), clang::IK_CXX, clang::LangStandard::lang_cxx11);
 #endif
 
   // make sure we free memory (by default it does not)
