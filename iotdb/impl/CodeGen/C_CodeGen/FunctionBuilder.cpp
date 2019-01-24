@@ -15,6 +15,8 @@ namespace iotdb {
 
     };
 
+    typedef std::shared_ptr<Statement> StatementPtr;
+
 
     typedef std::string Code;
 
@@ -35,7 +37,7 @@ namespace iotdb {
         static VariableDeclaration create(DataTypePtr type, const std::string& identifier);
         const Code getCode() const override{
           std::stringstream str;
-          str << type_->getCode()->code_ << " " << identifier_ << ";";
+          str << type_->getCode()->code_ << " " << identifier_;
           return str.str();
         }
     private:
@@ -52,9 +54,13 @@ namespace iotdb {
     }
 
     class FunctionDeclaration : public Declaration{
+     private:
+      Code function_code;
     public:
+      FunctionDeclaration(Code code) : function_code(code){}
+
       const Code getCode() const override{
-         return Code();
+         return function_code;
       }
     };
 
@@ -76,38 +82,72 @@ namespace iotdb {
     private:
       std::string name;
       DataTypePtr returnType;
-      std::vector<std::string> parameters;
-      std::vector<Statement> instructions;
-      FunctionBuilder();
+      std::vector<VariableDeclaration> parameters;
+      std::vector<VariableDeclaration> variable_declarations;
+      std::vector<StatementPtr> statements;
+      FunctionBuilder(const std::string& function_name);
     public:
       static FunctionBuilder create(const std::string& function_name);
 
       FunctionBuilder &returns(DataTypePtr returnType_);
       FunctionBuilder &addParameter(VariableDeclaration var_decl);
-      FunctionBuilder &addStatement(const Statement &statement);
+      FunctionBuilder &addStatement(StatementPtr statement);
+      FunctionBuilder &addVariableDeclaration(VariableDeclaration var_decl);
       FunctionDeclaration build();
     };
 
-    FunctionBuilder::FunctionBuilder(){
+    FunctionBuilder::FunctionBuilder(const std::string& function_name) : name(function_name){
 
     }
 
     FunctionBuilder FunctionBuilder::create(const std::string& function_name){
-      return FunctionBuilder();
+      return FunctionBuilder(function_name);
     }
 
     FunctionDeclaration FunctionBuilder::build(){
-      return FunctionDeclaration();
+      std::stringstream function;
+      if(!returnType){
+       function << "void";
+      } else {
+       function << returnType->getCode()->code_;
+      }
+      function << " " << name << "(";
+      for(uint64_t i=0;i<parameters.size();++i){
+         function << parameters[i].getCode();
+         if(i+1<parameters.size())
+           function << ", ";
+      }
+      function << "){";
+
+      for(uint64_t i=0;i<variable_declarations.size();++i){
+         function << variable_declarations[i].getCode() << ";";
+      }
+
+      for(uint64_t i=0;i<statements.size();++i){
+         //function << statements[i] << ";";
+      }
+      function << "}";
+
+      return FunctionDeclaration(function.str());
     }
 
-    FunctionBuilder &FunctionBuilder::returns(DataTypePtr returnType_){
+    FunctionBuilder &FunctionBuilder::returns(DataTypePtr type){
+        returnType = type;
         return *this;
     }
 
     FunctionBuilder &FunctionBuilder::addParameter(VariableDeclaration var_decl){
+      parameters.push_back(var_decl);
       return *this;
     }
-    FunctionBuilder &FunctionBuilder::addStatement(const Statement &statement){
+    FunctionBuilder &FunctionBuilder::addStatement(StatementPtr statement){
+      if(statement)
+        statements.push_back(statement);
+      return *this;
+    }
+
+    FunctionBuilder &FunctionBuilder::addVariableDeclaration(VariableDeclaration vardecl){
+      variable_declarations.push_back(vardecl);
       return *this;
     }
 
@@ -137,7 +177,7 @@ namespace iotdb {
       return builder;
     }
     FileBuilder& FileBuilder::addDeclaration(const Declaration& decl){
-      declations << decl.getCode();
+      declations << decl.getCode() << ";";
       return *this;
     }
     CodeFile FileBuilder::build(){
@@ -149,13 +189,14 @@ namespace iotdb {
 
     int CodeGenTest(){
 
-        VariableDeclaration var_decl = VariableDeclaration::create(createDataType(BasicType::UINT32),"i");
+        VariableDeclaration var_decl = VariableDeclaration::create(createDataType(BasicType::UINT32),"global_int");
 
         FunctionDeclaration main_function = FunctionBuilder::create("compiled_query")
-            .returns(createDataType(BasicType(INT32)))
+            //.returns(createDataType(BasicType(INT32)))
             .addParameter(VariableDeclaration::create(
                             createDataType(BasicType(INT32)),
-                            "thread_id")).build();
+                            "thread_id"))
+            .addVariableDeclaration(VariableDeclaration::create(createDataType(BasicType(INT32)),"i")).build();
         CodeFile file = FileBuilder::create("query.cpp")
             .addDeclaration(var_decl)
             .addDeclaration(main_function)
