@@ -21,11 +21,19 @@ typedef std::shared_ptr<CodeExpression> CodeExpressionPtr;
 
 class DataType {
 public:
+  virtual ValueTypePtr getDefaultInitValue() const = 0;
   virtual ValueTypePtr getNullValue() const = 0;
   virtual uint32_t getSizeBytes() const = 0;
   virtual const std::string toString() const = 0;
   virtual const CodeExpressionPtr getCode() const = 0;
   virtual ~DataType();
+};
+
+class ValueType{
+public:
+  virtual const DataTypePtr getType() const = 0;
+  virtual const CodeExpressionPtr getCodeExpression() const = 0;
+  virtual ~ValueType();
 };
 
 class AttributeField;
@@ -45,5 +53,8 @@ const AttributeFieldPtr createField(const std::string name, const BasicType & ty
 
 const DataTypePtr createDataType(const BasicType &);
 const DataTypePtr createDataTypeVarChar(const uint32_t &max_length);
+
+const ValueTypePtr createBasicTypeValue(const BasicType & type, const std::string& value);
+
 }
 #endif
