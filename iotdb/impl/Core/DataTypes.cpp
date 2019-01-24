@@ -6,7 +6,6 @@
 namespace iotdb {
 
   DataType::~DataType(){
-
   }
 
   AttributeField::AttributeField(const std::string &_name,
@@ -39,11 +38,44 @@ namespace iotdb {
   }
 
 
+
+  ValueType::~ValueType(){
+
+  }
+
+  class BasicValueType : public ValueType{
+    public:
+    BasicValueType(const BasicType & type, const std::string& value)
+      : type_(type), value_(value){
+    }
+
+    const DataTypePtr getType() const{
+      return createDataType(type_);
+    }
+
+    const CodeExpressionPtr getCodeExpression() const{
+      return std::make_shared<CodeExpression>(value_);
+    }
+
+    ~BasicValueType();
+  private:
+    const BasicType type_;
+    const std::string value_;
+  };
+
+  BasicValueType::~BasicValueType(){
+  }
+
   class BasicDataType : public DataType{
   public:
-    BasicDataType(const BasicType & _type) : type(_type){
-
+    BasicDataType(const BasicType & _type)
+      : type(_type){
     }
+
+    ValueTypePtr getDefaultInitValue() const{
+      return ValueTypePtr();
+    }
+
     ValueTypePtr getNullValue() const{
       return ValueTypePtr();
     }
@@ -99,12 +131,14 @@ namespace iotdb {
         case CHAR: return std::make_shared<CodeExpression>("char");
         case DATE: return std::make_shared<CodeExpression>("uint32_t");
       }
-      return 0;
+      return nullptr;
     }
+    ~BasicDataType();
+  private:
     BasicType type;
   };
 
-
+  BasicDataType::~BasicDataType(){}
 
 
   const DataTypePtr createDataType(const BasicType & type){
@@ -112,8 +146,19 @@ namespace iotdb {
     return ptr;
   }
 
+//  const PointerDataTypePtr createPointerDataType(const BasicType & type){
+//    PointerDataTypePtr ptr = std::make_shared<PointerBasicDataType>(type);
+//    return ptr;
+//  }
+
   const DataTypePtr createDataTypeVarChar(const uint32_t &max_length){
     return DataTypePtr();
+  }
+
+  const ValueTypePtr createBasicTypeValue(const BasicType & type, const std::string& value){
+
+    /** \todo: create instance of datatype and add a parseValue() method to datatype, so we can check whether the value inside the string matches the type */
+    return std::make_shared<BasicValueType>(type,value);
   }
 
 }
