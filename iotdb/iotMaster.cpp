@@ -20,7 +20,4 @@ int main(int argc, const char *argv[]) {
 	FogTopologyManager* fMgnr = new FogTopologyManager();
 	createTestTopo(fMgnr);
 
-
-
-
 }
