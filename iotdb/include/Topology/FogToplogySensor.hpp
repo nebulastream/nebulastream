@@ -1,17 +1,15 @@
 #ifndef INCLUDE_TOPOLOGY_FOGTOPLOGYSENSOR_HPP_
 #define INCLUDE_TOPOLOGY_FOGTOPLOGYSENSOR_HPP_
+#define INVALID_NODE_ID 101
 
 class FogToplogySensor{
+
     public:
-		FogToplogySensor(size_t pSensorID)
+		FogToplogySensor()
 		{
-			sensorID = pSensorID;
+			sensorID = INVALID_NODE_ID;
 		}
 
-//		void addParentNode(FogToplogyNodePtr ptr)
-//		{
-//			parents.push_back(ptr);
-//		}
 		void setSensorID(size_t id)
 		{
 			sensorID = id;
@@ -23,11 +21,6 @@ class FogToplogySensor{
 
 
     private:
-        /** \brief stores the fog nodes this fog node transmit data to */
-//        std::vector<std::weak_ptr<FogToplogyNode>> parents;
-        /** \brief stores the query sub-graph processed on this node */
-//        LogicalQueryGraphPtr query_graph;
-        FogTopologyNodePropertiesPtr properties;
         size_t sensorID;
     };
 

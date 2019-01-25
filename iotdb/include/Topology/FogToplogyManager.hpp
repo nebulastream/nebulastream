@@ -20,9 +20,19 @@ public:
 		currentPlan->addFogNode(ptr);
 	}
 
-	static FogTopologyPlanPtr getPlan()
+	void addSensorNode(FogToplogySensorPtr ptr)
 	{
-		return FogTopologyPlanPtr();
+		currentPlan->addFogSensor(ptr);
+	}
+
+	void addLink(size_t pSourceNodeID, size_t pDestNodeID, LinkType type)
+	{
+		currentPlan->addFogTopologyLink(pSourceNodeID,pDestNodeID,type);
+	}
+
+	FogTopologyPlanPtr getPlan()
+	{
+		return currentPlan;
 	}
 
 private:

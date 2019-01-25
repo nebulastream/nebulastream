@@ -8,7 +8,7 @@
 #include "../Topology/FogToplogyNode.hpp"
 #include "../Topology/FogToplogySensor.hpp"
 
-#define MAX_NUMBER_OF_NODES 100 //TODO: make this dynamic
+#define MAX_NUMBER_OF_NODES 10 //TODO: make this dynamic
 /**
  * TODOs:
  * 		- move functions to impl
@@ -71,10 +71,12 @@ public:
 	FogTopologyPlan()
 	{
 		linkGraph = new Graph(MAX_NUMBER_OF_NODES);
+		currentId = 1;
 	}
 
 	void addFogNode(FogToplogyNodePtr ptr)
 	{
+		ptr->setNodeId(currentId++);
 		fogNodes.push_back(ptr);
 	}
 	void removeFogNode(FogToplogyNodePtr ptr)
@@ -100,6 +102,7 @@ public:
 
 	void addFogSensor(FogToplogySensorPtr ptr)
 	{
+		ptr->setSensorID(currentId++);
 		fogSensors.push_back(ptr);
 
 	}
@@ -123,10 +126,17 @@ public:
 		cout << endl;
 	}
 
-	void addFogTopologyLink(FogTopologyLinkPtr linkPtr)
+	/**
+	 * Support half-duplex links?
+	 */
+	void addFogTopologyLink(size_t pSourceNodeID, size_t pDestNodeID, LinkType type)
 	{
+		FogTopologyLinkPtr linkPtr = std::make_shared<FogTopologyLink>(pSourceNodeID, pDestNodeID, type);
+		linkPtr->setLinkID(currentId++);
+
 		fogLinks.push_back(linkPtr);
 		linkGraph->addLink(linkPtr->getSourceNodeID(), linkPtr->getDestNodeID(), linkPtr->getLinkID());
+		linkGraph->addLink(linkPtr->getDestNodeID(), linkPtr->getSourceNodeID(), linkPtr->getLinkID());
 	}
 	void removeFogTopologyLink(FogTopologyLinkPtr linkPtr)
 	{
@@ -142,12 +152,16 @@ public:
 		}
 	}
 
+	void printPlan()
+	{
+		linkGraph->print();
+	}
 private:
 
 	std::vector<FogToplogyNodePtr> fogNodes;
 	std::vector<FogToplogySensorPtr> fogSensors;
 	std::vector<FogTopologyLinkPtr> fogLinks;
-
+	size_t currentId;
 	Graph* linkGraph;
 };
 
