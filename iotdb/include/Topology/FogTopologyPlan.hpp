@@ -60,7 +60,12 @@ public:
     	//first line
     	cout << " | ";
     	for (size_t v = 0; v < numberOfRows; v++)
-			cout << v << " ";
+    	{
+    		if(v == 0)
+    			cout << "-" << " ";
+    		else
+    			cout << v << " ";
+    	}
     	cout << endl;
     	for (size_t v = 0; v < numberOfColums*2+3; v++)
 			cout << "-";
@@ -68,10 +73,16 @@ public:
 
 		for (size_t u = 0; u < numberOfRows; u++)
 		{
-			cout << u << "| ";
+			if(u == 0)
+				cout << "-| ";
+			else
+				cout << u << "| ";
 		  for (size_t v = 0; v < numberOfColums; v++)
 		  {
-			  std::cout << mtx(u,v) << " ";
+			  if(mtx(u,v) == 0)
+				  std::cout << "- ";
+			  else
+				  std::cout << mtx(u,v) << " ";
 		  }
 		  std::cout << std::endl;
 		}
@@ -176,6 +187,23 @@ public:
 	void printPlan()
 	{
 		linkGraph->print();
+		cout << "Nodes IDs=";
+		for (size_t u = 0; u < fogNodes.size(); u++)
+		{
+			cout << fogNodes[u]->getNodeId();
+			if(u != fogNodes.size()-1)
+				cout << ",";
+		}
+		cout << endl;
+
+		cout << "Sensors IDs=";
+		for (size_t u = 0; u < fogSensors.size(); u++)
+		{
+			cout << fogSensors[u]->getSensorId();
+			if(u != fogSensors.size()-1)
+				cout << ",";
+		}
+		cout << endl;
 	}
 private:
 
