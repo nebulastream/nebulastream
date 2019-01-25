@@ -1,0 +1,21 @@
+
+#include <string>
+#include <memory>
+
+namespace iotdb{
+
+  class CodeExpression;
+  typedef std::shared_ptr<CodeExpression> CodeExpressionPtr;
+
+  class CodeExpression{
+	public:
+	CodeExpression(const std::string& code);
+        //private:
+	std::string code_;
+  };
+
+  const CodeExpressionPtr combine(const CodeExpressionPtr& lhs, const CodeExpressionPtr& rhs);
+
+}
+
+
