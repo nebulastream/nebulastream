@@ -269,25 +269,32 @@ namespace iotdb {
       return std::make_shared<CodeExpression>(names[type]);
     }
 
+
+
     class BinaryOperatorStatement
       : public Statement{
     public:
+
+      enum BracketMode{NO_BRACKETS,BRACKETS};
+
       BinaryOperatorStatement(const VarRefStatement& lhs,
                               const BinaryOperatorType& op,
-                              const VarRefStatement& rhs)
-        : lhs_(std::make_shared<VarRefStatement>(lhs)), bin_op_(), op_(op), rhs_(rhs)
+                              const VarRefStatement& rhs,
+                              BracketMode bracket_mode = NO_BRACKETS)
+        : lhs_(std::make_shared<VarRefStatement>(lhs)), bin_op_(), op_(op), rhs_(rhs), bracket_mode_(bracket_mode)
       {
       }
       BinaryOperatorStatement(const BinaryOperatorStatement& bin_op,
                               const BinaryOperatorType& op,
-                              const VarRefStatement& rhs)
-        : lhs_(), bin_op_(std::make_shared<BinaryOperatorStatement>(bin_op)), op_(op), rhs_(rhs)
+                              const VarRefStatement& rhs,
+                              BracketMode bracket_mode = NO_BRACKETS)
+        : lhs_(), bin_op_(std::make_shared<BinaryOperatorStatement>(bin_op)), op_(op), rhs_(rhs), bracket_mode_(bracket_mode)
       {
       }
 
-      BinaryOperatorStatement addRight(const BinaryOperatorType& op, const VarRefStatement& rhs)
+      BinaryOperatorStatement addRight(const BinaryOperatorType& op, const VarRefStatement& rhs, BracketMode bracket_mode = NO_BRACKETS)
       {
-        return BinaryOperatorStatement(*this, op, rhs);
+        return BinaryOperatorStatement(*this, op, rhs, bracket_mode);
 //        if(lhs_){
 //            return BinaryOperatorStatement(*lhs_, op, rhs);
 //          }else if(bin_op_){
@@ -314,7 +321,13 @@ namespace iotdb {
               IOTDB_FATAL_ERROR("In BinaryOperatorStatement: lhs_ and bin_op_ null!");
             }
           code = combine(code,rhs_.getCode());
-          return std::make_shared<CodeExpression>(std::string("(")+code->code_+std::string(")"));
+          std::string ret;
+          if(bracket_mode_==BRACKETS){
+           ret=std::string("(")+code->code_+std::string(")");
+            }else{
+              ret=code->code_;
+            }
+          return std::make_shared<CodeExpression>(ret);
        }
 
        virtual ~BinaryOperatorStatement();
@@ -323,6 +336,7 @@ namespace iotdb {
       const std::shared_ptr<BinaryOperatorStatement> bin_op_;
       BinaryOperatorType op_;
       VarRefStatement rhs_;
+      BracketMode bracket_mode_;
     };
 
     BinaryOperatorStatement::~BinaryOperatorStatement(){
@@ -340,7 +354,7 @@ public:
       }
       virtual const CodeExpressionPtr getCode() const{
          std::stringstream stmt;
-         stmt << "return " << var_ref_.getCode()->code_;
+         stmt << "return " << var_ref_.getCode()->code_ << ";";
          return std::make_shared<CodeExpression>(stmt.str());
       }
       virtual ~ReturnStatement(){}
@@ -348,18 +362,38 @@ public:
 
     class IfStatement
       : public Statement{
-           virtual StatementType getStamentType() const{
+    public:
+      IfStatement(const Statement& cond_expr, const Statement& cond_true_stmt)
+        : cond_expr_(cond_expr), cond_true_stmt_(cond_true_stmt){
 
+      }
+
+           virtual StatementType getStamentType() const{
+              return IF_STMT;
            }
            virtual const CodeExpressionPtr getCode() const{
-
+                std::stringstream code;
+                code << "if(" << cond_expr_.getCode()->code_ << "){" << std::endl;
+                code << cond_true_stmt_.getCode()->code_ << std::endl;
+                code << "}" << std::endl;
+                return std::make_shared<CodeExpression>(code.str());
            }
            virtual ~IfStatement();
+    private:
+      const Statement& cond_expr_;
+      const Statement& cond_true_stmt_;
     };
 
-    class IfElseStatement : public Statement{
-      virtual StatementType getStamentType() const{
+    IfStatement::~IfStatement(){
 
+    }
+
+    class IfElseStatement : public Statement{
+    public:
+      IfElseStatement(const Statement& cond_true, const Statement& cond_false);
+
+      virtual StatementType getStamentType() const{
+        return IF_ELSE_STMT;
       }
       virtual const CodeExpressionPtr getCode() const{
 
@@ -418,10 +452,18 @@ public:
           BinaryOperatorStatement(
               VarRefStatement(var_decl_i),PLUS_OP,VarRefStatement(var_decl_j))
             .addRight(PLUS_OP,VarRefStatement(var_decl_k))
-            .addRight(MULTIPLY_OP,VarRefStatement(var_decl_i))
+            .addRight(MULTIPLY_OP,VarRefStatement(var_decl_i), BinaryOperatorStatement::BRACKETS)
             .addRight(GREATER_THEN_OP,VarRefStatement(var_decl_l)).getCode();
 
         std::cout << code->code_ << std::endl;
+
+        std::cout << IfStatement(BinaryOperatorStatement(
+                      VarRefStatement(var_decl_i),GREATER_THEN_OP,VarRefStatement(var_decl_j)),
+                    ReturnStatement(VarRefStatement(var_decl_i))).getCode()->code_ << std::endl;
+
+
+        std::cout << IfStatement(VarRefStatement(var_decl_j),
+                    VarRefStatement(var_decl_i)).getCode()->code_ << std::endl;
         }
 
         FunctionDeclaration main_function = FunctionBuilder::create("compiled_query")
