@@ -7,6 +7,8 @@
 #include "../Topology/FogToplogyLink.hpp"
 #include "../Topology/FogToplogyNode.hpp"
 #include "../Topology/FogToplogySensor.hpp"
+#include <boost/numeric/ublas/matrix.hpp>
+#include <boost/numeric/ublas/io.hpp>
 
 #define MAX_NUMBER_OF_NODES 10 //TODO: make this dynamic
 /**
@@ -18,51 +20,68 @@
 
 
 using namespace std;
+using namespace boost::numeric::ublas;
+
 class Graph
 {
 public:
     Graph(int pNumberOfElements)
 	{
-    	numberOfElements = pNumberOfElements;
-		matrix = new size_t*[numberOfElements];
-
-		for (int i=0; i < numberOfElements; i++)
-		{
-		   matrix[i] = new size_t[numberOfElements];
-
-		   memset(matrix[i], NOT_EXISTING_LINK_ID, numberOfElements*sizeof(size_t));
-		}
+    	numberOfRows = numberOfColums = 1;
+    	mtx.resize(numberOfRows,numberOfColums);
+    	mtx(0,0) = 0;
 	}
 
+    void addNode()
+    {
+    	numberOfRows++;
+    	numberOfColums++;
+    	mtx.resize(numberOfRows,numberOfColums);
+    }
     // function to add an edge to graph
     void addLink(size_t nodeID1, size_t nodeID2, size_t linkID)
     {
     	//TODO: what to do if already exist?
-    	matrix[nodeID1][nodeID2] = linkID;
+    	mtx(nodeID1, nodeID2) = linkID;
     }
 
     size_t getLinkID(size_t nodeID1, size_t nodeID2)
     {
-    	return matrix[nodeID1][nodeID2];
+    	return mtx(nodeID1,nodeID2);
     }
 
     void removeLinkID(size_t nodeID1, size_t nodeID2)
 	{
-		matrix[nodeID1][nodeID2] = NOT_EXISTING_LINK_ID;
+		mtx(nodeID1,nodeID2) = 0;
 	}
 
     void print()
     {
-		for (int u = 0; u < numberOfElements; u++)
+    	//first line
+    	cout << " | ";
+    	for (size_t v = 0; v < numberOfRows; v++)
+			cout << v << " ";
+    	cout << endl;
+    	for (size_t v = 0; v < numberOfColums*2+3; v++)
+			cout << "-";
+    	cout << endl;
+
+		for (size_t u = 0; u < numberOfRows; u++)
 		{
-		  for (int v = 0; v < numberOfElements; v++)
-			 std::cout << matrix[u][v] << " ";
+			cout << u << "| ";
+		  for (size_t v = 0; v < numberOfColums; v++)
+		  {
+			  std::cout << mtx(u,v) << " ";
+		  }
 		  std::cout << std::endl;
 		}
     }
+
 private:
-    int numberOfElements;    // No. of vertices
-    size_t **matrix;
+    size_t numberOfRows;
+    size_t numberOfColums;
+    matrix<size_t> mtx;
+
 };
 
 class FogTopologyPlan{
@@ -78,6 +97,7 @@ public:
 	{
 		ptr->setNodeId(currentId++);
 		fogNodes.push_back(ptr);
+		linkGraph->addNode();
 	}
 	void removeFogNode(FogToplogyNodePtr ptr)
 	{
@@ -104,6 +124,7 @@ public:
 	{
 		ptr->setSensorID(currentId++);
 		fogSensors.push_back(ptr);
+		linkGraph->addNode();
 
 	}
 	void removeFogSensor(FogToplogyNodePtr ptr)
