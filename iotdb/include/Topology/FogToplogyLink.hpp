@@ -1,24 +1,50 @@
 #ifndef INCLUDE_TOPOLOGY_FOGTOPLOGYLINK_HPP_
 #define INCLUDE_TOPOLOGY_FOGTOPLOGYLINK_HPP_
 
-#include "FogTopologySensorProperties.hpp"
 #define NOT_EXISTING_LINK_ID 0
+#define INVALID_NODE_ID 101
+
+enum LinkType { NodeToNode, NodeToSensor, SensorToNode};
+enum NodeType { Worker, Sensor};
+
+
 
 class FogTopologyLink
 {
+
 public:
-	FogTopologyLink(FogTopologySensorPropertiesPtr pPtr, size_t pId, size_t pSourceNodeID, size_t pDestNodeID)
+	FogTopologyLink(size_t pSourceNodeID, size_t pDestNodeID, LinkType type)
 	{
-		ptr = pPtr;
-		assert(pId != NOT_EXISTING_LINK_ID);
-		linkID = pId;
+		linkId = INVALID_NODE_ID;
+
+		if(type == NodeToNode)
+		{
+			sourceNodeType = Worker;
+			destNodeType = Worker;
+		}
+		else if (type == NodeToSensor)
+		{
+			sourceNodeType = Worker;
+			destNodeType = Sensor;
+		}
+		else // SensorToNode
+		{
+			sourceNodeType = Sensor;
+			destNodeType = Sensor;
+		}
+
 		sourceNodeID = pSourceNodeID;
 		destNodeID = pDestNodeID;
-
 	}
+
+	void setLinkID(size_t pLinkID)
+	{
+		linkId = pLinkID;
+	}
+
 	size_t getLinkID()
 	{
-		return linkID;
+		return linkId;
 	}
 
 	size_t getSourceNodeID()
@@ -32,11 +58,12 @@ public:
 	}
 
 private:
-	FogTopologySensorPropertiesPtr ptr;
-	size_t linkID;
+	size_t linkId;
 	size_t sourceNodeID;
 	size_t destNodeID;
 
+	NodeType sourceNodeType;
+	NodeType destNodeType;
 };
 
 
