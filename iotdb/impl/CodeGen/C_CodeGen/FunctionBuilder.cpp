@@ -1,5 +1,6 @@
 
 #include <string>
+#include <iostream>
 #include <sstream>
 #include <vector>
 
@@ -8,10 +9,11 @@
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
 #include <CodeGen/PipelineStage.hpp>
 #include <CodeGen/CodeExpression.hpp>
+#include <Util/ErrorHandling.hpp>
 
 namespace iotdb {
 
-    enum StatementType{RETURN_STMT,IF_STMT,IF_ELSE_STMT,FOR_LOOP_STMT,FUNC_CALL_STMT,VAR_REF_STMT};
+    enum StatementType{RETURN_STMT,IF_STMT,IF_ELSE_STMT,FOR_LOOP_STMT,FUNC_CALL_STMT,VAR_REF_STMT, BINARY_OP_STMT};
 
     class Statement{
     public:
@@ -232,7 +234,100 @@ namespace iotdb {
      }
     };
 
+    enum BinaryOperatorType{EQUAL_OP, UNEQUAL_OP, LESS_THEN_OP,LESS_THEN_EQUAL_OP,GREATER_THEN_OP,GREATER_THEN_EQUAL_OP, PLUS_OP, MINUS_OP, MULTIPLY_OP, DIVISION_OP, MODULO_OP, LOGICAL_AND_OP, LOGICAL_OR_OP, BITWISE_AND_OP, BITWISE_OR_OP, BITWISE_XOR_OP, BITWISE_LEFT_SHIFT_OP, BITWISE_RIGHT_SHIFT_OP};
 
+    const std::string toString(const BinaryOperatorType& type){
+      const char* const names[] = {"EQUAL_OP", "UNEQUAL_OP", "LESS_THEN_OP", "LESS_THEN_EQUAL_OP","GREATER_THEN_OP","GREATER_THEN_EQUAL_OP","PLUS_OP",
+                                   "MINUS_OP",
+                                   "MULTIPLY_OP",
+                                   "DIVISION_OP",
+                                   "MODULO_OP",
+                                   "LOGICAL_AND_OP",
+                                   "LOGICAL_OR_OP",
+                                   "BITWISE_AND_OP",
+                                   "BITWISE_OR_OP",
+                                   "BITWISE_XOR_OP",
+                                   "BITWISE_LEFT_SHIFT_OP",
+                                   "BITWISE_RIGHT_SHIFT_OP",
+                                   "ASSIGNMENT_OP"};
+      return std::string(names[type]);
+    }
+
+    const CodeExpressionPtr toCodeExpression(const BinaryOperatorType& type){
+      const char* const names[] = {"==", "!=", "<", "<=",">",">=","+",
+                                   "-",
+                                   "*",
+                                   "/",
+                                   "%",
+                                   "&&",
+                                   "||",
+                                   "&",
+                                   "|",
+                                   "^",
+                                   "<<",
+                                   ">>", "="};
+      return std::make_shared<CodeExpression>(names[type]);
+    }
+
+    class BinaryOperatorStatement
+      : public Statement{
+    public:
+      BinaryOperatorStatement(const VarRefStatement& lhs,
+                              const BinaryOperatorType& op,
+                              const VarRefStatement& rhs)
+        : lhs_(std::make_shared<VarRefStatement>(lhs)), bin_op_(), op_(op), rhs_(rhs)
+      {
+      }
+      BinaryOperatorStatement(const BinaryOperatorStatement& bin_op,
+                              const BinaryOperatorType& op,
+                              const VarRefStatement& rhs)
+        : lhs_(), bin_op_(std::make_shared<BinaryOperatorStatement>(bin_op)), op_(op), rhs_(rhs)
+      {
+      }
+
+      BinaryOperatorStatement addRight(const BinaryOperatorType& op, const VarRefStatement& rhs)
+      {
+        return BinaryOperatorStatement(*this, op, rhs);
+//        if(lhs_){
+//            return BinaryOperatorStatement(*lhs_, op, rhs);
+//          }else if(bin_op_){
+//            return BinaryOperatorStatement(*bin_op_, op, rhs);
+//          }else{
+//            IOTDB_FATAL_ERROR("In BinaryOperatorStatement: lhs_ and bin_op_ null!");
+//          }
+      }
+
+      StatementPtr assignToVariable(const VarRefStatement& lhs){
+          return StatementPtr();
+      }
+
+       virtual StatementType getStamentType() const{
+        return BINARY_OP_STMT;
+       }
+       virtual const CodeExpressionPtr getCode() const{
+          CodeExpressionPtr code;
+          if(lhs_){
+            code = combine(lhs_->getCode(),toCodeExpression(op_));
+            }else if(bin_op_){
+            code = combine(bin_op_->getCode(),toCodeExpression(op_));
+            }else{
+              IOTDB_FATAL_ERROR("In BinaryOperatorStatement: lhs_ and bin_op_ null!");
+            }
+          code = combine(code,rhs_.getCode());
+          return std::make_shared<CodeExpression>(std::string("(")+code->code_+std::string(")"));
+       }
+
+       virtual ~BinaryOperatorStatement();
+    private:
+      const std::shared_ptr<VarRefStatement> lhs_;
+      const std::shared_ptr<BinaryOperatorStatement> bin_op_;
+      BinaryOperatorType op_;
+      VarRefStatement rhs_;
+    };
+
+    BinaryOperatorStatement::~BinaryOperatorStatement(){
+
+    }
 
     class ReturnStatement : public Statement{
 public:
@@ -274,8 +369,11 @@ public:
     };
 
     class ForLoopStatement : public Statement{
-      virtual StatementType getStamentType() const{
 
+
+
+      virtual StatementType getStamentType() const{
+        return StatementType::FOR_LOOP_STMT;
       }
       virtual const CodeExpressionPtr getCode() const{
 
@@ -298,9 +396,33 @@ public:
 
     int CodeGenTest(){
 
+
+
+
         VariableDeclaration var_decl = VariableDeclaration::create(createDataType(BasicType::UINT32),"global_int");
 
         VariableDeclaration var_decl_i = VariableDeclaration::create(createDataType(BasicType(INT32)),"i",createBasicTypeValue(BasicType(INT32),"0"));
+        VariableDeclaration var_decl_j = VariableDeclaration::create(createDataType(BasicType(INT32)),"j",createBasicTypeValue(BasicType(INT32),"5"));
+        VariableDeclaration var_decl_k = VariableDeclaration::create(createDataType(BasicType(INT32)),"k",createBasicTypeValue(BasicType(INT32),"7"));
+        VariableDeclaration var_decl_l = VariableDeclaration::create(createDataType(BasicType(INT32)),"l",createBasicTypeValue(BasicType(INT32),"2"));
+
+        {
+        BinaryOperatorStatement bin_op (VarRefStatement(var_decl_i),PLUS_OP,VarRefStatement(var_decl_j));
+        std::cout << bin_op.getCode()->code_ << std::endl;
+        CodeExpressionPtr code = bin_op.addRight(PLUS_OP,VarRefStatement(var_decl_k)).getCode();
+
+        std::cout << code->code_ << std::endl;
+        }
+        {
+        CodeExpressionPtr code =
+          BinaryOperatorStatement(
+              VarRefStatement(var_decl_i),PLUS_OP,VarRefStatement(var_decl_j))
+            .addRight(PLUS_OP,VarRefStatement(var_decl_k))
+            .addRight(MULTIPLY_OP,VarRefStatement(var_decl_i))
+            .addRight(GREATER_THEN_OP,VarRefStatement(var_decl_l)).getCode();
+
+        std::cout << code->code_ << std::endl;
+        }
 
         FunctionDeclaration main_function = FunctionBuilder::create("compiled_query")
             .returns(createDataType(BasicType(INT32)))
