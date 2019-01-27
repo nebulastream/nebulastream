@@ -9,6 +9,8 @@
 #include "../Topology/FogToplogySensor.hpp"
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/io.hpp>
+#include <boost/numeric/ublas/matrix_proxy.hpp>
+
 
 #define MAX_NUMBER_OF_NODES 10 //TODO: make this dynamic
 /**
@@ -55,38 +57,86 @@ public:
 		mtx(nodeID1,nodeID2) = 0;
 	}
 
+//    void print()
+//    {
+//    	//first line
+//    	cout << " | ";
+//    	for (size_t v = 0; v < numberOfRows; v++)
+//    	{
+//    		if(v == 0)
+//    			cout << "-" << " ";
+//    		else
+//    			cout << v << " ";
+//    	}
+//    	cout << endl;
+//    	for (size_t v = 0; v < numberOfColums*2+3; v++)
+//			cout << "-";
+//    	cout << endl;
+//
+//		for (size_t u = 0; u < numberOfRows; u++)
+//		{
+//			if(u == 0)
+//				cout << "-| ";
+//			else
+//				cout << u << "| ";
+//		  for (size_t v = 0; v < numberOfColums; v++)
+//		  {
+//			  if(mtx(u,v) == 0)
+//				  std::cout << "- ";
+//			  else
+//				  std::cout << mtx(u,v) << " ";
+//		  }
+//		  std::cout << std::endl;
+//		}
+//    }
     void print()
     {
-    	//first line
-    	cout << " | ";
-    	for (size_t v = 0; v < numberOfRows; v++)
-    	{
-    		if(v == 0)
-    			cout << "-" << " ";
-    		else
-    			cout << v << " ";
-    	}
-    	cout << endl;
-    	for (size_t v = 0; v < numberOfColums*2+3; v++)
-			cout << "-";
-    	cout << endl;
+    	print(mtx);
+    }
 
-		for (size_t u = 0; u < numberOfRows; u++)
+    void print(matrix<size_t> pMtx)
+	{
+//    	size1_ == rows
+//		size2_ == cols
+
+		//first line
+		cout << " | ";
+		for (size_t v = 0; v < pMtx.size1(); v++)
+		{
+			if(v == 0)
+				cout << "-" << " ";
+			else
+				cout << v << " ";
+		}
+		cout << endl;
+		for (size_t v = 0; v < pMtx.size2()*2+3; v++)
+			cout << "-";
+		cout << endl;
+
+		for (size_t u = 0; u < pMtx.size1(); u++)
 		{
 			if(u == 0)
 				cout << "-| ";
 			else
 				cout << u << "| ";
-		  for (size_t v = 0; v < numberOfColums; v++)
+		  for (size_t v = 0; v < pMtx.size2(); v++)
 		  {
-			  if(mtx(u,v) == 0)
+			  if(pMtx(u,v) == 0)
 				  std::cout << "- ";
 			  else
-				  std::cout << mtx(u,v) << " ";
+				  std::cout << pMtx(u,v) << " ";
 		  }
 		  std::cout << std::endl;
 		}
+	}
+
+    void removeRowAndCol()
+    {
+        matrix_slice<matrix<size_t> > ms (mtx, boost::numeric::ublas::slice (0, 1, 3), boost::numeric::ublas::slice (0, 1, 3));
+        print(ms);
+
     }
+
 
 private:
     size_t numberOfRows;
@@ -203,6 +253,9 @@ public:
 				cout << ",";
 		}
 		cout << endl;
+
+		cout << "slices:" << endl;
+		linkGraph->removeRowAndCol();
 	}
 private:
 
