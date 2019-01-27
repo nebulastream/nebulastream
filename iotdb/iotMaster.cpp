@@ -1,5 +1,15 @@
 #include <Topology/FogToplogyManager.hpp>
 
+/**
+ *
+ * Open Questions:
+ * 		- support half-duplex links?
+ *		- how to handle the ids among nodes?
+ *
+ *	Todo:
+ *		- add remove columns/row in matrix
+ *		- add unit tests
+ */
 
 void createTestTopo(FogTopologyManager* fMgnr)
 {
