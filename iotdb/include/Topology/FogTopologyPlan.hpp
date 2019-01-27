@@ -164,7 +164,6 @@ public:
 	void addFogTopologyLink(size_t pSourceNodeID, size_t pDestNodeID, LinkType type)
 	{
 		FogTopologyLinkPtr linkPtr = std::make_shared<FogTopologyLink>(pSourceNodeID, pDestNodeID, type);
-		linkPtr->setLinkID(currentId++);
 
 		fogLinks.push_back(linkPtr);
 		linkGraph->addLink(linkPtr->getSourceNodeID(), linkPtr->getDestNodeID(), linkPtr->getLinkID());
