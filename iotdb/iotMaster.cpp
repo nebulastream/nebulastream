@@ -6,6 +6,7 @@
  * 		- support half-duplex links?
  *		- how to handle the ids among nodes?
  *		- how does a node knows to whom it is connected?
+ *		- make a parrent class for fogentries?
  *
  *	Todo:
  *		- add remove columns/row in matrix
