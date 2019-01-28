@@ -228,20 +228,17 @@ public:
 	{
 		linkGraph->print();
 		cout << "Nodes IDs=";
-		for (size_t u = 0; u < fogNodes.size(); u++)
+		for (auto const& it : fogNodes)
 		{
-			cout << fogNodes[u]->getNodeId();
-			if(u != fogNodes.size()-1)
-				cout << ",";
+			cout << it.second->getNodeId() << ",";
 		}
+
 		cout << endl;
 
 		cout << "Sensors IDs=";
-		for (size_t u = 0; u < fogSensors.size(); u++)
+		for (auto const& it : fogSensors)
 		{
-			cout << fogSensors[u]->getSensorId();
-			if(u != fogSensors.size()-1)
-				cout << ",";
+			cout << it.second->getSensorId() << ",";
 		}
 		cout << endl;
 
