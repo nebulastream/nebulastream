@@ -59,6 +59,9 @@ add_definitions( -D 'QUERY_COMPILATION_CLANG_VERSION=\"${LLVM_VERSION_BASE_STRIN
 add_definitions( -D 'QUERY_COMPILATION_CC=\"${QUERY_COMPILATION_CC}\"' )
 add_definitions( -D 'CLANG_INCLUDE_DIRS=\"${CLANG_INCLUDE_DIRS}\"' )
 
+# fix compile error with llvm (https://stackoverflow.com/a/18966387)
+add_definitions( -D '__STDC_CONSTANT_MACROS')
+add_definitions( -D '__STDC_LIMIT_MACROS' )
 
 include_directories(${CLANG_INCLUDE_DIRS})
 include_directories(${LLVM_INCLUDE_DIRS})
