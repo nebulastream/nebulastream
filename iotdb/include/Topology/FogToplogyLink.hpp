@@ -8,6 +8,7 @@ enum LinkType { NodeToNode, NodeToSensor, SensorToNode};
 enum NodeType { Worker, Sensor};
 
 
+static size_t currentLinkID = 1;
 
 class FogTopologyLink
 {
@@ -15,7 +16,7 @@ class FogTopologyLink
 public:
 	FogTopologyLink(size_t pSourceNodeID, size_t pDestNodeID, LinkType type)
 	{
-		linkId = INVALID_NODE_ID;
+		linkId = currentLinkID++;
 
 		if(type == NodeToNode)
 		{
