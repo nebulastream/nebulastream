@@ -2,6 +2,7 @@
 #define INCLUDE_TOPOLOGY_FOGTOPOLOGYPLAN_HPP_
 
 #include <vector>
+#include <map>
 #include <bits/stdc++.h>
 #include <algorithm>
 #include "../Topology/FogToplogyLink.hpp"
@@ -9,6 +10,8 @@
 #include "../Topology/FogToplogySensor.hpp"
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/io.hpp>
+#include <boost/numeric/ublas/matrix_proxy.hpp>
+
 
 #define MAX_NUMBER_OF_NODES 10 //TODO: make this dynamic
 /**
@@ -55,38 +58,86 @@ public:
 		mtx(nodeID1,nodeID2) = 0;
 	}
 
+//    void print()
+//    {
+//    	//first line
+//    	cout << " | ";
+//    	for (size_t v = 0; v < numberOfRows; v++)
+//    	{
+//    		if(v == 0)
+//    			cout << "-" << " ";
+//    		else
+//    			cout << v << " ";
+//    	}
+//    	cout << endl;
+//    	for (size_t v = 0; v < numberOfColums*2+3; v++)
+//			cout << "-";
+//    	cout << endl;
+//
+//		for (size_t u = 0; u < numberOfRows; u++)
+//		{
+//			if(u == 0)
+//				cout << "-| ";
+//			else
+//				cout << u << "| ";
+//		  for (size_t v = 0; v < numberOfColums; v++)
+//		  {
+//			  if(mtx(u,v) == 0)
+//				  std::cout << "- ";
+//			  else
+//				  std::cout << mtx(u,v) << " ";
+//		  }
+//		  std::cout << std::endl;
+//		}
+//    }
     void print()
     {
-    	//first line
-    	cout << " | ";
-    	for (size_t v = 0; v < numberOfRows; v++)
-    	{
-    		if(v == 0)
-    			cout << "-" << " ";
-    		else
-    			cout << v << " ";
-    	}
-    	cout << endl;
-    	for (size_t v = 0; v < numberOfColums*2+3; v++)
-			cout << "-";
-    	cout << endl;
+    	print(mtx);
+    }
 
-		for (size_t u = 0; u < numberOfRows; u++)
+    void print(matrix<size_t> pMtx)
+	{
+//    	size1_ == rows
+//		size2_ == cols
+
+		//first line
+		cout << " | ";
+		for (size_t v = 0; v < pMtx.size1(); v++)
+		{
+			if(v == 0)
+				cout << "-" << " ";
+			else
+				cout << v << " ";
+		}
+		cout << endl;
+		for (size_t v = 0; v < pMtx.size2()*2+3; v++)
+			cout << "-";
+		cout << endl;
+
+		for (size_t u = 0; u < pMtx.size1(); u++)
 		{
 			if(u == 0)
 				cout << "-| ";
 			else
 				cout << u << "| ";
-		  for (size_t v = 0; v < numberOfColums; v++)
+		  for (size_t v = 0; v < pMtx.size2(); v++)
 		  {
-			  if(mtx(u,v) == 0)
+			  if(pMtx(u,v) == 0)
 				  std::cout << "- ";
 			  else
-				  std::cout << mtx(u,v) << " ";
+				  std::cout << pMtx(u,v) << " ";
 		  }
 		  std::cout << std::endl;
 		}
+	}
+
+    void removeRowAndCol()
+    {
+        matrix_slice<matrix<size_t> > ms (mtx, boost::numeric::ublas::slice (0, 1, 3), boost::numeric::ublas::slice (0, 1, 3));
+        print(ms);
+
     }
+
 
 private:
     size_t numberOfRows;
@@ -106,35 +157,37 @@ public:
 
 	void addFogNode(FogToplogyNodePtr ptr)
 	{
-		ptr->setNodeId(currentId++);
-		fogNodes.push_back(ptr);
+//		if ( fogNodes.find("f") == m.end() ) {
+//		  // not found
+//		} else {
+//		  // found
+//		}
+		//TODO: check if id exists
+		fogNodes[currentId]= ptr;
+		ptr->setNodeId(currentId);
+		currentId++;
 		linkGraph->addNode();
 	}
 	void removeFogNode(FogToplogyNodePtr ptr)
 	{
 		size_t search_id = ptr->getNodeId();
-
-		for(std::vector<FogToplogyNodePtr>::iterator it = fogNodes.begin(); it != fogNodes.end(); ++it)
-		{
-			if(it->get()->getNodeId() == search_id)
-				fogNodes.erase(it);
-		}
-
+		fogNodes.erase(search_id);
 	}
 	void listFogNodes()
 	{
 		cout << "fogNodes:";
-		for (auto& it : fogNodes)
+		for (auto const& it : fogNodes)
 		{
-			cout << it->getNodeId() << ",";
+			cout << it.second->getNodeId() << ",";
 		}
 		cout << endl;
 	}
 
 	void addFogSensor(FogToplogySensorPtr ptr)
 	{
-		ptr->setSensorID(currentId++);
-		fogSensors.push_back(ptr);
+		fogSensors[currentId] = ptr;
+		ptr->setSensorID(currentId);
+		currentId++;
 		linkGraph->addNode();
 
 	}
@@ -142,18 +195,14 @@ public:
 	{
 		size_t search_id = ptr->getNodeId();
 
-		for(std::vector<FogToplogySensorPtr>::iterator it = fogSensors.begin(); it != fogSensors.end(); ++it)
-		{
-			if(it->get()->getSensorId() == search_id)
-				fogSensors.erase(it);
-		}
+		fogSensors.erase(search_id);
 	}
 	void listFogSensors()
 	{
 		cout << "fogSensors:";
-		for (auto& it : fogSensors)
+		for (auto const& it : fogSensors)
 		{
-			cout << it->getSensorId()<< ",";
+			cout << it.second->getSensorId() << ",";
 		}
 		cout << endl;
 	}
@@ -164,52 +213,44 @@ public:
 	void addFogTopologyLink(size_t pSourceNodeID, size_t pDestNodeID, LinkType type)
 	{
 		FogTopologyLinkPtr linkPtr = std::make_shared<FogTopologyLink>(pSourceNodeID, pDestNodeID, type);
-		linkPtr->setLinkID(currentId++);
-
-		fogLinks.push_back(linkPtr);
+		fogLinks[linkPtr->getLinkID()] = linkPtr;
 		linkGraph->addLink(linkPtr->getSourceNodeID(), linkPtr->getDestNodeID(), linkPtr->getLinkID());
 		linkGraph->addLink(linkPtr->getDestNodeID(), linkPtr->getSourceNodeID(), linkPtr->getLinkID());
 	}
 	void removeFogTopologyLink(FogTopologyLinkPtr linkPtr)
 	{
 		size_t search_id = linkPtr->getLinkID();
-
-		for(std::vector<FogTopologyLinkPtr>::iterator it = fogLinks.begin(); it != fogLinks.end(); ++it)
-		{
-			if(it->get()->getLinkID() == search_id)
-			{
-				linkGraph->removeLinkID(linkPtr->getSourceNodeID(), linkPtr->getDestNodeID());
-				fogLinks.erase(it);
-			}
-		}
+		linkGraph->removeLinkID(linkPtr->getSourceNodeID(), linkPtr->getDestNodeID());
+		fogLinks.erase(linkPtr->getLinkID());
 	}
 
 	void printPlan()
 	{
 		linkGraph->print();
 		cout << "Nodes IDs=";
-		for (size_t u = 0; u < fogNodes.size(); u++)
+		for (auto const& it : fogNodes)
 		{
-			cout << fogNodes[u]->getNodeId();
-			if(u != fogNodes.size()-1)
-				cout << ",";
+			cout << it.second->getNodeId() << ",";
 		}
+
 		cout << endl;
 
 		cout << "Sensors IDs=";
-		for (size_t u = 0; u < fogSensors.size(); u++)
+		for (auto const& it : fogSensors)
 		{
-			cout << fogSensors[u]->getSensorId();
-			if(u != fogSensors.size()-1)
-				cout << ",";
+			cout << it.second->getSensorId() << ",";
 		}
 		cout << endl;
+
+		cout << "slices:" << endl;
+		linkGraph->removeRowAndCol();
 	}
+
 private:
 
-	std::vector<FogToplogyNodePtr> fogNodes;
-	std::vector<FogToplogySensorPtr> fogSensors;
-	std::vector<FogTopologyLinkPtr> fogLinks;
+	std::map<size_t,FogToplogyNodePtr> fogNodes;
+	std::map<size_t,FogToplogySensorPtr> fogSensors;
+	std::map<size_t,FogTopologyLinkPtr> fogLinks;
 	size_t currentId;
 	Graph* linkGraph;
 };

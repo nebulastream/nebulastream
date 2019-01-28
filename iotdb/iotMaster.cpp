@@ -1,5 +1,21 @@
 #include <Topology/FogToplogyManager.hpp>
 
+/**
+ *
+ * Open Questions:
+ * 		- support half-duplex links?
+ *		- how to handle the ids among nodes?
+ *		- how does a node knows to whom it is connected?
+ *		- make a parrent class for fogentries?
+ *
+ *	Todo:
+ *		- add remove columns/row in matrix
+ *		- add node ids
+ *		- add unit tests
+ *		- make TopologyManager Singleton
+ *		- add createFogNode/FogSensor
+ *		- make it thread safe
+ */
 
 void createTestTopo(FogTopologyManager* fMgnr)
 {
