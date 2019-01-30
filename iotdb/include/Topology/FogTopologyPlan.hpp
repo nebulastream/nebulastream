@@ -159,7 +159,7 @@ public:
 		currentId = 1;
 	}
 
-	void addFogNode(FogToplogyNodePtr ptr)
+	void addFogNode(FogTopologyNodePtr ptr)
 	{
 //		if ( fogNodes.find("f") == m.end() ) {
 //		  // not found
@@ -172,7 +172,7 @@ public:
 		currentId++;
 		linkGraph->addNode();
 	}
-	void removeFogNode(FogToplogyNodePtr ptr)
+	void removeFogNode(FogTopologyNodePtr ptr)
 	{
 		size_t search_id = ptr->getNodeId();
 		fogNodes.erase(search_id);
@@ -187,7 +187,7 @@ public:
 		cout << endl;
 	}
 
-	void addFogSensor(FogToplogySensorPtr ptr)
+	void addFogSensor(FogTopologySensorPtr ptr)
 	{
 		fogSensors[currentId] = ptr;
 		ptr->setSensorID(currentId);
@@ -195,7 +195,7 @@ public:
 		linkGraph->addNode();
 
 	}
-	void removeFogSensor(FogToplogyNodePtr ptr)
+	void removeFogSensor(FogTopologyNodePtr ptr)
 	{
 		size_t search_id = ptr->getNodeId();
 
@@ -252,8 +252,8 @@ public:
 
 private:
 
-	std::map<size_t,FogToplogyNodePtr> fogNodes;
-	std::map<size_t,FogToplogySensorPtr> fogSensors;
+	std::map<size_t,FogTopologyNodePtr> fogNodes;
+	std::map<size_t,FogTopologySensorPtr> fogSensors;
 	std::map<size_t,FogTopologyLinkPtr> fogLinks;
 	size_t currentId;
 	Graph* linkGraph;
