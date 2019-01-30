@@ -13,7 +13,7 @@ class FogTopologySensor{
 			sensorID = INVALID_NODE_ID;
 		}
 
-		void setSensorID(size_t id)
+		void setSensorId(size_t id)
 		{
 			sensorID = id;
 		}
