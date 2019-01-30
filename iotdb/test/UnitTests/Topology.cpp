@@ -29,13 +29,13 @@ public:
 
 TEST_F(FogTopologyLinkTest, create_link) {
   auto link_N2N = std::make_unique<FogTopologyLink>(0, 1, NodeToNode);
-  ASSERT_NE(link_N2N, nulllptr);
+  ASSERT_NE(link_N2N, nullptr);
 
   auto link_N2S = std::make_unique<FogTopologyLink>(1, 2, NodeToSensor);
-  ASSERT_NE(link_N2S, nulllptr);
+  ASSERT_NE(link_N2S, nullptr);
 
   auto link_S2N = std::make_unique<FogTopologyLink>(2, 3, SensorToNode);
-  ASSERT_NE(link_S2N, nulllptr);
+  ASSERT_NE(link_S2N, nullptr);
 
   // ToDo: There could be a check at construction time, if the nodes exist and the type is matching
   // Maybe do not pass an ID but a smart pointer to the nodes.
@@ -100,7 +100,7 @@ public:
 TEST_F(FogTopologyNodeTest, create_node) {
 
   auto node = std::make_unique<FogTopologyNode>();
-  ASSERT_NE(node, nulllptr);
+  ASSERT_NE(node, nullptr);
 }
 
 TEST_F(FogTopologyNodeTest, manipulate_node_id) {
@@ -139,7 +139,7 @@ public:
 TEST_F(FogTopologySensorTest, create_sensor) {
 
   auto sensor = std::make_unique<FogTopologySensor>();
-  ASSERT_NE(sensor, nulllptr);
+  ASSERT_NE(sensor, nullptr);
 }
 
 TEST_F(FogTopologySensorTest, manipulate_sensor_id) {
