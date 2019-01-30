@@ -1,4 +1,4 @@
-#include <Topology/FogToplogyManager.hpp>
+#include <Topology/FogTopologyManager.hpp>
 
 /**
  *
