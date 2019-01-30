@@ -16,7 +16,7 @@ class FogTopologyLink
 {
 
 public:
-	FogTopologyLink(size_t pSourceNodeID, size_t pDestNodeID, LinkType type)
+	FogTopologyLink(size_t pSourceNodeId, size_t pDestNodeId, LinkType type)
 	{
 		linkId = currentLinkID++;
 
@@ -36,8 +36,8 @@ public:
 			destNodeType = Sensor;
 		}
 
-		sourceNodeID = pSourceNodeID;
-		destNodeID = pDestNodeID;
+		sourceNodeID = pSourceNodeId;
+		destNodeID = pDestNodeId;
 	}
 
 	void setLinkID(size_t pLinkID)
@@ -50,12 +50,12 @@ public:
 		return linkId;
 	}
 
-	size_t getSourceNodeID()
+	size_t getSourceNodeId()
 	{
 		return sourceNodeID;
 	}
 
-	size_t getDestNodeID()
+	size_t getDestNodeId()
 	{
 		return destNodeID;
 	}
