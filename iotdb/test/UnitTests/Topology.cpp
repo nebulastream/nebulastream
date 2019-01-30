@@ -23,7 +23,56 @@ public:
   static void TearDownTestCase() { std::cout << "Tear down FogTopologyLink test class." << std::endl; }
 };
 
-TEST_F(FogTopologyLink, FirstTest) { ASSERT_EQ(); }
+TEST_F(FogTopologyLink, create_link) {
+  auto link_N2N = std::make_unique<FogToplogyLink>(0, 1, NodeToNode);
+  ASSERT_NE(link_N2N, nulllptr);
+
+  auto link_N2S = std::make_unique<FogToplogyLink>(1, 2, NodeToSensor);
+  ASSERT_NE(link_N2S, nulllptr);
+
+  auto link_S2N = std::make_unique<FogToplogyLink>(2, 3, SensorToNode);
+  ASSERT_NE(link_S2N, nulllptr);
+
+  // ToDo: There could be a check at construction time, if the nodes exist
+}
+
+TEST_F(FogTopologyLink, manipulate_link_id) {
+  auto link_N2N = std::make_unique<FogToplogyLink>(0, 1, NodeToNode);
+  auto link_N2S = std::make_unique<FogToplogyLink>(1, 2, NodeToSensor);
+  auto link_S2N = std::make_unique<FogToplogyLink>(2, 3, SensorToNode);
+
+  // Link ID is set to incremental values
+  ASSERT_EQ(link_N2N->getLinkID() + 1, link_N2S->getLinkID());
+  ASSERT_EQ(link_N2S->getLinkID() + 1, link_S2N->getLinkID());
+
+  // Set link ID and check result
+  link_N2N->setLinkID(1);
+  ASSERT_EQ(link_N2N->getLinkID(), 1);
+
+  link_N2S->setLinkID(2);
+  ASSERT_EQ(link_N2S->getLinkID(), 2);
+
+  link_S2N->setLinkID(3);
+  ASSERT_EQ(link_S2N->getLinkID(), 3);
+
+  // There should be no two links with same id
+  // ToDo: Not implemented yet
+}
+
+TEST_F(FogTopologyLink, get_node_ids) {
+  auto link_N2N = std::make_unique<FogToplogyLink>(0, 1, NodeToNode);
+  auto link_N2S = std::make_unique<FogToplogyLink>(1, 2, NodeToSensor);
+  auto link_S2N = std::make_unique<FogToplogyLink>(2, 3, SensorToNode);
+
+  ASSERT_EQ(link_N2N->getSourceNodeID(), 0);
+  ASSERT_EQ(link_N2N->getDestNodeID(), 1);
+
+  ASSERT_EQ(link_N2S->getSourceNodeID(), 1);
+  ASSERT_EQ(link_N2S->getDestNodeID(), 2);
+
+  ASSERT_EQ(link_S2N->getSourceNodeID(), 2);
+  ASSERT_EQ(link_S2N->getDestNodeID(), 3);
+}
 
 /* ------------------------------------------------------------------------- */
 /* - FogTopologyManager ---------------------------------------------------- */
