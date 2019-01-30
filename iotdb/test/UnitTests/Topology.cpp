@@ -61,7 +61,7 @@ TEST_F(FogTopologyLinkTest, manipulate_link_id) {
   EXPECT_EQ(link_S2N->getLinkID(), 300);
 
   // There should be no two links with same id
-  EXPECT_ANY_THROW(link_S2N->setLinkID(200);
+  EXPECT_ANY_THROW(link_S2N->setLinkID(200););
 }
 
 TEST_F(FogTopologyLinkTest, get_node_ids) {
@@ -115,7 +115,7 @@ TEST_F(FogTopologyNodeTest, manipulate_node_id) {
 
   // There should be no two nodes with same id
   auto node_2 = std::make_unique<FogTopologyNode>();
-  EXPECT_ANY_THROW(node_2->setNodeId(200);
+  EXPECT_ANY_THROW(node_2->setNodeId(200););
 }
 
 /* ------------------------------------------------------------------------- */
@@ -154,7 +154,7 @@ TEST_F(FogTopologySensorTest, manipulate_sensor_id) {
 
   // There should be no two sensors with same id
   auto sensor_2 = std::make_unique<FogTopologySensor>();
-  EXPECT_ANY_THROW(sensor_2->setSensorId(200);
+  EXPECT_ANY_THROW(sensor_2->setSensorId(200););
 }
 
 /* ------------------------------------------------------------------------- */
@@ -213,15 +213,15 @@ TEST_F(FogTopologyPlanTest, graph_create) {
   auto graph_max = std::make_unique<Graph>(MAX_NUMBER_OF_NODES);
   EXPECT_NE(graph_max, nullptr);
 
-  EXPECT_ANY_THROW(auto graph_max = std::make_unique<Graph>(MAX_NUMBER_OF_NODES + 1);
+  EXPECT_ANY_THROW(auto graph_max = std::make_unique<Graph>(MAX_NUMBER_OF_NODES + 1););
 
-  EXPECT_ANY_THROW(auto graph_max = std::make_unique<Graph>(-1);
+  EXPECT_ANY_THROW(auto graph_max = std::make_unique<Graph>(-1););
 }
 
 TEST_F(FogTopologyPlanTest, graph_add_node) {
   auto graph = std::make_unique<Graph>(MAX_NUMBER_OF_NODES - 1);
   graph->addNode();
-  EXPECT_ANY_THROW(graph->addNode();
+  EXPECT_ANY_THROW(graph->addNode(););
 }
 
 TEST_F(FogTopologyPlanTest, graph_add_link) {
@@ -230,17 +230,17 @@ TEST_F(FogTopologyPlanTest, graph_add_link) {
   graph->addLink(1, 2, 1);
 
   // adding a link, that already exists
-  EXPECT_ANY_THROW(graph->addLink(1, 2, 1); // nodes & id are identical
-  EXPECT_ANY_THROW(graph->addLink(1, 2, 2); // nodes are identical
-  EXPECT_ANY_THROW(graph->addLink(1, 3, 1); // id is identical
+  EXPECT_ANY_THROW(graph->addLink(1, 2, 1);); // nodes & id are identical
+  EXPECT_ANY_THROW(graph->addLink(1, 2, 2);); // nodes are identical
+  EXPECT_ANY_THROW(graph->addLink(1, 3, 1);); // id is identical
 
   // adding a link for nodes, that do not exist
-  EXPECT_ANY_THROW(graph->addLink(1, 6, 3); // right node
-  EXPECT_ANY_THROW(graph->addLink(6, 2, 4); // left node
-  EXPECT_ANY_THROW(graph->addLink(6, 7, 5); // both
+  EXPECT_ANY_THROW(graph->addLink(1, 6, 3);); // right node
+  EXPECT_ANY_THROW(graph->addLink(6, 2, 4);); // left node
+  EXPECT_ANY_THROW(graph->addLink(6, 7, 5);); // both
 
   // self-assignment
-  EXPECT_ANY_THROW(graph->addLink(2, 2, 6);
+  EXPECT_ANY_THROW(graph->addLink(2, 2, 6););
 }
 
 TEST_F(FogTopologyPlanTest, graph_get_link) { EXPECT_EQ(true, true); }
