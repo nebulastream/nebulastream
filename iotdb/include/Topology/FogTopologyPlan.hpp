@@ -4,6 +4,9 @@
 #include <map>
 #include <memory>
 #include <vector>
+#include <string>
+#include <iostream>
+#include <sstream>
 #include <algorithm>
 #include <bits/stdc++.h>
 
@@ -62,78 +65,51 @@ public:
 		mtx(nodeID1,nodeID2) = 0;
 	}
 
-//    void print()
-//    {
-//    	//first line
-//    	cout << " | ";
-//    	for (size_t v = 0; v < numberOfRows; v++)
-//    	{
-//    		if(v == 0)
-//    			cout << "-" << " ";
-//    		else
-//    			cout << v << " ";
-//    	}
-//    	cout << endl;
-//    	for (size_t v = 0; v < numberOfColums*2+3; v++)
-//			cout << "-";
-//    	cout << endl;
-//
-//		for (size_t u = 0; u < numberOfRows; u++)
-//		{
-//			if(u == 0)
-//				cout << "-| ";
-//			else
-//				cout << u << "| ";
-//		  for (size_t v = 0; v < numberOfColums; v++)
-//		  {
-//			  if(mtx(u,v) == 0)
-//				  std::cout << "- ";
-//			  else
-//				  std::cout << mtx(u,v) << " ";
-//		  }
-//		  std::cout << std::endl;
-//		}
-//    }
-    void print()
-    {
-    	print(mtx);
-    }
+    std::string to_string(matrix<size_t> pMtx) {
 
-    void print(matrix<size_t> pMtx)
-	{
-//    	size1_ == rows
-//		size2_ == cols
+		std::stringstream ss;
 
-		//first line
-		cout << " | ";
+		// first line
+		ss << " | ";
 		for (size_t v = 0; v < pMtx.size1(); v++)
 		{
 			if(v == 0)
-				cout << "-" << " ";
+				ss << "-" << " ";
 			else
-				cout << v << " ";
+				ss << v << " ";
 		}
-		cout << endl;
+
+		ss << endl;
 		for (size_t v = 0; v < pMtx.size2()*2+3; v++)
-			cout << "-";
-		cout << endl;
+			ss << "-";
+		ss << endl;
 
 		for (size_t u = 0; u < pMtx.size1(); u++)
 		{
 			if(u == 0)
-				cout << "-| ";
+				ss << "-| ";
 			else
-				cout << u << "| ";
-		  for (size_t v = 0; v < pMtx.size2(); v++)
-		  {
-			  if(pMtx(u,v) == 0)
-				  std::cout << "- ";
-			  else
-				  std::cout << pMtx(u,v) << " ";
-		  }
-		  std::cout << std::endl;
+				ss << u << "| ";
+			for (size_t v = 0; v < pMtx.size2(); v++)
+			{
+				if(pMtx(u,v) == 0)
+					ss << "- ";
+				else
+					ss << pMtx(u,v) << " ";
+			}
+			ss << std::endl;
 		}
+		return ss.str();
+    }
+
+	void print(matrix<size_t> pMtx){
+        std::cout << to_sring(pMtx);
 	}
+
+	void print(){
+    	print(mtx);
+    }
+
 
     void removeRowAndCol()
     {
@@ -228,26 +204,27 @@ public:
 		fogLinks.erase(linkPtr->getLinkID());
 	}
 
-	void printPlan()
-	{
-		linkGraph->print();
-		cout << "Nodes IDs=";
-		for (auto const& it : fogNodes)
-		{
-			cout << it.second->getNodeId() << ",";
+	std::string to_string() {
+		std::stringstream ss;
+
+		ss << linkGraph->to_string();
+		ss << "Nodes IDs=";
+		for (auto const& it : fogNodes){
+			ss << it.second->getNodeId() << ",";
 		}
+		ss << endl;
 
-		cout << endl;
-
-		cout << "Sensors IDs=";
-		for (auto const& it : fogSensors)
-		{
-			cout << it.second->getSensorId() << ",";
+		ss << "Sensors IDs=";
+		for (auto const& it : fogSensors){
+			ss << it.second->getSensorId() << ",";
 		}
-		cout << endl;
+		ss << endl;
 
-		cout << "slices:" << endl;
-		linkGraph->removeRowAndCol();
+		return ss;
+	}
+
+	void printPlan(){
+        std::cout << to_string();
 	}
 
 private:
