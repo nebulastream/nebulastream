@@ -33,7 +33,8 @@ TEST_F(FogTopologyLink, create_link) {
   auto link_S2N = std::make_unique<FogToplogyLink>(2, 3, SensorToNode);
   ASSERT_NE(link_S2N, nulllptr);
 
-  // ToDo: There could be a check at construction time, if the nodes exist
+  // ToDo: There could be a check at construction time, if the nodes exist and the type is matching
+  // Maybe do not pass an ID but a smart pointer to the nodes.
 }
 
 TEST_F(FogTopologyLink, manipulate_link_id) {
@@ -56,7 +57,7 @@ TEST_F(FogTopologyLink, manipulate_link_id) {
   ASSERT_EQ(link_S2N->getLinkID(), 3);
 
   // There should be no two links with same id
-  // ToDo: Not implemented yet
+  // ToDo: Check not implemented yet
 }
 
 TEST_F(FogTopologyLink, get_node_ids) {
@@ -72,6 +73,84 @@ TEST_F(FogTopologyLink, get_node_ids) {
 
   ASSERT_EQ(link_S2N->getSourceNodeID(), 2);
   ASSERT_EQ(link_S2N->getDestNodeID(), 3);
+}
+
+/* ------------------------------------------------------------------------- */
+/* - FogTopologyNode ------------------------------------------------------- */
+
+class FogTopologyNode : public testing::Test {
+public:
+  /* Will be called before any test in this class are executed. */
+  static void SetUpTestCase() { std::cout << "Setup FogTopologyNode tests class." << std::endl; }
+
+  /* Will be called before a test is executed. */
+  void SetUp() { std::cout << "Setup FogTopologyNode test case." << std::endl; }
+
+  /* Will be called before a test is executed. */
+  void TearDown() { std::cout << "Setup FogTopologyNode test case." << std::endl; }
+
+  /* Will be called after all tests in this class are finished. */
+  static void TearDownTestCase() { std::cout << "Tear down FogTopologyNode test class." << std::endl; }
+};
+
+TEST_F(FogTopologyNode, create_node) {
+
+  auto node = std::make_unique<FogToplogyNode>();
+  ASSERT_NE(node, nulllptr);
+}
+
+TEST_F(FogTopologyNode, manipulate_node_id) {
+
+  auto node = std::make_unique<FogToplogyNode>();
+
+  // Node is constructed with invalid id.
+  ASSERT_EQ(node->getNodeId(), INVALID_NODE_ID);
+
+  // Set id for note
+  node->setNodeId(1);
+  ASSERT_EQ(node->getNodeId(), 1);
+
+  // There should be no two nodes with same id
+  // ToDo: Check not implemented yet
+}
+
+/* ------------------------------------------------------------------------- */
+/* - FogTopologySensor ----------------------------------------------------- */
+
+class FogTopologySensor : public testing::Test {
+public:
+  /* Will be called before any test in this class are executed. */
+  static void SetUpTestCase() { std::cout << "Setup FogTopologySensor tests class." << std::endl; }
+
+  /* Will be called before a test is executed. */
+  void SetUp() { std::cout << "Setup FogTopologySensor test case." << std::endl; }
+
+  /* Will be called before a test is executed. */
+  void TearDown() { std::cout << "Setup FogTopologySensor test case." << std::endl; }
+
+  /* Will be called after all tests in this class are finished. */
+  static void TearDownTestCase() { std::cout << "Tear down FogTopologySensor test class." << std::endl; }
+};
+
+TEST_F(FogTopologySensor, create_sensor) {
+
+  auto sensor = std::make_unique<FogToplogySensor>();
+  ASSERT_NE(sensor, nulllptr);
+}
+
+TEST_F(FogTopologyNode, manipulate_sensor_id) {
+
+  auto sensor = std::make_unique<FogToplogySensor>();
+
+  // Sensor is constructed with invalid id.
+  ASSERT_EQ(node->getNodeId(), INVALID_NODE_ID);
+
+  // Set id for sensor
+  node->setSensorId(1);
+  ASSERT_EQ(sensor->getSensorId(), 1);
+
+  // There should be no two Sensors with same id
+  // ToDo: Check not implemented yet
 }
 
 /* ------------------------------------------------------------------------- */
@@ -93,46 +172,6 @@ public:
 };
 
 TEST_F(FogTopologyManager, FirstTest) { ASSERT_EQ(true, true); }
-
-/* ------------------------------------------------------------------------- */
-/* - FogTopologyNode ------------------------------------------------------- */
-
-class FogTopologyNode : public testing::Test {
-public:
-  /* Will be called before any test in this class are executed. */
-  static void SetUpTestCase() { std::cout << "Setup Tests Class." << std::endl; }
-
-  /* Will be called before a test is executed. */
-  void SetUp() { std::cout << "Setup test case." << std::endl; }
-
-  /* Will be called before a test is executed. */
-  void TearDown() { std::cout << "Setup test case." << std::endl; }
-
-  /* Will be called after all tests in this class are finished. */
-  static void TearDownTestCase() { std::cout << "Tear down test class." << std::endl; }
-};
-
-TEST_F(FogTopologyNode, FirstTest) { ASSERT_EQ(true, true); }
-
-/* ------------------------------------------------------------------------- */
-/* - FogTopologySensor ----------------------------------------------------- */
-
-class FogTopologySensor : public testing::Test {
-public:
-  /* Will be called before any test in this class are executed. */
-  static void SetUpTestCase() { std::cout << "Setup Tests Class." << std::endl; }
-
-  /* Will be called before a test is executed. */
-  void SetUp() { std::cout << "Setup test case." << std::endl; }
-
-  /* Will be called before a test is executed. */
-  void TearDown() { std::cout << "Setup test case." << std::endl; }
-
-  /* Will be called after all tests in this class are finished. */
-  static void TearDownTestCase() { std::cout << "Tear down test class." << std::endl; }
-};
-
-TEST_F(FogTopologySensor, FirstTest) { ASSERT_EQ(true, true); }
 
 /* ------------------------------------------------------------------------- */
 /* - FogTopologyPlan ------------------------------------------------------- */
