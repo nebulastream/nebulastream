@@ -17,12 +17,12 @@ public:
 	}
 
 
-	void addFogNode(FogToplogyNodePtr ptr)
+	void addFogNode(FogTopologyNodePtr ptr)
 	{
 		currentPlan->addFogNode(ptr);
 	}
 
-	void addSensorNode(FogToplogySensorPtr ptr)
+	void addSensorNode(FogTopologySensorPtr ptr)
 	{
 		currentPlan->addFogSensor(ptr);
 	}

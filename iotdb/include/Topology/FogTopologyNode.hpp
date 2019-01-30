@@ -5,14 +5,14 @@
 #include <memory>
 #define INVALID_NODE_ID 101
 
-class FogToplogyNode;
-typedef std::shared_ptr<FogToplogyNode> FogToplogyNodePtr;
+class FogTopologyNode;
+typedef std::shared_ptr<FogTopologyNode> FogTopologyNodePtr;
 
 
-class FogToplogyNode{
+class FogTopologyNode{
 
     public:
-		FogToplogyNode()
+		FogTopologyNode()
 		{
 			node_id = INVALID_NODE_ID;
 		}
