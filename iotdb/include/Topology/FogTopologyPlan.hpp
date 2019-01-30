@@ -190,7 +190,7 @@ public:
 	void addFogSensor(FogTopologySensorPtr ptr)
 	{
 		fogSensors[currentId] = ptr;
-		ptr->setSensorID(currentId);
+		ptr->setSensorId(currentId);
 		currentId++;
 		linkGraph->addNode();
 
