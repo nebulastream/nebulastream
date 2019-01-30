@@ -1,6 +1,6 @@
+#include <cstddef>
 #include <iostream>
 #include <memory>
-#include <cstddef>
 
 #include "gtest/gtest.h"
 
@@ -51,17 +51,17 @@ TEST_F(FogTopologyLinkTest, manipulate_link_id) {
   ASSERT_EQ(link_N2S->getLinkID() + 1, link_S2N->getLinkID());
 
   // Set link ID and check result
-  link_N2N->setLinkID(1);
-  ASSERT_EQ(link_N2N->getLinkID(), 1);
+  link_N2N->setLinkID(100);
+  ASSERT_EQ(link_N2N->getLinkID(), 100);
 
-  link_N2S->setLinkID(2);
-  ASSERT_EQ(link_N2S->getLinkID(), 2);
+  link_N2S->setLinkID(200);
+  ASSERT_EQ(link_N2S->getLinkID(), 200);
 
-  link_S2N->setLinkID(3);
-  ASSERT_EQ(link_S2N->getLinkID(), 3);
+  link_S2N->setLinkID(300);
+  ASSERT_EQ(link_S2N->getLinkID(), 300);
 
   // There should be no two links with same id
-  // ToDo: Check not implemented yet
+  ASSERT_ANY_THROW(link_S2N->setLinkID(200);)
 }
 
 TEST_F(FogTopologyLinkTest, get_node_ids) {
@@ -111,11 +111,12 @@ TEST_F(FogTopologyNodeTest, manipulate_node_id) {
   ASSERT_EQ(node->getNodeId(), INVALID_NODE_ID);
 
   // Set id for note
-  node->setNodeId(1);
-  ASSERT_EQ(node->getNodeId(), 1);
+  node->setNodeId(200);
+  ASSERT_EQ(node->getNodeId(), 200);
 
   // There should be no two nodes with same id
-  // ToDo: Check not implemented yet
+  auto node_2 = std::make_unique<FogTopologyNode>();
+  ASSERT_ANY_THROW(node_2->setNodeId(200);)
 }
 
 /* ------------------------------------------------------------------------- */
@@ -150,11 +151,12 @@ TEST_F(FogTopologySensorTest, manipulate_sensor_id) {
   ASSERT_EQ(sensor->getSensorId(), INVALID_NODE_ID);
 
   // Set id for sensor
-  sensor->setSensorId(1);
-  ASSERT_EQ(sensor->getSensorId(), 1);
+  sensor->setSensorId(200);
+  ASSERT_EQ(sensor->getSensorId(), 200);
 
-  // There should be no two Sensors with same id
-  // ToDo: Check not implemented yet
+  // There should be no two sensors with same id
+  auto sensor_2 = std::make_unique<FogTopologySensor>();
+  ASSERT_ANY_THROW(sensor_2->setSensorId(200);)
 }
 
 /* ------------------------------------------------------------------------- */
@@ -176,7 +178,21 @@ public:
 };
 
 /* - Graph part -------------------- */
-TEST_F(FogTopologyPlanTest, graph_create) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, graph_create) {
+
+  auto graph = std::make_unique<Graph>(3);
+  ASSERT_NE(graph, nullptr);
+
+  auto graph_min = std::make_unique<Graph>(0);
+  ASSERT_NE(graph_min, nullptr);
+
+  auto graph_max = std::make_unique<Graph>(MAX_NUMBER_OF_NODES);
+  ASSERT_NE(graph_max, nullptr);
+
+  ASSERT_ANY_THROW(auto graph_max = std::make_unique<Graph>(MAX_NUMBER_OF_NODES + 1);)
+
+  ASSERT_ANY_THROW(auto graph_max = std::make_unique<Graph>(-1);)
+}
 
 TEST_F(FogTopologyPlanTest, graph_print) { ASSERT_EQ(true, true); }
 
