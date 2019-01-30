@@ -196,7 +196,8 @@ TEST_F(FogTopologyPlan, plan_add_node) { ASSERT_EQ(true, true); }
 TEST_F(FogTopologyPlan, plan_remove_node) { ASSERT_EQ(true, true); }
 
 TEST_F(FogTopologyPlan, plan_list_nodes) { ASSERT_EQ(true, true); }
-+ TEST_F(FogTopologyPlan, plan_add_sensor) {
+
+TEST_F(FogTopologyPlan, plan_add_sensor) {
   ASSERT_EQ(true, true);
 }
 

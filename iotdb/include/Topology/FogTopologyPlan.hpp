@@ -1,16 +1,20 @@
 #ifndef INCLUDE_TOPOLOGY_FOGTOPOLOGYPLAN_HPP_
 #define INCLUDE_TOPOLOGY_FOGTOPOLOGYPLAN_HPP_
 
-#include <vector>
 #include <map>
-#include <bits/stdc++.h>
+#include <memory>
+#include <vector>
 #include <algorithm>
-#include "../Topology/FogToplogyLink.hpp"
-#include "../Topology/FogToplogyNode.hpp"
-#include "../Topology/FogToplogySensor.hpp"
+#include <bits/stdc++.h>
+
 #include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/matrix_proxy.hpp>
+
+#include "Topology/FogToplogyLink.hpp"
+#include "Topology/FogToplogyNode.hpp"
+#include "Topology/FogToplogySensor.hpp"
+
 
 
 #define MAX_NUMBER_OF_NODES 10 //TODO: make this dynamic
