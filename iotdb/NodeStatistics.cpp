@@ -63,6 +63,34 @@ int getCPUCount(){
 }   
 
 /*
+ * Provide CPU Information
+ *
+ * It uses the following commandline:
+ * lscpu | grep 'Model name:' | awk '{ for(i=3; i<NF; i++) printf "%s",$i OFS; if(NF) printf "%si",$NF; printf ORS}'
+ * 
+ * The command 
+ * awk '{ for(i=2; i<NF; i++) printf "%s",$i OFS; if(NF) printf "%s",$NF; printf ORS}' 
+ * prints all columns without the first two cols
+ *
+ */
+std::string getCPUInformation(){
+    std::string resultString = exec("lscpu | grep 'Model name:' | awk '{ for(i=3; i<NF; i++) printf \"%s\",$i OFS; if(NF) printf \"%si\",$NF; printf ORS}' | head -1");
+    try {
+        size_t pos = 0;
+        std::string token;
+        std::string delimiter = "\n";
+        while ((pos = resultString.find(delimiter)) != std::string::npos) {
+            token = resultString.substr(0, pos);
+            resultString.erase(0, pos + delimiter.length());
+        }
+        return token;
+    } catch (std::exception& e) {
+        std::cout << "Parsing in getNetworkInterfaces failed!" << std::endl;
+        return std::string();
+    };
+}
+
+/*
  * Provide CPU Additional Information
  *
  * It uses the following commandline:
@@ -96,11 +124,11 @@ std::vector<std::string>  getCPUAdditionalInformation(){
  * Provide current CPU usage in percent
  *
  * It uses the following commandline:
- * top -b -d1 -n1 | grep -i "Cpu(s)"
+ * top -b -d1 -n1 | grep -i 'Cpu(s)' | awk '{print $2}'
  *
  */
 float getCPUUsage(){
-    std::string resultString = exec("top -b -d1 -n1 | grep -i 'Cpu(s)'");
+    std::string resultString = exec("top -b -d1 -n1 | grep -i 'Cpu(s)' | awk '{print $2}'");
     float count = 0;
     try {
         count = std::stof(resultString);
@@ -156,6 +184,25 @@ int getMainMemoryCapacity(){
     }
     return count;
 }
+
+/*
+ * Provide the available main memory capacity in kB 
+ *
+ * It uses the following commandline:
+ *  top -b -d1 -n1 | grep -i "KiB Mem" | awk '{print $6}'
+ *
+ */
+int getAvailableMainMemoryCapacity(){
+    std::string resultString = exec("top -b -d1 -n1 | grep -i 'KiB Mem' | awk '{print $6}'");
+    int count = 0;
+    try {
+        count = std::stoi(resultString);
+    } catch (std::exception& e) {
+        std::cout << "Parsing in getMainMemoryCapacity failed!" << std::endl;
+    }
+    return count;
+}
+
 
 
 /*
@@ -243,12 +290,39 @@ int getNetworkInterfaceSpeed(std::string interface_name){
  *  Provide the current network load for a given interface
  *
  *  It uses the following commandline:
- *  ? nload ?
+ *  ifstat 1 1 | awk '{print $1}' | tail -1
+ *
  *
  */
-int getNetworkInterfaceLoad(std::string interface_name){
-    // TODO
-    int count = -1; 
+float getNetworkInterfaceLoadIncoming(){
+    std::string resultString = exec("ifstat 1 1 | awk '{print $1}' | tail -1");
+    float count = 0;
+    try {
+        count = std::stof(resultString);
+    } catch (std::exception& e) {
+        std::cout << "Parsing in getNetworkInterfaceLoadIncoming failed!" << std::endl;
+        count = -1;
+    }
+    return count;
+}
+
+/*
+ *  Provide the current network load for a given interface
+ *
+ *  It uses the following commandline:
+ *  ifstat 1 1 | awk '{print $1}' | tail -1
+ *
+ *
+ */
+float getNetworkInterfaceLoadOutgoing(){
+    std::string resultString = exec("ifstat 1 1 | awk '{print $2}' | tail -1");
+    float count = 0;
+    try {
+        count = std::stof(resultString);
+    } catch (std::exception& e) {
+        std::cout << "Parsing in getNetworkInterfaceLoadOutgoing failed!" << std::endl;
+        count = -1;
+    }
     return count;
 }
 
@@ -259,14 +333,14 @@ int getNetworkInterfaceLoad(std::string interface_name){
  *  ? nload ?
  *
  */
-float getNetworkInterfaceLoadforWindow(std::string interface_name, int window_in_sec){
+float getNetworkInterfaceLoadIncomingforWindow(int window_in_sec){
     float count = 0;
     int iter = 0;
     auto start = std::chrono::high_resolution_clock::now();
     while (true){
         iter++;   
         
-        float i = getNetworkInterfaceLoad(interface_name);
+        float i = getNetworkInterfaceLoadIncoming();
         if (i == -1){
             std::cout << "Error in getCPUUsage! getCPUUsageforWindow failed!" << std::endl;
             return -1;
@@ -283,20 +357,106 @@ float getNetworkInterfaceLoadforWindow(std::string interface_name, int window_in
     return count;
 }
 
+/*
+ *  Provide the current network load for a given interface and time window in sec
+ *
+ *  It uses the following commandline:
+ *  ? nload ?
+ *
+ */
+float getNetworkInterfaceLoadOutgoingforWindow(int window_in_sec){
+    float count = 0;
+    int iter = 0;
+    auto start = std::chrono::high_resolution_clock::now();
+    while (true){
+        iter++;   
+        
+        float i = getNetworkInterfaceLoadIncoming();
+        if (i == -1){
+            std::cout << "Error in getCPUUsage! getCPUUsageforWindow failed!" << std::endl;
+            return -1;
+        }
+        count += i;
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        auto finish = std::chrono::high_resolution_clock::now();
+        auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(finish-start);
+        if (microseconds > std::chrono::seconds(window_in_sec))
+            break;
+    }
+    count /= iter;
+    return count;
+}
+
+/*
+ *  Generates Json out of node statistics 
+ *
+ */
+std::string writeJSON () {
+    //stream outfile ("NodeStats.json",std::ofstream::binary);
+    //outfile.write (buffer,size);
+
+    std::string json = "{\n";
+    
+    json += "\t\"CPUCount\": " +  std::to_string(getCPUCount()) + ",\n";
+    json += "\t\"CPUUsagePercent\": " +  std::to_string(getCPUUsage()) + ",\n";
+    json += "\t\"CPUUsageforWindow10s\": " + std::to_string(getCPUUsageforWindow(10)) + ",\n";
+    json += "\t\"CPUInformation\": \"" + getCPUInformation() + "\",\n";
+    json += "\t\"CPUAdditionalInformation\": ";
+    std::vector<std::string> vec = getCPUAdditionalInformation();
+    for (auto i : vec)
+    	json +="\"" + i + "\"";
+    json += ",\n";
+
+    json += "\t\"MainMemoryCapacityKb\": " + std::to_string(getMainMemoryCapacity()) + ",\n";
+    json += "\t\"AvailableMainMemoryCapacityKb\": " + std::to_string(getAvailableMainMemoryCapacity()) + ",\n";
+    json += "\t\"DiskCapacityKb\": " + std::to_string(getDiskCapacity()) + ",\n";
+    json += "\t\"AvailableDiskCapacityKb\": " + std::to_string(getAvailableDiskCapacity()) + ",\n";
+    json += "\t\"NetworkInterfaceLoadIncomingKbs\": " + std::to_string(getNetworkInterfaceLoadIncoming()) + ",\n";
+    json += "\t\"NetworkInterfaceLoadOutgoingKbs\": " + std::to_string(getNetworkInterfaceLoadOutgoing()) + ",\n";
+    json += "\t\"NetworkInterfaceLoadIncomingforWindow10sKbs\": " + std::to_string(getNetworkInterfaceLoadIncomingforWindow(10)) + ",\n";
+    json += "\t\"NetworkInterfaceLoadOutgoingforWindow10sKbs\": " + std::to_string(getNetworkInterfaceLoadOutgoingforWindow(10)) + "\n";
+
+    json += "}\n";
+
+    std::cout << json;
+    return json;
+}
+
 /* 
  * Main func for testing
  *
  */
 int main (){
+
+    writeJSON();
+
+    /*
+    std::cout << "----CPU---- " << std::endl;
     std::cout << "getCPUCount(): " <<  getCPUCount() << std::endl;
     std::cout << "getCPUUsage(): " <<  getCPUUsage() << std::endl;
-   //std::vector<std::string>  getCPUAdditionalInformation(){
     std::cout << "getCPUUsageforWindow(10): " << getCPUUsageforWindow(10) << std::endl;
+    std::cout << "getCPUInformation(): " << getCPUInformation();
+    std::cout << "getCPUAdditionalInformation(): " <<  std::endl;
+    std::vector<std::string> vec = getCPUAdditionalInformation();
+    for (std::vector<std::string>::iterator it = vec.begin() ; it != vec.end(); ++it)
+    	std::cout << ' ' << *it;
+    std::cout << '\n';
+
+    std::cout << "---Main Memory---- " << std::endl;
+    std::cout << "getMainMemoryCapacity(): "  << getMainMemoryCapacity() << std::endl;
+    std::cout << "getAvailableMainMemoryCapacity(): "  << getAvailableMainMemoryCapacity() << std::endl;
+
+    std::cout << "---Disk Memory---- " << std::endl;
     std::cout << "getDiskCapacity(): " << getDiskCapacity() << std::endl;
     std::cout << "getAvailableDiskCapacity(): " << getAvailableDiskCapacity() << std::endl;
+
+    std::cout << "---Network---- " << std::endl;
     //std::vector<std::string> getNetworkInterfaces(){
     std::cout << "getNetworkInterfaceSpeed('wlan0'): " << getNetworkInterfaceSpeed("wlan0") << std::endl;
-    std::cout << "getNetworkInterfaceLoad('wlan0'):  " << getNetworkInterfaceLoad("wlan0") << std::endl;
-    std::cout << "getNetworkInterfaceLoadforWindow('wlan0', 10): " <<  getNetworkInterfaceLoadforWindow("wlan0", 10) << std::endl;
+    std::cout << "getNetworkInterfaceLoadIncoming():  " << getNetworkInterfaceLoadIncoming() << std::endl;
+    std::cout << "getNetworkInterfaceLoadOutgoing():  " << getNetworkInterfaceLoadOutgoing() << std::endl;
+    std::cout << "getNetworkInterfaceLoadIncomingforWindow(10): " <<  getNetworkInterfaceLoadIncomingforWindow(10) << std::endl;
+    std::cout << "getNetworkInterfaceLoadOutgoingforWindow(10): " <<  getNetworkInterfaceLoadOutgoingforWindow(10) << std::endl;
+    */
 }
-
