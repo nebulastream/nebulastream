@@ -143,7 +143,7 @@ TEST_F(FogTopologyNode, manipulate_sensor_id) {
   auto sensor = std::make_unique<FogToplogySensor>();
 
   // Sensor is constructed with invalid id.
-  ASSERT_EQ(node->getNodeId(), INVALID_NODE_ID);
+  ASSERT_EQ(node->getSensorId(), INVALID_NODE_ID);
 
   // Set id for sensor
   node->setSensorId(1);
@@ -152,26 +152,6 @@ TEST_F(FogTopologyNode, manipulate_sensor_id) {
   // There should be no two Sensors with same id
   // ToDo: Check not implemented yet
 }
-
-/* ------------------------------------------------------------------------- */
-/* - FogTopologyManager ---------------------------------------------------- */
-
-class FogTopologyManager : public testing::Test {
-public:
-  /* Will be called before any test in this class are executed. */
-  static void SetUpTestCase() { std::cout << "Setup FogTopologyManager test class." << std::endl; }
-
-  /* Will be called before a test is executed. */
-  void SetUp() { std::cout << "Setup test case." << std::endl; }
-
-  /* Will be called before a test is executed. */
-  void TearDown() { std::cout << "Setup test case." << std::endl; }
-
-  /* Will be called after all tests in this class are finished. */
-  static void TearDownTestCase() { std::cout << "Tear down test class." << std::endl; }
-};
-
-TEST_F(FogTopologyManager, FirstTest) { ASSERT_EQ(true, true); }
 
 /* ------------------------------------------------------------------------- */
 /* - FogTopologyPlan ------------------------------------------------------- */
@@ -191,4 +171,61 @@ public:
   static void TearDownTestCase() { std::cout << "Tear down test class." << std::endl; }
 };
 
-TEST_F(FogTopologyPlan, FirstTest) { ASSERT_EQ(true, true); }
+/* - Graph part -------------------- */
+TEST_F(FogTopologyPlan, graph_create) { ASSERT_EQ(true, true); }
+
+TEST_F(FogTopologyPlan, graph_print) { ASSERT_EQ(true, true); }
+
+TEST_F(FogTopologyPlan, graph_add_node) { ASSERT_EQ(true, true); }
+
+TEST_F(FogTopologyPlan, graph_add_link) { ASSERT_EQ(true, true); }
+
+TEST_F(FogTopologyPlan, graph_get_link) { ASSERT_EQ(true, true); }
+
+TEST_F(FogTopologyPlan, graph_remove_link) { ASSERT_EQ(true, true); }
+
+TEST_F(FogTopologyPlan, graph_remove_row_and_col) { ASSERT_EQ(true, true); }
+
+/* - Plan part -------------------- */
+TEST_F(FogTopologyPlan, plan_create) { ASSERT_EQ(true, true); }
+
+TEST_F(FogTopologyPlan, plan_print) { ASSERT_EQ(true, true); }
+
+TEST_F(FogTopologyPlan, plan_add_node) { ASSERT_EQ(true, true); }
+
+TEST_F(FogTopologyPlan, plan_remove_node) { ASSERT_EQ(true, true); }
+
+TEST_F(FogTopologyPlan, plan_list_nodes) { ASSERT_EQ(true, true); }
++ TEST_F(FogTopologyPlan, plan_add_sensor) {
+  ASSERT_EQ(true, true);
+}
+
+TEST_F(FogTopologyPlan, plan_remove_sensor) { ASSERT_EQ(true, true); }
+
+TEST_F(FogTopologyPlan, plan_list_sensor) { ASSERT_EQ(true, true); }
+
+/* ------------------------------------------------------------------------- */
+/* - FogTopologyManager ---------------------------------------------------- */
+
+class FogTopologyManager : public testing::Test {
+public:
+  /* Will be called before any test in this class are executed. */
+  static void SetUpTestCase() { std::cout << "Setup FogTopologyManager test class." << std::endl; }
+
+  /* Will be called before a test is executed. */
+  void SetUp() { std::cout << "Setup test case." << std::endl; }
+
+  /* Will be called before a test is executed. */
+  void TearDown() { std::cout << "Setup test case." << std::endl; }
+
+  /* Will be called after all tests in this class are finished. */
+  static void TearDownTestCase() { std::cout << "Tear down test class." << std::endl; }
+};
+
+TEST_F(FogTopologyManager, create_manager) { ASSERT_EQ(true, true); }
+
+TEST_F(FogTopologyManager, add_node) { ASSERT_EQ(true, true); }
+
+TEST_F(FogTopologyManager, add_sensor) { ASSERT_EQ(true, true); }
+
+TEST_F(FogTopologyManager, add_link) { ASSERT_EQ(true, true); }
