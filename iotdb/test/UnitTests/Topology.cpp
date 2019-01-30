@@ -147,10 +147,10 @@ TEST_F(FogTopologySensorTest, manipulate_sensor_id) {
   auto sensor = std::make_unique<FogTopologySensor>();
 
   // Sensor is constructed with invalid id.
-  ASSERT_EQ(node->getSensorId(), INVALID_NODE_ID);
+  ASSERT_EQ(sensor->getSensorId(), INVALID_NODE_ID);
 
   // Set id for sensor
-  node->setSensorId(1);
+  sensor->setSensorId(1);
   ASSERT_EQ(sensor->getSensorId(), 1);
 
   // There should be no two Sensors with same id
