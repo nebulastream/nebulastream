@@ -29,13 +29,13 @@ public:
 
 TEST_F(FogTopologyLinkTest, create_link) {
   auto link_N2N = std::make_unique<FogTopologyLink>(0, 1, NodeToNode);
-  ASSERT_NE(link_N2N, nullptr);
+  EXPECT_NE(link_N2N, nullptr);
 
   auto link_N2S = std::make_unique<FogTopologyLink>(1, 2, NodeToSensor);
-  ASSERT_NE(link_N2S, nullptr);
+  EXPECT_NE(link_N2S, nullptr);
 
   auto link_S2N = std::make_unique<FogTopologyLink>(2, 3, SensorToNode);
-  ASSERT_NE(link_S2N, nullptr);
+  EXPECT_NE(link_S2N, nullptr);
 
   // ToDo: There could be a check at construction time, if the nodes exist and the type is matching
   // Maybe do not pass an ID but a smart pointer to the nodes.
@@ -47,21 +47,21 @@ TEST_F(FogTopologyLinkTest, manipulate_link_id) {
   auto link_S2N = std::make_unique<FogTopologyLink>(2, 3, SensorToNode);
 
   // Link ID is set to incremental values
-  ASSERT_EQ(link_N2N->getLinkID() + 1, link_N2S->getLinkID());
-  ASSERT_EQ(link_N2S->getLinkID() + 1, link_S2N->getLinkID());
+  EXPECT_EQ(link_N2N->getLinkID() + 1, link_N2S->getLinkID());
+  EXPECT_EQ(link_N2S->getLinkID() + 1, link_S2N->getLinkID());
 
   // Set link ID and check result
   link_N2N->setLinkID(100);
-  ASSERT_EQ(link_N2N->getLinkID(), 100);
+  EXPECT_EQ(link_N2N->getLinkID(), 100);
 
   link_N2S->setLinkID(200);
-  ASSERT_EQ(link_N2S->getLinkID(), 200);
+  EXPECT_EQ(link_N2S->getLinkID(), 200);
 
   link_S2N->setLinkID(300);
-  ASSERT_EQ(link_S2N->getLinkID(), 300);
+  EXPECT_EQ(link_S2N->getLinkID(), 300);
 
   // There should be no two links with same id
-  ASSERT_ANY_THROW(link_S2N->setLinkID(200);)
+  EXPECT_ANY_THROW(link_S2N->setLinkID(200);)
 }
 
 TEST_F(FogTopologyLinkTest, get_node_ids) {
@@ -69,14 +69,14 @@ TEST_F(FogTopologyLinkTest, get_node_ids) {
   auto link_N2S = std::make_unique<FogTopologyLink>(1, 2, NodeToSensor);
   auto link_S2N = std::make_unique<FogTopologyLink>(2, 3, SensorToNode);
 
-  ASSERT_EQ(link_N2N->getSourceNodeId(), 0);
-  ASSERT_EQ(link_N2N->getDestNodeId(), 1);
+  EXPECT_EQ(link_N2N->getSourceNodeId(), 0);
+  EXPECT_EQ(link_N2N->getDestNodeId(), 1);
 
-  ASSERT_EQ(link_N2S->getSourceNodeId(), 1);
-  ASSERT_EQ(link_N2S->getDestNodeId(), 2);
+  EXPECT_EQ(link_N2S->getSourceNodeId(), 1);
+  EXPECT_EQ(link_N2S->getDestNodeId(), 2);
 
-  ASSERT_EQ(link_S2N->getSourceNodeId(), 2);
-  ASSERT_EQ(link_S2N->getDestNodeId(), 3);
+  EXPECT_EQ(link_S2N->getSourceNodeId(), 2);
+  EXPECT_EQ(link_S2N->getDestNodeId(), 3);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -100,7 +100,7 @@ public:
 TEST_F(FogTopologyNodeTest, create_node) {
 
   auto node = std::make_unique<FogTopologyNode>();
-  ASSERT_NE(node, nullptr);
+  EXPECT_NE(node, nullptr);
 }
 
 TEST_F(FogTopologyNodeTest, manipulate_node_id) {
@@ -108,15 +108,15 @@ TEST_F(FogTopologyNodeTest, manipulate_node_id) {
   auto node = std::make_unique<FogTopologyNode>();
 
   // Node is constructed with invalid id.
-  ASSERT_EQ(node->getNodeId(), INVALID_NODE_ID);
+  EXPECT_EQ(node->getNodeId(), INVALID_NODE_ID);
 
   // Set id for note
   node->setNodeId(200);
-  ASSERT_EQ(node->getNodeId(), 200);
+  EXPECT_EQ(node->getNodeId(), 200);
 
   // There should be no two nodes with same id
   auto node_2 = std::make_unique<FogTopologyNode>();
-  ASSERT_ANY_THROW(node_2->setNodeId(200);)
+  EXPECT_ANY_THROW(node_2->setNodeId(200);)
 }
 
 /* ------------------------------------------------------------------------- */
@@ -140,7 +140,7 @@ public:
 TEST_F(FogTopologySensorTest, create_sensor) {
 
   auto sensor = std::make_unique<FogTopologySensor>();
-  ASSERT_NE(sensor, nullptr);
+  EXPECT_NE(sensor, nullptr);
 }
 
 TEST_F(FogTopologySensorTest, manipulate_sensor_id) {
@@ -148,15 +148,15 @@ TEST_F(FogTopologySensorTest, manipulate_sensor_id) {
   auto sensor = std::make_unique<FogTopologySensor>();
 
   // Sensor is constructed with invalid id.
-  ASSERT_EQ(sensor->getSensorId(), INVALID_NODE_ID);
+  EXPECT_EQ(sensor->getSensorId(), INVALID_NODE_ID);
 
   // Set id for sensor
   sensor->setSensorId(200);
-  ASSERT_EQ(sensor->getSensorId(), 200);
+  EXPECT_EQ(sensor->getSensorId(), 200);
 
   // There should be no two sensors with same id
   auto sensor_2 = std::make_unique<FogTopologySensor>();
-  ASSERT_ANY_THROW(sensor_2->setSensorId(200);)
+  EXPECT_ANY_THROW(sensor_2->setSensorId(200);)
 }
 
 /* ------------------------------------------------------------------------- */
@@ -181,47 +181,47 @@ public:
 TEST_F(FogTopologyPlanTest, graph_create) {
 
   auto graph = std::make_unique<Graph>(3);
-  ASSERT_NE(graph, nullptr);
+  EXPECT_NE(graph, nullptr);
 
   auto graph_min = std::make_unique<Graph>(0);
-  ASSERT_NE(graph_min, nullptr);
+  EXPECT_NE(graph_min, nullptr);
 
   auto graph_max = std::make_unique<Graph>(MAX_NUMBER_OF_NODES);
-  ASSERT_NE(graph_max, nullptr);
+  EXPECT_NE(graph_max, nullptr);
 
-  ASSERT_ANY_THROW(auto graph_max = std::make_unique<Graph>(MAX_NUMBER_OF_NODES + 1);)
+  EXPECT_ANY_THROW(auto graph_max = std::make_unique<Graph>(MAX_NUMBER_OF_NODES + 1);)
 
-  ASSERT_ANY_THROW(auto graph_max = std::make_unique<Graph>(-1);)
+  EXPECT_ANY_THROW(auto graph_max = std::make_unique<Graph>(-1);)
 }
 
-TEST_F(FogTopologyPlanTest, graph_print) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, graph_print) { EXPECT_EQ(true, true); }
 
-TEST_F(FogTopologyPlanTest, graph_add_node) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, graph_add_node) { EXPECT_EQ(true, true); }
 
-TEST_F(FogTopologyPlanTest, graph_add_link) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, graph_add_link) { EXPECT_EQ(true, true); }
 
-TEST_F(FogTopologyPlanTest, graph_get_link) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, graph_get_link) { EXPECT_EQ(true, true); }
 
-TEST_F(FogTopologyPlanTest, graph_remove_link) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, graph_remove_link) { EXPECT_EQ(true, true); }
 
-TEST_F(FogTopologyPlanTest, graph_remove_row_and_col) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, graph_remove_row_and_col) { EXPECT_EQ(true, true); }
 
 /* - Plan part -------------------- */
-TEST_F(FogTopologyPlanTest, plan_create) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, plan_create) { EXPECT_EQ(true, true); }
 
-TEST_F(FogTopologyPlanTest, plan_print) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, plan_print) { EXPECT_EQ(true, true); }
 
-TEST_F(FogTopologyPlanTest, plan_add_node) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, plan_add_node) { EXPECT_EQ(true, true); }
 
-TEST_F(FogTopologyPlanTest, plan_remove_node) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, plan_remove_node) { EXPECT_EQ(true, true); }
 
-TEST_F(FogTopologyPlanTest, plan_list_nodes) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, plan_list_nodes) { EXPECT_EQ(true, true); }
 
-TEST_F(FogTopologyPlanTest, plan_add_sensor) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, plan_add_sensor) { EXPECT_EQ(true, true); }
 
-TEST_F(FogTopologyPlanTest, plan_remove_sensor) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, plan_remove_sensor) { EXPECT_EQ(true, true); }
 
-TEST_F(FogTopologyPlanTest, plan_list_sensor) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, plan_list_sensor) { EXPECT_EQ(true, true); }
 
 /* ------------------------------------------------------------------------- */
 /* - FogTopologyManager ---------------------------------------------------- */
@@ -241,10 +241,10 @@ public:
   static void TearDownTestCase() { std::cout << "Tear down FogTopologyManager test class." << std::endl; }
 };
 
-TEST_F(FogTopologyManagerTest, create_manager) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyManagerTest, create_manager) { EXPECT_EQ(true, true); }
 
-TEST_F(FogTopologyManagerTest, add_node) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyManagerTest, add_node) { EXPECT_EQ(true, true); }
 
-TEST_F(FogTopologyManagerTest, add_sensor) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyManagerTest, add_sensor) { EXPECT_EQ(true, true); }
 
-TEST_F(FogTopologyManagerTest, add_link) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyManagerTest, add_link) { EXPECT_EQ(true, true); }
