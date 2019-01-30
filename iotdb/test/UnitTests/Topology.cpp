@@ -1,4 +1,7 @@
 #include <iostream>
+#include <memory>
+
+#include "gtest/gtest.h"
 
 #include "Topology/FogTopologyLink.hpp"
 #include "Topology/FogTopologyManager.hpp"
@@ -8,7 +11,7 @@
 /* ------------------------------------------------------------------------- */
 /* - FogTopologyLink ------------------------------------------------------- */
 
-class FogTopologyLink : public testing::Test {
+class FogTopologyLinkTest : public testing::Test {
 public:
   /* Will be called before any test in this class are executed. */
   static void SetUpTestCase() { std::cout << "Setup FogTopologyLink tests class." << std::endl; }
@@ -23,7 +26,7 @@ public:
   static void TearDownTestCase() { std::cout << "Tear down FogTopologyLink test class." << std::endl; }
 };
 
-TEST_F(FogTopologyLink, create_link) {
+TEST_F(FogTopologyLinkTest, create_link) {
   auto link_N2N = std::make_unique<FogToplogyLink>(0, 1, NodeToNode);
   ASSERT_NE(link_N2N, nulllptr);
 
@@ -37,7 +40,7 @@ TEST_F(FogTopologyLink, create_link) {
   // Maybe do not pass an ID but a smart pointer to the nodes.
 }
 
-TEST_F(FogTopologyLink, manipulate_link_id) {
+TEST_F(FogTopologyLinkTest, manipulate_link_id) {
   auto link_N2N = std::make_unique<FogToplogyLink>(0, 1, NodeToNode);
   auto link_N2S = std::make_unique<FogToplogyLink>(1, 2, NodeToSensor);
   auto link_S2N = std::make_unique<FogToplogyLink>(2, 3, SensorToNode);
@@ -60,7 +63,7 @@ TEST_F(FogTopologyLink, manipulate_link_id) {
   // ToDo: Check not implemented yet
 }
 
-TEST_F(FogTopologyLink, get_node_ids) {
+TEST_F(FogTopologyLinkTest, get_node_ids) {
   auto link_N2N = std::make_unique<FogToplogyLink>(0, 1, NodeToNode);
   auto link_N2S = std::make_unique<FogToplogyLink>(1, 2, NodeToSensor);
   auto link_S2N = std::make_unique<FogToplogyLink>(2, 3, SensorToNode);
@@ -78,7 +81,7 @@ TEST_F(FogTopologyLink, get_node_ids) {
 /* ------------------------------------------------------------------------- */
 /* - FogTopologyNode ------------------------------------------------------- */
 
-class FogTopologyNode : public testing::Test {
+class FogTopologyNodeTest : public testing::Test {
 public:
   /* Will be called before any test in this class are executed. */
   static void SetUpTestCase() { std::cout << "Setup FogTopologyNode tests class." << std::endl; }
@@ -93,13 +96,13 @@ public:
   static void TearDownTestCase() { std::cout << "Tear down FogTopologyNode test class." << std::endl; }
 };
 
-TEST_F(FogTopologyNode, create_node) {
+TEST_F(FogTopologyNodeTest, create_node) {
 
   auto node = std::make_unique<FogToplogyNode>();
   ASSERT_NE(node, nulllptr);
 }
 
-TEST_F(FogTopologyNode, manipulate_node_id) {
+TEST_F(FogTopologyNodeTest, manipulate_node_id) {
 
   auto node = std::make_unique<FogToplogyNode>();
 
@@ -117,7 +120,7 @@ TEST_F(FogTopologyNode, manipulate_node_id) {
 /* ------------------------------------------------------------------------- */
 /* - FogTopologySensor ----------------------------------------------------- */
 
-class FogTopologySensor : public testing::Test {
+class FogTopologySensorTest : public testing::Test {
 public:
   /* Will be called before any test in this class are executed. */
   static void SetUpTestCase() { std::cout << "Setup FogTopologySensor tests class." << std::endl; }
@@ -132,13 +135,13 @@ public:
   static void TearDownTestCase() { std::cout << "Tear down FogTopologySensor test class." << std::endl; }
 };
 
-TEST_F(FogTopologySensor, create_sensor) {
+TEST_F(FogTopologySensorTest, create_sensor) {
 
   auto sensor = std::make_unique<FogToplogySensor>();
   ASSERT_NE(sensor, nulllptr);
 }
 
-TEST_F(FogTopologyNode, manipulate_sensor_id) {
+TEST_F(FogTopologySensorTest, manipulate_sensor_id) {
 
   auto sensor = std::make_unique<FogToplogySensor>();
 
@@ -156,77 +159,75 @@ TEST_F(FogTopologyNode, manipulate_sensor_id) {
 /* ------------------------------------------------------------------------- */
 /* - FogTopologyPlan ------------------------------------------------------- */
 
-class FogTopologyPlan : public testing::Test {
+class FogTopologyPlanTest : public testing::Test {
 public:
   /* Will be called before any test in this class are executed. */
-  static void SetUpTestCase() { std::cout << "Setup Tests Class." << std::endl; }
+  static void SetUpTestCase() { std::cout << "Setup FogTopologyPlan tests class." << std::endl; }
 
   /* Will be called before a test is executed. */
-  void SetUp() { std::cout << "Setup test case." << std::endl; }
+  void SetUp() { std::cout << "Setup FogTopologyPlan test case." << std::endl; }
 
   /* Will be called before a test is executed. */
-  void TearDown() { std::cout << "Setup test case." << std::endl; }
+  void TearDown() { std::cout << "Setup FogTopologyPlan test case." << std::endl; }
 
   /* Will be called after all tests in this class are finished. */
-  static void TearDownTestCase() { std::cout << "Tear down test class." << std::endl; }
+  static void TearDownTestCase() { std::cout << "Tear down FogTopologyPlan test class." << std::endl; }
 };
 
 /* - Graph part -------------------- */
-TEST_F(FogTopologyPlan, graph_create) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, graph_create) { ASSERT_EQ(true, true); }
 
-TEST_F(FogTopologyPlan, graph_print) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, graph_print) { ASSERT_EQ(true, true); }
 
-TEST_F(FogTopologyPlan, graph_add_node) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, graph_add_node) { ASSERT_EQ(true, true); }
 
-TEST_F(FogTopologyPlan, graph_add_link) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, graph_add_link) { ASSERT_EQ(true, true); }
 
-TEST_F(FogTopologyPlan, graph_get_link) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, graph_get_link) { ASSERT_EQ(true, true); }
 
-TEST_F(FogTopologyPlan, graph_remove_link) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, graph_remove_link) { ASSERT_EQ(true, true); }
 
-TEST_F(FogTopologyPlan, graph_remove_row_and_col) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, graph_remove_row_and_col) { ASSERT_EQ(true, true); }
 
 /* - Plan part -------------------- */
-TEST_F(FogTopologyPlan, plan_create) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, plan_create) { ASSERT_EQ(true, true); }
 
-TEST_F(FogTopologyPlan, plan_print) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, plan_print) { ASSERT_EQ(true, true); }
 
-TEST_F(FogTopologyPlan, plan_add_node) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, plan_add_node) { ASSERT_EQ(true, true); }
 
-TEST_F(FogTopologyPlan, plan_remove_node) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, plan_remove_node) { ASSERT_EQ(true, true); }
 
-TEST_F(FogTopologyPlan, plan_list_nodes) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, plan_list_nodes) { ASSERT_EQ(true, true); }
 
-TEST_F(FogTopologyPlan, plan_add_sensor) {
-  ASSERT_EQ(true, true);
-}
+TEST_F(FogTopologyPlanTest, plan_add_sensor) { ASSERT_EQ(true, true); }
 
-TEST_F(FogTopologyPlan, plan_remove_sensor) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, plan_remove_sensor) { ASSERT_EQ(true, true); }
 
-TEST_F(FogTopologyPlan, plan_list_sensor) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, plan_list_sensor) { ASSERT_EQ(true, true); }
 
 /* ------------------------------------------------------------------------- */
 /* - FogTopologyManager ---------------------------------------------------- */
 
-class FogTopologyManager : public testing::Test {
+class FogTopologyManagerTest : public testing::Test {
 public:
   /* Will be called before any test in this class are executed. */
   static void SetUpTestCase() { std::cout << "Setup FogTopologyManager test class." << std::endl; }
 
   /* Will be called before a test is executed. */
-  void SetUp() { std::cout << "Setup test case." << std::endl; }
+  void SetUp() { std::cout << "Setup FogTopologyManager test case." << std::endl; }
 
   /* Will be called before a test is executed. */
-  void TearDown() { std::cout << "Setup test case." << std::endl; }
+  void TearDown() { std::cout << "Setup FogTopologyManager test case." << std::endl; }
 
   /* Will be called after all tests in this class are finished. */
-  static void TearDownTestCase() { std::cout << "Tear down test class." << std::endl; }
+  static void TearDownTestCase() { std::cout << "Tear down FogTopologyManager test class." << std::endl; }
 };
 
-TEST_F(FogTopologyManager, create_manager) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyManagerTest, create_manager) { ASSERT_EQ(true, true); }
 
-TEST_F(FogTopologyManager, add_node) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyManagerTest, add_node) { ASSERT_EQ(true, true); }
 
-TEST_F(FogTopologyManager, add_sensor) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyManagerTest, add_sensor) { ASSERT_EQ(true, true); }
 
-TEST_F(FogTopologyManager, add_link) { ASSERT_EQ(true, true); }
+TEST_F(FogTopologyManagerTest, add_link) { ASSERT_EQ(true, true); }
