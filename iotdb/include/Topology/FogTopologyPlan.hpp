@@ -214,17 +214,17 @@ public:
 	/**
 	 * Support half-duplex links?
 	 */
-	void addFogTopologyLink(size_t pSourceNodeID, size_t pDestNodeID, LinkType type)
+	void addFogTopologyLink(size_t pSourceNodeId, size_t pDestNodeId, LinkType type)
 	{
-		FogTopologyLinkPtr linkPtr = std::make_shared<FogTopologyLink>(pSourceNodeID, pDestNodeID, type);
+		FogTopologyLinkPtr linkPtr = std::make_shared<FogTopologyLink>(pSourceNodeId, pDestNodeId, type);
 		fogLinks[linkPtr->getLinkID()] = linkPtr;
-		linkGraph->addLink(linkPtr->getSourceNodeID(), linkPtr->getDestNodeID(), linkPtr->getLinkID());
-		linkGraph->addLink(linkPtr->getDestNodeID(), linkPtr->getSourceNodeID(), linkPtr->getLinkID());
+		linkGraph->addLink(linkPtr->getSourceNodeId(), linkPtr->getDestNodeId(), linkPtr->getLinkID());
+		linkGraph->addLink(linkPtr->getDestNodeId(), linkPtr->getSourceNodeId(), linkPtr->getLinkID());
 	}
 	void removeFogTopologyLink(FogTopologyLinkPtr linkPtr)
 	{
 		size_t search_id = linkPtr->getLinkID();
-		linkGraph->removeLinkID(linkPtr->getSourceNodeID(), linkPtr->getDestNodeID());
+		linkGraph->removeLinkID(linkPtr->getSourceNodeId(), linkPtr->getDestNodeId());
 		fogLinks.erase(linkPtr->getLinkID());
 	}
 

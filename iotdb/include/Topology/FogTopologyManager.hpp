@@ -27,9 +27,9 @@ public:
 		currentPlan->addFogSensor(ptr);
 	}
 
-	void addLink(size_t pSourceNodeID, size_t pDestNodeID, LinkType type)
+	void addLink(size_t pSourceNodeId, size_t pDestNodeId, LinkType type)
 	{
-		currentPlan->addFogTopologyLink(pSourceNodeID,pDestNodeID,type);
+		currentPlan->addFogTopologyLink(pSourceNodeId,pDestNodeId,type);
 	}
 
 	FogTopologyPlanPtr getPlan()

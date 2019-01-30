@@ -69,14 +69,14 @@ TEST_F(FogTopologyLinkTest, get_node_ids) {
   auto link_N2S = std::make_unique<FogTopologyLink>(1, 2, NodeToSensor);
   auto link_S2N = std::make_unique<FogTopologyLink>(2, 3, SensorToNode);
 
-  ASSERT_EQ(link_N2N->getSourceNodeID(), 0);
-  ASSERT_EQ(link_N2N->getDestNodeID(), 1);
+  ASSERT_EQ(link_N2N->getSourceNodeId(), 0);
+  ASSERT_EQ(link_N2N->getDestNodeId(), 1);
 
-  ASSERT_EQ(link_N2S->getSourceNodeID(), 1);
-  ASSERT_EQ(link_N2S->getDestNodeID(), 2);
+  ASSERT_EQ(link_N2S->getSourceNodeId(), 1);
+  ASSERT_EQ(link_N2S->getDestNodeId(), 2);
 
-  ASSERT_EQ(link_S2N->getSourceNodeID(), 2);
-  ASSERT_EQ(link_S2N->getDestNodeID(), 3);
+  ASSERT_EQ(link_S2N->getSourceNodeId(), 2);
+  ASSERT_EQ(link_S2N->getDestNodeId(), 3);
 }
 
 /* ------------------------------------------------------------------------- */
