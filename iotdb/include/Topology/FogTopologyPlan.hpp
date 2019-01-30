@@ -87,7 +87,9 @@ public:
     return ss.str();
   }
 
-  void print(matrix<size_t> pMtx) { std::cout << to_sring(pMtx); }
+  std::string to_string() { to_string(mtx); }
+
+  void print(matrix<size_t> pMtx) { std::cout << to_string(pMtx); }
 
   void print() { print(mtx); }
 
@@ -184,7 +186,7 @@ public:
     }
     ss << endl;
 
-    return ss;
+    return ss.str();
   }
 
   void printPlan() { std::cout << to_string(); }
