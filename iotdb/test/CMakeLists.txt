@@ -10,6 +10,5 @@ add_test(NAME code-generation-tests COMMAND code-generation-tests)
 # Topology
 add_executable(fog-topology-tests "UnitTests/Topology.cpp")
 target_link_libraries(fog-topology-tests ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
-target_include_directories(iotMaster PUBLIC "include")
 add_test(NAME fog-topology-tests COMMAND fog-topology-tests)
 
