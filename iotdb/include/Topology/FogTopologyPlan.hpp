@@ -87,7 +87,7 @@ public:
     return ss.str();
   }
 
-  std::string to_string() { to_string(mtx); }
+  std::string to_string() { return to_string(mtx); }
 
   void print(matrix<size_t> pMtx) { std::cout << to_string(pMtx); }
 
