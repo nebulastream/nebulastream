@@ -1,7 +1,9 @@
 #ifndef INCLUDE_TOPOLOGY_FOGTOPLOGYMANAGER_HPP_
 #define INCLUDE_TOPOLOGY_FOGTOPLOGYMANAGER_HPP_
 
-#include "../Topology/FogTopologyPlan.hpp"
+#include <memory>
+
+#include "Topology/FogTopologyPlan.hpp"
 
 typedef std::shared_ptr<FogTopologyPlan> FogTopologyPlanPtr;
 

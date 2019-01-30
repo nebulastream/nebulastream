@@ -1,5 +1,8 @@
 #ifndef INCLUDE_TOPOLOGY_FOGTOPLOGYSENSOR_HPP_
 #define INCLUDE_TOPOLOGY_FOGTOPLOGYSENSOR_HPP_
+
+#include <memory>
+
 #define INVALID_NODE_ID 101
 
 class FogToplogySensor{
