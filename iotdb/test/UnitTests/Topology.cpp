@@ -15,26 +15,26 @@
 class FogTopologyLinkTest : public testing::Test {
 public:
   /* Will be called before any test in this class are executed. */
-  static void SetUpTestCase() { std::cout << "Setup FogTopologyLink tests class." << std::endl; }
+  static void SetUpTestCase() override { std::cout << "Setup FogTopologyLink tests class." << std::endl; }
 
   /* Will be called before a test is executed. */
-  void SetUp() { std::cout << "Setup FogTopologyLink test case." << std::endl; }
+  void SetUp() override { std::cout << "Setup FogTopologyLink test case." << std::endl; }
 
   /* Will be called before a test is executed. */
-  void TearDown() { std::cout << "Setup FogTopologyLink test case." << std::endl; }
+  void TearDown() override { std::cout << "Setup FogTopologyLink test case." << std::endl; }
 
   /* Will be called after all tests in this class are finished. */
-  static void TearDownTestCase() { std::cout << "Tear down FogTopologyLink test class." << std::endl; }
+  static void TearDownTestCase() override { std::cout << "Tear down FogTopologyLink test class." << std::endl; }
 };
 
 TEST_F(FogTopologyLinkTest, create_link) {
-  auto link_N2N = std::make_unique<FogTopologyLink>(0, 1, NodeToNode);
+  EXPECT_NO_THROW(auto link_N2N = std::make_unique<FogTopologyLink>(0, 1, NodeToNode););
   EXPECT_NE(link_N2N, nullptr);
 
-  auto link_N2S = std::make_unique<FogTopologyLink>(1, 2, NodeToSensor);
+  EXPECT_NO_THROW(auto link_N2S = std::make_unique<FogTopologyLink>(1, 2, NodeToSensor););
   EXPECT_NE(link_N2S, nullptr);
 
-  auto link_S2N = std::make_unique<FogTopologyLink>(2, 3, SensorToNode);
+  EXPECT_NO_THROW(auto link_S2N = std::make_unique<FogTopologyLink>(2, 3, SensorToNode););
   EXPECT_NE(link_S2N, nullptr);
 
   // ToDo: There could be a check at construction time, if the nodes exist and the type is matching
@@ -85,21 +85,20 @@ TEST_F(FogTopologyLinkTest, get_node_ids) {
 class FogTopologyNodeTest : public testing::Test {
 public:
   /* Will be called before any test in this class are executed. */
-  static void SetUpTestCase() { std::cout << "Setup FogTopologyNode tests class." << std::endl; }
+  static void SetUpTestCase() override { std::cout << "Setup FogTopologyNode tests class." << std::endl; }
 
   /* Will be called before a test is executed. */
-  void SetUp() { std::cout << "Setup FogTopologyNode test case." << std::endl; }
+  void SetUp() override { std::cout << "Setup FogTopologyNode test case." << std::endl; }
 
   /* Will be called before a test is executed. */
-  void TearDown() { std::cout << "Setup FogTopologyNode test case." << std::endl; }
+  void TearDown() override { std::cout << "Setup FogTopologyNode test case." << std::endl; }
 
   /* Will be called after all tests in this class are finished. */
-  static void TearDownTestCase() { std::cout << "Tear down FogTopologyNode test class." << std::endl; }
+  static void TearDownTestCase() override { std::cout << "Tear down FogTopologyNode test class." << std::endl; }
 };
 
 TEST_F(FogTopologyNodeTest, create_node) {
-
-  auto node = std::make_unique<FogTopologyNode>();
+  EXPECT_NO_THROW(auto node = std::make_unique<FogTopologyNode>(););
   EXPECT_NE(node, nullptr);
 }
 
@@ -125,21 +124,20 @@ TEST_F(FogTopologyNodeTest, manipulate_node_id) {
 class FogTopologySensorTest : public testing::Test {
 public:
   /* Will be called before any test in this class are executed. */
-  static void SetUpTestCase() { std::cout << "Setup FogTopologySensor tests class." << std::endl; }
+  static void SetUpTestCase() override { std::cout << "Setup FogTopologySensor tests class." << std::endl; }
 
   /* Will be called before a test is executed. */
-  void SetUp() { std::cout << "Setup FogTopologySensor test case." << std::endl; }
+  void SetUp() override { std::cout << "Setup FogTopologySensor test case." << std::endl; }
 
   /* Will be called before a test is executed. */
-  void TearDown() { std::cout << "Setup FogTopologySensor test case." << std::endl; }
+  void TearDown() override { std::cout << "Setup FogTopologySensor test case." << std::endl; }
 
   /* Will be called after all tests in this class are finished. */
-  static void TearDownTestCase() { std::cout << "Tear down FogTopologySensor test class." << std::endl; }
+  static void TearDownTestCase() override { std::cout << "Tear down FogTopologySensor test class." << std::endl; }
 };
 
 TEST_F(FogTopologySensorTest, create_sensor) {
-
-  auto sensor = std::make_unique<FogTopologySensor>();
+  EXPECT_NO_THROW(auto sensor = std::make_unique<FogTopologySensor>(););
   EXPECT_NE(sensor, nullptr);
 }
 
@@ -165,28 +163,54 @@ TEST_F(FogTopologySensorTest, manipulate_sensor_id) {
 class FogTopologyPlanTest : public testing::Test {
 public:
   /* Will be called before any test in this class are executed. */
-  static void SetUpTestCase() { std::cout << "Setup FogTopologyPlan tests class." << std::endl; }
+  static void SetUpTestCase() override { std::cout << "Setup FogTopologyPlan tests class." << std::endl; }
 
   /* Will be called before a test is executed. */
-  void SetUp() { std::cout << "Setup FogTopologyPlan test case." << std::endl; }
+  void SetUp() override {
+
+    std::cout << "Setup FogTopologyPlan test case." << std::endl;
+
+    sensor_1 = std::make_shared<FogTopologySensor>();
+    sensor_2 = std::make_shared<FogTopologySensor>();
+    sensor_3 = std::make_shared<FogTopologySensor>();
+    sensor_4 = std::make_shared<FogTopologySensor>();
+
+    sensor_1->setSensorId(1);
+    sensor_2->setSensorId(2);
+    sensor_3->setSensorId(3);
+    sensor_4->setSensorId(4);
+
+    node_1 = std::make_shared<FogTopologyNode>();
+    node_2 = std::make_shared<FogTopologyNode>();
+    node_3 = std::make_shared<FogTopologyNode>();
+    node_4 = std::make_shared<FogTopologyNode>();
+
+    node_1->setNodeId(1);
+    node_2->setNodeId(2);
+    node_3->setNodeId(3);
+    node_4->setNodeId(4);
+  }
 
   /* Will be called before a test is executed. */
-  void TearDown() { std::cout << "Setup FogTopologyPlan test case." << std::endl; }
+  void TearDown() override { std::cout << "Setup FogTopologyPlan test case." << std::endl; }
 
   /* Will be called after all tests in this class are finished. */
-  static void TearDownTestCase() { std::cout << "Tear down FogTopologyPlan test class." << std::endl; }
+  static void TearDownTestCase() override { std::cout << "Tear down FogTopologyPlan test class." << std::endl; }
+
+  FogTopologyNodePtr node_1, node_2, node_3, node_4;
+  FogTopologySensorPtr sensor_1, sensor_2, sensor_3, sensor_4;
 };
 
 /* - Graph part -------------------- */
 TEST_F(FogTopologyPlanTest, graph_create) {
 
-  auto graph = std::make_unique<Graph>(3);
+  EXPECT_NO_THROW(auto graph = std::make_unique<Graph>(3););
   EXPECT_NE(graph, nullptr);
 
-  auto graph_min = std::make_unique<Graph>(0);
+  EXPECT_NO_THROW(auto graph_min = std::make_unique<Graph>(0););
   EXPECT_NE(graph_min, nullptr);
 
-  auto graph_max = std::make_unique<Graph>(MAX_NUMBER_OF_NODES);
+  EXPECT_NO_THROW(auto graph_max = std::make_unique<Graph>(MAX_NUMBER_OF_NODES););
   EXPECT_NE(graph_max, nullptr);
 
   EXPECT_ANY_THROW(auto graph_max = std::make_unique<Graph>(MAX_NUMBER_OF_NODES + 1););
@@ -194,17 +218,59 @@ TEST_F(FogTopologyPlanTest, graph_create) {
   EXPECT_ANY_THROW(auto graph_max = std::make_unique<Graph>(-1););
 }
 
-TEST_F(FogTopologyPlanTest, graph_print) { EXPECT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, graph_add_node) {
+  auto graph = std::make_unique<Graph>(MAX_NUMBER_OF_NODES - 1);
+  EXPECT_NO_THROW(graph->addNode(););
+  EXPECT_ANY_THROW(graph->addNode(););
+}
 
-TEST_F(FogTopologyPlanTest, graph_add_node) { EXPECT_EQ(true, true); }
+TEST_F(FogTopologyPlanTest, graph_add_link) {
+  // create graph
+  auto graph = std::make_unique<Graph>(4);
+  EXPECT_NO_THROW(graph->addLink(1, 2, 1););
 
-TEST_F(FogTopologyPlanTest, graph_add_link) { EXPECT_EQ(true, true); }
+  // adding a link, that already exists
+  EXPECT_ANY_THROW(graph->addLink(1, 2, 1);); // nodes & id are identical
+  EXPECT_ANY_THROW(graph->addLink(1, 2, 2);); // nodes are identical
+  EXPECT_ANY_THROW(graph->addLink(1, 3, 1);); // id is identical
+
+  // adding a link for nodes, that do not exist
+  EXPECT_ANY_THROW(graph->addLink(1, 6, 3);); // right node
+  EXPECT_ANY_THROW(graph->addLink(6, 2, 4);); // left node
+  EXPECT_ANY_THROW(graph->addLink(6, 7, 5);); // both
+
+  // self-assignment
+  EXPECT_ANY_THROW(graph->addLink(2, 2, 6););
+}
 
 TEST_F(FogTopologyPlanTest, graph_get_link) { EXPECT_EQ(true, true); }
 
 TEST_F(FogTopologyPlanTest, graph_remove_link) { EXPECT_EQ(true, true); }
 
 TEST_F(FogTopologyPlanTest, graph_remove_row_and_col) { EXPECT_EQ(true, true); }
+
+TEST_F(FogTopologyPlanTest, graph_print) {
+
+  // empty and naked graph
+  auto graph = std::make_unique<Graph>(4);
+  std::cout << graph->to_string();
+
+  // add a node
+  graph->addNode();
+  std::cout << graph->to_string();
+
+  // add a link
+  graph->addLink(1, 2, 1);
+  std::cout << graph->to_string();
+
+  // adding a node
+  graph->addNode();
+  std::cout << graph->to_string();
+
+  // remove a link
+  graph->addNode();
+  std::cout << graph->to_string();
+}
 
 /* - Plan part -------------------- */
 TEST_F(FogTopologyPlanTest, plan_create) { EXPECT_EQ(true, true); }
@@ -229,16 +295,16 @@ TEST_F(FogTopologyPlanTest, plan_list_sensor) { EXPECT_EQ(true, true); }
 class FogTopologyManagerTest : public testing::Test {
 public:
   /* Will be called before any test in this class are executed. */
-  static void SetUpTestCase() { std::cout << "Setup FogTopologyManager test class." << std::endl; }
+  static void SetUpTestCase() override { std::cout << "Setup FogTopologyManager test class." << std::endl; }
 
   /* Will be called before a test is executed. */
-  void SetUp() { std::cout << "Setup FogTopologyManager test case." << std::endl; }
+  void SetUp() override { std::cout << "Setup FogTopologyManager test case." << std::endl; }
 
   /* Will be called before a test is executed. */
-  void TearDown() { std::cout << "Setup FogTopologyManager test case." << std::endl; }
+  void TearDown() override { std::cout << "Setup FogTopologyManager test case." << std::endl; }
 
   /* Will be called after all tests in this class are finished. */
-  static void TearDownTestCase() { std::cout << "Tear down FogTopologyManager test class." << std::endl; }
+  static void TearDownTestCase() override { std::cout << "Tear down FogTopologyManager test class." << std::endl; }
 };
 
 TEST_F(FogTopologyManagerTest, create_manager) { EXPECT_EQ(true, true); }
