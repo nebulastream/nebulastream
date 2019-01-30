@@ -27,13 +27,13 @@ public:
 };
 
 TEST_F(FogTopologyLinkTest, create_link) {
-  auto link_N2N = std::make_unique<FogToplogyLink>(0, 1, NodeToNode);
+  auto link_N2N = std::make_unique<FogTopologyLink>(0, 1, NodeToNode);
   ASSERT_NE(link_N2N, nulllptr);
 
-  auto link_N2S = std::make_unique<FogToplogyLink>(1, 2, NodeToSensor);
+  auto link_N2S = std::make_unique<FogTopologyLink>(1, 2, NodeToSensor);
   ASSERT_NE(link_N2S, nulllptr);
 
-  auto link_S2N = std::make_unique<FogToplogyLink>(2, 3, SensorToNode);
+  auto link_S2N = std::make_unique<FogTopologyLink>(2, 3, SensorToNode);
   ASSERT_NE(link_S2N, nulllptr);
 
   // ToDo: There could be a check at construction time, if the nodes exist and the type is matching
@@ -41,9 +41,9 @@ TEST_F(FogTopologyLinkTest, create_link) {
 }
 
 TEST_F(FogTopologyLinkTest, manipulate_link_id) {
-  auto link_N2N = std::make_unique<FogToplogyLink>(0, 1, NodeToNode);
-  auto link_N2S = std::make_unique<FogToplogyLink>(1, 2, NodeToSensor);
-  auto link_S2N = std::make_unique<FogToplogyLink>(2, 3, SensorToNode);
+  auto link_N2N = std::make_unique<FogTopologyLink>(0, 1, NodeToNode);
+  auto link_N2S = std::make_unique<FogTopologyLink>(1, 2, NodeToSensor);
+  auto link_S2N = std::make_unique<FogTopologyLink>(2, 3, SensorToNode);
 
   // Link ID is set to incremental values
   ASSERT_EQ(link_N2N->getLinkID() + 1, link_N2S->getLinkID());
@@ -64,9 +64,9 @@ TEST_F(FogTopologyLinkTest, manipulate_link_id) {
 }
 
 TEST_F(FogTopologyLinkTest, get_node_ids) {
-  auto link_N2N = std::make_unique<FogToplogyLink>(0, 1, NodeToNode);
-  auto link_N2S = std::make_unique<FogToplogyLink>(1, 2, NodeToSensor);
-  auto link_S2N = std::make_unique<FogToplogyLink>(2, 3, SensorToNode);
+  auto link_N2N = std::make_unique<FogTopologyLink>(0, 1, NodeToNode);
+  auto link_N2S = std::make_unique<FogTopologyLink>(1, 2, NodeToSensor);
+  auto link_S2N = std::make_unique<FogTopologyLink>(2, 3, SensorToNode);
 
   ASSERT_EQ(link_N2N->getSourceNodeID(), 0);
   ASSERT_EQ(link_N2N->getDestNodeID(), 1);
@@ -98,13 +98,13 @@ public:
 
 TEST_F(FogTopologyNodeTest, create_node) {
 
-  auto node = std::make_unique<FogToplogyNode>();
+  auto node = std::make_unique<FogTopologyNode>();
   ASSERT_NE(node, nulllptr);
 }
 
 TEST_F(FogTopologyNodeTest, manipulate_node_id) {
 
-  auto node = std::make_unique<FogToplogyNode>();
+  auto node = std::make_unique<FogTopologyNode>();
 
   // Node is constructed with invalid id.
   ASSERT_EQ(node->getNodeId(), INVALID_NODE_ID);
@@ -137,13 +137,13 @@ public:
 
 TEST_F(FogTopologySensorTest, create_sensor) {
 
-  auto sensor = std::make_unique<FogToplogySensor>();
+  auto sensor = std::make_unique<FogTopologySensor>();
   ASSERT_NE(sensor, nulllptr);
 }
 
 TEST_F(FogTopologySensorTest, manipulate_sensor_id) {
 
-  auto sensor = std::make_unique<FogToplogySensor>();
+  auto sensor = std::make_unique<FogTopologySensor>();
 
   // Sensor is constructed with invalid id.
   ASSERT_EQ(node->getSensorId(), INVALID_NODE_ID);
