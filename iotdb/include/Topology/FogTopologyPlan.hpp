@@ -11,9 +11,9 @@
 #include <boost/numeric/ublas/io.hpp>
 #include <boost/numeric/ublas/matrix_proxy.hpp>
 
-#include "Topology/FogToplogyLink.hpp"
-#include "Topology/FogToplogyNode.hpp"
-#include "Topology/FogToplogySensor.hpp"
+#include "Topology/FogTopologyLink.hpp"
+#include "Topology/FogTopologyNode.hpp"
+#include "Topology/FogTopologySensor.hpp"
 
 
 
