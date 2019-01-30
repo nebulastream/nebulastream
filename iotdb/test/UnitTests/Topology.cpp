@@ -61,7 +61,7 @@ TEST_F(FogTopologyLinkTest, manipulate_link_id) {
   EXPECT_EQ(link_S2N->getLinkID(), 300);
 
   // There should be no two links with same id
-  EXPECT_ANY_THROW(link_S2N->setLinkID(200);)
+  EXPECT_ANY_THROW(link_S2N->setLinkID(200););
 }
 
 TEST_F(FogTopologyLinkTest, get_node_ids) {
@@ -116,7 +116,7 @@ TEST_F(FogTopologyNodeTest, manipulate_node_id) {
 
   // There should be no two nodes with same id
   auto node_2 = std::make_unique<FogTopologyNode>();
-  EXPECT_ANY_THROW(node_2->setNodeId(200);)
+  EXPECT_ANY_THROW(node_2->setNodeId(200););
 }
 
 /* ------------------------------------------------------------------------- */
@@ -156,7 +156,7 @@ TEST_F(FogTopologySensorTest, manipulate_sensor_id) {
 
   // There should be no two sensors with same id
   auto sensor_2 = std::make_unique<FogTopologySensor>();
-  EXPECT_ANY_THROW(sensor_2->setSensorId(200);)
+  EXPECT_ANY_THROW(sensor_2->setSensorId(200););
 }
 
 /* ------------------------------------------------------------------------- */
@@ -189,9 +189,9 @@ TEST_F(FogTopologyPlanTest, graph_create) {
   auto graph_max = std::make_unique<Graph>(MAX_NUMBER_OF_NODES);
   EXPECT_NE(graph_max, nullptr);
 
-  EXPECT_ANY_THROW(auto graph_max = std::make_unique<Graph>(MAX_NUMBER_OF_NODES + 1);)
+  EXPECT_ANY_THROW(auto graph_max = std::make_unique<Graph>(MAX_NUMBER_OF_NODES + 1););
 
-  EXPECT_ANY_THROW(auto graph_max = std::make_unique<Graph>(-1);)
+  EXPECT_ANY_THROW(auto graph_max = std::make_unique<Graph>(-1););
 }
 
 TEST_F(FogTopologyPlanTest, graph_print) { EXPECT_EQ(true, true); }
