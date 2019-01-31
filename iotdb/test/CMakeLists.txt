@@ -8,7 +8,7 @@ target_link_libraries(code-generation-tests ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
 add_test(NAME code-generation-tests COMMAND code-generation-tests)
 
 # Topology
-add_executable(fog-topology-tests "UnitTests/Topology.cpp")
-target_link_libraries(fog-topology-tests ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
-add_test(NAME fog-topology-tests COMMAND fog-topology-tests)
+#add_executable(fog-topology-tests "UnitTests/Topology.cpp")
+#target_link_libraries(fog-topology-tests ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
+#add_test(NAME fog-topology-tests COMMAND fog-topology-tests)
 
