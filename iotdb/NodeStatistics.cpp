@@ -388,6 +388,53 @@ float getNetworkInterfaceLoadOutgoingforWindow(int window_in_sec){
     return count;
 }
 
+
+/*
+ *  Provide the current IP address
+ *
+ */
+std::string getIPAddress(){
+    std::string resultString = exec("ifconfig | grep 'inet ' | grep -Fv 127.0.0.1 | awk '{print $2}'");
+    resultString.erase(0,5);
+    try {
+        size_t pos = 0;
+        std::string token;
+        std::string delimiter = "\n";
+        while ((pos = resultString.find(delimiter)) != std::string::npos) {
+            token = resultString.substr(0, pos);
+            resultString.erase(0, pos + delimiter.length());
+        }
+        return token;
+    } catch (std::exception& e) {
+        std::cout << "Parsing in getIPAddress failed!" << std::endl;
+        return std::string();
+    };
+}
+
+
+/*
+ *  Provide the current MAC address
+ *
+ */
+std::string getMACAddress(){
+    std::string resultString = exec("ifconfig -a | grep -Po 'HWaddr \\K.*$'");
+    try {
+        size_t pos = 0;
+        std::string token;
+        std::string delimiter = "\n";
+        while ((pos = resultString.find(delimiter)) != std::string::npos) {
+            token = resultString.substr(0, pos);
+            resultString.erase(0, pos + delimiter.length());
+        }
+        return token;
+    } catch (std::exception& e) {
+        std::cout << "Parsing in getMAC failed!" << std::endl;
+        return std::string();
+    };
+}
+
+
+
 /*
  *  Generates Json out of node statistics 
  *
@@ -412,6 +459,8 @@ std::string writeJSON () {
     json += "\t\"AvailableMainMemoryCapacityKb\": " + std::to_string(getAvailableMainMemoryCapacity()) + ",\n";
     json += "\t\"DiskCapacityKb\": " + std::to_string(getDiskCapacity()) + ",\n";
     json += "\t\"AvailableDiskCapacityKb\": " + std::to_string(getAvailableDiskCapacity()) + ",\n";
+    json += "\t\"IPAddress\": \"" + getIPAddress() + "\",\n";
+    json += "\t\"MACAddress\": \"" + getMACAddress() + "\",\n";
     json += "\t\"NetworkInterfaceLoadIncomingKbs\": " + std::to_string(getNetworkInterfaceLoadIncoming()) + ",\n";
     json += "\t\"NetworkInterfaceLoadOutgoingKbs\": " + std::to_string(getNetworkInterfaceLoadOutgoing()) + ",\n";
     json += "\t\"NetworkInterfaceLoadIncomingforWindow10sKbs\": " + std::to_string(getNetworkInterfaceLoadIncomingforWindow(10)) + ",\n";
@@ -428,7 +477,7 @@ std::string writeJSON () {
  *
  */
 int main (){
-
+   
     writeJSON();
 
     /*
