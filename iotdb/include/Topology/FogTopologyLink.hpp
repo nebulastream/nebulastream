@@ -2,32 +2,32 @@
 #define INCLUDE_TOPOLOGY_FOGTOPOLOGYLINK_HPP_
 
 #include <memory>
-
+#include "FogTopologyEntry.hpp"
 #define NOT_EXISTING_LINK_ID 0
 #define INVALID_NODE_ID 101
 
 enum LinkType { NodeToNode, NodeToSensor, SensorToNode };
-enum NodeType { Worker, Sensor };
+//enum NodeType { Worker, Sensor };
 
 static size_t currentLinkID = 1;
 
 class FogTopologyLink {
 
 public:
-  FogTopologyLink(size_t pSourceNodeId, size_t pDestNodeId, LinkType type) {
+  FogTopologyLink(size_t pSourceNodeId, size_t pDestNodeId) {
     linkId = currentLinkID++;
 
-    if (type == NodeToNode) {
-      sourceNodeType = Worker;
-      destNodeType = Worker;
-    } else if (type == NodeToSensor) {
-      sourceNodeType = Worker;
-      destNodeType = Sensor;
-    } else // SensorToNode
-    {
-      sourceNodeType = Sensor;
-      destNodeType = Sensor;
-    }
+//    if (type == NodeToNode) {
+//      sourceNodeType = Worker;
+//      destNodeType = Worker;
+//    } else if (type == NodeToSensor) {
+//      sourceNodeType = Worker;
+//      destNodeType = Sensor;
+//    } else // SensorToNode
+//    {
+//      sourceNodeType = Sensor;
+//      destNodeType = Sensor;
+//    }
 
     sourceNodeID = pSourceNodeId;
     destNodeID = pDestNodeId;
@@ -35,7 +35,7 @@ public:
 
   void setLinkID(size_t pLinkID) { linkId = pLinkID; }
 
-  size_t getLinkID() { return linkId; }
+  size_t getID() { return linkId; }
 
   size_t getSourceNodeId() { return sourceNodeID; }
 
@@ -46,8 +46,8 @@ private:
   size_t sourceNodeID;
   size_t destNodeID;
 
-  NodeType sourceNodeType;
-  NodeType destNodeType;
+  FogTopologyEntryPtr sourceNodeType;
+  FogTopologyEntryPtr destNodeType;
 };
 
 typedef std::shared_ptr<FogTopologyLink> FogTopologyLinkPtr;

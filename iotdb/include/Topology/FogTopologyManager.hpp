@@ -11,12 +11,19 @@ class FogTopologyManager {
 public:
   FogTopologyManager() { currentPlan = std::make_shared<FogTopologyPlan>(); }
 
-  void addFogNode(FogTopologyNodePtr ptr) { currentPlan->addFogNode(ptr); }
+  FogTopologyNodePtr createFogNode()
+  {
+	  return currentPlan->createFogWorkerNode();
+  }
 
-  void addSensorNode(FogTopologySensorPtr ptr) { currentPlan->addFogSensor(ptr); }
+  FogTopologySensorPtr createSensorNode()
+  {
+	  return currentPlan->createFogSensorNode();
+  }
 
-  void addLink(size_t pSourceNodeId, size_t pDestNodeId, LinkType type) {
-    currentPlan->addFogTopologyLink(pSourceNodeId, pDestNodeId, type);
+  void createFogNodeLink(size_t pSourceNodeId, size_t pDestNodeId)
+  {
+	  return currentPlan->createFogNodeLink(pSourceNodeId, pDestNodeId);
   }
 
   FogTopologyPlanPtr getPlan() { return currentPlan; }

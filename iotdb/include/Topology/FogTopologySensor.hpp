@@ -2,16 +2,19 @@
 #define INCLUDE_TOPOLOGY_FOGTOPOLOGYSENSOR_HPP_
 
 #include <memory>
+#include "FogTopologyEntry.hpp"
 
 #define INVALID_NODE_ID 101
 
-class FogTopologySensor {
+class FogTopologySensor : public FogTopologyEntry{
 
 public:
   FogTopologySensor() { sensorID = INVALID_NODE_ID; }
 
   void setSensorId(size_t id) { sensorID = id; }
-  size_t getSensorId() { return sensorID; }
+  size_t getID() { return sensorID; }
+
+  FogNodeType getEntryType(){return Sensor;}
 
 private:
   size_t sensorID;

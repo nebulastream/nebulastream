@@ -19,17 +19,13 @@
 
 void createTestTopo(FogTopologyManager* fMgnr)
 {
-	FogTopologyNodePtr f1 = std::make_shared<FogTopologyNode>();
-	fMgnr->addFogNode(f1);
+	FogTopologyNodePtr f1 = fMgnr->createFogNode();
 
-	FogTopologySensorPtr s1 = std::make_shared<FogTopologySensor>();
-	fMgnr->addSensorNode(s1);
+	FogTopologySensorPtr s1 = fMgnr->createSensorNode();
 
-	FogTopologySensorPtr s2 = std::make_shared<FogTopologySensor>();
-	fMgnr->addSensorNode(s2);
+//	FogTopologySensorPtr s2 = fMgnr->createSensorNode();
 
-	fMgnr->addLink(f1->getNodeId(), s1->getSensorId(), NodeToSensor);
-	fMgnr->addLink(f1->getNodeId(), s2->getSensorId(), NodeToSensor);
+	fMgnr->createFogNodeLink(s1->getID(), f1->getID());
 
 	FogTopologyPlanPtr fPlan = fMgnr->getPlan();
 
