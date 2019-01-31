@@ -26,6 +26,21 @@ namespace iotdb {
 
     }
 
+    class ExpressionStatment;
+    typedef std::shared_ptr<ExpressionStatment> ExpressionStatmentPtr;
+
+    class ExpressionStatment : public Statement{
+    public:
+      virtual StatementType getStamentType() const = 0;
+      virtual const CodeExpressionPtr getCode() const = 0;
+      /** \brief virtual copy constructor */
+      virtual const ExpressionStatmentPtr copy() const = 0;
+      virtual ~ExpressionStatment();
+    };
+
+    ExpressionStatment::~ExpressionStatment(){
+    }
+
     typedef std::shared_ptr<Statement> StatementPtr;
 
 
@@ -34,8 +49,11 @@ namespace iotdb {
     class Declaration{
     public:
       virtual const Code getCode() const = 0;
-      virtual ~Declaration(){}
+      virtual ~Declaration();
     };
+
+    Declaration::~Declaration(){
+    }
 
     class StructDeclaration : public Declaration{
     public:
@@ -213,7 +231,7 @@ namespace iotdb {
       return file;
     }
 
-    class VarRefStatement : public Statement{
+    class VarRefStatement : public ExpressionStatment{
     public:
       const VariableDeclaration& var_decl_;
 
@@ -225,16 +243,20 @@ namespace iotdb {
          return var_decl_.getIdentifier();
       }
 
+      virtual const ExpressionStatmentPtr copy() const{
+        return std::make_shared<VarRefStatement>(*this);
+      }
+
      VarRefStatement(const VariableDeclaration& var_decl) : var_decl_(var_decl){
 
      }
 
-     virtual ~VarRefStatement(){
-
-     }
+     virtual ~VarRefStatement();
     };
 
-    enum BinaryOperatorType{EQUAL_OP, UNEQUAL_OP, LESS_THEN_OP,LESS_THEN_EQUAL_OP,GREATER_THEN_OP,GREATER_THEN_EQUAL_OP, PLUS_OP, MINUS_OP, MULTIPLY_OP, DIVISION_OP, MODULO_OP, LOGICAL_AND_OP, LOGICAL_OR_OP, BITWISE_AND_OP, BITWISE_OR_OP, BITWISE_XOR_OP, BITWISE_LEFT_SHIFT_OP, BITWISE_RIGHT_SHIFT_OP};
+    VarRefStatement::~VarRefStatement(){}
+
+    enum BinaryOperatorType{EQUAL_OP, UNEQUAL_OP, LESS_THEN_OP,LESS_THEN_EQUAL_OP,GREATER_THEN_OP,GREATER_THEN_EQUAL_OP, PLUS_OP, MINUS_OP, MULTIPLY_OP, DIVISION_OP, MODULO_OP, LOGICAL_AND_OP, LOGICAL_OR_OP, BITWISE_AND_OP, BITWISE_OR_OP, BITWISE_XOR_OP, BITWISE_LEFT_SHIFT_OP, BITWISE_RIGHT_SHIFT_OP, ASSIGNMENT_OP};
 
     const std::string toString(const BinaryOperatorType& type){
       const char* const names[] = {"EQUAL_OP", "UNEQUAL_OP", "LESS_THEN_OP", "LESS_THEN_EQUAL_OP","GREATER_THEN_OP","GREATER_THEN_EQUAL_OP","PLUS_OP",
@@ -272,23 +294,16 @@ namespace iotdb {
 
 
     class BinaryOperatorStatement
-      : public Statement{
+      : public ExpressionStatment{
     public:
 
       enum BracketMode{NO_BRACKETS,BRACKETS};
 
-      BinaryOperatorStatement(const VarRefStatement& lhs,
+      BinaryOperatorStatement(const ExpressionStatment& lhs,
                               const BinaryOperatorType& op,
-                              const VarRefStatement& rhs,
+                              const ExpressionStatment& rhs,
                               BracketMode bracket_mode = NO_BRACKETS)
-        : lhs_(std::make_shared<VarRefStatement>(lhs)), bin_op_(), op_(op), rhs_(rhs), bracket_mode_(bracket_mode)
-      {
-      }
-      BinaryOperatorStatement(const BinaryOperatorStatement& bin_op,
-                              const BinaryOperatorType& op,
-                              const VarRefStatement& rhs,
-                              BracketMode bracket_mode = NO_BRACKETS)
-        : lhs_(), bin_op_(std::make_shared<BinaryOperatorStatement>(bin_op)), op_(op), rhs_(rhs), bracket_mode_(bracket_mode)
+        : lhs_(lhs.copy()), rhs_(rhs.copy()), op_(op), bracket_mode_(bracket_mode)
       {
       }
 
@@ -313,14 +328,8 @@ namespace iotdb {
        }
        virtual const CodeExpressionPtr getCode() const{
           CodeExpressionPtr code;
-          if(lhs_){
-            code = combine(lhs_->getCode(),toCodeExpression(op_));
-            }else if(bin_op_){
-            code = combine(bin_op_->getCode(),toCodeExpression(op_));
-            }else{
-              IOTDB_FATAL_ERROR("In BinaryOperatorStatement: lhs_ and bin_op_ null!");
-            }
-          code = combine(code,rhs_.getCode());
+          code = combine(lhs_->getCode(),toCodeExpression(op_));
+          code = combine(code,rhs_->getCode());
           std::string ret;
           if(bracket_mode_==BRACKETS){
            ret=std::string("(")+code->code_+std::string(")");
@@ -330,12 +339,15 @@ namespace iotdb {
           return std::make_shared<CodeExpression>(ret);
        }
 
+      virtual const ExpressionStatmentPtr copy() const{
+        return std::make_shared<BinaryOperatorStatement>(*this);
+      }
+
        virtual ~BinaryOperatorStatement();
     private:
-      const std::shared_ptr<VarRefStatement> lhs_;
-      const std::shared_ptr<BinaryOperatorStatement> bin_op_;
+      ExpressionStatmentPtr lhs_;
+      ExpressionStatmentPtr rhs_;
       BinaryOperatorType op_;
-      VarRefStatement rhs_;
       BracketMode bracket_mode_;
     };
 
@@ -464,6 +476,18 @@ public:
 
         std::cout << IfStatement(VarRefStatement(var_decl_j),
                     VarRefStatement(var_decl_i)).getCode()->code_ << std::endl;
+        }
+
+        {
+          std::cout <<
+          BinaryOperatorStatement(
+                VarRefStatement(var_decl_k),
+                ASSIGNMENT_OP,
+                BinaryOperatorStatement(
+                  VarRefStatement(var_decl_j),
+                  GREATER_THEN_OP,
+                  VarRefStatement(var_decl_i))).getCode()->code_ << std::endl;
+
         }
 
         FunctionDeclaration main_function = FunctionBuilder::create("compiled_query")
