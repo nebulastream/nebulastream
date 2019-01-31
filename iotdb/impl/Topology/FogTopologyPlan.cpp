@@ -4,12 +4,12 @@
 //
 //}
 //
-//void FogTopologyPlan::addFogNode(FogToplogyNodePtr ptr)
+//void FogTopologyPlan::addFogNode(FogTopologyNodePtr ptr)
 //{
 //
 //}
 //
-//void FogTopologyPlan::removeFogNode(FogToplogyNodePtr ptr)
+//void FogTopologyPlan::removeFogNode(FogTopologyNodePtr ptr)
 //{
 //
 //}
