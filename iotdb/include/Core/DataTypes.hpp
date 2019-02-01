@@ -12,9 +12,15 @@ enum BasicType { INT8, UINT8, INT16, UINT16, INT32, UINT32, INT64, UINT64, FLOAT
 class DataType;
 typedef std::shared_ptr<DataType> DataTypePtr;
 
+/** \brief grepresents a pointer to a particular DataType */
+class PointerDataType;
+typedef std::shared_ptr<PointerDataType> PointerDataTypePtr;
+
 /** \brief represents a value of a particular DataType */
 class ValueType;
 typedef std::shared_ptr<ValueType> ValueTypePtr;
+
+
 
 class CodeExpression;
 typedef std::shared_ptr<CodeExpression> CodeExpressionPtr;
@@ -53,6 +59,10 @@ const AttributeFieldPtr createField(const std::string name, const BasicType & ty
 
 const DataTypePtr createDataType(const BasicType &);
 const DataTypePtr createDataTypeVarChar(const uint32_t &max_length);
+
+  const DataTypePtr createPointerDataType(const DataTypePtr& type);
+
+  const DataTypePtr createPointerDataType(const BasicType & type);
 
 const ValueTypePtr createBasicTypeValue(const BasicType & type, const std::string& value);
 
