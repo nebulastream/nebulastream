@@ -13,7 +13,7 @@
 
 namespace iotdb {
 
-    enum StatementType{RETURN_STMT,IF_STMT,IF_ELSE_STMT,FOR_LOOP_STMT,FUNC_CALL_STMT,VAR_REF_STMT, BINARY_OP_STMT, UNARY_OP_STMT};
+    enum StatementType{RETURN_STMT,IF_STMT,IF_ELSE_STMT,FOR_LOOP_STMT,FUNC_CALL_STMT,VAR_REF_STMT, CONSTANT_VALUE_EXPR_STMT, BINARY_OP_STMT, UNARY_OP_STMT};
 
     class Statement{
     public:
@@ -230,6 +230,37 @@ namespace iotdb {
       file.code = declations.str();
       return file;
     }
+
+    class ConstantExprStatement : public ExpressionStatment{
+    public:
+      ValueTypePtr val_;
+
+      virtual StatementType getStamentType() const{
+        return CONSTANT_VALUE_EXPR_STMT;
+      }
+
+      virtual const CodeExpressionPtr getCode() const{
+         return val_->getCodeExpression();
+      }
+
+      virtual const ExpressionStatmentPtr copy() const{
+        return std::make_shared<ConstantExprStatement>(*this);
+      }
+
+     ConstantExprStatement(const ValueTypePtr& val)
+       : val_(val){
+
+     }
+
+     ConstantExprStatement(const BasicType & type, const std::string& value)
+       : val_(createBasicTypeValue(type, value)){
+
+     }
+
+     virtual ~ConstantExprStatement();
+    };
+
+    ConstantExprStatement::~ConstantExprStatement(){}
 
     class VarRefStatement : public ExpressionStatment{
     public:
@@ -660,7 +691,7 @@ private:
                 BinaryOperatorStatement(
                   VarRefStatement(var_decl_j),
                   GREATER_THEN_OP,
-                  VarRefStatement(var_decl_i))).getCode()->code_ << std::endl;
+                  ConstantExprStatement(INT32,"5"))).getCode()->code_ << std::endl;
 
         }
 
