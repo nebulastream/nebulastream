@@ -6,7 +6,7 @@
 
 namespace iotdb {
 
-enum BasicType { INT8, UINT8, INT16, UINT16, INT32, UINT32, INT64, UINT64, FLOAT32, FLOAT64, BOOLEAN, CHAR, DATE };
+enum BasicType { INT8, UINT8, INT16, UINT16, INT32, UINT32, INT64, UINT64, FLOAT32, FLOAT64, BOOLEAN, CHAR, DATE, VOID_TYPE};
 
 /** \brief generic implementation of DataType for ground-up support of user-defined types */
 class DataType;
@@ -32,6 +32,7 @@ public:
   virtual uint32_t getSizeBytes() const = 0;
   virtual const std::string toString() const = 0;
   virtual const CodeExpressionPtr getCode() const = 0;
+  virtual const CodeExpressionPtr getTypeDefinitionCode() const = 0;
   virtual ~DataType();
 };
 
