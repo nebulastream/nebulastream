@@ -11,12 +11,10 @@
 #include <vector>
 
 #include <boost/numeric/ublas/io.hpp>
-#include <boost/numeric/ublas/matrix.hpp>
-#include <boost/numeric/ublas/matrix_proxy.hpp>
 
 #include "Topology/FogTopologyLink.hpp"
-#include "Topology/FogTopologyNode.hpp"
 #include "Topology/FogTopologySensor.hpp"
+#include "FogTopologyWorkerNode.hpp"
 #include "Topology/FogTopologyEntry.hpp"
 
 
@@ -27,6 +25,7 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/dijkstra_shortest_paths.hpp>
 #include <boost/graph/graphviz.hpp>
+#include <boost/graph/graph_utility.hpp>
 
 
 #define MAX_NUMBER_OF_NODES 10 // TODO: make this dynamic
@@ -44,7 +43,6 @@
  */
 
 using namespace std;
-using namespace boost::numeric::ublas;
 using namespace boost;
 
 struct Vertex {size_t id; FogTopologyEntryPtr ptr;};
@@ -63,7 +61,7 @@ public:
 	{
 	    boost::add_vertex(Vertex{id, ptr}, graph);
 	}
-	void removeVertex(size_t search_id)
+	bool removeVertex(size_t search_id)
 	{
 		boost::graph_traits<graph_t>::vertex_iterator vi, vi_end, next;
 		boost::tie(vi, vi_end) = vertices(graph);
@@ -71,8 +69,12 @@ public:
 		{
 		  ++next;
 		  if (graph[*vi].id == search_id)
+		  {
 			  remove_vertex(*vi, graph);
+			  return true;
+		  }
 		}
+		return false;
 	}
 
 	boost::graph_traits<graph_t>::vertex_descriptor getVertex(size_t search_id)
@@ -99,7 +101,7 @@ public:
 	    boost::add_edge(src, dst, Edge{id, ptr}, graph);
 	}
 
-	void removeEdge(size_t search_id)
+	bool removeEdge(size_t search_id)
 	{
 		boost::graph_traits<graph_t>::edge_iterator vi, vi_end, next;
 		boost::tie(vi, vi_end) = edges(graph);
@@ -107,8 +109,12 @@ public:
 		{
 		  ++next;
 		  if (graph[*vi].id == search_id)
+		  {
 			  remove_edge(*vi, graph);
+			  return true;
+		  }
 		}
+		return false;
 	}
 
 	boost::graph_traits<graph_t>::edge_descriptor getEdge(size_t search_id)
@@ -130,7 +136,7 @@ public:
 	void print()
 	{
 		boost::write_graphviz(std::cout, graph, [&] (auto& out, auto v) {
-		       out << "[label=\"" << graph[v].id << "\"]";
+		       out << "[label=\"" << graph[v].id << " type=" << graph[v].ptr->getEntryTypeString() << "\"]";
 		      },
 		      [&] (auto& out, auto e) {
 		       out << "[label=\"" << graph[e].id << "\"]";
@@ -138,9 +144,9 @@ public:
 		    std::cout << std::flush;
 	}
 
+
 private:
     graph_t graph;
-
 
 };
 
@@ -151,22 +157,22 @@ public:
   FogTopologyPlan()
 	{
 	  fGraph = new FogGraph();
-	  currentId = 1;
+	  currentId = 0;
 	}
 
-  FogTopologyNodePtr createFogWorkerNode()
+  FogTopologyWorkerNodePtr createFogWorkerNode()
   {
 	  // TODO: check if id exists
-	  FogTopologyNodePtr ptr = std::make_shared<FogTopologyNode>();
+	  FogTopologyWorkerNodePtr ptr = std::make_shared<FogTopologyWorkerNode>();
 	  fGraph->addVertex(currentId, ptr);
 	  ptr->setNodeId(currentId);
 	  currentId++;
 	  return ptr;
   }
-  void removeFogWorkerNode(FogTopologyNodePtr ptr)
+  bool removeFogWorkerNode(FogTopologyWorkerNodePtr ptr)
   {
 	  size_t search_id = ptr->getID();
-	  fGraph->removeVertex(search_id);
+	  return fGraph->removeVertex(search_id);
   }
 
   FogTopologySensorPtr createFogSensorNode() {
@@ -178,21 +184,22 @@ public:
 	  return ptr;
   }
 
-  void removeFogSensorNode(FogTopologySensorPtr ptr)
+  bool removeFogSensorNode(FogTopologySensorPtr ptr)
   {
 	  size_t search_id = ptr->getID();
-	  fGraph->removeVertex(search_id);
+	  return fGraph->removeVertex(search_id);
   }
 
-  void createFogNodeLink(size_t pSourceNodeId, size_t pDestNodeId)
+  FogTopologyLinkPtr createFogNodeLink(size_t pSourceNodeId, size_t pDestNodeId)
   {
     FogTopologyLinkPtr linkPtr = std::make_shared<FogTopologyLink>(pSourceNodeId, pDestNodeId);
     fGraph->addEdge(linkPtr, pSourceNodeId, pDestNodeId);
+    return linkPtr;
   }
 
-  void removeFogTopologyLink(FogTopologyLinkPtr linkPtr)
+  bool removeFogTopologyLink(FogTopologyLinkPtr linkPtr)
   {
-	  fGraph->removeEdge(linkPtr->getDestNodeId());
+	  return fGraph->removeEdge(linkPtr->getID());
   }
 
   void printPlan() { fGraph->print();}

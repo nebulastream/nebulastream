@@ -24,6 +24,14 @@ set(CMAKE_CXX_FLAGS_RELEASE "-Wextra -O3")
 find_package(LLVM 3.6.0 REQUIRED)
 find_package(clang REQUIRED)
 
+#ZMPQ
+find_package(ZMQ)
+set(LIBRARIES ${LIBRARIES} ${ZMQ_LIBRARIES})
+include_directories(${ZMQ_INCLUDE_DIRS})
+
+#boost
+find_package(Boost 1.47.0 REQUIRED system thread program_options filesystem) # Only check if lib is available on system for generated code.
+
 # Definition of runtime variables ######################################################################################
 
 # Set definition values.
@@ -89,7 +97,7 @@ endif()
 
 
 # Boost Libraries
-find_package(Boost 1.47.0 REQUIRED system thread filesystem) # Only check if lib is available on system for generated code.
+find_package(Boost 1.47.0 REQUIRED system thread program_options filesystem) # Only check if lib is available on system for generated code.
 link_directories(${Boost_LIBRARY_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
 set(LIBRARIES ${LIBRARIES} ${Boost_LIBRARIES})
@@ -191,7 +199,10 @@ add_subdirectory(test)
 #add_custom_target(iotdb_tests COMMAND ${CMAKE_CTEST_COMMAND}
  #                 DEPENDS ${UNITTESTS})
 
-#add_executable(iotClient iotClient.cpp)
-#target_link_libraries(iotClient iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
-#target_include_directories(iotClient PUBLIC "include")
+add_executable(iotClient iotClient.cpp)
+target_link_libraries(iotClient iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
+target_include_directories(iotClient PUBLIC "include")
  
+add_executable(iotServer iotServer.cpp)
+target_link_libraries(iotServer iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
+target_include_directories(iotServer PUBLIC "include")
