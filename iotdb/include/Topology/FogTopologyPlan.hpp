@@ -1,261 +1,206 @@
 #ifndef INCLUDE_TOPOLOGY_FOGTOPOLOGYPLAN_HPP_
 #define INCLUDE_TOPOLOGY_FOGTOPOLOGYPLAN_HPP_
 
-#include <vector>
-#include <map>
-#include <bits/stdc++.h>
 #include <algorithm>
-#include "../Topology/FogToplogyLink.hpp"
-#include "../Topology/FogToplogyNode.hpp"
-#include "../Topology/FogToplogySensor.hpp"
-#include <boost/numeric/ublas/matrix.hpp>
+#include <bits/stdc++.h>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <vector>
+
 #include <boost/numeric/ublas/io.hpp>
+#include <boost/numeric/ublas/matrix.hpp>
 #include <boost/numeric/ublas/matrix_proxy.hpp>
 
+#include "Topology/FogTopologyLink.hpp"
+#include "Topology/FogTopologyNode.hpp"
+#include "Topology/FogTopologySensor.hpp"
+#include "Topology/FogTopologyEntry.hpp"
 
-#define MAX_NUMBER_OF_NODES 10 //TODO: make this dynamic
+
+#include <iostream>                  // for std::cout
+#include <utility>                   // for std::pair
+#include <algorithm>                 // for std::for_each
+#include <boost/graph/graph_traits.hpp>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/dijkstra_shortest_paths.hpp>
+#include <boost/graph/graphviz.hpp>
+
+
+#define MAX_NUMBER_OF_NODES 10 // TODO: make this dynamic
 /**
+ * Links:
+ * 		- https://www.boost.org/doc/libs/1_61_0/libs/graph/doc/file_dependency_example.html
+ * 		- https://www.boost.org/doc/libs/1_69_0/libs/graph/doc/index.html
+ * 		- https://www.boost.org/doc/libs/1_49_0/libs/graph/doc/quick_tour.html
+ * 		- https://theboostcpplibraries.com/boost.graph-vertices-and-edges
+ * 		- https://stackoverflow.com/questions/3100146/adding-custom-vertices-to-a-boost-graph
  * TODOs:
  * 		- move functions to impl
  * 	Assumptions
  * 		-
  */
 
-
 using namespace std;
 using namespace boost::numeric::ublas;
+using namespace boost;
 
-class Graph
-{
+struct Vertex {size_t id; FogTopologyEntryPtr ptr;};
+struct Edge { size_t id; FogTopologyLinkPtr ptr;};
+
+using graph_t  = adjacency_list<listS, vecS, undirectedS, Vertex, Edge >;
+using vertex_t = graph_traits<graph_t>::vertex_descriptor;
+using edge_t   = graph_traits<graph_t>::edge_descriptor;
+
+
+class FogGraph {
 public:
-    Graph(int pNumberOfElements)
+
+	FogGraph(){};
+	void addVertex(size_t id, FogTopologyEntryPtr ptr)
 	{
-    	numberOfRows = numberOfColums = 1;
-    	mtx.resize(numberOfRows,numberOfColums);
-    	mtx(0,0) = 0;
+	    boost::add_vertex(Vertex{id, ptr}, graph);
 	}
-
-    void addNode()
-    {
-    	numberOfRows++;
-    	numberOfColums++;
-    	mtx.resize(numberOfRows,numberOfColums);
-    }
-    // function to add an edge to graph
-    void addLink(size_t nodeID1, size_t nodeID2, size_t linkID)
-    {
-    	//TODO: what to do if already exist?
-    	mtx(nodeID1, nodeID2) = linkID;
-    }
-
-    size_t getLinkID(size_t nodeID1, size_t nodeID2)
-    {
-    	return mtx(nodeID1,nodeID2);
-    }
-
-    void removeLinkID(size_t nodeID1, size_t nodeID2)
+	void removeVertex(size_t search_id)
 	{
-		mtx(nodeID1,nodeID2) = 0;
-	}
-
-//    void print()
-//    {
-//    	//first line
-//    	cout << " | ";
-//    	for (size_t v = 0; v < numberOfRows; v++)
-//    	{
-//    		if(v == 0)
-//    			cout << "-" << " ";
-//    		else
-//    			cout << v << " ";
-//    	}
-//    	cout << endl;
-//    	for (size_t v = 0; v < numberOfColums*2+3; v++)
-//			cout << "-";
-//    	cout << endl;
-//
-//		for (size_t u = 0; u < numberOfRows; u++)
-//		{
-//			if(u == 0)
-//				cout << "-| ";
-//			else
-//				cout << u << "| ";
-//		  for (size_t v = 0; v < numberOfColums; v++)
-//		  {
-//			  if(mtx(u,v) == 0)
-//				  std::cout << "- ";
-//			  else
-//				  std::cout << mtx(u,v) << " ";
-//		  }
-//		  std::cout << std::endl;
-//		}
-//    }
-    void print()
-    {
-    	print(mtx);
-    }
-
-    void print(matrix<size_t> pMtx)
-	{
-//    	size1_ == rows
-//		size2_ == cols
-
-		//first line
-		cout << " | ";
-		for (size_t v = 0; v < pMtx.size1(); v++)
+		boost::graph_traits<graph_t>::vertex_iterator vi, vi_end, next;
+		boost::tie(vi, vi_end) = vertices(graph);
+		for (next = vi; vi != vi_end; vi = next)
 		{
-			if(v == 0)
-				cout << "-" << " ";
-			else
-				cout << v << " ";
+		  ++next;
+		  if (graph[*vi].id == search_id)
+			  remove_vertex(*vi, graph);
 		}
-		cout << endl;
-		for (size_t v = 0; v < pMtx.size2()*2+3; v++)
-			cout << "-";
-		cout << endl;
+	}
 
-		for (size_t u = 0; u < pMtx.size1(); u++)
+	boost::graph_traits<graph_t>::vertex_descriptor getVertex(size_t search_id)
+	{
+		boost::graph_traits<graph_t>::vertex_iterator vi, vi_end, next;
+		boost::tie(vi, vi_end) = vertices(graph);
+		for (next = vi; vi != vi_end; vi = next)
 		{
-			if(u == 0)
-				cout << "-| ";
-			else
-				cout << u << "| ";
-		  for (size_t v = 0; v < pMtx.size2(); v++)
+		  ++next;
+		  if (graph[*vi].id == search_id)
 		  {
-			  if(pMtx(u,v) == 0)
-				  std::cout << "- ";
-			  else
-				  std::cout << pMtx(u,v) << " ";
+			  return *vi;
 		  }
-		  std::cout << std::endl;
+		}
+		return 0;
+	}
+
+	void addEdge(FogTopologyLinkPtr ptr, size_t sourceID, size_t destID)
+	{
+		size_t id = ptr->getID();
+		boost::graph_traits<graph_t>::vertex_descriptor src = getVertex(sourceID);
+		boost::graph_traits<graph_t>::vertex_descriptor dst = getVertex(destID);
+
+	    boost::add_edge(src, dst, Edge{id, ptr}, graph);
+	}
+
+	void removeEdge(size_t search_id)
+	{
+		boost::graph_traits<graph_t>::edge_iterator vi, vi_end, next;
+		boost::tie(vi, vi_end) = edges(graph);
+		for (next = vi; vi != vi_end; vi = next)
+		{
+		  ++next;
+		  if (graph[*vi].id == search_id)
+			  remove_edge(*vi, graph);
 		}
 	}
 
-    void removeRowAndCol()
-    {
-        matrix_slice<matrix<size_t> > ms (mtx, boost::numeric::ublas::slice (0, 1, 3), boost::numeric::ublas::slice (0, 1, 3));
-        print(ms);
+	boost::graph_traits<graph_t>::edge_descriptor getEdge(size_t search_id)
+	{
+		boost::graph_traits<graph_t>::edge_iterator vi, vi_end, next;
 
-    }
+		boost::tie(vi, vi_end) = edges(graph);
+		for (next = vi; vi != vi_end; vi = next)
+		{
+		  ++next;
+		  if (graph[*vi].id == search_id)
+		  {
+			  return *vi;
+		  }
+		}
+//		return 0;
+	}
 
+	void print()
+	{
+		boost::write_graphviz(std::cout, graph, [&] (auto& out, auto v) {
+		       out << "[label=\"" << graph[v].id << "\"]";
+		      },
+		      [&] (auto& out, auto e) {
+		       out << "[label=\"" << graph[e].id << "\"]";
+		    });
+		    std::cout << std::flush;
+	}
 
 private:
-    size_t numberOfRows;
-    size_t numberOfColums;
-    matrix<size_t> mtx;
+    graph_t graph;
+
 
 };
 
-class FogTopologyPlan{
+
+class FogTopologyPlan {
 
 public:
-	FogTopologyPlan()
+  FogTopologyPlan()
 	{
-		linkGraph = new Graph(MAX_NUMBER_OF_NODES);
-		currentId = 1;
+	  fGraph = new FogGraph();
+	  currentId = 1;
 	}
 
-	void addFogNode(FogToplogyNodePtr ptr)
-	{
-//		if ( fogNodes.find("f") == m.end() ) {
-//		  // not found
-//		} else {
-//		  // found
-//		}
-		//TODO: check if id exists
-		fogNodes[currentId]= ptr;
-		ptr->setNodeId(currentId);
-		currentId++;
-		linkGraph->addNode();
-	}
-	void removeFogNode(FogToplogyNodePtr ptr)
-	{
-		size_t search_id = ptr->getNodeId();
-		fogNodes.erase(search_id);
-	}
-	void listFogNodes()
-	{
-		cout << "fogNodes:";
-		for (auto const& it : fogNodes)
-		{
-			cout << it.second->getNodeId() << ",";
-		}
-		cout << endl;
-	}
+  FogTopologyNodePtr createFogWorkerNode()
+  {
+	  // TODO: check if id exists
+	  FogTopologyNodePtr ptr = std::make_shared<FogTopologyNode>();
+	  fGraph->addVertex(currentId, ptr);
+	  ptr->setNodeId(currentId);
+	  currentId++;
+	  return ptr;
+  }
+  void removeFogWorkerNode(FogTopologyNodePtr ptr)
+  {
+	  size_t search_id = ptr->getID();
+	  fGraph->removeVertex(search_id);
+  }
 
-	void addFogSensor(FogToplogySensorPtr ptr)
-	{
-		fogSensors[currentId] = ptr;
-		ptr->setSensorID(currentId);
-		currentId++;
-		linkGraph->addNode();
+  FogTopologySensorPtr createFogSensorNode() {
+	  // TODO: check if id exists
+	  FogTopologySensorPtr ptr = std::make_shared<FogTopologySensor>();
+	  fGraph->addVertex(currentId, ptr);
+	  ptr->setSensorId(currentId);
+	  currentId++;
+	  return ptr;
+  }
 
-	}
-	void removeFogSensor(FogToplogyNodePtr ptr)
-	{
-		size_t search_id = ptr->getNodeId();
+  void removeFogSensorNode(FogTopologySensorPtr ptr)
+  {
+	  size_t search_id = ptr->getID();
+	  fGraph->removeVertex(search_id);
+  }
 
-		fogSensors.erase(search_id);
-	}
-	void listFogSensors()
-	{
-		cout << "fogSensors:";
-		for (auto const& it : fogSensors)
-		{
-			cout << it.second->getSensorId() << ",";
-		}
-		cout << endl;
-	}
+  void createFogNodeLink(size_t pSourceNodeId, size_t pDestNodeId)
+  {
+    FogTopologyLinkPtr linkPtr = std::make_shared<FogTopologyLink>(pSourceNodeId, pDestNodeId);
+    fGraph->addEdge(linkPtr, pSourceNodeId, pDestNodeId);
+  }
 
-	/**
-	 * Support half-duplex links?
-	 */
-	void addFogTopologyLink(size_t pSourceNodeID, size_t pDestNodeID, LinkType type)
-	{
-		FogTopologyLinkPtr linkPtr = std::make_shared<FogTopologyLink>(pSourceNodeID, pDestNodeID, type);
-		fogLinks[linkPtr->getLinkID()] = linkPtr;
-		linkGraph->addLink(linkPtr->getSourceNodeID(), linkPtr->getDestNodeID(), linkPtr->getLinkID());
-		linkGraph->addLink(linkPtr->getDestNodeID(), linkPtr->getSourceNodeID(), linkPtr->getLinkID());
-	}
-	void removeFogTopologyLink(FogTopologyLinkPtr linkPtr)
-	{
-		size_t search_id = linkPtr->getLinkID();
-		linkGraph->removeLinkID(linkPtr->getSourceNodeID(), linkPtr->getDestNodeID());
-		fogLinks.erase(linkPtr->getLinkID());
-	}
+  void removeFogTopologyLink(FogTopologyLinkPtr linkPtr)
+  {
+	  fGraph->removeEdge(linkPtr->getDestNodeId());
+  }
 
-	void printPlan()
-	{
-		linkGraph->print();
-		cout << "Nodes IDs=";
-		for (auto const& it : fogNodes)
-		{
-			cout << it.second->getNodeId() << ",";
-		}
-
-		cout << endl;
-
-		cout << "Sensors IDs=";
-		for (auto const& it : fogSensors)
-		{
-			cout << it.second->getSensorId() << ",";
-		}
-		cout << endl;
-
-		cout << "slices:" << endl;
-		linkGraph->removeRowAndCol();
-	}
+  void printPlan() { fGraph->print();}
 
 private:
+  size_t currentId;
+  FogGraph* fGraph;
 
-	std::map<size_t,FogToplogyNodePtr> fogNodes;
-	std::map<size_t,FogToplogySensorPtr> fogSensors;
-	std::map<size_t,FogTopologyLinkPtr> fogLinks;
-	size_t currentId;
-	Graph* linkGraph;
 };
-
-
-
 
 #endif /* INCLUDE_TOPOLOGY_FOGTOPOLOGYPLAN_HPP_ */
