@@ -46,9 +46,13 @@ namespace iotdb {
 
     typedef std::string Code;
 
+    class Declaration;
+    typedef std::shared_ptr<Declaration> DeclarationPtr;
+
     class Declaration{
     public:
       virtual const Code getCode() const = 0;
+      virtual const DeclarationPtr copy() const = 0;
       virtual ~Declaration();
     };
 
@@ -57,10 +61,41 @@ namespace iotdb {
 
     class StructDeclaration : public Declaration{
     public:
-      const Code getCode() const override{
-         return Code();
+      static StructDeclaration create(const std::string& type_name){
+          return StructDeclaration(type_name);
       }
+
+      const Code getCode() const override{
+         std::stringstream expr;
+         expr << "struct " << type_name_ << "{" << std::endl;
+         for(auto& decl : decls_){
+            expr << decl->getCode() << ";" << std::endl;
+         }
+         expr << "}";
+         return expr.str();
+      }
+
+      const DeclarationPtr copy() const override{
+        return std::make_shared<StructDeclaration>(*this);
+      }
+
+      StructDeclaration& addField(const Declaration& decl){
+        DeclarationPtr decl_p = decl.copy();
+        if(decl_p)
+          decls_.push_back(decl_p);
+        return *this;
+      }
+      ~StructDeclaration();
+    private:
+      StructDeclaration(const std::string& type_name) :
+        type_name_(type_name), decls_(){}
+      std::string type_name_;
+      std::vector<DeclarationPtr> decls_;
     };
+
+    StructDeclaration::~StructDeclaration(){
+
+    }
 
     class VariableDeclaration : public Declaration{
     public:
@@ -80,6 +115,10 @@ namespace iotdb {
 
         const DataTypePtr getDataType() const{
           return type_;
+        }
+
+        const DeclarationPtr copy() const override{
+          return std::make_shared<VariableDeclaration>(*this);
         }
     private:
         VariableDeclaration(DataTypePtr type, const std::string& identifier, ValueTypePtr value=nullptr);
@@ -105,6 +144,9 @@ namespace iotdb {
 
       const Code getCode() const override{
          return function_code;
+      }
+      const DeclarationPtr copy() const override{
+        return std::make_shared<FunctionDeclaration>(*this);
       }
     };
 
@@ -706,6 +748,14 @@ private:
 
             std::cout << var_decl_i.getCode() << std::endl;
             std::cout << var_decl_p.getCode() << std::endl;
+
+
+            StructDeclaration struct_decl = StructDeclaration::create("TupleBuffer")
+                .addField(var_decl_i)
+                .addField(var_decl_p);
+
+            //std::cout << VariableDeclaration(createDataType(), "buffer") << std::endl;
+
 
         }
 
