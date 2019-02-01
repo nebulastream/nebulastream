@@ -13,7 +13,7 @@
 
 namespace iotdb {
 
-    enum StatementType{RETURN_STMT,IF_STMT,IF_ELSE_STMT,FOR_LOOP_STMT,FUNC_CALL_STMT,VAR_REF_STMT, BINARY_OP_STMT};
+    enum StatementType{RETURN_STMT,IF_STMT,IF_ELSE_STMT,FOR_LOOP_STMT,FUNC_CALL_STMT,VAR_REF_STMT, BINARY_OP_STMT, UNARY_OP_STMT};
 
     class Statement{
     public:
@@ -256,6 +256,56 @@ namespace iotdb {
 
     VarRefStatement::~VarRefStatement(){}
 
+    enum UnaryOperatorType{ADDRESS_OF_OP,
+                           DEREFERENCE_POINTER_OP,
+                           ARRAY_REFERENCE_OP,
+                           MEMBER_SELECT_POINTER_OP,
+                           MEMBER_SELECT_REFERENCE_OP,
+                           PREFIX_INCREMENT_OP,
+                           PREFIX_DECREMENT_OP,
+                           POSTFIX_INCREMENT_OP,
+                           POSTFIX_DECREMENT_OP,
+                           BITWISE_COMPLEMENT_OP,
+                           LOGICAL_NOT_OP,
+                           SIZE_OF_TYPE_OP
+                           };
+
+
+    const std::string toString(const UnaryOperatorType& type){
+      const char* const names[] = {
+    "ADDRESS_OF_OP",
+    "DEREFERENCE_POINTER_OP",
+    "ARRAY_REFERENCE_OP",
+    "MEMBER_SELECT_POINTER_OP",
+    "MEMBER_SELECT_REFERENCE_OP",
+    "PREFIX_INCREMENT_OP",
+    "PREFIX_DECREMENT_OP",
+    "POSTFIX_INCREMENT_OP",
+    "POSTFIX_DECREMENT_OP",
+    "BITWISE_COMPLEMENT_OP",
+    "LOGICAL_NOT_OP",
+    "SIZE_OF_TYPE_OP"};
+      return std::string(names[type]);
+    }
+
+    const CodeExpressionPtr toCodeExpression(const UnaryOperatorType& type){
+      const char* const names[] = {
+        "&",
+        "*",
+        "[]",
+        "->",
+        ".",
+        "++",
+        "--",
+        "++",
+        "--",
+        "~",
+        "!",
+        "sizeof"
+      };
+      return std::make_shared<CodeExpression>(names[type]);
+    }
+
     enum BinaryOperatorType{EQUAL_OP, UNEQUAL_OP, LESS_THEN_OP,LESS_THEN_EQUAL_OP,GREATER_THEN_OP,GREATER_THEN_EQUAL_OP, PLUS_OP, MINUS_OP, MULTIPLY_OP, DIVISION_OP, MODULO_OP, LOGICAL_AND_OP, LOGICAL_OR_OP, BITWISE_AND_OP, BITWISE_OR_OP, BITWISE_XOR_OP, BITWISE_LEFT_SHIFT_OP, BITWISE_RIGHT_SHIFT_OP, ASSIGNMENT_OP};
 
     const std::string toString(const BinaryOperatorType& type){
@@ -275,6 +325,8 @@ namespace iotdb {
       return std::string(names[type]);
     }
 
+
+
     const CodeExpressionPtr toCodeExpression(const BinaryOperatorType& type){
       const char* const names[] = {"==", "!=", "<", "<=",">",">=","+",
                                    "-",
@@ -292,12 +344,56 @@ namespace iotdb {
     }
 
 
+    enum BracketMode{NO_BRACKETS,BRACKETS};
+
+    class UnaryOperatorStatement
+      : public ExpressionStatment{
+    public:
+
+
+
+      UnaryOperatorStatement(const ExpressionStatment& expr,
+                              const UnaryOperatorType& op,
+                              BracketMode bracket_mode = NO_BRACKETS)
+        : expr_(expr.copy()), op_(op), bracket_mode_(bracket_mode)
+      {
+      }
+
+       virtual StatementType getStamentType() const{
+        return UNARY_OP_STMT;
+       }
+       virtual const CodeExpressionPtr getCode() const{
+          CodeExpressionPtr code;
+          code = combine(expr_->getCode(),toCodeExpression(op_));
+          std::string ret;
+          if(bracket_mode_==BRACKETS){
+           ret=std::string("(")+code->code_+std::string(")");
+            }else{
+              ret=code->code_;
+            }
+          return std::make_shared<CodeExpression>(ret);
+       }
+
+      virtual const ExpressionStatmentPtr copy() const{
+        return std::make_shared<UnaryOperatorStatement>(*this);
+      }
+
+       virtual ~UnaryOperatorStatement();
+    private:
+      ExpressionStatmentPtr expr_;
+      UnaryOperatorType op_;
+      BracketMode bracket_mode_;
+    };
+
+    UnaryOperatorStatement::~UnaryOperatorStatement(){
+
+    }
 
     class BinaryOperatorStatement
       : public ExpressionStatment{
     public:
 
-      enum BracketMode{NO_BRACKETS,BRACKETS};
+
 
       BinaryOperatorStatement(const ExpressionStatment& lhs,
                               const BinaryOperatorType& op,
@@ -415,18 +511,53 @@ public:
     };
 
     class ForLoopStatement : public Statement{
+public:
 
-
+      ForLoopStatement(const VariableDeclaration& var_decl,
+                       const ExpressionStatment& condition,
+                       const ExpressionStatment& advance,
+                       const std::vector<StatementPtr>& loop_body = std::vector<StatementPtr>());
 
       virtual StatementType getStamentType() const{
         return StatementType::FOR_LOOP_STMT;
       }
       virtual const CodeExpressionPtr getCode() const{
-
+        std::stringstream code;
+        code << "for(" << var_decl_.getCode() << ";"
+             << condition_->getCode()->code_ << ";"
+             << advance_->getCode()->code_ << "){" << std::endl;
+        for(const auto& stmt : loop_body_){
+          code << stmt->getCode()->code_ << ";" << std::endl;
+        }
+        code << "}" << std::endl;
+        return std::make_shared<CodeExpression>(code.str());
       }
-      virtual ~ForLoopStatement();
 
+      void addStatement(StatementPtr stmt){
+        if(stmt)
+          loop_body_.push_back(stmt);
+      }
+
+      virtual ~ForLoopStatement();
+private:
+      VariableDeclaration var_decl_;
+      ExpressionStatmentPtr condition_;
+      ExpressionStatmentPtr advance_;
+      std::vector<StatementPtr> loop_body_;
     };
+
+    ForLoopStatement::ForLoopStatement(const VariableDeclaration& var_decl,
+                                       const ExpressionStatment& condition,
+                                       const ExpressionStatment& advance,
+                                       const std::vector<StatementPtr>& loop_body)
+      : var_decl_(var_decl), condition_(condition.copy()), advance_(advance.copy()),
+        loop_body_(loop_body){
+
+    }
+
+    ForLoopStatement::~ForLoopStatement(){
+
+    }
 
     class FunctionCallStatement : public Statement{
       virtual StatementType getStamentType() const{
@@ -464,7 +595,7 @@ public:
           BinaryOperatorStatement(
               VarRefStatement(var_decl_i),PLUS_OP,VarRefStatement(var_decl_j))
             .addRight(PLUS_OP,VarRefStatement(var_decl_k))
-            .addRight(MULTIPLY_OP,VarRefStatement(var_decl_i), BinaryOperatorStatement::BRACKETS)
+            .addRight(MULTIPLY_OP,VarRefStatement(var_decl_i), BRACKETS)
             .addRight(GREATER_THEN_OP,VarRefStatement(var_decl_l)).getCode();
 
         std::cout << code->code_ << std::endl;
@@ -481,6 +612,49 @@ public:
         {
           std::cout <<
           BinaryOperatorStatement(
+                VarRefStatement(var_decl_k),
+                ASSIGNMENT_OP,
+                BinaryOperatorStatement(
+                  VarRefStatement(var_decl_j),
+                  GREATER_THEN_OP,
+                  VarRefStatement(var_decl_i))).getCode()->code_ << std::endl;
+
+        }
+
+        {
+
+          VariableDeclaration var_decl_q = VariableDeclaration::create(createDataType(BasicType(INT32)),"q",createBasicTypeValue(BasicType(INT32),"0"));
+          VariableDeclaration var_decl_num_tup = VariableDeclaration::create(createDataType(BasicType(INT32)),"num_tuples",createBasicTypeValue(BasicType(INT32),"0"));
+
+          VariableDeclaration var_decl_sum = VariableDeclaration::create(createDataType(BasicType(INT32)),"sum",createBasicTypeValue(BasicType(INT32),"0"));
+
+          ForLoopStatement loop_stmt(var_decl_q,
+                           BinaryOperatorStatement(
+                             VarRefStatement(var_decl_q),
+                             LESS_THEN_OP,
+                             VarRefStatement(var_decl_num_tup)),
+                           UnaryOperatorStatement(VarRefStatement(var_decl_q), PREFIX_INCREMENT_OP));
+
+          loop_stmt.addStatement(BinaryOperatorStatement(
+                                   VarRefStatement(var_decl_sum),
+                                   ASSIGNMENT_OP,
+                                   BinaryOperatorStatement(
+                                     VarRefStatement(var_decl_sum),
+                                     PLUS_OP,
+                                     VarRefStatement(var_decl_q))).copy());
+
+          std::cout << loop_stmt.getCode()->code_ << std::endl;
+
+
+          std::cout <<
+                       ForLoopStatement(var_decl_q,
+                                        BinaryOperatorStatement(
+                                          VarRefStatement(var_decl_q),
+                                          LESS_THEN_OP,
+                                          VarRefStatement(var_decl_num_tup)),
+                                        UnaryOperatorStatement(VarRefStatement(var_decl_q), PREFIX_INCREMENT_OP)).getCode()->code_ << std::endl;
+
+          std::cout << BinaryOperatorStatement(
                 VarRefStatement(var_decl_k),
                 ASSIGNMENT_OP,
                 BinaryOperatorStatement(
