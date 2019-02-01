@@ -51,6 +51,7 @@ namespace iotdb {
 
     class Declaration{
     public:
+      virtual const Code getTypeDefinitionCode() const = 0;
       virtual const Code getCode() const = 0;
       virtual const DeclarationPtr copy() const = 0;
       virtual ~Declaration();
@@ -65,6 +66,16 @@ namespace iotdb {
           return StructDeclaration(type_name);
       }
 
+      const Code getTypeDefinitionCode() const override{
+        std::stringstream expr;
+        expr << "struct " << type_name_ << "{" << std::endl;
+        for(auto& decl : decls_){
+           expr << decl->getCode() << ";" << std::endl;
+        }
+        expr << "}";
+        return expr.str();
+      }
+
       const Code getCode() const override{
          std::stringstream expr;
          expr << "struct " << type_name_ << "{" << std::endl;
@@ -75,9 +86,20 @@ namespace iotdb {
          return expr.str();
       }
 
+      const uint32_t getTypeSizeInBytes() const{
+        IOTDB_FATAL_ERROR("Called unimplemented function!");
+        return 0;
+      }
+
+      const std::string getTypeName() const{
+        return type_name_;
+      }
+
       const DeclarationPtr copy() const override{
         return std::make_shared<StructDeclaration>(*this);
       }
+
+
 
       StructDeclaration& addField(const Declaration& decl){
         DeclarationPtr decl_p = decl.copy();
@@ -100,6 +122,12 @@ namespace iotdb {
     class VariableDeclaration : public Declaration{
     public:
         static VariableDeclaration create(DataTypePtr type, const std::string& identifier, ValueTypePtr value=nullptr);
+
+        const Code getTypeDefinitionCode() const override{
+          return Code();
+          //return type_->getCode()->code_;
+        }
+
         const Code getCode() const override{
           std::stringstream str;
           str << type_->getCode()->code_ << " " << identifier_;
@@ -141,6 +169,10 @@ namespace iotdb {
       Code function_code;
     public:
       FunctionDeclaration(Code code) : function_code(code){}
+
+      const Code getTypeDefinitionCode() const override{
+        return Code();
+      }
 
       const Code getCode() const override{
          return function_code;
@@ -644,6 +676,46 @@ private:
       virtual ~FunctionCallStatement();
     };
 
+    class UserDefinedDataType : public DataType{
+      public:
+      UserDefinedDataType(const StructDeclaration& decl)
+        : decl_(decl){
+      }
+
+      ValueTypePtr getDefaultInitValue() const{
+           return ValueTypePtr();
+         }
+
+         ValueTypePtr getNullValue() const{
+           return ValueTypePtr();
+         }
+         uint32_t getSizeBytes() const{
+           /* assume a 64 bit architecture, each pointer is 8 bytes */
+           return decl_.getTypeSizeInBytes();
+         }
+         const std::string toString() const{
+           return std::string("STRUCT ")+decl_.getTypeName();
+         }
+         const CodeExpressionPtr getTypeDefinitionCode() const{
+           return std::make_shared<CodeExpression>(decl_.getCode());
+         }
+         const CodeExpressionPtr getCode() const{
+           return std::make_shared<CodeExpression>(decl_.getTypeName());
+         }
+      ~UserDefinedDataType();
+    private:
+      StructDeclaration decl_;
+    };
+    UserDefinedDataType::~UserDefinedDataType(){
+
+    }
+
+    const DataTypePtr createUserDefinedType(const StructDeclaration& decl);
+
+    const DataTypePtr createUserDefinedType(const StructDeclaration& decl){
+      return std::make_shared<UserDefinedDataType>(decl);
+    }
+
 
 
     int CodeGenTest(){
@@ -754,7 +826,12 @@ private:
                 .addField(var_decl_i)
                 .addField(var_decl_p);
 
-            //std::cout << VariableDeclaration(createDataType(), "buffer") << std::endl;
+
+
+            std::cout << VariableDeclaration::create(createUserDefinedType(struct_decl), "buffer").getCode() << std::endl;
+            std::cout << VariableDeclaration::create(createPointerDataType(createUserDefinedType(struct_decl)), "buffer").getCode() << std::endl;
+            std::cout << createPointerDataType(createUserDefinedType(struct_decl))->getCode()->code_ << std::endl;
+            std::cout << VariableDeclaration::create(createPointerDataType(createUserDefinedType(struct_decl)), "buffer").getTypeDefinitionCode() << std::endl;
 
 
         }
