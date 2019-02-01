@@ -16,6 +16,9 @@ public:
 
   FogNodeType getEntryType(){return Sensor;}
 
+  std::string getEntryTypeString() {return "Sensor";}
+
+
 private:
   size_t sensorID;
 };
