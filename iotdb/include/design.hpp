@@ -16,20 +16,20 @@ namespace iotdb {
     typedef std::shared_ptr<Stream> StreamPtr;
 
 /** Master Node -- Fog Components **/    
-    class FogToplogyManager;
-    typedef std::shared_ptr<FogToplogyManager> FogToplogyManagerPtr;
+    class FogTopologyManager;
+    typedef std::shared_ptr<FogTopologyManager> FogTopologyManagerPtr;
 
     class FogTopologyPlan;
     typedef std::shared_ptr<FogTopologyPlan> FogTopologyPlanPtr;
     
-    class FogToplogyNode;
-    typedef std::shared_ptr<FogToplogyNode> FogToplogyNodePtr;
+    class FogTopologyNode;
+    typedef std::shared_ptr<FogTopologyNode> FogTopologyNodePtr;
 
-    class FogToplogyLink;
-    typedef std::shared_ptr<FogToplogyLink> FogToplogyLinkPtr;
+    class FogTopologyLink;
+    typedef std::shared_ptr<FogTopologyLink> FogTopologyLinkPtr;
 
-    class FogToplogySensor;
-    typedef std::shared_ptr<FogToplogySensor> FogToplogySensorPtr;
+    class FogTopologySensor;
+    typedef std::shared_ptr<FogTopologySensor> FogTopologySensorPtr;
 
 
     class FogNodeProperties;
@@ -73,12 +73,12 @@ namespace iotdb {
     
  /* ----------- IMPL ---------*/  
     
-    class FogToplogyNode{
+    class FogTopologyNode{
     public:
         /** \brief stores the fog nodes this fog node receives its data from */
-        std::vector<FogToplogyNodePtr> childs;
+        std::vector<FogTopologyNodePtr> childs;
         /** \brief stores the fog nodes this fog node transmit data to */
-        std::vector<std::weak_ptr<FogToplogyNode>> parents;
+        std::vector<std::weak_ptr<FogTopologyNode>> parents;
         /** \brief stores the query sub-graph processed on this node */
         LogicalQueryGraphPtr query_graph;
         FogNodePropertiesPtr properties;
@@ -87,8 +87,8 @@ namespace iotdb {
 
     class FogTopologyPlan{
         // how to model Links?
-        std::vector<FogToplogyNodePtr> source_nodes;
-        std::vector<FogToplogyNodePtr> sink_nodes;
+        std::vector<FogTopologyNodePtr> source_nodes;
+        std::vector<FogTopologyNodePtr> sink_nodes;
     };
 
     class FogTopologyManager{
