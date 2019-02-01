@@ -94,6 +94,7 @@ namespace iotdb {
         case BOOLEAN: return sizeof(bool);
         case CHAR: return sizeof(char);
         case DATE: return sizeof(uint32_t);
+        case VOID_TYPE: return 0;
       }
       return 0;
     }
@@ -112,9 +113,12 @@ namespace iotdb {
         case BOOLEAN: return "BOOLEAN";
         case CHAR: return "CHAR";
         case DATE: return "DATE";
+        case VOID_TYPE: return "VOID";
       }
       return "";
     }
+
+
     const CodeExpressionPtr getCode() const{
       switch(type){
         case INT8: return std::make_shared<CodeExpression>("int8_t");
@@ -130,9 +134,15 @@ namespace iotdb {
         case BOOLEAN: return std::make_shared<CodeExpression>("bool");
         case CHAR: return std::make_shared<CodeExpression>("char");
         case DATE: return std::make_shared<CodeExpression>("uint32_t");
+        case VOID_TYPE: return std::make_shared<CodeExpression>("void");
       }
       return nullptr;
     }
+
+    const CodeExpressionPtr getTypeDefinitionCode() const{
+      return std::make_shared<CodeExpression>("");
+    }
+
     ~BasicDataType();
   private:
     BasicType type;
@@ -166,7 +176,9 @@ namespace iotdb {
          return std::make_shared<CodeExpression>(base_type_->getCode()->code_+"*");
 
        }
-
+       const CodeExpressionPtr getTypeDefinitionCode() const{
+         return base_type_->getTypeDefinitionCode();
+       }
     virtual ~PointerDataType();
 private:
     DataTypePtr base_type_;
