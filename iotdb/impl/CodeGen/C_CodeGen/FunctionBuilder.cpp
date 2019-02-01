@@ -92,6 +92,8 @@ namespace iotdb {
       : type_(type), identifier_(identifier), init_value_(value){}
 
     VariableDeclaration VariableDeclaration::create(DataTypePtr type, const std::string& identifier, ValueTypePtr value){
+      if(!type)
+        IOTDB_FATAL_ERROR("DataTypePtr type is nullptr!");
       return VariableDeclaration(type,identifier,value);
     }
 
@@ -692,6 +694,18 @@ private:
                   VarRefStatement(var_decl_j),
                   GREATER_THEN_OP,
                   ConstantExprStatement(INT32,"5"))).getCode()->code_ << std::endl;
+
+        }
+        /* pointers */
+        {
+
+            DataTypePtr val = createPointerDataType(BasicType(INT32));
+            assert(val!=nullptr);
+            VariableDeclaration var_decl_i = VariableDeclaration::create(createDataType(BasicType(INT32)),"i",createBasicTypeValue(BasicType(INT32),"0"));
+            VariableDeclaration var_decl_p = VariableDeclaration::create(val,"array");
+
+            std::cout << var_decl_i.getCode() << std::endl;
+            std::cout << var_decl_p.getCode() << std::endl;
 
         }
 

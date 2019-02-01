@@ -141,15 +141,53 @@ namespace iotdb {
   BasicDataType::~BasicDataType(){}
 
 
+
+  class PointerDataType : public DataType{
+  public:
+    PointerDataType(const DataTypePtr& type)
+      : DataType(), base_type_(type){
+
+    }
+    ValueTypePtr getDefaultInitValue() const{
+         return ValueTypePtr();
+       }
+
+       ValueTypePtr getNullValue() const{
+         return ValueTypePtr();
+       }
+       uint32_t getSizeBytes() const{
+         /* assume a 64 bit architecture, each pointer is 8 bytes */
+         return 8;
+       }
+       const std::string toString() const{
+         return base_type_->toString()+"*";
+       }
+       const CodeExpressionPtr getCode() const{
+         return std::make_shared<CodeExpression>(base_type_->getCode()->code_+"*");
+
+       }
+
+    virtual ~PointerDataType();
+private:
+    DataTypePtr base_type_;
+  };
+
+  PointerDataType::~PointerDataType(){
+
+  }
+
   const DataTypePtr createDataType(const BasicType & type){
     DataTypePtr ptr = std::make_shared<BasicDataType>(type);
     return ptr;
   }
 
-//  const PointerDataTypePtr createPointerDataType(const BasicType & type){
-//    PointerDataTypePtr ptr = std::make_shared<PointerBasicDataType>(type);
-//    return ptr;
-//  }
+  const DataTypePtr createPointerDataType(const DataTypePtr& type){
+    return std::make_shared<PointerDataType>(type);
+  }
+
+  const DataTypePtr createPointerDataType(const BasicType & type){
+    return std::make_shared<PointerDataType>(createDataType(type));
+  }
 
   const DataTypePtr createDataTypeVarChar(const uint32_t &max_length){
     return DataTypePtr();
