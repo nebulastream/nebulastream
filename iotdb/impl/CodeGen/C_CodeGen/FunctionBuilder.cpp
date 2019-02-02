@@ -480,6 +480,10 @@ namespace iotdb {
           || POSTFIX_DECREMENT_OP==op_){
             /* postfix operators */
             code = combine(expr_->getCode(),toCodeExpression(op_));
+          }else if(SIZE_OF_TYPE_OP==op_){
+             code = combine(toCodeExpression(op_), std::make_shared<CodeExpression>("("));
+             code = combine(code, expr_->getCode());
+             code = combine(code, std::make_shared<CodeExpression>(")"));
           }else {
             /* prefix operators */
             code = combine(toCodeExpression(op_),expr_->getCode());
@@ -780,6 +784,23 @@ private:
                   GREATER_THEN_OP,
                   VarRefStatement(var_decl_i))).getCode()->code_ << std::endl;
 
+        }
+
+        {
+          VariableDeclaration var_decl_num_tup = VariableDeclaration::create(createDataType(BasicType(INT32)),"num_tuples",createBasicTypeValue(BasicType(INT32),"0"));
+
+          std::cout << toString(ADDRESS_OF_OP) << ": " << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup),ADDRESS_OF_OP).getCode()->code_ << std::endl;
+          std::cout << toString(DEREFERENCE_POINTER_OP) << ": " << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup),DEREFERENCE_POINTER_OP).getCode()->code_ << std::endl;
+          //std::cout << toString(ARRAY_REFERENCE_OP) << ": " << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup),ARRAY_REFERENCE_OP).getCode()->code_ << std::endl;
+          std::cout << toString(MEMBER_SELECT_POINTER_OP) << ": " << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup),MEMBER_SELECT_POINTER_OP).getCode()->code_ << std::endl;
+          std::cout << toString(MEMBER_SELECT_REFERENCE_OP) << ": " << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup),MEMBER_SELECT_REFERENCE_OP).getCode()->code_ << std::endl;
+          std::cout << toString(PREFIX_INCREMENT_OP) << ": " << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup),PREFIX_INCREMENT_OP).getCode()->code_ << std::endl;
+          std::cout << toString(PREFIX_DECREMENT_OP) << ": " << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup),PREFIX_DECREMENT_OP).getCode()->code_ << std::endl;
+          std::cout << toString(POSTFIX_INCREMENT_OP) << ": " << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup),POSTFIX_INCREMENT_OP).getCode()->code_ << std::endl;
+          std::cout << toString(POSTFIX_DECREMENT_OP) << ": " << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup),POSTFIX_DECREMENT_OP).getCode()->code_ << std::endl;
+          std::cout << toString(BITWISE_COMPLEMENT_OP) << ": " << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup),BITWISE_COMPLEMENT_OP).getCode()->code_ << std::endl;
+          std::cout << toString(LOGICAL_NOT_OP) << ": " << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup),LOGICAL_NOT_OP).getCode()->code_ << std::endl;
+          std::cout << toString(SIZE_OF_TYPE_OP) << ": " << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup),SIZE_OF_TYPE_OP).getCode()->code_ << std::endl;
         }
 
         {
