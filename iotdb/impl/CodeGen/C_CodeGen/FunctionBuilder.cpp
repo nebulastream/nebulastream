@@ -119,6 +119,14 @@ namespace iotdb {
         return DeclarationPtr();
       }
 
+//      VariableDeclarationPtr getReferenceToField(const std::string field_name) const{
+//        for(auto& decl : decls_){
+//            if(decl->getIdentifierName()==field_name){
+//                return std::make_shared<VariableDelaration>;
+//            }
+//        }
+//      }
+
       StructDeclaration& addField(const Declaration& decl){
         DeclarationPtr decl_p = decl.copy();
         if(decl_p)
@@ -137,6 +145,9 @@ namespace iotdb {
     StructDeclaration::~StructDeclaration(){
 
     }
+
+    class VariableDeclaration;
+    typedef std::shared_ptr<VariableDeclaration> VariableDeclarationPtr;
 
     class VariableDeclaration : public Declaration{
     public:
@@ -177,12 +188,17 @@ namespace iotdb {
         const DeclarationPtr copy() const override{
           return std::make_shared<VariableDeclaration>(*this);
         }
+        ~VariableDeclaration();
     private:
         VariableDeclaration(DataTypePtr type, const std::string& identifier, ValueTypePtr value=nullptr);
         DataTypePtr type_;
         std::string identifier_;
         ValueTypePtr init_value_;
     };
+
+    VariableDeclaration::~VariableDeclaration(){
+
+    }
 
     VariableDeclaration::VariableDeclaration(DataTypePtr type, const std::string& identifier, ValueTypePtr value)
       : type_(type), identifier_(identifier), init_value_(value){}
@@ -402,8 +418,6 @@ namespace iotdb {
 
     enum UnaryOperatorType{ADDRESS_OF_OP,
                            DEREFERENCE_POINTER_OP,
-                           MEMBER_SELECT_POINTER_OP,
-                           MEMBER_SELECT_REFERENCE_OP,
                            PREFIX_INCREMENT_OP,
                            PREFIX_DECREMENT_OP,
                            POSTFIX_INCREMENT_OP,
@@ -418,8 +432,6 @@ namespace iotdb {
       const char* const names[] = {
     "ADDRESS_OF_OP",
     "DEREFERENCE_POINTER_OP",
-    "MEMBER_SELECT_POINTER_OP",
-    "MEMBER_SELECT_REFERENCE_OP",
     "PREFIX_INCREMENT_OP",
     "PREFIX_DECREMENT_OP",
     "POSTFIX_INCREMENT_OP",
@@ -434,8 +446,6 @@ namespace iotdb {
       const char* const names[] = {
         "&",
         "*",
-        "->",
-        ".",
         "++",
         "--",
         "++",
@@ -447,7 +457,8 @@ namespace iotdb {
       return std::make_shared<CodeExpression>(names[type]);
     }
 
-    enum BinaryOperatorType{EQUAL_OP, UNEQUAL_OP, LESS_THEN_OP,LESS_THEN_EQUAL_OP,GREATER_THEN_OP,GREATER_THEN_EQUAL_OP, PLUS_OP, MINUS_OP, MULTIPLY_OP, DIVISION_OP, MODULO_OP, LOGICAL_AND_OP, LOGICAL_OR_OP, BITWISE_AND_OP, BITWISE_OR_OP, BITWISE_XOR_OP, BITWISE_LEFT_SHIFT_OP, BITWISE_RIGHT_SHIFT_OP, ASSIGNMENT_OP, ARRAY_REFERENCE_OP};
+    enum BinaryOperatorType{EQUAL_OP, UNEQUAL_OP, LESS_THEN_OP,LESS_THEN_EQUAL_OP,GREATER_THEN_OP,GREATER_THEN_EQUAL_OP, PLUS_OP, MINUS_OP, MULTIPLY_OP, DIVISION_OP, MODULO_OP, LOGICAL_AND_OP, LOGICAL_OR_OP, BITWISE_AND_OP, BITWISE_OR_OP, BITWISE_XOR_OP, BITWISE_LEFT_SHIFT_OP, BITWISE_RIGHT_SHIFT_OP, ASSIGNMENT_OP, ARRAY_REFERENCE_OP, MEMBER_SELECT_POINTER_OP,
+                            MEMBER_SELECT_REFERENCE_OP};
 
     const std::string toString(const BinaryOperatorType& type){
       const char* const names[] = {"EQUAL_OP", "UNEQUAL_OP", "LESS_THEN_OP", "LESS_THEN_EQUAL_OP","GREATER_THEN_OP","GREATER_THEN_EQUAL_OP","PLUS_OP",
@@ -463,7 +474,9 @@ namespace iotdb {
                                    "BITWISE_LEFT_SHIFT_OP",
                                    "BITWISE_RIGHT_SHIFT_OP",
                                    "ASSIGNMENT_OP",
-                                   "ARRAY_REFERENCE_OP"};
+                                   "ARRAY_REFERENCE_OP",
+                                   "MEMBER_SELECT_POINTER_OP",
+                                   "MEMBER_SELECT_REFERENCE_OP"};
       return std::string(names[type]);
     }
 
@@ -481,7 +494,11 @@ namespace iotdb {
                                    "|",
                                    "^",
                                    "<<",
-                                   ">>", "=", "[]"};
+                                   ">>",
+                                   "=",
+                                   "[]",
+                                   "->",
+                                   ".",};
       return std::make_shared<CodeExpression>(names[type]);
     }
 
@@ -506,9 +523,7 @@ namespace iotdb {
        }
        virtual const CodeExpressionPtr getCode() const{
           CodeExpressionPtr code;
-          if(MEMBER_SELECT_POINTER_OP==op_
-          || MEMBER_SELECT_REFERENCE_OP==op_
-          || POSTFIX_INCREMENT_OP==op_
+          if(POSTFIX_INCREMENT_OP==op_
           || POSTFIX_DECREMENT_OP==op_){
             /* postfix operators */
             code = combine(expr_->getCode(),toCodeExpression(op_));
@@ -830,8 +845,8 @@ private:
           std::cout << toString(ADDRESS_OF_OP) << ": " << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup),ADDRESS_OF_OP).getCode()->code_ << std::endl;
           std::cout << toString(DEREFERENCE_POINTER_OP) << ": " << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup),DEREFERENCE_POINTER_OP).getCode()->code_ << std::endl;
           //std::cout << toString(ARRAY_REFERENCE_OP) << ": " << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup),ARRAY_REFERENCE_OP).getCode()->code_ << std::endl;
-          std::cout << toString(MEMBER_SELECT_POINTER_OP) << ": " << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup),MEMBER_SELECT_POINTER_OP).getCode()->code_ << std::endl;
-          std::cout << toString(MEMBER_SELECT_REFERENCE_OP) << ": " << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup),MEMBER_SELECT_REFERENCE_OP).getCode()->code_ << std::endl;
+          //std::cout << toString(MEMBER_SELECT_POINTER_OP) << ": " << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup),MEMBER_SELECT_POINTER_OP).getCode()->code_ << std::endl;
+          //std::cout << toString(MEMBER_SELECT_REFERENCE_OP) << ": " << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup),MEMBER_SELECT_REFERENCE_OP).getCode()->code_ << std::endl;
           std::cout << toString(PREFIX_INCREMENT_OP) << ": " << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup),PREFIX_INCREMENT_OP).getCode()->code_ << std::endl;
           std::cout << toString(PREFIX_DECREMENT_OP) << ": " << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup),PREFIX_DECREMENT_OP).getCode()->code_ << std::endl;
           std::cout << toString(POSTFIX_INCREMENT_OP) << ": " << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup),POSTFIX_INCREMENT_OP).getCode()->code_ << std::endl;
@@ -923,6 +938,8 @@ private:
             .addField(VariableDeclaration::create(createDataType(BasicType(UINT32)),"campaign_id"))
             .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)),"payload"));
 
+
+
         VariableDeclaration var_decl_tuple = VariableDeclaration::create(
               createPointerDataType(
                 createUserDefinedType(struct_decl_tuple)),
@@ -931,15 +948,17 @@ private:
 
         DeclarationPtr decl = struct_decl_tuple.getField("campaign_id");
         assert(decl!=nullptr);
+        VariableDeclaration decl_field_struct = VariableDeclaration::create(decl->getType(),decl->getIdentifierName());
+
 
         std::cout << BinaryOperatorStatement(VarRefStatement(var_decl_tuple),ARRAY_REFERENCE_OP,ConstantExprStatement(INT32,"0")).getCode()->code_ << std::endl;
         std::cout << BinaryOperatorStatement(VarRefStatement(var_decl_tuple),ARRAY_REFERENCE_OP,VarRefStatement(var_decl_i)).getCode()->code_ << std::endl;
-        std::cout << UnaryOperatorStatement(
+        std::cout << BinaryOperatorStatement(
                        BinaryOperatorStatement(
                          VarRefStatement(var_decl_tuple),
                          ARRAY_REFERENCE_OP,
                          VarRefStatement(var_decl_i)),
-                       MEMBER_SELECT_REFERENCE_OP).getCode()->code_ << std::endl;
+                       MEMBER_SELECT_REFERENCE_OP, VarRefStatement(decl_field_struct)).getCode()->code_ << std::endl;
 
 
 
