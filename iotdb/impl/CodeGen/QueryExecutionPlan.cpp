@@ -20,7 +20,8 @@ QueryExecutionPlan::~QueryExecutionPlan() {}
 const std::vector<DataSourcePtr> QueryExecutionPlan::getSources() const { return sources; }
 
 bool QueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const TupleBuffer &buf) {
-  bool ret = stages[pipeline_stage_id]->execute(buf);
+  WindowState* state;
+  bool ret = stages[pipeline_stage_id]->execute(buf,state);
   return ret;
 }
 }

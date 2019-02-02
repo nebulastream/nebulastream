@@ -8,10 +8,11 @@
 #include <CodeGen/PipelineStage.hpp>
 #include <iostream>
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
+#include <Util/ErrorHandling.hpp>
 
 namespace iotdb {
 
-bool PipelineStage::execute(TupleBuffer buf) {
+bool PipelineStage::execute(TupleBuffer buf, WindowState* state) {
   std::cout << "Execute a Pipeline Stage!" << std::endl;
   return true;
 }
@@ -19,6 +20,8 @@ bool PipelineStage::execute(TupleBuffer buf) {
 PipelineStage::~PipelineStage(){
 
 }
+
+
 
 class CPipelineStage : public PipelineStage{
 public:
@@ -29,8 +32,8 @@ public:
 
 protected:
 
- TupleBuffer execute_impl() override final;
- virtual TupleBuffer callCFunction(TupleBuffer** c_tables);
+ TupleBuffer execute_impl(std::vector<TupleBuffer*>& input_buffers) override final;
+ virtual uint32_t callCFunction(TupleBuffer** tuple_buffers, WindowState* state, TupleBuffer* result_buffer);
 
  CompiledCCodePtr compiled_code_;
 };
@@ -49,16 +52,22 @@ const PipelineStagePtr CPipelineStage::copy() const{
     return PipelineStagePtr(new CPipelineStage(*this));
 }
 
-TupleBuffer CPipelineStage::execute_impl(){
+TupleBuffer CPipelineStage::execute_impl(std::vector<TupleBuffer*>& input_buffers){
 
+  WindowState* state;
+  TupleBuffer result={nullptr,0,0,0};
 
+  uint32_t ret = callCFunction(input_buffers.data(), state, &result);
+  if(!ret)
+    IOTDB_FATAL_ERROR("Execution of Compled PipelineStage Failed!");
+  return result;
 }
 
-typedef TupleBuffer (*SharedCLibPipelineQueryPtr)(TupleBuffer**);
+typedef uint32_t (*SharedCLibPipelineQueryPtr)(TupleBuffer**, WindowState*, TupleBuffer*);
 
-TupleBuffer CPipelineStage::callCFunction(TupleBuffer** tuple_buffers){
+uint32_t CPipelineStage::callCFunction(TupleBuffer** tuple_buffers, WindowState* state, TupleBuffer* result_buffer){
   return (*compiled_code_->getFunctionPointer<SharedCLibPipelineQueryPtr>(
-      "compiled_query"))(tuple_buffers);
+      "compiled_query"))(tuple_buffers,state, result_buffer);
 
 }
 

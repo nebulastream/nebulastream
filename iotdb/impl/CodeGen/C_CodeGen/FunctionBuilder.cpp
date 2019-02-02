@@ -914,31 +914,29 @@ private:
                 .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)),"num_tuples",createBasicTypeValue(BasicType(UINT64),"0")))
                 .addField(var_decl_p);
 
-
-
             std::cout << VariableDeclaration::create(createUserDefinedType(struct_decl), "buffer").getCode() << std::endl;
             std::cout << VariableDeclaration::create(createPointerDataType(createUserDefinedType(struct_decl)), "buffer").getCode() << std::endl;
             std::cout << createPointerDataType(createUserDefinedType(struct_decl))->getCode()->code_ << std::endl;
 
             std::cout << VariableDeclaration::create(createPointerDataType(createUserDefinedType(struct_decl)), "buffer").getTypeDefinitionCode() << std::endl;
-
-
         }
 
-
-        StructDeclaration struct_decl = StructDeclaration::create("TupleBuffer", "buffer")
+        StructDeclaration struct_decl = StructDeclaration::create("TupleBuffer", "")
                         .addField(VariableDeclaration::create(createPointerDataType(createDataType(BasicType(VOID_TYPE))),"data"))
-            .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)),"size_of_tuples"))
+            .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)),"buffer_size"))
+            .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)),"tuple_size_bytes"))
             .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)),"num_tuples"));
 
+        StructDeclaration struct_decl_state = StructDeclaration::create("WindowState", "")
+            .addField(VariableDeclaration::create(createPointerDataType(createDataType(BasicType(VOID_TYPE))),"window_state"));
 
-        VariableDeclaration var_decl_tuple_buffer = VariableDeclaration::create(createPointerDataType(createUserDefinedType(struct_decl)),"window_buffer");
+        VariableDeclaration var_decl_tuple_buffer = VariableDeclaration::create(createPointerDataType(createPointerDataType(createUserDefinedType(struct_decl))),"window_buffer");
+        VariableDeclaration var_decl_tuple_buffer_output = VariableDeclaration::create(createPointerDataType(createUserDefinedType(struct_decl)),"output_tuple_buffer");
+        VariableDeclaration var_decl_state = VariableDeclaration::create(createPointerDataType(createUserDefinedType(struct_decl_state)),"global_state");
 
         StructDeclaration struct_decl_tuple = StructDeclaration::create("Tuple", "tuples")
             .addField(VariableDeclaration::create(createDataType(BasicType(UINT32)),"campaign_id"))
             .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)),"payload"));
-
-
 
         VariableDeclaration var_decl_tuple = VariableDeclaration::create(
               createPointerDataType(
@@ -958,23 +956,33 @@ private:
                          VarRefStatement(var_decl_tuple),
                          ARRAY_REFERENCE_OP,
                          VarRefStatement(var_decl_i)),
-                       MEMBER_SELECT_REFERENCE_OP, VarRefStatement(decl_field_struct)).getCode()->code_ << std::endl;
+                       MEMBER_SELECT_REFERENCE_OP,
+                       VarRefStatement(decl_field_struct))
+                     .getCode()->code_ << std::endl;
 
+
+
+        /* typedef uint32_t (*SharedCLibPipelineQueryPtr)(TupleBuffer**, WindowState*, TupleBuffer*); */
+
+        VariableDeclaration var_decl_return = VariableDeclaration::create(createDataType(BasicType(INT32)),"ret",createBasicTypeValue(BasicType(INT32),"0"));
 
 
         FunctionDeclaration main_function = FunctionBuilder::create("compiled_query")
-            .returns(createDataType(BasicType(INT32)))
-            .addParameter(VariableDeclaration::create(
-                            createDataType(BasicType(INT32)),
-                            "thread_id"))
+            .returns(createDataType(BasicType(UINT32)))
+//            .addParameter(VariableDeclaration::create(
+//                            createDataType(BasicType(INT32)),
+//                            "thread_id"))
             .addParameter(var_decl_tuple_buffer)
-            .addVariableDeclaration(var_decl_i)
+            .addParameter(var_decl_state)
+            .addParameter(var_decl_tuple_buffer_output)
+            .addVariableDeclaration(var_decl_return)
             .addVariableDeclaration(var_decl_tuple)
-            .addStatement(StatementPtr(new ReturnStatement(VarRefStatement(var_decl_i))))
+            .addStatement(StatementPtr(new ReturnStatement(VarRefStatement(var_decl_return))))
             .build();
 
         CodeFile file = FileBuilder::create("query.cpp")
             .addDeclaration(struct_decl)
+            .addDeclaration(struct_decl_state)
             .addDeclaration(struct_decl_tuple)
             .addDeclaration(var_decl)
             .addDeclaration(main_function)

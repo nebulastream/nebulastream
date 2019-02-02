@@ -9,20 +9,23 @@
 #define INCLUDE_PIPELINESTAGE_H_
 #include <Core/TupleBuffer.hpp>
 #include <memory>
+#include <vector>
 
 namespace iotdb {
 
 class PipelineStage;
 typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
 
+class WindowState;
+
 class PipelineStage {
 public:
   /** \brief process input tuple buffer */
-  bool execute(TupleBuffer buf);
+  bool execute(TupleBuffer buf, WindowState* state);
   virtual const PipelineStagePtr copy() const = 0;
   virtual ~PipelineStage();
 protected:
-  virtual TupleBuffer execute_impl() = 0;
+  virtual TupleBuffer execute_impl(std::vector<TupleBuffer*>& input_buffers) = 0;
 };
 typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
 
