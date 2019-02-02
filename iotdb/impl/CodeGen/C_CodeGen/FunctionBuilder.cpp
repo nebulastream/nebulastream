@@ -4,7 +4,6 @@
 #include <sstream>
 #include <vector>
 
-
 #include <Core/DataTypes.hpp>
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
 #include <CodeGen/PipelineStage.hpp>
@@ -42,8 +41,6 @@ namespace iotdb {
     }
 
     typedef std::shared_ptr<Statement> StatementPtr;
-
-
     typedef std::string Code;
 
     class Declaration;
@@ -51,6 +48,8 @@ namespace iotdb {
 
     class Declaration{
     public:
+      virtual const DataTypePtr getType() const = 0;
+      virtual const std::string getIdentifierName() const = 0;
       virtual const Code getTypeDefinitionCode() const = 0;
       virtual const Code getCode() const = 0;
       virtual const DeclarationPtr copy() const = 0;
@@ -60,10 +59,21 @@ namespace iotdb {
     Declaration::~Declaration(){
     }
 
+    class StructDeclaration;
+    const DataTypePtr createUserDefinedType(const StructDeclaration& decl);
+
     class StructDeclaration : public Declaration{
     public:
-      static StructDeclaration create(const std::string& type_name){
-          return StructDeclaration(type_name);
+      static StructDeclaration create(const std::string& type_name, const std::string& variable_name){
+          return StructDeclaration(type_name,variable_name);
+      }
+
+      virtual const DataTypePtr getType() const override{
+        return createUserDefinedType(*this);
+      }
+
+      virtual const std::string getIdentifierName() const override{
+         return variable_name_;
       }
 
       const Code getTypeDefinitionCode() const override{
@@ -83,6 +93,7 @@ namespace iotdb {
             expr << decl->getCode() << ";" << std::endl;
          }
          expr << "}";
+         expr << variable_name_;
          return expr.str();
       }
 
@@ -99,7 +110,14 @@ namespace iotdb {
         return std::make_shared<StructDeclaration>(*this);
       }
 
-
+      DeclarationPtr getField(const std::string field_name) const{
+        for(auto& decl : decls_){
+            if(decl->getIdentifierName()==field_name){
+                return decl;
+            }
+        }
+        return DeclarationPtr();
+      }
 
       StructDeclaration& addField(const Declaration& decl){
         DeclarationPtr decl_p = decl.copy();
@@ -109,9 +127,10 @@ namespace iotdb {
       }
       ~StructDeclaration();
     private:
-      StructDeclaration(const std::string& type_name) :
-        type_name_(type_name), decls_(){}
+      StructDeclaration(const std::string& type_name, const std::string& variable_name) :
+        type_name_(type_name), variable_name_(variable_name), decls_(){}
       std::string type_name_;
+      std::string variable_name_;
       std::vector<DeclarationPtr> decls_;
     };
 
@@ -122,6 +141,13 @@ namespace iotdb {
     class VariableDeclaration : public Declaration{
     public:
         static VariableDeclaration create(DataTypePtr type, const std::string& identifier, ValueTypePtr value=nullptr);
+
+        virtual const DataTypePtr getType() const override{
+          return type_;
+        }
+        virtual const std::string getIdentifierName() const override{
+           return identifier_;
+        }
 
         const Code getTypeDefinitionCode() const override{
           CodeExpressionPtr code = type_->getTypeDefinitionCode();
@@ -172,6 +198,14 @@ namespace iotdb {
       Code function_code;
     public:
       FunctionDeclaration(Code code) : function_code(code){}
+
+
+      virtual const DataTypePtr getType() const override{
+        return DataTypePtr();
+      }
+      virtual const std::string getIdentifierName() const override{
+         return "";
+      }
 
       const Code getTypeDefinitionCode() const override{
         return Code();
@@ -733,7 +767,6 @@ private:
 
     }
 
-    const DataTypePtr createUserDefinedType(const StructDeclaration& decl);
 
     const DataTypePtr createUserDefinedType(const StructDeclaration& decl){
       return std::make_shared<UserDefinedDataType>(decl);
@@ -862,7 +895,7 @@ private:
             std::cout << var_decl_p.getCode() << std::endl;
 
 
-            StructDeclaration struct_decl = StructDeclaration::create("TupleBuffer")
+            StructDeclaration struct_decl = StructDeclaration::create("TupleBuffer","buffer")
                 .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)),"num_tuples",createBasicTypeValue(BasicType(UINT64),"0")))
                 .addField(var_decl_p);
 
@@ -878,7 +911,7 @@ private:
         }
 
 
-        StructDeclaration struct_decl = StructDeclaration::create("TupleBuffer")
+        StructDeclaration struct_decl = StructDeclaration::create("TupleBuffer", "buffer")
                         .addField(VariableDeclaration::create(createPointerDataType(createDataType(BasicType(VOID_TYPE))),"data"))
             .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)),"size_of_tuples"))
             .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)),"num_tuples"));
@@ -886,7 +919,7 @@ private:
 
         VariableDeclaration var_decl_tuple_buffer = VariableDeclaration::create(createPointerDataType(createUserDefinedType(struct_decl)),"window_buffer");
 
-        StructDeclaration struct_decl_tuple = StructDeclaration::create("Tuple")
+        StructDeclaration struct_decl_tuple = StructDeclaration::create("Tuple", "tuples")
             .addField(VariableDeclaration::create(createDataType(BasicType(UINT32)),"campaign_id"))
             .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)),"payload"));
 
@@ -896,8 +929,19 @@ private:
               "tuples");
 
 
+        DeclarationPtr decl = struct_decl_tuple.getField("campaign_id");
+        assert(decl!=nullptr);
+
         std::cout << BinaryOperatorStatement(VarRefStatement(var_decl_tuple),ARRAY_REFERENCE_OP,ConstantExprStatement(INT32,"0")).getCode()->code_ << std::endl;
         std::cout << BinaryOperatorStatement(VarRefStatement(var_decl_tuple),ARRAY_REFERENCE_OP,VarRefStatement(var_decl_i)).getCode()->code_ << std::endl;
+        std::cout << UnaryOperatorStatement(
+                       BinaryOperatorStatement(
+                         VarRefStatement(var_decl_tuple),
+                         ARRAY_REFERENCE_OP,
+                         VarRefStatement(var_decl_i)),
+                       MEMBER_SELECT_REFERENCE_OP).getCode()->code_ << std::endl;
+
+
 
         FunctionDeclaration main_function = FunctionBuilder::create("compiled_query")
             .returns(createDataType(BasicType(INT32)))
