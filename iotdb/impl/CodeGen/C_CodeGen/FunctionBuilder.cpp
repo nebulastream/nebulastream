@@ -954,12 +954,26 @@ private:
             std::cout << VariableDeclaration::create(createPointerDataType(createUserDefinedType(struct_decl)), "buffer").getTypeDefinitionCode() << std::endl;
         }
 
+        /** define structure of TupleBuffer
+          struct TupleBuffer {
+            void *data;
+            uint64_t buffer_size;
+            uint64_t tuple_size_bytes;
+            uint64_t num_tuples;
+          };
+        */
         StructDeclaration struct_decl_tuple_buffer = StructDeclaration::create("TupleBuffer", "")
                         .addField(VariableDeclaration::create(createPointerDataType(createDataType(BasicType(VOID_TYPE))),"data"))
             .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)),"buffer_size"))
             .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)),"tuple_size_bytes"))
             .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)),"num_tuples"));
 
+        /**
+           define the WindowState struct
+         struct WindowState {
+          void *window_state;
+          };
+        */
         StructDeclaration struct_decl_state = StructDeclaration::create("WindowState", "")
             .addField(VariableDeclaration::create(createPointerDataType(createDataType(BasicType(VOID_TYPE))),"window_state"));
 
@@ -967,14 +981,27 @@ private:
         VariableDeclaration var_decl_tuple_buffer_output = VariableDeclaration::create(createPointerDataType(createUserDefinedType(struct_decl_tuple_buffer)),"output_tuple_buffer");
         VariableDeclaration var_decl_state = VariableDeclaration::create(createPointerDataType(createUserDefinedType(struct_decl_state)),"global_state");
 
+        /* struct definition for input tuples */
+
         StructDeclaration struct_decl_tuple = StructDeclaration::create("Tuple", "")
-            .addField(VariableDeclaration::create(createDataType(BasicType(UINT32)),"campaign_id"))
-            .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)),"payload"));
+            .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)),"campaign_id"));
+            //.addField(VariableDeclaration::create(createDataType(BasicType(UINT64)),"payload"));
+
+        /* Tuple *tuples; */
 
         VariableDeclaration var_decl_tuple = VariableDeclaration::create(
               createPointerDataType(
                 createUserDefinedType(struct_decl_tuple)),
               "tuples");
+
+        /* struct definition for result tuples */
+        StructDeclaration struct_decl_result_tuple = StructDeclaration::create("ResultTuple", "")
+            .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)),"sum"));
+
+        VariableDeclaration var_decl_result_tuple = VariableDeclaration::create(
+              createPointerDataType(
+                createUserDefinedType(struct_decl_result_tuple)),
+              "result_tuples");
 
 
         DeclarationPtr decl = struct_decl_tuple.getField("campaign_id");
@@ -988,6 +1015,10 @@ private:
         DeclarationPtr decl_field_tup_buf_data_ptr = struct_decl_tuple_buffer.getField("data");
         assert(decl_field_tup_buf_data_ptr!=nullptr);
         VariableDeclaration decl_field_data_ptr_struct_tuple_buf = VariableDeclaration::create(decl_field_tup_buf_data_ptr->getType(),decl_field_tup_buf_data_ptr->getIdentifierName());
+
+        DeclarationPtr decl_field_result_tuple_sum = struct_decl_result_tuple.getField("sum");
+        assert(decl_field_result_tuple_sum!=nullptr);
+        VariableDeclaration var_decl_field_result_tuple_sum=VariableDeclaration::create(decl_field_result_tuple_sum->getType(),decl_field_result_tuple_sum->getIdentifierName());
 
 
         std::cout << BinaryOperatorStatement(VarRefStatement(var_decl_tuple),ARRAY_REFERENCE_OP,ConstantExprStatement(INT32,"0")).getCode()->code_ << std::endl;
@@ -1008,12 +1039,18 @@ private:
 
         /* variable declarations */
 
+
+        /* TupleBuffer *tuple_buffer_1; */
+
         VariableDeclaration var_decl_tuple_buffer_1 = VariableDeclaration::create(createPointerDataType(createUserDefinedType(struct_decl_tuple_buffer)),"tuple_buffer_1");
 
         VariableDeclaration var_decl_id = VariableDeclaration::create(createDataType(BasicType(UINT64)),"id",createBasicTypeValue(BasicType(INT32),"0"));
         VariableDeclaration var_decl_num_tup = VariableDeclaration::create(createDataType(BasicType(INT32)),"num_tuples",createBasicTypeValue(BasicType(INT32),"0"));
 
-        VariableDeclaration var_decl_sum = VariableDeclaration::create(createDataType(BasicType(INT32)),"sum",createBasicTypeValue(BasicType(INT32),"0"));
+        VariableDeclaration var_decl_sum = VariableDeclaration::create(
+              createDataType(BasicType(INT32)),"sum",
+              createBasicTypeValue(BasicType(INT32),"0"));
+
 
         BinaryOperatorStatement init_tuple_buffer_ptr(VarRefStatement(var_decl_tuple_buffer_1),
                                                       ASSIGNMENT_OP,
@@ -1028,6 +1065,18 @@ private:
                                                                               VarRefStatement(decl_field_data_ptr_struct_tuple_buf)),
                                                  createPointerDataType(createUserDefinedType(struct_decl_tuple))));
 
+        BinaryOperatorStatement init_result_tuple_ptr(VarRefStatement(var_decl_result_tuple),
+                                                      ASSIGNMENT_OP,
+                                                      TypeCastExprStatement(
+                                                           BinaryOperatorStatement(VarRefStatement(var_decl_tuple_buffer_output),
+                                                                              MEMBER_SELECT_POINTER_OP,
+                                                                              VarRefStatement(decl_field_data_ptr_struct_tuple_buf)),
+                                                 createPointerDataType(createUserDefinedType(struct_decl_result_tuple))));
+
+
+
+
+        /* for (uint64_t id = 0; id < tuple_buffer_1->num_tuples; ++id) */
         ForLoopStatement loop_stmt(var_decl_id,
                          BinaryOperatorStatement(
                            VarRefStatement(var_decl_id),
@@ -1038,6 +1087,7 @@ private:
                                        VarRefStatement(decl_field_num_tuples_struct_tuple_buf))),
                          UnaryOperatorStatement(VarRefStatement(var_decl_id), PREFIX_INCREMENT_OP));
 
+        /* sum = sum + tuples[id].campaign_id; */
         loop_stmt.addStatement(BinaryOperatorStatement(
                                  VarRefStatement(var_decl_sum),
                                  ASSIGNMENT_OP,
@@ -1066,18 +1116,24 @@ private:
             .addParameter(var_decl_tuple_buffer_output)
             .addVariableDeclaration(var_decl_return)
             .addVariableDeclaration(var_decl_tuple)
+            .addVariableDeclaration(var_decl_result_tuple)
             .addVariableDeclaration(var_decl_tuple_buffer_1)
             .addVariableDeclaration(var_decl_sum)
             .addStatement(init_tuple_buffer_ptr.copy())
             .addStatement(init_tuple_ptr.copy())
+            .addStatement(init_result_tuple_ptr.copy())
             .addStatement(StatementPtr(new ForLoopStatement(loop_stmt)))
-//            .addStatement(
-//              BinaryOperatorStatement(VarRefStatement(var_decl_tuple_buffer_output),
-//                                                  MEMBER_SELECT_POINTER_OP,
-//                                                  BinaryOperatorStatement(
-//                                                  VarRefStatement(decl_field_data_ptr_struct_tuple_buf),
-//                                        ARRAY_REFERENCE_OP,
-//                                        ConstantExprStatement(INT32,"0"))).copy())
+            .addStatement(
+              BinaryOperatorStatement(
+                BinaryOperatorStatement(VarRefStatement(var_decl_result_tuple),
+                                        ARRAY_REFERENCE_OP,
+                                        ConstantExprStatement(INT32,"0")),
+                MEMBER_SELECT_REFERENCE_OP,
+                BinaryOperatorStatement(
+                  VarRefStatement(var_decl_field_result_tuple_sum),
+                  ASSIGNMENT_OP,
+                  VarRefStatement(var_decl_sum))
+                  ).copy())
             .addStatement(StatementPtr(new ReturnStatement(VarRefStatement(var_decl_return))))
             .build();
 
@@ -1085,13 +1141,12 @@ private:
             .addDeclaration(struct_decl_tuple_buffer)
             .addDeclaration(struct_decl_state)
             .addDeclaration(struct_decl_tuple)
+            .addDeclaration(struct_decl_result_tuple)
             .addDeclaration(var_decl)
             .addDeclaration(main_function)
             .build();
 
         PipelineStagePtr stage = compile(file);
-
-
 
         uint64_t* my_array = (uint64_t*) malloc(100*sizeof(uint64_t));
 
@@ -1111,6 +1166,14 @@ private:
         if(!stage->execute(bufs,nullptr,&result_buf)){
             std::cout << "Error!" << std::endl;
         }
+
+        std::cout << "Sum (Generated Code): " << result_array[0] << std::endl;
+
+        uint64_t my_sum=0;
+        for(uint64_t i=0;i<100;++i){
+                  my_sum+=my_array[i];
+        }
+        std::cout << "my sum: " << my_sum << std::endl;
 
 
         free(my_array);
