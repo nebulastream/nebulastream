@@ -21,11 +21,11 @@ class WindowState;
 class PipelineStage {
 public:
   /** \brief process input tuple buffer */
-  bool execute(TupleBuffer buf, WindowState* state);
+  bool execute(const std::vector<TupleBuffer*>& input_buffers, WindowState* state, TupleBuffer* result_buf);
   virtual const PipelineStagePtr copy() const = 0;
   virtual ~PipelineStage();
 protected:
-  virtual TupleBuffer execute_impl(std::vector<TupleBuffer*>& input_buffers) = 0;
+  virtual uint32_t execute_impl(const std::vector<TupleBuffer*>& input_buffers, WindowState* state, TupleBuffer* result_buf) = 0;
 };
 typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
 

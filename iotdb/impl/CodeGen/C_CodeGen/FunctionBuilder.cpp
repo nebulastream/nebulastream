@@ -1071,6 +1071,13 @@ private:
             .addStatement(init_tuple_buffer_ptr.copy())
             .addStatement(init_tuple_ptr.copy())
             .addStatement(StatementPtr(new ForLoopStatement(loop_stmt)))
+//            .addStatement(
+//              BinaryOperatorStatement(VarRefStatement(var_decl_tuple_buffer_output),
+//                                                  MEMBER_SELECT_POINTER_OP,
+//                                                  BinaryOperatorStatement(
+//                                                  VarRefStatement(decl_field_data_ptr_struct_tuple_buf),
+//                                        ARRAY_REFERENCE_OP,
+//                                        ConstantExprStatement(INT32,"0"))).copy())
             .addStatement(StatementPtr(new ReturnStatement(VarRefStatement(var_decl_return))))
             .build();
 
@@ -1083,6 +1090,32 @@ private:
             .build();
 
         PipelineStagePtr stage = compile(file);
+
+
+
+        uint64_t* my_array = (uint64_t*) malloc(100*sizeof(uint64_t));
+
+        for(unsigned int i=0;i<100;++i){
+           my_array[i]=i;
+        }
+
+        TupleBuffer buf{my_array, 100*sizeof(uint64_t), sizeof(uint64_t), 100};
+
+        uint64_t* result_array = (uint64_t*) malloc(1*sizeof(uint64_t));
+
+        std::vector<TupleBuffer*> bufs;
+        bufs.push_back(&buf);
+
+        TupleBuffer result_buf{result_array, sizeof(uint64_t), sizeof(uint64_t), 0};
+
+        if(!stage->execute(bufs,nullptr,&result_buf)){
+            std::cout << "Error!" << std::endl;
+        }
+
+
+        free(my_array);
+        free(result_array);
+
         //stage->execute();
 
       return 0;
