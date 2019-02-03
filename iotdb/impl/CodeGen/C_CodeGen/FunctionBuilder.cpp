@@ -40,6 +40,7 @@ namespace iotdb {
     ExpressionStatment::~ExpressionStatment(){
     }
 
+
     typedef std::shared_ptr<Statement> StatementPtr;
     typedef std::string Code;
 
@@ -390,6 +391,38 @@ namespace iotdb {
     };
 
     ConstantExprStatement::~ConstantExprStatement(){}
+
+    class TypeCastExprStatement : public ExpressionStatment{
+    public:
+      virtual StatementType getStamentType() const{
+        return CONSTANT_VALUE_EXPR_STMT;
+      }
+
+      virtual const CodeExpressionPtr getCode() const{
+        CodeExpressionPtr code;
+        code = combine(std::make_shared<CodeExpression>("("), type_->getCode());
+        code = combine(code, std::make_shared<CodeExpression>(")"));
+        code = combine(code, expr_->getCode());
+        return code;
+      }
+
+      virtual const ExpressionStatmentPtr copy() const{
+        return std::make_shared<TypeCastExprStatement>(*this);
+      }
+
+     TypeCastExprStatement(const ExpressionStatment& expr, const DataTypePtr& type)
+       : expr_(expr.copy()), type_(type){
+
+     }
+
+     virtual ~TypeCastExprStatement();
+
+     private:
+       ExpressionStatmentPtr expr_;
+       DataTypePtr type_;
+    };
+
+    TypeCastExprStatement::~TypeCastExprStatement(){}
 
     class VarRefStatement : public ExpressionStatment{
     public:
@@ -921,7 +954,7 @@ private:
             std::cout << VariableDeclaration::create(createPointerDataType(createUserDefinedType(struct_decl)), "buffer").getTypeDefinitionCode() << std::endl;
         }
 
-        StructDeclaration struct_decl = StructDeclaration::create("TupleBuffer", "")
+        StructDeclaration struct_decl_tuple_buffer = StructDeclaration::create("TupleBuffer", "")
                         .addField(VariableDeclaration::create(createPointerDataType(createDataType(BasicType(VOID_TYPE))),"data"))
             .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)),"buffer_size"))
             .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)),"tuple_size_bytes"))
@@ -930,11 +963,11 @@ private:
         StructDeclaration struct_decl_state = StructDeclaration::create("WindowState", "")
             .addField(VariableDeclaration::create(createPointerDataType(createDataType(BasicType(VOID_TYPE))),"window_state"));
 
-        VariableDeclaration var_decl_tuple_buffer = VariableDeclaration::create(createPointerDataType(createPointerDataType(createUserDefinedType(struct_decl))),"window_buffer");
-        VariableDeclaration var_decl_tuple_buffer_output = VariableDeclaration::create(createPointerDataType(createUserDefinedType(struct_decl)),"output_tuple_buffer");
+        VariableDeclaration var_decl_tuple_buffers = VariableDeclaration::create(createPointerDataType(createPointerDataType(createUserDefinedType(struct_decl_tuple_buffer))),"window_buffer");
+        VariableDeclaration var_decl_tuple_buffer_output = VariableDeclaration::create(createPointerDataType(createUserDefinedType(struct_decl_tuple_buffer)),"output_tuple_buffer");
         VariableDeclaration var_decl_state = VariableDeclaration::create(createPointerDataType(createUserDefinedType(struct_decl_state)),"global_state");
 
-        StructDeclaration struct_decl_tuple = StructDeclaration::create("Tuple", "tuples")
+        StructDeclaration struct_decl_tuple = StructDeclaration::create("Tuple", "")
             .addField(VariableDeclaration::create(createDataType(BasicType(UINT32)),"campaign_id"))
             .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)),"payload"));
 
@@ -946,7 +979,15 @@ private:
 
         DeclarationPtr decl = struct_decl_tuple.getField("campaign_id");
         assert(decl!=nullptr);
-        VariableDeclaration decl_field_struct = VariableDeclaration::create(decl->getType(),decl->getIdentifierName());
+        VariableDeclaration decl_field_campaign_id = VariableDeclaration::create(decl->getType(),decl->getIdentifierName());
+
+        DeclarationPtr decl_field_tup_buf_num_tuples = struct_decl_tuple_buffer.getField("num_tuples");
+        assert(decl_field_tup_buf_num_tuples!=nullptr);
+        VariableDeclaration decl_field_num_tuples_struct_tuple_buf = VariableDeclaration::create(decl_field_tup_buf_num_tuples->getType(),
+                                                                                                 decl_field_tup_buf_num_tuples->getIdentifierName());
+        DeclarationPtr decl_field_tup_buf_data_ptr = struct_decl_tuple_buffer.getField("data");
+        assert(decl_field_tup_buf_data_ptr!=nullptr);
+        VariableDeclaration decl_field_data_ptr_struct_tuple_buf = VariableDeclaration::create(decl_field_tup_buf_data_ptr->getType(),decl_field_tup_buf_data_ptr->getIdentifierName());
 
 
         std::cout << BinaryOperatorStatement(VarRefStatement(var_decl_tuple),ARRAY_REFERENCE_OP,ConstantExprStatement(INT32,"0")).getCode()->code_ << std::endl;
@@ -957,31 +998,84 @@ private:
                          ARRAY_REFERENCE_OP,
                          VarRefStatement(var_decl_i)),
                        MEMBER_SELECT_REFERENCE_OP,
-                       VarRefStatement(decl_field_struct))
+                       VarRefStatement(decl_field_campaign_id))
                      .getCode()->code_ << std::endl;
 
 
 
+        /* generating the query function */
+
+
+        /* variable declarations */
+
+        VariableDeclaration var_decl_tuple_buffer_1 = VariableDeclaration::create(createPointerDataType(createUserDefinedType(struct_decl_tuple_buffer)),"tuple_buffer_1");
+
+        VariableDeclaration var_decl_id = VariableDeclaration::create(createDataType(BasicType(UINT64)),"id",createBasicTypeValue(BasicType(INT32),"0"));
+        VariableDeclaration var_decl_num_tup = VariableDeclaration::create(createDataType(BasicType(INT32)),"num_tuples",createBasicTypeValue(BasicType(INT32),"0"));
+
+        VariableDeclaration var_decl_sum = VariableDeclaration::create(createDataType(BasicType(INT32)),"sum",createBasicTypeValue(BasicType(INT32),"0"));
+
+        BinaryOperatorStatement init_tuple_buffer_ptr(VarRefStatement(var_decl_tuple_buffer_1),
+                                                      ASSIGNMENT_OP,
+                                                      BinaryOperatorStatement(VarRefStatement(var_decl_tuple_buffers),
+                                                                              ARRAY_REFERENCE_OP,
+                                                                              ConstantExprStatement(INT32,"0")));
+        BinaryOperatorStatement init_tuple_ptr(VarRefStatement(var_decl_tuple),
+                                                      ASSIGNMENT_OP,
+                                                      TypeCastExprStatement(
+                                                           BinaryOperatorStatement(VarRefStatement(var_decl_tuple_buffer_1),
+                                                                              MEMBER_SELECT_POINTER_OP,
+                                                                              VarRefStatement(decl_field_data_ptr_struct_tuple_buf)),
+                                                 createPointerDataType(createUserDefinedType(struct_decl_tuple))));
+
+        ForLoopStatement loop_stmt(var_decl_id,
+                         BinaryOperatorStatement(
+                           VarRefStatement(var_decl_id),
+                           LESS_THEN_OP,
+                           BinaryOperatorStatement(
+                              VarRefStatement(var_decl_tuple_buffer_1),
+                                       MEMBER_SELECT_POINTER_OP,
+                                       VarRefStatement(decl_field_num_tuples_struct_tuple_buf))),
+                         UnaryOperatorStatement(VarRefStatement(var_decl_id), PREFIX_INCREMENT_OP));
+
+        loop_stmt.addStatement(BinaryOperatorStatement(
+                                 VarRefStatement(var_decl_sum),
+                                 ASSIGNMENT_OP,
+                                 BinaryOperatorStatement(
+                                   VarRefStatement(var_decl_sum),
+                                   PLUS_OP,
+                                   BinaryOperatorStatement(
+                                                          BinaryOperatorStatement(
+                                                            VarRefStatement(var_decl_tuple),
+                                                            ARRAY_REFERENCE_OP,
+                                                            VarRefStatement(var_decl_id)),
+                                                          MEMBER_SELECT_REFERENCE_OP,
+                                                          VarRefStatement(decl_field_campaign_id))
+                                   )).copy());
+
         /* typedef uint32_t (*SharedCLibPipelineQueryPtr)(TupleBuffer**, WindowState*, TupleBuffer*); */
 
         VariableDeclaration var_decl_return = VariableDeclaration::create(createDataType(BasicType(INT32)),"ret",createBasicTypeValue(BasicType(INT32),"0"));
+        //VariableDeclaration var_decl_sum = VariableDeclaration::create(createDataType(BasicType(UINT64)),"sum",createBasicTypeValue(BasicType(INT32),"0"));
 
 
         FunctionDeclaration main_function = FunctionBuilder::create("compiled_query")
             .returns(createDataType(BasicType(UINT32)))
-//            .addParameter(VariableDeclaration::create(
-//                            createDataType(BasicType(INT32)),
-//                            "thread_id"))
-            .addParameter(var_decl_tuple_buffer)
+            .addParameter(var_decl_tuple_buffers)
             .addParameter(var_decl_state)
             .addParameter(var_decl_tuple_buffer_output)
             .addVariableDeclaration(var_decl_return)
             .addVariableDeclaration(var_decl_tuple)
+            .addVariableDeclaration(var_decl_tuple_buffer_1)
+            .addVariableDeclaration(var_decl_sum)
+            .addStatement(init_tuple_buffer_ptr.copy())
+            .addStatement(init_tuple_ptr.copy())
+            .addStatement(StatementPtr(new ForLoopStatement(loop_stmt)))
             .addStatement(StatementPtr(new ReturnStatement(VarRefStatement(var_decl_return))))
             .build();
 
         CodeFile file = FileBuilder::create("query.cpp")
-            .addDeclaration(struct_decl)
+            .addDeclaration(struct_decl_tuple_buffer)
             .addDeclaration(struct_decl_state)
             .addDeclaration(struct_decl_tuple)
             .addDeclaration(var_decl)
