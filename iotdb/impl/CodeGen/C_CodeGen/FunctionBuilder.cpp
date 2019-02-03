@@ -743,13 +743,6 @@ int CodeGenTest() {
     std::cout << toString(DEREFERENCE_POINTER_OP) << ": "
               << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup), DEREFERENCE_POINTER_OP).getCode()->code_
               << std::endl;
-    // std::cout << toString(ARRAY_REFERENCE_OP) << ": " <<
-    // UnaryOperatorStatement(VarRefStatement(var_decl_num_tup),ARRAY_REFERENCE_OP).getCode()->code_ << std::endl;
-    // std::cout << toString(MEMBER_SELECT_POINTER_OP) << ": " <<
-    // UnaryOperatorStatement(VarRefStatement(var_decl_num_tup),MEMBER_SELECT_POINTER_OP).getCode()->code_ << std::endl;
-    // std::cout << toString(MEMBER_SELECT_REFERENCE_OP) << ": " <<
-    // UnaryOperatorStatement(VarRefStatement(var_decl_num_tup),MEMBER_SELECT_REFERENCE_OP).getCode()->code_ <<
-    // std::endl;
     std::cout << toString(PREFIX_INCREMENT_OP) << ": "
               << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup), PREFIX_INCREMENT_OP).getCode()->code_
               << std::endl;
@@ -981,8 +974,6 @@ int CodeGenTest() {
 
   VariableDeclaration var_decl_return =
       VariableDeclaration::create(createDataType(BasicType(INT32)), "ret", createBasicTypeValue(BasicType(INT32), "0"));
-  // VariableDeclaration var_decl_sum =
-  // VariableDeclaration::create(createDataType(BasicType(UINT64)),"sum",createBasicTypeValue(BasicType(INT32),"0"));
 
   FunctionDeclaration main_function =
       FunctionBuilder::create("compiled_query")
@@ -999,13 +990,14 @@ int CodeGenTest() {
           .addStatement(init_tuple_ptr.copy())
           .addStatement(init_result_tuple_ptr.copy())
           .addStatement(StatementPtr(new ForLoopStatement(loop_stmt)))
-          .addStatement(
+          .addStatement( /*   result_tuples[0].sum = sum; */
               BinaryOperatorStatement(BinaryOperatorStatement(VarRefStatement(var_decl_result_tuple),
                                                               ARRAY_REFERENCE_OP, ConstantExprStatement(INT32, "0")),
                                       MEMBER_SELECT_REFERENCE_OP,
                                       BinaryOperatorStatement(VarRefStatement(var_decl_field_result_tuple_sum),
                                                               ASSIGNMENT_OP, VarRefStatement(var_decl_sum)))
                   .copy())
+            /* return ret; */
           .addStatement(StatementPtr(new ReturnStatement(VarRefStatement(var_decl_return))))
           .build();
 
