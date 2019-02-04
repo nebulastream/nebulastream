@@ -12,6 +12,7 @@
  *
  */
 
+#include <csignal>
 #include <iostream>
 #include <string>
 #include <tuple>
@@ -28,13 +29,10 @@ namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
 enum CLIENT_COMMAND { ADD_QUERY, REMOVE_QUERY, LIST_QUERIES };
+using client_queries_t = std::map<size_t, std::tuple<std::string, std::string>>;
 
-/* Status of Iot_DB server. */
-size_t number_client_queries = 0;
-std::map<size_t, std::tuple<std::string, std::string>> client_queries;
-std::map<size_t, std::tuple<std::string, std::string>>::iterator client_queries_it;
-
-void request_add_query(zmq::socket_t &socket, zmq::message_t &request) {
+void request_add_query(client_queries_t &client_queries, size_t &client_queries_id, zmq::socket_t &socket,
+                       zmq::message_t &request) {
 
   /* Get information from request. */
   size_t size_file_name = *(reinterpret_cast<size_t *>((char *)request.data() + sizeof(CLIENT_COMMAND)));
@@ -50,22 +48,24 @@ void request_add_query(zmq::socket_t &socket, zmq::message_t &request) {
   std::string file_content(begin_file_content_ptr, size_file_content);
 
   /* Save new query. */
-  client_queries[number_client_queries] = std::tuple<std::string, std::string>(file_name, file_content);
+  client_queries[client_queries_id] = std::tuple<std::string, std::string>(file_name, file_content);
 
   /* Print some information for admin. */
   std::cout << "Received request with client commmand 'ADD_QUERY'." << std::endl;
-  std::cout << "-> added new query '" << file_name << "' with id " << number_client_queries << "." << std::endl;
+  std::cout << "-> added new query '" << file_name << "' with id " << client_queries_id << "." << std::endl;
 
   /* Reply to request with query_id. */
   zmq::message_t reply(sizeof(size_t));
-  memcpy(reply.data(), &number_client_queries, sizeof(size_t));
+  memcpy(reply.data(), &client_queries_id, sizeof(size_t));
   socket.send(reply);
 
   /* Increment query id for next query. */
-  number_client_queries++;
+  client_queries_id++;
 }
 
-void request_remove_query(zmq::socket_t &socket, zmq::message_t &request) {
+void request_remove_query(client_queries_t &client_queries, zmq::socket_t &socket, zmq::message_t &request) {
+
+  client_queries_t::iterator client_queries_it;
 
   /* Interpret remove query request. */
   size_t query_id = *(reinterpret_cast<size_t *>((char *)request.data() + sizeof(CLIENT_COMMAND)));
@@ -91,7 +91,7 @@ void request_remove_query(zmq::socket_t &socket, zmq::message_t &request) {
   socket.send(reply);
 }
 
-void request_list_queries(zmq::socket_t &socket, zmq::message_t &request) {
+void request_list_queries(client_queries_t &client_queries, zmq::socket_t &socket, zmq::message_t &request) {
 
   std::cout << "Received request with client commmand 'LIST_QUERIES'." << std::endl;
 
@@ -115,7 +115,7 @@ void request_list_queries(zmq::socket_t &socket, zmq::message_t &request) {
   socket.send(reply);
 }
 
-int main(int argc, const char *argv[]) {
+void receive_reply(client_queries_t &client_queries, size_t &client_queries_id) {
 
   /* Prepare ZeroMQ context and socket. */
   uint16_t port = MASTER_PORT;
@@ -124,6 +124,10 @@ int main(int argc, const char *argv[]) {
   std::string addr = "tcp://*:" + std::to_string(port);
   socket.bind(addr.c_str());
 
+  std::cout << "Waiting for commands from a IoT-DB clients on port " << std::to_string(port) << "." << std::endl;
+  std::cout << "Press CTRL+C to exit." << std::endl;
+
+  /* Listening loop. */
   while (true) {
     zmq::message_t request;
 
@@ -134,20 +138,29 @@ int main(int argc, const char *argv[]) {
     CLIENT_COMMAND *command = reinterpret_cast<CLIENT_COMMAND *>(request.data());
     if (*command == ADD_QUERY) {
 
-      request_add_query(socket, request);
+      request_add_query(client_queries, client_queries_id, socket, request);
 
     } else if (*command == REMOVE_QUERY) {
 
-      request_remove_query(socket, request);
+      request_remove_query(client_queries, socket, request);
 
     } else if (*command == LIST_QUERIES) {
 
-      request_list_queries(socket, request);
+      request_list_queries(client_queries, socket, request);
 
     } else {
-      std::cerr << "Received request with undefined client command: '" << *command << "'." << std::endl;
+      std::cerr << "Received request with undefined client command!" << std::endl;
     }
   }
+}
+
+int main(int argc, const char *argv[]) {
+
+  /* Status of Iot_DB server. */
+  size_t client_queries_id = 0;
+  client_queries_t client_queries;
+
+  receive_reply(client_queries, client_queries_id);
 
   return EXIT_SUCCESS;
 }
