@@ -11,11 +11,13 @@
  *
  */
 
+#include <cassert>
 #include <cstddef>
 #include <fstream>
 #include <iostream>
 #include <iterator>
 #include <string>
+#include <vector>
 
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
@@ -41,141 +43,133 @@ void conflicting_options(const po::variables_map &vm, const char *opt1, const ch
     throw std::logic_error(std::string("Conflicting options '") + opt1 + "' and '" + opt2 + "'.");
 }
 
-/**
- * Sends *.cpp source file with query to Server via ZeroMQ.
- * Returns the id of the query on server.
- */
-bool add_query(std::string file_path, std::string host, uint16_t port) {
+/* Build ZeroMQ message to add a query on the IoT-DB server. */
+std::shared_ptr<zmq::message_t> add_query_request(std::string file_path) {
 
   /* Check if file can be found on system and read. */
   fs::path path{file_path.c_str()};
   if (!fs::exists(path) || !fs::is_regular_file(path)) {
-    std::cerr << "No file found at given path." << std::endl;
-    return EXIT_FAILURE;
+    assert(0 == 1 && "No file found at given path.");
   }
-  std::string file_name = path.filename().string();
+
+  /* Read file from file system. */
   std::ifstream ifs(path.string().c_str());
   std::string file_content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
 
-  /* Connect to server. */
-  zmq::context_t context(1);
-  zmq::socket_t socket(context, ZMQ_REQ);
-  std::string addr = "tcp://" + host + ":" + std::to_string(port);
-  socket.connect(addr.c_str());
-
-  /* Pack message and send to server. */
+  /* Some other parts of the message. */
   CLIENT_COMMAND command = ADD_QUERY;
-  size_t file_name_size = file_name.size();
   size_t file_content_size = file_content.size();
+  std::string file_name = path.filename().string();
+  size_t file_name_size = file_name.size();
 
-  zmq::message_t request(sizeof(CLIENT_COMMAND) + 2 * sizeof(size_t) + file_name.size() + file_content.size());
-  std::memcpy(request.data(), &command, sizeof(CLIENT_COMMAND));
-  std::memcpy((char *)request.data() + sizeof(CLIENT_COMMAND), &file_name_size, sizeof(size_t));
-  std::memcpy((char *)request.data() + sizeof(CLIENT_COMMAND) + sizeof(size_t), &file_content_size, sizeof(size_t));
-  std::memcpy((char *)request.data() + sizeof(CLIENT_COMMAND) + 2 * sizeof(size_t), file_name.data(), file_name_size);
-  std::memcpy((char *)request.data() + sizeof(CLIENT_COMMAND) + 2 * sizeof(size_t) + file_name_size,
+  /* Pack message. */
+  std::shared_ptr<zmq::message_t> request(
+      new zmq::message_t(sizeof(CLIENT_COMMAND) + 2 * sizeof(size_t) + file_name.size() + file_content.size()));
+  std::memcpy(request->data(), &command, sizeof(CLIENT_COMMAND));
+  std::memcpy((char *)request->data() + sizeof(CLIENT_COMMAND), &file_name_size, sizeof(size_t));
+  std::memcpy((char *)request->data() + sizeof(CLIENT_COMMAND) + sizeof(size_t), &file_content_size, sizeof(size_t));
+  std::memcpy((char *)request->data() + sizeof(CLIENT_COMMAND) + 2 * sizeof(size_t), file_name.data(), file_name_size);
+  std::memcpy((char *)request->data() + sizeof(CLIENT_COMMAND) + 2 * sizeof(size_t) + file_name_size,
               file_content.data(), file_content_size);
 
-  socket.send(request);
-
-  /* Receive query id from server. */
-  size_t query_id = 0;
-  zmq::message_t reply;
-  socket.recv(&reply);
-  std::memcpy(&query_id, reply.data(), sizeof(size_t));
-
-  /* Print info for user. */
-  std::cout << "Query successfully send to IoT-DB with query id " << query_id << "!" << std::endl;
-
-  socket.close();
-  context.close();
-
-  return EXIT_SUCCESS;
+  return request;
 }
 
-/**
- * Removes a query with given query id from the server.
- */
-bool remove_query(size_t query_id, std::string host, uint16_t port) {
+/* Interpret the Iot-DB server reply from an add query request. */
+size_t add_query_reply(std::shared_ptr<zmq::message_t> reply) {
 
-  /* Connect to server. */
-  zmq::context_t context(1);
-  zmq::socket_t socket(context, ZMQ_REQ);
-  std::string addr = "tcp://" + host + ":" + std::to_string(port);
-  socket.connect(addr.c_str());
+  size_t query_id = 0;
+  std::memcpy(&query_id, reply->data(), sizeof(size_t));
+  std::cout << "Query successfully send to IoT-DB with query id " << query_id << "!" << std::endl;
+
+  return query_id;
+}
+
+/* Build ZeroMQ message to remove a query on the IoT-DB server. */
+std::shared_ptr<zmq::message_t> remove_query_request(size_t query_id) {
 
   /* Pack message and send to server. */
   CLIENT_COMMAND command = REMOVE_QUERY;
-  zmq::message_t request(sizeof(CLIENT_COMMAND) + sizeof(size_t));
-  std::memcpy(request.data(), &command, sizeof(CLIENT_COMMAND));
-  std::memcpy((char *)request.data() + sizeof(CLIENT_COMMAND), &query_id, sizeof(size_t));
-  socket.send(request);
+  std::shared_ptr<zmq::message_t> request(new zmq::message_t(sizeof(CLIENT_COMMAND) + sizeof(size_t)));
+  std::memcpy(request->data(), &command, sizeof(CLIENT_COMMAND));
+  std::memcpy((char *)request->data() + sizeof(CLIENT_COMMAND), &query_id, sizeof(size_t));
 
-  /* Receive query id from server. */
-  bool removed = false;
-  zmq::message_t reply;
-  socket.recv(&reply);
-  std::memcpy(&removed, reply.data(), sizeof(bool));
-
-  /* Print info for user. */
-  if (removed) {
-    std::cout << "Query with id " << query_id << " successfully removed from IoT-DB!" << std::endl;
-  } else {
-    std::cout << "Query with id " << query_id << " not found on IoT-DB!" << std::endl;
-  }
-
-  socket.close();
-  context.close();
-
-  return EXIT_SUCCESS;
+  return request;
 }
 
-/**
- * List all queries on the server.
- */
-bool list_queries(std::string host, uint16_t port) {
+/* Interpret the Iot-DB server reply from a remove query request. */
+bool remove_query_reply(std::shared_ptr<zmq::message_t> reply) {
 
-  /* Connect to server. */
-  zmq::context_t context(1);
-  zmq::socket_t socket(context, ZMQ_REQ);
-  std::string addr = "tcp://" + host + ":" + std::to_string(port);
-  socket.connect(addr.c_str());
+  bool removed = false;
+  std::memcpy(&removed, reply->data(), sizeof(bool));
+  if (removed) {
+    std::cout << "Query with successfully removed from IoT-DB!" << std::endl;
+  } else {
+    std::cout << "Query with not found on IoT-DB!" << std::endl;
+  }
 
-  /* Pack message and send to server. */
+  return removed;
+}
+
+/* Build ZeroMQ message to list all queries on the IoT-DB server. */
+std::shared_ptr<zmq::message_t> list_queries_request() {
+
   CLIENT_COMMAND command = LIST_QUERIES;
-  zmq::message_t request(sizeof(CLIENT_COMMAND));
-  std::memcpy(request.data(), &command, sizeof(CLIENT_COMMAND));
-  socket.send(request);
+  std::shared_ptr<zmq::message_t> request(new zmq::message_t(sizeof(CLIENT_COMMAND)));
+  std::memcpy(request->data(), &command, sizeof(CLIENT_COMMAND));
 
-  /* Receive list of queries from server. */
-  zmq::message_t reply;
-  socket.recv(&reply);
+  return request;
+}
 
-  /* Print our list of query ids. */
+/* Interpret the Iot-DB server reply from a list queries request. */
+std::vector<std::pair<size_t, std::string>> list_queries_reply(std::shared_ptr<zmq::message_t> reply) {
+
+  std::vector<std::pair<size_t, std::string>> queries;
+
   std::cout << "There are the following queries at IoT-DB: " << std::endl;
   size_t begin_elem = 0;
-  while (begin_elem < reply.size()) {
+  while (begin_elem < reply->size()) {
 
-    size_t query_id = *(reinterpret_cast<size_t *>((char *)reply.data() + begin_elem));
-    size_t file_name_size = *(reinterpret_cast<size_t *>((char *)reply.data() + begin_elem + sizeof(size_t)));
+    size_t query_id = *(reinterpret_cast<size_t *>((char *)reply->data() + begin_elem));
+    size_t file_name_size = *(reinterpret_cast<size_t *>((char *)reply->data() + begin_elem + sizeof(size_t)));
 
     size_t begin_file_name = begin_elem + 2 * sizeof(size_t);
-    char *begin_file_name_ptr = &(((char *)reply.data())[begin_file_name]);
+    char *begin_file_name_ptr = &(((char *)reply->data())[begin_file_name]);
     std::string file_name(begin_file_name_ptr, file_name_size);
 
     std::cout << "-> " << file_name << " (" << query_id << ")" << std::endl;
+    queries.push_back(std::pair<size_t, std::string>(query_id, file_name));
 
     begin_elem += 2 * sizeof(size_t) + file_name.size();
   }
 
+  return queries;
+}
+
+std::shared_ptr<zmq::message_t> send_request(std::shared_ptr<zmq::message_t> request, std::string host, uint16_t port) {
+
+  /* Connect to server. */
+  zmq::context_t context(1);
+  zmq::socket_t socket(context, ZMQ_REQ);
+  std::string addr = "tcp://" + host + ":" + std::to_string(port);
+  socket.connect(addr.c_str());
+
+  /* Send request and receive reply.*/
+  socket.send(*request);
+  std::shared_ptr<zmq::message_t> reply(new zmq::message_t());
+  socket.recv(reply.get());
+
+  /* Close connection to server. */
   socket.close();
   context.close();
 
-  return EXIT_SUCCESS;
+  return reply;
 }
+
 } // namespace IotClient
 
 #ifndef TESTING
+
 int main(int argc, const char *argv[]) {
 
   using namespace IotClient;
@@ -239,17 +233,23 @@ int main(int argc, const char *argv[]) {
 
   /* Interpret client command. */
   if (vm.count("add_query")) {
-    return IotClient::add_query(vm["add_query"].as<std::string>(), host, port);
+    auto request = IotClient::add_query_request(vm["add_query"].as<std::string>());
+    auto reply = IotClient::send_request(request, host, port);
+    IotClient::add_query_reply(reply);
   }
 
   if (vm.count("remove_query")) {
-    return IotClient::remove_query(vm["remove_query"].as<size_t>(), host, port);
+    auto request = IotClient::remove_query_request(vm["remove_query"].as<size_t>());
+    auto reply = IotClient::send_request(request, host, port);
+    IotClient::remove_query_reply(reply);
   }
 
   if (vm.count("list_queries")) {
-    return IotClient::list_queries(host, port);
+    auto request = IotClient::list_queries_request();
+    auto reply = IotClient::send_request(request, host, port);
+    IotClient::list_queries_reply(reply);
   }
 
-  return EXIT_FAILURE;
+  return EXIT_SUCCESS;
 }
 #endif // TESTING
