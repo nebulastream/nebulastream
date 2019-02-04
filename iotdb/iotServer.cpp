@@ -13,6 +13,7 @@
  */
 
 #include <csignal>
+#include <cstddef>
 #include <iostream>
 #include <string>
 #include <tuple>
@@ -24,6 +25,8 @@
 #ifndef MASTER_PORT
 #define MASTER_PORT 38938
 #endif // MASTER_PORT
+
+namespace IotServer {
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
@@ -153,14 +156,19 @@ void receive_reply(client_queries_t &client_queries, size_t &client_queries_id) 
     }
   }
 }
+} // namespace IotServer
 
+#ifndef TESTING
 int main(int argc, const char *argv[]) {
+
+  using namespace IotServer;
 
   /* Status of Iot_DB server. */
   size_t client_queries_id = 0;
-  client_queries_t client_queries;
+  IotServer::client_queries_t client_queries;
 
-  receive_reply(client_queries, client_queries_id);
+  IotServer::receive_reply(client_queries, client_queries_id);
 
   return EXIT_SUCCESS;
 }
+#endif // TESTING
