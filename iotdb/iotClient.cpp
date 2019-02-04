@@ -173,8 +173,6 @@ std::shared_ptr<zmq::message_t> send_request(std::shared_ptr<zmq::message_t> req
 
 int main(int argc, const char *argv[]) {
 
-  using namespace IotClient;
-
   /* Important Variables with defaults. */
   std::string host = "localhost";
   uint16_t port = MASTER_PORT;
