@@ -36,12 +36,28 @@ Statement::~Statement() {}
 class ExpressionStatment;
 typedef std::shared_ptr<ExpressionStatment> ExpressionStatmentPtr;
 
+class BinaryOperatorStatement;
+
 class ExpressionStatment : public Statement {
 public:
   virtual StatementType getStamentType() const = 0;
   virtual const CodeExpressionPtr getCode() const = 0;
   /** \brief virtual copy constructor */
   virtual const ExpressionStatmentPtr copy() const = 0;
+
+//  UnaryOperatorStatement operator sizeof(const ExpressionStatment &ref){
+//  return UnaryOperatorStatement(ref, SIZE_OF_TYPE_OP);
+//  }
+
+
+
+  //UnaryOperatorStatement operator ++(const ExpressionStatment &ref){
+  //return UnaryOperatorStatement(ref, POSTFIX_INCREMENT_OP);
+  //}
+  //UnaryOperatorStatement operator --(const ExpressionStatment &ref){
+  //return UnaryOperatorStatement(ref, POSTFIX_DECREMENT_OP);
+  //}
+
   virtual ~ExpressionStatment();
 };
 
@@ -390,6 +406,8 @@ public:
 
 VarRefStatement::~VarRefStatement() {}
 
+typedef VarRefStatement VarRef;
+
 enum UnaryOperatorType {
   ADDRESS_OF_OP,
   DEREFERENCE_POINTER_OP,
@@ -559,6 +577,11 @@ public:
 
   virtual const ExpressionStatmentPtr copy() const { return std::make_shared<BinaryOperatorStatement>(*this); }
 
+  BinaryOperatorStatement operator [](const ExpressionStatment &ref){
+    return BinaryOperatorStatement(*this, ARRAY_REFERENCE_OP, ref);
+  }
+
+
   virtual ~BinaryOperatorStatement();
 
 private:
@@ -569,6 +592,108 @@ private:
 };
 
 BinaryOperatorStatement::~BinaryOperatorStatement() {}
+
+/** \brief small utility operator overloads to make code generation simpler and */
+
+UnaryOperatorStatement operator &(const ExpressionStatment &ref){
+return UnaryOperatorStatement(ref, ADDRESS_OF_OP);
+}
+UnaryOperatorStatement operator *(const ExpressionStatment &ref){
+return UnaryOperatorStatement(ref, DEREFERENCE_POINTER_OP);
+}
+UnaryOperatorStatement operator ++(const ExpressionStatment &ref){
+return UnaryOperatorStatement(ref, PREFIX_INCREMENT_OP);
+}
+UnaryOperatorStatement operator --(const ExpressionStatment &ref){
+return UnaryOperatorStatement(ref, PREFIX_DECREMENT_OP);
+}
+UnaryOperatorStatement operator ~(const ExpressionStatment &ref){
+return UnaryOperatorStatement(ref, BITWISE_COMPLEMENT_OP);
+}
+UnaryOperatorStatement operator !(const ExpressionStatment &ref){
+return UnaryOperatorStatement(ref, LOGICAL_NOT_OP);
+}
+
+BinaryOperatorStatement assign(const ExpressionStatment &lhs, const ExpressionStatment &rhs){
+ return BinaryOperatorStatement(lhs, ASSIGNMENT_OP, rhs);
+}
+
+UnaryOperatorStatement sizeOf(const ExpressionStatment &ref){
+ return UnaryOperatorStatement(ref, SIZE_OF_TYPE_OP);
+}
+
+//BinaryOperatorStatement ExpressionStatment::operator =(const ExpressionStatment &ref){
+//return BinaryOperatorStatement(*this, ASSIGNMENT_OP, ref);
+//}
+
+BinaryOperatorStatement operator ==(const ExpressionStatment &lhs, const ExpressionStatment &rhs){
+return BinaryOperatorStatement(lhs, EQUAL_OP, rhs);
+}
+BinaryOperatorStatement operator !=(const ExpressionStatment &lhs, const ExpressionStatment &rhs){
+return BinaryOperatorStatement(lhs, UNEQUAL_OP, rhs);
+}
+BinaryOperatorStatement operator <(const ExpressionStatment &lhs, const ExpressionStatment &rhs){
+return BinaryOperatorStatement(lhs, LESS_THEN_OP, rhs);
+}
+BinaryOperatorStatement operator <=(const ExpressionStatment &lhs, const ExpressionStatment &rhs){
+return BinaryOperatorStatement(lhs, LESS_THEN_EQUAL_OP, rhs);
+}
+BinaryOperatorStatement operator >(const ExpressionStatment &lhs, const ExpressionStatment &rhs){
+return BinaryOperatorStatement(lhs, GREATER_THEN_OP, rhs);
+}
+BinaryOperatorStatement operator >=(const ExpressionStatment &lhs, const ExpressionStatment &rhs){
+return BinaryOperatorStatement(lhs, GREATER_THEN_EQUAL_OP, rhs);
+}
+BinaryOperatorStatement operator +(const ExpressionStatment &lhs, const ExpressionStatment &rhs){
+return BinaryOperatorStatement(lhs, PLUS_OP, rhs);
+}
+BinaryOperatorStatement operator -(const ExpressionStatment &lhs, const ExpressionStatment &rhs){
+return BinaryOperatorStatement(lhs, MINUS_OP, rhs);
+}
+BinaryOperatorStatement operator *(const ExpressionStatment &lhs, const ExpressionStatment &rhs){
+return BinaryOperatorStatement(lhs, MULTIPLY_OP, rhs);
+}
+BinaryOperatorStatement operator /(const ExpressionStatment &lhs, const ExpressionStatment &rhs){
+return BinaryOperatorStatement(lhs, DIVISION_OP, rhs);
+}
+BinaryOperatorStatement operator %(const ExpressionStatment &lhs, const ExpressionStatment &rhs){
+return BinaryOperatorStatement(lhs, MODULO_OP, rhs);
+}
+BinaryOperatorStatement operator &&(const ExpressionStatment &lhs, const ExpressionStatment &rhs){
+return BinaryOperatorStatement(lhs, LOGICAL_AND_OP, rhs);
+}
+BinaryOperatorStatement operator ||(const ExpressionStatment &lhs, const ExpressionStatment &rhs){
+return BinaryOperatorStatement(lhs, LOGICAL_OR_OP, rhs);
+}
+BinaryOperatorStatement operator &(const ExpressionStatment &lhs, const ExpressionStatment &rhs){
+return BinaryOperatorStatement(lhs, BITWISE_AND_OP, rhs);
+}
+BinaryOperatorStatement operator |(const ExpressionStatment &lhs, const ExpressionStatment &rhs){
+return BinaryOperatorStatement(lhs, BITWISE_OR_OP, rhs);
+}
+BinaryOperatorStatement operator ^(const ExpressionStatment &lhs, const ExpressionStatment &rhs){
+return BinaryOperatorStatement(lhs, BITWISE_XOR_OP, rhs);
+}
+BinaryOperatorStatement operator <<(const ExpressionStatment &lhs, const ExpressionStatment &rhs){
+return BinaryOperatorStatement(lhs, BITWISE_LEFT_SHIFT_OP, rhs);
+}
+BinaryOperatorStatement operator >>(const ExpressionStatment &lhs, const ExpressionStatment &rhs){
+return BinaryOperatorStatement(lhs, BITWISE_RIGHT_SHIFT_OP, rhs);
+}
+
+
+//BinaryOperatorStatement operator [](const ExpressionStatment &lhs, const ExpressionStatment &rhs){
+//return BinaryOperatorStatement(lhs, ARRAY_REFERENCE_OP, rhs);
+//}
+//BinaryOperatorStatement operator ->(const ExpressionStatment &lhs, const ExpressionStatment &rhs){
+//return BinaryOperatorStatement(lhs, MEMBER_SELECT_POINTER_OP, rhs);
+//}
+
+
+
+
+
+
 
 class ReturnStatement : public Statement {
 public:
@@ -606,6 +731,8 @@ private:
 };
 
 IfStatement::~IfStatement() {}
+
+typedef IfStatement IF;
 
 class IfElseStatement : public Statement {
 public:
@@ -648,6 +775,8 @@ private:
   std::vector<StatementPtr> loop_body_;
 };
 
+typedef ForLoopStatement FOR;
+
 ForLoopStatement::ForLoopStatement(const VariableDeclaration &var_decl, const ExpressionStatment &condition,
                                    const ExpressionStatment &advance, const std::vector<StatementPtr> &loop_body)
     : var_decl_(var_decl), condition_(condition.copy()), advance_(advance.copy()), loop_body_(loop_body) {}
@@ -686,6 +815,8 @@ const DataTypePtr createUserDefinedType(const StructDeclaration &decl) {
   return std::make_shared<UserDefinedDataType>(decl);
 }
 
+
+
 int CodeGenTest() {
 
   VariableDeclaration var_decl = VariableDeclaration::create(createDataType(BasicType::UINT32), "global_int");
@@ -714,6 +845,31 @@ int CodeGenTest() {
                                  .getCode();
 
     std::cout << code->code_ << std::endl;
+
+    std::cout << "=========================" << std::endl;
+
+    std::cout << BinaryOperatorStatement(VarRefStatement(var_decl_i), PLUS_OP, VarRefStatement(var_decl_j)).getCode()->code_ << std::endl;
+    std::cout << (VarRefStatement(var_decl_i) + VarRefStatement(var_decl_j)).getCode()->code_ << std::endl;
+
+    std::cout << "=========================" << std::endl;
+
+    std::cout << UnaryOperatorStatement(VarRefStatement(var_decl_i),POSTFIX_INCREMENT_OP).getCode()->code_ << std::endl;
+    std::cout << (++VarRefStatement(var_decl_i)).getCode()->code_ << std::endl;
+    std::cout << (VarRefStatement(var_decl_i) >= VarRefStatement(var_decl_j))[VarRefStatement(var_decl_j)].getCode()->code_ << std::endl;
+
+    std::cout << ((~VarRefStatement(var_decl_i) >= VarRefStatement(var_decl_j) << ConstantExprStatement(createBasicTypeValue(INT32,"0"))))[VarRefStatement(var_decl_j)].getCode()->code_ << std::endl;
+
+    std::cout << (assign(VarRefStatement(var_decl_i),VarRefStatement(var_decl_i)+VarRefStatement(var_decl_i))).getCode()->code_ << std::endl;
+
+    std::cout << (sizeOf(VarRefStatement(var_decl_i))).getCode()->code_ << std::endl;
+
+    std::cout << assign(VarRef(var_decl_i), VarRef(var_decl_i)).getCode()->code_  << std::endl;
+
+    std::cout << IF(VarRef(var_decl_i)<VarRef(var_decl_j),
+                    assign(VarRef(var_decl_i), VarRef(var_decl_i)*VarRef(var_decl_k))).getCode()->code_  << std::endl;
+
+    std::cout << "=========================" << std::endl;
+
 
     std::cout << IfStatement(
                      BinaryOperatorStatement(VarRefStatement(var_decl_i), GREATER_THEN_OP, VarRefStatement(var_decl_j)),
