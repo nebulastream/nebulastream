@@ -11,6 +11,7 @@
  *
  */
 
+#include <cstddef>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -23,6 +24,8 @@
 #ifndef MASTER_PORT
 #define MASTER_PORT 38938
 #endif // MASTER_PORT
+
+namespace IotClient {
 
 namespace fs = boost::filesystem;
 namespace po = boost::program_options;
@@ -170,8 +173,12 @@ bool list_queries(std::string host, uint16_t port) {
 
   return EXIT_SUCCESS;
 }
+} // namespace IotClient
 
+#ifndef TESTING
 int main(int argc, const char *argv[]) {
+
+  using namespace IotClient;
 
   /* Important Variables with defaults. */
   std::string host = "localhost";
@@ -232,16 +239,17 @@ int main(int argc, const char *argv[]) {
 
   /* Interpret client command. */
   if (vm.count("add_query")) {
-    return add_query(vm["add_query"].as<std::string>(), host, port);
+    return IotClient::add_query(vm["add_query"].as<std::string>(), host, port);
   }
 
   if (vm.count("remove_query")) {
-    return remove_query(vm["remove_query"].as<size_t>(), host, port);
+    return IotClient::remove_query(vm["remove_query"].as<size_t>(), host, port);
   }
 
   if (vm.count("list_queries")) {
-    return list_queries(host, port);
+    return IotClient::list_queries(host, port);
   }
 
   return EXIT_FAILURE;
 }
+#endif // TESTING
