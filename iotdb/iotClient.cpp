@@ -84,6 +84,9 @@ bool add_query(std::string file_path, std::string host, uint16_t port) {
   /* Print info for user. */
   std::cout << "Query successfully send to IoT-DB with query id " << query_id << "!" << std::endl;
 
+  socket.close();
+  context.close();
+
   return EXIT_SUCCESS;
 }
 
@@ -117,6 +120,9 @@ bool remove_query(size_t query_id, std::string host, uint16_t port) {
   } else {
     std::cout << "Query with id " << query_id << " not found on IoT-DB!" << std::endl;
   }
+
+  socket.close();
+  context.close();
 
   return EXIT_SUCCESS;
 }
@@ -158,6 +164,9 @@ bool list_queries(std::string host, uint16_t port) {
 
     begin_elem += 2 * sizeof(size_t) + file_name.size();
   }
+
+  socket.close();
+  context.close();
 
   return EXIT_SUCCESS;
 }
