@@ -1,28 +1,24 @@
 /**
  *
- * Open Questions:
- * 		- support half-duplex links?
- *		- how to handle the ids among nodes?
- *		- how does a node knows to whom it is connected?
- *		- make a parrent class for fogentries?
+ * In this file the server side of the IoT-DB is implemented.
+ * With this program the DBMS is able to manage queries from the user.
  *
- *	Todo:
- *		- add remove columns/row in matrix
- *		- add node ids
- *		- add unit tests
- *		- make TopologyManager Singleton
- *		- add createFogNode/FogSensor
- *		- make it thread safe
+ * Tasks:
+ *   - Receive messages from users on a specified port.
+ *   - Process the commands from the users:
+ *     - Receive a query (*.cpp) from the user, send query id back
+ *     - Send a list of current queries on the server
+ *     - Remove a query from the server
+ *
  */
 
 #include <iostream>
 #include <string>
+#include <tuple>
 
 #include <boost/filesystem.hpp>
 #include <boost/program_options.hpp>
 #include <zmq.hpp>
-
-//#include <Topology/FogToplogyManager.hpp>
 
 #ifndef MASTER_PORT
 #define MASTER_PORT 38938
@@ -33,34 +29,93 @@ namespace po = boost::program_options;
 
 enum CLIENT_COMMAND { ADD_QUERY, REMOVE_QUERY, LIST_QUERIES };
 
-/*
-void createTestTopo(FogTopologyManager* fMgnr)
-{
-        FogToplogyNodePtr f1 = std::make_shared<FogToplogyNode>();
-        fMgnr->addFogNode(f1);
+/* Status of Iot_DB server. */
+size_t number_client_queries = 0;
+std::map<size_t, std::tuple<std::string, std::string>> client_queries;
+std::map<size_t, std::tuple<std::string, std::string>>::iterator client_queries_it;
 
-        FogToplogySensorPtr s1 = std::make_shared<FogToplogySensor>();
-        fMgnr->addSensorNode(s1);
+void request_add_query(zmq::socket_t &socket, zmq::message_t &request) {
 
-        FogToplogySensorPtr s2 = std::make_shared<FogToplogySensor>();
-        fMgnr->addSensorNode(s2);
+  /* Get information from request. */
+  size_t size_file_name = *(reinterpret_cast<size_t *>((char *)request.data() + sizeof(CLIENT_COMMAND)));
+  size_t size_file_content =
+      *(reinterpret_cast<size_t *>((char *)request.data() + sizeof(CLIENT_COMMAND) + sizeof(size_t)));
 
-        fMgnr->addLink(f1->getNodeId(), s1->getSensorId(), NodeToSensor);
-        fMgnr->addLink(f1->getNodeId(), s2->getSensorId(), NodeToSensor);
+  size_t begin_file_name = sizeof(CLIENT_COMMAND) + 2 * sizeof(size_t);
+  char *begin_file_name_ptr = &(((char *)request.data())[begin_file_name]);
+  std::string file_name(begin_file_name_ptr, size_file_name);
 
-        FogTopologyPlanPtr fPlan = fMgnr->getPlan();
+  size_t begin_file_content = sizeof(CLIENT_COMMAND) + 2 * sizeof(size_t) + size_file_name;
+  char *begin_file_content_ptr = &(((char *)request.data())[begin_file_content]);
+  std::string file_content(begin_file_content_ptr, size_file_content);
 
-        fPlan->printPlan();
+  /* Save new query. */
+  client_queries[number_client_queries] = std::tuple<std::string, std::string>(file_name, file_content);
+
+  /* Print some information for admin. */
+  std::cout << "Received request with client commmand 'ADD_QUERY'." << std::endl;
+  std::cout << "-> added new query '" << file_name << "' with id " << number_client_queries << "." << std::endl;
+
+  /* Reply to request with query_id. */
+  zmq::message_t reply(sizeof(size_t));
+  memcpy(reply.data(), &number_client_queries, sizeof(size_t));
+  socket.send(reply);
+
+  /* Increment query id for next query. */
+  number_client_queries++;
 }
-*/
+
+void request_remove_query(zmq::socket_t &socket, zmq::message_t &request) {
+
+  /* Interpret remove query request. */
+  size_t query_id = *(reinterpret_cast<size_t *>((char *)request.data() + sizeof(CLIENT_COMMAND)));
+
+  bool removed = false;
+  client_queries_it = client_queries.find(query_id);
+  if (client_queries_it != client_queries.end()) {
+    removed = true;
+    client_queries.erase(client_queries_it);
+  }
+
+  /* Print some information. */
+  std::cout << "Received request with client commmand 'REMOVE_QUERY'." << std::endl;
+  if (removed) {
+    std::cout << "-> query with id " << query_id << " removed." << std::endl;
+  } else {
+    std::cout << "-> query with id " << query_id << " not found and not removed." << std::endl;
+  }
+
+  /* Reply to request with query_id. */
+  zmq::message_t reply(sizeof(bool));
+  memcpy(reply.data(), &removed, sizeof(bool));
+  socket.send(reply);
+}
+
+void request_list_queries(zmq::socket_t &socket, zmq::message_t &request) {
+
+  std::cout << "Received request with client commmand 'LIST_QUERIES'." << std::endl;
+
+  /* Pack message and send to client. */
+  size_t message_size = 0;
+  for (auto const &query : client_queries) {
+    // query id, size of file_name and file_name
+    message_size += 2 * sizeof(size_t) + std::get<0>(query.second).size();
+  }
+  zmq::message_t reply(message_size);
+
+  size_t begin_elem = 0;
+  for (auto const &query : client_queries) {
+    std::string file_name = std::get<0>(query.second);
+    size_t file_name_size = file_name.size();
+    std::memcpy((char *)reply.data() + begin_elem, &query.first, sizeof(size_t));
+    std::memcpy((char *)reply.data() + begin_elem + sizeof(size_t), &file_name_size, sizeof(size_t));
+    std::memcpy((char *)reply.data() + begin_elem + 2 * sizeof(size_t), file_name.data(), file_name_size);
+    begin_elem += 2 * sizeof(size_t) + file_name.size();
+  }
+  socket.send(reply);
+}
 
 int main(int argc, const char *argv[]) {
-  // FogTopologyManager* fMgnr = new FogTopologyManager();
-  // createTestTopo(fMgnr);
-
-  size_t number_client_queries = 0;
-  std::map<size_t, std::string> client_queries;
-  std::map<size_t, std::string>::iterator client_queries_it;
 
   /* Prepare ZeroMQ context and socket. */
   uint16_t port = MASTER_PORT;
@@ -79,58 +134,15 @@ int main(int argc, const char *argv[]) {
     CLIENT_COMMAND *command = reinterpret_cast<CLIENT_COMMAND *>(request.data());
     if (*command == ADD_QUERY) {
 
-      /* Interpret add query request. */
-      std::string file_content(static_cast<char *>((char *)request.data() + sizeof(CLIENT_COMMAND)), request.size());
-      client_queries[number_client_queries] = file_content;
-
-      /* Print some information. */
-      std::cout << "Received request with client commmand 'ADD_QUERY'." << std::endl;
-      std::cout << "-> added new query with id " << number_client_queries << "." << std::endl;
-
-      /* Reply to request with query_id. */
-      zmq::message_t reply(sizeof(size_t));
-      memcpy(reply.data(), &number_client_queries, sizeof(size_t));
-      socket.send(reply);
-
-      /* Increment query id for next query. */
-      number_client_queries++;
+      request_add_query(socket, request);
 
     } else if (*command == REMOVE_QUERY) {
 
-      /* Interpret remove query request. */
-      size_t query_id = *(reinterpret_cast<size_t *>((char *)request.data() + sizeof(CLIENT_COMMAND)));
-
-      bool removed = false;
-      client_queries_it = client_queries.find(query_id);
-      if (client_queries_it != client_queries.end()) {
-        removed = true;
-        client_queries.erase(client_queries_it);
-      }
-
-      /* Print some information. */
-      std::cout << "Received request with client commmand 'REMOVE_QUERY'." << std::endl;
-      if (removed) {
-        std::cout << "-> query with id " << query_id << " removed." << std::endl;
-      } else {
-        std::cout << "-> query with id " << query_id << " not found and not removed." << std::endl;
-      }
-
-      /* Reply to request with query_id. */
-      zmq::message_t reply(sizeof(bool));
-      memcpy(reply.data(), &removed, sizeof(bool));
-      socket.send(reply);
+      request_remove_query(socket, request);
 
     } else if (*command == LIST_QUERIES) {
 
-      std::cout << "Received request with client commmand 'LIST_QUERIES'." << std::endl;
-      /* Pack message and send to client. */
-      zmq::message_t reply(client_queries.size() * sizeof(size_t));
-      size_t i = 0;
-      for (auto const &query : client_queries) {
-        std::memcpy((char *)reply.data() + i * sizeof(size_t), &query.first, sizeof(size_t));
-        i++;
-      }
-      socket.send(reply);
+      request_list_queries(socket, request);
 
     } else {
       std::cerr << "Received request with undefined client command: '" << *command << "'." << std::endl;
