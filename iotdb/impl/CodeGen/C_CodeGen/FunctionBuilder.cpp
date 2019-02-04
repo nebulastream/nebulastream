@@ -49,7 +49,9 @@ public:
 //  return UnaryOperatorStatement(ref, SIZE_OF_TYPE_OP);
 //  }
 
-
+  BinaryOperatorStatement assign(const ExpressionStatment &ref);
+  BinaryOperatorStatement accessPtr(const ExpressionStatment &ref);
+  BinaryOperatorStatement accessRef(const ExpressionStatment &ref);
 
   //UnaryOperatorStatement operator ++(const ExpressionStatment &ref){
   //return UnaryOperatorStatement(ref, POSTFIX_INCREMENT_OP);
@@ -626,6 +628,19 @@ UnaryOperatorStatement sizeOf(const ExpressionStatment &ref){
 //return BinaryOperatorStatement(*this, ASSIGNMENT_OP, ref);
 //}
 
+
+BinaryOperatorStatement ExpressionStatment::accessPtr(const ExpressionStatment &ref){
+   return BinaryOperatorStatement(*this, MEMBER_SELECT_POINTER_OP, ref);
+}
+
+BinaryOperatorStatement ExpressionStatment::accessRef(const ExpressionStatment &ref){
+   return BinaryOperatorStatement(*this, MEMBER_SELECT_REFERENCE_OP, ref);
+}
+
+BinaryOperatorStatement ExpressionStatment::assign(const ExpressionStatment &ref){
+ return BinaryOperatorStatement(*this, ASSIGNMENT_OP, ref);
+}
+
 BinaryOperatorStatement operator ==(const ExpressionStatment &lhs, const ExpressionStatment &rhs){
 return BinaryOperatorStatement(lhs, EQUAL_OP, rhs);
 }
@@ -859,7 +874,7 @@ int CodeGenTest() {
 
     std::cout << ((~VarRefStatement(var_decl_i) >= VarRefStatement(var_decl_j) << ConstantExprStatement(createBasicTypeValue(INT32,"0"))))[VarRefStatement(var_decl_j)].getCode()->code_ << std::endl;
 
-    std::cout << (assign(VarRefStatement(var_decl_i),VarRefStatement(var_decl_i)+VarRefStatement(var_decl_i))).getCode()->code_ << std::endl;
+    std::cout << VarRefStatement(var_decl_i).assign(VarRefStatement(var_decl_i)+VarRefStatement(var_decl_j)).getCode()->code_ << std::endl;
 
     std::cout << (sizeOf(VarRefStatement(var_decl_i))).getCode()->code_ << std::endl;
 
