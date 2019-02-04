@@ -1,6 +1,5 @@
-#include <cstddef>
 #include <iostream>
-#include <memory>
+#include <thread>
 
 #include "gtest/gtest.h"
 
@@ -11,35 +10,44 @@
 #include "../../iotServer.cpp"
 
 /* ------------------------------------------------------------------------- */
-/* - IoT-DB Server --------------------------------------------------------- */
-class IotServerTest : public testing::Test {
+/* - Client Server Communication ------------------------------------------- */
+class IotClientServerTest : public testing::Test {
 public:
   /* Will be called before any test in this class are executed. */
-  static void SetUpTestCase() { std::cout << "Setup IotServerTest test class." << std::endl; }
+  static void SetUpTestCase() {
+    std::cout << "Setup ClientServerTest test class." << std::endl;
+    client_queries_id = 0;
+    client_queries[client_queries_id++] =
+        std::tuple<std::string, std::string>(std::string("query_1.cpp"), std::string("Content\nFile 1"));
+    client_queries[client_queries_id++] =
+        std::tuple<std::string, std::string>(std::string("query_2.cpp"), std::string("Content\nFile 2"));
+    server_thread = std::thread(&IotServer::receive_reply, &client_queries, &client_queries_id);
+  }
 
   /* Will be called before a test is executed. */
-  void SetUp() { std::cout << "Setup IotServerTest test case." << std::endl; }
+  void SetUp() { std::cout << "Setup ClientServerTest test case." << std::endl; }
 
   /* Will be called before a test is executed. */
-  void TearDown() { std::cout << "Setup IotServerTest test case." << std::endl; }
+  void TearDown() { std::cout << "Setup ClientServerTest test case." << std::endl; }
 
   /* Will be called after all tests in this class are finished. */
-  static void TearDownTestCase() { std::cout << "Tear down IotServerTest test class." << std::endl; }
+  static void TearDownTestCase() {
+    std::cout << "Tear down ClientServerTest test class." << std::endl;
+    server_thread.join();
+  }
+
+private:
+  static size_t client_queries_id;
+  static IotServer::client_queries_t client_queries;
+  static std::thread server_thread;
 };
 
-/* ------------------------------------------------------------------------- */
-/* - IoT-DB Client --------------------------------------------------------- */
-class IotClientTest : public testing::Test {
-public:
-  /* Will be called before any test in this class are executed. */
-  static void SetUpTestCase() { std::cout << "Setup IotClientTest test class." << std::endl; }
+/* Receive 'ADD_QEUERY'-command. */
 
-  /* Will be called before a test is executed. */
-  void SetUp() { std::cout << "Setup IotClientTest test case." << std::endl; }
+/* Receive 'REMOVE_QUERY'-command, query id is present. */
 
-  /* Will be called before a test is executed. */
-  void TearDown() { std::cout << "Setup IotClientTest test case." << std::endl; }
+/* Receive 'REMOVE_QUERY'-command, query id is not present. */
 
-  /* Will be called after all tests in this class are finished. */
-  static void TearDownTestCase() { std::cout << "Tear down IotClientTest test class." << std::endl; }
-};
+/* Receive 'LIST_QUERIES'-command. */
+
+/* Receive unknown command. */

@@ -32,9 +32,10 @@ namespace fs = boost::filesystem;
 namespace po = boost::program_options;
 
 enum CLIENT_COMMAND { ADD_QUERY, REMOVE_QUERY, LIST_QUERIES };
+using client_query_t = std::pair<size_t, std::tuple<std::string, std::string>>;
 using client_queries_t = std::map<size_t, std::tuple<std::string, std::string>>;
 
-void request_add_query(client_queries_t &client_queries, size_t &client_queries_id, zmq::socket_t &socket,
+void request_add_query(client_queries_t *client_queries, size_t *client_queries_id, zmq::socket_t &socket,
                        zmq::message_t &request) {
 
   /* Get information from request. */
@@ -51,22 +52,23 @@ void request_add_query(client_queries_t &client_queries, size_t &client_queries_
   std::string file_content(begin_file_content_ptr, size_file_content);
 
   /* Save new query. */
-  client_queries[client_queries_id] = std::tuple<std::string, std::string>(file_name, file_content);
+  client_queries->insert(
+      client_query_t(*client_queries_id, std::tuple<std::string, std::string>(file_name, file_content)));
 
   /* Print some information for admin. */
   std::cout << "Received request with client commmand 'ADD_QUERY'." << std::endl;
-  std::cout << "-> added new query '" << file_name << "' with id " << client_queries_id << "." << std::endl;
+  std::cout << "-> added new query '" << file_name << "' with id " << *client_queries_id << "." << std::endl;
 
   /* Reply to request with query_id. */
   zmq::message_t reply(sizeof(size_t));
-  memcpy(reply.data(), &client_queries_id, sizeof(size_t));
+  memcpy(reply.data(), client_queries_id, sizeof(size_t));
   socket.send(reply);
 
   /* Increment query id for next query. */
-  client_queries_id++;
+  (*client_queries_id)++;
 }
 
-void request_remove_query(client_queries_t &client_queries, zmq::socket_t &socket, zmq::message_t &request) {
+void request_remove_query(client_queries_t *client_queries, zmq::socket_t &socket, zmq::message_t &request) {
 
   client_queries_t::iterator client_queries_it;
 
@@ -74,10 +76,10 @@ void request_remove_query(client_queries_t &client_queries, zmq::socket_t &socke
   size_t query_id = *(reinterpret_cast<size_t *>((char *)request.data() + sizeof(CLIENT_COMMAND)));
 
   bool removed = false;
-  client_queries_it = client_queries.find(query_id);
-  if (client_queries_it != client_queries.end()) {
+  client_queries_it = client_queries->find(query_id);
+  if (client_queries_it != client_queries->end()) {
     removed = true;
-    client_queries.erase(client_queries_it);
+    client_queries->erase(client_queries_it);
   }
 
   /* Print some information. */
@@ -94,20 +96,20 @@ void request_remove_query(client_queries_t &client_queries, zmq::socket_t &socke
   socket.send(reply);
 }
 
-void request_list_queries(client_queries_t &client_queries, zmq::socket_t &socket, zmq::message_t &request) {
+void request_list_queries(client_queries_t *client_queries, zmq::socket_t &socket, zmq::message_t &request) {
 
   std::cout << "Received request with client commmand 'LIST_QUERIES'." << std::endl;
 
   /* Pack message and send to client. */
   size_t message_size = 0;
-  for (auto const &query : client_queries) {
+  for (auto const &query : *client_queries) {
     // query id, size of file_name and file_name
     message_size += 2 * sizeof(size_t) + std::get<0>(query.second).size();
   }
   zmq::message_t reply(message_size);
 
   size_t begin_elem = 0;
-  for (auto const &query : client_queries) {
+  for (auto const &query : *client_queries) {
     std::string file_name = std::get<0>(query.second);
     size_t file_name_size = file_name.size();
     std::memcpy((char *)reply.data() + begin_elem, &query.first, sizeof(size_t));
@@ -118,7 +120,7 @@ void request_list_queries(client_queries_t &client_queries, zmq::socket_t &socke
   socket.send(reply);
 }
 
-void receive_reply(client_queries_t &client_queries, size_t &client_queries_id) {
+void receive_reply(client_queries_t *client_queries, size_t *client_queries_id) {
 
   /* Prepare ZeroMQ context and socket. */
   uint16_t port = MASTER_PORT;
@@ -163,11 +165,11 @@ int main(int argc, const char *argv[]) {
 
   using namespace IotServer;
 
-  /* Status of Iot_DB server. */
+  /* Status of Iot-DB server. */
   size_t client_queries_id = 0;
   IotServer::client_queries_t client_queries;
 
-  IotServer::receive_reply(client_queries, client_queries_id);
+  IotServer::receive_reply(&client_queries, &client_queries_id);
 
   return EXIT_SUCCESS;
 }
