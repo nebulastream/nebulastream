@@ -176,8 +176,6 @@ void receive_reply(std::shared_ptr<client_queries_t> client_queries, std::shared
 #ifndef TESTING
 int main(int argc, const char *argv[]) {
 
-  using namespace IotServer;
-
   /* Status of Iot-DB server. */
   auto client_queries_id = std::make_shared<size_t>();
   auto client_queries = std::make_shared<IotServer::client_queries_t>();
