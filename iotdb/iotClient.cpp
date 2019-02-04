@@ -16,6 +16,7 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -103,9 +104,9 @@ bool remove_query_reply(std::shared_ptr<zmq::message_t> reply) {
   bool removed = false;
   std::memcpy(&removed, reply->data(), sizeof(bool));
   if (removed) {
-    std::cout << "Query with successfully removed from IoT-DB!" << std::endl;
+    std::cout << "Query successfully removed from IoT-DB!" << std::endl;
   } else {
-    std::cout << "Query with not found on IoT-DB!" << std::endl;
+    std::cout << "Query not found on IoT-DB!" << std::endl;
   }
 
   return removed;
