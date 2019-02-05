@@ -1,7 +1,7 @@
 /**
  *
  * In this file the server side of the IoT-DB is implemented.
- * With this program the DBMS is able to manage queries from the user.
+ * With this program the DBMS is able to manage queries from the users.
  *
  * Tasks:
  *   - Receive messages from users on a specified port.
@@ -62,7 +62,7 @@ std::shared_ptr<zmq::message_t> add_query_request(std::shared_ptr<zmq::message_t
   /* Print some information for admin. */
   std::cout << "Received request with client commmand 'ADD_QUERY'." << std::endl;
   std::cout << "-> added new query '" << file_name << "' with id " << *client_queries_id << "." << std::endl;
-  std::cout << "-> file content:" << std::endl << file_content << std::endl << std::endl;
+  // std::cout << "-> file content:" << std::endl << file_content << std::endl << std::endl;
 
   /* Reply to request with query_id. */
   std::shared_ptr<zmq::message_t> reply(new zmq::message_t(sizeof(size_t)));
