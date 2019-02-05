@@ -53,6 +53,8 @@ public:
   BinaryOperatorStatement accessPtr(const ExpressionStatment &ref);
   BinaryOperatorStatement accessRef(const ExpressionStatment &ref);
 
+  BinaryOperatorStatement operator [](const ExpressionStatment &ref);
+
   //UnaryOperatorStatement operator ++(const ExpressionStatment &ref){
   //return UnaryOperatorStatement(ref, POSTFIX_INCREMENT_OP);
   //}
@@ -366,6 +368,8 @@ public:
 
 ConstantExprStatement::~ConstantExprStatement() {}
 
+typedef ConstantExprStatement Constant;
+
 class TypeCastExprStatement : public ExpressionStatment {
 public:
   virtual StatementType getStamentType() const { return CONSTANT_VALUE_EXPR_STMT; }
@@ -390,6 +394,8 @@ private:
 };
 
 TypeCastExprStatement::~TypeCastExprStatement() {}
+
+typedef TypeCastExprStatement TypeCast;
 
 class VarRefStatement : public ExpressionStatment {
 public:
@@ -579,9 +585,9 @@ public:
 
   virtual const ExpressionStatmentPtr copy() const { return std::make_shared<BinaryOperatorStatement>(*this); }
 
-  BinaryOperatorStatement operator [](const ExpressionStatment &ref){
-    return BinaryOperatorStatement(*this, ARRAY_REFERENCE_OP, ref);
-  }
+//  BinaryOperatorStatement operator [](const ExpressionStatment &ref){
+//    return BinaryOperatorStatement(*this, ARRAY_REFERENCE_OP, ref);
+//  }
 
 
   virtual ~BinaryOperatorStatement();
@@ -596,6 +602,8 @@ private:
 BinaryOperatorStatement::~BinaryOperatorStatement() {}
 
 /** \brief small utility operator overloads to make code generation simpler and */
+
+
 
 UnaryOperatorStatement operator &(const ExpressionStatment &ref){
 return UnaryOperatorStatement(ref, ADDRESS_OF_OP);
@@ -628,6 +636,9 @@ UnaryOperatorStatement sizeOf(const ExpressionStatment &ref){
 //return BinaryOperatorStatement(*this, ASSIGNMENT_OP, ref);
 //}
 
+BinaryOperatorStatement ExpressionStatment::operator [](const ExpressionStatment &ref){
+  return BinaryOperatorStatement(*this, ARRAY_REFERENCE_OP, ref);
+}
 
 BinaryOperatorStatement ExpressionStatment::accessPtr(const ExpressionStatment &ref){
    return BinaryOperatorStatement(*this, MEMBER_SELECT_POINTER_OP, ref);
@@ -1072,8 +1083,7 @@ int CodeGenTest() {
   VariableDeclaration var_decl_field_result_tuple_sum = VariableDeclaration::create(
       decl_field_result_tuple_sum->getType(), decl_field_result_tuple_sum->getIdentifierName());
 
-  std::cout << BinaryOperatorStatement(VarRefStatement(var_decl_tuple), ARRAY_REFERENCE_OP,
-                                       ConstantExprStatement(INT32, "0"))
+  std::cout << (VarRefStatement(var_decl_tuple))[ConstantExprStatement(INT32, "0")]
                    .getCode()
                    ->code_
             << std::endl;
@@ -1105,41 +1115,32 @@ int CodeGenTest() {
   VariableDeclaration var_decl_sum =
       VariableDeclaration::create(createDataType(BasicType(INT32)), "sum", createBasicTypeValue(BasicType(INT32), "0"));
 
-  BinaryOperatorStatement init_tuple_buffer_ptr(VarRefStatement(var_decl_tuple_buffer_1), ASSIGNMENT_OP,
-                                                BinaryOperatorStatement(VarRefStatement(var_decl_tuple_buffers),
-                                                                        ARRAY_REFERENCE_OP,
-                                                                        ConstantExprStatement(INT32, "0")));
+  BinaryOperatorStatement init_tuple_buffer_ptr(VarRefStatement(var_decl_tuple_buffer_1).assign(
+                                                  VarRefStatement(var_decl_tuple_buffers)[ConstantExprStatement(INT32, "0")]));
+
   BinaryOperatorStatement init_tuple_ptr(
-      VarRefStatement(var_decl_tuple), ASSIGNMENT_OP,
-      TypeCastExprStatement(BinaryOperatorStatement(VarRefStatement(var_decl_tuple_buffer_1), MEMBER_SELECT_POINTER_OP,
-                                                    VarRefStatement(decl_field_data_ptr_struct_tuple_buf)),
-                            createPointerDataType(createUserDefinedType(struct_decl_tuple))));
+      VarRef(var_decl_tuple).assign(
+      TypeCast(VarRefStatement(var_decl_tuple_buffer_1)
+        .accessPtr(VarRef(decl_field_data_ptr_struct_tuple_buf)),
+        createPointerDataType(createUserDefinedType(struct_decl_tuple)))));
 
   BinaryOperatorStatement init_result_tuple_ptr(
-      VarRefStatement(var_decl_result_tuple), ASSIGNMENT_OP,
-      TypeCastExprStatement(BinaryOperatorStatement(VarRefStatement(var_decl_tuple_buffer_output),
-                                                    MEMBER_SELECT_POINTER_OP,
-                                                    VarRefStatement(decl_field_data_ptr_struct_tuple_buf)),
-                            createPointerDataType(createUserDefinedType(struct_decl_result_tuple))));
+      VarRef(var_decl_result_tuple).assign(
+      TypeCast(VarRef(var_decl_tuple_buffer_output).accessPtr(VarRef(decl_field_data_ptr_struct_tuple_buf)),
+                            createPointerDataType(createUserDefinedType(struct_decl_result_tuple)))));
 
   /* for (uint64_t id = 0; id < tuple_buffer_1->num_tuples; ++id) */
-  ForLoopStatement loop_stmt(
-      var_decl_id, BinaryOperatorStatement(
-                       VarRefStatement(var_decl_id), LESS_THEN_OP,
-                       BinaryOperatorStatement(VarRefStatement(var_decl_tuple_buffer_1), MEMBER_SELECT_POINTER_OP,
-                                               VarRefStatement(decl_field_num_tuples_struct_tuple_buf))),
-      UnaryOperatorStatement(VarRefStatement(var_decl_id), PREFIX_INCREMENT_OP));
+  FOR loop_stmt(
+      var_decl_id, (VarRef(var_decl_id) < (VarRef(var_decl_tuple_buffer_1).accessPtr(
+                                               VarRef(decl_field_num_tuples_struct_tuple_buf)))),
+      ++VarRef(var_decl_id));
 
   /* sum = sum + tuples[id].campaign_id; */
   loop_stmt.addStatement(
-      BinaryOperatorStatement(
-          VarRefStatement(var_decl_sum), ASSIGNMENT_OP,
-          BinaryOperatorStatement(
-              VarRefStatement(var_decl_sum), PLUS_OP,
-              BinaryOperatorStatement(BinaryOperatorStatement(VarRefStatement(var_decl_tuple), ARRAY_REFERENCE_OP,
-                                                              VarRefStatement(var_decl_id)),
-                                      MEMBER_SELECT_REFERENCE_OP, VarRefStatement(decl_field_campaign_id))))
-          .copy());
+          VarRef(var_decl_sum).assign(
+              VarRef(var_decl_sum)
+            + VarRef(var_decl_tuple)[VarRef(var_decl_id)].accessRef(VarRef(decl_field_campaign_id)))
+      .copy());
 
   /* typedef uint32_t (*SharedCLibPipelineQueryPtr)(TupleBuffer**, WindowState*, TupleBuffer*); */
 
@@ -1162,12 +1163,8 @@ int CodeGenTest() {
           .addStatement(init_result_tuple_ptr.copy())
           .addStatement(StatementPtr(new ForLoopStatement(loop_stmt)))
           .addStatement( /*   result_tuples[0].sum = sum; */
-              BinaryOperatorStatement(BinaryOperatorStatement(VarRefStatement(var_decl_result_tuple),
-                                                              ARRAY_REFERENCE_OP, ConstantExprStatement(INT32, "0")),
-                                      MEMBER_SELECT_REFERENCE_OP,
-                                      BinaryOperatorStatement(VarRefStatement(var_decl_field_result_tuple_sum),
-                                                              ASSIGNMENT_OP, VarRefStatement(var_decl_sum)))
-                  .copy())
+            VarRef(var_decl_result_tuple)[Constant(INT32, "0")].accessRef(VarRef(var_decl_field_result_tuple_sum)).assign(VarRef(var_decl_sum))
+                         .copy())
             /* return ret; */
           .addStatement(StatementPtr(new ReturnStatement(VarRefStatement(var_decl_return))))
           .build();
