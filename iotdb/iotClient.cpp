@@ -30,22 +30,12 @@
 
 namespace IotClient {
 
-namespace fs = boost::filesystem;
-namespace po = boost::program_options;
-
 enum CLIENT_COMMAND { ADD_QUERY, REMOVE_QUERY, LIST_QUERIES };
-
-/**
- * Check, if two program options are conflicting
- * (source: https://stackoverflow.com/a/29016720).
- */
-void conflicting_options(const po::variables_map &vm, const char *opt1, const char *opt2) {
-  if (vm.count(opt1) && !vm[opt1].defaulted() && vm.count(opt2) && !vm[opt2].defaulted())
-    throw std::logic_error(std::string("Conflicting options '") + opt1 + "' and '" + opt2 + "'.");
-}
 
 /* Build ZeroMQ message to add a query on the IoT-DB server. */
 std::shared_ptr<zmq::message_t> add_query_request(std::string file_path) {
+
+  namespace fs = boost::filesystem;
 
   /* Check if file can be found on system and read. */
   fs::path path{file_path.c_str()};
@@ -160,18 +150,22 @@ std::shared_ptr<zmq::message_t> send_request(std::shared_ptr<zmq::message_t> req
   std::shared_ptr<zmq::message_t> reply(new zmq::message_t());
   socket.recv(reply.get());
 
-  /* Close connection to server. */
-  socket.close();
-//  context.close();
-
   return reply;
 }
 
 } // namespace IotClient
 
-//#ifndef TESTING
+#ifndef TESTING
+namespace po = boost::program_options;
 
-using namespace IotClient;
+/**
+ * Check, if two program options are conflicting
+ * (source: https://stackoverflow.com/a/29016720).
+ */
+void conflicting_options(const po::variables_map &vm, const char *opt1, const char *opt2) {
+  if (vm.count(opt1) && !vm[opt1].defaulted() && vm.count(opt2) && !vm[opt2].defaulted())
+    throw std::logic_error(std::string("Conflicting options '") + opt1 + "' and '" + opt2 + "'.");
+}
 
 int main(int argc, const char *argv[]) {
 
@@ -253,4 +247,4 @@ int main(int argc, const char *argv[]) {
 
   return EXIT_SUCCESS;
 }
-//#endif // TESTING
+#endif // TESTING
