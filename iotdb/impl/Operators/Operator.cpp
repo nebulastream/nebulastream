@@ -14,6 +14,8 @@ namespace iotdb {
 
   }
 
+
+
 class Scan : public Operator {
 public:
   Scan(DataSourcePtr src) : Operator (SCAN), source(src) {}
