@@ -1,0 +1,49 @@
+#include <iostream>
+#include <stdexcept>
+
+#include "API/Schema.hpp"
+
+using namespace iotdb;
+
+Schema::Schema() {}
+
+Schema Schema::create() { return Schema(); }
+
+/* Return size of one row of schema in bytes. */
+size_t Schema::getSchemaSize() const {
+  size_t size = 0;
+  for (auto const &field : fields) {
+    size += field.getFieldSize();
+  }
+  return size;
+}
+
+Schema &Schema::copyFields(Schema const &schema) {
+  fields.insert(fields.end(), schema.fields.begin(), schema.fields.end());
+  return *this;
+}
+
+Schema &Schema::addFixSizeField(const std::string name, const APIDataType data_type) {
+  fields.emplace_back(name, data_type, data_type.defaultSize());
+  return *this;
+}
+
+Schema &Schema::addVarSizeField(const std::string name, const APIDataType data_type, const size_t data_size) {
+  fields.emplace_back(name, data_type, data_size);
+  return *this;
+}
+
+Field &Schema::get(const std::string pName) {
+  for (auto &f : fields) {
+    if (f.name == pName)
+      return f;
+  }
+  throw std::invalid_argument("field " + pName + " does not exist");
+}
+
+const std::string Schema::toString() const
+{
+	//TODO: change to return entire schema
+	return "schema";
+}
+
