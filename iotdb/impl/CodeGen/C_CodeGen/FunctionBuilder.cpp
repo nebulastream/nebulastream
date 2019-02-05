@@ -827,7 +827,7 @@ const DataTypePtr createUserDefinedType(const StructDeclaration &decl) {
 }
 
 
-
+/* TODO: make proper test suite out of these */
 int CodeGenTestCases() {
 
   VariableDeclaration var_decl_i =
