@@ -88,6 +88,8 @@ Declaration::~Declaration() {}
 class StructDeclaration;
 const DataTypePtr createUserDefinedType(const StructDeclaration &decl);
 
+class VariableDeclaration;
+
 class StructDeclaration : public Declaration {
 public:
   static StructDeclaration create(const std::string &type_name, const std::string &variable_name) {
@@ -128,7 +130,7 @@ public:
 
   const DeclarationPtr copy() const override { return std::make_shared<StructDeclaration>(*this); }
 
-  DeclarationPtr getField(const std::string field_name) const {
+  DeclarationPtr getField(const std::string& field_name) const {
     for (auto &decl : decls_) {
       if (decl->getIdentifierName() == field_name) {
         return decl;
@@ -136,6 +138,8 @@ public:
     }
     return DeclarationPtr();
   }
+
+  VariableDeclaration getVariableDeclaration(const std::string& field_name) const;
 
   //      VariableDeclarationPtr getReferenceToField(const std::string field_name) const{
   //        for(auto& decl : decls_){
@@ -203,6 +207,15 @@ private:
   std::string identifier_;
   ValueTypePtr init_value_;
 };
+
+VariableDeclaration StructDeclaration::getVariableDeclaration(const std::string& field_name) const{
+  DeclarationPtr decl = getField(field_name);
+  if(!decl)
+    IOTDB_FATAL_ERROR("Error during Code Generation: Field '"
+                      << field_name
+                      << "' does not exist in struct '" << getTypeName() << "'" );
+  return  VariableDeclaration::create(decl->getType(), decl->getIdentifierName());
+}
 
 VariableDeclaration::~VariableDeclaration() {}
 
@@ -274,18 +287,19 @@ FunctionDeclaration FunctionBuilder::build() {
     function << returnType->getCode()->code_;
   }
   function << " " << name << "(";
-  for (uint64_t i = 0; i < parameters.size(); ++i) {
+  for (size_t i = 0; i < parameters.size(); ++i) {
     function << parameters[i].getCode();
     if (i + 1 < parameters.size())
       function << ", ";
   }
   function << "){";
 
-  for (uint64_t i = 0; i < variable_declarations.size(); ++i) {
+  function  << std::endl << "/* variable declarations */" << std::endl;
+  for (size_t i = 0; i < variable_declarations.size(); ++i) {
     function << variable_declarations[i].getCode() << ";";
   }
-
-  for (uint64_t i = 0; i < statements.size(); ++i) {
+  function  << std::endl << "/* statements section */" << std::endl;
+  for (size_t i = 0; i < statements.size(); ++i) {
     function << statements[i]->getCode()->code_ << ";";
   }
   function << "}";
@@ -551,13 +565,6 @@ public:
   BinaryOperatorStatement addRight(const BinaryOperatorType &op, const VarRefStatement &rhs,
                                    BracketMode bracket_mode = NO_BRACKETS) {
     return BinaryOperatorStatement(*this, op, rhs, bracket_mode);
-    //        if(lhs_){
-    //            return BinaryOperatorStatement(*lhs_, op, rhs);
-    //          }else if(bin_op_){
-    //            return BinaryOperatorStatement(*bin_op_, op, rhs);
-    //          }else{
-    //            IOTDB_FATAL_ERROR("In BinaryOperatorStatement: lhs_ and bin_op_ null!");
-    //          }
   }
 
   StatementPtr assignToVariable(const VarRefStatement &lhs) { return StatementPtr(); }
@@ -845,8 +852,6 @@ const DataTypePtr createUserDefinedType(const StructDeclaration &decl) {
 
 int CodeGenTest() {
 
-  VariableDeclaration var_decl = VariableDeclaration::create(createDataType(BasicType::UINT32), "global_int");
-
   VariableDeclaration var_decl_i =
       VariableDeclaration::create(createDataType(BasicType(INT32)), "i", createBasicTypeValue(BasicType(INT32), "0"));
   VariableDeclaration var_decl_j =
@@ -1065,23 +1070,27 @@ int CodeGenTest() {
   VariableDeclaration var_decl_result_tuple = VariableDeclaration::create(
       createPointerDataType(createUserDefinedType(struct_decl_result_tuple)), "result_tuples");
 
-  DeclarationPtr decl = struct_decl_tuple.getField("campaign_id");
-  assert(decl != nullptr);
-  VariableDeclaration decl_field_campaign_id = VariableDeclaration::create(decl->getType(), decl->getIdentifierName());
+//  DeclarationPtr decl = struct_decl_tuple.getField("campaign_id");
+//  assert(decl != nullptr);
+  VariableDeclaration decl_field_campaign_id = struct_decl_tuple.getVariableDeclaration("campaign_id");
+  //    VariableDeclaration::create(decl->getType(), decl->getIdentifierName());
 
-  DeclarationPtr decl_field_tup_buf_num_tuples = struct_decl_tuple_buffer.getField("num_tuples");
-  assert(decl_field_tup_buf_num_tuples != nullptr);
-  VariableDeclaration decl_field_num_tuples_struct_tuple_buf = VariableDeclaration::create(
-      decl_field_tup_buf_num_tuples->getType(), decl_field_tup_buf_num_tuples->getIdentifierName());
+//  DeclarationPtr decl_field_tup_buf_num_tuples = struct_decl_tuple_buffer.getVariableDeclaration("num_tuples");
+//  assert(decl_field_tup_buf_num_tuples != nullptr);
+  VariableDeclaration decl_field_num_tuples_struct_tuple_buf = struct_decl_tuple_buffer.getVariableDeclaration("num_tuples");
+//      VariableDeclaration::create(
+//      decl_field_tup_buf_num_tuples->getType(), decl_field_tup_buf_num_tuples->getIdentifierName());
   DeclarationPtr decl_field_tup_buf_data_ptr = struct_decl_tuple_buffer.getField("data");
   assert(decl_field_tup_buf_data_ptr != nullptr);
-  VariableDeclaration decl_field_data_ptr_struct_tuple_buf = VariableDeclaration::create(
-      decl_field_tup_buf_data_ptr->getType(), decl_field_tup_buf_data_ptr->getIdentifierName());
+  VariableDeclaration decl_field_data_ptr_struct_tuple_buf = struct_decl_tuple_buffer.getVariableDeclaration("data");
+      //VariableDeclaration::create(
+      //decl_field_tup_buf_data_ptr->getType(), decl_field_tup_buf_data_ptr->getIdentifierName());
 
-  DeclarationPtr decl_field_result_tuple_sum = struct_decl_result_tuple.getField("sum");
-  assert(decl_field_result_tuple_sum != nullptr);
-  VariableDeclaration var_decl_field_result_tuple_sum = VariableDeclaration::create(
-      decl_field_result_tuple_sum->getType(), decl_field_result_tuple_sum->getIdentifierName());
+//  DeclarationPtr decl_field_result_tuple_sum = struct_decl_result_tuple.getField("sum");
+//  assert(decl_field_result_tuple_sum != nullptr);
+  VariableDeclaration var_decl_field_result_tuple_sum = struct_decl_result_tuple.getVariableDeclaration("sum");
+//      VariableDeclaration::create(
+//      decl_field_result_tuple_sum->getType(), decl_field_result_tuple_sum->getIdentifierName());
 
   std::cout << (VarRefStatement(var_decl_tuple))[ConstantExprStatement(INT32, "0")]
                    .getCode()
@@ -1174,7 +1183,6 @@ int CodeGenTest() {
                       .addDeclaration(struct_decl_state)
                       .addDeclaration(struct_decl_tuple)
                       .addDeclaration(struct_decl_result_tuple)
-                      .addDeclaration(var_decl)
                       .addDeclaration(main_function)
                       .build();
 
