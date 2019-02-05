@@ -162,14 +162,16 @@ std::shared_ptr<zmq::message_t> send_request(std::shared_ptr<zmq::message_t> req
 
   /* Close connection to server. */
   socket.close();
-  context.close();
+//  context.close();
 
   return reply;
 }
 
 } // namespace IotClient
 
-#ifndef TESTING
+//#ifndef TESTING
+
+using namespace IotClient;
 
 int main(int argc, const char *argv[]) {
 
@@ -251,4 +253,4 @@ int main(int argc, const char *argv[]) {
 
   return EXIT_SUCCESS;
 }
-#endif // TESTING
+//#endif // TESTING
