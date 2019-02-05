@@ -1,4 +1,20 @@
 add_source_iotdb(
         CodeCompiler.cpp
+        Declaration.cpp
         FunctionBuilder.cpp
+        Statement.cpp
+        ExpressionStatment.cpp
+        BinaryOperatorStatement.cpp
+        ExpressionStatment.cpp
+        ConstantExprStatement.cpp
+        TypeCastExprStatement.cpp
+        VarRefStatement.cpp
+        UnaryOperatorStatement.cpp
+        BinaryOperatorStatement.cpp
+        ReturnStatement.cpp
+        IfStatement.cpp
+        IfElseStatement.cpp
+        ForLoopStatement.cpp
+        FunctionCallStatement.cpp
+        UserDefinedDataType.cpp
         )
