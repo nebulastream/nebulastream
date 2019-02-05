@@ -141,14 +141,6 @@ public:
 
   VariableDeclaration getVariableDeclaration(const std::string& field_name) const;
 
-  //      VariableDeclarationPtr getReferenceToField(const std::string field_name) const{
-  //        for(auto& decl : decls_){
-  //            if(decl->getIdentifierName()==field_name){
-  //                return std::make_shared<VariableDelaration>;
-  //            }
-  //        }
-  //      }
-
   StructDeclaration &addField(const Declaration &decl) {
     DeclarationPtr decl_p = decl.copy();
     if (decl_p)
@@ -714,20 +706,6 @@ BinaryOperatorStatement operator >>(const ExpressionStatment &lhs, const Express
 return BinaryOperatorStatement(lhs, BITWISE_RIGHT_SHIFT_OP, rhs);
 }
 
-
-//BinaryOperatorStatement operator [](const ExpressionStatment &lhs, const ExpressionStatment &rhs){
-//return BinaryOperatorStatement(lhs, ARRAY_REFERENCE_OP, rhs);
-//}
-//BinaryOperatorStatement operator ->(const ExpressionStatment &lhs, const ExpressionStatment &rhs){
-//return BinaryOperatorStatement(lhs, MEMBER_SELECT_POINTER_OP, rhs);
-//}
-
-
-
-
-
-
-
 class ReturnStatement : public Statement {
 public:
   ReturnStatement(VarRefStatement var_ref) : var_ref_(var_ref) {}
@@ -850,7 +828,7 @@ const DataTypePtr createUserDefinedType(const StructDeclaration &decl) {
 
 
 
-int CodeGenTest() {
+int CodeGenTestCases() {
 
   VariableDeclaration var_decl_i =
       VariableDeclaration::create(createDataType(BasicType(INT32)), "i", createBasicTypeValue(BasicType(INT32), "0"));
@@ -1016,7 +994,31 @@ int CodeGenTest() {
                      .getTypeDefinitionCode()
               << std::endl;
   }
+  /* TODO: Write Test Cases for this code */
 
+  /*
+  std::cout << (VarRefStatement(var_decl_tuple))[ConstantExprStatement(INT32, "0")]
+                   .getCode()
+                   ->code_
+            << std::endl;
+  std::cout << BinaryOperatorStatement(VarRefStatement(var_decl_tuple), ARRAY_REFERENCE_OP, VarRefStatement(var_decl_i))
+                   .getCode()
+                   ->code_
+            << std::endl;
+  std::cout << BinaryOperatorStatement(BinaryOperatorStatement(VarRefStatement(var_decl_tuple), ARRAY_REFERENCE_OP,
+                                                               VarRefStatement(var_decl_i)),
+                                       MEMBER_SELECT_REFERENCE_OP, VarRefStatement(decl_field_campaign_id))
+                   .getCode()
+                   ->code_
+            << std::endl;
+*/
+
+  return 0;
+}
+
+int CodeGenTest() {
+
+    /* === struct type definitions === */
   /** define structure of TupleBuffer
     struct TupleBuffer {
       void *data;
@@ -1043,6 +1045,18 @@ int CodeGenTest() {
           .addField(
               VariableDeclaration::create(createPointerDataType(createDataType(BasicType(VOID_TYPE))), "window_state"));
 
+  /* struct definition for input tuples */
+  StructDeclaration struct_decl_tuple =
+      StructDeclaration::create("Tuple", "")
+          .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)), "campaign_id"));
+
+  /* struct definition for result tuples */
+  StructDeclaration struct_decl_result_tuple =
+      StructDeclaration::create("ResultTuple", "")
+          .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)), "sum"));
+
+  /* === declarations === */
+
   VariableDeclaration var_decl_tuple_buffers = VariableDeclaration::create(
       createPointerDataType(createPointerDataType(createUserDefinedType(struct_decl_tuple_buffer))), "window_buffer");
   VariableDeclaration var_decl_tuple_buffer_output = VariableDeclaration::create(
@@ -1050,89 +1064,52 @@ int CodeGenTest() {
   VariableDeclaration var_decl_state =
       VariableDeclaration::create(createPointerDataType(createUserDefinedType(struct_decl_state)), "global_state");
 
-  /* struct definition for input tuples */
-
-  StructDeclaration struct_decl_tuple =
-      StructDeclaration::create("Tuple", "")
-          .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)), "campaign_id"));
-  //.addField(VariableDeclaration::create(createDataType(BasicType(UINT64)),"payload"));
-
   /* Tuple *tuples; */
 
   VariableDeclaration var_decl_tuple =
       VariableDeclaration::create(createPointerDataType(createUserDefinedType(struct_decl_tuple)), "tuples");
 
-  /* struct definition for result tuples */
-  StructDeclaration struct_decl_result_tuple =
-      StructDeclaration::create("ResultTuple", "")
-          .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)), "sum"));
 
   VariableDeclaration var_decl_result_tuple = VariableDeclaration::create(
       createPointerDataType(createUserDefinedType(struct_decl_result_tuple)), "result_tuples");
 
-//  DeclarationPtr decl = struct_decl_tuple.getField("campaign_id");
-//  assert(decl != nullptr);
+  /* variable declarations for fields inside structs */
   VariableDeclaration decl_field_campaign_id = struct_decl_tuple.getVariableDeclaration("campaign_id");
-  //    VariableDeclaration::create(decl->getType(), decl->getIdentifierName());
-
-//  DeclarationPtr decl_field_tup_buf_num_tuples = struct_decl_tuple_buffer.getVariableDeclaration("num_tuples");
-//  assert(decl_field_tup_buf_num_tuples != nullptr);
   VariableDeclaration decl_field_num_tuples_struct_tuple_buf = struct_decl_tuple_buffer.getVariableDeclaration("num_tuples");
-//      VariableDeclaration::create(
-//      decl_field_tup_buf_num_tuples->getType(), decl_field_tup_buf_num_tuples->getIdentifierName());
-  DeclarationPtr decl_field_tup_buf_data_ptr = struct_decl_tuple_buffer.getField("data");
-  assert(decl_field_tup_buf_data_ptr != nullptr);
   VariableDeclaration decl_field_data_ptr_struct_tuple_buf = struct_decl_tuple_buffer.getVariableDeclaration("data");
-      //VariableDeclaration::create(
-      //decl_field_tup_buf_data_ptr->getType(), decl_field_tup_buf_data_ptr->getIdentifierName());
-
-//  DeclarationPtr decl_field_result_tuple_sum = struct_decl_result_tuple.getField("sum");
-//  assert(decl_field_result_tuple_sum != nullptr);
   VariableDeclaration var_decl_field_result_tuple_sum = struct_decl_result_tuple.getVariableDeclaration("sum");
-//      VariableDeclaration::create(
-//      decl_field_result_tuple_sum->getType(), decl_field_result_tuple_sum->getIdentifierName());
 
-  std::cout << (VarRefStatement(var_decl_tuple))[ConstantExprStatement(INT32, "0")]
-                   .getCode()
-                   ->code_
-            << std::endl;
-  std::cout << BinaryOperatorStatement(VarRefStatement(var_decl_tuple), ARRAY_REFERENCE_OP, VarRefStatement(var_decl_i))
-                   .getCode()
-                   ->code_
-            << std::endl;
-  std::cout << BinaryOperatorStatement(BinaryOperatorStatement(VarRefStatement(var_decl_tuple), ARRAY_REFERENCE_OP,
-                                                               VarRefStatement(var_decl_i)),
-                                       MEMBER_SELECT_REFERENCE_OP, VarRefStatement(decl_field_campaign_id))
-                   .getCode()
-                   ->code_
-            << std::endl;
 
-  /* generating the query function */
+  /* === generating the query function === */
 
   /* variable declarations */
 
   /* TupleBuffer *tuple_buffer_1; */
-
   VariableDeclaration var_decl_tuple_buffer_1 = VariableDeclaration::create(
       createPointerDataType(createUserDefinedType(struct_decl_tuple_buffer)), "tuple_buffer_1");
-
+  /* uint64_t id = 0; */
   VariableDeclaration var_decl_id =
       VariableDeclaration::create(createDataType(BasicType(UINT64)), "id", createBasicTypeValue(BasicType(INT32), "0"));
-  VariableDeclaration var_decl_num_tup = VariableDeclaration::create(createDataType(BasicType(INT32)), "num_tuples",
-                                                                     createBasicTypeValue(BasicType(INT32), "0"));
-
+  /* int32_t ret = 0; */
+  VariableDeclaration var_decl_return =
+      VariableDeclaration::create(createDataType(BasicType(INT32)), "ret", createBasicTypeValue(BasicType(INT32), "0"));
+  /* int32_t sum = 0;*/
   VariableDeclaration var_decl_sum =
       VariableDeclaration::create(createDataType(BasicType(INT32)), "sum", createBasicTypeValue(BasicType(INT32), "0"));
 
+  /* init statements before for loop */
+
+  /* tuple_buffer_1 = window_buffer[0]; */
   BinaryOperatorStatement init_tuple_buffer_ptr(VarRefStatement(var_decl_tuple_buffer_1).assign(
                                                   VarRefStatement(var_decl_tuple_buffers)[ConstantExprStatement(INT32, "0")]));
-
+  /*  tuples = (Tuple *)tuple_buffer_1->data;*/
   BinaryOperatorStatement init_tuple_ptr(
       VarRef(var_decl_tuple).assign(
       TypeCast(VarRefStatement(var_decl_tuple_buffer_1)
         .accessPtr(VarRef(decl_field_data_ptr_struct_tuple_buf)),
         createPointerDataType(createUserDefinedType(struct_decl_tuple)))));
 
+   /* result_tuples = (ResultTuple *)output_tuple_buffer->data;*/
   BinaryOperatorStatement init_result_tuple_ptr(
       VarRef(var_decl_result_tuple).assign(
       TypeCast(VarRef(var_decl_tuple_buffer_output).accessPtr(VarRef(decl_field_data_ptr_struct_tuple_buf)),
@@ -1151,10 +1128,9 @@ int CodeGenTest() {
             + VarRef(var_decl_tuple)[VarRef(var_decl_id)].accessRef(VarRef(decl_field_campaign_id)))
       .copy());
 
-  /* typedef uint32_t (*SharedCLibPipelineQueryPtr)(TupleBuffer**, WindowState*, TupleBuffer*); */
-
-  VariableDeclaration var_decl_return =
-      VariableDeclaration::create(createDataType(BasicType(INT32)), "ret", createBasicTypeValue(BasicType(INT32), "0"));
+  /* function signature:
+   * typedef uint32_t (*SharedCLibPipelineQueryPtr)(TupleBuffer**, WindowState*, TupleBuffer*);
+   */
 
   FunctionDeclaration main_function =
       FunctionBuilder::create("compiled_query")
@@ -1188,8 +1164,9 @@ int CodeGenTest() {
 
   PipelineStagePtr stage = compile(file);
 
-  uint64_t *my_array = (uint64_t *)malloc(100 * sizeof(uint64_t));
+  /* setup minimal runtime to execute generated code */
 
+  uint64_t *my_array = (uint64_t *)malloc(100 * sizeof(uint64_t));
   for (unsigned int i = 0; i < 100; ++i) {
     my_array[i] = i;
   }
@@ -1203,11 +1180,14 @@ int CodeGenTest() {
 
   TupleBuffer result_buf{result_array, sizeof(uint64_t), sizeof(uint64_t), 0};
 
+  /* execute code */
   if (!stage->execute(bufs, nullptr, &result_buf)) {
     std::cout << "Error!" << std::endl;
   }
 
-  std::cout << "Sum (Generated Code): " << result_array[0] << std::endl;
+  /* check result for correctness */
+  uint64_t sum_generated_code = result_array[0];
+  std::cout << "Sum (Generated Code): " << sum_generated_code << std::endl;
 
   uint64_t my_sum = 0;
   for (uint64_t i = 0; i < 100; ++i) {
@@ -1218,7 +1198,12 @@ int CodeGenTest() {
   free(my_array);
   free(result_array);
 
-  // stage->execute();
+  if(my_sum==sum_generated_code){
+      return 0;
+    }else{
+      std::cerr << "Test Failed, sums do not match!" << std::endl;
+      return 1;
+    }
 
   return 0;
 }
