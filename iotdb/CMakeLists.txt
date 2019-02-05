@@ -195,14 +195,10 @@ target_include_directories(iotMaster PUBLIC "include")
  
 add_subdirectory(test)
 
-
-#add_custom_target(iotdb_tests COMMAND ${CMAKE_CTEST_COMMAND}
- #                 DEPENDS ${UNITTESTS})
-
 add_executable(iotClient iotClient.cpp)
-target_link_libraries(iotClient iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
+target_link_libraries(iotClient ${Boost_LIBRARIES} ${ZMQ_LIBRARIES})
 target_include_directories(iotClient PUBLIC "include")
  
 add_executable(iotServer iotServer.cpp)
-target_link_libraries(iotServer iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
+target_link_libraries(iotServer ${Boost_LIBRARIES} ${ZMQ_LIBRARIES})
 target_include_directories(iotServer PUBLIC "include")
