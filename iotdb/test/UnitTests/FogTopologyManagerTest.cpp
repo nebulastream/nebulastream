@@ -70,7 +70,7 @@ TEST_F(FogTopologyManagerTest, remove_non_existing_node) {
   EXPECT_FALSE(result_worker);
 
   auto sensor_node = topology_manager->createFogSensorNode();
-  auto result_sensor topology_manager->removeFogSensorNode(sensor_node);
+  auto result_sensor = topology_manager->removeFogSensorNode(sensor_node);
   result_sensor = topology_manager->removeFogSensorNode(sensor_node);
   EXPECT_FALSE(result_sensor);
 }
@@ -180,7 +180,7 @@ TEST_F(FogTopologyManagerTest, many_nodes) {
   }
 
   // creater some workers
-  for (uint32_t i = 0; i != 5;) {
+  for (uint32_t i = 0; i != 5; ++i) {
     workers.push_back(topology_manager->createFogWorkerNode());
   }
 
@@ -190,7 +190,7 @@ TEST_F(FogTopologyManagerTest, many_nodes) {
   }
 
   // create some sensors
-  for (uint32_t i = 0; i != 10;) {
+  for (uint32_t i = 0; i != 10; ++i) {
     sensors.push_back(topology_manager->createFogSensorNode());
   }
 }
@@ -223,10 +223,10 @@ TEST_F(FogTopologyManagerTest, many_links) {
   for (uint32_t i = 0; i != 30; ++i) {
     if (i % 2 == 0) {
       // even sensor
-      links.push_back(topology_manager->createFogNodeLink(sensor.at(i)->getId(), workers.at(i / 2)->getId()));
+      links.push_back(topology_manager->createFogNodeLink(sensors.at(i)->getId(), workers.at(i / 2)->getId()));
     } else {
       // odd sensor
-      links.push_back(topology_manager->createFogNodeLink(sensor.at(i)->getId(), workers.at((i - 1) / 2)->getId()));
+      links.push_back(topology_manager->createFogNodeLink(sensors.at(i)->getId(), workers.at((i - 1) / 2)->getId()));
     }
   }
 
