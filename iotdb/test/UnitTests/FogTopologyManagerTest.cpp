@@ -58,20 +58,20 @@ TEST_F(FogTopologyManagerTest, remove_node) {
   EXPECT_TRUE(result_worker);
 
   auto sensor_node = topology_manager->createFogSensorNode();
-  auto result_sensor topology_manager->removeFogSensorNode(sensor_node);
+  auto result_sensor = topology_manager->removeFogSensorNode(sensor_node);
   EXPECT_TRUE(result_sensor);
 }
 
 /* Remove a non existing node. */
 TEST_F(FogTopologyManagerTest, remove_non_existing_node) {
   auto worker_node = topology_manager->createFogWorkerNode();
-  auto result_worker = topology_manager->removeFogWorkerNode(sensor_node);
-  result_worker = topology_manager->removeFogWorkerNode(sensor_node);
+  auto result_worker = topology_manager->removeFogWorkerNode(worker_node);
+  result_worker = topology_manager->removeFogWorkerNode(worker_node);
   EXPECT_FALSE(result_worker);
 
   auto sensor_node = topology_manager->createFogSensorNode();
-  auto result_sensor topology_manager->removeFogSensorNode(worker_node);
-  result_sensor topology_manager->removeFogSensorNode(worker_node);
+  auto result_sensor topology_manager->removeFogSensorNode(sensor_node);
+  result_sensor = topology_manager->removeFogSensorNode(sensor_node);
   EXPECT_FALSE(result_sensor);
 }
 
@@ -164,13 +164,13 @@ TEST_F(FogTopologyManagerTest, remove_non_existing_link) {
 TEST_F(FogTopologyManagerTest, many_nodes) {
   // creater workers
   std::vector<std::shared_ptr<FogTopologyWorkerNode>> workers;
-  for (uint32_t i = 0; i != 15;) {
+  for (uint32_t i = 0; i != 15; ++i) {
     workers.push_back(topology_manager->createFogWorkerNode());
   }
 
   // create sensors
-  std::vector<std::shared_ptr<FogTopologySensorNode>> sensors;
-  for (uint32_t i = 0; i != 30;) {
+  std::vector<std::shared_ptr<FogTopologySensor>> sensors;
+  for (uint32_t i = 0; i != 30; ++i) {
     sensors.push_back(topology_manager->createFogSensorNode());
   }
 
@@ -204,7 +204,7 @@ TEST_F(FogTopologyManagerTest, many_links) {
   }
 
   // create sensors
-  std::vector<std::shared_ptr<FogTopologySensorNode>> sensors;
+  std::vector<std::shared_ptr<FogTopologySensor>> sensors;
   for (uint32_t i = 0; i != 30; ++i) {
     sensors.push_back(topology_manager->createFogSensorNode());
   }
