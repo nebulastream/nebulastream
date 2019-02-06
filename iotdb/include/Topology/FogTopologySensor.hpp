@@ -12,7 +12,7 @@ public:
   FogTopologySensor() { sensorID = INVALID_NODE_ID; }
 
   void setSensorId(size_t id) { sensorID = id; }
-  size_t getID() { return sensorID; }
+  size_t getId() { return sensorID; }
 
   FogNodeType getEntryType(){return Sensor;}
 

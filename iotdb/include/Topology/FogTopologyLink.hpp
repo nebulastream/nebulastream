@@ -35,7 +35,7 @@ public:
 
   void setLinkID(size_t pLinkID) { linkId = pLinkID; }
 
-  size_t getID() { return linkId; }
+  size_t getId() { return linkId; }
 
   size_t getSourceNodeId() { return sourceNodeID; }
 
