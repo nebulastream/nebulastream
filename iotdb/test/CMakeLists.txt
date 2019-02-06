@@ -8,12 +8,12 @@ target_link_libraries(engine-start-stop-test ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS}
 add_test(NAME engine-start-stop-test COMMAND engine-start-stop-test)
 
 # Code Generation
-add_executable(code-generation-tests "UnitTests/CodeGen.cpp")
+add_executable(code-generation-tests "UnitTests/CodeGenTest.cpp")
 target_link_libraries(code-generation-tests ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
 add_test(NAME code-generation-tests COMMAND code-generation-tests)
 
 # Topology
-add_executable(fog-topology-tests "UnitTests/Topology.cpp")
+add_executable(fog-topology-tests "UnitTests/TopologyTest.cpp")
 target_link_libraries(fog-topology-tests ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
 add_test(NAME fog-topology-tests COMMAND fog-topology-tests)
 
