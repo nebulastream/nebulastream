@@ -44,8 +44,8 @@ TEST_F(FogTopologyManagerTest, create_node) {
 
   auto sensor_node = topology_manager->createFogSensorNode();
   EXPECT_NE(sensor_node.get(), nullptr);
-  EXPECT_EQ(worker_node->getEntryType(), Sensor);
-  EXPECT_EQ(worker_node->getEntryTypeString(), "Sensor");
+  EXPECT_EQ(sensor_node->getEntryType(), Sensor);
+  EXPECT_EQ(sensor_node->getEntryTypeString(), "Sensor");
   EXPECT_NE(sensor_node->getId(), INVALID_NODE_ID);
 
   EXPECT_EQ(worker_node->getId() + 1, sensor_node->getId());
@@ -97,16 +97,16 @@ TEST_F(FogTopologyManagerTest, create_link) {
   auto link_node_sensor = topology_manager->createFogNodeLink(worker_node_2->getId(), sensor_node_0->getId());
   EXPECT_NE(link_node_sensor.get(), nullptr);
   EXPECT_NE(link_node_sensor->getId(), NOT_EXISTING_LINK_ID);
-  EXPECT_EQ(link_node_sensor->getSourceNodeId(), worker_node_1->getId());
+  EXPECT_EQ(link_node_sensor->getSourceNodeId(), worker_node_2->getId());
   EXPECT_EQ(link_node_sensor->getDestNodeId(), sensor_node_0->getId());
   // EXPECT_EQ(link_node_sensor->getLinkType(), NodeToSensor);          TODO? not supported yet
   // EXPECT_EQ(link_node_sensor->getLinkTypeString(), "NodeToSensor");  TODO? not supported yet
 
   auto link_sensor_node = topology_manager->createFogNodeLink(sensor_node_1->getId(), worker_node_3->getId());
-  EXPECT_NE(link_node_sensor.get(), nullptr);
-  EXPECT_NE(link_node_sensor->getId(), NOT_EXISTING_LINK_ID);
-  EXPECT_EQ(link_node_sensor->getSourceNodeId(), sensor_node_1->getId());
-  EXPECT_EQ(link_node_sensor->getDestNodeId(), worker_node_3->getId());
+  EXPECT_NE(link_sensor_node.get(), nullptr);
+  EXPECT_NE(link_sensor->getId(), NOT_EXISTING_LINK_ID);
+  EXPECT_EQ(link_sensor_node->getSourceNodeId(), sensor_node_1->getId());
+  EXPECT_EQ(link_sensor_node->getDestNodeId(), worker_node_3->getId());
   // EXPECT_EQ(link_node_sensor->getLinkType(), SensorToNode);          TODO? not supported yet
   // EXPECT_EQ(link_node_sensor->getLinkTypeString(), "SensorToNode");  TODO? not supported yet
 
