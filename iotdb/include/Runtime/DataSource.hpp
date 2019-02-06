@@ -10,7 +10,7 @@
 
 #include <thread>
 #include <Core/TupleBuffer.hpp>
-#include <Core/Schema.hpp>
+#include <API/Schema.hpp>
 
 namespace iotdb {
 
