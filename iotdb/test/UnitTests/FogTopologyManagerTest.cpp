@@ -104,7 +104,7 @@ TEST_F(FogTopologyManagerTest, create_link) {
 
   auto link_sensor_node = topology_manager->createFogNodeLink(sensor_node_1->getId(), worker_node_3->getId());
   EXPECT_NE(link_sensor_node.get(), nullptr);
-  EXPECT_NE(link_sensor->getId(), NOT_EXISTING_LINK_ID);
+  EXPECT_NE(link_sensor_node->getId(), NOT_EXISTING_LINK_ID);
   EXPECT_EQ(link_sensor_node->getSourceNodeId(), sensor_node_1->getId());
   EXPECT_EQ(link_sensor_node->getDestNodeId(), worker_node_3->getId());
   // EXPECT_EQ(link_node_sensor->getLinkType(), SensorToNode);          TODO? not supported yet
