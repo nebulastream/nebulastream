@@ -4,7 +4,10 @@
 
 #include "gtest/gtest.h"
 
+#include "Topology/FogTopologyEntry.hpp"
+#include "Topology/FogTopologyLink.hpp"
 #include "Topology/FogTopologyManager.hpp"
+#include "Topology/FogTopologyPlan.hpp"
 #include "Topology/FogTopologySensor.hpp"
 #include "Topology/FogTopologyWorkerNode.hpp"
 
@@ -33,7 +36,6 @@ public:
 /* - Nodes ----------------------------------------------------------------- */
 /* Create a new node. */
 TEST_F(FogTopologyManagerTest, create_node) {
-
   auto worker_node = topology_manager->createFogWorkerNode();
   EXPECT_NE(worker_node.get(), nullptr);
   EXPECT_EQ(worker_node->getEntryType(), Worker);
@@ -52,12 +54,12 @@ TEST_F(FogTopologyManagerTest, create_node) {
 /* Remove an existing node. */
 TEST_F(FogTopologyManagerTest, remove_node) {
   auto worker_node = topology_manager->createFogWorkerNode();
-  auto result_worker = topology_manager->removeFogWorkerNode(sensor_node);
-  EXPECT_EQ(result_worker, true);
+  auto result_worker = topology_manager->removeFogWorkerNode(worker_node);
+  EXPECT_TRUE(result_worker);
 
   auto sensor_node = topology_manager->createFogSensorNode();
-  auto result_sensor topology_manager->removeFogSensorNode(worker_node);
-  EXPECT_EQ(result_sensor, true);
+  auto result_sensor topology_manager->removeFogSensorNode(sensor_node);
+  EXPECT_TRUE(result_sensor);
 }
 
 /* Remove a non existing node. */
@@ -65,34 +67,174 @@ TEST_F(FogTopologyManagerTest, remove_non_existing_node) {
   auto worker_node = topology_manager->createFogWorkerNode();
   auto result_worker = topology_manager->removeFogWorkerNode(sensor_node);
   result_worker = topology_manager->removeFogWorkerNode(sensor_node);
-  EXPECT_EQ(result_worker, false);
+  EXPECT_FALSE(result_worker);
 
   auto sensor_node = topology_manager->createFogSensorNode();
   auto result_sensor topology_manager->removeFogSensorNode(worker_node);
   result_sensor topology_manager->removeFogSensorNode(worker_node);
-  EXPECT_EQ(result_sensor, false);
+  EXPECT_FALSE(result_sensor);
 }
 
 /* - Links ----------------------------------------------------------------- */
 /* Create a new link. */
-TEST_F(FogTopologyManagerTest, create_link) { EXPECT_EQ(true, true); }
+TEST_F(FogTopologyManagerTest, create_link) {
+  auto worker_node_0 = topology_manager->createFogWorkerNode();
+  auto worker_node_1 = topology_manager->createFogWorkerNode();
+  auto worker_node_2 = topology_manager->createFogWorkerNode();
+  auto worker_node_3 = topology_manager->createFogWorkerNode();
+
+  auto sensor_node_0 = topology_manager->createFogSensorNode();
+  auto sensor_node_1 = topology_manager->createFogSensorNode();
+
+  auto link_node_node = topology_manager->createFogNodeLink(worker_node_0->getId(), worker_node_1->getId());
+  EXPECT_NE(link_node_node.get(), nullptr);
+  EXPECT_NE(link_node_node->getId(), NOT_EXISTING_LINK_ID);
+  EXPECT_EQ(link_node_node->getSourceNodeId(), worker_node_0->getId());
+  EXPECT_EQ(link_node_node->getDestNodeId(), worker_node_1->getId());
+  // EXPECT_EQ(link_node_node->getLinkType(), NodeToNode);          TODO? not supported yet
+  // EXPECT_EQ(link_node_node->getLinkTypeString(), "NodeToNode");  TODO? not supported yet
+
+  auto link_node_sensor = topology_manager->createFogNodeLink(worker_node_2->getId(), sensor_node_0->getId());
+  EXPECT_NE(link_node_sensor.get(), nullptr);
+  EXPECT_NE(link_node_sensor->getId(), NOT_EXISTING_LINK_ID);
+  EXPECT_EQ(link_node_sensor->getSourceNodeId(), worker_node_1->getId());
+  EXPECT_EQ(link_node_sensor->getDestNodeId(), sensor_node_0->getId());
+  // EXPECT_EQ(link_node_sensor->getLinkType(), NodeToSensor);          TODO? not supported yet
+  // EXPECT_EQ(link_node_sensor->getLinkTypeString(), "NodeToSensor");  TODO? not supported yet
+
+  auto link_sensor_node = topology_manager->createFogNodeLink(sensor_node_1->getId(), worker_node_3->getId());
+  EXPECT_NE(link_node_sensor.get(), nullptr);
+  EXPECT_NE(link_node_sensor->getId(), NOT_EXISTING_LINK_ID);
+  EXPECT_EQ(link_node_sensor->getSourceNodeId(), sensor_node_1->getId());
+  EXPECT_EQ(link_node_sensor->getDestNodeId(), worker_node_3->getId());
+  // EXPECT_EQ(link_node_sensor->getLinkType(), SensorToNode);          TODO? not supported yet
+  // EXPECT_EQ(link_node_sensor->getLinkTypeString(), "SensorToNode");  TODO? not supported yet
+
+  EXPECT_EQ(link_node_node->getId() + 1, link_node_sensor->getId());
+  EXPECT_EQ(link_node_sensor->getId() + 1, link_sensor_node->getId());
+}
 
 /* Create link, where a link already exists. */
-TEST_F(FogTopologyManagerTest, create_existing_link) { EXPECT_EQ(true, true); }
+TEST_F(FogTopologyManagerTest, create_existing_link) {
+  auto node_0 = topology_manager->createFogWorkerNode();
+  auto node_1 = topology_manager->createFogWorkerNode();
+  topology_manager->createFogNodeLink(node_0->getId(), node_1->getId());
+  EXPECT_ANY_THROW(topology_manager->createFogNodeLink(node_0->getId(), node_1->getId()););
+}
 
 /* Create a link for nodes, that do not exist. */
-TEST_F(FogTopologyManagerTest, create_invalid_link) { EXPECT_EQ(true, true); }
+TEST_F(FogTopologyManagerTest, create_invalid_link) {
+  auto node_0 = topology_manager->createFogWorkerNode();
+  EXPECT_ANY_THROW(topology_manager->createFogNodeLink(node_0->getId(), node_0->getId()););
+  EXPECT_ANY_THROW(topology_manager->createFogNodeLink(INVALID_NODE_ID, node_0->getId()););
+  EXPECT_ANY_THROW(topology_manager->createFogNodeLink(node_0->getId(), INVALID_NODE_ID););
+  EXPECT_ANY_THROW(topology_manager->createFogNodeLink(INVALID_NODE_ID, INVALID_NODE_ID););
+}
 
 /* Remove an existing link. */
-TEST_F(FogTopologyManagerTest, remove_link) { EXPECT_EQ(true, true); }
+TEST_F(FogTopologyManagerTest, remove_link) {
+  auto node_0 = topology_manager->createFogWorkerNode();
+  auto node_1 = topology_manager->createFogWorkerNode();
+  auto link = topology_manager->createFogNodeLink(node_0->getId(), node_1->getId());
+
+  auto result_link = topology_manager->removeFogNodeLink(link);
+  EXPECT_TRUE(result_link);
+}
 
 /* Remove a non existing link. */
-TEST_F(FogTopologyManagerTest, remove_non_existing_link) { EXPECT_EQ(true, true); }
+TEST_F(FogTopologyManagerTest, remove_non_existing_link) {
+  auto node_0 = topology_manager->createFogWorkerNode();
+  auto node_1 = topology_manager->createFogWorkerNode();
+  auto link = topology_manager->createFogNodeLink(node_0->getId(), node_1->getId());
+
+  auto result_link = topology_manager->removeFogNodeLink(link);
+  result_link = topology_manager->removeFogNodeLink(link);
+  EXPECT_FALSE(result_link);
+
+  // What happens to a link, if one node was removed?
+  // Expectation: Link is removed as well.
+  link = topology_manager->createFogNodeLink(node_0->getId(), node_1->getId());
+  auto result_node = topology_manager->removeFogWorkerNode(node_0);
+  EXPECT_TRUE(result_node);
+  result_link = topology_manager->removeFogNodeLink(link);
+  EXPECT_FALSE(result_link);
+}
 
 /* - Usage Pattern --------------------------------------------------------- */
-TEST_F(FogTopologyManagerTest, many_nodes) { EXPECT_EQ(true, true); }
+TEST_F(FogTopologyManagerTest, many_nodes) {
+  // creater workers
+  std::vector<std::shared_ptr<FogTopologyWorkerNode>> workers;
+  for (uint32_t i = 0; i != 15;) {
+    workers.push_back(topology_manager->createFogWorkerNode());
+  }
 
-TEST_F(FogTopologyManagerTest, many_edges) { EXPECT_EQ(true, true); }
+  // create sensors
+  std::vector<std::shared_ptr<FogTopologySensorNode>> sensors;
+  for (uint32_t i = 0; i != 30;) {
+    sensors.push_back(topology_manager->createFogSensorNode());
+  }
+
+  // remove some workers
+  for (uint32_t i = 0; i < workers.size(); i += 4) {
+    topology_manager->removeFogWorkerNode(workers.at(i));
+  }
+
+  // creater some workers
+  for (uint32_t i = 0; i != 5;) {
+    workers.push_back(topology_manager->createFogWorkerNode());
+  }
+
+  // remove some sensors
+  for (uint32_t i = 0; i < sensors.size(); i += 3) {
+    topology_manager->removeFogSensorNode(sensors.at(i));
+  }
+
+  // create some sensors
+  for (uint32_t i = 0; i != 10;) {
+    sensors.push_back(topology_manager->createFogSensorNode());
+  }
+}
+
+TEST_F(FogTopologyManagerTest, many_links) {
+
+  // creater workers
+  std::vector<std::shared_ptr<FogTopologyWorkerNode>> workers;
+  for (uint32_t i = 0; i != 15; ++i) {
+    workers.push_back(topology_manager->createFogWorkerNode());
+  }
+
+  // create sensors
+  std::vector<std::shared_ptr<FogTopologySensorNode>> sensors;
+  for (uint32_t i = 0; i != 30; ++i) {
+    sensors.push_back(topology_manager->createFogSensorNode());
+  }
+
+  // link each worker with all other workers
+  std::vector<std::shared_ptr<FogTopologyLink>> links;
+  for (uint32_t i = 0; i != 15; ++i) {
+    for (uint32_t j = 0; j != 15; ++j) {
+      if (i != j) {
+        links.push_back(topology_manager->createFogNodeLink(workers.at(i)->getId(), workers.at(j)->getId()));
+      }
+    }
+  }
+
+  // each worker has two sensors
+  for (uint32_t i = 0; i != 30; ++i) {
+    if (i % 2 == 0) {
+      // even sensor
+      links.push_back(topology_manager->createFogNodeLink(sensor.at(i)->getId(), workers.at(i / 2)->getId()));
+    } else {
+      // odd sensor
+      links.push_back(topology_manager->createFogNodeLink(sensor.at(i)->getId(), workers.at((i - 1) / 2)->getId()));
+    }
+  }
+
+  // remove some links
+  for (uint32_t i = 0; i < links.size(); i += 4) {
+    EXPECT_TRUE(topology_manager->removeFogNodeLink(links.at(i)));
+  }
+}
 
 /* ------------------------------------------------------------------------- */
 /* - FogTopologyGraph ------------------------------------------------------ */
