@@ -13,7 +13,7 @@ public:
 
   void setNodeId(size_t id) { node_id = id; }
 
-  size_t getID() { return node_id; }
+  size_t getId() { return node_id; }
 
   FogNodeType getEntryType(){return Worker;}
 

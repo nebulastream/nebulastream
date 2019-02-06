@@ -18,7 +18,7 @@ public:
 	virtual FogNodeType getEntryType() = 0;
 	virtual std::string getEntryTypeString() = 0;
 
-	virtual size_t getID() = 0;
+	virtual size_t getId() = 0;
 
 };
 

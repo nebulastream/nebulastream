@@ -94,7 +94,7 @@ public:
 
 	void addEdge(FogTopologyLinkPtr ptr, size_t sourceID, size_t destID)
 	{
-		size_t id = ptr->getID();
+		size_t id = ptr->getId();
 		boost::graph_traits<graph_t>::vertex_descriptor src = getVertex(sourceID);
 		boost::graph_traits<graph_t>::vertex_descriptor dst = getVertex(destID);
 
@@ -171,7 +171,7 @@ public:
   }
   bool removeFogWorkerNode(FogTopologyWorkerNodePtr ptr)
   {
-	  size_t search_id = ptr->getID();
+	  size_t search_id = ptr->getId();
 	  return fGraph->removeVertex(search_id);
   }
 
@@ -186,7 +186,7 @@ public:
 
   bool removeFogSensorNode(FogTopologySensorPtr ptr)
   {
-	  size_t search_id = ptr->getID();
+	  size_t search_id = ptr->getId();
 	  return fGraph->removeVertex(search_id);
   }
 
@@ -199,7 +199,7 @@ public:
 
   bool removeFogTopologyLink(FogTopologyLinkPtr linkPtr)
   {
-	  return fGraph->removeEdge(linkPtr->getID());
+	  return fGraph->removeEdge(linkPtr->getId());
   }
 
   void printPlan() { fGraph->print();}
