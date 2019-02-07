@@ -35,7 +35,7 @@ namespace iotdb {
 class InputQuery {
 public:
   ~InputQuery();
-  static InputQuery create(Config& config, Schema& schema, Source& source);
+  static InputQuery& create(Config& config, Schema& schema, Source& source);
 
   void execute();
 

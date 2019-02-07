@@ -3,7 +3,7 @@
 #include <algorithm>
 
 #include "API/InputQuery.hpp"
-namespace iotdb {
+namespace iotdb_test {
 
 /** Client Side **/
     class InputQuery;//API
