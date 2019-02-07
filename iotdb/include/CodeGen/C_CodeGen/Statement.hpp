@@ -1,0 +1,245 @@
+
+#pragma once
+
+#include <string>
+#include <memory>
+
+#include <Core/DataTypes.hpp>
+#include <CodeGen/CodeExpression.hpp>
+#include <CodeGen/C_CodeGen/Declaration.hpp>
+
+
+namespace iotdb{
+
+enum StatementType {
+  RETURN_STMT,
+  IF_STMT,
+  IF_ELSE_STMT,
+  FOR_LOOP_STMT,
+  FUNC_CALL_STMT,
+  VAR_REF_STMT,
+  CONSTANT_VALUE_EXPR_STMT,
+  BINARY_OP_STMT,
+  UNARY_OP_STMT
+};
+
+enum BracketMode { NO_BRACKETS, BRACKETS };
+
+class Statement {
+public:
+  virtual StatementType getStamentType() const = 0;
+  virtual const CodeExpressionPtr getCode() const = 0;
+  virtual ~Statement();
+};
+
+
+
+class ExpressionStatment;
+typedef std::shared_ptr<ExpressionStatment> ExpressionStatmentPtr;
+
+class BinaryOperatorStatement;
+
+class ExpressionStatment : public Statement {
+public:
+  virtual StatementType getStamentType() const = 0;
+  virtual const CodeExpressionPtr getCode() const = 0;
+  /** \brief virtual copy constructor */
+  virtual const ExpressionStatmentPtr copy() const = 0;
+
+//  UnaryOperatorStatement operator sizeof(const ExpressionStatment &ref){
+//  return UnaryOperatorStatement(ref, SIZE_OF_TYPE_OP);
+//  }
+
+  BinaryOperatorStatement assign(const ExpressionStatment &ref);
+  BinaryOperatorStatement accessPtr(const ExpressionStatment &ref);
+  BinaryOperatorStatement accessRef(const ExpressionStatment &ref);
+
+  BinaryOperatorStatement operator [](const ExpressionStatment &ref);
+
+  //UnaryOperatorStatement operator ++(const ExpressionStatment &ref){
+  //return UnaryOperatorStatement(ref, POSTFIX_INCREMENT_OP);
+  //}
+  //UnaryOperatorStatement operator --(const ExpressionStatment &ref){
+  //return UnaryOperatorStatement(ref, POSTFIX_DECREMENT_OP);
+  //}
+
+  virtual ~ExpressionStatment();
+};
+
+
+
+typedef std::shared_ptr<Statement> StatementPtr;
+typedef std::string Code;
+
+class ConstantExprStatement : public ExpressionStatment {
+public:
+  ValueTypePtr val_;
+
+  virtual StatementType getStamentType() const { return CONSTANT_VALUE_EXPR_STMT; }
+
+  virtual const CodeExpressionPtr getCode() const { return val_->getCodeExpression(); }
+
+  virtual const ExpressionStatmentPtr copy() const { return std::make_shared<ConstantExprStatement>(*this); }
+
+  ConstantExprStatement(const ValueTypePtr &val) : val_(val) {}
+
+  ConstantExprStatement(const BasicType &type, const std::string &value) : val_(createBasicTypeValue(type, value)) {}
+
+  virtual ~ConstantExprStatement();
+};
+
+
+typedef ConstantExprStatement Constant;
+
+class TypeCastExprStatement : public ExpressionStatment {
+public:
+  virtual StatementType getStamentType() const { return CONSTANT_VALUE_EXPR_STMT; }
+
+  virtual const CodeExpressionPtr getCode() const {
+    CodeExpressionPtr code;
+    code = combine(std::make_shared<CodeExpression>("("), type_->getCode());
+    code = combine(code, std::make_shared<CodeExpression>(")"));
+    code = combine(code, expr_->getCode());
+    return code;
+  }
+
+  virtual const ExpressionStatmentPtr copy() const { return std::make_shared<TypeCastExprStatement>(*this); }
+
+  TypeCastExprStatement(const ExpressionStatment &expr, const DataTypePtr &type) : expr_(expr.copy()), type_(type) {}
+
+  virtual ~TypeCastExprStatement();
+
+private:
+  ExpressionStatmentPtr expr_;
+  DataTypePtr type_;
+};
+
+
+typedef TypeCastExprStatement TypeCast;
+
+class VarRefStatement : public ExpressionStatment {
+public:
+  const VariableDeclaration &var_decl_;
+
+  virtual StatementType getStamentType() const { return VAR_REF_STMT; }
+
+  virtual const CodeExpressionPtr getCode() const { return var_decl_.getIdentifier(); }
+
+  virtual const ExpressionStatmentPtr copy() const { return std::make_shared<VarRefStatement>(*this); }
+
+  VarRefStatement(const VariableDeclaration &var_decl) : var_decl_(var_decl) {}
+
+  virtual ~VarRefStatement();
+};
+
+
+
+
+typedef VarRefStatement VarRef;
+
+
+class ReturnStatement : public Statement {
+public:
+  ReturnStatement(VarRefStatement var_ref) : var_ref_(var_ref) {}
+
+  VarRefStatement var_ref_;
+
+  virtual StatementType getStamentType() const {}
+  virtual const CodeExpressionPtr getCode() const {
+    std::stringstream stmt;
+    stmt << "return " << var_ref_.getCode()->code_ << ";";
+    return std::make_shared<CodeExpression>(stmt.str());
+  }
+  virtual ~ReturnStatement() {}
+};
+
+class IfStatement : public Statement {
+public:
+  IfStatement(const Statement &cond_expr, const Statement &cond_true_stmt)
+      : cond_expr_(cond_expr), cond_true_stmt_(cond_true_stmt) {}
+
+  virtual StatementType getStamentType() const { return IF_STMT; }
+  virtual const CodeExpressionPtr getCode() const {
+    std::stringstream code;
+    code << "if(" << cond_expr_.getCode()->code_ << "){" << std::endl;
+    code << cond_true_stmt_.getCode()->code_ << std::endl;
+    code << "}" << std::endl;
+    return std::make_shared<CodeExpression>(code.str());
+  }
+  virtual ~IfStatement();
+
+private:
+  const Statement &cond_expr_;
+  const Statement &cond_true_stmt_;
+};
+
+
+
+
+typedef IfStatement IF;
+
+class IfElseStatement : public Statement {
+public:
+  IfElseStatement(const Statement &cond_true, const Statement &cond_false);
+
+  virtual StatementType getStamentType() const { return IF_ELSE_STMT; }
+  virtual const CodeExpressionPtr getCode() const {}
+  virtual ~IfElseStatement();
+};
+
+class ForLoopStatement : public Statement {
+public:
+  ForLoopStatement(const VariableDeclaration &var_decl, const ExpressionStatment &condition,
+                   const ExpressionStatment &advance,
+                   const std::vector<StatementPtr> &loop_body = std::vector<StatementPtr>());
+
+  virtual StatementType getStamentType() const ;
+  virtual const CodeExpressionPtr getCode() const;
+
+  void addStatement(StatementPtr stmt);
+
+  virtual ~ForLoopStatement();
+
+private:
+  VariableDeclaration var_decl_;
+  ExpressionStatmentPtr condition_;
+  ExpressionStatmentPtr advance_;
+  std::vector<StatementPtr> loop_body_;
+};
+
+typedef ForLoopStatement FOR;
+
+
+
+class FunctionCallStatement : public Statement {
+  virtual StatementType getStamentType() const {}
+  virtual const CodeExpressionPtr getCode() const {}
+  virtual ~FunctionCallStatement();
+};
+
+class UserDefinedDataType : public DataType {
+public:
+  UserDefinedDataType(const StructDeclaration &decl) : decl_(decl) {}
+
+  ValueTypePtr getDefaultInitValue() const { return ValueTypePtr(); }
+
+  ValueTypePtr getNullValue() const { return ValueTypePtr(); }
+  uint32_t getSizeBytes() const {
+    /* assume a 64 bit architecture, each pointer is 8 bytes */
+    return decl_.getTypeSizeInBytes();
+  }
+  const std::string toString() const { return std::string("STRUCT ") + decl_.getTypeName(); }
+  const CodeExpressionPtr getTypeDefinitionCode() const { return std::make_shared<CodeExpression>(decl_.getCode()); }
+  const CodeExpressionPtr getCode() const { return std::make_shared<CodeExpression>(decl_.getTypeName()); }
+
+  ~UserDefinedDataType();
+
+private:
+  StructDeclaration decl_;
+};
+
+const DataTypePtr createUserDefinedType(const StructDeclaration &decl);
+
+
+
+}
