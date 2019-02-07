@@ -1,15 +1,21 @@
 #google testing framework
 enable_testing(true)
-set(GTEST_LIBRARIES libgtest libgtest_main libgmock)
+set(GTEST_LIBRARIES iotdb libgtest libgtest_main libgmock)
+
+# Engine Start and Stop Test
+add_executable(engine-start-stop-test "UnitTests/EngineStartAndStopTest.cpp")
+target_link_libraries(engine-start-stop-test ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
+add_test(NAME engine-start-stop-test COMMAND engine-start-stop-test)
 
 # Code Generation
-add_executable(code-generation-tests "UnitTests/CodeGen.cpp")
-target_link_libraries(code-generation-tests iotdb ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
+add_executable(code-generation-tests "UnitTests/CodeGenTest.cpp")
+target_link_libraries(code-generation-tests ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
 add_test(NAME code-generation-tests COMMAND code-generation-tests)
 
 # Topology
-add_executable(fog-topology-tests "UnitTests/Topology.cpp")
-target_link_libraries(fog-topology-tests iotdb ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
+add_executable(fog-topology-tests "UnitTests/TopologyTest.cpp")
+target_link_libraries(fog-topology-tests ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
+
 add_test(NAME fog-topology-tests COMMAND fog-topology-tests)
 
 # Client Server Communication
