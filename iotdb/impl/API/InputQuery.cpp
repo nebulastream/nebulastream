@@ -45,7 +45,7 @@ InputQuery::InputQuery(Config& config, Schema& schema, Source& source):
 
 InputQuery::~InputQuery() {}
 
-InputQuery InputQuery::create(Config& config, Schema& schema, Source& source)
+InputQuery& InputQuery::create(Config& config, Schema& schema, Source& source)
 {
 	InputQuery* q = new InputQuery(config, schema, source);
 	InputType type = source.getType();
