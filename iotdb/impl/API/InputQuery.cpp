@@ -19,40 +19,35 @@
 #include <Operators/Operator.hpp>
 #include <Operators/FilterOperator.hpp>
 namespace iotdb{
-//#include "code_generation/code_generator.h"
-//#include "operator/aggregate_operator.h"
-//#include "operator/filter_operator.h"
-//#include "operator/generate_operator.h"
-//#include "operator/group_by_operator.h"
-//#include "operator/input_operator.h"
-//#include "operator/join_operator.h"
-//#include "operator/key_operator.h"
-//#include "operator/map_operator.h"
-//#include "operator/order_by_operator.h"
-//#include "operator/print_operator.h"
-//#include "operator/read_operator.h"
-//#include "operator/read_window_operator.h"
-//#include "operator/table_read_operator.h"
-//#include "operator/window_operator.h"
-//#include "operator/write_operator.h"
-//#include "api/source.h"
 
 InputQuery::InputQuery(Config& config, Schema& schema, Source& source):
-		schema(schema), config(config), source(source)
+		config(config), schema(schema), source(source), root()
 	{
-		current = NULL;
+
 	}
+
+/* TODO: perform deep copy of operator graph */
+InputQuery::InputQuery(InputQuery& query)
+   : config(query.config),schema(query.schema), source(query.source), root(query.root->copy()){
+
+}
 
 InputQuery::~InputQuery() {}
 
 InputQuery InputQuery::create(Config& config, Schema& schema, Source& source)
 {
-	InputQuery* q = new InputQuery(config, schema, source);
-	InputType type = source.getType();
-	string path = source.getPath();
-	q->current = new InputOperator(type, path, new ReadOperator(schema));
-	q->root = q->current;
-	return *q;
+
+
+  InputQuery q(config, schema, source);
+  return q;
+//	InputQuery* q = new InputQuery(config, schema, source);
+//	InputType type = source.getType();
+//	string path = source.getPath();
+//	OperatorPtr op(new InputOperator(type, path));
+//	new ReadOperator(schema)
+//	op->leftChild = q->root;
+//	q->root = q->op;
+//	return *q;
 }
 
 
@@ -63,23 +58,34 @@ void InputQuery::execute() {
 /*
  * Relational Operators
  */
-InputQuery& InputQuery::filter(Predicate &&predicate) {
-  Operator* newOp = new FilterOperator(predicate, current);
-  if (current)
-    newOp->rightChild = current;
-  root = newOp;
-  current = newOp;
+InputQuery& InputQuery::filter(PredicatePtr predicate) {
+//  Operator* newOp = new FilterOperator(predicate, current);
+//  if (current)
+//    newOp->rightChild = current;
+//  root = newOp;
+//  current = newOp;
   return *this;
 }
 
-InputQuery &InputQuery::groupBy(std::string fieldId) {
-  Operator *newOp = new GroupByOperator(schema.get(fieldId), current);
-  if (current)
-    newOp->rightChild = current;
-  root = newOp;
-  current = newOp;
+/*
+InputQuery &InputQuery::groupBy(const AttributeFieldPtr& field) {
+//  Operator *newOp = new GroupByOperator(field, current);
+//  if (current)
+//    newOp->rightChild = current;
+//  root = newOp;
+//  current = newOp;
   return *this;
 }
+
+InputQuery &InputQuery::groupBy(const VecAttributeFieldPtr& field){
+//  Operator *newOp = new GroupByOperator(schema.get(fieldId), current);
+//  if (current)
+//    newOp->rightChild = current;
+//  root = newOp;
+//  current = newOp;
+  return *this;
+}
+
 
 InputQuery &InputQuery::orderBy(std::string& fieldId, std::string& sortedness) {
   Operator *newOp = new OrderByOperator(schema.get(fieldId), current);
@@ -106,10 +112,12 @@ InputQuery &InputQuery::join(Operator* op, JoinPredicate &&joinPred) {
   current = newOp;
   return *this;
 }
+*/
 
 /*
  * Streaming Operators
  */
+/*
 InputQuery &InputQuery::window(Window &&window) {
   Operator *newOp = new WindowOperator(window.assigner, window.trigger, current);
   if (current)
@@ -136,10 +144,13 @@ InputQuery &InputQuery::map(Mapper &&mapper) {
   current = newOp;
   return *this;
 }
+*/
 
 /*
  * Input Operators
  */
+
+/*
 InputQuery &InputQuery::input(InputType type, std::string path) {
   assert(0);
   Operator *newOp = new InputOperator(type, path, current);
@@ -166,6 +177,8 @@ InputQuery &InputQuery::print() {
   current = newOp;
   return *this;
 }
+*/
+
 
 void InputQuery::printInputQueryPlan(Operator *p, int indent) {
   // Taken from https://stackoverflow.com/questions/13484943/print-a-binary-tree-in-a-pretty-way
@@ -188,17 +201,19 @@ void InputQuery::printInputQueryPlan(Operator *p, int indent) {
   }
 }
 
+
 InputQuery &InputQuery::printInputQueryPlan() {
   std::cout << "InputQuery Plan " << std::string(69, '-') << std::endl;
 
   if (root == NULL) {
     printf("No root node; cant print InputQueryplan\n");
   } else {
-    printInputQueryPlan(current, 0);
+    printInputQueryPlan(root.get(), 0);
     printf("\n");
   }
   return *this;
 }
+
 
 //InputQuery &InputQuery::printPipelinePermutations() {
 //  std::cout << "InputQuery Plan - Permutations of the longest Pipeline " << std::string(30, '-') << std::endl;

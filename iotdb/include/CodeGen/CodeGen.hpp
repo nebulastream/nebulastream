@@ -17,7 +17,7 @@ class PipelineStage;
 typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
 
 //class Operator;
-typedef std::unique_ptr<Operator> OperatorPtr;
+typedef std::shared_ptr<Operator> OperatorPtr;
 
 class CompilerArgs;
 class CodeGenArgs;
