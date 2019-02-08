@@ -1,7 +1,9 @@
 #include <Topology/FogTopologyManager.hpp>
-#include "include/API/InputQuery.hpp"
+#include <API/InputQuery.hpp>
+#include <API/Config.hpp>
+#include <API/Schema.hpp>
 
-using namespace iotdb;
+namespace iotdb{
 /**
  *
  * Open Questions:
@@ -32,6 +34,7 @@ void createTestTopo(FogTopologyManager* fMgnr)
 	fPlan->printPlan();
 }
 
+/*
 void createQuery()
 {
 	// define config
@@ -56,16 +59,46 @@ void createQuery()
 	.inputType(InputType::BinaryFile)
 	.sourceType(Rest);
 
+
 	// streaming query
 	InputQuery::create(config, schema, s1)
 	.filter(Equal("event_type", "view"))                // filter by event type
 	.window(TumblingProcessingTimeWindow(Counter(100))) // tumbling window of 100 elements
-	.groupBy("campaign_id")                             // group by campaign id
+	.groupBy(schema)                             // group by campaign id
 	.aggregate(Count())                                 // count results per key and window
 	.write("output.csv");                                // write results to file
 //	.execute();
 }
+*/
+
+void createQuery()
+{
+  // define config
+  Config config = Config::create().
+                  withParallelism(1).
+                  withPreloading().
+                  withBufferSize(1000).
+                  withNumberOfPassesOverInput(1);
+
+  Schema schema = Schema::create().addField("",INT32);
+
+  Source s1 = Source::create()
+  .path("/home/zeuchste/git/streaming_code_generator/yahoo_data_generator/yahoo_test_data.bin")
+  .inputType(InputType::BinaryFile)
+  .sourceType(Rest);
+
+  InputQuery::create(config, schema, s1)
+      .filter(PredicatePtr());
+  AttributeFieldPtr attr = schema[0];
+
+}
+
+};
+
 int main(int argc, const char *argv[]) {
+	using namespace iotdb;
 	FogTopologyManager* fMgnr = new FogTopologyManager();
 	createTestTopo(fMgnr);
+
+	return 0;
 }

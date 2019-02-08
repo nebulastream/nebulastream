@@ -2,14 +2,14 @@
 #define API_INPUT_QUERY_H
 
 #include <Operators/Operator.hpp>
-#include "Source.hpp"
-#include "Schema.hpp"
+#include <API/Source.hpp>
+#include <API/Schema.hpp>
 #include "Window.hpp"
 #include "Aggregation.hpp"
 #include "JoinPredicate.hpp"
 #include "Mapper.hpp"
 #include <string>
-#include "Config.hpp"
+#include <API/Config.hpp>
 
 
 namespace iotdb {
@@ -17,8 +17,8 @@ namespace iotdb {
 //class Config;
 //class Schema;
 
-//class Predicate;
-//typedef std::shared_ptr<Predicate> PredicatePtr;
+class Predicate;
+typedef std::shared_ptr<Predicate> PredicatePtr;
 //typedef Predicate&& PredicatePtr;
 
 //class JoinPredicate;
@@ -31,6 +31,20 @@ namespace iotdb {
 
 //class Mapper;
 
+enum SortOrder{ASCENDING,DESCENDING};
+
+struct SortAttr{
+    AttributeFieldPtr field;
+    SortOrder order;
+};
+
+class Sort{
+  Sort(AttributeFieldPtr field1);
+  Sort(AttributeFieldPtr field1,AttributeFieldPtr field2);
+  Sort(AttributeFieldPtr field1,AttributeFieldPtr field2, AttributeFieldPtr field3);
+  std::vector<SortAttr> param;
+};
+
 /** \brief the central abstraction for the user to define queries */
 class InputQuery {
 public:
@@ -40,33 +54,36 @@ public:
   void execute();
 
   // relational operators
-  InputQuery &filter(Predicate&& predicate);
-  InputQuery &groupBy(std::string field);
-  InputQuery &orderBy(std::string& field, std::string& sortedness);
-  InputQuery &aggregate(Aggregation &&aggregation);
-  InputQuery &join(Operator* op, JoinPredicate&& joinPred);
+  InputQuery &filter(PredicatePtr predicate);
+//  InputQuery &groupBy(const AttributeFieldPtr& field);
+//  InputQuery &groupBy(const VecAttributeFieldPtr& field);
 
-  // streaming operators
-  InputQuery &window(Window &&window);
-  InputQuery &keyBy(std::string& fieldId);
-  InputQuery &map(Mapper&& mapper);
+//  InputQuery &orderBy(const Sort& field);
+
+//  InputQuery &aggregate(Aggregation &&aggregation);
+//  InputQuery &join(InputQuery& sub_query, JoinPredicate&& joinPred);
+
+//  // streaming operators
+//  InputQuery &window(Window &&window);
+//  InputQuery &keyBy(const AttributeFieldPtr& field);
+//  InputQuery &keyBy(const VecAttributeFieldPtr& field);
+//  InputQuery &map(Mapper&& mapper);
 
   // output operators
-  InputQuery &write(std::string file_name);
-  InputQuery &print();
+  //InputQuery &write(const std::string& file_name);
+  //InputQuery &print();
 
   // helper operators
-  InputQuery &printQueryPlan();
+  //InputQuery &printQueryPlan();
 
-  InputQuery &input(InputType type, std::string path);
+  //InputQuery &input(InputType type, std::string path);
 private:
   InputQuery(Config& config, Schema& schema, Source& source);
-//  InputQuery(InputQuery& );
-  Config& config;
-  Schema& schema;
+  InputQuery(InputQuery& );
+  Config config;
+  Schema schema;
   Source& source;
-  Operator* root;
-  Operator* current;
+  OperatorPtr root;
   void printInputQueryPlan(Operator* curr, int depth);
   InputQuery &printInputQueryPlan();
 

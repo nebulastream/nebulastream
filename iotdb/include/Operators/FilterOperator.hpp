@@ -2,17 +2,17 @@
 #define OPERATOR_FILTER_OPERATOR_H
 
 #include <API/Predicate.hpp>
-#include "Operator.hpp"
+#include <API/InputQuery.hpp>
+#include <Operators/Operator.hpp>
 
 namespace iotdb{
 class FilterOperator : public Operator {
 public:
-  FilterOperator(Predicate &predicate, Operator *input): predicate(predicate), input(input){};
-  std::string to_string(){ return "Select " + predicate.to_string(); };
+  FilterOperator(PredicatePtr &predicate, Operator *input): predicate(predicate){};
+  std::string to_string(){ return "Select " + predicate->to_string(); };
 
 private:
-  Predicate &predicate;
-  Operator *input;
+  PredicatePtr predicate;
 };
 }
 #endif // OPERATOR_FILTER_OPERATOR_H

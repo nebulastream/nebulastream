@@ -13,7 +13,7 @@ Schema Schema::create() { return Schema(); }
 size_t Schema::getSchemaSize() const {
   size_t size = 0;
   for (auto const &field : fields) {
-    size += field.getFieldSize();
+    size += field->getFieldSize();
   }
   return size;
 }
@@ -24,27 +24,40 @@ Schema &Schema::copyFields(Schema const &schema) {
 }
 
 Schema& Schema::addField(AttributeFieldPtr field){
-//    if(field)
-//      fields.push_back(*field);
+    if(field)
+      fields.push_back(field);
     return *this;
 }
 
-Schema &Schema::addFixSizeField(const std::string name, const APIDataType data_type) {
-  fields.emplace_back(name, data_type, data_type.defaultSize());
-  return *this;
+Schema& Schema::addField(const std::string &name, const BasicType & type){
+  return addField(createField(name, type));
 }
 
-Schema &Schema::addVarSizeField(const std::string name, const APIDataType data_type, const size_t data_size) {
-  fields.emplace_back(name, data_type, data_size);
-  return *this;
-}
+//Schema &Schema::addFixSizeField(const std::string name, const APIDataType data_type) {
+//  fields.emplace_back(name, data_type, data_type.defaultSize());
+//  return *this;
+//}
 
-Field &Schema::get(const std::string pName) {
+//Schema &Schema::addVarSizeField(const std::string name, const APIDataType data_type, const size_t data_size) {
+//  fields.emplace_back(name, data_type, data_size);
+//  return *this;
+//}
+
+AttributeFieldPtr Schema::get(const std::string pName) {
   for (auto &f : fields) {
-    if (f.name == pName)
+    if (f->name == pName)
       return f;
   }
-  throw std::invalid_argument("field " + pName + " does not exist");
+  return AttributeFieldPtr();
+  //throw std::invalid_argument("field " + pName + " does not exist");
+}
+
+const AttributeFieldPtr Schema::operator [](uint32_t index){
+  if(index<(uint32_t)fields.size()){
+      return fields[index];
+    }else{
+      return AttributeFieldPtr();
+    }
 }
 
 const std::string Schema::toString() const

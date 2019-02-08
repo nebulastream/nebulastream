@@ -1,10 +1,16 @@
 
-//#include <Operators/Operator.hpp>
+#include <Operators/Operator.hpp>
 
 //#include <Runtime/DataSource.hpp>
 //#include <sstream>
 
-//namespace iotdb {
+namespace iotdb {
+
+  Operator::~Operator(){
+
+  }
+
+}
 
 //  Operator::Operator(OperatorType op_type) : type(op_type), childs(){
 
