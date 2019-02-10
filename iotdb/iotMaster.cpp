@@ -2,6 +2,7 @@
 #include <API/InputQuery.hpp>
 #include <API/Config.hpp>
 #include <API/Schema.hpp>
+#include <sstream>
 
 namespace iotdb{
 /**
@@ -72,7 +73,7 @@ void createQuery()
 */
 
 void createQuery()
-{
+{ 
   // define config
   Config config = Config::create().
                   withParallelism(1).
@@ -88,9 +89,34 @@ void createQuery()
   .sourceType(Rest);
 
   InputQuery::create(config, schema, s1)
-      .filter(PredicatePtr());
+      .filter(PredicatePtr())
+      .printInputQueryPlan();
+
   AttributeFieldPtr attr = schema[0];
 
+}
+
+void createQueryString(){
+
+  std::stringstream code;
+  code << "Config config = Config::create()."
+          "        withParallelism(1)."
+          "        withPreloading()."
+          "        withBufferSize(1000)."
+          "        withNumberOfPassesOverInput(1);" << std::endl;
+
+  code << "Schema schema = Schema::create().addField(\"\",INT32);" << std::endl;
+
+  code << "Source s1 = Source::create()"
+  << ".path(\"/home/zeuchste/git/streaming_code_generator/yahoo_data_generator/yahoo_test_data.bin\")"
+  << ".inputType(InputType::BinaryFile)"
+  << ".sourceType(Rest);" << std::endl;
+
+  code << "return InputQuery::create(config, schema, s1)" << std::endl
+       << ".filter(PredicatePtr())" << std::endl
+       <<   ".printInputQueryPlan();" << std::endl;
+
+  InputQuery q(createQueryFromCodeString(code.str()));
 }
 
 };
@@ -99,6 +125,9 @@ int main(int argc, const char *argv[]) {
 	using namespace iotdb;
 	FogTopologyManager* fMgnr = new FogTopologyManager();
 	createTestTopo(fMgnr);
+
+	createQuery();
+	createQueryString();
 
 	return 0;
 }
