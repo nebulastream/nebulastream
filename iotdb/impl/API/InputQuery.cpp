@@ -18,7 +18,42 @@
 #include <Operators/InputOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <Operators/FilterOperator.hpp>
+
+#include <CodeGen/C_CodeGen/CodeCompiler.hpp>
+#include <Util/ErrorHandling.hpp>
+
 namespace iotdb{
+
+InputQuery createQueryFromCodeString(const std::string& query_code_snippet){
+
+  /* translate user code to a shared library, load and execute function, then return query object */
+
+  std::stringstream code;
+  code << "#include <API/InputQuery.hpp>" << std::endl;
+  code << "#include <API/Config.hpp>" << std::endl;
+  code << "#include <API/Schema.hpp>" << std::endl;
+  code << "namespace iotdb{" << std::endl;
+  code << "InputQuery createQuery(){" << std::endl;
+  code << query_code_snippet << std::endl;
+  code << "}" << std::endl;
+  code << "}" << std::endl;
+  CCodeCompiler compiler;
+  CompiledCCodePtr compiled_code = compiler.compile(code.str());
+  if(!code){
+    IOTDB_FATAL_ERROR("Compilation of query code failed! Code: " << code.str());
+  }
+
+  typedef InputQuery (*CreateQueryFunctionPtr)();
+  CreateQueryFunctionPtr func = compiled_code->getFunctionPointer<CreateQueryFunctionPtr>("_ZN5iotdb11createQueryEv");
+  if(!func){
+    IOTDB_FATAL_ERROR("Error retrieving function! Symbol not found!");
+  }
+  /* call loaded function to create query object */
+  InputQuery query((*func)());
+
+  return query;
+}
+
 
 InputQuery::InputQuery(Config& config, Schema& schema, Source& source):
 		config(config), schema(schema), source(source), root()
@@ -27,7 +62,7 @@ InputQuery::InputQuery(Config& config, Schema& schema, Source& source):
 	}
 
 /* TODO: perform deep copy of operator graph */
-InputQuery::InputQuery(InputQuery& query)
+InputQuery::InputQuery(const InputQuery& query)
    : config(query.config),schema(query.schema), source(query.source), root(query.root->copy()){
 
 }
@@ -39,6 +74,9 @@ InputQuery InputQuery::create(Config& config, Schema& schema, Source& source)
 
 
   InputQuery q(config, schema, source);
+
+  OperatorPtr op(new InputOperator(source.getType(), source.getPath()));
+  q.root=op;
   return q;
 //	InputQuery* q = new InputQuery(config, schema, source);
 //	InputType type = source.getType();

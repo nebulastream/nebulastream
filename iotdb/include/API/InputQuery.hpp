@@ -50,7 +50,7 @@ class InputQuery {
 public:
   ~InputQuery();
   static InputQuery create(Config& config, Schema& schema, Source& source);
-
+  InputQuery(const InputQuery& );
   void execute();
 
   // relational operators
@@ -77,16 +77,19 @@ public:
   //InputQuery &printQueryPlan();
 
   //InputQuery &input(InputType type, std::string path);
+  InputQuery &printInputQueryPlan();
 private:
   InputQuery(Config& config, Schema& schema, Source& source);
-  InputQuery(InputQuery& );
   Config config;
   Schema schema;
   Source& source;
   OperatorPtr root;
   void printInputQueryPlan(Operator* curr, int depth);
-  InputQuery &printInputQueryPlan();
 
 };
+
+/* this function **executes** the code provided by the user and returns an InputQuery Object */
+InputQuery createQueryFromCodeString(const std::string&);
+
 }
 #endif
