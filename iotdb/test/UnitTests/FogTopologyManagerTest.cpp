@@ -119,16 +119,16 @@ TEST_F(FogTopologyManagerTest, create_existing_link) {
   auto node_0 = topology_manager->createFogWorkerNode();
   auto node_1 = topology_manager->createFogWorkerNode();
   topology_manager->createFogNodeLink(node_0->getId(), node_1->getId());
-  EXPECT_ANY_THROW(topology_manager->createFogNodeLink(node_0->getId(), node_1->getId()););
+  EXPECT_DEATH(topology_manager->createFogNodeLink(node_0->getId(), node_1->getId()), "");
 }
 
 /* Create a link for nodes, that do not exist. */
 TEST_F(FogTopologyManagerTest, create_invalid_link) {
   auto node_0 = topology_manager->createFogWorkerNode();
-  EXPECT_ANY_THROW(topology_manager->createFogNodeLink(node_0->getId(), node_0->getId()););
-  EXPECT_ANY_THROW(topology_manager->createFogNodeLink(INVALID_NODE_ID, node_0->getId()););
-  EXPECT_ANY_THROW(topology_manager->createFogNodeLink(node_0->getId(), INVALID_NODE_ID););
-  EXPECT_ANY_THROW(topology_manager->createFogNodeLink(INVALID_NODE_ID, INVALID_NODE_ID););
+  EXPECT_DEATH(topology_manager->createFogNodeLink(node_0->getId(), node_0->getId()), "");
+  EXPECT_DEATH(topology_manager->createFogNodeLink(INVALID_NODE_ID, node_0->getId()), "");
+  EXPECT_DEATH(topology_manager->createFogNodeLink(node_0->getId(), INVALID_NODE_ID), "");
+  EXPECT_DEATH(topology_manager->createFogNodeLink(INVALID_NODE_ID, INVALID_NODE_ID), "");
 }
 
 /* Remove an existing link. */
