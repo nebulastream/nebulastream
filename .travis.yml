@@ -1,0 +1,17 @@
+os: linux
+dist: xenial
+
+language: cpp
+compiler: clang
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install -y libzmq-dev
+  - sudo apt-get install -y libboost1.58-all-dev
+  - sudo apt-get install -y zlib1g-dev
+
+script:
+  - cd iotdb
+  - mkdir debug-build && cd debug-build
+  - cmake -DCMAKE_BUILD_TYPE=Debug ..
+  - make
