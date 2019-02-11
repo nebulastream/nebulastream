@@ -23,6 +23,12 @@ Schema &Schema::copyFields(Schema const &schema) {
   return *this;
 }
 
+Schema& Schema::addField(AttributeFieldPtr field){
+//    if(field)
+//      fields.push_back(*field);
+    return *this;
+}
+
 Schema &Schema::addFixSizeField(const std::string name, const APIDataType data_type) {
   fields.emplace_back(name, data_type, data_type.defaultSize());
   return *this;
