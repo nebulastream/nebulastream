@@ -15,6 +15,7 @@ before_install:
 
 script:
   - cd iotdb
+  - export PATH=/usr/lib/llvm-3.8/bin:$PATH
   - llvm-config --includedir
   - mkdir debug-build && cd debug-build
   - export CC=/usr/lib/llvm-3.8/bin/clang
