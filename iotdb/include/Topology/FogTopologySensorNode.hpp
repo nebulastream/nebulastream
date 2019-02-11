@@ -9,18 +9,16 @@
 class FogTopologySensorNode : public FogTopologyEntry{
 
 public:
-  FogTopologySensorNode() { sensorID = INVALID_NODE_ID; }
+  FogTopologySensorNode() { sensorId = INVALID_NODE_ID; }
 
-  void setSensorId(size_t id) { sensorID = id; }
-  size_t getId() { return sensorID; }
+  void setId(size_t id) { sensor_id = id; }
+  size_t getId() { return sensor_id; }
 
   FogNodeType getEntryType(){return Sensor;}
-
   std::string getEntryTypeString() {return "Sensor";}
 
-
 private:
-  size_t sensorID;
+  size_t sensor_id;
 };
 
 typedef std::shared_ptr<FogTopologySensorNode> FogTopologySensorNodePtr;
