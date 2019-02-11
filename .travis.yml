@@ -15,8 +15,12 @@ before_install:
 
 script:
   - cd iotdb
+  - llvm-config --includedir
   - mkdir debug-build && cd debug-build
   - export CC=/usr/lib/llvm-3.8/bin/clang
   - export CXX=/usr/lib/llvm-3.8/bin/clang++
   - cmake -DCMAKE_BUILD_TYPE=Debug ..
   - make
+
+notifications:
+  email: false
