@@ -36,22 +36,25 @@ public:
 
   LinkType getLinkType() {
     if (sourceNode->getEntryType() == Worker && destNode->getEntryType() == Worker) {
-        return NodeToNode;
+      return NodeToNode;
     } else if (sourceNode->getEntryType() == Sensor && destNode->getEntryType() == Worker) {
-        return SensorToNode;
+      return SensorToNode;
     } else if (sourceNode->getEntryType() == Worker && destNode->getEntryType() == Sensor) {
-        return NodeToSensor;
+      return NodeToSensor;
     }
     IOTDB_FATAL_ERROR("Unrecognized LinkType!");
   }
 
   std::string getLinkTypeString() {
-      switch(getLinkType()) {
-          case NodeToNode: return "NodeToNode";
-          case SensorToNode: return "SensorToNode";
-          case NodeToSensor: return "NodeToSensor";
-      }
-      IOTDB_FATAL_ERROR("String for LinkType not found!");
+    switch (getLinkType()) {
+    case NodeToNode:
+      return "NodeToNode";
+    case SensorToNode:
+      return "SensorToNode";
+    case NodeToSensor:
+      return "NodeToSensor";
+    }
+    IOTDB_FATAL_ERROR("String for LinkType not found!");
   }
 
 private:
