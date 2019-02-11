@@ -42,18 +42,18 @@ public:
   size_t getDestNodeId() { return destNodeID; }
 
   LinkType getLinkType() {
-    if (sourceNodeType.getEntryType() == Worker && destNodeType.getEntryType() == Worker) {
+    if (sourceNode.getEntryType() == Worker && destNode.getEntryType() == Worker) {
         return NodeToNode;
-    } else if (sourceNodeType.getEntryType() == Sensor && destNodeType.getEntryType() == Worker) {
+    } else if (sourceNode.getEntryType() == Sensor && destNode.getEntryType() == Worker) {
         return SensorToNode;
-    } else if (sourceNodeType.getEntryType() == Worker && destNodeType.getEntryType() == Sensor) {
+    } else if (sourceNode.getEntryType() == Worker && destNode.getEntryType() == Sensor) {
         return NodeToSensor;
     }
     IOTDB_FATAL_ERROR("Unrecognized LinkType!");
   }
 
   std::string getLinkTypeString() {
-      switch(getLinkType) {
+      switch(getLinkType()) {
           case NodeToNode: return "NodeToNode";
           case SensorToNode: return "SensorToNode";
           case NodeToSensor: return "NodeToSensor";
