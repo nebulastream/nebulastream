@@ -1,6 +1,6 @@
 # Google Testing Framework
-enable_testing(true)
-set(GTEST_LIBRARIES iotdb libgtest libgtest_main libgmock)
+enable_testing()
+set(GTEST_LIBRARIES libgtest libgtest_main libgmock)
 
 # Engine Start and Stop Test
 add_executable(engine-start-stop-test "UnitTests/EngineStartAndStopTest.cpp")
