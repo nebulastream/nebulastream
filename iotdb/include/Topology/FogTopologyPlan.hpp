@@ -57,9 +57,9 @@ class FogGraph {
 public:
 
 	FogGraph(){};
-	void addVertex(size_t id, FogTopologyEntryPtr ptr)
+	void addVertex(FogTopologyEntryPtr ptr)
 	{
-	    boost::add_vertex(Vertex{id, ptr}, graph);
+	    boost::add_vertex(Vertex{ptr->getId(), ptr}, graph);
 	}
 	bool removeVertex(size_t search_id)
 	{
@@ -92,11 +92,11 @@ public:
 		return 0;
 	}
 
-	void addEdge(FogTopologyLinkPtr ptr, size_t sourceID, size_t destID)
+	void addEdge(FogTopologyLinkPtr ptr)
 	{
 		size_t id = ptr->getId();
-		boost::graph_traits<graph_t>::vertex_descriptor src = getVertex(sourceID);
-		boost::graph_traits<graph_t>::vertex_descriptor dst = getVertex(destID);
+		boost::graph_traits<graph_t>::vertex_descriptor src = getVertex(ptr->getSourceNodeId());
+		boost::graph_traits<graph_t>::vertex_descriptor dst = getVertex(prt->getDestNodeId());
 
 	    boost::add_edge(src, dst, Edge{id, ptr}, graph);
 	}
@@ -165,8 +165,8 @@ public:
   {
 	  // TODO: check if id exists
 	  FogTopologyWorkerNodePtr ptr = std::make_shared<FogTopologyWorkerNode>();
-	  fGraph->addVertex(currentId, ptr);
 	  ptr->setNodeId(currentId);
+	  fGraph->addVertex(ptr);
 	  currentId++;
 	  return ptr;
   }
@@ -179,8 +179,8 @@ public:
   FogTopologySensorNodePtr createFogSensorNode() {
 	  // TODO: check if id exists
 	  FogTopologySensorNodePtr ptr = std::make_shared<FogTopologySensorNode>();
-	  fGraph->addVertex(currentId, ptr);
 	  ptr->setSensorId(currentId);
+	  fGraph->addVertex(ptr);
 	  currentId++;
 	  return ptr;
   }
@@ -194,7 +194,7 @@ public:
   FogTopologyLinkPtr createFogNodeLink(FogTopologyEntryPtr pSourceNode, FogTopologyEntryPtr pDestNode)
   {
     FogTopologyLinkPtr linkPtr = std::make_shared<FogTopologyLink>(pSourceNode, pDestNode);
-    fGraph->addEdge(linkPtr, linkPtr->getSourceNodeId(), linkPtr->getDestNodeId());
+    fGraph->addEdge(linkPtr);
     return linkPtr;
   }
 
