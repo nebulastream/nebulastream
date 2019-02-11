@@ -4,7 +4,7 @@ set(GTEST_LIBRARIES libgtest libgtest_main libgmock)
 
 # Engine Start and Stop Test
 add_executable(engine-start-stop-test "UnitTests/EngineStartAndStopTest.cpp")
-target_link_libraries(engine-start-stop-test ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
+target_link_libraries(engine-start-stop-test iotdb ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
 add_test(NAME engine-start-stop-test COMMAND engine-start-stop-test)
 
 # Copy Test Data
