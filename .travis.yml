@@ -10,6 +10,7 @@ before_install:
   - sudo apt-get install -y libboost1.58-all-dev
   - sudo apt-get install -y zlib1g-dev
   - sudo apt-get install -y libclang-dev
+  - sudo apt-get install -y llvm
 
 script:
   - cd iotdb
