@@ -96,7 +96,7 @@ public:
 	{
 		size_t id = ptr->getId();
 		boost::graph_traits<graph_t>::vertex_descriptor src = getVertex(ptr->getSourceNodeId());
-		boost::graph_traits<graph_t>::vertex_descriptor dst = getVertex(prt->getDestNodeId());
+		boost::graph_traits<graph_t>::vertex_descriptor dst = getVertex(ptr->getDestNodeId());
 
 	    boost::add_edge(src, dst, Edge{id, ptr}, graph);
 	}
