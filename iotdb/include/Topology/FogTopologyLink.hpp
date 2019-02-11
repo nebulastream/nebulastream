@@ -10,39 +10,29 @@
 #define INVALID_NODE_ID 101
 
 enum LinkType { NodeToNode, NodeToSensor, SensorToNode };
-//enum NodeType { Worker, Sensor };
 
 static size_t currentLinkID = 1;
 
 class FogTopologyLink {
 
 public:
-  FogTopologyLink(size_t pSourceNodeId, size_t pDestNodeId) {
+  FogTopologyLink(FogTopologyEntryPtr pSourceNode, FogTopologyEntryPtr pDestNode) {
     linkId = currentLinkID++;
-
-//    if (type == NodeToNode) {
-//      sourceNodeType = Worker;
-//      destNodeType = Worker;
-//    } else if (type == NodeToSensor) {
-//      sourceNodeType = Worker;
-//      destNodeType = Sensor;
-//    } else // SensorToNode
-//    {
-//      sourceNodeType = Sensor;
-//      destNodeType = Sensor;
-//    }
-
-    sourceNodeID = pSourceNodeId;
-    destNodeID = pDestNodeId;
+    sourceNode = pSourceNode;
+    destNode = pDestNode;
   }
 
   void setLinkID(size_t pLinkID) { linkId = pLinkID; }
 
   size_t getId() { return linkId; }
 
-  size_t getSourceNodeId() { return sourceNodeID; }
+  FogTopologyEntryPtr getSourceNode() { return sourceNode; }
 
-  size_t getDestNodeId() { return destNodeID; }
+  size_t getSourceNodeId() { return sourceNode->getId(); }
+
+  FogTopologyEntryPtr getDestNode() { return destNode; }
+
+  size_t getDestNodeId() { return destNode->getId(); }
 
   LinkType getLinkType() {
     if (sourceNode->getEntryType() == Worker && destNode->getEntryType() == Worker) {
@@ -66,8 +56,6 @@ public:
 
 private:
   size_t linkId;
-  size_t sourceNodeID;
-  size_t destNodeID;
 
   FogTopologyEntryPtr sourceNode;
   FogTopologyEntryPtr destNode;
