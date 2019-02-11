@@ -34,9 +34,9 @@ public:
 	  return currentPlan->createFogSensorNode();
   }
 
-  FogTopologyLinkPtr createFogNodeLink(size_t pSourceNodeId, size_t pDestNodeId)
+  FogTopologyLinkPtr createFogNodeLink(FogTopologyEntryPtr pSourceNode, FogTopologyEntryPtr pDestNode)
   {
-	  return currentPlan->createFogNodeLink(pSourceNodeId, pDestNodeId);
+	  return currentPlan->createFogNodeLink(pSourceNode, pDestNode);
   }
 
   bool removeFogNodeLink(FogTopologyLinkPtr linkPtr)
@@ -44,8 +44,8 @@ public:
 	  return currentPlan->removeFogTopologyLink(linkPtr);
   }
 
-
-  FogTopologyPlanPtr getPlan() { return currentPlan; }
+  void printTopologyPlan() { std::cout << getTopologyPlanString() << std::endl; }
+  std::string getTopologyPlanString() { return currentPlan->getTopologyPlanString(); }
 
 private:
   FogTopologyPlanPtr currentPlan;

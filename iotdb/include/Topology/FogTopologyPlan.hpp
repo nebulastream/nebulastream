@@ -133,15 +133,16 @@ public:
 //		return 0;
 	}
 
-	void print()
-	{
-		boost::write_graphviz(std::cout, graph, [&] (auto& out, auto v) {
+	std::string getGraphString() {
+		std::stringstream ss;
+		boost::write_graphviz(ss, graph, [&] (auto& out, auto v) {
 		       out << "[label=\"" << graph[v].id << " type=" << graph[v].ptr->getEntryTypeString() << "\"]";
 		      },
 		      [&] (auto& out, auto e) {
 		       out << "[label=\"" << graph[e].id << "\"]";
 		    });
-		    std::cout << std::flush;
+		    ss << std::flush;
+		    return ss.str();
 	}
 
 
@@ -190,10 +191,10 @@ public:
 	  return fGraph->removeVertex(search_id);
   }
 
-  FogTopologyLinkPtr createFogNodeLink(size_t pSourceNodeId, size_t pDestNodeId)
+  FogTopologyLinkPtr createFogNodeLink(FogTopologyEntryPtr pSourceNode, FogTopologyEntryPtr pDestNode)
   {
-    FogTopologyLinkPtr linkPtr = std::make_shared<FogTopologyLink>(pSourceNodeId, pDestNodeId);
-    fGraph->addEdge(linkPtr, pSourceNodeId, pDestNodeId);
+    FogTopologyLinkPtr linkPtr = std::make_shared<FogTopologyLink>(pSourceNode, pDestNode);
+    fGraph->addEdge(linkPtr, linkPtr->getSourceNodeId(), linkPtr->getDestNodeId());
     return linkPtr;
   }
 
@@ -202,7 +203,9 @@ public:
 	  return fGraph->removeEdge(linkPtr->getId());
   }
 
-  void printPlan() { fGraph->print();}
+  std::string getTopologyPlanString() {
+  	return fGraph->getGraphString();
+  }
 
 private:
   size_t currentId;
