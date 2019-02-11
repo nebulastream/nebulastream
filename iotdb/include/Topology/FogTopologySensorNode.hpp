@@ -6,10 +6,10 @@
 
 #define INVALID_NODE_ID 101
 
-class FogTopologySensor : public FogTopologyEntry{
+class FogTopologySensorNode : public FogTopologyEntry{
 
 public:
-  FogTopologySensor() { sensorID = INVALID_NODE_ID; }
+  FogTopologySensorNode() { sensorID = INVALID_NODE_ID; }
 
   void setSensorId(size_t id) { sensorID = id; }
   size_t getId() { return sensorID; }
@@ -23,6 +23,6 @@ private:
   size_t sensorID;
 };
 
-typedef std::shared_ptr<FogTopologySensor> FogTopologySensorPtr;
+typedef std::shared_ptr<FogTopologySensorNode> FogTopologySensorNodePtr;
 
 #endif /* INCLUDE_TOPOLOGY_FOGTOPOLOGYSENSOR_HPP_ */

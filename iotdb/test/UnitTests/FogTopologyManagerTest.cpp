@@ -8,7 +8,7 @@
 #include "Topology/FogTopologyLink.hpp"
 #include "Topology/FogTopologyManager.hpp"
 #include "Topology/FogTopologyPlan.hpp"
-#include "Topology/FogTopologySensor.hpp"
+#include "Topology/FogTopologySensorNode.hpp"
 #include "Topology/FogTopologyWorkerNode.hpp"
 
 /* ------------------------------------------------------------------------- */
@@ -169,7 +169,7 @@ TEST_F(FogTopologyManagerTest, many_nodes) {
   }
 
   // create sensors
-  std::vector<std::shared_ptr<FogTopologySensor>> sensors;
+  std::vector<std::shared_ptr<FogTopologySensorNode>> sensors;
   for (uint32_t i = 0; i != 30; ++i) {
     sensors.push_back(topology_manager->createFogSensorNode());
   }
@@ -204,7 +204,7 @@ TEST_F(FogTopologyManagerTest, many_links) {
   }
 
   // create sensors
-  std::vector<std::shared_ptr<FogTopologySensor>> sensors;
+  std::vector<std::shared_ptr<FogTopologySensorNode>> sensors;
   for (uint32_t i = 0; i != 30; ++i) {
     sensors.push_back(topology_manager->createFogSensorNode());
   }
