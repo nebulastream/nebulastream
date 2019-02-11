@@ -6,6 +6,7 @@ compiler: clang
 
 before_install:
   - sudo apt-get update
+  - sudo apt-get install -y clang-3.8
   - sudo apt-get install -y libzmq-dev
   - sudo apt-get install -y libboost1.58-all-dev
   - sudo apt-get install -y zlib1g-dev
