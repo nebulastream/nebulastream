@@ -373,7 +373,7 @@ TEST_F(FogTopologyGraphTest, add_existing_vertex) {
   auto worker_node = std::make_shared<FogTopologyWorkerNode>();
   worker_node->setId(0);
   fog_graph->addVertex(worker_node);
-  EXPECT_DEATCH(fog_graph->addVertex(worker_node), "");
+  EXPECT_DEATH(fog_graph->addVertex(worker_node), "");
 
   auto sensor_node = std::make_shared<FogTopologySensorNode>();
   sensor_node->setId(0);

@@ -9,7 +9,7 @@
 class FogTopologySensorNode : public FogTopologyEntry{
 
 public:
-  FogTopologySensorNode() { sensorId = INVALID_NODE_ID; }
+  FogTopologySensorNode() { sensor_id = INVALID_NODE_ID; }
 
   void setId(size_t id) { sensor_id = id; }
   size_t getId() { return sensor_id; }
