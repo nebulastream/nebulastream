@@ -165,7 +165,7 @@ public:
   {
 	  // TODO: check if id exists
 	  FogTopologyWorkerNodePtr ptr = std::make_shared<FogTopologyWorkerNode>();
-	  ptr->setNodeId(currentId);
+	  ptr->setId(currentId);
 	  fGraph->addVertex(ptr);
 	  currentId++;
 	  return ptr;
@@ -179,7 +179,7 @@ public:
   FogTopologySensorNodePtr createFogSensorNode() {
 	  // TODO: check if id exists
 	  FogTopologySensorNodePtr ptr = std::make_shared<FogTopologySensorNode>();
-	  ptr->setSensorId(currentId);
+	  ptr->setId(currentId);
 	  fGraph->addVertex(ptr);
 	  currentId++;
 	  return ptr;

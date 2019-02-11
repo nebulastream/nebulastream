@@ -11,14 +11,11 @@ class FogTopologyWorkerNode : public FogTopologyEntry {
 public:
   FogTopologyWorkerNode() { node_id = INVALID_NODE_ID; }
 
-  void setNodeId(size_t id) { node_id = id; }
-
+  void setId(size_t id) { node_id = id; }
   size_t getId() { return node_id; }
 
   FogNodeType getEntryType(){return Worker;}
-
   std::string getEntryTypeString() {return "Worker";}
-
 
 private:
   size_t node_id;
