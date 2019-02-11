@@ -91,24 +91,24 @@ TEST_F(FogTopologyManagerTest, create_link) {
   EXPECT_NE(link_node_node->getId(), NOT_EXISTING_LINK_ID);
   EXPECT_EQ(link_node_node->getSourceNodeId(), worker_node_0->getId());
   EXPECT_EQ(link_node_node->getDestNodeId(), worker_node_1->getId());
-  // EXPECT_EQ(link_node_node->getLinkType(), NodeToNode);          TODO? not supported yet
-  // EXPECT_EQ(link_node_node->getLinkTypeString(), "NodeToNode");  TODO? not supported yet
+  EXPECT_EQ(link_node_node->getLinkType(), NodeToNode);          TODO? not supported yet
+  EXPECT_EQ(link_node_node->getLinkTypeString(), "NodeToNode");  TODO? not supported yet
 
   auto link_node_sensor = topology_manager->createFogNodeLink(worker_node_2->getId(), sensor_node_0->getId());
   EXPECT_NE(link_node_sensor.get(), nullptr);
   EXPECT_NE(link_node_sensor->getId(), NOT_EXISTING_LINK_ID);
   EXPECT_EQ(link_node_sensor->getSourceNodeId(), worker_node_2->getId());
   EXPECT_EQ(link_node_sensor->getDestNodeId(), sensor_node_0->getId());
-  // EXPECT_EQ(link_node_sensor->getLinkType(), NodeToSensor);          TODO? not supported yet
-  // EXPECT_EQ(link_node_sensor->getLinkTypeString(), "NodeToSensor");  TODO? not supported yet
+  EXPECT_EQ(link_node_sensor->getLinkType(), NodeToSensor);          TODO? not supported yet
+  EXPECT_EQ(link_node_sensor->getLinkTypeString(), "NodeToSensor");  TODO? not supported yet
 
   auto link_sensor_node = topology_manager->createFogNodeLink(sensor_node_1->getId(), worker_node_3->getId());
   EXPECT_NE(link_sensor_node.get(), nullptr);
   EXPECT_NE(link_sensor_node->getId(), NOT_EXISTING_LINK_ID);
   EXPECT_EQ(link_sensor_node->getSourceNodeId(), sensor_node_1->getId());
   EXPECT_EQ(link_sensor_node->getDestNodeId(), worker_node_3->getId());
-  // EXPECT_EQ(link_node_sensor->getLinkType(), SensorToNode);          TODO? not supported yet
-  // EXPECT_EQ(link_node_sensor->getLinkTypeString(), "SensorToNode");  TODO? not supported yet
+  EXPECT_EQ(link_node_sensor->getLinkType(), SensorToNode);          TODO? not supported yet
+  EXPECT_EQ(link_node_sensor->getLinkTypeString(), "SensorToNode");  TODO? not supported yet
 
   EXPECT_EQ(link_node_node->getId() + 1, link_node_sensor->getId());
   EXPECT_EQ(link_node_sensor->getId() + 1, link_sensor_node->getId());

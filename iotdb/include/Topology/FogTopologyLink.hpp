@@ -41,13 +41,33 @@ public:
 
   size_t getDestNodeId() { return destNodeID; }
 
+  LinkType getLinkType() {
+    if (sourceNodeType.getEntryType() == Worker && destNodeType.getEntryType() == Worker) {
+        return NodeToNode;
+    } else if (sourceNodeType.getEntryType() == Sensor && destNodeType.getEntryType() == Worker) {
+        return SensorToNode;
+    } else if (sourceNodeType.getEntryType() == Worker && destNodeType.getEntryType() == Sensor) {
+        return NodeToSensor;
+    }
+    IOTDB_FATAL_ERROR("Unrecognized LinkType!");
+  }
+
+  std::string getLinkTypeString() {
+      switch(getLinkType) {
+          case NodeToNode: return "NodeToNode";
+          case SensorToNode: return "SensorToNode";
+          case NodeToSensor: return "NodeToSensor";
+      }
+      IOTDB_FATAL_ERROR("String for LinkType not found!");
+  }
+
 private:
   size_t linkId;
   size_t sourceNodeID;
   size_t destNodeID;
 
-  FogTopologyEntryPtr sourceNodeType;
-  FogTopologyEntryPtr destNodeType;
+  FogTopologyEntryPtr sourceNode;
+  FogTopologyEntryPtr destNode;
 };
 
 typedef std::shared_ptr<FogTopologyLink> FogTopologyLinkPtr;
