@@ -2,7 +2,10 @@
 #define INCLUDE_TOPOLOGY_FOGTOPOLOGYLINK_HPP_
 
 #include <memory>
+
 #include "FogTopologyEntry.hpp"
+#include "Util/ErrorHandling.hpp"
+
 #define NOT_EXISTING_LINK_ID 0
 #define INVALID_NODE_ID 101
 
@@ -42,11 +45,11 @@ public:
   size_t getDestNodeId() { return destNodeID; }
 
   LinkType getLinkType() {
-    if (sourceNode.getEntryType() == Worker && destNode.getEntryType() == Worker) {
+    if (sourceNode->getEntryType() == Worker && destNode->getEntryType() == Worker) {
         return NodeToNode;
-    } else if (sourceNode.getEntryType() == Sensor && destNode.getEntryType() == Worker) {
+    } else if (sourceNode->getEntryType() == Sensor && destNode->getEntryType() == Worker) {
         return SensorToNode;
-    } else if (sourceNode.getEntryType() == Worker && destNode.getEntryType() == Sensor) {
+    } else if (sourceNode->getEntryType() == Worker && destNode->getEntryType() == Sensor) {
         return NodeToSensor;
     }
     IOTDB_FATAL_ERROR("Unrecognized LinkType!");
