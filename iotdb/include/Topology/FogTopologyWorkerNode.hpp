@@ -1,9 +1,9 @@
 #ifndef INCLUDE_TOPOLOGY_FOGTOPOLOGYWORKERNODE_HPP_
 #define INCLUDE_TOPOLOGY_FOGTOPOLOGYWORKERNODE_HPP_
 
+#include "FogTopologyEntry.hpp"
 #include <memory>
 #include <vector>
-#include "FogTopologyEntry.hpp"
 #define INVALID_NODE_ID 101
 
 class FogTopologyWorkerNode : public FogTopologyEntry {
@@ -14,8 +14,8 @@ public:
   void setId(size_t id) { node_id = id; }
   size_t getId() { return node_id; }
 
-  FogNodeType getEntryType(){return Worker;}
-  std::string getEntryTypeString() {return "Worker";}
+  FogNodeType getEntryType() { return Worker; }
+  std::string getEntryTypeString() { return "Worker"; }
 
 private:
   size_t node_id;
