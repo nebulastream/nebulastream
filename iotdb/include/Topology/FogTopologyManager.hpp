@@ -24,12 +24,12 @@ public:
 	  return currentPlan->removeFogWorkerNode(ptr);
   }
 
-  bool removeFogSensorNode(FogTopologySensorPtr ptr)
+  bool removeFogSensorNode(FogTopologySensorNodePtr ptr)
   {
 	  return currentPlan->removeFogSensorNode(ptr);
   }
 
-  FogTopologySensorPtr createFogSensorNode()
+  FogTopologySensorNodePtr createFogSensorNode()
   {
 	  return currentPlan->createFogSensorNode();
   }

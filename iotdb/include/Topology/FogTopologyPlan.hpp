@@ -13,7 +13,7 @@
 #include <boost/numeric/ublas/io.hpp>
 
 #include "Topology/FogTopologyLink.hpp"
-#include "Topology/FogTopologySensor.hpp"
+#include "Topology/FogTopologySensorNode.hpp"
 #include "FogTopologyWorkerNode.hpp"
 #include "Topology/FogTopologyEntry.hpp"
 
@@ -175,16 +175,16 @@ public:
 	  return fGraph->removeVertex(search_id);
   }
 
-  FogTopologySensorPtr createFogSensorNode() {
+  FogTopologySensorNodePtr createFogSensorNode() {
 	  // TODO: check if id exists
-	  FogTopologySensorPtr ptr = std::make_shared<FogTopologySensor>();
+	  FogTopologySensorNodePtr ptr = std::make_shared<FogTopologySensorNode>();
 	  fGraph->addVertex(currentId, ptr);
 	  ptr->setSensorId(currentId);
 	  currentId++;
 	  return ptr;
   }
 
-  bool removeFogSensorNode(FogTopologySensorPtr ptr)
+  bool removeFogSensorNode(FogTopologySensorNodePtr ptr)
   {
 	  size_t search_id = ptr->getId();
 	  return fGraph->removeVertex(search_id);
