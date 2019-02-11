@@ -15,6 +15,7 @@ before_install:
 
 script:
   - cd iotdb
+  - sudo find / -name Casting.h
   - mkdir debug-build && cd debug-build
   - cmake -DCMAKE_BUILD_TYPE=Debug ..
   - make
