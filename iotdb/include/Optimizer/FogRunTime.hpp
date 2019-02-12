@@ -1,6 +1,6 @@
 #ifndef INCLUDE_OPTIMIZER_FOGRUNTIME_HPP_
 #define INCLUDE_OPTIMIZER_FOGRUNTIME_HPP_
-
+#include <Optimizer/FogExecutionPlan.hpp>
 namespace iotdb{
 class FogRunTime{
 public:
