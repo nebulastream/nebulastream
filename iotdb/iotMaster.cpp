@@ -1,5 +1,7 @@
 #include <Topology/FogTopologyManager.hpp>
+#include "include/API/InputQuery.hpp"
 
+using namespace iotdb;
 /**
  *
  * Open Questions:
@@ -21,15 +23,46 @@ void createTestTopo(FogTopologyManager* fMgnr)
 {
 	FogTopologyWorkerNodePtr f1 = fMgnr->createFogWorkerNode();
 
-	FogTopologySensorPtr s1 = fMgnr->createFogSensorNode();
+	FogTopologySensorNodePtr s1 = fMgnr->createFogSensorNode();
 
-	FogTopologyLinkPtr l1 = fMgnr->createFogNodeLink(s1->getID(), f1->getID());
+	FogTopologyLinkPtr l1 = fMgnr->createFogNodeLink(s1, f1);
 
-	FogTopologyPlanPtr fPlan = fMgnr->getPlan();
-
-	fPlan->printPlan();
+	fMgnr->printTopologyPlan();
 }
 
+void createQuery()
+{
+	// define config
+	Config config = Config::create().
+			withParallelism(1).
+			withPreloading().
+			withBufferSize(1000).
+			withNumberOfPassesOverInput(1);
+
+	// define schema
+	Schema schema = Schema::create()
+	.addVarSizeField("user_id", APIDataType::Char, 16)
+	.addVarSizeField("page_id", APIDataType::Char, 16)
+	.addVarSizeField("campaign_id", APIDataType::Char, 16)
+	.addVarSizeField("event_type", APIDataType::Char, 9)
+	.addVarSizeField("ad_type", APIDataType::Char, 9)
+	.addFixSizeField("current_ms", APIDataType::Long)
+	.addFixSizeField("ip", APIDataType::Int);
+
+	Source s1 = Source::create()
+	.path("/home/zeuchste/git/streaming_code_generator/yahoo_data_generator/yahoo_test_data.bin")
+	.inputType(InputType::BinaryFile)
+	.sourceType(Rest);
+
+	// streaming query
+	InputQuery::create(config, schema, s1)
+	.filter(Equal("event_type", "view"))                // filter by event type
+	.window(TumblingProcessingTimeWindow(Counter(100))) // tumbling window of 100 elements
+	.groupBy("campaign_id")                             // group by campaign id
+	.aggregate(Count())                                 // count results per key and window
+	.write("output.csv");                                // write results to file
+//	.execute();
+}
 int main(int argc, const char *argv[]) {
 	FogTopologyManager* fMgnr = new FogTopologyManager();
 	createTestTopo(fMgnr);

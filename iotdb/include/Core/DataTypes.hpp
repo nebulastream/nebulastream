@@ -2,6 +2,7 @@
 #define CORE_DATATYPES_H
 
 #include <cstdint>
+#include <string>
 #include <memory>
 
 namespace iotdb {
