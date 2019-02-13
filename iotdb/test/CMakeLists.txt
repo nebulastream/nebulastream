@@ -25,3 +25,8 @@ add_definitions( -DTEST_DATA_PATH="${CMAKE_BINARY_DIR}/test/test_data/" )
 add_executable(client-server-communication-tests "UnitTests/ClientServerCommunication.cpp")
 target_link_libraries(client-server-communication-tests ${GTEST_LIBRARIES} ${Boost_LIBRARIES} ${ZMQ_LIBRARIES})
 add_test(NAME client-server-communication-tests COMMAND client-server-communication-tests)
+
+# Buffer Manager Test
+add_executable(buffer-manager-test "UnitTests/BufferManagerTest.cpp")
+target_link_libraries(buffer-manager-test ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
+add_test(NAME buffer-manager-test COMMAND buffer-manager-test)

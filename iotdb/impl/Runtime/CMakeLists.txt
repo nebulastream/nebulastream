@@ -6,4 +6,5 @@ add_source_iotdb(
         RemoteSocketSource.cpp
         GeneratorSource.cpp
         BinarySource.cpp
+        BufferManager.cpp
         )

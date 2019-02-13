@@ -125,6 +125,7 @@ ExternalProject_Add(
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/gtest
     # Disable install step
     INSTALL_COMMAND ""
+    URL_HASH SHA256=927827c183d01734cc5cfef85e0ff3f5a92ffe6188e0d18e909c5efebf28a0c7
 )
 
 # Get GTest source and binary directories from CMake project
@@ -192,13 +193,13 @@ target_include_directories(ClangAstBuilder PUBLIC "include")
 add_executable(iotMaster iotMaster.cpp)
 target_link_libraries(iotMaster iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
 target_include_directories(iotMaster PUBLIC "include")
- 
+
 add_subdirectory(test)
 
 add_executable(iotClient iotClient.cpp)
 target_link_libraries(iotClient ${Boost_LIBRARIES} ${ZMQ_LIBRARIES})
 target_include_directories(iotClient PUBLIC "include")
- 
+
 add_executable(iotServer iotServer.cpp)
 target_link_libraries(iotServer ${Boost_LIBRARIES} ${ZMQ_LIBRARIES})
 target_include_directories(iotServer PUBLIC "include")
