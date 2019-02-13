@@ -14,6 +14,8 @@ compiler: clang
 
 before_install:
   - eval "${EVAL}"
+  - ls /usr/include
+  - ls /usr/lib/llvm-3.8/include
   - sudo apt-get update
   - sudo apt-get install -y libclang-dev
   - sudo apt-get install -y libzmq-dev
