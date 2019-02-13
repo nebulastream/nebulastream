@@ -12,9 +12,6 @@ matrix:
       env:
         - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8"
 
-language: cpp
-compiler: clang
-
 before_install:
   - eval "${MATRIX_EVAL}"
   - sudo apt-get update
