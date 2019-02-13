@@ -5,12 +5,14 @@
 #include <memory>
 #include <Util/TimeMeasurement.hpp>
 #include <vector>
+#include <string>
 #include <clang/Basic/LLVM.h>
 
 namespace llvm {
   class LLVMContext;
   class ExecutionEngine;
 }
+
 
 namespace clang {
   class CompilerInstance;

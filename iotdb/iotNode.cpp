@@ -13,10 +13,10 @@
 #include <Core/DataTypes.hpp>
 
 #include <API/Config.hpp>
-#include <API/InputQuery.hpp>
 #include <Core/Schema.hpp>
 
 #include <design.hpp>
+#include "include/API/InputQuery.hpp"
 
 using namespace std;
 

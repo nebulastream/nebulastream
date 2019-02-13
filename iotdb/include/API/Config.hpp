@@ -1,5 +1,3 @@
-
-#pragma once
 #include <string>
 
 namespace iotdb {
@@ -22,6 +20,8 @@ public:
   bool getPreLoading();
   Config &withPreloading();
   std::string getPreLoadingAsString();
+  Config &withSourcePath(std::string pSourcePath);
+  std::string getSourcePath();
 
 private:
   Config();
@@ -32,5 +32,6 @@ private:
   unsigned int number_of_passes_over_input_files;
   bool measuring;
   bool preloading;
+  std::string sourcePath;
 };
 }
