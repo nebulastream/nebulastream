@@ -25,9 +25,14 @@ private:
   const uint16_t port;
   const std::string topic;
 
+  bool connected;
   std::unique_ptr<zmq::context_t> zmq_context;
   std::unique_ptr<zmq::socket_t> zmq_socket;
+
+  bool zmq_connect();
+  bool zmq_disconnect();
 };
+
 } // namespace iotdb
 
 #endif // ZMQSOURCE_HPP
