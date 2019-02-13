@@ -1,7 +1,13 @@
-os: linux
-dist: xenial
-env:
-  - EVAL="CC=/usr/lib/llvm-3.8/bin/clang && CXX=/usr/lib/llvm-3.8/bin/clang++"
+matrix:
+  include:
+    os: linux
+    dist: xenial
+    addons:
+      apt:
+        packages:
+          clang-3.8
+    env:
+        - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8"
 
 language: cpp
 compiler: clang
