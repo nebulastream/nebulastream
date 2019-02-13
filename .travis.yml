@@ -1,25 +1,30 @@
 os: linux
 dist: xenial
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+      - llvm-toolchain-precise-3.8
+    packages:
+      - clang-3.8
+env:
+  - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8"
 
 language: cpp
 compiler: clang
 
 before_install:
+  - eval "${MATRIX_EVAL}"
   - sudo apt-get update
-  - sudo apt-get install -y clang-3.8
   - sudo apt-get install -y libzmq-dev
   - sudo apt-get install -y libboost1.58-all-dev
   - sudo apt-get install -y zlib1g-dev
   - sudo apt-get install -y libclang-dev
-  - sudo apt-get install -y llvm
 
 script:
   - cd iotdb
-  - export PATH=/usr/lib/llvm-3.8/bin:$PATH
   - llvm-config --includedir
   - mkdir debug-build && cd debug-build
-  - export CC=/usr/lib/llvm-3.8/bin/clang
-  - export CXX=/usr/lib/llvm-3.8/bin/clang++
   - cmake -DCMAKE_BUILD_TYPE=Debug ..
   - make
 
