@@ -6,7 +6,7 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-xenial-3.8
+            - llvm-toolchain-3.8
           packages:
             - clang-3.8
       env:
