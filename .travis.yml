@@ -1,7 +1,7 @@
 os: linux
 dist: xenial
 env:
-  - EVAL="CC=clang-3.8 && CXX=clang++-3.8"
+  - EVAL="CC=usr/lib/llvm-3.8/bin/clang && CXX=usr/lib/llvm-3.8/bin/clang++"
 
 language: cpp
 compiler: clang
