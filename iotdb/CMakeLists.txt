@@ -29,6 +29,14 @@ find_package(ZMQ)
 set(LIBRARIES ${LIBRARIES} ${ZMQ_LIBRARIES})
 include_directories(${ZMQ_INCLUDE_DIRS})
 
+# TRAVIS-CI
+if(TRAVIS_INCLUDE_DIR)
+  include_directories(${TRAVIS_INCLUDE_DIR})
+  message( STATUS "TRAVIS_INCLUDE_DIR:" ${TRAVIS_INCLUDE_DIR} )
+endif()
+
+include_directories(${YOURLIB_INCLUDE_DIR})
+
 #boost
 find_package(Boost 1.47.0 REQUIRED system thread program_options filesystem) # Only check if lib is available on system for generated code.
 
@@ -176,7 +184,6 @@ target_include_directories(iotdb PUBLIC "include")
 target_link_libraries(iotdb ${CLANG_LIBS} ${LIBRARIES} ${LLVM_LIBRARIES} ${LLVM_LDFLAGS})
 
 message( STATUS "LLVM_LIBRARIES:" ${LLVM_LIBRARIES} )
-message( STATUS "LLVM_INCLUDE_DIR:" ${INCLUDE_DIRS} )
 
 add_executable(llvm_test llvm_test.cpp)
 target_link_libraries(llvm_test iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
