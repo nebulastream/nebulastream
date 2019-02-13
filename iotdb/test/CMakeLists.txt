@@ -18,10 +18,15 @@ add_test(NAME code-generation-tests COMMAND code-generation-tests)
 
 # Fog Topology Tests
 add_executable(fog-topology-tests "UnitTests/FogTopologyManagerTest.cpp")
-target_link_libraries(fog-topology-tests iotdb ${GTEST_LIBRARIES})
+target_link_libraries(fog-topology-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME fog-topology-tests COMMAND fog-topology-tests)
 
 # Client Server Communication Tests
 add_executable(client-server-communication-tests "UnitTests/ClientServerCommunicationTest.cpp")
-target_link_libraries(client-server-communication-tests ${Boost_LIBRARIES} ${ZMQ_LIBRARIES} ${GTEST_LIBRARIES})
+target_link_libraries(client-server-communication-tests ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME client-server-communication-tests COMMAND client-server-communication-tests)
+
+# Test data sources of runtime
+add_executable(runtime-data-source-tests "UnitTests/RuntimeDataSourceTest.cpp")
+target_link_libraries(runtime-data-source-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
+add_test(NAME runtime-data-source-tests COMMAND runtime-data-source-tests)
