@@ -1,14 +1,16 @@
-os: linux
-dist: xenial
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-      - llvm-toolchain-precise-3.8
-    packages:
-      - clang-3.8
-env:
-  - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8"
+matrix:
+  include:
+    - os: linux
+      dist: xenial
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-precise-3.8
+          packages:
+            - clang-3.8
+      env:
+        - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8"
 
 language: cpp
 compiler: clang
