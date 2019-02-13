@@ -7,27 +7,23 @@ matrix:
         packages:
           clang-3.8
           llvm-3.8-dev
-    env:
-        - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8"
 
 language: cpp
 compiler: clang
 
 before_install:
-  - eval "${EVAL}"
-  - ls /usr/include -la
-  - ls /usr/lib/llvm-3.8/include -la
   - sudo apt-get update
   - sudo apt-get install -y libclang-dev
   - sudo apt-get install -y libzmq-dev
   - sudo apt-get install -y libboost1.58-all-dev
  
 script:
-  - cd iotdb
-  - llvm-config --includedir
-  - mkdir debug-build && cd debug-build
-  - cmake -DCMAKE_BUILD_TYPE=Debug -DTRAVIS_INCLUDE_DIR=/usr/lib/llvm-3.8/include ..
+  - clang --version
+  - clang++ --version 
+  - cd iotdb && mkdir debug-build && cd debug-build
+  - cmake -DCMAKE_BUILD_TYPE=Debug ..
   - make
+  
 
 notifications:
   email: false
