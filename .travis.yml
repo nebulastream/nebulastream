@@ -23,7 +23,7 @@ script:
   - cd iotdb
   - llvm-config --includedir
   - mkdir debug-build && cd debug-build
-  - cmake -DCMAKE_BUILD_TYPE=Debug ..
+  - cmake -DCMAKE_BUILD_TYPE=Debug -DTRAVIS_INCLUDE_DIR=/usr/local/clang-7.0.0/include ..
   - make
 
 notifications:
