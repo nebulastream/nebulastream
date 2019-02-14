@@ -5,7 +5,12 @@ namespace iotdb{
 class FogRunTime{
 public:
 	FogRunTime(){};
-	void deployQuery(){};
+	void deployQuery(FogExecutionPlanPtr plan){};
+
+private:
+	void startFog();
+	void stopFog();
+
 };
 
 }

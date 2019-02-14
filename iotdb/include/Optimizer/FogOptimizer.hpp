@@ -3,6 +3,8 @@
 
 #include <API/InputQuery.hpp>
 #include <Topology/FogTopologyPlan.hpp>
+#include <Optimizer/FogExecutionPlan.hpp>
+
 
 namespace iotdb{
 class FogOptimizer
@@ -10,13 +12,13 @@ class FogOptimizer
 public:
 	FogOptimizer(){};
 
-	FogExecutionPlanPtr map(InputQuery& query, FogTopologyPlan* plan)
+	FogExecutionPlanPtr map(InputQuery& query, FogTopologyPlanPtr plan)
 	{
 		//Query graph auf root node
 		//copy and override pointer to node
 	}
 
-	void optimize(InputQuery& query, FogTopologyPlan* plan)
+	void optimize(FogExecutionPlanPtr execPlan)
 	{
 
 	}
