@@ -2,6 +2,8 @@
 #include "include/API/InputQuery.hpp"
 #include <Optimizer/FogOptimizer.hpp>
 #include <Optimizer/FogRunTime.hpp>
+#include <NodeEngine/NodeEngine.hpp>
+
 using namespace iotdb;
 /**
  *
@@ -67,7 +69,17 @@ InputQuery& createTestQuery()
 	return query;
 }
 
+NodeEnginePtr createTestNode()
+{
+	NodeEnginePtr node = std::make_shared<NodeEngine>(1);
+	JSON props = node->getNodeProperties();
+	node->printNodeProperties();
+	return node;
+}
+
 int main(int argc, const char *argv[]) {
+	NodeEnginePtr nodePtr = createTestNode();
+
 	FogTopologyManager* fMgnr = new FogTopologyManager();
 	createTestTopo(fMgnr);
 
@@ -80,5 +92,10 @@ int main(int argc, const char *argv[]) {
 	fogOpt->optimize(execPlan);//TODO: does nothing atm
 
 	FogRunTime* runtime = new FogRunTime();
+	runtime->registerNode(nodePtr);
+
 	runtime->deployQuery(execPlan);
+
+
+
 }
