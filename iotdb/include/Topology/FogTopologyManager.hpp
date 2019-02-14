@@ -29,7 +29,10 @@ public:
   bool removeFogNodeLink(FogTopologyLinkPtr linkPtr) { return currentPlan->removeFogTopologyLink(linkPtr); }
 
   void printTopologyPlan() { std::cout << getTopologyPlanString() << std::endl; }
+
   std::string getTopologyPlanString() { return currentPlan->getTopologyPlanString(); }
+
+  FogTopologyPlanPtr getTopologyPlan() {return currentPlan;}
 
 private:
   FogTopologyPlanPtr currentPlan;

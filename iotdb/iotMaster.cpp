@@ -76,10 +76,9 @@ int main(int argc, const char *argv[]) {
 	//skipping LogicalPlanManager
 
 	FogOptimizer* fogOpt = new FogOptimizer();
-	fogOpt->optimize(query, fMgnr->getPlan().get());
+	FogExecutionPlanPtr execPlan = fogOpt->map(query, fMgnr->getTopologyPlan());
+	fogOpt->optimize(execPlan);//TODO: does nothing atm
 
 	FogRunTime* runtime = new FogRunTime();
-	runtime->deployQuery();
-
-
+	runtime->deployQuery(execPlan);
 }
