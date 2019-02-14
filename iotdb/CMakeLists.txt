@@ -29,6 +29,14 @@ find_package(ZMQ)
 set(LIBRARIES ${LIBRARIES} ${ZMQ_LIBRARIES})
 include_directories(${ZMQ_INCLUDE_DIRS})
 
+# TRAVIS-CI
+if(TRAVIS_INCLUDE_DIR)
+  include_directories(${TRAVIS_INCLUDE_DIR})
+  message( STATUS "TRAVIS_INCLUDE_DIR:" ${TRAVIS_INCLUDE_DIR} )
+endif()
+
+include_directories(${YOURLIB_INCLUDE_DIR})
+
 #boost
 find_package(Boost 1.47.0 REQUIRED system thread program_options filesystem) # Only check if lib is available on system for generated code.
 
@@ -202,3 +210,9 @@ target_include_directories(iotClient PUBLIC "include")
 add_executable(iotServer iotServer.cpp)
 target_link_libraries(iotServer ${Boost_LIBRARIES} ${ZMQ_LIBRARIES})
 target_include_directories(iotServer PUBLIC "include")
+
+message(STATUS "INCLUDE_DIRS:")
+get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
+foreach(dir ${dirs})
+  message(STATUS "  - ${dir}")
+endforeach()
