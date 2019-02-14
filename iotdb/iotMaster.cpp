@@ -1,6 +1,7 @@
 #include <Topology/FogTopologyManager.hpp>
 #include "include/API/InputQuery.hpp"
-
+#include <Optimizer/FogOptimizer.hpp>
+#include <Optimizer/FogRunTime.hpp>
 using namespace iotdb;
 /**
  *
@@ -30,7 +31,7 @@ void createTestTopo(FogTopologyManager* fMgnr)
 	fMgnr->printTopologyPlan();
 }
 
-void createQuery()
+InputQuery& createTestQuery()
 {
 	// define config
 	Config config = Config::create().
@@ -55,15 +56,29 @@ void createQuery()
 	.sourceType(Rest);
 
 	// streaming query
-	InputQuery::create(config, schema, s1)
+	InputQuery& query = InputQuery::create(config, schema, s1)
 	.filter(Equal("event_type", "view"))                // filter by event type
 	.window(TumblingProcessingTimeWindow(Counter(100))) // tumbling window of 100 elements
 	.groupBy("campaign_id")                             // group by campaign id
 	.aggregate(Count())                                 // count results per key and window
 	.write("output.csv");                                // write results to file
 //	.execute();
+
+	return query;
 }
+
 int main(int argc, const char *argv[]) {
 	FogTopologyManager* fMgnr = new FogTopologyManager();
 	createTestTopo(fMgnr);
+
+	InputQuery& query = createTestQuery();
+
+	//skipping LogicalPlanManager
+
+	FogOptimizer* fogOpt = new FogOptimizer();
+	FogExecutionPlanPtr execPlan = fogOpt->map(query, fMgnr->getTopologyPlan());
+	fogOpt->optimize(execPlan);//TODO: does nothing atm
+
+	FogRunTime* runtime = new FogRunTime();
+	runtime->deployQuery(execPlan);
 }
