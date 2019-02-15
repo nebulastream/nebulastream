@@ -10,6 +10,7 @@
 #include "Mapper.hpp"
 #include <string>
 #include <API/Config.hpp>
+#include <Runtime/DataSource.hpp>
 
 
 namespace iotdb {
@@ -33,6 +34,9 @@ typedef std::shared_ptr<Predicate> PredicatePtr;
 
 enum SortOrder{ASCENDING,DESCENDING};
 
+
+typedef std::vector<AttributeFieldPtr> Attributes;
+
 struct SortAttr{
     AttributeFieldPtr field;
     SortOrder order;
@@ -49,7 +53,7 @@ class Sort{
 class InputQuery {
 public:
   ~InputQuery();
-  static InputQuery create(Config& config, Schema& schema, Source& source);
+  static InputQuery create(const Config& config, const DataSourcePtr& source);
   InputQuery(const InputQuery& );
   void execute();
 
@@ -79,12 +83,11 @@ public:
   //InputQuery &input(InputType type, std::string path);
   InputQuery &printInputQueryPlan();
 private:
-  InputQuery(Config& config, Schema& schema, Source& source);
+  InputQuery(const Config& config, const DataSourcePtr& source);
   Config config;
-  Schema schema;
-  Source& source;
+  DataSourcePtr source;
   OperatorPtr root;
-  void printInputQueryPlan(Operator* curr, int depth);
+  void printInputQueryPlan(const OperatorPtr& curr, int depth);
 
 };
 

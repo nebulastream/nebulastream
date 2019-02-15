@@ -12,6 +12,11 @@ add_executable(code-generation-tests "UnitTests/CodeGenTest.cpp")
 target_link_libraries(code-generation-tests ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
 add_test(NAME code-generation-tests COMMAND code-generation-tests)
 
+#Query Interface
+add_executable(query-interface-tests "UnitTests/QueryInterfaceTest.cpp")
+target_link_libraries(query-interface-tests ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
+add_test(NAME query-interface-tests COMMAND query-interface-tests)
+
 # Topology
 add_executable(fog-topology-tests "UnitTests/TopologyTest.cpp")
 target_link_libraries(fog-topology-tests ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})

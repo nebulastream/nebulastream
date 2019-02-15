@@ -55,37 +55,26 @@ InputQuery createQueryFromCodeString(const std::string& query_code_snippet){
 }
 
 
-InputQuery::InputQuery(Config& config, Schema& schema, Source& source):
-		config(config), schema(schema), source(source), root()
+InputQuery::InputQuery(const Config& config, const DataSourcePtr& source):
+		config(config), source(source), root()
 	{
 
 	}
 
 /* TODO: perform deep copy of operator graph */
 InputQuery::InputQuery(const InputQuery& query)
-   : config(query.config),schema(query.schema), source(query.source), root(query.root->copy()){
+   : config(query.config), source(query.source), root(query.root->copy()){
 
 }
 
 InputQuery::~InputQuery() {}
 
-InputQuery InputQuery::create(Config& config, Schema& schema, Source& source)
+InputQuery InputQuery::create(const Config& config, const DataSourcePtr& source)
 {
-
-
-  InputQuery q(config, schema, source);
-
-  OperatorPtr op(new InputOperator(source.getType(), source.getPath()));
+  InputQuery q(config, source);
+  OperatorPtr op=createScan(source);
   q.root=op;
   return q;
-//	InputQuery* q = new InputQuery(config, schema, source);
-//	InputType type = source.getType();
-//	string path = source.getPath();
-//	OperatorPtr op(new InputOperator(type, path));
-//	new ReadOperator(schema)
-//	op->leftChild = q->root;
-//	q->root = q->op;
-//	return *q;
 }
 
 
@@ -217,36 +206,48 @@ InputQuery &InputQuery::print() {
 }
 */
 
+class Operator;
+typedef std::shared_ptr<Operator> OperatorPtr;
 
-void InputQuery::printInputQueryPlan(Operator *p, int indent) {
-  // Taken from https://stackoverflow.com/questions/13484943/print-a-binary-tree-in-a-pretty-way
+const std::vector<OperatorPtr> getChildNodes(const OperatorPtr& op);
 
-  if (p != NULL) {
-    if (p->rightChild) {
-      printInputQueryPlan(p->rightChild, indent + 4);
-    }
-    if (indent) {
-      std::cout << std::setw(indent) << ' ';
-    }
-    if (p->rightChild) {
-      std::cout << "  /\n" << std::setw(indent) << ' ';
-    }
-    std::cout << p->to_string() << "\n ";
-    if (p->leftChild) {
-      std::cout << std::setw(indent) << ' ' << "/ \\\n";
-      printInputQueryPlan(p->leftChild, indent + 4);
+const std::vector<OperatorPtr> getChildNodes(const OperatorPtr& op){
+  std::vector<OperatorPtr> result;
+  if(!op){
+      return result;
+  }else {
+    return op->childs;
+  }
+}
+
+
+void InputQuery::printInputQueryPlan(const OperatorPtr& p, int indent) {
+  if (p) {
+      if (indent) {
+        std::cout << std::setw(indent) << ' ';
+      }
+      if (p) {
+        std::cout << "  \n" << std::setw(indent) << ' ';
+      }
+      std::cout << p->toString() << "\n ";
+    std::vector<OperatorPtr> childs = getChildNodes(p);
+
+    for(const OperatorPtr& op : childs){
+        if (op) {
+          printInputQueryPlan(op, indent + 4);
+        }
     }
   }
 }
 
 
 InputQuery &InputQuery::printInputQueryPlan() {
-  std::cout << "InputQuery Plan " << std::string(69, '-') << std::endl;
+  std::cout << "InputQuery Plan " << std::string(50, '-') << std::endl;
 
-  if (root == NULL) {
-    printf("No root node; cant print InputQueryplan\n");
+  if (!root) {
+    printf("No root node; cannot print InputQueryplan\n");
   } else {
-    printInputQueryPlan(root.get(), 0);
+    printInputQueryPlan(root, 0);
     printf("\n");
   }
   return *this;

@@ -36,6 +36,8 @@ protected:
   Schema schema;
 };
 typedef std::shared_ptr<DataSource> DataSourcePtr;
+
+const DataSourcePtr createTestSource();
 }
 
 #endif /* INCLUDE_DATASOURCE_H_ */
