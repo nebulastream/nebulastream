@@ -10,6 +10,9 @@
 #include <iostream>
 #include <functional>
 #include <Runtime/GeneratorSource.hpp>
+#include <Runtime/BinarySource.hpp>
+#include <Runtime/RemoteSocketSource.hpp>
+#include <Util/ErrorHandling.hpp>
 
 namespace iotdb {
 
@@ -90,5 +93,14 @@ const DataSourcePtr createTestSource(){
   return source;
 }
 
+const DataSourcePtr createBinaryFileSource(const std::string& path_to_file){
+  //instantiate BinaryFileSource
+  IOTDB_FATAL_ERROR("Called unimplemented Function");
+}
+
+const DataSourcePtr createRemoteTCPSource(const std::string& server_ip, int port){
+   //instantiate RemoteSocketSource
+  IOTDB_FATAL_ERROR("Called unimplemented Function");
+}
 
 }
