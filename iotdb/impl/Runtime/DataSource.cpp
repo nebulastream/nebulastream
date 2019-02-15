@@ -93,12 +93,12 @@ const DataSourcePtr createTestSource(){
   return source;
 }
 
-const DataSourcePtr createBinaryFileSource(const std::string& path_to_file){
+const DataSourcePtr createBinaryFileSource(const Schema& schema, const std::string& path_to_file){
   //instantiate BinaryFileSource
   IOTDB_FATAL_ERROR("Called unimplemented Function");
 }
 
-const DataSourcePtr createRemoteTCPSource(const std::string& server_ip, int port){
+const DataSourcePtr createRemoteTCPSource(const Schema& schema, const std::string& server_ip, int port){
    //instantiate RemoteSocketSource
   IOTDB_FATAL_ERROR("Called unimplemented Function");
 }
