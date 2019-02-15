@@ -4,6 +4,7 @@
 namespace iotdb{
 class FogExecutionPlan
 {
+public:
 	FogExecutionPlan(){};
 };
 

@@ -11,6 +11,7 @@
 #include "Topology/FogTopologySensorNode.hpp"
 #include "Topology/FogTopologyWorkerNode.hpp"
 
+using namespace iotdb;
 /* ------------------------------------------------------------------------- */
 /* - FogTopologyManager ---------------------------------------------------- */
 class FogTopologyManagerTest : public testing::Test {

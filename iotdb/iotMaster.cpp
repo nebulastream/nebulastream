@@ -33,7 +33,7 @@ void createTestTopo(FogTopologyManager* fMgnr)
 	fMgnr->printTopologyPlan();
 }
 
-InputQuery& createTestQuery()
+InputQueryPtr createTestQuery()
 {
 	// define config
 	Config config = Config::create().
@@ -58,8 +58,9 @@ InputQuery& createTestQuery()
 	.sourceType(Rest);
 
 	// streaming query
-	InputQuery& query = InputQuery::create(config, schema, s1)
-	.filter(Equal("event_type", "view"))                // filter by event type
+
+	InputQueryPtr query = InputQuery::create(config, schema, s1);
+	query->filter(Equal("event_type", "view"))                // filter by event type
 	.window(TumblingProcessingTimeWindow(Counter(100))) // tumbling window of 100 elements
 	.groupBy("campaign_id")                             // group by campaign id
 	.aggregate(Count())                                 // count results per key and window
@@ -78,12 +79,10 @@ NodeEnginePtr createTestNode()
 }
 
 int main(int argc, const char *argv[]) {
-	NodeEnginePtr nodePtr = createTestNode();
-
 	FogTopologyManager* fMgnr = new FogTopologyManager();
 	createTestTopo(fMgnr);
 
-	InputQuery& query = createTestQuery();
+	InputQueryPtr query = createTestQuery();
 
 	//skipping LogicalPlanManager
 
@@ -92,8 +91,8 @@ int main(int argc, const char *argv[]) {
 	fogOpt->optimize(execPlan);//TODO: does nothing atm
 
 	FogRunTime* runtime = new FogRunTime();
+	NodeEnginePtr nodePtr = createTestNode();
 	runtime->registerNode(nodePtr);
-
 	runtime->deployQuery(execPlan);
 
 
