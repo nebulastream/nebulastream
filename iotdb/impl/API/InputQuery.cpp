@@ -2,22 +2,8 @@
 #include <iomanip>
 #include <iostream>
 #include <API/InputQuery.hpp>
-#include <Operators/AggregateOperator.hpp>
-#include <Operators/GenerateOperator.hpp>
-#include <Operators/GroupByOperator.hpp>
-#include <Operators/JoinOperator.hpp>
-#include <Operators/MapOperator.hpp>
-#include <Operators/KeyOperator.hpp>
-#include <Operators/OrderByOperator.hpp>
-#include <Operators/PrintOperator.hpp>
-#include <Operators/ReadOperator.hpp>
-#include <Operators/ReadWindowOperator.hpp>
-#include <Operators/TableReadOperator.hpp>
-#include <Operators/WindowOperator.hpp>
-#include <Operators/WriteOperator.hpp>
-#include <Operators/InputOperator.hpp>
 #include <Operators/Operator.hpp>
-#include <Operators/FilterOperator.hpp>
+
 
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
 #include <Util/ErrorHandling.hpp>
