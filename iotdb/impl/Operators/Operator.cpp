@@ -1,8 +1,8 @@
 
 #include <Operators/Operator.hpp>
-
-//#include <Runtime/DataSource.hpp>
-//#include <sstream>
+#include <CodeGen/CodeGen.hpp>
+#include <Runtime/DataSource.hpp>
+#include <sstream>
 
 namespace iotdb {
 
@@ -10,37 +10,46 @@ namespace iotdb {
 
   }
 
+class Scan : public Operator {
+public:
+  Scan(DataSourcePtr src);
+  Scan(const Scan&);
+  void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
+  void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
+  const OperatorPtr copy() override;
+  const std::string toString() const override;
+  ~Scan() override;
+private:
+  DataSourcePtr source;
+};
+
+Scan::Scan(DataSourcePtr src) : Operator (), source(src) {
+
 }
 
-//  Operator::Operator(OperatorType op_type) : type(op_type), childs(){
+Scan::Scan(const Scan& scan)
+  : source(scan.source){
+}
 
-//  }
+void Scan::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out){
 
-//  Operator::~Operator(){
+}
+void Scan::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out){
 
-//  }
+}
 
+const OperatorPtr Scan::copy(){
+  return std::make_shared<Scan>(*this);
+}
 
+const std::string Scan::toString() const{
+  std::stringstream ss;
+  ss << "SCAN(" << source->toString() << ")";
+  return ss.str();
+}
 
-//class Scan : public Operator {
-//public:
-//  Scan(DataSourcePtr src) : Operator (SCAN), source(src) {}
-
-//  void produce(CodeGeneratorPtr codegen, QueryExecutionPlanPtr qep) override {}
-//  void consume(CodeGeneratorPtr codegen, QueryExecutionPlanPtr qep) override {}
-//  std::string toString() const override {
-//    std::stringstream ss;
-//    ss << "SCAN(" << source->toString() << ")";
-//    return ss.str();
-//  }
-
-//  ~Scan() override{
-
-//  }
-
-//private:
-//  DataSourcePtr source;
-//};
+Scan::~Scan(){
+}
 
 //const std::string toString(const PredicatePtr& predicate){
 //  return "";
@@ -66,8 +75,8 @@ namespace iotdb {
 //  PredicatePtr predicate;
 //};
 
-//OperatorPtr createScan(DataSourcePtr source) { return std::make_shared<Scan>(source); }
+OperatorPtr createScan(DataSourcePtr source) { return std::make_shared<Scan>(source); }
 
 //OperatorPtr createSelection(PredicatePtr predicate) { return std::make_shared<Selection>(predicate); }
 //}
-
+}
