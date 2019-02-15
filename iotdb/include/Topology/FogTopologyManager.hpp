@@ -2,12 +2,12 @@
 #define INCLUDE_TOPOLOGY_FOGTOPOLOGYMANAGER_HPP_
 
 #include <memory>
-
 #include "Topology/FogTopologyPlan.hpp"
 
 /**
  * TODO: add return of create
  */
+namespace iotdb{
 typedef std::shared_ptr<FogTopologyPlan> FogTopologyPlanPtr;
 
 class FogTopologyManager {
@@ -34,8 +34,10 @@ public:
 
   FogTopologyPlanPtr getTopologyPlan() {return currentPlan;}
 
+  FogTopologyWorkerNodePtr getRootNode(){return currentPlan->getRootNode();};
+
 private:
   FogTopologyPlanPtr currentPlan;
 };
-
+}
 #endif /* INCLUDE_TOPOLOGY_FOGTOPOLOGYMANAGER_HPP_ */

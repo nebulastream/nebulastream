@@ -13,7 +13,14 @@ using JSON = nlohmann::json;
 class FogRunTime{
 public:
 	FogRunTime(){};
-	void deployQuery(FogExecutionPlanPtr plan){};
+	void deployQuery(FogExecutionPlanPtr plan){
+		//setup node by sending query
+
+		//setup sensor
+
+		//start query
+
+	};
 	void registerNode(NodeEnginePtr ptr);
 	void receiveNodeInfo();
 	void printNodeInfo(JSON data);

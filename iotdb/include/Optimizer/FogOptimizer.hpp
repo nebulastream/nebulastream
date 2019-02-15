@@ -12,10 +12,15 @@ class FogOptimizer
 public:
 	FogOptimizer(){};
 
-	FogExecutionPlanPtr map(InputQuery& query, FogTopologyPlanPtr plan)
+	FogExecutionPlanPtr map(InputQueryPtr query, FogTopologyPlanPtr plan)
 	{
-		//Query graph auf root node
-		//copy and override pointer to node
+		FogExecutionPlanPtr execPlan = std::make_shared<FogExecutionPlan>();
+
+		//get Root
+		FogTopologyWorkerNodePtr rootNode = plan->getRootNode();
+		rootNode->setQuery(query);
+
+		return execPlan;
 	}
 
 	void optimize(FogExecutionPlanPtr execPlan)

@@ -2,8 +2,11 @@
 #define INCLUDE_TOPOLOGY_FOGTOPOLOGYWORKERNODE_HPP_
 
 #include "FogTopologyEntry.hpp"
+#include <API/InputQuery.hpp>
+
 #include <memory>
 #include <vector>
+namespace iotdb{
 #define INVALID_NODE_ID 101
 
 class FogTopologyWorkerNode : public FogTopologyEntry {
@@ -17,10 +20,12 @@ public:
   FogNodeType getEntryType() { return Worker; }
   std::string getEntryTypeString() { return "Worker"; }
 
+  void setQuery(InputQueryPtr pQuery){query = pQuery;};
 private:
   size_t node_id;
+  InputQueryPtr query;
 };
 
 typedef std::shared_ptr<FogTopologyWorkerNode> FogTopologyWorkerNodePtr;
-
+}
 #endif /* INCLUDE_TOPOLOGY_FOGTOPOLOGYWORKERNODE_HPP_ */
