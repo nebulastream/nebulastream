@@ -10,7 +10,12 @@
 
 namespace iotdb{
 
-InputQuery createQueryFromCodeString(const std::string& query_code_snippet){
+  /* some utility functions to encapsulate node handling to be
+   * independent of implementation of query graph */
+  const std::vector<OperatorPtr> getChildNodes(const OperatorPtr& op);
+  void addChild(const OperatorPtr& op_parent, const OperatorPtr& op_child);
+
+const InputQuery createQueryFromCodeString(const std::string& query_code_snippet){
 
   /* translate user code to a shared library, load and execute function, then return query object */
 
@@ -58,7 +63,7 @@ InputQuery::~InputQuery() {}
 InputQuery InputQuery::create(const Config& config, const DataSourcePtr& source)
 {
   InputQuery q(config, source);
-  OperatorPtr op=createScan(source);
+  OperatorPtr op=createScanOperator(source);
   q.root=op;
   return q;
 }
@@ -71,12 +76,69 @@ void InputQuery::execute() {
 /*
  * Relational Operators
  */
-InputQuery& InputQuery::filter(PredicatePtr predicate) {
-//  Operator* newOp = new FilterOperator(predicate, current);
-//  if (current)
-//    newOp->rightChild = current;
-//  root = newOp;
-//  current = newOp;
+InputQuery& InputQuery::filter(const PredicatePtr &predicate) {
+  OperatorPtr op = createSelectionOperator(predicate);
+  addChild(op, root);
+  root = op;
+  return *this;
+}
+
+InputQuery &InputQuery::groupBy(const Attributes& grouping_fields,
+                                const AggregationPtr& aggr_spec) {
+  OperatorPtr op = createGroupedAggregationOperator(grouping_fields, aggr_spec);
+  addChild(op, root);
+  root = op;
+  return *this;
+}
+
+InputQuery &InputQuery::orderBy(const Sort& fields) {
+  OperatorPtr op = createOrderByOperator(fields);
+  addChild(op, root);
+  root = op;
+  return *this;
+}
+
+InputQuery &InputQuery::join(const InputQuery& sub_query, const JoinPredicatePtr& joinPred) {
+  OperatorPtr op = createJoinOperator(sub_query,joinPred);
+  addChild(op, root);
+  root = op;
+  return *this;
+}
+
+// streaming operators
+InputQuery &InputQuery::window(const WindowPtr& window) {
+  OperatorPtr op = createWindowOperator(window);
+  addChild(op, root);
+  root = op;
+  return *this;
+}
+
+InputQuery &InputQuery::keyBy(const Attributes& fields) {
+  OperatorPtr op = createKeyByOperator(fields);
+  addChild(op, root);
+  root = op;
+  return *this;
+}
+
+InputQuery &InputQuery::map(const MapperPtr& mapper) {
+  OperatorPtr op = createMapOperator(mapper);
+  addChild(op, root);
+  root = op;
+  return *this;
+}
+
+
+// output operators
+InputQuery &InputQuery::writeToFile(const std::string& file_name) {
+  OperatorPtr op = createWriteFileOperator(file_name);
+  addChild(op, root);
+  root = op;
+  return *this;
+}
+InputQuery &InputQuery::print(std::ostream& out) {
+  OperatorPtr op = createPrintOperator(out);
+  addChild(op, root);
+  root = op;
   return *this;
 }
 
@@ -192,10 +254,16 @@ InputQuery &InputQuery::print() {
 }
 */
 
-class Operator;
-typedef std::shared_ptr<Operator> OperatorPtr;
+//class Operator;
+//typedef std::shared_ptr<Operator> OperatorPtr;
 
-const std::vector<OperatorPtr> getChildNodes(const OperatorPtr& op);
+
+
+void addChild(const OperatorPtr& op_parent, const OperatorPtr& op_child){
+  if(op_parent && op_child){
+      op_parent->childs.push_back(op_child);
+  }
+}
 
 const std::vector<OperatorPtr> getChildNodes(const OperatorPtr& op){
   std::vector<OperatorPtr> result;
