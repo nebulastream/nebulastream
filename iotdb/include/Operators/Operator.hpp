@@ -5,6 +5,7 @@
 #include <memory>
 #include <vector>
 #include <iostream>
+#include <API/InputQuery.hpp>
 
 namespace iotdb{
 
@@ -31,10 +32,18 @@ public:
   virtual const std::string toString() const = 0;
 };
 
-OperatorPtr createScan(DataSourcePtr source);
+const OperatorPtr createScanOperator(DataSourcePtr source);
+const OperatorPtr createSelectionOperator(const PredicatePtr& predicate);
+const OperatorPtr createGroupedAggregationOperator(const Attributes& grouping_fields, const AggregationPtr& aggr_spec);
+const OperatorPtr createOrderByOperator(const Sort& fields);
+const OperatorPtr createJoinOperator(const InputQuery& sub_query, const JoinPredicatePtr& joinPred);
 
-OperatorPtr createSelection(DataSourcePtr source);
+const OperatorPtr createWindowOperator(const WindowPtr& window);
+const OperatorPtr createKeyByOperator(const Attributes& fields);
+const OperatorPtr createMapOperator(const MapperPtr& mapper);
 
+const OperatorPtr createWriteFileOperator(const std::string& file_name);
+const OperatorPtr createPrintOperator(std::ostream& out);
 
 }
 

@@ -3,6 +3,7 @@
 #include <CodeGen/CodeGen.hpp>
 #include <Runtime/DataSource.hpp>
 #include <sstream>
+#include <Util/ErrorHandling.hpp>
 
 namespace iotdb {
 
@@ -51,32 +52,94 @@ const std::string Scan::toString() const{
 Scan::~Scan(){
 }
 
-//const std::string toString(const PredicatePtr& predicate){
-//  return "";
-//}
+class Selection : public Operator {
+public:
+  Selection(PredicatePtr _predicate);
+  Selection(const Selection& op);
+  void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
+  void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
+  const OperatorPtr copy() override;
+  const std::string toString() const override;
+  ~Selection() override;
+private:
+  PredicatePtr predicate;
+};
 
-//class Selection : public Operator {
-//public:
-//  Selection(PredicatePtr _predicate) : Operator (SELECTION), predicate(_predicate) {}
+Selection::Selection(PredicatePtr _predicate)
+  : Operator (), predicate(_predicate)
+{
+}
 
-//  void produce(CodeGeneratorPtr codegen, QueryExecutionPlanPtr qep) override {}
-//  void consume(CodeGeneratorPtr codegen, QueryExecutionPlanPtr qep) override {}
-//  std::string toString() const override {
-//    std::stringstream ss;
-//    ss << "SELECTION(" << iotdb::toString(predicate) << ")";
-//    return ss.str();
-//  }
+Selection::Selection(const Selection& op)
+  : predicate(op.predicate)
+{
+}
 
-//  ~Selection() override{
+void Selection::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out){
 
-//  }
+}
+void Selection::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out){
 
-//private:
-//  PredicatePtr predicate;
-//};
+}
 
-OperatorPtr createScan(DataSourcePtr source) { return std::make_shared<Scan>(source); }
+const OperatorPtr Selection::copy(){
+  return std::make_shared<Selection>(*this);
+}
 
-//OperatorPtr createSelection(PredicatePtr predicate) { return std::make_shared<Selection>(predicate); }
-//}
+const std::string Selection::toString() const{
+  std::stringstream ss;
+  ss << "SELECTION( *** )";
+//  ss << "SELECTION(" << iotdb::toString(predicate) << ")";
+  return ss.str();
+}
+
+Selection::~Selection(){
+
+}
+
+const OperatorPtr createScanOperator(DataSourcePtr source) {
+  return std::make_shared<Scan>(source);
+}
+
+const OperatorPtr createSelectionOperator(const PredicatePtr& predicate){
+  return std::make_shared<Selection>(predicate);
+}
+const OperatorPtr createGroupedAggregationOperator(const Attributes& grouping_fields, const AggregationPtr& aggr_spec){
+  IOTDB_FATAL_ERROR("Called Unimplemented Method!");
+  return OperatorPtr();
+}
+const OperatorPtr createOrderByOperator(const Sort& fields){
+  IOTDB_FATAL_ERROR("Called Unimplemented Method!");
+  return OperatorPtr();
+}
+const OperatorPtr createJoinOperator(const InputQuery& sub_query, const JoinPredicatePtr& joinPred){
+  IOTDB_FATAL_ERROR("Called Unimplemented Method!");
+  return OperatorPtr();
+}
+
+const OperatorPtr createWindowOperator(const WindowPtr& window){
+  IOTDB_FATAL_ERROR("Called Unimplemented Method!");
+  return OperatorPtr();
+}
+
+const OperatorPtr createKeyByOperator(const Attributes& fields){
+  IOTDB_FATAL_ERROR("Called Unimplemented Method!");
+  return OperatorPtr();
+}
+
+const OperatorPtr createMapOperator(const MapperPtr& mapper){
+  IOTDB_FATAL_ERROR("Called Unimplemented Method!");
+  return OperatorPtr();
+}
+
+const OperatorPtr createWriteFileOperator(const std::string& file_name){
+  IOTDB_FATAL_ERROR("Called Unimplemented Method!");
+  return OperatorPtr();
+}
+
+const OperatorPtr createPrintOperator(std::ostream& out){
+  IOTDB_FATAL_ERROR("Called Unimplemented Method!");
+  return OperatorPtr();
+}
+
 }
