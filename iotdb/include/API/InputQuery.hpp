@@ -3,7 +3,6 @@
 
 #include <string>
 #include <iostream>
-#include <API/Source.hpp>
 #include <API/Schema.hpp>
 #include <API/Config.hpp>
 #include <API/ParameterTypes.hpp>

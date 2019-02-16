@@ -5,8 +5,6 @@
 #include <vector>
 #include <memory>
 
-#include <API/Field.hpp>
-#include <API/Source.hpp>
 #include <Core/DataTypes.hpp>
 
 namespace iotdb{
@@ -34,8 +32,6 @@ public:
 
   std::vector<AttributeFieldPtr> fields;
 
-private:
-  Schema(const SourceType source_type);
 };
 }
 #endif // API_SCHEMA_H

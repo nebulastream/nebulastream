@@ -97,6 +97,10 @@ Selection::~Selection(){
 
 }
 
+/** \todo create the remaining operators here!
+ *
+ */
+
 const OperatorPtr createScanOperator(DataSourcePtr source) {
   return std::make_shared<Scan>(source);
 }

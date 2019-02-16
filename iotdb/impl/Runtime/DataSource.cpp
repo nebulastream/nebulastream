@@ -13,6 +13,7 @@
 #include <Runtime/BinarySource.hpp>
 #include <Runtime/RemoteSocketSource.hpp>
 #include <Util/ErrorHandling.hpp>
+#include <cassert>
 
 namespace iotdb {
 
