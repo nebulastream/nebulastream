@@ -1,20 +1,23 @@
 #include <iostream>
 #include <utility>
 #include <cassert>
-
+#include <thread>
 #include <Runtime/BufferManager.hpp>
 
 namespace iotdb {
 
-  BufferManager::BufferManager() {
+  BufferManager::BufferManager() : capacity(100) {
 
     std::cout << "Init BufferManager" << std::endl;
     std::vector<TupleBufferPtr> buffers(capacity);
 
-    uint64_t buffer_size = 4096;
-    uint32_t tuple_size_bytes = sizeof(uint64_t);
-    uint32_t num_tuples = buffer_size / tuple_size_bytes;
+    // uint64_t buffer_size = 4096;
+    // uint32_t tuple_size_bytes = sizeof(uint64_t);
+    // uint32_t num_tuples = buffer_size / tuple_size_bytes;
 
+    uint32_t tuple_size_bytes = sizeof(uint64_t);
+    uint32_t num_tuples = 10;
+    uint64_t buffer_size = num_tuples * tuple_size_bytes;
     std::cout << "buffer_size: " << buffer_size << std::endl;
 
     for (uint32_t i = 0; i < capacity; i ++) {
@@ -28,6 +31,13 @@ namespace iotdb {
 
   BufferManager::~BufferManager() {
     std::cout << "Enter Destructor of BufferManager" << std::endl;
+    for (auto &kv : buffer_pool) {
+      auto &buffers = kv.second;
+      for (auto buffer : buffers) {
+        free(buffer->buffer);
+      }
+    }
+    buffer_pool.clear();
   }
 
   BufferManager &BufferManager::instance() {
@@ -36,28 +46,21 @@ namespace iotdb {
     return instance;
   }
 
-  TupleBufferPtr BufferManager::getBuffer(uint64_t size) {
+  TupleBufferPtr BufferManager::getBuffer(const uint64_t size) {
     std::unique_lock<std::mutex> lock(mutex);
     auto found = buffer_pool.find(size);
-
+    assert(found != buffer_pool.cend() && (std::string("No buffers for size ") + std::to_string(size) + std::string(" in pool. bug?")).c_str());
     TupleBufferPtr buf = nullptr;
-
-    if (found == buffer_pool.cend()) {
-      std::cout << "no buffers for size " << size << " in pool. bug? " << std::endl;
-    } else {
-      auto& buffers = found->second;
-      if (! buffers.empty()) {
-        // std::cout << "before return tuple buffer to consumer, currently available buffer pool size is " << buffers.size() << std::endl;
-        buf = buffers.back();
-        buffers.pop_back();
-
-        // std::cout << "after return tuple buffer to consumer, currently available buffer pool size is " << buffers.size() << std::endl;
-      } else {
-        std::cout << "no buffers in buffer pool" << std::endl;
-      }
+    auto& buffers = found->second;
+    while (buffers.empty()) {
+      cv.wait(lock);
     }
+
+    assert(buffers.empty() == false && "must have available buffer. bug?");
+    buf = buffers.back();
+    buffers.pop_back();
+
     cv.notify_all();
-    std::cout << "buffer address: " << buf << std::endl;
     return buf;
   }
 
@@ -65,18 +68,14 @@ namespace iotdb {
     std::unique_lock<std::mutex> lock(mutex);
     assert(tupleBuffer != nullptr && "tupleBuffer is nullptr");
     auto found = buffer_pool.find(tupleBuffer->buffer_size);
-    if (found == buffer_pool.cend()) {
-      std::cout << "no buffers for size " << tupleBuffer->buffer_size << " in pool. bug? " << std::endl;
-    } else {
-      auto& buffers = found->second;
-      buffers.push_back(tupleBuffer);
-      // sanity checking
-      assert(buffers.size() <= capacity);
-      // if (buffers.size() > capacity) {
-      //   std::cerr << "buffer size is " << buffers.size() << ", wheras maximum capacity is " << capacity << std::endl;
-      //   abort();
-      // }
-    }
+    assert(found != buffer_pool.cend() && (std::string("No buffers for size ") + std::to_string(tupleBuffer->buffer_size) + std::string(" in pool. bug?")).c_str());
+    // {
+    auto& buffers = found->second;
+    buffers.push_back(tupleBuffer);
+    // sanity checking
+    assert(buffers.size() <= capacity && "Buffer size is fixed, bug?");
+
+    // std::cerr << "Thread: " << std::this_thread::get_id() << " release buffer" << std::endl;
     cv.notify_all();
   }
 }

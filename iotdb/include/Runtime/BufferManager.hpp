@@ -18,10 +18,13 @@ namespace iotdb {
   class BufferManager{
   public:
 
-    TupleBufferPtr getBuffer(uint64_t size=4096);
+    TupleBufferPtr getBuffer(const uint64_t size=4096);
     void releaseBuffer(TupleBufferPtr tupleBuffer);
 
     static BufferManager& instance();
+    void unblockThreads() { cv.notify_all(); }
+
+    uint32_t getCapacity() const { return capacity; }
 
   private:
     BufferManager();
@@ -29,22 +32,14 @@ namespace iotdb {
     BufferManager& operator= (const BufferManager&);
     ~BufferManager();
 
-    // class BufferEntry{
-    // public:
-    //   TupleBufferPtr buffer;
-    //   bool used;
-    //   BufferEntry (TupleBufferPtr buf) : buffer(buf), used(false) {
-    //   }
-    // };
-
-    // std::map<uint64_t, std::shared_ptr<std::vector<TupleBufferPtr> > > buffer_pool;
     std::map<uint64_t, std::vector<TupleBufferPtr> > buffer_pool;
-    // std::map<std::string, uint64_t > tester;
 
     std::mutex mutex;
     std::condition_variable cv;
-    const uint32_t capacity = 10;
+    uint32_t capacity;
   };
+
+  typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 }
 
 #endif
