@@ -6,25 +6,28 @@ matrix:
       apt:
         packages:
           clang-3.8
-    env:
-        - MATRIX_EVAL="CC=clang-3.8 && CXX=clang++-3.8"
+          llvm-3.8-dev
 
 language: cpp
 compiler: clang
 
+branches:
+  only:
+  - master
+
 before_install:
-  - eval "${EVAL}"
   - sudo apt-get update
   - sudo apt-get install -y libclang-dev
   - sudo apt-get install -y libzmq-dev
   - sudo apt-get install -y libboost1.58-all-dev
  
 script:
-  - cd iotdb
-  - llvm-config --includedir
-  - mkdir debug-build && cd debug-build
+  - clang --version
+  - clang++ --version 
+  - cd iotdb && mkdir debug-build && cd debug-build
   - cmake -DCMAKE_BUILD_TYPE=Debug ..
   - make
+  
 
 notifications:
   email: false
