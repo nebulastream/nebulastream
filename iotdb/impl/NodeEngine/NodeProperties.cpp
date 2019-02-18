@@ -1,5 +1,6 @@
-#include "../include/NodeEngine/NodeProperties.hpp"
+#include <NodeEngine/NodeProperties.hpp>
 
+namespace iotdb{
 void NodeProperties::readCpuStats() {
 
   this->_cpus.clear();
@@ -44,6 +45,24 @@ void NodeProperties::readCpuStats() {
   }
   this->nbrProcessors = this->_cpus.size() - 1;
   this->_metrics["cpus"] = this->_cpus;
+}
+
+std::string NodeProperties::getCpuStats()
+{
+	return _cpus.dump();
+}
+std::string NodeProperties::getNetworkStats()
+{
+	return _nets.dump();
+}
+std::string NodeProperties::getMemStats()
+{
+	return _mem.dump();
+}
+
+std::string NodeProperties::getFsStats()
+{
+	return _fs.dump();
 }
 
 void NodeProperties::readNetworkStats() {
@@ -183,4 +202,5 @@ JSON NodeProperties::load(const char* metricsBuffer) {
 
 JSON NodeProperties::load() {
   return this->_metrics;
+}
 }

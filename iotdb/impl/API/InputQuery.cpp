@@ -45,14 +45,14 @@ InputQuery::InputQuery(Config& config, Schema& schema, Source& source):
 
 InputQuery::~InputQuery() {}
 
-InputQuery InputQuery::create(Config& config, Schema& schema, Source& source)
+InputQueryPtr InputQuery::create(Config& config, Schema& schema, Source& source)
 {
-	InputQuery* q = new InputQuery(config, schema, source);
+	InputQueryPtr q = std::make_shared<InputQuery>(config, schema, source);
 	InputType type = source.getType();
 	string path = source.getPath();
 	q->current = new InputOperator(type, path, new ReadOperator(schema));
 	q->root = q->current;
-	return *q;
+	return q;
 }
 
 

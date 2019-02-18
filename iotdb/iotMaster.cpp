@@ -1,5 +1,8 @@
 #include <Topology/FogTopologyManager.hpp>
 #include "include/API/InputQuery.hpp"
+#include <Optimizer/FogOptimizer.hpp>
+#include <Optimizer/FogRunTime.hpp>
+#include <NodeEngine/NodeEngine.hpp>
 
 using namespace iotdb;
 /**
@@ -23,16 +26,14 @@ void createTestTopo(FogTopologyManager* fMgnr)
 {
 	FogTopologyWorkerNodePtr f1 = fMgnr->createFogWorkerNode();
 
-	FogTopologySensorPtr s1 = fMgnr->createFogSensorNode();
+	FogTopologySensorNodePtr s1 = fMgnr->createFogSensorNode();
 
-	FogTopologyLinkPtr l1 = fMgnr->createFogNodeLink(s1->getID(), f1->getID());
+	FogTopologyLinkPtr l1 = fMgnr->createFogNodeLink(s1, f1);
 
-	FogTopologyPlanPtr fPlan = fMgnr->getPlan();
-
-	fPlan->printPlan();
+	fMgnr->printTopologyPlan();
 }
 
-void createQuery()
+InputQueryPtr createTestQuery()
 {
 	// define config
 	Config config = Config::create().
@@ -57,15 +58,43 @@ void createQuery()
 	.sourceType(Rest);
 
 	// streaming query
-	InputQuery::create(config, schema, s1)
-	.filter(Equal("event_type", "view"))                // filter by event type
+
+	InputQueryPtr query = InputQuery::create(config, schema, s1);
+	query->filter(Equal("event_type", "view"))                // filter by event type
 	.window(TumblingProcessingTimeWindow(Counter(100))) // tumbling window of 100 elements
 	.groupBy("campaign_id")                             // group by campaign id
 	.aggregate(Count())                                 // count results per key and window
 	.write("output.csv");                                // write results to file
 //	.execute();
+
+	return query;
 }
+
+NodeEnginePtr createTestNode()
+{
+	NodeEnginePtr node = std::make_shared<NodeEngine>(1);
+	JSON props = node->getNodeProperties();
+	node->printNodeProperties();
+	return node;
+}
+
 int main(int argc, const char *argv[]) {
 	FogTopologyManager* fMgnr = new FogTopologyManager();
 	createTestTopo(fMgnr);
+
+	InputQueryPtr query = createTestQuery();
+
+	//skipping LogicalPlanManager
+
+	FogOptimizer* fogOpt = new FogOptimizer();
+	FogExecutionPlanPtr execPlan = fogOpt->map(query, fMgnr->getTopologyPlan());
+	fogOpt->optimize(execPlan);//TODO: does nothing atm
+
+	FogRunTime* runtime = new FogRunTime();
+	NodeEnginePtr nodePtr = createTestNode();
+	runtime->registerNode(nodePtr);
+	runtime->deployQuery(execPlan);
+
+
+
 }

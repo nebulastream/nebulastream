@@ -7,4 +7,5 @@ add_source_iotdb(
         GeneratorSource.cpp
         BinarySource.cpp
         BufferManager.cpp
+        ZmqSource.cpp
         )
