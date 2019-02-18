@@ -54,7 +54,7 @@ TEST_F(RuntimeDataSourceTest, ZmqSourceReceiveData) {
   zmq::context_t context(1);
   zmq::socket_t socket(context, ZMQ_PUB);
   auto address = std::string("tcp://") + std::string(LOCAL_HOST) + std::string(":") + std::to_string(LOCAL_PORT);
-  socket.bind(address);
+  socket.bind(address.c_str());
 
   // Start thread for receiving the data.
   bool receiving_finished = false;
