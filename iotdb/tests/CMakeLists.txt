@@ -9,7 +9,7 @@ add_test(NAME engine-start-stop-test COMMAND engine-start-stop-test)
 
 # Copy Test Data
 file(COPY test_data DESTINATION .)
-add_definitions( -DTEST_DATA_PATH="${CMAKE_BINARY_DIR}/test/test_data/" )
+add_definitions( -DTEST_DATA_PATH="${CMAKE_BINARY_DIR}/test_dir/test_data/" )
 
 # Code Generation Tests
 add_executable(code-generation-tests "UnitTests/CodeGenTest.cpp")
@@ -28,7 +28,7 @@ add_test(NAME client-server-communication-tests COMMAND client-server-communicat
 
 # Buffer Manager Test
 add_executable(buffer-manager-test "UnitTests/BufferManagerTest.cpp")
-target_link_libraries(buffer-manager-test ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
+target_link_libraries(buffer-manager-test iotdb ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
 add_test(NAME buffer-manager-test COMMAND buffer-manager-test)
 
 # Test data sources of runtime
