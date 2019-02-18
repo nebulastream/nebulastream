@@ -1,4 +1,4 @@
-# IoTDB
+# IoTDB [![Build Status](https://travis-ci.com/Dima-IoT-System/IoTDB.svg?token=TQvLNjkNrxwrxs343My4&branch=master)](https://travis-ci.com/Dima-IoT-System/IoTDB)
 
 Our awesome new IoT data stream management system :-)
 
