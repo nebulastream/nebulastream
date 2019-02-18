@@ -23,9 +23,12 @@
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/graph_utility.hpp>
 #include <boost/graph/graphviz.hpp>
+#include <boost/graph/topological_sort.hpp>
+
 #include <iostream> // for std::cout
 #include <utility>  // for std::pair
 
+namespace iotdb{
 #define MAX_NUMBER_OF_NODES 10 // TODO: make this dynamic
 /**
  * Links:
@@ -71,6 +74,22 @@ public:
       }
     }
     return false;
+  }
+
+  //
+
+  FogTopologyWorkerNodePtr getRoot() {
+	    boost::graph_traits<graph_t>::vertex_iterator vi, vi_end, next;
+	    boost::tie(vi, vi_end) = vertices(graph);
+	    for (next = vi; vi != vi_end; vi = next) {
+	      ++next;
+	      //first worker node is root TODO:change this
+	      if (graph[*vi].ptr->getEntryType() == Worker)
+	      {
+	    	  graph[*vi].ptr;
+	      }
+	    }
+	    return 0;
   }
 
   boost::graph_traits<graph_t>::vertex_descriptor getVertex(size_t search_id) {
@@ -143,6 +162,10 @@ public:
     currentId = 0;
   }
 
+  FogTopologyWorkerNodePtr getRootNode()
+  {
+	  return fGraph->getRoot();
+  }
   FogTopologyWorkerNodePtr createFogWorkerNode() {
     // TODO: check if id exists
     FogTopologyWorkerNodePtr ptr = std::make_shared<FogTopologyWorkerNode>();
@@ -180,9 +203,10 @@ public:
 
   std::string getTopologyPlanString() { return fGraph->getGraphString(); }
 
+
 private:
   size_t currentId;
   FogGraph *fGraph;
 };
-
+}
 #endif /* INCLUDE_TOPOLOGY_FOGTOPOLOGYPLAN_HPP_ */

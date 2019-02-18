@@ -7,7 +7,8 @@
 #include <vector>
 #include <pthread.h>
 #include <unistd.h>
-#include "metrics.hpp"
+
+#include "../include/NodeEngine/NodeProperties.hpp"
 #include "json.hpp"
 
 
