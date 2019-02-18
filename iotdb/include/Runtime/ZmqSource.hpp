@@ -26,11 +26,11 @@ private:
   const std::string topic;
 
   bool connected;
-  std::unique_ptr<zmq::context_t> zmq_context;
-  std::unique_ptr<zmq::socket_t> zmq_socket;
+  zmq::context_t context;
+  zmq::socket_t socket;
 
-  bool zmq_connect();
-  bool zmq_disconnect();
+  bool connect();
+  bool disconnect();
 };
 
 } // namespace iotdb
