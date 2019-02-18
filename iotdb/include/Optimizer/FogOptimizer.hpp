@@ -10,7 +10,14 @@ namespace iotdb{
 class FogOptimizer
 {
 public:
-	FogOptimizer(){};
+	static FogOptimizer& getInstance()
+	{
+			   static FogOptimizer instance; // Guaranteed to be destroyed.
+									 // Instantiated on first use.
+			   return instance;
+	}
+	FogOptimizer(FogOptimizer const&);// Don't Implement
+	void operator=(FogOptimizer const&); // Don't implement
 
 	FogExecutionPlanPtr map(InputQueryPtr query, FogTopologyPlanPtr plan)
 	{
@@ -27,6 +34,9 @@ public:
 	{
 
 	}
+private:
+	FogOptimizer(){};
+
 
 };
 }
