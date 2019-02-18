@@ -2,40 +2,39 @@
 #include <cstdint>
 #include <cstring>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <zmq.hpp>
 
 #include <Core/TupleBuffer.hpp>
 #include <Runtime/DataSource.hpp>
+#include <Runtime/Dispatcher.hpp>
 #include <Runtime/ZmqSource.hpp>
 
 namespace iotdb {
 
 ZmqSource::ZmqSource(const Schema &schema, const std::string host, const uint16_t port, const std::string topic)
-    : DataSource(schema), host(host), port(port), topic(topic) {
-  connected = false;
-  zmq_context = std::make_unique<zmq::context_t>(1);
-  zmq_socket = std::make_unique<zmq::socket_t>(zmq_context, ZMQ_SUB);
-}
-
-ZmqSource::~ZmqSource() { assert(zmq_disconnect()); }
+    : DataSource(schema), host(host), port(port), topic(topic), connected(false), context(zmq::context_t(1)),
+      socket(zmq::socket_t(context, ZMQ_SUB)) {}
+ZmqSource::~ZmqSource() { assert(disconnect()); }
 
 TupleBuffer ZmqSource::receiveData() {
-  assert(zmq_connect());
+  assert(connect());
 
   // Receive new chunk of data
-  zmq_message_t new_data;
-  zmq_socket.recv(&new_data);
+  zmq::message_t new_data;
+  socket.recv(&new_data); // envelope - not needed at the moment
+  socket.recv(&new_data); // actual data
 
   // Get some information about received data
-  auto buffer_size = new_date.size();
+  auto buffer_size = new_data.size();
   auto tuple_size = schema.getSchemaSize();
   auto number_of_tuples = buffer_size / tuple_size;
 
   // Create new TupleBuffer and copy data
   auto buffer = Dispatcher::instance().getBuffer(number_of_tuples);
   assert(buffer.buffer_size == buffer_size);
-  std::memcpy(buffer.buffer, &new_data.data(), buffer_size);
+  std::memcpy(buffer.buffer, new_data.data(), buffer_size);
 
   return buffer;
 }
@@ -46,30 +45,39 @@ const std::string ZmqSource::toString() const {
   ss << "SCHEMA(" << schema.toString() << "), ";
   ss << "HOST=" << host << ", ";
   ss << "PORT=" << port << ", ";
-  ss << "TOPIC=" << topic << ")";
+  ss << "TOPIC=\"" << topic << "\")";
   return ss.str();
 };
 
-bool ZmqSource::zmq_connect() {
+bool ZmqSource::connect() {
   if (!connected) {
-    int fail = 0;
-    auto adress = std::string("tcp://") + host + std::string(":") + port;
-    fail += zmq_socket.connect(adress);
-    fail += zmq_socket.setsockopt(ZMQ_LINGER, 0); // discard all messages after closing the socket
-    fail += zmq_socket.setsockopt(ZMQ_SUBSCRIBE, topic.c_str(), topic.size()); // subscribe to given topic
-    connected = (fail == 0);
+    int linger = 0;
+    auto address = std::string("tcp://") + host + std::string(":") + std::to_string(port);
+
+    try {
+      socket.connect(address);
+      socket.setsockopt(ZMQ_SUBSCRIBE, topic.c_str(), topic.size());
+      socket.setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
+      connected = true;
+    } catch (...) {
+      connected = false;
+    }
   }
+
   return connected;
 }
 
-bool ZmqSource::zmq_disconnect() {
+bool ZmqSource::disconnect() {
   if (connected) {
-    int fail = 0;
-    fail += zmq_socket.close();
-    fail += zmq_context.close();
-    connected = !(fail == 0);
+
+    try {
+      socket.close();
+      connected = false;
+    } catch (...) {
+      connected = true;
+    }
   }
-  return connected;
+  return !connected;
 }
 
 } // namespace iotdb
