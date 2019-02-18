@@ -30,12 +30,14 @@ namespace iotdb {
 //typedef std::shared_ptr<Window> WindowPtr;
 
 //class Mapper;
+class InputQuery;
+typedef std::shared_ptr<InputQuery> InputQueryPtr;
 
 /** \brief the central abstraction for the user to define queries */
 class InputQuery {
 public:
   ~InputQuery();
-  static InputQuery create(Config& config, Schema& schema, Source& source);
+  static InputQueryPtr create(Config& config, Schema& schema, Source& source);
 
   void execute();
 
@@ -59,8 +61,9 @@ public:
   InputQuery &printQueryPlan();
 
   InputQuery &input(InputType type, std::string path);
-private:
   InputQuery(Config& config, Schema& schema, Source& source);
+
+private:
 //  InputQuery(InputQuery& );
   Config& config;
   Schema& schema;
@@ -71,5 +74,7 @@ private:
   InputQuery &printInputQueryPlan();
 
 };
+
 }
+
 #endif
