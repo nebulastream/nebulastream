@@ -26,6 +26,11 @@ add_executable(client-server-communication-tests "UnitTests/ClientServerCommunic
 target_link_libraries(client-server-communication-tests ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME client-server-communication-tests COMMAND client-server-communication-tests)
 
+# Buffer Manager Test
+add_executable(buffer-manager-test "UnitTests/BufferManagerTest.cpp")
+target_link_libraries(buffer-manager-test ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
+add_test(NAME buffer-manager-test COMMAND buffer-manager-test)
+
 # Test data sources of runtime
 add_executable(runtime-data-source-tests "UnitTests/RuntimeDataSourceTest.cpp")
 target_link_libraries(runtime-data-source-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
