@@ -23,13 +23,12 @@ Dispatcher::~Dispatcher() {
   std::cout << "Destroyed Dispatcher" << std::endl;
 }
 
-TupleBuffer Dispatcher::getBuffer() {
+TupleBuffer Dispatcher::getBuffer(uint32_t number_of_tuples) {
   std::unique_lock<std::mutex> lock(mutex);
   uint32_t tuple_size_bytes = sizeof(uint64_t);
-  uint32_t num_tuples = 10;
-  uint64_t buffer_size = num_tuples * tuple_size_bytes;
+  uint64_t buffer_size = number_of_tuples * tuple_size_bytes;
   void *buffer = malloc(buffer_size);
-  TupleBuffer buf(buffer, buffer_size, tuple_size_bytes, num_tuples);
+  TupleBuffer buf(buffer, buffer_size, tuple_size_bytes, number_of_tuples);
   return buf;
 }
 
