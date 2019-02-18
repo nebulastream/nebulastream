@@ -21,8 +21,10 @@ namespace iotdb {
     std::cout << "buffer_size: " << buffer_size << std::endl;
 
     for (uint32_t i = 0; i < capacity; i ++) {
-      void *buffer = malloc(buffer_size);
-      TupleBufferPtr buf = std::make_shared<TupleBuffer>(buffer, buffer_size, tuple_size_bytes, num_tuples);
+      // void *buffer = malloc(buffer_size);
+      // https://stackoverflow.com/questions/43631415/using-shared-ptr-with-char
+      std::shared_ptr<char> buffer(new char[buffer_size], std::default_delete<char []>());
+      TupleBufferPtr buf = std::make_shared<TupleBuffer>((void *)(buffer.get()), buffer_size, tuple_size_bytes, num_tuples);
       buffers[i] = buf;
     }
 
@@ -31,12 +33,6 @@ namespace iotdb {
 
   BufferManager::~BufferManager() {
     std::cout << "Enter Destructor of BufferManager" << std::endl;
-    for (auto &kv : buffer_pool) {
-      auto &buffers = kv.second;
-      for (auto buffer : buffers) {
-        free(buffer->buffer);
-      }
-    }
     buffer_pool.clear();
   }
 
@@ -47,11 +43,12 @@ namespace iotdb {
   }
 
   TupleBufferPtr BufferManager::getBuffer(const uint64_t size) {
-    std::unique_lock<std::mutex> lock(mutex);
+
     auto found = buffer_pool.find(size);
     assert(found != buffer_pool.cend() && (std::string("No buffers for size ") + std::to_string(size) + std::string(" in pool. bug?")).c_str());
     TupleBufferPtr buf = nullptr;
     auto& buffers = found->second;
+    std::unique_lock<std::mutex> lock(mutex);
     while (buffers.empty()) {
       cv.wait(lock);
     }
@@ -65,12 +62,13 @@ namespace iotdb {
   }
 
   void BufferManager::releaseBuffer(TupleBufferPtr tupleBuffer) {
-    std::unique_lock<std::mutex> lock(mutex);
+
     assert(tupleBuffer != nullptr && "tupleBuffer is nullptr");
     auto found = buffer_pool.find(tupleBuffer->buffer_size);
     assert(found != buffer_pool.cend() && (std::string("No buffers for size ") + std::to_string(tupleBuffer->buffer_size) + std::string(" in pool. bug?")).c_str());
     // {
     auto& buffers = found->second;
+    std::unique_lock<std::mutex> lock(mutex);
     buffers.push_back(tupleBuffer);
     // sanity checking
     assert(buffers.size() <= capacity && "Buffer size is fixed, bug?");
