@@ -12,7 +12,15 @@ using JSON = nlohmann::json;
 
 class FogRunTime{
 public:
-	FogRunTime(){};
+    static FogRunTime& getInstance()
+    {
+               static FogRunTime instance; // Guaranteed to be destroyed.
+                                     // Instantiated on first use.
+               return instance;
+    }
+    FogRunTime(FogRunTime const&);// Don't Implement
+    void operator=(FogRunTime const&); // Don't implement
+
 	void deployQuery(FogExecutionPlanPtr plan){
 		//setup node by sending query
 
@@ -26,6 +34,8 @@ public:
 	void printNodeInfo(JSON data);
 
 private:
+	FogRunTime(){};
+
 	void startFog();
 	void stopFog();
 	std::map<size_t, NodeEnginePtr> nodeInfos;

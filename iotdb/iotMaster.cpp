@@ -22,15 +22,15 @@ using namespace iotdb;
  *		- make it thread safe
  */
 
-void createTestTopo(FogTopologyManager* fMgnr)
+void createTestTopo(FogTopologyManager& fMgnr)
 {
-	FogTopologyWorkerNodePtr f1 = fMgnr->createFogWorkerNode();
+	FogTopologyWorkerNodePtr f1 = fMgnr.createFogWorkerNode();
 
-	FogTopologySensorNodePtr s1 = fMgnr->createFogSensorNode();
+	FogTopologySensorNodePtr s1 = fMgnr.createFogSensorNode();
 
-	FogTopologyLinkPtr l1 = fMgnr->createFogNodeLink(s1, f1);
+	FogTopologyLinkPtr l1 = fMgnr.createFogNodeLink(s1, f1);
 
-	fMgnr->printTopologyPlan();
+	fMgnr.printTopologyPlan();
 }
 
 InputQueryPtr createTestQuery()
@@ -79,21 +79,21 @@ NodeEnginePtr createTestNode()
 }
 
 int main(int argc, const char *argv[]) {
-	FogTopologyManager* fMgnr = new FogTopologyManager();
+	FogTopologyManager& fMgnr = FogTopologyManager::getInstance();
 	createTestTopo(fMgnr);
 
 	InputQueryPtr query = createTestQuery();
 
 	//skipping LogicalPlanManager
 
-	FogOptimizer* fogOpt = new FogOptimizer();
-	FogExecutionPlanPtr execPlan = fogOpt->map(query, fMgnr->getTopologyPlan());
-	fogOpt->optimize(execPlan);//TODO: does nothing atm
+	FogOptimizer& fogOpt = FogOptimizer::getInstance();
+	FogExecutionPlanPtr execPlan = fogOpt.map(query, fMgnr.getTopologyPlan());
+	fogOpt.optimize(execPlan);//TODO: does nothing atm
 
-	FogRunTime* runtime = new FogRunTime();
+	FogRunTime& runtime = FogRunTime::getInstance();
 	NodeEnginePtr nodePtr = createTestNode();
-	runtime->registerNode(nodePtr);
-	runtime->deployQuery(execPlan);
+	runtime.registerNode(nodePtr);
+	runtime.deployQuery(execPlan);
 
 
 
