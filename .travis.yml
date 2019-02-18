@@ -11,9 +11,6 @@ matrix:
 language: cpp
 compiler: clang
 
-branches:
-  only:
-  - master
 
 before_install:
   - sudo apt-get update
