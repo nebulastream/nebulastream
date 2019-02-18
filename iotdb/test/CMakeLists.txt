@@ -30,3 +30,11 @@ add_test(NAME client-server-communication-tests COMMAND client-server-communicat
 add_executable(runtime-data-source-tests "UnitTests/RuntimeDataSourceTest.cpp")
 target_link_libraries(runtime-data-source-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME runtime-data-source-tests COMMAND runtime-data-source-tests)
+
+
+
+add_custom_target(test COMMAND ${CMAKE_CTEST_COMMAND} DEPENDS engine-start-stop-test
+                                                              code-generation-tests
+                                                              fog-topology-tests
+                                                              client-server-communication-tests
+                                                              runtime-data-source-tests)
