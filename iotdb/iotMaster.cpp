@@ -1,12 +1,41 @@
 #include <Topology/FogTopologyManager.hpp>
+#include <API/InputQuery.hpp>
+#include <API/Config.hpp>
+#include <API/Schema.hpp>
 #include "include/API/InputQuery.hpp"
 #include <Optimizer/FogOptimizer.hpp>
 #include <Optimizer/FogRunTime.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Runtime/compiledTestPlan.hpp>
 
+#include <sstream>
+
 using namespace iotdb;
 
+
+InputQueryPtr createTestQuery()
+{
+	 Config config = Config::create().
+		                  withParallelism(1).
+		                  withPreloading().
+		                  withBufferSize(1000).
+		                  withNumberOfPassesOverInput(1);
+
+	  Schema schema = Schema::create().addField("",INT32);
+
+	  /** \brief create a source using the following functions:
+	  * const DataSourcePtr createTestSource();
+	  * const DataSourcePtr createBinaryFileSource(const Schema& schema, const std::string& path_to_file);
+	  * const DataSourcePtr createRemoteTCPSource(const Schema& schema, const std::string& server_ip, int port);
+  */
+	DataSourcePtr source = createTestSource();
+
+	InputQueryPtr ptr = std::make_shared<InputQuery>(InputQuery::create(config, source)
+		      .filter(PredicatePtr())
+		      .printInputQueryPlan());
+
+	return ptr;
+}
 
 CompiledTestQueryExecutionPlanPtr createQEP()
 {
@@ -22,43 +51,6 @@ void createTestTopo(FogTopologyManager& fMgnr)
 	FogTopologyLinkPtr l1 = fMgnr.createFogNodeLink(s1, f1);
 
 	fMgnr.printTopologyPlan();
-}
-
-InputQueryPtr createTestQuery()
-{
-	// define config
-	Config config = Config::create().
-			withParallelism(1).
-			withPreloading().
-			withBufferSize(1000).
-			withNumberOfPassesOverInput(1);
-
-	// define schema
-	Schema schema = Schema::create()
-	.addVarSizeField("user_id", APIDataType::Char, 16)
-	.addVarSizeField("page_id", APIDataType::Char, 16)
-	.addVarSizeField("campaign_id", APIDataType::Char, 16)
-	.addVarSizeField("event_type", APIDataType::Char, 9)
-	.addVarSizeField("ad_type", APIDataType::Char, 9)
-	.addFixSizeField("current_ms", APIDataType::Long)
-	.addFixSizeField("ip", APIDataType::Int);
-
-	Source s1 = Source::create()
-	.path("/home/zeuchste/git/streaming_code_generator/yahoo_data_generator/yahoo_test_data.bin")
-	.inputType(InputType::BinaryFile)
-	.sourceType(Rest);
-
-	// streaming query
-
-	InputQueryPtr query = InputQuery::create(config, schema, s1);
-	query->filter(Equal("event_type", "view"))                // filter by event type
-	.window(TumblingProcessingTimeWindow(Counter(100))) // tumbling window of 100 elements
-	.groupBy("campaign_id")                             // group by campaign id
-	.aggregate(Count())                                 // count results per key and window
-	.write("output.csv");                                // write results to file
-//	.execute();
-
-	return query;
 }
 
 NodeEnginePtr createTestNode()
