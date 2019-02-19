@@ -2,6 +2,8 @@
 #define INCLUDE_OPTIMIZER_FOGRUNTIME_HPP_
 #include <Optimizer/FogExecutionPlan.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <CodeGen/QueryExecutionPlan.hpp>
+#include <Runtime/compiledTestPlan.hpp>
 
 #include <zmq.hpp>
 #include <NodeEngine/json.hpp>
@@ -21,14 +23,10 @@ public:
     FogRunTime(FogRunTime const&);// Don't Implement
     void operator=(FogRunTime const&); // Don't implement
 
-	void deployQuery(FogExecutionPlanPtr plan){
-		//setup node by sending query
+	void deployQuery(FogExecutionPlan fogPlan);
+	void deployQuery(CompiledTestQueryExecutionPlanPtr cPlan);
 
-		//setup sensor
 
-		//start query
-
-	};
 	void registerNode(NodeEnginePtr ptr);
 	void receiveNodeInfo();
 	void printNodeInfo(JSON data);

@@ -3,25 +3,16 @@
 #include <Optimizer/FogOptimizer.hpp>
 #include <Optimizer/FogRunTime.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <Runtime/compiledTestPlan.hpp>
 
 using namespace iotdb;
-/**
- *
- * Open Questions:
- * 		- support half-duplex links?
- *		- how to handle the ids among nodes?
- *		- how does a node knows to whom it is connected?
- *		- make a parrent class for fogentries?
- *
- *	Todo:
- *		- add remove columns/row in matrix
- *		- add node ids
- *		- add unit tests
- *		- make TopologyManager Singleton
- *		- add createFogNode/FogSensor
- *		- make it thread safe
- */
 
+
+CompiledTestQueryExecutionPlanPtr createQEP()
+{
+	CompiledTestQueryExecutionPlanPtr qep(new CompiledTestQueryExecutionPlan());
+    return qep;
+}
 void createTestTopo(FogTopologyManager& fMgnr)
 {
 	FogTopologyWorkerNodePtr f1 = fMgnr.createFogWorkerNode();
@@ -93,8 +84,9 @@ int main(int argc, const char *argv[]) {
 	FogRunTime& runtime = FogRunTime::getInstance();
 	NodeEnginePtr nodePtr = createTestNode();
 	runtime.registerNode(nodePtr);
-	runtime.deployQuery(execPlan);
 
-
+	//TODO: will be replaced with FogExecutionPlan
+	CompiledTestQueryExecutionPlanPtr qep = createQEP();
+	runtime.deployQuery(qep);
 
 }

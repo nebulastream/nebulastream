@@ -6,6 +6,7 @@
 #include "FogTopologyEntry.hpp"
 #include "Util/ErrorHandling.hpp"
 
+namespace iotdb{
 #define NOT_EXISTING_LINK_ID 0
 #define INVALID_NODE_ID 101
 
@@ -65,5 +66,5 @@ private:
 };
 
 typedef std::shared_ptr<FogTopologyLink> FogTopologyLinkPtr;
-
+}
 #endif /* INCLUDE_TOPOLOGY_FOGTOPOLOGYLINK_HPP_ */
