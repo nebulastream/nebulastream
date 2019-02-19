@@ -41,7 +41,7 @@ if(TRAVIS_INCLUDE_DIR)
   message( STATUS "TRAVIS_INCLUDE_DIR:" ${TRAVIS_INCLUDE_DIR} )
 endif()
 
-include_directories(${YOURLIB_INCLUDE_DIR})
+
 
 # Boost Libraries
 find_package(Boost 1.47.0 REQUIRED system thread program_options filesystem) # Only check if lib is available on system for generated code.
@@ -142,7 +142,6 @@ set_target_properties(libgmock PROPERTIES
 # Set Include Dirs
 include_directories("${source_dir}/googletest/include"
                     "${source_dir}/googlemock/include")
-
 
 
 ###########################################################################################

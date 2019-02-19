@@ -21,22 +21,16 @@ typedef unsigned long uint64_t;
 
 class NodeProperties {
 public:
-  NodeProperties() {}
+  NodeProperties() {};
 
   ~NodeProperties() {
-    if (this->sinfo)
-      free(this->sinfo);
-    if (this->svfs)
-      free(this->svfs);
-    if (this->ifaddr)
-      freeifaddrs(this->ifaddr);
   }
 
   void print();
   std::string dump(int setw=-1);
   JSON load(const char *metricsBuffer);
   JSON load();
-public:
+
   void readCpuStats();           // read cpu inforamtion
   void readMemStats();           // read memory information
   void readFsStats();            // read file system information
@@ -53,18 +47,18 @@ private:
    * /proc/meminfo
    * /proc/loadavg
    */
-  struct sysinfo *sinfo;
+//  struct sysinfo *sinfo;
   /*
    * file system information
    * /proc/diskstats
    */
-  struct statvfs *svfs;
+//  struct statvfs *svfs;
   /*
    * network information
    * /proc/net/dev
    *
    */
-  struct ifaddrs *ifaddr;
+//  struct ifaddrs *ifaddr;
 
   long nbrProcessors;
 

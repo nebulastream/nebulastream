@@ -24,7 +24,7 @@ public:
 		FogExecutionPlanPtr execPlan = std::make_shared<FogExecutionPlan>();
 
 		//get Root
-		FogTopologyWorkerNodePtr rootNode = plan->getRootNode();
+		FogTopologyEntryPtr rootNode = plan->getRootNode();
 		rootNode->setQuery(query);
 
 		return execPlan;
@@ -32,11 +32,11 @@ public:
 
 	void optimize(FogExecutionPlanPtr execPlan)
 	{
+		//TODO: do the magic
 
 	}
 private:
 	FogOptimizer(){};
-
 
 };
 }

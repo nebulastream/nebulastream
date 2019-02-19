@@ -41,7 +41,7 @@ public:
 
   FogTopologyPlanPtr getTopologyPlan() {return currentPlan;}
 
-  FogTopologyWorkerNodePtr getRootNode(){return currentPlan->getRootNode();};
+  FogTopologyEntryPtr getRootNode(){return currentPlan->getRootNode();};
 
 private:
   FogTopologyManager() { currentPlan = std::make_shared<FogTopologyPlan>(); }
