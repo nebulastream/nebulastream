@@ -19,6 +19,7 @@ public:
   static InputQuery create(const Config& config, const DataSourcePtr& source);
   InputQuery(const InputQuery& );
   ~InputQuery();
+
   void execute();
 
   // relational operators
@@ -49,6 +50,8 @@ private:
 
 /* this function **executes** the code provided by the user and returns an InputQuery Object */
 const InputQuery createQueryFromCodeString(const std::string&);
+typedef std::shared_ptr<InputQuery> InputQueryPtr;
 
 }
+
 #endif

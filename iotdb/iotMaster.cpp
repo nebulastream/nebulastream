@@ -2,134 +2,83 @@
 #include <API/InputQuery.hpp>
 #include <API/Config.hpp>
 #include <API/Schema.hpp>
+#include "include/API/InputQuery.hpp"
+#include <Optimizer/FogOptimizer.hpp>
+#include <Optimizer/FogRunTime.hpp>
+#include <NodeEngine/NodeEngine.hpp>
+#include <Runtime/compiledTestPlan.hpp>
 
 #include <sstream>
 
-namespace iotdb{
-/**
- *
- * Open Questions:
- * 		- support half-duplex links?
- *		- how to handle the ids among nodes?
- *		- how does a node knows to whom it is connected?
- *		- make a parrent class for fogentries?
- *
- *	Todo:
- *		- add remove columns/row in matrix
- *		- add node ids
- *		- add unit tests
- *		- make TopologyManager Singleton
- *		- add createFogNode/FogSensor
- *		- make it thread safe
- */
+using namespace iotdb;
 
-void createTestTopo(FogTopologyManager* fMgnr)
+
+InputQueryPtr createTestQuery()
 {
-	FogTopologyWorkerNodePtr f1 = fMgnr->createFogWorkerNode();
+	 Config config = Config::create().
+		                  withParallelism(1).
+		                  withPreloading().
+		                  withBufferSize(1000).
+		                  withNumberOfPassesOverInput(1);
 
-	FogTopologySensorPtr s1 = fMgnr->createFogSensorNode();
+	  Schema schema = Schema::create().addField("",INT32);
 
-	FogTopologyLinkPtr l1 = fMgnr->createFogNodeLink(s1->getID(), f1->getID());
+	  /** \brief create a source using the following functions:
+	  * const DataSourcePtr createTestSource();
+	  * const DataSourcePtr createBinaryFileSource(const Schema& schema, const std::string& path_to_file);
+	  * const DataSourcePtr createRemoteTCPSource(const Schema& schema, const std::string& server_ip, int port);
+  */
+	DataSourcePtr source = createTestSource();
 
-	FogTopologyPlanPtr fPlan = fMgnr->getPlan();
+	InputQueryPtr ptr = std::make_shared<InputQuery>(InputQuery::create(config, source)
+		      .filter(PredicatePtr())
+		      .printInputQueryPlan());
 
-	fPlan->printPlan();
+	return ptr;
 }
 
-/*
-void createQuery()
+CompiledTestQueryExecutionPlanPtr createQEP()
 {
-	// define config
-	Config config = Config::create().
-			withParallelism(1).
-			withPreloading().
-			withBufferSize(1000).
-			withNumberOfPassesOverInput(1);
-
-	// define schema
-	Schema schema = Schema::create()
-	.addVarSizeField("user_id", APIDataType::Char, 16)
-	.addVarSizeField("page_id", APIDataType::Char, 16)
-	.addVarSizeField("campaign_id", APIDataType::Char, 16)
-	.addVarSizeField("event_type", APIDataType::Char, 9)
-	.addVarSizeField("ad_type", APIDataType::Char, 9)
-	.addFixSizeField("current_ms", APIDataType::Long)
-	.addFixSizeField("ip", APIDataType::Int);
-
-	Source s1 = Source::create()
-	.path("/home/zeuchste/git/streaming_code_generator/yahoo_data_generator/yahoo_test_data.bin")
-	.inputType(InputType::BinaryFile)
-	.sourceType(Rest);
-
-
-	// streaming query
-	InputQuery::create(config, schema, s1)
-	.filter(Equal("event_type", "view"))                // filter by event type
-	.window(TumblingProcessingTimeWindow(Counter(100))) // tumbling window of 100 elements
-	.groupBy(schema)                             // group by campaign id
-	.aggregate(Count())                                 // count results per key and window
-	.write("output.csv");                                // write results to file
-//	.execute();
+	CompiledTestQueryExecutionPlanPtr qep(new CompiledTestQueryExecutionPlan());
+    return qep;
 }
-*/
+void createTestTopo(FogTopologyManager& fMgnr)
+{
+	FogTopologyWorkerNodePtr f1 = fMgnr.createFogWorkerNode();
 
-//void createQuery()
-//{
-//  // define config
-//  Config config = Config::create().
-//                  withParallelism(1).
-//                  withPreloading().
-//                  withBufferSize(1000).
-//                  withNumberOfPassesOverInput(1);
+	FogTopologySensorNodePtr s1 = fMgnr.createFogSensorNode();
 
-//  Schema schema = Schema::create().addField("",INT32);
+	FogTopologyLinkPtr l1 = fMgnr.createFogNodeLink(s1, f1);
 
-//  Source s1 = Source::create()
-//  .path("/home/zeuchste/git/streaming_code_generator/yahoo_data_generator/yahoo_test_data.bin")
-//  .inputType(InputType::BinaryFile)
-//  .sourceType(Rest);
+	fMgnr.printTopologyPlan();
+}
 
-
-//  InputQuery::create(config,  s1)
-//      .filter(PredicatePtr())
-//      .printInputQueryPlan();
-
-//  AttributeFieldPtr attr = schema[0];
-
-//}
-
-//void createQueryString(){
-
-//  std::stringstream code;
-//  code << "Config config = Config::create()."
-//          "        withParallelism(1)."
-//          "        withPreloading()."
-//          "        withBufferSize(1000)."
-//          "        withNumberOfPassesOverInput(1);" << std::endl;
-
-//  code << "Schema schema = Schema::create().addField(\"\",INT32);" << std::endl;
-
-//  code << "Source s1 = Source::create()"
-//  << ".path(\"/home/zeuchste/git/streaming_code_generator/yahoo_data_generator/yahoo_test_data.bin\")"
-//  << ".inputType(InputType::BinaryFile)"
-//  << ".sourceType(Rest);" << std::endl;
-
-//  code << "return InputQuery::create(config, schema, s1)" << std::endl
-//       << ".filter(PredicatePtr())" << std::endl
-//       <<   ".printInputQueryPlan();" << std::endl;
-
-//  InputQuery q(createQueryFromCodeString(code.str()));
-//}
-
-};
+NodeEnginePtr createTestNode()
+{
+	NodeEnginePtr node = std::make_shared<NodeEngine>(1);
+	JSON props = node->getNodeProperties();
+	node->printNodeProperties();
+	return node;
+}
 
 int main(int argc, const char *argv[]) {
-	using namespace iotdb;
-	FogTopologyManager* fMgnr = new FogTopologyManager();
+	FogTopologyManager& fMgnr = FogTopologyManager::getInstance();
 	createTestTopo(fMgnr);
 
-//	createQuery();
-//	createQueryString();
+	InputQueryPtr query = createTestQuery();
 
-	return 0;
+	//skipping LogicalPlanManager
+
+	FogOptimizer& fogOpt = FogOptimizer::getInstance();
+	FogExecutionPlanPtr execPlan = fogOpt.map(query, fMgnr.getTopologyPlan());
+	fogOpt.optimize(execPlan);//TODO: does nothing atm
+
+	FogRunTime& runtime = FogRunTime::getInstance();
+	NodeEnginePtr nodePtr = createTestNode();
+	runtime.registerNode(nodePtr);
+
+	//TODO: will be replaced with FogExecutionPlan
+	CompiledTestQueryExecutionPlanPtr qep = createQEP();
+	runtime.deployQuery(qep);
+
 }
