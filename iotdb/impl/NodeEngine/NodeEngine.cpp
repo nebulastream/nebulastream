@@ -40,6 +40,7 @@ void NodeEngine::sendNodePropertiesToServer(std::string ip, std::string port)
 
 void NodeEngine::deployQuery(CompiledTestQueryExecutionPlanPtr qep)
 {
+	//TODO:add compile here
 	Dispatcher::instance().registerQuery(qep);
 
 	ThreadPool thread_pool;
