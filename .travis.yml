@@ -22,7 +22,7 @@ script:
   - clang++ --version
   - cd iotdb && mkdir debug-build && cd debug-build
   - cmake -DCMAKE_BUILD_TYPE=Debug ..
-  - make && make test
+  - make -j && make test
 
 notifications:
   email: false
