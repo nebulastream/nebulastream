@@ -48,7 +48,7 @@ public:
 /* Receive 'ADD_QEUERY'-command. */
 TEST_F(ClientServerCommunicationTest, add_query) {
 
-  auto test_file_path = std::string(TEST_DATA_PATH).append("ClientServerCommunication_TestQuery.cpp");
+  auto test_file_path = std::string(TEST_DATA_DIRECTORY).append("ClientServerCommunication_TestQuery.cpp");
   std::cout << "Path of the test file: " << test_file_path << std::endl;
 
   auto request = IotClient::add_query_request(test_file_path);

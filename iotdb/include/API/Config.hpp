@@ -1,3 +1,6 @@
+
+#pragma once
+
 #include <string>
 
 namespace iotdb {
@@ -34,4 +37,5 @@ private:
   bool preloading;
   std::string sourcePath;
 };
+
 }

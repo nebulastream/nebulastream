@@ -72,7 +72,8 @@ void NodeProperties::readNetworkStats() {
 
   int family, s;
   char host[NI_MAXHOST];
-  if (getifaddrs(&this->ifaddr) == -1) {
+  struct ifaddrs *ifaddr;
+  if (getifaddrs(&ifaddr) == -1) {
     std::cerr << "ERROR: getifaddrs failed" << std::endl;
     return ;
   }
@@ -82,7 +83,7 @@ void NodeProperties::readNetworkStats() {
   std::map<std::string, int> keeper;
 
   int n = 0;
-  for (ifa = this->ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
+  for (ifa = ifaddr; ifa != NULL; ifa = ifa->ifa_next) {
     if (ifa->ifa_addr == NULL)
       continue;
 
@@ -147,26 +148,25 @@ void NodeProperties::readNetworkStats() {
 void NodeProperties::readMemStats() {
   this->_mem.clear();
 
+  struct sysinfo* sinfo = (struct sysinfo *)malloc(sizeof(struct sysinfo));
 
-  if (this->sinfo == NULL)
-    this->sinfo = (struct sysinfo *)malloc(sizeof(struct sysinfo));
-  int ret = sysinfo(this->sinfo);
+  int ret = sysinfo(sinfo);
   if (ret == EFAULT)
     perror("ERROR: read filesystem ");
 
-  this->_mem["totalram"] = this->sinfo->totalram;
-  this->_mem["totalswap"] = this->sinfo->totalswap;
-  this->_mem["freeram"] = this->sinfo->freeram;
-  this->_mem["sharedram"] = this->sinfo->sharedram;
-  this->_mem["bufferram"] = this->sinfo->bufferram;
-  this->_mem["freeswap"] = this->sinfo->freeswap;
-  this->_mem["totalhigh"] = this->sinfo->totalhigh;
-  this->_mem["freehigh"] = this->sinfo->freehigh;
-  this->_mem["procs"] = this->sinfo->procs;
-  this->_mem["mem_unit"] = this->sinfo->mem_unit;
-  this->_mem["loads_1min"] = this->sinfo->loads[0];
-  this->_mem["loads_5min"] = this->sinfo->loads[1];
-  this->_mem["loads_15min"] = this->sinfo->loads[2];
+  this->_mem["totalram"] = sinfo->totalram;
+  this->_mem["totalswap"] = sinfo->totalswap;
+  this->_mem["freeram"] = sinfo->freeram;
+  this->_mem["sharedram"] = sinfo->sharedram;
+  this->_mem["bufferram"] = sinfo->bufferram;
+  this->_mem["freeswap"] = sinfo->freeswap;
+  this->_mem["totalhigh"] = sinfo->totalhigh;
+  this->_mem["freehigh"] = sinfo->freehigh;
+  this->_mem["procs"] = sinfo->procs;
+  this->_mem["mem_unit"] = sinfo->mem_unit;
+  this->_mem["loads_1min"] = sinfo->loads[0];
+  this->_mem["loads_5min"] = sinfo->loads[1];
+  this->_mem["loads_15min"] = sinfo->loads[2];
 
   this->_metrics["mem"] = this->_mem;
 }
@@ -174,19 +174,17 @@ void NodeProperties::readMemStats() {
 void NodeProperties::readFsStats() {
   // this->_cpus = JSON({});
   this->_fs.clear();
+  struct statvfs *svfs = (struct statvfs *)malloc(sizeof(struct statvfs));
 
-  if (this->svfs == NULL)
-    this->svfs = (struct statvfs *)malloc(sizeof(struct statvfs));
-
-  int ret = statvfs("/", this->svfs);
+  int ret = statvfs("/", svfs);
   if (ret == EFAULT)
     perror("ERROR: read filesystem ");
 
-  this->_fs["f_bsize"] = this->svfs->f_bsize;
-  this->_fs["f_frsize"] = this->svfs->f_frsize;
-  this->_fs["f_blocks"] = this->svfs->f_blocks;
-  this->_fs["f_bfree"] = this->svfs->f_bfree;
-  this->_fs["f_bavail"] = this->svfs->f_bavail;
+  this->_fs["f_bsize"] = svfs->f_bsize;
+  this->_fs["f_frsize"] = svfs->f_frsize;
+  this->_fs["f_blocks"] = svfs->f_blocks;
+  this->_fs["f_bfree"] = svfs->f_bfree;
+  this->_fs["f_bavail"] = svfs->f_bavail;
 
   this->_metrics["fs"] = this->_fs;
 }
