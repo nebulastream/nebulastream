@@ -18,23 +18,8 @@ before_install:
 - sudo apt-get install -y libboost1.58-all-dev
 
 script:
-- clang --version
-- clang++ --version
-- cd iotdb && mkdir debug-build && cd debug-build
-- cmake -DCMAKE_BUILD_TYPE=Debug ..
-- make
-
-
-notifications:
-  email: false
-  - sudo apt-get update
-  - sudo apt-get install -y libclang-dev
-  - sudo apt-get install -y libzmq-dev
-  - sudo apt-get install -y libboost1.58-all-dev
-
-script:
   - clang --version
-  - clang++ --version 
+  - clang++ --version
   - cd iotdb && mkdir debug-build && cd debug-build
   - cmake -DCMAKE_BUILD_TYPE=Debug ..
   - make && make test
