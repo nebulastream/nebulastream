@@ -172,7 +172,7 @@ target_include_directories(ClangAstBuilder PUBLIC "include")
 #target_include_directories(iotNode PUBLIC "include")
 
 add_executable(iotMaster iotMaster.cpp)
-target_link_libraries(iotMaster iotdb ${LLCMAKE_DL_LIBSVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
+target_link_libraries(iotMaster iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
 target_include_directories(iotMaster PUBLIC "include")
 
 add_subdirectory(tests)
