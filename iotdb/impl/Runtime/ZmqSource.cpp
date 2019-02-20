@@ -55,7 +55,7 @@ bool ZmqSource::connect() {
     auto address = std::string("tcp://") + host + std::string(":") + std::to_string(port);
 
     try {
-      socket.connect(address);
+      socket.connect(address.c_str());
       socket.setsockopt(ZMQ_SUBSCRIBE, topic.c_str(), topic.size());
       socket.setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
       connected = true;

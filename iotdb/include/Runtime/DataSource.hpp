@@ -36,6 +36,10 @@ protected:
   Schema schema;
 };
 typedef std::shared_ptr<DataSource> DataSourcePtr;
+
+const DataSourcePtr createTestSource();
+const DataSourcePtr createBinaryFileSource(const Schema& schema, const std::string& path_to_file);
+const DataSourcePtr createRemoteTCPSource(const Schema& schema, const std::string& server_ip, int port);
 }
 
 #endif /* INCLUDE_DATASOURCE_H_ */

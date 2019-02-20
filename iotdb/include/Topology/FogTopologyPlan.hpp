@@ -78,7 +78,7 @@ public:
 
   //
 
-  FogTopologyWorkerNodePtr getRoot() {
+  FogTopologyEntryPtr getRoot() {
 	    boost::graph_traits<graph_t>::vertex_iterator vi, vi_end, next;
 	    boost::tie(vi, vi_end) = vertices(graph);
 	    for (next = vi; vi != vi_end; vi = next) {
@@ -86,7 +86,7 @@ public:
 	      //first worker node is root TODO:change this
 	      if (graph[*vi].ptr->getEntryType() == Worker)
 	      {
-	    	  graph[*vi].ptr;
+	    	  return graph[*vi].ptr;
 	      }
 	    }
 	    return 0;
@@ -162,7 +162,7 @@ public:
     currentId = 0;
   }
 
-  FogTopologyWorkerNodePtr getRootNode()
+  FogTopologyEntryPtr getRootNode()
   {
 	  return fGraph->getRoot();
   }

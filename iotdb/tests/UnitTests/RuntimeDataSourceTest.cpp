@@ -5,8 +5,6 @@
 #include <thread>
 #include <zmq.hpp>
 
-#include <API/APIDataTypes.hpp>
-#include <API/Field.hpp>
 #include <API/Schema.hpp>
 #include <Runtime/ZmqSource.hpp>
 
@@ -41,8 +39,8 @@ TEST_F(RuntimeDataSourceTest, ZmqSourceReceiveData) {
 
   // Create ZeroMQ Data Source.
   auto schema = Schema::create()
-                    .addVarSizeField("KEY", APIDataType(APIDataType::Uint), 4)
-                    .addVarSizeField("VALUE", APIDataType(APIDataType::Uint), 4);
+                    .addField("KEY", UINT32)
+                    .addField("VALUE", UINT32);
   auto zmq_source = std::make_shared<ZmqSource>(schema, LOCAL_HOST, LOCAL_PORT, "TOPIC");
   std::cout << zmq_source->toString() << std::endl;
 
@@ -54,7 +52,7 @@ TEST_F(RuntimeDataSourceTest, ZmqSourceReceiveData) {
   zmq::context_t context(1);
   zmq::socket_t socket(context, ZMQ_PUB);
   auto address = std::string("tcp://") + std::string(LOCAL_HOST) + std::string(":") + std::to_string(LOCAL_PORT);
-  socket.bind(address);
+  socket.bind(address.c_str());
 
   // Start thread for receiving the data.
   bool receiving_finished = false;

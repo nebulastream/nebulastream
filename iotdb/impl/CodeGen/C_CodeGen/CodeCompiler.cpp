@@ -32,7 +32,7 @@
 namespace iotdb {
 
 const std::string CCodeCompiler::IncludePath =
-    PATH_TO_IOTDB_SOURCE_CODE"/iotdb/include/";
+    PATH_TO_IOTDB_SOURCE_CODE"/include/";
 
 const std::string CCodeCompiler::MinimalApiHeaderPath =
     PATH_TO_IOTDB_SOURCE_CODE

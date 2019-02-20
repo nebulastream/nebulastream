@@ -22,7 +22,9 @@ public:
   /* Will be called before a test is executed. */
   void SetUp() {
     std::cout << "Setup FogTopologyManager test case." << std::endl;
-    topology_manager = std::make_shared<FogTopologyManager>();
+    topology_manager.reset(&FogTopologyManager::getInstance());
+
+//    topology_manager = std::make_shared<FogTopologyManager>();
   }
 
   /* Will be called before a test is executed. */
@@ -345,7 +347,9 @@ public:
   /* Will be called before a test is executed. */
   void SetUp() {
     std::cout << "Setup FogTopologyGraph test case." << std::endl;
-    topology_manager = std::make_shared<FogTopologyManager>();
+//    topology_manager = std::make_shared<FogTopologyManager>();
+    topology_manager.reset(&FogTopologyManager::getInstance());
+
     fog_graph = std::make_shared<FogGraph>();
   }
 

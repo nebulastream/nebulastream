@@ -13,6 +13,27 @@ void FogRunTime::registerNode(NodeEnginePtr ptr)
 	}
 }
 
+void FogRunTime::deployQuery(FogExecutionPlan fogPlan)
+{
+	assert(0);
+}
+
+void FogRunTime::deployQuery(CompiledTestQueryExecutionPlanPtr cPlan)
+{
+	//setup node by sending query
+	assert(nodeInfos.size() == 1);
+	for(auto node : nodeInfos)
+	{
+		node.second->deployQuery(cPlan);
+	}
+
+
+	//setup sensor
+
+	//start query
+
+}
+
 
 void FogRunTime::receiveNodeInfo()
 {
