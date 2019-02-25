@@ -17,8 +17,9 @@ public:
   Scan(const Scan&);
   void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
   void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
-  const OperatorPtr copy() override;
+  const OperatorPtr copy() const override;
   const std::string toString() const override;
+  OperatorType getOperatorType() const override;
   ~Scan() override;
 private:
   DataSourcePtr source;
@@ -39,7 +40,7 @@ void Scan::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::os
 
 }
 
-const OperatorPtr Scan::copy(){
+const OperatorPtr Scan::copy() const{
   return std::make_shared<Scan>(*this);
 }
 
@@ -49,17 +50,23 @@ const std::string Scan::toString() const{
   return ss.str();
 }
 
+OperatorType Scan::getOperatorType() const{
+  return SCAN_OP;
+}
+
 Scan::~Scan(){
 }
 
 class Selection : public Operator {
 public:
   Selection(PredicatePtr _predicate);
-  Selection(const Selection& op);
+  Selection(const Selection& other);
+  Selection& operator = (const Selection& other);
   void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
   void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
-  const OperatorPtr copy() override;
+  const OperatorPtr copy() const override;
   const std::string toString() const override;
+  OperatorType getOperatorType() const override;
   ~Selection() override;
 private:
   PredicatePtr predicate;
@@ -70,9 +77,16 @@ Selection::Selection(PredicatePtr _predicate)
 {
 }
 
-Selection::Selection(const Selection& op)
-  : predicate(op.predicate)
+Selection::Selection(const Selection& other)
+  : predicate(other.predicate)
 {
+}
+
+Selection& Selection::operator = (const Selection& other){
+  if (this != &other){
+    predicate = other.predicate;
+  }
+  return *this;
 }
 
 void Selection::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out){
@@ -82,7 +96,7 @@ void Selection::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, st
 
 }
 
-const OperatorPtr Selection::copy(){
+const OperatorPtr Selection::copy() const{
   return std::make_shared<Selection>(*this);
 }
 
@@ -91,6 +105,10 @@ const std::string Selection::toString() const{
   ss << "SELECTION( *** )";
 //  ss << "SELECTION(" << iotdb::toString(predicate) << ")";
   return ss.str();
+}
+
+OperatorType Selection::getOperatorType() const{
+  return FILTER_OP;
 }
 
 Selection::~Selection(){
