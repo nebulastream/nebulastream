@@ -2,6 +2,8 @@
 #define INCLUDE_OPTIMIZER_FOGRUNTIME_HPP_
 #include <Optimizer/FogExecutionPlan.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <CodeGen/QueryExecutionPlan.hpp>
+#include <Runtime/compiledTestPlan.hpp>
 
 #include <zmq.hpp>
 #include <NodeEngine/json.hpp>
@@ -12,20 +14,26 @@ using JSON = nlohmann::json;
 
 class FogRunTime{
 public:
-	FogRunTime(){};
-	void deployQuery(FogExecutionPlanPtr plan){
-		//setup node by sending query
+    static FogRunTime& getInstance()
+    {
+               static FogRunTime instance; // Guaranteed to be destroyed.
+                                     // Instantiated on first use.
+               return instance;
+    }
+    FogRunTime(FogRunTime const&);// Don't Implement
+    void operator=(FogRunTime const&); // Don't implement
 
-		//setup sensor
+	void deployQuery(FogExecutionPlan fogPlan);
+	void deployQuery(CompiledTestQueryExecutionPlanPtr cPlan);
 
-		//start query
 
-	};
 	void registerNode(NodeEnginePtr ptr);
 	void receiveNodeInfo();
 	void printNodeInfo(JSON data);
 
 private:
+	FogRunTime(){};
+
 	void startFog();
 	void stopFog();
 	std::map<size_t, NodeEnginePtr> nodeInfos;

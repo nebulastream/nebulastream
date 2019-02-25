@@ -5,7 +5,6 @@ if(POLICY CMP0004)
   cmake_policy(SET CMP0004 OLD)
 endif()
 
-
 # Custome CMake find instructions and macros
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
 include(cmake/macros.cmake)
@@ -20,14 +19,21 @@ set(CMAKE_CXX_FLAGS "-Wall -g")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
 set(CMAKE_CXX_FLAGS_RELEASE "-Wextra -O3")
 
+# Compiler should produce specific code for system architecture
+include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
+if(COMPILER_SUPPORTS_MARCH_NATIVE)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native -mavx")
+endif()
+
 # LLVM
 find_package(LLVM 3.6.0 REQUIRED)
 find_package(clang REQUIRED)
 
-#ZMPQ
+# ZMPQ
 find_package(ZMQ)
-set(LIBRARIES ${LIBRARIES} ${ZMQ_LIBRARIES})
 include_directories(${ZMQ_INCLUDE_DIRS})
+set(LIBRARIES ${LIBRARIES} ${ZMQ_LIBRARIES})
 
 # TRAVIS-CI
 if(TRAVIS_INCLUDE_DIR)
@@ -35,10 +41,14 @@ if(TRAVIS_INCLUDE_DIR)
   message( STATUS "TRAVIS_INCLUDE_DIR:" ${TRAVIS_INCLUDE_DIR} )
 endif()
 
-include_directories(${YOURLIB_INCLUDE_DIR})
 
-#boost
+
+# Boost Libraries
 find_package(Boost 1.47.0 REQUIRED system thread program_options filesystem) # Only check if lib is available on system for generated code.
+link_directories(${Boost_LIBRARY_DIRS})
+include_directories(${Boost_INCLUDE_DIRS})
+set(LIBRARIES ${LIBRARIES} ${Boost_LIBRARIES})
+
 
 # Definition of runtime variables ######################################################################################
 
@@ -46,7 +56,7 @@ find_package(Boost 1.47.0 REQUIRED system thread program_options filesystem) # O
 set(CLANG_EXECUTABLE ${LLVM_ROOT_DIR}/bin/clang++)
 set(CLANG_FORMAT_EXECUTABLE ${LLVM_ROOT_DIR}/bin/clang-format)
 set(GENERATED_CODE_DIRECTORY ${PROJECT_BINARY_DIR}/generated-code)
-set(TEST_DATA_DIRECTORY ${PROJECT_BINARY_DIR}/test/test_data)
+set(TEST_DATA_DIRECTORY ${PROJECT_BINARY_DIR}/test_dir/test_data)
 set(PATH_TO_IOTDB_SOURCE_CODE ${PROJECT_SOURCE_DIR})
 
 # set clang binary for query compilation
@@ -82,48 +92,10 @@ add_definitions( -D '__STDC_LIMIT_MACROS' )
 include_directories(${CLANG_INCLUDE_DIRS})
 include_directories(${LLVM_INCLUDE_DIRS})
 
-
-#set(LIBRARIES ${LIBRARIES} ${CLANG_LIBS} ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLVM_CFLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LLVM_LDFLAGS}")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LLVM_LDFLAGS}")
-#set(LIBRARIES ${LIBRARIES} "${CMAKE_SHARED_LINKER_FLAGS}")
 
-
-# Compiler should produce specific code for system architecture
-include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
-if(COMPILER_SUPPORTS_MARCH_NATIVE)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native -mavx")
-endif()
-
-# Threads
-#set(THREADS_PREFER_PTHREAD_FLAG ON)
-#find_package(Threads REQUIRED)
-#set(LIBRARIES ${LIBRARIES} Threads::Threads)
-
-
-
-# Boost Libraries
-find_package(Boost 1.47.0 REQUIRED system thread program_options filesystem) # Only check if lib is available on system for generated code.
-link_directories(${Boost_LIBRARY_DIRS})
-include_directories(${Boost_INCLUDE_DIRS})
-set(LIBRARIES ${LIBRARIES} ${Boost_LIBRARIES})
-
-# Intel TBB
-#find_package(TBB REQUIRED) # Only check if lib is available on system for generated code.
-# link_directories(${TBB_INCLUDE_DIRS})
-# include_directories(${TBB_INCLUDE_DIRS})
-# set(LIBRARIES ${LIBRARIES} ${TBB_LIBRARIES})
-
-# Use Performance Counters?
-if(USE_PERFORMANCE_COUNTER)
-    find_package(PAPI)
-    set(LIBRARIES ${LIBRARIES} ${PAPI_LIBRARIES})
-endif(USE_PERFORMANCE_COUNTER)
-
-
-###########################################################################################
 
 # Enable Testing with gtest ############################################################################################
 include(ExternalProject)
@@ -133,6 +105,7 @@ ExternalProject_Add(
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/gtest
     # Disable install step
     INSTALL_COMMAND ""
+    URL_HASH SHA256=927827c183d01734cc5cfef85e0ff3f5a92ffe6188e0d18e909c5efebf28a0c7
 )
 
 # Get GTest source and binary directories from CMake project
@@ -171,11 +144,11 @@ include_directories("${source_dir}/googletest/include"
                     "${source_dir}/googlemock/include")
 
 
-
 ###########################################################################################
 
 # Add Source Code
 add_subdirectory(impl)
+
 # Add Library
 get_source_iotdb(iotdb_SOURCE_FILES)
 get_header_iotdb(iotdb_HEADER_FILES)
@@ -201,16 +174,16 @@ target_include_directories(ClangAstBuilder PUBLIC "include")
 add_executable(iotMaster iotMaster.cpp)
 target_link_libraries(iotMaster iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
 target_include_directories(iotMaster PUBLIC "include")
- 
-add_subdirectory(test)
 
+add_subdirectory(tests)
 add_executable(iotClient iotClient.cpp)
-target_link_libraries(iotClient ${Boost_LIBRARIES} ${ZMQ_LIBRARIES})
+target_link_libraries(iotClient ${LIBRARIES})
 target_include_directories(iotClient PUBLIC "include")
- 
+
 add_executable(iotServer iotServer.cpp)
-target_link_libraries(iotServer ${Boost_LIBRARIES} ${ZMQ_LIBRARIES})
+target_link_libraries(iotServer ${LIBRARIES})
 target_include_directories(iotServer PUBLIC "include")
+
 
 message(STATUS "INCLUDE_DIRS:")
 get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)

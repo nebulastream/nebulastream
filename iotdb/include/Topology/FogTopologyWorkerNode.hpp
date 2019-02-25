@@ -12,7 +12,7 @@ namespace iotdb{
 class FogTopologyWorkerNode : public FogTopologyEntry {
 
 public:
-  FogTopologyWorkerNode() { node_id = INVALID_NODE_ID; }
+  FogTopologyWorkerNode() {node_id = INVALID_NODE_ID;}
 
   void setId(size_t id) { node_id = id; }
   size_t getId() { return node_id; }
@@ -20,7 +20,11 @@ public:
   FogNodeType getEntryType() { return Worker; }
   std::string getEntryTypeString() { return "Worker"; }
 
-  void setQuery(InputQueryPtr pQuery){query = pQuery;};
+  void setQuery(InputQueryPtr pQuery)
+  {
+	  query = pQuery;
+  };
+
 private:
   size_t node_id;
   InputQueryPtr query;
