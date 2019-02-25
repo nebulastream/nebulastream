@@ -12,6 +12,21 @@ namespace iotdb{
         return *this;
     }
 
+    Sort::Sort(SortAttr field1) : param(){
+        param.push_back(field1);
+    }
+
+    Sort::Sort(SortAttr field1,SortAttr field2) : param(){
+        param.push_back(field1);
+        param.push_back(field2);
+    }
+
+    Sort::Sort(SortAttr field1,SortAttr field2, SortAttr field3) : param(){
+        param.push_back(field1);
+        param.push_back(field2);
+        param.push_back(field3);
+    }
+
 //const DataSourcePtr copy(const DataSourcePtr& param){ return param->copy();}
 //const DataSinkPtr copy(const DataSinkPtr& param){ return param->copy();}
 //const PredicatePtr copy(const PredicatePtr& param){ return param->copy();}

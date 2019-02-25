@@ -52,6 +52,7 @@ struct Attributes{
 enum SortOrder{ASCENDING,DESCENDING};
 
 struct SortAttr{
+
     AttributeFieldPtr field;
     SortOrder order;
 };
