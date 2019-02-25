@@ -35,18 +35,16 @@ public:
   virtual OperatorType getOperatorType() const = 0;
 };
 
-const OperatorPtr createScanOperator(const DataSourcePtr& source);
-const OperatorPtr createSelectionOperator(const PredicatePtr& predicate);
-const OperatorPtr createGroupedAggregationOperator(const Attributes& grouping_fields, const AggregationPtr& aggr_spec);
-const OperatorPtr createOrderByOperator(const Sort& fields);
-const OperatorPtr createJoinOperator(const InputQuery& sub_query, const JoinPredicatePtr& joinPred);
-
-const OperatorPtr createWindowOperator(const WindowPtr& window);
-const OperatorPtr createKeyByOperator(const Attributes& fields);
+const OperatorPtr createAggregationOperator(const AggregationSpec& aggr_spec);
+const OperatorPtr createFilterOperator(const PredicatePtr& predicate);
+const OperatorPtr createJoinOperator(const JoinPredicatePtr& join_spec);
+const OperatorPtr createKeyByOperator(const Attributes& keyby_spec);
 const OperatorPtr createMapOperator(const MapperPtr& mapper);
+const OperatorPtr createSinkOperator(const DataSinkPtr& sink);
+const OperatorPtr createSortOperator(const Sort& sort_spec);
+const OperatorPtr createSourceOperator(const DataSourcePtr& source);
+const OperatorPtr createWindowOperator(const WindowPtr& window_spec);
 
-const OperatorPtr createWriteFileOperator(const std::string& file_name);
-const OperatorPtr createPrintOperator(std::ostream& out);
 
 }
 
