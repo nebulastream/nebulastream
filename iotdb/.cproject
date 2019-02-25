@@ -14,7 +14,7 @@
 				</extensions>
 			</storageModule>
 			<storageModule moduleId="cdtBuildSystem" version="4.0.0">
-				<configuration buildProperties="" description="" id="cdt.managedbuild.toolchain.gnu.base.541878164" name="Default" parent="org.eclipse.cdt.build.core.emptycfg">
+				<configuration artifactName="${ProjName}" buildProperties="" description="" id="cdt.managedbuild.toolchain.gnu.base.541878164" name="Default" parent="org.eclipse.cdt.build.core.emptycfg">
 					<folderInfo id="cdt.managedbuild.toolchain.gnu.base.541878164.737251887" name="/" resourcePath="">
 						<toolChain id="cdt.managedbuild.toolchain.gnu.base.353041667" name="Linux GCC" superClass="cdt.managedbuild.toolchain.gnu.base">
 							<targetPlatform archList="all" binaryParser="org.eclipse.cdt.core.GNU_ELF" id="cdt.managedbuild.target.gnu.platform.base.1037394965" name="Debug Platform" osList="linux,hpux,aix,qnx" superClass="cdt.managedbuild.target.gnu.platform.base"/>
@@ -38,19 +38,13 @@
 							</tool>
 						</toolChain>
 					</folderInfo>
+					<sourceEntries>
+						<entry excluding="FogRunTime.cpp" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+					</sourceEntries>
 				</configuration>
 			</storageModule>
 			<storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 		</cconfiguration>
-	</storageModule>
-	<storageModule moduleId="scannerConfiguration">
-		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.62562378;cdt.managedbuild.toolchain.gnu.base.62562378.2003189396;cdt.managedbuild.tool.gnu.cpp.compiler.base.822696845;cdt.managedbuild.tool.gnu.cpp.compiler.input.777358374">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
-		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.62562378;cdt.managedbuild.toolchain.gnu.base.62562378.2003189396;cdt.managedbuild.tool.gnu.c.compiler.base.1307765615;cdt.managedbuild.tool.gnu.c.compiler.input.1881981407">
-			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
-		</scannerConfigBuildInfo>
 	</storageModule>
 	<storageModule moduleId="cdtBuildSystem" version="4.0.0">
 		<project id="iotdbNEW.null.126151804" name="iotdbNEW"/>
@@ -62,4 +56,20 @@
 			<resource resourceType="PROJECT" workspacePath="/iotdbNEW"/>
 		</configuration>
 	</storageModule>
+	<storageModule moduleId="scannerConfiguration">
+		<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.62562378;cdt.managedbuild.toolchain.gnu.base.62562378.2003189396;cdt.managedbuild.tool.gnu.c.compiler.base.1307765615;cdt.managedbuild.tool.gnu.c.compiler.input.1881981407">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.541878164;cdt.managedbuild.toolchain.gnu.base.541878164.737251887;cdt.managedbuild.tool.gnu.cpp.compiler.base.1428292548;cdt.managedbuild.tool.gnu.cpp.compiler.input.549479902">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.62562378;cdt.managedbuild.toolchain.gnu.base.62562378.2003189396;cdt.managedbuild.tool.gnu.cpp.compiler.base.822696845;cdt.managedbuild.tool.gnu.cpp.compiler.input.777358374">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+		<scannerConfigBuildInfo instanceId="cdt.managedbuild.toolchain.gnu.base.541878164;cdt.managedbuild.toolchain.gnu.base.541878164.737251887;cdt.managedbuild.tool.gnu.c.compiler.base.368862529;cdt.managedbuild.tool.gnu.c.compiler.input.137634177">
+			<autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId=""/>
+		</scannerConfigBuildInfo>
+	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 </cproject>

@@ -8,21 +8,24 @@
 #ifndef INCLUDE_TOPOLOGY_FOGTOPOLOGYENTRY_HPP_
 #define INCLUDE_TOPOLOGY_FOGTOPOLOGYENTRY_HPP_
 #include <string>
+#include <API/InputQuery.hpp>
+
+namespace iotdb{
 enum FogNodeType { Worker, Sensor };
 
-class FogTopologyEntry
-{
+class FogTopologyEntry {
 public:
-//	FogTopologyEntry(){};
+  //	FogTopologyEntry(){};
 
-	virtual FogNodeType getEntryType() = 0;
-	virtual std::string getEntryTypeString() = 0;
+  virtual void setId(size_t id) = 0;
+  virtual size_t getId() = 0;
 
-	virtual size_t getID() = 0;
+  virtual FogNodeType getEntryType() = 0;
+  virtual std::string getEntryTypeString() = 0;
 
+  virtual void setQuery(InputQueryPtr pQuery) = 0;
 };
 
 typedef std::shared_ptr<FogTopologyEntry> FogTopologyEntryPtr;
-
-
+}
 #endif /* INCLUDE_TOPOLOGY_FOGTOPOLOGYENTRY_HPP_ */

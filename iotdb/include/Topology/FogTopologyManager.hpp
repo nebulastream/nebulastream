@@ -2,53 +2,52 @@
 #define INCLUDE_TOPOLOGY_FOGTOPOLOGYMANAGER_HPP_
 
 #include <memory>
-
 #include <Topology/FogTopologyPlan.hpp>
+
 
 /**
  * TODO: add return of create
  */
+namespace iotdb{
 typedef std::shared_ptr<FogTopologyPlan> FogTopologyPlanPtr;
 
 class FogTopologyManager {
 public:
-  FogTopologyManager() { currentPlan = std::make_shared<FogTopologyPlan>(); }
+	static FogTopologyManager& getInstance()
+	{
+			   static FogTopologyManager instance; // Guaranteed to be destroyed.
+									 // Instantiated on first use.
+			   return instance;
+	}
+	FogTopologyManager(FogTopologyManager const&);// Don't Implement
+	void operator=(FogTopologyManager const&); // Don't implement
 
-  FogTopologyWorkerNodePtr createFogWorkerNode()
-  {
-	  return currentPlan->createFogWorkerNode();
+  FogTopologyWorkerNodePtr createFogWorkerNode() { return currentPlan->createFogWorkerNode(); }
+
+  bool removeFogWorkerNode(FogTopologyWorkerNodePtr ptr) { return currentPlan->removeFogWorkerNode(ptr); }
+
+  bool removeFogSensorNode(FogTopologySensorNodePtr ptr) { return currentPlan->removeFogSensorNode(ptr); }
+
+  FogTopologySensorNodePtr createFogSensorNode() { return currentPlan->createFogSensorNode(); }
+
+  FogTopologyLinkPtr createFogNodeLink(FogTopologyEntryPtr pSourceNode, FogTopologyEntryPtr pDestNode) {
+    return currentPlan->createFogNodeLink(pSourceNode, pDestNode);
   }
 
-  bool removeFogWorkerNode(FogTopologyWorkerNodePtr ptr)
-  {
-	  return currentPlan->removeFogWorkerNode(ptr);
-  }
+  bool removeFogNodeLink(FogTopologyLinkPtr linkPtr) { return currentPlan->removeFogTopologyLink(linkPtr); }
 
-  bool removeFogSensorNode(FogTopologySensorPtr ptr)
-  {
-	  return currentPlan->removeFogSensorNode(ptr);
-  }
+  void printTopologyPlan() { std::cout << getTopologyPlanString() << std::endl; }
 
-  FogTopologySensorPtr createFogSensorNode()
-  {
-	  return currentPlan->createFogSensorNode();
-  }
+  std::string getTopologyPlanString() { return currentPlan->getTopologyPlanString(); }
 
-  FogTopologyLinkPtr createFogNodeLink(size_t pSourceNodeId, size_t pDestNodeId)
-  {
-	  return currentPlan->createFogNodeLink(pSourceNodeId, pDestNodeId);
-  }
+  FogTopologyPlanPtr getTopologyPlan() {return currentPlan;}
 
-  bool removeFogNodeLink(FogTopologyLinkPtr linkPtr)
-  {
-	  return currentPlan->removeFogTopologyLink(linkPtr);
-  }
-
-
-  FogTopologyPlanPtr getPlan() { return currentPlan; }
+  FogTopologyEntryPtr getRootNode(){return currentPlan->getRootNode();};
 
 private:
+  FogTopologyManager() { currentPlan = std::make_shared<FogTopologyPlan>(); }
+
   FogTopologyPlanPtr currentPlan;
 };
-
+}
 #endif /* INCLUDE_TOPOLOGY_FOGTOPOLOGYMANAGER_HPP_ */

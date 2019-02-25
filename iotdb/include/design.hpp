@@ -3,7 +3,7 @@
 #include <algorithm>
 
 #include "API/InputQuery.hpp"
-namespace iotdb {
+namespace iotdb_test {
 
 /** Client Side **/
     class InputQuery;//API
@@ -28,8 +28,8 @@ namespace iotdb {
     class FogTopologyLink;
     typedef std::shared_ptr<FogTopologyLink> FogTopologyLinkPtr;
 
-    class FogTopologySensor;
-    typedef std::shared_ptr<FogTopologySensor> FogTopologySensorPtr;
+    class FogTopologySensorNode;
+    typedef std::shared_ptr<FogTopologySensorNode> FogTopologySensorNodePtr;
 
 
     class FogNodeProperties;
