@@ -21,7 +21,7 @@ typedef std::unique_ptr<PipelineContext> PipelineContextPtr;
 class DataSource;
 typedef std::shared_ptr<DataSource> DataSourcePtr;
 
-enum OperatorType{SCAN_OP,FILTER_OP,AGGREGATION_OP, SORT_OP, JOIN_OP, SET_OP, WINDOW_OP, KEYBY_OP, MAP_OP, OUTPUT_OPERATOR};
+enum OperatorType{SOURCE_OP,FILTER_OP,AGGREGATION_OP, SORT_OP, JOIN_OP, SET_OP, WINDOW_OP, KEYBY_OP, MAP_OP, SINK_OPERATOR};
 
 class Operator {
 public:
@@ -35,7 +35,7 @@ public:
   virtual OperatorType getOperatorType() const = 0;
 };
 
-const OperatorPtr createScanOperator(DataSourcePtr source);
+const OperatorPtr createScanOperator(const DataSourcePtr& source);
 const OperatorPtr createSelectionOperator(const PredicatePtr& predicate);
 const OperatorPtr createGroupedAggregationOperator(const Attributes& grouping_fields, const AggregationPtr& aggr_spec);
 const OperatorPtr createOrderByOperator(const Sort& fields);

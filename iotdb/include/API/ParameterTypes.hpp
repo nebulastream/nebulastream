@@ -18,6 +18,11 @@ typedef std::shared_ptr<JoinPredicate> JoinPredicatePtr;
 class Aggregation;
 typedef std::shared_ptr<Aggregation> AggregationPtr;
 
+struct AggregationSpec{
+ Aggregation& grouping_fields;
+ AggregationPtr aggr_spec;
+};
+
 class WindowFunction;
 typedef std::shared_ptr<WindowFunction> WindowFunctionPtr;
 
@@ -57,7 +62,7 @@ struct Sort{
   std::vector<SortAttr> param;
 };
 
-WindowPtr copy(const WindowPtr&);
+const WindowPtr copy(const WindowPtr&);
 const std::string toString(const WindowPtr&);
 
 }

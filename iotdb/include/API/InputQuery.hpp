@@ -13,6 +13,9 @@ namespace iotdb {
 class Operator;
 typedef std::shared_ptr<Operator> OperatorPtr;
 
+class DataSink;
+typedef std::shared_ptr<DataSink> DataSinkPtr;
+
 /** \brief the central abstraction for the user to define queries */
 class InputQuery {
 public:
