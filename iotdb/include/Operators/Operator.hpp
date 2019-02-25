@@ -21,7 +21,7 @@ typedef std::unique_ptr<PipelineContext> PipelineContextPtr;
 class DataSource;
 typedef std::shared_ptr<DataSource> DataSourcePtr;
 
-enum OperatorType{SOURCE_OP,FILTER_OP,AGGREGATION_OP, SORT_OP, JOIN_OP, SET_OP, WINDOW_OP, KEYBY_OP, MAP_OP, SINK_OPERATOR};
+enum OperatorType{SOURCE_OP,FILTER_OP,AGGREGATION_OP, SORT_OP, JOIN_OP, SET_OP, WINDOW_OP, KEYBY_OP, MAP_OP, SINK_OP};
 
 class Operator {
 public:

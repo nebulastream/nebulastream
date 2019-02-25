@@ -6,6 +6,7 @@
 
 namespace iotdb{
 
+
 class AttributeField;
 typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
 
@@ -21,6 +22,7 @@ typedef std::shared_ptr<Aggregation> AggregationPtr;
 struct AggregationSpec{
  Aggregation& grouping_fields;
  AggregationPtr aggr_spec;
+ AggregationSpec& operator=(const AggregationSpec&);
 };
 
 class WindowFunction;
@@ -62,8 +64,34 @@ struct Sort{
   std::vector<SortAttr> param;
 };
 
+class DataSource;
+typedef std::shared_ptr<DataSource> DataSourcePtr;
+
+class DataSink;
+typedef std::shared_ptr<DataSink> DataSinkPtr;
+
+const DataSourcePtr copy(const DataSourcePtr&);
+const DataSinkPtr copy(const DataSinkPtr&);
+const PredicatePtr copy(const PredicatePtr&);
+const Sort copy(const Sort&);
 const WindowPtr copy(const WindowPtr&);
+const Attributes copy(const Attributes&);
+const MapperPtr copy(const MapperPtr&);
+const AggregationSpec copy(const AggregationSpec&);
+const JoinPredicatePtr copy(const JoinPredicatePtr&);
+
+const std::string toString(const DataSourcePtr&);
+const std::string toString(const DataSinkPtr&);
+const std::string toString(const PredicatePtr&);
+const std::string toString(const Sort&);
 const std::string toString(const WindowPtr&);
+const std::string toString(const Attributes&);
+const std::string toString(const MapperPtr&);
+const std::string toString(const AggregationSpec&);
+const std::string toString(const JoinPredicatePtr&);
+
+
+
 
 }
 

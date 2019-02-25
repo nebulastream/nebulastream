@@ -29,7 +29,7 @@ namespace iotdb {
 
 class $CLASS_NAME : public Operator {
 public:
-  $CLASS_NAME($PARAMETER_TYPE $VAR_NAME);
+  $CLASS_NAME(const $PARAMETER_TYPE& $VAR_NAME);
   $CLASS_NAME(const $CLASS_NAME& other);
   $CLASS_NAME& operator = (const $CLASS_NAME& other);
   void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
@@ -56,7 +56,7 @@ echo "
 
 namespace iotdb {
 
-$CLASS_NAME::$CLASS_NAME($PARAMETER_TYPE $VAR_NAME)
+$CLASS_NAME::$CLASS_NAME(const $PARAMETER_TYPE& $VAR_NAME)
   : Operator (), $VAR_NAME_INTERN(iotdb::copy($VAR_NAME))
 {
 }
