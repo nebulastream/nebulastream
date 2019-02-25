@@ -10,7 +10,7 @@
 
 #include <CodeGen/QueryExecutionPlan.hpp>
 #include <stdint.h>
-class TupleBuffer;
+//class TupleBuffer;
 
 namespace iotdb {
 

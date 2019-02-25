@@ -15,7 +15,7 @@
 
 /* ------------------------------------------------------------------------- */
 /* - Client Server Communication ------------------------------------------- */
-class IotClientServerTest : public testing::Test {
+class ClientServerCommunicationTest : public testing::Test {
 public:
   /* Will be called before any test in this class are executed. */
   static void SetUpTestCase() { std::cout << "Setup ClientServerTest test class." << std::endl; }
@@ -46,7 +46,7 @@ public:
 };
 
 /* Receive 'ADD_QEUERY'-command. */
-TEST_F(IotClientServerTest, add_query) {
+TEST_F(ClientServerCommunicationTest, add_query) {
 
   auto test_file_path = std::string(TEST_DATA_PATH).append("ClientServerCommunication_TestQuery.cpp");
   std::cout << "Path of the test file: " << test_file_path << std::endl;
@@ -67,7 +67,7 @@ TEST_F(IotClientServerTest, add_query) {
 }
 
 /* Receive 'REMOVE_QUERY'-command, query id is present. */
-TEST_F(IotClientServerTest, remove_query_existing) {
+TEST_F(ClientServerCommunicationTest, remove_query_existing) {
   auto request = IotClient::remove_query_request(1);
   EXPECT_NE(request.get(), nullptr);
 
@@ -79,7 +79,7 @@ TEST_F(IotClientServerTest, remove_query_existing) {
 }
 
 /* Receive 'REMOVE_QUERY'-command, query id is not present. */
-TEST_F(IotClientServerTest, remove_query_not_existing) {
+TEST_F(ClientServerCommunicationTest, remove_query_not_existing) {
   auto request = IotClient::remove_query_request(3);
   EXPECT_NE(request.get(), nullptr);
 
@@ -91,7 +91,7 @@ TEST_F(IotClientServerTest, remove_query_not_existing) {
 }
 
 /* Receive 'LIST_QUERIES'-command. */
-TEST_F(IotClientServerTest, list_queries) {
+TEST_F(ClientServerCommunicationTest, list_queries) {
   auto request = IotClient::list_queries_request();
   EXPECT_NE(request.get(), nullptr);
 
