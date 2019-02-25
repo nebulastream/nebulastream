@@ -1,4 +1,6 @@
 
+#pragma once
+
 #include <memory>
 #include <vector>
 
@@ -16,8 +18,18 @@ typedef std::shared_ptr<JoinPredicate> JoinPredicatePtr;
 class Aggregation;
 typedef std::shared_ptr<Aggregation> AggregationPtr;
 
+class WindowFunction;
+typedef std::shared_ptr<WindowFunction> WindowFunctionPtr;
+
+class TimeMeasure;
+typedef std::shared_ptr<TimeMeasure> TimeMeasurePtr;
+
 class Window;
 typedef std::shared_ptr<Window> WindowPtr;
+
+const WindowPtr createTumblingWindow(const TimeMeasure&, const WindowFunction&, uint32_t unit);
+const WindowPtr createSlidingWindow(const TimeMeasure&, const WindowFunction&, uint32_t slide, uint32_t step);
+const WindowPtr createSessionWindow(const TimeMeasure&, const WindowFunction&, uint32_t session_gap);
 
 class Mapper;
 typedef std::shared_ptr<Mapper> MapperPtr;
@@ -44,6 +56,9 @@ struct Sort{
   /** \todo add more constructor cases for more fields */
   std::vector<SortAttr> param;
 };
+
+WindowPtr copy(const WindowPtr&);
+const std::string toString(const WindowPtr&);
 
 }
 
