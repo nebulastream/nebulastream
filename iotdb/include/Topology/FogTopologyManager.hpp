@@ -2,7 +2,8 @@
 #define INCLUDE_TOPOLOGY_FOGTOPOLOGYMANAGER_HPP_
 
 #include <memory>
-#include "Topology/FogTopologyPlan.hpp"
+#include <Topology/FogTopologyPlan.hpp>
+
 
 /**
  * TODO: add return of create
@@ -12,7 +13,14 @@ typedef std::shared_ptr<FogTopologyPlan> FogTopologyPlanPtr;
 
 class FogTopologyManager {
 public:
-  FogTopologyManager() { currentPlan = std::make_shared<FogTopologyPlan>(); }
+	static FogTopologyManager& getInstance()
+	{
+			   static FogTopologyManager instance; // Guaranteed to be destroyed.
+									 // Instantiated on first use.
+			   return instance;
+	}
+	FogTopologyManager(FogTopologyManager const&);// Don't Implement
+	void operator=(FogTopologyManager const&); // Don't implement
 
   FogTopologyWorkerNodePtr createFogWorkerNode() { return currentPlan->createFogWorkerNode(); }
 
@@ -34,9 +42,11 @@ public:
 
   FogTopologyPlanPtr getTopologyPlan() {return currentPlan;}
 
-  FogTopologyWorkerNodePtr getRootNode(){return currentPlan->getRootNode();};
+  FogTopologyEntryPtr getRootNode(){return currentPlan->getRootNode();};
 
 private:
+  FogTopologyManager() { currentPlan = std::make_shared<FogTopologyPlan>(); }
+
   FogTopologyPlanPtr currentPlan;
 };
 }

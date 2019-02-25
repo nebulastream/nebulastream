@@ -1,79 +1,56 @@
 #ifndef API_INPUT_QUERY_H
 #define API_INPUT_QUERY_H
 
-#include <Operators/Operator.hpp>
-#include "Source.hpp"
-#include "Schema.hpp"
-#include "Window.hpp"
-#include "Aggregation.hpp"
-#include "JoinPredicate.hpp"
-#include "Mapper.hpp"
 #include <string>
-#include "Config.hpp"
-
+#include <iostream>
+#include <API/Schema.hpp>
+#include <API/Config.hpp>
+#include <API/ParameterTypes.hpp>
+#include <Runtime/DataSource.hpp>
 
 namespace iotdb {
 
-//class Config;
-//class Schema;
-
-//class Predicate;
-//typedef std::shared_ptr<Predicate> PredicatePtr;
-//typedef Predicate&& PredicatePtr;
-
-//class JoinPredicate;
-//typedef std::shared_ptr<JoinPredicate> JoinPredicatePtr;
-
-//class Aggregation;
-
-//class Window;
-//typedef std::shared_ptr<Window> WindowPtr;
-
-//class Mapper;
-class InputQuery;
-typedef std::shared_ptr<InputQuery> InputQueryPtr;
+class Operator;
+typedef std::shared_ptr<Operator> OperatorPtr;
 
 /** \brief the central abstraction for the user to define queries */
 class InputQuery {
 public:
+  static InputQuery create(const Config& config, const DataSourcePtr& source);
+  InputQuery(const InputQuery& );
   ~InputQuery();
-  static InputQueryPtr create(Config& config, Schema& schema, Source& source);
 
   void execute();
 
   // relational operators
-  InputQuery &filter(Predicate&& predicate);
-  InputQuery &groupBy(std::string field);
-  InputQuery &orderBy(std::string& field, std::string& sortedness);
-  InputQuery &aggregate(Aggregation &&aggregation);
-  InputQuery &join(Operator* op, JoinPredicate&& joinPred);
+  InputQuery &filter(const PredicatePtr& predicate);
+  InputQuery &groupBy(const Attributes& grouping_fields, const AggregationPtr& aggr_spec);
+  InputQuery &orderBy(const Sort& fields);
+  InputQuery &join(const InputQuery& sub_query, const JoinPredicatePtr& joinPred);
 
   // streaming operators
-  InputQuery &window(Window &&window);
-  InputQuery &keyBy(std::string& fieldId);
-  InputQuery &map(Mapper&& mapper);
+  InputQuery &window(const WindowPtr& window);
+  InputQuery &keyBy(const Attributes& fields);
+  InputQuery &map(const MapperPtr& mapper);
+
 
   // output operators
-  InputQuery &write(std::string file_name);
-  InputQuery &print();
+  InputQuery &writeToFile(const std::string& file_name);
+  InputQuery &print(std::ostream& = std::cout);
 
   // helper operators
-  InputQuery &printQueryPlan();
-
-  InputQuery &input(InputType type, std::string path);
-  InputQuery(Config& config, Schema& schema, Source& source);
-
-private:
-//  InputQuery(InputQuery& );
-  Config& config;
-  Schema& schema;
-  Source& source;
-  Operator* root;
-  Operator* current;
-  void printInputQueryPlan(Operator* curr, int depth);
   InputQuery &printInputQueryPlan();
-
+private:
+  InputQuery(const Config& config, const DataSourcePtr& source);
+  Config config;
+  DataSourcePtr source;
+  OperatorPtr root;
+  void printInputQueryPlan(const OperatorPtr& curr, int depth);
 };
+
+/* this function **executes** the code provided by the user and returns an InputQuery Object */
+const InputQuery createQueryFromCodeString(const std::string&);
+typedef std::shared_ptr<InputQuery> InputQueryPtr;
 
 }
 

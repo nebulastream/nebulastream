@@ -5,6 +5,7 @@
 #include <memory>
 
 #define INVALID_NODE_ID 101
+namespace iotdb{
 
 class FogTopologySensorNode : public FogTopologyEntry {
 
@@ -17,10 +18,13 @@ public:
   FogNodeType getEntryType() { return Sensor; }
   std::string getEntryTypeString() { return "Sensor"; }
 
+  void setQuery(InputQueryPtr pQuery){ query = pQuery;};
+
 private:
   size_t sensor_id;
+  InputQueryPtr query;
 };
 
 typedef std::shared_ptr<FogTopologySensorNode> FogTopologySensorNodePtr;
-
+}
 #endif /* INCLUDE_TOPOLOGY_FOGTOPOLOGYSENSOR_HPP_ */
