@@ -22,11 +22,23 @@ typedef std::shared_ptr<Operator> OperatorPtr;
 class CompilerArgs;
 class CodeGenArgs;
 
+class CodeGenArgs{
+
+};
+
 class CodeGenerator {
 public:
-  virtual bool addOperator(OperatorPtr, const CodeGenArgs &) = 0;
+  CodeGenerator(const CodeGenArgs &args);
+  //virtual bool addOperator(OperatorPtr) = 0;
+  virtual bool generateCode(const DataSourcePtr& source, const PipelineContextPtr& context, std::ostream& out) = 0;
+  virtual bool generateCode(const PredicatePtr& pred, const PipelineContextPtr& context, std::ostream& out) = 0;
+  virtual bool generateCode(const DataSinkPtr& sink, const PipelineContextPtr& context, std::ostream& out) = 0;
   virtual PipelineStagePtr compile(const CompilerArgs &) = 0;
   virtual ~CodeGenerator();
+  protected:
+  CodeGenArgs args_;
+  Schema input_schema_;
+  Schema result_schema_;
 };
 
 /** \brief factory method for creating a code generator */

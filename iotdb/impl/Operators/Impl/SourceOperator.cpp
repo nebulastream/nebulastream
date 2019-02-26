@@ -6,6 +6,7 @@
 #include <vector>
 
 #include <Operators/Impl/SourceOperator.hpp>
+#include <CodeGen/CodeGen.hpp>
 
 namespace iotdb {
 
@@ -27,10 +28,12 @@ SourceOperator& SourceOperator::operator = (const SourceOperator& other){
 }
 
 void SourceOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out){
-
+    this->consume(codegen,context,out);
 }
-void SourceOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out){
 
+void SourceOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out){
+  codegen->generateCode(source_, context, out);
+  //parent->consume(codegen,context,out);
 }
 
 const OperatorPtr SourceOperator::copy() const{

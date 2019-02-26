@@ -64,17 +64,41 @@ namespace iotdb {
     return true;
   }
 
+  CodeGenerator::CodeGenerator(const CodeGenArgs& args) : args_(args){
+
+  }
+
   CodeGenerator::~CodeGenerator(){}
 
   class C_CodeGenerator : public CodeGenerator {
-    bool addOperator(OperatorPtr, const CodeGenArgs &);
-    PipelineStagePtr compile(const CompilerArgs &);
-    ~C_CodeGenerator();
+  public:
+    C_CodeGenerator(const CodeGenArgs& args);
+    virtual bool generateCode(const DataSourcePtr& source, const PipelineContextPtr& context, std::ostream& out) override;
+    virtual bool generateCode(const PredicatePtr& pred, const PipelineContextPtr& context, std::ostream& out) override;
+    virtual bool generateCode(const DataSinkPtr& sink, const PipelineContextPtr& context, std::ostream& out) override;
+    PipelineStagePtr compile(const CompilerArgs &) override;
+    ~C_CodeGenerator() override;
   };
 
-  bool C_CodeGenerator::addOperator(OperatorPtr, const CodeGenArgs &){
+  C_CodeGenerator::C_CodeGenerator(const CodeGenArgs& args)
+    : CodeGenerator (args)
+  {
+  }
 
-    return false;
+  bool C_CodeGenerator::generateCode(const DataSourcePtr& source, const PipelineContextPtr& context, std::ostream& out){
+
+    input_schema_=source->getSchema();
+
+    return true;
+  }
+
+  bool C_CodeGenerator::generateCode(const PredicatePtr& pred, const PipelineContextPtr& context, std::ostream& out){
+
+    return true;
+  }
+  bool C_CodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContextPtr& context, std::ostream& out){
+
+    return true;
   }
 
   PipelineStagePtr C_CodeGenerator::compile(const CompilerArgs &){
@@ -90,9 +114,8 @@ namespace iotdb {
   }
 
 
-
   CodeGeneratorPtr createCodeGenerator(){
-    return CodeGeneratorPtr();
+    return std::make_shared<C_CodeGenerator>(CodeGenArgs());
   }
 
 }
