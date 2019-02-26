@@ -4,8 +4,10 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <assert.h>
 
 #include <Operators/Impl/SinkOperator.hpp>
+#include <CodeGen/CodeGen.hpp>
 
 namespace iotdb {
 
@@ -27,10 +29,13 @@ SinkOperator& SinkOperator::operator = (const SinkOperator& other){
 }
 
 void SinkOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out){
-
+   assert(!childs.empty());
+   childs[0]->produce(codegen, context, out);
 }
-void SinkOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out){
 
+void SinkOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out){
+  codegen->generateCode(sink_, context, out);
+  /* no call to consume of parent, ends code generation */
 }
 
 const OperatorPtr SinkOperator::copy() const{

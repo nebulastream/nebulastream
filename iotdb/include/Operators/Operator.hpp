@@ -16,7 +16,7 @@ class CodeGenerator;
 typedef std::shared_ptr<CodeGenerator> CodeGeneratorPtr;
 
 class PipelineContext;
-typedef std::unique_ptr<PipelineContext> PipelineContextPtr;
+typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
 
 class DataSource;
 typedef std::shared_ptr<DataSource> DataSourcePtr;
