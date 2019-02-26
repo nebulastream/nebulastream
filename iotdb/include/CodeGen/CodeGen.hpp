@@ -22,9 +22,14 @@ typedef std::shared_ptr<Operator> OperatorPtr;
 class CompilerArgs;
 class CodeGenArgs;
 
+class CompilerArgs{
+
+};
+
 class CodeGenArgs{
 
 };
+
 
 
 
@@ -45,5 +50,8 @@ public:
 
 /** \brief factory method for creating a code generator */
 CodeGeneratorPtr createCodeGenerator();
+/** \brief factory method for creating a pipeline context */
+const PipelineContextPtr createPipelineContext();
+
 }
 #endif

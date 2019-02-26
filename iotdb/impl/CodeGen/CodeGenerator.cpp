@@ -6,17 +6,6 @@
 #include <iostream>
 #include <list>
 
-//#include <clang/AST/AST.h>
-//#include <clang/AST/Decl.h>
-//#include <clang/Frontend/TextDiagnosticPrinter.h>
-//#include <clang/Driver/Driver.h>
-//#include <clang/Driver/DriverDiagnostic.h>
-
-//#include <llvm/Support/Program.h>
-
-//#include <clang/Basic/Builtins.h>
-//#include <clang/Driver/Compilation.h>
-
 #include <Util/ErrorHandling.hpp>
 
 #include <CodeGen/C_CodeGen/Statement.hpp>
@@ -48,10 +37,27 @@ namespace iotdb {
 
   typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
 
-
+  const PipelineContextPtr createPipelineContext(){
+    return std::make_shared<PipelineContext>();
+  }
 
   class GeneratedCode {
    public:
+
+    GeneratedCode()
+      : variable_decls(),
+        variable_init_stmts(),
+        for_loop_stmt(),
+        cleanup_stmts(),
+        return_stmt(),
+        var_decl_id(),
+        var_decl_return(),
+        var_decl_tuple_buffers(VariableDeclaration::create(createDataType(INT32),"input_buffers")),
+        var_decl_tuple_buffer_output(VariableDeclaration::create(createDataType(INT32),"output_buffer")),
+        var_decl_state(VariableDeclaration::create(createDataType(INT32),"state"))
+    {
+
+    }
     std::vector<VariableDeclaration> variable_decls;
     std::vector<StatementPtr> variable_init_stmts;
     std::shared_ptr<FOR> for_loop_stmt;
@@ -59,36 +65,14 @@ namespace iotdb {
     StatementPtr return_stmt;
     std::shared_ptr<VariableDeclaration> var_decl_id;
     std::shared_ptr<VariableDeclaration> var_decl_return;
+    VariableDeclaration var_decl_tuple_buffers;
+    VariableDeclaration var_decl_tuple_buffer_output;
+    VariableDeclaration var_decl_state;
+    std::vector<StructDeclaration> type_decls;
   };
 
   typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
 
-//  bool addToCode(GeneratedCodePtr code, GeneratedCodePtr code_to_add);
-
-//  bool addToCode(GeneratedCodePtr code, GeneratedCodePtr code_to_add) {
-//    if (!code || !code_to_add) return false;
-//    code->header_and_types_code_block_
-//        << code_to_add->header_and_types_code_block_.str();
-//    code->fetch_input_code_block_ << code_to_add->fetch_input_code_block_.str();
-//    code->declare_variables_code_block_
-//        << code_to_add->declare_variables_code_block_.str();
-//    code->init_variables_code_block_
-//        << code_to_add->init_variables_code_block_.str();
-//    code->upper_code_block_.insert(code->upper_code_block_.end(),
-//                                   code_to_add->upper_code_block_.begin(),
-//                                   code_to_add->upper_code_block_.end());
-//    code->lower_code_block_.insert(code->lower_code_block_.begin(),
-//                                   code_to_add->lower_code_block_.begin(),
-//                                   code_to_add->lower_code_block_.end());
-//    code->after_for_loop_code_block_
-//        << code_to_add->after_for_loop_code_block_.str();
-//    code->create_result_table_code_block_
-//        << code_to_add->create_result_table_code_block_.str();
-//    code->clean_up_code_block_ << code_to_add->clean_up_code_block_.str();
-//    code->kernel_header_and_types_code_block_
-//        << code_to_add->kernel_header_and_types_code_block_.str();
-//    return true;
-//  }
 
   CodeGenerator::CodeGenerator(const CodeGenArgs& args) : args_(args){
 
@@ -177,6 +161,11 @@ namespace iotdb {
     context->addTypeDeclaration(struct_decl_tuple);
     context->addTypeDeclaration(struct_decl_result_tuple);
 
+    code_.type_decls.push_back(struct_decl_tuple_buffer);
+    code_.type_decls.push_back(struct_decl_state);
+    code_.type_decls.push_back(struct_decl_tuple);
+    code_.type_decls.push_back(struct_decl_result_tuple);
+
     /* === declarations === */
 
     VariableDeclaration var_decl_tuple_buffers = VariableDeclaration::create(
@@ -200,12 +189,21 @@ namespace iotdb {
         createPointerDataType(createUserDefinedType(getStructDeclarationTupleBuffer())), "tuple_buffer_1");
 
 
+
     /* uint64_t id = 0; */
     code_.var_decl_id =
         std::dynamic_pointer_cast<VariableDeclaration>(VariableDeclaration::create(createDataType(BasicType(UINT64)), "id", createBasicTypeValue(BasicType(INT32), "0")).copy());
     /* int32_t ret = 0; */
     code_.var_decl_return =
         std::dynamic_pointer_cast<VariableDeclaration>(VariableDeclaration::create(createDataType(BasicType(INT32)), "ret", createBasicTypeValue(BasicType(INT32), "0")).copy());
+
+    code_.variable_decls.push_back(var_decl_tuple_buffers);
+    code_.variable_decls.push_back(var_decl_tuple_buffer_output);
+    code_.variable_decls.push_back(var_decl_state);
+    code_.variable_decls.push_back(var_decl_tuple);
+    code_.variable_decls.push_back(var_decl_result_tuple);
+    code_.variable_decls.push_back(var_decl_tuple_buffer_1);
+    code_.variable_decls.push_back(*(code_.var_decl_return.get()));
 
     /* variable declarations for fields inside structs */
     VariableDeclaration decl_field_campaign_id = struct_decl_tuple.getVariableDeclaration("campaign_id");
@@ -252,11 +250,48 @@ namespace iotdb {
   }
 
   PipelineStagePtr C_CodeGenerator::compile(const CompilerArgs &){
-      CCodeCompiler compiler;
-      CompiledCCodePtr code = compiler.compile("");
 
-      //code->getFunctionPointer("");
-      return PipelineStagePtr();
+      /* function signature:
+       * typedef uint32_t (*SharedCLibPipelineQueryPtr)(TupleBuffer**, WindowState*, TupleBuffer*);
+       */
+
+      //FunctionDeclaration main_function =
+          FunctionBuilder func_builder = FunctionBuilder::create("compiled_query")
+              .returns(createDataType(BasicType(UINT32)))
+              .addParameter(code_.var_decl_tuple_buffers)
+              .addParameter(code_.var_decl_state)
+              .addParameter(code_.var_decl_tuple_buffer_output);
+
+          for(auto& var_decl : code_.variable_decls){
+            func_builder.addVariableDeclaration(var_decl);
+          }
+          for(auto& var_init : code_.variable_init_stmts){
+            func_builder.addStatement(var_init);
+          }
+
+          /* here comes the code for the processing loop */
+
+          func_builder.addStatement(code_.for_loop_stmt);
+
+          func_builder.addStatement(code_.return_stmt);
+
+          FunctionDeclaration main_function = func_builder.build();
+
+          FileBuilder file_builder = FileBuilder::create("query.cpp");
+
+          for(auto& type_decl : code_.type_decls){
+                 file_builder.addDeclaration(type_decl);
+          }
+
+           CodeFile file = file_builder.addDeclaration(main_function)
+                                       .build();
+
+      std::cout << "JIHA!" << std::endl;
+
+      PipelineStagePtr stage;
+      stage = iotdb::compile(file);
+
+      return stage;
   }
 
   C_CodeGenerator::~C_CodeGenerator(){

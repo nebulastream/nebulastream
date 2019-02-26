@@ -70,6 +70,7 @@ typedef std::shared_ptr<VariableDeclaration> VariableDeclarationPtr;
 
 class VariableDeclaration : public Declaration {
 public:
+  VariableDeclaration(const VariableDeclaration& var_decl);
   static VariableDeclaration create(DataTypePtr type, const std::string &identifier, ValueTypePtr value = nullptr);
 
   virtual const DataTypePtr getType() const override;
