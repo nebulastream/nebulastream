@@ -14,10 +14,11 @@
 #include <thread>
 #include <vector>
 
-#include <Runtime/DataSource.hpp>
-#include <Runtime/Task.hpp>
 #include <CodeGen/QueryExecutionPlan.hpp>
 #include <Core/TupleBuffer.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/DataSource.hpp>
+#include <Runtime/Task.hpp>
 
 namespace iotdb {
 
@@ -30,7 +31,7 @@ public:
 
   TaskPtr getWork(bool &run_thread);
   void addWork(const TupleBuffer &, DataSource *);
-  void completedWork(TaskPtr);
+  void completedWork(TaskPtr task);
 
   static Dispatcher &instance();
 
@@ -54,6 +55,6 @@ private:
   std::condition_variable cv;
 };
 typedef std::shared_ptr<Dispatcher> DispatcherPtr;
-}
+} // namespace iotdb
 
 #endif /* INCLUDE_DISPATCHER_H_ */

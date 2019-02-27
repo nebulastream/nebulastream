@@ -78,10 +78,13 @@ void Dispatcher::addWork(const TupleBuffer &buf, DataSource *source) {
   cv.notify_all();
 }
 
-void Dispatcher::completedWork(TaskPtr) { std::unique_lock<std::mutex> lock(mutex); }
+void Dispatcher::completedWork(TaskPtr task) {
+  std::unique_lock<std::mutex> lock(mutex);
+  task->releaseInputBuffer();
+}
 
 Dispatcher &Dispatcher::instance() {
   static Dispatcher instance;
   return instance;
 }
-}
+} // namespace iotdb
