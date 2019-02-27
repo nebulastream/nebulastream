@@ -13,8 +13,8 @@
 
 namespace iotdb {
 
-#define USE_LOCK_IMPL 1
-#define USE_CAS_IMPL 0
+#define USE_LOCK_IMPL 0
+#define USE_CAS_IMPL 1
 
 class TupleBuffer;
 typedef std::shared_ptr<TupleBuffer> TupleBufferPtr;

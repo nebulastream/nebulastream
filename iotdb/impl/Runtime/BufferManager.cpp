@@ -70,10 +70,10 @@ TupleBuffer BufferManager::getBufferByLock(const uint32_t number_of_tuples, cons
   auto found = buffer_pool.find(buffer_size_bytes);
   if (found == buffer_pool.cend()) {
     std::cout << "No buffer of size " << buffer_size_bytes << " found." << std::endl;
-    std::cout << "Create 4 new buffers of size " << buffer_size_bytes << " bytes." << std::endl;
-    addBuffersByLock(4, buffer_size_bytes);
+    std::cout << "Create 10 new buffers of size " << buffer_size_bytes << " bytes." << std::endl;
+    addBuffersByLock(10, buffer_size_bytes);
+    found = buffer_pool.find(buffer_size_bytes);
   }
-  found = buffer_pool.find(buffer_size_bytes);
   assert(found != buffer_pool.cend());
 
   // Acquire lock and wait for buffer ready
@@ -117,42 +117,43 @@ void BufferManager::addBuffersByCAS(const size_t number_of_buffers, const size_t
 }
 
 TupleBuffer BufferManager::getBufferByCAS(const uint32_t number_of_tuples, const uint32_t tuple_size_bytes) {
-  auto found = buffer_pool.find(size);
-  assert(found != buffer_pool.cend() &&
-         (std::string("No buffers for size ") + std::to_string(size) + std::string(" in pool. bug?")).c_str());
-  TupleBuffer buf;
-  auto &buffers = found->second;
 
+  // Find buffer of that size
+  auto buffer_size_bytes = number_of_tuples * tuple_size_bytes;
+  auto found = buffer_pool.find(buffer_size_bytes);
+  if (found == buffer_pool.cend()) {
+    std::cout << "No buffer of size " << buffer_size_bytes << " found." << std::endl;
+    std::cout << "Create 10 new buffers of size " << buffer_size_bytes << " bytes." << std::endl;
+    addBuffersByCAS(10, buffer_size_bytes);
+    found = buffer_pool.find(buffer_size_bytes);
+  }
+  assert(found != buffer_pool.cend());
+
+  bool found_buffer = false;
   do {
-    for (auto &buffer : buffers) {
+    for (auto &buffer : found->second) {
       int expected = 0;
       int desired = 1;
       if (buffer.used.compare_exchange_weak(expected, desired, std::memory_order_relaxed)) {
-        buf = buffer.buffer;
-        // std::cout << "Thread: " << std::this_thread::get_id() << " GOT Buffer: " << buf.get() << std::endl;
+        return TupleBuffer((void *)buffer.buffer, buffer_size_bytes, tuple_size_bytes, number_of_tuples);
+        found_buffer = true;
         break;
       }
     }
-  } while (buf == nullptr);
-
-  return buf;
+  } while (!found_buffer);
 }
 
-void BufferManager::releaseBufferByCAS(TupleBufferPtr tuple_buffer) {
-  assert(tupleBuffer != nullptr && "tupleBuffer is nullptr");
-  auto found = buffer_pool.find(tupleBuffer->buffer_size);
-  assert(found != buffer_pool.cend() && (std::string("No buffers for size ") +
-                                         std::to_string(tupleBuffer->buffer_size) + std::string(" in pool. bug?"))
-                                            .c_str());
+void BufferManager::releaseBufferByCAS(TupleBuffer tuple_buffer) {
 
-  auto &buffers = found->second;
+  // Find buffer of that size
+  auto found = buffer_pool.find(tuple_buffer.buffer_size);
+  assert(found != buffer_pool.cend());
 
-  // 2. CAS Version
+  // Add buffer again to manager
   int expected = 0;
-  for (auto &buffer : buffers) {
-    if (buffer.buffer.get() == tupleBuffer.get()) {
+  for (auto &buffer : found->second) {
+    if (buffer.buffer == (char *)tuple_buffer.buffer) {
       buffer.used.exchange(expected);
-      // std::cout << "Thread: " << std::this_thread::get_id() << "Release Buffer: " << tupleBuffer.get() << std::endl;
       break;
     }
   }
