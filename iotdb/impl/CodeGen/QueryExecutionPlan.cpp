@@ -37,8 +37,6 @@ bool QueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const TupleBuf
   bool ret = stages[pipeline_stage_id]->execute(v,state, &result_buf);
 
 
-
-
   free(result_buf.buffer);
 
   return ret;
