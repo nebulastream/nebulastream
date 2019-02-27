@@ -13,7 +13,7 @@
 
 namespace iotdb {
 
-ZmqSource::ZmqSource(const Schema &schema, const std::string host, const uint16_t port, const std::string topic)
+ZmqSource::ZmqSource(const Schema &schema, const std::string &host, const uint16_t port, const std::string &topic)
     : DataSource(schema), host(host), port(port), topic(topic), connected(false), context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_SUB)) {}
 ZmqSource::~ZmqSource() { assert(disconnect()); }
