@@ -38,14 +38,24 @@ void BufferManager::addBuffers(const size_t number_of_buffers, const size_t buff
 }
 
 TupleBuffer BufferManager::getBuffer(const uint32_t number_of_tuples, const uint32_t tuple_size_bytes) {
+
 #if USE_LOCK_IMPL
-  return getBufferByLock(number_of_tuples, tuple_size_bytes);
+  TupleBuffer tmp = getBufferByLock(number_of_tuples, tuple_size_bytes);
 #elif USE_CAS_IMPL
-  return getBufferByCAS(number_of_tuples, tuple_size_bytes);
+  TupleBuffer tmp = getBufferByCAS(number_of_tuples, tuple_size_bytes);
 #endif
+
+  std::cout << "Get buffer for " << number_of_tuples << " tuples of size " << tuple_size_bytes << " bytes at "
+            << tmp.buffer << "." << std::endl;
+
+  return tmp;
 }
 
 void BufferManager::releaseBuffer(TupleBuffer tuple_buffer) {
+
+  std::cout << "Release buffer for " << tuple_buffer.num_tuples << " tuples of size " << tuple_buffer.tuple_size_bytes
+            << " bytes at " << tuple_buffer.buffer << "." << std::endl;
+
 #if USE_LOCK_IMPL
   releaseBufferByLock(tuple_buffer);
 #elif USE_CAS_IMPL
