@@ -14,7 +14,7 @@ namespace iotdb {
 class ZmqSource : public DataSource {
 
 public:
-  ZmqSource(const Schema &schema, const std::string host, const uint16_t port, const std::string topic);
+  ZmqSource(const Schema &schema, const std::string &host, const uint16_t port, const std::string &topic);
   ~ZmqSource();
 
   TupleBuffer receiveData() override;

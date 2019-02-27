@@ -1,30 +1,21 @@
-/*
- * DataSource.cpp
- *
- *  Created on: Dec 19, 2018
- *      Author: zeuchste
- */
-
+#include <Runtime/BinarySource.hpp>
 #include <Runtime/DataSource.hpp>
 #include <Runtime/Dispatcher.hpp>
-#include <iostream>
-#include <functional>
 #include <Runtime/GeneratorSource.hpp>
-#include <Runtime/BinarySource.hpp>
 #include <Runtime/RemoteSocketSource.hpp>
+#include <Runtime/ZmqSource.hpp>
 #include <Util/ErrorHandling.hpp>
 #include <cassert>
+#include <functional>
+#include <iostream>
 
 namespace iotdb {
 
-DataSource::DataSource(const Schema& _schema) : run_thread(false), thread(), schema(_schema) {
+DataSource::DataSource(const Schema &_schema) : run_thread(false), thread(), schema(_schema) {
   std::cout << "Init Data Source!" << std::endl;
 }
 
-const Schema& DataSource::getSchema() const{
-  return schema;
-}
-
+const Schema &DataSource::getSchema() const { return schema; }
 
 DataSource::~DataSource() {
   stop();
@@ -60,48 +51,48 @@ void DataSource::run() {
   std::cout << "Data Source Finished!" << std::endl;
 }
 
-
-const DataSourcePtr createTestSource(){
-  class Functor{
+const DataSourcePtr createTestSource() {
+  // Shall this go to the UnitTest Directory in future?
+  class Functor {
   public:
-      Functor() : last_number(0){
+    Functor() : last_number(0) {}
+    TupleBuffer operator()(uint64_t generated_tuples, uint64_t num_tuples_to_process) {
+      TupleBuffer buf = Dispatcher::instance().getBuffer();
+      assert(buf.buffer != NULL);
+      uint64_t generated_tuples_this_pass = buf.buffer_size / sizeof(uint64_t);
+      std::cout << generated_tuples << ", " << num_tuples_to_process << std::endl;
+      generated_tuples_this_pass = std::min(num_tuples_to_process - generated_tuples, generated_tuples_this_pass);
 
+      uint64_t *tuples = (uint64_t *)buf.buffer;
+      for (uint64_t i = 0; i < generated_tuples_this_pass; i++) {
+        tuples[i] = last_number++;
       }
-      TupleBuffer operator ()(uint64_t generated_tuples, uint64_t num_tuples_to_process){
-          TupleBuffer buf = Dispatcher::instance().getBuffer();
-          assert(buf.buffer!=NULL);
-          uint64_t generated_tuples_this_pass=buf.buffer_size/sizeof(uint64_t);
-          std::cout << generated_tuples << ", " << num_tuples_to_process << std::endl;
-          generated_tuples_this_pass=std::min(num_tuples_to_process-generated_tuples,generated_tuples_this_pass);
+      buf.tuple_size_bytes = sizeof(uint64_t);
+      buf.num_tuples = generated_tuples_this_pass;
+      return buf;
+    }
 
-          uint64_t* tuples = (uint64_t*) buf.buffer;
-          for(uint64_t i=0;i<generated_tuples_this_pass;i++){
-              tuples[i] = last_number++;
-          }
-          buf.tuple_size_bytes=sizeof(uint64_t);
-          buf.num_tuples=generated_tuples_this_pass;
-          return buf;
-      }
-
-      uint64_t last_number;
+    uint64_t last_number;
   };
 
-  DataSourcePtr source (
-        new GeneratorSource<Functor>(
-          Schema::create().addField(createField("id", UINT32)),
-          100));
+  DataSourcePtr source(new GeneratorSource<Functor>(Schema::create().addField(createField("id", UINT32)), 100));
 
   return source;
 }
 
-const DataSourcePtr createBinaryFileSource(const Schema& schema, const std::string& path_to_file){
-  //instantiate BinaryFileSource
+const DataSourcePtr createZmqSource(const Schema &schema, const std::string &host, const uint16_t port,
+                                    const std::string &topic) {
+  return std::make_shared<ZmqSource>(schema, host, port, topic);
+}
+
+const DataSourcePtr createBinaryFileSource(const Schema &schema, const std::string &path_to_file) {
+  // instantiate BinaryFileSource
   IOTDB_FATAL_ERROR("Called unimplemented Function");
 }
 
-const DataSourcePtr createRemoteTCPSource(const Schema& schema, const std::string& server_ip, int port){
-   //instantiate RemoteSocketSource
+const DataSourcePtr createRemoteTCPSource(const Schema &schema, const std::string &server_ip, int port) {
+  // instantiate RemoteSocketSource
   IOTDB_FATAL_ERROR("Called unimplemented Function");
 }
 
-}
+} // namespace iotdb
