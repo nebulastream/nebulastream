@@ -169,11 +169,15 @@ namespace iotdb {
     /* === declarations === */
 
     VariableDeclaration var_decl_tuple_buffers = VariableDeclaration::create(
-        createPointerDataType(createPointerDataType(createUserDefinedType(struct_decl_tuple_buffer))), "window_buffer");
+        createPointerDataType(createPointerDataType(createUserDefinedType(struct_decl_tuple_buffer))), "window_buffers");
     VariableDeclaration var_decl_tuple_buffer_output = VariableDeclaration::create(
         createPointerDataType(createUserDefinedType(struct_decl_tuple_buffer)), "output_tuple_buffer");
     VariableDeclaration var_decl_state =
         VariableDeclaration::create(createPointerDataType(createUserDefinedType(struct_decl_state)), "global_state");
+
+    code_.var_decl_tuple_buffers=var_decl_tuple_buffers;
+    code_.var_decl_tuple_buffer_output=var_decl_tuple_buffer_output;
+    code_.var_decl_state=var_decl_state;
 
     /* Tuple *tuples; */
 
@@ -197,9 +201,6 @@ namespace iotdb {
     code_.var_decl_return =
         std::dynamic_pointer_cast<VariableDeclaration>(VariableDeclaration::create(createDataType(BasicType(INT32)), "ret", createBasicTypeValue(BasicType(INT32), "0")).copy());
 
-    code_.variable_decls.push_back(var_decl_tuple_buffers);
-    code_.variable_decls.push_back(var_decl_tuple_buffer_output);
-    code_.variable_decls.push_back(var_decl_state);
     code_.variable_decls.push_back(var_decl_tuple);
     code_.variable_decls.push_back(var_decl_result_tuple);
     code_.variable_decls.push_back(var_decl_tuple_buffer_1);
@@ -217,17 +218,17 @@ namespace iotdb {
     code_.variable_init_stmts.push_back(VarRefStatement(var_decl_tuple_buffer_1).assign(
                                                     VarRefStatement(var_decl_tuple_buffers)[ConstantExprStatement(INT32, "0")]).copy());
     /*  tuples = (Tuple *)tuple_buffer_1->data;*/
-    BinaryOperatorStatement init_tuple_ptr(
+    code_.variable_init_stmts.push_back(
         VarRef(var_decl_tuple).assign(
         TypeCast(VarRefStatement(var_decl_tuple_buffer_1)
           .accessPtr(VarRef(decl_field_data_ptr_struct_tuple_buf)),
-          createPointerDataType(createUserDefinedType(struct_decl_tuple)))));
+          createPointerDataType(createUserDefinedType(struct_decl_tuple)))).copy());
 
      /* result_tuples = (ResultTuple *)output_tuple_buffer->data;*/
-    BinaryOperatorStatement init_result_tuple_ptr(
+    code_.variable_init_stmts.push_back(
         VarRef(var_decl_result_tuple).assign(
         TypeCast(VarRef(var_decl_tuple_buffer_output).accessPtr(VarRef(decl_field_data_ptr_struct_tuple_buf)),
-                              createPointerDataType(createUserDefinedType(struct_decl_result_tuple)))));
+                              createPointerDataType(createUserDefinedType(struct_decl_result_tuple)))).copy());
 
     /* for (uint64_t id = 0; id < tuple_buffer_1->num_tuples; ++id) */
     code_.for_loop_stmt=std::make_shared<FOR>(
