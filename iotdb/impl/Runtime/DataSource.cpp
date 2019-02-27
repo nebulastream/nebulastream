@@ -1,3 +1,8 @@
+#include <cassert>
+#include <functional>
+#include <iostream>
+#include <memory>
+
 #include <Runtime/BinarySource.hpp>
 #include <Runtime/DataSource.hpp>
 #include <Runtime/Dispatcher.hpp>
@@ -5,9 +10,6 @@
 #include <Runtime/RemoteSocketSource.hpp>
 #include <Runtime/ZmqSource.hpp>
 #include <Util/ErrorHandling.hpp>
-#include <cassert>
-#include <functional>
-#include <iostream>
 
 namespace iotdb {
 

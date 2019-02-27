@@ -8,30 +8,29 @@
 
 #include <Runtime/DataSink.hpp>
 
-
 namespace iotdb {
 
 class ZmqSink : public DataSink {
 
 public:
-    ZmqSink(const Schema &schema, const std::string host, const uint16_t port, const std::string topic);
-    ~ZmqSink();
+  ZmqSink(const Schema &schema, const std::string &host, const uint16_t port, const std::string &topic);
+  ~ZmqSink();
 
-    bool writeData(const std::vector<TupleBuffer*>& input_buffers) override;
-    const std::string toString() const override;
+  bool writeData(const std::vector<TupleBuffer *> &input_buffers) override;
+  const std::string toString() const override;
 
 private:
-    const std::string host;
-    const uint16_t port;
-    const std::string topic;
+  const std::string host;
+  const uint16_t port;
+  const std::string topic;
 
-    bool connected;
-    zmq::context_t context;
-    zmq::socket_t socket;
+  bool connected;
+  zmq::context_t context;
+  zmq::socket_t socket;
 
-    bool connect();
-    bool disconnect();
+  bool connect();
+  bool disconnect();
 };
-}
+} // namespace iotdb
 
-#endif //ZMQSINK_HPP
+#endif // ZMQSINK_HPP
