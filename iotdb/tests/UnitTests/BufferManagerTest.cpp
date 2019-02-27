@@ -110,7 +110,7 @@ void testSingleThread() {
 void testMultiThreads() {
   ThreadPoolForBufferManager thread_pool;
   thread_pool.start();
-  int sleep = 30;
+  int sleep = 5;
   std::cout << "Waiting " << sleep << " seconds " << std::endl;
   std::this_thread::sleep_for(std::chrono::seconds(sleep));
 }
