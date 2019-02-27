@@ -158,11 +158,11 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSinkToSource) {
   tuple_buffer_vec.push_back(&tuple_buffer);
 
   // Create ZeroMQ Data Sink.
-  auto zmq_sink = createZmqSink(test_schema, LOCAL_HOST, LOCAL_PORT, "TOPIC");
+  auto zmq_sink = createZmqSink(test_schema, LOCAL_HOST, LOCAL_PORT, topic);
   std::cout << zmq_sink->toString() << std::endl;
 
   // Create ZeroMQ Data Source.
-  auto zmq_source = createZmqSource(test_schema, LOCAL_HOST, LOCAL_PORT, "TOPIC");
+  auto zmq_source = createZmqSource(test_schema, LOCAL_HOST, LOCAL_PORT, topic);
   std::cout << zmq_source->toString() << std::endl;
 
   // Start thread for receiving the data.
