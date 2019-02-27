@@ -6,7 +6,7 @@
 #include <zmq.hpp>
 
 #include <API/Schema.hpp>
-#include <Runtime/ZmqSource.hpp>
+#include <Runtime/DataSource.hpp>
 
 using namespace iotdb;
 
@@ -18,30 +18,27 @@ using namespace iotdb;
 #define LOCAL_PORT 38938
 #endif
 
-class RuntimeDataSourceTest : public testing::Test {
+class RuntimeDataSourceSinkTest : public testing::Test {
 public:
   /* Will be called before any test in this class are executed. */
-  static void SetUpTestCase() { std::cout << "Setup RuntimeDataSourceTest test class." << std::endl; }
+  static void SetUpTestCase() { std::cout << "Setup RuntimeDataSourceSinkTest test class." << std::endl; }
 
   /* Will be called before a test is executed. */
-  void SetUp() { std::cout << "Setup RuntimeDataSourceTest test case." << std::endl; }
+  void SetUp() { std::cout << "Setup RuntimeDataSourceSinkTest test case." << std::endl; }
 
   /* Will be called before a test is executed. */
-  void TearDown() { std::cout << "Setup RuntimeDataSourceTest test case." << std::endl; }
+  void TearDown() { std::cout << "Setup RuntimeDataSourceSinkTest test case." << std::endl; }
 
   /* Will be called after all tests in this class are finished. */
-  static void TearDownTestCase() { std::cout << "Tear down RuntimeDataSourceTest test class." << std::endl; }
+  static void TearDownTestCase() { std::cout << "Tear down RuntimeDataSourceSinkTest test class." << std::endl; }
 };
 
-/* ------------------------------------------------------------------------- */
 /* - ZeroMQ Data Source ---------------------------------------------------- */
-TEST_F(RuntimeDataSourceTest, ZmqSourceReceiveData) {
+TEST_F(RuntimeDataSourceSinkTest, ZmqSourceReceiveData) {
 
   // Create ZeroMQ Data Source.
-  auto schema = Schema::create()
-                    .addField("KEY", UINT32)
-                    .addField("VALUE", UINT32);
-  auto zmq_source = std::make_shared<ZmqSource>(schema, LOCAL_HOST, LOCAL_PORT, "TOPIC");
+  auto schema = Schema::create().addField("KEY", UINT32).addField("VALUE", UINT32);
+  auto zmq_source = createZmqSource(schema, LOCAL_HOST, LOCAL_PORT, "TOPIC");
   std::cout << zmq_source->toString() << std::endl;
 
   // Define test data.
@@ -84,3 +81,9 @@ TEST_F(RuntimeDataSourceTest, ZmqSourceReceiveData) {
   }
   receiving_thread.join();
 }
+
+/* - ZeroMQ Data Sink ------------------------------------------------------ */
+TEST_F(RuntimeDataSourceSinkTest, ZmqSinkSendData) { EXPECT_TRUE(true); }
+
+/* - ZeroMQ Data Sink to ZeroMQ Data Source  ------------------------------- */
+TEST_F(RuntimeDataSourceSinkTest, ZmqSinkToSource) { EXPECT_TRUE(true); }
