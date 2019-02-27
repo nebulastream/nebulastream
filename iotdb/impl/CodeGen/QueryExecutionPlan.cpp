@@ -25,20 +25,10 @@ const std::vector<DataSourcePtr> QueryExecutionPlan::getSources() const { return
 
 bool QueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const TupleBuffer &buf) {
   WindowState* state;
-
-
-  void *buffer = malloc(buf.buffer_size);
-  TupleBuffer result_buf{buffer,0,0,0};
-
-
+  TupleBuffer result_buf{nullptr,0,0,0};
   std::vector<TupleBuffer*> v;
   v.push_back((TupleBuffer*)&buf);
-
   bool ret = stages[pipeline_stage_id]->execute(v,state, &result_buf);
-
-
-  free(result_buf.buffer);
-
   return ret;
 }
 }
