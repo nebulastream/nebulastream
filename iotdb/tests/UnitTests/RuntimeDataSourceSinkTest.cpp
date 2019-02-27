@@ -7,6 +7,7 @@
 
 #include <API/Schema.hpp>
 #include <Core/TupleBuffer.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/DataSink.hpp>
 #include <Runtime/DataSource.hpp>
 
@@ -76,7 +77,7 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSourceReceiveData) {
       EXPECT_EQ(*(tuple++), i);
       EXPECT_EQ(*(tuple++), 100 - i);
     }
-
+    BufferManager::instance().releaseBuffer(tuple_buffer);
     receiving_finished = true;
   });
 
@@ -177,7 +178,7 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSinkToSource) {
       EXPECT_EQ(*(tuple++), i);
       EXPECT_EQ(*(tuple++), 100 - i);
     }
-
+    BufferManager::instance().releaseBuffer(new_data);
     receiving_finished = true;
   });
 
