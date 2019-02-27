@@ -16,21 +16,22 @@ ZmqSink::ZmqSink(const Schema &schema, const std::string host, const uint16_t po
     socket(zmq::socket_t(context, ZMQ_PUB)) {}
 ZmqSink::~ZmqSink() { assert(disconnect()); }
 
-bool ZmqSink::writeData(const TupleBuffer &buf) {
+bool ZmqSink::writeData(const std::vector<TupleBuffer*>& input_buffers) {
     assert(connect());
 
-    zmq::message_t msg(buf.buffer_size);
-    std::memcpy(msg.data(), buf.buffer, buf.buffer_size);
+    for (auto &buf : input_buffers) {
+        zmq::message_t msg(buf->buffer_size);
+        std::memcpy(msg.data(), buf->buffer, buf->buffer_size);
 
+        zmq::message_t envelope(topic.size());
+        memcpy(envelope.data(), topic.data(), topic.size());
 
-    zmq::message_t envelope(topic.size());
-    memcpy(envelope.data(), topic.data(), topic.size());
-
-
-    bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
-    bool rc_msg = socket.send(msg);
-
-    return rc_env && rc_msg;
+        bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
+        bool rc_msg = socket.send(msg);
+        if (!rc_env || !rc_msg)
+            return false;
+    }
+    return true;
 }
 
 const std::string ZmqSink::toString() const {

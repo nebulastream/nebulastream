@@ -13,7 +13,7 @@ public:
     DataSink(const Schema& schema);
     virtual ~DataSink();
 
-    virtual bool writeData(const TupleBuffer& buf) = 0;
+    virtual bool writeData(const std::vector<TupleBuffer*>& input_buffers) = 0;
     virtual const std::string toString() const = 0;
     const Schema& getSchema() const;
 

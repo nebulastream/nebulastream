@@ -17,7 +17,7 @@ public:
     ZmqSink(const Schema &schema, const std::string host, const uint16_t port, const std::string topic);
     ~ZmqSink();
 
-    bool writeData(const TupleBuffer& buf) override;
+    bool writeData(const std::vector<TupleBuffer*>& input_buffers) override;
     const std::string toString() const override;
 
 private:
@@ -34,4 +34,4 @@ private:
 };
 }
 
-#endif //IOTDB_ZMQSINK_HPP
+#endif //ZMQSINK_HPP
