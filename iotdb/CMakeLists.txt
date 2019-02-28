@@ -157,6 +157,7 @@ target_include_directories(iotdb PUBLIC "include")
 target_link_libraries(iotdb ${CLANG_LIBS} ${LIBRARIES} ${LLVM_LIBRARIES} ${LLVM_LDFLAGS})
 
 message( STATUS "LLVM_LIBRARIES:" ${LLVM_LIBRARIES} )
+message( STATUS "LLVM_INCLUDE:" ${INCLUDE_DIRS} )
 
 add_executable(llvm_test llvm_test.cpp)
 target_link_libraries(llvm_test iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)

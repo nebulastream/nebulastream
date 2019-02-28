@@ -12,10 +12,14 @@ namespace iotdb {
 QueryExecutionPlan::QueryExecutionPlan() : sources(), stages() {}
 
 QueryExecutionPlan::QueryExecutionPlan(const std::vector<DataSourcePtr> &_sources,
-                                       const std::vector<PipelineStagePtr> &_stages)
-    : sources(_sources), stages(_stages) {}
+                                       const std::vector<PipelineStagePtr> &_stages,
+                                       const std::map<DataSource *, uint32_t> &_source_to_stage,
+                                       const std::map<uint32_t , uint32_t> &_stage_to_dest)
+    : sources(_sources), stages(_stages), source_to_stage(_source_to_stage), stage_to_dest(_stage_to_dest) {}
 
 QueryExecutionPlan::~QueryExecutionPlan() {}
+
+uint32_t QueryExecutionPlan::stageIdFromSource(DataSource * source) { return source_to_stage[source]; } ;
 
 const std::vector<DataSourcePtr> QueryExecutionPlan::getSources() const { return sources; }
 
