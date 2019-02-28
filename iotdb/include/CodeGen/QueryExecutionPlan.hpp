@@ -10,6 +10,8 @@
 #include <Runtime/DataSource.hpp>
 #include <CodeGen/PipelineStage.hpp>
 #include <vector>
+#include <Runtime/DataSink.hpp>
+#include <map>
 
 namespace iotdb {
 
@@ -17,14 +19,21 @@ class QueryExecutionPlan {
 public:
   virtual bool executeStage(uint32_t pipeline_stage_id, const TupleBuffer &buf);
   const std::vector<DataSourcePtr> getSources() const;
+  uint32_t stageIdFromSource(DataSource * source);
   virtual ~QueryExecutionPlan();
 
 protected:
   QueryExecutionPlan();
-  QueryExecutionPlan(const std::vector<DataSourcePtr> &_sources, const std::vector<PipelineStagePtr> &_stages);
+  QueryExecutionPlan(const std::vector<DataSourcePtr> &_sources, 
+          const std::vector<PipelineStagePtr> &_stages, 
+          const std::map<DataSource *, uint32_t> &_source_to_stage,
+          const std::map<uint32_t, uint32_t> &_stage_to_dest);
 
   std::vector<DataSourcePtr> sources;
   std::vector<PipelineStagePtr> stages;
+  std::map<DataSource *, uint32_t> source_to_stage;
+  std::map<uint32_t, uint32_t> stage_to_dest;
+
 };
 typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 }

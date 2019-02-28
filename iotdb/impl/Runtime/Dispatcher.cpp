@@ -71,17 +71,20 @@ void Dispatcher::addWork(const TupleBuffer &buf, DataSource *source) {
   std::unique_lock<std::mutex> lock(mutex);
   std::vector<QueryExecutionPlanPtr> &queries = source_to_query_map[source];
   for (uint64_t i = 0; i < queries.size(); ++i) {
-    TaskPtr task(new Task(queries[i], 1, source, buf));
+    TaskPtr task(new Task(queries[i], queries[i]->stageIdFromSource(source), source, buf));
     task_queue.push_back(task);
     std::cout << "Dispatcher: added Task for source " << source << " for QEP " << queries[i].get() << std::endl;
   }
   cv.notify_all();
 }
 
-void Dispatcher::completedWork(TaskPtr) { std::unique_lock<std::mutex> lock(mutex); }
+void Dispatcher::completedWork(TaskPtr task) {
+  std::unique_lock<std::mutex> lock(mutex);
+  task->releaseInputBuffer();
+}
 
 Dispatcher &Dispatcher::instance() {
   static Dispatcher instance;
   return instance;
 }
-}
+} // namespace iotdb

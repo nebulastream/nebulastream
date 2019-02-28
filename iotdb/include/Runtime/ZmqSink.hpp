@@ -1,23 +1,22 @@
-#ifndef ZMQSOURCE_HPP
-#define ZMQSOURCE_HPP
+#ifndef ZMQSINK_HPP
+#define ZMQSINK_HPP
 
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <zmq.hpp>
 
-#include <Core/TupleBuffer.hpp>
-#include <Runtime/DataSource.hpp>
+#include <Runtime/DataSink.hpp>
 
 namespace iotdb {
 
-class ZmqSource : public DataSource {
+class ZmqSink : public DataSink {
 
 public:
-  ZmqSource(const Schema &schema, const std::string &host, const uint16_t port, const std::string &topic);
-  ~ZmqSource();
+  ZmqSink(const Schema &schema, const std::string &host, const uint16_t port, const std::string &topic);
+  ~ZmqSink();
 
-  TupleBuffer receiveData() override;
+  bool writeData(const std::vector<TupleBuffer *> &input_buffers) override;
   const std::string toString() const override;
 
 private:
@@ -32,7 +31,6 @@ private:
   bool connect();
   bool disconnect();
 };
-
 } // namespace iotdb
 
-#endif // ZMQSOURCE_HPP
+#endif // ZMQSINK_HPP

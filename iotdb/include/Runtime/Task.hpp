@@ -18,6 +18,7 @@ typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 class Task {
 public:
   Task(QueryExecutionPlanPtr _qep, uint32_t _pipeline_stage_id, DataSource *_source, const TupleBuffer &_buf);
+  void releaseInputBuffer();
   bool execute();
 
 private:
@@ -28,6 +29,6 @@ private:
 };
 
 typedef std::shared_ptr<Task> TaskPtr;
-}
+} // namespace iotdb
 
 #endif /* INCLUDE_TASK_H_ */

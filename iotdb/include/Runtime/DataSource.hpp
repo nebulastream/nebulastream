@@ -8,15 +8,15 @@
 #ifndef INCLUDE_DATASOURCE_H_
 #define INCLUDE_DATASOURCE_H_
 
-#include <thread>
-#include <Core/TupleBuffer.hpp>
 #include <API/Schema.hpp>
+#include <Core/TupleBuffer.hpp>
+#include <thread>
 
 namespace iotdb {
 
 class DataSource {
 public:
-  DataSource(const Schema& schema);
+  DataSource(const Schema &schema);
 
   void start();
   void stop();
@@ -25,21 +25,24 @@ public:
   virtual TupleBuffer receiveData() = 0;
   virtual const std::string toString() const = 0;
   void submitWork(const TupleBuffer &);
-  const Schema& getSchema() const;
+  const Schema &getSchema() const;
 
   virtual ~DataSource();
 
 private:
   bool run_thread;
   std::thread thread;
+
 protected:
   Schema schema;
 };
 typedef std::shared_ptr<DataSource> DataSourcePtr;
 
 const DataSourcePtr createTestSource();
-const DataSourcePtr createBinaryFileSource(const Schema& schema, const std::string& path_to_file);
-const DataSourcePtr createRemoteTCPSource(const Schema& schema, const std::string& server_ip, int port);
-}
+const DataSourcePtr createZmqSource(const Schema &schema, const std::string &host, const uint16_t port,
+                                    const std::string &topic);
+const DataSourcePtr createBinaryFileSource(const Schema &schema, const std::string &path_to_file);
+const DataSourcePtr createRemoteTCPSource(const Schema &schema, const std::string &server_ip, int port);
+} // namespace iotdb
 
 #endif /* INCLUDE_DATASOURCE_H_ */
