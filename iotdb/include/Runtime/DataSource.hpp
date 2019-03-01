@@ -22,7 +22,7 @@ public:
   void stop();
   void run();
 
-  virtual TupleBuffer receiveData() = 0;
+  virtual TupleBufferPtr receiveData() = 0;
   virtual const std::string toString() const = 0;
   void submitWork(const TupleBuffer &);
   const Schema &getSchema() const;
@@ -32,6 +32,9 @@ public:
 private:
   bool run_thread;
   std::thread thread;
+protected:
+  uint64_t num_buffers_to_process;
+
 
 protected:
   Schema schema;

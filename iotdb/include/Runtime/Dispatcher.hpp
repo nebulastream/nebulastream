@@ -24,13 +24,13 @@ namespace iotdb {
 
 class Dispatcher {
 public:
-  TupleBuffer getBuffer(uint32_t number_of_tuples = 10);
+  TupleBufferPtr getBuffer();
 
   void registerQuery(const QueryExecutionPlanPtr);
   void deregisterQuery(const QueryExecutionPlanPtr);
 
   TaskPtr getWork(bool &run_thread);
-  void addWork(const TupleBuffer &, DataSource *);
+  void addWork(const TupleBufferPtr, DataSource *);
   void completedWork(TaskPtr task);
 
   static Dispatcher &instance();

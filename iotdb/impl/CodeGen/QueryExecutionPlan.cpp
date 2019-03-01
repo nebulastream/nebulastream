@@ -1,11 +1,6 @@
-/*
- * QueryExecutionPlan.cpp
- *
- *  Created on: Dec 19, 2018
- *      Author: zeuchste
- */
-
 #include <CodeGen/QueryExecutionPlan.hpp>
+#include <assert.h>
+#include <iostream>
 
 namespace iotdb {
 
@@ -17,13 +12,20 @@ QueryExecutionPlan::QueryExecutionPlan(const std::vector<DataSourcePtr> &_source
                                        const std::map<uint32_t , uint32_t> &_stage_to_dest)
     : sources(_sources), stages(_stages), source_to_stage(_source_to_stage), stage_to_dest(_stage_to_dest) {}
 
-QueryExecutionPlan::~QueryExecutionPlan() {}
+QueryExecutionPlan::~QueryExecutionPlan() {
+	std::cout << "destroy qep" << std::endl;
+	sources.clear();
+	stages.clear();
+	source_to_stage.clear();
+	stage_to_dest.clear();
+}
 
 uint32_t QueryExecutionPlan::stageIdFromSource(DataSource * source) { return source_to_stage[source]; } ;
 
 const std::vector<DataSourcePtr> QueryExecutionPlan::getSources() const { return sources; }
 
-bool QueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const TupleBuffer &buf) {
+bool QueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf) {
+  assert(0);
   WindowState* state;
   TupleBuffer result_buf{nullptr,0,0,0};
   std::vector<TupleBuffer*> v;

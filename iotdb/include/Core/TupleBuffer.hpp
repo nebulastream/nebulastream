@@ -8,6 +8,7 @@
 #ifndef INCLUDE_TUPLEBUFFER_H_
 #define INCLUDE_TUPLEBUFFER_H_
 #include <cstdint>
+#include <memory>
 
 namespace iotdb {
 class TupleBuffer {
@@ -19,5 +20,7 @@ public:
   uint64_t tuple_size_bytes;
   uint64_t num_tuples;
 };
+typedef std::shared_ptr<TupleBuffer> TupleBufferPtr;
+
 }
 #endif /* INCLUDE_TUPLEBUFFER_H_ */

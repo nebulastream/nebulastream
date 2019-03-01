@@ -17,7 +17,7 @@ namespace iotdb {
 
 class QueryExecutionPlan {
 public:
-  virtual bool executeStage(uint32_t pipeline_stage_id, const TupleBuffer &buf);
+  virtual bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf);
   const std::vector<DataSourcePtr> getSources() const;
   uint32_t stageIdFromSource(DataSource * source);
   virtual ~QueryExecutionPlan();
