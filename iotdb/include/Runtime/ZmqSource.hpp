@@ -17,7 +17,7 @@ public:
   ZmqSource(const Schema &schema, const std::string &host, const uint16_t port, const std::string &topic);
   ~ZmqSource();
 
-  TupleBuffer receiveData() override;
+  TupleBufferPtr receiveData() override;
   const std::string toString() const override;
 
 private:

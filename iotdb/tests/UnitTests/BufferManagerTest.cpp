@@ -18,9 +18,7 @@ public:
     stop();
   }
   void start() {
-    int size = 80;
-    const int capacity = 100;
-    iotdb::BufferManager::instance().addBuffers(capacity, size);
+    iotdb::BufferManager::instance();
     std::cout << "Start threads" << std::endl;
 
     if (run)
@@ -38,10 +36,9 @@ public:
 
   void worker_thread() {
     BufferManager &buffer_manager = BufferManager::instance();
-    const uint64_t size = 80;
     while (run) {
 
-      TupleBuffer buf = buffer_manager.getBuffer(1, size);
+      TupleBufferPtr buf = buffer_manager.getBuffer();
 
       int sleep1 = std::rand() % 3 + 1;
       std::this_thread::sleep_for(std::chrono::seconds(sleep1));
@@ -72,36 +69,41 @@ private:
 };
 
 void testSingleThread() {
-  int size = 80;
-  const int capacity = 10;
+  int size = 3*4*1024;
+  const int capacity = 3;
   const int num_to_release = 2;
-  iotdb::BufferManager::instance().addBuffers(capacity, size);
+  iotdb::BufferManager::instance();
 
-  std::vector<TupleBuffer> buffers;
+  std::vector<TupleBufferPtr> buffers;
   std::cout << "==========Get Buffer==========" << std::endl;
   for (int i = 0; i < capacity; i++) {
-    buffers.push_back(BufferManager::instance().getBuffer(1, size));
-    std::cout << "buffer " << i << ": " << buffers[i].buffer << std::endl;
+    buffers.push_back(BufferManager::instance().getBuffer());
+    std::cout << "buffer " << i << ": " << buffers[i]->buffer << std::endl;
   }
 
   std::cout << "==========Release Buffer==========" << std::endl;
-  for (int i = 0; i < num_to_release; i++) {
-    std::cout << "buffer " << capacity - i - 1 << ": " << buffers[capacity - i - 1].buffer << std::endl;
-    if (buffers[i].buffer) { // make sure not nullptr
+  for (int i = 0; i < capacity; i++) {
+    if (buffers[i]->buffer)
+    { // make sure not nullptr
+    	std::cout << "try to release buffer " << buffers[i]->buffer << std::endl;
       BufferManager::instance().releaseBuffer(buffers[i]);
+    }
+    else
+    {
+    	std::cout << "empty buffer found!!!" << std::endl;
     }
   }
 
   std::cout << "==========Get Buffer Again==========" << std::endl;
   for (int i = capacity - num_to_release; i < capacity; i++) {
-    buffers.push_back(BufferManager::instance().getBuffer(1, size));
-    std::cout << "buffer " << i << ": " << buffers[i].buffer << std::endl;
+    buffers.push_back(BufferManager::instance().getBuffer());
+    std::cout << "buffer " << i << ": " << buffers[i]->buffer << std::endl;
   }
 
   std::cout << "==========Release Buffer==========" << std::endl;
   for (int i = 0; i < capacity; i++) {
-    std::cout << "buffer " << i << ": " << buffers[i].buffer << std::endl;
-    if (buffers[i].buffer) { // make sure not nullptr
+    std::cout << "buffer " << i << ": " << buffers[i]->buffer << std::endl;
+    if (buffers[i]->buffer) { // make sure not nullptr
       BufferManager::instance().releaseBuffer(buffers[i]);
     }
   }
@@ -122,7 +124,7 @@ int main(int argc, const char *argv[]) {
   std::cout << "Test Single Thread" << std::endl;
   iotdb::testSingleThread();
   std::cout << "Test Multiple Thread" << std::endl;
-  iotdb::testMultiThreads();
+//  iotdb::testMultiThreads();
 
   return 0;
 }
