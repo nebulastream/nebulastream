@@ -26,12 +26,17 @@ add_executable(client-server-communication-tests "UnitTests/ClientServerCommunic
 target_link_libraries(client-server-communication-tests ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME client-server-communication-tests COMMAND client-server-communication-tests)
 
+# Query Interface Tests
+add_executable(query-interface-tests "UnitTests/QueryInterfaceTest.cpp")
+target_link_libraries(query-interface-tests iotdb ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
+add_test(NAME query-interface-tests COMMAND query-interface-tests)
+
 # Buffer Manager Test
 add_executable(buffer-manager-test "UnitTests/BufferManagerTest.cpp")
 target_link_libraries(buffer-manager-test iotdb ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
 add_test(NAME buffer-manager-test COMMAND buffer-manager-test)
 
-# Test data sources of runtime
-add_executable(runtime-data-source-tests "UnitTests/RuntimeDataSourceTest.cpp")
-target_link_libraries(runtime-data-source-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
-add_test(NAME runtime-data-source-tests COMMAND runtime-data-source-tests)
+# Test data sources and data sinks of runtime
+add_executable(runtime-data-source-sink-tests "UnitTests/RuntimeDataSourceSinkTest.cpp")
+target_link_libraries(runtime-data-source-sink-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
+add_test(NAME runtime-data-source-sink-tests COMMAND runtime-data-source-sink-tests)
