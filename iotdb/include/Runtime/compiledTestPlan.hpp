@@ -15,11 +15,11 @@
 namespace iotdb{
 
 
-class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan{
+class CompiledYSBTestQueryExecutionPlan : public HandCodedQueryExecutionPlan{
 public:
     uint64_t count;
     uint64_t sum;
-    CompiledTestQueryExecutionPlan()
+    CompiledYSBTestQueryExecutionPlan()
         : HandCodedQueryExecutionPlan(), count(0), sum(0){
 
 
@@ -43,7 +43,7 @@ public:
         return true;
     }
 };
-typedef std::shared_ptr<CompiledTestQueryExecutionPlan> CompiledTestQueryExecutionPlanPtr;
+typedef std::shared_ptr<CompiledYSBTestQueryExecutionPlan> CompiledTestQueryExecutionPlanPtr;
 
 }
 #endif /* TESTS_TESTPLANS_COMPILEDTESTPLAN_HPP_ */
