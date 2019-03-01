@@ -119,15 +119,15 @@ typedef TypeCastExprStatement TypeCast;
 
 class VarRefStatement : public ExpressionStatment {
 public:
-  const VariableDeclaration &var_decl_;
+  std::shared_ptr<VariableDeclaration> var_decl_;
 
   virtual StatementType getStamentType() const { return VAR_REF_STMT; }
 
-  virtual const CodeExpressionPtr getCode() const { return var_decl_.getIdentifier(); }
+  virtual const CodeExpressionPtr getCode() const { return var_decl_->getIdentifier(); }
 
   virtual const ExpressionStatmentPtr copy() const { return std::make_shared<VarRefStatement>(*this); }
 
-  VarRefStatement(const VariableDeclaration &var_decl) : var_decl_(var_decl) {}
+  VarRefStatement(const VariableDeclaration &var_decl) : var_decl_(std::dynamic_pointer_cast<VariableDeclaration>(var_decl.copy())) {}
 
   virtual ~VarRefStatement();
 };
