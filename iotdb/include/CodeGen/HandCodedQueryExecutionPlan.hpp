@@ -18,7 +18,7 @@ class HandCodedQueryExecutionPlan : public QueryExecutionPlan {
 public:
   HandCodedQueryExecutionPlan();
   virtual ~HandCodedQueryExecutionPlan();
-  virtual bool executeStage(uint32_t pipeline_stage_id, const TupleBuffer &buf) = 0;
+  virtual bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf) = 0;
 };
 }
 
