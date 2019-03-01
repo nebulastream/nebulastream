@@ -19,7 +19,7 @@ ZmqSource::ZmqSource(const Schema &schema, const std::string &host, const uint16
       socket(zmq::socket_t(context, ZMQ_SUB)) {}
 ZmqSource::~ZmqSource() { assert(disconnect()); }
 
-TupleBuffer ZmqSource::receiveData() {
+TupleBufferPtr ZmqSource::receiveData() {
   assert(connect());
 
   // Receive new chunk of data
@@ -33,8 +33,8 @@ TupleBuffer ZmqSource::receiveData() {
   auto number_of_tuples = buffer_size / tuple_size;
 
   // Create new TupleBuffer and copy data
-  auto buffer = BufferManager::instance().getBuffer(number_of_tuples, tuple_size);
-  std::memcpy(buffer.buffer, new_data.data(), buffer.buffer_size);
+  TupleBufferPtr buffer = BufferManager::instance().getBuffer();
+  std::memcpy(buffer->buffer, new_data.data(), buffer->buffer_size);
 
   return buffer;
 }

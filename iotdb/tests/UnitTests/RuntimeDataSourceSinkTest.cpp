@@ -72,8 +72,8 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSourceReceiveData) {
     auto tuple_buffer = zmq_source->receiveData();
 
     // Test received data.
-    uint32_t *tuple = (uint32_t *)tuple_buffer.buffer;
-    for (size_t i = 0; i != tuple_buffer.num_tuples; ++i) {
+    uint32_t *tuple = (uint32_t *)tuple_buffer->buffer;
+    for (size_t i = 0; i != tuple_buffer->num_tuples; ++i) {
       EXPECT_EQ(*(tuple++), i);
       EXPECT_EQ(*(tuple++), 100 - i);
     }
@@ -173,8 +173,8 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSinkToSource) {
     auto new_data = zmq_source->receiveData();
 
     // Test received data.
-    uint32_t *tuple = (uint32_t *)new_data.buffer;
-    for (size_t i = 0; i != new_data.num_tuples; ++i) {
+    uint32_t *tuple = (uint32_t *)new_data->buffer;
+    for (size_t i = 0; i != new_data->num_tuples; ++i) {
       EXPECT_EQ(*(tuple++), i);
       EXPECT_EQ(*(tuple++), 100 - i);
     }

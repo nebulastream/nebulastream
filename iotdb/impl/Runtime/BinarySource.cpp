@@ -10,15 +10,17 @@
 #include <Runtime/Dispatcher.hpp>
 #include <fstream>
 #include <sstream>
+#include <assert.h>
 
 namespace iotdb {
 
 BinarySource::BinarySource(const Schema& schema, const std::string &_file_path, const uint64_t &_num_tuples_to_process)
     : DataSource(schema), input(std::ifstream(_file_path.c_str())), file_path(_file_path), num_tuples_to_process(_num_tuples_to_process) {}
 
-TupleBuffer BinarySource::receiveData() {
-  TupleBuffer buf = Dispatcher::instance().getBuffer();
-  fillBuffer(buf);
+TupleBufferPtr BinarySource::receiveData() {
+	assert(0);//not implemented yet
+  TupleBufferPtr buf = Dispatcher::instance().getBuffer();
+//  fillBuffer(buf);
   return buf;
 }
 

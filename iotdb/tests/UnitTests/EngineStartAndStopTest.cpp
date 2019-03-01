@@ -12,56 +12,9 @@
 #include <Runtime/Dispatcher.hpp>
 #include <Runtime/GeneratorSource.hpp>
 #include <Runtime/ThreadPool.hpp>
+#include <Runtime/compiledTestPlan.hpp>
 
 namespace iotdb {
-
-class Functor {
-public:
-  Functor() : last_number(0) {}
-  TupleBuffer operator()(uint64_t generated_tuples, uint64_t num_tuples_to_process) {
-    TupleBuffer buf = BufferManager::instance().getBuffer(10, sizeof(uint64_t));
-    assert(buf.buffer != NULL);
-    uint64_t generated_tuples_this_pass = buf.buffer_size / sizeof(uint64_t);
-    std::cout << generated_tuples << ", " << num_tuples_to_process << std::endl;
-    generated_tuples_this_pass = std::min(num_tuples_to_process - generated_tuples, generated_tuples_this_pass);
-
-    uint64_t *tuples = (uint64_t *)buf.buffer;
-    for (uint64_t i = 0; i < generated_tuples_this_pass; i++) {
-      tuples[i] = last_number++;
-    }
-    buf.tuple_size_bytes = sizeof(uint64_t);
-    buf.num_tuples = generated_tuples_this_pass;
-    return buf;
-  }
-
-  uint64_t last_number;
-};
-
-class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
-public:
-  uint64_t count;
-  uint64_t sum;
-  CompiledTestQueryExecutionPlan() : HandCodedQueryExecutionPlan(), count(0), sum(0) {
-
-    DataSourcePtr source(new GeneratorSource<Functor>(Schema::create().addField(createField("id", UINT32)), 100));
-    sources.push_back(source);
-  }
-
-  bool firstPipelineStage(const TupleBuffer &) { return false; }
-
-  bool executeStage(uint32_t pipeline_stage_id, const TupleBuffer &buf) {
-    // assert(pipeline_stage_id==1);
-    uint64_t *tuples = (uint64_t *)buf.buffer;
-
-    for (size_t i = 0; i < buf.num_tuples; ++i) {
-      count++;
-      sum += tuples[i];
-    }
-    std::cout << "Processed Block:" << buf.num_tuples << " count: " << count << "sum: " << sum << std::endl;
-    return true;
-  }
-};
-typedef std::shared_ptr<CompiledTestQueryExecutionPlan> CompiledTestQueryExecutionPlanPtr;
 
 int test() {
   CompiledTestQueryExecutionPlanPtr qep(new CompiledTestQueryExecutionPlan());
@@ -73,22 +26,36 @@ int test() {
   thread_pool.start();
 
   std::cout << "Waiting 2 seconds " << std::endl;
-  std::this_thread::sleep_for(std::chrono::seconds(2));
+  std::this_thread::sleep_for(std::chrono::seconds(3));
 
-  if (qep->sum == 4950 && qep->count == 100) {
+//  while(true)
+//    {
+//  	  std::this_thread::sleep_for(std::chrono::seconds(2));
+//  	  std::cout << "waiting to finish" << std::endl;
+//    }
+
+  Dispatcher::instance().deregisterQuery(qep);
+
+  thread_pool.stop();
+
+  if (qep->sum == 512 && qep->count == 512) {
     std::cout << "Result Correct" << std::endl;
     return 0;
   } else {
     std::cerr << "Wrong Result: sum=" << qep->sum << ", count=" << qep->count << std::endl;
     return -1;
   }
-}
 
+}
 } // namespace iotdb
+
 
 int main(int argc, const char *argv[]) {
 
   iotdb::Dispatcher::instance();
 
-  return iotdb::test();
+  iotdb::test();
+
+
+  return 0;
 }
