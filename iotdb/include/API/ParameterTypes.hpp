@@ -16,8 +16,8 @@ typedef std::shared_ptr<JoinPredicate> JoinPredicatePtr;
 class Aggregation;
 typedef std::shared_ptr<Aggregation> AggregationPtr;
 
-class Window;
-typedef std::shared_ptr<Window> WindowPtr;
+class legencyWindow;
+//typedef std::shared_ptr<legencyWindow> WindowPtr;
 
 class Mapper;
 typedef std::shared_ptr<Mapper> MapperPtr;

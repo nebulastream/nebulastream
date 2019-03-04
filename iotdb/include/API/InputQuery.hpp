@@ -7,6 +7,7 @@
 #include <API/Config.hpp>
 #include <API/ParameterTypes.hpp>
 #include <Runtime/DataSource.hpp>
+#include <Runtime/Window.hpp>
 
 namespace iotdb {
 

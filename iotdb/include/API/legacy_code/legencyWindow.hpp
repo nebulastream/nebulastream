@@ -17,18 +17,18 @@ public:
 private:
 };
 
-class Window {
+class legencyWindow {
 public:
   Assigner *assigner;
   Trigger *trigger;
 
-  Window withTrigger(Trigger &&trigger) {
+  legencyWindow withTrigger(Trigger &&trigger) {
     this->trigger = &trigger;
     return *this;
   }
 };
 
-class TumblingProcessingTimeWindow : public Window {
+class TumblingProcessingTimeWindow : public legencyWindow {
 public:
   TumblingProcessingTimeWindow(Time size) {
     assigner = new TumblingProcessingTimeAssigner();
@@ -41,7 +41,7 @@ public:
   }
 };
 
-class SlidingProcessingTimeWindow : public Window {
+class SlidingProcessingTimeWindow : public legencyWindow {
 public:
   SlidingProcessingTimeWindow(Time size, Time slide) {
     assigner = new SlidingProcessingTimeAssigner(size, slide);
@@ -49,7 +49,7 @@ public:
   }
 };
 
-class SessionProcessingTimeWindow : public Window {
+class SessionProcessingTimeWindow : public legencyWindow {
 public:
   SessionProcessingTimeWindow(Time timeout) {
     assigner = new SessionProcessingTimeAssigner(timeout);
@@ -58,7 +58,7 @@ public:
   }
 };
 
-class TumblingEventTimeWindow : public Window {
+class TumblingEventTimeWindow : public legencyWindow {
 public:
   TumblingEventTimeWindow(Time size, std::string timestampFieldId) : size(size), timestampFieldId(timestampFieldId) {
     assigner = new TumblingEventTimeAssigner(size, timestampFieldId, Time::seconds(0));
@@ -76,7 +76,7 @@ private:
   std::string timestampFieldId;
 };
 
-class SlidingEventTimeWindow : public Window {
+class SlidingEventTimeWindow : public legencyWindow {
 public:
   SlidingEventTimeWindow(Time size, Time slide, std::string timestampFieldId)
       : size(size), slide(slide), timestampFieldId(timestampFieldId) {
@@ -96,7 +96,7 @@ private:
   std::string timestampFieldId;
 };
 
-class SessionEventTimeWindow : public Window {
+class SessionEventTimeWindow : public legencyWindow {
 public:
   SessionEventTimeWindow(Time timeout, std::string timestampFieldId)
       : timeout(timeout), timestampFieldId(timestampFieldId) {
