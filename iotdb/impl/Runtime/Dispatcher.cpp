@@ -7,6 +7,7 @@
 #include <Runtime/Dispatcher.hpp>
 #include <iostream>
 #include <assert.h>
+#include <Runtime/Window.hpp>
 #include <Util/Logger.hpp>
 namespace iotdb {
 
@@ -35,14 +36,19 @@ TupleBufferPtr Dispatcher::getBuffer() {
 }
 
 void Dispatcher::registerSource(DataSourcePtr source) {
-  // std::unique_lock<std::mutex> lock(mutex);
-	LOG4CXX_DEBUG(logger, "!!!!!!!!!!!HIER!!!!!!!!!")
   if (source) {
 	  IOTDB_DEBUG("Dispatcher: Register Source " << source.get() << "in Dispatcher")
     sources.push_back(source);
   }
 }
 
+void Dispatcher::registerWindow(WindowPtr window) {
+  // std::unique_lock<std::mutex> lock(mutex);
+  if (window) {
+	  IOTDB_DEBUG("Dispatcher: Register Window " << window.get() << "in Dispatcher")
+    windows.push_back(window);
+  }
+}
 void Dispatcher::deregisterSource(DataSourcePtr source)
 {
 //	std::unique_lock<std::mutex> lock(mutex);
@@ -64,6 +70,27 @@ void Dispatcher::deregisterSource(DataSourcePtr source)
 	}
 }
 
+void Dispatcher::deregisterWindow(WindowPtr window)
+{
+//	std::unique_lock<std::mutex> lock(mutex);
+	if (window) {
+		std::vector<WindowPtr>::iterator it = windows.begin();
+		while(it != windows.end()) {
+
+	    	if(it->get() == window.get())
+	    	{
+	    		IOTDB_DEBUG("Dispatcher: Deregister Window " << window.get() << "in Dispatcher")
+		        it = windows.erase(it);
+		        return;
+		    }
+		    else
+		    	++it;
+		}
+		IOTDB_ERROR("Dispatcher: ERROR: tried to deregister unregistered window")
+		assert(0);
+	}
+}
+
 void Dispatcher::registerQuery(const QueryExecutionPlanPtr qep) {
   std::unique_lock<std::mutex> lock(mutex);
 
@@ -73,6 +100,12 @@ void Dispatcher::registerQuery(const QueryExecutionPlanPtr qep) {
     source_to_query_map[source.get()].emplace_back(qep);
     source->start();
   }
+  auto windows = qep->getWindows();
+	for (auto window : windows) {
+	  registerWindow(window);
+	  window_to_query_map[window.get()].emplace_back(qep);
+	  window->setup();
+	}
 }
 
 void Dispatcher::deregisterQuery(const QueryExecutionPlanPtr qep)
@@ -84,6 +117,13 @@ void Dispatcher::deregisterQuery(const QueryExecutionPlanPtr qep)
 		source_to_query_map.erase(source.get());
 		source->stop();
 	  }
+	  auto windows = qep->getWindows();
+
+	for (auto window : windows) {
+		  deregisterWindow(window);
+		  window_to_query_map.erase(window.get());
+		  window->shutdown();
+		}
 }
 
 TaskPtr Dispatcher::getWork(bool &run_thread) {

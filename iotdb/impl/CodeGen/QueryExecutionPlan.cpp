@@ -24,6 +24,8 @@ uint32_t QueryExecutionPlan::stageIdFromSource(DataSource * source) { return sou
 
 const std::vector<DataSourcePtr> QueryExecutionPlan::getSources() const { return sources; }
 
+const std::vector<WindowPtr> QueryExecutionPlan::getWindows() const { return windows; }
+
 bool QueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf) {
   assert(0);
   WindowState* state;

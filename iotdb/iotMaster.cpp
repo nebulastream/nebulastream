@@ -7,8 +7,7 @@
 #include <Optimizer/FogOptimizer.hpp>
 #include <Optimizer/FogRunTime.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-#include <Runtime/compiledTestPlan.hpp>
-#include <Runtime/compiledYSBPlan.hpp>
+#include <Runtime/CompiledDummyPlan.hpp>
 #include <Util/Logger.hpp>
 
 #include <memory>
@@ -89,23 +88,29 @@ InputQueryPtr createYSBTestQuery()
 //	.write("output.csv");
 	InputQueryPtr ptr = std::make_shared<InputQuery>(InputQuery::create(config, source)
 		      .filter(PredicatePtr())
-			  .window(WindowPtr())
+//			  .window(WindowPtr())
 		      .printInputQueryPlan());
 
 	return ptr;
 }
 
-CompiledTestQueryExecutionPlanPtr createQEP()
+CompiledDummyPlanPtr createDummyQEP()
 {
-	CompiledTestQueryExecutionPlanPtr qep(new CompiledTestQueryExecutionPlan());
+	CompiledDummyPlanPtr qep(new CompiledDummyPlan());
 	return qep;
 }
 
-CompiledYSBTestQueryExecutionPlanPtr createYSBQEP()
-{
-	CompiledYSBTestQueryExecutionPlanPtr qep(new CompiledYSBTestQueryExecutionPlan());
-    return qep;
-}
+//CompiledTestQueryExecutionPlanPtr createQEP()
+//{
+//	CompiledTestQueryExecutionPlanPtr qep(new CompiledTestQueryExecutionPlan());
+//	return qep;
+//}
+//
+//CompiledYSBTestQueryExecutionPlanPtr createYSBQEP()
+//{
+//	CompiledYSBTestQueryExecutionPlanPtr qep(new CompiledYSBTestQueryExecutionPlan());
+//    return qep;
+//}
 
 void createTestTopo(FogTopologyManager& fMgnr)
 {
@@ -134,14 +139,13 @@ int main(int argc, const char *argv[]) {
 	createTestTopo(fMgnr);
 
 	//normal test query
-//	InputQueryPtr query = createTestQuery();
-//	CompiledTestQueryExecutionPlanPtr qep = createQEP();
-//	qep->setDataSource(query->getSource());
+	InputQueryPtr query = createTestQuery();
+	CompiledDummyPlanPtr qep = createDummyQEP();
 
 	//YSB Query
-	InputQueryPtr query = createYSBTestQuery();
-	CompiledYSBTestQueryExecutionPlanPtr qep = createYSBQEP();
-	qep->setDataSource(query->getSource());
+//	InputQueryPtr query = createYSBTestQuery();
+//	CompiledYSBTestQueryExecutionPlanPtr qep = createYSBQEP();
+//	qep->setDataSource(query->getSource());
 	//skipping LogicalPlanManager
 
 	FogOptimizer& fogOpt = FogOptimizer::getInstance();
