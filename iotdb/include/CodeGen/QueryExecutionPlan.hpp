@@ -21,6 +21,7 @@ public:
   const std::vector<DataSourcePtr> getSources() const;
   uint32_t stageIdFromSource(DataSource * source);
   virtual ~QueryExecutionPlan();
+  size_t getQueryResult(std::string name){return qResult[name];};
 
 protected:
   QueryExecutionPlan();
@@ -33,6 +34,7 @@ protected:
   std::vector<PipelineStagePtr> stages;
   std::map<DataSource *, uint32_t> source_to_stage;
   std::map<uint32_t, uint32_t> stage_to_dest;
+  std::map<std::string, size_t> qResult;
 
 };
 typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;

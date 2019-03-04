@@ -9,13 +9,14 @@
 #include <Runtime/Task.hpp>
 #include <Runtime/ThreadPool.hpp>
 #include <functional>
+#include <Util/Logger.hpp>
 
 namespace iotdb {
 
 ThreadPool::ThreadPool() : run(), threads() {}
 
 ThreadPool::~ThreadPool() {
-  std::cout << "Destroying Thread Pool" << std::endl;
+	IOTDB_DEBUG("Threadpool: Destroying Thread Pool")
   stop();
 }
 void ThreadPool::worker_thread() {
@@ -25,7 +26,7 @@ void ThreadPool::worker_thread() {
     if (task) {
       task->execute();
       dispatcher.completedWork(task);
-      std::cout << "Dispatcher: finished task " << task.get() << std::endl;
+      IOTDB_DEBUG("Threadpool: finished task ")
     }
   }
 }
@@ -37,8 +38,7 @@ void ThreadPool::start() {
   /* spawn threads */
 //  auto num_threads = std::thread::hardware_concurrency();
   auto num_threads = 1;
-
-  std::cout << "Spawning " << num_threads << " threads" << std::endl;
+  IOTDB_DEBUG("Threadpool: Spawning " << num_threads << " threads")
   for (uint64_t i = 0; i < num_threads; ++i) {
     threads.push_back(std::thread(std::bind(&ThreadPool::worker_thread, this)));
   }
