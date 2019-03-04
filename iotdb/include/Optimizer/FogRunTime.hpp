@@ -24,7 +24,7 @@ public:
     void operator=(FogRunTime const&); // Don't implement
 
 	void deployQuery(FogExecutionPlan fogPlan);
-	void deployQuery(CompiledTestQueryExecutionPlanPtr cPlan);
+	void deployQuery(QueryExecutionPlanPtr cPlan);
 
 
 	void registerNode(NodeEnginePtr ptr);

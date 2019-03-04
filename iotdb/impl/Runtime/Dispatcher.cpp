@@ -7,20 +7,22 @@
 #include <Runtime/Dispatcher.hpp>
 #include <iostream>
 #include <assert.h>
+#include <Util/Logger.hpp>
 namespace iotdb {
 
 Dispatcher::Dispatcher() : sources(), task_queue(), source_to_query_map(), mutex() {
-  std::cout << "Init Dispatcher" << std::endl;
+  IOTDB_DEBUG("Init Dispatcher")
 }
 
 Dispatcher::~Dispatcher() {
-	std::cout << "Enter Destructor of Dispatcher" << std::endl;
+	IOTDB_DEBUG("Dispatcher: Enter Destructor of Dispatcher")
 	sources.clear();
-	std::cout << "Destroyed Sources" << std::endl;
+	IOTDB_DEBUG("Dispatcher: Destroyed Source")
  	task_queue.clear();
- 	std::cout << "Destroyed Task Queue" << std::endl;
+ 	IOTDB_DEBUG("Dispatcher: Destroyed Task Queue")
  	source_to_query_map.clear();
- 	std::cout << "Destroyed Dispatcher" << std::endl;
+ 	IOTDB_DEBUG("Dispatcher: Destroyed Dispatcher")
+
 }
 
 TupleBufferPtr Dispatcher::getBuffer() {
@@ -28,13 +30,15 @@ TupleBufferPtr Dispatcher::getBuffer() {
 //  uint64_t buffer_size = number_of_tuples * tuple_size_bytes;
 //  void *buffer = malloc(buffer_size);
 //  TupleBuffer buf(buffer, buffer_size, tuple_size_bytes, number_of_tuples);
+	IOTDB_DEBUG("Dispatcher: Dispatcher returns buffer")
   return BufferManager::instance().getBuffer();
 }
 
 void Dispatcher::registerSource(DataSourcePtr source) {
   // std::unique_lock<std::mutex> lock(mutex);
+	LOG4CXX_DEBUG(logger, "!!!!!!!!!!!HIER!!!!!!!!!")
   if (source) {
-    std::cout << "Register Source " << source.get() << "in Dispatcher" << std::endl;
+	  IOTDB_DEBUG("Dispatcher: Register Source " << source.get() << "in Dispatcher")
     sources.push_back(source);
   }
 }
@@ -48,13 +52,14 @@ void Dispatcher::deregisterSource(DataSourcePtr source)
 
 	    	if(it->get() == source.get())
 	    	{
-	    	    std::cout << "Deregister Source " << source.get() << "in Dispatcher" << std::endl;
+	    		IOTDB_DEBUG("Dispatcher: Deregister Source " << source.get() << "in Dispatcher")
 		        it = sources.erase(it);
 		        return;
 		    }
 		    else
 		    	++it;
 		}
+		IOTDB_ERROR("Dispatcher: ERROR: tried to deregister unregistered Buffer")
 		assert(0);
 	}
 }
@@ -90,8 +95,7 @@ TaskPtr Dispatcher::getWork(bool &run_thread) {
   }
   TaskPtr task = task_queue.front();
   task_queue.erase(task_queue.begin());
-  std::cout << "Dispatcher: give task" << task.get() << " to thread (getWork())" << std::endl;
-
+  IOTDB_DEBUG("Dispatcher: give task" << task.get() << " to thread (getWork())")
   return task;
 }
 
@@ -101,8 +105,10 @@ void Dispatcher::addWork(const TupleBufferPtr buf, DataSource *source) {
   for (uint64_t i = 0; i < queries.size(); ++i) {
     TaskPtr task(new Task(queries[i], queries[i]->stageIdFromSource(source), source, buf));
     task_queue.push_back(task);
-    std::cout << "Dispatcher: added Task " << task.get() << " for source " << source << " for QEP " << queries[i].get()
-    		<< " inputBuffer " << buf << std::endl;
+    IOTDB_DEBUG("Dispatcher: added Task " << task.get()
+    		<< " for source " << source << " for QEP "
+			<< queries[i].get()
+    		<< " inputBuffer " << buf)
   }
   cv.notify_all();
 }

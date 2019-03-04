@@ -42,6 +42,8 @@ protected:
 typedef std::shared_ptr<DataSource> DataSourcePtr;
 
 const DataSourcePtr createTestSource();
+const DataSourcePtr createYSBSource();
+
 const DataSourcePtr createZmqSource(const Schema &schema, const std::string &host, const uint16_t port,
                                     const std::string &topic);
 const DataSourcePtr createBinaryFileSource(const Schema &schema, const std::string &path_to_file);

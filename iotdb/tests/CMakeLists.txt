@@ -40,3 +40,10 @@ add_test(NAME buffer-manager-test COMMAND buffer-manager-test)
 add_executable(runtime-data-source-sink-tests "UnitTests/RuntimeDataSourceSinkTest.cpp")
 target_link_libraries(runtime-data-source-sink-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME runtime-data-source-sink-tests COMMAND runtime-data-source-sink-tests)
+
+
+# YSB Test
+add_executable(ysb-test "UnitTests/YSBTest.cpp")
+target_link_libraries(ysb-test iotdb ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
+add_test(NAME eysb-test COMMAND ysb-test)
+

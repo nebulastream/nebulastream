@@ -40,6 +40,8 @@ public:
 
   // helper operators
   InputQuery &printInputQueryPlan();
+  DataSourcePtr getSource(){return source;};
+
 private:
   InputQuery(const Config& config, const DataSourcePtr& source);
   Config config;
