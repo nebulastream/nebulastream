@@ -2,17 +2,36 @@
 #include <API/InputQuery.hpp>
 #include <API/Config.hpp>
 #include <API/Schema.hpp>
+
 #include "include/API/InputQuery.hpp"
 #include <Optimizer/FogOptimizer.hpp>
 #include <Optimizer/FogRunTime.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Runtime/compiledTestPlan.hpp>
+#include <Runtime/compiledYSBPlan.hpp>
+#include <Util/Logger.hpp>
 
+#include <memory>
 #include <sstream>
 
 using namespace iotdb;
 
+void printWelcome()
+{
+	vector<string> logo;
+	logo.push_back(R"( __         __)");
+	logo.push_back(R"(/  \.-"""-./  \)");
+	logo.push_back(R"(\   - DFKI -  /)");
+	logo.push_back(R"( |   o   o   |)");
+	logo.push_back(R"( \  .-'''-.  /)");
+	logo.push_back(R"(  '-\__Y__/-')");
+	logo.push_back(R"(     `---`)");
 
+	std::cout << "Welcome to the Grizzly Streaming Compiler ʕ•ᴥ•ʔ" << endl;
+	for(auto a : logo)
+		cout << a << endl;
+
+}
 InputQueryPtr createTestQuery()
 {
 	 Config config = Config::create().
@@ -37,11 +56,57 @@ InputQueryPtr createTestQuery()
 	return ptr;
 }
 
+InputQueryPtr createYSBTestQuery()
+{
+	 Config config = Config::create().
+		                  withParallelism(1).
+		                  withPreloading().
+		                  withBufferSize(1000).
+		                  withNumberOfPassesOverInput(1);
+
+//	  Schema schema = Schema::create().addField("",INT32);
+
+	  /** \brief create a source using the following functions:
+	  * const DataSourcePtr createTestSource();
+	  * const DataSourcePtr createBinaryFileSource(const Schema& schema, const std::string& path_to_file);
+	  * const DataSourcePtr createRemoteTCPSource(const Schema& schema, const std::string& server_ip, int port);
+  */
+	DataSourcePtr source = createYSBSource();
+
+	Schema schema = Schema::create()
+		.addField("user_id", 16)
+		.addField("page_id", 16)
+		.addField("campaign_id", 16)
+		.addField("event_type", 16)
+		.addField("ad_type", 16)
+		.addField("current_ms", UINT64)
+		.addField("ip", INT32);
+
+//	.filter(Equal("event_type", "view"))                // filter by event type
+//	.window(TumblingProcessingTimeWindow(Counter(100))) // tumbling window of 100 elements
+//	.groupBy("campaign_id")                             // group by campaign id
+//	.aggregate(Count())                                 // count results per key and window
+//	.write("output.csv");
+	InputQueryPtr ptr = std::make_shared<InputQuery>(InputQuery::create(config, source)
+		      .filter(PredicatePtr())
+			  .window(WindowPtr())
+		      .printInputQueryPlan());
+
+	return ptr;
+}
+
 CompiledTestQueryExecutionPlanPtr createQEP()
 {
 	CompiledTestQueryExecutionPlanPtr qep(new CompiledTestQueryExecutionPlan());
+	return qep;
+}
+
+CompiledYSBTestQueryExecutionPlanPtr createYSBQEP()
+{
+	CompiledYSBTestQueryExecutionPlanPtr qep(new CompiledYSBTestQueryExecutionPlan());
     return qep;
 }
+
 void createTestTopo(FogTopologyManager& fMgnr)
 {
 	FogTopologyWorkerNodePtr f1 = fMgnr.createFogWorkerNode();
@@ -62,11 +127,21 @@ NodeEnginePtr createTestNode()
 }
 
 int main(int argc, const char *argv[]) {
+	log4cxx::Logger::getLogger("IOTDB")->setLevel(log4cxx::Level::getInfo());
+
+	printWelcome();
 	FogTopologyManager& fMgnr = FogTopologyManager::getInstance();
 	createTestTopo(fMgnr);
 
-	InputQueryPtr query = createTestQuery();
+	//normal test query
+//	InputQueryPtr query = createTestQuery();
+//	CompiledTestQueryExecutionPlanPtr qep = createQEP();
+//	qep->setDataSource(query->getSource());
 
+	//YSB Query
+	InputQueryPtr query = createYSBTestQuery();
+	CompiledYSBTestQueryExecutionPlanPtr qep = createYSBQEP();
+	qep->setDataSource(query->getSource());
 	//skipping LogicalPlanManager
 
 	FogOptimizer& fogOpt = FogOptimizer::getInstance();
@@ -77,8 +152,7 @@ int main(int argc, const char *argv[]) {
 	NodeEnginePtr nodePtr = createTestNode();
 	runtime.registerNode(nodePtr);
 
-	//TODO: will be replaced with FogExecutionPlan
-	CompiledTestQueryExecutionPlanPtr qep = createQEP();
+
 	runtime.deployQuery(qep);
 
 }

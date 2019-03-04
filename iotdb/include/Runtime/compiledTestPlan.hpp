@@ -21,13 +21,13 @@ public:
     uint64_t sum;
     CompiledTestQueryExecutionPlan()
         : HandCodedQueryExecutionPlan(), count(0), sum(0){
-
-
-    	DataSourcePtr source = createTestSource();
-
-        sources.push_back(source);
     }
 
+    void setDataSource(DataSourcePtr source)
+    {
+        sources.push_back(source);
+
+    }
     bool firstPipelineStage(const TupleBuffer&){
         return false;
     }

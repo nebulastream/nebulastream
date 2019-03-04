@@ -35,6 +35,13 @@ find_package(ZMQ)
 include_directories(${ZMQ_INCLUDE_DIRS})
 set(LIBRARIES ${LIBRARIES} ${ZMQ_LIBRARIES})
 
+#Log4cc
+find_package(Log4cxx)
+include_directories(${Log4cxx_INCLUDE_DIR})
+set(LIBRARIES ${LIBRARIES} ${Log4cxx_LIBRARY})
+
+
+
 # TRAVIS-CI
 if(TRAVIS_INCLUDE_DIR)
   include_directories(${TRAVIS_INCLUDE_DIR})
