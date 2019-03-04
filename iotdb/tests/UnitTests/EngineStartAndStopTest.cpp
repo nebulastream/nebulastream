@@ -17,7 +17,9 @@
 namespace iotdb {
 
 int test() {
-  CompiledTestQueryExecutionPlanPtr qep(new CompiledYSBTestQueryExecutionPlan());
+  CompiledTestQueryExecutionPlanPtr qep(new CompiledTestQueryExecutionPlan());
+  DataSourcePtr source = createTestSource();
+  qep->setDataSource(source);
 
   Dispatcher::instance().registerQuery(qep);
 

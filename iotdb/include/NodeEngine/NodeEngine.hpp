@@ -29,7 +29,7 @@ public:
 
 	size_t getId(){return id;};
 
-	void deployQuery(CompiledTestQueryExecutionPlanPtr ptr);
+	void deployQuery(QueryExecutionPlanPtr ptr);
 
 	void sendNodePropertiesToServer(std::string ip, std::string port);
 

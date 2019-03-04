@@ -10,26 +10,26 @@
 #include <Runtime/RemoteSocketSource.hpp>
 #include <Runtime/ZmqSource.hpp>
 #include <Util/ErrorHandling.hpp>
+#include <Util/Logger.hpp>
 
 namespace iotdb {
 
 DataSource::DataSource(const Schema &_schema) : run_thread(false), thread(), schema(_schema) {
-  std::cout << "Init Data Source!" << std::endl;
+  IOTDB_DEBUG("DataSource: Init Data Source!")
 }
 
 const Schema &DataSource::getSchema() const { return schema; }
 
 DataSource::~DataSource() {
 //	stop();
-	std::cout << "Destroy Data Source " << this << std::endl;
-
+	IOTDB_DEBUG("DataSource: Destroy Data Source.")
 }
 
 void DataSource::start() {
   if (run_thread)
     return;
   run_thread = true;
-  std::cout << "Spawn" << std::endl;
+  IOTDB_DEBUG("DataSource: Spawn thread")
   thread = std::thread(std::bind(&DataSource::run, this));
 }
 
@@ -42,12 +42,12 @@ void DataSource::stop() {
 }
 
 void DataSource::run() {
-  std::cout << "Running Data Source!" << std::endl;
+  IOTDB_DEBUG("DataSource: Running Data Source")
   size_t cnt = 0;
 
   while (run_thread) {
     TupleBufferPtr buf = receiveData();
-    std::cout << "Received Data: " << buf->num_tuples << "tuples" << std::endl;
+    IOTDB_DEBUG("DataSource: Received Data: " << buf->num_tuples << "tuples")
     if (buf->buffer && cnt < this->num_buffers_to_process)
     {
         Dispatcher::instance().addWork(buf, this);
@@ -59,7 +59,7 @@ void DataSource::run() {
     	break;
     }
   }
-  std::cout << "Data Source Finished!" << std::endl;
+  IOTDB_DEBUG("DataSource: Data Source Finished")
 }
 
 const DataSourcePtr createTestSource() {
@@ -120,7 +120,7 @@ struct __attribute__((packed)) ysbRecord {
 	};//size 78 bytes
 
 void generateTuple(ysbRecord* data, size_t campaingOffset, uint64_t campaign_lsb, uint64_t campaign_msb, size_t event_id)
-	{
+{
 		std::string events[] = {"view", "click", "purchase"};
 		event_id = event_id % 3;
 
@@ -137,35 +137,34 @@ void generateTuple(ysbRecord* data, size_t campaingOffset, uint64_t campaign_lsb
 	  data->current_ms = std::chrono::duration_cast<std::chrono::milliseconds>(ts).count();
 
 	  data->ip = 0x01020304;
-	}
+}
 
 void generate(ysbRecord* data, size_t generated_tuples_this_pass)
+{
+	std::random_device rd;  //Will be used to obtain a seed for the random number engine
+	std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+	std::uniform_int_distribution<size_t> diss(0, SIZE_MAX);
+
+	const size_t campaingCnt = 10;
+
+	size_t randomCnt = generated_tuples_this_pass/10;
+	size_t* randomNumbers = new size_t[randomCnt];
+	std::uniform_int_distribution<size_t> disi(0, campaingCnt);
+	for(size_t i = 0; i < randomCnt; i++)
+		randomNumbers[i] = disi(gen);
+
+	uint64_t campaign_lsb, campaign_msb;
+	auto uuid = diss(gen);
+	uint8_t* uuid_ptr = reinterpret_cast<uint8_t*>(&uuid);
+	memcpy(&campaign_msb, uuid_ptr, 8);
+	memcpy(&campaign_lsb, uuid_ptr + 8, 8);
+	campaign_lsb &= 0xffffffff00000000;
+
+	for(size_t u = 0; u < generated_tuples_this_pass; u++)
 	{
-		std::random_device rd;  //Will be used to obtain a seed for the random number engine
-		std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
-		std::uniform_int_distribution<size_t> diss(0, SIZE_MAX);
-
-	    const size_t campaingCnt = 10000;
-
-		size_t randomCnt = generated_tuples_this_pass/10;
-		size_t* randomNumbers = new size_t[randomCnt];
-		std::uniform_int_distribution<size_t> disi(0, campaingCnt);
-		for(size_t i = 0; i < randomCnt; i++)
-			randomNumbers[i] = disi(gen);
-
-		uint64_t campaign_lsb, campaign_msb;
-		auto uuid = diss(gen);
-		uint8_t* uuid_ptr = reinterpret_cast<uint8_t*>(&uuid);
-		memcpy(&campaign_msb, uuid_ptr, 8);
-		memcpy(&campaign_lsb, uuid_ptr + 8, 8);
-		campaign_lsb &= 0xffffffff00000000;
-
-		for(size_t u = 0; u < generated_tuples_this_pass; u++)
-		{
-			generateTuple(&data[u], /**campaingOffset*/ randomNumbers[u%randomCnt], campaign_lsb, campaign_msb, /**eventID*/ u);
-		}
+		generateTuple(&data[u], /**campaingOffset*/ randomNumbers[u%randomCnt], campaign_lsb, campaign_msb, /**eventID*/ u);
 	}
-
+}
 
 
 const DataSourcePtr createYSBSource() {
@@ -201,12 +200,12 @@ const DataSourcePtr createZmqSource(const Schema &schema, const std::string &hos
 
 const DataSourcePtr createBinaryFileSource(const Schema &schema, const std::string &path_to_file) {
   // instantiate BinaryFileSource
-  IOTDB_FATAL_ERROR("Called unimplemented Function");
+  IOTDB_FATAL_ERROR("DataSource: Called unimplemented Function");
 }
 
 const DataSourcePtr createRemoteTCPSource(const Schema &schema, const std::string &server_ip, int port) {
-  // instantiate RemoteSocketSource
-  IOTDB_FATAL_ERROR("Called unimplemented Function");
+  // instantiate RemoDataSource: teSocketSource
+  IOTDB_FATAL_ERROR("DataSource: Called unimplemented Function");
 }
 
 } // namespace iotdb

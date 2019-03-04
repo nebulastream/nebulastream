@@ -38,7 +38,7 @@ void NodeEngine::sendNodePropertiesToServer(std::string ip, std::string port)
 	sleep(1);
 }
 
-void NodeEngine::deployQuery(CompiledTestQueryExecutionPlanPtr qep)
+void NodeEngine::deployQuery(QueryExecutionPlanPtr qep)
 {
 	//TODO:add compile here
 	Dispatcher::instance().registerQuery(qep);
@@ -50,12 +50,6 @@ void NodeEngine::deployQuery(CompiledTestQueryExecutionPlanPtr qep)
 	std::cout << "Waiting 2 seconds " << std::endl;
 	std::this_thread::sleep_for(std::chrono::seconds(2));
 
-	if(qep->sum==4950 && qep->count==100){
-	  std::cout << "Result Correct" << std::endl;
-	}else{
-	  std::cerr << "Wrong Result: sum=" << qep->sum << ", count=" << qep->count << std::endl;
-	  assert(0);
-	}
 }
 
 

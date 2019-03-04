@@ -3,17 +3,16 @@
 #include <iostream>
 #include <thread>
 #include <utility>
-
+#include <Util/Logger.hpp>
 namespace iotdb {
 
 BufferManager::BufferManager():mutex() {
-	std::cout << "Enter Constructor of BufferManager." << std::endl;
+	IOTDB_DEBUG("BufferManager: Enter Constructor of BufferManager.")
 	maxBufferCnt = 3;
 	bufferSizeInByte = 4 * 1024;//set buffer to 4KB
-	std::cout << "Set maximun number of buffer to "<<  maxBufferCnt
-			<< " and a bufferSize of KB:" << bufferSizeInByte/1024 << std::endl;
-
-	std::cout << "initialize buffers" << std::endl;
+	IOTDB_DEBUG("BufferManager: Set maximun number of buffer to "<<  maxBufferCnt
+			<< " and a bufferSize of KB:" << bufferSizeInByte/1024)
+	IOTDB_DEBUG("BufferManager: initialize buffers")
 	for(size_t i = 0; i < maxBufferCnt; i++)
 	{
 		addBuffer();
@@ -21,7 +20,7 @@ BufferManager::BufferManager():mutex() {
 }
 
 BufferManager::~BufferManager() {
-  std::cout << "Enter Destructor of BufferManager." << std::endl;
+	IOTDB_DEBUG("BufferManager: Enter Destructor of BufferManager.")
 
   // Release memory.
   for (auto const &buffer_pool_entry : buffer_pool) {
@@ -55,13 +54,15 @@ TupleBufferPtr BufferManager::getBuffer() {
 	  if(entry.second == false)//found free entry
 	  {
 		  entry.second = true;
-		  std::cout << "BufferManager: Got free buffer " <<  entry.first << std::endl;
+
+		  IOTDB_DEBUG("BufferManager: Got free buffer " <<  entry.first)
+
 		  return entry.first;
 	  }
 	}
 	//add wait
 	std::this_thread::sleep_for(std::chrono::seconds(1));
-	std::cout << "BufferManager: no buffer free yet --- retry" << std::endl;
+	IOTDB_DEBUG("BufferManager: no buffer free yet --- retry")
   }
 
 }
@@ -75,12 +76,13 @@ void BufferManager::releaseBuffer(TupleBufferPtr tuple_buffer) {
 		  if(entry.first.get() == tuple_buffer.get())//found free entry
 		  {
 			  entry.second = false;
-			  std::cout << "BufferManager: found and release buffer" << std::endl;
+				IOTDB_DEBUG("BufferManager: found and release buffer")
+
 			  return;
 		  }
 	   }
+		IOTDB_ERROR("BufferManager: buffer not found")
 
-	   std::cout << "BufferManager: buffer not found" << std::endl;
 	   assert(0);
 }
 

@@ -15,19 +15,19 @@
 namespace iotdb{
 
 
-class CompiledYSBTestQueryExecutionPlan : public HandCodedQueryExecutionPlan{
+class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan{
 public:
     uint64_t count;
     uint64_t sum;
-    CompiledYSBTestQueryExecutionPlan()
+    CompiledTestQueryExecutionPlan()
         : HandCodedQueryExecutionPlan(), count(0), sum(0){
-
-
-    	DataSourcePtr source = createTestSource();
-
-        sources.push_back(source);
     }
 
+    void setDataSource(DataSourcePtr source)
+    {
+        sources.push_back(source);
+
+    }
     bool firstPipelineStage(const TupleBuffer&){
         return false;
     }
@@ -43,7 +43,7 @@ public:
         return true;
     }
 };
-typedef std::shared_ptr<CompiledYSBTestQueryExecutionPlan> CompiledTestQueryExecutionPlanPtr;
+typedef std::shared_ptr<CompiledTestQueryExecutionPlan> CompiledTestQueryExecutionPlanPtr;
 
 }
 #endif /* TESTS_TESTPLANS_COMPILEDTESTPLAN_HPP_ */

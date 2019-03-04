@@ -18,7 +18,7 @@ void FogRunTime::deployQuery(FogExecutionPlan fogPlan)
 	assert(0);
 }
 
-void FogRunTime::deployQuery(CompiledTestQueryExecutionPlanPtr cPlan)
+void FogRunTime::deployQuery(QueryExecutionPlanPtr cPlan)
 {
 	//setup node by sending query
 	assert(nodeInfos.size() == 1);
