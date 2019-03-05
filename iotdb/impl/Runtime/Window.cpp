@@ -3,15 +3,21 @@
 namespace iotdb{
 const WindowPtr createTestWindow() {
 
-	  WindowPtr source(new Window());
+	  WindowPtr win(new YSBWindow());
 
-	  return source;
+	  return win;
 	}
 
+ Window::~Window(){
+	 IOTDB_DEBUG("WINDOW: calling destructor")
+ };
 
-Window::Window()
-{
 
-}
+
+YSBWindow::~YSBWindow()
+ {
+	 IOTDB_DEBUG("YSB Window: calling destructor")
+
+ }
 
 }

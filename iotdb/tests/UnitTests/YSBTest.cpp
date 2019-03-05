@@ -2,6 +2,7 @@
 
 #include <cassert>
 #include <iostream>
+#include "gtest/gtest.h"
 
 #include <Core/DataTypes.hpp>
 
@@ -59,12 +60,9 @@ class CompiledYSBTestQueryExecutionPlan : public HandCodedQueryExecutionPlan{
 public:
     uint64_t count;
     uint64_t sum;
-    std::atomic<size_t>** hashTable;
-    size_t windowSizeInSec;
-    size_t campaingCnt;
 
     CompiledYSBTestQueryExecutionPlan()
-        : HandCodedQueryExecutionPlan(), count(0), sum(0), campaingCnt(10), windowSizeInSec(1){
+        : HandCodedQueryExecutionPlan(), count(0), sum(0){
 
     }
 
@@ -89,24 +87,17 @@ public:
     	char buffer[8];
     };
 
-    void printResult(size_t currenWindow)
-    {
 
-    	IOTDB_INFO("Hash Table Content with window " << currenWindow)
-    	for(size_t i = 0; i < campaingCnt; i++)
-    	{
-
-    		IOTDB_INFO("id=" << i << " cnt=" << hashTable[currenWindow][i])
-    	}
-    }
     bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf)
     {
         ysbRecord* tuples = (ysbRecord*) buf->buffer;
-
         size_t lastTimeStamp = time(NULL);
         size_t current_window = 0;
         char key[] = "view";
-
+        size_t windowSizeInSec = 1;
+        size_t campaingCnt = 10;
+        YSBWindow* window = (YSBWindow*)this->getWindows()[0].get();
+        std::atomic<size_t>** hashTable = window->getHashTable();
 		for(size_t i = 0; i < buf->num_tuples; i++)
 		{
 			if(strcmp(key,tuples[i].event_type) != 0)
@@ -122,11 +113,12 @@ public:
 					current_window = 1;
 				else
 					current_window = 0;
+
 				if(hashTable[current_window][campaingCnt] != timeStamp)
 				{
-					IOTDB_INFO("rest st at tup=" << i)
+			        std::cout << "win" << std::endl;
 					atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
-					printResult(current_window);
+					window->print();
 					std::fill(hashTable[current_window], hashTable[current_window]+campaingCnt, 0);
 					//memset(myarray, 0, N*sizeof(*myarray)); // TODO: is it faster?
 				}
@@ -160,16 +152,32 @@ int test() {
 
 	thread_pool.start();
 
-//	std::cout << "Waiting 2 seconds " << std::endl;
-//	std::this_thread::sleep_for(std::chrono::seconds(3));
+	std::cout << "Waiting 2 seconds " << std::endl;
+	std::this_thread::sleep_for(std::chrono::seconds(2));
 
-	while(!user_wants_to_quit)
-	{
-	  std::this_thread::sleep_for(std::chrono::seconds(2));
-	  std::cout << "waiting to finish" << std::endl;
-	}
+    YSBWindow* res_window = (YSBWindow*)qep->getWindows()[0].get();
+    size_t sum = 0;
+    for(size_t i = 0; i < 10; i++)
+    {
+    	sum += res_window->getHashTable()[0][i];
+    	sum += res_window->getHashTable()[1][i];
+    }
+    std::cout << "query result = " << sum << std::endl;
+    if(sum != 1800)
+    {
+    	std::cout << "wrong result" << std::endl;
+    	assert(0);
+    }
+	EXPECT_EQ(sum, 1800);
 
 	Dispatcher::instance().deregisterQuery(qep);
+
+//	while(!user_wants_to_quit)
+//	{
+//	  std::this_thread::sleep_for(std::chrono::seconds(2));
+//	  std::cout << "waiting to finish" << std::endl;
+//	}
+
 
 	thread_pool.stop();
 
@@ -192,8 +200,8 @@ void setupLogging()
 
 	// set log level
 	//logger->setLevel(log4cxx::Level::getTrace());
-	logger->setLevel(log4cxx::Level::getDebug());
-	//logger->setLevel(log4cxx::Level::getIngfo());
+//	logger->setLevel(log4cxx::Level::getDebug());
+	logger->setLevel(log4cxx::Level::getInfo());
 //	logger->setLevel(log4cxx::Level::getWarn());
 	//logger->setLevel(log4cxx::Level::getError());
 //	logger->setLevel(log4cxx::Level::getFatal());
