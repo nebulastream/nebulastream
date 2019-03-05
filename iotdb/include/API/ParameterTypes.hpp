@@ -19,6 +19,9 @@ typedef std::shared_ptr<JoinPredicate> JoinPredicatePtr;
 class Aggregation;
 typedef std::shared_ptr<Aggregation> AggregationPtr;
 
+class Window;
+typedef std::shared_ptr<Window> WindowPtr;
+
 struct AggregationSpec{
  Aggregation& grouping_fields;
  AggregationPtr aggr_spec;
@@ -30,9 +33,6 @@ typedef std::shared_ptr<WindowFunction> WindowFunctionPtr;
 
 class TimeMeasure;
 typedef std::shared_ptr<TimeMeasure> TimeMeasurePtr;
-
-class Window;
-typedef std::shared_ptr<Window> WindowPtr;
 
 const WindowPtr createTumblingWindow(const TimeMeasure&, const WindowFunction&, uint32_t unit);
 const WindowPtr createSlidingWindow(const TimeMeasure&, const WindowFunction&, uint32_t slide, uint32_t step);
