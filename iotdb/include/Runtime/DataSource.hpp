@@ -27,6 +27,7 @@ public:
   void submitWork(const TupleBuffer &);
   const Schema &getSchema() const;
 
+  virtual bool isRunning();
   virtual ~DataSource();
 
 private:
@@ -42,7 +43,7 @@ protected:
 typedef std::shared_ptr<DataSource> DataSourcePtr;
 
 const DataSourcePtr createTestSource();
-const DataSourcePtr createYSBSource();
+const DataSourcePtr createYSBSource(size_t bufferCnt);
 
 const DataSourcePtr createZmqSource(const Schema &schema, const std::string &host, const uint16_t port,
                                     const std::string &topic);

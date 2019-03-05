@@ -41,6 +41,10 @@ void DataSource::stop() {
     thread.join();
 }
 
+bool DataSource::isRunning()
+{
+	return run_thread;
+}
 void DataSource::run() {
   IOTDB_DEBUG("DataSource: Running Data Source")
   size_t cnt = 0;
@@ -167,7 +171,7 @@ void generate(ysbRecord* data, size_t generated_tuples_this_pass)
 }
 
 
-const DataSourcePtr createYSBSource() {
+const DataSourcePtr createYSBSource(size_t bufferCnt) {
   class Functor {
   public:
 
@@ -187,7 +191,8 @@ const DataSourcePtr createYSBSource() {
     uint64_t last_number;
   };
 
-  DataSourcePtr source(new GeneratorSource<Functor>(Schema::create().addField(createField("id", UINT32)), 100));
+//  DataSourcePtr source(new GeneratorSource<Functor>(Schema::create().addField(createField("id", UINT32)), 100));
+  DataSourcePtr source(new GeneratorSource<Functor>(Schema::create().addField(createField("id", UINT32)), bufferCnt));
 
   return source;
 }
