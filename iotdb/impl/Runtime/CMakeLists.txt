@@ -10,4 +10,5 @@ add_source_iotdb(
         BufferManager.cpp
         ZmqSink.cpp
         ZmqSource.cpp
-        )
+        Window.cpp
+                )

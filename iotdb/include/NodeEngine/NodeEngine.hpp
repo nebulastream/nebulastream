@@ -12,7 +12,7 @@
 #include <CodeGen/QueryExecutionPlan.hpp>
 #include <Runtime/Dispatcher.hpp>
 #include <Runtime/ThreadPool.hpp>
-#include <Runtime/compiledTestPlan.hpp>
+#include "../Runtime/CompiledDummyPlan.hpp"
 
 namespace iotdb{
 using JSON = nlohmann::json;

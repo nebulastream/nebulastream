@@ -3,11 +3,10 @@
 #include <Optimizer/FogExecutionPlan.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <CodeGen/QueryExecutionPlan.hpp>
-#include <Runtime/compiledTestPlan.hpp>
-
 #include <zmq.hpp>
 #include <NodeEngine/json.hpp>
 #include <map>
+#include "../Runtime/CompiledDummyPlan.hpp"
 
 namespace iotdb{
 using JSON = nlohmann::json;

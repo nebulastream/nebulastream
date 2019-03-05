@@ -11,6 +11,7 @@
 #include <CodeGen/PipelineStage.hpp>
 #include <vector>
 #include <Runtime/DataSink.hpp>
+#include <Runtime/Window.hpp>
 #include <map>
 
 namespace iotdb {
@@ -19,6 +20,8 @@ class QueryExecutionPlan {
 public:
   virtual bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf);
   const std::vector<DataSourcePtr> getSources() const;
+  const std::vector<WindowPtr> getWindows() const;
+
   uint32_t stageIdFromSource(DataSource * source);
   virtual ~QueryExecutionPlan();
   size_t getQueryResult(std::string name){return qResult[name];};
@@ -31,6 +34,8 @@ protected:
           const std::map<uint32_t, uint32_t> &_stage_to_dest);
 
   std::vector<DataSourcePtr> sources;
+  std::vector<WindowPtr> windows;
+
   std::vector<PipelineStagePtr> stages;
   std::map<DataSource *, uint32_t> source_to_stage;
   std::map<uint32_t, uint32_t> stage_to_dest;
