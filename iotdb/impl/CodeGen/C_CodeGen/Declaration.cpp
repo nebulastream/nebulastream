@@ -125,6 +125,11 @@ namespace iotdb{
   VariableDeclaration::VariableDeclaration(DataTypePtr type, const std::string &identifier, ValueTypePtr value)
       : type_(type), identifier_(identifier), init_value_(value) {}
 
+  VariableDeclaration::VariableDeclaration(const VariableDeclaration& var_decl)
+    : type_(var_decl.type_), identifier_(var_decl.identifier_), init_value_(var_decl.init_value_)
+  {
+  }
+
   VariableDeclaration VariableDeclaration::create(DataTypePtr type, const std::string &identifier, ValueTypePtr value) {
     if (!type)
       IOTDB_FATAL_ERROR("DataTypePtr type is nullptr!");
