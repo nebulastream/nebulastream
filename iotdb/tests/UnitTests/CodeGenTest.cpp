@@ -3,6 +3,7 @@
 #include <cassert>
 
 #include <CodeGen/PipelineStage.hpp>
+#include <CodeGen/CodeGen.hpp>
 #include <Core/DataTypes.hpp>
 #include <Util/ErrorHandling.hpp>
 
@@ -396,11 +397,32 @@ namespace iotdb {
     return 0;
   }
 
+  int CodeGeneratorTest(){
+
+    CodeGeneratorPtr code_gen = createCodeGenerator();
+    PipelineContextPtr context = createPipelineContext();
+    std::cout << "Generate Code" << std::endl;
+    code_gen->generateCode(createTestSource(), context, std::cout);
+    PipelineStagePtr stage = code_gen->compile(CompilerArgs());
+
+    if(stage)
+      return 0;
+    else
+      return -1;
+  }
+
 }
+
+
 
 int main(){
 
   iotdb::CodeGenTestCases();
+
+  if(iotdb::CodeGeneratorTest()){
+    std::cerr << "Test Failed!" << std::endl;
+    return -1;
+  }
 
   if(!iotdb::CodeGenTest()){
     std::cout << "Test Passed!" << std::endl;
@@ -409,6 +431,7 @@ int main(){
     std::cerr << "Test Failed!" << std::endl;
     return -1;
     }
+
   return 0;
 }
 
