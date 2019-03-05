@@ -141,10 +141,11 @@ typedef std::shared_ptr<CompiledYSBTestQueryExecutionPlan> CompiledYSBTestQueryE
 
 int test() {
 	CompiledYSBTestQueryExecutionPlanPtr qep(new CompiledYSBTestQueryExecutionPlan());
-	DataSourcePtr source = createYSBSource();
+	DataSourcePtr source = createYSBSource(100000);
 	WindowPtr window = createTestWindow();
 	qep->setDataSource(source);
 	qep->setWindow(window);
+    YSBWindow* res_window = (YSBWindow*)qep->getWindows()[0].get();
 
 	Dispatcher::instance().registerQuery(qep);
 
@@ -152,23 +153,27 @@ int test() {
 
 	thread_pool.start();
 
-	std::cout << "Waiting 2 seconds " << std::endl;
-	std::this_thread::sleep_for(std::chrono::seconds(2));
+	while(source->isRunning()){
+		std::cout << "----- processing current res is:-----" << std::endl;
+		res_window->print();
+		std::cout << "Waiting 1 seconds " << std::endl;
+		std::this_thread::sleep_for(std::chrono::seconds(1));
 
-    YSBWindow* res_window = (YSBWindow*)qep->getWindows()[0].get();
+	}
+
     size_t sum = 0;
     for(size_t i = 0; i < 10; i++)
     {
     	sum += res_window->getHashTable()[0][i];
     	sum += res_window->getHashTable()[1][i];
     }
-    std::cout << "query result = " << sum << std::endl;
-    if(sum != 1800)
+    std::cout << " ========== FINAL query result  ========== " << sum << std::endl;
+    if(sum != 1800000)
     {
     	std::cout << "wrong result" << std::endl;
-    	assert(0);
+//    	assert(0);
     }
-	EXPECT_EQ(sum, 1800);
+	EXPECT_EQ(sum, 1800000);
 
 	Dispatcher::instance().deregisterQuery(qep);
 
