@@ -19,7 +19,8 @@ typedef std::shared_ptr<JoinPredicate> JoinPredicatePtr;
 class Aggregation;
 typedef std::shared_ptr<Aggregation> AggregationPtr;
 
-class legencyWindow;
+class Window;
+typedef std::shared_ptr<Window> WindowPtr;
 
 struct AggregationSpec{
  Aggregation& grouping_fields;
