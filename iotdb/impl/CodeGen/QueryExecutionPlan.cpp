@@ -13,7 +13,7 @@ QueryExecutionPlan::QueryExecutionPlan(const std::vector<DataSourcePtr> &_source
     : sources(_sources), stages(_stages), source_to_stage(_source_to_stage), stage_to_dest(_stage_to_dest) {}
 
 QueryExecutionPlan::~QueryExecutionPlan() {
-	std::cout << "destroy qep" << std::endl;
+	IOTDB_DEBUG("destroy qep")
 	sources.clear();
 	stages.clear();
 	source_to_stage.clear();
