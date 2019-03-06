@@ -5,6 +5,7 @@
 #include <sstream>
 #include <string>
 #include <zmq.hpp>
+#include <Util/ErrorHandling.hpp>
 
 #include <Runtime/ZmqSink.hpp>
 
@@ -15,7 +16,7 @@ ZmqSink::ZmqSink(const Schema &schema, const std::string &host, const uint16_t p
       socket(zmq::socket_t(context, ZMQ_PUB)) {}
 ZmqSink::~ZmqSink() { assert(disconnect()); }
 
-bool ZmqSink::writeData(const std::vector<TupleBuffer *> &input_buffers) {
+bool ZmqSink::writeData(const std::vector<TupleBufferPtr> &input_buffers) {
   assert(connect());
 
   for (auto &buf : input_buffers) {
@@ -31,6 +32,12 @@ bool ZmqSink::writeData(const std::vector<TupleBuffer *> &input_buffers) {
       return false;
   }
   return true;
+}
+
+bool ZmqSink::writeData(const TupleBufferPtr input_buffer)
+{
+	  IOTDB_FATAL_ERROR("Called unimplemented Function")
+
 }
 
 const std::string ZmqSink::toString() const {
