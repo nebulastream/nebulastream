@@ -16,7 +16,9 @@ public:
   ZmqSink(const Schema &schema, const std::string &host, const uint16_t port, const std::string &topic);
   ~ZmqSink();
 
-  bool writeData(const std::vector<TupleBuffer *> &input_buffers) override;
+  bool writeData(const std::vector<TupleBufferPtr> &input_buffers) override;
+  bool writeData(const TupleBufferPtr input_buffer) override;
+
   const std::string toString() const override;
 
 private:

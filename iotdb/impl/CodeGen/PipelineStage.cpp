@@ -81,7 +81,7 @@ protected:
 
 DataSinkPiplineStage::DataSinkPiplineStage(DataSinkPtr sink) : sink(sink) {}
 
-uint32_t DataSinkPiplineStage::execute_impl(const std::vector<TupleBuffer *> &input_buffers, WindowState *state,
+uint32_t DataSinkPiplineStage::execute_impl(const std::vector<TupleBuffer*> &input_buffers, WindowState *state,
         TupleBuffer *result_buf) {
     if(sink->writeData(input_buffers))
         return 0;

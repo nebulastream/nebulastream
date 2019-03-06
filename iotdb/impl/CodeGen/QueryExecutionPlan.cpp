@@ -26,6 +26,8 @@ const std::vector<DataSourcePtr> QueryExecutionPlan::getSources() const { return
 
 const std::vector<WindowPtr> QueryExecutionPlan::getWindows() const { return windows; }
 
+const std::vector<DataSinkPtr> QueryExecutionPlan::getSinks() const { return sinks; }
+
 bool QueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf) {
   assert(0);
   WindowState* state;
