@@ -10,7 +10,7 @@
 namespace iotdb {
 
 PrintSink::PrintSink(const Schema &schema)
-    : DataSink(schema) {}
+    : DataSink(schema), printedTuples(0) {}
 
 PrintSink::~PrintSink() { }
 
@@ -42,13 +42,15 @@ const std::string PrintSink::toString() const {
 }
 
 struct __attribute__((packed)) ysbRecordOut {
-	  uint8_t campaign_id[16];
+	  char campaign_id[16];
 	  char event_type[9];
 	  int64_t current_ms;
+	  uint32_t id;
+
 };
 
 YSBPrintSink::YSBPrintSink(const Schema& schema)
-    : PrintSink(schema) {}
+    : PrintSink(schema){}
 
 YSBPrintSink::~YSBPrintSink() { }
 
@@ -61,13 +63,21 @@ bool YSBPrintSink::writeData(const std::vector<TupleBufferPtr> &input_buffers) {
 }
 
 bool YSBPrintSink::writeData(const TupleBufferPtr input_buffer) {
-	ysbRecordOut* recordBuffer = (ysbRecordOut*) input_buffer.get();
+	ysbRecordOut* recordBuffer = (ysbRecordOut*) input_buffer->buffer;
+	IOTDB_INFO(" ============= YSBPrintSink: print buffer " << input_buffer->buffer << "============")
 	for(size_t u = 0; u < input_buffer->num_tuples; u++)
 	{
-		IOTDB_INFO("PrintSink: tuple:" << u << " = " << " campaign=" << recordBuffer[u].campaign_id
+//		std::cout << "id=" << recordBuffer[u].id << std::endl;
+//		std::cout << " ms=" << recordBuffer[u].current_ms << std::endl;
+//		std::cout << " type=" << std::string(recordBuffer[u].event_type) << std::endl;
+//		std::cout << " camp=" << std::string(recordBuffer[u].campaign_id) << std::endl;
+
+		IOTDB_INFO("YSBPrintSink: tuple:" << u << " = " << " id=" << recordBuffer[u].id << " campaign=" << recordBuffer[u].campaign_id
 				<< " type=" << recordBuffer[u].event_type
 				<< " timestamp=" <<recordBuffer[u].current_ms)
+		printedTuples++;
 	}
+	IOTDB_INFO(" ============= YSBPrintSink: FINISHED ============")
 
 	Dispatcher::instance().releaseBuffer(input_buffer);
 }

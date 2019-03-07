@@ -21,7 +21,8 @@ public:
   bool writeData(const TupleBufferPtr input_buffer) override;
   const std::string toString() const override;
 
-private:
+protected:
+  size_t printedTuples;
 };
 
 
@@ -35,6 +36,7 @@ public:
   bool writeData(const TupleBufferPtr input_buffer) override;
   void setup(){};
   void shutdown(){};
+  size_t getNumberOfPrintedTuples(){return printedTuples;};
   const std::string toString() const override;
 
 private:
