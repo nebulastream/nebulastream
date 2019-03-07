@@ -1,5 +1,3 @@
-
-
 #include <cassert>
 #include <iostream>
 #include "gtest/gtest.h"
@@ -66,15 +64,7 @@ public:
 
     }
 
-    void setDataSource(DataSourcePtr source)
-	{
-	   sources.push_back(source);
-	}
 
-    void setWindow(WindowPtr window)
-	{
-	   windows.push_back(window);
-	}
 
 
     bool firstPipelineStage(const TupleBuffer&){
@@ -143,8 +133,8 @@ int test() {
 	CompiledYSBTestQueryExecutionPlanPtr qep(new CompiledYSBTestQueryExecutionPlan());
 	DataSourcePtr source = createYSBSource(100000);
 	WindowPtr window = createTestWindow();
-	qep->setDataSource(source);
-	qep->setWindow(window);
+	qep->addDataSource(source);
+	qep->addWindow(window);
     YSBWindow* res_window = (YSBWindow*)qep->getWindows()[0].get();
 
 	Dispatcher::instance().registerQuery(qep);

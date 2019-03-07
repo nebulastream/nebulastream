@@ -11,4 +11,6 @@ add_source_iotdb(
         ZmqSink.cpp
         ZmqSource.cpp
         Window.cpp
+        FileOutputSink.cpp
+        PrintSink.cpp
                 )

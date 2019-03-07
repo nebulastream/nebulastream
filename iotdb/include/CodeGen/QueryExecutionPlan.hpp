@@ -21,11 +21,25 @@ public:
   virtual bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf);
   const std::vector<DataSourcePtr> getSources() const;
   const std::vector<WindowPtr> getWindows() const;
+  const std::vector<DataSinkPtr> getSinks() const;
 
   uint32_t stageIdFromSource(DataSource * source);
   virtual ~QueryExecutionPlan();
   size_t getQueryResult(std::string name){return qResult[name];};
 
+  void addDataSource(DataSourcePtr source)
+	{
+	   sources.push_back(source);
+	}
+
+	 void addDataSink(DataSinkPtr sink)
+	{
+	   sinks.push_back(sink);
+	}
+	 void addWindow(WindowPtr window)
+	{
+	   windows.push_back(window);
+	}
 protected:
   QueryExecutionPlan();
   QueryExecutionPlan(const std::vector<DataSourcePtr> &_sources, 
@@ -34,6 +48,7 @@ protected:
           const std::map<uint32_t, uint32_t> &_stage_to_dest);
 
   std::vector<DataSourcePtr> sources;
+  std::vector<DataSinkPtr> sinks;
   std::vector<WindowPtr> windows;
 
   std::vector<PipelineStagePtr> stages;

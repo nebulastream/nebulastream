@@ -1,0 +1,79 @@
+#include <cstring>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <zmq.hpp>
+
+#include <Runtime/PrintSink.hpp>
+#include <Util/Logger.hpp>
+
+namespace iotdb {
+
+PrintSink::PrintSink(const Schema &schema)
+    : DataSink(schema) {}
+
+PrintSink::~PrintSink() { }
+
+bool PrintSink::writeData(const std::vector<TupleBufferPtr> &input_buffers) {
+	//TODO: is it really neccesary to use a vector of buffers?
+	for(size_t i = 0; i < input_buffers.size(); i++)//for each buffer
+	{
+		IOTDB_INFO("PrintSink: Buffer No:" << i)
+		writeData(input_buffers[i]);
+	}
+	//TODO: release buffe
+}
+
+bool PrintSink::writeData(const TupleBufferPtr input_buffer) {
+	for(size_t u = 0; u < input_buffer->num_tuples; u++)
+	{
+		IOTDB_INFO("PrintSink: tuple:" << u << " = ")
+		//TODO: how to get a tuple via a schema
+		//TODO: add file heere
+	}
+}
+
+
+const std::string PrintSink::toString() const {
+  std::stringstream ss;
+  ss << "PRINT_SINK(";
+  ss << "SCHEMA(" << schema.toString() << "), ";
+  return ss.str();
+}
+
+struct __attribute__((packed)) ysbRecordOut {
+	  uint8_t campaign_id[16];
+	  char event_type[9];
+	  int64_t current_ms;
+};
+
+YSBPrintSink::YSBPrintSink(const Schema& schema)
+    : PrintSink(schema) {}
+
+YSBPrintSink::~YSBPrintSink() { }
+
+bool YSBPrintSink::writeData(const std::vector<TupleBufferPtr> &input_buffers) {
+	for(size_t i = 0; i < input_buffers.size(); i++)//for each buffer
+	{
+		IOTDB_INFO("PrintSink: Buffer No:" << i)
+		writeData(input_buffers[i]);
+	}
+}
+
+bool YSBPrintSink::writeData(const TupleBufferPtr input_buffer) {
+	ysbRecordOut* recordBuffer = (ysbRecordOut*) input_buffer.get();
+	for(size_t u = 0; u < input_buffer->num_tuples; u++)
+	{
+		IOTDB_INFO("PrintSink: tuple:" << u << " = " << " campaign=" << recordBuffer[u].campaign_id
+				<< " type=" << recordBuffer[u].event_type
+				<< " timestamp=" <<recordBuffer[u].current_ms)
+	}
+}
+const std::string YSBPrintSink::toString() const {
+  std::stringstream ss;
+  ss << "YSB_PRINT_SINK(";
+  ss << "SCHEMA(" << schema.toString() << "), ";
+  return ss.str();
+}
+
+} // namespace iotdb
