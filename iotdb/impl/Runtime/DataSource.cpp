@@ -146,7 +146,7 @@ void generateTuple(ysbRecord* data, size_t campaingOffset, uint64_t campaign_lsb
 void generate(ysbRecord* data, size_t generated_tuples_this_pass)
 {
 	std::random_device rd;  //Will be used to obtain a seed for the random number engine
-	std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+	std::mt19937 gen; //(rd()); //Standard mersenne_twister_engine seeded with rd()
 	std::uniform_int_distribution<size_t> diss(0, SIZE_MAX);
 
 	const size_t campaingCnt = 10;
