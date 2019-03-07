@@ -4,6 +4,7 @@
 
 #include <Runtime/DataSink.hpp>
 #include <Runtime/ZmqSink.hpp>
+#include <Runtime/PrintSink.hpp>
 #include <Util/ErrorHandling.hpp>
 
 namespace iotdb {
@@ -18,6 +19,12 @@ const DataSinkPtr createTestSink() {
   // instantiate TestSink
   IOTDB_FATAL_ERROR("Called unimplemented Function");
 }
+
+const DataSinkPtr createYSBPrintSink(const Schema& schema)
+{
+	return std::make_shared<YSBPrintSink>(schema);
+}
+
 
 const DataSinkPtr createBinaryFileSink(const Schema &schema, const std::string &path_to_file) {
   // instantiate BinaryFileSink

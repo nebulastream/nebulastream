@@ -42,8 +42,14 @@ target_link_libraries(runtime-data-source-sink-tests iotdb ${LIBRARIES} ${GTEST_
 add_test(NAME runtime-data-source-sink-tests COMMAND runtime-data-source-sink-tests)
 
 
-# YSB Test
-add_executable(ysb-test "UnitTests/YSBTest.cpp")
-target_link_libraries(ysb-test iotdb ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
-add_test(NAME eysb-test COMMAND ysb-test)
+# YSB Test source to out
+add_executable(ysb_test_source_out "UnitTests/YSBSourceToOutTest.cpp")
+target_link_libraries(ysb_test_source_out iotdb ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
+add_test(NAME ysb_test_source_out COMMAND ysb_test_source_out)
+
+# YSB Test source to sink
+add_executable(ysb_test_source_sink "UnitTests/YSB_SourceToSink.cpp")
+target_link_libraries(ysb_test_source_sink iotdb ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
+add_test(NAME ysb_test_source_sink COMMAND ysb_test_source_sink)
+
 
