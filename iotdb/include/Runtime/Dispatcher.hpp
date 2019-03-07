@@ -45,15 +45,15 @@ private:
   Dispatcher(const Dispatcher &);
   Dispatcher &operator=(const Dispatcher &);
   ~Dispatcher();
-  void registerSource(DataSourcePtr);
-  void deregisterSource(DataSourcePtr);
+//  void registerSource(DataSourcePtr);
+//  void deregisterSource(DataSourcePtr);
+//
+//  void registerWindow(WindowPtr);
+//  void deregisterWindow(WindowPtr);
 
-  void registerWindow(WindowPtr);
-  void deregisterWindow(WindowPtr);
 
-
-  std::vector<DataSourcePtr> sources;
-  std::vector<WindowPtr> windows;
+//  std::vector<DataSourcePtr> sources;
+//  std::vector<WindowPtr> windows;
 
   std::vector<TaskPtr> task_queue;
   std::map<DataSource *, std::vector<QueryExecutionPlanPtr>> source_to_query_map;

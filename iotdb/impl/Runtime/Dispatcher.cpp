@@ -35,74 +35,74 @@ TupleBufferPtr Dispatcher::getBuffer() {
   return BufferManager::instance().getBuffer();
 }
 
-void Dispatcher::registerSource(DataSourcePtr source) {
-  if (source) {
-	  IOTDB_DEBUG("Dispatcher: Register Source " << source.get() << "in Dispatcher")
-    sources.push_back(source);
-  }
-}
+//void Dispatcher::registerSource(DataSourcePtr source) {
+//  if (source) {
+//	  IOTDB_DEBUG("Dispatcher: Register Source " << source.get() << "in Dispatcher")
+//    sources.push_back(source);
+//  }
+//}
 
-void Dispatcher::registerWindow(WindowPtr window) {
-  // std::unique_lock<std::mutex> lock(mutex);
-  if (window) {
-	  IOTDB_DEBUG("Dispatcher: Register Window " << window.get() << "in Dispatcher")
-    windows.push_back(window);
-  }
-}
-void Dispatcher::deregisterSource(DataSourcePtr source)
-{
-//	std::unique_lock<std::mutex> lock(mutex);
-	if (source) {
-		std::vector<DataSourcePtr>::iterator it = sources.begin();
-		while(it != sources.end()) {
+//void Dispatcher::registerWindow(WindowPtr window) {
+//  // std::unique_lock<std::mutex> lock(mutex);
+//  if (window) {
+//	  IOTDB_DEBUG("Dispatcher: Register Window " << window.get() << "in Dispatcher")
+//    windows.push_back(window);
+//  }
+//}
+//void Dispatcher::deregisterSource(DataSourcePtr source)
+//{
+////	std::unique_lock<std::mutex> lock(mutex);
+//	if (source) {
+//		std::vector<DataSourcePtr>::iterator it = sources.begin();
+//		while(it != sources.end()) {
+//
+//	    	if(it->get() == source.get())
+//	    	{
+//	    		IOTDB_DEBUG("Dispatcher: Deregister Source " << source.get() << "in Dispatcher")
+//		        it = sources.erase(it);
+//		        return;
+//		    }
+//		    else
+//		    	++it;
+//		}
+//		IOTDB_ERROR("Dispatcher: ERROR: tried to deregister unregistered Buffer")
+//		assert(0);
+//	}
+//}
 
-	    	if(it->get() == source.get())
-	    	{
-	    		IOTDB_DEBUG("Dispatcher: Deregister Source " << source.get() << "in Dispatcher")
-		        it = sources.erase(it);
-		        return;
-		    }
-		    else
-		    	++it;
-		}
-		IOTDB_ERROR("Dispatcher: ERROR: tried to deregister unregistered Buffer")
-		assert(0);
-	}
-}
-
-void Dispatcher::deregisterWindow(WindowPtr window)
-{
-//	std::unique_lock<std::mutex> lock(mutex);
-	if (window) {
-		std::vector<WindowPtr>::iterator it = windows.begin();
-		while(it != windows.end()) {
-
-	    	if(it->get() == window.get())
-	    	{
-	    		IOTDB_DEBUG("Dispatcher: Deregister Window " << window.get() << "in Dispatcher")
-		        it = windows.erase(it);
-		        return;
-		    }
-		    else
-		    	++it;
-		}
-		IOTDB_ERROR("Dispatcher: ERROR: tried to deregister unregistered window")
-		assert(0);
-	}
-}
+//void Dispatcher::deregisterWindow(WindowPtr window)
+//{
+////	std::unique_lock<std::mutex> lock(mutex);
+//	if (window) {
+//		std::vector<WindowPtr>::iterator it = windows.begin();
+//		while(it != windows.end()) {
+//
+//	    	if(it->get() == window.get())
+//	    	{
+//	    		IOTDB_DEBUG("Dispatcher: Deregister Window " << window.get() << "in Dispatcher")
+//		        it = windows.erase(it);
+//		        return;
+//		    }
+//		    else
+//		    	++it;
+//		}
+//		IOTDB_ERROR("Dispatcher: ERROR: tried to deregister unregistered window")
+//		assert(0);
+//	}
+//}
 
 void Dispatcher::registerQuery(const QueryExecutionPlanPtr qep) {
   std::unique_lock<std::mutex> lock(mutex);
 
   auto sources = qep->getSources();
   for (auto source : sources) {
-    registerSource(source);
+//    registerSource(source);
     source_to_query_map[source.get()].emplace_back(qep);
     source->start();
   }
   auto windows = qep->getWindows();
 	for (auto window : windows) {
-	  registerWindow(window);
+//	  registerWindow(window);
 	  window_to_query_map[window.get()].emplace_back(qep);
 	  window->setup();
 	}
