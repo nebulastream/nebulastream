@@ -28,7 +28,7 @@ Dispatcher::~Dispatcher() {
 }
 
 TupleBufferPtr Dispatcher::getBuffer() {
-	std::unique_lock<std::mutex> lock(bufferMutex);
+//	std::unique_lock<std::mutex> lock(bufferMutex);
 	IOTDB_DEBUG("Dispatcher: getBuffer(): Dispatcher returns buffer")
   return BufferManager::instance().getBuffer();
 }
