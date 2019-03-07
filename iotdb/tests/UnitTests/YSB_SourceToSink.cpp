@@ -97,7 +97,7 @@ public:
         size_t windowSizeInSec = 1;
         size_t campaingCnt = 10;
         YSBWindow* window = (YSBWindow*)this->getWindows()[0].get();
-        YSBPrintSink* sink = (YSBPrintSink*)this->getSinks()[0].get();
+        DataSinkPtr sink = this->getSinks()[0];
         size_t qualCnt = 0;
         std::atomic<size_t>** hashTable = window->getHashTable();
 		for(size_t i = 0; i < buf->num_tuples; i++)

@@ -16,11 +16,11 @@ public:
   ZmqSink(const Schema &schema, const std::string &host, const uint16_t port, const std::string &topic);
   ~ZmqSink();
 
-  bool writeData(const std::vector<TupleBufferPtr> &input_buffers) override;
-  bool writeData(const TupleBufferPtr input_buffer) override;
-
-  void setup(){};
-  void shutdown(){};
+    bool writeData(const TupleBuffer* input_buffer) override;
+    /* optimized method to send multiple tuple buffers with one zmq message */
+    bool writeData(const std::vector<TupleBuffer*> &input_buffers) override;
+  void setup(){}
+  void shutdown(){}
   const std::string toString() const override;
 
 private:
