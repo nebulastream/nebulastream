@@ -12,10 +12,6 @@ public:
   DataSink(const Schema &schema);
   virtual ~DataSink();
 
-  bool writeData(const std::vector<TupleBuffer*> &input_buffers){
-	  IOTDB_NOT_IMPLEMENTED("not impl");
-  };
-
   virtual void setup() = 0;
   virtual void shutdown() = 0;
   virtual bool writeData(const std::vector<TupleBufferPtr> &input_buffers) = 0;
