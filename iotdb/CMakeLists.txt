@@ -31,15 +31,22 @@ find_package(LLVM 3.6.0 REQUIRED)
 find_package(clang REQUIRED)
 
 # ZMPQ
-find_package(ZMQ)
+find_package(ZMQ REQUIRED)
 include_directories(${ZMQ_INCLUDE_DIRS})
 set(LIBRARIES ${LIBRARIES} ${ZMQ_LIBRARIES})
 
 #Log4cc
-find_package(Log4cxx)
+find_package(Log4cxx REQUIRED)
 include_directories(${Log4cxx_INCLUDE_DIR})
 set(LIBRARIES ${LIBRARIES} ${Log4cxx_LIBRARY})
 
+if(LOG4CXX_FOUND)
+    message(STATUS "LOG4CXX found")
+else(LOG4CXX_FOUND)
+    message(STATUS "LOG4CXX not found")
+    message(STATUS "On Ubuntu, install the package by the following command!")
+    message(STATUS "sudo apt-get install liblog4cxx10-dev")
+endif(LOG4CXX_FOUND)
 
 
 # TRAVIS-CI
