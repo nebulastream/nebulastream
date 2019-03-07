@@ -49,7 +49,6 @@ protected:
 
   std::vector<DataSourcePtr> sources;
   std::vector<DataSinkPtr> sinks;
-
   std::vector<WindowPtr> windows;
 
   std::vector<PipelineStagePtr> stages;
