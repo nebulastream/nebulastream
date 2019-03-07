@@ -25,6 +25,7 @@ namespace iotdb {
 class Dispatcher {
 public:
   TupleBufferPtr getBuffer();
+  void releaseBuffer(TupleBufferPtr ptr);
 
   void registerQuery(const QueryExecutionPlanPtr);
   void deregisterQuery(const QueryExecutionPlanPtr);
@@ -45,21 +46,17 @@ private:
   Dispatcher(const Dispatcher &);
   Dispatcher &operator=(const Dispatcher &);
   ~Dispatcher();
-//  void registerSource(DataSourcePtr);
-//  void deregisterSource(DataSourcePtr);
-//
-//  void registerWindow(WindowPtr);
-//  void deregisterWindow(WindowPtr);
-
-
-//  std::vector<DataSourcePtr> sources;
-//  std::vector<WindowPtr> windows;
 
   std::vector<TaskPtr> task_queue;
   std::map<DataSource *, std::vector<QueryExecutionPlanPtr>> source_to_query_map;
   std::map<Window *, std::vector<QueryExecutionPlanPtr>> window_to_query_map;
+  std::map<DataSink*, std::vector<QueryExecutionPlanPtr>> sink_to_query_map;
 
-  std::mutex mutex;
+
+  std::mutex bufferMutex;
+  std::mutex queryMutex;
+  std::mutex workMutex;
+
   std::condition_variable cv;
 };
 typedef std::shared_ptr<Dispatcher> DispatcherPtr;
