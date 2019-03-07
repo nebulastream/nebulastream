@@ -15,7 +15,8 @@ class PrintSink : public DataSink {
 public:
 	PrintSink(const Schema& schema);
   ~PrintSink();
-
+  virtual void setup(){};
+  virtual void shutdown(){};
   bool writeData(const std::vector<TupleBufferPtr> &input_buffers) override;
   bool writeData(const TupleBufferPtr input_buffer) override;
   const std::string toString() const override;
@@ -32,7 +33,8 @@ public:
 
   bool writeData(const std::vector<TupleBufferPtr> &input_buffers) override;
   bool writeData(const TupleBufferPtr input_buffer) override;
-
+  void setup(){};
+  void shutdown(){};
   const std::string toString() const override;
 
 private:
