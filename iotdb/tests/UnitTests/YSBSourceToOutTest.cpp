@@ -131,7 +131,7 @@ typedef std::shared_ptr<CompiledYSBTestQueryExecutionPlan> CompiledYSBTestQueryE
 
 int test() {
 	CompiledYSBTestQueryExecutionPlanPtr qep(new CompiledYSBTestQueryExecutionPlan());
-	DataSourcePtr source = createYSBSource(100000);
+	DataSourcePtr source = createYSBSource(1000);
 	WindowPtr window = createTestWindow();
 	qep->addDataSource(source);
 	qep->addWindow(window);
@@ -158,12 +158,12 @@ int test() {
     	sum += res_window->getHashTable()[1][i];
     }
     std::cout << " ========== FINAL query result  ========== " << sum << std::endl;
-    if(sum != 1800000)
+    if(sum != 18000)
     {
     	std::cout << "wrong result" << std::endl;
 //    	assert(0);
     }
-	EXPECT_EQ(sum, 1800000);
+	EXPECT_EQ(sum, 18000);
 
 	Dispatcher::instance().deregisterQuery(qep);
 

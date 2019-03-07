@@ -32,9 +32,9 @@ user_wants_to_quit = 1;
 }
 
 struct __attribute__((packed)) ysbRecord {
-	  uint8_t user_id[16];
-	  uint8_t page_id[16];
-	  uint8_t campaign_id[16];
+	  char user_id[16];
+	  char page_id[16];
+	  char campaign_id[16];
 	  char event_type[9];
 	  char ad_type[9];
 	  int64_t current_ms;
@@ -81,40 +81,57 @@ public:
     };
 
     struct __attribute__((packed)) ysbRecordOut {
-    	  uint8_t campaign_id[16];
+    	  char campaign_id[16];
     	  char event_type[9];
     	  int64_t current_ms;
+    	  uint32_t id;
     };
 
     bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf)
     {
     	TupleBufferPtr workingBuffer = Dispatcher::instance().getBuffer();
-    	ysbRecordOut* recBuffer = (ysbRecordOut*)workingBuffer.get();
+    	ysbRecordOut* recBuffer = (ysbRecordOut*)workingBuffer->buffer;
     	ysbRecord* tuples = (ysbRecord*) buf->buffer;
         size_t lastTimeStamp = time(NULL);
         size_t current_window = 0;
         char key[] = "view";
         size_t windowSizeInSec = 1;
         size_t campaingCnt = 10;
-        YSBWindow* window = (YSBWindow*)this->getWindows()[0].get();
         YSBPrintSink* sink = (YSBPrintSink*)this->getSinks()[0].get();
         size_t qualCnt = 0;
-        std::atomic<size_t>** hashTable = window->getHashTable();
 		for(size_t i = 0; i < buf->num_tuples; i++)
 		{
 			if(strcmp(key,tuples[i].event_type) != 0)
 			{
 				continue;
 			}
-			memcpy(recBuffer[qualCnt].campaign_id,tuples[i].campaign_id,16);
+			memcpy(recBuffer[qualCnt].campaign_id, tuples[i].campaign_id,16);
 			recBuffer[qualCnt].current_ms = tuples[i].current_ms;
-			memcpy(recBuffer[qualCnt].event_type, tuples[i].event_type, 16);
+			recBuffer[qualCnt].id = tuples[i].ip;
+			memcpy(recBuffer[qualCnt].event_type, tuples[i].event_type, 9);
 
+//ip
+//			std::cout << "size=" << sizeof(ysbRecord) << std::endl;
+//			//input
+//			std::cout << "input:" << std::endl;
+//			std::cout << tuples[i].ip << std::endl;
+//			std::cout << tuples[i].current_ms << std::endl;
+//			std::cout << std::string(tuples[i].event_type) << std::endl;
+//			std::cout << std::string(tuples[i].campaign_id) << std::endl;
+//
+//			std::cout << "output:" << std::endl;
+//			std::cout << recBuffer[qualCnt].id << std::endl;
+//			std::cout << recBuffer[qualCnt].current_ms << std::endl;
+//			std::cout << std::string(recBuffer[qualCnt].event_type) << std::endl;
+//			std::cout << std::string(recBuffer[qualCnt].campaign_id) << std::endl;
+//
+//			std::cout << "---------" << std::endl;
 			//write to sink
+			qualCnt++;
 		}
+		workingBuffer->num_tuples = qualCnt;
+		workingBuffer->tuple_size_bytes = sizeof(ysbRecordOut);
 		sink->writeData(workingBuffer);
-
-
 		IOTDB_DEBUG("task " << this << " finished processing")
     }
 };
@@ -123,13 +140,10 @@ typedef std::shared_ptr<CompiledYSBTestQueryExecutionPlan> CompiledYSBTestQueryE
 
 int test() {
 	CompiledYSBTestQueryExecutionPlanPtr qep(new CompiledYSBTestQueryExecutionPlan());
-	DataSourcePtr source = createYSBSource(100000);
-	WindowPtr window = createTestWindow();
+	DataSourcePtr source = createYSBSource(2);
 	DataSinkPtr sink = createYSBPrintSink(source->getSchema());
 	qep->addDataSource(source);
-	qep->addWindow(window);
 	qep->addDataSink(sink);
-    YSBWindow* res_window = (YSBWindow*)qep->getWindows()[0].get();
 
 	Dispatcher::instance().registerQuery(qep);
 
@@ -139,33 +153,18 @@ int test() {
 
 	while(source->isRunning()){
 		std::cout << "----- processing current res is:-----" << std::endl;
-		res_window->print();
 		std::cout << "Waiting 1 seconds " << std::endl;
-		std::this_thread::sleep_for(std::chrono::seconds(1));
-
+		std::this_thread::sleep_for(std::chrono::seconds(3));
 	}
 
-    size_t sum = 0;
-    for(size_t i = 0; i < 10; i++)
-    {
-    	sum += res_window->getHashTable()[0][i];
-    	sum += res_window->getHashTable()[1][i];
-    }
-    std::cout << " ========== FINAL query result  ========== " << sum << std::endl;
-    if(sum != 1800000)
-    {
-    	std::cout << "wrong result" << std::endl;
-//    	assert(0);
-    }
-	EXPECT_EQ(sum, 1800000);
-
+	YSBPrintSink* ySink = (YSBPrintSink*)sink.get();
+	std::cout << "printed tuples=" << ySink->getNumberOfPrintedTuples() << std::endl;
+	if(ySink->getNumberOfPrintedTuples()!= 36)
+	{
+		std::cout << "wrong result" << std::endl;
+		assert(0);
+	}
 	Dispatcher::instance().deregisterQuery(qep);
-
-//	while(!user_wants_to_quit)
-//	{
-//	  std::this_thread::sleep_for(std::chrono::seconds(2));
-//	  std::cout << "waiting to finish" << std::endl;
-//	}
 
 
 	thread_pool.stop();
