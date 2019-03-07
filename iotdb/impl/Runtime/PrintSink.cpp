@@ -6,7 +6,7 @@
 
 #include <Runtime/PrintSink.hpp>
 #include <Util/Logger.hpp>
-
+#include <Runtime/Dispatcher.hpp>
 namespace iotdb {
 
 PrintSink::PrintSink(const Schema &schema)
@@ -68,6 +68,8 @@ bool YSBPrintSink::writeData(const TupleBufferPtr input_buffer) {
 				<< " type=" << recordBuffer[u].event_type
 				<< " timestamp=" <<recordBuffer[u].current_ms)
 	}
+
+	Dispatcher::instance().releaseBuffer(input_buffer);
 }
 const std::string YSBPrintSink::toString() const {
   std::stringstream ss;
