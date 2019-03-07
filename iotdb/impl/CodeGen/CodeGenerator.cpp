@@ -1,6 +1,5 @@
 
-#include <CodeGen/CodeGen.hpp>
-#include <CodeGen/C_CodeGen/CodeCompiler.hpp>
+
 
 #include <sstream>
 #include <iostream>
@@ -8,6 +7,8 @@
 
 #include <Util/ErrorHandling.hpp>
 
+#include <CodeGen/CodeGen.hpp>
+#include <CodeGen/C_CodeGen/CodeCompiler.hpp>
 #include <CodeGen/C_CodeGen/Statement.hpp>
 #include <CodeGen/C_CodeGen/UnaryOperatorStatement.hpp>
 #include <CodeGen/C_CodeGen/BinaryOperatorStatement.hpp>
@@ -15,6 +16,7 @@
 #include <CodeGen/C_CodeGen/FunctionBuilder.hpp>
 #include <CodeGen/C_CodeGen/FileBuilder.hpp>
 
+#include <Runtime/DataSink.hpp>
 
 namespace iotdb {
 
@@ -192,8 +194,6 @@ namespace iotdb {
     VariableDeclaration var_decl_tuple_buffer_1 = VariableDeclaration::create(
         createPointerDataType(createUserDefinedType(getStructDeclarationTupleBuffer())), "tuple_buffer_1");
 
-
-
     /* uint64_t id = 0; */
     code_.var_decl_id =
         std::dynamic_pointer_cast<VariableDeclaration>(VariableDeclaration::create(createDataType(BasicType(UINT64)), "id", createBasicTypeValue(BasicType(INT32), "0")).copy());
@@ -246,6 +246,8 @@ namespace iotdb {
     return true;
   }
   bool C_CodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContextPtr& context, std::ostream& out){
+
+    result_schema_=sink->getSchema();
 
     return true;
   }
