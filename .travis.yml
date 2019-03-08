@@ -17,6 +17,7 @@ before_install:
 - sudo apt-get install -y libclang-dev
 - sudo apt-get install -y libzmq-dev
 - sudo apt-get install -y libboost1.58-all-dev
+- sudo apt-get install -y liblog4cxx10-dev
 
 script:
 - clang --version
