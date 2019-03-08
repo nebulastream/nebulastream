@@ -71,7 +71,7 @@ set(LIBRARIES ${LIBRARIES} ${Boost_LIBRARIES})
 set(CLANG_EXECUTABLE ${LLVM_ROOT_DIR}/bin/clang++)
 set(CLANG_FORMAT_EXECUTABLE ${LLVM_ROOT_DIR}/bin/clang-format)
 set(GENERATED_CODE_DIRECTORY ${PROJECT_BINARY_DIR}/generated-code)
-set(TEST_DATA_DIRECTORY ${PROJECT_BINARY_DIR}/test_dir/test_data)
+set(TEST_DATA_DIRECTORY ${PROJECT_BINARY_DIR}/tests/test_data)
 set(PATH_TO_IOTDB_SOURCE_CODE ${PROJECT_SOURCE_DIR})
 
 # set clang binary for query compilation
