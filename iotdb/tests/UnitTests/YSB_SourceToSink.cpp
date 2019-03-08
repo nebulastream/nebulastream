@@ -161,15 +161,16 @@ int test() {
 
 	YSBPrintSink* ySink = (YSBPrintSink*)sink.get();
 	std::cout << "printed tuples=" << ySink->getNumberOfPrintedTuples() << std::endl;
+
+	Dispatcher::instance().deregisterQuery(qep);
+	//thread_pool.stop();
+
 	if(ySink->getNumberOfPrintedTuples()!= 36)
 	{
 		std::cout << "wrong result" << std::endl;
-		assert(0);
+		return -1;
 	}
-	Dispatcher::instance().deregisterQuery(qep);
-
-
-	thread_pool.stop();
+	return 0;
 
 }
 } // namespace iotdb
@@ -206,8 +207,5 @@ int main(int argc, const char *argv[]) {
 	setupLogging();
   iotdb::Dispatcher::instance();
 
-  iotdb::test();
-
-
-  return 0;
+  return iotdb::test();
 }
