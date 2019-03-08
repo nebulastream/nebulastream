@@ -25,7 +25,7 @@ script:
 - cd iotdb && mkdir debug-build && cd debug-build
 - cmake -DCMAKE_BUILD_TYPE=Debug ..
 - make
-- cd tests && ctest
+- make test
 
 notifications:
   email: false
