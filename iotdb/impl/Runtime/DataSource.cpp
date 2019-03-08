@@ -96,9 +96,9 @@ const DataSourcePtr createTestSource() {
 }
 
 struct __attribute__((packed)) ysbRecord {
-	  uint8_t user_id[16];
-	  uint8_t page_id[16];
-	  uint8_t campaign_id[16];
+	  char user_id[16];
+	  char page_id[16];
+	  char campaign_id[16];
 	  char event_type[9];
 	  char ad_type[9];
 	  int64_t current_ms;
@@ -126,21 +126,21 @@ struct __attribute__((packed)) ysbRecord {
 void generateTuple(ysbRecord* data, size_t campaingOffset, uint64_t campaign_lsb, uint64_t campaign_msb, size_t event_id)
 {
 		std::string events[] = {"view", "click", "purchase"};
-		event_id = event_id % 3;
+		size_t currentID  = event_id % 3;
 
 	  memcpy(data->campaign_id, &campaign_msb, 8);
 
 	  uint64_t campaign_lsbr = campaign_lsb + campaingOffset;
 	  memcpy(&data->campaign_id[8], &campaign_lsbr, 8);
 
-	  const char* str = events[event_id].c_str();
+	  const char* str = events[currentID].c_str();
 	  strcpy(&data->ad_type[0], "banner78");
 	  strcpy(&data->event_type[0], str);
 
 	  auto ts = std::chrono::system_clock::now().time_since_epoch();
 	  data->current_ms = std::chrono::duration_cast<std::chrono::milliseconds>(ts).count();
 
-	  data->ip = 0x01020304;
+	  data->ip = event_id;
 }
 
 void generate(ysbRecord* data, size_t generated_tuples_this_pass)
