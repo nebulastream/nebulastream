@@ -200,6 +200,9 @@ target_link_libraries(iotServer ${LIBRARIES})
 target_include_directories(iotServer PUBLIC "include")
 
 
+add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND}
+                  DEPENDS ${UNITTESTS} --output-on-failure)
+
 message(STATUS "INCLUDE_DIRS:")
 get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
 foreach(dir ${dirs})
