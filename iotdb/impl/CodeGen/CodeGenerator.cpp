@@ -7,6 +7,9 @@
 
 #include <Util/ErrorHandling.hpp>
 
+
+#include <Core/DataTypes.hpp>
+#include <API/Schema.hpp>
 #include <CodeGen/CodeGen.hpp>
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
 #include <CodeGen/C_CodeGen/Statement.hpp>
@@ -146,6 +149,58 @@ namespace iotdb {
       StructDeclaration::create("ResultTuple", "")
           .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)), "sum"));
     return struct_decl_result_tuple;
+  }
+
+  const std::string toString(void* value, DataTypePtr type){
+//     if(type->)
+      return "";
+  }
+
+  std::string toString(const TupleBuffer& buffer, const Schema& schema){
+    return toString(&buffer,schema);
+  }
+
+  std::string toString(const TupleBuffer* buffer, const Schema& schema){
+      if(!buffer) return "INVALID_BUFFER_PTR";
+      std::stringstream str;
+      std::vector<uint32_t> offsets;
+      std::vector<DataTypePtr> types;
+      for(uint32_t i=0;i<schema.getSize();++i){
+         offsets.push_back(schema[i]->getFieldSize());
+         types.push_back(schema[i]->getDataType());
+      }
+
+      uint32_t prefix_sum=0;
+      for(uint32_t i=0;i<offsets.size();++i){
+          uint32_t val = offsets[i];
+          offsets[i]=prefix_sum;
+          prefix_sum+=val;
+      }
+      uint32_t total_record_size = prefix_sum;
+
+      //assert(total_record_size == buffer->tuple_size_bytes);
+
+      str << "Tuple Buffer (" << (void*) buffer << "):" << std::endl;
+      str << "+----------------------------------------------------+" << std::endl;
+      str << "|";
+      for(uint32_t i=0;i<schema.getSize();++i){
+        str << schema[i]->toString() << "|";
+      }
+      str << std::endl;
+      str << "+----------------------------------------------------+" << std::endl;
+
+      char* buf = (char*) buffer->buffer;
+      for(uint32_t i=0;i<buffer->num_tuples*buffer->tuple_size_bytes;i+=buffer->tuple_size_bytes){
+          str << "|";
+          for(uint32_t s=0;s<offsets.size();++s){
+              void* value = &buf[i+offsets[s]];
+              std::string tmp = types[s]->convertRawToString(value);
+              str << tmp << "|" << std::endl;
+          }
+
+      }
+      str << "+----------------------------------------------------+" << std::endl;
+      return str.str();
   }
 
 

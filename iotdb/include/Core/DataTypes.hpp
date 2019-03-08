@@ -32,6 +32,7 @@ public:
   virtual ValueTypePtr getNullValue() const = 0;
   virtual uint32_t getSizeBytes() const = 0;
   virtual const std::string toString() const = 0;
+  virtual const std::string convertRawToString(void* data) const = 0;
   virtual const CodeExpressionPtr getCode() const = 0;
   virtual const CodeExpressionPtr getTypeDefinitionCode() const = 0;
   virtual ~DataType();
@@ -56,6 +57,7 @@ public:
   std::string name;
   DataTypePtr data_type;
   uint32_t getFieldSize() const;
+  const DataTypePtr getDataType() const;
   const std::string toString() const;
 private:
 };
@@ -66,9 +68,9 @@ const AttributeFieldPtr createField(const std::string name, uint32_t size);
 const DataTypePtr createDataType(const BasicType &);
 const DataTypePtr createDataTypeVarChar(const uint32_t &max_length);
 
-  const DataTypePtr createPointerDataType(const DataTypePtr& type);
+const DataTypePtr createPointerDataType(const DataTypePtr& type);
 
-  const DataTypePtr createPointerDataType(const BasicType & type);
+const DataTypePtr createPointerDataType(const BasicType & type);
 
 const ValueTypePtr createBasicTypeValue(const BasicType & type, const std::string& value);
 
