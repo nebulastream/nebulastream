@@ -20,24 +20,33 @@ bool ZmqSink::writeData(const std::vector<TupleBufferPtr> &input_buffers) {
   assert(connect());
 
   for (auto &buf : input_buffers) {
-    zmq::message_t msg(buf->buffer_size);
-    std::memcpy(msg.data(), buf->buffer, buf->buffer_size);
-
-    zmq::message_t envelope(topic.size());
-    memcpy(envelope.data(), topic.data(), topic.size());
-
-    bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
-    bool rc_msg = socket.send(msg);
-    if (!rc_env || !rc_msg)
-      return false;
+	 if(!writeData(buf))
+	 {
+		 return false;
+	 }
   }
   return true;
 }
 
 bool ZmqSink::writeData(const TupleBufferPtr input_buffer)
 {
-	  IOTDB_FATAL_ERROR("Called unimplemented Function")
+	  assert(connect());
+	zmq::message_t msg(input_buffer->buffer_size);
+	std::memcpy(msg.data(), input_buffer->buffer, input_buffer->buffer_size);
 
+	zmq::message_t envelope(topic.size());
+	memcpy(envelope.data(), topic.data(), topic.size());
+
+	bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
+	bool rc_msg = socket.send(msg);
+	if (!rc_env || !rc_msg)
+	{
+		  return false;
+	}
+	else
+	{
+		return true;
+	}
 }
 
 const std::string ZmqSink::toString() const {
