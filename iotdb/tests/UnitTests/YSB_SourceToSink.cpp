@@ -168,6 +168,7 @@ int test() {
 	if(ySink->getNumberOfPrintedTuples()!= 36)
 	{
 		std::cout << "wrong result" << std::endl;
+		quick_exit(-1);
 		return -1;
 	}
 	return 0;
