@@ -4,6 +4,7 @@ project (iotdb CXX)
 if(POLICY CMP0004)
   cmake_policy(SET CMP0004 OLD)
 endif()
+enable_testing()
 
 # Custome CMake find instructions and macros
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
