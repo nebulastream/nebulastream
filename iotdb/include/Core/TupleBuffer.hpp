@@ -22,5 +22,9 @@ public:
 };
 typedef std::shared_ptr<TupleBuffer> TupleBufferPtr;
 
+class Schema;
+std::string toString(const TupleBuffer& buffer, const Schema& schema);
+std::string toString(const TupleBuffer* buffer, const Schema& schema);
+
 }
 #endif /* INCLUDE_TUPLEBUFFER_H_ */

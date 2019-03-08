@@ -367,12 +367,14 @@ namespace iotdb {
     std::vector<TupleBuffer *> bufs;
     bufs.push_back(&buf);
 
-    TupleBuffer result_buf{result_array, sizeof(uint64_t), sizeof(uint64_t), 0};
+    TupleBuffer result_buf{result_array, sizeof(uint64_t), sizeof(uint64_t), 1};
 
     /* execute code */
     if (!stage->execute(bufs, nullptr, &result_buf)) {
       std::cout << "Error!" << std::endl;
     }
+
+    std::cout << toString(&result_buf,Schema::create().addField("sum",UINT64)) << std::endl;
 
     /* check result for correctness */
     uint64_t sum_generated_code = result_array[0];
