@@ -9,7 +9,7 @@ add_test(NAME engine-start-stop-test COMMAND engine-start-stop-test)
 
 # Copy Test Data
 file(COPY test_data DESTINATION .)
-add_definitions( -DTEST_DATA_PATH="${CMAKE_BINARY_DIR}/test_dir/test_data/" )
+add_definitions( -DTEST_DATA_PATH="${CMAKE_BINARY_DIR}/tests/test_data/" )
 
 # Code Generation Tests
 add_executable(code-generation-tests "UnitTests/CodeGenTest.cpp")
