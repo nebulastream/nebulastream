@@ -4,6 +4,7 @@ project (iotdb CXX)
 if(POLICY CMP0004)
   cmake_policy(SET CMP0004 OLD)
 endif()
+enable_testing()
 
 # Custome CMake find instructions and macros
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
@@ -70,7 +71,7 @@ set(LIBRARIES ${LIBRARIES} ${Boost_LIBRARIES})
 set(CLANG_EXECUTABLE ${LLVM_ROOT_DIR}/bin/clang++)
 set(CLANG_FORMAT_EXECUTABLE ${LLVM_ROOT_DIR}/bin/clang-format)
 set(GENERATED_CODE_DIRECTORY ${PROJECT_BINARY_DIR}/generated-code)
-set(TEST_DATA_DIRECTORY ${PROJECT_BINARY_DIR}/test_dir/test_data)
+set(TEST_DATA_DIRECTORY ${PROJECT_BINARY_DIR}/tests/test_data)
 set(PATH_TO_IOTDB_SOURCE_CODE ${PROJECT_SOURCE_DIR})
 
 # set clang binary for query compilation
@@ -198,6 +199,9 @@ add_executable(iotServer iotServer.cpp)
 target_link_libraries(iotServer ${LIBRARIES})
 target_include_directories(iotServer PUBLIC "include")
 
+
+add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+                  DEPENDS ${UNITTESTS})
 
 message(STATUS "INCLUDE_DIRS:")
 get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
