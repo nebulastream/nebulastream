@@ -157,7 +157,6 @@ int test() {
 		std::cout << "Waiting 1 seconds " << std::endl;
 		std::this_thread::sleep_for(std::chrono::seconds(2));
 	}
-	thread_pool.stop();
 
 	YSBPrintSink* ySink = (YSBPrintSink*)sink.get();
 	std::cout << "printed tuples=" << ySink->getNumberOfPrintedTuples() << std::endl;
@@ -168,6 +167,8 @@ int test() {
 				<< sink->getNumberOfProcessedBuffers() << std::endl;
 		assert(0);
 	}
+	thread_pool.stop();
+
 	Dispatcher::instance().deregisterQuery(qep);
 
 
@@ -191,8 +192,8 @@ void setupLogging()
 
 	// set log level
 	//logger->setLevel(log4cxx::Level::getTrace());
-//	logger->setLevel(log4cxx::Level::getDebug());
-	logger->setLevel(log4cxx::Level::getInfo());
+	logger->setLevel(log4cxx::Level::getDebug());
+//	logger->setLevel(log4cxx::Level::getInfo());
 //	logger->setLevel(log4cxx::Level::getWarn());
 	//logger->setLevel(log4cxx::Level::getError());
 //	logger->setLevel(log4cxx::Level::getFatal());
