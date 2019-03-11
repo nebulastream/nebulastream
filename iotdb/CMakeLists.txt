@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
 project (iotdb CXX)
-enable_testing()
 
 if(POLICY CMP0004)
   cmake_policy(SET CMP0004 OLD)
@@ -156,4 +155,5 @@ target_link_libraries(iotServer ${LIBRARIES})
 target_include_directories(iotServer PUBLIC "include")
 
 # Add tests with command
+enable_testing()
 add_subdirectory(tests)
