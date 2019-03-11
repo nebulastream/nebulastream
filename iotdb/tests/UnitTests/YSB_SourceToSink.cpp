@@ -151,7 +151,7 @@ int test() {
 
 	thread_pool.start();
 
-	while(source->isRunning() && sink->getNumberOfProcessedBuffers() != 2){
+	while(source->isRunning() || sink->getNumberOfProcessedBuffers() != 2){
 		std::cout << "sourceRunnin=" << source->isRunning() << " numberOfProcBuffer="
 				<< sink->getNumberOfProcessedBuffers() << std::endl;
 		std::cout << "Waiting 1 seconds " << std::endl;
