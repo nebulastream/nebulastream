@@ -48,7 +48,7 @@ void createQuery()
       //.keyBy(Attributes())
       .printInputQueryPlan();
 
-  AttributeFieldPtr attr = schema[0];
+  //AttributeFieldPtr attr = schema[0];
 
 }
 
