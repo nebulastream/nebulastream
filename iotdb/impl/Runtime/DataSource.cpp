@@ -2,6 +2,7 @@
 #include <functional>
 #include <iostream>
 #include <memory>
+#include <random>
 
 #include <Runtime/BinarySource.hpp>
 #include <Runtime/DataSource.hpp>
