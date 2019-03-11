@@ -83,7 +83,6 @@ void Dispatcher::deregisterQuery(const QueryExecutionPlanPtr qep)
 	  }
 }
 
-
 TaskPtr Dispatcher::getWork(bool &run_thread) {
   std::unique_lock<std::mutex> lock(workMutex);
   while (task_queue.empty() && run_thread) {
