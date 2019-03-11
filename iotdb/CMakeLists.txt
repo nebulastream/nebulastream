@@ -4,7 +4,6 @@ project (iotdb CXX)
 if(POLICY CMP0004)
   cmake_policy(SET CMP0004 OLD)
 endif()
-enable_testing()
 
 # Custome CMake find instructions and macros
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH}")
@@ -31,12 +30,12 @@ endif()
 find_package(LLVM 3.6.0 REQUIRED)
 find_package(clang REQUIRED)
 
-# ZMPQ
+# ZMQ
 find_package(ZMQ REQUIRED)
 include_directories(${ZMQ_INCLUDE_DIRS})
 set(LIBRARIES ${LIBRARIES} ${ZMQ_LIBRARIES})
 
-#Log4cc
+# Log4cc
 find_package(Log4cxx REQUIRED)
 include_directories(${Log4cxx_INCLUDE_DIR})
 set(LIBRARIES ${LIBRARIES} ${Log4cxx_LIBRARY})
@@ -56,13 +55,21 @@ if(TRAVIS_INCLUDE_DIR)
   message( STATUS "TRAVIS_INCLUDE_DIR:" ${TRAVIS_INCLUDE_DIR} )
 endif()
 
-
-
 # Boost Libraries
 find_package(Boost 1.47.0 REQUIRED system thread program_options filesystem) # Only check if lib is available on system for generated code.
 link_directories(${Boost_LIBRARY_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
 set(LIBRARIES ${LIBRARIES} ${Boost_LIBRARIES})
+
+# Library containing dlopen and dlcose.
+set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
+
+# Print all used include directories
+message(STATUS "INCLUDE_DIRS:")
+get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
+foreach(dir ${dirs})
+    message(STATUS "  - ${dir}")
+endforeach()
 
 
 # Definition of runtime variables ######################################################################################
@@ -71,7 +78,6 @@ set(LIBRARIES ${LIBRARIES} ${Boost_LIBRARIES})
 set(CLANG_EXECUTABLE ${LLVM_ROOT_DIR}/bin/clang++)
 set(CLANG_FORMAT_EXECUTABLE ${LLVM_ROOT_DIR}/bin/clang-format)
 set(GENERATED_CODE_DIRECTORY ${PROJECT_BINARY_DIR}/generated-code)
-set(TEST_DATA_DIRECTORY ${PROJECT_BINARY_DIR}/tests/test_data)
 set(PATH_TO_IOTDB_SOURCE_CODE ${PROJECT_SOURCE_DIR})
 
 # set clang binary for query compilation
@@ -86,14 +92,12 @@ set(QUERY_COMPILATION_CLANG_VERSION ${CLANG_VERSION})
 message( STATUS "Clang Executable: ${CLANG_EXECUTABLE}" )
 message( STATUS "Clang-Format Executable: ${CLANG_FORMAT_EXECUTABLE}" )
 message( STATUS "Generated Code Directory: ${GENERATED_CODE_DIRECTORY}" )
-message( STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}" )
 
 # Add definitions as compile flag.
 add_definitions(-DLLVM_VERSION=${LLVM_VERSION_MAJOR}${LLVM_VERSION_MINOR})
 add_definitions( -D 'CLANG_EXECUTABLE=\"${CLANG_EXECUTABLE}\"' )
 add_definitions( -D 'CLANG_FORMAT_EXECUTABLE=\"${CLANG_FORMAT_EXECUTABLE}\"' )
 add_definitions( -D 'GENERATED_CODE_DIRECTORY=\"${GENERATED_CODE_DIRECTORY}\"' )
-add_definitions( -D 'TEST_DATA_DIRECTORY=\"${TEST_DATA_DIRECTORY}\"' )
 add_definitions( -D 'PATH_TO_IOTDB_SOURCE_CODE=\"${PATH_TO_IOTDB_SOURCE_CODE}\"' )
 
 add_definitions( -D 'QUERY_COMPILATION_CLANG_VERSION=\"${LLVM_VERSION_BASE_STRING}\"')
@@ -110,54 +114,6 @@ include_directories(${LLVM_INCLUDE_DIRS})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLVM_CFLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LLVM_LDFLAGS}")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LLVM_LDFLAGS}")
-
-
-# Enable Testing with gtest ############################################################################################
-include(ExternalProject)
-ExternalProject_Add(
-    gtest
-    URL https://github.com/google/googletest/archive/release-1.8.1.zip
-    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/gtest
-    # Disable install step
-    INSTALL_COMMAND ""
-    URL_HASH SHA256=927827c183d01734cc5cfef85e0ff3f5a92ffe6188e0d18e909c5efebf28a0c7
-)
-
-# Get GTest source and binary directories from CMake project
-ExternalProject_Get_Property(gtest source_dir binary_dir)
-
-# Create a libgtest target to be used as a dependency by test programs
-add_library(libgtest IMPORTED STATIC GLOBAL)
-add_dependencies(libgtest gtest gtest_main)
-
-# Set libgtest properties
-set_target_properties(libgtest PROPERTIES
-    "IMPORTED_LOCATION" "${binary_dir}/googlemock/gtest/libgtest.a"
-    "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
-)
-
-add_library(libgtest_main IMPORTED STATIC GLOBAL)
-add_dependencies(libgtest_main gtest_main)
-
-set_target_properties(libgtest_main PROPERTIES
-    "IMPORTED_LOCATION" "${binary_dir}/googlemock/gtest/libgtest_main.a"
-    "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
-)
-
-# Create a libgmock target to be used as a dependency by test programs
-add_library(libgmock IMPORTED STATIC GLOBAL)
-add_dependencies(libgmock gtest)
-
-# Set libgmock properties
-set_target_properties(libgmock PROPERTIES
-    "IMPORTED_LOCATION" "${binary_dir}/googlemock/libgmock.a"
-    "IMPORTED_LINK_INTERFACE_LIBRARIES" "${CMAKE_THREAD_LIBS_INIT}"
-)
-
-# Set Include Dirs
-include_directories("${source_dir}/googletest/include"
-                    "${source_dir}/googlemock/include")
-
 
 ###########################################################################################
 
@@ -190,7 +146,6 @@ add_executable(iotMaster iotMaster.cpp)
 target_link_libraries(iotMaster iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
 target_include_directories(iotMaster PUBLIC "include")
 
-add_subdirectory(tests)
 add_executable(iotClient iotClient.cpp)
 target_link_libraries(iotClient ${LIBRARIES})
 target_include_directories(iotClient PUBLIC "include")
@@ -199,12 +154,6 @@ add_executable(iotServer iotServer.cpp)
 target_link_libraries(iotServer ${LIBRARIES})
 target_include_directories(iotServer PUBLIC "include")
 
-
-add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
-                  DEPENDS ${UNITTESTS})
-
-message(STATUS "INCLUDE_DIRS:")
-get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
-foreach(dir ${dirs})
-  message(STATUS "  - ${dir}")
-endforeach()
+# Add tests with command
+enable_testing()
+add_subdirectory(tests)
