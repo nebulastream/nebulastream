@@ -79,6 +79,7 @@ bool YSBPrintSink::writeData(const std::vector<TupleBufferPtr> &input_buffers) {
 	{
 		IOTDB_INFO("PrintSink: Buffer No:" << i)
 		writeData(input_buffers[i]);
+		processedBuffer++;
 	}
 }
 
@@ -98,6 +99,7 @@ bool YSBPrintSink::writeData(const TupleBufferPtr input_buffer) {
 		printedTuples++;
 	}
 	IOTDB_INFO(" ============= YSBPrintSink: FINISHED ============")
+	processedBuffer++;
 
 	Dispatcher::instance().releaseBuffer(input_buffer);
 }
@@ -107,6 +109,8 @@ bool YSBPrintSink::writeData(const std::vector<TupleBuffer*> &input_buffers) {
 	{
 		IOTDB_INFO("PrintSink: Buffer No:" << i)
 		writeData(input_buffers[i]);
+		processedBuffer++;
+
 	}
 }
 
@@ -126,6 +130,8 @@ bool YSBPrintSink::writeData(const TupleBuffer* input_buffer) {
 				<< " timestamp=" <<recordBuffer[u].current_ms)
 		printedTuples++;
 	}
+	processedBuffer++;
+
 	IOTDB_INFO(" ============= YSBPrintSink: FINISHED ============")
 
 //	Dispatcher::instance().releaseBuffer(input_buffer);
