@@ -46,11 +46,11 @@ public:
   uint64_t last_number;
 };
 
-class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
+class CompiledYSBTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
 public:
   uint64_t count;
   uint64_t sum;
-  CompiledTestQueryExecutionPlan() : HandCodedQueryExecutionPlan(), count(0), sum(0) {
+  CompiledYSBTestQueryExecutionPlan() : HandCodedQueryExecutionPlan(), count(0), sum(0) {
     Schema s = Schema::create().addField(createField("val",UINT64));
     DataSourcePtr source(new GeneratorSource<Functor>(s, 100));
     sources.push_back(source);
@@ -84,7 +84,7 @@ void test() {
       .filter(PredicatePtr())
       .execute();
 
-  QueryExecutionPlanPtr qep(new CompiledTestQueryExecutionPlan());
+  QueryExecutionPlanPtr qep(new CompiledYSBTestQueryExecutionPlan());
 
   Dispatcher::instance().registerQuery(qep);
 

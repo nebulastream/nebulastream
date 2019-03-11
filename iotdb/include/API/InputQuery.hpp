@@ -7,6 +7,7 @@
 #include <API/Config.hpp>
 #include <API/ParameterTypes.hpp>
 #include <Runtime/DataSource.hpp>
+#include <Runtime/Window.hpp>
 
 namespace iotdb {
 
@@ -40,6 +41,8 @@ public:
 
   // helper operators
   InputQuery &printInputQueryPlan();
+  DataSourcePtr getSource(){return source;};
+
 private:
   InputQuery(const Config& config, const DataSourcePtr& source);
   Config config;

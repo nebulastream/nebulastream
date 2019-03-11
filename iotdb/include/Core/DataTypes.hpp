@@ -51,13 +51,17 @@ class AttributeField {
 public:
   AttributeField(const std::string &name, DataTypePtr data_type);
   AttributeField(const std::string &name, const BasicType &);
+  AttributeField(const std::string &name,uint32_t dataTypeSize);
+
   std::string name;
   DataTypePtr data_type;
   uint32_t getFieldSize() const;
   const std::string toString() const;
+private:
 };
 
 const AttributeFieldPtr createField(const std::string name, const BasicType & type);
+const AttributeFieldPtr createField(const std::string name, uint32_t size);
 
 const DataTypePtr createDataType(const BasicType &);
 const DataTypePtr createDataTypeVarChar(const uint32_t &max_length);

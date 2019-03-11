@@ -12,7 +12,7 @@
 #include <CodeGen/QueryExecutionPlan.hpp>
 #include <Runtime/Dispatcher.hpp>
 #include <Runtime/ThreadPool.hpp>
-#include <Runtime/compiledTestPlan.hpp>
+#include "../Runtime/CompiledDummyPlan.hpp"
 
 namespace iotdb{
 using JSON = nlohmann::json;
@@ -29,7 +29,7 @@ public:
 
 	size_t getId(){return id;};
 
-	void deployQuery(CompiledTestQueryExecutionPlanPtr ptr);
+	void deployQuery(QueryExecutionPlanPtr ptr);
 
 	void sendNodePropertiesToServer(std::string ip, std::string port);
 

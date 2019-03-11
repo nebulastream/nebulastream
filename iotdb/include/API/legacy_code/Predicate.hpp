@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 
-#include "API/Field.hpp"
 #include "../CodeGen/CodeGen.hpp"
 #include "../Operators/Operator.hpp"
 #include "Schema.hpp"

@@ -17,35 +17,29 @@ namespace iotdb {
 
 template <typename F> class GeneratorSource : public DataSource {
 public:
-  GeneratorSource(const Schema& schema, const uint64_t &_num_tuples_to_process)
-      : DataSource(schema), functor(), num_tuples_to_process(_num_tuples_to_process), generated_tuples(0) {}
-  TupleBuffer receiveData();
+  GeneratorSource(const Schema& schema, const uint64_t pNum_buffers_to_process)
+      : DataSource(schema), functor(), generated_tuples(0) {
+	  this->num_buffers_to_process = pNum_buffers_to_process;
+  }
+  TupleBufferPtr receiveData();
   const std::string toString() const;
 private:
   F functor;
-  uint64_t num_tuples_to_process;
   uint64_t generated_tuples;
 };
 
-template <typename F> TupleBuffer GeneratorSource<F>::receiveData() {
-  std::cout << "produced " << generated_tuples << " tuples from total " << num_tuples_to_process << " tuples "
-            << std::endl;
-
-  if (generated_tuples < num_tuples_to_process) {
-    TupleBuffer buf = functor(generated_tuples, num_tuples_to_process);
-    generated_tuples += buf.num_tuples;
+template <typename F> TupleBufferPtr GeneratorSource<F>::receiveData() {
+    //we wait until the buffer is filled
+	TupleBufferPtr buf = functor();
+    generated_tuples += buf->num_tuples;
     return buf;
-  }
-  /* job done, quit this source */
-  // std::this_thread::sleep_for(std::chrono::seconds(1)); //nanoseconds(100000));
-  return TupleBuffer(NULL, 0, 0, 0);
 }
 
 template <typename F>
   const std::string GeneratorSource<F>::toString() const{
     std::stringstream ss;
     ss << "GENERATOR_SOURCE(SCHEMA(" << schema.toString();
-    ss << "), NUM_TUPLES=" << num_tuples_to_process << "))";
+    ss << "), NUM_BUFFERS=" << num_buffers_to_process << "))";
     return ss.str();
   }
 }
