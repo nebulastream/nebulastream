@@ -58,17 +58,15 @@ TEST_F(FogTopologyManagerTest, remove_node) {
   EXPECT_TRUE(result_sensor);
 }
 
-/* Remove a non existing node. */
+/* Remove a non-existing node. */
 TEST_F(FogTopologyManagerTest, remove_non_existing_node) {
   auto worker_node = FogTopologyManager::getInstance().createFogWorkerNode();
-  auto result_worker = FogTopologyManager::getInstance().removeFogWorkerNode(worker_node);
-  result_worker = FogTopologyManager::getInstance().removeFogWorkerNode(worker_node);
-  EXPECT_FALSE(result_worker);
+  EXPECT_TRUE(FogTopologyManager::getInstance().removeFogWorkerNode(worker_node));
+  EXPECT_FALSE(FogTopologyManager::getInstance().removeFogWorkerNode(worker_node));
 
   auto sensor_node = FogTopologyManager::getInstance().createFogSensorNode();
-  auto result_sensor = FogTopologyManager::getInstance().removeFogSensorNode(sensor_node);
-  result_sensor = FogTopologyManager::getInstance().removeFogSensorNode(sensor_node);
-  EXPECT_FALSE(result_sensor);
+  EXPECT_TRUE(FogTopologyManager::getInstance().removeFogSensorNode(sensor_node));
+  EXPECT_FALSE(FogTopologyManager::getInstance().removeFogSensorNode(sensor_node));
 }
 
 /* - Links ----------------------------------------------------------------- */
@@ -120,8 +118,8 @@ TEST_F(FogTopologyManagerTest, create_link) {
 TEST_F(FogTopologyManagerTest, create_existing_link) {
   auto node_0 = FogTopologyManager::getInstance().createFogWorkerNode();
   auto node_1 = FogTopologyManager::getInstance().createFogWorkerNode();
-  FogTopologyManager::getInstance().createFogTopologyLink(node_0, node_1);
-  EXPECT_DEATH(FogTopologyManager::getInstance().createFogTopologyLink(node_0, node_1), "");
+  auto link = FogTopologyManager::getInstance().createFogTopologyLink(node_0, node_1);
+  EXPECT_EQ(link, FogTopologyManager::getInstance().createFogTopologyLink(node_0, node_1));
 }
 
 /* Remove an existing link. */
@@ -130,27 +128,23 @@ TEST_F(FogTopologyManagerTest, remove_link) {
   auto node_1 = FogTopologyManager::getInstance().createFogWorkerNode();
   auto link = FogTopologyManager::getInstance().createFogTopologyLink(node_0, node_1);
 
-  auto result_link = FogTopologyManager::getInstance().removeFogNodeLink(link);
-  EXPECT_TRUE(result_link);
+  EXPECT_TRUE(FogTopologyManager::getInstance().removeFogNodeLink(link));
 }
 
-/* Remove a non existing link. */
+/* Remove a non-existing link. */
 TEST_F(FogTopologyManagerTest, remove_non_existing_link) {
   auto node_0 = FogTopologyManager::getInstance().createFogWorkerNode();
   auto node_1 = FogTopologyManager::getInstance().createFogWorkerNode();
   auto link = FogTopologyManager::getInstance().createFogTopologyLink(node_0, node_1);
 
-  auto result_link = FogTopologyManager::getInstance().removeFogNodeLink(link);
-  result_link = FogTopologyManager::getInstance().removeFogNodeLink(link);
-  EXPECT_FALSE(result_link);
+  EXPECT_TRUE(FogTopologyManager::getInstance().removeFogNodeLink(link));
+  EXPECT_FALSE(FogTopologyManager::getInstance().removeFogNodeLink(link));
 
   // What happens to a link, if one node was removed?
   // Expectation: Link is removed as well.
   link = FogTopologyManager::getInstance().createFogTopologyLink(node_0, node_1);
-  auto result_node = FogTopologyManager::getInstance().removeFogWorkerNode(node_0);
-  EXPECT_TRUE(result_node);
-  result_link = FogTopologyManager::getInstance().removeFogNodeLink(link);
-  EXPECT_FALSE(result_link);
+  EXPECT_TRUE(FogTopologyManager::getInstance().removeFogWorkerNode(node_0));
+  EXPECT_FALSE(FogTopologyManager::getInstance().removeFogNodeLink(link));
 }
 
 /* - Usage Pattern --------------------------------------------------------- */
@@ -355,32 +349,28 @@ public:
 TEST_F(FogTopologyGraphTest, add_vertex) {
   auto worker_node = std::make_shared<FogTopologyWorkerNode>();
   worker_node->setId(0);
-  fog_graph->addVertex(worker_node);
+  EXPECT_TRUE(fog_graph->addVertex(worker_node));
 
   auto sensor_node = std::make_shared<FogTopologySensorNode>();
   sensor_node->setId(1);
-  fog_graph->addVertex(sensor_node);
+  EXPECT_TRUE(fog_graph->addVertex(sensor_node));
 }
 
 TEST_F(FogTopologyGraphTest, add_existing_vertex) {
   auto worker_node = std::make_shared<FogTopologyWorkerNode>();
   worker_node->setId(0);
-  fog_graph->addVertex(worker_node);
-  EXPECT_DEATH(fog_graph->addVertex(worker_node), "");
-
-  auto sensor_node = std::make_shared<FogTopologySensorNode>();
-  sensor_node->setId(0);
-  EXPECT_DEATH(fog_graph->addVertex(sensor_node), "");
+  EXPECT_TRUE(fog_graph->addVertex(worker_node));
+  EXPECT_FALSE(fog_graph->addVertex(worker_node));
 }
 
 TEST_F(FogTopologyGraphTest, remove_vertex) {
   auto worker_node = std::make_shared<FogTopologyWorkerNode>();
   worker_node->setId(0);
-  fog_graph->addVertex(worker_node);
+  EXPECT_TRUE(fog_graph->addVertex(worker_node));
 
   auto sensor_node = std::make_shared<FogTopologySensorNode>();
   sensor_node->setId(1);
-  fog_graph->addVertex(sensor_node);
+  EXPECT_TRUE(fog_graph->addVertex(sensor_node));
 
   EXPECT_TRUE(fog_graph->removeVertex(worker_node->getId()));
   EXPECT_TRUE(fog_graph->removeVertex(sensor_node->getId()));
@@ -393,64 +383,63 @@ TEST_F(FogTopologyGraphTest, remove_non_existing_vertex) {
 
   EXPECT_TRUE(fog_graph->removeVertex(worker_node->getId()));
   EXPECT_FALSE(fog_graph->removeVertex(worker_node->getId()));
-
-  EXPECT_FALSE(fog_graph->removeVertex(INVALID_NODE_ID));
 }
 
 /* - Edges ----------------------------------------------------------------- */
 TEST_F(FogTopologyGraphTest, add_edge) {
   auto worker_node = std::make_shared<FogTopologyWorkerNode>();
   worker_node->setId(0);
-  fog_graph->addVertex(worker_node);
+  EXPECT_TRUE(fog_graph->addVertex(worker_node));
 
   auto sensor_node = std::make_shared<FogTopologySensorNode>();
   sensor_node->setId(1);
-  fog_graph->addVertex(sensor_node);
+  EXPECT_TRUE(fog_graph->addVertex(sensor_node));
 
   auto link_0 = std::make_shared<FogTopologyLink>(sensor_node, worker_node);
   auto link_1 = std::make_shared<FogTopologyLink>(worker_node, sensor_node);
 
-  fog_graph->addEdge(link_0);
-  fog_graph->addEdge(link_1);
+  EXPECT_TRUE(fog_graph->addEdge(link_0));
+  EXPECT_TRUE(fog_graph->addEdge(link_1));
 }
 
 TEST_F(FogTopologyGraphTest, add_existing_edge) {
 
   auto worker_node = std::make_shared<FogTopologyWorkerNode>();
   worker_node->setId(0);
-  fog_graph->addVertex(worker_node);
+  EXPECT_TRUE(fog_graph->addVertex(worker_node));
 
   auto sensor_node = std::make_shared<FogTopologySensorNode>();
   sensor_node->setId(1);
-  fog_graph->addVertex(sensor_node);
+  EXPECT_TRUE(fog_graph->addVertex(sensor_node));
 
   auto link_0 = std::make_shared<FogTopologyLink>(sensor_node, worker_node);
-
-  fog_graph->addEdge(link_0);
-  EXPECT_DEATH(fog_graph->addEdge(link_0), "");
+  auto link_1 = std::make_shared<FogTopologyLink>(sensor_node, worker_node);
+  EXPECT_TRUE(fog_graph->addEdge(link_0));
+  EXPECT_FALSE(fog_graph->addEdge(link_0));
+  EXPECT_FALSE(fog_graph->addEdge(link_1));
 }
 
 TEST_F(FogTopologyGraphTest, add_invalid_edge) {
   auto worker_node = std::make_shared<FogTopologyWorkerNode>();
   worker_node->setId(0);
-  fog_graph->addVertex(worker_node);
+  EXPECT_TRUE(fog_graph->addVertex(worker_node));
 
   auto sensor_node = std::make_shared<FogTopologySensorNode>();
-  sensor_node->setId(1);
+  EXPECT_TRUE(sensor_node->setId(1));
   // node not added to graph
 
   auto link_0 = std::make_shared<FogTopologyLink>(worker_node, sensor_node);
-  EXPECT_DEATH(fog_graph->addEdge(link_0), "");
+  EXPECT_FALSE(fog_graph->addEdge(link_0));
 }
 
 TEST_F(FogTopologyGraphTest, remove_edge) {
   auto worker_node = std::make_shared<FogTopologyWorkerNode>();
   worker_node->setId(0);
-  fog_graph->addVertex(worker_node);
+  EXPECT_TRUE(fog_graph->addVertex(worker_node));
 
   auto sensor_node = std::make_shared<FogTopologySensorNode>();
   sensor_node->setId(1);
-  fog_graph->addVertex(sensor_node);
+  EXPECT_TRUE(fog_graph->addVertex(sensor_node));
 
   auto link_0 = std::make_shared<FogTopologyLink>(sensor_node, worker_node);
   fog_graph->addEdge(link_0);
@@ -461,14 +450,14 @@ TEST_F(FogTopologyGraphTest, remove_edge) {
 TEST_F(FogTopologyGraphTest, remove_non_existing_edge) {
   auto worker_node = std::make_shared<FogTopologyWorkerNode>();
   worker_node->setId(0);
-  fog_graph->addVertex(worker_node);
+  EXPECT_TRUE(fog_graph->addVertex(worker_node));
 
   auto sensor_node = std::make_shared<FogTopologySensorNode>();
   sensor_node->setId(1);
-  fog_graph->addVertex(sensor_node);
+  EXPECT_TRUE(fog_graph->addVertex(sensor_node));
 
   auto link_0 = std::make_shared<FogTopologyLink>(sensor_node, worker_node);
-  fog_graph->addEdge(link_0);
+  EXPECT_TRUE(fog_graph->addEdge(link_0));
 
   EXPECT_TRUE(fog_graph->removeEdge(link_0->getId()));
   EXPECT_FALSE(fog_graph->removeEdge(link_0->getId()));
