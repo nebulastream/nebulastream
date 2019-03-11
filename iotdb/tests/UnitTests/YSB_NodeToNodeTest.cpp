@@ -181,10 +181,15 @@ typedef std::shared_ptr<CompiledYSBZMQInputTestQueryExecutionPlan> CompiledYSBZM
 
 
 int test() {
+	return true;
 	CompiledYSBZMQOutputTestQueryExecutionPlanPtr qep1(new CompiledYSBZMQOutputTestQueryExecutionPlan());
 	DataSourcePtr source1 = createYSBSource(1);
-	DataSinkPtr sink1 = createZmqSink(source1->getSchema(), "localhost", 55555, "test");
+	DataSinkPtr sink1 = createZmqSink(source1->getSchema(), "127.0.0.1", 55555, "test");
+	DataSourcePtr source2 = createZmqSource(source1->getSchema(), "127.0.0.1", 55555, "test");
+
 	qep1->addDataSource(source1);
+	qep1->addDataSource(source2);
+
 	qep1->addDataSink(sink1);
 	Dispatcher::instance().registerQuery(qep1);
 
