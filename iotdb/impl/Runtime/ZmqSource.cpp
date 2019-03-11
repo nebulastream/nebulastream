@@ -16,11 +16,17 @@ namespace iotdb {
 
 ZmqSource::ZmqSource(const Schema &schema, const std::string &host, const uint16_t port, const std::string &topic)
     : DataSource(schema), host(host), port(port), topic(topic), connected(false), context(zmq::context_t(1)),
-      socket(zmq::socket_t(context, ZMQ_SUB)) {}
-ZmqSource::~ZmqSource() { assert(disconnect()); }
+      socket(zmq::socket_t(context, ZMQ_SUB)) {
+	  IOTDB_DEBUG("ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/" << topic)
+
+}
+ZmqSource::~ZmqSource() { assert(disconnect());
+IOTDB_DEBUG("ZMQSOURCE  " << this << ": Destroy ZMQ Source")
+}
 
 TupleBufferPtr ZmqSource::receiveData() {
   assert(connect());
+  IOTDB_DEBUG("ZMQSource  " << this << ": receiveData ")
 
   // Receive new chunk of data
   zmq::message_t new_data;
@@ -34,7 +40,10 @@ TupleBufferPtr ZmqSource::receiveData() {
 
   // Create new TupleBuffer and copy data
   TupleBufferPtr buffer = BufferManager::instance().getBuffer();
+  IOTDB_DEBUG("ZMQSource  " << this << ": got buffer ")
+
   std::memcpy(buffer->buffer, new_data.data(), buffer->buffer_size);
+  IOTDB_DEBUG("ZMQSource  " << this << ": return buffer ")
 
   return buffer;
 }
@@ -63,6 +72,15 @@ bool ZmqSource::connect() {
       connected = false;
     }
   }
+  if(connected)
+  {
+	  IOTDB_DEBUG("ZMQSOURCE  " << this << ": connected")
+  }
+  else
+  {
+	  IOTDB_DEBUG("ZMQSOURCE  " << this << ": NOT connected")
+  }
+
 
   return connected;
 }
@@ -76,6 +94,14 @@ bool ZmqSource::disconnect() {
     } catch (...) {
       connected = true;
     }
+  }
+  if(!connected)
+  {
+	  IOTDB_DEBUG("ZMQSOURCE  " << this << ": disconnected")
+  }
+  else
+  {
+	  IOTDB_DEBUG("ZMQSOURCE  " << this << ": NOT disconnected")
   }
   return !connected;
 }

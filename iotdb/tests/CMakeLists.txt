@@ -98,6 +98,10 @@ add_executable(ysb_test_source_sink "UnitTests/YSB_SourceToSink.cpp")
 target_link_libraries(ysb_test_source_sink iotdb ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
 add_test(NAME ysb_test_source_sink COMMAND ysb_test_source_sink)
 
+# YSB Test node to node
+add_executable(ysb_test_node_to_node "UnitTests/YSB_NodeToNodeTest.cpp")
+target_link_libraries(ysb_test_node_to_node iotdb ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
+add_test(NAME ysb_test_node_to_node COMMAND ysb_test_node_to_node)
 
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
