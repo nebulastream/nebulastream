@@ -30,6 +30,8 @@ public:
 
   /* Will be called after all tests in this class are finished. */
   static void TearDownTestCase() { std::cout << "Tear down FogTopologyManager test class." << std::endl; }
+
+  //@Tobias please reactive the tests and find the error :)
 };
 
 /* - Nodes ----------------------------------------------------------------- */

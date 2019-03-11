@@ -15,6 +15,7 @@ PrintSink::PrintSink(const Schema &schema)
 PrintSink::~PrintSink() { }
 
 bool PrintSink::writeData(const std::vector<TupleBufferPtr> &input_buffers) {
+	assert(0);
 	//TODO: is it really neccesary to use a vector of buffers?
 	for(size_t i = 0; i < input_buffers.size(); i++)//for each buffer
 	{
@@ -25,6 +26,8 @@ bool PrintSink::writeData(const std::vector<TupleBufferPtr> &input_buffers) {
 }
 
 bool PrintSink::writeData(const TupleBufferPtr input_buffer) {
+	assert(0);
+
 	for(size_t u = 0; u < input_buffer->num_tuples; u++)
 	{
 		IOTDB_INFO("PrintSink: tuple:" << u << " = ")
@@ -35,6 +38,8 @@ bool PrintSink::writeData(const TupleBufferPtr input_buffer) {
 
 
 bool PrintSink::writeData(const std::vector<TupleBuffer*> &input_buffers) {
+	assert(0);
+
 	//TODO: is it really neccesary to use a vector of buffers?
 	for(size_t i = 0; i < input_buffers.size(); i++)//for each buffer
 	{
@@ -45,6 +50,8 @@ bool PrintSink::writeData(const std::vector<TupleBuffer*> &input_buffers) {
 }
 
 bool PrintSink::writeData(const TupleBuffer* input_buffer) {
+	assert(0);
+
 	for(size_t u = 0; u < input_buffer->num_tuples; u++)
 	{
 		IOTDB_INFO("PrintSink: tuple:" << u << " = ")
@@ -79,6 +86,7 @@ bool YSBPrintSink::writeData(const std::vector<TupleBufferPtr> &input_buffers) {
 	{
 		IOTDB_INFO("PrintSink: Buffer No:" << i)
 		writeData(input_buffers[i]);
+		processedBuffer++;
 	}
 }
 
@@ -98,6 +106,7 @@ bool YSBPrintSink::writeData(const TupleBufferPtr input_buffer) {
 		printedTuples++;
 	}
 	IOTDB_INFO(" ============= YSBPrintSink: FINISHED ============")
+	processedBuffer++;
 
 	Dispatcher::instance().releaseBuffer(input_buffer);
 }
@@ -107,6 +116,7 @@ bool YSBPrintSink::writeData(const std::vector<TupleBuffer*> &input_buffers) {
 	{
 		IOTDB_INFO("PrintSink: Buffer No:" << i)
 		writeData(input_buffers[i]);
+		processedBuffer++;
 	}
 }
 
@@ -126,6 +136,8 @@ bool YSBPrintSink::writeData(const TupleBuffer* input_buffer) {
 				<< " timestamp=" <<recordBuffer[u].current_ms)
 		printedTuples++;
 	}
+	processedBuffer++;
+
 	IOTDB_INFO(" ============= YSBPrintSink: FINISHED ============")
 
 //	Dispatcher::instance().releaseBuffer(input_buffer);
