@@ -152,10 +152,10 @@ int test() {
 	thread_pool.start();
 
 	while(source->isRunning() && sink->getNumberOfProcessedBuffers() != 2){
-//		std::cout << "sourceRunnin=" << source->isRunning() << " numberOfProcBuffer="
-//				<< sink->getNumberOfProcessedBuffers() << std::endl;
-//		std::cout << "Waiting 1 seconds " << std::endl;
-//		std::this_thread::sleep_for(std::chrono::seconds(3));
+		std::cout << "sourceRunnin=" << source->isRunning() << " numberOfProcBuffer="
+				<< sink->getNumberOfProcessedBuffers() << std::endl;
+		std::cout << "Waiting 1 seconds " << std::endl;
+		std::this_thread::sleep_for(std::chrono::seconds(2));
 	}
 	thread_pool.stop();
 
