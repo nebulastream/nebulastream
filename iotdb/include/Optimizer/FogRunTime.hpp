@@ -3,11 +3,10 @@
 #include <Optimizer/FogExecutionPlan.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <CodeGen/QueryExecutionPlan.hpp>
-#include <Runtime/compiledTestPlan.hpp>
-
 #include <zmq.hpp>
 #include <NodeEngine/json.hpp>
 #include <map>
+#include "../Runtime/CompiledDummyPlan.hpp"
 
 namespace iotdb{
 using JSON = nlohmann::json;
@@ -24,7 +23,7 @@ public:
     void operator=(FogRunTime const&); // Don't implement
 
 	void deployQuery(FogExecutionPlan fogPlan);
-	void deployQuery(CompiledTestQueryExecutionPlanPtr cPlan);
+	void deployQuery(QueryExecutionPlanPtr cPlan);
 
 
 	void registerNode(NodeEnginePtr ptr);

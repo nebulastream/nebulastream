@@ -14,23 +14,25 @@
 #include <thread>
 #include <vector>
 
-#include <Runtime/DataSource.hpp>
-#include <Runtime/Task.hpp>
 #include <CodeGen/QueryExecutionPlan.hpp>
 #include <Core/TupleBuffer.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/DataSource.hpp>
+#include <Runtime/Task.hpp>
 
 namespace iotdb {
 
 class Dispatcher {
 public:
-  TupleBuffer getBuffer(uint32_t number_of_tuples = 10);
+  TupleBufferPtr getBuffer();
+  void releaseBuffer(TupleBufferPtr ptr);
 
   void registerQuery(const QueryExecutionPlanPtr);
   void deregisterQuery(const QueryExecutionPlanPtr);
 
   TaskPtr getWork(bool &run_thread);
-  void addWork(const TupleBuffer &, DataSource *);
-  void completedWork(TaskPtr);
+  void addWork(const TupleBufferPtr, DataSource *);
+  void completedWork(TaskPtr task);
 
   static Dispatcher &instance();
 
@@ -44,16 +46,20 @@ private:
   Dispatcher(const Dispatcher &);
   Dispatcher &operator=(const Dispatcher &);
   ~Dispatcher();
-  void registerSource(DataSourcePtr);
-  void deregisterSource(DataSourcePtr);
 
-  std::vector<DataSourcePtr> sources;
   std::vector<TaskPtr> task_queue;
   std::map<DataSource *, std::vector<QueryExecutionPlanPtr>> source_to_query_map;
-  std::mutex mutex;
+  std::map<Window *, std::vector<QueryExecutionPlanPtr>> window_to_query_map;
+  std::map<DataSink*, std::vector<QueryExecutionPlanPtr>> sink_to_query_map;
+
+
+  std::mutex bufferMutex;
+  std::mutex queryMutex;
+  std::mutex workMutex;
+
   std::condition_variable cv;
 };
 typedef std::shared_ptr<Dispatcher> DispatcherPtr;
-}
+} // namespace iotdb
 
 #endif /* INCLUDE_DISPATCHER_H_ */

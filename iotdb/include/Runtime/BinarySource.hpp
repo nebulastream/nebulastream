@@ -17,7 +17,7 @@ namespace iotdb {
 class BinarySource : public DataSource {
 public:
   BinarySource(const Schema& schema, const std::string &file_path, const uint64_t &num_tuples_to_process);
-  TupleBuffer receiveData();
+  TupleBufferPtr receiveData();
   const std::string toString() const;
   void fillBuffer(TupleBuffer &);
 

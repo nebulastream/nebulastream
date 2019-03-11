@@ -6,57 +6,86 @@
  */
 #include <Runtime/Dispatcher.hpp>
 #include <iostream>
-
+#include <assert.h>
+#include <Runtime/Window.hpp>
+#include <Util/Logger.hpp>
 namespace iotdb {
 
-Dispatcher::Dispatcher() : sources(), task_queue(), source_to_query_map(), mutex() {
-  std::cout << "Init Dispatcher" << std::endl;
+Dispatcher::Dispatcher() : task_queue(), source_to_query_map(), window_to_query_map(),
+		sink_to_query_map(), bufferMutex(), queryMutex(), workMutex() {
+  IOTDB_DEBUG("Init Dispatcher")
 }
 
 Dispatcher::~Dispatcher() {
-  std::cout << "Enter Destructor of Dispatcher" << std::endl;
-  sources.clear();
-  std::cout << "Destroyed Sources" << std::endl;
-  task_queue.clear();
-  std::cout << "Destroyed Task Queue" << std::endl;
-  source_to_query_map.clear();
-  std::cout << "Destroyed Dispatcher" << std::endl;
+	IOTDB_DEBUG("Dispatcher: Destroy Task Queue")
+ 	task_queue.clear();
+ 	IOTDB_DEBUG("Dispatcher: Destroy source_to_query_map")
+ 	source_to_query_map.clear();
+ 	IOTDB_DEBUG("Dispatcher: Destroy sink_to_query_map")
+ 	sink_to_query_map.clear();
+ 	IOTDB_DEBUG("Dispatcher: Destroy window_to_query_map")
+ 	window_to_query_map.clear();
 }
 
-TupleBuffer Dispatcher::getBuffer(uint32_t number_of_tuples) {
-  std::unique_lock<std::mutex> lock(mutex);
-  uint32_t tuple_size_bytes = sizeof(uint64_t);
-  uint64_t buffer_size = number_of_tuples * tuple_size_bytes;
-  void *buffer = malloc(buffer_size);
-  TupleBuffer buf(buffer, buffer_size, tuple_size_bytes, number_of_tuples);
-  return buf;
+TupleBufferPtr Dispatcher::getBuffer() {
+//	std::unique_lock<std::mutex> lock(bufferMutex);
+	IOTDB_DEBUG("Dispatcher: getBuffer(): Dispatcher returns buffer")
+  return BufferManager::instance().getBuffer();
 }
 
-void Dispatcher::registerSource(DataSourcePtr source) {
-  // std::unique_lock<std::mutex> lock(mutex);
-  if (source) {
-    std::cout << "Register Source " << source.get() << "in Dispatcher" << std::endl;
-    sources.push_back(source);
-  }
+void Dispatcher::releaseBuffer(TupleBufferPtr ptr) {
+	std::unique_lock<std::mutex> lock(bufferMutex);
+	IOTDB_DEBUG("Dispatcher: releaseBuffer() : Dispatcher release buffer")
+	return BufferManager::instance().releaseBuffer(ptr);
 }
 
-void Dispatcher::deregisterSource(DataSourcePtr) { std::unique_lock<std::mutex> lock(mutex); }
 
 void Dispatcher::registerQuery(const QueryExecutionPlanPtr qep) {
-  std::unique_lock<std::mutex> lock(mutex);
+  std::unique_lock<std::mutex> lock(queryMutex);
 
   auto sources = qep->getSources();
   for (auto source : sources) {
-    registerSource(source);
-    source_to_query_map[source.get()].push_back(qep);
+    source_to_query_map[source.get()].emplace_back(qep);
     source->start();
   }
+  auto windows = qep->getWindows();
+	for (auto window : windows) {
+	  window_to_query_map[window.get()].emplace_back(qep);
+	  window->setup();
+	}
+	auto sinks = qep->getSinks();
+	  for (auto sink : sinks) {
+		  sink_to_query_map[sink.get()].emplace_back(qep);
+	    sink->setup();
+	  }
+
 }
 
-void Dispatcher::deregisterQuery(const QueryExecutionPlanPtr) { std::unique_lock<std::mutex> lock(mutex); }
+void Dispatcher::deregisterQuery(const QueryExecutionPlanPtr qep)
+{
+	std::unique_lock<std::mutex> lock(queryMutex);
+	auto sources = qep->getSources();
+	for (auto source : sources) {
+		source_to_query_map.erase(source.get());
+		source->stop();
+	  }
+	  auto windows = qep->getWindows();
+
+	for (auto window : windows) {
+		  window_to_query_map.erase(window.get());
+		  window->shutdown();
+		}
+
+	auto sinks = qep->getSinks();
+	for (auto sink : sinks) {
+		sink_to_query_map.erase(sink.get());
+		sink->shutdown();
+	  }
+}
+
 
 TaskPtr Dispatcher::getWork(bool &run_thread) {
-  std::unique_lock<std::mutex> lock(mutex);
+  std::unique_lock<std::mutex> lock(workMutex);
   while (task_queue.empty() && run_thread) {
     cv.wait(lock);
     if (!run_thread)
@@ -64,24 +93,31 @@ TaskPtr Dispatcher::getWork(bool &run_thread) {
   }
   TaskPtr task = task_queue.front();
   task_queue.erase(task_queue.begin());
+  IOTDB_DEBUG("Dispatcher: give task" << task.get() << " to thread (getWork())")
   return task;
 }
 
-void Dispatcher::addWork(const TupleBuffer &buf, DataSource *source) {
-  std::unique_lock<std::mutex> lock(mutex);
+void Dispatcher::addWork(const TupleBufferPtr buf, DataSource *source) {
+  std::unique_lock<std::mutex> lock(workMutex);
   std::vector<QueryExecutionPlanPtr> &queries = source_to_query_map[source];
   for (uint64_t i = 0; i < queries.size(); ++i) {
-    TaskPtr task(new Task(queries[i], 1, source, buf));
+    TaskPtr task(new Task(queries[i], queries[i]->stageIdFromSource(source), source, buf));
     task_queue.push_back(task);
-    std::cout << "Dispatcher: added Task for source " << source << " for QEP " << queries[i].get() << std::endl;
+    IOTDB_DEBUG("Dispatcher: added Task " << task.get()
+    		<< " for source " << source << " for QEP "
+			<< queries[i].get()
+    		<< " inputBuffer " << buf)
   }
   cv.notify_all();
 }
 
-void Dispatcher::completedWork(TaskPtr) { std::unique_lock<std::mutex> lock(mutex); }
+void Dispatcher::completedWork(TaskPtr task) {
+  std::unique_lock<std::mutex> lock(workMutex);
+  task->releaseInputBuffer();
+}
 
 Dispatcher &Dispatcher::instance() {
   static Dispatcher instance;
   return instance;
 }
-}
+} // namespace iotdb

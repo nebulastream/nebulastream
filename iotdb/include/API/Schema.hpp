@@ -21,6 +21,8 @@ public:
   Schema &copyFields(Schema const &schema);
   Schema& addField(AttributeFieldPtr field);
   Schema& addField(const std::string &name, const BasicType &);
+  Schema& addField(const std::string &name, uint32_t size);
+
   //Schema &addFixSizeField(const std::string name, const APIDataType data_type);
   //Schema &addVarSizeField(const std::string name, const APIDataType data_type, const size_t data_size);
   AttributeFieldPtr get(const std::string name);

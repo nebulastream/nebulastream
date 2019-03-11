@@ -25,7 +25,7 @@ public:
   }
 
   /* Will be called before a test is executed. */
-  void TearDown() { std::cout << "Setup FogTopologyManager test case." << std::endl; }
+  void TearDown() { std::cout << "Tear down FogTopologyManager test case." << std::endl; }
 
   /* Will be called after all tests in this class are finished. */
   static void TearDownTestCase() { std::cout << "Tear down FogTopologyManager test class." << std::endl; }

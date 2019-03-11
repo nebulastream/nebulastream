@@ -27,6 +27,7 @@
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Support/TargetSelect.h>
 
+#include <Util/Logger.hpp>
 #pragma GCC diagnostic pop
 
 namespace iotdb {

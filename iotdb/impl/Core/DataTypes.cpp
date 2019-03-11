@@ -21,6 +21,11 @@ namespace iotdb {
 
   }
 
+  AttributeField::AttributeField(const std::string &_name,
+                                 uint32_t _size)
+    : name(_name), data_type(createDataTypeVarChar(_size)){
+
+  }
   uint32_t AttributeField::getFieldSize() const{
      return data_type->getSizeBytes();
   }
@@ -37,7 +42,10 @@ namespace iotdb {
     return ptr;
   }
 
-
+  const AttributeFieldPtr createField(const std::string name, uint32_t size){
+      AttributeFieldPtr ptr = std::make_shared<AttributeField>(name, size);
+      return ptr;
+    }
 
   ValueType::~ValueType(){
 
@@ -72,6 +80,11 @@ namespace iotdb {
       : type(_type){
     }
 
+    BasicDataType(const BasicType & _type, uint32_t _size)
+          : type(_type), dataSize(_size){
+        }
+
+
     ValueTypePtr getDefaultInitValue() const{
       return ValueTypePtr();
     }
@@ -79,7 +92,20 @@ namespace iotdb {
     ValueTypePtr getNullValue() const{
       return ValueTypePtr();
     }
+
     uint32_t getSizeBytes() const{
+    	if(dataSize == 0)
+    	{
+    		return getFixSizeBytes();
+    	}
+    	else
+    	{
+    		return getFixSizeBytes() * dataSize;
+    	}
+
+    }
+
+    uint32_t getFixSizeBytes() const{
       switch(type){
         case INT8: return sizeof(int8_t);
         case UINT8: return sizeof(uint8_t);
@@ -146,6 +172,8 @@ namespace iotdb {
     ~BasicDataType();
   private:
     BasicType type;
+    uint32_t dataSize;
+
   };
 
   BasicDataType::~BasicDataType(){}
@@ -193,6 +221,11 @@ private:
     return ptr;
   }
 
+  const DataTypePtr createVarDataType(const BasicType & type, uint32_t size){
+      DataTypePtr ptr = std::make_shared<BasicDataType>(type, size);
+      return ptr;
+    }
+
   const DataTypePtr createPointerDataType(const DataTypePtr& type){
     return std::make_shared<PointerDataType>(type);
   }
@@ -201,8 +234,9 @@ private:
     return std::make_shared<PointerDataType>(createDataType(type));
   }
 
-  const DataTypePtr createDataTypeVarChar(const uint32_t &max_length){
-    return DataTypePtr();
+  const DataTypePtr createDataTypeVarChar(const uint32_t &size){
+	  DataTypePtr ptr = std::make_shared<BasicDataType>(CHAR, size);
+	  return ptr;
   }
 
   const ValueTypePtr createBasicTypeValue(const BasicType & type, const std::string& value){

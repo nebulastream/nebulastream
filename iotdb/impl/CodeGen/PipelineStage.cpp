@@ -9,6 +9,7 @@
 #include <iostream>
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
 #include <Util/ErrorHandling.hpp>
+#include <Runtime/DataSink.hpp>
 
 namespace iotdb {
 
@@ -36,16 +37,13 @@ public:
 
 protected:
 
- uint32_t execute_impl(const std::vector<TupleBuffer*>& input_buffers, WindowState* state, TupleBuffer* result_buf) override final;
+ uint32_t execute_impl(const std::vector<TupleBuffer*>& input_buffers, WindowState* state, TupleBuffer* result_buf) final;
  virtual uint32_t callCFunction(TupleBuffer** tuple_buffers, WindowState* state, TupleBuffer* result_buffer);
 
  CompiledCCodePtr compiled_code_;
 };
 
-CPipelineStage::CPipelineStage(CompiledCCodePtr compiled_code)
-  : compiled_code_(compiled_code){
-
-}
+CPipelineStage::CPipelineStage(CompiledCCodePtr compiled_code) : compiled_code_(compiled_code) {}
 
 CPipelineStage::CPipelineStage(const CPipelineStage& other){
   /* consider deep copying this! */
@@ -72,5 +70,22 @@ PipelineStagePtr createPipelineStage(const CompiledCCodePtr compiled_code){
    return PipelineStagePtr(new CPipelineStage(compiled_code));
 }
 
+class DataSinkPiplineStage : public PipelineStage {
+public:
+    DataSinkPiplineStage(DataSinkPtr sink);
 
+protected:
+    DataSinkPtr sink;
+    uint32_t execute_impl(const std::vector<TupleBuffer*>& input_buffers, WindowState* state, TupleBuffer* result_buf) final;
+};
+
+DataSinkPiplineStage::DataSinkPiplineStage(DataSinkPtr sink) : sink(sink) {}
+
+uint32_t DataSinkPiplineStage::execute_impl(const std::vector<TupleBuffer*> &input_buffers, WindowState *state,
+        TupleBuffer *result_buf) {
+    if(sink->writeData(input_buffers))
+        return 0;
+    else
+        return 1;
 }
+} // namespace iotdb

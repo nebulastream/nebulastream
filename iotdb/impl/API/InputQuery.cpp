@@ -46,6 +46,16 @@ const InputQuery createQueryFromCodeString(const std::string& query_code_snippet
 }
 
 
+//const OperatorPtr recursiveOperatorCopy(const OperatorPtr& op){
+
+
+// return OperatorPtr();
+//}
+
+//const OperatorPtr copyOperatorTree(InputQuery sub_query){
+// return sub_query
+//}
+
 InputQuery::InputQuery(const Config& config, const DataSourcePtr& source):
 		config(config), source(source), root()
 	{
@@ -63,7 +73,7 @@ InputQuery::~InputQuery() {}
 InputQuery InputQuery::create(const Config& config, const DataSourcePtr& source)
 {
   InputQuery q(config, source);
-  OperatorPtr op=createScanOperator(source);
+  OperatorPtr op=createSourceOperator(source);
   q.root=op;
   return q;
 }
@@ -77,7 +87,7 @@ void InputQuery::execute() {
  * Relational Operators
  */
 InputQuery& InputQuery::filter(const PredicatePtr &predicate) {
-  OperatorPtr op = createSelectionOperator(predicate);
+  OperatorPtr op = createFilterOperator(predicate);
   addChild(op, root);
   root = op;
   return *this;
@@ -85,22 +95,26 @@ InputQuery& InputQuery::filter(const PredicatePtr &predicate) {
 
 InputQuery &InputQuery::groupBy(const Attributes& grouping_fields,
                                 const AggregationPtr& aggr_spec) {
-  OperatorPtr op = createGroupedAggregationOperator(grouping_fields, aggr_spec);
+  OperatorPtr op;
+//  = createAggregationOperator(AggregationSpec
+//  {grouping_fields, aggr_spec});
   addChild(op, root);
   root = op;
   return *this;
 }
 
 InputQuery &InputQuery::orderBy(const Sort& fields) {
-  OperatorPtr op = createOrderByOperator(fields);
+  OperatorPtr op = createSortOperator(fields);
   addChild(op, root);
   root = op;
   return *this;
 }
 
 InputQuery &InputQuery::join(const InputQuery& sub_query, const JoinPredicatePtr& joinPred) {
-  OperatorPtr op = createJoinOperator(sub_query,joinPred);
+  OperatorPtr op = createJoinOperator(joinPred);
   addChild(op, root);
+  //addChild(op, copyRecursive(sub_query,sub_query.root));
+  addChild(op, sub_query.root);
   root = op;
   return *this;
 }
@@ -127,16 +141,26 @@ InputQuery &InputQuery::map(const MapperPtr& mapper) {
   return *this;
 }
 
+const DataSinkPtr createWriteFileSink(const std::string file_name);
+const DataSinkPtr createPrintSink(std::ostream& out);
+
+const DataSinkPtr createWriteFileSink(const std::string file_name){
+
+}
+
+const DataSinkPtr createPrintSink(std::ostream& out){
+
+}
 
 // output operators
 InputQuery &InputQuery::writeToFile(const std::string& file_name) {
-  OperatorPtr op = createWriteFileOperator(file_name);
+  OperatorPtr op = createSinkOperator(createWriteFileSink(file_name));
   addChild(op, root);
   root = op;
   return *this;
 }
 InputQuery &InputQuery::print(std::ostream& out) {
-  OperatorPtr op = createPrintOperator(out);
+  OperatorPtr op = createSinkOperator(createPrintSink(out));
   addChild(op, root);
   root = op;
   return *this;
