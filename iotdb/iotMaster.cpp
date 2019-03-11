@@ -118,7 +118,7 @@ void createTestTopo(FogTopologyManager& fMgnr)
 
 	FogTopologySensorNodePtr s1 = fMgnr.createFogSensorNode();
 
-	FogTopologyLinkPtr l1 = fMgnr.createFogNodeLink(s1, f1);
+	FogTopologyLinkPtr l1 = fMgnr.createFogTopologyLink(s1, f1);
 
 	fMgnr.printTopologyPlan();
 }
