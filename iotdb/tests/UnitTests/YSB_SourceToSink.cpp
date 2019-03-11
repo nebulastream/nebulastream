@@ -167,6 +167,12 @@ int test() {
 				<< sink->getNumberOfProcessedBuffers() << std::endl;
 		assert(0);
 	}
+	else
+	{
+		std::cout << "right result with sourceRunnin=" << source->isRunning() << " numberOfProcBuffer="
+				<< sink->getNumberOfProcessedBuffers() << std::endl;
+
+	}
 	thread_pool.stop();
 
 	Dispatcher::instance().deregisterQuery(qep);
@@ -192,9 +198,9 @@ void setupLogging()
 
 	// set log level
 	//logger->setLevel(log4cxx::Level::getTrace());
-	logger->setLevel(log4cxx::Level::getDebug());
+//	logger->setLevel(log4cxx::Level::getDebug());
 //	logger->setLevel(log4cxx::Level::getInfo());
-//	logger->setLevel(log4cxx::Level::getWarn());
+	logger->setLevel(log4cxx::Level::getWarn());
 	//logger->setLevel(log4cxx::Level::getError());
 //	logger->setLevel(log4cxx::Level::getFatal());
 
