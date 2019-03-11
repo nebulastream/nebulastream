@@ -22,9 +22,6 @@ public:
   /* Will be called before a test is executed. */
   void SetUp() {
     std::cout << "Setup FogTopologyManager test case." << std::endl;
-    //topology_manager.reset(&FogTopologyManager::getInstance());
-
-//    topology_manager = std::make_shared<FogTopologyManager>();
   }
 
   /* Will be called before a test is executed. */
@@ -32,8 +29,6 @@ public:
 
   /* Will be called after all tests in this class are finished. */
   static void TearDownTestCase() { std::cout << "Tear down FogTopologyManager test class." << std::endl; }
-
-  //std::shared_ptr<FogTopologyManager> topology_manager;
 };
 
 /* - Nodes ----------------------------------------------------------------- */
@@ -347,9 +342,6 @@ public:
   /* Will be called before a test is executed. */
   void SetUp() {
     std::cout << "Setup FogTopologyGraph test case." << std::endl;
-//    topology_manager = std::make_shared<FogTopologyManager>();
-    topology_manager.reset(&FogTopologyManager::getInstance());
-
     fog_graph = std::make_shared<FogGraph>();
   }
 
@@ -358,8 +350,6 @@ public:
 
   /* Will be called after all tests in this class are finished. */
   static void TearDownTestCase() { std::cout << "Tear down FogTopologyGraph test class." << std::endl; }
-
-  std::shared_ptr<FogTopologyManager> topology_manager;
   std::shared_ptr<FogGraph> fog_graph;
 };
 
