@@ -123,7 +123,6 @@ public:
 
     // does graph contain vertex?
     if (hasVertex(search_id)) {
-      // remove
       remove_vertex(getVertex(search_id), graph);
       return true;
     }
@@ -194,7 +193,7 @@ public:
     }
 
     // no matching edge found
-    return 0;
+    return nullptr;
   }
 
   bool hasEdge(size_t search_id) const {
@@ -220,7 +219,7 @@ public:
       return false;
     }
 
-    // check if vertex is at graph
+    // check if vertices are in graph
     if (!hasVertex(ptr->getSourceNodeId()) || !hasVertex(ptr->getDestNodeId())) {
       return false;
     }
@@ -240,8 +239,13 @@ public:
       return false;
     }
 
-    // remove edge
+    // check if vertices are in graph
     auto edge = getEdge(search_id);
+    if (!hasVertex(edge->ptr->getSourceNodeId()) || !hasVertex(edge->ptr->getDestNodeId())) {
+      return false;
+    }
+
+    // remove edge
     auto src = getVertex(edge->ptr->getSourceNodeId());
     auto dst = getVertex(edge->ptr->getDestNodeId());
     remove_edge(src, dst, graph);

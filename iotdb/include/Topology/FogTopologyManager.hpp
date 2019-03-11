@@ -1,8 +1,9 @@
 #ifndef INCLUDE_TOPOLOGY_FOGTOPOLOGYMANAGER_HPP_
 #define INCLUDE_TOPOLOGY_FOGTOPOLOGYMANAGER_HPP_
 
-#include <Topology/FogTopologyPlan.hpp>
 #include <memory>
+
+#include <Topology/FogTopologyPlan.hpp>
 
 /**
  * TODO: add return of create
@@ -32,7 +33,7 @@ public:
     return currentPlan->createFogTopologyLink(pSourceNode, pDestNode);
   }
 
-  bool removeFogNodeLink(FogTopologyLinkPtr linkPtr) { return currentPlan->removeFogTopologyLink(linkPtr); }
+  bool removeFogTopologyLink(FogTopologyLinkPtr linkPtr) { return currentPlan->removeFogTopologyLink(linkPtr); }
 
   void printTopologyPlan() { std::cout << getTopologyPlanString() << std::endl; }
 
@@ -41,6 +42,11 @@ public:
   FogTopologyPlanPtr getTopologyPlan() { return currentPlan; }
 
   FogTopologyEntryPtr getRootNode() { return currentPlan->getRootNode(); };
+
+  void resetFogTopologyPlan() {
+    currentPlan.reset(new FogTopologyPlan());
+    currentLinkID = 1;
+  }
 
 private:
   FogTopologyManager() { currentPlan = std::make_shared<FogTopologyPlan>(); }
