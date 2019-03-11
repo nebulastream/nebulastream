@@ -55,7 +55,7 @@ TupleBufferPtr BufferManager::getBuffer() {
 	  {
 		  entry.second = true;
 
-		  IOTDB_DEBUG("BufferManager: Got free buffer " <<  entry.first)
+		  IOTDB_DEBUG("BufferManager: provide free buffer " <<  entry.first)
 
 		  return entry.first;
 	  }

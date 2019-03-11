@@ -15,21 +15,21 @@
 namespace iotdb {
 
 DataSource::DataSource(const Schema &_schema) : run_thread(false), thread(), schema(_schema) {
-  IOTDB_DEBUG("DataSource: Init Data Source!")
+  IOTDB_DEBUG("DataSource " << this << ": Init Data Source!")
 }
 
 const Schema &DataSource::getSchema() const { return schema; }
 
 DataSource::~DataSource() {
 //	stop();
-	IOTDB_DEBUG("DataSource: Destroy Data Source.")
+	IOTDB_DEBUG("DataSource " << this << ": Destroy Data Source.")
 }
 
 void DataSource::start() {
   if (run_thread)
     return;
   run_thread = true;
-  IOTDB_DEBUG("DataSource: Spawn thread")
+  IOTDB_DEBUG("DataSource " << this << ": Spawn thread")
   thread = std::thread(std::bind(&DataSource::run, this));
 }
 
@@ -46,12 +46,12 @@ bool DataSource::isRunning()
 	return run_thread;
 }
 void DataSource::run() {
-  IOTDB_DEBUG("DataSource: Running Data Source")
+  IOTDB_DEBUG("DataSource " << this << ": Running Data Source")
   size_t cnt = 0;
 
   while (run_thread) {
     TupleBufferPtr buf = receiveData();
-    IOTDB_DEBUG("DataSource: Received Data: " << buf->num_tuples << "tuples")
+    IOTDB_DEBUG("DataSource " << this << ": Received Data: " << buf->num_tuples << "tuples")
     if (buf->buffer && cnt < this->num_buffers_to_process)
     {
         Dispatcher::instance().addWork(buf, this);
@@ -63,7 +63,7 @@ void DataSource::run() {
     	break;
     }
   }
-  IOTDB_DEBUG("DataSource: Data Source Finished")
+  IOTDB_DEBUG("DataSource " << this << ": Data Source Finished")
 }
 
 const DataSourcePtr createTestSource() {

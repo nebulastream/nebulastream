@@ -12,6 +12,7 @@
 #include "Topology/FogTopologyWorkerNode.hpp"
 
 using namespace iotdb;
+
 /* ------------------------------------------------------------------------- */
 /* - FogTopologyManager ---------------------------------------------------- */
 class FogTopologyManagerTest : public testing::Test {
@@ -33,6 +34,7 @@ public:
 
 /* - Nodes ----------------------------------------------------------------- */
 /* Create a new node. */
+
 TEST_F(FogTopologyManagerTest, create_node) {
   auto worker_node = FogTopologyManager::getInstance().createFogWorkerNode();
   EXPECT_NE(worker_node.get(), nullptr);
@@ -48,7 +50,7 @@ TEST_F(FogTopologyManagerTest, create_node) {
 
   EXPECT_EQ(worker_node->getId() + 1, sensor_node->getId());
 }
-
+#if 0
 /* Remove an existing node. */
 TEST_F(FogTopologyManagerTest, remove_node) {
   auto worker_node = FogTopologyManager::getInstance().createFogWorkerNode();
@@ -475,3 +477,4 @@ TEST_F(FogTopologyGraphTest, remove_non_existing_edge) {
   EXPECT_TRUE(fog_graph->removeEdge(link_0->getId()));
   EXPECT_FALSE(fog_graph->removeEdge(link_0->getId()));
 }
+#endif
