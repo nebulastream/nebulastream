@@ -1,5 +1,3 @@
-
-
 #include <cassert>
 #include <iostream>
 #include "gtest/gtest.h"
@@ -12,6 +10,9 @@
 #include <Runtime/DataSource.hpp>
 #include <Runtime/Window.hpp>
 #include <Runtime/DataSink.hpp>
+#include <Runtime/ZmqSink.hpp>
+#include <Runtime/ZmqSource.hpp>
+
 #include <Runtime/PrintSink.hpp>
 
 
@@ -59,16 +60,15 @@ struct __attribute__((packed)) ysbRecord {
 
 	};//size 78 bytes
 
-class CompiledYSBTestQueryExecutionPlan : public HandCodedQueryExecutionPlan{
+class CompiledYSBZMQOutputTestQueryExecutionPlan : public HandCodedQueryExecutionPlan{
 public:
     uint64_t count;
     uint64_t sum;
 
-    CompiledYSBTestQueryExecutionPlan()
+    CompiledYSBZMQOutputTestQueryExecutionPlan()
         : HandCodedQueryExecutionPlan(), count(0), sum(0){
 
     }
-
 
     bool firstPipelineStage(const TupleBuffer&){
         return false;
@@ -95,6 +95,66 @@ public:
         size_t lastTimeStamp = time(NULL);
         size_t current_window = 0;
         char key[] = "view";
+        ZmqSink* sink = (ZmqSink*)this->getSinks()[0].get();
+        //add code to get corresponding
+        size_t qualCnt = 0;
+		for(size_t i = 0; i < buf->num_tuples; i++)
+		{
+			if(strcmp(key,tuples[i].event_type) != 0)
+			{
+				continue;
+			}
+			memcpy(recBuffer[qualCnt].campaign_id, tuples[i].campaign_id,16);
+			recBuffer[qualCnt].current_ms = tuples[i].current_ms;
+			recBuffer[qualCnt].id = tuples[i].ip;
+			memcpy(recBuffer[qualCnt].event_type, tuples[i].event_type, 9);
+			//write to sink
+			qualCnt++;
+		}
+		workingBuffer->num_tuples = qualCnt;
+		workingBuffer->tuple_size_bytes = sizeof(ysbRecordOut);
+		sink->writeData(workingBuffer);
+		IOTDB_DEBUG("task " << this << " finished processing")
+    }
+};
+typedef std::shared_ptr<CompiledYSBZMQOutputTestQueryExecutionPlan> CompiledYSBZMQOutputTestQueryExecutionPlanPtr;
+
+class CompiledYSBZMQInputTestQueryExecutionPlan : public HandCodedQueryExecutionPlan
+{
+public:
+    uint64_t count;
+    uint64_t sum;
+
+    CompiledYSBZMQInputTestQueryExecutionPlan()
+        : HandCodedQueryExecutionPlan(), count(0), sum(0){
+
+    }
+
+    bool firstPipelineStage(const TupleBuffer&){
+        return false;
+    }
+
+    union tempHash
+    {
+    	uint64_t value;
+    	char buffer[8];
+    };
+
+    struct __attribute__((packed)) ysbRecordOut {
+    	  char campaign_id[16];
+    	  char event_type[9];
+    	  int64_t current_ms;
+    	  uint32_t id;
+    };
+
+    bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf)
+    {
+    	TupleBufferPtr workingBuffer = Dispatcher::instance().getBuffer();
+    	ysbRecordOut* recBuffer = (ysbRecordOut*)workingBuffer->buffer;
+    	ysbRecordOut* tuples = (ysbRecordOut*) buf->buffer;
+        size_t lastTimeStamp = time(NULL);
+        size_t current_window = 0;
+        char key[] = "view";
         size_t windowSizeInSec = 1;
         size_t campaingCnt = 10;
         YSBPrintSink* sink = (YSBPrintSink*)this->getSinks()[0].get();
@@ -107,77 +167,62 @@ public:
 			}
 			memcpy(recBuffer[qualCnt].campaign_id, tuples[i].campaign_id,16);
 			recBuffer[qualCnt].current_ms = tuples[i].current_ms;
-			recBuffer[qualCnt].id = tuples[i].ip;
+			recBuffer[qualCnt].id = tuples[i].id;
 			memcpy(recBuffer[qualCnt].event_type, tuples[i].event_type, 9);
-
-//ip
-//			std::cout << "size=" << sizeof(ysbRecord) << std::endl;
-//			//input
-//			std::cout << "input:" << std::endl;
-//			std::cout << tuples[i].ip << std::endl;
-//			std::cout << tuples[i].current_ms << std::endl;
-//			std::cout << std::string(tuples[i].event_type) << std::endl;
-//			std::cout << std::string(tuples[i].campaign_id) << std::endl;
-//
-//			std::cout << "output:" << std::endl;
-//			std::cout << recBuffer[qualCnt].id << std::endl;
-//			std::cout << recBuffer[qualCnt].current_ms << std::endl;
-//			std::cout << std::string(recBuffer[qualCnt].event_type) << std::endl;
-//			std::cout << std::string(recBuffer[qualCnt].campaign_id) << std::endl;
-//
-//			std::cout << "---------" << std::endl;
 			//write to sink
 			qualCnt++;
 		}
 		workingBuffer->num_tuples = qualCnt;
 		workingBuffer->tuple_size_bytes = sizeof(ysbRecordOut);
-		sink->writeData(workingBuffer);
-		IOTDB_DEBUG("task " << this << " finished processing")
+
     }
 };
-typedef std::shared_ptr<CompiledYSBTestQueryExecutionPlan> CompiledYSBTestQueryExecutionPlanPtr;
+typedef std::shared_ptr<CompiledYSBZMQInputTestQueryExecutionPlan> CompiledYSBZMQInputTestQueryExecutionPlanPtr;
 
 
 int test() {
-	CompiledYSBTestQueryExecutionPlanPtr qep(new CompiledYSBTestQueryExecutionPlan());
-	DataSourcePtr source = createYSBSource(2);
-	DataSinkPtr sink = createYSBPrintSink(source->getSchema());
-	qep->addDataSource(source);
-	qep->addDataSink(sink);
+	return true;
+	CompiledYSBZMQOutputTestQueryExecutionPlanPtr qep1(new CompiledYSBZMQOutputTestQueryExecutionPlan());
+	DataSourcePtr source1 = createYSBSource(1);
+	DataSinkPtr sink1 = createZmqSink(source1->getSchema(), "127.0.0.1", 55555, "test");
+	DataSourcePtr source2 = createZmqSource(source1->getSchema(), "127.0.0.1", 55555, "test");
 
-	Dispatcher::instance().registerQuery(qep);
+	qep1->addDataSource(source1);
+	qep1->addDataSource(source2);
+
+	qep1->addDataSink(sink1);
+	Dispatcher::instance().registerQuery(qep1);
+
+
+//	CompiledYSBZMQInputTestQueryExecutionPlanPtr qep2(new CompiledYSBZMQInputTestQueryExecutionPlan());
+//	DataSourcePtr source2 = createZmqSource(source1->getSchema(), "localhost", 55555, "test");
+//	DataSinkPtr sink2 = createYSBPrintSink(source1->getSchema());
+//	qep2->addDataSource(source2);
+//	qep2->addDataSink(sink2);
+//	Dispatcher::instance().registerQuery(qep2);
 
 	ThreadPool thread_pool;
 
 	thread_pool.start();
 
-	while(source->isRunning() || sink->getNumberOfProcessedBuffers() != 2){
-		std::cout << "sourceRunnin=" << source->isRunning() << " numberOfProcBuffer="
-				<< sink->getNumberOfProcessedBuffers() << std::endl;
+	while(source1->isRunning()){
+		std::cout << "----- processing current res is:-----" << std::endl;
 		std::cout << "Waiting 1 seconds " << std::endl;
-		std::this_thread::sleep_for(std::chrono::seconds(2));
+		std::this_thread::sleep_for(std::chrono::seconds(3));
 	}
 
-	YSBPrintSink* ySink = (YSBPrintSink*)sink.get();
-	std::cout << "printed tuples=" << ySink->getNumberOfPrintedTuples() << std::endl;
-	if(ySink->getNumberOfPrintedTuples()!= 36)
-	{
-		std::cout << "wrong result" << std::endl;
-		std::cout << "sourceRunnin=" << source->isRunning() << " numberOfProcBuffer="
-				<< sink->getNumberOfProcessedBuffers() << std::endl;
-		assert(0);
-	}
-	else
-	{
-		std::cout << "right result with sourceRunnin=" << source->isRunning() << " numberOfProcBuffer="
-				<< sink->getNumberOfProcessedBuffers() << std::endl;
+//	YSBPrintSink* ySink = (YSBPrintSink*)sink2.get();
+//	std::cout << "printed tuples=" << ySink->getNumberOfPrintedTuples() << std::endl;
+//	if(ySink->getNumberOfPrintedTuples()!= 36)
+//	{
+//		std::cout << "wrong result" << std::endl;
+//		assert(0);
+//	}
+	Dispatcher::instance().deregisterQuery(qep1);
+//	Dispatcher::instance().deregisterQuery(qep2);
 
-	}
+
 	thread_pool.stop();
-
-	Dispatcher::instance().deregisterQuery(qep);
-
-
 
 }
 } // namespace iotdb
@@ -198,8 +243,8 @@ void setupLogging()
 
 	// set log level
 	//logger->setLevel(log4cxx::Level::getTrace());
-//	logger->setLevel(log4cxx::Level::getDebug());
-	logger->setLevel(log4cxx::Level::getInfo());
+	logger->setLevel(log4cxx::Level::getDebug());
+//	logger->setLevel(log4cxx::Level::getInfo());
 //	logger->setLevel(log4cxx::Level::getWarn());
 	//logger->setLevel(log4cxx::Level::getError());
 //	logger->setLevel(log4cxx::Level::getFatal());

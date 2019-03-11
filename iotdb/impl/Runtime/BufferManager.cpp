@@ -8,7 +8,7 @@ namespace iotdb {
 
 BufferManager::BufferManager():mutex() {
 	IOTDB_DEBUG("BufferManager: Enter Constructor of BufferManager.")
-	maxBufferCnt = 3;
+	maxBufferCnt = 10;//changed from 3
 	bufferSizeInByte = 4 * 1024;//set buffer to 4KB
 	IOTDB_DEBUG("BufferManager: Set maximun number of buffer to "<<  maxBufferCnt
 			<< " and a bufferSize of KB:" << bufferSizeInByte/1024)
@@ -55,7 +55,7 @@ TupleBufferPtr BufferManager::getBuffer() {
 	  {
 		  entry.second = true;
 
-		  IOTDB_DEBUG("BufferManager: Got free buffer " <<  entry.first)
+		  IOTDB_DEBUG("BufferManager: provide free buffer " <<  entry.first)
 
 		  return entry.first;
 	  }
