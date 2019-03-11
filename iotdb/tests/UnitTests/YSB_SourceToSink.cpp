@@ -151,10 +151,11 @@ int test() {
 
 	thread_pool.start();
 
-	while(source->isRunning()){
-		std::cout << "----- processing current res is:-----" << std::endl;
+	while(source->isRunning() || sink->getNumberOfProcessedBuffers() != 2){
+		std::cout << "sourceRunnin=" << source->isRunning() << " numberOfProcBuffer="
+				<< sink->getNumberOfProcessedBuffers() << std::endl;
 		std::cout << "Waiting 1 seconds " << std::endl;
-		std::this_thread::sleep_for(std::chrono::seconds(3));
+		std::this_thread::sleep_for(std::chrono::seconds(2));
 	}
 
 	YSBPrintSink* ySink = (YSBPrintSink*)sink.get();
@@ -162,12 +163,21 @@ int test() {
 	if(ySink->getNumberOfPrintedTuples()!= 36)
 	{
 		std::cout << "wrong result" << std::endl;
+		std::cout << "sourceRunnin=" << source->isRunning() << " numberOfProcBuffer="
+				<< sink->getNumberOfProcessedBuffers() << std::endl;
 		assert(0);
 	}
+	else
+	{
+		std::cout << "right result with sourceRunnin=" << source->isRunning() << " numberOfProcBuffer="
+				<< sink->getNumberOfProcessedBuffers() << std::endl;
+
+	}
+	thread_pool.stop();
+
 	Dispatcher::instance().deregisterQuery(qep);
 
 
-	thread_pool.stop();
 
 }
 } // namespace iotdb
