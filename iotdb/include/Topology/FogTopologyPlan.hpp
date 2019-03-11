@@ -125,7 +125,7 @@ public:
     if (hasVertex(search_id)) {
       // remove
       remove_vertex(getVertex(search_id), graph);
-      return false;
+      return true;
     }
 
     return false;
@@ -217,6 +217,11 @@ public:
 
     // there is already a link between those two vertices
     if (hasLink(ptr->getSourceNode(), ptr->getDestNode())) {
+      return false;
+    }
+
+    // check if vertex is at graph
+    if (!hasVertex(ptr->getSourceNodeId()) || !hasVertex(ptr->getDestNodeId())) {
       return false;
     }
 
