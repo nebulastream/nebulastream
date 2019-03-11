@@ -151,10 +151,11 @@ int test() {
 
 	thread_pool.start();
 
-	while(source->isRunning()){
-		std::cout << "----- processing current res is:-----" << std::endl;
-		std::cout << "Waiting 5 seconds " << std::endl;
-		std::this_thread::sleep_for(std::chrono::seconds(5));
+	while(source->isRunning() && sink->getNumberOfProcessedBuffers() != 2){
+		std::cout << "sourceRunnin=" << source->isRunning() << " numberOfProcBuffer="
+				<< sink->getNumberOfProcessedBuffers() << std::endl;
+		std::cout << "Waiting 1 seconds " << std::endl;
+		std::this_thread::sleep_for(std::chrono::seconds(1));
 	}
 
 	YSBPrintSink* ySink = (YSBPrintSink*)sink.get();
@@ -162,6 +163,8 @@ int test() {
 	if(ySink->getNumberOfPrintedTuples()!= 36)
 	{
 		std::cout << "wrong result" << std::endl;
+		std::cout << "sourceRunnin=" << source->isRunning() << " numberOfProcBuffer="
+				<< sink->getNumberOfProcessedBuffers() << std::endl;
 		assert(0);
 	}
 	Dispatcher::instance().deregisterQuery(qep);
@@ -188,8 +191,8 @@ void setupLogging()
 
 	// set log level
 	//logger->setLevel(log4cxx::Level::getTrace());
-	logger->setLevel(log4cxx::Level::getDebug());
-//	logger->setLevel(log4cxx::Level::getInfo());
+//	logger->setLevel(log4cxx::Level::getDebug());
+	logger->setLevel(log4cxx::Level::getInfo());
 //	logger->setLevel(log4cxx::Level::getWarn());
 	//logger->setLevel(log4cxx::Level::getError());
 //	logger->setLevel(log4cxx::Level::getFatal());
