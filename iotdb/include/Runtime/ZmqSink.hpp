@@ -21,7 +21,7 @@ public:
   bool writeData(const std::vector<TupleBuffer*> &input_buffers) override;
   bool writeData(const TupleBuffer* input_buffer);
 
-  void setup(){};
+  void setup(){connect();};
   void shutdown(){};
   const std::string toString() const override;
 

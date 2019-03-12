@@ -45,24 +45,32 @@ bool DataSource::isRunning()
 {
 	return run_thread;
 }
+
 void DataSource::run() {
   IOTDB_DEBUG("DataSource " << this << ": Running Data Source")
   size_t cnt = 0;
 
   while (run_thread) {
-    TupleBufferPtr buf = receiveData();
-    IOTDB_DEBUG("DataSource " << this << ": Received Data: " << buf->num_tuples << "tuples")
-    if (buf->buffer && cnt < this->num_buffers_to_process)
-    {
-        Dispatcher::instance().addWork(buf, this);
-        cnt++;
-    }
-    else
-    {
-    	run_thread = false;
-    	break;
-    }
-  }
+	  if(cnt < this->num_buffers_to_process)
+	  {
+		  TupleBufferPtr buf = receiveData();
+		  IOTDB_DEBUG("DataSource " << this << ": Received Data: " << buf->num_tuples << "tuples")
+		  if (buf->buffer)
+		  {
+			  Dispatcher::instance().addWork(buf, this);
+			  cnt++;
+		  }
+		  else
+		  {
+			  assert(0);
+		  }
+	  }
+	  else
+	  {
+		run_thread = false;
+		break;
+	  }
+  	}//end of while
   IOTDB_DEBUG("DataSource " << this << ": Data Source Finished")
 }
 
