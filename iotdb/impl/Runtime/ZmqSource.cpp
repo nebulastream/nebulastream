@@ -31,18 +31,21 @@ TupleBufferPtr ZmqSource::receiveData() {
   // Receive new chunk of data
   zmq::message_t new_data;
   socket.recv(&new_data); // envelope - not needed at the moment
+  size_t tupleCnt = *((size_t*)new_data.data());
+  std::cout << "tup=" << tupleCnt << std::endl;
   socket.recv(&new_data); // actual data
 
   // Get some information about received data
-  auto buffer_size = new_data.size();
-  auto tuple_size = schema.getSchemaSize();
-  auto number_of_tuples = buffer_size / tuple_size;
-
+  size_t tuple_size = schema.getSchemaSize();
+  size_t bufferSize = tupleCnt * tuple_size;
   // Create new TupleBuffer and copy data
   TupleBufferPtr buffer = BufferManager::instance().getBuffer();
   IOTDB_DEBUG("ZMQSource  " << this << ": got buffer ")
 
-  std::memcpy(buffer->buffer, new_data.data(), buffer->buffer_size);
+  std::memcpy(buffer->buffer, new_data.data(), bufferSize);
+  buffer->num_tuples = tupleCnt;
+  buffer->tuple_size_bytes = tuple_size;
+
   IOTDB_DEBUG("ZMQSource  " << this << ": return buffer ")
 
   return buffer;
@@ -65,7 +68,8 @@ bool ZmqSource::connect() {
 
     try {
       socket.connect(address.c_str());
-      socket.setsockopt(ZMQ_SUBSCRIBE, topic.c_str(), topic.size());
+//      socket.setsockopt(ZMQ_SUBSCRIBE, topic.c_str(), topic.size());
+      socket.setsockopt(ZMQ_SUBSCRIBE, "", 0);
       socket.setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
       connected = true;
     } catch (...) {

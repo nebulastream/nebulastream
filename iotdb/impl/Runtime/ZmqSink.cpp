@@ -7,13 +7,14 @@
 #include <zmq.hpp>
 #include <Util/ErrorHandling.hpp>
 #include <Util/Logger.hpp>
+#include <Runtime/Dispatcher.hpp>
 
 #include <Runtime/ZmqSink.hpp>
 
 namespace iotdb {
 
 ZmqSink::ZmqSink(const Schema &schema, const std::string &host, const uint16_t port, const std::string &topic)
-    : DataSink(schema), host(host), port(port), topic(topic), connected(false), context(zmq::context_t(1)),
+    : DataSink(schema), host(host), port(port), tupleCnt(0), topic(topic), connected(false), context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_PUB)) {
 	  IOTDB_DEBUG("ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port << "/" << topic)
 
@@ -49,16 +50,19 @@ bool ZmqSink::writeData(const std::vector<TupleBuffer*> &input_buffers)
 
 bool ZmqSink::writeData(const TupleBuffer* input_buffer)
 {
+	assert(0);
 	assert(connect());
 	IOTDB_DEBUG("ZMQSINK  " << this << ": writes buffer " << input_buffer)
 
 	zmq::message_t msg(input_buffer->buffer_size);
 	std::memcpy(msg.data(), input_buffer->buffer, input_buffer->buffer_size);
 
-	zmq::message_t envelope(topic.size());
-	memcpy(envelope.data(), topic.data(), topic.size());
+//	tupleCnt = input_buffer->num_tuples;
+//	zmq::message_t envelope(sizeof(tupleCnt));
+//	memcpy(envelope.data(), &tupleCnt, sizeof(tupleCnt));
 
-	bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
+//	bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
+	bool rc_env = true;
 	bool rc_msg = socket.send(msg);
 	processedBuffer++;
 	if (!rc_env || !rc_msg)
@@ -76,12 +80,12 @@ bool ZmqSink::writeData(const TupleBufferPtr input_buffer)
 {
 	assert(connect());
 	IOTDB_DEBUG("ZMQSINK  " << this << ": writes buffer " << input_buffer)
-
-	zmq::message_t msg(input_buffer->buffer_size);
-	std::memcpy(msg.data(), input_buffer->buffer, input_buffer->buffer_size);
-
-	zmq::message_t envelope(topic.size());
-	memcpy(envelope.data(), topic.data(), topic.size());
+	size_t usedBufferSize = input_buffer->num_tuples * input_buffer->tuple_size_bytes;
+	zmq::message_t msg(usedBufferSize);
+	std::memcpy(msg.data(), input_buffer->buffer, usedBufferSize);
+	tupleCnt = input_buffer->num_tuples;
+	zmq::message_t envelope(sizeof(tupleCnt));
+	memcpy(envelope.data(), &tupleCnt, sizeof(tupleCnt));
 
 	bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
 	bool rc_msg = socket.send(msg);
@@ -89,11 +93,14 @@ bool ZmqSink::writeData(const TupleBufferPtr input_buffer)
 	if (!rc_env || !rc_msg)
 	{
 		  IOTDB_DEBUG("ZMQSINK  " << this << ": send NOT successful")
+		  Dispatcher::instance().releaseBuffer(input_buffer);
 		  return false;
  	}
 	else
 	{
 		IOTDB_DEBUG("ZMQSINK  " << this << ": send successful")
+	    Dispatcher::instance().releaseBuffer(input_buffer);
+
 		return true;
 	}
 }
@@ -104,7 +111,7 @@ const std::string ZmqSink::toString() const {
   ss << "SCHEMA(" << schema.toString() << "), ";
   ss << "HOST=" << host << ", ";
   ss << "PORT=" << port << ", ";
-  ss << "TOPIC=\"" << topic << "\")";
+  ss << "TupleCnt=\"" << tupleCnt << "\")";
   return ss.str();
 }
 
@@ -115,6 +122,7 @@ bool ZmqSink::connect() {
 
     try {
       socket.bind(address.c_str());
+//      socket.setsockopt(ZMQ_SUBSCRIBE, topic.c_str(), topic.size());
       socket.setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
       connected = true;
     } catch (...) {
