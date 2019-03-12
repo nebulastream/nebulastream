@@ -12,7 +12,7 @@
 #include <Runtime/DataSink.hpp>
 #include <Runtime/ZmqSink.hpp>
 #include <Runtime/ZmqSource.hpp>
-
+#include <API/Schema.hpp>
 #include <Runtime/PrintSink.hpp>
 
 
@@ -149,11 +149,13 @@ public:
 
     bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf)
     {
+    	std::cout << "schemasize=" << sizeof(ysbRecordOut) << std::endl;
+
     	TupleBufferPtr workingBuffer = Dispatcher::instance().getBuffer();
     	ysbRecordOut* recBuffer = (ysbRecordOut*)workingBuffer->buffer;
     	ysbRecordOut* tuples = (ysbRecordOut*) buf->buffer;
         size_t qualCnt = 0;
-        ZmqSink* sink = (ZmqSink*)this->getSinks()[0].get();
+        DataSink* sink = this->getSinks()[0].get();
 
 		for(size_t i = 0; i < buf->num_tuples; i++)
 		{
@@ -174,6 +176,12 @@ typedef std::shared_ptr<CompiledYSBZMQInputTestQueryExecutionPlan> CompiledYSBZM
 
 
 int test() {
+	Schema schema = Schema::create()
+		.addField("campaign_id", 16)
+		.addField("event_type", 9)
+		.addField("current_ms", 8)
+		.addField("id", 4);
+
 	CompiledYSBZMQOutputTestQueryExecutionPlanPtr qep1(new CompiledYSBZMQOutputTestQueryExecutionPlan());
 	DataSourcePtr source1 = createYSBSource(1);
 	DataSinkPtr sink1 = createZmqSink(source1->getSchema(), "127.0.0.1", 55555, "test");
@@ -183,14 +191,14 @@ int test() {
 	Dispatcher::instance().registerQuery(qep1);
 
 	CompiledYSBZMQInputTestQueryExecutionPlanPtr qep2(new CompiledYSBZMQInputTestQueryExecutionPlan());
-	DataSourcePtr source2 = createZmqSource(source1->getSchema(), "127.0.0.1", 55555, "test");
+	DataSourcePtr source2 = createZmqSource(schema, "127.0.0.1", 55555, "test");
 	source2->setNumBuffersToProcess(1);
 	qep2->addDataSource(source2);
 	DataSinkPtr sink2 = createYSBPrintSink(source2->getSchema());
 	qep2->addDataSink(sink2);
 	Dispatcher::instance().registerQuery(qep2);
 
-	std::this_thread::sleep_for(std::chrono::seconds(1));
+	std::this_thread::sleep_for(std::chrono::seconds(2));
 	std::cout << "start processing" << std::endl;
 
 //	DataSourcePtr source2 = createZmqSource(source1->getSchema(), "localhost", 55555, "test");

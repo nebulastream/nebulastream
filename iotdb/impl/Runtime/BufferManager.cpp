@@ -77,6 +77,8 @@ void BufferManager::releaseBuffer(TupleBufferPtr tuple_buffer) {
 		  {
 			  entry.second = false;
 				IOTDB_DEBUG("BufferManager: found and release buffer")
+			  entry.first->num_tuples = 0;
+			  entry.first->tuple_size_bytes = 0;
 
 			  return;
 		  }
