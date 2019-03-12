@@ -7,16 +7,14 @@
 
 #ifndef INCLUDE_TOPOLOGY_FOGTOPOLOGYENTRY_HPP_
 #define INCLUDE_TOPOLOGY_FOGTOPOLOGYENTRY_HPP_
-#include <string>
 #include <API/InputQuery.hpp>
+#include <string>
 
-namespace iotdb{
+namespace iotdb {
 enum FogNodeType { Worker, Sensor };
 
 class FogTopologyEntry {
 public:
-  //	FogTopologyEntry(){};
-
   virtual void setId(size_t id) = 0;
   virtual size_t getId() = 0;
 
@@ -27,5 +25,5 @@ public:
 };
 
 typedef std::shared_ptr<FogTopologyEntry> FogTopologyEntryPtr;
-}
+} // namespace iotdb
 #endif /* INCLUDE_TOPOLOGY_FOGTOPOLOGYENTRY_HPP_ */
