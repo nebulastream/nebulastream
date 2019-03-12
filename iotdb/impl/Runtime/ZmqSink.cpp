@@ -36,6 +36,7 @@ bool ZmqSink::writeData(const std::vector<TupleBufferPtr> &input_buffers) {
 
 bool ZmqSink::writeData(const std::vector<TupleBuffer*> &input_buffers)
 {
+	assert(0);
   assert(connect());
   for (auto &buf : input_buffers) {
 	 if(!writeData(buf))
@@ -59,6 +60,7 @@ bool ZmqSink::writeData(const TupleBuffer* input_buffer)
 
 	bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
 	bool rc_msg = socket.send(msg);
+	processedBuffer++;
 	if (!rc_env || !rc_msg)
 	{
 		  IOTDB_DEBUG("ZMQSINK  " << this << ": send NOT successful")
@@ -83,6 +85,7 @@ bool ZmqSink::writeData(const TupleBufferPtr input_buffer)
 
 	bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
 	bool rc_msg = socket.send(msg);
+	processedBuffer++;
 	if (!rc_env || !rc_msg)
 	{
 		  IOTDB_DEBUG("ZMQSINK  " << this << ": send NOT successful")

@@ -30,9 +30,13 @@ public:
   virtual bool isRunning();
   virtual ~DataSource();
 
+  //debugging
+  void setNumBuffersToProcess(size_t cnt){num_buffers_to_process = cnt;};
+
 private:
   bool run_thread;
   std::thread thread;
+
 protected:
   uint64_t num_buffers_to_process;
 
