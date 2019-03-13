@@ -149,8 +149,6 @@ public:
 
     bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf)
     {
-    	std::cout << "schemasize=" << sizeof(ysbRecordOut) << std::endl;
-
     	TupleBufferPtr workingBuffer = Dispatcher::instance().getBuffer();
     	ysbRecordOut* recBuffer = (ysbRecordOut*)workingBuffer->buffer;
     	ysbRecordOut* tuples = (ysbRecordOut*) buf->buffer;
@@ -225,13 +223,18 @@ int test() {
 					<< " sink2->getNumberOfProcessedBuffers()=" << sink2->getNumberOfProcessedBuffers()
 					<< std::endl;
 
-//	YSBPrintSink* ySink = (YSBPrintSink*)sink2.get();
-//	std::cout << "printed tuples=" << ySink->getNumberOfPrintedTuples() << std::endl;
-//	if(ySink->getNumberOfPrintedTuples()!= 36)
-//	{
-//		std::cout << "wrong result" << std::endl;
-//		assert(0);
-//	}
+	YSBPrintSink* ySink = (YSBPrintSink*)sink2.get();
+	std::cout << "printed tuples=" << ySink->getNumberOfPrintedTuples() << std::endl;
+	if(ySink->getNumberOfPrintedTuples()!= 18)
+	{
+		std::cout << "wrong result" << std::endl;
+		assert(0);
+	}
+	else
+	{
+		std::cout << "Test finished successfully" << std::endl;
+
+	}
 	Dispatcher::instance().deregisterQuery(qep1);
 
 	thread_pool.stop();

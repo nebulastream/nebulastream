@@ -80,9 +80,10 @@ bool ZmqSink::writeData(const TupleBufferPtr input_buffer)
 {
 	assert(connect());
 	IOTDB_DEBUG("ZMQSINK  " << this << ": writes buffer " << input_buffer)
-	size_t usedBufferSize = input_buffer->num_tuples * input_buffer->tuple_size_bytes;
-	zmq::message_t msg(usedBufferSize);
-	std::memcpy(msg.data(), input_buffer->buffer, usedBufferSize);
+//	size_t usedBufferSize = input_buffer->num_tuples * input_buffer->tuple_size_bytes;
+	zmq::message_t msg(input_buffer->buffer_size);
+	//TODO: If possible only copy the content not the empty part
+	std::memcpy(msg.data(), input_buffer->buffer, input_buffer->buffer_size);
 	tupleCnt = input_buffer->num_tuples;
 	zmq::message_t envelope(sizeof(tupleCnt));
 	memcpy(envelope.data(), &tupleCnt, sizeof(tupleCnt));

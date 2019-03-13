@@ -6,6 +6,7 @@
 #include <Runtime/ZmqSink.hpp>
 #include <Runtime/PrintSink.hpp>
 #include <Util/ErrorHandling.hpp>
+#include <Util/Logger.hpp>
 
 namespace iotdb {
 
@@ -13,7 +14,8 @@ DataSink::DataSink(const Schema &_schema) : schema(_schema), processedBuffer(0) 
 
 const Schema &DataSink::getSchema() const { return schema; }
 
-DataSink::~DataSink() { std::cout << "Destroy Data Sink " << this << std::endl; }
+DataSink::~DataSink() {
+	IOTDB_DEBUG("Destroy Data Sink  " << this) }
 
 const DataSinkPtr createTestSink() {
   // instantiate TestSink
