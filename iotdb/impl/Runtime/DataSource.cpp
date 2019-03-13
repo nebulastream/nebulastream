@@ -21,7 +21,7 @@ DataSource::DataSource(const Schema &_schema) : run_thread(false), thread(), sch
 const Schema &DataSource::getSchema() const { return schema; }
 
 DataSource::~DataSource() {
-//	stop();
+	stop();
 	IOTDB_DEBUG("DataSource " << this << ": Destroy Data Source.")
 }
 
@@ -34,11 +34,17 @@ void DataSource::start() {
 }
 
 void DataSource::stop() {
-//  if (!run_thread)
-//    return;
-  run_thread = false;
+	  IOTDB_DEBUG("DataSource " << this << ": Stop called")
+
+//	if (!run_thread)
+//	  return;
+
+	run_thread = false;
+
   if (thread.joinable())
     thread.join();
+
+  IOTDB_DEBUG("DataSource " << this << ": Thread joinded")
 }
 
 bool DataSource::isRunning()
@@ -67,6 +73,7 @@ void DataSource::run() {
 	  }
 	  else
 	  {
+		  IOTDB_DEBUG("DataSource " << this << ": Stop running")
 		run_thread = false;
 		break;
 	  }
