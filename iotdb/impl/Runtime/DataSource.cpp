@@ -214,9 +214,8 @@ const DataSourcePtr createYSBSource(size_t bufferCnt) {
 }
 
 
-const DataSourcePtr createZmqSource(const Schema &schema, const std::string &host, const uint16_t port,
-                                    const std::string &topic) {
-  return std::make_shared<ZmqSource>(schema, host, port, topic);
+const DataSourcePtr createZmqSource(const Schema &schema, const std::string &host, const uint16_t port) {
+  return std::make_shared<ZmqSource>(schema, host, port);
 }
 
 const DataSourcePtr createBinaryFileSource(const Schema &schema, const std::string &path_to_file) {

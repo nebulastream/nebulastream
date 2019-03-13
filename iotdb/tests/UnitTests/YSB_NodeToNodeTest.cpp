@@ -182,14 +182,14 @@ int test() {
 
 	CompiledYSBZMQOutputTestQueryExecutionPlanPtr qep1(new CompiledYSBZMQOutputTestQueryExecutionPlan());
 	DataSourcePtr source1 = createYSBSource(1);
-	DataSinkPtr sink1 = createZmqSink(source1->getSchema(), "127.0.0.1", 55555, "test");
+	DataSinkPtr sink1 = createZmqSink(source1->getSchema(), "127.0.0.1", 55555);
 
 	qep1->addDataSource(source1);
 	qep1->addDataSink(sink1);
 	Dispatcher::instance().registerQuery(qep1);
 
 	CompiledYSBZMQInputTestQueryExecutionPlanPtr qep2(new CompiledYSBZMQInputTestQueryExecutionPlan());
-	DataSourcePtr source2 = createZmqSource(schema, "127.0.0.1", 55555, "test");
+	DataSourcePtr source2 = createZmqSource(schema, "127.0.0.1", 55555);
 	source2->setNumBuffersToProcess(1);
 	qep2->addDataSource(source2);
 	DataSinkPtr sink2 = createYSBPrintSink(source2->getSchema());
