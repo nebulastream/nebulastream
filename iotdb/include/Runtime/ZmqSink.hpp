@@ -13,7 +13,8 @@ namespace iotdb {
 class ZmqSink : public DataSink {
 
 public:
-  ZmqSink(const Schema &schema, const std::string &host, const uint16_t port, const std::string &topic);
+  ZmqSink(const Schema &schema, const std::string &host,
+		  const uint16_t port);
   ~ZmqSink();
 
   bool writeData(const std::vector<TupleBufferPtr> &input_buffers) override;
@@ -21,14 +22,14 @@ public:
   bool writeData(const std::vector<TupleBuffer*> &input_buffers) override;
   bool writeData(const TupleBuffer* input_buffer);
 
-  void setup(){};
+  void setup(){connect();};
   void shutdown(){};
   const std::string toString() const override;
 
 private:
   const std::string host;
   const uint16_t port;
-  const std::string topic;
+  size_t tupleCnt;
 
   bool connected;
   zmq::context_t context;
