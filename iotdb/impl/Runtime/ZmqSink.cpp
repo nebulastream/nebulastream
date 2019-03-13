@@ -16,7 +16,7 @@ namespace iotdb {
 ZmqSink::ZmqSink(const Schema &schema, const std::string &host, const uint16_t port)
     : DataSink(schema), host(host), port(port), tupleCnt(0), connected(false), context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_PUB)) {
-	  IOTDB_DEBUG("ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port << "/" << topic)
+	  IOTDB_DEBUG("ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port)
 
 }
 ZmqSink::~ZmqSink() { assert(disconnect());
