@@ -9,7 +9,7 @@ matrix:
           llvm-3.8-dev
 
 language: cpp
-compiler: clang
+compiler: gcc
 
 before_install:
   - sudo apt-get update
