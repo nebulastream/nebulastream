@@ -14,7 +14,7 @@ class ZmqSink : public DataSink {
 
 public:
   ZmqSink(const Schema &schema, const std::string &host,
-		  const uint16_t port, const std::string &topic);
+		  const uint16_t port);
   ~ZmqSink();
 
   bool writeData(const std::vector<TupleBufferPtr> &input_buffers) override;
@@ -30,7 +30,6 @@ private:
   const std::string host;
   const uint16_t port;
   size_t tupleCnt;
-  std::string topic;
 
   bool connected;
   zmq::context_t context;

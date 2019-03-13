@@ -13,8 +13,8 @@
 
 namespace iotdb {
 
-ZmqSink::ZmqSink(const Schema &schema, const std::string &host, const uint16_t port, const std::string &topic)
-    : DataSink(schema), host(host), port(port), tupleCnt(0), topic(topic), connected(false), context(zmq::context_t(1)),
+ZmqSink::ZmqSink(const Schema &schema, const std::string &host, const uint16_t port)
+    : DataSink(schema), host(host), port(port), tupleCnt(0), connected(false), context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_PUB)) {
 	  IOTDB_DEBUG("ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port << "/" << topic)
 
@@ -37,7 +37,6 @@ bool ZmqSink::writeData(const std::vector<TupleBufferPtr> &input_buffers) {
 
 bool ZmqSink::writeData(const std::vector<TupleBuffer*> &input_buffers)
 {
-	assert(0);
   assert(connect());
   for (auto &buf : input_buffers) {
 	 if(!writeData(buf))
@@ -49,34 +48,6 @@ bool ZmqSink::writeData(const std::vector<TupleBuffer*> &input_buffers)
 }
 
 bool ZmqSink::writeData(const TupleBuffer* input_buffer)
-{
-	assert(0);
-	assert(connect());
-	IOTDB_DEBUG("ZMQSINK  " << this << ": writes buffer " << input_buffer)
-
-	zmq::message_t msg(input_buffer->buffer_size);
-	std::memcpy(msg.data(), input_buffer->buffer, input_buffer->buffer_size);
-
-//	tupleCnt = input_buffer->num_tuples;
-//	zmq::message_t envelope(sizeof(tupleCnt));
-//	memcpy(envelope.data(), &tupleCnt, sizeof(tupleCnt));
-
-//	bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
-	bool rc_env = true;
-	bool rc_msg = socket.send(msg);
-	processedBuffer++;
-	if (!rc_env || !rc_msg)
-	{
-		  IOTDB_DEBUG("ZMQSINK  " << this << ": send NOT successful")
-		  return false;
-	}
-	else
-	{
-		IOTDB_DEBUG("ZMQSINK  " << this << ": send successful")
-		return true;
-	}
-}
-bool ZmqSink::writeData(const TupleBufferPtr input_buffer)
 {
 	assert(connect());
 	IOTDB_DEBUG("ZMQSINK  " << this << ": writes buffer " << input_buffer)
@@ -96,14 +67,19 @@ bool ZmqSink::writeData(const TupleBufferPtr input_buffer)
 		  IOTDB_DEBUG("ZMQSINK  " << this << ": send NOT successful")
 		  Dispatcher::instance().releaseBuffer(input_buffer);
 		  return false;
- 	}
+	}
 	else
 	{
 		IOTDB_DEBUG("ZMQSINK  " << this << ": send successful")
-	    Dispatcher::instance().releaseBuffer(input_buffer);
+		Dispatcher::instance().releaseBuffer(input_buffer);
 
 		return true;
 	}
+}
+bool ZmqSink::writeData(const TupleBufferPtr input_buffer)
+{
+	assert(connect());
+	return writeData(input_buffer.get());
 }
 
 const std::string ZmqSink::toString() const {

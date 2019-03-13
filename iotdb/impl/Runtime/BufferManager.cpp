@@ -33,6 +33,15 @@ BufferManager &BufferManager::instance() {
   static BufferManager instance;
   return instance;
 }
+void BufferManager::setNewBufferSize(size_t size)
+{
+	buffer_pool.clear();
+	bufferSizeInByte = size;
+	for(size_t i = 0; i < maxBufferCnt; i++)
+	{
+		addBuffer();
+	}
+}
 
 void BufferManager::addBuffer() {
 	std::unique_lock<std::mutex> lock(mutex);
@@ -67,13 +76,37 @@ TupleBufferPtr BufferManager::getBuffer() {
 
 }
 
-void BufferManager::releaseBuffer(TupleBufferPtr tuple_buffer) {
+
+void BufferManager::releaseBuffer(const TupleBuffer* tuple_buffer) {
 	  std::unique_lock<std::mutex> lock(mutex);
 
 	  //find a free buffer
 	   for(auto& entry : buffer_pool)
 	   {
-		  if(entry.first.get() == tuple_buffer.get())//found free entry
+		  if(entry.first.get() == tuple_buffer)//found entry
+		  {
+			  entry.second = false;
+				IOTDB_DEBUG("BufferManager: found and release buffer")
+			  entry.first->num_tuples = 0;
+			  entry.first->tuple_size_bytes = 0;
+
+			  return;
+		  }
+	   }
+		IOTDB_ERROR("BufferManager: buffer not found")
+
+	   assert(0);
+}
+
+
+
+void BufferManager::releaseBuffer(const TupleBufferPtr tuple_buffer) {
+	  std::unique_lock<std::mutex> lock(mutex);
+
+	  //find a free buffer
+	   for(auto& entry : buffer_pool)
+	   {
+		  if(entry.first.get() == tuple_buffer.get())//found entry
 		  {
 			  entry.second = false;
 				IOTDB_DEBUG("BufferManager: found and release buffer")
