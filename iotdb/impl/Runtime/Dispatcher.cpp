@@ -33,12 +33,16 @@ TupleBufferPtr Dispatcher::getBuffer() {
   return BufferManager::instance().getBuffer();
 }
 
-void Dispatcher::releaseBuffer(TupleBufferPtr ptr) {
+void Dispatcher::releaseBuffer(const TupleBufferPtr ptr) {
 	std::unique_lock<std::mutex> lock(bufferMutex);
 	IOTDB_DEBUG("Dispatcher: releaseBuffer() : Dispatcher release buffer")
 	return BufferManager::instance().releaseBuffer(ptr);
 }
-
+void Dispatcher::releaseBuffer(const TupleBuffer* ptr) {
+	std::unique_lock<std::mutex> lock(bufferMutex);
+	IOTDB_DEBUG("Dispatcher: releaseBuffer() : Dispatcher release buffer")
+	return BufferManager::instance().releaseBuffer(ptr);
+}
 
 void Dispatcher::registerQuery(const QueryExecutionPlanPtr qep) {
   std::unique_lock<std::mutex> lock(queryMutex);

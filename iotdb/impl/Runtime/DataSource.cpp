@@ -22,7 +22,7 @@ DataSource::DataSource(const Schema &_schema) : run_thread(false), thread(), sch
 const Schema &DataSource::getSchema() const { return schema; }
 
 DataSource::~DataSource() {
-//	stop();
+	stop();
 	IOTDB_DEBUG("DataSource " << this << ": Destroy Data Source.")
 }
 
@@ -35,35 +35,50 @@ void DataSource::start() {
 }
 
 void DataSource::stop() {
-//  if (!run_thread)
-//    return;
-  run_thread = false;
+	  IOTDB_DEBUG("DataSource " << this << ": Stop called")
+
+//	if (!run_thread)
+//	  return;
+
+	run_thread = false;
+
   if (thread.joinable())
     thread.join();
+
+  IOTDB_DEBUG("DataSource " << this << ": Thread joinded")
 }
 
 bool DataSource::isRunning()
 {
 	return run_thread;
 }
+
 void DataSource::run() {
   IOTDB_DEBUG("DataSource " << this << ": Running Data Source")
   size_t cnt = 0;
 
   while (run_thread) {
-    TupleBufferPtr buf = receiveData();
-    IOTDB_DEBUG("DataSource " << this << ": Received Data: " << buf->num_tuples << "tuples")
-    if (buf->buffer && cnt < this->num_buffers_to_process)
-    {
-        Dispatcher::instance().addWork(buf, this);
-        cnt++;
-    }
-    else
-    {
-    	run_thread = false;
-    	break;
-    }
-  }
+	  if(cnt < this->num_buffers_to_process)
+	  {
+		  TupleBufferPtr buf = receiveData();
+		  IOTDB_DEBUG("DataSource " << this << ": Received Data: " << buf->num_tuples << "tuples")
+		  if (buf->buffer)
+		  {
+			  Dispatcher::instance().addWork(buf, this);
+			  cnt++;
+		  }
+		  else
+		  {
+			  assert(0);
+		  }
+	  }
+	  else
+	  {
+		  IOTDB_DEBUG("DataSource " << this << ": Stop running")
+		run_thread = false;
+		break;
+	  }
+  	}//end of while
   IOTDB_DEBUG("DataSource " << this << ": Data Source Finished")
 }
 
@@ -199,9 +214,8 @@ const DataSourcePtr createYSBSource(size_t bufferCnt) {
 }
 
 
-const DataSourcePtr createZmqSource(const Schema &schema, const std::string &host, const uint16_t port,
-                                    const std::string &topic) {
-  return std::make_shared<ZmqSource>(schema, host, port, topic);
+const DataSourcePtr createZmqSource(const Schema &schema, const std::string &host, const uint16_t port) {
+  return std::make_shared<ZmqSource>(schema, host, port);
 }
 
 const DataSourcePtr createBinaryFileSource(const Schema &schema, const std::string &path_to_file) {

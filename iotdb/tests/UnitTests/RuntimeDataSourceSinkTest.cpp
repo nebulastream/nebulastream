@@ -10,7 +10,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/DataSink.hpp>
 #include <Runtime/DataSource.hpp>
-
+#include <Util/Logger.hpp>
 using namespace iotdb;
 
 #ifndef LOCAL_HOST
@@ -21,6 +21,31 @@ using namespace iotdb;
 #define LOCAL_PORT 38938
 #endif
 
+void setupLogging()
+{
+	 // create PatternLayout
+	log4cxx::LayoutPtr layoutPtr(new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
+
+	// create FileAppender
+	LOG4CXX_DECODE_CHAR(fileName, "iotdb.log");
+	log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
+
+	// create ConsoleAppender
+	log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
+
+	// set log level
+	//logger->setLevel(log4cxx::Level::getTrace());
+	logger->setLevel(log4cxx::Level::getDebug());
+//	logger->setLevel(log4cxx::Level::getInfo());
+//	logger->setLevel(log4cxx::Level::getWarn());
+	//logger->setLevel(log4cxx::Level::getError());
+//	logger->setLevel(log4cxx::Level::getFatal());
+
+	// add appenders and other will inherit the settings
+	logger->addAppender(file);
+	logger->addAppender(console);
+}
+
 class RuntimeDataSourceSinkTest : public testing::Test {
 public:
   /* Will be called before any test in this class are executed. */
@@ -29,13 +54,16 @@ public:
   /* Will be called before a test is executed. */
   void SetUp() {
     std::cout << "Setup RuntimeDataSourceSinkTest test case." << std::endl;
-
-    topic = std::string("TOPIC");
+    setupLogging();
     address = std::string("tcp://") + std::string(LOCAL_HOST) + std::string(":") + std::to_string(LOCAL_PORT);
 
     test_data = {{0, 100, 1, 99, 2, 98, 3, 97}};
     test_data_size = test_data.size() * sizeof(uint32_t);
+    tupleCnt = 8;
+//    test_data_size = 4096;
     test_schema = Schema::create().addField("KEY", UINT32).addField("VALUE", UINT32);
+    BufferManager::instance();
+//    BufferManager::instance().setBufferSize(test_data_size);
   }
 
   /* Will be called before a test is executed. */
@@ -44,7 +72,7 @@ public:
   /* Will be called after all tests in this class are finished. */
   static void TearDownTestCase() { std::cout << "Tear down RuntimeDataSourceSinkTest test class." << std::endl; }
 
-  std::string topic;
+  size_t tupleCnt;
   std::string address;
 
   Schema test_schema;
@@ -57,8 +85,9 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSourceReceiveData) {
 
   // Create ZeroMQ Data Source.
   auto test_schema = Schema::create().addField("KEY", UINT32).addField("VALUE", UINT32);
-  auto zmq_source = createZmqSource(test_schema, LOCAL_HOST, LOCAL_PORT, topic);
+  auto zmq_source = createZmqSource(test_schema, LOCAL_HOST, LOCAL_PORT);
   std::cout << zmq_source->toString() << std::endl;
+  BufferManager::instance().setNewBufferSize(test_data_size);
 
   // Open Publisher
   zmq::context_t context(1);
@@ -72,22 +101,24 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSourceReceiveData) {
     auto tuple_buffer = zmq_source->receiveData();
 
     // Test received data.
+    size_t sum = 0;
     uint32_t *tuple = (uint32_t *)tuple_buffer->buffer;
     for (size_t i = 0; i != tuple_buffer->num_tuples; ++i) {
-      EXPECT_EQ(*(tuple++), i);
-      EXPECT_EQ(*(tuple++), 100 - i);
+    	sum += *(tuple++);
     }
+    EXPECT_EQ(sum, 400);
+
     BufferManager::instance().releaseBuffer(tuple_buffer);
     receiving_finished = true;
   });
-
+  size_t tupCnt = 8;
   // Wait until receiving is complete.
   while (!receiving_finished) {
 
     // Send data from here.
-    zmq::message_t message_topic(topic.size());
-    memcpy(message_topic.data(), topic.data(), topic.size());
-    socket.send(message_topic, ZMQ_SNDMORE);
+    zmq::message_t message_tupleCnt(8);
+    memcpy(message_tupleCnt.data(), &tupCnt, 8);
+    socket.send(message_tupleCnt, ZMQ_SNDMORE);
 
     zmq::message_t message_data(test_data_size);
     memcpy(message_data.data(), test_data.data(), test_data_size);
@@ -101,15 +132,17 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSinkSendData) {
 
   // Create ZeroMQ Data Sink.
   auto test_schema = Schema::create().addField("KEY", UINT32).addField("VALUE", UINT32);
-  auto zmq_sink = createZmqSink(test_schema, LOCAL_HOST, LOCAL_PORT, topic);
+  auto zmq_sink = createZmqSink(test_schema, LOCAL_HOST, LOCAL_PORT);
   std::cout << zmq_sink->toString() << std::endl;
 
   // Put test data into a TupleBuffer vector.
   void *buffer = new char[test_data_size];
-  auto tuple_buffer = TupleBuffer(buffer, test_data_size, sizeof(uint32_t) * 2, test_data.size() / 2);
-  std::memcpy(tuple_buffer.buffer, &test_data, test_data_size);
-  auto tuple_buffer_vec = std::vector<TupleBuffer *>();
-  tuple_buffer_vec.push_back(&tuple_buffer);
+//  auto tuple_buffer = TupleBuffer(buffer, test_data_size, sizeof(uint32_t) * 2, test_data.size() / 2);
+  auto tuple_buffer = BufferManager::instance().getBuffer();
+
+  std::memcpy(tuple_buffer->buffer, &test_data, test_data_size);
+  auto tuple_buffer_vec = std::vector<TupleBuffer*>();
+  tuple_buffer_vec.push_back(tuple_buffer.get());
 
   // Start thread for receiving the data.
   bool receiving_finished = false;
@@ -119,7 +152,7 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSinkSendData) {
     auto context = zmq::context_t(1);
     auto socket = zmq::socket_t(context, ZMQ_SUB);
     socket.connect(address.c_str());
-    socket.setsockopt(ZMQ_SUBSCRIBE, topic.c_str(), topic.size());
+    socket.setsockopt(ZMQ_SUBSCRIBE, "", 0);
     socket.setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
 
     // Receive message.
@@ -153,20 +186,22 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSinkToSource) {
 
   // Put test data into a TupleBuffer vector.
   void *buffer = new char[test_data_size];
-  auto tuple_buffer = TupleBuffer(buffer, test_data_size, sizeof(uint32_t) * 2, test_data.size() / 2);
-  std::memcpy(tuple_buffer.buffer, &test_data, test_data_size);
+//  auto tuple_buffer = TupleBuffer(buffer, test_data_size, sizeof(uint32_t) * 2, test_data.size() / 2);
+  auto tuple_buffer = BufferManager::instance().getBuffer();
+
+  std::memcpy(tuple_buffer->buffer, &test_data, test_data_size);
   auto tuple_buffer_vec = std::vector<TupleBuffer *>();
-  tuple_buffer_vec.push_back(&tuple_buffer);
+  tuple_buffer_vec.push_back(tuple_buffer.get());
 
   // Create ZeroMQ Data Sink.
-  auto zmq_sink = createZmqSink(test_schema, LOCAL_HOST, LOCAL_PORT, topic);
+  auto zmq_sink = createZmqSink(test_schema, LOCAL_HOST, LOCAL_PORT);
   std::cout << zmq_sink->toString() << std::endl;
 
   // Create ZeroMQ Data Source.
-  auto zmq_source = createZmqSource(test_schema, LOCAL_HOST, LOCAL_PORT, topic);
+  auto zmq_source = createZmqSource(test_schema, LOCAL_HOST, LOCAL_PORT);
   std::cout << zmq_source->toString() << std::endl;
 
-  // Start thread for receiving the data.
+  // Start thread for receivingh the data.
   bool receiving_finished = false;
   auto receiving_thread = std::thread([&]() {
     // Receive data.
