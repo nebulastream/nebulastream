@@ -17,7 +17,7 @@ namespace iotdb {
 ZmqSource::ZmqSource(const Schema &schema, const std::string &host, const uint16_t port)
     : DataSource(schema), host(host), port(port), connected(false), context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_SUB)) {
-	  IOTDB_DEBUG("ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/" << topic)
+	  IOTDB_DEBUG("ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/")
 
 }
 ZmqSource::~ZmqSource() { assert(disconnect());
@@ -32,7 +32,7 @@ TupleBufferPtr ZmqSource::receiveData() {
   zmq::message_t new_data;
   socket.recv(&new_data); // envelope - not needed at the moment
   size_t tupleCnt = *((size_t*)new_data.data());
-  IOTDB_DEBUG("ZMQSource received #tups " tupleCnt)
+  IOTDB_DEBUG("ZMQSource received #tups " << tupleCnt)
 
   socket.recv(&new_data); // actual data
 
