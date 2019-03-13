@@ -14,23 +14,18 @@ public:
 
   virtual void setup() = 0;
   virtual void shutdown() = 0;
-
-
-
-
   bool writeData(const std::vector<TupleBufferPtr> &input_buffers);
-
   bool writeData(const TupleBufferPtr input_buffer);
-
   virtual bool writeData(const std::vector<TupleBuffer*> &input_buffers);
-
   virtual bool writeData(const TupleBuffer* input_buffer) = 0;
+  size_t getNumberOfProcessedBuffers(){return processedBuffer;}
 
   virtual const std::string toString() const = 0;
   const Schema &getSchema() const;
 
 protected:
   Schema schema;
+  size_t processedBuffer;
 };
 typedef std::shared_ptr<DataSink> DataSinkPtr;
 
