@@ -12,12 +12,14 @@
 
 #include <memory>
 #include <sstream>
+#include <string>
+#include <vector>
 
 using namespace iotdb;
 
 void printWelcome()
 {
-	vector<string> logo;
+	std::vector<std::string> logo;
 	logo.push_back(R"( __         __)");
 	logo.push_back(R"(/  \.-"""-./  \)");
 	logo.push_back(R"(\   - DFKI -  /)");
@@ -26,9 +28,9 @@ void printWelcome()
 	logo.push_back(R"(  '-\__Y__/-')");
 	logo.push_back(R"(     `---`)");
 
-	std::cout << "Welcome to the Grizzly Streaming Compiler ʕ•ᴥ•ʔ" << endl;
+	std::cout << "Welcome to the Grizzly Streaming Compiler ʕ•ᴥ•ʔ" << std::endl;
 	for(auto a : logo)
-		cout << a << endl;
+		std::cout << a << std::endl;
 
 }
 InputQueryPtr createTestQuery()
@@ -118,7 +120,7 @@ void createTestTopo(FogTopologyManager& fMgnr)
 
 	FogTopologySensorNodePtr s1 = fMgnr.createFogSensorNode();
 
-	FogTopologyLinkPtr l1 = fMgnr.createFogNodeLink(s1, f1);
+	FogTopologyLinkPtr l1 = fMgnr.createFogTopologyLink(s1, f1);
 
 	fMgnr.printTopologyPlan();
 }
