@@ -14,13 +14,14 @@ PrintSink::PrintSink(const Schema &schema)
 
 PrintSink::~PrintSink() { }
 
+
 bool PrintSink::writeData(const TupleBuffer* input_buffer) {
-	for(size_t u = 0; u < input_buffer->num_tuples; u++)
-	{
-		IOTDB_INFO("PrintSink: tuple:" << u << " = ")
-		//TODO: how to get a tuple via a schema
-		//TODO: add file heere
-	}
+
+  IOTDB_INFO("PrintSink: Buffer No:" << i);
+
+  std::cout << iotdb::toString(input_buffer,this->getSchema()) << std::endl;
+
+  return true;
 }
 
 
@@ -45,6 +46,7 @@ YSBPrintSink::YSBPrintSink(const Schema& schema)
 YSBPrintSink::~YSBPrintSink() { }
 
 bool YSBPrintSink::writeData(const TupleBuffer* input_buffer) {
+
 	ysbRecordOut* recordBuffer = (ysbRecordOut*) input_buffer->buffer;
 //	Schema s = Schema::create().addField("",UINT32);
 //	std::cout << iotdb::toString(input_buffer,s) << std::endl;
@@ -62,6 +64,7 @@ bool YSBPrintSink::writeData(const TupleBuffer* input_buffer) {
 		printedTuples++;
 	}
 	IOTDB_INFO(" ============= YSBPrintSink: FINISHED ============")
+	processedBuffer++;
 
 	//Dispatcher::instance().releaseBuffer(input_buffer);
 }

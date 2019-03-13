@@ -14,13 +14,13 @@ class ZmqSink : public DataSink {
 
 public:
   ZmqSink(const Schema &schema, const std::string &host, const uint16_t port, const std::string &topic);
-  ~ZmqSink();
+  ~ZmqSink() override;
 
-    bool writeData(const TupleBuffer* input_buffer) override;
-    /* optimized method to send multiple tuple buffers with one zmq message */
-    bool writeData(const std::vector<TupleBuffer*> &input_buffers) override;
-  void setup(){}
-  void shutdown(){}
+  bool writeData(const TupleBuffer* input_buffer) override;
+
+  void setup() override {}
+  void shutdown() override {}
+
   const std::string toString() const override;
 
 private:
