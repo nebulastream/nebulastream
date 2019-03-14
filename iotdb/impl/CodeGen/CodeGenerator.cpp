@@ -167,6 +167,7 @@ namespace iotdb {
       std::vector<DataTypePtr> types;
       for(uint32_t i=0;i<schema.getSize();++i){
          offsets.push_back(schema[i]->getFieldSize());
+         IOTDB_DEBUG(std::string("Field Size ") + schema[i]->toString() + std::string(": ") + std::to_string(schema[i]->getFieldSize()));
          types.push_back(schema[i]->getDataType());
       }
 
@@ -175,12 +176,10 @@ namespace iotdb {
           uint32_t val = offsets[i];
           offsets[i]=prefix_sum;
           prefix_sum+=val;
+          IOTDB_DEBUG(std::string("Prefix Sum: ") + schema[i]->toString() + std::string(": ") + std::to_string(offsets[i]));
       }
       uint32_t total_record_size = prefix_sum;
 
-      //assert(total_record_size == buffer->tuple_size_bytes);
-
-      str << "Tuple Buffer (" << (void*) buffer << "):" << std::endl;
       str << "+----------------------------------------------------+" << std::endl;
       str << "|";
       for(uint32_t i=0;i<schema.getSize();++i){
@@ -195,11 +194,12 @@ namespace iotdb {
           for(uint32_t s=0;s<offsets.size();++s){
               void* value = &buf[i+offsets[s]];
               std::string tmp = types[s]->convertRawToString(value);
-              str << tmp << "|" << std::endl;
+              str << tmp << "|";
           }
+          str << std::endl;
 
       }
-      str << "+----------------------------------------------------+" << std::endl;
+      str << "+----------------------------------------------------+";
       return str.str();
   }
 
