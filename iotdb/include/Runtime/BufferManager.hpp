@@ -23,11 +23,13 @@ class BufferManager {
 public:
   void addBuffer();
   TupleBufferPtr getBuffer();
-  void releaseBuffer(TupleBufferPtr tuple_buffer);
+  void releaseBuffer(const TupleBufferPtr tuple_buffer);
+  void releaseBuffer(const TupleBuffer* tuple_buffer);
 
   static BufferManager &instance();
   void unblockThreads() { cv.notify_all(); }
 
+  void setNewBufferSize(size_t size);
 private:
   BufferManager();
   BufferManager(const BufferManager &);

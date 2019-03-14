@@ -32,8 +32,7 @@ typedef std::shared_ptr<DataSink> DataSinkPtr;
 const DataSinkPtr createTestSink();
 const DataSinkPtr createBinaryFileSink(const Schema &schema, const std::string &path_to_file);
 const DataSinkPtr createRemoteTCPSink(const Schema &schema, const std::string &server_ip, int port);
-const DataSinkPtr createZmqSink(const Schema &schema, const std::string &host, const uint16_t port,
-                                const std::string &topic);
+const DataSinkPtr createZmqSink(const Schema &schema, const std::string &host, const uint16_t port);
 const DataSinkPtr createYSBPrintSink(const Schema &schema);
 
 } // namespace iotdb

@@ -6,6 +6,10 @@
 #include <string>
 #include <zmq.hpp>
 
+#include <Util/ErrorHandling.hpp>
+#include <Util/Logger.hpp>
+#include <Runtime/Dispatcher.hpp>
+
 
 #include <Util/Logger.hpp>
 #include <Util/ErrorHandling.hpp>
@@ -13,10 +17,10 @@
 
 namespace iotdb {
 
-ZmqSink::ZmqSink(const Schema &schema, const std::string &host, const uint16_t port, const std::string &topic)
-    : DataSink(schema), host(host), port(port), topic(topic), connected(false), context(zmq::context_t(1)),
+ZmqSink::ZmqSink(const Schema &schema, const std::string &host, const uint16_t port)
+    : DataSink(schema), host(host), port(port), tupleCnt(0), connected(false), context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_PUB)) {
-	  IOTDB_DEBUG("ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port << "/" << topic)
+	  IOTDB_DEBUG("ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port)
 
 }
 ZmqSink::~ZmqSink() { assert(disconnect());
@@ -55,7 +59,7 @@ const std::string ZmqSink::toString() const {
   ss << "SCHEMA(" << schema.toString() << "), ";
   ss << "HOST=" << host << ", ";
   ss << "PORT=" << port << ", ";
-  ss << "TOPIC=\"" << topic << "\")";
+  ss << "TupleCnt=\"" << tupleCnt << "\")";
   return ss.str();
 }
 
@@ -66,6 +70,7 @@ bool ZmqSink::connect() {
 
     try {
       socket.bind(address.c_str());
+//      socket.setsockopt(ZMQ_SUBSCRIBE, topic.c_str(), topic.size());
       socket.setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
       connected = true;
     } catch (...) {

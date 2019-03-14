@@ -12,7 +12,7 @@
 #include <Runtime/DataSink.hpp>
 #include <Runtime/ZmqSink.hpp>
 #include <Runtime/ZmqSource.hpp>
-
+#include <API/Schema.hpp>
 #include <Runtime/PrintSink.hpp>
 
 
@@ -114,7 +114,7 @@ public:
 		workingBuffer->num_tuples = qualCnt;
 		workingBuffer->tuple_size_bytes = sizeof(ysbRecordOut);
 		sink->writeData(workingBuffer);
-		IOTDB_DEBUG("task " << this << " finished processing")
+		IOTDB_DEBUG("task1 " << this << " finished processing with #tups qual=" << qualCnt)
     }
 };
 typedef std::shared_ptr<CompiledYSBZMQOutputTestQueryExecutionPlan> CompiledYSBZMQOutputTestQueryExecutionPlanPtr;
@@ -152,49 +152,53 @@ public:
     	TupleBufferPtr workingBuffer = Dispatcher::instance().getBuffer();
     	ysbRecordOut* recBuffer = (ysbRecordOut*)workingBuffer->buffer;
     	ysbRecordOut* tuples = (ysbRecordOut*) buf->buffer;
-        size_t lastTimeStamp = time(NULL);
-        size_t current_window = 0;
-        char key[] = "view";
-        size_t windowSizeInSec = 1;
-        size_t campaingCnt = 10;
-        YSBPrintSink* sink = (YSBPrintSink*)this->getSinks()[0].get();
         size_t qualCnt = 0;
+        DataSink* sink = this->getSinks()[0].get();
+
 		for(size_t i = 0; i < buf->num_tuples; i++)
 		{
-			if(strcmp(key,tuples[i].event_type) != 0)
-			{
-				continue;
-			}
 			memcpy(recBuffer[qualCnt].campaign_id, tuples[i].campaign_id,16);
-			recBuffer[qualCnt].current_ms = tuples[i].current_ms;
-			recBuffer[qualCnt].id = tuples[i].id;
+			recBuffer[qualCnt].current_ms = 1234;
+			recBuffer[qualCnt].id = 12345;
 			memcpy(recBuffer[qualCnt].event_type, tuples[i].event_type, 9);
 			//write to sink
 			qualCnt++;
 		}
 		workingBuffer->num_tuples = qualCnt;
 		workingBuffer->tuple_size_bytes = sizeof(ysbRecordOut);
-
+		sink->writeData(workingBuffer);
+		IOTDB_DEBUG("task2 " << this << " finished processing with #tups qual=" << qualCnt)
     }
 };
 typedef std::shared_ptr<CompiledYSBZMQInputTestQueryExecutionPlan> CompiledYSBZMQInputTestQueryExecutionPlanPtr;
 
 
 int test() {
-	return true;
+	Schema schema = Schema::create()
+		.addField("campaign_id", 16)
+		.addField("event_type", 9)
+		.addField("current_ms", 8)
+		.addField("id", 4);
+
 	CompiledYSBZMQOutputTestQueryExecutionPlanPtr qep1(new CompiledYSBZMQOutputTestQueryExecutionPlan());
 	DataSourcePtr source1 = createYSBSource(1);
-	DataSinkPtr sink1 = createZmqSink(source1->getSchema(), "127.0.0.1", 55555, "test");
-	DataSourcePtr source2 = createZmqSource(source1->getSchema(), "127.0.0.1", 55555, "test");
+	DataSinkPtr sink1 = createZmqSink(source1->getSchema(), "127.0.0.1", 55555);
 
 	qep1->addDataSource(source1);
-	qep1->addDataSource(source2);
-
 	qep1->addDataSink(sink1);
 	Dispatcher::instance().registerQuery(qep1);
 
+	CompiledYSBZMQInputTestQueryExecutionPlanPtr qep2(new CompiledYSBZMQInputTestQueryExecutionPlan());
+	DataSourcePtr source2 = createZmqSource(schema, "127.0.0.1", 55555);
+	source2->setNumBuffersToProcess(1);
+	qep2->addDataSource(source2);
+	DataSinkPtr sink2 = createYSBPrintSink(source2->getSchema());
+	qep2->addDataSink(sink2);
+	Dispatcher::instance().registerQuery(qep2);
 
-//	CompiledYSBZMQInputTestQueryExecutionPlanPtr qep2(new CompiledYSBZMQInputTestQueryExecutionPlan());
+	std::this_thread::sleep_for(std::chrono::seconds(2));
+	std::cout << "start processing" << std::endl;
+
 //	DataSourcePtr source2 = createZmqSource(source1->getSchema(), "localhost", 55555, "test");
 //	DataSinkPtr sink2 = createYSBPrintSink(source1->getSchema());
 //	qep2->addDataSource(source2);
@@ -205,22 +209,33 @@ int test() {
 
 	thread_pool.start();
 
-	while(source1->isRunning()){
-		std::cout << "----- processing current res is:-----" << std::endl;
+	while(source1->isRunning() || sink1->getNumberOfProcessedBuffers() != 1 || source2->isRunning() || sink2->getNumberOfProcessedBuffers() != 1){
+		std::cout << "source1->isRunning()=" << source1->isRunning() << " sink1->getNumberOfProcessedBuffers()=" << sink1->getNumberOfProcessedBuffers()
+				<< " source2->isRunning()=" << source2->isRunning()
+				<< " sink2->getNumberOfProcessedBuffers()=" << sink2->getNumberOfProcessedBuffers()
+				<< std::endl;
 		std::cout << "Waiting 1 seconds " << std::endl;
-		std::this_thread::sleep_for(std::chrono::seconds(3));
+		std::this_thread::sleep_for(std::chrono::seconds(1));
 	}
+	std::cout << "Finished processing " << std::endl;
+	std::cout << "source1->isRunning()=" << source1->isRunning() << " sink1->getNumberOfProcessedBuffers()=" << sink1->getNumberOfProcessedBuffers()
+					<< " source2->isRunning()=" << source2->isRunning()
+					<< " sink2->getNumberOfProcessedBuffers()=" << sink2->getNumberOfProcessedBuffers()
+					<< std::endl;
 
-//	YSBPrintSink* ySink = (YSBPrintSink*)sink2.get();
-//	std::cout << "printed tuples=" << ySink->getNumberOfPrintedTuples() << std::endl;
-//	if(ySink->getNumberOfPrintedTuples()!= 36)
-//	{
-//		std::cout << "wrong result" << std::endl;
-//		assert(0);
-//	}
+	YSBPrintSink* ySink = (YSBPrintSink*)sink2.get();
+	std::cout << "printed tuples=" << ySink->getNumberOfPrintedTuples() << std::endl;
+	if(ySink->getNumberOfPrintedTuples()!= 18)
+	{
+		std::cout << "wrong result" << std::endl;
+		assert(0);
+	}
+	else
+	{
+		std::cout << "Test finished successfully" << std::endl;
+
+	}
 	Dispatcher::instance().deregisterQuery(qep1);
-//	Dispatcher::instance().deregisterQuery(qep2);
-
 
 	thread_pool.stop();
 
