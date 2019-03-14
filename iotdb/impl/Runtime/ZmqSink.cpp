@@ -29,28 +29,32 @@ IOTDB_DEBUG("ZMQSINK  " << this << ": Destroy ZMQ Source")
 
 bool ZmqSink::writeData(const TupleBuffer* input_buffer)
 {
+	assert(connect());
+	IOTDB_DEBUG("ZMQSINK  " << this << ": writes buffer " << input_buffer)
+//	size_t usedBufferSize = input_buffer->num_tuples * input_buffer->tuple_size_bytes;
+	zmq::message_t msg(input_buffer->buffer_size);
+	//TODO: If possible only copy the content not the empty part
+	std::memcpy(msg.data(), input_buffer->buffer, input_buffer->buffer_size);
+	tupleCnt = input_buffer->num_tuples;
+	zmq::message_t envelope(sizeof(tupleCnt));
+	memcpy(envelope.data(), &tupleCnt, sizeof(tupleCnt));
 
-  assert(connect());
-  IOTDB_DEBUG("ZMQSINK  " << this << ": writes buffer " << input_buffer)
+	bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
+	bool rc_msg = socket.send(msg);
+	processedBuffer++;
+	if (!rc_env || !rc_msg)
+	{
+		  IOTDB_DEBUG("ZMQSINK  " << this << ": send NOT successful")
+		  Dispatcher::instance().releaseBuffer(input_buffer);
+		  return false;
+	}
+	else
+	{
+		IOTDB_DEBUG("ZMQSINK  " << this << ": send successful")
+		Dispatcher::instance().releaseBuffer(input_buffer);
 
-  zmq::message_t msg(input_buffer->buffer_size);
-  std::memcpy(msg.data(), input_buffer->buffer, input_buffer->buffer_size);
-
-  zmq::message_t envelope(topic.size());
-  memcpy(envelope.data(), topic.data(), topic.size());
-
-  bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
-  bool rc_msg = socket.send(msg);
-  if (!rc_env || !rc_msg)
-  {
-            IOTDB_DEBUG("ZMQSINK  " << this << ": send NOT successful")
-            return false;
-  }
-  else
-  {
-          IOTDB_DEBUG("ZMQSINK  " << this << ": send successful")
-          return true;
-  }
+		return true;
+	}
 }
 
 const std::string ZmqSink::toString() const {

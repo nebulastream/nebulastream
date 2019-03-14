@@ -17,8 +17,6 @@ PrintSink::~PrintSink() { }
 
 bool PrintSink::writeData(const TupleBuffer* input_buffer) {
 
-  IOTDB_INFO("PrintSink: Buffer No:" << i);
-
   std::cout << iotdb::toString(input_buffer,this->getSchema()) << std::endl;
 
   return true;
