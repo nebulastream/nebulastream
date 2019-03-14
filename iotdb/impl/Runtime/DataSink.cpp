@@ -6,6 +6,7 @@
 #include <Runtime/ZmqSink.hpp>
 #include <Runtime/PrintSink.hpp>
 #include <Util/ErrorHandling.hpp>
+#include <Util/Logger.hpp>
 
 namespace iotdb {
 
@@ -34,7 +35,9 @@ bool DataSink::writeData(const TupleBufferPtr input_buffer){
   return writeData(input_buffer.get());
 }
 
-DataSink::~DataSink() { std::cout << "Destroy Data Sink " << this << std::endl; }
+DataSink::~DataSink() {
+	IOTDB_DEBUG("Destroy Data Sink  " << this) }
+
 
 const DataSinkPtr createTestSink() {
   // instantiate TestSink
@@ -57,9 +60,8 @@ const DataSinkPtr createRemoteTCPSink(const Schema &schema, const std::string &s
   IOTDB_FATAL_ERROR("Called unimplemented Function");
 }
 
-const DataSinkPtr createZmqSink(const Schema &schema, const std::string &host, const uint16_t port,
-                                const std::string &topic) {
-  return std::make_shared<ZmqSink>(schema, host, port, topic);
+const DataSinkPtr createZmqSink(const Schema &schema, const std::string &host, const uint16_t port) {
+  return std::make_shared<ZmqSink>(schema, host, port);
 }
 
 } // namespace iotdb

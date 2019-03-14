@@ -25,7 +25,8 @@ namespace iotdb {
 class Dispatcher {
 public:
   TupleBufferPtr getBuffer();
-  void releaseBuffer(TupleBufferPtr ptr);
+  void releaseBuffer(const TupleBufferPtr ptr);
+  void releaseBuffer(const TupleBuffer* ptr);
 
   void registerQuery(const QueryExecutionPlanPtr);
   void deregisterQuery(const QueryExecutionPlanPtr);
