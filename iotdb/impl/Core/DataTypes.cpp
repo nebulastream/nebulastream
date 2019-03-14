@@ -81,7 +81,7 @@ namespace iotdb {
   class BasicDataType : public DataType{
   public:
     BasicDataType(const BasicType & _type)
-      : type(_type){
+      : type(_type), dataSize(0){
     }
 
     BasicDataType(const BasicType & _type, uint32_t _size)
@@ -100,11 +100,11 @@ namespace iotdb {
     uint32_t getSizeBytes() const{
     	if(dataSize == 0)
     	{
-    		return getFixSizeBytes();
+          return getFixSizeBytes();
     	}
     	else
     	{
-    		return getFixSizeBytes() * dataSize;
+          return getFixSizeBytes() * dataSize;
     	}
 
     }
@@ -164,7 +164,12 @@ namespace iotdb {
         case FLOAT32: return std::to_string(*reinterpret_cast<float*>(data));
         case FLOAT64: return std::to_string(*reinterpret_cast<double*>(data));
         case BOOLEAN: return std::to_string(*reinterpret_cast<bool*>(data));
-        case CHAR: return std::to_string(*reinterpret_cast<char*>(data));
+        case CHAR:
+          if(dataSize==0){
+            return std::to_string(*reinterpret_cast<char*>(data));
+          } else {
+              return std::string(reinterpret_cast<char*>(data));
+          }
         case DATE: return std::to_string(*reinterpret_cast<uint32_t*>(data));
         case VOID_TYPE: return "";
       }
