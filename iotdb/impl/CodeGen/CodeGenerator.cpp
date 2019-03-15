@@ -1,6 +1,5 @@
 
-#include <CodeGen/CodeGen.hpp>
-#include <CodeGen/C_CodeGen/CodeCompiler.hpp>
+
 
 #include <sstream>
 #include <iostream>
@@ -8,6 +7,11 @@
 
 #include <Util/ErrorHandling.hpp>
 
+
+#include <Core/DataTypes.hpp>
+#include <API/Schema.hpp>
+#include <CodeGen/CodeGen.hpp>
+#include <CodeGen/C_CodeGen/CodeCompiler.hpp>
 #include <CodeGen/C_CodeGen/Statement.hpp>
 #include <CodeGen/C_CodeGen/UnaryOperatorStatement.hpp>
 #include <CodeGen/C_CodeGen/BinaryOperatorStatement.hpp>
@@ -15,6 +19,7 @@
 #include <CodeGen/C_CodeGen/FunctionBuilder.hpp>
 #include <CodeGen/C_CodeGen/FileBuilder.hpp>
 
+#include <Runtime/DataSink.hpp>
 
 namespace iotdb {
 
@@ -146,6 +151,58 @@ namespace iotdb {
     return struct_decl_result_tuple;
   }
 
+  const std::string toString(void* value, DataTypePtr type){
+//     if(type->)
+      return "";
+  }
+
+  std::string toString(const TupleBuffer& buffer, const Schema& schema){
+    return toString(&buffer,schema);
+  }
+
+  std::string toString(const TupleBuffer* buffer, const Schema& schema){
+      if(!buffer) return "INVALID_BUFFER_PTR";
+      std::stringstream str;
+      std::vector<uint32_t> offsets;
+      std::vector<DataTypePtr> types;
+      for(uint32_t i=0;i<schema.getSize();++i){
+         offsets.push_back(schema[i]->getFieldSize());
+         IOTDB_DEBUG(std::string("Field Size ") + schema[i]->toString() + std::string(": ") + std::to_string(schema[i]->getFieldSize()));
+         types.push_back(schema[i]->getDataType());
+      }
+
+      uint32_t prefix_sum=0;
+      for(uint32_t i=0;i<offsets.size();++i){
+          uint32_t val = offsets[i];
+          offsets[i]=prefix_sum;
+          prefix_sum+=val;
+          IOTDB_DEBUG(std::string("Prefix Sum: ") + schema[i]->toString() + std::string(": ") + std::to_string(offsets[i]));
+      }
+      uint32_t total_record_size = prefix_sum;
+
+      str << "+----------------------------------------------------+" << std::endl;
+      str << "|";
+      for(uint32_t i=0;i<schema.getSize();++i){
+        str << schema[i]->toString() << "|";
+      }
+      str << std::endl;
+      str << "+----------------------------------------------------+" << std::endl;
+
+      char* buf = (char*) buffer->buffer;
+      for(uint32_t i=0;i<buffer->num_tuples*buffer->tuple_size_bytes;i+=buffer->tuple_size_bytes){
+          str << "|";
+          for(uint32_t s=0;s<offsets.size();++s){
+              void* value = &buf[i+offsets[s]];
+              std::string tmp = types[s]->convertRawToString(value);
+              str << tmp << "|";
+          }
+          str << std::endl;
+
+      }
+      str << "+----------------------------------------------------+";
+      return str.str();
+  }
+
 
   bool C_CodeGenerator::generateCode(const DataSourcePtr& source, const PipelineContextPtr& context, std::ostream& out){
 
@@ -191,8 +248,6 @@ namespace iotdb {
     /* TupleBuffer *tuple_buffer_1; */
     VariableDeclaration var_decl_tuple_buffer_1 = VariableDeclaration::create(
         createPointerDataType(createUserDefinedType(getStructDeclarationTupleBuffer())), "tuple_buffer_1");
-
-
 
     /* uint64_t id = 0; */
     code_.var_decl_id =
@@ -246,6 +301,8 @@ namespace iotdb {
     return true;
   }
   bool C_CodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContextPtr& context, std::ostream& out){
+
+    result_schema_=sink->getSchema();
 
     return true;
   }

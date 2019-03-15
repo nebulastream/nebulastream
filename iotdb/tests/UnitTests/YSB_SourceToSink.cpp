@@ -97,7 +97,8 @@ public:
         char key[] = "view";
         size_t windowSizeInSec = 1;
         size_t campaingCnt = 10;
-        YSBPrintSink* sink = (YSBPrintSink*)this->getSinks()[0].get();
+        YSBWindow* window = (YSBWindow*)this->getWindows()[0].get();
+        DataSinkPtr sink = this->getSinks()[0];
         size_t qualCnt = 0;
 		for(size_t i = 0; i < buf->num_tuples; i++)
 		{
@@ -140,8 +141,10 @@ typedef std::shared_ptr<CompiledYSBTestQueryExecutionPlan> CompiledYSBTestQueryE
 
 int test() {
 	CompiledYSBTestQueryExecutionPlanPtr qep(new CompiledYSBTestQueryExecutionPlan());
+	WindowPtr window = createTestWindow();
 	DataSourcePtr source = createYSBSource(2);
 	DataSinkPtr sink = createYSBPrintSink(source->getSchema());
+	qep->addWindow(window);
 	qep->addDataSource(source);
 	qep->addDataSink(sink);
 
@@ -160,9 +163,14 @@ int test() {
 
 	YSBPrintSink* ySink = (YSBPrintSink*)sink.get();
 	std::cout << "printed tuples=" << ySink->getNumberOfPrintedTuples() << std::endl;
+
+	Dispatcher::instance().deregisterQuery(qep);
+	//thread_pool.stop();
+
 	if(ySink->getNumberOfPrintedTuples()!= 36)
 	{
 		std::cout << "wrong result" << std::endl;
+
 		std::cout << "sourceRunnin=" << source->isRunning() << " numberOfProcBuffer="
 				<< sink->getNumberOfProcessedBuffers() << std::endl;
 		assert(0);
@@ -177,8 +185,7 @@ int test() {
 
 	Dispatcher::instance().deregisterQuery(qep);
 
-
-
+	return 0;
 }
 } // namespace iotdb
 
@@ -214,8 +221,5 @@ int main(int argc, const char *argv[]) {
 	setupLogging();
   iotdb::Dispatcher::instance();
 
-  iotdb::test();
-
-
-  return 0;
+  return iotdb::test();
 }

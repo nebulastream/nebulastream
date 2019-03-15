@@ -5,10 +5,14 @@
 #include <sstream>
 #include <string>
 #include <zmq.hpp>
+
 #include <Util/ErrorHandling.hpp>
 #include <Util/Logger.hpp>
 #include <Runtime/Dispatcher.hpp>
 
+
+#include <Util/Logger.hpp>
+#include <Util/ErrorHandling.hpp>
 #include <Runtime/ZmqSink.hpp>
 
 namespace iotdb {
@@ -21,30 +25,6 @@ ZmqSink::ZmqSink(const Schema &schema, const std::string &host, const uint16_t p
 }
 ZmqSink::~ZmqSink() { assert(disconnect());
 IOTDB_DEBUG("ZMQSINK  " << this << ": Destroy ZMQ Source")
-}
-
-bool ZmqSink::writeData(const std::vector<TupleBufferPtr> &input_buffers) {
-  assert(connect());
-  assert(0);
-  for (auto &buf : input_buffers) {
-	 if(!writeData(buf))
-	 {
-		 return false;
-	 }
-  }
-  return true;
-}
-
-bool ZmqSink::writeData(const std::vector<TupleBuffer*> &input_buffers)
-{
-  assert(connect());
-  for (auto &buf : input_buffers) {
-	 if(!writeData(buf))
-	 {
-		 return false;
-	 }
-  }
-  return true;
 }
 
 bool ZmqSink::writeData(const TupleBuffer* input_buffer)
@@ -75,11 +55,6 @@ bool ZmqSink::writeData(const TupleBuffer* input_buffer)
 
 		return true;
 	}
-}
-bool ZmqSink::writeData(const TupleBufferPtr input_buffer)
-{
-	assert(connect());
-	return writeData(input_buffer.get());
 }
 
 const std::string ZmqSink::toString() const {

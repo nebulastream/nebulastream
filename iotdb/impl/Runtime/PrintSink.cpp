@@ -14,50 +14,12 @@ PrintSink::PrintSink(const Schema &schema)
 
 PrintSink::~PrintSink() { }
 
-bool PrintSink::writeData(const std::vector<TupleBufferPtr> &input_buffers) {
-	assert(0);
-	//TODO: is it really neccesary to use a vector of buffers?
-	for(size_t i = 0; i < input_buffers.size(); i++)//for each buffer
-	{
-		IOTDB_INFO("PrintSink: Buffer No:" << i)
-		writeData(input_buffers[i]);
-	}
-	//TODO: release buffe
-}
-
-bool PrintSink::writeData(const TupleBufferPtr input_buffer) {
-	assert(0);
-
-	for(size_t u = 0; u < input_buffer->num_tuples; u++)
-	{
-		IOTDB_INFO("PrintSink: tuple:" << u << " = ")
-		//TODO: how to get a tuple via a schema
-		//TODO: add file heere
-	}
-}
-
-
-bool PrintSink::writeData(const std::vector<TupleBuffer*> &input_buffers) {
-	assert(0);
-
-	//TODO: is it really neccesary to use a vector of buffers?
-	for(size_t i = 0; i < input_buffers.size(); i++)//for each buffer
-	{
-		IOTDB_INFO("PrintSink: Buffer No:" << i)
-		writeData(input_buffers[i]);
-	}
-	//TODO: release buffe
-}
 
 bool PrintSink::writeData(const TupleBuffer* input_buffer) {
-	assert(0);
 
-	for(size_t u = 0; u < input_buffer->num_tuples; u++)
-	{
-		IOTDB_INFO("PrintSink: tuple:" << u << " = ")
-		//TODO: how to get a tuple via a schema
-		//TODO: add file heere
-	}
+  std::cout << iotdb::toString(input_buffer,this->getSchema()) << std::endl;
+
+  return true;
 }
 
 
@@ -81,49 +43,11 @@ YSBPrintSink::YSBPrintSink(const Schema& schema)
 
 YSBPrintSink::~YSBPrintSink() { }
 
-bool YSBPrintSink::writeData(const std::vector<TupleBufferPtr> &input_buffers) {
-	for(size_t i = 0; i < input_buffers.size(); i++)//for each buffer
-	{
-		IOTDB_INFO("PrintSink: Buffer No:" << i)
-		writeData(input_buffers[i]);
-		processedBuffer++;
-	}
-}
-
-bool YSBPrintSink::writeData(const TupleBufferPtr input_buffer) {
-	ysbRecordOut* recordBuffer = (ysbRecordOut*) input_buffer->buffer;
-	IOTDB_INFO(" ============= YSBPrintSink: print buffer " << input_buffer->buffer << "============")
-	for(size_t u = 0; u < input_buffer->num_tuples; u++)
-	{
-//		std::cout << "id=" << recordBuffer[u].id << std::endl;
-//		std::cout << " ms=" << recordBuffer[u].current_ms << std::endl;
-//		std::cout << " type=" << std::string(recordBuffer[u].event_type) << std::endl;
-//		std::cout << " camp=" << std::string(recordBuffer[u].campaign_id) << std::endl;
-
-		IOTDB_INFO("YSBPrintSink: tuple:" << u << " = " << " id=" << recordBuffer[u].id << " campaign=" << recordBuffer[u].campaign_id
-				<< " type=" << recordBuffer[u].event_type
-				<< " timestamp=" <<recordBuffer[u].current_ms)
-		printedTuples++;
-	}
-	IOTDB_INFO(" ============= YSBPrintSink: FINISHED ============")
-	processedBuffer++;
-
-	Dispatcher::instance().releaseBuffer(input_buffer);
-}
-
-bool YSBPrintSink::writeData(const std::vector<TupleBuffer*> &input_buffers) {
-	for(size_t i = 0; i < input_buffers.size(); i++)//for each buffer
-	{
-		IOTDB_INFO("PrintSink: Buffer No:" << i)
-		writeData(input_buffers[i]);
-		processedBuffer++;
-	}
-}
-
 bool YSBPrintSink::writeData(const TupleBuffer* input_buffer) {
-	assert(0);
+
 	ysbRecordOut* recordBuffer = (ysbRecordOut*) input_buffer->buffer;
-	IOTDB_INFO(" ============= YSBPrintSink: print buffer " << input_buffer->buffer << "============")
+//	Schema s = Schema::create().addField("",UINT32);
+//	std::cout << iotdb::toString(input_buffer,s) << std::endl;
 	for(size_t u = 0; u < input_buffer->num_tuples; u++)
 	{
 //		std::cout << "id=" << recordBuffer[u].id << std::endl;
@@ -134,13 +58,13 @@ bool YSBPrintSink::writeData(const TupleBuffer* input_buffer) {
 		IOTDB_INFO("YSBPrintSink: tuple:" << u << " = " << " id=" << recordBuffer[u].id << " campaign=" << recordBuffer[u].campaign_id
 				<< " type=" << recordBuffer[u].event_type
 				<< " timestamp=" <<recordBuffer[u].current_ms)
+
 		printedTuples++;
 	}
+	IOTDB_INFO(" ============= YSBPrintSink: FINISHED ============")
 	processedBuffer++;
 
-	IOTDB_INFO(" ============= YSBPrintSink: FINISHED ============")
-
-//	Dispatcher::instance().releaseBuffer(input_buffer);
+	//Dispatcher::instance().releaseBuffer(input_buffer);
 }
 
 const std::string YSBPrintSink::toString() const {

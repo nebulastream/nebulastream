@@ -12,18 +12,13 @@ public:
   DataSink(const Schema &schema);
   virtual ~DataSink();
 
-//  bool writeData(const std::vector<TupleBuffer*> &input_buffers) = 0;
-
-//  bool writeData(const std::vector<TupleBuffer*> &input_buffers){
-//	  IOTDB_NOT_IMPLEMENTED("not impl");
-//  };
-
   virtual void setup() = 0;
   virtual void shutdown() = 0;
-  virtual bool writeData(const std::vector<TupleBufferPtr> &input_buffers) = 0;
-  virtual bool writeData(const TupleBufferPtr input_buffer) = 0;
-  virtual bool writeData(const std::vector<TupleBuffer*> &input_buffers) = 0;
-  size_t getNumberOfProcessedBuffers(){return processedBuffer;};
+  bool writeData(const std::vector<TupleBufferPtr> &input_buffers);
+  bool writeData(const TupleBufferPtr input_buffer);
+  virtual bool writeData(const std::vector<TupleBuffer*> &input_buffers);
+  virtual bool writeData(const TupleBuffer* input_buffer) = 0;
+  size_t getNumberOfProcessedBuffers(){return processedBuffer;}
 
   virtual const std::string toString() const = 0;
   const Schema &getSchema() const;
@@ -38,8 +33,8 @@ const DataSinkPtr createTestSink();
 const DataSinkPtr createBinaryFileSink(const Schema &schema, const std::string &path_to_file);
 const DataSinkPtr createRemoteTCPSink(const Schema &schema, const std::string &server_ip, int port);
 const DataSinkPtr createZmqSink(const Schema &schema, const std::string &host, const uint16_t port);
-
 const DataSinkPtr createYSBPrintSink(const Schema &schema);
+
 } // namespace iotdb
 
 #endif // INCLUDE_DATASINK_H_

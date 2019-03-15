@@ -16,8 +16,7 @@ public:
 	FileOutputSink(const Schema &schema);
   ~FileOutputSink();
 
-  bool writeData(const std::vector<TupleBufferPtr> &input_buffers) override;
-  bool writeData(const TupleBufferPtr input_buffers) override;
+  bool writeData(const TupleBuffer* input_buffer) override;
 
   const std::string toString() const override;
 
