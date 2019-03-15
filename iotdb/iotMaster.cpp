@@ -72,7 +72,7 @@ InputQueryPtr createYSBTestQuery()
 	  * const DataSourcePtr createBinaryFileSource(const Schema& schema, const std::string& path_to_file);
 	  * const DataSourcePtr createRemoteTCPSource(const Schema& schema, const std::string& server_ip, int port);
   */
-	DataSourcePtr source = createYSBSource(100);
+	DataSourcePtr source = createYSBSource(100,10);
 
 	Schema schema = Schema::create()
 		.addField("user_id", 16)

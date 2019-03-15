@@ -1,9 +1,9 @@
 #include <Runtime/Window.hpp>
 
 namespace iotdb{
-const WindowPtr createTestWindow() {
+const WindowPtr createTestWindow(size_t campainCnt) {
 
-	  WindowPtr win(new YSBWindow());
+	  WindowPtr win(new YSBWindow(campainCnt));
 
 	  return win;
 	}
