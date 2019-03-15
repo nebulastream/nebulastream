@@ -185,6 +185,7 @@ int test(size_t toProcessedBuffers, size_t threadCnt, size_t campaignCnt, size_t
 			<< " sources=" << sourceCnt
 			<< std::endl;
 
+	Dispatcher::instance().printStatistics();
 	Dispatcher::instance().deregisterQuery(qep);
 
 	thread_pool.stop();

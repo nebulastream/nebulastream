@@ -35,6 +35,8 @@ public:
   void addWork(const TupleBufferPtr, DataSource *);
   void completedWork(TaskPtr task);
 
+  void printStatistics();
+
   static Dispatcher &instance();
 
   void unblockThreads() { cv.notify_all(); }
@@ -59,6 +61,10 @@ private:
   std::mutex workMutex;
 
   std::condition_variable cv;
+
+  //statistics:
+  size_t workerHitEmptyTaskQueue;
+  size_t processedTasks;
 };
 typedef std::shared_ptr<Dispatcher> DispatcherPtr;
 } // namespace iotdb

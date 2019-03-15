@@ -6,9 +6,9 @@
 #include <Util/Logger.hpp>
 namespace iotdb {
 
-BufferManager::BufferManager():mutex() {
+BufferManager::BufferManager():mutex(), noFreeBuffer(0), releasedBuffer(0), providedBuffer(0) {
 	IOTDB_DEBUG("BufferManager: Enter Constructor of BufferManager.")
-	maxBufferCnt = 1000;//changed from 3
+	maxBufferCnt = 10000;//changed from 3
 	bufferSizeInByte = 4 * 1024;//set buffer to 4KB
 	IOTDB_DEBUG("BufferManager: Set maximun number of buffer to "<<  maxBufferCnt
 			<< " and a bufferSize of KB:" << bufferSizeInByte/1024)
@@ -52,24 +52,27 @@ void BufferManager::addBuffer() {
 }
 
 TupleBufferPtr BufferManager::getBuffer() {
-//  std::unique_lock<std::mutex> lock(mutex);
+  std::unique_lock<std::mutex> lock(mutex);
   bool found = false;
+  std::map<TupleBufferPtr, bool>::iterator it;
 
   while(!found)
   {
 	  //find a free buffer
-	for(auto& entry : buffer_pool)
+//	for(auto& entry : buffer_pool)
+	for ( it = buffer_pool.begin(); it != buffer_pool.end(); it++ )
 	{
-	  if(entry.second == false)//found free entry
+	  if(it->second == false)//found free entry
 	  {
-		  entry.second = true;
+		  it->second = true;
 
-		  IOTDB_DEBUG("BufferManager: provide free buffer " <<  entry.first)
-
-		  return entry.first;
+		  IOTDB_DEBUG("BufferManager: provide free buffer " <<  it->first)
+		  providedBuffer++;
+		  return it->first;
 	  }
 	}
 	//add wait
+	noFreeBuffer++;
 	std::this_thread::sleep_for(std::chrono::seconds(1));
 	IOTDB_DEBUG("BufferManager: no buffer free yet --- retry")
   }
@@ -89,7 +92,7 @@ void BufferManager::releaseBuffer(const TupleBuffer* tuple_buffer) {
 				IOTDB_DEBUG("BufferManager: found and release buffer")
 			  entry.first->num_tuples = 0;
 			  entry.first->tuple_size_bytes = 0;
-
+			  releasedBuffer++;
 			  return;
 		  }
 	   }
@@ -112,6 +115,7 @@ void BufferManager::releaseBuffer(const TupleBufferPtr tuple_buffer) {
 				IOTDB_DEBUG("BufferManager: found and release buffer")
 			  entry.first->num_tuples = 0;
 			  entry.first->tuple_size_bytes = 0;
+			  releasedBuffer++;
 
 			  return;
 		  }
@@ -121,7 +125,14 @@ void BufferManager::releaseBuffer(const TupleBufferPtr tuple_buffer) {
 	   assert(0);
 }
 
+void BufferManager::printStatistics()
+{
+	std::cout << "BufferManager Statistics:" << std::endl;
+	std::cout << "\t noFreeBuffer=" << noFreeBuffer << std::endl;
+	std::cout << "\t providedBuffer=" << providedBuffer << std::endl;
+	std::cout << "\t releasedBuffer=" << releasedBuffer << std::endl;
 
+}
 
 
 } // namespace iotdb
