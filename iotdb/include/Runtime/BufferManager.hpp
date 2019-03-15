@@ -28,6 +28,7 @@ public:
 
   static BufferManager &instance();
   void unblockThreads() { cv.notify_all(); }
+  void printStatistics();
 
   void setNewBufferSize(size_t size);
 private:
@@ -42,6 +43,13 @@ private:
 
   std::mutex mutex;
   std::condition_variable cv;
+
+  //statistics
+  size_t noFreeBuffer;
+  size_t providedBuffer;
+  size_t releasedBuffer;
+
+
 };
 
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;

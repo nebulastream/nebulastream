@@ -12,7 +12,7 @@
 namespace iotdb {
 
 Dispatcher::Dispatcher() : task_queue(), source_to_query_map(), window_to_query_map(),
-		sink_to_query_map(), bufferMutex(), queryMutex(), workMutex() {
+		sink_to_query_map(), bufferMutex(), queryMutex(), workMutex(), workerHitEmptyTaskQueue(0) {
   IOTDB_DEBUG("Init Dispatcher")
 }
 
@@ -90,6 +90,7 @@ void Dispatcher::deregisterQuery(const QueryExecutionPlanPtr qep)
 TaskPtr Dispatcher::getWork(bool &run_thread) {
   std::unique_lock<std::mutex> lock(workMutex);
   while (task_queue.empty() && run_thread) {
+	workerHitEmptyTaskQueue++;
     cv.wait(lock);
     if (!run_thread)
       return TaskPtr();
@@ -116,6 +117,7 @@ void Dispatcher::addWork(const TupleBufferPtr buf, DataSource *source) {
 
 void Dispatcher::completedWork(TaskPtr task) {
   std::unique_lock<std::mutex> lock(workMutex);
+  processedTasks++;
   task->releaseInputBuffer();
 }
 
@@ -123,4 +125,15 @@ Dispatcher &Dispatcher::instance() {
   static Dispatcher instance;
   return instance;
 }
+
+void Dispatcher::printStatistics()
+{
+	std::cout << "Dispatcher Statistics:" << std::endl;
+	std::cout << "\t workerHitEmptyTaskQueue=" << workerHitEmptyTaskQueue << std::endl;
+	std::cout << "\t processedTasks=" << processedTasks << std::endl;
+
+	BufferManager::instance().printStatistics();
+}
+
+
 } // namespace iotdb

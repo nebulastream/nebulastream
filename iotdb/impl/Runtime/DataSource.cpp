@@ -186,11 +186,11 @@ void generate(ysbRecord* data, size_t generated_tuples_this_pass, size_t campain
 
 
 const DataSourcePtr createYSBSource(size_t bufferCnt, size_t campaingCnt) {
-  class Functor {
+  class YSBFunctor {
   public:
 
-    Functor(size_t pCampaingCnt): campaingCnt(pCampaingCnt){}
-    TupleBufferPtr operator()() {
+	 YSBFunctor(size_t pCampaingCnt): campaingCnt(pCampaingCnt){}
+     TupleBufferPtr operator()() {
       TupleBufferPtr buf = Dispatcher::instance().getBuffer();
       assert(buf->buffer != NULL);
       uint64_t generated_tuples_this_pass = buf->buffer_size / sizeof(ysbRecord);
@@ -214,7 +214,7 @@ const DataSourcePtr createYSBSource(size_t bufferCnt, size_t campaingCnt) {
   		.addField("ip", INT32);
 
 //  DataSourcePtr source(new GeneratorSource<Functor>(Schema::create().addField(createField("id", UINT32)), 100));
-  DataSourcePtr source(new YSBGeneratorSource<Functor>(schema, bufferCnt, campaingCnt));
+  DataSourcePtr source(new YSBGeneratorSource<YSBFunctor>(schema, bufferCnt, campaingCnt));
 
   return source;
 }
