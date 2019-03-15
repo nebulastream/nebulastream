@@ -13,14 +13,12 @@ namespace iotdb {
 class PrintSink : public DataSink {
 
 public:
-	PrintSink(const Schema& schema);
+  PrintSink(const Schema& schema);
   ~PrintSink();
-  virtual void setup(){};
-  virtual void shutdown(){};
-  bool writeData(const std::vector<TupleBufferPtr> &input_buffers) override;
-  bool writeData(const TupleBufferPtr input_buffer) override;
-  bool writeData(const std::vector<TupleBuffer*> &input_buffers) override;
-  bool writeData(const TupleBuffer* input_buffer);
+  virtual void setup(){}
+  virtual void shutdown(){}
+
+  bool writeData(const TupleBuffer* input_buffer) override;
 
   const std::string toString() const override;
 
@@ -35,13 +33,10 @@ public:
 
 	~YSBPrintSink();
 
-  bool writeData(const std::vector<TupleBufferPtr> &input_buffers) override;
-  bool writeData(const TupleBufferPtr input_buffer) override;
-  bool writeData(const std::vector<TupleBuffer*> &input_buffers) override;
-  bool writeData(const TupleBuffer* input_buffer);
+  bool writeData(const TupleBuffer* input_buffer) override;
 
-  void setup(){};
-  void shutdown(){};
+  void setup(){}
+  void shutdown(){}
   size_t getNumberOfPrintedTuples(){return printedTuples;};
 
   const std::string toString() const override;

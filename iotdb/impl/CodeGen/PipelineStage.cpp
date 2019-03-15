@@ -83,9 +83,16 @@ DataSinkPiplineStage::DataSinkPiplineStage(DataSinkPtr sink) : sink(sink) {}
 
 uint32_t DataSinkPiplineStage::execute_impl(const std::vector<TupleBuffer*> &input_buffers, WindowState *state,
         TupleBuffer *result_buf) {
-    if(sink->writeData(input_buffers))
-        return 0;
-    else
+  for(auto& buf : input_buffers){
+      TupleBufferPtr buffer_ptr(buf);
+      if(!sink->writeData(buffer_ptr))
         return 1;
+      buffer_ptr.reset();
+  }
+  return 0;
+//    if(sink->writeData(input_buffers))
+//        return 0;
+//    else
+//        return 1;
 }
 } // namespace iotdb

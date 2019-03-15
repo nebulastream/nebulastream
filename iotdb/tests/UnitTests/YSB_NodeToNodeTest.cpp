@@ -95,7 +95,7 @@ public:
         size_t lastTimeStamp = time(NULL);
         size_t current_window = 0;
         char key[] = "view";
-        ZmqSink* sink = (ZmqSink*)this->getSinks()[0].get();
+        DataSinkPtr sink = this->getSinks()[0];
         //add code to get corresponding
         size_t qualCnt = 0;
 		for(size_t i = 0; i < buf->num_tuples; i++)
