@@ -15,7 +15,7 @@
 
 namespace iotdb {
 
-DataSource::DataSource(const Schema &_schema) : run_thread(false), thread(), schema(_schema) {
+DataSource::DataSource(const Schema &_schema) : run_thread(false), thread(), schema(_schema), generatedTuples(0) {
   IOTDB_DEBUG("DataSource " << this << ": Init Data Source!")
 }
 
@@ -159,13 +159,11 @@ void generateTuple(ysbRecord* data, size_t campaingOffset, uint64_t campaign_lsb
 	  data->ip = event_id;
 }
 
-void generate(ysbRecord* data, size_t generated_tuples_this_pass)
+void generate(ysbRecord* data, size_t generated_tuples_this_pass, size_t campaingCnt)
 {
 	std::random_device rd;  //Will be used to obtain a seed for the random number engine
 	std::mt19937 gen; //(rd()); //Standard mersenne_twister_engine seeded with rd()
 	std::uniform_int_distribution<size_t> diss(0, SIZE_MAX);
-
-	const size_t campaingCnt = 10;
 
 	size_t randomCnt = generated_tuples_this_pass/10;
 	size_t* randomNumbers = new size_t[randomCnt];
@@ -187,28 +185,36 @@ void generate(ysbRecord* data, size_t generated_tuples_this_pass)
 }
 
 
-const DataSourcePtr createYSBSource(size_t bufferCnt) {
+const DataSourcePtr createYSBSource(size_t bufferCnt, size_t campaingCnt) {
   class Functor {
   public:
 
-    Functor() : last_number(0) {}
+    Functor(size_t pCampaingCnt): campaingCnt(pCampaingCnt){}
     TupleBufferPtr operator()() {
       TupleBufferPtr buf = Dispatcher::instance().getBuffer();
       assert(buf->buffer != NULL);
       uint64_t generated_tuples_this_pass = buf->buffer_size / sizeof(ysbRecord);
 
-      generate((ysbRecord*) buf->buffer, generated_tuples_this_pass);
+      generate((ysbRecord*) buf->buffer, generated_tuples_this_pass, campaingCnt);
 
       buf->tuple_size_bytes = sizeof(ysbRecord);
       buf->num_tuples = generated_tuples_this_pass;
       return buf;
     }
-
-    uint64_t last_number;
+    size_t campaingCnt;
   };
 
+  Schema schema = Schema::create()
+  		.addField("user_id", 16)
+  		.addField("page_id", 16)
+  		.addField("campaign_id", 16)
+  		.addField("event_type", 16)
+  		.addField("ad_type", 16)
+  		.addField("current_ms", UINT64)
+  		.addField("ip", INT32);
+
 //  DataSourcePtr source(new GeneratorSource<Functor>(Schema::create().addField(createField("id", UINT32)), 100));
-  DataSourcePtr source(new GeneratorSource<Functor>(Schema::create().addField(createField("id", UINT32)), bufferCnt));
+  DataSourcePtr source(new YSBGeneratorSource<Functor>(schema, bufferCnt, campaingCnt));
 
   return source;
 }

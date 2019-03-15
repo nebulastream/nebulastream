@@ -18,7 +18,7 @@ public:
 
 private:
 };
-const WindowPtr createTestWindow();
+const WindowPtr createTestWindow(size_t pCampaingCnt);
 
 
 
@@ -26,7 +26,7 @@ class YSBWindow : public Window
 {
 public:
 
-	YSBWindow():windowSizeInSec(1), campaingCnt(10)
+	YSBWindow(size_t pCampaingCnt): windowSizeInSec(1), campaingCnt(pCampaingCnt)
 	{
 	};
 	~YSBWindow();
@@ -47,15 +47,15 @@ public:
 		IOTDB_INFO("Hash Table Content with window 1:")
 		for(size_t i = 0; i < campaingCnt; i++)
 		{
-
-			IOTDB_INFO("id=" << i << " cnt=" << hashTable[0][i])
+			if(hashTable[0][i] != 0)
+				IOTDB_INFO("id=" << i << " cnt=" << hashTable[0][i])
 		}
 
 		IOTDB_INFO("Hash Table Content with window 2:")
 		for(size_t i = 0; i < campaingCnt; i++)
 		{
-
-			IOTDB_INFO("id=" << i << " cnt=" << hashTable[1][i])
+			if(hashTable[1][i] != 0)
+				IOTDB_INFO("id=" << i << " cnt=" << hashTable[1][i])
 		}
 
 	}

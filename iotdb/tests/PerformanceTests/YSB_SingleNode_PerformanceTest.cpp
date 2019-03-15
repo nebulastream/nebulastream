@@ -1,6 +1,7 @@
 #include <cassert>
 #include <iostream>
 #include "gtest/gtest.h"
+#include <chrono>
 
 #include <Core/DataTypes.hpp>
 
@@ -18,12 +19,20 @@
 #include <Util/Logger.hpp>
 #include <memory>
 #include <cstring>
+#include <boost/program_options.hpp>
+
 
 namespace iotdb {
-sig_atomic_t user_wants_to_quit = 0;
 
-void signal_handler(int) {
-user_wants_to_quit = 1;
+typedef uint64_t Timestamp;
+using NanoSeconds = std::chrono::nanoseconds;
+using Clock = std::chrono::high_resolution_clock;
+
+Timestamp getTimestamp()
+{
+  return std::chrono::duration_cast<NanoSeconds>(
+			 Clock::now().time_since_epoch())
+	  .count();
 }
 
 struct __attribute__((packed)) ysbRecord {
@@ -54,18 +63,15 @@ struct __attribute__((packed)) ysbRecord {
 
 	};//size 78 bytes
 
-class CompiledYSBTestQueryExecutionPlan : public HandCodedQueryExecutionPlan{
+class YSB_SingleNode_PerformanceTest : public HandCodedQueryExecutionPlan{
 public:
     uint64_t count;
     uint64_t sum;
 
-    CompiledYSBTestQueryExecutionPlan()
+    YSB_SingleNode_PerformanceTest()
         : HandCodedQueryExecutionPlan(), count(0), sum(0){
 
     }
-
-
-
 
     bool firstPipelineStage(const TupleBuffer&){
         return false;
@@ -106,9 +112,8 @@ public:
 
 				if(hashTable[current_window][campaingCnt] != timeStamp)
 				{
-			        std::cout << "win" << std::endl;
 					atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
-					window->print();
+//					window->print();
 					std::fill(hashTable[current_window], hashTable[current_window]+campaingCnt, 0);
 					//memset(myarray, 0, N*sizeof(*myarray)); // TODO: is it faster?
 				}
@@ -126,53 +131,48 @@ public:
 		IOTDB_DEBUG("task " << this << " finished processing")
     }
 };
-typedef std::shared_ptr<CompiledYSBTestQueryExecutionPlan> CompiledYSBTestQueryExecutionPlanPtr;
+typedef std::shared_ptr<YSB_SingleNode_PerformanceTest> YSB_SingleNode_PerformanceTestPtr;
 
 
-int test() {
-	CompiledYSBTestQueryExecutionPlanPtr qep(new CompiledYSBTestQueryExecutionPlan());
-	DataSourcePtr source = createYSBSource(1000,10);
-	WindowPtr window = createTestWindow(10);
+int test(size_t toProcessedBuffers, size_t threadCnt, size_t campaignCnt) {
+	YSB_SingleNode_PerformanceTestPtr qep(new YSB_SingleNode_PerformanceTest());
+
+	DataSourcePtr source = createYSBSource(toProcessedBuffers,campaignCnt);
+	DataSourcePtr source2 = createYSBSource(toProcessedBuffers,campaignCnt);
+	DataSourcePtr source3 = createYSBSource(toProcessedBuffers,campaignCnt);
+
+	WindowPtr window = createTestWindow(campaignCnt);
 	qep->addDataSource(source);
-	qep->addWindow(window);
-    YSBWindow* res_window = (YSBWindow*)qep->getWindows()[0].get();
+	qep->addDataSource(source2);
+	qep->addDataSource(source3);
 
+	qep->addWindow(window);
 	Dispatcher::instance().registerQuery(qep);
 
-	ThreadPool thread_pool(1);
+	ThreadPool thread_pool(threadCnt);
 
+	Timestamp start = getTimestamp();
 	thread_pool.start();
 
-	while(source->isRunning()){
-		std::cout << "----- processing current res is:-----" << std::endl;
-		res_window->print();
-		std::cout << "Waiting 1 seconds " << std::endl;
-		std::this_thread::sleep_for(std::chrono::seconds(1));
-
+	while(source->isRunning() && source2->isRunning() && source3->isRunning()){
+//		std::cout << "----- processing current res is:-----" << std::endl;
+//		std::cout << "Waiting 1 seconds " << std::endl;
+//		std::this_thread::sleep_for(std::chrono::seconds(1));
 	}
+	Timestamp end = getTimestamp();
+	double elapsed_time = double(end - start) / (1024 * 1024 * 1024);
+	size_t processCnt = source->getNumberOfGeneratedTuples() +
+			source2->getNumberOfGeneratedTuples()
+			+ source3->getNumberOfGeneratedTuples();
 
-    size_t sum = 0;
-    for(size_t i = 0; i < 10; i++)
-    {
-    	sum += res_window->getHashTable()[0][i];
-    	sum += res_window->getHashTable()[1][i];
-    }
-    std::cout << " ========== FINAL query result  ========== " << sum << std::endl;
-    if(sum != 18000)
-    {
-    	std::cout << "wrong result" << std::endl;
-//    	assert(0);
-    }
-	EXPECT_EQ(sum, 18000);
+	std::cout << "time=" << elapsed_time << " rec/sec=" << processCnt/elapsed_time
+			<< " processd Buffers=" << toProcessedBuffers
+			<< " processd tuples=" << processCnt
+			<< " threads=" << threadCnt
+			<< " campaigns="<< campaignCnt
+			<< std::endl;
 
 	Dispatcher::instance().deregisterQuery(qep);
-
-//	while(!user_wants_to_quit)
-//	{
-//	  std::this_thread::sleep_for(std::chrono::seconds(2));
-//	  std::cout << "waiting to finish" << std::endl;
-//	}
-
 
 	thread_pool.stop();
 
@@ -209,9 +209,38 @@ void setupLogging()
 int main(int argc, const char *argv[]) {
 
 	setupLogging();
-  iotdb::Dispatcher::instance();
+	iotdb::Dispatcher::instance();
 
-  iotdb::test();
+
+	namespace po = boost::program_options;
+	po::options_description desc("Options");
+	size_t numBuffers = 1;
+	size_t numThreads = 1;
+	size_t numCampaings = 1;
+	desc.add_options()
+		("help", "Print help messages")
+		("numBuffers", po::value<uint64_t>(&numBuffers)->default_value(numBuffers), "The number of buffers")
+		("numThreads", po::value<uint64_t>(&numThreads)->default_value(numThreads), "The number of threads")
+		("numCampaings", po::value<uint64_t>(&numCampaings)->default_value(numCampaings), "The number of campaings")
+		;
+
+	    po::variables_map vm;
+	    po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
+	    po::notify(vm);
+
+	    if (vm.count("help")) {
+	        std::cout << "Basic Command Line Parameter " << std::endl
+	                  << desc << std::endl;
+	        return 0;
+	    }
+
+	    std::cout << "Settings: "
+	              << "\nnumBuffers: " << numBuffers
+	              << "\nnumThreads: " << numThreads
+	              << "\nnumCampaings: " << numCampaings
+	              << std::endl;
+
+	iotdb::test(numBuffers,numThreads,numCampaings);
 
 
   return 0;

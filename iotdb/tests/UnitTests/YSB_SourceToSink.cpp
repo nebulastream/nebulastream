@@ -97,7 +97,6 @@ public:
         char key[] = "view";
         size_t windowSizeInSec = 1;
         size_t campaingCnt = 10;
-        YSBWindow* window = (YSBWindow*)this->getWindows()[0].get();
         DataSinkPtr sink = this->getSinks()[0];
         size_t qualCnt = 0;
 		for(size_t i = 0; i < buf->num_tuples; i++)
@@ -141,16 +140,14 @@ typedef std::shared_ptr<CompiledYSBTestQueryExecutionPlan> CompiledYSBTestQueryE
 
 int test() {
 	CompiledYSBTestQueryExecutionPlanPtr qep(new CompiledYSBTestQueryExecutionPlan());
-	WindowPtr window = createTestWindow();
-	DataSourcePtr source = createYSBSource(2);
+	DataSourcePtr source = createYSBSource(2,10);
 	DataSinkPtr sink = createYSBPrintSink(source->getSchema());
-	qep->addWindow(window);
 	qep->addDataSource(source);
 	qep->addDataSink(sink);
 
 	Dispatcher::instance().registerQuery(qep);
 
-	ThreadPool thread_pool;
+	ThreadPool thread_pool(1);
 
 	thread_pool.start();
 

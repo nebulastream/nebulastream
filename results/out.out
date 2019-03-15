@@ -1,0 +1,52 @@
+Settings: 
+numBuffers: 10000
+numThreads: 1
+numCampaings: 100
+time=0.204119 rec/sec=2.54754e+06 processd Buffers=10000 processd tuples=520000 threads=1 campaigns=100
+Mar 15 2019 17:28:09 IOTDB:64 [0x7f59fdc73780] [INFO] : Final Window Result:
+print
+Mar 15 2019 17:28:09 IOTDB:47 [0x7f59fdc73780] [INFO] : Hash Table Content with window 1:
+Mar 15 2019 17:28:09 IOTDB:51 [0x7f59fdc73780] [INFO] : id=0 cnt=30000
+Mar 15 2019 17:28:09 IOTDB:51 [0x7f59fdc73780] [INFO] : id=7 cnt=40000
+Mar 15 2019 17:28:09 IOTDB:51 [0x7f59fdc73780] [INFO] : id=8 cnt=40000
+Mar 15 2019 17:28:09 IOTDB:51 [0x7f59fdc73780] [INFO] : id=9 cnt=70000
+Mar 15 2019 17:28:09 IOTDB:54 [0x7f59fdc73780] [INFO] : Hash Table Content with window 2:
+Settings: 
+numBuffers: 10000
+numThreads: 2
+numCampaings: 100
+time=0.196105 rec/sec=2.65164e+06 processd Buffers=10000 processd tuples=520000 threads=2 campaigns=100
+Mar 15 2019 17:28:09 IOTDB:64 [0x7fa3f9e31780] [INFO] : Final Window Result:
+print
+Mar 15 2019 17:28:09 IOTDB:47 [0x7fa3f9e31780] [INFO] : Hash Table Content with window 1:
+Mar 15 2019 17:28:09 IOTDB:51 [0x7fa3f9e31780] [INFO] : id=0 cnt=30000
+Mar 15 2019 17:28:09 IOTDB:51 [0x7fa3f9e31780] [INFO] : id=7 cnt=40000
+Mar 15 2019 17:28:09 IOTDB:51 [0x7fa3f9e31780] [INFO] : id=8 cnt=40000
+Mar 15 2019 17:28:09 IOTDB:51 [0x7fa3f9e31780] [INFO] : id=9 cnt=70000
+Mar 15 2019 17:28:09 IOTDB:54 [0x7fa3f9e31780] [INFO] : Hash Table Content with window 2:
+Settings: 
+numBuffers: 10000
+numThreads: 4
+numCampaings: 100
+time=0.20811 rec/sec=2.49867e+06 processd Buffers=10000 processd tuples=520000 threads=4 campaigns=100
+Mar 15 2019 17:28:09 IOTDB:64 [0x7efc97d40780] [INFO] : Final Window Result:
+print
+Mar 15 2019 17:28:09 IOTDB:47 [0x7efc97d40780] [INFO] : Hash Table Content with window 1:
+Mar 15 2019 17:28:09 IOTDB:51 [0x7efc97d40780] [INFO] : id=0 cnt=30000
+Mar 15 2019 17:28:09 IOTDB:51 [0x7efc97d40780] [INFO] : id=7 cnt=40000
+Mar 15 2019 17:28:09 IOTDB:51 [0x7efc97d40780] [INFO] : id=8 cnt=40000
+Mar 15 2019 17:28:09 IOTDB:51 [0x7efc97d40780] [INFO] : id=9 cnt=70000
+Mar 15 2019 17:28:09 IOTDB:54 [0x7efc97d40780] [INFO] : Hash Table Content with window 2:
+Settings: 
+numBuffers: 10000
+numThreads: 8
+numCampaings: 100
+time=0.278459 rec/sec=1.86742e+06 processd Buffers=10000 processd tuples=520000 threads=8 campaigns=100
+Mar 15 2019 17:28:10 IOTDB:64 [0x7f2aab43b780] [INFO] : Final Window Result:
+print
+Mar 15 2019 17:28:10 IOTDB:47 [0x7f2aab43b780] [INFO] : Hash Table Content with window 1:
+Mar 15 2019 17:28:10 IOTDB:51 [0x7f2aab43b780] [INFO] : id=0 cnt=30000
+Mar 15 2019 17:28:10 IOTDB:51 [0x7f2aab43b780] [INFO] : id=7 cnt=40000
+Mar 15 2019 17:28:10 IOTDB:51 [0x7f2aab43b780] [INFO] : id=8 cnt=40000
+Mar 15 2019 17:28:10 IOTDB:51 [0x7f2aab43b780] [INFO] : id=9 cnt=70000
+Mar 15 2019 17:28:10 IOTDB:54 [0x7f2aab43b780] [INFO] : Hash Table Content with window 2:

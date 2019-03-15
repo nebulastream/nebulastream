@@ -32,13 +32,15 @@ public:
 
   //debugging
   void setNumBuffersToProcess(size_t cnt){num_buffers_to_process = cnt;};
+  size_t getNumberOfGeneratedTuples(){return generatedTuples;};
 
 private:
   bool run_thread;
   std::thread thread;
 
 protected:
-  uint64_t num_buffers_to_process;
+  size_t num_buffers_to_process;
+  size_t generatedTuples;
 
 
 protected:
@@ -47,7 +49,7 @@ protected:
 typedef std::shared_ptr<DataSource> DataSourcePtr;
 
 const DataSourcePtr createTestSource();
-const DataSourcePtr createYSBSource(size_t bufferCnt);
+const DataSourcePtr createYSBSource(size_t bufferCnt, size_t campaingCnt);
 
 const DataSourcePtr createZmqSource(const Schema &schema, const std::string &host, const uint16_t port);
 const DataSourcePtr createBinaryFileSource(const Schema &schema, const std::string &path_to_file);
