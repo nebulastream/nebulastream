@@ -134,19 +134,19 @@ public:
 typedef std::shared_ptr<YSB_SingleNode_PerformanceTest> YSB_SingleNode_PerformanceTestPtr;
 
 
-int test(size_t toProcessedBuffers, size_t threadCnt, size_t campaignCnt) {
+int test(size_t toProcessedBuffers, size_t threadCnt, size_t campaignCnt, size_t sourceCnt) {
 	YSB_SingleNode_PerformanceTestPtr qep(new YSB_SingleNode_PerformanceTest());
 
-	DataSourcePtr source = createYSBSource(toProcessedBuffers,campaignCnt);
-	DataSourcePtr source2 = createYSBSource(toProcessedBuffers,campaignCnt);
-	DataSourcePtr source3 = createYSBSource(toProcessedBuffers,campaignCnt);
+	std::vector<DataSourcePtr> sources;
+	for(size_t i = 0; i < sourceCnt; i++)
+	{
+		sources.push_back(createYSBSource(toProcessedBuffers,campaignCnt));
+		qep->addDataSource(sources[i]);
+	}
 
 	WindowPtr window = createTestWindow(campaignCnt);
-	qep->addDataSource(source);
-	qep->addDataSource(source2);
-	qep->addDataSource(source3);
-
 	qep->addWindow(window);
+
 	Dispatcher::instance().registerQuery(qep);
 
 	ThreadPool thread_pool(threadCnt);
@@ -154,22 +154,35 @@ int test(size_t toProcessedBuffers, size_t threadCnt, size_t campaignCnt) {
 	Timestamp start = getTimestamp();
 	thread_pool.start();
 
-	while(source->isRunning() && source2->isRunning() && source3->isRunning()){
+	size_t endedRuns = 0;
+	while(sourceCnt != endedRuns){
+		endedRuns = 0;
+		for(size_t i = 0; i < sourceCnt; i++)
+		{
+			if(!sources[i]->isRunning())
+			{
+				endedRuns++;
+			}
+		}
 //		std::cout << "----- processing current res is:-----" << std::endl;
 //		std::cout << "Waiting 1 seconds " << std::endl;
 //		std::this_thread::sleep_for(std::chrono::seconds(1));
 	}
 	Timestamp end = getTimestamp();
 	double elapsed_time = double(end - start) / (1024 * 1024 * 1024);
-	size_t processCnt = source->getNumberOfGeneratedTuples() +
-			source2->getNumberOfGeneratedTuples()
-			+ source3->getNumberOfGeneratedTuples();
+
+	size_t processCnt = 0;
+	for(size_t i = 0; i < sourceCnt; i++)
+	{
+		processCnt += sources[i]->getNumberOfGeneratedTuples();
+	}
 
 	std::cout << "time=" << elapsed_time << " rec/sec=" << processCnt/elapsed_time
 			<< " processd Buffers=" << toProcessedBuffers
 			<< " processd tuples=" << processCnt
 			<< " threads=" << threadCnt
 			<< " campaigns="<< campaignCnt
+			<< " sources=" << sourceCnt
 			<< std::endl;
 
 	Dispatcher::instance().deregisterQuery(qep);
@@ -217,11 +230,13 @@ int main(int argc, const char *argv[]) {
 	size_t numBuffers = 1;
 	size_t numThreads = 1;
 	size_t numCampaings = 1;
+	size_t numSources = 1;
 	desc.add_options()
 		("help", "Print help messages")
 		("numBuffers", po::value<uint64_t>(&numBuffers)->default_value(numBuffers), "The number of buffers")
 		("numThreads", po::value<uint64_t>(&numThreads)->default_value(numThreads), "The number of threads")
 		("numCampaings", po::value<uint64_t>(&numCampaings)->default_value(numCampaings), "The number of campaings")
+		("numSources", po::value<uint64_t>(&numSources)->default_value(numSources), "The number of sources")
 		;
 
 	    po::variables_map vm;
@@ -238,9 +253,11 @@ int main(int argc, const char *argv[]) {
 	              << "\nnumBuffers: " << numBuffers
 	              << "\nnumThreads: " << numThreads
 	              << "\nnumCampaings: " << numCampaings
+	              << "\nnumSources: " << numSources
+
 	              << std::endl;
 
-	iotdb::test(numBuffers,numThreads,numCampaings);
+	iotdb::test(numBuffers,numThreads,numCampaings, numSources);
 
 
   return 0;
