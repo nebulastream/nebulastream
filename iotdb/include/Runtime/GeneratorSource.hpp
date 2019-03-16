@@ -32,6 +32,8 @@ template <typename F> TupleBufferPtr GeneratorSource<F>::receiveData() {
     //we wait until the buffer is filled
 	TupleBufferPtr buf = functor();
 	generatedTuples += buf->num_tuples;
+	generatedBuffers++;
+
     return buf;
 };
 
@@ -62,6 +64,7 @@ template <typename F> TupleBufferPtr YSBGeneratorSource<F>::receiveData() {
     //we wait until the buffer is filled
 	TupleBufferPtr buf = functor();
 	generatedTuples += buf->num_tuples;
+	generatedBuffers++;
     return buf;
 };
 

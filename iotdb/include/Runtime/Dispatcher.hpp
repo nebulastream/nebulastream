@@ -35,7 +35,7 @@ public:
   void addWork(const TupleBufferPtr, DataSource *);
   void completedWork(TaskPtr task);
 
-  void printStatistics();
+  void printStatistics(const QueryExecutionPlanPtr qep);
 
   static Dispatcher &instance();
 

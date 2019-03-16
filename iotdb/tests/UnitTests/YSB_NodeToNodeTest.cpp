@@ -224,8 +224,8 @@ int test() {
 					<< std::endl;
 
 	YSBPrintSink* ySink = (YSBPrintSink*)sink2.get();
-	std::cout << "printed tuples=" << ySink->getNumberOfPrintedTuples() << std::endl;
-	if(ySink->getNumberOfPrintedTuples()!= 18)
+	std::cout << "printed tuples=" << ySink->getNumberOfProcessedTuples() << std::endl;
+	if(ySink->getNumberOfProcessedTuples()!= 18)
 	{
 		std::cout << "wrong result" << std::endl;
 		assert(0);
