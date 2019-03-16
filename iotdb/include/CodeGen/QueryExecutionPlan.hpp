@@ -13,35 +13,75 @@
 #include <Runtime/DataSink.hpp>
 #include <Runtime/Window.hpp>
 #include <map>
+#include <boost/serialization/list.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/shared_ptr.hpp>
 
 namespace iotdb {
+class QueryExecutionPlan;
+typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 
 class QueryExecutionPlan {
 public:
-  virtual bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf);
-  const std::vector<DataSourcePtr> getSources() const;
-  const std::vector<WindowPtr> getWindows() const;
-  const std::vector<DataSinkPtr> getSinks() const;
+    friend class boost::serialization::access;
+    QueryExecutionPlan();
 
-  uint32_t stageIdFromSource(DataSource * source);
-  virtual ~QueryExecutionPlan();
-  size_t getQueryResult(std::string name){return qResult[name];};
+	virtual bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf);
+	const std::vector<DataSourcePtr> getSources() const;
+	const std::vector<WindowPtr> getWindows() const;
+	const std::vector<DataSinkPtr> getSinks() const;
 
-  void addDataSource(DataSourcePtr source)
+	uint32_t stageIdFromSource(DataSource * source);
+	virtual ~QueryExecutionPlan();
+	size_t getQueryResult(std::string name){return qResult[name];};
+
+	void addDataSource(DataSourcePtr source)
 	{
 	   sources.push_back(source);
 	}
 
-	 void addDataSink(DataSinkPtr sink)
+	void addDataSink(DataSinkPtr sink)
 	{
 	   sinks.push_back(sink);
 	}
-	 void addWindow(WindowPtr window)
+	void addWindow(WindowPtr window)
 	{
 	   windows.push_back(window);
 	}
+
+    template<class Archive>
+	void serialize(Archive & ar, const unsigned int version)
+	{
+    	ar & sources;
+    	ar & sinks;
+    	ar & windows;
+//    	ar & stages;
+//    	ar & source_to_stage;
+//    	ar & stage_to_dest;
+//    	ar & qResult;
+	}
+
+    void print()
+    {
+		for (auto source : sources) {
+			IOTDB_INFO("Source:" << source)
+			IOTDB_INFO("\t Generated Buffers=" << source->getNumberOfGeneratedBuffers())
+			IOTDB_INFO("\t Generated Tuples=" << source->getNumberOfGeneratedTuples())
+		}
+		for (auto window : windows) {
+			IOTDB_INFO("Window:" << window)
+			IOTDB_INFO("\t NumberOfEntries=" << window->getNumberOfEntries())
+			IOTDB_INFO("Window Final Result:")
+			window->print();
+
+		}
+		for (auto sink : sinks) {
+			IOTDB_INFO("Sink:" << sink)
+			IOTDB_INFO("\t Generated Buffers=" << sink->getNumberOfProcessedBuffers())
+			IOTDB_INFO("\t Generated Tuples=" << sink->getNumberOfProcessedTuples())
+		}
+    }
 protected:
-  QueryExecutionPlan();
   QueryExecutionPlan(const std::vector<DataSourcePtr> &_sources, 
           const std::vector<PipelineStagePtr> &_stages, 
           const std::map<DataSource *, uint32_t> &_source_to_stage,
@@ -57,7 +97,8 @@ protected:
   std::map<std::string, size_t> qResult;
 
 };
-typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
+const QueryExecutionPlanPtr createTestQEP();
+
 }
 
 #endif /* INCLUDE_QUERYEXECUTIONPLAN_H_ */

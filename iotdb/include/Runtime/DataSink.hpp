@@ -5,24 +5,36 @@
 #include <API/Schema.hpp>
 #include <Core/TupleBuffer.hpp>
 #include <Util/ErrorHandling.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/shared_ptr.hpp>
+
 namespace iotdb {
 
 class DataSink {
 public:
-  DataSink(const Schema &schema);
-  virtual ~DataSink();
+	DataSink(const Schema &schema);
+	virtual ~DataSink();
 
-  virtual void setup() = 0;
-  virtual void shutdown() = 0;
-  bool writeData(const std::vector<TupleBufferPtr> &input_buffers);
-  bool writeData(const TupleBufferPtr input_buffer);
-  virtual bool writeData(const std::vector<TupleBuffer*> &input_buffers);
-  virtual bool writeData(const TupleBuffer* input_buffer) = 0;
-  size_t getNumberOfProcessedBuffers(){return processedBuffer;}
-  size_t getNumberOfProcessedTuples(){return processedTuples;}
+	virtual void setup() = 0;
+	virtual void shutdown() = 0;
+	bool writeData(const std::vector<TupleBufferPtr> &input_buffers);
+	bool writeData(const TupleBufferPtr input_buffer);
+	virtual bool writeData(const std::vector<TupleBuffer*> &input_buffers);
+	virtual bool writeData(const TupleBuffer* input_buffer) = 0;
+	size_t getNumberOfProcessedBuffers(){return processedBuffer;}
+	size_t getNumberOfProcessedTuples(){return processedTuples;}
 
-  virtual const std::string toString() const = 0;
-  const Schema &getSchema() const;
+	virtual const std::string toString() const = 0;
+	const Schema &getSchema() const;
+
+	template<class Archive>
+	void serialize(Archive & ar, const unsigned int version)
+	{
+		ar & schema;
+		ar & processedBuffer;
+		ar & processedTuples;
+	}
 
 protected:
   Schema schema;
