@@ -9,11 +9,10 @@
 #define INCLUDE_QUERYEXECUTIONPLAN_H_
 #include <Runtime/DataSource.hpp>
 #include <CodeGen/PipelineStage.hpp>
-#include <vector>
+//#include <vector>
 #include <Runtime/DataSink.hpp>
 #include <Runtime/Window.hpp>
 #include <map>
-#include <boost/serialization/list.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 

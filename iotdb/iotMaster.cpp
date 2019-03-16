@@ -180,6 +180,7 @@ void restore_qep(QueryExecutionPlan* s, const char * filename)
 
     // restore the schedule from the archive
     ia >> s;
+    std::cout << "numsrc=" << s->getSources().size() << std::endl;
 }
 
 int main(int argc, const char *argv[]) {
@@ -190,6 +191,7 @@ int main(int argc, const char *argv[]) {
 	QueryExecutionPlanPtr q = createTestQEP();
 
 	DataSourcePtr src = createYSBSource(100,10);
+//	DataSourcePtr src = createTestSource();
 	q->addDataSource(src);
 
 	std::cout << "qep before:" << std::endl;
@@ -198,8 +200,15 @@ int main(int argc, const char *argv[]) {
 
 	std::cout << "save finished:" << std::endl;
 
-	QueryExecutionPlanPtr q2 = createTestQEP();
-	restore_qep(q2.get(), filename.c_str());
+//	QueryExecutionPlanPtr q2 = createTestQEP();
+	QueryExecutionPlan* q2 = new QueryExecutionPlan();
+
+    std::ifstream ifs(filename);
+    boost::archive::text_iarchive ia(ifs);
+    ia >> q2;
+    std::cout << "numsrc=" << q2->getSources().size() << std::endl;
+
+//	restore_qep(q2, filename.c_str());
 	std::cout << "qep afterwards:" << std::endl;
 	q2->print();
 
@@ -225,7 +234,6 @@ int main(int argc, const char *argv[]) {
 	FogRunTime& runtime = FogRunTime::getInstance();
 	NodeEnginePtr nodePtr = createTestNode();
 	runtime.registerNode(nodePtr);
-
 
 	runtime.deployQuery(qep);
 
