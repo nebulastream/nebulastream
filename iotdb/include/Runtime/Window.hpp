@@ -4,6 +4,10 @@
 #include <Util/Logger.hpp>
 #include <atomic>
 #include <iostream>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/shared_ptr.hpp>
+
 
 namespace iotdb{
 class Window;
@@ -16,6 +20,12 @@ public:
 	virtual void print() = 0;
 	virtual void shutdown() = 0;
 	virtual size_t getNumberOfEntries() = 0;
+
+	template<class Archive>
+	void serialize(Archive & ar, const unsigned int version)
+	{
+	}
+
 
 private:
 };

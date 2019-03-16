@@ -13,6 +13,11 @@
 #include <iostream>
 #include <sstream>
 
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/shared_ptr.hpp>
+#include <boost/serialization/base_object.hpp>
+
 namespace iotdb {
 
 template <typename F> class GeneratorSource : public DataSource {
@@ -46,39 +51,34 @@ template <typename F>
     return ss.str();
   }
 
-template <typename F> class YSBGeneratorSource : public DataSource {
+class YSBGeneratorSource : public DataSource {
 public:
-	YSBGeneratorSource(const Schema& schema, const uint64_t pNum_buffers_to_process, size_t pCampaingCnt)
-      : DataSource(schema), functor(pCampaingCnt){
-	  this->num_buffers_to_process = pNum_buffers_to_process;
-	  this->numberOfCampaings = pCampaingCnt;
-  }
+    friend class boost::serialization::access;
+    YSBGeneratorSource();
+
+	YSBGeneratorSource(const Schema& schema, const uint64_t pNum_buffers_to_process, size_t pCampaingCnt);
+
+	template<class Archive>
+	void serialize(Archive & ar, const unsigned int version)
+	{
+        ar & boost::serialization::base_object<DataSource>(*this);
+		ar & numberOfCampaings;
+
+	}
+
   TupleBufferPtr receiveData();
   const std::string toString() const;
 private:
-  F functor;
+  iotdb::YSBFunctor functor;
   uint64_t numberOfCampaings;
 };
 
-template <typename F> TupleBufferPtr YSBGeneratorSource<F>::receiveData() {
-    //we wait until the buffer is filled
-	TupleBufferPtr buf = functor();
-	generatedTuples += buf->num_tuples;
-	generatedBuffers++;
-    return buf;
+
 };
-
-
-template <typename F>
-  const std::string YSBGeneratorSource<F>::toString() const{
-    std::stringstream ss;
-    ss << "YSBGeneratorSource(SCHEMA(" << schema.toString();
-    ss << "), NUM_BUFFERS=" << num_buffers_to_process <<
-    		" numberOfCampaings=" << numberOfCampaings << "))";
-    return ss.str();
-  }
-};
-
+#include <boost/serialization/export.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+BOOST_CLASS_EXPORT_KEY(iotdb::YSBGeneratorSource);
 
 
 #endif /* INCLUDE_GENERATORSOURCE_H_ */

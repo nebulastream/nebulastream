@@ -5,18 +5,30 @@
 #include <random>
 
 #include <Runtime/BinarySource.hpp>
-#include <Runtime/DataSource.hpp>
 #include <Runtime/Dispatcher.hpp>
 #include <Runtime/GeneratorSource.hpp>
+
 #include <Runtime/RemoteSocketSource.hpp>
 #include <Runtime/ZmqSource.hpp>
 #include <Util/ErrorHandling.hpp>
 #include <Util/Logger.hpp>
 
+#include <boost/serialization/export.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <Runtime/DataSource.hpp>
+BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::DataSource);
+
+
 namespace iotdb {
+
 
 DataSource::DataSource(const Schema &_schema) : run_thread(false), thread(), schema(_schema), generatedTuples(0), generatedBuffers(0) {
   IOTDB_DEBUG("DataSource " << this << ": Init Data Source!")
+}
+
+DataSource::DataSource() : run_thread(false), thread(), generatedTuples(0), generatedBuffers(0) {
+  IOTDB_DEBUG("DataSource " << this << ": Init Data Source Default!")
 }
 
 const Schema &DataSource::getSchema() const { return schema; }
@@ -185,24 +197,21 @@ void generate(ysbRecord* data, size_t generated_tuples_this_pass, size_t campain
 }
 
 
+TupleBufferPtr YSBFunctor::operator()()
+{
+	TupleBufferPtr buf = Dispatcher::instance().getBuffer();
+	assert(buf->buffer != NULL);
+	uint64_t generated_tuples_this_pass = buf->buffer_size / sizeof(ysbRecord);
+
+	generate((ysbRecord*) buf->buffer, generated_tuples_this_pass, campaingCnt);
+
+	buf->tuple_size_bytes = sizeof(ysbRecord);
+	buf->num_tuples = generated_tuples_this_pass;
+	return buf;
+}
+
 const DataSourcePtr createYSBSource(size_t bufferCnt, size_t campaingCnt) {
-  class YSBFunctor {
-  public:
 
-	 YSBFunctor(size_t pCampaingCnt): campaingCnt(pCampaingCnt){}
-     TupleBufferPtr operator()() {
-      TupleBufferPtr buf = Dispatcher::instance().getBuffer();
-      assert(buf->buffer != NULL);
-      uint64_t generated_tuples_this_pass = buf->buffer_size / sizeof(ysbRecord);
-
-      generate((ysbRecord*) buf->buffer, generated_tuples_this_pass, campaingCnt);
-
-      buf->tuple_size_bytes = sizeof(ysbRecord);
-      buf->num_tuples = generated_tuples_this_pass;
-      return buf;
-    }
-    size_t campaingCnt;
-  };
 
   Schema schema = Schema::create()
   		.addField("user_id", 16)
@@ -214,7 +223,7 @@ const DataSourcePtr createYSBSource(size_t bufferCnt, size_t campaingCnt) {
   		.addField("ip", INT32);
 
 //  DataSourcePtr source(new GeneratorSource<Functor>(Schema::create().addField(createField("id", UINT32)), 100));
-  DataSourcePtr source(new YSBGeneratorSource<YSBFunctor>(schema, bufferCnt, campaingCnt));
+  DataSourcePtr source(new YSBGeneratorSource(schema, bufferCnt, campaingCnt));
 
   return source;
 }
