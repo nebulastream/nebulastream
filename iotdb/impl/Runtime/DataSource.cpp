@@ -15,7 +15,7 @@
 
 namespace iotdb {
 
-DataSource::DataSource(const Schema &_schema) : run_thread(false), thread(), schema(_schema), generatedTuples(0) {
+DataSource::DataSource(const Schema &_schema) : run_thread(false), thread(), schema(_schema), generatedTuples(0), generatedBuffers(0) {
   IOTDB_DEBUG("DataSource " << this << ": Init Data Source!")
 }
 

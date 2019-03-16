@@ -178,14 +178,14 @@ int test(size_t toProcessedBuffers, size_t threadCnt, size_t campaignCnt, size_t
 	}
 
 	std::cout << "time=" << elapsed_time << " rec/sec=" << processCnt/elapsed_time
-			<< " processd Buffers=" << toProcessedBuffers
-			<< " processd tuples=" << processCnt
+			<< " Processed Buffers=" << toProcessedBuffers
+			<< " Processed tuples=" << processCnt
 			<< " threads=" << threadCnt
 			<< " campaigns="<< campaignCnt
 			<< " sources=" << sourceCnt
 			<< std::endl;
 
-	Dispatcher::instance().printStatistics();
+	Dispatcher::instance().printStatistics(qep);
 	Dispatcher::instance().deregisterQuery(qep);
 
 	thread_pool.stop();

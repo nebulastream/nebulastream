@@ -15,6 +15,7 @@ public:
 	virtual void setup() = 0;
 	virtual void print() = 0;
 	virtual void shutdown() = 0;
+	virtual size_t getNumberOfEntries() = 0;
 
 private:
 };
@@ -29,6 +30,7 @@ public:
 	YSBWindow(size_t pCampaingCnt): windowSizeInSec(1), campaingCnt(pCampaingCnt)
 	{
 	};
+
 	~YSBWindow();
 	void setup()
 	{
@@ -43,7 +45,6 @@ public:
 	}
 	void print()
 	{
-		std::cout << "print" << std::endl;
 		IOTDB_INFO("Hash Table Content with window 1:")
 		for(size_t i = 0; i < campaingCnt; i++)
 		{
@@ -57,12 +58,30 @@ public:
 			if(hashTable[1][i] != 0)
 				IOTDB_INFO("id=" << i << " cnt=" << hashTable[1][i])
 		}
-
 	}
+
+	size_t getNumberOfEntries()
+	{
+		size_t numEntries = 0;
+		for(size_t i = 0; i < campaingCnt; i++)
+		{
+			if(hashTable[0][i] != 0)
+				numEntries += hashTable[0][i];
+		}
+
+		IOTDB_INFO("Hash Table Content with window 2:")
+		for(size_t i = 0; i < campaingCnt; i++)
+		{
+			if(hashTable[1][i] != 0)
+				numEntries += hashTable[1][i];
+		}
+		return numEntries;
+	}
+
 	void shutdown()
 	{
-		IOTDB_INFO("Final Window Result:");
-		print();
+//		IOTDB_INFO("Final Window Result:");
+//		print();
 		//maybe also delete the entries?
 		delete[] hashTable[0];
 		delete[] hashTable[1];

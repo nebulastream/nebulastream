@@ -22,8 +22,6 @@ public:
 
   const std::string toString() const override;
 
-protected:
-  size_t printedTuples;
 };
 
 
@@ -37,7 +35,6 @@ public:
 
   void setup(){}
   void shutdown(){}
-  size_t getNumberOfPrintedTuples(){return printedTuples;};
 
   const std::string toString() const override;
 

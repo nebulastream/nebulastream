@@ -19,6 +19,7 @@ public:
   virtual bool writeData(const std::vector<TupleBuffer*> &input_buffers);
   virtual bool writeData(const TupleBuffer* input_buffer) = 0;
   size_t getNumberOfProcessedBuffers(){return processedBuffer;}
+  size_t getNumberOfProcessedTuples(){return processedTuples;}
 
   virtual const std::string toString() const = 0;
   const Schema &getSchema() const;
@@ -26,6 +27,7 @@ public:
 protected:
   Schema schema;
   size_t processedBuffer;
+  size_t processedTuples;
 };
 typedef std::shared_ptr<DataSink> DataSinkPtr;
 

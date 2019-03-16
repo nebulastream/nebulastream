@@ -159,12 +159,12 @@ int test() {
 	}
 
 	YSBPrintSink* ySink = (YSBPrintSink*)sink.get();
-	std::cout << "printed tuples=" << ySink->getNumberOfPrintedTuples() << std::endl;
+	std::cout << "printed tuples=" << ySink->getNumberOfProcessedTuples() << std::endl;
 
 	Dispatcher::instance().deregisterQuery(qep);
 	//thread_pool.stop();
 
-	if(ySink->getNumberOfPrintedTuples()!= 36)
+	if(ySink->getNumberOfProcessedTuples()!= 36)
 	{
 		std::cout << "wrong result" << std::endl;
 

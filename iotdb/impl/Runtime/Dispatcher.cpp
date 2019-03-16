@@ -126,13 +126,35 @@ Dispatcher &Dispatcher::instance() {
   return instance;
 }
 
-void Dispatcher::printStatistics()
+void Dispatcher::printStatistics(const QueryExecutionPlanPtr qep)
 {
-	std::cout << "Dispatcher Statistics:" << std::endl;
-	std::cout << "\t workerHitEmptyTaskQueue=" << workerHitEmptyTaskQueue << std::endl;
-	std::cout << "\t processedTasks=" << processedTasks << std::endl;
+	IOTDB_INFO("Dispatcher Statistics:")
+	IOTDB_INFO("\t workerHitEmptyTaskQueue=" << workerHitEmptyTaskQueue)
+	IOTDB_INFO("\t processedTasks=" << processedTasks)
 
 	BufferManager::instance().printStatistics();
+	IOTDB_INFO("Source Statistics:")
+	auto sources = qep->getSources();
+	for (auto source : sources) {
+		IOTDB_INFO("Source:" << source)
+		IOTDB_INFO("\t Generated Buffers=" << source->getNumberOfGeneratedBuffers())
+		IOTDB_INFO("\t Generated Tuples=" << source->getNumberOfGeneratedTuples())
+	}
+	auto windows = qep->getWindows();
+	for (auto window : windows) {
+		IOTDB_INFO("Window:" << window)
+		IOTDB_INFO("\t NumberOfEntries=" << window->getNumberOfEntries())
+		IOTDB_INFO("Window Final Result:")
+		window->print();
+
+	}
+	auto sinks = qep->getSinks();
+	for (auto sink : sinks) {
+		IOTDB_INFO("Sink:" << sink)
+		IOTDB_INFO("\t Generated Buffers=" << sink->getNumberOfProcessedBuffers())
+		IOTDB_INFO("\t Generated Tuples=" << sink->getNumberOfProcessedTuples())
+	}
+
 }
 
 

@@ -33,6 +33,7 @@ public:
   //debugging
   void setNumBuffersToProcess(size_t cnt){num_buffers_to_process = cnt;};
   size_t getNumberOfGeneratedTuples(){return generatedTuples;};
+  size_t getNumberOfGeneratedBuffers(){return generatedBuffers;};
 
 private:
   bool run_thread;
@@ -41,6 +42,7 @@ private:
 protected:
   size_t num_buffers_to_process;
   size_t generatedTuples;
+  size_t generatedBuffers;
 
 
 protected:
