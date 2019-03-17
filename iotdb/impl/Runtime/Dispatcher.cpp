@@ -27,6 +27,11 @@ Dispatcher::~Dispatcher() {
  	window_to_query_map.clear();
 }
 
+void Dispatcher::setBufferSize(size_t size)
+{
+	BufferManager::instance().setBufferSize(size);
+}
+
 TupleBufferPtr Dispatcher::getBuffer() {
 //	std::unique_lock<std::mutex> lock(bufferMutex);
 	IOTDB_DEBUG("Dispatcher: getBuffer(): Dispatcher returns buffer")

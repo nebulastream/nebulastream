@@ -25,6 +25,8 @@ namespace iotdb {
 class Dispatcher {
 public:
   TupleBufferPtr getBuffer();
+
+  void setBufferSize(size_t size);
   void releaseBuffer(const TupleBufferPtr ptr);
   void releaseBuffer(const TupleBuffer* ptr);
 

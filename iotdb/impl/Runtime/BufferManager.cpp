@@ -9,7 +9,7 @@ namespace iotdb {
 BufferManager::BufferManager():mutex(), noFreeBuffer(0), releasedBuffer(0), providedBuffer(0) {
 	IOTDB_DEBUG("BufferManager: Enter Constructor of BufferManager.")
 	maxBufferCnt = 10000;//changed from 3
-	bufferSizeInByte = 4 * 1024 * 1024;//set buffer to 4KB
+	bufferSizeInByte = 4 * 1024 * 10;//set buffer to 4KB
 	IOTDB_DEBUG("BufferManager: Set maximun number of buffer to "<<  maxBufferCnt
 			<< " and a bufferSize of KB:" << bufferSizeInByte/1024)
 	IOTDB_DEBUG("BufferManager: initialize buffers")
@@ -33,7 +33,16 @@ BufferManager &BufferManager::instance() {
   static BufferManager instance;
   return instance;
 }
-void BufferManager::setNewBufferSize(size_t size)
+void BufferManager::setNumberOfBuffers(size_t size)
+{
+	buffer_pool.clear();
+	maxBufferCnt = size;
+	for(size_t i = 0; i < maxBufferCnt; i++)
+	{
+		addBuffer();
+	}
+}
+void BufferManager::setBufferSize(size_t size)
 {
 	buffer_pool.clear();
 	bufferSizeInByte = size;
@@ -127,10 +136,10 @@ void BufferManager::releaseBuffer(const TupleBufferPtr tuple_buffer) {
 
 void BufferManager::printStatistics()
 {
-	std::cout << "BufferManager Statistics:" << std::endl;
-	std::cout << "\t noFreeBuffer=" << noFreeBuffer << std::endl;
-	std::cout << "\t providedBuffer=" << providedBuffer << std::endl;
-	std::cout << "\t releasedBuffer=" << releasedBuffer << std::endl;
+	IOTDB_INFO("BufferManager Statistics:")
+	IOTDB_INFO("\t noFreeBuffer=" << noFreeBuffer)
+	IOTDB_INFO("\t providedBuffer=" << providedBuffer)
+	IOTDB_INFO("\t releasedBuffer=" << releasedBuffer)
 
 }
 

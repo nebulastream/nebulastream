@@ -232,13 +232,18 @@ int main(int argc, const char *argv[]) {
 	size_t numThreads = 1;
 	size_t numCampaings = 1;
 	size_t numSources = 1;
+	size_t bufferSizeInByte= 4096;
+
 	desc.add_options()
 		("help", "Print help messages")
 		("numBuffers", po::value<uint64_t>(&numBuffers)->default_value(numBuffers), "The number of buffers")
 		("numThreads", po::value<uint64_t>(&numThreads)->default_value(numThreads), "The number of threads")
 		("numCampaings", po::value<uint64_t>(&numCampaings)->default_value(numCampaings), "The number of campaings")
 		("numSources", po::value<uint64_t>(&numSources)->default_value(numSources), "The number of sources")
+		("bufferSizeInByte", po::value<uint64_t>(&bufferSizeInByte)->default_value(bufferSizeInByte), "Buffersize in Byte")
+
 		;
+
 
 	    po::variables_map vm;
 	    po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
@@ -255,8 +260,11 @@ int main(int argc, const char *argv[]) {
 	              << "\nnumThreads: " << numThreads
 	              << "\nnumCampaings: " << numCampaings
 	              << "\nnumSources: " << numSources
-
+				  << "\nBufferSizeInBytes: " << bufferSizeInByte
+				  << "\nnumTuplesPerBuffer: " << bufferSizeInByte / sizeof(iotdb::ysbRecord)
 	              << std::endl;
+
+	iotdb::Dispatcher::instance().setBufferSize(bufferSizeInByte);
 
 	iotdb::test(numBuffers,numThreads,numCampaings, numSources);
 

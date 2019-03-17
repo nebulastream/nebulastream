@@ -30,7 +30,9 @@ public:
   void unblockThreads() { cv.notify_all(); }
   void printStatistics();
 
-  void setNewBufferSize(size_t size);
+  void setNumberOfBuffers(size_t size);
+  void setBufferSize(size_t size);
+
 private:
   BufferManager();
   BufferManager(const BufferManager &);
