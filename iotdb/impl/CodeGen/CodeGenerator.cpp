@@ -206,7 +206,7 @@ namespace iotdb {
 
   bool C_CodeGenerator::generateCode(const DataSourcePtr& source, const PipelineContextPtr& context, std::ostream& out){
 
-    input_schema_=source->getSchema();
+    input_schema_= source->getSchema();
 
     StructDeclaration struct_decl_tuple_buffer = getStructDeclarationTupleBuffer();
     StructDeclaration struct_decl_state = getStructDeclarationWindowState();

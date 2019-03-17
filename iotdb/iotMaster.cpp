@@ -191,7 +191,6 @@ int main(int argc, const char *argv[]) {
 	QueryExecutionPlanPtr q = createTestQEP();
 
 	DataSourcePtr src = createYSBSource(100,10);
-//	DataSourcePtr src = createTestSource();
 	q->addDataSource(src);
 
 	std::cout << "qep before:" << std::endl;
@@ -207,8 +206,6 @@ int main(int argc, const char *argv[]) {
     boost::archive::text_iarchive ia(ifs);
     ia >> q2;
     std::cout << "numsrc=" << q2->getSources().size() << std::endl;
-
-//	restore_qep(q2, filename.c_str());
 	std::cout << "qep afterwards:" << std::endl;
 	q2->print();
 
