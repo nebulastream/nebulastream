@@ -52,6 +52,7 @@ public:
   void setNumBuffersToProcess(size_t cnt){num_buffers_to_process = cnt;};
   size_t getNumberOfGeneratedTuples(){return generatedTuples;};
   size_t getNumberOfGeneratedBuffers(){return generatedBuffers;};
+  const std::string getSourceSchema(){return schema.toString();};
 
 private:
   bool run_thread;

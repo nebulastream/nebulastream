@@ -66,13 +66,13 @@ public:
 			IOTDB_INFO("Source:" << source)
 			IOTDB_INFO("\t Generated Buffers=" << source->getNumberOfGeneratedBuffers())
 			IOTDB_INFO("\t Generated Tuples=" << source->getNumberOfGeneratedTuples())
+			IOTDB_INFO("\t Schema=" << source->getSourceSchema())
 		}
 		for (auto window : windows) {
 			IOTDB_INFO("Window:" << window)
 			IOTDB_INFO("\t NumberOfEntries=" << window->getNumberOfEntries())
 			IOTDB_INFO("Window Final Result:")
 			window->print();
-
 		}
 		for (auto sink : sinks) {
 			IOTDB_INFO("Sink:" << sink)
