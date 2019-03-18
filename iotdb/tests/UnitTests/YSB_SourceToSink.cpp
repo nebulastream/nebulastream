@@ -140,7 +140,7 @@ typedef std::shared_ptr<CompiledYSBTestQueryExecutionPlan> CompiledYSBTestQueryE
 
 int test() {
 	CompiledYSBTestQueryExecutionPlanPtr qep(new CompiledYSBTestQueryExecutionPlan());
-	DataSourcePtr source = createYSBSource(2,10);
+	DataSourcePtr source = createYSBSource(2,10, /*pregen*/ false);
 	DataSinkPtr sink = createYSBPrintSink(source->getSchema());
 	qep->addDataSource(source);
 	qep->addDataSink(sink);

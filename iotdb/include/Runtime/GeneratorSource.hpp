@@ -56,7 +56,7 @@ public:
     friend class boost::serialization::access;
     YSBGeneratorSource();
 
-	YSBGeneratorSource(const Schema& schema, const uint64_t pNum_buffers_to_process, size_t pCampaingCnt);
+	YSBGeneratorSource(const Schema& schema, const uint64_t pNum_buffers_to_process, size_t pCampaingCnt, bool preGenerated);
 
 	template<class Archive>
 	void serialize(Archive & ar, const unsigned int version)
@@ -71,6 +71,8 @@ public:
 private:
   iotdb::YSBFunctor functor;
   uint64_t numberOfCampaings;
+  bool preGenerated;
+  TupleBufferPtr copyBuffer;
 };
 
 

@@ -181,7 +181,7 @@ int test() {
 		.addField("id", 4);
 
 	CompiledYSBZMQOutputTestQueryExecutionPlanPtr qep1(new CompiledYSBZMQOutputTestQueryExecutionPlan());
-	DataSourcePtr source1 = createYSBSource(1,10);
+	DataSourcePtr source1 = createYSBSource(1,10, /*pregen*/ false);
 	DataSinkPtr sink1 = createZmqSink(source1->getSchema(), "127.0.0.1", 55555);
 
 	qep1->addDataSource(source1);

@@ -140,7 +140,7 @@ int test(size_t toProcessedBuffers, size_t threadCnt, size_t campaignCnt, size_t
 	std::vector<DataSourcePtr> sources;
 	for(size_t i = 0; i < sourceCnt; i++)
 	{
-		sources.push_back(createYSBSource(toProcessedBuffers,campaignCnt));
+		sources.push_back(createYSBSource(toProcessedBuffers,campaignCnt, /*pregen*/ true));
 		qep->addDataSource(sources[i]);
 	}
 
@@ -241,9 +241,7 @@ int main(int argc, const char *argv[]) {
 		("numCampaings", po::value<uint64_t>(&numCampaings)->default_value(numCampaings), "The number of campaings")
 		("numSources", po::value<uint64_t>(&numSources)->default_value(numSources), "The number of sources")
 		("bufferSizeInByte", po::value<uint64_t>(&bufferSizeInByte)->default_value(bufferSizeInByte), "Buffersize in Byte")
-
 		;
-
 
 	    po::variables_map vm;
 	    po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);

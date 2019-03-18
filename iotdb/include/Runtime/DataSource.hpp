@@ -80,7 +80,7 @@ private:
 typedef std::shared_ptr<DataSource> DataSourcePtr;
 
 const DataSourcePtr createTestSource();
-const DataSourcePtr createYSBSource(size_t bufferCnt, size_t campaingCnt);
+const DataSourcePtr createYSBSource(size_t bufferCnt, size_t campaingCnt, bool preGen);
 
 const DataSourcePtr createZmqSource(const Schema &schema, const std::string &host, const uint16_t port);
 const DataSourcePtr createBinaryFileSource(const Schema &schema, const std::string &path_to_file);
