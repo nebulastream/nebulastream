@@ -57,5 +57,6 @@ void ThreadPool::stop() {
     if (thread.joinable())
       thread.join();
   }
+  IOTDB_DEBUG("Threadpool: All threads are joined.")
 }
 }

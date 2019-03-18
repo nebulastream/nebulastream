@@ -88,20 +88,10 @@ add_executable(runtime-data-source-sink-tests "UnitTests/RuntimeDataSourceSinkTe
 target_link_libraries(runtime-data-source-sink-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME runtime-data-source-sink-tests COMMAND runtime-data-source-sink-tests)
 
-# YSB Test source to out
-add_executable(ysb_test_source_out "UnitTests/YSBSourceToOutTest.cpp")
-target_link_libraries(ysb_test_source_out iotdb ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
-add_test(NAME ysb_test_source_out COMMAND ysb_test_source_out)
-
-# YSB Test source to sink
-add_executable(ysb_test_source_sink "UnitTests/YSB_SourceToSink.cpp")
-target_link_libraries(ysb_test_source_sink iotdb ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
-add_test(NAME ysb_test_source_sink COMMAND ysb_test_source_sink)
-
-# YSB Test node to node
-add_executable(ysb_test_node_to_node "UnitTests/YSB_NodeToNodeTest.cpp")
-target_link_libraries(ysb_test_node_to_node iotdb ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
-add_test(NAME ysb_test_node_to_node COMMAND ysb_test_node_to_node)
+# Yahoo Streaming Benchmark Tests
+add_executable(yahoo-streaming-benchmark-tests "UnitTests/YahooStreamingBenchmarkTest.cpp")
+target_link_libraries(yahoo-streaming-benchmark-tests iotdb ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
+add_test(NAME yahoo-streaming-benchmark-tests COMMAND yahoo-streaming-benchmark-tests)
 
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure

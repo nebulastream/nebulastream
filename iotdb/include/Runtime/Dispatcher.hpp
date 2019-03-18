@@ -38,6 +38,7 @@ public:
   static Dispatcher &instance();
 
   void unblockThreads() { cv.notify_all(); }
+  void resetDispatcher();
 
 private:
   /* implement singleton semantics: no construction,
