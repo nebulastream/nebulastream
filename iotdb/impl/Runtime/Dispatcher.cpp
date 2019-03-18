@@ -98,7 +98,14 @@ TaskPtr Dispatcher::getWork(bool &run_thread) {
     if (!run_thread)
       return TaskPtr();
   }
-  TaskPtr task = task_queue.front();
+
+  TaskPtr task;
+  if (run_thread) {
+      task = task_queue.front();
+  } else {
+      task = TaskPtr();
+  }
+
   task_queue.erase(task_queue.begin());
   IOTDB_DEBUG("Dispatcher: give task" << task.get() << " to thread (getWork())")
   return task;
