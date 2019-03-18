@@ -181,7 +181,7 @@ int test() {
 		.addField("id", 4);
 
 	CompiledYSBZMQOutputTestQueryExecutionPlanPtr qep1(new CompiledYSBZMQOutputTestQueryExecutionPlan());
-	DataSourcePtr source1 = createYSBSource(1);
+	DataSourcePtr source1 = createYSBSource(1,10, /*pregen*/ false);
 	DataSinkPtr sink1 = createZmqSink(source1->getSchema(), "127.0.0.1", 55555);
 
 	qep1->addDataSource(source1);
@@ -205,7 +205,7 @@ int test() {
 //	qep2->addDataSink(sink2);
 //	Dispatcher::instance().registerQuery(qep2);
 
-	ThreadPool thread_pool;
+	ThreadPool thread_pool(1);
 
 	thread_pool.start();
 
@@ -224,8 +224,8 @@ int test() {
 					<< std::endl;
 
 	YSBPrintSink* ySink = (YSBPrintSink*)sink2.get();
-	std::cout << "printed tuples=" << ySink->getNumberOfPrintedTuples() << std::endl;
-	if(ySink->getNumberOfPrintedTuples()!= 18)
+	std::cout << "printed tuples=" << ySink->getNumberOfProcessedTuples() << std::endl;
+	if(ySink->getNumberOfProcessedTuples()!= 18)
 	{
 		std::cout << "wrong result" << std::endl;
 		assert(0);

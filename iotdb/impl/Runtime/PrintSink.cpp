@@ -10,7 +10,7 @@
 namespace iotdb {
 
 PrintSink::PrintSink(const Schema &schema)
-    : DataSink(schema), printedTuples(0) {}
+    : DataSink(schema){}
 
 PrintSink::~PrintSink() { }
 
@@ -59,7 +59,7 @@ bool YSBPrintSink::writeData(const TupleBuffer* input_buffer) {
 				<< " type=" << recordBuffer[u].event_type
 				<< " timestamp=" <<recordBuffer[u].current_ms)
 
-		printedTuples++;
+		processedTuples++;
 	}
 	IOTDB_INFO(" ============= YSBPrintSink: FINISHED ============")
 	processedBuffer++;

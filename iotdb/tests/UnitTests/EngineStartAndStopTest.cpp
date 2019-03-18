@@ -55,7 +55,7 @@ int test() {
 
   Dispatcher::instance().registerQuery(qep);
 
-  ThreadPool thread_pool;
+  ThreadPool thread_pool(1);
 
   thread_pool.start();
 
