@@ -134,7 +134,7 @@ TupleBufferPtr YSBGeneratorSource::receiveData() {
 	else
 	{
 		TupleBufferPtr buf = Dispatcher::instance().getBuffer();
-		std::cout << "before=" << std::endl;
+//		std::cout << "before=" << std::endl;
 		TupleBuffer* buffPtr = buf.get();
 		TupleBuffer* copyBuff = copyBuffer.get();
 		*buffPtr = *copyBuff;
