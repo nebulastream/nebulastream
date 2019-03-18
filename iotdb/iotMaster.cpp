@@ -80,7 +80,7 @@ InputQueryPtr createYSBTestQuery()
 	  * const DataSourcePtr createBinaryFileSource(const Schema& schema, const std::string& path_to_file);
 	  * const DataSourcePtr createRemoteTCPSource(const Schema& schema, const std::string& server_ip, int port);
   */
-	DataSourcePtr source = createYSBSource(100,10);
+	DataSourcePtr source = createYSBSource(100,10, /*pregen*/ false);
 
 	Schema schema = Schema::create()
 		.addField("user_id", 16)
@@ -190,7 +190,7 @@ int main(int argc, const char *argv[]) {
 	filename += "/home/zeuchste/git/IoTDB/iotdb/build/tests/demofile.txt";
 	QueryExecutionPlanPtr q = createTestQEP();
 
-	DataSourcePtr src = createYSBSource(100,10);
+	DataSourcePtr src = createYSBSource(100,10, /*pregen*/ false);
 	q->addDataSource(src);
 
 	std::cout << "qep before:" << std::endl;

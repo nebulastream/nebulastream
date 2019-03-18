@@ -131,7 +131,7 @@ typedef std::shared_ptr<CompiledYSBTestQueryExecutionPlan> CompiledYSBTestQueryE
 
 int test() {
 	CompiledYSBTestQueryExecutionPlanPtr qep(new CompiledYSBTestQueryExecutionPlan());
-	DataSourcePtr source = createYSBSource(1000,10);
+	DataSourcePtr source = createYSBSource(1000,10, /*pregen*/ false);
 	WindowPtr window = createTestWindow(10);
 	qep->addDataSource(source);
 	qep->addWindow(window);
