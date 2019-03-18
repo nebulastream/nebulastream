@@ -185,10 +185,12 @@ int test(size_t toProcessedBuffers, size_t threadCnt, size_t campaignCnt, size_t
 			<< " sources=" << sourceCnt
 			<< std::endl;
 
+	thread_pool.stop();
+
 	Dispatcher::instance().printStatistics(qep);
 	Dispatcher::instance().deregisterQuery(qep);
 
-	thread_pool.stop();
+
 
 }
 } // namespace iotdb
