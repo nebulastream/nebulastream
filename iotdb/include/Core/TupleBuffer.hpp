@@ -14,6 +14,8 @@ namespace iotdb {
 class TupleBuffer {
 public:
   TupleBuffer(void *buffer, const uint64_t buffer_size, const uint32_t tuple_size_bytes, const uint32_t num_tuples);
+  TupleBuffer(const TupleBuffer& t1);
+   TupleBuffer& operator=(const TupleBuffer&);
 
   void print();
   void *buffer;
