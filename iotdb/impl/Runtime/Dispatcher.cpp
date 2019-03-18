@@ -17,14 +17,18 @@ Dispatcher::Dispatcher() : task_queue(), source_to_query_map(), window_to_query_
 }
 
 Dispatcher::~Dispatcher() {
+  resetDispatcher();
+}
+
+void Dispatcher::resetDispatcher() {
 	IOTDB_DEBUG("Dispatcher: Destroy Task Queue")
- 	task_queue.clear();
- 	IOTDB_DEBUG("Dispatcher: Destroy source_to_query_map")
- 	source_to_query_map.clear();
- 	IOTDB_DEBUG("Dispatcher: Destroy sink_to_query_map")
- 	sink_to_query_map.clear();
- 	IOTDB_DEBUG("Dispatcher: Destroy window_to_query_map")
- 	window_to_query_map.clear();
+	task_queue.clear();
+	IOTDB_DEBUG("Dispatcher: Destroy source_to_query_map")
+	source_to_query_map.clear();
+	IOTDB_DEBUG("Dispatcher: Destroy sink_to_query_map")
+	sink_to_query_map.clear();
+	IOTDB_DEBUG("Dispatcher: Destroy window_to_query_map")
+	window_to_query_map.clear();
 }
 
 TupleBufferPtr Dispatcher::getBuffer() {
