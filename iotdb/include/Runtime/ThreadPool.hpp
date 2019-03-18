@@ -14,7 +14,7 @@
 namespace iotdb {
 class ThreadPool {
 public:
-  ThreadPool();
+  ThreadPool(size_t numThreads);
   void worker_thread();
 
   void start();
@@ -24,6 +24,7 @@ public:
 
 private:
   bool run;
+  size_t numThreads;
   std::vector<std::thread> threads;
 };
 }

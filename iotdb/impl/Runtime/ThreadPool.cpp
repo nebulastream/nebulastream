@@ -13,7 +13,7 @@
 
 namespace iotdb {
 
-ThreadPool::ThreadPool() : run(), threads() {}
+ThreadPool::ThreadPool(size_t pNumThreads) : run(), threads(), numThreads(pNumThreads){}
 
 ThreadPool::~ThreadPool() {
 	IOTDB_DEBUG("Threadpool: Destroying Thread Pool")
@@ -37,9 +37,8 @@ void ThreadPool::start() {
   run = true;
   /* spawn threads */
 //  auto num_threads = std::thread::hardware_concurrency();
-  auto num_threads = 1;
-  IOTDB_DEBUG("Threadpool: Spawning " << num_threads << " threads")
-  for (uint64_t i = 0; i < num_threads; ++i) {
+  IOTDB_DEBUG("Threadpool: Spawning " << numThreads << " threads")
+  for (uint64_t i = 0; i < numThreads; ++i) {
     threads.push_back(std::thread(std::bind(&ThreadPool::worker_thread, this)));
   }
   /* TODO: pin each thread to a fixed core */
