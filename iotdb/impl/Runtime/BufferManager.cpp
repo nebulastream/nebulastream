@@ -24,7 +24,7 @@ BufferManager::~BufferManager() {
 
   // Release memory.
   for (auto const &buffer_pool_entry : buffer_pool) {
-      delete[] buffer_pool_entry.first->buffer;
+      delete (char *) buffer_pool_entry.first->buffer;
   }
   buffer_pool.clear();
 }
@@ -44,14 +44,13 @@ void BufferManager::addBuffer() {
 
 TupleBufferPtr BufferManager::getBuffer() {
 //  std::unique_lock<std::mutex> lock(mutex);
-  bool found = false;
 
-  while(!found)
+  while(true)
   {
 	  //find a free buffer
 	for(auto& entry : buffer_pool)
 	{
-	  if(entry.second == false)//found free entry
+	  if(!entry.second)//found free entry
 	  {
 		  entry.second = true;
 
@@ -67,13 +66,24 @@ TupleBufferPtr BufferManager::getBuffer() {
 
 }
 
+size_t BufferManager::getNumberOfBuffers() {
+	return buffer_pool.size();
+}
+
+size_t BufferManager::getNumberOfFreeBuffers() {
+	size_t result = 0;
+	for(auto& entry : buffer_pool) {
+		if (!entry.second)
+			result++;
+	}
+	return result;
+}
 void BufferManager::releaseBuffer(TupleBufferPtr tuple_buffer) {
 	  std::unique_lock<std::mutex> lock(mutex);
 
-	  //find a free buffer
 	   for(auto& entry : buffer_pool)
 	   {
-		  if(entry.first.get() == tuple_buffer.get())//found free entry
+		  if(entry.first.get() == tuple_buffer.get())
 		  {
 			  entry.second = false;
 				IOTDB_DEBUG("BufferManager: found and release buffer")
