@@ -45,7 +45,7 @@ void DataSource::stop() {
   if (thread.joinable())
     thread.join();
 
-  IOTDB_DEBUG("DataSource " << this << ": Thread joinded")
+  IOTDB_DEBUG("DataSource " << this << ": Thread joined")
 }
 
 bool DataSource::isRunning()
@@ -61,7 +61,7 @@ void DataSource::run() {
 	  if(cnt < this->num_buffers_to_process)
 	  {
 		  TupleBufferPtr buf = receiveData();
-		  IOTDB_DEBUG("DataSource " << this << ": Received Data: " << buf->num_tuples << "tuples")
+		  IOTDB_DEBUG("DataSource " << this << ": Received Data: " << buf->num_tuples << " tuples")
 		  if (buf->buffer)
 		  {
 			  Dispatcher::instance().addWork(buf, this);
