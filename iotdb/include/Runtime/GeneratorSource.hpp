@@ -63,7 +63,6 @@ public:
 	{
         ar & boost::serialization::base_object<DataSource>(*this);
 		ar & numberOfCampaings;
-
 	}
 
   TupleBufferPtr receiveData();

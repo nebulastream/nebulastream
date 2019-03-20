@@ -43,9 +43,7 @@ void NodeEngine::deployQuery(QueryExecutionPlanPtr qep)
 	//TODO:add compile here
 	Dispatcher::instance().registerQuery(qep);
 
-	ThreadPool thread_pool(1);
-
-	thread_pool.start();
+	ThreadPool::instance().start(1);
 
 	std::cout << "Waiting 2 seconds " << std::endl;
 	std::this_thread::sleep_for(std::chrono::seconds(2));

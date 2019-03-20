@@ -13,17 +13,22 @@ TupleBuffer::TupleBuffer(void *_buffer, const uint64_t _buffer_size, const uint3
                          const uint32_t _num_tuples)
     : buffer(_buffer), buffer_size(_buffer_size), tuple_size_bytes(_tuple_size_bytes), num_tuples(_num_tuples) {}
 
-TupleBuffer::TupleBuffer(const TupleBuffer& other)
+
+void TupleBuffer::copyInto(const TupleBufferPtr& other)
 {
-	buffer_size = other.buffer_size;
-	tuple_size_bytes = other.tuple_size_bytes;
-	num_tuples = other.num_tuples;
-	std::memcpy(buffer, other.buffer, other.buffer_size);
+	if(other && other.get() != this)
+	{
+		this->buffer_size = other->buffer_size;
+		this->tuple_size_bytes = other->tuple_size_bytes;
+		this->num_tuples = other->num_tuples;
+		std::memcpy(this->buffer, other->buffer, other->buffer_size);
+	}
 }
 
 TupleBuffer& TupleBuffer::operator=(const TupleBuffer& other)
 {
-	if(this!=&other){
+	if(this!=&other)
+	{
 		this->buffer_size = other.buffer_size;
 		this->tuple_size_bytes = other.tuple_size_bytes;
 		this->num_tuples = other.num_tuples;

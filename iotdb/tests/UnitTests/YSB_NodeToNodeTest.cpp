@@ -89,7 +89,7 @@ public:
 
     bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf)
     {
-    	TupleBufferPtr workingBuffer = Dispatcher::instance().getBuffer();
+    	TupleBufferPtr workingBuffer = BufferManager::instance().getBuffer();
     	ysbRecordOut* recBuffer = (ysbRecordOut*)workingBuffer->buffer;
     	ysbRecord* tuples = (ysbRecord*) buf->buffer;
         size_t lastTimeStamp = time(NULL);
@@ -149,7 +149,7 @@ public:
 
     bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf)
     {
-    	TupleBufferPtr workingBuffer = Dispatcher::instance().getBuffer();
+    	TupleBufferPtr workingBuffer = BufferManager::instance().getBuffer();
     	ysbRecordOut* recBuffer = (ysbRecordOut*)workingBuffer->buffer;
     	ysbRecordOut* tuples = (ysbRecordOut*) buf->buffer;
         size_t qualCnt = 0;
@@ -205,9 +205,7 @@ int test() {
 //	qep2->addDataSink(sink2);
 //	Dispatcher::instance().registerQuery(qep2);
 
-	ThreadPool thread_pool(1);
-
-	thread_pool.start();
+	ThreadPool::instance().start(1);
 
 	while(source1->isRunning() || sink1->getNumberOfProcessedBuffers() != 1 || source2->isRunning() || sink2->getNumberOfProcessedBuffers() != 1){
 		std::cout << "source1->isRunning()=" << source1->isRunning() << " sink1->getNumberOfProcessedBuffers()=" << sink1->getNumberOfProcessedBuffers()
@@ -237,7 +235,7 @@ int test() {
 	}
 	Dispatcher::instance().deregisterQuery(qep1);
 
-	thread_pool.stop();
+	ThreadPool::instance().stop();
 
 }
 } // namespace iotdb
