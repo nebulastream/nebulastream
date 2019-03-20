@@ -149,10 +149,10 @@ int test(size_t toProcessedBuffers, size_t threadCnt, size_t campaignCnt, size_t
 
 	Dispatcher::instance().registerQuery(qep);
 
-	ThreadPool thread_pool(threadCnt);
+	ThreadPool::instance().setNumberOfThreads(threadCnt);
 
 	Timestamp start = getTimestamp();
-	thread_pool.start();
+	ThreadPool::instance().start(1);
 
 	size_t endedRuns = 0;
 	while(sourceCnt != endedRuns){
@@ -185,13 +185,10 @@ int test(size_t toProcessedBuffers, size_t threadCnt, size_t campaignCnt, size_t
 			<< " sources=" << sourceCnt
 			<< std::endl;
 
-	thread_pool.stop();
+	ThreadPool::instance().stop();
 
 	Dispatcher::instance().printStatistics(qep);
 	Dispatcher::instance().deregisterQuery(qep);
-
-
-
 }
 } // namespace iotdb
 
@@ -264,7 +261,7 @@ int main(int argc, const char *argv[]) {
 				  << "\nnumTuplesPerBuffer: " << bufferSizeInByte / sizeof(iotdb::ysbRecord)
 	              << std::endl;
 
-	iotdb::Dispatcher::instance().setBufferSize(bufferSizeInByte);
+	iotdb::BufferManager::instance().setBufferSize(bufferSizeInByte);
 
 	iotdb::test(numBuffers,numThreads,numCampaings, numSources);
 

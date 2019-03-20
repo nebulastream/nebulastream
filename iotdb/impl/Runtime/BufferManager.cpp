@@ -61,6 +61,8 @@ void BufferManager::addBuffer() {
 }
 
 TupleBufferPtr BufferManager::getBuffer() {
+	IOTDB_DEBUG("BufferManager: getBuffer()")
+
   std::unique_lock<std::mutex> lock(mutex);
   bool found = false;
   std::map<TupleBufferPtr, bool>::iterator it;
@@ -90,6 +92,8 @@ TupleBufferPtr BufferManager::getBuffer() {
 
 
 void BufferManager::releaseBuffer(const TupleBuffer* tuple_buffer) {
+	IOTDB_DEBUG("BufferManager: releaseBuffer(TupleBufferPtr)")
+
 	  std::unique_lock<std::mutex> lock(mutex);
 
 	  //find a free buffer
@@ -113,6 +117,8 @@ void BufferManager::releaseBuffer(const TupleBuffer* tuple_buffer) {
 
 
 void BufferManager::releaseBuffer(const TupleBufferPtr tuple_buffer) {
+	IOTDB_DEBUG("BufferManager: releaseBuffer(TupleBufferPtr)")
+
 	  std::unique_lock<std::mutex> lock(mutex);
 
 	  //find a free buffer

@@ -89,7 +89,7 @@ public:
 
     bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf)
     {
-    	TupleBufferPtr workingBuffer = Dispatcher::instance().getBuffer();
+    	TupleBufferPtr workingBuffer = BufferManager::instance().getBuffer();
     	ysbRecordOut* recBuffer = (ysbRecordOut*)workingBuffer->buffer;
     	ysbRecord* tuples = (ysbRecord*) buf->buffer;
         size_t lastTimeStamp = time(NULL);
@@ -147,9 +147,7 @@ int test() {
 
 	Dispatcher::instance().registerQuery(qep);
 
-	ThreadPool thread_pool(1);
-
-	thread_pool.start();
+	ThreadPool::instance().start(1);
 
 	while(source->isRunning() || sink->getNumberOfProcessedBuffers() != 2){
 		std::cout << "sourceRunnin=" << source->isRunning() << " numberOfProcBuffer="
@@ -178,7 +176,7 @@ int test() {
 				<< sink->getNumberOfProcessedBuffers() << std::endl;
 
 	}
-	thread_pool.stop();
+	  ThreadPool::instance().stop();
 
 	Dispatcher::instance().deregisterQuery(qep);
 

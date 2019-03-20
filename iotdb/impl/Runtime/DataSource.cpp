@@ -101,7 +101,7 @@ const DataSourcePtr createTestSource() {
     Functor() : one(1) {}
     TupleBufferPtr operator()() {
       //10 tuples of size one
-      TupleBufferPtr buf = Dispatcher::instance().getBuffer();
+      TupleBufferPtr buf = BufferManager::instance().getBuffer();
       size_t tupleCnt = buf->buffer_size / sizeof(uint64_t);
 
       assert(buf->buffer != NULL);
