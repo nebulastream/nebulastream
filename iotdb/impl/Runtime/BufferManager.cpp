@@ -34,6 +34,23 @@ BufferManager &BufferManager::instance() {
   return instance;
 }
 
+void BufferManager::removeBuffer(TupleBufferPtr tuple_buffer){
+    std::unique_lock<std::mutex> lock(mutex);
+
+    for(auto& entry : buffer_pool)
+    {
+        if(entry.first.get() == tuple_buffer.get())
+        {
+            delete (char *) entry.first->buffer;
+            buffer_pool.erase(tuple_buffer);
+            IOTDB_DEBUG("BufferManager: found and remove Buffer buffer")
+            return;
+        }
+    }
+    IOTDB_DEBUG("BufferManager: could not remove buffer, buffer not found")
+    return;
+}
+
 void BufferManager::addBuffer() {
 	std::unique_lock<std::mutex> lock(mutex);
 

@@ -21,12 +21,14 @@ typedef std::shared_ptr<TupleBuffer> TupleBufferPtr;
 
 class BufferManager {
 public:
+  static BufferManager &instance();
   void addBuffer();
+  void removeBuffer(TupleBufferPtr tuple_buffer);
   TupleBufferPtr getBuffer();
+  void releaseBuffer(TupleBufferPtr tuple_buffer);
   size_t getNumberOfBuffers();
   size_t getNumberOfFreeBuffers();
-  void releaseBuffer(TupleBufferPtr tuple_buffer);
-  static BufferManager &instance();
+
 
 private:
   BufferManager();

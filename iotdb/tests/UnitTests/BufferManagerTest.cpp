@@ -135,8 +135,6 @@ namespace iotdb {
     class BufferManagerTest : public testing::Test {
     public:
         static void SetUpTestCase() { std::cout << "Setup BufferMangerTest test class." << std::endl; }
-
-
         static void TearDownTestCase() { std::cout << "Tear down BufferManager test class." << std::endl; }
 
         const size_t buffers_managed = 10;
@@ -144,84 +142,155 @@ namespace iotdb {
 
     };
 
-    TEST_F(BufferManagerTest, addBuffer_simple) {
+    TEST_F(BufferManagerTest, add_and_remove_Buffer_simple) {
         size_t buffers_count = BufferManager::instance().getNumberOfBuffers();
+        size_t buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
         ASSERT_EQ(buffers_count, buffers_managed);
+        ASSERT_EQ(buffers_free, buffers_managed);
 
         BufferManager::instance().addBuffer();
+        TupleBufferPtr buffer = BufferManager::instance().getBuffer();
+
         buffers_count = BufferManager::instance().getNumberOfBuffers();
+        buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
         ASSERT_EQ(buffers_count, buffers_managed + 1);
+        ASSERT_EQ(buffers_free, buffers_managed);
+
+        BufferManager::instance().removeBuffer(buffer);
+
+        buffers_count = BufferManager::instance().getNumberOfBuffers();
+        buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+        ASSERT_EQ(buffers_count, buffers_managed);
+        ASSERT_EQ(buffers_free, buffers_managed);
     }
 
-    TEST_F(BufferManagerTest, getBuffer_simple) {
-        for (int i = 0; i < BufferManager::instance().getNumberOfBuffers(); ++i) {
+    TEST_F(BufferManagerTest, get_and_release_Buffer_simple) {
+        std::vector<TupleBufferPtr> buffers;
+
+        size_t buffers_count = BufferManager::instance().getNumberOfBuffers();
+        size_t buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+        ASSERT_EQ(buffers_count, buffers_managed);
+        ASSERT_EQ(buffers_free, buffers_managed);
+
+        for (int i = 1; i <= BufferManager::instance().getNumberOfBuffers(); ++i) {
             TupleBufferPtr buf = BufferManager::instance().getBuffer();
 
             ASSERT_TRUE(buf->buffer != nullptr);
             ASSERT_EQ(buf->buffer_size, buffer_size);
             ASSERT_EQ(buf->num_tuples, 0);
             ASSERT_EQ(buf->tuple_size_bytes, 0);
-        }
-    }
 
-    TEST_F(BufferManagerTest, release_Buffer) {
-        size_t size = BufferManager::instance().getNumberOfBuffers();
-        std::vector<TupleBufferPtr> buffers;
+            buffers_count = BufferManager::instance().getNumberOfBuffers();
+            buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+            ASSERT_EQ(buffers_count, buffers_managed);
+            ASSERT_EQ(buffers_free, buffers_managed - i);
 
-        ASSERT_EQ(size, BufferManager::instance().getNumberOfFreeBuffers());
-
-        for (size_t i = 0; i < size; ++i) {
-            buffers.push_back(BufferManager::instance().getBuffer());
-        }
-        ASSERT_EQ(0, BufferManager::instance().getNumberOfFreeBuffers());
-
-        for (auto &ptr : buffers) {
-            BufferManager::instance().releaseBuffer(ptr);
+            buffers.push_back(buf);
         }
 
-        ASSERT_EQ(size, BufferManager::instance().getNumberOfFreeBuffers());
+        int i = 1;
+        for (auto& buf : buffers) {
+
+            BufferManager::instance().releaseBuffer(buf);
+
+            buffers_count = BufferManager::instance().getNumberOfBuffers();
+            buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+            ASSERT_EQ(buffers_count, buffers_managed);
+            ASSERT_EQ(buffers_free, i);
+            i++;
+        }
+
+        buffers_count = BufferManager::instance().getNumberOfBuffers();
+        buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+        ASSERT_EQ(buffers_count, buffers_managed);
+        ASSERT_EQ(buffers_free, buffers_managed);
     }
 
     void run(TupleBufferPtr *ptr) {
         *ptr = BufferManager::instance().getBuffer();
-        ASSERT_TRUE(ptr != nullptr);
     }
 
     TEST_F(BufferManagerTest, getBuffer_afterRelease) {
-        size_t size = BufferManager::instance().getNumberOfBuffers();
         std::vector<TupleBufferPtr> buffers;
 
-        for (size_t i = 0; i < size; ++i) {
+        size_t buffers_count = BufferManager::instance().getNumberOfBuffers();
+        size_t buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+        ASSERT_EQ(buffers_count, buffers_managed);
+        ASSERT_EQ(buffers_free, buffers_managed);
+
+
+        for (size_t i = 0; i < buffers_count; ++i) {
             buffers.push_back(BufferManager::instance().getBuffer());
         }
 
         TupleBufferPtr t;
         std::thread t1(run, &t);
+
         std::this_thread::sleep_for(std::chrono::seconds(1));
-        BufferManager::instance().releaseBuffer(buffers.front());
+
+        BufferManager::instance().releaseBuffer(buffers.back());
+        buffers.pop_back();
         t1.join();
+
+        buffers.push_back(t);
+
+        for (auto& buf : buffers) {
+            BufferManager::instance().releaseBuffer(buf);
+        }
+
+        buffers_count = BufferManager::instance().getNumberOfBuffers();
+        buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+        ASSERT_EQ(buffers_count, buffers_managed);
+        ASSERT_EQ(buffers_free, buffers_managed);
     }
 
 
     TEST_F(BufferManagerTest, getBuffer_race) {
-        size_t size = BufferManager::instance().getNumberOfBuffers();
-        std::vector<TupleBufferPtr> buffers;
+        for (int i = 0; i < 100; ++i) {
 
-        for (size_t i = 0; i < size - 2; ++i) {
-            buffers.push_back(BufferManager::instance().getBuffer());
+            std::vector<TupleBufferPtr> buffers;
+
+            size_t buffers_count = BufferManager::instance().getNumberOfBuffers();
+            size_t buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+            ASSERT_EQ(buffers_count, buffers_managed);
+            ASSERT_EQ(buffers_free, buffers_managed);
+
+            for (size_t j = 0; j < buffers_count; ++j) {
+                buffers.push_back(BufferManager::instance().getBuffer());
+            }
+
+            TupleBufferPtr buffer_threads[buffers_managed];
+            std::thread threads[buffers_managed];
+            for (size_t j = 0; j < buffers_count; ++j) {
+                threads[j] = std::thread(run, &buffer_threads[j]);
+            }
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+
+            for (size_t j = 0; j < buffers_managed; ++j) {
+                BufferManager::instance().releaseBuffer(buffers.back());
+                buffers.pop_back();
+            }
+
+            for (auto &thread : threads) {
+                thread.join();
+            }
+
+            std::set<TupleBufferPtr> setOfTupleBufferPtr;
+            for (auto &b : buffer_threads) {
+                setOfTupleBufferPtr.insert(b);
+            }
+            ASSERT_EQ(10, setOfTupleBufferPtr.size());
+
+
+            for (auto &b : buffer_threads) {
+                BufferManager::instance().releaseBuffer(b);
+            }
+            buffers_count = BufferManager::instance().getNumberOfBuffers();
+            buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+            ASSERT_EQ(buffers_count, buffers_managed);
+            ASSERT_EQ(buffers_free, buffers_managed);
         }
-
-        TupleBufferPtr buffer_thread1;
-        TupleBufferPtr buffer_thread2;
-        std::thread t1(run, &buffer_thread1);
-        std::thread t2(run, &buffer_thread2);
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        BufferManager::instance().releaseBuffer(buffers.front());
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        BufferManager::instance().releaseBuffer(buffers.front());
-        t1.join();
-        t2.join();
-
-        ASSERT_NE(buffer_thread1.get(), buffer_thread2.get());
     }
 }
