@@ -45,13 +45,13 @@ bool ZmqSink::writeData(const TupleBuffer* input_buffer)
 	if (!rc_env || !rc_msg)
 	{
 		  IOTDB_DEBUG("ZMQSINK  " << this << ": send NOT successful")
-		  Dispatcher::instance().releaseBuffer(input_buffer);
+		  BufferManager::instance().releaseBuffer(input_buffer);
 		  return false;
 	}
 	else
 	{
 		IOTDB_DEBUG("ZMQSINK  " << this << ": send successful")
-		Dispatcher::instance().releaseBuffer(input_buffer);
+		BufferManager::instance().releaseBuffer(input_buffer);
 
 		return true;
 	}

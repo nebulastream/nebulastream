@@ -139,10 +139,7 @@ int test() {
 
 	Dispatcher::instance().registerQuery(qep);
 
-	ThreadPool thread_pool(1);
-
-	thread_pool.start();
-
+	ThreadPool::instance().start(1);
 	while(source->isRunning()){
 		std::cout << "----- processing current res is:-----" << std::endl;
 		res_window->print();
@@ -174,7 +171,7 @@ int test() {
 //	}
 
 
-	thread_pool.stop();
+	  ThreadPool::instance().stop();
 
 }
 } // namespace iotdb
