@@ -135,6 +135,7 @@ typedef std::shared_ptr<YSB_SingleNode_PerformanceTest> YSB_SingleNode_Performan
 
 
 int test(size_t toProcessedBuffers, size_t threadCnt, size_t campaignCnt, size_t sourceCnt) {
+	return 0;
 	YSB_SingleNode_PerformanceTestPtr qep(new YSB_SingleNode_PerformanceTest());
 
 	std::vector<DataSourcePtr> sources;
