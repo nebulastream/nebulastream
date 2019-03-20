@@ -95,6 +95,7 @@ size_t BufferManager::getNumberOfFreeBuffers() {
 	}
 	return result;
 }
+
 void BufferManager::releaseBuffer(TupleBufferPtr tuple_buffer) {
 	  std::unique_lock<std::mutex> lock(mutex);
 
@@ -112,8 +113,4 @@ void BufferManager::releaseBuffer(TupleBufferPtr tuple_buffer) {
 
 	   assert(0);
 }
-
-
-
-
 } // namespace iotdb
