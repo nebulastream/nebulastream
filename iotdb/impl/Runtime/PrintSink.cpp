@@ -9,6 +9,10 @@
 #include <Runtime/Dispatcher.hpp>
 namespace iotdb {
 
+  const DataSinkPtr createPrintSink(const Schema &schema){
+    return std::make_shared<PrintSink>(schema);
+  }
+
 PrintSink::PrintSink(const Schema &schema)
     : DataSink(schema){}
 
