@@ -66,16 +66,6 @@ protected:
 
 };
 
-class YSBFunctor {
-public:
-	YSBFunctor(): campaingCnt(0){};
-
-	YSBFunctor(size_t pCampaingCnt): campaingCnt(pCampaingCnt){};
-	TupleBufferPtr operator()();
-
-private:
-   size_t campaingCnt;
-};
 
 typedef std::shared_ptr<DataSource> DataSourcePtr;
 
