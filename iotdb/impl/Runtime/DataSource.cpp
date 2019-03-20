@@ -118,7 +118,7 @@ const DataSourcePtr createTestSource() {
     uint64_t one;
   };
 
-  DataSourcePtr source(new GeneratorSource<Functor>(Schema::create().addField(createField("id", UINT32)), 1));
+  DataSourcePtr source(new GeneratorSource<Functor>(Schema::create().addField(createField("campaign_id", UINT32)), 1));
 
   return source;
 }

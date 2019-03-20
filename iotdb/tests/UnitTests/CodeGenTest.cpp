@@ -6,6 +6,7 @@
 #include <CodeGen/CodeGen.hpp>
 #include <Core/DataTypes.hpp>
 #include <Util/ErrorHandling.hpp>
+#include <Runtime/DataSink.hpp>
 
 #include <CodeGen/C_CodeGen/Statement.hpp>
 #include <CodeGen/C_CodeGen/UnaryOperatorStatement.hpp>
@@ -405,6 +406,7 @@ namespace iotdb {
     PipelineContextPtr context = createPipelineContext();
     std::cout << "Generate Code" << std::endl;
     code_gen->generateCode(createTestSource(), context, std::cout);
+    code_gen->generateCode(createPrintSink(Schema::create().addField("sum",UINT32)), context, std::cout);
     PipelineStagePtr stage = code_gen->compile(CompilerArgs());
 
     if(stage)
