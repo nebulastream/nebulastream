@@ -16,7 +16,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Set Optimization Flags
 set(CMAKE_CXX_FLAGS "-Wall -g")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -fsanitize=thread ")
 set(CMAKE_CXX_FLAGS_RELEASE "-Wextra -O3")
 
 # Compiler should produce specific code for system architecture
