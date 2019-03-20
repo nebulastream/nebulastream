@@ -13,12 +13,22 @@
 
 namespace iotdb {
 
-ThreadPool::ThreadPool(size_t pNumThreads) : run(), threads(), numThreads(pNumThreads){}
+ThreadPool& ThreadPool::instance()
+{
+	static ThreadPool instance;
+	return instance;
+}
+
+
+ThreadPool::ThreadPool() : run(), threads(), numThreads(1){}
 
 ThreadPool::~ThreadPool() {
 	IOTDB_DEBUG("Threadpool: Destroying Thread Pool")
-  stop();
+	stop();
+	IOTDB_DEBUG("Dispatcher: Destroy threads Queue")
+	threads.clear();
 }
+
 void ThreadPool::worker_thread() {
   Dispatcher &dispatcher = Dispatcher::instance();
   while (run) {
@@ -31,7 +41,8 @@ void ThreadPool::worker_thread() {
   }
 }
 
-void ThreadPool::start() {
+void ThreadPool::start(size_t numberOfThreads) {
+	numThreads = numberOfThreads;
   if (run)
     return;
   run = true;

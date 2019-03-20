@@ -27,28 +27,6 @@ Dispatcher::~Dispatcher() {
  	window_to_query_map.clear();
 }
 
-void Dispatcher::setBufferSize(size_t size)
-{
-	BufferManager::instance().setBufferSize(size);
-}
-
-TupleBufferPtr Dispatcher::getBuffer() {
-//	std::unique_lock<std::mutex> lock(bufferMutex);
-	IOTDB_DEBUG("Dispatcher: getBuffer(): Dispatcher returns buffer")
-  return BufferManager::instance().getBuffer();
-}
-
-void Dispatcher::releaseBuffer(const TupleBufferPtr ptr) {
-	std::unique_lock<std::mutex> lock(bufferMutex);
-	IOTDB_DEBUG("Dispatcher: releaseBuffer() : Dispatcher release buffer")
-	return BufferManager::instance().releaseBuffer(ptr);
-}
-void Dispatcher::releaseBuffer(const TupleBuffer* ptr) {
-	std::unique_lock<std::mutex> lock(bufferMutex);
-	IOTDB_DEBUG("Dispatcher: releaseBuffer() : Dispatcher release buffer")
-	return BufferManager::instance().releaseBuffer(ptr);
-}
-
 void Dispatcher::registerQuery(const QueryExecutionPlanPtr qep) {
   std::unique_lock<std::mutex> lock(queryMutex);
 
@@ -151,7 +129,6 @@ void Dispatcher::printStatistics(const QueryExecutionPlanPtr qep)
 		IOTDB_INFO("\t NumberOfEntries=" << window->getNumberOfEntries())
 		IOTDB_INFO("Window Final Result:")
 		window->print();
-
 	}
 	auto sinks = qep->getSinks();
 	for (auto sink : sinks) {
@@ -159,7 +136,6 @@ void Dispatcher::printStatistics(const QueryExecutionPlanPtr qep)
 		IOTDB_INFO("\t Generated Buffers=" << sink->getNumberOfProcessedBuffers())
 		IOTDB_INFO("\t Generated Tuples=" << sink->getNumberOfProcessedTuples())
 	}
-
 }
 
 

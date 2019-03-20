@@ -111,7 +111,7 @@ void generate(ysbRecord* data, size_t generated_tuples_this_pass, size_t campain
 
 TupleBufferPtr YSBFunctor::operator()()
 {
-	TupleBufferPtr buf = Dispatcher::instance().getBuffer();
+	TupleBufferPtr buf = BufferManager::instance().getBuffer();
 	assert(buf->buffer != NULL);
 	uint64_t generated_tuples_this_pass = buf->buffer_size / sizeof(ysbRecord);
 
@@ -133,15 +133,8 @@ TupleBufferPtr YSBGeneratorSource::receiveData() {
 	}
 	else
 	{
-		TupleBufferPtr buf = Dispatcher::instance().getBuffer();
-//		std::cout << "before=" << std::endl;
-		TupleBuffer* buffPtr = buf.get();
-		TupleBuffer* copyBuff = copyBuffer.get();
-		*buffPtr = *copyBuff;
-//		std::cout << "inbuffer=" << std::endl;
-//		copyBuffer->print();
-//		std::cout << "outbuffer=" << std::endl;
-//		buf->print();
+		TupleBufferPtr buf = BufferManager::instance().getBuffer();
+		buf->copyInto(copyBuffer);
 		generatedBuffers++;
 		generatedTuples += buf->num_tuples;
 		return buf;
