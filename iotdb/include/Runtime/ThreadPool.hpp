@@ -17,7 +17,7 @@ public:
   ThreadPool();
   void worker_thread();
 
-  void start();
+  void start(size_t pNumberOfThreads = 1);
 
   void stop();
   ~ThreadPool();

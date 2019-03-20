@@ -31,17 +31,17 @@ void ThreadPool::worker_thread() {
   }
 }
 
-void ThreadPool::start() {
+void ThreadPool::start(size_t pNumberOfThreads) {
   if (run)
     return;
   run = true;
+
   /* spawn threads */
-//  auto num_threads = std::thread::hardware_concurrency();
-  auto num_threads = 1;
-  IOTDB_DEBUG("Threadpool: Spawning " << num_threads << " threads")
-  for (uint64_t i = 0; i < num_threads; ++i) {
+  IOTDB_DEBUG("Threadpool: Spawning " << pNumberOfThreads << " threads")
+  for (uint64_t i = 0; i < pNumberOfThreads; ++i) {
     threads.push_back(std::thread(std::bind(&ThreadPool::worker_thread, this)));
   }
+
   /* TODO: pin each thread to a fixed core */
 }
 
