@@ -28,6 +28,8 @@ public:
 
 
 private:
+    friend class boost::serialization::access;
+
 };
 const WindowPtr createTestWindow(size_t pCampaingCnt);
 

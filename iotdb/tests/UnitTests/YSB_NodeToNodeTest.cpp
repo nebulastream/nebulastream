@@ -13,7 +13,7 @@
 #include <Runtime/ZmqSink.hpp>
 #include <Runtime/ZmqSource.hpp>
 #include <API/Schema.hpp>
-#include <Runtime/PrintSink.hpp>
+#include <Runtime/YSBPrintSink.hpp>
 
 
 #include <Runtime/Dispatcher.hpp>
@@ -192,7 +192,7 @@ int test() {
 	DataSourcePtr source2 = createZmqSource(schema, "127.0.0.1", 55555);
 	source2->setNumBuffersToProcess(1);
 	qep2->addDataSource(source2);
-	DataSinkPtr sink2 = createYSBPrintSink(source2->getSchema());
+	DataSinkPtr sink2 = createYSBPrintSink();
 	qep2->addDataSink(sink2);
 	Dispatcher::instance().registerQuery(qep2);
 

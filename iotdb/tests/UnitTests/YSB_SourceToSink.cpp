@@ -12,7 +12,7 @@
 #include <Runtime/DataSource.hpp>
 #include <Runtime/Window.hpp>
 #include <Runtime/DataSink.hpp>
-#include <Runtime/PrintSink.hpp>
+#include <Runtime/YSBPrintSink.hpp>
 
 
 #include <Runtime/Dispatcher.hpp>
@@ -141,7 +141,7 @@ typedef std::shared_ptr<CompiledYSBTestQueryExecutionPlan> CompiledYSBTestQueryE
 int test() {
 	CompiledYSBTestQueryExecutionPlanPtr qep(new CompiledYSBTestQueryExecutionPlan());
 	DataSourcePtr source = createYSBSource(2,10, /*pregen*/ false);
-	DataSinkPtr sink = createYSBPrintSink(source->getSchema());
+	DataSinkPtr sink = createYSBPrintSink();
 	qep->addDataSource(source);
 	qep->addDataSink(sink);
 
