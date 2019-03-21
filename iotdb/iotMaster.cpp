@@ -18,11 +18,8 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
-#include <boost/serialization/base_object.hpp>
-#include <boost/serialization/utility.hpp>
-#include <boost/serialization/list.hpp>
-#include <boost/serialization/assume_abstract.hpp>
 #include <Runtime/YSBGeneratorSource.hpp>
+#include <Runtime/YSBPrintSink.hpp>
 
 
 #include <boost/iostreams/device/back_inserter.hpp>
@@ -227,6 +224,9 @@ int main(int argc, const char *argv[]) {
 	window->setup();
 	q->addWindow(window);
 
+	DataSinkPtr sink = createYSBPrintSink();
+	q->addDataSink(sink);
+
 
 	std::cout << "qep before:" << std::endl;
 	q->print();
@@ -240,18 +240,23 @@ int main(int argc, const char *argv[]) {
     std::ifstream ifs(filename);
     boost::archive::text_iarchive ia(ifs);
     ia >> q2;
-    std::cout << "numsrc=" << q2->getSources().size() << std::endl;
-	std::cout << "qep afterwards:" << std::endl;
-	q2->print();
 //	delete q2;
     DataSourcePtr yp = q2->getSources()[0];
 	YSBGeneratorSource* ysb = (YSBGeneratorSource*)yp.get();
-	std::cout << "ysb=" << ysb->toString() << std::endl;
+	std::cout << "ysb source=" << ysb->toString() << std::endl;
 
 	WindowPtr win = q2->getWindows()[0];
 	win->setup();
 	std::cout << "window=" << std::endl;
 	win->print();
+
+	DataSinkPtr ys = q2->getSinks()[0];
+	YSBPrintSink* ysp_sink = (YSBPrintSink*)ys.get();
+	std::cout << "ysb sink=" << ysp_sink->toString() << std::endl;
+
+	std::cout << "numsrc=" << q2->getSources().size() << std::endl;
+	std::cout << "qep afterwards:" << std::endl;
+	q2->print();
 	return 0;
 
 
