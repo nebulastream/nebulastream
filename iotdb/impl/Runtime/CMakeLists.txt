@@ -14,4 +14,5 @@ add_source_iotdb(
         FileOutputSink.cpp
         PrintSink.cpp
         YSBGeneratorSource.cpp
+        YSBWindow.cpp
                 )
