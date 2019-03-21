@@ -39,14 +39,19 @@ public:
 
   TupleBufferPtr receiveData();
   const std::string toString() const;
+  uint64_t numberOfCampaings;
 
 private:
   iotdb::YSBFunctor functor;
-  uint64_t numberOfCampaings;
   bool preGenerated;
   TupleBufferPtr copyBuffer;
 };
 
-
 }
+#include <boost/serialization/export.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+//BOOST_SERIALIZATION_ASSUME_ABSTRACT(iotdb::DataSource)
+BOOST_CLASS_EXPORT_KEY(iotdb::YSBGeneratorSource)
+
 #endif /* INCLUDE_RUNTIME_YSBGENERATORSOURCE_HPP_ */

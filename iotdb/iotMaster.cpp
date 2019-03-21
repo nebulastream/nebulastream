@@ -22,6 +22,12 @@
 #include <boost/serialization/utility.hpp>
 #include <boost/serialization/list.hpp>
 #include <boost/serialization/assume_abstract.hpp>
+#include <Runtime/YSBGeneratorSource.hpp>
+
+
+#include <boost/iostreams/device/back_inserter.hpp>
+#include <boost/iostreams/device/array.hpp>
+#include <boost/iostreams/stream.hpp>
 
 using namespace iotdb;
 
@@ -183,6 +189,30 @@ void restore_qep(QueryExecutionPlan* s, const char * filename)
     std::cout << "numsrc=" << s->getSources().size() << std::endl;
 }
 
+static std::string save(QueryExecutionPlan const& ptr) {
+	std::string out;
+	{
+		namespace io = boost::iostreams;
+		io::stream<io::back_insert_device<std::string> > os(out);
+
+		boost::archive::text_oarchive archive(os);
+		archive << ptr;
+	}
+
+	return out;
+}
+
+static QueryExecutionPlan load(std::string const &s) {
+	QueryExecutionPlan p;
+	{
+		namespace io = boost::iostreams;
+		io::stream<io::array_source> is(io::array_source{ s.data(), s.size() });
+		boost::archive::text_iarchive archive(is);
+		archive >> p;
+	}
+	return std::move(p);
+}
+
 int main(int argc, const char *argv[]) {
 	log4cxx::Logger::getLogger("IOTDB")->setLevel(log4cxx::Level::getInfo());
 	setupLogging();
@@ -192,6 +222,11 @@ int main(int argc, const char *argv[]) {
 
 	DataSourcePtr src = createYSBSource(100,10, /*pregen*/ false);
 	q->addDataSource(src);
+
+	WindowPtr window = createTestWindow(10);
+	window->setup();
+	q->addWindow(window);
+
 
 	std::cout << "qep before:" << std::endl;
 	q->print();
@@ -208,8 +243,20 @@ int main(int argc, const char *argv[]) {
     std::cout << "numsrc=" << q2->getSources().size() << std::endl;
 	std::cout << "qep afterwards:" << std::endl;
 	q2->print();
+//	delete q2;
+    DataSourcePtr yp = q2->getSources()[0];
+	YSBGeneratorSource* ysb = (YSBGeneratorSource*)yp.get();
+	std::cout << "ysb=" << ysb->toString() << std::endl;
 
+	WindowPtr win = q2->getWindows()[0];
+	win->setup();
+	std::cout << "window=" << std::endl;
+	win->print();
 	return 0;
+
+
+
+
 	printWelcome();
 	FogTopologyManager& fMgnr = FogTopologyManager::getInstance();
 	createTestTopo(fMgnr);

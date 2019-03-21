@@ -81,5 +81,6 @@ const DataSourcePtr createRemoteTCPSource(const Schema &schema, const std::strin
 #include <boost/serialization/export.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-BOOST_CLASS_EXPORT_KEY(iotdb::DataSource);
+//BOOST_SERIALIZATION_ASSUME_ABSTRACT(iotdb::DataSource)
+BOOST_CLASS_EXPORT_KEY(iotdb::DataSource)
 #endif /* INCLUDE_DATASOURCE_H_ */
