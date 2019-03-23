@@ -19,28 +19,20 @@ using JSON = nlohmann::json;
 
 class NodeEngine {
 public:
-	NodeEngine(uint64_t id) : id(id), threadPool(1)
+	NodeEngine()
 	{
 		props = new NodeProperties();
-		iotdb::Dispatcher::instance();
 	}
+
+	void init();
+	void deployQuery(QueryExecutionPlanPtr ptr);
+	void start();
+	void stop();
 
 	JSON getNodeProperties();
 
-	size_t getId(){return id;};
-
-	void deployQuery(QueryExecutionPlanPtr ptr);
-
-	void sendNodePropertiesToServer(std::string ip, std::string port);
-
-	void printNodeProperties();
-	void printMetric();
-
 private:
-  std::vector<pthread_t> threadPool;
   NodeProperties* props;
-  uint64_t id;
-
 };
 
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;

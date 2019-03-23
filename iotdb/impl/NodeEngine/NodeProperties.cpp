@@ -82,7 +82,10 @@ std::string NodeProperties::getHostname()
 //    auto m = _nets.at("hostname").get<std::string>();
 //
 //	return m;
-	return _nets[0]["hostname"].dump();
+	std::string host = _nets[0]["hostname"].dump();
+	host.erase(0,1);               //           ^
+	host.erase(host.length()-1,1);               //           ^
+	return host;
 
 }
 
