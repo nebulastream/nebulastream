@@ -21,7 +21,7 @@ typedef unsigned long uint64_t;
 
 class NodeProperties {
 public:
-  NodeProperties() {};
+  NodeProperties():nbrProcessors(0) {};
 
   ~NodeProperties() {
   }
@@ -53,5 +53,8 @@ private:
   JSON _cpus;
   JSON _nets;
 };
+
+typedef std::shared_ptr<NodeProperties> NodePropertiesPtr;
+
 }
 #endif
