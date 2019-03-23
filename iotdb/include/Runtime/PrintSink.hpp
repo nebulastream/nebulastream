@@ -22,14 +22,16 @@ public:
 
   const std::string toString() const override;
 
+
+protected:
+  friend class boost::serialization::access;
+
   template<class Archive>
   void serialize(Archive & ar, const unsigned int version)
   {
       ar & boost::serialization::base_object<DataSink>(*this);
 
   }
-protected:
-  friend class boost::serialization::access;
   PrintSink(){};
 
 };

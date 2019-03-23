@@ -12,10 +12,9 @@ namespace iotdb {
 
 class YSBPrintSink : public PrintSink {
 public:
-    YSBPrintSink();
 
 	~YSBPrintSink();
-
+	YSBPrintSink();
   bool writeData(const TupleBuffer* input_buffer) override;
 
   void setup(){};
@@ -23,15 +22,15 @@ public:
 
   const std::string toString() const override;
 
-  	template<class Archive>
+protected:
+    friend class boost::serialization::access;
+    template<class Archive>
 	void serialize(Archive & ar, const unsigned int version)
 	{
-        ar & boost::serialization::base_object<PrintSink>(*this);
+		ar & boost::serialization::base_object<PrintSink>(*this);
 	}
 
 
-private:
-    friend class boost::serialization::access;
 };
 
 } // namespace iotdb

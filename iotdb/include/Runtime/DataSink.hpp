@@ -28,21 +28,22 @@ public:
 	virtual const std::string toString() const = 0;
 	const Schema &getSchema() const;
 
-	template<class Archive>
-	void serialize(Archive & ar, const unsigned int version)
-	{
-		ar & schema;
-		ar & processedBuffer;
-		ar & processedTuples;
-	}
+
 
 protected:
-  Schema schema;
-  size_t processedBuffer;
-  size_t processedTuples;
+	Schema schema;
+	size_t processedBuffer;
+	size_t processedTuples;
 
-  friend class boost::serialization::access;
-  DataSink(){};
+	friend class boost::serialization::access;
+	DataSink(){};
+	template<class Archive>
+  	void serialize(Archive & ar, const unsigned int version)
+  	{
+  		ar & schema;
+  		ar & processedBuffer;
+  		ar & processedTuples;
+  	}
 
 };
 typedef std::shared_ptr<DataSink> DataSinkPtr;
