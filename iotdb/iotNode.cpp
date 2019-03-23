@@ -1,109 +1,99 @@
-#include <Runtime/DataSource.hpp>
-#include <Runtime/Dispatcher.hpp>
-#include <Runtime/GeneratorSource.hpp>
-#include <Runtime/ThreadPool.hpp>
-#include <assert.h>
-#include <CodeGen/HandCodedQueryExecutionPlan.hpp>
-#include <CodeGen/QueryExecutionPlan.hpp>
-#include <Core/TupleBuffer.hpp>
-#include <cstdint>
+//
+// blocking_tcp_echo_client.cpp
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//
+// Copyright (c) 2003-2011 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+
+#include <cstdlib>
+#include <cstring>
 #include <iostream>
-#include <string>
-#include <thread>
-#include <Core/DataTypes.hpp>
+#include <boost/asio.hpp>
+#include <NodeEngine/NodeEngine.hpp>
 
-#include <API/Config.hpp>
-#include <Core/Schema.hpp>
+using boost::asio::ip::tcp;
+using namespace iotdb;
+using namespace std; // For strlen.
 
-#include <design.hpp>
-#include "include/API/InputQuery.hpp"
+enum { max_length = 1024 };
 
-using namespace std;
+boost::asio::io_service io_service;
 
-namespace iotdb {
 
-    void generate_LLVM_AST();
+void registerNodeInFog(string host, string port)
+{
+	tcp::resolver resolver(io_service);
+	tcp::resolver::query query(tcp::v4(), host, port);
+	tcp::resolver::iterator iterator = resolver.resolve(query);
+	tcp::socket s(io_service);
+	s.connect(*iterator);
+	cout << "connected to " << host << ":" << port << " successfully";
 
-class Functor {
-public:
-  Functor() : last_number(0) {}
-  TupleBuffer operator()(uint64_t generated_tuples, uint64_t num_tuples_to_process) {
-    TupleBuffer buf = Dispatcher::instance().getBuffer();
-    assert(buf.buffer != NULL);
-    uint64_t generated_tuples_this_pass = buf.buffer_size / sizeof(uint64_t);
-    std::cout << generated_tuples << ", " << num_tuples_to_process << std::endl;
-    generated_tuples_this_pass = std::min(num_tuples_to_process - generated_tuples, generated_tuples_this_pass);
+	NodeEnginePtr node = std::make_shared<NodeEngine>(1);
+	JSON props = node->getNodeProperties();
+	node->printNodeProperties();
+	node->printMetric();
 
-    uint64_t *tuples = (uint64_t *)buf.buffer;
-    for (uint64_t i = 0; i < generated_tuples_this_pass; i++) {
-      tuples[i] = last_number++;
+
+	cout << "write data size=" << props.dump().size() << endl;
+	boost::asio::write(s, boost::asio::buffer(props.dump(), props.dump().size()));
+//	std::this_thread::sleep_for(std::chrono::seconds(1));
+//
+//	char reply[max_length];
+//	size_t reply_length = boost::asio::read(s, boost::asio::buffer(reply, max_length));
+//	std::cout << "Reply is: ";
+//	std::cout.write(reply, reply_length);
+//	std::cout << "\n";
+}
+
+void setupLogging()
+{
+	 // create PatternLayout
+	log4cxx::LayoutPtr layoutPtr(new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
+
+	// create FileAppender
+	LOG4CXX_DECODE_CHAR(fileName, "iotdb.log");
+	log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
+
+	// create ConsoleAppender
+	log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
+
+	// set log level
+	//logger->setLevel(log4cxx::Level::getTrace());
+	logger->setLevel(log4cxx::Level::getDebug());
+//	logger->setLevel(log4cxx::Level::getInfo());
+//	logger->setLevel(log4cxx::Level::getWarn());
+	//logger->setLevel(log4cxx::Level::getError());
+//	logger->setLevel(log4cxx::Level::getFatal());
+
+	// add appenders and other will inherit the settings
+	logger->addAppender(file);
+	logger->addAppender(console);
+}
+
+int main(int argc, char* argv[])
+{
+	setupLogging();
+  try
+  {
+    if (argc != 3)
+    {
+      std::cerr << "Usage: blocking_tcp_echo_client <host> <port>\n";
+      return 1;
     }
-    buf.tuple_size_bytes = sizeof(uint64_t);
-    buf.num_tuples = generated_tuples_this_pass;
-    return buf;
+    std::string host = argv[1];
+    std::string port = argv[2];
+
+    registerNodeInFog(host, port);
+
+  }
+  catch (std::exception& e)
+  {
+    std::cerr << "Exception: " << e.what() << "\n";
   }
 
-  uint64_t last_number;
-};
-
-class CompiledYSBTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
-public:
-  uint64_t count;
-  uint64_t sum;
-  CompiledYSBTestQueryExecutionPlan() : HandCodedQueryExecutionPlan(), count(0), sum(0) {
-    Schema s = Schema::create().addField(createField("val",UINT64));
-    DataSourcePtr source(new GeneratorSource<Functor>(s, 100));
-    sources.push_back(source);
-  }
-
-  bool firstPipelineStage(const TupleBuffer &) { return false; }
-
-  bool executeStage(uint32_t pipeline_stage_id, const TupleBuffer &buf) {
-    assert(pipeline_stage_id == 1);
-    uint64_t *tuples = static_cast<uint64_t *>(buf.buffer);
-
-    for (uint64_t i = 0; i < buf.num_tuples; ++i) {
-      count++;
-      sum += tuples[i];
-    }
-    std::cout << "Processed Block:" << buf.num_tuples << " count: " << count << "sum: " << sum << std::endl;
-    return true;
-  }
-};
-
-DataSourcePtr createGeneratorDataSource() {
-  Schema s = Schema::create().addField(createField("val",UINT64));
-  return std::make_shared<GeneratorSource<Functor>>(s,100);
-}
-
-void test() {
-
-  iotdb::InputQuery::create(iotdb::Config::create(),
-                       iotdb::Schema::create().addField(createField("val",UINT64)),
-                       createGeneratorDataSource())
-      .filter(PredicatePtr())
-      .execute();
-
-  QueryExecutionPlanPtr qep(new CompiledYSBTestQueryExecutionPlan());
-
-  Dispatcher::instance().registerQuery(qep);
-
-  ThreadPool thread_pool;
-
-  thread_pool.start();
-
-  std::cout << "Waiting 2 seconds " << std::endl;
-  std::this_thread::sleep_for(std::chrono::seconds(2));
-
-  // Dispatcher::instance().deregisterQuery(qep);
-}
-}
-
-int main(int argc, const char *argv[]) {
-
-  iotdb::Dispatcher::instance();
-
-  iotdb::test();
-
-  iotdb::test_design();
+  return 0;
 }

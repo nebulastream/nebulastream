@@ -1,5 +1,7 @@
 #include <NodeEngine/NodeProperties.hpp>
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 namespace iotdb{
 void NodeProperties::readCpuStats() {
 
@@ -65,8 +67,34 @@ std::string NodeProperties::getFsStats()
 	return _fs.dump();
 }
 
+std::string NodeProperties::getMetric()
+{
+	return _metrics.dump();
+}
+
+std::string NodeProperties::getHostname()
+{
+//    using T = std::map<std::string,
+//    		std::map<std::string, int>>;
+//	std::cout << "obj=" << _nets.is_object() << std::endl;
+//	std::cout << "ar=" << _nets.is_array() << std::endl;
+//	std::cout << "str=" << _nets.is_string() << std::endl;
+//    auto m = _nets.at("hostname").get<std::string>();
+//
+//	return m;
+	return _nets[0]["hostname"].dump();
+
+}
+
+
 void NodeProperties::readNetworkStats() {
   this->_nets.clear();
+  char hostname[1024];
+  gethostname(hostname, 1024);
+  std::string s1 = hostname;
+  JSON hname;
+  hname["hostname"] = s1;
+  this->_nets.push_back(hname);
 
   struct ifaddrs* ifa;
 
@@ -140,11 +168,26 @@ void NodeProperties::readNetworkStats() {
     } else {
       this->_nets.push_back(net);
     }
+
   }
 
   this->_metrics["nets"] = this->_nets;
 }
 
+void NodeProperties::print()
+{
+	std::cout << "cpu stats=" << std::endl;
+	std::cout << getCpuStats() << std::endl;
+
+	std::cout << "network stats=" << std::endl;
+	std::cout << getNetworkStats() << std::endl;
+
+	std::cout << "mbemory stats=" << std::endl;
+	std::cout << getMemStats() << std::endl;
+
+	std::cout << "filesystem stats=" << std::endl;
+	std::cout << getFsStats() << std::endl;
+}
 void NodeProperties::readMemStats() {
   this->_mem.clear();
 
@@ -193,9 +236,13 @@ std::string NodeProperties::dump(int setw) {
   return _metrics.dump(setw);
 }
 
-JSON NodeProperties::load(const char* metricsBuffer) {
+void NodeProperties::load(const char* metricsBuffer) {
   this->_metrics = JSON::parse(metricsBuffer);
-  return this->_metrics;
+
+  _mem = this->_metrics["mem"];
+  _fs = this->_metrics["fs"];
+  _cpus = this->_metrics["cpus"];
+  _nets = this->_metrics["nets"];
 }
 
 JSON NodeProperties::load() {
