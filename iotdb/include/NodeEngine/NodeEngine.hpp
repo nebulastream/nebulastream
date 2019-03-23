@@ -34,6 +34,7 @@ public:
 	void sendNodePropertiesToServer(std::string ip, std::string port);
 
 	void printNodeProperties();
+	void printMetric();
 
 private:
   std::vector<pthread_t> threadPool;

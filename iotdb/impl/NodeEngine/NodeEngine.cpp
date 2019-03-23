@@ -50,20 +50,16 @@ void NodeEngine::deployQuery(QueryExecutionPlanPtr qep)
 
 }
 
+void NodeEngine::printMetric()
+{
+	cout << "Metric=" << endl;
+	cout << props->getMetric() << endl;
+}
+
+
 
 void NodeEngine::printNodeProperties()
 {
-	cout << "cpu stats=" << endl;
-	cout << props->getCpuStats() << endl;
-
-	cout << "network stats=" << endl;
-	cout << props->getNetworkStats() << endl;
-
-	cout << "memory stats=" << endl;
-	cout << props->getMemStats() << endl;
-
-	cout << "filesystem stats=" << endl;
-	cout << props->getFsStats() << endl;
-
+	props->print();
 }
 }

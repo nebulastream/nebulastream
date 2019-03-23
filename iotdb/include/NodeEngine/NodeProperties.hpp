@@ -28,7 +28,7 @@ public:
 
   void print();
   std::string dump(int setw=-1);
-  JSON load(const char *metricsBuffer);
+  void load(const char *metricsBuffer);
   JSON load();
 
   void readCpuStats();           // read cpu inforamtion
@@ -40,26 +40,11 @@ public:
   std::string getNetworkStats();
   std::string getMemStats();
   std::string getFsStats();
+  std::string getMetric();
+  std::string getHostname();
+
 
 private:
-  /*
-   * memory information
-   * /proc/meminfo
-   * /proc/loadavg
-   */
-//  struct sysinfo *sinfo;
-  /*
-   * file system information
-   * /proc/diskstats
-   */
-//  struct statvfs *svfs;
-  /*
-   * network information
-   * /proc/net/dev
-   *
-   */
-//  struct ifaddrs *ifaddr;
-
   long nbrProcessors;
 
   JSON _metrics;
