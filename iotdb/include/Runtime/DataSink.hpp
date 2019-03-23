@@ -28,18 +28,23 @@ public:
 	virtual const std::string toString() const = 0;
 	const Schema &getSchema() const;
 
-	template<class Archive>
-	void serialize(Archive & ar, const unsigned int version)
-	{
-		ar & schema;
-		ar & processedBuffer;
-		ar & processedTuples;
-	}
+
 
 protected:
-  Schema schema;
-  size_t processedBuffer;
-  size_t processedTuples;
+	Schema schema;
+	size_t processedBuffer;
+	size_t processedTuples;
+
+	friend class boost::serialization::access;
+	DataSink(){};
+	template<class Archive>
+  	void serialize(Archive & ar, const unsigned int version)
+  	{
+  		ar & schema;
+  		ar & processedBuffer;
+  		ar & processedTuples;
+  	}
+
 };
 typedef std::shared_ptr<DataSink> DataSinkPtr;
 
@@ -47,8 +52,11 @@ const DataSinkPtr createTestSink();
 const DataSinkPtr createBinaryFileSink(const Schema &schema, const std::string &path_to_file);
 const DataSinkPtr createRemoteTCPSink(const Schema &schema, const std::string &server_ip, int port);
 const DataSinkPtr createZmqSink(const Schema &schema, const std::string &host, const uint16_t port);
-const DataSinkPtr createYSBPrintSink(const Schema &schema);
+const DataSinkPtr createYSBPrintSink();
 
 } // namespace iotdb
-
+#include <boost/serialization/export.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+BOOST_CLASS_EXPORT_KEY(iotdb::DataSink)
 #endif // INCLUDE_DATASINK_H_

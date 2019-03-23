@@ -22,27 +22,24 @@ public:
 
   const std::string toString() const override;
 
+
+protected:
+  friend class boost::serialization::access;
+
+  template<class Archive>
+  void serialize(Archive & ar, const unsigned int version)
+  {
+      ar & boost::serialization::base_object<DataSink>(*this);
+
+  }
+  PrintSink(){};
+
 };
-
-
-class YSBPrintSink : public PrintSink {
-public:
-	YSBPrintSink(const Schema& schema);
-
-	~YSBPrintSink();
-
-  bool writeData(const TupleBuffer* input_buffer) override;
-
-  void setup(){}
-  void shutdown(){}
-
-  const std::string toString() const override;
-
-private:
-};
-
 } // namespace iotdb
-
+#include <boost/serialization/export.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+BOOST_CLASS_EXPORT_KEY(iotdb::PrintSink)
 
 
 #endif // ZMQSINK_HPP

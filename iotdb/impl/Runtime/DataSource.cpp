@@ -7,6 +7,7 @@
 #include <Runtime/BinarySource.hpp>
 #include <Runtime/Dispatcher.hpp>
 #include <Runtime/GeneratorSource.hpp>
+#include <Runtime/YSBGeneratorSource.hpp>
 
 #include <Runtime/RemoteSocketSource.hpp>
 #include <Runtime/ZmqSource.hpp>

@@ -20,10 +20,8 @@ namespace iotdb {
 
 class DataSource {
 public:
-	DataSource();
 
 	DataSource(const Schema &schema);
-	friend class boost::serialization::access;
 
 	void start();
 	void stop();
@@ -37,16 +35,7 @@ public:
 	virtual bool isRunning();
 	virtual ~DataSource();
 
- 	template<class Archive>
-	void serialize(Archive & ar, const unsigned int version)
-	{
-		ar & run_thread;
-//		ar & thread;
-		ar & num_buffers_to_process;
-		ar & generatedTuples;
-		ar & generatedBuffers;
-		ar & schema;
-	}
+
 
   //debugging
   void setNumBuffersToProcess(size_t cnt){num_buffers_to_process = cnt;};
@@ -59,6 +48,18 @@ private:
   std::thread thread;
 
 protected:
+	DataSource();
+	friend class boost::serialization::access;
+	template<class Archive>
+	void serialize(Archive & ar, const unsigned int version)
+	{
+		ar & run_thread;
+	//		ar & thread;
+		ar & num_buffers_to_process;
+		ar & generatedTuples;
+		ar & generatedBuffers;
+		ar & schema;
+	}
   size_t num_buffers_to_process;
   size_t generatedTuples;
   size_t generatedBuffers;
@@ -66,16 +67,6 @@ protected:
 
 };
 
-class YSBFunctor {
-public:
-	YSBFunctor(): campaingCnt(0){};
-
-	YSBFunctor(size_t pCampaingCnt): campaingCnt(pCampaingCnt){};
-	TupleBufferPtr operator()();
-
-private:
-   size_t campaingCnt;
-};
 
 typedef std::shared_ptr<DataSource> DataSourcePtr;
 
@@ -91,5 +82,6 @@ const DataSourcePtr createRemoteTCPSource(const Schema &schema, const std::strin
 #include <boost/serialization/export.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-BOOST_CLASS_EXPORT_KEY(iotdb::DataSource);
+//BOOST_SERIALIZATION_ASSUME_ABSTRACT(iotdb::DataSource)
+BOOST_CLASS_EXPORT_KEY(iotdb::DataSource)
 #endif /* INCLUDE_DATASOURCE_H_ */
