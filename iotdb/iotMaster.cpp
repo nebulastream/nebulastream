@@ -141,9 +141,9 @@ void createTestTopo(FogTopologyManager& fMgnr)
 
 NodeEnginePtr createTestNode()
 {
-	NodeEnginePtr node = std::make_shared<NodeEngine>(1);
+	NodeEnginePtr node = std::make_shared<NodeEngine>();
 	JSON props = node->getNodeProperties();
-	node->printNodeProperties();
+//	node->printNodeProperties();
 	return node;
 }
 

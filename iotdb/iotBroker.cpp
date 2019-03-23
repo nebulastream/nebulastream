@@ -14,15 +14,26 @@
 #include <boost/smart_ptr.hpp>
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
+#include <thread>
 #include <NodeEngine/json.hpp>
 #include <NodeEngine/NodeProperties.hpp>
 #include <string>
+#include <boost/lexical_cast.hpp>
+
 using boost::asio::ip::tcp;
 using JSON = nlohmann::json;
 using namespace iotdb;
 using namespace std;
 const int max_length = 1024*10;
+const size_t serverPort = 5555;
+const size_t clientPort = 6666;
+const std::string clientPortStr = "6666";
 
+
+enum NODE_COMMANDS {
+	START_QUERY = 1,
+	STOP_QUERY = 2,
+	DEPLOY_QEP = 3 };
 typedef boost::shared_ptr<tcp::socket> socket_ptr;
 
 std::map<std::string, NodePropertiesPtr> nodes;
@@ -31,18 +42,17 @@ void session(socket_ptr sock)
   try
   {
       char data[max_length];
-
       boost::system::error_code error;
       size_t length = sock->read_some(boost::asio::buffer(data), error);
       assert(length < max_length);
       if (error)
-        throw boost::system::system_error(error); // Some other error.
+        throw boost::system::system_error(error); // Some other error.g
 
       NodePropertiesPtr ptr = std::make_shared<NodeProperties>();
       ptr->load(data);
       std::cout << "sending replay" << std::endl;
       char reply[14];
-      std::cout << "Host =" << ptr->getHostname() << " try to register"<< std::endl;
+      std::cout << "Host= " << ptr->getHostname() << " try to register"<< std::endl;
       if ( nodes.find(ptr->getHostname()) == nodes.end() ) {
 		  std::cout << "registering node" << std::endl;
 		  nodes[ptr->getHostname()] = ptr;
@@ -61,9 +71,10 @@ void session(socket_ptr sock)
   }
 }
 
-void server(boost::asio::io_service& io_service, short port)
+void server()
 {
-  tcp::acceptor a(io_service, tcp::endpoint(tcp::v4(), port));
+  boost::asio::io_service io_service;
+  tcp::acceptor a(io_service, tcp::endpoint(tcp::v4(), serverPort));
   for (;;)
   {
     socket_ptr sock(new tcp::socket(io_service));
@@ -72,20 +83,55 @@ void server(boost::asio::io_service& io_service, short port)
   }
 }
 
+void sendCommandToNodes(std::string command)
+{
+	for(auto& node : nodes)
+	{
+		boost::asio::io_service io_service;
+		tcp::resolver resolver(io_service);
+		std::string addr = node.first;
+		cout << "resolve address for " << addr << std::endl;
+//		tcp::resolver::query query(tcp::v4(), node.first, clientPortStr, boost::asio::ip::resolver_query_base::numeric_service);
+		tcp::resolver::query query(tcp::v4(), addr, clientPortStr.c_str(), boost::asio::ip::resolver_query_base::numeric_service);
+
+//		tcp::resolver::query query(node.first, ientPortStr, boost::asio::ip::resolver_query_base::numeric_service);
+
+		//		tcp::resolver::query query(boost::asio::ip::host_name(), "");
+
+		tcp::resolver::iterator iterator = resolver.resolve(query);
+		tcp::socket s(io_service);
+		s.connect(*iterator);
+		cout << "connected to " << node.first << ":" << clientPort << " successfully";
+	}
+}
+
+
 int main(int argc, char* argv[])
 {
   try
   {
-    if (argc != 2)
+    if (argc != 1)
     {
-      std::cerr << "Usage: blocking_tcp_echo_server <port>\n";
+      std::cerr << "no args required";
       return 1;
     }
 
-    boost::asio::io_service io_service;
+    boost::thread t(server);
+    std::cout << "server started" << std::endl;
 
-    using namespace std; // For atoi.
-    server(io_service, atoi(argv[1]));
+    std::string command = "0";
+	std::cout << "Please enter node command";
+	std::cout << "1 = START_QUERY";
+	std::cout << "2 = STOP_QUERY";
+	std::cout << "3 = DEPLOY_QEP";
+	std::cout << "4 = QUIT"  <<std::endl;
+
+	while(command != "4"){
+		std::getline (std::cin,command);
+		std::cout << "Exec Command, " << command << std::endl;
+		sendCommandToNodes(command);
+	}
+
   }
   catch (std::exception& e)
   {

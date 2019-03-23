@@ -16,28 +16,6 @@ JSON NodeEngine::getNodeProperties()
 	return props->load();
 }
 
-void NodeEngine::sendNodePropertiesToServer(std::string ip, std::string port)
-{
-
-	zmq::context_t context (1);
-	zmq::socket_t socket (context, ZMQ_REQ);
-	std::cout << "Connecting to master..." << std::endl;
-	std::string connectStr = "tcp://" + ip + ":" + port;
-	socket.connect(connectStr.c_str());
-
-	NodeProperties *metrics = new NodeProperties();
-	JSON result;
-
-	int size = result.dump().size();
-	zmq::message_t request(size);
-	memcpy(request.data(), result.dump().c_str(), size);
-	socket.send(request);
-
-	zmq::message_t reply;
-	socket.recv(&reply);
-	sleep(1);
-}
-
 void NodeEngine::deployQuery(QueryExecutionPlanPtr qep)
 {
 	//TODO:add compile here
@@ -48,18 +26,5 @@ void NodeEngine::deployQuery(QueryExecutionPlanPtr qep)
 	std::cout << "Waiting 2 seconds " << std::endl;
 	std::this_thread::sleep_for(std::chrono::seconds(2));
 
-}
-
-void NodeEngine::printMetric()
-{
-	cout << "Metric=" << endl;
-	cout << props->getMetric() << endl;
-}
-
-
-
-void NodeEngine::printNodeProperties()
-{
-	props->print();
 }
 }
