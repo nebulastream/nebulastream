@@ -34,19 +34,19 @@ void registerNodeInFog(string host, string port)
 
 	NodeEnginePtr node = std::make_shared<NodeEngine>(1);
 	JSON props = node->getNodeProperties();
-	node->printNodeProperties();
-	node->printMetric();
+//	node->printNodeProperties();
+//	node->printMetric();
 
 
-	cout << "write data size=" << props.dump().size() << endl;
+//	cout << "write data size=" << props.dump().size() << endl;
 	boost::asio::write(s, boost::asio::buffer(props.dump(), props.dump().size()));
 //	std::this_thread::sleep_for(std::chrono::seconds(1));
 //
-//	char reply[max_length];
-//	size_t reply_length = boost::asio::read(s, boost::asio::buffer(reply, max_length));
-//	std::cout << "Reply is: ";
-//	std::cout.write(reply, reply_length);
-//	std::cout << "\n";
+	char reply[14];
+	size_t reply_length = boost::asio::read(s, boost::asio::buffer(reply, max_length));
+	std::cout << "Reply is: ";
+	std::cout.write(reply, reply_length);
+	std::cout << "\n";
 }
 
 void setupLogging()
@@ -63,8 +63,8 @@ void setupLogging()
 
 	// set log level
 	//logger->setLevel(log4cxx::Level::getTrace());
-	logger->setLevel(log4cxx::Level::getDebug());
-//	logger->setLevel(log4cxx::Level::getInfo());
+//	logger->setLevel(log4cxx::Level::getDebug());
+	logger->setLevel(log4cxx::Level::getInfo());
 //	logger->setLevel(log4cxx::Level::getWarn());
 	//logger->setLevel(log4cxx::Level::getError());
 //	logger->setLevel(log4cxx::Level::getFatal());

@@ -16,7 +16,7 @@
 #include <boost/thread.hpp>
 #include <NodeEngine/json.hpp>
 #include <NodeEngine/NodeProperties.hpp>
-
+#include <string>
 using boost::asio::ip::tcp;
 using JSON = nlohmann::json;
 using namespace iotdb;
@@ -25,6 +25,7 @@ const int max_length = 1024*10;
 
 typedef boost::shared_ptr<tcp::socket> socket_ptr;
 
+std::map<std::string, NodePropertiesPtr> nodes;
 void session(socket_ptr sock)
 {
   try
@@ -33,14 +34,26 @@ void session(socket_ptr sock)
 
       boost::system::error_code error;
       size_t length = sock->read_some(boost::asio::buffer(data), error);
-      std::cout << "bufferSize=" << length << std::endl;
+      assert(length < max_length);
       if (error)
         throw boost::system::system_error(error); // Some other error.
 
-      NodeProperties* props = new NodeProperties();
-      props->load(data);
-      std::cout << "Host =" << props->getHostname() << " registered"<< std::endl;
+      NodePropertiesPtr ptr = std::make_shared<NodeProperties>();
+      ptr->load(data);
+      std::cout << "sending replay" << std::endl;
+      char reply[14];
+      std::cout << "Host =" << ptr->getHostname() << " try to register"<< std::endl;
+      if ( nodes.find(ptr->getHostname()) == nodes.end() ) {
+		  std::cout << "registering node" << std::endl;
+		  nodes[ptr->getHostname()] = ptr;
+		  memcpy(reply, "REG_COMPLETED", 13);
+	  } else {
+		  std::cout << "Node already registered" << std::endl;
+		  memcpy(reply, "ALREADY_REG", 11);
 
+	  }
+  	boost::asio::write(*sock, boost::asio::buffer(reply, sizeof(reply)));
+	std::cout << "process complete" << std::endl;
   }
   catch (std::exception& e)
   {
