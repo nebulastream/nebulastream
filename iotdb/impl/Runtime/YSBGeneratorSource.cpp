@@ -7,8 +7,6 @@
 #include <Runtime/YSBGeneratorSource.hpp>
 BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::YSBGeneratorSource);
 
-
-
 namespace iotdb {
 
 

@@ -10,15 +10,25 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/DataSource.hpp>
 #include <Runtime/Dispatcher.hpp>
+
+#include <boost/serialization/export.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 #include <Runtime/ZmqSource.hpp>
+BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::ZmqSource);
 
 namespace iotdb {
+
+ZmqSource::ZmqSource()
+    : host(""), port(0), connected(false), context(zmq::context_t(1)),
+      socket(zmq::socket_t(context, ZMQ_SUB)) {
+	  IOTDB_DEBUG("Default ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/")
+}
 
 ZmqSource::ZmqSource(const Schema &schema, const std::string &host, const uint16_t port)
     : DataSource(schema), host(host), port(port), connected(false), context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_SUB)) {
 	  IOTDB_DEBUG("ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/")
-
 }
 ZmqSource::~ZmqSource() { assert(disconnect());
 IOTDB_DEBUG("ZMQSOURCE  " << this << ": Destroy ZMQ Source")

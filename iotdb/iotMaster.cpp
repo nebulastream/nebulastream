@@ -19,6 +19,9 @@
 #include <boost/archive/text_oarchive.hpp>
 
 #include <Runtime/YSBGeneratorSource.hpp>
+#include <Runtime/ZmqSink.hpp>
+#include <Runtime/ZmqSource.hpp>
+
 #include <Runtime/YSBPrintSink.hpp>
 
 
@@ -212,6 +215,12 @@ static QueryExecutionPlan load(std::string const &s) {
 
 int main(int argc, const char *argv[]) {
 	log4cxx::Logger::getLogger("IOTDB")->setLevel(log4cxx::Level::getInfo());
+	Schema schema = Schema::create()
+		.addField("campaign_id", 16)
+		.addField("event_type", 9)
+		.addField("current_ms", 8)
+		.addField("id", 4);
+
 	setupLogging();
 	std::string filename("");
 	filename += "/home/zeuchste/git/IoTDB/iotdb/build/tests/demofile.txt";
@@ -219,6 +228,8 @@ int main(int argc, const char *argv[]) {
 
 	DataSourcePtr src = createYSBSource(100,10, /*pregen*/ false);
 	q->addDataSource(src);
+	DataSourcePtr zmq_src = createZmqSource(schema, "127.0.0.1", 55555);
+	q->addDataSource(zmq_src);
 
 	WindowPtr window = createTestWindow(10);
 	window->setup();
@@ -226,6 +237,8 @@ int main(int argc, const char *argv[]) {
 
 	DataSinkPtr sink = createYSBPrintSink();
 	q->addDataSink(sink);
+	DataSinkPtr zmq_sink = createZmqSink(schema, "127.0.0.1", 55555);
+	q->addDataSink(zmq_sink);
 
 
 	std::cout << "qep before:" << std::endl;
@@ -240,10 +253,16 @@ int main(int argc, const char *argv[]) {
     std::ifstream ifs(filename);
     boost::archive::text_iarchive ia(ifs);
     ia >> q2;
+	std::cout << "restore finished:" << std::endl;
+
 //	delete q2;
     DataSourcePtr yp = q2->getSources()[0];
 	YSBGeneratorSource* ysb = (YSBGeneratorSource*)yp.get();
 	std::cout << "ysb source=" << ysb->toString() << std::endl;
+
+	DataSourcePtr zp = q2->getSources()[1];
+	ZmqSource* zsrc = (ZmqSource*)zp.get();
+	std::cout << "zmq source=" << zsrc->toString() << std::endl;
 
 	WindowPtr win = q2->getWindows()[0];
 	win->setup();
@@ -254,13 +273,15 @@ int main(int argc, const char *argv[]) {
 	YSBPrintSink* ysp_sink = (YSBPrintSink*)ys.get();
 	std::cout << "ysb sink=" << ysp_sink->toString() << std::endl;
 
+	DataSinkPtr zs = q2->getSinks()[1];
+	ZmqSink* zsink = (ZmqSink*)zs.get();
+	std::cout << "zmq sink=" << zsink->toString() << std::endl;
+
+
 	std::cout << "numsrc=" << q2->getSources().size() << std::endl;
 	std::cout << "qep afterwards:" << std::endl;
 	q2->print();
 	return 0;
-
-
-
 
 	printWelcome();
 	FogTopologyManager& fMgnr = FogTopologyManager::getInstance();
