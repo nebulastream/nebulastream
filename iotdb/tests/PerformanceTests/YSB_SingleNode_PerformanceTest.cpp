@@ -10,9 +10,10 @@
 
 #include <Runtime/DataSource.hpp>
 #include <Runtime/Window.hpp>
+#include <Runtime/YSBWindow.hpp>
 
 #include <Runtime/Dispatcher.hpp>
-#include <Runtime/GeneratorSource.hpp>
+#include <Runtime/YSBGeneratorSource.hpp>
 #include <Runtime/ThreadPool.hpp>
 #include <stdio.h>
 #include <signal.h>

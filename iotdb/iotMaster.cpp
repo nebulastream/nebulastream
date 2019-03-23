@@ -18,10 +18,16 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
-#include <boost/serialization/base_object.hpp>
-#include <boost/serialization/utility.hpp>
-#include <boost/serialization/list.hpp>
-#include <boost/serialization/assume_abstract.hpp>
+#include <Runtime/YSBGeneratorSource.hpp>
+#include <Runtime/ZmqSink.hpp>
+#include <Runtime/ZmqSource.hpp>
+
+#include <Runtime/YSBPrintSink.hpp>
+
+
+#include <boost/iostreams/device/back_inserter.hpp>
+#include <boost/iostreams/device/array.hpp>
+#include <boost/iostreams/stream.hpp>
 
 using namespace iotdb;
 
@@ -183,8 +189,38 @@ void restore_qep(QueryExecutionPlan* s, const char * filename)
     std::cout << "numsrc=" << s->getSources().size() << std::endl;
 }
 
+static std::string save(QueryExecutionPlan const& ptr) {
+	std::string out;
+	{
+		namespace io = boost::iostreams;
+		io::stream<io::back_insert_device<std::string> > os(out);
+
+		boost::archive::text_oarchive archive(os);
+		archive << ptr;
+	}
+
+	return out;
+}
+
+static QueryExecutionPlan load(std::string const &s) {
+	QueryExecutionPlan p;
+	{
+		namespace io = boost::iostreams;
+		io::stream<io::array_source> is(io::array_source{ s.data(), s.size() });
+		boost::archive::text_iarchive archive(is);
+		archive >> p;
+	}
+	return std::move(p);
+}
+
 int main(int argc, const char *argv[]) {
 	log4cxx::Logger::getLogger("IOTDB")->setLevel(log4cxx::Level::getInfo());
+	Schema schema = Schema::create()
+		.addField("campaign_id", 16)
+		.addField("event_type", 9)
+		.addField("current_ms", 8)
+		.addField("id", 4);
+
 	setupLogging();
 	std::string filename("");
 	filename += "/home/zeuchste/git/IoTDB/iotdb/build/tests/demofile.txt";
@@ -192,6 +228,18 @@ int main(int argc, const char *argv[]) {
 
 	DataSourcePtr src = createYSBSource(100,10, /*pregen*/ false);
 	q->addDataSource(src);
+	DataSourcePtr zmq_src = createZmqSource(schema, "127.0.0.1", 55555);
+	q->addDataSource(zmq_src);
+
+	WindowPtr window = createTestWindow(10);
+	window->setup();
+	q->addWindow(window);
+
+	DataSinkPtr sink = createYSBPrintSink();
+	q->addDataSink(sink);
+	DataSinkPtr zmq_sink = createZmqSink(schema, "127.0.0.1", 55555);
+	q->addDataSink(zmq_sink);
+
 
 	std::cout << "qep before:" << std::endl;
 	q->print();
@@ -205,11 +253,36 @@ int main(int argc, const char *argv[]) {
     std::ifstream ifs(filename);
     boost::archive::text_iarchive ia(ifs);
     ia >> q2;
-    std::cout << "numsrc=" << q2->getSources().size() << std::endl;
+	std::cout << "restore finished:" << std::endl;
+
+//	delete q2;
+    DataSourcePtr yp = q2->getSources()[0];
+	YSBGeneratorSource* ysb = (YSBGeneratorSource*)yp.get();
+	std::cout << "ysb source=" << ysb->toString() << std::endl;
+
+	DataSourcePtr zp = q2->getSources()[1];
+	ZmqSource* zsrc = (ZmqSource*)zp.get();
+	std::cout << "zmq source=" << zsrc->toString() << std::endl;
+
+	WindowPtr win = q2->getWindows()[0];
+	win->setup();
+	std::cout << "window=" << std::endl;
+	win->print();
+
+	DataSinkPtr ys = q2->getSinks()[0];
+	YSBPrintSink* ysp_sink = (YSBPrintSink*)ys.get();
+	std::cout << "ysb sink=" << ysp_sink->toString() << std::endl;
+
+	DataSinkPtr zs = q2->getSinks()[1];
+	ZmqSink* zsink = (ZmqSink*)zs.get();
+	std::cout << "zmq sink=" << zsink->toString() << std::endl;
+
+
+	std::cout << "numsrc=" << q2->getSources().size() << std::endl;
 	std::cout << "qep afterwards:" << std::endl;
 	q2->print();
-
 	return 0;
+
 	printWelcome();
 	FogTopologyManager& fMgnr = FogTopologyManager::getInstance();
 	createTestTopo(fMgnr);
