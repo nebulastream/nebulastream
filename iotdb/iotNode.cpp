@@ -13,13 +13,9 @@
 #include <iostream>
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
+#include <Util/Logger.hpp>
 
 #include <NodeEngine/NodeEngine.hpp>
-enum NODE_COMMANDS {
-	START_QUERY = 1,
-	STOP_QUERY = 2,
-	DEPLOY_QEP = 3 };
-
 using boost::asio::ip::tcp;
 using namespace iotdb;
 using namespace std; // For strlen.
@@ -27,6 +23,10 @@ using namespace std; // For strlen.
 const size_t serverPort = 5555;
 const size_t clientPort = 6666;
 enum { max_length = 1024*10 };
+enum NODE_COMMANDS {
+	START_QUERY = 1,
+	STOP_QUERY = 2,
+	DEPLOY_QEP = 3 };
 
 boost::asio::io_service io_service;
 typedef boost::shared_ptr<tcp::socket> socket_ptr;
@@ -34,12 +34,13 @@ typedef boost::shared_ptr<tcp::socket> socket_ptr;
 
 bool registerNodeInFog(string host, string port)
 {
+	IOTDB_DEBUG("IOTNODE: register with server " << host << ":" << port)
 	tcp::resolver resolver(io_service);
 	tcp::resolver::query query(tcp::v4(), host, port);
 	tcp::resolver::iterator iterator = resolver.resolve(query);
 	tcp::socket s(io_service);
 	s.connect(*iterator);
-	cout << "connected to " << host << ":" << port << " successfully";
+	IOTDB_DEBUG("connected to " << host << ":" << port << " successfully")
 
 	NodeEnginePtr node = std::make_shared<NodeEngine>();
 	JSON props = node->getNodeProperties();
@@ -48,34 +49,51 @@ bool registerNodeInFog(string host, string port)
 //
 	char reply[14];
 	boost::asio::read(s, boost::asio::buffer(reply, max_length));
-	std::cout << "Reply is: " << reply << std::endl;
+	IOTDB_DEBUG("IOTNODE: Server replyied " << reply)
+	if(strcmp(reply, "REG_COMPLETED") == 0)
+	{
+		IOTDB_DEBUG("IOTNODE: registration successful" << reply)
+		return true;
+	}
+	else
+	{
+		IOTDB_DEBUG("IOTNODE: registration unsuccessful" << reply)
+		return false;
+	}
 }
 
 void commandProcess(socket_ptr sock)
 {
-	char data[max_length];
+	IOTDB_DEBUG("IOTNODE: process incomming command")
+	char data[32];
 	boost::system::error_code error;
 	size_t length = sock->read_some(boost::asio::buffer(data), error);
 	assert(length < max_length);
+	IOTDB_DEBUG("IOTNODE: received command=" << data)
 	if (error)
 		throw boost::system::system_error(error);
 
 	//first char identifies cmd
-	if(data[0] == START_QUERY)
+	if(strcmp(data, "1") == 0)
 	{
 		std::cout << "starting query" << std::endl;
 	}
-	else if(data[1] == STOP_QUERY)
+	else if(strcmp(data, "2") == 0)
 	{
 		std::cout << "stop query" << std::endl;
 	}
-	else if(data[2] == DEPLOY_QEP)
+	else if(strcmp(data, "3") == 0)
 	{
 		std::cout << "deploy query" << std::endl;
+	}
+	else
+	{
+		std::cerr << "COMMAND NOT FOUND" << std::endl;
 	}
 
 }
 void listen(boost::asio::io_service& io_service, short port){
+	IOTDB_DEBUG("IOTNODE: start listener for incoming commands")
 	tcp::acceptor a(io_service, tcp::endpoint(tcp::v4(), port));
 	  for (;;)
 	  {
@@ -92,7 +110,7 @@ void setupLogging()
 	log4cxx::LayoutPtr layoutPtr(new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
 
 	// create FileAppender
-	LOG4CXX_DECODE_CHAR(fileName, "iotdb.log");
+	LOG4CXX_DECODE_CHAR(fileName, "node.log");
 	log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
 
 	// create ConsoleAppender
@@ -100,8 +118,8 @@ void setupLogging()
 
 	// set log level
 	//logger->setLevel(log4cxx::Level::getTrace());
-//	logger->setLevel(log4cxx::Level::getDebug());
-	logger->setLevel(log4cxx::Level::getInfo());
+	logger->setLevel(log4cxx::Level::getDebug());
+//	logger->setLevel(log4cxx::Level::getInfo());
 //	logger->setLevel(log4cxx::Level::getWarn());
 	//logger->setLevel(log4cxx::Level::getError());
 //	logger->setLevel(log4cxx::Level::getFatal());
@@ -128,7 +146,7 @@ int main(int argc, char* argv[])
 
     if(successReg)
     {
-        std::cout << "waiting for commands" << std::endl;
+    	IOTDB_DEBUG("IOTNODE: waiting for commands")
         boost::asio::io_service io_service;
         listen(io_service, clientPort);
     }
