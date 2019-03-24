@@ -29,11 +29,11 @@ const size_t serverPort = 5555;
 const size_t clientPort = 6666;
 const std::string clientPortStr = "6666";
 
-
 enum NODE_COMMANDS {
 	START_QUERY = 1,
 	STOP_QUERY = 2,
 	DEPLOY_QEP = 3 };
+
 typedef boost::shared_ptr<tcp::socket> socket_ptr;
 
 std::map<std::string, NodePropertiesPtr> nodes;
@@ -89,19 +89,15 @@ void sendCommandToNodes(std::string command)
 	{
 		boost::asio::io_service io_service;
 		tcp::resolver resolver(io_service);
-		std::string addr = node.first;
-		cout << "resolve address for " << addr << std::endl;
-//		tcp::resolver::query query(tcp::v4(), node.first, clientPortStr, boost::asio::ip::resolver_query_base::numeric_service);
-		tcp::resolver::query query(tcp::v4(), addr, clientPortStr.c_str(), boost::asio::ip::resolver_query_base::numeric_service);
-
-//		tcp::resolver::query query(node.first, ientPortStr, boost::asio::ip::resolver_query_base::numeric_service);
-
-		//		tcp::resolver::query query(boost::asio::ip::host_name(), "");
-
+		cout << "resolve address for " << node.first << std::endl;
+		tcp::resolver::query query(tcp::v4(), node.first, clientPortStr.c_str(), boost::asio::ip::resolver_query_base::numeric_service);
 		tcp::resolver::iterator iterator = resolver.resolve(query);
 		tcp::socket s(io_service);
 		s.connect(*iterator);
-		cout << "connected to " << node.first << ":" << clientPort << " successfully";
+		cout << "connected to " << node.first << ":" << clientPort << " successfully" << std::endl;
+
+		cout << "send command " << command << " size=" << sizeof(command) << std::endl;
+	  	boost::asio::write(s, boost::asio::buffer(command.c_str(), sizeof(command)));
 	}
 }
 
@@ -120,14 +116,16 @@ int main(int argc, char* argv[])
     std::cout << "server started" << std::endl;
 
     std::string command = "0";
-	std::cout << "Please enter node command";
-	std::cout << "1 = START_QUERY";
-	std::cout << "2 = STOP_QUERY";
-	std::cout << "3 = DEPLOY_QEP";
-	std::cout << "4 = QUIT"  <<std::endl;
+
 
 	while(command != "4"){
-		std::getline (std::cin,command);
+		std::cout << "Please enter node command:";
+		std::cout << "1 = START_QUERY";
+		std::cout << "2 = STOP_QUERY";
+		std::cout << "3 = DEPLOY_QEP";
+		std::cout << "4 = QUIT"  <<std::endl;
+		cin >> command; // input the length
+
 		std::cout << "Exec Command, " << command << std::endl;
 		sendCommandToNodes(command);
 	}

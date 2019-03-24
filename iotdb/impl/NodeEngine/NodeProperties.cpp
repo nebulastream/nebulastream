@@ -74,14 +74,6 @@ std::string NodeProperties::getMetric()
 
 std::string NodeProperties::getHostname()
 {
-//    using T = std::map<std::string,
-//    		std::map<std::string, int>>;
-//	std::cout << "obj=" << _nets.is_object() << std::endl;
-//	std::cout << "ar=" << _nets.is_array() << std::endl;
-//	std::cout << "str=" << _nets.is_string() << std::endl;
-//    auto m = _nets.at("hostname").get<std::string>();
-//
-//	return m;
 	std::string host = _nets[0]["hostname"].dump();
 	host.erase(0,1);               //           ^
 	host.erase(host.length()-1,1);               //           ^
