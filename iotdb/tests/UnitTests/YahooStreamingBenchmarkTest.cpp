@@ -28,10 +28,10 @@ public:
   void SetUp() {
     IOTDB_INFO("Setup YahooStreamingBenchmarkTest test case.");
     Dispatcher::instance();
-    BufferManager::instance().setBufferSize(10 * 1024); // 10 kb / 78 bytes = 131 tuples per buffer
-    ysb_source = createYSBSource(256, 10, true);        // 256 buffers * 4 kb = 1 mb
-    ThreadPool::instance().setNumberOfThreads(8);       // 131 tuples per buffer * 8 threads = 1048 tuples in parallel
-    ThreadPool::instance().start(8);                    // 1048 tuples in parallel
+    BufferManager::instance().setBufferSize(32 * 1024); // 32 kb / 78 bytes = 420 tuples per buffer
+    ysb_source = createYSBSource(1024, 10, false);      // 1024 buffers * 32 kb = 32 MB
+    ThreadPool::instance().setNumberOfThreads(8);       // 420 tuples per buffer * 8 threads
+    ThreadPool::instance().start(8);                    // 3360 tuples in parallel
     ysb_window = createTestWindow(2, 10);               // windows of 2 seconds, 10 campaigns
   }
 
@@ -104,10 +104,10 @@ TEST_F(YahooStreamingBenchmarkTest, source_to_out) {
   class SourceToOutExecutionPlan : public HandCodedQueryExecutionPlan {
   public:
     SourceToOutExecutionPlan(size_t *check_number_windows, size_t *check_number_tuples, size_t *check_first_timestamp,
-                             size_t *check_last_timestamp)
+                             size_t *check_last_timestamp, size_t *check_processed_buffers)
         : HandCodedQueryExecutionPlan(), check_number_windows(check_number_windows),
           check_number_tuples(check_number_tuples), check_first_timestamp(check_first_timestamp),
-          check_last_timestamp(check_last_timestamp) {}
+          check_last_timestamp(check_last_timestamp), check_processed_buffers(check_processed_buffers) {}
 
     union tempHash {
       uint64_t value;
@@ -119,6 +119,7 @@ TEST_F(YahooStreamingBenchmarkTest, source_to_out) {
     size_t *check_number_tuples;
     size_t *check_first_timestamp;
     size_t *check_last_timestamp;
+    size_t *check_processed_buffers;
 
     bool firstPipelineStage(const TupleBuffer &) { return false; }
 
@@ -144,6 +145,9 @@ TEST_F(YahooStreamingBenchmarkTest, source_to_out) {
 
       // iterate over tuples
       for (size_t i = 0; i < buf->num_tuples; i++) {
+
+        // slow down a bit
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
 
         // filter
         if (strcmp(key, tuples[i].event_type) != 0) {
@@ -171,11 +175,16 @@ TEST_F(YahooStreamingBenchmarkTest, source_to_out) {
             window->setCurrentWindow(current_window);
             window->setLastTimestamp(timestamp);
 
-            // reset hash table for next window
+            // print
+            window->print();
+
+            // sum up checksum
             size_t checksum = 0;
             for (size_t bucket = 0; bucket < campaign_count; ++bucket) {
               checksum += hashTable[old_window][bucket];
             }
+
+            // reset hash table for next window
             std::fill(hashTable[old_window], hashTable[old_window] + campaign_count, 0);
 
             // increment number of windows checksum
@@ -192,13 +201,11 @@ TEST_F(YahooStreamingBenchmarkTest, source_to_out) {
         hash_value.value = *(((uint64_t *)tuples[i].campaign_id) + 1);
         uint64_t bucketPos = (hash_value.value * 789 + 321) % campaign_count;
         atomic_fetch_add(&hashTable[current_window][bucketPos], size_t(1));
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(5));
       }
 
       // save timestamp of last window change
       (*check_last_timestamp) = last_timestamp;
-
+      (*check_processed_buffers)++;
       return true;
     }
   };
@@ -211,28 +218,28 @@ TEST_F(YahooStreamingBenchmarkTest, source_to_out) {
   size_t check_number_tuples = 0;
   size_t check_first_timestamp = 0;
   size_t check_last_timestamp = 0;
+  size_t check_processed_buffers = 0;
 
   // Run query
   SourceToOutExecutionPlanPtr qep(new SourceToOutExecutionPlan(&check_number_windows, &check_number_tuples,
-                                                               &check_first_timestamp, &check_last_timestamp));
+                                                               &check_first_timestamp, &check_last_timestamp,
+                                                               &check_processed_buffers));
   qep->addDataSource(ysb_source);
   qep->addWindow(ysb_window);
   Dispatcher::instance().registerQuery(qep);
 
-  while (ysb_source->isRunning()) {
+  while (ysb_source->isRunning() || ysb_source->getNumberOfGeneratedBuffers() != check_processed_buffers) {
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
 
-  std::cout << "Number of Windows processed: " << check_number_windows << std::endl;
-  std::cout << "Number of Tuples processed: " << check_number_tuples << std::endl;
-  std::cout << "First timestamp: " << check_first_timestamp << std::endl;
-  std::cout << "Last timestamp: " << check_last_timestamp << std::endl;
+  // is the output correct?
+  size_t tmp_tuples = ysb_source->getNumberOfGeneratedTuples() / 3;
+  EXPECT_TRUE(tmp_tuples - (tmp_tuples * 0.1) < check_number_tuples ||
+              check_number_tuples < tmp_tuples + (tmp_tuples * 0.1));
 
-  // TODO: is the output correct?
-
-  // TODO: does the windowing work correctly?
-
-  // TODO: does the approach scale for more buffers?
+  // does the windowing work correctly?
+  size_t tmp_windows = (check_last_timestamp - check_first_timestamp) / 2;
+  EXPECT_TRUE(check_number_windows == tmp_windows || check_number_windows == tmp_windows + 1);
 }
 
 /* - Source to Node -------------------------------------------------------- */
