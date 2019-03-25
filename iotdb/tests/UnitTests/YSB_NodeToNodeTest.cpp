@@ -13,7 +13,7 @@
 #include <Runtime/ZmqSink.hpp>
 #include <Runtime/ZmqSource.hpp>
 #include <API/Schema.hpp>
-#include <Runtime/PrintSink.hpp>
+#include <Runtime/YSBPrintSink.hpp>
 
 
 #include <Runtime/Dispatcher.hpp>
@@ -89,7 +89,7 @@ public:
 
     bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf)
     {
-    	TupleBufferPtr workingBuffer = Dispatcher::instance().getBuffer();
+    	TupleBufferPtr workingBuffer = BufferManager::instance().getBuffer();
     	ysbRecordOut* recBuffer = (ysbRecordOut*)workingBuffer->buffer;
     	ysbRecord* tuples = (ysbRecord*) buf->buffer;
         size_t lastTimeStamp = time(NULL);
@@ -149,7 +149,7 @@ public:
 
     bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf)
     {
-    	TupleBufferPtr workingBuffer = Dispatcher::instance().getBuffer();
+    	TupleBufferPtr workingBuffer = BufferManager::instance().getBuffer();
     	ysbRecordOut* recBuffer = (ysbRecordOut*)workingBuffer->buffer;
     	ysbRecordOut* tuples = (ysbRecordOut*) buf->buffer;
         size_t qualCnt = 0;
@@ -181,7 +181,7 @@ int test() {
 		.addField("id", 4);
 
 	CompiledYSBZMQOutputTestQueryExecutionPlanPtr qep1(new CompiledYSBZMQOutputTestQueryExecutionPlan());
-	DataSourcePtr source1 = createYSBSource(1);
+	DataSourcePtr source1 = createYSBSource(1,10, /*pregen*/ false);
 	DataSinkPtr sink1 = createZmqSink(source1->getSchema(), "127.0.0.1", 55555);
 
 	qep1->addDataSource(source1);
@@ -192,7 +192,7 @@ int test() {
 	DataSourcePtr source2 = createZmqSource(schema, "127.0.0.1", 55555);
 	source2->setNumBuffersToProcess(1);
 	qep2->addDataSource(source2);
-	DataSinkPtr sink2 = createYSBPrintSink(source2->getSchema());
+	DataSinkPtr sink2 = createYSBPrintSink();
 	qep2->addDataSink(sink2);
 	Dispatcher::instance().registerQuery(qep2);
 
@@ -205,9 +205,7 @@ int test() {
 //	qep2->addDataSink(sink2);
 //	Dispatcher::instance().registerQuery(qep2);
 
-	ThreadPool thread_pool;
-
-	thread_pool.start();
+	ThreadPool::instance().start(1);
 
 	while(source1->isRunning() || sink1->getNumberOfProcessedBuffers() != 1 || source2->isRunning() || sink2->getNumberOfProcessedBuffers() != 1){
 		std::cout << "source1->isRunning()=" << source1->isRunning() << " sink1->getNumberOfProcessedBuffers()=" << sink1->getNumberOfProcessedBuffers()
@@ -224,8 +222,8 @@ int test() {
 					<< std::endl;
 
 	YSBPrintSink* ySink = (YSBPrintSink*)sink2.get();
-	std::cout << "printed tuples=" << ySink->getNumberOfPrintedTuples() << std::endl;
-	if(ySink->getNumberOfPrintedTuples()!= 18)
+	std::cout << "printed tuples=" << ySink->getNumberOfProcessedTuples() << std::endl;
+	if(ySink->getNumberOfProcessedTuples()!= 18)
 	{
 		std::cout << "wrong result" << std::endl;
 		assert(0);
@@ -237,7 +235,7 @@ int test() {
 	}
 	Dispatcher::instance().deregisterQuery(qep1);
 
-	thread_pool.stop();
+	ThreadPool::instance().stop();
 
 }
 } // namespace iotdb

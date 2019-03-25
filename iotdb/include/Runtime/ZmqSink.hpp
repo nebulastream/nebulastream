@@ -5,7 +5,8 @@
 #include <memory>
 #include <string>
 #include <zmq.hpp>
-
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 #include <Runtime/DataSink.hpp>
 
 namespace iotdb {
@@ -25,8 +26,19 @@ public:
   const std::string toString() const override;
 
 private:
-  const std::string host;
-  const uint16_t port;
+  ZmqSink();
+
+  friend class boost::serialization::access;
+  template<class Archive>
+	void serialize(Archive & ar, const unsigned int version)
+	{
+	  ar & boost::serialization::base_object<DataSink>(*this);
+	  ar & host;
+	  ar & port;
+	}
+
+  std::string host;
+  uint16_t port;
   size_t tupleCnt;
 
   bool connected;
@@ -37,5 +49,8 @@ private:
   bool disconnect();
 };
 } // namespace iotdb
-
+#include <boost/serialization/export.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+BOOST_CLASS_EXPORT_KEY(iotdb::ZmqSink)
 #endif // ZMQSINK_HPP

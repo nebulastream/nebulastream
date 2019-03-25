@@ -10,12 +10,22 @@
 #include <Util/Logger.hpp>
 #include <Runtime/Dispatcher.hpp>
 
-
 #include <Util/Logger.hpp>
 #include <Util/ErrorHandling.hpp>
+
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 #include <Runtime/ZmqSink.hpp>
+BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::ZmqSink);
 
 namespace iotdb {
+
+ZmqSink::ZmqSink():  host(""), port(0), tupleCnt(0), connected(false), context(zmq::context_t(1)),
+	      socket(zmq::socket_t(context, ZMQ_PUB))
+{
+	  IOTDB_DEBUG("DEFAULT ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port)
+
+}
 
 ZmqSink::ZmqSink(const Schema &schema, const std::string &host, const uint16_t port)
     : DataSink(schema), host(host), port(port), tupleCnt(0), connected(false), context(zmq::context_t(1)),
@@ -45,13 +55,13 @@ bool ZmqSink::writeData(const TupleBuffer* input_buffer)
 	if (!rc_env || !rc_msg)
 	{
 		  IOTDB_DEBUG("ZMQSINK  " << this << ": send NOT successful")
-		  Dispatcher::instance().releaseBuffer(input_buffer);
+		  BufferManager::instance().releaseBuffer(input_buffer);
 		  return false;
 	}
 	else
 	{
 		IOTDB_DEBUG("ZMQSINK  " << this << ": send successful")
-		Dispatcher::instance().releaseBuffer(input_buffer);
+		BufferManager::instance().releaseBuffer(input_buffer);
 
 		return true;
 	}

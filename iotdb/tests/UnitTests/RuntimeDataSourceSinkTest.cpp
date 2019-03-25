@@ -87,7 +87,7 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSourceReceiveData) {
   auto test_schema = Schema::create().addField("KEY", UINT32).addField("VALUE", UINT32);
   auto zmq_source = createZmqSource(test_schema, LOCAL_HOST, LOCAL_PORT);
   std::cout << zmq_source->toString() << std::endl;
-  BufferManager::instance().setNewBufferSize(test_data_size);
+  BufferManager::instance().setBufferSize(test_data_size);
 
   // Open Publisher
   zmq::context_t context(1);
