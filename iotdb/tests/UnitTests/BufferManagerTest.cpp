@@ -13,8 +13,12 @@
 namespace iotdb {
     class BufferManagerTest : public testing::Test {
     public:
-        static void SetUpTestCase() { std::cout << "Setup BufferMangerTest test class." << std::endl; }
+        static void SetUpTestCase() {
+            std::cout << "Setup BufferMangerTest test class." << std::endl;
+            BufferManager::instance().setNumberOfBuffers(10);
+        }
         static void TearDownTestCase() { std::cout << "Tear down BufferManager test class." << std::endl; }
+
 
         const size_t buffers_managed = 10;
         const size_t buffer_size = 4 * 1024;
