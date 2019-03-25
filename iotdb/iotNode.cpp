@@ -65,7 +65,7 @@ bool registerNodeInFog(string host, string port)
 void commandProcess(socket_ptr sock)
 {
 	IOTDB_DEBUG("IOTNODE: process incomming command")
-	char data[32];
+	char data[max_length];
 	boost::system::error_code error;
 	size_t length = sock->read_some(boost::asio::buffer(data), error);
 	assert(length < max_length);
@@ -73,23 +73,28 @@ void commandProcess(socket_ptr sock)
 	if (error)
 		throw boost::system::system_error(error);
 
+    char cmd = data[0];
+
 	//first char identifies cmd
-	if(strcmp(data, "1") == 0)
+	if(cmd == '1')
 	{
-		std::cout << "starting query" << std::endl;
+	    IOTDB_DEBUG("IOTNODE: received start query command")
 	}
-	else if(strcmp(data, "2") == 0)
+	else if(cmd == '2')
 	{
-		std::cout << "stop query" << std::endl;
+        IOTDB_DEBUG("IOTNODE: received stop query command")
 	}
-	else if(strcmp(data, "3") == 0)
+	else if(cmd == '3')
 	{
-		std::cout << "deploy query" << std::endl;
+        IOTDB_DEBUG("IOTNODE: received deploy query command")
+
+        std::cout << "deploy query, waiting on QEP" << std::endl;
 	}
 	else
 	{
 		std::cerr << "COMMAND NOT FOUND" << std::endl;
 	}
+
 
 }
 void listen(boost::asio::io_service& io_service, short port){
