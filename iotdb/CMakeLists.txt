@@ -56,7 +56,7 @@ if(TRAVIS_INCLUDE_DIR)
 endif()
 
 # Boost Libraries
-find_package(Boost 1.47.0 REQUIRED system thread program_options filesystem) # Only check if lib is available on system for generated code.
+find_package(Boost 1.47.0 REQUIRED system thread program_options filesystem serialization) # Only check if lib is available on system for generated code.
 link_directories(${Boost_LIBRARY_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
 set(LIBRARIES ${LIBRARIES} ${Boost_LIBRARIES})

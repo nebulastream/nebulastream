@@ -13,44 +13,33 @@ namespace iotdb {
 class PrintSink : public DataSink {
 
 public:
-	PrintSink(const Schema& schema);
+  PrintSink(const Schema& schema);
   ~PrintSink();
-  virtual void setup(){};
-  virtual void shutdown(){};
-  bool writeData(const std::vector<TupleBufferPtr> &input_buffers) override;
-  bool writeData(const TupleBufferPtr input_buffer) override;
-  bool writeData(const std::vector<TupleBuffer*> &input_buffers) override;
-  bool writeData(const TupleBuffer* input_buffer);
+  virtual void setup(){}
+  virtual void shutdown(){}
+
+  bool writeData(const TupleBuffer* input_buffer) override;
 
   const std::string toString() const override;
+
 
 protected:
-  size_t printedTuples;
+  friend class boost::serialization::access;
+
+  template<class Archive>
+  void serialize(Archive & ar, const unsigned int version)
+  {
+      ar & boost::serialization::base_object<DataSink>(*this);
+
+  }
+  PrintSink(){};
+
 };
-
-
-class YSBPrintSink : public PrintSink {
-public:
-	YSBPrintSink(const Schema& schema);
-
-	~YSBPrintSink();
-
-  bool writeData(const std::vector<TupleBufferPtr> &input_buffers) override;
-  bool writeData(const TupleBufferPtr input_buffer) override;
-  bool writeData(const std::vector<TupleBuffer*> &input_buffers) override;
-  bool writeData(const TupleBuffer* input_buffer);
-
-  void setup(){};
-  void shutdown(){};
-  size_t getNumberOfPrintedTuples(){return printedTuples;};
-
-  const std::string toString() const override;
-
-private:
-};
-
 } // namespace iotdb
-
+#include <boost/serialization/export.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+BOOST_CLASS_EXPORT_KEY(iotdb::PrintSink)
 
 
 #endif // ZMQSINK_HPP
