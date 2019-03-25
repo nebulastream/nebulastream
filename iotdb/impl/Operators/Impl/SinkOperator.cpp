@@ -1,13 +1,11 @@
-
-
-
 #include <iostream>
 #include <sstream>
 #include <vector>
 #include <assert.h>
 
-#include <Operators/Impl/SinkOperator.hpp>
 #include <CodeGen/CodeGen.hpp>
+#include <Runtime/DataSink.hpp>
+#include <Operators/Impl/SinkOperator.hpp>
 
 namespace iotdb {
 
@@ -34,6 +32,7 @@ void SinkOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context,
 }
 
 void SinkOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out){
+  sink_->setSchema(codegen->getResultSchema());
   codegen->generateCode(sink_, context, out);
   /* no call to consume of parent, ends code generation */
 }

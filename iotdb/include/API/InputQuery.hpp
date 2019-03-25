@@ -34,7 +34,6 @@ public:
   InputQuery &keyBy(const Attributes& fields);
   InputQuery &map(const MapperPtr& mapper);
 
-
   // output operators
   InputQuery &writeToFile(const std::string& file_name);
   InputQuery &print(std::ostream& = std::cout);
