@@ -5,85 +5,86 @@
  *      Author: zeuchste
  */
 
-#include <CodeGen/PipelineStage.hpp>
-#include <iostream>
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
-#include <Util/ErrorHandling.hpp>
+#include <CodeGen/PipelineStage.hpp>
 #include <Runtime/DataSink.hpp>
+#include <Util/ErrorHandling.hpp>
+#include <iostream>
 
 namespace iotdb {
 
-bool PipelineStage::execute(const std::vector<TupleBuffer*>& input_buffers, WindowState* state, TupleBuffer* result_buf) {
-  std::cout << "Execute a Pipeline Stage!" << std::endl;
-  uint32_t ret = execute_impl(input_buffers, state, result_buf);
-  if(ret)
-    IOTDB_FATAL_ERROR("Execution of Compled PipelineStage Failed!");
+bool PipelineStage::execute(const std::vector<TupleBuffer*>& input_buffers, WindowState* state, TupleBuffer* result_buf)
+{
+    std::cout << "Execute a Pipeline Stage!" << std::endl;
+    uint32_t ret = execute_impl(input_buffers, state, result_buf);
+    if (ret)
+        IOTDB_FATAL_ERROR("Execution of Compled PipelineStage Failed!");
 
-  return true;
+    return true;
 }
 
-PipelineStage::~PipelineStage(){
+PipelineStage::~PipelineStage() {}
 
-}
+class CPipelineStage : public PipelineStage {
+  public:
+    CPipelineStage(CompiledCCodePtr compiled_code);
+    CPipelineStage(const CPipelineStage&);
 
+    const PipelineStagePtr copy() const override;
 
+  protected:
+    uint32_t execute_impl(const std::vector<TupleBuffer*>& input_buffers, WindowState* state,
+                          TupleBuffer* result_buf) final;
+    virtual uint32_t callCFunction(TupleBuffer** tuple_buffers, WindowState* state, TupleBuffer* result_buffer);
 
-class CPipelineStage : public PipelineStage{
-public:
- CPipelineStage(CompiledCCodePtr compiled_code);
- CPipelineStage(const CPipelineStage&);
-
- const PipelineStagePtr copy() const override;
-
-protected:
-
- uint32_t execute_impl(const std::vector<TupleBuffer*>& input_buffers, WindowState* state, TupleBuffer* result_buf) final;
- virtual uint32_t callCFunction(TupleBuffer** tuple_buffers, WindowState* state, TupleBuffer* result_buffer);
-
- CompiledCCodePtr compiled_code_;
+    CompiledCCodePtr compiled_code_;
 };
 
 CPipelineStage::CPipelineStage(CompiledCCodePtr compiled_code) : compiled_code_(compiled_code) {}
 
-CPipelineStage::CPipelineStage(const CPipelineStage& other){
-  /* consider deep copying this! */
-  this->compiled_code_ = other.compiled_code_;
+CPipelineStage::CPipelineStage(const CPipelineStage& other)
+{
+    /* consider deep copying this! */
+    this->compiled_code_ = other.compiled_code_;
 }
 
-const PipelineStagePtr CPipelineStage::copy() const{
-    return PipelineStagePtr(new CPipelineStage(*this));
-}
+const PipelineStagePtr CPipelineStage::copy() const { return PipelineStagePtr(new CPipelineStage(*this)); }
 
-uint32_t CPipelineStage::execute_impl(const std::vector<TupleBuffer*>& input_buffers, WindowState* state, TupleBuffer* result_buf){
-  return callCFunction((TupleBuffer**)input_buffers.data(), state, result_buf);
+uint32_t CPipelineStage::execute_impl(const std::vector<TupleBuffer*>& input_buffers, WindowState* state,
+                                      TupleBuffer* result_buf)
+{
+    return callCFunction((TupleBuffer**)input_buffers.data(), state, result_buf);
 }
 
 typedef uint32_t (*SharedCLibPipelineQueryPtr)(TupleBuffer**, WindowState*, TupleBuffer*);
 
-uint32_t CPipelineStage::callCFunction(TupleBuffer** tuple_buffers, WindowState* state, TupleBuffer* result_buffer){
-  return (*compiled_code_->getFunctionPointer<SharedCLibPipelineQueryPtr>(
-      "_Z14compiled_queryPP11TupleBufferP11WindowStateS0_"))(tuple_buffers,state, result_buffer);
-
+uint32_t CPipelineStage::callCFunction(TupleBuffer** tuple_buffers, WindowState* state, TupleBuffer* result_buffer)
+{
+    return (*compiled_code_->getFunctionPointer<SharedCLibPipelineQueryPtr>(
+        "_Z14compiled_queryPP11TupleBufferP11WindowStateS0_"))(tuple_buffers, state, result_buffer);
 }
 
-PipelineStagePtr createPipelineStage(const CompiledCCodePtr compiled_code){
-   return PipelineStagePtr(new CPipelineStage(compiled_code));
+PipelineStagePtr createPipelineStage(const CompiledCCodePtr compiled_code)
+{
+    return PipelineStagePtr(new CPipelineStage(compiled_code));
 }
 
 class DataSinkPiplineStage : public PipelineStage {
-public:
+  public:
     DataSinkPiplineStage(DataSinkPtr sink);
 
-protected:
+  protected:
     DataSinkPtr sink;
-    uint32_t execute_impl(const std::vector<TupleBuffer*>& input_buffers, WindowState* state, TupleBuffer* result_buf) final;
+    uint32_t execute_impl(const std::vector<TupleBuffer*>& input_buffers, WindowState* state,
+                          TupleBuffer* result_buf) final;
 };
 
 DataSinkPiplineStage::DataSinkPiplineStage(DataSinkPtr sink) : sink(sink) {}
 
-uint32_t DataSinkPiplineStage::execute_impl(const std::vector<TupleBuffer*> &input_buffers, WindowState *state,
-        TupleBuffer *result_buf) {
-    if(sink->writeData(input_buffers))
+uint32_t DataSinkPiplineStage::execute_impl(const std::vector<TupleBuffer*>& input_buffers, WindowState* state,
+                                            TupleBuffer* result_buf)
+{
+    if (sink->writeData(input_buffers))
         return 0;
     else
         return 1;

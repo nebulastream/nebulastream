@@ -1,63 +1,67 @@
 #ifndef API_TRIGGER_H
 #define API_TRIGGER_H
 
-#include "API/Time.hpp"
 #include "../CodeGen/CodeGen.hpp"
 #include "../Operators/Operator.hpp"
+#include "API/Time.hpp"
 
-namespace iotdb{
+namespace iotdb {
 
 class Trigger {
 
-public:
-  bool purge = false;
-  virtual std::string to_string() { return "trigger"; };
+  public:
+    bool purge = false;
+    virtual std::string to_string() { return "trigger"; };
 };
 
 class CountTrigger : public Trigger {
-public:
-  CountTrigger(size_t maxCount) : maxCount(maxCount) {};
-  std::string to_string() override { return "CountTrigger"; }
+  public:
+    CountTrigger(size_t maxCount) : maxCount(maxCount){};
+    std::string to_string() override { return "CountTrigger"; }
 
-private:
-  size_t maxCount;
+  private:
+    size_t maxCount;
 };
 
 class ProcessingTimeTrigger : public Trigger {
-public:
-  ProcessingTimeTrigger(Time every) : every(every) {}
+  public:
+    ProcessingTimeTrigger(Time every) : every(every) {}
 
-  std::string to_string() override { return "ProcessingTimeTrigger"; }
+    std::string to_string() override { return "ProcessingTimeTrigger"; }
 
-private:
-  Time every;
+  private:
+    Time every;
 };
 
 class EventTimeTrigger : public Trigger {
-public:
-  EventTimeTrigger(Time every, std::string tsFieldId, Time allowedLateness)
-      : every(every), timestampFieldId(tsFieldId), allowedLateness(allowedLateness), merge(Time::seconds(0)) {}
-  EventTimeTrigger(Time every, std::string tsFieldId, Time allowedLateness, Time merge)
-      : every(every), timestampFieldId(tsFieldId), allowedLateness(allowedLateness), merge(merge) {}
+  public:
+    EventTimeTrigger(Time every, std::string tsFieldId, Time allowedLateness)
+        : every(every), timestampFieldId(tsFieldId), allowedLateness(allowedLateness), merge(Time::seconds(0))
+    {
+    }
+    EventTimeTrigger(Time every, std::string tsFieldId, Time allowedLateness, Time merge)
+        : every(every), timestampFieldId(tsFieldId), allowedLateness(allowedLateness), merge(merge)
+    {
+    }
 
-  std::string to_string() override { return "EventTimeTrigger"; }
+    std::string to_string() override { return "EventTimeTrigger"; }
 
-private:
-  Time every;
-  std::string timestampFieldId;
-  Time allowedLateness;
-  Time merge;
+  private:
+    Time every;
+    std::string timestampFieldId;
+    Time allowedLateness;
+    Time merge;
 };
 
 class PurgingTrigger : public Trigger {
-public:
-  PurgingTrigger(Trigger *trigger) : trigger(trigger) {}
-  PurgingTrigger(Trigger &&trigger) : trigger(&trigger) {}
+  public:
+    PurgingTrigger(Trigger* trigger) : trigger(trigger) {}
+    PurgingTrigger(Trigger&& trigger) : trigger(&trigger) {}
 
-  std::string to_string() override { return "PurgingTrigger"; }
+    std::string to_string() override { return "PurgingTrigger"; }
 
-private:
-  Trigger *trigger;
+  private:
+    Trigger* trigger;
 };
-}
+} // namespace iotdb
 #endif // APPI_TRIGGER_H
