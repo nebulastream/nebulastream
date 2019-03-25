@@ -6,7 +6,7 @@
 #include <Util/Logger.hpp>
 namespace iotdb {
 
-BufferManager::BufferManager():mutex(), noFreeBuffer(0), releasedBuffer(0), providedBuffer(0) {
+BufferManager::BufferManager():mutex(), noFreeBuffer(0), providedBuffer(0), releasedBuffer(0) {
 	IOTDB_DEBUG("BufferManager: Enter Constructor of BufferManager.")
 	maxBufferCnt = 10000;//changed from 3
 	bufferSizeInByte = 4 * 1024;//set buffer to 4KB
@@ -33,8 +33,14 @@ BufferManager &BufferManager::instance() {
   static BufferManager instance;
   return instance;
 }
+
+
 void BufferManager::setNumberOfBuffers(size_t size)
 {
+	for(auto& entry : buffer_pool)
+	{
+		delete (char *) entry.first->buffer;
+	}
 	buffer_pool.clear();
 	maxBufferCnt = size;
 	for(size_t i = 0; i < maxBufferCnt; i++)
@@ -44,6 +50,10 @@ void BufferManager::setNumberOfBuffers(size_t size)
 }
 void BufferManager::setBufferSize(size_t size)
 {
+	for(auto& entry : buffer_pool)
+	{
+		delete (char *) entry.first->buffer;
+	}
 	buffer_pool.clear();
 	bufferSizeInByte = size;
 	for(size_t i = 0; i < maxBufferCnt; i++)
@@ -120,7 +130,6 @@ size_t BufferManager::getNumberOfFreeBuffers() {
 	return result;
 }
 
-void BufferManager::releaseBuffer(TupleBufferPtr tuple_buffer) {
 
 void BufferManager::releaseBuffer(const TupleBuffer* tuple_buffer) {
 	IOTDB_DEBUG("BufferManager: releaseBuffer(TupleBufferPtr)")

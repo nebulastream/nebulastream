@@ -26,7 +26,6 @@ public:
   TupleBufferPtr getBuffer();
   void releaseBuffer(const TupleBufferPtr tuple_buffer);
   void releaseBuffer(const TupleBuffer* tuple_buffer);
-  void releaseBuffer(TupleBufferPtr tuple_buffer);
   size_t getNumberOfBuffers();
   size_t getNumberOfFreeBuffers();
 
