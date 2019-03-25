@@ -122,4 +122,53 @@ namespace iotdb {
         ASSERT_EQ(buffers_count, buffers_managed);
         ASSERT_EQ(buffers_free, buffers_managed);
     }
+
+    TEST_F(BufferManagerTest, getBuffer_race) {
+        for (int i = 0; i < 100; ++i) {
+
+            std::vector<TupleBufferPtr> buffers;
+
+            size_t buffers_count = BufferManager::instance().getNumberOfBuffers();
+            size_t buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+            ASSERT_EQ(buffers_count, buffers_managed);
+            ASSERT_EQ(buffers_free, buffers_managed);
+
+            for (size_t j = 0; j < buffers_count; ++j) {
+                buffers.push_back(BufferManager::instance().getBuffer());
+            }
+
+            TupleBufferPtr buffer_threads[buffers_managed];
+            std::thread threads[buffers_managed];
+            for (size_t j = 0; j < buffers_count; ++j) {
+                threads[j] = std::thread(run, &buffer_threads[j]);
+            }
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+
+            for (size_t j = 0; j < buffers_managed; ++j) {
+                BufferManager::instance().releaseBuffer(buffers.back());
+                buffers.pop_back();
+            }
+
+            for (auto &thread : threads) {
+                thread.join();
+            }
+
+            std::set<TupleBufferPtr> setOfTupleBufferPtr;
+            for (auto &b : buffer_threads) {
+                setOfTupleBufferPtr.insert(b);
+            }
+            ASSERT_EQ(10, setOfTupleBufferPtr.size());
+
+
+            for (auto &b : buffer_threads) {
+                BufferManager::instance().releaseBuffer(b);
+            }
+            buffers_count = BufferManager::instance().getNumberOfBuffers();
+            buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+            ASSERT_EQ(buffers_count, buffers_managed);
+            ASSERT_EQ(buffers_free, buffers_managed);
+        }
+    }
 }
