@@ -61,7 +61,9 @@ namespace iotdb {
         var_decl_tuple_buffer_output(VariableDeclaration::create(createDataType(INT32),"output_buffer")),
         var_decl_state(VariableDeclaration::create(createDataType(INT32),"state")),
         decl_field_num_tuples_struct_tuple_buf(VariableDeclaration::create(createDataType(INT32),"decl_field_num_tuples_NOT_DEFINED")),
-        decl_field_data_ptr_struct_tuple_buf(VariableDeclaration::create(createDataType(INT32),"decl_field_data_ptr_NOT_DEFINED"))
+        decl_field_data_ptr_struct_tuple_buf(VariableDeclaration::create(createDataType(INT32),"decl_field_data_ptr_NOT_DEFINED")),
+        var_decl_input_tuple(VariableDeclaration::create(createDataType(INT32),"input_tuple_NOT_DEFINED")),
+        type_decls()
     {
     }
 
@@ -81,6 +83,7 @@ namespace iotdb {
     VariableDeclaration var_decl_state;
     VariableDeclaration decl_field_num_tuples_struct_tuple_buf;
     VariableDeclaration decl_field_data_ptr_struct_tuple_buf;
+    VariableDeclaration var_decl_input_tuple;
     std::vector<StructDeclaration> type_decls;
   };
 
@@ -170,6 +173,14 @@ namespace iotdb {
 
   const StructDeclaration getStructDeclarationResultTuple(const Schema& schema){
        return getStructDeclarationFromSchema("ResultTuple",schema);
+  }
+
+  const VariableDeclarationPtr getVariableDeclarationForField(const StructDeclaration& struct_decl, const AttributeFieldPtr field){
+    if(struct_decl.getField(field->name))
+      return std::make_shared<VariableDeclaration>(struct_decl.getVariableDeclaration(field->name));
+    else {
+       return VariableDeclarationPtr();
+    }
   }
 
   std::string toString(const TupleBuffer& buffer, const Schema& schema){
@@ -269,6 +280,7 @@ namespace iotdb {
     code_.var_decl_return =
         std::dynamic_pointer_cast<VariableDeclaration>(VariableDeclaration::create(createDataType(BasicType(INT32)), "ret", createBasicTypeValue(BasicType(INT32), "0")).copy());
 
+    code_.var_decl_input_tuple = var_decl_tuple;
     code_.variable_decls.push_back(var_decl_tuple);
     code_.variable_decls.push_back(var_decl_tuple_buffer_1);
     code_.variable_decls.push_back(*(code_.var_decl_return.get()));
@@ -318,13 +330,33 @@ code_.type_decls.push_back(struct_decl_result_tuple);
     VariableDeclaration var_decl_result_tuple = VariableDeclaration::create(
         createPointerDataType(createUserDefinedType(struct_decl_result_tuple)), "result_tuples");
         code_.variable_decls.push_back(var_decl_result_tuple);
-    VariableDeclaration var_decl_field_result_tuple_sum = struct_decl_result_tuple.getVariableDeclaration("sum");
+    //VariableDeclaration var_decl_field_result_tuple_sum = struct_decl_result_tuple.getVariableDeclaration("sum");
 
     /* result_tuples = (ResultTuple *)output_tuple_buffer->data;*/
    code_.variable_init_stmts.push_back(
        VarRef(var_decl_result_tuple).assign(
        TypeCast(VarRef(code_.var_decl_tuple_buffer_output).accessPtr(VarRef(code_.decl_field_data_ptr_struct_tuple_buf)),
                              createPointerDataType(createUserDefinedType(struct_decl_result_tuple)))).copy());
+
+     std::vector<VariableDeclaration> var_decls;
+     std::vector<StatementPtr> write_result_tuples;
+     for(size_t i=0;i<result_schema_.getSize();++i){
+         VariableDeclarationPtr var_decl = getVariableDeclarationForField(struct_decl_result_tuple, result_schema_[i]);
+         if(!var_decl){
+           IOTDB_FATAL_ERROR("Could not extract field " <<  result_schema_[i]->toString() << " from struct " << struct_decl_result_tuple.getTypeName());
+         }
+         //VariableDeclaration var_decl = code_.struct_decl_result_tuple.getVariableDeclaration(result_schema_[i]->name);
+         code_.variable_decls.push_back(*var_decl);
+         /** \FIXME: we need to handle the case where the field in the result tuple is not part of the input schema! */
+         code_.for_loop_stmt->addStatement(VarRef(var_decl_result_tuple)[VarRef(*(code_.var_decl_id))].accessRef(VarRef(*var_decl)).assign(VarRef(code_.var_decl_input_tuple)[VarRef(*(code_.var_decl_id))].accessRef(VarRef(*var_decl))).copy());
+         //var_decls.push_back(*var_decl);
+        // write_result_tuples.push_back(VarRef(var_decl_result_tuple)[VarRef(*(code_.var_decl_id))].assign(VarRef(var_decl_result_tuple)[VarRef(*(code_.var_decl_id))]).copy());
+     }
+
+    /* TODO: set number of output tuples to result buffer */
+
+
+
 
     return true;
   }

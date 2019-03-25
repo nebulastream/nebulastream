@@ -406,7 +406,7 @@ namespace iotdb {
     PipelineContextPtr context = createPipelineContext();
     std::cout << "Generate Code" << std::endl;
     code_gen->generateCode(createTestSource(), context, std::cout);
-    code_gen->generateCode(createPrintSink(Schema::create().addField("sum",UINT32)), context, std::cout);
+    code_gen->generateCode(createPrintSink(Schema::create().addField("campaign_id",UINT32)), context, std::cout);
     PipelineStagePtr stage = code_gen->compile(CompilerArgs());
 
     if(stage)
