@@ -23,41 +23,40 @@
 namespace iotdb {
 
 class Dispatcher {
-public:
-  TupleBufferPtr getBuffer();
-  void releaseBuffer(TupleBufferPtr ptr);
+  public:
+    TupleBufferPtr getBuffer();
+    void releaseBuffer(TupleBufferPtr ptr);
 
-  void registerQuery(const QueryExecutionPlanPtr);
-  void deregisterQuery(const QueryExecutionPlanPtr);
+    void registerQuery(const QueryExecutionPlanPtr);
+    void deregisterQuery(const QueryExecutionPlanPtr);
 
-  TaskPtr getWork(bool &run_thread);
-  void addWork(const TupleBufferPtr, DataSource *);
-  void completedWork(TaskPtr task);
+    TaskPtr getWork(bool& run_thread);
+    void addWork(const TupleBufferPtr, DataSource*);
+    void completedWork(TaskPtr task);
 
-  static Dispatcher &instance();
+    static Dispatcher& instance();
 
-  void unblockThreads() { cv.notify_all(); }
+    void unblockThreads() { cv.notify_all(); }
 
-private:
-  /* implement singleton semantics: no construction,
-   * copying or destruction of Dispatcher objects
-   * outside of the class */
-  Dispatcher();
-  Dispatcher(const Dispatcher &);
-  Dispatcher &operator=(const Dispatcher &);
-  ~Dispatcher();
+  private:
+    /* implement singleton semantics: no construction,
+     * copying or destruction of Dispatcher objects
+     * outside of the class */
+    Dispatcher();
+    Dispatcher(const Dispatcher&);
+    Dispatcher& operator=(const Dispatcher&);
+    ~Dispatcher();
 
-  std::vector<TaskPtr> task_queue;
-  std::map<DataSource *, std::vector<QueryExecutionPlanPtr>> source_to_query_map;
-  std::map<Window *, std::vector<QueryExecutionPlanPtr>> window_to_query_map;
-  std::map<DataSink*, std::vector<QueryExecutionPlanPtr>> sink_to_query_map;
+    std::vector<TaskPtr> task_queue;
+    std::map<DataSource*, std::vector<QueryExecutionPlanPtr>> source_to_query_map;
+    std::map<Window*, std::vector<QueryExecutionPlanPtr>> window_to_query_map;
+    std::map<DataSink*, std::vector<QueryExecutionPlanPtr>> sink_to_query_map;
 
+    std::mutex bufferMutex;
+    std::mutex queryMutex;
+    std::mutex workMutex;
 
-  std::mutex bufferMutex;
-  std::mutex queryMutex;
-  std::mutex workMutex;
-
-  std::condition_variable cv;
+    std::condition_variable cv;
 };
 typedef std::shared_ptr<Dispatcher> DispatcherPtr;
 } // namespace iotdb

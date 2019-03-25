@@ -1,21 +1,17 @@
 #pragma once
 
-#include <string>
 #include <memory>
+#include <string>
 
 #include <Core/DataTypes.hpp>
 
-#include <CodeGen/CodeExpression.hpp>
 #include <CodeGen/C_CodeGen/Declaration.hpp>
 #include <CodeGen/C_CodeGen/Statement.hpp>
-#include <CodeGen/C_CodeGen/Statement.hpp>
+#include <CodeGen/CodeExpression.hpp>
 
 #include <Util/ErrorHandling.hpp>
 
-
-
-namespace iotdb{
-
+namespace iotdb {
 
 Statement::~Statement() {}
 ExpressionStatment::~ExpressionStatment() {}
@@ -28,8 +24,9 @@ IfStatement::~IfStatement() {}
 ForLoopStatement::~ForLoopStatement() {}
 UserDefinedDataType::~UserDefinedDataType() {}
 
-const DataTypePtr createUserDefinedType(const StructDeclaration &decl) {
-  return std::make_shared<UserDefinedDataType>(decl);
+const DataTypePtr createUserDefinedType(const StructDeclaration& decl)
+{
+    return std::make_shared<UserDefinedDataType>(decl);
 }
 
-}
+} // namespace iotdb
