@@ -81,7 +81,6 @@ add_test(NAME client-server-communication-tests COMMAND client-server-communicat
 # Buffer Manager Test
 add_executable(buffer-manager-tests "UnitTests/BufferManagerTest.cpp")
 target_link_libraries(buffer-manager-tests iotdb ${GTEST_LIBRARIES})
-target_compile_options(buffer-manager-tests PRIVATE "-fsanitize=thread")
 add_test(NAME buffer-manager-tests COMMAND buffer-manager-tests)
 
 # Test data sources and data sinks of runtime
