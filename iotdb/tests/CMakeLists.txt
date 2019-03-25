@@ -93,6 +93,11 @@ add_executable(yahoo-streaming-benchmark-tests "UnitTests/YahooStreamingBenchmar
 target_link_libraries(yahoo-streaming-benchmark-tests iotdb ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
 add_test(NAME yahoo-streaming-benchmark-tests COMMAND yahoo-streaming-benchmark-tests)
 
+# YSB Performance Test
+add_executable(ysb_performance_test "PerformanceTests/YSB_SingleNode_PerformanceTest.cpp")
+target_link_libraries(ysb_performance_test iotdb ${GTEST_LIBRARIES})
+add_test(NAME ysb_performance_test COMMAND ysb_performance_test)
+
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
         DEPENDS ${UNITTESTS})

@@ -24,9 +24,6 @@ namespace iotdb {
 
 class Dispatcher {
 public:
-  TupleBufferPtr getBuffer();
-  void releaseBuffer(const TupleBufferPtr ptr);
-  void releaseBuffer(const TupleBuffer* ptr);
 
   void registerQuery(const QueryExecutionPlanPtr);
   void deregisterQuery(const QueryExecutionPlanPtr);
@@ -34,6 +31,8 @@ public:
   TaskPtr getWork(bool &run_thread);
   void addWork(const TupleBufferPtr, DataSource *);
   void completedWork(TaskPtr task);
+
+  void printStatistics(const QueryExecutionPlanPtr qep);
 
   static Dispatcher &instance();
 
@@ -60,6 +59,10 @@ private:
   std::mutex workMutex;
 
   std::condition_variable cv;
+
+  //statistics:
+  size_t workerHitEmptyTaskQueue;
+  size_t processedTasks;
 };
 typedef std::shared_ptr<Dispatcher> DispatcherPtr;
 } // namespace iotdb

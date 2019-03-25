@@ -12,7 +12,7 @@
 #include <Runtime/DataSource.hpp>
 #include <Runtime/Window.hpp>
 #include <Runtime/DataSink.hpp>
-#include <Runtime/PrintSink.hpp>
+#include <Runtime/YSBPrintSink.hpp>
 
 
 #include <Runtime/Dispatcher.hpp>
@@ -89,7 +89,7 @@ public:
 
     bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf)
     {
-    	TupleBufferPtr workingBuffer = Dispatcher::instance().getBuffer();
+    	TupleBufferPtr workingBuffer = BufferManager::instance().getBuffer();
     	ysbRecordOut* recBuffer = (ysbRecordOut*)workingBuffer->buffer;
     	ysbRecord* tuples = (ysbRecord*) buf->buffer;
         size_t lastTimeStamp = time(NULL);
@@ -97,7 +97,6 @@ public:
         char key[] = "view";
         size_t windowSizeInSec = 1;
         size_t campaingCnt = 10;
-        YSBWindow* window = (YSBWindow*)this->getWindows()[0].get();
         DataSinkPtr sink = this->getSinks()[0];
         size_t qualCnt = 0;
 		for(size_t i = 0; i < buf->num_tuples; i++)
@@ -141,18 +140,14 @@ typedef std::shared_ptr<CompiledYSBTestQueryExecutionPlan> CompiledYSBTestQueryE
 
 int test() {
 	CompiledYSBTestQueryExecutionPlanPtr qep(new CompiledYSBTestQueryExecutionPlan());
-	WindowPtr window = createTestWindow();
-	DataSourcePtr source = createYSBSource(2);
-	DataSinkPtr sink = createYSBPrintSink(source->getSchema());
-	qep->addWindow(window);
+	DataSourcePtr source = createYSBSource(2,10, /*pregen*/ false);
+	DataSinkPtr sink = createYSBPrintSink();
 	qep->addDataSource(source);
 	qep->addDataSink(sink);
 
 	Dispatcher::instance().registerQuery(qep);
 
-	ThreadPool thread_pool;
-
-	thread_pool.start();
+	ThreadPool::instance().start(1);
 
 	while(source->isRunning() || sink->getNumberOfProcessedBuffers() != 2){
 		std::cout << "sourceRunnin=" << source->isRunning() << " numberOfProcBuffer="
@@ -162,12 +157,12 @@ int test() {
 	}
 
 	YSBPrintSink* ySink = (YSBPrintSink*)sink.get();
-	std::cout << "printed tuples=" << ySink->getNumberOfPrintedTuples() << std::endl;
+	std::cout << "printed tuples=" << ySink->getNumberOfProcessedTuples() << std::endl;
 
 	Dispatcher::instance().deregisterQuery(qep);
 	//thread_pool.stop();
 
-	if(ySink->getNumberOfPrintedTuples()!= 36)
+	if(ySink->getNumberOfProcessedTuples()!= 36)
 	{
 		std::cout << "wrong result" << std::endl;
 
@@ -181,7 +176,7 @@ int test() {
 				<< sink->getNumberOfProcessedBuffers() << std::endl;
 
 	}
-	thread_pool.stop();
+	  ThreadPool::instance().stop();
 
 	Dispatcher::instance().deregisterQuery(qep);
 

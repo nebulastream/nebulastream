@@ -3,6 +3,9 @@
 #include <memory>
 
 #include <Runtime/DataSink.hpp>
+BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::DataSink)
+#include <Runtime/YSBPrintSink.hpp>
+
 #include <Runtime/ZmqSink.hpp>
 #include <Runtime/PrintSink.hpp>
 #include <Util/ErrorHandling.hpp>
@@ -10,7 +13,7 @@
 
 namespace iotdb {
 
-DataSink::DataSink(const Schema &_schema) : schema(_schema), processedBuffer(0) { std::cout << "Init Data Sink!" << std::endl; }
+DataSink::DataSink(const Schema &_schema) : schema(_schema), processedBuffer(0), processedTuples(0) { std::cout << "Init Data Sink!" << std::endl; }
 
 const Schema &DataSink::getSchema() const { return schema; }
 
@@ -44,9 +47,9 @@ const DataSinkPtr createTestSink() {
   IOTDB_FATAL_ERROR("Called unimplemented Function");
 }
 
-const DataSinkPtr createYSBPrintSink(const Schema& schema)
+const DataSinkPtr createYSBPrintSink()
 {
-	return std::make_shared<YSBPrintSink>(schema);
+	return std::make_shared<YSBPrintSink>();
 }
 
 

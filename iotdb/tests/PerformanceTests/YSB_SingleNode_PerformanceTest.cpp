@@ -1,6 +1,7 @@
 #include <cassert>
 #include <iostream>
 #include "gtest/gtest.h"
+#include <chrono>
 
 #include <Core/DataTypes.hpp>
 
@@ -11,21 +12,28 @@
 #include <Runtime/Window.hpp>
 #include <Runtime/YSBWindow.hpp>
 
-
 #include <Runtime/Dispatcher.hpp>
-#include <Runtime/GeneratorSource.hpp>
+#include <Runtime/YSBGeneratorSource.hpp>
 #include <Runtime/ThreadPool.hpp>
 #include <stdio.h>
 #include <signal.h>
 #include <Util/Logger.hpp>
 #include <memory>
 #include <cstring>
+#include <boost/program_options.hpp>
+
 
 namespace iotdb {
-sig_atomic_t user_wants_to_quit = 0;
 
-void signal_handler(int) {
-user_wants_to_quit = 1;
+typedef uint64_t Timestamp;
+using NanoSeconds = std::chrono::nanoseconds;
+using Clock = std::chrono::high_resolution_clock;
+
+Timestamp getTimestamp()
+{
+  return std::chrono::duration_cast<NanoSeconds>(
+			 Clock::now().time_since_epoch())
+	  .count();
 }
 
 struct __attribute__((packed)) ysbRecord {
@@ -56,18 +64,15 @@ struct __attribute__((packed)) ysbRecord {
 
 	};//size 78 bytes
 
-class CompiledYSBTestQueryExecutionPlan : public HandCodedQueryExecutionPlan{
+class YSB_SingleNode_PerformanceTest : public HandCodedQueryExecutionPlan{
 public:
     uint64_t count;
     uint64_t sum;
 
-    CompiledYSBTestQueryExecutionPlan()
+    YSB_SingleNode_PerformanceTest()
         : HandCodedQueryExecutionPlan(), count(0), sum(0){
 
     }
-
-
-
 
     bool firstPipelineStage(const TupleBuffer&){
         return false;
@@ -108,9 +113,8 @@ public:
 
 				if(hashTable[current_window][campaingCnt] != timeStamp)
 				{
-			        std::cout << "win" << std::endl;
 					atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
-					window->print();
+//					window->print();
 					std::fill(hashTable[current_window], hashTable[current_window]+campaingCnt, 0);
 					//memset(myarray, 0, N*sizeof(*myarray)); // TODO: is it faster?
 				}
@@ -128,53 +132,65 @@ public:
 		IOTDB_DEBUG("task " << this << " finished processing")
     }
 };
-typedef std::shared_ptr<CompiledYSBTestQueryExecutionPlan> CompiledYSBTestQueryExecutionPlanPtr;
+typedef std::shared_ptr<YSB_SingleNode_PerformanceTest> YSB_SingleNode_PerformanceTestPtr;
 
 
-int test() {
-	CompiledYSBTestQueryExecutionPlanPtr qep(new CompiledYSBTestQueryExecutionPlan());
-	DataSourcePtr source = createYSBSource(1000,10, /*pregen*/ false);
-	WindowPtr window = createTestWindow(10);
-	qep->addDataSource(source);
+int test(size_t toProcessedBuffers, size_t threadCnt, size_t campaignCnt, size_t sourceCnt) {
+	return 0;
+	YSB_SingleNode_PerformanceTestPtr qep(new YSB_SingleNode_PerformanceTest());
+
+	std::vector<DataSourcePtr> sources;
+	for(size_t i = 0; i < sourceCnt; i++)
+	{
+		sources.push_back(createYSBSource(toProcessedBuffers,campaignCnt, /*pregen*/ true));
+		qep->addDataSource(sources[i]);
+	}
+
+	WindowPtr window = createTestWindow(campaignCnt);
 	qep->addWindow(window);
-    YSBWindow* res_window = (YSBWindow*)qep->getWindows()[0].get();
 
 	Dispatcher::instance().registerQuery(qep);
 
-	ThreadPool::instance().start(1);
-	while(source->isRunning()){
-		std::cout << "----- processing current res is:-----" << std::endl;
-		res_window->print();
-		std::cout << "Waiting 1 seconds " << std::endl;
-		std::this_thread::sleep_for(std::chrono::seconds(1));
+	ThreadPool::instance().setNumberOfThreads(threadCnt);
 
+	Timestamp start = getTimestamp();
+	ThreadPool::instance().start(1);
+
+	size_t endedRuns = 0;
+	while(sourceCnt != endedRuns){
+		endedRuns = 0;
+		for(size_t i = 0; i < sourceCnt; i++)
+		{
+			if(!sources[i]->isRunning())
+			{
+				endedRuns++;
+			}
+		}
+//		std::cout << "----- processing current res is:-----" << std::endl;
+//		std::cout << "Waiting 1 seconds " << std::endl;
+//		std::this_thread::sleep_for(std::chrono::seconds(1));
+	}
+	Timestamp end = getTimestamp();
+	double elapsed_time = double(end - start) / (1024 * 1024 * 1024);
+
+	size_t processCnt = 0;
+	for(size_t i = 0; i < sourceCnt; i++)
+	{
+		processCnt += sources[i]->getNumberOfGeneratedTuples();
 	}
 
-    size_t sum = 0;
-    for(size_t i = 0; i < 10; i++)
-    {
-    	sum += res_window->getHashTable()[0][i];
-    	sum += res_window->getHashTable()[1][i];
-    }
-    std::cout << " ========== FINAL query result  ========== " << sum << std::endl;
-    if(sum != 18000)
-    {
-    	std::cout << "wrong result" << std::endl;
-//    	assert(0);
-    }
-	EXPECT_EQ(sum, 18000);
+	std::cout << "time=" << elapsed_time << " rec/sec=" << processCnt/elapsed_time
+			<< " Processed Buffers=" << toProcessedBuffers
+			<< " Processed tuples=" << processCnt
+			<< " threads=" << threadCnt
+			<< " campaigns="<< campaignCnt
+			<< " sources=" << sourceCnt
+			<< std::endl;
 
+	ThreadPool::instance().stop();
+
+	Dispatcher::instance().printStatistics(qep);
 	Dispatcher::instance().deregisterQuery(qep);
-
-//	while(!user_wants_to_quit)
-//	{
-//	  std::this_thread::sleep_for(std::chrono::seconds(2));
-//	  std::cout << "waiting to finish" << std::endl;
-//	}
-
-
-	  ThreadPool::instance().stop();
-
 }
 } // namespace iotdb
 
@@ -208,9 +224,48 @@ void setupLogging()
 int main(int argc, const char *argv[]) {
 
 	setupLogging();
-  iotdb::Dispatcher::instance();
+	iotdb::Dispatcher::instance();
 
-  iotdb::test();
+
+	namespace po = boost::program_options;
+	po::options_description desc("Options");
+	size_t numBuffers = 1;
+	size_t numThreads = 1;
+	size_t numCampaings = 1;
+	size_t numSources = 1;
+	size_t bufferSizeInByte= 4096;
+
+	desc.add_options()
+		("help", "Print help messages")
+		("numBuffers", po::value<uint64_t>(&numBuffers)->default_value(numBuffers), "The number of buffers")
+		("numThreads", po::value<uint64_t>(&numThreads)->default_value(numThreads), "The number of threads")
+		("numCampaings", po::value<uint64_t>(&numCampaings)->default_value(numCampaings), "The number of campaings")
+		("numSources", po::value<uint64_t>(&numSources)->default_value(numSources), "The number of sources")
+		("bufferSizeInByte", po::value<uint64_t>(&bufferSizeInByte)->default_value(bufferSizeInByte), "Buffersize in Byte")
+		;
+
+	    po::variables_map vm;
+	    po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
+	    po::notify(vm);
+
+	    if (vm.count("help")) {
+	        std::cout << "Basic Command Line Parameter " << std::endl
+	                  << desc << std::endl;
+	        return 0;
+	    }
+
+	    std::cout << "Settings: "
+	              << "\nnumBuffers: " << numBuffers
+	              << "\nnumThreads: " << numThreads
+	              << "\nnumCampaings: " << numCampaings
+	              << "\nnumSources: " << numSources
+				  << "\nBufferSizeInBytes: " << bufferSizeInByte
+				  << "\nnumTuplesPerBuffer: " << bufferSizeInByte / sizeof(iotdb::ysbRecord)
+	              << std::endl;
+
+	iotdb::BufferManager::instance().setBufferSize(bufferSizeInByte);
+
+	iotdb::test(numBuffers,numThreads,numCampaings, numSources);
 
 
   return 0;

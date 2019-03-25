@@ -10,6 +10,7 @@
 #include <Runtime/GeneratorSource.hpp>
 #include <Runtime/ThreadPool.hpp>
 #include <Runtime/Window.hpp>
+#include <Runtime/YSBWindow.hpp>
 
 #include <CodeGen/HandCodedQueryExecutionPlan.hpp>
 
@@ -27,23 +28,23 @@ public:
   void SetUp() {
     IOTDB_INFO("Setup YahooStreamingBenchmarkTest test case.");
     Dispatcher::instance();
-    BufferManager::instance().setNewBufferSize(10 * 1024); // 10 kb / 78 bytes = 131 tuples per buffer
-    ysb_source = createYSBSource(256);                     // 256 buffers * 4 kb = 1 mb
-    thread_pool.start(8); // 131 tuples per buffer * 8 threads = 1048 tuples in parallel
-    ysb_window = createTestWindow();
+    BufferManager::instance().setBufferSize(10 * 1024); // 10 kb / 78 bytes = 131 tuples per buffer
+    ysb_source = createYSBSource(256, 10, true);        // 256 buffers * 4 kb = 1 mb
+    ThreadPool::instance().setNumberOfThreads(8);       // 131 tuples per buffer * 8 threads = 1048 tuples in parallel
+    ThreadPool::instance().start(8);                    // 1048 tuples in parallel
+    ysb_window = createTestWindow(2, 10);               // windows of 2 seconds, 10 campaigns
   }
 
   /* Will be called after a test is executed. */
   void TearDown() {
     IOTDB_INFO("Tear down YahooStreamingBenchmarkTest test case.");
-    thread_pool.stop();
+    ThreadPool::instance().stop();
     Dispatcher::instance().resetDispatcher();
   }
 
   /* Will be called after all tests in this class are finished. */
   static void TearDownTestCase() { IOTDB_INFO("Tear down YahooStreamingBenchmarkTest test class."); }
 
-  ThreadPool thread_pool;
   DataSourcePtr ysb_source;
   WindowPtr ysb_window;
 

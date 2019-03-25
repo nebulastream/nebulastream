@@ -37,4 +37,9 @@ bool QueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const TupleBuf
   bool ret = stages[pipeline_stage_id]->execute(v,state, &result_buf);
   return ret;
 }
+
+const QueryExecutionPlanPtr createTestQEP(){
+	return std::make_shared<QueryExecutionPlan>();
+}
+
 }
