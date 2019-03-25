@@ -55,9 +55,7 @@ int test() {
 
   Dispatcher::instance().registerQuery(qep);
 
-  ThreadPool thread_pool;
-
-  thread_pool.start();
+  ThreadPool::instance().start(1);
 
   std::cout << "Waiting 2 seconds " << std::endl;
   std::this_thread::sleep_for(std::chrono::seconds(3));
@@ -70,7 +68,7 @@ int test() {
 
   Dispatcher::instance().deregisterQuery(qep);
 
-  thread_pool.stop();
+  ThreadPool::instance().stop();
 
   if (qep->sum == 512 && qep->count == 512) {
     std::cout << "Result Correct" << std::endl;

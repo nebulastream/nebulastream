@@ -9,6 +9,10 @@ Schema::Schema() {}
 
 Schema Schema::create() { return Schema(); }
 
+size_t Schema::getSize() const{
+  return fields.size();
+}
+
 /* Return size of one row of schema in bytes. */
 size_t Schema::getSchemaSize() const {
   size_t size = 0;
@@ -56,7 +60,7 @@ AttributeFieldPtr Schema::get(const std::string pName) {
   //throw std::invalid_argument("field " + pName + " does not exist");
 }
 
-const AttributeFieldPtr Schema::operator [](uint32_t index){
+const AttributeFieldPtr Schema::operator [](uint32_t index) const{
   if(index<(uint32_t)fields.size()){
       return fields[index];
     }else{

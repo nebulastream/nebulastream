@@ -229,6 +229,7 @@ public:
     return decl_.getTypeSizeInBytes();
   }
   const std::string toString() const { return std::string("STRUCT ") + decl_.getTypeName(); }
+  const std::string convertRawToString(void* data) const override{ return "";}
   const CodeExpressionPtr getTypeDefinitionCode() const { return std::make_shared<CodeExpression>(decl_.getCode()); }
   const CodeExpressionPtr getCode() const { return std::make_shared<CodeExpression>(decl_.getTypeName()); }
 
