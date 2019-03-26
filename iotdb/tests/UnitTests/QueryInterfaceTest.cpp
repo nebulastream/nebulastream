@@ -34,10 +34,10 @@ void createQuery()
 
     InputQuery::create(config, source)
         .filter(PredicatePtr())
-        // .orderBy(Sort(SortAttr{schema[0], ASCENDING}))
-        // .map(MapperPtr())
+        .orderBy(Sort(SortAttr{schema[0], ASCENDING}))
+        .map(MapperPtr())
         //.join(InputQuery::create(config, createTestSource()), JoinPredicatePtr())
-        // .print(std::cout)
+        .print(std::cout)
         //      .window(createTumblingWindow())
         //.keyBy(Attributes())
         .printInputQueryPlan();
@@ -73,6 +73,7 @@ int main(int argc, const char* argv[])
 {
 
     iotdb::Dispatcher::instance();
+
     iotdb::createQuery();
     iotdb::createQueryString();
 
