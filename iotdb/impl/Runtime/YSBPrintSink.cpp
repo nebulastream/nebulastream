@@ -51,6 +51,7 @@ bool YSBPrintSink::writeData(const TupleBuffer* input_buffer) {
 	processedBuffer++;
 
 	//Dispatcher::instance().releaseBuffer(input_buffer);
+	return true;
 }
 
 const std::string YSBPrintSink::toString() const {
