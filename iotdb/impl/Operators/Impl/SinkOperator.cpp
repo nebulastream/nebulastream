@@ -1,52 +1,64 @@
 
 
-#include <assert.h>
+
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <assert.h>
 
-#include <CodeGen/CodeGen.hpp>
 #include <Operators/Impl/SinkOperator.hpp>
+#include <CodeGen/CodeGen.hpp>
 
 namespace iotdb {
 
-SinkOperator::SinkOperator(const DataSinkPtr& sink) : Operator(), sink_(iotdb::copy(sink)) {}
-
-SinkOperator::SinkOperator(const SinkOperator& other) : sink_(iotdb::copy(other.sink_)) {}
-
-SinkOperator& SinkOperator::operator=(const SinkOperator& other)
+SinkOperator::SinkOperator(const DataSinkPtr& sink)
+  : Operator (), sink_(iotdb::copy(sink))
 {
-    if (this != &other) {
-        sink_ = iotdb::copy(other.sink_);
-    }
-    return *this;
 }
 
-void SinkOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out)
+SinkOperator::SinkOperator(const SinkOperator& other)
+  : sink_(iotdb::copy(other.sink_))
 {
-    assert(!childs.empty());
-    childs[0]->produce(codegen, context, out);
 }
 
-void SinkOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out)
-{
-    codegen->generateCode(sink_, context, out);
-    /* no call to consume of parent, ends code generation */
+SinkOperator& SinkOperator::operator = (const SinkOperator& other){
+  if (this != &other){
+    sink_ = iotdb::copy(other.sink_);
+  }
+  return *this;
 }
 
-const OperatorPtr SinkOperator::copy() const { return std::make_shared<SinkOperator>(*this); }
-
-const std::string SinkOperator::toString() const
-{
-    std::stringstream ss;
-    ss << "SINK(" << iotdb::toString(sink_) << ")";
-    return ss.str();
+void SinkOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out){
+   assert(!childs.empty());
+   childs[0]->produce(codegen, context, out);
 }
 
-OperatorType SinkOperator::getOperatorType() const { return SINK_OP; }
+void SinkOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out){
+  codegen->generateCode(sink_, context, out);
+  /* no call to consume of parent, ends code generation */
+}
 
-SinkOperator::~SinkOperator() {}
+const OperatorPtr SinkOperator::copy() const{
+  return std::make_shared<SinkOperator>(*this);
+}
 
-const OperatorPtr createSinkOperator(const DataSinkPtr& sink) { return std::make_shared<SinkOperator>(sink); }
+const std::string SinkOperator::toString() const{
+  std::stringstream ss;
+  ss << "SINK(" << iotdb::toString(sink_) << ")";
+  return ss.str();
+}
 
-} // namespace iotdb
+OperatorType SinkOperator::getOperatorType() const{
+  return SINK_OP;
+}
+
+SinkOperator::~SinkOperator(){
+
+}
+
+const OperatorPtr createSinkOperator(const DataSinkPtr& sink){
+  return std::make_shared<SinkOperator>(sink);
+}
+
+}
+

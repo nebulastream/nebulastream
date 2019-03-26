@@ -10,27 +10,27 @@
 
 namespace iotdb {
 
-class SharedLibrary;
-typedef std::shared_ptr<SharedLibrary> SharedLibraryPtr;
+  class SharedLibrary;
+  typedef std::shared_ptr<SharedLibrary> SharedLibraryPtr;
 
-class SharedLibrary {
-  public:
+  class SharedLibrary {
+   public:
     ~SharedLibrary();
 
     static SharedLibraryPtr load(const std::string& file_path);
     void* getSymbol(const std::string& mangeled_symbol_name) const;
 
-    template <typename Function> Function getFunction(const std::string& mangeled_symbol_name) const
-    {
-        return reinterpret_cast<Function>(getSymbol(mangeled_symbol_name));
+    template <typename Function>
+    Function getFunction(const std::string& mangeled_symbol_name) const {
+      return reinterpret_cast<Function>(getSymbol(mangeled_symbol_name));
     }
 
-  private:
+   private:
     SharedLibrary(void* shared_lib);
     void* shared_lib_;
-};
+  };
 
-} // namespace iotdb
+} 
 
 #pragma GCC diagnostic pop
 

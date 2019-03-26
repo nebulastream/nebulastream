@@ -2,40 +2,44 @@
 #define INCLUDE_OPTIMIZER_FOGOPTIMIZER_HPP_
 
 #include <API/InputQuery.hpp>
-#include <Optimizer/FogExecutionPlan.hpp>
 #include <Topology/FogTopologyPlan.hpp>
+#include <Optimizer/FogExecutionPlan.hpp>
 
-namespace iotdb {
-class FogOptimizer {
-  public:
-    static FogOptimizer& getInstance()
-    {
-        static FogOptimizer instance; // Guaranteed to be destroyed.
-                                      // Instantiated on first use.
-        return instance;
-    }
-    FogOptimizer(FogOptimizer const&);   // Don't Implement
-    void operator=(FogOptimizer const&); // Don't implement
 
-    FogExecutionPlanPtr map(InputQueryPtr query, FogTopologyPlanPtr plan)
-    {
-        FogExecutionPlanPtr execPlan = std::make_shared<FogExecutionPlan>();
+namespace iotdb{
+class FogOptimizer
+{
+public:
+	static FogOptimizer& getInstance()
+	{
+			   static FogOptimizer instance; // Guaranteed to be destroyed.
+									 // Instantiated on first use.
+			   return instance;
+	}
+	FogOptimizer(FogOptimizer const&);// Don't Implement
+	void operator=(FogOptimizer const&); // Don't implement
 
-        // get Root
-        FogTopologyEntryPtr rootNode = plan->getRootNode();
-        rootNode->setQuery(query);
+	FogExecutionPlanPtr map(InputQueryPtr query, FogTopologyPlanPtr plan)
+	{
+		FogExecutionPlanPtr execPlan = std::make_shared<FogExecutionPlan>();
 
-        return execPlan;
-    }
+		//get Root
+		FogTopologyEntryPtr rootNode = plan->getRootNode();
+		rootNode->setQuery(query);
 
-    void optimize(FogExecutionPlanPtr execPlan)
-    {
-        // TODO: do the magic
-    }
+		return execPlan;
+	}
 
-  private:
-    FogOptimizer(){};
+	void optimize(FogExecutionPlanPtr execPlan)
+	{
+		//TODO: do the magic
+
+	}
+private:
+	FogOptimizer(){};
+
 };
-} // namespace iotdb
+}
+
 
 #endif /* INCLUDE_OPTIMIZER_FOGOPTIMIZER_HPP_ */
