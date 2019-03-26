@@ -14,8 +14,8 @@
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 #include <Util/Logger.hpp>
-
 #include <NodeEngine/NodeEngine.hpp>
+
 using boost::asio::ip::tcp;
 using namespace iotdb;
 using namespace std; // For strlen.
@@ -30,7 +30,32 @@ enum NODE_COMMANDS {
 
 boost::asio::io_service io_service;
 typedef boost::shared_ptr<tcp::socket> socket_ptr;
+std::vector<QueryExecutionPlanPtr> qeps;
 
+void deserizalieQEP(std::string filename, QueryExecutionPlanPtr qep)
+{
+    std::ifstream ifs(filename);
+    boost::archive::text_iarchive ia(ifs);
+    ia >> qep.get();
+}
+
+void start()
+{
+    for(auto& q : qeps)
+    {
+        Dispatcher::instance().registerQuery(q);
+    }
+    ThreadPool::instance().start();
+}
+
+void stop()
+{
+    for(auto& q : qeps)
+    {
+        Dispatcher::instance().deregisterQuery(q);
+    }
+    ThreadPool::instance().stop();
+}
 
 bool registerNodeInFog(string host, string port)
 {
@@ -79,24 +104,30 @@ void commandProcess(socket_ptr sock)
 	if(cmd == '1')
 	{
 	    IOTDB_DEBUG("IOTNODE: received start query command")
+	    start();
 	}
 	else if(cmd == '2')
 	{
         IOTDB_DEBUG("IOTNODE: received stop query command")
+        stop();
 	}
 	else if(cmd == '3')
 	{
         IOTDB_DEBUG("IOTNODE: received deploy query command")
-
-        std::cout << "deploy query, waiting on QEP" << std::endl;
+        std::string qepFile = &data[1];
+        std::cout << " qepFile=" << qepFile << std::endl;
+        std::ifstream ifs(qepFile.c_str());
+        boost::archive::text_iarchive ia(ifs);
+        QueryExecutionPlanPtr q = std::make_shared<QueryExecutionPlan>();
+        ia >> q;
+        qeps.push_back(q);
 	}
 	else
 	{
 		std::cerr << "COMMAND NOT FOUND" << std::endl;
 	}
-
-
 }
+
 void listen(boost::asio::io_service& io_service, short port){
 	IOTDB_DEBUG("IOTNODE: start listener for incoming commands")
 	tcp::acceptor a(io_service, tcp::endpoint(tcp::v4(), port));
@@ -107,7 +138,6 @@ void listen(boost::asio::io_service& io_service, short port){
 	    boost::thread t(boost::bind(commandProcess, sock));
 	  }
 }
-
 
 void setupLogging()
 {
@@ -134,37 +164,51 @@ void setupLogging()
 	logger->addAppender(console);
 }
 
+void initNodeEngine()
+{
+    iotdb::Dispatcher::instance();
+    iotdb::BufferManager::instance();
+    iotdb::ThreadPool::instance();
+    //optional
+//    iotdb::BufferManager::instance().setBufferSize(bufferSizeInByte);
+//    ThreadPool::instance().setNumberOfThreads(threadCnt);
+}
+
+
 int main(int argc, char* argv[])
 {
-	setupLogging();
-  try
-  {
-    if (argc != 3)
+    setupLogging();
+    try
     {
-      std::cerr << "Usage: blocking_tcp_echo_client <host> <port>\n";
-      return 1;
-    }
-    std::string host = argv[1];
-    std::string port = argv[2];
+        if (argc != 3)
+        {
+          std::cerr << "Usage: blocking_tcp_echo_client <host> <port>\n";
+          return 1;
+        }
+        std::string host = argv[1];
+        std::string port = argv[2];
 
-    bool successReg = registerNodeInFog(host, port);
+        bool successReg = registerNodeInFog(host, port);
 
-    if(successReg)
+        IOTDB_DEBUG("IOTNODE: initialize node engine")
+        initNodeEngine();
+
+        if(successReg)
+        {
+            IOTDB_DEBUG("IOTNODE: waiting for commands")
+            boost::asio::io_service io_service;
+            listen(io_service, clientPort);
+        }
+        else
+        {
+            IOTDB_ERROR("IOTNODE: register failed")
+            return -1;
+        }
+    }//end of try
+    catch (std::exception& e)
     {
-    	IOTDB_DEBUG("IOTNODE: waiting for commands")
-        boost::asio::io_service io_service;
-        listen(io_service, clientPort);
-    }
-    else
-    {
-    	return -1;
+        IOTDB_ERROR("Exception: " << e.what())
     }
 
-  }
-  catch (std::exception& e)
-  {
-    std::cerr << "Exception: " << e.what() << "\n";
-  }
-
-  return 0;
+    return 0;
 }
