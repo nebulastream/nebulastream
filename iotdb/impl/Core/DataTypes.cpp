@@ -30,6 +30,10 @@ namespace iotdb {
      return data_type->getSizeBytes();
   }
 
+  const DataTypePtr AttributeField::getDataType() const{
+    return data_type;
+  }
+
   const std::string AttributeField::toString() const{
 
     std::stringstream ss;
@@ -77,7 +81,7 @@ namespace iotdb {
   class BasicDataType : public DataType{
   public:
     BasicDataType(const BasicType & _type)
-      : type(_type){
+      : type(_type), dataSize(0){
     }
 
     BasicDataType(const BasicType & _type, uint32_t _size)
@@ -96,11 +100,11 @@ namespace iotdb {
     uint32_t getSizeBytes() const{
     	if(dataSize == 0)
     	{
-    		return getFixSizeBytes();
+          return getFixSizeBytes();
     	}
     	else
     	{
-    		return getFixSizeBytes() * dataSize;
+          return getFixSizeBytes() * dataSize;
     	}
 
     }
@@ -144,6 +148,33 @@ namespace iotdb {
       return "";
     }
 
+    const std::string convertRawToString(void* data) const override{
+      if(!data)
+        return std::string();
+      std::stringstream str;
+      switch(type){
+        case INT8: return std::to_string(*reinterpret_cast<int8_t*>(data));
+        case UINT8: return std::to_string(*reinterpret_cast<uint8_t*>(data));
+        case INT16: return std::to_string(*reinterpret_cast<int16_t*>(data));
+        case UINT16: return std::to_string(*reinterpret_cast<uint16_t*>(data));
+        case INT32: return std::to_string(*reinterpret_cast<int32_t*>(data));
+        case UINT32: return std::to_string(*reinterpret_cast<uint32_t*>(data));
+        case INT64: return std::to_string(*reinterpret_cast<int64_t*>(data));
+        case UINT64: return std::to_string(*reinterpret_cast<uint64_t*>(data));
+        case FLOAT32: return std::to_string(*reinterpret_cast<float*>(data));
+        case FLOAT64: return std::to_string(*reinterpret_cast<double*>(data));
+        case BOOLEAN: return std::to_string(*reinterpret_cast<bool*>(data));
+        case CHAR:
+          if(dataSize==0){
+            return std::to_string(*reinterpret_cast<char*>(data));
+          } else {
+              return std::string(reinterpret_cast<char*>(data));
+          }
+        case DATE: return std::to_string(*reinterpret_cast<uint32_t*>(data));
+        case VOID_TYPE: return "";
+      }
+      return "";
+    }
 
     const CodeExpressionPtr getCode() const{
       switch(type){
@@ -199,6 +230,11 @@ namespace iotdb {
        }
        const std::string toString() const{
          return base_type_->toString()+"*";
+       }
+       const std::string convertRawToString(void* data) const override{
+         if(!data)
+           return "";
+         return "POINTER"; //std::to_string(data);
        }
        const CodeExpressionPtr getCode() const{
          return std::make_shared<CodeExpression>(base_type_->getCode()->code_+"*");

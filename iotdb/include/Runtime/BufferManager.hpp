@@ -23,10 +23,15 @@ class BufferManager {
 public:
   void addBuffer();
   TupleBufferPtr getBuffer();
-  void releaseBuffer(TupleBufferPtr tuple_buffer);
+  void releaseBuffer(const TupleBufferPtr tuple_buffer);
+  void releaseBuffer(const TupleBuffer* tuple_buffer);
 
   static BufferManager &instance();
   void unblockThreads() { cv.notify_all(); }
+  void printStatistics();
+
+  void setNumberOfBuffers(size_t size);
+  void setBufferSize(size_t size);
 
 private:
   BufferManager();
@@ -40,6 +45,13 @@ private:
 
   std::mutex mutex;
   std::condition_variable cv;
+
+  //statistics
+  size_t noFreeBuffer;
+  size_t providedBuffer;
+  size_t releasedBuffer;
+
+
 };
 
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;

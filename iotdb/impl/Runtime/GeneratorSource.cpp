@@ -5,7 +5,17 @@
  *      Author: zeuchste
  */
 
-#include <Runtime/GeneratorSource.hpp>
-#include <iostream>
+#include <boost/serialization/export.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <Runtime/Dispatcher.hpp>
 
-namespace iotdb {}
+#include <Runtime/GeneratorSource.hpp>
+//BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::YSBGeneratorSource);
+
+#include <iostream>
+#include <Core/TupleBuffer.hpp>
+namespace iotdb {
+
+
+}

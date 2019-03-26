@@ -367,12 +367,14 @@ namespace iotdb {
     std::vector<TupleBuffer *> bufs;
     bufs.push_back(&buf);
 
-    TupleBuffer result_buf{result_array, sizeof(uint64_t), sizeof(uint64_t), 0};
+    TupleBuffer result_buf{result_array, sizeof(uint64_t), sizeof(uint64_t), 1};
 
     /* execute code */
     if (!stage->execute(bufs, nullptr, &result_buf)) {
       std::cout << "Error!" << std::endl;
     }
+
+    std::cout << toString(&result_buf,Schema::create().addField("sum",UINT64)) << std::endl;
 
     /* check result for correctness */
     uint64_t sum_generated_code = result_array[0];
@@ -411,24 +413,85 @@ namespace iotdb {
       return -1;
   }
 
+
+
+int testTupleBufferPrinting(){
+
+  struct __attribute__((packed)) MyTuple{
+    uint64_t i64;
+    float f;
+    double d;
+    uint32_t i32;
+    char s[12];
+  };
+
+  MyTuple *my_array = (MyTuple *)malloc(5 * sizeof(MyTuple));
+  for (unsigned int i = 0; i < 5; ++i) {
+    my_array[i] = MyTuple{i, float(0.5f*i), double(i*0.2), i*2, "1234"};
+    std::cout << my_array[i].i64 << "|" << my_array[i].f << "|" << my_array[i].d << "|" << my_array[i].i32 << "|" << std::string(my_array[i].s,12) << std::endl;
+  }
+
+  TupleBuffer buf{my_array, 5 * sizeof(MyTuple), sizeof(MyTuple), 5};
+  Schema s = Schema::create()
+      .addField("i64",UINT64)
+      .addField("f",FLOAT32)
+      .addField("d",FLOAT64)
+      .addField("i32",UINT32)
+      .addField("s",12);
+
+
+std::string reference =
+"+----------------------------------------------------+\n"
+"|i64:UINT64|f:FLOAT32|d:FLOAT64|i32:UINT32|s:CHAR|\n"
+"+----------------------------------------------------+\n"
+"|0|0.000000|0.000000|0|1234|\n"
+"|1|0.500000|0.200000|2|1234|\n"
+"|2|1.000000|0.400000|4|1234|\n"
+"|3|1.500000|0.600000|6|1234|\n"
+"|4|2.000000|0.800000|8|1234|\n"
+"+----------------------------------------------------+";
+
+
+   std::string result = iotdb::toString(buf, s);
+   std::cout << "'" << reference << "'" << reference.size() << std::endl;
+   std::cout << "'" << result << "'" << result.size() << std::endl;
+
+  assert(reference.size()==result.size());
+  if(reference==result){
+      std::cout << "Print Test Successful!" << std::endl;
+    }else{
+      std::cout << "Print Test Failed!" << std::endl;
+    }
+
+  free(my_array);
+  return 0;
 }
 
-
+}
 
 int main(){
 
+  /** \todo make proper test case out of this function! */
   iotdb::CodeGenTestCases();
 
-  if(iotdb::CodeGeneratorTest()){
-    std::cerr << "Test Failed!" << std::endl;
+  if(!iotdb::CodeGenTest()){
+    std::cout << "Test CodeGenTest Passed!" << std::endl;
+    }else{
+    std::cerr << "Test CodeGenTest Failed!" << std::endl;
     return -1;
   }
 
-  if(!iotdb::CodeGenTest()){
-    std::cout << "Test Passed!" << std::endl;
-    return 0;
+  if(!iotdb::CodeGeneratorTest()){
+    std::cerr << "Test CodeGeneratorTest Passed!" << std::endl;
+  }else{
+    std::cerr << "Test CodeGeneratorTest Failed!" << std::endl;
+    return -1;
+  }
+
+  if(!iotdb::testTupleBufferPrinting()){
+    std::cout << "Test Print Tuple Buffer Passed!" << std::endl;
     }else{
-    std::cerr << "Test Failed!" << std::endl;
+    std::cerr << "Test Print Tuple Buffer Failed!" << std::endl;
     return -1;
     }
 
