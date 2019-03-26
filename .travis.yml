@@ -9,7 +9,7 @@ matrix:
           llvm-3.8-dev
 
 language: cpp
-compiler: clang
+compiler: gcc
 
 before_install:
   - sudo apt-get update
@@ -23,7 +23,7 @@ script:
   - clang++ --version
   - cd iotdb && mkdir debug-build && cd debug-build
   - cmake -DCMAKE_BUILD_TYPE=Debug -DBoost_NO_SYSTEM_PATHS=TRUE -DBoost_INCLUDE_DIR="/usr/include" -DBoost_LIBRARY_DIR="/usr/lib/x86_64-linux-gnu" ..
-  - make -j && make test_debug
+  - make -j8 && make test_debug
 
 notifications:
   email: false

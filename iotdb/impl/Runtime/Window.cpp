@@ -1,9 +1,15 @@
+#include <boost/serialization/export.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <Runtime/YSBWindow.hpp>
 #include <Runtime/Window.hpp>
-
+BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::Window)
 namespace iotdb{
-const WindowPtr createTestWindow() {
 
-	  WindowPtr win(new YSBWindow());
+
+const WindowPtr createTestWindow(size_t campainCnt) {
+
+	  WindowPtr win(new YSBWindow(campainCnt));
 
 	  return win;
 	}
@@ -12,12 +18,5 @@ const WindowPtr createTestWindow() {
 	 IOTDB_DEBUG("WINDOW: calling destructor")
  };
 
-
-
-YSBWindow::~YSBWindow()
- {
-	 IOTDB_DEBUG("YSB Window: calling destructor")
-
- }
 
 }

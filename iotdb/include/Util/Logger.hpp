@@ -16,5 +16,4 @@ static log4cxx::LoggerPtr logger(log4cxx::Logger::getLogger("IOTDB"));
 #define IOTDB_INFO(TEXT) LOG4CXX_INFO(logger, TEXT)
 #define IOTDB_ERROR(TEXT) LOG4CXX_ERROR(logger, TEXT)
 
-
 #endif /* INCLUDE_UTIL_LOGGER_HPP_ */

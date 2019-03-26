@@ -1,12 +1,13 @@
 #include <cstddef>
 #include <iomanip>
 #include <iostream>
+
 #include <API/InputQuery.hpp>
+#include <Runtime/DataSink.hpp>
 #include <Operators/Operator.hpp>
 
-
-#include <CodeGen/C_CodeGen/CodeCompiler.hpp>
 #include <Util/ErrorHandling.hpp>
+#include <CodeGen/C_CodeGen/CodeCompiler.hpp>
 
 namespace iotdb{
 
@@ -141,24 +142,14 @@ InputQuery &InputQuery::map(const MapperPtr& mapper) {
   return *this;
 }
 
-const DataSinkPtr createWriteFileSink(const std::string file_name);
-const DataSinkPtr createPrintSink(std::ostream& out);
-
-const DataSinkPtr createWriteFileSink(const std::string file_name){
-
-}
-
-const DataSinkPtr createPrintSink(std::ostream& out){
-
-}
-
 // output operators
 InputQuery &InputQuery::writeToFile(const std::string& file_name) {
-  OperatorPtr op = createSinkOperator(createWriteFileSink(file_name));
+  OperatorPtr op = createSinkOperator(createBinaryFileSink(file_name));
   addChild(op, root);
   root = op;
   return *this;
 }
+
 InputQuery &InputQuery::print(std::ostream& out) {
   OperatorPtr op = createSinkOperator(createPrintSink(out));
   addChild(op, root);

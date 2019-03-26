@@ -19,7 +19,7 @@ BinarySource::BinarySource(const Schema& schema, const std::string &_file_path, 
 
 TupleBufferPtr BinarySource::receiveData() {
 	assert(0);//not implemented yet
-  TupleBufferPtr buf = Dispatcher::instance().getBuffer();
+  TupleBufferPtr buf = BufferManager::instance().getBuffer();
 //  fillBuffer(buf);
   return buf;
 }
