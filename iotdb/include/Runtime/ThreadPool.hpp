@@ -17,6 +17,7 @@ public:
   void worker_thread();
 
   void start(size_t numberOfThreads);
+  void start();
 
   void stop();
 

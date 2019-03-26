@@ -42,7 +42,12 @@ void ThreadPool::worker_thread() {
 }
 
 void ThreadPool::start(size_t numberOfThreads) {
-	numThreads = numberOfThreads;
+    numThreads = numberOfThreads;
+    start();
+}
+
+
+void ThreadPool::start() {
   if (run)
     return;
   run = true;
