@@ -18,12 +18,10 @@ public:
 		  const uint16_t port);
   ~ZmqSink() override;
 
-  bool writeData(const TupleBuffer* input_buffer) override;
-
-  void setup() override {connect();};
-  void shutdown() override {};
-
-  const std::string toString() const override;
+	bool writeData(const TupleBuffer* input_buffer) override;
+	void setup() override {connect();};
+	void shutdown() override {};
+	const std::string toString() const override;
 
 private:
   ZmqSink();
