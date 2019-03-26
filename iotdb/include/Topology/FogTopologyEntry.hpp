@@ -14,14 +14,14 @@ namespace iotdb {
 enum FogNodeType { Worker, Sensor };
 
 class FogTopologyEntry {
-public:
-  virtual void setId(size_t id) = 0;
-  virtual size_t getId() = 0;
+  public:
+    virtual void setId(size_t id) = 0;
+    virtual size_t getId() = 0;
 
-  virtual FogNodeType getEntryType() = 0;
-  virtual std::string getEntryTypeString() = 0;
+    virtual FogNodeType getEntryType() = 0;
+    virtual std::string getEntryTypeString() = 0;
 
-  virtual void setQuery(InputQueryPtr pQuery) = 0;
+    virtual void setQuery(InputQueryPtr pQuery) = 0;
 };
 
 typedef std::shared_ptr<FogTopologyEntry> FogTopologyEntryPtr;
