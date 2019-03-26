@@ -13,13 +13,12 @@ namespace iotdb {
 class YSBPrintSink : public PrintSink {
 public:
 
-	~YSBPrintSink();
 	YSBPrintSink();
+	~YSBPrintSink();
+
   bool writeData(const TupleBuffer* input_buffer) override;
-
-  void setup(){};
-  void shutdown(){};
-
+  void setup() override {};
+  void shutdown() override {};
   const std::string toString() const override;
 
 protected:
@@ -30,7 +29,6 @@ protected:
 		ar & boost::serialization::base_object<PrintSink>(*this);
 	}
 
-
 };
 
 } // namespace iotdb
@@ -40,4 +38,4 @@ protected:
 BOOST_CLASS_EXPORT_KEY(iotdb::YSBPrintSink)
 
 
-#endif // ZMQSINK_HPP
+#endif // YSB_PRINTSINK_HPP
