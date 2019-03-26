@@ -33,132 +33,135 @@ static llvm::cl::OptionCategory ToolingSampleCategory("Tooling Sample");
 // By implementing RecursiveASTVisitor, we can specify which AST nodes
 // we're interested in by overriding relevant methods.
 class MyASTVisitor : public RecursiveASTVisitor<MyASTVisitor> {
-  public:
-    MyASTVisitor(Rewriter& R) : TheRewriter(R) {}
+public:
+  MyASTVisitor(Rewriter &R) : TheRewriter(R) {}
 
-    bool VisitStmt(Stmt* s)
-    {
-        // Only care about If statements.
-        if (isa<IfStmt>(s)) {
-            IfStmt* IfStatement = cast<IfStmt>(s);
-            Stmt* Then = IfStatement->getThen();
+  bool VisitStmt(Stmt *s) {
+    // Only care about If statements.
+    if (isa<IfStmt>(s)) {
+      IfStmt *IfStatement = cast<IfStmt>(s);
+      Stmt *Then = IfStatement->getThen();
 
-            TheRewriter.InsertText(Then->getLocStart(), "// the 'if' part\n", true, true);
+      TheRewriter.InsertText(Then->getLocStart(), "// the 'if' part\n", true,
+                             true);
 
-            Stmt* Else = IfStatement->getElse();
-            if (Else)
-                TheRewriter.InsertText(Else->getLocStart(), "// the 'else' part\n", true, true);
-        }
-
-        return true;
+      Stmt *Else = IfStatement->getElse();
+      if (Else)
+        TheRewriter.InsertText(Else->getLocStart(), "// the 'else' part\n",
+                               true, true);
     }
 
-    bool VisitFunctionDecl(FunctionDecl* f)
-    {
-        // Only function definitions (with bodies), not declarations.
-        if (f->hasBody()) {
-            Stmt* FuncBody = f->getBody();
+    return true;
+  }
 
-            // Type name as string
-            QualType QT = f->getReturnType();
-            std::string TypeStr = QT.getAsString();
+  bool VisitFunctionDecl(FunctionDecl *f) {
+    // Only function definitions (with bodies), not declarations.
+    if (f->hasBody()) {
+      Stmt *FuncBody = f->getBody();
 
-            // Function name
-            DeclarationName DeclName = f->getNameInfo().getName();
-            std::string FuncName = DeclName.getAsString();
+      // Type name as string
+      QualType QT = f->getReturnType();
+      std::string TypeStr = QT.getAsString();
 
-            // Add comment before
-            std::stringstream SSBefore;
-            SSBefore << "// Begin function " << FuncName << " returning " << TypeStr << "\n";
-            SourceLocation ST = f->getSourceRange().getBegin();
-            TheRewriter.InsertText(ST, SSBefore.str(), true, true);
+      // Function name
+      DeclarationName DeclName = f->getNameInfo().getName();
+      std::string FuncName = DeclName.getAsString();
 
-            // And after
-            std::stringstream SSAfter;
-            SSAfter << "\n// End function " << FuncName;
-            ST = FuncBody->getLocEnd().getLocWithOffset(1);
-            TheRewriter.InsertText(ST, SSAfter.str(), true, true);
-        }
+      // Add comment before
+      std::stringstream SSBefore;
+      SSBefore << "// Begin function " << FuncName << " returning " << TypeStr
+               << "\n";
+      SourceLocation ST = f->getSourceRange().getBegin();
+      TheRewriter.InsertText(ST, SSBefore.str(), true, true);
 
-        return true;
+      // And after
+      std::stringstream SSAfter;
+      SSAfter << "\n// End function " << FuncName;
+      ST = FuncBody->getLocEnd().getLocWithOffset(1);
+      TheRewriter.InsertText(ST, SSAfter.str(), true, true);
     }
 
-  private:
-    Rewriter& TheRewriter;
+    return true;
+  }
+
+private:
+  Rewriter &TheRewriter;
 };
 
 // Implementation of the ASTConsumer interface for reading an AST produced
 // by the Clang parser.
 class MyASTConsumer : public ASTConsumer {
-  public:
-    MyASTConsumer(Rewriter& R) : Visitor(R) {}
+public:
+  MyASTConsumer(Rewriter &R) : Visitor(R) {}
 
-    // Override the method that gets called for each parsed top-level
-    // declaration.
-    bool HandleTopLevelDecl(DeclGroupRef DR) override
-    {
-        for (DeclGroupRef::iterator b = DR.begin(), e = DR.end(); b != e; ++b) {
-            // Traverse the declaration using our AST visitor.
-            Visitor.TraverseDecl(*b);
-            (*b)->dump();
-        }
-        return true;
+  // Override the method that gets called for each parsed top-level
+  // declaration.
+  bool HandleTopLevelDecl(DeclGroupRef DR) override {
+    for (DeclGroupRef::iterator b = DR.begin(), e = DR.end(); b != e; ++b) {
+      // Traverse the declaration using our AST visitor.
+      Visitor.TraverseDecl(*b);
+      (*b)->dump();
     }
+    return true;
+  }
 
-  private:
-    MyASTVisitor Visitor;
+private:
+  MyASTVisitor Visitor;
 };
 
 // For each source file provided to the tool, a new FrontendAction is created.
 class MyFrontendAction : public ASTFrontendAction {
-  public:
-    MyFrontendAction() {}
-    void EndSourceFileAction() override
-    {
-        SourceManager& SM = TheRewriter.getSourceMgr();
-        llvm::errs() << "** EndSourceFileAction for: " << SM.getFileEntryForID(SM.getMainFileID())->getName() << "\n";
+public:
+  MyFrontendAction() {}
+  void EndSourceFileAction() override {
+    SourceManager &SM = TheRewriter.getSourceMgr();
+    llvm::errs() << "** EndSourceFileAction for: "
+                 << SM.getFileEntryForID(SM.getMainFileID())->getName() << "\n";
 
-        clang::TranslationUnitDecl* TopDecl = this->getCurrentASTUnit().getASTContext().getTranslationUnitDecl();
+      clang::TranslationUnitDecl *TopDecl = this->getCurrentASTUnit().
+          getASTContext().
+          getTranslationUnitDecl();
 
-        // Now emit the rewritten buffer.
-        TheRewriter.getEditBuffer(SM.getMainFileID()).write(llvm::outs());
-    }
+    // Now emit the rewritten buffer.
+    TheRewriter.getEditBuffer(SM.getMainFileID()).write(llvm::outs());
+  }
 
-    std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance& CI, StringRef file) override
-    {
-        llvm::errs() << "** Creating AST consumer for: " << file << "\n";
-        TheRewriter.setSourceMgr(CI.getSourceManager(), CI.getLangOpts());
-        return llvm::make_unique<MyASTConsumer>(TheRewriter);
-    }
+  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+                                                 StringRef file) override {
+    llvm::errs() << "** Creating AST consumer for: " << file << "\n";
+    TheRewriter.setSourceMgr(CI.getSourceManager(), CI.getLangOpts());
+    return llvm::make_unique<MyASTConsumer>(TheRewriter);
+  }
 
-  private:
-    Rewriter TheRewriter;
+private:
+  Rewriter TheRewriter;
 };
 
-int main(int argc, const char** argv)
-{
-    CommonOptionsParser op(argc, argv, ToolingSampleCategory);
-    ClangTool Tool(op.getCompilations(), op.getSourcePathList());
+int main(int argc, const char **argv) {
+  CommonOptionsParser op(argc, argv, ToolingSampleCategory);
+  ClangTool Tool(op.getCompilations(), op.getSourcePathList());
 
-    std::cout << "Create Clang AST" << std::endl;
-    std::shared_ptr<PCHContainerOperations> PCHContainerOps = std::make_shared<PCHContainerOperations>();
-    std::unique_ptr<clang::ASTUnit> ast_unit =
-        clang::tooling::buildASTFromCode("int myfunction(double arg1) { return 12; }", "test.cpp", PCHContainerOps);
 
-    if (!ast_unit) {
-        std::cerr << "Error" << std::endl;
-        return -1;
-    }
+  std::cout << "Create Clang AST" << std::endl;
+  std::shared_ptr<PCHContainerOperations> PCHContainerOps = std::make_shared<PCHContainerOperations>();
+  std::unique_ptr<clang::ASTUnit> ast_unit =
+  clang::tooling::buildASTFromCode("int myfunction(double arg1) { return 12; }",  "test.cpp",
+                   PCHContainerOps);
 
-    clang::TranslationUnitDecl* TopDecl = ast_unit->getASTContext().getTranslationUnitDecl();
-    TopDecl->print(llvm::outs());
-    TopDecl->dump(llvm::outs());
-    // ClangTool::run accepts a FrontendActionFactory, which is then used to
-    // create new objects implementing the FrontendAction interface. Here we use
-    // the helper newFrontendActionFactory to create a default factory that will
-    // return a new MyFrontendAction object every time.
-    // To further customize this, we could create our own factory class.
-    // return Tool.run(newFrontendActionFactory<MyFrontendAction>().get());
+  if(!ast_unit){
+    std::cerr << "Error" << std::endl;
+    return -1;
+  }
 
-    return 0;
+  clang::TranslationUnitDecl *TopDecl = ast_unit->getASTContext().getTranslationUnitDecl();
+  TopDecl->print(llvm::outs());
+  TopDecl->dump(llvm::outs());
+  // ClangTool::run accepts a FrontendActionFactory, which is then used to
+  // create new objects implementing the FrontendAction interface. Here we use
+  // the helper newFrontendActionFactory to create a default factory that will
+  // return a new MyFrontendAction object every time.
+  // To further customize this, we could create our own factory class.
+  //return Tool.run(newFrontendActionFactory<MyFrontendAction>().get());
+
+  return 0;
 }

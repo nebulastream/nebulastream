@@ -16,40 +16,41 @@ using namespace iotdb;
 /* ------------------------------------------------------------------------- */
 /* - FogTopologyManager ---------------------------------------------------- */
 class FogTopologyManagerTest : public testing::Test {
-  public:
-    /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() { std::cout << "Setup FogTopologyManager test class." << std::endl; }
+public:
+  /* Will be called before any test in this class are executed. */
+  static void SetUpTestCase() { std::cout << "Setup FogTopologyManager test class." << std::endl; }
 
-    /* Will be called before a test is executed. */
-    void SetUp() { std::cout << "Setup FogTopologyManager test case." << std::endl; }
+  /* Will be called before a test is executed. */
+  void SetUp() {
+    std::cout << "Setup FogTopologyManager test case." << std::endl;
+  }
 
-    /* Will be called before a test is executed. */
-    void TearDown() { std::cout << "Tear down FogTopologyManager test case." << std::endl; }
+  /* Will be called before a test is executed. */
+  void TearDown() { std::cout << "Tear down FogTopologyManager test case." << std::endl; }
 
-    /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() { std::cout << "Tear down FogTopologyManager test class." << std::endl; }
+  /* Will be called after all tests in this class are finished. */
+  static void TearDownTestCase() { std::cout << "Tear down FogTopologyManager test class." << std::endl; }
 
-    //@Tobias please reactive the tests and find the error :)
+  //@Tobias please reactive the tests and find the error :)
 };
 
 /* - Nodes ----------------------------------------------------------------- */
 /* Create a new node. */
 
-TEST_F(FogTopologyManagerTest, create_node)
-{
-    auto worker_node = FogTopologyManager::getInstance().createFogWorkerNode();
-    EXPECT_NE(worker_node.get(), nullptr);
-    EXPECT_EQ(worker_node->getEntryType(), Worker);
-    EXPECT_EQ(worker_node->getEntryTypeString(), "Worker");
-    EXPECT_NE(worker_node->getId(), INVALID_NODE_ID);
+TEST_F(FogTopologyManagerTest, create_node) {
+  auto worker_node = FogTopologyManager::getInstance().createFogWorkerNode();
+  EXPECT_NE(worker_node.get(), nullptr);
+  EXPECT_EQ(worker_node->getEntryType(), Worker);
+  EXPECT_EQ(worker_node->getEntryTypeString(), "Worker");
+  EXPECT_NE(worker_node->getId(), INVALID_NODE_ID);
 
-    auto sensor_node = FogTopologyManager::getInstance().createFogSensorNode();
-    EXPECT_NE(sensor_node.get(), nullptr);
-    EXPECT_EQ(sensor_node->getEntryType(), Sensor);
-    EXPECT_EQ(sensor_node->getEntryTypeString(), "Sensor");
-    EXPECT_NE(sensor_node->getId(), INVALID_NODE_ID);
+  auto sensor_node = FogTopologyManager::getInstance().createFogSensorNode();
+  EXPECT_NE(sensor_node.get(), nullptr);
+  EXPECT_EQ(sensor_node->getEntryType(), Sensor);
+  EXPECT_EQ(sensor_node->getEntryTypeString(), "Sensor");
+  EXPECT_NE(sensor_node->getId(), INVALID_NODE_ID);
 
-    EXPECT_EQ(worker_node->getId() + 1, sensor_node->getId());
+  EXPECT_EQ(worker_node->getId() + 1, sensor_node->getId());
 }
 #if 0
 /* Remove an existing node. */

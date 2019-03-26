@@ -6,5 +6,4 @@
  */
 #include <Runtime/RemoteSocketSource.hpp>
 
-namespace iotdb {
-}
+namespace iotdb {}

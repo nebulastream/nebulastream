@@ -13,19 +13,19 @@
 #include <vector>
 namespace iotdb {
 class ThreadPool {
-  public:
-    ThreadPool();
-    void worker_thread();
+public:
+  ThreadPool();
+  void worker_thread();
 
-    void start();
+  void start();
 
-    void stop();
-    ~ThreadPool();
+  void stop();
+  ~ThreadPool();
 
-  private:
-    bool run;
-    std::vector<std::thread> threads;
+private:
+  bool run;
+  std::vector<std::thread> threads;
 };
-} // namespace iotdb
+}
 
 #endif /* THREADPOOL_H_ */

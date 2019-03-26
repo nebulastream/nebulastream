@@ -1,5 +1,6 @@
 
 
+
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -8,37 +9,51 @@
 
 namespace iotdb {
 
-FilterOperator::FilterOperator(const PredicatePtr& predicate) : Operator(), predicate_(iotdb::copy(predicate)) {}
-
-FilterOperator::FilterOperator(const FilterOperator& other) : predicate_(iotdb::copy(other.predicate_)) {}
-
-FilterOperator& FilterOperator::operator=(const FilterOperator& other)
+FilterOperator::FilterOperator(const PredicatePtr& predicate)
+  : Operator (), predicate_(iotdb::copy(predicate))
 {
-    if (this != &other) {
-        predicate_ = iotdb::copy(other.predicate_);
-    }
-    return *this;
 }
 
-void FilterOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {}
-void FilterOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {}
-
-const OperatorPtr FilterOperator::copy() const { return std::make_shared<FilterOperator>(*this); }
-
-const std::string FilterOperator::toString() const
+FilterOperator::FilterOperator(const FilterOperator& other)
+  : predicate_(iotdb::copy(other.predicate_))
 {
-    std::stringstream ss;
-    ss << "FILTER(" << iotdb::toString(predicate_) << ")";
-    return ss.str();
 }
 
-OperatorType FilterOperator::getOperatorType() const { return FILTER_OP; }
-
-FilterOperator::~FilterOperator() {}
-
-const OperatorPtr createFilterOperator(const PredicatePtr& predicate)
-{
-    return std::make_shared<FilterOperator>(predicate);
+FilterOperator& FilterOperator::operator = (const FilterOperator& other){
+  if (this != &other){
+    predicate_ = iotdb::copy(other.predicate_);
+  }
+  return *this;
 }
 
-} // namespace iotdb
+void FilterOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out){
+
+}
+void FilterOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out){
+
+}
+
+const OperatorPtr FilterOperator::copy() const{
+  return std::make_shared<FilterOperator>(*this);
+}
+
+const std::string FilterOperator::toString() const{
+  std::stringstream ss;
+  ss << "FILTER(" << iotdb::toString(predicate_) << ")";
+  return ss.str();
+}
+
+OperatorType FilterOperator::getOperatorType() const{
+  return FILTER_OP;
+}
+
+FilterOperator::~FilterOperator(){
+
+}
+
+const OperatorPtr createFilterOperator(const PredicatePtr& predicate){
+  return std::make_shared<FilterOperator>(predicate);
+}
+
+}
+

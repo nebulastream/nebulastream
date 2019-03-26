@@ -6,13 +6,13 @@
 namespace iotdb {
 
 class Time {
-  public:
-    static Time seconds(size_t seconds);
-    static Time minutes(size_t minutes);
-    size_t time;
+public:
+  static Time seconds(size_t seconds);
+  static Time minutes(size_t minutes);
+  size_t time;
 
-  private:
-    Time(size_t seconds) : time(seconds) {}
+private:
+  Time(size_t seconds) : time(seconds) {}
 };
-} // namespace iotdb
+}
 #endif // API_TIME_H

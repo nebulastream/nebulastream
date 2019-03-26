@@ -8,19 +8,18 @@
 #ifndef INCLUDE_REMOTESOCKETSOURCE_H_
 #define INCLUDE_REMOTESOCKETSOURCE_H_
 
-#include <Core/TupleBuffer.hpp>
 #include <Runtime/DataSource.hpp>
+#include <Core/TupleBuffer.hpp>
 
 namespace iotdb {
 
 class RemoteSocketSource : public DataSource {
-  public:
-    RemoteSocketSource(const Schema& schema, int32_t port);
-    TupleBufferPtr receiveData();
-    const std::string toString() const;
-
-  private:
+public:
+  RemoteSocketSource(const Schema& schema, int32_t port);
+  TupleBufferPtr receiveData();
+  const std::string toString() const;
+private:
 };
-} // namespace iotdb
+}
 
 #endif /* INCLUDE_REMOTESOCKETSOURCE_H_ */

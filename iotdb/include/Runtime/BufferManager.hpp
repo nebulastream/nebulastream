@@ -20,26 +20,26 @@ class TupleBuffer;
 typedef std::shared_ptr<TupleBuffer> TupleBufferPtr;
 
 class BufferManager {
-  public:
-    void addBuffer();
-    TupleBufferPtr getBuffer();
-    void releaseBuffer(TupleBufferPtr tuple_buffer);
+public:
+  void addBuffer();
+  TupleBufferPtr getBuffer();
+  void releaseBuffer(TupleBufferPtr tuple_buffer);
 
-    static BufferManager& instance();
-    void unblockThreads() { cv.notify_all(); }
+  static BufferManager &instance();
+  void unblockThreads() { cv.notify_all(); }
 
-  private:
-    BufferManager();
-    BufferManager(const BufferManager&);
-    BufferManager& operator=(const BufferManager&);
-    ~BufferManager();
+private:
+  BufferManager();
+  BufferManager(const BufferManager &);
+  BufferManager &operator=(const BufferManager &);
+  ~BufferManager();
 
-    std::map<TupleBufferPtr, bool> buffer_pool; // make bool atomic
-    size_t maxBufferCnt;
-    size_t bufferSizeInByte;
+  std::map<TupleBufferPtr, bool> buffer_pool;//make bool atomic
+  size_t maxBufferCnt;
+  size_t bufferSizeInByte;
 
-    std::mutex mutex;
-    std::condition_variable cv;
+  std::mutex mutex;
+  std::condition_variable cv;
 };
 
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;

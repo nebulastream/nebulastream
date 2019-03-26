@@ -13,10 +13,8 @@
 
 namespace iotdb {
 
-Task::Task(QueryExecutionPlanPtr _qep, uint32_t _pipeline_stage_id, DataSource* _source, const TupleBufferPtr pBuf)
-    : qep(_qep), pipeline_stage_id(_pipeline_stage_id), source(_source), buf(pBuf)
-{
-}
+Task::Task(QueryExecutionPlanPtr _qep, uint32_t _pipeline_stage_id, DataSource *_source, const TupleBufferPtr pBuf)
+    : qep(_qep), pipeline_stage_id(_pipeline_stage_id), source(_source), buf(pBuf) {}
 
 bool Task::execute() { return qep->executeStage(pipeline_stage_id, buf); }
 

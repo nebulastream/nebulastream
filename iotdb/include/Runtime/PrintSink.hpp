@@ -12,42 +12,45 @@ namespace iotdb {
 
 class PrintSink : public DataSink {
 
-  public:
-    PrintSink(const Schema& schema);
-    ~PrintSink();
-    virtual void setup(){};
-    virtual void shutdown(){};
-    bool writeData(const std::vector<TupleBufferPtr>& input_buffers) override;
-    bool writeData(const TupleBufferPtr input_buffer) override;
-    bool writeData(const std::vector<TupleBuffer*>& input_buffers) override;
-    bool writeData(const TupleBuffer* input_buffer);
+public:
+	PrintSink(const Schema& schema);
+  ~PrintSink();
+  virtual void setup(){};
+  virtual void shutdown(){};
+  bool writeData(const std::vector<TupleBufferPtr> &input_buffers) override;
+  bool writeData(const TupleBufferPtr input_buffer) override;
+  bool writeData(const std::vector<TupleBuffer*> &input_buffers) override;
+  bool writeData(const TupleBuffer* input_buffer);
 
-    const std::string toString() const override;
+  const std::string toString() const override;
 
-  protected:
-    size_t printedTuples;
+protected:
+  size_t printedTuples;
 };
 
+
 class YSBPrintSink : public PrintSink {
-  public:
-    YSBPrintSink(const Schema& schema);
+public:
+	YSBPrintSink(const Schema& schema);
 
-    ~YSBPrintSink();
+	~YSBPrintSink();
 
-    bool writeData(const std::vector<TupleBufferPtr>& input_buffers) override;
-    bool writeData(const TupleBufferPtr input_buffer) override;
-    bool writeData(const std::vector<TupleBuffer*>& input_buffers) override;
-    bool writeData(const TupleBuffer* input_buffer);
+  bool writeData(const std::vector<TupleBufferPtr> &input_buffers) override;
+  bool writeData(const TupleBufferPtr input_buffer) override;
+  bool writeData(const std::vector<TupleBuffer*> &input_buffers) override;
+  bool writeData(const TupleBuffer* input_buffer);
 
-    void setup(){};
-    void shutdown(){};
-    size_t getNumberOfPrintedTuples() { return printedTuples; };
+  void setup(){};
+  void shutdown(){};
+  size_t getNumberOfPrintedTuples(){return printedTuples;};
 
-    const std::string toString() const override;
+  const std::string toString() const override;
 
-  private:
+private:
 };
 
 } // namespace iotdb
+
+
 
 #endif // ZMQSINK_HPP

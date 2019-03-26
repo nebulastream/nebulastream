@@ -7,25 +7,31 @@
 
 #ifndef TESTS_TESTPLANS_COMPILEDDUMMYPLAN_HPP_
 #define TESTS_TESTPLANS_COMPILEDDUMMYPLAN_HPP_
-#include <API/InputQuery.hpp>
-#include <CodeGen/HandCodedQueryExecutionPlan.hpp>
 #include <Runtime/Dispatcher.hpp>
 #include <Runtime/GeneratorSource.hpp>
+#include <CodeGen/HandCodedQueryExecutionPlan.hpp>
+#include <API/InputQuery.hpp>
 #include <memory>
 
-namespace iotdb {
+namespace iotdb{
 
-class CompiledDummyPlan : public HandCodedQueryExecutionPlan {
-  public:
+class CompiledDummyPlan : public HandCodedQueryExecutionPlan{
+public:
     uint64_t count;
     uint64_t sum;
-    CompiledDummyPlan() : HandCodedQueryExecutionPlan(), count(0), sum(0) {}
+    CompiledDummyPlan()
+        : HandCodedQueryExecutionPlan(), count(0), sum(0){
+    }
 
-    bool firstPipelineStage(const TupleBuffer&) { return false; }
+    bool firstPipelineStage(const TupleBuffer&){
+        return false;
+    }
 
-    bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf) { return true; }
+    bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf){
+        return true;
+    }
 };
 typedef std::shared_ptr<CompiledDummyPlan> CompiledDummyPlanPtr;
 
-};     // namespace iotdb
+};
 #endif /* TESTS_TESTPLANS_COMPILEDTESTPLAN_HPP_ */

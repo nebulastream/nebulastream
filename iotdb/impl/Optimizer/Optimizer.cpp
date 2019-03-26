@@ -1,4 +1,3 @@
 
 
-namespace iotdb {
-}
+namespace iotdb {}
