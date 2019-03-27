@@ -20,36 +20,39 @@ class TupleBuffer;
 typedef std::shared_ptr<TupleBuffer> TupleBufferPtr;
 
 class BufferManager {
-  public:
-    void addBuffer();
-    TupleBufferPtr getBuffer();
-    void releaseBuffer(const TupleBufferPtr tuple_buffer);
-    void releaseBuffer(const TupleBuffer* tuple_buffer);
+public:
+  void addBuffer();
+  void removeBuffer(TupleBufferPtr tuple_buffer);
+  TupleBufferPtr getBuffer();
+  void releaseBuffer(const TupleBufferPtr tuple_buffer);
+  void releaseBuffer(const TupleBuffer* tuple_buffer);
+  size_t getNumberOfBuffers();
+  size_t getNumberOfFreeBuffers();
 
-    static BufferManager& instance();
-    void unblockThreads() { cv.notify_all(); }
-    void printStatistics();
+  static BufferManager &instance();
+  void printStatistics();
 
-    void setNumberOfBuffers(size_t size);
-    void setBufferSize(size_t size);
+  void setNumberOfBuffers(size_t size);
+  void setBufferSize(size_t size);
 
-  private:
-    BufferManager();
-    BufferManager(const BufferManager&);
-    BufferManager& operator=(const BufferManager&);
-    ~BufferManager();
+private:
+  BufferManager();
+  BufferManager(const BufferManager &);
+  BufferManager &operator=(const BufferManager &);
+  ~BufferManager();
 
-    std::map<TupleBufferPtr, bool> buffer_pool; // make bool atomic
-    size_t maxBufferCnt;
-    size_t bufferSizeInByte;
+  std::map<TupleBufferPtr, std::atomic<bool>> buffer_pool;//make bool atomic
+  size_t maxBufferCnt;
+  size_t bufferSizeInByte;
 
-    std::mutex mutex;
-    std::condition_variable cv;
+  std::mutex mutex;
 
-    // statistics
-    size_t noFreeBuffer;
-    size_t providedBuffer;
-    size_t releasedBuffer;
+  //statistics
+  size_t noFreeBuffer;
+  size_t providedBuffer;
+  size_t releasedBuffer;
+
+
 };
 
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
