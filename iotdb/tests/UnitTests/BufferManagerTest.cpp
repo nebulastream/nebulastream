@@ -10,6 +10,7 @@
 
 #include <Runtime/BufferManager.hpp>
 
+
 namespace iotdb {
     class BufferManagerTest : public testing::Test {
     public:
@@ -89,6 +90,49 @@ namespace iotdb {
         ASSERT_EQ(buffers_free, buffers_managed);
     }
 
+    TEST_F(BufferManagerTest, resize_buffer_pool) {
+        size_t buffers_count = BufferManager::instance().getNumberOfBuffers();
+        size_t buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+        ASSERT_EQ(buffers_count, buffers_managed);
+        ASSERT_EQ(buffers_free, buffers_managed);
+
+        BufferManager::instance().setNumberOfBuffers(5);
+        buffers_count = BufferManager::instance().getNumberOfBuffers();
+        buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+        ASSERT_EQ(buffers_count, 5);
+        ASSERT_EQ(buffers_free, 5);
+
+        BufferManager::instance().setNumberOfBuffers(buffers_managed);
+        buffers_count = BufferManager::instance().getNumberOfBuffers();
+        buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+        ASSERT_EQ(buffers_count, buffers_managed);
+        ASSERT_EQ(buffers_free, buffers_managed);
+    }
+
+    TEST_F(BufferManagerTest, resize_buffer_size) {
+        size_t buffers_count = BufferManager::instance().getNumberOfBuffers();
+        size_t buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+        ASSERT_EQ(buffers_count, buffers_managed);
+        ASSERT_EQ(buffers_free, buffers_managed);
+
+        BufferManager::instance().setBufferSize(buffer_size * 2);
+        TupleBufferPtr buf = BufferManager::instance().getBuffer();
+        ASSERT_EQ(buf->buffer_size, 2 * buffer_size);
+        BufferManager::instance().releaseBuffer(buf);
+
+        BufferManager::instance().setBufferSize(buffer_size);
+        buf = BufferManager::instance().getBuffer();
+        ASSERT_EQ(buf->buffer_size, buffer_size);
+        BufferManager::instance().releaseBuffer(buf);
+
+
+        buffers_count = BufferManager::instance().getNumberOfBuffers();
+        buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+        ASSERT_EQ(buffers_count, buffers_managed);
+        ASSERT_EQ(buffers_free, buffers_managed);
+
+    }
+
     void run(TupleBufferPtr *ptr) {
         *ptr = BufferManager::instance().getBuffer();
     }
@@ -127,8 +171,10 @@ namespace iotdb {
         ASSERT_EQ(buffers_free, buffers_managed);
     }
 
+    #ifndef NO_RACE_CHECK
     TEST_F(BufferManagerTest, getBuffer_race) {
         for (int i = 0; i < 100; ++i) {
+            std::cout << "Run getBuffer_race " << i << std::endl;
 
             std::vector<TupleBufferPtr> buffers;
 
@@ -175,4 +221,5 @@ namespace iotdb {
             ASSERT_EQ(buffers_free, buffers_managed);
         }
     }
+    #endif
 }
