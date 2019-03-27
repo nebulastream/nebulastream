@@ -79,9 +79,9 @@ target_link_libraries(client-server-communication-tests ${GTEST_LIBRARIES})
 add_test(NAME client-server-communication-tests COMMAND client-server-communication-tests)
 
 # Buffer Manager Test
-add_executable(buffer-manager-test "UnitTests/BufferManagerTest.cpp")
-target_link_libraries(buffer-manager-test iotdb ${GTEST_LIBRARIES})
-add_test(NAME buffer-manager-test COMMAND buffer-manager-test)
+add_executable(buffer-manager-tests "UnitTests/BufferManagerTest.cpp")
+target_link_libraries(buffer-manager-tests iotdb ${GTEST_LIBRARIES})
+add_test(NAME buffer-manager-tests COMMAND buffer-manager-tests)
 
 # Test data sources and data sinks of runtime
 add_executable(runtime-data-source-sink-tests "UnitTests/RuntimeDataSourceSinkTest.cpp")
