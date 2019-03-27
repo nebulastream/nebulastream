@@ -30,7 +30,6 @@ protected:
 		ar & boost::serialization::base_object<PrintSink>(*this);
 	}
 
-
 };
 
 } // namespace iotdb
@@ -40,4 +39,4 @@ protected:
 BOOST_CLASS_EXPORT_KEY(iotdb::YSBPrintSink)
 
 
-#endif // ZMQSINK_HPP
+#endif // YSB_PRINTSINK_HPP
