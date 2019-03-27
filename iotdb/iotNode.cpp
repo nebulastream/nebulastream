@@ -122,7 +122,6 @@ void commandProcess(socket_ptr sock)
         qeps.push_back(qPtr);
         IOTDB_DEBUG("received QEP after deserialization:")
         q->print();
-
 	}
 	else
 	{

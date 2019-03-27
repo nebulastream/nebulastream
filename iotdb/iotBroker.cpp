@@ -105,7 +105,7 @@ std::string generateTestQEP()
     std::string filename = "/home/zeuchste/git/IoTDB/iotdb/build/tests/testQep.txt";
     CompiledYSBTestQueryExecutionPlanPtr q(new CompiledYSBTestQueryExecutionPlan());
 
-    DataSourcePtr src = createYSBSource(100,10, /*pregen*/ false);
+    DataSourcePtr src = createYSBSource(100000,10, /*pregen*/ false);
     q->addDataSource(src);
 //    DataSourcePtr zmq_src = createZmqSource(schema, "127.0.0.1", 55555);
 //    q->addDataSource(zmq_src);
