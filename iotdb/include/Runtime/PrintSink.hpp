@@ -12,34 +12,29 @@ namespace iotdb {
 
 class PrintSink : public DataSink {
 
-public:
-  PrintSink(const Schema& schema);
-  ~PrintSink();
-  virtual void setup(){}
-  virtual void shutdown(){}
+  public:
+    PrintSink(const Schema& schema);
+    ~PrintSink();
+    virtual void setup() {}
+    virtual void shutdown() {}
 
-  bool writeData(const TupleBuffer* input_buffer) override;
+    bool writeData(const TupleBuffer* input_buffer) override;
 
-  const std::string toString() const override;
+    const std::string toString() const override;
 
+  protected:
+    friend class boost::serialization::access;
 
-protected:
-  friend class boost::serialization::access;
-
-  template<class Archive>
-  void serialize(Archive & ar, const unsigned int version)
-  {
-      ar & boost::serialization::base_object<DataSink>(*this);
-
-  }
-  PrintSink(){};
-
+    template <class Archive> void serialize(Archive& ar, const unsigned int version)
+    {
+        ar& boost::serialization::base_object<DataSink>(*this);
+    }
+    PrintSink(){};
 };
 } // namespace iotdb
-#include <boost/serialization/export.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/export.hpp>
 BOOST_CLASS_EXPORT_KEY(iotdb::PrintSink)
-
 
 #endif // ZMQSINK_HPP

@@ -1,13 +1,13 @@
 #ifndef OPERATOR_OPERATOR_H
 #define OPERATOR_OPERATOR_H
 
-#include <string>
-#include <memory>
-#include <vector>
-#include <iostream>
 #include <API/InputQuery.hpp>
+#include <iostream>
+#include <memory>
+#include <string>
+#include <vector>
 
-namespace iotdb{
+namespace iotdb {
 
 class Operator;
 typedef std::shared_ptr<Operator> OperatorPtr;
@@ -21,18 +21,29 @@ typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
 class DataSource;
 typedef std::shared_ptr<DataSource> DataSourcePtr;
 
-enum OperatorType{SOURCE_OP,FILTER_OP,AGGREGATION_OP, SORT_OP, JOIN_OP, SET_OP, WINDOW_OP, KEYBY_OP, MAP_OP, SINK_OP};
+enum OperatorType {
+    SOURCE_OP,
+    FILTER_OP,
+    AGGREGATION_OP,
+    SORT_OP,
+    JOIN_OP,
+    SET_OP,
+    WINDOW_OP,
+    KEYBY_OP,
+    MAP_OP,
+    SINK_OP
+};
 
 class Operator {
-public:
-  virtual ~Operator();
-  virtual const OperatorPtr copy() const = 0;
-  size_t cost;
-  std::vector<OperatorPtr> childs;
-  virtual void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) = 0;
-  virtual void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) = 0;
-  virtual const std::string toString() const = 0;
-  virtual OperatorType getOperatorType() const = 0;
+  public:
+    virtual ~Operator();
+    virtual const OperatorPtr copy() const = 0;
+    size_t cost;
+    std::vector<OperatorPtr> childs;
+    virtual void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) = 0;
+    virtual void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) = 0;
+    virtual const std::string toString() const = 0;
+    virtual OperatorType getOperatorType() const = 0;
 };
 
 const OperatorPtr createAggregationOperator(const AggregationSpec& aggr_spec);
@@ -45,7 +56,6 @@ const OperatorPtr createSortOperator(const Sort& sort_spec);
 const OperatorPtr createSourceOperator(const DataSourcePtr& source);
 const OperatorPtr createWindowOperator(const WindowPtr& window_spec);
 
-
-}
+} // namespace iotdb
 
 #endif // OPERATOR_OPERATOR_H
