@@ -7,9 +7,9 @@ BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::Window)
 namespace iotdb{
 
 
-const WindowPtr createTestWindow(size_t campainCnt) {
+const WindowPtr createTestWindow(size_t campainCnt, size_t windowSizeInSec) {
 
-	  WindowPtr win(new YSBWindow(campainCnt));
+	  WindowPtr win(new YSBWindow(campainCnt, windowSizeInSec));
 
 	  return win;
 	}

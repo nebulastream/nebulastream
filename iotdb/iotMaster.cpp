@@ -234,7 +234,7 @@ int main(int argc, const char *argv[]) {
 	DataSourcePtr zmq_src = createZmqSource(schema, "127.0.0.1", 55555);
 	q->addDataSource(zmq_src);
 
-	WindowPtr window = createTestWindow(10);
+	WindowPtr window = createTestWindow(/*campainCnt*/10, /*windowSizeInSec*/5);
 	window->setup();
 	q->addWindow(window);
 

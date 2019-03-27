@@ -146,7 +146,7 @@ int test(size_t toProcessedBuffers, size_t threadCnt, size_t campaignCnt, size_t
 		qep->addDataSource(sources[i]);
 	}
 
-	WindowPtr window = createTestWindow(campaignCnt);
+	WindowPtr window = createTestWindow(campaignCnt,1);
 	qep->addWindow(window);
 
 	Dispatcher::instance().registerQuery(qep);

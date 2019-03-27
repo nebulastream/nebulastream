@@ -31,7 +31,7 @@ private:
     friend class boost::serialization::access;
 
 };
-const WindowPtr createTestWindow(size_t pCampaingCnt);
+const WindowPtr createTestWindow(size_t pCampaingCnt, size_t windowSizeInSec);
 
 }//end of namespace
 #include <boost/serialization/export.hpp>
