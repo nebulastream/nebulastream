@@ -12,19 +12,16 @@ namespace iotdb {
 
 class FileOutputSink : public DataSink {
 
-public:
-	FileOutputSink(const Schema &schema);
-  ~FileOutputSink();
+  public:
+    FileOutputSink(const Schema& schema);
+    ~FileOutputSink();
 
-  bool writeData(const TupleBuffer* input_buffer) override;
+    bool writeData(const TupleBuffer* input_buffer) override;
 
-  const std::string toString() const override;
+    const std::string toString() const override;
 
-private:
+  private:
 };
 } // namespace iotdb
 
 #endif // ZMQSINK_HPP
-
-
-

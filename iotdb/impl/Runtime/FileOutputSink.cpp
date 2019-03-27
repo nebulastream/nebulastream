@@ -9,21 +9,17 @@
 
 namespace iotdb {
 
-FileOutputSink::FileOutputSink(const Schema &schema)
-    : DataSink(schema) {}
-FileOutputSink::~FileOutputSink() { }
+FileOutputSink::FileOutputSink(const Schema& schema) : DataSink(schema) {}
+FileOutputSink::~FileOutputSink() {}
 
-bool FileOutputSink::writeData(const TupleBuffer* input_buffer)
+bool FileOutputSink::writeData(const TupleBuffer* input_buffer) { IOTDB_FATAL_ERROR("Called Uninplemented Function!"); }
+
+const std::string FileOutputSink::toString() const
 {
-        IOTDB_FATAL_ERROR("Called Uninplemented Function!");
+    std::stringstream ss;
+    ss << "PRINT_SINK(";
+    ss << "SCHEMA(" << schema.toString() << "), ";
+    return ss.str();
 }
-
-const std::string FileOutputSink::toString() const {
-  std::stringstream ss;
-  ss << "PRINT_SINK(";
-  ss << "SCHEMA(" << schema.toString() << "), ";
-  return ss.str();
-}
-
 
 } // namespace iotdb
