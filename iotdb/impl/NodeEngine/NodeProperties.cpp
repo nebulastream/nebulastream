@@ -51,33 +51,33 @@ void NodeProperties::readCpuStats() {
 
 std::string NodeProperties::getCpuStats()
 {
-	return _cpus.dump();
+    return _cpus.dump();
 }
 std::string NodeProperties::getNetworkStats()
 {
-	return _nets.dump();
+    return _nets.dump();
 }
 std::string NodeProperties::getMemStats()
 {
-	return _mem.dump();
+    return _mem.dump();
 }
 
 std::string NodeProperties::getFsStats()
 {
-	return _fs.dump();
+    return _fs.dump();
 }
 
 std::string NodeProperties::getMetric()
 {
-	return _metrics.dump();
+    return _metrics.dump();
 }
 
 std::string NodeProperties::getHostname()
 {
-	std::string host = _nets[0]["hostname"].dump();
-	host.erase(0,1);               //           ^
-	host.erase(host.length()-1,1);               //           ^
-	return host;
+    std::string host = _nets[0]["hostname"].dump();
+    host.erase(0,1);               //           ^
+    host.erase(host.length()-1,1);               //           ^
+    return host;
 
 }
 
@@ -171,17 +171,17 @@ void NodeProperties::readNetworkStats() {
 
 void NodeProperties::print()
 {
-	std::cout << "cpu stats=" << std::endl;
-	std::cout << getCpuStats() << std::endl;
+    std::cout << "cpu stats=" << std::endl;
+    std::cout << getCpuStats() << std::endl;
 
-	std::cout << "network stats=" << std::endl;
-	std::cout << getNetworkStats() << std::endl;
+    std::cout << "network stats=" << std::endl;
+    std::cout << getNetworkStats() << std::endl;
 
-	std::cout << "mbemory stats=" << std::endl;
-	std::cout << getMemStats() << std::endl;
+    std::cout << "mbemory stats=" << std::endl;
+    std::cout << getMemStats() << std::endl;
 
-	std::cout << "filesystem stats=" << std::endl;
-	std::cout << getFsStats() << std::endl;
+    std::cout << "filesystem stats=" << std::endl;
+    std::cout << getFsStats() << std::endl;
 }
 void NodeProperties::readMemStats() {
   this->_mem.clear();

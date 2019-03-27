@@ -5,10 +5,10 @@
 
 namespace iotdb {
 
-  typedef uint64_t Timestamp;
+typedef uint64_t Timestamp;
 
-  Timestamp getTimestamp();
+Timestamp getTimestamp();
 
-}  
+} // namespace iotdb
 
-#endif  //#ifndef TIME_MEASUREMENT_HPP
+#endif //#ifndef TIME_MEASUREMENT_HPP

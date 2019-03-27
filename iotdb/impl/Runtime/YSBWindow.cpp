@@ -1,7 +1,7 @@
-#include <boost/serialization/export.hpp>
+#include <Runtime/YSBWindow.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-#include <Runtime/YSBWindow.hpp>
+#include <boost/serialization/export.hpp>
 BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::YSBWindow)
 namespace iotdb{
 YSBWindow::~YSBWindow()

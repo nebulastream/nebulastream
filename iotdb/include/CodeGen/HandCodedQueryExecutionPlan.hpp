@@ -13,7 +13,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <stdint.h>
-//class TupleBuffer;
+// class TupleBuffer;
 
 namespace iotdb {
 

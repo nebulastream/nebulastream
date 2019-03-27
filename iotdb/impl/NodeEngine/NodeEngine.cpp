@@ -16,6 +16,7 @@ JSON NodeEngine::getNodeProperties()
 	return props->load();
 }
 
+
 void NodeEngine::deployQuery(QueryExecutionPlanPtr qep)
 {
 	//TODO:add compile here
@@ -23,8 +24,8 @@ void NodeEngine::deployQuery(QueryExecutionPlanPtr qep)
 
 	ThreadPool::instance().start(1);
 
-	std::cout << "Waiting 2 seconds " << std::endl;
-	std::this_thread::sleep_for(std::chrono::seconds(2));
-
+    std::cout << "Waiting 2 seconds " << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(2));
 }
+
 }
