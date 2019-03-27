@@ -1,2 +1,5 @@
 BasedOnStyle: LLVM
-ColumnLimit: 120
+IndentWidth: '4'
+ColumnLimit: '120'
+PointerAlignment: Left
+BreakBeforeBraces: Stroustrup
