@@ -5,6 +5,7 @@
 
 #include "gtest/gtest.h"
 
+#include <Runtime/DataSink.hpp>
 #include <Runtime/DataSource.hpp>
 #include <Runtime/Dispatcher.hpp>
 #include <Runtime/GeneratorSource.hpp>
@@ -27,12 +28,16 @@ public:
   /* Will be called before a test is executed. */
   void SetUp() {
     IOTDB_INFO("Setup YahooStreamingBenchmarkTest test case.");
+
     Dispatcher::instance();
     BufferManager::instance().setBufferSize(32 * 1024); // 32 kb / 78 bytes = 420 tuples per buffer
-    ysb_source = createYSBSource(1024, 10, false);      // 1024 buffers * 32 kb = 32 MB
-    ThreadPool::instance().setNumberOfThreads(8);       // 420 tuples per buffer * 8 threads
-    ThreadPool::instance().start(8);                    // 3360 tuples in parallel
-    ysb_window = createTestWindow(2, 10);               // windows of 2 seconds, 10 campaigns
+
+    ThreadPool::instance().setNumberOfThreads(8); // 420 tuples per buffer * 8 threads
+    ThreadPool::instance().start(8);              // 3360 tuples in parallel
+
+    ysb_source = createYSBSource(1024, 10, false); // 1024 buffers * 32 kb = 32 MB
+    ysb_window = createTestWindow(2, 10);          // windows of 2 seconds, 10 campaigns
+    ysb_sink = createPrintSink(Schema::create().addField("campaign_id", UINT64).addField("campaign_count", UINT64));
   }
 
   /* Will be called after a test is executed. */
@@ -46,6 +51,7 @@ public:
   static void TearDownTestCase() { IOTDB_INFO("Tear down YahooStreamingBenchmarkTest test class."); }
 
   DataSourcePtr ysb_source;
+  DataSinkPtr ysb_sink;
   WindowPtr ysb_window;
 
   struct __attribute__((packed)) ysbRecord {
@@ -76,7 +82,18 @@ public:
 
   }; // size 78 bytes
 
-private:
+  struct __attribute__((packed)) ysbRecordResult {
+    size_t campaign_id;
+    size_t campaign_count;
+    size_t last_timestamp;
+  }; // 24 bytes
+
+  union tempHash {
+    uint64_t value;
+    char buffer[8];
+  };
+
+protected:
   static void setupLogging() {
     // create PatternLayout
     log4cxx::LayoutPtr layoutPtr(new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
@@ -96,10 +113,6 @@ private:
     logger->addAppender(file);
     logger->addAppender(console);
   }
-};
-
-/* - Source to Out --------------------------------------------------------- */
-TEST_F(YahooStreamingBenchmarkTest, source_to_out) {
 
   class SourceToOutExecutionPlan : public HandCodedQueryExecutionPlan {
   public:
@@ -108,11 +121,6 @@ TEST_F(YahooStreamingBenchmarkTest, source_to_out) {
         : HandCodedQueryExecutionPlan(), check_number_windows(check_number_windows),
           check_number_tuples(check_number_tuples), check_first_timestamp(check_first_timestamp),
           check_last_timestamp(check_last_timestamp), check_processed_buffers(check_processed_buffers) {}
-
-    union tempHash {
-      uint64_t value;
-      char buffer[8];
-    };
 
     // variables to access checksums
     size_t *check_number_windows;
@@ -211,6 +219,97 @@ TEST_F(YahooStreamingBenchmarkTest, source_to_out) {
   };
   typedef std::shared_ptr<SourceToOutExecutionPlan> SourceToOutExecutionPlanPtr;
 
+  class SourceToSinkExecutionPlan : public HandCodedQueryExecutionPlan {
+  public:
+    SourceToSinkExecutionPlan() : HandCodedQueryExecutionPlan() {}
+
+    bool firstPipelineStage(const TupleBuffer &) { return false; }
+
+    bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf) {
+
+      // Input and output buffer
+      ysbRecord *inputBufferPtr = (ysbRecord *)buf->buffer;
+      TupleBufferPtr outputBuffer = BufferManager::instance().getBuffer();
+      ysbRecordResult *outputBufferPtr = (ysbRecordResult *)outputBuffer->buffer;
+      DataSinkPtr sink = this->getSinks()[0];
+
+      // windowing vars
+      YSBWindow *window = (YSBWindow *)this->getWindows()[0].get();
+      size_t window_size_sec = window->getWindowSizeSec();
+      size_t campaign_count = window->getCampaignCount();
+      size_t current_window = window->getCurrentWindow();
+      size_t last_timestamp = window->getLastTimestamp();
+      std::atomic<size_t> **hashTable = window->getHashTable();
+
+      // other vars
+      char key[] = "view";
+
+      // iterate over tuples
+      for (size_t i = 0; i < buf->num_tuples; i++) {
+
+        // slow down a bit
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
+
+        // filter
+        if (strcmp(key, inputBufferPtr[i].event_type) != 0) {
+          continue;
+        }
+
+        // windowing
+        size_t timestamp = time(NULL);
+        if (last_timestamp != timestamp && timestamp % window_size_sec == 0) {
+
+          // change to new window
+          size_t old_window = current_window;
+          if (current_window == 0) {
+            current_window = 1;
+          } else {
+            current_window = 0;
+          }
+
+          // only do clean up work once -> if not done from other thred before
+          // point of synchronization is a defined field in the hash table
+          if (hashTable[current_window][campaign_count] != timestamp) {
+            atomic_store(&hashTable[current_window][campaign_count], timestamp);
+
+            // update window values
+            window->setCurrentWindow(current_window);
+            window->setLastTimestamp(timestamp);
+
+            // write hash table to output buffer.
+            for (uint32_t campaign = 0; campaign < campaign_count; campaign++) {
+              outputBufferPtr[campaign].campaign_id = campaign;
+              outputBufferPtr[campaign].campaign_count = hashTable[old_window][campaign];
+              outputBufferPtr[campaign].last_timestamp = timestamp;
+            }
+            outputBuffer->num_tuples += campaign_count;
+            outputBufferPtr += campaign_count;
+
+            // reset hash table for next window
+            std::fill(hashTable[old_window], hashTable[old_window] + campaign_count, 0);
+          }
+
+          // remember timestammp
+          last_timestamp = timestamp;
+        }
+
+        // aggregation
+        tempHash hash_value;
+        hash_value.value = *(((uint64_t *)inputBufferPtr[i].campaign_id) + 1);
+        uint64_t bucketPos = (hash_value.value * 789 + 321) % campaign_count;
+        atomic_fetch_add(&hashTable[current_window][bucketPos], size_t(1));
+      }
+      outputBuffer->tuple_size_bytes = sizeof(ysbRecordResult);
+      sink->writeData(outputBuffer);
+
+      return true;
+    }
+  };
+  typedef std::shared_ptr<SourceToSinkExecutionPlan> SourceToSinkExecutionPlanPtr;
+};
+
+/* - Source to Out --------------------------------------------------------- */
+TEST_F(YahooStreamingBenchmarkTest, source_to_out) {
   IOTDB_INFO("Start source-to-out test.");
 
   // vars for checks
@@ -246,11 +345,18 @@ TEST_F(YahooStreamingBenchmarkTest, source_to_out) {
 TEST_F(YahooStreamingBenchmarkTest, source_to_sink) {
   IOTDB_INFO("Start source-to-sink test.");
 
-  // TODO: is the output correct?
+  // Run query
+  SourceToSinkExecutionPlanPtr qep(new SourceToSinkExecutionPlan());
+  qep->addWindow(ysb_window);
+  qep->addDataSource(ysb_source);
+  qep->addDataSink(ysb_sink);
 
-  // TODO: does the windowing work correctly?
+  Dispatcher::instance().registerQuery(qep);
 
-  // TODO: does the approach scale for more buffers?
+  while (ysb_source->isRunning() ||
+         ysb_source->getNumberOfGeneratedBuffers() != ysb_sink->getNumberOfProcessedBuffers()) {
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
 }
 
 /* - Node to Node ---------------------------------------------------------- */
