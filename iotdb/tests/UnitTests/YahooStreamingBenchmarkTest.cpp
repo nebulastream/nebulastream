@@ -5,6 +5,7 @@
 #include <memory>
 #include <sstream>
 #include <string>
+#include <thread>
 
 #include "gtest/gtest.h"
 
@@ -17,6 +18,14 @@
 #include <Runtime/YSBWindow.hpp>
 
 #include <CodeGen/HandCodedQueryExecutionPlan.hpp>
+
+#ifndef LOCAL_HOST
+#define LOCAL_HOST "127.0.0.1"
+#endif
+
+#ifndef LOCAL_PORT
+#define LOCAL_PORT 38938
+#endif
 
 using namespace iotdb;
 
@@ -33,17 +42,20 @@ class YahooStreamingBenchmarkTest : public testing::Test {
     void SetUp()
     {
         IOTDB_INFO("Setup YahooStreamingBenchmarkTest test case.");
-
         Dispatcher::instance();
         BufferManager::instance().setBufferSize(32 * 1024); // 32 kb / 78 bytes = 420 tuples per buffer
+        ThreadPool::instance().setNumberOfThreads(8);       // 420 tuples per buffer * 8 threads
+        ThreadPool::instance().start(8);                    // 3360 tuples in parallel
 
-        ThreadPool::instance().setNumberOfThreads(8); // 420 tuples per buffer * 8 threads
-        ThreadPool::instance().start(8);              // 3360 tuples in parallel
+        ysbRecordResultSchema = Schema::create()
+                                    .addField("campaign_id", UINT64)
+                                    .addField("campaign_count", UINT64)
+                                    .addField("last_timestamp", UINT64);
 
-        ysb_source = createYSBSource(1024, 10, false); // 1024 buffers * 32 kb = 32 MB
-        ysb_window = createTestWindow(2, 10);          // windows of 2 seconds, 10 campaigns
-        ysb_sink = createPrintSink(Schema::create().addField("campaign_id", UINT64).addField("campaign_count", UINT64),
-                                   output_stream);
+        ysbSource = createYSBSource(1024, 10, false); // 1024 buffers * 32 kb = 32 MB
+        ysbWindow = createTestWindow(2, 10);          // windows of 2 seconds, 10 campaigns
+        ysbSink = createPrintSink(ysbRecordResultSchema, outputStream);
+        zmqSink = createZmqSink(ysbRecordResultSchema, LOCAL_HOST, LOCAL_PORT);
     }
 
     /* Will be called after a test is executed. */
@@ -57,10 +69,12 @@ class YahooStreamingBenchmarkTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { IOTDB_INFO("Tear down YahooStreamingBenchmarkTest test class."); }
 
-    std::stringstream output_stream;
-    DataSourcePtr ysb_source;
-    DataSinkPtr ysb_sink;
-    WindowPtr ysb_window;
+    std::stringstream outputStream;
+    DataSourcePtr ysbSource;
+    DataSinkPtr ysbSink;
+    DataSinkPtr zmqSink;
+    WindowPtr ysbWindow;
+    Schema ysbRecordResultSchema;
 
     struct __attribute__((packed)) ysbRecord {
 
@@ -127,21 +141,19 @@ class YahooStreamingBenchmarkTest : public testing::Test {
 
     class SourceToOutExecutionPlan : public HandCodedQueryExecutionPlan {
       public:
-        SourceToOutExecutionPlan(size_t* check_number_windows, size_t* check_number_tuples,
-                                 size_t* check_first_timestamp, size_t* check_last_timestamp,
-                                 size_t* check_processed_buffers)
-            : HandCodedQueryExecutionPlan(), check_number_windows(check_number_windows),
-              check_number_tuples(check_number_tuples), check_first_timestamp(check_first_timestamp),
-              check_last_timestamp(check_last_timestamp), check_processed_buffers(check_processed_buffers)
+        SourceToOutExecutionPlan(size_t* numberWindows, size_t* numberTuples, size_t* firstTimestamp,
+                                 size_t* lastTimestamp, size_t* processedBuffers)
+            : HandCodedQueryExecutionPlan(), numberWindows(numberWindows), numberTuples(numberTuples),
+              firstTimestamp(firstTimestamp), lastTimestamp(lastTimestamp), processedBuffers(processedBuffers)
         {
         }
 
         // variables to access checksums
-        size_t* check_number_windows;
-        size_t* check_number_tuples;
-        size_t* check_first_timestamp;
-        size_t* check_last_timestamp;
-        size_t* check_processed_buffers;
+        size_t* numberWindows;
+        size_t* numberTuples;
+        size_t* firstTimestamp;
+        size_t* lastTimestamp;
+        size_t* processedBuffers;
 
         bool firstPipelineStage(const TupleBuffer&) { return false; }
 
@@ -159,8 +171,8 @@ class YahooStreamingBenchmarkTest : public testing::Test {
             std::atomic<size_t>** hashTable = window->getHashTable();
 
             // remember first timestamp for checking
-            if (*check_first_timestamp == 0) {
-                *check_first_timestamp = time(NULL);
+            if (*firstTimestamp == 0) {
+                *firstTimestamp = time(NULL);
             }
 
             // other vars
@@ -212,8 +224,8 @@ class YahooStreamingBenchmarkTest : public testing::Test {
                         std::fill(hashTable[old_window], hashTable[old_window] + campaign_count, 0);
 
                         // increment number of windows checksum
-                        (*check_number_windows) += 1;
-                        (*check_number_tuples) += checksum;
+                        (*numberWindows) += 1;
+                        (*numberTuples) += checksum;
                     }
 
                     // remember timestammp
@@ -228,8 +240,8 @@ class YahooStreamingBenchmarkTest : public testing::Test {
             }
 
             // save timestamp of last window change
-            (*check_last_timestamp) = last_timestamp;
-            (*check_processed_buffers)++;
+            (*lastTimestamp) = last_timestamp;
+            (*processedBuffers)++;
             return true;
         }
     };
@@ -326,87 +338,132 @@ class YahooStreamingBenchmarkTest : public testing::Test {
 };
 
 /* - Source to Out --------------------------------------------------------- */
-TEST_F(YahooStreamingBenchmarkTest, source_to_out)
+TEST_F(YahooStreamingBenchmarkTest, sourceToOut)
 {
     IOTDB_INFO("Start source-to-out test.");
 
     // vars for checks
-    size_t check_number_windows = 0;
-    size_t check_number_tuples = 0;
-    size_t check_first_timestamp = 0;
-    size_t check_last_timestamp = 0;
-    size_t check_processed_buffers = 0;
+    size_t numberWindows = 0;
+    size_t numberTuples = 0;
+    size_t firstTimestamp = 0;
+    size_t lastTimestamp = 0;
+    size_t processedBuffers = 0;
 
     // Run query
-    SourceToOutExecutionPlanPtr qep(new SourceToOutExecutionPlan(&check_number_windows, &check_number_tuples,
-                                                                 &check_first_timestamp, &check_last_timestamp,
-                                                                 &check_processed_buffers));
-    qep->addDataSource(ysb_source);
-    qep->addWindow(ysb_window);
+    SourceToOutExecutionPlanPtr qep(new SourceToOutExecutionPlan(&numberWindows, &numberTuples, &firstTimestamp,
+                                                                 &lastTimestamp, &processedBuffers));
+    qep->addDataSource(ysbSource);
+    qep->addWindow(ysbWindow);
     Dispatcher::instance().registerQuery(qep);
 
-    while (ysb_source->isRunning()) {
+    while (ysbSource->isRunning()) {
         std::this_thread::sleep_for(std::chrono::seconds(10));
     }
 
     // is the output correct?
-    size_t tmp_tuples = ysb_source->getNumberOfGeneratedTuples() / 3;
-    EXPECT_TRUE(tmp_tuples - (tmp_tuples * 0.1) < check_number_tuples ||
-                check_number_tuples < tmp_tuples + (tmp_tuples * 0.1));
+    size_t tmp_tuples = ysbSource->getNumberOfGeneratedTuples() / 3;
+    EXPECT_TRUE(tmp_tuples - (tmp_tuples * 0.3) < numberTuples && numberTuples < tmp_tuples + (tmp_tuples * 0.3));
 
     // does the windowing work correctly?
-    size_t tmp_windows = (check_last_timestamp - check_first_timestamp) / 2;
-    EXPECT_TRUE(check_number_windows == tmp_windows || check_number_windows == tmp_windows + 1);
+    size_t tmp_windows = (lastTimestamp - firstTimestamp) / 2;
+    EXPECT_TRUE(numberWindows == tmp_windows || numberWindows == tmp_windows + 1);
 }
 
 /* - Source to Node -------------------------------------------------------- */
-TEST_F(YahooStreamingBenchmarkTest, source_to_sink)
+TEST_F(YahooStreamingBenchmarkTest, sourceToSink)
 {
     IOTDB_INFO("Start source-to-sink test.");
 
     // Run query
     SourceToSinkExecutionPlanPtr qep(new SourceToSinkExecutionPlan());
-    qep->addWindow(ysb_window);
-    qep->addDataSource(ysb_source);
-    qep->addDataSink(ysb_sink);
+    qep->addWindow(ysbWindow);
+    qep->addDataSource(ysbSource);
+    qep->addDataSink(ysbSink);
 
-    size_t begin_timestamp = time(NULL);
+    size_t beginTimestamp = time(NULL);
     Dispatcher::instance().registerQuery(qep);
 
-    while (ysb_source->isRunning()) {
+    while (ysbSource->isRunning()) {
         std::this_thread::sleep_for(std::chrono::seconds(10));
     }
 
     // is the output correct?
     size_t checksum = 0;
-    for (std::string line; std::getline(output_stream, line);) {
+    for (std::string line; std::getline(outputStream, line);) {
         line.erase(line.begin(), line.begin() + 3);
-        line.erase(line.end() - 1, line.end());
+        line.erase(line.end() - 12, line.end());
         if (std::all_of(line.begin(), line.end(), ::isdigit)) {
             checksum += std::stoi(line);
         };
     }
-    size_t tmp_tuples = ysb_source->getNumberOfGeneratedTuples() / 3;
-    EXPECT_TRUE(tmp_tuples - (tmp_tuples * 0.1) < checksum || checksum < tmp_tuples + (tmp_tuples * 0.1));
+
+    size_t tmp_tuples = ysbSource->getNumberOfGeneratedTuples() / 3;
+    EXPECT_TRUE(tmp_tuples - (tmp_tuples * 0.3) < checksum && checksum < tmp_tuples + (tmp_tuples * 0.3));
 
     // does the windowing work correctly?
-    std::string output = output_stream.str();
-    size_t number_windows_output = std::count(output.begin(), output.end(), '+') / 6;
-    size_t number_windows_processed = (((YSBWindow*)ysb_window.get())->getLastTimestamp() - begin_timestamp) / 2;
-    EXPECT_TRUE(number_windows_output == number_windows_processed ||
-                number_windows_output == number_windows_processed + 1);
+    std::string output = outputStream.str();
+    size_t windowsOutput = std::count(output.begin(), output.end(), '+') / 6;
+    size_t windowsProcessed = (((YSBWindow*)ysbWindow.get())->getLastTimestamp() - beginTimestamp) / 2;
+    EXPECT_TRUE(windowsOutput == windowsProcessed || windowsOutput == windowsProcessed + 1);
 
-    output_stream.clear();
+    outputStream.clear();
 }
 
 /* - Node to Node ---------------------------------------------------------- */
-TEST_F(YahooStreamingBenchmarkTest, node_to_node)
+TEST_F(YahooStreamingBenchmarkTest, nodeToNode)
 {
     IOTDB_INFO("Start node-to-node test.");
 
-    // TODO: is the output correct?
+    size_t windowsChecksum = 0;
+    size_t aggregationChecksum = 0;
 
-    // TODO: does the windowing work correctly?
+    bool finished = false;
+    DataSourcePtr zmqSource = createZmqSource(ysbRecordResultSchema, LOCAL_HOST, LOCAL_PORT);
+    std::thread receivingThread = std::thread([&]() {
+        while (!finished) {
+            // Receive data.
+            TupleBufferPtr newData = zmqSource->receiveData();
 
-    // TODO: does the approach scale for more buffers?
+            // Add to checksums.
+            ysbRecordResult* tuple = (ysbRecordResult*)newData->buffer;
+            for (size_t i = 0; i != newData->num_tuples; ++i) {
+                aggregationChecksum += tuple[i].campaign_count;
+            }
+            windowsChecksum++;
+
+            // Release buffer.
+            BufferManager::instance().releaseBuffer(newData);
+        }
+        windowsChecksum--;
+    });
+
+    // Run query
+    SourceToSinkExecutionPlanPtr qep(new SourceToSinkExecutionPlan());
+    qep->addWindow(ysbWindow);
+    qep->addDataSource(ysbSource);
+    qep->addDataSink(zmqSink);
+
+    size_t beginTimestamp = time(NULL);
+    Dispatcher::instance().registerQuery(qep);
+
+    while (ysbSource->isRunning()) {
+        std::this_thread::sleep_for(std::chrono::seconds(10));
+    }
+
+    // send something to get out the receiving loop
+    finished = true;
+    TupleBufferPtr tmpBuffer = BufferManager::instance().getBuffer();
+    tmpBuffer->num_tuples = 0;
+    tmpBuffer->tuple_size_bytes = sizeof(ysbRecordResult);
+    zmqSink->writeData(tmpBuffer);
+    receivingThread.join();
+
+    // is the output correct?
+    size_t tmp_tuples = ysbSource->getNumberOfGeneratedTuples() / 3;
+    EXPECT_TRUE(tmp_tuples - (tmp_tuples * 0.3) < aggregationChecksum &&
+                aggregationChecksum < tmp_tuples + (tmp_tuples * 0.3));
+
+    // does the windowing work correctly?
+    size_t windowsProcessed = (((YSBWindow*)ysbWindow.get())->getLastTimestamp() - beginTimestamp) / 2;
+    EXPECT_TRUE(windowsChecksum == windowsProcessed || windowsChecksum == windowsProcessed + 1);
 }
