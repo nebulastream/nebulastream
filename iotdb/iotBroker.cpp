@@ -21,6 +21,9 @@
 #include <boost/lexical_cast.hpp>
 #include <Util/Logger.hpp>
 #include <string>
+#include <CodeGen/QueryExecutionPlan.hpp>
+#include <QEPs/CompiledYSBTestQueryExecutionPlan.hpp>
+
 
 using boost::asio::ip::tcp;
 using JSON = nlohmann::json;
@@ -85,11 +88,46 @@ void server()
   }
 }
 
-
-char* readFile(size_t& size)
+void save_qep(const QueryExecutionPlan* s, const char * filename){
+    // make an archive
+    std::ofstream ofs(filename);
+    boost::archive::text_oarchive oa(ofs);
+    oa << s;
+}
+std::string generateTestQEP()
 {
-    std::string filename = "/home/zeuchste/git/IoTDB/iotdb/build/tests/demofile.txt";
-    FILE *f = fopen(filename.c_str(), "rb");
+    Schema schema = Schema::create()
+        .addField("campaign_id", 16)
+        .addField("event_type", 9)
+        .addField("current_ms", 8)
+        .addField("id", 4);
+
+    std::string filename = "/home/zeuchste/git/IoTDB/iotdb/build/tests/testQep.txt";
+    CompiledYSBTestQueryExecutionPlanPtr q(new CompiledYSBTestQueryExecutionPlan());
+
+    DataSourcePtr src = createYSBSource(100,10, /*pregen*/ false);
+    q->addDataSource(src);
+//    DataSourcePtr zmq_src = createZmqSource(schema, "127.0.0.1", 55555);
+//    q->addDataSource(zmq_src);
+
+    WindowPtr window = createTestWindow(10);
+    window->setup();
+    q->addWindow(window);
+
+    DataSinkPtr sink = createYSBPrintSink();
+    q->addDataSink(sink);
+//    DataSinkPtr zmq_sink = createZmqSink(schema, "127.0.0.1", 55555);
+//    q->addDataSink(zmq_sink);
+
+    save_qep(q.get(), filename.c_str());
+
+    return filename;
+}
+
+
+char* readFile(std::string fileName, size_t& size)
+{
+    FILE *f = fopen(fileName.c_str(), "rb");
     fseek(f, 0, SEEK_END);
     size = ftell(f);
     fseek(f, 0, SEEK_SET);
@@ -118,7 +156,9 @@ void sendCommandToNodes(std::string command)
 	    {
 	        IOTDB_DEBUG("IOTBROKER: sending QEP")
 	        size_t fileSize = 0;
-	        char* data = readFile(fileSize);
+	        std::string fileName = generateTestQEP();
+//	        std::string fileName = "/home/zeuchste/git/IoTDB/iotdb/build/tests/demofile.txt";
+	        char* data = readFile(fileName, fileSize);
 	        IOTDB_DEBUG("IOTBROKER: send QEP serialized data:" << data)
 
 	        char* sendBuffer = new char[fileSize + 1];
@@ -181,7 +221,6 @@ int main(int argc, char* argv[])
     IOTDB_DEBUG("IOTBROKER: server started")
 
     std::string command = "0";
-
 
 	while(command != "4"){
 		std::cout << "Please enter node command:";

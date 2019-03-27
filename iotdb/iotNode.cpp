@@ -32,19 +32,14 @@ boost::asio::io_service io_service;
 typedef boost::shared_ptr<tcp::socket> socket_ptr;
 std::vector<QueryExecutionPlanPtr> qeps;
 
-void deserizalieQEP(std::string filename, QueryExecutionPlanPtr qep)
-{
-    std::ifstream ifs(filename);
-    boost::archive::text_iarchive ia(ifs);
-    ia >> qep.get();
-}
-
 void start()
 {
     for(auto& q : qeps)
     {
+        IOTDB_DEBUG("IOTNODE: register query " << q)
         Dispatcher::instance().registerQuery(q);
     }
+    IOTDB_DEBUG("IOTNODE: start thread pool")
     ThreadPool::instance().start();
 }
 
@@ -52,8 +47,10 @@ void stop()
 {
     for(auto& q : qeps)
     {
+        IOTDB_DEBUG("IOTNODE: deregister query " << q)
         Dispatcher::instance().deregisterQuery(q);
     }
+    IOTDB_DEBUG("IOTNODE: stop thread pool")
     ThreadPool::instance().stop();
 }
 
@@ -115,12 +112,17 @@ void commandProcess(socket_ptr sock)
 	{
         IOTDB_DEBUG("IOTNODE: received deploy query command")
         std::string qepFile = &data[1];
-        std::cout << " qepFile=" << qepFile << std::endl;
-        std::ifstream ifs(qepFile.c_str());
+        IOTDB_DEBUG("qepFile=" << qepFile)
+        std::stringstream ifs(qepFile.c_str());
         boost::archive::text_iarchive ia(ifs);
-        QueryExecutionPlanPtr q = std::make_shared<QueryExecutionPlan>();
+        QueryExecutionPlan* q = new QueryExecutionPlan();
         ia >> q;
-        qeps.push_back(q);
+        QueryExecutionPlanPtr qPtr = std::make_shared<QueryExecutionPlan>();
+        qPtr.reset(q);
+        qeps.push_back(qPtr);
+        IOTDB_DEBUG("received QEP after deserialization:")
+        q->print();
+
 	}
 	else
 	{
@@ -153,8 +155,8 @@ void setupLogging()
 
 	// set log level
 	//logger->setLevel(log4cxx::Level::getTrace());
-	logger->setLevel(log4cxx::Level::getDebug());
-//	logger->setLevel(log4cxx::Level::getInfo());
+//	logger->setLevel(log4cxx::Level::getDebug());
+	logger->setLevel(log4cxx::Level::getInfo());
 //	logger->setLevel(log4cxx::Level::getWarn());
 	//logger->setLevel(log4cxx::Level::getError());
 //	logger->setLevel(log4cxx::Level::getFatal());

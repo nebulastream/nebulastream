@@ -5,17 +5,7 @@
 #include <atomic>
 #include <iostream>
 #include <Runtime/Window.hpp>
-//#include <boost/atomic.hpp>
 
-//namespace boost {
-//namespace serialization {
-//    template <class Archive, class T>
-//    void serialize(Archive &ar, boost::atomic<size_t>& t, const unsigned int)
-//    {
-//        ar & t.load();
-//    }
-//}
-//}
 namespace iotdb{
 
 class YSBWindow : public Window
