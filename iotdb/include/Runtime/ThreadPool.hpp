@@ -16,7 +16,7 @@ class ThreadPool {
   public:
     void worker_thread();
 
-    void start(size_t pNumberOfThreads = 1);
+    void start(size_t numberOfThreads);
 
     void stop();
 

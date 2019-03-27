@@ -2,13 +2,14 @@
 #include <memory>
 #include <sstream>
 #include <string>
-#include <zmq.hpp>
 
+#include <Runtime/DataSink.hpp>
 #include <Runtime/FileOutputSink.hpp>
 #include <Util/Logger.hpp>
 
 namespace iotdb {
 
+FileOutputSink::FileOutputSink() : DataSink() {}
 FileOutputSink::FileOutputSink(const Schema& schema) : DataSink(schema) {}
 FileOutputSink::~FileOutputSink() {}
 

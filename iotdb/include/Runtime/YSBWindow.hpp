@@ -8,38 +8,36 @@
 #include <Runtime/Window.hpp>
 #include <Util/Logger.hpp>
 
-namespace iotdb {
+namespace iotdb{
 
 class YSBWindow : public Window {
   public:
     YSBWindow();
-    YSBWindow(size_t pCampaignCnt);
-    YSBWindow(size_t pWindowSizeInSec, size_t pCampaignCnt);
-    ~YSBWindow();
+    YSBWindow(size_t pCampaingCnt);
 
+    ~YSBWindow();
     void setup()
     {
         hashTable = new std::atomic<size_t>*[2];
-        hashTable[0] = new std::atomic<size_t>[campaignCnt + 1];
-        for (size_t i = 0; i < campaignCnt + 1; i++)
+        hashTable[0] = new std::atomic<size_t>[campaingCnt + 1];
+        for (size_t i = 0; i < campaingCnt + 1; i++)
             std::atomic_init(&hashTable[0][i], std::size_t(0));
 
-        hashTable[1] = new std::atomic<size_t>[campaignCnt + 1];
-        for (size_t i = 0; i < campaignCnt + 1; i++)
+        hashTable[1] = new std::atomic<size_t>[campaingCnt + 1];
+        for (size_t i = 0; i < campaingCnt + 1; i++)
             std::atomic_init(&hashTable[1][i], std::size_t(0));
     }
-
     void print()
     {
-        IOTDB_INFO("windowSizeInSec=" << windowSizeInSec << " campaignCnt=" << campaignCnt)
+        IOTDB_INFO("windowSizeInSec=" << windowSizeInSec << " campaingCnt=" << campaingCnt)
         IOTDB_INFO("Hash Table Content with window 1:")
-        for (size_t i = 0; i < campaignCnt; i++) {
+        for (size_t i = 0; i < campaingCnt; i++) {
             if (hashTable[0][i] != 0)
                 IOTDB_INFO("id=" << i << " cnt=" << hashTable[0][i])
         }
 
         IOTDB_INFO("Hash Table Content with window 2:")
-        for (size_t i = 0; i < campaignCnt; i++) {
+        for (size_t i = 0; i < campaingCnt; i++) {
             if (hashTable[1][i] != 0)
                 IOTDB_INFO("id=" << i << " cnt=" << hashTable[1][i])
         }
@@ -48,30 +46,18 @@ class YSBWindow : public Window {
     size_t getNumberOfEntries()
     {
         size_t numEntries = 0;
-        for (size_t i = 0; i < campaignCnt; i++) {
+        for (size_t i = 0; i < campaingCnt; i++) {
             if (hashTable[0][i] != 0)
                 numEntries += hashTable[0][i];
         }
 
         IOTDB_INFO("Hash Table Content with window 2:")
-        for (size_t i = 0; i < campaignCnt; i++) {
+        for (size_t i = 0; i < campaingCnt; i++) {
             if (hashTable[1][i] != 0)
                 numEntries += hashTable[1][i];
         }
         return numEntries;
     }
-
-    const size_t getWindowSizeSec() const { return windowSizeInSec; }
-
-    const size_t getCampaignCount() const { return campaignCnt; }
-
-    const size_t getCurrentWindow() const { return currentWindow; }
-
-    void setCurrentWindow(size_t pCurrentWindow) { currentWindow = pCurrentWindow; }
-
-    const size_t getLastTimestamp() const { return lastTimestamp; }
-
-    void setLastTimestamp(size_t pLastTimestamp) { lastTimestamp = pLastTimestamp; }
 
     void shutdown()
     {
@@ -86,7 +72,7 @@ class YSBWindow : public Window {
     {
         ar& boost::serialization::base_object<Window>(*this);
         ar& windowSizeInSec;
-        ar& campaignCnt;
+        ar& campaingCnt;
     }
 
     std::atomic<size_t>** getHashTable() { return hashTable; };
@@ -97,12 +83,9 @@ class YSBWindow : public Window {
     std::atomic<size_t>** hashTable;
 
     size_t windowSizeInSec;
-    size_t campaignCnt;
-    size_t currentWindow;
-    size_t lastTimestamp;
+    size_t campaingCnt;
 };
 } // namespace iotdb
-
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>

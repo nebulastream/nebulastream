@@ -12,13 +12,12 @@ namespace iotdb {
 
 class YSBPrintSink : public PrintSink {
   public:
-    ~YSBPrintSink();
     YSBPrintSink();
+    ~YSBPrintSink();
+
     bool writeData(const TupleBuffer* input_buffer) override;
-
-    void setup(){};
-    void shutdown(){};
-
+    void setup() override{};
+    void shutdown() override{};
     const std::string toString() const override;
 
   protected:
