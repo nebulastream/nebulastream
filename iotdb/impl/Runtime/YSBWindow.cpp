@@ -11,11 +11,11 @@ YSBWindow::~YSBWindow()
 
 YSBWindow::YSBWindow(size_t pCampaingCnt): windowSizeInSec(1), campaingCnt(pCampaingCnt)
 {
-
+    setup();
 };
 
 YSBWindow::YSBWindow(): windowSizeInSec(1), campaingCnt(1)
 {
-
+    setup();
 }
 }//end of namespace

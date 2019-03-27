@@ -22,7 +22,6 @@ typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 
 class QueryExecutionPlan {
 public:
-    friend class boost::serialization::access;
     QueryExecutionPlan();
 
 	virtual bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf);
@@ -80,8 +79,11 @@ public:
 			IOTDB_INFO("\t Generated Tuples=" << sink->getNumberOfProcessedTuples())
 		}
     }
+
 protected:
-  QueryExecutionPlan(const std::vector<DataSourcePtr> &_sources, 
+    friend class boost::serialization::access;
+
+    QueryExecutionPlan(const std::vector<DataSourcePtr> &_sources,
           const std::vector<PipelineStagePtr> &_stages, 
           const std::map<DataSource *, uint32_t> &_source_to_stage,
           const std::map<uint32_t, uint32_t> &_stage_to_dest);

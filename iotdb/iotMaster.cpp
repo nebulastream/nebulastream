@@ -29,6 +29,8 @@
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/stream.hpp>
 
+#include <QEPs/CompiledYSBTestQueryExecutionPlan.hpp>
+
 using namespace iotdb;
 
 void printWelcome()
@@ -224,7 +226,8 @@ int main(int argc, const char *argv[]) {
 	setupLogging();
 	std::string filename("");
 	filename += "/home/zeuchste/git/IoTDB/iotdb/build/tests/demofile.txt";
-	QueryExecutionPlanPtr q = createTestQEP();
+//	QueryExecutionPlanPtr q = createTestQEP();
+    CompiledYSBTestQueryExecutionPlanPtr q(new CompiledYSBTestQueryExecutionPlan());
 
 	DataSourcePtr src = createYSBSource(100,10, /*pregen*/ false);
 	q->addDataSource(src);
