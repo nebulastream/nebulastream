@@ -4,8 +4,7 @@
 #include <memory>
 #include <vector>
 
-namespace iotdb{
-
+namespace iotdb {
 
 class AttributeField;
 typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
@@ -22,10 +21,10 @@ typedef std::shared_ptr<Aggregation> AggregationPtr;
 class Window;
 typedef std::shared_ptr<Window> WindowPtr;
 
-struct AggregationSpec{
- Aggregation& grouping_fields;
- AggregationPtr aggr_spec;
- AggregationSpec& operator=(const AggregationSpec&);
+struct AggregationSpec {
+    Aggregation& grouping_fields;
+    AggregationPtr aggr_spec;
+    AggregationSpec& operator=(const AggregationSpec&);
 };
 
 class WindowFunction;
@@ -41,28 +40,28 @@ const WindowPtr createSessionWindow(const TimeMeasure&, const WindowFunction&, u
 class Mapper;
 typedef std::shared_ptr<Mapper> MapperPtr;
 
-struct Attributes{
-  Attributes(AttributeFieldPtr field1);
-  Attributes(AttributeFieldPtr field1,AttributeFieldPtr field2);
-  Attributes(AttributeFieldPtr field1,AttributeFieldPtr field2, AttributeFieldPtr field3);
-  /** \todo add more constructor cases for more fields */
-  std::vector<AttributeFieldPtr> attrs;
+struct Attributes {
+    Attributes(AttributeFieldPtr field1);
+    Attributes(AttributeFieldPtr field1, AttributeFieldPtr field2);
+    Attributes(AttributeFieldPtr field1, AttributeFieldPtr field2, AttributeFieldPtr field3);
+    /** \todo add more constructor cases for more fields */
+    std::vector<AttributeFieldPtr> attrs;
 };
 
-enum SortOrder{ASCENDING,DESCENDING};
+enum SortOrder { ASCENDING, DESCENDING };
 
-struct SortAttr{
+struct SortAttr {
 
     AttributeFieldPtr field;
     SortOrder order;
 };
 
-struct Sort{
-  Sort(SortAttr field1);
-  Sort(SortAttr field1,SortAttr field2);
-  Sort(SortAttr field1,SortAttr field2, SortAttr field3);
-  /** \todo add more constructor cases for more fields */
-  std::vector<SortAttr> param;
+struct Sort {
+    Sort(SortAttr field1);
+    Sort(SortAttr field1, SortAttr field2);
+    Sort(SortAttr field1, SortAttr field2, SortAttr field3);
+    /** \todo add more constructor cases for more fields */
+    std::vector<SortAttr> param;
 };
 
 class DataSource;
@@ -91,8 +90,4 @@ const std::string toString(const MapperPtr&);
 const std::string toString(const AggregationSpec&);
 const std::string toString(const JoinPredicatePtr&);
 
-
-
-
-}
-
+} // namespace iotdb
