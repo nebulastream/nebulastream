@@ -13,6 +13,7 @@ namespace iotdb {
 
 class DataSink {
   public:
+    DataSink();
     DataSink(const Schema& schema);
     virtual ~DataSink();
 
@@ -27,6 +28,7 @@ class DataSink {
 
     virtual const std::string toString() const = 0;
     const Schema& getSchema() const;
+    void setSchema(const Schema& pSchema) { schema = pSchema; };
 
   protected:
     Schema schema;
@@ -34,7 +36,6 @@ class DataSink {
     size_t processedTuples;
 
     friend class boost::serialization::access;
-    DataSink(){};
     template <class Archive> void serialize(Archive& ar, const unsigned int version)
     {
         ar& schema;
@@ -45,6 +46,9 @@ class DataSink {
 typedef std::shared_ptr<DataSink> DataSinkPtr;
 
 const DataSinkPtr createTestSink();
+const DataSinkPtr createPrintSink(std::ostream&);
+const DataSinkPtr createPrintSink(const Schema& schema, std::ostream&);
+const DataSinkPtr createBinaryFileSink(const std::string& path_to_file);
 const DataSinkPtr createBinaryFileSink(const Schema& schema, const std::string& path_to_file);
 const DataSinkPtr createRemoteTCPSink(const Schema& schema, const std::string& server_ip, int port);
 const DataSinkPtr createZmqSink(const Schema& schema, const std::string& host, const uint16_t port);

@@ -42,20 +42,18 @@ void ThreadPool::worker_thread()
     }
 }
 
-void ThreadPool::start(size_t pNumberOfThreads)
+void ThreadPool::start(size_t numberOfThreads)
 {
-    numThreads = pNumberOfThreads;
-
+    numThreads = numberOfThreads;
     if (run)
         return;
     run = true;
-
     /* spawn threads */
+    //  auto num_threads = std::thread::hardware_concurrency();
     IOTDB_DEBUG("Threadpool: Spawning " << numThreads << " threads")
     for (uint64_t i = 0; i < numThreads; ++i) {
         threads.push_back(std::thread(std::bind(&ThreadPool::worker_thread, this)));
     }
-
     /* TODO: pin each thread to a fixed core */
 }
 
@@ -72,6 +70,5 @@ void ThreadPool::stop()
         if (thread.joinable())
             thread.join();
     }
-    IOTDB_DEBUG("Threadpool: All threads are joined.")
 }
 } // namespace iotdb

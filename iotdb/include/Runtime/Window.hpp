@@ -1,5 +1,6 @@
 #ifndef INCLUDE_RUNTIME_WINDOW_HPP_
 #define INCLUDE_RUNTIME_WINDOW_HPP_
+
 #include <atomic>
 #include <iostream>
 #include <memory>
@@ -27,14 +28,12 @@ class Window {
   private:
     friend class boost::serialization::access;
 };
-const WindowPtr createTestWindow(size_t pCampaignCnt);
+const WindowPtr createTestWindow(size_t pCampaingCnt);
 const WindowPtr createTestWindow(size_t pWindowSizeInSec, size_t pCampaignCnt);
 
 } // namespace iotdb
-
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
 BOOST_CLASS_EXPORT_KEY(iotdb::Window)
-
 #endif /* INCLUDE_RUNTIME_WINDOW_HPP_ */

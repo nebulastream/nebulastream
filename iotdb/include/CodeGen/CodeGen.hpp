@@ -38,6 +38,9 @@ class CodeGenerator {
     virtual PipelineStagePtr compile(const CompilerArgs&) = 0;
     virtual ~CodeGenerator();
 
+    const Schema& getInputSchema() const { return input_schema_; };
+    const Schema& getResultSchema() const { return result_schema_; };
+
   protected:
     CodeGenArgs args_;
     Schema input_schema_;
