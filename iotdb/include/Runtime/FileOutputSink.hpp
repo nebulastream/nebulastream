@@ -11,27 +11,24 @@ namespace iotdb {
 
 class FileOutputSink : public DataSink {
 
-public:
-	FileOutputSink();
-	FileOutputSink(const Schema &schema);
-  ~FileOutputSink();
+  public:
+    FileOutputSink();
+    FileOutputSink(const Schema& schema);
+    ~FileOutputSink();
 
-	virtual void setup() override {}
-	virtual void shutdown() override {}
+    virtual void setup() override {}
+    virtual void shutdown() override {}
 
-  bool writeData(const TupleBuffer* input_buffer) override;
-  const std::string toString() const override;
+    bool writeData(const TupleBuffer* input_buffer) override;
+    const std::string toString() const override;
 
-private:
+  private:
 };
 } // namespace iotdb
 
-#include <boost/serialization/export.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/export.hpp>
 BOOST_CLASS_EXPORT_KEY(iotdb::FileOutputSink)
 
 #endif // FILEOUTPUTSINK_HPP
-
-
-

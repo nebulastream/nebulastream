@@ -22,12 +22,14 @@ typedef std::shared_ptr<TupleBuffer> TupleBufferPtr;
 class BufferManager {
 public:
   void addBuffer();
+  void removeBuffer(TupleBufferPtr tuple_buffer);
   TupleBufferPtr getBuffer();
   void releaseBuffer(const TupleBufferPtr tuple_buffer);
   void releaseBuffer(const TupleBuffer* tuple_buffer);
+  size_t getNumberOfBuffers();
+  size_t getNumberOfFreeBuffers();
 
   static BufferManager &instance();
-  void unblockThreads() { cv.notify_all(); }
   void printStatistics();
 
   void setNumberOfBuffers(size_t size);
@@ -39,12 +41,11 @@ private:
   BufferManager &operator=(const BufferManager &);
   ~BufferManager();
 
-  std::map<TupleBufferPtr, bool> buffer_pool;//make bool atomic
+  std::map<TupleBufferPtr, std::atomic<bool>> buffer_pool;//make bool atomic
   size_t maxBufferCnt;
   size_t bufferSizeInByte;
 
   std::mutex mutex;
-  std::condition_variable cv;
 
   //statistics
   size_t noFreeBuffer;

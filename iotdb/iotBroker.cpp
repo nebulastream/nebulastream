@@ -35,9 +35,9 @@ const size_t clientPort = 6666;
 const std::string clientPortStr = "6666";
 
 enum NODE_COMMANDS {
-	START_QUERY = 1,
-	STOP_QUERY = 2,
-	DEPLOY_QEP = 3 };
+    START_QUERY = 1,
+    STOP_QUERY = 2,
+    DEPLOY_QEP = 3 };
 
 typedef boost::shared_ptr<tcp::socket> socket_ptr;
 
@@ -59,20 +59,20 @@ void session(socket_ptr sock)
       char reply[14];
       IOTDB_DEBUG("IOTBROKER: Host= " << ptr->getHostname() << " try to register")
       if ( nodes.find(ptr->getHostname()) == nodes.end() ) {
-    	  IOTDB_DEBUG("IOTBROKER: registering node")
-		  nodes[ptr->getHostname()] = ptr;
-		  memcpy(reply, "REG_COMPLETED", 13);
-	  } else {
-		  IOTDB_DEBUG("IOTBROKER: Node already registered")
-		  memcpy(reply, "ALREADY_REG", 11);
+          IOTDB_DEBUG("IOTBROKER: registering node")
+          nodes[ptr->getHostname()] = ptr;
+          memcpy(reply, "REG_COMPLETED", 13);
+      } else {
+          IOTDB_DEBUG("IOTBROKER: Node already registered")
+          memcpy(reply, "ALREADY_REG", 11);
 
-	  }
-  	boost::asio::write(*sock, boost::asio::buffer(reply, sizeof(reply)));
-  	IOTDB_DEBUG("IOTBROKER: registration process completed")
+      }
+    boost::asio::write(*sock, boost::asio::buffer(reply, sizeof(reply)));
+    IOTDB_DEBUG("IOTBROKER: registration process completed")
   }
   catch (std::exception& e)
   {
-	  IOTDB_ERROR("IOTBROKER: Exception in registration: " << e.what())
+      IOTDB_ERROR("IOTBROKER: Exception in registration: " << e.what())
   }
 }
 
@@ -134,75 +134,75 @@ char* readFile(std::string fileName, size_t& size)
 
 void sendCommandToNodes(std::string command)
 {
-	for(auto& node : nodes)
-	{
-		boost::asio::io_service io_service;
-		tcp::resolver resolver(io_service);
-		IOTDB_DEBUG("IOTBROKER: resolve address for " << node.first)
-		tcp::resolver::query query(tcp::v4(), node.first, clientPortStr.c_str(), boost::asio::ip::resolver_query_base::numeric_service);
-		tcp::resolver::iterator iterator = resolver.resolve(query);
-		tcp::socket s(io_service);
-		s.connect(*iterator);
-		IOTDB_DEBUG("IOTBROKER: connected to " << node.first << ":" << clientPort << " successfully")
+    for(auto& node : nodes)
+    {
+        boost::asio::io_service io_service;
+        tcp::resolver resolver(io_service);
+        IOTDB_DEBUG("IOTBROKER: resolve address for " << node.first)
+        tcp::resolver::query query(tcp::v4(), node.first, clientPortStr.c_str(), boost::asio::ip::resolver_query_base::numeric_service);
+        tcp::resolver::iterator iterator = resolver.resolve(query);
+        tcp::socket s(io_service);
+        s.connect(*iterator);
+        IOTDB_DEBUG("IOTBROKER: connected to " << node.first << ":" << clientPort << " successfully")
 
 
-	    if(command == "3")
-	    {
-	        IOTDB_DEBUG("IOTBROKER: sending QEP")
-	        size_t fileSize = 0;
-	        std::string fileName = generateTestQEP();
-//	        std::string fileName = "/home/zeuchste/git/IoTDB/iotdb/build/tests/demofile.txt";
-	        char* data = readFile(fileName, fileSize);
-	        IOTDB_DEBUG("IOTBROKER: send QEP serialized data:" << data)
+        if(command == "3")
+        {
+            IOTDB_DEBUG("IOTBROKER: sending QEP")
+            size_t fileSize = 0;
+            std::string fileName = generateTestQEP();
+//          std::string fileName = "/home/zeuchste/git/IoTDB/iotdb/build/tests/demofile.txt";
+            char* data = readFile(fileName, fileSize);
+            IOTDB_DEBUG("IOTBROKER: send QEP serialized data:" << data)
 
-	        char* sendBuffer = new char[fileSize + 1];
-	        char cmdChar = command[0];
+            char* sendBuffer = new char[fileSize + 1];
+            char cmdChar = command[0];
             memcpy(sendBuffer, &cmdChar, 1);
             memcpy(&sendBuffer[1], data, fileSize);
 
-	        boost::asio::write(s, boost::asio::buffer(sendBuffer, fileSize + 32));
-	        delete sendBuffer;
-	        delete data;
-	    }
-	    else
-	    {
-	        IOTDB_DEBUG("IOTBROKER: send command " << command << " size=" << sizeof(command))
+            boost::asio::write(s, boost::asio::buffer(sendBuffer, fileSize + 32));
+            delete sendBuffer;
+            delete data;
+        }
+        else
+        {
+            IOTDB_DEBUG("IOTBROKER: send command " << command << " size=" << sizeof(command))
             boost::asio::write(s, boost::asio::buffer(command.c_str(), sizeof(command)));
-	    }
+        }
 
         IOTDB_DEBUG("IOTBROKER: send command completed")
 
-	}
+    }
 }
 
 void setupLogging()
 {
-	 // create PatternLayout
-	log4cxx::LayoutPtr layoutPtr(new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
+     // create PatternLayout
+    log4cxx::LayoutPtr layoutPtr(new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
 
-	// create FileAppender
-	LOG4CXX_DECODE_CHAR(fileName, "iotbroker.log");
-	log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
+    // create FileAppender
+    LOG4CXX_DECODE_CHAR(fileName, "iotbroker.log");
+    log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
 
-	// create ConsoleAppender
-	log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
+    // create ConsoleAppender
+    log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
 
-	// set log level
-	//logger->setLevel(log4cxx::Level::getTrace());
-	logger->setLevel(log4cxx::Level::getDebug());
-//	logger->setLevel(log4cxx::Level::getInfo());
-//	logger->setLevel(log4cxx::Level::getWarn());
-	//logger->setLevel(log4cxx::Level::getError());
-//	logger->setLevel(log4cxx::Level::getFatal());
+    // set log level
+    //logger->setLevel(log4cxx::Level::getTrace());
+    logger->setLevel(log4cxx::Level::getDebug());
+//  logger->setLevel(log4cxx::Level::getInfo());
+//  logger->setLevel(log4cxx::Level::getWarn());
+    //logger->setLevel(log4cxx::Level::getError());
+//  logger->setLevel(log4cxx::Level::getFatal());
 
-	// add appenders and other will inherit the settings
-	logger->addAppender(file);
-	logger->addAppender(console);
+    // add appenders and other will inherit the settings
+    logger->addAppender(file);
+    logger->addAppender(console);
 }
 
 int main(int argc, char* argv[])
 {
-	setupLogging();
+    setupLogging();
   try
   {
     if (argc != 1)
@@ -216,17 +216,17 @@ int main(int argc, char* argv[])
 
     std::string command = "0";
 
-	while(command != "4"){
-		std::cout << "Please enter node command:";
-		std::cout << "1 = START_QUERY";
-		std::cout << "2 = STOP_QUERY";
-		std::cout << "3 = DEPLOY_QEP";
-		std::cout << "4 = QUIT"  <<std::endl;
-		cin >> command; // input the length
+    while(command != "4"){
+        std::cout << "Please enter node command:";
+        std::cout << "1 = START_QUERY";
+        std::cout << "2 = STOP_QUERY";
+        std::cout << "3 = DEPLOY_QEP";
+        std::cout << "4 = QUIT"  <<std::endl;
+        cin >> command; // input the length
 
-		IOTDB_DEBUG("IOTBROKER: User entered command " << command)
-		sendCommandToNodes(command);
-	}
+        IOTDB_DEBUG("IOTBROKER: User entered command " << command)
+        sendCommandToNodes(command);
+    }
 
   }
   catch (std::exception& e)

@@ -1,19 +1,19 @@
 #ifndef _METRICS_H
 #define _METRICS_H
 
-#include <sys/sysinfo.h>
-#include <sys/statvfs.h>
-#include <sys/types.h>
-#include <sys/ioctl.h>
 #include <ifaddrs.h>
 #include <linux/if_link.h>
-#include <netdb.h>
 #include <net/if.h>
+#include <netdb.h>
+#include <sys/ioctl.h>
+#include <sys/statvfs.h>
+#include <sys/sysinfo.h>
+#include <sys/types.h>
 
-#include <fstream>
 #include "json.hpp"
+#include <fstream>
 
-namespace iotdb{
+namespace iotdb {
 using JSON = nlohmann::json;
 typedef unsigned long uint64_t;
 
@@ -23,18 +23,17 @@ class NodeProperties {
 public:
   NodeProperties():nbrProcessors(0) {};
 
-  ~NodeProperties() {
-  }
+    ~NodeProperties() {}
 
   void print();
   std::string dump(int setw=-1);
   void load(const char *metricsBuffer);
   JSON load();
 
-  void readCpuStats();           // read cpu inforamtion
-  void readMemStats();           // read memory information
-  void readFsStats();            // read file system information
-  void readNetworkStats();       // read network information
+    void readCpuStats();     // read cpu inforamtion
+    void readMemStats();     // read memory information
+    void readFsStats();      // read file system information
+    void readNetworkStats(); // read network information
 
   std::string getCpuStats();
   std::string getNetworkStats();
@@ -47,11 +46,11 @@ public:
 private:
   long nbrProcessors;
 
-  JSON _metrics;
-  JSON _mem;
-  JSON _fs;
-  JSON _cpus;
-  JSON _nets;
+    JSON _metrics;
+    JSON _mem;
+    JSON _fs;
+    JSON _cpus;
+    JSON _nets;
 };
 
 typedef std::shared_ptr<NodeProperties> NodePropertiesPtr;

@@ -1,6 +1,6 @@
+#include "gtest/gtest.h"
 #include <cassert>
 #include <iostream>
-#include "gtest/gtest.h"
 
 #include <Core/DataTypes.hpp>
 
@@ -11,23 +11,17 @@
 #include <Runtime/Window.hpp>
 #include <Runtime/YSBWindow.hpp>
 
-
 #include <Runtime/Dispatcher.hpp>
 #include <Runtime/GeneratorSource.hpp>
 #include <Runtime/ThreadPool.hpp>
-#include <stdio.h>
-#include <signal.h>
 #include <Util/Logger.hpp>
-#include <memory>
 #include <cstring>
 #include <QEPs/CompiledYSBTestQueryExecutionPlan.hpp>
 
 namespace iotdb {
 sig_atomic_t user_wants_to_quit = 0;
 
-void signal_handler(int) {
-user_wants_to_quit = 1;
-}
+void signal_handler(int) { user_wants_to_quit = 1; }
 
 
 int test() {
@@ -38,7 +32,7 @@ int test() {
 	qep->addWindow(window);
     YSBWindow* res_window = (YSBWindow*)qep->getWindows()[0].get();
 
-	Dispatcher::instance().registerQuery(qep);
+    Dispatcher::instance().registerQuery(qep);
 
 	ThreadPool::instance().start(1);
 	while(source->isRunning()){
@@ -50,16 +44,14 @@ int test() {
 	}
 
     size_t sum = 0;
-    for(size_t i = 0; i < 10; i++)
-    {
-    	sum += res_window->getHashTable()[0][i];
-    	sum += res_window->getHashTable()[1][i];
+    for (size_t i = 0; i < 10; i++) {
+        sum += res_window->getHashTable()[0][i];
+        sum += res_window->getHashTable()[1][i];
     }
     std::cout << " ========== FINAL query result  ========== " << sum << std::endl;
-    if(sum != 18000)
-    {
-    	std::cout << "wrong result" << std::endl;
-//    	assert(0);
+    if (sum != 18000) {
+        std::cout << "wrong result" << std::endl;
+        //    	assert(0);
     }
     else
     {
@@ -75,46 +67,50 @@ int test() {
 //	  std::cout << "waiting to finish" << std::endl;
 //	}
 
+    Dispatcher::instance().deregisterQuery(qep);
 
-	  ThreadPool::instance().stop();
+    //	while(!user_wants_to_quit)
+    //	{
+    //	  std::this_thread::sleep_for(std::chrono::seconds(2));
+    //	  std::cout << "waiting to finish" << std::endl;
+    //	}
 
+    ThreadPool::instance().stop();
 }
 } // namespace iotdb
 
-
-
 void setupLogging()
 {
-	 // create PatternLayout
-	log4cxx::LayoutPtr layoutPtr(new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
+    // create PatternLayout
+    log4cxx::LayoutPtr layoutPtr(new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
 
-	// create FileAppender
-	LOG4CXX_DECODE_CHAR(fileName, "iotdb.log");
-	log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
+    // create FileAppender
+    LOG4CXX_DECODE_CHAR(fileName, "iotdb.log");
+    log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
 
-	// create ConsoleAppender
-	log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
+    // create ConsoleAppender
+    log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
 
-	// set log level
-	//logger->setLevel(log4cxx::Level::getTrace());
-//	logger->setLevel(log4cxx::Level::getDebug());
-	logger->setLevel(log4cxx::Level::getInfo());
-//	logger->setLevel(log4cxx::Level::getWarn());
-	//logger->setLevel(log4cxx::Level::getError());
-//	logger->setLevel(log4cxx::Level::getFatal());
+    // set log level
+    // logger->setLevel(log4cxx::Level::getTrace());
+    //	logger->setLevel(log4cxx::Level::getDebug());
+    logger->setLevel(log4cxx::Level::getInfo());
+    //	logger->setLevel(log4cxx::Level::getWarn());
+    // logger->setLevel(log4cxx::Level::getError());
+    //	logger->setLevel(log4cxx::Level::getFatal());
 
-	// add appenders and other will inherit the settings
-	logger->addAppender(file);
-	logger->addAppender(console);
+    // add appenders and other will inherit the settings
+    logger->addAppender(file);
+    logger->addAppender(console);
 }
 
-int main(int argc, const char *argv[]) {
+int main(int argc, const char* argv[])
+{
 
-	setupLogging();
-  iotdb::Dispatcher::instance();
+    setupLogging();
+    iotdb::Dispatcher::instance();
 
-  iotdb::test();
+    iotdb::test();
 
-
-  return 0;
+    return 0;
 }

@@ -1,20 +1,20 @@
 #ifndef _IOT_NODE_H
 #define _IOT_NODE_H
 
-#include <iostream>
-#include <string>
-#include <zmq.hpp>
-#include <vector>
-#include <pthread.h>
-#include <unistd.h>
-#include "json.hpp"
+#include "../Runtime/CompiledDummyPlan.hpp"
 #include "NodeProperties.hpp"
+#include "json.hpp"
 #include <CodeGen/QueryExecutionPlan.hpp>
 #include <Runtime/Dispatcher.hpp>
 #include <Runtime/ThreadPool.hpp>
-#include "../Runtime/CompiledDummyPlan.hpp"
+#include <iostream>
+#include <pthread.h>
+#include <string>
+#include <unistd.h>
+#include <vector>
+#include <zmq.hpp>
 
-namespace iotdb{
+namespace iotdb {
 using JSON = nlohmann::json;
 
 class NodeEngine {
@@ -37,5 +37,5 @@ private:
 
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
 
-}
+} // namespace iotdb
 #endif // _IOT_NODE_H

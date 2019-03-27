@@ -17,12 +17,12 @@ namespace iotdb {
 #define MAX_NUMBER_OF_NODES 10 // TODO: make this dynamic
 
 struct Vertex {
-  size_t id;
-  FogTopologyEntryPtr ptr;
+    size_t id;
+    FogTopologyEntryPtr ptr;
 };
 struct Edge {
-  size_t id;
-  FogTopologyLinkPtr ptr;
+    size_t id;
+    FogTopologyLinkPtr ptr;
 };
 
 using graph_t = boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS, Vertex, Edge>;
@@ -32,55 +32,55 @@ using edge_t = boost::graph_traits<graph_t>::edge_descriptor;
 using edge_iterator = boost::graph_traits<graph_t>::edge_iterator;
 
 class FogGraph {
-public:
-  FogGraph(){};
+  public:
+    FogGraph(){};
 
-  const vertex_t getVertex(size_t search_id) const;
-  bool hasVertex(size_t search_id) const;
+    const vertex_t getVertex(size_t search_id) const;
+    bool hasVertex(size_t search_id) const;
 
-  bool addVertex(FogTopologyEntryPtr ptr);
-  bool removeVertex(size_t search_id);
+    bool addVertex(FogTopologyEntryPtr ptr);
+    bool removeVertex(size_t search_id);
 
-  FogTopologyEntryPtr getRoot();
+    FogTopologyEntryPtr getRoot();
 
-  FogTopologyLinkPtr getLink(FogTopologyEntryPtr sourceNode, FogTopologyEntryPtr destNode) const;
-  bool hasLink(FogTopologyEntryPtr sourceNode, FogTopologyEntryPtr destNode) const;
+    FogTopologyLinkPtr getLink(FogTopologyEntryPtr sourceNode, FogTopologyEntryPtr destNode) const;
+    bool hasLink(FogTopologyEntryPtr sourceNode, FogTopologyEntryPtr destNode) const;
 
-  const Edge *getEdge(size_t search_id) const;
-  bool hasEdge(size_t search_id) const;
+    const Edge* getEdge(size_t search_id) const;
+    bool hasEdge(size_t search_id) const;
 
-  bool addEdge(FogTopologyLinkPtr ptr);
-  bool removeEdge(size_t search_id);
+    bool addEdge(FogTopologyLinkPtr ptr);
+    bool removeEdge(size_t search_id);
 
-  std::string getGraphString();
+    std::string getGraphString();
 
-private:
-  graph_t graph;
+  private:
+    graph_t graph;
 };
 
 class FogTopologyPlan {
 
-public:
-  FogTopologyPlan();
+  public:
+    FogTopologyPlan();
 
-  FogTopologyEntryPtr getRootNode() const;
+    FogTopologyEntryPtr getRootNode() const;
 
-  FogTopologyWorkerNodePtr createFogWorkerNode();
-  bool removeFogWorkerNode(FogTopologyWorkerNodePtr ptr);
+    FogTopologyWorkerNodePtr createFogWorkerNode();
+    bool removeFogWorkerNode(FogTopologyWorkerNodePtr ptr);
 
-  FogTopologySensorNodePtr createFogSensorNode();
-  bool removeFogSensorNode(FogTopologySensorNodePtr ptr);
+    FogTopologySensorNodePtr createFogSensorNode();
+    bool removeFogSensorNode(FogTopologySensorNodePtr ptr);
 
-  FogTopologyLinkPtr createFogTopologyLink(FogTopologyEntryPtr pSourceNode, FogTopologyEntryPtr pDestNode);
-  bool removeFogTopologyLink(FogTopologyLinkPtr linkPtr);
+    FogTopologyLinkPtr createFogTopologyLink(FogTopologyEntryPtr pSourceNode, FogTopologyEntryPtr pDestNode);
+    bool removeFogTopologyLink(FogTopologyLinkPtr linkPtr);
 
-  std::string getTopologyPlanString() const;
+    std::string getTopologyPlanString() const;
 
-private:
-  size_t getNextFreeNodeId();
+  private:
+    size_t getNextFreeNodeId();
 
-  size_t currentId;
-  FogGraph *fGraph;
+    size_t currentId;
+    FogGraph* fGraph;
 };
 } // namespace iotdb
 

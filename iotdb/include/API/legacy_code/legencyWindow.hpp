@@ -7,112 +7,123 @@
 #include "API/Time.hpp"
 #include "API/Trigger.hpp"
 
-namespace iotdb{
+namespace iotdb {
 class Counter {
-public:
-  Counter(size_t max) : max(max) {}
+  public:
+    Counter(size_t max) : max(max) {}
 
-  size_t max;
+    size_t max;
 
-private:
+  private:
 };
 
 class legencyWindow {
-public:
-  Assigner *assigner;
-  Trigger *trigger;
+  public:
+    Assigner* assigner;
+    Trigger* trigger;
 
-  legencyWindow withTrigger(Trigger &&trigger) {
-    this->trigger = &trigger;
-    return *this;
-  }
+    legencyWindow withTrigger(Trigger&& trigger)
+    {
+        this->trigger = &trigger;
+        return *this;
+    }
 };
 
 class TumblingProcessingTimeWindow : public legencyWindow {
-public:
-  TumblingProcessingTimeWindow(Time size) {
-    assigner = new TumblingProcessingTimeAssigner();
-    trigger = new PurgingTrigger(new ProcessingTimeTrigger(size));
-  }
+  public:
+    TumblingProcessingTimeWindow(Time size)
+    {
+        assigner = new TumblingProcessingTimeAssigner();
+        trigger = new PurgingTrigger(new ProcessingTimeTrigger(size));
+    }
 
-  TumblingProcessingTimeWindow(Counter size) {
-    assigner = new TumblingProcessingTimeAssigner();
-    trigger = new PurgingTrigger(new CountTrigger(size.max));
-  }
+    TumblingProcessingTimeWindow(Counter size)
+    {
+        assigner = new TumblingProcessingTimeAssigner();
+        trigger = new PurgingTrigger(new CountTrigger(size.max));
+    }
 };
 
 class SlidingProcessingTimeWindow : public legencyWindow {
-public:
-  SlidingProcessingTimeWindow(Time size, Time slide) {
-    assigner = new SlidingProcessingTimeAssigner(size, slide);
-    trigger = new PurgingTrigger(new ProcessingTimeTrigger(slide));
-  }
+  public:
+    SlidingProcessingTimeWindow(Time size, Time slide)
+    {
+        assigner = new SlidingProcessingTimeAssigner(size, slide);
+        trigger = new PurgingTrigger(new ProcessingTimeTrigger(slide));
+    }
 };
 
 class SessionProcessingTimeWindow : public legencyWindow {
-public:
-  SessionProcessingTimeWindow(Time timeout) {
-    assigner = new SessionProcessingTimeAssigner(timeout);
-    trigger = new PurgingTrigger(
-        new ProcessingTimeTrigger(Time::seconds(365 * 24 * 60 * 60))); // maximum session timeout of one year
-  }
+  public:
+    SessionProcessingTimeWindow(Time timeout)
+    {
+        assigner = new SessionProcessingTimeAssigner(timeout);
+        trigger = new PurgingTrigger(
+            new ProcessingTimeTrigger(Time::seconds(365 * 24 * 60 * 60))); // maximum session timeout of one year
+    }
 };
 
 class TumblingEventTimeWindow : public legencyWindow {
-public:
-  TumblingEventTimeWindow(Time size, std::string timestampFieldId) : size(size), timestampFieldId(timestampFieldId) {
-    assigner = new TumblingEventTimeAssigner(size, timestampFieldId, Time::seconds(0));
-    trigger = new PurgingTrigger(new EventTimeTrigger(size, timestampFieldId, Time::seconds(0)));
-  }
+  public:
+    TumblingEventTimeWindow(Time size, std::string timestampFieldId) : size(size), timestampFieldId(timestampFieldId)
+    {
+        assigner = new TumblingEventTimeAssigner(size, timestampFieldId, Time::seconds(0));
+        trigger = new PurgingTrigger(new EventTimeTrigger(size, timestampFieldId, Time::seconds(0)));
+    }
 
-  TumblingEventTimeWindow withAllowedLateness(Time lateness) {
-    assigner = new TumblingEventTimeAssigner(size, timestampFieldId, lateness);
-    trigger = new PurgingTrigger(new EventTimeTrigger(size, timestampFieldId, lateness));
-    return *this;
-  }
+    TumblingEventTimeWindow withAllowedLateness(Time lateness)
+    {
+        assigner = new TumblingEventTimeAssigner(size, timestampFieldId, lateness);
+        trigger = new PurgingTrigger(new EventTimeTrigger(size, timestampFieldId, lateness));
+        return *this;
+    }
 
-private:
-  Time size;
-  std::string timestampFieldId;
+  private:
+    Time size;
+    std::string timestampFieldId;
 };
 
 class SlidingEventTimeWindow : public legencyWindow {
-public:
-  SlidingEventTimeWindow(Time size, Time slide, std::string timestampFieldId)
-      : size(size), slide(slide), timestampFieldId(timestampFieldId) {
-    assigner = new SlidingEventTimeAssigner(size, slide, timestampFieldId, Time::seconds(0));
-    trigger = new PurgingTrigger(new EventTimeTrigger(size, timestampFieldId, Time::seconds(0)));
-  }
+  public:
+    SlidingEventTimeWindow(Time size, Time slide, std::string timestampFieldId)
+        : size(size), slide(slide), timestampFieldId(timestampFieldId)
+    {
+        assigner = new SlidingEventTimeAssigner(size, slide, timestampFieldId, Time::seconds(0));
+        trigger = new PurgingTrigger(new EventTimeTrigger(size, timestampFieldId, Time::seconds(0)));
+    }
 
-  SlidingEventTimeWindow withAllowedLateness(Time lateness) {
-    assigner = new SlidingEventTimeAssigner(size, slide, timestampFieldId, lateness);
-    trigger = new PurgingTrigger(new EventTimeTrigger(slide, timestampFieldId, lateness));
-    return *this;
-  }
+    SlidingEventTimeWindow withAllowedLateness(Time lateness)
+    {
+        assigner = new SlidingEventTimeAssigner(size, slide, timestampFieldId, lateness);
+        trigger = new PurgingTrigger(new EventTimeTrigger(slide, timestampFieldId, lateness));
+        return *this;
+    }
 
-private:
-  Time size;
-  Time slide;
-  std::string timestampFieldId;
+  private:
+    Time size;
+    Time slide;
+    std::string timestampFieldId;
 };
 
 class SessionEventTimeWindow : public legencyWindow {
-public:
-  SessionEventTimeWindow(Time timeout, std::string timestampFieldId)
-      : timeout(timeout), timestampFieldId(timestampFieldId) {
-    assigner = new SessionEventTimeAssigner(timeout, timestampFieldId, Time::seconds(0));
-    trigger = new PurgingTrigger(new EventTimeTrigger(timeout, timestampFieldId, Time::seconds(0), timeout));
-  }
+  public:
+    SessionEventTimeWindow(Time timeout, std::string timestampFieldId)
+        : timeout(timeout), timestampFieldId(timestampFieldId)
+    {
+        assigner = new SessionEventTimeAssigner(timeout, timestampFieldId, Time::seconds(0));
+        trigger = new PurgingTrigger(new EventTimeTrigger(timeout, timestampFieldId, Time::seconds(0), timeout));
+    }
 
-  SessionEventTimeWindow withAllowedLateness(Time lateness) {
-    assigner = new SessionEventTimeAssigner(timeout, timestampFieldId, lateness);
-    trigger = new PurgingTrigger(new EventTimeTrigger(timeout, timestampFieldId, lateness, timeout));
-    return *this;
-  }
+    SessionEventTimeWindow withAllowedLateness(Time lateness)
+    {
+        assigner = new SessionEventTimeAssigner(timeout, timestampFieldId, lateness);
+        trigger = new PurgingTrigger(new EventTimeTrigger(timeout, timestampFieldId, lateness, timeout));
+        return *this;
+    }
 
-private:
-  Time timeout;
-  std::string timestampFieldId;
+  private:
+    Time timeout;
+    std::string timestampFieldId;
 };
-}
+} // namespace iotdb
 #endif // API_WINDOW_H

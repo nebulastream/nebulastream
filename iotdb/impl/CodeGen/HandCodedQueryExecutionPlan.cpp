@@ -17,4 +17,4 @@ namespace iotdb {
 HandCodedQueryExecutionPlan::HandCodedQueryExecutionPlan() : QueryExecutionPlan() {}
 
 HandCodedQueryExecutionPlan::~HandCodedQueryExecutionPlan() {}
-}
+} // namespace iotdb
