@@ -70,7 +70,7 @@ public:
 		for (auto window : windows) {
 			IOTDB_INFO("Window:" << window)
 			IOTDB_INFO("\t NumberOfEntries=" << window->getNumberOfEntries())
-			IOTDB_INFO("Window Final Result:")
+			IOTDB_INFO("Window Result:")
 			window->print();
 		}
 		for (auto sink : sinks) {

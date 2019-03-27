@@ -6,8 +6,21 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <Runtime/YSBGeneratorSource.hpp>
 BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::YSBGeneratorSource);
+BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::YSBFunctor);
 
 namespace iotdb {
+
+
+
+YSBFunctor::YSBFunctor(): campaingCnt(0)
+{
+
+}
+
+YSBFunctor::YSBFunctor(size_t pCampaingCnt): campaingCnt(pCampaingCnt)
+{
+
+}
 
 
 YSBGeneratorSource::YSBGeneratorSource() : numberOfCampaings(0), preGenerated(false)
@@ -24,7 +37,7 @@ YSBGeneratorSource::YSBGeneratorSource(const Schema& schema,
 	  this->numberOfCampaings = pCampaingCnt;
 	  if(preGenerated)
 	  {
-		  copyBuffer = functor();
+		  copyBuffer = functor(pCampaingCnt);
 	  }
 }
 
@@ -102,13 +115,13 @@ void generate(ysbRecord* data, size_t generated_tuples_this_pass, size_t campain
 	}
 }
 
-TupleBufferPtr YSBFunctor::operator()()
+TupleBufferPtr YSBFunctor::operator()(size_t numberOfCampaings)
 {
 	TupleBufferPtr buf = BufferManager::instance().getBuffer();
 	assert(buf->buffer != NULL);
 	uint64_t generated_tuples_this_pass = buf->buffer_size / sizeof(ysbRecord);
 
-	generate((ysbRecord*) buf->buffer, generated_tuples_this_pass, campaingCnt);
+	generate((ysbRecord*) buf->buffer, generated_tuples_this_pass, numberOfCampaings);
 
 	buf->tuple_size_bytes = sizeof(ysbRecord);
 	buf->num_tuples = generated_tuples_this_pass;
@@ -119,7 +132,7 @@ TupleBufferPtr YSBGeneratorSource::receiveData() {
     //we wait until the buffer is filled
 	if(!preGenerated)
 	{
-		TupleBufferPtr buf = functor();
+		TupleBufferPtr buf = functor(numberOfCampaings);
 		generatedTuples += buf->num_tuples;
 		generatedBuffers++;
 		return buf;

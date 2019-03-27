@@ -33,7 +33,7 @@ user_wants_to_quit = 1;
 int test() {
 	CompiledYSBTestQueryExecutionPlanPtr qep(new CompiledYSBTestQueryExecutionPlan());
 	DataSourcePtr source = createYSBSource(1000,10, /*pregen*/ false);
-	WindowPtr window = createTestWindow(10);
+	WindowPtr window = createTestWindow(10,2);
 	qep->addDataSource(source);
 	qep->addWindow(window);
     YSBWindow* res_window = (YSBWindow*)qep->getWindows()[0].get();
@@ -42,8 +42,8 @@ int test() {
 
 	ThreadPool::instance().start(1);
 	while(source->isRunning()){
-		std::cout << "----- processing current res is:-----" << std::endl;
-		res_window->print();
+//		std::cout << "----- processing current res is:-----" << std::endl;
+//		res_window->print();
 		std::cout << "Waiting 1 seconds " << std::endl;
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -60,6 +60,10 @@ int test() {
     {
     	std::cout << "wrong result" << std::endl;
 //    	assert(0);
+    }
+    else
+    {
+        std::cout << "right result" << std::endl;
     }
 	EXPECT_EQ(sum, 18000);
 

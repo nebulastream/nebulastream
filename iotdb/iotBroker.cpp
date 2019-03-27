@@ -105,20 +105,14 @@ std::string generateTestQEP()
     std::string filename = "/home/zeuchste/git/IoTDB/iotdb/build/tests/testQep.txt";
     CompiledYSBTestQueryExecutionPlanPtr q(new CompiledYSBTestQueryExecutionPlan());
 
-    DataSourcePtr src = createYSBSource(100000,10, /*pregen*/ false);
+    DataSourcePtr src = createYSBSource(10000000,10, /*pregen*/ false);
     q->addDataSource(src);
-//    DataSourcePtr zmq_src = createZmqSource(schema, "127.0.0.1", 55555);
-//    q->addDataSource(zmq_src);
-
-    WindowPtr window = createTestWindow(10);
+    WindowPtr window = createTestWindow(10,2);
     window->setup();
     q->addWindow(window);
 
     DataSinkPtr sink = createYSBPrintSink();
     q->addDataSink(sink);
-//    DataSinkPtr zmq_sink = createZmqSink(schema, "127.0.0.1", 55555);
-//    q->addDataSink(zmq_sink);
-
     save_qep(q.get(), filename.c_str());
 
     return filename;

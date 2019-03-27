@@ -5,6 +5,8 @@
 #include <atomic>
 #include <iostream>
 #include <Runtime/Window.hpp>
+#include <mutex>
+#include <condition_variable>
 
 namespace iotdb{
 
@@ -12,7 +14,7 @@ class YSBWindow : public Window
 {
 public:
 	YSBWindow();
-	YSBWindow(size_t pCampaingCnt);
+	YSBWindow(size_t pCampaingCnt, size_t windowSizeInSec);
 
 	~YSBWindow();
 	void setup()
@@ -28,7 +30,10 @@ public:
 	}
 	void print()
 	{
-		IOTDB_INFO("windowSizeInSec=" << windowSizeInSec << " campaingCnt=" << campaingCnt)
+		IOTDB_INFO("windowSizeInSec=" << windowSizeInSec
+		        << " campaingCnt=" << campaingCnt
+		        << " currentWindow=" << currentWindow
+		        << " lastChangeTimeStamp=" << lastChangeTimeStamp)
 		IOTDB_INFO("Hash Table Content with window 1:")
 		for(size_t i = 0; i < campaingCnt; i++)
 		{
@@ -64,9 +69,6 @@ public:
 
 	void shutdown()
 	{
-//		IOTDB_INFO("Final Window Result:");
-//		print();
-		//maybe also delete the entries?
 		delete[] hashTable[0];
 		delete[] hashTable[1];
 	}
@@ -77,17 +79,34 @@ public:
         ar & boost::serialization::base_object<Window>(*this);
 		ar & windowSizeInSec;
 		ar & campaingCnt;
+
 	}
 
 	std::atomic<size_t>** getHashTable(){return hashTable;};
+	size_t getWindowSizeInSec(){return windowSizeInSec;};
+    size_t getCampaingCnt(){return campaingCnt;};
 
+    size_t checkWindow(size_t actualWindow, size_t currentTime);
+
+    size_t getCurrentWindow()
+    {
+        return currentWindow;
+    }
+
+    size_t getLastChangeTimeStamp()
+    {
+        return lastChangeTimeStamp;
+    }
 private:
     friend class boost::serialization::access;
+    std::mutex mutex;
+    std::atomic<size_t> currentWindow;
+    std::atomic<size_t> lastChangeTimeStamp;
 
     std::atomic<size_t>** hashTable;
-
     size_t windowSizeInSec;
     size_t campaingCnt;
+
 
 };
 }//end of namespace
