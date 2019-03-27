@@ -10,16 +10,16 @@
 
 #include <CodeGen/QueryExecutionPlan.hpp>
 #include <stdint.h>
-//class TupleBuffer;
+// class TupleBuffer;
 
 namespace iotdb {
 
 class HandCodedQueryExecutionPlan : public QueryExecutionPlan {
-public:
-  HandCodedQueryExecutionPlan();
-  virtual ~HandCodedQueryExecutionPlan();
-  virtual bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf) = 0;
+  public:
+    HandCodedQueryExecutionPlan();
+    virtual ~HandCodedQueryExecutionPlan();
+    virtual bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf) = 0;
 };
-}
+} // namespace iotdb
 
 #endif /* INCLUDE_HANDCODEDQUERYEXECUTIONPLAN_H_ */
