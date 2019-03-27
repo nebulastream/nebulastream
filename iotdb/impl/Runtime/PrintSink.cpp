@@ -1,7 +1,7 @@
-#include <cstring>
 #include <memory>
 #include <sstream>
 #include <string>
+
 #include <zmq.hpp>
 
 #include <Runtime/Dispatcher.hpp>
@@ -12,15 +12,18 @@ BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::PrintSink)
 
 namespace iotdb {
 
-PrintSink::PrintSink() : DataSink() {}
+PrintSink::PrintSink(std::ostream& pOutputStream) : DataSink(), outputStream(pOutputStream) {}
 
-PrintSink::PrintSink(const Schema& schema) : DataSink(schema) {}
+PrintSink::PrintSink(const Schema& pSchema, std::ostream& pOutputStream)
+    : DataSink(pSchema), outputStream(pOutputStream)
+{
+}
 
 PrintSink::~PrintSink() {}
 
 bool PrintSink::writeData(const TupleBuffer* input_buffer)
 {
-    std::cout << iotdb::toString(input_buffer, this->getSchema()) << std::endl;
+    outputStream << iotdb::toString(input_buffer, this->getSchema()) << std::endl;
     return true;
 }
 

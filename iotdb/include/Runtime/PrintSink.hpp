@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <sstream>
 #include <string>
 
 #include <Runtime/DataSink.hpp>
@@ -12,8 +13,8 @@ namespace iotdb {
 class PrintSink : public DataSink {
 
   public:
-    PrintSink();
-    PrintSink(const Schema& schema);
+    PrintSink(std::ostream& pOutputStream = std::cout);
+    PrintSink(const Schema& pSchema, std::ostream& pOutputStream = std::cout);
     ~PrintSink();
     virtual void setup() override {}
     virtual void shutdown() override {}
@@ -28,6 +29,9 @@ class PrintSink : public DataSink {
     {
         ar& boost::serialization::base_object<DataSink>(*this);
     }
+
+  private:
+    std::ostream& outputStream;
 };
 
 } // namespace iotdb

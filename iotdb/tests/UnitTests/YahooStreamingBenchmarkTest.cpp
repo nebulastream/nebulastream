@@ -1,7 +1,10 @@
+#include <algorithm>
 #include <atomic>
 #include <cstddef>
 #include <iostream>
 #include <memory>
+#include <sstream>
+#include <string>
 
 #include "gtest/gtest.h"
 
@@ -39,7 +42,8 @@ class YahooStreamingBenchmarkTest : public testing::Test {
 
         ysb_source = createYSBSource(1024, 10, false); // 1024 buffers * 32 kb = 32 MB
         ysb_window = createTestWindow(2, 10);          // windows of 2 seconds, 10 campaigns
-        ysb_sink = createPrintSink(Schema::create().addField("campaign_id", UINT64).addField("campaign_count", UINT64));
+        ysb_sink = createPrintSink(Schema::create().addField("campaign_id", UINT64).addField("campaign_count", UINT64),
+                                   output_stream);
     }
 
     /* Will be called after a test is executed. */
@@ -53,6 +57,7 @@ class YahooStreamingBenchmarkTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { IOTDB_INFO("Tear down YahooStreamingBenchmarkTest test class."); }
 
+    std::stringstream output_stream;
     DataSourcePtr ysb_source;
     DataSinkPtr ysb_sink;
     WindowPtr ysb_window;
@@ -241,8 +246,6 @@ class YahooStreamingBenchmarkTest : public testing::Test {
 
             // Input and output buffer
             ysbRecord* inputBufferPtr = (ysbRecord*)buf->buffer;
-            TupleBufferPtr outputBuffer = BufferManager::instance().getBuffer();
-            ysbRecordResult* outputBufferPtr = (ysbRecordResult*)outputBuffer->buffer;
             DataSinkPtr sink = this->getSinks()[0];
 
             // windowing vars
@@ -290,13 +293,16 @@ class YahooStreamingBenchmarkTest : public testing::Test {
                         window->setLastTimestamp(timestamp);
 
                         // write hash table to output buffer.
+                        TupleBufferPtr outputBuffer = BufferManager::instance().getBuffer();
+                        ysbRecordResult* outputBufferPtr = (ysbRecordResult*)outputBuffer->buffer;
                         for (uint32_t campaign = 0; campaign < campaign_count; campaign++) {
                             outputBufferPtr[campaign].campaign_id = campaign;
                             outputBufferPtr[campaign].campaign_count = hashTable[old_window][campaign];
                             outputBufferPtr[campaign].last_timestamp = timestamp;
                         }
-                        outputBuffer->num_tuples += campaign_count;
-                        outputBufferPtr += campaign_count;
+                        outputBuffer->num_tuples = campaign_count;
+                        outputBuffer->tuple_size_bytes = sizeof(ysbRecordResult);
+                        sink->writeData(outputBuffer);
 
                         // reset hash table for next window
                         std::fill(hashTable[old_window], hashTable[old_window] + campaign_count, 0);
@@ -312,8 +318,6 @@ class YahooStreamingBenchmarkTest : public testing::Test {
                 uint64_t bucketPos = (hash_value.value * 789 + 321) % campaign_count;
                 atomic_fetch_add(&hashTable[current_window][bucketPos], size_t(1));
             }
-            outputBuffer->tuple_size_bytes = sizeof(ysbRecordResult);
-            sink->writeData(outputBuffer);
 
             return true;
         }
@@ -341,8 +345,8 @@ TEST_F(YahooStreamingBenchmarkTest, source_to_out)
     qep->addWindow(ysb_window);
     Dispatcher::instance().registerQuery(qep);
 
-    while (ysb_source->isRunning() || ysb_source->getNumberOfGeneratedBuffers() != check_processed_buffers) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+    while (ysb_source->isRunning()) {
+        std::this_thread::sleep_for(std::chrono::seconds(10));
     }
 
     // is the output correct?
@@ -366,12 +370,33 @@ TEST_F(YahooStreamingBenchmarkTest, source_to_sink)
     qep->addDataSource(ysb_source);
     qep->addDataSink(ysb_sink);
 
+    size_t begin_timestamp = time(NULL);
     Dispatcher::instance().registerQuery(qep);
 
-    while (ysb_source->isRunning() ||
-           ysb_source->getNumberOfGeneratedBuffers() != ysb_sink->getNumberOfProcessedBuffers()) {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+    while (ysb_source->isRunning()) {
+        std::this_thread::sleep_for(std::chrono::seconds(10));
     }
+
+    // is the output correct?
+    size_t checksum = 0;
+    for (std::string line; std::getline(output_stream, line);) {
+        line.erase(line.begin(), line.begin() + 3);
+        line.erase(line.end() - 1, line.end());
+        if (std::all_of(line.begin(), line.end(), ::isdigit)) {
+            checksum += std::stoi(line);
+        };
+    }
+    size_t tmp_tuples = ysb_source->getNumberOfGeneratedTuples() / 3;
+    EXPECT_TRUE(tmp_tuples - (tmp_tuples * 0.1) < checksum || checksum < tmp_tuples + (tmp_tuples * 0.1));
+
+    // does the windowing work correctly?
+    std::string output = output_stream.str();
+    size_t number_windows_output = std::count(output.begin(), output.end(), '+') / 6;
+    size_t number_windows_processed = (((YSBWindow*)ysb_window.get())->getLastTimestamp() - begin_timestamp) / 2;
+    EXPECT_TRUE(number_windows_output == number_windows_processed ||
+                number_windows_output == number_windows_processed + 1);
+
+    output_stream.clear();
 }
 
 /* - Node to Node ---------------------------------------------------------- */
