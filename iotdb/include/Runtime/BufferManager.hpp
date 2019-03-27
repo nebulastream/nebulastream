@@ -41,7 +41,7 @@ private:
   BufferManager &operator=(const BufferManager &);
   ~BufferManager();
 
-  std::map<TupleBufferPtr, bool> buffer_pool;//make bool atomic
+  std::map<TupleBufferPtr, std::atomic<bool>> buffer_pool;//make bool atomic
   size_t maxBufferCnt;
   size_t bufferSizeInByte;
 
