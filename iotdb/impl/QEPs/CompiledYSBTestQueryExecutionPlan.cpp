@@ -41,7 +41,6 @@ bool CompiledYSBTestQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id,
 
             if(hashTable[current_window][campaingCnt] != timeStamp)
             {
-                std::cout << "win" << std::endl;
                 atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
                 window->print();
                 std::fill(hashTable[current_window], hashTable[current_window]+campaingCnt, 0);
