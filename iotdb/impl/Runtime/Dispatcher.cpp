@@ -41,11 +41,13 @@ void Dispatcher::registerQuery(const QueryExecutionPlanPtr qep)
         source_to_query_map[source.get()].emplace_back(qep);
         source->start();
     }
+
     auto windows = qep->getWindows();
     for (auto window : windows) {
         window_to_query_map[window.get()].emplace_back(qep);
         window->setup();
     }
+
     auto sinks = qep->getSinks();
     for (auto sink : sinks) {
         sink_to_query_map[sink.get()].emplace_back(qep);
@@ -56,13 +58,14 @@ void Dispatcher::registerQuery(const QueryExecutionPlanPtr qep)
 void Dispatcher::deregisterQuery(const QueryExecutionPlanPtr qep)
 {
     std::unique_lock<std::mutex> lock(queryMutex);
+
     auto sources = qep->getSources();
     for (auto source : sources) {
         source_to_query_map.erase(source.get());
         source->stop();
     }
-    auto windows = qep->getWindows();
 
+    auto windows = qep->getWindows();
     for (auto window : windows) {
         window_to_query_map.erase(window.get());
         window->shutdown();

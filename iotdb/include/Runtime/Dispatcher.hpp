@@ -36,6 +36,7 @@ class Dispatcher {
     static Dispatcher& instance();
 
     void unblockThreads() { cv.notify_all(); }
+    const size_t getProcessedTasks() const { return processedTasks; }
     void resetDispatcher();
 
   private:
