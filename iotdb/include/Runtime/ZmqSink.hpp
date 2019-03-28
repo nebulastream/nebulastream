@@ -1,13 +1,12 @@
 #ifndef ZMQSINK_HPP
 #define ZMQSINK_HPP
 
-#include <Runtime/DataSink.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <zmq.hpp>
+
+#include <Runtime/DataSink.hpp>
 
 namespace iotdb {
 

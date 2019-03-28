@@ -17,6 +17,11 @@ Dispatcher::Dispatcher()
 
       Dispatcher::~Dispatcher()
 {
+    resetDispatcher();
+}
+
+void Dispatcher::resetDispatcher()
+{
     IOTDB_DEBUG("Dispatcher: Destroy Task Queue")
     task_queue.clear();
     IOTDB_DEBUG("Dispatcher: Destroy source_to_query_map")
@@ -36,11 +41,13 @@ void Dispatcher::registerQuery(const QueryExecutionPlanPtr qep)
         source_to_query_map[source.get()].emplace_back(qep);
         source->start();
     }
+
     auto windows = qep->getWindows();
     for (auto window : windows) {
         window_to_query_map[window.get()].emplace_back(qep);
         window->setup();
     }
+
     auto sinks = qep->getSinks();
     for (auto sink : sinks) {
         sink_to_query_map[sink.get()].emplace_back(qep);
@@ -51,13 +58,14 @@ void Dispatcher::registerQuery(const QueryExecutionPlanPtr qep)
 void Dispatcher::deregisterQuery(const QueryExecutionPlanPtr qep)
 {
     std::unique_lock<std::mutex> lock(queryMutex);
+
     auto sources = qep->getSources();
     for (auto source : sources) {
         source_to_query_map.erase(source.get());
         source->stop();
     }
-    auto windows = qep->getWindows();
 
+    auto windows = qep->getWindows();
     for (auto window : windows) {
         window_to_query_map.erase(window.get());
         window->shutdown();
@@ -79,7 +87,15 @@ TaskPtr Dispatcher::getWork(bool& run_thread)
         if (!run_thread)
             return TaskPtr();
     }
-    TaskPtr task = task_queue.front();
+
+    TaskPtr task;
+    if (run_thread) {
+        task = task_queue.front();
+    }
+    else {
+        task = TaskPtr();
+    }
+
     task_queue.erase(task_queue.begin());
     IOTDB_DEBUG("Dispatcher: give task" << task.get() << " to thread (getWork())")
     return task;

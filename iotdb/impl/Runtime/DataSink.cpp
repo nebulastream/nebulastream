@@ -74,11 +74,11 @@ const DataSinkPtr createBinaryFileSink(const Schema& schema, const std::string& 
     return std::make_shared<FileOutputSink>(schema /*, path_to_file */);
 }
 
-const DataSinkPtr createPrintSink(std::ostream& out) { return std::make_shared<PrintSink>(/* out */); }
+const DataSinkPtr createPrintSink(std::ostream& out) { return std::make_shared<PrintSink>(out); }
 
 const DataSinkPtr createPrintSink(const Schema& schema, std::ostream& out)
 {
-    return std::make_shared<PrintSink>(schema /*, out */);
+    return std::make_shared<PrintSink>(schema, out);
 }
 
 const DataSinkPtr createZmqSink(const Schema& schema, const std::string& host, const uint16_t port)

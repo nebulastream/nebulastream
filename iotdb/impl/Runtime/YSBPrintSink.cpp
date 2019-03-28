@@ -1,4 +1,5 @@
 #include <cstring>
+#include <iostream>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -25,7 +26,8 @@ YSBPrintSink::YSBPrintSink()
                     .addField("event_type", 16)
                     .addField("ad_type", 16)
                     .addField("current_ms", UINT64)
-                    .addField("ip", INT32))
+                    .addField("ip", INT32),
+                std::cout)
 {
 }
 
