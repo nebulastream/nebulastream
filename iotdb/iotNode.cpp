@@ -172,14 +172,14 @@ int main(int argc, char* argv[])
     setupLogging();
     try
     {
-        if (argc != 3)
+        if (argc != 4)
         {
-          std::cerr << "Usage: blocking_tcp_echo_client <host> <port>\n";
+          std::cerr << "Usage: blocking_tcp_echo_client <host> <port> <hostname> \n";
           return 1;
         }
         std::string host = argv[1];
         std::string port = argv[2];
-
+        std::string hostName = argv[3];
         bool successReg = registerNodeInFog(host, port);
 
         IOTDB_DEBUG("IOTNODE: initialize node engine")
