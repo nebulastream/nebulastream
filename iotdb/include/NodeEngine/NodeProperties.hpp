@@ -20,46 +20,31 @@ typedef unsigned long uint64_t;
 #define PROC_STAT_CPU_COLUMNS 11
 
 class NodeProperties {
-  public:
-    NodeProperties(){};
+public:
+  NodeProperties():nbrProcessors(0) {};
 
     ~NodeProperties() {}
 
-    void print();
-    std::string dump(int setw = -1);
-    JSON load(const char* metricsBuffer);
-    JSON load();
+  void print();
+  std::string dump(int setw=-1);
+  void load(const char *metricsBuffer);
+  JSON load();
 
     void readCpuStats();     // read cpu inforamtion
     void readMemStats();     // read memory information
     void readFsStats();      // read file system information
     void readNetworkStats(); // read network information
 
-    std::string getCpuStats();
-    std::string getNetworkStats();
-    std::string getMemStats();
-    std::string getFsStats();
+  std::string getCpuStats();
+  std::string getNetworkStats();
+  std::string getMemStats();
+  std::string getFsStats();
+  std::string getMetric();
+  std::string getHostname();
 
-  private:
-    /*
-     * memory information
-     * /proc/meminfo
-     * /proc/loadavg
-     */
-    //  struct sysinfo *sinfo;
-    /*
-     * file system information
-     * /proc/diskstats
-     */
-    //  struct statvfs *svfs;
-    /*
-     * network information
-     * /proc/net/dev
-     *
-     */
-    //  struct ifaddrs *ifaddr;
 
-    long nbrProcessors;
+private:
+  long nbrProcessors;
 
     JSON _metrics;
     JSON _mem;
@@ -67,5 +52,8 @@ class NodeProperties {
     JSON _cpus;
     JSON _nets;
 };
-} // namespace iotdb
+
+typedef std::shared_ptr<NodeProperties> NodePropertiesPtr;
+
+}
 #endif

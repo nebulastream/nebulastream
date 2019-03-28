@@ -28,6 +28,8 @@
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/stream.hpp>
 
+#include <QEPs/CompiledYSBTestQueryExecutionPlan.hpp>
+
 using namespace iotdb;
 
 void printWelcome()
@@ -132,10 +134,10 @@ void createTestTopo(FogTopologyManager& fMgnr)
 
 NodeEnginePtr createTestNode()
 {
-    NodeEnginePtr node = std::make_shared<NodeEngine>(1);
-    JSON props = node->getNodeProperties();
-    node->printNodeProperties();
-    return node;
+	NodeEnginePtr node = std::make_shared<NodeEngine>();
+	JSON props = node->getNodeProperties();
+//	node->printNodeProperties();
+	return node;
 }
 
 void setupLogging()
@@ -207,28 +209,23 @@ static QueryExecutionPlan load(std::string const& s)
     return std::move(p);
 }
 
-int main(int argc, const char* argv[])
-{
-    log4cxx::Logger::getLogger("IOTDB")->setLevel(log4cxx::Level::getInfo());
-    Schema schema = Schema::create()
-                        .addField("campaign_id", 16)
-                        .addField("event_type", 9)
-                        .addField("current_ms", 8)
-                        .addField("id", 4);
+int main(int argc, const char *argv[]) {
+	log4cxx::Logger::getLogger("IOTDB")->setLevel(log4cxx::Level::getInfo());
+	Schema schema = Schema::create()
+		.addField("campaign_id", 16)
+		.addField("event_type", 9)
+		.addField("current_ms", 8)
+		.addField("id", 4);
 
-    setupLogging();
+	setupLogging();
+//	QueryExecutionPlanPtr q = createTestQEP();
+    CompiledYSBTestQueryExecutionPlanPtr q(new CompiledYSBTestQueryExecutionPlan());
     std::string filename("");
     filename += "/home/zeuchste/git/IoTDB/iotdb/build/tests/demofile.txt";
-    QueryExecutionPlanPtr q = createTestQEP();
 
-    DataSourcePtr src = createYSBSource(100, 10, /*pregen*/ false);
-    q->addDataSource(src);
-    DataSourcePtr zmq_src = createZmqSource(schema, "127.0.0.1", 55555);
-    q->addDataSource(zmq_src);
-
-    WindowPtr window = createTestWindow(10);
-    window->setup();
-    q->addWindow(window);
+	WindowPtr window = createTestWindow(/*campainCnt*/10, /*windowSizeInSec*/5);
+	window->setup();
+	q->addWindow(window);
 
     DataSinkPtr sink = createYSBPrintSink();
     q->addDataSink(sink);

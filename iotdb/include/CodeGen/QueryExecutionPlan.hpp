@@ -21,8 +21,7 @@ class QueryExecutionPlan;
 typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 
 class QueryExecutionPlan {
-  public:
-    friend class boost::serialization::access;
+public:
     QueryExecutionPlan();
 
     virtual bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf);
@@ -52,29 +51,37 @@ class QueryExecutionPlan {
 
     void print()
     {
-        for (auto source : sources) {
-            IOTDB_INFO("Source:" << source)
-            IOTDB_INFO("\t Generated Buffers=" << source->getNumberOfGeneratedBuffers())
-            IOTDB_INFO("\t Generated Tuples=" << source->getNumberOfGeneratedTuples())
-            IOTDB_INFO("\t Schema=" << source->getSourceSchema())
-        }
-        for (auto window : windows) {
-            IOTDB_INFO("Window:" << window)
-            IOTDB_INFO("\t NumberOfEntries=" << window->getNumberOfEntries())
-            IOTDB_INFO("Window Final Result:")
-            window->print();
-        }
-        for (auto sink : sinks) {
-            IOTDB_INFO("Sink:" << sink)
-            IOTDB_INFO("\t Generated Buffers=" << sink->getNumberOfProcessedBuffers())
-            IOTDB_INFO("\t Generated Tuples=" << sink->getNumberOfProcessedTuples())
-        }
+		for (auto source : sources) {
+			IOTDB_INFO("Source:" << source)
+			IOTDB_INFO("\t Generated Buffers=" << source->getNumberOfGeneratedBuffers())
+			IOTDB_INFO("\t Generated Tuples=" << source->getNumberOfGeneratedTuples())
+			IOTDB_INFO("\t Schema=" << source->getSourceSchema())
+		}
+		for (auto window : windows) {
+			IOTDB_INFO("Window:" << window)
+			IOTDB_INFO("\t NumberOfEntries=" << window->getNumberOfEntries())
+			IOTDB_INFO("Window Result:")
+			window->print();
+		}
+		for (auto sink : sinks) {
+			IOTDB_INFO("Sink:" << sink)
+			IOTDB_INFO("\t Generated Buffers=" << sink->getNumberOfProcessedBuffers())
+			IOTDB_INFO("\t Generated Tuples=" << sink->getNumberOfProcessedTuples())
+		}
     }
 
+protected:
+    friend class boost::serialization::access;
+
+    QueryExecutionPlan(const std::vector<DataSourcePtr> &_sources,
+          const std::vector<PipelineStagePtr> &_stages, 
+          const std::map<DataSource *, uint32_t> &_source_to_stage,
+          const std::map<uint32_t, uint32_t> &_stage_to_dest);
+
   protected:
-    QueryExecutionPlan(const std::vector<DataSourcePtr>& _sources, const std::vector<PipelineStagePtr>& _stages,
-                       const std::map<DataSource*, uint32_t>& _source_to_stage,
-                       const std::map<uint32_t, uint32_t>& _stage_to_dest);
+//    QueryExecutionPlan(const std::vector<DataSourcePtr>& _sources, const std::vector<PipelineStagePtr>& _stages,
+//                       const std::map<DataSource*, uint32_t>& _source_to_stage,
+//                       const std::map<uint32_t, uint32_t>& _stage_to_dest);
 
     std::vector<DataSourcePtr> sources;
     std::vector<DataSinkPtr> sinks;
