@@ -89,9 +89,9 @@ target_link_libraries(runtime-data-source-sink-tests iotdb ${LIBRARIES} ${GTEST_
 add_test(NAME runtime-data-source-sink-tests COMMAND runtime-data-source-sink-tests)
 
 # Yahoo Streaming Benchmark Tests
-add_executable(yahoo-streaming-benchmark-tests "UnitTests/YahooStreamingBenchmarkTest.cpp")
-target_link_libraries(yahoo-streaming-benchmark-tests iotdb ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
-add_test(NAME yahoo-streaming-benchmark-tests COMMAND yahoo-streaming-benchmark-tests)
+#add_executable(yahoo-streaming-benchmark-tests "UnitTests/YahooStreamingBenchmarkTest.cpp")
+#target_link_libraries(yahoo-streaming-benchmark-tests iotdb ${GTEST_LIBRARIES} ${CMAKE_DL_LIBS})
+#add_test(NAME yahoo-streaming-benchmark-tests COMMAND yahoo-streaming-benchmark-tests)
 
 # YSB Performance Test
 add_executable(ysb_performance_test "PerformanceTests/YSB_SingleNode_PerformanceTest.cpp")

@@ -4,12 +4,12 @@ namespace iotdb {
 
 void FogRunTime::registerNode(NodeEnginePtr ptr)
 {
-    if (nodeInfos.find(ptr->getId()) == nodeInfos.end()) {
-        nodeInfos[ptr->getId()] = ptr;
-    }
-    else {
-        assert(0);
-    }
+//	if ( nodeInfos.find(ptr->getId()) == nodeInfos.end() )
+//	{
+//		nodeInfos[ptr->getId()] = ptr;
+//	} else {
+//		assert(0);
+//	}
 }
 
 void FogRunTime::deployQuery(FogExecutionPlan fogPlan) { assert(0); }

@@ -164,10 +164,10 @@ class YahooStreamingBenchmarkTest : public testing::Test {
 
             // windowing vars
             YSBWindow* window = (YSBWindow*)this->getWindows()[0].get();
-            size_t window_size_sec = window->getWindowSizeSec();
-            size_t campaign_count = window->getCampaignCount();
+            size_t window_size_sec = window->getWindowSizeInSec();
+            size_t campaign_count = window->getCampaingCnt();
             size_t current_window = window->getCurrentWindow();
-            size_t last_timestamp = window->getLastTimestamp();
+            size_t last_timestamp = window->getLastChangeTimeStamp();
             std::atomic<size_t>** hashTable = window->getHashTable();
 
             // remember first timestamp for checking

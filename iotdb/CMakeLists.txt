@@ -138,9 +138,13 @@ add_executable(ClangAstBuilder ClangAstBuilder.cpp)
 target_link_libraries(ClangAstBuilder iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
 target_include_directories(ClangAstBuilder PUBLIC "include")
 
-#add_executable(iotNode iotNode.cpp)
-#target_link_libraries(iotNode iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS})
-#target_include_directories(iotNode PUBLIC "include")
+add_executable(iotNode iotNode.cpp)
+target_link_libraries(iotNode iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS})
+target_include_directories(iotNode PUBLIC "include")
+
+add_executable(iotBroker iotBroker.cpp)
+target_link_libraries(iotBroker iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS})
+target_include_directories(iotBroker PUBLIC "include")
 
 add_executable(iotMaster iotMaster.cpp)
 target_link_libraries(iotMaster iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
