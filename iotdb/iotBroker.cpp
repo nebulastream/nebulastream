@@ -115,7 +115,7 @@ std::string generateTestQEP()
     std::string filename = "/home/zeuchste/git/IoTDB/iotdb/build/tests/testQep.txt";
     CompiledYSBTestQueryExecutionPlanPtr q(new CompiledYSBTestQueryExecutionPlan());
 
-    DataSourcePtr src = createYSBSource(10000000,10, /*pregen*/ false);
+    DataSourcePtr src = createYSBSource(10000000,10, /*pregen*/ true);
     q->addDataSource(src);
     WindowPtr window = createTestWindow(10,2);
     window->setup();
