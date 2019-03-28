@@ -29,7 +29,8 @@ public:
 	void start();
 	void stop();
 
-	JSON getNodeProperties();
+	JSON getNodePropertiesAsJSON();
+	NodeProperties* getNodeProperties();
 
 private:
   NodeProperties* props;
