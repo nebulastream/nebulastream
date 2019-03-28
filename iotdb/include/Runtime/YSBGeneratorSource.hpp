@@ -13,37 +13,46 @@
 namespace iotdb {
 
 class YSBFunctor {
-  public:
-    YSBFunctor() : campaingCnt(0){};
+public:
+	YSBFunctor();
 
-    YSBFunctor(size_t pCampaingCnt) : campaingCnt(pCampaingCnt){};
-    TupleBufferPtr operator()();
+	YSBFunctor(size_t campaingCnt);
 
-  private:
-    size_t campaingCnt;
+	TupleBufferPtr operator()(size_t numberOfCampaings);
+
+private:
+	friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int version)
+    {
+        ar & campaingCnt;
+    }
+
+   size_t campaingCnt;
 };
 
 class YSBGeneratorSource : public DataSource {
-  public:
-    YSBGeneratorSource(const Schema& schema, const uint64_t pNum_buffers_to_process, size_t pCampaingCnt,
-                       bool preGenerated);
-
-    TupleBufferPtr receiveData();
-    const std::string toString() const;
-    uint64_t numberOfCampaings;
-
-  private:
+public:
     YSBGeneratorSource();
-    friend class boost::serialization::access;
-    template <class Archive> void serialize(Archive& ar, const unsigned int version)
-    {
-        ar& boost::serialization::base_object<DataSource>(*this);
-        ar& numberOfCampaings;
-    }
+	YSBGeneratorSource(const Schema& schema, const uint64_t pNum_buffers_to_process, size_t pCampaingCnt, bool preGenerated);
 
-    iotdb::YSBFunctor functor;
-    bool preGenerated;
-    TupleBufferPtr copyBuffer;
+  TupleBufferPtr receiveData();
+  const std::string toString() const;
+  uint64_t numberOfCampaings;
+
+private:
+	friend class boost::serialization::access;
+	template<class Archive>
+	void serialize(Archive & ar, const unsigned int version)
+	{
+		ar & boost::serialization::base_object<DataSource>(*this);
+		ar & numberOfCampaings;
+		ar & preGenerated;
+	}
+
+  iotdb::YSBFunctor functor;
+  bool preGenerated;
+  TupleBufferPtr copyBuffer;
 };
 
 } // namespace iotdb
@@ -51,5 +60,6 @@ class YSBGeneratorSource : public DataSource {
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
 BOOST_CLASS_EXPORT_KEY(iotdb::YSBGeneratorSource)
+BOOST_CLASS_EXPORT_KEY(iotdb::YSBFunctor)
 
 #endif /* INCLUDE_RUNTIME_YSBGENERATORSOURCE_HPP_ */

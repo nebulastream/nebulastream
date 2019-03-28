@@ -6,20 +6,37 @@
 #include <boost/serialization/export.hpp>
 #include <iostream>
 BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::YSBGeneratorSource);
+BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::YSBFunctor);
 
 namespace iotdb {
 
-YSBGeneratorSource::YSBGeneratorSource() : numberOfCampaings(0), preGenerated(false) {}
-
-YSBGeneratorSource::YSBGeneratorSource(const Schema& schema, const uint64_t pNum_buffers_to_process,
-                                       size_t pCampaingCnt, bool preGenerated)
-    : DataSource(schema), functor(pCampaingCnt), preGenerated(preGenerated)
+YSBFunctor::YSBFunctor(): campaingCnt(0)
 {
-    this->num_buffers_to_process = pNum_buffers_to_process;
-    this->numberOfCampaings = pCampaingCnt;
-    if (preGenerated) {
-        copyBuffer = functor();
-    }
+
+}
+
+YSBFunctor::YSBFunctor(size_t pCampaingCnt): campaingCnt(pCampaingCnt)
+{
+
+}
+
+
+YSBGeneratorSource::YSBGeneratorSource() : numberOfCampaings(0), preGenerated(false)
+{
+
+}
+
+YSBGeneratorSource::YSBGeneratorSource(const Schema& schema,
+        const uint64_t pNum_buffers_to_process,
+        size_t pCampaingCnt, bool preGenerated)
+      : DataSource(schema), functor(pCampaingCnt), preGenerated(preGenerated)
+{
+      this->num_buffers_to_process = pNum_buffers_to_process;
+      this->numberOfCampaings = pCampaingCnt;
+      if(preGenerated)
+      {
+          copyBuffer = functor(pCampaingCnt);
+      }
 }
 
 struct __attribute__((packed)) ysbRecord {
@@ -97,35 +114,36 @@ void generate(ysbRecord* data, size_t generated_tuples_this_pass, size_t campain
     }
 }
 
-TupleBufferPtr YSBFunctor::operator()()
+TupleBufferPtr YSBFunctor::operator()(size_t numberOfCampaings)
 {
     TupleBufferPtr buf = BufferManager::instance().getBuffer();
     assert(buf->buffer != NULL);
     uint64_t generated_tuples_this_pass = buf->buffer_size / sizeof(ysbRecord);
 
-    generate((ysbRecord*)buf->buffer, generated_tuples_this_pass, campaingCnt);
+	generate((ysbRecord*) buf->buffer, generated_tuples_this_pass, numberOfCampaings);
 
     buf->tuple_size_bytes = sizeof(ysbRecord);
     buf->num_tuples = generated_tuples_this_pass;
     return buf;
 }
 
-TupleBufferPtr YSBGeneratorSource::receiveData()
-{
-    // we wait until the buffer is filled
-    if (!preGenerated) {
-        TupleBufferPtr buf = functor();
-        generatedTuples += buf->num_tuples;
-        generatedBuffers++;
-        return buf;
-    }
-    else {
-        TupleBufferPtr buf = BufferManager::instance().getBuffer();
-        buf->copyInto(copyBuffer);
-        generatedBuffers++;
-        generatedTuples += buf->num_tuples;
-        return buf;
-    }
+TupleBufferPtr YSBGeneratorSource::receiveData() {
+    //we wait until the buffer is filled
+	if(!preGenerated)
+	{
+		TupleBufferPtr buf = functor(numberOfCampaings);
+		generatedTuples += buf->num_tuples;
+		generatedBuffers++;
+		return buf;
+	}
+	else
+	{
+		TupleBufferPtr buf = BufferManager::instance().getBuffer();
+		buf->copyInto(copyBuffer);
+		generatedBuffers++;
+		generatedTuples += buf->num_tuples;
+		return buf;
+	}
 }
 
 const std::string YSBGeneratorSource::toString() const

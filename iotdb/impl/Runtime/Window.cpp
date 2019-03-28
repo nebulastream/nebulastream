@@ -5,18 +5,13 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
 BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::Window)
+namespace iotdb{
 
-namespace iotdb {
 
-const WindowPtr createTestWindow(size_t pCampaignCnt)
-{
-    WindowPtr win(new YSBWindow(pCampaignCnt));
-    return win;
-}
+const WindowPtr createTestWindow(size_t campainCnt, size_t windowSizeInSec) {
 
-const WindowPtr createTestWindow(size_t pWindowSizeInSec, size_t pCampaignCnt)
-{
-    WindowPtr win(new YSBWindow(pWindowSizeInSec, pCampaignCnt));
+    WindowPtr win(new YSBWindow(campainCnt, windowSizeInSec));
+
     return win;
 }
 
