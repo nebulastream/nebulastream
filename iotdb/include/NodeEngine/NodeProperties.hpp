@@ -40,17 +40,21 @@ public:
   std::string getMemStats();
   std::string getFsStats();
   std::string getMetric();
-  std::string getHostname();
+  std::string getClientName();
+  std::string getClientPort();
+  void setClientName(std::string clientname);
+  void setClientPort(std::string clientPort);
 
 
 private:
-  long nbrProcessors;
-
+    long nbrProcessors;
     JSON _metrics;
     JSON _mem;
     JSON _fs;
     JSON _cpus;
     JSON _nets;
+    std::string clientName;
+    std::string clientPort;
 };
 
 typedef std::shared_ptr<NodeProperties> NodePropertiesPtr;
