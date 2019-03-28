@@ -1,12 +1,15 @@
 #ifndef INCLUDE_RUNTIME_WINDOW_HPP_
 #define INCLUDE_RUNTIME_WINDOW_HPP_
-#include <Util/Logger.hpp>
+
 #include <atomic>
+#include <iostream>
+#include <memory>
+
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/vector.hpp>
-#include <iostream>
-#include <memory>
+
+#include <Util/Logger.hpp>
 
 namespace iotdb {
 class Window;

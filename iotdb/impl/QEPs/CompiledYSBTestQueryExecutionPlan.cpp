@@ -21,7 +21,7 @@ bool CompiledYSBTestQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id,
     YSBWindow* window = (YSBWindow*)this->getWindows()[0].get();
     size_t current_window = window->getCurrentWindow();
     size_t windowSizeInSec = window->getWindowSizeInSec();
-    size_t campaingCnt = window->getCampaingCnt();
+    size_t campaingCnt = window->getCampaignCnt();
     std::atomic<size_t>** hashTable = window->getHashTable();
     for(size_t i = 0; i < buf->num_tuples; i++)
     {
