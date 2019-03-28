@@ -31,8 +31,17 @@ using namespace iotdb;
 using namespace std;
 const int max_length = 1024*10;
 const size_t serverPort = 5555;
-const size_t clientPort = 6666;
-const std::string clientPortStr = "6666";
+
+//struct nodeStruct
+//{
+//    nodeStruct(std::string pHostname, std::string pPort):
+//        hostName(pHostname), port(pPort){};
+//
+//    std::string hostName;
+//    std::string port;
+//};
+//const size_t clientPort = 6666;
+//const std::string clientPortStr = "6666";
 
 enum NODE_COMMANDS {
     START_QUERY = 1,
@@ -57,10 +66,11 @@ void session(socket_ptr sock)
       ptr->load(data);
       IOTDB_DEBUG("IOTBROKER: sending replay")
       char reply[14];
-      IOTDB_DEBUG("IOTBROKER: Host= " << ptr->getHostname() << " try to register")
-      if ( nodes.find(ptr->getHostname()) == nodes.end() ) {
+      IOTDB_DEBUG("IOTBROKER: Host= " << ptr->getClientName() << ":" << ptr->getClientPort() << " try to register")
+      if ( nodes.find(ptr->getClientName()) == nodes.end() ) {
           IOTDB_DEBUG("IOTBROKER: registering node")
-          nodes[ptr->getHostname()] = ptr;
+
+          nodes[ptr->getClientName()] = ptr;
           memcpy(reply, "REG_COMPLETED", 13);
       } else {
           IOTDB_DEBUG("IOTBROKER: Node already registered")
@@ -139,11 +149,11 @@ void sendCommandToNodes(std::string command)
         boost::asio::io_service io_service;
         tcp::resolver resolver(io_service);
         IOTDB_DEBUG("IOTBROKER: resolve address for " << node.first)
-        tcp::resolver::query query(tcp::v4(), node.first, clientPortStr.c_str(), boost::asio::ip::resolver_query_base::numeric_service);
+        tcp::resolver::query query(tcp::v4(), node.first, node.second->getClientPort(), boost::asio::ip::resolver_query_base::numeric_service);
         tcp::resolver::iterator iterator = resolver.resolve(query);
         tcp::socket s(io_service);
         s.connect(*iterator);
-        IOTDB_DEBUG("IOTBROKER: connected to " << node.first << ":" << clientPort << " successfully")
+        IOTDB_DEBUG("IOTBROKER: connected to " << node.first << ":" << node.second->getClientPort() << " successfully")
 
 
         if(command == "3")

@@ -6,7 +6,7 @@
 using namespace std;
 namespace iotdb{
 //todo: better return ptr ?
-JSON NodeEngine::getNodeProperties()
+JSON NodeEngine::getNodePropertiesAsJSON()
 {
 	props->readMemStats();
 	props->readCpuStats();
@@ -16,6 +16,10 @@ JSON NodeEngine::getNodeProperties()
 	return props->load();
 }
 
+NodeProperties* NodeEngine::getNodeProperties()
+{
+    return props;
+}
 
 void NodeEngine::deployQuery(QueryExecutionPlanPtr qep)
 {

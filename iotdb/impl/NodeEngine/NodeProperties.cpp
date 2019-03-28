@@ -72,23 +72,42 @@ std::string NodeProperties::getMetric()
     return _metrics.dump();
 }
 
-std::string NodeProperties::getHostname()
+void NodeProperties::setClientName(std::string pClientName)
+{
+    clientName = pClientName;
+};
+
+void NodeProperties::setClientPort(std::string pClientPort)
+{
+    clientPort = pClientPort;
+};
+
+std::string NodeProperties::getClientName()
 {
     std::string host = _nets[0]["hostname"].dump();
-    host.erase(0,1);               //           ^
-    host.erase(host.length()-1,1);               //           ^
+    host.erase(0,1);
+    host.erase(host.length()-1,1);
     return host;
+}
 
+std::string NodeProperties::getClientPort()
+{
+    std::string port = _nets[0]["port"].dump();
+    port.erase(0,1);
+    port.erase(port.length()-1,1);
+    return port;
 }
 
 
 void NodeProperties::readNetworkStats() {
   this->_nets.clear();
-  char hostname[1024];
-  gethostname(hostname, 1024);
-  std::string s1 = hostname;
+  char hostnameChar[1024];
+  gethostname(hostnameChar, 1024);
+  std::string s1 = hostnameChar;
   JSON hname;
-  hname["hostname"] = s1;
+
+  hname["hostname"] = clientName;//TODO: replace this later with s1
+  hname["port"] = clientPort;//TODO: replace this later with s1
   this->_nets.push_back(hname);
 
   struct ifaddrs* ifa;

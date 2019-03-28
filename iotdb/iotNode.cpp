@@ -12,7 +12,8 @@ using namespace iotdb;
 using namespace std; // For strlen.
 
 const size_t serverPort = 5555;
-const size_t clientPort = 6666;
+const std::string serverPortStr = "5555";
+//const size_t clientPort = 6666;
 enum { max_length = 1024*10 };
 enum NODE_COMMANDS {
     START_QUERY = 1,
@@ -45,18 +46,22 @@ void stop()
     ThreadPool::instance().stop();
 }
 
-bool registerNodeInFog(string host, string port)
+bool registerNodeInFog(string host, string clientName, string clientPort)
 {
-    IOTDB_DEBUG("IOTNODE: register with server " << host << ":" << port)
+    IOTDB_DEBUG("IOTNODE: register with server " << host << ":" << serverPort)
     tcp::resolver resolver(io_service);
-    tcp::resolver::query query(tcp::v4(), host, port);
+    tcp::resolver::query query(tcp::v4(), host, serverPortStr);
     tcp::resolver::iterator iterator = resolver.resolve(query);
     tcp::socket s(io_service);
     s.connect(*iterator);
-    IOTDB_DEBUG("connected to " << host << ":" << port << " successfully")
+    IOTDB_DEBUG("connected to " << host << ":" << serverPort << " successfully")
 
     NodeEnginePtr node = std::make_shared<NodeEngine>();
-    JSON props = node->getNodeProperties();
+    NodeProperties* ptr = node->getNodeProperties();
+    ptr->setClientName(clientName);
+    ptr->setClientPort(clientPort);
+
+    JSON props = node->getNodePropertiesAsJSON();
 
     boost::asio::write(s, boost::asio::buffer(props.dump(), props.dump().size()));
 //
@@ -172,15 +177,15 @@ int main(int argc, char* argv[])
     setupLogging();
     try
     {
-        if (argc != 3)
+        if (argc != 4)
         {
-          std::cerr << "Usage: blocking_tcp_echo_client <host> <port>\n";
+          std::cerr << "Usage: blocking_tcp_echo_client <host> <client_port> <clientName> \n";
           return 1;
         }
         std::string host = argv[1];
-        std::string port = argv[2];
-
-        bool successReg = registerNodeInFog(host, port);
+        std::string clientPort = argv[2];
+        std::string clientName = argv[3];
+        bool successReg = registerNodeInFog(host, clientName, clientPort);
 
         IOTDB_DEBUG("IOTNODE: initialize node engine")
         initNodeEngine();
@@ -189,7 +194,7 @@ int main(int argc, char* argv[])
         {
             IOTDB_DEBUG("IOTNODE: waiting for commands")
             boost::asio::io_service io_service;
-            listen(io_service, clientPort);
+            listen(io_service, atoi(clientPort.c_str( )));
         }
         else
         {
