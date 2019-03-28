@@ -25,7 +25,7 @@ class Window {
   private:
     friend class boost::serialization::access;
 };
-const WindowPtr createTestWindow(size_t pCampaingCnt);
+const WindowPtr createTestWindow(size_t pCampaingCnt, size_t windowSizeInSec);
 
 } // namespace iotdb
 #include <boost/archive/text_iarchive.hpp>

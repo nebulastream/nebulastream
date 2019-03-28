@@ -18,27 +18,21 @@ namespace iotdb {
 using JSON = nlohmann::json;
 
 class NodeEngine {
-  public:
-    NodeEngine(uint64_t id) : id(id), threadPool(1)
-    {
-        props = new NodeProperties();
-        iotdb::Dispatcher::instance();
-    }
+public:
+	NodeEngine()
+	{
+		props = new NodeProperties();
+	}
 
-    JSON getNodeProperties();
+	void init();
+	void deployQuery(QueryExecutionPlanPtr ptr);
+	void start();
+	void stop();
 
-    size_t getId() { return id; };
+	JSON getNodeProperties();
 
-    void deployQuery(QueryExecutionPlanPtr ptr);
-
-    void sendNodePropertiesToServer(std::string ip, std::string port);
-
-    void printNodeProperties();
-
-  private:
-    std::vector<pthread_t> threadPool;
-    NodeProperties* props;
-    uint64_t id;
+private:
+  NodeProperties* props;
 };
 
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;

@@ -118,56 +118,64 @@ class YSB_SingleNode_PerformanceTest : public HandCodedQueryExecutionPlan {
 };
 typedef std::shared_ptr<YSB_SingleNode_PerformanceTest> YSB_SingleNode_PerformanceTestPtr;
 
-int test(size_t toProcessedBuffers, size_t threadCnt, size_t campaignCnt, size_t sourceCnt)
-{
-    return 0;
-    YSB_SingleNode_PerformanceTestPtr qep(new YSB_SingleNode_PerformanceTest());
+int test(size_t toProcessedBuffers, size_t threadCnt, size_t campaignCnt, size_t sourceCnt) {
+	return 0;
+	YSB_SingleNode_PerformanceTestPtr qep(new YSB_SingleNode_PerformanceTest());
 
-    std::vector<DataSourcePtr> sources;
-    for (size_t i = 0; i < sourceCnt; i++) {
-        sources.push_back(createYSBSource(toProcessedBuffers, campaignCnt, /*pregen*/ true));
-        qep->addDataSource(sources[i]);
-    }
+	std::vector<DataSourcePtr> sources;
+	for(size_t i = 0; i < sourceCnt; i++)
+	{
+		sources.push_back(createYSBSource(toProcessedBuffers,campaignCnt, /*pregen*/ true));
+		qep->addDataSource(sources[i]);
+	}
 
-    WindowPtr window = createTestWindow(campaignCnt);
-    qep->addWindow(window);
+	WindowPtr window = createTestWindow(campaignCnt,1);
+	qep->addWindow(window);
 
-    Dispatcher::instance().registerQuery(qep);
+	Dispatcher::instance().registerQuery(qep);
 
-    ThreadPool::instance().setNumberOfThreads(threadCnt);
+	ThreadPool::instance().setNumberOfThreads(threadCnt);
 
-    Timestamp start = getTimestamp();
-    ThreadPool::instance().start(1);
+	Timestamp start = getTimestamp();
+	ThreadPool::instance().start(1);
 
-    size_t endedRuns = 0;
-    while (sourceCnt != endedRuns) {
-        endedRuns = 0;
-        for (size_t i = 0; i < sourceCnt; i++) {
-            if (!sources[i]->isRunning()) {
-                endedRuns++;
-            }
-        }
-        //		std::cout << "----- processing current res is:-----" << std::endl;
-        //		std::cout << "Waiting 1 seconds " << std::endl;
-        //		std::this_thread::sleep_for(std::chrono::seconds(1));
-    }
-    Timestamp end = getTimestamp();
-    double elapsed_time = double(end - start) / (1024 * 1024 * 1024);
+	size_t endedRuns = 0;
+	while(sourceCnt != endedRuns){
+		endedRuns = 0;
+		for(size_t i = 0; i < sourceCnt; i++)
+		{
+			if(!sources[i]->isRunning())
+			{
+				endedRuns++;
+			}
+		}
+//		std::cout << "----- processing current res is:-----" << std::endl;
+//		std::cout << "Waiting 1 seconds " << std::endl;
+//		std::this_thread::sleep_for(std::chrono::seconds(1));
+	}
+	Timestamp end = getTimestamp();
+	double elapsed_time = double(end - start) / (1024 * 1024 * 1024);
 
-    size_t processCnt = 0;
-    for (size_t i = 0; i < sourceCnt; i++) {
-        processCnt += sources[i]->getNumberOfGeneratedTuples();
-    }
+	size_t processCnt = 0;
+	for(size_t i = 0; i < sourceCnt; i++)
+	{
+		processCnt += sources[i]->getNumberOfGeneratedTuples();
+	}
 
-    std::cout << "time=" << elapsed_time << " rec/sec=" << processCnt / elapsed_time
-              << " Processed Buffers=" << toProcessedBuffers << " Processed tuples=" << processCnt
-              << " threads=" << threadCnt << " campaigns=" << campaignCnt << " sources=" << sourceCnt << std::endl;
+	std::cout << "time=" << elapsed_time << " rec/sec=" << processCnt/elapsed_time
+			<< " Processed Buffers=" << toProcessedBuffers
+			<< " Processed tuples=" << processCnt
+			<< " threads=" << threadCnt
+			<< " campaigns="<< campaignCnt
+			<< " sources=" << sourceCnt
+			<< std::endl;
 
-    ThreadPool::instance().stop();
+	ThreadPool::instance().stop();
 
-    Dispatcher::instance().printStatistics(qep);
-    Dispatcher::instance().deregisterQuery(qep);
+	Dispatcher::instance().printStatistics(qep);
+	Dispatcher::instance().deregisterQuery(qep);
 }
+
 } // namespace iotdb
 
 void setupLogging()
