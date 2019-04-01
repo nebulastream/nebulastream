@@ -137,7 +137,7 @@ class ReturnStatement : public Statement {
 
     VarRefStatement var_ref_;
 
-    virtual StatementType getStamentType() const {}
+    virtual StatementType getStamentType() const { return RETURN_STMT; }
     virtual const CodeExpressionPtr getCode() const
     {
         std::stringstream stmt;
@@ -177,7 +177,9 @@ class IfElseStatement : public Statement {
     IfElseStatement(const Statement& cond_true, const Statement& cond_false);
 
     virtual StatementType getStamentType() const { return IF_ELSE_STMT; }
-    virtual const CodeExpressionPtr getCode() const {}
+    virtual const CodeExpressionPtr getCode() const {
+        return std::make_shared<CodeExpression>("");
+    }
     virtual ~IfElseStatement();
 };
 
@@ -204,8 +206,10 @@ class ForLoopStatement : public Statement {
 typedef ForLoopStatement FOR;
 
 class FunctionCallStatement : public Statement {
-    virtual StatementType getStamentType() const {}
-    virtual const CodeExpressionPtr getCode() const {}
+    virtual StatementType getStamentType() const { return FUNC_CALL_STMT; }
+    virtual const CodeExpressionPtr getCode() const {
+        return std::make_shared<CodeExpression>("");
+    }
     virtual ~FunctionCallStatement();
 };
 
