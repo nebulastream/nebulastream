@@ -23,7 +23,7 @@ YSBFunctor::YSBFunctor(size_t pCampaingCnt): campaingCnt(pCampaingCnt)
 
 YSBGeneratorSource::YSBGeneratorSource() : numberOfCampaings(0), preGenerated(false)
 {
-
+    IOTDB_DEBUG("YSBGeneratorSource: defualt constructor")
 }
 
 YSBGeneratorSource::YSBGeneratorSource(const Schema& schema,
@@ -138,6 +138,12 @@ TupleBufferPtr YSBGeneratorSource::receiveData() {
 	}
 	else
 	{
+	    if(!copyBuffer)
+	    {
+	        IOTDB_DEBUG("YSBGeneratorSource init buffer")
+	        copyBuffer = functor(numberOfCampaings);
+	    }
+
 		TupleBufferPtr buf = BufferManager::instance().getBuffer();
 		buf->copyInto(copyBuffer);
 		generatedBuffers++;

@@ -61,10 +61,10 @@ void Dispatcher::deregisterQuery(const QueryExecutionPlanPtr qep)
 {
     size_t endTime = std::chrono::duration_cast<NanoSeconds>(Clock::now().time_since_epoch()).count();
     size_t elapsedTime = double(endTime - startTime)  / (1024 * 1024 * 1024);
-    std::cout << "processedTuple=" << processedTuple << std::endl;
-    std::cout << "processedTasks=" << processedTasks << std::endl;
-    std::cout << "timeInSec=" << elapsedTime << " task/sec=" << processedTasks/elapsedTime
-            << " tups/sec=" << processedTuple/elapsedTime << std::endl;
+    IOTDB_RES("processedTuple=" << processedTuple <<
+     "processedTasks=" << processedTasks)
+    IOTDB_RES("timeInSec=" << elapsedTime << " task/sec=" << processedTasks/elapsedTime
+            << " tups/sec=" << processedTuple/elapsedTime)
     std::unique_lock<std::mutex> lock(queryMutex);
 
     auto sources = qep->getSources();

@@ -50,7 +50,7 @@ void printWelcome()
 InputQueryPtr createTestQuery()
 {
     Config config =
-        Config::create().withParallelism(1).withPreloading().withBufferSize(1000).withNumberOfPassesOverInput(1);
+        Config::create();
 
     Schema schema = Schema::create().addField("", INT32);
 
@@ -70,7 +70,7 @@ InputQueryPtr createTestQuery()
 InputQueryPtr createYSBTestQuery()
 {
     Config config =
-        Config::create().withParallelism(1).withPreloading().withBufferSize(1000).withNumberOfPassesOverInput(1);
+        Config::create();
 
     //	  Schema schema = Schema::create().addField("",INT32);
 

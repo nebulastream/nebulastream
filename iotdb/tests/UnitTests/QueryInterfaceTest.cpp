@@ -20,9 +20,8 @@ namespace iotdb {
 void createQuery()
 {
     // define config
-    Config config =
-        Config::create().withParallelism(1).withPreloading().withBufferSize(1000).withNumberOfPassesOverInput(1);
-
+    Config config = Config::create();
+//    Config::create().withParallelism(1).withPreloading().withBufferSize(1000).withNumberOfPassesOverInput(1);
     Schema schema = Schema::create().addField("", INT32);
 
     /** \brief create a source using the following functions:

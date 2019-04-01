@@ -23,6 +23,7 @@
 #include <string>
 #include <CodeGen/QueryExecutionPlan.hpp>
 #include <QEPs/CompiledYSBTestQueryExecutionPlan.hpp>
+#include <API/Config.hpp>
 
 
 using boost::asio::ip::tcp;
@@ -31,22 +32,6 @@ using namespace iotdb;
 using namespace std;
 const int max_length = 1024*10;
 const size_t serverPort = 5555;
-
-//struct nodeStruct
-//{
-//    nodeStruct(std::string pHostname, std::string pPort):
-//        hostName(pHostname), port(pPort){};
-//
-//    std::string hostName;
-//    std::string port;
-//};
-//const size_t clientPort = 6666;
-//const std::string clientPortStr = "6666";
-
-enum NODE_COMMANDS {
-    START_QUERY = 1,
-    STOP_QUERY = 2,
-    DEPLOY_QEP = 3 };
 
 typedef boost::shared_ptr<tcp::socket> socket_ptr;
 
@@ -123,9 +108,32 @@ std::string generateTestQEP()
 
     DataSinkPtr sink = createYSBPrintSink();
     q->addDataSink(sink);
-    save_qep(q.get(), filename.c_str());
+
+    std::ofstream ofs(filename);
+    boost::archive::text_oarchive oa(ofs);
+    const QueryExecutionPlan* s = q.get();
+    oa << s;
+
+//    save_qep(q.get(), filename.c_str());
 
     return filename;
+}
+
+std::string getTestConfig()
+{
+    Config
+    conf = Config::create()
+            .setBufferCount(1000)
+            .setBufferSizeInByte(4*1024)
+            .setNumberOfWorker(2)
+            .setPreloading(true);
+    std::string filename = "/home/zeuchste/git/IoTDB/iotdb/build/tests/testConfig.txt";
+    std::ofstream ofs(filename);
+    boost::archive::text_oarchive oa(ofs);
+//    const QueryExecutionPlan* s = q.get();
+    oa << conf;
+    return filename;
+
 }
 
 
@@ -170,7 +178,24 @@ void sendCommandToNodes(std::string command)
             memcpy(sendBuffer, &cmdChar, 1);
             memcpy(&sendBuffer[1], data, fileSize);
 
-            boost::asio::write(s, boost::asio::buffer(sendBuffer, fileSize + 32));
+            boost::asio::write(s, boost::asio::buffer(sendBuffer, fileSize + 1));
+            delete sendBuffer;
+            delete data;
+        }
+        else if(command == "4")
+        {
+            IOTDB_DEBUG("IOTBROKER: sending Config")
+            std::string filename = getTestConfig();
+            size_t fileSize = 0;
+            char* data = readFile(filename, fileSize);
+            IOTDB_DEBUG("IOTBROKER: send Config serialized data:" << data)
+
+            char* sendBuffer = new char[fileSize + 1];
+            char cmdChar = command[0];
+            memcpy(sendBuffer, &cmdChar, 1);
+            memcpy(&sendBuffer[1], data, fileSize);
+
+            boost::asio::write(s, boost::asio::buffer(sendBuffer, fileSize + 1));
             delete sendBuffer;
             delete data;
         }
@@ -226,12 +251,13 @@ int main(int argc, char* argv[])
 
     std::string command = "0";
 
-    while(command != "4"){
+    while(command != "5"){
         std::cout << "Please enter node command:";
-        std::cout << "1 = START_QUERY";
-        std::cout << "2 = STOP_QUERY";
-        std::cout << "3 = DEPLOY_QEP";
-        std::cout << "4 = QUIT"  <<std::endl;
+        std::cout << "1 = Start Query";
+        std::cout << "2 = Stop Query";
+        std::cout << "3 = Deploy QEP";
+        std::cout << "4 = Deploy Config";
+        std::cout << "5 = QUIT"  <<std::endl;
         cin >> command; // input the length
 
         IOTDB_DEBUG("IOTBROKER: User entered command " << command)
