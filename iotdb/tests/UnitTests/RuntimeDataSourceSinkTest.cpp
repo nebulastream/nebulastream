@@ -108,7 +108,8 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSourceReceiveData)
         for (size_t i = 0; i != tuple_buffer->num_tuples; ++i) {
             sum += *(tuple++);
         }
-        EXPECT_EQ(sum, 400);
+        size_t expected = 400;
+        EXPECT_EQ(sum, expected);
 
         BufferManager::instance().releaseBuffer(tuple_buffer);
         receiving_finished = true;
@@ -167,7 +168,8 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSinkSendData)
         uint32_t* tuple = (uint32_t*)new_data.data();
         for (size_t i = 0; i != new_data.size() / test_schema.getSchemaSize(); ++i) {
             EXPECT_EQ(*(tuple++), i);
-            EXPECT_EQ(*(tuple++), 100 - i);
+            size_t expected = 100 - i;
+            EXPECT_EQ(*(tuple++), expected);
         }
 
         socket.close();
@@ -215,7 +217,8 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSinkToSource)
         uint32_t* tuple = (uint32_t*)new_data->buffer;
         for (size_t i = 0; i != new_data->num_tuples; ++i) {
             EXPECT_EQ(*(tuple++), i);
-            EXPECT_EQ(*(tuple++), 100 - i);
+            size_t expected = 100 - i;
+            EXPECT_EQ(*(tuple++), expected);
         }
         BufferManager::instance().releaseBuffer(new_data);
         receiving_finished = true;

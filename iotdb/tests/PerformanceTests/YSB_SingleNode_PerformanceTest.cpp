@@ -114,6 +114,7 @@ class YSB_SingleNode_PerformanceTest : public HandCodedQueryExecutionPlan {
             atomic_fetch_add(&hashTable[current_window][bucketPos], size_t(1));
         }
         IOTDB_DEBUG("task " << this << " finished processing")
+        return true;
     }
 };
 typedef std::shared_ptr<YSB_SingleNode_PerformanceTest> YSB_SingleNode_PerformanceTestPtr;

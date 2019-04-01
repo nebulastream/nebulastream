@@ -60,7 +60,8 @@ TEST_F(ClientServerCommunicationTest, add_query)
     EXPECT_NE(reply.get(), nullptr);
 
     auto result = IotClient::add_query_reply(reply);
-    EXPECT_EQ(result, 2);
+    size_t expected = 2;
+    EXPECT_EQ(result, expected);
 
     std::ifstream ifs(test_file_path.c_str());
     std::string file_content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
