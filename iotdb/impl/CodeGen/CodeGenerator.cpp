@@ -163,7 +163,6 @@ std::string toString(const TupleBuffer* buffer, const Schema& schema)
         IOTDB_DEBUG(std::string("Prefix Sum: ") + schema[i]->toString() + std::string(": ") +
                     std::to_string(offsets[i]));
     }
-    uint32_t total_record_size = prefix_sum;
 
     str << "+----------------------------------------------------+" << std::endl;
     str << "|";
