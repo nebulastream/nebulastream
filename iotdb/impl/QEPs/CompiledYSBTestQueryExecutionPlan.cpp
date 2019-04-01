@@ -50,6 +50,7 @@ bool CompiledYSBTestQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id,
         atomic_fetch_add(&hashTable[current_window][bucketPos], size_t(1));
     }
     IOTDB_DEBUG("task " << this << " finished processing")
+    return true;
 }
 
 /**

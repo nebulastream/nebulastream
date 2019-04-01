@@ -32,7 +32,7 @@ void FogRunTime::receiveNodeInfo()
     zmq::context_t context(1);
     zmq::socket_t socket(context, ZMQ_REP);
     socket.bind("tcp://*:5555");
-    int mallocSize = 8096 * 10;
+    size_t mallocSize = 8096 * 10;
     char* dest = (char*)malloc(sizeof(char) * mallocSize);
     // char dest[8096] = { 0 };
     while (true) {

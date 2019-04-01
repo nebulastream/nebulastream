@@ -39,17 +39,19 @@ class FogTopologyManagerTest : public testing::Test {
 
 TEST_F(FogTopologyManagerTest, create_node)
 {
+    size_t invalid_id = INVALID_NODE_ID;
+
     auto worker_node = FogTopologyManager::getInstance().createFogWorkerNode();
     EXPECT_NE(worker_node.get(), nullptr);
     EXPECT_EQ(worker_node->getEntryType(), Worker);
     EXPECT_EQ(worker_node->getEntryTypeString(), "Worker");
-    EXPECT_NE(worker_node->getId(), INVALID_NODE_ID);
+    EXPECT_NE(worker_node->getId(), invalid_id);
 
     auto sensor_node = FogTopologyManager::getInstance().createFogSensorNode();
     EXPECT_NE(sensor_node.get(), nullptr);
     EXPECT_EQ(sensor_node->getEntryType(), Sensor);
     EXPECT_EQ(sensor_node->getEntryTypeString(), "Sensor");
-    EXPECT_NE(sensor_node->getId(), INVALID_NODE_ID);
+    EXPECT_NE(sensor_node->getId(), invalid_id);
 
     EXPECT_EQ(worker_node->getId() + 1, sensor_node->getId());
 }
@@ -91,8 +93,11 @@ TEST_F(FogTopologyManagerTest, create_link)
     auto sensor_node_1 = FogTopologyManager::getInstance().createFogSensorNode();
 
     auto link_node_node = FogTopologyManager::getInstance().createFogTopologyLink(worker_node_0, worker_node_1);
+
+    size_t not_existing_link_id = NOT_EXISTING_LINK_ID;
+
     EXPECT_NE(link_node_node.get(), nullptr);
-    EXPECT_NE(link_node_node->getId(), NOT_EXISTING_LINK_ID);
+    EXPECT_NE(link_node_node->getId(), not_existing_link_id);
     EXPECT_EQ(link_node_node->getSourceNode().get(), worker_node_0.get());
     EXPECT_EQ(link_node_node->getSourceNodeId(), worker_node_0->getId());
     EXPECT_EQ(link_node_node->getDestNode().get(), worker_node_1.get());
@@ -102,7 +107,7 @@ TEST_F(FogTopologyManagerTest, create_link)
 
     auto link_node_sensor = FogTopologyManager::getInstance().createFogTopologyLink(worker_node_2, sensor_node_0);
     EXPECT_NE(link_node_sensor.get(), nullptr);
-    EXPECT_NE(link_node_sensor->getId(), NOT_EXISTING_LINK_ID);
+    EXPECT_NE(link_node_sensor->getId(), not_existing_link_id);
     EXPECT_EQ(link_node_sensor->getSourceNode().get(), worker_node_2.get());
     EXPECT_EQ(link_node_sensor->getSourceNodeId(), worker_node_2->getId());
     EXPECT_EQ(link_node_sensor->getDestNode().get(), sensor_node_0.get());
@@ -112,7 +117,7 @@ TEST_F(FogTopologyManagerTest, create_link)
 
     auto link_sensor_node = FogTopologyManager::getInstance().createFogTopologyLink(sensor_node_1, worker_node_3);
     EXPECT_NE(link_sensor_node.get(), nullptr);
-    EXPECT_NE(link_sensor_node->getId(), NOT_EXISTING_LINK_ID);
+    EXPECT_NE(link_sensor_node->getId(), not_existing_link_id);
     EXPECT_EQ(link_sensor_node->getSourceNode().get(), sensor_node_1.get());
     EXPECT_EQ(link_sensor_node->getSourceNodeId(), sensor_node_1->getId());
     EXPECT_EQ(link_sensor_node->getDestNode().get(), worker_node_3.get());
