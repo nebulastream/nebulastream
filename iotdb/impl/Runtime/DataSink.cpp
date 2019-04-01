@@ -18,11 +18,11 @@ namespace iotdb {
 
 DataSink::DataSink(const Schema& _schema) : schema(_schema), processedBuffer(0), processedTuples(0)
 {
-    std::cout << "Init Data Sink!" << std::endl;
+    IOTDB_DEBUG("DataSink:Init Data Sink!")
 }
 DataSink::DataSink() : schema(Schema::create()), processedBuffer(0), processedTuples(0)
 {
-    std::cout << "Init Data Sink!" << std::endl;
+    IOTDB_DEBUG("DataSink:Init Default Data Sink!")
 }
 
 const Schema& DataSink::getSchema() const { return schema; }
