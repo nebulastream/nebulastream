@@ -26,7 +26,7 @@ YSBWindow::YSBWindow():  mutex(), currentWindow(0),lastChangeTimeStamp(time(NULL
 
 
 
-size_t YSBWindow::checkWindow(size_t actualWindow, size_t currentTime)
+size_t YSBWindow::checkWindow(size_t actualWindow, time_t currentTime)
     {
         size_t nextWindow = currentWindow == 1 ? 0 : 1;
         std::unique_lock<std::mutex> lock(mutex);

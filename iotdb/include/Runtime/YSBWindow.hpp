@@ -82,7 +82,7 @@ public:
 	size_t getWindowSizeInSec(){return windowSizeInSec;};
     size_t getCampaignCnt(){return campaignCnt;};
 
-    size_t checkWindow(size_t actualWindow, size_t currentTime);
+    size_t checkWindow(size_t actualWindow, time_t currentTime);
 
     size_t getCurrentWindow()
     {
