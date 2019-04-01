@@ -37,7 +37,8 @@ namespace iotdb {
 
         buffers_count = BufferManager::instance().getNumberOfBuffers();
         buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
-        ASSERT_EQ(buffers_count, buffers_managed + 1);
+        size_t expected = buffers_managed + 1;
+        ASSERT_EQ(buffers_count, expected);
         ASSERT_EQ(buffers_free, buffers_managed);
 
         BufferManager::instance().removeBuffer(buffer);
@@ -58,21 +59,22 @@ namespace iotdb {
 
         for (size_t i = 1; i <= BufferManager::instance().getNumberOfBuffers(); ++i) {
             TupleBufferPtr buf = BufferManager::instance().getBuffer();
-
+            size_t expected = 0;
             ASSERT_TRUE(buf->buffer != nullptr);
             ASSERT_EQ(buf->buffer_size, buffer_size);
-            ASSERT_EQ(buf->num_tuples, 0);
-            ASSERT_EQ(buf->tuple_size_bytes, 0);
+            ASSERT_EQ(buf->num_tuples, expected);
+            ASSERT_EQ(buf->tuple_size_bytes, expected);
 
             buffers_count = BufferManager::instance().getNumberOfBuffers();
             buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
             ASSERT_EQ(buffers_count, buffers_managed);
-            ASSERT_EQ(buffers_free, buffers_managed - i);
+            expected = buffers_managed - i;
+            ASSERT_EQ(buffers_free, expected );
 
             buffers.push_back(buf);
         }
 
-        int i = 1;
+        size_t i = 1;
         for (auto& buf : buffers) {
 
             BufferManager::instance().releaseBuffer(buf);
@@ -99,8 +101,9 @@ namespace iotdb {
         BufferManager::instance().setNumberOfBuffers(5);
         buffers_count = BufferManager::instance().getNumberOfBuffers();
         buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
-        ASSERT_EQ(buffers_count, 5);
-        ASSERT_EQ(buffers_free, 5);
+        size_t expected = 5;
+        ASSERT_EQ(buffers_count, expected);
+        ASSERT_EQ(buffers_free, expected);
 
         BufferManager::instance().setNumberOfBuffers(buffers_managed);
         buffers_count = BufferManager::instance().getNumberOfBuffers();
