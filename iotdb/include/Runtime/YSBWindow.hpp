@@ -89,7 +89,7 @@ public:
         return currentWindow;
     }
 
-    size_t getLastChangeTimeStamp()
+    time_t getLastChangeTimeStamp()
     {
         return lastChangeTimeStamp;
     }
@@ -97,7 +97,7 @@ private:
     friend class boost::serialization::access;
     std::mutex mutex;
     std::atomic<size_t> currentWindow;
-    std::atomic<size_t> lastChangeTimeStamp;
+    std::atomic<time_t> lastChangeTimeStamp;
 
     std::atomic<size_t>** hashTable;
     size_t windowSizeInSec;
