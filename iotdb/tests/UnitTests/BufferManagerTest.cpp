@@ -31,7 +31,7 @@ namespace iotdb {
             log4cxx::LayoutPtr layoutPtr(new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
 
             // create FileAppender
-            LOG4CXX_DECODE_CHAR(fileName, "YahooStreamingBenchmarkTest.log");
+            LOG4CXX_DECODE_CHAR(fileName, "BufferManagerTest.log");
             log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
 
             // create ConsoleAppender
@@ -162,10 +162,9 @@ namespace iotdb {
         *ptr = BufferManager::instance().getBuffer();
     }
 
-    void run_and_release(size_t id) {
+    void run_and_release(size_t id, size_t sleeptime) {
         TupleBufferPtr ptr = BufferManager::instance().getBuffer();
-        std::this_thread::sleep_for(std::chrono::milliseconds(id));
-        std::cout << " wait " << id << " ms" <<std::endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleeptime));
         BufferManager::instance().releaseBuffer(ptr);
     }
 
@@ -218,7 +217,7 @@ namespace iotdb {
         std::uniform_int_distribution<size_t> sleeptime(1, 100);
 
         for(size_t i = 0; i < 1000; i++) {
-            threads.emplace_back(run_and_release, sleeptime(mt));
+            threads.emplace_back(run_and_release, i, sleeptime(mt));
         }
 
         for(auto& thread :threads) {
