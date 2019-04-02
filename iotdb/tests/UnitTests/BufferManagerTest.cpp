@@ -5,9 +5,9 @@
 #include <cstdlib>
 #include <iostream>
 #include <thread>
-
+#include <log4cxx/appender.h>
 #include <gtest/gtest.h>
-
+#include <Util/Logger.hpp>
 #include <Runtime/BufferManager.hpp>
 
 
@@ -15,7 +15,8 @@ namespace iotdb {
     class BufferManagerTest : public testing::Test {
     public:
         static void SetUpTestCase() {
-            std::cout << "Setup BufferMangerTest test class." << std::endl;
+            setupLogging();
+            IOTDB_INFO("Setup BufferMangerTest test class.");
             BufferManager::instance().setNumberOfBuffers(10);
         }
         static void TearDownTestCase() { std::cout << "Tear down BufferManager test class." << std::endl; }
@@ -23,6 +24,27 @@ namespace iotdb {
 
         const size_t buffers_managed = 10;
         const size_t buffer_size = 4 * 1024;
+    protected:
+        static void setupLogging()
+        {
+            // create PatternLayout
+            log4cxx::LayoutPtr layoutPtr(new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
+
+            // create FileAppender
+            LOG4CXX_DECODE_CHAR(fileName, "YahooStreamingBenchmarkTest.log");
+            log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
+
+            // create ConsoleAppender
+            log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
+
+            // set log level
+            // logger->setLevel(log4cxx::Level::getDebug());
+            logger->setLevel(log4cxx::Level::getInfo());
+
+            // add appenders and other will inherit the settings
+            logger->addAppender(file);
+            logger->addAppender(console);
+        }
 
     };
 
