@@ -73,6 +73,11 @@ namespace iotdb {
         return;
     }
 
+    size_t BufferManager::getBufferSize()
+    {
+        return bufferSizeInByte;
+    }
+
     void BufferManager::addBuffer() {
         std::unique_lock<std::mutex> lock(mutex);
 

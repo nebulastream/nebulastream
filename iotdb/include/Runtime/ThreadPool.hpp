@@ -24,6 +24,7 @@ class ThreadPool {
     static ThreadPool& instance();
 
     void setNumberOfThreads(size_t size) { numThreads = size; };
+    size_t getNumberOfThreads() { return numThreads; };
 
   private:
     ThreadPool();

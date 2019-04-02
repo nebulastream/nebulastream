@@ -123,10 +123,9 @@ std::string getTestConfig()
 {
     Config
     conf = Config::create()
-            .setBufferCount(1000)
-            .setBufferSizeInByte(4*1024)
-            .setNumberOfWorker(2)
-            .setPreloading(true);
+            .setBufferCount(2000)
+            .setBufferSizeInByte(8*1024)
+            .setNumberOfWorker(2);
     std::string filename = "/home/zeuchste/git/IoTDB/iotdb/build/tests/testConfig.txt";
     std::ofstream ofs(filename);
     boost::archive::text_oarchive oa(ofs);

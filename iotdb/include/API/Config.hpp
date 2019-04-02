@@ -20,13 +20,6 @@ class Config {
     Config& setNumberOfWorker(size_t numberOfWorker);
     size_t getNumberOfWorker();
 
-    Config& setMeasuring();
-    bool getMeasuring();
-
-    Config& setPreloading(bool value);
-    bool getPreLoading();
-    std::string getPreLoadingAsString();
-
     void print();
     Config();
 
@@ -34,19 +27,12 @@ class Config {
     friend class boost::serialization::access;
     template <class Archive> void serialize(Archive& ar, const unsigned int version)
     {
-        ar& measuring;
-        ar& preloading;
         ar& numberOfWorker;
-        ar& numberOfTuplesPerSource;
         ar& bufferCount;
         ar& bufferSizeInByte;
     }
 
-    bool measuring;
-    bool preloading;
-
     size_t numberOfWorker;
-    size_t numberOfTuplesPerSource;
     size_t bufferCount;
     size_t bufferSizeInByte;
 
