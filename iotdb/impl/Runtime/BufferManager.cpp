@@ -92,6 +92,7 @@ namespace iotdb {
             for (auto &entry : buffer_pool) {
                 bool used = false;
                 if (entry.second.compare_exchange_weak(used, true)) {
+                    providedBuffer++;
                     return entry.first;
                 }
             }
@@ -104,8 +105,6 @@ namespace iotdb {
     }
 
     size_t BufferManager::getNumberOfBuffers() {
-        int f = 0;
-        f++;
         return buffer_pool.size();
     }
 
