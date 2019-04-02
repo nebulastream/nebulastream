@@ -24,7 +24,7 @@ enum NODE_COMMANDS {
 boost::asio::io_service io_service;
 typedef boost::shared_ptr<tcp::socket> socket_ptr;
 std::vector<QueryExecutionPlanPtr> qeps;
-Config* config;
+
 void start()
 {
     for(auto& q : qeps)
@@ -82,6 +82,26 @@ bool registerNodeInFog(string host, string clientName, string clientPort)
     }
 }
 
+void applyConfig(Config& conf)
+{
+    if(conf.getNumberOfWorker() != ThreadPool::instance().getNumberOfThreads())
+    {
+        IOTDB_DEBUG("IOTNODE: changing numberOfWorker from " << ThreadPool::instance().getNumberOfThreads() << " to " << conf.getNumberOfWorker())
+        ThreadPool::instance().setNumberOfThreads(conf.getNumberOfWorker());
+    }
+    if(conf.getBufferCount() !=  BufferManager::instance().getNumberOfBuffers())
+    {
+        IOTDB_DEBUG("IOTNODE: changing bufferCount from " << BufferManager::instance().getNumberOfBuffers() << " to " << conf.getBufferCount())
+        BufferManager::instance().setNumberOfBuffers(conf.getBufferCount());
+    }
+    if(conf.getBufferSizeInByte() !=  BufferManager::instance().getBufferSize())
+    {
+        IOTDB_DEBUG("IOTNODE: changing buffer size from " << BufferManager::instance().getBufferSize() << " to " << conf.getBufferSizeInByte())
+        BufferManager::instance().setBufferSize(conf.getBufferSizeInByte());
+    }
+    IOTDB_DEBUG("IOTNODE: config successuflly changed")
+
+}
 void commandProcess(socket_ptr sock)
 {
     IOTDB_DEBUG("IOTNODE: process incomming command")
@@ -133,6 +153,10 @@ void commandProcess(socket_ptr sock)
 //
         IOTDB_DEBUG("received Config after deserialization:")
         conf.print();
+
+        IOTDB_DEBUG("applying config")
+        applyConfig(conf);
+
     }
     else
     {
@@ -185,6 +209,7 @@ void initNodeEngine()
 //    iotdb::BufferManager::instance().setBufferSize(bufferSizeInByte);
 //    ThreadPool::instance().setNumberOfThreads(threadCnt);
 }
+
 
 
 int main(int argc, char* argv[])
