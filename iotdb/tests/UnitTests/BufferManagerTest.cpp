@@ -140,6 +140,13 @@ namespace iotdb {
         *ptr = BufferManager::instance().getBuffer();
     }
 
+    void run_and_release(size_t id) {
+        TupleBufferPtr ptr = BufferManager::instance().getBuffer();
+        std::this_thread::sleep_for(std::chrono::milliseconds(id));
+        std::cout << " wait " << id << " ms" <<std::endl;
+        BufferManager::instance().releaseBuffer(ptr);
+    }
+
     TEST_F(BufferManagerTest, getBuffer_afterRelease) {
         std::vector<TupleBufferPtr> buffers;
 
@@ -172,6 +179,35 @@ namespace iotdb {
         buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
         ASSERT_EQ(buffers_count, buffers_managed);
         ASSERT_EQ(buffers_free, buffers_managed);
+    }
+
+    TEST_F(BufferManagerTest, get_and_release) {
+        size_t buffers_count = BufferManager::instance().getNumberOfBuffers();
+        size_t buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+        ASSERT_EQ(buffers_count, buffers_managed);
+        ASSERT_EQ(buffers_free, buffers_managed);
+
+
+
+        std::vector<std::thread> threads;
+        BufferManager::instance().printStatistics();
+        std::random_device rd;
+        std::mt19937 mt(rd());
+        std::uniform_int_distribution<size_t> sleeptime(1, 100);
+
+        for(size_t i = 0; i < 1000; i++) {
+            threads.emplace_back(run_and_release, sleeptime(mt));
+        }
+
+        for(auto& thread :threads) {
+            thread.join();
+        }
+
+        buffers_count = BufferManager::instance().getNumberOfBuffers();
+        buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+        ASSERT_EQ(buffers_count, buffers_managed);
+        ASSERT_EQ(buffers_free, buffers_managed);
+        BufferManager::instance().printStatistics();
     }
 
     #ifndef NO_RACE_CHECK
