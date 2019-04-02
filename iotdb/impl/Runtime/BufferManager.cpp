@@ -170,7 +170,6 @@ namespace iotdb {
         IOTDB_INFO("\t noFreeBuffer=" << noFreeBuffer)
         IOTDB_INFO("\t providedBuffer=" << providedBuffer)
         IOTDB_INFO("\t releasedBuffer=" << releasedBuffer)
-
     }
 
 
