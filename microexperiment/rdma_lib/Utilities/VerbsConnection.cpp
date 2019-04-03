@@ -98,7 +98,6 @@ void VerbsConnection::receive_test_message(Buffer* buffer) {
         fprintf(stderr, "Something weird happened on test-message %lu->%lu\n", target_rank, MPIHelper::get_rank());
         throw "error";
     }
-
 }
 
 
