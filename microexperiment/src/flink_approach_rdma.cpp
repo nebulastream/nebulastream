@@ -272,7 +272,7 @@ void setupRDMA(size_t numa_node, size_t rank) {
     auto remote_receive_token = connection.exchange_region_tokens(receive_buffer);
 
     RequestToken* pRequestToken = connection.create_request_token();
-
+    cout << "waiting on barrier" << endl;
     connection.barrier();
     std::vector<Timestamp> measured_times;
     printf("Starting Measurement!\n");
