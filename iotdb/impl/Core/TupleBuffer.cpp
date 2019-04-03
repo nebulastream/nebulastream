@@ -4,7 +4,11 @@
  *  Created on: Dec 19, 2018
  *      Author: zeuchste
  */
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/export.hpp>
 #include <Core/TupleBuffer.hpp>
+BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::TupleBuffer);
 #include <cstring>
 #include <iostream>
 namespace iotdb {

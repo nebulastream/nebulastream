@@ -9,8 +9,8 @@ namespace iotdb {
 
     BufferManager::BufferManager() : mutex(), noFreeBuffer(0), providedBuffer(0), releasedBuffer(0) {
         IOTDB_DEBUG("BufferManager: Enter Constructor of BufferManager.")
-        maxBufferCnt = 10000;//changed from 3
-        bufferSizeInByte = 4 * 1024;//set buffer to 4KB
+        maxBufferCnt = 1000;//changed from 3
+        bufferSizeInByte =  1 * 4 * 1024;//set buffer to 1024
         IOTDB_DEBUG("BufferManager: Set maximun number of buffer to " << maxBufferCnt
                                                                       << " and a bufferSize of KB:"
                                                                       << bufferSizeInByte / 1024)
@@ -71,6 +71,11 @@ namespace iotdb {
         }
         IOTDB_DEBUG("BufferManager: could not remove buffer, buffer not found")
         return;
+    }
+
+    size_t BufferManager::getBufferSize()
+    {
+        return bufferSizeInByte;
     }
 
     void BufferManager::addBuffer() {

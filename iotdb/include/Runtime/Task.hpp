@@ -20,7 +20,7 @@ class Task {
     Task(QueryExecutionPlanPtr _qep, uint32_t _pipeline_stage_id, DataSource* _source, const TupleBufferPtr buf);
     void releaseInputBuffer();
     bool execute();
-
+    size_t getNumberOfTuples(){return buf->num_tuples;};
   private:
     QueryExecutionPlanPtr qep;
     uint32_t pipeline_stage_id;

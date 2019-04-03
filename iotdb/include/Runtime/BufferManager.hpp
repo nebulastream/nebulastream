@@ -28,7 +28,7 @@ public:
   void releaseBuffer(const TupleBuffer* tuple_buffer);
   size_t getNumberOfBuffers();
   size_t getNumberOfFreeBuffers();
-
+  size_t getBufferSize();
   static BufferManager &instance();
   void printStatistics();
 

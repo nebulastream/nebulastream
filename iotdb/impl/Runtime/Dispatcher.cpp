@@ -13,9 +13,10 @@ namespace iotdb {
 
 Dispatcher::Dispatcher()
     : task_queue(), source_to_query_map(), window_to_query_map(), sink_to_query_map(), bufferMutex(), queryMutex(),
-      workMutex(), workerHitEmptyTaskQueue(0){IOTDB_DEBUG("Init Dispatcher")}
+      workMutex(), workerHitEmptyTaskQueue(0), processedTasks(0), processedTuple(0)
+{IOTDB_DEBUG("Init Dispatcher")}
 
-      Dispatcher::~Dispatcher()
+Dispatcher::~Dispatcher()
 {
     resetDispatcher();
 }
@@ -53,10 +54,17 @@ void Dispatcher::registerQuery(const QueryExecutionPlanPtr qep)
         sink_to_query_map[sink.get()].emplace_back(qep);
         sink->setup();
     }
+    startTime = std::chrono::duration_cast<NanoSeconds>(Clock::now().time_since_epoch()).count();
 }
 
 void Dispatcher::deregisterQuery(const QueryExecutionPlanPtr qep)
 {
+    size_t endTime = std::chrono::duration_cast<NanoSeconds>(Clock::now().time_since_epoch()).count();
+    size_t elapsedTime = double(endTime - startTime)  / (1024 * 1024 * 1024);
+    IOTDB_RES("processedTuple=" << processedTuple <<
+     "processedTasks=" << processedTasks)
+    IOTDB_RES("timeInSec=" << elapsedTime << " task/sec=" << processedTasks/elapsedTime
+            << " tups/sec=" << processedTuple/elapsedTime)
     std::unique_lock<std::mutex> lock(queryMutex);
 
     auto sources = qep->getSources();
@@ -118,6 +126,7 @@ void Dispatcher::completedWork(TaskPtr task)
 {
     std::unique_lock<std::mutex> lock(workMutex);
     processedTasks++;
+    processedTuple += task->getNumberOfTuples();
     task->releaseInputBuffer();
 }
 

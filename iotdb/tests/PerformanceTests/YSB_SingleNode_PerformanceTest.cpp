@@ -23,12 +23,7 @@
 #include <stdio.h>
 
 namespace iotdb {
-
-typedef uint64_t Timestamp;
-using NanoSeconds = std::chrono::nanoseconds;
-using Clock = std::chrono::high_resolution_clock;
-
-Timestamp getTimestamp() { return std::chrono::duration_cast<NanoSeconds>(Clock::now().time_since_epoch()).count(); }
+size_t getTimestamp() { return std::chrono::duration_cast<NanoSeconds>(Clock::now().time_since_epoch()).count(); }
 
 struct __attribute__((packed)) ysbRecord {
     uint8_t user_id[16];
@@ -137,7 +132,7 @@ int test(size_t toProcessedBuffers, size_t threadCnt, size_t campaignCnt, size_t
 
 	ThreadPool::instance().setNumberOfThreads(threadCnt);
 
-	Timestamp start = getTimestamp();
+	size_t start = getTimestamp();
 	ThreadPool::instance().start(1);
 
 	size_t endedRuns = 0;
@@ -154,7 +149,7 @@ int test(size_t toProcessedBuffers, size_t threadCnt, size_t campaignCnt, size_t
 //		std::cout << "Waiting 1 seconds " << std::endl;
 //		std::this_thread::sleep_for(std::chrono::seconds(1));
 	}
-	Timestamp end = getTimestamp();
+	size_t end = getTimestamp();
 	double elapsed_time = double(end - start) / (1024 * 1024 * 1024);
 
 	size_t processCnt = 0;
