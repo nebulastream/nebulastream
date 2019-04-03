@@ -52,14 +52,14 @@ class DataSource {
         ar& run_thread;
         //		ar & thread;
         ar& num_buffers_to_process;
+        ar& schema;
         ar& generatedTuples;
         ar& generatedBuffers;
-        ar& schema;
     }
     size_t num_buffers_to_process;
+    Schema schema;
     size_t generatedTuples;
     size_t generatedBuffers;
-    Schema schema;
 };
 
 typedef std::shared_ptr<DataSource> DataSourcePtr;

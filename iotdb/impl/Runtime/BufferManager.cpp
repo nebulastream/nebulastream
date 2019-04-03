@@ -25,7 +25,7 @@ namespace iotdb {
 
         // Release memory.
         for (auto const &buffer_pool_entry : buffer_pool) {
-            delete (char *) buffer_pool_entry.first->buffer;
+            delete[] (char *) buffer_pool_entry.first->buffer;
         }
         buffer_pool.clear();
     }
@@ -38,7 +38,7 @@ namespace iotdb {
 
     void BufferManager::setNumberOfBuffers(size_t size) {
         for (auto &entry : buffer_pool) {
-            delete (char *) entry.first->buffer;
+            delete[] (char *) entry.first->buffer;
         }
         buffer_pool.clear();
         maxBufferCnt = size;
@@ -49,7 +49,7 @@ namespace iotdb {
 
     void BufferManager::setBufferSize(size_t size) {
         for (auto &entry : buffer_pool) {
-            delete (char *) entry.first->buffer;
+            delete[] (char *) entry.first->buffer;
         }
         buffer_pool.clear();
         bufferSizeInByte = size;
@@ -97,6 +97,7 @@ namespace iotdb {
             for (auto &entry : buffer_pool) {
                 bool used = false;
                 if (entry.second.compare_exchange_weak(used, true)) {
+                    providedBuffer++;
                     return entry.first;
                 }
             }
@@ -109,8 +110,6 @@ namespace iotdb {
     }
 
     size_t BufferManager::getNumberOfBuffers() {
-        int f = 0;
-        f++;
         return buffer_pool.size();
     }
 
@@ -175,7 +174,6 @@ namespace iotdb {
         IOTDB_INFO("\t noFreeBuffer=" << noFreeBuffer)
         IOTDB_INFO("\t providedBuffer=" << providedBuffer)
         IOTDB_INFO("\t releasedBuffer=" << releasedBuffer)
-
     }
 
 
