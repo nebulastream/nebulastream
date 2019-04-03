@@ -5,9 +5,9 @@
 #include <cstdlib>
 #include <iostream>
 #include <thread>
-
+#include <log4cxx/appender.h>
 #include <gtest/gtest.h>
-
+#include <Util/Logger.hpp>
 #include <Runtime/BufferManager.hpp>
 
 
@@ -15,7 +15,8 @@ namespace iotdb {
     class BufferManagerTest : public testing::Test {
     public:
         static void SetUpTestCase() {
-            std::cout << "Setup BufferMangerTest test class." << std::endl;
+            setupLogging();
+            IOTDB_INFO("Setup BufferMangerTest test class.");
             BufferManager::instance().setNumberOfBuffers(10);
         }
         static void TearDownTestCase() { std::cout << "Tear down BufferManager test class." << std::endl; }
@@ -23,6 +24,27 @@ namespace iotdb {
 
         const size_t buffers_managed = 10;
         const size_t buffer_size = 4 * 1024;
+    protected:
+        static void setupLogging()
+        {
+            // create PatternLayout
+            log4cxx::LayoutPtr layoutPtr(new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
+
+            // create FileAppender
+            LOG4CXX_DECODE_CHAR(fileName, "BufferManagerTest.log");
+            log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
+
+            // create ConsoleAppender
+            log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
+
+            // set log level
+            // logger->setLevel(log4cxx::Level::getDebug());
+            logger->setLevel(log4cxx::Level::getInfo());
+
+            // add appenders and other will inherit the settings
+            logger->addAppender(file);
+            logger->addAppender(console);
+        }
 
     };
 
@@ -140,6 +162,12 @@ namespace iotdb {
         *ptr = BufferManager::instance().getBuffer();
     }
 
+    void run_and_release(size_t id, size_t sleeptime) {
+        TupleBufferPtr ptr = BufferManager::instance().getBuffer();
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleeptime));
+        BufferManager::instance().releaseBuffer(ptr);
+    }
+
     TEST_F(BufferManagerTest, getBuffer_afterRelease) {
         std::vector<TupleBufferPtr> buffers;
 
@@ -172,6 +200,35 @@ namespace iotdb {
         buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
         ASSERT_EQ(buffers_count, buffers_managed);
         ASSERT_EQ(buffers_free, buffers_managed);
+    }
+
+    TEST_F(BufferManagerTest, get_and_release) {
+        size_t buffers_count = BufferManager::instance().getNumberOfBuffers();
+        size_t buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+        ASSERT_EQ(buffers_count, buffers_managed);
+        ASSERT_EQ(buffers_free, buffers_managed);
+
+
+
+        std::vector<std::thread> threads;
+        BufferManager::instance().printStatistics();
+        std::random_device rd;
+        std::mt19937 mt(rd());
+        std::uniform_int_distribution<size_t> sleeptime(1, 100);
+
+        for(size_t i = 0; i < 1000; i++) {
+            threads.emplace_back(run_and_release, i, sleeptime(mt));
+        }
+
+        for(auto& thread :threads) {
+            thread.join();
+        }
+
+        buffers_count = BufferManager::instance().getNumberOfBuffers();
+        buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+        ASSERT_EQ(buffers_count, buffers_managed);
+        ASSERT_EQ(buffers_free, buffers_managed);
+        BufferManager::instance().printStatistics();
     }
 
     #ifndef NO_RACE_CHECK
