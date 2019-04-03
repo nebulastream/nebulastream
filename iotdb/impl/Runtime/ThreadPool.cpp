@@ -19,7 +19,7 @@ ThreadPool& ThreadPool::instance()
     return instance;
 }
 
-ThreadPool::ThreadPool() : run(), threads(), numThreads(1) {}
+ThreadPool::ThreadPool() : run(), numThreads(1), threads() {}
 
 ThreadPool::~ThreadPool()
 {
