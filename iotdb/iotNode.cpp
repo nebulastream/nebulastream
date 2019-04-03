@@ -6,6 +6,7 @@
 #include <boost/thread.hpp>
 #include <Util/Logger.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <API/Config.hpp>
 
 using boost::asio::ip::tcp;
 using namespace iotdb;
@@ -37,13 +38,14 @@ void start()
 
 void stop()
 {
+    IOTDB_DEBUG("IOTNODE: stop thread pool")
+    ThreadPool::instance().stop();
     for(auto& q : qeps)
     {
         IOTDB_DEBUG("IOTNODE: deregister query " << q)
         Dispatcher::instance().deregisterQuery(q);
     }
-    IOTDB_DEBUG("IOTNODE: stop thread pool")
-    ThreadPool::instance().stop();
+
 }
 
 bool registerNodeInFog(string host, string clientName, string clientPort)
@@ -80,6 +82,26 @@ bool registerNodeInFog(string host, string clientName, string clientPort)
     }
 }
 
+void applyConfig(Config& conf)
+{
+    if(conf.getNumberOfWorker() != ThreadPool::instance().getNumberOfThreads())
+    {
+        IOTDB_DEBUG("IOTNODE: changing numberOfWorker from " << ThreadPool::instance().getNumberOfThreads() << " to " << conf.getNumberOfWorker())
+        ThreadPool::instance().setNumberOfThreads(conf.getNumberOfWorker());
+    }
+    if(conf.getBufferCount() !=  BufferManager::instance().getNumberOfBuffers())
+    {
+        IOTDB_DEBUG("IOTNODE: changing bufferCount from " << BufferManager::instance().getNumberOfBuffers() << " to " << conf.getBufferCount())
+        BufferManager::instance().setNumberOfBuffers(conf.getBufferCount());
+    }
+    if(conf.getBufferSizeInByte() !=  BufferManager::instance().getBufferSize())
+    {
+        IOTDB_DEBUG("IOTNODE: changing buffer size from " << BufferManager::instance().getBufferSize() << " to " << conf.getBufferSizeInByte())
+        BufferManager::instance().setBufferSize(conf.getBufferSizeInByte());
+    }
+    IOTDB_DEBUG("IOTNODE: config successuflly changed")
+
+}
 void commandProcess(socket_ptr sock)
 {
     IOTDB_DEBUG("IOTNODE: process incomming command")
@@ -119,6 +141,23 @@ void commandProcess(socket_ptr sock)
         IOTDB_DEBUG("received QEP after deserialization:")
         q->print();
     }
+    else if(cmd == '4')
+    {
+        IOTDB_DEBUG("IOTNODE: received deploy config command")
+        std::string confFile = &data[1];
+        IOTDB_DEBUG("confFile=" << confFile)
+        std::stringstream ifs(confFile.c_str());
+        boost::archive::text_iarchive ia(ifs);
+        Config conf = Config::create();
+        ia >> conf;
+//
+        IOTDB_DEBUG("received Config after deserialization:")
+        conf.print();
+
+        IOTDB_DEBUG("applying config")
+        applyConfig(conf);
+
+    }
     else
     {
         std::cerr << "COMMAND NOT FOUND" << std::endl;
@@ -150,8 +189,8 @@ void setupLogging()
 
     // set log level
     //logger->setLevel(log4cxx::Level::getTrace());
-//  logger->setLevel(log4cxx::Level::getDebug());
-    logger->setLevel(log4cxx::Level::getInfo());
+  logger->setLevel(log4cxx::Level::getDebug());
+//    logger->setLevel(log4cxx::Level::getInfo());
 //  logger->setLevel(log4cxx::Level::getWarn());
     //logger->setLevel(log4cxx::Level::getError());
 //  logger->setLevel(log4cxx::Level::getFatal());
@@ -170,6 +209,7 @@ void initNodeEngine()
 //    iotdb::BufferManager::instance().setBufferSize(bufferSizeInByte);
 //    ThreadPool::instance().setNumberOfThreads(threadCnt);
 }
+
 
 
 int main(int argc, char* argv[])

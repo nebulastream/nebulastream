@@ -1,90 +1,50 @@
 #include <API/Config.hpp>
+BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::Config)
+
 #include <string>
+#include <Util/Logger.hpp>
+#include <Runtime/DataSink.hpp>
 
 namespace iotdb {
 Config::Config()
 {
-    preloading = false;
-    measuring = false;
-    parallelism = 1;
-    bufferSize = 1;
-    pipelinePermutation = 0;
-    sourcePath = "";
-    number_of_passes_over_input_files = 0;
-    hash_table_size = 0;
+    numberOfWorker = 1;
+    bufferCount = 1;
+    bufferSizeInByte = 1024;
+}
+
+void Config::print()
+{
+    IOTDB_DEBUG("Config:")
+    IOTDB_DEBUG("numberOfWorker=" << numberOfWorker)
+    IOTDB_DEBUG("bufferCount=" << bufferCount)
+    IOTDB_DEBUG("bufferSizeInByte=" << bufferSizeInByte)
 }
 
 Config Config::create() { return Config(); }
 
-Config& Config::withHashTableSize(size_t hash_table_rows)
+Config& Config::setBufferCount(size_t bufferCount)
 {
-    this->hash_table_size = hash_table_rows;
+    this->bufferCount = bufferCount;
     return *this;
 }
+size_t Config::getBufferCount() { return bufferCount; }
 
-Config& Config::withBufferSize(unsigned int bufferSize)
+
+Config& Config::setBufferSizeInByte(size_t bufferSizeInByte)
 {
-    this->bufferSize = bufferSize;
+    this->bufferSizeInByte = bufferSizeInByte;
     return *this;
 }
+size_t Config::getBufferSizeInByte() { return bufferSizeInByte; }
 
-Config& Config::withNumberOfPassesOverInput(unsigned int num_passes)
+
+Config& Config::setNumberOfWorker(size_t numberOfWorker)
 {
-    this->number_of_passes_over_input_files = num_passes;
+    this->numberOfWorker = numberOfWorker;
     return *this;
 }
+size_t Config::getNumberOfWorker() { return numberOfWorker; }
 
-Config& Config::withParallelism(unsigned int parallelism)
-{
-    this->parallelism = parallelism;
-    return *this;
-}
 
-Config& Config::withPipelinePermutation(unsigned int pipelinePermutation)
-{
-    this->pipelinePermutation = pipelinePermutation;
-    return *this;
-}
-
-Config& Config::withMeasuring()
-{
-    this->measuring = true;
-    return *this;
-}
-
-Config& Config::withPreloading()
-{
-    this->preloading = true;
-    return *this;
-}
-
-Config& Config::withSourcePath(std::string pSourcePath)
-{
-    this->sourcePath = pSourcePath;
-    return *this;
-}
-
-bool Config::getMeasuring() { return measuring; }
-
-bool Config::getPreLoading() { return preloading; }
-
-std::string Config::getPreLoadingAsString()
-{
-    if (preloading)
-        return "true";
-    else
-        return "false";
-}
-
-size_t Config::getHashTableSize() { return hash_table_size; }
-
-unsigned int Config::getBufferSize() { return bufferSize; }
-
-unsigned int Config::getParallelism() { return parallelism; }
-
-unsigned int Config::getNumberOfPassesOverInput() { return number_of_passes_over_input_files; }
-
-unsigned int Config::getPipelinePermutation() { return pipelinePermutation; }
-
-std::string Config::getSourcePath() { return sourcePath; }
 } // namespace iotdb

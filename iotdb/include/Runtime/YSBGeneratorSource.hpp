@@ -48,6 +48,7 @@ private:
 		ar & boost::serialization::base_object<DataSource>(*this);
 		ar & numberOfCampaings;
 		ar & preGenerated;
+//		ar & copyBuffer;
 	}
 
   iotdb::YSBFunctor functor;

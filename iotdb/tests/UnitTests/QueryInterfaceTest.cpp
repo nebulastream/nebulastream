@@ -20,9 +20,8 @@ namespace iotdb {
 void createQuery()
 {
     // define config
-    Config config =
-        Config::create().withParallelism(1).withPreloading().withBufferSize(1000).withNumberOfPassesOverInput(1);
-
+    Config config = Config::create();
+//    Config::create().withParallelism(1).withPreloading().withBufferSize(1000).withNumberOfPassesOverInput(1);
     Schema schema = Schema::create().addField("", INT32);
 
     /** \brief create a source using the following functions:
@@ -49,11 +48,10 @@ void createQueryString()
 {
 
     std::stringstream code;
-    code << "Config config = Config::create()."
-            "        withParallelism(1)."
-            "        withPreloading()."
-            "        withBufferSize(1000)."
-            "        withNumberOfPassesOverInput(1);"
+    code << "Config config = Config::create()"
+            ".setBufferCount(2000)"
+            ".setBufferSizeInByte(8*1024)"
+            ".setNumberOfWorker(2);"
          << std::endl;
 
     code << "Schema schema = Schema::create().addField(\"\",INT32);" << std::endl;

@@ -1,10 +1,3 @@
-/*
- * Dispatcher.h
- *
- *  Created on: Dec 19, 2018
- *      Author: zeuchste
- */
-
 #ifndef INCLUDE_DISPATCHER_H_
 #define INCLUDE_DISPATCHER_H_
 
@@ -13,6 +6,7 @@
 #include <mutex>
 #include <thread>
 #include <vector>
+#include <chrono>
 
 #include <CodeGen/QueryExecutionPlan.hpp>
 #include <Core/TupleBuffer.hpp>
@@ -20,7 +14,13 @@
 #include <Runtime/DataSource.hpp>
 #include <Runtime/Task.hpp>
 
+
 namespace iotdb {
+using NanoSeconds = std::chrono::nanoseconds;
+using Clock = std::chrono::high_resolution_clock;
+
+//Timestamp getTimestamp() { return std::chrono::duration_cast<NanoSeconds>(Clock::now().time_since_epoch()).count(); }
+
 
 class Dispatcher {
   public:
@@ -60,8 +60,12 @@ class Dispatcher {
     std::condition_variable cv;
 
     // statistics:
-    size_t workerHitEmptyTaskQueue;
-    size_t processedTasks;
+    std::atomic<size_t> workerHitEmptyTaskQueue;
+    std::atomic<size_t> processedTasks;
+    std::atomic<size_t> processedTuple;
+
+    std::atomic<size_t> processedBuffers;
+    size_t startTime;
 };
 typedef std::shared_ptr<Dispatcher> DispatcherPtr;
 } // namespace iotdb
