@@ -65,47 +65,47 @@ struct StructuredTupleBuffer {
     }
 
 };
-
-class AbstractDataExchangeOperator {
-
-private:
-
-protected:
-    std::atomic_bool can_start;
-    ConnectionCollection & connections;
-    std::vector<bool> done_with_sending;
-    std::vector<Timestamp> measured_network_times;
-    std::vector<std::thread> threads;
-
-public:
-    explicit AbstractDataExchangeOperator(ConnectionCollection &connections);
-
-    Timestamp duration() const;
-
-    void start();
-    void join();
-
-    bool all_done_sending() const;
-
-    void async_receive_tuples_from(size_t target_rank, const std::function<void(const StructuredTupleBuffer &, std::atomic_char*)> & tuple_processor);
-    void async_send_tuples_to_all(const ProbeTable * probeTable, const Limits & limits);
-    void async_send_matching_tuples_to(size_t target_rank, const ProbeTable * probeTable, const Limits & limits, const std::function<bool(size_t)> &matcher);
-
-
-protected:
-    virtual void send_tuples_to_all (const ProbeTable * probeTable, const Limits & limits) = 0;
-    virtual void send_matching_tuples_to (size_t target_rank, const ProbeTable * probeTable, const Limits & limits, const std::function<bool(size_t)> & matcher) = 0;
-    virtual void receive_tuples_from(size_t target_rank, const std::function<void(const StructuredTupleBuffer &, std::atomic_char*)> & tuple_processor) = 0;
-
-    void prepare_send_buffer(
-            StructuredTupleBuffer & structuredSendBuffer,
-            size_t & next_tuple_index,
-            const ProbeTable * probeTable,
-            const Limits & limits,
-            const std::function<bool(size_t)> & matcher
-            ) const;
-
-};
+//
+//class AbstractDataExchangeOperator {
+//
+//private:
+//
+//protected:
+//    std::atomic_bool can_start;
+//    ConnectionCollection & connections;
+//    std::vector<bool> done_with_sending;
+//    std::vector<Timestamp> measured_network_times;
+//    std::vector<std::thread> threads;
+//
+//public:
+//    explicit AbstractDataExchangeOperator(ConnectionCollection &connections);
+//
+//    Timestamp duration() const;
+//
+//    void start();
+//    void join();
+//
+//    bool all_done_sending() const;
+//
+//    void async_receive_tuples_from(size_t target_rank, const std::function<void(const StructuredTupleBuffer &, std::atomic_char*)> & tuple_processor);
+//    void async_send_tuples_to_all(const ProbeTable * probeTable, const Limits & limits);
+//    void async_send_matching_tuples_to(size_t target_rank, const ProbeTable * probeTable, const Limits & limits, const std::function<bool(size_t)> &matcher);
+//
+//
+//protected:
+//    virtual void send_tuples_to_all (const ProbeTable * probeTable, const Limits & limits) = 0;
+//    virtual void send_matching_tuples_to (size_t target_rank, const ProbeTable * probeTable, const Limits & limits, const std::function<bool(size_t)> & matcher) = 0;
+//    virtual void receive_tuples_from(size_t target_rank, const std::function<void(const StructuredTupleBuffer &, std::atomic_char*)> & tuple_processor) = 0;
+//
+//    void prepare_send_buffer(
+//            StructuredTupleBuffer & structuredSendBuffer,
+//            size_t & next_tuple_index,
+//            const ProbeTable * probeTable,
+//            const Limits & limits,
+//            const std::function<bool(size_t)> & matcher
+//            ) const;
+//
+//};
 
 
 
