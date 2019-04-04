@@ -8,7 +8,6 @@
 #include "Debug.h"
 #include <infinity/infinity.h>
 #include <zconf.h>
-#include "string.h"
 
 VerbsConnection &ConnectionCollection::operator[](int idx) {
     return *connections[idx];
