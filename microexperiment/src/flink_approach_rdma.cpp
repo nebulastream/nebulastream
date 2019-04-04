@@ -317,7 +317,7 @@ void setupRDMAProducer(VerbsConnection* connection)
 
     std::vector<StructuredTupleBuffer> sendBuffers;
     for(size_t i = 0; i < WRITE_SEND_BUFFER_COUNT; i++)
-        sendBuffers.emplace_back(StructuredTupleBuffer(&connection, JOIN_WRITE_BUFFER_SIZE));
+        sendBuffers.emplace_back(StructuredTupleBuffer(*connection, JOIN_WRITE_BUFFER_SIZE));
 
     std::vector<char> buffer_ready_sign(WRITE_RECEIVE_BUFFER_COUNT, BUFFER_READY_FLAG);
     auto sign_buffer = connection->register_buffer(buffer_ready_sign.data(), WRITE_RECEIVE_BUFFER_COUNT);
@@ -433,10 +433,12 @@ int main(int argc, char *argv[])
     VerbsConnection* connection = new VerbsConnection(&info);
     if(rank == 0)
     {
+        std::cout << "run producer" << endl;
         setupRDMAProducer(connection);
     }
     else
     {
+        std::cout << "run consumer" << endl;
         setupRDMAConsumer(connection);
     }
     return 0;
