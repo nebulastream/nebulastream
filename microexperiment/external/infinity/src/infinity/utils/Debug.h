@@ -18,6 +18,7 @@
 	#define INFINITY_DEBUG(X, ...) {}
 #endif
 
+#define INFINITY_ASSERT_ON
 #ifdef INFINITY_ASSERT_ON
 	#define INFINITY_ASSERT(B, X, ...) {if(!(B)) {fprintf(stdout, X, ##__VA_ARGS__); fflush(stdout); exit(-1);}}
 #else
