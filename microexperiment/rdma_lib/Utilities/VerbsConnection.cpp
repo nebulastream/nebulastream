@@ -13,9 +13,7 @@
 #include "Debug.h"
 #include <atomic>
 #include "JoinParameters.h"
-#include <string>
-#include "string.h"
-using namespace std;
+#include <string.h>
 
 VerbsConnection::VerbsConnection(const ConnectionInfoProvider * infoProvider)
 :target_rank(infoProvider->get_target_rank()) {
@@ -25,6 +23,7 @@ VerbsConnection::VerbsConnection(const ConnectionInfoProvider * infoProvider)
 void VerbsConnection::connect(const ConnectionInfoProvider &infoProvider) {
     this->context = new infinity::core::Context(infoProvider.get_device_index(), infoProvider.get_device_port());
     this->qp_factory = new infinity::queues::QueuePairFactory(context);
+
 
     this->send_barrier_buffer = allocate_buffer(1);
     ((char*)this->send_barrier_buffer->getData())[0] = (char)MPIHelper::get_rank();
@@ -97,6 +96,7 @@ void VerbsConnection::receive_test_message(Buffer* buffer) {
         fprintf(stderr, "Something weird happened on test-message %lu->%lu\n", target_rank, MPIHelper::get_rank());
         throw "error";
     }
+
 }
 
 
@@ -239,6 +239,7 @@ std::shared_ptr<RegionToken> VerbsConnection::exchange_region_tokens(Buffer* buf
     if ( MPIHelper::get_rank() < target_rank ) {
         if(buffer != nullptr){
             auto region_token = buffer->createRegionToken();
+            memcpy(exchange_buffer->getData(), region_token, token_size);
         }
         usleep(50*1000);
         send_blocking(exchange_buffer);
