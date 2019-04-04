@@ -268,7 +268,7 @@ void cosume_window_mem(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
 void setupRDMAConsumer(VerbsConnection* connection)
 {
-    TRACE("Started routine to receive tuples from %lu!\n", target_rank);
+    TRACE("Started routine to receive tuples from %lu!\n", 1);
 
     std::vector<Buffer*> recv_buffers(WRITE_RECEIVE_BUFFER_COUNT);
     std::vector<RegionToken*> region_tokens(WRITE_RECEIVE_BUFFER_COUNT+1);
@@ -291,7 +291,7 @@ void setupRDMAConsumer(VerbsConnection* connection)
         }
         memcpy((RegionToken*)recv_buffers[0]->getData() + i, region_tokens[i], sizeof(RegionToken));
     }
-
+    sleep(1);
     TRACE("PREPARED EVERYTHING FOR RECEIVING!\n");
     connection->send_blocking(recv_buffers[0]);
 }
