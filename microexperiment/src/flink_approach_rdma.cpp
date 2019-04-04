@@ -258,8 +258,8 @@ void setupRDMA(size_t numa_node, size_t rank, char* ip) {
     MPIHelper::set_process_count(2);
 
     size_t target_rank = rank == 0 ? 1 : 0;
-
-    SimpleInfoProvider info(target_rank, 3 - static_cast<u_int16_t>(numa_node * 3), 1, PORT, ip);
+//    (size_t target_rank, u_int16_t device_index, u_int16_t device_Port, u_int16_t connection_port, const std::string & ip);
+    SimpleInfoProvider info(target_rank, 3, 1, PORT, ip);
     VerbsConnection connection(&info);
 
     char * receive_memory = static_cast<char*>(malloc(BUFFER_SIZE));
