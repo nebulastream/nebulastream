@@ -149,7 +149,8 @@ const DataSourcePtr createZmqSource(const Schema& schema, const std::string& hos
 const DataSourcePtr createBinaryFileSource(const Schema& schema, const std::string& path_to_file)
 {
     // instantiate BinaryFileSource
-    IOTDB_FATAL_ERROR("DataSource: Called unimplemented Function");
+    DataSourcePtr source(new BinarySource(schema, path_to_file));
+    return source;
 }
 
 const DataSourcePtr createRemoteTCPSource(const Schema& schema, const std::string& server_ip, int port)

@@ -18,13 +18,19 @@ BinarySource::BinarySource(const Schema& schema, const std::string& _file_path, 
     : DataSource(schema), input(std::ifstream(_file_path.c_str())), file_path(_file_path),
       num_tuples_to_process(_num_tuples_to_process)
 {
+  input.seekg(0, input.end);
+  file_size = input.tellg();
+  input.seekg(0, input.beg);
+  tuple_size = schema.getSchemaSize();
+  generatedTuples = 0;
+  generatedBuffers = 0;
 }
 
 TupleBufferPtr BinarySource::receiveData()
 {
-    assert(0); // not implemented yet
+    // assert(0); // not implemented yet
     TupleBufferPtr buf = BufferManager::instance().getBuffer();
-    //  fillBuffer(buf);
+    fillBuffer(*buf);
     return buf;
 }
 
@@ -41,5 +47,25 @@ void BinarySource::fillBuffer(TupleBuffer& buf)
     /* while(generated_tuples < num_tuples_to_process) */
     /* read <buf.buffer_size> bytes data from file into buffer */
     /* advance internal file pointer, if we reach the file end, set to file begin */
+    // std::cout << "curr pos: " << input.tellg()
+    //           << ", buffer_size: " << buf.buffer_size
+    //           << ", file_size: " << file_size
+    //           << std::endl;
+
+    if (input.tellg() == file_size) {
+        input.seekg(0, input.beg);
+    }
+    // std::cout << "curr pos: " << input.tellg()
+    //           << ", buffer_size: " << buf.buffer_size
+    //           << ", file_size: " << file_size
+    //           << std::endl;
+    size_t size_to_read = buf.buffer_size < file_size ? buf.buffer_size : file_size;
+    input.read((char *)buf.buffer, size_to_read);
+    uint64_t generated_tuples_this_pass = size_to_read / tuple_size;
+    buf.tuple_size_bytes = tuple_size;
+    buf.num_tuples = generated_tuples_this_pass;
+
+    generatedTuples += generated_tuples_this_pass;
+    generatedBuffers ++;
 }
 } // namespace iotdb
