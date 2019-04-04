@@ -409,6 +409,10 @@ int main(int argc, char *argv[])
     size_t bufferSizeInTups = std::stoi(argv[2]);
 
     size_t rank = std::stoi(argv[3]);
+
+    MPIHelper::set_rank(rank);
+    MPIHelper::set_process_count(processCnt);
+
     std::string ip = "";
     if(rank == 1)
     {
