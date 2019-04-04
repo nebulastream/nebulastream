@@ -93,7 +93,15 @@ add_executable(flinkApproachRDMA
     )
 # target_link_libraries(GPUSendLatency ${CUDA_LIBS} infinity ibverbs numa json11)
 target_link_libraries(flinkApproachRDMA infinity ibverbs numa json11 tbb)
-# set_property(TARGET flinkApproachRDMA tbb)
+
+
+add_executable(flinkApproachSingleNode
+        src/flink_approach.cpp)
+target_link_libraries(flinkApproachSingleNode tbb)
+
+add_executable(noQueueGlobalSingleNode
+        src/noQueueGlobal.cpp)
+target_link_libraries(noQueueGlobalSingleNode tbb)
 
 # add_library(rdma_lib SHARED
 #     src/Benchmarks/Verbs/verbs_gpu_send_latency.cpp
