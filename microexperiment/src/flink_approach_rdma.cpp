@@ -287,6 +287,7 @@ void setupRDMA(size_t numa_node, size_t rank, char* ip) {
         {
             if (rank == 0)
             {
+                *send_memory = (char) 1;
                 std::cout << "R0 try write" << std::endl;
                 connection.write(send_buffer, remote_receive_token.get());
                 std::cout << "R0 wrote" << std::endl;
