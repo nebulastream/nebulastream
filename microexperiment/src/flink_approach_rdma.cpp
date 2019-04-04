@@ -265,6 +265,7 @@ void setupRDMA(size_t numa_node, size_t rank, char* ip) {
     char * receive_memory = static_cast<char*>(malloc(BUFFER_SIZE));
     char * send_memory = static_cast<char*>(malloc(BUFFER_SIZE));
     memset(receive_memory, 0, BUFFER_SIZE);
+    memset(send_memory, 1, BUFFER_SIZE);
 
     auto receive_buffer = connection.register_buffer(receive_memory, BUFFER_SIZE);
     auto send_buffer = connection.register_buffer(send_memory, BUFFER_SIZE);
