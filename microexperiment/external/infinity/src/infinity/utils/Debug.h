@@ -11,7 +11,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
+#define INFINITY_DEBUG_ON
 #ifdef INFINITY_DEBUG_ON
 	#define INFINITY_DEBUG(X, ...) {fprintf(stdout, X, ##__VA_ARGS__); fflush(stdout);}
 #else

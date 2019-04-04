@@ -245,10 +245,10 @@ void cosume_window_mem(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     *consumedRet = consumed;
 }
 
-#define SERVER_IP "192.168.5.30"
+//#define SERVER_IP "192.168.5.30"
 #define PORT 55355
 
-void setupRDMA(size_t numa_node, size_t rank) {
+void setupRDMA(size_t numa_node, size_t rank, char* ip) {
     size_t BUFFER_SIZE = 1;
     size_t ITERATIONS = 100;
     size_t REPETITIONS = 1000;
@@ -259,7 +259,7 @@ void setupRDMA(size_t numa_node, size_t rank) {
 
     size_t target_rank = rank == 0 ? 1 : 0;
 
-    SimpleInfoProvider info(target_rank, 3 - static_cast<u_int16_t>(numa_node * 3), 1, PORT, SERVER_IP);
+    SimpleInfoProvider info(target_rank, 3 - static_cast<u_int16_t>(numa_node * 3), 1, PORT, ip);
     VerbsConnection connection(&info);
 
     char * receive_memory = static_cast<char*>(malloc(BUFFER_SIZE));
@@ -312,8 +312,8 @@ void setupRDMA(size_t numa_node, size_t rank) {
 }
 int main(int argc, char *argv[]) {
 
-    cout << "rank" << endl;
-    setupRDMA(0, std::stoi(argv[1]));
+    cout << "rank=" << std::stoi(argv[1]) << endl;
+    setupRDMA(0, std::stoi(argv[1]), argv[2]);
     return 0;
     cout << "processCnt numProducer numberConsumer " << endl;
     //initialze
