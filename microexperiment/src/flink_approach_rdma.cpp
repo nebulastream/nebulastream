@@ -268,7 +268,7 @@ void cosume_window_mem(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
 void setupRDMAConsumer(VerbsConnection* connection)
 {
-    TRACE("Started routine to receive tuples from %lu!\n", 1);
+    std::cout << "Started routine to receive tuples as Consumer" << std::endl;
 
     std::vector<Buffer*> recv_buffers(WRITE_RECEIVE_BUFFER_COUNT);
     std::vector<RegionToken*> region_tokens(WRITE_RECEIVE_BUFFER_COUNT+1);
@@ -292,7 +292,7 @@ void setupRDMAConsumer(VerbsConnection* connection)
         memcpy((RegionToken*)recv_buffers[0]->getData() + i, region_tokens[i], sizeof(RegionToken));
     }
     sleep(1);
-    TRACE("PREPARED EVERYTHING FOR RECEIVING!\n");
+    std::cout << "PREPARED EVERYTHING FOR RECEIVING!" << std::endl;
     connection->send_blocking(recv_buffers[0]);
 }
 
@@ -312,20 +312,20 @@ void copy_received_tokens(const std::vector<StructuredTupleBuffer> &sendBuffers,
 
 void setupRDMAProducer(VerbsConnection* connection)
 {
-    TRACE("send_matching_tuples_to!\n");
+    std::cout << "send_matching_tuples_to!" << endl;
     std::vector<RegionToken*> region_tokens(WRITE_RECEIVE_BUFFER_COUNT);
 
     std::vector<StructuredTupleBuffer> sendBuffers;
     for(size_t i = 0; i < WRITE_SEND_BUFFER_COUNT; i++)
-        sendBuffers.emplace_back(StructuredTupleBuffer(connection, JOIN_WRITE_BUFFER_SIZE));
+        sendBuffers.emplace_back(StructuredTupleBuffer(*connection, JOIN_WRITE_BUFFER_SIZE));
 
     std::vector<char> buffer_ready_sign(WRITE_RECEIVE_BUFFER_COUNT, BUFFER_READY_FLAG);
     auto sign_buffer = connection->register_buffer(buffer_ready_sign.data(), WRITE_RECEIVE_BUFFER_COUNT);
     RegionToken* sign_token = nullptr;
 
-    TRACE2("Blocking to receive tokens!!\n");
+    std::cout << "Blocking to receive tokens!" << endl;
     connection->post_and_receive_blocking(sendBuffers[0].send_buffer);
-    TRACE2("Received tokens!!\n");
+    std::cout << "Received tokens!!\n" << endl;
     copy_received_tokens(sendBuffers, region_tokens, sign_token);
 
     TRACE2("PREPARED EVERYTHING FOR SENDING!\n");
