@@ -284,22 +284,26 @@ void setupRDMA(size_t numa_node, size_t rank, char* ip) {
 
         for (size_t i = 0; i < REPETITIONS; i++)
         {
-            if (rank == 0) {
-
+            if (rank == 0)
+            {
+                std::cout << "R0 try write" << std::endl;
                 connection.write(send_buffer, remote_receive_token.get());
+                std::cout << "R0 wrote" << std::endl;
                 while (((volatile char*) receive_memory)[0] != (char) 1) {
                 }
+                std::cout << "R0 reveived" << std::endl;
                 receive_memory[0] = 0;
-
             }
             else
             {
                 *send_memory = (char) 1;
+                std::cout << "R1 try receive" << std::endl;
                 while (((volatile char*) receive_memory)[0] != (char) 1) {
                 }
+                std::cout << "R1 received" << std::endl;
                 receive_memory[0] = 0;
+                std::cout << "R1 try write" << std::endl;
                 connection.write(send_buffer, remote_receive_token.get());
-
             }//end of else
         }//end of for
 
