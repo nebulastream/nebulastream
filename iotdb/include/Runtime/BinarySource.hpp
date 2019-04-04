@@ -16,7 +16,7 @@ namespace iotdb {
 
 class BinarySource : public DataSource {
   public:
-    BinarySource(const Schema& schema, const std::string& file_path, const uint64_t& num_tuples_to_process);
+    BinarySource(const Schema& schema, const std::string& file_path, const uint64_t& num_tuples_to_process=-1);
     TupleBufferPtr receiveData();
     const std::string toString() const;
     void fillBuffer(TupleBuffer&);
@@ -25,6 +25,9 @@ class BinarySource : public DataSource {
     std::ifstream input;
     const std::string file_path;
     uint64_t num_tuples_to_process;
+    // helper variables
+    int64_t file_size;
+    size_t tuple_size;
 };
 } // namespace iotdb
 
