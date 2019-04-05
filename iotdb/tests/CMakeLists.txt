@@ -97,6 +97,10 @@ add_executable(binary-source-tests "UnitTests/BinarySourceTest.cpp")
 target_link_libraries(binary-source-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME binary-source-tests COMMAND binary-source-tests)
 
+add_executable(csv-source-tests "UnitTests/CSVSourceTest.cpp")
+target_link_libraries(csv-source-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
+add_test(NAME csv-source-tests COMMAND csv-source-tests)
+
 # YSB Performance Test
 add_executable(ysb_performance_test "PerformanceTests/YSB_SingleNode_PerformanceTest.cpp")
 target_link_libraries(ysb_performance_test iotdb ${GTEST_LIBRARIES})
