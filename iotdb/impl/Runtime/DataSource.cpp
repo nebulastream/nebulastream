@@ -8,6 +8,7 @@
 #include <Runtime/Dispatcher.hpp>
 #include <Runtime/GeneratorSource.hpp>
 #include <Runtime/YSBGeneratorSource.hpp>
+#include <Runtime/CSVSource.hpp>
 
 #include <Runtime/RemoteSocketSource.hpp>
 #include <Runtime/ZmqSource.hpp>
@@ -157,6 +158,13 @@ const DataSourcePtr createRemoteTCPSource(const Schema& schema, const std::strin
 {
     // instantiate RemoDataSource: teSocketSource
     IOTDB_FATAL_ERROR("DataSource: Called unimplemented Function");
+}
+
+const DataSourcePtr createCSVFileSource(const Schema& schema, const std::string& path_to_file)
+{
+    // instantiate CSVFileSource
+    DataSourcePtr source(new CSVSource(schema, path_to_file));
+    return source;
 }
 
 } // namespace iotdb

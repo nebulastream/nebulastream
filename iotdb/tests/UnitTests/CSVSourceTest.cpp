@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <cstring>
+#include <cassert>
 #include <Runtime/DataSource.hpp>
 #include <Runtime/Dispatcher.hpp>
 #include <Runtime/GeneratorSource.hpp>
@@ -10,6 +11,7 @@
 #include <Runtime/BufferManager.hpp>
 
 #include <Core/DataTypes.hpp>
+
 // #include <Runtime/YSBGeneratorSource.hpp>
 
 namespace iotdb {
@@ -17,8 +19,8 @@ struct __attribute__((packed)) ysbRecord {
     char user_id[16];
     char page_id[16];
     char campaign_id[16];
-    char ad_type[9];
     char event_type[9];
+    char ad_type[9];
     int64_t current_ms;
     uint32_t ip;
 
@@ -37,7 +39,7 @@ struct __attribute__((packed)) ysbRecord {
         memcpy(&event_type, &rhs.event_type, 9);
         memcpy(&ad_type, &rhs.ad_type, 9);
         current_ms = rhs.current_ms;
-        ip = rhs.ip;
+        ip = rhs.current_ms;
     }
 
 }; // size 78 bytes
@@ -55,27 +57,30 @@ struct __attribute__((packed)) ysbRecord {
                         .addField("ip", INT32);
 
     uint64_t num_tuples_to_process = 1000;
-    size_t num_of_buffers = 1000;
+    size_t num_of_buffers = 10;
     uint64_t tuple_size = schema.getSchemaSize();
-    // std::cout << "tuple_size: " << tuple_size << std::endl;
     uint64_t buffer_size = num_tuples_to_process * tuple_size / num_of_buffers;
-    std::string path_to_file = "./tests/test_data/ysb-tuples-100-campaign-100.bin";
+    assert(buffer_size > 0);
+    std::string path_to_file = "./tests/test_data/ysb-tuples-100-campaign-100.csv";
 
     BufferManager::instance().setNumberOfBuffers(num_of_buffers);
     BufferManager::instance().setBufferSize(buffer_size);
 
-    DataSourcePtr source = createBinaryFileSource(schema, path_to_file);
+    DataSourcePtr source = createCSVFileSource(schema, path_to_file);
+
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
-      TupleBufferPtr buf = source->receiveData();
-      size_t i = 0;
-      while (i * tuple_size < buffer_size) {
-          ysbRecord record(*((ysbRecord *)((char *)buf->buffer + i*tuple_size)));
-          EXPECT_STREQ(record.ad_type, "banner78");
-          EXPECT_TRUE((! strcmp(record.event_type, "view") ||
-                       ! strcmp(record.event_type, "click") ||
-                       ! strcmp(record.event_type, "purchase") ));
-          i ++;
-      }
+        TupleBufferPtr buf = source->receiveData();
+
+        size_t i = 0;
+        while (i * tuple_size < buffer_size) {
+            ysbRecord record(*((ysbRecord *)((char *)buf->buffer + i*tuple_size)));
+            EXPECT_STREQ(record.ad_type, "banner78");
+            EXPECT_TRUE((! strcmp(record.event_type, "view") ||
+                   ! strcmp(record.event_type, "click") ||
+                   ! strcmp(record.event_type, "purchase") ));
+            i ++;
+        }
+        // std::cout << "number_of_buffers: " << source->getNumberOfGeneratedBuffers() << std::endl;
     }
 
     EXPECT_EQ(source->getNumberOfGeneratedTuples(), num_tuples_to_process);
