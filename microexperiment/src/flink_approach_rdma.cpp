@@ -489,7 +489,7 @@ int main(int argc, char *argv[])
     std::string ip = "";
     if(rank == 1)
     {
-        ip = argv[4];
+        ip = argv[2];
     }
     assert(rank == 0 || rank == 1);
     std::cout << "processCnt=" << processCnt;
