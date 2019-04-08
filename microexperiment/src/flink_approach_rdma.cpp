@@ -23,7 +23,24 @@
 
 //#define BUFFER_SIZE 1000
 std::atomic<size_t> exitProgram;
+#define PORT 55355
+#define WRITE_SEND_BUFFER_COUNT 20
+#define WRITE_RECEIVE_BUFFER_COUNT 20
+#define BUFFER_USED_SENDER_DONE 127
+#define BUFFER_READY_FLAG 0
+#define BUFFER_USED_FLAG 1
+#define BUFFER_BEING_PROCESSED_FLAG 2
+//#define JOIN_WRITE_BUFFER_SIZE 1024*1024*8
 
+std::vector<Buffer*> recv_buffers(WRITE_RECEIVE_BUFFER_COUNT);
+std::vector<RegionToken*> region_tokens(WRITE_RECEIVE_BUFFER_COUNT+1);
+std::vector<std::atomic_char> buffer_ready_sign(WRITE_RECEIVE_BUFFER_COUNT);
+
+
+//producer stuff
+infinity::memory::Buffer* sign_buffer;
+RegionToken* sign_token;
+std::vector<StructuredTupleBuffer> sendBuffers;
 using namespace std;
 typedef uint64_t Timestamp;
 using NanoSeconds = std::chrono::nanoseconds;
@@ -145,71 +162,119 @@ Timestamp getTimestamp() {
             > (Clock::now().time_since_epoch()).count();
 }
 
-void produce_window_mem(size_t processCnt, record* records,
-        ConnectionObject cObj, size_t consumeCnt, size_t prodID, size_t bufferSize) {
-    size_t produced = 0;
+
+void read_sign_buffer(size_t target_rank, Buffer* sign_buffer, RegionToken* sign_token, VerbsConnection* connection)
+{
+    TRACE("reading sign_buffer: \n");
+    connection->read_blocking(sign_buffer, sign_token);
+    TRACE("sign_buffer: ");
+    for(int i = 0; i < WRITE_RECEIVE_BUFFER_COUNT; i++)
+    {
+        std::cout << buffer_ready_sign[i];
+    }
+    std::cout << std::endl;
+}
+
+void produce_window_mem(record* records, size_t numInputTuples, size_t bufferSize, void* sendBuffer) {
     size_t disQTuple = 0;
     size_t qualTuple = 0;
-    size_t windowSwitchCnt = 0;
-    size_t htReset = 0;
     size_t pushCnt = 0;
-    size_t lastTimeStamp = 0;
-    size_t sendToCons1 = 0;
-    size_t sendToCons0 = 0;
-
-    size_t sender = { 0 };
-
-    char* sendBuffer = cObj.send_memory;
 
     TupleBuffer* tempBuffers = (TupleBuffer*)sendBuffer;
     *(tempBuffers) = TupleBuffer(bufferSize);
 
-    for (size_t i = 0; i < processCnt; i++) {
-        uint32_t value = *((uint32_t*) records[i].event_type);
+    size_t bufferIndex = 0;
+    size_t inputTupsIndex = 0;
+
+    while(bufferIndex < bufferSize)
+    {
+        uint32_t value = *((uint32_t*) records[inputTupsIndex].event_type);
         if (value != 2003134838) {
-            produced++;
             disQTuple++;
+            if(inputTupsIndex < numInputTuples)
+                inputTupsIndex++;
+            else
+                inputTupsIndex = 0;
             continue;
         }
-
         qualTuple++;
-        produced++;
         size_t timeStamp = time(NULL);
         tempHash hashValue;
-        hashValue.value = *(((uint64_t*) records[i].campaign_id) + 1);
+        hashValue.value = *(((uint64_t*) records[inputTupsIndex].campaign_id) + 1);
         Tuple tup(hashValue.value, timeStamp);
-
         if (tempBuffers->add(tup)) {
             pushCnt++;
-            cObj.connection->write_blocking(cObj.send_buffer, cObj.remote_receive_token.get());
-            tempBuffers->pos = 0;
-            sender++;
+            std::atomic_fetch_add(&exitProgram, size_t(1));
+            return;
         }
     }
-    stringstream ss;
-    ss << "Thread=" << omp_get_thread_num() << " prodID=" << prodID
-            << " produced=" << produced << " pushCnt=" << pushCnt
-            << " disQTuple=" << disQTuple << " qualTuple=" << qualTuple;
 
-    for (size_t i = 0; i < consumeCnt; i++) {
-        ss << " send_" << i << "=" << sender;
+}
+void runProducer(VerbsConnection* connection, record* records, size_t procCnt, size_t bufferSizeInTuples)
+{
+    size_t target_rank = 1;
+    Limits limits;
+    size_t next_tuple_index = limits.start_index;
+    size_t total_sent_tuples = 0;
+    size_t send_buffer_index = 0;
+
+    while(total_sent_tuples < procCnt)
+    {
+        for(size_t receive_buffer_index = 0; receive_buffer_index < WRITE_RECEIVE_BUFFER_COUNT;
+                receive_buffer_index=(receive_buffer_index+1)%WRITE_RECEIVE_BUFFER_COUNT)
+        {
+            if(receive_buffer_index == 0)
+            {
+                read_sign_buffer(target_rank, sign_buffer, sign_token, connection);
+            }
+            if(buffer_ready_sign[receive_buffer_index] == BUFFER_READY_FLAG)
+            {
+    //            prepare_send_buffer(sendBuffers[send_buffer_index], next_tuple_index, probeTable, limits, matcher);
+    //            sendBuffers[send_buffer_index].requestToken->waitUntilCompleted();
+
+                //fill buffer
+    //            void produce_window_mem(record* records, size_t numInputTuples, size_t bufferSize, void* sendBuffer) {
+
+                produce_window_mem(records, procCnt, bufferSizeInTuples, sendBuffers[send_buffer_index].send_buffer);
+
+                connection->write(sendBuffers[send_buffer_index].send_buffer, region_tokens[receive_buffer_index],
+                        sendBuffers[send_buffer_index].requestToken);
+
+                TRACE2("Writing %lu tuples to rank %lu on buffer %lu!\n", *sendBuffers[send_buffer_index].count_ptr, target_rank, receive_buffer_index);
+                total_sent_tuples += *sendBuffers[send_buffer_index].count_ptr;
+
+                if (next_tuple_index < limits.end_index){
+                    buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
+                    connection->write(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
+                    TRACE2("Done writing sign_buffer\n");
+                }
+                else {
+                    buffer_ready_sign[receive_buffer_index] = BUFFER_USED_SENDER_DONE;
+                    connection->write_blocking(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
+                    TRACE("Sent last tuples and marked as BUFFER_USED_SENDER_DONE\n");
+                    break;
+                }
+                send_buffer_index=(send_buffer_index+1)%WRITE_SEND_BUFFER_COUNT;
+
+            }
     }
-    cout << ss.str() << endl;
-
-    std::atomic_fetch_add(&exitProgram, size_t(1));
+    }
+    TRACE2("Done sending! Sent a total of %lu elements.\n", total_sent_tuples);
+//    done_with_sending[MPIHelper::get_rank()] = true;
+    auto end_time = TimeTools::now();
+//    measured_network_times[MPIHelper::get_process_count() + target_rank] = end_time - start_time;
 }
 
-void cosume_window_mem(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
-        ConnectionObject obj, size_t campaingCnt,
-        size_t* consumedRet, size_t consumerID, size_t produceCnt, size_t bufferSize) {
+
+void cosume_window_mem(StructuredTupleBuffer& buffer, std::atomic_char* flag, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
+        size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSize) {
     size_t consumed = 0;
-    size_t disQTuple = 0;
-    size_t qualTuple = 0;
     size_t windowSwitchCnt = 0;
     size_t htReset = 0;
     size_t lastTimeStamp = 0;
     size_t popCnt = 0;
     Tuple tup;
+
     TupleBuffer buff(bufferSize);
     bool consume = true;
 
@@ -247,32 +312,71 @@ void cosume_window_mem(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         if (std::atomic_load(&exitProgram) == produceCnt)
             consume = false;
     }
-
+    flag = BUFFER_READY_FLAG;
     stringstream ss;
     ss << "Thread=" << omp_get_thread_num() << " consumed=" << consumed
             << " popCnt=" << popCnt << " windowSwitchCnt=" << windowSwitchCnt
             << " htreset=" << htReset;
     cout << ss.str() << endl;
-    *consumedRet = consumed;
+}
+
+void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
+        size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples)
+{
+    size_t total_received_tuples = 0;
+    size_t index = 0;
+
+    while(true)
+    {
+        index ++;
+        index %= WRITE_RECEIVE_BUFFER_COUNT;
+
+        if (buffer_ready_sign[index] == BUFFER_USED_FLAG || buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
+        {
+            bool is_done = buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE;
+
+            if(is_done) // this is done so that the loop later doesnt try to process this again
+                buffer_ready_sign[index] = BUFFER_READY_FLAG;
+
+            total_received_tuples += ((size_t*) recv_buffers[index]->getData())[0];
+            TRACE2("Received %lu tuples from %lu on buffer %lu\n", ((size_t*) recv_buffers[index]->getData())[0], 0, index);
+            StructuredTupleBuffer buff = StructuredTupleBuffer(recv_buffers[index]->getData(), bufferSizeInTuples * sizeof(Tuple));
+            cosume_window_mem(buff, &buffer_ready_sign[index],
+                    hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
+
+//            tuple_processor(StructuredTupleBuffer(recv_buffers[index]->getData(), JOIN_WRITE_BUFFER_SIZE), &buffer_ready_sign[index]);
+
+            if(is_done)
+                break;
+        }
+    }
+
+    for(index = 0; index < WRITE_RECEIVE_BUFFER_COUNT; index++)
+    {
+        if (buffer_ready_sign[index] == BUFFER_USED_FLAG) {
+            total_received_tuples += ((size_t*) recv_buffers[index]->getData())[0];
+            StructuredTupleBuffer buff = StructuredTupleBuffer(recv_buffers[index]->getData(), bufferSizeInTuples * sizeof(Tuple));
+                       cosume_window_mem(buff, &buffer_ready_sign[index],
+                               hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
+        }
+    }
+//    done_with_sending[target_rank] = true;
+    TRACE2("Done receiving! Received a total of %lu elements.\n", total_received_tuples);
+    auto end_time = TimeTools::now();
+//    measured_network_times[MPIHelper::get_rank()] = end_time - start_time;
+    for (auto & token : region_tokens)
+        delete token;
+    for (auto & buffer : recv_buffers)
+        delete buffer;
 }
 
 //#define SERVER_IP "192.168.5.30"
-#define PORT 55355
-#define WRITE_SEND_BUFFER_COUNT 20
-#define WRITE_RECEIVE_BUFFER_COUNT 20
-#define BUFFER_USED_SENDER_DONE 127
-#define BUFFER_READY_FLAG 0
-#define BUFFER_USED_FLAG 1
-#define BUFFER_BEING_PROCESSED_FLAG 2
-#define JOIN_WRITE_BUFFER_SIZE 1024*1024*8
 
-void setupRDMAConsumer(VerbsConnection* connection)
+void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
 {
     std::cout << "Started routine to receive tuples as Consumer" << std::endl;
 
-    std::vector<Buffer*> recv_buffers(WRITE_RECEIVE_BUFFER_COUNT);
-    std::vector<RegionToken*> region_tokens(WRITE_RECEIVE_BUFFER_COUNT+1);
-    std::vector<std::atomic_char> buffer_ready_sign(WRITE_RECEIVE_BUFFER_COUNT);
+
     for(auto & r : buffer_ready_sign)
     {
         r = BUFFER_READY_FLAG;
@@ -283,7 +387,7 @@ void setupRDMAConsumer(VerbsConnection* connection)
     for(size_t i = 0; i < WRITE_RECEIVE_BUFFER_COUNT+1; i++)
     {
         if (i < WRITE_RECEIVE_BUFFER_COUNT) {
-            recv_buffers[i] = connection->allocate_buffer(JOIN_WRITE_BUFFER_SIZE);
+            recv_buffers[i] = connection->allocate_buffer(bufferSizeInTuples * sizeof(Tuple));
             region_tokens[i] = recv_buffers[i]->createRegionToken();
         } else {
             sign_buffer = connection->register_buffer(buffer_ready_sign.data(), WRITE_RECEIVE_BUFFER_COUNT);
@@ -310,18 +414,19 @@ void copy_received_tokens(const std::vector<StructuredTupleBuffer> &sendBuffers,
     }
 }
 
-void setupRDMAProducer(VerbsConnection* connection)
+
+void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples)
 {
     std::cout << "send_matching_tuples_to!" << endl;
     std::vector<RegionToken*> region_tokens(WRITE_RECEIVE_BUFFER_COUNT);
 
-    std::vector<StructuredTupleBuffer> sendBuffers;
+
     for(size_t i = 0; i < WRITE_SEND_BUFFER_COUNT; i++)
-        sendBuffers.emplace_back(StructuredTupleBuffer(*connection, JOIN_WRITE_BUFFER_SIZE));
+        sendBuffers.emplace_back(StructuredTupleBuffer(*connection, bufferSizeInTuples * sizeof(Tuple)));
 
     std::vector<char> buffer_ready_sign(WRITE_RECEIVE_BUFFER_COUNT, BUFFER_READY_FLAG);
-    auto sign_buffer = connection->register_buffer(buffer_ready_sign.data(), WRITE_RECEIVE_BUFFER_COUNT);
-    RegionToken* sign_token = nullptr;
+    sign_buffer = connection->register_buffer(buffer_ready_sign.data(), WRITE_RECEIVE_BUFFER_COUNT);
+    sign_token = nullptr;
 
     std::cout << "Blocking to receive tokens!" << endl;
     connection->post_and_receive_blocking(sendBuffers[0].send_buffer);
@@ -331,40 +436,6 @@ void setupRDMAProducer(VerbsConnection* connection)
     TRACE2("PREPARED EVERYTHING FOR SENDING!\n");
 }
 
-
-
-ConnectionObject setupRDMA(size_t numa_node, size_t rank, std::string ip, size_t bufferSize)
-{
-    pin_to_numa(numa_node);
-    MPIHelper::set_rank(rank);
-    MPIHelper::set_process_count(2);
-
-    size_t target_rank = rank == 0 ? 1 : 0;
-//    (size_t target_rank, u_int16_t device_index, u_int16_t device_Port, u_int16_t connection_port, const std::string & ip);
-    SimpleInfoProvider info(target_rank, 3, 1, PORT, ip);
-    VerbsConnection* connection = new VerbsConnection(&info);
-
-    char * receive_memory = static_cast<char*>(malloc(bufferSize));
-    char * send_memory = static_cast<char*>(malloc(bufferSize));
-    memset(receive_memory, 0, bufferSize);
-    memset(send_memory, 1, bufferSize);
-
-    auto receive_buffer = connection->register_buffer(receive_memory, bufferSize);
-    auto send_buffer = connection->register_buffer(send_memory, bufferSize);
-
-    auto remote_receive_token = connection->exchange_region_tokens(receive_buffer);
-
-//    RequestToken* pRequestToken = connection.create_request_token();
-    cout << "waiting on barrier" << endl;
-    connection->barrier();
-    ConnectionObject retValue;
-    retValue.receive_memory = receive_memory;
-    retValue.send_memory = send_memory;
-    retValue.receive_buffer = receive_buffer;
-    retValue.send_buffer = send_buffer;
-    retValue.remote_receive_token = remote_receive_token;
-    retValue.connection = connection;
-}
 
 record** generateTuples(size_t processCnt, size_t num_Producer, size_t campaingCnt)
 {
@@ -401,14 +472,16 @@ record** generateTuples(size_t processCnt, size_t num_Producer, size_t campaingC
 }
 int main(int argc, char *argv[])
 {
-    cout << "usage processCnt bufferSizeInTups rank ip" << endl;
+//    cout << "usage processCnt bufferSizeInTups rank ip" << endl;
     size_t windowSizeInSeconds = 2;
     //rank 0 producer, rank 1 consumer
-    size_t processCnt = std::stoi(argv[1]);
-    size_t bufferSizeInKB = std::stoi(argv[2]) * sizeof(Tuple);
-    size_t bufferSizeInTups = std::stoi(argv[2]);
+//    size_t processCnt = std::stoi(argv[1]);
+//    size_t bufferSizeInKB = std::stoi(argv[2]) * sizeof(Tuple);
+//    size_t bufferSizeInTups = std::stoi(argv[2]);
 
-    size_t rank = std::stoi(argv[3]);
+    size_t processCnt = 100;
+    size_t bufferSizeInTups = 10;
+    size_t rank = std::stoi(argv[1]);
 
     MPIHelper::set_rank(rank);
     MPIHelper::set_process_count(processCnt);
@@ -438,23 +511,17 @@ int main(int argc, char *argv[])
     if(rank == 0)
     {
         std::cout << "run producer" << endl;
-        setupRDMAProducer(connection);
+        setupRDMAProducer(connection, bufferSizeInTups);
     }
     else
     {
         std::cout << "run consumer" << endl;
-        setupRDMAConsumer(connection);
+        setupRDMAConsumer(connection, bufferSizeInTups);
     }
-    return 0;
-
-
-    ConnectionObject connectObj = setupRDMA(0, rank, ip, bufferSizeInKB);
-
     //fix for the test
     size_t num_Consumer = 1;
     size_t num_Producer = 1;
     const size_t campaingCnt = 10000;
-
 
     record** recs = generateTuples(processCnt, num_Producer, campaingCnt);
 
@@ -477,12 +544,14 @@ int main(int argc, char *argv[])
 
     if(rank == 0)
     {
-        produce_window_mem(processCnt, recs[0], connectObj, num_Consumer, 0, bufferSizeInTups);
+//        void produceTuples(infinity::memory::Buffer* sign_buffer, RegionToken* sign_token,
+//        std::vector<StructuredTupleBuffer> sendBuffers,
+//                VerbsConnection* connection, record* records, size_t procCnt)
+        runProducer(connection, recs[0], processCnt, bufferSizeInTups);
     }
     else
     {
-        cosume_window_mem(hashTable, windowSizeInSeconds, connectObj,
-                campaingCnt, &consumed[0],0, num_Producer, bufferSizeInTups);
+        runConsumer(hashTable, windowSizeInSeconds, campaingCnt, 0, num_Producer, bufferSizeInTups);
     }
 
     Timestamp end = getTimestamp();
@@ -533,3 +602,37 @@ int main(int argc, char *argv[])
 //
 //    }//end of for iteration
 //    printf("Done with Measurement!\n");
+//
+//ConnectionObject setupRDMA(size_t numa_node, size_t rank, std::string ip, size_t bufferSize)
+//{
+//    pin_to_numa(numa_node);
+//    MPIHelper::set_rank(rank);
+//    MPIHelper::set_process_count(2);
+//
+//    size_t target_rank = rank == 0 ? 1 : 0;
+////    (size_t target_rank, u_int16_t device_index, u_int16_t device_Port, u_int16_t connection_port, const std::string & ip);
+//    SimpleInfoProvider info(target_rank, 3, 1, PORT, ip);
+//    VerbsConnection* connection = new VerbsConnection(&info);
+//
+//    char * receive_memory = static_cast<char*>(malloc(bufferSize));
+//    char * send_memory = static_cast<char*>(malloc(bufferSize));
+//    memset(receive_memory, 0, bufferSize);
+//    memset(send_memory, 1, bufferSize);
+//
+//    auto receive_buffer = connection->register_buffer(receive_memory, bufferSize);
+//    auto send_buffer = connection->register_buffer(send_memory, bufferSize);
+//
+//    auto remote_receive_token = connection->exchange_region_tokens(receive_buffer);
+//
+////    RequestToken* pRequestToken = connection.create_request_token();
+//    cout << "waiting on barrier" << endl;
+//    connection->barrier();
+//    ConnectionObject retValue;
+//    retValue.receive_memory = receive_memory;
+//    retValue.send_memory = send_memory;
+//    retValue.receive_buffer = receive_buffer;
+//    retValue.send_buffer = send_buffer;
+//    retValue.remote_receive_token = remote_receive_token;
+//    retValue.connection = connection;
+//}
+
