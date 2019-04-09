@@ -231,7 +231,9 @@ void produce_window_mem(record* records, size_t numInputTuples, size_t bufferSiz
         tempHash hashValue;
         hashValue.value = *(((uint64_t*) records[inputTupsIndex].campaign_id) + 1);
         Tuple tup(hashValue.value, timeStamp);
+        cout << "add tuple with idx=" << bufferIndex << endl;
         outputBuffer[bufferIndex++] = tup;
+
 //        outputBuffer->add(tup);
     }
 
