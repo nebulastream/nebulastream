@@ -32,8 +32,8 @@ std::atomic<size_t> exitProgram;
 #define BUFFER_BEING_PROCESSED_FLAG 2
 //#define JOIN_WRITE_BUFFER_SIZE 1024*1024*8
 
-std::vector<Buffer*> recv_buffers(WRITE_RECEIVE_BUFFER_COUNT);
-std::vector<RegionToken*> region_tokens(WRITE_RECEIVE_BUFFER_COUNT+1);
+std::vector<infinity::memory::Buffer*> recv_buffers(WRITE_RECEIVE_BUFFER_COUNT);
+std::vector<infinity::memory::RegionToken*> region_tokens(WRITE_RECEIVE_BUFFER_COUNT+1);
 std::vector<std::atomic_char> buffer_ready_sign(WRITE_RECEIVE_BUFFER_COUNT);
 
 
@@ -387,10 +387,8 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
     for(size_t i = 0; i < WRITE_RECEIVE_BUFFER_COUNT+1; i++)
     {
         if (i < WRITE_RECEIVE_BUFFER_COUNT) {
-            infinity::memory::Buffer* buff = connection->allocate_buffer(bufferSizeInTuples * sizeof(Tuple));
-            cout << "buffer=" << buff << endl;
-            recv_buffers[i] = buff;
 //            recv_buffers[i] = connection->allocate_buffer(bufferSizeInTuples * sizeof(Tuple));
+            recv_buffers[i] = connection->allocate_buffer(100);
             region_tokens[i] = recv_buffers[i]->createRegionToken();
         } else {
             sign_buffer = connection->register_buffer(buffer_ready_sign.data(), WRITE_RECEIVE_BUFFER_COUNT);
