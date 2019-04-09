@@ -367,8 +367,10 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         }
         else
         {
-            cout << "found no free buffer at index=" << index << " value=" << buffer_ready_sign[index] << endl;
+            cout << "found no free buffer at index=" << index << " value=" << buffer_ready_sign[index].load() << endl;
             sleep(1);
+//            (volatile bool*) value = &buffer_ready_sign[index].load();
+//            cout << "val vol=" << value << endl;
         }
     }
 
@@ -607,7 +609,7 @@ int main(int argc, char *argv[])
 //            {
 //                *send_memory = (char) 1;
 //                connection.write(send_buffer, remote_receive_token.get());
-//                while (((volatile char*) receive_memory)[0] != (char) 1) {
+//                while (((x char*) receive_memory)[0] != (char) 1) {
 //                }
 //                receive_memory[0] = 0;
 //            }
