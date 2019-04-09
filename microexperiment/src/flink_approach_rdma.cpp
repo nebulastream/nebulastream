@@ -32,30 +32,6 @@ std::atomic<size_t> exitProgram;
 #define BUFFER_BEING_PROCESSED_FLAG 2
 //#define JOIN_WRITE_BUFFER_SIZE 1024*1024*8
 
-std::vector<infinity::memory::Buffer*> recv_buffers(WRITE_RECEIVE_BUFFER_COUNT);
-std::vector<infinity::memory::RegionToken*> region_tokens(WRITE_RECEIVE_BUFFER_COUNT+1);
-std::vector<std::atomic_char> buffer_ready_sign(WRITE_RECEIVE_BUFFER_COUNT);
-
-
-//producer stuff
-infinity::memory::Buffer* sign_buffer;
-RegionToken* sign_token;
-std::vector<StructuredTupleBuffer> sendBuffers;
-using namespace std;
-typedef uint64_t Timestamp;
-using NanoSeconds = std::chrono::nanoseconds;
-using Clock = std::chrono::high_resolution_clock;
-
-struct ConnectionObject
-{
-    char * receive_memory;
-    char * send_memory;
-    infinity::memory::Buffer* receive_buffer;
-    infinity::memory::Buffer* send_buffer;
-    std::shared_ptr<RegionToken> remote_receive_token;
-    VerbsConnection* connection;
-};
-
 struct __attribute__((packed)) record {
     uint8_t user_id[16];
     uint8_t page_id[16];
@@ -107,22 +83,75 @@ struct Tuple {
 };
 //size 16 Byte
 
-struct __attribute__((packed)) TupleBuffer {
-    TupleBuffer(size_t pBufferSize) {
-        pos = 0;
-        bufferSize = pBufferSize;
-        content = new Tuple[bufferSize];
+struct TupleBuffer{
+    TupleBuffer(VerbsConnection & connection, size_t bufferSizeInTuples): numberOfTuples(0)
+    {
+        maxNumberOfTuples = bufferSizeInTuples;
+        send_buffer = connection.allocate_buffer(bufferSizeInTuples * sizeof(Tuple));
+        requestToken = connection.create_request_token();
+        requestToken->setCompleted(true);
+        tups = (Tuple*)send_buffer->getAddress();
+    }
+//    TupleBuffer(void* memory, size_t size)
+//    {
+//        tups = memory;
+//
+//    }
+    TupleBuffer(TupleBuffer && other)
+        :maxNumberOfTuples(other.maxNumberOfTuples)
+        , numberOfTuples(other.numberOfTuples)
+        {
+            std::swap(send_buffer, other.send_buffer);
+            std::swap(tups, other.tups);
+            std::swap(requestToken, other.requestToken);
+        }
+
+    bool add(Tuple& tup)
+    {
+           tups[numberOfTuples++] = tup;
+           return numberOfTuples == maxNumberOfTuples;
     }
 
-    bool add(Tuple& tup) {
-        content[pos++] = tup;
-        return pos == bufferSize;
-    }
-
-    Tuple* content;
-    size_t pos;
-    size_t bufferSize;
+    Buffer * send_buffer;
+    Tuple* tups;
+    RequestToken * requestToken;
+    size_t numberOfTuples;
+    size_t maxNumberOfTuples;
 };
+//
+//struct __attribute__((packed)) TupleBuffer {
+//    TupleBuffer(size_t pBufferSize) {
+//        pos = 0;
+//        bufferSize = pBufferSize;
+//        content = new Tuple[bufferSize];
+//    }
+//
+//    bool add(Tuple& tup) {
+//        content[pos++] = tup;
+//        return pos == bufferSize;
+//    }
+//
+//    Tuple* content;
+//    size_t pos;
+//    size_t bufferSize;
+//};
+
+
+std::vector<infinity::memory::Buffer*> recv_buffers(WRITE_RECEIVE_BUFFER_COUNT);
+std::vector<infinity::memory::RegionToken*> region_tokens(WRITE_RECEIVE_BUFFER_COUNT+1);
+std::vector<std::atomic_char> buffer_ready_sign(WRITE_RECEIVE_BUFFER_COUNT);
+
+
+
+//producer stuff
+infinity::memory::Buffer* sign_buffer;
+RegionToken* sign_token;
+std::vector<TupleBuffer> sendBuffers;
+using namespace std;
+typedef uint64_t Timestamp;
+using NanoSeconds = std::chrono::nanoseconds;
+using Clock = std::chrono::high_resolution_clock;
+
 
 void shuffle(record* array, size_t n) {
     if (n > 1) {
@@ -181,7 +210,8 @@ void produce_window_mem(record* records, size_t numInputTuples, size_t bufferSiz
     size_t pushCnt = 0;
 
     TupleBuffer* tempBuffers = (TupleBuffer*)sendBuffer;
-    *(tempBuffers) = TupleBuffer(bufferSize);
+//    TupleBuffer* tempBuffers = (TupleBuffer*)sendBuffer;
+//    *(tempBuffers) = TupleBuffer(bufferSize);
 
     size_t bufferIndex = 0;
     size_t inputTupsIndex = 0;
@@ -202,11 +232,7 @@ void produce_window_mem(record* records, size_t numInputTuples, size_t bufferSiz
         tempHash hashValue;
         hashValue.value = *(((uint64_t*) records[inputTupsIndex].campaign_id) + 1);
         Tuple tup(hashValue.value, timeStamp);
-        if (tempBuffers->add(tup)) {
-            pushCnt++;
-            std::atomic_fetch_add(&exitProgram, size_t(1));
-            return;
-        }
+        tempBuffers->add(tup);
     }
 
 }
@@ -240,8 +266,9 @@ void runProducer(VerbsConnection* connection, record* records, size_t procCnt, s
                 connection->write(sendBuffers[send_buffer_index].send_buffer, region_tokens[receive_buffer_index],
                         sendBuffers[send_buffer_index].requestToken);
 
-                TRACE2("Writing %lu tuples to rank %lu on buffer %lu!\n", *sendBuffers[send_buffer_index].count_ptr, target_rank, receive_buffer_index);
-                total_sent_tuples += *sendBuffers[send_buffer_index].count_ptr;
+                TRACE2("Writing %lu tuples to rank %lu on buffer %lu!\n", sendBuffers[send_buffer_index].numberOfTuples,
+                        target_rank, receive_buffer_index);
+                total_sent_tuples += sendBuffers[send_buffer_index].numberOfTuples;
 
                 if (next_tuple_index < limits.end_index){
                     buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
@@ -266,7 +293,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t procCnt, s
 }
 
 
-void cosume_window_mem(StructuredTupleBuffer& buffer, std::atomic_char* flag, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
+void cosume_window_mem(void* vbuffer, size_t bufferSizeInTuples, std::atomic_char* flag, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSize) {
     size_t consumed = 0;
     size_t windowSwitchCnt = 0;
@@ -275,44 +302,32 @@ void cosume_window_mem(StructuredTupleBuffer& buffer, std::atomic_char* flag, st
     size_t popCnt = 0;
     Tuple tup;
 
-    TupleBuffer buff(bufferSize);
-    bool consume = true;
+    TupleBuffer* buffer = (TupleBuffer*) vbuffer;
+    for(size_t i = 0; i < buffer->numberOfTuples; i++)
+    {
+        size_t timeStamp = time(NULL); //seconds elapsed since 00:00 hours, Jan 1, 1970 UTC
 
-    while (consume) {
-//        while (!queue[consumerID]->empty()) {
-//            queue[consumerID]->pop(buff);
-            //cout << "Consumer" << consumerID << " consume from to queue " << consumerID << endl;
-
-            popCnt++;
-            size_t timeStamp = time(NULL); //seconds elapsed since 00:00 hours, Jan 1, 1970 UTC
-
-            size_t current_window = 0;
-            if (lastTimeStamp != timeStamp
-                    && timeStamp % windowSizeInSec == 0) {
-                //increment to new window
-                current_window++;
-                windowSwitchCnt++;
-                if (hashTable[current_window][campaingCnt] != timeStamp) {
-                    htReset++;
-                    atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
-                    std::fill(hashTable[current_window], hashTable[current_window] + campaingCnt, 0);
-                }
-                lastTimeStamp = timeStamp;
+        size_t current_window = 0;
+        if (lastTimeStamp != timeStamp
+                && timeStamp % windowSizeInSec == 0) {
+            //increment to new window
+            current_window++;
+            windowSwitchCnt++;
+            if (hashTable[current_window][campaingCnt] != timeStamp) {
+                htReset++;
+                atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
+                std::fill(hashTable[current_window], hashTable[current_window] + campaingCnt, 0);
             }
-            for (size_t u = 0; u < bufferSize; u++) {
-                //consume one tuple
-                uint64_t bucketPos = (buff.content[u].campaign_id * 789 + 321)
-                        % campaingCnt;
-                atomic_fetch_add(&hashTable[current_window][bucketPos],
-                        size_t(1));
-                consumed++;
-            }
-//        } //end of while not empty
+            lastTimeStamp = timeStamp;
+        }
 
-        if (std::atomic_load(&exitProgram) == produceCnt)
-            consume = false;
-    }
+        uint64_t bucketPos = (buffer->tups[i].campaign_id * 789 + 321)
+                    % campaingCnt;
+        atomic_fetch_add(&hashTable[current_window][bucketPos], size_t(1));
+        consumed++;
+    }//end of for
     flag = BUFFER_READY_FLAG;
+
     stringstream ss;
     ss << "Thread=" << omp_get_thread_num() << " consumed=" << consumed
             << " popCnt=" << popCnt << " windowSwitchCnt=" << windowSwitchCnt
@@ -340,8 +355,8 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
             total_received_tuples += ((size_t*) recv_buffers[index]->getData())[0];
             TRACE2("Received %lu tuples from %lu on buffer %lu\n", ((size_t*) recv_buffers[index]->getData())[0], 0, index);
-            StructuredTupleBuffer buff = StructuredTupleBuffer(recv_buffers[index]->getData(), bufferSizeInTuples * sizeof(Tuple));
-            cosume_window_mem(buff, &buffer_ready_sign[index],
+//            TupleBuffer buff = StructuredTupleBuffer(recv_buffers[index]->getData(), bufferSizeInTuples * sizeof(Tuple));
+            cosume_window_mem(recv_buffers[index]->getData(), bufferSizeInTuples, &buffer_ready_sign[index],
                     hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
 
 //            tuple_processor(StructuredTupleBuffer(recv_buffers[index]->getData(), JOIN_WRITE_BUFFER_SIZE), &buffer_ready_sign[index]);
@@ -351,13 +366,13 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         }
     }
 
-    for(index = 0; index < WRITE_RECEIVE_BUFFER_COUNT; index++)
+    for(index = 0; index < WRITE_RECEIVE_BUFFER_COUNT; index++)//check again if some are there
     {
         if (buffer_ready_sign[index] == BUFFER_USED_FLAG) {
             total_received_tuples += ((size_t*) recv_buffers[index]->getData())[0];
-            StructuredTupleBuffer buff = StructuredTupleBuffer(recv_buffers[index]->getData(), bufferSizeInTuples * sizeof(Tuple));
-                       cosume_window_mem(buff, &buffer_ready_sign[index],
-                               hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
+//            StructuredTupleBuffer buff = StructuredTupleBuffer(recv_buffers[index]->getData(), bufferSizeInTuples * sizeof(Tuple));
+            cosume_window_mem(recv_buffers[index]->getData(), bufferSizeInTuples, &buffer_ready_sign[index],
+                                hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
         }
     }
 //    done_with_sending[target_rank] = true;
@@ -403,7 +418,7 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
     cout << "setupRDMAConsumer finished" << endl;
 }
 
-void copy_received_tokens(const std::vector<StructuredTupleBuffer> &sendBuffers,
+void copy_received_tokens(const std::vector<TupleBuffer> &sendBuffers,
         std::vector<RegionToken*> &region_tokens, RegionToken*&sign_token)
 {
     for(size_t i = 0; i <= WRITE_RECEIVE_BUFFER_COUNT; i++){
@@ -425,7 +440,7 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples)
 
 
     for(size_t i = 0; i < WRITE_SEND_BUFFER_COUNT; i++)
-        sendBuffers.emplace_back(StructuredTupleBuffer(*connection, bufferSizeInTuples * sizeof(Tuple)));
+        sendBuffers.emplace_back(TupleBuffer(*connection, bufferSizeInTuples * sizeof(Tuple)));
 
     std::vector<char> buffer_ready_sign(WRITE_RECEIVE_BUFFER_COUNT, BUFFER_READY_FLAG);
     sign_buffer = connection->register_buffer(buffer_ready_sign.data(), WRITE_RECEIVE_BUFFER_COUNT);
