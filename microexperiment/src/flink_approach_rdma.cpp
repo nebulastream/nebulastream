@@ -204,12 +204,11 @@ void read_sign_buffer(size_t target_rank, Buffer* sign_buffer, RegionToken* sign
     std::cout << std::endl;
 }
 
-void produce_window_mem(record* records, size_t numInputTuples, size_t bufferSize, void* sendBuffer) {
+void produce_window_mem(record* records, size_t numInputTuples, size_t bufferSize, Tuple* outputBuffer) {
     size_t disQTuple = 0;
     size_t qualTuple = 0;
-    size_t pushCnt = 0;
 
-    TupleBuffer* tempBuffers = (TupleBuffer*)sendBuffer;
+//    TupleBuffer* tempBuffers = (TupleBuffer*)sendBuffer;
 //    TupleBuffer* tempBuffers = (TupleBuffer*)sendBuffer;
 //    *(tempBuffers) = TupleBuffer(bufferSize);
 
@@ -232,7 +231,8 @@ void produce_window_mem(record* records, size_t numInputTuples, size_t bufferSiz
         tempHash hashValue;
         hashValue.value = *(((uint64_t*) records[inputTupsIndex].campaign_id) + 1);
         Tuple tup(hashValue.value, timeStamp);
-        tempBuffers->add(tup);
+        outputBuffer[bufferIndex++] = tup;
+//        outputBuffer->add(tup);
     }
 
 }
@@ -261,7 +261,9 @@ void runProducer(VerbsConnection* connection, record* records, size_t procCnt, s
                 //fill buffer
     //            void produce_window_mem(record* records, size_t numInputTuples, size_t bufferSize, void* sendBuffer) {
 
-                produce_window_mem(records, procCnt, bufferSizeInTuples, sendBuffers[send_buffer_index].send_buffer);
+                //generate temp buffer
+
+                produce_window_mem(records, procCnt, bufferSizeInTuples, (Tuple*)sendBuffers[send_buffer_index].send_buffer->getData());
 
                 connection->write(sendBuffers[send_buffer_index].send_buffer, region_tokens[receive_buffer_index],
                         sendBuffers[send_buffer_index].requestToken);
