@@ -170,7 +170,7 @@ void read_sign_buffer(size_t target_rank, Buffer* sign_buffer, RegionToken* sign
     TRACE("sign_buffer: ");
     for(int i = 0; i < WRITE_RECEIVE_BUFFER_COUNT; i++)
     {
-        std::cout << buffer_ready_sign[i];
+        std::cout << buffer_ready_sign[i] << ",";
     }
     std::cout << std::endl;
 }
@@ -394,12 +394,13 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
             sign_buffer = connection->register_buffer(buffer_ready_sign.data(), WRITE_RECEIVE_BUFFER_COUNT);
             region_tokens[i] = sign_buffer->createRegionToken();
         }
-        cout << "write to " << ((RegionToken*)recv_buffers[0]->getData() + i) << " from " << region_tokens[i] << " bytes=" << sizeof(RegionToken) << endl;
+//        cout << "write to " << ((RegionToken*)recv_buffers[0]->getData() + i) << " from " << region_tokens[i] << " bytes=" << sizeof(RegionToken) << endl;
         memcpy((RegionToken*)recv_buffers[0]->getData() + i, region_tokens[i], sizeof(RegionToken));
     }
     sleep(1);
     std::cout << "PREPARED EVERYTHING FOR RECEIVING!" << std::endl;
     connection->send_blocking(recv_buffers[0]);
+    cout << "setupRDMAConsumer finished" << endl;
 }
 
 void copy_received_tokens(const std::vector<StructuredTupleBuffer> &sendBuffers,
@@ -435,7 +436,7 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples)
     std::cout << "Received tokens!!\n" << endl;
     copy_received_tokens(sendBuffers, region_tokens, sign_token);
 
-    TRACE2("PREPARED EVERYTHING FOR SENDING!\n");
+    cout << "setupRDMAConsumer finished" << endl;
 }
 
 
