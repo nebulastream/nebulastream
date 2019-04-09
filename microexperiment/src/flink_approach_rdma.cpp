@@ -377,7 +377,7 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
     std::cout << "Started routine to receive tuples as Consumer" << std::endl;
 
     cout << "buffer size=" << bufferSizeInTuples * sizeof(Tuple) << " first msg size=" << (WRITE_RECEIVE_BUFFER_COUNT+1) * sizeof(RegionToken) << endl;
-    assert(bufferSizeInTuples * sizeof(Tuple) < (WRITE_RECEIVE_BUFFER_COUNT+1) * sizeof(RegionToken));
+    assert(bufferSizeInTuples * sizeof(Tuple) > (WRITE_RECEIVE_BUFFER_COUNT+1) * sizeof(RegionToken));
     for(auto & r : buffer_ready_sign)
     {
         r = BUFFER_READY_FLAG;
@@ -481,8 +481,8 @@ int main(int argc, char *argv[])
 //    size_t bufferSizeInKB = std::stoi(argv[2]) * sizeof(Tuple);
 //    size_t bufferSizeInTups = std::stoi(argv[2]);
 
-    size_t processCnt = 100;
-    size_t bufferSizeInTups = 10;
+    size_t processCnt = 1000;
+    size_t bufferSizeInTups = 100;
     size_t rank = std::stoi(argv[1]);
 
     MPIHelper::set_rank(rank);
