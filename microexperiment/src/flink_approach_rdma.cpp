@@ -367,7 +367,8 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         }
         else
         {
-//            cout << "found no free buffer" << endl;
+            cout << "found no free buffer" << endl;
+            sleep(1);
         }
     }
 
