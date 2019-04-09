@@ -393,6 +393,7 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
             sign_buffer = connection->register_buffer(buffer_ready_sign.data(), WRITE_RECEIVE_BUFFER_COUNT);
             region_tokens[i] = sign_buffer->createRegionToken();
         }
+        cout << "write to " << ((RegionToken*)recv_buffers[0]->getData() + i) << " from " << region_tokens[i] << " bytes=" << sizeof(RegionToken) << endl;
         memcpy((RegionToken*)recv_buffers[0]->getData() + i, region_tokens[i], sizeof(RegionToken));
     }
     sleep(1);
