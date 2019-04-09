@@ -275,13 +275,13 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
                 {
                     buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
                     connection->write(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
-                    cout << "Done writing sign_buffer" << endl;
+                    cout << "Done writing sign_buffer at index=" << receive_buffer_index << endl;
                 }
                 else//finished processing
                 {
                     buffer_ready_sign[receive_buffer_index] = BUFFER_USED_SENDER_DONE;
                     connection->write_blocking(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
-                    cout << "Sent last tuples and marked as BUFFER_USED_SENDER_DONE" << endl;
+                    cout << "Sent last tuples and marked as BUFFER_USED_SENDER_DONE at index=" << receive_buffer_index << endl;
                     break;
                 }
                 send_buffer_index = (send_buffer_index+1) % WRITE_SEND_BUFFER_COUNT;
@@ -347,7 +347,7 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
     while(true)
     {
-        index ++;
+        index++;
         index %= WRITE_RECEIVE_BUFFER_COUNT;
 
         if (buffer_ready_sign[index] == BUFFER_USED_FLAG || buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
@@ -358,12 +358,16 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                 buffer_ready_sign[index] = BUFFER_READY_FLAG;
 
             total_received_tuples += ((size_t*) recv_buffers[index]->getData())[0];
-            TRACE2("Received %lu tuples from %lu on buffer %lu\n", ((size_t*) recv_buffers[index]->getData())[0], 0, index);
+            cout << "Received buffer at index=" << index << endl;
             cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples, &buffer_ready_sign[index],
                     hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
 
             if(is_done)
                 break;
+        }
+        else
+        {
+//            cout << "found no free buffer" << endl;
         }
     }
 
