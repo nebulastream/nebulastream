@@ -376,6 +376,7 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
 {
     std::cout << "Started routine to receive tuples as Consumer" << std::endl;
 
+    cout << "buffer size=" << bufferSizeInTuples * sizeof(Tuple) << " first msg size=" << (WRITE_RECEIVE_BUFFER_COUNT+1) * sizeof(RegionToken) << endl;
     assert(bufferSizeInTuples * sizeof(Tuple) < (WRITE_RECEIVE_BUFFER_COUNT+1) * sizeof(RegionToken));
     for(auto & r : buffer_ready_sign)
     {
@@ -394,7 +395,7 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
             region_tokens[i] = sign_buffer->createRegionToken();
         }
         cout << "write to " << ((RegionToken*)recv_buffers[0]->getData() + i) << " from " << region_tokens[i] << " bytes=" << sizeof(RegionToken) << endl;
-        memcpy((RegionToken*)recv_buffers[0]->getData() + i, &region_tokens[i], sizeof(RegionToken));
+        memcpy((RegionToken*)recv_buffers[0]->getData() + i, region_tokens[i], sizeof(RegionToken));
     }
     sleep(1);
     std::cout << "PREPARED EVERYTHING FOR RECEIVING!" << std::endl;
