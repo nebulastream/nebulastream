@@ -387,15 +387,15 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
     for(size_t i = 0; i < WRITE_RECEIVE_BUFFER_COUNT+1; i++)
     {
         if (i < WRITE_RECEIVE_BUFFER_COUNT) {
-//            recv_buffers[i] = connection->allocate_buffer(bufferSizeInTuples * sizeof(Tuple));
-            recv_buffers[i] = connection->allocate_buffer(100);
+            recv_buffers[i] = connection->allocate_buffer(bufferSizeInTuples * sizeof(Tuple));
+//            recv_buffers[i] = connection->allocate_buffer(100);
             region_tokens[i] = recv_buffers[i]->createRegionToken();
         } else {
             sign_buffer = connection->register_buffer(buffer_ready_sign.data(), WRITE_RECEIVE_BUFFER_COUNT);
             region_tokens[i] = sign_buffer->createRegionToken();
         }
         cout << "write to " << ((RegionToken*)recv_buffers[0]->getData() + i) << " from " << region_tokens[i] << " bytes=" << sizeof(RegionToken) << endl;
-        memcpy((RegionToken*)recv_buffers[0]->getData() + i, region_tokens[i], sizeof(RegionToken));
+//        memcpy((RegionToken*)recv_buffers[0]->getData() + i, region_tokens[i], sizeof(RegionToken));
     }
     sleep(1);
     std::cout << "PREPARED EVERYTHING FOR RECEIVING!" << std::endl;
