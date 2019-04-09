@@ -389,6 +389,7 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
         if (i < WRITE_RECEIVE_BUFFER_COUNT) {
             infinity::memory::Buffer* buff = connection->allocate_buffer(bufferSizeInTuples * sizeof(Tuple));
             cout << "buffer=" << buff << endl;
+            recv_buffers[i] = buff;
 //            recv_buffers[i] = connection->allocate_buffer(bufferSizeInTuples * sizeof(Tuple));
             region_tokens[i] = recv_buffers[i]->createRegionToken();
         } else {
