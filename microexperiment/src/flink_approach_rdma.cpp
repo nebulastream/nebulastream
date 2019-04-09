@@ -344,7 +344,7 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 {
     size_t total_received_tuples = 0;
     size_t index = 0;
-
+    cout << "start consumer" << endl;
     while(true)
     {
         index++;
