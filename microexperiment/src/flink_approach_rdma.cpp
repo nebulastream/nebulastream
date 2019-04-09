@@ -421,7 +421,7 @@ void copy_received_tokens(const std::vector<StructuredTupleBuffer> &sendBuffers,
 void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples)
 {
     std::cout << "send_matching_tuples_to!" << endl;
-    std::vector<RegionToken*> region_tokens(WRITE_RECEIVE_BUFFER_COUNT);
+//    std::vector<RegionToken*> region_tokens(WRITE_RECEIVE_BUFFER_COUNT);
 
 
     for(size_t i = 0; i < WRITE_SEND_BUFFER_COUNT; i++)
