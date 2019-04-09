@@ -376,7 +376,7 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
 {
     std::cout << "Started routine to receive tuples as Consumer" << std::endl;
 
-
+    assert(bufferSizeInTuples * sizeof(Tuple) < (WRITE_RECEIVE_BUFFER_COUNT+1) * sizeof(RegionToken));
     for(auto & r : buffer_ready_sign)
     {
         r = BUFFER_READY_FLAG;
