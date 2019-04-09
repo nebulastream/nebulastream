@@ -231,7 +231,7 @@ void produce_window_mem(record* records, size_t genCnt, size_t bufferSize, Tuple
         tempHash hashValue;
         hashValue.value = *(((uint64_t*) records[inputTupsIndex].campaign_id) + 1);
         Tuple tup(hashValue.value, timeStamp);
-        cout << "add tuple with idx=" << bufferIndex << endl;
+//        cout << "add tuple with idx=" << bufferIndex << endl;
         outputBuffer[bufferIndex++] = tup;
 
 //        outputBuffer->add(tup);
@@ -261,6 +261,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
             {
                 //this will run until one buffer is filled completely
                 produce_window_mem(records, genCnt, bufferSizeInTuples, (Tuple*)sendBuffers[send_buffer_index].send_buffer->getData());
+                sendBuffers[send_buffer_index].numberOfTuples = bufferSizeInTuples;
 
                 connection->write(sendBuffers[send_buffer_index].send_buffer, region_tokens[receive_buffer_index],
                         sendBuffers[send_buffer_index].requestToken);
@@ -294,7 +295,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
 }
 
 
-void cosume_window_mem(void* vbuffer, size_t bufferSizeInTuples, std::atomic_char* flag, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
+void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic_char* flag, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSize) {
     size_t consumed = 0;
     size_t windowSwitchCnt = 0;
@@ -303,10 +304,12 @@ void cosume_window_mem(void* vbuffer, size_t bufferSizeInTuples, std::atomic_cha
     size_t popCnt = 0;
     Tuple tup;
 
-    TupleBuffer* buffer = (TupleBuffer*) vbuffer;
-    for(size_t i = 0; i < buffer->numberOfTuples; i++)
+    for(size_t i = 0; i < bufferSizeInTuples; i++)
     {
         size_t timeStamp = time(NULL); //seconds elapsed since 00:00 hours, Jan 1, 1970 UTC
+
+        cout << "Consumer: received buffer with first tuple campaingid=" << buffer[0].campaign_id
+                << " timestamp=" << buffer[0].timeStamp << endl;
 
         size_t current_window = 0;
         if (lastTimeStamp != timeStamp
@@ -322,10 +325,10 @@ void cosume_window_mem(void* vbuffer, size_t bufferSizeInTuples, std::atomic_cha
             lastTimeStamp = timeStamp;
         }
 
-        uint64_t bucketPos = (buffer->tups[i].campaign_id * 789 + 321)
-                    % campaingCnt;
+        uint64_t bucketPos = (buffer[i].campaign_id * 789 + 321) % campaingCnt;
         atomic_fetch_add(&hashTable[current_window][bucketPos], size_t(1));
         consumed++;
+
     }//end of for
     flag = BUFFER_READY_FLAG;
 
@@ -356,7 +359,7 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
             total_received_tuples += ((size_t*) recv_buffers[index]->getData())[0];
             TRACE2("Received %lu tuples from %lu on buffer %lu\n", ((size_t*) recv_buffers[index]->getData())[0], 0, index);
-            cosume_window_mem(recv_buffers[index]->getData(), bufferSizeInTuples, &buffer_ready_sign[index],
+            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples, &buffer_ready_sign[index],
                     hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
 
             if(is_done)
@@ -369,7 +372,7 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         if (buffer_ready_sign[index] == BUFFER_USED_FLAG) {
             total_received_tuples += ((size_t*) recv_buffers[index]->getData())[0];
 //            StructuredTupleBuffer buff = StructuredTupleBuffer(recv_buffers[index]->getData(), bufferSizeInTuples * sizeof(Tuple));
-            cosume_window_mem(recv_buffers[index]->getData(), bufferSizeInTuples, &buffer_ready_sign[index],
+            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples, &buffer_ready_sign[index],
                                 hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
         }
     }
