@@ -387,7 +387,9 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
     for(size_t i = 0; i < WRITE_RECEIVE_BUFFER_COUNT+1; i++)
     {
         if (i < WRITE_RECEIVE_BUFFER_COUNT) {
-            recv_buffers[i] = connection->allocate_buffer(bufferSizeInTuples * sizeof(Tuple));
+            infinity::memory::Buffer* buff = connection->allocate_buffer(bufferSizeInTuples * sizeof(Tuple));
+            cout << "buffer=" << buff << endl;
+//            recv_buffers[i] = connection->allocate_buffer(bufferSizeInTuples * sizeof(Tuple));
             region_tokens[i] = recv_buffers[i]->createRegionToken();
         } else {
             sign_buffer = connection->register_buffer(buffer_ready_sign.data(), WRITE_RECEIVE_BUFFER_COUNT);
