@@ -290,7 +290,9 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
         }//end of for
     }//end of while
     cout << "Done sending! Sent a total of " << total_sent_tuples << " tuples and " << total_buffer_send << " buffers" << endl;
-//    done_with_sending[MPIHelper::get_rank()] = true;
+    cout << "read buffer status" << endl;
+    read_sign_buffer(target_rank, sign_buffer, sign_token, connection);
+    //    done_with_sending[MPIHelper::get_rank()] = true;
 //    auto end_time = TimeTools::now();
 //    measured_network_times[MPIHelper::get_process_count() + target_rank] = end_time - start_time;
 }
