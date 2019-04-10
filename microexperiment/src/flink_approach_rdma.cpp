@@ -367,7 +367,10 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         }
         else
         {
-            cout << "found no free buffer at index=" << index << " value=" << buffer_ready_sign[index].load() << endl;
+            Tuple* b = (Tuple*)recv_buffers[index]->getData();
+            cout << "found no free buffer at index=" << index << " value=" << buffer_ready_sign[index].load()
+                    << "first val camp=" << b[0].campaign_id
+                    << " timestamp=" << b[0].timeStamp << endl;
             sleep(1);
 //            (volatile bool*) value = &buffer_ready_sign[index].load();
 //            cout << "val vol=" << value << endl;
