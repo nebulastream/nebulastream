@@ -297,7 +297,6 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
 //    measured_network_times[MPIHelper::get_process_count() + target_rank] = end_time - start_time;
 }
 
-
 void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, char* flag, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSize) {
     size_t consumed = 0;
@@ -358,6 +357,9 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     {
         index++;
         index %= WRITE_RECEIVE_BUFFER_COUNT;
+
+        volatile char c = buffer_ready_sign[index];
+        cout << "C=" <<  c << endl;
 
         if (buffer_ready_sign[index] == BUFFER_USED_FLAG || buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
         {
