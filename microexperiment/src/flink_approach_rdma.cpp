@@ -411,12 +411,14 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
 
     Buffer * sign_buffer = nullptr;
 
-    for(size_t i = 0; i < WRITE_RECEIVE_BUFFER_COUNT+1; i++)
+    for(size_t i = 0; i <= WRITE_RECEIVE_BUFFER_COUNT; i++)
     {
         if (i < WRITE_RECEIVE_BUFFER_COUNT) {
             recv_buffers[i] = connection->allocate_buffer(bufferSizeInTuples * sizeof(Tuple));
             region_tokens[i] = recv_buffers[i]->createRegionToken();
         } else {
+            cout << "copy sign token at pos " << i << endl;
+
             sign_buffer = connection->register_buffer(buffer_ready_sign.data(), WRITE_RECEIVE_BUFFER_COUNT);
             region_tokens[i] = sign_buffer->createRegionToken();
         }
@@ -437,6 +439,7 @@ void copy_received_tokens(const std::vector<TupleBuffer> &sendBuffers,
             region_tokens[i] = static_cast<RegionToken*>(malloc(sizeof(RegionToken)));
             memcpy(region_tokens[i], (RegionToken*)sendBuffers[0].send_buffer->getData() + i, sizeof(RegionToken));
         } else {
+            cout << "copy sign token at pos " << i << endl;
             sign_token = static_cast<RegionToken*>(malloc(sizeof(RegionToken)));
             memcpy(sign_token, (RegionToken*)sendBuffers[0].send_buffer->getData() + i, sizeof(RegionToken));
         }
