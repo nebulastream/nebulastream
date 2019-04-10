@@ -347,10 +347,10 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     size_t index = 0;
     cout << "start consumer" << endl;
 
-    while ( *((volatile char*) buffer_ready_sign[0]) != (char) BUFFER_USED_FLAG) {
-        cout << "loop on buff 0" << endl;
-        sleep(1);
-    }
+//    while ( *((volatile char*) buffer_ready_sign[0]) != (char) BUFFER_USED_FLAG) {
+//        cout << "loop on buff 0" << endl;
+//        sleep(1);
+//    }
 
     while(true)
     {
