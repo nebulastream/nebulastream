@@ -357,9 +357,8 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     {
         index++;
         index %= WRITE_RECEIVE_BUFFER_COUNT;
-        volatile char* c = &buffer_ready_sign[index];
-
-        cout << "C[" << index << "]vol=" << (int)*c << " c_char=" << (int)(char)buffer_ready_sign[index] << endl;
+//        volatile char* c = &buffer_ready_sign[index];
+//        cout << "C[" << index << "]vol=" << (int)*c << " c_char=" << (int)(char)buffer_ready_sign[index] << endl;
 
         if (buffer_ready_sign[index] == BUFFER_USED_FLAG || buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
         {
@@ -391,6 +390,8 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     for(index = 0; index < WRITE_RECEIVE_BUFFER_COUNT; index++)//check again if some are there
     {
         if (buffer_ready_sign[index] == BUFFER_USED_FLAG) {
+            cout << "Check Iter -- Received buffer at index=" << index << endl;
+
             total_received_tuples += ((size_t*) recv_buffers[index]->getData())[0];
 //            StructuredTupleBuffer buff = StructuredTupleBuffer(recv_buffers[index]->getData(), bufferSizeInTuples * sizeof(Tuple));
             cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples, &buffer_ready_sign[index],
