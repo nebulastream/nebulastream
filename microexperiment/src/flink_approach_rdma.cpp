@@ -139,7 +139,8 @@ struct TupleBuffer{
 
 std::vector<infinity::memory::Buffer*> recv_buffers(WRITE_RECEIVE_BUFFER_COUNT);
 std::vector<infinity::memory::RegionToken*> region_tokens(WRITE_RECEIVE_BUFFER_COUNT+1);
-std::vector<std::atomic_char> buffer_ready_sign(WRITE_RECEIVE_BUFFER_COUNT);
+std::vector<char> buffer_ready_sign(WRITE_RECEIVE_BUFFER_COUNT);
+//std::vector<std::atomic_char> buffer_ready_sign(WRITE_RECEIVE_BUFFER_COUNT);
 
 
 
@@ -295,7 +296,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
 }
 
 
-void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic_char* flag, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
+void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, char* flag, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSize) {
     size_t consumed = 0;
     size_t windowSwitchCnt = 0;
@@ -345,6 +346,12 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     size_t total_received_tuples = 0;
     size_t index = 0;
     cout << "start consumer" << endl;
+
+    while ( *((volatile char*) buffer_ready_sign[0]) != (char) BUFFER_USED_FLAG) {
+        cout << "loop on buff 0" << endl;
+        sleep(1);
+    }
+
     while(true)
     {
         index++;
@@ -368,7 +375,7 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         else
         {
             Tuple* b = (Tuple*)recv_buffers[index]->getData();
-            cout << "found no free buffer at index=" << index << " value=" << buffer_ready_sign[index].load()
+            cout << "found no free buffer at index=" << index << " value=" << buffer_ready_sign[index]
                     << "first val camp=" << b[0].campaign_id
                     << " timestamp=" << b[0].timeStamp << endl;
             sleep(1);
@@ -424,7 +431,6 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
                     << " getLocalKey=" << region_tokens[i]->getLocalKey() << " getRemoteKey=" << region_tokens[i]->getRemoteKey() << endl;
 
         }
-//        cout << "write to " << ((RegionToken*)recv_buffers[0]->getData() + i) << " from " << region_tokens[i] << " bytes=" << sizeof(RegionToken) << endl;
         memcpy((RegionToken*)recv_buffers[0]->getData() + i, region_tokens[i], sizeof(RegionToken));
     }
     sleep(1);
@@ -447,7 +453,6 @@ void copy_received_tokens(const std::vector<TupleBuffer> &sendBuffers,
 
             cout << "sign region getSizeInBytes=" << sign_token->getSizeInBytes() << " getAddress=" << sign_token->getAddress()
                                 << " getLocalKey=" << sign_token->getLocalKey() << " getRemoteKey=" << sign_token->getRemoteKey() << endl;
-
         }
     }
 }
