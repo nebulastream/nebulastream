@@ -418,9 +418,11 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
             region_tokens[i] = recv_buffers[i]->createRegionToken();
         } else {
             cout << "copy sign token at pos " << i << endl;
-
             sign_buffer = connection->register_buffer(buffer_ready_sign.data(), WRITE_RECEIVE_BUFFER_COUNT);
             region_tokens[i] = sign_buffer->createRegionToken();
+            cout << "sign region getSizeInBytes=" << region_tokens[i]->getSizeInBytes() << " getAddress=" << region_tokens[i]->getAddress()
+                    << " getLocalKey=" << region_tokens[i]->getLocalKey() << " getRemoteKey=" << region_tokens[i]->getRemoteKey() << endl;
+
         }
 //        cout << "write to " << ((RegionToken*)recv_buffers[0]->getData() + i) << " from " << region_tokens[i] << " bytes=" << sizeof(RegionToken) << endl;
         memcpy((RegionToken*)recv_buffers[0]->getData() + i, region_tokens[i], sizeof(RegionToken));
@@ -441,17 +443,17 @@ void copy_received_tokens(const std::vector<TupleBuffer> &sendBuffers,
         } else {
             cout << "copy sign token at pos " << i << endl;
             sign_token = static_cast<RegionToken*>(malloc(sizeof(RegionToken)));
+            cout << "sign region getSizeInBytes=" << sign_token->getSizeInBytes() << " getAddress=" << sign_token->getAddress()
+                                << " getLocalKey=" << sign_token->getLocalKey() << " getRemoteKey=" << sign_token->getRemoteKey() << endl;
+
             memcpy(sign_token, (RegionToken*)sendBuffers[0].send_buffer->getData() + i, sizeof(RegionToken));
         }
     }
 }
 
-
 void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples)
 {
     std::cout << "send_matching_tuples_to!" << endl;
-//    std::vector<RegionToken*> region_tokens(WRITE_RECEIVE_BUFFER_COUNT);
-
 
     for(size_t i = 0; i < WRITE_SEND_BUFFER_COUNT; i++)
         sendBuffers.emplace_back(TupleBuffer(*connection, bufferSizeInTuples));
