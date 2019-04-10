@@ -468,7 +468,11 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples)
     for(size_t i = 0; i < WRITE_SEND_BUFFER_COUNT; i++)
         sendBuffers.emplace_back(TupleBuffer(*connection, bufferSizeInTuples));
 
-    std::vector<char> buffer_ready_sign(WRITE_RECEIVE_BUFFER_COUNT, BUFFER_READY_FLAG);
+    for(auto & r : buffer_ready_sign)
+    {
+        r = BUFFER_READY_FLAG;
+    }
+
     sign_buffer = connection->register_buffer(buffer_ready_sign.data(), WRITE_RECEIVE_BUFFER_COUNT);
     sign_token = nullptr;
 
