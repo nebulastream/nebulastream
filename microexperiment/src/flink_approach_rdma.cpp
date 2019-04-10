@@ -305,13 +305,13 @@ void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, char* flag, std
     size_t lastTimeStamp = 0;
     size_t popCnt = 0;
     Tuple tup;
-
+    cout << "Consumer: received buffer with first tuple campaingid=" << buffer[0].campaign_id
+                    << " timestamp=" << buffer[0].timeStamp << endl;
     for(size_t i = 0; i < bufferSizeInTuples; i++)
     {
         size_t timeStamp = time(NULL); //seconds elapsed since 00:00 hours, Jan 1, 1970 UTC
 
-        cout << "Consumer: received buffer with first tuple campaingid=" << buffer[0].campaign_id
-                << " timestamp=" << buffer[0].timeStamp << endl;
+
 
         size_t current_window = 0;
         if (lastTimeStamp != timeStamp
