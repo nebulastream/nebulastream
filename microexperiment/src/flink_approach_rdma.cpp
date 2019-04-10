@@ -200,7 +200,7 @@ void read_sign_buffer(size_t target_rank, Buffer* sign_buffer, RegionToken* sign
     TRACE("sign_buffer: ");
     for(int i = 0; i < WRITE_RECEIVE_BUFFER_COUNT; i++)
     {
-        std::cout << buffer_ready_sign[i] << ",";
+        std::cout << (int)buffer_ready_sign[i] << ",";
     }
     std::cout << std::endl;
 }
@@ -420,7 +420,7 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
         r = BUFFER_READY_FLAG;
     }
 
-    Buffer * sign_buffer = nullptr;
+//    Buffer * sign_buffer = nullptr;
 
     for(size_t i = 0; i <= WRITE_RECEIVE_BUFFER_COUNT; i++)
     {
