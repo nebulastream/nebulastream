@@ -359,7 +359,7 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         index %= WRITE_RECEIVE_BUFFER_COUNT;
 
         volatile char* c = &buffer_ready_sign[index];
-        cout << "C=" <<  c << endl;
+        cout << "C[" << index << "]=" << c << endl;
 
         if (buffer_ready_sign[index] == BUFFER_USED_FLAG || buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
         {
