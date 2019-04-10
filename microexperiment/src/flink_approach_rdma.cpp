@@ -443,10 +443,11 @@ void copy_received_tokens(const std::vector<TupleBuffer> &sendBuffers,
         } else {
             cout << "copy sign token at pos " << i << endl;
             sign_token = static_cast<RegionToken*>(malloc(sizeof(RegionToken)));
+            memcpy(sign_token, (RegionToken*)sendBuffers[0].send_buffer->getData() + i, sizeof(RegionToken));
+
             cout << "sign region getSizeInBytes=" << sign_token->getSizeInBytes() << " getAddress=" << sign_token->getAddress()
                                 << " getLocalKey=" << sign_token->getLocalKey() << " getRemoteKey=" << sign_token->getRemoteKey() << endl;
 
-            memcpy(sign_token, (RegionToken*)sendBuffers[0].send_buffer->getData() + i, sizeof(RegionToken));
         }
     }
 }
