@@ -8,7 +8,7 @@
 
 //#define DEBUG
 //#define SOME_DEBUG
-#define DEBUG
+//#define DEBUG
 #ifdef DEBUG
 #define SOME_DEBUG
 #define TRACE(...) {{printf(__VA_ARGS__); fflush(stdout);}}
