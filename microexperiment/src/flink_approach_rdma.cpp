@@ -643,6 +643,8 @@ int main(int argc, char *argv[])
     ss << " readInputTuples=" << readInputTuples  << endl;
     ss << " readInputVolume(MB)=" << readInputTuples * sizeof(record) /1024 /1024 << endl;
     ss << " readInputThroughput=" << readInputTuples * sizeof(record)/elapsed_time << endl;
+    ss << " readBandWidth MB/s=" << (readInputTuples*sizeof(record)/1024/1024)/elapsed_time << endl;
+
     ss << " ----------------------------------------------" << endl;
 
     ss << " produced=" << producesTuples << endl;
