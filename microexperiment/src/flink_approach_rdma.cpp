@@ -330,8 +330,6 @@ void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<siz
     {
         size_t timeStamp = time(NULL); //seconds elapsed since 00:00 hours, Jan 1, 1970 UTC
 
-
-
         size_t current_window = 0;
         if (lastTimeStamp != timeStamp
                 && timeStamp % windowSizeInSec == 0) {
@@ -351,13 +349,13 @@ void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<siz
         consumed++;
 
     }//end of for
-#ifdef DEBUG
+//#ifdef DEBUG
     stringstream ss;
     ss << "Thread=" << omp_get_thread_num() << " consumed=" << consumed
-            << " popCnt=" << popCnt << " windowSwitchCnt=" << windowSwitchCnt
+            << " windowSwitchCnt=" << windowSwitchCnt
             << " htreset=" << htReset;
     cout << ss.str() << endl;
-#endif
+//#endif
 }
 
 void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
@@ -368,6 +366,7 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     size_t index = 0;
     size_t noBufferFound = 0;
     cout << "start consumer" << endl;
+    std::vector<std::shared_ptr<std::thread>> buffer_threads(WRITE_RECEIVE_BUFFER_COUNT, nullptr);
 
     while(true)
     {
@@ -390,6 +389,14 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 #endif
 //            std::future<void> resultFromDB = std::async(std::launch::async, cosume_window_mem, (Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
 //                                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
+
+            buffer_threads[index] = std::make_shared<std::thread>([&recv_buffers,bufferSizeInTuples,hashTable, windowSizeInSec,
+                                                                   campaingCnt, consumerID, produceCnt, bufferSizeInTuples, index] {
+                cout << "start new thread for consumer" << endl;
+                cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
+            });
+
 
             cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
                     hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
@@ -447,7 +454,7 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
             recv_buffers[i] = connection->allocate_buffer(bufferSizeInTuples * sizeof(Tuple));
             region_tokens[i] = recv_buffers[i]->createRegionToken();
         } else {
-            cout << "copy sign token at pos " << i << endl;
+//            cout << "copy sign token at pos " << i << endl;
             sign_buffer = connection->register_buffer(buffer_ready_sign.data(), WRITE_RECEIVE_BUFFER_COUNT);
             region_tokens[i] = sign_buffer->createRegionToken();
 #ifdef DEBUG
