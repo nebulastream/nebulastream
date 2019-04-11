@@ -349,13 +349,13 @@ void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<siz
         consumed++;
 
     }//end of for
-#ifdef DEBUG
+//#ifdef DEBUG
     stringstream ss;
     ss << "Thread=" << omp_get_thread_num() << " consumed=" << consumed
             << " windowSwitchCnt=" << windowSwitchCnt
             << " htreset=" << htReset;
     cout << ss.str() << endl;
-#endif
+//#endif
 }
 
 void runComsumerThread(size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
