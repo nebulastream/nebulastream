@@ -345,7 +345,6 @@ void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<siz
         }
 
         uint64_t bucketPos = (buffer[i].campaign_id * 789 + 321) % campaingCnt;
-        cout << "bucketpos=" << bucketPos << endl;
         atomic_fetch_add(&hashTable[current_window][bucketPos], size_t(1));
         consumed++;
 
@@ -412,6 +411,8 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 //                cout << "start new thread for consumer" << endl;
                 cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
                         hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
+                buffer_ready_sign[index] = BUFFER_READY_FLAG;
+
                 cout << "index=" << index << endl;
             });
 
