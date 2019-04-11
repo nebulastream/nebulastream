@@ -400,17 +400,16 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             if(buffer_threads[index])
                 buffer_threads[index]->join();
 
-            buffer_threads[index] = std::make_shared<std::thread>(&runComsumerThread, bufferSizeInTuples,
-                                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, index);
+//            buffer_threads[index] = std::make_shared<std::thread>(&runComsumerThread, bufferSizeInTuples,
+//                                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, index);
 
-
-//            buffer_threads[index] = std::make_shared<std::thread>(
-//                    [&recv_buffers,bufferSizeInTuples,&hashTable,windowSizeInSec, campaingCnt, consumerID, produceCnt, index]
-//           {
-//                cout << "start new thread for consumer" << endl;
-//                cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-//                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
-//            });
+            buffer_threads[index] = std::make_shared<std::thread>(
+                    [&recv_buffers,bufferSizeInTuples,&hashTable,windowSizeInSec, campaingCnt, consumerID, produceCnt, index]
+           {
+                cout << "start new thread for consumer" << endl;
+                cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
+            });
 
 
 //            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
@@ -423,15 +422,6 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         {
             noBufferFound++;
         }
-//        if(index + 1 == WRITE_RECEIVE_BUFFER_COUNT)
-//        {
-////            cout << "joining" << endl;
-//            for(auto& th : buffer_threads)
-//            {
-//                if(th)
-//                    th.get()->join();
-//            }
-//        }
     }
 
     for(index = 0; index < WRITE_RECEIVE_BUFFER_COUNT; index++)//check again if some are there
