@@ -397,6 +397,7 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 //            std::future<void> resultFromDB = std::async(std::launch::async, cosume_window_mem, (Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
 //                                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
 //            cout << "start thread" << endl;
+            buffer_threads[index]->join();
             buffer_threads[index] = std::make_shared<std::thread>(&runComsumerThread, bufferSizeInTuples,
                                         hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, index);
 
@@ -420,15 +421,15 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         {
             noBufferFound++;
         }
-        if(index + 1 == WRITE_RECEIVE_BUFFER_COUNT)
-        {
-//            cout << "joining" << endl;
-            for(auto& th : buffer_threads)
-            {
-                if(th)
-                    th.get()->join();
-            }
-        }
+//        if(index + 1 == WRITE_RECEIVE_BUFFER_COUNT)
+//        {
+////            cout << "joining" << endl;
+//            for(auto& th : buffer_threads)
+//            {
+//                if(th)
+//                    th.get()->join();
+//            }
+//        }
     }
 
     for(index = 0; index < WRITE_RECEIVE_BUFFER_COUNT; index++)//check again if some are there
