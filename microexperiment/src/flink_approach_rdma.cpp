@@ -250,6 +250,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
     size_t total_buffer_send = 0;
     size_t send_buffer_index = 0;
     size_t readTuples = 0;
+    size_t noBufferFreeToSend = 0;
     while(total_buffer_send < bufferProcCnt)
     {
         for(size_t receive_buffer_index = 0; receive_buffer_index < WRITE_RECEIVE_BUFFER_COUNT;
@@ -294,10 +295,15 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
                 }
                 send_buffer_index = (send_buffer_index+1) % WRITE_SEND_BUFFER_COUNT;
             }
+            else
+            {
+                noBufferFreeToSend++;
+            }
         }//end of for
     }//end of while
-    cout << "Done sending! Sent a total of " << total_sent_tuples << " tuples and " << total_buffer_send << " buffers" << endl;
-    read_sign_buffer(target_rank, sign_buffer, sign_token, connection);
+    cout << "Done sending! Sent a total of " << total_sent_tuples << " tuples and " << total_buffer_send << " buffers"
+            << " noBufferFreeToSend=" << noBufferFreeToSend << endl;
+//    read_sign_buffer(target_rank, sign_buffer, sign_token, connection);
 
     *producesTuples = total_sent_tuples;
     *producedBuffers = total_buffer_send;
