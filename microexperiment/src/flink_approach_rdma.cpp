@@ -400,7 +400,6 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             buffer_threads[index] = std::make_shared<std::thread>(&runComsumerThread, bufferSizeInTuples,
                                         hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, index);
 
-            buffer_threads[index].get()->join();
 
 //            buffer_threads[index] = std::make_shared<std::thread>(
 //                    [&recv_buffers,bufferSizeInTuples,&hashTable,windowSizeInSec, campaingCnt, consumerID, produceCnt, index]
@@ -420,6 +419,13 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         else
         {
             noBufferFound++;
+        }
+        if(index + 1 == WRITE_RECEIVE_BUFFER_COUNT)
+        {
+            for(auto& th : buffer_threads)
+            {
+                th.get()->join();
+            }
         }
     }
 
