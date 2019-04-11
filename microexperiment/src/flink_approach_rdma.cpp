@@ -239,7 +239,7 @@ void produce_window_mem(record* records, size_t genCnt, size_t bufferSize, Tuple
     }
 
 }
-void runProducer(VerbsConnection* connection, record* records, size_t genCnt, size_t bufferSizeInTuples, size_t bufferProcCnt)
+void runProducer(VerbsConnection* connection, record* records, size_t genCnt, size_t bufferSizeInTuples, size_t bufferProcCnt, size_t* producesTuples, size_t* producedBuffers)
 {
     size_t target_rank = 1;
 //    Limits limits;
@@ -292,6 +292,10 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
     cout << "Done sending! Sent a total of " << total_sent_tuples << " tuples and " << total_buffer_send << " buffers" << endl;
     cout << "read buffer status" << endl;
     read_sign_buffer(target_rank, sign_buffer, sign_token, connection);
+
+    *producesTuples = total_sent_tuples;
+    *producedBuffers = total_buffer_send;
+
     //    done_with_sending[MPIHelper::get_rank()] = true;
 //    auto end_time = TimeTools::now();
 //    measured_network_times[MPIHelper::get_process_count() + target_rank] = end_time - start_time;
@@ -342,16 +346,12 @@ void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, char* flag, std
 }
 
 void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
-        size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples)
+        size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples, size_t* consumedTuples, size_t* consumedBuffers)
 {
     size_t total_received_tuples = 0;
+    size_t total_received_buffers = 0;
     size_t index = 0;
     cout << "start consumer" << endl;
-
-//    while ( *((volatile char*) buffer_ready_sign[0]) != (char) BUFFER_USED_FLAG) {
-//        cout << "loop on buff 0" << endl;
-//        sleep(1);
-//    }
 
     while(true)
     {
@@ -368,6 +368,7 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                 buffer_ready_sign[index] = BUFFER_READY_FLAG;
 
             total_received_tuples += ((size_t*) recv_buffers[index]->getData())[0];
+            total_received_buffers++;
             cout << "Received buffer at index=" << index << endl;
             cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples, &buffer_ready_sign[index],
                     hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
@@ -377,11 +378,11 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         }
         else
         {
-            Tuple* b = (Tuple*)recv_buffers[index]->getData();
-            cout << "found no free buffer at index=" << index << " value=" << buffer_ready_sign[index]
-                    << "first val camp=" << b[0].campaign_id
-                    << " timestamp=" << b[0].timeStamp << endl;
-            sleep(1);
+//            Tuple* b = (Tuple*)recv_buffers[index]->getData();
+//            cout << "found no free buffer at index=" << index << " value=" << buffer_ready_sign[index]
+//                    << "first val camp=" << b[0].campaign_id
+//                    << " timestamp=" << b[0].timeStamp << endl;
+//            sleep(1);
 //            (volatile bool*) value = &buffer_ready_sign[index].load();
 //            cout << "val vol=" << value << endl;
         }
@@ -393,15 +394,16 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             cout << "Check Iter -- Received buffer at index=" << index << endl;
 
             total_received_tuples += ((size_t*) recv_buffers[index]->getData())[0];
+            total_received_buffers++;
 //            StructuredTupleBuffer buff = StructuredTupleBuffer(recv_buffers[index]->getData(), bufferSizeInTuples * sizeof(Tuple));
             cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples, &buffer_ready_sign[index],
                                 hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
         }
     }
-//    done_with_sending[target_rank] = true;
-    TRACE2("Done receiving! Received a total of %lu elements.\n", total_received_tuples);
-    auto end_time = TimeTools::now();
-//    measured_network_times[MPIHelper::get_rank()] = end_time - start_time;
+
+    *consumedTuples = total_received_tuples;
+    *consumedBuffers = total_received_buffers;
+
     for (auto & token : region_tokens)
         delete token;
     for (auto & buffer : recv_buffers)
@@ -542,7 +544,7 @@ int main(int argc, char *argv[])
     {
         ip = argv[2];
     }
-    assert(rank == 0 || rank == 1);
+    assert(rank == 0 || rank == +1);
     std::cout << "bufferProcCnt=" << bufferProcCnt << " genCnt=" << genCnt
             << " Rank=" << rank;
     if(rank == 0)
@@ -587,7 +589,13 @@ int main(int argc, char *argv[])
     for (size_t i = 0; i < num_Consumer; i++) {
     }
 
-    size_t* consumed = new size_t[num_Consumer];
+//    size_t* consumed = new size_t[num_Consumer];
+
+    size_t producesTuples = 0;
+    size_t producedBuffers = 0;
+
+    size_t consumedTuples = 0;
+    size_t consumedBuffers = 0;
 
     Timestamp begin = getTimestamp();
 
@@ -596,26 +604,29 @@ int main(int argc, char *argv[])
 //        void produceTuples(infinity::memory::Buffer* sign_buffer, RegionToken* sign_token,
 //        std::vector<StructuredTupleBuffer> sendBuffers,
 //                VerbsConnection* connection, record* records, size_t procCnt)
-        runProducer(connection, recs[0], genCnt, bufferSizeInTups, bufferProcCnt);
+        runProducer(connection, recs[0], genCnt, bufferSizeInTups, bufferProcCnt, &producesTuples, &producedBuffers);
     }
     else
     {
-        runConsumer(hashTable, windowSizeInSeconds, campaingCnt, 0, num_Producer, bufferSizeInTups);
+        runConsumer(hashTable, windowSizeInSeconds, campaingCnt, 0, num_Producer, bufferSizeInTups, &consumedTuples, &consumedBuffers);
     }
 
     Timestamp end = getTimestamp();
 
     double elapsed_time = double(end - begin) / (1024 * 1024 * 1024);
-    size_t consumedOverall = 0;
-    for (size_t i = 0; i < num_Consumer; i++) {
-        cout << "con " << i << ":" << consumed[i] << endl;
-        consumedOverall += consumed[i];
-    }
-//    cout << " time=" << elapsed_time << " produced="
-//            << num_Producer * genCnt << " throughput="
-//            << num_Producer * genCnt / elapsed_time << " consumedOverall="
-//            << consumedOverall << " consumeRarte="
-//            << consumedOverall / elapsed_time << endl;
+//    size_t consumedOverall = 0;
+//    for (size_t i = 0; i < num_Consumer; i++) {
+//        cout << "con " << i << ":" << consumed[i] << endl;
+//        consumedOverall += consumed[i];
+//    }
+    cout << " time=" << elapsed_time << "s"
+            << " produced=" << num_Producer * producesTuples
+            << " throughput=" << num_Producer * producesTuples / elapsed_time
+            << " producesTuples=" << producesTuples
+            << " producedBuffers=" << producedBuffers
+            << " consumedTuples=" << consumedTuples
+            << " consumedBuffers=" << consumedBuffers
+            << endl;
 }
 
 //    std::vector<Timestamp> measured_times;
