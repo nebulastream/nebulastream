@@ -406,7 +406,7 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             buffer_threads[index] = std::make_shared<std::thread>(
                     [&recv_buffers,bufferSizeInTuples,&hashTable,windowSizeInSec, campaingCnt, consumerID, produceCnt, index]
            {
-                cout << "start new thread for consumer" << endl;
+//                cout << "start new thread for consumer" << endl;
                 cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
                         hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
             });
