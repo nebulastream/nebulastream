@@ -632,22 +632,24 @@ int main(int argc, char *argv[])
 //        consumedOverall += consumed[i];
 //    }
     stringstream ss;
-    ss << " time=" << elapsed_time << "s"
-            << " readInputTuples=" << readInputTuples
-            << " readInputVolume(MB)=" << readInputTuples * sizeof(record) /1024 /1024
-            << " readInputThroughput=" << readInputTuples * sizeof(record)/elapsed_time
-            << " ----------------------------------------------" << endl;
+    ss << " time=" << elapsed_time << "s" << endl;
 
-    ss << " produced=" << producesTuples
-            << " ProduceThroughput=" << producesTuples / elapsed_time
-            << " TransferVolume(MB)=" << producesTuples*sizeof(Tuple)/1024/1024
-            << " TransferBandwidth MB/s=" << (producesTuples*sizeof(Tuple)/1024/1024)/elapsed_time
-            << " producesTuples=" << producesTuples
-            << " producedBuffers=" << producedBuffers
-            << " ----------------------------------------------" << endl;
-    ss << " consumedTuples=" << consumedTuples
-            << " consumedBuffers=" << consumedBuffers
-            << endl;
+    ss << " readInputTuples=" << readInputTuples  << endl;
+    ss << " readInputVolume(MB)=" << readInputTuples * sizeof(record) /1024 /1024 << endl;
+    ss << " readInputThroughput=" << readInputTuples * sizeof(record)/elapsed_time << endl;
+    ss << " ----------------------------------------------" << endl;
+
+    ss << " produced=" << producesTuples << endl;
+    ss << " ProduceThroughput=" << producesTuples / elapsed_time << endl;
+    ss << " TransferVolume(MB)=" << producesTuples*sizeof(Tuple)/1024/1024 << endl;
+    ss << " TransferBandwidth MB/s=" << (producesTuples*sizeof(Tuple)/1024/1024)/elapsed_time << endl;
+    ss << " producesTuples=" << producesTuples << endl;
+    ss << " producedBuffers=" << producedBuffers << endl;
+    ss << " ----------------------------------------------" << endl;
+
+    ss << " consumedTuples=" << consumedTuples  << endl;
+    ss<< " consumedBuffers=" << consumedBuffers  << endl;
+
     cout << ss.str() << endl;
 }
 
