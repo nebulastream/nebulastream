@@ -531,8 +531,8 @@ int main(int argc, char *argv[])
 //    size_t bufferSizeInKB = std::stoi(argv[2]) * sizeof(Tuple);
 //    size_t bufferSizeInTups = std::stoi(argv[2]);
 
-    size_t bufferProcCnt = 1;
-    size_t genCnt = 100;
+    size_t bufferProcCnt = 1000;
+    size_t genCnt = 10000;
     size_t bufferSizeInTups = 100;
     size_t rank = std::stoi(argv[1]);
 
