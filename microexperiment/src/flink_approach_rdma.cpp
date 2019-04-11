@@ -425,7 +425,8 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             cout << "joining" << endl;
             for(auto& th : buffer_threads)
             {
-                th.get()->join();
+                if(th)
+                    th.get()->join();
             }
         }
     }
