@@ -414,17 +414,16 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
                                 hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
             buffer_ready_sign[index] = BUFFER_READY_FLAG;
-
         }
     }
 
     *consumedTuples = total_received_tuples;
     *consumedBuffers = total_received_buffers;
     cout << "nobufferFound=" << noBufferFound << endl;
-    for (auto & token : region_tokens)
-        delete token;
-    for (auto & buffer : recv_buffers)
-        delete buffer;
+//    for (auto & token : region_tokens)
+//        delete token;
+//    for (auto & buffer : recv_buffers)
+//        delete buffer;
 }
 
 //#define SERVER_IP "192.168.5.30"
