@@ -648,6 +648,7 @@ int main(int argc, char *argv[])
     ss << " consumedTuples=" << consumedTuples
             << " consumedBuffers=" << consumedBuffers
             << endl;
+    cout << ss.str() << endl;
 }
 
 //    std::vector<Timestamp> measured_times;
