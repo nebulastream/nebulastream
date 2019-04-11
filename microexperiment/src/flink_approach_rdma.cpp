@@ -422,6 +422,7 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         }
         if(index + 1 == WRITE_RECEIVE_BUFFER_COUNT)
         {
+            cout << "joining" << endl;
             for(auto& th : buffer_threads)
             {
                 th.get()->join();
