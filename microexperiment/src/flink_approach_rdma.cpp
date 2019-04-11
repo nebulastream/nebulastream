@@ -316,7 +316,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
 }
 
 void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
-        size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSize) {
+        size_t campaingCnt, size_t consumerID, size_t produceCnt) {
     size_t consumed = 0;
     size_t windowSwitchCnt = 0;
     size_t htReset = 0;
@@ -358,6 +358,13 @@ void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<siz
 //#endif
 }
 
+void runComsumerThread(size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
+        size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t index)
+{
+    cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+    hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
+
+}
 void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples, size_t* consumedTuples, size_t* consumedBuffers)
 {
@@ -390,8 +397,8 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 //            std::future<void> resultFromDB = std::async(std::launch::async, cosume_window_mem, (Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
 //                                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
 
-            buffer_threads[index] = std::thread(&cosume_window_mem, (Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-                                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
+            buffer_threads[index] = std::thread(&runComsumerThread, bufferSizeInTuples,
+                                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, index);
 
 
 //            buffer_threads[index] = std::make_shared<std::thread>(
@@ -423,7 +430,7 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
             cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-                                hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
+                                hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
             buffer_ready_sign[index] = BUFFER_READY_FLAG;
         }
         buffer_threads[index].join();
