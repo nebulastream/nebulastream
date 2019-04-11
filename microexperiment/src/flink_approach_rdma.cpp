@@ -349,13 +349,13 @@ void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<siz
         consumed++;
 
     }//end of for
-//#ifdef DEBUG
+#ifdef DEBUG
     stringstream ss;
     ss << "Thread=" << omp_get_thread_num() << " consumed=" << consumed
             << " windowSwitchCnt=" << windowSwitchCnt
             << " htreset=" << htReset;
     cout << ss.str() << endl;
-//#endif
+#endif
 }
 
 void runComsumerThread(size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
@@ -363,6 +363,7 @@ void runComsumerThread(size_t bufferSizeInTuples, std::atomic<size_t>** hashTabl
 {
     cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
     hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
+    buffer_ready_sign[index] = BUFFER_READY_FLAG;
 
 }
 void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
@@ -412,7 +413,7 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 //            });
 
 
-            buffer_ready_sign[index] = BUFFER_READY_FLAG;
+
             if(is_done)
                 break;
         }
