@@ -285,6 +285,9 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
                 {
                     buffer_ready_sign[receive_buffer_index] = BUFFER_USED_SENDER_DONE;
                     connection->write_blocking(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
+                    total_sent_tuples += sendBuffers[send_buffer_index].numberOfTuples;
+                    total_buffer_send++;
+
                     cout << "Sent last tuples and marked as BUFFER_USED_SENDER_DONE at index=" << receive_buffer_index << endl;
                     break;
                 }
@@ -371,7 +374,7 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             if(is_done) // this is done so that the loop later doesnt try to process this again
                 buffer_ready_sign[index] = BUFFER_READY_FLAG;
 
-            total_received_tuples += ((size_t*) recv_buffers[index]->getData())[0];
+            total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
 #ifdef DEBUG
             cout << "Received buffer at index=" << index << endl;
@@ -399,7 +402,7 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         if (buffer_ready_sign[index] == BUFFER_USED_FLAG) {
             cout << "Check Iter -- Received buffer at index=" << index << endl;
 
-            total_received_tuples += ((size_t*) recv_buffers[index]->getData())[0];
+            total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
 //            StructuredTupleBuffer buff = StructuredTupleBuffer(recv_buffers[index]->getData(), bufferSizeInTuples * sizeof(Tuple));
             cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
@@ -408,6 +411,7 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
         }
     }
+
 
     *consumedTuples = total_received_tuples;
     *consumedBuffers = total_received_buffers;
