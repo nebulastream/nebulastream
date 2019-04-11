@@ -207,50 +207,42 @@ void read_sign_buffer(size_t target_rank, Buffer* sign_buffer, RegionToken* sign
 //    std::cout << std::endl;
 }
 
-void produce_window_mem(record* records, size_t genCnt, size_t bufferSize, Tuple* outputBuffer) {
-    size_t disQTuple = 0;
-    size_t qualTuple = 0;
-
-//    TupleBuffer* tempBuffers = (TupleBuffer*)sendBuffer;
-//    TupleBuffer* tempBuffers = (TupleBuffer*)sendBuffer;
-//    *(tempBuffers) = TupleBuffer(bufferSize);
-
+size_t produce_window_mem(record* records, size_t genCnt, size_t bufferSize, Tuple* outputBuffer)
+{
     size_t bufferIndex = 0;
     size_t inputTupsIndex = 0;
+    size_t readTuples = 0;
 
     while(bufferIndex < bufferSize)
     {
+        readTuples++;
         uint32_t value = *((uint32_t*) records[inputTupsIndex].event_type);
-        if (value != 2003134838) {
-            disQTuple++;
+        if (value != 2003134838)
+        {
             if(inputTupsIndex < genCnt)
                 inputTupsIndex++;
             else
                 inputTupsIndex = 0;
             continue;
         }
-        qualTuple++;
+
         size_t timeStamp = time(NULL);
         tempHash hashValue;
         hashValue.value = *(((uint64_t*) records[inputTupsIndex].campaign_id) + 1);
         Tuple tup(hashValue.value, timeStamp);
-//        cout << "add tuple with idx=" << bufferIndex << endl;
         outputBuffer[bufferIndex++] = tup;
-
-//        outputBuffer->add(tup);
     }
-
+    return readTuples;
 }
-void runProducer(VerbsConnection* connection, record* records, size_t genCnt, size_t bufferSizeInTuples, size_t bufferProcCnt, size_t* producesTuples, size_t* producedBuffers)
+
+void runProducer(VerbsConnection* connection, record* records, size_t genCnt, size_t bufferSizeInTuples, size_t bufferProcCnt,
+        size_t* producesTuples, size_t* producedBuffers, size_t* readInputTuples)
 {
     size_t target_rank = 1;
-//    Limits limits;
-//    size_t next_tuple_index = limits.start_index;
     size_t total_sent_tuples = 0;
     size_t total_buffer_send = 0;
     size_t send_buffer_index = 0;
-
-
+    size_t readTuples = 0;
     while(total_buffer_send < bufferProcCnt)
     {
         for(size_t receive_buffer_index = 0; receive_buffer_index < WRITE_RECEIVE_BUFFER_COUNT;
@@ -263,7 +255,8 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
             if(buffer_ready_sign[receive_buffer_index] == BUFFER_READY_FLAG)
             {
                 //this will run until one buffer is filled completely
-                produce_window_mem(records, genCnt, bufferSizeInTuples, (Tuple*)sendBuffers[send_buffer_index].send_buffer->getData());
+                readTuples += produce_window_mem(records, genCnt, bufferSizeInTuples, (Tuple*)sendBuffers[send_buffer_index].send_buffer->getData());
+
                 sendBuffers[send_buffer_index].numberOfTuples = bufferSizeInTuples;
 
                 connection->write(sendBuffers[send_buffer_index].send_buffer, region_tokens[receive_buffer_index],
@@ -302,6 +295,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
 
     *producesTuples = total_sent_tuples;
     *producedBuffers = total_buffer_send;
+    *readInputTuples = readTuples;
 
     //    done_with_sending[MPIHelper::get_rank()] = true;
 //    auto end_time = TimeTools::now();
@@ -617,14 +611,12 @@ int main(int argc, char *argv[])
     size_t consumedTuples = 0;
     size_t consumedBuffers = 0;
 
+    size_t readInputTuples = 0;
     Timestamp begin = getTimestamp();
 
     if(rank == 0)
     {
-//        void produceTuples(infinity::memory::Buffer* sign_buffer, RegionToken* sign_token,
-//        std::vector<StructuredTupleBuffer> sendBuffers,
-//                VerbsConnection* connection, record* records, size_t procCnt)
-        runProducer(connection, recs[0], genCnt, bufferSizeInTups, bufferProcCnt, &producesTuples, &producedBuffers);
+        runProducer(connection, recs[0], genCnt, bufferSizeInTups, bufferProcCnt, &producesTuples, &producedBuffers, &readInputTuples);
     }
     else
     {
@@ -639,16 +631,22 @@ int main(int argc, char *argv[])
 //        cout << "con " << i << ":" << consumed[i] << endl;
 //        consumedOverall += consumed[i];
 //    }
-    cout << " time=" << elapsed_time << "s"
-            << " produced=" << num_Producer * producesTuples
-            << " throughput=" << num_Producer * producesTuples / elapsed_time
+    stringstream ss;
+    ss << " time=" << elapsed_time << "s"
+            << " readInputTuples=" << readInputTuples
+            << " readInputVolume(MB)=" << readInputTuples * sizeof(record) /1024 /1024
+            << " readInputThroughput=" << readInputTuples * sizeof(record)/elapsed_time
+            << " ----------------------------------------------" << endl;
+
+    ss << " produced=" << producesTuples
+            << " ProduceThroughput=" << producesTuples / elapsed_time
+            << " TransferVolume(MB)=" << producesTuples*sizeof(Tuple)/1024/1024
+            << " TransferBandwidth MB/s=" << (producesTuples*sizeof(Tuple)/1024/1024)/elapsed_time
             << " producesTuples=" << producesTuples
             << " producedBuffers=" << producedBuffers
-            << " consumedTuples=" << consumedTuples
+            << " ----------------------------------------------" << endl;
+    ss << " consumedTuples=" << consumedTuples
             << " consumedBuffers=" << consumedBuffers
-            << " InputDatasetSize(MB)=" << producesTuples*sizeof(record)/1024/1024
-            << " TransferDatasetSize(MB)=" << producesTuples*sizeof(Tuple)/1024/1024
-            << " TransferBandwidth MB/s=" << (producesTuples*sizeof(Tuple)/1024/1024)/elapsed_time
             << endl;
 }
 
