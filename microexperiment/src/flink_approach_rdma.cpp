@@ -25,8 +25,8 @@
 //#define BUFFER_SIZE 1000
 std::atomic<size_t> exitProgram;
 #define PORT 55355
-#define WRITE_SEND_BUFFER_COUNT 20
-#define WRITE_RECEIVE_BUFFER_COUNT 20
+#define WRITE_SEND_BUFFER_COUNT 1000
+#define WRITE_RECEIVE_BUFFER_COUNT 1000
 #define BUFFER_USED_SENDER_DONE 127
 #define BUFFER_READY_FLAG 0
 #define BUFFER_USED_FLAG 1
@@ -251,6 +251,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
     size_t send_buffer_index = 0;
     size_t readTuples = 0;
     size_t noBufferFreeToSend = 0;
+
     while(total_buffer_send < bufferProcCnt)
     {
         for(size_t receive_buffer_index = 0; receive_buffer_index < WRITE_RECEIVE_BUFFER_COUNT;
@@ -264,7 +265,6 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
             {
                 //this will run until one buffer is filled completely
                 readTuples += produce_window_mem(records, genCnt, bufferSizeInTuples, (Tuple*)sendBuffers[send_buffer_index].send_buffer->getData());
-
 
                 sendBuffers[send_buffer_index].numberOfTuples = bufferSizeInTuples;
 
@@ -304,7 +304,6 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
     }//end of while
     cout << "Done sending! Sent a total of " << total_sent_tuples << " tuples and " << total_buffer_send << " buffers"
             << " noBufferFreeToSend=" << noBufferFreeToSend << endl;
-//    read_sign_buffer(target_rank, sign_buffer, sign_token, connection);
 
     *producesTuples = total_sent_tuples;
     *producedBuffers = total_buffer_send;
@@ -396,8 +395,7 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             cout << "Received buffer at index=" << index << endl;
 #endif
             if(buffer_threads[index])
-//                if(buffer_threads[index]->joinable())
-                    buffer_threads[index]->join();
+                buffer_threads[index]->join();
 
 //            buffer_threads[index] = std::make_shared<std::thread>(&runComsumerThread, bufferSizeInTuples,
 //                                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, index);
@@ -585,7 +583,8 @@ int main(int argc, char *argv[])
     assert(rank == 0 || rank == +1);
     std::cout << "bufferProcCnt=" << bufferProcCnt << " genCnt=" << genCnt
             << " Rank=" << rank << " bufferSizeInTups=" << bufferSizeInTups
-            << " bufferSizeInKB=" << bufferSizeInTups*sizeof(Tuple)/1024;
+            << " bufferSizeInKB=" << bufferSizeInTups*sizeof(Tuple)/1024
+            << " bufferSize=" << WRITE_SEND_BUFFER_COUNT;
     if(rank == 0)
     {
         cout << " Producer" << endl;
