@@ -358,6 +358,7 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     size_t total_received_tuples = 0;
     size_t total_received_buffers = 0;
     size_t index = 0;
+    size_t noBufferFound = 0;
     cout << "start consumer" << endl;
 
     while(true)
@@ -387,6 +388,7 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         }
         else
         {
+            noBufferFound++;
 //            Tuple* b = (Tuple*)recv_buffers[index]->getData();
 //            cout << "found no free buffer at index=" << index << " value=" << buffer_ready_sign[index]
 //                    << "first val camp=" << b[0].campaign_id
@@ -415,7 +417,7 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
     *consumedTuples = total_received_tuples;
     *consumedBuffers = total_received_buffers;
-
+    cout << "nobufferFound=" << noBufferFound << endl;
     for (auto & token : region_tokens)
         delete token;
     for (auto & buffer : recv_buffers)
@@ -561,7 +563,8 @@ int main(int argc, char *argv[])
     }
     assert(rank == 0 || rank == +1);
     std::cout << "bufferProcCnt=" << bufferProcCnt << " genCnt=" << genCnt
-            << " Rank=" << rank << " bufferSizeInTups=" << bufferSizeInTups;
+            << " Rank=" << rank << " bufferSizeInTups=" << bufferSizeInTups
+            << " bufferSizeInKB=" << bufferSizeInTups*sizeof(Tuple)/1024;
     if(rank == 0)
     {
         cout << " Producer" << endl;
