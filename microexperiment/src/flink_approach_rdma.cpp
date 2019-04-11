@@ -396,7 +396,7 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 #endif
 //            std::future<void> resultFromDB = std::async(std::launch::async, cosume_window_mem, (Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
 //                                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
-
+            cout << "start thread" << endl;
             buffer_threads[index] = std::make_shared<std::thread>(&runComsumerThread, bufferSizeInTuples,
                                         hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, index);
 
