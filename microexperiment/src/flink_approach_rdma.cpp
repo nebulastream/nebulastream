@@ -420,20 +420,20 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         }
     }
 
-    for(index = 0; index < WRITE_RECEIVE_BUFFER_COUNT; index++)//check again if some are there
-    {
-        if (buffer_ready_sign[index] == BUFFER_USED_FLAG) {
-            cout << "Check Iter -- Received buffer at index=" << index << endl;
-
-            total_received_tuples += bufferSizeInTuples;
-            total_received_buffers++;
-            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-                                hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
-            buffer_ready_sign[index] = BUFFER_READY_FLAG;
-        }
-        if(buffer_threads[index])
-            buffer_threads[index]->join();
-    }
+//    for(index = 0; index < WRITE_RECEIVE_BUFFER_COUNT; index++)//check again if some are there
+//    {
+//        if (buffer_ready_sign[index] == BUFFER_USED_FLAG) {
+//            cout << "Check Iter -- Received buffer at index=" << index << endl;
+//
+//            total_received_tuples += bufferSizeInTuples;
+//            total_received_buffers++;
+//            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+//                                hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
+//            buffer_ready_sign[index] = BUFFER_READY_FLAG;
+//        }
+//        if(buffer_threads[index])
+//            buffer_threads[index]->join();
+//    }
 
     *consumedTuples = total_received_tuples;
     *consumedBuffers = total_received_buffers;
