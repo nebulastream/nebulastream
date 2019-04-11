@@ -223,6 +223,7 @@ size_t produce_window_mem(record* records, size_t genCnt, size_t bufferSize, Tup
                 inputTupsIndex++;
             else
                 inputTupsIndex = 0;
+
             continue;
         }
 
@@ -231,6 +232,12 @@ size_t produce_window_mem(record* records, size_t genCnt, size_t bufferSize, Tup
         hashValue.value = *(((uint64_t*) records[inputTupsIndex].campaign_id) + 1);
         Tuple tup(hashValue.value, timeStamp);
         outputBuffer[bufferIndex++] = tup;
+
+        if(inputTupsIndex < genCnt)
+            inputTupsIndex++;
+        else
+            inputTupsIndex = 0;
+
     }
     return readTuples;
 }
@@ -290,7 +297,6 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
         }//end of for
     }//end of while
     cout << "Done sending! Sent a total of " << total_sent_tuples << " tuples and " << total_buffer_send << " buffers" << endl;
-    cout << "read buffer status" << endl;
     read_sign_buffer(target_rank, sign_buffer, sign_token, connection);
 
     *producesTuples = total_sent_tuples;
