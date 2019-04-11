@@ -262,7 +262,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
             if(buffer_ready_sign[receive_buffer_index] == BUFFER_READY_FLAG)
             {
                 //this will run until one buffer is filled completely
-//                readTuples += produce_window_mem(records, genCnt, bufferSizeInTuples, (Tuple*)sendBuffers[send_buffer_index].send_buffer->getData());
+                readTuples += produce_window_mem(records, genCnt, bufferSizeInTuples, (Tuple*)sendBuffers[send_buffer_index].send_buffer->getData());
 
                 sendBuffers[send_buffer_index].numberOfTuples = bufferSizeInTuples;
 
