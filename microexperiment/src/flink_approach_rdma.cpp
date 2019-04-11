@@ -399,7 +399,8 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 //                                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
 //            cout << "start thread" << endl;
             if(buffer_threads[index])
-                buffer_threads[index]->join();
+                if(buffer_threads[index]->joinable())
+                    buffer_threads[index]->join();
 
 //            buffer_threads[index] = std::make_shared<std::thread>(&runComsumerThread, bufferSizeInTuples,
 //                                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, index);
@@ -410,6 +411,7 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 //                cout << "start new thread for consumer" << endl;
                 cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
                         hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
+                cout << "index=" << index << endl;
             });
 
 
