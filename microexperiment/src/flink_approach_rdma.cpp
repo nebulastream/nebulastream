@@ -538,7 +538,7 @@ int main(int argc, char *argv[])
 
 
     size_t bufferProcCnt = 0;
-    size_t genCnt = 100000;
+    size_t genCnt = 1000000;
     size_t bufferSizeInTups = std::stoi(argv[3]);
     size_t rank = std::stoi(argv[1]);
 
