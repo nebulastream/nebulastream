@@ -195,14 +195,14 @@ Timestamp getTimestamp() {
 
 void read_sign_buffer(size_t target_rank, Buffer* sign_buffer, RegionToken* sign_token, VerbsConnection* connection)
 {
-    TRACE("reading sign_buffer: \n");
+//    TRACE("reading sign_buffer: \n");
     connection->read_blocking(sign_buffer, sign_token);
-    TRACE("sign_buffer: ");
-    for(int i = 0; i < WRITE_RECEIVE_BUFFER_COUNT; i++)
-    {
-        std::cout << (int)buffer_ready_sign[i] << ",";
-    }
-    std::cout << std::endl;
+//    TRACE("sign_buffer: ");
+//    for(int i = 0; i < WRITE_RECEIVE_BUFFER_COUNT; i++)
+//    {
+//        std::cout << (int)buffer_ready_sign[i] << ",";
+//    }
+//    std::cout << std::endl;
 }
 
 void produce_window_mem(record* records, size_t genCnt, size_t bufferSize, Tuple* outputBuffer) {
