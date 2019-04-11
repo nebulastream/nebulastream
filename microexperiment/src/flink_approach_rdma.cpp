@@ -20,6 +20,7 @@
 #include <TimeTools.hpp>
 #include <memory>
 #include "DataExchangeOperators/AbstractDataExchangeOperator.h"
+#include <future>
 
 //#define BUFFER_SIZE 1000
 std::atomic<size_t> exitProgram;
@@ -380,8 +381,10 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 #ifdef DEBUG
             cout << "Received buffer at index=" << index << endl;
 #endif
-            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-                    hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
+            std::future<void> resultFromDB = std::async(std::launch::async, cosume_window_mem, (Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+                                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
+//            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+//                    hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
             buffer_ready_sign[index] = BUFFER_READY_FLAG;
             if(is_done)
                 break;
@@ -413,7 +416,6 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
         }
     }
-
 
     *consumedTuples = total_received_tuples;
     *consumedBuffers = total_received_buffers;
