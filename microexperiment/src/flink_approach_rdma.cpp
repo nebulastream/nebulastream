@@ -533,13 +533,13 @@ record** generateTuples(size_t genCnt, size_t num_Producer, size_t campaingCnt)
 int main(int argc, char *argv[])
 {
     cout << "Producer usage: rank bufferProcCnt bufferSizeInTups" << endl;
-    cout << "Consumer usage: rank ip" << endl;
+    cout << "Consumer usage: rank ip bufferSizeInTups" << endl;
     size_t windowSizeInSeconds = 2;
 
 
     size_t bufferProcCnt = 0;
     size_t genCnt = 10000;
-    size_t bufferSizeInTups = 0;
+    size_t bufferSizeInTups = std::stoi(argv[3]);
     size_t rank = std::stoi(argv[1]);
 
     MPIHelper::set_rank(rank);
@@ -549,7 +549,6 @@ int main(int argc, char *argv[])
     if(rank == 0)//producer
     {
         bufferProcCnt = std::stoi(argv[2]);
-        bufferSizeInTups = std::stoi(argv[3]);
     }
 
     if(rank == 1)//consumer
