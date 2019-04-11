@@ -393,13 +393,6 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         else
         {
             noBufferFound++;
-//            Tuple* b = (Tuple*)recv_buffers[index]->getData();
-//            cout << "found no free buffer at index=" << index << " value=" << buffer_ready_sign[index]
-//                    << "first val camp=" << b[0].campaign_id
-//                    << " timestamp=" << b[0].timeStamp << endl;
-//            sleep(1);
-//            (volatile bool*) value = &buffer_ready_sign[index].load();
-//            cout << "val vol=" << value << endl;
         }
     }
 
@@ -410,9 +403,8 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
-//            StructuredTupleBuffer buff = StructuredTupleBuffer(recv_buffers[index]->getData(), bufferSizeInTuples * sizeof(Tuple));
-            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-                                hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
+//            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+//                                hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
             buffer_ready_sign[index] = BUFFER_READY_FLAG;
         }
     }
