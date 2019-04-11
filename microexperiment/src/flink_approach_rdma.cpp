@@ -381,10 +381,11 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 #ifdef DEBUG
             cout << "Received buffer at index=" << index << endl;
 #endif
-            std::future<void> resultFromDB = std::async(std::launch::async, cosume_window_mem, (Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-                                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
-//            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-//                    hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
+//            std::future<void> resultFromDB = std::async(std::launch::async, cosume_window_mem, (Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+//                                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
+
+            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+                    hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
             buffer_ready_sign[index] = BUFFER_READY_FLAG;
             if(is_done)
                 break;
