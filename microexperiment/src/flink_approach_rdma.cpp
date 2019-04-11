@@ -400,20 +400,18 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             if(buffer_threads[index])
                 buffer_threads[index]->join();
 
-//            buffer_threads[index] = std::make_shared<std::thread>(&runComsumerThread, bufferSizeInTuples,
-//                                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, index);
+            buffer_threads[index] = std::make_shared<std::thread>(&runComsumerThread, bufferSizeInTuples,
+                                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, index);
 
-            buffer_threads[index] = std::make_shared<std::thread>(
-                    [&recv_buffers,bufferSizeInTuples,&hashTable,windowSizeInSec, campaingCnt, consumerID, produceCnt, index]
-           {
-//                cout << "start new thread for consumer" << endl;
-                cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
-            });
+//            buffer_threads[index] = std::make_shared<std::thread>(
+//                    [&recv_buffers,bufferSizeInTuples,&hashTable,windowSizeInSec, campaingCnt, consumerID, produceCnt, index]
+//           {
+////                cout << "start new thread for consumer" << endl;
+//                cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+//                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
+//            });
 
 
-//            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-//                    hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
             buffer_ready_sign[index] = BUFFER_READY_FLAG;
             if(is_done)
                 break;
