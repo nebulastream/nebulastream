@@ -302,13 +302,12 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
 //    measured_network_times[MPIHelper::get_process_count() + target_rank] = end_time - start_time;
 }
 
-void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, char* flag, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
+void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSize) {
     size_t consumed = 0;
     size_t windowSwitchCnt = 0;
     size_t htReset = 0;
     size_t lastTimeStamp = 0;
-    size_t popCnt = 0;
     Tuple tup;
 #ifdef DEBUG
     cout << "Consumer: received buffer with first tuple campaingid=" << buffer[0].campaign_id
@@ -339,7 +338,6 @@ void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, char* flag, std
         consumed++;
 
     }//end of for
-    flag = BUFFER_READY_FLAG;
 #ifdef DEBUG
     stringstream ss;
     ss << "Thread=" << omp_get_thread_num() << " consumed=" << consumed
@@ -374,9 +372,9 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             total_received_tuples += ((size_t*) recv_buffers[index]->getData())[0];
             total_received_buffers++;
             cout << "Received buffer at index=" << index << endl;
-            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples, &buffer_ready_sign[index],
+            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
                     hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
-
+            buffer_ready_sign[index] = BUFFER_READY_FLAG;
             if(is_done)
                 break;
         }
@@ -400,8 +398,10 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             total_received_tuples += ((size_t*) recv_buffers[index]->getData())[0];
             total_received_buffers++;
 //            StructuredTupleBuffer buff = StructuredTupleBuffer(recv_buffers[index]->getData(), bufferSizeInTuples * sizeof(Tuple));
-            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples, &buffer_ready_sign[index],
+            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
                                 hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
+            buffer_ready_sign[index] = BUFFER_READY_FLAG;
+
         }
     }
 
