@@ -31,6 +31,7 @@ std::atomic<size_t> exitProgram;
 #define BUFFER_USED_FLAG 1
 #define BUFFER_BEING_PROCESSED_FLAG 2
 //#define JOIN_WRITE_BUFFER_SIZE 1024*1024*8
+//#define DEBUG
 
 struct __attribute__((packed)) record {
     uint8_t user_id[16];
@@ -309,8 +310,10 @@ void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, char* flag, std
     size_t lastTimeStamp = 0;
     size_t popCnt = 0;
     Tuple tup;
+#ifdef DEBUG
     cout << "Consumer: received buffer with first tuple campaingid=" << buffer[0].campaign_id
                     << " timestamp=" << buffer[0].timeStamp << endl;
+#endif
     for(size_t i = 0; i < bufferSizeInTuples; i++)
     {
         size_t timeStamp = time(NULL); //seconds elapsed since 00:00 hours, Jan 1, 1970 UTC
@@ -337,12 +340,13 @@ void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, char* flag, std
 
     }//end of for
     flag = BUFFER_READY_FLAG;
-
+#ifdef DEBUG
     stringstream ss;
     ss << "Thread=" << omp_get_thread_num() << " consumed=" << consumed
             << " popCnt=" << popCnt << " windowSwitchCnt=" << windowSwitchCnt
             << " htreset=" << htReset;
     cout << ss.str() << endl;
+#endif
 }
 
 void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
@@ -531,7 +535,7 @@ int main(int argc, char *argv[])
 //    size_t bufferSizeInKB = std::stoi(argv[2]) * sizeof(Tuple);
 //    size_t bufferSizeInTups = std::stoi(argv[2]);
 
-    size_t bufferProcCnt = 1000;
+    size_t bufferProcCnt = 100;
     size_t genCnt = 10000;
     size_t bufferSizeInTups = 100;
     size_t rank = std::stoi(argv[1]);
