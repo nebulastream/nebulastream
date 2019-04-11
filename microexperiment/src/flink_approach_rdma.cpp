@@ -265,6 +265,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
                 //this will run until one buffer is filled completely
                 readTuples += produce_window_mem(records, genCnt, bufferSizeInTuples, (Tuple*)sendBuffers[send_buffer_index].send_buffer->getData());
 
+
                 sendBuffers[send_buffer_index].numberOfTuples = bufferSizeInTuples;
 
                 connection->write(sendBuffers[send_buffer_index].send_buffer, region_tokens[receive_buffer_index],
@@ -390,8 +391,8 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 //            std::future<void> resultFromDB = std::async(std::launch::async, cosume_window_mem, (Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
 //                                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
 
-//            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-//                    hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
+            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+                    hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
             buffer_ready_sign[index] = BUFFER_READY_FLAG;
             if(is_done)
                 break;
@@ -409,8 +410,8 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
-//            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-//                                hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
+            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+                                hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, bufferSizeInTuples);
             buffer_ready_sign[index] = BUFFER_READY_FLAG;
         }
     }
