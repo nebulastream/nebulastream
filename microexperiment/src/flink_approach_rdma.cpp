@@ -445,6 +445,8 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                                 hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
             buffer_ready_sign[index] = BUFFER_READY_FLAG;
         }
+        if(buffer_threads[index])
+            buffer_threads[index]->join();
     }
 
     *consumedTuples = total_received_tuples;
