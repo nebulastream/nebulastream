@@ -430,8 +430,9 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
 {
     std::cout << "Started routine to receive tuples as Consumer" << std::endl;
-
+#ifdef DEBUG
     cout << "buffer size=" << bufferSizeInTuples * sizeof(Tuple) << " first msg size=" << (WRITE_RECEIVE_BUFFER_COUNT+1) * sizeof(RegionToken) << endl;
+#endif
     assert(bufferSizeInTuples * sizeof(Tuple) > (WRITE_RECEIVE_BUFFER_COUNT+1) * sizeof(RegionToken));
     for(auto & r : buffer_ready_sign)
     {
@@ -449,14 +450,14 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
             cout << "copy sign token at pos " << i << endl;
             sign_buffer = connection->register_buffer(buffer_ready_sign.data(), WRITE_RECEIVE_BUFFER_COUNT);
             region_tokens[i] = sign_buffer->createRegionToken();
+#ifdef DEBUG
             cout << "sign region getSizeInBytes=" << region_tokens[i]->getSizeInBytes() << " getAddress=" << region_tokens[i]->getAddress()
                     << " getLocalKey=" << region_tokens[i]->getLocalKey() << " getRemoteKey=" << region_tokens[i]->getRemoteKey() << endl;
-
+#endif
         }
         memcpy((RegionToken*)recv_buffers[0]->getData() + i, region_tokens[i], sizeof(RegionToken));
     }
     sleep(1);
-    std::cout << "PREPARED EVERYTHING FOR RECEIVING!" << std::endl;
     connection->send_blocking(recv_buffers[0]);
     cout << "setupRDMAConsumer finished" << endl;
 }
@@ -469,19 +470,19 @@ void copy_received_tokens(const std::vector<TupleBuffer> &sendBuffers,
             region_tokens[i] = static_cast<RegionToken*>(malloc(sizeof(RegionToken)));
             memcpy(region_tokens[i], (RegionToken*)sendBuffers[0].send_buffer->getData() + i, sizeof(RegionToken));
         } else {
-            cout << "copy sign token at pos " << i << endl;
             sign_token = static_cast<RegionToken*>(malloc(sizeof(RegionToken)));
             memcpy(sign_token, (RegionToken*)sendBuffers[0].send_buffer->getData() + i, sizeof(RegionToken));
-
+#ifdef DEBUG
             cout << "sign region getSizeInBytes=" << sign_token->getSizeInBytes() << " getAddress=" << sign_token->getAddress()
                                 << " getLocalKey=" << sign_token->getLocalKey() << " getRemoteKey=" << sign_token->getRemoteKey() << endl;
+#endif
         }
     }
 }
 
 void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples)
 {
-    std::cout << "send_matching_tuples_to!" << endl;
+//    std::cout << "send_matching_tuples_to!" << endl;
 
     for(size_t i = 0; i < WRITE_SEND_BUFFER_COUNT; i++)
         sendBuffers.emplace_back(TupleBuffer(*connection, bufferSizeInTuples));
@@ -494,9 +495,9 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples)
     sign_buffer = connection->register_buffer(buffer_ready_sign.data(), WRITE_RECEIVE_BUFFER_COUNT);
     sign_token = nullptr;
 
-    std::cout << "Blocking to receive tokens!" << endl;
+//    std::cout << "Blocking to receive tokens!" << endl;
     connection->post_and_receive_blocking(sendBuffers[0].send_buffer);
-    std::cout << "Received tokens!!\n" << endl;
+//    std::cout << "Received tokens!!\n" << endl;
     copy_received_tokens(sendBuffers, region_tokens, sign_token);
 
     cout << "setupRDMAConsumer finished" << endl;
