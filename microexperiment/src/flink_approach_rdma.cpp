@@ -637,9 +637,9 @@ int main(int argc, char *argv[])
             << " producedBuffers=" << producedBuffers
             << " consumedTuples=" << consumedTuples
             << " consumedBuffers=" << consumedBuffers
-            << " InputDatasetSize(KB)=" << producesTuples*sizeof(record)/1024/1024
-            << " TransferDatasetSize(KB)=" << producesTuples*sizeof(Tuple)/1024/1024
-            << " TransferBandwidth MB/s" << (producesTuples*sizeof(Tuple)/1024/1024)/elapsed_time
+            << " InputDatasetSize(MB)=" << producesTuples*sizeof(record)/1024/1024
+            << " TransferDatasetSize(MB)=" << producesTuples*sizeof(Tuple)/1024/1024
+            << " TransferBandwidth MB/s=" << (producesTuples*sizeof(Tuple)/1024/1024)/elapsed_time
             << endl;
 }
 
