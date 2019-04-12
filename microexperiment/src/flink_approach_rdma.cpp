@@ -382,7 +382,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             if(is_done) // this is done so that the loop later doesnt try to process this again
             {
                 buffer_ready_sign[index] = BUFFER_READY_FLAG;
-                cout << "DONE BUFFER FOUND " << endl;
+                cout << "DONE BUFFER FOUND at idx"  << index << endl;
             }
 
             total_received_tuples += bufferSizeInTuples;
