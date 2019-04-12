@@ -766,7 +766,8 @@ int main(int argc, char *argv[])
             size_t endIdx = (i+1)*share;
 
             cout << "consumer " << i << " from=" << startIdx << " to " << endIdx << endl;
-            runConsumerNew(hashTable, windowSizeInSeconds, campaingCnt, 0, numberOfProducer , bufferSizeInTups, &consumedTuples[i], &consumedBuffers[i], startIdx, endIdx);
+            runConsumerNew(hashTable, windowSizeInSeconds, campaingCnt, 0, numberOfProducer , bufferSizeInTups,
+                    &consumedTuples[i], &consumedBuffers[i], startIdx, endIdx);
         }
     }
 #endif
@@ -784,9 +785,15 @@ int main(int argc, char *argv[])
         sumProducedTuples += producesTuples[i];
         sumProducedBuffer += producedBuffers[i];
         sumReadInTuples += readInputTuples[i];
+    }
+
+    for(size_t i = 0; i < numberOfConsumer; i++)
+    {
         sumConsumedTuples += consumedTuples[i];
         sumConsumedBuffer += consumedBuffers[i];
     }
+
+
     double elapsed_time = double(end - begin) / (1024 * 1024 * 1024);
 
     stringstream ss;
