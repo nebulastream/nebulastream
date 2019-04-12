@@ -418,6 +418,9 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
     for(index = startIdx; index < endIdx; index++)//check again if some are there
     {
+        if(buffer_threads[index])
+            buffer_threads[index]->join();
+
         if (buffer_ready_sign[index] == BUFFER_USED_FLAG) {
             cout << "Check Iter -- Received buffer at index=" << index << endl;
 
@@ -427,8 +430,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                                 hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
             buffer_ready_sign[index] = BUFFER_READY_FLAG;
         }
-        if(buffer_threads[index])
-            buffer_threads[index]->join();
+
     }
 
     *consumedTuples = total_received_tuples;
