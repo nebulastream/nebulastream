@@ -23,7 +23,8 @@
 #include <future>
 
 //#define BUFFER_SIZE 1000
-std::atomic<size_t> exitProgram;
+
+
 #define PORT 55355
 //#define OLCONSUMERVERSION
 //#define BUFFER_COUNT 10
@@ -35,6 +36,7 @@ std::atomic<size_t> exitProgram;
 //#define DEBUG
 
 std::atomic<size_t> exitProducer;
+std::atomic<size_t> exitConsumer;
 size_t BUFFER_COUNT;
 
 struct __attribute__((packed)) record {
@@ -381,6 +383,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
             if(is_done) // this is done so that the loop later doesnt try to process this again
             {
+                std::atomic_fetch_add(&exitConsumer, size_t(1));
                 buffer_ready_sign[index] = BUFFER_READY_FLAG;
                 cout << "DONE BUFFER FOUND at idx"  << index << endl;
             }
@@ -414,6 +417,15 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         index++;
         if(index > endIdx)
             index = startIdx;
+
+        if(std::atomic_load(&exitConsumer) == 1)
+        {
+            cout << "terminate signal found" << endl;
+            *consumedTuples = total_received_tuples;
+            *consumedBuffers = total_received_buffers;
+            cout << "nobufferFound=" << noBufferFound << endl;
+            return;
+        }
     }//end of while
 
     cout << "checking remaining buffers" << endl;
@@ -438,8 +450,6 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     *consumedBuffers = total_received_buffers;
     cout << "nobufferFound=" << noBufferFound << endl;
 }
-
-
 
 void runConsumerOld(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples, size_t* consumedTuples, size_t* consumedBuffers)
@@ -633,6 +643,7 @@ int main(int argc, char *argv[])
     cout << "Consumer usage: rank   ip              bufferSizeInTups sendBuffers numberOfConsumer" << endl;
     size_t windowSizeInSeconds = 2;
     exitProducer = 0;
+    exitConsumer = 0;
     size_t numberOfProducer = 1;
     size_t numberOfConsumer = 1;
     size_t bufferProcCnt = 0;
@@ -756,7 +767,6 @@ int main(int argc, char *argv[])
 
             cout << "consumer " << i << " from=" << startIdx << " to " << endIdx << endl;
             runConsumerNew(hashTable, windowSizeInSeconds, campaingCnt, 0, numberOfProducer , bufferSizeInTups, &consumedTuples[i], &consumedBuffers[i], startIdx, endIdx);
-
         }
     }
 #endif
