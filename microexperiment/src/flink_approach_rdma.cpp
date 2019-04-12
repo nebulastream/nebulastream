@@ -25,7 +25,7 @@
 //#define BUFFER_SIZE 1000
 std::atomic<size_t> exitProgram;
 #define PORT 55355
-#define WRITE_SEND_BUFFER_COUNT 10
+#define WRITE_SEND_BUFFER_COUNT 1000
 //#define WRITE_RECEIVE_BUFFER_COUNT 10
 #define BUFFER_USED_SENDER_DONE 127
 #define BUFFER_READY_FLAG 0
@@ -659,7 +659,7 @@ int main(int argc, char *argv[])
             size_t startIdx = i* share;
             size_t endIdx = (i+1)*share;
 
-            cout << "producer " << i << " from=" << startIdx << " to " << endIdx << endl;
+//            cout << "producer " << i << " from=" << startIdx << " to " << endIdx << endl;
             runProducer(connection, recs[0], genCnt, bufferSizeInTups, bufferProcCnt, &producesTuples[i],
                     &producedBuffers[i], &readInputTuples[i], startIdx, endIdx, numberOfProducer);
         }
