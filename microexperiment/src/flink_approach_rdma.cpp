@@ -796,8 +796,8 @@ int main(int argc, char *argv[])
     ss << " TransferBandwidth MB/s=" << (sumProducedTuples*sizeof(Tuple)/1024/1024)/elapsed_time << endl;
     ss << " ----------------------------------------------" << endl;
 
-    ss << " consumedTuples=" << consumedTuples  << endl;
-    ss<< " consumedBuffers=" << consumedBuffers  << endl;
+    ss << " consumedTuples=" << sumConsumedTuples  << endl;
+    ss<< " consumedBuffers=" << sumConsumedBuffer  << endl;
 
     cout << ss.str() << endl;
 }
