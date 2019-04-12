@@ -240,7 +240,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
     {
 //        for(size_t receive_buffer_index = 0; receive_buffer_index < WRITE_RECEIVE_BUFFER_COUNT;
 //                receive_buffer_index=(receive_buffer_index+1)%WRITE_RECEIVE_BUFFER_COUNT)
-        for(size_t receive_buffer_index = startIdx; receive_buffer_index < endIdx; receive_buffer_index++)
+        for(size_t receive_buffer_index = startIdx; receive_buffer_index < endIdx && total_buffer_send < bufferProcCnt; receive_buffer_index++)
         {
             cout << "start=" << startIdx << " checks idx=" << receive_buffer_index << endl;
             if(receive_buffer_index == startIdx)
