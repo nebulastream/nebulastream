@@ -632,8 +632,8 @@ int main(int argc, char *argv[])
 
 //    size_t* consumed = new size_t[num_Consumer];
 
-    size_t producesTuples = 0;
-    size_t producedBuffers = 0;
+    size_t producesTuples[numberOfProducer] = {0};
+    size_t producedBuffers[numberOfProducer] = {0};
 
     size_t consumedTuples = 0;
     size_t consumedBuffers = 0;
@@ -653,8 +653,8 @@ int main(int argc, char *argv[])
             size_t endIdx = (i+1)*share;
 
             cout << "producer " << i << " from=" << startIdx << " to " << endIdx << endl;
-            runProducer(connection, recs[0], genCnt, bufferSizeInTups, bufferProcCnt, &producesTuples,
-                    &producedBuffers, &readInputTuples, startIdx, endIdx, numberOfProducer);
+            runProducer(connection, recs[0], genCnt, bufferSizeInTups, bufferProcCnt, &producesTuples[i],
+                    &producedBuffers[i], &readInputTuples, startIdx, endIdx, numberOfProducer);
         }
     }
     }
@@ -665,6 +665,13 @@ int main(int argc, char *argv[])
 
     Timestamp end = getTimestamp();
 
+    size_t sumProducedTuples = 0;
+    size_t sumProducedBuffer = 0;
+    for(size_t i = 0; i < numberOfProducer; i++)
+    {
+        sumProducedTuples += producesTuples[i];
+        sumProducedBuffer += producedBuffers[i];
+    }
     double elapsed_time = double(end - begin) / (1024 * 1024 * 1024);
 //    size_t consumedOverall = 0;
 //    for (size_t i = 0; i < num_Consumer; i++) {
@@ -672,6 +679,7 @@ int main(int argc, char *argv[])
 //        consumedOverall += consumed[i];
 //    }
     stringstream ss;
+
     ss << " time=" << elapsed_time << "s" << endl;
 
     ss << " readInputTuples=" << readInputTuples  << endl;
@@ -681,12 +689,11 @@ int main(int argc, char *argv[])
 
     ss << " ----------------------------------------------" << endl;
 
-    ss << " produced=" << producesTuples << endl;
-    ss << " ProduceThroughput=" << producesTuples / elapsed_time << endl;
-    ss << " TransferVolume(MB)=" << producesTuples*sizeof(Tuple)/1024/1024 << endl;
-    ss << " TransferBandwidth MB/s=" << (producesTuples*sizeof(Tuple)/1024/1024)/elapsed_time << endl;
-    ss << " producesTuples=" << producesTuples << endl;
-    ss << " producedBuffers=" << producedBuffers << endl;
+    ss << " producedTuples=" << sumProducedTuples << endl;
+    ss << " producedBuffers=" << sumProducedBuffer << endl;
+    ss << " ProduceThroughput=" << sumProducedTuples / elapsed_time << endl;
+    ss << " TransferVolume(MB)=" << sumProducedTuples*sizeof(Tuple)/1024/1024 << endl;
+    ss << " TransferBandwidth MB/s=" << (sumProducedTuples*sizeof(Tuple)/1024/1024)/elapsed_time << endl;
     ss << " ----------------------------------------------" << endl;
 
     ss << " consumedTuples=" << consumedTuples  << endl;
