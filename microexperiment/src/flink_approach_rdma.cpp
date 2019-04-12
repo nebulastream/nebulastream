@@ -245,7 +245,9 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
 //                receive_buffer_index=(receive_buffer_index+1)%WRITE_RECEIVE_BUFFER_COUNT)
         for(size_t receive_buffer_index = startIdx; receive_buffer_index < endIdx && total_buffer_send < bufferProcCnt; receive_buffer_index++)
         {
+#ifdef DEBUG
             cout << "start=" << startIdx << " checks idx=" << receive_buffer_index << endl;
+#endif
             if(receive_buffer_index == startIdx)
             {
                 read_sign_buffer(target_rank, sign_buffer, sign_token, connection);
@@ -259,9 +261,9 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
 
                 connection->write(sendBuffers[send_buffer_index].send_buffer, region_tokens[receive_buffer_index],
                         sendBuffers[send_buffer_index].requestToken);
-//#ifdef DEBUG
+#ifdef DEBUG
                 cout << "Writing " << sendBuffers[send_buffer_index].numberOfTuples << " tuples on buffer " << receive_buffer_index << endl;
-//#endif
+#endif
                 total_sent_tuples += sendBuffers[send_buffer_index].numberOfTuples;
                 total_buffer_send++;
 
@@ -270,14 +272,14 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
                 {
                     buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
                     connection->write(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
-//#ifdef DEBUG
+#ifdef DEBUG
                     cout << "Done writing sign_buffer at index=" << receive_buffer_index << endl;
-//#endif
+#endif
                 }
                 else//finished processing
                 {
                     std::atomic_fetch_add(&exitProducer, size_t(1));
-                    cout << "exitProducer=" << exitProducer << " for thread" << omp_get_thread_num() << endl;
+//                    cout << "exitProducer=" << exitProducer << " for thread" << omp_get_thread_num() << endl;
                     if(std::atomic_load(&exitProducer) == numberOfProducer)
                     {
                         buffer_ready_sign[receive_buffer_index] = BUFFER_USED_SENDER_DONE;
@@ -560,11 +562,11 @@ record** generateTuples(size_t genCnt, size_t num_Producer, size_t campaingCnt)
 
 int main(int argc, char *argv[])
 {
-    cout << "Producer usage: rank bufferProcCnt bufferSizeInTups" << endl;
-    cout << "Consumer usage: rank ip bufferSizeInTups" << endl;
+    cout << "Producer usage: rank   bufferProcCnt   bufferSizeInTups numProducer" << endl;
+    cout << "Consumer usage: rank   ip              bufferSizeInTups" << endl;
     size_t windowSizeInSeconds = 2;
     exitProducer = 0;
-    size_t numberOfProducer = 2;
+    size_t numberOfProducer = 1;
     size_t bufferProcCnt = 0;
     size_t genCnt = 1000000;
     size_t bufferSizeInTups = std::stoi(argv[3]);
@@ -577,6 +579,8 @@ int main(int argc, char *argv[])
     if(rank == 0)//producer
     {
         bufferProcCnt = std::stoi(argv[2]);
+        numberOfProducer = std::stoi(argv[4]);
+
     }
 
     if(rank == 1)//consumer
@@ -587,7 +591,9 @@ int main(int argc, char *argv[])
     std::cout << "bufferProcCnt=" << bufferProcCnt << " genCnt=" << genCnt
             << " Rank=" << rank << " bufferSizeInTups=" << bufferSizeInTups
             << " bufferSizeInKB=" << bufferSizeInTups*sizeof(Tuple)/1024
-            << " bufferSize=" << WRITE_SEND_BUFFER_COUNT;
+            << " bufferSize=" << WRITE_SEND_BUFFER_COUNT
+            << " numberOfProducer=" << numberOfProducer;
+
     if(rank == 0)
     {
         cout << " Producer" << endl;
