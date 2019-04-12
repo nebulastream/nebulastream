@@ -25,7 +25,7 @@
 //#define BUFFER_SIZE 1000
 std::atomic<size_t> exitProgram;
 #define PORT 55355
-#define WRITE_SEND_BUFFER_COUNT 1000
+#define WRITE_SEND_BUFFER_COUNT 100
 //#define WRITE_RECEIVE_BUFFER_COUNT 10
 #define BUFFER_USED_SENDER_DONE 127
 #define BUFFER_READY_FLAG 0
@@ -235,7 +235,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
     size_t target_rank = 1;
     size_t total_sent_tuples = 0;
     size_t total_buffer_send = 0;
-    size_t send_buffer_index = 0;
+//    size_t send_buffer_index = 0;
     size_t readTuples = 0;
     size_t noBufferFreeToSend = 0;
 
@@ -255,16 +255,16 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
             if(buffer_ready_sign[receive_buffer_index] == BUFFER_READY_FLAG)
             {
                 //this will run until one buffer is filled completely
-                readTuples += produce_window_mem(records, genCnt, bufferSizeInTuples, (Tuple*)sendBuffers[send_buffer_index].send_buffer->getData());
+                readTuples += produce_window_mem(records, genCnt, bufferSizeInTuples, (Tuple*)sendBuffers[receive_buffer_index].send_buffer->getData());
 
-                sendBuffers[send_buffer_index].numberOfTuples = bufferSizeInTuples;
+                sendBuffers[receive_buffer_index].numberOfTuples = bufferSizeInTuples;
 
-                connection->write(sendBuffers[send_buffer_index].send_buffer, region_tokens[receive_buffer_index],
-                        sendBuffers[send_buffer_index].requestToken);
+                connection->write(sendBuffers[receive_buffer_index].send_buffer, region_tokens[receive_buffer_index],
+                        sendBuffers[receive_buffer_index].requestToken);
 #ifdef DEBUG
-                cout << "Writing " << sendBuffers[send_buffer_index].numberOfTuples << " tuples on buffer " << receive_buffer_index << endl;
+                cout << "Writing " << sendBuffers[receive_buffer_index].numberOfTuples << " tuples on buffer " << receive_buffer_index << endl;
 #endif
-                total_sent_tuples += sendBuffers[send_buffer_index].numberOfTuples;
+                total_sent_tuples += sendBuffers[receive_buffer_index].numberOfTuples;
                 total_buffer_send++;
 
 
@@ -294,7 +294,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
 
                     break;
                 }
-                send_buffer_index = (send_buffer_index+1) % WRITE_SEND_BUFFER_COUNT;
+//                send_buffer_index = (send_buffer_index+1) % WRITE_SEND_BUFFER_COUNT;
             }
             else
             {
