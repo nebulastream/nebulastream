@@ -126,9 +126,9 @@ struct TupleBuffer{
 
 
 
-std::vector<infinity::memory::Buffer*> recv_buffers(BUFFER_COUNT);
-std::vector<infinity::memory::RegionToken*> region_tokens(BUFFER_COUNT+1);
-std::vector<char> buffer_ready_sign(BUFFER_COUNT);
+std::vector<infinity::memory::Buffer*> recv_buffers;
+std::vector<infinity::memory::RegionToken*> region_tokens;
+std::vector<char> buffer_ready_sign;
 //std::vector<std::atomic_char> buffer_ready_sign(BUFFER_COUNT);
 
 
@@ -672,6 +672,11 @@ int main(int argc, char *argv[])
     {
         cout << " Consumer connecting to " << ip << endl;
     }
+
+
+    recv_buffers.resize(BUFFER_COUNT);
+    region_tokens.resize(BUFFER_COUNT+1);
+    buffer_ready_sign.resize(BUFFER_COUNT);
 
     size_t target_rank = rank == 0 ? 1 : 0;
     SimpleInfoProvider info(target_rank, 3, 1, PORT, ip);
