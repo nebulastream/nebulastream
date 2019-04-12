@@ -277,7 +277,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
                 else//finished processing
                 {
                     std::atomic_fetch_add(&exitProducer, size_t(1));
-                    if(exitProducer == numberOfProducer)
+                    if(std::atomic_load(&exitProducer) == numberOfProducer)
                     {
                         buffer_ready_sign[receive_buffer_index] = BUFFER_USED_SENDER_DONE;
                         connection->write_blocking(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
@@ -562,7 +562,7 @@ int main(int argc, char *argv[])
     cout << "Producer usage: rank bufferProcCnt bufferSizeInTups" << endl;
     cout << "Consumer usage: rank ip bufferSizeInTups" << endl;
     size_t windowSizeInSeconds = 2;
-
+    exitProducer = 0;
     size_t numberOfProducer = 2;
     size_t bufferProcCnt = 0;
     size_t genCnt = 1000000;
