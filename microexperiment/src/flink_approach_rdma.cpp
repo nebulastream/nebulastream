@@ -416,6 +416,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             index = startIdx;
     }//end of while
 
+    cout << "checking remaining buffers" << endl;
     for(index = startIdx; index < endIdx; index++)//check again if some are there
     {
         if(buffer_threads[index])
