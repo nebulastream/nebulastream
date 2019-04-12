@@ -25,8 +25,8 @@
 //#define BUFFER_SIZE 1000
 std::atomic<size_t> exitProgram;
 #define PORT 55355
-#define WRITE_SEND_BUFFER_COUNT 100
-//#define WRITE_RECEIVE_BUFFER_COUNT 10
+#define BUFFER_COUNT 100
+//#define BUFFER_COUNT 10
 #define BUFFER_USED_SENDER_DONE 127
 #define BUFFER_READY_FLAG 0
 #define BUFFER_USED_FLAG 1
@@ -126,10 +126,10 @@ struct TupleBuffer{
 
 
 
-std::vector<infinity::memory::Buffer*> recv_buffers(WRITE_RECEIVE_BUFFER_COUNT);
-std::vector<infinity::memory::RegionToken*> region_tokens(WRITE_RECEIVE_BUFFER_COUNT+1);
-std::vector<char> buffer_ready_sign(WRITE_RECEIVE_BUFFER_COUNT);
-//std::vector<std::atomic_char> buffer_ready_sign(WRITE_RECEIVE_BUFFER_COUNT);
+std::vector<infinity::memory::Buffer*> recv_buffers(BUFFER_COUNT);
+std::vector<infinity::memory::RegionToken*> region_tokens(BUFFER_COUNT+1);
+std::vector<char> buffer_ready_sign(BUFFER_COUNT);
+//std::vector<std::atomic_char> buffer_ready_sign(BUFFER_COUNT);
 
 
 
@@ -187,7 +187,7 @@ void read_sign_buffer(size_t target_rank, Buffer* sign_buffer, RegionToken* sign
 //    TRACE("reading sign_buffer: \n");
     connection->read_blocking(sign_buffer, sign_token);
 //    TRACE("sign_buffer: ");
-//    for(int i = 0; i < WRITE_RECEIVE_BUFFER_COUNT; i++)
+//    for(int i = 0; i < BUFFER_COUNT; i++)
 //    {
 //        std::cout << (int)buffer_ready_sign[i] << ",";
 //    }
@@ -241,8 +241,8 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
 
     while(total_buffer_send < bufferProcCnt)
     {
-//        for(size_t receive_buffer_index = 0; receive_buffer_index < WRITE_RECEIVE_BUFFER_COUNT;
-//                receive_buffer_index=(receive_buffer_index+1)%WRITE_RECEIVE_BUFFER_COUNT)
+//        for(size_t receive_buffer_index = 0; receive_buffer_index < BUFFER_COUNT;
+//                receive_buffer_index=(receive_buffer_index+1)%BUFFER_COUNT)
         for(size_t receive_buffer_index = startIdx; receive_buffer_index < endIdx && total_buffer_send < bufferProcCnt; receive_buffer_index++)
         {
 #ifdef DEBUG
@@ -294,7 +294,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
 
                     break;
                 }
-//                send_buffer_index = (send_buffer_index+1) % WRITE_SEND_BUFFER_COUNT;
+//                send_buffer_index = (send_buffer_index+1) % BUFFER_COUNT;
             }
             else
             {
@@ -378,12 +378,12 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     size_t index = 0;
     size_t noBufferFound = 0;
     cout << "start consumer" << endl;
-    std::vector<std::shared_ptr<std::thread>> buffer_threads(WRITE_RECEIVE_BUFFER_COUNT);
+    std::vector<std::shared_ptr<std::thread>> buffer_threads(BUFFER_COUNT);
 
     while(true)
     {
         index++;
-        index %= WRITE_RECEIVE_BUFFER_COUNT;
+        index %= BUFFER_COUNT;
 //        volatile char* c = &buffer_ready_sign[index];
 //        cout << "C[" << index << "]vol=" << (int)*c << " c_char=" << (int)(char)buffer_ready_sign[index] << endl;
 
@@ -423,7 +423,7 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         }
     }
 
-    for(index = 0; index < WRITE_RECEIVE_BUFFER_COUNT; index++)//check again if some are there
+    for(index = 0; index < BUFFER_COUNT; index++)//check again if some are there
     {
         if (buffer_ready_sign[index] == BUFFER_USED_FLAG) {
             cout << "Check Iter -- Received buffer at index=" << index << endl;
@@ -453,9 +453,9 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
 {
     std::cout << "Started routine to receive tuples as Consumer" << std::endl;
 #ifdef DEBUG
-    cout << "buffer size=" << bufferSizeInTuples * sizeof(Tuple) << " first msg size=" << (WRITE_RECEIVE_BUFFER_COUNT+1) * sizeof(RegionToken) << endl;
+    cout << "buffer size=" << bufferSizeInTuples * sizeof(Tuple) << " first msg size=" << (BUFFER_COUNT+1) * sizeof(RegionToken) << endl;
 #endif
-    assert(bufferSizeInTuples * sizeof(Tuple) > (WRITE_RECEIVE_BUFFER_COUNT+1) * sizeof(RegionToken));
+    assert(bufferSizeInTuples * sizeof(Tuple) > (BUFFER_COUNT+1) * sizeof(RegionToken));
     for(auto & r : buffer_ready_sign)
     {
         r = BUFFER_READY_FLAG;
@@ -463,14 +463,14 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
 
 //    Buffer * sign_buffer = nullptr;
 
-    for(size_t i = 0; i <= WRITE_RECEIVE_BUFFER_COUNT; i++)
+    for(size_t i = 0; i <= BUFFER_COUNT; i++)
     {
-        if (i < WRITE_RECEIVE_BUFFER_COUNT) {
+        if (i < BUFFER_COUNT) {
             recv_buffers[i] = connection->allocate_buffer(bufferSizeInTuples * sizeof(Tuple));
             region_tokens[i] = recv_buffers[i]->createRegionToken();
         } else {
 //            cout << "copy sign token at pos " << i << endl;
-            sign_buffer = connection->register_buffer(buffer_ready_sign.data(), WRITE_RECEIVE_BUFFER_COUNT);
+            sign_buffer = connection->register_buffer(buffer_ready_sign.data(), BUFFER_COUNT);
             region_tokens[i] = sign_buffer->createRegionToken();
 #ifdef DEBUG
             cout << "sign region getSizeInBytes=" << region_tokens[i]->getSizeInBytes() << " getAddress=" << region_tokens[i]->getAddress()
@@ -487,8 +487,8 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
 void copy_received_tokens(const std::vector<TupleBuffer> &sendBuffers,
         std::vector<RegionToken*> &region_tokens, RegionToken*&sign_token)
 {
-    for(size_t i = 0; i <= WRITE_RECEIVE_BUFFER_COUNT; i++){
-        if ( i < WRITE_RECEIVE_BUFFER_COUNT){
+    for(size_t i = 0; i <= BUFFER_COUNT; i++){
+        if ( i < BUFFER_COUNT){
             region_tokens[i] = static_cast<RegionToken*>(malloc(sizeof(RegionToken)));
             memcpy(region_tokens[i], (RegionToken*)sendBuffers[0].send_buffer->getData() + i, sizeof(RegionToken));
         } else {
@@ -506,7 +506,7 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples)
 {
 //    std::cout << "send_matching_tuples_to!" << endl;
 
-    for(size_t i = 0; i < WRITE_SEND_BUFFER_COUNT; i++)
+    for(size_t i = 0; i < BUFFER_COUNT; i++)
         sendBuffers.emplace_back(TupleBuffer(*connection, bufferSizeInTuples));
 
     for(auto & r : buffer_ready_sign)
@@ -514,7 +514,7 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples)
         r = BUFFER_READY_FLAG;
     }
 
-    sign_buffer = connection->register_buffer(buffer_ready_sign.data(), WRITE_RECEIVE_BUFFER_COUNT);
+    sign_buffer = connection->register_buffer(buffer_ready_sign.data(), BUFFER_COUNT);
     sign_token = nullptr;
 
 //    std::cout << "Blocking to receive tokens!" << endl;
@@ -591,7 +591,7 @@ int main(int argc, char *argv[])
     std::cout << "bufferProcCnt=" << bufferProcCnt << " genCnt=" << genCnt
             << " Rank=" << rank << " bufferSizeInTups=" << bufferSizeInTups
             << " bufferSizeInKB=" << bufferSizeInTups*sizeof(Tuple)/1024
-            << " bufferSize=" << WRITE_SEND_BUFFER_COUNT
+            << " bufferSize=" << BUFFER_COUNT
             << " numberOfProducer=" << numberOfProducer;
 
     if(rank == 0)
@@ -655,7 +655,7 @@ int main(int argc, char *argv[])
         #pragma omp for
         for(size_t i = 0; i < numberOfProducer; i++)
         {
-            size_t share = WRITE_SEND_BUFFER_COUNT/numberOfProducer;
+            size_t share = BUFFER_COUNT/numberOfProducer;
             size_t startIdx = i* share;
             size_t endIdx = (i+1)*share;
 
