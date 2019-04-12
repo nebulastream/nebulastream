@@ -25,7 +25,7 @@
 //#define BUFFER_SIZE 1000
 std::atomic<size_t> exitProgram;
 #define PORT 55355
-#define BUFFER_COUNT 100
+#define BUFFER_COUNT 10
 //#define BUFFER_COUNT 10
 #define BUFFER_USED_SENDER_DONE 127
 #define BUFFER_READY_FLAG 0
@@ -362,14 +362,14 @@ void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<siz
 #endif
 }
 
-void runComsumerThread(size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
-        size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t index)
-{
-    cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-    hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
-    buffer_ready_sign[index] = BUFFER_READY_FLAG;
-
-}
+//void runComsumerThread(size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
+//        size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t index)
+//{
+//    cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+//    hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
+//    buffer_ready_sign[index] = BUFFER_READY_FLAG;
+//
+//}
 void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples, size_t* consumedTuples, size_t* consumedBuffers)
 {
@@ -396,9 +396,9 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
-#ifdef DEBUG
+//#ifdef DEBUG
             cout << "Received buffer at index=" << index << endl;
-#endif
+//#endif
             if(buffer_threads[index])
                 buffer_threads[index]->join();
 
@@ -419,6 +419,7 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         }
         else
         {
+            cout << "no buffer found at" << index << endl;
             noBufferFound++;
         }
     }
