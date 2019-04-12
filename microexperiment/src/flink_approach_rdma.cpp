@@ -25,7 +25,7 @@
 //#define BUFFER_SIZE 1000
 std::atomic<size_t> exitProgram;
 #define PORT 55355
-#define BUFFER_COUNT 1000
+#define BUFFER_COUNT 100
 //#define BUFFER_COUNT 10
 #define BUFFER_USED_SENDER_DONE 127
 #define BUFFER_READY_FLAG 0
@@ -384,8 +384,6 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     {
         index++;
         index %= BUFFER_COUNT;
-//        volatile char* c = &buffer_ready_sign[index];
-//        cout << "C[" << index << "]vol=" << (int)*c << " c_char=" << (int)(char)buffer_ready_sign[index] << endl;
 
         if (buffer_ready_sign[index] == BUFFER_USED_FLAG || buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
         {
@@ -412,8 +410,8 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             buffer_threads[index] = std::make_shared<std::thread>(
                     [&recv_buffers,bufferSizeInTuples,&hashTable,windowSizeInSec, campaingCnt, consumerID, produceCnt, index]
            {
-//                cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-//                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
+                cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
                 buffer_ready_sign[index] = BUFFER_READY_FLAG;
 //                cout << "threadID=" << std::this_thread::get_id() << " index=" << index << endl;
             });
@@ -435,8 +433,8 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
-//            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-//                                hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
+            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+                                hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
             buffer_ready_sign[index] = BUFFER_READY_FLAG;
         }
         if(buffer_threads[index])
@@ -465,8 +463,6 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
     {
         r = BUFFER_READY_FLAG;
     }
-
-//    Buffer * sign_buffer = nullptr;
 
     for(size_t i = 0; i <= BUFFER_COUNT; i++)
     {
