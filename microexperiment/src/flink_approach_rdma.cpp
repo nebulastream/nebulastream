@@ -622,11 +622,9 @@ int main(int argc, char *argv[])
         setupRDMAConsumer(connection, bufferSizeInTups);
     }
     //fix for the test
-    size_t num_Consumer = 1;
-    size_t num_Producer = 1;
     const size_t campaingCnt = 10000;
 
-    record** recs = generateTuples(genCnt, num_Producer, campaingCnt);
+    record** recs = generateTuples(genCnt, numberOfProducer, campaingCnt);
 
     //create hash table
     std::atomic<size_t>** hashTable = new std::atomic<size_t>*[2];
@@ -638,8 +636,8 @@ int main(int argc, char *argv[])
     for (size_t i = 0; i < campaingCnt + 1; i++)
         std::atomic_init(&hashTable[1][i], std::size_t(0));
 
-    for (size_t i = 0; i < num_Consumer; i++) {
-    }
+//    for (size_t i = 0; i < num_Consumer; i++) {
+//    }
 
 //    size_t* consumed = new size_t[num_Consumer];
 
@@ -672,7 +670,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        runConsumer(hashTable, windowSizeInSeconds, campaingCnt, 0, num_Producer, bufferSizeInTups, &consumedTuples, &consumedBuffers);
+        runConsumer(hashTable, windowSizeInSeconds, campaingCnt, 0,numberOfProducer , bufferSizeInTups, &consumedTuples, &consumedBuffers);
     }
 
     Timestamp end = getTimestamp();
