@@ -745,10 +745,10 @@ int main(int argc, char *argv[])
 #ifdef OLCONSUMERVERSION
         runConsumerOld(hashTable, windowSizeInSeconds, campaingCnt, 0,numberOfProducer , bufferSizeInTups, &consumedTuples[0], &consumedBuffers[0]);
 #else
-#pragma omp parallel num_threads(numberOfProducer)
+#pragma omp parallel num_threads(numberOfConsumer)
     {
         #pragma omp for
-        for(size_t i = 0; i < numberOfProducer; i++)
+        for(size_t i = 0; i < numberOfConsumer; i++)
         {
             size_t share = BUFFER_COUNT/numberOfConsumer;
             size_t startIdx = i* share;
