@@ -277,6 +277,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
                 else//finished processing
                 {
                     std::atomic_fetch_add(&exitProducer, size_t(1));
+                    cout << "exitProducer=" << exitProducer << " for thread" << omp_get_thread_num() << endl;
                     if(std::atomic_load(&exitProducer) == numberOfProducer)
                     {
                         buffer_ready_sign[receive_buffer_index] = BUFFER_USED_SENDER_DONE;
