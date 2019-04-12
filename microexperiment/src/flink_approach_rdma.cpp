@@ -26,7 +26,7 @@
 std::atomic<size_t> exitProgram;
 #define PORT 55355
 #define WRITE_SEND_BUFFER_COUNT 10
-#define WRITE_RECEIVE_BUFFER_COUNT 10
+//#define WRITE_RECEIVE_BUFFER_COUNT 10
 #define BUFFER_USED_SENDER_DONE 127
 #define BUFFER_READY_FLAG 0
 #define BUFFER_USED_FLAG 1
@@ -631,6 +631,8 @@ int main(int argc, char *argv[])
 
     if(rank == 0)
     {
+#pragma omp parallel num_threads(numberOfProducer)
+    {
         #pragma omp for
         for(size_t i = 0; i < numberOfProducer; i++)
         {
@@ -641,6 +643,7 @@ int main(int argc, char *argv[])
             cout << "producer " << i << " from=" << startIdx << " to " << endIdx << endl;
             runProducer(connection, recs[0], genCnt, bufferSizeInTups, bufferProcCnt, &producesTuples, &producedBuffers, &readInputTuples, startIdx, endIdx);
         }
+    }
     }
     else
     {
