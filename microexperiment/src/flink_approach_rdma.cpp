@@ -25,7 +25,7 @@
 //#define BUFFER_SIZE 1000
 std::atomic<size_t> exitProgram;
 #define PORT 55355
-#define BUFFER_COUNT 1000
+//#define OLCONSUMERVERSION
 //#define BUFFER_COUNT 10
 #define BUFFER_USED_SENDER_DONE 127
 #define BUFFER_READY_FLAG 0
@@ -35,7 +35,7 @@ std::atomic<size_t> exitProgram;
 //#define DEBUG
 
 std::atomic<size_t> exitProducer;
-
+size_t BUFFER_COUNT;
 
 struct __attribute__((packed)) record {
     uint8_t user_id[16];
@@ -103,8 +103,8 @@ struct TupleBuffer{
 //
 //    }
     TupleBuffer(TupleBuffer && other)
-        :maxNumberOfTuples(other.maxNumberOfTuples)
-        , numberOfTuples(other.numberOfTuples)
+        : numberOfTuples(other.numberOfTuples),
+          maxNumberOfTuples(other.maxNumberOfTuples)
         {
             std::swap(send_buffer, other.send_buffer);
             std::swap(tups, other.tups);
@@ -362,15 +362,85 @@ void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<siz
 #endif
 }
 
-//void runComsumerThread(size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
-//        size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t index)
-//{
-//    cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-//    hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
-//    buffer_ready_sign[index] = BUFFER_READY_FLAG;
-//
-//}
-void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
+
+void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
+        size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples, size_t* consumedTuples, size_t* consumedBuffers, size_t startIdx, size_t endIdx)
+{
+    size_t total_received_tuples = 0;
+    size_t total_received_buffers = 0;
+    size_t index = startIdx;
+    size_t noBufferFound = 0;
+    cout << "start consumer" << endl;
+    std::vector<std::shared_ptr<std::thread>> buffer_threads(BUFFER_COUNT);
+
+    while(true)
+    {
+        if (buffer_ready_sign[index] == BUFFER_USED_FLAG || buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
+        {
+            bool is_done = buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE;
+
+            if(is_done) // this is done so that the loop later doesnt try to process this again
+            {
+                buffer_ready_sign[index] = BUFFER_READY_FLAG;
+                cout << "DONE BUFFER FOUND " << endl;
+            }
+
+            total_received_tuples += bufferSizeInTuples;
+            total_received_buffers++;
+#ifdef DEBUG
+            cout << "Received buffer at index=" << index << endl;
+#endif
+            if(buffer_threads[index])
+                buffer_threads[index]->join();
+
+//            buffer_threads[index] = std::make_shared<std::thread>(&runComsumerThread, bufferSizeInTuples,
+//                                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, index);
+
+            buffer_threads[index] = std::make_shared<std::thread>(
+                    [&recv_buffers,bufferSizeInTuples,&hashTable,windowSizeInSec, campaingCnt, consumerID, produceCnt, index]
+           {
+                cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
+                buffer_ready_sign[index] = BUFFER_READY_FLAG;
+//                cout << "threadID=" << std::this_thread::get_id() << " index=" << index << endl;
+            });
+
+            if(is_done)
+                break;
+        }
+        else
+        {
+//            cout << "no buffer found at" << index << endl;
+            noBufferFound++;
+        }
+        index++;
+        if(index > endIdx)
+            index = startIdx;
+    }//end of while
+
+    for(index = startIdx; index < endIdx; index++)//check again if some are there
+    {
+        if (buffer_ready_sign[index] == BUFFER_USED_FLAG) {
+            cout << "Check Iter -- Received buffer at index=" << index << endl;
+
+            total_received_tuples += bufferSizeInTuples;
+            total_received_buffers++;
+            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+                                hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
+            buffer_ready_sign[index] = BUFFER_READY_FLAG;
+        }
+        if(buffer_threads[index])
+            buffer_threads[index]->join();
+    }
+
+    *consumedTuples = total_received_tuples;
+    *consumedBuffers = total_received_buffers;
+    cout << "nobufferFound=" << noBufferFound << endl;
+}
+
+
+
+void runConsumerOld(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples, size_t* consumedTuples, size_t* consumedBuffers)
 {
     size_t total_received_tuples = 0;
@@ -444,13 +514,8 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     *consumedTuples = total_received_tuples;
     *consumedBuffers = total_received_buffers;
     cout << "nobufferFound=" << noBufferFound << endl;
-//    for (auto & token : region_tokens)
-//        delete token;
-//    for (auto & buffer : recv_buffers)
-//        delete buffer;
 }
 
-//#define SERVER_IP "192.168.5.30"
 
 void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
 {
@@ -563,14 +628,16 @@ record** generateTuples(size_t genCnt, size_t num_Producer, size_t campaingCnt)
 
 int main(int argc, char *argv[])
 {
-    cout << "Producer usage: rank   bufferProcCnt   bufferSizeInTups numProducer" << endl;
-    cout << "Consumer usage: rank   ip              bufferSizeInTups" << endl;
+    cout << "Producer usage: rank   bufferProcCnt   bufferSizeInTups sendBuffers numProducer" << endl;
+    cout << "Consumer usage: rank   ip              bufferSizeInTups sendBuffers numberOfConsumer" << endl;
     size_t windowSizeInSeconds = 2;
     exitProducer = 0;
     size_t numberOfProducer = 1;
+    size_t numberOfConsumer = 1;
     size_t bufferProcCnt = 0;
     size_t genCnt = 1000000;
     size_t bufferSizeInTups = std::stoi(argv[3]);
+    BUFFER_COUNT = std::stoi(argv[4]);
     size_t rank = std::stoi(argv[1]);
 
     MPIHelper::set_rank(rank);
@@ -580,20 +647,22 @@ int main(int argc, char *argv[])
     if(rank == 0)//producer
     {
         bufferProcCnt = std::stoi(argv[2]);
-        numberOfProducer = std::stoi(argv[4]);
-
+        numberOfProducer = std::stoi(argv[5]);
     }
 
     if(rank == 1)//consumer
     {
         ip = argv[2];
+        numberOfConsumer = std::stoi(argv[5]);
     }
+
     assert(rank == 0 || rank == +1);
     std::cout << "bufferProcCnt=" << bufferProcCnt << " genCnt=" << genCnt
             << " Rank=" << rank << " bufferSizeInTups=" << bufferSizeInTups
             << " bufferSizeInKB=" << bufferSizeInTups*sizeof(Tuple)/1024
             << " bufferSize=" << BUFFER_COUNT
-            << " numberOfProducer=" << numberOfProducer;
+            << " numberOfProducer=" << numberOfProducer
+            << " numberOfConsumer=" << numberOfConsumer;
 
     if(rank == 0)
     {
@@ -640,8 +709,9 @@ int main(int argc, char *argv[])
     size_t producesTuples[numberOfProducer] = {0};
     size_t producedBuffers[numberOfProducer] = {0};
 
-    size_t consumedTuples = 0;
-    size_t consumedBuffers = 0;
+
+    size_t consumedTuples[numberOfConsumer] = {0};
+    size_t consumedBuffers[numberOfConsumer] = {0};
 
     size_t readInputTuples[numberOfProducer] = {0};
 
@@ -666,7 +736,24 @@ int main(int argc, char *argv[])
     }
     else
     {
-        runConsumer(hashTable, windowSizeInSeconds, campaingCnt, 0,numberOfProducer , bufferSizeInTups, &consumedTuples, &consumedBuffers);
+#ifdef OLCONSUMERVERSION
+        runConsumerOld(hashTable, windowSizeInSeconds, campaingCnt, 0,numberOfProducer , bufferSizeInTups, &consumedTuples[0], &consumedBuffers[0]);
+#else
+#pragma omp parallel num_threads(numberOfProducer)
+    {
+        #pragma omp for
+        for(size_t i = 0; i < numberOfProducer; i++)
+        {
+            size_t share = BUFFER_COUNT/numberOfConsumer;
+            size_t startIdx = i* share;
+            size_t endIdx = (i+1)*share;
+
+            cout << "consumer " << i << " from=" << startIdx << " to " << endIdx << endl;
+            runConsumerNew(hashTable, windowSizeInSeconds, campaingCnt, 0,numberOfProducer , bufferSizeInTups, &consumedTuples[0], &consumedBuffers[0], startIdx, endIdx);
+
+        }
+    }
+#endif
     }
 
     Timestamp end = getTimestamp();
@@ -674,18 +761,18 @@ int main(int argc, char *argv[])
     size_t sumProducedTuples = 0;
     size_t sumProducedBuffer = 0;
     size_t sumReadInTuples = 0;
+    size_t sumConsumedTuples = 0;
+    size_t sumConsumedBuffer = 0;
     for(size_t i = 0; i < numberOfProducer; i++)
     {
         sumProducedTuples += producesTuples[i];
         sumProducedBuffer += producedBuffers[i];
         sumReadInTuples += readInputTuples[i];
+        sumConsumedTuples += consumedTuples[i];
+        sumConsumedBuffer += consumedBuffers[i];
     }
     double elapsed_time = double(end - begin) / (1024 * 1024 * 1024);
-//    size_t consumedOverall = 0;
-//    for (size_t i = 0; i < num_Consumer; i++) {
-//        cout << "con " << i << ":" << consumed[i] << endl;
-//        consumedOverall += consumed[i];
-//    }
+
     stringstream ss;
 
     ss << " time=" << elapsed_time << "s" << endl;
@@ -776,4 +863,11 @@ int main(int argc, char *argv[])
 //    retValue.remote_receive_token = remote_receive_token;
 //    retValue.connection = connection;
 //}
-
+//void runComsumerThread(size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
+//        size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t index)
+//{
+//    cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+//    hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
+//    buffer_ready_sign[index] = BUFFER_READY_FLAG;
+//
+//}
