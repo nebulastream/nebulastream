@@ -274,8 +274,8 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
                 {
                     buffer_ready_sign[receive_buffer_index] = BUFFER_USED_SENDER_DONE;
                     connection->write_blocking(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
-                    total_sent_tuples += sendBuffers[send_buffer_index].numberOfTuples;
-                    total_buffer_send++;
+//                    total_sent_tuples += sendBuffers[send_buffer_index].numberOfTuples;
+//                    total_buffer_send++;
 
                     cout << "Sent last tuples and marked as BUFFER_USED_SENDER_DONE at index=" << receive_buffer_index << endl;
                     break;
