@@ -393,8 +393,6 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             if(buffer_threads[index])
                 buffer_threads[index]->join();
 
-//            buffer_threads[index] = std::make_shared<std::thread>(&runComsumerThread, bufferSizeInTuples,
-//                                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, index);
 
             buffer_threads[index] = std::make_shared<std::thread>(
                     [&recv_buffers,bufferSizeInTuples,&hashTable,windowSizeInSec, campaingCnt, consumerID, produceCnt, index]
@@ -402,7 +400,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                 cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
                         hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
                 buffer_ready_sign[index] = BUFFER_READY_FLAG;
-//                cout << "threadID=" << std::this_thread::get_id() << " index=" << index << endl;
+                cout << "threadID=" << std::this_thread::get_id() << " index=" << index << endl;
             });
 
             if(is_done)
@@ -803,6 +801,9 @@ int main(int argc, char *argv[])
 }
 
 //    std::vector<Timestamp> measured_times;
+
+//            buffer_threads[index] = std::make_shared<std::thread>(&runComsumerThread, bufferSizeInTuples,
+//                                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, index);
 //    printf("Starting Measurement!\n");
 //    for (size_t iteration = 0; iteration < ITERATIONS; iteration++)
 //    {
