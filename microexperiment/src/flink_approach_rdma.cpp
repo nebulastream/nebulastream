@@ -392,13 +392,17 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             bool is_done = buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE;
 
             if(is_done) // this is done so that the loop later doesnt try to process this again
+            {
                 buffer_ready_sign[index] = BUFFER_READY_FLAG;
+                cout << "DONE BUFFER FOUND " << endl;
+            }
+
 
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
-//#ifdef DEBUG
+#ifdef DEBUG
             cout << "Received buffer at index=" << index << endl;
-//#endif
+#endif
             if(buffer_threads[index])
                 buffer_threads[index]->join();
 
@@ -419,7 +423,7 @@ void runConsumer(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         }
         else
         {
-            cout << "no buffer found at" << index << endl;
+//            cout << "no buffer found at" << index << endl;
             noBufferFound++;
         }
     }
