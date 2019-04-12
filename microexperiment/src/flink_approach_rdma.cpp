@@ -34,6 +34,9 @@ std::atomic<size_t> exitProgram;
 //#define JOIN_WRITE_BUFFER_SIZE 1024*1024*8
 //#define DEBUG
 
+std::atomic<size_t> exitProducer;
+
+
 struct __attribute__((packed)) record {
     uint8_t user_id[16];
     uint8_t page_id[16];
@@ -227,7 +230,7 @@ size_t produce_window_mem(record* records, size_t genCnt, size_t bufferSize, Tup
 }
 
 void runProducer(VerbsConnection* connection, record* records, size_t genCnt, size_t bufferSizeInTuples, size_t bufferProcCnt,
-        size_t* producesTuples, size_t* producedBuffers, size_t* readInputTuples, size_t startIdx, size_t endIdx)
+        size_t* producesTuples, size_t* producedBuffers, size_t* readInputTuples, size_t startIdx, size_t endIdx, size_t numberOfProducer)
 {
     size_t target_rank = 1;
     size_t total_sent_tuples = 0;
@@ -262,6 +265,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
                 total_sent_tuples += sendBuffers[send_buffer_index].numberOfTuples;
                 total_buffer_send++;
 
+
                 if (total_buffer_send < bufferProcCnt+1)//a new buffer will be send next
                 {
                     buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
@@ -272,12 +276,19 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
                 }
                 else//finished processing
                 {
-                    buffer_ready_sign[receive_buffer_index] = BUFFER_USED_SENDER_DONE;
-                    connection->write_blocking(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
-//                    total_sent_tuples += sendBuffers[send_buffer_index].numberOfTuples;
-//                    total_buffer_send++;
+                    std::atomic_fetch_add(&exitProducer, size_t(1));
+                    if(exitProducer == numberOfProducer)
+                    {
+                        buffer_ready_sign[receive_buffer_index] = BUFFER_USED_SENDER_DONE;
+                        connection->write_blocking(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
+                        cout << "Sent last tuples and marked as BUFFER_USED_SENDER_DONE at index=" << receive_buffer_index << endl;
+                    }
+                    else
+                    {
+                        buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
+                        connection->write(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
+                    }
 
-                    cout << "Sent last tuples and marked as BUFFER_USED_SENDER_DONE at index=" << receive_buffer_index << endl;
                     break;
                 }
                 send_buffer_index = (send_buffer_index+1) % WRITE_SEND_BUFFER_COUNT;
@@ -641,7 +652,8 @@ int main(int argc, char *argv[])
             size_t endIdx = (i+1)*share;
 
             cout << "producer " << i << " from=" << startIdx << " to " << endIdx << endl;
-            runProducer(connection, recs[0], genCnt, bufferSizeInTups, bufferProcCnt, &producesTuples, &producedBuffers, &readInputTuples, startIdx, endIdx);
+            runProducer(connection, recs[0], genCnt, bufferSizeInTups, bufferProcCnt, &producesTuples,
+                    &producedBuffers, &readInputTuples, startIdx, endIdx, numberOfProducer);
         }
     }
     }
