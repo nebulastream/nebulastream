@@ -25,8 +25,8 @@
 //#define BUFFER_SIZE 1000
 std::atomic<size_t> exitProgram;
 #define PORT 55355
-#define WRITE_SEND_BUFFER_COUNT 1000
-#define WRITE_RECEIVE_BUFFER_COUNT 1000
+#define WRITE_SEND_BUFFER_COUNT 10
+#define WRITE_RECEIVE_BUFFER_COUNT 10
 #define BUFFER_USED_SENDER_DONE 127
 #define BUFFER_READY_FLAG 0
 #define BUFFER_USED_FLAG 1
@@ -240,11 +240,10 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
     {
 //        for(size_t receive_buffer_index = 0; receive_buffer_index < WRITE_RECEIVE_BUFFER_COUNT;
 //                receive_buffer_index=(receive_buffer_index+1)%WRITE_RECEIVE_BUFFER_COUNT)
-        for(size_t receive_buffer_index = startIdx; receive_buffer_index < endIdx;
-                        receive_buffer_index=(receive_buffer_index+1)%startIdx + endIdx)
+        for(size_t receive_buffer_index = startIdx; receive_buffer_index < endIdx; receive_buffer_index++)
         {
-            cout << "id=" << endIdx-startIdx << " checks idx=" << receive_buffer_index << endl;
-            if(receive_buffer_index == 0)
+            cout << "start=" << startIdx << " checks idx=" << receive_buffer_index << endl;
+            if(receive_buffer_index == startIdx)
             {
                 read_sign_buffer(target_rank, sign_buffer, sign_token, connection);
             }
@@ -286,6 +285,11 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
             else
             {
                 noBufferFreeToSend++;
+            }
+//            =(receive_buffer_index+1)%startIdx + endIdx
+            if(receive_buffer_index +1 > endIdx)
+            {
+                receive_buffer_index = startIdx;
             }
         }//end of for
     }//end of while
