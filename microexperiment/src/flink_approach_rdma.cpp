@@ -259,20 +259,20 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
 
                 connection->write(sendBuffers[send_buffer_index].send_buffer, region_tokens[receive_buffer_index],
                         sendBuffers[send_buffer_index].requestToken);
-#ifdef DEBUG
+//#ifdef DEBUG
                 cout << "Writing " << sendBuffers[send_buffer_index].numberOfTuples << " tuples on buffer " << receive_buffer_index << endl;
-#endif
+//#endif
                 total_sent_tuples += sendBuffers[send_buffer_index].numberOfTuples;
                 total_buffer_send++;
 
 
-                if (total_buffer_send < bufferProcCnt+1)//a new buffer will be send next
+                if (total_buffer_send < bufferProcCnt)//a new buffer will be send next
                 {
                     buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
                     connection->write(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
-#ifdef DEBUG
+//#ifdef DEBUG
                     cout << "Done writing sign_buffer at index=" << receive_buffer_index << endl;
-#endif
+//#endif
                 }
                 else//finished processing
                 {
