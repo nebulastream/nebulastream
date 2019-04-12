@@ -120,23 +120,7 @@ struct TupleBuffer{
     size_t numberOfTuples;
     size_t maxNumberOfTuples;
 };
-//
-//struct __attribute__((packed)) TupleBuffer {
-//    TupleBuffer(size_t pBufferSize) {
-//        pos = 0;
-//        bufferSize = pBufferSize;
-//        content = new Tuple[bufferSize];
-//    }
-//
-//    bool add(Tuple& tup) {
-//        content[pos++] = tup;
-//        return pos == bufferSize;
-//    }
-//
-//    Tuple* content;
-//    size_t pos;
-//    size_t bufferSize;
-//};
+
 
 
 std::vector<infinity::memory::Buffer*> recv_buffers(WRITE_RECEIVE_BUFFER_COUNT);
@@ -243,7 +227,7 @@ size_t produce_window_mem(record* records, size_t genCnt, size_t bufferSize, Tup
 }
 
 void runProducer(VerbsConnection* connection, record* records, size_t genCnt, size_t bufferSizeInTuples, size_t bufferProcCnt,
-        size_t* producesTuples, size_t* producedBuffers, size_t* readInputTuples)
+        size_t* producesTuples, size_t* producedBuffers, size_t* readInputTuples, size_t startIdx, size_t endIdx)
 {
     size_t target_rank = 1;
     size_t total_sent_tuples = 0;
@@ -254,9 +238,12 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
 
     while(total_buffer_send < bufferProcCnt)
     {
-        for(size_t receive_buffer_index = 0; receive_buffer_index < WRITE_RECEIVE_BUFFER_COUNT;
-                receive_buffer_index=(receive_buffer_index+1)%WRITE_RECEIVE_BUFFER_COUNT)
+//        for(size_t receive_buffer_index = 0; receive_buffer_index < WRITE_RECEIVE_BUFFER_COUNT;
+//                receive_buffer_index=(receive_buffer_index+1)%WRITE_RECEIVE_BUFFER_COUNT)
+        for(size_t receive_buffer_index = startIdx; receive_buffer_index < endIdx;
+                        receive_buffer_index=(receive_buffer_index+1)%startIdx + endIdx)
         {
+            cout << "id=" << endIdx-startIdx << " checks idx=" << receive_buffer_index << endl;
             if(receive_buffer_index == 0)
             {
                 read_sign_buffer(target_rank, sign_buffer, sign_token, connection);
@@ -561,7 +548,7 @@ int main(int argc, char *argv[])
     cout << "Consumer usage: rank ip bufferSizeInTups" << endl;
     size_t windowSizeInSeconds = 2;
 
-
+    size_t numberOfProducer = 2;
     size_t bufferProcCnt = 0;
     size_t genCnt = 1000000;
     size_t bufferSizeInTups = std::stoi(argv[3]);
@@ -640,7 +627,16 @@ int main(int argc, char *argv[])
 
     if(rank == 0)
     {
-        runProducer(connection, recs[0], genCnt, bufferSizeInTups, bufferProcCnt, &producesTuples, &producedBuffers, &readInputTuples);
+        #pragma omp for
+        for(size_t i = 0; i < numberOfProducer; i++)
+        {
+            size_t share = WRITE_SEND_BUFFER_COUNT/numberOfProducer;
+            size_t startIdx = i* share;
+            size_t endIdx = (i+1)*share;
+
+            cout << "producer " << i << " from=" << startIdx << " to " << endIdx << endl;
+            runProducer(connection, recs[0], genCnt, bufferSizeInTups, bufferProcCnt, &producesTuples, &producedBuffers, &readInputTuples, startIdx, endIdx);
+        }
     }
     else
     {
