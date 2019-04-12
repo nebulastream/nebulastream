@@ -665,7 +665,7 @@ int main(int argc, char *argv[])
             size_t endIdx = (i+1)*share;
 
 //            cout << "producer " << i << " from=" << startIdx << " to " << endIdx << endl;
-            runProducer(connection, recs[0], genCnt, bufferSizeInTups, bufferProcCnt, &producesTuples[i],
+            runProducer(connection, recs[i], genCnt, bufferSizeInTups, bufferProcCnt, &producesTuples[i],
                     &producedBuffers[i], &readInputTuples[i], startIdx, endIdx, numberOfProducer);
         }
     }
