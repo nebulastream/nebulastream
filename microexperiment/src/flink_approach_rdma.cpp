@@ -25,7 +25,7 @@
 //#define BUFFER_SIZE 1000
 std::atomic<size_t> exitProgram;
 #define PORT 55355
-#define BUFFER_COUNT 10000
+#define BUFFER_COUNT 1000
 //#define BUFFER_COUNT 10
 #define BUFFER_USED_SENDER_DONE 127
 #define BUFFER_READY_FLAG 0
@@ -308,7 +308,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
         }//end of for
     }//end of while
     cout << "Done sending! Sent a total of " << total_sent_tuples << " tuples and " << total_buffer_send << " buffers"
-            << " noBufferFreeToSend=" << noBufferFreeToSend << endl;
+            << " noBufferFreeToSend=" << noBufferFreeToSend << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
 
     *producesTuples = total_sent_tuples;
     *producedBuffers = total_buffer_send;
