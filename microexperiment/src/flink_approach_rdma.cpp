@@ -25,7 +25,7 @@
 //#define BUFFER_SIZE 1000
 std::atomic<size_t> exitProgram;
 #define PORT 55355
-#define BUFFER_COUNT 1000
+#define BUFFER_COUNT 10000
 //#define BUFFER_COUNT 10
 #define BUFFER_USED_SENDER_DONE 127
 #define BUFFER_READY_FLAG 0
