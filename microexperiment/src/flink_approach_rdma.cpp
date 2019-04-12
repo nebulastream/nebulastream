@@ -638,7 +638,8 @@ int main(int argc, char *argv[])
     size_t consumedTuples = 0;
     size_t consumedBuffers = 0;
 
-    size_t readInputTuples = 0;
+    size_t readInputTuples[numberOfProducer] = {0};
+
     Timestamp begin = getTimestamp();
 
     if(rank == 0)
@@ -654,7 +655,7 @@ int main(int argc, char *argv[])
 
             cout << "producer " << i << " from=" << startIdx << " to " << endIdx << endl;
             runProducer(connection, recs[0], genCnt, bufferSizeInTups, bufferProcCnt, &producesTuples[i],
-                    &producedBuffers[i], &readInputTuples, startIdx, endIdx, numberOfProducer);
+                    &producedBuffers[i], &readInputTuples[i], startIdx, endIdx, numberOfProducer);
         }
     }
     }
@@ -667,10 +668,12 @@ int main(int argc, char *argv[])
 
     size_t sumProducedTuples = 0;
     size_t sumProducedBuffer = 0;
+    size_t sumReadInTuples = 0;
     for(size_t i = 0; i < numberOfProducer; i++)
     {
         sumProducedTuples += producesTuples[i];
         sumProducedBuffer += producedBuffers[i];
+        sumReadInTuples += readInputTuples[i];
     }
     double elapsed_time = double(end - begin) / (1024 * 1024 * 1024);
 //    size_t consumedOverall = 0;
@@ -682,10 +685,10 @@ int main(int argc, char *argv[])
 
     ss << " time=" << elapsed_time << "s" << endl;
 
-    ss << " readInputTuples=" << readInputTuples  << endl;
-    ss << " readInputVolume(MB)=" << readInputTuples * sizeof(record) /1024 /1024 << endl;
-    ss << " readInputThroughput=" << readInputTuples /elapsed_time << endl;
-    ss << " readBandWidth MB/s=" << (readInputTuples*sizeof(record)/1024/1024)/elapsed_time << endl;
+    ss << " readInputTuples=" << sumReadInTuples  << endl;
+    ss << " readInputVolume(MB)=" << sumReadInTuples * sizeof(record) /1024 /1024 << endl;
+    ss << " readInputThroughput=" << sumReadInTuples /elapsed_time << endl;
+    ss << " readBandWidth MB/s=" << (sumReadInTuples*sizeof(record)/1024/1024)/elapsed_time << endl;
 
     ss << " ----------------------------------------------" << endl;
 
