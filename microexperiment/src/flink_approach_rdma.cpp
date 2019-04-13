@@ -294,7 +294,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
                     else
                     {
                         buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
-                        connection->write(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
+                        connection->write_blocking(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
                     }
 
                     break;
