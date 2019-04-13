@@ -751,6 +751,7 @@ int main(int argc, char *argv[])
         #pragma omp for
         for(size_t i = 0; i < numberOfProducer; i++)
         {
+            cout << "startPRODUCER" << endl;
             size_t share = NUM_SEND_BUFFERS/numberOfProducer;
             size_t startIdx = i* share;
             size_t endIdx = (i+1)*share;
