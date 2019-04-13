@@ -255,7 +255,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
 #endif
             if(receive_buffer_index == startIdx)
             {
-                cout << "read sign buffer" << endl;
+//                cout << "read sign buffer" << endl;
                 read_sign_buffer(target_rank, sign_buffer, sign_token, connection);
             }
             if(buffer_ready_sign[receive_buffer_index] == BUFFER_READY_FLAG)
