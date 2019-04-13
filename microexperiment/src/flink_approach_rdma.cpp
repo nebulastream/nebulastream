@@ -532,11 +532,32 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
                     << " getLocalKey=" << region_tokens[i]->getLocalKey() << " getRemoteKey=" << region_tokens[i]->getRemoteKey() << endl;
 #endif
         }
-        memcpy((RegionToken*)recv_buffers[0]->getData() + i, region_tokens[i], sizeof(RegionToken));
+//        memcpy((RegionToken*)recv_buffers[0]->getData() + i, region_tokens[i], sizeof(RegionToken));
+
     }
+    infinity::memory::Buffer* tokenbuffer = connection->register_buffer(region_tokens.data(), (BUFFER_COUNT+1) * sizeof(RegionToken));
+
     sleep(1);
-    connection->send_blocking(recv_buffers[0]);
+    connection->send_blocking(tokenbuffer);
     cout << "setupRDMAConsumer finished" << endl;
+}
+
+void copy_received_tokens_from_buffer(infinity::memory::Buffer* buffer,
+        std::vector<RegionToken*> &region_tokens, RegionToken*&sign_token)
+{
+    for(size_t i = 0; i <= BUFFER_COUNT; i++){
+        if ( i < BUFFER_COUNT){
+            region_tokens[i] = static_cast<RegionToken*>(malloc(sizeof(RegionToken)));
+            memcpy(region_tokens[i], (RegionToken*)buffer->getData() + i, sizeof(RegionToken));
+        } else {
+            sign_token = static_cast<RegionToken*>(malloc(sizeof(RegionToken)));
+            memcpy(sign_token, (RegionToken*)buffer->getData() + i, sizeof(RegionToken));
+#ifdef DEBUG
+            cout << "sign region getSizeInBytes=" << sign_token->getSizeInBytes() << " getAddress=" << sign_token->getAddress()
+                                << " getLocalKey=" << sign_token->getLocalKey() << " getRemoteKey=" << sign_token->getRemoteKey() << endl;
+#endif
+        }
+    }
 }
 
 void copy_received_tokens(const std::vector<TupleBuffer> &sendBuffers,
@@ -572,10 +593,18 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples)
     sign_buffer = connection->register_buffer(buffer_ready_sign.data(), BUFFER_COUNT);
     sign_token = nullptr;
 
+    std::vector<RegionToken> tokens;
+    tokens.resize((BUFFER_COUNT+1) * sizeof(RegionToken));
+    infinity::memory::Buffer* tokenbuffer = connection->register_buffer(tokens.data(), (BUFFER_COUNT+1) * sizeof(RegionToken));
+
 //    std::cout << "Blocking to receive tokens!" << endl;
+    connection->post_and_receive_blocking(tokenbuffer);
+
+#ifdef old
     connection->post_and_receive_blocking(sendBuffers[0].send_buffer);
-//    std::cout << "Received tokens!!\n" << endl;
-    copy_received_tokens(sendBuffers, region_tokens, sign_token);
+#endif
+
+    copy_received_tokens_from_buffer(tokenbuffer, region_tokens, sign_token);
 
     cout << "setupRDMAConsumer finished" << endl;
 }
