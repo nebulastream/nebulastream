@@ -509,10 +509,6 @@ void runConsumerOld(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
 {
     std::cout << "Started routine to receive tuples as Consumer" << std::endl;
-//#ifdef DEBUG
-//    cout << "buffer size=" << bufferSizeInTuples * sizeof(Tuple) << " first msg size=" << (BUFFER_COUNT+1) * sizeof(RegionToken) << endl;
-//#endif
-//    assert(bufferSizeInTuples * sizeof(Tuple) > (BUFFER_COUNT+1) * sizeof(RegionToken));
     for(auto & r : buffer_ready_sign)
     {
         r = BUFFER_READY_FLAG;
@@ -552,10 +548,10 @@ void copy_received_tokens_from_buffer(infinity::memory::Buffer* buffer,
         } else {
             sign_token = static_cast<RegionToken*>(malloc(sizeof(RegionToken)));
             memcpy(sign_token, (RegionToken*)buffer->getData() + i, sizeof(RegionToken));
-#ifdef DEBUG
+//#ifdef DEBUG
             cout << "sign region getSizeInBytes=" << sign_token->getSizeInBytes() << " getAddress=" << sign_token->getAddress()
                                 << " getLocalKey=" << sign_token->getLocalKey() << " getRemoteKey=" << sign_token->getRemoteKey() << endl;
-#endif
+//#endif
         }
     }
 }
@@ -606,7 +602,7 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples)
 
     copy_received_tokens_from_buffer(tokenbuffer, region_tokens, sign_token);
 
-    cout << "setupRDMAConsumer finished" << endl;
+    cout << "setupRDMAProducer finished" << endl;
 }
 
 
