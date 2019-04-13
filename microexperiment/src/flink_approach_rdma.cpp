@@ -534,7 +534,7 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
 
 //    infinity::memory::Buffer* tokenbuffer = connection->register_buffer(region_tokens.data(), (BUFFER_COUNT+1) * sizeof(RegionToken));
     infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((BUFFER_COUNT+1) * sizeof(RegionToken));
-    memcpy((RegionToken*)tokenbuffer->getData(), region_tokens.data(), (BUFFER_COUNT+1) * sizeof(RegionToken));
+    memcpy(tokenbuffer->getData(), region_tokens.data(), (BUFFER_COUNT+1) * sizeof(RegionToken));
 
 
     sleep(1);
@@ -595,8 +595,8 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples)
     sign_buffer = connection->register_buffer(buffer_ready_sign.data(), BUFFER_COUNT);
     sign_token = nullptr;
 
-    std::vector<RegionToken> tokens;
-    tokens.resize((BUFFER_COUNT+1) * sizeof(RegionToken));
+//    std::vector<RegionToken> tokens;
+//    tokens.resize((BUFFER_COUNT+1) * sizeof(RegionToken));
     infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((BUFFER_COUNT+1) * sizeof(RegionToken));
 
 //    std::cout << "Blocking to receive tokens!" << endl;
