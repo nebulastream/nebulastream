@@ -751,7 +751,6 @@ int main(int argc, char *argv[])
             #pragma omp for
             for(size_t i = 0; i < numberOfProducer; i++)
             {
-                cout << "startPRODUCER" << endl;
                 size_t share = NUM_SEND_BUFFERS/numberOfProducer;
                 size_t startIdx = i* share;
                 size_t endIdx = (i+1)*share;
@@ -762,9 +761,9 @@ int main(int argc, char *argv[])
             }
 
         }
-        cout << "producer finished ... waiting for consumer to finish" << endl;
+        cout << "producer finished ... waiting for consumer to finish " << getTimestamp() << endl;
         connection->post_and_receive_blocking(finishBuffer);
-        cout << "got finish buffer, finished execution" << endl;
+        cout << "got finish buffer, finished execution " << getTimestamp()<< endl;
     }
     else
     {
@@ -785,9 +784,9 @@ int main(int argc, char *argv[])
                         &consumedTuples[i], &consumedBuffers[i], startIdx, endIdx);
             }
         }
-        cout << "finished, sending finish buffer" << endl;
+        cout << "finished, sending finish buffer " << getTimestamp() << endl;
         connection->send_blocking(finishBuffer);
-        cout << "buffer sending finished, shutdown" << endl;
+        cout << "buffer sending finished, shutdown "<< getTimestamp() << endl;
 #endif
     }
 
