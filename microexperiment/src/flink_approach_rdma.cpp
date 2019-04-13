@@ -746,47 +746,48 @@ int main(int argc, char *argv[])
 //#define OLCONSUMERVERSION
     if(rank == 0)
     {
-#pragma omp parallel num_threads(numberOfProducer)
-    {
-        #pragma omp for
-        for(size_t i = 0; i < numberOfProducer; i++)
+        #pragma omp parallel num_threads(numberOfProducer)
         {
-            cout << "startPRODUCER" << endl;
-            size_t share = NUM_SEND_BUFFERS/numberOfProducer;
-            size_t startIdx = i* share;
-            size_t endIdx = (i+1)*share;
+            #pragma omp for
+            for(size_t i = 0; i < numberOfProducer; i++)
+            {
+                cout << "startPRODUCER" << endl;
+                size_t share = NUM_SEND_BUFFERS/numberOfProducer;
+                size_t startIdx = i* share;
+                size_t endIdx = (i+1)*share;
 
-//            cout << "producer " << i << " from=" << startIdx << " to " << endIdx << endl;
-            runProducer(connection, recs[i], genCnt, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
-                    &producedBuffers[i], &readInputTuples[i], startIdx, endIdx, numberOfProducer);
+    //            cout << "producer " << i << " from=" << startIdx << " to " << endIdx << endl;
+                runProducer(connection, recs[i], genCnt, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
+                        &producedBuffers[i], &readInputTuples[i], startIdx, endIdx, numberOfProducer);
+            }
+
         }
         cout << "producer finished ... waiting for consumer to finish" << endl;
         connection->post_and_receive_blocking(finishBuffer);
         cout << "got finish buffer, finished execution" << endl;
-    }
     }
     else
     {
 #ifdef OLCONSUMERVERSION
         runConsumerOld(hashTable, windowSizeInSeconds, campaingCnt, 0,numberOfProducer , bufferSizeInTups, &consumedTuples[0], &consumedBuffers[0]);
 #else
-#pragma omp parallel num_threads(numberOfConsumer)
-    {
-        #pragma omp for
-        for(size_t i = 0; i < numberOfConsumer; i++)
+        #pragma omp parallel num_threads(numberOfConsumer)
         {
-            size_t share = NUM_SEND_BUFFERS/numberOfConsumer;
-            size_t startIdx = i* share;
-            size_t endIdx = (i+1)*share;
+            #pragma omp for
+            for(size_t i = 0; i < numberOfConsumer; i++)
+            {
+                size_t share = NUM_SEND_BUFFERS/numberOfConsumer;
+                size_t startIdx = i* share;
+                size_t endIdx = (i+1)*share;
 
-            cout << "consumer " << i << " from=" << startIdx << " to " << endIdx << endl;
-            runConsumerNew(hashTable, windowSizeInSeconds, campaingCnt, 0, numberOfProducer , bufferSizeInTups,
-                    &consumedTuples[i], &consumedBuffers[i], startIdx, endIdx);
+                cout << "consumer " << i << " from=" << startIdx << " to " << endIdx << endl;
+                runConsumerNew(hashTable, windowSizeInSeconds, campaingCnt, 0, numberOfProducer , bufferSizeInTups,
+                        &consumedTuples[i], &consumedBuffers[i], startIdx, endIdx);
+            }
         }
         cout << "finished, sending finish buffer" << endl;
         connection->send_blocking(finishBuffer);
         cout << "buffer sending finished, shutdown" << endl;
-    }
 #endif
     }
 
