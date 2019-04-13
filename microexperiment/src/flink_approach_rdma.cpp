@@ -219,9 +219,12 @@ size_t produce_window_mem(record* records, size_t genCnt, size_t bufferSize, Tup
         size_t timeStamp = time(NULL);
         tempHash hashValue;
         hashValue.value = *(((uint64_t*) records[inputTupsIndex].campaign_id) + 1);
-        Tuple tup(hashValue.value, timeStamp);
-        outputBuffer[bufferIndex++] = tup;
 
+//        Tuple tup(hashValue.value, timeStamp);
+        outputBuffer[bufferIndex].campaign_id = hashValue.value;
+        outputBuffer[bufferIndex].timeStamp = timeStamp;
+
+        bufferIndex++;
         if(inputTupsIndex < genCnt)
             inputTupsIndex++;
         else
