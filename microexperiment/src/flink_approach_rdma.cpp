@@ -526,18 +526,11 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
 //            cout << "copy sign token at pos " << i << endl;
             sign_buffer = connection->register_buffer(buffer_ready_sign.data(), BUFFER_COUNT);
             region_tokens[i] = sign_buffer->createRegionToken();
-//#ifdef DEBUG
-
-//#endif
         }
         memcpy((RegionToken*)tokenbuffer->getData() + i, region_tokens[i], sizeof(RegionToken));
-        cout << "i=" << i << "sign region getSizeInBytes=" << region_tokens[i]->getSizeInBytes() << " getAddress=" << region_tokens[i]->getAddress()
-                           << " getLocalKey=" << region_tokens[i]->getLocalKey() << " getRemoteKey=" << region_tokens[i]->getRemoteKey() << endl;
+//        cout << "i=" << i << "sign region getSizeInBytes=" << region_tokens[i]->getSizeInBytes() << " getAddress=" << region_tokens[i]->getAddress()
+//                           << " getLocalKey=" << region_tokens[i]->getLocalKey() << " getRemoteKey=" << region_tokens[i]->getRemoteKey() << endl;
     }
-
-//    infinity::memory::Buffer* tokenbuffer = connection->register_buffer(region_tokens.data(), (BUFFER_COUNT+1) * sizeof(RegionToken));
-//    memcpy(tokenbuffer->getData(), region_tokens.data(), (BUFFER_COUNT+1) * sizeof(RegionToken));
-
 
     sleep(1);
     connection->send_blocking(tokenbuffer);
@@ -551,16 +544,13 @@ void copy_received_tokens_from_buffer(infinity::memory::Buffer* buffer,
         if ( i < BUFFER_COUNT){
             region_tokens[i] = static_cast<RegionToken*>(malloc(sizeof(RegionToken)));
             memcpy(region_tokens[i], (RegionToken*)buffer->getData() + i, sizeof(RegionToken));
-            cout << "region getSizeInBytes=" << region_tokens[i]->getSizeInBytes() << " getAddress=" << region_tokens[i]->getAddress()
-                                << " getLocalKey=" << region_tokens[i]->getLocalKey() << " getRemoteKey=" << region_tokens[i]->getRemoteKey() << endl;
+
         } else {
             sign_token = static_cast<RegionToken*>(malloc(sizeof(RegionToken)));
             memcpy(sign_token, (RegionToken*)buffer->getData() + i, sizeof(RegionToken));
-//#ifdef DEBUG
-            cout << "sign region getSizeInBytes=" << sign_token->getSizeInBytes() << " getAddress=" << sign_token->getAddress()
-                                << " getLocalKey=" << sign_token->getLocalKey() << " getRemoteKey=" << sign_token->getRemoteKey() << endl;
-//#endif
         }
+//        cout << "region getSizeInBytes=" << region_tokens[i]->getSizeInBytes() << " getAddress=" << region_tokens[i]->getAddress()
+//                            << " getLocalKey=" << region_tokens[i]->getLocalKey() << " getRemoteKey=" << region_tokens[i]->getRemoteKey() << endl;
     }
 }
 
