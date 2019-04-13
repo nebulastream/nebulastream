@@ -21,6 +21,7 @@
 #include <memory>
 #include "DataExchangeOperators/AbstractDataExchangeOperator.h"
 #include <future>
+#include <boost/program_options.hpp>
 
 //#define BUFFER_SIZE 1000
 
@@ -220,7 +221,6 @@ size_t produce_window_mem(record* records, size_t genCnt, size_t bufferSize, Tup
         tempHash hashValue;
         hashValue.value = *(((uint64_t*) records[inputTupsIndex].campaign_id) + 1);
 
-//        Tuple tup(hashValue.value, timeStamp);
         outputBuffer[bufferIndex].campaign_id = hashValue.value;
         outputBuffer[bufferIndex].timeStamp = timeStamp;
 
@@ -640,54 +640,61 @@ record** generateTuples(size_t genCnt, size_t num_Producer, size_t campaingCnt)
     }
     return recs;
 }
-
+namespace po = boost::program_options;
 int main(int argc, char *argv[])
 {
-    cout << "Producer usage: rank   bufferProcCnt   bufferSizeInTups sendBuffers numProducer" << endl;
-    cout << "Consumer usage: rank   ip              bufferSizeInTups sendBuffers numberOfConsumer" << endl;
+    po::options_description desc("Options");
+
+//    cout << "Producer usage: rank   bufferProcCnt   bufferSizeInTups sendBuffers numProducer" << endl;
+//    cout << "Consumer usage: rank   ip              bufferSizeInTups sendBuffers numberOfConsumer" << endl;
     size_t windowSizeInSeconds = 2;
     exitProducer = 0;
     exitConsumer = 0;
+    size_t genCnt = 1000000;
+
+    size_t rank = 99;
     size_t numberOfProducer = 1;
     size_t numberOfConsumer = 1;
     size_t bufferProcCnt = 0;
-    size_t genCnt = 1000000;
-    size_t bufferSizeInTups = std::stoi(argv[3]);
-    NUM_SEND_BUFFERS = std::stoi(argv[4]);
-    size_t rank = std::stoi(argv[1]);
+    size_t bufferSizeInTups = 0;
+    NUM_SEND_BUFFERS = 0;
+    string ip = "";
 
-    MPIHelper::set_rank(rank);
-//    MPIHelper::set_process_count(processCnt);
+    desc.add_options()
+        ("help", "Print help messages")
+        ("rank", po::value<size_t>(&rank)->default_value(rank), "The rank of the current runtime")
+        ("numberOfProducer", po::value<size_t>(&numberOfProducer)->default_value(numberOfProducer), "numberOfProducer")
+        ("numberOfConsumer", po::value<size_t>(&numberOfConsumer)->default_value(numberOfConsumer), "numberOfConsumer")
+        ("bufferProcCnt", po::value<size_t>(&bufferProcCnt)->default_value(bufferProcCnt), "bufferProcCnt")
+        ("bufferSizeInTups", po::value<size_t>(&bufferSizeInTups)->default_value(bufferSizeInTups), "bufferSizeInTups")
+        ("sendBuffers", po::value<size_t>(&NUM_SEND_BUFFERS)->default_value(NUM_SEND_BUFFERS), "sendBuffers")
+        ("ip", po::value<string>(&ip)->default_value(ip), "ip")
+        ;
 
-    std::string ip = "";
-    if(rank == 0)//producer
-    {
-        bufferProcCnt = std::stoi(argv[2]);
-        numberOfProducer = std::stoi(argv[5]);
+    po::variables_map vm;
+    po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
+    po::notify(vm);
+
+    if (vm.count("help")) {
+        std::cout << "Basic Command Line Parameter " << std::endl
+                  << desc << std::endl;
+        return 0;
     }
 
-    if(rank == 1)//consumer
-    {
-        ip = argv[2];
-        numberOfConsumer = std::stoi(argv[5]);
-    }
-
-    assert(rank == 0 || rank == +1);
-    std::cout << "bufferProcCnt=" << bufferProcCnt << " genCnt=" << genCnt
-            << " Rank=" << rank << " bufferSizeInTups=" << bufferSizeInTups
-            << " bufferSizeInKB=" << bufferSizeInTups*sizeof(Tuple)/1024
+    assert(rank == 0 || rank == 1);
+    std::cout << "Settings:"
+            << " bufferProcCnt=" << bufferProcCnt
+            << " Rank=" << rank
+            << " genCnt=" << genCnt
+            << " bufferSizeInTups=" << bufferSizeInTups
+            << " bufferSizeInKB=" << bufferSizeInTups * sizeof(Tuple) / 1024
             << " numberOfSendBuffer=" << NUM_SEND_BUFFERS
             << " numberOfProducer=" << numberOfProducer
-            << " numberOfConsumer=" << numberOfConsumer;
+            << " numberOfConsumer=" << numberOfConsumer
+            << " ip=" << ip
 
-    if(rank == 0)
-    {
-        cout << " Producer" << endl;
-    }
-    else if(rank == 1)
-    {
-        cout << " Consumer connecting to " << ip << endl;
-    }
+            << endl;
+
 
 
     recv_buffers.resize(NUM_SEND_BUFFERS);
@@ -823,6 +830,23 @@ int main(int argc, char *argv[])
 
     cout << ss.str() << endl;
 }
+
+
+//    MPIHelper::set_rank(rank);
+//    MPIHelper::set_process_count(processCnt);
+
+//    std::string ip = "";
+//    if(rank == 0)//producer
+//    {
+//        bufferProcCnt = std::stoi(argv[2]);
+//        numberOfProducer = std::stoi(argv[5]);
+//    }
+//
+//    if(rank == 1)//consumer
+//    {
+//        ip = argv[2];
+//        numberOfConsumer = std::stoi(argv[5]);
+//    }
 
 //    std::vector<Timestamp> measured_times;
 

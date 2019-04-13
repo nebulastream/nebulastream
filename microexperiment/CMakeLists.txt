@@ -3,9 +3,9 @@ cmake_minimum_required(VERSION 3.8)
 project(MAMPI CXX)
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -ansi -pthread -lpthread -ltbb -fopenmp")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -pg -pthread -lpthread -ltbb -fopenmp")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -pthread -lpthread -ltbb -fopenmp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -ansi -pthread -lpthread -ltbb -fopenmp -lboost_program_options")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -pg -pthread -lpthread -ltbb -fopenmp -lboost_program_options")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -pthread -lpthread -ltbb -fopenmp -lboost_program_options")
 # set(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda/)
 # set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
 
@@ -33,7 +33,7 @@ include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 
 find_package(TBB REQUIRED tbb)
 
-find_package(Boost REQUIRED filesystem system)
+find_package(Boost REQUIRED filesystem system program_options)
 link_directories(${Boost_LIBRARY_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
 
@@ -59,27 +59,8 @@ include_directories(rdma_lib/Utilities)
 include_directories(SYSTEM external/)
 include_directories(src/)
 
-# if(CUDA_FOUND)
-#     set(MemoryAllocator
-#             src/Utilities/DeviceMemoryAllocator/GPUMemoryAllocator.cu
-#             src/operators.cu
-#             src/SingleNodeJoin/GPU/SingleGPUJoin.cu
-#             src/SingleNodeJoin/GPU/UnifiedMemoryGPUJoin.cu
-#             src/GlobalJoin/ShipNone/ShipNoneGPUJoin.cu
-#             src/GlobalJoin/ShipAll/ShipAllGPUJoin.cu
-#             src/GlobalJoin/ShipPerfect/ShipPerfectGPUJoin.cu
-#             src/AbstractJoins/AbstractGPUJoin.cu
-#             src/GlobalJoin/ShipAll/ShipAll2GPUJoin.cu
-#             src/GlobalJoin/ShipPerfect/ShipPerfect2GPUJoin.cu
-#             src/Utilities/DataExchangeOperators/ReadWriteGPUOperator.cu
-#             )
-# else()
-    
-# endif()
-
 add_executable(flinkApproachRDMA
         src/flink_approach_rdma.cpp
-#         src/Benchmarks/Verbs/verbs_gpu_send_latency.cpp
         rdma_lib/Utilities/MPI_Helper_Fake.cpp
         rdma_lib/Utilities/ConnectionInfoProvider/SimpleInfoProvider.cpp
         rdma_lib/Utilities/VerbsConnection.cpp
@@ -91,9 +72,7 @@ add_executable(flinkApproachRDMA
         rdma_lib/Utilities/ConnectionInfoProvider/ConnectionUtilities.cpp
         rdma_lib/Utilities/DeviceMemoryAllocator/GPUMemoryAllocator.cu
     )
-# target_link_libraries(GPUSendLatency ${CUDA_LIBS} infinity ibverbs numa json11)
-target_link_libraries(flinkApproachRDMA infinity ibverbs numa json11 tbb)
-
+target_link_libraries(flinkApproachRDMA infinity ibverbs numa json11 tbb boost_program_options)
 
 add_executable(flinkApproachSingleNode
         src/flink_approach.cpp)
