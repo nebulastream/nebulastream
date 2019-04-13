@@ -740,9 +740,10 @@ int main(int argc, char *argv[])
     size_t consumedBuffers[numberOfConsumer] = {0};
 
     size_t readInputTuples[numberOfProducer] = {0};
+    infinity::memory::Buffer* finishBuffer = connection->allocate_buffer(1);
 
     Timestamp begin = getTimestamp();
-#define OLCONSUMERVERSION
+//#define OLCONSUMERVERSION
     if(rank == 0)
     {
 #pragma omp parallel num_threads(numberOfProducer)
@@ -758,6 +759,9 @@ int main(int argc, char *argv[])
             runProducer(connection, recs[i], genCnt, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
                     &producedBuffers[i], &readInputTuples[i], startIdx, endIdx, numberOfProducer);
         }
+        cout << "producer finished ... waiting for consumer to finish" << endl;
+        connection->post_and_receive_blocking(finishBuffer);
+        cout << "got finish buffer, finished execution" << endl;
     }
     }
     else
@@ -778,6 +782,9 @@ int main(int argc, char *argv[])
             runConsumerNew(hashTable, windowSizeInSeconds, campaingCnt, 0, numberOfProducer , bufferSizeInTups,
                     &consumedTuples[i], &consumedBuffers[i], startIdx, endIdx);
         }
+        cout << "finished, sending finish buffer" << endl;
+        connection->send_blocking(finishBuffer);
+        cout << "buffer sending finished, shutdown" << endl;
     }
 #endif
     }
