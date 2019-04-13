@@ -37,7 +37,7 @@
 
 std::atomic<size_t> exitProducer;
 std::atomic<size_t> exitConsumer;
-size_t BUFFER_COUNT;
+size_t NUM_SEND_BUFFERS;
 
 struct __attribute__((packed)) record {
     uint8_t user_id[16];
@@ -437,12 +437,12 @@ void runConsumerOld(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     size_t index = 0;
     size_t noBufferFound = 0;
     cout << "start consumer" << endl;
-    std::vector<std::shared_ptr<std::thread>> buffer_threads(BUFFER_COUNT);
+    std::vector<std::shared_ptr<std::thread>> buffer_threads(NUM_SEND_BUFFERS);
 
     while(true)
     {
         index++;
-        index %= BUFFER_COUNT;
+        index %= NUM_SEND_BUFFERS;
 
         if (buffer_ready_sign[index] == BUFFER_USED_FLAG || buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
         {
@@ -485,7 +485,7 @@ void runConsumerOld(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         }
     }
 
-    for(index = 0; index < BUFFER_COUNT; index++)//check again if some are there
+    for(index = 0; index < NUM_SEND_BUFFERS; index++)//check again if some are there
     {
         if (buffer_ready_sign[index] == BUFFER_USED_FLAG) {
             cout << "Check Iter -- Received buffer at index=" << index << endl;
@@ -514,17 +514,17 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
         r = BUFFER_READY_FLAG;
     }
 
-    infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((BUFFER_COUNT+1) * sizeof(RegionToken));
+    infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
 
 
-    for(size_t i = 0; i <= BUFFER_COUNT; i++)
+    for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++)
     {
-        if (i < BUFFER_COUNT) {
+        if (i < NUM_SEND_BUFFERS) {
             recv_buffers[i] = connection->allocate_buffer(bufferSizeInTuples * sizeof(Tuple));
             region_tokens[i] = recv_buffers[i]->createRegionToken();
         } else {
 //            cout << "copy sign token at pos " << i << endl;
-            sign_buffer = connection->register_buffer(buffer_ready_sign.data(), BUFFER_COUNT);
+            sign_buffer = connection->register_buffer(buffer_ready_sign.data(), NUM_SEND_BUFFERS);
             region_tokens[i] = sign_buffer->createRegionToken();
         }
         memcpy((RegionToken*)tokenbuffer->getData() + i, region_tokens[i], sizeof(RegionToken));
@@ -540,8 +540,8 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
 void copy_received_tokens_from_buffer(infinity::memory::Buffer* buffer,
         std::vector<RegionToken*> &region_tokens, RegionToken*&sign_token)
 {
-    for(size_t i = 0; i <= BUFFER_COUNT; i++){
-        if ( i < BUFFER_COUNT){
+    for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++){
+        if ( i < NUM_SEND_BUFFERS){
             region_tokens[i] = static_cast<RegionToken*>(malloc(sizeof(RegionToken)));
             memcpy(region_tokens[i], (RegionToken*)buffer->getData() + i, sizeof(RegionToken));
 
@@ -557,8 +557,8 @@ void copy_received_tokens_from_buffer(infinity::memory::Buffer* buffer,
 void copy_received_tokens(const std::vector<TupleBuffer> &sendBuffers,
         std::vector<RegionToken*> &region_tokens, RegionToken*&sign_token)
 {
-    for(size_t i = 0; i <= BUFFER_COUNT; i++){
-        if ( i < BUFFER_COUNT){
+    for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++){
+        if ( i < NUM_SEND_BUFFERS){
             region_tokens[i] = static_cast<RegionToken*>(malloc(sizeof(RegionToken)));
             memcpy(region_tokens[i], (RegionToken*)sendBuffers[0].send_buffer->getData() + i, sizeof(RegionToken));
         } else {
@@ -576,7 +576,7 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples)
 {
 //    std::cout << "send_matching_tuples_to!" << endl;
 
-    for(size_t i = 0; i < BUFFER_COUNT; i++)
+    for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
         sendBuffers.emplace_back(TupleBuffer(*connection, bufferSizeInTuples));
 
     for(auto & r : buffer_ready_sign)
@@ -584,12 +584,12 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples)
         r = BUFFER_READY_FLAG;
     }
 
-    sign_buffer = connection->register_buffer(buffer_ready_sign.data(), BUFFER_COUNT);
+    sign_buffer = connection->register_buffer(buffer_ready_sign.data(), NUM_SEND_BUFFERS);
     sign_token = nullptr;
 
 //    std::vector<RegionToken> tokens;
 //    tokens.resize((BUFFER_COUNT+1) * sizeof(RegionToken));
-    infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((BUFFER_COUNT+1) * sizeof(RegionToken));
+    infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
 
 //    std::cout << "Blocking to receive tokens!" << endl;
     connection->post_and_receive_blocking(tokenbuffer);
@@ -650,7 +650,7 @@ int main(int argc, char *argv[])
     size_t bufferProcCnt = 0;
     size_t genCnt = 1000000;
     size_t bufferSizeInTups = std::stoi(argv[3]);
-    BUFFER_COUNT = std::stoi(argv[4]);
+    NUM_SEND_BUFFERS = std::stoi(argv[4]);
     size_t rank = std::stoi(argv[1]);
 
     MPIHelper::set_rank(rank);
@@ -673,7 +673,7 @@ int main(int argc, char *argv[])
     std::cout << "bufferProcCnt=" << bufferProcCnt << " genCnt=" << genCnt
             << " Rank=" << rank << " bufferSizeInTups=" << bufferSizeInTups
             << " bufferSizeInKB=" << bufferSizeInTups*sizeof(Tuple)/1024
-            << " bufferSize=" << BUFFER_COUNT
+            << " numberOfSendBuffer=" << NUM_SEND_BUFFERS
             << " numberOfProducer=" << numberOfProducer
             << " numberOfConsumer=" << numberOfConsumer;
 
@@ -687,9 +687,9 @@ int main(int argc, char *argv[])
     }
 
 
-    recv_buffers.resize(BUFFER_COUNT);
-    region_tokens.resize(BUFFER_COUNT+1);
-    buffer_ready_sign.resize(BUFFER_COUNT);
+    recv_buffers.resize(NUM_SEND_BUFFERS);
+    region_tokens.resize(NUM_SEND_BUFFERS+1);
+    buffer_ready_sign.resize(NUM_SEND_BUFFERS);
 
     size_t target_rank = rank == 0 ? 1 : 0;
     SimpleInfoProvider info(target_rank, 3, 1, PORT, ip);
@@ -742,7 +742,7 @@ int main(int argc, char *argv[])
         #pragma omp for
         for(size_t i = 0; i < numberOfProducer; i++)
         {
-            size_t share = BUFFER_COUNT/numberOfProducer;
+            size_t share = NUM_SEND_BUFFERS/numberOfProducer;
             size_t startIdx = i* share;
             size_t endIdx = (i+1)*share;
 
@@ -762,7 +762,7 @@ int main(int argc, char *argv[])
         #pragma omp for
         for(size_t i = 0; i < numberOfConsumer; i++)
         {
-            size_t share = BUFFER_COUNT/numberOfConsumer;
+            size_t share = NUM_SEND_BUFFERS/numberOfConsumer;
             size_t startIdx = i* share;
             size_t endIdx = (i+1)*share;
 
