@@ -780,7 +780,7 @@ int main(int argc, char *argv[])
                 size_t startIdx = i* share;
                 size_t endIdx = (i+1)*share;
 
-//                cout << "consumer " << i << " from=" << startIdx << " to " << endIdx << endl;
+                cout << "consumer " << i << " from=" << startIdx << " to " << endIdx << endl;
                 runConsumerNew(hashTable, windowSizeInSeconds, campaingCnt, 0, numberOfProducer , bufferSizeInTups,
                         &consumedTuples[i], &consumedBuffers[i], startIdx, endIdx);
             }
