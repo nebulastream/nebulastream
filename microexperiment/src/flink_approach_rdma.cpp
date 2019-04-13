@@ -597,7 +597,7 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples)
 
     std::vector<RegionToken> tokens;
     tokens.resize((BUFFER_COUNT+1) * sizeof(RegionToken));
-    infinity::memory::Buffer* tokenbuffer = connection->register_buffer(tokens.data(), (BUFFER_COUNT+1) * sizeof(RegionToken));
+    infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((BUFFER_COUNT+1) * sizeof(RegionToken));
 
 //    std::cout << "Blocking to receive tokens!" << endl;
     connection->post_and_receive_blocking(tokenbuffer);
