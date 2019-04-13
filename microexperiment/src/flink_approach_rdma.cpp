@@ -277,9 +277,9 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
                 {
                     buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
                     connection->write(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
-#ifdef DEBUG
+//#ifdef DEBUG
                     cout << "Done writing sign_buffer at index=" << receive_buffer_index << endl;
-#endif
+//#endif
                 }
                 else//finished processing
                 {
@@ -294,7 +294,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
                     else
                     {
                         buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
-                        connection->write_blocking(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
+                        connection->write(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
                     }
 
                     break;
@@ -384,9 +384,9 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
-#ifdef DEBUG
+//#ifdef DEBUG
             cout << "Received buffer at index=" << index << endl;
-#endif
+//#endif
 
                 cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
                         hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
