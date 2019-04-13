@@ -514,6 +514,9 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
         r = BUFFER_READY_FLAG;
     }
 
+    infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((BUFFER_COUNT+1) * sizeof(RegionToken));
+
+
     for(size_t i = 0; i <= BUFFER_COUNT; i++)
     {
         if (i < BUFFER_COUNT) {
@@ -527,14 +530,13 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
 
 //#endif
         }
-//        memcpy((RegionToken*)recv_buffers[0]->getData() + i, region_tokens[i], sizeof(RegionToken));
+        memcpy((RegionToken*)tokenbuffer->getData() + i, region_tokens[i], sizeof(RegionToken));
         cout << "i=" << i << "sign region getSizeInBytes=" << region_tokens[i]->getSizeInBytes() << " getAddress=" << region_tokens[i]->getAddress()
                            << " getLocalKey=" << region_tokens[i]->getLocalKey() << " getRemoteKey=" << region_tokens[i]->getRemoteKey() << endl;
     }
 
 //    infinity::memory::Buffer* tokenbuffer = connection->register_buffer(region_tokens.data(), (BUFFER_COUNT+1) * sizeof(RegionToken));
-    infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((BUFFER_COUNT+1) * sizeof(RegionToken));
-    memcpy(tokenbuffer->getData(), region_tokens.data(), (BUFFER_COUNT+1) * sizeof(RegionToken));
+//    memcpy(tokenbuffer->getData(), region_tokens.data(), (BUFFER_COUNT+1) * sizeof(RegionToken));
 
 
     sleep(1);
