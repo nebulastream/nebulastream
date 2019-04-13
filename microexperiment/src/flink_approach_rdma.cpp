@@ -742,7 +742,7 @@ int main(int argc, char *argv[])
     size_t readInputTuples[numberOfProducer] = {0};
 
     Timestamp begin = getTimestamp();
-
+#define OLCONSUMERVERSION
     if(rank == 0)
     {
 #pragma omp parallel num_threads(numberOfProducer)
