@@ -277,7 +277,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
                 {
                     buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
                     connection->write(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
-#ifdef DEBUG
+#ifdef DEBUGs
                     cout << "Done writing sign_buffer at index=" << receive_buffer_index << endl;
 #endif
                 }
