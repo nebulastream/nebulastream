@@ -416,7 +416,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     cout << "checking remaining buffers" << endl;
     for(index = startIdx; index < endIdx; index++)//check again if some are there
     {
-        cout << "checking i=" << index << endl;
+//        cout << "checking i=" << index << endl;
         if (buffer_ready_sign[index] == BUFFER_USED_FLAG) {
             cout << "Check Iter -- Received buffer at index=" << index << endl;
 
