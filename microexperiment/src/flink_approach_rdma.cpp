@@ -645,8 +645,6 @@ int main(int argc, char *argv[])
 {
     po::options_description desc("Options");
 
-//    cout << "Producer usage: rank   bufferProcCnt   bufferSizeInTups sendBuffers numProducer" << endl;
-//    cout << "Consumer usage: rank   ip              bufferSizeInTups sendBuffers numberOfConsumer" << endl;
     size_t windowSizeInSeconds = 2;
     exitProducer = 0;
     exitConsumer = 0;
@@ -680,6 +678,7 @@ int main(int argc, char *argv[])
                   << desc << std::endl;
         return 0;
     }
+    MPIHelper::set_rank(rank);
 
     assert(rank == 0 || rank == 1);
     std::cout << "Settings:"
@@ -692,7 +691,6 @@ int main(int argc, char *argv[])
             << " numberOfProducer=" << numberOfProducer
             << " numberOfConsumer=" << numberOfConsumer
             << " ip=" << ip
-
             << endl;
 
 
