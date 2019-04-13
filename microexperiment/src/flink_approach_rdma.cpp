@@ -523,18 +523,18 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
 //            cout << "copy sign token at pos " << i << endl;
             sign_buffer = connection->register_buffer(buffer_ready_sign.data(), BUFFER_COUNT);
             region_tokens[i] = sign_buffer->createRegionToken();
-#ifdef DEBUG
-            cout << "sign region getSizeInBytes=" << region_tokens[i]->getSizeInBytes() << " getAddress=" << region_tokens[i]->getAddress()
-                    << " getLocalKey=" << region_tokens[i]->getLocalKey() << " getRemoteKey=" << region_tokens[i]->getRemoteKey() << endl;
-#endif
+//#ifdef DEBUG
+
+//#endif
         }
 //        memcpy((RegionToken*)recv_buffers[0]->getData() + i, region_tokens[i], sizeof(RegionToken));
-
+        cout << "sign region getSizeInBytes=" << region_tokens[i]->getSizeInBytes() << " getAddress=" << region_tokens[i]->getAddress()
+                           << " getLocalKey=" << region_tokens[i]->getLocalKey() << " getRemoteKey=" << region_tokens[i]->getRemoteKey() << endl;
     }
 
 //    infinity::memory::Buffer* tokenbuffer = connection->register_buffer(region_tokens.data(), (BUFFER_COUNT+1) * sizeof(RegionToken));
     infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((BUFFER_COUNT+1) * sizeof(RegionToken));
-    memcpy((RegionToken*)tokenbuffer->getData(), region_tokens.data(), (BUFFER_COUNT+1));
+    memcpy(tokenbuffer->getData(), region_tokens.data(), BUFFER_COUNT+1);
 
 
     sleep(1);
