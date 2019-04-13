@@ -387,6 +387,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 #ifdef DEBUG
             cout << "Received buffer at index=" << index << endl;
 #endif
+
                 cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
                         hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
                 buffer_ready_sign[index] = BUFFER_READY_FLAG;
@@ -779,15 +780,16 @@ int main(int argc, char *argv[])
                 size_t startIdx = i* share;
                 size_t endIdx = (i+1)*share;
 
-                cout << "consumer " << i << " from=" << startIdx << " to " << endIdx << endl;
+//                cout << "consumer " << i << " from=" << startIdx << " to " << endIdx << endl;
                 runConsumerNew(hashTable, windowSizeInSeconds, campaingCnt, 0, numberOfProducer , bufferSizeInTups,
                         &consumedTuples[i], &consumedBuffers[i], startIdx, endIdx);
             }
         }
+#endif
         cout << "finished, sending finish buffer " << getTimestamp() << endl;
         connection->send_blocking(finishBuffer);
         cout << "buffer sending finished, shutdown "<< getTimestamp() << endl;
-#endif
+
     }
 
     Timestamp end = getTimestamp();
