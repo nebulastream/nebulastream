@@ -255,7 +255,6 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
 #endif
             if(receive_buffer_index == startIdx)
             {
-                cout << "read sign" << endl;
                 read_sign_buffer(target_rank, sign_buffer, sign_token, connection);
             }
             if(buffer_ready_sign[receive_buffer_index] == BUFFER_READY_FLAG)
@@ -296,7 +295,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
                     {
                         buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
                         connection->write(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
-                        cout << "LastNew Done writing sign_buffer at index=" << receive_buffer_index << " total_buffer_send=" << total_buffer_send <<  " bufferProcCnt=" << bufferProcCnt<< endl;
+                        cout << "Done writing sign_buffer at index=" << receive_buffer_index << " total_buffer_send=" << total_buffer_send <<  " bufferProcCnt=" << bufferProcCnt<< endl;
 
                     }
 
