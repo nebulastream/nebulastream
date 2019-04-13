@@ -510,9 +510,9 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
 {
     std::cout << "Started routine to receive tuples as Consumer" << std::endl;
 //#ifdef DEBUG
-    cout << "buffer size=" << bufferSizeInTuples * sizeof(Tuple) << " first msg size=" << (BUFFER_COUNT+1) * sizeof(RegionToken) << endl;
+//    cout << "buffer size=" << bufferSizeInTuples * sizeof(Tuple) << " first msg size=" << (BUFFER_COUNT+1) * sizeof(RegionToken) << endl;
 //#endif
-    assert(bufferSizeInTuples * sizeof(Tuple) > (BUFFER_COUNT+1) * sizeof(RegionToken));
+//    assert(bufferSizeInTuples * sizeof(Tuple) > (BUFFER_COUNT+1) * sizeof(RegionToken));
     for(auto & r : buffer_ready_sign)
     {
         r = BUFFER_READY_FLAG;
