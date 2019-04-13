@@ -296,13 +296,11 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
 
                     break;
                 }
-//                send_buffer_index = (send_buffer_index+1) % BUFFER_COUNT;
             }
             else
             {
                 noBufferFreeToSend++;
             }
-//            =(receive_buffer_index+1)%startIdx + endIdx
             if(receive_buffer_index +1 > endIdx)
             {
                 receive_buffer_index = startIdx;
@@ -315,10 +313,6 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
     *producesTuples = total_sent_tuples;
     *producedBuffers = total_buffer_send;
     *readInputTuples = readTuples;
-
-    //    done_with_sending[MPIHelper::get_rank()] = true;
-//    auto end_time = TimeTools::now();
-//    measured_network_times[MPIHelper::get_process_count() + target_rank] = end_time - start_time;
 }
 
 void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
@@ -364,7 +358,6 @@ void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<siz
 #endif
 }
 
-
 void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples, size_t* consumedTuples, size_t* consumedBuffers, size_t startIdx, size_t endIdx)
 {
@@ -372,8 +365,6 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     size_t total_received_buffers = 0;
     size_t index = startIdx;
     size_t noBufferFound = 0;
-    cout << "start consumer" << endl;
-//    std::vector<std::shared_ptr<std::thread>> buffer_threads(BUFFER_COUNT);
 
     while(true)
     {
@@ -393,25 +384,15 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 #ifdef DEBUG
             cout << "Received buffer at index=" << index << endl;
 #endif
-//            if(buffer_threads[index])
-//                buffer_threads[index]->join();
-
-
-//            buffer_threads[index] = std::make_shared<std::thread>(
-//                    [&recv_buffers,bufferSizeInTuples,&hashTable,windowSizeInSec, campaingCnt, consumerID, produceCnt, index]
-//           {
                 cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
                         hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
                 buffer_ready_sign[index] = BUFFER_READY_FLAG;
-//                cout << "threadID=" << std::this_thread::get_id() << " index=" << index << endl;
-//            });
 
             if(is_done)
                 break;
         }
         else
         {
-//            cout << "no buffer found at" << index << endl;
             noBufferFound++;
         }
         index++;
@@ -431,9 +412,6 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     cout << "checking remaining buffers" << endl;
     for(index = startIdx; index < endIdx; index++)//check again if some are there
     {
-//        if(buffer_threads[index])
-//            buffer_threads[index]->join();
-
         if (buffer_ready_sign[index] == BUFFER_USED_FLAG) {
             cout << "Check Iter -- Received buffer at index=" << index << endl;
 
@@ -531,9 +509,9 @@ void runConsumerOld(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
 {
     std::cout << "Started routine to receive tuples as Consumer" << std::endl;
-#ifdef DEBUG
+//#ifdef DEBUG
     cout << "buffer size=" << bufferSizeInTuples * sizeof(Tuple) << " first msg size=" << (BUFFER_COUNT+1) * sizeof(RegionToken) << endl;
-#endif
+//#endif
     assert(bufferSizeInTuples * sizeof(Tuple) > (BUFFER_COUNT+1) * sizeof(RegionToken));
     for(auto & r : buffer_ready_sign)
     {
@@ -746,7 +724,7 @@ int main(int argc, char *argv[])
             size_t endIdx = (i+1)*share;
 
 //            cout << "producer " << i << " from=" << startIdx << " to " << endIdx << endl;
-            runProducer(connection, recs[i], genCnt, bufferSizeInTups, bufferProcCnt, &producesTuples[i],
+            runProducer(connection, recs[i], genCnt, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
                     &producedBuffers[i], &readInputTuples[i], startIdx, endIdx, numberOfProducer);
         }
     }
