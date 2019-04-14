@@ -418,8 +418,8 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         {
             *consumedTuples = total_received_tuples;
             *consumedBuffers = total_received_buffers;
-            cout << "Thread=" << omp_get_thread_num() << " Done sending! Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
-                            << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
+//            cout << "Thread=" << omp_get_thread_num() << " Done sending! Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
+//                            << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
             return;
         }
     }//end of while
