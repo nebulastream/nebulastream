@@ -246,8 +246,6 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
 
     while(total_buffer_send < bufferProcCnt)
     {
-//        for(size_t receive_buffer_index = 0; receive_buffer_index < BUFFER_COUNT;
-//                receive_buffer_index=(receive_buffer_index+1)%BUFFER_COUNT)
         for(size_t receive_buffer_index = startIdx; receive_buffer_index < endIdx && total_buffer_send < bufferProcCnt; receive_buffer_index++)
         {
 #ifdef DEBUG
@@ -277,7 +275,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
                 if (total_buffer_send < bufferProcCnt)//a new buffer will be send next
                 {
                     buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
-                    connection->write(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
+                    connection->write_blocking(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
 //#ifdef DEBUGs
                     cout << "NextNew: Done writing sign_buffer at index=" << receive_buffer_index << " total_buffer_send=" << total_buffer_send <<  " bufferProcCnt=" << bufferProcCnt<< endl;
 //#endif
@@ -538,7 +536,7 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
 //                           << " getLocalKey=" << region_tokens[i]->getLocalKey() << " getRemoteKey=" << region_tokens[i]->getRemoteKey() << endl;
     }
 
-    sleep(1);
+//    sleep(1);
     connection->send_blocking(tokenbuffer);
     cout << "setupRDMAConsumer finished" << endl;
 }
