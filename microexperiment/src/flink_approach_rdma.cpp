@@ -254,6 +254,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
             {
 //                cout << "read sign buffer" << endl;
 //                connection->read_blocking(sign_buffer, sign_token);
+                cout << "read from startIdx=" << startIdx << " endIdx=" << endIdx << " size=" << endIdx - startIdx << endl;
                 connection->read(sign_buffer, sign_token, startIdx, endIdx, endIdx - startIdx);
 
             }
