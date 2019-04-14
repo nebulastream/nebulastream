@@ -442,13 +442,28 @@ void VerbsConnection::read_blocking(Buffer* destination, RegionToken* source, Re
     }
 }
 
-void VerbsConnection::write(Buffer* buffer, RegionToken* remote_token, size_t local_offset, size_t remote_offset, size_t size, RequestToken* pRequestToken) {
-    qp->write(buffer, local_offset, remote_token, remote_offset, size, infinity::queues::OperationFlags(), pRequestToken);
+void VerbsConnection::read_blocking(Buffer* buffer, RegionToken* remote_token, size_t local_offset, size_t remote_offset, size_t size, RequestToken* pRequestToken) {
+    if(pRequestToken != nullptr){
+        read(buffer, remote_token, local_offset, remote_offset, size, pRequestToken);
+        pRequestToken->waitUntilCompleted();
+    }
+    else {
+        auto r = create_request_token();
+        read(buffer, remote_token, local_offset, remote_offset, size, r);
+        r->waitUntilCompleted();
+        delete r;
+    }
 }
 
 void VerbsConnection::read(Buffer* buffer, RegionToken* remote_token, size_t local_offset, size_t remote_offset, size_t size, RequestToken* pRequestToken) {
     qp->read(buffer, local_offset, remote_token, remote_offset, size, infinity::queues::OperationFlags(), pRequestToken);
 }
+
+void VerbsConnection::write(Buffer* buffer, RegionToken* remote_token, size_t local_offset, size_t remote_offset, size_t size, RequestToken* pRequestToken) {
+    qp->write(buffer, local_offset, remote_token, remote_offset, size, infinity::queues::OperationFlags(), pRequestToken);
+}
+
+
 
 void VerbsConnection::write_blocking(Buffer* buffer, RegionToken* remote_token, size_t local_offset, size_t remote_offset, size_t size, RequestToken* pRequestToken) {
     if(pRequestToken != nullptr){
