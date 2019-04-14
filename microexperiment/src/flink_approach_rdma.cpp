@@ -654,6 +654,25 @@ record** generateTuples(size_t genCnt, size_t num_Producer, size_t campaingCnt)
     }
     return recs;
 }
+
+void printHT(std::atomic<size_t>** hashTable, size_t campaingCnt)
+{
+    cout << "HT1:" << endl;
+    for (size_t i = 0; i < campaingCnt + 1; i++)
+    {
+        if(hashTable[0] != 0)
+            cout << "i=" << i << " cnt=" << hashTable[0][i] << endl;
+    }
+
+    cout << "HT2:" << endl;
+    for (size_t i = 0; i < campaingCnt + 1; i++)
+    {
+        if(hashTable[1] != 0)
+            cout << "i=" << i << " cnt=" << hashTable[1][i]<< endl;
+    }
+
+
+}
 namespace po = boost::program_options;
 int main(int argc, char *argv[])
 {
@@ -856,6 +875,8 @@ int main(int argc, char *argv[])
     ss<< " consumedBuffers=" << sumConsumedBuffer  << endl;
 
     cout << ss.str() << endl;
+
+    printHT(hashTable, campaingCnt);
 }
 
 
