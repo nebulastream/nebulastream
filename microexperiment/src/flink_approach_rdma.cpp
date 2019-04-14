@@ -394,7 +394,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
 //#ifdef DEBUG
-            cout << "Received buffer at index=" << index << endl;
+//            cout << "Received buffer at index=" << index << endl;
 //#endif
 
                 cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
