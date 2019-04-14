@@ -416,10 +416,10 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
         if(std::atomic_load(&exitConsumer) == 1)
         {
-            cout << "terminate signal found" << endl;
             *consumedTuples = total_received_tuples;
             *consumedBuffers = total_received_buffers;
-            cout << "nobufferFound=" << noBufferFound << endl;
+            cout << "Thread=" << omp_get_thread_num() << " Done sending! Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
+                            << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
             return;
         }
     }//end of while
@@ -797,9 +797,9 @@ int main(int argc, char *argv[])
                     endIdx = NUM_SEND_BUFFERS;
                 }
 
-                stringstream ss;
-                ss << "consumer " << i << " from=" << startIdx << " to " << endIdx << endl;
-                cout << ss.str() << endl;
+//                stringstream ss;
+//                ss << "consumer " << i << " from=" << startIdx << " to " << endIdx << endl;
+//                cout << ss.str() << endl;
                 runConsumerNew(hashTable, windowSizeInSeconds, campaingCnt, 0, numberOfProducer , bufferSizeInTups,
                         &consumedTuples[i], &consumedBuffers[i], startIdx, endIdx);
             }
