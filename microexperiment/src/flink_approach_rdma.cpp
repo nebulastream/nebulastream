@@ -330,7 +330,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
 
 void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         size_t campaingCnt, size_t consumerID, size_t produceCnt) {
-    return;
+//    return;
     size_t consumed = 0;
     size_t windowSwitchCnt = 0;
     size_t htReset = 0;
@@ -342,7 +342,7 @@ void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<siz
 #endif
     for(size_t i = 0; i < bufferSizeInTuples; i++)
     {
-        size_t timeStamp = time(NULL); //seconds elapsed since 00:00 hours, Jan 1, 1970 UTC
+//        size_t timeStamp = time(NULL); //seconds elapsed since 00:00 hours, Jan 1, 1970 UTC
 
         size_t current_window = 0;
 //        if (lastTimeStamp != timeStamp
@@ -358,8 +358,8 @@ void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<siz
 //            lastTimeStamp = timeStamp;
 //        }
 
-        uint64_t bucketPos = (buffer[i].campaign_id * 789 + 321) % campaingCnt;
-        atomic_fetch_add(&hashTable[current_window][bucketPos], size_t(1));
+//        uint64_t bucketPos = (buffer[i].campaign_id * 789 + 321) % campaingCnt;
+//        atomic_fetch_add(&hashTable[current_window][bucketPos], size_t(1));
         consumed++;
 
     }//end of for
