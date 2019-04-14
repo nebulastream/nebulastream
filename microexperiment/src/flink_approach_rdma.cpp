@@ -343,7 +343,7 @@ size_t cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<s
     for(size_t i = 0; i < bufferSizeInTuples; i++)
     {
 //        size_t timeStamp = time(NULL); //seconds elapsed since 00:00 hours, Jan 1, 1970 UTC
-
+        //TODO: Who to use the timespamt of the tuple?
         size_t current_window = 0;
 //        if (lastTimeStamp != timeStamp
 //                && timeStamp % windowSizeInSec == 0) {
