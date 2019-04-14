@@ -410,6 +410,9 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             noBufferFound++;
         }
         index++;
+        if(index >= 999)
+            cout << "idx=" << index << endl;
+
         if(index > endIdx)
             index = startIdx;
 
