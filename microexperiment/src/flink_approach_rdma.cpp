@@ -660,14 +660,14 @@ void printHT(std::atomic<size_t>** hashTable, size_t campaingCnt)
     cout << "HT1:" << endl;
     for (size_t i = 0; i < campaingCnt + 1; i++)
     {
-        if(hashTable[0] != 0)
+        if(hashTable[0][i] != 0)
             cout << "i=" << i << " cnt=" << hashTable[0][i] << endl;
     }
 
     cout << "HT2:" << endl;
     for (size_t i = 0; i < campaingCnt + 1; i++)
     {
-        if(hashTable[1] != 0)
+        if(hashTable[1][i] != 0)
             cout << "i=" << i << " cnt=" << hashTable[1][i]<< endl;
     }
 
