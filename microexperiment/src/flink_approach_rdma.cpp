@@ -22,7 +22,7 @@
 #include "DataExchangeOperators/AbstractDataExchangeOperator.h"
 #include <future>
 #include <boost/program_options.hpp>
-
+#include <mutex>
 //#define BUFFER_SIZE 1000
 
 
@@ -234,6 +234,8 @@ size_t produce_window_mem(record* records, size_t genCnt, size_t bufferSize, Tup
     return readTuples;
 }
 
+static mutex m;
+
 void runProducer(VerbsConnection* connection, record* records, size_t genCnt, size_t bufferSizeInTuples, size_t bufferProcCnt,
         size_t* producesTuples, size_t* producedBuffers, size_t* readInputTuples, size_t startIdx, size_t endIdx, size_t numberOfProducer)
 {
@@ -252,9 +254,12 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
 #endif
             if(receive_buffer_index == startIdx)
             {
+                std::lock_guard<std::mutex> lock(m);
 //                cout << "read sign buffer" << endl;
 //                connection->read_blocking(sign_buffer, sign_token);
-                cout << "read from startIdx=" << startIdx << " endIdx=" << endIdx << " size=" << endIdx - startIdx << endl;
+                stringstream ss;
+                ss << "read from startIdx=" << startIdx << " endIdx=" << endIdx << " size=" << endIdx - startIdx << endl;
+                cout << ss.str() << endl;
                 connection->read(sign_buffer, sign_token, startIdx, endIdx, endIdx - startIdx);
 
             }
