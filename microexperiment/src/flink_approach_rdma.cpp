@@ -260,7 +260,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
                 stringstream ss;
                 ss << "read from startIdx=" << startIdx << " endIdx=" << endIdx << " size=" << endIdx - startIdx << endl;
                 cout << ss.str() << endl;
-                connection->read(sign_buffer, sign_token, startIdx, endIdx, endIdx - startIdx);
+                connection->read(sign_buffer, sign_token, startIdx, startIdx, endIdx - startIdx);
 
             }
             if(buffer_ready_sign[receive_buffer_index] == BUFFER_READY_FLAG)
