@@ -7,6 +7,14 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3 -Wall -ansi -pthread -lpthread -l
 #set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -pg -pthread -lpthread -ltbb -fopenmp -lboost_program_options")
 #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -pthread -lpthread -ltbb -fopenmp -lboost_program_options")
 
+# Compiler should produce specific code for system architecture
+include(CheckCXXCompilerFlag)
+CHECK_CXX_COMPILER_FLAG("-march=native -mtune=native" COMPILER_SUPPORTS_MARCH_NATIVE)
+if(COMPILER_SUPPORTS_MARCH_NATIVE)
+	message("use mtune")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native -mavx")
+endif()
+
 OPTION (USE_OpenMP "Use OpenMP" ON)
 IF(USE_OpenMP)
   FIND_PACKAGE(OpenMP)
@@ -49,6 +57,7 @@ add_library(json11 ${JSON11_SOURCE}/json11.cpp)
 include_directories(rdma_lib/Utilities)
 include_directories(SYSTEM external/)
 include_directories(src/)
+
 
 set( CMAKE_VERBOSE_MAKEFILE on )
 
