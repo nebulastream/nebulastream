@@ -77,6 +77,7 @@ public:
 
     void read(Buffer* destination, RegionToken * source, RequestToken * requestToken = nullptr);
     void read_blocking(Buffer* destination, RegionToken * source, RequestToken * requestToken = nullptr);
+    void read_blocking(Buffer * buffer, RegionToken * remote_token, size_t local_offset, size_t remote_offset, size_t size, RequestToken * pRequestToken = nullptr);
     void write(Buffer * buffer, RegionToken * remote_token, RequestToken * pRequestToken = nullptr);
     void write_blocking(Buffer * buffer, RegionToken * remote_token, RequestToken * pRequestToken = nullptr);
     void write(Buffer * buffer, RegionToken * remote_token, size_t local_offset, size_t remote_offset, size_t size, RequestToken * pRequestToken = nullptr);
