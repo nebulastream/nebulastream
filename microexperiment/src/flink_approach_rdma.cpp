@@ -277,7 +277,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
                 if (total_buffer_send < bufferProcCnt)//a new buffer will be send next
                 {
                     buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
-                    connection->write_blocking(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
+                    connection->write(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
 //#ifdef DEBUGs
                     cout << "NextNew: Done writing sign_buffer at index=" << receive_buffer_index << " total_buffer_send=" << total_buffer_send <<  " bufferProcCnt=" << bufferProcCnt<< endl;
 //#endif
@@ -295,7 +295,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
                     else
                     {
                         buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
-                        connection->write_blocking(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
+                        connection->write(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
                     }
 
                     break;
