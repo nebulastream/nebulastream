@@ -358,8 +358,8 @@ size_t cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<s
 //            lastTimeStamp = timeStamp;
 //        }
 
-//        uint64_t bucketPos = (buffer[i].campaign_id * 789 + 321) % campaingCnt;
-//        atomic_fetch_add(&hashTable[current_window][bucketPos], size_t(1));
+        uint64_t bucketPos = (buffer[i].campaign_id * 789 + 321) % campaingCnt;
+        atomic_fetch_add(&hashTable[current_window][bucketPos], size_t(1));
         consumed++;
 
     }//end of for
