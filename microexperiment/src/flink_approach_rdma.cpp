@@ -185,17 +185,17 @@ Timestamp getTimestamp() {
 }
 
 
-void read_sign_buffer(size_t target_rank, Buffer* sign_buffer, RegionToken* sign_token, VerbsConnection* connection)
-{
-//    TRACE("reading sign_buffer: \n");
-    connection->read_blocking(sign_buffer, sign_token);
-//    TRACE("sign_buffer: ");
-//    for(int i = 0; i < BUFFER_COUNT; i++)
-//    {
-//        std::cout << (int)buffer_ready_sign[i] << ",";
-//    }
-//    std::cout << std::endl;
-}
+//void read_sign_buffer(size_t target_rank, Buffer* sign_buffer, RegionToken* sign_token, VerbsConnection* connection)
+//{
+////    TRACE("reading sign_buffer: \n");
+//    connection->read_blocking(sign_buffer, sign_token);
+////    TRACE("sign_buffer: ");
+////    for(int i = 0; i < BUFFER_COUNT; i++)
+////    {
+////        std::cout << (int)buffer_ready_sign[i] << ",";
+////    }
+////    std::cout << std::endl;
+//}
 
 size_t produce_window_mem(record* records, size_t genCnt, size_t bufferSize, Tuple* outputBuffer)
 {
@@ -237,7 +237,6 @@ size_t produce_window_mem(record* records, size_t genCnt, size_t bufferSize, Tup
 void runProducer(VerbsConnection* connection, record* records, size_t genCnt, size_t bufferSizeInTuples, size_t bufferProcCnt,
         size_t* producesTuples, size_t* producedBuffers, size_t* readInputTuples, size_t startIdx, size_t endIdx, size_t numberOfProducer)
 {
-    size_t target_rank = 1;
     size_t total_sent_tuples = 0;
     size_t total_buffer_send = 0;
 //    size_t send_buffer_index = 0;
@@ -254,7 +253,9 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
             if(receive_buffer_index == startIdx)
             {
 //                cout << "read sign buffer" << endl;
-                read_sign_buffer(target_rank, sign_buffer, sign_token, connection);
+//                connection->read_blocking(sign_buffer, sign_token);
+                connection->read(sign_buffer, sign_token, startIdx, endIdx, endIdx - startIdx);
+
             }
             if(buffer_ready_sign[receive_buffer_index] == BUFFER_READY_FLAG)
             {
@@ -278,7 +279,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
                     connection->write_blocking(sign_buffer, sign_token, receive_buffer_index, receive_buffer_index, 1);
 //#ifdef DEBUGs
                     cout << "NextNew: Done writing sign_buffer at index=" << receive_buffer_index << " total_buffer_send=" << total_buffer_send <<  " bufferProcCnt=" << bufferProcCnt<< endl;
-                    read_sign_buffer(target_rank, sign_buffer, sign_token, connection);
+//                    read_sign_buffer(target_rank, sign_buffer, sign_token, connection);
                     cout << " read value after write= " << (int) buffer_ready_sign[receive_buffer_index] << endl;
 //#endif
                 }
