@@ -342,24 +342,24 @@ size_t cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<s
 #endif
     for(size_t i = 0; i < bufferSizeInTuples; i++)
     {
-//        size_t timeStamp = time(NULL); //seconds elapsed since 00:00 hours, Jan 1, 1970 UTC
+        size_t timeStamp = buffer[i].timeStamp; //seconds elapsed since 00:00 hours, Jan 1, 1970 UTC
         //TODO: Who to use the timespamt of the tuple?
         size_t current_window = 0;
-//        if (lastTimeStamp != timeStamp
-//                && timeStamp % windowSizeInSec == 0) {
-//            //increment to new window
-//            current_window++;
-//            windowSwitchCnt++;
-//            if (hashTable[current_window][campaingCnt] != timeStamp) {
-//                htReset++;
-//                atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
-//                std::fill(hashTable[current_window], hashTable[current_window] + campaingCnt, 0);
-//            }
-//            lastTimeStamp = timeStamp;
-//        }
+        if (lastTimeStamp != timeStamp
+                && timeStamp % windowSizeInSec == 0) {
+            //increment to new window
+            current_window++;
+            windowSwitchCnt++;
+            if (hashTable[current_window][campaingCnt] != timeStamp) {
+                htReset++;
+                atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
+                std::fill(hashTable[current_window], hashTable[current_window] + campaingCnt, 0);
+            }
+            lastTimeStamp = timeStamp;
+        }
 
-//        uint64_t bucketPos = (buffer[i].campaign_id * 789 + 321) % campaingCnt;
-//        atomic_fetch_add(&hashTable[current_window][bucketPos], size_t(1));
+        uint64_t bucketPos = (buffer[i].campaign_id * 789 + 321) % campaingCnt;
+        atomic_fetch_add(&hashTable[current_window][bucketPos], size_t(1));
         consumed++;
 
     }//end of for
