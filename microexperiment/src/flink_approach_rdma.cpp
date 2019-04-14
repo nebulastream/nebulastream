@@ -234,7 +234,7 @@ size_t produce_window_mem(record* records, size_t genCnt, size_t bufferSize, Tup
     return readTuples;
 }
 
-static mutex m;
+//static mutex m;
 
 void runProducer(VerbsConnection* connection, record* records, size_t genCnt, size_t bufferSizeInTuples, size_t bufferProcCnt,
         size_t* producesTuples, size_t* producedBuffers, size_t* readInputTuples, size_t startIdx, size_t endIdx, size_t numberOfProducer)
@@ -254,7 +254,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
 #endif
             if(receive_buffer_index == startIdx)
             {
-                std::lock_guard<std::mutex> lock(m);
+//                std::lock_guard<std::mutex> lock(m);
 //                cout << "read sign buffer" << endl;
 //                connection->read_blocking(sign_buffer, sign_token);
                 stringstream ss;
