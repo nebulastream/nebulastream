@@ -794,6 +794,10 @@ int main(int argc, char *argv[])
                 size_t share = NUM_SEND_BUFFERS/numberOfConsumer;
                 size_t startIdx = i* share;
                 size_t endIdx = (i+1)*share;
+                if(i == numberOfConsumer -1)
+                {
+                    endIdx = NUM_SEND_BUFFERS;
+                }
 
                 stringstream ss;
                 ss << "consumer " << i << " from=" << startIdx << " to " << endIdx << endl;
