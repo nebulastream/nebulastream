@@ -785,7 +785,7 @@ int main(int argc, char *argv[])
     infinity::memory::Buffer* finishBuffer = connection->allocate_buffer(1);
 
     Timestamp begin = getTimestamp();
-#define OLCONSUMERVERSION
+//#define OLCONSUMERVERSION
     if(rank == 0)
     {
         #pragma omp parallel num_threads(numberOfProducer)
