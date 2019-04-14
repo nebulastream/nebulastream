@@ -328,7 +328,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
     *noFreeEntryFound = noBufferFreeToSend;
 }
 
-void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
+size_t cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         size_t campaingCnt, size_t consumerID, size_t produceCnt) {
 //    return;
     size_t consumed = 0;
@@ -363,6 +363,7 @@ void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<siz
         consumed++;
 
     }//end of for
+    return consumed;
 #ifdef DEBUG
     stringstream ss;
     ss << "Thread=" << std::this_thread::get_id() << " consumed=" << consumed
@@ -380,7 +381,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     size_t total_received_buffers = 0;
     size_t index = startIdx;
     size_t noBufferFound = 0;
-
+    size_t consumed = 0;
     while(true)
     {
         if (buffer_ready_sign[index] == BUFFER_USED_FLAG || buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
@@ -400,7 +401,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 //            cout << "Received buffer at index=" << index << endl;
 //#endif
 
-                cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+                consumed += cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
                         hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
 
                 buffer_ready_sign[index] = BUFFER_READY_FLAG;
@@ -436,14 +437,14 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
-            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+            consumed += cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
                                 hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
             buffer_ready_sign[index] = BUFFER_READY_FLAG;
         }
 
     }
 
-    *consumedTuples = total_received_tuples;
+    *consumedTuples = consumed;
     *consumedBuffers = total_received_buffers;
     *consumerNoBufferFound = noBufferFound;
 //    cout << "Thread=" << omp_get_thread_num() << " Done sending! Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"

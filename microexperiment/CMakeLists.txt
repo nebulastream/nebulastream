@@ -3,19 +3,10 @@ cmake_minimum_required(VERSION 3.8)
 project(MAMPI CXX)
 
 set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -ansi -pthread -lpthread -ltbb -fopenmp -lboost_program_options")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -pg -pthread -lpthread -ltbb -fopenmp -lboost_program_options")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -pthread -lpthread -ltbb -fopenmp -lboost_program_options")
-# set(CUDA_TOOLKIT_ROOT_DIR /usr/local/cuda/)
-# set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3 -Wall -ansi -pthread -lpthread -ltbb -fopenmp -lboost_program_options")
+#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -pg -pthread -lpthread -ltbb -fopenmp -lboost_program_options")
+#set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -pthread -lpthread -ltbb -fopenmp -lboost_program_options")
 
-# find_package(OpenMP REQUIRED)
-# if (OPENMP_FOUND)
-#     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-#     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-#     set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler ${OpenMP_CXX_FLAGS}")
-#     message(STATUS "${CMAKE_CUDA_FLAGS}")
-# endif()
 OPTION (USE_OpenMP "Use OpenMP" ON)
 IF(USE_OpenMP)
   FIND_PACKAGE(OpenMP)
@@ -58,6 +49,8 @@ add_library(json11 ${JSON11_SOURCE}/json11.cpp)
 include_directories(rdma_lib/Utilities)
 include_directories(SYSTEM external/)
 include_directories(src/)
+
+set( CMAKE_VERBOSE_MAKEFILE on )
 
 add_executable(flinkApproachRDMA
         src/flink_approach_rdma.cpp
