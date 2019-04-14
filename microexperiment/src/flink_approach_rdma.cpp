@@ -237,7 +237,7 @@ size_t produce_window_mem(record* records, size_t genCnt, size_t bufferSize, Tup
 //static mutex m;
 
 void runProducer(VerbsConnection* connection, record* records, size_t genCnt, size_t bufferSizeInTuples, size_t bufferProcCnt,
-        size_t* producesTuples, size_t* producedBuffers, size_t* readInputTuples, size_t startIdx, size_t endIdx, size_t numberOfProducer)
+        size_t* producesTuples, size_t* producedBuffers, size_t* readInputTuples, size_t* noFreeEntryFound, size_t startIdx, size_t endIdx, size_t numberOfProducer)
 {
     size_t total_sent_tuples = 0;
     size_t total_buffer_send = 0;
@@ -319,12 +319,13 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
             }
         }//end of for
     }//end of while
-    cout << "Thread=" << omp_get_thread_num() << " Done sending! Sent a total of " << total_sent_tuples << " tuples and " << total_buffer_send << " buffers"
-            << " noBufferFreeToSend=" << noBufferFreeToSend << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
+//    cout << "Thread=" << omp_get_thread_num() << " Done sending! Sent a total of " << total_sent_tuples << " tuples and " << total_buffer_send << " buffers"
+//            << " noBufferFreeToSend=" << noBufferFreeToSend << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
 
     *producesTuples = total_sent_tuples;
     *producedBuffers = total_buffer_send;
     *readInputTuples = readTuples;
+    *noFreeEntryFound = noBufferFreeToSend;
 }
 
 void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
@@ -371,7 +372,8 @@ void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<siz
 }
 
 void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
-        size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples, size_t* consumedTuples, size_t* consumedBuffers, size_t startIdx, size_t endIdx)
+        size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples, size_t* consumedTuples, size_t* consumedBuffers, size_t* consumerNoBufferFound,
+        size_t startIdx, size_t endIdx)
 {
     size_t total_received_tuples = 0;
     size_t total_received_buffers = 0;
@@ -442,8 +444,9 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
     *consumedTuples = total_received_tuples;
     *consumedBuffers = total_received_buffers;
-    cout << "Thread=" << omp_get_thread_num() << " Done sending! Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
-                << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
+    *consumerNoBufferFound = noBufferFound;
+//    cout << "Thread=" << omp_get_thread_num() << " Done sending! Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
+//                << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
 }
 
 void runConsumerOld(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
@@ -770,16 +773,19 @@ int main(int argc, char *argv[])
 
     size_t producesTuples[numberOfProducer] = {0};
     size_t producedBuffers[numberOfProducer] = {0};
-
-
+    size_t noFreeEntryFound[numberOfProducer] = {0};
     size_t consumedTuples[numberOfConsumer] = {0};
     size_t consumedBuffers[numberOfConsumer] = {0};
+    size_t consumerNoBufferFound[numberOfConsumer] = {0};
+
+
+
 
     size_t readInputTuples[numberOfProducer] = {0};
     infinity::memory::Buffer* finishBuffer = connection->allocate_buffer(1);
 
     Timestamp begin = getTimestamp();
-//#define OLCONSUMERVERSION
+#define OLCONSUMERVERSION
     if(rank == 0)
     {
         #pragma omp parallel num_threads(numberOfProducer)
@@ -793,7 +799,7 @@ int main(int argc, char *argv[])
 
     //            cout << "producer " << i << " from=" << startIdx << " to " << endIdx << endl;
                 runProducer(connection, recs[i], genCnt, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
-                        &producedBuffers[i], &readInputTuples[i], startIdx, endIdx, numberOfProducer);
+                        &producedBuffers[i], &readInputTuples[i], &noFreeEntryFound[i], startIdx, endIdx, numberOfProducer);
             }
 
         }
@@ -823,7 +829,7 @@ int main(int argc, char *argv[])
 //                ss << "consumer " << i << " from=" << startIdx << " to " << endIdx << endl;
 //                cout << ss.str() << endl;
                 runConsumerNew(hashTable, windowSizeInSeconds, campaingCnt, 0, numberOfProducer , bufferSizeInTups,
-                        &consumedTuples[i], &consumedBuffers[i], startIdx, endIdx);
+                        &consumedTuples[i], &consumedBuffers[i], &consumerNoBufferFound[i], startIdx, endIdx);
             }
         }
 #endif
@@ -838,19 +844,25 @@ int main(int argc, char *argv[])
     size_t sumProducedTuples = 0;
     size_t sumProducedBuffer = 0;
     size_t sumReadInTuples = 0;
+    size_t sumNoFreeEntry = 0;
     size_t sumConsumedTuples = 0;
     size_t sumConsumedBuffer = 0;
+    size_t sumNoBuffer = 0;
+
+
     for(size_t i = 0; i < numberOfProducer; i++)
     {
         sumProducedTuples += producesTuples[i];
         sumProducedBuffer += producedBuffers[i];
         sumReadInTuples += readInputTuples[i];
+        sumNoFreeEntry += noFreeEntryFound[i];
     }
 
     for(size_t i = 0; i < numberOfConsumer; i++)
     {
         sumConsumedTuples += consumedTuples[i];
         sumConsumedBuffer += consumedBuffers[i];
+        sumNoBuffer += consumerNoBufferFound[i];
     }
 
 
@@ -869,17 +881,18 @@ int main(int argc, char *argv[])
 
     ss << " producedTuples=" << sumProducedTuples << endl;
     ss << " producedBuffers=" << sumProducedBuffer << endl;
+    ss << " noFreeEntry=" << sumNoFreeEntry << endl;
     ss << " ProduceThroughput=" << sumProducedTuples / elapsed_time << endl;
     ss << " TransferVolume(MB)=" << sumProducedTuples*sizeof(Tuple)/1024/1024 << endl;
     ss << " TransferBandwidth MB/s=" << (sumProducedTuples*sizeof(Tuple)/1024/1024)/elapsed_time << endl;
     ss << " ----------------------------------------------" << endl;
 
     ss << " consumedTuples=" << sumConsumedTuples  << endl;
-    ss<< " consumedBuffers=" << sumConsumedBuffer  << endl;
-
+    ss << " consumedBuffers=" << sumConsumedBuffer  << endl;
+    ss << " sumNoBufferFound=" << sumNoBuffer  << endl;
     cout << ss.str() << endl;
 
-    printHT(hashTable, campaingCnt);
+//    printHT(hashTable, campaingCnt);
 }
 
 
