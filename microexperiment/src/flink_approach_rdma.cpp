@@ -657,19 +657,22 @@ record** generateTuples(size_t genCnt, size_t num_Producer, size_t campaingCnt)
 
 void printHT(std::atomic<size_t>** hashTable, size_t campaingCnt)
 {
-    cout << "HT1:" << endl;
+    ofstream myfile;
+    myfile.open ("ht.txt");
+    myfile << "HT1:" << endl;
     for (size_t i = 0; i < campaingCnt + 1; i++)
     {
         if(hashTable[0][i] != 0)
-            cout << "i=" << i << " cnt=" << hashTable[0][i] << endl;
+            myfile << "i=" << i << " cnt=" << hashTable[0][i] << endl;
     }
 
-    cout << "HT2:" << endl;
+    myfile << "HT2:" << endl;
     for (size_t i = 0; i < campaingCnt + 1; i++)
     {
         if(hashTable[1][i] != 0)
-            cout << "i=" << i << " cnt=" << hashTable[1][i]<< endl;
+            myfile << "i=" << i << " cnt=" << hashTable[1][i]<< endl;
     }
+    myfile.close();
 
 
 }
