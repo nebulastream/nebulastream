@@ -263,7 +263,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
 
                 sendBuffers[receive_buffer_index].numberOfTuples = bufferSizeInTuples;
 
-                connection->write(sendBuffers[receive_buffer_index].send_buffer, region_tokens[receive_buffer_index],
+                connection->write_blocking(sendBuffers[receive_buffer_index].send_buffer, region_tokens[receive_buffer_index],
                         sendBuffers[receive_buffer_index].requestToken);
 #ifdef DEBUG
                 cout << "Writing " << sendBuffers[receive_buffer_index].numberOfTuples << " tuples on buffer " << receive_buffer_index << endl;
