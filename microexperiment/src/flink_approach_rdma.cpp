@@ -330,6 +330,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
 
 void cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         size_t campaingCnt, size_t consumerID, size_t produceCnt) {
+    return;
     size_t consumed = 0;
     size_t windowSwitchCnt = 0;
     size_t htReset = 0;
@@ -766,10 +767,6 @@ int main(int argc, char *argv[])
     for (size_t i = 0; i < campaingCnt + 1; i++)
         std::atomic_init(&hashTable[1][i], std::size_t(0));
 
-//    for (size_t i = 0; i < num_Consumer; i++) {
-//    }
-
-//    size_t* consumed = new size_t[num_Consumer];
 
     size_t producesTuples[numberOfProducer] = {0};
     size_t producedBuffers[numberOfProducer] = {0};
@@ -777,9 +774,6 @@ int main(int argc, char *argv[])
     size_t consumedTuples[numberOfConsumer] = {0};
     size_t consumedBuffers[numberOfConsumer] = {0};
     size_t consumerNoBufferFound[numberOfConsumer] = {0};
-
-
-
 
     size_t readInputTuples[numberOfProducer] = {0};
     infinity::memory::Buffer* finishBuffer = connection->allocate_buffer(1);
