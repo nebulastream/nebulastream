@@ -397,8 +397,8 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 //            cout << "Received buffer at index=" << index << endl;
 //#endif
 
-//                cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-//                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
+                cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
 
                 buffer_ready_sign[index] = BUFFER_READY_FLAG;
 
@@ -433,8 +433,8 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
-//            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-//                                hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
+            cosume_window_mem((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+                                hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
             buffer_ready_sign[index] = BUFFER_READY_FLAG;
         }
 
