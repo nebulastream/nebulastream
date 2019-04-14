@@ -446,6 +446,10 @@ void VerbsConnection::write(Buffer* buffer, RegionToken* remote_token, size_t lo
     qp->write(buffer, local_offset, remote_token, remote_offset, size, infinity::queues::OperationFlags(), pRequestToken);
 }
 
+void VerbsConnection::read(Buffer* buffer, RegionToken* remote_token, size_t local_offset, size_t remote_offset, size_t size, RequestToken* pRequestToken) {
+    qp->read(buffer, local_offset, remote_token, remote_offset, size, infinity::queues::OperationFlags(), pRequestToken);
+}
+
 void VerbsConnection::write_blocking(Buffer* buffer, RegionToken* remote_token, size_t local_offset, size_t remote_offset, size_t size, RequestToken* pRequestToken) {
     if(pRequestToken != nullptr){
         write(buffer, remote_token, local_offset, remote_offset, size, pRequestToken);

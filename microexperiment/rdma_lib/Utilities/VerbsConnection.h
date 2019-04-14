@@ -80,6 +80,7 @@ public:
     void write(Buffer * buffer, RegionToken * remote_token, RequestToken * pRequestToken = nullptr);
     void write_blocking(Buffer * buffer, RegionToken * remote_token, RequestToken * pRequestToken = nullptr);
     void write(Buffer * buffer, RegionToken * remote_token, size_t local_offset, size_t remote_offset, size_t size, RequestToken * pRequestToken = nullptr);
+    void read(Buffer * buffer, RegionToken * remote_token, size_t local_offset, size_t remote_offset, size_t size, RequestToken * pRequestToken = nullptr);
     void write_blocking(Buffer * buffer, RegionToken * remote_token, size_t local_offset, size_t remote_offset, size_t size, RequestToken * pRequestToken = nullptr);
     std::shared_ptr<RegionToken> exchange_region_tokens(Buffer * buffer = nullptr);
 
