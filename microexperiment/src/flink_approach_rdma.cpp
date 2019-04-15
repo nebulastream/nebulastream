@@ -330,7 +330,7 @@ void runProducer(VerbsConnection* connection, record* records, size_t genCnt, si
 
 size_t cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         size_t campaingCnt, size_t consumerID, size_t produceCnt) {
-    return;
+    return bufferSizeInTuples;
     size_t consumed = 0;
     size_t windowSwitchCnt = 0;
     size_t htReset = 0;
