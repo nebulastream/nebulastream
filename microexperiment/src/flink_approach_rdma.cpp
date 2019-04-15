@@ -353,7 +353,7 @@ size_t cosume_window_mem(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<s
             if (hashTable[current_window][campaingCnt] != timeStamp) {
                 htReset++;
                 atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
-                std::fill(hashTable[current_window], hashTable[current_window] + campaingCnt, 0);
+//                std::fill(hashTable[current_window], hashTable[current_window] + campaingCnt, 0);
             }
             lastTimeStamp = timeStamp;
         }
