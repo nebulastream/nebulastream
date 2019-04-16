@@ -238,6 +238,7 @@ void trySendBufferToConsumer(VerbsConnection* connection, size_t targetConsumer,
             if(notFull)
                 sendBuffers[idx].send_buffer->setSizeInBytes(sizeof(Tuple)* bufferSizeInTuples);//TODO:reset it but its not nessesary now
 
+            cout << "WRITE BUFFER with size=" << sendBuffers[idx].send_buffer->getSizeInBytes() << endl;
             connection->write(sendBuffers[idx].send_buffer, region_tokens[idx],
                  sendBuffers[idx].requestToken);
 
