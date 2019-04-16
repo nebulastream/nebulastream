@@ -457,6 +457,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 #endif
     for(size_t i = 0; i < bufferSizeInTuples; i++)
     {
+        cout << " tuple=" << i << buffer[i].campaign_id  << endl;
         size_t timeStamp = buffer[i].timeStamp; //seconds elapsed since 00:00 hours, Jan 1, 1970 UTC
         if (lastTimeStamp != timeStamp && timeStamp % windowSizeInSec == 0) {
             //TODO this is not corret atm
@@ -511,10 +512,10 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             total_received_buffers++;
             cout << "Received buffer at index=" << index << endl;
 
-                consumed += runConsumerOneOnOne((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
+            consumed += runConsumerOneOnOne((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+                    hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
 
-                buffer_ready_sign[index] = BUFFER_READY_FLAG;
+            buffer_ready_sign[index] = BUFFER_READY_FLAG;
 
             if(is_done)
                 break;
