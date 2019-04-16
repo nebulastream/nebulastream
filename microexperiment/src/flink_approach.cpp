@@ -264,12 +264,12 @@ void cosume_window_mem(std::atomic<size_t>** hashTable,
 			    current_window = current_window == 0 ? 1 : 0;
 
 			    windowSwitchCnt++;
-				cout << "thread=" << omp_get_thread_num() << " in first loop" << endl;
+//				cout << "thread=" << omp_get_thread_num() << " in first loop" << endl;
 				if(hashTable[current_window][campaingCnt] != timeStamp)
 				{
 				    //TODO: potentiall race here
 					htReset++;
-					cout << "thread=" << omp_get_thread_num() << " in second loop" << endl;
+//					cout << "thread=" << omp_get_thread_num() << " in second loop" << endl;
 					atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
 					std::fill(hashTable[current_window], hashTable[current_window]+campaingCnt, 0);
 					//memset(myarray, 0, N*sizeof(*myarray)); // TODO: is it faster?
