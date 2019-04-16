@@ -185,19 +185,6 @@ Timestamp getTimestamp() {
             > (Clock::now().time_since_epoch()).count();
 }
 
-
-//void read_sign_buffer(size_t target_rank, Buffer* sign_buffer, RegionToken* sign_token, VerbsConnection* connection)
-//{
-////    TRACE("reading sign_buffer: \n");
-//    connection->read_blocking(sign_buffer, sign_token);
-////    TRACE("sign_buffer: ");
-////    for(int i = 0; i < BUFFER_COUNT; i++)
-////    {
-////        std::cout << (int)buffer_ready_sign[i] << ",";
-////    }
-////    std::cout << std::endl;
-//}
-
 size_t produce_window_mem(record* records, size_t genCnt, size_t bufferSize, Tuple* outputBuffer)
 {
     size_t bufferIndex = 0;
@@ -247,18 +234,94 @@ void trySendBufferToConsumer(VerbsConnection* connection, size_t targetConsumer,
 
         if(buffer_ready_sign[idx] == BUFFER_READY_FLAG)
         {
-         sendBuffers[idx].numberOfTuples = bufferSizeInTuples;
+//            sendBuffers[idx].numberOfTuples = bufferSizeInTuples;
 
-         connection->write(sendBuffers[idx].send_buffer, region_tokens[idx],
+            connection->write(sendBuffers[idx].send_buffer, region_tokens[idx],
                  sendBuffers[idx].requestToken);
 
-         cout << "Writing " << sendBuffers[idx].numberOfTuples << " tuples on buffer " << idx << endl;
+            cout << "Writing " << sendBuffers[idx].numberOfTuples << " tuples on buffer " << idx << endl;
 
-         buffer_ready_sign[idx] = BUFFER_USED_FLAG;
-         connection->write_blocking(sign_buffer, sign_token, idx, idx, 1);
-         break;
+            buffer_ready_sign[idx] = BUFFER_USED_FLAG;
+            connection->write_blocking(sign_buffer, sign_token, idx, idx, 1);
+            break;
         }
     }
+}
+
+void runConsumerPartitioned(size_t** hashTable, size_t windowSizeInSec,
+        size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples, size_t* consumedTuples, size_t* consumedBuffers, size_t* consumerNoBufferFound,
+        size_t startIdx, size_t endIdx)
+{
+    size_t total_received_tuples = 0;
+    size_t total_received_buffers = 0;
+    size_t index = startIdx;
+    size_t noBufferFound = 0;
+    size_t consumed = 0;
+    while(true)
+    {
+        if (buffer_ready_sign[index] == BUFFER_USED_FLAG || buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
+        {
+            bool is_done = buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE;
+
+            if(is_done) // this is done so that the loop later doesnt try to process this again
+            {
+                std::atomic_fetch_add(&exitConsumer, size_t(1));
+                buffer_ready_sign[index] = BUFFER_READY_FLAG;
+                cout << "DONE BUFFER FOUND at idx"  << index << endl;
+            }
+
+            total_received_tuples += recv_buffers[index]->;
+            total_received_buffers++;
+            cout << "Received buffer at index=" << index << endl;
+
+            consumed += runConsumerOneOnOne((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+                    hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
+
+            buffer_ready_sign[index] = BUFFER_READY_FLAG;
+
+            if(is_done)
+                break;
+        }
+        else
+        {
+            noBufferFound++;
+        }
+        index++;
+
+        if(index > endIdx)
+            index = startIdx;
+
+        if(std::atomic_load(&exitConsumer) == 1)
+        {
+            *consumedTuples = total_received_tuples;
+            *consumedBuffers = total_received_buffers;
+            cout << "Thread=" << omp_get_thread_num() << " Done sending! Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
+                            << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
+            return;
+        }
+    }//end of while
+
+    cout << "checking remaining buffers" << endl;
+    for(index = startIdx; index < endIdx; index++)//check again if some are there
+    {
+//        cout << "checking i=" << index << endl;
+        if (buffer_ready_sign[index] == BUFFER_USED_FLAG) {
+            cout << "Check Iter -- Received buffer at index=" << index << endl;
+
+            total_received_tuples += bufferSizeInTuples;
+            total_received_buffers++;
+            consumed += runConsumerOneOnOne((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+                                hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
+            buffer_ready_sign[index] = BUFFER_READY_FLAG;
+        }
+
+    }
+
+    *consumedTuples = consumed;
+    *consumedBuffers = total_received_buffers;
+    *consumerNoBufferFound = noBufferFound;
+//    cout << "Thread=" << omp_get_thread_num() << " Done sending! Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
+//                << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
 }
 
 void runProducerPartitioned(VerbsConnection* connection, record* records, size_t produceCnt, size_t bufferSizeInTuples, size_t bufferProcCnt,
@@ -274,11 +337,6 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
     size_t qualTuple = 0;
 
     size_t sender[numberOfConsumer] = {0};
-//    TupleBuffer** tempBuffers = new TupleBuffer*[numberOfConsumer];
-//    for(size_t i = 0; i < numberOfConsumer; i++)
-//    {
-//        tempBuffers[i] = new TupleBuffer(numberOfConsumer);
-//    }
 
     for(size_t i = 0; i < produceCnt; i++)
     {
@@ -335,8 +393,6 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
 
         }
     }
-
-    //send poisoned tuple
 
     stringstream ss;
     ss << "Thread=" << omp_get_thread_num() << " prodID=" << prodID <<" produced=" << produced << " pushCnt=" << total_buffer_send
