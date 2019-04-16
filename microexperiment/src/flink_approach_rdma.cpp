@@ -315,7 +315,7 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
     {
         if(sendBuffers[i + bufferOffset].numberOfTuples != 0)
         {
-//            cout << "send remaining buffer " << i  << " with " << tempBuffers[i]->pos << " tuples left."<< endl;
+            cout << "send remaining buffer " << i + bufferOffset << " with " << sendBuffers[i + bufferOffset].numberOfTuples << " tuples left."<< endl;
             tempHash hashValue;
             hashValue.value = sendBuffers[i + bufferOffset].tups[0].campaign_id;
 //            cout << "sending to queue=" << hashValue.value % consumeCnt << endl;
@@ -460,7 +460,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 #endif
     for(size_t i = 0; i < bufferSizeInTuples; i++)
     {
-        cout << " tuple=" << i << buffer[i].campaign_id  << endl;
+        cout << " tuple=" << i << " val="<< buffer[i].campaign_id  << endl;
         size_t timeStamp = buffer[i].timeStamp; //seconds elapsed since 00:00 hours, Jan 1, 1970 UTC
         if (lastTimeStamp != timeStamp && timeStamp % windowSizeInSec == 0) {
             //TODO this is not corret atm
