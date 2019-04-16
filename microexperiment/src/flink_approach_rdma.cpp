@@ -328,13 +328,15 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
 //            queue[hashValue.value % numberOfConsumer]->push(*tempBuffers[hashValue.value % numberOfConsumer]);
             sendBuffers[(hashValue.value % numberOfConsumer) + bufferOffset].numberOfTuples = 0;
             sender[hashValue.value % numberOfConsumer]++;
+
+            cout << "sending poisoned tuplle" << endl;
+            buffer_ready_sign[0] = BUFFER_USED_SENDER_DONE;
+            connection->write_blocking(sign_buffer, sign_token, 0, 0, 1);
+
         }
     }
 
     //send poisoned tuple
-    cout << "sending poisoned tuplle" << endl;
-    buffer_ready_sign[0] = BUFFER_USED_SENDER_DONE;
-    connection->write_blocking(sign_buffer, sign_token, 0, 0, 1);
 
     stringstream ss;
     ss << "Thread=" << omp_get_thread_num() << " prodID=" << prodID <<" produced=" << produced << " pushCnt=" << total_buffer_send
