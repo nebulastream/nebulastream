@@ -1010,8 +1010,13 @@ int main(int argc, char *argv[])
 //                stringstream ss;
 //                ss << "consumer " << i << " from=" << startIdx << " to " << endIdx << endl;
 //                cout << ss.str() << endl;
+#ifdef MODE_PATRITIONING
+                runConsumerPartitioned(hashTable, windowSizeInSeconds, campaingCnt, 0, numberOfProducer , bufferSizeInTups,
+                                        &consumedTuples[i], &consumedBuffers[i], &consumerNoBufferFound[i], startIdx, endIdx);
+#else
                 runConsumerNew(hashTable, windowSizeInSeconds, campaingCnt, 0, numberOfProducer , bufferSizeInTups,
                         &consumedTuples[i], &consumedBuffers[i], &consumerNoBufferFound[i], startIdx, endIdx);
+#endif
             }
         }
 #endif
