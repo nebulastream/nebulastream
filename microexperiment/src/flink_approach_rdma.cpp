@@ -270,12 +270,12 @@ void runConsumerPartitioned(size_t** hashTable, size_t windowSizeInSec,
                 cout << "DONE BUFFER FOUND at idx"  << index << endl;
             }
 
-            total_received_tuples += recv_buffers[index]->;
+//            total_received_tuples += recv_buffers[index]->;
             total_received_buffers++;
             cout << "Received buffer at index=" << index << endl;
 
-            consumed += runConsumerOneOnOne((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-                    hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
+//            consumed += runConsumerOneOnOne((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+//                    hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
 
             buffer_ready_sign[index] = BUFFER_READY_FLAG;
 
@@ -310,8 +310,8 @@ void runConsumerPartitioned(size_t** hashTable, size_t windowSizeInSec,
 
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
-            consumed += runConsumerOneOnOne((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-                                hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
+//            consumed += runConsumerOneOnOne((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+//                                hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
             buffer_ready_sign[index] = BUFFER_READY_FLAG;
         }
 
