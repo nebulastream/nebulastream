@@ -251,7 +251,6 @@ void trySendBufferToConsumer(VerbsConnection* connection, size_t targetConsumer,
 }
 
 
-
 void runProducerPartitioned(VerbsConnection* connection, record* records, size_t produceCnt, size_t bufferSizeInTuples, size_t bufferProcCnt,
         size_t* producesTuples, size_t* producedBuffers, size_t* readInputTuples, size_t* noFreeEntryFound, size_t startIdx, size_t endIdx, size_t numberOfProducer
         , size_t numberOfConsumer, size_t prodID, size_t bufferOffset)
@@ -310,7 +309,9 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
             size_t offset = (hashValue.value % numberOfConsumer) + bufferOffset;
             cout << "hash value= " << hashValue.value  << " pos=" << (hashValue.value % numberOfConsumer) + bufferOffset
                             << " value=" << hashValue.value << endl;
-            trySendBufferToConsumer(connection, hashValue.value % numberOfConsumer, offset, bufferSizeInTuples, true);
+            size_t remaining_tuples = sendBuffers[i + bufferOffset].numberOfTuples;
+            cout << " remain tups=" << remaining_tuples << endl;
+            trySendBufferToConsumer(connection, hashValue.value % numberOfConsumer, offset, remaining_tuples, true);
 //            queue[hashValue.value % numberOfConsumer]->push(*tempBuffers[hashValue.value % numberOfConsumer]);
             sendBuffers[(hashValue.value % numberOfConsumer) + bufferOffset].numberOfTuples = 0;
             sender[hashValue.value % numberOfConsumer]++;
