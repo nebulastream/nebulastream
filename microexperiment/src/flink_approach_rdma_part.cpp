@@ -313,7 +313,7 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
 
         if(sendBuffers[bufferIdx].add(tup))//TODO:change to inplace update instead of constcutor
         {
-            ss << "prodID=" << prodID << " consumerID=" << consumerID << " hash value= " << hashValue.value << endl;
+//            ss << "prodID=" << prodID << " consumerID=" << consumerID << " hash value= " << hashValue.value << endl;
 
             total_buffer_send++;
             total_sent_tuples += sendBuffers[bufferIdx].getNumberOfTuples();
@@ -336,8 +336,8 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
 
         if(sendBuffers[bufferIdx].getNumberOfTuples() != 0)
         {
-            ss << "Remain prodID=" << prodID << " consumerID=" << consumerID
-                            << " idx=" << bufferIdx  << " tupCnt=" << sendBuffers[bufferIdx].getNumberOfTuples() << endl;
+//            ss << "Remain prodID=" << prodID << " consumerID=" << consumerID
+//                            << " idx=" << bufferIdx  << " tupCnt=" << sendBuffers[bufferIdx].getNumberOfTuples() << endl;
 
             total_buffer_send++;
             total_sent_tuples += sendBuffers[bufferIdx].getNumberOfTuples();
@@ -984,9 +984,9 @@ int main(int argc, char *argv[])
                     endIdx = NUM_SEND_BUFFERS;
                 }
 
-                stringstream ss;
-                ss << "consumer " << i << " from=" << startIdx << " to " << endIdx << endl;
-                cout << ss.str() << endl;
+//                stringstream ss;
+//                ss << "consumer " << i << " from=" << startIdx << " to " << endIdx << endl;
+//                cout << ss.str() << endl;
 #ifdef MODE_PATRITIONING
                 runConsumerPartitioned(hashTable, windowSizeInSeconds, campaingCnt, i, bufferSizeInTups,
                                         &consumedTuples[i], &consumedBuffers[i], &consumerNoBufferFound[i], startIdx, endIdx);
