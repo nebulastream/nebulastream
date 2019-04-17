@@ -469,7 +469,7 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
 }
 
 size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
-        size_t campaingCnt, size_t consumerID, size_t produceCnt) {
+        size_t campaingCnt, size_t consumerID) {
 //    return bufferSizeInTuples;
     size_t consumed = 0;
     size_t windowSwitchCnt = 0;
@@ -515,8 +515,8 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 
 
 void runConsumerPartitioned(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
-        size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples, size_t* consumedTuples, size_t* consumedBuffers, size_t* consumerNoBufferFound,
-        size_t startIdx, size_t endIdx)
+        size_t campaingCnt, size_t consumerID, size_t bufferSizeInTuples, size_t* consumedTuples,
+        size_t* consumedBuffers, size_t* consumerNoBufferFound, size_t startIdx, size_t endIdx)
 {
     size_t total_received_tuples = 0;
     size_t total_received_buffers = 0;
@@ -549,7 +549,7 @@ void runConsumerPartitioned(std::atomic<size_t>** hashTable, size_t windowSizeIn
             cout << " buffer start = " << recv_buffers[index]->getData() << " new pos= " << dataPtr << endl;
 
             consumed += runConsumerOneOnOne((Tuple*)dataPtr, tuplesCnt,
-                    hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
+                    hashTable, windowSizeInSec, campaingCnt, consumerID);
 
             buffer_ready_sign[index] = BUFFER_READY_FLAG;
 
@@ -625,7 +625,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             cout << "Received buffer at index=" << index << endl;
 
             consumed += runConsumerOneOnOne((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-                    hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
+                    hashTable, windowSizeInSec, campaingCnt, consumerID);
 
             buffer_ready_sign[index] = BUFFER_READY_FLAG;
 
@@ -661,7 +661,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
             consumed += runConsumerOneOnOne((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-                                hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
+                                hashTable, windowSizeInSec, campaingCnt, consumerID);
             buffer_ready_sign[index] = BUFFER_READY_FLAG;
         }
 
@@ -674,81 +674,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 //                << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
 }
 
-void runConsumerOld(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
-        size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples, size_t* consumedTuples, size_t* consumedBuffers)
-{
-    size_t total_received_tuples = 0;
-    size_t total_received_buffers = 0;
-    size_t index = 0;
-    size_t noBufferFound = 0;
-    cout << "start consumer" << endl;
-    std::vector<std::shared_ptr<std::thread>> buffer_threads(NUM_SEND_BUFFERS);
 
-    while(true)
-    {
-        index++;
-        index %= NUM_SEND_BUFFERS;
-
-        if (buffer_ready_sign[index] == BUFFER_USED_FLAG || buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
-        {
-            bool is_done = buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE;
-
-            if(is_done) // this is done so that the loop later doesnt try to process this again
-            {
-                buffer_ready_sign[index] = BUFFER_READY_FLAG;
-                cout << "DONE BUFFER FOUND " << endl;
-            }
-
-
-            total_received_tuples += bufferSizeInTuples;
-            total_received_buffers++;
-#ifdef DEBUG
-            cout << "Received buffer at index=" << index << endl;
-#endif
-            if(buffer_threads[index])
-                buffer_threads[index]->join();
-
-//            buffer_threads[index] = std::make_shared<std::thread>(&runComsumerThread, bufferSizeInTuples,
-//                                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, index);
-
-            buffer_threads[index] = std::make_shared<std::thread>(
-                    [&recv_buffers,bufferSizeInTuples,&hashTable,windowSizeInSec, campaingCnt, consumerID, produceCnt, index]
-           {
-                runConsumerOneOnOne((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
-                buffer_ready_sign[index] = BUFFER_READY_FLAG;
-//                cout << "threadID=" << std::this_thread::get_id() << " index=" << index << endl;
-            });
-
-            if(is_done)
-                break;
-        }
-        else
-        {
-//            cout << "no buffer found at" << index << endl;
-            noBufferFound++;
-        }
-    }
-
-    for(index = 0; index < NUM_SEND_BUFFERS; index++)//check again if some are there
-    {
-        if (buffer_ready_sign[index] == BUFFER_USED_FLAG) {
-            cout << "Check Iter -- Received buffer at index=" << index << endl;
-
-            total_received_tuples += bufferSizeInTuples;
-            total_received_buffers++;
-            runConsumerOneOnOne((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-                                hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
-            buffer_ready_sign[index] = BUFFER_READY_FLAG;
-        }
-        if(buffer_threads[index])
-            buffer_threads[index]->join();
-    }
-
-    *consumedTuples = total_received_tuples;
-    *consumedBuffers = total_received_buffers;
-    cout << "nobufferFound=" << noBufferFound << endl;
-}
 
 
 void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
@@ -1056,7 +982,7 @@ int main(int argc, char *argv[])
 //                ss << "consumer " << i << " from=" << startIdx << " to " << endIdx << endl;
 //                cout << ss.str() << endl;
 #ifdef MODE_PATRITIONING
-                runConsumerPartitioned(hashTable, windowSizeInSeconds, campaingCnt, 0, numberOfProducer , bufferSizeInTups,
+                runConsumerPartitioned(hashTable, windowSizeInSeconds, campaingCnt, i, bufferSizeInTups,
                                         &consumedTuples[i], &consumedBuffers[i], &consumerNoBufferFound[i], startIdx, endIdx);
 #else
                 runConsumerNew(hashTable, windowSizeInSeconds, campaingCnt, 0, numberOfProducer , bufferSizeInTups,
@@ -1220,4 +1146,79 @@ int main(int argc, char *argv[])
 //    hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
 //    buffer_ready_sign[index] = BUFFER_READY_FLAG;
 //
+//}
+//void runConsumerOld(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
+//        size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples, size_t* consumedTuples, size_t* consumedBuffers)
+//{
+//    size_t total_received_tuples = 0;
+//    size_t total_received_buffers = 0;
+//    size_t index = 0;
+//    size_t noBufferFound = 0;
+//    cout << "start consumer" << endl;
+//    std::vector<std::shared_ptr<std::thread>> buffer_threads(NUM_SEND_BUFFERS);
+//
+//    while(true)
+//    {
+//        index++;
+//        index %= NUM_SEND_BUFFERS;
+//
+//        if (buffer_ready_sign[index] == BUFFER_USED_FLAG || buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
+//        {
+//            bool is_done = buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE;
+//
+//            if(is_done) // this is done so that the loop later doesnt try to process this again
+//            {
+//                buffer_ready_sign[index] = BUFFER_READY_FLAG;
+//                cout << "DONE BUFFER FOUND " << endl;
+//            }
+//
+//
+//            total_received_tuples += bufferSizeInTuples;
+//            total_received_buffers++;
+//#ifdef DEBUG
+//            cout << "Received buffer at index=" << index << endl;
+//#endif
+//            if(buffer_threads[index])
+//                buffer_threads[index]->join();
+//
+////            buffer_threads[index] = std::make_shared<std::thread>(&runComsumerThread, bufferSizeInTuples,
+////                                        hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt, index);
+//
+//            buffer_threads[index] = std::make_shared<std::thread>(
+//                    [&recv_buffers,bufferSizeInTuples,&hashTable,windowSizeInSec, campaingCnt, consumerID, produceCnt, index]
+//           {
+//                runConsumerOneOnOne((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+//                        hashTable, windowSizeInSec, campaingCnt, consumerID);
+//                buffer_ready_sign[index] = BUFFER_READY_FLAG;
+////                cout << "threadID=" << std::this_thread::get_id() << " index=" << index << endl;
+//            });
+//
+//            if(is_done)
+//                break;
+//        }
+//        else
+//        {
+////            cout << "no buffer found at" << index << endl;
+//            noBufferFound++;
+//        }
+//    }
+//
+//    for(index = 0; index < NUM_SEND_BUFFERS; index++)//check again if some are there
+//    {
+//        if (buffer_ready_sign[index] == BUFFER_USED_FLAG) {
+//            cout << "Check Iter -- Received buffer at index=" << index << endl;
+//
+//            total_received_tuples += bufferSizeInTuples;
+//            total_received_buffers++;
+//            runConsumerOneOnOne((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
+//                                hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
+//            buffer_ready_sign[index] = BUFFER_READY_FLAG;
+//        }
+//        if(buffer_threads[index])
+//            buffer_threads[index]->join();
+//    }
+//
+//    *consumedTuples = total_received_tuples;
+//    *consumedBuffers = total_received_buffers;
+//    cout << "nobufferFound=" << noBufferFound << endl;
 //}
