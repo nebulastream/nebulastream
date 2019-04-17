@@ -76,6 +76,22 @@ add_executable(flinkApproachRDMA
     )
 target_link_libraries(flinkApproachRDMA infinity ibverbs numa json11 tbb boost_program_options)
 
+add_executable(flinkApproachRDMAPART
+        src/flink_approach_rdma_part.cpp
+        rdma_lib/Utilities/MPI_Helper_Fake.cpp
+        rdma_lib/Utilities/ConnectionInfoProvider/SimpleInfoProvider.cpp
+        rdma_lib/Utilities/VerbsConnection.cpp
+        rdma_lib/Utilities/TimeTools.cpp
+        rdma_lib/Utilities/BenchmarkTools.cpp
+        rdma_lib/Utilities/ComputationParameters.cpp
+        rdma_lib/Utilities/DeviceMemoryAllocator/CPUMemoryAllocator.cpp
+        rdma_lib/Utilities/ConnectionCollection.cpp
+        rdma_lib/Utilities/ConnectionInfoProvider/ConnectionUtilities.cpp
+        rdma_lib/Utilities/DeviceMemoryAllocator/GPUMemoryAllocator.cu
+    )
+target_link_libraries(flinkApproachRDMAPART infinity ibverbs numa json11 tbb boost_program_options)
+
+
 add_executable(flinkApproachSingleNode
         src/flink_approach.cpp)
 target_link_libraries(flinkApproachSingleNode tbb)
