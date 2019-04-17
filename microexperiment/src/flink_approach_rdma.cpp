@@ -283,6 +283,8 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
     size_t qualTuple = 0;
     size_t sender[numberOfConsumer] = {0};
     size_t readIdx = 0;
+    stringstream ss;
+
 //    for(size_t i = 0; i < produceCnt; i++)
     while(total_buffer_send < bufferProcCnt)
     {
@@ -311,9 +313,7 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
 
         if(sendBuffers[bufferIdx].add(tup))//TODO:change to inplace update instead of constcutor
         {
-            stringstream ss;
-            ss << "prodID=" << prodID << " consumerID=" << consumerID << " hash value= " << hashValue.value;
-            cout << ss.str();
+            ss << "prodID=" << prodID << " consumerID=" << consumerID << " hash value= " << hashValue.value << endl;
 
             total_buffer_send++;
             total_sent_tuples += sendBuffers[bufferIdx].getNumberOfTuples();
@@ -336,10 +336,8 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
 
         if(sendBuffers[bufferIdx].getNumberOfTuples() != 0)
         {
-            stringstream ss;
             ss << "Remain prodID=" << prodID << " consumerID=" << consumerID
                             << " idx=" << bufferIdx  << " tupCnt=" << sendBuffers[bufferIdx].getNumberOfTuples() << endl;
-            cout << ss.str();
 
             total_buffer_send++;
             total_sent_tuples += sendBuffers[bufferIdx].getNumberOfTuples();
@@ -358,12 +356,12 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
     {
         while(true)
         {
-            cout << "read from for poisoned at Idx=" << 0 << endl;
+            ss << "read from for poisoned at Idx=" << 0 << endl;
             connection->read_blocking(sign_buffer, sign_token, 0, 0, 1);
 
             if(buffer_ready_sign[0] == BUFFER_READY_FLAG)
             {
-                cout << "sending poisoned tuple" << endl;
+                ss << "sending poisoned tuple" << endl;
                 buffer_ready_sign[0] = BUFFER_USED_SENDER_DONE;
                 connection->write_blocking(sign_buffer, sign_token, 0, 0, 1);
                 break;
@@ -371,7 +369,6 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
         }
     }
 
-    stringstream ss;
     ss << "Thread=" << omp_get_thread_num() << " prodID=" << prodID << " readIn" << readInputTuples << " produced=" << produced
             << " pushCnt=" << total_buffer_send << " disQTuple=" << disQTuple << " qualTuple=" << qualTuple;
 
