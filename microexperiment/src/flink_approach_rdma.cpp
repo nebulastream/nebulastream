@@ -102,7 +102,7 @@ public:
         send_buffer = connection.allocate_buffer(bufferSizeInTuples * sizeof(Tuple) + sizeof(size_t));
         requestToken = connection.create_request_token();
         requestToken->setCompleted(true);
-        tups = (Tuple*)send_buffer->getAddress() + sizeof(size_t);
+        tups = (Tuple*)(send_buffer->getAddress() + sizeof(size_t));
         numberOfTuples = (size_t*) send_buffer->getAddress();
         *numberOfTuples = 0;
     }
