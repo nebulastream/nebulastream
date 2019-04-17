@@ -136,6 +136,8 @@ const StructDeclaration getStructDeclarationFromSchema(const std::string struct_
 {
     /* struct definition for tuples */
     StructDeclaration struct_decl_tuple = StructDeclaration::create(struct_name, "");
+    /* disable padding of bytes to generate compact structs, required for input and output tuple formats */
+    struct_decl_tuple.makeStructCompact();
 
     std::cout << "Converting Schema: " << schema.toString() << std::endl;
     std::cout << "Define Struct : " << struct_name << std::endl;
