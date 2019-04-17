@@ -307,17 +307,20 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
         hashValue.value = *(((uint64_t*) records[readIdx].campaign_id) + 1);
         Tuple tup(hashValue.value, timeStamp);
         size_t bufferIdx = (hashValue.value % numberOfConsumer) + bufferOffset;
-        cout << "hash value= " << hashValue.value  << " pos=" << bufferOffset << " consumer=" << hashValue.value % numberOfConsumer << endl;
+        cout << "prodID=" << prodID << "hash value= " << hashValue.value  << " idx=" << bufferOffset
+                << " consumer=" << hashValue.value % numberOfConsumer << endl;
 
         if(sendBuffers[bufferIdx].add(tup))//TODO:change to inplace update instead of constcutor
         {
+            size_t targetConsumer = hashValue.value % numberOfConsumer;
             cout << "buffer full at idx=" << bufferIdx << endl;
+
             total_buffer_send++;
             total_sent_tuples += sendBuffers[bufferIdx].getNumberOfTuples();
-            trySendBufferToConsumer(connection, hashValue.value % numberOfConsumer, bufferIdx, bufferSizeInTuples, false);
+            trySendBufferToConsumer(connection, targetConsumer, bufferIdx, bufferSizeInTuples, false);
 //            queue[hashValue.value % numberOfConsumer]->push(*tempBuffers[hashValue.value % numberOfConsumer]);
             sendBuffers[bufferIdx].setNumberOfTuples(0);
-            sender[bufferIdx]++;
+            sender[targetConsumer]++;
         }
 
         if(readIdx < NUMBER_OF_GEN_TUPLE)
