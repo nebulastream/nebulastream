@@ -862,8 +862,7 @@ int main(int argc, char *argv[])
         ("ip", po::value<string>(&ip)->default_value(ip), "ip")
         ;
 
-    cout << "overwrite send buffer to " << numberOfConsumer * numberOfConsumer << endl;
-    NUM_SEND_BUFFERS = numberOfConsumer * numberOfConsumer;
+
     po::variables_map vm;
     po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
     po::notify(vm);
@@ -876,7 +875,8 @@ int main(int argc, char *argv[])
 
     size_t tupleProcCnt = bufferProcCnt * bufferSizeInTups * 3;
     MPIHelper::set_rank(rank);
-
+    cout << "overwrite send buffer to " << numberOfConsumer * numberOfConsumer << endl;
+    NUM_SEND_BUFFERS = numberOfConsumer * numberOfConsumer;
     assert(rank == 0 || rank == 1);
     std::cout << "Settings:"
             << " bufferProcCnt=" << bufferProcCnt
