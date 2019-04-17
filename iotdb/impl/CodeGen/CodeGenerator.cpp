@@ -335,7 +335,12 @@ bool C_CodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContex
     VariableDeclaration var_decl_result_tuple = VariableDeclaration::create(
         createPointerDataType(createUserDefinedType(struct_decl_result_tuple)), "result_tuples");
     code_.variable_decls.push_back(var_decl_result_tuple);
-    // VariableDeclaration var_decl_field_result_tuple_sum = struct_decl_result_tuple.getVariableDeclaration("sum");
+
+    VariableDeclaration var_decl_num_result_tuples = VariableDeclaration::create(
+        createDataType(BasicType(UINT64)), "num_result_tuples",createBasicTypeValue(BasicType(INT64), "0"));
+    code_.variable_decls.push_back(var_decl_num_result_tuples);
+
+
 
     /* result_tuples = (ResultTuple *)output_tuple_buffer->data;*/
     code_.variable_init_stmts.push_back(
@@ -358,16 +363,21 @@ bool C_CodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContex
         code_.variable_decls.push_back(*var_decl);
         /** \FIXME: we need to handle the case where the field in the result tuple is not part of the input schema! */
         code_.for_loop_stmt->addStatement(
-            VarRef(var_decl_result_tuple)[VarRef(*(code_.var_decl_id))]
+            VarRef(var_decl_result_tuple)[VarRef(var_decl_num_result_tuples)]
                 .accessRef(VarRef(*var_decl))
                 .assign(VarRef(code_.var_decl_input_tuple)[VarRef(*(code_.var_decl_id))].accessRef(VarRef(*var_decl)))
                 .copy());
+        /* */
+        code_.for_loop_stmt->addStatement((++VarRef(var_decl_num_result_tuples)).copy());
+
         // var_decls.push_back(*var_decl);
         // write_result_tuples.push_back(VarRef(var_decl_result_tuple)[VarRef(*(code_.var_decl_id))].assign(VarRef(var_decl_result_tuple)[VarRef(*(code_.var_decl_id))]).copy());
     }
 
     /* TODO: set number of output tuples to result buffer */
-
+    code_.cleanup_stmts.push_back(
+    VarRef(code_.var_decl_tuple_buffer_output).accessPtr(VarRef(code_.decl_field_num_tuples_struct_tuple_buf)).assign(VarRef(var_decl_num_result_tuples)).copy()
+        );
     return true;
 }
 
@@ -394,6 +404,11 @@ PipelineStagePtr C_CodeGenerator::compile(const CompilerArgs&)
 
     /* here comes the code for the processing loop */
     func_builder.addStatement(code_.for_loop_stmt);
+
+    /* add statements executed after the for loop, for example cleanup code */
+    for (auto& stmt : code_.cleanup_stmts) {
+        func_builder.addStatement(stmt);
+    }
 
     /* add return statement */
     func_builder.addStatement(code_.return_stmt);
