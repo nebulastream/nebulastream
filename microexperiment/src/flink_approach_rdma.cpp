@@ -250,7 +250,7 @@ void trySendBufferToConsumer(VerbsConnection* connection,  size_t idx,
             if(notFull)
             {
                 sendBuffers[idx].send_buffer->setSizeInBytes(sizeof(Tuple)* bufferSizeInTuples);//TODO:reset it but its not nessesary now
-                cout << "reset buffer size to " << sizeof(Tuple)* bufferSizeInTuples << endl;
+//                cout << "reset buffer size to " << sizeof(Tuple)* bufferSizeInTuples << endl;
             }
 
 //            cout << "WRITE BUFFER with size=" << sendBuffers[idx].send_buffer->getSizeInBytes()
@@ -981,9 +981,9 @@ int main(int argc, char *argv[])
                     endIdx = NUM_SEND_BUFFERS;
                 }
 
-//                stringstream ss;
-//                ss << "consumer " << i << " from=" << startIdx << " to " << endIdx << endl;
-//                cout << ss.str() << endl;
+                stringstream ss;
+                ss << "consumer " << i << " from=" << startIdx << " to " << endIdx << endl;
+                cout << ss.str() << endl;
 #ifdef MODE_PATRITIONING
                 runConsumerPartitioned(hashTable, windowSizeInSeconds, campaingCnt, i, bufferSizeInTups,
                                         &consumedTuples[i], &consumedBuffers[i], &consumerNoBufferFound[i], startIdx, endIdx);
