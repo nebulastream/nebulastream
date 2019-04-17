@@ -306,9 +306,9 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
         tempHash hashValue;
         hashValue.value = *(((uint64_t*) records[readIdx].campaign_id) + 1);
         Tuple tup(hashValue.value, timeStamp);
-        cout << "hash value= " << hashValue.value  << " pos=" << (hashValue.value % numberOfConsumer) + bufferOffset
-                << " value=" << hashValue.value << endl;
         size_t bufferOffset = (hashValue.value % numberOfConsumer) + bufferOffset;
+        cout << "hash value= " << hashValue.value  << " pos=" << bufferOffset << endl;
+
         if(sendBuffers[bufferOffset].add(tup))//TODO:change to inplace update instead of constcutor
         {
             cout << "buffer full at idx=" << bufferOffset << endl;
