@@ -3,7 +3,6 @@
 #include <list>
 #include <sstream>
 
-#include <Util/ErrorHandling.hpp>
 #include <API/Schema.hpp>
 #include <CodeGen/C_CodeGen/BinaryOperatorStatement.hpp>
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
@@ -15,13 +14,14 @@
 #include <CodeGen/CodeGen.hpp>
 #include <Core/DataTypes.hpp>
 #include <Runtime/DataSink.hpp>
+#include <Util/ErrorHandling.hpp>
 
 namespace iotdb {
 
-  const StructDeclaration getStructDeclarationTupleBuffer();
-  const StructDeclaration getStructDeclarationWindowState();
+const StructDeclaration getStructDeclarationTupleBuffer();
+const StructDeclaration getStructDeclarationWindowState();
 
-  class PipelineContext{
+class PipelineContext {
   public:
     void addTypeDeclaration(const Declaration&);
     void addVariableDeclaration(const Declaration&);
@@ -39,24 +39,20 @@ const PipelineContextPtr createPipelineContext() { return std::make_shared<Pipel
 class GeneratedCode {
   public:
     GeneratedCode()
-      : variable_decls(),
-        variable_init_stmts(),
-        for_loop_stmt(),
-        cleanup_stmts(),
-        return_stmt(),
-        var_decl_id(),
-        var_decl_return(),
-        struct_decl_tuple_buffer(getStructDeclarationTupleBuffer()),
-        struct_decl_state(getStructDeclarationWindowState()),
-        struct_decl_input_tuple(StructDeclaration::create("InputTuple", "")),
-        struct_decl_result_tuple(StructDeclaration::create("ResultTuple", "")),
-        var_decl_tuple_buffers(VariableDeclaration::create(createDataType(INT32),"input_buffers")),
-        var_decl_tuple_buffer_output(VariableDeclaration::create(createDataType(INT32),"output_buffer")),
-        var_decl_state(VariableDeclaration::create(createDataType(INT32),"state")),
-        decl_field_num_tuples_struct_tuple_buf(VariableDeclaration::create(createDataType(INT32),"decl_field_num_tuples_NOT_DEFINED")),
-        decl_field_data_ptr_struct_tuple_buf(VariableDeclaration::create(createDataType(INT32),"decl_field_data_ptr_NOT_DEFINED")),
-        var_decl_input_tuple(VariableDeclaration::create(createDataType(INT32),"input_tuple_NOT_DEFINED")),
-        type_decls()
+        : variable_decls(), variable_init_stmts(), for_loop_stmt(), cleanup_stmts(), return_stmt(), var_decl_id(),
+          var_decl_return(), struct_decl_tuple_buffer(getStructDeclarationTupleBuffer()),
+          struct_decl_state(getStructDeclarationWindowState()),
+          struct_decl_input_tuple(StructDeclaration::create("InputTuple", "")),
+          struct_decl_result_tuple(StructDeclaration::create("ResultTuple", "")),
+          var_decl_tuple_buffers(VariableDeclaration::create(createDataType(INT32), "input_buffers")),
+          var_decl_tuple_buffer_output(VariableDeclaration::create(createDataType(INT32), "output_buffer")),
+          var_decl_state(VariableDeclaration::create(createDataType(INT32), "state")),
+          decl_field_num_tuples_struct_tuple_buf(
+              VariableDeclaration::create(createDataType(INT32), "decl_field_num_tuples_NOT_DEFINED")),
+          decl_field_data_ptr_struct_tuple_buf(
+              VariableDeclaration::create(createDataType(INT32), "decl_field_data_ptr_NOT_DEFINED")),
+          var_decl_input_tuple(VariableDeclaration::create(createDataType(INT32), "input_tuple_NOT_DEFINED")),
+          type_decls()
     {
     }
 
@@ -136,42 +132,43 @@ const StructDeclaration getStructDeclarationWindowState()
     return struct_decl_state;
 }
 
-
-  const StructDeclaration getStructDeclarationFromSchema(const std::string struct_name,
-                                                         const Schema& schema){
+const StructDeclaration getStructDeclarationFromSchema(const std::string struct_name, const Schema& schema)
+{
     /* struct definition for tuples */
-    StructDeclaration struct_decl_tuple =
-        StructDeclaration::create(struct_name, "");
+    StructDeclaration struct_decl_tuple = StructDeclaration::create(struct_name, "");
 
-    std::cout << "Converting Schema: " << schema.toString() <<std::endl;
+    std::cout << "Converting Schema: " << schema.toString() << std::endl;
     std::cout << "Define Struct : " << struct_name << std::endl;
 
-      for(size_t i=0;i<schema.getSize();++i){
-          struct_decl_tuple.addField(
-                VariableDeclaration::create(
-                  schema[i]->getDataType(),schema[i]->name));
-          std::cout << "Field " << i << ": " << schema[i]->getDataType()->toString() << " " << schema[i]->name << std::endl;
-      }
-      //.addField(VariableDeclaration::create(createDataType(BasicType(UINT64)), "campaign_id"));
-      //.addField(VariableDeclaration::create(createDataType(BasicType(UINT64)), "sum"));
-      return struct_decl_tuple;
-  }
-
-    const StructDeclaration getStructDeclarationInputTuple(const Schema& schema){
-       return getStructDeclarationFromSchema("InputTuple",schema);
-  }
-
-  const StructDeclaration getStructDeclarationResultTuple(const Schema& schema){
-       return getStructDeclarationFromSchema("ResultTuple",schema);
-  }
-
-  const VariableDeclarationPtr getVariableDeclarationForField(const StructDeclaration& struct_decl, const AttributeFieldPtr field){
-    if(struct_decl.getField(field->name))
-      return std::make_shared<VariableDeclaration>(struct_decl.getVariableDeclaration(field->name));
-    else {
-       return VariableDeclarationPtr();
+    for (size_t i = 0; i < schema.getSize(); ++i) {
+        struct_decl_tuple.addField(VariableDeclaration::create(schema[i]->getDataType(), schema[i]->name));
+        std::cout << "Field " << i << ": " << schema[i]->getDataType()->toString() << " " << schema[i]->name
+                  << std::endl;
     }
-  }
+    //.addField(VariableDeclaration::create(createDataType(BasicType(UINT64)), "campaign_id"));
+    //.addField(VariableDeclaration::create(createDataType(BasicType(UINT64)), "sum"));
+    return struct_decl_tuple;
+}
+
+const StructDeclaration getStructDeclarationInputTuple(const Schema& schema)
+{
+    return getStructDeclarationFromSchema("InputTuple", schema);
+}
+
+const StructDeclaration getStructDeclarationResultTuple(const Schema& schema)
+{
+    return getStructDeclarationFromSchema("ResultTuple", schema);
+}
+
+const VariableDeclarationPtr getVariableDeclarationForField(const StructDeclaration& struct_decl,
+                                                            const AttributeFieldPtr field)
+{
+    if (struct_decl.getField(field->name))
+        return std::make_shared<VariableDeclaration>(struct_decl.getVariableDeclaration(field->name));
+    else {
+        return VariableDeclarationPtr();
+    }
+}
 
 const std::string toString(void* value, DataTypePtr type)
 {
@@ -239,9 +236,9 @@ bool C_CodeGenerator::generateCode(const DataSourcePtr& source, const PipelineCo
     context->addTypeDeclaration(struct_decl_state);
     context->addTypeDeclaration(struct_decl_tuple);
 
-//    code_.type_decls.push_back(struct_decl_tuple_buffer);
-//    code_.type_decls.push_back(struct_decl_state);
-//    code_.type_decls.push_back(struct_decl_tuple);
+    //    code_.type_decls.push_back(struct_decl_tuple_buffer);
+    //    code_.type_decls.push_back(struct_decl_state);
+    //    code_.type_decls.push_back(struct_decl_tuple);
 
     code_.struct_decl_tuple_buffer = struct_decl_tuple_buffer;
     code_.struct_decl_state = struct_decl_state;
@@ -287,8 +284,9 @@ bool C_CodeGenerator::generateCode(const DataSourcePtr& source, const PipelineCo
     code_.variable_decls.push_back(*(code_.var_decl_return.get()));
 
     /* variable declarations for fields inside structs */
-    //VariableDeclaration decl_field_campaign_id = struct_decl_tuple.getVariableDeclaration("campaign_id");
-    VariableDeclaration decl_field_num_tuples_struct_tuple_buf = struct_decl_tuple_buffer.getVariableDeclaration("num_tuples");
+    // VariableDeclaration decl_field_campaign_id = struct_decl_tuple.getVariableDeclaration("campaign_id");
+    VariableDeclaration decl_field_num_tuples_struct_tuple_buf =
+        struct_decl_tuple_buffer.getVariableDeclaration("num_tuples");
     VariableDeclaration decl_field_data_ptr_struct_tuple_buf = struct_decl_tuple_buffer.getVariableDeclaration("data");
 
     code_.decl_field_num_tuples_struct_tuple_buf = decl_field_num_tuples_struct_tuple_buf;
@@ -333,37 +331,42 @@ bool C_CodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContex
 
     StructDeclaration struct_decl_result_tuple = getStructDeclarationResultTuple(result_schema_);
     context->addTypeDeclaration(struct_decl_result_tuple);
-code_.type_decls.push_back(struct_decl_result_tuple);
+    code_.type_decls.push_back(struct_decl_result_tuple);
     VariableDeclaration var_decl_result_tuple = VariableDeclaration::create(
         createPointerDataType(createUserDefinedType(struct_decl_result_tuple)), "result_tuples");
-        code_.variable_decls.push_back(var_decl_result_tuple);
-    //VariableDeclaration var_decl_field_result_tuple_sum = struct_decl_result_tuple.getVariableDeclaration("sum");
+    code_.variable_decls.push_back(var_decl_result_tuple);
+    // VariableDeclaration var_decl_field_result_tuple_sum = struct_decl_result_tuple.getVariableDeclaration("sum");
 
     /* result_tuples = (ResultTuple *)output_tuple_buffer->data;*/
-   code_.variable_init_stmts.push_back(
-       VarRef(var_decl_result_tuple).assign(
-       TypeCast(VarRef(code_.var_decl_tuple_buffer_output).accessPtr(VarRef(code_.decl_field_data_ptr_struct_tuple_buf)),
-                             createPointerDataType(createUserDefinedType(struct_decl_result_tuple)))).copy());
+    code_.variable_init_stmts.push_back(
+        VarRef(var_decl_result_tuple)
+            .assign(TypeCast(VarRef(code_.var_decl_tuple_buffer_output)
+                                 .accessPtr(VarRef(code_.decl_field_data_ptr_struct_tuple_buf)),
+                             createPointerDataType(createUserDefinedType(struct_decl_result_tuple))))
+            .copy());
 
-     std::vector<VariableDeclaration> var_decls;
-     std::vector<StatementPtr> write_result_tuples;
-     for(size_t i=0;i<result_schema_.getSize();++i){
-         VariableDeclarationPtr var_decl = getVariableDeclarationForField(struct_decl_result_tuple, result_schema_[i]);
-         if(!var_decl){
-           IOTDB_FATAL_ERROR("Could not extract field " <<  result_schema_[i]->toString() << " from struct " << struct_decl_result_tuple.getTypeName());
-         }
-         //VariableDeclaration var_decl = code_.struct_decl_result_tuple.getVariableDeclaration(result_schema_[i]->name);
-         code_.variable_decls.push_back(*var_decl);
-         /** \FIXME: we need to handle the case where the field in the result tuple is not part of the input schema! */
-         code_.for_loop_stmt->addStatement(VarRef(var_decl_result_tuple)[VarRef(*(code_.var_decl_id))].accessRef(VarRef(*var_decl)).assign(VarRef(code_.var_decl_input_tuple)[VarRef(*(code_.var_decl_id))].accessRef(VarRef(*var_decl))).copy());
-         //var_decls.push_back(*var_decl);
+    std::vector<VariableDeclaration> var_decls;
+    std::vector<StatementPtr> write_result_tuples;
+    for (size_t i = 0; i < result_schema_.getSize(); ++i) {
+        VariableDeclarationPtr var_decl = getVariableDeclarationForField(struct_decl_result_tuple, result_schema_[i]);
+        if (!var_decl) {
+            IOTDB_FATAL_ERROR("Could not extract field " << result_schema_[i]->toString() << " from struct "
+                                                         << struct_decl_result_tuple.getTypeName());
+        }
+        // VariableDeclaration var_decl =
+        // code_.struct_decl_result_tuple.getVariableDeclaration(result_schema_[i]->name);
+        code_.variable_decls.push_back(*var_decl);
+        /** \FIXME: we need to handle the case where the field in the result tuple is not part of the input schema! */
+        code_.for_loop_stmt->addStatement(
+            VarRef(var_decl_result_tuple)[VarRef(*(code_.var_decl_id))]
+                .accessRef(VarRef(*var_decl))
+                .assign(VarRef(code_.var_decl_input_tuple)[VarRef(*(code_.var_decl_id))].accessRef(VarRef(*var_decl)))
+                .copy());
+        // var_decls.push_back(*var_decl);
         // write_result_tuples.push_back(VarRef(var_decl_result_tuple)[VarRef(*(code_.var_decl_id))].assign(VarRef(var_decl_result_tuple)[VarRef(*(code_.var_decl_id))]).copy());
-     }
+    }
 
     /* TODO: set number of output tuples to result buffer */
-
-
-
 
     return true;
 }
@@ -395,30 +398,25 @@ PipelineStagePtr C_CodeGenerator::compile(const CompilerArgs&)
     /* add return statement */
     func_builder.addStatement(code_.return_stmt);
 
+    FileBuilder file_builder = FileBuilder::create("query.cpp");
+    /* add core declarations */
+    file_builder.addDeclaration(code_.struct_decl_tuple_buffer);
+    file_builder.addDeclaration(code_.struct_decl_state);
+    file_builder.addDeclaration(code_.struct_decl_input_tuple);
+    /* add generic declarations by operators*/
+    for (auto& type_decl : code_.type_decls) {
+        file_builder.addDeclaration(type_decl);
+    }
 
-          FileBuilder file_builder = FileBuilder::create("query.cpp");
-          /* add core declarations */
-          file_builder.addDeclaration(code_.struct_decl_tuple_buffer);
-          file_builder.addDeclaration(code_.struct_decl_state);
-          file_builder.addDeclaration(code_.struct_decl_input_tuple);
-          /* add generic declarations by operators*/
-          for(auto& type_decl : code_.type_decls){
-                 file_builder.addDeclaration(type_decl);
-          }
+    CodeFile file = file_builder.addDeclaration(func_builder.build()).build();
 
-          CodeFile file = file_builder.addDeclaration(func_builder.build()).build();
+    PipelineStagePtr stage;
+    stage = iotdb::compile(file);
+    return stage;
+}
 
-      PipelineStagePtr stage;
-      stage = iotdb::compile(file);
-      return stage;
-  }
+C_CodeGenerator::~C_CodeGenerator() {}
 
-  C_CodeGenerator::~C_CodeGenerator(){
-  }
-
-  CodeGeneratorPtr createCodeGenerator(){
-    return std::make_shared<C_CodeGenerator>(CodeGenArgs());
-  }
-
+CodeGeneratorPtr createCodeGenerator() { return std::make_shared<C_CodeGenerator>(CodeGenArgs()); }
 
 } // namespace iotdb
