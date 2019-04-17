@@ -357,9 +357,19 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
     std::atomic_fetch_add(&exitProducer, size_t(1));
     if(std::atomic_load(&exitProducer) == numberOfProducer)
     {
-        cout << "sending poisoned tuple" << endl;
-        buffer_ready_sign[0] = BUFFER_USED_SENDER_DONE;
-        connection->write_blocking(sign_buffer, sign_token, 0, 0, 1);
+        while(true)
+        {
+            cout << "read from for poisoned at Idx=" << 0 << endl;
+            connection->read_blocking(sign_buffer, sign_token, 0, 0, 1);
+
+            if(buffer_ready_sign[0] == BUFFER_READY_FLAG)
+            {
+                cout << "sending poisoned tuple" << endl;
+                buffer_ready_sign[0] = BUFFER_USED_SENDER_DONE;
+                connection->write_blocking(sign_buffer, sign_token, 0, 0, 1);
+                break;
+            }
+        }
     }
 
 
