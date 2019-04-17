@@ -1,47 +1,43 @@
 //#include <API/Source.hpp>
 
-//namespace iotdb{
-//Source& Source::inputType(InputType pType)
+// namespace iotdb{
+// Source& Source::inputType(InputType pType)
 //{
 //	typeValue = pType;
 //	return *this;
 //}
 
-//Source& Source::sourceType(SourceType sType)
+// Source& Source::sourceType(SourceType sType)
 //{
 //	srcType = sType;
 //	return *this;
 //}
 
-
-//Source& Source::path(string pPath)
+// Source& Source::path(string pPath)
 //{
 //	pathValue = pPath;
 //	return *this;
 //}
 
-
-//InputType& Source::getType()
+// InputType& Source::getType()
 //{
 //	return typeValue;
 //}
 
-
-//string& Source::getPath()
+// string& Source::getPath()
 //{
 //	return pathValue;
 //}
 
-//Source::Source()
+// Source::Source()
 //{
 ////	InputType
 //	typeValue = InputType();
 //	pathValue = "";
 //}
 
-//Source Source::create()
+// Source Source::create()
 //{
 //	return Source();
 //}
 //}
-

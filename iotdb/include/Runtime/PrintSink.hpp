@@ -3,8 +3,8 @@
 
 #include <cstdint>
 #include <memory>
+#include <sstream>
 #include <string>
-#include <zmq.hpp>
 
 #include <Runtime/DataSink.hpp>
 
@@ -12,37 +12,33 @@ namespace iotdb {
 
 class PrintSink : public DataSink {
 
-public:
-  PrintSink(const Schema& schema);
-  ~PrintSink();
-  virtual void setup(){}
-  virtual void shutdown(){}
+  public:
+    PrintSink(std::ostream& pOutputStream = std::cout);
+    PrintSink(const Schema& pSchema, std::ostream& pOutputStream = std::cout);
+    ~PrintSink();
+    virtual void setup() override {}
+    virtual void shutdown() override {}
 
-  bool writeData(const TupleBuffer* input_buffer) override;
+    bool writeData(const TupleBuffer* input_buffer) override;
+    const std::string toString() const override;
 
-  const std::string toString() const override;
+  protected:
+    friend class boost::serialization::access;
 
-};
+    template <class Archive> void serialize(Archive& ar, const unsigned int version)
+    {
+        ar& boost::serialization::base_object<DataSink>(*this);
+    }
 
-
-class YSBPrintSink : public PrintSink {
-public:
-	YSBPrintSink(const Schema& schema);
-
-	~YSBPrintSink();
-
-  bool writeData(const TupleBuffer* input_buffer) override;
-
-  void setup(){}
-  void shutdown(){}
-
-  const std::string toString() const override;
-
-private:
+  private:
+    std::ostream& outputStream;
 };
 
 } // namespace iotdb
 
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/export.hpp>
+BOOST_CLASS_EXPORT_KEY(iotdb::PrintSink)
 
-
-#endif // ZMQSINK_HPP
+#endif // PRINTSINK_HPP
