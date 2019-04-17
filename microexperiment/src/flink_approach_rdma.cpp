@@ -536,13 +536,14 @@ void runConsumerPartitioned(std::atomic<size_t>** hashTable, size_t windowSizeIn
     size_t total_received_buffers = 0;
     size_t noBufferFound = 0;
     size_t consumed = 0;
+    bool is_done  = false;
     while(true)
     {
         for(size_t index = startIdx; index < endIdx ; index++)
         {
             if (buffer_ready_sign[index] == BUFFER_USED_FLAG || buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
             {
-                bool is_done = buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE;
+                is_done = buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE;
 
                 if(is_done) // this is done so that the loop later doesnt try to process this again
                 {
@@ -590,6 +591,8 @@ void runConsumerPartitioned(std::atomic<size_t>** hashTable, size_t windowSizeIn
 //                return;
             }
         }//end of for
+        if(is_done)
+            break;
     }//end of while
 
     cout << "checking remaining buffers" << endl;
