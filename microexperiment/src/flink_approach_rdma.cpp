@@ -36,7 +36,7 @@ using namespace std;
 #define BUFFER_BEING_PROCESSED_FLAG 2
 #define NUMBER_OF_GEN_TUPLE 1000000
 //#define JOIN_WRITE_BUFFER_SIZE 1024*1024*8
-#define DEBUG
+//#define DEBUG
 #define MODE_PATRITIONING
 
 std::atomic<size_t> exitProducer;
@@ -311,11 +311,10 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
 
         if(sendBuffers[bufferIdx].add(tup))//TODO:change to inplace update instead of constcutor
         {
-#ifdef DEBUG
             stringstream ss;
             ss << "prodID=" << prodID << " consumerID=" << consumerID << " hash value= " << hashValue.value;
             cout << ss.str();
-#endif
+
             total_buffer_send++;
             total_sent_tuples += sendBuffers[bufferIdx].getNumberOfTuples();
             trySendBufferToConsumer(connection, bufferIdx, bufferSizeInTuples, false);
@@ -423,11 +422,11 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
 
                 connection->write(sendBuffers[receive_buffer_index].send_buffer, region_tokens[receive_buffer_index],
                         sendBuffers[receive_buffer_index].requestToken);
-//#ifdef DEBUG
-//                cout << "Writing " << sendBuffers[receive_buffer_index].getNumberOfTuples() << " tuples on buffer "
-//                        << receive_buffer_index << endl;
-//#endif
-//                total_sent_tuples += sendBuffers[receive_buffer_index].getNumberOfTuples();
+#ifdef DEBUG
+                cout << "Writing " << sendBuffers[receive_buffer_index].getNumberOfTuples() << " tuples on buffer "
+                        << receive_buffer_index << endl;
+#endif
+                total_sent_tuples += sendBuffers[receive_buffer_index].getNumberOfTuples();
                 total_buffer_send++;
 
 
@@ -548,10 +547,11 @@ void runConsumerPartitioned(std::atomic<size_t>** hashTable, size_t windowSizeIn
 
                 total_received_tuples += tuplesCnt;
                 total_received_buffers++;
-#ifdef DEBUG
-                cout << "consumerID=" << consumerID << " received buffer at index=" << index << " size=" << recv_buffers[index]->getSizeInBytes()
+
+                stringstream ss;
+                ss << "consumerID=" << consumerID << " received buffer at index=" << index << " size=" << recv_buffers[index]->getSizeInBytes()
                         << " tuplesCnt=" << tuplesCnt << endl;
-#endif
+                cout << ss.str();
 
                 size_t* dataPtr = (size_t*)recv_buffers[index]->getData();
                 dataPtr++;
@@ -564,10 +564,6 @@ void runConsumerPartitioned(std::atomic<size_t>** hashTable, size_t windowSizeIn
             {
                 noBufferFound++;
             }
-
-//            index++;
-//            if(index > endIdx)
-//                index = startIdx;
 
             if(std::atomic_load(&exitConsumer) == 1)
             {
