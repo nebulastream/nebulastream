@@ -549,7 +549,7 @@ void runConsumerPartitioned(std::atomic<size_t>** hashTable, size_t windowSizeIn
                     std::atomic_fetch_add(&exitConsumer, size_t(1));
                     buffer_ready_sign[index] = BUFFER_READY_FLAG;
                     cout << "DONE BUFFER FOUND at idx"  << index << endl;
-    //                break;
+                    break;
                 }
 
                 size_t tuplesCnt = *((size_t*)recv_buffers[index]->getData());
@@ -582,6 +582,7 @@ void runConsumerPartitioned(std::atomic<size_t>** hashTable, size_t windowSizeIn
 
             if(std::atomic_load(&exitConsumer) == 1)
             {
+                break;
 //                *consumedTuples = total_received_tuples;
 //                *consumedBuffers = total_received_buffers;
 //                cout << "Thread=" << omp_get_thread_num() << " Done sending! Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
