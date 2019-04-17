@@ -119,7 +119,7 @@ public:
 
     bool add(Tuple& tup)
     {
-           tups[*numberOfTuples++] = tup;
+           tups[(*numberOfTuples)++] = tup;
            cout << "new buff size=" << *numberOfTuples << endl;
            return *numberOfTuples == maxNumberOfTuples;
     }
