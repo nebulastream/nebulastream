@@ -241,7 +241,7 @@ size_t produce_window_mem(record* records, size_t bufferSize, Tuple* outputBuffe
 void trySendBufferToConsumer(VerbsConnection* connection, size_t targetConsumer, size_t idx,
         size_t bufferSizeInTuples, bool notFull)
 {
-    cout << "write idx=" << idx << endl;
+    cout << "write idx=" << idx << " notFull=" << notFull << endl;
 
     while(true)
     {
@@ -251,9 +251,13 @@ void trySendBufferToConsumer(VerbsConnection* connection, size_t targetConsumer,
         if(buffer_ready_sign[idx] == BUFFER_READY_FLAG)
         {
             if(notFull)
+            {
                 sendBuffers[idx].send_buffer->setSizeInBytes(sizeof(Tuple)* bufferSizeInTuples);//TODO:reset it but its not nessesary now
+                cout << "reset buffer size to " << sizeof(Tuple)* bufferSizeInTuples << endl;
+            }
 
-            cout << "WRITE BUFFER with size=" << sendBuffers[idx].send_buffer->getSizeInBytes() << endl;
+            cout << "WRITE BUFFER with size=" << sendBuffers[idx].send_buffer->getSizeInBytes()
+                    << " regsize=" << region_tokens[idx]->getSizeInBytes() << endl;
             connection->write(sendBuffers[idx].send_buffer, region_tokens[idx],
                  sendBuffers[idx].requestToken);
 
