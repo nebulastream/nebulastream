@@ -423,11 +423,11 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
 
                 connection->write(sendBuffers[receive_buffer_index].send_buffer, region_tokens[receive_buffer_index],
                         sendBuffers[receive_buffer_index].requestToken);
-#ifdef DEBUG
-                cout << "Writing " << sendBuffers[receive_buffer_index].getNumberOfTuples() << " tuples on buffer "
-                        << receive_buffer_index << endl;
-#endif
-                total_sent_tuples += sendBuffers[receive_buffer_index].getNumberOfTuples();
+//#ifdef DEBUG
+//                cout << "Writing " << sendBuffers[receive_buffer_index].getNumberOfTuples() << " tuples on buffer "
+//                        << receive_buffer_index << endl;
+//#endif
+//                total_sent_tuples += sendBuffers[receive_buffer_index].getNumberOfTuples();
                 total_buffer_send++;
 
 
