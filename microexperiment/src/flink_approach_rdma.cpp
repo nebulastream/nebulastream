@@ -568,9 +568,6 @@ void runConsumerPartitioned(std::atomic<size_t>** hashTable, size_t windowSizeIn
                         hashTable, windowSizeInSec, campaingCnt, consumerID);
 
                 buffer_ready_sign[index] = BUFFER_READY_FLAG;
-
-//                if(is_done)
-//                    break;
             }
             else
             {
@@ -583,6 +580,7 @@ void runConsumerPartitioned(std::atomic<size_t>** hashTable, size_t windowSizeIn
 
             if(std::atomic_load(&exitConsumer) == 1)
             {
+                is_done = true;
                 break;
 //                *consumedTuples = total_received_tuples;
 //                *consumedBuffers = total_received_buffers;
