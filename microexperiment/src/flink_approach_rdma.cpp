@@ -257,7 +257,10 @@ void trySendBufferToConsumer(VerbsConnection* connection, size_t targetConsumer,
             }
 
             cout << "WRITE BUFFER with size=" << sendBuffers[idx].send_buffer->getSizeInBytes()
-                    << " regsize=" << region_tokens[idx]->getSizeInBytes() << endl;
+                    << " regsize=" << region_tokens[idx]->getSizeInBytes()
+                    << " numTups=" << sendBuffers[idx].getNumberOfTuples() << endl;
+
+            cout << "write to= "<< region_tokens[idx]->getAddress() << endl;
             connection->write(sendBuffers[idx].send_buffer, region_tokens[idx],
                  sendBuffers[idx].requestToken);
 
@@ -530,10 +533,12 @@ void runConsumerPartitioned(std::atomic<size_t>** hashTable, size_t windowSizeIn
                 break;
             }
 
-            size_t tuplesCnt = recv_buffers[index]->getSizeInBytes() / sizeof(Tuple);
+            size_t tuplesCnt = *((size_t*)recv_buffers[index]->getData());
+
             total_received_tuples += tuplesCnt;
             total_received_buffers++;
-            cout << "Received buffer at index=" << index << " tuples=" << tuplesCnt << endl;
+            cout << "Received buffer at index=" << index << " size=" << recv_buffers[index]->getSizeInBytes()
+                    << " tuplesCnt=" << tuplesCnt << endl;
 
             size_t* dataPtr = (size_t*)recv_buffers[index]->getData();
             dataPtr++;
