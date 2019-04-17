@@ -464,17 +464,34 @@ int CodeGenTest()
 int CodeGeneratorTest()
 {
 
+    DataSourcePtr source = createTestSourceCodeGen();
     CodeGeneratorPtr code_gen = createCodeGenerator();
     PipelineContextPtr context = createPipelineContext();
     std::cout << "Generate Code" << std::endl;
-    code_gen->generateCode(createTestSourceCodeGen(), context, std::cout);
+    code_gen->generateCode(source, context, std::cout);
     code_gen->generateCode(createPrintSink(Schema::create().addField("campaign_id",UINT32),std::cout), context, std::cout);
     PipelineStagePtr stage = code_gen->compile(CompilerArgs());
 
-    if (stage)
-        return 0;
-    else
+    if(!stage)
         return -1;
+
+    Schema s = Schema::create()
+                   .addField("i64", UINT64);
+
+    TupleBufferPtr buf = source->receiveData();
+    std::vector<TupleBuffer*> input_buffers;
+    input_buffers.push_back(buf.get());
+
+    std::cout << iotdb::toString(buf.get(),source->getSchema()) << std::endl;
+
+    size_t buffer_size = 100*sizeof (uint64_t);
+    TupleBuffer result_buffer(malloc(buffer_size), buffer_size,sizeof(uint64_t),0);
+
+    stage->execute(input_buffers, NULL, &result_buffer);
+
+    std::cout << iotdb::toString(result_buffer,s) << std::endl;
+
+    return 0;
 }
 
 int testTupleBufferPrinting()
