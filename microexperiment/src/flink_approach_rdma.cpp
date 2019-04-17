@@ -547,7 +547,7 @@ void runConsumerPartitioned(std::atomic<size_t>** hashTable, size_t windowSizeIn
                 if(is_done) // this is done so that the loop later doesnt try to process this again
                 {
                     std::atomic_fetch_add(&exitConsumer, size_t(1));
-                    buffer_ready_sign[index] = BUFFER_READY_FLAG;
+//                    buffer_ready_sign[index] = BUFFER_READY_FLAG;
                     cout << "DONE BUFFER FOUND at idx"  << index << endl;
                     break;
                 }
@@ -568,8 +568,8 @@ void runConsumerPartitioned(std::atomic<size_t>** hashTable, size_t windowSizeIn
 
                 buffer_ready_sign[index] = BUFFER_READY_FLAG;
 
-                if(is_done)
-                    break;
+//                if(is_done)
+//                    break;
             }
             else
             {
