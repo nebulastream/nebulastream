@@ -369,7 +369,7 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
             }
         }
     }
-
+#ifndef FAST
     ss << "Thread=" << omp_get_thread_num() << " prodID=" << prodID << " readIn" << readInputTuples << " produced=" << produced
             << " pushCnt=" << total_buffer_send << " disQTuple=" << disQTuple << " qualTuple=" << qualTuple;
 
@@ -378,7 +378,7 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
         ss << " send_" << i << "=" << sender[i];
     }
     cout << ss.str() << endl;
-
+#endif
     *producesTuples = total_sent_tuples;
     *producedBuffers = total_buffer_send;
     *readInputTuples = readTuples;
@@ -489,7 +489,7 @@ void runConsumerPartitioned(std::atomic<size_t>** hashTable, size_t windowSizeIn
             break;
     }//end of while
 
-    cout << "checking remaining buffers from " << startIdx << " to " << endIdx << endl;
+//    cout << "checking remaining buffers from " << startIdx << " to " << endIdx << endl;
     for(size_t index = startIdx; index < endIdx; index++)//check again if some are there
     {
 //        cout << "checking i=" << index << endl;
@@ -511,10 +511,12 @@ void runConsumerPartitioned(std::atomic<size_t>** hashTable, size_t windowSizeIn
     *consumedTuples = consumed;
     *consumedBuffers = total_received_buffers;
     *consumerNoBufferFound = noBufferFound;
+#ifndef FAST
     stringstream ss;
     ss<< "Thread=" << omp_get_thread_num() << " Done sending! Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
                 << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
     cout << ss.str();
+#endif
 }
 
 
