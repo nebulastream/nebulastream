@@ -1,81 +1,38 @@
-#include <cstring>
 #include <memory>
 #include <sstream>
 #include <string>
+
 #include <zmq.hpp>
 
+#include <Runtime/Dispatcher.hpp>
 #include <Runtime/PrintSink.hpp>
 #include <Util/Logger.hpp>
-#include <Runtime/Dispatcher.hpp>
+
+BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::PrintSink)
+
 namespace iotdb {
 
-  const DataSinkPtr createPrintSink(const Schema &schema){
-    return std::make_shared<PrintSink>(schema);
-  }
+PrintSink::PrintSink(std::ostream& pOutputStream) : DataSink(), outputStream(pOutputStream) {}
 
-PrintSink::PrintSink(const Schema &schema)
-    : DataSink(schema){}
-
-PrintSink::~PrintSink() { }
-
-
-bool PrintSink::writeData(const TupleBuffer* input_buffer) {
-
-  std::cout << iotdb::toString(input_buffer,this->getSchema()) << std::endl;
-
-  return true;
+PrintSink::PrintSink(const Schema& pSchema, std::ostream& pOutputStream)
+    : DataSink(pSchema), outputStream(pOutputStream)
+{
 }
 
+PrintSink::~PrintSink() {}
 
-const std::string PrintSink::toString() const {
-  std::stringstream ss;
-  ss << "PRINT_SINK(";
-  ss << "SCHEMA(" << schema.toString() << "), ";
-  return ss.str();
+bool PrintSink::writeData(const TupleBuffer* input_buffer)
+{
+    outputStream << iotdb::toString(input_buffer, this->getSchema()) << std::endl;
+    return true;
 }
 
-struct __attribute__((packed)) ysbRecordOut {
-	  char campaign_id[16];
-	  char event_type[9];
-	  int64_t current_ms;
-	  uint32_t id;
-
-};
-
-YSBPrintSink::YSBPrintSink(const Schema& schema)
-    : PrintSink(schema){}
-
-YSBPrintSink::~YSBPrintSink() { }
-
-bool YSBPrintSink::writeData(const TupleBuffer* input_buffer) {
-
-	ysbRecordOut* recordBuffer = (ysbRecordOut*) input_buffer->buffer;
-//	Schema s = Schema::create().addField("",UINT32);
-//	std::cout << iotdb::toString(input_buffer,s) << std::endl;
-	for(size_t u = 0; u < input_buffer->num_tuples; u++)
-	{
-//		std::cout << "id=" << recordBuffer[u].id << std::endl;
-//		std::cout << " ms=" << recordBuffer[u].current_ms << std::endl;
-//		std::cout << " type=" << std::string(recordBuffer[u].event_type) << std::endl;
-//		std::cout << " camp=" << std::string(recordBuffer[u].campaign_id) << std::endl;
-
-		IOTDB_INFO("YSBPrintSink: tuple:" << u << " = " << " id=" << recordBuffer[u].id << " campaign=" << recordBuffer[u].campaign_id
-				<< " type=" << recordBuffer[u].event_type
-				<< " timestamp=" <<recordBuffer[u].current_ms)
-
-		processedTuples++;
-	}
-	IOTDB_INFO(" ============= YSBPrintSink: FINISHED ============")
-	processedBuffer++;
-
-	//Dispatcher::instance().releaseBuffer(input_buffer);
-}
-
-const std::string YSBPrintSink::toString() const {
-  std::stringstream ss;
-  ss << "YSB_PRINT_SINK(";
-  ss << "SCHEMA(" << schema.toString() << "), ";
-  return ss.str();
+const std::string PrintSink::toString() const
+{
+    std::stringstream ss;
+    ss << "PRINT_SINK(";
+    ss << "SCHEMA(" << schema.toString() << "), ";
+    return ss.str();
 }
 
 } // namespace iotdb

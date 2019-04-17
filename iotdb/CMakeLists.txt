@@ -16,7 +16,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Set Optimization Flags
 set(CMAKE_CXX_FLAGS "-Wall -g")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNO_RACE_CHECK ")
 set(CMAKE_CXX_FLAGS_RELEASE "-Wextra -O3")
 
 # Compiler should produce specific code for system architecture
@@ -138,9 +138,13 @@ add_executable(ClangAstBuilder ClangAstBuilder.cpp)
 target_link_libraries(ClangAstBuilder iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
 target_include_directories(ClangAstBuilder PUBLIC "include")
 
-#add_executable(iotNode iotNode.cpp)
-#target_link_libraries(iotNode iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS})
-#target_include_directories(iotNode PUBLIC "include")
+add_executable(iotNode iotNode.cpp)
+target_link_libraries(iotNode iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS})
+target_include_directories(iotNode PUBLIC "include")
+
+add_executable(iotBroker iotBroker.cpp)
+target_link_libraries(iotBroker iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS})
+target_include_directories(iotBroker PUBLIC "include")
 
 add_executable(iotMaster iotMaster.cpp)
 target_link_libraries(iotMaster iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)

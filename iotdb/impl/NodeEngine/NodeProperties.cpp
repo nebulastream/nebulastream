@@ -1,5 +1,7 @@
 #include <NodeEngine/NodeProperties.hpp>
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 namespace iotdb{
 void NodeProperties::readCpuStats() {
 
@@ -49,24 +51,64 @@ void NodeProperties::readCpuStats() {
 
 std::string NodeProperties::getCpuStats()
 {
-	return _cpus.dump();
+    return _cpus.dump();
 }
 std::string NodeProperties::getNetworkStats()
 {
-	return _nets.dump();
+    return _nets.dump();
 }
 std::string NodeProperties::getMemStats()
 {
-	return _mem.dump();
+    return _mem.dump();
 }
 
 std::string NodeProperties::getFsStats()
 {
-	return _fs.dump();
+    return _fs.dump();
 }
+
+std::string NodeProperties::getMetric()
+{
+    return _metrics.dump();
+}
+
+void NodeProperties::setClientName(std::string pClientName)
+{
+    clientName = pClientName;
+};
+
+void NodeProperties::setClientPort(std::string pClientPort)
+{
+    clientPort = pClientPort;
+};
+
+std::string NodeProperties::getClientName()
+{
+    std::string host = _nets[0]["hostname"].dump();
+    host.erase(0,1);
+    host.erase(host.length()-1,1);
+    return host;
+}
+
+std::string NodeProperties::getClientPort()
+{
+    std::string port = _nets[0]["port"].dump();
+    port.erase(0,1);
+    port.erase(port.length()-1,1);
+    return port;
+}
+
 
 void NodeProperties::readNetworkStats() {
   this->_nets.clear();
+  char hostnameChar[1024];
+  gethostname(hostnameChar, 1024);
+  std::string s1 = hostnameChar;
+  JSON hname;
+
+  hname["hostname"] = clientName;//TODO: replace this later with s1
+  hname["port"] = clientPort;//TODO: replace this later with s1
+  this->_nets.push_back(hname);
 
   struct ifaddrs* ifa;
 
@@ -140,11 +182,26 @@ void NodeProperties::readNetworkStats() {
     } else {
       this->_nets.push_back(net);
     }
+
   }
 
   this->_metrics["nets"] = this->_nets;
 }
 
+void NodeProperties::print()
+{
+    std::cout << "cpu stats=" << std::endl;
+    std::cout << getCpuStats() << std::endl;
+
+    std::cout << "network stats=" << std::endl;
+    std::cout << getNetworkStats() << std::endl;
+
+    std::cout << "mbemory stats=" << std::endl;
+    std::cout << getMemStats() << std::endl;
+
+    std::cout << "filesystem stats=" << std::endl;
+    std::cout << getFsStats() << std::endl;
+}
 void NodeProperties::readMemStats() {
   this->_mem.clear();
 
@@ -193,9 +250,13 @@ std::string NodeProperties::dump(int setw) {
   return _metrics.dump(setw);
 }
 
-JSON NodeProperties::load(const char* metricsBuffer) {
+void NodeProperties::load(const char* metricsBuffer) {
   this->_metrics = JSON::parse(metricsBuffer);
-  return this->_metrics;
+
+  _mem = this->_metrics["mem"];
+  _fs = this->_metrics["fs"];
+  _cpus = this->_metrics["cpus"];
+  _nets = this->_metrics["nets"];
 }
 
 JSON NodeProperties::load() {

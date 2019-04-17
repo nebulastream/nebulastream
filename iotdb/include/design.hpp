@@ -6,215 +6,172 @@
 namespace iotdb_test {
 
 /** Client Side **/
-    class InputQuery;//API
-    typedef std::shared_ptr<InputQuery> InputQueryPtr;
+class InputQuery; // API
+typedef std::shared_ptr<InputQuery> InputQueryPtr;
 
-    class Schema;//API
-    typedef std::shared_ptr<Schema> SchemaPtr;
+class Schema; // API
+typedef std::shared_ptr<Schema> SchemaPtr;
 
-    class Stream;//API
-    typedef std::shared_ptr<Stream> StreamPtr;
+class Stream; // API
+typedef std::shared_ptr<Stream> StreamPtr;
 
-/** Master Node -- Fog Components **/    
-    class FogTopologyManager;
-    typedef std::shared_ptr<FogTopologyManager> FogTopologyManagerPtr;
+/** Master Node -- Fog Components **/
+class FogTopologyManager;
+typedef std::shared_ptr<FogTopologyManager> FogTopologyManagerPtr;
 
-    class FogTopologyPlan;
-    typedef std::shared_ptr<FogTopologyPlan> FogTopologyPlanPtr;
-    
-    class FogTopologyNode;
-    typedef std::shared_ptr<FogTopologyNode> FogTopologyNodePtr;
+class FogTopologyPlan;
+typedef std::shared_ptr<FogTopologyPlan> FogTopologyPlanPtr;
 
-    class FogTopologyLink;
-    typedef std::shared_ptr<FogTopologyLink> FogTopologyLinkPtr;
+class FogTopologyNode;
+typedef std::shared_ptr<FogTopologyNode> FogTopologyNodePtr;
 
-    class FogTopologySensorNode;
-    typedef std::shared_ptr<FogTopologySensorNode> FogTopologySensorNodePtr;
+class FogTopologyLink;
+typedef std::shared_ptr<FogTopologyLink> FogTopologyLinkPtr;
 
+class FogTopologySensorNode;
+typedef std::shared_ptr<FogTopologySensorNode> FogTopologySensorNodePtr;
 
-    class FogNodeProperties;
-    typedef std::shared_ptr<FogNodeProperties> FogNodePropertiesPtr;
+class FogNodeProperties;
+typedef std::shared_ptr<FogNodeProperties> FogNodePropertiesPtr;
 
+/** Master Node -- Query Components **/
+class LogicalQueryManager;
+typedef std::shared_ptr<LogicalQueryManager> LogicalQueryManagerPtr;
 
-/** Master Node -- Query Components **/    
-    class LogicalQueryManager;
-    typedef std::shared_ptr<LogicalQueryManager> LogicalQueryManagerPtr;
+/** for deploying multiple queries at once */
+class LogicalQueryGraph;
+typedef std::shared_ptr<LogicalQueryGraph> LogicalQueryGraphPtr;
 
-  /** for deploying multiple queries at once */
-    class LogicalQueryGraph;
-    typedef std::shared_ptr<LogicalQueryGraph> LogicalQueryGraphPtr;
+class LogicalQueryPlan;
+typedef std::shared_ptr<LogicalQueryPlan> LogicalQueryPlanPtr;
 
-    class LogicalQueryPlan;
-    typedef std::shared_ptr<LogicalQueryPlan> LogicalQueryPlanPtr;
+/** Master Node -- Optimizer Components **/
+class FogOptimizer;
+typedef std::shared_ptr<FogOptimizer> FogOptimizerPtr;
 
-/** Master Node -- Optimizer Components **/    
-    class FogOptimizer;
-    typedef std::shared_ptr<FogOptimizer> FogOptimizerPtr;
+class FogExecutionPlan;
+typedef std::shared_ptr<FogExecutionPlan> FogExecutionPlanPtr;
 
-    class FogExecutionPlan;
-    typedef std::shared_ptr<FogExecutionPlan> FogExecutionPlanPtr;
+class FogRuntime;
+typedef std::shared_ptr<FogRuntime> FogRuntimePtr;
 
-    class FogRuntime;
-    typedef std::shared_ptr<FogRuntime> FogRuntimePtr;
+/** Master Node -- Monitoring Components **/
+class FogMonitor;
+typedef std::shared_ptr<FogMonitor> FogMonitorPtr;
 
-/** Master Node -- Monitoring Components **/    
-    class FogMonitor;
-    typedef std::shared_ptr<FogMonitor> FogMonitorPtr;
+/** FogNode Device **/
+class FogNodeManager;
+typedef std::shared_ptr<FogNodeManager> FogNodeManagerPtr;
 
-/** FogNode Device **/    
-    class FogNodeManager;
-    typedef std::shared_ptr<FogNodeManager> FogNodeManagerPtr;
-    
-    class FogExecutionEngine;
-    typedef std::shared_ptr<FogExecutionEngine> FogExecutionEnginePtr;
-    
-    class FogSensorEngine;
-    typedef std::shared_ptr<FogSensorEngine> FogSensorEnginePtr;
-    
- /* ----------- IMPL ---------*/  
-    
-    class FogTopologyNode{
-    public:
-        /** \brief stores the fog nodes this fog node receives its data from */
-        std::vector<FogTopologyNodePtr> childs;
-        /** \brief stores the fog nodes this fog node transmit data to */
-        std::vector<std::weak_ptr<FogTopologyNode>> parents;
-        /** \brief stores the query sub-graph processed on this node */
-        LogicalQueryGraphPtr query_graph;
-        FogNodePropertiesPtr properties;
-        uint64_t node_id;
-    };
+class FogExecutionEngine;
+typedef std::shared_ptr<FogExecutionEngine> FogExecutionEnginePtr;
 
-    class FogTopologyPlan{
-        // how to model Links?
-        std::vector<FogTopologyNodePtr> source_nodes;
-        std::vector<FogTopologyNodePtr> sink_nodes;
-    };
+class FogSensorEngine;
+typedef std::shared_ptr<FogSensorEngine> FogSensorEnginePtr;
 
-    class FogTopologyManager{
-        public:
+/* ----------- IMPL ---------*/
 
-            static FogTopologyPlanPtr getPlan(){
-                return FogTopologyPlanPtr();
-            }
-    };
+class FogTopologyNode {
+  public:
+    /** \brief stores the fog nodes this fog node receives its data from */
+    std::vector<FogTopologyNodePtr> childs;
+    /** \brief stores the fog nodes this fog node transmit data to */
+    std::vector<std::weak_ptr<FogTopologyNode>> parents;
+    /** \brief stores the query sub-graph processed on this node */
+    LogicalQueryGraphPtr query_graph;
+    FogNodePropertiesPtr properties;
+    uint64_t node_id;
+};
 
-    class FogOptimizer
+class FogTopologyPlan {
+    // how to model Links?
+    std::vector<FogTopologyNodePtr> source_nodes;
+    std::vector<FogTopologyNodePtr> sink_nodes;
+};
+
+class FogTopologyManager {
+  public:
+    static FogTopologyPlanPtr getPlan() { return FogTopologyPlanPtr(); }
+};
+
+class FogOptimizer {
+  public:
+    static FogExecutionPlanPtr map(FogTopologyPlanPtr fog, LogicalQueryGraphPtr qg) { return FogExecutionPlanPtr(); }
+
+    LogicalQueryGraphPtr optimizeQueryGraph(LogicalQueryGraphPtr query_graph)
     {
-    public:
-    	 static FogExecutionPlanPtr map(FogTopologyPlanPtr fog, LogicalQueryGraphPtr qg){
-    		 return FogExecutionPlanPtr();
-    	 }
+        /** \todo Optimizer path to determine the operator and sub-query placement on individual fog nodes */
+        /** \todo Optimizer path to determine the routing of data through the fog */
 
-    	  LogicalQueryGraphPtr optimizeQueryGraph(LogicalQueryGraphPtr query_graph){
-    	        /** \todo Optimizer path to determine the operator and sub-query placement on individual fog nodes */
-    	        /** \todo Optimizer path to determine the routing of data through the fog */
-
-    	        return LogicalQueryGraphPtr();
-    	    }
-
-
-    };
-
-    class FogRuntime
-    {
-    public:
-    	static FogMonitorPtr deploy(FogExecutionPlanPtr fqep){
-			return FogMonitorPtr();
-		}
-    };
-
-
-    class LogicalQueryGraph{
-        public:
-            static LogicalQueryGraphPtr create(){
-                return LogicalQueryGraphPtr();
-            }
-
-            void add(LogicalQueryPlanPtr query_plan){
-
-            }
-
-            std::vector<OperatorPtr> source_nodes;
-            std::vector<OperatorPtr> sink_nodes;
-    };
-
-    class LogicalQueryManager
-    {
-    public:
-    	LogicalQueryGraphPtr getQueryGraph(){
-    		return logQueryGraph;
-		}
-
-    	LogicalQueryPlanPtr createLogQueryPlan(InputQuery& query){
-            return LogicalQueryPlanPtr();
-        }
-
-        void addQueryToGraph(LogicalQueryPlanPtr plan)
-        {
-
-        }
-
-
-
-        LogicalQueryGraphPtr logQueryGraph;
-    };
-
-
-    class FogEvent{
-        //what to do with this?
-    };
-
-    class FogMonitor{
-    public:
-        bool hasEvents(){
-            return false;
-        }
-        const std::vector<FogEvent> getEvents(){
-            return std::vector<FogEvent>();
-        }
-        void waitForEvents(){
-
-        }
-    };
-    void handleEvents(const std::vector<FogEvent>& events){
-
+        return LogicalQueryGraphPtr();
     }
+};
 
+class FogRuntime {
+  public:
+    static FogMonitorPtr deploy(FogExecutionPlanPtr fqep) { return FogMonitorPtr(); }
+};
 
-    void test_design()
-    {
+class LogicalQueryGraph {
+  public:
+    static LogicalQueryGraphPtr create() { return LogicalQueryGraphPtr(); }
 
+    void add(LogicalQueryPlanPtr query_plan) {}
 
-        FogTopologyPlanPtr fog = FogTopologyManager::getPlan();
+    std::vector<OperatorPtr> source_nodes;
+    std::vector<OperatorPtr> sink_nodes;
+};
 
-        DataSourcePtr source;
+class LogicalQueryManager {
+  public:
+    LogicalQueryGraphPtr getQueryGraph() { return logQueryGraph; }
 
-        InputQuery&& iQuery = std::move(InputQuery::create(Config::create(), Schema::create(), source));
+    LogicalQueryPlanPtr createLogQueryPlan(InputQuery& query) { return LogicalQueryPlanPtr(); }
 
-        LogicalQueryManager logQueryMgn;
+    void addQueryToGraph(LogicalQueryPlanPtr plan) {}
 
-        LogicalQueryPlanPtr logPlan = logQueryMgn.createLogQueryPlan(iQuery);
+    LogicalQueryGraphPtr logQueryGraph;
+};
 
-        logQueryMgn.addQueryToGraph(logPlan);
+class FogEvent {
+    // what to do with this?
+};
 
-        FogExecutionPlanPtr fep = FogOptimizer::map(fog, logQueryMgn.getQueryGraph());
+class FogMonitor {
+  public:
+    bool hasEvents() { return false; }
+    const std::vector<FogEvent> getEvents() { return std::vector<FogEvent>(); }
+    void waitForEvents() {}
+};
+void handleEvents(const std::vector<FogEvent>& events) {}
 
-        FogMonitorPtr monitor = FogRuntime::deploy(fep);
+void test_design()
+{
 
-        while(true){
+    FogTopologyPlanPtr fog = FogTopologyManager::getPlan();
 
-                if(!monitor->hasEvents()){
-                    monitor->waitForEvents();
-                    }
+    DataSourcePtr source;
 
-                handleEvents(monitor->getEvents());
+    InputQuery&& iQuery = std::move(InputQuery::create(Config::create(), Schema::create(), source));
 
+    LogicalQueryManager logQueryMgn;
+
+    LogicalQueryPlanPtr logPlan = logQueryMgn.createLogQueryPlan(iQuery);
+
+    logQueryMgn.addQueryToGraph(logPlan);
+
+    FogExecutionPlanPtr fep = FogOptimizer::map(fog, logQueryMgn.getQueryGraph());
+
+    FogMonitorPtr monitor = FogRuntime::deploy(fep);
+
+    while (true) {
+
+        if (!monitor->hasEvents()) {
+            monitor->waitForEvents();
         }
 
-
+        handleEvents(monitor->getEvents());
     }
-
-
-
 }
+
+} // namespace iotdb_test
