@@ -545,10 +545,10 @@ void runConsumerPartitioned(std::atomic<size_t>** hashTable, size_t windowSizeIn
                 total_received_tuples += tuplesCnt;
                 total_received_buffers++;
 
-                stringstream ss;
-                ss << "consumerID=" << consumerID << " received buffer at index=" << index << " size=" << recv_buffers[index]->getSizeInBytes()
-                        << " tuplesCnt=" << tuplesCnt << endl;
-                cout << ss.str();
+//                stringstream ss;
+//                ss << "consumerID=" << consumerID << " received buffer at index=" << index << " size=" << recv_buffers[index]->getSizeInBytes()
+//                        << " tuplesCnt=" << tuplesCnt << endl;
+//                cout << ss.str();
 
                 size_t* dataPtr = (size_t*)recv_buffers[index]->getData();
                 dataPtr++;
@@ -647,10 +647,10 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         {
             *consumedTuples = total_received_tuples;
             *consumedBuffers = total_received_buffers;
-            stringstream ss;
-            cout << "Thread=" << omp_get_thread_num() << " Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
-                            << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
-            cout << ss.str();
+//            stringstream ss;
+//            cout << "Thread=" << omp_get_thread_num() << " Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
+//                            << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
+//            cout << ss.str();
             return;
         }
     }//end of while
