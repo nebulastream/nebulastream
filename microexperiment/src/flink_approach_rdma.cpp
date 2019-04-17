@@ -537,6 +537,8 @@ void runConsumerPartitioned(std::atomic<size_t>** hashTable, size_t windowSizeIn
 
             size_t* dataPtr = (size_t*)recv_buffers[index]->getData();
             dataPtr++;
+            cout << " buffer start = " << recv_buffers[index]->getData() << " new pos= " << dataPtr << endl;
+
             consumed += runConsumerOneOnOne((Tuple*)dataPtr, tuplesCnt,
                     hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
 
