@@ -314,7 +314,7 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
         {
             stringstream ss;
             ss << "prodID=" << prodID << " consumerID=" << consumerID << " hash value= " << hashValue.value
-                            << " idx=" << bufferIdx << endl;
+                            << " idx=" << bufferIdx  << " tupCnt=" << sendBuffers[bufferIdx].getNumberOfTuples() << endl;
             cout << ss.str() << endl;
             total_buffer_send++;
             total_sent_tuples += sendBuffers[bufferIdx].getNumberOfTuples();
@@ -342,7 +342,7 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
         {
             stringstream ss;
             ss << "Remain prodID=" << prodID << " consumerID=" << consumerID
-                            << " idx=" << bufferIdx << endl;
+                            << " idx=" << bufferIdx  << " tupCnt=" << sendBuffers[bufferIdx].getNumberOfTuples() << endl;
             cout << ss.str() << endl;
 
             total_buffer_send++;
