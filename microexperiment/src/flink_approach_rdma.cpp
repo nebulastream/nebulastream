@@ -309,7 +309,6 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
         size_t consumerID = (hashValue.value % numberOfConsumer);
         size_t bufferIdx = (consumerID * numberOfConsumer) + prodID ;
 
-
         if(sendBuffers[bufferIdx].add(tup))//TODO:change to inplace update instead of constcutor
         {
             stringstream ss;
@@ -353,6 +352,7 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
             sender[consumerID]++;
         }
     }
+
     std::atomic_fetch_add(&exitProducer, size_t(1));
     if(std::atomic_load(&exitProducer) == numberOfProducer)
     {
@@ -561,9 +561,9 @@ void runConsumerPartitioned(std::atomic<size_t>** hashTable, size_t windowSizeIn
                 noBufferFound++;
             }
 
-            index++;
-            if(index > endIdx)
-                index = startIdx;
+//            index++;
+//            if(index > endIdx)
+//                index = startIdx;
 
             if(std::atomic_load(&exitConsumer) == 1)
             {
