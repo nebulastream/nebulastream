@@ -253,11 +253,11 @@ void trySendBufferToConsumer(VerbsConnection* connection,  size_t idx,
                 cout << "reset buffer size to " << sizeof(Tuple)* bufferSizeInTuples << endl;
             }
 
-            cout << "WRITE BUFFER with size=" << sendBuffers[idx].send_buffer->getSizeInBytes()
-                    << " regsize=" << region_tokens[idx]->getSizeInBytes()
-                    << " numTups=" << sendBuffers[idx].getNumberOfTuples()
-                    << " by thread=" << omp_get_thread_num()
-                    << endl;
+//            cout << "WRITE BUFFER with size=" << sendBuffers[idx].send_buffer->getSizeInBytes()
+//                    << " regsize=" << region_tokens[idx]->getSizeInBytes()
+//                    << " numTups=" << sendBuffers[idx].getNumberOfTuples()
+//                    << " by thread=" << omp_get_thread_num()
+//                    << endl;
 
             connection->write(sendBuffers[idx].send_buffer, region_tokens[idx],
                  sendBuffers[idx].requestToken);
@@ -344,9 +344,9 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
             total_buffer_send++;
             total_sent_tuples += sendBuffers[bufferIdx].getNumberOfTuples();
 
-            cout << "prodID=" << prodID << " consumerID=" << consumerID << " idx=" << bufferIdx << endl;
+//            cout << "prodID=" << prodID << " consumerID=" << consumerID << " idx=" << bufferIdx << endl;
             size_t remaining_tuples = sendBuffers[bufferIdx].getNumberOfTuples();
-            cout << " remain tups=" << remaining_tuples << endl;
+//            cout << " remain tups=" << remaining_tuples << endl;
             trySendBufferToConsumer(connection, bufferIdx, remaining_tuples, true);
 //            sendBuffers[(hashValue.value % numberOfConsumer) + bufferOffset].setNumberOfTuples(0);
             sender[consumerID]++;
@@ -369,7 +369,6 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
             }
         }
     }
-
 
     stringstream ss;
     ss << "Thread=" << omp_get_thread_num() << " prodID=" << prodID << " readIn" << readInputTuples << " produced=" << produced
