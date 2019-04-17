@@ -55,6 +55,7 @@ class StructDeclaration : public Declaration {
     VariableDeclaration getVariableDeclaration(const std::string& field_name) const;
 
     StructDeclaration& addField(const Declaration& decl);
+    StructDeclaration& makeStructCompact();
 
     ~StructDeclaration();
 
@@ -63,6 +64,7 @@ class StructDeclaration : public Declaration {
     std::string type_name_;
     std::string variable_name_;
     std::vector<DeclarationPtr> decls_;
+    bool packed_struct_;
 };
 
 class VariableDeclaration;
