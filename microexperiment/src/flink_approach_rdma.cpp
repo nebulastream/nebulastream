@@ -351,10 +351,14 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
             sender[hashValue.value % numberOfConsumer]++;
         }
     }
+    std::atomic_fetch_add(&exitProducer, size_t(1));
+    if(std::atomic_load(&exitProducer) == numberOfProducer)
+    {
+        cout << "sending poisoned tuple" << endl;
+        buffer_ready_sign[0] = BUFFER_USED_SENDER_DONE;
+        connection->write_blocking(sign_buffer, sign_token, 0, 0, 1);
+    }
 
-    cout << "sending poisoned tuplle" << endl;
-    buffer_ready_sign[0] = BUFFER_USED_SENDER_DONE;
-    connection->write_blocking(sign_buffer, sign_token, 0, 0, 1);
 
     stringstream ss;
     ss << "Thread=" << omp_get_thread_num() << " prodID=" << prodID <<" produced=" << produced << " pushCnt=" << total_buffer_send
@@ -530,7 +534,7 @@ void runConsumerPartitioned(std::atomic<size_t>** hashTable, size_t windowSizeIn
                 std::atomic_fetch_add(&exitConsumer, size_t(1));
                 buffer_ready_sign[index] = BUFFER_READY_FLAG;
                 cout << "DONE BUFFER FOUND at idx"  << index << endl;
-                break;
+//                break;
             }
 
             size_t tuplesCnt = *((size_t*)recv_buffers[index]->getData());
