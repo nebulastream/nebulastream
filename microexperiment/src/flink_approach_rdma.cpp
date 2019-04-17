@@ -864,6 +864,8 @@ int main(int argc, char *argv[])
         ("ip", po::value<string>(&ip)->default_value(ip), "ip")
         ;
 
+    cout << "overwrite send buffer to " << numberOfConsumer * numberOfConsumer << endl;
+    NUM_SEND_BUFFERS = numberOfConsumer * numberOfConsumer;
     po::variables_map vm;
     po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
     po::notify(vm);
