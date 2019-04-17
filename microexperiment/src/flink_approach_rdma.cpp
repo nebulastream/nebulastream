@@ -120,7 +120,6 @@ public:
     bool add(Tuple& tup)
     {
            tups[(*numberOfTuples)++] = tup;
-           cout << "new buff size=" << *numberOfTuples << endl;
            return *numberOfTuples == maxNumberOfTuples;
     }
 
@@ -258,13 +257,12 @@ void trySendBufferToConsumer(VerbsConnection* connection, size_t targetConsumer,
 
             cout << "WRITE BUFFER with size=" << sendBuffers[idx].send_buffer->getSizeInBytes()
                     << " regsize=" << region_tokens[idx]->getSizeInBytes()
-                    << " numTups=" << sendBuffers[idx].getNumberOfTuples() << endl;
+                    << " numTups=" << sendBuffers[idx].getNumberOfTuples()
+                    << " toConsumer=" << targetConsumer
+                    << endl;
 
-            cout << "write to= "<< region_tokens[idx]->getAddress() << endl;
             connection->write(sendBuffers[idx].send_buffer, region_tokens[idx],
                  sendBuffers[idx].requestToken);
-
-            cout << "Writing " << sendBuffers[idx].getNumberOfTuples() << " tuples on buffer " << idx << endl;
 
             buffer_ready_sign[idx] = BUFFER_USED_FLAG;
             connection->write_blocking(sign_buffer, sign_token, idx, idx, 1);
