@@ -340,8 +340,10 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
 
         if(sendBuffers[bufferIdx].getNumberOfTuples() != 0)
         {
-            cout << "send remaining buffer idx" << bufferIdx << " with " << sendBuffers[bufferIdx].getNumberOfTuples() << " tuples left"
-                    << " to " << consumerID << endl;
+            stringstream ss;
+            ss << "Remain prodID=" << prodID << " consumerID=" << consumerID
+                            << " idx=" << bufferIdx << endl;
+            cout << ss.str() << endl;
 
             total_buffer_send++;
             total_sent_tuples += sendBuffers[bufferIdx].getNumberOfTuples();
