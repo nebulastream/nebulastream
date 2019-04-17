@@ -312,8 +312,10 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
 
         if(sendBuffers[bufferIdx].add(tup))//TODO:change to inplace update instead of constcutor
         {
-            cout << "prodID=" << prodID << " consumerID=" << consumerID << " hash value= " << hashValue.value
+            stringstream ss;
+            ss << "prodID=" << prodID << " consumerID=" << consumerID << " hash value= " << hashValue.value
                             << " idx=" << bufferIdx << endl;
+            cout << ss.str() << endl;
             total_buffer_send++;
             total_sent_tuples += sendBuffers[bufferIdx].getNumberOfTuples();
             trySendBufferToConsumer(connection, bufferIdx, bufferSizeInTuples, false);
