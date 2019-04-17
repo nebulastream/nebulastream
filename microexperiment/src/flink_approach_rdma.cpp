@@ -306,18 +306,18 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
         tempHash hashValue;
         hashValue.value = *(((uint64_t*) records[readIdx].campaign_id) + 1);
         Tuple tup(hashValue.value, timeStamp);
-        size_t bufferOffset = (hashValue.value % numberOfConsumer) + bufferOffset;
-        cout << "hash value= " << hashValue.value  << " pos=" << bufferOffset << endl;
+        size_t bufferIdx = (hashValue.value % numberOfConsumer) + bufferOffset;
+        cout << "hash value= " << hashValue.value  << " pos=" << bufferOffset << " consumer=" << hashValue.value % numberOfConsumer << endl;
 
-        if(sendBuffers[bufferOffset].add(tup))//TODO:change to inplace update instead of constcutor
+        if(sendBuffers[bufferIdx].add(tup))//TODO:change to inplace update instead of constcutor
         {
-            cout << "buffer full at idx=" << bufferOffset << endl;
+            cout << "buffer full at idx=" << bufferIdx << endl;
             total_buffer_send++;
-            total_sent_tuples += sendBuffers[bufferOffset].getNumberOfTuples();
-            trySendBufferToConsumer(connection, hashValue.value % numberOfConsumer, bufferOffset, bufferSizeInTuples, false);
+            total_sent_tuples += sendBuffers[bufferIdx].getNumberOfTuples();
+            trySendBufferToConsumer(connection, hashValue.value % numberOfConsumer, bufferIdx, bufferSizeInTuples, false);
 //            queue[hashValue.value % numberOfConsumer]->push(*tempBuffers[hashValue.value % numberOfConsumer]);
-            sendBuffers[bufferOffset].setNumberOfTuples(0);
-            sender[bufferOffset]++;
+            sendBuffers[bufferIdx].setNumberOfTuples(0);
+            sender[bufferIdx]++;
         }
 
         if(readIdx < NUMBER_OF_GEN_TUPLE)
