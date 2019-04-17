@@ -307,7 +307,7 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
         hashValue.value = *(((uint64_t*) records[readIdx].campaign_id) + 1);
         Tuple tup(hashValue.value, timeStamp);
         size_t bufferIdx = (hashValue.value % numberOfConsumer) + bufferOffset;
-        cout << "prodID=" << prodID << "hash value= " << hashValue.value  << " idx=" << bufferOffset
+        cout << "prodID=" << prodID << " hash value= " << hashValue.value  << " idx=" << bufferOffset
                 << " consumer=" << hashValue.value % numberOfConsumer << endl;
 
         if(sendBuffers[bufferIdx].add(tup))//TODO:change to inplace update instead of constcutor
@@ -332,23 +332,26 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
     //send unfull buffer
     for(size_t i = 0; i < numberOfConsumer; i++)
     {
-        size_t bufferOffset = i + bufferOffset;
+        size_t bufferIdx = i + bufferOffset;
 
-        if(sendBuffers[bufferOffset].getNumberOfTuples() != 0)
+        if(sendBuffers[bufferIdx].getNumberOfTuples() != 0)
         {
-            cout << "send remaining buffer " << bufferOffset << " with " << sendBuffers[bufferOffset].getNumberOfTuples() << " tuples left."<< endl;
+
             tempHash hashValue;
-            hashValue.value = sendBuffers[bufferOffset].tups[0].campaign_id;
+            hashValue.value = sendBuffers[bufferIdx].tups[0].campaign_id;
+            size_t targetConsumer = hashValue.value % numberOfConsumer;
+            cout << "send remaining buffer idx" << bufferIdx << " with " << sendBuffers[bufferIdx].getNumberOfTuples() << " tuples left"
+                    << " to " << targetConsumer << endl;
 
             total_buffer_send++;
-            total_sent_tuples += sendBuffers[bufferOffset].getNumberOfTuples();
+            total_sent_tuples += sendBuffers[bufferIdx].getNumberOfTuples();
 
-            cout << "hash value= " << hashValue.value  << " pos=" << bufferOffset << " value=" << hashValue.value << endl;
-            size_t remaining_tuples = sendBuffers[bufferOffset].getNumberOfTuples();
+            cout << "hash value= " << hashValue.value  << " idx=" << bufferIdx << " value=" << hashValue.value << endl;
+            size_t remaining_tuples = sendBuffers[bufferIdx].getNumberOfTuples();
             cout << " remain tups=" << remaining_tuples << endl;
-            trySendBufferToConsumer(connection, hashValue.value % numberOfConsumer, bufferOffset, remaining_tuples, true);
+            trySendBufferToConsumer(connection, targetConsumer, bufferIdx, remaining_tuples, true);
 //            sendBuffers[(hashValue.value % numberOfConsumer) + bufferOffset].setNumberOfTuples(0);
-            sender[bufferOffset]++;
+            sender[targetConsumer]++;
         }
     }
     std::atomic_fetch_add(&exitProducer, size_t(1));
