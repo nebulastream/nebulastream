@@ -495,7 +495,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 #endif
     for(size_t i = 0; i < bufferSizeInTuples; i++)
     {
-        cout << " tuple=" << i << " val="<< buffer[i].campaign_id  << endl;
+//        cout << " tuple=" << i << " val="<< buffer[i].campaign_id  << endl;
         size_t timeStamp = buffer[i].timeStamp; //seconds elapsed since 00:00 hours, Jan 1, 1970 UTC
         if (lastTimeStamp != timeStamp && timeStamp % windowSizeInSec == 0) {
             //TODO this is not corret atm
