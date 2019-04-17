@@ -92,24 +92,24 @@ struct Tuple {
 };
 //size 16 Byte
 
-struct TupleBuffer{
-    TupleBuffer(VerbsConnection & connection, size_t bufferSizeInTuples): numberOfTuples(0)
+class TupleBuffer{
+public:
+    TupleBuffer(VerbsConnection & connection, size_t bufferSizeInTuples)
     {
         maxNumberOfTuples = bufferSizeInTuples;
-        send_buffer = connection.allocate_buffer(bufferSizeInTuples * sizeof(Tuple));
+        send_buffer = connection.allocate_buffer(bufferSizeInTuples * sizeof(Tuple) + sizeof(size_t));
         requestToken = connection.create_request_token();
         requestToken->setCompleted(true);
-        tups = (Tuple*)send_buffer->getAddress();
+        tups = (Tuple*)send_buffer->getAddress() + sizeof(size_t);
+        numberOfTuples = (size_t*) send_buffer->getAddress();
+        *numberOfTuples = 0;
     }
-//    TupleBuffer(void* memory, size_t size)
-//    {
-//        tups = memory;
-//
-//    }
+
     TupleBuffer(TupleBuffer && other)
-        : numberOfTuples(other.numberOfTuples),
-          maxNumberOfTuples(other.maxNumberOfTuples)
         {
+            numberOfTuples = other.numberOfTuples;
+            maxNumberOfTuples = other.maxNumberOfTuples;
+
             std::swap(send_buffer, other.send_buffer);
             std::swap(tups, other.tups);
             std::swap(requestToken, other.requestToken);
@@ -117,15 +117,28 @@ struct TupleBuffer{
 
     bool add(Tuple& tup)
     {
-           tups[numberOfTuples++] = tup;
-           return numberOfTuples == maxNumberOfTuples;
+           tups[*numberOfTuples++] = tup;
+           return *numberOfTuples == maxNumberOfTuples;
     }
 
-    Buffer* send_buffer;
-    Tuple* tups;
-    RequestToken * requestToken;
-    size_t numberOfTuples;
+    size_t getNumberOfTuples()
+    {
+        return *numberOfTuples;
+    }
+
+    void setNumberOfTuples(size_t size)
+    {
+        *numberOfTuples = size;
+    }
+
     size_t maxNumberOfTuples;
+    Buffer* send_buffer;
+    RequestToken * requestToken;
+    Tuple* tups;
+private:
+    size_t* numberOfTuples;
+
+//    size_t numberOfTuples;
 };
 
 
@@ -242,7 +255,7 @@ void trySendBufferToConsumer(VerbsConnection* connection, size_t targetConsumer,
             connection->write(sendBuffers[idx].send_buffer, region_tokens[idx],
                  sendBuffers[idx].requestToken);
 
-            cout << "Writing " << sendBuffers[idx].numberOfTuples << " tuples on buffer " << idx << endl;
+            cout << "Writing " << sendBuffers[idx].getNumberOfTuples() << " tuples on buffer " << idx << endl;
 
             buffer_ready_sign[idx] = BUFFER_USED_FLAG;
             connection->write_blocking(sign_buffer, sign_token, idx, idx, 1);
@@ -287,11 +300,11 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
         if(sendBuffers[(hashValue.value % numberOfConsumer) + bufferOffset].add(tup))//TODO:change to inplace update instead of constcutor
         {
             total_buffer_send++;
-            total_sent_tuples += sendBuffers[(hashValue.value % numberOfConsumer) + bufferOffset].numberOfTuples;
+            total_sent_tuples += sendBuffers[(hashValue.value % numberOfConsumer) + bufferOffset].getNumberOfTuples();
             size_t offset = (hashValue.value % numberOfConsumer) + bufferOffset;
             trySendBufferToConsumer(connection, hashValue.value % numberOfConsumer, offset, bufferSizeInTuples, false);
 //            queue[hashValue.value % numberOfConsumer]->push(*tempBuffers[hashValue.value % numberOfConsumer]);
-            sendBuffers[(hashValue.value % numberOfConsumer) + bufferOffset].numberOfTuples = 0;
+            sendBuffers[(hashValue.value % numberOfConsumer) + bufferOffset].setNumberOfTuples(0);
             sender[hashValue.value % numberOfConsumer]++;
         }
     }
@@ -299,22 +312,22 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
     //send unfull buffer
     for(size_t i = 0; i < numberOfConsumer; i++)
     {
-        if(sendBuffers[i + bufferOffset].numberOfTuples != 0)
+        if(sendBuffers[i + bufferOffset].getNumberOfTuples() != 0)
         {
-            cout << "send remaining buffer " << i + bufferOffset << " with " << sendBuffers[i + bufferOffset].numberOfTuples << " tuples left."<< endl;
+            cout << "send remaining buffer " << i + bufferOffset << " with " << sendBuffers[i + bufferOffset].getNumberOfTuples() << " tuples left."<< endl;
             tempHash hashValue;
             hashValue.value = sendBuffers[i + bufferOffset].tups[0].campaign_id;
 //            cout << "sending to queue=" << hashValue.value % consumeCnt << endl;
             total_buffer_send++;
-            total_sent_tuples += sendBuffers[(hashValue.value % numberOfConsumer) + bufferOffset].numberOfTuples;
+            total_sent_tuples += sendBuffers[(hashValue.value % numberOfConsumer) + bufferOffset].getNumberOfTuples();
             size_t offset = (hashValue.value % numberOfConsumer) + bufferOffset;
             cout << "hash value= " << hashValue.value  << " pos=" << (hashValue.value % numberOfConsumer) + bufferOffset
                             << " value=" << hashValue.value << endl;
-            size_t remaining_tuples = sendBuffers[i + bufferOffset].numberOfTuples;
+            size_t remaining_tuples = sendBuffers[i + bufferOffset].getNumberOfTuples();
             cout << " remain tups=" << remaining_tuples << endl;
             trySendBufferToConsumer(connection, hashValue.value % numberOfConsumer, offset, remaining_tuples, true);
 //            queue[hashValue.value % numberOfConsumer]->push(*tempBuffers[hashValue.value % numberOfConsumer]);
-            sendBuffers[(hashValue.value % numberOfConsumer) + bufferOffset].numberOfTuples = 0;
+            sendBuffers[(hashValue.value % numberOfConsumer) + bufferOffset].setNumberOfTuples(0);
             sender[hashValue.value % numberOfConsumer]++;
         }
     }
@@ -372,14 +385,14 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t ge
                 //this will run until one buffer is filled completely
                 readTuples += produce_window_mem(records, genCnt, bufferSizeInTuples, (Tuple*)sendBuffers[receive_buffer_index].send_buffer->getData());
 
-                sendBuffers[receive_buffer_index].numberOfTuples = bufferSizeInTuples;
+                //sendBuffers[receive_buffer_index].numberOfTuples = bufferSizeInTuples;
 
                 connection->write(sendBuffers[receive_buffer_index].send_buffer, region_tokens[receive_buffer_index],
                         sendBuffers[receive_buffer_index].requestToken);
 #ifdef DEBUG
                 cout << "Writing " << sendBuffers[receive_buffer_index].numberOfTuples << " tuples on buffer " << receive_buffer_index << endl;
 #endif
-                total_sent_tuples += sendBuffers[receive_buffer_index].numberOfTuples;
+                total_sent_tuples += sendBuffers[receive_buffer_index].getNumberOfTuples();
                 total_buffer_send++;
 
 
@@ -503,7 +516,7 @@ void runConsumerPartitioned(std::atomic<size_t>** hashTable, size_t windowSizeIn
             size_t tuplesCnt = recv_buffers[index]->getSizeInBytes() / sizeof(Tuple);
             total_received_tuples += tuplesCnt;
             total_received_buffers++;
-            cout << "Received buffer at index=" << index << "tuples=" << tuplesCnt << endl;
+            cout << "Received buffer at index=" << index << " tuples=" << tuplesCnt << endl;
 
             consumed += runConsumerOneOnOne((Tuple*)recv_buffers[index]->getData(), tuplesCnt,
                     hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
