@@ -752,7 +752,7 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
     for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++)
     {
         if (i < NUM_SEND_BUFFERS) {
-            recv_buffers[i] = connection->allocate_buffer(bufferSizeInTuples * sizeof(Tuple));
+            recv_buffers[i] = connection->allocate_buffer(bufferSizeInTuples * sizeof(Tuple) + sizeof(size_t));
             region_tokens[i] = recv_buffers[i]->createRegionToken();
         } else {
 //            cout << "copy sign token at pos " << i << endl;
