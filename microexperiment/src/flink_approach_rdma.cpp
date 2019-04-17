@@ -548,7 +548,7 @@ void runConsumerPartitioned(std::atomic<size_t>** hashTable, size_t windowSizeIn
                 if(is_done) // this is done so that the loop later doesnt try to process this again
                 {
                     std::atomic_fetch_add(&exitConsumer, size_t(1));
-//                    buffer_ready_sign[index] = BUFFER_READY_FLAG;
+                    buffer_ready_sign[index] = BUFFER_READY_FLAG;
                     cout << "DONE BUFFER FOUND at idx"  << index << endl;
                     break;
                 }
@@ -595,12 +595,12 @@ void runConsumerPartitioned(std::atomic<size_t>** hashTable, size_t windowSizeIn
             break;
     }//end of while
 
-    cout << "checking remaining buffers" << endl;
+    cout << "checking remaining buffers from " << startIdx << " to " << endIdx << endl;
     for(size_t index = startIdx; index < endIdx; index++)//check again if some are there
     {
 //        cout << "checking i=" << index << endl;
         if (buffer_ready_sign[index] == BUFFER_USED_FLAG) {
-            cout << "Check Iter -- Received buffer at index=" << index << endl;
+            cout << "Found remaining buffer at -- Received buffer at index=" << index << endl;
 
             size_t tuplesCnt = *((size_t*)recv_buffers[index]->getData());
             size_t* dataPtr = (size_t*)recv_buffers[index]->getData();
