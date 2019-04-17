@@ -287,6 +287,7 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
 //    for(size_t i = 0; i < produceCnt; i++)
     while(total_buffer_send < bufferProcCnt)
     {
+        readTuples++;
         uint32_t value = *((uint32_t*) records[readIdx].event_type);
         if(value != 2003134838)
         {
@@ -313,7 +314,7 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
         if(sendBuffers[bufferIdx].add(tup))//TODO:change to inplace update instead of constcutor
         {
             size_t targetConsumer = hashValue.value % numberOfConsumer;
-            cout << "buffer full at idx=" << bufferIdx << endl;
+            //cout << "buffer full at idx=" << bufferIdx << endl;
 
             total_buffer_send++;
             total_sent_tuples += sendBuffers[bufferIdx].getNumberOfTuples();
@@ -374,8 +375,8 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
 
 
     stringstream ss;
-    ss << "Thread=" << omp_get_thread_num() << " prodID=" << prodID <<" produced=" << produced << " pushCnt=" << total_buffer_send
-            << " disQTuple=" << disQTuple << " qualTuple=" << qualTuple;
+    ss << "Thread=" << omp_get_thread_num() << " prodID=" << prodID << " readIn" << readInputTuples << " produced=" << produced
+            << " pushCnt=" << total_buffer_send << " disQTuple=" << disQTuple << " qualTuple=" << qualTuple;
 
     for(size_t i = 0; i < numberOfConsumer; i++)
     {
@@ -573,8 +574,8 @@ void runConsumerPartitioned(std::atomic<size_t>** hashTable, size_t windowSizeIn
         {
             noBufferFound++;
         }
-        index++;
 
+        index++;
         if(index > endIdx)
             index = startIdx;
 
@@ -595,11 +596,15 @@ void runConsumerPartitioned(std::atomic<size_t>** hashTable, size_t windowSizeIn
         if (buffer_ready_sign[index] == BUFFER_USED_FLAG) {
             cout << "Check Iter -- Received buffer at index=" << index << endl;
 
-            total_received_tuples += bufferSizeInTuples;
-            total_received_buffers++;
-//            consumed += runConsumerOneOnOne((Tuple*)recv_buffers[index]->getData(), bufferSizeInTuples,
-//                                hashTable, windowSizeInSec, campaingCnt, consumerID, produceCnt);
+            size_t tuplesCnt = *((size_t*)recv_buffers[index]->getData());
+            size_t* dataPtr = (size_t*)recv_buffers[index]->getData();
+            dataPtr++;
+            consumed += runConsumerOneOnOne((Tuple*)dataPtr, tuplesCnt,
+                                hashTable, windowSizeInSec, campaingCnt, consumerID);
+
             buffer_ready_sign[index] = BUFFER_READY_FLAG;
+            total_received_tuples += tuplesCnt;
+            total_received_buffers++;
         }
 
     }
