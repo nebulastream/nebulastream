@@ -25,6 +25,7 @@
 #include <mutex>
 //#define BUFFER_SIZE 1000
 
+using namespace std;
 
 #define PORT 55355
 //#define OLCONSUMERVERSION
@@ -119,6 +120,7 @@ public:
     bool add(Tuple& tup)
     {
            tups[*numberOfTuples++] = tup;
+           cout << "new buff size=" << *numberOfTuples << endl;
            return *numberOfTuples == maxNumberOfTuples;
     }
 
@@ -155,7 +157,6 @@ std::vector<char> buffer_ready_sign;
 infinity::memory::Buffer* sign_buffer;
 RegionToken* sign_token;
 std::vector<TupleBuffer> sendBuffers;
-using namespace std;
 typedef uint64_t Timestamp;
 using NanoSeconds = std::chrono::nanoseconds;
 using Clock = std::chrono::high_resolution_clock;
