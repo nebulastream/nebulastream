@@ -33,6 +33,7 @@
 #define BUFFER_READY_FLAG 0
 #define BUFFER_USED_FLAG 1
 #define BUFFER_BEING_PROCESSED_FLAG 2
+#define NUMBER_OF_GEN_TUPLE 1000000
 //#define JOIN_WRITE_BUFFER_SIZE 1024*1024*8
 //#define DEBUG
 #define MODE_PATRITIONING
@@ -198,7 +199,7 @@ Timestamp getTimestamp() {
             > (Clock::now().time_since_epoch()).count();
 }
 
-size_t produce_window_mem(record* records, size_t genCnt, size_t bufferSize, Tuple* outputBuffer)
+size_t produce_window_mem(record* records, size_t bufferSize, Tuple* outputBuffer)
 {
     size_t bufferIndex = 0;
     size_t inputTupsIndex = 0;
@@ -210,7 +211,7 @@ size_t produce_window_mem(record* records, size_t genCnt, size_t bufferSize, Tup
         uint32_t value = *((uint32_t*) records[inputTupsIndex].event_type);
         if (value != 2003134838)
         {
-            if(inputTupsIndex < genCnt)
+            if(inputTupsIndex < NUMBER_OF_GEN_TUPLE)
                 inputTupsIndex++;
             else
                 inputTupsIndex = 0;
@@ -226,7 +227,7 @@ size_t produce_window_mem(record* records, size_t genCnt, size_t bufferSize, Tup
         outputBuffer[bufferIndex].timeStamp = timeStamp;
 
         bufferIndex++;
-        if(inputTupsIndex < genCnt)
+        if(inputTupsIndex < NUMBER_OF_GEN_TUPLE)
             inputTupsIndex++;
         else
             inputTupsIndex = 0;
@@ -265,7 +266,7 @@ void trySendBufferToConsumer(VerbsConnection* connection, size_t targetConsumer,
 }
 
 
-void runProducerPartitioned(VerbsConnection* connection, record* records, size_t produceCnt, size_t bufferSizeInTuples, size_t bufferProcCnt,
+void runProducerPartitioned(VerbsConnection* connection, record* records, size_t bufferSizeInTuples, size_t bufferProcCnt,
         size_t* producesTuples, size_t* producedBuffers, size_t* readInputTuples, size_t* noFreeEntryFound, size_t startIdx, size_t endIdx, size_t numberOfProducer
         , size_t numberOfConsumer, size_t prodID, size_t bufferOffset)
 {
@@ -276,16 +277,21 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
     size_t produced = 0;
     size_t disQTuple = 0;
     size_t qualTuple = 0;
-
     size_t sender[numberOfConsumer] = {0};
-
-    for(size_t i = 0; i < produceCnt; i++)
+    size_t readIdx = 0;
+//    for(size_t i = 0; i < produceCnt; i++)
+    while(total_buffer_send < bufferProcCnt)
     {
-        uint32_t value = *((uint32_t*) records[i].event_type);
+        uint32_t value = *((uint32_t*) records[readIdx].event_type);
         if(value != 2003134838)
         {
             produced++;
             disQTuple++;
+            if(readIdx < NUMBER_OF_GEN_TUPLE)
+                readIdx++;
+            else
+                readIdx = 0;
+
             continue;
         }
 
@@ -293,7 +299,7 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
         produced++;
         size_t timeStamp = time(NULL);
         tempHash hashValue;
-        hashValue.value = *(((uint64_t*) records[i].campaign_id) + 1);
+        hashValue.value = *(((uint64_t*) records[readIdx].campaign_id) + 1);
         Tuple tup(hashValue.value, timeStamp);
         cout << "hash value= " << hashValue.value  << " pos=" << (hashValue.value % numberOfConsumer) + bufferOffset
                 << " value=" << hashValue.value << endl;
@@ -308,6 +314,11 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
             sendBuffers[(hashValue.value % numberOfConsumer) + bufferOffset].setNumberOfTuples(0);
             sender[hashValue.value % numberOfConsumer]++;
         }
+
+        if(readIdx < NUMBER_OF_GEN_TUPLE)
+            readIdx++;
+        else
+            readIdx = 0;
     }
 
     //send unfull buffer
@@ -353,7 +364,7 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
     *noFreeEntryFound = noBufferFreeToSend;
 }
 
-void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t genCnt, size_t bufferSizeInTuples, size_t bufferProcCnt,
+void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bufferSizeInTuples, size_t bufferProcCnt,
         size_t* producesTuples, size_t* producedBuffers, size_t* readInputTuples, size_t* noFreeEntryFound, size_t startIdx, size_t endIdx, size_t numberOfProducer)
 {
     size_t total_sent_tuples = 0;
@@ -384,7 +395,7 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t ge
             if(buffer_ready_sign[receive_buffer_index] == BUFFER_READY_FLAG)
             {
                 //this will run until one buffer is filled completely
-                readTuples += produce_window_mem(records, genCnt, bufferSizeInTuples, (Tuple*)sendBuffers[receive_buffer_index].send_buffer->getData());
+                readTuples += produce_window_mem(records, bufferSizeInTuples, (Tuple*)sendBuffers[receive_buffer_index].send_buffer->getData());
 
                 //sendBuffers[receive_buffer_index].numberOfTuples = bufferSizeInTuples;
 
@@ -820,13 +831,13 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples)
 }
 
 
-record** generateTuples(size_t genCnt, size_t num_Producer, size_t campaingCnt)
+record** generateTuples(size_t num_Producer, size_t campaingCnt)
 {
     std::random_device rd; //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
     std::uniform_int_distribution<size_t> diss(0, SIZE_MAX);
 
-    size_t randomCnt = genCnt / 10;
+    size_t randomCnt = NUMBER_OF_GEN_TUPLE / 10;
     size_t* randomNumbers = new size_t[randomCnt];
     std::uniform_int_distribution<size_t> disi(0, campaingCnt);
     for (size_t i = 0; i < randomCnt; i++)
@@ -842,14 +853,14 @@ record** generateTuples(size_t genCnt, size_t num_Producer, size_t campaingCnt)
 
     recs = new record*[num_Producer];
     for (size_t i = 0; i < num_Producer; i++) {
-        recs[i] = new record[genCnt];
+        recs[i] = new record[NUMBER_OF_GEN_TUPLE];
 
-        for (size_t u = 0; u < genCnt; u++) {
+        for (size_t u = 0; u < NUMBER_OF_GEN_TUPLE; u++) {
             generate(recs[i][u], /**campaingOffset*/
                     randomNumbers[u % randomCnt], campaign_lsb, campaign_msb, /**eventID*/
                     u);
         }
-        shuffle(recs[i], genCnt);
+        shuffle(recs[i], NUMBER_OF_GEN_TUPLE);
     }
     return recs;
 }
@@ -883,7 +894,6 @@ int main(int argc, char *argv[])
     size_t windowSizeInSeconds = 2;
     exitProducer = 0;
     exitConsumer = 0;
-    size_t genCnt = 1000000;
 
     size_t rank = 99;
     size_t numberOfProducer = 1;
@@ -922,12 +932,13 @@ int main(int argc, char *argv[])
             << " bufferProcCnt=" << bufferProcCnt
             << " tupleProcCnt=" << tupleProcCnt
             << " Rank=" << rank
-            << " genCnt=" << genCnt
+            << " genCnt=" << NUMBER_OF_GEN_TUPLE
             << " bufferSizeInTups=" << bufferSizeInTups
             << " bufferSizeInKB=" << bufferSizeInTups * sizeof(Tuple) / 1024
             << " numberOfSendBuffer=" << NUM_SEND_BUFFERS
             << " numberOfProducer=" << numberOfProducer
             << " numberOfConsumer=" << numberOfConsumer
+
             << " ip=" << ip
             << endl;
 
@@ -953,7 +964,7 @@ int main(int argc, char *argv[])
     //fix for the test
     const size_t campaingCnt = 10000;
 
-    record** recs = generateTuples(genCnt, numberOfProducer, campaingCnt);
+    record** recs = generateTuples(numberOfProducer, campaingCnt);
 
     //create hash table
     std::atomic<size_t>** hashTable = new std::atomic<size_t>*[2];
@@ -990,12 +1001,12 @@ int main(int argc, char *argv[])
                 size_t endIdx = (i+1)*share;
 
 #ifdef MODE_PATRITIONING
-                runProducerPartitioned(connection, recs[i], tupleProcCnt, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
+                runProducerPartitioned(connection, recs[i], bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
                         &producedBuffers[i], &readInputTuples[i], &noFreeEntryFound[i], startIdx, endIdx, numberOfProducer, numberOfConsumer
                         , i, /** bucketOffset*/ i * numberOfConsumer);
 #else
     //            cout << "producer " << i << " from=" << startIdx << " to " << endIdx << endl;
-                runProducerOneOnOne(connection, recs[i], genCnt, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
+                runProducerOneOnOne(connection, recs[i], bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
                         &producedBuffers[i], &readInputTuples[i], &noFreeEntryFound[i], startIdx, endIdx, numberOfProducer);
 #endif
             }
