@@ -802,6 +802,7 @@ int main(int argc, char *argv[])
                 if(i == numberOfConsumer -1)
                 {
                     endIdx = NUM_SEND_BUFFERS;
+
                 }
 
 #ifndef FAST
