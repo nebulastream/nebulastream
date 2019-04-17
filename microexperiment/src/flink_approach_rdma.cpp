@@ -242,7 +242,7 @@ void trySendBufferToConsumer(VerbsConnection* connection,  size_t idx,
 {
     while(true)
     {
-        cout << "read from startIdx=" << idx << endl;
+//        cout << "read from startIdx=" << idx << endl;
         connection->read_blocking(sign_buffer, sign_token, idx, idx, 1);
 
         if(buffer_ready_sign[idx] == BUFFER_READY_FLAG)
@@ -308,12 +308,12 @@ void runProducerPartitioned(VerbsConnection* connection, record* records, size_t
         Tuple tup(hashValue.value, timeStamp);
         size_t consumerID = (hashValue.value % numberOfConsumer);
         size_t bufferIdx = (consumerID * numberOfConsumer) + prodID ;
-        cout << "prodID=" << prodID << " consumerID=" << consumerID << " hash value= " << hashValue.value
-                << " idx=" << bufferIdx << endl;
+
 
         if(sendBuffers[bufferIdx].add(tup))//TODO:change to inplace update instead of constcutor
         {
-
+            cout << "prodID=" << prodID << " consumerID=" << consumerID << " hash value= " << hashValue.value
+                            << " idx=" << bufferIdx << endl;
             total_buffer_send++;
             total_sent_tuples += sendBuffers[bufferIdx].getNumberOfTuples();
             trySendBufferToConsumer(connection, bufferIdx, bufferSizeInTuples, false);
@@ -553,12 +553,12 @@ void runConsumerPartitioned(std::atomic<size_t>** hashTable, size_t windowSizeIn
 
                 total_received_tuples += tuplesCnt;
                 total_received_buffers++;
-                cout << "Received buffer at index=" << index << " size=" << recv_buffers[index]->getSizeInBytes()
+                cout << "consumerID=" << consumerID << " received buffer at index=" << index << " size=" << recv_buffers[index]->getSizeInBytes()
                         << " tuplesCnt=" << tuplesCnt << endl;
 
                 size_t* dataPtr = (size_t*)recv_buffers[index]->getData();
                 dataPtr++;
-                cout << " buffer start = " << recv_buffers[index]->getData() << " new pos= " << dataPtr << endl;
+//                cout << " buffer start = " << recv_buffers[index]->getData() << " new pos= " << dataPtr << endl;
 
                 consumed += runConsumerOneOnOne((Tuple*)dataPtr, tuplesCnt,
                         hashTable, windowSizeInSec, campaingCnt, consumerID);
