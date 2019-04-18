@@ -21,7 +21,7 @@ int main() {
     status[0]=-1;
     void * ptr_to_check = &bla;
 
-    ret_code=move_pages(0 /*self memory */, 1, &ptr_to_check,
+    ret_code=move_pages(0 /*self memory */, 1, ptr_to_check,
        NULL, status, 0);
     printf("Memory at %p is at %d node (id %d) (node %d)\n",
             bla, status[0], 0, numa_node_of_cpu(sched_getcpu()));
@@ -40,7 +40,7 @@ int main() {
     status[1];
     ret_code;
     status[0]=-1;
-    ret_code=move_pages(0 /*self memory */, 1, &ptr_to_check,
+    ret_code=move_pages(0 /*self memory */, 1, ptr_to_check,
        NULL, status, 0);
 
     printf("Memory at %p is at %d node (id %d) (node %d)\n",
