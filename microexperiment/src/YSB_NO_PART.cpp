@@ -765,7 +765,7 @@ int main(int argc, char *argv[])
 
 //    cout << "ptr=" << sendBuffers << " *=" << * sendBuffers << " &=" << &sendBuffers << " now=" << (void*)sendBuffers << endl;
     stringstream ss;
-    void* ptr_to_check = region_tokens;
+    void* ptr_to_check = sendBuffers;
     int status[1];
     status[0] = -1;
     size_t ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check, NULL, status, 0);
