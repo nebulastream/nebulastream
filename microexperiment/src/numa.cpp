@@ -19,12 +19,12 @@ int main() {
     int status[1];
     int ret_code;
     status[0]=-1;
-    void * ptr_to_check = numa_alloc_onnode(999, node);
+    void * ptr_to_check = numa_alloc_onnode(999999, node);
 
     ret_code=move_pages(0 /*self memory */, 1, &ptr_to_check,
        NULL, status, 0);
     printf("Memory at %p is at %d node (id %d) (node %d)\n",
-            bla, status[0], 0, numa_node_of_cpu(sched_getcpu()));
+            ptr_to_check, status[0], 0, numa_node_of_cpu(sched_getcpu()));
     int numa_node = -1;
 
     get_mempolicy(&numa_node, NULL, 0, (void*)bla, MPOL_F_NODE | MPOL_F_ADDR);
@@ -38,7 +38,7 @@ int main() {
     numa_bitmask_setbit(asd2, node2);
     numa_set_membind(asd2);
     size_t* bla2 = new size_t[999999]{0};
-    void * ptr_to_check2 = numa_alloc_onnode(999, node2);
+    void * ptr_to_check2 = numa_alloc_onnode(999999, node2);
     cout << "test=" << bla2[0] << endl;
 
     status[1];
@@ -48,7 +48,7 @@ int main() {
        NULL, status, 0);
 
     printf("Memory at %p is at %d node (id %d) (node %d)\n",
-            bla2, status[0], 0, numa_node_of_cpu(sched_getcpu()));
+            ptr_to_check2, status[0], 0, numa_node_of_cpu(sched_getcpu()));
     get_mempolicy(&numa_node, NULL, 0, (void*)bla, MPOL_F_NODE | MPOL_F_ADDR);
         cout << "node= " << numa_node << ",";
 
