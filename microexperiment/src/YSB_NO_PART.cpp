@@ -749,7 +749,7 @@ int main(int argc, char *argv[])
 //        sendBuffers[i] = new TupleBuffer(*connections[outer_thread_id], bufferSizeInTups);
 //    }
 
-    void* b2 = numa_alloc_onnode((NUM_SEND_BUFFERS+1)*sizeof(RegionToken*), outer_thread_id);
+    void* b2 = numa_alloc_onnode((NUM_SEND_BUFFERS+1)*sizeof(RegionToken), outer_thread_id);
     infinity::memory::RegionToken** region_tokens = (infinity::memory::RegionToken**)b2;
 
 //    infinity::memory::RegionToken** region_tokens = new infinity::memory::RegionToken*[NUM_SEND_BUFFERS+1];
