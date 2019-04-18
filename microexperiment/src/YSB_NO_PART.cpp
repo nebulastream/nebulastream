@@ -724,9 +724,9 @@ int main(int argc, char *argv[])
     auto outer_thread_id = omp_get_thread_num();
     numa_run_on_node(outer_thread_id);
     numa_set_preferred(outer_thread_id);
-    std::string str = std::to_string(outer_thread_id);
-    struct bitmask *bm = numa_parse_nodestring(str.c_str());
-    numa_bind(bm);
+//    std::string str = std::to_string(outer_thread_id);
+//    struct bitmask *bm = numa_parse_nodestring(str.c_str());
+//    numa_bind(bm);
 
     TupleBuffer** sendBuffers = new TupleBuffer*[NUM_SEND_BUFFERS];
     for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
