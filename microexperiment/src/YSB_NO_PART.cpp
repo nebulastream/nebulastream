@@ -728,17 +728,17 @@ int main(int argc, char *argv[])
     for(size_t i = 0; i < numberOfConnections; i++)
     {
         CorePin(i*10);
-        numa_run_on_node(static_cast<int>(i));
         size_t nr_nodes = numa_max_node()+1;
         struct bitmask * asd = numa_bitmask_alloc(nr_nodes);
         numa_bitmask_setbit(asd, i);
         numa_set_membind(asd);
         struct bitmask * ret = numa_bitmask_alloc(nr_nodes);
 
-        numa_run_on_node(i);
+        numa_run_on_node(0);
+        numa_set_preferred(0);
         nodemask_t mask;
         nodemask_zero(&mask);
-        nodemask_set_compat(&mask, i);
+        nodemask_set_compat(&mask, 0);
         numa_bind_compat(&mask);
 
         region_tokens = new infinity::memory::RegionToken*[NUM_SEND_BUFFERS+1];
