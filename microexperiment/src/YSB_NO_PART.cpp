@@ -734,8 +734,8 @@ int main(int argc, char *argv[])
 //        numa_set_membind(asd);
 //        struct bitmask * ret = numa_bitmask_alloc(nr_nodes);
 
-        numa_run_on_node(i);
-        numa_set_preferred(i);
+        numa_run_on_node(1);
+        numa_set_preferred(1);
 //        bitmask oldmask = numa_get_interleave_mask();
 //        numa_set_interleave_mask(&numa_all_cpus_ptr);
 //        /* run memory bandwidth intensive legacy library that allocates memory */
@@ -744,11 +744,9 @@ int main(int argc, char *argv[])
 //        nodemask_t mask;
 //        nodemask_zero(&mask);
 //        nodemask_set_compat(&mask, i);
-        struct bitmask *bm = numa_parse_nodestring("0");
-        if (bm == 0) {
-            exit(1);
-        }
+        struct bitmask *bm = numa_parse_nodestring("1");
         numa_bind(bm);
+
         TupleBuffer** sendBuffers2 = new TupleBuffer*[NUM_SEND_BUFFERS];
         region_tokens = new infinity::memory::RegionToken*[NUM_SEND_BUFFERS+1];
 
