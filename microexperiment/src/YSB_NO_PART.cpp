@@ -722,7 +722,7 @@ int main(int argc, char *argv[])
     {
 //        CorePin(i*10);
         std::cout << "Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << "\n";
-        setupRDMAProducer(connections[i], bufferSizeInTups, i*10);
+        setupRDMAProducer(connections[i], bufferSizeInTups, i);
     }
 }//end of pragma
     }
@@ -736,7 +736,7 @@ int main(int argc, char *argv[])
 //        CorePin(i*10);
         std::cout << "Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << "\n";
         std::cout << "run consumer" << endl;
-        setupRDMAConsumer(connections[i], bufferSizeInTups, i*10);
+        setupRDMAConsumer(connections[i], bufferSizeInTups, i);
     }
 }
     }
