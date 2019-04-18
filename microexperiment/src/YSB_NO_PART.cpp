@@ -693,7 +693,7 @@ int main(int argc, char *argv[])
     size_t target_rank = rank == 0 ? 1 : 0;
     SimpleInfoProvider info1(target_rank, 3, 1, PORT1, ip1);//ib0
     connections.push_back(new VerbsConnection(&info1));
-
+    cout << "first connection established" << endl;
     if(numberOfConnections == 2)
     {
         SimpleInfoProvider info2(target_rank, 1, 1, PORT2, ip2);//ib1
