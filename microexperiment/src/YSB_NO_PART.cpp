@@ -724,7 +724,10 @@ int main(int argc, char *argv[])
     auto outer_thread_id = omp_get_thread_num();
     numa_run_on_node(outer_thread_id);
     numa_set_preferred(outer_thread_id);
-    numa_set_localalloc();
+//    numa_set_localalloc();
+
+    void * ptr_to_check3 = numa_alloc_onnode(999, outer_thread_id);
+    ((size_t*)ptr_to_check3)[0] = 123;
 
     TupleBuffer** sendBuffers = new TupleBuffer*[NUM_SEND_BUFFERS];
     for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
