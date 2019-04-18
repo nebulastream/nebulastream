@@ -8,7 +8,7 @@ using namespace std;
 
 int main() {
     size_t node = 0;
-//    numa_run_on_node(static_cast<int>(node));
+    numa_run_on_node(static_cast<int>(node));
 //    numa_set_preferred(node);
 //    size_t nr_nodes = numa_max_node()+1;
 //    struct bitmask * asd = numa_bitmask_alloc(nr_nodes);
@@ -32,7 +32,7 @@ int main() {
 //    cout << "node= " << numa_node << ",";
 //    /s/##################
     size_t node2 = 1;
-//    numa_run_on_node(static_cast<int>(node2));
+    numa_run_on_node(static_cast<int>(node2));
 //    numa_set_preferred(node2);
 //    nr_nodes = numa_max_node()+1;
 //    struct bitmask * asd2 = numa_bitmask_alloc(nr_nodes);
