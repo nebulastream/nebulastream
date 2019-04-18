@@ -504,7 +504,7 @@ void copy_received_tokens_from_buffer(infinity::memory::Buffer* buffer)
 //    }
 //}
 
-void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples, size_t nodeId)
+void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples, size_t nodeId, TupleBuffer** sendBuffers)
 {
 //    std::vector<TupleBuffer> sendBuffers;
     for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
@@ -745,7 +745,7 @@ int main(int argc, char *argv[])
         TupleBuffer** sendBuffers = new TupleBuffer*[NUM_SEND_BUFFERS];
         buffer_ready_sign = new char[NUM_SEND_BUFFERS];
 
-        setupRDMAProducer(connections[i], bufferSizeInTups, i);
+        setupRDMAProducer(connections[i], bufferSizeInTups, i, sendBuffers);
         stringstream ss;
         ss  << "Producer Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << " nodes=";
         int numa_node = -1;
