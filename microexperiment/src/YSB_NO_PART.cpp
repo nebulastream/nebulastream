@@ -670,6 +670,7 @@ int main(int argc, char *argv[])
 
     if(rank == 0)
     {
+        cout << "starting " << numberOfConnections << " threads" << endl;
 #pragma omp parallel proc_bind(spread)
 #pragma omp parallel num_threads(numberOfConnections)
 {
@@ -679,7 +680,6 @@ int main(int argc, char *argv[])
         std::cout << "Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << "\n";
         setupRDMAProducer(connections[i], bufferSizeInTups);
     }
-
 }//end of pragma
     }
     else
