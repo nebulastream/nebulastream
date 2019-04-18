@@ -726,7 +726,7 @@ int main(int argc, char *argv[])
     numa_set_preferred(outer_thread_id);
 //    numa_set_localalloc();
 
-    void * ptr_to_check3 = numa_alloc_onnode(999, outer_thread_id);
+    void * ptr_to_check3 = numa_alloc_onnode(100, outer_thread_id);
     ((size_t*)ptr_to_check3)[0] = 123;
 
     TupleBuffer** sendBuffers = new TupleBuffer*[NUM_SEND_BUFFERS];
@@ -743,22 +743,21 @@ int main(int argc, char *argv[])
         buffer_ready_sign[i] = BUFFER_READY_FLAG;
     }
 
-    cout << "ptr=" << sendBuffers << " *=" << * sendBuffers << " &=" << &sendBuffers << " now=" << (void*)sendBuffers << endl;
+//    cout << "ptr=" << sendBuffers << " *=" << * sendBuffers << " &=" << &sendBuffers << " now=" << (void*)sendBuffers << endl;
     stringstream ss;
     void * ptr_to_check = sendBuffers;
-     /*here you should align ptr_to_check to page boundary */
-     int status[1];
-     int ret_code;
-     status[0]=-1;
-//     ret_code=move_pages(0 /*self memory */, 1, ptr_to_check, NULL, status, 0);
-     printf("Memory at %p is at %d node (id %d) (node %d)\n", sendBuffers, status[0], outer_thread_id, numa_node_of_cpu(sched_getcpu()));
+    int status[1];
+    status[0] = -1;
+
+    int ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check, NULL, status, 0);
+    printf("Memory at %p is at %d node (thread %d) (core %d) (node %d) (retCode %d) \n", sendBuffers,
+            status[0], outer_thread_id, sched_getcpu() ,numa_node_of_cpu(sched_getcpu())
+            , ret_code);
 
     ss  << "Producer Thread #" << outer_thread_id  << ": on CPU " << sched_getcpu() << " nodes=";
     int numa_node = -1;
     get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers, MPOL_F_NODE | MPOL_F_ADDR);
     ss << numa_node << ",";
-    get_mempolicy(&numa_node, NULL, 0, (void*)*sendBuffers, MPOL_F_NODE | MPOL_F_ADDR);
-        ss << numa_node << ",";
     get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers[0]->send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
     ss << numa_node << ",";
     get_mempolicy(&numa_node, NULL, 0, (void*)buffer_ready_sign, MPOL_F_NODE | MPOL_F_ADDR);
