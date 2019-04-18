@@ -735,11 +735,20 @@ int main(int argc, char *argv[])
                 status[0], outer_thread_id, sched_getcpu() ,numa_node_of_cpu(sched_getcpu())
                 , ret_code);
 
-    TupleBuffer** sendBuffers = new TupleBuffer*[NUM_SEND_BUFFERS];
-    for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
+
+    char* pBuffer = new char[NUM_SEND_BUFFERS*sizeof(TupleBuffer)];
+    TupleBuffer** pA = (TupleBuffer**)pBuffer;
+
+    for(int i = 0; i < NUM_SEND_BUFFERS; ++i)
     {
-        sendBuffers[i] = new TupleBuffer(*connections[outer_thread_id], bufferSizeInTups);
+        pA[i] = new (pA + i) TupleBuffer(*connections[outer_thread_id], bufferSizeInTups);
     }
+
+//    TupleBuffer** sendBuffers = new TupleBuffer*[NUM_SEND_BUFFERS];
+//    for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
+//    {
+//        sendBuffers[i] = new TupleBuffer(*connections[outer_thread_id], bufferSizeInTups);
+//    }
 
     infinity::memory::RegionToken** region_tokens = new infinity::memory::RegionToken*[NUM_SEND_BUFFERS+1];
 
@@ -753,7 +762,6 @@ int main(int argc, char *argv[])
     stringstream ss;
     void* ptr_to_check = sendBuffers;
     status[0] = -1;
-
     ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check, NULL, status, 0);
     printf("Memory at %p is at %d node (thread %d) (core %d) (node %d) (retCode %d) \n", sendBuffers,
             status[0], outer_thread_id, sched_getcpu() ,numa_node_of_cpu(sched_getcpu())
