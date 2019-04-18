@@ -91,6 +91,10 @@ add_executable(YSB_PART
     )
 target_link_libraries(YSB_PART infinity ibverbs numa json11 tbb boost_program_options)
 
+add_executable(numatest
+        src/numa.cpp
+    )
+target_link_libraries(numatest infinity ibverbs numa json11 tbb boost_program_options)
 
 add_executable(flinkApproachSingleNode
         src/flink_approach.cpp)
