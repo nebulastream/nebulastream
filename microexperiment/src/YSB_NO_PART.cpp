@@ -708,8 +708,8 @@ int main(int argc, char *argv[])
     #pragma omp for
     for(size_t i = 0; i < numberOfConnections; i++)
     {
-//        std::cout << "Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << "\n";
         CorePin(0);
+        std::cout << "Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << "\n";
         while(true)
             ;
        //setupRDMAProducer(connections[i], bufferSizeInTups);
