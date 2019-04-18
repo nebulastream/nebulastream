@@ -709,18 +709,25 @@ int main(int argc, char *argv[])
     #pragma omp for
     for(size_t i = 0; i < numberOfConnections; i++)
     {
-        CorePin(0*10);
+        CorePin(i*10);
         std::cout << "Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << "\n";
-        while(true)
-            ;
-       //setupRDMAProducer(connections[i], bufferSizeInTups);
+        setupRDMAProducer(connections[i], bufferSizeInTups);
     }
 }//end of pragma
     }
     else
     {
+#pragma omp parallel num_threads(numberOfConnections)
+{
+    #pragma omp for
+    for(size_t i = 0; i < numberOfConnections; i++)
+    {
+        CorePin(i10);
+        std::cout << "Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << "\n";
         std::cout << "run consumer" << endl;
-        setupRDMAConsumer(connections[0], bufferSizeInTups);
+        setupRDMAConsumer(connections[i], bufferSizeInTups);
+    }
+}
     }
     exit(0);
     //fix for the test
