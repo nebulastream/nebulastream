@@ -507,6 +507,7 @@ void copy_received_tokens(const std::vector<TupleBuffer> &sendBuffers,
 
 void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples, size_t nodeId)
 {
+    stringstream ss;
     numa_run_on_node(static_cast<int>(nodeId));
 //    numa_set_preferred(nodeId);
 //    numa_set_localalloc();
@@ -516,7 +517,7 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples, s
     numa_bitmask_setbit(asd, 1);
     numa_set_membind(asd);
 
-    std::cout << "Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << "\n";
+    ss << "Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << "\n";
 
 //    std::vector<TupleBuffer> sendBuffers;
     for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
@@ -528,15 +529,15 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples, s
     void * ptr_to_check = (void*)sendBuffers[0].send_buffer;
 
     ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check, NULL, status, 0);
-    printf("Memory at %p is at %d node (retcode %d)\n", &ptr_to_check, status[0], ret_code);
+   // printf("Memory at %p is at %d node (retcode %d)\n", &ptr_to_check, status[0], ret_code);
 
     int numa_node = -1;
     get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers[0].send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
-    cout << "alloc on numa node=" << numa_node << " thread/node=" << nodeId << endl;
+    ss << "alloc on numa node=" << numa_node << " thread/node=" << nodeId << endl;
 
     size_t* sendBuffers2 = new size_t[100];
     get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers2, MPOL_F_NODE | MPOL_F_ADDR);
-    cout << "alloclocal on numa node=" << numa_node << " thread/node=" << nodeId << endl;
+    ss << "alloclocal on numa node=" << numa_node << " thread/node=" << nodeId << endl;
 
     for(auto & r : buffer_ready_sign)
     {
@@ -559,7 +560,8 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples, s
 
     copy_received_tokens_from_buffer(tokenbuffer, region_tokens, sign_token);
 
-    cout << "setupRDMAProducer finished" << endl;
+    ss << "setupRDMAProducer finished" << endl;
+    cout << ss.str() << endl;
 }
 
 
