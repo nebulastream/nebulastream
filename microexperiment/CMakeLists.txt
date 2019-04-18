@@ -61,8 +61,8 @@ include_directories(src/)
 
 set( CMAKE_VERBOSE_MAKEFILE on )
 
-add_executable(flinkApproachRDMA
-        src/flink_approach_rdma.cpp
+add_executable(YSB_NO_PART
+        src/YSB_NO_PART.cpp
         rdma_lib/Utilities/MPI_Helper_Fake.cpp
         rdma_lib/Utilities/ConnectionInfoProvider/SimpleInfoProvider.cpp
         rdma_lib/Utilities/VerbsConnection.cpp
@@ -74,10 +74,10 @@ add_executable(flinkApproachRDMA
         rdma_lib/Utilities/ConnectionInfoProvider/ConnectionUtilities.cpp
         rdma_lib/Utilities/DeviceMemoryAllocator/GPUMemoryAllocator.cu
     )
-target_link_libraries(flinkApproachRDMA infinity ibverbs numa json11 tbb boost_program_options)
+target_link_libraries(YSB_NO_PART infinity ibverbs numa json11 tbb boost_program_options)
 
-add_executable(flinkApproachRDMAPART
-        src/flink_approach_rdma_part.cpp
+add_executable(YSB_PART
+        src/YSB_PART.cpp
         rdma_lib/Utilities/MPI_Helper_Fake.cpp
         rdma_lib/Utilities/ConnectionInfoProvider/SimpleInfoProvider.cpp
         rdma_lib/Utilities/VerbsConnection.cpp
@@ -89,7 +89,7 @@ add_executable(flinkApproachRDMAPART
         rdma_lib/Utilities/ConnectionInfoProvider/ConnectionUtilities.cpp
         rdma_lib/Utilities/DeviceMemoryAllocator/GPUMemoryAllocator.cu
     )
-target_link_libraries(flinkApproachRDMAPART infinity ibverbs numa json11 tbb boost_program_options)
+target_link_libraries(YSB_PART infinity ibverbs numa json11 tbb boost_program_options)
 
 
 add_executable(flinkApproachSingleNode

@@ -581,14 +581,12 @@ void printHT(std::atomic<size_t>** hashTable, size_t campaingCnt)
     }
     myfile.close();
 
-
 }
 namespace po = boost::program_options;
 int main(int argc, char *argv[])
 {
     numa_run_on_node(static_cast<int>(1));
-//    numa_set_localalloc();
-    numa_set_preferred(0);
+    numa_set_preferred(1);
 
     po::options_description desc("Options");
 
@@ -601,8 +599,11 @@ int main(int argc, char *argv[])
     size_t numberOfConsumer = 1;
     size_t bufferProcCnt = 0;
     size_t bufferSizeInTups = 0;
+    size_t numberOfConnections = 1;
     NUM_SEND_BUFFERS = 0;
-    string ip = "";
+    string ip1 = "";
+    string ip2 = "";
+
 
     desc.add_options()
         ("help", "Print help messages")
@@ -612,7 +613,9 @@ int main(int argc, char *argv[])
         ("bufferProcCnt", po::value<size_t>(&bufferProcCnt)->default_value(bufferProcCnt), "bufferProcCnt")
         ("bufferSizeInTups", po::value<size_t>(&bufferSizeInTups)->default_value(bufferSizeInTups), "bufferSizeInTups")
         ("sendBuffers", po::value<size_t>(&NUM_SEND_BUFFERS)->default_value(NUM_SEND_BUFFERS), "sendBuffers")
-        ("ip", po::value<string>(&ip)->default_value(ip), "ip")
+        ("numberOfConnections", po::value<size_t>(&numberOfConnections)->default_value(numberOfConnections), "numberOfConnections")
+        ("ip1", po::value<string>(&ip1)->default_value(ip1), "ip1")
+        ("ip2", po::value<string>(&ip2)->default_value(ip2), "ip2")
         ;
 
     po::variables_map vm;
@@ -639,28 +642,46 @@ int main(int argc, char *argv[])
             << " numberOfSendBuffer=" << NUM_SEND_BUFFERS
             << " numberOfProducer=" << numberOfProducer
             << " numberOfConsumer=" << numberOfConsumer
-            << " ip=" << ip
+            << " numberOfConnections=" << numberOfConnections
+            << " ip1=" << ip1
+            << " ip2=" << ip2
             << endl;
-
-
 
     recv_buffers.resize(NUM_SEND_BUFFERS);
     region_tokens.resize(NUM_SEND_BUFFERS+1);
     buffer_ready_sign.resize(NUM_SEND_BUFFERS);
 
+    std::vector<VerbsConnection*> connections;
     size_t target_rank = rank == 0 ? 1 : 0;
-    SimpleInfoProvider info(target_rank, 3, 1, PORT, ip);
-    VerbsConnection* connection = new VerbsConnection(&info);
+    SimpleInfoProvider info1(target_rank, 3, 1, PORT, ip1);//ib0
+    connections.push_back(new VerbsConnection(&info1));
+
+    if(numberOfConnections == 2)
+    {
+        SimpleInfoProvider info2(target_rank, 1, 1, PORT, ip2);//ib1
+        connections.push_back(new VerbsConnection(&info2));
+    }
+
     if(rank == 0)
     {
-        std::cout << "run producer" << endl;
-        setupRDMAProducer(connection, bufferSizeInTups);
+#pragma omp parallel proc_bind(spread)
+#pragma omp parallel num_threads(numberOfConnections)
+{
+    #pragma omp for
+    for(size_t i = 0; i < numberOfProducer; i++)
+    {
+        std::cout << "Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << "\n";
+        setupRDMAProducer(connections[i], bufferSizeInTups);
+    }
+
+}//end of pragma
     }
     else
     {
         std::cout << "run consumer" << endl;
-        setupRDMAConsumer(connection, bufferSizeInTups);
+        setupRDMAConsumer(connections[0], bufferSizeInTups);
     }
+    exit(0);
     //fix for the test
     const size_t campaingCnt = 10000;
 
@@ -685,7 +706,7 @@ int main(int argc, char *argv[])
     size_t consumerNoBufferFound[numberOfConsumer] = {0};
 
     size_t readInputTuples[numberOfProducer] = {0};
-    infinity::memory::Buffer* finishBuffer = connection->allocate_buffer(1);
+    infinity::memory::Buffer* finishBuffer = connections[0]->allocate_buffer(1);
 
     Timestamp begin = getTimestamp();
 //#define OLCONSUMERVERSION
@@ -700,13 +721,13 @@ int main(int argc, char *argv[])
                 size_t startIdx = i* share;
                 size_t endIdx = (i+1)*share;
 
-                runProducerOneOnOne(connection, recs[i], bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
+                runProducerOneOnOne(connections[0], recs[i], bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
                         &producedBuffers[i], &readInputTuples[i], &noFreeEntryFound[i], startIdx, endIdx, numberOfProducer);
             }
 
         }
         cout << "producer finished ... waiting for consumer to finish " << getTimestamp() << endl;
-        connection->post_and_receive_blocking(finishBuffer);
+        connections[0]->post_and_receive_blocking(finishBuffer);
         cout << "got finish buffer, finished execution " << getTimestamp()<< endl;
     }
     else
@@ -732,7 +753,7 @@ int main(int argc, char *argv[])
             }
         }
         cout << "finished, sending finish buffer " << getTimestamp() << endl;
-        connection->send_blocking(finishBuffer);
+        connections[0]->send_blocking(finishBuffer);
         cout << "buffer sending finished, shutdown "<< getTimestamp() << endl;
 
     }
