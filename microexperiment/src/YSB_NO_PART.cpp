@@ -722,7 +722,7 @@ int main(int argc, char *argv[])
     #pragma omp for
     for(size_t i = 0; i < numberOfConnections; i++)
     {
-        CorePin(i10);
+        CorePin(i*10);
         std::cout << "Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << "\n";
         std::cout << "run consumer" << endl;
         setupRDMAConsumer(connections[i], bufferSizeInTups);
