@@ -24,7 +24,6 @@
 #include <boost/program_options.hpp>
 #include <mutex>
 #include <numaif.h>
-
 //#define BUFFER_SIZE 1000
 
 using namespace std;
@@ -506,23 +505,23 @@ void copy_received_tokens(const std::vector<TupleBuffer> &sendBuffers,
     }
 }
 
-void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples, size_t threadID)
+void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples, size_t nodeId)
 {
-    numa_run_on_node(static_cast<int>(threadID));
-    numa_set_preferred(threadID);
-    numa_set_localalloc();
+    numa_run_on_node(static_cast<int>(nodeId));
+    numa_set_preferred(nodeId);
+//    numa_set_localalloc();
     std::cout << "Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << "\n";
 
     for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
         sendBuffers.emplace_back(TupleBuffer(*connection, bufferSizeInTuples));
 
     int numa_node = -1;
-    get_mempolicy(&numa_node, NULL, 0, (void*)&sendBuffers[0].send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
-    cout << "alloc on numa node=" << numa_node << " thread/node=" << threadID << endl;
+    get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers[0].send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
+    cout << "alloc on numa node=" << numa_node << " thread/node=" << nodeId << endl;
 
     std::vector<TupleBuffer> sendBuffers2;
     get_mempolicy(&numa_node, NULL, 0, (void*)&sendBuffers2, MPOL_F_NODE | MPOL_F_ADDR);
-    cout << "alloclocal on numa node=" << numa_node << " thread/node=" << threadID << endl;
+    cout << "alloclocal on numa node=" << numa_node << " thread/node=" << nodeId << endl;
 
     for(auto & r : buffer_ready_sign)
     {
@@ -640,6 +639,8 @@ int main(int argc, char *argv[])
 //    numa_run_on_node(static_cast<int>(1));
 //    numa_set_preferred(1);
 
+
+    std::cout << "done" << std::endl;
     po::options_description desc("Options");
 
     size_t windowSizeInSeconds = 2;
