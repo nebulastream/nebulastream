@@ -699,7 +699,7 @@ int main(int argc, char *argv[])
         SimpleInfoProvider info2(target_rank, 1, 1, PORT2, ip2);//ib1
         connections.push_back(new VerbsConnection(&info2));
     }
-
+    cout << "second connection established" << endl;
     if(rank == 0)
     {
         cout << "starting " << numberOfConnections << " threads" << endl;
