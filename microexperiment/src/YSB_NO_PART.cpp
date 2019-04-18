@@ -733,9 +733,9 @@ int main(int argc, char *argv[])
     numa_run_on_node(outer_thread_id);
 
     TupleBuffer** sendBuffers2 = new TupleBuffer*[NUM_SEND_BUFFERS];
-    region_tokens = new infinity::memory::RegionToken*[NUM_SEND_BUFFERS+1];
+    infinity::memory::RegionToken** region_tokens = new infinity::memory::RegionToken*[NUM_SEND_BUFFERS+1];
 
-    buffer_ready_sign = new char[NUM_SEND_BUFFERS];
+    char* buffer_ready_sign = new char[NUM_SEND_BUFFERS];
     cout << "node=" << numa_node_of_cpu(sched_getcpu()) << endl;
     setupRDMAProducer(connections[outer_thread_id], bufferSizeInTups, outer_thread_id, sendBuffers2);
     stringstream ss;
