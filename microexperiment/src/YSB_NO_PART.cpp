@@ -769,7 +769,7 @@ int main(int argc, char *argv[])
     int status[1];
     status[0] = -1;
     size_t ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check, NULL, status, 0);
-    printf("Memory at %p is at %d node (thread %d) (core %d) (node %d) (retCode %d) \n", region_tokens,
+    printf("Memory at %p is at %d node (thread %d) (core %d) (node %d) (retCode %d) \n", sendBuffers,
             status[0], outer_thread_id, sched_getcpu() ,numa_node_of_cpu(sched_getcpu())
             , ret_code);
 
@@ -779,7 +779,7 @@ int main(int argc, char *argv[])
 
     std::cout << "Blocking to receive tokens!" << endl;
     connections[outer_thread_id]->post_and_receive_blocking(tokenbuffer);
-    std::cout << "received" << endl;
+//    std::cout << "received" << endl;
 
     for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++)
     {
