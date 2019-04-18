@@ -514,7 +514,7 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples, s
     size_t nr_nodes = numa_max_node()+1;
 
     struct bitmask * asd = numa_bitmask_alloc(nr_nodes);
-    numa_bitmask_setbit(asd, 1);
+    numa_bitmask_setbit(asd, nodeId);
     numa_set_membind(asd);
 
     ss << "Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << "\n";
