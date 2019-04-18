@@ -472,21 +472,22 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples, s
     cout << "setupRDMAConsumer finished" << endl;
 }
 
-void copy_received_tokens_from_buffer(infinity::memory::Buffer* buffer)
-{
-    for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++){
-        if ( i < NUM_SEND_BUFFERS){
-            region_tokens[i] = static_cast<RegionToken*>(malloc(sizeof(RegionToken)));
-            memcpy(region_tokens[i], (RegionToken*)buffer->getData() + i, sizeof(RegionToken));
-
-        } else {
-            sign_token = static_cast<RegionToken*>(malloc(sizeof(RegionToken)));
-            memcpy(sign_token, (RegionToken*)buffer->getData() + i, sizeof(RegionToken));
-        }
-//        cout << "region getSizeInBytes=" << region_tokens[i]->getSizeInBytes() << " getAddress=" << region_tokens[i]->getAddress()
-//                            << " getLocalKey=" << region_tokens[i]->getLocalKey() << " getRemoteKey=" << region_tokens[i]->getRemoteKey() << endl;
-    }
-}
+//void copy_received_tokens_from_buffer(infinity::memory::Buffer* buffer,
+//        infinity::memory::RegionToken** region_tokens, size_t nodeId)
+//{
+//    for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++){
+//        if ( i < NUM_SEND_BUFFERS){
+//            region_tokens[i] = static_cast<RegionToken*>(malloc(sizeof(RegionToken)));
+//            memcpy(region_tokens[i], (RegionToken*)buffer->getData() + i, sizeof(RegionToken));
+//
+//        } else {
+//            sign_token = static_cast<RegionToken*>(malloc(sizeof(RegionToken)));
+//            memcpy(sign_token, (RegionToken*)buffer->getData() + i, sizeof(RegionToken));
+//        }
+////        cout << "region getSizeInBytes=" << region_tokens[i]->getSizeInBytes() << " getAddress=" << region_tokens[i]->getAddress()
+////                            << " getLocalKey=" << region_tokens[i]->getLocalKey() << " getRemoteKey=" << region_tokens[i]->getRemoteKey() << endl;
+//    }
+//}
 //
 //void copy_received_tokens(const std::vector<TupleBuffer> &sendBuffers,
 //        std::vector<RegionToken*> &region_tokens, RegionToken*&sign_token)
@@ -532,16 +533,16 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples, s
 //        buffer_ready_sign[i] = BUFFER_READY_FLAG;
 //    }
 
-    sign_buffer = connection->register_buffer(buffer_ready_sign, NUM_SEND_BUFFERS);
-    sign_token = nullptr;
-    infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
-
-//    std::cout << "Blocking to receive tokens!" << endl;
-    connection->post_and_receive_blocking(tokenbuffer);
-
-    copy_received_tokens_from_buffer(tokenbuffer);
-
-    cout  << "setupRDMAProducer finished" << endl;
+//    sign_buffer = connection->register_buffer(buffer_ready_sign, NUM_SEND_BUFFERS);
+//    sign_token = nullptr;
+//    infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
+//
+////    std::cout << "Blocking to receive tokens!" << endl;
+//    connection->post_and_receive_blocking(tokenbuffer);
+//
+//    copy_received_tokens_from_buffer(tokenbuffer);
+//
+//    cout  << "setupRDMAProducer finished" << endl;
 }
 
 
@@ -779,7 +780,20 @@ int main(int argc, char *argv[])
     std::cout << "Blocking to receive tokens!" << endl;
     connections[outer_thread_id]->post_and_receive_blocking(tokenbuffer);
     std::cout << "received" << endl;
-    copy_received_tokens_from_buffer(tokenbuffer);
+
+    for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++)
+    {
+        if ( i < NUM_SEND_BUFFERS){
+            region_tokens[i] = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
+            memcpy(region_tokens[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
+
+        } else {
+            sign_token = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
+            memcpy(sign_token, (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
+        }
+    }
+
+//    copy_received_tokens_from_buffer(tokenbuffer, region_tokens, outer_thread_id);
 
     ss  << "Producer Thread #" << outer_thread_id  << ": on CPU " << sched_getcpu() << " nodes=";
    int numa_node = -1;
