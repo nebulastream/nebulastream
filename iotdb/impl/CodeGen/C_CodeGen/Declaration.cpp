@@ -37,7 +37,9 @@ const Code StructDeclaration::getTypeDefinitionCode() const
 const Code StructDeclaration::getCode() const
 {
     std::stringstream expr;
-    expr << "struct " << type_name_ << "{" << std::endl;
+    expr << "struct ";
+    if(packed_struct_) expr << "__attribute__((packed)) ";
+    expr << type_name_ << "{" << std::endl;
     for (auto& decl : decls_) {
         expr << decl->getCode() << ";" << std::endl;
     }
@@ -74,8 +76,13 @@ StructDeclaration& StructDeclaration::addField(const Declaration& decl)
     return *this;
 }
 
+StructDeclaration& StructDeclaration::makeStructCompact(){
+  packed_struct_ = true;
+  return *this;
+}
+
 StructDeclaration::StructDeclaration(const std::string& type_name, const std::string& variable_name)
-    : type_name_(type_name), variable_name_(variable_name), decls_()
+    : type_name_(type_name), variable_name_(variable_name), decls_(), packed_struct_(false)
 {
 }
 
