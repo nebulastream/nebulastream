@@ -747,8 +747,7 @@ int main(int argc, char *argv[])
      int status[1];
      int ret_code;
      status[0]=-1;
-     ret_code=move_pages(0 /*self memory */, 1, &ptr_to_check,
-        NULL, status, 0);
+//     ret_code=move_pages(0 /*self memory */, 1, ptr_to_check, NULL, status, 0);
      printf("Memory at %p is at %d node (id %d) (node %d)\n", sendBuffers, status[0], outer_thread_id, numa_node_of_cpu(sched_getcpu()));
 
     ss  << "Producer Thread #" << outer_thread_id  << ": on CPU " << sched_getcpu() << " nodes=";
