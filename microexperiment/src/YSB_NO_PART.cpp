@@ -728,28 +728,28 @@ int main(int argc, char *argv[])
     for(size_t i = 0; i < numberOfConnections; i++)
     {
 //        CorePin(i*10);
-        size_t nr_nodes = numa_max_node()+1;
-        struct bitmask * asd = numa_bitmask_alloc(nr_nodes);
-        numa_bitmask_setbit(asd, i);
-        numa_set_membind(asd);
-        struct bitmask * ret = numa_bitmask_alloc(nr_nodes);
+//        size_t nr_nodes = numa_max_node()+1;
+//        struct bitmask * asd = numa_bitmask_alloc(nr_nodes);
+//        numa_bitmask_setbit(asd, i);
+//        numa_set_membind(asd);
+//        struct bitmask * ret = numa_bitmask_alloc(nr_nodes);
 
         numa_run_on_node(i);
         numa_set_preferred(i);
-        nodemask_t mask;
-        nodemask_zero(&mask);
-        nodemask_set_compat(&mask, i);
-        numa_bind_compat(&mask);
-
+//        nodemask_t mask;
+//        nodemask_zero(&mask);
+//        nodemask_set_compat(&mask, i);
+//        numa_bind_compat(&mask);
+        TupleBuffer** sendBuffers2 = new TupleBuffer*[NUM_SEND_BUFFERS];
         region_tokens = new infinity::memory::RegionToken*[NUM_SEND_BUFFERS+1];
-        TupleBuffer** sendBuffers = new TupleBuffer*[NUM_SEND_BUFFERS];
+
         buffer_ready_sign = new char[NUM_SEND_BUFFERS];
 
-        setupRDMAProducer(connections[i], bufferSizeInTups, i, sendBuffers);
+        setupRDMAProducer(connections[i], bufferSizeInTups, i, sendBuffers2);
         stringstream ss;
         ss  << "Producer Thread #" << i  << ": on CPU " << sched_getcpu() << " nodes=";
         int numa_node = -1;
-        get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers, MPOL_F_NODE | MPOL_F_ADDR);
+        get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers2, MPOL_F_NODE | MPOL_F_ADDR);
         ss << numa_node << ",";
         get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers[0]->send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
         ss << numa_node << ",";
