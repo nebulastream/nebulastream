@@ -38,6 +38,7 @@ int main() {
     void* ptr_to_check2 = bla2;
 
     status[1];
+    ret_code;
     status[0]=-1;
     ret_code=move_pages(0 /*self memory */, 1, &ptr_to_check2,
        NULL, status, 0);
