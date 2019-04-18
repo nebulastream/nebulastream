@@ -25,7 +25,10 @@ int main() {
        NULL, status, 0);
     printf("Memory at %p is at %d node (id %d) (node %d)\n",
             bla, status[0], 0, numa_node_of_cpu(sched_getcpu()));
+    int numa_node = -1;
 
+    get_mempolicy(&numa_node, NULL, 0, (void*)bla, MPOL_F_NODE | MPOL_F_ADDR);
+    cout << "node= " << numa_node << ",";
 //    /s/##################
     size_t node2 = 1;
     numa_run_on_node(static_cast<int>(node2));
@@ -45,7 +48,8 @@ int main() {
 
     printf("Memory at %p is at %d node (id %d) (node %d)\n",
             bla2, status[0], 0, numa_node_of_cpu(sched_getcpu()));
-
+    get_mempolicy(&numa_node, NULL, 0, (void*)bla, MPOL_F_NODE | MPOL_F_ADDR);
+        cout << "node= " << numa_node << ",";
 
     return 0;
 }
