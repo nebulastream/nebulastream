@@ -508,12 +508,13 @@ void copy_received_tokens(const std::vector<TupleBuffer> &sendBuffers,
 void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples, size_t nodeId)
 {
     numa_run_on_node(static_cast<int>(nodeId));
-    numa_set_preferred(nodeId);
-    numa_set_localalloc();
-    struct bitmask* b = numa_get_mems_allowed();
-    cout << "bitmask" << b << endl;
-    std::bitset<b->size> x(b->maskp);
-    std::cout << "x=" << x << '\n';
+//    numa_set_preferred(nodeId);
+//    numa_set_localalloc();
+    bitmask mask;
+    numa_bitmask_setbit(&mask, 0);
+    numa_set_membind(&mask);
+//    struct bitmask* b = numa_get_mems_allowed();
+
 
     std::cout << "Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << "\n";
 
