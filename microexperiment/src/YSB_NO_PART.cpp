@@ -519,8 +519,9 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples, s
     get_mempolicy(&numa_node, NULL, 0, (void*)&sendBuffers[0].send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
     cout << "alloc on numa node=" << numa_node << endl;
 
-    get_mempolicy(&numa_node, NULL, 0, (void*)&sendBuffers[NUM_SEND_BUFFERS-1].send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
-    cout << "alloc on numa node=" << numa_node << endl;
+    std::vector<TupleBuffer> sendBuffers2;
+    get_mempolicy(&numa_node, NULL, 0, (void*)&sendBuffers2, MPOL_F_NODE | MPOL_F_ADDR);
+    cout << "alloc2 on numa node=" << numa_node << endl;
 
     for(auto & r : buffer_ready_sign)
     {
