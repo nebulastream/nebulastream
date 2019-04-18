@@ -510,9 +510,11 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples, s
     numa_run_on_node(static_cast<int>(nodeId));
 //    numa_set_preferred(nodeId);
 //    numa_set_localalloc();
-    bitmask mask;
-    numa_bitmask_setbit(&mask, 0);
-    numa_set_membind(&mask);
+    size_t nr_nodes = numa_max_node()+1;
+
+    struct bitmask * asd = numa_bitmask_alloc(nr_nodes);
+    numa_bitmask_setbit(asd, 1);
+    numa_set_membind(asd);
 //    struct bitmask* b = numa_get_mems_allowed();
 
 
