@@ -459,6 +459,10 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
 //                           << " getLocalKey=" << region_tokens[i]->getLocalKey() << " getRemoteKey=" << region_tokens[i]->getRemoteKey() << endl;
     }
 
+    int numa_node = -1;
+    get_mempolicy(&numa_node, NULL, 0, (void*)recv_buffers[0]->getData(), MPOL_F_NODE | MPOL_F_ADDR);
+    cout << "alloc on numa node=" << numa_node << endl;
+
 //    sleep(1);
     connection->send_blocking(tokenbuffer);
     cout << "setupRDMAConsumer finished" << endl;
@@ -506,7 +510,7 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples)
     cout << "creating sendbuffer done" << endl;
 
     int numa_node = -1;
-    get_mempolicy(&numa_node, NULL, 0, (void*)&sendBuffers[0], MPOL_F_NODE | MPOL_F_ADDR);
+    get_mempolicy(&numa_node, NULL, 0, (void*)&sendBuffers[0].send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
     cout << "alloc on numa node=" << numa_node << endl;
 
     for(auto & r : buffer_ready_sign)
