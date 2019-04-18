@@ -734,13 +734,25 @@ int main(int argc, char *argv[])
         numa_bitmask_setbit(asd, i);
         numa_set_membind(asd);
         struct bitmask * ret = numa_bitmask_alloc(nr_nodes);
-        std::cout << "Producer Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << " ret=" << ret << "\n";
 
         region_tokens = new infinity::memory::RegionToken*[NUM_SEND_BUFFERS+1];
         sendBuffers = new TupleBuffer*[NUM_SEND_BUFFERS];
         buffer_ready_sign = new char[NUM_SEND_BUFFERS];
 
         setupRDMAProducer(connections[i], bufferSizeInTups, i);
+        stringstream ss;
+        ss  << "Producer Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << " nodes=";
+        int numa_node = -1;
+        get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers, MPOL_F_NODE | MPOL_F_ADDR);
+        ss << numa_node << ",";
+        get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers[0]->send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
+        ss << numa_node << ",";
+        get_mempolicy(&numa_node, NULL, 0, (void*)buffer_ready_sign, MPOL_F_NODE | MPOL_F_ADDR);
+        ss << numa_node << ",";
+        get_mempolicy(&numa_node, NULL, 0, (void*)region_tokens, MPOL_F_NODE | MPOL_F_ADDR);
+        ss << numa_node << ",";
+        cout << ss.str() << endl;
+
     }
 }//end of pragma
     }
@@ -758,13 +770,26 @@ int main(int argc, char *argv[])
         numa_bitmask_setbit(asd, i);
         numa_set_membind(asd);
         struct bitmask * ret = numa_bitmask_alloc(nr_nodes);
-        std::cout << "Consumer Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << " ret=" << ret << "\n";
+//        std::cout << "Consumer Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << " ret=" << ret << "\n";
 
         recv_buffers = new infinity::memory::Buffer*[NUM_SEND_BUFFERS];
         buffer_ready_sign = new char[NUM_SEND_BUFFERS];
         region_tokens = new infinity::memory::RegionToken*[NUM_SEND_BUFFERS+1];
 
         setupRDMAConsumer(connections[i], bufferSizeInTups, i);
+
+        stringstream ss;
+        ss  << "Consumer Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << " nodes=";
+        int numa_node = -1;
+        get_mempolicy(&numa_node, NULL, 0, (void*)recv_buffers, MPOL_F_NODE | MPOL_F_ADDR);
+        ss << numa_node << ",";
+        get_mempolicy(&numa_node, NULL, 0, (void*)recv_buffers[0]->getData(), MPOL_F_NODE | MPOL_F_ADDR);
+        ss << numa_node << ",";
+        get_mempolicy(&numa_node, NULL, 0, (void*)buffer_ready_sign, MPOL_F_NODE | MPOL_F_ADDR);
+        ss << numa_node << ",";
+        get_mempolicy(&numa_node, NULL, 0, (void*)region_tokens, MPOL_F_NODE | MPOL_F_ADDR);
+        ss << numa_node << ",";
+        cout << ss.str() << endl;
     }
 }
     }
