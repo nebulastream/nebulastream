@@ -23,6 +23,8 @@
 #include <future>
 #include <boost/program_options.hpp>
 #include <mutex>
+#include <numaif.h>
+
 //#define BUFFER_SIZE 1000
 
 using namespace std;
@@ -503,6 +505,10 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples)
     for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
         sendBuffers.emplace_back(TupleBuffer(*connection, bufferSizeInTuples));
 
+    int numa_node = -1;
+    get_mempolicy(&numa_node, NULL, 0, (void*)&sendBuffers[0], MPOL_F_NODE | MPOL_F_ADDR);
+    cout << "alloc on numa node=" << numa_node << endl;
+
     for(auto & r : buffer_ready_sign)
     {
         r = BUFFER_READY_FLAG;
@@ -668,7 +674,7 @@ int main(int argc, char *argv[])
 #pragma omp parallel num_threads(numberOfConnections)
 {
     #pragma omp for
-    for(size_t i = 0; i < numberOfProducer; i++)
+    for(size_t i = 0; i < numberOfConnections; i++)
     {
         std::cout << "Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << "\n";
         setupRDMAProducer(connections[i], bufferSizeInTups);
