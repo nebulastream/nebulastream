@@ -726,17 +726,16 @@ int main(int argc, char *argv[])
     numa_set_preferred(outer_thread_id);
 //    numa_set_localalloc();
 
-    void * ptr_to_check3 = numa_alloc_onnode(100, outer_thread_id);
-    ((size_t*)ptr_to_check3)[0] = 123;
-    int status[1];
-    status[0] = -1;
-    int ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check3, NULL, status, 0);
-    printf("Memory at %p is at %d node (thread %d) (core %d) (node %d) (retCode %d) \n", sendBuffers,
-                status[0], outer_thread_id, sched_getcpu() ,numa_node_of_cpu(sched_getcpu())
-                , ret_code);
+//    void * ptr_to_check3 = numa_alloc_onnode(100, outer_thread_id);
+//    ((size_t*)ptr_to_check3)[0] = 123;
+//    int status[1];
+//    status[0] = -1;
+//    int ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check3, NULL, status, 0);
+//    printf("Memory at %p is at %d node (thread %d) (core %d) (node %d) (retCode %d) \n", sendBuffers,
+//                status[0], outer_thread_id, sched_getcpu() ,numa_node_of_cpu(sched_getcpu())
+//                , ret_code);
 
-
-    char* pBuffer = new char[NUM_SEND_BUFFERS*sizeof(TupleBuffer)];
+    void* pBuffer = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(TupleBuffer), outer_thread_id);
     TupleBuffer** pA = (TupleBuffer**)pBuffer;
 
     for(int i = 0; i < NUM_SEND_BUFFERS; ++i)
@@ -761,8 +760,9 @@ int main(int argc, char *argv[])
 //    cout << "ptr=" << sendBuffers << " *=" << * sendBuffers << " &=" << &sendBuffers << " now=" << (void*)sendBuffers << endl;
     stringstream ss;
     void* ptr_to_check = sendBuffers;
+    int status[1];
     status[0] = -1;
-    ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check, NULL, status, 0);
+    size_t ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check, NULL, status, 0);
     printf("Memory at %p is at %d node (thread %d) (core %d) (node %d) (retCode %d) \n", sendBuffers,
             status[0], outer_thread_id, sched_getcpu() ,numa_node_of_cpu(sched_getcpu())
             , ret_code);
