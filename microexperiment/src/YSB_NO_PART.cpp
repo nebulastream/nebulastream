@@ -778,7 +778,7 @@ int main(int argc, char *argv[])
 
     std::cout << "Blocking to receive tokens!" << endl;
     connections[outer_thread_id]->post_and_receive_blocking(tokenbuffer);
-
+    std::cout << "received" << endl;
     copy_received_tokens_from_buffer(tokenbuffer);
 
     ss  << "Producer Thread #" << outer_thread_id  << ": on CPU " << sched_getcpu() << " nodes=";
