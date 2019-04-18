@@ -27,13 +27,13 @@ int main() {
             bla, status[0], 0, numa_node_of_cpu(sched_getcpu()));
 
 //    /s/##################
-    node = 1;
-    numa_run_on_node(static_cast<int>(node));
-    numa_set_preferred(node);
+    size_t node2 = 1;
+    numa_run_on_node(static_cast<int>(node2));
+    numa_set_preferred(node2);
     nr_nodes = numa_max_node()+1;
-    asd = numa_bitmask_alloc(nr_nodes);
-    numa_bitmask_setbit(asd, node);
-    numa_set_membind(asd);
+    struct bitmask * asd2 = numa_bitmask_alloc(nr_nodes);
+    numa_bitmask_setbit(asd2, node2);
+    numa_set_membind(asd2);
     size_t* bla2 = new size_t[999];
     ptr_to_check = &bla2;
 
