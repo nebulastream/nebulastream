@@ -742,7 +742,7 @@ int main(int argc, char *argv[])
     {
         sendBuffers[i] = new (sendBuffers + i) TupleBuffer(*connections[outer_thread_id], bufferSizeInTups);
     }
-    sendBuffers[0]->numberOfTuples = 0;
+//    sendBuffers[0]->numberOfTuples = 0;
 
 //    TupleBuffer** sendBuffers = new TupleBuffer*[NUM_SEND_BUFFERS];
 //    for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
