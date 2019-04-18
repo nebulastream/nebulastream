@@ -736,13 +736,13 @@ int main(int argc, char *argv[])
 //                , ret_code);
 
     void* pBuffer = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(TupleBuffer), outer_thread_id);
-    TupleBuffer** pA = (TupleBuffer**)pBuffer;
+    TupleBuffer** sendBuffers = (TupleBuffer**)pBuffer;
 
     for(int i = 0; i < NUM_SEND_BUFFERS; ++i)
     {
-        pA[i] = new (pA + i) TupleBuffer(*connections[outer_thread_id], bufferSizeInTups);
+        sendBuffers[i] = new (sendBuffers + i) TupleBuffer(*connections[outer_thread_id], bufferSizeInTups);
     }
-    pA[0]->numberOfTuples = 0;
+    sendBuffers[0]->numberOfTuples = 0;
 
 //    TupleBuffer** sendBuffers = new TupleBuffer*[NUM_SEND_BUFFERS];
 //    for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
