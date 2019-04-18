@@ -535,8 +535,8 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples, s
     get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers[0].send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
     ss << "alloc on numa node=" << numa_node << " thread/node=" << nodeId << endl;
 
-    size_t* sendBuffers2 = new size_t[100];
-    get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers2, MPOL_F_NODE | MPOL_F_ADDR);
+    TupleBuffer* sendBuffers2 = new TupleBuffer(*connection, bufferSizeInTuples);
+    get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers2->send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
     ss << "alloclocal on numa node=" << numa_node << " thread/node=" << nodeId << endl;
 
     for(auto & r : buffer_ready_sign)
