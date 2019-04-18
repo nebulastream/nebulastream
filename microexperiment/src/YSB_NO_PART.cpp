@@ -772,18 +772,6 @@ int main(int argc, char *argv[])
             status[0], outer_thread_id, sched_getcpu() ,numa_node_of_cpu(sched_getcpu())
             , ret_code);
 
-    ss  << "Producer Thread #" << outer_thread_id  << ": on CPU " << sched_getcpu() << " nodes=";
-    int numa_node = -1;
-    get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers, MPOL_F_NODE | MPOL_F_ADDR);
-    ss << numa_node << ",";
-    get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers[1]->send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
-    ss << numa_node << ",";
-    get_mempolicy(&numa_node, NULL, 0, (void*)buffer_ready_sign, MPOL_F_NODE | MPOL_F_ADDR);
-    ss << numa_node << ",";
-    get_mempolicy(&numa_node, NULL, 0, (void*)region_tokens, MPOL_F_NODE | MPOL_F_ADDR);
-    ss << numa_node << ",";
-    cout << ss.str() << endl;
-
     sign_buffer = connections[outer_thread_id]->register_buffer(buffer_ready_sign, NUM_SEND_BUFFERS);
     sign_token = nullptr;
     infinity::memory::Buffer* tokenbuffer = connections[outer_thread_id]->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
@@ -793,6 +781,17 @@ int main(int argc, char *argv[])
 
     copy_received_tokens_from_buffer(tokenbuffer);
 
+    ss  << "Producer Thread #" << outer_thread_id  << ": on CPU " << sched_getcpu() << " nodes=";
+   int numa_node = -1;
+   get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers, MPOL_F_NODE | MPOL_F_ADDR);
+   ss << numa_node << ",";
+   get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers[1]->send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
+   ss << numa_node << ",";
+   get_mempolicy(&numa_node, NULL, 0, (void*)buffer_ready_sign, MPOL_F_NODE | MPOL_F_ADDR);
+   ss << numa_node << ",";
+   get_mempolicy(&numa_node, NULL, 0, (void*)region_tokens, MPOL_F_NODE | MPOL_F_ADDR);
+   ss << numa_node << ",";
+   cout << ss.str() << endl;
 
 }//end of pragma
     }
