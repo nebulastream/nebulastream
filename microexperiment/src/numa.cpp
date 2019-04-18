@@ -10,6 +10,8 @@ int main() {
     size_t node = 0;
     numa_run_on_node(static_cast<int>(node));
     numa_set_preferred(node);
+    numa_set_localalloc();
+
     size_t* bla = new size_t[999];
 
     int status[1];
