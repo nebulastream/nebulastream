@@ -15,7 +15,7 @@ int main() {
     int status[1];
     int ret_code;
     status[0]=-1;
-    void * ptr_to_check = bla;
+    void * ptr_to_check = &bla;
 
     ret_code=move_pages(0 /*self memory */, 1, &ptr_to_check,
        NULL, status, 0);
@@ -28,7 +28,7 @@ int main() {
     numa_set_preferred(node);
     sleep(2);
     size_t* bla2 = new size_t[999];
-    ptr_to_check = bla2;
+    ptr_to_check = &bla2;
 
     status[1];
     ret_code;
