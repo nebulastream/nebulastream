@@ -678,7 +678,7 @@ int main(int argc, char *argv[])
     for(size_t i = 0; i < numberOfConnections; i++)
     {
         std::cout << "Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << "\n";
-        setupRDMAProducer(connections[i], bufferSizeInTups);
+       //setupRDMAProducer(connections[i], bufferSizeInTups);
     }
 }//end of pragma
     }
