@@ -708,7 +708,7 @@ int main(int argc, char *argv[])
     #pragma omp for
     for(size_t i = 0; i < numberOfConnections; i++)
     {
-        CorePin(0);
+        CorePin(0*10);
         std::cout << "Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << "\n";
         while(true)
             ;
