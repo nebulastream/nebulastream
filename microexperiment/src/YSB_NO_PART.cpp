@@ -436,32 +436,32 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
 void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples, size_t numaNode)
 {
-    numa_run_on_node(static_cast<int>(numaNode));
-    numa_set_preferred(numaNode);
-
-    std::cout << "Started routine to receive tuples as Consumer" << std::endl;
-    for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
-    {
-        buffer_ready_sign[i] = BUFFER_READY_FLAG;
-    }
+//    numa_run_on_node(static_cast<int>(numaNode));
+//    numa_set_preferred(numaNode);
+//
+//    std::cout << "Started routine to receive tuples as Consumer" << std::endl;
+//    for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
+//    {
+//        buffer_ready_sign[i] = BUFFER_READY_FLAG;
+//    }
 
     infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
 
 
-    for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++)
-    {
-        if (i < NUM_SEND_BUFFERS) {
-            recv_buffers[i] = connection->allocate_buffer(bufferSizeInTuples * sizeof(Tuple));
-            region_tokens[i] = recv_buffers[i]->createRegionToken();
-        } else {
-//            cout << "copy sign token at pos " << i << endl;
-            sign_buffer = connection->register_buffer(buffer_ready_sign, NUM_SEND_BUFFERS);
-            region_tokens[i] = sign_buffer->createRegionToken();
-        }
-        memcpy((RegionToken*)tokenbuffer->getData() + i, region_tokens[i], sizeof(RegionToken));
-//        cout << "i=" << i << "sign region getSizeInBytes=" << region_tokens[i]->getSizeInBytes() << " getAddress=" << region_tokens[i]->getAddress()
-//                           << " getLocalKey=" << region_tokens[i]->getLocalKey() << " getRemoteKey=" << region_tokens[i]->getRemoteKey() << endl;
-    }
+//    for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++)
+//    {
+//        if (i < NUM_SEND_BUFFERS) {
+//            recv_buffers[i] = connection->allocate_buffer(bufferSizeInTuples * sizeof(Tuple));
+//            region_tokens[i] = recv_buffers[i]->createRegionToken();
+//        } else {
+////            cout << "copy sign token at pos " << i << endl;
+//            sign_buffer = connection->register_buffer(buffer_ready_sign, NUM_SEND_BUFFERS);
+//            region_tokens[i] = sign_buffer->createRegionToken();
+//        }
+//        memcpy((RegionToken*)tokenbuffer->getData() + i, region_tokens[i], sizeof(RegionToken));
+////        cout << "i=" << i << "sign region getSizeInBytes=" << region_tokens[i]->getSizeInBytes() << " getAddress=" << region_tokens[i]->getAddress()
+////                           << " getLocalKey=" << region_tokens[i]->getLocalKey() << " getRemoteKey=" << region_tokens[i]->getRemoteKey() << endl;
+//    }
 
     int numa_node = -1;
     get_mempolicy(&numa_node, NULL, 0, (void*)recv_buffers[0]->getData(), MPOL_F_NODE | MPOL_F_ADDR);
@@ -710,142 +710,134 @@ int main(int argc, char *argv[])
         SimpleInfoProvider info2(target_rank, 1, 1, PORT2, ip2);//ib1
         connections.push_back(new VerbsConnection(&info2));
     }
+    auto nodes = numa_num_configured_nodes();
+    auto cores = numa_num_configured_cpus();
+    auto cores_per_node = cores / nodes;
+    omp_set_nested(1);
+
     cout << "second connection established" << endl;
     if(rank == 0)
     {
         cout << "starting " << numberOfConnections << " threads" << endl;
-//#pragma omp parallel proc_bind(spread)
-    auto nodes = numa_num_configured_nodes();
-    auto cores = numa_num_configured_cpus();
-    auto cores_per_node = cores / nodes;
+        #pragma omp parallel num_threads(nodes)
+        {
+            auto outer_thread_id = omp_get_thread_num();
+            numa_run_on_node(outer_thread_id);
+            numa_set_preferred(outer_thread_id);
 
-    omp_set_nested(1);
-#pragma omp parallel num_threads(nodes)
-{
-    auto outer_thread_id = omp_get_thread_num();
-    numa_run_on_node(outer_thread_id);
-    numa_set_preferred(outer_thread_id);
-//    numa_set_localalloc();
+            void* pBuffer = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(TupleBuffer), outer_thread_id);
+            TupleBuffer** sendBuffers = (TupleBuffer**)pBuffer;
 
-//    void * ptr_to_check3 = numa_alloc_onnode(100, outer_thread_id);
-//    ((size_t*)ptr_to_check3)[0] = 123;
-//    int status[1];
-//    status[0] = -1;
-//    int ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check3, NULL, status, 0);
-//    printf("Memory at %p is at %d node (thread %d) (core %d) (node %d) (retCode %d) \n", sendBuffers,
-//                status[0], outer_thread_id, sched_getcpu() ,numa_node_of_cpu(sched_getcpu())
-//                , ret_code);
+            for(int i = 0; i < NUM_SEND_BUFFERS; ++i)
+            {
+                sendBuffers[i] = new (sendBuffers + i) TupleBuffer(*connections[outer_thread_id], bufferSizeInTups);
+            }
 
-    void* pBuffer = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(TupleBuffer), outer_thread_id);
-    TupleBuffer** sendBuffers = (TupleBuffer**)pBuffer;
 
-    for(int i = 0; i < NUM_SEND_BUFFERS; ++i)
-    {
-        sendBuffers[i] = new (sendBuffers + i) TupleBuffer(*connections[outer_thread_id], bufferSizeInTups);
-    }
+            void* b3 = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(char), outer_thread_id);
+            char* buffer_ready_sign = (char*)b3;
+            for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
+            {
+                buffer_ready_sign[i] = BUFFER_READY_FLAG;
+            }
 
-//    TupleBuffer** sendBuffers = new TupleBuffer*[NUM_SEND_BUFFERS];
-//    for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
-//    {
-//        sendBuffers[i] = new TupleBuffer(*connections[outer_thread_id], bufferSizeInTups);
-//    }
+            sign_buffer = connections[outer_thread_id]->register_buffer(buffer_ready_sign, NUM_SEND_BUFFERS);
+            sign_token = nullptr;
+            infinity::memory::Buffer* tokenbuffer = connections[outer_thread_id]->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
 
-    void* b2 = numa_alloc_onnode((NUM_SEND_BUFFERS+1)*sizeof(RegionToken), outer_thread_id);
-    infinity::memory::RegionToken** region_tokens = (infinity::memory::RegionToken**)b2;
+            void* b2 = numa_alloc_onnode((NUM_SEND_BUFFERS+1)*sizeof(RegionToken), outer_thread_id);
+            infinity::memory::RegionToken** region_tokens = (infinity::memory::RegionToken**)b2;
 
-//    infinity::memory::RegionToken** region_tokens = new infinity::memory::RegionToken*[NUM_SEND_BUFFERS+1];
+            std::cout << "Blocking to receive tokens!" << endl;
+            connections[outer_thread_id]->post_and_receive_blocking(tokenbuffer);
+        //    std::cout << "received" << endl;
 
-    void* b3 = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(char), outer_thread_id);
-    char* buffer_ready_sign = (char*)b3;
-//    char* buffer_ready_sign = new char[NUM_SEND_BUFFERS];
-    for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
-    {
-        buffer_ready_sign[i] = BUFFER_READY_FLAG;
-    }
+            for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++)
+            {
+                if ( i < NUM_SEND_BUFFERS){
+                    region_tokens[i] = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
+                    memcpy(region_tokens[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
 
-//    cout << "ptr=" << sendBuffers << " *=" << * sendBuffers << " &=" << &sendBuffers << " now=" << (void*)sendBuffers << endl;
-    stringstream ss;
-    void* ptr_to_check = sendBuffers;
-    int status[1];
-    status[0] = -1;
-    size_t ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check, NULL, status, 0);
-    printf("Memory at %p is at %d node (thread %d) (core %d) (node %d) (retCode %d) \n", sendBuffers,
-            status[0], outer_thread_id, sched_getcpu() ,numa_node_of_cpu(sched_getcpu())
-            , ret_code);
+                } else {
+                    sign_token = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
+                    memcpy(sign_token, (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
+                }
+            }
 
-    sign_buffer = connections[outer_thread_id]->register_buffer(buffer_ready_sign, NUM_SEND_BUFFERS);
-    sign_token = nullptr;
-    infinity::memory::Buffer* tokenbuffer = connections[outer_thread_id]->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
-
-    std::cout << "Blocking to receive tokens!" << endl;
-    connections[outer_thread_id]->post_and_receive_blocking(tokenbuffer);
-//    std::cout << "received" << endl;
-
-    for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++)
-    {
-        if ( i < NUM_SEND_BUFFERS){
-            region_tokens[i] = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
-            memcpy(region_tokens[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
-
-        } else {
-            sign_token = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
-            memcpy(sign_token, (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
-        }
-    }
-
-//    copy_received_tokens_from_buffer(tokenbuffer, region_tokens, outer_thread_id);
-
-    ss  << "Producer Thread #" << outer_thread_id  << ": on CPU " << sched_getcpu() << " nodes=";
-   int numa_node = -1;
-   get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers, MPOL_F_NODE | MPOL_F_ADDR);
-   ss << numa_node << ",";
-   get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers[1]->send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
-   ss << numa_node << ",";
-   get_mempolicy(&numa_node, NULL, 0, (void*)buffer_ready_sign, MPOL_F_NODE | MPOL_F_ADDR);
-   ss << numa_node << ",";
-   get_mempolicy(&numa_node, NULL, 0, (void*)region_tokens, MPOL_F_NODE | MPOL_F_ADDR);
-   ss << numa_node << ",";
-   cout << ss.str() << endl;
-
-}//end of pragma
+            stringstream ss;
+           ss  << "Producer Thread #" << outer_thread_id  << ": on CPU " << sched_getcpu() << " nodes=";
+           int numa_node = -1;
+           get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers, MPOL_F_NODE | MPOL_F_ADDR);
+           ss << numa_node << ",";
+           get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers[1]->send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
+           ss << numa_node << ",";
+           get_mempolicy(&numa_node, NULL, 0, (void*)buffer_ready_sign, MPOL_F_NODE | MPOL_F_ADDR);
+           ss << numa_node << ",";
+           get_mempolicy(&numa_node, NULL, 0, (void*)region_tokens, MPOL_F_NODE | MPOL_F_ADDR);
+           ss << numa_node << ",";
+           cout << ss.str() << endl;
+        }//end of pragma
     }
     else
     {
-#pragma omp parallel num_threads(numberOfConnections)
-{
-    #pragma omp for
-    for(size_t i = 0; i < numberOfConnections; i++)
-    {
-        CorePin(i*10);
-        numa_run_on_node(static_cast<int>(i));
-        size_t nr_nodes = numa_max_node()+1;
-        struct bitmask * asd = numa_bitmask_alloc(nr_nodes);
-        numa_bitmask_setbit(asd, i);
-        numa_set_membind(asd);
-        struct bitmask * ret = numa_bitmask_alloc(nr_nodes);
-//        std::cout << "Consumer Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << " ret=" << ret << "\n";
+        cout << "starting " << numberOfConnections << " threads" << endl;
+        #pragma omp parallel num_threads(nodes)
+        {
+            auto outer_thread_id = omp_get_thread_num();
+            numa_run_on_node(outer_thread_id);
+            numa_set_preferred(outer_thread_id);
 
-        recv_buffers = new infinity::memory::Buffer*[NUM_SEND_BUFFERS];
-        buffer_ready_sign = new char[NUM_SEND_BUFFERS];
-        region_tokens = new infinity::memory::RegionToken*[NUM_SEND_BUFFERS+1];
+            void* b1 = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(char), outer_thread_id);
+            char* buffer_ready_sign = (char*)b1;
+            for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
+            {
+                buffer_ready_sign[i] = BUFFER_READY_FLAG;
+            }
 
-        setupRDMAConsumer(connections[i], bufferSizeInTups, i);
+            void* b2 = numa_alloc_onnode((NUM_SEND_BUFFERS+1)*sizeof(RegionToken), outer_thread_id);
+            infinity::memory::RegionToken** region_tokens = (infinity::memory::RegionToken**)b2;
 
-        stringstream ss;
-        ss  << "Consumer Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << " nodes=";
-        int numa_node = -1;
-        get_mempolicy(&numa_node, NULL, 0, (void*)recv_buffers, MPOL_F_NODE | MPOL_F_ADDR);
-        ss << numa_node << ",";
-        get_mempolicy(&numa_node, NULL, 0, (void*)recv_buffers[0]->getData(), MPOL_F_NODE | MPOL_F_ADDR);
-        ss << numa_node << ",";
-        get_mempolicy(&numa_node, NULL, 0, (void*)buffer_ready_sign, MPOL_F_NODE | MPOL_F_ADDR);
-        ss << numa_node << ",";
-        get_mempolicy(&numa_node, NULL, 0, (void*)region_tokens, MPOL_F_NODE | MPOL_F_ADDR);
-        ss << numa_node << ",";
-        cout << ss.str() << endl;
-    }
-}
-    }
+            recv_buffers = new infinity::memory::Buffer*[NUM_SEND_BUFFERS];
+            void* pBuffer = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(Buffer), outer_thread_id);
+            infinity::memory::Buffer** recv_buffers = (infinity::memory::Buffer**)pBuffer;
+
+            infinity::memory::Buffer* tokenbuffer = connections[outer_thread_id]->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
+
+            for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++)
+            {
+                if (i < NUM_SEND_BUFFERS) {
+                    recv_buffers[i] = connections[outer_thread_id]->allocate_buffer(bufferSizeInTups * sizeof(Tuple));
+                    region_tokens[i] = recv_buffers[i]->createRegionToken();
+                } else {
+        //            cout << "copy sign token at pos " << i << endl;
+                    sign_buffer = connections[outer_thread_id]->register_buffer(buffer_ready_sign, NUM_SEND_BUFFERS);
+                    region_tokens[i] = sign_buffer->createRegionToken();
+                }
+                memcpy((RegionToken*)tokenbuffer->getData() + i, region_tokens[i], sizeof(RegionToken));
+        //        cout << "i=" << i << "sign region getSizeInBytes=" << region_tokens[i]->getSizeInBytes() << " getAddress=" << region_tokens[i]->getAddress()
+        //                           << " getLocalKey=" << region_tokens[i]->getLocalKey() << " getRemoteKey=" << region_tokens[i]->getRemoteKey() << endl;
+            }
+
+            connections[outer_thread_id]->send_blocking(tokenbuffer);
+            cout << "setupRDMAConsumer finished" << endl;
+//            recv_buffers = new infinity::memory::Buffer*[NUM_SEND_BUFFERS];
+//            region_tokens = new infinity::memory::RegionToken*[NUM_SEND_BUFFERS+1];
+//            setupRDMAConsumer(connections[i], bufferSizeInTups, i);
+
+            stringstream ss;
+            ss  << "Consumer Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << " nodes=";
+            int numa_node = -1;
+            get_mempolicy(&numa_node, NULL, 0, (void*)recv_buffers, MPOL_F_NODE | MPOL_F_ADDR);
+            ss << numa_node << ",";
+            get_mempolicy(&numa_node, NULL, 0, (void*)recv_buffers[0]->getData(), MPOL_F_NODE | MPOL_F_ADDR);
+            ss << numa_node << ",";
+            get_mempolicy(&numa_node, NULL, 0, (void*)buffer_ready_sign, MPOL_F_NODE | MPOL_F_ADDR);
+            ss << numa_node << ",";
+            get_mempolicy(&numa_node, NULL, 0, (void*)region_tokens, MPOL_F_NODE | MPOL_F_ADDR);
+            ss << numa_node << ",";
+            cout << ss.str() << endl;
+        }
+    }//end of else
     exit(0);
     //fix for the test
     const size_t campaingCnt = 10000;
@@ -977,3 +969,10 @@ int main(int argc, char *argv[])
 
 //    printHT(hashTable, campaingCnt);
 }
+//void* ptr_to_check = sendBuffers;
+//int status[1];
+//status[0] = -1;
+//size_t ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check, NULL, status, 0);
+//printf("Memory at %p is at %d node (thread %d) (core %d) (node %d) (retCode %d) \n", sendBuffers,
+//        status[0], outer_thread_id, sched_getcpu() ,numa_node_of_cpu(sched_getcpu())
+//        , ret_code);
