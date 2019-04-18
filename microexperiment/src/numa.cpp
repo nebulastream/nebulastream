@@ -20,7 +20,7 @@ int main() {
     int ret_code;
     status[0]=-1;
     void * ptr_to_check = numa_alloc_onnode(999999, node);
-    ((size_t*)ptr_to_check)[0] = 123;
+//    ((size_t*)ptr_to_check)[0] = 123;
 
     ret_code=move_pages(0 /*self memory */, 1, &ptr_to_check,
        NULL, status, 0);
@@ -40,7 +40,7 @@ int main() {
 //    numa_set_membind(asd2);
 //    size_t* bla2 = new size_t[999999]{0};
     void * ptr_to_check2 = numa_alloc_onnode(999999, node2);
-    ((size_t*)ptr_to_check2)[0] = 123;
+//    ((size_t*)ptr_to_check2)[0] = 123;
 //    cout << "test=" << bla2[0] << endl;
 
     status[1];
