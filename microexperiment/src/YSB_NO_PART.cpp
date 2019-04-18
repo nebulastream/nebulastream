@@ -591,8 +591,8 @@ void printHT(std::atomic<size_t>** hashTable, size_t campaingCnt)
 namespace po = boost::program_options;
 int main(int argc, char *argv[])
 {
-    numa_run_on_node(static_cast<int>(1));
-    numa_set_preferred(1);
+//    numa_run_on_node(static_cast<int>(1));
+//    numa_set_preferred(1);
 
     po::options_description desc("Options");
 
