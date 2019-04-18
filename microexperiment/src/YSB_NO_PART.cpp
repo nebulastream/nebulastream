@@ -735,6 +735,12 @@ int main(int argc, char *argv[])
         numa_set_membind(asd);
         struct bitmask * ret = numa_bitmask_alloc(nr_nodes);
 
+        numa_run_on_node(i);
+        nodemask_t mask;
+        nodemask_zero(&mask);
+        nodemask_set_compat(&mask, i);
+        numa_bind_compat(&mask);
+
         region_tokens = new infinity::memory::RegionToken*[NUM_SEND_BUFFERS+1];
         sendBuffers = new TupleBuffer*[NUM_SEND_BUFFERS];
         buffer_ready_sign = new char[NUM_SEND_BUFFERS];
@@ -743,13 +749,13 @@ int main(int argc, char *argv[])
         stringstream ss;
         ss  << "Producer Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << " nodes=";
         int numa_node = -1;
-        get_mempolicy(&numa_node, NULL, 0, (void*)*sendBuffers, MPOL_F_NODE | MPOL_F_ADDR);
+        get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers, MPOL_F_NODE | MPOL_F_ADDR);
         ss << numa_node << ",";
         get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers[0]->send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
         ss << numa_node << ",";
-        get_mempolicy(&numa_node, NULL, 0, (void*)*buffer_ready_sign, MPOL_F_NODE | MPOL_F_ADDR);
+        get_mempolicy(&numa_node, NULL, 0, (void*)buffer_ready_sign, MPOL_F_NODE | MPOL_F_ADDR);
         ss << numa_node << ",";
-        get_mempolicy(&numa_node, NULL, 0, (void*)*region_tokens, MPOL_F_NODE | MPOL_F_ADDR);
+        get_mempolicy(&numa_node, NULL, 0, (void*)region_tokens, MPOL_F_NODE | MPOL_F_ADDR);
         ss << numa_node << ",";
         cout << ss.str() << endl;
 
