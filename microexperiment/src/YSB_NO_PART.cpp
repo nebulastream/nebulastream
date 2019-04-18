@@ -736,7 +736,7 @@ int main(int argc, char *argv[])
     region_tokens = new infinity::memory::RegionToken*[NUM_SEND_BUFFERS+1];
 
     buffer_ready_sign = new char[NUM_SEND_BUFFERS];
-
+    cout << "node=" << numa_node_of_cpu(sched_getcpu()) << endl;
     setupRDMAProducer(connections[outer_thread_id], bufferSizeInTups, outer_thread_id, sendBuffers2);
     stringstream ss;
     ss  << "Producer Thread #" << outer_thread_id  << ": on CPU " << sched_getcpu() << " nodes=";
