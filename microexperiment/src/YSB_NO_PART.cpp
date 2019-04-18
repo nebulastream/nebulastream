@@ -742,7 +742,6 @@ int main(int argc, char *argv[])
     {
         sendBuffers[i] = new (sendBuffers + i) TupleBuffer(*connections[outer_thread_id], bufferSizeInTups);
     }
-//    sendBuffers[0]->numberOfTuples = 0;
 
 //    TupleBuffer** sendBuffers = new TupleBuffer*[NUM_SEND_BUFFERS];
 //    for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
@@ -750,9 +749,14 @@ int main(int argc, char *argv[])
 //        sendBuffers[i] = new TupleBuffer(*connections[outer_thread_id], bufferSizeInTups);
 //    }
 
-    infinity::memory::RegionToken** region_tokens = new infinity::memory::RegionToken*[NUM_SEND_BUFFERS+1];
+    void* b2 = numa_alloc_onnode((NUM_SEND_BUFFERS+1)*sizeof(RegionToken*), outer_thread_id);
+    infinity::memory::RegionToken** region_tokens = (infinity::memory::RegionToken**)b2;
 
-    char* buffer_ready_sign = new char[NUM_SEND_BUFFERS];
+//    infinity::memory::RegionToken** region_tokens = new infinity::memory::RegionToken*[NUM_SEND_BUFFERS+1];
+
+    void* b3 = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(char), outer_thread_id);
+    char* buffer_ready_sign = (char*)b3;
+//    char* buffer_ready_sign = new char[NUM_SEND_BUFFERS];
     for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
     {
         buffer_ready_sign[i] = BUFFER_READY_FLAG;
