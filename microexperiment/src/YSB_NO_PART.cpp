@@ -510,6 +510,7 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples, s
 {
     numa_run_on_node(static_cast<int>(threadID));
     numa_set_preferred(threadID);
+    numa_set_localalloc();
     std::cout << "Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << "\n";
 
     for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
@@ -521,7 +522,7 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples, s
 
     std::vector<TupleBuffer> sendBuffers2;
     get_mempolicy(&numa_node, NULL, 0, (void*)&sendBuffers2, MPOL_F_NODE | MPOL_F_ADDR);
-    cout << "alloc2 on numa node=" << numa_node << " thread/node=" << threadID << endl;
+    cout << "alloclocal on numa node=" << numa_node << " thread/node=" << threadID << endl;
 
     for(auto & r : buffer_ready_sign)
     {
