@@ -509,11 +509,18 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples, s
 {
     numa_run_on_node(static_cast<int>(nodeId));
     numa_set_preferred(nodeId);
-//    numa_set_localalloc();
     std::cout << "Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << "\n";
 
     for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
         sendBuffers.emplace_back(TupleBuffer(*connection, bufferSizeInTuples));
+
+    int status[1];
+    int ret_code;
+    status[0]=-1;
+    void * ptr_to_check = (void*)sendBuffers[0].send_buffer;
+
+    ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check, NULL, status, 0);
+    printf("Memory at %p is at %d node (retcode %d)\n", &ptr_to_check, status[0], ret_code);
 
     int numa_node = -1;
     get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers[0].send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
