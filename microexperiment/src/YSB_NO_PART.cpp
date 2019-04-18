@@ -722,51 +722,34 @@ int main(int argc, char *argv[])
     {
         cout << "starting " << numberOfConnections << " threads" << endl;
 //#pragma omp parallel proc_bind(spread)
-#pragma omp parallel num_threads(numberOfConnections)
+    auto nodes = numa_num_configured_nodes();
+    auto cores = numa_num_configured_cpus();
+    auto cores_per_node = cores / nodes;
+
+    omp_set_nested(1);
+#pragma omp parallel num_threads(nodes)
 {
-    #pragma omp for
-    for(size_t i = 0; i < numberOfConnections; i++)
-    {
-//        CorePin(i*10);
-//        size_t nr_nodes = numa_max_node()+1;
-//        struct bitmask * asd = numa_bitmask_alloc(nr_nodes);
-//        numa_bitmask_setbit(asd, i);
-//        numa_set_membind(asd);
-//        struct bitmask * ret = numa_bitmask_alloc(nr_nodes);
+    auto outer_thread_id = omp_get_thread_num();
+    numa_run_on_node(outer_thread_id);
 
-        numa_run_on_node(1);
-        numa_set_preferred(1);
-//        bitmask oldmask = numa_get_interleave_mask();
-//        numa_set_interleave_mask(&numa_all_cpus_ptr);
-//        /* run memory bandwidth intensive legacy library that allocates memory */
-//        numa_set_interleave_mask(&oldmask);
+    TupleBuffer** sendBuffers2 = new TupleBuffer*[NUM_SEND_BUFFERS];
+    region_tokens = new infinity::memory::RegionToken*[NUM_SEND_BUFFERS+1];
 
-//        nodemask_t mask;
-//        nodemask_zero(&mask);
-//        nodemask_set_compat(&mask, i);
-        struct bitmask *bm = numa_parse_nodestring("1");
-        numa_bind(bm);
+    buffer_ready_sign = new char[NUM_SEND_BUFFERS];
 
-        TupleBuffer** sendBuffers2 = new TupleBuffer*[NUM_SEND_BUFFERS];
-        region_tokens = new infinity::memory::RegionToken*[NUM_SEND_BUFFERS+1];
-
-        buffer_ready_sign = new char[NUM_SEND_BUFFERS];
-
-        setupRDMAProducer(connections[i], bufferSizeInTups, i, sendBuffers2);
-        stringstream ss;
-        ss  << "Producer Thread #" << i  << ": on CPU " << sched_getcpu() << " nodes=";
-        int numa_node = -1;
-        get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers2, MPOL_F_NODE | MPOL_F_ADDR);
-        ss << numa_node << ",";
-        get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers2[0]->send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
-        ss << numa_node << ",";
-        get_mempolicy(&numa_node, NULL, 0, (void*)buffer_ready_sign, MPOL_F_NODE | MPOL_F_ADDR);
-        ss << numa_node << ",";
-        get_mempolicy(&numa_node, NULL, 0, (void*)region_tokens, MPOL_F_NODE | MPOL_F_ADDR);
-        ss << numa_node << ",";
-        cout << ss.str() << endl;
-
-    }
+    setupRDMAProducer(connections[outer_thread_id], bufferSizeInTups, outer_thread_id, sendBuffers2);
+    stringstream ss;
+    ss  << "Producer Thread #" << outer_thread_id  << ": on CPU " << sched_getcpu() << " nodes=";
+    int numa_node = -1;
+    get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers2, MPOL_F_NODE | MPOL_F_ADDR);
+    ss << numa_node << ",";
+    get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers2[0]->send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
+    ss << numa_node << ",";
+    get_mempolicy(&numa_node, NULL, 0, (void*)buffer_ready_sign, MPOL_F_NODE | MPOL_F_ADDR);
+    ss << numa_node << ",";
+    get_mempolicy(&numa_node, NULL, 0, (void*)region_tokens, MPOL_F_NODE | MPOL_F_ADDR);
+    ss << numa_node << ",";
+    cout << ss.str() << endl;
 }//end of pragma
     }
     else
