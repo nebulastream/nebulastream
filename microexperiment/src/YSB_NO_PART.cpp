@@ -433,8 +433,10 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 //                << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
 }
 
-void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples)
+void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples, size_t threadID)
 {
+    numa_run_on_node(static_cast<int>(threadID));
+    numa_set_preferred(threadID);
     std::cout << "Started routine to receive tuples as Consumer" << std::endl;
     for(auto & r : buffer_ready_sign)
     {
@@ -503,8 +505,11 @@ void copy_received_tokens(const std::vector<TupleBuffer> &sendBuffers,
     }
 }
 
-void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples)
+void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples, size_t threadID)
 {
+    numa_run_on_node(static_cast<int>(threadID));
+    numa_set_preferred(threadID);
+
     for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
         sendBuffers.emplace_back(TupleBuffer(*connection, bufferSizeInTuples));
     cout << "creating sendbuffer done" << endl;
@@ -715,9 +720,9 @@ int main(int argc, char *argv[])
     #pragma omp for
     for(size_t i = 0; i < numberOfConnections; i++)
     {
-        CorePin(i*10);
+//        CorePin(i*10);
         std::cout << "Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << "\n";
-        setupRDMAProducer(connections[i], bufferSizeInTups);
+        setupRDMAProducer(connections[i], bufferSizeInTups, i*10);
     }
 }//end of pragma
     }
@@ -728,10 +733,10 @@ int main(int argc, char *argv[])
     #pragma omp for
     for(size_t i = 0; i < numberOfConnections; i++)
     {
-        CorePin(i*10);
+//        CorePin(i*10);
         std::cout << "Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << "\n";
         std::cout << "run consumer" << endl;
-        setupRDMAConsumer(connections[i], bufferSizeInTups);
+        setupRDMAConsumer(connections[i], bufferSizeInTups, i*10);
     }
 }
     }
