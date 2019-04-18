@@ -738,6 +738,8 @@ int main(int argc, char *argv[])
 
         region_tokens = new infinity::memory::RegionToken*[NUM_SEND_BUFFERS+1];
         sendBuffers = new TupleBuffer*[NUM_SEND_BUFFERS];
+        buffer_ready_sign = new char[NUM_SEND_BUFFERS];
+
         setupRDMAProducer(connections[i], bufferSizeInTups, i);
     }
 }//end of pragma
@@ -760,6 +762,7 @@ int main(int argc, char *argv[])
 
         recv_buffers = new infinity::memory::Buffer*[NUM_SEND_BUFFERS];
         buffer_ready_sign = new char[NUM_SEND_BUFFERS];
+        region_tokens = new infinity::memory::RegionToken*[NUM_SEND_BUFFERS+1];
 
         setupRDMAConsumer(connections[i], bufferSizeInTups, i);
     }
