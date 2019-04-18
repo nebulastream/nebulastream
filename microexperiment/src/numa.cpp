@@ -14,7 +14,7 @@ int main() {
     struct bitmask * asd = numa_bitmask_alloc(nr_nodes);
     numa_bitmask_setbit(asd, node);
     numa_set_membind(asd);
-    size_t* bla = new size_t[999999];
+    size_t* bla = new size_t[999]{0};;
     cout << "test=" << bla[0] << endl;
     int status[1];
     int ret_code;
@@ -37,7 +37,7 @@ int main() {
     struct bitmask * asd2 = numa_bitmask_alloc(nr_nodes);
     numa_bitmask_setbit(asd2, node2);
     numa_set_membind(asd2);
-    size_t* bla2 = new size_t[999];
+    size_t* bla2 = new size_t[999]{0};
     void* ptr_to_check2 = bla2;
     cout << "test=" << bla2[0] << endl;
 
