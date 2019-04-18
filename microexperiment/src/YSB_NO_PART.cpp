@@ -501,10 +501,9 @@ void copy_received_tokens(const std::vector<TupleBuffer> &sendBuffers,
 
 void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples)
 {
-//    std::cout << "send_matching_tuples_to!" << endl;
-
     for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
         sendBuffers.emplace_back(TupleBuffer(*connection, bufferSizeInTuples));
+    cout << "creating sendbuffer done" << endl;
 
     int numa_node = -1;
     get_mempolicy(&numa_node, NULL, 0, (void*)&sendBuffers[0], MPOL_F_NODE | MPOL_F_ADDR);
