@@ -29,7 +29,8 @@
 
 using namespace std;
 
-#define PORT 55355
+#define PORT1 55355
+#define PORT2 55356
 //#define OLCONSUMERVERSION
 //#define BUFFER_COUNT 10
 #define BUFFER_USED_SENDER_DONE 127
@@ -690,12 +691,12 @@ int main(int argc, char *argv[])
 
     std::vector<VerbsConnection*> connections;
     size_t target_rank = rank == 0 ? 1 : 0;
-    SimpleInfoProvider info1(target_rank, 3, 1, PORT, ip1);//ib0
+    SimpleInfoProvider info1(target_rank, 3, 1, PORT1, ip1);//ib0
     connections.push_back(new VerbsConnection(&info1));
 
     if(numberOfConnections == 2)
     {
-        SimpleInfoProvider info2(target_rank, 1, 1, PORT, ip2);//ib1
+        SimpleInfoProvider info2(target_rank, 1, 1, PORT2, ip2);//ib1
         connections.push_back(new VerbsConnection(&info2));
     }
 
