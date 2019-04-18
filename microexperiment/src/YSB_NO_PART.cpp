@@ -746,6 +746,15 @@ int main(int argc, char *argv[])
 //    cout << "node=" << numa_node_of_cpu(sched_getcpu()) << endl;
 //    setupRDMAProducer(connections[outer_thread_id], bufferSizeInTups, outer_thread_id, sendBuffers2);
     stringstream ss;
+    void * ptr_to_check = sendBuffers;
+     /*here you should align ptr_to_check to page boundary */
+     int status[1];
+     int ret_code;
+     status[0]=-1;
+     ret_code=move_pages(0 /*self memory */, 1, &ptr_to_check,
+        NULL, status, 0);
+     printf("Memory at %p is at %d node (retcode %d)\n", ptr_to_check, status[0], ret_code);
+
     ss  << "Producer Thread #" << outer_thread_id  << ": on CPU " << sched_getcpu() << " nodes=";
     int numa_node = -1;
     get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers, MPOL_F_NODE | MPOL_F_ADDR);
