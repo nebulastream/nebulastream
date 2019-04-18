@@ -776,7 +776,7 @@ int main(int argc, char *argv[])
     sign_token = nullptr;
     infinity::memory::Buffer* tokenbuffer = connections[outer_thread_id]->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
 
-//    std::cout << "Blocking to receive tokens!" << endl;
+    std::cout << "Blocking to receive tokens!" << endl;
     connections[outer_thread_id]->post_and_receive_blocking(tokenbuffer);
 
     copy_received_tokens_from_buffer(tokenbuffer);
