@@ -742,7 +742,8 @@ int main(int argc, char *argv[])
         buffer_ready_sign[i] = BUFFER_READY_FLAG;
     }
 
-    cout << "node=" << numa_node_of_cpu(sched_getcpu()) << endl;
+    cout << "ptr=" << sendBuffers << " *=" << * sendBuffers << " &=" << &sendBuffers << " now=" << (void*)sendBuffers << endl;
+//    cout << "node=" << numa_node_of_cpu(sched_getcpu()) << endl;
 //    setupRDMAProducer(connections[outer_thread_id], bufferSizeInTups, outer_thread_id, sendBuffers2);
     stringstream ss;
     ss  << "Producer Thread #" << outer_thread_id  << ": on CPU " << sched_getcpu() << " nodes=";
