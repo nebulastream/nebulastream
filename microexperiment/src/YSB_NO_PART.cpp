@@ -97,7 +97,7 @@ struct Tuple {
 
 class TupleBuffer{
 public:
-    TupleBuffer(VerbsConnection & connection, size_t bufferSizeInTuples)
+    TupleBuffer(VerbsConnection& connection, size_t bufferSizeInTuples)
     {
         numberOfTuples = 0;
         maxNumberOfTuples = bufferSizeInTuples;
@@ -507,10 +507,7 @@ void copy_received_tokens_from_buffer(infinity::memory::Buffer* buffer)
 void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples, size_t nodeId, TupleBuffer** sendBuffers)
 {
 //    std::vector<TupleBuffer> sendBuffers;
-    for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
-    {
-        sendBuffers[i] = new TupleBuffer(*connection, bufferSizeInTuples);
-    }
+
 
 //    int status[1];
 //    int ret_code;
@@ -528,24 +525,17 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples, s
 //    get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers2->send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
 //    ss << "alloclocal on numa node=" << numa_node << " thread/node=" << nodeId << endl;
 
-    for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
-    {
-        buffer_ready_sign[i] = BUFFER_READY_FLAG;
-    }
+//    for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
+//    {
+//        buffer_ready_sign[i] = BUFFER_READY_FLAG;
+//    }
 
     sign_buffer = connection->register_buffer(buffer_ready_sign, NUM_SEND_BUFFERS);
     sign_token = nullptr;
-
-//    std::vector<RegionToken> tokens;
-//    tokens.resize((BUFFER_COUNT+1) * sizeof(RegionToken));
     infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
 
 //    std::cout << "Blocking to receive tokens!" << endl;
     connection->post_and_receive_blocking(tokenbuffer);
-
-#ifdef old
-    connection->post_and_receive_blocking(sendBuffers[0].send_buffer);
-#endif
 
     copy_received_tokens_from_buffer(tokenbuffer);
 
@@ -732,24 +722,45 @@ int main(int argc, char *argv[])
     auto outer_thread_id = omp_get_thread_num();
     numa_run_on_node(outer_thread_id);
 
-    TupleBuffer** sendBuffers2 = new TupleBuffer*[NUM_SEND_BUFFERS];
+    TupleBuffer** sendBuffers = new TupleBuffer*[NUM_SEND_BUFFERS];
+    for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
+    {
+        sendBuffers[i] = new TupleBuffer(*connections[outer_thread_id], bufferSizeInTups);
+    }
+
     infinity::memory::RegionToken** region_tokens = new infinity::memory::RegionToken*[NUM_SEND_BUFFERS+1];
 
     char* buffer_ready_sign = new char[NUM_SEND_BUFFERS];
+    for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
+    {
+        buffer_ready_sign[i] = BUFFER_READY_FLAG;
+    }
+
     cout << "node=" << numa_node_of_cpu(sched_getcpu()) << endl;
-    setupRDMAProducer(connections[outer_thread_id], bufferSizeInTups, outer_thread_id, sendBuffers2);
+//    setupRDMAProducer(connections[outer_thread_id], bufferSizeInTups, outer_thread_id, sendBuffers2);
     stringstream ss;
     ss  << "Producer Thread #" << outer_thread_id  << ": on CPU " << sched_getcpu() << " nodes=";
     int numa_node = -1;
-    get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers2, MPOL_F_NODE | MPOL_F_ADDR);
+    get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers, MPOL_F_NODE | MPOL_F_ADDR);
     ss << numa_node << ",";
-    get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers2[0]->send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
+    get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers[0]->send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
     ss << numa_node << ",";
     get_mempolicy(&numa_node, NULL, 0, (void*)buffer_ready_sign, MPOL_F_NODE | MPOL_F_ADDR);
     ss << numa_node << ",";
     get_mempolicy(&numa_node, NULL, 0, (void*)region_tokens, MPOL_F_NODE | MPOL_F_ADDR);
     ss << numa_node << ",";
     cout << ss.str() << endl;
+
+    sign_buffer = connections[outer_thread_id]->register_buffer(buffer_ready_sign, NUM_SEND_BUFFERS);
+    sign_token = nullptr;
+    infinity::memory::Buffer* tokenbuffer = connections[outer_thread_id]->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
+
+//    std::cout << "Blocking to receive tokens!" << endl;
+    connections[outer_thread_id]->post_and_receive_blocking(tokenbuffer);
+
+    copy_received_tokens_from_buffer(tokenbuffer);
+
+
 }//end of pragma
     }
     else
