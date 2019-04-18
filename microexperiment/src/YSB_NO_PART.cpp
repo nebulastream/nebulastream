@@ -725,9 +725,6 @@ int main(int argc, char *argv[])
     numa_run_on_node(outer_thread_id);
     numa_set_preferred(outer_thread_id);
     numa_set_localalloc();
-//    std::string str = std::to_string(outer_thread_id);
-//    struct bitmask *bm = numa_parse_nodestring(str.c_str());
-//    numa_bind(bm);
 
     TupleBuffer** sendBuffers = new TupleBuffer*[NUM_SEND_BUFFERS];
     for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
@@ -744,10 +741,8 @@ int main(int argc, char *argv[])
     }
 
     cout << "ptr=" << sendBuffers << " *=" << * sendBuffers << " &=" << &sendBuffers << " now=" << (void*)sendBuffers << endl;
-//    cout << "node=" << numa_node_of_cpu(sched_getcpu()) << endl;
-//    setupRDMAProducer(connections[outer_thread_id], bufferSizeInTups, outer_thread_id, sendBuffers2);
     stringstream ss;
-    void * ptr_to_check = sendBuffers;
+    void * ptr_to_check = *sendBuffers;
      /*here you should align ptr_to_check to page boundary */
      int status[1];
      int ret_code;
