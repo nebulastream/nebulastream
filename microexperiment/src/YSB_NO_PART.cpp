@@ -510,6 +510,7 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples, s
 {
     numa_run_on_node(static_cast<int>(threadID));
     numa_set_preferred(threadID);
+    std::cout << "Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << "\n";
 
     for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
         sendBuffers.emplace_back(TupleBuffer(*connection, bufferSizeInTuples));
