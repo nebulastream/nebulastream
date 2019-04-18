@@ -728,6 +728,12 @@ int main(int argc, char *argv[])
 
     void * ptr_to_check3 = numa_alloc_onnode(100, outer_thread_id);
     ((size_t*)ptr_to_check3)[0] = 123;
+    int status[1];
+    status[0] = -1;
+    int ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check3, NULL, status, 0);
+    printf("Memory at %p is at %d node (thread %d) (core %d) (node %d) (retCode %d) \n", sendBuffers,
+                status[0], outer_thread_id, sched_getcpu() ,numa_node_of_cpu(sched_getcpu())
+                , ret_code);
 
     TupleBuffer** sendBuffers = new TupleBuffer*[NUM_SEND_BUFFERS];
     for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
@@ -745,11 +751,10 @@ int main(int argc, char *argv[])
 
 //    cout << "ptr=" << sendBuffers << " *=" << * sendBuffers << " &=" << &sendBuffers << " now=" << (void*)sendBuffers << endl;
     stringstream ss;
-    void * ptr_to_check = sendBuffers;
-    int status[1];
+    void* ptr_to_check = sendBuffers;
     status[0] = -1;
 
-    int ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check, NULL, status, 0);
+    ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check, NULL, status, 0);
     printf("Memory at %p is at %d node (thread %d) (core %d) (node %d) (retCode %d) \n", sendBuffers,
             status[0], outer_thread_id, sched_getcpu() ,numa_node_of_cpu(sched_getcpu())
             , ret_code);
