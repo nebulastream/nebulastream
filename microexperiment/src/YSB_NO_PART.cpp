@@ -727,7 +727,7 @@ int main(int argc, char *argv[])
     #pragma omp for
     for(size_t i = 0; i < numberOfConnections; i++)
     {
-        CorePin(i*10);
+//        CorePin(i*10);
         size_t nr_nodes = numa_max_node()+1;
         struct bitmask * asd = numa_bitmask_alloc(nr_nodes);
         numa_bitmask_setbit(asd, i);
