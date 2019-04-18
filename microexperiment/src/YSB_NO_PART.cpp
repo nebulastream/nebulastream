@@ -742,7 +742,7 @@ int main(int argc, char *argv[])
         numa_bind_compat(&mask);
 
         region_tokens = new infinity::memory::RegionToken*[NUM_SEND_BUFFERS+1];
-        sendBuffers = new TupleBuffer*[NUM_SEND_BUFFERS];
+        TupleBuffer** sendBuffers = new TupleBuffer*[NUM_SEND_BUFFERS];
         buffer_ready_sign = new char[NUM_SEND_BUFFERS];
 
         setupRDMAProducer(connections[i], bufferSizeInTups, i);
