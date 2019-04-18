@@ -702,7 +702,7 @@ int main(int argc, char *argv[])
     if(rank == 0)
     {
         cout << "starting " << numberOfConnections << " threads" << endl;
-#pragma omp parallel proc_bind(spread)
+//#pragma omp parallel proc_bind(spread)
 #pragma omp parallel num_threads(numberOfConnections)
 {
     #pragma omp for
