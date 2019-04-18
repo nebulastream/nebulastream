@@ -764,11 +764,11 @@ int main(int argc, char *argv[])
 
 //    cout << "ptr=" << sendBuffers << " *=" << * sendBuffers << " &=" << &sendBuffers << " now=" << (void*)sendBuffers << endl;
     stringstream ss;
-    void* ptr_to_check = sendBuffers;
+    void* ptr_to_check = region_tokens;
     int status[1];
     status[0] = -1;
     size_t ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check, NULL, status, 0);
-    printf("Memory at %p is at %d node (thread %d) (core %d) (node %d) (retCode %d) \n", sendBuffers,
+    printf("Memory at %p is at %d node (thread %d) (core %d) (node %d) (retCode %d) \n", region_tokens,
             status[0], outer_thread_id, sched_getcpu() ,numa_node_of_cpu(sched_getcpu())
             , ret_code);
 
@@ -776,7 +776,7 @@ int main(int argc, char *argv[])
     int numa_node = -1;
     get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers, MPOL_F_NODE | MPOL_F_ADDR);
     ss << numa_node << ",";
-    get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers[0]->send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
+    get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers[1]->send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
     ss << numa_node << ",";
     get_mempolicy(&numa_node, NULL, 0, (void*)buffer_ready_sign, MPOL_F_NODE | MPOL_F_ADDR);
     ss << numa_node << ",";
