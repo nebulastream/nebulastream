@@ -512,7 +512,7 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples, s
     numa_set_localalloc();
     struct bitmask* b = numa_get_mems_allowed();
     cout << "bitmask" << b << endl;
-    std::bitset<32> x(b->maskp);
+    std::bitset<b->size> x(b->maskp);
     std::cout << "x=" << x << '\n';
 
     std::cout << "Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << "\n";
