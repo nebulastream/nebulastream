@@ -3,7 +3,7 @@
 #include <cstdio>
 #include <iostream>
 #include <numaif.h>
-
+#include <unistd.h>
 using namespace std;
 
 int main() {
@@ -26,7 +26,7 @@ int main() {
     node = 1;
     numa_run_on_node(static_cast<int>(node));
     numa_set_preferred(node);
-
+    sleep(2);
     size_t* bla2 = new size_t[999];
     ptr_to_check = bla2;
 
