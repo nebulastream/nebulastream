@@ -734,11 +734,11 @@ int main(int argc, char *argv[])
         numa_set_membind(asd);
         struct bitmask * ret = numa_bitmask_alloc(nr_nodes);
 
-        numa_run_on_node(0);
-        numa_set_preferred(0);
+        numa_run_on_node(i);
+        numa_set_preferred(i);
         nodemask_t mask;
         nodemask_zero(&mask);
-        nodemask_set_compat(&mask, 0);
+        nodemask_set_compat(&mask, i);
         numa_bind_compat(&mask);
 
         region_tokens = new infinity::memory::RegionToken*[NUM_SEND_BUFFERS+1];
