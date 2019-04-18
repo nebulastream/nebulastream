@@ -747,7 +747,7 @@ int main(int argc, char *argv[])
 
         setupRDMAProducer(connections[i], bufferSizeInTups, i, sendBuffers);
         stringstream ss;
-        ss  << "Producer Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << " nodes=";
+        ss  << "Producer Thread #" << i  << ": on CPU " << sched_getcpu() << " nodes=";
         int numa_node = -1;
         get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers, MPOL_F_NODE | MPOL_F_ADDR);
         ss << numa_node << ",";
