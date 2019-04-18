@@ -513,6 +513,9 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTuples)
     get_mempolicy(&numa_node, NULL, 0, (void*)&sendBuffers[0].send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
     cout << "alloc on numa node=" << numa_node << endl;
 
+    get_mempolicy(&numa_node, NULL, 0, (void*)&sendBuffers[NUM_SEND_BUFFERS-1].send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
+    cout << "alloc on numa node=" << numa_node << endl;
+
     for(auto & r : buffer_ready_sign)
     {
         r = BUFFER_READY_FLAG;
@@ -775,7 +778,6 @@ int main(int argc, char *argv[])
                 runProducerOneOnOne(connections[0], recs[i], bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
                         &producedBuffers[i], &readInputTuples[i], &noFreeEntryFound[i], startIdx, endIdx, numberOfProducer);
             }
-
         }
         cout << "producer finished ... waiting for consumer to finish " << getTimestamp() << endl;
         connections[0]->post_and_receive_blocking(finishBuffer);
