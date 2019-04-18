@@ -433,10 +433,11 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 //                << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
 }
 
-void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples, size_t threadID)
+void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples, size_t numaNode)
 {
-    numa_run_on_node(static_cast<int>(threadID));
-    numa_set_preferred(threadID);
+    numa_run_on_node(static_cast<int>(numaNode));
+    numa_set_preferred(numaNode);
+
     std::cout << "Started routine to receive tuples as Consumer" << std::endl;
     for(auto & r : buffer_ready_sign)
     {
@@ -720,7 +721,7 @@ int main(int argc, char *argv[])
     #pragma omp for
     for(size_t i = 0; i < numberOfConnections; i++)
     {
-//        CorePin(i*10);
+        CorePin(i*10);
         std::cout << "Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << "\n";
         setupRDMAProducer(connections[i], bufferSizeInTups, i);
     }
@@ -733,7 +734,7 @@ int main(int argc, char *argv[])
     #pragma omp for
     for(size_t i = 0; i < numberOfConnections; i++)
     {
-//        CorePin(i*10);
+        CorePin(i*10);
         std::cout << "Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << "\n";
         std::cout << "run consumer" << endl;
         setupRDMAConsumer(connections[i], bufferSizeInTups, i);
