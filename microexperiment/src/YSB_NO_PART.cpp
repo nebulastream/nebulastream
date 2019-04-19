@@ -846,7 +846,14 @@ int main(int argc, char *argv[])
         cout << "starting " << nodes << " threads" << endl;
         #pragma omp parallel num_threads(nodes)
         {
-            conInfos[omp_get_thread_num()] = setupRDMAConsumer(connections[0], bufferSizeInTups);
+            #pragma omp critical
+            {
+                cout << "thread in critivcal = " << omp_get_thread_num() << endl;
+                conInfos[omp_get_thread_num()] = setupRDMAConsumer(connections[0], bufferSizeInTups);
+
+            }
+            cout << "thread out of critivcal = " << omp_get_thread_num() << endl;
+
         }
     }//end of else
     //fix for the test
