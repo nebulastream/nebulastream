@@ -40,7 +40,7 @@ using namespace std;
 #define BUFFER_BEING_PROCESSED_FLAG 2
 #define NUMBER_OF_GEN_TUPLE 1000000
 //#define JOIN_WRITE_BUFFER_SIZE 1024*1024*8
-//#define DEBUG
+#define DEBUG
 
 std::atomic<size_t> exitProducer;
 std::atomic<size_t> exitConsumer;
@@ -292,7 +292,7 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
                 connection->write(cInfos->sendBuffers[receive_buffer_index]->send_buffer, cInfos->region_tokens[receive_buffer_index],
                         cInfos->sendBuffers[receive_buffer_index]->requestToken);
 #ifdef DEBUG
-                cout << "Writing " << sendBuffers[receive_buffer_index].numberOfTuples << " tuples on buffer "
+                cout << "Writing " << cInfos->sendBuffers[receive_buffer_index]->numberOfTuples << " tuples on buffer "
                         << receive_buffer_index << endl;
 #endif
                 total_sent_tuples += cInfos->sendBuffers[receive_buffer_index]->numberOfTuples;
