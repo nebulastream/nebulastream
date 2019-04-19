@@ -280,24 +280,24 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
 //                stringstream ss;
 //                ss << "read from startIdx=" << startIdx << " endIdx=" << endIdx << " size=" << endIdx - startIdx << endl;
 //                cout << ss.str() << endl;
-                stringstream ss;
-                ss << "BEFORE SIZE=" << cInfos->sign_buffer->getSizeInBytes()
-                                            << " token size= "<< cInfos->sign_token->getSizeInBytes()
-                                            << " idx=" << receive_buffer_index
-                                            << " keyL=" <<  cInfos->sign_token->getLocalKey()
-                                            << " thread=" << omp_get_thread_num()
-                                                            << endl;//                sleep(1);
+//                stringstream ss;
+//                ss << "BEFORE SIZE=" << cInfos->sign_buffer->getSizeInBytes()
+//                                            << " token size= "<< cInfos->sign_token->getSizeInBytes()
+//                                            << " idx=" << receive_buffer_index
+//                                            << " keyL=" <<  cInfos->sign_token->getLocalKey()
+//                                            << " thread=" << omp_get_thread_num()
+//                                                            << endl;//                sleep(1);
 
                 connection->read_blocking(cInfos->sign_buffer, cInfos->sign_token, startIdx, startIdx, endIdx - startIdx);
-                ss << "AFTER SIZE=" << cInfos->sign_buffer->getSizeInBytes()
-                                                            << " token size= "<< cInfos->sign_token->getSizeInBytes()
-                                                            << " idx=" << receive_buffer_index
-                                                            << " keyL=" <<  cInfos->sign_token->getLocalKey()
-                                                                            << endl;//
-                ss << "buffer=";
-                for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
-                    ss << ((char*)cInfos->sign_buffer[receive_buffer_index].getAddress()) +i << " ";
-                cout << ss.str() << endl;
+//                ss << "AFTER SIZE=" << cInfos->sign_buffer->getSizeInBytes()
+//                                                            << " token size= "<< cInfos->sign_token->getSizeInBytes()
+//                                                            << " idx=" << receive_buffer_index
+//                                                            << " keyL=" <<  cInfos->sign_token->getLocalKey()
+//                                                                            << endl;//
+//                ss << "buffer=";
+//                for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
+//                    ss << ((char*)cInfos->sign_buffer[receive_buffer_index].getAddress()) +i << " ";
+//                cout << ss.str() << endl;
 
             }
             if(cInfos->buffer_ready_sign[receive_buffer_index] == BUFFER_READY_FLAG)
@@ -305,6 +305,8 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
                 //this will run until one buffer is filled completely
                 readTuples += produce_window_mem(records, bufferSizeInTuples, cInfos->sendBuffers[receive_buffer_index]->tups);
 
+                cout << "using send buffer=" << cInfos->sendBuffers[receive_buffer_index]->numberOfTuples << " "
+                        << cInfos->sendBuffers[receive_buffer_index]->send_buffer->getAddress() << endl;
                 connection->write(cInfos->sendBuffers[receive_buffer_index]->send_buffer, cInfos->region_tokens[receive_buffer_index],
                         cInfos->sendBuffers[receive_buffer_index]->requestToken);
 #ifdef DEBUG
