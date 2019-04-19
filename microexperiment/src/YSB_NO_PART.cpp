@@ -280,8 +280,9 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
 //                stringstream ss;
 //                ss << "read from startIdx=" << startIdx << " endIdx=" << endIdx << " size=" << endIdx - startIdx << endl;
 //                cout << ss.str() << endl;
-                connection->read_blocking(cInfos->sign_buffer, cInfos->sign_token, startIdx, startIdx, endIdx - startIdx);
-//                sleep(1);
+                cout << "before sign buffer size=" << cInfos->sign_buffer->getSizeInBytes() << endl;
+                                connection->read_blocking(cInfos->sign_buffer, cInfos->sign_token, startIdx, startIdx, endIdx - startIdx);
+                                cout << "after sign buffer size=" << cInfos->sign_buffer->getSizeInBytes() << endl;//                sleep(1);
 
             }
             if(cInfos->buffer_ready_sign[receive_buffer_index] == BUFFER_READY_FLAG)
@@ -503,6 +504,7 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
         } else {
 //            cout << "copy sign token at pos " << i << endl;
             connectInfo->sign_buffer = connection->register_buffer(connectInfo->buffer_ready_sign, NUM_SEND_BUFFERS);
+
             connectInfo->region_tokens[i] = connectInfo->sign_buffer->createRegionToken();
             stringstream ss;
             ss << "i=" << i << "sign region getSizeInBytes=" << connectInfo->sign_buffer->getSizeInBytes() << " getAddress=" << connectInfo->sign_buffer->getAddress()
@@ -564,7 +566,7 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
     }
 
     connectInfo->sign_buffer = connection->register_buffer(connectInfo->buffer_ready_sign, NUM_SEND_BUFFERS);
-
+    cout << "prod sign buffer size=" << connectInfo->sign_buffer->getSizeInBytes() << endl;
     infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
 
     void* b2 = numa_alloc_onnode((NUM_SEND_BUFFERS+1)*sizeof(RegionToken), outer_thread_id);
