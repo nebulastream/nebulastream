@@ -280,9 +280,7 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
 //                stringstream ss;
 //                ss << "read from startIdx=" << startIdx << " endIdx=" << endIdx << " size=" << endIdx - startIdx << endl;
 //                cout << ss.str() << endl;
-                cout << "before sign buffer size=" << cInfos->sign_buffer->getSizeInBytes() << endl;
-                                connection->read_blocking(cInfos->sign_buffer, cInfos->sign_token, startIdx, startIdx, endIdx - startIdx);
-                                cout << "after sign buffer size=" << cInfos->sign_buffer->getSizeInBytes() << endl;//                sleep(1);
+                connection->read_blocking(cInfos->sign_buffer, cInfos->sign_token, startIdx, startIdx, endIdx - startIdx);
 
             }
             if(cInfos->buffer_ready_sign[receive_buffer_index] == BUFFER_READY_FLAG)
@@ -303,6 +301,9 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
                 if (total_buffer_send < bufferProcCnt)//a new buffer will be send next
                 {
                     cInfos->buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
+                    cout << "after sign buffer size=" << cInfos->sign_buffer->getSizeInBytes() << endl;//                sleep(1);
+                    cout << "after sign buffer size=" << cInfos->sign_token->getSizeInBytes() << endl;//                sleep(1);
+                    cout << "idx= " << receive_buffer_index << endl;
                     connection->write_blocking(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index, receive_buffer_index, 1);
                 }
                 else//finished processing
