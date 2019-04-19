@@ -472,62 +472,46 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
     numa_set_preferred(outer_thread_id);
 
     void* b1 = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(char), outer_thread_id);
-    char* buffer_ready_sign_local = (char*)b1;
+    connectInfo->buffer_ready_sign = (char*)b1;
     for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
     {
-        buffer_ready_sign_local[i] = BUFFER_READY_FLAG;
+        connectInfo->buffer_ready_sign[i] = BUFFER_READY_FLAG;
     }
-    connectInfo->buffer_ready_sign = buffer_ready_sign_local;
 
     void* b2 = numa_alloc_onnode((NUM_SEND_BUFFERS+1)*sizeof(RegionToken), outer_thread_id);
-    infinity::memory::RegionToken** region_tokens_local = (infinity::memory::RegionToken**)b2;
-    connectInfo->region_tokens = region_tokens_local;
-
-//    void* pBuffer = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(TupleBuffer), outer_thread_id);
-//    TupleBuffer** sendBuffers_local = (TupleBuffer**)pBuffer;
-//
-//    for(size_t i = 0; i < NUM_SEND_BUFFERS; ++i)
-//    {
-//      sendBuffers_local[i] = new (sendBuffers_local + i) TupleBuffer(*connection, bufferSizeInTups);
-//    }
-//    connectInfo->sendBuffers = sendBuffers_local;
+    connectInfo->region_tokens = (infinity::memory::RegionToken**)b2;
 
 
     void* pBuffer = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(Buffer), outer_thread_id);
-    infinity::memory::Buffer** recv_buffers_local = (infinity::memory::Buffer**)pBuffer;
+    connectInfo->recv_buffers = (infinity::memory::Buffer**)pBuffer;
 
     infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
 
-    RegionToken* sign_token_local = nullptr;
-    infinity::memory::Buffer* sign_buffer_local;
+    connectInfo->sign_token = nullptr;
 
 
     for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++)
     {
         if (i < NUM_SEND_BUFFERS) {
-            recv_buffers_local[i] = connection->allocate_buffer(bufferSizeInTups * sizeof(Tuple));
-            region_tokens_local[i] = recv_buffers_local[i]->createRegionToken();
+            connectInfo->recv_buffers[i] = connection->allocate_buffer(bufferSizeInTups * sizeof(Tuple));
+            connectInfo->region_tokens[i] = connectInfo->recv_buffers[i]->createRegionToken();
 
             stringstream ss;
-            ss << "i=" << i << "recv region getSizeInBytes=" << recv_buffers_local[i]->getSizeInBytes() << " getAddress=" << recv_buffers_local[i]->getAddress()
-                                       << " getLocalKey=" << recv_buffers_local[i]->getLocalKey() << " getRemoteKey=" << recv_buffers_local[i]->getRemoteKey() << endl;
+            ss << "i=" << i << "recv region getSizeInBytes=" << connectInfo->recv_buffers[i]->getSizeInBytes() << " getAddress=" << connectInfo->recv_buffers[i]->getAddress()
+                                       << " getLocalKey=" << connectInfo->recv_buffers[i]->getLocalKey() << " getRemoteKey=" << connectInfo->recv_buffers[i]->getRemoteKey() << endl;
             cout << ss.str() << endl;
         } else {
 //            cout << "copy sign token at pos " << i << endl;
-            sign_buffer_local = connection->register_buffer(buffer_ready_sign_local, NUM_SEND_BUFFERS);
-            region_tokens_local[i] = sign_buffer_local->createRegionToken();
+            connectInfo->sign_buffer = connection->register_buffer(connectInfo->buffer_ready_sign, NUM_SEND_BUFFERS);
+            connectInfo->region_tokens[i] = connectInfo->sign_buffer->createRegionToken();
             stringstream ss;
-            ss << "i=" << i << "sign region getSizeInBytes=" << sign_buffer_local->getSizeInBytes() << " getAddress=" << sign_buffer_local->getAddress()
-                                       << " getLocalKey=" << sign_buffer_local->getLocalKey() << " getRemoteKey=" << sign_buffer_local->getRemoteKey() << endl;
+            ss << "i=" << i << "sign region getSizeInBytes=" << connectInfo->sign_buffer->getSizeInBytes() << " getAddress=" << connectInfo->sign_buffer->getAddress()
+                                       << " getLocalKey=" << connectInfo->sign_buffer->getLocalKey() << " getRemoteKey=" << connectInfo->sign_buffer->getRemoteKey() << endl;
             cout << ss.str() << endl;
         }
-        memcpy((RegionToken*)tokenbuffer->getData() + i, region_tokens_local[i], sizeof(RegionToken));
+        memcpy((RegionToken*)tokenbuffer->getData() + i, connectInfo->region_tokens[i], sizeof(RegionToken));
 
     }
-
-    connectInfo->sign_token = sign_token_local;
-    connectInfo->sign_buffer = sign_buffer_local;
-    connectInfo->recv_buffers = recv_buffers_local;
 
     connection->send_blocking(tokenbuffer);
     cout << "setupRDMAConsumer finished" << endl;
@@ -565,55 +549,50 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
     numa_set_preferred(outer_thread_id);
 
     void* pBuffer = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(TupleBuffer), outer_thread_id);
-    TupleBuffer** sendBuffers_local = (TupleBuffer**)pBuffer;
+    connectInfo->sendBuffers = (TupleBuffer**)pBuffer;
 
     for(size_t i = 0; i < NUM_SEND_BUFFERS; ++i)
     {
-        sendBuffers_local[i] = new (sendBuffers_local + i) TupleBuffer(*connection, bufferSizeInTups);
+        connectInfo->sendBuffers[i] = new (connectInfo->sendBuffers + i) TupleBuffer(*connection, bufferSizeInTups);
     }
 
     void* b3 = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(char), outer_thread_id);
-    char* buffer_ready_sign_local = (char*)b3;
+    connectInfo->buffer_ready_sign = (char*)b3;
     for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
     {
-        buffer_ready_sign_local[i] = BUFFER_READY_FLAG;
+        connectInfo->buffer_ready_sign[i] = BUFFER_READY_FLAG;
     }
 
-    infinity::memory::Buffer* sign_buffer_local = connection->register_buffer(buffer_ready_sign_local, NUM_SEND_BUFFERS);
-    RegionToken* sign_token_local = nullptr;
+    connectInfo->sign_buffer = connection->register_buffer(connectInfo->buffer_ready_sign, NUM_SEND_BUFFERS);
+
     infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
 
     void* b2 = numa_alloc_onnode((NUM_SEND_BUFFERS+1)*sizeof(RegionToken), outer_thread_id);
-    infinity::memory::RegionToken**region_tokens_local = (infinity::memory::RegionToken**)b2;
+    connectInfo->region_tokens = (infinity::memory::RegionToken**)b2;
 
     connection->post_and_receive_blocking(tokenbuffer);
 
     for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++)
     {
         if ( i < NUM_SEND_BUFFERS){
-            region_tokens_local[i] = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
-            memcpy(region_tokens_local[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
+            connectInfo->region_tokens[i] = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
+            memcpy(connectInfo->region_tokens[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
             stringstream ss;
-            ss << "region getSizeInBytes=" << region_tokens_local[i]->getSizeInBytes() << " getAddress=" << region_tokens_local[i]->getAddress()
-                    << " getLocalKey=" << region_tokens_local[i]->getLocalKey() << " getRemoteKey=" << region_tokens_local[i]->getRemoteKey() << endl;
+            ss << "region getSizeInBytes=" << connectInfo->region_tokens[i]->getSizeInBytes() << " getAddress=" << connectInfo->region_tokens[i]->getAddress()
+                    << " getLocalKey=" << connectInfo->region_tokens[i]->getLocalKey() << " getRemoteKey=" << connectInfo->region_tokens[i]->getRemoteKey() << endl;
                     cout << ss.str() << endl;
         }
         else {
-            sign_token_local = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
-            memcpy(sign_token_local, (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
+            connectInfo->sign_token = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
+            memcpy(connectInfo->sign_token, (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
             stringstream ss;
-            ss << " SIGN LOCALregion getSizeInBytes=" << sign_token_local->getSizeInBytes() << " getAddress=" << sign_token_local->getAddress()
-                    << " getLocalKey=" << sign_token_local->getLocalKey() << " getRemoteKey=" << sign_token_local->getRemoteKey() << endl;
+            ss << " SIGN LOCALregion getSizeInBytes=" << connectInfo->sign_token->getSizeInBytes() << " getAddress=" << connectInfo->sign_token->getAddress()
+                    << " getLocalKey=" << connectInfo->sign_token->getLocalKey() << " getRemoteKey=" << connectInfo->sign_token->getRemoteKey() << endl;
                     cout << ss.str() << endl;
         }
 
     }
-    connectInfo->sendBuffers = sendBuffers_local;
-    connectInfo->buffer_ready_sign = buffer_ready_sign_local;
 
-    connectInfo->sign_buffer = sign_buffer_local;
-    connectInfo->sign_token = sign_token_local;
-    connectInfo->region_tokens = region_tokens_local;
 
    stringstream ss;
    ss  << "Producer Thread #" << outer_thread_id  << ": on CPU " << sched_getcpu() << " nodes=";
