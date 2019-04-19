@@ -794,8 +794,9 @@ int main(int argc, char *argv[])
         cout << "starting " << nodes << " threads" << endl;
         #pragma omp parallel num_threads(nodes)
         {
-
+            setupRDMAConsumer(connections[0], bufferSizeInTups);
         }
+
     }//end of else
     exit(0);
     //fix for the test
