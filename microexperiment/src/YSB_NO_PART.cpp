@@ -582,6 +582,8 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
             sign_token_local = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
             memcpy(sign_token_local, (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
         }
+        cout << "region getSizeInBytes=" << region_tokens_local[i]->getSizeInBytes() << " getAddress=" << region_tokens_local[i]->getAddress()
+        << " getLocalKey=" << region_tokens_local[i]->getLocalKey() << " getRemoteKey=" << region_tokens_local[i]->getRemoteKey() << endl;
     }
     connectInfo->sign_buffer = sign_buffer_local;
     connectInfo->sign_token = sign_token_local;
