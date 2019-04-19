@@ -460,9 +460,78 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 //                << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
 }
 
-void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples, size_t numaNode)
+void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTups)
 {
+    ConnectionInfos* connectInfo = new ConnectionInfos();
 
+    auto outer_thread_id = omp_get_thread_num();
+    numa_run_on_node(outer_thread_id);
+    numa_set_preferred(outer_thread_id);
+
+    void* b1 = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(char), outer_thread_id);
+    char* buffer_ready_sign_local = (char*)b1;
+    for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
+    {
+        buffer_ready_sign_local[i] = BUFFER_READY_FLAG;
+    }
+    connectInfo->buffer_ready_sign = buffer_ready_sign_local;
+
+    void* b2 = numa_alloc_onnode((NUM_SEND_BUFFERS+1)*sizeof(RegionToken), outer_thread_id);
+    infinity::memory::RegionToken** region_tokens_local = (infinity::memory::RegionToken**)b2;
+    connectInfo->region_tokens = region_tokens_local;
+
+    void* pBuffer = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(Buffer), outer_thread_id);
+    infinity::memory::Buffer** recv_buffers_local = (infinity::memory::Buffer**)pBuffer;
+    connectInfo->recv_buffers = recv_buffers_local;
+
+    infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
+
+    RegionToken* sign_token_local = nullptr;
+    infinity::memory::Buffer* sign_buffer_local;
+
+
+    for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++)
+    {
+        if (i < NUM_SEND_BUFFERS) {
+            recv_buffers_local[i] = connection->allocate_buffer(bufferSizeInTups * sizeof(Tuple));
+            region_tokens_local[i] = recv_buffers_local[i]->createRegionToken();
+        } else {
+//            cout << "copy sign token at pos " << i << endl;
+            sign_buffer_local = connection->register_buffer(buffer_ready_sign_local, NUM_SEND_BUFFERS);
+            region_tokens_local[i] = sign_buffer_local->createRegionToken();
+        }
+        memcpy((RegionToken*)tokenbuffer->getData() + i, region_tokens_local[i], sizeof(RegionToken));
+//        cout << "i=" << i << "sign region getSizeInBytes=" << region_tokens[i]->getSizeInBytes() << " getAddress=" << region_tokens[i]->getAddress()
+//                           << " getLocalKey=" << region_tokens[i]->getLocalKey() << " getRemoteKey=" << region_tokens[i]->getRemoteKey() << endl;
+    }
+
+    connectInfo->sign_token = sign_token_local;
+    connectInfo->sign_buffer = sign_buffer_local;
+
+    connection->send_blocking(tokenbuffer);
+    cout << "setupRDMAConsumer finished" << endl;
+
+    stringstream ss;
+    ss  << "Consumer Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << " nodes=";
+    int numa_node = -1;
+    get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->recv_buffers, MPOL_F_NODE | MPOL_F_ADDR);
+    ss << numa_node << ",";
+    get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->recv_buffers[0]->getData(), MPOL_F_NODE | MPOL_F_ADDR);
+    ss << numa_node << ",";
+    get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->buffer_ready_sign, MPOL_F_NODE | MPOL_F_ADDR);
+    ss << numa_node << ",";
+    get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->region_tokens, MPOL_F_NODE | MPOL_F_ADDR);
+    ss << numa_node << ",";
+    get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->region_tokens[0]->getAddress(), MPOL_F_NODE | MPOL_F_ADDR);
+        ss << numa_node << ",";
+    get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->sign_token, MPOL_F_NODE | MPOL_F_ADDR);
+    ss << numa_node << ",";
+    void * ptr_to_check = connectInfo->recv_buffers;
+    int status[1];
+    status[0]=-1;
+    int ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check, NULL, status, 0);
+    ss << status[0] << ",";
+    cout << ss.str() << endl;
 }
 
 
@@ -476,7 +545,7 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
     void* pBuffer = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(TupleBuffer), outer_thread_id);
     TupleBuffer** sendBuffers_local = (TupleBuffer**)pBuffer;
 
-    for(int i = 0; i < NUM_SEND_BUFFERS; ++i)
+    for(size_t i = 0; i < NUM_SEND_BUFFERS; ++i)
     {
         sendBuffers_local[i] = new (sendBuffers_local + i) TupleBuffer(*connection, bufferSizeInTups);
     }
@@ -534,10 +603,8 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
    void * ptr_to_check = connectInfo->sendBuffers;
    int status[1];
    status[0]=-1;
-   int ret_code=move_pages(0 /*self memory */, 1, &ptr_to_check, NULL, status, 0);
+   int ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check, NULL, status, 0);
    ss << status[0] << ",";
-   get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers, MPOL_F_NODE | MPOL_F_ADDR);
-   ss << numa_node << ",";
    cout << ss.str() << endl;
 
    return connectInfo;
@@ -727,56 +794,7 @@ int main(int argc, char *argv[])
         cout << "starting " << nodes << " threads" << endl;
         #pragma omp parallel num_threads(nodes)
         {
-            auto outer_thread_id = omp_get_thread_num();
-            numa_run_on_node(outer_thread_id);
-            numa_set_preferred(outer_thread_id);
 
-            void* b1 = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(char), outer_thread_id);
-            char* buffer_ready_sign = (char*)b1;
-            for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
-            {
-                buffer_ready_sign[i] = BUFFER_READY_FLAG;
-            }
-
-            void* b2 = numa_alloc_onnode((NUM_SEND_BUFFERS+1)*sizeof(RegionToken), outer_thread_id);
-            infinity::memory::RegionToken** region_tokens = (infinity::memory::RegionToken**)b2;
-
-            recv_buffers = new infinity::memory::Buffer*[NUM_SEND_BUFFERS];
-            void* pBuffer = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(Buffer), outer_thread_id);
-            infinity::memory::Buffer** recv_buffers = (infinity::memory::Buffer**)pBuffer;
-
-            infinity::memory::Buffer* tokenbuffer = connections[0]->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
-
-            for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++)
-            {
-                if (i < NUM_SEND_BUFFERS) {
-                    recv_buffers[i] = connections[0]->allocate_buffer(bufferSizeInTups * sizeof(Tuple));
-                    region_tokens[i] = recv_buffers[i]->createRegionToken();
-                } else {
-        //            cout << "copy sign token at pos " << i << endl;
-                    sign_buffer = connections[0]->register_buffer(buffer_ready_sign, NUM_SEND_BUFFERS);
-                    region_tokens[i] = sign_buffer->createRegionToken();
-                }
-                memcpy((RegionToken*)tokenbuffer->getData() + i, region_tokens[i], sizeof(RegionToken));
-        //        cout << "i=" << i << "sign region getSizeInBytes=" << region_tokens[i]->getSizeInBytes() << " getAddress=" << region_tokens[i]->getAddress()
-        //                           << " getLocalKey=" << region_tokens[i]->getLocalKey() << " getRemoteKey=" << region_tokens[i]->getRemoteKey() << endl;
-            }
-
-            connections[0]->send_blocking(tokenbuffer);
-            cout << "setupRDMAConsumer finished" << endl;
-
-            stringstream ss;
-            ss  << "Consumer Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << " nodes=";
-            int numa_node = -1;
-            get_mempolicy(&numa_node, NULL, 0, (void*)recv_buffers, MPOL_F_NODE | MPOL_F_ADDR);
-            ss << numa_node << ",";
-            get_mempolicy(&numa_node, NULL, 0, (void*)recv_buffers[0]->getData(), MPOL_F_NODE | MPOL_F_ADDR);
-            ss << numa_node << ",";
-            get_mempolicy(&numa_node, NULL, 0, (void*)buffer_ready_sign, MPOL_F_NODE | MPOL_F_ADDR);
-            ss << numa_node << ",";
-            get_mempolicy(&numa_node, NULL, 0, (void*)region_tokens, MPOL_F_NODE | MPOL_F_ADDR);
-            ss << numa_node << ",";
-            cout << ss.str() << endl;
         }
     }//end of else
     exit(0);
