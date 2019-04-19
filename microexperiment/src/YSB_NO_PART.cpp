@@ -483,9 +483,18 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
     infinity::memory::RegionToken** region_tokens_local = (infinity::memory::RegionToken**)b2;
     connectInfo->region_tokens = region_tokens_local;
 
+//    void* pBuffer = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(TupleBuffer), outer_thread_id);
+//    TupleBuffer** sendBuffers_local = (TupleBuffer**)pBuffer;
+//
+//    for(size_t i = 0; i < NUM_SEND_BUFFERS; ++i)
+//    {
+//      sendBuffers_local[i] = new (sendBuffers_local + i) TupleBuffer(*connection, bufferSizeInTups);
+//    }
+//    connectInfo->sendBuffers = sendBuffers_local;
+
+
     void* pBuffer = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(Buffer), outer_thread_id);
     infinity::memory::Buffer** recv_buffers_local = (infinity::memory::Buffer**)pBuffer;
-    connectInfo->recv_buffers = recv_buffers_local;
 
     infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
 
@@ -498,18 +507,26 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
         if (i < NUM_SEND_BUFFERS) {
             recv_buffers_local[i] = connection->allocate_buffer(bufferSizeInTups * sizeof(Tuple));
             region_tokens_local[i] = recv_buffers_local[i]->createRegionToken();
+            stringstream ss;
+            ss << "i=" << i << "recv region getSizeInBytes=" << recv_buffers_local[i]->getSizeInBytes() << " getAddress=" << recv_buffers_local[i]->getAddress()
+                                       << " getLocalKey=" << recv_buffers_local[i]->getLocalKey() << " getRemoteKey=" << recv_buffers_local[i]->getRemoteKey() << endl;
+            cout << ss.str() << endl;
         } else {
 //            cout << "copy sign token at pos " << i << endl;
             sign_buffer_local = connection->register_buffer(buffer_ready_sign_local, NUM_SEND_BUFFERS);
             region_tokens_local[i] = sign_buffer_local->createRegionToken();
+            stringstream ss;
+            ss << "i=" << i << "sign region getSizeInBytes=" << sign_buffer_local->getSizeInBytes() << " getAddress=" << sign_buffer_local->getAddress()
+                                       << " getLocalKey=" << sign_buffer_local->getLocalKey() << " getRemoteKey=" << sign_buffer_local->getRemoteKey() << endl;
+            cout << ss.str() << endl;
         }
         memcpy((RegionToken*)tokenbuffer->getData() + i, region_tokens_local[i], sizeof(RegionToken));
-//        cout << "i=" << i << "sign region getSizeInBytes=" << region_tokens[i]->getSizeInBytes() << " getAddress=" << region_tokens[i]->getAddress()
-//                           << " getLocalKey=" << region_tokens[i]->getLocalKey() << " getRemoteKey=" << region_tokens[i]->getRemoteKey() << endl;
+
     }
 
     connectInfo->sign_token = sign_token_local;
     connectInfo->sign_buffer = sign_buffer_local;
+    connectInfo->recv_buffers = recv_buffers_local;
 
     connection->send_blocking(tokenbuffer);
     cout << "setupRDMAConsumer finished" << endl;
