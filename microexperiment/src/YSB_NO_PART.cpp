@@ -736,7 +736,7 @@ int main(int argc, char *argv[])
     exitConsumer = 0;
 
     size_t rank = 99;
-    size_t numberOfProducer = 1;
+    size_t numberOfProducer = 2;
     size_t numberOfConsumer = 1;
     size_t bufferProcCnt = 0;
     size_t bufferSizeInTups = 0;
