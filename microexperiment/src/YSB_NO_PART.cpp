@@ -303,7 +303,8 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
                     cInfos->buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
                     cout << "after sign buffer size=" << cInfos->sign_buffer->getSizeInBytes() << endl;//                sleep(1);
                     cout << "after sign buffer size=" << cInfos->sign_token->getSizeInBytes() << endl;//                sleep(1);
-                    cout << "idx= " << receive_buffer_index << endl;
+                    cout << "idx= " << receive_buffer_index << " key=" <<                     cInfos->sign_buffer->getLocalKey()
+<< endl;
                     connection->write_blocking(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index, receive_buffer_index, 1);
                 }
                 else//finished processing
