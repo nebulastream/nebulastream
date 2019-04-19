@@ -101,6 +101,7 @@ class TupleBuffer{
 public:
     TupleBuffer(VerbsConnection& connection, size_t bufferSizeInTuples)
     {
+        cout << "constr called " << endl;
         numberOfTuples = 0;
         maxNumberOfTuples = bufferSizeInTuples;
         send_buffer = connection.allocate_buffer(bufferSizeInTuples * sizeof(Tuple));
@@ -507,6 +508,7 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
         if (i < NUM_SEND_BUFFERS) {
             recv_buffers_local[i] = connection->allocate_buffer(bufferSizeInTups * sizeof(Tuple));
             region_tokens_local[i] = recv_buffers_local[i]->createRegionToken();
+
             stringstream ss;
             ss << "i=" << i << "recv region getSizeInBytes=" << recv_buffers_local[i]->getSizeInBytes() << " getAddress=" << recv_buffers_local[i]->getAddress()
                                        << " getLocalKey=" << recv_buffers_local[i]->getLocalKey() << " getRemoteKey=" << recv_buffers_local[i]->getRemoteKey() << endl;
