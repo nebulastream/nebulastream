@@ -582,7 +582,9 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
 
     for(size_t i = 0; i < NUM_SEND_BUFFERS; ++i)
     {
-        connectInfo->sendBuffers[i] = new (connectInfo->sendBuffers + i) TupleBuffer(*connection, bufferSizeInTups);
+//        connectInfo->sendBuffers[i] = new (connectInfo->sendBuffers + i) TupleBuffer(*connection, bufferSizeInTups);,
+        connectInfo->sendBuffers[i] = new TupleBuffer(*connection, bufferSizeInTups);
+
     }
 
     void* b3 = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(char), outer_thread_id);
