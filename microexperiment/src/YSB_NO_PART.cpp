@@ -492,6 +492,7 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
 
     connectInfo->sign_token = nullptr;
 
+    stringstream ss;
 
     for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++)
     {
@@ -499,10 +500,8 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
             connectInfo->recv_buffers[i] = connection->allocate_buffer(bufferSizeInTups * sizeof(Tuple));
             connectInfo->region_tokens[i] = connectInfo->recv_buffers[i]->createRegionToken();
 
-            stringstream ss;
             ss << "i=" << i << "recv region getSizeInBytes=" << connectInfo->recv_buffers[i]->getSizeInBytes() << " getAddress=" << connectInfo->recv_buffers[i]->getAddress()
                                        << " getLocalKey=" << connectInfo->recv_buffers[i]->getLocalKey() << " getRemoteKey=" << connectInfo->recv_buffers[i]->getRemoteKey() << endl;
-            cout << ss.str() << endl;
         } else {
 //            cout << "copy sign token at pos " << i << endl;
             connectInfo->sign_buffer = connection->register_buffer(connectInfo->buffer_ready_sign, NUM_SEND_BUFFERS);
@@ -511,16 +510,18 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
             stringstream ss;
             ss << "i=" << i << "sign region getSizeInBytes=" << connectInfo->sign_buffer->getSizeInBytes() << " getAddress=" << connectInfo->sign_buffer->getAddress()
                                        << " getLocalKey=" << connectInfo->sign_buffer->getLocalKey() << " getRemoteKey=" << connectInfo->sign_buffer->getRemoteKey() << endl;
-            cout << ss.str() << endl;
+
         }
         memcpy((RegionToken*)tokenbuffer->getData() + i, connectInfo->region_tokens[i], sizeof(RegionToken));
-
+    }
+    if(outer_thread_id == 0)
+    {
+        cout << "0=" << ss.str() << endl;
     }
 
     connection->send_blocking(tokenbuffer);
     cout << "setupRDMAConsumer finished" << endl;
 
-    stringstream ss;
     ss  << "Consumer Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << " nodes=";
     int numa_node = -1;
     get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->recv_buffers, MPOL_F_NODE | MPOL_F_ADDR);
@@ -575,16 +576,15 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
     connectInfo->region_tokens = (infinity::memory::RegionToken**)b2;
 
     connection->post_and_receive_blocking(tokenbuffer);
+    stringstream ss;
 
     for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++)
     {
         if ( i < NUM_SEND_BUFFERS){
             connectInfo->region_tokens[i] = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
             memcpy(connectInfo->region_tokens[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
-            stringstream ss;
             ss << "region getSizeInBytes=" << connectInfo->region_tokens[i]->getSizeInBytes() << " getAddress=" << connectInfo->region_tokens[i]->getAddress()
                     << " getLocalKey=" << connectInfo->region_tokens[i]->getLocalKey() << " getRemoteKey=" << connectInfo->region_tokens[i]->getRemoteKey() << endl;
-                    cout << ss.str() << endl;
         }
         else {
             connectInfo->sign_token = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
@@ -592,13 +592,14 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
             stringstream ss;
             ss << " SIGN LOCALregion getSizeInBytes=" << connectInfo->sign_token->getSizeInBytes() << " getAddress=" << connectInfo->sign_token->getAddress()
                     << " getLocalKey=" << connectInfo->sign_token->getLocalKey() << " getRemoteKey=" << connectInfo->sign_token->getRemoteKey() << endl;
-                    cout << ss.str() << endl;
         }
 
     }
+    if(outer_thread_id == 0)
+   {
+       cout << "0=" << ss.str() << endl;
+   }
 
-
-   stringstream ss;
    ss  << "Producer Thread #" << outer_thread_id  << ": on CPU " << sched_getcpu() << " nodes=";
    int numa_node = -1;
    get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->sendBuffers, MPOL_F_NODE | MPOL_F_ADDR);
