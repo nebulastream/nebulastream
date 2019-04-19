@@ -818,8 +818,6 @@ int main(int argc, char *argv[])
         connections.push_back(new VerbsConnection(&info2));
     }
     auto nodes = numa_num_configured_nodes();
-    nodes = 1;
-
     auto cores = numa_num_configured_cpus();
     auto cores_per_node = cores / nodes;
     cout << "net=" << omp_get_nested() << endl;
@@ -830,12 +828,17 @@ int main(int argc, char *argv[])
         cout << "starting " << nodes << " threads" << endl;
         #pragma omp parallel num_threads(nodes)
         {
-            conInfos[omp_get_thread_num()] = setupRDMAProducer(connections[0], bufferSizeInTups);
-            conInfos[omp_get_thread_num()]->records = new record*[numberOfProducer];
-            for(size_t i = 0; i < numberOfProducer; i++)
+            #pragma omp critical
             {
-                conInfos[omp_get_thread_num()]->records[i] = generateTuplesOneArray(numberOfProducer, campaingCnt);
+                cout << "thread in critivcal = " << omp_get_thread_num() << endl;
+                conInfos[omp_get_thread_num()] = setupRDMAProducer(connections[0], bufferSizeInTups);
+                conInfos[omp_get_thread_num()]->records = new record*[numberOfProducer];
+                for(size_t i = 0; i < numberOfProducer; i++)
+                {
+                    conInfos[omp_get_thread_num()]->records[i] = generateTuplesOneArray(numberOfProducer, campaingCnt);
+                }
             }
+            cout << "thread out of critivcal = " << omp_get_thread_num() << endl;
         }//end of pragma
     }
     else
@@ -889,17 +892,16 @@ int main(int argc, char *argv[])
              size_t startIdx = inner_thread_id* share;
              size_t endIdx = (inner_thread_id+1)*share;
 
-             #pragma omp critical
-             std::cout
-                << "Thread " << outer_thread_id << ":" << inner_thread_id
-                << " core: " << sched_getcpu() << " start=" << startIdx << " endidx=" << endIdx << std::endl;
+
+             std::cout << "Thread " << outer_thread_id << ":" << inner_thread_id
+                << " core: " << sched_getcpu() << " start=" << startIdx << " endidx=" << endIdx << " in critical" << std::endl;
 
              record* recs = conInfos[outer_thread_id]->records[inner_thread_id];
              cout << "recs=" << recs << endl;
              runProducerOneOnOne(connections[0], recs, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
                      &producedBuffers[i], &readInputTuples[i], &noFreeEntryFound[i], startIdx, endIdx,
                      numberOfProducer, conInfos[outer_thread_id]);
-
+             std::cout << "Thread " << outer_thread_id << ":" << inner_thread_id << "out of ciritcal" << endl;
 
 
              assert(outer_thread_id == numa_node_of_cpu(sched_getcpu()));
