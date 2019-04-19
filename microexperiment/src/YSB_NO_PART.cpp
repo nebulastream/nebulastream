@@ -836,6 +836,7 @@ int main(int argc, char *argv[])
         connections.push_back(new VerbsConnection(&info2));
     }
     auto nodes = numa_num_configured_nodes();
+    nodes = 1;
     auto cores = numa_num_configured_cpus();
     auto cores_per_node = cores / nodes;
     cout << "net=" << omp_get_nested() << endl;
@@ -961,7 +962,7 @@ int main(int argc, char *argv[])
        {
           auto outer_thread_id = omp_get_thread_num();
           numa_run_on_node(outer_thread_id);
-          #pragma omp parallel num_threads(numberOfConsumer/nodes)
+          #pragma omp parallel num_threads(1)
           {
              auto inner_thread_id = omp_get_thread_num();
              size_t i = inner_thread_id;
@@ -1115,3 +1116,4 @@ int main(int argc, char *argv[])
 //        }
 //    }
 //}
+
