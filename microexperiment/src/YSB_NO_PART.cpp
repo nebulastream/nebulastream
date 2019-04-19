@@ -287,7 +287,7 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
             if(cInfos->buffer_ready_sign[receive_buffer_index] == BUFFER_READY_FLAG)
             {
                 //this will run until one buffer is filled completely
-                readTuples += produce_window_mem(records, bufferSizeInTuples, (Tuple*)cInfos->sendBuffers[receive_buffer_index]->send_buffer->getData());
+                readTuples += produce_window_mem(records, bufferSizeInTuples, (Tuple*)cInfos->sendBuffers[receive_buffer_index]->tups);
 
                 connection->write(cInfos->sendBuffers[receive_buffer_index]->send_buffer, cInfos->region_tokens[receive_buffer_index],
                         cInfos->sendBuffers[receive_buffer_index]->requestToken);
@@ -570,7 +570,6 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
     for(size_t i = 0; i < NUM_SEND_BUFFERS; ++i)
     {
         sendBuffers_local[i] = new (sendBuffers_local + i) TupleBuffer(*connection, bufferSizeInTups);
-        cout << "tups= " << sendBuffers_local[i]->numberOfTuples << endl;
     }
 
     void* b3 = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(char), outer_thread_id);
