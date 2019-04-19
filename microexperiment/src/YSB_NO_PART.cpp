@@ -877,6 +877,7 @@ int main(int argc, char *argv[])
                 << " core: " << sched_getcpu() << " start=" << startIdx << " endidx=" << endIdx << std::endl;
 
              record* recs = conInfos[outer_thread_id]->records[inner_thread_id];
+             cout << "recs=" << recs << endl;
              runProducerOneOnOne(connections[0], recs, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
                      &producedBuffers[i], &readInputTuples[i], &noFreeEntryFound[i], startIdx, endIdx,
                      numberOfProducer, conInfos[outer_thread_id]);
