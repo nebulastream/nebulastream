@@ -500,15 +500,17 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
             connectInfo->recv_buffers[i] = connection->allocate_buffer(bufferSizeInTups * sizeof(Tuple));
             connectInfo->region_tokens[i] = connectInfo->recv_buffers[i]->createRegionToken();
 
-            ss << "i=" << i << "recv region getSizeInBytes=" << connectInfo->recv_buffers[i]->getSizeInBytes() << " getAddress=" << connectInfo->recv_buffers[i]->getAddress()
+            if(outer_thread_id == 0)
+                ss << "i=" << i << "recv region getSizeInBytes=" << connectInfo->recv_buffers[i]->getSizeInBytes() << " getAddress=" << connectInfo->recv_buffers[i]->getAddress()
                                        << " getLocalKey=" << connectInfo->recv_buffers[i]->getLocalKey() << " getRemoteKey=" << connectInfo->recv_buffers[i]->getRemoteKey() << endl;
         } else {
 //            cout << "copy sign token at pos " << i << endl;
             connectInfo->sign_buffer = connection->register_buffer(connectInfo->buffer_ready_sign, NUM_SEND_BUFFERS);
 
             connectInfo->region_tokens[i] = connectInfo->sign_buffer->createRegionToken();
-            stringstream ss;
-            ss << "i=" << i << "sign region getSizeInBytes=" << connectInfo->sign_buffer->getSizeInBytes() << " getAddress=" << connectInfo->sign_buffer->getAddress()
+
+            if(outer_thread_id == 0)
+                ss << "i=" << i << "sign region getSizeInBytes=" << connectInfo->sign_buffer->getSizeInBytes() << " getAddress=" << connectInfo->sign_buffer->getAddress()
                                        << " getLocalKey=" << connectInfo->sign_buffer->getLocalKey() << " getRemoteKey=" << connectInfo->sign_buffer->getRemoteKey() << endl;
 
         }
@@ -583,14 +585,16 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
         if ( i < NUM_SEND_BUFFERS){
             connectInfo->region_tokens[i] = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
             memcpy(connectInfo->region_tokens[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
-            ss << "region getSizeInBytes=" << connectInfo->region_tokens[i]->getSizeInBytes() << " getAddress=" << connectInfo->region_tokens[i]->getAddress()
+            if(outer_thread_id == 0)
+                ss << "region getSizeInBytes=" << connectInfo->region_tokens[i]->getSizeInBytes() << " getAddress=" << connectInfo->region_tokens[i]->getAddress()
                     << " getLocalKey=" << connectInfo->region_tokens[i]->getLocalKey() << " getRemoteKey=" << connectInfo->region_tokens[i]->getRemoteKey() << endl;
         }
         else {
             connectInfo->sign_token = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
             memcpy(connectInfo->sign_token, (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
-            stringstream ss;
-            ss << " SIGN LOCALregion getSizeInBytes=" << connectInfo->sign_token->getSizeInBytes() << " getAddress=" << connectInfo->sign_token->getAddress()
+
+            if(outer_thread_id == 0)
+                ss << " SIGN LOCALregion getSizeInBytes=" << connectInfo->sign_token->getSizeInBytes() << " getAddress=" << connectInfo->sign_token->getAddress()
                     << " getLocalKey=" << connectInfo->sign_token->getLocalKey() << " getRemoteKey=" << connectInfo->sign_token->getRemoteKey() << endl;
         }
 
