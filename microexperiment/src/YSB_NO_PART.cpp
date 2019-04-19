@@ -577,15 +577,20 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
         if ( i < NUM_SEND_BUFFERS){
             region_tokens_local[i] = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
             memcpy(region_tokens_local[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
-
-        } else {
+            stringstream ss;
+            ss << "region getSizeInBytes=" << region_tokens_local[i]->getSizeInBytes() << " getAddress=" << region_tokens_local[i]->getAddress()
+                    << " getLocalKey=" << region_tokens_local[i]->getLocalKey() << " getRemoteKey=" << region_tokens_local[i]->getRemoteKey() << endl;
+                    cout << ss.str() << endl;
+        }
+        else {
             sign_token_local = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
             memcpy(sign_token_local, (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
+            stringstream ss;
+            ss << " SIGN LOCALregion getSizeInBytes=" << sign_token_local->getSizeInBytes() << " getAddress=" << sign_token_local->getAddress()
+                    << " getLocalKey=" << sign_token_local->getLocalKey() << " getRemoteKey=" << sign_token_local->getRemoteKey() << endl;
+                    cout << ss.str() << endl;
         }
-        stringstream ss;
-        ss << "region getSizeInBytes=" << region_tokens_local[i]->getSizeInBytes() << " getAddress=" << region_tokens_local[i]->getAddress()
-        << " getLocalKey=" << region_tokens_local[i]->getLocalKey() << " getRemoteKey=" << region_tokens_local[i]->getRemoteKey() << endl;
-        cout << ss.str() << endl;
+
     }
     connectInfo->sign_buffer = sign_buffer_local;
     connectInfo->sign_token = sign_token_local;
