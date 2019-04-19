@@ -813,7 +813,11 @@ int main(int argc, char *argv[])
             conInfos[omp_get_thread_num()] = setupRDMAProducer(connections[0], bufferSizeInTups);
             record* recs = generateTuplesOneArray(numberOfProducer, campaingCnt);
 //            conInfos[omp_get_thread_num()]->records = recs;
-            cout << "test tuple=" << recs[0].event_type << " " << recs[0].campaign_id << endl;
+            for(size_t i = 0; i < 100; i ++)
+            {
+                cout << "test tuple=" << recs[i].event_type << " " << recs[i].ip << endl;
+            }
+
         }//end of pragma
     }
     else
