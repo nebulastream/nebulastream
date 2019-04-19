@@ -101,7 +101,6 @@ class TupleBuffer{
 public:
     TupleBuffer(VerbsConnection& connection, size_t bufferSizeInTuples)
     {
-        cout << "constr called " << endl;
         numberOfTuples = 0;
         maxNumberOfTuples = bufferSizeInTuples;
         send_buffer = connection.allocate_buffer(bufferSizeInTuples * sizeof(Tuple));
@@ -571,8 +570,8 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
     for(size_t i = 0; i < NUM_SEND_BUFFERS; ++i)
     {
         sendBuffers_local[i] = new (sendBuffers_local + i) TupleBuffer(*connection, bufferSizeInTups);
+        cout << "tups= " << sendBuffers_local[i]->numberOfTuples << endl;
     }
-    connectInfo->sendBuffers = sendBuffers_local;
 
     void* b3 = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(char), outer_thread_id);
     char* buffer_ready_sign_local = (char*)b3;
@@ -580,7 +579,6 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
     {
         buffer_ready_sign_local[i] = BUFFER_READY_FLAG;
     }
-    connectInfo->buffer_ready_sign = buffer_ready_sign_local;
 
     infinity::memory::Buffer* sign_buffer_local = connection->register_buffer(buffer_ready_sign_local, NUM_SEND_BUFFERS);
     RegionToken* sign_token_local = nullptr;
@@ -611,6 +609,9 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
         }
 
     }
+    connectInfo->sendBuffers = sendBuffers_local;
+    connectInfo->buffer_ready_sign = buffer_ready_sign_local;
+
     connectInfo->sign_buffer = sign_buffer_local;
     connectInfo->sign_token = sign_token_local;
     connectInfo->region_tokens = region_tokens_local;
