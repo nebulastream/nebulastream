@@ -447,12 +447,13 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTups)
     numa_set_preferred(outer_thread_id);
 
     void* pBuffer = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(TupleBuffer), outer_thread_id);
-    TupleBuffer** sendBuffers = (TupleBuffer**)pBuffer;
+    TupleBuffer** sendBuffers_local = (TupleBuffer**)pBuffer;
 
     for(int i = 0; i < NUM_SEND_BUFFERS; ++i)
     {
-        sendBuffers[i] = new (sendBuffers + i) TupleBuffer(*connection, bufferSizeInTups);
+        sendBuffers_local[i] = new (sendBuffers_local + i) TupleBuffer(*connection, bufferSizeInTups);
     }
+    sendBuffers = sendBuffers_local;
 
     void* b3 = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(char), outer_thread_id);
     buffer_ready_sign = (char*)b3;
