@@ -827,7 +827,6 @@ int main(int argc, char *argv[])
             conInfos[omp_get_thread_num()] = setupRDMAConsumer(connections[0], bufferSizeInTups);
         }
     }//end of else
-    exit(0);
     //fix for the test
 
 
@@ -852,27 +851,58 @@ int main(int argc, char *argv[])
     size_t readInputTuples[numberOfProducer] = {0};
     infinity::memory::Buffer* finishBuffer = connections[0]->allocate_buffer(1);
 
-    record** recs;
+    assert(numberOfProducer % 2 == 0);
+    assert(numberOfProducer <= cores_per_node);
+
     Timestamp begin = getTimestamp();
 //#define OLCONSUMERVERSION
     if(rank == 0)
     {
-        #pragma omp parallel num_threads(numberOfProducer)
-        {
-            #pragma omp for
-            for(size_t i = 0; i < numberOfProducer; i++)
-            {
-                size_t share = NUM_SEND_BUFFERS/numberOfProducer;
-                size_t startIdx = i* share;
-                size_t endIdx = (i+1)*share;
+    #pragma omp parallel num_threads(nodes)
+       {
+          auto outer_thread_id = omp_get_thread_num();
+          numa_run_on_node(outer_thread_id);
+          #pragma omp parallel num_threads(numberOfProducer)
+          {
+             auto inner_thread_id = omp_get_thread_num();
 
-                runProducerOneOnOne(connections[0], recs[i], bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
-                        &producedBuffers[i], &readInputTuples[i], &noFreeEntryFound[i], startIdx, endIdx, numberOfProducer);
-            }
-        }
-        cout << "producer finished ... waiting for consumer to finish " << getTimestamp() << endl;
-        connections[0]->post_and_receive_blocking(finishBuffer);
-        cout << "got finish buffer, finished execution " << getTimestamp()<< endl;
+             size_t share = NUM_SEND_BUFFERS/numberOfProducer;
+             size_t startIdx = inner_thread_id* share;
+             size_t endIdx = (inner_thread_id+1)*share;
+//             conInfos[outer_thread_id]->records
+//             runProducerOneOnOne(connections[0], recs[i], bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
+//                     &producedBuffers[i], &readInputTuples[i], &noFreeEntryFound[i], startIdx, endIdx, numberOfProducer);
+
+             #pragma omp critical
+             std::cout
+                << "Thread " << outer_thread_id << ":" << inner_thread_id
+                << " core: " << sched_getcpu() << " start=" << startIdx << " endidx=" << endIdx << std::endl;
+
+             assert(outer_thread_id == numa_node_of_cpu(sched_getcpu()));
+          }
+       }
+       cout << "producer finished ... waiting for consumer to finish " << getTimestamp() << endl;
+       connections[0]->post_and_receive_blocking(finishBuffer);
+       cout << "got finish buffer, finished execution " << getTimestamp()<< endl;
+
+
+//
+//        #pragma omp parallel num_threads(numberOfProducer)
+//        {
+//            #pragma omp for
+//            for(size_t i = 0; i < numberOfProducer; i++)
+//            {
+//                size_t share = NUM_SEND_BUFFERS/numberOfProducer;
+//                size_t startIdx = i* share;
+//                size_t endIdx = (i+1)*share;
+//
+//                runProducerOneOnOne(connections[0], recs[i], bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
+//                        &producedBuffers[i], &readInputTuples[i], &noFreeEntryFound[i], startIdx, endIdx, numberOfProducer);
+//            }
+//        }
+//        cout << "producer finished ... waiting for consumer to finish " << getTimestamp() << endl;
+//        connections[0]->post_and_receive_blocking(finishBuffer);
+//        cout << "got finish buffer, finished execution " << getTimestamp()<< endl;
     }
     else
     {
