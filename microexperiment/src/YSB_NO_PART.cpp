@@ -488,7 +488,7 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
     void* pBuffer = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(Buffer), outer_thread_id);
     connectInfo->recv_buffers = (infinity::memory::Buffer**)pBuffer;
 
-    infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
+    infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken) + sizeof(size_t));
 
     connectInfo->sign_token = nullptr;
 
@@ -516,6 +516,7 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
         }
         memcpy((RegionToken*)tokenbuffer->getData() + i, connectInfo->region_tokens[i], sizeof(RegionToken));
     }
+
     if(outer_thread_id == 0)
     {
         cout << "0=" << s2.str() << endl;
@@ -867,7 +868,7 @@ int main(int argc, char *argv[])
     size_t readInputTuples[numberOfProducer] = {0};
     infinity::memory::Buffer* finishBuffer = connections[0]->allocate_buffer(1);
 
-    assert(numberOfProducer % 2 == 0);
+//    assert(numberOfProducer % 2 == 0);
     assert(numberOfProducer <= cores_per_node);
 
     Timestamp begin = getTimestamp();
