@@ -764,7 +764,7 @@ int main(int argc, char *argv[])
     po::notify(vm);
 
     if (vm.count("help")) {
-        std::cout << "Basic Command Line Parameter " << std::endl
+        std::cout << "Basic Command Ligeneratene Parameter " << std::endl
                   << desc << std::endl;
         return 0;
     }
@@ -812,7 +812,7 @@ int main(int argc, char *argv[])
         {
             conInfos[omp_get_thread_num()] = setupRDMAProducer(connections[0], bufferSizeInTups);
             record* recs = generateTuplesOneArray(numberOfProducer, campaingCnt);
-//            conInfos[omp_get_thread_num()]->records = recs;
+            conInfos[omp_get_thread_num()]->records = recs;
             for(size_t i = 0; i < 100; i ++)
             {
                 cout << "test tuple=" << recs[i].event_type << " " << recs[i].ip << endl;
