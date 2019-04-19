@@ -294,6 +294,8 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
                                                             << " idx=" << receive_buffer_index
                                                             << " keyL=" <<  cInfos->sign_token->getLocalKey()
                                                                             << endl;//
+
+
                 cout << ss.str() << endl;
 
             }
@@ -902,11 +904,11 @@ int main(int argc, char *argv[])
 //#define OLCONSUMERVERSION
     if(rank == 0)
     {
-    #pragma omp parallel num_threads(nodes)
+    #pragma omp parallel num_threads(1)//nodes
        {
           auto outer_thread_id = omp_get_thread_num();
           numa_run_on_node(outer_thread_id);
-          #pragma omp parallel num_threads(numberOfProducer/nodes)
+          #pragma omp parallel num_threads(1)//numberOfProducer/nodes
           {
              auto inner_thread_id = omp_get_thread_num();
              size_t i = inner_thread_id;
@@ -916,7 +918,7 @@ int main(int argc, char *argv[])
 
 
              std::cout << "Thread " << outer_thread_id << ":" << inner_thread_id
-                << " core: " << sched_getcpu() << " start=" << startIdx << " endidx=" << endIdx << " in critical" << std::endl;
+                << " core: " << sched_getcpu() << " start=" << startIdx << " endidx=" << endIdx << std::endl;
 
              record* recs = conInfos[outer_thread_id]->records[inner_thread_id];
              cout << "recs=" << recs << endl;
