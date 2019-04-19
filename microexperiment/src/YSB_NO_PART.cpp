@@ -160,7 +160,7 @@ struct ConnectionInfos
     infinity::memory::Buffer* sign_buffer;//reads the buffer_read from customer into this
     RegionToken* sign_token;//special token for this connection
     TupleBuffer** sendBuffers;
-    record* records;
+    record** records;
 };
 
 //consumer stuff
@@ -811,13 +811,11 @@ int main(int argc, char *argv[])
         #pragma omp parallel num_threads(nodes)
         {
             conInfos[omp_get_thread_num()] = setupRDMAProducer(connections[0], bufferSizeInTups);
-            record* recs = generateTuplesOneArray(numberOfProducer, campaingCnt);
-            conInfos[omp_get_thread_num()]->records = recs;
-            for(size_t i = 0; i < 100; i ++)
+            conInfos[omp_get_thread_num()]->records = new record*[numberOfProducer];
+            for(size_t i = 0; i < numberOfProducer; i++)
             {
-                cout << "test tuple=" << recs[i].event_type << " " << recs[i].ip << endl;
+                conInfos[omp_get_thread_num()]->records[i] = generateTuplesOneArray(numberOfProducer, campaingCnt);
             }
-
         }//end of pragma
     }
     else
