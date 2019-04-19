@@ -865,13 +865,13 @@ int main(int argc, char *argv[])
           #pragma omp parallel num_threads(numberOfProducer)
           {
              auto inner_thread_id = omp_get_thread_num();
-
+             size_t i = inner_thread_id;
              size_t share = NUM_SEND_BUFFERS/numberOfProducer;
              size_t startIdx = inner_thread_id* share;
              size_t endIdx = (inner_thread_id+1)*share;
-//             conInfos[outer_thread_id]->records
-//             runProducerOneOnOne(connections[0], recs[i], bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
-//                     &producedBuffers[i], &readInputTuples[i], &noFreeEntryFound[i], startIdx, endIdx, numberOfProducer);
+             record* recs = conInfos[outer_thread_id]->records[inner_thread_id];
+             runProducerOneOnOne(connections[0], recs, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
+                     &producedBuffers[i], &readInputTuples[i], &noFreeEntryFound[i], startIdx, endIdx, numberOfProducer);
 
              #pragma omp critical
              std::cout
