@@ -488,7 +488,7 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
     void* pBuffer = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(Buffer), outer_thread_id);
     connectInfo->recv_buffers = (infinity::memory::Buffer**)pBuffer;
 
-    infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken) + sizeof(size_t));
+    infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
 
     connectInfo->sign_token = nullptr;
 
