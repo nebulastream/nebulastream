@@ -818,6 +818,8 @@ int main(int argc, char *argv[])
         connections.push_back(new VerbsConnection(&info2));
     }
     auto nodes = numa_num_configured_nodes();
+    nodes = 1;
+
     auto cores = numa_num_configured_cpus();
     auto cores_per_node = cores / nodes;
     cout << "net=" << omp_get_nested() << endl;
