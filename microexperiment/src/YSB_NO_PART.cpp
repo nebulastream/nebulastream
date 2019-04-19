@@ -466,7 +466,7 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples, s
 }
 
 
-void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTups)
+ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTups)
 {
     ConnectionInfos* connectInfo = new ConnectionInfos();
     auto outer_thread_id = omp_get_thread_num();
@@ -531,8 +531,16 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTups)
    ss << numa_node << ",";
    get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->sign_token, MPOL_F_NODE | MPOL_F_ADDR);
    ss << numa_node << ",";
+   void * ptr_to_check = connectInfo->sendBuffers;
+   int status[1];
+   status[0]=-1;
+   int ret_code=move_pages(0 /*self memory */, 1, &ptr_to_check, NULL, status, 0);
+   ss << status[0] << ",";
+   get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers, MPOL_F_NODE | MPOL_F_ADDR);
+   ss << numa_node << ",";
    cout << ss.str() << endl;
 
+   return connectInfo;
 
 }
 
