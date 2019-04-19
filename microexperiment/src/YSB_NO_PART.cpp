@@ -642,7 +642,7 @@ record** generateTuples(size_t num_Producer, size_t campaingCnt, size_t numberTo
 
     for(size_t i = 0; i < numberToProduce; ++i)
     {
-        recs[i] = new (recs + i) record();
+        recs[i] = new (recs + i) record[NUMBER_OF_GEN_TUPLE];
         for (size_t u = 0; u < NUMBER_OF_GEN_TUPLE; u++)
         {
             generate(recs[i][u], /**campaingOffset*/
@@ -817,6 +817,7 @@ int main(int argc, char *argv[])
             conInfos[omp_get_thread_num()] = setupRDMAProducer(connections[0], bufferSizeInTups);
             record** recs = generateTuples(numberOfProducer, campaingCnt, numberOfProducer / 2);
             conInfos[omp_get_thread_num()]->records = recs;
+            cout << "test tuple=" << recs[0]->event_type << " " << recs[0]->campaign_id << endl;
         }//end of pragma
     }
     else
