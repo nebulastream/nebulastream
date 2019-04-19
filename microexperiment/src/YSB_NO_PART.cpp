@@ -615,7 +615,7 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
 }
 
 
-record** generateTuples(size_t num_Producer, size_t campaingCnt, size_t numberToProduce)
+record* generateTuplesOneArray(size_t num_Producer, size_t campaingCnt)
 {
     std::random_device rd; //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
@@ -635,23 +635,19 @@ record** generateTuples(size_t num_Producer, size_t campaingCnt, size_t numberTo
     memcpy(&campaign_lsb, uuid_ptr + 8, 8);
     campaign_lsb &= 0xffffffff00000000;
 
+//    void* pBuffer = numa_alloc_onnode(numberToProduce*NUMBER_OF_GEN_TUPLE*sizeof(record), omp_get_thread_num());
+//    record** recs = (record**)pBuffer;
 
-
-    void* pBuffer = numa_alloc_onnode(numberToProduce*NUMBER_OF_GEN_TUPLE*sizeof(record), omp_get_thread_num());
-    record** recs = (record**)pBuffer;
-
-    for(size_t i = 0; i < numberToProduce; ++i)
+    void* pBuffer = numa_alloc_onnode(NUMBER_OF_GEN_TUPLE*sizeof(record), omp_get_thread_num());
+    record* recs = new (pBuffer) record[NUMBER_OF_GEN_TUPLE];
+    for (size_t u = 0; u < NUMBER_OF_GEN_TUPLE; u++)
     {
-        recs[i] = new (recs + i) record[NUMBER_OF_GEN_TUPLE];
-        for (size_t u = 0; u < NUMBER_OF_GEN_TUPLE; u++)
-        {
-            generate(recs[i][u], /**campaingOffset*/
-                    randomNumbers[u % randomCnt], campaign_lsb, campaign_msb, /**eventID*/
-                    u);
-        }
-        shuffle(recs[i], NUMBER_OF_GEN_TUPLE);
-
+        generate(recs[u], /**campaingOffset*/
+                randomNumbers[u % randomCnt], campaign_lsb, campaign_msb, /**eventID*/
+                u);
     }
+    shuffle(recs, NUMBER_OF_GEN_TUPLE);
+
 //    recs = new record*[num_Producer];
 //    for (size_t i = 0; i < num_Producer; i++) {
 //        void* ptr = numa_alloc_onnode(NUMBER_OF_GEN_TUPLE*sizeof(record), omp_get_thread_num());
@@ -815,9 +811,9 @@ int main(int argc, char *argv[])
         #pragma omp parallel num_threads(nodes)
         {
             conInfos[omp_get_thread_num()] = setupRDMAProducer(connections[0], bufferSizeInTups);
-            record** recs = generateTuples(numberOfProducer, campaingCnt, numberOfProducer / 2);
-            conInfos[omp_get_thread_num()]->records = recs;
-            cout << "test tuple=" << recs[0]->event_type << " " << recs[0]->campaign_id << endl;
+            record* recs = generateTuplesOneArray(numberOfProducer, campaingCnt);
+//            conInfos[omp_get_thread_num()]->records = recs;
+            cout << "test tuple=" << recs[0].event_type << " " << recs[0].campaign_id << endl;
         }//end of pragma
     }
     else
