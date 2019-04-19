@@ -870,14 +870,18 @@ int main(int argc, char *argv[])
              size_t share = NUM_SEND_BUFFERS/numberOfProducer;
              size_t startIdx = inner_thread_id* share;
              size_t endIdx = (inner_thread_id+1)*share;
-             record* recs = conInfos[outer_thread_id]->records[inner_thread_id];
-             runProducerOneOnOne(connections[0], recs, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
-                     &producedBuffers[i], &readInputTuples[i], &noFreeEntryFound[i], startIdx, endIdx, numberOfProducer, conInfos[outer_thread_id]);
 
              #pragma omp critical
              std::cout
                 << "Thread " << outer_thread_id << ":" << inner_thread_id
                 << " core: " << sched_getcpu() << " start=" << startIdx << " endidx=" << endIdx << std::endl;
+
+             record* recs = conInfos[outer_thread_id]->records[inner_thread_id];
+             runProducerOneOnOne(connections[0], recs, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
+                     &producedBuffers[i], &readInputTuples[i], &noFreeEntryFound[i], startIdx, endIdx,
+                     numberOfProducer, conInfos[outer_thread_id]);
+
+
 
              assert(outer_thread_id == numa_node_of_cpu(sched_getcpu()));
           }
