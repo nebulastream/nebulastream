@@ -135,6 +135,32 @@ public:
 };
 
 
+struct ConnectionInfos
+{
+    ConnectionInfos(){};
+
+    ConnectionInfos(const ConnectionInfos& other)
+    {
+        recv_buffers = other.recv_buffers;
+        buffer_ready_sign = other.buffer_ready_sign;
+        region_tokens = other.region_tokens;
+        sign_buffer = other.sign_buffer;
+        sign_token = other.sign_token;
+        sendBuffers = other.sendBuffers;
+    }
+    //consumer stuff
+    infinity::memory::Buffer** recv_buffers;
+    char* buffer_ready_sign;
+
+    //both producer and consumer
+    infinity::memory::RegionToken** region_tokens;
+
+    //producer stuff
+    infinity::memory::Buffer* sign_buffer;//reads the buffer_read from customer into this
+    RegionToken* sign_token;//special token for this connection
+    TupleBuffer** sendBuffers;
+};
+
 //consumer stuff
 infinity::memory::Buffer** recv_buffers;
 char* buffer_ready_sign;
@@ -442,6 +468,7 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTuples, s
 
 void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTups)
 {
+    ConnectionInfos* connectInfo = new ConnectionInfos();
     auto outer_thread_id = omp_get_thread_num();
     numa_run_on_node(outer_thread_id);
     numa_set_preferred(outer_thread_id);
@@ -453,54 +480,60 @@ void setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTups)
     {
         sendBuffers_local[i] = new (sendBuffers_local + i) TupleBuffer(*connection, bufferSizeInTups);
     }
-    sendBuffers = sendBuffers_local;
+    connectInfo->sendBuffers = sendBuffers_local;
 
     void* b3 = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(char), outer_thread_id);
-    buffer_ready_sign = (char*)b3;
+    char* buffer_ready_sign_local = (char*)b3;
     for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
     {
-        buffer_ready_sign[i] = BUFFER_READY_FLAG;
+        buffer_ready_sign_local[i] = BUFFER_READY_FLAG;
     }
+    connectInfo->buffer_ready_sign = buffer_ready_sign_local;
 
-    sign_buffer = connection->register_buffer(buffer_ready_sign, NUM_SEND_BUFFERS);
-    sign_token = nullptr;
+    infinity::memory::Buffer* sign_buffer_local = connection->register_buffer(buffer_ready_sign_local, NUM_SEND_BUFFERS);
+    RegionToken* sign_token_local = nullptr;
     infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
 
     void* b2 = numa_alloc_onnode((NUM_SEND_BUFFERS+1)*sizeof(RegionToken), outer_thread_id);
-    region_tokens = (infinity::memory::RegionToken**)b2;
+    infinity::memory::RegionToken**region_tokens_local = (infinity::memory::RegionToken**)b2;
 
     connection->post_and_receive_blocking(tokenbuffer);
 
     for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++)
     {
         if ( i < NUM_SEND_BUFFERS){
-            region_tokens[i] = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
-            memcpy(region_tokens[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
+            region_tokens_local[i] = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
+            memcpy(region_tokens_local[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
 
         } else {
-            sign_token = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
-            memcpy(sign_token, (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
+            sign_token_local = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
+            memcpy(sign_token_local, (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
         }
     }
+    connectInfo->sign_buffer = sign_buffer_local;
+    connectInfo->sign_token = sign_token_local;
+    connectInfo->region_tokens = region_tokens_local;
 
    stringstream ss;
    ss  << "Producer Thread #" << outer_thread_id  << ": on CPU " << sched_getcpu() << " nodes=";
    int numa_node = -1;
-   get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers, MPOL_F_NODE | MPOL_F_ADDR);
+   get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->sendBuffers, MPOL_F_NODE | MPOL_F_ADDR);
    ss << numa_node << ",";
-   get_mempolicy(&numa_node, NULL, 0, (void*)sendBuffers[1]->send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
+   get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->sendBuffers[1]->send_buffer, MPOL_F_NODE | MPOL_F_ADDR);
    ss << numa_node << ",";
-   get_mempolicy(&numa_node, NULL, 0, (void*)buffer_ready_sign, MPOL_F_NODE | MPOL_F_ADDR);
+   get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->buffer_ready_sign, MPOL_F_NODE | MPOL_F_ADDR);
    ss << numa_node << ",";
-   get_mempolicy(&numa_node, NULL, 0, (void*)region_tokens, MPOL_F_NODE | MPOL_F_ADDR);
+   get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->region_tokens, MPOL_F_NODE | MPOL_F_ADDR);
    ss << numa_node << ",";
-   get_mempolicy(&numa_node, NULL, 0, (void*)sign_buffer, MPOL_F_NODE | MPOL_F_ADDR);
+   get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->sign_buffer, MPOL_F_NODE | MPOL_F_ADDR);
    ss << numa_node << ",";
-   get_mempolicy(&numa_node, NULL, 0, (void*)sign_buffer[0].getData(), MPOL_F_NODE | MPOL_F_ADDR);
+   get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->sign_buffer[0].getData(), MPOL_F_NODE | MPOL_F_ADDR);
    ss << numa_node << ",";
-   get_mempolicy(&numa_node, NULL, 0, (void*)sign_token, MPOL_F_NODE | MPOL_F_ADDR);
+   get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->sign_token, MPOL_F_NODE | MPOL_F_ADDR);
    ss << numa_node << ",";
    cout << ss.str() << endl;
+
+
 }
 
 
