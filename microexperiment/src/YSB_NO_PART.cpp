@@ -210,7 +210,7 @@ void generate(record& data, size_t campaingOffset, uint64_t campaign_lsb,
     data.current_ms = std::chrono::duration_cast < std::chrono::milliseconds
             > (ts).count();
 
-    data.ip = 0x01020304;
+    data.ip = time(NULL);
 }
 
 Timestamp getTimestamp() {
