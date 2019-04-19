@@ -863,7 +863,7 @@ int main(int argc, char *argv[])
        {
           auto outer_thread_id = omp_get_thread_num();
           numa_run_on_node(outer_thread_id);
-          #pragma omp parallel num_threads(numberOfProducer)
+          #pragma omp parallel num_threads(numberOfProducer/nodes)
           {
              auto inner_thread_id = omp_get_thread_num();
              size_t i = inner_thread_id;
@@ -915,7 +915,7 @@ int main(int argc, char *argv[])
        {
           auto outer_thread_id = omp_get_thread_num();
           numa_run_on_node(outer_thread_id);
-          #pragma omp parallel num_threads(numberOfConsumer)
+          #pragma omp parallel num_threads(numberOfConsumer/nodes)
           {
              auto inner_thread_id = omp_get_thread_num();
              size_t i = inner_thread_id;
