@@ -926,7 +926,10 @@ int main(int argc, char *argv[])
              {
                  endIdx = NUM_SEND_BUFFERS;
              }
-
+             #pragma omp critical
+             std::cout
+                << "Thread " << outer_thread_id << ":" << inner_thread_id
+                << " core: " << sched_getcpu() << " start=" << startIdx << " endidx=" << endIdx << std::endl;
              stringstream ss;
              ss << "consumer " << i << " from=" << startIdx << " to " << endIdx << endl;
              cout << ss.str() << endl;
