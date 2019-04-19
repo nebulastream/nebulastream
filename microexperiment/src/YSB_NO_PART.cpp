@@ -160,7 +160,7 @@ struct ConnectionInfos
     infinity::memory::Buffer* sign_buffer;//reads the buffer_read from customer into this
     RegionToken* sign_token;//special token for this connection
     TupleBuffer** sendBuffers;
-    record** records;
+    record* records;
 };
 
 //consumer stuff
