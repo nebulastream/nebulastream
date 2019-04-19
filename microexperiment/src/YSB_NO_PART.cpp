@@ -294,8 +294,9 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
                                                             << " idx=" << receive_buffer_index
                                                             << " keyL=" <<  cInfos->sign_token->getLocalKey()
                                                                             << endl;//
-
-
+                ss << "buffer=";
+                for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
+                    ss << ((char*)cInfos->sign_buffer[receive_buffer_index].getAddress()) +i << " ";
                 cout << ss.str() << endl;
 
             }
