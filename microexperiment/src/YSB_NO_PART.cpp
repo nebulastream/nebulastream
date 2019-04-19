@@ -492,7 +492,7 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
 
     connectInfo->sign_token = nullptr;
 
-    stringstream ss;
+    stringstream s2;
 
     for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++)
     {
@@ -501,7 +501,7 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
             connectInfo->region_tokens[i] = connectInfo->recv_buffers[i]->createRegionToken();
 
             if(outer_thread_id == 0)
-                ss << "i=" << i << "recv region getSizeInBytes=" << connectInfo->recv_buffers[i]->getSizeInBytes() << " getAddress=" << connectInfo->recv_buffers[i]->getAddress()
+                s2 << "i=" << i << "recv region getSizeInBytes=" << connectInfo->recv_buffers[i]->getSizeInBytes() << " getAddress=" << connectInfo->recv_buffers[i]->getAddress()
                                        << " getLocalKey=" << connectInfo->recv_buffers[i]->getLocalKey() << " getRemoteKey=" << connectInfo->recv_buffers[i]->getRemoteKey() << endl;
         } else {
 //            cout << "copy sign token at pos " << i << endl;
@@ -510,7 +510,7 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
             connectInfo->region_tokens[i] = connectInfo->sign_buffer->createRegionToken();
 
             if(outer_thread_id == 0)
-                ss << "i=" << i << "sign region getSizeInBytes=" << connectInfo->sign_buffer->getSizeInBytes() << " getAddress=" << connectInfo->sign_buffer->getAddress()
+                s2 << "i=" << i << "sign region getSizeInBytes=" << connectInfo->sign_buffer->getSizeInBytes() << " getAddress=" << connectInfo->sign_buffer->getAddress()
                                        << " getLocalKey=" << connectInfo->sign_buffer->getLocalKey() << " getRemoteKey=" << connectInfo->sign_buffer->getRemoteKey() << endl;
 
         }
@@ -518,12 +518,13 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
     }
     if(outer_thread_id == 0)
     {
-        cout << "0=" << ss.str() << endl;
+        cout << "0=" << s2.str() << endl;
     }
 
     connection->send_blocking(tokenbuffer);
     cout << "setupRDMAConsumer finished" << endl;
 
+    stringstream ss;
     ss  << "Consumer Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << " nodes=";
     int numa_node = -1;
     get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->recv_buffers, MPOL_F_NODE | MPOL_F_ADDR);
@@ -578,15 +579,14 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
     connectInfo->region_tokens = (infinity::memory::RegionToken**)b2;
 
     connection->post_and_receive_blocking(tokenbuffer);
-    stringstream ss;
-
+    stringstream s2;
     for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++)
     {
         if ( i < NUM_SEND_BUFFERS){
             connectInfo->region_tokens[i] = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
             memcpy(connectInfo->region_tokens[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
             if(outer_thread_id == 0)
-                ss << "region getSizeInBytes=" << connectInfo->region_tokens[i]->getSizeInBytes() << " getAddress=" << connectInfo->region_tokens[i]->getAddress()
+                s2 << "region getSizeInBytes=" << connectInfo->region_tokens[i]->getSizeInBytes() << " getAddress=" << connectInfo->region_tokens[i]->getAddress()
                     << " getLocalKey=" << connectInfo->region_tokens[i]->getLocalKey() << " getRemoteKey=" << connectInfo->region_tokens[i]->getRemoteKey() << endl;
         }
         else {
@@ -594,16 +594,15 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
             memcpy(connectInfo->sign_token, (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
 
             if(outer_thread_id == 0)
-                ss << " SIGN LOCALregion getSizeInBytes=" << connectInfo->sign_token->getSizeInBytes() << " getAddress=" << connectInfo->sign_token->getAddress()
+                s2 << " SIGN LOCALregion getSizeInBytes=" << connectInfo->sign_token->getSizeInBytes() << " getAddress=" << connectInfo->sign_token->getAddress()
                     << " getLocalKey=" << connectInfo->sign_token->getLocalKey() << " getRemoteKey=" << connectInfo->sign_token->getRemoteKey() << endl;
         }
-
     }
     if(outer_thread_id == 0)
    {
-       cout << "0=" << ss.str() << endl;
+       cout << "0=" << s2.str() << endl;
    }
-
+   stringstream ss;
    ss  << "Producer Thread #" << outer_thread_id  << ": on CPU " << sched_getcpu() << " nodes=";
    int numa_node = -1;
    get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->sendBuffers, MPOL_F_NODE | MPOL_F_ADDR);
