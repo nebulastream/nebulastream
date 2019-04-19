@@ -147,6 +147,7 @@ struct ConnectionInfos
         sign_buffer = other.sign_buffer;
         sign_token = other.sign_token;
         sendBuffers = other.sendBuffers;
+        records = other.records;
     }
     //consumer stuff
     infinity::memory::Buffer** recv_buffers;
@@ -159,6 +160,7 @@ struct ConnectionInfos
     infinity::memory::Buffer* sign_buffer;//reads the buffer_read from customer into this
     RegionToken* sign_token;//special token for this connection
     TupleBuffer** sendBuffers;
+    record** records;
 };
 
 //consumer stuff
@@ -460,7 +462,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 //                << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
 }
 
-void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTups)
+ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTups)
 {
     ConnectionInfos* connectInfo = new ConnectionInfos();
 
@@ -532,6 +534,7 @@ void setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTups)
     int ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check, NULL, status, 0);
     ss << status[0] << ",";
     cout << ss.str() << endl;
+    return connectInfo;
 }
 
 
@@ -604,7 +607,7 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
    int status[1];
    status[0]=-1;
    int ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check, NULL, status, 0);
-   ss << status[0] << ",";
+   ss << status[0] << endl;
    cout << ss.str() << endl;
 
    return connectInfo;
@@ -612,7 +615,7 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
 }
 
 
-record** generateTuples(size_t num_Producer, size_t campaingCnt)
+record** generateTuples(size_t num_Producer, size_t campaingCnt, size_t numberToProduce)
 {
     std::random_device rd; //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
@@ -624,7 +627,7 @@ record** generateTuples(size_t num_Producer, size_t campaingCnt)
     for (size_t i = 0; i < randomCnt; i++)
         randomNumbers[i] = disi(gen);
 
-    record** recs;
+//    record** recs;
     uint64_t campaign_lsb, campaign_msb;
     auto uuid = diss(gen);
     uint8_t* uuid_ptr = reinterpret_cast<uint8_t*>(&uuid);
@@ -632,17 +635,40 @@ record** generateTuples(size_t num_Producer, size_t campaingCnt)
     memcpy(&campaign_lsb, uuid_ptr + 8, 8);
     campaign_lsb &= 0xffffffff00000000;
 
-    recs = new record*[num_Producer];
-    for (size_t i = 0; i < num_Producer; i++) {
-        recs[i] = new record[NUMBER_OF_GEN_TUPLE];
 
-        for (size_t u = 0; u < NUMBER_OF_GEN_TUPLE; u++) {
+
+    void* pBuffer = numa_alloc_onnode(numberToProduce*NUMBER_OF_GEN_TUPLE*sizeof(record), omp_get_thread_num());
+    record** recs = (record**)pBuffer;
+
+    for(size_t i = 0; i < numberToProduce; ++i)
+    {
+        recs[i] = new (recs + i) record();
+        for (size_t u = 0; u < NUMBER_OF_GEN_TUPLE; u++)
+        {
             generate(recs[i][u], /**campaingOffset*/
                     randomNumbers[u % randomCnt], campaign_lsb, campaign_msb, /**eventID*/
                     u);
         }
         shuffle(recs[i], NUMBER_OF_GEN_TUPLE);
+
     }
+//    recs = new record*[num_Producer];
+//    for (size_t i = 0; i < num_Producer; i++) {
+//        void* ptr = numa_alloc_onnode(NUMBER_OF_GEN_TUPLE*sizeof(record), omp_get_thread_num());
+//        record* ptrRec = (record*)ptr;
+//        recs[i] = new (ptrRec + i) record();
+//
+////        recs[i] = new record[NUMBER_OF_GEN_TUPLE];
+//
+//        for (size_t u = 0; u < NUMBER_OF_GEN_TUPLE; u++) {
+//            generate(recs[i][u], /**campaingOffset*/
+//                    randomNumbers[u % randomCnt], campaign_lsb, campaign_msb, /**eventID*/
+//                    u);
+//        }
+//        shuffle(recs[i], NUMBER_OF_GEN_TUPLE);
+//    }
+
+    delete[] randomNumbers;
     return recs;
 }
 
@@ -708,6 +734,8 @@ int main(int argc, char *argv[])
     po::options_description desc("Options");
 
     size_t windowSizeInSeconds = 2;
+    size_t campaingCnt = 10000;
+
     exitProducer = 0;
     exitConsumer = 0;
 
@@ -780,13 +808,15 @@ int main(int argc, char *argv[])
     auto cores = numa_num_configured_cpus();
     auto cores_per_node = cores / nodes;
     omp_set_nested(1);
-
+    ConnectionInfos** conInfos = new ConnectionInfos*[nodes];
     if(rank == 0)
     {
         cout << "starting " << nodes << " threads" << endl;
         #pragma omp parallel num_threads(nodes)
         {
-            setupRDMAProducer(connections[0], bufferSizeInTups);
+            conInfos[omp_get_thread_num()] = setupRDMAProducer(connections[0], bufferSizeInTups);
+            record** recs = generateTuples(numberOfProducer, campaingCnt, numberOfProducer / 2);
+            conInfos[omp_get_thread_num()]->records = recs;
         }//end of pragma
     }
     else
@@ -794,15 +824,12 @@ int main(int argc, char *argv[])
         cout << "starting " << nodes << " threads" << endl;
         #pragma omp parallel num_threads(nodes)
         {
-            setupRDMAConsumer(connections[0], bufferSizeInTups);
+            conInfos[omp_get_thread_num()] = setupRDMAConsumer(connections[0], bufferSizeInTups);
         }
-
     }//end of else
     exit(0);
     //fix for the test
-    const size_t campaingCnt = 10000;
 
-    record** recs = generateTuples(numberOfProducer, campaingCnt);
 
     //create hash table
     std::atomic<size_t>** hashTable = new std::atomic<size_t>*[2];
@@ -825,6 +852,7 @@ int main(int argc, char *argv[])
     size_t readInputTuples[numberOfProducer] = {0};
     infinity::memory::Buffer* finishBuffer = connections[0]->allocate_buffer(1);
 
+    record** recs;
     Timestamp begin = getTimestamp();
 //#define OLCONSUMERVERSION
     if(rank == 0)
