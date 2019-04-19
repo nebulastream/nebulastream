@@ -304,9 +304,10 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
             {
                 //this will run until one buffer is filled completely
                 readTuples += produce_window_mem(records, bufferSizeInTuples, cInfos->sendBuffers[receive_buffer_index]->tups);
+                cInfos->sendBuffers[receive_buffer_index]->numberOfTuples = bufferSizeInTuples;
 
-                cout << "using send buffer=" << cInfos->sendBuffers[receive_buffer_index]->numberOfTuples << " "
-                        << cInfos->sendBuffers[receive_buffer_index]->send_buffer->getAddress() << endl;
+//                cout << "using send buffer=" << cInfos->sendBuffers[receive_buffer_index]->numberOfTuples << " "
+//                        << cInfos->sendBuffers[receive_buffer_index]->send_buffer->getAddress() << endl;
                 connection->write(cInfos->sendBuffers[receive_buffer_index]->send_buffer, cInfos->region_tokens[receive_buffer_index],
                         cInfos->sendBuffers[receive_buffer_index]->requestToken);
 #ifdef DEBUG
@@ -316,15 +317,14 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
                 total_sent_tuples += cInfos->sendBuffers[receive_buffer_index]->numberOfTuples;
                 total_buffer_send++;
 
-
                 if (total_buffer_send < bufferProcCnt)//a new buffer will be send next
                 {
                     cInfos->buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
-                    cout << "sign buffer size=" << cInfos->sign_buffer->getSizeInBytes()
-                            << " token size= "<< cInfos->sign_token->getSizeInBytes()
-                            << " idx=" << receive_buffer_index
-                            << " keyL=" <<  cInfos->sign_token->getLocalKey()
-                                            << endl;//                sleep(1);
+//                    cout << "sign buffer size=" << cInfos->sign_buffer->getSizeInBytes()
+//                            << " token size= "<< cInfos->sign_token->getSizeInBytes()
+//                            << " idx=" << receive_buffer_index
+//                            << " keyL=" <<  cInfos->sign_token->getLocalKey()
+//                                            << endl;//                sleep(1);
                     connection->write_blocking(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index, receive_buffer_index, 1);
                 }
                 else//finished processing
@@ -433,7 +433,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
-//            cout << "Received buffer at index=" << index << endl;
+            cout << "Received buffer at index=" << index << endl;
 
             consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers[index]->getData(), bufferSizeInTuples,
                     hashTable, windowSizeInSec, campaingCnt, consumerID);
@@ -925,7 +925,6 @@ int main(int argc, char *argv[])
                 << " core: " << sched_getcpu() << " start=" << startIdx << " endidx=" << endIdx << std::endl;
 
              record* recs = conInfos[outer_thread_id]->records[inner_thread_id];
-             cout << "recs=" << recs << endl;
              runProducerOneOnOne(connections[0], recs, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
                      &producedBuffers[i], &readInputTuples[i], &noFreeEntryFound[i], startIdx, endIdx,
                      numberOfProducer, conInfos[outer_thread_id]);
@@ -979,6 +978,7 @@ int main(int argc, char *argv[])
              std::cout
                 << "Thread " << outer_thread_id << ":" << inner_thread_id
                 << " core: " << sched_getcpu() << " start=" << startIdx << " endidx=" << endIdx << std::endl;
+
              stringstream ss;
              ss << "consumer " << i << " from=" << startIdx << " to " << endIdx << endl;
              cout << ss.str() << endl;
@@ -987,8 +987,8 @@ int main(int argc, char *argv[])
           }
        }
        cout << "finished, sending finish buffer " << getTimestamp() << endl;
-      connections[0]->send_blocking(finishBuffer);
-      cout << "buffer sending finished, shutdown "<< getTimestamp() << endl;
+       connections[0]->send_blocking(finishBuffer);
+       cout << "buffer sending finished, shutdown "<< getTimestamp() << endl;
 
 
 
