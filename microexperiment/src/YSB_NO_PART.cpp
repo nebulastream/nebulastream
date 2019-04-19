@@ -672,10 +672,9 @@ int main(int argc, char *argv[])
     auto cores_per_node = cores / nodes;
     omp_set_nested(1);
 
-    cout << "second connection established" << endl;
     if(rank == 0)
     {
-        cout << "starting " << numberOfConnections << " threads" << endl;
+        cout << "starting " << nodes << " threads" << endl;
         #pragma omp parallel num_threads(nodes)
         {
             setupRDMAProducer(connections[0], bufferSizeInTups);
@@ -683,7 +682,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        cout << "starting " << numberOfConnections << " threads" << endl;
+        cout << "starting " << nodes << " threads" << endl;
         #pragma omp parallel num_threads(nodes)
         {
             auto outer_thread_id = omp_get_thread_num();
@@ -704,16 +703,16 @@ int main(int argc, char *argv[])
             void* pBuffer = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(Buffer), outer_thread_id);
             infinity::memory::Buffer** recv_buffers = (infinity::memory::Buffer**)pBuffer;
 
-            infinity::memory::Buffer* tokenbuffer = connections[outer_thread_id]->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
+            infinity::memory::Buffer* tokenbuffer = connections[0]->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
 
             for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++)
             {
                 if (i < NUM_SEND_BUFFERS) {
-                    recv_buffers[i] = connections[outer_thread_id]->allocate_buffer(bufferSizeInTups * sizeof(Tuple));
+                    recv_buffers[i] = connections[0]->allocate_buffer(bufferSizeInTups * sizeof(Tuple));
                     region_tokens[i] = recv_buffers[i]->createRegionToken();
                 } else {
         //            cout << "copy sign token at pos " << i << endl;
-                    sign_buffer = connections[outer_thread_id]->register_buffer(buffer_ready_sign, NUM_SEND_BUFFERS);
+                    sign_buffer = connections[0]->register_buffer(buffer_ready_sign, NUM_SEND_BUFFERS);
                     region_tokens[i] = sign_buffer->createRegionToken();
                 }
                 memcpy((RegionToken*)tokenbuffer->getData() + i, region_tokens[i], sizeof(RegionToken));
@@ -721,7 +720,7 @@ int main(int argc, char *argv[])
         //                           << " getLocalKey=" << region_tokens[i]->getLocalKey() << " getRemoteKey=" << region_tokens[i]->getRemoteKey() << endl;
             }
 
-            connections[outer_thread_id]->send_blocking(tokenbuffer);
+            connections[0]->send_blocking(tokenbuffer);
             cout << "setupRDMAConsumer finished" << endl;
 
             stringstream ss;
