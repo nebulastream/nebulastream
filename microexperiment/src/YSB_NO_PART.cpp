@@ -926,7 +926,7 @@ int main(int argc, char *argv[])
     infinity::memory::Buffer* finishBuffer = connections[0]->allocate_buffer(1);
 
 //    assert(numberOfProducer % 2 == 0);
-    assert(numberOfProducer <= cores_per_node);
+//    assert(numberOfProducer <= cores_per_node);
 
     Timestamp begin = getTimestamp();
 //#define OLCONSUMERVERSION
