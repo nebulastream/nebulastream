@@ -148,7 +148,9 @@ struct ConnectionInfos
         sign_token = other.sign_token;
         sendBuffers = other.sendBuffers;
         records = other.records;
+        con = other.con;
     }
+
     //consumer stuff
     infinity::memory::Buffer** recv_buffers;
     char* buffer_ready_sign;
@@ -161,6 +163,7 @@ struct ConnectionInfos
     RegionToken* sign_token;//special token for this connection
     TupleBuffer** sendBuffers;
     record** records;
+    VerbsConnection* con;
 };
 
 //consumer stuff
@@ -851,21 +854,20 @@ int main(int argc, char *argv[])
 
 
 //    assert(numberOfConnections == 1);
-    std::vector<VerbsConnection*> connections;
+    VerbsConnection** connections = new VerbsConnection*[numberOfConnections];
     size_t target_rank = rank == 0 ? 1 : 0;
     SimpleInfoProvider info1(target_rank, 3, 1, PORT1, ip1);//ib0
-    connections.push_back(new VerbsConnection(&info1));
+    connections[0] = new VerbsConnection(&info1);
     cout << "first connection established" << endl;
     if(numberOfConnections == 2)
     {
         SimpleInfoProvider info2(target_rank, 1, 1, PORT2, ip2);//ib1
-        connections.push_back(new VerbsConnection(&info2));
+        connections[1] = new VerbsConnection(&info2);
     }
     auto nodes = numa_num_configured_nodes();
 //    nodes = 1;
     auto cores = numa_num_configured_cpus();
     auto cores_per_node = cores / nodes;
-    cout << "net=" << omp_get_nested() << endl;
     omp_set_nested(1);
     ConnectionInfos** conInfos = new ConnectionInfos*[nodes];
     if(rank == 0)
@@ -876,7 +878,15 @@ int main(int argc, char *argv[])
             #pragma omp critical
             {
                 cout << "thread in critivcal = " << omp_get_thread_num() << endl;
-                conInfos[omp_get_thread_num()] = setupRDMAProducer(connections[0], bufferSizeInTups);
+                if(numberOfConnections == 1)
+                {
+                    conInfos[omp_get_thread_num()] = setupRDMAProducer(connections[0], bufferSizeInTups);
+
+                }
+                else
+                {
+                    conInfos[omp_get_thread_num()] = setupRDMAProducer(connections[omp_get_thread_num()], bufferSizeInTups);
+                }
                 conInfos[omp_get_thread_num()]->records = new record*[numberOfProducer];
                 for(size_t i = 0; i < numberOfProducer; i++)
                 {
@@ -1074,48 +1084,5 @@ int main(int argc, char *argv[])
     ss << " sumNoBufferFound=" << sumNoBuffer  << endl;
     cout << ss.str() << endl;
 
-//    printHT(hashTable, campaingCnt);
+    printHT(hashTable, campaingCnt);
 }
-//void* ptr_to_check = sendBuffers;
-//int status[1];
-//status[0] = -1;
-//size_t ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check, NULL, status, 0);
-//printf("Memory at %p is at %d node (thread %d) (core %d) (node %d) (retCode %d) \n", sendBuffers,
-//        status[0], outer_thread_id, sched_getcpu() ,numa_node_of_cpu(sched_getcpu())
-//        , ret_code);
-
-//void copy_received_tokens_from_buffer(infinity::memory::Buffer* buffer,
-//        infinity::memory::RegionToken** region_tokens, size_t nodeId)
-//{
-//    for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++){
-//        if ( i < NUM_SEND_BUFFERS){
-//            region_tokens[i] = static_cast<RegionToken*>(malloc(sizeof(RegionToken)));
-//            memcpy(region_tokens[i], (RegionToken*)buffer->getData() + i, sizeof(RegionToken));
-//
-//        } else {
-//            sign_token = static_cast<RegionToken*>(malloc(sizeof(RegionToken)));
-//            memcpy(sign_token, (RegionToken*)buffer->getData() + i, sizeof(RegionToken));
-//        }
-////        cout << "region getSizeInBytes=" << region_tokens[i]->getSizeInBytes() << " getAddress=" << region_tokens[i]->getAddress()
-////                            << " getLocalKey=" << region_tokens[i]->getLocalKey() << " getRemoteKey=" << region_tokens[i]->getRemoteKey() << endl;
-//    }
-//}
-//
-//void copy_received_tokens(const std::vector<TupleBuffer> &sendBuffers,
-//        std::vector<RegionToken*> &region_tokens, RegionToken*&sign_token)
-//{
-//    for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++){
-//        if ( i < NUM_SEND_BUFFERS){
-//            region_tokens[i] = static_cast<RegionToken*>(malloc(sizeof(RegionToken)));
-//            memcpy(region_tokens[i], (RegionToken*)sendBuffers[0].send_buffer->getData() + i, sizeof(RegionToken));
-//        } else {
-//            sign_token = static_cast<RegionToken*>(malloc(sizeof(RegionToken)));
-//            memcpy(sign_token, (RegionToken*)sendBuffers[0].send_buffer->getData() + i, sizeof(RegionToken));
-//#ifdef DEBUG
-//            cout << "sign region getSizeInBytes=" << sign_token->getSizeInBytes() << " getAddress=" << sign_token->getAddress()
-//                                << " getLocalKey=" << sign_token->getLocalKey() << " getRemoteKey=" << sign_token->getRemoteKey() << endl;
-//#endif
-//        }
-//    }
-//}
-
