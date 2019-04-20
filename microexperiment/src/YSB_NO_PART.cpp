@@ -756,6 +756,20 @@ short CorePin(int coreID)
   return 1;
 }
 
+size_t getNumaNodeFromPtr(void* ptr)
+{
+
+    int numa_node1 = -1;
+    get_mempolicy(&numa_node1, NULL, 0, ptr, MPOL_F_NODE | MPOL_F_ADDR);
+
+    int status[1];
+    status[0]=-1;
+    int ret_code = move_pages(0 /*self memory */, 1, &ptr, NULL, status, 0);
+    int numa_node2 = status[0];
+    assert(numa_node1 == numa_node2);
+    return numa_node1;
+}
+
 namespace po = boost::program_options;
 int main(int argc, char *argv[])
 {
@@ -974,6 +988,7 @@ int main(int argc, char *argv[])
              {
                  endIdx = NUM_SEND_BUFFERS;
              }
+
              #pragma omp critical
              std::cout
                 << "OuterThread=" << outer_thread_id
@@ -981,6 +996,7 @@ int main(int argc, char *argv[])
                 << " SumThreadID=" << i
                 << " core: " << sched_getcpu()
                 << " numaNode:" << numa_node_of_cpu(sched_getcpu())
+                << " receiveBufferLocation=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->sendBuffers[0])
                 << " start=" << startIdx
                 << " endidx=" << endIdx
                 << " share=" << share
