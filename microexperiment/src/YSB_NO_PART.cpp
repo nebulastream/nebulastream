@@ -442,8 +442,9 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
+#ifdef DEBUG
             cout << "Thread=" << outerThread << "/" << omp_get_thread_num() << " Received buffer at index=" << index << endl;
-
+#endif
             consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers[index]->getData(), bufferSizeInTuples,
                     hashTable, windowSizeInSec, campaingCnt, consumerID);
 
