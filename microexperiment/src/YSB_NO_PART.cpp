@@ -360,7 +360,9 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
     }//end of while
 //    cout << "Thread=" << omp_get_thread_num() << " Done sending! Sent a total of " << total_sent_tuples << " tuples and " << total_buffer_send << " buffers"
 //            << " noBufferFreeToSend=" << noBufferFreeToSend << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
-#pragma omp critical
+#ifdef DEBUG
+
+    #pragma omp critical
              {
                  cout << "Thread:" << outerThread << "/" << omp_get_thread_num() << "/" << connectionID
                          << " producesTuples=" << total_sent_tuples
@@ -370,6 +372,7 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
                          << endl;
 
              }
+#endif
     *producesTuples = total_sent_tuples;
     *producedBuffers = total_buffer_send;
     *readInputTuples = readTuples;
@@ -468,10 +471,13 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         {
             *consumedTuples = total_received_tuples;
             *consumedBuffers = total_received_buffers;
+#ifdef DEBUG
+
             stringstream ss;
             cout << "Thread=" << outerThread << "/" << omp_get_thread_num() << " Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
                             << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
             cout << ss.str();
+#endif
             return;
         }
     }//end of while
