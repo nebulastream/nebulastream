@@ -911,8 +911,8 @@ int main(int argc, char *argv[])
     size_t consumedTuples[nodes][numberOfConsumer/nodes] = {0};
     size_t consumedBuffers[nodes][numberOfConsumer/nodes] = {0};
     size_t consumerNoBufferFound[nodes][numberOfConsumer/nodes] = {0};
+    size_t readInputTuples[nodes][numberOfProducer/nodes] = {0};
 
-    size_t readInputTuples[nodes][numberOfProducer] = {0};
     infinity::memory::Buffer* finishBuffer = connections[0]->allocate_buffer(1);
 
 //    assert(numberOfProducer % 2 == 0);
@@ -1020,7 +1020,7 @@ int main(int argc, char *argv[])
 
     for(size_t n = 0; n < nodes; n++)
     {
-        for(size_t i = 0; i < numberOfProducer; i++)
+        for(size_t i = 0; i < numberOfProducer/nodes; i++)
         {
             sumProducedTuples += producesTuples[n][i];
             sumProducedBuffer += producedBuffers[n][i];
@@ -1028,7 +1028,7 @@ int main(int argc, char *argv[])
             sumNoFreeEntry += noFreeEntryFound[n][i];
         }
 
-        for(size_t i = 0; i < numberOfConsumer; i++)
+        for(size_t i = 0; i < numberOfConsumer/nodes; i++)
         {
             sumConsumedTuples += consumedTuples[n][i];
             sumConsumedBuffer += consumedBuffers[n][i];
