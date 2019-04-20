@@ -40,7 +40,7 @@ using namespace std;
 #define BUFFER_BEING_PROCESSED_FLAG 2
 #define NUMBER_OF_GEN_TUPLE 1000000
 //#define JOIN_WRITE_BUFFER_SIZE 1024*1024*8
-//#define DEBUG
+#define DEBUG
 
 std::atomic<size_t> exitProducer;
 std::atomic<size_t> exitConsumer;
@@ -260,7 +260,7 @@ size_t produce_window_mem(record* records, size_t bufferSize, Tuple* outputBuffe
 
 void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bufferSizeInTuples, size_t bufferProcCnt,
         size_t* producesTuples, size_t* producedBuffers, size_t* readInputTuples, size_t* noFreeEntryFound, size_t startIdx,
-        size_t endIdx, size_t numberOfProducer, ConnectionInfos* cInfos, size_t outerThread)
+        size_t endIdx, size_t numberOfProducer, ConnectionInfos* cInfos, size_t outerThread, size_t connectionID)
 {
     size_t total_sent_tuples = 0;
     size_t total_buffer_send = 0;
@@ -314,7 +314,7 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
                 connection->write(cInfos->sendBuffers[receive_buffer_index]->send_buffer, cInfos->region_tokens[receive_buffer_index],
                         cInfos->sendBuffers[receive_buffer_index]->requestToken);
 #ifdef DEBUG
-                cout << "Thread:" << outerThread << "/" << omp_get_thread_num() << " Writing " << cInfos->sendBuffers[receive_buffer_index]->numberOfTuples << " tuples on buffer "
+                cout << "Thread:" << outerThread << "/" << omp_get_thread_num() << "/" << connectionID << " Writing " << cInfos->sendBuffers[receive_buffer_index]->numberOfTuples << " tuples on buffer "
                         << receive_buffer_index << endl;
 #endif
                 total_sent_tuples += cInfos->sendBuffers[receive_buffer_index]->numberOfTuples;
@@ -360,16 +360,16 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
     }//end of while
 //    cout << "Thread=" << omp_get_thread_num() << " Done sending! Sent a total of " << total_sent_tuples << " tuples and " << total_buffer_send << " buffers"
 //            << " noBufferFreeToSend=" << noBufferFreeToSend << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
-//#pragma omp critical
-//             {
-//                 cout << "Thread:" << outerThread << "/" << omp_get_thread_num()
-//                         << " producesTuples=" << total_sent_tuples
-//                         << " producedBuffers=" << total_buffer_send
-//                         << " readInputTuples=" << readTuples
-//                         << " noFreeEntryFound=" << noBufferFreeToSend
-//                         << endl;
-//
-//             }
+#pragma omp critical
+             {
+                 cout << "Thread:" << outerThread << "/" << omp_get_thread_num() << "/" << connectionID
+                         << " producesTuples=" << total_sent_tuples
+                         << " producedBuffers=" << total_buffer_send
+                         << " readInputTuples=" << readTuples
+                         << " noFreeEntryFound=" << noBufferFreeToSend
+                         << endl;
+
+             }
     *producesTuples = total_sent_tuples;
     *producedBuffers = total_buffer_send;
     *readInputTuples = readTuples;
@@ -994,7 +994,7 @@ int main(int argc, char *argv[])
 
              runProducerOneOnOne(con, recs, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[outer_thread_id][i],
                      &producedBuffers[outer_thread_id][i], &readInputTuples[outer_thread_id][i], &noFreeEntryFound[outer_thread_id][i], startIdx, endIdx,
-                     numberOfProducer, conInfos[outer_thread_id], outer_thread_id);
+                     numberOfProducer, conInfos[outer_thread_id], outer_thread_id, outer_thread_id);
 
              assert(outer_thread_id == numa_node_of_cpu(sched_getcpu()));
           }
