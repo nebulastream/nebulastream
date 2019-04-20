@@ -933,7 +933,7 @@ int main(int argc, char *argv[])
              size_t share = NUM_SEND_BUFFERS/(numberOfProducer/nodes);
              size_t startIdx = inner_thread_id* share;
              size_t endIdx = (inner_thread_id+1)*share;
-
+             record* recs = conInfos[outer_thread_id]->records[inner_thread_id];
 
             #pragma omp critical
              std::cout
@@ -942,20 +942,18 @@ int main(int argc, char *argv[])
                 << " SumThreadID=" << i
                 << " core: " << sched_getcpu()
                 << " numaNode:" << numa_node_of_cpu(sched_getcpu())
-                << " receiveBufferLocation=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->sendBuffers)
-                << " receiveBufferDataLocation=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->sendBuffers[0]->send_buffer)
+                << " sendBufferLocation=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->sendBuffers)
+                << " sendBufferDataLocation=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->sendBuffers[0]->send_buffer)
+                << " inputdata numaNode=" << getNumaNodeFromPtr(recs)
                 << " start=" << startIdx
                 << " endidx=" << endIdx
                 << " share=" << share
                 << std::endl;
 
-             record* recs = conInfos[outer_thread_id]->records[inner_thread_id];
+
              runProducerOneOnOne(connections[0], recs, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
                      &producedBuffers[i], &readInputTuples[i], &noFreeEntryFound[i], startIdx, endIdx,
                      numberOfProducer, conInfos[outer_thread_id]);
-             std::cout << "Thread " << outer_thread_id << ":" << inner_thread_id << endl;
-
-
              assert(outer_thread_id == numa_node_of_cpu(sched_getcpu()));
           }
        }
@@ -1004,35 +1002,6 @@ int main(int argc, char *argv[])
        cout << "finished, sending finish buffer " << getTimestamp() << endl;
        connections[0]->send_blocking(finishBuffer);
        cout << "buffer sending finished, shutdown "<< getTimestamp() << endl;
-
-
-
-
-
-//
-//        #pragma omp parallel num_threads(numberOfConsumer)
-//        {
-//            #pragma omp for
-//            for(size_t i = 0; i < numberOfConsumer; i++)
-//            {
-//                size_t share = NUM_SEND_BUFFERS/numberOfConsumer;
-//                size_t startIdx = i* share;
-//                size_t endIdx = (i+1)*share;
-//                if(i == numberOfConsumer -1)
-//                {
-//                    endIdx = NUM_SEND_BUFFERS;
-//                }
-//
-//                stringstream ss;
-//                ss << "consumer " << i << " from=" << startIdx << " to " << endIdx << endl;
-//                cout << ss.str() << endl;
-//                runConsumerNew(hashTable, windowSizeInSeconds, campaingCnt, 0, numberOfProducer , bufferSizeInTups,
-//                        &consumedTuples[i], &consumedBuffers[i], &consumerNoBufferFound[i], startIdx, endIdx);
-//            }
-//        }
-//        cout << "finished, sending finish buffer " << getTimestamp() << endl;
-//        connections[0]->send_blocking(finishBuffer);
-//        cout << "buffer sending finished, shutdown "<< getTimestamp() << endl;
 
     }
 
