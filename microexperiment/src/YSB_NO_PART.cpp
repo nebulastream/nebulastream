@@ -880,7 +880,7 @@ int main(int argc, char *argv[])
                     << " ibdev_path=" << ibvDeviceList[i]->ibdev_path
                     << endl;
         }
-        SimpleInfoProvider info2(target_rank, 2, 1, PORT2, ip1);//
+        SimpleInfoProvider info2(target_rank, 3, 1, PORT2, ip1);//
 //        SimpleInfoProvider info2(target_rank, 2, 1, PORT2, ip2);//
 
         connections[1] = new VerbsConnection(&info2);
