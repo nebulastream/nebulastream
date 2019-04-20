@@ -414,13 +414,14 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
         consumed++;
 
     }//end of for
-    return consumed;
 #ifdef DEBUG
 #pragma omp critical
     cout << "Thread=" << std::this_thread::get_id() << " consumed=" << consumed
             << " windowSwitchCnt=" << windowSwitchCnt
             << " htreset=" << htReset;
 #endif
+    return consumed;
+
 }
 
 void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
@@ -992,14 +993,21 @@ int main(int argc, char *argv[])
              }
 #endif
              VerbsConnection* con;
+             size_t connectID;
              if(numberOfConnections == 1)
+             {
                  con = connections[0];
+                 connectID = 0;
+             }
              else
+             {
                  con = connections[outer_thread_id];
+                 connectID = outer_thread_id;
+             }
 
              runProducerOneOnOne(con, recs, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[outer_thread_id][i],
                      &producedBuffers[outer_thread_id][i], &readInputTuples[outer_thread_id][i], &noFreeEntryFound[outer_thread_id][i], startIdx, endIdx,
-                     numberOfProducer, conInfos[outer_thread_id], outer_thread_id, outer_thread_id);
+                     numberOfProducer, conInfos[outer_thread_id], outer_thread_id, connectID);
 
              assert(outer_thread_id == numa_node_of_cpu(sched_getcpu()));
           }
