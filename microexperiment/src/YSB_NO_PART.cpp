@@ -980,6 +980,7 @@ int main(int argc, char *argv[])
                 << " InnerThread=" << inner_thread_id
                 << " SumThreadID=" << i
                 << " core: " << sched_getcpu()
+                << " numaNode:" << numa_node_of_cpu(sched_getcpu())
                 << " start=" << startIdx
                 << " endidx=" << endIdx
                 << " share=" << share
