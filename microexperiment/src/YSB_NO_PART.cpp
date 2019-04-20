@@ -1,3 +1,6 @@
+#pragma GCC optimize("O3","unroll-loops","omit-frame-pointer","inline") //Optimization flags
+#pragma GCC option("arch=native","tune=native","no-zero-upper") //Enable AVX
+#pragma GCC target("avx", "avx512cd", "avx512cd" ,"avx512f")  //Enable AVX
 #include <string>
 
 #include <iostream>
@@ -416,9 +419,9 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
     }//end of for
 #ifdef DEBUG
 #pragma omp critical
-    cout << "Thread=" << std::this_thread::get_id() << " consumed=" << consumed
+    cout << "Thread=" << omp_get_thread_num() << " consumed=" << consumed
             << " windowSwitchCnt=" << windowSwitchCnt
-            << " htreset=" << htReset;
+            << " htreset=" << htReset << endl;
 #endif
     return consumed;
 
