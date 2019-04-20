@@ -850,7 +850,7 @@ int main(int argc, char *argv[])
             << endl;
 
 
-    assert(numberOfConnections == 1);
+//    assert(numberOfConnections == 1);
     std::vector<VerbsConnection*> connections;
     size_t target_rank = rank == 0 ? 1 : 0;
     SimpleInfoProvider info1(target_rank, 3, 1, PORT1, ip1);//ib0
