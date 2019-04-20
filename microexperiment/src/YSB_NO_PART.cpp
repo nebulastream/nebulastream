@@ -257,7 +257,7 @@ size_t produce_window_mem(record* records, size_t bufferSize, Tuple* outputBuffe
 
 void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bufferSizeInTuples, size_t bufferProcCnt,
         size_t* producesTuples, size_t* producedBuffers, size_t* readInputTuples, size_t* noFreeEntryFound, size_t startIdx,
-        size_t endIdx, size_t numberOfProducer, ConnectionInfos* cInfos)
+        size_t endIdx, size_t numberOfProducer, ConnectionInfos* cInfos, size_t outerThread)
 {
     size_t total_sent_tuples = 0;
     size_t total_buffer_send = 0;
@@ -270,7 +270,7 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
         for(size_t receive_buffer_index = startIdx; receive_buffer_index < endIdx && total_buffer_send < bufferProcCnt; receive_buffer_index++)
         {
 #ifdef DEBUG
-            cout << "start=" << startIdx << " checks idx=" << receive_buffer_index << endl;
+//            cout << "start=" << startIdx << " checks idx=" << receive_buffer_index << endl;
 #endif
             if(receive_buffer_index == startIdx)
             {
@@ -311,7 +311,7 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
                 connection->write(cInfos->sendBuffers[receive_buffer_index]->send_buffer, cInfos->region_tokens[receive_buffer_index],
                         cInfos->sendBuffers[receive_buffer_index]->requestToken);
 #ifdef DEBUG
-                cout << "Thread:" << omp_get_thread_num() << " Writing " << cInfos->sendBuffers[receive_buffer_index]->numberOfTuples << " tuples on buffer "
+                cout << "Thread:" << outerThread << "/" << omp_get_thread_num() << " Writing " << cInfos->sendBuffers[receive_buffer_index]->numberOfTuples << " tuples on buffer "
                         << receive_buffer_index << endl;
 #endif
                 total_sent_tuples += cInfos->sendBuffers[receive_buffer_index]->numberOfTuples;
@@ -411,7 +411,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 
 void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples, size_t* consumedTuples, size_t* consumedBuffers, size_t* consumerNoBufferFound,
-        size_t startIdx, size_t endIdx, ConnectionInfos* cInfos)
+        size_t startIdx, size_t endIdx, ConnectionInfos* cInfos, size_t outerThread)
 {
     size_t total_received_tuples = 0;
     size_t total_received_buffers = 0;
@@ -433,7 +433,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
-            cout << "Thread=" << omp_get_thread_num() << " Received buffer at index=" << index << endl;
+            cout << "Thread=" << outerThread << "/" << omp_get_thread_num() << " Received buffer at index=" << index << endl;
 
             consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers[index]->getData(), bufferSizeInTuples,
                     hashTable, windowSizeInSec, campaingCnt, consumerID);
@@ -457,7 +457,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             *consumedTuples = total_received_tuples;
             *consumedBuffers = total_received_buffers;
             stringstream ss;
-            cout << "Thread=" << omp_get_thread_num() << " Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
+            cout << "Thread=" << outerThread << "/" << omp_get_thread_num() << " Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
                             << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
             cout << ss.str();
             return;
@@ -953,7 +953,7 @@ int main(int argc, char *argv[])
 
              runProducerOneOnOne(connections[0], recs, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
                      &producedBuffers[i], &readInputTuples[i], &noFreeEntryFound[i], startIdx, endIdx,
-                     numberOfProducer, conInfos[outer_thread_id]);
+                     numberOfProducer, conInfos[outer_thread_id], outer_thread_id);
              assert(outer_thread_id == numa_node_of_cpu(sched_getcpu()));
           }
        }
@@ -996,7 +996,7 @@ int main(int argc, char *argv[])
              stringstream ss;
              cout << ss.str() << endl;
              runConsumerNew(hashTable, windowSizeInSeconds, campaingCnt, 0, numberOfProducer , bufferSizeInTups,
-                     &consumedTuples[i], &consumedBuffers[i], &consumerNoBufferFound[i], startIdx, endIdx, conInfos[outer_thread_id]);
+                     &consumedTuples[i], &consumedBuffers[i], &consumerNoBufferFound[i], startIdx, endIdx, conInfos[outer_thread_id], outer_thread_id);
           }
        }
        cout << "finished, sending finish buffer " << getTimestamp() << endl;
