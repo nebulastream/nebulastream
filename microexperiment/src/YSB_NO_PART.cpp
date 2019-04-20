@@ -865,7 +865,7 @@ int main(int argc, char *argv[])
 //    assert(numberOfConnections == 1);
     VerbsConnection** connections = new VerbsConnection*[numberOfConnections];
     size_t target_rank = rank == 0 ? 1 : 0;
-    SimpleInfoProvider info1(target_rank, 0, 1, PORT1, ip1);//was 3
+    SimpleInfoProvider info1(target_rank, 3, 1, PORT1, ip1);//was 3
     connections[0] = new VerbsConnection(&info1);
     cout << "first connection established" << endl;
     if(numberOfConnections == 2)
@@ -880,7 +880,7 @@ int main(int argc, char *argv[])
                     << " ibdev_path=" << ibvDeviceList[i]->ibdev_path
                     << endl;
         }
-        SimpleInfoProvider info2(target_rank, 3, 1, PORT2, ip1);//
+        SimpleInfoProvider info2(target_rank, 1, 1, PORT2, ip1);//
 //        SimpleInfoProvider info2(target_rank, 2, 1, PORT2, ip2);//
 
         connections[1] = new VerbsConnection(&info2);
