@@ -40,7 +40,7 @@ using namespace std;
 #define BUFFER_BEING_PROCESSED_FLAG 2
 #define NUMBER_OF_GEN_TUPLE 1000000
 //#define JOIN_WRITE_BUFFER_SIZE 1024*1024*8
-#define DEBUG
+//#define DEBUG
 
 std::atomic<size_t> exitProducer;
 std::atomic<size_t> exitConsumer;
@@ -944,6 +944,7 @@ int main(int argc, char *argv[])
              size_t endIdx = (inner_thread_id+1)*share;
              record* recs = conInfos[outer_thread_id]->records[inner_thread_id];
 
+#ifdef DEBUG
              #pragma omp critical
              {
                  std::cout
@@ -960,7 +961,7 @@ int main(int argc, char *argv[])
                 << " share=" << share
                 << std::endl;
              }
-
+#endif
              runProducerOneOnOne(connections[0], recs, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[outer_thread_id][i],
                      &producedBuffers[outer_thread_id][i], &readInputTuples[outer_thread_id][i], &noFreeEntryFound[outer_thread_id][i], startIdx, endIdx,
                      numberOfProducer, conInfos[outer_thread_id], outer_thread_id);
@@ -988,7 +989,7 @@ int main(int argc, char *argv[])
              {
                  endIdx = NUM_SEND_BUFFERS;
              }
-
+#ifdef DEBUG
              #pragma omp critical
              {
              std::cout
@@ -1004,8 +1005,7 @@ int main(int argc, char *argv[])
                 << " share=" << share
                 << std::endl;
              }
-             stringstream ss;
-             cout << ss.str() << endl;
+#endif
              runConsumerNew(hashTable, windowSizeInSeconds, campaingCnt, 0, numberOfProducer , bufferSizeInTups,
                      &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
                      endIdx, conInfos[outer_thread_id], outer_thread_id);
