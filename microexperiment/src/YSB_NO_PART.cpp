@@ -996,7 +996,8 @@ int main(int argc, char *argv[])
                 << " SumThreadID=" << i
                 << " core: " << sched_getcpu()
                 << " numaNode:" << numa_node_of_cpu(sched_getcpu())
-                << " receiveBufferLocation=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->sendBuffers[0])
+                << " receiveBufferLocation=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->recv_buffers)
+                << " receiveBufferDataLocation=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->recv_buffers[0]->getData())
                 << " start=" << startIdx
                 << " endidx=" << endIdx
                 << " share=" << share
