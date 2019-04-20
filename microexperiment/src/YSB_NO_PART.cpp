@@ -870,8 +870,18 @@ int main(int argc, char *argv[])
     cout << "first connection established" << endl;
     if(numberOfConnections == 2)
     {
-        SimpleInfoProvider info2(target_rank, 1, 1, PORT2, ip2);//ib2 192.168.5.22
-//        SimpleInfoProvider info2(target_rank, 2, 1, PORT2, ip2);//ib1 192.168.5.21
+        int32_t numberOfInstalledDevices = 0;
+        ibv_device **ibvDeviceList = ibv_get_device_list(&numberOfInstalledDevices);
+        for(size_t i = 0; i < numberOfInstalledDevices; i++)
+        {
+            cout << "name=" << ibvDeviceList[i]->dev_name
+                    << " dev_path=" << ibvDeviceList[i]->dev_path
+                    << " name=" << ibvDeviceList[i]->name
+                    << " ibdev_path=" << ibvDeviceList[i]->ibdev_path
+                    << endl;
+        }
+//        SimpleInfoProvider info2(target_rank, 1, 1, PORT2, ip2);//ib2 192.168.5.22
+        SimpleInfoProvider info2(target_rank, 2, 1, PORT2, ip2);//ib1 192.168.5.21
 
         connections[1] = new VerbsConnection(&info2);
     }
