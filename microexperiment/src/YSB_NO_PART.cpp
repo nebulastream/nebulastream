@@ -40,7 +40,7 @@ using namespace std;
 #define BUFFER_BEING_PROCESSED_FLAG 2
 #define NUMBER_OF_GEN_TUPLE 1000000
 //#define JOIN_WRITE_BUFFER_SIZE 1024*1024*8
-#define DEBUG
+//#define DEBUG
 
 std::atomic<size_t> exitProducer;
 std::atomic<size_t> exitConsumer;
