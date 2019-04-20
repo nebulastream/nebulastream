@@ -865,7 +865,7 @@ int main(int argc, char *argv[])
 //    assert(numberOfConnections == 1);
     VerbsConnection** connections = new VerbsConnection*[numberOfConnections];
     size_t target_rank = rank == 0 ? 1 : 0;
-    SimpleInfoProvider info1(target_rank, 0, 1, PORT1, ip1);//ib0
+    SimpleInfoProvider info1(target_rank, 0, 1, PORT1, ip1);//was 3
     connections[0] = new VerbsConnection(&info1);
     cout << "first connection established" << endl;
     if(numberOfConnections == 2)
