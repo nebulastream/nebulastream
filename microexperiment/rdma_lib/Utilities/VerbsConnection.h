@@ -22,8 +22,6 @@ private:
     infinity::queues::QueuePair * qp;
     infinity::queues::QueuePairFactory * qp_factory;
 
-
-
     char send_barrier_counter = 1;
     char recv_barrier_counter = 1;
     Buffer * send_barrier_buffer;
