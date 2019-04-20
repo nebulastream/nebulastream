@@ -360,10 +360,10 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
 #pragma omp critical
              {
                  cout << "Thread:" << outerThread << "/" << omp_get_thread_num()
-                         << " producesTuples=" << producesTuples
-                         << " producedBuffers=" << producedBuffers
-                         << " readInputTuples=" << readInputTuples
-                         << " noFreeEntryFound=" << noFreeEntryFound
+                         << " producesTuples=" << total_sent_tuples
+                         << " producedBuffers=" << total_buffer_send
+                         << " readInputTuples=" << readTuples
+                         << " noFreeEntryFound=" << noBufferFreeToSend
                          << endl;
 
              }
