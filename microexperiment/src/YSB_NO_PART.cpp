@@ -357,16 +357,16 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
     }//end of while
 //    cout << "Thread=" << omp_get_thread_num() << " Done sending! Sent a total of " << total_sent_tuples << " tuples and " << total_buffer_send << " buffers"
 //            << " noBufferFreeToSend=" << noBufferFreeToSend << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
-#pragma omp critical
-             {
-                 cout << "Thread:" << outerThread << "/" << omp_get_thread_num()
-                         << " producesTuples=" << total_sent_tuples
-                         << " producedBuffers=" << total_buffer_send
-                         << " readInputTuples=" << readTuples
-                         << " noFreeEntryFound=" << noBufferFreeToSend
-                         << endl;
-
-             }
+//#pragma omp critical
+//             {
+//                 cout << "Thread:" << outerThread << "/" << omp_get_thread_num()
+//                         << " producesTuples=" << total_sent_tuples
+//                         << " producedBuffers=" << total_buffer_send
+//                         << " readInputTuples=" << readTuples
+//                         << " noFreeEntryFound=" << noBufferFreeToSend
+//                         << endl;
+//
+//             }
     *producesTuples = total_sent_tuples;
     *producedBuffers = total_buffer_send;
     *readInputTuples = readTuples;
