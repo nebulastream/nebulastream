@@ -870,8 +870,8 @@ int main(int argc, char *argv[])
     cout << "first connection established" << endl;
     if(numberOfConnections == 2)
     {
-//        SimpleInfoProvider info2(target_rank, 1, 1, PORT2, ip2);//ib2 192.168.5.22
-        SimpleInfoProvider info2(target_rank, 2, 1, PORT2, ip2);//ib1 192.168.5.21
+        SimpleInfoProvider info2(target_rank, 1, 1, PORT2, ip2);//ib2 192.168.5.22
+//        SimpleInfoProvider info2(target_rank, 2, 1, PORT2, ip2);//ib1 192.168.5.21
 
         connections[1] = new VerbsConnection(&info2);
     }
