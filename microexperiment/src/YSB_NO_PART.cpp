@@ -881,12 +881,16 @@ int main(int argc, char *argv[])
                 if(numberOfConnections == 1)
                 {
                     conInfos[omp_get_thread_num()] = setupRDMAProducer(connections[0], bufferSizeInTups);
-
+                    conInfos[omp_get_thread_num()]->con = connections[0];
                 }
-                else
+                else if(numberOfConnections == 2)
                 {
                     conInfos[omp_get_thread_num()] = setupRDMAProducer(connections[omp_get_thread_num()], bufferSizeInTups);
+                    conInfos[omp_get_thread_num()]->con = connections[omp_get_thread_num()];
                 }
+                else
+                    assert(0);
+
                 conInfos[omp_get_thread_num()]->records = new record*[numberOfProducer];
                 for(size_t i = 0; i < numberOfProducer; i++)
                 {
@@ -904,11 +908,20 @@ int main(int argc, char *argv[])
             #pragma omp critical
             {
                 cout << "thread in critivcal = " << omp_get_thread_num() << endl;
-                conInfos[omp_get_thread_num()] = setupRDMAConsumer(connections[0], bufferSizeInTups);
-
+                if(numberOfConnections == 1)
+                {
+                    conInfos[omp_get_thread_num()] = setupRDMAConsumer(connections[0], bufferSizeInTups);
+                    conInfos[omp_get_thread_num()]->con = connections[0];
+                }
+                else if(numberOfConnections == 2)
+                {
+                    conInfos[omp_get_thread_num()] = setupRDMAConsumer(connections[omp_get_thread_num()], bufferSizeInTups);
+                    conInfos[omp_get_thread_num()]->con = connections[omp_get_thread_num()];
+                }
+                else
+                    assert(0);
             }
             cout << "thread out of critivcal = " << omp_get_thread_num() << endl;
-
         }
     }//end of else
     //fix for the test
@@ -973,9 +986,16 @@ int main(int argc, char *argv[])
                 << std::endl;
              }
 #endif
-             runProducerOneOnOne(connections[0], recs, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[outer_thread_id][i],
+             VerbsConnection* con;
+             if(numberOfConnections == 1)
+                 con = connections[0];
+             else
+                 con = connections[outer_thread_id];
+
+             runProducerOneOnOne(con, recs, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[outer_thread_id][i],
                      &producedBuffers[outer_thread_id][i], &readInputTuples[outer_thread_id][i], &noFreeEntryFound[outer_thread_id][i], startIdx, endIdx,
                      numberOfProducer, conInfos[outer_thread_id], outer_thread_id);
+
              assert(outer_thread_id == numa_node_of_cpu(sched_getcpu()));
           }
        }
@@ -1084,5 +1104,5 @@ int main(int argc, char *argv[])
     ss << " sumNoBufferFound=" << sumNoBuffer  << endl;
     cout << ss.str() << endl;
 
-    printHT(hashTable, campaingCnt);
+//    printHT(hashTable, campaingCnt);
 }
