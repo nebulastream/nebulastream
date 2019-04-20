@@ -930,13 +930,24 @@ int main(int argc, char *argv[])
           {
              auto inner_thread_id = omp_get_thread_num();
              size_t i = inner_thread_id;
-             size_t share = NUM_SEND_BUFFERS/numberOfProducer;
+             size_t share = NUM_SEND_BUFFERS/(numberOfProducer/nodes);
              size_t startIdx = inner_thread_id* share;
              size_t endIdx = (inner_thread_id+1)*share;
 
 
-             std::cout << "Thread " << outer_thread_id << ":" << inner_thread_id
-                << " core: " << sched_getcpu() << " start=" << startIdx << " endidx=" << endIdx << std::endl;
+            #pragma omp critical
+             std::cout
+                << "OuterThread=" << outer_thread_id
+                << " InnerThread=" << inner_thread_id
+                << " SumThreadID=" << i
+                << " core: " << sched_getcpu()
+                << " numaNode:" << numa_node_of_cpu(sched_getcpu())
+                << " receiveBufferLocation=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->sendBuffers)
+                << " receiveBufferDataLocation=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->sendBuffers[0]->send_buffer)
+                << " start=" << startIdx
+                << " endidx=" << endIdx
+                << " share=" << share
+                << std::endl;
 
              record* recs = conInfos[outer_thread_id]->records[inner_thread_id];
              runProducerOneOnOne(connections[0], recs, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
@@ -951,25 +962,6 @@ int main(int argc, char *argv[])
        cout << "producer finished ... waiting for consumer to finish " << getTimestamp() << endl;
        connections[0]->post_and_receive_blocking(finishBuffer);
        cout << "got finish buffer, finished execution " << getTimestamp()<< endl;
-
-
-//
-//        #pragma omp parallel num_threads(numberOfProducer)
-//        {
-//            #pragma omp for
-//            for(size_t i = 0; i < numberOfProducer; i++)
-//            {
-//                size_t share = NUM_SEND_BUFFERS/numberOfProducer;
-//                size_t startIdx = i* share;
-//                size_t endIdx = (i+1)*share;
-//
-//                runProducerOneOnOne(connections[0], recs[i], bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
-//                        &producedBuffers[i], &readInputTuples[i], &noFreeEntryFound[i], startIdx, endIdx, numberOfProducer);
-//            }
-//        }
-//        cout << "producer finished ... waiting for consumer to finish " << getTimestamp() << endl;
-//        connections[0]->post_and_receive_blocking(finishBuffer);
-//        cout << "got finish buffer, finished execution " << getTimestamp()<< endl;
     }
     else
     {
@@ -1004,7 +996,6 @@ int main(int argc, char *argv[])
                 << std::endl;
 
              stringstream ss;
-             ss << "consumer " << i << " from=" << startIdx << " to " << endIdx << endl;
              cout << ss.str() << endl;
              runConsumerNew(hashTable, windowSizeInSeconds, campaingCnt, 0, numberOfProducer , bufferSizeInTups,
                      &consumedTuples[i], &consumedBuffers[i], &consumerNoBufferFound[i], startIdx, endIdx, conInfos[outer_thread_id]);
