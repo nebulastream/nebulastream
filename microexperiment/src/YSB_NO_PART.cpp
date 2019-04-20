@@ -905,14 +905,14 @@ int main(int argc, char *argv[])
         std::atomic_init(&hashTable[1][i], std::size_t(0));
 
 
-    size_t producesTuples[numberOfProducer] = {0};
-    size_t producedBuffers[numberOfProducer] = {0};
-    size_t noFreeEntryFound[numberOfProducer] = {0};
-    size_t consumedTuples[numberOfConsumer] = {0};
-    size_t consumedBuffers[numberOfConsumer] = {0};
-    size_t consumerNoBufferFound[numberOfConsumer] = {0};
+    size_t producesTuples[nodes][numberOfProducer/nodes] = {0};
+    size_t producedBuffers[nodes][numberOfProducer/nodes] = {0};
+    size_t noFreeEntryFound[nodes][numberOfProducer/nodes] = {0};
+    size_t consumedTuples[nodes][numberOfConsumer/nodes] = {0};
+    size_t consumedBuffers[nodes][numberOfConsumer/nodes] = {0};
+    size_t consumerNoBufferFound[nodes][numberOfConsumer/nodes] = {0};
 
-    size_t readInputTuples[numberOfProducer] = {0};
+    size_t readInputTuples[nodes][numberOfProducer] = {0};
     infinity::memory::Buffer* finishBuffer = connections[0]->allocate_buffer(1);
 
 //    assert(numberOfProducer % 2 == 0);
@@ -935,8 +935,9 @@ int main(int argc, char *argv[])
              size_t endIdx = (inner_thread_id+1)*share;
              record* recs = conInfos[outer_thread_id]->records[inner_thread_id];
 
-            #pragma omp critical
-             std::cout
+             #pragma omp critical
+             {
+                 std::cout
                 << "OuterThread=" << outer_thread_id
                 << " InnerThread=" << inner_thread_id
                 << " SumThreadID=" << i
@@ -949,10 +950,10 @@ int main(int argc, char *argv[])
                 << " endidx=" << endIdx
                 << " share=" << share
                 << std::endl;
+             }
 
-
-             runProducerOneOnOne(connections[0], recs, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[i],
-                     &producedBuffers[i], &readInputTuples[i], &noFreeEntryFound[i], startIdx, endIdx,
+             runProducerOneOnOne(connections[0], recs, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[outer_thread_id][i],
+                     &producedBuffers[outer_thread_id][i], &readInputTuples[outer_thread_id][i], &noFreeEntryFound[outer_thread_id][i], startIdx, endIdx,
                      numberOfProducer, conInfos[outer_thread_id], outer_thread_id);
              assert(outer_thread_id == numa_node_of_cpu(sched_getcpu()));
           }
@@ -980,6 +981,7 @@ int main(int argc, char *argv[])
              }
 
              #pragma omp critical
+             {
              std::cout
                 << "OuterThread=" << outer_thread_id
                 << " InnerThread=" << inner_thread_id
@@ -992,11 +994,12 @@ int main(int argc, char *argv[])
                 << " endidx=" << endIdx
                 << " share=" << share
                 << std::endl;
-
+             }
              stringstream ss;
              cout << ss.str() << endl;
              runConsumerNew(hashTable, windowSizeInSeconds, campaingCnt, 0, numberOfProducer , bufferSizeInTups,
-                     &consumedTuples[i], &consumedBuffers[i], &consumerNoBufferFound[i], startIdx, endIdx, conInfos[outer_thread_id], outer_thread_id);
+                     &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
+                     endIdx, conInfos[outer_thread_id], outer_thread_id);
           }
        }
        cout << "finished, sending finish buffer " << getTimestamp() << endl;
@@ -1015,21 +1018,24 @@ int main(int argc, char *argv[])
     size_t sumConsumedBuffer = 0;
     size_t sumNoBuffer = 0;
 
-
-    for(size_t i = 0; i < numberOfProducer; i++)
+    for(size_t n = 0; n < nodes; n++)
     {
-        sumProducedTuples += producesTuples[i];
-        sumProducedBuffer += producedBuffers[i];
-        sumReadInTuples += readInputTuples[i];
-        sumNoFreeEntry += noFreeEntryFound[i];
+        for(size_t i = 0; i < numberOfProducer; i++)
+        {
+            sumProducedTuples += producesTuples[n][i];
+            sumProducedBuffer += producedBuffers[n][i];
+            sumReadInTuples += readInputTuples[n][i];
+            sumNoFreeEntry += noFreeEntryFound[n][i];
+        }
+
+        for(size_t i = 0; i < numberOfConsumer; i++)
+        {
+            sumConsumedTuples += consumedTuples[n][i];
+            sumConsumedBuffer += consumedBuffers[n][i];
+            sumNoBuffer += consumerNoBufferFound[n][i];
+        }
     }
 
-    for(size_t i = 0; i < numberOfConsumer; i++)
-    {
-        sumConsumedTuples += consumedTuples[i];
-        sumConsumedBuffer += consumedBuffers[i];
-        sumNoBuffer += consumerNoBufferFound[i];
-    }
 
 
     double elapsed_time = double(end - begin) / (1024 * 1024 * 1024);
