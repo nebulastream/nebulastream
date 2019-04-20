@@ -12,7 +12,7 @@ include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-march=native -mtune=native" COMPILER_SUPPORTS_MARCH_NATIVE)
 if(COMPILER_SUPPORTS_MARCH_NATIVE)
 	message("use mtune")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native -mavx")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native -mavx2")
 endif()
 
 OPTION (USE_OpenMP "Use OpenMP" ON)
