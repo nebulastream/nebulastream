@@ -976,8 +976,13 @@ int main(int argc, char *argv[])
              }
              #pragma omp critical
              std::cout
-                << "Thread " << outer_thread_id << ":" << inner_thread_id
-                << " core: " << sched_getcpu() << " start=" << startIdx << " endidx=" << endIdx << std::endl;
+                << "OuterThread=" << outer_thread_id
+                << " InnerThread=" << inner_thread_id
+                << " core: " << sched_getcpu()
+                << " start=" << startIdx
+                << " endidx=" << endIdx
+                << " share=" << share
+                << std::endl;
 
              stringstream ss;
              ss << "consumer " << i << " from=" << startIdx << " to " << endIdx << endl;
