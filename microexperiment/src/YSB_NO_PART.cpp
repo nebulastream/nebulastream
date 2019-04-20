@@ -386,10 +386,10 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
     Tuple tup;
     size_t current_window = 0;
 
-#ifdef DEBUG
-    cout << "Consumer: received buffer with first tuple campaingid=" << buffer[0].campaign_id
-                    << " timestamp=" << buffer[0].timeStamp << endl;
-#endif
+//#ifdef DEBUG
+//    cout << "Consumer: received buffer with first tuple campaingid=" << buffer[0].campaign_id
+//                    << " timestamp=" << buffer[0].timeStamp << endl;
+//#endif
     for(size_t i = 0; i < bufferSizeInTuples; i++)
     {
 //        cout << " tuple=" << i << " val="<< buffer[i].campaign_id  << endl;
@@ -413,11 +413,10 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
     }//end of for
     return consumed;
 #ifdef DEBUG
-    stringstream ss;
-    ss << "Thread=" << std::this_thread::get_id() << " consumed=" << consumed
+#pragma omp critical
+    cout << "Thread=" << std::this_thread::get_id() << " consumed=" << consumed
             << " windowSwitchCnt=" << windowSwitchCnt
             << " htreset=" << htReset;
-    cout << ss.str() << endl;
 #endif
 }
 
@@ -446,7 +445,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
 #ifdef DEBUG
-            cout << "Thread=" << outerThread << "/" << omp_get_thread_num() << " Received buffer at index=" << index << endl;
+            cout << "Thread=" << outerThread << "/" << omp_get_thread_num() << "/" << outerThread<< " Received buffer at index=" << index << endl;
 #endif
             consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers[index]->getData(), bufferSizeInTuples,
                     hashTable, windowSizeInSec, campaingCnt, consumerID);
