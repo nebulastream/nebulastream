@@ -167,6 +167,7 @@ struct ConnectionInfos
     TupleBuffer** sendBuffers;
     record** records;
     VerbsConnection* con;
+    std::atomic<size_t>** hashTable;
 };
 
 //consumer stuff
@@ -508,7 +509,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 //                << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
 }
 
-ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTups)
+ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTups, size_t campaingCnt)
 {
     ConnectionInfos* connectInfo = new ConnectionInfos();
 
@@ -587,6 +588,17 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
     int ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check, NULL, status, 0);
     ss << status[0] << ",";
     cout << ss.str() << endl;
+
+
+    connectInfo->hashTable = new std::atomic<size_t>*[2];
+    connectInfo->hashTable[0] = new std::atomic<size_t>[campaingCnt + 1];
+    for (size_t i = 0; i < campaingCnt + 1; i++)
+       std::atomic_init(&connectInfo->hashTable[0][i], std::size_t(0));
+
+    connectInfo->hashTable[1] = new std::atomic<size_t>[campaingCnt + 1];
+    for (size_t i = 0; i < campaingCnt + 1; i++)
+       std::atomic_init(&connectInfo->hashTable[1][i], std::size_t(0));
+
     return connectInfo;
 }
 
@@ -890,6 +902,8 @@ int main(int argc, char *argv[])
     auto cores = numa_num_configured_cpus();
     auto cores_per_node = cores / nodes;
     omp_set_nested(1);
+//    std::atomic<size_t>** hashTable = new std::atomic<size_t>*[4];
+
     ConnectionInfos** conInfos = new ConnectionInfos*[nodes];
     if(rank == 0)
     {
@@ -931,12 +945,14 @@ int main(int argc, char *argv[])
                 cout << "thread in critivcal = " << omp_get_thread_num() << endl;
                 if(numberOfConnections == 1)
                 {
-                    conInfos[omp_get_thread_num()] = setupRDMAConsumer(connections[0], bufferSizeInTups);
+                    conInfos[omp_get_thread_num()] = setupRDMAConsumer(connections[0], bufferSizeInTups, campaingCnt);
                     conInfos[omp_get_thread_num()]->con = connections[0];
+                    //create hash table
+
                 }
                 else if(numberOfConnections == 2)
                 {
-                    conInfos[omp_get_thread_num()] = setupRDMAConsumer(connections[omp_get_thread_num()], bufferSizeInTups);
+                    conInfos[omp_get_thread_num()] = setupRDMAConsumer(connections[omp_get_thread_num()], bufferSizeInTups, campaingCnt);
                     conInfos[omp_get_thread_num()]->con = connections[omp_get_thread_num()];
                 }
                 else
@@ -948,15 +964,7 @@ int main(int argc, char *argv[])
     //fix for the test
 
 
-    //create hash table
-    std::atomic<size_t>** hashTable = new std::atomic<size_t>*[2];
-    hashTable[0] = new std::atomic<size_t>[campaingCnt + 1];
-    for (size_t i = 0; i < campaingCnt + 1; i++)
-        std::atomic_init(&hashTable[0][i], std::size_t(0));
 
-    hashTable[1] = new std::atomic<size_t>[campaingCnt + 1];
-    for (size_t i = 0; i < campaingCnt + 1; i++)
-        std::atomic_init(&hashTable[1][i], std::size_t(0));
 
 
     size_t producesTuples[nodes][numberOfProducer/nodes] = {0};
@@ -1065,7 +1073,7 @@ int main(int argc, char *argv[])
                 << std::endl;
              }
 #endif
-             runConsumerNew(hashTable, windowSizeInSeconds, campaingCnt, 0, numberOfProducer , bufferSizeInTups,
+             runConsumerNew(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, 0, numberOfProducer , bufferSizeInTups,
                      &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
                      endIdx, conInfos[outer_thread_id], outer_thread_id);
           }
