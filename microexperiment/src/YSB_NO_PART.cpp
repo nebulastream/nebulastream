@@ -854,13 +854,13 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    size_t tupleProcCnt = bufferProcCnt * bufferSizeInTups * 3;
+//    size_t tupleProcCnt = bufferProcCnt * bufferSizeInTups * 3;
     MPIHelper::set_rank(rank);
 
-    assert(rank == 0 || rank == 1);
+//    assert(rank == 0 || rank == 1);
     std::cout << "Settings:"
             << " bufferProcCnt=" << bufferProcCnt
-            << " tupleProcCnt=" << tupleProcCnt
+//            << " tupleProcCnt=" << tupleProcCnt
             << " Rank=" << rank
             << " genCnt=" << NUMBER_OF_GEN_TUPLE
             << " bufferSizeInTups=" << bufferSizeInTups
@@ -876,25 +876,26 @@ int main(int argc, char *argv[])
 
 //    assert(numberOfConnections == 1);
     VerbsConnection** connections = new VerbsConnection*[numberOfConnections];
-    size_t target_rank = rank == 0 ? 1 : 0;
+    size_t target_rank = 99;
+    if(rank == 0) //cloud41
+        target_rank = 1;
+    else if(rank == 1)//cloud 42
+        target_rank = 1;
+    else if(rank == 2)//
+        target_rank = 3;
+    else if(rank == 3)
+        target_rank = 2;
+    else
+        assert(0);
+
+//    size_t target_rank = rank == 0 ? 1 : 0;
     SimpleInfoProvider info1(target_rank, "mlx5_0", 1, PORT1, ip1);//was 3
     connections[0] = new VerbsConnection(&info1);
     cout << "first connection established" << endl;
     if(numberOfConnections == 2)
     {
-        int32_t numberOfInstalledDevices = 0;
-        ibv_device **ibvDeviceList = ibv_get_device_list(&numberOfInstalledDevices);
-        for(size_t i = 0; i < numberOfInstalledDevices; i++)
-        {
-            cout << "name=" << ibvDeviceList[i]->dev_name
-                    << " dev_path=" << ibvDeviceList[i]->dev_path
-                    << " name=" << ibvDeviceList[i]->name
-                    << " ibdev_path=" << ibvDeviceList[i]->ibdev_path
-                    << endl;
-        }
-//        SimpleInfoProvider info2(target_rank, "mlx5_1", 1, PORT2, ip1);//
+        //mlx5_0 and mlx5_1 as well as mlx5_2 and mlx5_3 are on the same card
         SimpleInfoProvider info2(target_rank, "mlx5_2", 1, PORT2, ip1);//
-//        SimpleInfoProvider info2(target_rank, 2, 1, PORT2, ip2);//
 
         connections[1] = new VerbsConnection(&info2);
     }
@@ -906,7 +907,7 @@ int main(int argc, char *argv[])
 //    std::atomic<size_t>** hashTable = new std::atomic<size_t>*[4];
 
     ConnectionInfos** conInfos = new ConnectionInfos*[nodes];
-    if(rank == 0)
+    if(rank % 2 == 0)
     {
         cout << "starting " << nodes << " threads" << endl;
         #pragma omp parallel num_threads(nodes)
