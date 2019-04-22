@@ -731,7 +731,7 @@ int main(int argc, char *argv[])
     buffer_ready_sign.resize(NUM_SEND_BUFFERS);
 
     size_t target_rank = rank == 0 ? 1 : 0;
-    SimpleInfoProvider info(target_rank, 3, 1, PORT, ip);
+    SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT, ip);
     VerbsConnection* connection = new VerbsConnection(&info);
     if(rank == 0)
     {
