@@ -939,7 +939,7 @@ int main(int argc, char *argv[])
 {
     po::options_description desc("Options");
 
-    size_t windowSizeInSeconds = 0;
+    size_t windowSizeInSeconds = 1;
     size_t campaingCnt = 10000;
 
     exitProducer = 0;
