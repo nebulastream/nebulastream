@@ -525,6 +525,11 @@ ConnectionInfos* setupSharedHT(VerbsConnection* connection, size_t campaingCnt, 
 {
 
     sharedHT = new std::atomic<size_t>*[numberOfParticipant*2];
+
+    for(size_t i; i < numberOfParticipant * 2; i++)
+    {
+        sharedHT[i] = new std::atomic<size_t>[campaingCnt + 1];
+    }
     for(size_t i; i < numberOfParticipant * 2; i++)
     {
         for (size_t u = 0; u < campaingCnt + 1; u++)
