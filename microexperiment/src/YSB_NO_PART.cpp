@@ -436,8 +436,9 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         //sent to master both hts
                         cout << "sent to master node the ht no=" << oldWindow << " toID=" << consumerID << endl;
                         //copy data to den
-                        memcpy(sharedHT_buffer[consumerID], hashTable[oldWindow], sizeof(std::atomic<size_t>)* campaingCnt);
+                        memcpy(sharedHT_buffer[consumerID]->getData(), hashTable[oldWindow], sizeof(std::atomic<size_t>) * campaingCnt);
                         sharedHTConnection->write(sharedHT_buffer[consumerID], sharedHT_region_token[consumerID]);
+                        cout << "write ready entry " << endl;
                         ht_sign_ready[consumerID] = BUFFER_USED_SENDER_DONE;//ht_sign_ready
                         sharedHTConnection->write_blocking(ht_sign_ready_buffer, ready_token, consumerID, consumerID, 1);
                     }
@@ -445,7 +446,6 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                     {
                         //collect data
                         cout << "merging local stuff" << endl;
-
                         //copy local
                         for(size_t i = 0; i < campaingCnt; i++)
                         {
@@ -728,6 +728,8 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
        std::atomic_init(&connectInfo->hashTable[1][i], std::size_t(0));
 
     outputTable = new std::atomic<size_t>[campaingCnt];
+    for (size_t i = 0; i < campaingCnt ; i++)
+        std::atomic_init(&outputTable[i], std::size_t(0));
 
 //    htPtrs[outer_thread_id] = hashTable[0];
 //    htPtrs[outer_thread_id*2] = hashTable[1];
