@@ -587,6 +587,12 @@ void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numbe
     sharedHT_region_token = new RegionToken*[numberOfParticipant+1];
 
     sharedHT_buffer = new infinity::memory::Buffer*[numberOfParticipant];
+    for(size_t i = 0; i <= numberOfParticipant; i++)
+    {
+        sharedHT_buffer[i] = connection->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
+    }
+
+
     infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((numberOfParticipant+1) * sizeof(RegionToken));
 
     ht_sign_ready = new char[numberOfParticipant];
@@ -595,14 +601,12 @@ void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numbe
         ht_sign_ready[i] = BUFFER_READY_FLAG;
     }
 
-    if(rank == 1)//reveiver
+    if(rank == 1)//reveiver cloud40
     {
-
         for(size_t i = 0; i <= numberOfParticipant; i++)
            {
                if (i < numberOfParticipant)
                {
-                   sharedHT_buffer[i] = connection->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
                    sharedHT_region_token[i] = sharedHT_buffer[i]->createRegionToken();
                }
                else
@@ -617,7 +621,7 @@ void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numbe
         connection->send_blocking(tokenbuffer);
         cout << "setupRDMAConsumer finished" << endl;
     }
-    else//sender
+    else//sender cloud43 rank3
     {
         connection->post_and_receive_blocking(tokenbuffer);
         for(size_t i = 0; i < numberOfParticipant; i++)
