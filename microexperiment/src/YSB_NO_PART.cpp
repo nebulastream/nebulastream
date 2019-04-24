@@ -397,7 +397,7 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
 }
 
 size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
-        size_t campaingCnt, size_t rank, size_t consumerID) {
+        size_t campaingCnt, size_t consumerID, size_t rank) {
 //    return bufferSizeInTuples;
     size_t consumed = 0;
     size_t windowSwitchCnt = 0;
@@ -1209,7 +1209,7 @@ int main(int argc, char *argv[])
                 << std::endl;
              }
 #endif
-             runConsumerNew(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, inner_thread_id + (rank -1), numberOfProducer , bufferSizeInTups,
+             runConsumerNew(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, outer_thread_id, numberOfProducer , bufferSizeInTups,
                      &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
                      endIdx, conInfos[outer_thread_id], outer_thread_id, rank);
           }
