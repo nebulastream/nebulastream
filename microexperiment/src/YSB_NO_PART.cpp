@@ -584,7 +584,10 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numberOfParticipant, size_t rank)
 {
     sharedHT_region_token = new RegionToken*[numberOfParticipant+1];
-    sharedHT_buffer = new infinity::memory::Buffer*[numberOfParticipant];
+    void* pBuffer = numa_alloc_onnode(campaingCnt * sizeof(std::atomic<size_t>) * numberOfParticipant, 0);
+    sharedHT_buffer = (infinity::memory::Buffer**)pBuffer;
+//    connectInfo->sendBuffers = (infinity::memory::Buffer**) pBuffer;
+//    new infinity::memory::Buffer*[numberOfParticipant];
     infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((numberOfParticipant+1) * sizeof(RegionToken));
 
     ht_sign_ready = new char[numberOfParticipant];
