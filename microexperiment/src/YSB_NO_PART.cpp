@@ -48,6 +48,7 @@ using namespace std;
 #define NUMBER_OF_GEN_TUPLE 1000000
 //#define JOIN_WRITE_BUFFER_SIZE 1024*1024*8
 //#define DEBUG
+void printSingleHT(std::atomic<size_t>* hashTable, size_t campaingCnt);
 
 std::atomic<size_t> exitProducer;
 std::atomic<size_t> exitConsumer;
@@ -428,6 +429,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 
                     atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
                     htReset++;
+                    cout << "windowing with rank=" << rank << " consumerID=" << consumerID << endl;
                     size_t oldWindow = current_window == 0 ? 1 : 0;
                     if(rank == 3)
                     {
@@ -442,8 +444,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                     else if(rank == 1)//this one merges
                     {
                         //collect data
-                        cout << "wait for master node" << endl;
-                        size_t expeced_HTs = 2;
+                        cout << "merging local stuff" << endl;
 
                         //copy local
                         for(size_t i = 0; i < campaingCnt; i++)
@@ -455,7 +456,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                     cout << "process rest"<< endl;
                     size_t expecedHTs = 2;
                     size_t count = 0;
-                    if(consumerID == 0)
+                    if(consumerID == 0 && rank == 1)
                     {
                         while(count < expecedHTs)
                         {
@@ -473,6 +474,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         {
                             ht_sign_ready[consumerID] = BUFFER_READY_FLAG;
                         }
+                        printSingleHT(outputTable, campaingCnt);
                     }
 //                std::fill(hashTable[current_window], hashTable[current_window] + campaingCnt, 0);
             }
@@ -869,6 +871,15 @@ record* generateTuplesOneArray(size_t num_Producer, size_t campaingCnt)
     return recs;
 }
 
+
+void printSingleHT(std::atomic<size_t>* hashTable, size_t campaingCnt)
+{
+    for (size_t i = 0; i < campaingCnt + 1; i++)
+    {
+        if(hashTable[i] != 0)
+            cout << "i=" << i << " cnt=" << hashTable[i] << endl;
+    }
+}
 void printHT(std::atomic<size_t>** hashTable, size_t campaingCnt)
 {
     ofstream myfile;
