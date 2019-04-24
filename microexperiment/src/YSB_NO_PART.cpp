@@ -984,6 +984,7 @@ int main(int argc, char *argv[])
             cout << "thread out of critical = " << omp_get_thread_num() << endl;
             if(numberOfNodes == 4)
             {
+                sleep(2);
                 if(rank == 1 || rank == 3)
                 {
                     cout << "establish connection for shared ht" << endl;
