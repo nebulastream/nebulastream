@@ -553,6 +553,8 @@ ConnectionInfos* setupSharedHT(VerbsConnection* connection, size_t campaingCnt, 
         connection->post_and_receive_blocking(tokenbuffer);
         RegionToken* sharedHT_token = new RegionToken();
 
+//        connectInfo->sign_buffer = connection->register_buffer(connectInfo->buffer_ready_sign, NUM_SEND_BUFFERS);
+
         cout << "received token" << endl;
         memcpy(sharedHT_token, (RegionToken*)tokenbuffer->getData(), sizeof(RegionToken));
         cout << "recv region getSizeInBytes=" << sharedHT_token->getSizeInBytes() << " getAddress=" << sharedHT_token->getAddress()
