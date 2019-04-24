@@ -613,7 +613,6 @@ void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numbe
                }
                else
                {
-
                    sharedHT_region_token[i] = ht_sign_ready_buffer->createRegionToken();
                }
 
@@ -639,8 +638,8 @@ void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numbe
             {
                 ready_token = new RegionToken();
                 memcpy(ready_token, (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
-                cout << "sign token region getSizeInBytes=" << sharedHT_region_token[i]->getSizeInBytes() << " getAddress=" << sharedHT_region_token[i]->getAddress()
-                                          << " getLocalKey=" << sharedHT_region_token[i]->getLocalKey() << " getRemoteKey=" << sharedHT_region_token[i]->getRemoteKey() << endl;
+                cout << "sign token region getSizeInBytes=" << ready_token->getSizeInBytes() << " getAddress=" << ready_token->getAddress()
+                                          << " getLocalKey=" << ready_token->getLocalKey() << " getRemoteKey=" << ready_token->getRemoteKey() << endl;
             }
         }
         cout << "received token" << endl;
