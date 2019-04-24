@@ -442,8 +442,10 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 
                         cout << "sent to master node the ht no=" << oldWindow << " toID=" << consumerID << endl;
                         sharedHTConnection->write(sharedHT_buffer[consumerID], sharedHT_region_token[consumerID]);
-                        cout << "write ready entry " << endl;
+
+                        cout << "set ready flag" << endl;
                         ht_sign_ready[consumerID] = BUFFER_USED_SENDER_DONE;//ht_sign_ready
+                        cout << "write ready entry " << endl;
                         sharedHTConnection->write_blocking(ht_sign_ready_buffer, ready_token, consumerID, consumerID, 1);
                     }
                     else if(rank == 1)//this one merges
@@ -591,7 +593,7 @@ void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numbe
     {
         sharedHT_buffer[i] = connection->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
     }
-
+    ht_sign_ready_buffer = connection->register_buffer(ht_sign_ready, numberOfParticipant);
 
     infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((numberOfParticipant+1) * sizeof(RegionToken));
 
@@ -611,7 +613,7 @@ void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numbe
                }
                else
                {
-                   ht_sign_ready_buffer = connection->register_buffer(ht_sign_ready, numberOfParticipant);
+
                    sharedHT_region_token[i] = ht_sign_ready_buffer->createRegionToken();
                }
 
