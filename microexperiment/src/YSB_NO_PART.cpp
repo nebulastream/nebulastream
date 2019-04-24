@@ -626,7 +626,7 @@ void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numbe
     else//sender cloud43 rank3
     {
         connection->post_and_receive_blocking(tokenbuffer);
-        for(size_t i = 0; i < numberOfParticipant; i++)
+        for(size_t i = 0; i <= numberOfParticipant; i++)
         {
             if (i < numberOfParticipant)
             {
