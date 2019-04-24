@@ -434,9 +434,12 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                     if(rank == 3)
                     {
                         //sent to master both hts
-                        cout << "sent to master node the ht no=" << oldWindow << " toID=" << consumerID << endl;
+
                         //copy data to den
+                        cout << "memcp dest=" << sharedHT_buffer[consumerID]->getData() << "src=" << hashTable[oldWindow] << " size=" << sizeof(std::atomic<size_t>) * campaingCnt << endl;
                         memcpy(sharedHT_buffer[consumerID]->getData(), hashTable[oldWindow], sizeof(std::atomic<size_t>) * campaingCnt);
+
+                        cout << "sent to master node the ht no=" << oldWindow << " toID=" << consumerID << endl;
                         sharedHTConnection->write(sharedHT_buffer[consumerID], sharedHT_region_token[consumerID]);
                         cout << "write ready entry " << endl;
                         ht_sign_ready[consumerID] = BUFFER_USED_SENDER_DONE;//ht_sign_ready
