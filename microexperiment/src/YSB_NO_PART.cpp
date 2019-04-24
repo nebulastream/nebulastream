@@ -436,7 +436,8 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         //sent to master both hts
 
                         //copy data to den
-                        cout << "memcp dest=" << sharedHT_buffer[consumerID]->getData() << "src=" << hashTable[oldWindow] << " size=" << sizeof(std::atomic<size_t>) * campaingCnt << endl;
+                        cout << "memcp dest=" << sharedHT_buffer[consumerID]->getData() << "src=" << hashTable[oldWindow]
+                           << " size=" << sizeof(std::atomic<size_t>) * campaingCnt << " capa=" << sharedHT_buffer[consumerID]->getSizeInBytes() << endl;
                         memcpy(sharedHT_buffer[consumerID]->getData(), hashTable[oldWindow], sizeof(std::atomic<size_t>) * campaingCnt);
 
                         cout << "sent to master node the ht no=" << oldWindow << " toID=" << consumerID << endl;
@@ -584,10 +585,8 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numberOfParticipant, size_t rank)
 {
     sharedHT_region_token = new RegionToken*[numberOfParticipant+1];
-    void* pBuffer = numa_alloc_onnode(campaingCnt * sizeof(std::atomic<size_t>) * numberOfParticipant, 0);
-    sharedHT_buffer = (infinity::memory::Buffer**)pBuffer;
-//    connectInfo->sendBuffers = (infinity::memory::Buffer**) pBuffer;
-//    new infinity::memory::Buffer*[numberOfParticipant];
+
+    sharedHT_buffer = new infinity::memory::Buffer*[numberOfParticipant];
     infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((numberOfParticipant+1) * sizeof(RegionToken));
 
     ht_sign_ready = new char[numberOfParticipant];
