@@ -521,7 +521,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 //                << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
 }
 
-ConnectionInfos* setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numberOfParticipant)
+ConnectionInfos* setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numberOfParticipant, size_t rank)
 {
 
     sharedHT = new std::atomic<size_t>*[numberOfParticipant*2];
@@ -537,12 +537,28 @@ ConnectionInfos* setupSharedHT(VerbsConnection* connection, size_t campaingCnt, 
     }
 
     infinity::memory::Buffer* sharedHT_buffer = connection->register_buffer(sharedHT, numberOfParticipant*2* sizeof(std::atomic<size_t>));
-    RegionToken* sharedHT_token = sharedHT_buffer->createRegionToken();
-    infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer(sizeof(RegionToken));
-    memcpy((RegionToken*)tokenbuffer->getData(), sharedHT_token, sizeof(RegionToken));
 
-    connection->send_blocking(tokenbuffer);
-    cout << "setupRDMAConsumer finished" << endl;
+
+    if(rank == 1)
+    {
+        RegionToken* sharedHT_token = sharedHT_buffer->createRegionToken();
+        infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer(sizeof(RegionToken));
+        memcpy((RegionToken*)tokenbuffer->getData(), sharedHT_token, sizeof(RegionToken));
+        connection->send_blocking(tokenbuffer);
+        cout << "setupRDMAConsumer finished" << endl;
+    }
+    else
+    {
+        infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer(sizeof(RegionToken));
+        connection->post_and_receive_blocking(tokenbuffer);
+        RegionToken* sharedHT_token = new RegionToken();
+
+        cout << "received token" << endl;
+        memcpy(sharedHT_token, (RegionToken*)tokenbuffer->getData(), sizeof(RegionToken));
+        cout << "recv region getSizeInBytes=" << sharedHT_token->getSizeInBytes() << " getAddress=" << sharedHT_token->getAddress()
+                               << " getLocalKey=" << sharedHT_token->getLocalKey() << " getRemoteKey=" << sharedHT_token->getRemoteKey() << endl;
+    }
+
 }
 
 
@@ -998,7 +1014,7 @@ int main(int argc, char *argv[])
                 //host cloud 42 rank 2, client cloud43  rank 4 mlx5_3
                 SimpleInfoProvider info(targetR, "mlx5_1", 1, PORT3, "192.168.5.10");
                 VerbsConnection* connection = new VerbsConnection(&info);
-                setupSharedHT(connection, campaingCnt, 2);
+                setupSharedHT(connection, campaingCnt, 2, rank);
             }
 
         }
