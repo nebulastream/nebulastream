@@ -982,19 +982,19 @@ int main(int argc, char *argv[])
                     assert(0);
             }//end of critical
             cout << "thread out of critical = " << omp_get_thread_num() << endl;
-            if(numberOfNodes == 4)
+        }
+        if(numberOfNodes == 4)
+        {
+            sleep(2);
+            if(rank == 1 || rank == 3)
             {
-                sleep(2);
-                if(rank == 1 || rank == 3)
-                {
-                    cout << "establish connection for shared ht" << endl;
-                    //host cloud 42 rank 2, client cloud43  rank 4 mlx5_3
-                    SimpleInfoProvider info(target_rank, "mlx5_3", 1, PORT3, "192.168.5.10");
-                    VerbsConnection* connection = new VerbsConnection(&info);
-                    setupSharedHT(connection, campaingCnt, 2);
-                }
-
+                cout << "establish connection for shared ht" << endl;
+                //host cloud 42 rank 2, client cloud43  rank 4 mlx5_3
+                SimpleInfoProvider info(target_rank, "mlx5_3", 1, PORT3, "192.168.5.10");
+                VerbsConnection* connection = new VerbsConnection(&info);
+                setupSharedHT(connection, campaingCnt, 2);
             }
+
         }
     }//end of else
     size_t producesTuples[nodes][numberOfProducer/nodes] = {0};
