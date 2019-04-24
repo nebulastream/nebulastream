@@ -988,9 +988,10 @@ int main(int argc, char *argv[])
             sleep(2);
             if(rank == 1 || rank == 3)
             {
-                cout << "establish connection for shared ht rank=" << rank << " targetRank=" << target_rank << endl;
+                size_t targetR = rank == 1 ? 3 : 1;
+                cout << "establish connection for shared ht rank=" << rank << " targetRank=" << targetR << endl;
                 //host cloud 42 rank 2, client cloud43  rank 4 mlx5_3
-                SimpleInfoProvider info(target_rank, "mlx5_1", 1, PORT3, "192.168.5.10");
+                SimpleInfoProvider info(targetR, "mlx5_1", 1, PORT3, "192.168.5.10");
                 VerbsConnection* connection = new VerbsConnection(&info);
                 setupSharedHT(connection, campaingCnt, 2);
             }
