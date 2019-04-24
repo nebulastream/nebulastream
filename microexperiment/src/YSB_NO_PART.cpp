@@ -35,6 +35,8 @@ using namespace std;
 
 #define PORT1 55355
 #define PORT2 55356
+#define PORT3 55357
+
 //#define OLCONSUMERVERSION
 //#define BUFFER_COUNT 10
 #define BUFFER_USED_SENDER_DONE 127
@@ -48,7 +50,7 @@ using namespace std;
 std::atomic<size_t> exitProducer;
 std::atomic<size_t> exitConsumer;
 size_t NUM_SEND_BUFFERS;
-
+std::atomic<size_t>** sharedHT;
 struct __attribute__((packed)) record {
     uint8_t user_id[16];
     uint8_t page_id[16];
@@ -384,7 +386,7 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
 }
 
 size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
-        size_t campaingCnt, size_t consumerID) {
+        size_t campaingCnt, size_t consumerID, size_t rank) {
 //    return bufferSizeInTuples;
     size_t consumed = 0;
     size_t windowSwitchCnt = 0;
@@ -405,9 +407,19 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
             //TODO this is not corret atm
             current_window = current_window == 0 ? 1 : 0;
             windowSwitchCnt++;
-            if (hashTable[current_window][campaingCnt] != timeStamp) {
+            if (hashTable[current_window][campaingCnt] != timeStamp) {//TODO: replace this with compare and swap
                 htReset++;
                 atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
+                if(rank == 3)
+                {
+                    cout << "sent to master node" << endl;
+                    //sent to master
+                }
+                else if(rank == 1)
+                {
+                    //collect data
+                    cout << "wait for master node" << endl;
+                }
 //                std::fill(hashTable[current_window], hashTable[current_window] + campaingCnt, 0);
             }
             lastTimeStamp = timeStamp;
@@ -430,7 +442,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 
 void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples, size_t* consumedTuples, size_t* consumedBuffers, size_t* consumerNoBufferFound,
-        size_t startIdx, size_t endIdx, ConnectionInfos* cInfos, size_t outerThread)
+        size_t startIdx, size_t endIdx, ConnectionInfos* cInfos, size_t outerThread, size_t rank)
 {
     size_t total_received_tuples = 0;
     size_t total_received_buffers = 0;
@@ -456,7 +468,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             cout << "Thread=" << outerThread << "/" << omp_get_thread_num() << "/" << outerThread<< " Received buffer at index=" << index << endl;
 #endif
             consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers[index]->getData(), bufferSizeInTuples,
-                    hashTable, windowSizeInSec, campaingCnt, consumerID);
+                    hashTable, windowSizeInSec, campaingCnt, consumerID, rank);
 
             cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
 
@@ -508,6 +520,26 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 //    cout << "Thread=" << omp_get_thread_num() << " Done sending! Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
 //                << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
 }
+
+ConnectionInfos* setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numberOfParticipant)
+{
+
+    sharedHT = new std::atomic<size_t>*[numberOfParticipant*2];
+    for(size_t i; i < numberOfParticipant * 2; i++)
+    {
+        for (size_t u = 0; u < campaingCnt + 1; u++)
+           std::atomic_init(&sharedHT[i][u], std::size_t(0));
+    }
+
+    infinity::memory::Buffer* sharedHT_buffer = connection->register_buffer(sharedHT, numberOfParticipant*2* sizeof(std::atomic<size_t>));
+    RegionToken* sharedHT_token = sharedHT_buffer->createRegionToken();
+    infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer(sizeof(RegionToken));
+    memcpy((RegionToken*)tokenbuffer->getData(), sharedHT_token, sizeof(RegionToken));
+
+    connection->send_blocking(tokenbuffer);
+    cout << "setupRDMAConsumer finished" << endl;
+}
+
 
 ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTups, size_t campaingCnt)
 {
@@ -807,11 +839,6 @@ size_t getNumaNodeFromPtr(void* ptr)
 namespace po = boost::program_options;
 int main(int argc, char *argv[])
 {
-//    numa_run_on_node(static_cast<int>(1));
-//    numa_set_preferred(1);
-
-
-    std::cout << "done" << std::endl;
     po::options_description desc("Options");
 
     size_t windowSizeInSeconds = 2;
@@ -827,8 +854,8 @@ int main(int argc, char *argv[])
     size_t bufferSizeInTups = 0;
     size_t numberOfConnections = 1;
     NUM_SEND_BUFFERS = 0;
-    string ip1 = "";
-    string ip2 = "";
+    size_t numberOfNodes = 2;
+    string ip = "";
 
 
     desc.add_options()
@@ -840,8 +867,8 @@ int main(int argc, char *argv[])
         ("bufferSizeInTups", po::value<size_t>(&bufferSizeInTups)->default_value(bufferSizeInTups), "bufferSizeInTups")
         ("sendBuffers", po::value<size_t>(&NUM_SEND_BUFFERS)->default_value(NUM_SEND_BUFFERS), "sendBuffers")
         ("numberOfConnections", po::value<size_t>(&numberOfConnections)->default_value(numberOfConnections), "numberOfConnections")
-        ("ip1", po::value<string>(&ip1)->default_value(ip1), "ip1")
-        ("ip2", po::value<string>(&ip2)->default_value(ip2), "ip2")
+        ("numberOfNodes", po::value<size_t>(&numberOfNodes)->default_value(numberOfNodes), "numberOfConnections")
+        ("ip", po::value<string>(&ip)->default_value(ip), "ip")
         ;
 
     po::variables_map vm;
@@ -849,7 +876,7 @@ int main(int argc, char *argv[])
     po::notify(vm);
 
     if (vm.count("help")) {
-        std::cout << "Basic Command Ligeneratene Parameter " << std::endl
+        std::cout << "Basic Command Line Parameter " << std::endl
                   << desc << std::endl;
         return 0;
     }
@@ -869,8 +896,7 @@ int main(int argc, char *argv[])
             << " numberOfProducer=" << numberOfProducer
             << " numberOfConsumer=" << numberOfConsumer
             << " numberOfConnections=" << numberOfConnections
-            << " ip1=" << ip1
-            << " ip2=" << ip2
+            << " ip=" << ip
             << endl;
 
 
@@ -889,32 +915,29 @@ int main(int argc, char *argv[])
         assert(0);
 
 //    size_t target_rank = rank == 0 ? 1 : 0;
-    SimpleInfoProvider info1(target_rank, "mlx5_0", 1, PORT1, ip1);//was 3
+    SimpleInfoProvider info1(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
     connections[0] = new VerbsConnection(&info1);
     cout << "first connection established" << endl;
     if(numberOfConnections == 2)
     {
-        //mlx5_0 and mlx5_1 as well as mlx5_2 and mlx5_3 are on the same card
-        SimpleInfoProvider info2(target_rank, "mlx5_2", 1, PORT2, ip1);//
+        SimpleInfoProvider info2(target_rank, "mlx5_2", 1, PORT2, ip);//
 
         connections[1] = new VerbsConnection(&info2);
     }
     auto nodes = numa_num_configured_nodes();
-//    nodes = 1;
-    auto cores = numa_num_configured_cpus();
-    auto cores_per_node = cores / nodes;
+//    auto cores = numa_num_configured_cpus();
+//    auto cores_per_node = cores / nodes;
     omp_set_nested(1);
-//    std::atomic<size_t>** hashTable = new std::atomic<size_t>*[4];
 
     ConnectionInfos** conInfos = new ConnectionInfos*[nodes];
-    if(rank == 0)
+    if(rank % 2 == 0)//producer
     {
         cout << "starting " << nodes << " threads" << endl;
         #pragma omp parallel num_threads(nodes)
         {
             #pragma omp critical
             {
-                cout << "thread in critivcal = " << omp_get_thread_num() << endl;
+                cout << "thread in critical = " << omp_get_thread_num() << endl;
                 if(numberOfConnections == 1)
                 {
                     conInfos[omp_get_thread_num()] = setupRDMAProducer(connections[0], bufferSizeInTups);
@@ -934,23 +957,21 @@ int main(int argc, char *argv[])
                     conInfos[omp_get_thread_num()]->records[i] = generateTuplesOneArray(numberOfProducer, campaingCnt);
                 }
             }
-            cout << "thread out of critivcal = " << omp_get_thread_num() << endl;
+            cout << "thread out of critical = " << omp_get_thread_num() << endl;
         }//end of pragma
     }
-    else
+    else//consumer
     {
         cout << "starting " << nodes << " threads" << endl;
         #pragma omp parallel num_threads(nodes)
         {
             #pragma omp critical
             {
-                cout << "thread in critivcal = " << omp_get_thread_num() << endl;
+                cout << "thread in critical = " << omp_get_thread_num() << endl;
                 if(numberOfConnections == 1)
                 {
                     conInfos[omp_get_thread_num()] = setupRDMAConsumer(connections[0], bufferSizeInTups, campaingCnt);
                     conInfos[omp_get_thread_num()]->con = connections[0];
-                    //create hash table
-
                 }
                 else if(numberOfConnections == 2)
                 {
@@ -959,16 +980,22 @@ int main(int argc, char *argv[])
                 }
                 else
                     assert(0);
+            }//end of critical
+            cout << "thread out of critical = " << omp_get_thread_num() << endl;
+            if(numberOfNodes == 4)
+            {
+                if(rank == 1 || rank == 3)
+                {
+                    cout << "establish connection for shared ht" << endl;
+                    //host cloud 42 rank 2, client cloud43  rank 4 mlx5_3
+                    SimpleInfoProvider info(target_rank, "mlx5_3", 1, PORT3, "192.168.5.10");
+                    VerbsConnection* connection = new VerbsConnection(&info);
+                    setupSharedHT(connection, campaingCnt, 2);
+                }
+
             }
-            cout << "thread out of critivcal = " << omp_get_thread_num() << endl;
         }
     }//end of else
-    //fix for the test
-
-
-
-
-
     size_t producesTuples[nodes][numberOfProducer/nodes] = {0};
     size_t producedBuffers[nodes][numberOfProducer/nodes] = {0};
     size_t noFreeEntryFound[nodes][numberOfProducer/nodes] = {0};
@@ -979,12 +1006,8 @@ int main(int argc, char *argv[])
 
     infinity::memory::Buffer* finishBuffer = connections[0]->allocate_buffer(1);
 
-//    assert(numberOfProducer % 2 == 0);
-//    assert(numberOfProducer <= cores_per_node);
-
     Timestamp begin = getTimestamp();
-//#define OLCONSUMERVERSION
-    if(rank == 0)
+    if(rank % 2 == 0)
     {
     #pragma omp parallel num_threads(nodes)//nodes
        {
@@ -1077,7 +1100,7 @@ int main(int argc, char *argv[])
 #endif
              runConsumerNew(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, 0, numberOfProducer , bufferSizeInTups,
                      &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
-                     endIdx, conInfos[outer_thread_id], outer_thread_id);
+                     endIdx, conInfos[outer_thread_id], outer_thread_id, rank);
           }
        }
        cout << "finished, sending finish buffer " << getTimestamp() << endl;
