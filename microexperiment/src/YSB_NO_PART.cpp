@@ -593,7 +593,6 @@ void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numbe
     {
         sharedHT_buffer[i] = connection->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
     }
-    ht_sign_ready_buffer = connection->register_buffer(ht_sign_ready, numberOfParticipant);
 
     infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((numberOfParticipant+1) * sizeof(RegionToken));
 
@@ -602,6 +601,7 @@ void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numbe
     {
         ht_sign_ready[i] = BUFFER_READY_FLAG;
     }
+    ht_sign_ready_buffer = connection->register_buffer(ht_sign_ready, numberOfParticipant);
 
     if(rank == 1)//reveiver cloud40
     {
