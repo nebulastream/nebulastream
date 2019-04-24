@@ -52,11 +52,14 @@ using namespace std;
 std::atomic<size_t> exitProducer;
 std::atomic<size_t> exitConsumer;
 size_t NUM_SEND_BUFFERS;
-std::atomic<size_t>** sharedHT;
+//std::atomic<size_t>** htPtrs;
 VerbsConnection* sharedHTConnection;
 infinity::memory::RegionToken** sharedHT_region_token;
 infinity::memory::Buffer** sharedHT_buffer;
-
+char* ht_sign_ready;
+infinity::memory::Buffer* ht_sign_ready_buffer;
+RegionToken* ready_token;
+std::atomic<size_t>* outputTable;
 
 struct __attribute__((packed)) record {
     uint8_t user_id[16];
@@ -393,7 +396,7 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
 }
 
 size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
-        size_t campaingCnt, size_t consumerID, size_t rank) {
+        size_t campaingCnt, size_t rank, size_t consumerID) {
 //    return bufferSizeInTuples;
     size_t consumed = 0;
     size_t windowSwitchCnt = 0;
@@ -429,19 +432,47 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                     if(rank == 3)
                     {
                         //sent to master both hts
-                        cout << "sent to master node the ht no=" << oldWindow << endl;
+                        cout << "sent to master node the ht no=" << oldWindow << " toID=" << consumerID << endl;
                         //copy data to den
-
-//                        sharedHTConnection->write(cInfos->sendBuffers[receive_buffer_index]->send_buffer, cInfos->region_tokens[receive_buffer_index],
-//                                                cInfos->sendBuffers[receive_buffer_index]->requestToken);
-
+                        memcpy(sharedHT_buffer[consumerID], hashTable[oldWindow], sizeof(std::atomic<size_t>)* campaingCnt);
+                        sharedHTConnection->write(sharedHT_buffer[consumerID], sharedHT_region_token[consumerID]);
+                        ht_sign_ready[consumerID] = BUFFER_USED_SENDER_DONE;//ht_sign_ready
+                        sharedHTConnection->write_blocking(ht_sign_ready_buffer, ready_token, consumerID, consumerID, 1);
                     }
-                    else if(rank == 1)
+                    else if(rank == 1)//this one merges
                     {
                         //collect data
                         cout << "wait for master node" << endl;
-                        //copy own hts
+                        size_t expeced_HTs = 2;
 
+                        //copy local
+                        for(size_t i = 0; i < campaingCnt; i++)
+                        {
+                            outputTable[i] += hashTable[oldWindow][i];
+                        }
+                    }
+
+                    cout << "process rest"<< endl;
+                    size_t expecedHTs = 2;
+                    size_t count = 0;
+                    if(consumerID == 0)
+                    {
+                        while(count < expecedHTs)
+                        {
+                            if(ht_sign_ready[consumerID] == BUFFER_USED_SENDER_DONE)
+                            {
+                                std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[consumerID]->getData();
+                                for(size_t i = 0; i < campaingCnt; i++)
+                                {
+                                    outputTable[i] += tempTable[i];
+                                }
+                                count++;
+                            }
+                        }
+                        for(size_t u = 0; u < expecedHTs; u++)
+                        {
+                            ht_sign_ready[consumerID] = BUFFER_READY_FLAG;
+                        }
                     }
 //                std::fill(hashTable[current_window], hashTable[current_window] + campaingCnt, 0);
             }
@@ -464,7 +495,8 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 }
 
 void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
-        size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples, size_t* consumedTuples, size_t* consumedBuffers, size_t* consumerNoBufferFound,
+        size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples, size_t* consumedTuples, size_t* consumedBuffers,
+        size_t* consumerNoBufferFound,
         size_t startIdx, size_t endIdx, ConnectionInfos* cInfos, size_t outerThread, size_t rank)
 {
     size_t total_received_tuples = 0;
@@ -546,34 +578,32 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
 void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numberOfParticipant, size_t rank)
 {
+    sharedHT_region_token = new RegionToken*[numberOfParticipant+1];
+    sharedHT_buffer = new infinity::memory::Buffer*[numberOfParticipant];
+    infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((numberOfParticipant+1) * sizeof(RegionToken));
 
-    sharedHT = new std::atomic<size_t>*[numberOfParticipant*2];
-
-    for(size_t i; i < numberOfParticipant * 2; i++)
+    ht_sign_ready = new char[numberOfParticipant];
+    for(size_t i = 0; i < numberOfParticipant; i++)
     {
-        sharedHT[i] = new std::atomic<size_t>[campaingCnt + 1];
+        ht_sign_ready[i] = BUFFER_READY_FLAG;
     }
-    for(size_t i; i < numberOfParticipant * 2; i++)
-    {
-        for (size_t u = 0; u < campaingCnt + 1; u++)
-           std::atomic_init(&sharedHT[i][u], std::size_t(0));
-    }
-
-    sharedHT_region_token = new RegionToken*[numberOfParticipant*2];
-    sharedHT_buffer = new infinity::memory::Buffer*[numberOfParticipant*2];
-    infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer(numberOfParticipant * 2 * sizeof(RegionToken));
 
     if(rank == 1)//reveiver
     {
 
-        for(size_t i = 0; i < numberOfParticipant*2; i++)
+        for(size_t i = 0; i <= numberOfParticipant; i++)
            {
-               if (i < NUM_SEND_BUFFERS)
+               if (i < numberOfParticipant)
                {
                    sharedHT_buffer[i] = connection->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
                    sharedHT_region_token[i] = sharedHT_buffer[i]->createRegionToken();
-
                }
+               else
+               {
+                   ht_sign_ready_buffer = connection->register_buffer(ht_sign_ready, numberOfParticipant);
+                   sharedHT_region_token[i] = ht_sign_ready_buffer->createRegionToken();
+               }
+
                memcpy((RegionToken*)tokenbuffer->getData() + i, sharedHT_region_token[i], sizeof(RegionToken));
            }
 
@@ -583,17 +613,25 @@ void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numbe
     else//sender
     {
         connection->post_and_receive_blocking(tokenbuffer);
-        for(size_t i = 0; i < numberOfParticipant*2; i++)
+        for(size_t i = 0; i < numberOfParticipant; i++)
         {
-            sharedHT_region_token[i] = new RegionToken();
-            memcpy(sharedHT_region_token[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
-            cout << "recv region getSizeInBytes=" << sharedHT_region_token[i]->getSizeInBytes() << " getAddress=" << sharedHT_region_token[i]->getAddress()
-                                           << " getLocalKey=" << sharedHT_region_token[i]->getLocalKey() << " getRemoteKey=" << sharedHT_region_token[i]->getRemoteKey() << endl;
+            if (i < numberOfParticipant)
+            {
+                sharedHT_region_token[i] = new RegionToken();
+                memcpy(sharedHT_region_token[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
+                cout << "recv region getSizeInBytes=" << sharedHT_region_token[i]->getSizeInBytes() << " getAddress=" << sharedHT_region_token[i]->getAddress()
+                                                           << " getLocalKey=" << sharedHT_region_token[i]->getLocalKey() << " getRemoteKey=" << sharedHT_region_token[i]->getRemoteKey() << endl;
+            }
+            else
+            {
+                ready_token = new RegionToken();
+                memcpy(ready_token, (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
+                cout << "sign token region getSizeInBytes=" << sharedHT_region_token[i]->getSizeInBytes() << " getAddress=" << sharedHT_region_token[i]->getAddress()
+                                          << " getLocalKey=" << sharedHT_region_token[i]->getLocalKey() << " getRemoteKey=" << sharedHT_region_token[i]->getRemoteKey() << endl;
+            }
         }
         cout << "received token" << endl;
-
     }
-
 }
 
 
@@ -687,6 +725,10 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
     for (size_t i = 0; i < campaingCnt + 1; i++)
        std::atomic_init(&connectInfo->hashTable[1][i], std::size_t(0));
 
+    outputTable = new std::atomic<size_t>[campaingCnt];
+
+//    htPtrs[outer_thread_id] = hashTable[0];
+//    htPtrs[outer_thread_id*2] = hashTable[1];
     return connectInfo;
 }
 
@@ -984,7 +1026,7 @@ int main(int argc, char *argv[])
 //    auto cores = numa_num_configured_cpus();
 //    auto cores_per_node = cores / nodes;
     omp_set_nested(1);
-
+//    htPtrs = new std::atomic<size_t>*[4];
     ConnectionInfos** conInfos = new ConnectionInfos*[nodes];
     if(rank % 2 == 0)//producer
     {
@@ -1156,7 +1198,7 @@ int main(int argc, char *argv[])
                 << std::endl;
              }
 #endif
-             runConsumerNew(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, 0, numberOfProducer , bufferSizeInTups,
+             runConsumerNew(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, inner_thread_id + (rank -1), numberOfProducer , bufferSizeInTups,
                      &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
                      endIdx, conInfos[outer_thread_id], outer_thread_id, rank);
           }
