@@ -428,8 +428,8 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 //            }
 //            size_t next = lastTimeStamp + windowSizeInSec;
 //            if(bookKeeper[current_window].compare_and_swap(nextTS, lastTimeStamp) == nextTS)
-            if (hashTable[current_window][campaingCnt] != timeStamp)//TODO: replace this with compare and swap
 #pragma omp single
+            if (hashTable[current_window][campaingCnt] != timeStamp)//TODO: replace this with compare and swap
             {
                     atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
                     htReset++;
