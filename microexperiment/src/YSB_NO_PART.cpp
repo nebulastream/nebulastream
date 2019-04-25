@@ -487,7 +487,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 //                                   cout << "merge i=" << i << " old=" << outputTable[i] << " inc =" << tempTable[i] << endl;
                             outputTable[i] += tempTable[i];
                         }
-
+                        ht_sign_ready[consumerID] = BUFFER_READY_FLAG;
 //                        while(true)
 //                        {
 //                           if(ht_sign_ready[consumerID] == BUFFER_USED_FLAG)
