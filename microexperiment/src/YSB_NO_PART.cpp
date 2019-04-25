@@ -582,7 +582,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     {
 //        cout << "checking i=" << index << endl;
         if (cInfos->buffer_ready_sign[index] == BUFFER_USED_FLAG) {
-            cout << "Check Iter -- Received buffer at index=" << index << endl;
+//            cout << "Check Iter -- Received buffer at index=" << index << endl;
 
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
