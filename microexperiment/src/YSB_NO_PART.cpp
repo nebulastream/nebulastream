@@ -591,8 +591,6 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
         }
     }
-
-
     *consumedTuples = consumed;
     *consumedBuffers = total_received_buffers;
     *consumerNoBufferFound = noBufferFound;
@@ -1149,6 +1147,7 @@ int main(int argc, char *argv[])
 
     infinity::memory::Buffer* finishBuffer = connections[0]->allocate_buffer(1);
 
+    cout << "start processing " << endl;
     Timestamp begin = getTimestamp();
     if(rank % 2 == 0)
     {
