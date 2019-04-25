@@ -444,7 +444,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         sharedHTConnection->write(sharedHT_buffer[consumerID], sharedHT_region_token[consumerID]);
 
                         cout << "set ready flag" << endl;
-                        ht_sign_ready[consumerID] = BUFFER_USED_SENDER_DONE;//ht_sign_ready
+                        ht_sign_ready[consumerID] = BUFFER_USED_FLAG;//ht_sign_ready
                         cout << "write ready entry " << endl;
                         sharedHTConnection->write_blocking(ht_sign_ready_buffer, ready_token, consumerID, consumerID, 1);
                     }
@@ -466,7 +466,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                     {
                         while(count < expecedHTs)
                         {
-                            if(ht_sign_ready[consumerID] == BUFFER_USED_SENDER_DONE)
+                            if(ht_sign_ready[consumerID] == BUFFER_USED_FLAG)
                             {
                                 cout << " add received ht for id " << consumerID << endl;
                                 std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[consumerID]->getData();
