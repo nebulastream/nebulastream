@@ -529,6 +529,16 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         {
             bool is_done = cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE;
 
+            total_received_tuples += bufferSizeInTuples;
+            total_received_buffers++;
+#ifdef DEBUG
+            cout << "Thread=" << outerThread << "/" << omp_get_thread_num() << "/" << outerThread<< " Received buffer at index=" << index << endl;
+#endif
+            consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers[index]->getData(), bufferSizeInTuples,
+                    hashTable, windowSizeInSec, campaingCnt, consumerID, rank);
+
+//            cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
+
             if(is_done) // this is done so that the loop later doesnt try to process this again
             {
                 std::atomic_fetch_add(&exitConsumer[consumerID], size_t(1));
@@ -540,21 +550,8 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                     cout << "write finish entry with id=" << consumerID << " time=" << time(NULL) << endl;
                     sharedHTConnection->write_blocking(ht_sign_ready_buffer, ready_token, consumerID, consumerID, 1);
                 }
-
-            }
-
-            total_received_tuples += bufferSizeInTuples;
-            total_received_buffers++;
-#ifdef DEBUG
-            cout << "Thread=" << outerThread << "/" << omp_get_thread_num() << "/" << outerThread<< " Received buffer at index=" << index << endl;
-#endif
-            consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers[index]->getData(), bufferSizeInTuples,
-                    hashTable, windowSizeInSec, campaingCnt, consumerID, rank);
-
-            cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
-
-            if(is_done)
                 break;
+            }
         }
         else
         {
@@ -576,7 +573,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                             << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
             cout << ss.str();
 #endif
-            return;
+            break;
         }
     }//end of while
 
@@ -594,6 +591,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
         }
     }
+
 
     *consumedTuples = consumed;
     *consumedBuffers = total_received_buffers;
