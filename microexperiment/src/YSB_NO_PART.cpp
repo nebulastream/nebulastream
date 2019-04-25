@@ -1231,7 +1231,8 @@ int main(int argc, char *argv[])
              runConsumerNew(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, outer_thread_id, numberOfProducer , bufferSizeInTups,
                      &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
                      endIdx, conInfos[outer_thread_id], outer_thread_id, rank);
-             printSingleHT(conInfos[outer_thread_id]->hashTable[0], campaingCnt);
+//             printSingleHT(conInfos[outer_thread_id]->hashTable[0], campaingCnt);
+                 printHT(conInfos[outer_thread_id]->hashTable, campaingCnt);
           }
        }
        cout << "finished, sending finish buffer " << getTimestamp() << endl;
