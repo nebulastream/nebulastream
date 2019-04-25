@@ -492,7 +492,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                            {
                                cout << "wait in rank " << rank << " consumerID=" << consumerID
                                        << "ts=" << timeStamp << " thread=" << omp_get_thread_num() << endl;
-                               sleep(1);
+//                               sleep(1);
                            }
                         }
                     }
