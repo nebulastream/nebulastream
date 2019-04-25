@@ -482,6 +482,11 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                                ht_sign_ready[consumerID] = BUFFER_READY_FLAG;
                                break;
                             }
+                           else
+                           {
+                               cout << "not used" << endl;
+                              sleep(1);
+                           }
                         }
                     }
 
