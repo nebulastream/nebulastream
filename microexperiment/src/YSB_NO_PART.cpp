@@ -451,7 +451,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                     else if(rank == 1)//this one merges
                     {
                         //collect data
-                        cout << "merging local stuff" << endl;
+                        cout << "merging local stuff for consumerID=" << consumerID << endl;
                         //copy local
                         for(size_t i = 0; i < campaingCnt; i++)
                         {
@@ -468,6 +468,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         {
                             if(ht_sign_ready[consumerID] == BUFFER_USED_SENDER_DONE)
                             {
+                                cout << " add received ht for id " << consumerID << endl;
                                 std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[consumerID]->getData();
                                 for(size_t i = 0; i < campaingCnt; i++)
                                 {
