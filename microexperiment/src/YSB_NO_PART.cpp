@@ -490,6 +490,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                            else
                            {
                                cout << "wait" << endl;
+                               sleep(1);
                            }
                         }
                     }
@@ -538,7 +539,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                 if(rank == 3)
                 {
                     ht_sign_ready[consumerID] = BUFFER_USED_SENDER_DONE;//ht_sign_ready
-                    cout << "write finish entry " << endl;
+                    cout << "write finish entry with id=" << consumerID << endl;
                     sharedHTConnection->write_blocking(ht_sign_ready_buffer, ready_token, consumerID, consumerID, 1);
                 }
 
@@ -599,8 +600,8 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     *consumedTuples = consumed;
     *consumedBuffers = total_received_buffers;
     *consumerNoBufferFound = noBufferFound;
-    cout << "Thread=" << omp_get_thread_num() << " Done sending! Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
-                << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
+//    cout << "Thread=" << omp_get_thread_num() << " Done sending! Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
+//                << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
 }
 
 void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numberOfParticipant, size_t rank)
@@ -1227,7 +1228,7 @@ int main(int argc, char *argv[])
              {
                  endIdx = NUM_SEND_BUFFERS;
              }
-//#ifdef DEBUG
+#ifdef DEBUG
              #pragma omp critical
              {
              std::cout
@@ -1243,7 +1244,7 @@ int main(int argc, char *argv[])
                 << " share=" << share
                 << std::endl;
              }
-//#endif
+#endif
              runConsumerNew(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, outer_thread_id, numberOfProducer , bufferSizeInTups,
                      &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
                      endIdx, conInfos[outer_thread_id], outer_thread_id, rank);
