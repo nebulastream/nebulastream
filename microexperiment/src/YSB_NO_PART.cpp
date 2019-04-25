@@ -419,14 +419,8 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
             current_window = current_window == 0 ? 1 : 0;
             windowSwitchCnt++;
             if (hashTable[current_window][campaingCnt] != timeStamp)//TODO: replace this with compare and swap
-//                if(std::atomic_compare_exchange_weak_explicit(
-//                                                &head,
-//                                                &new_node->next,
-//                                                new_node,
-//                                                std::memory_order_release,
-//                                                std::memory_order_relaxed) == 0)
+//                if(std::atomic_compare_exchange_weak_explicit(&head,&new_node->next,new_node,std::memory_order_release,std::memory_order_relaxed) == 0)
                 {
-
                     atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
                     htReset++;
                     cout << "windowing with rank=" << rank << " consumerID=" << consumerID << endl;
@@ -441,15 +435,18 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 
                         while(true)
                         {
-                            sharedHTConnection->read_blocking(ht_sign_ready_buffer, ready_token);
 
+                            sharedHTConnection->read_blocking(ht_sign_ready_buffer, ready_token);
+                            cout << "read value is" << ht_sign_ready[consumerID] << endl;
                             if(ht_sign_ready[consumerID] == BUFFER_READY_FLAG)
                             {
                                 break;
                             }
+                            else
+                            {
+                                cout << "not free" << endl;
+                            }
                         }
-
-                        cout << "read value is" << ht_sign_ready[consumerID] << endl;
 
                         memcpy(sharedHT_buffer[consumerID]->getData(), hashTable[oldWindow], sizeof(std::atomic<size_t>) * campaingCnt);
 
@@ -459,7 +456,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 //                        cout << "set ready flag" << endl;
                         ht_sign_ready[consumerID] = BUFFER_USED_FLAG;//ht_sign_ready
 //                        cout << "write ready entry " << endl;
-                        sharedHTConnection->write_blocking(ht_sign_ready_buffer, ready_token, consumerID, consumerID, 1);
+                        sharedHTConnection->write_blocking(ht_sign_ready_buffer, ready_token, consumerID, consumerID, BUFFER_USED_FLAG);
                     }
                     else if(rank == 1)//this one merges
                     {
