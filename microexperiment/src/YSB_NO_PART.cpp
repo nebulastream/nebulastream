@@ -985,7 +985,7 @@ int main(int argc, char *argv[])
     po::options_description desc("Options");
 
     size_t windowSizeInSeconds = 2;
-    size_t campaingCnt = 10;
+    size_t campaingCnt = 10000;
 
     exitProducer = 0;
     exitConsumer = 0;
@@ -1247,7 +1247,7 @@ int main(int argc, char *argv[])
                      &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
                      endIdx, conInfos[outer_thread_id], outer_thread_id, rank);
 //             printSingleHT(conInfos[outer_thread_id]->hashTable[0], campaingCnt);
-                 printHT(conInfos[outer_thread_id]->hashTable, campaingCnt, outer_thread_id);
+//                 printHT(conInfos[outer_thread_id]->hashTable, campaingCnt, outer_thread_id);
           }
        }
        cout << "finished, sending finish buffer " << getTimestamp() << endl;
