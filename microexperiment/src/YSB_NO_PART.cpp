@@ -413,7 +413,8 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
     for(size_t i = 0; i < bufferSizeInTuples; i++)
     {
 //        cout << " tuple=" << i << " val="<< buffer[i].campaign_id  << endl;
-        size_t timeStamp = buffer[i].timeStamp; //seconds elapsed since 00:00 hours, Jan 1, 1970 UTC
+        size_t timeStamp = time(NULL);
+//        = buffer[i].timeStamp; //was
         if (lastTimeStamp != timeStamp && timeStamp % windowSizeInSec == 0) {
             //TODO this is not corret atm
             current_window = current_window == 0 ? 1 : 0;
@@ -428,11 +429,6 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                     size_t oldWindow = current_window == 0 ? 1 : 0;
                     if(rank == 3)
                     {
-                        //sent to master both hts
-
-                        //copy data to den
-//                        cout << "memcp dest=" << sharedHT_buffer[consumerID]->getData() << "src=" << hashTable[oldWindow]
-//                           << " size=" << sizeof(std::atomic<size_t>) * campaingCnt << " capa=" << sharedHT_buffer[consumerID]->getSizeInBytes() << endl;
                         while(true)
                         {
                             sharedHTConnection->read_blocking(ht_sign_ready_buffer, ready_token);
@@ -461,7 +457,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                     else if(rank == 1)//this one merges
                     {
 //                        cout << "merging local stuff for consumerID=" << consumerID << endl;
-                        #pragma omp parallel for
+                        #pragma omp parallel for num_threads(10)
                         for(size_t i = 0; i < campaingCnt; i++)
                         {
 //                            cout << "merge i=" << i << " old=" << outputTable[i] << " incold=" << hashTable[oldWindow][i] << endl;
