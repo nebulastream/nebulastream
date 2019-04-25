@@ -420,8 +420,8 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
             windowSwitchCnt++;
 //            std::atomic<size_t>* expected = &hashTable[current_window][campaingCnt];
 ////            if (hashTable[current_window][campaingCnt] != timeStamp)//TODO: replace this with compare and swap
-//#pragma omp critical
-//            {
+#pragma omp critical
+            {
             cout << "cmpNEW=" << bookKeeper[current_window]
                     << " val=" << timeStamp
                     << " lastTimeStamp=" << lastTimeStamp << " i=" << i << endl;
