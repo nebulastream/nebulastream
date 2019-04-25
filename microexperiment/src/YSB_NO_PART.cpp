@@ -417,8 +417,10 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
             windowSwitchCnt++;
 //            std::atomic<size_t>* expected = &hashTable[current_window][campaingCnt];
 ////            if (hashTable[current_window][campaingCnt] != timeStamp)//TODO: replace this with compare and swap
-            cout << "cmp=" << bookKeeper[current_window] << " val=" << timeStamp << " lastTimeStamp=" << lastTimeStamp << endl;
-            if(bookKeeper[current_window].compare_and_swap(timeStamp, lastTimeStamp) != lastTimeStamp)
+            cout << "cmp=" << bookKeeper[current_window] << " val=" << timeStamp
+                    << " lastTimeStamp=" << lastTimeStamp << " i=" << i << endl;
+
+            if(bookKeeper[current_window].compare_and_swap(timeStamp, lastTimeStamp) == lastTimeStamp)
             {
                     htReset++;
                     cout << "windowing with rank=" << rank << " consumerID=" << consumerID << "ts=" << timeStamp
