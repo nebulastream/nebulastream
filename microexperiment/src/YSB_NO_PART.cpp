@@ -411,18 +411,16 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
     for(size_t i = 0; i < bufferSizeInTuples; i++)
     {
         size_t timeStamp = time(NULL);//        = buffer[i].timeStamp; //was
-        if (lastTimeStamp != timeStamp && timeStamp % windowSizeInSec == 0) {
+        if (lastTimeStamp != timeStamp && timeStamp % windowSizeInSec == 0)
+        {
             current_window = current_window == 0 ? 1 : 0;
             windowSwitchCnt++;
 //            std::atomic<size_t>* expected = &hashTable[current_window][campaingCnt];
 ////            if (hashTable[current_window][campaingCnt] != timeStamp)//TODO: replace this with compare and swap
             cout << "cmp=" << bookKeeper[current_window] << " val=" << timeStamp << " lastTimeStamp=" << lastTimeStamp << endl;
             if(bookKeeper[current_window].compare_and_swap(timeStamp, lastTimeStamp) == lastTimeStamp)
-                {
-
-//                    atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
+            {
                     htReset++;
-
                     cout << "windowing with rank=" << rank << " consumerID=" << consumerID << "ts=" << timeStamp
                             << " lastts=" << lastTimeStamp << endl;
                     size_t oldWindow = current_window == 0 ? 1 : 0;
@@ -454,11 +452,11 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 //                                   cout << "merge i=" << i << " old=" << outputTable[i] << " inc =" << tempTable[i] << endl;
                             outputTable[i] += tempTable[i];
                         }
-                    }
-
+                    }//end of else
             }//end of if window
+            cout << "set lastTs=" << lastTimeStamp << " to new " << timeStamp << endl;
             lastTimeStamp = timeStamp;
-        }
+        }//end of if window
 
         uint64_t bucketPos = (buffer[i].campaign_id * 789 + 321) % campaingCnt;
         atomic_fetch_add(&hashTable[current_window][bucketPos], size_t(1));
