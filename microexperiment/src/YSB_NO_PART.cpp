@@ -455,8 +455,8 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         //copy local
                         for(size_t i = 0; i < campaingCnt; i++)
                         {
-                            cout << "merge i=" << i << " old=" << outputTable[i] << " incold=" << hashTable[oldWindow][i] <<
-                            " incnew=" << hashTable[current_window][i] <<endl;
+//                            cout << "merge i=" << i << " old=" << outputTable[i] << " incold=" << hashTable[oldWindow][i] <<
+//                            " incnew=" << hashTable[current_window][i] <<endl;
                             outputTable[i] += hashTable[oldWindow][i];
                         }
                     }
@@ -478,6 +478,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                                    std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[i]->getData();
                                    for(size_t i = 0; i < campaingCnt; i++)
                                    {
+                                       cout << "merge i=" << i << " old=" << outputTable[i] << " inc =" << tempTable[i] << endl;
                                        outputTable[i] += tempTable[i];
                                    }
                                    count++;
