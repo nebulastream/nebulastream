@@ -482,10 +482,10 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                                ht_sign_ready[consumerID] = BUFFER_READY_FLAG;
                                break;
                             }
-                           else
+                           else if(ht_sign_ready[consumerID] == BUFFER_USED_SENDER_DONE)
                            {
-                               cout << "not used" << endl;
-                              sleep(1);
+                               cout << "other finished" << endl;
+                               break;
                            }
                         }
                     }
@@ -531,6 +531,9 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                 std::atomic_fetch_add(&exitConsumer[consumerID], size_t(1));
                 cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
                 cout << "DONE BUFFER FOUND at idx"  << index << endl;
+                ht_sign_ready[consumerID] = BUFFER_USED_FLAG;//ht_sign_ready
+                cout << "write finish entry " << endl;
+                sharedHTConnection->write_blocking(ht_sign_ready_buffer, ready_token, consumerID, consumerID, BUFFER_USED_SENDER_DONE);
             }
 
             total_received_tuples += bufferSizeInTuples;
