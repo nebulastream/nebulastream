@@ -436,14 +436,14 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         while(true)
                         {
                             sharedHTConnection->read_blocking(ht_sign_ready_buffer, ready_token);
-                            cout << "read value is" << ht_sign_ready[consumerID] << endl;
+                            cout << "read value is id="<< consumerID << ht_sign_ready[consumerID] << endl;
                             if(ht_sign_ready[consumerID] == BUFFER_READY_FLAG)
                             {
                                 break;
                             }
                             else
                             {
-                                cout << "not free" << endl;
+//                                cout << "not free" << endl;
                             }
                         }
 
@@ -479,7 +479,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         {
                             for(size_t i = 0; i < expecedHTs; i++)
                             {
-                                if(ht_sign_ready[i] == BUFFER_USED_FLAG)
+                               if(ht_sign_ready[i] == BUFFER_USED_FLAG)
                                {
                                    cout << " add received ht for id " << i << endl;
                                    ht_sign_ready[i] = BUFFER_USED_SENDER_DONE;
@@ -495,7 +495,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         }
                         for(size_t u = 0; u < expecedHTs; u++)
                         {
-                            cout << "set buffer ready" << endl;
+                            cout << "set buffer ready for consumerID=" << consumerID << endl;
                             ht_sign_ready[consumerID] = BUFFER_READY_FLAG;
 
                         }
