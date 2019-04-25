@@ -459,22 +459,26 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         }
                     }
 
-                    cout << "process rest"<< endl;
                     size_t expecedHTs = 2;
                     size_t count = 0;
                     if(consumerID == 0 && rank == 1)
                     {
+                        cout << "process rest"<< endl;
+
                         while(count < expecedHTs)
                         {
-                            if(ht_sign_ready[consumerID] == BUFFER_USED_FLAG)
+                            for(size_t i = 0; i < expecedHTs; i++)
                             {
-                                cout << " add received ht for id " << consumerID << endl;
-                                std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[consumerID]->getData();
-                                for(size_t i = 0; i < campaingCnt; i++)
-                                {
-                                    outputTable[i] += tempTable[i];
-                                }
-                                count++;
+                                if(ht_sign_ready[i] == BUFFER_USED_FLAG)
+                               {
+                                   cout << " add received ht for id " << i << endl;
+                                   std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[i]->getData();
+                                   for(size_t i = 0; i < campaingCnt; i++)
+                                   {
+                                       outputTable[i] += tempTable[i];
+                                   }
+                                   count++;
+                               }
                             }
                         }
                         for(size_t u = 0; u < expecedHTs; u++)
