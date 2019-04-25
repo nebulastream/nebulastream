@@ -404,7 +404,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
     size_t consumed = 0;
     size_t windowSwitchCnt = 0;
     size_t htReset = 0;
-    size_t lastTimeStamp = time(NULL);
+    size_t lastTimeStamp = 0;
     Tuple tup;
     size_t current_window = 0;
 
