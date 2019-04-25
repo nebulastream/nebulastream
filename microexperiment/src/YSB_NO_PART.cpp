@@ -555,7 +555,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                 cout << "DONE BUFFER FOUND at idx"  << index << endl;
                 if(rank == 3)
                 {
-                    ht_sign_ready[consumerID] = BUFFER_USED_SENDER_DONE;//ht_sign_ready
+//                    ht_sign_ready[consumerID] = BUFFER_USED_SENDER_DONE;//ht_sign_ready
 //                    cout << "write finish entry with id=" << consumerID << " time=" << time(NULL) << endl;
 //                    sharedHTConnection->write_blocking(ht_sign_ready_buffer, ready_token, consumerID, consumerID, 1);
                 }
