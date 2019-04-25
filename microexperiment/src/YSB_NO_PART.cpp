@@ -469,13 +469,13 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
         consumed++;
 
     }//end of for
-//#ifdef DEBUG
+#ifdef DEBUG
 #pragma omp critical
     cout << "Thread=" << omp_get_thread_num() << " consumed=" << consumed
             << " windowSwitchCnt=" << windowSwitchCnt
             << " htreset=" << htReset
             << " consumeID=" << consumerID << endl;
-//#endif
+#endif
     return consumed;
 
 }
