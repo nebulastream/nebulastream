@@ -455,8 +455,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         //copy local
                         for(size_t i = 0; i < campaingCnt; i++)
                         {
-//                            cout << "merge i=" << i << " old=" << outputTable[i] << " incold=" << hashTable[oldWindow][i] <<
-//                            " incnew=" << hashTable[current_window][i] <<endl;
+                            cout << "merge i=" << i << " old=" << outputTable[i] << " incold=" << hashTable[oldWindow][i] << endl;
                             outputTable[i] += hashTable[oldWindow][i];
                         }
                     }
@@ -895,7 +894,7 @@ record* generateTuplesOneArray(size_t num_Producer, size_t campaingCnt)
 
 void printSingleHT(std::atomic<size_t>* hashTable, size_t campaingCnt)
 {
-    for (size_t i = 0; i < campaingCnt + 1; i++)
+    for (size_t i = 0; i < campaingCnt; i++)
     {
         if(hashTable[i] != 0)
             cout << "i=" << i << " cnt=" << hashTable[i] << endl;
