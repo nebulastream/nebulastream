@@ -424,7 +424,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                     atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
                     htReset++;
 
-                    cout << "windowing with rank=" << rank << " consumerID=" << consumerID << "ts=" << timeStamp << endl;
+//                    cout << "windowing with rank=" << rank << " consumerID=" << consumerID << "ts=" << timeStamp << endl;
                     size_t oldWindow = current_window == 0 ? 1 : 0;
                     if(rank == 3)
                     {
@@ -443,8 +443,8 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                             }
                             else
                             {
-                                cout << "not free" << endl;
-                                sleep(1);
+//                                cout << "not free" << endl;
+//                                sleep(1);
                             }
                         }
 
@@ -490,8 +490,8 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                            }
                            else
                            {
-                               cout << "wait in rank " << rank << " consumerID=" << consumerID
-                                       << "ts=" << timeStamp << " thread=" << omp_get_thread_num() << endl;
+//                               cout << "wait in rank " << rank << " consumerID=" << consumerID
+//                                       << "ts=" << timeStamp << " thread=" << omp_get_thread_num() << endl;
 //                               sleep(1);
                            }
                         }
