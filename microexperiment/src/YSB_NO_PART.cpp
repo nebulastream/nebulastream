@@ -455,7 +455,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 //                        cout << "set ready flag" << endl;
                         ht_sign_ready[consumerID] = BUFFER_USED_FLAG;//ht_sign_ready
 //                        cout << "write ready entry " << endl;
-                        sharedHTConnection->write_blocking(ht_sign_ready_buffer, ready_token, consumerID, consumerID, BUFFER_USED_FLAG);
+                        sharedHTConnection->write_blocking(ht_sign_ready_buffer, ready_token, consumerID, consumerID, 1);
                     }
                     else if(rank == 1)//this one merges
                     {
@@ -531,9 +531,9 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                 std::atomic_fetch_add(&exitConsumer[consumerID], size_t(1));
                 cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
                 cout << "DONE BUFFER FOUND at idx"  << index << endl;
-                ht_sign_ready[consumerID] = BUFFER_USED_FLAG;//ht_sign_ready
+                ht_sign_ready[consumerID] = BUFFER_USED_SENDER_DONE;//ht_sign_ready
                 cout << "write finish entry " << endl;
-                sharedHTConnection->write_blocking(ht_sign_ready_buffer, ready_token, consumerID, consumerID, BUFFER_USED_SENDER_DONE);
+                sharedHTConnection->write_blocking(ht_sign_ready_buffer, ready_token, consumerID, consumerID, 1);
             }
 
             total_received_tuples += bufferSizeInTuples;
