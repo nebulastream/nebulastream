@@ -486,8 +486,8 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                            }
                            else
                            {
-//                               cout << "wait in rank " << rank << " consumerID=" << consumerID
-//                                       << "ts=" << timeStamp << " thread=" << omp_get_thread_num() << endl;
+                               cout << "wait in rank " << rank << " consumerID=" << consumerID
+                                       << "ts=" << timeStamp << " thread=" << omp_get_thread_num() << endl;
 //                               sleep(1);
                            }
                         }
@@ -577,7 +577,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         }
     }//end of while
 
-    cout << "checking remaining buffers" << endl;
+//    cout << "checking remaining buffers" << endl;
     for(index = startIdx; index < endIdx; index++)//check again if some are there
     {
 //        cout << "checking i=" << index << endl;
