@@ -969,8 +969,8 @@ int main(int argc, char *argv[])
 {
     po::options_description desc("Options");
 
-    size_t windowSizeInSeconds = 1;
-    size_t campaingCnt = 10000;
+    size_t windowSizeInSeconds = 2;
+    size_t campaingCnt = 10;
 
     exitProducer = 0;
     exitConsumer = 0;
@@ -1231,6 +1231,7 @@ int main(int argc, char *argv[])
              runConsumerNew(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, outer_thread_id, numberOfProducer , bufferSizeInTups,
                      &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
                      endIdx, conInfos[outer_thread_id], outer_thread_id, rank);
+             printSingleHT(conInfos[outer_thread_id]->hashTable[0], campaingCnt);
           }
        }
        cout << "finished, sending finish buffer " << getTimestamp() << endl;
