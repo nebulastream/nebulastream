@@ -350,7 +350,7 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
                 else//finished processing
                 {
                     std::atomic_fetch_add(&exitProducer[outerThread], size_t(1));
-                    if(std::atomic_load(&exitProducer[outerThread]) == numberOfProducer)
+                    if(std::atomic_load(&exitProducer[outerThread]) == numberOfProducer/2)
                     {
                         cInfos->buffer_ready_sign[receive_buffer_index] = BUFFER_USED_SENDER_DONE;
                         connection->write_blocking(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index, receive_buffer_index, 1);
