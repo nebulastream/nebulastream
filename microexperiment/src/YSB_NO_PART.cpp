@@ -472,6 +472,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                                 if(ht_sign_ready[i] == BUFFER_USED_FLAG)
                                {
                                    cout << " add received ht for id " << i << endl;
+                                   ht_sign_ready[i] = BUFFER_USED_SENDER_DONE;
                                    std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[i]->getData();
                                    for(size_t i = 0; i < campaingCnt; i++)
                                    {
@@ -896,6 +897,7 @@ void printSingleHT(std::atomic<size_t>* hashTable, size_t campaingCnt)
         if(hashTable[i] != 0)
             cout << "i=" << i << " cnt=" << hashTable[i] << endl;
     }
+    cout << "print down" << endl;
 }
 void printHT(std::atomic<size_t>** hashTable, size_t campaingCnt)
 {
