@@ -476,7 +476,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 //                            cout << "merge i=" << i << " old=" << outputTable[i] << " incold=" << hashTable[oldWindow][i] << endl;
                             outputTable[i] += hashTable[oldWindow][i];
                         }
-                        cout << "post rec" << endl;
+                        cout << "post rec id " << consumerID << " ranK=" << rank << endl;
                         sharedHTConnection->post_and_receive_blocking(sharedHT_buffer[consumerID]);
                         cout << "got rec" << endl;
                         std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[consumerID]->getData();
