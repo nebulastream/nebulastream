@@ -463,7 +463,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                     size_t count = 0;
                     if(consumerID == 0 && rank == 1)
                     {
-                        cout << "process rest"<< endl;
+                        cout << "process rest with rank=" << rank << " consumerID=" << consumerID << endl;
 
                         while(count < expecedHTs)
                         {
