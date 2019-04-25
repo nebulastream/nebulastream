@@ -429,19 +429,20 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                     size_t oldWindow = current_window == 0 ? 1 : 0;
                     if(rank == 3)
                     {
+
 //                        while(true)
 //                        {
-                            sharedHTConnection->read_blocking(ht_sign_ready_buffer, ready_token);
-////                            cout << "read value is id="<< consumerID << ht_sign_ready[consumerID] << endl;
-                            if(ht_sign_ready[consumerID] == BUFFER_READY_FLAG)
-                            {
-                              cout << "ready" << endl;
-
-                            }
-                            else
-                            {
-                                cout << "not ready" << endl;
-                            }
+//                            sharedHTConnection->read_blocking(ht_sign_ready_buffer, ready_token);
+//////                            cout << "read value is id="<< consumerID << ht_sign_ready[consumerID] << endl;
+//                            if(ht_sign_ready[consumerID] == BUFFER_READY_FLAG)
+//                            {
+//                              cout << "ready" << endl;
+//
+//                            }
+//                            else
+//                            {
+//                                cout << "not ready" << endl;
+//                            }
 //                            {
 //                                break;
 //                            }
@@ -454,13 +455,17 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 
                         memcpy(sharedHT_buffer[consumerID]->getData(), hashTable[oldWindow], sizeof(std::atomic<size_t>) * campaingCnt);
 
-//                        cout << "sent to master node the ht no=" << oldWindow << " toID=" << consumerID << endl;
-                        sharedHTConnection->write(sharedHT_buffer[consumerID], sharedHT_region_token[consumerID]);
+                        cout << "send blocking" << endl;
+                        sharedHTConnection->send_blocking(sharedHT_buffer[consumerID]);
+                        cout << "send blocking finished " << endl;
 
-//                        cout << "set ready flag" << endl;
-                        ht_sign_ready[consumerID] = BUFFER_USED_FLAG;//ht_sign_ready
-//                        cout << "write ready entry " << endl;
-                        sharedHTConnection->write(ht_sign_ready_buffer, ready_token, consumerID, consumerID, 1);
+//                        cout << "sent to master node the ht no=" << oldWindow << " toID=" << consumerID << endl;
+//                        sharedHTConnection->write(sharedHT_buffer[consumerID], sharedHT_region_token[consumerID]);
+//
+////                        cout << "set ready flag" << endl;
+//                        ht_sign_ready[consumerID] = BUFFER_USED_FLAG;//ht_sign_ready
+////                        cout << "write ready entry " << endl;
+//                        sharedHTConnection->write(ht_sign_ready_buffer, ready_token, consumerID, consumerID, 1);
                     }
                     else if(rank == 1)//this one merges
                     {
@@ -471,23 +476,26 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 //                            cout << "merge i=" << i << " old=" << outputTable[i] << " incold=" << hashTable[oldWindow][i] << endl;
                             outputTable[i] += hashTable[oldWindow][i];
                         }
-
+                        cout << "post rec" << endl;
+                        sharedHTConnection->post_and_receive_blocking(sharedHT_buffer[consumerID]);
+                        cout << "got rec" << endl;
                         std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[consumerID]->getData();
-                        if(ht_sign_ready[consumerID] == BUFFER_USED_FLAG)
-                        {
-                           cout << "ok" << endl;
-                        }
-                        else
-                        {
-                            cout << "ne" << endl;
-                        }
+//                        if(ht_sign_ready[consumerID] == BUFFER_USED_FLAG)
+//                        {
+//                           cout << "ok" << endl;
+//                        }
+//                        else
+//                        {
+//                            cout << "ne" << endl;
+//                        }
+
                         #pragma omp parallel for num_threads(10)
                         for(size_t i = 0; i < campaingCnt; i++)
                         {
 //                                   cout << "merge i=" << i << " old=" << outputTable[i] << " inc =" << tempTable[i] << endl;
                             outputTable[i] += tempTable[i];
                         }
-                        ht_sign_ready[consumerID] = BUFFER_READY_FLAG;
+//                        ht_sign_ready[consumerID] = BUFFER_READY_FLAG;
 //                        while(true)
 //                        {
 //                           if(ht_sign_ready[consumerID] == BUFFER_USED_FLAG)
