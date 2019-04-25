@@ -438,7 +438,17 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         //copy data to den
 //                        cout << "memcp dest=" << sharedHT_buffer[consumerID]->getData() << "src=" << hashTable[oldWindow]
 //                           << " size=" << sizeof(std::atomic<size_t>) * campaingCnt << " capa=" << sharedHT_buffer[consumerID]->getSizeInBytes() << endl;
-                        sharedHTConnection->read_blocking(ht_sign_ready_buffer, ready_token);
+
+                        while(true)
+                        {
+                            sharedHTConnection->read_blocking(ht_sign_ready_buffer, ready_token);
+
+                            if(ht_sign_ready[consumerID] == BUFFER_READY_FLAG)
+                            {
+                                break;
+                            }
+                        }
+
                         cout << "read value is" << ht_sign_ready[consumerID] << endl;
 
                         memcpy(sharedHT_buffer[consumerID]->getData(), hashTable[oldWindow], sizeof(std::atomic<size_t>) * campaingCnt);
