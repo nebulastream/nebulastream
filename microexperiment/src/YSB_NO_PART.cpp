@@ -467,41 +467,57 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 //                            cout << "merge i=" << i << " old=" << outputTable[i] << " incold=" << hashTable[oldWindow][i] << endl;
                             outputTable[i] += hashTable[oldWindow][i];
                         }
-                    }
-
-                    if(consumerID == 0 && rank == 1)
-                    {
-                        size_t expecedHTs = 2;
-                        size_t count = 0;
-//                        cout << "process rest with rank=" << rank << " consumerID=" << consumerID << endl;
-
-                        while(count < expecedHTs)
+                        while(true)
                         {
-                            for(size_t i = 0; i < expecedHTs; i++)
-                            {
-                               if(ht_sign_ready[i] == BUFFER_USED_FLAG)
-                               {
+                           if(ht_sign_ready[consumerID] == BUFFER_USED_FLAG)
+                           {
 //                                   cout << " add received ht for id " << i << endl;
-                                   ht_sign_ready[i] = BUFFER_USED_SENDER_DONE;
-                                   std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[i]->getData();
-                                   for(size_t i = 0; i < campaingCnt; i++)
-                                   {
+                               ht_sign_ready[consumerID] = BUFFER_USED_SENDER_DONE;
+                               std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[consumerID]->getData();
+                               #pragma omp parallel for
+                               for(size_t i = 0; i < campaingCnt; i++)
+                               {
 //                                       cout << "merge i=" << i << " old=" << outputTable[i] << " inc =" << tempTable[i] << endl;
-                                       outputTable[i] += tempTable[i];
-                                   }
-                                   count++;
+                                   outputTable[i] += tempTable[i];
                                }
+                               ht_sign_ready[consumerID] = BUFFER_READY_FLAG;
                             }
                         }
-                        for(size_t u = 0; u < expecedHTs; u++)
-                        {
-//                            cout << "set buffer ready for consumerID=" << u << endl;
-                            ht_sign_ready[u] = BUFFER_READY_FLAG;
-
-                        }
-//                        printSingleHT(outputTable, campaingCnt);
-                        std::fill(outputTable, outputTable + campaingCnt, 0);
                     }
+//
+//                    if(consumerID == 0 && rank == 1)
+//                    {
+//                        size_t expecedHTs = 2;
+//                        size_t count = 0;
+////                        cout << "process rest with rank=" << rank << " consumerID=" << consumerID << endl;
+//
+//                        while(count < expecedHTs)
+//                        {
+//                            for(size_t i = 0; i < expecedHTs; i++)
+//                            {
+//                               if(ht_sign_ready[i] == BUFFER_USED_FLAG)
+//                               {
+////                                   cout << " add received ht for id " << i << endl;
+//                                   ht_sign_ready[i] = BUFFER_USED_SENDER_DONE;
+//                                   std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[i]->getData();
+//                                   for(size_t i = 0; i < campaingCnt; i++)
+//                                   {
+////                                       cout << "merge i=" << i << " old=" << outputTable[i] << " inc =" << tempTable[i] << endl;
+//                                       outputTable[i] += tempTable[i];
+//                                   }
+//                                   count++;
+//                               }
+//                            }
+//                        }
+//                        for(size_t u = 0; u < expecedHTs; u++)
+//                        {
+////                            cout << "set buffer ready for consumerID=" << u << endl;
+//                            ht_sign_ready[u] = BUFFER_READY_FLAG;
+//
+//                        }
+////                        printSingleHT(outputTable, campaingCnt);
+//                        std::fill(outputTable, outputTable + campaingCnt, 0);
+//                    }
             }//end of if window
             lastTimeStamp = timeStamp;
         }
