@@ -1209,7 +1209,7 @@ int main(int argc, char *argv[])
              {
                  endIdx = NUM_SEND_BUFFERS;
              }
-#ifdef DEBUG
+//#ifdef DEBUG
              #pragma omp critical
              {
              std::cout
@@ -1225,7 +1225,7 @@ int main(int argc, char *argv[])
                 << " share=" << share
                 << std::endl;
              }
-#endif
+//#endif
              runConsumerNew(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, outer_thread_id, numberOfProducer , bufferSizeInTups,
                      &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
                      endIdx, conInfos[outer_thread_id], outer_thread_id, rank);
