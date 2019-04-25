@@ -397,7 +397,7 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
 }
 
 size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
-        size_t campaingCnt, size_t consumerID, size_t rank) {
+        size_t campaingCnt, size_t consumerID, size_t rank, bool done) {
 //    return bufferSizeInTuples;
     size_t consumed = 0;
     size_t windowSwitchCnt = 0;
@@ -427,7 +427,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 
 //                    cout << "windowing with rank=" << rank << " consumerID=" << consumerID << "ts=" << timeStamp << endl;
                     size_t oldWindow = current_window == 0 ? 1 : 0;
-                    if(rank == 3)
+                    if(rank == 3 && !done)
                     {
 
 //                        while(true)
@@ -467,7 +467,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 ////                        cout << "write ready entry " << endl;
 //                        sharedHTConnection->write(ht_sign_ready_buffer, ready_token, consumerID, consumerID, 1);
                     }
-                    else if(rank == 1)//this one merges
+                    else if(rank == 1 && !done)//this one merges
                     {
 //                        cout << "merging local stuff for consumerID=" << consumerID << endl;
                         #pragma omp parallel for num_threads(10)
