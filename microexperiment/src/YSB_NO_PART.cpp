@@ -571,7 +571,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         if(std::atomic_load(&exitConsumer) == 1)
         {
             *consumedTuples = total_received_tuples;
-            *consumedBuffers = total_receivegd_buffers;
+            *consumedBuffers = total_received_buffers;
 //#ifdef DEBUG
 
             stringstream ss;
