@@ -50,8 +50,8 @@ using namespace std;
 //#define DEBUG
 void printSingleHT(std::atomic<size_t>* hashTable, size_t campaingCnt);
 
-std::atomic<size_t> exitProducer;
-std::atomic<size_t> exitConsumer;
+std::atomic<size_t>* exitProducer;
+std::atomic<size_t>* exitConsumer;
 size_t NUM_SEND_BUFFERS;
 //std::atomic<size_t>** htPtrs;
 VerbsConnection* sharedHTConnection;
@@ -349,8 +349,8 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
                 }
                 else//finished processing
                 {
-                    std::atomic_fetch_add(&exitProducer, size_t(1));
-                    if(std::atomic_load(&exitProducer) == numberOfProducer)
+                    std::atomic_fetch_add(&exitProducer[outerThread], size_t(1));
+                    if(std::atomic_load(&exitProducer[outerThread]) == numberOfProducer)
                     {
                         cInfos->buffer_ready_sign[receive_buffer_index] = BUFFER_USED_SENDER_DONE;
                         connection->write_blocking(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index, receive_buffer_index, 1);
@@ -522,7 +522,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
             if(is_done) // this is done so that the loop later doesnt try to process this again
             {
-                std::atomic_fetch_add(&exitConsumer, size_t(1));
+                std::atomic_fetch_add(&exitConsumer[consumerID], size_t(1));
                 cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
                 cout << "DONE BUFFER FOUND at idx"  << index << endl;
             }
@@ -549,7 +549,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         if(index > endIdx)
             index = startIdx;
 
-        if(std::atomic_load(&exitConsumer) == 1)
+        if(std::atomic_load(&exitConsumer[consumerID]) == 1)
         {
             *consumedTuples = total_received_tuples;
             *consumedBuffers = total_received_buffers;
@@ -970,8 +970,9 @@ int main(int argc, char *argv[])
     size_t windowSizeInSeconds = 2;
     size_t campaingCnt = 10000;
 
-    exitProducer = 0;
-    exitConsumer = 0;
+    exitProducer = new std::atomic<size_t>[2];
+    exitConsumer = new std::atomic<size_t>[2];
+    exitProducer[0] = exitProducer[1] = exitConsumer[0] = exitConsumer[1] = 0;
 
     size_t rank = 99;
     size_t numberOfProducer = 2;
