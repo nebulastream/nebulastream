@@ -498,7 +498,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                             ht_sign_ready[u] = BUFFER_READY_FLAG;
 
                         }
-                        printSingleHT(outputTable, campaingCnt);
+//                        printSingleHT(outputTable, campaingCnt);
                         std::fill(outputTable, outputTable + campaingCnt, 0);
                     }
             }//end of if window
