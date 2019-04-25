@@ -436,16 +436,16 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         //sent to master both hts
 
                         //copy data to den
-                        cout << "memcp dest=" << sharedHT_buffer[consumerID]->getData() << "src=" << hashTable[oldWindow]
-                           << " size=" << sizeof(std::atomic<size_t>) * campaingCnt << " capa=" << sharedHT_buffer[consumerID]->getSizeInBytes() << endl;
+//                        cout << "memcp dest=" << sharedHT_buffer[consumerID]->getData() << "src=" << hashTable[oldWindow]
+//                           << " size=" << sizeof(std::atomic<size_t>) * campaingCnt << " capa=" << sharedHT_buffer[consumerID]->getSizeInBytes() << endl;
                         memcpy(sharedHT_buffer[consumerID]->getData(), hashTable[oldWindow], sizeof(std::atomic<size_t>) * campaingCnt);
 
-                        cout << "sent to master node the ht no=" << oldWindow << " toID=" << consumerID << endl;
+//                        cout << "sent to master node the ht no=" << oldWindow << " toID=" << consumerID << endl;
                         sharedHTConnection->write(sharedHT_buffer[consumerID], sharedHT_region_token[consumerID]);
 
-                        cout << "set ready flag" << endl;
+//                        cout << "set ready flag" << endl;
                         ht_sign_ready[consumerID] = BUFFER_USED_FLAG;//ht_sign_ready
-                        cout << "write ready entry " << endl;
+//                        cout << "write ready entry " << endl;
                         sharedHTConnection->write_blocking(ht_sign_ready_buffer, ready_token, consumerID, consumerID, 1);
                     }
                     else if(rank == 1)//this one merges
@@ -455,15 +455,15 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         //copy local
                         for(size_t i = 0; i < campaingCnt; i++)
                         {
-                            cout << "merge i=" << i << " old=" << outputTable[i] << " incold=" << hashTable[oldWindow][i] << endl;
+//                            cout << "merge i=" << i << " old=" << outputTable[i] << " incold=" << hashTable[oldWindow][i] << endl;
                             outputTable[i] += hashTable[oldWindow][i];
                         }
                     }
 
-                    size_t expecedHTs = 2;
-                    size_t count = 0;
                     if(consumerID == 0 && rank == 1)
                     {
+                        size_t expecedHTs = 2;
+                        size_t count = 0;
                         cout << "process rest with rank=" << rank << " consumerID=" << consumerID << endl;
 
                         while(count < expecedHTs)
@@ -477,7 +477,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                                    std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[i]->getData();
                                    for(size_t i = 0; i < campaingCnt; i++)
                                    {
-                                       cout << "merge i=" << i << " old=" << outputTable[i] << " inc =" << tempTable[i] << endl;
+//                                       cout << "merge i=" << i << " old=" << outputTable[i] << " inc =" << tempTable[i] << endl;
                                        outputTable[i] += tempTable[i];
                                    }
                                    count++;
@@ -487,8 +487,11 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         for(size_t u = 0; u < expecedHTs; u++)
                         {
                             ht_sign_ready[consumerID] = BUFFER_READY_FLAG;
+
                         }
                         printSingleHT(outputTable, campaingCnt);
+                        std::fill(outputTable, outputTable + campaingCnt, 0);
+
                     }
 //                std::fill(hashTable[current_window], hashTable[current_window] + campaingCnt, 0);
             }
