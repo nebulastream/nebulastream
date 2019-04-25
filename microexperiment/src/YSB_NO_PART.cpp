@@ -465,7 +465,8 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         }
                         while(true)
                         {
-                           if(ht_sign_ready[consumerID] == BUFFER_USED_FLAG)
+
+//                           if(ht_sign_ready[consumerID] == BUFFER_USED_FLAG)//TODO:reacticate
                            {
 //                               cout << " add received ht for id " << consumerID << endl;
 //                               ht_sign_ready[consumerID] = BUFFER_USED_SENDER_DONE;
@@ -479,17 +480,17 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                                ht_sign_ready[consumerID] = BUFFER_READY_FLAG;
                                break;
                             }
-                           else if(ht_sign_ready[consumerID] == BUFFER_USED_SENDER_DONE)
-                           {
-                               cout << "other finished" << endl;
-                               break;
-                           }
-                           else
-                           {
-                               cout << "wait in rank " << rank << " consumerID=" << consumerID
-                                       << "ts=" << timeStamp << " thread=" << omp_get_thread_num() << endl;
-//                               sleep(1);
-                           }
+//                           else if(ht_sign_ready[consumerID] == BUFFER_USED_SENDER_DONE)
+//                           {
+//                               cout << "other finished" << endl;
+//                               break;
+//                           }
+//                           else
+//                           {
+//                               cout << "wait in rank " << rank << " consumerID=" << consumerID
+//                                       << "ts=" << timeStamp << " thread=" << omp_get_thread_num() << endl;
+////                               sleep(1);
+//                           }
                         }
                     }
 
@@ -993,7 +994,7 @@ int main(int argc, char *argv[])
     size_t bufferSizeInTups = 0;
     size_t numberOfConnections = 1;
     NUM_SEND_BUFFERS = 0;
-    size_t numberOfNodes = 2;
+    size_t numberOfNodes = 4;
     string ip = "";
 
 
