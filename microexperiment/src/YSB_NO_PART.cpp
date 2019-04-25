@@ -435,7 +435,6 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 
                         while(true)
                         {
-
                             sharedHTConnection->read_blocking(ht_sign_ready_buffer, ready_token);
                             cout << "read value is" << ht_sign_ready[consumerID] << endl;
                             if(ht_sign_ready[consumerID] == BUFFER_READY_FLAG)
@@ -496,6 +495,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         }
                         for(size_t u = 0; u < expecedHTs; u++)
                         {
+                            cout << "set buffer ready" << endl;
                             ht_sign_ready[consumerID] = BUFFER_READY_FLAG;
 
                         }
@@ -571,7 +571,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         if(std::atomic_load(&exitConsumer) == 1)
         {
             *consumedTuples = total_received_tuples;
-            *consumedBuffers = total_received_buffers;
+            *consumedBuffers = total_receivegd_buffers;
 //#ifdef DEBUG
 
             stringstream ss;
