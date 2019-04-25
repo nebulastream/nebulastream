@@ -432,7 +432,6 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         //copy data to den
 //                        cout << "memcp dest=" << sharedHT_buffer[consumerID]->getData() << "src=" << hashTable[oldWindow]
 //                           << " size=" << sizeof(std::atomic<size_t>) * campaingCnt << " capa=" << sharedHT_buffer[consumerID]->getSizeInBytes() << endl;
-
                         while(true)
                         {
                             sharedHTConnection->read_blocking(ht_sign_ready_buffer, ready_token);
@@ -501,10 +500,8 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         }
                         printSingleHT(outputTable, campaingCnt);
                         std::fill(outputTable, outputTable + campaingCnt, 0);
-
                     }
-//                std::fill(hashTable[current_window], hashTable[current_window] + campaingCnt, 0);
-            }
+            }//end of if window
             lastTimeStamp = timeStamp;
         }
 
@@ -513,12 +510,13 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
         consumed++;
 
     }//end of for
-#ifdef DEBUG
+//#ifdef DEBUG
 #pragma omp critical
     cout << "Thread=" << omp_get_thread_num() << " consumed=" << consumed
             << " windowSwitchCnt=" << windowSwitchCnt
-            << " htreset=" << htReset << endl;
-#endif
+            << " htreset=" << htReset
+            << " consumeID=" << consumerID << endl;
+//#endif
     return consumed;
 
 }
