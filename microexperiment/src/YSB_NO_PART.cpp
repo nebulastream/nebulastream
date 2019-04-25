@@ -165,6 +165,7 @@ struct ConnectionInfos
         sendBuffers = other.sendBuffers;
         records = other.records;
         con = other.con;
+        bookKeeping = other.bookKeeping;
     }
 
     //consumer stuff
@@ -181,6 +182,7 @@ struct ConnectionInfos
     record** records;
     VerbsConnection* con;
     std::atomic<size_t>** hashTable;
+    tbb::atomic<size_t>* bookKeeping;
 };
 
 //consumer stuff
@@ -397,7 +399,7 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
 }
 
 size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
-        size_t campaingCnt, size_t consumerID, size_t rank, bool done) {
+        size_t campaingCnt, size_t consumerID, size_t rank, bool done, tbb::atomic<size_t>* bookKeeper) {
 //    return bufferSizeInTuples;
     size_t consumed = 0;
     size_t windowSwitchCnt = 0;
@@ -412,20 +414,27 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 //#endif
     for(size_t i = 0; i < bufferSizeInTuples; i++)
     {
-//        cout << " tuple=" << i << " val="<< buffer[i].campaign_id  << endl;
-        size_t timeStamp = time(NULL);
-//        = buffer[i].timeStamp; //was
+        size_t timeStamp = time(NULL);//        = buffer[i].timeStamp; //was
         if (lastTimeStamp != timeStamp && timeStamp % windowSizeInSec == 0) {
-            //TODO this is not corret atm
             current_window = current_window == 0 ? 1 : 0;
             windowSwitchCnt++;
-            if (hashTable[current_window][campaingCnt] != timeStamp)//TODO: replace this with compare and swap
-//                if(std::atomic_compare_exchange_weak_explicit(&head,&new_node->next,new_node,std::memory_order_release,std::memory_order_relaxed) == 0)
+//            std::atomic<size_t>* expected = &hashTable[current_window][campaingCnt];
+////            if (hashTable[current_window][campaingCnt] != timeStamp)//TODO: replace this with compare and swap
+//            tbb::atomic<size_t> meta[2];
+//            size_t next = 0;
+//            size_t old = 0;
+            if(bookKeeper[current_window].compare_and_swap(timeStamp, lastTimeStamp) == lastTimeStamp)
+//            if(std::atomic_compare_exchange_weak_explicit(
+//                        &hashTable[current_window][campaingCnt],
+//                        expected,
+//                        timeStamp))
                 {
+
                     atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
                     htReset++;
 
-//                    cout << "windowing with rank=" << rank << " consumerID=" << consumerID << "ts=" << timeStamp << endl;
+                    cout << "windowing with rank=" << rank << " consumerID=" << consumerID << "ts=" << timeStamp
+                            << " lastts=" << lastTimeStamp << endl;
                     size_t oldWindow = current_window == 0 ? 1 : 0;
                     if(rank == 3 && !done)
                     {
@@ -569,7 +578,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             cout << "Thread=" << outerThread << "/" << omp_get_thread_num() << "/" << outerThread<< " Received buffer at index=" << index << endl;
 #endif
             consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers[index]->getData(), bufferSizeInTuples,
-                    hashTable, windowSizeInSec, campaingCnt, consumerID, rank, is_done);
+                    hashTable, windowSizeInSec, campaingCnt, consumerID, rank, is_done, cInfos->bookKeeping);
 
             cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
 
@@ -621,7 +630,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
             consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers[index]->getData(), bufferSizeInTuples,
-                                hashTable, windowSizeInSec, campaingCnt, consumerID, rank, is_done);
+                                hashTable, windowSizeInSec, campaingCnt, consumerID, rank, is_done, cInfos->bookKeeping);
             cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
         }
     }
@@ -788,6 +797,10 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
     outputTable = new std::atomic<size_t>[campaingCnt];
     for (size_t i = 0; i < campaingCnt ; i++)
         std::atomic_init(&outputTable[i], std::size_t(0));
+
+    connectInfo->bookKeeping = new tbb::atomic<size_t>[2];
+    connectInfo->bookKeeping[0] = 0;
+    connectInfo->bookKeeping[1] = 0;
 
 //    htPtrs[outer_thread_id] = hashTable[0];
 //    htPtrs[outer_thread_id*2] = hashTable[1];
