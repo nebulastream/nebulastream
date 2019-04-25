@@ -902,10 +902,12 @@ void printSingleHT(std::atomic<size_t>* hashTable, size_t campaingCnt)
     }
     cout << "print down" << endl;
 }
-void printHT(std::atomic<size_t>** hashTable, size_t campaingCnt)
+void printHT(std::atomic<size_t>** hashTable, size_t campaingCnt, size_t id)
 {
     ofstream myfile;
-    myfile.open ("ht.txt");
+    stringstream fileName;
+    fileName << "ht_" << id << ".txt";
+    myfile.open (fileName.str());
     myfile << "HT1:" << endl;
     for (size_t i = 0; i < campaingCnt + 1; i++)
     {
@@ -1235,7 +1237,7 @@ int main(int argc, char *argv[])
                      &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
                      endIdx, conInfos[outer_thread_id], outer_thread_id, rank);
 //             printSingleHT(conInfos[outer_thread_id]->hashTable[0], campaingCnt);
-                 printHT(conInfos[outer_thread_id]->hashTable, campaingCnt);
+                 printHT(conInfos[outer_thread_id]->hashTable, campaingCnt, outer_thread_id);
           }
        }
        cout << "finished, sending finish buffer " << getTimestamp() << endl;
