@@ -495,8 +495,8 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         }
                         for(size_t u = 0; u < expecedHTs; u++)
                         {
-                            cout << "set buffer ready for consumerID=" << consumerID << endl;
-                            ht_sign_ready[consumerID] = BUFFER_READY_FLAG;
+                            cout << "set buffer ready for consumerID=" << u << endl;
+                            ht_sign_ready[u] = BUFFER_READY_FLAG;
 
                         }
                         printSingleHT(outputTable, campaingCnt);
