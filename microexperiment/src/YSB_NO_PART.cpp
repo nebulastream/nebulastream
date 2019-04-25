@@ -490,7 +490,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                            else
                            {
                                cout << "wait" << endl;
-                               sleep(1);
+//                               sleep(1);
                            }
                         }
                     }
