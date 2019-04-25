@@ -423,7 +423,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                 {
                     atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
                     htReset++;
-                    cout << "windowing with rank=" << rank << " consumerID=" << consumerID << endl;
+//                    cout << "windowing with rank=" << rank << " consumerID=" << consumerID << endl;
                     size_t oldWindow = current_window == 0 ? 1 : 0;
                     if(rank == 3)
                     {
@@ -435,7 +435,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         while(true)
                         {
                             sharedHTConnection->read_blocking(ht_sign_ready_buffer, ready_token);
-                            cout << "read value is id="<< consumerID << ht_sign_ready[consumerID] << endl;
+//                            cout << "read value is id="<< consumerID << ht_sign_ready[consumerID] << endl;
                             if(ht_sign_ready[consumerID] == BUFFER_READY_FLAG)
                             {
                                 break;
@@ -459,7 +459,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                     else if(rank == 1)//this one merges
                     {
                         //collect data
-                        cout << "merging local stuff for consumerID=" << consumerID << endl;
+//                        cout << "merging local stuff for consumerID=" << consumerID << endl;
                         //copy local
                         for(size_t i = 0; i < campaingCnt; i++)
                         {
@@ -472,7 +472,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                     {
                         size_t expecedHTs = 2;
                         size_t count = 0;
-                        cout << "process rest with rank=" << rank << " consumerID=" << consumerID << endl;
+//                        cout << "process rest with rank=" << rank << " consumerID=" << consumerID << endl;
 
                         while(count < expecedHTs)
                         {
@@ -480,7 +480,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                             {
                                if(ht_sign_ready[i] == BUFFER_USED_FLAG)
                                {
-                                   cout << " add received ht for id " << i << endl;
+//                                   cout << " add received ht for id " << i << endl;
                                    ht_sign_ready[i] = BUFFER_USED_SENDER_DONE;
                                    std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[i]->getData();
                                    for(size_t i = 0; i < campaingCnt; i++)
@@ -494,7 +494,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         }
                         for(size_t u = 0; u < expecedHTs; u++)
                         {
-                            cout << "set buffer ready for consumerID=" << u << endl;
+//                            cout << "set buffer ready for consumerID=" << u << endl;
                             ht_sign_ready[u] = BUFFER_READY_FLAG;
 
                         }
@@ -510,13 +510,13 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
         consumed++;
 
     }//end of for
-//#ifdef DEBUG
+#ifdef DEBUG
 #pragma omp critical
     cout << "Thread=" << omp_get_thread_num() << " consumed=" << consumed
             << " windowSwitchCnt=" << windowSwitchCnt
             << " htreset=" << htReset
             << " consumeID=" << consumerID << endl;
-//#endif
+#endif
     return consumed;
 
 }
@@ -570,13 +570,13 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         {
             *consumedTuples = total_received_tuples;
             *consumedBuffers = total_received_buffers;
-//#ifdef DEBUG
+#ifdef DEBUG
 
             stringstream ss;
             cout << "Thread=" << outerThread << "/" << omp_get_thread_num() << " Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
                             << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
             cout << ss.str();
-//#endif
+#endif
             return;
         }
     }//end of while
