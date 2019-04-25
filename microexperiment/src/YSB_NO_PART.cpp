@@ -471,7 +471,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                            if(ht_sign_ready[consumerID] == BUFFER_USED_FLAG)
                            {
 //                               cout << " add received ht for id " << consumerID << endl;
-                               ht_sign_ready[consumerID] = BUFFER_USED_SENDER_DONE;
+//                               ht_sign_ready[consumerID] = BUFFER_USED_SENDER_DONE;
                                std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[consumerID]->getData();
                                #pragma omp parallel for
                                for(size_t i = 0; i < campaingCnt; i++)
