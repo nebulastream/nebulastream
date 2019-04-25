@@ -423,7 +423,8 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                 {
                     atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
                     htReset++;
-//                    cout << "windowing with rank=" << rank << " consumerID=" << consumerID << endl;
+
+                    cout << "windowing with rank=" << rank << " consumerID=" << consumerID << endl;
                     size_t oldWindow = current_window == 0 ? 1 : 0;
                     if(rank == 3)
                     {
