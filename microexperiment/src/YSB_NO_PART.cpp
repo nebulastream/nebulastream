@@ -456,6 +456,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
             }//end of if window
             cout << "set lastTs=" << lastTimeStamp << " to new " << timeStamp << endl;
             lastTimeStamp = timeStamp;
+            cout << "new lastTs" << lastTimeStamp << endl;
         }//end of if window
 
         uint64_t bucketPos = (buffer[i].campaign_id * 789 + 321) % campaingCnt;
