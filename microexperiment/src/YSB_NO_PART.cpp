@@ -541,7 +541,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                 if(rank == 3)
                 {
                     ht_sign_ready[consumerID] = BUFFER_USED_SENDER_DONE;//ht_sign_ready
-                    cout << "write finish entry with id=" << consumerID << " time=" << time(NULL) <<< endl;
+                    cout << "write finish entry with id=" << consumerID << " time=" << time(NULL) << endl;
                     sharedHTConnection->write_blocking(ht_sign_ready_buffer, ready_token, consumerID, consumerID, 1);
                 }
 
