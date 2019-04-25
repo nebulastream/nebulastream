@@ -556,11 +556,12 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     size_t index = startIdx;
     size_t noBufferFound = 0;
     size_t consumed = 0;
+    bool is_done;
     while(true)
     {
         if (cInfos->buffer_ready_sign[index] == BUFFER_USED_FLAG || cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
         {
-            bool is_done = cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE;
+            is_done = cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE;
 
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
@@ -568,7 +569,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             cout << "Thread=" << outerThread << "/" << omp_get_thread_num() << "/" << outerThread<< " Received buffer at index=" << index << endl;
 #endif
             consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers[index]->getData(), bufferSizeInTuples,
-                    hashTable, windowSizeInSec, campaingCnt, consumerID, rank);
+                    hashTable, windowSizeInSec, campaingCnt, consumerID, rank, is_done);
 
             cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
 
@@ -620,7 +621,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
             consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers[index]->getData(), bufferSizeInTuples,
-                                hashTable, windowSizeInSec, campaingCnt, consumerID, rank);
+                                hashTable, windowSizeInSec, campaingCnt, consumerID, rank, is_done);
             cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
         }
     }
