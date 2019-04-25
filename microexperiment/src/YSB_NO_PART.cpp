@@ -537,12 +537,12 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers[index]->getData(), bufferSizeInTuples,
                     hashTable, windowSizeInSec, campaingCnt, consumerID, rank);
 
-//            cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
+            cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
 
-            if(is_done) // this is done so that the loop later doesnt try to process this again
+            if(is_done)
             {
                 std::atomic_fetch_add(&exitConsumer[consumerID], size_t(1));
-                cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
+//                cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
                 cout << "DONE BUFFER FOUND at idx"  << index << endl;
                 if(rank == 3)
                 {
