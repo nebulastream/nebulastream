@@ -442,7 +442,8 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                             }
                             else
                             {
-//                                cout << "not free" << endl;
+                                cout << "not free" << endl;
+                                sleep(1);
                             }
                         }
 
