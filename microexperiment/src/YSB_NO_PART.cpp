@@ -461,6 +461,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         //collect data
 //                        cout << "merging local stuff for consumerID=" << consumerID << endl;
                         //copy local
+                        #pragma omp parallel for
                         for(size_t i = 0; i < campaingCnt; i++)
                         {
 //                            cout << "merge i=" << i << " old=" << outputTable[i] << " incold=" << hashTable[oldWindow][i] << endl;
