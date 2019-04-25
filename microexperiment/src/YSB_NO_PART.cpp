@@ -404,9 +404,10 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
     size_t consumed = 0;
     size_t windowSwitchCnt = 0;
     size_t htReset = 0;
-    size_t lastTimeStamp = 0;
     Tuple tup;
     size_t current_window = 0;
+    size_t lastTimeStamp = bookKeeper[current_window];
+
 
     for(size_t i = 0; i < bufferSizeInTuples; i++)
     {
@@ -415,17 +416,16 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
         {
             current_window = current_window == 0 ? 1 : 0;
             windowSwitchCnt++;
-            size_t oldWindow = current_window == 0 ? 1 : 0;
 //            std::atomic<size_t>* expected = &hashTable[current_window][campaingCnt];
 ////            if (hashTable[current_window][campaingCnt] != timeStamp)//TODO: replace this with compare and swap
 #pragma omp critical
             {
             cout << "cmpNEW=" << bookKeeper[current_window]
-                                            << " cmpOld" << bookKeeper[oldWindow]
-                                            << " val=" << timeStamp
+                    << " val=" << timeStamp
                     << " lastTimeStamp=" << lastTimeStamp << " i=" << i << endl;
             }
-            if(bookKeeper[current_window].compare_and_swap(timeStamp, lastTimeStamp) != timeStamp)
+            size_t next = lastTimeStamp + windowSizeInSec;
+            if(bookKeeper[current_window].compare_and_swap(next, lastTimeStamp) != timeStamp)
             {
                     htReset++;
                     cout << "windowing with rank=" << rank << " consumerID=" << consumerID << "ts=" << timeStamp
