@@ -487,6 +487,10 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                                cout << "other finished" << endl;
                                break;
                            }
+                           else
+                           {
+                               cout << "wait" << endl;
+                           }
                         }
                     }
 
