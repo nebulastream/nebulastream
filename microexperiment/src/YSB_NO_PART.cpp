@@ -408,10 +408,6 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
     Tuple tup;
     size_t current_window = 0;
 
-//#ifdef DEBUG
-//    cout << "Consumer: received buffer with first tuple campaingid=" << buffer[0].campaign_id
-//                    << " timestamp=" << buffer[0].timeStamp << endl;
-//#endif
     for(size_t i = 0; i < bufferSizeInTuples; i++)
     {
         size_t timeStamp = time(NULL);//        = buffer[i].timeStamp; //was
@@ -420,17 +416,11 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
             windowSwitchCnt++;
 //            std::atomic<size_t>* expected = &hashTable[current_window][campaingCnt];
 ////            if (hashTable[current_window][campaingCnt] != timeStamp)//TODO: replace this with compare and swap
-//            tbb::atomic<size_t> meta[2];
-//            size_t next = 0;
-//            size_t old = 0;
+            cout << "cmp=" << bookKeeper[current_window] << " val=" << timeStamp << " lastTimeStamp=" << endl;
             if(bookKeeper[current_window].compare_and_swap(timeStamp, lastTimeStamp) == lastTimeStamp)
-//            if(std::atomic_compare_exchange_weak_explicit(
-//                        &hashTable[current_window][campaingCnt],
-//                        expected,
-//                        timeStamp))
                 {
 
-                    atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
+//                    atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
                     htReset++;
 
                     cout << "windowing with rank=" << rank << " consumerID=" << consumerID << "ts=" << timeStamp
@@ -438,43 +428,11 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                     size_t oldWindow = current_window == 0 ? 1 : 0;
                     if(rank == 3 && !done)
                     {
-
-//                        while(true)
-//                        {
-//                            sharedHTConnection->read_blocking(ht_sign_ready_buffer, ready_token);
-//////                            cout << "read value is id="<< consumerID << ht_sign_ready[consumerID] << endl;
-//                            if(ht_sign_ready[consumerID] == BUFFER_READY_FLAG)
-//                            {
-//                              cout << "ready" << endl;
-//
-//                            }
-//                            else
-//                            {
-//                                cout << "not ready" << endl;
-//                            }
-//                            {
-//                                break;
-//                            }
-//                            else
-//                            {
-////                                cout << "not free" << endl;
-////                                sleep(1);
-//                            }
-//                        }
-
                         memcpy(sharedHT_buffer[consumerID]->getData(), hashTable[oldWindow], sizeof(std::atomic<size_t>) * campaingCnt);
 
                         cout << "send blocking" << endl;
                         sharedHTConnection->send_blocking(sharedHT_buffer[consumerID]);
                         cout << "send blocking finished " << endl;
-
-//                        cout << "sent to master node the ht no=" << oldWindow << " toID=" << consumerID << endl;
-//                        sharedHTConnection->write(sharedHT_buffer[consumerID], sharedHT_region_token[consumerID]);
-//
-////                        cout << "set ready flag" << endl;
-//                        ht_sign_ready[consumerID] = BUFFER_USED_FLAG;//ht_sign_ready
-////                        cout << "write ready entry " << endl;
-//                        sharedHTConnection->write(ht_sign_ready_buffer, ready_token, consumerID, consumerID, 1);
                     }
                     else if(rank == 1 && !done)//this one merges
                     {
@@ -489,14 +447,6 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         sharedHTConnection->post_and_receive_blocking(sharedHT_buffer[consumerID]);
                         cout << "got rec" << endl;
                         std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[consumerID]->getData();
-//                        if(ht_sign_ready[consumerID] == BUFFER_USED_FLAG)
-//                        {
-//                           cout << "ok" << endl;
-//                        }
-//                        else
-//                        {
-//                            cout << "ne" << endl;
-//                        }
 
                         #pragma omp parallel for num_threads(10)
                         for(size_t i = 0; i < campaingCnt; i++)
@@ -504,35 +454,6 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 //                                   cout << "merge i=" << i << " old=" << outputTable[i] << " inc =" << tempTable[i] << endl;
                             outputTable[i] += tempTable[i];
                         }
-//                        ht_sign_ready[consumerID] = BUFFER_READY_FLAG;
-//                        while(true)
-//                        {
-//                           if(ht_sign_ready[consumerID] == BUFFER_USED_FLAG)
-//                           {
-////                               cout << " add received ht for id " << consumerID << endl;
-////                               ht_sign_ready[consumerID] = BUFFER_USED_SENDER_DONE;
-//                               std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[consumerID]->getData();
-//                               #pragma omp parallel for
-//                               for(size_t i = 0; i < campaingCnt; i++)
-//                               {
-////                                   cout << "merge i=" << i << " old=" << outputTable[i] << " inc =" << tempTable[i] << endl;
-//                                   outputTable[i] += tempTable[i];
-//                               }
-//                               ht_sign_ready[consumerID] = BUFFER_READY_FLAG;
-//                               break;
-//                            }
-//                           else if(ht_sign_ready[consumerID] == BUFFER_USED_SENDER_DONE)
-//                           {
-//                               cout << "other finished" << endl;
-//                               break;
-//                           }
-//                           else
-//                           {
-////                               cout << "wait in rank " << rank << " consumerID=" << consumerID
-////                                       << "ts=" << timeStamp << " thread=" << omp_get_thread_num() << endl;
-////                               sleep(1);
-//                           }
-//                        }
                     }
 
             }//end of if window
@@ -802,8 +723,6 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
     connectInfo->bookKeeping[0] = 0;
     connectInfo->bookKeeping[1] = 0;
 
-//    htPtrs[outer_thread_id] = hashTable[0];
-//    htPtrs[outer_thread_id*2] = hashTable[1];
     return connectInfo;
 }
 
@@ -1392,3 +1311,123 @@ int main(int argc, char *argv[])
 ////                        printSingleHT(outputTable, campaingCnt);
 //                        std::fill(outputTable, outputTable + campaingCnt, 0);
 //                    }
+//
+//for(size_t i = 0; i < bufferSizeInTuples; i++)
+//    {
+//        size_t timeStamp = time(NULL);//        = buffer[i].timeStamp; //was
+//        if (lastTimeStamp != timeStamp && timeStamp % windowSizeInSec == 0) {
+//            current_window = current_window == 0 ? 1 : 0;
+//            windowSwitchCnt++;
+////            std::atomic<size_t>* expected = &hashTable[current_window][campaingCnt];
+//////            if (hashTable[current_window][campaingCnt] != timeStamp)//TODO: replace this with compare and swap
+//            if(bookKeeper[current_window].compare_and_swap(timeStamp, lastTimeStamp) == lastTimeStamp)
+//                {
+//
+////                    atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
+//                    htReset++;
+//
+//                    cout << "windowing with rank=" << rank << " consumerID=" << consumerID << "ts=" << timeStamp
+//                            << " lastts=" << lastTimeStamp << endl;
+//                    size_t oldWindow = current_window == 0 ? 1 : 0;
+//                    if(rank == 3 && !done)
+//                    {
+//
+////                        while(true)
+////                        {
+////                            sharedHTConnection->read_blocking(ht_sign_ready_buffer, ready_token);
+////////                            cout << "read value is id="<< consumerID << ht_sign_ready[consumerID] << endl;
+////                            if(ht_sign_ready[consumerID] == BUFFER_READY_FLAG)
+////                            {
+////                              cout << "ready" << endl;
+////
+////                            }
+////                            else
+////                            {
+////                                cout << "not ready" << endl;
+////                            }
+////                            {
+////                                break;
+////                            }
+////                            else
+////                            {
+//////                                cout << "not free" << endl;
+//////                                sleep(1);
+////                            }
+////                        }
+//
+//                        memcpy(sharedHT_buffer[consumerID]->getData(), hashTable[oldWindow], sizeof(std::atomic<size_t>) * campaingCnt);
+//
+//                        cout << "send blocking" << endl;
+//                        sharedHTConnection->send_blocking(sharedHT_buffer[consumerID]);
+//                        cout << "send blocking finished " << endl;
+//
+////                        cout << "sent to master node the ht no=" << oldWindow << " toID=" << consumerID << endl;
+////                        sharedHTConnection->write(sharedHT_buffer[consumerID], sharedHT_region_token[consumerID]);
+////
+//////                        cout << "set ready flag" << endl;
+////                        ht_sign_ready[consumerID] = BUFFER_USED_FLAG;//ht_sign_ready
+//////                        cout << "write ready entry " << endl;
+////                        sharedHTConnection->write(ht_sign_ready_buffer, ready_token, consumerID, consumerID, 1);
+//                    }
+//                    else if(rank == 1 && !done)//this one merges
+//                    {
+////                        cout << "merging local stuff for consumerID=" << consumerID << endl;
+//                        #pragma omp parallel for num_threads(10)
+//                        for(size_t i = 0; i < campaingCnt; i++)
+//                        {
+////                            cout << "merge i=" << i << " old=" << outputTable[i] << " incold=" << hashTable[oldWindow][i] << endl;
+//                            outputTable[i] += hashTable[oldWindow][i];
+//                        }
+//                        cout << "post rec id " << consumerID << " ranK=" << rank << " thread=" << omp_get_thread_num() << endl;
+//                        sharedHTConnection->post_and_receive_blocking(sharedHT_buffer[consumerID]);
+//                        cout << "got rec" << endl;
+//                        std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[consumerID]->getData();
+////                        if(ht_sign_ready[consumerID] == BUFFER_USED_FLAG)
+////                        {
+////                           cout << "ok" << endl;
+////                        }
+////                        else
+////                        {
+////                            cout << "ne" << endl;
+////                        }
+//
+//                        #pragma omp parallel for num_threads(10)
+//                        for(size_t i = 0; i < campaingCnt; i++)
+//                        {
+////                                   cout << "merge i=" << i << " old=" << outputTable[i] << " inc =" << tempTable[i] << endl;
+//                            outputTable[i] += tempTable[i];
+//                        }
+////                        ht_sign_ready[consumerID] = BUFFER_READY_FLAG;
+////                        while(true)
+////                        {
+////                           if(ht_sign_ready[consumerID] == BUFFER_USED_FLAG)
+////                           {
+//////                               cout << " add received ht for id " << consumerID << endl;
+//////                               ht_sign_ready[consumerID] = BUFFER_USED_SENDER_DONE;
+////                               std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[consumerID]->getData();
+////                               #pragma omp parallel for
+////                               for(size_t i = 0; i < campaingCnt; i++)
+////                               {
+//////                                   cout << "merge i=" << i << " old=" << outputTable[i] << " inc =" << tempTable[i] << endl;
+////                                   outputTable[i] += tempTable[i];
+////                               }
+////                               ht_sign_ready[consumerID] = BUFFER_READY_FLAG;
+////                               break;
+////                            }
+////                           else if(ht_sign_ready[consumerID] == BUFFER_USED_SENDER_DONE)
+////                           {
+////                               cout << "other finished" << endl;
+////                               break;
+////                           }
+////                           else
+////                           {
+//////                               cout << "wait in rank " << rank << " consumerID=" << consumerID
+//////                                       << "ts=" << timeStamp << " thread=" << omp_get_thread_num() << endl;
+//////                               sleep(1);
+////                           }
+////                        }
+//                    }
+//
+//            }//end of if window
+//            lastTimeStamp = timeStamp;
+//        }
