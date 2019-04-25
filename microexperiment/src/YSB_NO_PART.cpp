@@ -450,9 +450,9 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         sharedHTConnection->write(sharedHT_buffer[consumerID], sharedHT_region_token[consumerID]);
 
 //                        cout << "set ready flag" << endl;
-                        ht_sign_ready[consumerID] = BUFFER_USED_FLAG;//ht_sign_ready
+//                        ht_sign_ready[consumerID] = BUFFER_USED_FLAG;//ht_sign_ready
 //                        cout << "write ready entry " << endl;
-                        sharedHTConnection->write_blocking(ht_sign_ready_buffer, ready_token, consumerID, consumerID, 1);
+//                        sharedHTConnection->write_blocking(ht_sign_ready_buffer, ready_token, consumerID, consumerID, 1);
                     }
                     else if(rank == 1)//this one merges
                     {
@@ -556,8 +556,8 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                 if(rank == 3)
                 {
                     ht_sign_ready[consumerID] = BUFFER_USED_SENDER_DONE;//ht_sign_ready
-                    cout << "write finish entry with id=" << consumerID << " time=" << time(NULL) << endl;
-                    sharedHTConnection->write_blocking(ht_sign_ready_buffer, ready_token, consumerID, consumerID, 1);
+//                    cout << "write finish entry with id=" << consumerID << " time=" << time(NULL) << endl;
+//                    sharedHTConnection->write_blocking(ht_sign_ready_buffer, ready_token, consumerID, consumerID, 1);
                 }
                 break;
             }
