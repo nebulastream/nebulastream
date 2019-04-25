@@ -455,6 +455,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         //copy local
                         for(size_t i = 0; i < campaingCnt; i++)
                         {
+                            cout << "merge i=" << i << " old=" << outputTable[i] << " inc=" << hashTable[oldWindow][i] <<endl;
                             outputTable[i] += hashTable[oldWindow][i];
                         }
                     }
