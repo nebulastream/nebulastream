@@ -407,9 +407,9 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
     Tuple tup;
     size_t current_window = 0;
 
-    size_t nextWindow = current_window == 0 ? 1 : 0;
-    size_t lastTimeStamp = bookKeeper[nextWindow];
-    size_t nextTS = lastTimeStamp + windowSizeInSec;
+//    size_t nextWindow = current_window == 0 ? 1 : 0;
+    size_t lastTimeStamp = 0;
+//    size_t nextTS = lastTimeStamp + windowSizeInSec;
 
     for(size_t i = 0; i < bufferSizeInTuples; i++)
     {
