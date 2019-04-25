@@ -429,6 +429,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 //            size_t next = lastTimeStamp + windowSizeInSec;
 //            if(bookKeeper[current_window].compare_and_swap(nextTS, lastTimeStamp) == nextTS)
 #pragma omp single
+        {
             if (hashTable[current_window][campaingCnt] != timeStamp)//TODO: replace this with compare and swap
             {
                     atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
@@ -473,7 +474,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
             lastTimeStamp = timeStamp;
 //            cout << "new lastTs" << lastTimeStamp << endl;
         }//end of if window
-
+        }
         uint64_t bucketPos = (buffer[i].campaign_id * 789 + 321) % campaingCnt;
         atomic_fetch_add(&hashTable[current_window][bucketPos], size_t(1));
         consumed++;
