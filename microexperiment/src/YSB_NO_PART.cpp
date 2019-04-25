@@ -490,7 +490,8 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                            }
                            else
                            {
-                               cout << "wait in rank " << rank << " consumerID=" << consumerID << "ts=" << timeStamp << " thread=" << omp_get_thread_num() << endl;
+                               cout << "wait in rank " << rank << " consumerID=" << consumerID
+                                       << "ts=" << timeStamp << " thread=" << omp_get_thread_num() << endl;
                                sleep(1);
                            }
                         }
@@ -540,7 +541,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                 if(rank == 3)
                 {
                     ht_sign_ready[consumerID] = BUFFER_USED_SENDER_DONE;//ht_sign_ready
-                    cout << "write finish entry with id=" << consumerID << endl;
+                    cout << "write finish entry with id=" << consumerID << " time=" << time(NULL) <<< endl;
                     sharedHTConnection->write_blocking(ht_sign_ready_buffer, ready_token, consumerID, consumerID, 1);
                 }
 
