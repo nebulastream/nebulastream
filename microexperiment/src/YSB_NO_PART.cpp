@@ -416,16 +416,16 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
             {
                     atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
                     htReset++;
-                    #pragma omp critical
-                    {
+//                    #pragma omp critical
+//                    {
                     cout << "windowing with rank=" << rank << " consumerID=" << consumerID << "ts=" << timeStamp
                             << " lastts=" << lastTimeStamp << " thread=" << omp_get_thread_num()
                             << " i=" << i  << " done=" << done << endl;
-                    }
-                    size_t oldWindow = current_window == 0 ? 1 : 0;
-                    if(rank == 3 && !done)
+//                    }
+//                    size_t oldWindow = current_window == 0 ? 1 : 0;
+                    if(rank == 3 && !done && std::atomic_load(&exitConsumer[consumerID]) != 1)
                     {
-                        memcpy(sharedHT_buffer[consumerID]->getData(), hashTable[oldWindow], sizeof(std::atomic<size_t>) * campaingCnt);
+                        memcpy(sharedHT_buffer[consumerID]->getData(), hashTable[current_window], sizeof(std::atomic<size_t>) * campaingCnt);
 
                         cout << "send blocking" << endl;
                         sharedHTConnection->send_blocking(sharedHT_buffer[consumerID]);
@@ -438,7 +438,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         for(size_t i = 0; i < campaingCnt; i++)
                         {
 //                            cout << "merge i=" << i << " old=" << outputTable[i] << " incold=" << hashTable[oldWindow][i] << endl;
-                            outputTable[i] += hashTable[oldWindow][i];
+                            outputTable[i] += hashTable[current_window][i];
                         }
                         cout << "post rec id " << consumerID << " ranK=" << rank << " thread=" << omp_get_thread_num() << "done=" << done<< endl;
                         sharedHTConnection->post_and_receive_blocking(sharedHT_buffer[consumerID]);
