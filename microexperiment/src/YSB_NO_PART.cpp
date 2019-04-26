@@ -500,6 +500,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             if(cInfos->exitConsumer == 1)
             {
                 cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
+                is_done = true;
                 break;
             }
 
