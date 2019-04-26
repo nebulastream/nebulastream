@@ -420,7 +420,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                     {
                     cout << "windowing with rank=" << rank << " consumerID=" << consumerID << "ts=" << timeStamp
                             << " lastts=" << lastTimeStamp << " thread=" << omp_get_thread_num()
-                            << " i=" << i << endl;
+                            << " i=" << i  << " done=" << done << endl;
                     }
                     size_t oldWindow = current_window == 0 ? 1 : 0;
                     if(rank == 3 && !done)
