@@ -419,12 +419,12 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
             {
 //                    atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
                     htReset++;
-//                    #pragma omp critical
-//                    {
-//                    cout << "windowing with rank=" << rank << " consumerID=" << consumerID << "ts=" << timeStamp
-//                            << " lastts=" << lastTimeStamp << " thread=" << omp_get_thread_num()
-//                            << " i=" << i  << " done=" << done << endl;
-//                    }
+                    #pragma omp critical
+                    {
+                        cout << "windowing with rank=" << rank << " consumerID=" << consumerID << "ts=" << timeStamp
+                            << " lastts=" << lastTimeStamp << " thread=" << omp_get_thread_num()
+                            << " i=" << i  << " done=" << done << endl;
+                    }
 //                    size_t oldWindow = current_window == 0 ? 1 : 0;
                     if(rank == 3 && !done && *exitConsumer != 1)
                     {
@@ -443,7 +443,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 //                            cout << "merge i=" << i << " old=" << outputTable[i] << " incold=" << hashTable[oldWindow][i] << endl;
                             outputTable[i] += hashTable[current_window][i];
                         }
-//                        cout << "post rec id " << consumerID << " ranK=" << rank << " thread=" << omp_get_thread_num() << "done=" << done<< endl;
+                        cout << "post rec id " << consumerID << " ranK=" << rank << " thread=" << omp_get_thread_num() << "done=" << done<< endl;
                         sharedHTConnection->post_and_receive_blocking(sharedHT_buffer[consumerID]);
 //                        cout << "got rec" << endl;
                         std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[consumerID]->getData();
