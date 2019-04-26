@@ -441,6 +441,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                             outputTable[i] += hashTable[current_window][i];
                         }
 //                        cout << "post rec id " << consumerID << " ranK=" << rank << " thread=" << omp_get_thread_num() << "done=" << done<< endl;
+                        //TODO: DO THIS AS LAMDA FUNC CALL
                         ReceiveElement receiveElement;
                         receiveElement.buffer = sharedHT_buffer[consumerID];
                         sharedHTConnection->post_receive(receiveElement.buffer);
