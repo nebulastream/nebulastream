@@ -418,12 +418,12 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
             if(bookKeeper[current_window].compare_and_swap(timeStamp, lastTimeStamp) == lastTimeStamp)
             {
                     htReset++;
-                    #pragma omp critical
-                    {
-                        cout << "windowing with rank=" << rank << " consumerID=" << consumerID << "ts=" << timeStamp
-                            << " lastts=" << lastTimeStamp << " thread=" << omp_get_thread_num()
-                            << " i=" << i  << " done=" << done << " exit=" << *exitConsumer << endl;
-                    }
+//                    #pragma omp critical
+//                    {
+//                        cout << "windowing with rank=" << rank << " consumerID=" << consumerID << "ts=" << timeStamp
+//                            << " lastts=" << lastTimeStamp << " thread=" << omp_get_thread_num()
+//                            << " i=" << i  << " done=" << done << " exit=" << *exitConsumer << endl;
+//                    }
                     if(rank == 3 && !done && *exitConsumer != 1)
                     {
                         memcpy(sharedHT_buffer[consumerID]->getData(), hashTable[current_window], sizeof(std::atomic<size_t>) * campaingCnt);
@@ -505,6 +505,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             }
             if(cInfos->exitConsumer == 1)
             {
+                cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
                 break;
             }
 
