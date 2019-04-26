@@ -509,7 +509,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                 std::atomic_fetch_add(&exitConsumer[consumerID], size_t(1));
                 cout << "DONE BUFFER FOUND at idx"  << index << endl;
 
-                break;
+//                break;
             }
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
@@ -547,7 +547,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         }
     }//end of while
 
-    cout << "checking remaining buffers" << endl;
+//    cout << "checking remaining buffers" << endl;
     for(index = startIdx; index < endIdx; index++)//check again if some are there
     {
 //        cout << "checking i=" << index << endl;
