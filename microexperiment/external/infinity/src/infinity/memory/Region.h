@@ -40,6 +40,7 @@ public:
 	uint32_t getLocalKey();
 	uint32_t getRemoteKey();
 
+	void setSizeInBytes(size_t size);
 protected:
 
 	infinity::core::Context* context;

@@ -38,6 +38,11 @@ uint64_t Region::getSizeInBytes() {
 	return this->sizeInBytes;
 }
 
+void Region::setSizeInBytes(size_t size) {
+    this->sizeInBytes = size;
+}
+
+
 uint64_t Region::getRemainingSizeInBytes(uint64_t offset) {
 	return this->sizeInBytes - offset;
 }
