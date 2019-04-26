@@ -405,19 +405,14 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
     size_t windowSwitchCnt = 0;
     size_t htReset = 0;
     Tuple tup;
-    size_t current_window = 0;
-
-//    size_t nextWindow = current_window == 0 ? 1 : 0;
-    size_t lastTimeStamp = hashTable[current_window][campaingCnt];
-//    size_t nextTS = lastTimeStamp + windowSizeInSec;
+    size_t current_window = bookKeeper[0] > bookKeeper[1] ? 0 : 1;
+    size_t lastTimeStamp = bookKeeper[current_window];
 
     for(size_t i = 0; i < bufferSizeInTuples; i++)
     {
         size_t timeStamp = time(NULL);//        = buffer[i].timeStamp; //was
         if (lastTimeStamp != timeStamp && timeStamp % windowSizeInSec == 0)
         {
-            current_window = current_window == 0 ? 1 : 0;
-            windowSwitchCnt++;
 //            std::atomic<size_t>* expected = &hashTable[current_window][campaingCnt];
 ////            if (hashTable[current_window][campaingCnt] != timeStamp)//TODO: replace this with compare and swap
 //#pragma omp critical
@@ -427,14 +422,13 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 //                    << " lastTimeStamp=" << lastTimeStamp << " i=" << i << endl;
 //            }
 //            size_t next = lastTimeStamp + windowSizeInSec;
-//            if(bookKeeper[current_window].compare_and_swap(nextTS, lastTimeStamp) == nextTS)
-#pragma omp single
-        {
-            if (hashTable[current_window][campaingCnt] != timeStamp)//TODO: replace this with compare and swap
+            if(bookKeeper[current_window].compare_and_swap(timeStamp, lastTimeStamp) == lastTimeStamp)
             {
+//            if (hashTable[current_window][campaingCnt] != timeStamp)//TODO: replace this with compare and swap
+//            {
                     atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
                     htReset++;
-#pragma omp critical
+                    #pragma omp critical
                     {
                     cout << "windowing with rank=" << rank << " consumerID=" << consumerID << "ts=" << timeStamp
                             << " lastts=" << lastTimeStamp << " thread=" << omp_get_thread_num()
@@ -470,17 +464,18 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                             outputTable[i] += tempTable[i];
                         }
                     }//end of else
-            }//end of if window
-//            cout << "set lastTs=" << lastTimeStamp << " to new " << timeStamp << endl;
+            }//end of if to change
+            current_window = current_window == 0 ? 1 : 0;
             lastTimeStamp = timeStamp;
-//            cout << "new lastTs" << lastTimeStamp << endl;
-        }//end of if window
-        }
+            windowSwitchCnt++;
+
+        }//end of if window is new
+//        }//end of for
         uint64_t bucketPos = (buffer[i].campaign_id * 789 + 321) % campaingCnt;
         atomic_fetch_add(&hashTable[current_window][bucketPos], size_t(1));
         consumed++;
 
-    }//end of for
+    }       //end of for
 #ifdef DEBUG
 #pragma omp critical
     cout << "Thread=" << omp_get_thread_num() << " consumed=" << consumed
@@ -736,8 +731,8 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
         std::atomic_init(&outputTable[i], std::size_t(0));
 
     connectInfo->bookKeeping = new tbb::atomic<size_t>[2];
-    connectInfo->bookKeeping[0] = 0;
-    connectInfo->bookKeeping[1] = 0;
+    connectInfo->bookKeeping[0] = time(NULL);
+    connectInfo->bookKeeping[1] = time(NULL) + 2;
 
     return connectInfo;
 }
