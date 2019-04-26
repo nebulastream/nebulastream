@@ -417,7 +417,6 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
         {
             if(bookKeeper[current_window].compare_and_swap(timeStamp, lastTimeStamp) == lastTimeStamp)
             {
-//                    atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
                     htReset++;
                     #pragma omp critical
                     {
@@ -437,18 +436,18 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                     else if(rank == 1 && !done && *exitConsumer != 1)//this one merges
                     {
 //                        cout << "merging local stuff for consumerID=" << consumerID << endl;
-                        #pragma omp parallel for num_threads(10)
+                        #pragma omp parallel for num_threads(8)
                         for(size_t i = 0; i < campaingCnt; i++)
                         {
 //                            cout << "merge i=" << i << " old=" << outputTable[i] << " incold=" << hashTable[oldWindow][i] << endl;
                             outputTable[i] += hashTable[current_window][i];
                         }
-                        cout << "post rec id " << consumerID << " ranK=" << rank << " thread=" << omp_get_thread_num() << "done=" << done<< endl;
+//                        cout << "post rec id " << consumerID << " ranK=" << rank << " thread=" << omp_get_thread_num() << "done=" << done<< endl;
                         sharedHTConnection->post_and_receive_blocking(sharedHT_buffer[consumerID]);
 //                        cout << "got rec" << endl;
                         std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[consumerID]->getData();
 
-                        #pragma omp parallel for num_threads(10)
+                        #pragma omp parallel for num_threads(8)
                         for(size_t i = 0; i < campaingCnt; i++)
                         {
 //                                   cout << "merge i=" << i << " old=" << outputTable[i] << " inc =" << tempTable[i] << endl;
