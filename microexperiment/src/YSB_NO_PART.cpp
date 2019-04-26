@@ -422,19 +422,19 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                     {
                         cout << "windowing with rank=" << rank << " consumerID=" << consumerID << "ts=" << timeStamp
                             << " lastts=" << lastTimeStamp << " thread=" << omp_get_thread_num()
-                            << " i=" << i  << " done=" << done << endl;
+                            << " i=" << i  << " done=" << done << " exit=" << *exitConsumer << endl;
                     }
                     if(rank == 3 && !done && *exitConsumer != 1)
                     {
                         memcpy(sharedHT_buffer[consumerID]->getData(), hashTable[current_window], sizeof(std::atomic<size_t>) * campaingCnt);
 
-                        cout << "send blocking id=" << consumerID  << endl;
+//                        cout << "send blocking id=" << consumerID  << endl;
                         sharedHTConnection->send_blocking(sharedHT_buffer[consumerID]);
 //                        cout << "send blocking finished " << endl;
                     }
                     else if(rank == 1 && !done && *exitConsumer != 1)//this one merges
                     {
-                        cout << "merging local stuff for consumerID=" << consumerID << endl;
+//                        cout << "merging local stuff for consumerID=" << consumerID << endl;
                         #pragma omp parallel for num_threads(20)
                         for(size_t i = 0; i < campaingCnt; i++)
                         {
@@ -489,16 +489,13 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     {
         if (cInfos->buffer_ready_sign[index] == BUFFER_USED_FLAG || cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
         {
-            if(cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE || cInfos->exitConsumer == 1)
+            if(cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
             {
-                if(cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
-                {
                     std::atomic_fetch_add(&cInfos->exitConsumer, size_t(1));
                     cout << "DONE BUFFER FOUND at idx"  << index << endl;
-                }
-                is_done = true;
-                break;
+                    is_done = true;
             }
+
 
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
