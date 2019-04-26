@@ -400,7 +400,6 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
 
 size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         size_t campaingCnt, size_t consumerID, size_t rank, bool done, tbb::atomic<size_t>* bookKeeper) {
-//    return bufferSizeInTuples;
     size_t consumed = 0;
     size_t windowSwitchCnt = 0;
     size_t htReset = 0;
@@ -413,19 +412,8 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
         size_t timeStamp = time(NULL);//        = buffer[i].timeStamp; //was
         if (lastTimeStamp != timeStamp && timeStamp % windowSizeInSec == 0)
         {
-//            std::atomic<size_t>* expected = &hashTable[current_window][campaingCnt];
-////            if (hashTable[current_window][campaingCnt] != timeStamp)//TODO: replace this with compare and swap
-//#pragma omp critical
-//            {
-//            cout << "cmpNEW=" << bookKeeper[current_window]
-//                    << " val=" << timeStamp
-//                    << " lastTimeStamp=" << lastTimeStamp << " i=" << i << endl;
-//            }
-//            size_t next = lastTimeStamp + windowSizeInSec;
             if(bookKeeper[current_window].compare_and_swap(timeStamp, lastTimeStamp) == lastTimeStamp)
             {
-//            if (hashTable[current_window][campaingCnt] != timeStamp)//TODO: replace this with compare and swap
-//            {
                     atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
                     htReset++;
                     #pragma omp critical
@@ -490,14 +478,14 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples, size_t* consumedTuples, size_t* consumedBuffers,
         size_t* consumerNoBufferFound,
-        size_t startIdx, size_t endIdx, ConnectionInfos* cInfos, size_t outerThread, size_t rank)
+        size_t startIdx, size_t endIdx, ConnectionInfos* cInfos, size_t outerThread, size_t rank, size_t numberOfNodes)
 {
     size_t total_received_tuples = 0;
     size_t total_received_buffers = 0;
     size_t index = startIdx;
     size_t noBufferFound = 0;
     size_t consumed = 0;
-    bool is_done;
+    bool is_done = numberOfNodes == 4 ? false : true;
     while(true)
     {
         if (cInfos->buffer_ready_sign[index] == BUFFER_USED_FLAG || cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
@@ -507,20 +495,11 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                 if(cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
                 {
                     std::atomic_fetch_add(&exitConsumer[consumerID], size_t(1));
-                   cout << "DONE BUFFER FOUND at idx"  << index << endl;
+                    cout << "DONE BUFFER FOUND at idx"  << index << endl;
                 }
                 is_done = true;
-
             }
-//            is_done = cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE;
 
-//            if(is_done)
-//            {
-//                std::atomic_fetch_add(&exitConsumer[consumerID], size_t(1));
-//                cout << "DONE BUFFER FOUND at idx"  << index << endl;
-//
-////                break;
-//            }
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
 #ifdef DEBUG
@@ -1222,7 +1201,7 @@ int main(int argc, char *argv[])
 #endif
              runConsumerNew(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, outer_thread_id, numberOfProducer , bufferSizeInTups,
                      &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
-                     endIdx, conInfos[outer_thread_id], outer_thread_id, rank);
+                     endIdx, conInfos[outer_thread_id], outer_thread_id, rank, numberOfNodes);
 //             printSingleHT(conInfos[outer_thread_id]->hashTable[0], campaingCnt);
 //                 printHT(conInfos[outer_thread_id]->hashTable, campaingCnt, outer_thread_id);
           }
