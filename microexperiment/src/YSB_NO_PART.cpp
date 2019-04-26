@@ -429,7 +429,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         memcpy(sharedHT_buffer[consumerID]->getData(), hashTable[current_window], sizeof(std::atomic<size_t>) * campaingCnt);
 
 //                        cout << "send blocking id=" << consumerID  << endl;
-                        sharedHTConnection->send_blocking(sharedHT_buffer[consumerID]);
+                        sharedHTConnection->send(sharedHT_buffer[consumerID]);//send_blocking
 //                        cout << "send blocking finished " << endl;
                     }
                     else if(rank == 1 && !done && std::atomic_load(exitConsumer) != 1)//this one merges
