@@ -438,7 +438,6 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         #pragma omp parallel for num_threads(20)
                         for(size_t i = 0; i < campaingCnt; i++)
                         {
-//                            cout << "merge i=" << i << " old=" << outputTable[i] << " incold=" << hashTable[oldWindow][i] << endl;
                             outputTable[i] += hashTable[current_window][i];
                         }
 //                        cout << "post rec id " << consumerID << " ranK=" << rank << " thread=" << omp_get_thread_num() << "done=" << done<< endl;
@@ -449,7 +448,6 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         #pragma omp parallel for num_threads(20)
                         for(size_t i = 0; i < campaingCnt; i++)
                         {
-//                                   cout << "merge i=" << i << " old=" << outputTable[i] << " inc =" << tempTable[i] << endl;
                             outputTable[i] += tempTable[i];
                         }
                     }//end of else
@@ -499,6 +497,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                     cout << "DONE BUFFER FOUND at idx"  << index << endl;
                 }
                 is_done = true;
+                break;
             }
 
             total_received_tuples += bufferSizeInTuples;
