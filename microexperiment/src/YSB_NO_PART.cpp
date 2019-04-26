@@ -501,6 +501,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                     std::atomic_fetch_add(&cInfos->exitConsumer, size_t(1));
                     cout << "DONE BUFFER FOUND at idx"  << index << endl;
                     is_done = true;
+                    break;
             }
 
 
