@@ -416,20 +416,20 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
             {
                     atomic_store(&hashTable[current_window][campaingCnt], timeStamp);
                     htReset++;
-                    #pragma omp critical
-                    {
-                    cout << "windowing with rank=" << rank << " consumerID=" << consumerID << "ts=" << timeStamp
-                            << " lastts=" << lastTimeStamp << " thread=" << omp_get_thread_num()
-                            << " i=" << i  << " done=" << done << endl;
-                    }
+//                    #pragma omp critical
+//                    {
+//                    cout << "windowing with rank=" << rank << " consumerID=" << consumerID << "ts=" << timeStamp
+//                            << " lastts=" << lastTimeStamp << " thread=" << omp_get_thread_num()
+//                            << " i=" << i  << " done=" << done << endl;
+//                    }
 //                    size_t oldWindow = current_window == 0 ? 1 : 0;
                     if(rank == 3 && !done && exitConsumer[consumerID] != 1)
                     {
                         memcpy(sharedHT_buffer[consumerID]->getData(), hashTable[current_window], sizeof(std::atomic<size_t>) * campaingCnt);
 
-                        cout << "send blocking" << endl;
+//                        cout << "send blocking" << endl;
                         sharedHTConnection->send_blocking(sharedHT_buffer[consumerID]);
-                        cout << "send blocking finished " << endl;
+//                        cout << "send blocking finished " << endl;
                     }
                     else if(rank == 1 && !done && exitConsumer[consumerID] != 1)//this one merges
                     {
@@ -440,9 +440,9 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 //                            cout << "merge i=" << i << " old=" << outputTable[i] << " incold=" << hashTable[oldWindow][i] << endl;
                             outputTable[i] += hashTable[current_window][i];
                         }
-                        cout << "post rec id " << consumerID << " ranK=" << rank << " thread=" << omp_get_thread_num() << "done=" << done<< endl;
+//                        cout << "post rec id " << consumerID << " ranK=" << rank << " thread=" << omp_get_thread_num() << "done=" << done<< endl;
                         sharedHTConnection->post_and_receive_blocking(sharedHT_buffer[consumerID]);
-                        cout << "got rec" << endl;
+//                        cout << "got rec" << endl;
                         std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[consumerID]->getData();
 
                         #pragma omp parallel for num_threads(10)
@@ -490,7 +490,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     {
         if (cInfos->buffer_ready_sign[index] == BUFFER_USED_FLAG || cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
         {
-            if(cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE || std::atomic_load(&exitConsumer[consumerID]) == 1)
+            if(cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE || exitConsumer[consumerID] == 1)
             {
                 if(cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
                 {
