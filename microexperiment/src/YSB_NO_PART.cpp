@@ -502,15 +502,25 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     {
         if (cInfos->buffer_ready_sign[index] == BUFFER_USED_FLAG || cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
         {
-            is_done = cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE;
-
-            if(is_done)
+            if(cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE || std::atomic_load(&exitConsumer[consumerID]) == 1)
             {
-                std::atomic_fetch_add(&exitConsumer[consumerID], size_t(1));
-                cout << "DONE BUFFER FOUND at idx"  << index << endl;
+                if(cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
+                {
+                    std::atomic_fetch_add(&exitConsumer[consumerID], size_t(1));
+                   cout << "DONE BUFFER FOUND at idx"  << index << endl;
+                }
+                is_done = true;
 
-//                break;
             }
+//            is_done = cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE;
+
+//            if(is_done)
+//            {
+//                std::atomic_fetch_add(&exitConsumer[consumerID], size_t(1));
+//                cout << "DONE BUFFER FOUND at idx"  << index << endl;
+//
+////                break;
+//            }
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
 #ifdef DEBUG
@@ -520,8 +530,6 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                     hashTable, windowSizeInSec, campaingCnt, consumerID, rank, is_done, cInfos->bookKeeping);
 
             cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
-
-
         }
         else
         {
@@ -534,8 +542,8 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
         if(std::atomic_load(&exitConsumer[consumerID]) == 1)
         {
-            *consumedTuples = total_received_tuples;
-            *consumedBuffers = total_received_buffers;
+//            *consumedTuples = total_received_tuples;
+//            *consumedBuffers = total_received_buffers;
 #ifdef DEBUG
 
             stringstream ss;
