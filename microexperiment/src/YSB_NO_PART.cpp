@@ -424,7 +424,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 //                            << " lastts=" << lastTimeStamp << " thread=" << omp_get_thread_num()
 //                            << " i=" << i  << " done=" << done << " exit=" << *exitConsumer << endl;
 //                    }
-                    if(rank == 3 && !done && *exitConsumer != 1)
+                    if(rank == 3 && !done && std::atomic_load(exitConsumer) != 1)
                     {
                         memcpy(sharedHT_buffer[consumerID]->getData(), hashTable[current_window], sizeof(std::atomic<size_t>) * campaingCnt);
 
@@ -432,7 +432,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         sharedHTConnection->send_blocking(sharedHT_buffer[consumerID]);
 //                        cout << "send blocking finished " << endl;
                     }
-                    else if(rank == 1 && !done && *exitConsumer != 1)//this one merges
+                    else if(rank == 1 && !done && std::atomic_load(exitConsumer) != 1)//this one merges
                     {
 //                        cout << "merging local stuff for consumerID=" << consumerID << endl;
                         #pragma omp parallel for num_threads(20)
@@ -497,7 +497,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                     is_done = true;
 
             }
-            if(cInfos->exitConsumer == 1)
+            if(std::atomic_load(&cInfos->exitConsumer) == 1)
             {
                 cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
                 is_done = true;
