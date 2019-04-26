@@ -424,7 +424,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 //                            << " lastts=" << lastTimeStamp << " thread=" << omp_get_thread_num()
 //                            << " i=" << i  << " done=" << done << " exit=" << *exitConsumer << endl;
 //                    }
-                    if(rank == 3 && !done && std::atomic_load(exitConsumer) != 1)
+                    if(rank == 3 && !done )//&& std::atomic_load(exitConsumer) != 1
                     {
                         memcpy(sharedHT_buffer[consumerID]->getData(), hashTable[current_window], sizeof(std::atomic<size_t>) * campaingCnt);
 
