@@ -973,7 +973,7 @@ int main(int argc, char *argv[])
     size_t bufferSizeInTups = 0;
     size_t numberOfConnections = 1;
     NUM_SEND_BUFFERS = 0;
-    size_t numberOfNodes = 4;
+    size_t numberOfNodes = 2;
     string ip = "";
 
 
