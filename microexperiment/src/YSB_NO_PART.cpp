@@ -424,7 +424,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 //                            << " lastts=" << lastTimeStamp << " thread=" << omp_get_thread_num()
 //                            << " i=" << i  << " done=" << done << " exit=" << *exitConsumer << endl;
 //                    }
-                    if(rank == 3 && !done )//&& std::atomic_load(exitConsumer) != 1
+                    if(rank == 3 && !done && std::atomic_load(exitConsumer) != 1)
                     {
                         memcpy(sharedHT_buffer[consumerID]->getData(), hashTable[current_window], sizeof(std::atomic<size_t>) * campaingCnt);
 
@@ -501,7 +501,6 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             {
                 cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
                 is_done = true;
-                break;
             }
 
             total_received_tuples += bufferSizeInTuples;
@@ -523,8 +522,12 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         if(index > endIdx)
             index = startIdx;
 
-        if(cInfos->exitConsumer == 1)
+        if(is_done)
         {
+            break;
+        }
+//        if(cInfos->exitConsumer == 1)
+//        {
 //            *consumedTuples = total_received_tuples;
 //            *consumedBuffers = total_received_buffers;
 #ifdef DEBUG
@@ -534,8 +537,8 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                             << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
             cout << ss.str();
 #endif
-            break;
-        }
+//            break;
+//        }
     }//end of while
 
 //    cout << "checking remaining buffers" << endl;
