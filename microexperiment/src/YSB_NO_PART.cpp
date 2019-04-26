@@ -424,7 +424,6 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                             << " lastts=" << lastTimeStamp << " thread=" << omp_get_thread_num()
                             << " i=" << i  << " done=" << done << endl;
                     }
-//                    size_t oldWindow = current_window == 0 ? 1 : 0;
                     if(rank == 3 && !done && *exitConsumer != 1)
                     {
                         memcpy(sharedHT_buffer[consumerID]->getData(), hashTable[current_window], sizeof(std::atomic<size_t>) * campaingCnt);
@@ -436,7 +435,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                     else if(rank == 1 && !done && *exitConsumer != 1)//this one merges
                     {
 //                        cout << "merging local stuff for consumerID=" << consumerID << endl;
-                        #pragma omp parallel for num_threads(8)
+                        #pragma omp parallel for num_threads(2)
                         for(size_t i = 0; i < campaingCnt; i++)
                         {
 //                            cout << "merge i=" << i << " old=" << outputTable[i] << " incold=" << hashTable[oldWindow][i] << endl;
@@ -447,7 +446,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 //                        cout << "got rec" << endl;
                         std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[consumerID]->getData();
 
-                        #pragma omp parallel for num_threads(8)
+                        #pragma omp parallel for num_threads(2)
                         for(size_t i = 0; i < campaingCnt; i++)
                         {
 //                                   cout << "merge i=" << i << " old=" << outputTable[i] << " inc =" << tempTable[i] << endl;
