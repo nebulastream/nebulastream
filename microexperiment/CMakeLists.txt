@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.4)
 
 project(MAMPI CXX)
 
@@ -12,7 +12,7 @@ include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-march=native -mtune=native" COMPILER_SUPPORTS_MARCH_NATIVE)
 if(COMPILER_SUPPORTS_MARCH_NATIVE)
 	message("use mtune")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native -mavx")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native -mavx2")
 endif()
 
 OPTION (USE_OpenMP "Use OpenMP" ON)
@@ -61,8 +61,8 @@ include_directories(src/)
 
 set( CMAKE_VERBOSE_MAKEFILE on )
 
-add_executable(flinkApproachRDMA
-        src/flink_approach_rdma.cpp
+add_executable(LM_PC
+        src/LM_PC.cpp
         rdma_lib/Utilities/MPI_Helper_Fake.cpp
         rdma_lib/Utilities/ConnectionInfoProvider/SimpleInfoProvider.cpp
         rdma_lib/Utilities/VerbsConnection.cpp
@@ -74,7 +74,27 @@ add_executable(flinkApproachRDMA
         rdma_lib/Utilities/ConnectionInfoProvider/ConnectionUtilities.cpp
         rdma_lib/Utilities/DeviceMemoryAllocator/GPUMemoryAllocator.cu
     )
-target_link_libraries(flinkApproachRDMA infinity ibverbs numa json11 tbb boost_program_options)
+target_link_libraries(LM_PC infinity ibverbs numa json11 tbb boost_program_options)
+
+add_executable(YSB_PART
+        src/YSB_PART.cpp
+        rdma_lib/Utilities/MPI_Helper_Fake.cpp
+        rdma_lib/Utilities/ConnectionInfoProvider/SimpleInfoProvider.cpp
+        rdma_lib/Utilities/VerbsConnection.cpp
+        rdma_lib/Utilities/TimeTools.cpp
+        rdma_lib/Utilities/BenchmarkTools.cpp
+        rdma_lib/Utilities/ComputationParameters.cpp
+        rdma_lib/Utilities/DeviceMemoryAllocator/CPUMemoryAllocator.cpp
+        rdma_lib/Utilities/ConnectionCollection.cpp
+        rdma_lib/Utilities/ConnectionInfoProvider/ConnectionUtilities.cpp
+        rdma_lib/Utilities/DeviceMemoryAllocator/GPUMemoryAllocator.cu
+    )
+target_link_libraries(YSB_PART infinity ibverbs numa json11 tbb boost_program_options)
+
+add_executable(numatest
+        src/numa.cpp
+    )
+target_link_libraries(numatest infinity ibverbs numa json11 tbb boost_program_options)
 
 add_executable(flinkApproachSingleNode
         src/flink_approach.cpp)
