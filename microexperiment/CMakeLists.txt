@@ -61,8 +61,8 @@ include_directories(src/)
 
 set( CMAKE_VERBOSE_MAKEFILE on )
 
-add_executable(YSB_NO_PART
-        src/YSB_NO_PART.cpp
+add_executable(LM_PC
+        src/LM_PC.cpp
         rdma_lib/Utilities/MPI_Helper_Fake.cpp
         rdma_lib/Utilities/ConnectionInfoProvider/SimpleInfoProvider.cpp
         rdma_lib/Utilities/VerbsConnection.cpp
@@ -74,7 +74,7 @@ add_executable(YSB_NO_PART
         rdma_lib/Utilities/ConnectionInfoProvider/ConnectionUtilities.cpp
         rdma_lib/Utilities/DeviceMemoryAllocator/GPUMemoryAllocator.cu
     )
-target_link_libraries(YSB_NO_PART infinity ibverbs numa json11 tbb boost_program_options)
+target_link_libraries(LM_PC infinity ibverbs numa json11 tbb boost_program_options)
 
 add_executable(YSB_PART
         src/YSB_PART.cpp
