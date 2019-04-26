@@ -50,8 +50,7 @@ using namespace std;
 //#define DEBUG
 void printSingleHT(std::atomic<size_t>* hashTable, size_t campaingCnt);
 
-std::atomic<size_t>* exitProducer;
-std::atomic<size_t>* exitConsumer;
+
 size_t NUM_SEND_BUFFERS;
 //std::atomic<size_t>** htPtrs;
 VerbsConnection* sharedHTConnection;
@@ -166,6 +165,8 @@ struct ConnectionInfos
         records = other.records;
         con = other.con;
         bookKeeping = other.bookKeeping;
+//        exitProducer = other.exitProducer;
+//        exitConsumer = other.exitConsumer;
     }
 
     //consumer stuff
@@ -183,6 +184,8 @@ struct ConnectionInfos
     VerbsConnection* con;
     std::atomic<size_t>** hashTable;
     tbb::atomic<size_t>* bookKeeping;
+    std::atomic<size_t> exitProducer;
+    std::atomic<size_t> exitConsumer;
 };
 
 //consumer stuff
@@ -351,8 +354,8 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
                 }
                 else//finished processing
                 {
-                    std::atomic_fetch_add(&exitProducer[outerThread], size_t(1));
-                    if(std::atomic_load(&exitProducer[outerThread]) == numberOfProducer/2)
+                    std::atomic_fetch_add(&cInfos->exitProducer, size_t(1));
+                    if(std::atomic_load(&cInfos->exitProducer) == numberOfProducer/2)
                     {
                         cInfos->buffer_ready_sign[receive_buffer_index] = BUFFER_USED_SENDER_DONE;
                         connection->write_blocking(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index, receive_buffer_index, 1);
@@ -399,7 +402,7 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
 }
 
 size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
-        size_t campaingCnt, size_t consumerID, size_t rank, bool done, tbb::atomic<size_t>* bookKeeper) {
+        size_t campaingCnt, size_t consumerID, size_t rank, bool done, tbb::atomic<size_t>* bookKeeper, std::atomic<size_t>* exitConsumer) {
     size_t consumed = 0;
     size_t windowSwitchCnt = 0;
     size_t htReset = 0;
@@ -423,7 +426,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 //                            << " i=" << i  << " done=" << done << endl;
 //                    }
 //                    size_t oldWindow = current_window == 0 ? 1 : 0;
-                    if(rank == 3 && !done && exitConsumer[consumerID] != 1)
+                    if(rank == 3 && !done && *exitConsumer != 1)
                     {
                         memcpy(sharedHT_buffer[consumerID]->getData(), hashTable[current_window], sizeof(std::atomic<size_t>) * campaingCnt);
 
@@ -431,7 +434,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         sharedHTConnection->send_blocking(sharedHT_buffer[consumerID]);
 //                        cout << "send blocking finished " << endl;
                     }
-                    else if(rank == 1 && !done && exitConsumer[consumerID] != 1)//this one merges
+                    else if(rank == 1 && !done && *exitConsumer != 1)//this one merges
                     {
 //                        cout << "merging local stuff for consumerID=" << consumerID << endl;
                         #pragma omp parallel for num_threads(10)
@@ -490,11 +493,11 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     {
         if (cInfos->buffer_ready_sign[index] == BUFFER_USED_FLAG || cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
         {
-            if(cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE || exitConsumer[consumerID] == 1)
+            if(cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE || cInfos->exitConsumer == 1)
             {
                 if(cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
                 {
-                    std::atomic_fetch_add(&exitConsumer[consumerID], size_t(1));
+                    std::atomic_fetch_add(&cInfos->exitConsumer, size_t(1));
                     cout << "DONE BUFFER FOUND at idx"  << index << endl;
                 }
                 is_done = true;
@@ -506,7 +509,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             cout << "Thread=" << outerThread << "/" << omp_get_thread_num() << "/" << outerThread<< " Received buffer at index=" << index << endl;
 #endif
             consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers[index]->getData(), bufferSizeInTuples,
-                    hashTable, windowSizeInSec, campaingCnt, consumerID, rank, is_done, cInfos->bookKeeping);
+                    hashTable, windowSizeInSec, campaingCnt, consumerID, rank, is_done, cInfos->bookKeeping, &cInfos->exitConsumer);
 
             cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
         }
@@ -519,7 +522,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         if(index > endIdx)
             index = startIdx;
 
-        if(std::atomic_load(&exitConsumer[consumerID]) == 1)
+        if(cInfos->exitConsumer == 1)
         {
 //            *consumedTuples = total_received_tuples;
 //            *consumedBuffers = total_received_buffers;
@@ -544,7 +547,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
             consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers[index]->getData(), bufferSizeInTuples,
-                                hashTable, windowSizeInSec, campaingCnt, consumerID, rank, is_done, cInfos->bookKeeping);
+                                hashTable, windowSizeInSec, campaingCnt, consumerID, rank, is_done, cInfos->bookKeeping, &cInfos->exitConsumer);
             cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
         }
     }
@@ -716,6 +719,8 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
     connectInfo->bookKeeping[0] = time(NULL);
     connectInfo->bookKeeping[1] = time(NULL) + 2;
 
+    connectInfo->exitConsumer = 0;
+
     return connectInfo;
 }
 
@@ -797,6 +802,8 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
    int ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check, NULL, status, 0);
    ss << status[0] << endl;
    cout << ss.str() << endl;
+
+   connectInfo->exitProducer = 0;
 
    return connectInfo;
 
@@ -940,10 +947,6 @@ int main(int argc, char *argv[])
 
     size_t windowSizeInSeconds = 2;
     size_t campaingCnt = 10000;
-
-    exitProducer = new std::atomic<size_t>[2];
-    exitConsumer = new std::atomic<size_t>[2];
-    exitProducer[0] = exitProducer[1] = exitConsumer[0] = exitConsumer[1] = 0;
 
     size_t rank = 99;
     size_t numberOfProducer = 2;
