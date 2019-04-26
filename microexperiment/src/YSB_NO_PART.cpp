@@ -419,11 +419,11 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
             {
                     htReset++;
 //                    #pragma omp critical
-//                    {
-//                        cout << "windowing with rank=" << rank << " consumerID=" << consumerID << "ts=" << timeStamp
-//                            << " lastts=" << lastTimeStamp << " thread=" << omp_get_thread_num()
-//                            << " i=" << i  << " done=" << done << endl;
-//                    }
+                    {
+                        cout << "windowing with rank=" << rank << " consumerID=" << consumerID << "ts=" << timeStamp
+                            << " lastts=" << lastTimeStamp << " thread=" << omp_get_thread_num()
+                            << " i=" << i  << " done=" << done << endl;
+                    }
                     if(rank == 3 && !done && *exitConsumer != 1)
                     {
                         memcpy(sharedHT_buffer[consumerID]->getData(), hashTable[current_window], sizeof(std::atomic<size_t>) * campaingCnt);
