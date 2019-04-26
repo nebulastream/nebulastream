@@ -497,11 +497,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                     is_done = true;
 
             }
-            if(std::atomic_load(&cInfos->exitConsumer) == 1)
-            {
-                cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
-                is_done = true;
-            }
+
 
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
@@ -517,17 +513,14 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         {
             noBufferFound++;
         }
+
         index++;
 
         if(index > endIdx)
             index = startIdx;
 
-        if(is_done)
+        if(cInfos->exitConsumer == 1)
         {
-            break;
-        }
-//        if(cInfos->exitConsumer == 1)
-//        {
 //            *consumedTuples = total_received_tuples;
 //            *consumedBuffers = total_received_buffers;
 #ifdef DEBUG
@@ -537,8 +530,8 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                             << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
             cout << ss.str();
 #endif
-//            break;
-//        }
+            break;
+        }
     }//end of while
 
 //    cout << "checking remaining buffers" << endl;
