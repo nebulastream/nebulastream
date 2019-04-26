@@ -431,7 +431,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         sharedHTConnection->send_blocking(sharedHT_buffer[consumerID]);
                         cout << "send blocking finished " << endl;
                     }
-                    else if(rank == 1 && !done)//this one merges
+                    else if(rank == 1 && !done && std::atomic_load(&exitConsumer[consumerID]) != 1)//this one merges
                     {
 //                        cout << "merging local stuff for consumerID=" << consumerID << endl;
                         #pragma omp parallel for num_threads(10)
