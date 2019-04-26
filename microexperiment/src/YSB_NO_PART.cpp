@@ -444,10 +444,14 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         ReceiveElement receiveElement;
                         receiveElement.buffer = sharedHT_buffer[consumerID];
                         sharedHTConnection->post_receive(receiveElement.buffer);
-                        while(!sharedHTConnection->check_receive(receiveElement) || std::atomic_load(exitConsumer) != 1)
+                        while(!sharedHTConnection->check_receive(receiveElement) && std::atomic_load(exitConsumer) != 1)
                         {
-                            cout << "wait receive" << endl;
+                            cout << "wait receive " << exitConsumer<< endl;
                             sleep(1);
+                        }
+                        else
+                        {
+                            cout << "revceived" << endl;
                         }
 //                        sharedHTConnection->post_and_receive_blocking(sharedHT_buffer[consumerID]);
 
