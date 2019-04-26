@@ -547,7 +547,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         }
     }//end of while
 
-//    cout << "checking remaining buffers" << endl;
+    cout << "checking remaining buffers" << endl;
     for(index = startIdx; index < endIdx; index++)//check again if some are there
     {
 //        cout << "checking i=" << index << endl;
