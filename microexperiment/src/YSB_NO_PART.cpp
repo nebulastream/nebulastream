@@ -429,7 +429,10 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         memcpy(sharedHT_buffer[consumerID]->getData(), hashTable[current_window], sizeof(std::atomic<size_t>) * campaingCnt);
 
 //                        cout << "send blocking id=" << consumerID  << endl;
-                        sharedHTConnection->send_blocking(sharedHT_buffer[consumerID]);
+                        if(*exitConsumer != 1)
+                        {
+                            sharedHTConnection->send_blocking(sharedHT_buffer[consumerID]);
+                        }
 //                        cout << "send blocking finished " << endl;
                     }
                     else if(rank == 1 && !done && *exitConsumer != 1)//this one merges
@@ -441,7 +444,11 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                             outputTable[i] += hashTable[current_window][i];
                         }
 //                        cout << "post rec id " << consumerID << " ranK=" << rank << " thread=" << omp_get_thread_num() << "done=" << done<< endl;
-                        sharedHTConnection->post_and_receive_blocking(sharedHT_buffer[consumerID]);
+                        if(*exitConsumer != 1)
+                        {
+                            sharedHTConnection->post_and_receive_blocking(sharedHT_buffer[consumerID]);
+                        }
+
 //                        cout << "got rec" << endl;
                         std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[consumerID]->getData();
 
