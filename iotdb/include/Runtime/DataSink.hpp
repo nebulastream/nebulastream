@@ -46,6 +46,7 @@ class DataSink {
 typedef std::shared_ptr<DataSink> DataSinkPtr;
 
 const DataSinkPtr createTestSink();
+
 const DataSinkPtr createPrintSink(std::ostream& out);
 const DataSinkPtr createPrintSink(const Schema& schema, std::ostream& out);
 const DataSinkPtr createBinaryFileSink(const std::string& path_to_file);

@@ -6,6 +6,9 @@
 #include <CodeGen/PipelineStage.hpp>
 #include <Core/DataTypes.hpp>
 #include <Util/ErrorHandling.hpp>
+#include <Runtime/DataSink.hpp>
+#include <Runtime/GeneratorSource.hpp>
+#include <Runtime/BufferManager.hpp>
 
 #include <CodeGen/C_CodeGen/BinaryOperatorStatement.hpp>
 #include <CodeGen/C_CodeGen/Declaration.hpp>
@@ -15,6 +18,37 @@
 #include <CodeGen/C_CodeGen/UnaryOperatorStatement.hpp>
 
 namespace iotdb {
+
+  const DataSourcePtr createTestSourceCodeGen()
+  {
+      // Shall this go to the UnitTest Directory in future?
+      class Functor {
+        public:
+          Functor() : one(1) {}
+          TupleBufferPtr operator()()
+          {
+              // 10 tuples of size one
+              TupleBufferPtr buf = BufferManager::instance().getBuffer();
+              size_t tupleCnt = buf->buffer_size / sizeof(uint64_t);
+
+              assert(buf->buffer != NULL);
+
+              uint64_t* tuples = (uint64_t*)buf->buffer;
+              for (uint64_t i = 0; i < tupleCnt; i++) {
+                  tuples[i] = one;
+              }
+              buf->tuple_size_bytes = sizeof(uint64_t);
+              buf->num_tuples = tupleCnt;
+              return buf;
+          }
+
+          uint64_t one;
+      };
+
+      DataSourcePtr source(new GeneratorSource<Functor>(Schema::create().addField(createField("campaign_id", UINT64)), 1));
+
+      return source;
+  }
 
 /* TODO: make proper test suite out of these */
 int CodeGenTestCases()
@@ -429,17 +463,52 @@ int CodeGenTest()
 
 int CodeGeneratorTest()
 {
-
+    /* prepare objects for test */
+    DataSourcePtr source = createTestSourceCodeGen();
     CodeGeneratorPtr code_gen = createCodeGenerator();
     PipelineContextPtr context = createPipelineContext();
-    std::cout << "Generate Code" << std::endl;
-    code_gen->generateCode(createTestSource(), context, std::cout);
-    PipelineStagePtr stage = code_gen->compile(CompilerArgs());
 
-    if (stage)
-        return 0;
-    else
+    std::cout << "Generate Code" << std::endl;
+    /* generate code for scanning input buffer */
+    code_gen->generateCode(source, context, std::cout);
+    /* generate code for writing result tuples to output buffer */
+    code_gen->generateCode(createPrintSink(Schema::create().addField("campaign_id",UINT64),std::cout), context, std::cout);
+    /* compile code to pipeline stage */
+    PipelineStagePtr stage = code_gen->compile(CompilerArgs());
+    if(!stage)
         return -1;
+    /* prepare input tuple buffer */
+    Schema s = Schema::create()
+                   .addField("i64", UINT64);
+    TupleBufferPtr buf = source->receiveData();
+    std::vector<TupleBuffer*> input_buffers;
+    input_buffers.push_back(buf.get());
+    //std::cout << iotdb::toString(buf.get(),source->getSchema()) << std::endl;
+    std::cout << "Processing " << buf->num_tuples << " tuples: " << std::endl;
+    size_t buffer_size = buf->num_tuples*sizeof (uint64_t);
+    TupleBuffer result_buffer(malloc(buffer_size), buffer_size,sizeof(uint64_t),0);
+
+    /* execute Stage */
+    stage->execute(input_buffers, NULL, &result_buffer);
+
+    /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
+    //std::cout << "Result Buffer: #tuples: " << result_buffer.num_tuples << std::endl;
+    if(buf->num_tuples!=result_buffer.num_tuples){
+      std::cout << "Wrong number of tuples in output: " << result_buffer.num_tuples
+                << " (should have been: " << buf->num_tuples << ")" << std::endl;
+      return -1;
+    }
+    uint64_t* result_data = (uint64_t*) result_buffer.buffer;
+    for(uint64_t i=0;i<buf->num_tuples;++i){
+        if(result_data[i]!=1){
+          std::cout << "Error in Result! Mismatch position: " << i << std::endl;
+          return -1;
+        }
+    }
+
+    //std::cout << iotdb::toString(result_buffer,s) << std::endl;
+
+    return 0;
 }
 
 int testTupleBufferPrinting()
