@@ -501,9 +501,12 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                     std::atomic_fetch_add(&cInfos->exitConsumer, size_t(1));
                     cout << "DONE BUFFER FOUND at idx"  << index << endl;
                     is_done = true;
-                    break;
-            }
 
+            }
+            if(cInfos->exitConsumer == 1)
+            {
+                break;
+            }
 
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
