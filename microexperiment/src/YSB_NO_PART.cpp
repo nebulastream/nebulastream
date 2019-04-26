@@ -429,10 +429,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         memcpy(sharedHT_buffer[consumerID]->getData(), hashTable[current_window], sizeof(std::atomic<size_t>) * campaingCnt);
 
 //                        cout << "send blocking id=" << consumerID  << endl;
-                        if(*exitConsumer != 1)
-                        {
-                            sharedHTConnection->send_blocking(sharedHT_buffer[consumerID]);
-                        }
+                        sharedHTConnection->send_blocking(sharedHT_buffer[consumerID]);
 //                        cout << "send blocking finished " << endl;
                     }
                     else if(rank == 1 && !done && *exitConsumer != 1)//this one merges
@@ -444,10 +441,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                             outputTable[i] += hashTable[current_window][i];
                         }
 //                        cout << "post rec id " << consumerID << " ranK=" << rank << " thread=" << omp_get_thread_num() << "done=" << done<< endl;
-                        if(*exitConsumer != 1)
-                        {
-                            sharedHTConnection->post_and_receive_blocking(sharedHT_buffer[consumerID]);
-                        }
+                        sharedHTConnection->post_and_receive_blocking(sharedHT_buffer[consumerID]);
 
 //                        cout << "got rec" << endl;
                         std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[consumerID]->getData();
@@ -553,7 +547,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
             consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers[index]->getData(), bufferSizeInTuples,
-                                hashTable, windowSizeInSec, campaingCnt, consumerID, rank, is_done, cInfos->bookKeeping, &cInfos->exitConsumer);
+                                hashTable, windowSizeInSec, campaingCnt, consumerID, rank, /*is_done*/ true, cInfos->bookKeeping, &cInfos->exitConsumer);
             cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
         }
     }
