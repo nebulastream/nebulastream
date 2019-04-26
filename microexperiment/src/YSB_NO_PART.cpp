@@ -441,7 +441,15 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                             outputTable[i] += hashTable[current_window][i];
                         }
 //                        cout << "post rec id " << consumerID << " ranK=" << rank << " thread=" << omp_get_thread_num() << "done=" << done<< endl;
-                        sharedHTConnection->post_and_receive_blocking(sharedHT_buffer[consumerID]);
+                        ReceiveElement receiveElement;
+                        receiveElement.buffer = sharedHT_buffer[consumerID];
+                        sharedHTConnection->post_receive(receiveElement.buffer);
+                        while(!sharedHTConnection->check_receive(receiveElement) || std::atomic_load(exitConsumer) != 1)
+                        {
+                            cout << "wait receive" << endl;
+                            sleep(1);
+                        }
+//                        sharedHTConnection->post_and_receive_blocking(sharedHT_buffer[consumerID]);
 
 //                        cout << "got rec" << endl;
                         std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[consumerID]->getData();
