@@ -452,7 +452,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 //                            cout << "merge i=" << i << " old=" << outputTable[i] << " incold=" << hashTable[oldWindow][i] << endl;
                             outputTable[i] += hashTable[oldWindow][i];
                         }
-                        cout << "post rec id " << consumerID << " ranK=" << rank << " thread=" << omp_get_thread_num() << endl;
+                        cout << "post rec id " << consumerID << " ranK=" << rank << " thread=" << omp_get_thread_num() << "done=" << done<< endl;
                         sharedHTConnection->post_and_receive_blocking(sharedHT_buffer[consumerID]);
                         cout << "got rec" << endl;
                         std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[consumerID]->getData();
@@ -504,6 +504,13 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         {
             is_done = cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE;
 
+            if(is_done)
+            {
+                std::atomic_fetch_add(&exitConsumer[consumerID], size_t(1));
+                cout << "DONE BUFFER FOUND at idx"  << index << endl;
+
+                break;
+            }
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
 #ifdef DEBUG
@@ -514,19 +521,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
             cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
 
-            if(is_done)
-            {
-                std::atomic_fetch_add(&exitConsumer[consumerID], size_t(1));
-//                cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
-                cout << "DONE BUFFER FOUND at idx"  << index << endl;
-                if(rank == 3)
-                {
-//                    ht_sign_ready[consumerID] = BUFFER_USED_SENDER_DONE;//ht_sign_ready
-//                    cout << "write finish entry with id=" << consumerID << " time=" << time(NULL) << endl;
-//                    sharedHTConnection->write_blocking(ht_sign_ready_buffer, ready_token, consumerID, consumerID, 1);
-                }
-                break;
-            }
+
         }
         else
         {
