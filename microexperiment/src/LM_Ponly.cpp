@@ -668,7 +668,6 @@ int main(int argc, char *argv[])
           {
              auto inner_thread_id = omp_get_thread_num();
              size_t i = inner_thread_id;
-             record* recs = conInfos[outer_thread_id]->records[inner_thread_id];
 
              #pragma omp critical
              {
@@ -679,26 +678,12 @@ int main(int argc, char *argv[])
                 << " produceCntPerNode=" << produceCntPerProd
                 << " core: " << sched_getcpu()
                 << " numaNode:" << numa_node_of_cpu(sched_getcpu())
-                << " sendBufferLocation=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->sendBuffers)
-                << " sendBufferDataLocation=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->sendBuffers[0]->send_buffer)
-                << " inputdata numaNode=" << getNumaNodeFromPtr(recs)
+                << " recordLoc=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->records[inner_thread_id])
+                << " htLoc=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->hashTable[inner_thread_id])
                 << std::endl;
              }
 
-             VerbsConnection* con;
-             size_t connectID;
-             if(numberOfConnections == 1)
-             {
-                 con = connections[0];
-                 connectID = 0;
-             }
-             else
-             {
-                 assert(0);
-                 con = connections[outer_thread_id];
-                 connectID = outer_thread_id;
-             }
-
+             record* recs = conInfos[outer_thread_id]->records[inner_thread_id];
 
              producer_only(recs, produceCntPerProd, connections[0], campaingCnt, conInfos[outer_thread_id]->hashTable, windowSizeInSeconds
                      , conInfos[outer_thread_id]->bookKeeping, outer_thread_id, rank);
