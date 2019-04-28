@@ -1081,7 +1081,7 @@ int main(int argc, char *argv[])
             cout << "thread in critical = " << omp_get_thread_num() << endl;
             if(numberOfConnections == 1)
             {
-                conInfos[omp_get_thread_num()] = setupProducerOnly(connections[0], bufferSizeInTups, campaingCnt, rank, numberOfProducer);
+//                conInfos[omp_get_thread_num()] = setupProducerOnly(connections[0], bufferSizeInTups, campaingCnt, rank, numberOfProducer);
                 conInfos[omp_get_thread_num()]->con = connections[0];
             }
             else if(numberOfConnections == 2)
