@@ -334,14 +334,16 @@ void producer_only(record* records, size_t runCnt, VerbsConnection* con, size_t 
             inputTupsIndex = 0;
 
     }
-
-    stringstream ss;
-    ss << "Thread=" << omp_get_thread_num() << " runCnt="  << runCnt
-            << " disQTuple=" << disQTuple << " qualTuple=" << qualTuple
-            << " windowSwitchCnt=" << windowSwitchCnt
-            << " htreset=" << htReset
-            << " input array=" << &records << endl;
-    cout << ss.str() << endl;
+//#pragma omp critical
+//{
+//    stringstream ss;
+//    ss << "Thread=" << omp_get_thread_num() << " runCnt="  << runCnt
+//            << " disQTuple=" << disQTuple << " qualTuple=" << qualTuple
+//            << " windowSwitchCnt=" << windowSwitchCnt
+//            << " htreset=" << htReset
+//            << " input array=" << &records << endl;
+//    cout << ss.str() << endl;
+//}
 }
 
 
@@ -682,19 +684,19 @@ int main(int argc, char *argv[])
              auto inner_thread_id = omp_get_thread_num();
              size_t i = inner_thread_id;
 
-             #pragma omp critical
-             {
-                 std::cout
-                << "OuterThread=" << outer_thread_id
-                << " InnerThread=" << inner_thread_id
-                << " SumThreadID=" << i
-                << " produceCntPerNode=" << produceCntPerProd
-                << " core: " << sched_getcpu()
-                << " numaNode:" << numa_node_of_cpu(sched_getcpu())
-                << " recordLoc=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->records[inner_thread_id])
-                << " htLoc=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->hashTable[0])
-                << std::endl;
-             }
+//             #pragma omp critical
+//             {
+//                 std::cout
+//                << "OuterThread=" << outer_thread_id
+//                << " InnerThread=" << inner_thread_id
+//                << " SumThreadID=" << i
+//                << " produceCntPerNode=" << produceCntPerProd
+//                << " core: " << sched_getcpu()
+//                << " numaNode:" << numa_node_of_cpu(sched_getcpu())
+//                << " recordLoc=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->records[inner_thread_id])
+//                << " htLoc=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->hashTable[0])
+//                << std::endl;
+//             }
 
              record* recs = conInfos[outer_thread_id]->records[inner_thread_id];
 
