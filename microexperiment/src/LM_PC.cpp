@@ -49,7 +49,7 @@ using namespace std;
 //#define JOIN_WRITE_BUFFER_SIZE 1024*1024*8
 //#define DEBUG
 void printSingleHT(std::atomic<size_t>* hashTable, size_t campaingCnt);
-
+std::vector<std::shared_ptr<std::thread>> buffer_threads;
 
 size_t NUM_SEND_BUFFERS;
 //std::atomic<size_t>** htPtrs;
@@ -442,6 +442,33 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         }
 //                        cout << "post rec id " << consumerID << " ranK=" << rank << " thread=" << omp_get_thread_num() << "done=" << done<< endl;
                         //TODO: DO THIS AS LAMDA FUNC CALL
+
+                        buffer_threads.push_back(std::make_shared<std::thread>([&sharedHTConnection, consumerID, exitConsumer,
+                          sharedHT_buffer, outputTable, campaingCnt] {
+                            cout << "run buffer thread" << endl;
+                            ReceiveElement receiveElement;
+                            receiveElement.buffer = sharedHT_buffer[consumerID];
+                            sharedHTConnection->post_receive(receiveElement.buffer);
+                            while(!sharedHTConnection->check_receive(receiveElement) && std::atomic_load(exitConsumer) != 1)
+                            {
+    //                            cout << "wait receive " << std::atomic_load(exitConsumer)<< endl;
+    //                            sleep(1);
+                            }
+                            cout << "revceived" << endl;
+    //                        sharedHTConnection->post_and_receive_blocking(sharedHT_buffer[consumerID]);
+
+    //                        cout << "got rec" << endl;
+                            std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[consumerID]->getData();
+
+                            #pragma omp parallel for num_threads(20)
+                            for(size_t i = 0; i < campaingCnt; i++)
+                            {
+                                outputTable[i] += tempTable[i];
+                            }
+
+
+                        }));
+#ifdef 0
                         ReceiveElement receiveElement;
                         receiveElement.buffer = sharedHT_buffer[consumerID];
                         sharedHTConnection->post_receive(receiveElement.buffer);
@@ -461,6 +488,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         {
                             outputTable[i] += tempTable[i];
                         }
+#endif
                     }//end of else
             }//end of if to change
             current_window = current_window == 0 ? 1 : 0;
