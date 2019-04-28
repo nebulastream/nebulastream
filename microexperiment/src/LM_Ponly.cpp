@@ -248,8 +248,8 @@ void producer_only(record* records, size_t runCnt, VerbsConnection* con, size_t 
     size_t lastTimeStamp = bookKeeper[current_window];
     size_t windowSwitchCnt = 0;
     size_t htReset = 0;
-
-
+    size_t disQTuple = 0;
+    size_t qualTuple = 0;
     for(size_t i = 0; i < runCnt; i++)
     {
         uint32_t value = *((uint32_t*) records[inputTupsIndex].event_type);
@@ -260,9 +260,10 @@ void producer_only(record* records, size_t runCnt, VerbsConnection* con, size_t 
             else
                 inputTupsIndex = 0;
 
+            disQTuple++;
             continue;
         }
-
+        qualTuple++;
         //tuple qualifies
         size_t timeStamp = time(NULL);
         if (lastTimeStamp != timeStamp && timeStamp % windowSizeInSec == 0)
@@ -333,6 +334,14 @@ void producer_only(record* records, size_t runCnt, VerbsConnection* con, size_t 
             inputTupsIndex = 0;
 
     }
+
+    stringstream ss;
+    ss << "Thread=" << omp_get_thread_num() << " runCnt="  << runCnt
+            << " disQTuple=" << disQTuple << " qualTuple=" << qualTuple
+            << " windowSwitchCnt=" << windowSwitchCnt
+            << " htreset=" << htReset
+            << " input array=" << &records << endl;
+    cout << ss.str() << endl;
 }
 
 
@@ -694,25 +703,7 @@ int main(int argc, char *argv[])
 
     Timestamp end = getTimestamp();
 
-    size_t sumProducedTuples = 0;
-    size_t sumProducedBuffer = 0;
-    size_t sumReadInTuples = 0;
-    size_t sumNoFreeEntry = 0;
-    size_t sumConsumedTuples = 0;
-    size_t sumConsumedBuffer = 0;
-    size_t sumNoBuffer = 0;
-
-    for(size_t n = 0; n < nodes; n++)
-    {
-        for(size_t i = 0; i < numberOfProducer/nodes; i++)
-        {
-            sumProducedTuples += producesTuples[n][i];
-            sumProducedBuffer += producedBuffers[n][i];
-            sumReadInTuples += readInputTuples[n][i];
-            sumNoFreeEntry += noFreeEntryFound[n][i];
-        }
-    }
-
+    size_t sumReadInTuples = numberOfProducer * produceCntPerProd;
     double elapsed_time = double(end - begin) / (1024 * 1024 * 1024);
 
     stringstream ss;
@@ -726,17 +717,6 @@ int main(int argc, char *argv[])
 
     ss << " ----------------------------------------------" << endl;
 
-    ss << " producedTuples=" << sumProducedTuples << endl;
-    ss << " producedBuffers=" << sumProducedBuffer << endl;
-    ss << " noFreeEntry=" << sumNoFreeEntry << endl;
-    ss << " ProduceThroughput=" << sumProducedTuples / elapsed_time << endl;
-    ss << " TransferVolume(MB)=" << sumProducedTuples*sizeof(Tuple)/1024/1024 << endl;
-    ss << " TransferBandwidth MB/s=" << (sumProducedTuples*sizeof(Tuple)/1024/1024)/elapsed_time << endl;
-    ss << " ----------------------------------------------" << endl;
-
-    ss << " consumedTuples=" << sumConsumedTuples  << endl;
-    ss << " consumedBuffers=" << sumConsumedBuffer  << endl;
-    ss << " sumNoBufferFound=" << sumNoBuffer  << endl;
     cout << ss.str() << endl;
 
 //    printHT(hashTable, campaingCnt);
