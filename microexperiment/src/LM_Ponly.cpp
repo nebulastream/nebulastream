@@ -993,7 +993,7 @@ int main(int argc, char *argv[])
     size_t campaingCnt = 10000;
 
     size_t rank = 99;
-    size_t numberOfProducer = 2;
+    size_t numberOfProducer = 1;
     size_t bufferProcCnt = 1;
     size_t bufferSizeInTups = 1;
     size_t numberOfConnections = 1;
@@ -1081,11 +1081,12 @@ int main(int argc, char *argv[])
             cout << "thread in critical = " << omp_get_thread_num() << endl;
             if(numberOfConnections == 1)
             {
-                conInfos[omp_get_thread_num()] = setupProducerOnly(connections[0], bufferSizeInTups, campaingCnt, rank, numberOfProducer);
                 cout << "connections[0]=" << connections[0] << endl;
-                cout << "coninfo=" <<conInfos[omp_get_thread_num()] << endl;
-                cout << "con= " <<conInfos[omp_get_thread_num()]->con << endl;
-                conInfos[omp_get_thread_num()]->con = connections[0];
+                                cout << "coninfo=" <<conInfos[omp_get_thread_num()] << endl;
+                                cout << "con= " <<conInfos[omp_get_thread_num()]->con << endl;
+                                conInfos[omp_get_thread_num()]->con = connections[0];
+                conInfos[omp_get_thread_num()] = setupProducerOnly(connections[0], bufferSizeInTups, campaingCnt, rank, numberOfProducer);
+
             }
             else if(numberOfConnections == 2)
             {
