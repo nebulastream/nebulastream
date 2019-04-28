@@ -1057,10 +1057,10 @@ int main(int argc, char *argv[])
                 else
                     assert(0);
 
-                conInfos[omp_get_thread_num()]->records = new record*[numberOfProducer/2];
+                conInfos[omp_get_thread_num()]->records = new record*[numberOfProducer];
                 for(size_t i = 0; i < numberOfProducer; i++)
                 {
-                    conInfos[omp_get_thread_num()]->records[i] = generateTuplesOneArray(numberOfProducer/2, campaingCnt);
+                    conInfos[omp_get_thread_num()]->records[i] = generateTuplesOneArray(numberOfProducer, campaingCnt);
                 }
             }
             cout << "thread out of critical = " << omp_get_thread_num() << endl;
