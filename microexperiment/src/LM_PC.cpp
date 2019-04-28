@@ -969,7 +969,7 @@ size_t getNumaNodeFromPtr(void* ptr)
 
     int status[1];
     status[0]=-1;
-    int ret_code = move_pages(0 /*self memory */, 1, &ptr, NULL, status, 0);
+    int ret_code = move_pages(0 /*selbuffer_threadsf memory */, 1, &ptr, NULL, status, 0);
     int numa_node2 = status[0];
     assert(numa_node1 == numa_node2);
     return numa_node1;
