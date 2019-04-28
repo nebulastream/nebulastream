@@ -1250,6 +1250,11 @@ int main(int argc, char *argv[])
 
     }
 
+    for(size_t i = 0; i < buffer_threads.size(); i++)
+    {
+        buffer_threads[i]->join();
+    }
+
     Timestamp end = getTimestamp();
 
     size_t sumProducedTuples = 0;
