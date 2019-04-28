@@ -784,15 +784,15 @@ ConnectionInfos* setupProducerOnly(VerbsConnection* connection, size_t bufferSiz
 //               std::atomic_init(&connectInfo->hashTable[0][u], std::size_t(0));
 //    }
 
-//    connectInfo->hashTable = new std::atomic<size_t>*[2];
-    void* ht = numa_alloc_onnode(sizeof(std::atomic<size_t>)*campaingCnt * 2, outer_thread_id);
-    connectInfo->hashTable = (std::atomic<size_t>**)ht;
-    connectInfo->hashTable[0] = new std::atomic<size_t>[campaingCnt + 1];
-    for (size_t i = 0; i < campaingCnt + 1; i++)
+    connectInfo->hashTable = new std::atomic<size_t>*[2];
+//    void* ht = numa_alloc_onnode(sizeof(std::atomic<size_t>)*campaingCnt * 2, outer_thread_id);
+//    connectInfo->hashTable = (std::atomic<size_t>**)ht;
+    connectInfo->hashTable[0] = new std::atomic<size_t>[campaingCnt];
+    for (size_t i = 0; i < campaingCnt; i++)
        std::atomic_init(&connectInfo->hashTable[0][i], std::size_t(0));
 
-    connectInfo->hashTable[1] = new std::atomic<size_t>[campaingCnt + 1];
-    for (size_t i = 0; i < campaingCnt + 1; i++)
+    connectInfo->hashTable[1] = new std::atomic<size_t>[campaingCnt];
+    for (size_t i = 0; i < campaingCnt; i++)
        std::atomic_init(&connectInfo->hashTable[1][i], std::size_t(0));
 
     if(rank == 0)
@@ -817,10 +817,10 @@ ConnectionInfos* setupProducerOnly(VerbsConnection* connection, size_t bufferSiz
     int numa_node = -1;
     get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->hashTable[0], MPOL_F_NODE | MPOL_F_ADDR);
     ss << numa_node << ",";
-
     ss << endl;
     cout << ss.str() << endl;
 }
+
 ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSizeInTups)
 {
     ConnectionInfos* connectInfo = new ConnectionInfos();
@@ -994,8 +994,8 @@ int main(int argc, char *argv[])
 
     size_t rank = 99;
     size_t numberOfProducer = 2;
-    size_t bufferProcCnt = 0;
-    size_t bufferSizeInTups = 0;
+    size_t bufferProcCnt = 1;
+    size_t bufferSizeInTups = 1;
     size_t numberOfConnections = 1;
     NUM_SEND_BUFFERS = 0;
     size_t numberOfNodes = 2;
