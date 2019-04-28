@@ -427,6 +427,12 @@ ConnectionInfos* setupProducerOnly(VerbsConnection* connection, size_t campaingC
     numa_run_on_node(outer_thread_id);
     numa_set_preferred(outer_thread_id);
 
+
+    void* b1 = numa_alloc_onnode(100*sizeof(char), outer_thread_id);
+    char* buffer_ready_sign = (char*)b1;
+    buffer_ready_sign[0] = 't';
+    cout << "temp written " << buffer_ready_sign[0] << endl;
+
     ConnectionInfos* connectInfo = new ConnectionInfos();
 
     connectInfo->hashTable = new std::atomic<size_t>*[2];
@@ -631,9 +637,6 @@ int main(int argc, char *argv[])
             if(numberOfConnections == 1)
             {
                 conInfos[omp_get_thread_num()] = setupProducerOnly(connections[0], campaingCnt, rank, numberOfProducer);
-                cout << "connections[0]=" << connections[0] << endl;
-                cout << "coninfo=" <<conInfos[omp_get_thread_num()] << endl;
-                cout << "con= " <<conInfos[omp_get_thread_num()]->con << endl;
                 conInfos[omp_get_thread_num()]->con = connections[0];
             }
             else if(numberOfConnections == 2)
