@@ -692,7 +692,7 @@ int main(int argc, char *argv[])
                 << " core: " << sched_getcpu()
                 << " numaNode:" << numa_node_of_cpu(sched_getcpu())
                 << " recordLoc=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->records[inner_thread_id])
-                << " htLoc=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->hashTable[inner_thread_id])
+                << " htLoc=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->hashTable[0])
                 << std::endl;
              }
 
