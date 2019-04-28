@@ -51,7 +51,7 @@ void printSingleHT(std::atomic<size_t>* hashTable, size_t campaingCnt);
 std::vector<std::shared_ptr<std::thread>> buffer_threads;
 
 size_t NUM_SEND_BUFFERS;
-//VerbsConnection* sharedHTConnection;
+VerbsConnection* sharedHTConnection;
 infinity::memory::RegionToken** sharedHT_region_token;
 infinity::memory::Buffer** sharedHT_buffer;
 std::atomic<size_t>* outputTable;
