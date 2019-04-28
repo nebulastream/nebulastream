@@ -775,17 +775,18 @@ ConnectionInfos* setupProducerOnly(VerbsConnection* connection, size_t bufferSiz
 
     ConnectionInfos* connectInfo = new ConnectionInfos();
 
-    void* ht = numa_alloc_onnode(sizeof(std::atomic<size_t>)*campaingCnt * 2, outer_thread_id);
-    connectInfo->hashTable = (std::atomic<size_t>**)ht;
-    for(size_t i = 0; i < 2; i++)
-    {
-        connectInfo->hashTable[0] = new (&connectInfo->hashTable + i) std::atomic<size_t>[campaingCnt];
 
-        for (size_t u = 0; u < campaingCnt; u++)
-               std::atomic_init(&connectInfo->hashTable[0][u], std::size_t(0));
-    }
+//    for(size_t i = 0; i < 2; i++)
+//    {
+//        connectInfo->hashTable[0] = new (&connectInfo->hashTable + i) std::atomic<size_t>[campaingCnt];
+//
+//        for (size_t u = 0; u < campaingCnt; u++)
+//               std::atomic_init(&connectInfo->hashTable[0][u], std::size_t(0));
+//    }
 
 //    connectInfo->hashTable = new std::atomic<size_t>*[2];
+    void* ht = numa_alloc_onnode(sizeof(std::atomic<size_t>)*campaingCnt * 2, outer_thread_id);
+    connectInfo->hashTable = (std::atomic<size_t>**)ht;
     connectInfo->hashTable[0] = new std::atomic<size_t>[campaingCnt + 1];
     for (size_t i = 0; i < campaingCnt + 1; i++)
        std::atomic_init(&connectInfo->hashTable[0][i], std::size_t(0));
