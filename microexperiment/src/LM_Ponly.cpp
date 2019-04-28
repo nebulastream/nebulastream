@@ -51,7 +51,7 @@ void printSingleHT(std::atomic<size_t>* hashTable, size_t campaingCnt);
 std::vector<std::shared_ptr<std::thread>> buffer_threads;
 
 size_t NUM_SEND_BUFFERS;
-VerbsConnection* sharedHTConnection;
+//VerbsConnection* sharedHTConnection;
 infinity::memory::RegionToken** sharedHT_region_token;
 infinity::memory::Buffer** sharedHT_buffer;
 std::atomic<size_t>* outputTable;
@@ -775,18 +775,7 @@ ConnectionInfos* setupProducerOnly(VerbsConnection* connection, size_t bufferSiz
 
     ConnectionInfos* connectInfo = new ConnectionInfos();
 
-
-//    for(size_t i = 0; i < 2; i++)
-//    {
-//        connectInfo->hashTable[0] = new (&connectInfo->hashTable + i) std::atomic<size_t>[campaingCnt];
-//
-//        for (size_t u = 0; u < campaingCnt; u++)
-//               std::atomic_init(&connectInfo->hashTable[0][u], std::size_t(0));
-//    }
-
     connectInfo->hashTable = new std::atomic<size_t>*[2];
-//    void* ht = numa_alloc_onnode(sizeof(std::atomic<size_t>)*campaingCnt * 2, outer_thread_id);
-//    connectInfo->hashTable = (std::atomic<size_t>**)ht;
     connectInfo->hashTable[0] = new std::atomic<size_t>[campaingCnt];
     for (size_t i = 0; i < campaingCnt; i++)
        std::atomic_init(&connectInfo->hashTable[0][i], std::size_t(0));
@@ -1105,12 +1094,12 @@ int main(int argc, char *argv[])
         sleep(2);
         if(rank == 0 || rank == 1)
         {
-            size_t targetR = rank == 0 ? 1 : 0;
-            cout << "establish connection for shared ht rank=" << rank << " targetRank=" << targetR << endl;
-            //host cloud 42 rank 2, client cloud43  rank 4 mlx5_3
-            SimpleInfoProvider info(targetR, "mlx5_1", 1, PORT3, "192.168.5.10");
-            sharedHTConnection = new VerbsConnection(&info);
-            setupSharedHT(sharedHTConnection, campaingCnt, 2, rank);
+//            size_t targetR = rank == 0 ? 1 : 0;
+//            cout << "establish connection for shared ht rank=" << rank << " targetRank=" << targetR << endl;
+//            //host cloud 42 rank 2, client cloud43  rank 4 mlx5_3
+//            SimpleInfoProvider info(targetR, "mlx5_1", 1, PORT3, "192.168.5.10");
+//            sharedHTConnection = new VerbsConnection(&info);
+            setupSharedHT(connections[0], campaingCnt, 2, rank);
         }
     }
 
