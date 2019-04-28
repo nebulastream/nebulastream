@@ -311,22 +311,6 @@ record* generateTuplesOneArray(size_t campaingCnt)
     }
     shuffle(recs, NUMBER_OF_GEN_TUPLE);
 
-//    recs = new record*[num_Producer];
-//    for (size_t i = 0; i < num_Producer; i++) {
-//        void* ptr = numa_alloc_onnode(NUMBER_OF_GEN_TUPLE*sizeof(record), omp_get_thread_num());
-//        record* ptrRec = (record*)ptr;
-//        recs[i] = new (ptrRec + i) record();
-//
-////        recs[i] = new record[NUMBER_OF_GEN_TUPLE];
-//
-//        for (size_t u = 0; u < NUMBER_OF_GEN_TUPLE; u++) {
-//            generate(recs[i][u], /**campaingOffset*/
-//                    randomNumbers[u % randomCnt], campaign_lsb, campaign_msb, /**eventID*/
-//                    u);
-//        }
-//        shuffle(recs[i], NUMBER_OF_GEN_TUPLE);
-//    }
-
     delete[] randomNumbers;
     return recs;
 }
@@ -1061,10 +1045,10 @@ int main(int argc, char *argv[])
     VerbsConnection** connections = new VerbsConnection*[numberOfConnections];
     size_t target_rank = 99;
     target_rank = 0;
-//    if(rank == 0) //cloud41
-//        target_rank = 1;
-//    else if(rank == 1)//cloud 42
-//        target_rank = 0;
+    if(rank == 0) //cloud41
+        target_rank = 1;
+    else if(rank == 1)//cloud 42
+        target_rank = 0;
 //    else if(rank == 2)//
 //        target_rank = 3;
 //    else if(rank == 3)
