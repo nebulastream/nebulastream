@@ -302,7 +302,7 @@ void producer_only(record* records, size_t runCnt, VerbsConnection* con, size_t 
                             while(!sharedHTConnection->check_receive(receiveElement))
                             {
                                 cout << "wait receive producerID=" << producerID << endl;
-                                sleep(1);
+//                                sleep(1);
                             }
                             cout << "revceived" << endl;
                             std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[producerID]->getData();
