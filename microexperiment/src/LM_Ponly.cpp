@@ -1044,7 +1044,6 @@ int main(int argc, char *argv[])
 //    assert(numberOfConnections == 1);
     VerbsConnection** connections = new VerbsConnection*[numberOfConnections];
     size_t target_rank = 99;
-    target_rank = 0;
     if(rank == 0) //cloud41
         target_rank = 1;
     else if(rank == 1)//cloud 42
