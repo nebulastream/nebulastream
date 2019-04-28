@@ -301,7 +301,7 @@ void producer_only(record* records, size_t runCnt, VerbsConnection* con, size_t 
                             sharedHTConnection->post_receive(receiveElement.buffer);
                             while(!sharedHTConnection->check_receive(receiveElement))
                             {
-                                cout << "wait receive producerID=" << producerID << endl;
+//                                cout << "wait receive producerID=" << producerID << endl;
 //                                sleep(1);
                             }
                             cout << "revceived" << endl;
@@ -719,6 +719,9 @@ int main(int argc, char *argv[])
     ss << " ----------------------------------------------" << endl;
 
     cout << ss.str() << endl;
-
+    for(size_t i = 0; i < buffer_threads.size(); i++)
+    {
+        buffer_threads[i]->join();
+    }
 //    printHT(hashTable, campaingCnt);
 }
