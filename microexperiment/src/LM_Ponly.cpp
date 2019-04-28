@@ -50,7 +50,7 @@ using namespace std;
 void printSingleHT(std::atomic<size_t>* hashTable, size_t campaingCnt);
 std::vector<std::shared_ptr<std::thread>> buffer_threads;
 
-VerbsConnection* sharedHTConnection;
+//VerbsConnection* sharedHTConnection;
 infinity::memory::RegionToken** sharedHT_region_token;
 infinity::memory::Buffer** sharedHT_buffer;
 std::atomic<size_t>* outputTable;
@@ -282,7 +282,7 @@ void producer_only(record* records, size_t runCnt, VerbsConnection* con, size_t 
                         memcpy(sharedHT_buffer[producerID]->getData(), hashTable[current_window], sizeof(std::atomic<size_t>) * campaingCnt);
 
                         cout << "send blocking id=" << producerID  << endl;
-                        sharedHTConnection->send_blocking(sharedHT_buffer[producerID]);//send_blocking
+                        con->send_blocking(sharedHT_buffer[producerID]);//send_blocking
                         cout << "send blocking finished " << endl;
                     }
                     else if(rank == 0)//this one merges
@@ -293,13 +293,13 @@ void producer_only(record* records, size_t runCnt, VerbsConnection* con, size_t 
                         {
                             outputTable[i] += hashTable[current_window][i];
                         }
-                        buffer_threads.push_back(std::make_shared<std::thread>([&sharedHTConnection, producerID,
+                        buffer_threads.push_back(std::make_shared<std::thread>([&con, producerID,
                           sharedHT_buffer, outputTable, campaingCnt] {
                             cout << "run buffer thread prodID=" << producerID << endl;
                             ReceiveElement receiveElement;
                             receiveElement.buffer = sharedHT_buffer[producerID];
-                            sharedHTConnection->post_receive(receiveElement.buffer);
-                            while(!sharedHTConnection->check_receive(receiveElement))
+                            con->post_receive(receiveElement.buffer);
+                            while(!con->check_receive(receiveElement))
                             {
 //                                cout << "wait receive producerID=" << producerID << endl;
 //                                sleep(1);
@@ -662,15 +662,11 @@ int main(int argc, char *argv[])
 //            cout << "establish connection for shared ht rank=" << rank << " targetRank=" << targetR << endl;
 //            //host cloud 42 rank 2, client cloud43  rank 4 mlx5_3
 //            SimpleInfoProvider info(targetR, "mlx5_1", 1, PORT3, "192.168.5.10");
-            sharedHTConnection = connections[0];
-            setupSharedHT(connections[0], campaingCnt, 2, rank);
+//            sharedHTConnection = connections[0];
+//            setupSharedHT(connections[0], campaingCnt, 2, rank);
         }
     }
 
-    size_t producesTuples[nodes][numberOfProducer/nodes] = {0};
-    size_t producedBuffers[nodes][numberOfProducer/nodes] = {0};
-    size_t noFreeEntryFound[nodes][numberOfProducer/nodes] = {0};
-    size_t readInputTuples[nodes][numberOfProducer/nodes] = {0};
 
     cout << "start processing " << endl;
     Timestamp begin = getTimestamp();
@@ -715,7 +711,6 @@ int main(int argc, char *argv[])
     stringstream ss;
 
     ss << " time=" << elapsed_time << "s" << endl;
-
     ss << " readInputTuples=" << sumReadInTuples  << endl;
     ss << " readInputVolume(MB)=" << sumReadInTuples * sizeof(record) /1024 /1024 << endl;
     ss << " readInputThroughput=" << sumReadInTuples /elapsed_time << endl;
