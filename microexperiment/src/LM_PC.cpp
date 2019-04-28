@@ -56,9 +56,9 @@ size_t NUM_SEND_BUFFERS;
 VerbsConnection* sharedHTConnection;
 infinity::memory::RegionToken** sharedHT_region_token;
 infinity::memory::Buffer** sharedHT_buffer;
-char* ht_sign_ready;
-infinity::memory::Buffer* ht_sign_ready_buffer;
-RegionToken* ready_token;
+//char* ht_sign_ready;
+//infinity::memory::Buffer* ht_sign_ready_buffer;
+//RegionToken* ready_token;
 std::atomic<size_t>* outputTable;
 
 struct __attribute__((packed)) record {
@@ -605,28 +605,13 @@ void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numbe
 
     infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((numberOfParticipant+1) * sizeof(RegionToken));
 
-    ht_sign_ready = new char[numberOfParticipant];
-    for(size_t i = 0; i < numberOfParticipant; i++)
-    {
-        ht_sign_ready[i] = BUFFER_READY_FLAG;
-    }
-    ht_sign_ready_buffer = connection->register_buffer(ht_sign_ready, numberOfParticipant);
-
     if(rank == 1)//reveiver cloud40
     {
-        for(size_t i = 0; i <= numberOfParticipant; i++)
-           {
-               if (i < numberOfParticipant)
-               {
-                   sharedHT_region_token[i] = sharedHT_buffer[i]->createRegionToken();
-               }
-               else
-               {
-                   sharedHT_region_token[i] = ht_sign_ready_buffer->createRegionToken();
-               }
-
-               memcpy((RegionToken*)tokenbuffer->getData() + i, sharedHT_region_token[i], sizeof(RegionToken));
-           }
+        for(size_t i = 0; i < numberOfParticipant; i++)
+        {
+           sharedHT_region_token[i] = sharedHT_buffer[i]->createRegionToken();
+           memcpy((RegionToken*)tokenbuffer->getData() + i, sharedHT_region_token[i], sizeof(RegionToken));
+        }
 
         connection->send_blocking(tokenbuffer);
         cout << "setupRDMAConsumer finished" << endl;
@@ -634,22 +619,12 @@ void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numbe
     else//sender cloud43 rank3
     {
         connection->post_and_receive_blocking(tokenbuffer);
-        for(size_t i = 0; i <= numberOfParticipant; i++)
+        for(size_t i = 0; i < numberOfParticipant; i++)
         {
-            if (i < numberOfParticipant)
-            {
-                sharedHT_region_token[i] = new RegionToken();
-                memcpy(sharedHT_region_token[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
-                cout << "recv region getSizeInBytes=" << sharedHT_region_token[i]->getSizeInBytes() << " getAddress=" << sharedHT_region_token[i]->getAddress()
-                                                           << " getLocalKey=" << sharedHT_region_token[i]->getLocalKey() << " getRemoteKey=" << sharedHT_region_token[i]->getRemoteKey() << endl;
-            }
-            else
-            {
-                ready_token = new RegionToken();
-                memcpy(ready_token, (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
-                cout << "sign token region getSizeInBytes=" << ready_token->getSizeInBytes() << " getAddress=" << ready_token->getAddress()
-                                          << " getLocalKey=" << ready_token->getLocalKey() << " getRemoteKey=" << ready_token->getRemoteKey() << endl;
-            }
+            sharedHT_region_token[i] = new RegionToken();
+            memcpy(sharedHT_region_token[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
+            cout << "recv region getSizeInBytes=" << sharedHT_region_token[i]->getSizeInBytes() << " getAddress=" << sharedHT_region_token[i]->getAddress()
+                   << " getLocalKey=" << sharedHT_region_token[i]->getLocalKey() << " getRemoteKey=" << sharedHT_region_token[i]->getRemoteKey() << endl;
         }
         cout << "received token" << endl;
     }
