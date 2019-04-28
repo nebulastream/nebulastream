@@ -281,9 +281,9 @@ void producer_only(record* records, size_t runCnt, VerbsConnection* con, size_t 
                     {
                         memcpy(sharedHT_buffer[producerID]->getData(), hashTable[current_window], sizeof(std::atomic<size_t>) * campaingCnt);
 
-                        cout << "send blocking id=" << producerID  << endl;
-                        sharedHTConnection->send(sharedHT_buffer[producerID]);//send_blocking
-                        cout << "send blocking finished " << endl;
+//                        cout << "send blocking id=" << producerID  << endl;
+                        sharedHTConnection->send_blocking(sharedHT_buffer[producerID]);//send_blocking
+//                        cout << "send blocking finished " << endl;
                     }
                     else if(rank == 0)//this one merges
                     {
