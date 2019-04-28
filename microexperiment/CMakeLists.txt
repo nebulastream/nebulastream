@@ -76,6 +76,22 @@ add_executable(LM_PC
     )
 target_link_libraries(LM_PC infinity ibverbs numa json11 tbb boost_program_options)
 
+add_executable(LM_Ponly
+        src/LM_Ponly.cpp
+        rdma_lib/Utilities/MPI_Helper_Fake.cpp
+        rdma_lib/Utilities/ConnectionInfoProvider/SimpleInfoProvider.cpp
+        rdma_lib/Utilities/VerbsConnection.cpp
+        rdma_lib/Utilities/TimeTools.cpp
+        rdma_lib/Utilities/BenchmarkTools.cpp
+        rdma_lib/Utilities/ComputationParameters.cpp
+        rdma_lib/Utilities/DeviceMemoryAllocator/CPUMemoryAllocator.cpp
+        rdma_lib/Utilities/ConnectionCollection.cpp
+        rdma_lib/Utilities/ConnectionInfoProvider/ConnectionUtilities.cpp
+        rdma_lib/Utilities/DeviceMemoryAllocator/GPUMemoryAllocator.cu
+    )
+target_link_libraries(LM_Ponly infinity ibverbs numa json11 tbb boost_program_options)
+
+
 add_executable(YSB_PART
         src/YSB_PART.cpp
         rdma_lib/Utilities/MPI_Helper_Fake.cpp

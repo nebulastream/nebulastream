@@ -46,19 +46,14 @@ using namespace std;
 #define BUFFER_USED_FLAG 1
 #define BUFFER_BEING_PROCESSED_FLAG 2
 #define NUMBER_OF_GEN_TUPLE 1000000
-//#define JOIN_WRITE_BUFFER_SIZE 1024*1024*8
 //#define DEBUG
 void printSingleHT(std::atomic<size_t>* hashTable, size_t campaingCnt);
 std::vector<std::shared_ptr<std::thread>> buffer_threads;
 
 size_t NUM_SEND_BUFFERS;
-//std::atomic<size_t>** htPtrs;
 VerbsConnection* sharedHTConnection;
 infinity::memory::RegionToken** sharedHT_region_token;
 infinity::memory::Buffer** sharedHT_buffer;
-//char* ht_sign_ready;
-//infinity::memory::Buffer* ht_sign_ready_buffer;
-//RegionToken* ready_token;
 std::atomic<size_t>* outputTable;
 
 struct __attribute__((packed)) record {
@@ -1062,10 +1057,10 @@ int main(int argc, char *argv[])
                 else
                     assert(0);
 
-                conInfos[omp_get_thread_num()]->records = new record*[numberOfProducer];
+                conInfos[omp_get_thread_num()]->records = new record*[numberOfProducer/2];
                 for(size_t i = 0; i < numberOfProducer; i++)
                 {
-                    conInfos[omp_get_thread_num()]->records[i] = generateTuplesOneArray(numberOfProducer, campaingCnt);
+                    conInfos[omp_get_thread_num()]->records[i] = generateTuplesOneArray(numberOfProducer/2, campaingCnt);
                 }
             }
             cout << "thread out of critical = " << omp_get_thread_num() << endl;
