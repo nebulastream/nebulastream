@@ -11,7 +11,7 @@
 
 #include <Core/DataTypes.hpp>
 
-
+#include <Util/Logger.hpp>
 namespace iotdb {
 
 struct __attribute__((packed)) ysbRecord {
@@ -99,9 +99,9 @@ int testCSVSource() {
 }
 
 int main(int argc, const char* argv[]) {
+    setupLogger();
     iotdb::Dispatcher::instance();
     iotdb::BufferManager::instance();
-
     iotdb::testBinarySource();
     iotdb::testCSVSource();
     return 0;
