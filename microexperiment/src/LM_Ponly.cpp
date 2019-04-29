@@ -250,17 +250,17 @@ void producer_only(record* records, size_t runCnt, VerbsConnection* con, size_t 
                     if(rank != 0)//copy and send result
                     {
                         buffer_threads.push_back(std::make_shared<std::thread>([&con, producerID,
-                                                  sharedHT_buffer, outputTable, campaingCnt, current_window, &hashTable] {
+                                                  sharedHT_buffer, outputTable, campaingCnt, current_window, &hashTable, rank] {
 
                             memcpy(sharedHT_buffer[producerID]->getData(), hashTable[current_window], sizeof(std::atomic<size_t>) * campaingCnt);
-                            cout << "send blocking id=" << producerID  << endl;
+                            cout << "send blocking id=" << producerID  << " rank=" << rank << " thread=" << omp_get_thread_num() << endl;
                             con->send_blocking(sharedHT_buffer[producerID]);//send_blocking
                             cout << "send blocking finished " << endl;
                         }));
                     }
                     else if(rank == 0)//this one merges
                     {
-                        cout << "merging local stuff for consumerID=" << producerID << endl;
+                        cout << "merging local stuff for id=" << producerID  << " rank=" << rank << " thread=" << omp_get_thread_num() << endl;
                         #pragma omp parallel for num_threads(20)
                         for(size_t i = 0; i < campaingCnt; i++)
                         {
@@ -649,21 +649,6 @@ int main(int argc, char *argv[])
         cout << "thread out of critical = " << omp_get_thread_num() << endl;
     }//end of pragma
 
-//    if(numberOfNodes == 2)
-//    {
-//        sleep(2);
-//        if(rank == 0 || rank == 1)
-//        {
-////            size_t targetR = rank == 0 ? 1 : 0;
-////            cout << "establish connection for shared ht rank=" << rank << " targetRank=" << targetR << endl;
-////            //host cloud 42 rank 2, client cloud43  rank 4 mlx5_3
-////            SimpleInfoProvider info(targetR, "mlx5_1", 1, PORT3, "192.168.5.10");
-////            sharedHTConnection = connections[0];
-//            setupSharedHT(connections[0], campaingCnt, /**numberOfPart*/ 2, rank);
-//        }
-//    }
-
-
     cout << "start processing " << endl;
     Timestamp begin = getTimestamp();
 
@@ -691,8 +676,17 @@ int main(int argc, char *argv[])
 
              record* recs = conInfos[outer_thread_id]->records[inner_thread_id];
 
-             producer_only(recs, produceCntPerProd, connections[0], campaingCnt, conInfos[outer_thread_id]->hashTable, windowSizeInSeconds
-                     , conInfos[outer_thread_id]->bookKeeping, outer_thread_id, rank);
+             if(rank == 0)
+             {
+                 producer_only(recs, produceCntPerProd, connections[0], campaingCnt, conInfos[outer_thread_id]->hashTable, windowSizeInSeconds
+                                      , conInfos[outer_thread_id]->bookKeeping, rank*2+outer_thread_id, rank);
+             }
+             else
+             {
+                 producer_only(recs, produceCntPerProd, connections[rank - 1], campaingCnt, conInfos[outer_thread_id]->hashTable, windowSizeInSeconds
+                                      , conInfos[outer_thread_id]->bookKeeping, rank*2+outer_thread_id, rank);
+             }
+
 
              assert(outer_thread_id == numa_node_of_cpu(sched_getcpu()));
           }//end of pragma inner threads
