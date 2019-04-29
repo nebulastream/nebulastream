@@ -271,11 +271,12 @@ void producer_only(record* records, size_t runCnt, VerbsConnection* con, size_t 
                         cout << "post " << numberOfNodes -1 << " receives" << endl;
                         for(size_t i = 0; i < numberOfNodes -1; i++)
                         {
-                            buffer_threads.push_back(std::make_shared<std::thread>([&con, producerID,
+                            size_t slotID = producerID * numberOfNodes + i;
+                            buffer_threads.push_back(std::make_shared<std::thread>([&con, slotID,
                               sharedHT_buffer, outputTable, campaingCnt] {
-                                cout << "run buffer thread prodID=" << producerID << endl;
+                                cout << "run buffer thread slotid=" << slotID << endl;
                                 ReceiveElement receiveElement;
-                                receiveElement.buffer = sharedHT_buffer[producerID];
+                                receiveElement.buffer = sharedHT_buffer[slotID];
                                 con->post_receive(receiveElement.buffer);
                                 while(!con->check_receive(receiveElement))
                                 {
@@ -283,7 +284,7 @@ void producer_only(record* records, size_t runCnt, VerbsConnection* con, size_t 
     //                                sleep(1);
                                 }
                                 cout << "revceived" << endl;
-                                std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[producerID]->getData();
+                                std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[slotID]->getData();
 
                                 #pragma omp parallel for num_threads(20)
                                 for(size_t i = 0; i < campaingCnt; i++)
