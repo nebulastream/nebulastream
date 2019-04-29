@@ -23,16 +23,15 @@
         },
 
         handleTrafficStatus: function () {
-			//console.log(this._trafficStatus)
+
             for (let key in this._trafficStatus) {
                 let status = this._trafficStatus[key];
                 if (! (key in this._markers)) {
-                    if (key < 5000) {
-						console.log('Set markers init');
+                    if (key < 5000 ) {
                         this._markers[key] = L.marker(status, {
                             title: `route-${key}`,
                             icon: L.icon({
-                    iconUrl: 'static/assets/images/icons/transport-icons/U-Bahn.svg',
+                    iconUrl: "assets/images/icons/transport-icons/UBahn.jpg",
                     iconSize: [20,20],
                 }),
                     });
@@ -40,7 +39,15 @@
                         this._markers[key] = L.marker(status, {
                             title: `route-${key}`,
                             icon: L.icon({
-                    iconUrl: 'static/assets/images/icons/transport-icons/S-Bahn-Logo.svg',
+                    iconUrl: "assets/images/icons/transport-icons/SBahnLogo.jpg",
+                    iconSize: [20,20],
+                }),
+                    });
+                    } else if (key < 12500) {
+                        this._markers[key] = L.marker(status, {
+                            title: `route-${key}`,
+                            icon: L.icon({
+                    iconUrl: "assets/images/icons/transport-icons/Tram.jpg",
                     iconSize: [20,20],
                 }),
                     });
@@ -48,7 +55,7 @@
                          this._markers[key] = L.marker(status, {
                             title: `route-${key}`,
                             icon: L.icon({
-                    iconUrl: 'static/assets/images/icons/transport-icons/BUS-Logo-BVG.svg',
+                    iconUrl: "assets/images/icons/transport-icons/BUSLogoBVG.jpg",
                     iconSize: [20,20],
                 }),
                     });
