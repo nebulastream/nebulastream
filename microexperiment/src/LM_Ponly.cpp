@@ -599,13 +599,13 @@ int main(int argc, char *argv[])
         cout << "connection established rank 0 and 1" << endl;
     }
 
-    if((rank == 0 || rank == 2) && numberOfProducer != 2)
+    if((rank == 0 || rank == 2) && numberOfNodes != 2)
     {
         SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT2, ip);//was 3
         connections[1] = new VerbsConnection(&info);
         cout << "connection established rank 0 and 2" << endl;
     }
-    if((rank == 0 || rank == 3) && numberOfProducer != 2)
+    if((rank == 0 || rank == 3) && numberOfNodes != 2)
     {
        SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT3, ip);//was 3
        connections[2] = new VerbsConnection(&info);
