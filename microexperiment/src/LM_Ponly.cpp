@@ -586,11 +586,11 @@ int main(int argc, char *argv[])
     VerbsConnection** connections = new VerbsConnection*[numberOfProducer];
     size_t target_rank = 99;
     if(rank == 0) //cloud41
-        target_rank = 1;
+        target_rank = 10;
     else if(rank == 1)//cloud 42
         target_rank = 0;
     else if(rank == 2)//
-        target_rank = 4;
+        target_rank = 1;
     else if(rank == 3)
         target_rank = 0;
     else
