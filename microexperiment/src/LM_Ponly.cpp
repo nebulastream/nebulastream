@@ -617,12 +617,14 @@ int main(int argc, char *argv[])
        cout << "connection established rank 0 and 3" << endl;
     }
 
+
     if(numberOfConnections == 2)
     {
         assert(0);
         SimpleInfoProvider info2(target_rank, "mlx5_2", 1, PORT2, ip);//
         connections[1] = new VerbsConnection(&info2);
     }
+
     auto nodes = numa_num_configured_nodes();
 //    auto cores = numa_num_configured_cpus();
 //    auto cores_per_node = cores / nodes;
@@ -653,6 +655,11 @@ int main(int argc, char *argv[])
         }
         cout << "thread out of critical = " << omp_get_thread_num() << endl;
     }//end of pragma
+
+    do
+    {
+      cout << '\n' << "Press a key to continue...";
+    } while (cin.get() != '\n');
 
     cout << "start processing " << endl;
     Timestamp begin = getTimestamp();
