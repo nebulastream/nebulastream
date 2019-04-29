@@ -569,7 +569,6 @@ int main(int argc, char *argv[])
     }
 
 //    size_t tupleProcCnt = bufferProcCnt * bufferSizeInTups * 3;
-    MPIHelper::set_rank(rank);
 
 //    assert(rank == 0 || rank == 1);
     std::cout << "Settings:"
@@ -585,12 +584,14 @@ int main(int argc, char *argv[])
 //    assert(numberOfConnections == 1);
     VerbsConnection** connections = new VerbsConnection*[numberOfProducer];
     size_t target_rank = 99;
+    MPIHelper::set_rank(rank);
+
     if(rank == 0) //cloud41
         target_rank = 1;
     else if(rank == 1)//cloud 42
         target_rank = 0;
     else if(rank == 2)//
-        target_rank = 2;
+        target_rank = 0;
     else if(rank == 3)
         target_rank = 0;
     else
