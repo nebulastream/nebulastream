@@ -51,8 +51,8 @@ void printSingleHT(std::atomic<size_t>* hashTable, size_t campaingCnt);
 std::vector<std::shared_ptr<std::thread>> buffer_threads;
 
 //VerbsConnection* sharedHTConnection;
-infinity::memory::RegionToken** sharedHT_region_token;
-infinity::memory::Buffer** sharedHT_buffer;
+//infinity::memory::RegionToken** sharedHT_region_token;
+//infinity::memory::Buffer** sharedHT_buffer;
 std::atomic<size_t>* outputTable;
 
 
@@ -163,6 +163,7 @@ struct ConnectionInfos
     VerbsConnection* con;
     std::atomic<size_t>** hashTable;
     tbb::atomic<size_t>* bookKeeping;
+    infinity::memory::Buffer** sharedHT_buffer;
 };
 
 typedef uint64_t Timestamp;
@@ -211,7 +212,7 @@ Timestamp getTimestamp() {
 
 void producer_only(record* records, size_t runCnt, VerbsConnection* con, size_t campaingCnt,
         std::atomic<size_t>** hashTable, size_t windowSizeInSec, tbb::atomic<size_t>* bookKeeper, size_t producerID, size_t rank,
-        size_t numberOfNodes)
+        size_t numberOfNodes, infinity::memory::Buffer** sharedHT_buffer)
 {
     size_t inputTupsIndex = 0;
     size_t current_window = bookKeeper[0] > bookKeeper[1] ? 0 : 1;
@@ -363,41 +364,6 @@ record* generateTuplesOneArray(size_t campaingCnt)
     return recs;
 }
 
-//void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numberOfParticipant, size_t rank)
-//{
-////    sharedHT_region_token = new RegionToken*[numberOfParticipant+1];
-//
-//    sharedHT_buffer = new infinity::memory::Buffer*[numberOfParticipant];
-//    for(size_t i = 0; i <= numberOfParticipant; i++)
-//    {
-//        sharedHT_buffer[i] = connection->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
-//    }
-//
-////    infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((numberOfParticipant+1) * sizeof(RegionToken));
-////    if(rank == 0)//reveiver cloud40
-////    {
-////        for(size_t i = 0; i < numberOfParticipant; i++)
-////        {
-////           sharedHT_region_token[i] = sharedHT_buffer[i]->createRegionToken();
-////           memcpy((RegionToken*)tokenbuffer->getData() + i, sharedHT_region_token[i], sizeof(RegionToken));
-////        }
-////
-////        connection->send_blocking(tokenbuffer);
-////        cout << "setupRDMAConsumer finished" << endl;
-////    }
-////    else//sender cloud43 rank3
-////    {
-////        connection->post_and_receive_blocking(tokenbuffer);
-////        for(size_t i = 0; i < numberOfParticipant; i++)
-////        {
-////            sharedHT_region_token[i] = new RegionToken();
-////            memcpy(sharedHT_region_token[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
-////            cout << "recv region getSizeInBytes=" << sharedHT_region_token[i]->getSizeInBytes() << " getAddress=" << sharedHT_region_token[i]->getAddress()
-////                   << " getLocalKey=" << sharedHT_region_token[i]->getLocalKey() << " getRemoteKey=" << sharedHT_region_token[i]->getRemoteKey() << endl;
-////        }
-////        cout << "received token" << endl;
-////    }
-//}
 
 
 ConnectionInfos* setupProducerOnly(VerbsConnection* connection, size_t campaingCnt, size_t rank, size_t numberOfProducer, size_t numberOfHTSlots)
@@ -448,10 +414,10 @@ ConnectionInfos* setupProducerOnly(VerbsConnection* connection, size_t campaingC
     ss << endl;
     cout << ss.str() << endl;
 
-    sharedHT_buffer = new infinity::memory::Buffer*[numberOfHTSlots];
+    connectInfo->sharedHT_buffer = new infinity::memory::Buffer*[numberOfHTSlots];
     for(size_t i = 0; i <= numberOfHTSlots; i++)
     {
-       sharedHT_buffer[i] = connection->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
+        connectInfo->sharedHT_buffer[i] = connection->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
     }
     connectInfo->con = connection;
     return connectInfo;
@@ -701,12 +667,12 @@ int main(int argc, char *argv[])
              if(rank == 0)
              {
                  producer_only(recs, produceCntPerProd, connections[0], campaingCnt, conInfos[outer_thread_id]->hashTable, windowSizeInSeconds
-                                      , conInfos[outer_thread_id]->bookKeeping, rank*2+outer_thread_id, rank, numberOfNodes);
+                                      , conInfos[outer_thread_id]->bookKeeping, rank*2+outer_thread_id, rank, numberOfNodes, conInfos[outer_thread_id]->sharedHT_buffer);
              }
              else
              {
                  producer_only(recs, produceCntPerProd, connections[rank - 1], campaingCnt, conInfos[outer_thread_id]->hashTable, windowSizeInSeconds
-                                      , conInfos[outer_thread_id]->bookKeeping, rank*2+outer_thread_id, rank, numberOfNodes);
+                                      , conInfos[outer_thread_id]->bookKeeping, rank*2+outer_thread_id, rank, numberOfNodes, conInfos[outer_thread_id]->sharedHT_buffer);
              }
 
 
