@@ -151,12 +151,6 @@ struct ConnectionInfos
 
     ConnectionInfos(const ConnectionInfos& other)
     {
-        recv_buffers = other.recv_buffers;
-        buffer_ready_sign = other.buffer_ready_sign;
-        region_tokens = other.region_tokens;
-        sign_buffer = other.sign_buffer;
-        sign_token = other.sign_token;
-        sendBuffers = other.sendBuffers;
         records = other.records;
         con = other.con;
         bookKeeping = other.bookKeeping;
@@ -164,36 +158,12 @@ struct ConnectionInfos
 //        exitConsumer = other.exitConsumer;
     }
 
-    //consumer stuff
-    infinity::memory::Buffer** recv_buffers;
-    char* buffer_ready_sign;
-
-    //both producer and consumer
-    infinity::memory::RegionToken** region_tokens;
-
     //producer stuff
-    infinity::memory::Buffer* sign_buffer;//reads the buffer_read from customer into this
-    RegionToken* sign_token;//special token for this connection
-    TupleBuffer** sendBuffers;
     record** records;
     VerbsConnection* con;
     std::atomic<size_t>** hashTable;
     tbb::atomic<size_t>* bookKeeping;
-    std::atomic<size_t> exitProducer;
-    std::atomic<size_t> exitConsumer;
 };
-
-//consumer stuff
-//infinity::memory::Buffer** recv_buffers;
-//char* buffer_ready_sign;
-//
-////both producer and consumer
-//infinity::memory::RegionToken** region_tokens;
-//
-////producer stuff
-//infinity::memory::Buffer* sign_buffer;//reads the buffer_read from customer into this
-//RegionToken* sign_token;//special token for this connection
-//TupleBuffer** sendBuffers;
 
 typedef uint64_t Timestamp;
 using NanoSeconds = std::chrono::nanoseconds;
@@ -242,7 +212,6 @@ Timestamp getTimestamp() {
 void producer_only(record* records, size_t runCnt, VerbsConnection* con, size_t campaingCnt,
         std::atomic<size_t>** hashTable, size_t windowSizeInSec, tbb::atomic<size_t>* bookKeeper, size_t producerID, size_t rank)
 {
-    size_t bufferIndex = 0;
     size_t inputTupsIndex = 0;
     size_t current_window = bookKeeper[0] > bookKeeper[1] ? 0 : 1;
     size_t lastTimeStamp = bookKeeper[current_window];
@@ -264,6 +233,7 @@ void producer_only(record* records, size_t runCnt, VerbsConnection* con, size_t 
             continue;
         }
         qualTuple++;
+
         //tuple qualifies
         size_t timeStamp = time(NULL);
         if (lastTimeStamp != timeStamp && timeStamp % windowSizeInSec == 0)
@@ -389,7 +359,7 @@ record* generateTuplesOneArray(size_t campaingCnt)
 
 void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numberOfParticipant, size_t rank)
 {
-    sharedHT_region_token = new RegionToken*[numberOfParticipant+1];
+//    sharedHT_region_token = new RegionToken*[numberOfParticipant+1];
 
     sharedHT_buffer = new infinity::memory::Buffer*[numberOfParticipant];
     for(size_t i = 0; i <= numberOfParticipant; i++)
@@ -424,7 +394,7 @@ void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numbe
 }
 
 
-ConnectionInfos* setupProducerOnly(VerbsConnection* connection, size_t campaingCnt, size_t rank, size_t numberOfProducer)
+ConnectionInfos* setupProducerOnly(VerbsConnection* connection, size_t campaingCnt, size_t rank, size_t numberOfProducer, size_t numberOfHTSlots)
 {
     auto outer_thread_id = omp_get_thread_num();
     numa_run_on_node(outer_thread_id);
@@ -471,6 +441,13 @@ ConnectionInfos* setupProducerOnly(VerbsConnection* connection, size_t campaingC
     ss << numa_node << ",";
     ss << endl;
     cout << ss.str() << endl;
+
+    sharedHT_buffer = new infinity::memory::Buffer*[numberOfHTSlots];
+    for(size_t i = 0; i <= numberOfHTSlots; i++)
+    {
+       sharedHT_buffer[i] = connection->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
+    }
+    connectInfo->con = connection;
     return connectInfo;
 }
 
@@ -601,23 +578,40 @@ int main(int argc, char *argv[])
 
 
 //    assert(numberOfConnections == 1);
-    VerbsConnection** connections = new VerbsConnection*[numberOfConnections];
+    VerbsConnection** connections = new VerbsConnection*[numberOfProducer];
     size_t target_rank = 99;
     if(rank == 0) //cloud41
         target_rank = 1;
     else if(rank == 1)//cloud 42
         target_rank = 0;
-//    else if(rank == 2)//
-//        target_rank = 3;
-//    else if(rank == 3)
-//        target_rank = 2;
-//    else
-//        assert(0);
+    else if(rank == 2)//
+        target_rank = 0;
+    else if(rank == 3)
+        target_rank = 0;
+    else
+        assert(0);
 
 //    size_t target_rank = rank == 0 ? 1 : 0;
-    SimpleInfoProvider info1(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
-    connections[0] = new VerbsConnection(&info1);
-    cout << "first connection established" << endl;
+    if(rank == 0 || rank == 1)
+    {
+        SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
+        connections[0] = new VerbsConnection(&info);
+        cout << "connection established rank 0 and 1" << endl;
+    }
+
+    if((rank == 0 || rank == 2) && numberOfProducer != 2)
+    {
+        SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT2, ip);//was 3
+        connections[1] = new VerbsConnection(&info);
+        cout << "connection established rank 0 and 2" << endl;
+    }
+    if((rank == 0 || rank == 3) && numberOfProducer != 2)
+    {
+       SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT3, ip);//was 3
+       connections[2] = new VerbsConnection(&info);
+       cout << "connection established rank 0 and 3" << endl;
+    }
+
     if(numberOfConnections == 2)
     {
         assert(0);
@@ -639,13 +633,14 @@ int main(int argc, char *argv[])
             cout << "thread in critical = " << omp_get_thread_num() << endl;
             if(numberOfConnections == 1)
             {
-                conInfos[omp_get_thread_num()] = setupProducerOnly(connections[0], campaingCnt, rank, numberOfProducer);
-                conInfos[omp_get_thread_num()]->con = connections[0];
-            }
-            else if(numberOfConnections == 2)
-            {
-                conInfos[omp_get_thread_num()] = setupProducerOnly(connections[omp_get_thread_num()], campaingCnt, rank, numberOfProducer);
-                conInfos[omp_get_thread_num()]->con = connections[omp_get_thread_num()];
+                if(rank == 0)
+                {
+                    conInfos[omp_get_thread_num()] = setupProducerOnly(connections[0], campaingCnt, rank, numberOfProducer, 4);
+                }
+                else
+                {
+                    conInfos[omp_get_thread_num()] = setupProducerOnly(connections[rank -1], campaingCnt, rank, numberOfProducer, 2);
+                }
             }
             else
                 assert(0);
@@ -654,19 +649,19 @@ int main(int argc, char *argv[])
         cout << "thread out of critical = " << omp_get_thread_num() << endl;
     }//end of pragma
 
-    if(numberOfNodes == 2)
-    {
-        sleep(2);
-        if(rank == 0 || rank == 1)
-        {
-//            size_t targetR = rank == 0 ? 1 : 0;
-//            cout << "establish connection for shared ht rank=" << rank << " targetRank=" << targetR << endl;
-//            //host cloud 42 rank 2, client cloud43  rank 4 mlx5_3
-//            SimpleInfoProvider info(targetR, "mlx5_1", 1, PORT3, "192.168.5.10");
-//            sharedHTConnection = connections[0];
-            setupSharedHT(connections[0], campaingCnt, 2, rank);
-        }
-    }
+//    if(numberOfNodes == 2)
+//    {
+//        sleep(2);
+//        if(rank == 0 || rank == 1)
+//        {
+////            size_t targetR = rank == 0 ? 1 : 0;
+////            cout << "establish connection for shared ht rank=" << rank << " targetRank=" << targetR << endl;
+////            //host cloud 42 rank 2, client cloud43  rank 4 mlx5_3
+////            SimpleInfoProvider info(targetR, "mlx5_1", 1, PORT3, "192.168.5.10");
+////            sharedHTConnection = connections[0];
+//            setupSharedHT(connections[0], campaingCnt, /**numberOfPart*/ 2, rank);
+//        }
+//    }
 
 
     cout << "start processing " << endl;
@@ -679,7 +674,6 @@ int main(int argc, char *argv[])
           #pragma omp parallel num_threads(numberOfProducer/nodes)//
           {
              auto inner_thread_id = omp_get_thread_num();
-             size_t i = inner_thread_id;
 
 //             #pragma omp critical
 //             {
