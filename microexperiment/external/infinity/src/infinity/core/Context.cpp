@@ -53,6 +53,7 @@ Context::Context(uint16_t device, uint16_t devicePort) {
 	ibv_query_port(this->ibvContext, devicePort, &portAttributes);
 	this->ibvLocalDeviceId = portAttributes.lid;
 	this->ibvDevicePort = devicePort;
+    INFINITY_DEBUG("[INFINITY][CORE][CONTEXT] USING PORT= %d for lid=%d.\n", devicePort, portAttributes.lid);
 
 	// Allocate completion queues
 	this->ibvSendCompletionQueue = ibv_create_cq(this->ibvContext, MAX(Configuration::SEND_COMPLETION_QUEUE_LENGTH, 1), NULL, NULL, 0);

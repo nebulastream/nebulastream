@@ -24,7 +24,6 @@ void VerbsConnection::connect(const ConnectionInfoProvider &infoProvider) {
     this->context = new infinity::core::Context(infoProvider.get_device_index(), infoProvider.get_device_port());
     this->qp_factory = new infinity::queues::QueuePairFactory(context);
 
-
     this->send_barrier_buffer = allocate_buffer(1);
     ((char*)this->send_barrier_buffer->getData())[0] = (char)MPIHelper::get_rank();
     this->recv_barrier_buffer = allocate_buffer(1);
