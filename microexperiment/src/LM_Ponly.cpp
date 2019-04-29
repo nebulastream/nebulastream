@@ -585,20 +585,21 @@ int main(int argc, char *argv[])
 //    assert(numberOfConnections == 1);
     VerbsConnection** connections = new VerbsConnection*[numberOfProducer];
     size_t target_rank = 99;
-    if(rank == 0) //cloud41
-        target_rank = 1;
-    else if(rank == 1)//cloud 42
-        target_rank = 0;
-    else if(rank == 2)//
-        target_rank = 0;
-    else if(rank == 3)
-        target_rank = 0;
-    else
-        assert(0);
+//    if(rank == 0) //cloud41
+//        target_rank = 1;
+//    else if(rank == 1)//cloud 42
+//        target_rank = 0;
+//    else if(rank == 2)//
+//        target_rank = 0;
+//    else if(rank == 3)
+//        target_rank = 0;
+//    else
+//        assert(0);
 
 //    size_t target_rank = rank == 0 ? 1 : 0;
     if(rank == 0 || rank == 1)
     {
+        cout << "connecting 0 and 1" << endl;
         SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
         connections[0] = new VerbsConnection(&info);
         cout << "connection established rank 0 and 1" << endl;
@@ -606,12 +607,14 @@ int main(int argc, char *argv[])
 
     if((rank == 0 || rank == 2) && numberOfNodes != 2)
     {
+        cout << "connecting 0 and 2" << endl;
         SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT2, ip);//was 3
         connections[1] = new VerbsConnection(&info);
         cout << "connection established rank 0 and 2" << endl;
     }
     if((rank == 0 || rank == 3) && numberOfNodes != 2)
     {
+        cout << "connecting 0 and 3" << endl;
        SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT3, ip);//was 3
        connections[2] = new VerbsConnection(&info);
        cout << "connection established rank 0 and 3" << endl;
