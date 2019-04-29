@@ -279,11 +279,14 @@ void producer_only(record* records, size_t runCnt, VerbsConnection* con, size_t 
                     }
                     if(rank != 0)//copy and send result
                     {
-                        memcpy(sharedHT_buffer[producerID]->getData(), hashTable[current_window], sizeof(std::atomic<size_t>) * campaingCnt);
+                        buffer_threads.push_back(std::make_shared<std::thread>([&con, producerID,
+                                                  sharedHT_buffer, outputTable, campaingCnt, current_window, &hashTable] {
 
-                        cout << "send blocking id=" << producerID  << endl;
-                        con->send_blocking(sharedHT_buffer[producerID]);//send_blocking
-                        cout << "send blocking finished " << endl;
+                            memcpy(sharedHT_buffer[producerID]->getData(), hashTable[current_window], sizeof(std::atomic<size_t>) * campaingCnt);
+                            cout << "send blocking id=" << producerID  << endl;
+                            con->send_blocking(sharedHT_buffer[producerID]);//send_blocking
+                            cout << "send blocking finished " << endl;
+                        }));
                     }
                     else if(rank == 0)//this one merges
                     {
