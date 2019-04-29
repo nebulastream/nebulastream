@@ -4,12 +4,13 @@
 #include <Core/TupleBuffer.hpp>
 #include <Runtime/DataSource.hpp>
 #include <fstream>
+#include <string>
 
 namespace iotdb {
 
 class CSVSource : public DataSource {
   public:
-    CSVSource(const Schema& schema, const std::string& file_path, const uint64_t& num_tuples_to_process=-1);
+    CSVSource(const Schema& schema, const std::string& file_path, const uint64_t& num_tuples_to_process=-1, const std::string& delimiter=",");
     TupleBufferPtr receiveData();
     const std::string toString() const;
     void fillBuffer(TupleBuffer&);
@@ -21,6 +22,7 @@ class CSVSource : public DataSource {
     // helper variables
     int64_t file_size;
     size_t tuple_size;
+    std::string delimiter;
 };
 } // namespace iotdb
 
