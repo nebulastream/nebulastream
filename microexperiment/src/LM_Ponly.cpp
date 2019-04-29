@@ -608,6 +608,9 @@ int main(int argc, char *argv[])
 
     if((rank == 0 || rank == 2) && numberOfNodes != 2)
     {
+        if(rank == 0)
+            target_rank = 2;
+
         cout << "connecting 0 and 2" << endl;
         SimpleInfoProvider info(target_rank, "mlx5_1", 1, PORT2, ip);//was 3
         connections[1] = new VerbsConnection(&info);
