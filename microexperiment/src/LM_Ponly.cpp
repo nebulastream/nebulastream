@@ -585,16 +585,16 @@ int main(int argc, char *argv[])
 //    assert(numberOfConnections == 1);
     VerbsConnection** connections = new VerbsConnection*[numberOfProducer];
     size_t target_rank = 99;
-//    if(rank == 0) //cloud41
-//        target_rank = 1;
-//    else if(rank == 1)//cloud 42
-//        target_rank = 0;
-//    else if(rank == 2)//
-//        target_rank = 0;
-//    else if(rank == 3)
-//        target_rank = 0;
-//    else
-//        assert(0);
+    if(rank == 0) //cloud41
+        target_rank = 1;
+    else if(rank == 1)//cloud 42
+        target_rank = 0;
+    else if(rank == 2)//
+        target_rank = 3;
+    else if(rank == 3)
+        target_rank = 3;
+    else
+        assert(0);
 
 //    size_t target_rank = rank == 0 ? 1 : 0;
     if(rank == 0 || rank == 1)
