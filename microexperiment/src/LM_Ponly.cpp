@@ -210,7 +210,8 @@ Timestamp getTimestamp() {
 }
 
 void producer_only(record* records, size_t runCnt, VerbsConnection* con, size_t campaingCnt,
-        std::atomic<size_t>** hashTable, size_t windowSizeInSec, tbb::atomic<size_t>* bookKeeper, size_t producerID, size_t rank)
+        std::atomic<size_t>** hashTable, size_t windowSizeInSec, tbb::atomic<size_t>* bookKeeper, size_t producerID, size_t rank,
+        size_t numberOfNodes)
 {
     size_t inputTupsIndex = 0;
     size_t current_window = bookKeeper[0] > bookKeeper[1] ? 0 : 1;
@@ -266,27 +267,31 @@ void producer_only(record* records, size_t runCnt, VerbsConnection* con, size_t 
                         {
                             outputTable[i] += hashTable[current_window][i];
                         }
-                        buffer_threads.push_back(std::make_shared<std::thread>([&con, producerID,
-                          sharedHT_buffer, outputTable, campaingCnt] {
-                            cout << "run buffer thread prodID=" << producerID << endl;
-                            ReceiveElement receiveElement;
-                            receiveElement.buffer = sharedHT_buffer[producerID];
-                            con->post_receive(receiveElement.buffer);
-                            while(!con->check_receive(receiveElement))
-                            {
-//                                cout << "wait receive producerID=" << producerID << endl;
-//                                sleep(1);
-                            }
-                            cout << "revceived" << endl;
-                            std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[producerID]->getData();
 
-                            #pragma omp parallel for num_threads(20)
-                            for(size_t i = 0; i < campaingCnt; i++)
-                            {
-                                outputTable[i] += tempTable[i];
-                            }
-                        }));
+                        cout << "post " << numberOfNodes -1 << " receives" << endl;
+                        for(size_t i = 0; i < numberOfNodes -1; i++)
+                        {
+                            buffer_threads.push_back(std::make_shared<std::thread>([&con, producerID,
+                              sharedHT_buffer, outputTable, campaingCnt] {
+                                cout << "run buffer thread prodID=" << producerID << endl;
+                                ReceiveElement receiveElement;
+                                receiveElement.buffer = sharedHT_buffer[producerID];
+                                con->post_receive(receiveElement.buffer);
+                                while(!con->check_receive(receiveElement))
+                                {
+    //                                cout << "wait receive producerID=" << producerID << endl;
+    //                                sleep(1);
+                                }
+                                cout << "revceived" << endl;
+                                std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[producerID]->getData();
 
+                                #pragma omp parallel for num_threads(20)
+                                for(size_t i = 0; i < campaingCnt; i++)
+                                {
+                                    outputTable[i] += tempTable[i];
+                                }
+                            }));
+                        }//end of for
                     }//end of else
             }//end of if to change
             current_window = current_window == 0 ? 1 : 0;
@@ -635,11 +640,11 @@ int main(int argc, char *argv[])
             {
                 if(rank == 0)
                 {
-                    conInfos[omp_get_thread_num()] = setupProducerOnly(connections[0], campaingCnt, rank, numberOfProducer, 8);
+                    conInfos[omp_get_thread_num()] = setupProducerOnly(connections[0], campaingCnt, rank, numberOfProducer, 10);
                 }
                 else
                 {
-                    conInfos[omp_get_thread_num()] = setupProducerOnly(connections[rank -1], campaingCnt, rank, numberOfProducer, 8);
+                    conInfos[omp_get_thread_num()] = setupProducerOnly(connections[rank -1], campaingCnt, rank, numberOfProducer, 10);
                 }
             }
             else
@@ -679,12 +684,12 @@ int main(int argc, char *argv[])
              if(rank == 0)
              {
                  producer_only(recs, produceCntPerProd, connections[0], campaingCnt, conInfos[outer_thread_id]->hashTable, windowSizeInSeconds
-                                      , conInfos[outer_thread_id]->bookKeeping, rank*2+outer_thread_id, rank);
+                                      , conInfos[outer_thread_id]->bookKeeping, rank*2+outer_thread_id, rank, numberOfNodes);
              }
              else
              {
                  producer_only(recs, produceCntPerProd, connections[rank - 1], campaingCnt, conInfos[outer_thread_id]->hashTable, windowSizeInSeconds
-                                      , conInfos[outer_thread_id]->bookKeeping, rank*2+outer_thread_id, rank);
+                                      , conInfos[outer_thread_id]->bookKeeping, rank*2+outer_thread_id, rank, numberOfNodes);
              }
 
 
