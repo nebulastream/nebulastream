@@ -384,7 +384,6 @@ record* generateTuplesOneArray(size_t campaingCnt)
     return recs;
 }
 
-
 void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numberOfParticipant, size_t rank)
 {
     sharedHT_region_token = new RegionToken*[numberOfParticipant+1];
@@ -395,31 +394,30 @@ void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numbe
         sharedHT_buffer[i] = connection->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
     }
 
-    infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((numberOfParticipant+1) * sizeof(RegionToken));
-
-    if(rank == 0)//reveiver cloud40
-    {
-        for(size_t i = 0; i < numberOfParticipant; i++)
-        {
-           sharedHT_region_token[i] = sharedHT_buffer[i]->createRegionToken();
-           memcpy((RegionToken*)tokenbuffer->getData() + i, sharedHT_region_token[i], sizeof(RegionToken));
-        }
-
-        connection->send_blocking(tokenbuffer);
-        cout << "setupRDMAConsumer finished" << endl;
-    }
-    else//sender cloud43 rank3
-    {
-        connection->post_and_receive_blocking(tokenbuffer);
-        for(size_t i = 0; i < numberOfParticipant; i++)
-        {
-            sharedHT_region_token[i] = new RegionToken();
-            memcpy(sharedHT_region_token[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
-            cout << "recv region getSizeInBytes=" << sharedHT_region_token[i]->getSizeInBytes() << " getAddress=" << sharedHT_region_token[i]->getAddress()
-                   << " getLocalKey=" << sharedHT_region_token[i]->getLocalKey() << " getRemoteKey=" << sharedHT_region_token[i]->getRemoteKey() << endl;
-        }
-        cout << "received token" << endl;
-    }
+//    infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((numberOfParticipant+1) * sizeof(RegionToken));
+//    if(rank == 0)//reveiver cloud40
+//    {
+//        for(size_t i = 0; i < numberOfParticipant; i++)
+//        {
+//           sharedHT_region_token[i] = sharedHT_buffer[i]->createRegionToken();
+//           memcpy((RegionToken*)tokenbuffer->getData() + i, sharedHT_region_token[i], sizeof(RegionToken));
+//        }
+//
+//        connection->send_blocking(tokenbuffer);
+//        cout << "setupRDMAConsumer finished" << endl;
+//    }
+//    else//sender cloud43 rank3
+//    {
+//        connection->post_and_receive_blocking(tokenbuffer);
+//        for(size_t i = 0; i < numberOfParticipant; i++)
+//        {
+//            sharedHT_region_token[i] = new RegionToken();
+//            memcpy(sharedHT_region_token[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
+//            cout << "recv region getSizeInBytes=" << sharedHT_region_token[i]->getSizeInBytes() << " getAddress=" << sharedHT_region_token[i]->getAddress()
+//                   << " getLocalKey=" << sharedHT_region_token[i]->getLocalKey() << " getRemoteKey=" << sharedHT_region_token[i]->getRemoteKey() << endl;
+//        }
+//        cout << "received token" << endl;
+//    }
 }
 
 
@@ -663,7 +661,7 @@ int main(int argc, char *argv[])
 //            //host cloud 42 rank 2, client cloud43  rank 4 mlx5_3
 //            SimpleInfoProvider info(targetR, "mlx5_1", 1, PORT3, "192.168.5.10");
 //            sharedHTConnection = connections[0];
-//            setupSharedHT(connections[0], campaingCnt, 2, rank);
+            setupSharedHT(connections[0], campaingCnt, 2, rank);
         }
     }
 
