@@ -590,7 +590,7 @@ int main(int argc, char *argv[])
     else if(rank == 1)//cloud 42
         target_rank = 0;
     else if(rank == 2)//
-        target_rank = 1;
+        target_rank = 2;
     else if(rank == 3)
         target_rank = 0;
     else
