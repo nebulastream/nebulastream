@@ -357,41 +357,41 @@ record* generateTuplesOneArray(size_t campaingCnt)
     return recs;
 }
 
-void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numberOfParticipant, size_t rank)
-{
-//    sharedHT_region_token = new RegionToken*[numberOfParticipant+1];
-
-    sharedHT_buffer = new infinity::memory::Buffer*[numberOfParticipant];
-    for(size_t i = 0; i <= numberOfParticipant; i++)
-    {
-        sharedHT_buffer[i] = connection->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
-    }
-
-//    infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((numberOfParticipant+1) * sizeof(RegionToken));
-//    if(rank == 0)//reveiver cloud40
-//    {
-//        for(size_t i = 0; i < numberOfParticipant; i++)
-//        {
-//           sharedHT_region_token[i] = sharedHT_buffer[i]->createRegionToken();
-//           memcpy((RegionToken*)tokenbuffer->getData() + i, sharedHT_region_token[i], sizeof(RegionToken));
-//        }
+//void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numberOfParticipant, size_t rank)
+//{
+////    sharedHT_region_token = new RegionToken*[numberOfParticipant+1];
 //
-//        connection->send_blocking(tokenbuffer);
-//        cout << "setupRDMAConsumer finished" << endl;
-//    }
-//    else//sender cloud43 rank3
+//    sharedHT_buffer = new infinity::memory::Buffer*[numberOfParticipant];
+//    for(size_t i = 0; i <= numberOfParticipant; i++)
 //    {
-//        connection->post_and_receive_blocking(tokenbuffer);
-//        for(size_t i = 0; i < numberOfParticipant; i++)
-//        {
-//            sharedHT_region_token[i] = new RegionToken();
-//            memcpy(sharedHT_region_token[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
-//            cout << "recv region getSizeInBytes=" << sharedHT_region_token[i]->getSizeInBytes() << " getAddress=" << sharedHT_region_token[i]->getAddress()
-//                   << " getLocalKey=" << sharedHT_region_token[i]->getLocalKey() << " getRemoteKey=" << sharedHT_region_token[i]->getRemoteKey() << endl;
-//        }
-//        cout << "received token" << endl;
+//        sharedHT_buffer[i] = connection->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
 //    }
-}
+//
+////    infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((numberOfParticipant+1) * sizeof(RegionToken));
+////    if(rank == 0)//reveiver cloud40
+////    {
+////        for(size_t i = 0; i < numberOfParticipant; i++)
+////        {
+////           sharedHT_region_token[i] = sharedHT_buffer[i]->createRegionToken();
+////           memcpy((RegionToken*)tokenbuffer->getData() + i, sharedHT_region_token[i], sizeof(RegionToken));
+////        }
+////
+////        connection->send_blocking(tokenbuffer);
+////        cout << "setupRDMAConsumer finished" << endl;
+////    }
+////    else//sender cloud43 rank3
+////    {
+////        connection->post_and_receive_blocking(tokenbuffer);
+////        for(size_t i = 0; i < numberOfParticipant; i++)
+////        {
+////            sharedHT_region_token[i] = new RegionToken();
+////            memcpy(sharedHT_region_token[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
+////            cout << "recv region getSizeInBytes=" << sharedHT_region_token[i]->getSizeInBytes() << " getAddress=" << sharedHT_region_token[i]->getAddress()
+////                   << " getLocalKey=" << sharedHT_region_token[i]->getLocalKey() << " getRemoteKey=" << sharedHT_region_token[i]->getRemoteKey() << endl;
+////        }
+////        cout << "received token" << endl;
+////    }
+//}
 
 
 ConnectionInfos* setupProducerOnly(VerbsConnection* connection, size_t campaingCnt, size_t rank, size_t numberOfProducer, size_t numberOfHTSlots)
@@ -635,11 +635,11 @@ int main(int argc, char *argv[])
             {
                 if(rank == 0)
                 {
-                    conInfos[omp_get_thread_num()] = setupProducerOnly(connections[0], campaingCnt, rank, numberOfProducer, 4);
+                    conInfos[omp_get_thread_num()] = setupProducerOnly(connections[0], campaingCnt, rank, numberOfProducer, 8);
                 }
                 else
                 {
-                    conInfos[omp_get_thread_num()] = setupProducerOnly(connections[rank -1], campaingCnt, rank, numberOfProducer, 2);
+                    conInfos[omp_get_thread_num()] = setupProducerOnly(connections[rank -1], campaingCnt, rank, numberOfProducer, 8);
                 }
             }
             else
