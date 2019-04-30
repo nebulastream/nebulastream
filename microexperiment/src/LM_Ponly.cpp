@@ -291,18 +291,19 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
                                 buffer_threads.push_back(std::make_shared<std::thread>([&connections,
                                    outputTable, campaingCnt, i, numberOfNodes] {
 
-
-                                    ReceiveElement* recv1 = receiveElements.back();
-                                    connections[i]->post_and_receive_blocking(recv1->buffer);
-                                    receiveElements.pop_back();
-                                    ReceiveElement* recv2 = receiveElements.back();
-                                    connections[i]->post_and_receive_blocking(recv2->buffer);
-                                    receiveElements.pop_back();
-
                                     stringstream st;
                                     st << "received buffer connection=" << i << "i="
                                             << i << " other=" << (i + (numberOfNodes -1)*2) << endl;
                                     cout << st.str() << endl;
+
+                                    ReceiveElement* recv1 = receiveElements.back();
+                                    connections[i]->post_and_receive_blocking(recv1->buffer);
+                                    receiveElements.pop_back();
+                                    cout << "received first buffer" << endl;
+                                    ReceiveElement* recv2 = receiveElements.back();
+                                    connections[i]->post_and_receive_blocking(recv2->buffer);
+                                    receiveElements.pop_back();
+                                    cout << "received second buffer" << endl;
 
                                     std::atomic<size_t>* tempTable = (std::atomic<size_t>*) recv1->buffer;
                                     std::atomic<size_t>* tempTable2 = (std::atomic<size_t>*) recv2->buffer;
@@ -315,14 +316,14 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
                                     }
 
                                     cout << "post new receive" << endl;
-                                    infinity::memory::Buffer* newBuf = connections[i]->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
+                                    infinity::memory::Buffer* newBuf = connections[0]->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
                                     if(numberOfNodes >=3)
                                         connections[1]->register_buffer(newBuf, campaingCnt * sizeof(std::atomic<size_t>));
                                     if(numberOfNodes >=4)
                                         connections[2]->register_buffer(newBuf, campaingCnt * sizeof(std::atomic<size_t>));
                                     receiveElements.push_back(new ReceiveElement(newBuf));
 
-                                    infinity::memory::Buffer* newBuf2 = connections[i]->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
+                                    infinity::memory::Buffer* newBuf2 = connections[0]->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
                                     if(numberOfNodes >=3)
                                         connections[1]->register_buffer(newBuf2, campaingCnt * sizeof(std::atomic<size_t>));
                                     if(numberOfNodes >=4)
