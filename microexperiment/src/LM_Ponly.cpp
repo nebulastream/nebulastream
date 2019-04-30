@@ -292,18 +292,17 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
                                    outputTable, campaingCnt, i, numberOfNodes] {
 
                                     stringstream st;
-                                    st << "received buffer connection=" << i << "i="
-                                            << i << " other=" << (i + (numberOfNodes -1)*2) << endl;
+                                    st << "received buffer connection=" << i << " bufferSize=" << receiveElements.size() << endl;
                                     cout << st.str() << endl;
 
                                     ReceiveElement* recv1 = receiveElements.back();
                                     connections[i]->post_and_receive_blocking(recv1->buffer);
                                     receiveElements.pop_back();
-                                    cout << "received first buffer" << endl;
+                                    cout << "received first buffer new size=" <<  receiveElements.size() << endl;
                                     ReceiveElement* recv2 = receiveElements.back();
                                     connections[i]->post_and_receive_blocking(recv2->buffer);
                                     receiveElements.pop_back();
-                                    cout << "received second buffer" << endl;
+                                    cout << "received second buffer new size=" <<  receiveElements.size() << endl;
 
                                     std::atomic<size_t>* tempTable = (std::atomic<size_t>*) recv1->buffer;
                                     std::atomic<size_t>* tempTable2 = (std::atomic<size_t>*) recv2->buffer;
