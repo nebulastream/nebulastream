@@ -54,7 +54,7 @@ std::vector<std::shared_ptr<std::thread>> buffer_threads;
 //infinity::memory::RegionToken** sharedHT_region_token;
 //infinity::memory::Buffer** sharedHT_buffer;
 std::atomic<size_t>* outputTable;
-std::vector<ReceiveElement*> receiveElements;
+ReceiveElement** receiveElements;
 infinity::memory::Buffer** sharedHT_buffer_for_merge;
 
 
@@ -293,19 +293,17 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
                                    outputTable, campaingCnt, i, numberOfNodes] {
 
                                     stringstream st;
-                                    st << "received buffer connection=" << i << " bufferSize=" << receiveElements.size() << endl;
+                                    st << "received buffer connection=" << i << endl;
                                     cout << st.str() << endl;
 
-                                    ReceiveElement* recv1 = receiveElements.back();
-                                    connections[i]->post_and_receive_blocking(recv1->buffer);
-                                    receiveElements.pop_back();
-                                    cout << "received first buffer new size=" <<  receiveElements.size() << endl;
+                                    connections[i]->post_and_receive_blocking(receiveElements[i]->buffer);
+                                    cout << "received first buffer at pos" << i << endl;
 //                                    ReceiveElement* recv2 = receiveElements.back();
 //                                    connections[i]->post_and_receive_blocking(recv2->buffer);
 //                                    receiveElements.pop_back();
 //                                    cout << "received second buffer new size=" <<  receiveElements.size() << endl;
 
-                                    std::atomic<size_t>* tempTable = (std::atomic<size_t>*) recv1->buffer;
+                                    std::atomic<size_t>* tempTable = (std::atomic<size_t>*) receiveElements[i]->buffer;
 //                                    std::atomic<size_t>* tempTable2 = (std::atomic<size_t>*) recv2->buffer;
 
                                     #pragma omp parallel for num_threads(20)
@@ -315,13 +313,13 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
 //                                        outputTable[i] += tempTable2[i];
                                     }
 
-//                                    cout << "post new receive" << endl;
-//                                    infinity::memory::Buffer* newBuf = connections[0]->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
-//                                    if(numberOfNodes >=3)
-//                                        connections[1]->register_buffer(newBuf, campaingCnt * sizeof(std::atomic<size_t>));
-//                                    if(numberOfNodes >=4)
-//                                        connections[2]->register_buffer(newBuf, campaingCnt * sizeof(std::atomic<size_t>));
-//                                    receiveElements.push_back(new ReceiveElement(newBuf));
+                                    cout << "post new receive" << endl;
+                                    infinity::memory::Buffer* newBuf = connections[0]->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
+                                    if(numberOfNodes >=3)
+                                        connections[1]->register_buffer(newBuf, campaingCnt * sizeof(std::atomic<size_t>));
+                                    if(numberOfNodes >=4)
+                                        connections[2]->register_buffer(newBuf, campaingCnt * sizeof(std::atomic<size_t>));
+                                    receiveElements[i] = new ReceiveElement(newBuf);
 
 //                                    infinity::memory::Buffer* newBuf2 = connections[0]->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
 //                                    if(numberOfNodes >=3)
@@ -672,10 +670,10 @@ int main(int argc, char *argv[])
                     if(omp_get_thread_num() == 0)
                     {
                         sharedHT_buffer_for_merge = new infinity::memory::Buffer*[(numberOfNodes-1)*2];
-//                        receiveElements = new ReceiveElement*[(numberOfNodes-1)*2];
+                        receiveElements = new ReceiveElement*[(numberOfNodes-1)*2];
 
 //                        for(size_t i = 0; i <= (numberOfNodes-1)*2; i++)
-                        for(size_t i = 0; i <= 100; i++)
+                        for(size_t i = 0; i <= (numberOfNodes-1)*2; i++)
                         {
                             sharedHT_buffer_for_merge[i] = connections[0]->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
                             if(numberOfNodes >= 3)
@@ -683,7 +681,7 @@ int main(int argc, char *argv[])
                             if(numberOfNodes >= 4)
                                 connections[2]->register_buffer(sharedHT_buffer_for_merge[i], campaingCnt * sizeof(std::atomic<size_t>));
 
-                            receiveElements.push_back(new ReceiveElement(sharedHT_buffer_for_merge[i]));
+                            receiveElements[i] = new ReceiveElement(sharedHT_buffer_for_merge[i]);
                         }
                     }
                 }
