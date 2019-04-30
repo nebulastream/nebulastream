@@ -312,7 +312,7 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
                                     for(size_t i = 0; i < campaingCnt; i++)
                                     {
                                         outputTable[i] += tempTable[i];
-                                        outputTable[i] += tempTable2[i];
+//                                        outputTable[i] += tempTable2[i];
                                     }
 
                                     cout << "post new receive" << endl;
