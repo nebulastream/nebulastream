@@ -594,7 +594,7 @@ int main(int argc, char *argv[])
         cout << "connection established rank 0 and 1" << endl;
     }
 
-    if((rank == 0 || rank == 2) && numberOfNodes == 3)
+    if((rank == 0 || rank == 2) && numberOfNodes > 3)
     {
         if(rank == 0)
             target_rank = 2;
@@ -604,7 +604,7 @@ int main(int argc, char *argv[])
         connections[1] = new VerbsConnection(&info);
         cout << "connection established rank 0 and 2" << endl;
     }
-    if((rank == 0 || rank == 3) && numberOfNodes == 4)
+    if((rank == 0 || rank == 3) && numberOfNodes >= 4)
     {
        cout << "connecting 0 and 3" << endl;
        if(rank == 0)
