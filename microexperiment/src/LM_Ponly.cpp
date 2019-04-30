@@ -291,11 +291,12 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
                                 buffer_threads.push_back(std::make_shared<std::thread>([&connections,
                                    outputTable, campaingCnt, i, numberOfNodes] {
 
+
                                     ReceiveElement* recv1 = receiveElements.back();
                                     connections[i]->post_and_receive_blocking(recv1->buffer);
                                     receiveElements.pop_back();
                                     ReceiveElement* recv2 = receiveElements.back();
-                                    connections[i]->post_and_receive_blocking(recv1->buffer);
+                                    connections[i]->post_and_receive_blocking(recv2->buffer);
                                     receiveElements.pop_back();
 
                                     stringstream st;
