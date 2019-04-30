@@ -213,7 +213,7 @@ Timestamp getTimestamp() {
 
 void producer_only(record* records, size_t runCnt, ConnectionInfos** connections, size_t connectID, size_t campaingCnt,
         std::atomic<size_t>** hashTable, size_t windowSizeInSec, tbb::atomic<size_t>* bookKeeper, size_t producerID, size_t rank,
-        size_t numberOfNodes, infinity::memory::Buffer** sharedHT_buffer)
+        size_t numberOfNodes, infinity::memory::Buffer** sharedHT_buffer, size_t numaNode)
 {
     size_t inputTupsIndex = 0;
     size_t current_window = bookKeeper[0] > bookKeeper[1] ? 0 : 1;
@@ -253,12 +253,12 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connections
                     if(rank != 0)//copy and send result
                     {
                         buffer_threads.push_back(std::make_shared<std::thread>([&connections, producerID, connectID,
-                                                  sharedHT_buffer, outputTable, campaingCnt, current_window, &hashTable, rank] {
-
-                            memcpy(sharedHT_buffer[producerID]->getData(), hashTable[current_window], sizeof(std::atomic<size_t>) * campaingCnt);
+                                                  sharedHT_buffer, outputTable, campaingCnt, current_window, &hashTable, rank, numaNode] {
                             cout << "send blocking id=" << producerID  << " rank=" << rank
-                                    << " thread=" << omp_get_thread_num()<< " connection=" << connectID << endl;
-                            connections[connectID]->con->send_blocking(sharedHT_buffer[producerID]);//send_blocking
+                                    << " thread=" << omp_get_thread_num()<< " connection=" << connectID << " numaNode=" << numaNode << endl;
+                            memcpy(sharedHT_buffer[numaNode]->getData(), hashTable[current_window], sizeof(std::atomic<size_t>) * campaingCnt);
+
+                            connections[connectID]->con->send_blocking(sharedHT_buffer[numaNode]);//send_blocking
                             cout << "send blocking finished " << endl;
                         }));
                     }
@@ -732,12 +732,14 @@ int main(int argc, char *argv[])
              if(rank == 0)
              {
                  producer_only(recs, produceCntPerProd, conInfos, 0, campaingCnt, conInfos[outer_thread_id]->hashTable, windowSizeInSeconds
-                                      , conInfos[outer_thread_id]->bookKeeping, rank*2+outer_thread_id, rank, numberOfNodes, conInfos[outer_thread_id]->sharedHT_buffer);
+                                      , conInfos[outer_thread_id]->bookKeeping, rank*2+outer_thread_id, rank, numberOfNodes, conInfos[outer_thread_id]->sharedHT_buffer
+                                      , outer_thread_id);
              }
              else
              {
                  producer_only(recs, produceCntPerProd, conInfos, rank - 1, campaingCnt, conInfos[outer_thread_id]->hashTable, windowSizeInSeconds
-                                      , conInfos[outer_thread_id]->bookKeeping, rank*2+outer_thread_id, rank, numberOfNodes, conInfos[outer_thread_id]->sharedHT_buffer);
+                                      , conInfos[outer_thread_id]->bookKeeping, rank*2+outer_thread_id, rank, numberOfNodes, conInfos[outer_thread_id]->sharedHT_buffer
+                                      , outer_thread_id);
              }
 
 
