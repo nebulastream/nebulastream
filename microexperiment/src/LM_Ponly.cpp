@@ -286,10 +286,11 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connections
                                         stringstream ss;
                                         ss << "run buffer thread slotid=" << i+c  << " on connection="<<  i<< endl;
                                         cout << ss.str() << endl;
-                                        connections[i]->con->post_and_receive_blocking(connections[i]->sharedHT_buffer[i+c]);
-//                                        ReceiveElement receiveElement;
-//                                        receiveElement.buffer = connections[i]->sharedHT_buffer[i+c];
-//                                        connections[i]->con->post_receive(receiveElement.buffer);
+//                                        connections[i]->con->post_and_receive_blocking(connections[i]->sharedHT_buffer[i+c]);
+                                        ReceiveElement receiveElement;
+                                        receiveElement.buffer = connections[i]->sharedHT_buffer[i+c];
+                                        connections[i]->con->post_receive(receiveElement.buffer);
+                                        connections[i]->con->wait_for_receive(receiveElement);
 //                                        while(!connections[i]->con->check_receive(receiveElement))
 //                                        {
 ////                                            connections[i]->con->
