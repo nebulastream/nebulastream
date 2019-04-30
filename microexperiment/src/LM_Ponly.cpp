@@ -210,7 +210,7 @@ Timestamp getTimestamp() {
             > (Clock::now().time_since_epoch()).count();
 }
 
-void producer_only(record* records, size_t runCnt, VerbsConnection* con, size_t campaingCnt,
+void producer_only(record* records, size_t runCnt, ConnectionInfos** connections, size_t connectID, size_t campaingCnt,
         std::atomic<size_t>** hashTable, size_t windowSizeInSec, tbb::atomic<size_t>* bookKeeper, size_t producerID, size_t rank,
         size_t numberOfNodes, infinity::memory::Buffer** sharedHT_buffer)
 {
@@ -251,12 +251,13 @@ void producer_only(record* records, size_t runCnt, VerbsConnection* con, size_t 
                     }
                     if(rank != 0)//copy and send result
                     {
-                        buffer_threads.push_back(std::make_shared<std::thread>([&con, producerID,
+                        buffer_threads.push_back(std::make_shared<std::thread>([&connections, producerID, connectID,
                                                   sharedHT_buffer, outputTable, campaingCnt, current_window, &hashTable, rank] {
 
                             memcpy(sharedHT_buffer[producerID]->getData(), hashTable[current_window], sizeof(std::atomic<size_t>) * campaingCnt);
-                            cout << "send blocking id=" << producerID  << " rank=" << rank << " thread=" << omp_get_thread_num() << endl;
-                            con->send_blocking(sharedHT_buffer[producerID]);//send_blocking
+                            cout << "send blocking id=" << producerID  << " rank=" << rank
+                                    << " thread=" << omp_get_thread_num()<< " connection=" << connectID << endl;
+                            connections[connectID]->con->send_blocking(sharedHT_buffer[producerID]);//send_blocking
                             cout << "send blocking finished " << endl;
                         }));
                     }
@@ -269,31 +270,40 @@ void producer_only(record* records, size_t runCnt, VerbsConnection* con, size_t 
                             outputTable[i] += hashTable[current_window][i];
                         }
 
-                        cout << "post " << numberOfNodes -1 << " receives" << endl;
-                        for(size_t i = 0; i < numberOfNodes -1; i++)
+                        //post on each connection 2 receives
+                        if(producerID == 0)
                         {
-                            size_t slotID = producerID * numberOfNodes + i;
-                            buffer_threads.push_back(std::make_shared<std::thread>([&con, slotID,
-                              sharedHT_buffer, outputTable, campaingCnt] {
-                                cout << "run buffer thread slotid=" << slotID << endl;
-                                ReceiveElement receiveElement;
-                                receiveElement.buffer = sharedHT_buffer[slotID];
-                                con->post_receive(receiveElement.buffer);
-                                while(!con->check_receive(receiveElement))
+                            //on each connection
+                            cout << "post " << numberOfNodes -1 << " receives" << endl;
+                            for(size_t i = 0; i < numberOfNodes -1; i++)
+                            {
+                                for(size_t c = 0; c < 2; c++)//for each ht
                                 {
-    //                                cout << "wait receive producerID=" << producerID << endl;
-    //                                sleep(1);
-                                }
-                                cout << "revceived" << endl;
-                                std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[slotID]->getData();
+//                                size_t slotID = producerID * numberOfNodes + i;
+                                    buffer_threads.push_back(std::make_shared<std::thread>([&connections,
+                                       outputTable, campaingCnt, i , c] {
+                                        cout << "run buffer thread slotid=" << i * c  << " on connection"<<  i<< endl;
+                                        ReceiveElement receiveElement;
+                                        receiveElement.buffer = connections[i]->sharedHT_buffer[i * c];
+                                        connections[i]->con->post_receive(receiveElement.buffer);
+                                        while(!connections[i]->con->check_receive(receiveElement))
+                                        {
+            //                                cout << "wait receive producerID=" << producerID << endl;
+            //                                sleep(1);
+                                        }
+                                        cout << "revceived" << endl;
+                                        std::atomic<size_t>* tempTable = (std::atomic<size_t>*) connections[i]->sharedHT_buffer[i * c]->getData();
 
-                                #pragma omp parallel for num_threads(20)
-                                for(size_t i = 0; i < campaingCnt; i++)
-                                {
-                                    outputTable[i] += tempTable[i];
-                                }
-                            }));
-                        }//end of for
+                                        #pragma omp parallel for num_threads(20)
+                                        for(size_t i = 0; i < campaingCnt; i++)
+                                        {
+                                            outputTable[i] += tempTable[i];
+                                        }
+                                }));
+                                }//end of first for
+                            }//end of for
+                        }
+
                     }//end of else
             }//end of if to change
             current_window = current_window == 0 ? 1 : 0;
@@ -666,12 +676,12 @@ int main(int argc, char *argv[])
 
              if(rank == 0)
              {
-                 producer_only(recs, produceCntPerProd, connections[0], campaingCnt, conInfos[outer_thread_id]->hashTable, windowSizeInSeconds
+                 producer_only(recs, produceCntPerProd, conInfos, 0, campaingCnt, conInfos[outer_thread_id]->hashTable, windowSizeInSeconds
                                       , conInfos[outer_thread_id]->bookKeeping, rank*2+outer_thread_id, rank, numberOfNodes, conInfos[outer_thread_id]->sharedHT_buffer);
              }
              else
              {
-                 producer_only(recs, produceCntPerProd, connections[rank - 1], campaingCnt, conInfos[outer_thread_id]->hashTable, windowSizeInSeconds
+                 producer_only(recs, produceCntPerProd, conInfos, rank - 1, campaingCnt, conInfos[outer_thread_id]->hashTable, windowSizeInSeconds
                                       , conInfos[outer_thread_id]->bookKeeping, rank*2+outer_thread_id, rank, numberOfNodes, conInfos[outer_thread_id]->sharedHT_buffer);
              }
 
@@ -694,6 +704,7 @@ int main(int argc, char *argv[])
     ss << " readBandWidth MB/s=" << (sumReadInTuples*sizeof(record)/1024/1024)/elapsed_time << endl;
 
     ss << " ----------------------------------------------" << endl;
+
 
     cout << ss.str() << endl;
     for(size_t i = 0; i < buffer_threads.size(); i++)
