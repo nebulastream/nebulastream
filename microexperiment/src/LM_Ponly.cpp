@@ -713,7 +713,6 @@ int main(int argc, char *argv[])
 //    } while (cin.get() != '\n');
 
     cout << "start processing " << endl;
-    Timestamp begin = getTimestamp();
 
     if(rank == 0)
     {
@@ -735,6 +734,7 @@ int main(int argc, char *argv[])
        cout << "got finish buffer, start execution" << endl;
 
     }
+    Timestamp begin = getTimestamp();
 
     #pragma omp parallel num_threads(nodes)//nodes
        {
