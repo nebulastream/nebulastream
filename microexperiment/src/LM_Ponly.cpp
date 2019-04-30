@@ -284,10 +284,10 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connections
                                        outputTable, campaingCnt, i , c] {
 
                                         stringstream ss;
-                                        ss << "run buffer thread slotid=" << i * c  << " on connection="<<  i<< endl;
+                                        ss << "run buffer thread slotid=" << i+c  << " on connection="<<  i<< endl;
                                         cout << ss.str() << endl;
                                         ReceiveElement receiveElement;
-                                        receiveElement.buffer = connections[i]->sharedHT_buffer[i * c];
+                                        receiveElement.buffer = connections[i]->sharedHT_buffer[i+c];
                                         connections[i]->con->post_receive(receiveElement.buffer);
                                         while(!connections[i]->con->check_receive(receiveElement))
                                         {
@@ -295,7 +295,7 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connections
             //                                sleep(1);
                                         }
                                         cout << "revceived" << endl;
-                                        std::atomic<size_t>* tempTable = (std::atomic<size_t>*) connections[i]->sharedHT_buffer[i * c]->getData();
+                                        std::atomic<size_t>* tempTable = (std::atomic<size_t>*) connections[i]->sharedHT_buffer[i+c]->getData();
 
                                         #pragma omp parallel for num_threads(20)
                                         for(size_t i = 0; i < campaingCnt; i++)
@@ -645,13 +645,34 @@ int main(int argc, char *argv[])
         cout << "thread out of critical = " << omp_get_thread_num() << endl;
     }//end of pragma
 
-    do
-    {
-      cout << '\n' << "Press a key to continue...";
-    } while (cin.get() != '\n');
+//    do
+//    {
+//      cout << '\n' << "Press a key to continue...";
+//    } while (cin.get() != '\n');
 
     cout << "start processing " << endl;
     Timestamp begin = getTimestamp();
+
+    if(rank == 0)
+    {
+        cout << "master finished setup , sending start buffer " << endl;
+        for(size_t i = 0; i < numberOfNodes -1 ; i++)
+        {
+            cout << "send startbuffer on connection=" << i << endl;
+            infinity::memory::Buffer* finishBuffer = connections[1]->allocate_buffer(1);
+            connections[i]->send_blocking(finishBuffer);
+        }
+        cout << "buffer sending finished, starting "<< getTimestamp() << endl;
+
+    }
+    else
+    {
+       infinity::memory::Buffer* finishBuffer = connections[rank - 1]->allocate_buffer(1);
+       cout << "waiting on master with connectID=" << rank - 1<< endl;
+       connections[rank - 1]->post_and_receive_blocking(finishBuffer);
+       cout << "got finish buffer, start execution" << endl;
+
+    }
 
     #pragma omp parallel num_threads(nodes)//nodes
        {
