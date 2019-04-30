@@ -315,14 +315,14 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
                                     }
 
                                     cout << "post new receive" << endl;
-                                    infinity::memory::Buffer* newBuf = connections[0]->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
+                                    infinity::memory::Buffer* newBuf = connections[i]->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
                                     if(numberOfNodes >=3)
                                         connections[1]->register_buffer(newBuf, campaingCnt * sizeof(std::atomic<size_t>));
                                     if(numberOfNodes >=4)
                                         connections[2]->register_buffer(newBuf, campaingCnt * sizeof(std::atomic<size_t>));
                                     receiveElements.push_back(new ReceiveElement(newBuf));
 
-                                    infinity::memory::Buffer* newBuf2 = connections[0]->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
+                                    infinity::memory::Buffer* newBuf2 = connections[i]->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
                                     if(numberOfNodes >=3)
                                         connections[1]->register_buffer(newBuf2, campaingCnt * sizeof(std::atomic<size_t>));
                                     if(numberOfNodes >=4)
