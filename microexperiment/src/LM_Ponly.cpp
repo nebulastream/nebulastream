@@ -282,7 +282,10 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connections
 //                                size_t slotID = producerID * numberOfNodes + i;
                                     buffer_threads.push_back(std::make_shared<std::thread>([&connections,
                                        outputTable, campaingCnt, i , c] {
-                                        cout << "run buffer thread slotid=" << i * c  << " on connection"<<  i<< endl;
+
+                                        stringstream ss;
+                                        ss << "run buffer thread slotid=" << i * c  << " on connection="<<  i<< endl;
+                                        cout << ss.str() << endl;
                                         ReceiveElement receiveElement;
                                         receiveElement.buffer = connections[i]->sharedHT_buffer[i * c];
                                         connections[i]->con->post_receive(receiveElement.buffer);
