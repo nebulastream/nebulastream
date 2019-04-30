@@ -54,7 +54,7 @@ std::vector<std::shared_ptr<std::thread>> buffer_threads;
 //infinity::memory::RegionToken** sharedHT_region_token;
 //infinity::memory::Buffer** sharedHT_buffer;
 std::atomic<size_t>* outputTable;
-ReceiveElement** receiveElements;
+std::vector<ReceiveElement*> receiveElements;
 infinity::memory::Buffer** sharedHT_buffer_for_merge;
 
 
@@ -291,34 +291,49 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
                                 buffer_threads.push_back(std::make_shared<std::thread>([&connections,
                                    outputTable, campaingCnt, i, numberOfNodes] {
 
-                                    cout << " post receive i=" << i << endl;
-                                    connections[i]->post_and_receive_blocking(receiveElements[i]->buffer);
-                                    cout << " post receive i=" << i + ((numberOfNodes -1)) << endl;
-                                    connections[i]->post_and_receive_blocking(receiveElements[i + ((numberOfNodes -1))]->buffer);
-
-//                                    connections[i%2]->post_receive(receiveElements[i]->buffer);
+                                    ReceiveElement* recv1 = receiveElements.back();
+                                    connections[i]->post_and_receive_blocking(recv1->buffer);
+                                    receiveElements.pop_back();
+                                    ReceiveElement* recv2 = receiveElements.back();
+                                    connections[i]->post_and_receive_blocking(recv1->buffer);
+                                    receiveElements.pop_back();
 
                                     stringstream st;
                                     st << "received buffer connection=" << i << "i="
                                             << i << " other=" << (i + (numberOfNodes -1)*2) << endl;
                                     cout << st.str() << endl;
 
-                                    std::atomic<size_t>* tempTable = (std::atomic<size_t>*) receiveElements[i]->buffer;
-                                    std::atomic<size_t>* tempTable2 = (std::atomic<size_t>*) receiveElements[i + ((numberOfNodes -1))]->buffer;
+                                    std::atomic<size_t>* tempTable = (std::atomic<size_t>*) recv1->buffer;
+                                    std::atomic<size_t>* tempTable2 = (std::atomic<size_t>*) recv2->buffer;
 
                                     #pragma omp parallel for num_threads(20)
                                     for(size_t i = 0; i < campaingCnt; i++)
                                     {
                                         outputTable[i] += tempTable[i];
                                         outputTable[i] += tempTable2[i];
-
                                     }
 
-                                    //post new receive
                                     cout << "post new receive" << endl;
-                                    receiveElements[i] = new ReceiveElement();
-                                    receiveElements[i]->buffer = sharedHT_buffer_for_merge[i];
-                                    connections[i]->post_receive(receiveElements[i]->buffer);
+                                    infinity::memory::Buffer* newBuf = connections[0]->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
+                                    if(numberOfNodes >=3)
+                                        connections[1]->register_buffer(newBuf, campaingCnt * sizeof(std::atomic<size_t>));
+                                    if(numberOfNodes >=4)
+                                        connections[2]->register_buffer(newBuf, campaingCnt * sizeof(std::atomic<size_t>));
+                                    receiveElements.push_back(new ReceiveElement(newBuf));
+
+                                    infinity::memory::Buffer* newBuf2 = connections[0]->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
+                                    if(numberOfNodes >=3)
+                                        connections[1]->register_buffer(newBuf2, campaingCnt * sizeof(std::atomic<size_t>));
+                                    if(numberOfNodes >=4)
+                                        connections[2]->register_buffer(newBuf2, campaingCnt * sizeof(std::atomic<size_t>));
+                                    receiveElements.push_back(new ReceiveElement(newBuf2));
+
+//                                    receiveElements.push_back(new ReceiveElement(sharedHT_buffer_for_merge[i]));
+//                                    //post new receive
+//                                    cout << "post new receive" << endl;
+//                                    receiveElements[i] = new ReceiveElement();
+//                                    receiveElements[i]->buffer = sharedHT_buffer_for_merge[i];
+//                                    connections[i]->post_receive(receiveElements[i]->buffer);
                                 }));
                             }//end of first for
                         }
@@ -655,7 +670,7 @@ int main(int argc, char *argv[])
                     if(omp_get_thread_num() == 0)
                     {
                         sharedHT_buffer_for_merge = new infinity::memory::Buffer*[(numberOfNodes-1)*2];
-                        receiveElements = new ReceiveElement*[(numberOfNodes-1)*2];
+//                        receiveElements = new ReceiveElement*[(numberOfNodes-1)*2];
 
                         for(size_t i = 0; i <= (numberOfNodes-1)*2; i++)
                         {
@@ -665,8 +680,7 @@ int main(int argc, char *argv[])
                             if(numberOfNodes >=4)
                                 connections[2]->register_buffer(sharedHT_buffer_for_merge[i], campaingCnt * sizeof(std::atomic<size_t>));
 
-                            receiveElements[i] = new ReceiveElement();
-                            receiveElements[i]->buffer = sharedHT_buffer_for_merge[i];
+                            receiveElements.push_back(new ReceiveElement(sharedHT_buffer_for_merge[i]));
                         }
                     }
                 }
