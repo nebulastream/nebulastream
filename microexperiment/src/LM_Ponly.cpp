@@ -286,8 +286,9 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
 //                                // i+3 0:0,3 1:1,4 2:2,5
                                  //
 //                            }
-                            for(size_t i = 0; i < (numberOfNodes -1); i++)
+                            for(size_t i = 0; i < (numberOfNodes -1); i++)//3
                             {
+
                                 buffer_threads.push_back(std::make_shared<std::thread>([&connections,
                                    outputTable, campaingCnt, i, numberOfNodes] {
 
@@ -299,13 +300,13 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
                                     connections[i]->post_and_receive_blocking(recv1->buffer);
                                     receiveElements.pop_back();
                                     cout << "received first buffer new size=" <<  receiveElements.size() << endl;
-                                    ReceiveElement* recv2 = receiveElements.back();
-                                    connections[i]->post_and_receive_blocking(recv2->buffer);
-                                    receiveElements.pop_back();
-                                    cout << "received second buffer new size=" <<  receiveElements.size() << endl;
+//                                    ReceiveElement* recv2 = receiveElements.back();
+//                                    connections[i]->post_and_receive_blocking(recv2->buffer);
+//                                    receiveElements.pop_back();
+//                                    cout << "received second buffer new size=" <<  receiveElements.size() << endl;
 
                                     std::atomic<size_t>* tempTable = (std::atomic<size_t>*) recv1->buffer;
-                                    std::atomic<size_t>* tempTable2 = (std::atomic<size_t>*) recv2->buffer;
+//                                    std::atomic<size_t>* tempTable2 = (std::atomic<size_t>*) recv2->buffer;
 
                                     #pragma omp parallel for num_threads(20)
                                     for(size_t i = 0; i < campaingCnt; i++)
@@ -322,12 +323,12 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
                                         connections[2]->register_buffer(newBuf, campaingCnt * sizeof(std::atomic<size_t>));
                                     receiveElements.push_back(new ReceiveElement(newBuf));
 
-                                    infinity::memory::Buffer* newBuf2 = connections[0]->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
-                                    if(numberOfNodes >=3)
-                                        connections[1]->register_buffer(newBuf2, campaingCnt * sizeof(std::atomic<size_t>));
-                                    if(numberOfNodes >=4)
-                                        connections[2]->register_buffer(newBuf2, campaingCnt * sizeof(std::atomic<size_t>));
-                                    receiveElements.push_back(new ReceiveElement(newBuf2));
+//                                    infinity::memory::Buffer* newBuf2 = connections[0]->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
+//                                    if(numberOfNodes >=3)
+//                                        connections[1]->register_buffer(newBuf2, campaingCnt * sizeof(std::atomic<size_t>));
+//                                    if(numberOfNodes >=4)
+//                                        connections[2]->register_buffer(newBuf2, campaingCnt * sizeof(std::atomic<size_t>));
+//                                    receiveElements.push_back(new ReceiveElement(newBuf2));
 
 //                                    receiveElements.push_back(new ReceiveElement(sharedHT_buffer_for_merge[i]));
 //                                    //post new receive
