@@ -459,6 +459,7 @@ ConnectionInfos* setupProducerOnly(VerbsConnection* connection, size_t campaingC
         connectInfo->receiveElements = new ReceiveElement*[(numberOfNode-1)*2];
         for(size_t i = 0; i < (numberOfNode-1)*2; i++)
         {
+            connectInfo->receiveElements[i] = new ReceiveElement();
             connectInfo->receiveElements[i]->buffer = connectInfo->sharedHT_buffer[i];
             connectInfo->con->post_receive(connectInfo->receiveElements[i]->buffer);
         }
