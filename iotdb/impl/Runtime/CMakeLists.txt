@@ -16,5 +16,5 @@ add_source_iotdb(
         YSBGeneratorSource.cpp
         YSBWindow.cpp
         YSBPrintSink.cpp
-    
+        CSVSource.cpp
                 )
