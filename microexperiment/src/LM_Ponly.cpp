@@ -653,7 +653,7 @@ int main(int argc, char *argv[])
                     if(omp_get_thread_num() == 0)
                     {
                         sharedHT_buffer_for_merge = new infinity::memory::Buffer*[(numberOfNodes-1)*2];
-                        receiveElements = new ReceiveElement*[(numberOfNodes-1-1)*2];
+                        receiveElements = new ReceiveElement*[(numberOfNodes-1)*2];
 
                         for(size_t i = 0; i <= (numberOfNodes-1)*2; i++)
                         {
