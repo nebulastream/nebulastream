@@ -277,37 +277,43 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
                         if(numaNode == 0)
                         {
                             //on each connection
-                            cout << "post " << (numberOfNodes -1)*2 << " receives" << endl;
-                            for(size_t i = 0; i < (numberOfNodes -1)*2; i++)
-                            {
-                                connections[i%2]->post_receive(receiveElements[i]->buffer);
-                            }
-
-                            cout << "wait" << endl;
+//                            cout << "post " << (numberOfNodes -1)*2 << " receives" << endl;
+//                            for(size_t i = 0; i < (numberOfNodes -1)*2; i++)
+//                            {
+//                                connections[i]->post_receive(receiveElements[i]->buffer);
+//                                connections[i]->post_receive(receiveElements[i + ((numberOfNodes -1)*2)]->buffer);
+//                                // i+3 0:0,3 1:1,4 2:2,5
+//                            }
                             for(size_t i = 0; i < (numberOfNodes -1)*2; i++)
                             {
                                 buffer_threads.push_back(std::make_shared<std::thread>([&connections,
                                    outputTable, campaingCnt, i] {
 
-                                    connections[i%2]->post_receive(receiveElements[i]->buffer);
+                                    connections[i]->post_and_receive_blocking(receiveElements[i]->buffer);
+                                    connections[i]->post_and_receive_blocking(receiveElements[i + ((numberOfNodes -1)*2)]->buffer);
+
+//                                    connections[i%2]->post_receive(receiveElements[i]->buffer);
 
                                     stringstream st;
-                                    st << "received buffer connection=" << i%2 << "i=" << i<< endl;
+                                    st << "received buffer connection=" << i << "i=" << i << " other=" << (i + ((numberOfNodes -1)*2) << endl;
                                     cout << st.str() << endl;
 
                                     std::atomic<size_t>* tempTable = (std::atomic<size_t>*) receiveElements[i]->buffer;
+                                    std::atomic<size_t>* tempTable2 = (std::atomic<size_t>*) receiveElements[i + ((numberOfNodes -1)*2)]->buffer;
 
                                     #pragma omp parallel for num_threads(20)
                                     for(size_t i = 0; i < campaingCnt; i++)
                                     {
                                         outputTable[i] += tempTable[i];
+                                        outputTable[i] += tempTable2[i];
+
                                     }
 
                                     //post new receive
                                     cout << "post new receive" << endl;
                                     receiveElements[i] = new ReceiveElement();
                                     receiveElements[i]->buffer = sharedHT_buffer_for_merge[i];
-                                    connections[i%2]->post_receive(receiveElements[i]->buffer);
+                                    connections[i]->post_receive(receiveElements[i]->buffer);
                                 }));
                             }//end of first for
                         }
