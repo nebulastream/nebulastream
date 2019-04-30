@@ -164,6 +164,7 @@ struct ConnectionInfos
     std::atomic<size_t>** hashTable;
     tbb::atomic<size_t>* bookKeeping;
     infinity::memory::Buffer** sharedHT_buffer;
+    ReceiveElement** receiveElements;
 };
 
 typedef uint64_t Timestamp;
@@ -274,8 +275,8 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connections
                         if(producerID == 0)
                         {
                             //on each connection
-                            cout << "post " << numberOfNodes -1 << " receives" << endl;
-                            for(size_t i = 0; i < numberOfNodes -1; i++)
+                            cout << "post " << (numberOfNodes -1) << " receives" << endl;
+                            for(size_t i = 0; i < (numberOfNodes -1); i++)
                             {
                                 for(size_t c = 0; c < 2; c++)//for each ht
                                 {
@@ -284,13 +285,13 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connections
                                        outputTable, campaingCnt, i , c] {
 
                                         stringstream ss;
-                                        ss << "run buffer thread slotid=" << i+c  << " on connection="<<  i<< endl;
+                                        ss << "run buffer thread recelement=" << c  << " on connection="<<  i<< endl;
                                         cout << ss.str() << endl;
 //                                        connections[i]->con->post_and_receive_blocking(connections[i]->sharedHT_buffer[i+c]);
-                                        ReceiveElement receiveElement;
-                                        receiveElement.buffer = connections[i]->sharedHT_buffer[i+c];
-                                        connections[i]->con->post_receive(receiveElement.buffer);
-                                        connections[i]->con->wait_for_receive(receiveElement);
+//                                        ReceiveElement* receiveElement = new ReceiveElement();
+//                                        receiveElement->buffer = connections[i]->sharedHT_buffer[i+c];
+                                        connections[i]->con->wait_for_receive(*connections[i]->receiveElements[c]);
+
 //                                        while(!connections[i]->con->check_receive(receiveElement))
 //                                        {
 ////                                            connections[i]->con->
@@ -308,6 +309,11 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connections
                                         {
                                             outputTable[i] += tempTable[i];
                                         }
+
+                                        //post new receive
+                                        connections[i]->receiveElements[c] = new ReceiveElement();
+                                        connections[i]->receiveElements[c]->buffer = connections[i]->sharedHT_buffer[i+c];
+
                                 }));
                                 }//end of first for
                             }//end of for
@@ -385,7 +391,7 @@ record* generateTuplesOneArray(size_t campaingCnt)
 
 
 
-ConnectionInfos* setupProducerOnly(VerbsConnection* connection, size_t campaingCnt, size_t rank, size_t numberOfProducer, size_t numberOfHTSlots)
+ConnectionInfos* setupProducerOnly(VerbsConnection* connection, size_t campaingCnt, size_t rank, size_t numberOfProducer, size_t numberOfNode)
 {
     auto outer_thread_id = omp_get_thread_num();
     numa_run_on_node(outer_thread_id);
@@ -432,13 +438,31 @@ ConnectionInfos* setupProducerOnly(VerbsConnection* connection, size_t campaingC
     ss << numa_node << ",";
     ss << endl;
     cout << ss.str() << endl;
-
-    connectInfo->sharedHT_buffer = new infinity::memory::Buffer*[numberOfHTSlots];
-    for(size_t i = 0; i <= numberOfHTSlots; i++)
-    {
-        connectInfo->sharedHT_buffer[i] = connection->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
-    }
     connectInfo->con = connection;
+
+    if(rank != 0 || outer_thread_id != 0)
+    {
+        connectInfo->sharedHT_buffer = new infinity::memory::Buffer*[2];
+        for(size_t i = 0; i <= 2; i++)
+        {
+            connectInfo->sharedHT_buffer[i] = connection->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
+        }
+    }
+    if(rank == 0 && outer_thread_id == 0)
+    {
+        connectInfo->sharedHT_buffer = new infinity::memory::Buffer*[(numberOfNode-1)*2];
+        for(size_t i = 0; i <= (numberOfNode-1)*2; i++)
+        {
+            connectInfo->sharedHT_buffer[i] = connection->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
+        }
+
+        connectInfo->receiveElements = new ReceiveElement*[(numberOfNode-1)*2];
+        for(size_t i = 0; i < (numberOfNode-1)*2; i++)
+        {
+            connectInfo->receiveElements[i]->buffer = connectInfo->sharedHT_buffer[i];
+            connectInfo->con->post_receive(connectInfo->receiveElements[i]->buffer);
+        }
+    }
     return connectInfo;
 }
 
@@ -637,11 +661,11 @@ int main(int argc, char *argv[])
             {
                 if(rank == 0)
                 {
-                    conInfos[omp_get_thread_num()] = setupProducerOnly(connections[0], campaingCnt, rank, numberOfProducer, 10);
+                    conInfos[omp_get_thread_num()] = setupProducerOnly(connections[0], campaingCnt, rank, numberOfProducer, numberOfNodes);
                 }
                 else
                 {
-                    conInfos[omp_get_thread_num()] = setupProducerOnly(connections[rank -1], campaingCnt, rank, numberOfProducer, 10);
+                    conInfos[omp_get_thread_num()] = setupProducerOnly(connections[rank -1], campaingCnt, rank, numberOfProducer, numberOfNodes);
                 }
             }
             else
