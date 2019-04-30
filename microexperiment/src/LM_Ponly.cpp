@@ -286,7 +286,7 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
 //                                // i+3 0:0,3 1:1,4 2:2,5
                                  //
 //                            }
-                            for(size_t i = 0; i < (numberOfNodes -1)*2; i++)
+                            for(size_t i = 0; i < (numberOfNodes -1); i++)
                             {
                                 buffer_threads.push_back(std::make_shared<std::thread>([&connections,
                                    outputTable, campaingCnt, i, numberOfNodes] {
