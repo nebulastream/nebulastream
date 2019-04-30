@@ -284,15 +284,16 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
 //                                connections[i]->post_receive(receiveElements[i]->buffer);
 //                                connections[i]->post_receive(receiveElements[i + ((numberOfNodes -1)*2)]->buffer);
 //                                // i+3 0:0,3 1:1,4 2:2,5
+                                 //
 //                            }
                             for(size_t i = 0; i < (numberOfNodes -1)*2; i++)
                             {
                                 buffer_threads.push_back(std::make_shared<std::thread>([&connections,
                                    outputTable, campaingCnt, i, numberOfNodes] {
 
-                                    cout << " post receive i=" << i << " and " << i + ((numberOfNodes -1)*2) << endl;
+                                    cout << " post receive i=" << i << " and " << i + ((numberOfNodes -1)) << endl;
                                     connections[i]->post_and_receive_blocking(receiveElements[i]->buffer);
-                                    connections[i]->post_and_receive_blocking(receiveElements[i + ((numberOfNodes -1)*2)]->buffer);
+                                    connections[i]->post_and_receive_blocking(receiveElements[i + ((numberOfNodes -1))]->buffer);
 
 //                                    connections[i%2]->post_receive(receiveElements[i]->buffer);
 
@@ -302,7 +303,7 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
                                     cout << st.str() << endl;
 
                                     std::atomic<size_t>* tempTable = (std::atomic<size_t>*) receiveElements[i]->buffer;
-                                    std::atomic<size_t>* tempTable2 = (std::atomic<size_t>*) receiveElements[i + ((numberOfNodes -1)*2)]->buffer;
+                                    std::atomic<size_t>* tempTable2 = (std::atomic<size_t>*) receiveElements[i + ((numberOfNodes -1))]->buffer;
 
                                     #pragma omp parallel for num_threads(20)
                                     for(size_t i = 0; i < campaingCnt; i++)
