@@ -266,13 +266,14 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
                     }
                     else if(rank == 0)//this one merges
                     {
-                        cout << "merging local stuff for id=" << producerID  << " rank=" << rank << " thread=" << omp_get_thread_num() << endl;
+                        cout << "merging local stuff for id=" << producerID
+                                << " rank=" << rank << " thread=" << omp_get_thread_num() << endl;
                         #pragma omp parallel for num_threads(20)
                         for(size_t i = 0; i < campaingCnt; i++)
                         {
                             outputTable[i] += hashTable[current_window][i];
                         }
-
+                        cout << "merging done" << endl;
                         //post on each connection 2 receives
                         if(numaNode == 0)
                         {
@@ -289,6 +290,7 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
                                 buffer_threads.push_back(std::make_shared<std::thread>([&connections,
                                    outputTable, campaingCnt, i, numberOfNodes] {
 
+                                    cout << " post receive i=" << i << " and " << i + ((numberOfNodes -1)*2) << endl;
                                     connections[i]->post_and_receive_blocking(receiveElements[i]->buffer);
                                     connections[i]->post_and_receive_blocking(receiveElements[i + ((numberOfNodes -1)*2)]->buffer);
 
