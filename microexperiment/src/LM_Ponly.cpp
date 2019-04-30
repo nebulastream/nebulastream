@@ -298,7 +298,8 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
                                     st << "received buffer connection=" << i << endl;
                                     cout << st.str() << endl;
 
-                                    connections[i]->post_and_receive_blocking(receiveElements[i]->buffer);
+                                    connections[i]->wait_for_receive(*receiveElements[i]);
+//                                    connections[i]->post_and_receive_blocking(receiveElements[i]->buffer);
                                     cout << "received first buffer at pos" << i << endl;
 //                                    ReceiveElement* recv2 = receiveElements.back();
 //                                    connections[i]->post_and_receive_blocking(recv2->buffer);
@@ -318,11 +319,13 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
                                     cout << "post new receive i=" << i  << endl;
                                     infinity::memory::Buffer* newBuf = connections[i]->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
                                     receiveElements[i] = new ReceiveElement(newBuf);
+                                    connections[i]->post_receive(receiveElements[i]->buffer);
+
 //                                    if(numberOfNodes >=3)
 //                                        connections[1]->register_buffer(newBuf, campaingCnt * sizeof(std::atomic<size_t>));
 //                                    if(numberOfNodes >=4)
 //                                        connections[2]->register_buffer(newBuf, campaingCnt * sizeof(std::atomic<size_t>));
-                                    receiveElements[i] = new ReceiveElement(newBuf);
+//                                    receiveElements[i] = new ReceiveElement(newBuf);
 
 //                                    infinity::memory::Buffer* newBuf2 = connections[0]->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
 //                                    if(numberOfNodes >=3)
@@ -678,13 +681,15 @@ int main(int argc, char *argv[])
 //                        for(size_t i = 0; i <= (numberOfNodes-1)*2; i++)
                         for(size_t i = 0; i <= (numberOfNodes-1)*2; i++)
                         {
-                            sharedHT_buffer_for_merge[i] = connections[0]->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
-                            if(numberOfNodes >= 3)
-                                connections[1]->register_buffer(sharedHT_buffer_for_merge[i], campaingCnt * sizeof(std::atomic<size_t>));
-                            if(numberOfNodes >= 4)
-                                connections[2]->register_buffer(sharedHT_buffer_for_merge[i], campaingCnt * sizeof(std::atomic<size_t>));
+                            sharedHT_buffer_for_merge[i] = connections[i]->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
+//                            if(numberOfNodes >= 3)
+//                                connections[1]->register_buffer(sharedHT_buffer_for_merge[i], campaingCnt * sizeof(std::atomic<size_t>));
+//                            if(numberOfNodes >= 4)
+//                                connections[2]->register_buffer(sharedHT_buffer_for_merge[i], campaingCnt * sizeof(std::atomic<size_t>));
 
                             receiveElements[i] = new ReceiveElement(sharedHT_buffer_for_merge[i]);
+                            connections[i]->post_receive(receiveElements[i]->buffer);
+
                         }
                     }
                 }
