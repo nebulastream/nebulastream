@@ -1,22 +1,16 @@
-/*
- * BinarySource.h
- *
- *  Created on: Dec 19, 2018
- *      Author: zeuchste
- */
-
-#ifndef INCLUDE_BINARYSOURCE_H_
-#define INCLUDE_BINARYSOURCE_H_
+#ifndef INCLUDE_CSVSOURCE_H_
+#define INCLUDE_CSVSOURCE_H_
 
 #include <Core/TupleBuffer.hpp>
 #include <Runtime/DataSource.hpp>
 #include <fstream>
+#include <string>
 
 namespace iotdb {
 
-class BinarySource : public DataSource {
+class CSVSource : public DataSource {
   public:
-    BinarySource(const Schema& schema, const std::string& file_path, const uint64_t& num_tuples_to_process=-1);
+    CSVSource(const Schema& schema, const std::string& file_path, const uint64_t& num_tuples_to_process=-1, const std::string& delimiter=",");
     TupleBufferPtr receiveData();
     const std::string toString() const;
     void fillBuffer(TupleBuffer&);
@@ -28,7 +22,8 @@ class BinarySource : public DataSource {
     // helper variables
     int64_t file_size;
     size_t tuple_size;
+    std::string delimiter;
 };
 } // namespace iotdb
 
-#endif /* INCLUDE_BINARYSOURCE_H_ */
+#endif /* INCLUDE_CSVSOURCE_H_ */
