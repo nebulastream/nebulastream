@@ -659,7 +659,7 @@ int main(int argc, char *argv[])
         for(size_t i = 0; i < numberOfNodes -1 ; i++)
         {
             cout << "send startbuffer on connection=" << i << endl;
-            infinity::memory::Buffer* finishBuffer = connections[1]->allocate_buffer(1);
+            infinity::memory::Buffer* finishBuffer = connections[i]->allocate_buffer(1);
             connections[i]->send_blocking(finishBuffer);
         }
         cout << "buffer sending finished, starting "<< getTimestamp() << endl;
