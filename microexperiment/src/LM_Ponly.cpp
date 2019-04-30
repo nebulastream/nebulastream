@@ -285,12 +285,12 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connections
                                        outputTable, campaingCnt, i , c] {
 
                                         stringstream ss;
-                                        ss << "run buffer thread recelement=" << c  << " on connection="<< i
-                                                << " sharedbuff=" << i+c << endl;
+                                        ss << "run buffer thread i=" << i  << " on c="<< c << endl;
                                         cout << ss.str() << endl;
 //                                        connections[i]->con->post_and_receive_blocking(connections[i]->sharedHT_buffer[i+c]);
 //                                        ReceiveElement* receiveElement = new ReceiveElement();
 //                                        receiveElement->buffer = connections[i]->sharedHT_buffer[i+c];
+
                                         connections[i]->con->wait_for_receive(*connections[i]->receiveElements[c]);
 
 //                                        while(!connections[i]->con->check_receive(receiveElement))
@@ -300,10 +300,10 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connections
 //            //                                sleep(1);
 //                                        }
                                         stringstream st;
-                                        st << "received buffer thread slotid=" << i+c  << " on connection="<<  i<< endl;
+                                        st << "received buffer thread i=" << i << " c=" << c << endl;
                                         cout << st.str() << endl;
 
-                                        std::atomic<size_t>* tempTable = (std::atomic<size_t>*) connections[i]->sharedHT_buffer[i+c]->getData();
+                                        std::atomic<size_t>* tempTable = (std::atomic<size_t>*) connections[i]->receiveElements[c]->buffer;
 
                                         #pragma omp parallel for num_threads(20)
                                         for(size_t i = 0; i < campaingCnt; i++)
@@ -312,10 +312,10 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connections
                                         }
 
                                         //post new receive
+                                        cout << "post new receive" << endl;
                                         connections[i]->receiveElements[c] = new ReceiveElement();
                                         connections[i]->receiveElements[c]->buffer = connections[i]->sharedHT_buffer[i+c];
                                         connections[i]->con->post_receive(connections[i]->receiveElements[c]->buffer);
-
                                 }));
                                 }//end of first for
                             }//end of for
