@@ -291,8 +291,9 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
                                 buffer_threads.push_back(std::make_shared<std::thread>([&connections,
                                    outputTable, campaingCnt, i, numberOfNodes] {
 
-                                    cout << " post receive i=" << i << " and " << i + ((numberOfNodes -1)) << endl;
+                                    cout << " post receive i=" << i << endl;
                                     connections[i]->post_and_receive_blocking(receiveElements[i]->buffer);
+                                    cout << " post receive i=" << i + ((numberOfNodes -1)) << endl;
                                     connections[i]->post_and_receive_blocking(receiveElements[i + ((numberOfNodes -1))]->buffer);
 
 //                                    connections[i%2]->post_receive(receiveElements[i]->buffer);
