@@ -287,7 +287,7 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
                             for(size_t i = 0; i < (numberOfNodes -1)*2; i++)
                             {
                                 buffer_threads.push_back(std::make_shared<std::thread>([&connections,
-                                   outputTable, campaingCnt, i] {
+                                   outputTable, campaingCnt, i, numberOfNodes] {
 
                                     connections[i]->post_and_receive_blocking(receiveElements[i]->buffer);
                                     connections[i]->post_and_receive_blocking(receiveElements[i + ((numberOfNodes -1)*2)]->buffer);
@@ -295,7 +295,8 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
 //                                    connections[i%2]->post_receive(receiveElements[i]->buffer);
 
                                     stringstream st;
-                                    st << "received buffer connection=" << i << "i=" << i << " other=" << (i + ((numberOfNodes -1)*2) << endl;
+                                    st << "received buffer connection=" << i << "i="
+                                            << i << " other=" << (i + (numberOfNodes -1)*2) << endl;
                                     cout << st.str() << endl;
 
                                     std::atomic<size_t>* tempTable = (std::atomic<size_t>*) receiveElements[i]->buffer;
