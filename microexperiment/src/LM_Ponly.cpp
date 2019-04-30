@@ -736,6 +736,7 @@ int main(int argc, char *argv[])
     }
     Timestamp begin = getTimestamp();
 
+
     #pragma omp parallel num_threads(nodes)//nodes
        {
           auto outer_thread_id = omp_get_thread_num();
