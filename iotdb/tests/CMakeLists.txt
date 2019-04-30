@@ -95,7 +95,7 @@ add_test(NAME runtime-data-source-sink-tests COMMAND runtime-data-source-sink-te
 
 add_executable(file-source-tests "UnitTests/FileSourceTest.cpp")
 target_link_libraries(file-source-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
-add_test(NAME file-source-tests COMMAND binary-source-tests)
+add_test(NAME file-source-tests COMMAND file-source-tests)
 
 # YSB Performance Test
 add_executable(ysb_performance_test "PerformanceTests/YSB_SingleNode_PerformanceTest.cpp")

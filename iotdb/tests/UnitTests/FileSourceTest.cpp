@@ -84,14 +84,14 @@ int test(createFileSourceFuncPtr funcPtr, std::string& path_to_file) {
 }
 
 int testBinarySource() {
-    std::string path_to_file = "./tests/test_data/ysb-tuples-100-campaign-100.bin";
+    std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.bin";
     createFileSourceFuncPtr funcPtr = &createBinaryFileSource;
     test(funcPtr, path_to_file);
     return 0;
 }
 
 int testCSVSource() {
-    std::string path_to_file = "./tests/test_data/ysb-tuples-100-campaign-100.csv";
+    std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
     createFileSourceFuncPtr funcPtr = &createCSVFileSource;
     test(funcPtr, path_to_file);
     return 0;
