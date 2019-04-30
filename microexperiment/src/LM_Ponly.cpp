@@ -315,13 +315,13 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
 //                                        outputTable[i] += tempTable2[i];
                                     }
 
-                                    cout << "post new receive" << endl;
-                                    infinity::memory::Buffer* newBuf = connections[0]->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
-                                    if(numberOfNodes >=3)
-                                        connections[1]->register_buffer(newBuf, campaingCnt * sizeof(std::atomic<size_t>));
-                                    if(numberOfNodes >=4)
-                                        connections[2]->register_buffer(newBuf, campaingCnt * sizeof(std::atomic<size_t>));
-                                    receiveElements.push_back(new ReceiveElement(newBuf));
+//                                    cout << "post new receive" << endl;
+//                                    infinity::memory::Buffer* newBuf = connections[0]->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
+//                                    if(numberOfNodes >=3)
+//                                        connections[1]->register_buffer(newBuf, campaingCnt * sizeof(std::atomic<size_t>));
+//                                    if(numberOfNodes >=4)
+//                                        connections[2]->register_buffer(newBuf, campaingCnt * sizeof(std::atomic<size_t>));
+//                                    receiveElements.push_back(new ReceiveElement(newBuf));
 
 //                                    infinity::memory::Buffer* newBuf2 = connections[0]->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
 //                                    if(numberOfNodes >=3)
@@ -674,7 +674,8 @@ int main(int argc, char *argv[])
                         sharedHT_buffer_for_merge = new infinity::memory::Buffer*[(numberOfNodes-1)*2];
 //                        receiveElements = new ReceiveElement*[(numberOfNodes-1)*2];
 
-                        for(size_t i = 0; i <= (numberOfNodes-1)*2; i++)
+//                        for(size_t i = 0; i <= (numberOfNodes-1)*2; i++)
+                        for(size_t i = 0; i <= 100; i++)
                         {
                             sharedHT_buffer_for_merge[i] = connections[0]->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
                             if(numberOfNodes >= 3)
