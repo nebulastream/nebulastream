@@ -675,9 +675,9 @@ int main(int argc, char *argv[])
                         for(size_t i = 0; i <= (numberOfNodes-1)*2; i++)
                         {
                             sharedHT_buffer_for_merge[i] = connections[0]->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
-                            if(numberOfNodes >=3)
+                            if(numberOfNodes >= 3)
                                 connections[1]->register_buffer(sharedHT_buffer_for_merge[i], campaingCnt * sizeof(std::atomic<size_t>));
-                            if(numberOfNodes >=4)
+                            if(numberOfNodes >= 4)
                                 connections[2]->register_buffer(sharedHT_buffer_for_merge[i], campaingCnt * sizeof(std::atomic<size_t>));
 
                             receiveElements.push_back(new ReceiveElement(sharedHT_buffer_for_merge[i]));
