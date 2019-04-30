@@ -254,13 +254,13 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
                     }
                     if(rank != 0)//copy and send result
                     {
-                        buffer_threads.push_back(std::make_shared<std::thread>([&connections, producerID, connectID,
+                        buffer_threads.push_back(std::make_shared<std::thread>([ producerID, connectID,
                                                   sharedHT_buffer, outputTable, campaingCnt, current_window, &hashTable, rank, numaNode, &connectInfos] {
                             cout << "send blocking id=" << producerID  << " rank=" << rank
                                     << " thread=" << omp_get_thread_num()<< " connection=" << connectID << " numaNode=" << numaNode << endl;
                             memcpy(sharedHT_buffer[numaNode]->getData(), hashTable[current_window], sizeof(std::atomic<size_t>) * campaingCnt);
 
-                            connectInfos[connectID]->con->send_blocking(sharedHT_buffer[numaNode]);//send_blocking
+                            connectInfos[numaNode]->con->send_blocking(sharedHT_buffer[numaNode]);//send_blocking
                             cout << "send blocking finished " << endl;
                         }));
                     }
