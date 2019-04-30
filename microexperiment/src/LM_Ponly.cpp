@@ -286,15 +286,20 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connections
                                         stringstream ss;
                                         ss << "run buffer thread slotid=" << i+c  << " on connection="<<  i<< endl;
                                         cout << ss.str() << endl;
-                                        ReceiveElement receiveElement;
-                                        receiveElement.buffer = connections[i]->sharedHT_buffer[i+c];
-                                        connections[i]->con->post_receive(receiveElement.buffer);
-                                        while(!connections[i]->con->check_receive(receiveElement))
-                                        {
-            //                                cout << "wait receive producerID=" << producerID << endl;
-            //                                sleep(1);
-                                        }
-                                        cout << "revceived" << endl;
+                                        connections[i]->con->post_and_receive_blocking(connections[i]->sharedHT_buffer[i+c]);
+//                                        ReceiveElement receiveElement;
+//                                        receiveElement.buffer = connections[i]->sharedHT_buffer[i+c];
+//                                        connections[i]->con->post_receive(receiveElement.buffer);
+//                                        while(!connections[i]->con->check_receive(receiveElement))
+//                                        {
+////                                            connections[i]->con->
+//            //                                cout << "wait receive producerID=" << producerID << endl;
+//            //                                sleep(1);
+//                                        }
+                                        stringstream st;
+                                        st << "received buffer thread slotid=" << i+c  << " on connection="<<  i<< endl;
+                                        cout << st.str() << endl;
+
                                         std::atomic<size_t>* tempTable = (std::atomic<size_t>*) connections[i]->sharedHT_buffer[i+c]->getData();
 
                                         #pragma omp parallel for num_threads(20)
