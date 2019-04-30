@@ -263,7 +263,7 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
                             memcpy(sharedHT_buffer[numaNode]->getData(), hashTable[current_window], sizeof(std::atomic<size_t>) * campaingCnt);
 
 //                            connectInfos[connectID]->con->send_blocking(sharedHT_buffer[numaNode]);//send_blocking
-                            connections[connectID]->send_blocking(sharedHT_buffer[numaNode]);//send_blocking
+                            connections[connectID]->send(sharedHT_buffer[numaNode]);//send_blocking
 
 
                             cout << "send blocking finished " << endl;
