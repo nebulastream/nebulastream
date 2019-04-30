@@ -70,6 +70,7 @@ const DataSourcePtr createYSBSource(size_t bufferCnt, size_t campaingCnt, bool p
 const DataSourcePtr createZmqSource(const Schema& schema, const std::string& host, const uint16_t port);
 const DataSourcePtr createBinaryFileSource(const Schema& schema, const std::string& path_to_file);
 const DataSourcePtr createRemoteTCPSource(const Schema& schema, const std::string& server_ip, int port);
+const DataSourcePtr createCSVFileSource(const Schema& schema, const std::string& path_to_file);
 
 } // namespace iotdb
 #include <boost/archive/text_iarchive.hpp>
