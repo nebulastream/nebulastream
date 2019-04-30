@@ -285,7 +285,8 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connections
                                        outputTable, campaingCnt, i , c] {
 
                                         stringstream ss;
-                                        ss << "run buffer thread recelement=" << c  << " on connection="<<  i<< endl;
+                                        ss << "run buffer thread recelement=" << c  << " on connection="<< i
+                                                << " sharedbuff=" << i+c << endl;
                                         cout << ss.str() << endl;
 //                                        connections[i]->con->post_and_receive_blocking(connections[i]->sharedHT_buffer[i+c]);
 //                                        ReceiveElement* receiveElement = new ReceiveElement();
@@ -313,6 +314,7 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connections
                                         //post new receive
                                         connections[i]->receiveElements[c] = new ReceiveElement();
                                         connections[i]->receiveElements[c]->buffer = connections[i]->sharedHT_buffer[i+c];
+                                        connections[i]->con->post_receive(connections[i]->receiveElements[c]->buffer);
 
                                 }));
                                 }//end of first for
