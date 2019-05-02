@@ -32,26 +32,35 @@ const boost::unordered_map<UserAPIBinaryExpression, std::string> UserAPIBinaryEx
 	(UserAPIBinaryExpression::EQUALS, 		" == ")
 	(UserAPIBinaryExpression::BIGGERTHEN, 	" > ")
 	(UserAPIBinaryExpression::SMALLERTHEN, 	" < ");
+
+
+class UserAPIExpression;
+typedef std::shared_ptr<UserAPIExpression> UserAPIExpressionPtr;
+
+class Predicate;
+typedef std::shared_ptr<Predicate> PredicatePtr;
+
 	
 class UserAPIExpression{
 public:
 	virtual ~UserAPIExpression(){};
-	virtual const std::string generateCode() const=0;
+	virtual const std::string generateCode() const = 0;
+	virtual const std::string toString() const = 0;
+	virtual UserAPIExpressionPtr copy() const = 0;
 };
-
-typedef std::shared_ptr<UserAPIExpression> UserAPIExpressionPtr;
-
 
 class Predicate : public UserAPIExpression{
 public:
-	Predicate(UserAPIBinaryExpression op, const UserAPIExpression &left, const UserAPIExpression &right);
+	Predicate(UserAPIBinaryExpression op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right, bool bracket);
 	
 	virtual const std::string generateCode() const override;
-	Predicate copy();
+	virtual const std::string toString() const override;
+	virtual UserAPIExpressionPtr copy() const override;
 private:
 	UserAPIBinaryExpression _op;
-	const UserAPIExpression &_left;
-	const UserAPIExpression &_right;
+	const UserAPIExpressionPtr _left;
+	const UserAPIExpressionPtr _right;
+	bool _bracket;
 };
 
 
@@ -61,7 +70,8 @@ public:
 	PredicateItem(ValueTypePtr value);
 	
 	virtual const std::string generateCode() const override;
-	PredicateItem copy();
+	virtual const std::string toString() const override;
+	virtual UserAPIExpressionPtr copy() const override;
 private:
 	PredicateItemMutation _mutation;
 	AttributeFieldPtr _attribute=nullptr;
@@ -69,6 +79,8 @@ private:
 };
 
 Predicate operator == (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
+Predicate operator < (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
+Predicate operator > (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
 
 
 } //end of namespace iotdb
