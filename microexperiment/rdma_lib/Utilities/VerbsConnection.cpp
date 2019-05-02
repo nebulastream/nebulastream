@@ -134,6 +134,14 @@ void VerbsConnection::send_blocking(Buffer* buffer, RequestToken * pRequestToken
 
 }
 
+void VerbsConnection::compareAndSwap(infinity::memory::RegionToken* destination, infinity::memory::Atomic* previousValue, uint64_t compare, uint64_t swap)
+{
+    infinity::requests::RequestToken requestToken(context);
+    qp->compareAndSwap(destination, previousValue, compare, swap, infinity::queues::OperationFlags(), &requestToken);
+    requestToken.waitUntilCompleted();
+
+}
+
 void VerbsConnection::post_receive(Buffer* buffer) {
     context->postReceiveBuffer(buffer);
 }

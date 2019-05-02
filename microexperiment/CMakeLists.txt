@@ -92,8 +92,8 @@ add_executable(LM_Ponly
 target_link_libraries(LM_Ponly infinity ibverbs numa json11 tbb boost_program_options)
 
 
-add_executable(YSB_PART
-        src/YSB_PART.cpp
+add_executable(Part_PC
+        src/Part_PC.cpp
         rdma_lib/Utilities/MPI_Helper_Fake.cpp
         rdma_lib/Utilities/ConnectionInfoProvider/SimpleInfoProvider.cpp
         rdma_lib/Utilities/VerbsConnection.cpp
@@ -105,7 +105,7 @@ add_executable(YSB_PART
         rdma_lib/Utilities/ConnectionInfoProvider/ConnectionUtilities.cpp
         rdma_lib/Utilities/DeviceMemoryAllocator/GPUMemoryAllocator.cu
     )
-target_link_libraries(YSB_PART infinity ibverbs numa json11 tbb boost_program_options)
+target_link_libraries(Part_PC infinity ibverbs numa json11 tbb boost_program_options)
 
 add_executable(numatest
         src/numa.cpp
