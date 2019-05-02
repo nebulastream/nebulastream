@@ -24,15 +24,45 @@ enum class PredicateItemMutation{
 
 enum class UserAPIBinaryExpression{
 	EQUALS,
-	BIGGERTHEN,
-	SMALLERTHEN
+	NOTEQUALS,
+	BIGGEREQUALS,
+	SMALLEREQUALS,
+	BIGGER,
+	SMALLER,
+	ADD,
+	SUB,
+	MUL,
+	DIV,
+	MOD,
+	LAZYAND,
+	LAZYOR,
+	AND,
+	OR,
+	XOR,
+	LEFTSHIFT,
+	RIGHTSHIFT
 };
 
 const boost::unordered_map<UserAPIBinaryExpression, std::string> UserAPIBinaryExpressionString = boost::assign::map_list_of
-	(UserAPIBinaryExpression::EQUALS, 		" == ")
-	(UserAPIBinaryExpression::BIGGERTHEN, 	" > ")
-	(UserAPIBinaryExpression::SMALLERTHEN, 	" < ");
-
+	(UserAPIBinaryExpression::EQUALS, 			" == ")
+	(UserAPIBinaryExpression::NOTEQUALS,		" != ")
+	(UserAPIBinaryExpression::BIGGEREQUALS,		" >= ")
+	(UserAPIBinaryExpression::SMALLEREQUALS,	" <= ")
+	(UserAPIBinaryExpression::BIGGER,			" > ")
+	(UserAPIBinaryExpression::SMALLER,			" < ")
+	(UserAPIBinaryExpression::ADD,				" + ")
+	(UserAPIBinaryExpression::SUB,				" - ")
+	(UserAPIBinaryExpression::MUL,				" * ")
+	(UserAPIBinaryExpression::DIV,				" / ")
+	(UserAPIBinaryExpression::MOD,				" % ")
+	(UserAPIBinaryExpression::LAZYAND,			" && ")
+	(UserAPIBinaryExpression::LAZYOR,			" || ")
+	(UserAPIBinaryExpression::OR,				" | ")
+	(UserAPIBinaryExpression::AND,				" & ")
+	(UserAPIBinaryExpression::XOR,				" ^ ")
+	(UserAPIBinaryExpression::LEFTSHIFT,		" << ")
+	(UserAPIBinaryExpression::RIGHTSHIFT,		" >> ");
+	
 
 class UserAPIExpression;
 typedef std::shared_ptr<UserAPIExpression> UserAPIExpressionPtr;
@@ -79,8 +109,23 @@ private:
 };
 
 Predicate operator == (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
+Predicate operator != (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
 Predicate operator < (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
 Predicate operator > (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
+Predicate operator >= (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
+Predicate operator <= (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
+Predicate operator + (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
+Predicate operator - (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
+Predicate operator * (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
+Predicate operator / (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
+Predicate operator % (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
+Predicate operator && (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
+Predicate operator || (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
+Predicate operator & (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
+Predicate operator | (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
+Predicate operator ^ (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
+Predicate operator << (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
+Predicate operator >> (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
 
 
 } //end of namespace iotdb

@@ -73,10 +73,56 @@ namespace iotdb
 	Predicate operator == (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
 		return Predicate(UserAPIBinaryExpression::EQUALS, lhs.copy(), rhs.copy());
 	};
+	Predicate operator != (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+		return Predicate(UserAPIBinaryExpression::NOTEQUALS, lhs.copy(), rhs.copy());
+	};
 	Predicate operator > (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
-		return Predicate(UserAPIBinaryExpression::SMALLERTHEN, lhs.copy(), rhs.copy());
+		return Predicate(UserAPIBinaryExpression::BIGGER, lhs.copy(), rhs.copy());
 	};
 	Predicate operator < (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
-		return Predicate(UserAPIBinaryExpression::BIGGERTHEN, lhs.copy(), rhs.copy());
+		return Predicate(UserAPIBinaryExpression::SMALLER, lhs.copy(), rhs.copy());
 	};
+	Predicate operator >= (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+		return Predicate(UserAPIBinaryExpression::BIGGEREQUALS, lhs.copy(), rhs.copy());
+	};
+	Predicate operator <= (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+		return Predicate(UserAPIBinaryExpression::SMALLEREQUALS, lhs.copy(), rhs.copy());
+	};
+	Predicate operator + (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+		return Predicate(UserAPIBinaryExpression::ADD, lhs.copy(), rhs.copy());
+	};
+	Predicate operator - (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+		return Predicate(UserAPIBinaryExpression::SUB, lhs.copy(), rhs.copy());
+	};
+	Predicate operator * (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+		return Predicate(UserAPIBinaryExpression::MUL, lhs.copy(), rhs.copy());
+	};
+	Predicate operator / (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+		return Predicate(UserAPIBinaryExpression::DIV, lhs.copy(), rhs.copy());
+	};
+	Predicate operator % (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+		return Predicate(UserAPIBinaryExpression::MOD, lhs.copy(), rhs.copy());
+	};
+	Predicate operator && (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+		return Predicate(UserAPIBinaryExpression::LAZYAND, lhs.copy(), rhs.copy());
+	};
+	Predicate operator || (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+		return Predicate(UserAPIBinaryExpression::LAZYOR, lhs.copy(), rhs.copy());
+	};
+	Predicate operator & (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+		return Predicate(UserAPIBinaryExpression::AND, lhs.copy(), rhs.copy());
+	};
+	Predicate operator | (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+		return Predicate(UserAPIBinaryExpression::OR, lhs.copy(), rhs.copy());
+	};
+	Predicate operator ^ (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+		return Predicate(UserAPIBinaryExpression::XOR, lhs.copy(), rhs.copy());
+	};
+	Predicate operator << (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+		return Predicate(UserAPIBinaryExpression::LEFTSHIFT, lhs.copy(), rhs.copy());
+	};
+	Predicate operator >> (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+		return Predicate(UserAPIBinaryExpression::RIGHTSHIFT, lhs.copy(), rhs.copy());
+	};
+	
 } //end namespace iotdb
