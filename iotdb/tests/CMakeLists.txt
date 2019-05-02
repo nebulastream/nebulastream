@@ -102,6 +102,11 @@ add_executable(ysb_performance_test "PerformanceTests/YSB_SingleNode_Performance
 target_link_libraries(ysb_performance_test iotdb ${GTEST_LIBRARIES})
 add_test(NAME ysb_performance_test COMMAND ysb_performance_test)
 
+# Predicate Tree Tests
+add_executable(predicate-tree-tests "UnitTests/PredicateTest.cpp")
+target_link_libraries(predicate-tree-tests iotdb ${GTEST_LIBRARIES})
+add_test(NAME predicate-tree-tests COMMAND predicate-tree-tests) 
+
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
         DEPENDS ${UNITTESTS})
