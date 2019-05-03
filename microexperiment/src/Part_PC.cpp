@@ -451,7 +451,7 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
         {
             if(receive_buffer_index == startIdx)//read buffers
             {
-                cout << " read array at idx=" << receive_buffer_index << " << endl;
+                cout << " read array at idx=" << receive_buffer_index <<  endl;
                 cInfos[0]->con->read_blocking(cInfos[0]->sign_buffer, cInfos[0]->sign_token, startIdx*sizeof(size_t), startIdx *sizeof(size_t), (endIdx - startIdx)* sizeof(uint64_t));
             }
 
@@ -987,23 +987,23 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
         if ( i < NUM_SEND_BUFFERS){
             connectInfo->region_tokens[i] = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
             memcpy(connectInfo->region_tokens[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
-//            if(outer_thread_id == 0)
-//                s2 << "region getSizeInBytes=" << connectInfo->region_tokens[i]->getSizeInBytes() << " getAddress=" << connectInfo->region_tokens[i]->getAddress()
-//                    << " getLocalKey=" << connectInfo->region_tokens[i]->getLocalKey() << " getRemoteKey=" << connectInfo->region_tokens[i]->getRemoteKey() << endl;
+            if(outer_thread_id == 0)
+                s2 << "region getSizeInBytes=" << connectInfo->region_tokens[i]->getSizeInBytes() << " getAddress=" << connectInfo->region_tokens[i]->getAddress()
+                    << " getLocalKey=" << connectInfo->region_tokens[i]->getLocalKey() << " getRemoteKey=" << connectInfo->region_tokens[i]->getRemoteKey() << endl;
         }
         else {
             connectInfo->sign_token = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
             memcpy(connectInfo->sign_token, (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
 
-//            if(outer_thread_id == 0)
-//                s2 << " SIGN LOCALregion getSizeInBytes=" << connectInfo->sign_token->getSizeInBytes() << " getAddress=" << connectInfo->sign_token->getAddress()
-//                    << " getLocalKey=" << connectInfo->sign_token->getLocalKey() << " getRemoteKey=" << connectInfo->sign_token->getRemoteKey() << endl;
+            if(outer_thread_id == 0)
+                s2 << " SIGN LOCALregion getSizeInBytes=" << connectInfo->sign_token->getSizeInBytes() << " getAddress=" << connectInfo->sign_token->getAddress()
+                    << " getLocalKey=" << connectInfo->sign_token->getLocalKey() << " getRemoteKey=" << connectInfo->sign_token->getRemoteKey() << endl;
         }
     }
-//    if(outer_thread_id == 0)
-//   {
-//       cout << "0=" << s2.str() << endl;
-//   }
+    if(outer_thread_id == 0)
+   {
+       cout << "0=" << s2.str() << endl;
+   }
    stringstream ss;
    ss  << "Producer Thread #" << outer_thread_id  << ": on CPU " << sched_getcpu() << " nodes=";
    int numa_node = -1;
