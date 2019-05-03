@@ -364,7 +364,7 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
                     {
                         cInfos->buffer_ready_sign[receive_buffer_index] = BUFFER_USED_SENDER_DONE;
                         connection->write_blocking(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index*sizeof(size_t), receive_buffer_index*sizeof(size_t), sizeof(uint64_t));
-                        cout << "Sent last tuples and marked as BUFFER_USED_SENDER_DONE at index=" << receive_buffer_index << endl;
+                        cout << "Sent last tuples and marked as BUFFER_USED_SENDER_DONE at index=" << receive_buffer_index << " numanode=" << outerThread << endl;
                     }
                     else
                     {
@@ -536,11 +536,9 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             if(cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
             {
                     std::atomic_fetch_add(&cInfos->exitConsumer, size_t(1));
-                    cout << "DONE BUFFER FOUND at idx"  << index << endl;
+                    cout << "DONE BUFFER FOUND at idx"  << index << " numanode=" << outerThread << endl;
                     is_done = true;
-
             }
-
 
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
