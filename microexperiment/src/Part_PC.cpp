@@ -1015,7 +1015,7 @@ int main(int argc, char *argv[])
 //    }
 
     auto nodes = numa_num_configured_nodes();
-//    nodes = 1;
+    nodes = 1;
 //    auto cores = numa_num_configured_cpus();
 //    auto cores_per_node = cores / nodes;
     omp_set_nested(1);
