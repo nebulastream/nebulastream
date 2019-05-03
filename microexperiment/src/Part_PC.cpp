@@ -1047,7 +1047,7 @@ int main(int argc, char *argv[])
         connections[1] = new VerbsConnection(&info2);
     }
     auto nodes = numa_num_configured_nodes();
-    node = 1;
+    nodes = 1;
 //    auto cores = numa_num_configured_cpus();
 //    auto cores_per_node = cores / nodes;
     omp_set_nested(1);
