@@ -526,6 +526,7 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
         cInfos[1]->con->write(cInfos[1]->sendBuffers[idxCon1]->send_buffer, cInfos[1]->region_tokens[idxCon1],
                         cInfos[1]->sendBuffers[idxCon1]->requestToken);
 
+        cout << " buffer sending finsihed" << endl;
         total_buffer_send += 2;
 
         if (total_buffer_send < bufferProcCnt)//a new buffer will be send next
@@ -535,6 +536,8 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
 
             cInfos[0]->con->write_blocking(cInfos[0]->sign_buffer, cInfos[0]->sign_token, idxCon0*sizeof(size_t), idxCon0*sizeof(size_t), sizeof(size_t));
             cInfos[1]->con->write_blocking(cInfos[1]->sign_buffer, cInfos[1]->sign_token, idxCon1*sizeof(size_t), idxCon1*sizeof(size_t), sizeof(size_t));
+
+            cout << " reset buffer" << endl;
         }
         else//finished processing
         {
@@ -552,11 +555,14 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
             }
             else
             {
+
                 cInfos[0]->buffer_ready_sign[idxCon0] = BUFFER_USED_FLAG;
                 cInfos[0]->con->write(cInfos[0]->sign_buffer, cInfos[0]->sign_token, idxCon0*sizeof(size_t), idxCon0*sizeof(size_t), sizeof(uint64_t));
 
                 cInfos[1]->buffer_ready_sign[idxCon1] = BUFFER_USED_FLAG;
                 cInfos[1]->con->write(cInfos[1]->sign_buffer, cInfos[1]->sign_token, idxCon1*sizeof(size_t), idxCon1*sizeof(size_t), sizeof(uint64_t));
+
+                cout << " prod finished" << endl;
             }
 
             break;
@@ -790,6 +796,10 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                     cout << "DONE BUFFER FOUND at idx"  << index << " numanode=" << outerThread << endl;
                     is_done = true;
             }
+            else
+            {
+                cout << " found buffer at idx=" << index << endl;
+            }
 
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
@@ -800,6 +810,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                     hashTable, windowSizeInSec, campaingCnt, consumerID, rank, is_done, cInfos->bookKeeping, &cInfos->exitConsumer);
 
             cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
+            cout << " set buffer ready again" << endl;
         }
         else
         {
