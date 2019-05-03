@@ -295,31 +295,7 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
 #endif
             if(receive_buffer_index == startIdx)
             {
-//                std::lock_guard<std::mutex> lock(m);
-//                cout << "read sign buffer" << endl;
-//                connection->read_blocking(sign_buffer, sign_token);
-//                stringstream ss;
-//                ss << "read from startIdx=" << startIdx << " endIdx=" << endIdx << " size=" << endIdx - startIdx << endl;
-//                cout << ss.str() << endl;
-//                stringstream ss;
-//                ss << "BEFORE SIZE=" << cInfos->sign_buffer->getSizeInBytes()
-//                                            << " token size= "<< cInfos->sign_token->getSizeInBytes()
-//                                            << " idx=" << receive_buffer_index
-//                                            << " keyL=" <<  cInfos->sign_token->getLocalKey()
-//                                            << " thread=" << omp_get_thread_num()
-//                                                            << endl;//                sleep(1);
-
                 connection->read_blocking(cInfos->sign_buffer, cInfos->sign_token, startIdx*sizeof(size_t), startIdx *sizeof(size_t), (endIdx - startIdx)* sizeof(uint64_t));
-//                ss << "AFTER SIZE=" << cInfos->sign_buffer->getSizeInBytes()
-//                                                            << " token size= "<< cInfos->sign_token->getSizeInBytes()
-//                                                            << " idx=" << receive_buffer_index
-//                                                            << " keyL=" <<  cInfos->sign_token->getLocalKey()
-//                                                                            << endl;//
-//                ss << "buffer=";
-//                for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
-//                    ss << ((char*)cInfos->sign_buffer[receive_buffer_index].getAddress()) +i << " ";
-//                cout << ss.str() << endl;
-
             }
             if(cInfos->buffer_ready_sign[receive_buffer_index] == BUFFER_READY_FLAG)
             {
@@ -589,49 +565,13 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
         }
     }
+
     *consumedTuples = consumed;
     *consumedBuffers = total_received_buffers;
     *consumerNoBufferFound = noBufferFound;
 //    cout << "Thread=" << omp_get_thread_num() << " Done sending! Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
 //                << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
 }
-//
-//void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numberOfParticipant, size_t rank)
-//{
-//    sharedHT_region_token = new RegionToken*[numberOfParticipant+1];
-//
-//    sharedHT_buffer = new infinity::memory::Buffer*[numberOfParticipant];
-//    for(size_t i = 0; i <= numberOfParticipant; i++)
-//    {
-//        sharedHT_buffer[i] = connection->allocate_buffer(campaingCnt * sizeof(std::atomic<size_t>));
-//    }
-//
-//    infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((numberOfParticipant+1) * sizeof(RegionToken));
-//
-//    if(rank == 1)//reveiver cloud40
-//    {
-//        for(size_t i = 0; i < numberOfParticipant; i++)
-//        {
-//           sharedHT_region_token[i] = sharedHT_buffer[i]->createRegionToken();
-//           memcpy((RegionToken*)tokenbuffer->getData() + i, sharedHT_region_token[i], sizeof(RegionToken));
-//        }
-//
-//        connection->send_blocking(tokenbuffer);
-//        cout << "setupRDMAConsumer finished" << endl;
-//    }
-//    else//sender cloud43 rank3
-//    {
-//        connection->post_and_receive_blocking(tokenbuffer);
-//        for(size_t i = 0; i < numberOfParticipant; i++)
-//        {
-//            sharedHT_region_token[i] = new RegionToken();
-//            memcpy(sharedHT_region_token[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
-//            cout << "recv region getSizeInBytes=" << sharedHT_region_token[i]->getSizeInBytes() << " getAddress=" << sharedHT_region_token[i]->getAddress()
-//                   << " getLocalKey=" << sharedHT_region_token[i]->getLocalKey() << " getRemoteKey=" << sharedHT_region_token[i]->getRemoteKey() << endl;
-//        }
-//        cout << "received token" << endl;
-//    }
-//}
 
 
 ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTups, size_t campaingCnt)
@@ -761,7 +701,6 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
     }
 
     connectInfo->sign_buffer = connection->register_buffer(connectInfo->buffer_ready_sign, NUM_SEND_BUFFERS*sizeof(size_t));
-
 
     cout << "prod sign buffer size=" << connectInfo->sign_buffer->getSizeInBytes() << endl;
     infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
@@ -1029,23 +968,32 @@ int main(int argc, char *argv[])
     else
         assert(0);
 
-//    size_t target_rank = rank == 0 ? 1 : 0;
     SimpleInfoProvider info1(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
     connections[0] = new VerbsConnection(&info1);
     cout << "first connection established" << endl;
-    if(numberOfConnections == 2)
-    {
-        SimpleInfoProvider info2(target_rank, "mlx5_2", 1, PORT2, ip);//
 
-        connections[1] = new VerbsConnection(&info2);
+    if((rank == 0 || rank == 3) && numberOfNodes == 4)
+    {
+      cout << "connecting 0 and 3" << endl;
+      if(rank == 0)
+         target_rank = 3;
+      SimpleInfoProvider info(target_rank, "mlx5_2", 1, PORT2, ip);//was 3
+      connections[2] = new VerbsConnection(&info);
+      cout << "connection established rank 0 and 3" << endl;
     }
+
     auto nodes = numa_num_configured_nodes();
 //    nodes = 1;
 //    auto cores = numa_num_configured_cpus();
 //    auto cores_per_node = cores / nodes;
     omp_set_nested(1);
 //    htPtrs = new std::atomic<size_t>*[4];
-    ConnectionInfos** conInfos = new ConnectionInfos*[nodes];
+    ConnectionInfos** conInfos;
+    if(numberOfNodes == 2)
+        conInfos = new ConnectionInfos*[nodes];
+    else
+        conInfos = new ConnectionInfos*[nodes*2];// numanode_0: 0,2 numanod_1: 1,3
+
     if(rank % 2 == 0)//producer
     {
         cout << "starting " << nodes << " threads" << endl;
@@ -1058,11 +1006,11 @@ int main(int argc, char *argv[])
                 {
                     conInfos[omp_get_thread_num()] = setupRDMAProducer(connections[0], bufferSizeInTups);
                     conInfos[omp_get_thread_num()]->con = connections[0];
-                }
-                else if(numberOfConnections == 2)
-                {
-                    conInfos[omp_get_thread_num()] = setupRDMAProducer(connections[omp_get_thread_num()], bufferSizeInTups);
-                    conInfos[omp_get_thread_num()]->con = connections[omp_get_thread_num()];
+                    if(numberOfNodes == 4)
+                    {
+                        conInfos[omp_get_thread_num()+nodes] = setupRDMAProducer(connections[1], bufferSizeInTups);
+                        conInfos[omp_get_thread_num()+nodes]->con = connections[1];
+                    }
                 }
                 else
                     assert(0);
@@ -1092,28 +1040,18 @@ int main(int argc, char *argv[])
                     conInfos[omp_get_thread_num()] = setupRDMAConsumer(connections[0], bufferSizeInTups, campaingCnt);
                     conInfos[omp_get_thread_num()]->con = connections[0];
                 }
-                else if(numberOfConnections == 2)
+                if(numberOfNodes == 4)
                 {
-                    conInfos[omp_get_thread_num()] = setupRDMAConsumer(connections[omp_get_thread_num()], bufferSizeInTups, campaingCnt);
-                    conInfos[omp_get_thread_num()]->con = connections[omp_get_thread_num()];
+                    conInfos[omp_get_thread_num()+nodes] = setupRDMAConsumer(connections[1], bufferSizeInTups, campaingCnt);
+                    conInfos[omp_get_thread_num()+nodes]->con = connections[1];
                 }
+
                 else
                     assert(0);
             }//end of critical
             cout << "thread out of critical = " << omp_get_thread_num() << endl;
         }
-        if(numberOfNodes == 4)
-        {
-            sleep(2);
-            if(rank == 1 || rank == 3)
-            {
-                size_t targetR = rank == 1 ? 3 : 1;
-                cout << "establish connection for shared ht rank=" << rank << " targetRank=" << targetR << endl;
-                //host cloud 42 rank 2, client cloud43  rank 4 mlx5_3
-                SimpleInfoProvider info(targetR, "mlx5_1", 1, PORT3, "192.168.5.10");
-            }
 
-        }
     }//end of else
     size_t producesTuples[nodes][numberOfProducer/nodes] = {0};
     size_t producedBuffers[nodes][numberOfProducer/nodes] = {0};
