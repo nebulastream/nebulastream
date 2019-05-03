@@ -443,6 +443,10 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
 
     size_t idxCon0 = 0;
     size_t idxCon1 = 0;
+    size_t bufferSendToC1 = 0;
+    size_t bufferSendToC2 = 0;
+    size_t tupleSendToC1 = 0;
+    size_t tupleSendToC2 = 0;
     while(total_buffer_send < bufferProcCnt)
     {
         //alloc first buffer
@@ -518,7 +522,11 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
         cInfos[1]->sendBuffers[idxCon1]->numberOfTuples = *tupCntBuff2;
 
         total_sent_tuples += *tupCntBuff1;
+        tupleSendToC1 += *tupCntBuff1;
+        bufferSendToC1++;
         total_sent_tuples += *tupCntBuff2;
+        tupleSendToC2 += *tupCntBuff2;
+        bufferSendToC2++;
 
         cInfos[0]->con->write(cInfos[0]->sendBuffers[idxCon0]->send_buffer, cInfos[0]->region_tokens[idxCon0],
                 cInfos[0]->sendBuffers[idxCon0]->requestToken);
@@ -565,96 +573,26 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
             }
             break;
         }
-
-//
-//        for(size_t receive_buffer_index = startIdx; receive_buffer_index < endIdx && total_buffer_send < bufferProcCnt; receive_buffer_index++)
-//        {
-//#ifdef DEBUG
-////            cout << "start=" << startIdx << " checks idx=" << receive_buffer_index << endl;
-//#endif
-//            if(receive_buffer_index == startIdx)
-//            {
-//                connection->read_blocking(cInfos->sign_buffer, cInfos->sign_token, startIdx*sizeof(size_t), startIdx *sizeof(size_t), (endIdx - startIdx)* sizeof(uint64_t));
-//            }
-//            if(cInfos->buffer_ready_sign[receive_buffer_index] == BUFFER_READY_FLAG)
-//            {
-//                size_t prevValue = connection->atomic_cas_blocking(cInfos->sign_token, receive_buffer_index*sizeof(size_t), BUFFER_READY_FLAG, BUFFER_BEING_PROCESSED_FLAG, nullptr);
-//                if(prevValue != BUFFER_READY_FLAG)
-//                {
-//                    cout << "buffer already taken with val=" << prevValue << endl;
-//                    continue;
-//                }
-//                else
-//                {
-////                    cout << "buffer free" << endl;
-//                }
-//
-//                //this will run until one buffer is filled completely
-//                readTuples += produce_window_mem(records, bufferSizeInTuples, cInfos->sendBuffers[receive_buffer_index]->tups);
-//                cInfos->sendBuffers[receive_buffer_index]->numberOfTuples = bufferSizeInTuples;
-//
-//                connection->write(cInfos->sendBuffers[receive_buffer_index]->send_buffer, cInfos->region_tokens[receive_buffer_index],
-//                        cInfos->sendBuffers[receive_buffer_index]->requestToken);
-//#ifdef DEBUG
-//                cout << "Thread:" << outerThread << "/" << omp_get_thread_num() << "/" << connectionID << " Writing " << cInfos->sendBuffers[receive_buffer_index]->numberOfTuples << " tuples on buffer "
-//                        << receive_buffer_index << endl;
-//#endif
-//                total_sent_tuples += cInfos->sendBuffers[receive_buffer_index]->numberOfTuples;
-//                total_buffer_send++;
-//
-//                if (total_buffer_send < bufferProcCnt)//a new buffer will be send next
-//                {
-//                    cInfos->buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
-////                    cout << "sign buffer size=" << cInfos->sign_buffer->getSizeInBytes()
-////                            << " token size= "<< cInfos->sign_token->getSizeInBytes()
-////                            << " idx=" << receive_buffer_index
-////                            << " keyL=" <<  cInfos->sign_token->getLocalKey()
-////                                            << endl;//                sleep(1);
-//                    connection->write_blocking(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index*sizeof(size_t), receive_buffer_index*sizeof(size_t), sizeof(size_t));
-//                }
-//                else//finished processing
-//                {
-//                    std::atomic_fetch_add(&cInfos->exitProducer, size_t(1));
-//                    if(std::atomic_load(&cInfos->exitProducer) == numberOfProducer/2)
-//                    {
-//                        cInfos->buffer_ready_sign[receive_buffer_index] = BUFFER_USED_SENDER_DONE;
-//                        connection->write_blocking(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index*sizeof(size_t), receive_buffer_index*sizeof(size_t), sizeof(uint64_t));
-//                        cout << "Sent last tuples and marked as BUFFER_USED_SENDER_DONE at index=" << receive_buffer_index << " numanode=" << outerThread << endl;
-//                    }
-//                    else
-//                    {
-//                        cInfos->buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
-//                        connection->write(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index*sizeof(size_t), receive_buffer_index*sizeof(size_t), sizeof(uint64_t));
-//                    }
-//
-//                    break;
-//                }
-//            }
-//            else
-//            {
-//                noBufferFreeToSend++;
-//            }
-//            if(receive_buffer_index +1 > endIdx)
-//            {
-//                receive_buffer_index = startIdx;
-//            }
-//        }//end of for
     }//end of while
 //    cout << "Thread=" << omp_get_thread_num() << " Done sending! Sent a total of " << total_sent_tuples << " tuples and " << total_buffer_send << " buffers"
 //            << " noBufferFreeToSend=" << noBufferFreeToSend << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
-#ifdef DEBUG
+//#ifdef DEBUG
 
     #pragma omp critical
              {
-                 cout << "Thread:" << outerThread << "/" << omp_get_thread_num() << "/" << connectionID
+                 cout << "Thread:" << outerThread << "/" << omp_get_thread_num()
                          << " producesTuples=" << total_sent_tuples
                          << " producedBuffers=" << total_buffer_send
+                         << " bufferSendToC1=" << bufferSendToC1
+                         << " bufferSendToC2=" << bufferSendToC2
+                         << " tupleSendToC1=" << tupleSendToC1
+                         << " tupleSendToC2=" << tupleSendToC2
                          << " readInputTuples=" << readTuples
                          << " noFreeEntryFound=" << noBufferFreeToSend
                          << endl;
 
              }
-#endif
+//#endif
     *producesTuples = total_sent_tuples;
     *producedBuffers = total_buffer_send;
     *readInputTuples = readTuples;
@@ -791,9 +729,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             if(cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
             {
                     std::atomic_fetch_add(&cInfos->exitConsumer, size_t(1));
-                    #pragma omp critical
                     cout << "DONE BUFFER FOUND at idx"  << index << " numanode=" << outerThread << endl;
-
                     is_done = true;
             }
             else
