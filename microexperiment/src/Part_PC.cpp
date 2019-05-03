@@ -326,9 +326,14 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
                 //claim buffer
                 //infinity::memory::RegionToken* destination, infinity::memory::Atomic* previousValue, uint64_t compare, uint64_t swap,
 //                infinity::requests::RequestToken *requestToken
+                cout << " write value" << endl;
+                cInfos->buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
+                connection->write(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index, receive_buffer_index, 1);
+
+                cout << " read" << endl;
                 infinity::memory::Atomic* prevVal = connection->getAtomic();
                 connection->compareAndSwap(cInfos->sign_token, prevVal, BUFFER_READY_FLAG, BUFFER_BEING_PROCESSED_FLAG);
-                cout << "preval=" << prevVal->getValue() << endl;
+                cout << "preval=" << prevVal->getValue() << " for index=" << receive_buffer_index << endl;
 
                 //this will run until one buffer is filled completely
                 readTuples += produce_window_mem(records, bufferSizeInTuples, cInfos->sendBuffers[receive_buffer_index]->tups);
