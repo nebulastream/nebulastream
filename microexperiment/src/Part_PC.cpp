@@ -152,7 +152,7 @@ struct ConnectionInfos
     ConnectionInfos(const ConnectionInfos& other)
     {
         recv_buffers = other.recv_buffers;
-        buffer_ready_sign = other.buffer_ready_sign;
+//        buffer_ready_sign = other.buffer_ready_sign;
         region_tokens = other.region_tokens;
         sign_buffer = other.sign_buffer;
         sign_token = other.sign_token;
@@ -331,9 +331,11 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
                 connection->write(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index, receive_buffer_index, sizeof(uint64_t));
 
                 cout << " read value idx=" << receive_buffer_index << endl;
-                infinity::memory::Atomic* prevVal = connection->getAtomic();
-                connection->compareAndSwap(cInfos->sign_token, prevVal, BUFFER_READY_FLAG, BUFFER_BEING_PROCESSED_FLAG);
-                cout << "preval=" << prevVal->getValue() << " for index=" << receive_buffer_index << endl;
+                bool success = connection->atomic_cas_blocking(cInfos->sign_token, receive_buffer_index, BUFFER_READY_FLAG, BUFFER_BEING_PROCESSED_FLAG, nullptr);
+                cout << "success=" << success << " for index=" << receive_buffer_index << endl;
+
+                connection->read_blocking(cInfos->sign_buffer, cInfos->sign_token, startIdx, startIdx, (endIdx - startIdx)* sizeof(uint64_t));
+                cout << " value after swap=" << cInfos->buffer_ready_sign[receive_buffer_index] << endl;
 
                 //this will run until one buffer is filled completely
                 readTuples += produce_window_mem(records, bufferSizeInTuples, cInfos->sendBuffers[receive_buffer_index]->tups);
@@ -647,8 +649,8 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
     numa_run_on_node(outer_thread_id);
     numa_set_preferred(outer_thread_id);
 
-    void* b1 = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(uint64_t), outer_thread_id);
-    connectInfo->buffer_ready_sign = (uint64_t*)b1;
+    void* b1 = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(size_t), outer_thread_id);
+    connectInfo->buffer_ready_sign = (size_t*)b1;
     for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
     {
         connectInfo->buffer_ready_sign[i] = BUFFER_READY_FLAG;
@@ -677,8 +679,8 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
 //                                       << " getLocalKey=" << connectInfo->recv_buffers[i]->getLocalKey() << " getRemoteKey=" << connectInfo->recv_buffers[i]->getRemoteKey() << endl;
         } else {
 //            cout << "copy sign token at pos " << i << endl;
-            connectInfo->sign_buffer = connection->register_buffer(connectInfo->buffer_ready_sign, NUM_SEND_BUFFERS*sizeof(uint64_t));
-
+            connectInfo->sign_buffer = connection->register_buffer(connectInfo->buffer_ready_sign, NUM_SEND_BUFFERS*sizeof(size_t));
+//            connectInfo->sign_buffer = connection->allocate_buffer(NUM_SEND_BUFFERS*sizeof(infinity::memory::Atomic));
             connectInfo->region_tokens[i] = connectInfo->sign_buffer->createRegionToken();
 
 //            if(outer_thread_id == 0)
@@ -755,18 +757,19 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
 
     for(size_t i = 0; i < NUM_SEND_BUFFERS; ++i)
     {
-//        connectInfo->sendBuffers[i] = new (connectInfo->sendBuffers + i) TupleBuffer(*connection, bufferSizeInTups);,
         connectInfo->sendBuffers[i] = new TupleBuffer(*connection, bufferSizeInTups);//TODO:not sure if this is right
     }
 
-    void* b3 = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(uint64_t), outer_thread_id);
-    connectInfo->buffer_ready_sign = (uint64_t*)b3;
+    void* b3 = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(size_t), outer_thread_id);
+    connectInfo->buffer_ready_sign = (size_t*)b3;
     for(size_t i = 0; i < NUM_SEND_BUFFERS; i++)
     {
-        connectInfo->buffer_ready_sign[i] = BUFFER_READY_FLAG;
+      connectInfo->buffer_ready_sign[i] = BUFFER_READY_FLAG;
     }
 
-    connectInfo->sign_buffer = connection->register_buffer(connectInfo->buffer_ready_sign, NUM_SEND_BUFFERS*sizeof(uint64_t));
+    connectInfo->sign_buffer = connection->register_buffer(connectInfo->buffer_ready_sign, NUM_SEND_BUFFERS*sizeof(size_t));
+
+
     cout << "prod sign buffer size=" << connectInfo->sign_buffer->getSizeInBytes() << endl;
     infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
 

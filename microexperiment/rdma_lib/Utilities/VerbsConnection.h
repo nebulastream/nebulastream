@@ -46,6 +46,9 @@ public:
 
     virtual ~VerbsConnection();
 
+    void atomic_cas(RegionToken * remote_token, int64_t compare, int64_t set);
+    bool atomic_cas_blocking(RegionToken * remote_token, int64_t compare, int64_t set, RequestToken * pRequestToken);
+    bool atomic_cas_blocking(RegionToken* remote_token, size_t offset, int64_t compare, int64_t set, RequestToken* pRequestToken);
 
 
     bool check_receive(infinity::core::receive_element_t & receive_element);
