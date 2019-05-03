@@ -968,19 +968,51 @@ int main(int argc, char *argv[])
     else
         assert(0);
 
-    SimpleInfoProvider info1(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
-    connections[0] = new VerbsConnection(&info1);
-    cout << "first connection established" << endl;
-
-    if((rank == 0 || rank == 3) && numberOfNodes == 4)
+    if(rank == 0)
     {
-      cout << "connecting 0 and 3" << endl;
-      if(rank == 0)
-         target_rank = 3;
-      SimpleInfoProvider info(target_rank, "mlx5_2", 1, PORT2, ip);//was 3
-      connections[2] = new VerbsConnection(&info);
-      cout << "connection established rank 0 and 3" << endl;
+        cout << "rank 0 connecting 0 and 1" << endl;
+        SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
+        connections[0] = new VerbsConnection(&info);
+        cout << "connection established rank 0 and 1" << endl;
+
+        if(numberOfNodes == 4)
+        {
+            cout << "rank connecting 0 and 3" << endl;
+            if(rank == 0)
+                target_rank = 3;
+            SimpleInfoProvider info(target_rank, "mlx5_2", 1, PORT2, ip);//was 3
+            connections[1] = new VerbsConnection(&info);
+            cout << "connection established rank 0 and 3" << endl;
+        }
+
     }
+    if(rank == 1)
+    {
+        cout << "rank 1 connecting 0 and 1" << endl;
+        SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
+        connections[0] = new VerbsConnection(&info);
+        cout << "connection established rank 0 and 1" << endl;
+
+    }
+    if(rank == 3)
+    {
+        cout << "rank 3 connecting 0 and 1" << endl;
+        SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT2, ip);//was 3
+        connections[0] = new VerbsConnection(&info);
+        cout << "connection established rank 0 and 3" << endl;
+    }
+
+
+//
+//    if((rank == 0 || rank == 3) && numberOfNodes == 4)
+//    {
+//      cout << "connecting 0 and 3" << endl;
+//      if(rank == 0)
+//         target_rank = 3;
+//      SimpleInfoProvider info(target_rank, "mlx5_2", 1, PORT2, ip);//was 3
+//      connections[2] = new VerbsConnection(&info);
+//      cout << "connection established rank 0 and 3" << endl;
+//    }
 
     auto nodes = numa_num_configured_nodes();
 //    nodes = 1;
