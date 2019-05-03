@@ -165,7 +165,7 @@ bool VerbsConnection::atomic_cas_blocking(RegionToken * remote_token, int64_t co
     return success;
 }
 
-bool VerbsConnection::atomic_cas_blocking(RegionToken* remote_token, size_t offset, int64_t compare, int64_t set, RequestToken* pRequestToken)
+size_t VerbsConnection::atomic_cas_blocking(RegionToken* remote_token, size_t offset, int64_t compare, int64_t set, RequestToken* pRequestToken)
 {
     bool created_request_token = false;
     if ( pRequestToken == nullptr){
@@ -191,7 +191,8 @@ bool VerbsConnection::atomic_cas_blocking(RegionToken* remote_token, size_t offs
         delete pRequestToken;
         pRequestToken = nullptr;
     }
-    return success;
+    return context->defaultAtomic->getValue();
+//    return success;
 }
 
 void VerbsConnection::post_receive(Buffer* buffer) {
