@@ -1176,7 +1176,7 @@ int main(int argc, char *argv[])
             << endl;
 
     auto nodes = numa_num_configured_nodes();
-    nodes = 1;
+//    nodes = 1;
 
 //    htPtrs = new std::atomic<size_t>*[4];
     ConnectionInfos** conInfos;
@@ -1271,8 +1271,6 @@ int main(int argc, char *argv[])
             }//end of critical
             cout << "thread out of critical = " << omp_get_thread_num() << endl;
         }
-
-
     }
     if(rank == 3)
     {
@@ -1300,73 +1298,6 @@ int main(int argc, char *argv[])
     }
 
 
-//    auto cores = numa_num_configured_cpus();
-//    auto cores_per_node = cores / nodes;
-
-//    if(rank % 2 == 0)//producer
-//    {
-//        cout << "starting " << nodes << " threads" << endl;
-//        #pragma omp parallel num_threads(nodes)
-//        {
-//            #pragma omp critical
-//            {
-//                cout << "thread in critical = " << omp_get_thread_num() << endl;
-//                if(numberOfConnections == 1)
-//                {
-//                    cout << "setup con 1" << endl;
-//                    conInfos[omp_get_thread_num()] = setupRDMAProducer(connections[0], bufferSizeInTups);
-//                    conInfos[omp_get_thread_num()]->con = connections[0];
-//                    cout << "setup con 1 finished" << endl;
-//                    if(numberOfNodes == 4)
-//                    {
-//                        cout << "setup con 2" << endl;
-//                        conInfos[omp_get_thread_num()+nodes] = setupRDMAProducer(connections[1], bufferSizeInTups);
-//                        conInfos[omp_get_thread_num()+nodes]->con = connections[1];
-//                        cout << "setup con 2 finished" << endl;
-//                    }
-//                }
-//                else
-//                    assert(0);
-//
-//                conInfos[omp_get_thread_num()]->records = new record*[numberOfProducer];
-//                for(size_t i = 0; i < numberOfProducer; i++)
-//                {
-//                    conInfos[omp_get_thread_num()]->records[i] = generateTuplesOneArray(numberOfProducer, campaingCnt);
-//                }
-//                int numa_node = -1;
-//                get_mempolicy(&numa_node, NULL, 0, (void*)conInfos[omp_get_thread_num()]->records[0], MPOL_F_NODE | MPOL_F_ADDR);
-//                cout << "ht numa=" << numa_node << " outthread=" << omp_get_thread_num() << endl;
-//            }
-//            cout << "thread out of critical = " << omp_get_thread_num() << endl;
-//        }//end of pragma
-//    }
-//    else//consumer
-//    {
-//        cout << "starting " << nodes << " threads" << endl;
-//        #pragma omp parallel num_threads(nodes)
-//        {
-//            #pragma omp critical
-//            {
-//                cout << "thread in critical = " << omp_get_thread_num() << endl;
-//                if(numberOfConnections == 1)
-//                {
-//                    conInfos[omp_get_thread_num()] = setupRDMAConsumer(connections[0], bufferSizeInTups, campaingCnt);
-//                    conInfos[omp_get_thread_num()]->con = connections[0];
-//                }
-//                if(numberOfNodes == 4)
-//                {
-//                    conInfos[omp_get_thread_num()+nodes] = setupRDMAConsumer(connections[1], bufferSizeInTups, campaingCnt);
-//                    conInfos[omp_get_thread_num()+nodes]->con = connections[1];
-//                }
-//
-//                else
-//                    assert(0);
-//            }//end of critical
-//            cout << "thread out of critical = " << omp_get_thread_num() << endl;
-//        }
-//
-//    }//end of else
-//    exit(0);
     size_t producesTuples[nodes][numberOfProducer/nodes] = {0};
     size_t producedBuffers[nodes][numberOfProducer/nodes] = {0};
     size_t noFreeEntryFound[nodes][numberOfProducer/nodes] = {0};
@@ -1412,18 +1343,6 @@ int main(int argc, char *argv[])
                 << std::endl;
              }
 #endif
-//             VerbsConnection* con;
-//             size_t connectID;
-//             if(numberOfConnections == 1)
-//             {
-//                 con = connections[0];
-//                 connectID = 0;
-//             }
-//             else
-//             {
-//                 con = connections[outer_thread_id];
-//                 connectID = outer_thread_id;
-//             }
 
              if(numberOfNodes == 2)
              {
