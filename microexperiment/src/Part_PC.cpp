@@ -330,8 +330,8 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
 //                cInfos->buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
 //                connection->write(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index, receive_buffer_index, sizeof(uint64_t));
 
-                cout << " cmp=" << BUFFER_USED_FLAG << " swap=" <<  BUFFER_BEING_PROCESSED_FLAG << " value idx=" << receive_buffer_index << endl;
-                size_t prev = connection->atomic_cas_blocking(cInfos->sign_token, receive_buffer_index*sizeof(size_t), BUFFER_USED_FLAG, BUFFER_BEING_PROCESSED_FLAG, nullptr);
+                cout << " cmp=" << BUFFER_READY_FLAG << " swap=" <<  BUFFER_BEING_PROCESSED_FLAG << " value idx=" << receive_buffer_index << endl;
+                size_t prev = connection->atomic_cas_blocking(cInfos->sign_token, receive_buffer_index*sizeof(size_t), BUFFER_READY_FLAG, BUFFER_BEING_PROCESSED_FLAG, nullptr);
                 cout << "prev=" << prev << " for index=" << receive_buffer_index << endl;
 
                 connection->read_blocking(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index*sizeof(size_t), receive_buffer_index*sizeof(size_t), sizeof(uint64_t));
