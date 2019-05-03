@@ -309,7 +309,7 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
 //                                            << " thread=" << omp_get_thread_num()
 //                                                            << endl;//                sleep(1);
 
-                connection->read_blocking(cInfos->sign_buffer, cInfos->sign_token, startIdx*sizeof(size_t), startIdx sizeof(size_t), (endIdx - startIdx)* sizeof(uint64_t));
+                connection->read_blocking(cInfos->sign_buffer, cInfos->sign_token, startIdx*sizeof(size_t), startIdx *sizeof(size_t), (endIdx - startIdx)* sizeof(uint64_t));
 //                ss << "AFTER SIZE=" << cInfos->sign_buffer->getSizeInBytes()
 //                                                            << " token size= "<< cInfos->sign_token->getSizeInBytes()
 //                                                            << " idx=" << receive_buffer_index
