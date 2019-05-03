@@ -1176,7 +1176,7 @@ int main(int argc, char *argv[])
             << endl;
 
     auto nodes = numa_num_configured_nodes();
-//    nodes = 1;
+    nodes = 1;
 
 //    htPtrs = new std::atomic<size_t>*[4];
     ConnectionInfos** conInfos;
