@@ -309,7 +309,7 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
 //                                            << " thread=" << omp_get_thread_num()
 //                                                            << endl;//                sleep(1);
 
-                connection->read_blocking(cInfos->sign_buffer, cInfos->sign_token, startIdx, startIdx, endIdx - startIdx);
+                connection->read_blocking(cInfos->sign_buffer, cInfos->sign_token, startIdx, startIdx, (endIdx - startIdx)* sizeof(uint64_t));
 //                ss << "AFTER SIZE=" << cInfos->sign_buffer->getSizeInBytes()
 //                                                            << " token size= "<< cInfos->sign_token->getSizeInBytes()
 //                                                            << " idx=" << receive_buffer_index
@@ -366,13 +366,13 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
                     if(std::atomic_load(&cInfos->exitProducer) == numberOfProducer/2)
                     {
                         cInfos->buffer_ready_sign[receive_buffer_index] = BUFFER_USED_SENDER_DONE;
-                        connection->write_blocking(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index, receive_buffer_index, 1);
+                        connection->write_blocking(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index, receive_buffer_index, sizeof(uint64_t));
                         cout << "Sent last tuples and marked as BUFFER_USED_SENDER_DONE at index=" << receive_buffer_index << endl;
                     }
                     else
                     {
                         cInfos->buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
-                        connection->write(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index, receive_buffer_index, 1);
+                        connection->write(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index, receive_buffer_index, sizeof(uint64_t));
                     }
 
                     break;
