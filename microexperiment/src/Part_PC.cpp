@@ -323,27 +323,21 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
             }
             if(cInfos->buffer_ready_sign[receive_buffer_index] == BUFFER_READY_FLAG)
             {
-                //claim buffer
-                //infinity::memory::RegionToken* destination, infinity::memory::Atomic* previousValue, uint64_t compare, uint64_t swap,
-//                infinity::requests::RequestToken *requestToken
-//                cout << " write value" << BUFFER_USED_FLAG << " to idx=" << receive_buffer_index << endl;
-//                cInfos->buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
-//                connection->write(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index, receive_buffer_index, sizeof(uint64_t));
-
-                cout << " cmp=" << BUFFER_READY_FLAG << " swap=" <<  BUFFER_BEING_PROCESSED_FLAG << " value idx=" << receive_buffer_index << endl;
-                size_t prev = connection->atomic_cas_blocking(cInfos->sign_token, receive_buffer_index*sizeof(size_t), BUFFER_READY_FLAG, BUFFER_BEING_PROCESSED_FLAG, nullptr);
-                cout << "prev=" << prev << " for index=" << receive_buffer_index << endl;
-
-                connection->read_blocking(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index*sizeof(size_t), receive_buffer_index*sizeof(size_t), sizeof(uint64_t));
-                cout << " value after swap=" << cInfos->buffer_ready_sign[receive_buffer_index] << endl;
-
+                size_t prevValue = connection->atomic_cas_blocking(cInfos->sign_token, receive_buffer_index*sizeof(size_t), BUFFER_READY_FLAG, BUFFER_BEING_PROCESSED_FLAG, nullptr);
+                if(prevValue != BUFFER_READY_FLAG)
+                {
+                    cout << "buffer already taken with val=" << prevValue << endl;
+                    continue;
+                }
+                else
+                {
+                    cout << "buffer free" << endl;
+                }
 
                 //this will run until one buffer is filled completely
                 readTuples += produce_window_mem(records, bufferSizeInTuples, cInfos->sendBuffers[receive_buffer_index]->tups);
                 cInfos->sendBuffers[receive_buffer_index]->numberOfTuples = bufferSizeInTuples;
 
-//                cout << "using send buffer=" << cInfos->sendBuffers[receive_buffer_index]->numberOfTuples << " "
-//                        << cInfos->sendBuffers[receive_buffer_index]->send_buffer->getAddress() << endl;
                 connection->write(cInfos->sendBuffers[receive_buffer_index]->send_buffer, cInfos->region_tokens[receive_buffer_index],
                         cInfos->sendBuffers[receive_buffer_index]->requestToken);
 #ifdef DEBUG
@@ -361,7 +355,7 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
 //                            << " idx=" << receive_buffer_index
 //                            << " keyL=" <<  cInfos->sign_token->getLocalKey()
 //                                            << endl;//                sleep(1);
-                    connection->write_blocking(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index, receive_buffer_index, 1);
+                    connection->write_blocking(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index*sizeof(size_t), receive_buffer_index*sizeof(size_t), sizeof(size_t));
                 }
                 else//finished processing
                 {
@@ -369,13 +363,13 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
                     if(std::atomic_load(&cInfos->exitProducer) == numberOfProducer/2)
                     {
                         cInfos->buffer_ready_sign[receive_buffer_index] = BUFFER_USED_SENDER_DONE;
-                        connection->write_blocking(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index, receive_buffer_index, sizeof(uint64_t));
+                        connection->write_blocking(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index*sizeof(size_t), receive_buffer_index*sizeof(size_t), sizeof(uint64_t));
                         cout << "Sent last tuples and marked as BUFFER_USED_SENDER_DONE at index=" << receive_buffer_index << endl;
                     }
                     else
                     {
                         cInfos->buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
-                        connection->write(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index, receive_buffer_index, sizeof(uint64_t));
+                        connection->write(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index*sizeof(size_t), receive_buffer_index*sizeof(size_t), sizeof(uint64_t));
                     }
 
                     break;
