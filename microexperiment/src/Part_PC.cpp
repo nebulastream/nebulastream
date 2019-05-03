@@ -1036,12 +1036,16 @@ int main(int argc, char *argv[])
                 cout << "thread in critical = " << omp_get_thread_num() << endl;
                 if(numberOfConnections == 1)
                 {
+                    cout << "setup con 1" << endl;
                     conInfos[omp_get_thread_num()] = setupRDMAProducer(connections[0], bufferSizeInTups);
                     conInfos[omp_get_thread_num()]->con = connections[0];
+                    cout << "setup con 1 finished" << endl;
                     if(numberOfNodes == 4)
                     {
+                        cout << "setup con 2" << endl;
                         conInfos[omp_get_thread_num()+nodes] = setupRDMAProducer(connections[1], bufferSizeInTups);
                         conInfos[omp_get_thread_num()+nodes]->con = connections[1];
+                        cout << "setup con 2 finished" << endl;
                     }
                 }
                 else
