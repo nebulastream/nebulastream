@@ -326,11 +326,11 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
                 //claim buffer
                 //infinity::memory::RegionToken* destination, infinity::memory::Atomic* previousValue, uint64_t compare, uint64_t swap,
 //                infinity::requests::RequestToken *requestToken
-                cout << " write value idx=" << receive_buffer_index << endl;
+                cout << " write value" << BUFFER_USED_FLAG << " to idx=" << receive_buffer_index << endl;
                 cInfos->buffer_ready_sign[receive_buffer_index] = BUFFER_USED_FLAG;
                 connection->write(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index, receive_buffer_index, sizeof(uint64_t));
 
-                cout << " read value idx=" << receive_buffer_index << endl;
+                cout << " cmp=" BUFFER_READY_FLAG << " swap=" <<  BUFFER_BEING_PROCESSED_FLAG << " value idx=" << receive_buffer_index << endl;
                 bool success = connection->atomic_cas_blocking(cInfos->sign_token, receive_buffer_index, BUFFER_READY_FLAG, BUFFER_BEING_PROCESSED_FLAG, nullptr);
                 cout << "success=" << success << " for index=" << receive_buffer_index << endl;
 
