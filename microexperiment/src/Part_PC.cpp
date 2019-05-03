@@ -446,12 +446,15 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
     while(total_buffer_send < bufferProcCnt)
     {
         //alloc first buffer
+        cout << " read idx for con 0" << endl;
         for(size_t receive_buffer_index = startIdx; receive_buffer_index < endIdx && total_buffer_send < bufferProcCnt; receive_buffer_index++)
         {
             if(receive_buffer_index == startIdx)//read buffers
             {
+                cout << " read array " << endl;
                 cInfos[0]->con->read_blocking(cInfos[0]->sign_buffer, cInfos[0]->sign_token, startIdx*sizeof(size_t), startIdx *sizeof(size_t), (endIdx - startIdx)* sizeof(uint64_t));
             }
+
             if(cInfos[0]->buffer_ready_sign[receive_buffer_index] == BUFFER_READY_FLAG)
             {
                 size_t prevValue = cInfos[0]->con->atomic_cas_blocking(cInfos[0]->sign_token, receive_buffer_index*sizeof(size_t), BUFFER_READY_FLAG, BUFFER_BEING_PROCESSED_FLAG, nullptr);
