@@ -555,7 +555,6 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
             }
             else
             {
-
                 cInfos[0]->buffer_ready_sign[idxCon0] = BUFFER_USED_FLAG;
                 cInfos[0]->con->write(cInfos[0]->sign_buffer, cInfos[0]->sign_token, idxCon0*sizeof(size_t), idxCon0*sizeof(size_t), sizeof(uint64_t));
 
@@ -564,7 +563,6 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
 
                 cout << " prod finished" << endl;
             }
-
             break;
         }
 
@@ -837,12 +835,12 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         }
     }//end of while
 
-//    cout << "checking remaining buffers" << endl;
+    cout << "checking remaining buffers" << endl;
     for(index = startIdx; index < endIdx; index++)//check again if some are there
     {
 //        cout << "checking i=" << index << endl;
         if (cInfos->buffer_ready_sign[index] == BUFFER_USED_FLAG) {
-//            cout << "Check Iter -- Received buffer at index=" << index << endl;
+            cout << "Check Iter -- Received buffer at index=" << index << endl;
 
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
