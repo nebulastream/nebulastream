@@ -791,7 +791,9 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             if(cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
             {
                     std::atomic_fetch_add(&cInfos->exitConsumer, size_t(1));
+                    #pragma omp critical
                     cout << "DONE BUFFER FOUND at idx"  << index << " numanode=" << outerThread << endl;
+
                     is_done = true;
             }
             else
