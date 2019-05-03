@@ -451,7 +451,7 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
         {
             if(receive_buffer_index == startIdx)//read buffers
             {
-                cout << " read array " << endl;
+                cout << " read array at idx=" << receive_buffer_index << " << endl;
                 cInfos[0]->con->read_blocking(cInfos[0]->sign_buffer, cInfos[0]->sign_token, startIdx*sizeof(size_t), startIdx *sizeof(size_t), (endIdx - startIdx)* sizeof(uint64_t));
             }
 
@@ -474,6 +474,7 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
             {
                 cout << " val at idx=" << receive_buffer_index<< " is " << cInfos[0]->buffer_ready_sign[receive_buffer_index] << endl;
             }
+
             if(receive_buffer_index +1 > endIdx)
             {
                 receive_buffer_index = startIdx;
