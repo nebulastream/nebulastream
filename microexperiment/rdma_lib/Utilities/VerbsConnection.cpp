@@ -137,7 +137,7 @@ void VerbsConnection::send_blocking(Buffer* buffer, RequestToken * pRequestToken
 void VerbsConnection::compareAndSwap(infinity::memory::RegionToken* destination, infinity::memory::Atomic* previousValue, uint64_t compare, uint64_t swap)
 {
     infinity::requests::RequestToken requestToken(context);
-    qp->compareAndSwap(destination, previousValue, compare, swap, infinity::queues::OperationFlags(), &requestToken);
+    qp->compareAndSwap(destination, previousValue, compare, swap,  &requestToken);
     requestToken.waitUntilCompleted();
 
 }
@@ -181,9 +181,9 @@ size_t VerbsConnection::atomic_cas_blocking(RegionToken* remote_token, size_t of
             remote_token->getLocalKey(),
             remote_token->getRemoteKey());
 
+    infinity::memory::Atomic* prevValue = new infinity::memory::Atomic(context);
 
-
-    qp->compareAndSwap(&test, compare, set, pRequestToken);
+    qp->compareAndSwap(&test, prevValue, compare, set, pRequestToken);
     pRequestToken->waitUntilCompleted();
     bool success = pRequestToken->success;
 
@@ -191,7 +191,7 @@ size_t VerbsConnection::atomic_cas_blocking(RegionToken* remote_token, size_t of
         delete pRequestToken;
         pRequestToken = nullptr;
     }
-    return context->defaultAtomic->getValue();
+    return prevValue->getValue();
 //    return success;
 }
 
