@@ -309,7 +309,7 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
 //                                            << " thread=" << omp_get_thread_num()
 //                                                            << endl;//                sleep(1);
 
-                connection->read_blocking(cInfos->sign_buffer, cInfos->sign_token, startIdx, startIdx, (endIdx - startIdx)* sizeof(uint64_t));
+                connection->read_blocking(cInfos->sign_buffer, cInfos->sign_token, startIdx*sizeof(size_t), startIdx sizeof(size_t), (endIdx - startIdx)* sizeof(uint64_t));
 //                ss << "AFTER SIZE=" << cInfos->sign_buffer->getSizeInBytes()
 //                                                            << " token size= "<< cInfos->sign_token->getSizeInBytes()
 //                                                            << " idx=" << receive_buffer_index
@@ -331,10 +331,10 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
 //                connection->write(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index, receive_buffer_index, sizeof(uint64_t));
 
                 cout << " cmp=" << BUFFER_USED_SENDER_DONE << " swap=" <<  BUFFER_BEING_PROCESSED_FLAG << " value idx=" << receive_buffer_index << endl;
-                bool success = connection->atomic_cas_blocking(cInfos->sign_token, receive_buffer_index, BUFFER_USED_SENDER_DONE, BUFFER_BEING_PROCESSED_FLAG, nullptr);
+                bool success = connection->atomic_cas_blocking(cInfos->sign_token, receive_buffer_index*sizeof(size_t), BUFFER_USED_SENDER_DONE, BUFFER_BEING_PROCESSED_FLAG, nullptr);
                 cout << "success=" << success << " for index=" << receive_buffer_index << endl;
 
-                connection->read_blocking(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index, receive_buffer_index, sizeof(uint64_t));
+                connection->read_blocking(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index*sizeof(size_t), receive_buffer_index*sizeof(size_t), sizeof(uint64_t));
                 cout << " value after swap=" << cInfos->buffer_ready_sign[receive_buffer_index] << endl;
 
                 //this will run until one buffer is filled completely
