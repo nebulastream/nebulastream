@@ -550,7 +550,7 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
         else//finished processing
         {
             std::atomic_fetch_add(&cInfos[0]->exitProducer, size_t(1));//TODO: IS THIS OK?
-            if(std::atomic_load(&cInfos[0]->exitProducer) == numberOfProducer/2)
+            if(std::atomic_load(&cInfos[0]->exitProducer) == numberOfProducer)
             {
                 cInfos[0]->buffer_ready_sign[idxCon0] = BUFFER_USED_SENDER_DONE;
                 cInfos[1]->buffer_ready_sign[idxCon1] = BUFFER_USED_SENDER_DONE;
@@ -1354,7 +1354,7 @@ int main(int argc, char *argv[])
              {
                  runProducerOneOnOneFourNodes(recs, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[outer_thread_id][i],
                          &producedBuffers[outer_thread_id][i], &readInputTuples[outer_thread_id][i], &noFreeEntryFound[outer_thread_id][i], startIdx, endIdx,
-                         numberOfProducer, conInfos, outer_thread_id, numberOfNodes);
+                         numberOfProducer/nodes, conInfos, outer_thread_id, numberOfNodes);
              }
 
 
