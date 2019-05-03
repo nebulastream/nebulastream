@@ -142,6 +142,58 @@ void VerbsConnection::compareAndSwap(infinity::memory::RegionToken* destination,
 
 }
 
+void VerbsConnection::atomic_cas(RegionToken * remote_token, int64_t compare, int64_t set)
+{
+    qp->compareAndSwap(remote_token, compare, set);
+}
+bool VerbsConnection::atomic_cas_blocking(RegionToken * remote_token, int64_t compare, int64_t set, RequestToken * pRequestToken)
+{
+    bool created_request_token = false;
+    if ( pRequestToken == nullptr){
+        pRequestToken = create_request_token();
+        created_request_token = true;
+    }
+
+    qp->compareAndSwap(remote_token, compare, set, pRequestToken);
+    pRequestToken->waitUntilCompleted();
+    bool success = pRequestToken->success;
+
+    if(created_request_token){
+        delete pRequestToken;
+        pRequestToken = nullptr;
+    }
+    return success;
+}
+
+bool VerbsConnection::atomic_cas_blocking(RegionToken* remote_token, size_t offset, int64_t compare, int64_t set, RequestToken* pRequestToken)
+{
+    bool created_request_token = false;
+    if ( pRequestToken == nullptr){
+        pRequestToken = create_request_token();
+        created_request_token = true;
+    }
+
+    RegionToken test(
+            remote_token->getMemoryRegion(),
+            remote_token->getMemoryRegionType(),
+            remote_token->getSizeInBytes(),
+            remote_token->getAddress() + offset,
+            remote_token->getLocalKey(),
+            remote_token->getRemoteKey());
+
+
+
+    qp->compareAndSwap(&test, compare, set, pRequestToken);
+    pRequestToken->waitUntilCompleted();
+    bool success = pRequestToken->success;
+
+    if(created_request_token){
+        delete pRequestToken;
+        pRequestToken = nullptr;
+    }
+    return success;
+}
+
 void VerbsConnection::post_receive(Buffer* buffer) {
     context->postReceiveBuffer(buffer);
 }
