@@ -953,6 +953,15 @@ int main(int argc, char *argv[])
             << " ip=" << ip
             << endl;
 
+    auto nodes = numa_num_configured_nodes();
+    nodes = 1;
+
+//    htPtrs = new std::atomic<size_t>*[4];
+    ConnectionInfos** conInfos;
+    if(numberOfNodes == 2)
+        conInfos = new ConnectionInfos*[nodes];
+    else
+        conInfos = new ConnectionInfos*[nodes*2];// numanode_0: 0,2 numanod_1: 1,3
 
 //    assert(numberOfConnections == 1);
     VerbsConnection** connections = new VerbsConnection*[numberOfConnections];
@@ -968,6 +977,8 @@ int main(int argc, char *argv[])
     else
         assert(0);
 
+    omp_set_nested(1);
+
     if(rank == 0)
     {
         cout << "rank 0 connecting 0 and 1" << endl;
@@ -975,59 +986,6 @@ int main(int argc, char *argv[])
         connections[0] = new VerbsConnection(&info);
         cout << "connection established rank 0 and 1" << endl;
 
-        if(numberOfNodes == 4)
-        {
-            cout << "rank connecting 0 and 3" << endl;
-            if(rank == 0)
-                target_rank = 3;
-            SimpleInfoProvider info(target_rank, "mlx5_2", 1, PORT2, ip);//was 3
-            connections[1] = new VerbsConnection(&info);
-            cout << "connection established rank 0 and 3" << endl;
-        }
-
-    }
-    if(rank == 1)
-    {
-        cout << "rank 1 connecting 0 and 1" << endl;
-        SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
-        connections[0] = new VerbsConnection(&info);
-        cout << "connection established rank 0 and 1" << endl;
-
-    }
-    if(rank == 3)
-    {
-        cout << "rank 3 connecting 0 and 1" << endl;
-        SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT2, ip);//was 3
-        connections[0] = new VerbsConnection(&info);
-        cout << "connection established rank 0 and 3" << endl;
-    }
-
-
-//
-//    if((rank == 0 || rank == 3) && numberOfNodes == 4)
-//    {
-//      cout << "connecting 0 and 3" << endl;
-//      if(rank == 0)
-//         target_rank = 3;
-//      SimpleInfoProvider info(target_rank, "mlx5_2", 1, PORT2, ip);//was 3
-//      connections[2] = new VerbsConnection(&info);
-//      cout << "connection established rank 0 and 3" << endl;
-//    }
-
-    auto nodes = numa_num_configured_nodes();
-    nodes = 1;
-//    auto cores = numa_num_configured_cpus();
-//    auto cores_per_node = cores / nodes;
-    omp_set_nested(1);
-//    htPtrs = new std::atomic<size_t>*[4];
-    ConnectionInfos** conInfos;
-    if(numberOfNodes == 2)
-        conInfos = new ConnectionInfos*[nodes];
-    else
-        conInfos = new ConnectionInfos*[nodes*2];// numanode_0: 0,2 numanod_1: 1,3
-
-    if(rank % 2 == 0)//producer
-    {
         cout << "starting " << nodes << " threads" << endl;
         #pragma omp parallel num_threads(nodes)
         {
@@ -1042,6 +1000,13 @@ int main(int argc, char *argv[])
                     cout << "setup con 1 finished" << endl;
                     if(numberOfNodes == 4)
                     {
+                        cout << "rank connecting 0 and 3" << endl;
+                        if(rank == 0)
+                            target_rank = 3;
+                        SimpleInfoProvider info(target_rank, "mlx5_2", 1, PORT2, ip);//was 3
+                        connections[1] = new VerbsConnection(&info);
+                        cout << "connection established rank 0 and 3" << endl;
+
                         cout << "setup con 2" << endl;
                         conInfos[omp_get_thread_num()+nodes] = setupRDMAProducer(connections[1], bufferSizeInTups);
                         conInfos[omp_get_thread_num()+nodes]->con = connections[1];
@@ -1063,8 +1028,12 @@ int main(int argc, char *argv[])
             cout << "thread out of critical = " << omp_get_thread_num() << endl;
         }//end of pragma
     }
-    else//consumer
+    if(rank == 1)
     {
+        cout << "rank 1 connecting 0 and 1" << endl;
+        SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
+        connections[0] = new VerbsConnection(&info);
+        cout << "connection established rank 0 and 1" << endl;
         cout << "starting " << nodes << " threads" << endl;
         #pragma omp parallel num_threads(nodes)
         {
@@ -1076,19 +1045,106 @@ int main(int argc, char *argv[])
                     conInfos[omp_get_thread_num()] = setupRDMAConsumer(connections[0], bufferSizeInTups, campaingCnt);
                     conInfos[omp_get_thread_num()]->con = connections[0];
                 }
-                if(numberOfNodes == 4)
-                {
-                    conInfos[omp_get_thread_num()+nodes] = setupRDMAConsumer(connections[1], bufferSizeInTups, campaingCnt);
-                    conInfos[omp_get_thread_num()+nodes]->con = connections[1];
-                }
-
                 else
                     assert(0);
             }//end of critical
             cout << "thread out of critical = " << omp_get_thread_num() << endl;
         }
 
-    }//end of else
+
+    }
+    if(rank == 3)
+    {
+        cout << "rank 3 connecting 0 and 1" << endl;
+        SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT2, ip);//was 3
+        connections[0] = new VerbsConnection(&info);
+        cout << "connection established rank 0 and 3" << endl;
+        cout << "starting " << nodes << " threads" << endl;
+        #pragma omp parallel num_threads(nodes)
+        {
+            #pragma omp critical
+            {
+                cout << "thread in critical = " << omp_get_thread_num() << endl;
+                if(numberOfConnections == 1)
+                {
+                    conInfos[omp_get_thread_num()] = setupRDMAConsumer(connections[0], bufferSizeInTups, campaingCnt);
+                    conInfos[omp_get_thread_num()]->con = connections[0];
+                }
+                else
+                    assert(0);
+            }//end of critical
+            cout << "thread out of critical = " << omp_get_thread_num() << endl;
+        }
+    }
+
+
+//    auto cores = numa_num_configured_cpus();
+//    auto cores_per_node = cores / nodes;
+
+//    if(rank % 2 == 0)//producer
+//    {
+//        cout << "starting " << nodes << " threads" << endl;
+//        #pragma omp parallel num_threads(nodes)
+//        {
+//            #pragma omp critical
+//            {
+//                cout << "thread in critical = " << omp_get_thread_num() << endl;
+//                if(numberOfConnections == 1)
+//                {
+//                    cout << "setup con 1" << endl;
+//                    conInfos[omp_get_thread_num()] = setupRDMAProducer(connections[0], bufferSizeInTups);
+//                    conInfos[omp_get_thread_num()]->con = connections[0];
+//                    cout << "setup con 1 finished" << endl;
+//                    if(numberOfNodes == 4)
+//                    {
+//                        cout << "setup con 2" << endl;
+//                        conInfos[omp_get_thread_num()+nodes] = setupRDMAProducer(connections[1], bufferSizeInTups);
+//                        conInfos[omp_get_thread_num()+nodes]->con = connections[1];
+//                        cout << "setup con 2 finished" << endl;
+//                    }
+//                }
+//                else
+//                    assert(0);
+//
+//                conInfos[omp_get_thread_num()]->records = new record*[numberOfProducer];
+//                for(size_t i = 0; i < numberOfProducer; i++)
+//                {
+//                    conInfos[omp_get_thread_num()]->records[i] = generateTuplesOneArray(numberOfProducer, campaingCnt);
+//                }
+//                int numa_node = -1;
+//                get_mempolicy(&numa_node, NULL, 0, (void*)conInfos[omp_get_thread_num()]->records[0], MPOL_F_NODE | MPOL_F_ADDR);
+//                cout << "ht numa=" << numa_node << " outthread=" << omp_get_thread_num() << endl;
+//            }
+//            cout << "thread out of critical = " << omp_get_thread_num() << endl;
+//        }//end of pragma
+//    }
+//    else//consumer
+//    {
+//        cout << "starting " << nodes << " threads" << endl;
+//        #pragma omp parallel num_threads(nodes)
+//        {
+//            #pragma omp critical
+//            {
+//                cout << "thread in critical = " << omp_get_thread_num() << endl;
+//                if(numberOfConnections == 1)
+//                {
+//                    conInfos[omp_get_thread_num()] = setupRDMAConsumer(connections[0], bufferSizeInTups, campaingCnt);
+//                    conInfos[omp_get_thread_num()]->con = connections[0];
+//                }
+//                if(numberOfNodes == 4)
+//                {
+//                    conInfos[omp_get_thread_num()+nodes] = setupRDMAConsumer(connections[1], bufferSizeInTups, campaingCnt);
+//                    conInfos[omp_get_thread_num()+nodes]->con = connections[1];
+//                }
+//
+//                else
+//                    assert(0);
+//            }//end of critical
+//            cout << "thread out of critical = " << omp_get_thread_num() << endl;
+//        }
+//
+//    }//end of else
+    exit(0);
     size_t producesTuples[nodes][numberOfProducer/nodes] = {0};
     size_t producedBuffers[nodes][numberOfProducer/nodes] = {0};
     size_t noFreeEntryFound[nodes][numberOfProducer/nodes] = {0};
