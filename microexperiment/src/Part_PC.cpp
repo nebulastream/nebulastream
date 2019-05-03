@@ -331,7 +331,7 @@ void runProducerOneOnOne(VerbsConnection* connection, record* records, size_t bu
                 }
                 else
                 {
-                    cout << "buffer free" << endl;
+//                    cout << "buffer free" << endl;
                 }
 
                 //this will run until one buffer is filled completely
