@@ -1184,9 +1184,9 @@ int main(int argc, char *argv[])
 //    htPtrs = new std::atomic<size_t>*[4];
     ConnectionInfos** conInfos;
     if(numberOfNodes == 2)
-        conInfos = new ConnectionInfos*[nodes];
+        conInfos = new ConnectionInfos*[numaNodes];
     else
-        conInfos = new ConnectionInfos*[nodes*2];// numanode_0: 0,2 numanod_1: 1,3
+        conInfos = new ConnectionInfos*[numaNodes*2];// numanode_0: 0,2 numanod_1: 1,3
 
 //    assert(numberOfConnections == 1);
     VerbsConnection** connections = new VerbsConnection*[numberOfConnections];
@@ -1212,7 +1212,7 @@ int main(int argc, char *argv[])
         cout << "connection established rank 0 and 1" << endl;
 
         cout << "starting " << numaNodes << " threads" << endl;
-        #pragma omp parallel num_threads(nodes)
+        #pragma omp parallel num_threads(numaNodes)
         {
             #pragma omp critical
             {
@@ -1259,7 +1259,7 @@ int main(int argc, char *argv[])
         connections[0] = new VerbsConnection(&info);
         cout << "connection established rank 0 and 1" << endl;
         cout << "starting " << numaNodes << " threads" << endl;
-        #pragma omp parallel num_threads(nodes)
+        #pragma omp parallel num_threads(numaNodes)
         {
             #pragma omp critical
             {
@@ -1283,7 +1283,7 @@ int main(int argc, char *argv[])
         connections[0] = new VerbsConnection(&info);
         cout << "connection established rank 0 and 3" << endl;
         cout << "starting " << numaNodes << " threads" << endl;
-        #pragma omp parallel num_threads(nodes)
+        #pragma omp parallel num_threads(numaNodes)
         {
             #pragma omp critical
             {
@@ -1315,11 +1315,11 @@ int main(int argc, char *argv[])
     Timestamp begin = getTimestamp();
     if(rank % 2 == 0)
     {
-    #pragma omp parallel num_threads(nodes)//nodes
+    #pragma omp parallel num_threads(numaNodes)//nodes
        {
           auto outer_thread_id = omp_get_thread_num();
           numa_run_on_node(outer_thread_id);
-          #pragma omp parallel num_threads(numberOfProducer/nodes)//
+          #pragma omp parallel num_threads(numberOfProducer/numaNodes)//
           {
              auto inner_thread_id = omp_get_thread_num();
              size_t i = inner_thread_id;
@@ -1370,11 +1370,11 @@ int main(int argc, char *argv[])
     }
     else
     {
-#pragma omp parallel num_threads(nodes)
+#pragma omp parallel num_threads(numaNodes)
        {
           auto outer_thread_id = omp_get_thread_num();
           numa_run_on_node(outer_thread_id);
-          #pragma omp parallel num_threads(numberOfConsumer/nodes)
+          #pragma omp parallel num_threads(numberOfConsumer/numaNodes)
           {
              auto inner_thread_id = omp_get_thread_num();
              size_t i = inner_thread_id;
