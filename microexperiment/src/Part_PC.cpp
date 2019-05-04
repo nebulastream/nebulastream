@@ -1251,7 +1251,8 @@ int main(int argc, char *argv[])
         }//end of pragma
 
         cout << "starting " << numaNodes << " threads to connect node 2" << endl;
-        #pragma omp parallel num_threads(numaNodes)
+        #pragma omp parallel for num_threads(numaNodes)
+        for(size_t i = 0; i < numaNodes; i++)
         {
             #pragma omp critical
             {
@@ -1284,7 +1285,7 @@ int main(int argc, char *argv[])
                 else
                     assert(0);
 
-                conInfos[omp_get_thread_num()]->records = new record*[numberOfProducer];
+                conInfos[omp_get_thread_num()]->records = new record*[numberOfProducer];//TODO: is this still neccesary?
                 for(size_t i = 0; i < numberOfProducer; i++)
                 {
                     conInfos[omp_get_thread_num()]->records[i] = generateTuplesOneArray(numberOfProducer, campaingCnt);
