@@ -951,7 +951,7 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
         }
     }
 
-   cout << "0=" << s2.str() << endl;
+   cout << s2.str() << endl;
 
    stringstream ss;
    ss  << "Producer Thread #" << outer_thread_id  << ": on CPU " << sched_getcpu() << " nodes=";
@@ -1205,7 +1205,7 @@ int main(int argc, char *argv[])
 
     if(rank == 0)
     {
-        cout << "starting " << numaNodes << " threads" << endl;
+        cout << "starting " << numaNodes << " threads to connect node 1" << endl;
         #pragma omp parallel num_threads(numaNodes)
         {
             #pragma omp critical
@@ -1234,19 +1234,6 @@ int main(int argc, char *argv[])
                     conInfos[connectionID] = setupRDMAProducer(connections[connectionID], bufferSizeInTups);
                     conInfos[connectionID]->con = connections[connectionID];
                     cout << "setup con numa node " << numaNode  << " connectionID=" << connectionID << " finished"<< endl;
-
-#if 0
-                    cout << "rank connecting 0 and 3" << endl;
-                    target_rank = 3;
-                    SimpleInfoProvider info(target_rank, "mlx5_2", 1, PORT2, ip);//was 3
-                    connections[1] = new VerbsConnection(&info);
-                    cout << "connection established rank 0 and 3" << endl;
-
-                    cout << "setup con 1" << endl;
-                    conInfos[omp_get_thread_num()+numaNodes] = setupRDMAProducer(connections[1], bufferSizeInTups);
-                    conInfos[omp_get_thread_num()+numaNodes]->con = connections[1];
-                    cout << "setup con 1 finished" << endl;
-#endif
                 }
                 else
                     assert(0);
@@ -1262,6 +1249,52 @@ int main(int argc, char *argv[])
             }
             cout << "thread out of critical = " << omp_get_thread_num() << endl;
         }//end of pragma
+
+        cout << "starting " << numaNodes << " threads to connect node 2" << endl;
+        #pragma omp parallel num_threads(numaNodes)
+        {
+            #pragma omp critical
+            {
+                cout << "thread in critical = " << omp_get_thread_num() << endl;
+                if(numberOfConnections == 1)
+                {
+                    size_t numaNode = omp_get_thread_num();
+                    size_t connectionID = (omp_get_thread_num() * 2) +1;
+                    cout << "rank 0: connecting 0 and 3 on numa node " << numaNode << " connectionID=" << connectionID << endl;
+
+                    if(numaNode == 0)
+                    {
+                        SimpleInfoProvider info(target_rank, "mlx5_2", 1, PORT3, ip);//was 3
+                        connections[connectionID] = new VerbsConnection(&info);
+                        cout << "connection established rank 0 and 3 on numa node " << numaNode  << " connectionID=" << connectionID << endl;
+                    }
+                    else
+                    {
+                        SimpleInfoProvider info(target_rank, "mlx5_3", 1, PORT4, ip);//was 3
+                        connections[connectionID] = new VerbsConnection(&info);
+                        cout << "connection established rank 0 and 3 on numa node " << numaNode  << " connectionID=" << connectionID << endl;
+                    }
+
+                    cout << "setup con numa node " << numaNode  << " connectionID=" << connectionID << endl;
+                    conInfos[connectionID] = setupRDMAProducer(connections[connectionID], bufferSizeInTups);
+                    conInfos[connectionID]->con = connections[connectionID];
+                    cout << "setup con numa node " << numaNode  << " connectionID=" << connectionID << " finished"<< endl;
+                }
+                else
+                    assert(0);
+
+                conInfos[omp_get_thread_num()]->records = new record*[numberOfProducer];
+                for(size_t i = 0; i < numberOfProducer; i++)
+                {
+                    conInfos[omp_get_thread_num()]->records[i] = generateTuplesOneArray(numberOfProducer, campaingCnt);
+                }
+                int numa_node = -1;
+                get_mempolicy(&numa_node, NULL, 0, (void*)conInfos[omp_get_thread_num()]->records[0], MPOL_F_NODE | MPOL_F_ADDR);
+                cout << "ht numa=" << numa_node << " outthread=" << omp_get_thread_num() << endl;
+            }
+            cout << "thread out of critical = " << omp_get_thread_num() << endl;
+        }//end of pragma
+
     }
     if(rank == 1)
     {
@@ -1298,12 +1331,6 @@ int main(int argc, char *argv[])
     }
     if(rank == 3)
     {
-        cout << "rank 3 connecting 0 and 1" << endl;
-        target_rank = 0;
-        SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT2, ip);//was 3
-        connections[0] = new VerbsConnection(&info);
-        cout << "connection established rank 0 and 3" << endl;
-        cout << "starting " << numaNodes << " threads" << endl;
         #pragma omp parallel num_threads(numaNodes)
         {
             #pragma omp critical
@@ -1311,8 +1338,23 @@ int main(int argc, char *argv[])
                 cout << "thread in critical = " << omp_get_thread_num() << endl;
                 if(numberOfConnections == 1)
                 {
-                    conInfos[omp_get_thread_num()] = setupRDMAConsumer(connections[0], bufferSizeInTups, campaingCnt);
-                    conInfos[omp_get_thread_num()]->con = connections[0];
+                    size_t numaNode = omp_get_thread_num();
+                    size_t connectionID = omp_get_thread_num() * 2;
+                    if(numaNode == 0)
+                    {
+                       SimpleInfoProvider info(target_rank, "mlx5_3", 1, PORT3, ip);//was 3
+                       connections[connectionID] = new VerbsConnection(&info);
+                       cout << "connection established rank 0 and 1 on numa node " << numaNode  << " connectionID=" << connectionID << endl;
+                   }
+                   else
+                   {
+                       SimpleInfoProvider info(target_rank, "mlx5_4", 1, PORT4, ip);//was 3
+                       connections[connectionID] = new VerbsConnection(&info);
+                       cout << "connection established rank 0 and 1 on numa node " << numaNode  << " connectionID=" << connectionID << endl;
+                   }
+
+                    conInfos[connectionID] = setupRDMAConsumer(connections[connectionID], bufferSizeInTups, campaingCnt);
+                    conInfos[connectionID]->con = connections[connectionID];
                 }
                 else
                     assert(0);
