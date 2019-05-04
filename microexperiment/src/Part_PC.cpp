@@ -38,6 +38,7 @@ using namespace std;
 #define PORT1 55355
 #define PORT2 55356
 #define PORT3 55357
+#define PORT4 55358
 
 //#define OLCONSUMERVERSION
 //#define BUFFER_COUNT 10
@@ -1206,11 +1207,6 @@ int main(int argc, char *argv[])
 
     if(rank == 0)
     {
-        cout << "rank 0 connecting 0 and 1" << endl;
-        SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
-        connections[0] = new VerbsConnection(&info);
-        cout << "connection established rank 0 and 1" << endl;
-
         cout << "starting " << numaNodes << " threads" << endl;
         #pragma omp parallel num_threads(numaNodes)
         {
@@ -1219,23 +1215,40 @@ int main(int argc, char *argv[])
                 cout << "thread in critical = " << omp_get_thread_num() << endl;
                 if(numberOfConnections == 1)
                 {
-                    cout << "setup con 1" << endl;
-                    conInfos[omp_get_thread_num()] = setupRDMAProducer(connections[0], bufferSizeInTups);
-                    conInfos[omp_get_thread_num()]->con = connections[0];
-                    cout << "setup con 1 finished" << endl;
-                    if(numberOfNodes == 4)
-                    {
-                        cout << "rank connecting 0 and 3" << endl;
-                        target_rank = 3;
-                        SimpleInfoProvider info(target_rank, "mlx5_2", 1, PORT2, ip);//was 3
-                        connections[1] = new VerbsConnection(&info);
-                        cout << "connection established rank 0 and 3" << endl;
+                    size_t numaNode = omp_get_thread_num();
+                    size_t connectionID = omp_get_thread_num() * 2;
+                    cout << "rank 0: connecting 0 and 1 on numa node " << numaNode << " connectionID=" << connectionID << endl;
 
-                        cout << "setup con 2" << endl;
-                        conInfos[omp_get_thread_num()+numaNodes] = setupRDMAProducer(connections[1], bufferSizeInTups);
-                        conInfos[omp_get_thread_num()+numaNodes]->con = connections[1];
-                        cout << "setup con 2 finished" << endl;
+                    if(numaNode == 0)
+                    {
+                        SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
+                        connections[connectionID] = new VerbsConnection(&info);
+                        cout << "connection established rank 0 and 1 on numa node " << numaNode  << " connectionID=" << connectionID << endl;
                     }
+                    else
+                    {
+                        SimpleInfoProvider info(target_rank, "mlx5_1", 1, PORT2, ip);//was 3
+                        connections[connectionID] = new VerbsConnection(&info);
+                        cout << "connection established rank 0 and 1 on numa node " << numaNode  << " connectionID=" << connectionID << endl;
+                    }
+
+                    cout << "setup con numa node " << numaNode  << " connectionID=" << connectionID << endl;
+                    conInfos[connectionID] = setupRDMAProducer(connections[connectionID], bufferSizeInTups);
+                    conInfos[connectionID]->con = connections[connectionID];
+                    cout << "setup con numa node " << numaNode  << " connectionID=" << connectionID << " finished"<< endl;
+
+#if 0
+                    cout << "rank connecting 0 and 3" << endl;
+                    target_rank = 3;
+                    SimpleInfoProvider info(target_rank, "mlx5_2", 1, PORT2, ip);//was 3
+                    connections[1] = new VerbsConnection(&info);
+                    cout << "connection established rank 0 and 3" << endl;
+
+                    cout << "setup con 1" << endl;
+                    conInfos[omp_get_thread_num()+numaNodes] = setupRDMAProducer(connections[1], bufferSizeInTups);
+                    conInfos[omp_get_thread_num()+numaNodes]->con = connections[1];
+                    cout << "setup con 1 finished" << endl;
+#endif
                 }
                 else
                     assert(0);
@@ -1254,11 +1267,11 @@ int main(int argc, char *argv[])
     }
     if(rank == 1)
     {
-        cout << "rank 1 connecting 0 and 1" << endl;
-        SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
-        connections[0] = new VerbsConnection(&info);
-        cout << "connection established rank 0 and 1" << endl;
-        cout << "starting " << numaNodes << " threads" << endl;
+//        cout << "rank 1 connecting 0 and 1" << endl;
+//        SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
+//        connections[0] = new VerbsConnection(&info);
+//        cout << "connection established rank 0 and 1" << endl;
+//        cout << "starting " << numaNodes << " threads" << endl;
         #pragma omp parallel num_threads(numaNodes)
         {
             #pragma omp critical
@@ -1266,8 +1279,23 @@ int main(int argc, char *argv[])
                 cout << "thread in critical = " << omp_get_thread_num() << endl;
                 if(numberOfConnections == 1)
                 {
-                    conInfos[omp_get_thread_num()] = setupRDMAConsumer(connections[0], bufferSizeInTups, campaingCnt);
-                    conInfos[omp_get_thread_num()]->con = connections[0];
+                    size_t numaNode = omp_get_thread_num();
+                    size_t connectionID = omp_get_thread_num() * 2;
+                    if(numaNode == 0)
+                    {
+                       SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
+                       connections[connectionID] = new VerbsConnection(&info);
+                       cout << "connection established rank 0 and 1 on numa node " << numaNode  << " connectionID=" << connectionID << endl;
+                   }
+                   else
+                   {
+                       SimpleInfoProvider info(target_rank, "mlx5_1", 1, PORT2, ip);//was 3
+                       connections[connectionID] = new VerbsConnection(&info);
+                       cout << "connection established rank 0 and 1 on numa node " << numaNode  << " connectionID=" << connectionID << endl;
+                   }
+
+                    conInfos[connectionID] = setupRDMAConsumer(connections[connectionID], bufferSizeInTups, campaingCnt);
+                    conInfos[connectionID]->con = connections[connectionID];
                 }
                 else
                     assert(0);
@@ -1355,6 +1383,7 @@ int main(int argc, char *argv[])
              }
              else
              {
+
                  runProducerOneOnOneFourNodes(recs, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[outer_thread_id][i],
                          &producedBuffers[outer_thread_id][i], &readInputTuples[outer_thread_id][i], &noFreeEntryFound[outer_thread_id][i], startIdx, endIdx,
                          numberOfProducer/numaNodes, conInfos, outer_thread_id, numberOfNodes);
