@@ -1255,6 +1255,7 @@ int main(int argc, char *argv[])
         {
             #pragma omp critical
             {
+                target_rank = 3;
                 cout << "thread in critical = " << omp_get_thread_num() << endl;
                 if(numberOfConnections == 1)
                 {
