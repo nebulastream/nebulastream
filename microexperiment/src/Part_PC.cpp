@@ -366,7 +366,7 @@ void runProducerOneOnOneTwoNodes(VerbsConnection* connection, record* records, s
                 connection->write(cInfos->sendBuffers[receive_buffer_index]->send_buffer, cInfos->region_tokens[receive_buffer_index],
                         cInfos->sendBuffers[receive_buffer_index]->requestToken);
 #ifdef DEBUG
-                cout << "Thread:" << outerThread << "/" << omp_get_thread_num() << "/" << connectionID << " Writing " << cInfos->sendBuffers[receive_buffer_index]->numberOfTuples << " tuples on buffer "
+                cout << "Thread:" << outerThread << "/" << omp_get_thread_num()  << " Writing " << cInfos->sendBuffers[receive_buffer_index]->numberOfTuples << " tuples on buffer "
                         << receive_buffer_index << endl;
 #endif
                 total_sent_tuples += cInfos->sendBuffers[receive_buffer_index]->numberOfTuples;
@@ -416,7 +416,7 @@ void runProducerOneOnOneTwoNodes(VerbsConnection* connection, record* records, s
 
     #pragma omp critical
              {
-                 cout << "Thread:" << outerThread << "/" << omp_get_thread_num() << "/" << connectionID
+                 cout << "Thread:" << outerThread << "/" << omp_get_thread_num()
                          << " producesTuples=" << total_sent_tuples
                          << " producedBuffers=" << total_buffer_send
                          << " readInputTuples=" << readTuples
