@@ -1342,13 +1342,13 @@ int main(int argc, char *argv[])
                     size_t connectionID = omp_get_thread_num() * 2;
                     if(numaNode == 0)
                     {
-                       SimpleInfoProvider info(target_rank, "mlx5_3", 1, PORT3, ip);//was 3
+                       SimpleInfoProvider info(target_rank, "mlx5_2", 1, PORT3, ip);//was 3
                        connections[connectionID] = new VerbsConnection(&info);
                        cout << "connection established rank 0 and 1 on numa node " << numaNode  << " connectionID=" << connectionID << endl;
                    }
                    else
                    {
-                       SimpleInfoProvider info(target_rank, "mlx5_4", 1, PORT4, ip);//was 3
+                       SimpleInfoProvider info(target_rank, "mlx5_3", 1, PORT4, ip);//was 3
                        connections[connectionID] = new VerbsConnection(&info);
                        cout << "connection established rank 0 and 1 on numa node " << numaNode  << " connectionID=" << connectionID << endl;
                    }
