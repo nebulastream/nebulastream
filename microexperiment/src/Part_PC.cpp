@@ -823,7 +823,7 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
 
     connectInfo->sign_token = nullptr;
 
-
+    stringstream s2;
     for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++)
     {
         if (i < NUM_SEND_BUFFERS) {
@@ -831,8 +831,8 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
             connectInfo->region_tokens[i] = connectInfo->recv_buffers[i]->createRegionToken();
 
 //            if(outer_thread_id == 0)
-//                s2 << "i=" << i << "recv region getSizeInBytes=" << connectInfo->recv_buffers[i]->getSizeInBytes() << " getAddress=" << connectInfo->recv_buffers[i]->getAddress()
-//                                       << " getLocalKey=" << connectInfo->recv_buffers[i]->getLocalKey() << " getRemoteKey=" << connectInfo->recv_buffers[i]->getRemoteKey() << endl;
+                s2 << "i=" << i << "recv region getSizeInBytes=" << connectInfo->recv_buffers[i]->getSizeInBytes() << " getAddress=" << connectInfo->recv_buffers[i]->getAddress()
+                                       << " getLocalKey=" << connectInfo->recv_buffers[i]->getLocalKey() << " getRemoteKey=" << connectInfo->recv_buffers[i]->getRemoteKey() << endl;
         } else {
 //            cout << "copy sign token at pos " << i << endl;
             connectInfo->sign_buffer = connection->register_buffer(connectInfo->buffer_ready_sign, NUM_SEND_BUFFERS*sizeof(size_t));
@@ -840,13 +840,13 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
             connectInfo->region_tokens[i] = connectInfo->sign_buffer->createRegionToken();
 
 //            if(outer_thread_id == 0)
-//                s2 << "i=" << i << "sign region getSizeInBytes=" << connectInfo->sign_buffer->getSizeInBytes() << " getAddress=" << connectInfo->sign_buffer->getAddress()
-//                                       << " getLocalKey=" << connectInfo->sign_buffer->getLocalKey() << " getRemoteKey=" << connectInfo->sign_buffer->getRemoteKey() << endl;
+                s2 << "i=" << i << "sign region getSizeInBytes=" << connectInfo->sign_buffer->getSizeInBytes() << " getAddress=" << connectInfo->sign_buffer->getAddress()
+                                       << " getLocalKey=" << connectInfo->sign_buffer->getLocalKey() << " getRemoteKey=" << connectInfo->sign_buffer->getRemoteKey() << endl;
 
         }
         memcpy((RegionToken*)tokenbuffer->getData() + i, connectInfo->region_tokens[i], sizeof(RegionToken));
     }
-
+    cout << s2.str() << endl;
 //    if(outer_thread_id == 0)
 //    {
 //        cout << "0=" << s2.str() << endl;
