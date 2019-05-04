@@ -925,13 +925,14 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
 
     connectInfo->sign_buffer = connection->register_buffer(connectInfo->buffer_ready_sign, NUM_SEND_BUFFERS*sizeof(size_t));
 
-    cout << "prod sign buffer size=" << connectInfo->sign_buffer->getSizeInBytes() << endl;
+//    cout << "prod sign buffer size=" << connectInfo->sign_buffer->getSizeInBytes() << endl;
     infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
 
     void* b2 = numa_alloc_onnode((NUM_SEND_BUFFERS+1)*sizeof(RegionToken), outer_thread_id);
     connectInfo->region_tokens = (infinity::memory::RegionToken**)b2;
 
     connection->post_and_receive_blocking(tokenbuffer);
+    cout << "got receive " << endl;
     stringstream s2;
     for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++)
     {
@@ -1267,11 +1268,6 @@ int main(int argc, char *argv[])
     }
     if(rank == 1)
     {
-//        cout << "rank 1 connecting 0 and 1" << endl;
-//        SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
-//        connections[0] = new VerbsConnection(&info);
-//        cout << "connection established rank 0 and 1" << endl;
-//        cout << "starting " << numaNodes << " threads" << endl;
         #pragma omp parallel num_threads(numaNodes)
         {
             #pragma omp critical
@@ -1338,7 +1334,7 @@ int main(int argc, char *argv[])
     size_t readInputTuples[numaNodes][numberOfProducer/numaNodes] = {0};
 
     infinity::memory::Buffer* finishBuffer = connections[0]->allocate_buffer(1);
-
+    exit(0);
     cout << "start processing " << endl;
     Timestamp begin = getTimestamp();
     if(rank % 2 == 0)
