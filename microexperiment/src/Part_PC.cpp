@@ -952,10 +952,9 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
                     << " getLocalKey=" << connectInfo->sign_token->getLocalKey() << " getRemoteKey=" << connectInfo->sign_token->getRemoteKey() << endl;
         }
     }
-    if(outer_thread_id == 0)
-   {
-       cout << "0=" << s2.str() << endl;
-   }
+
+   cout << "0=" << s2.str() << endl;
+
    stringstream ss;
    ss  << "Producer Thread #" << outer_thread_id  << ": on CPU " << sched_getcpu() << " nodes=";
    int numa_node = -1;
