@@ -1130,6 +1130,7 @@ int main(int argc, char *argv[])
     size_t bufferSizeInTups = 0;
     size_t numberOfConnections = 1;
     NUM_SEND_BUFFERS = 0;
+    size_t numaNodes = numa_num_configured_nodes();
     size_t numberOfNodes = 2;
     string ip = "";
 
@@ -1144,6 +1145,7 @@ int main(int argc, char *argv[])
         ("sendBuffers", po::value<size_t>(&NUM_SEND_BUFFERS)->default_value(NUM_SEND_BUFFERS), "sendBuffers")
         ("numberOfConnections", po::value<size_t>(&numberOfConnections)->default_value(numberOfConnections), "numberOfConnections")
         ("numberOfNodes", po::value<size_t>(&numberOfNodes)->default_value(numberOfNodes), "numberOfConnections")
+        ("numaNodes", po::value<size_t>(&numaNodes)->default_value(numaNodes), "numaNodes")
         ("ip", po::value<string>(&ip)->default_value(ip), "ip")
         ;
 
@@ -1172,11 +1174,12 @@ int main(int argc, char *argv[])
             << " numberOfProducer=" << numberOfProducer
             << " numberOfConsumer=" << numberOfConsumer
             << " numberOfConnections=" << numberOfConnections
+            << " numberOfNodes=" << numberOfNodes
+            << " numaNodes=" << numaNodes
             << " ip=" << ip
             << endl;
 
-    auto nodes = numa_num_configured_nodes();
-    nodes = 1;
+
 
 //    htPtrs = new std::atomic<size_t>*[4];
     ConnectionInfos** conInfos;
@@ -1208,7 +1211,7 @@ int main(int argc, char *argv[])
         connections[0] = new VerbsConnection(&info);
         cout << "connection established rank 0 and 1" << endl;
 
-        cout << "starting " << nodes << " threads" << endl;
+        cout << "starting " << numaNodes << " threads" << endl;
         #pragma omp parallel num_threads(nodes)
         {
             #pragma omp critical
@@ -1229,8 +1232,8 @@ int main(int argc, char *argv[])
                         cout << "connection established rank 0 and 3" << endl;
 
                         cout << "setup con 2" << endl;
-                        conInfos[omp_get_thread_num()+nodes] = setupRDMAProducer(connections[1], bufferSizeInTups);
-                        conInfos[omp_get_thread_num()+nodes]->con = connections[1];
+                        conInfos[omp_get_thread_num()+numaNodes] = setupRDMAProducer(connections[1], bufferSizeInTups);
+                        conInfos[omp_get_thread_num()+numaNodes]->con = connections[1];
                         cout << "setup con 2 finished" << endl;
                     }
                 }
@@ -1255,7 +1258,7 @@ int main(int argc, char *argv[])
         SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
         connections[0] = new VerbsConnection(&info);
         cout << "connection established rank 0 and 1" << endl;
-        cout << "starting " << nodes << " threads" << endl;
+        cout << "starting " << numaNodes << " threads" << endl;
         #pragma omp parallel num_threads(nodes)
         {
             #pragma omp critical
@@ -1279,7 +1282,7 @@ int main(int argc, char *argv[])
         SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT2, ip);//was 3
         connections[0] = new VerbsConnection(&info);
         cout << "connection established rank 0 and 3" << endl;
-        cout << "starting " << nodes << " threads" << endl;
+        cout << "starting " << numaNodes << " threads" << endl;
         #pragma omp parallel num_threads(nodes)
         {
             #pragma omp critical
@@ -1298,13 +1301,13 @@ int main(int argc, char *argv[])
     }
 
 
-    size_t producesTuples[nodes][numberOfProducer/nodes] = {0};
-    size_t producedBuffers[nodes][numberOfProducer/nodes] = {0};
-    size_t noFreeEntryFound[nodes][numberOfProducer/nodes] = {0};
-    size_t consumedTuples[nodes][numberOfConsumer/nodes] = {0};
-    size_t consumedBuffers[nodes][numberOfConsumer/nodes] = {0};
-    size_t consumerNoBufferFound[nodes][numberOfConsumer/nodes] = {0};
-    size_t readInputTuples[nodes][numberOfProducer/nodes] = {0};
+    size_t producesTuples[numaNodes][numberOfProducer/numaNodes] = {0};
+    size_t producedBuffers[numaNodes][numberOfProducer/numaNodes] = {0};
+    size_t noFreeEntryFound[numaNodes][numberOfProducer/numaNodes] = {0};
+    size_t consumedTuples[numaNodes][numberOfConsumer/numaNodes] = {0};
+    size_t consumedBuffers[numaNodes][numberOfConsumer/numaNodes] = {0};
+    size_t consumerNoBufferFound[numaNodes][numberOfConsumer/numaNodes] = {0};
+    size_t readInputTuples[numaNodes][numberOfProducer/numaNodes] = {0};
 
     infinity::memory::Buffer* finishBuffer = connections[0]->allocate_buffer(1);
 
@@ -1320,7 +1323,7 @@ int main(int argc, char *argv[])
           {
              auto inner_thread_id = omp_get_thread_num();
              size_t i = inner_thread_id;
-             size_t share = NUM_SEND_BUFFERS/(numberOfProducer/nodes);
+             size_t share = NUM_SEND_BUFFERS/(numberOfProducer/numaNodes);
              size_t startIdx = inner_thread_id* share;
              size_t endIdx = (inner_thread_id+1)*share;
              record* recs = conInfos[outer_thread_id]->records[inner_thread_id];
@@ -1354,7 +1357,7 @@ int main(int argc, char *argv[])
              {
                  runProducerOneOnOneFourNodes(recs, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[outer_thread_id][i],
                          &producedBuffers[outer_thread_id][i], &readInputTuples[outer_thread_id][i], &noFreeEntryFound[outer_thread_id][i], startIdx, endIdx,
-                         numberOfProducer/nodes, conInfos, outer_thread_id, numberOfNodes);
+                         numberOfProducer/numaNodes, conInfos, outer_thread_id, numberOfNodes);
              }
 
 
@@ -1375,7 +1378,7 @@ int main(int argc, char *argv[])
           {
              auto inner_thread_id = omp_get_thread_num();
              size_t i = inner_thread_id;
-             size_t share = NUM_SEND_BUFFERS/(numberOfConsumer/nodes);
+             size_t share = NUM_SEND_BUFFERS/(numberOfConsumer/numaNodes);
              size_t startIdx = i* share;
              size_t endIdx = (i+1)*share;
              if(i == numberOfConsumer -1)
@@ -1427,9 +1430,9 @@ int main(int argc, char *argv[])
     size_t sumConsumedBuffer = 0;
     size_t sumNoBuffer = 0;
 
-    for(size_t n = 0; n < nodes; n++)
+    for(size_t n = 0; n < numaNodes; n++)
     {
-        for(size_t i = 0; i < numberOfProducer/nodes; i++)
+        for(size_t i = 0; i < numberOfProducer/numaNodes; i++)
         {
             sumProducedTuples += producesTuples[n][i];
             sumProducedBuffer += producedBuffers[n][i];
@@ -1437,7 +1440,7 @@ int main(int argc, char *argv[])
             sumNoFreeEntry += noFreeEntryFound[n][i];
         }
 
-        for(size_t i = 0; i < numberOfConsumer/nodes; i++)
+        for(size_t i = 0; i < numberOfConsumer/numaNodes; i++)
         {
             sumConsumedTuples += consumedTuples[n][i];
             sumConsumedBuffer += consumedBuffers[n][i];
