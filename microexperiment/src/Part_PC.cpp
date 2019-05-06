@@ -1128,7 +1128,7 @@ size_t getNumaNodeFromPtr(void* ptr, std::string name)
     int ret_code = move_pages(0 /*selbuffer_threadsf memory */, 1, &ptr, NULL, status, 0);
     int numa_node2 = status[0];
     if(numa_node1 != numa_node2)
-        cout << "ERROR NO matching numa node for " << name << endl;
+        cout << "Warning no matching numa node for " << name << endl;
 
 //    assert(numa_node1 == numa_node2);
     return numa_node1;
