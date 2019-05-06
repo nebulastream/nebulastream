@@ -1158,7 +1158,7 @@ int main(int argc, char *argv[])
 
     desc.add_options()
         ("help", "Print help messages")
-        ("rank", po::value<size_t>(&rank)->default_value(rank), "The rank of the current runtime")
+//        ("rank", po::value<size_t>(&rank)->default_value(rank), "The rank of the current runtime")
         ("numberOfProducer", po::value<size_t>(&numberOfProducer)->default_value(numberOfProducer), "numberOfProducer")
         ("numberOfConsumer", po::value<size_t>(&numberOfConsumer)->default_value(numberOfConsumer), "numberOfConsumer")
         ("bufferProcCnt", po::value<size_t>(&bufferProcCnt)->default_value(bufferProcCnt), "bufferProcCnt");
