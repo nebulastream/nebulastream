@@ -1017,7 +1017,7 @@ record* generateTuplesOneArray(size_t num_Producer, size_t campaingCnt)
 
 //    record** recs;
     uint64_t campaign_lsb, campaign_msb;
-    auto uuid = diss(gen);
+    uint64_t uuid = diss(gen);
     uint8_t* uuid_ptr = reinterpret_cast<uint8_t*>(&uuid);
     memcpy(&campaign_msb, uuid_ptr, 8);
     memcpy(&campaign_lsb, uuid_ptr + 8, 8);
