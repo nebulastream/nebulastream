@@ -18,27 +18,7 @@
 
 namespace iotdb {
 
-const StructDeclaration getStructDeclarationTupleBuffer();
-const StructDeclaration getStructDeclarationWindowState();
-
-class PipelineContext {
-  public:
-    void addTypeDeclaration(const Declaration&);
-    void addVariableDeclaration(const Declaration&);
-    std::vector<DeclarationPtr> type_declarations;
-    std::vector<DeclarationPtr> variable_declarations;
-};
-
-void PipelineContext::addTypeDeclaration(const Declaration& decl) { type_declarations.push_back(decl.copy()); }
-void PipelineContext::addVariableDeclaration(const Declaration& decl) { variable_declarations.push_back(decl.copy()); }
-
-typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
-
-const PipelineContextPtr createPipelineContext() { return std::make_shared<PipelineContext>(); }
-
-class GeneratedCode {
-  public:
-    GeneratedCode()
+GeneratedCode::GeneratedCode()
         : variable_decls(), variable_init_stmts(), for_loop_stmt(), cleanup_stmts(), return_stmt(), var_decl_id(),
           var_decl_return(), struct_decl_tuple_buffer(getStructDeclarationTupleBuffer()),
           struct_decl_state(getStructDeclarationWindowState()),
@@ -56,25 +36,21 @@ class GeneratedCode {
     {
     }
 
-    std::vector<VariableDeclaration> variable_decls;
-    std::vector<StatementPtr> variable_init_stmts;
-    std::shared_ptr<FOR> for_loop_stmt;
-    std::vector<StatementPtr> cleanup_stmts;
-    StatementPtr return_stmt;
-    std::shared_ptr<VariableDeclaration> var_decl_id;
-    std::shared_ptr<VariableDeclaration> var_decl_return;
-    StructDeclaration struct_decl_tuple_buffer;
-    StructDeclaration struct_decl_state;
-    StructDeclaration struct_decl_input_tuple;
-    StructDeclaration struct_decl_result_tuple;
-    VariableDeclaration var_decl_tuple_buffers;
-    VariableDeclaration var_decl_tuple_buffer_output;
-    VariableDeclaration var_decl_state;
-    VariableDeclaration decl_field_num_tuples_struct_tuple_buf;
-    VariableDeclaration decl_field_data_ptr_struct_tuple_buf;
-    VariableDeclaration var_decl_input_tuple;
-    std::vector<StructDeclaration> type_decls;
+class PipelineContext {
+  public:
+    void addTypeDeclaration(const Declaration&);
+    void addVariableDeclaration(const Declaration&);
+    std::vector<DeclarationPtr> type_declarations;
+    std::vector<DeclarationPtr> variable_declarations;
 };
+
+void PipelineContext::addTypeDeclaration(const Declaration& decl) { type_declarations.push_back(decl.copy()); }
+void PipelineContext::addVariableDeclaration(const Declaration& decl) { variable_declarations.push_back(decl.copy()); }
+
+typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
+
+const PipelineContextPtr createPipelineContext() { return std::make_shared<PipelineContext>(); }
+
 
 typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
 
@@ -323,6 +299,9 @@ bool C_CodeGenerator::generateCode(const DataSourcePtr& source, const PipelineCo
 
 bool C_CodeGenerator::generateCode(const PredicatePtr& pred, const PipelineContextPtr& context, std::ostream& out)
 {
+	
+	ExpressionStatmentPtr expr = pred.generateCode(this->code_);
+	
 
     return true;
 }

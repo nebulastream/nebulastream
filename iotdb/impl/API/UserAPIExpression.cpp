@@ -6,7 +6,13 @@
 #include <string>
 #include <sstream>
 
-#include <CodeGen/CodeExpression.hpp>
+#include <CodeGen/CodeGen.hpp>
+#include <CodeGen/C_CodeGen/BinaryOperatorStatement.hpp>
+#include <CodeGen/C_CodeGen/Declaration.hpp>
+#include <CodeGen/C_CodeGen/FileBuilder.hpp>
+#include <CodeGen/C_CodeGen/FunctionBuilder.hpp>
+#include <CodeGen/C_CodeGen/Statement.hpp>
+#include <CodeGen/C_CodeGen/UnaryOperatorStatement.hpp>
 
 #include <API/UserAPIExpression.hpp>
 
@@ -24,9 +30,42 @@ namespace iotdb
 		return std::make_shared<Predicate>(*this);
 	};
 	
-	const std::string Predicate::generateCode() const{
+	bool Predicate::generateCode(GeneratedCode& code) const{
 		//toDo: implement code-generation
-		return "";
+		return true;
+	};
+	
+	bool PredicateItem::generateCode(GeneratedCode& code) const{
+		//toDo: implement code-generation
+		
+		
+		
+		code_.
+		if(_attribute){
+			
+			
+			VariableDeclaration var_decl_i =
+				VariableDeclaration::create(createDataType(BasicType(INT32)), "i", createBasicTypeValue(BasicType(INT32), "0"));
+			VariableDeclaration var_decl_j =
+				VariableDeclaration::create(createDataType(BasicType(INT32)), "j", createBasicTypeValue(BasicType(INT32), "5"));
+			VariableDeclaration var_decl_k =
+				VariableDeclaration::create(createDataType(BasicType(INT32)), "k", createBasicTypeValue(BasicType(INT32), "7"));
+			VariableDeclaration var_decl_l =
+				VariableDeclaration::create(createDataType(BasicType(INT32)), "l", createBasicTypeValue(BasicType(INT32), "2"));
+
+    {
+        BinaryOperatorStatement bin_op(VarRefStatement(var_decl_i), PLUS_OP, VarRefStatement(var_decl_j));
+        std::cout << bin_op.getCode()->code_ << std::endl;
+        CodeExpressionPtr code = bin_op.addRight(PLUS_OP, VarRefStatement(var_decl_k)).getCode();
+
+        std::cout << code->code_ << std::endl;
+    }
+		}
+		 
+		
+		BinaryOperatorStatement()
+		
+		return true;
 	};
 	
 	const std::string Predicate::toString() const{
@@ -46,11 +85,6 @@ namespace iotdb
 	_mutation(PredicateItemMutation::VALUE),
 	_value(value)
 	{};
-	
-	const std::string PredicateItem::generateCode() const{
-		//toDo: implement code-generation
-		return "";
-	};
 	
 	const std::string PredicateItem::toString() const{
 			switch(_mutation)
