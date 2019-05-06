@@ -594,7 +594,7 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
 //            << " noBufferFreeToSend=" << noBufferFreeToSend << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
 //#ifdef DEBUG
 
-    #pragma omp criticalh
+    #pragma omp critical
              {
                  cout << "Thread:" << outerThread << "/" << omp_get_thread_num()
                          << " producesTuples=" << total_sent_tuples
@@ -807,8 +807,8 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     *consumedTuples = consumed;
     *consumedBuffers = total_received_buffers;
     *consumerNoBufferFound = noBufferFound;
-//    cout << "Thread=" << omp_get_thread_num() << " Done sending! Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
-//                << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
+    cout << "Thread=" << omp_get_thread_num() << " Done Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
+                << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
 }
 
 
@@ -1452,6 +1452,7 @@ int main(int argc, char *argv[])
        }
        cout << "producer finished ... waiting for consumer to finish " << getTimestamp() << endl;
        connections[0]->post_and_receive_blocking(finishBuffer);
+//       connections[2]->post_and_receive_blocking(finishBuffer);
        cout << "got finish buffer, finished execution " << getTimestamp()<< endl;
     }
     else
@@ -1496,7 +1497,8 @@ int main(int argc, char *argv[])
           }
        }
        cout << "finished, sending finish buffer " << getTimestamp() << endl;
-       connections[0]->send_blocking(finishBuffer);
+       if(rank == 1)
+           connections[0]->send_blocking(finishBuffer);
        cout << "buffer sending finished, shutdown "<< getTimestamp() << endl;
 
     }
