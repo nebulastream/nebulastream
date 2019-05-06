@@ -1143,8 +1143,8 @@ int main(int argc, char *argv[])
     size_t windowSizeInSeconds = 2;
     size_t campaingCnt = 10000;
 
-    size_t rank = 99;
-//    size_t rank = atoi(argv[1]);
+//    size_t rank = 99;
+    size_t rank = atoi(argv[1]);
 
     size_t numberOfProducer = 2;
     size_t numberOfConsumer = 2;
