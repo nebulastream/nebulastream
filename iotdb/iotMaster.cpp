@@ -67,18 +67,18 @@ InputQueryPtr createTestQuery()
     return ptr;
 }
 
+
+/** \brief create a source using the following functions:
+ * const DataSourcePtr createTestSource();
+ * const DataSourcePtr createBinaryFileSource(const Schema& schema, const std::string& path_to_file);
+ * const DataSourcePtr createRemoteTCPSource(const Schema& schema, const std::string& server_ip, int port);
+ */
+
 InputQueryPtr createYSBTestQuery()
 {
     Config config =
         Config::create();
 
-    //	  Schema schema = Schema::create().addField("",INT32);
-
-    /** \brief create a source using the following functions:
-     * const DataSourcePtr createTestSource();
-     * const DataSourcePtr createBinaryFileSource(const Schema& schema, const std::string& path_to_file);
-     * const DataSourcePtr createRemoteTCPSource(const Schema& schema, const std::string& server_ip, int port);
-     */
     DataSourcePtr source = createYSBSource(100, 10, /*pregen*/ false);
 
     Schema schema = Schema::create()
@@ -90,11 +90,22 @@ InputQueryPtr createYSBTestQuery()
                         .addField("current_ms", UINT64)
                         .addField("ip", INT32);
 
-    //	.filter(Equal("event_type", "view"))                // filter by event type
-    //	.window(TumblingProcessingTimeWindow(Counter(100))) // tumbling window of 100 elements
-    //	.groupBy("campaign_id")                             // group by campaign id
-    //	.aggregate(Count())                                 // count results per key and window
-    //	.write("output.csv");
+//    InputQueryPtr ptr = std::make_shared<InputQuery>(InputQuery::create(config, source)
+//    	.filter(Equal("event_type", "view"))                // filter by event type
+//    	.window(TumblingProcessingTimeWindow(Counter(100))) // tumbling window of 100 elements
+//    	.groupBy("campaign_id")                             // group by campaign id
+//    	.aggregate(Count())                                 // count results per key and window
+//    	.write("output.csv");                               // output result to csv
+
+
+
+
+
+        InputQueryPtr ptr = std::make_shared<InputQuery>(InputQuery::create(config, source)
+                                                             .filter(PredicatePtr())
+                                                             //           .window(WindowPtr())
+                                                             .printInputQueryPlan());
+
     InputQueryPtr ptr = std::make_shared<InputQuery>(InputQuery::create(config, source)
                                                          .filter(PredicatePtr())
                                                          //			  .window(WindowPtr())
