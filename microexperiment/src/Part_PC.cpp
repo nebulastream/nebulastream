@@ -842,7 +842,11 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
     for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++)
     {
         if (i < NUM_SEND_BUFFERS) {
-            connectInfo->recv_buffers[i] = connection->allocate_buffer(bufferSizeInTups * sizeof(Tuple));
+            void* b1 = numa_alloc_onnode(bufferSizeInTups * sizeof(Tuple), outer_thread_id);
+//            connectInfo->buffer_ready_sign = (size_t*)b1
+//            connectInfo->recv_buffers[i] = connection->allocate_buffer(bufferSizeInTups * sizeof(Tuple));
+            connectInfo->recv_buffers[i] = connection->register_buffer(b1, bufferSizeInTups * sizeof(Tuple));
+
             connectInfo->region_tokens[i] = connectInfo->recv_buffers[i]->createRegionToken();
 
 //            if(outer_thread_id == 0)
