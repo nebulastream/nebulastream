@@ -1154,7 +1154,7 @@ int main(int argc, char *argv[])
     NUM_SEND_BUFFERS = 10;
     size_t numaNodes = 2;
     size_t numberOfNodes = 4;
-    string ip = "";
+    string ip = "192.168.5.20";
 
     desc.add_options()
         ("help", "Print help messages")
