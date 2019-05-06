@@ -846,7 +846,6 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
 //            connectInfo->buffer_ready_sign = (size_t*)b1
 //            connectInfo->recv_buffers[i] = connection->allocate_buffer(bufferSizeInTups * sizeof(Tuple));
             connectInfo->recv_buffers[i] = connection->register_buffer(b1, bufferSizeInTups * sizeof(Tuple));
-
             connectInfo->region_tokens[i] = connectInfo->recv_buffers[i]->createRegionToken();
 
 //            if(outer_thread_id == 0)
@@ -1131,7 +1130,7 @@ size_t getNumaNodeFromPtr(void* ptr, std::string name)
     if(numa_node1 != numa_node2)
         cout << "ERROR NO matching numa node for " << name << endl;
 
-    assert(numa_node1 == numa_node2);
+//    assert(numa_node1 == numa_node2);
     return numa_node1;
 }
 
