@@ -1146,10 +1146,10 @@ int main(int argc, char *argv[])
     size_t rank = 99;
     size_t numberOfProducer = 2;
     size_t numberOfConsumer = 1;
-    size_t bufferProcCnt = 0;
-    size_t bufferSizeInTups = 0;
+    size_t bufferProcCnt = 1;
+    size_t bufferSizeInTups = 1;
     size_t numberOfConnections = 1;
-    NUM_SEND_BUFFERS = 0;
+    NUM_SEND_BUFFERS = 1;
     size_t numaNodes = numa_num_configured_nodes();
     size_t numberOfNodes = 2;
     string ip = "";
@@ -1185,7 +1185,6 @@ int main(int argc, char *argv[])
 //    assert(rank == 0 || rank == 1);
     std::cout << "Settings:"
             << " bufferProcCnt=" << bufferProcCnt
-//            << " tupleProcCnt=" << tupleProcCnt
             << " Rank=" << rank
             << " genCnt=" << NUMBER_OF_GEN_TUPLE
             << " bufferSizeInTups=" << bufferSizeInTups
@@ -1504,11 +1503,6 @@ int main(int argc, char *argv[])
 
     }
 
-//    for(size_t i = 0; i < buffer_threads.size(); i++)
-//    {
-//        buffer_threads[i]->join();
-//    }
-
     Timestamp end = getTimestamp();
 
     size_t sumProducedTuples = 0;
@@ -1536,8 +1530,6 @@ int main(int argc, char *argv[])
             sumNoBuffer += consumerNoBufferFound[n][i];
         }
     }
-
-
 
     double elapsed_time = double(end - begin) / (1024 * 1024 * 1024);
 
