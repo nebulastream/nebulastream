@@ -1138,7 +1138,7 @@ size_t getNumaNodeFromPtr(void* ptr, std::string name)
 namespace po = boost::program_options;
 int main(int argc, char *argv[])
 {
-    po::options_description* desc = new po::options_description("Options");
+    po::options_description desc("Options");
 
     size_t windowSizeInSeconds = 2;
     size_t campaingCnt = 10000;
@@ -1157,22 +1157,22 @@ int main(int argc, char *argv[])
     string ip = "192.168.5.20";
 
 
-    desc->add_options()
+    desc.add_options()
         ("help", "Print help messages")
         ("rank", po::value<size_t>(&rank)->default_value(rank), "The rank of the current runtime")
         ("numberOfProducer", po::value<size_t>(&numberOfProducer)->default_value(numberOfProducer), "numberOfProducer")
         ("numberOfConsumer", po::value<size_t>(&numberOfConsumer)->default_value(numberOfConsumer), "numberOfConsumer")
-//        ("bufferProcCnt", po::value<size_t>(&bufferProcCnt)->default_value(bufferProcCnt), "bufferProcCnt")
-//        ("bufferSizeInTups", po::value<size_t>(&bufferSizeInTups)->default_value(bufferSizeInTups), "bufferSizeInTups")
-//        ("sendBuffers", po::value<size_t>(&NUM_SEND_BUFFERS)->default_value(NUM_SEND_BUFFERS), "sendBuffers")
-//        ("numberOfConnections", po::value<size_t>(&numberOfConnections)->default_value(numberOfConnections), "numberOfConnections")
-//        ("numberOfNodes", po::value<size_t>(&numberOfNodes)->default_value(numberOfNodes), "numberOfConnections")
-//        ("numaNodes", po::value<size_t>(&numaNodes)->default_value(numaNodes), "numaNodes")
-//        ("ip", po::value<string>(&ip)->default_value(ip), "ip")
+        ("bufferProcCnt", po::value<size_t>(&bufferProcCnt)->default_value(bufferProcCnt), "bufferProcCnt")
+        ("bufferSizeInTups", po::value<size_t>(&bufferSizeInTups)->default_value(bufferSizeInTups), "bufferSizeInTups")
+        ("sendBuffers", po::value<size_t>(&NUM_SEND_BUFFERS)->default_value(NUM_SEND_BUFFERS), "sendBuffers")
+        ("numberOfConnections", po::value<size_t>(&numberOfConnections)->default_value(numberOfConnections), "numberOfConnections")
+        ("numberOfNodes", po::value<size_t>(&numberOfNodes)->default_value(numberOfNodes), "numberOfConnections")
+        ("numaNodes", po::value<size_t>(&numaNodes)->default_value(numaNodes), "numaNodes")
+        ("ip", po::value<string>(&ip)->default_value(ip), "ip")
         ;
 //
     po::variables_map vm;
-    po::store(po::command_line_parser(argc, argv).options(*desc).run(), vm);
+    po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
     po::notify(vm);
 
     if (vm.count("help")) {
