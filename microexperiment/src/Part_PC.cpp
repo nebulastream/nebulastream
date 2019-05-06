@@ -55,6 +55,9 @@ std::vector<std::shared_ptr<std::thread>> buffer_threads;
 std::atomic<size_t>* outputTable;
 
 
+std::atomic<size_t> exitProducer;
+std::atomic<size_t> exitConsumer;
+
 size_t NUM_SEND_BUFFERS;
 
 struct __attribute__((packed)) record {
@@ -180,8 +183,6 @@ struct ConnectionInfos
     VerbsConnection* con;
     std::atomic<size_t>** hashTable;
     tbb::atomic<size_t>* bookKeeping;
-    std::atomic<size_t> exitProducer;
-    std::atomic<size_t> exitConsumer;
 
 };
 
@@ -386,8 +387,8 @@ void runProducerOneOnOneTwoNodes(VerbsConnection* connection, record* records, s
                 }
                 else//finished processing
                 {
-                    std::atomic_fetch_add(&cInfos->exitProducer, size_t(1));
-                    if(std::atomic_load(&cInfos->exitProducer) == numberOfProducer/2)
+                    std::atomic_fetch_add(&exitProducer, size_t(1));
+                    if(std::atomic_load(&exitProducer) == numberOfProducer)
                     {
                         cInfos->buffer_ready_sign[receive_buffer_index] = BUFFER_USED_SENDER_DONE;
                         connection->write_blocking(cInfos->sign_buffer, cInfos->sign_token, receive_buffer_index*sizeof(size_t), receive_buffer_index*sizeof(size_t), sizeof(uint64_t));
@@ -561,8 +562,8 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
         }
         else//finished processing
         {
-            std::atomic_fetch_add(&cInfos[0]->exitProducer, size_t(1));//TODO: IS THIS OK?
-            if(std::atomic_load(&cInfos[0]->exitProducer) == numberOfProducer)
+            std::atomic_fetch_add(&exitProducer, size_t(1));//TODO: IS THIS OK?
+            if(std::atomic_load(&exitProducer) == numberOfProducer)
             {
                 cInfos[offsetConnectionEven]->buffer_ready_sign[idxConEven] = BUFFER_USED_SENDER_DONE;
                 cInfos[offsetConnectionOdd]->buffer_ready_sign[idxConOdd] = BUFFER_USED_SENDER_DONE;
@@ -744,7 +745,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         {
             if(cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
             {
-                    std::atomic_fetch_add(&cInfos->exitConsumer, size_t(1));
+                    std::atomic_fetch_add(&exitConsumer, size_t(1));
                     cout << "DONE BUFFER FOUND at idx"  << index << " numanode=" << outerThread << endl;
                     is_done = true;
             }
@@ -759,7 +760,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             cout << "Thread=" << outerThread << "/" << omp_get_thread_num() << "/" << outerThread<< " Received buffer at index=" << index << endl;
 #endif
             consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers[index]->getData(), bufferSizeInTuples,
-                    hashTable, windowSizeInSec, campaingCnt, consumerID, rank, is_done, cInfos->bookKeeping, &cInfos->exitConsumer);
+                    hashTable, windowSizeInSec, campaingCnt, consumerID, rank, is_done, cInfos->bookKeeping, &exitConsumer);
 
             cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
             cout << " set buffer ready again" << endl;
@@ -774,7 +775,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         if(index > endIdx)
             index = startIdx;
 
-        if(cInfos->exitConsumer == 1)
+        if(exitConsumer == 1)
         {
 //            *consumedTuples = total_received_tuples;
 //            *consumedBuffers = total_received_buffers;
@@ -799,7 +800,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
             consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers[index]->getData(), bufferSizeInTuples,
-                                hashTable, windowSizeInSec, campaingCnt, consumerID, rank, /*is_done*/ true, cInfos->bookKeeping, &cInfos->exitConsumer);
+                                hashTable, windowSizeInSec, campaingCnt, consumerID, rank, /*is_done*/ true, cInfos->bookKeeping, &exitConsumer);
             cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
         }
     }
@@ -913,7 +914,7 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
     connectInfo->bookKeeping[0] = time(NULL);
     connectInfo->bookKeeping[1] = time(NULL) + 2;
 
-    connectInfo->exitConsumer = 0;
+    exitConsumer = 0;
 
     return connectInfo;
 }
@@ -995,7 +996,7 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
    ss << status[0] << endl;
    cout << ss.str() << endl;
 
-   connectInfo->exitProducer = 0;
+   exitProducer = 0;
 
    return connectInfo;
 
