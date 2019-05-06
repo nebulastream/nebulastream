@@ -1147,11 +1147,11 @@ int main(int argc, char *argv[])
     size_t rank = atoi(argv[1]);
 
     size_t numberOfProducer = 2;
-    size_t numberOfConsumer = 1;
-    size_t bufferProcCnt = 1;
-    size_t bufferSizeInTups = 1;
+    size_t numberOfConsumer = 2;
+    size_t bufferProcCnt = 10;
+    size_t bufferSizeInTups = 10;
     size_t numberOfConnections = 1;
-    NUM_SEND_BUFFERS = 1;
+    NUM_SEND_BUFFERS = 10;
     size_t numaNodes = numa_num_configured_nodes();
     size_t numberOfNodes = 4;
     string ip = "192.168.5.20";
