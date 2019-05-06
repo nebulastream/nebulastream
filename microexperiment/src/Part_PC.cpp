@@ -1328,22 +1328,22 @@ int main(int argc, char *argv[])
                 if(numberOfConnections == 1)
                 {
                     size_t numaNode = omp_get_thread_num();
-                    size_t connectionID = omp_get_thread_num() * 2;
+//                    size_t connectionID = omp_get_thread_num() * 2;
                     if(numaNode == 0)
                     {
                        SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
-                       connections[connectionID] = new VerbsConnection(&info);
-                       cout << "connection established rank 0 and 1 on numa node " << numaNode  << " connectionID=" << connectionID << endl;
+                       connections[numaNode] = new VerbsConnection(&info);
+                       cout << "connection established rank 0 and 1 on numa node " << numaNode  << endl;
                    }
                    else
                    {
                        SimpleInfoProvider info(target_rank, "mlx5_1", 1, PORT2, ip);//was 3
-                       connections[connectionID] = new VerbsConnection(&info);
-                       cout << "connection established rank 0 and 1 on numa node " << numaNode  << " connectionID=" << connectionID << endl;
+                       connections[numaNode] = new VerbsConnection(&info);
+                       cout << "connection established rank 0 and 1 on numa node " << numaNode << endl;
                    }
 
-                    conInfos[connectionID] = setupRDMAConsumer(connections[connectionID], bufferSizeInTups, campaingCnt);
-                    conInfos[connectionID]->con = connections[connectionID];
+                    conInfos[numaNode] = setupRDMAConsumer(connections[numaNode], bufferSizeInTups, campaingCnt);
+                    conInfos[numaNode]->con = connections[numaNode];
                 }
                 else
                     assert(0);
