@@ -51,7 +51,7 @@ using namespace std;
 #define NUMBER_OF_GEN_TUPLE 1000000
 //#define DEBUG
 void printSingleHT(std::atomic<size_t>* hashTable, size_t campaingCnt);
-std::vector<std::shared_ptr<std::thread>> buffer_threads;
+//std::vector<std::shared_ptr<std::thread>> buffer_threads;
 std::atomic<size_t>* outputTable;
 
 
@@ -1504,10 +1504,10 @@ int main(int argc, char *argv[])
 
     }
 
-    for(size_t i = 0; i < buffer_threads.size(); i++)
-    {
-        buffer_threads[i]->join();
-    }
+//    for(size_t i = 0; i < buffer_threads.size(); i++)
+//    {
+//        buffer_threads[i]->join();
+//    }
 
     Timestamp end = getTimestamp();
 
