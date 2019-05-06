@@ -1143,7 +1143,9 @@ int main(int argc, char *argv[])
     size_t windowSizeInSeconds = 2;
     size_t campaingCnt = 10000;
 
-    size_t rank = 99;
+//    size_t rank = 99;
+    size_t rank = atoi(argv[2]);
+
     size_t numberOfProducer = 2;
     size_t numberOfConsumer = 1;
     size_t bufferProcCnt = 1;
@@ -1151,7 +1153,7 @@ int main(int argc, char *argv[])
     size_t numberOfConnections = 1;
     NUM_SEND_BUFFERS = 1;
     size_t numaNodes = numa_num_configured_nodes();
-    size_t numberOfNodes = 2;
+    size_t numberOfNodes = 4;
     string ip = "192.168.5.20";
 
 
