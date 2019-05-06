@@ -1119,9 +1119,8 @@ short CorePin(int coreID)
   return 1;
 }
 
-size_t getNumaNodeFromPtr(void* ptr)
+size_t getNumaNodeFromPtr(void* ptr, std::string name)
 {
-
     int numa_node1 = -1;
     get_mempolicy(&numa_node1, NULL, 0, ptr, MPOL_F_NODE | MPOL_F_ADDR);
 
@@ -1129,6 +1128,9 @@ size_t getNumaNodeFromPtr(void* ptr)
     status[0]=-1;
     int ret_code = move_pages(0 /*selbuffer_threadsf memory */, 1, &ptr, NULL, status, 0);
     int numa_node2 = status[0];
+    if(numa_node1 != numa_node2)
+        cout << "ERROR NO matching numa node for " << name << endl;
+
     assert(numa_node1 == numa_node2);
     return numa_node1;
 }
@@ -1421,9 +1423,9 @@ int main(int argc, char *argv[])
                 << " SumThreadID=" << i
                 << " core: " << sched_getcpu()
                 << " numaNode:" << numa_node_of_cpu(sched_getcpu())
-                << " sendBufferLocation=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->sendBuffers)
-                << " sendBufferDataLocation=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->sendBuffers[0]->send_buffer)
-                << " inputdata numaNode=" << getNumaNodeFromPtr(recs)
+                << " sendBufferLocation=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->sendBuffers, "sendBufferLocation")
+                << " sendBufferDataLocation=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->sendBuffers[0]->send_buffer, "sendBufferDataLocation")
+                << " inputdata numaNode=" << getNumaNodeFromPtr(recs, "inputdata numaNode")
                 << " start=" << startIdx
                 << " endidx=" << endIdx
                 << " share=" << share
@@ -1479,8 +1481,8 @@ int main(int argc, char *argv[])
                 << " SumThreadID=" << i
                 << " core: " << sched_getcpu()
                 << " numaNode:" << numa_node_of_cpu(sched_getcpu())
-                << " receiveBufferLocation=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->recv_buffers)
-                << " receiveBufferDataLocation=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->recv_buffers[0]->getData())
+                << " receiveBufferLocation=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->recv_buffers, "receiveBufferLocation")
+                << " receiveBufferDataLocation=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->recv_buffers[0]->getData(), "receiveBufferDataLocation")
                 << " start=" << startIdx
                 << " endidx=" << endIdx
                 << " share=" << share
