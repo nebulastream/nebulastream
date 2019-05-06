@@ -1533,30 +1533,29 @@ int main(int argc, char *argv[])
 
     double elapsed_time = double(end - begin) / (1024 * 1024 * 1024);
 
-//    stringstream ss;
-//
-//    ss << " time=" << elapsed_time << "s" << endl;
-//
-//    ss << " readInputTuples=" << sumReadInTuples  << endl;
-//    ss << " readInputVolume(MB)=" << sumReadInTuples * sizeof(record) /1024 /1024 << endl;
-//    ss << " readInputThroughput=" << sumReadInTuples /elapsed_time << endl;
-//    ss << " readBandWidth MB/s=" << (sumReadInTuples*sizeof(record)/1024/1024)/elapsed_time << endl;
-//
-//    ss << " ----------------------------------------------" << endl;
-//
-//    ss << " producedTuples=" << sumProducedTuples << endl;
-//    ss << " producedBuffers=" << sumProducedBuffer << endl;
-//    ss << " noFreeEntry=" << sumNoFreeEntry << endl;
-//    ss << " ProduceThroughput=" << sumProducedTuples / elapsed_time << endl;
-//    ss << " TransferVolume(MB)=" << sumProducedTuples*sizeof(Tuple)/1024/1024 << endl;
-//    ss << " TransferBandwidth MB/s=" << (sumProducedTuples*sizeof(Tuple)/1024/1024)/elapsed_time << endl;
-//    ss << " ----------------------------------------------" << endl;
-//
-//    ss << " consumedTuples=" << sumConsumedTuples  << endl;
-//    ss << " consumedBuffers=" << sumConsumedBuffer  << endl;
-//    ss << " sumNoBufferFound=" << sumNoBuffer  << endl;
-//    cout << ss.str() << endl;
+    stringstream ss;
 
+    ss << " time=" << elapsed_time << "s" << endl;
+
+    ss << " readInputTuples=" << sumReadInTuples  << endl;
+    ss << " readInputVolume(MB)=" << sumReadInTuples * sizeof(record) /1024 /1024 << endl;
+    ss << " readInputThroughput=" << sumReadInTuples /elapsed_time << endl;
+    ss << " readBandWidth MB/s=" << (sumReadInTuples*sizeof(record)/1024/1024)/elapsed_time << endl;
+
+    ss << " ----------------------------------------------" << endl;
+
+    ss << " producedTuples=" << sumProducedTuples << endl;
+    ss << " producedBuffers=" << sumProducedBuffer << endl;
+    ss << " noFreeEntry=" << sumNoFreeEntry << endl;
+    ss << " ProduceThroughput=" << sumProducedTuples / elapsed_time << endl;
+    ss << " TransferVolume(MB)=" << sumProducedTuples*sizeof(Tuple)/1024/1024 << endl;
+    ss << " TransferBandwidth MB/s=" << (sumProducedTuples*sizeof(Tuple)/1024/1024)/elapsed_time << endl;
+    ss << " ----------------------------------------------" << endl;
+
+    ss << " consumedTuples=" << sumConsumedTuples  << endl;
+    ss << " consumedBuffers=" << sumConsumedBuffer  << endl;
+    ss << " sumNoBufferFound=" << sumNoBuffer  << endl;
+    cout << ss.str() << endl;
+    exit(0);
     return 0;
-//    printHT(hashTable, campaingCnt);
 }
