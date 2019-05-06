@@ -569,11 +569,11 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
 
                 cInfos[offsetConnectionEven]->con->write_blocking(cInfos[offsetConnectionEven]->sign_buffer,
                         cInfos[offsetConnectionEven]->sign_token, idxConEven*sizeof(size_t), idxConEven*sizeof(size_t), sizeof(uint64_t));
-                cout << "Sent last tuples and marked as BUFFER_USED_SENDER_DONE at index=" << idxConEven << " numanode=" << outerThread << " con=" << 0 << endl;
+                cout << "Sent last tuples and marked as BUFFER_USED_SENDER_DONE at index=" << idxConEven << " numanode=" << outerThread << " con=" << offsetConnectionEven << endl;
 
                 cInfos[offsetConnectionOdd]->con->write_blocking(cInfos[offsetConnectionOdd]->sign_buffer, cInfos[offsetConnectionOdd]->sign_token,
                         idxConOdd*sizeof(size_t), idxConOdd*sizeof(size_t), sizeof(uint64_t));
-                cout << "Sent last tuples and marked as BUFFER_USED_SENDER_DONE at index=" << idxConOdd << " numanode=" << outerThread << " con=" << 1 << endl;
+                cout << "Sent last tuples and marked as BUFFER_USED_SENDER_DONE at index=" << idxConOdd << " numanode=" << outerThread << " con=" << offsetConnectionOdd << endl;
             }
             else
             {
@@ -781,7 +781,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 #ifdef DEBUG
 
             stringstream ss;
-            cout << "befroe out Thread=" << outerThread << "/" << omp_get_thread_num() << " Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
+            cout << "before out Thread=" << outerThread << "/" << omp_get_thread_num() << " Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
                             << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
             cout << ss.str();
 #endif
@@ -1471,7 +1471,7 @@ int main(int argc, char *argv[])
              {
                  endIdx = NUM_SEND_BUFFERS;
              }
-#ifdef DEBUG
+//#ifdef DEBUG
              #pragma omp critical
              {
              std::cout
@@ -1487,7 +1487,7 @@ int main(int argc, char *argv[])
                 << " share=" << share
                 << std::endl;
              }
-#endif
+//#endif
              runConsumerNew(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, outer_thread_id, numberOfProducer , bufferSizeInTups,
                      &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
                      endIdx, conInfos[outer_thread_id], outer_thread_id, rank, numberOfNodes);
