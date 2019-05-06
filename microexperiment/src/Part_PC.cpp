@@ -1013,7 +1013,7 @@ record* generateTuplesOneArray(size_t num_Producer, size_t campaingCnt)
     size_t* randomNumbers = new size_t[randomCnt];
     std::uniform_int_distribution<size_t> disi(0, campaingCnt);
     for (size_t i = 0; i < randomCnt; i++)
-        randomNumbers[i] = disi(gen);
+        randomNumbers[i] = (size_t)disi(gen);
 
 //    record** recs;
     uint64_t campaign_lsb, campaign_msb;
