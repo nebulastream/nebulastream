@@ -1385,7 +1385,6 @@ int main(int argc, char *argv[])
         }
     }
 
-
     size_t producesTuples[numaNodes][numberOfProducer/numaNodes] = {0};
     size_t producedBuffers[numaNodes][numberOfProducer/numaNodes] = {0};
     size_t noFreeEntryFound[numaNodes][numberOfProducer/numaNodes] = {0};
