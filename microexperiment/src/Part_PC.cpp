@@ -1158,16 +1158,16 @@ int main(int argc, char *argv[])
 
     desc.add_options()
         ("help", "Print help messages")
-//        ("rank", po::value<size_t>(&rank)->default_value(rank), "The rank of the current runtime")
+        ("rank", po::value<size_t>(&rank)->default_value(rank), "The rank of the current runtime")
         ("numberOfProducer", po::value<size_t>(&numberOfProducer)->default_value(numberOfProducer), "numberOfProducer")
         ("numberOfConsumer", po::value<size_t>(&numberOfConsumer)->default_value(numberOfConsumer), "numberOfConsumer")
         ("bufferProcCnt", po::value<size_t>(&bufferProcCnt)->default_value(bufferProcCnt), "bufferProcCnt")
-        ("bufferSizeInTups", po::value<size_t>(&bufferSizeInTups)->default_value(bufferSizeInTups), "bufferSizeInTups");
-//        ("sendBuffers", po::value<size_t>(&NUM_SEND_BUFFERS)->default_value(NUM_SEND_BUFFERS), "sendBuffers")
-//        ("numberOfConnections", po::value<size_t>(&numberOfConnections)->default_value(numberOfConnections), "numberOfConnections")
-//        ("numberOfNodes", po::value<size_t>(&numberOfNodes)->default_value(numberOfNodes), "numberOfConnections")
-//        ("numaNodes", po::value<size_t>(&numaNodes)->default_value(numaNodes), "numaNodes")
-//        ("ip", po::value<string>(&ip)->default_value(ip), "ip")
+        ("bufferSizeInTups", po::value<size_t>(&bufferSizeInTups)->default_value(bufferSizeInTups), "bufferSizeInTups")
+        ("sendBuffers", po::value<size_t>(&NUM_SEND_BUFFERS)->default_value(NUM_SEND_BUFFERS), "sendBuffers")
+        ("numberOfConnections", po::value<size_t>(&numberOfConnections)->default_value(numberOfConnections), "numberOfConnections")
+        ("numberOfNodes", po::value<size_t>(&numberOfNodes)->default_value(numberOfNodes), "numberOfConnections")
+        ("numaNodes", po::value<size_t>(&numaNodes)->default_value(numaNodes), "numaNodes")
+        ("ip", po::value<string>(&ip)->default_value(ip), "ip");
 //        ;
 //
 //    po::variables_map vm;
@@ -1533,29 +1533,29 @@ int main(int argc, char *argv[])
 
     double elapsed_time = double(end - begin) / (1024 * 1024 * 1024);
 
-    stringstream ss;
-
-    ss << " time=" << elapsed_time << "s" << endl;
-
-    ss << " readInputTuples=" << sumReadInTuples  << endl;
-    ss << " readInputVolume(MB)=" << sumReadInTuples * sizeof(record) /1024 /1024 << endl;
-    ss << " readInputThroughput=" << sumReadInTuples /elapsed_time << endl;
-    ss << " readBandWidth MB/s=" << (sumReadInTuples*sizeof(record)/1024/1024)/elapsed_time << endl;
-
-    ss << " ----------------------------------------------" << endl;
-
-    ss << " producedTuples=" << sumProducedTuples << endl;
-    ss << " producedBuffers=" << sumProducedBuffer << endl;
-    ss << " noFreeEntry=" << sumNoFreeEntry << endl;
-    ss << " ProduceThroughput=" << sumProducedTuples / elapsed_time << endl;
-    ss << " TransferVolume(MB)=" << sumProducedTuples*sizeof(Tuple)/1024/1024 << endl;
-    ss << " TransferBandwidth MB/s=" << (sumProducedTuples*sizeof(Tuple)/1024/1024)/elapsed_time << endl;
-    ss << " ----------------------------------------------" << endl;
-
-    ss << " consumedTuples=" << sumConsumedTuples  << endl;
-    ss << " consumedBuffers=" << sumConsumedBuffer  << endl;
-    ss << " sumNoBufferFound=" << sumNoBuffer  << endl;
-    cout << ss.str() << endl;
+//    stringstream ss;
+//
+//    ss << " time=" << elapsed_time << "s" << endl;
+//
+//    ss << " readInputTuples=" << sumReadInTuples  << endl;
+//    ss << " readInputVolume(MB)=" << sumReadInTuples * sizeof(record) /1024 /1024 << endl;
+//    ss << " readInputThroughput=" << sumReadInTuples /elapsed_time << endl;
+//    ss << " readBandWidth MB/s=" << (sumReadInTuples*sizeof(record)/1024/1024)/elapsed_time << endl;
+//
+//    ss << " ----------------------------------------------" << endl;
+//
+//    ss << " producedTuples=" << sumProducedTuples << endl;
+//    ss << " producedBuffers=" << sumProducedBuffer << endl;
+//    ss << " noFreeEntry=" << sumNoFreeEntry << endl;
+//    ss << " ProduceThroughput=" << sumProducedTuples / elapsed_time << endl;
+//    ss << " TransferVolume(MB)=" << sumProducedTuples*sizeof(Tuple)/1024/1024 << endl;
+//    ss << " TransferBandwidth MB/s=" << (sumProducedTuples*sizeof(Tuple)/1024/1024)/elapsed_time << endl;
+//    ss << " ----------------------------------------------" << endl;
+//
+//    ss << " consumedTuples=" << sumConsumedTuples  << endl;
+//    ss << " consumedBuffers=" << sumConsumedBuffer  << endl;
+//    ss << " sumNoBufferFound=" << sumNoBuffer  << endl;
+//    cout << ss.str() << endl;
 
     return 0;
 //    printHT(hashTable, campaingCnt);
