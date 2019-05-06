@@ -1557,5 +1557,6 @@ int main(int argc, char *argv[])
     ss << " sumNoBufferFound=" << sumNoBuffer  << endl;
     cout << ss.str() << endl;
 
+    return 0;
 //    printHT(hashTable, campaingCnt);
 }
