@@ -1156,7 +1156,6 @@ int main(int argc, char *argv[])
     size_t numberOfNodes = 4;
     string ip = "";
 
-
     desc.add_options()
         ("help", "Print help messages")
         ("rank", po::value<size_t>(&rank)->default_value(rank), "The rank of the current runtime")
@@ -1171,15 +1170,15 @@ int main(int argc, char *argv[])
         ("ip", po::value<string>(&ip)->default_value(ip), "ip")
         ;
 //
-    po::variables_map vm;
-    po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
-    po::notify(vm);
+//    po::variables_map vm;
+//    po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
+//    po::notify(vm);
 
-    if (vm.count("help")) {
-        std::cout << "Basic Command Line Parameter " << std::endl
-                  << desc << std::endl;
-        return 0;
-    }
+//    if (vm.count("help")) {
+//        std::cout << "Basic Command Line Parameter " << std::endl
+//                  << desc << std::endl;
+//        return 0;
+//    }
 
 //    size_t tupleProcCnt = bufferProcCnt * bufferSizeInTups * 3;
     MPIHelper::set_rank(rank);
