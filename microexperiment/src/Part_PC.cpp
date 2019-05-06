@@ -1138,7 +1138,7 @@ size_t getNumaNodeFromPtr(void* ptr, std::string name)
 namespace po = boost::program_options;
 int main(int argc, char *argv[])
 {
-    po::options_description desc("Options");
+    po::options_description* desc = new po::options_description("Options");
 
     size_t windowSizeInSeconds = 2;
     size_t campaingCnt = 10000;
@@ -1157,7 +1157,7 @@ int main(int argc, char *argv[])
     string ip = "192.168.5.20";
 
 
-    desc.add_options()
+    desc->add_options()
         ("help", "Print help messages")
         ("rank", po::value<size_t>(&rank)->default_value(rank), "The rank of the current runtime")
         ("numberOfProducer", po::value<size_t>(&numberOfProducer)->default_value(numberOfProducer), "numberOfProducer")
@@ -1172,7 +1172,7 @@ int main(int argc, char *argv[])
         ;
 //
     po::variables_map vm;
-    po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
+    po::store(po::command_line_parser(argc, argv).options(*desc).run(), vm);
     po::notify(vm);
 
     if (vm.count("help")) {
