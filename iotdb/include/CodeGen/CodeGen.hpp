@@ -5,6 +5,19 @@
 #include <Core/DataTypes.hpp>
 #include <memory>
 
+#include <API/Schema.hpp>
+#include <CodeGen/C_CodeGen/BinaryOperatorStatement.hpp>
+#include <CodeGen/C_CodeGen/CodeCompiler.hpp>
+#include <CodeGen/C_CodeGen/Declaration.hpp>
+#include <CodeGen/C_CodeGen/FileBuilder.hpp>
+#include <CodeGen/C_CodeGen/FunctionBuilder.hpp>
+#include <CodeGen/C_CodeGen/Statement.hpp>
+#include <CodeGen/C_CodeGen/UnaryOperatorStatement.hpp>
+#include <CodeGen/CodeGen.hpp>
+#include <Core/DataTypes.hpp>
+#include <Runtime/DataSink.hpp>
+#include <Util/ErrorHandling.hpp>
+
 namespace iotdb {
 
 class AttributeReference;
@@ -52,5 +65,36 @@ CodeGeneratorPtr createCodeGenerator();
 /** \brief factory method for creating a pipeline context */
 const PipelineContextPtr createPipelineContext();
 
+class GeneratedCode {
+  public:
+    GeneratedCode();
+
+    std::vector<VariableDeclaration> variable_decls;
+    std::vector<StatementPtr> variable_init_stmts;
+    std::shared_ptr<FOR> for_loop_stmt;
+    std::vector<StatementPtr> cleanup_stmts;
+    StatementPtr return_stmt;
+    std::shared_ptr<VariableDeclaration> var_decl_id;
+    std::shared_ptr<VariableDeclaration> var_decl_return;
+    StructDeclaration struct_decl_tuple_buffer;
+    StructDeclaration struct_decl_state;
+    StructDeclaration struct_decl_input_tuple;
+    StructDeclaration struct_decl_result_tuple;
+    VariableDeclaration var_decl_tuple_buffers;
+    VariableDeclaration var_decl_tuple_buffer_output;
+    VariableDeclaration var_decl_state;
+    VariableDeclaration decl_field_num_tuples_struct_tuple_buf;
+    VariableDeclaration decl_field_data_ptr_struct_tuple_buf;
+    VariableDeclaration var_decl_input_tuple;
+    std::vector<StructDeclaration> type_decls;
+};
+
+typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
+
+const StructDeclaration getStructDeclarationTupleBuffer();
+const StructDeclaration getStructDeclarationWindowState();
+const StructDeclaration getStructDeclarationTupleBuffer();
+const StructDeclaration getStructDeclarationWindowState();
+const StructDeclaration getStructDeclarationFromSchema(const std::string struct_name, const Schema& schema);
 } // namespace iotdb
 #endif

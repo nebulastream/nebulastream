@@ -10,12 +10,19 @@
 #include <memory>
 
 #include <Core/DataTypes.hpp>
+#include <CodeGen/CodeGen.hpp>
 
 #include <boost/unordered_map.hpp>
 #include <boost/assign/list_of.hpp>
 
 namespace iotdb
 {
+
+class GeneratedCode;
+typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
+
+class ExpressionStatment;
+typedef std::shared_ptr<ExpressionStatment> ExpressionStatmentPtr; 
 
 enum class PredicateItemMutation{
 	ATTRIBUTE,
@@ -74,7 +81,7 @@ typedef std::shared_ptr<Predicate> PredicatePtr;
 class UserAPIExpression{
 public:
 	virtual ~UserAPIExpression(){};
-	virtual const std::string generateCode() const = 0;
+	virtual bool generateCode(GeneratedCode& code) const = 0;
 	virtual const std::string toString() const = 0;
 	virtual UserAPIExpressionPtr copy() const = 0;
 };
@@ -83,7 +90,7 @@ class Predicate : public UserAPIExpression{
 public:
 	Predicate(UserAPIBinaryExpression op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right, bool bracket);
 	
-	virtual const std::string generateCode() const override;
+	virtual const ExpressionStatmentPtr generateCode(GeneratedCode& code) const override;
 	virtual const std::string toString() const override;
 	virtual UserAPIExpressionPtr copy() const override;
 private:
@@ -99,7 +106,7 @@ public:
 	PredicateItem(AttributeFieldPtr attribute);
 	PredicateItem(ValueTypePtr value);
 	
-	virtual const std::string generateCode() const override;
+	virtual bool generateCode(GeneratedCode& code) const override;
 	virtual const std::string toString() const override;
 	virtual UserAPIExpressionPtr copy() const override;
 private:
