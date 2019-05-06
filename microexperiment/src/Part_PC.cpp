@@ -1143,8 +1143,8 @@ int main(int argc, char *argv[])
     size_t windowSizeInSeconds = 2;
     size_t campaingCnt = 10000;
 
-//    size_t rank = 99;
-    size_t rank = atoi(argv[1]);
+    size_t rank = 99;
+//    size_t rank = atoi(argv[1]);
 
     size_t numberOfProducer = 2;
     size_t numberOfConsumer = 2;
@@ -1154,7 +1154,7 @@ int main(int argc, char *argv[])
     NUM_SEND_BUFFERS = 10;
     size_t numaNodes = 2;
     size_t numberOfNodes = 4;
-    string ip = "192.168.5.20";
+    string ip = "";
 
     desc.add_options()
         ("help", "Print help messages")
