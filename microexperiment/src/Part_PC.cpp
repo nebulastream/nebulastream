@@ -1152,9 +1152,9 @@ int main(int argc, char *argv[])
     size_t bufferSizeInTups = 10;
     size_t numberOfConnections = 1;
     NUM_SEND_BUFFERS = 10;
-    size_t numaNodes = numa_num_configured_nodes();
+    size_t numaNodes = 2;
     size_t numberOfNodes = 4;
-    string ip = "192.168.5.20";
+    string ip = "";
 
 
     desc.add_options()
