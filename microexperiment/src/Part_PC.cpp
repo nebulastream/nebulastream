@@ -1027,7 +1027,7 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
 }
 
 
-record* generateTuplesOneArray(size_t num_Producer, size_t campaingCnt)
+record* generateTuplesOneArray(size_t campaingCnt)
 {
     std::random_device rd; //Will be used to obtain a seed for the random number engine
     std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
@@ -1256,43 +1256,40 @@ int main(int argc, char *argv[])
         {
 //            #pragma omp critical
 //            {
-                cout << "thread in critical = " << omp_get_thread_num() << endl;
-                if(numberOfConnections == 1)
+//                cout << "thread in critical = " << omp_get_thread_num() << endl;
+
+                size_t numaNode = omp_get_thread_num();
+                size_t connectionID = omp_get_thread_num() * 2;
+                cout << "rank 0: connecting 0 and 1 on numa node " << numaNode << " connectionID=" << connectionID << endl;
+
+                if(numaNode == 0)
                 {
-                    size_t numaNode = omp_get_thread_num();
-                    size_t connectionID = omp_get_thread_num() * 2;
-                    cout << "rank 0: connecting 0 and 1 on numa node " << numaNode << " connectionID=" << connectionID << endl;
-
-                    if(numaNode == 0)
-                    {
-                        SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
-                        connections[connectionID] = new VerbsConnection(&info);
-                        cout << "connection established rank 0 and 1 on numa node " << numaNode  << " connectionID=" << connectionID << endl;
-                    }
-                    else
-                    {
-                        SimpleInfoProvider info(target_rank, "mlx5_1", 1, PORT2, ip);//was 3
-                        connections[connectionID] = new VerbsConnection(&info);
-                        cout << "connection established rank 0 and 1 on numa node " << numaNode  << " connectionID=" << connectionID << endl;
-                    }
-
-                    cout << "setup con numa node " << numaNode  << " connectionID=" << connectionID << endl;
-                    conInfos[connectionID] = setupRDMAProducer(connections[connectionID], bufferSizeInTups);
-                    conInfos[connectionID]->con = connections[connectionID];
-                    cout << "setup con numa node " << numaNode  << " connectionID=" << connectionID << " finished"<< endl;
+                    SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
+                    connections[connectionID] = new VerbsConnection(&info);
+                    cout << "connection established rank 0 and 1 on numa node " << numaNode  << " connectionID=" << connectionID << endl;
                 }
                 else
-                    assert(0);
-
-                conInfos[omp_get_thread_num()]->records = new record*[numberOfProducer];
-                for(size_t i = 0; i < numberOfProducer; i++)
                 {
-                    conInfos[omp_get_thread_num()]->records[i] = generateTuplesOneArray(numberOfProducer, campaingCnt);
+                    SimpleInfoProvider info(target_rank, "mlx5_1", 1, PORT2, ip);//was 3
+                    connections[connectionID] = new VerbsConnection(&info);
+                    cout << "connection established rank 0 and 1 on numa node " << numaNode  << " connectionID=" << connectionID << endl;
+                }
+
+                cout << "setup con numa node " << numaNode  << " connectionID=" << connectionID << endl;
+                conInfos[connectionID] = setupRDMAProducer(connections[connectionID], bufferSizeInTups);
+                conInfos[connectionID]->con = connections[connectionID];
+                cout << "setup con numa node " << numaNode  << " connectionID=" << connectionID << " finished"<< endl;
+
+                conInfos[connectionID]->records = new record*[numberOfProducer/numaNodes];
+                for(size_t i = 0; i < numberOfProducer/numaNodes; i++)
+                {
+                    conInfos[connectionID]->records[i] = generateTuplesOneArray(campaingCnt);
                 }
                 int numa_node = -1;
                 get_mempolicy(&numa_node, NULL, 0, (void*)conInfos[omp_get_thread_num()]->records[0], MPOL_F_NODE | MPOL_F_ADDR);
                 cout << "ht numa=" << numa_node << " outthread=" << omp_get_thread_num() << endl;
             }
+
             cout << "thread out of critical = " << omp_get_thread_num() << endl;
 //        }//end of pragma
 
@@ -1333,14 +1330,14 @@ int main(int argc, char *argv[])
                 else
                     assert(0);
 
-                conInfos[omp_get_thread_num()]->records = new record*[numberOfProducer];//TODO: is this still neccesary?
-                for(size_t i = 0; i < numberOfProducer; i++)
-                {
-                    conInfos[omp_get_thread_num()]->records[i] = generateTuplesOneArray(numberOfProducer, campaingCnt);
-                }
-                int numa_node = -1;
-                get_mempolicy(&numa_node, NULL, 0, (void*)conInfos[omp_get_thread_num()]->records[0], MPOL_F_NODE | MPOL_F_ADDR);
-                cout << "ht numa=" << numa_node << " outthread=" << omp_get_thread_num() << endl;
+//                conInfos[omp_get_thread_num()]->records = new record*[numberOfProducer];//TODO: is this still neccesary?
+//                for(size_t i = 0; i < numberOfProducer; i++)
+//                {
+//                    conInfos[omp_get_thread_num()]->records[i] = generateTuplesOneArray(numberOfProducer, campaingCnt);
+//                }
+//                int numa_node = -1;
+//                get_mempolicy(&numa_node, NULL, 0, (void*)conInfos[omp_get_thread_num()]->records[0], MPOL_F_NODE | MPOL_F_ADDR);
+//                cout << "ht numa=" << numa_node << " outthread=" << omp_get_thread_num() << endl;
             }
             cout << "thread out of critical = " << omp_get_thread_num() << endl;
 //        }//end of pragma
@@ -1437,11 +1434,14 @@ int main(int argc, char *argv[])
           #pragma omp parallel num_threads(numberOfProducer/numaNodes)//
           {
              auto inner_thread_id = omp_get_thread_num();
+             size_t numaNode = omp_get_thread_num();
+             size_t connectionID = outer_thread_id * 2;
+
              size_t i = inner_thread_id;
              size_t share = NUM_SEND_BUFFERS/(numberOfProducer/numaNodes);
              size_t startIdx = inner_thread_id* share;
              size_t endIdx = (inner_thread_id+1)*share;
-             record* recs = conInfos[outer_thread_id]->records[inner_thread_id];
+             record* recs = conInfos[connectionID]->records[inner_thread_id];
 
 //#ifdef DEBUG
              #pragma omp critical
