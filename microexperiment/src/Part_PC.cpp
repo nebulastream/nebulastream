@@ -618,7 +618,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
         index++;
 
-        if(index > endIdx)
+        if(index >= endIdx)
             index = startIdx;
 
 //        if(exitConsumer == 1)
