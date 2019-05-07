@@ -1320,7 +1320,7 @@ int main(int argc, char *argv[])
                 cout << "ht numa=" << numa_node << " outthread=" << omp_get_thread_num() << endl;
             }
             cout << "thread out of critical = " << omp_get_thread_num() << endl;
-        }//end of p/ragma
+//        }//end of pragma
 
     }
     if(rank == 1)
