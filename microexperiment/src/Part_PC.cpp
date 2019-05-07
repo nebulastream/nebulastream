@@ -751,7 +751,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             }
             else
             {
-                cout << " found buffer at idx=" << index << endl;
+                cout << "numanode=" << outerThread << " found buffer at idx=" << index << endl;
             }
 
             total_received_tuples += bufferSizeInTuples;
@@ -790,7 +790,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         }
     }//end of while
 
-    cout << "checking remaining buffers" << endl;
+    cout << "numanode=" << outerThread << " checking remaining buffers" << endl;
     for(index = startIdx; index < endIdx; index++)//check again if some are there
     {
 //        cout << "checking i=" << index << endl;
