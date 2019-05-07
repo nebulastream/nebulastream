@@ -1159,7 +1159,7 @@ int main(int argc, char *argv[])
     string ip = "192.168.5.10";
 
     desc.add_options()
-//        ("help", "Print help messages")
+        ("help", "Print help messages")
         ("rank", po::value<size_t>(&rank)->default_value(rank), "The rank of the current runtime")
         ("numberOfProducer", po::value<size_t>(&numberOfProducer)->default_value(numberOfProducer), "numberOfProducer")
         ("numberOfConsumer", po::value<size_t>(&numberOfConsumer)->default_value(numberOfConsumer), "numberOfConsumer")
@@ -1168,8 +1168,8 @@ int main(int argc, char *argv[])
         ("sendBuffers", po::value<size_t>(&num_send_buffer)->default_value(num_send_buffer), "sendBuffers")
         ("numberOfConnections", po::value<size_t>(&numberOfConnections)->default_value(numberOfConnections), "numberOfConnections")
         ("numberOfNodes", po::value<size_t>(&numberOfNodes)->default_value(numberOfNodes), "numberOfConnections")
-        ("numaNodes", po::value<size_t>(&numaNodes)->default_value(numaNodes), "numaNodes");
-//        ("ip", po::value<string>(&ip)->default_value(ip), "ip");
+        ("numaNodes", po::value<size_t>(&numaNodes)->default_value(numaNodes), "numaNodes")
+        ("ip", po::value<string>(&ip)->default_value(ip), "ip");
 //        ;
 //
     po::variables_map vm;
