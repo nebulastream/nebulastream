@@ -7,7 +7,7 @@
 #include <cstdio>
 #include <string>
 #include <json11/json11.hpp>
-
+#include <cmath>
 using NanoSeconds = std::chrono::nanoseconds;
 using Clock = std::chrono::high_resolution_clock;
 typedef uint64_t Timestamp;
