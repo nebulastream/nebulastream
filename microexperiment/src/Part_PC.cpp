@@ -1277,8 +1277,8 @@ int main(int argc, char *argv[])
         #pragma omp parallel for num_threads(numaNodes)
         for(size_t i = 0; i < numaNodes; i++)
         {
-            #pragma omp critical
-            {
+//            #pragma omp critical
+//            {
                 target_rank = 3;
                 cout << "thread in critical = " << omp_get_thread_num() << endl;
                 if(numberOfConnections == 1)
@@ -1320,7 +1320,7 @@ int main(int argc, char *argv[])
                 cout << "ht numa=" << numa_node << " outthread=" << omp_get_thread_num() << endl;
             }
             cout << "thread out of critical = " << omp_get_thread_num() << endl;
-        }//end of pragma
+        }//end of p/ragma
 
     }
     if(rank == 1)
