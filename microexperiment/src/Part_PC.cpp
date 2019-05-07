@@ -465,9 +465,11 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
 
             cInfos[offsetConnectionEven]->con->write_blocking(cInfos[offsetConnectionEven]->sign_buffer, cInfos[offsetConnectionEven]->sign_token,
                     idxConEven*sizeof(size_t), idxConEven*sizeof(size_t), sizeof(size_t));
+
             cInfos[offsetConnectionOdd]->con->write_blocking(cInfos[offsetConnectionOdd]->sign_buffer,
                     cInfos[offsetConnectionOdd]->sign_token, idxConOdd*sizeof(size_t),
                     idxConOdd*sizeof(size_t), sizeof(size_t));
+
 #ifdef DEBUG
             cout << "numanode=" << outerThread << " reset buffer" << endl;
 #endif
@@ -482,22 +484,22 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
 
                 cout << "cnt =" << total_buffer_send << endl;
                 cInfos[offsetConnectionEven]->con->write_blocking(cInfos[offsetConnectionEven]->sign_buffer,
-                        cInfos[offsetConnectionEven]->sign_token, idxConEven*sizeof(size_t), idxConEven*sizeof(size_t), sizeof(uint64_t));
+                        cInfos[offsetConnectionEven]->sign_token, idxConEven*sizeof(size_t), idxConEven*sizeof(size_t), sizeof(size_t));
                 cout << "numanode=" << outerThread << " Sent last tuples and marked as BUFFER_USED_SENDER_DONE at index=" << idxConEven << " numanode=" << outerThread << " con=" << offsetConnectionEven << endl;
 
                 cInfos[offsetConnectionOdd]->con->write_blocking(cInfos[offsetConnectionOdd]->sign_buffer, cInfos[offsetConnectionOdd]->sign_token,
-                        idxConOdd*sizeof(size_t), idxConOdd*sizeof(size_t), sizeof(uint64_t));
+                        idxConOdd*sizeof(size_t), idxConOdd*sizeof(size_t), sizeof(size_t));
                 cout << "numanode=" << outerThread << " Sent last tuples and marked as BUFFER_USED_SENDER_DONE at index=" << idxConOdd << " numanode=" << outerThread << " con=" << offsetConnectionOdd << endl;
             }
             else
             {
                 cInfos[offsetConnectionEven]->buffer_ready_sign[idxConEven] = BUFFER_USED_FLAG;
                 cInfos[offsetConnectionEven]->con->write(cInfos[offsetConnectionEven]->sign_buffer,
-                        cInfos[offsetConnectionEven]->sign_token, idxConEven*sizeof(size_t), idxConEven*sizeof(size_t), sizeof(uint64_t));
+                        cInfos[offsetConnectionEven]->sign_token, idxConEven*sizeof(size_t), idxConEven*sizeof(size_t), sizeof(size_t));
 
                 cInfos[offsetConnectionOdd]->buffer_ready_sign[idxConOdd] = BUFFER_USED_FLAG;
                 cInfos[offsetConnectionOdd]->con->write(cInfos[offsetConnectionOdd]->sign_buffer,
-                        cInfos[offsetConnectionOdd]->sign_token, idxConOdd*sizeof(size_t), idxConOdd*sizeof(size_t), sizeof(uint64_t));
+                        cInfos[offsetConnectionOdd]->sign_token, idxConOdd*sizeof(size_t), idxConOdd*sizeof(size_t), sizeof(size_t));
 
                 cout << "numanode=" << outerThread << " thread" << omp_get_thread_num() << " prod finished" << endl;
             }
@@ -556,15 +558,14 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
         uint64_t bucketPos = (buffer[i].campaign_id * 789 + 321) % campaingCnt;
         atomic_fetch_add(&hashTable[current_window][bucketPos], size_t(1));
         consumed++;
-
     }       //end of for
-#ifdef DEBUG
+//#ifdef DEBUG
 #pragma omp critical
     cout << "Thread=" << omp_get_thread_num() << " consumed=" << consumed
             << " windowSwitchCnt=" << windowSwitchCnt
             << " htreset=" << htReset
             << " consumeID=" << consumerID << endl;
-#endif
+//#endif
     return consumed;
 
 }
@@ -625,13 +626,13 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         {
 //            *consumedTuples = total_received_tuples;
 //            *consumedBuffers = total_received_buffers;
-#ifdef DEBUG
+//#ifdef DEBUG
 
             stringstream ss;
             cout << "before out Thread=" << outerThread << "/" << omp_get_thread_num() << " Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
                             << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
             cout << ss.str();
-#endif
+//#endif
             break;
         }
     }//end of while
