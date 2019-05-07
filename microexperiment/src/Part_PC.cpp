@@ -485,7 +485,7 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
             }
             else
             {
-                cout << " val at idx=" << receive_buffer_index<< " is " << cInfos[offsetConnectionEven]->buffer_ready_sign[receive_buffer_index] << endl;
+//                cout << " val at idx=" << receive_buffer_index<< " is " << cInfos[offsetConnectionEven]->buffer_ready_sign[receive_buffer_index] << endl;
             }
 
             if(receive_buffer_index +1 > endIdx)
