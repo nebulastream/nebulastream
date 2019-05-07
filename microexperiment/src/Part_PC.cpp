@@ -1556,6 +1556,6 @@ int main(int argc, char *argv[])
     ss << " consumedBuffers=" << sumConsumedBuffer  << endl;
     ss << " sumNoBufferFound=" << sumNoBuffer  << endl;
     cout << ss.str() << endl;
-    exit(0);
+//    exit(0);
     return 0;
 }
