@@ -1403,7 +1403,6 @@ int main(int argc, char *argv[])
     size_t readInputTuples[numaNodes][numberOfProducer/numaNodes] = {0};
 
     infinity::memory::Buffer* finishBuffer = connections[0]->allocate_buffer(1);
-//    exit(0);
     cout << "start processing " << endl;
     Timestamp begin = getTimestamp();
     if(rank % 2 == 0)
@@ -1564,6 +1563,6 @@ int main(int argc, char *argv[])
     ss << " consumedBuffers=" << sumConsumedBuffer  << endl;
     ss << " sumNoBufferFound=" << sumNoBuffer  << endl;
     cout << ss.str() << endl;
-//    exit(0);
+    exit(0);
     return 0;
 }
