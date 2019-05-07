@@ -6,7 +6,7 @@
 #define MAMPI_MATHUTILS_H
 
 #include <algorithm>
-
+#include <cmath>
 namespace Math {
     template <typename It> static double median(It begin, It end){
         using T = typename std::iterator_traits<It>::value_type;
