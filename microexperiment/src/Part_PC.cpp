@@ -1358,9 +1358,10 @@ int main(int argc, char *argv[])
 
              if(numberOfNodes == 2)
              {
-                 runProducerOneOnOneTwoNodes(connections[0], recs, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[outer_thread_id][i],
-                          &producedBuffers[outer_thread_id][i], &readInputTuples[outer_thread_id][i], &noFreeEntryFound[outer_thread_id][i], startIdx, endIdx,
-                          numberOfProducer, conInfos[outer_thread_id], outer_thread_id);
+                 assert(0);
+//                 runProducerOneOnOneTwoNodes(connections[0], recs, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[outer_thread_id][i],
+//                          &producedBuffers[outer_thread_id][i], &readInputTuples[outer_thread_id][i], &noFreeEntryFound[outer_thread_id][i], startIdx, endIdx,
+//                          numberOfProducer, conInfos[outer_thread_id], outer_thread_id);
              }
              else
              {
