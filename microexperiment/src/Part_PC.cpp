@@ -457,7 +457,9 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
     while(total_buffer_send < bufferProcCnt)
     {
         //alloc first buffer
+#ifdef DEBUG
         cout << " read idx for even con " << offsetConnectionEven <<  endl;
+#endif
         for(size_t receive_buffer_index = startIdx; receive_buffer_index < endIdx && total_buffer_send < bufferProcCnt; receive_buffer_index++)
         {
             if(receive_buffer_index == startIdx)//read buffers
