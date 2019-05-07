@@ -462,7 +462,9 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
         {
             if(receive_buffer_index == startIdx)//read buffers
             {
+#ifdef DEBUG
                 cout << " read array at idx=" << receive_buffer_index <<  endl;
+#endif
                 cInfos[offsetConnectionEven]->con->read_blocking(cInfos[offsetConnectionEven]->sign_buffer, cInfos[offsetConnectionEven]->sign_token,
                         startIdx*sizeof(size_t), startIdx *sizeof(size_t), (endIdx - startIdx)* sizeof(uint64_t));
             }
@@ -473,12 +475,16 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
                         receive_buffer_index*sizeof(size_t), BUFFER_READY_FLAG, BUFFER_BEING_PROCESSED_FLAG, nullptr);
                 if(prevValue != BUFFER_READY_FLAG)
                 {
+#ifdef DEBUG
                     cout << "numanode=" << outerThread << " buffer already taken with val=" << prevValue << " connection=" << offsetConnectionEven << endl;
+#endif
                     continue;
                 }
                 else
                 {
+#ifdef DEBUG
                     cout << "numanode=" << outerThread << " found first idx=" << receive_buffer_index << " connection=" << offsetConnectionEven << endl;
+#endif
                     idxConEven = receive_buffer_index;
                     break;
                 }
@@ -513,7 +519,9 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
                 }
                 else
                 {
+#ifdef DEBUG
                     cout << "numanode=" << outerThread << " found second idx=" << receive_buffer_index  << " connection=" << offsetConnectionOdd << endl;
+#endif
                     idxConOdd = receive_buffer_index;
                     break;
                 }
@@ -527,8 +535,9 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
         size_t* tupCntBuffOdd = new size_t(0);
         readTuples += produce_window_mem_two_buffers(records, bufferSizeInTuples, cInfos[offsetConnectionEven]->sendBuffers[idxConEven]->tups,
                 cInfos[offsetConnectionOdd]->sendBuffers[idxConOdd]->tups, tupCntBuffEven, tupCntBuffOdd);
+#ifdef DEBUG
         cout << "numanode=" << outerThread << " buffer fill finsihed bufferEven=" << *tupCntBuffEven<< " bufferOdd=" << *tupCntBuffOdd << endl;
-
+#endif
         cInfos[offsetConnectionEven]->sendBuffers[idxConEven]->numberOfTuples = *tupCntBuffEven;
         cInfos[offsetConnectionOdd]->sendBuffers[idxConOdd]->numberOfTuples = *tupCntBuffOdd;
 
@@ -546,8 +555,9 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
         cInfos[offsetConnectionOdd]->con->write(cInfos[offsetConnectionOdd]->sendBuffers[idxConOdd]->send_buffer,
                 cInfos[offsetConnectionOdd]->region_tokens[idxConOdd],
                 cInfos[offsetConnectionOdd]->sendBuffers[idxConOdd]->requestToken);
-
+#ifdef DEBUG
         cout << "numanode=" << outerThread << " buffer sending finsihed" << endl;
+#endif
         total_buffer_send += 2;
 
         if (total_buffer_send < bufferProcCnt)//a new buffer will be send next
@@ -560,7 +570,9 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
             cInfos[offsetConnectionOdd]->con->write_blocking(cInfos[offsetConnectionOdd]->sign_buffer,
                     cInfos[offsetConnectionOdd]->sign_token, idxConOdd*sizeof(size_t),
                     idxConOdd*sizeof(size_t), sizeof(size_t));
+#ifdef DEBUG
             cout << "numanode=" << outerThread << " reset buffer" << endl;
+#endif
         }
         else//finished processing
         {
@@ -753,7 +765,9 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             }
             else
             {
+#ifdef DEBUG
                 cout << "numanode=" << outerThread << " found buffer at idx=" << index << endl;
+#endif
             }
 
             total_received_tuples += bufferSizeInTuples;
@@ -765,7 +779,9 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                     hashTable, windowSizeInSec, campaingCnt, consumerID, rank, is_done, cInfos->bookKeeping, &exitConsumer);
 
             cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
+#ifdef DEBUG
             cout << "numanode=" << outerThread << " set buffer ready again" << endl;
+#endif
         }
         else
         {
@@ -797,8 +813,9 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     {
 //        cout << "checking i=" << index << endl;
         if (cInfos->buffer_ready_sign[index] == BUFFER_USED_FLAG) {
+#ifdef DEBUG
             cout << "numanode=" << outerThread << " Check Iter -- Received buffer at index=" << index << endl;
-
+#endif
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
             consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers[index]->getData(), bufferSizeInTuples,
@@ -868,7 +885,7 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
         }
         memcpy((RegionToken*)tokenbuffer->getData() + i, connectInfo->region_tokens[i], sizeof(RegionToken));
     }
-    cout << s2.str() << endl;
+//    cout << s2.str() << endl;
 //    if(outer_thread_id == 0)
 //    {
 //        cout << "0=" << s2.str() << endl;
@@ -973,7 +990,7 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
         }
     }
 
-   cout << s2.str() << endl;
+//   cout << s2.str() << endl;
 
    stringstream ss;
    ss  << "Producer Thread #" << outer_thread_id  << ": on CPU " << sched_getcpu() << " nodes=";
