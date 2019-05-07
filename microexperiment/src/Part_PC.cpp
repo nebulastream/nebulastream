@@ -1179,7 +1179,7 @@ int main(int argc, char *argv[])
 
     size_t numaNodes = 2;
     size_t numberOfNodes = 4;
-    string ip = "192.168.5.10";
+    string ip = "";
 
     desc.add_options()
         ("help", "Print help messages")
@@ -1254,8 +1254,8 @@ int main(int argc, char *argv[])
         cout << "starting " << numaNodes << " threads to connect node 1" << endl;
         #pragma omp parallel num_threads(numaNodes)
         {
-            #pragma omp critical
-            {
+//            #pragma omp critical
+//            {
                 cout << "thread in critical = " << omp_get_thread_num() << endl;
                 if(numberOfConnections == 1)
                 {
@@ -1294,7 +1294,7 @@ int main(int argc, char *argv[])
                 cout << "ht numa=" << numa_node << " outthread=" << omp_get_thread_num() << endl;
             }
             cout << "thread out of critical = " << omp_get_thread_num() << endl;
-        }//end of pragma
+//        }//end of pragma
 
         cout << "starting " << numaNodes << " threads to connect node 2" << endl;
         #pragma omp parallel for num_threads(numaNodes)
