@@ -746,7 +746,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             if(cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
             {
                     std::atomic_fetch_add(&exitConsumer, size_t(1));
-                    cout << "DONE BUFFER FOUND at idx"  << index << " numanode=" << outerThread << endl;
+                    cout << "numanode=" << outerThread << " DONE BUFFER FOUND at idx"  << index << " numanode=" << outerThread << endl;
                     is_done = true;
             }
             else
@@ -763,7 +763,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
                     hashTable, windowSizeInSec, campaingCnt, consumerID, rank, is_done, cInfos->bookKeeping, &exitConsumer);
 
             cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
-            cout << " set buffer ready again" << endl;
+            cout << "numanode=" << outerThread << " set buffer ready again" << endl;
         }
         else
         {
@@ -795,7 +795,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     {
 //        cout << "checking i=" << index << endl;
         if (cInfos->buffer_ready_sign[index] == BUFFER_USED_FLAG) {
-            cout << "Check Iter -- Received buffer at index=" << index << endl;
+            cout << "numanode=" << outerThread << " Check Iter -- Received buffer at index=" << index << endl;
 
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
