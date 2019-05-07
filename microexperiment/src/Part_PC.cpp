@@ -1016,7 +1016,7 @@ int main(int argc, char *argv[])
         ("numberOfConnections", po::value<size_t>(&numberOfConnections)->default_value(numberOfConnections), "numberOfConnections")
         ("numberOfNodes", po::value<size_t>(&numberOfNodes)->default_value(numberOfNodes), "numberOfConnections")
         ("numaNodes", po::value<size_t>(&numaNodes)->default_value(numaNodes), "numaNodes")
-        ("ip", po::value<string>(&ip)->default_value(ip), "ip");
+        ("ip", po::value<string>(&ip)->default_value(ip), "ip")
         ("ip2", po::value<string>(&ip2)->default_value(ip2), "ip2");
 
 //        ;
