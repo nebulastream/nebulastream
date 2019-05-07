@@ -1450,7 +1450,7 @@ int main(int argc, char *argv[])
 
                  runProducerOneOnOneFourNodes(recs, bufferSizeInTups, bufferProcCnt/numberOfProducer, &producesTuples[outer_thread_id][i],
                          &producedBuffers[outer_thread_id][i], &readInputTuples[outer_thread_id][i], &noFreeEntryFound[outer_thread_id][i], startIdx, endIdx,
-                         numberOfProducer/numaNodes, conInfos, outer_thread_id, numberOfNodes);
+                         numberOfProducer, conInfos, outer_thread_id, numberOfNodes);
              }
 
 
