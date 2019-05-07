@@ -473,19 +473,19 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
                         receive_buffer_index*sizeof(size_t), BUFFER_READY_FLAG, BUFFER_BEING_PROCESSED_FLAG, nullptr);
                 if(prevValue != BUFFER_READY_FLAG)
                 {
-                    cout << "buffer already taken with val=" << prevValue << " connection=" << offsetConnectionEven << endl;
+                    cout << "numanode=" << outerThread << " buffer already taken with val=" << prevValue << " connection=" << offsetConnectionEven << endl;
                     continue;
                 }
                 else
                 {
-                    cout << "found first idx=" << receive_buffer_index << " connection=" << offsetConnectionEven << endl;
+                    cout << "numanode=" << outerThread << " found first idx=" << receive_buffer_index << " connection=" << offsetConnectionEven << endl;
                     idxConEven = receive_buffer_index;
                     break;
                 }
             }
             else
             {
-                cout << " val at idx=" << receive_buffer_index<< " is " << cInfos[offsetConnectionEven]->buffer_ready_sign[receive_buffer_index] << endl;
+                cout << "numanode=" << outerThread << " val at idx=" << receive_buffer_index<< " is " << cInfos[offsetConnectionEven]->buffer_ready_sign[receive_buffer_index] << endl;
             }
 
             if(receive_buffer_index +1 > endIdx)
@@ -507,12 +507,12 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
                         receive_buffer_index*sizeof(size_t), BUFFER_READY_FLAG, BUFFER_BEING_PROCESSED_FLAG, nullptr);
                 if(prevValue != BUFFER_READY_FLAG)
                 {
-                    cout << "buffer already taken with val=" << prevValue  << " connection=" << offsetConnectionOdd << endl;
+                    cout << "numanode=" << outerThread << " buffer already taken with val=" << prevValue  << " connection=" << offsetConnectionOdd << endl;
                     continue;
                 }
                 else
                 {
-                    cout << "found second idx=" << receive_buffer_index  << " connection=" << offsetConnectionOdd << endl;
+                    cout << "numanode=" << outerThread << " found second idx=" << receive_buffer_index  << " connection=" << offsetConnectionOdd << endl;
                     idxConOdd = receive_buffer_index;
                     break;
                 }
@@ -527,7 +527,7 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
         readTuples += produce_window_mem_two_buffers(records, bufferSizeInTuples, cInfos[offsetConnectionEven]->sendBuffers[idxConEven]->tups, cInfos[offsetConnectionOdd]->sendBuffers[idxConOdd]->tups,
                 tupCntBuffEven, tupCntBuffOdd);
 
-        cout << "buffer fill finsihed bufferEven=" << *tupCntBuffEven<< " bufferOdd=" << *tupCntBuffOdd << endl;
+        cout << "numanode=" << outerThread << " buffer fill finsihed bufferEven=" << *tupCntBuffEven<< " bufferOdd=" << *tupCntBuffOdd << endl;
 
         cInfos[offsetConnectionEven]->sendBuffers[idxConEven]->numberOfTuples = *tupCntBuffEven;
         cInfos[offsetConnectionOdd]->sendBuffers[idxConOdd]->numberOfTuples = *tupCntBuffOdd;
@@ -546,7 +546,7 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
                 cInfos[offsetConnectionOdd]->region_tokens[idxConOdd],
                 cInfos[offsetConnectionOdd]->sendBuffers[idxConOdd]->requestToken);
 
-        cout << " buffer sending finsihed" << endl;
+        cout << "numanode=" << outerThread << " buffer sending finsihed" << endl;
         total_buffer_send += 2;
 
         if (total_buffer_send < bufferProcCnt)//a new buffer will be send next
@@ -558,7 +558,7 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
                     idxConEven*sizeof(size_t), idxConEven*sizeof(size_t), sizeof(size_t));
             cInfos[offsetConnectionOdd]->con->write_blocking(cInfos[offsetConnectionOdd]->sign_buffer, cInfos[offsetConnectionOdd]->sign_token, idxConOdd*sizeof(size_t),
                     idxConOdd*sizeof(size_t), sizeof(size_t));
-            cout << " reset buffer" << endl;
+            cout << "numanode=" << outerThread << " reset buffer" << endl;
         }
         else//finished processing
         {
@@ -570,11 +570,11 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
 
                 cInfos[offsetConnectionEven]->con->write_blocking(cInfos[offsetConnectionEven]->sign_buffer,
                         cInfos[offsetConnectionEven]->sign_token, idxConEven*sizeof(size_t), idxConEven*sizeof(size_t), sizeof(uint64_t));
-                cout << "Sent last tuples and marked as BUFFER_USED_SENDER_DONE at index=" << idxConEven << " numanode=" << outerThread << " con=" << offsetConnectionEven << endl;
+                cout << "numanode=" << outerThread << " Sent last tuples and marked as BUFFER_USED_SENDER_DONE at index=" << idxConEven << " numanode=" << outerThread << " con=" << offsetConnectionEven << endl;
 
                 cInfos[offsetConnectionOdd]->con->write_blocking(cInfos[offsetConnectionOdd]->sign_buffer, cInfos[offsetConnectionOdd]->sign_token,
                         idxConOdd*sizeof(size_t), idxConOdd*sizeof(size_t), sizeof(uint64_t));
-                cout << "Sent last tuples and marked as BUFFER_USED_SENDER_DONE at index=" << idxConOdd << " numanode=" << outerThread << " con=" << offsetConnectionOdd << endl;
+                cout << "numanode=" << outerThread << " Sent last tuples and marked as BUFFER_USED_SENDER_DONE at index=" << idxConOdd << " numanode=" << outerThread << " con=" << offsetConnectionOdd << endl;
             }
             else
             {
@@ -586,7 +586,7 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
                 cInfos[offsetConnectionOdd]->con->write(cInfos[offsetConnectionOdd]->sign_buffer,
                         cInfos[offsetConnectionOdd]->sign_token, idxConOdd*sizeof(size_t), idxConOdd*sizeof(size_t), sizeof(uint64_t));
 
-                cout << " prod finished" << endl;
+                cout << "numanode=" << outerThread << " prod finished" << endl;
             }
             break;
         }
@@ -1420,7 +1420,7 @@ int main(int argc, char *argv[])
              size_t endIdx = (inner_thread_id+1)*share;
              record* recs = conInfos[outer_thread_id]->records[inner_thread_id];
 
-#ifdef DEBUG
+//#ifdef DEBUG
              #pragma omp critical
              {
                  std::cout
@@ -1437,7 +1437,7 @@ int main(int argc, char *argv[])
                 << " share=" << share
                 << std::endl;
              }
-#endif
+//#endif
 
              if(numberOfNodes == 2)
              {
