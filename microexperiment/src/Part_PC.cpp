@@ -545,83 +545,11 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
             if(bookKeeper[current_window].compare_and_swap(timeStamp, lastTimeStamp) == lastTimeStamp)
             {
                     htReset++;
-//                    #pragma omp critical
-//                    {
-//                        cout << "windowing with rank=" << rank << " consumerID=" << consumerID << "ts=" << timeStamp
-//                            << " lastts=" << lastTimeStamp << " thread=" << omp_get_thread_num()
-//                            << " i=" << i  << " done=" << done << " exit=" << *exitConsumer << endl;
-//                    }
-                    if(rank == 3 && !done && std::atomic_load(exitConsumer) != 1)
-                    {
-//                        memcpy(sharedHT_buffer[consumerID]->getData(), hashTable[current_window], sizeof(std::atomic<size_t>) * campaingCnt);
-//
-////                        cout << "send blocking id=" << consumerID  << endl;
-//                        sharedHTConnection->send(sharedHT_buffer[consumerID]);//send_blocking
-//                        cout << "send blocking finished " << endl;
-                    }
-                    else if(rank == 1 && !done && std::atomic_load(exitConsumer) != 1)//this one merges
-                    {
-//                        cout << "merging local stuff for consumerID=" << consumerID << endl;
-                        #pragma omp parallel for num_threads(20)
-                        for(size_t i = 0; i < campaingCnt; i++)
-                        {
-                            outputTable[i] += hashTable[current_window][i];
-                        }
-//                        cout << "post rec id " << consumerID << " ranK=" << rank << " thread=" << omp_get_thread_num() << "done=" << done<< endl;
-                        //TODO: DO THIS AS LAMDA FUNC CALL
 
-//                        buffer_threads.push_back(std::make_shared<std::thread>([&sharedHTConnection, consumerID, exitConsumer,
-//                          sharedHT_buffer, outputTable, campaingCnt] {
-//                            cout << "run buffer thread" << endl;
-//                            ReceiveElement receiveElement;
-//                            receiveElement.buffer = sharedHT_buffer[consumerID];
-//                            sharedHTConnection->post_receive(receiveElement.buffer);
-//                            while(!sharedHTConnection->check_receive(receiveElement) && std::atomic_load(exitConsumer) != 1)
-//                            {
-//    //                            cout << "wait receive " << std::atomic_load(exitConsumer)<< endl;
-//    //                            sleep(1);
-//                            }
-//                            cout << "revceived" << endl;
-//    //                        sharedHTConnection->post_and_receive_blocking(sharedHT_buffer[consumerID]);
-//
-//    //                        cout << "got rec" << endl;
-//                            std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[consumerID]->getData();
-//
-//                            #pragma omp parallel for num_threads(20)
-//                            for(size_t i = 0; i < campaingCnt; i++)
-//                            {
-//                                outputTable[i] += tempTable[i];
-//                            }
-//
-//
-//                        }));
-#if 0
-                        ReceiveElement receiveElement;
-                        receiveElement.buffer = sharedHT_buffer[consumerID];
-                        sharedHTConnection->post_receive(receiveElement.buffer);
-                        while(!sharedHTConnection->check_receive(receiveElement) && std::atomic_load(exitConsumer) != 1)
-                        {
-//                            cout << "wait receive " << std::atomic_load(exitConsumer)<< endl;
-//                            sleep(1);
-                        }
-                        cout << "revceived" << endl;
-//                        sharedHTConnection->post_and_receive_blocking(sharedHT_buffer[consumerID]);
-
-//                        cout << "got rec" << endl;
-                        std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[consumerID]->getData();
-
-                        #pragma omp parallel for num_threads(20)
-                        for(size_t i = 0; i < campaingCnt; i++)
-                        {
-                            outputTable[i] += tempTable[i];
-                        }
-#endif
-                    }//end of else
-            }//end of if to change
-            current_window = current_window == 0 ? 1 : 0;
-            lastTimeStamp = timeStamp;
-            windowSwitchCnt++;
-
+                    current_window = current_window == 0 ? 1 : 0;
+                    lastTimeStamp = timeStamp;
+                    windowSwitchCnt++;
+            }
         }//end of if window is new
 //        }//end of for
         uint64_t bucketPos = (buffer[i].campaign_id * 789 + 321) % campaingCnt;
@@ -691,7 +619,8 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         if(index > endIdx)
             index = startIdx;
 
-        if(exitConsumer == 1)
+//        if(exitConsumer == 1)
+        if(std::atomic_load(&exitConsumer) == 1)
         {
 //            *consumedTuples = total_received_tuples;
 //            *consumedBuffers = total_received_buffers;
