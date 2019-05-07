@@ -494,6 +494,7 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
             }
         }//end of for
         //alloc second buffer
+        cout << " read idx for even con " << offsetConnectionOdd <<  endl;
         for(size_t receive_buffer_index = startIdx; receive_buffer_index < endIdx && total_buffer_send < bufferProcCnt; receive_buffer_index++)
         {
             if(receive_buffer_index == startIdx)//read buffers
@@ -524,9 +525,8 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
         }//end of for
         size_t* tupCntBuffEven = new size_t(0);
         size_t* tupCntBuffOdd = new size_t(0);
-        readTuples += produce_window_mem_two_buffers(records, bufferSizeInTuples, cInfos[offsetConnectionEven]->sendBuffers[idxConEven]->tups, cInfos[offsetConnectionOdd]->sendBuffers[idxConOdd]->tups,
-                tupCntBuffEven, tupCntBuffOdd);
-
+        readTuples += produce_window_mem_two_buffers(records, bufferSizeInTuples, cInfos[offsetConnectionEven]->sendBuffers[idxConEven]->tups,
+                cInfos[offsetConnectionOdd]->sendBuffers[idxConOdd]->tups, tupCntBuffEven, tupCntBuffOdd);
         cout << "numanode=" << outerThread << " buffer fill finsihed bufferEven=" << *tupCntBuffEven<< " bufferOdd=" << *tupCntBuffOdd << endl;
 
         cInfos[offsetConnectionEven]->sendBuffers[idxConEven]->numberOfTuples = *tupCntBuffEven;
@@ -539,7 +539,8 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
         tupleSendToC2 += *tupCntBuffOdd;
         bufferSendToC2++;
 
-        cInfos[offsetConnectionEven]->con->write(cInfos[offsetConnectionEven]->sendBuffers[idxConEven]->send_buffer, cInfos[offsetConnectionEven]->region_tokens[idxConEven],
+        cInfos[offsetConnectionEven]->con->write(cInfos[offsetConnectionEven]->sendBuffers[idxConEven]->send_buffer,
+                cInfos[offsetConnectionEven]->region_tokens[idxConEven],
                 cInfos[offsetConnectionEven]->sendBuffers[idxConEven]->requestToken);
 
         cInfos[offsetConnectionOdd]->con->write(cInfos[offsetConnectionOdd]->sendBuffers[idxConOdd]->send_buffer,
@@ -556,7 +557,8 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
 
             cInfos[offsetConnectionEven]->con->write_blocking(cInfos[offsetConnectionEven]->sign_buffer, cInfos[offsetConnectionEven]->sign_token,
                     idxConEven*sizeof(size_t), idxConEven*sizeof(size_t), sizeof(size_t));
-            cInfos[offsetConnectionOdd]->con->write_blocking(cInfos[offsetConnectionOdd]->sign_buffer, cInfos[offsetConnectionOdd]->sign_token, idxConOdd*sizeof(size_t),
+            cInfos[offsetConnectionOdd]->con->write_blocking(cInfos[offsetConnectionOdd]->sign_buffer,
+                    cInfos[offsetConnectionOdd]->sign_token, idxConOdd*sizeof(size_t),
                     idxConOdd*sizeof(size_t), sizeof(size_t));
             cout << "numanode=" << outerThread << " reset buffer" << endl;
         }
@@ -1152,7 +1154,6 @@ int main(int argc, char *argv[])
     size_t bufferSizeInTups = 10;
     size_t numberOfConnections = 1;
     NUM_SEND_BUFFERS = 10;
-    size_t num_send_buffer = 10;
 
     size_t numaNodes = 2;
     size_t numberOfNodes = 4;
@@ -1165,7 +1166,7 @@ int main(int argc, char *argv[])
         ("numberOfConsumer", po::value<size_t>(&numberOfConsumer)->default_value(numberOfConsumer), "numberOfConsumer")
         ("bufferProcCnt", po::value<size_t>(&bufferProcCnt)->default_value(bufferProcCnt), "bufferProcCnt")
         ("bufferSizeInTups", po::value<size_t>(&bufferSizeInTups)->default_value(bufferSizeInTups), "bufferSizeInTups")
-        ("sendBuffers", po::value<size_t>(&num_send_buffer)->default_value(num_send_buffer), "sendBuffers")
+        ("sendBuffers", po::value<size_t>(&NUM_SEND_BUFFERS)->default_value(NUM_SEND_BUFFERS), "sendBuffers")
         ("numberOfConnections", po::value<size_t>(&numberOfConnections)->default_value(numberOfConnections), "numberOfConnections")
         ("numberOfNodes", po::value<size_t>(&numberOfNodes)->default_value(numberOfNodes), "numberOfConnections")
         ("numaNodes", po::value<size_t>(&numaNodes)->default_value(numaNodes), "numaNodes")
