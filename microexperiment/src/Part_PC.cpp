@@ -532,7 +532,7 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
 }
 
 size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
-        size_t campaingCnt, size_t consumerID, size_t rank, bool done, tbb::atomic<size_t>* bookKeeper, std::atomic<size_t>* exitConsumer) {
+        size_t campaingCnt, size_t consumerID, size_t rank, bool done, tbb::atomic<size_t>* bookKeeper) {
     size_t consumed = 0;
     size_t windowSwitchCnt = 0;
     size_t htReset = 0;
@@ -604,7 +604,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             cout << "Thread=" << outerThread << "/" << omp_get_thread_num() << "/" << outerThread<< " Received buffer at index=" << index << endl;
 #endif
             consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers[index]->getData(), bufferSizeInTuples,
-                    hashTable, windowSizeInSec, campaingCnt, consumerID, rank, is_done, cInfos->bookKeeping, &exitConsumer);
+                    hashTable, windowSizeInSec, campaingCnt, consumerID, rank, is_done, cInfos->bookKeeping);
 
             cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
 #ifdef DEBUG
@@ -627,11 +627,9 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 //            *consumedTuples = total_received_tuples;
 //            *consumedBuffers = total_received_buffers;
 //#ifdef DEBUG
-
-            stringstream ss;
+#pragma omp critical
             cout << "before out Thread=" << outerThread << "/" << omp_get_thread_num() << " Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
                             << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
-            cout << ss.str();
 //#endif
             break;
         }
@@ -648,7 +646,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
             consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers[index]->getData(), bufferSizeInTuples,
-                                hashTable, windowSizeInSec, campaingCnt, consumerID, rank, /*is_done*/ true, cInfos->bookKeeping, &exitConsumer);
+                                hashTable, windowSizeInSec, campaingCnt, consumerID, rank, /*is_done*/ true, cInfos->bookKeeping);
             cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
         }
     }
@@ -1252,7 +1250,7 @@ int main(int argc, char *argv[])
     Timestamp begin = getTimestamp();
     if(rank % 2 == 0)
     {
-    #pragma omp parallel num_threads(numaNodes)//nodes
+    #pragma omp parallel num_threads(numaNodes)//producer
        {
           auto outer_thread_id = omp_get_thread_num();
           numa_run_on_node(outer_thread_id);
@@ -1313,7 +1311,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-#pragma omp parallel num_threads(numaNodes)
+#pragma omp parallel num_threads(numaNodes)//consumer
        {
           auto outer_thread_id = omp_get_thread_num();
           numa_run_on_node(outer_thread_id);
