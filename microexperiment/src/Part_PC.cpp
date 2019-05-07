@@ -1003,6 +1003,7 @@ int main(int argc, char *argv[])
     size_t numaNodes = 2;
     size_t numberOfNodes = 4;
     string ip = "";
+    string ip2 = "";
 
     desc.add_options()
         ("help", "Print help messages")
@@ -1016,6 +1017,8 @@ int main(int argc, char *argv[])
         ("numberOfNodes", po::value<size_t>(&numberOfNodes)->default_value(numberOfNodes), "numberOfConnections")
         ("numaNodes", po::value<size_t>(&numaNodes)->default_value(numaNodes), "numaNodes")
         ("ip", po::value<string>(&ip)->default_value(ip), "ip");
+        ("ip2", po::value<string>(&ip2)->default_value(ip2), "ip2");
+
 //        ;
 //
     po::variables_map vm;
@@ -1045,6 +1048,7 @@ int main(int argc, char *argv[])
             << " numberOfNodes=" << numberOfNodes
             << " numaNodes=" << numaNodes
             << " ip=" << ip
+            << " ip2=" << ip2
             << endl;
 
 
@@ -1072,7 +1076,7 @@ int main(int argc, char *argv[])
 
     omp_set_nested(1);
 
-    if(rank == 0)
+    if(rank % 2 == 0)
     {
         cout << "starting " << numaNodes << " threads to connect node 1" << endl;
         #pragma omp parallel num_threads(numaNodes)
@@ -1169,37 +1173,60 @@ int main(int argc, char *argv[])
     if(rank == 1)
     {
 //        #pragma omp parallel num_threads(numaNodes)
+        cout << "starting " << numaNodes << " threads to connect node 1" << endl;
         #pragma omp parallel for num_threads(numaNodes)
         for(size_t i = 0; i < numaNodes; i++)
         {
-//            #pragma omp critical
-//            {
-                cout << "thread in critical = " << omp_get_thread_num() << endl;
-                if(numberOfConnections == 1)
-                {
-                    size_t numaNode = omp_get_thread_num();
-//                    size_t connectionID = omp_get_thread_num() * 2;
-                    if(numaNode == 0)
-                    {
-                       SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
-                       connections[numaNode] = new VerbsConnection(&info);
-                       cout << "connection established rank 0 and 1 on numa node " << numaNode  << endl;
-                   }
-                   else
-                   {
-                       SimpleInfoProvider info(target_rank, "mlx5_1", 1, PORT2, ip);//was 3
-                       connections[numaNode] = new VerbsConnection(&info);
-                       cout << "connection established rank 0 and 1 on numa node " << numaNode << endl;
-                   }
+            size_t numaNode = omp_get_thread_num();
+            size_t connectionID = omp_get_thread_num() * 2;
 
-                    conInfos[numaNode] = setupRDMAConsumer(connections[numaNode], bufferSizeInTups, campaingCnt);
-                    conInfos[numaNode]->con = connections[numaNode];
-                }
-                else
-                    assert(0);
-//            }//end of critical
+            cout << "thread in critical = " << omp_get_thread_num() << endl;
+//                    size_t connectionID = omp_get_thread_num() * 2;
+            if(numaNode == 0)
+            {
+               SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
+               connections[connectionID] = new VerbsConnection(&info);
+               cout << "connection established rank 0 and 1 on numa node " << numaNode  << endl;
+           }
+           else
+           {
+               SimpleInfoProvider info(target_rank, "mlx5_1", 1, PORT2, ip);//was 3
+               connections[connectionID] = new VerbsConnection(&info);
+               cout << "connection established rank 0 and 1 on numa node " << numaNode << endl;
+           }
+
+            conInfos[connectionID] = setupRDMAConsumer(connections[connectionID], bufferSizeInTups, campaingCnt);
+            conInfos[connectionID]->con = connections[connectionID];
+        }//end of for
             cout << "thread out of critical = " << omp_get_thread_num() << endl;
+
+        cout << "starting " << numaNodes << " threads to connect node 2" << endl;
+        #pragma omp parallel for num_threads(numaNodes)
+        for(size_t i = 0; i < numaNodes; i++)
+        {
+            size_t numaNode = omp_get_thread_num();
+            size_t connectionID = omp_get_thread_num() * 2;
+
+            cout << "thread in critical = " << omp_get_thread_num() << endl;
+//                    size_t connectionID = omp_get_thread_num() * 2;
+            if(numaNode == 0)
+            {
+               SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT1, ip2);//was 3
+               connections[connectionID] = new VerbsConnection(&info);
+               cout << "connection established rank 0 and 1 on numa node " << numaNode  << endl;
+            }
+            else
+            {
+               SimpleInfoProvider info(target_rank, "mlx5_1", 1, PORT2, ip2);//was 3
+               connections[connectionID] = new VerbsConnection(&info);
+               cout << "connection established rank 0 and 1 on numa node " << numaNode << endl;
+            }
+
+            conInfos[connectionID] = setupRDMAConsumer(connections[connectionID], bufferSizeInTups, campaingCnt);
+            conInfos[connectionID]->con = connections[connectionID];
         }
+
+        cout << "thread out of critical = " << omp_get_thread_num() << endl;
     }
     if(rank == 3)
     {
