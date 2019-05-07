@@ -1287,12 +1287,14 @@ int main(int argc, char *argv[])
 
                     if(numaNode == 0)
                     {
+                        cout << " waiting on port " << PORT3 << endl;
                         SimpleInfoProvider info(target_rank, "mlx5_2", 1, PORT3, ip);//was 3
                         connections[connectionID] = new VerbsConnection(&info);
                         cout << "connection established rank 0 and 3 on numa node " << numaNode  << " connectionID=" << connectionID << endl;
                     }
                     else
                     {
+                        cout << " waiting on port " << PORT4 << endl;
                         SimpleInfoProvider info(target_rank, "mlx5_3", 1, PORT4, ip);//was 3
                         connections[connectionID] = new VerbsConnection(&info);
                         cout << "connection established rank 0 and 3 on numa node " << numaNode  << " connectionID=" << connectionID << endl;
@@ -1365,12 +1367,14 @@ int main(int argc, char *argv[])
 //                    size_t connectionID = omp_get_thread_num() * 2;
                     if(numaNode == 0)
                     {
+                       cout << " connection on port " << PORT3 << endl;
                        SimpleInfoProvider info(target_rank, "mlx5_2", 1, PORT3, ip);//was 3
                        connections[numaNode] = new VerbsConnection(&info);
                        cout << "connection established rank 0 and 3 on numa node " << numaNode  << endl;
                    }
                    else
                    {
+                       cout << " connection on port " << PORT4 << endl;
                        SimpleInfoProvider info(target_rank, "mlx5_3", 1, PORT4, ip);//was 3
                        connections[numaNode] = new VerbsConnection(&info);
                        cout << "connection established rank 0 and 3 on numa node " << numaNode << endl;
