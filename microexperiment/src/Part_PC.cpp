@@ -1352,8 +1352,8 @@ int main(int argc, char *argv[])
         #pragma omp parallel for num_threads(numaNodes)
         for(size_t i = 0; i < numaNodes; i++)
         {
-            #pragma omp critical
-            {
+//            #pragma omp critical
+//            {
                 cout << "thread in critical = " << omp_get_thread_num() << endl;
                 if(numberOfConnections == 1)
                 {
@@ -1377,7 +1377,7 @@ int main(int argc, char *argv[])
                 }
                 else
                     assert(0);
-            }//end of critical
+//            }//end of critical
             cout << "thread out of critical = " << omp_get_thread_num() << endl;
         }
     }
@@ -1385,8 +1385,8 @@ int main(int argc, char *argv[])
     {
         #pragma omp parallel for num_threads(numaNodes)
         for(size_t i = 0; i < numaNodes; i++)        {
-            #pragma omp critical
-            {
+//            #pragma omp critical
+//            {
                 cout << "thread in critical = " << omp_get_thread_num() << endl;
                 if(numberOfConnections == 1)
                 {
@@ -1412,7 +1412,7 @@ int main(int argc, char *argv[])
                 }
                 else
                     assert(0);
-            }//end of critical
+//            }//end of critical
             cout << "thread out of critical = " << omp_get_thread_num() << endl;
         }
     }
