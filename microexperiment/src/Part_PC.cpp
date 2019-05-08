@@ -1299,6 +1299,7 @@ int main(int argc, char *argv[])
                 << " start=" << startIdx
                 << " endidx=" << endIdx
                 << " share=" << share
+                << " con=" << conInfos[0]->con
                 << std::endl;
              }
 //#endif
