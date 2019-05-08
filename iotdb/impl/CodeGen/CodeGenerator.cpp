@@ -300,7 +300,7 @@ bool C_CodeGenerator::generateCode(const DataSourcePtr& source, const PipelineCo
 bool C_CodeGenerator::generateCode(const PredicatePtr& pred, const PipelineContextPtr& context, std::ostream& out)
 {
 	
-	ExpressionStatmentPtr expr = pred.generateCode(this->code_);
+	//ExpressionStatmentPtr expr = pred.generateCode(this->code_);
 	
 
     return true;

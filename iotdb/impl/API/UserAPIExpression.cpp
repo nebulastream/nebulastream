@@ -19,7 +19,7 @@
 namespace iotdb
 {
 	
-	Predicate::Predicate(UserAPIBinaryExpression op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right, bool bracket = true) :
+	Predicate::Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right, bool bracket = false) :
 		_op(op),
 		_left(left),
 		_right(right),
@@ -29,21 +29,33 @@ namespace iotdb
 	UserAPIExpressionPtr Predicate::copy() const{
 		return std::make_shared<Predicate>(*this);
 	};
-	
-	bool Predicate::generateCode(GeneratedCode& code) const{
+
+
+	bool PredicateItem::attributeEquals(const AttributeFieldPtr& pAttribute){
+	    return (pAttribute->toString() == _attribute->toString());
+	}
+
+
+    const ExpressionStatmentPtr Predicate::generateCode(GeneratedCode& code) const{
 		//toDo: implement code-generation
-		return true;
+		return nullptr;
 	};
-	
-	bool PredicateItem::generateCode(GeneratedCode& code) const{
+
+
+
+    const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCode& code) const{
 		//toDo: implement code-generation
-		
-		
-		
-		code_.
+
 		if(_attribute){
-			
-			
+
+		    //toDo: Need an equals operator instead of true
+		    if(code.struct_decl_input_tuple.getField(_attribute->name) &&
+		            code.struct_decl_input_tuple.getField(_attribute->name)->getType() == _attribute->getDataType()){
+
+
+
+		        //_attribute->
+		    }
 			VariableDeclaration var_decl_i =
 				VariableDeclaration::create(createDataType(BasicType(INT32)), "i", createBasicTypeValue(BasicType(INT32), "0"));
 			VariableDeclaration var_decl_j =
@@ -53,25 +65,27 @@ namespace iotdb
 			VariableDeclaration var_decl_l =
 				VariableDeclaration::create(createDataType(BasicType(INT32)), "l", createBasicTypeValue(BasicType(INT32), "2"));
 
-    {
-        BinaryOperatorStatement bin_op(VarRefStatement(var_decl_i), PLUS_OP, VarRefStatement(var_decl_j));
-        std::cout << bin_op.getCode()->code_ << std::endl;
-        CodeExpressionPtr code = bin_op.addRight(PLUS_OP, VarRefStatement(var_decl_k)).getCode();
+            {
+                BinaryOperatorStatement bin_op(VarRefStatement(var_decl_i), PLUS_OP, VarRefStatement(var_decl_j));
+                std::cout << bin_op.getCode()->code_ << std::endl;
+                //CodeExpressionPtr code = bin_op.addRight(PLUS_OP, VarRefStatement(var_decl_k)).getCode();
 
-        std::cout << code->code_ << std::endl;
-    }
+                //std::cout << code->code_ << std::endl;
+            }
 		}
-		 
+		if(_value){
+            //code.
+		}
+		//ExpressionStatmentPtr temp;
 		
-		BinaryOperatorStatement()
-		
-		return true;
+		return nullptr;
 	};
 	
 	const std::string Predicate::toString() const{
 			std::stringstream stream;
 			if(_bracket) stream << "(";
-			stream << _left->toString() << UserAPIBinaryExpressionString.at(_op) << _right->toString();
+			stream << _left->toString() << ::iotdb::toString(_op) << _right->toString();
+			::iotdb::toString(_op);
 			if(_bracket) stream << ")";
 			return stream.str();
 		};
@@ -91,12 +105,9 @@ namespace iotdb
 			{
 				case PredicateItemMutation::ATTRIBUTE:
 					return _attribute->toString();
-					break;
 				case PredicateItemMutation::VALUE:
 					return _value->getCodeExpression()->code_;
-					break;
-			};
-			return "";
+			}
 		};
 
 	UserAPIExpressionPtr PredicateItem::copy() const{
@@ -105,58 +116,58 @@ namespace iotdb
 	
 	
 	Predicate operator == (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
-		return Predicate(UserAPIBinaryExpression::EQUALS, lhs.copy(), rhs.copy());
+		return Predicate(BinaryOperatorType::EQUAL_OP, lhs.copy(), rhs.copy());
 	};
 	Predicate operator != (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
-		return Predicate(UserAPIBinaryExpression::NOTEQUALS, lhs.copy(), rhs.copy());
+		return Predicate(BinaryOperatorType::UNEQUAL_OP, lhs.copy(), rhs.copy());
 	};
 	Predicate operator > (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
-		return Predicate(UserAPIBinaryExpression::BIGGER, lhs.copy(), rhs.copy());
+		return Predicate(BinaryOperatorType::GREATER_THEN_OP, lhs.copy(), rhs.copy());
 	};
 	Predicate operator < (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
-		return Predicate(UserAPIBinaryExpression::SMALLER, lhs.copy(), rhs.copy());
+		return Predicate(BinaryOperatorType::LESS_THEN_OP, lhs.copy(), rhs.copy());
 	};
 	Predicate operator >= (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
-		return Predicate(UserAPIBinaryExpression::BIGGEREQUALS, lhs.copy(), rhs.copy());
+		return Predicate(BinaryOperatorType::GREATER_THEN_OP , lhs.copy(), rhs.copy());
 	};
 	Predicate operator <= (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
-		return Predicate(UserAPIBinaryExpression::SMALLEREQUALS, lhs.copy(), rhs.copy());
+		return Predicate(BinaryOperatorType::LESS_THEN_EQUAL_OP, lhs.copy(), rhs.copy());
 	};
 	Predicate operator + (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
-		return Predicate(UserAPIBinaryExpression::ADD, lhs.copy(), rhs.copy());
+		return Predicate(BinaryOperatorType::PLUS_OP, lhs.copy(), rhs.copy());
 	};
 	Predicate operator - (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
-		return Predicate(UserAPIBinaryExpression::SUB, lhs.copy(), rhs.copy());
+		return Predicate(BinaryOperatorType::MINUS_OP, lhs.copy(), rhs.copy());
 	};
 	Predicate operator * (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
-		return Predicate(UserAPIBinaryExpression::MUL, lhs.copy(), rhs.copy());
+		return Predicate(BinaryOperatorType::MULTIPLY_OP, lhs.copy(), rhs.copy());
 	};
 	Predicate operator / (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
-		return Predicate(UserAPIBinaryExpression::DIV, lhs.copy(), rhs.copy());
+		return Predicate(BinaryOperatorType::DIVISION_OP, lhs.copy(), rhs.copy());
 	};
 	Predicate operator % (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
-		return Predicate(UserAPIBinaryExpression::MOD, lhs.copy(), rhs.copy());
+		return Predicate(BinaryOperatorType::MODULO_OP, lhs.copy(), rhs.copy());
 	};
 	Predicate operator && (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
-		return Predicate(UserAPIBinaryExpression::LAZYAND, lhs.copy(), rhs.copy());
+		return Predicate(BinaryOperatorType::LOGICAL_AND_OP, lhs.copy(), rhs.copy());
 	};
 	Predicate operator || (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
-		return Predicate(UserAPIBinaryExpression::LAZYOR, lhs.copy(), rhs.copy());
+		return Predicate(BinaryOperatorType::LOGICAL_OR_OP, lhs.copy(), rhs.copy());
 	};
 	Predicate operator & (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
-		return Predicate(UserAPIBinaryExpression::AND, lhs.copy(), rhs.copy());
+		return Predicate(BinaryOperatorType::BITWISE_AND_OP, lhs.copy(), rhs.copy());
 	};
 	Predicate operator | (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
-		return Predicate(UserAPIBinaryExpression::OR, lhs.copy(), rhs.copy());
+		return Predicate(BinaryOperatorType::BITWISE_OR_OP, lhs.copy(), rhs.copy());
 	};
 	Predicate operator ^ (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
-		return Predicate(UserAPIBinaryExpression::XOR, lhs.copy(), rhs.copy());
+		return Predicate(BinaryOperatorType::BITWISE_XOR_OP, lhs.copy(), rhs.copy());
 	};
 	Predicate operator << (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
-		return Predicate(UserAPIBinaryExpression::LEFTSHIFT, lhs.copy(), rhs.copy());
+		return Predicate(BinaryOperatorType::BITWISE_LEFT_SHIFT_OP, lhs.copy(), rhs.copy());
 	};
 	Predicate operator >> (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
-		return Predicate(UserAPIBinaryExpression::RIGHTSHIFT, lhs.copy(), rhs.copy());
+		return Predicate(BinaryOperatorType::BITWISE_RIGHT_SHIFT_OP, lhs.copy(), rhs.copy());
 	};
 	
 } //end namespace iotdb
