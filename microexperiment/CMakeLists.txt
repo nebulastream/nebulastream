@@ -4,7 +4,7 @@ project(MAMPI CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 #fsanitize=address
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3 -Wall -ansi -pthread -lpthread -ltbb -fopenmp -lboost_program_options")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -ansi -pthread -lpthread -ltbb -fopenmp -lboost_program_options")
 #set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -pg -pthread -lpthread -ltbb -fopenmp -lboost_program_options")
 #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -pthread -lpthread -ltbb -fopenmp -lboost_program_options")
 
