@@ -1256,7 +1256,7 @@ int main(int argc, char *argv[])
     else
     {
        infinity::memory::Buffer* startBuffer = connections[0]->allocate_buffer(1);
-       cout << "waiting on master with connectID=" << 0 " rank=" << rank << endl;
+       cout << "waiting on master with connectID=" << 0 << " rank=" << rank << endl;
        connections[0]->post_and_receive_blocking(startBuffer);
        cout << "got finish buffer, start execution" << endl;
     }
