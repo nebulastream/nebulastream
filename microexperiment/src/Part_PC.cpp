@@ -1244,7 +1244,6 @@ int main(int argc, char *argv[])
     size_t readInputTuples[numaNodes][numberOfProducer/numaNodes] = {0};
 
     infinity::memory::Buffer* finishBuffer = connections[0]->allocate_buffer(1);
-    exit(0);
 
     if(rank == 0)
     {
@@ -1266,6 +1265,7 @@ int main(int argc, char *argv[])
        cout << "got finish buffer, start execution" << endl;
     }
     cout << "start processing " << endl;
+    exit(0);
 
     Timestamp begin = getTimestamp();
     if(rank % 2 == 0)
