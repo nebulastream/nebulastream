@@ -1095,7 +1095,8 @@ int main(int argc, char *argv[])
 
                     SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
                     connections[connectionID] = new VerbsConnection(&info);
-                    cout << "rank " << rank << ": connecting to" << target_rank << " on numa node " << numaNode  << " connectionID=" << connectionID << endl;
+                    cout << "rank=" << rank << ": connecting to" << ip
+                            << " on numa node " << numaNode  << " connectionID=" << connectionID << endl;
                 }
                 else
                 {
@@ -1103,7 +1104,8 @@ int main(int argc, char *argv[])
 
                     SimpleInfoProvider info(target_rank, "mlx5_1", 1, PORT2, ip);//was 3
                     connections[connectionID] = new VerbsConnection(&info);
-                    cout << "connection established rank " << rank << " and " << target_rank << " on numa node " << numaNode  << " connectionID=" << connectionID << endl;
+                    cout << "rank=" << rank << ": connecting to" << ip
+                                               << " on numa node " << numaNode  << " connectionID=" << connectionID << endl;
                 }
 
                 cout << "setup con numa node " << numaNode  << " connectionID=" << connectionID << endl;
