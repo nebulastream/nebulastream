@@ -1176,7 +1176,7 @@ int main(int argc, char *argv[])
 //        }//end of pragma
 
     }
-    else
+    else//rank 1 and 3
     {
         cout << "starting " << numaNodes << " threads to connect node 1" << endl;
         size_t firstPort = rank == 1 ? PORT1 : PORT3;
@@ -1193,14 +1193,16 @@ int main(int argc, char *argv[])
                cout << " connecting ip" << ip << " port=" <<  firstPort << " numaNode=" << numaNode << endl;
                SimpleInfoProvider info(target_rank, "mlx5_0", 1, firstPort, ip);//was 3
                connections[connectionID] = new VerbsConnection(&info);
-               cout << "connection established rank 0 and 1 on numa node " << numaNode  << endl;
+               cout << "rank=" << rank << ": connecting to" << ip
+                                           << " on numa node " << numaNode  << " connectionID=" << connectionID << endl;
            }
            else
            {
                cout << " connecting ip" << ip << " port=" <<  secondPort << " numaNode=" << numaNode << endl;
                SimpleInfoProvider info(target_rank, "mlx5_1", 1, secondPort, ip);//was 3
                connections[connectionID] = new VerbsConnection(&info);
-               cout << "connection established rank 0 and 1 on numa node " << numaNode << endl;
+               cout << "rank=" << rank << ": connecting to" << ip
+                                           << " on numa node " << numaNode  << " connectionID=" << connectionID << endl;
            }
 
             conInfos[connectionID] = setupRDMAConsumer(connections[connectionID], bufferSizeInTups, campaingCnt);
@@ -1221,14 +1223,16 @@ int main(int argc, char *argv[])
                cout << " connecting ip" << ip2 << " port=" <<  firstPort << " numaNode=" << numaNode << endl;
                SimpleInfoProvider info(target_rank, "mlx5_2", 1, firstPort, ip2);//was 3
                connections[connectionID] = new VerbsConnection(&info);
-               cout << "connection established rank 0 and 1 on numa node " << numaNode  << endl;
+               cout << "rank=" << rank << ": connecting to" << ip2
+                                           << " on numa node " << numaNode  << " connectionID=" << connectionID << endl;
             }
             else
             {
                cout << " connecting ip" << ip2 << " port=" <<  secondPort << " numaNode=" << numaNode << endl;
                SimpleInfoProvider info(target_rank, "mlx5_3", 1, secondPort, ip2);//was 3
                connections[connectionID] = new VerbsConnection(&info);
-               cout << "connection established rank 0 and 1 on numa node " << numaNode << endl;
+               cout << "rank=" << rank << ": connecting to" << ip2
+                                           << " on numa node " << numaNode  << " connectionID=" << connectionID << endl;
             }
 
             conInfos[connectionID] = setupRDMAConsumer(connections[connectionID], bufferSizeInTups, campaingCnt);
