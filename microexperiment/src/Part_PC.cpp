@@ -1403,7 +1403,7 @@ int main(int argc, char *argv[])
        if(rank == 1)
            connections[0]->send_blocking(finishBuffer);
        else
-           connections[1]->send_blocking(finishBuffer);
+           connections[0]->send_blocking(finishBuffer);
        cout << "buffer sending finished, shutdown "<< getTimestamp() << endl;
 
     }
