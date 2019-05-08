@@ -1087,19 +1087,19 @@ int main(int argc, char *argv[])
 
                 size_t numaNode = omp_get_thread_num();
                 size_t connectionID = omp_get_thread_num() * 2;
-                cout << "rank 0: connecting 0 and 1 on numa node " << numaNode << " connectionID=" << connectionID << endl;
+                cout << "rank " << rank << ": connecting to" << target_rank << " on numa node " << numaNode << " connectionID=" << connectionID << endl;
 
                 if(numaNode == 0)
                 {
                     SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
                     connections[connectionID] = new VerbsConnection(&info);
-                    cout << "connection established rank 0 and 1 on numa node " << numaNode  << " connectionID=" << connectionID << endl;
+                    cout << "rank " << rank << ": connecting to" << target_rank << " on numa node " << numaNode  << " connectionID=" << connectionID << endl;
                 }
                 else
                 {
                     SimpleInfoProvider info(target_rank, "mlx5_1", 1, PORT2, ip);//was 3
                     connections[connectionID] = new VerbsConnection(&info);
-                    cout << "connection established rank 0 and 1 on numa node " << numaNode  << " connectionID=" << connectionID << endl;
+                    cout << "connection established rank " << rank << " and " << target_rank << " on numa node " << numaNode  << " connectionID=" << connectionID << endl;
                 }
 
                 cout << "setup con numa node " << numaNode  << " connectionID=" << connectionID << endl;
@@ -1127,19 +1127,18 @@ int main(int argc, char *argv[])
 //            #pragma omp critical
 //            {
                 target_rank = 3;
-                cout << "thread in critical = " << omp_get_thread_num() << endl;
                 if(numberOfConnections == 1)
                 {
                     size_t numaNode = omp_get_thread_num();
                     size_t connectionID = (omp_get_thread_num() * 2) +1;
-                    cout << "rank 0: connecting 0 and 3 on numa node " << numaNode << " connectionID=" << connectionID << endl;
+                    cout << "rank " << rank << ": connecting to" << target_rank << " on numa node " << numaNode << " connectionID=" << connectionID << endl;
 
                     if(numaNode == 0)
                     {
                         cout << " waiting on port " << PORT3 << " numaNode=" << numaNode << endl;
                         SimpleInfoProvider info(target_rank, "mlx5_2", 1, PORT3, ip);//was 3
                         connections[connectionID] = new VerbsConnection(&info);
-                        cout << "connection established rank 0 and 3 on numa node " << numaNode  << " connectionID=" << connectionID << endl;
+                        cout << "rank " << rank << ": connecting to" << target_rank << " on numa node " << numaNode  << " connectionID=" << connectionID << endl;
                     }
                     else
                     {
@@ -1184,12 +1183,14 @@ int main(int argc, char *argv[])
 //                    size_t connectionID = omp_get_thread_num() * 2;
             if(numaNode == 0)
             {
+               cout << " connecting ip" << ip << " port=" <<  PORT1 << " numaNode=" << numaNode << endl;
                SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
                connections[connectionID] = new VerbsConnection(&info);
                cout << "connection established rank 0 and 1 on numa node " << numaNode  << endl;
            }
            else
            {
+               cout << " connecting ip" << ip << " port=" <<  PORT2 << " numaNode=" << numaNode << endl;
                SimpleInfoProvider info(target_rank, "mlx5_1", 1, PORT2, ip);//was 3
                connections[connectionID] = new VerbsConnection(&info);
                cout << "connection established rank 0 and 1 on numa node " << numaNode << endl;
@@ -1213,13 +1214,15 @@ int main(int argc, char *argv[])
 //                    size_t connectionID = omp_get_thread_num() * 2;
             if(numaNode == 0)
             {
-               SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT1, ip2);//was 3
+               cout << " connecting ip" << ip2 << " port=" <<  PORT1 << " numaNode=" << numaNode << endl;
+               SimpleInfoProvider info(target_rank, "mlx5_2", 1, PORT1, ip2);//was 3
                connections[connectionID] = new VerbsConnection(&info);
                cout << "connection established rank 0 and 1 on numa node " << numaNode  << endl;
             }
             else
             {
-               SimpleInfoProvider info(target_rank, "mlx5_1", 1, PORT2, ip2);//was 3
+               cout << " connecting ip" << ip2 << " port=" <<  PORT2 << " numaNode=" << numaNode << endl;
+               SimpleInfoProvider info(target_rank, "mlx5_3", 1, PORT2, ip2);//was 3
                connections[connectionID] = new VerbsConnection(&info);
                cout << "connection established rank 0 and 1 on numa node " << numaNode << endl;
             }
