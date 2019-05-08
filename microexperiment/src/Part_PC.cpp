@@ -1215,7 +1215,7 @@ int main(int argc, char *argv[])
         for(size_t i = 0; i < numaNodes; i++)
         {
             size_t numaNode = omp_get_thread_num();
-            size_t connectionID = omp_get_thread_num() * 2;
+            size_t connectionID = (omp_get_thread_num() * 2) +1;
 
             cout << "thread in critical = " << omp_get_thread_num() << endl;
             if(numaNode == 0)
