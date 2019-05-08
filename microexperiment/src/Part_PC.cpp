@@ -572,20 +572,24 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 
 void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples, size_t* consumedTuples, size_t* consumedBuffers,
-        size_t* consumerNoBufferFound,
-        size_t startIdx, size_t endIdx, ConnectionInfos* cInfos, size_t outerThread, size_t rank, size_t numberOfNodes)
+        size_t* consumerNoBufferFound, size_t startIdx, size_t endIdx, ConnectionInfos** cInfos, size_t outerThread, size_t rank, size_t numberOfNodes)
 {
+
     size_t total_received_tuples = 0;
     size_t total_received_buffers = 0;
     size_t index = startIdx;
     size_t noBufferFound = 0;
     size_t consumed = 0;
+
+    size_t idxOne = outerThread == 0 ? 0 : 2;
+    size_t idxTwo = outerThread == 0 ? 1 : 3;
+    size_t currentIdx = idxOne;
     bool is_done = numberOfNodes == 4 ? false : true;
     while(true)
     {
-        if (cInfos->buffer_ready_sign[index] == BUFFER_USED_FLAG || cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
+        if(cInfos[currentIdx]->buffer_ready_sign[index] == BUFFER_USED_FLAG || cInfos[currentIdx]->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
         {
-            if(cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
+            if(cInfos[currentIdx]->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
             {
                     std::atomic_fetch_add(&exitConsumer, size_t(1));
                     cout << "numanode=" << outerThread << " DONE BUFFER FOUND at idx"  << index << " numanode=" << outerThread << endl;
@@ -603,10 +607,10 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 #ifdef DEBUG
             cout << "Thread=" << outerThread << "/" << omp_get_thread_num() << "/" << outerThread<< " Received buffer at index=" << index << endl;
 #endif
-            consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers[index]->getData(), bufferSizeInTuples,
-                    hashTable, windowSizeInSec, campaingCnt, consumerID, rank, is_done, cInfos->bookKeeping);
+            consumed += runConsumerOneOnOne((Tuple*)cInfos[currentIdx]->recv_buffers[index]->getData(), bufferSizeInTuples,
+                    hashTable, windowSizeInSec, campaingCnt, consumerID, rank, is_done, cInfos[currentIdx]->bookKeeping);
 
-            cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
+            cInfos[currentIdx]->buffer_ready_sign[index] = BUFFER_READY_FLAG;
 #ifdef DEBUG
             cout << "numanode=" << outerThread << " set buffer ready again" << endl;
 #endif
@@ -619,18 +623,18 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         index++;
 
         if(index >= endIdx)
+        {
             index = startIdx;
+            currentIdx = currentIdx == idxOne ? idxTwo : idxOne;
+        }
 
-//        if(exitConsumer == 1)
         if(std::atomic_load(&exitConsumer) == 1)
         {
-//            *consumedTuples = total_received_tuples;
-//            *consumedBuffers = total_received_buffers;
-//#ifdef DEBUG
+#ifdef DEBUG
 #pragma omp critical
             cout << "before out Thread=" << outerThread << "/" << omp_get_thread_num() << " Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
                             << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
-//#endif
+#endif
             break;
         }
     }//end of while
@@ -639,15 +643,25 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     for(index = startIdx; index < endIdx; index++)//check again if some are there
     {
 //        cout << "checking i=" << index << endl;
-        if (cInfos->buffer_ready_sign[index] == BUFFER_USED_FLAG) {
+        if (cInfos[idxOne]->buffer_ready_sign[index] == BUFFER_USED_FLAG) {
 #ifdef DEBUG
             cout << "numanode=" << outerThread << " Check Iter -- Received buffer at index=" << index << endl;
 #endif
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
-            consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers[index]->getData(), bufferSizeInTuples,
-                                hashTable, windowSizeInSec, campaingCnt, consumerID, rank, /*is_done*/ true, cInfos->bookKeeping);
-            cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
+            consumed += runConsumerOneOnOne((Tuple*)cInfos[idxOne]->recv_buffers[index]->getData(), bufferSizeInTuples,
+                                hashTable, windowSizeInSec, campaingCnt, consumerID, rank, /*is_done*/ true, cInfos[idxOne]->bookKeeping);
+            cInfos[idxOne]->buffer_ready_sign[index] = BUFFER_READY_FLAG;
+        }
+        if (cInfos[idxTwo]->buffer_ready_sign[index] == BUFFER_USED_FLAG) {
+#ifdef DEBUG
+            cout << "numanode=" << outerThread << " Check Iter -- Received buffer at index=" << index << endl;
+#endif
+            total_received_tuples += bufferSizeInTuples;
+            total_received_buffers++;
+            consumed += runConsumerOneOnOne((Tuple*)cInfos[idxTwo]->recv_buffers[index]->getData(), bufferSizeInTuples,
+                                hashTable, windowSizeInSec, campaingCnt, consumerID, rank, /*is_done*/ true, cInfos[idxTwo]->bookKeeping);
+            cInfos[idxTwo]->buffer_ready_sign[index] = BUFFER_READY_FLAG;
         }
     }
 
@@ -656,7 +670,8 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     *consumerNoBufferFound = noBufferFound;
     cout << "Thread=" << omp_get_thread_num()<< "/" << outerThread << " Done Receiving a total of " << total_received_tuples
             << " tuples and " << total_received_buffers << " buffers"
-                << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
+                << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << " idxOne=" << idxOne << " idxTwo="
+                << idxTwo<< endIdx << endl;
 }
 
 
@@ -1364,7 +1379,7 @@ int main(int argc, char *argv[])
 //#endif
              runConsumerNew(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, outer_thread_id, numberOfProducer , bufferSizeInTups,
                      &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
-                     endIdx, conInfos[outer_thread_id], outer_thread_id, rank, numberOfNodes);
+                     endIdx, conInfos, outer_thread_id, rank, numberOfNodes);
 //             printSingleHT(conInfos[outer_thread_id]->hashTable[0], campaingCnt);
 //                 printHT(conInfos[outer_thread_id]->hashTable, campaingCnt, outer_thread_id);
           }
