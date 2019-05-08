@@ -1247,10 +1247,12 @@ int main(int argc, char *argv[])
 
     if(rank % 2 ==  0)
     {
+        size_t offSet = rank == 0 ? 0 : 2;
+
         cout << "master finished setup , sending start buffer for rank=" << rank << endl;
-        cout << "send startbuffer on connection=" << 0 << endl;
-        infinity::memory::Buffer* startBuffer = connections[0]->allocate_buffer(1);
-        connections[0]->send_blocking(startBuffer);
+        cout << "send startbuffer on connection=" << offSet << endl;
+        infinity::memory::Buffer* startBuffer = connections[offSet]->allocate_buffer(1);
+        connections[offSet]->send_blocking(startBuffer);
         cout << "buffer sending finished, starting "<< getTimestamp() << endl;
     }
     else
