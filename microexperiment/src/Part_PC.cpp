@@ -1163,14 +1163,6 @@ int main(int argc, char *argv[])
                 else
                     assert(0);
 
-//                conInfos[omp_get_thread_num()]->records = new record*[numberOfProducer];//TODO: is this still neccesary?
-//                for(size_t i = 0; i < numberOfProducer; i++)
-//                {
-//                    conInfos[omp_get_thread_num()]->records[i] = generateTuplesOneArray(numberOfProducer, campaingCnt);
-//                }
-//                int numa_node = -1;
-//                get_mempolicy(&numa_node, NULL, 0, (void*)conInfos[omp_get_thread_num()]->records[0], MPOL_F_NODE | MPOL_F_ADDR);
-//                cout << "ht numa=" << numa_node << " outthread=" << omp_get_thread_num() << endl;
             }
             cout << "thread out of critical = " << omp_get_thread_num() << endl;
 //        }//end of pragma
@@ -1207,6 +1199,7 @@ int main(int argc, char *argv[])
 
             conInfos[connectionID] = setupRDMAConsumer(connections[connectionID], bufferSizeInTups, campaingCnt);
             conInfos[connectionID]->con = connections[connectionID];
+
         }//end of for
             cout << "thread out of critical = " << omp_get_thread_num() << endl;
 
@@ -1271,7 +1264,6 @@ int main(int argc, char *argv[])
        cout << "got finish buffer, start execution" << endl;
     }
     cout << "start processing " << endl;
-    exit(0);
 
     Timestamp begin = getTimestamp();
     if(rank % 2 == 0)
