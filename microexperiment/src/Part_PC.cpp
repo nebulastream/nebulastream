@@ -1250,7 +1250,7 @@ int main(int argc, char *argv[])
 
     if(rank % 2 ==  0)
     {
-        size_t offSet = rank == 0 ? 0 : 2;
+        size_t offSet = rank == 0 ? 0 : 1;
 
         cout << "master finished setup , sending start buffer for rank=" << rank << endl;
         cout << "send startbuffer on connection=" << offSet << endl;
@@ -1260,7 +1260,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        size_t offSet = rank == 1 ? 0 : 2;
+       size_t offSet = rank == 1 ? 0 : 1;
        infinity::memory::Buffer* startBuffer = connections[offSet]->allocate_buffer(1);
        cout << "waiting on master with connectID=" << offSet << " rank=" << rank << endl;
        connections[offSet]->post_and_receive_blocking(startBuffer);
