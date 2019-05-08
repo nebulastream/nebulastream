@@ -1245,23 +1245,19 @@ int main(int argc, char *argv[])
 
     infinity::memory::Buffer* finishBuffer = connections[0]->allocate_buffer(1);
 
-    if(rank == 0)
+    if(rank % 2 ==  0)
     {
-        cout << "master finished setup , sending start buffer " << endl;
-        for(size_t i = 0; i < numberOfNodes/2 -1 ; i++)
-        {
-            cout << "send startbuffer on connection=" << i << endl;
-            infinity::memory::Buffer* startBuffer = connections[i]->allocate_buffer(1);
-            connections[i]->send_blocking(startBuffer);
-        }
+        cout << "master finished setup , sending start buffer for rank=" << rank << endl;
+        cout << "send startbuffer on connection=" << 0 << endl;
+        infinity::memory::Buffer* startBuffer = connections[0]->allocate_buffer(1);
+        connections[0]->send_blocking(startBuffer);
         cout << "buffer sending finished, starting "<< getTimestamp() << endl;
     }
     else
     {
-       size_t conID = rank == 1 ? 0 : 1;
-       infinity::memory::Buffer* startBuffer = connections[conID]->allocate_buffer(1);
-       cout << "waiting on master with connectID=" << conID<< endl;
-       connections[conID]->post_and_receive_blocking(startBuffer);
+       infinity::memory::Buffer* startBuffer = connections[0]->allocate_buffer(1);
+       cout << "waiting on master with connectID=" << 0 " rank=" << rank << endl;
+       connections[0]->post_and_receive_blocking(startBuffer);
        cout << "got finish buffer, start execution" << endl;
     }
     cout << "start processing " << endl;
