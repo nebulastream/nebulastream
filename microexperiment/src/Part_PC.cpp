@@ -1209,7 +1209,7 @@ int main(int argc, char *argv[])
         #pragma omp parallel for num_threads(numaNodes)
         for(size_t i = 0; i < numaNodes; i++)
         {
-            target_rank = 2;
+//            target_rank = 2;
 
             size_t numaNode = omp_get_thread_num();
             size_t connectionID = omp_get_thread_num() * 2;
