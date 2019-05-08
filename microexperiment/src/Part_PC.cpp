@@ -348,6 +348,7 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
     size_t offsetConnectionEven = outerThread == 0 ? 0 : 2;
     size_t offsetConnectionOdd = outerThread == 0 ? 1 : 3;
 
+    //TODO: ACTIVATE O3 AGAIN
     while(total_buffer_send < bufferProcCnt)
     {
         //alloc first buffer
