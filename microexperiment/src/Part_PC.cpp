@@ -1351,7 +1351,10 @@ int main(int argc, char *argv[])
           }
        }
        cout << "producer finished ... waiting for consumer to finish " << getTimestamp() << endl;
-       connections[0]->post_and_receive_blocking(finishBuffer);
+       if(rank == 0)
+           connections[0]->post_and_receive_blocking(finishBuffer);
+       else
+           connections[1]->post_and_receive_blocking(finishBuffer);
 //       connections[2]->post_and_receive_blocking(finishBuffer);
        cout << "got finish buffer, finished execution " << getTimestamp()<< endl;
     }
@@ -1396,9 +1399,11 @@ int main(int argc, char *argv[])
 //                 printHT(conInfos[outer_thread_id]->hashTable, campaingCnt, outer_thread_id);
           }
        }
-       cout << "finished, sending finish buffer " << getTimestamp() << endl;
+       cout << "finished, sending finish buffer rank=" << rank  << getTimestamp() << endl;
        if(rank == 1)
            connections[0]->send_blocking(finishBuffer);
+       else
+           connections[1]->send_blocking(finishBuffer);
        cout << "buffer sending finished, shutdown "<< getTimestamp() << endl;
 
     }
