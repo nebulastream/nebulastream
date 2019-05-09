@@ -132,11 +132,11 @@ public:
             std::swap(requestToken, other.requestToken);
         }
 
-    bool add(Tuple& tup)
-    {
-           tups[numberOfTuples] = tup;
-           return numberOfTuples == maxNumberOfTuples;
-    }
+//    bool add(Tuple& tup)
+//    {
+//           tups[numberOfTuples] = tup;
+//           return numberOfTuples == maxNumberOfTuples;
+//    }
 
     size_t maxNumberOfTuples;
     Buffer* send_buffer;
