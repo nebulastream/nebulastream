@@ -121,11 +121,11 @@ public:
         requestToken = connection.create_request_token();
         requestToken->setCompleted(true);
         tups = (Tuple*)(send_buffer->getAddress());
-        numberOfTuples = (size_t*) send_buffer->getAddressWithOffset( (bufferSizeInTuples * sizeof(Tuple))) ;
-        cout << "remaining=" << (send_buffer->getRemainingSizeInBytes((bufferSizeInTuples * sizeof(Tuple)))) << endl;;
-        cout << " sizeofTup=" << sizeof(Tuple) << " startAddr=" << send_buffer->getAddress()
-                << "getAddressWithOffset=" <<send_buffer->getAddressWithOffset( (bufferSizeInTuples * sizeof(Tuple)))
-                << " offset=" << bufferSizeInTuples * sizeof(Tuple) << endl;
+        numberOfTuples = (size_t*) send_buffer->getAddressWithOffset(bufferSizeInTuples * sizeof(Tuple)) ;
+//        cout << "remaining=" << (send_buffer->getRemainingSizeInBytes((bufferSizeInTuples * sizeof(Tuple)))) << endl;;
+//        cout << " sizeofTup=" << sizeof(Tuple) << " startAddr=" << send_buffer->getAddress()
+//                << "getAddressWithOffset=" <<send_buffer->getAddressWithOffset( (bufferSizeInTuples * sizeof(Tuple)))
+//                << " offset=" << bufferSizeInTuples * sizeof(Tuple) << endl;
         *numberOfTuples = 0;
     }
 
@@ -602,7 +602,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             }
 
             total_received_tuples += bufferSizeInTuples;
-            cout << "received buffer size=" << *(size_t*)cInfos[currentIdx]->recv_buffers[index]->getData() << endl;;
+            cout << "received buffer size=" << *(size_t*)cInfos[currentIdx]->recv_buffers[index]->getAddressWithOffset(bufferSizeInTuples * sizeof(Tuple))  << endl;;
             total_received_buffers++;
 
 
@@ -714,6 +714,7 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
     {
         if (i < NUM_SEND_BUFFERS) {
             void* b1 = numa_alloc_onnode(bufferSizeInTups * sizeof(Tuple), outer_thread_id);
+
 //            connectInfo->buffer_ready_sign = (size_t*)b1
 //            connectInfo->recv_buffers[i] = connection->allocate_buffer(bufferSizeInTups * sizeof(Tuple));
             connectInfo->recv_buffers[i] = connection->register_buffer(b1, bufferSizeInTups * sizeof(Tuple) + sizeof(size_t));
