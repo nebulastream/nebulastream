@@ -124,6 +124,7 @@ public:
         numberOfTuples = (size_t*) send_buffer->getAddressWithOffset( (bufferSizeInTuples * sizeof(Tuple)/sizeof(uint64_t))) ;
         cout << "remaining=" << (send_buffer->getRemainingSizeInBytes((bufferSizeInTuples * sizeof(Tuple)/sizeof(uint64_t)))) << endl;;
         cout << " sizeofTup=" << sizeof(Tuple) << " startAddr=" << send_buffer->getAddress()
+                << "getAddressWithOffset=" <<send_buffer->getAddressWithOffset( (bufferSizeInTuples * sizeof(Tuple)/sizeof(uint64_t)))
                 << " offset=" << bufferSizeInTuples * sizeof(Tuple)/sizeof(uint64_t) << endl;
         *numberOfTuples = 0;
     }
