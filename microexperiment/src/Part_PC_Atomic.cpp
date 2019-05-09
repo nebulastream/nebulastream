@@ -400,6 +400,7 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
 #ifdef DEBUG
                     cout << "!!!!!!!!!!!numanode=" << outerThread << " buffer already taken with val=" << prevValue << " connection=" << offsetConnectionEven << endl;
 #endif
+                    assert(0);
                     continue;
                 }
                 else
