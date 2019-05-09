@@ -16,6 +16,7 @@
 #include <CodeGen/C_CodeGen/FunctionBuilder.hpp>
 #include <CodeGen/C_CodeGen/Statement.hpp>
 #include <CodeGen/C_CodeGen/UnaryOperatorStatement.hpp>
+#include <API/UserAPIExpression.hpp>
 
 namespace iotdb {
 
@@ -518,9 +519,17 @@ int CodeGeneratorTest()
         CodeGeneratorPtr code_gen = createCodeGenerator();
         PipelineContextPtr context = createPipelineContext();
 
+        Schema input_schema = source->getSchema();
+
         std::cout << "Generate Code" << std::endl;
         /* generate code for scanning input buffer */
         code_gen->generateCode(source, context, std::cout);
+
+	PredicatePtr pred=std::dynamic_pointer_cast<Predicate>(
+	      (PredicateItem(input_schema[0])<PredicateItem(createBasicTypeValue(iotdb::BasicType::INT64,"5"))).copy()
+	    );
+	code_gen->generateCode(pred, context, std::cout);
+
         /* generate code for writing result tuples to output buffer */
         code_gen->generateCode(createPrintSink(Schema::create().addField("campaign_id",UINT64),std::cout), context, std::cout);
         /* compile code to pipeline stage */
