@@ -1470,8 +1470,9 @@ int main(int argc, char *argv[])
 
 #ifdef ONEPARTITIONMODE
              size_t share = NUM_SEND_BUFFERS/(numberOfConsumer/4);
-             size_t startIdx = i%2*share;
-             size_t endIdx = (i%2+1)*share;
+             size_t threadsPerCon = numberOfConsumer/4;
+             size_t startIdx = i%threadsPerCon*share;
+             size_t endIdx = (i%threadsPerCon+1)*share;
 
              if(outer_thread_id == 0)
              {
