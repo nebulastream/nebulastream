@@ -896,7 +896,7 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
         }
     }
 
-//   cout << s2.str() << endl;
+   cout << s2.str() << endl;
 
    stringstream ss;
    ss  << "Producer Thread #" << outer_thread_id  << ": on CPU " << sched_getcpu() << " nodes=";
