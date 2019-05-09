@@ -1274,12 +1274,17 @@ int main(int argc, char *argv[])
     if(rank % 2 ==  0)
     {
         size_t offSet = rank == 0 ? 0 : 1;
-
-        cout << "master finished setup , sending start buffer for rank=" << rank << endl;
-        cout << "send startbuffer on connection=" << offSet << endl;
+        cout << "master finished setup , sending start buffer for rank=" << rank << " to offset=" << offSet << endl;
         infinity::memory::Buffer* startBuffer = connections[offSet]->allocate_buffer(1);
         connections[offSet]->send_blocking(startBuffer);
-        cout << "buffer sending finished, starting "<< getTimestamp() << endl;
+
+        size_t offSet2 = rank == 0 ? 1 : 0;
+        cout << "master finished setup , sending start buffer for rank=" << rank << " to offset=" << offSet << endl;
+        infinity::memory::Buffer* startBuffer2 = connections[offSet2]->allocate_buffer(1);
+        connections[offSet2]->send_blocking(startBuffer2);
+
+        cout << " sending finished" << endl;
+
     }
     else
     {
@@ -1287,9 +1292,13 @@ int main(int argc, char *argv[])
        infinity::memory::Buffer* startBuffer = connections[offSet]->allocate_buffer(1);
        cout << "waiting on master with connectID=" << offSet << " rank=" << rank << endl;
        connections[offSet]->post_and_receive_blocking(startBuffer);
-       cout << "got finish buffer, start execution" << endl;
+
+       size_t offSet2 = rank == 1 ? 1: 0;
+       infinity::memory::Buffer* startBuffer2 = connections[offSet2]->allocate_buffer(1);
+       cout << "waiting on master with connectID=" << offSet2 << " rank=" << rank << endl;
+       connections[offSet2]->post_and_receive_blocking(startBuffer2);
     }
-    cout << "start processing " << endl;
+    cout << "start processing with rank=" << rank  << endl;
 
     Timestamp begin = getTimestamp();
     if(rank % 2 == 0)
@@ -1354,7 +1363,6 @@ int main(int argc, char *argv[])
        size_t offSet = rank == 0 ? 0 : 1;
        infinity::memory::Buffer* finishBuffer = connections[offSet]->allocate_buffer(1);
        connections[offSet]->post_and_receive_blocking(finishBuffer);
-
        cout << "got finish buffer, finished execution " << getTimestamp()<< endl;
     }
     else
@@ -1405,8 +1413,6 @@ int main(int argc, char *argv[])
        infinity::memory::Buffer* finishBuffer = connections[offSet]->allocate_buffer(1);
        connections[offSet]->send_blocking(finishBuffer);
        cout << "buffer sending finished, shutdown "<< getTimestamp() << endl;
-
-
     }
 
     Timestamp end = getTimestamp();
