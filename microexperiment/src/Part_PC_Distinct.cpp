@@ -45,8 +45,6 @@ using namespace std;
 #define BUFFER_USED_SENDER_DONE 127
 #define BUFFER_READY_FLAG 0
 #define BUFFER_USED_FLAG 1
-#define BUFFER_BEING_PROCESSED_FLAG 2
-#define BUFFER_WILL_BE_PROCESSED_FLAG 3
 
 #define NUMBER_OF_GEN_TUPLE 1000000
 #define DEBUG
@@ -603,6 +601,8 @@ void runConsumerOnePartition(std::atomic<size_t>** hashTable, size_t windowSizeI
         else
         {
             noBufferFound++;
+            cout << "read idx=" << index << endl;
+            sleep(0.5);
         }
 
         index++;
