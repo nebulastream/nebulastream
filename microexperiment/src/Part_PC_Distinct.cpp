@@ -1472,6 +1472,21 @@ int main(int argc, char *argv[])
                  endIdx = NUM_SEND_BUFFERS;
              }
 
+             size_t idx = 0;
+            if(outer_thread_id == 0)
+            {
+                if(inner_thread_id == 0)
+                    idx = 0;
+                else
+                    idx = 1;
+            }
+            if(outer_thread_id == 1)
+            {
+                if(inner_thread_id == 0)
+                     idx = 2;
+                 else
+                     idx = 3;
+            }
 //#ifdef DEBUG
              #pragma omp critical
              {
@@ -1486,6 +1501,7 @@ int main(int argc, char *argv[])
                 << " start=" << startIdx
                 << " endidx=" << endIdx
                 << " share=" << share
+                << " idx=" << idx
                 << std::endl;
              }
 //#endif
@@ -1493,21 +1509,7 @@ int main(int argc, char *argv[])
 //                     &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
 //                     endIdx, conInfos, outer_thread_id, rank, numberOfNodes);
 
-             size_t idx = 0;
-             if(outer_thread_id == 0)
-             {
-                 if(inner_thread_id == 0)
-                     idx = 0;
-                 else
-                     idx = 1;
-             }
-             if(outer_thread_id == 1)
-             {
-                 if(inner_thread_id == 0)
-                      idx = 2;
-                  else
-                      idx = 3;
-             }
+
 
 //             size_t idxOne = outer_thread_id == 0 ? 0 : 2;
 //             size_t idxTwo = outer_thread_id == 0 ? 1 : 3;
