@@ -547,14 +547,18 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
         {
             if(bookKeeper[current_window].compare_and_swap(timeStamp, lastTimeStamp) == lastTimeStamp)
             {
-                    htReset++;
-
-                    current_window = current_window == 0 ? 1 : 0;
-                    lastTimeStamp = timeStamp;
-                    windowSwitchCnt++;
+                htReset++;
+                #pragma omp parallel for num_threads(10)
+                for(size_t i = 0; i < campaingCnt; i++)
+                {
+                    outputTable[i] += hashTable[current_window][i];
+                }
             }
+            current_window = current_window == 0 ? 1 : 0;
+            lastTimeStamp = timeStamp;
+            windowSwitchCnt++;
         }//end of if window is new
-//        }//end of for
+
         uint64_t bucketPos = (buffer[i].campaign_id * 789 + 321) % campaingCnt;
         atomic_fetch_add(&hashTable[current_window][bucketPos], size_t(1));
         consumed++;
@@ -601,13 +605,13 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             {
 #ifdef DEBUG
                 cout << "numanode=" << outerThread << " found buffer at idx=" << index << endl;
-                if(currentIdx == idxOne)
-                    total_received_buffersIdxOne++;
-                else
-                    total_received_buffersIdxTwo++;
+
 #endif
             }
-
+            if(currentIdx == idxOne)
+                total_received_buffersIdxOne++;
+            else
+                total_received_buffersIdxTwo++;
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
 
