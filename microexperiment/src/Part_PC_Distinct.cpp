@@ -117,10 +117,12 @@ public:
     {
         numberOfTuples = 0;
         maxNumberOfTuples = bufferSizeInTuples;
-        send_buffer = connection.allocate_buffer(bufferSizeInTuples * sizeof(Tuple));
+        send_buffer = connection.allocate_buffer(bufferSizeInTuples * sizeof(Tuple) + sizeof(size_t));
         requestToken = connection.create_request_token();
         requestToken->setCompleted(true);
-        tups = (Tuple*)(send_buffer->getAddress());
+        tups = (Tuple*)(send_buffer->getAddress() + sizeof(size_t));
+        numberOfTuples = (size_t*) send_buffer->getAddress();
+        *numberOfTuples = 0;
     }
 
     TupleBuffer(TupleBuffer && other)
@@ -133,17 +135,28 @@ public:
             std::swap(requestToken, other.requestToken);
         }
 
-    bool add(Tuple& tup)
+//    bool add(Tuple& tup)
+//    {
+//           tups[numberOfTuples] = tup;
+//           return numberOfTuples == maxNumberOfTuples;
+//    }
+
+    size_t getNumberOfTuples()
     {
-           tups[numberOfTuples] = tup;
-           return numberOfTuples == maxNumberOfTuples;
+       return *numberOfTuples;
+    }
+
+    void setNumberOfTuples(size_t size)
+    {
+       *numberOfTuples = size;
     }
 
     size_t maxNumberOfTuples;
     Buffer* send_buffer;
     RequestToken * requestToken;
     Tuple* tups;
-    size_t numberOfTuples;
+private:
+    size_t* numberOfTuples;
 
 //    size_t numberOfTuples;
 };
@@ -409,8 +422,8 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
 #ifdef DEBUG
         cout << "numanode=" << outerThread << " buffer fill finsihed bufferEven=" << *tupCntBuffEven<< " bufferOdd=" << *tupCntBuffOdd << endl;
 #endif
-        cInfos[offsetConnectionEven]->sendBuffers[idxConEven]->numberOfTuples = *tupCntBuffEven;
-        cInfos[offsetConnectionOdd]->sendBuffers[idxConOdd]->numberOfTuples = *tupCntBuffOdd;
+        cInfos[offsetConnectionEven]->sendBuffers[idxConEven]->setNumberOfTuples(*tupCntBuffEven);
+        cInfos[offsetConnectionOdd]->sendBuffers[idxConOdd]->setNumberOfTuples(*tupCntBuffOdd);
 
         total_sent_tuples += *tupCntBuffEven;
         tupleSendToC1 += *tupCntBuffEven;
@@ -585,6 +598,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             }
 
             total_received_tuples += bufferSizeInTuples;
+            cout << "received buffer size=" << *(size_t*)cInfos[currentIdx]->recv_buffers[index]->getData() << endl;;
             total_received_buffers++;
 
 
