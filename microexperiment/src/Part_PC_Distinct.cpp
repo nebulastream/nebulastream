@@ -40,6 +40,9 @@ using namespace std;
 #define PORT3 55357
 #define PORT4 55358
 
+//#define TWOPARTITIONMODE
+#define ONEPARTITIONMODE
+
 //#define OLCONSUMERVERSION
 //#define BUFFER_COUNT 10
 #define BUFFER_USED_SENDER_DONE 127
@@ -1463,35 +1466,40 @@ int main(int argc, char *argv[])
           {
              auto inner_thread_id = omp_get_thread_num();
              size_t i = inner_thread_id;
-//             size_t share = NUM_SEND_BUFFERS/(numberOfConsumer/numaNodes);
-//             size_t startIdx = i* share;
-//          size_t endIdx = (i+1)*share;
+             size_t idx = 0;
 
-             size_t share = NUM_SEND_BUFFERS;
-             size_t startIdx = 0;
-              size_t endIdx = share;
+#ifdef ONEPARTITIONMODE
+             size_t share = NUM_SEND_BUFFERS/(numberOfConsumer/4);
+             size_t startIdx = i%2*share;
+             size_t endIdx = (i%2)*2+share;
 
+             if(outer_thread_id == 0)
+             {
+                 if(numberOfConsumer / 4 < 2)
+                     idx = 0;
+                 else
+                     idx = 1;
+             }
+             if(outer_thread_id == 1)
+             {
+                 if(numberOfConsumer / 4 < 2)
+                      idx = 2;
+                  else
+                      idx = 3;
+             }
+
+#endif
+#ifdef TWOPARTITIONMODE
+             size_t share = NUM_SEND_BUFFERS/(h/numaNodes);
+             size_t startIdx = i* share;
+             size_t endIdx = (i+1)*share;
+#endif
 
              if(i == numberOfConsumer -1)
              {
                  endIdx = NUM_SEND_BUFFERS;
              }
 
-             size_t idx = 0;
-            if(outer_thread_id == 0)
-            {
-                if(inner_thread_id == 0)
-                    idx = 0;
-                else
-                    idx = 1;
-            }
-            if(outer_thread_id == 1)
-            {
-                if(inner_thread_id == 0)
-                     idx = 2;
-                 else
-                     idx = 3;
-            }
 //#ifdef DEBUG
              #pragma omp critical
              {
@@ -1510,18 +1518,18 @@ int main(int argc, char *argv[])
                 << std::endl;
              }
 //#endif
-//             runConsumerTwoPartitions(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, outer_thread_id, numberOfProducer , bufferSizeInTups,
-//                     &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
-//                     endIdx, conInfos, outer_thread_id, rank, numberOfNodes);
 
+#ifdef TWOPARTITIONMODE
+             runConsumerTwoPartitions(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, outer_thread_id, numberOfProducer , bufferSizeInTups,
+                     &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
+                     endIdx, conInfos, outer_thread_id, rank, numberOfNodes);
+#endif
 
-
-//             size_t idxOne = outer_thread_id == 0 ? 0 : 2;
-//             size_t idxTwo = outer_thread_id == 0 ? 1 : 3;
+#ifdef ONEPARTITIONMODE
              runConsumerOnePartition(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, outer_thread_id, numberOfProducer , bufferSizeInTups,
                      &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
                      endIdx, conInfos[idx], outer_thread_id, rank, numberOfNodes, idx);
-
+#endif
           }
        }
        cout << "finished, sending finish buffer rank=" << rank << " " << getTimestamp() << endl;
