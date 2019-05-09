@@ -1279,7 +1279,7 @@ int main(int argc, char *argv[])
         connections[offSet]->send_blocking(startBuffer);
 
         size_t offSet2 = rank == 0 ? 1 : 0;
-        cout << "master finished setup , sending start buffer for rank=" << rank << " to offset=" << offSet << endl;
+        cout << "master finished setup , sending start buffer for rank=" << rank << " to offset=" << offSet2 << endl;
         infinity::memory::Buffer* startBuffer2 = connections[offSet2]->allocate_buffer(1);
         connections[offSet2]->send_blocking(startBuffer2);
 
