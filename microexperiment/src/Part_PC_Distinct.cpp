@@ -560,7 +560,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 
 void runConsumerOnePartition(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples, size_t* consumedTuples, size_t* consumedBuffers,
-        size_t* consumerNoBufferFound, size_t startIdx, size_t endIdx, ConnectionInfos* cInfos, size_t outerThread, size_t rank, size_t numberOfNodes)
+        size_t* consumerNoBufferFound, size_t startIdx, size_t endIdx, ConnectionInfos* cInfos, size_t outerThread, size_t rank, size_t numberOfNodes, size_t infoID)
 {
     size_t total_received_tuples = 0;
     size_t total_received_buffers = 0;
@@ -601,8 +601,8 @@ void runConsumerOnePartition(std::atomic<size_t>** hashTable, size_t windowSizeI
         else
         {
             noBufferFound++;
-            cout << "read idx=" << index << endl;
-            sleep(0.5);
+            cout << "read idx=" << index << " infoID=" << infoID<< endl;
+            sleep(1);
         }
 
         index++;
@@ -1514,7 +1514,7 @@ int main(int argc, char *argv[])
 //             size_t idxTwo = outer_thread_id == 0 ? 1 : 3;
              runConsumerOnePartition(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, outer_thread_id, numberOfProducer , bufferSizeInTups,
                      &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
-                     endIdx, conInfos[idx], outer_thread_id, rank, numberOfNodes);
+                     endIdx, conInfos[idx], outer_thread_id, rank, numberOfNodes, idx);
 
           }
        }
