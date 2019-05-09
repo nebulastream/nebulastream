@@ -121,8 +121,8 @@ public:
         requestToken = connection.create_request_token();
         requestToken->setCompleted(true);
         tups = (Tuple*)(send_buffer->getAddress());
-        numberOfTuples = (size_t*) (send_buffer->getAddressWithOffset((bufferSizeInTuples * sizeof(Tuple)/sizeof(uint64_t))));
-        cout << "remaining=" << (send_buffer->getRemainingSizeInBytes((bufferSizeInTuples * sizeof(Tuple)/sizeof(uint64_t)))) << endl;;
+        numberOfTuples = (size_t*) (send_buffer->getAddressWithOffset((bufferSizeInTuples * sizeof(Tuple)/sizeof(uint64_t))+1));
+        cout << "remaining=" << (send_buffer->getRemainingSizeInBytes((bufferSizeInTuples * sizeof(Tuple)/sizeof(uint64_t))+1)) << endl;;
         *numberOfTuples = 0;
     }
 
