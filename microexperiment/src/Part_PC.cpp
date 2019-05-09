@@ -49,7 +49,7 @@ using namespace std;
 #define BUFFER_WILL_BE_PROCESSED_FLAG 3
 
 #define NUMBER_OF_GEN_TUPLE 1000000
-#define DEBUG
+//#define DEBUG
 void printSingleHT(std::atomic<size_t>* hashTable, size_t campaingCnt);
 //std::vector<std::shared_ptr<std::thread>> buffer_threads;
 std::atomic<size_t>* outputTable;
