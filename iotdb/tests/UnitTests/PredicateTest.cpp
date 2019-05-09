@@ -67,6 +67,8 @@ int main(){
 	} else {
 		std::cout << "VALUE-VALUE: all test passed" << std::endl;
 	}
+
+	std::cout << (attNum > valInt).toString() << std::endl;
 	
 	return 0;
 }

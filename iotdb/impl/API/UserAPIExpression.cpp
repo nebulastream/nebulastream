@@ -32,6 +32,7 @@ namespace iotdb
 
 
 	bool PredicateItem::attributeEquals(const AttributeFieldPtr& pAttribute){
+	  /* \todo: change this, use an isEqual method defined on AttributeField! */
 	    return (pAttribute->toString() == _attribute->toString());
 	}
 
@@ -85,8 +86,7 @@ namespace iotdb
 	const std::string Predicate::toString() const{
 			std::stringstream stream;
 			if(_bracket) stream << "(";
-			stream << _left->toString() << ::iotdb::toString(_op) << _right->toString();
-			::iotdb::toString(_op);
+			stream << _left->toString() << " " << ::iotdb::toCodeExpression(_op)->code_ << " " << _right->toString() << " ";
 			if(_bracket) stream << ")";
 			return stream.str();
 	}

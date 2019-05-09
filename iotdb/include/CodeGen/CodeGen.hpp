@@ -1,5 +1,4 @@
-#ifndef CODEGEN_H
-#define CODEGEN_H
+#pragma once
 
 #include "Operators/Operator.hpp"
 #include <Core/DataTypes.hpp>
@@ -97,4 +96,4 @@ const StructDeclaration getStructDeclarationTupleBuffer();
 const StructDeclaration getStructDeclarationWindowState();
 const StructDeclaration getStructDeclarationFromSchema(const std::string struct_name, const Schema& schema);
 } // namespace iotdb
-#endif
+
