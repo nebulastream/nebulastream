@@ -1504,17 +1504,17 @@ int main(int argc, char *argv[])
                 << std::endl;
              }
 //#endif
-             runConsumerTwoPartitions(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, outer_thread_id, numberOfProducer , bufferSizeInTups,
-                     &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
-                     endIdx, conInfos, outer_thread_id, rank, numberOfNodes);
+//             runConsumerTwoPartitions(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, outer_thread_id, numberOfProducer , bufferSizeInTups,
+//                     &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
+//                     endIdx, conInfos, outer_thread_id, rank, numberOfNodes);
 
 
 
 //             size_t idxOne = outer_thread_id == 0 ? 0 : 2;
 //             size_t idxTwo = outer_thread_id == 0 ? 1 : 3;
-//             runConsumerOnePartition(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, outer_thread_id, numberOfProducer , bufferSizeInTups,
-//                     &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
-//                     endIdx, conInfos[idx], outer_thread_id, rank, numberOfNodes);
+             runConsumerOnePartition(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, outer_thread_id, numberOfProducer , bufferSizeInTups,
+                     &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
+                     endIdx, conInfos[idx], outer_thread_id, rank, numberOfNodes);
 
           }
        }
