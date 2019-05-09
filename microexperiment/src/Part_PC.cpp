@@ -636,7 +636,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             currentIdx = currentIdx == idxOne ? idxTwo : idxOne;
         }
 
-        if(std::atomic_load(&exitConsumer) == 1)
+        if(std::atomic_load(&exitConsumer) == 2)
         {
 #ifdef DEBUG
 #pragma omp critical
@@ -1399,10 +1399,7 @@ int main(int argc, char *argv[])
 //                 printHT(conInfos[outer_thread_id]->hashTable, campaingCnt, outer_thread_id);
           }
        }
-       cout << "finished, sending finish buffer rank=" << rank  << getTimestamp() << endl;
-       if(rank == 1)
-           connections[0]->send_blocking(finishBuffer);
-       else
+       cout << "finished, sending finish buffer rank=" << rank << " " << getTimestamp() << endl;
            connections[0]->send_blocking(finishBuffer);
        cout << "buffer sending finished, shutdown "<< getTimestamp() << endl;
 
