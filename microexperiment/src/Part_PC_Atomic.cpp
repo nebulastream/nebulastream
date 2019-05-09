@@ -40,13 +40,14 @@ using namespace std;
 #define PORT3 55357
 #define PORT4 55358
 
+//#define TWOPARTITIONMODE
+#define ONEPARTITIONMODE
+
 //#define OLCONSUMERVERSION
 //#define BUFFER_COUNT 10
 #define BUFFER_USED_SENDER_DONE 127
 #define BUFFER_READY_FLAG 0
 #define BUFFER_USED_FLAG 1
-#define BUFFER_BEING_PROCESSED_FLAG 2
-#define BUFFER_WILL_BE_PROCESSED_FLAG 3
 
 #define NUMBER_OF_GEN_TUPLE 1000000
 //#define DEBUG
@@ -117,10 +118,16 @@ public:
     {
         numberOfTuples = 0;
         maxNumberOfTuples = bufferSizeInTuples;
-        send_buffer = connection.allocate_buffer(bufferSizeInTuples * sizeof(Tuple));
+        send_buffer = connection.allocate_buffer(bufferSizeInTuples * sizeof(Tuple) + sizeof(size_t));
         requestToken = connection.create_request_token();
         requestToken->setCompleted(true);
         tups = (Tuple*)(send_buffer->getAddress());
+        numberOfTuples = (size_t*) send_buffer->getAddressWithOffset(bufferSizeInTuples * sizeof(Tuple)) ;
+//        cout << "remaining=" << (send_buffer->getRemainingSizeInBytes((bufferSizeInTuples * sizeof(Tuple)))) << endl;;
+//        cout << " sizeofTup=" << sizeof(Tuple) << " startAddr=" << send_buffer->getAddress()
+//                << "getAddressWithOffset=" <<send_buffer->getAddressWithOffset( (bufferSizeInTuples * sizeof(Tuple)))
+//                << " offset=" << bufferSizeInTuples * sizeof(Tuple) << endl;
+        *numberOfTuples = 0;
     }
 
     TupleBuffer(TupleBuffer && other)
@@ -133,17 +140,28 @@ public:
             std::swap(requestToken, other.requestToken);
         }
 
-    bool add(Tuple& tup)
+//    bool add(Tuple& tup)
+//    {
+//           tups[numberOfTuples] = tup;
+//           return numberOfTuples == maxNumberOfTuples;
+//    }
+
+    size_t getNumberOfTuples()
     {
-           tups[numberOfTuples] = tup;
-           return numberOfTuples == maxNumberOfTuples;
+       return *numberOfTuples;
+    }
+
+    void setNumberOfTuples(size_t size)
+    {
+       *numberOfTuples = size;
     }
 
     size_t maxNumberOfTuples;
     Buffer* send_buffer;
     RequestToken * requestToken;
     Tuple* tups;
-    size_t numberOfTuples;
+private:
+    size_t* numberOfTuples;
 
 //    size_t numberOfTuples;
 };
@@ -155,10 +173,13 @@ struct ConnectionInfos
 
     ConnectionInfos(const ConnectionInfos& other)
     {
-        recv_buffers = other.recv_buffers;
+        recv_buffers1 = other.recv_buffers1;
+        recv_buffers2 = other.recv_buffers2;
 //        buffer_ready_sign = other.buffer_ready_sign;
-        region_tokens = other.region_tokens;
-        sign_buffer = other.sign_buffer;
+        region_tokens1 = other.region_tokens1;
+        region_tokens2 = other.region_tokens2;
+        sign_buffer1 = other.sign_buffer1;
+        sign_buffer2 = other.sign_buffer2;
         sign_token = other.sign_token;
         sendBuffers = other.sendBuffers;
         records = other.records;
@@ -169,14 +190,17 @@ struct ConnectionInfos
     }
 
     //consumer stuff
-    infinity::memory::Buffer** recv_buffers;
+    infinity::memory::Buffer** recv_buffers1;
+    infinity::memory::Buffer** recv_buffers2;
     uint64_t* buffer_ready_sign;
 
     //both producer and consumer
-    infinity::memory::RegionToken** region_tokens;
+    infinity::memory::RegionToken** region_tokens1;
+    infinity::memory::RegionToken** region_tokens2;
 
     //producer stuff
-    infinity::memory::Buffer* sign_buffer;//reads the buffer_read from customer into this
+    infinity::memory::Buffer* sign_buffer1;//reads the buffer_read from customer into this
+    infinity::memory::Buffer* sign_buffer2;//reads the buffer_read from customer into this
     RegionToken* sign_token;//special token for this connection
     TupleBuffer** sendBuffers;
     record** records;
@@ -327,8 +351,6 @@ size_t produce_window_mem_two_buffers(record* records, size_t bufferSize, Tuple*
     return readTuples;
 }
 
-
-
 void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, size_t bufferProcCnt,
         size_t* producesTuples, size_t* producedBuffers, size_t* readInputTuples, size_t* noFreeEntryFound, size_t startIdx,
         size_t endIdx, size_t numberOfProducer, ConnectionInfos** cInfos, size_t outerThread, size_t numberOfNodes)
@@ -361,29 +383,15 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
 #ifdef DEBUG
                 cout << " read array at idx=" << receive_buffer_index <<  endl;
 #endif
-                cInfos[offsetConnectionEven]->con->read_blocking(cInfos[offsetConnectionEven]->sign_buffer, cInfos[offsetConnectionEven]->sign_token,
+                cInfos[offsetConnectionEven]->con->read_blocking(cInfos[offsetConnectionEven]->sign_buffer1,
+                        cInfos[offsetConnectionEven]->sign_token,
                         startIdx*sizeof(size_t), startIdx *sizeof(size_t), (endIdx - startIdx)* sizeof(uint64_t));
             }
 
             if(cInfos[offsetConnectionEven]->buffer_ready_sign[receive_buffer_index] == BUFFER_READY_FLAG)
             {
-                size_t prevValue = cInfos[offsetConnectionEven]->con->atomic_cas_blocking(cInfos[offsetConnectionEven]->sign_token,
-                        receive_buffer_index*sizeof(size_t), BUFFER_READY_FLAG, BUFFER_BEING_PROCESSED_FLAG, nullptr);
-                if(prevValue != BUFFER_READY_FLAG)
-                {
-#ifdef DEBUG
-                    cout << "numanode=" << outerThread << " buffer already taken with val=" << prevValue << " connection=" << offsetConnectionEven << endl;
-#endif
-                    continue;
-                }
-                else
-                {
-#ifdef DEBUG
-                    cout << "numanode=" << outerThread << " found first idx=" << receive_buffer_index << " connection=" << offsetConnectionEven << endl;
-#endif
-                    idxConEven = receive_buffer_index;
-                    break;
-                }
+                idxConEven = receive_buffer_index;
+                break;
             }
             else
             {
@@ -403,27 +411,15 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
         {
             if(receive_buffer_index == startIdx)//read buffers
             {
-                cInfos[offsetConnectionOdd]->con->read_blocking(cInfos[offsetConnectionOdd]->sign_buffer, cInfos[offsetConnectionOdd]->sign_token,
+                cInfos[offsetConnectionOdd]->con->read_blocking(cInfos[offsetConnectionOdd]->sign_buffer1, cInfos[offsetConnectionOdd]->sign_token,
                         startIdx*sizeof(size_t), startIdx *sizeof(size_t), (endIdx - startIdx)* sizeof(uint64_t));
             }
             if(cInfos[offsetConnectionOdd]->buffer_ready_sign[receive_buffer_index] == BUFFER_READY_FLAG)
             {
-                size_t prevValue = cInfos[offsetConnectionOdd]->con->atomic_cas_blocking(cInfos[offsetConnectionOdd]->sign_token,
-                        receive_buffer_index*sizeof(size_t), BUFFER_READY_FLAG, BUFFER_BEING_PROCESSED_FLAG, nullptr);
-                if(prevValue != BUFFER_READY_FLAG)
-                {
-                    cout << "numanode=" << outerThread << " buffer already taken with val=" << prevValue  << " connection=" << offsetConnectionOdd << endl;
-                    continue;
-                }
-                else
-                {
-#ifdef DEBUG
-                    cout << "numanode=" << outerThread << " found second idx=" << receive_buffer_index  << " connection=" << offsetConnectionOdd << endl;
-#endif
-                    idxConOdd = receive_buffer_index;
-                    break;
-                }
+                idxConOdd = receive_buffer_index;
+                break;
             }
+
             if(receive_buffer_index +1 > endIdx)
             {
                 receive_buffer_index = startIdx;
@@ -436,8 +432,8 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
 #ifdef DEBUG
         cout << "numanode=" << outerThread << " buffer fill finsihed bufferEven=" << *tupCntBuffEven<< " bufferOdd=" << *tupCntBuffOdd << endl;
 #endif
-        cInfos[offsetConnectionEven]->sendBuffers[idxConEven]->numberOfTuples = *tupCntBuffEven;
-        cInfos[offsetConnectionOdd]->sendBuffers[idxConOdd]->numberOfTuples = *tupCntBuffOdd;
+        cInfos[offsetConnectionEven]->sendBuffers[idxConEven]->setNumberOfTuples(*tupCntBuffEven);
+        cInfos[offsetConnectionOdd]->sendBuffers[idxConOdd]->setNumberOfTuples(*tupCntBuffOdd);
 
         total_sent_tuples += *tupCntBuffEven;
         tupleSendToC1 += *tupCntBuffEven;
@@ -447,11 +443,11 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
         bufferSendToC2++;
 
         cInfos[offsetConnectionEven]->con->write(cInfos[offsetConnectionEven]->sendBuffers[idxConEven]->send_buffer,
-                cInfos[offsetConnectionEven]->region_tokens[idxConEven],
+                cInfos[offsetConnectionEven]->region_tokens1[idxConEven],
                 cInfos[offsetConnectionEven]->sendBuffers[idxConEven]->requestToken);
 
         cInfos[offsetConnectionOdd]->con->write(cInfos[offsetConnectionOdd]->sendBuffers[idxConOdd]->send_buffer,
-                cInfos[offsetConnectionOdd]->region_tokens[idxConOdd],
+                cInfos[offsetConnectionOdd]->region_tokens1[idxConOdd],
                 cInfos[offsetConnectionOdd]->sendBuffers[idxConOdd]->requestToken);
 #ifdef DEBUG
         cout << "numanode=" << outerThread << " buffer sending finsihed" << endl;
@@ -463,10 +459,10 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
             cInfos[offsetConnectionEven]->buffer_ready_sign[idxConEven] = BUFFER_USED_FLAG;
             cInfos[offsetConnectionOdd]->buffer_ready_sign[idxConOdd] = BUFFER_USED_FLAG;
 
-            cInfos[offsetConnectionEven]->con->write_blocking(cInfos[offsetConnectionEven]->sign_buffer, cInfos[offsetConnectionEven]->sign_token,
+            cInfos[offsetConnectionEven]->con->write_blocking(cInfos[offsetConnectionEven]->sign_buffer1, cInfos[offsetConnectionEven]->sign_token,
                     idxConEven*sizeof(size_t), idxConEven*sizeof(size_t), sizeof(size_t));
 
-            cInfos[offsetConnectionOdd]->con->write_blocking(cInfos[offsetConnectionOdd]->sign_buffer,
+            cInfos[offsetConnectionOdd]->con->write_blocking(cInfos[offsetConnectionOdd]->sign_buffer1,
                     cInfos[offsetConnectionOdd]->sign_token, idxConOdd*sizeof(size_t),
                     idxConOdd*sizeof(size_t), sizeof(size_t));
 
@@ -482,22 +478,22 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
                 cInfos[offsetConnectionEven]->buffer_ready_sign[idxConEven] = BUFFER_USED_SENDER_DONE;
                 cInfos[offsetConnectionOdd]->buffer_ready_sign[idxConOdd] = BUFFER_USED_SENDER_DONE;
 
-                cInfos[offsetConnectionEven]->con->write_blocking(cInfos[offsetConnectionEven]->sign_buffer,
+                cInfos[offsetConnectionEven]->con->write_blocking(cInfos[offsetConnectionEven]->sign_buffer1,
                         cInfos[offsetConnectionEven]->sign_token, idxConEven*sizeof(size_t), idxConEven*sizeof(size_t), sizeof(size_t));
                 cout << "numanode=" << outerThread << " Sent last tuples and marked as BUFFER_USED_SENDER_DONE at index=" << idxConEven << " numanode=" << outerThread << " con=" << offsetConnectionEven << endl;
 
-                cInfos[offsetConnectionOdd]->con->write_blocking(cInfos[offsetConnectionOdd]->sign_buffer, cInfos[offsetConnectionOdd]->sign_token,
+                cInfos[offsetConnectionOdd]->con->write_blocking(cInfos[offsetConnectionOdd]->sign_buffer1, cInfos[offsetConnectionOdd]->sign_token,
                         idxConOdd*sizeof(size_t), idxConOdd*sizeof(size_t), sizeof(size_t));
                 cout << "numanode=" << outerThread << " Sent last tuples and marked as BUFFER_USED_SENDER_DONE at index=" << idxConOdd << " numanode=" << outerThread << " con=" << offsetConnectionOdd << endl;
             }
             else
             {
                 cInfos[offsetConnectionEven]->buffer_ready_sign[idxConEven] = BUFFER_USED_FLAG;
-                cInfos[offsetConnectionEven]->con->write(cInfos[offsetConnectionEven]->sign_buffer,
+                cInfos[offsetConnectionEven]->con->write(cInfos[offsetConnectionEven]->sign_buffer1,
                         cInfos[offsetConnectionEven]->sign_token, idxConEven*sizeof(size_t), idxConEven*sizeof(size_t), sizeof(size_t));
 
                 cInfos[offsetConnectionOdd]->buffer_ready_sign[idxConOdd] = BUFFER_USED_FLAG;
-                cInfos[offsetConnectionOdd]->con->write(cInfos[offsetConnectionOdd]->sign_buffer,
+                cInfos[offsetConnectionOdd]->con->write(cInfos[offsetConnectionOdd]->sign_buffer1,
                         cInfos[offsetConnectionOdd]->sign_token, idxConOdd*sizeof(size_t), idxConOdd*sizeof(size_t), sizeof(size_t));
 
                 cout << "numanode=" << outerThread << " thread" << omp_get_thread_num() << " prod finished" << endl;
@@ -507,8 +503,7 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
     }//end of while
 //    cout << "Thread=" << omp_get_thread_num() << " Done sending! Sent a total of " << total_sent_tuples << " tuples and " << total_buffer_send << " buffers"
 //            << " noBufferFreeToSend=" << noBufferFreeToSend << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
-//#ifdef DEBUG
-
+#ifdef DEBUG
     #pragma omp critical
              {
                  cout << "Thread:" << outerThread << "/" << omp_get_thread_num()
@@ -523,7 +518,7 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
                          << endl;
 
              }
-//#endif
+#endif
     *producesTuples = total_sent_tuples;
     *producedBuffers = total_buffer_send;
     *readInputTuples = readTuples;
@@ -531,7 +526,8 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
 }
 
 size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
-        size_t campaingCnt, size_t consumerID, size_t rank, bool done, tbb::atomic<size_t>* bookKeeper) {
+        size_t campaingCnt, size_t consumerID, size_t rank, bool done, tbb::atomic<size_t>* bookKeeper)
+{
     size_t consumed = 0;
     size_t windowSwitchCnt = 0;
     size_t htReset = 0;
@@ -570,58 +566,44 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
             << " consumeID=" << consumerID << endl;
 #endif
     return consumed;
-
 }
 
-void runConsumerTwoPartitions(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
+void runConsumerOnePartition(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples, size_t* consumedTuples, size_t* consumedBuffers,
-        size_t* consumerNoBufferFound, size_t startIdx, size_t endIdx, ConnectionInfos** cInfos, size_t outerThread, size_t rank, size_t numberOfNodes)
+        size_t* consumerNoBufferFound, size_t startIdx, size_t endIdx, ConnectionInfos* cInfos, size_t outerThread, size_t rank, size_t numberOfNodes, size_t infoID)
 {
-
     size_t total_received_tuples = 0;
     size_t total_received_buffers = 0;
-    size_t total_received_buffersIdxOne = 0;
-    size_t total_received_buffersIdxTwo = 0;
     size_t index = startIdx;
     size_t noBufferFound = 0;
     size_t consumed = 0;
 
-    size_t idxOne = outerThread == 0 ? 0 : 2;
-    size_t idxTwo = outerThread == 0 ? 1 : 3;
-    size_t currentIdx = idxOne;
+//    size_t idxOne = outerThread == 0 ? 0 : 2;
+//    size_t idxTwo = outerThread == 0 ? 1 : 3;
     bool is_done = numberOfNodes == 4 ? false : true;
     while(true)
     {
-        if(cInfos[currentIdx]->buffer_ready_sign[index] == BUFFER_USED_FLAG || cInfos[currentIdx]->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
+        if(cInfos->buffer_ready_sign[index] == BUFFER_USED_FLAG || cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
         {
-            if(cInfos[currentIdx]->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
+            if(cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
             {
                     std::atomic_fetch_add(&exitConsumer, size_t(1));
                     cout << "numanode=" << outerThread << " DONE BUFFER FOUND at idx"  << index << " numanode=" << outerThread << endl;
                     is_done = true;
             }
-            else
-            {
-#ifdef DEBUG
-                cout << "numanode=" << outerThread << " found buffer at idx=" << index << endl;
-                if(currentIdx == idxOne)
-                    total_received_buffersIdxOne++;
-                else
-                    total_received_buffersIdxTwo++;
-#endif
-            }
 
-            total_received_tuples += bufferSizeInTuples;
+            size_t currentBufferSizeInTups = *(size_t*)cInfos->recv_buffers1[index]->getAddressWithOffset(bufferSizeInTuples * sizeof(Tuple));
+            total_received_tuples += currentBufferSizeInTups;
             total_received_buffers++;
 
 
 #ifdef DEBUG
             cout << "Thread=" << outerThread << "/" << omp_get_thread_num() << "/" << outerThread<< " Received buffer at index=" << index << endl;
 #endif
-            consumed += runConsumerOneOnOne((Tuple*)cInfos[currentIdx]->recv_buffers[index]->getData(), bufferSizeInTuples,
-                    hashTable, windowSizeInSec, campaingCnt, consumerID, rank, is_done, cInfos[currentIdx]->bookKeeping);
+            consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers1[index]->getData(), currentBufferSizeInTups,
+                    hashTable, windowSizeInSec, campaingCnt, consumerID, rank, is_done, cInfos->bookKeeping);
 
-            cInfos[currentIdx]->buffer_ready_sign[index] = BUFFER_READY_FLAG;
+            cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
 #ifdef DEBUG
             cout << "numanode=" << outerThread << " set buffer ready again" << endl;
 #endif
@@ -629,6 +611,8 @@ void runConsumerTwoPartitions(std::atomic<size_t>** hashTable, size_t windowSize
         else
         {
             noBufferFound++;
+//            cout << "read idx=" << index << " infoID=" << infoID<< endl;
+//            sleep(1);
         }
 
         index++;
@@ -636,7 +620,6 @@ void runConsumerTwoPartitions(std::atomic<size_t>** hashTable, size_t windowSize
         if(index >= endIdx)
         {
             index = startIdx;
-            currentIdx = currentIdx == idxOne ? idxTwo : idxOne;
         }
 
         if(std::atomic_load(&exitConsumer) == 2)
@@ -654,28 +637,17 @@ void runConsumerTwoPartitions(std::atomic<size_t>** hashTable, size_t windowSize
     for(index = startIdx; index < endIdx; index++)//check again if some are there
     {
 //        cout << "checking i=" << index << endl;
-        if (cInfos[idxOne]->buffer_ready_sign[index] == BUFFER_USED_FLAG) {
+        if (cInfos->buffer_ready_sign[index] == BUFFER_USED_FLAG) {
 #ifdef DEBUG
             cout << "numanode=" << outerThread << " Check Iter -- Received buffer at index=" << index << endl;
 #endif
-            total_received_tuples += bufferSizeInTuples;
-            total_received_buffers++;
-            consumed += runConsumerOneOnOne((Tuple*)cInfos[idxOne]->recv_buffers[index]->getData(), bufferSizeInTuples,
-                                hashTable, windowSizeInSec, campaingCnt, consumerID, rank, /*is_done*/ true, cInfos[idxOne]->bookKeeping);
-            cInfos[idxOne]->buffer_ready_sign[index] = BUFFER_READY_FLAG;
-            total_received_buffersIdxOne++;
+            size_t currentBufferSizeInTups = *(size_t*)cInfos->recv_buffers1[index]->getAddressWithOffset(bufferSizeInTuples * sizeof(Tuple));
+            total_received_tuples += currentBufferSizeInTups;
 
-        }
-        if (cInfos[idxTwo]->buffer_ready_sign[index] == BUFFER_USED_FLAG) {
-#ifdef DEBUG
-            cout << "numanode=" << outerThread << " Check Iter -- Received buffer at index=" << index << endl;
-#endif
-            total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
-            consumed += runConsumerOneOnOne((Tuple*)cInfos[idxTwo]->recv_buffers[index]->getData(), bufferSizeInTuples,
-                                hashTable, windowSizeInSec, campaingCnt, consumerID, rank, /*is_done*/ true, cInfos[idxTwo]->bookKeeping);
-            cInfos[idxTwo]->buffer_ready_sign[index] = BUFFER_READY_FLAG;
-            total_received_buffersIdxTwo++;
+            consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers1[index]->getData(), currentBufferSizeInTups,
+                                hashTable, windowSizeInSec, campaingCnt, consumerID, rank, /*is_done*/ true, cInfos->bookKeeping);
+            cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
         }
     }
 
@@ -685,12 +657,86 @@ void runConsumerTwoPartitions(std::atomic<size_t>** hashTable, size_t windowSize
 #ifdef DEBUG
     cout << "Thread=" << omp_get_thread_num()<< "/" << outerThread << " Done Receiving a total of " << total_received_tuples
             << " tuples and " << total_received_buffers << " buffers"
-            <<  "total_received_buffersIdxOne=" << total_received_buffersIdxOne << " total_received_buffersIdxTwo=" << total_received_buffersIdxTwo
-                << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << " idxOne=" << idxOne << " idxTwo="
-                << idxTwo<< endIdx << endl;
+                << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
 #endif
 }
 
+
+
+void setupRDMAConsumerSecondCon(VerbsConnection* connection2, size_t bufferSizeInTups, size_t campaingCnt, ConnectionInfos* connectInfo2)
+{
+
+    auto outer_thread_id = omp_get_thread_num();
+    numa_run_on_node(outer_thread_id);
+    numa_set_preferred(outer_thread_id);
+
+    void* b2 = numa_alloc_onnode((NUM_SEND_BUFFERS+1)*sizeof(RegionToken), outer_thread_id);
+    connectInfo2->region_tokens2 = (infinity::memory::RegionToken**)b2;
+
+
+    void* pBuffer = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(Buffer), outer_thread_id);
+    connectInfo2->recv_buffers2 = (infinity::memory::Buffer**)pBuffer;
+
+    infinity::memory::Buffer* tokenbuffer = connection2->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
+
+    connectInfo2->sign_token = nullptr;
+
+    stringstream s2;
+    for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++)
+    {
+        if (i < NUM_SEND_BUFFERS) {
+            void* b1 = numa_alloc_onnode(bufferSizeInTups * sizeof(Tuple), outer_thread_id);
+
+//            connectInfo->buffer_ready_sign = (size_t*)b1
+//            connectInfo->recv_buffers[i] = connection->allocate_buffer(bufferSizeInTups * sizeof(Tuple));
+            connectInfo2->recv_buffers2[i] = connection2->register_buffer(b1, bufferSizeInTups * sizeof(Tuple) + sizeof(size_t));
+            connectInfo2->region_tokens2[i] = connectInfo2->recv_buffers2[i]->createRegionToken();
+
+//            if(outer_thread_id == 0)
+                s2 << "i=" << i << "recv region getSizeInBytes=" << connectInfo2->recv_buffers2[i]->getSizeInBytes() << " getAddress=" << connectInfo2->recv_buffers2[i]->getAddress()
+                                       << " getLocalKey=" << connectInfo2->recv_buffers2[i]->getLocalKey() << " getRemoteKey=" << connectInfo2->recv_buffers2[i]->getRemoteKey() << endl;
+        } else {
+//            cout << "copy sign token at pos " << i << endl;
+            connectInfo2->sign_buffer2 = connection2->register_buffer(connectInfo2->buffer_ready_sign, NUM_SEND_BUFFERS*sizeof(size_t));
+//            connectInfo->sign_buffer = connection->allocate_buffer(NUM_SEND_BUFFERS*sizeof(infinity::memory::Atomic));
+            connectInfo2->region_tokens2[i] = connectInfo2->sign_buffer2->createRegionToken();
+
+//            if(outer_thread_id == 0)
+                s2 << "i=" << i << "sign region getSizeInBytes=" << connectInfo2->sign_buffer2->getSizeInBytes() << " getAddress=" << connectInfo2->sign_buffer2->getAddress()
+                                       << " getLocalKey=" << connectInfo2->sign_buffer2->getLocalKey() << " getRemoteKey=" << connectInfo2->sign_buffer2->getRemoteKey() << endl;
+
+        }
+        memcpy((RegionToken*)tokenbuffer->getData() + i, connectInfo2->region_tokens2[i], sizeof(RegionToken));
+    }
+
+    cout << s2.str() << endl;
+
+    connection2->send_blocking(tokenbuffer);
+    cout << "setupRDMAConsumer finished" << endl;
+
+    stringstream ss;
+    ss  << "Consumer Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << " nodes=";
+    int numa_node = -1;
+    get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo2->recv_buffers2, MPOL_F_NODE | MPOL_F_ADDR);
+    ss << numa_node << ",";
+    get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo2->recv_buffers2[0]->getData(), MPOL_F_NODE | MPOL_F_ADDR);
+    ss << numa_node << ",";
+    get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo2->buffer_ready_sign, MPOL_F_NODE | MPOL_F_ADDR);
+    ss << numa_node << ",";
+    get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo2->region_tokens2, MPOL_F_NODE | MPOL_F_ADDR);
+    ss << numa_node << ",";
+    get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo2->region_tokens2[0]->getAddress(), MPOL_F_NODE | MPOL_F_ADDR);
+        ss << numa_node << ",";
+    get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo2->sign_token, MPOL_F_NODE | MPOL_F_ADDR);
+    ss << numa_node << ",";
+    void * ptr_to_check = connectInfo2->recv_buffers2;
+    int status[1];
+    status[0]=-1;
+    int ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check, NULL, status, 0);
+    ss << status[0] << ",";
+    cout << ss.str() << endl;
+
+}
 
 ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSizeInTups, size_t campaingCnt)
 {
@@ -708,11 +754,11 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
     }
 
     void* b2 = numa_alloc_onnode((NUM_SEND_BUFFERS+1)*sizeof(RegionToken), outer_thread_id);
-    connectInfo->region_tokens = (infinity::memory::RegionToken**)b2;
+    connectInfo->region_tokens1 = (infinity::memory::RegionToken**)b2;
 
 
     void* pBuffer = numa_alloc_onnode(NUM_SEND_BUFFERS*sizeof(Buffer), outer_thread_id);
-    connectInfo->recv_buffers = (infinity::memory::Buffer**)pBuffer;
+    connectInfo->recv_buffers1 = (infinity::memory::Buffer**)pBuffer;
 
     infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
 
@@ -723,28 +769,29 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
     {
         if (i < NUM_SEND_BUFFERS) {
             void* b1 = numa_alloc_onnode(bufferSizeInTups * sizeof(Tuple), outer_thread_id);
+
 //            connectInfo->buffer_ready_sign = (size_t*)b1
 //            connectInfo->recv_buffers[i] = connection->allocate_buffer(bufferSizeInTups * sizeof(Tuple));
-            connectInfo->recv_buffers[i] = connection->register_buffer(b1, bufferSizeInTups * sizeof(Tuple));
-            connectInfo->region_tokens[i] = connectInfo->recv_buffers[i]->createRegionToken();
+            connectInfo->recv_buffers1[i] = connection->register_buffer(b1, bufferSizeInTups * sizeof(Tuple) + sizeof(size_t));
+            connectInfo->region_tokens1[i] = connectInfo->recv_buffers1[i]->createRegionToken();
 
 //            if(outer_thread_id == 0)
-                s2 << "i=" << i << "recv region getSizeInBytes=" << connectInfo->recv_buffers[i]->getSizeInBytes() << " getAddress=" << connectInfo->recv_buffers[i]->getAddress()
-                                       << " getLocalKey=" << connectInfo->recv_buffers[i]->getLocalKey() << " getRemoteKey=" << connectInfo->recv_buffers[i]->getRemoteKey() << endl;
+                s2 << "i=" << i << "recv region getSizeInBytes=" << connectInfo->recv_buffers1[i]->getSizeInBytes() << " getAddress=" << connectInfo->recv_buffers1[i]->getAddress()
+                                       << " getLocalKey=" << connectInfo->recv_buffers1[i]->getLocalKey() << " getRemoteKey=" << connectInfo->recv_buffers1[i]->getRemoteKey() << endl;
         } else {
 //            cout << "copy sign token at pos " << i << endl;
-            connectInfo->sign_buffer = connection->register_buffer(connectInfo->buffer_ready_sign, NUM_SEND_BUFFERS*sizeof(size_t));
+            connectInfo->sign_buffer1 = connection->register_buffer(connectInfo->buffer_ready_sign, NUM_SEND_BUFFERS*sizeof(size_t));
 //            connectInfo->sign_buffer = connection->allocate_buffer(NUM_SEND_BUFFERS*sizeof(infinity::memory::Atomic));
-            connectInfo->region_tokens[i] = connectInfo->sign_buffer->createRegionToken();
+            connectInfo->region_tokens1[i] = connectInfo->sign_buffer1->createRegionToken();
 
 //            if(outer_thread_id == 0)
-                s2 << "i=" << i << "sign region getSizeInBytes=" << connectInfo->sign_buffer->getSizeInBytes() << " getAddress=" << connectInfo->sign_buffer->getAddress()
-                                       << " getLocalKey=" << connectInfo->sign_buffer->getLocalKey() << " getRemoteKey=" << connectInfo->sign_buffer->getRemoteKey() << endl;
+                s2 << "i=" << i << "sign region getSizeInBytes=" << connectInfo->sign_buffer1->getSizeInBytes() << " getAddress=" << connectInfo->sign_buffer1->getAddress()
+                                       << " getLocalKey=" << connectInfo->sign_buffer1->getLocalKey() << " getRemoteKey=" << connectInfo->sign_buffer1->getRemoteKey() << endl;
 
         }
-        memcpy((RegionToken*)tokenbuffer->getData() + i, connectInfo->region_tokens[i], sizeof(RegionToken));
+        memcpy((RegionToken*)tokenbuffer->getData() + i, connectInfo->region_tokens1[i], sizeof(RegionToken));
     }
-//    cout << s2.str() << endl;
+    cout << s2.str() << endl;
 //    if(outer_thread_id == 0)
 //    {
 //        cout << "0=" << s2.str() << endl;
@@ -756,19 +803,19 @@ ConnectionInfos* setupRDMAConsumer(VerbsConnection* connection, size_t bufferSiz
     stringstream ss;
     ss  << "Consumer Thread #" << omp_get_thread_num()  << ": on CPU " << sched_getcpu() << " nodes=";
     int numa_node = -1;
-    get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->recv_buffers, MPOL_F_NODE | MPOL_F_ADDR);
+    get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->recv_buffers1, MPOL_F_NODE | MPOL_F_ADDR);
     ss << numa_node << ",";
-    get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->recv_buffers[0]->getData(), MPOL_F_NODE | MPOL_F_ADDR);
+    get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->recv_buffers1[0]->getData(), MPOL_F_NODE | MPOL_F_ADDR);
     ss << numa_node << ",";
     get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->buffer_ready_sign, MPOL_F_NODE | MPOL_F_ADDR);
     ss << numa_node << ",";
-    get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->region_tokens, MPOL_F_NODE | MPOL_F_ADDR);
+    get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->region_tokens1, MPOL_F_NODE | MPOL_F_ADDR);
     ss << numa_node << ",";
-    get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->region_tokens[0]->getAddress(), MPOL_F_NODE | MPOL_F_ADDR);
+    get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->region_tokens1[0]->getAddress(), MPOL_F_NODE | MPOL_F_ADDR);
         ss << numa_node << ",";
     get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->sign_token, MPOL_F_NODE | MPOL_F_ADDR);
     ss << numa_node << ",";
-    void * ptr_to_check = connectInfo->recv_buffers;
+    void * ptr_to_check = connectInfo->recv_buffers1;
     int status[1];
     status[0]=-1;
     int ret_code = move_pages(0 /*self memory */, 1, &ptr_to_check, NULL, status, 0);
@@ -821,13 +868,13 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
       connectInfo->buffer_ready_sign[i] = BUFFER_READY_FLAG;
     }
 
-    connectInfo->sign_buffer = connection->register_buffer(connectInfo->buffer_ready_sign, NUM_SEND_BUFFERS*sizeof(size_t));
+    connectInfo->sign_buffer1 = connection->register_buffer(connectInfo->buffer_ready_sign, NUM_SEND_BUFFERS*sizeof(size_t));
 
 //    cout << "prod sign buffer size=" << connectInfo->sign_buffer->getSizeInBytes() << endl;
     infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((NUM_SEND_BUFFERS+1) * sizeof(RegionToken));
 
     void* b2 = numa_alloc_onnode((NUM_SEND_BUFFERS+1)*sizeof(RegionToken), outer_thread_id);
-    connectInfo->region_tokens = (infinity::memory::RegionToken**)b2;
+    connectInfo->region_tokens1 = (infinity::memory::RegionToken**)b2;
 
     connection->post_and_receive_blocking(tokenbuffer);
     cout << "got receive " << endl;
@@ -835,10 +882,10 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
     for(size_t i = 0; i <= NUM_SEND_BUFFERS; i++)
     {
         if ( i < NUM_SEND_BUFFERS){
-            connectInfo->region_tokens[i] = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
-            memcpy(connectInfo->region_tokens[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
-                s2 << "region getSizeInBytes=" << connectInfo->region_tokens[i]->getSizeInBytes() << " getAddress=" << connectInfo->region_tokens[i]->getAddress()
-                    << " getLocalKey=" << connectInfo->region_tokens[i]->getLocalKey() << " getRemoteKey=" << connectInfo->region_tokens[i]->getRemoteKey() << endl;
+            connectInfo->region_tokens1[i] = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
+            memcpy(connectInfo->region_tokens1[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
+                s2 << "region getSizeInBytes=" << connectInfo->region_tokens1[i]->getSizeInBytes() << " getAddress=" << connectInfo->region_tokens1[i]->getAddress()
+                    << " getLocalKey=" << connectInfo->region_tokens1[i]->getLocalKey() << " getRemoteKey=" << connectInfo->region_tokens1[i]->getRemoteKey() << endl;
         }
         else {
             connectInfo->sign_token = static_cast<RegionToken*>(numa_alloc_onnode(sizeof(RegionToken), outer_thread_id));
@@ -860,11 +907,11 @@ ConnectionInfos* setupRDMAProducer(VerbsConnection* connection, size_t bufferSiz
    ss << numa_node << ",";
    get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->buffer_ready_sign, MPOL_F_NODE | MPOL_F_ADDR);
    ss << numa_node << ",";
-   get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->region_tokens, MPOL_F_NODE | MPOL_F_ADDR);
+   get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->region_tokens1, MPOL_F_NODE | MPOL_F_ADDR);
    ss << numa_node << ",";
-   get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->sign_buffer, MPOL_F_NODE | MPOL_F_ADDR);
+   get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->sign_buffer1, MPOL_F_NODE | MPOL_F_ADDR);
    ss << numa_node << ",";
-   get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->sign_buffer[0].getData(), MPOL_F_NODE | MPOL_F_ADDR);
+   get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->sign_buffer1[0].getData(), MPOL_F_NODE | MPOL_F_ADDR);
    ss << numa_node << ",";
    get_mempolicy(&numa_node, NULL, 0, (void*)connectInfo->sign_token, MPOL_F_NODE | MPOL_F_ADDR);
    ss << numa_node << ",";
@@ -1113,10 +1160,6 @@ int main(int argc, char *argv[])
         cout << "starting " << numaNodes << " threads to connect node 1" << endl;
         #pragma omp parallel num_threads(numaNodes)
         {
-//            #pragma omp critical
-//            {
-//                cout << "thread in critical = " << omp_get_thread_num() << endl;
-
                 size_t numaNode = omp_get_thread_num();
                 size_t connectionID = omp_get_thread_num() * 2;
 //                cout << "rank " << rank << ": connecting to" << target_rank << " on numa node " << numaNode << " connectionID=" << connectionID << endl;
@@ -1127,7 +1170,7 @@ int main(int argc, char *argv[])
 
                     SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
                     connections[connectionID] = new VerbsConnection(&info);
-                    cout << "rank=" << rank << ": connecting to" << ip
+                    cout << "rank=" << rank << ": connecting to " << ip
                             << " on numa node " << numaNode  << " connectionID=" << connectionID << endl;
                 }
                 else
@@ -1135,7 +1178,7 @@ int main(int argc, char *argv[])
                     cout << " waiting on port " << PORT2 << " numaNode=" << numaNode << endl;
                     SimpleInfoProvider info(target_rank, "mlx5_1", 1, PORT2, ip);//was 3
                     connections[connectionID] = new VerbsConnection(&info);
-                    cout << "rank=" << rank << ": connecting to" << ip
+                    cout << "rank=" << rank << ": connecting to " << ip
                                                << " on numa node " << numaNode  << " connectionID=" << connectionID << endl;
                 }
 
@@ -1380,14 +1423,42 @@ int main(int argc, char *argv[])
           {
              auto inner_thread_id = omp_get_thread_num();
              size_t i = inner_thread_id;
-             size_t share = NUM_SEND_BUFFERS/(numberOfConsumer/numaNodes);
+             size_t idx = 0;
+
+#ifdef ONEPARTITIONMODE
+             size_t share = NUM_SEND_BUFFERS/(numberOfConsumer/4);
+             size_t threadsPerCon = numberOfConsumer/4;
+             size_t startIdx = i%threadsPerCon*share;
+             size_t endIdx = (i%threadsPerCon+1)*share;
+
+             if(outer_thread_id == 0)
+             {
+                 if(i < (numberOfConsumer/4))
+                     idx = 0;
+                 else
+                     idx = 1;
+             }
+             if(outer_thread_id == 1)
+             {
+                 if(i < (numberOfConsumer/4))
+                      idx = 2;
+                  else
+                      idx = 3;
+             }
+
+#endif
+#ifdef TWOPARTITIONMODE
+             size_t share = NUM_SEND_BUFFERS/(h/numaNodes);
              size_t startIdx = i* share;
              size_t endIdx = (i+1)*share;
+#endif
+
              if(i == numberOfConsumer -1)
              {
                  endIdx = NUM_SEND_BUFFERS;
              }
-#ifdef DEBUG
+
+//#ifdef DEBUG
              #pragma omp critical
              {
              std::cout
@@ -1396,19 +1467,29 @@ int main(int argc, char *argv[])
                 << " SumThreadID=" << i
                 << " core: " << sched_getcpu()
                 << " numaNode:" << numa_node_of_cpu(sched_getcpu())
-                << " receiveBufferLocation=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->recv_buffers, "receiveBufferLocation")
-                << " receiveBufferDataLocation=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->recv_buffers[0]->getData(), "receiveBufferDataLocation")
+                << " receiveBufferLocation1=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->recv_buffers1, "receiveBufferLocation")
+                << " receiveBufferLocation2=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->recv_buffers2, "receiveBufferLocation2")
+                << " receiveBufferDataLocation1=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->recv_buffers1[0]->getData(), "receiveBufferDataLocation1")
+                << " receiveBufferDataLocation2=" << getNumaNodeFromPtr(conInfos[outer_thread_id]->recv_buffers2[0]->getData(), "receiveBufferDataLocation2")
                 << " start=" << startIdx
                 << " endidx=" << endIdx
                 << " share=" << share
+                << " idx=" << idx
                 << std::endl;
              }
-#endif
+//#endif
+
+#ifdef TWOPARTITIONMODE
              runConsumerTwoPartitions(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, outer_thread_id, numberOfProducer , bufferSizeInTups,
                      &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
                      endIdx, conInfos, outer_thread_id, rank, numberOfNodes);
-//             printSingleHT(conInfos[outer_thread_id]->hashTable[0], campaingCnt);
-//                 printHT(conInfos[outer_thread_id]->hashTable, campaingCnt, outer_thread_id);
+#endif
+
+#ifdef ONEPARTITIONMODE
+             runConsumerOnePartition(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, outer_thread_id, numberOfProducer , bufferSizeInTups,
+                     &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
+                     endIdx, conInfos[idx], outer_thread_id, rank, numberOfNodes, idx);
+#endif
           }
        }
        cout << "finished, sending finish buffer rank=" << rank << " " << getTimestamp() << endl;
