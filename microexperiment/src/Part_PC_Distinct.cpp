@@ -423,9 +423,9 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
         size_t* tupCntBuffOdd = new size_t(0);
         readTuples += produce_window_mem_two_buffers(records, bufferSizeInTuples, cInfos[offsetConnectionEven]->sendBuffers[idxConEven]->tups,
                 cInfos[offsetConnectionOdd]->sendBuffers[idxConOdd]->tups, tupCntBuffEven, tupCntBuffOdd);
-#ifdef DEBUG
+//#ifdef DEBUG
         cout << "numanode=" << outerThread << " buffer fill finsihed bufferEven=" << *tupCntBuffEven<< " bufferOdd=" << *tupCntBuffOdd << endl;
-#endif
+//#endif
         cInfos[offsetConnectionEven]->sendBuffers[idxConEven]->setNumberOfTuples(*tupCntBuffEven);
         cInfos[offsetConnectionOdd]->sendBuffers[idxConOdd]->setNumberOfTuples(*tupCntBuffOdd);
 
@@ -601,15 +601,17 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 #endif
             }
 
-            total_received_tuples += bufferSizeInTuples;
-            cout << "received buffer size=" << *(size_t*)cInfos[currentIdx]->recv_buffers[index]->getAddressWithOffset(bufferSizeInTuples * sizeof(Tuple))  << endl;;
+//            total_received_tuples += bufferSizeInTuples;
+            size_t currentBufferSizeInTups = *(size_t*)cInfos[currentIdx]->recv_buffers[index]->getAddressWithOffset(bufferSizeInTuples * sizeof(Tuple));
+            total_received_tuples += currentBufferSizeInTups;
+            cout << "received buffer size=" << currentBufferSizeInTups << endl;
             total_received_buffers++;
 
 
 #ifdef DEBUG
             cout << "Thread=" << outerThread << "/" << omp_get_thread_num() << "/" << outerThread<< " Received buffer at index=" << index << endl;
 #endif
-            consumed += runConsumerOneOnOne((Tuple*)cInfos[currentIdx]->recv_buffers[index]->getData(), bufferSizeInTuples,
+            consumed += runConsumerOneOnOne((Tuple*)cInfos[currentIdx]->recv_buffers[index]->getData(), currentBufferSizeInTups,
                     hashTable, windowSizeInSec, campaingCnt, consumerID, rank, is_done, cInfos[currentIdx]->bookKeeping);
 
             cInfos[currentIdx]->buffer_ready_sign[index] = BUFFER_READY_FLAG;
@@ -649,9 +651,12 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 #ifdef DEBUG
             cout << "numanode=" << outerThread << " Check Iter -- Received buffer at index=" << index << endl;
 #endif
-            total_received_tuples += bufferSizeInTuples;
+            size_t currentBufferSizeInTups = *(size_t*)cInfos[idxOne]->recv_buffers[index]->getAddressWithOffset(bufferSizeInTuples * sizeof(Tuple));
+            total_received_tuples += currentBufferSizeInTups;
+            cout << "received buffer size=" << currentBufferSizeInTups << endl;
+
             total_received_buffers++;
-            consumed += runConsumerOneOnOne((Tuple*)cInfos[idxOne]->recv_buffers[index]->getData(), bufferSizeInTuples,
+            consumed += runConsumerOneOnOne((Tuple*)cInfos[idxOne]->recv_buffers[index]->getData(), currentBufferSizeInTups,
                                 hashTable, windowSizeInSec, campaingCnt, consumerID, rank, /*is_done*/ true, cInfos[idxOne]->bookKeeping);
             cInfos[idxOne]->buffer_ready_sign[index] = BUFFER_READY_FLAG;
             total_received_buffersIdxOne++;
@@ -662,8 +667,12 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             cout << "numanode=" << outerThread << " Check Iter -- Received buffer at index=" << index << endl;
 #endif
             total_received_tuples += bufferSizeInTuples;
+            size_t currentBufferSizeInTups = *(size_t*)cInfos[idxTwo]->recv_buffers[index]->getAddressWithOffset(bufferSizeInTuples * sizeof(Tuple));
+            total_received_tuples += currentBufferSizeInTups;
+            cout << "received buffer size=" << currentBufferSizeInTups << endl;
+
             total_received_buffers++;
-            consumed += runConsumerOneOnOne((Tuple*)cInfos[idxTwo]->recv_buffers[index]->getData(), bufferSizeInTuples,
+            consumed += runConsumerOneOnOne((Tuple*)cInfos[idxTwo]->recv_buffers[index]->getData(), currentBufferSizeInTups,
                                 hashTable, windowSizeInSec, campaingCnt, consumerID, rank, /*is_done*/ true, cInfos[idxTwo]->bookKeeping);
             cInfos[idxTwo]->buffer_ready_sign[index] = BUFFER_READY_FLAG;
             total_received_buffersIdxTwo++;
