@@ -482,7 +482,6 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
                 cInfos[offsetConnectionEven]->buffer_ready_sign[idxConEven] = BUFFER_USED_SENDER_DONE;
                 cInfos[offsetConnectionOdd]->buffer_ready_sign[idxConOdd] = BUFFER_USED_SENDER_DONE;
 
-                cout << "cnt =" << total_buffer_send << endl;
                 cInfos[offsetConnectionEven]->con->write_blocking(cInfos[offsetConnectionEven]->sign_buffer,
                         cInfos[offsetConnectionEven]->sign_token, idxConEven*sizeof(size_t), idxConEven*sizeof(size_t), sizeof(size_t));
                 cout << "numanode=" << outerThread << " Sent last tuples and marked as BUFFER_USED_SENDER_DONE at index=" << idxConEven << " numanode=" << outerThread << " con=" << offsetConnectionEven << endl;
@@ -605,13 +604,13 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             {
 #ifdef DEBUG
                 cout << "numanode=" << outerThread << " found buffer at idx=" << index << endl;
-
+                if(currentIdx == idxOne)
+                    total_received_buffersIdxOne++;
+                else
+                    total_received_buffersIdxTwo++;
 #endif
             }
-            if(currentIdx == idxOne)
-                total_received_buffersIdxOne++;
-            else
-                total_received_buffersIdxTwo++;
+
             total_received_tuples += bufferSizeInTuples;
             total_received_buffers++;
 
@@ -683,13 +682,13 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     *consumedTuples = consumed;
     *consumedBuffers = total_received_buffers;
     *consumerNoBufferFound = noBufferFound;
-//#ifdef DEBUG
+#ifdef DEBUG
     cout << "Thread=" << omp_get_thread_num()<< "/" << outerThread << " Done Receiving a total of " << total_received_tuples
             << " tuples and " << total_received_buffers << " buffers"
             <<  "total_received_buffersIdxOne=" << total_received_buffersIdxOne << " total_received_buffersIdxTwo=" << total_received_buffersIdxTwo
                 << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << " idxOne=" << idxOne << " idxTwo="
                 << idxTwo<< endIdx << endl;
-//#endif
+#endif
 }
 
 
