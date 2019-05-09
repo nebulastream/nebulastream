@@ -13,6 +13,11 @@
 namespace iotdb {
 
 Statement::~Statement() {}
+
+const StatementPtr ExpressionStatment::createCopy() const{
+  return this->copy();
+}
+
 ExpressionStatment::~ExpressionStatment() {}
 ConstantExprStatement::~ConstantExprStatement() {}
 
