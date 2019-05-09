@@ -121,10 +121,10 @@ public:
         requestToken = connection.create_request_token();
         requestToken->setCompleted(true);
         tups = (Tuple*)(send_buffer->getAddress());
-        numberOfTuples = (size_t*) send_buffer->getAddressWithOffset( ((bufferSizeInTuples+1) * sizeof(Tuple)/sizeof(uint64_t))) ;
-        cout << "remaining=" << (send_buffer->getRemainingSizeInBytes(((bufferSizeInTuples+1) * sizeof(Tuple)/sizeof(uint64_t)))) << endl;;
+        numberOfTuples = (size_t*) send_buffer->getAddressWithOffset( (bufferSizeInTuples * sizeof(Tuple)/sizeof(uint64_t))) ;
+        cout << "remaining=" << (send_buffer->getRemainingSizeInBytes((bufferSizeInTuples * sizeof(Tuple)/sizeof(uint64_t)))) << endl;;
         cout << " sizeofTup=" << sizeof(Tuple) << " startAddr=" << send_buffer->getAddress()
-                << " offset=" << (bufferSizeInTuples+1) * sizeof(Tuple)/sizeof(uint64_t) << endl;
+                << " offset=" << bufferSizeInTuples * sizeof(Tuple)/sizeof(uint64_t) << endl;
         *numberOfTuples = 0;
     }
 
