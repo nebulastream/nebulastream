@@ -48,6 +48,7 @@ using namespace std;
 #define BUFFER_USED_SENDER_DONE 127
 #define BUFFER_READY_FLAG 0
 #define BUFFER_USED_FLAG 1
+#define BUFFER_BEING_PROCESSED_FLAG 2
 
 #define NUMBER_OF_GEN_TUPLE 1000000
 #define DEBUG
@@ -392,8 +393,23 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
 
             if(cInfos[offsetConnectionEven]->buffer_ready_sign[receive_buffer_index] == BUFFER_READY_FLAG)
             {
-                idxConEven = receive_buffer_index;
-                break;
+                size_t prevValue = cInfos[offsetConnectionEven]->con1->atomic_cas_blocking(cInfos[offsetConnectionEven]->sign_token,
+                                        receive_buffer_index*sizeof(size_t), BUFFER_READY_FLAG, BUFFER_BEING_PROCESSED_FLAG, nullptr);
+                if(prevValue != BUFFER_READY_FLAG)
+                {
+#ifdef DEBUG
+                    cout << "!!!!!!!!!!!numanode=" << outerThread << " buffer already taken with val=" << prevValue << " connection=" << offsetConnectionEven << endl;
+#endif
+                    continue;
+                }
+                else
+                {
+#ifdef DEBUG
+                    cout << "numanode=" << outerThread << " found first idx=" << receive_buffer_index << " connection=" << offsetConnectionEven << endl;
+#endif
+                    idxConEven = receive_buffer_index;
+                    break;
+                }
             }
             else
             {
