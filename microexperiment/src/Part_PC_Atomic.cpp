@@ -204,7 +204,8 @@ struct ConnectionInfos
     RegionToken* sign_token;//special token for this connection
     TupleBuffer** sendBuffers;
     record** records;
-    VerbsConnection* con;
+    VerbsConnection* con1;
+    VerbsConnection* con2;
     std::atomic<size_t>** hashTable;
     tbb::atomic<size_t>* bookKeeping;
 
@@ -1272,8 +1273,8 @@ int main(int argc, char *argv[])
                                            << " on numa node " << numaNode  << " connectionID=" << connectionID << endl;
            }
 
-            conInfos[connectionID] = setupRDMAConsumer(connections[connectionID], bufferSizeInTups, campaingCnt);
-            conInfos[connectionID]->con = connections[connectionID];
+            conInfos[numaNode] = setupRDMAConsumer(connections[connectionID], bufferSizeInTups, campaingCnt);
+            conInfos[numaNode]->con1 = connections[connectionID];
 
         }//end of for
             cout << "thread out of critical = " << omp_get_thread_num() << endl;
@@ -1303,7 +1304,7 @@ int main(int argc, char *argv[])
                                            << " on numa node " << numaNode  << " connectionID=" << connectionID << endl;
             }
 
-            setupRDMAConsumerSecondCon(connections[connectionID], bufferSizeInTups, campaingCnt, conInfos[omp_get_thread_num() * 2]);
+            setupRDMAConsumerSecondCon(connections[connectionID], bufferSizeInTups, campaingCnt, conInfos[numaNode]);
 //            conInfos[connectionID]->con = connections[connectionID];
         }
         cout << "thread out of critical = " << omp_get_thread_num() << endl;
