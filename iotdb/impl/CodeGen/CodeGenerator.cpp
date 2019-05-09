@@ -315,7 +315,6 @@ bool C_CodeGenerator::generateCode(const PredicatePtr& pred, const PipelineConte
 	
     ExpressionStatmentPtr expr = pred->generateCode(this->code_);
 
-
     VariableDeclaration var_decl_i =
         VariableDeclaration::create(createDataType(BasicType(INT32)), "my_int", createBasicTypeValue(BasicType(INT32), "1"));
 
@@ -328,7 +327,7 @@ bool C_CodeGenerator::generateCode(const PredicatePtr& pred, const PipelineConte
     if(!found)
       code_.variable_decls.push_back(var_decl_i);
 
-    std::shared_ptr<IF> if_stmt = std::make_shared<IF>(VarRef(var_decl_i));//(*expr);
+    std::shared_ptr<IF> if_stmt = std::make_shared<IF>(*expr);//(*expr);
     CompoundStatementPtr compound_stmt = if_stmt->getCompoundStatement();
     /* update current compound_stmt*/
     code_.current_code_insertion_point->addStatement(if_stmt);
