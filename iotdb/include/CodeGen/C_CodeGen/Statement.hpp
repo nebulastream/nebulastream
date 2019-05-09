@@ -243,7 +243,9 @@ class ForLoopStatement : public Statement {
     }
 
     void addStatement(StatementPtr stmt);
-
+    const CompoundStatementPtr getCompoundStatement(){
+      return loop_body_;
+    }
     virtual ~ForLoopStatement();
 
   private:
