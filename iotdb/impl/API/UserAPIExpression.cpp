@@ -30,21 +30,6 @@ namespace iotdb
 		return std::make_shared<Predicate>(*this);
 	}
 
-
-	bool PredicateItem::isItem() const{
-	    return true;
-	}
-
-    bool Predicate::isItem() const {
-        return false;
-    }
-
-	bool PredicateItem::attributeEquals(const AttributeFieldPtr& pAttribute){
-	  /* \todo: change this, use an isEqual method defined on AttributeField! */
-	    return (pAttribute->toString() == _attribute->toString());
-	}
-
-
     const ExpressionStatmentPtr Predicate::generateCode(GeneratedCode& code) const{
 		//toDo: implement code-generation
 		//BinaryOperatorStatement bin_op(VarRefStatement(var_decl_i), PLUS_OP, VarRefStatement(var_decl_j));

@@ -40,7 +40,6 @@ public:
     virtual const ExpressionStatmentPtr generateCode(GeneratedCode& code) const = 0;
     virtual const std::string toString() const = 0;
 	virtual UserAPIExpressionPtr copy() const = 0;
-    virtual bool isItem() const = 0;
 };
 
 class Predicate : public UserAPIExpression{
@@ -50,7 +49,6 @@ public:
 	virtual const ExpressionStatmentPtr generateCode(GeneratedCode& code) const override;
 	virtual const std::string toString() const override;
 	virtual UserAPIExpressionPtr copy() const override;
-    virtual bool isItem() const override;
 private:
     BinaryOperatorType _op;
 	const UserAPIExpressionPtr _left;
@@ -67,8 +65,6 @@ public:
     virtual const ExpressionStatmentPtr generateCode(GeneratedCode& code) const override;
     virtual const std::string toString() const override;
 	virtual UserAPIExpressionPtr copy() const override;
-	virtual bool isItem() const override;
-    virtual bool attributeEquals(const AttributeFieldPtr& pAttribute);
 private:
 	PredicateItemMutation _mutation;
 	AttributeFieldPtr _attribute=nullptr;
