@@ -1270,7 +1270,6 @@ int main(int argc, char *argv[])
     size_t consumerNoBufferFound[numaNodes][numberOfConsumer/numaNodes] = {0};
     size_t readInputTuples[numaNodes][numberOfProducer/numaNodes] = {0};
 
-    infinity::memory::Buffer* finishBuffer = connections[0]->allocate_buffer(1);
 
     if(rank % 2 ==  0)
     {
@@ -1351,11 +1350,11 @@ int main(int argc, char *argv[])
           }
        }
        cout << "producer finished ... waiting for consumer to finish " << getTimestamp() << endl;
-       if(rank == 0)
-           connections[0]->post_and_receive_blocking(finishBuffer);
-       else
-           connections[1]->post_and_receive_blocking(finishBuffer);
-//       connections[2]->post_and_receive_blocking(finishBuffer);
+
+       size_t offSet = rank == 0 ? 0 : 1;
+       infinity::memory::Buffer* finishBuffer = connections[offSet]->allocate_buffer(1);
+       connections[offSet]->post_and_receive_blocking(finishBuffer);
+
        cout << "got finish buffer, finished execution " << getTimestamp()<< endl;
     }
     else
@@ -1401,11 +1400,12 @@ int main(int argc, char *argv[])
        }
        cout << "finished, sending finish buffer rank=" << rank << " " << getTimestamp() << endl;
 //           connections[0]->send_blocking(finishBuffer);
-       if(rank == 1)
-          connections[0]->send_blocking(finishBuffer);
-      else
-          connections[1]->send_blocking(finishBuffer);
+
+       size_t offSet = rank == 1 ? 0 : 1;
+       infinity::memory::Buffer* finishBuffer = connections[offSet]->allocate_buffer(1);
+       connections[offSet]->send_blocking(finishBuffer);
        cout << "buffer sending finished, shutdown "<< getTimestamp() << endl;
+
 
     }
 
