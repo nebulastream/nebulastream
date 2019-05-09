@@ -573,7 +573,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
 
 }
 
-void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
+void runConsumerTwoPartitions(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples, size_t* consumedTuples, size_t* consumedBuffers,
         size_t* consumerNoBufferFound, size_t startIdx, size_t endIdx, ConnectionInfos** cInfos, size_t outerThread, size_t rank, size_t numberOfNodes)
 {
@@ -1404,7 +1404,7 @@ int main(int argc, char *argv[])
                 << std::endl;
              }
 #endif
-             runConsumerNew(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, outer_thread_id, numberOfProducer , bufferSizeInTups,
+             runConsumerTwoPartitions(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, outer_thread_id, numberOfProducer , bufferSizeInTups,
                      &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
                      endIdx, conInfos, outer_thread_id, rank, numberOfNodes);
 //             printSingleHT(conInfos[outer_thread_id]->hashTable[0], campaingCnt);

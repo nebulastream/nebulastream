@@ -344,8 +344,6 @@ size_t produce_window_mem_two_buffers(record* records, size_t bufferSize, Tuple*
     return readTuples;
 }
 
-
-
 void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, size_t bufferProcCnt,
         size_t* producesTuples, size_t* producedBuffers, size_t* readInputTuples, size_t* noFreeEntryFound, size_t startIdx,
         size_t endIdx, size_t numberOfProducer, ConnectionInfos** cInfos, size_t outerThread, size_t numberOfNodes)
@@ -497,8 +495,7 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
     }//end of while
 //    cout << "Thread=" << omp_get_thread_num() << " Done sending! Sent a total of " << total_sent_tuples << " tuples and " << total_buffer_send << " buffers"
 //            << " noBufferFreeToSend=" << noBufferFreeToSend << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
-//#ifdef DEBUG
-
+#ifdef DEBUG
     #pragma omp critical
              {
                  cout << "Thread:" << outerThread << "/" << omp_get_thread_num()
@@ -513,7 +510,7 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
                          << endl;
 
              }
-//#endif
+#endif
     *producesTuples = total_sent_tuples;
     *producedBuffers = total_buffer_send;
     *readInputTuples = readTuples;
@@ -521,7 +518,8 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
 }
 
 size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic<size_t>** hashTable, size_t windowSizeInSec,
-        size_t campaingCnt, size_t consumerID, size_t rank, bool done, tbb::atomic<size_t>* bookKeeper) {
+        size_t campaingCnt, size_t consumerID, size_t rank, bool done, tbb::atomic<size_t>* bookKeeper)
+{
     size_t consumed = 0;
     size_t windowSwitchCnt = 0;
     size_t htReset = 0;
@@ -560,14 +558,105 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
             << " consumeID=" << consumerID << endl;
 #endif
     return consumed;
-
 }
 
-void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
+void runConsumerOnePartition(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
+        size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples, size_t* consumedTuples, size_t* consumedBuffers,
+        size_t* consumerNoBufferFound, size_t startIdx, size_t endIdx, ConnectionInfos* cInfos, size_t outerThread, size_t rank, size_t numberOfNodes)
+{
+    size_t total_received_tuples = 0;
+    size_t total_received_buffers = 0;
+    size_t index = startIdx;
+    size_t noBufferFound = 0;
+    size_t consumed = 0;
+
+//    size_t idxOne = outerThread == 0 ? 0 : 2;
+//    size_t idxTwo = outerThread == 0 ? 1 : 3;
+    bool is_done = numberOfNodes == 4 ? false : true;
+    while(true)
+    {
+        if(cInfos->buffer_ready_sign[index] == BUFFER_USED_FLAG || cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
+        {
+            if(cInfos->buffer_ready_sign[index] == BUFFER_USED_SENDER_DONE)
+            {
+                    std::atomic_fetch_add(&exitConsumer, size_t(1));
+                    cout << "numanode=" << outerThread << " DONE BUFFER FOUND at idx"  << index << " numanode=" << outerThread << endl;
+                    is_done = true;
+            }
+
+            size_t currentBufferSizeInTups = *(size_t*)cInfos->recv_buffers[index]->getAddressWithOffset(bufferSizeInTuples * sizeof(Tuple));
+            total_received_tuples += currentBufferSizeInTups;
+            total_received_buffers++;
+
+
+#ifdef DEBUG
+            cout << "Thread=" << outerThread << "/" << omp_get_thread_num() << "/" << outerThread<< " Received buffer at index=" << index << endl;
+#endif
+            consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers[index]->getData(), currentBufferSizeInTups,
+                    hashTable, windowSizeInSec, campaingCnt, consumerID, rank, is_done, cInfos->bookKeeping);
+
+            cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
+#ifdef DEBUG
+            cout << "numanode=" << outerThread << " set buffer ready again" << endl;
+#endif
+        }
+        else
+        {
+            noBufferFound++;
+        }
+
+        index++;
+
+        if(index >= endIdx)
+        {
+            index = startIdx;
+        }
+
+        if(std::atomic_load(&exitConsumer) == 2)
+        {
+#ifdef DEBUG
+#pragma omp critical
+            cout << "before out Thread=" << outerThread << "/" << omp_get_thread_num() << " Receiving a total of " << total_received_tuples << " tuples and " << total_received_buffers << " buffers"
+                            << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
+#endif
+            break;
+        }
+    }//end of while
+
+    cout << "numanode=" << outerThread << " checking remaining buffers" << endl;
+    for(index = startIdx; index < endIdx; index++)//check again if some are there
+    {
+//        cout << "checking i=" << index << endl;
+        if (cInfos->buffer_ready_sign[index] == BUFFER_USED_FLAG) {
+#ifdef DEBUG
+            cout << "numanode=" << outerThread << " Check Iter -- Received buffer at index=" << index << endl;
+#endif
+            size_t currentBufferSizeInTups = *(size_t*)cInfos->recv_buffers[index]->getAddressWithOffset(bufferSizeInTuples * sizeof(Tuple));
+            total_received_tuples += currentBufferSizeInTups;
+
+            total_received_buffers++;
+            consumed += runConsumerOneOnOne((Tuple*)cInfos->recv_buffers[index]->getData(), currentBufferSizeInTups,
+                                hashTable, windowSizeInSec, campaingCnt, consumerID, rank, /*is_done*/ true, cInfos->bookKeeping);
+            cInfos->buffer_ready_sign[index] = BUFFER_READY_FLAG;
+        }
+    }
+
+    *consumedTuples = consumed;
+    *consumedBuffers = total_received_buffers;
+    *consumerNoBufferFound = noBufferFound;
+#ifdef DEBUG
+    cout << "Thread=" << omp_get_thread_num()<< "/" << outerThread << " Done Receiving a total of " << total_received_tuples
+            << " tuples and " << total_received_buffers << " buffers"
+            <<  "total_received_buffersIdxOne=" << total_received_buffersIdxOne << " total_received_buffersIdxTwo=" << total_received_buffersIdxTwo
+                << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIDX << endl;
+#endif
+}
+
+
+void runConsumerTwoPartitions(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
         size_t campaingCnt, size_t consumerID, size_t produceCnt, size_t bufferSizeInTuples, size_t* consumedTuples, size_t* consumedBuffers,
         size_t* consumerNoBufferFound, size_t startIdx, size_t endIdx, ConnectionInfos** cInfos, size_t outerThread, size_t rank, size_t numberOfNodes)
 {
-
     size_t total_received_tuples = 0;
     size_t total_received_buffers = 0;
     size_t total_received_buffersIdxOne = 0;
@@ -1112,10 +1201,6 @@ int main(int argc, char *argv[])
         cout << "starting " << numaNodes << " threads to connect node 1" << endl;
         #pragma omp parallel num_threads(numaNodes)
         {
-//            #pragma omp critical
-//            {
-//                cout << "thread in critical = " << omp_get_thread_num() << endl;
-
                 size_t numaNode = omp_get_thread_num();
                 size_t connectionID = omp_get_thread_num() * 2;
 //                cout << "rank " << rank << ": connecting to" << target_rank << " on numa node " << numaNode << " connectionID=" << connectionID << endl;
@@ -1126,7 +1211,7 @@ int main(int argc, char *argv[])
 
                     SimpleInfoProvider info(target_rank, "mlx5_0", 1, PORT1, ip);//was 3
                     connections[connectionID] = new VerbsConnection(&info);
-                    cout << "rank=" << rank << ": connecting to" << ip
+                    cout << "rank=" << rank << ": connecting to " << ip
                             << " on numa node " << numaNode  << " connectionID=" << connectionID << endl;
                 }
                 else
@@ -1134,7 +1219,7 @@ int main(int argc, char *argv[])
                     cout << " waiting on port " << PORT2 << " numaNode=" << numaNode << endl;
                     SimpleInfoProvider info(target_rank, "mlx5_1", 1, PORT2, ip);//was 3
                     connections[connectionID] = new VerbsConnection(&info);
-                    cout << "rank=" << rank << ": connecting to" << ip
+                    cout << "rank=" << rank << ": connecting to " << ip
                                                << " on numa node " << numaNode  << " connectionID=" << connectionID << endl;
                 }
 
@@ -1386,7 +1471,8 @@ int main(int argc, char *argv[])
              {
                  endIdx = NUM_SEND_BUFFERS;
              }
-#ifdef DEBUG
+
+//#ifdef DEBUG
              #pragma omp critical
              {
              std::cout
@@ -1402,12 +1488,33 @@ int main(int argc, char *argv[])
                 << " share=" << share
                 << std::endl;
              }
-#endif
-             runConsumerNew(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, outer_thread_id, numberOfProducer , bufferSizeInTups,
+//#endif
+//             runConsumerTwoPartitions(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, outer_thread_id, numberOfProducer , bufferSizeInTups,
+//                     &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
+//                     endIdx, conInfos, outer_thread_id, rank, numberOfNodes);
+
+             size_t idx = 0;
+             if(outer_thread_id == 0)
+             {
+                 if(inner_thread_id == 0)
+                     idx = 0;
+                 else
+                     idx = 1;
+             }
+             if(outer_thread_id == 1)
+             {
+                 if(inner_thread_id == 0)
+                      idx = 2;
+                  else
+                      idx = 3;
+             }
+
+//             size_t idxOne = outer_thread_id == 0 ? 0 : 2;
+//             size_t idxTwo = outer_thread_id == 0 ? 1 : 3;
+             runConsumerOnePartition(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, outer_thread_id, numberOfProducer , bufferSizeInTups,
                      &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
-                     endIdx, conInfos, outer_thread_id, rank, numberOfNodes);
-//             printSingleHT(conInfos[outer_thread_id]->hashTable[0], campaingCnt);
-//                 printHT(conInfos[outer_thread_id]->hashTable, campaingCnt, outer_thread_id);
+                     endIdx, conInfos[idx], outer_thread_id, rank, numberOfNodes);
+
           }
        }
        cout << "finished, sending finish buffer rank=" << rank << " " << getTimestamp() << endl;
