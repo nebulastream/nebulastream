@@ -50,7 +50,7 @@ using namespace std;
 #define BUFFER_USED_FLAG 1
 
 #define NUMBER_OF_GEN_TUPLE 1000000
-//#define DEBUG
+#define DEBUG
 void printSingleHT(std::atomic<size_t>* hashTable, size_t campaingCnt);
 //std::vector<std::shared_ptr<std::thread>> buffer_threads;
 std::atomic<size_t>* outputTable;
@@ -183,7 +183,8 @@ struct ConnectionInfos
         sign_token = other.sign_token;
         sendBuffers = other.sendBuffers;
         records = other.records;
-        con = other.con;
+        con1 = other.con1;
+        con2 = other.con2;
         bookKeeping = other.bookKeeping;
 //        exitProducer = other.exitProducer;
 //        exitConsumer = other.exitConsumer;
@@ -384,7 +385,7 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
 #ifdef DEBUG
                 cout << " read array at idx=" << receive_buffer_index <<  endl;
 #endif
-                cInfos[offsetConnectionEven]->con->read_blocking(cInfos[offsetConnectionEven]->sign_buffer1,
+                cInfos[offsetConnectionEven]->con1->read_blocking(cInfos[offsetConnectionEven]->sign_buffer1,
                         cInfos[offsetConnectionEven]->sign_token,
                         startIdx*sizeof(size_t), startIdx *sizeof(size_t), (endIdx - startIdx)* sizeof(uint64_t));
             }
@@ -412,7 +413,7 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
         {
             if(receive_buffer_index == startIdx)//read buffers
             {
-                cInfos[offsetConnectionOdd]->con->read_blocking(cInfos[offsetConnectionOdd]->sign_buffer1, cInfos[offsetConnectionOdd]->sign_token,
+                cInfos[offsetConnectionOdd]->con1->read_blocking(cInfos[offsetConnectionOdd]->sign_buffer1, cInfos[offsetConnectionOdd]->sign_token,
                         startIdx*sizeof(size_t), startIdx *sizeof(size_t), (endIdx - startIdx)* sizeof(uint64_t));
             }
             if(cInfos[offsetConnectionOdd]->buffer_ready_sign[receive_buffer_index] == BUFFER_READY_FLAG)
@@ -443,11 +444,11 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
         tupleSendToC2 += *tupCntBuffOdd;
         bufferSendToC2++;
 
-        cInfos[offsetConnectionEven]->con->write(cInfos[offsetConnectionEven]->sendBuffers[idxConEven]->send_buffer,
+        cInfos[offsetConnectionEven]->con1->write(cInfos[offsetConnectionEven]->sendBuffers[idxConEven]->send_buffer,
                 cInfos[offsetConnectionEven]->region_tokens1[idxConEven],
                 cInfos[offsetConnectionEven]->sendBuffers[idxConEven]->requestToken);
 
-        cInfos[offsetConnectionOdd]->con->write(cInfos[offsetConnectionOdd]->sendBuffers[idxConOdd]->send_buffer,
+        cInfos[offsetConnectionOdd]->con1->write(cInfos[offsetConnectionOdd]->sendBuffers[idxConOdd]->send_buffer,
                 cInfos[offsetConnectionOdd]->region_tokens1[idxConOdd],
                 cInfos[offsetConnectionOdd]->sendBuffers[idxConOdd]->requestToken);
 #ifdef DEBUG
@@ -460,10 +461,10 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
             cInfos[offsetConnectionEven]->buffer_ready_sign[idxConEven] = BUFFER_USED_FLAG;
             cInfos[offsetConnectionOdd]->buffer_ready_sign[idxConOdd] = BUFFER_USED_FLAG;
 
-            cInfos[offsetConnectionEven]->con->write_blocking(cInfos[offsetConnectionEven]->sign_buffer1, cInfos[offsetConnectionEven]->sign_token,
+            cInfos[offsetConnectionEven]->con1->write_blocking(cInfos[offsetConnectionEven]->sign_buffer1, cInfos[offsetConnectionEven]->sign_token,
                     idxConEven*sizeof(size_t), idxConEven*sizeof(size_t), sizeof(size_t));
 
-            cInfos[offsetConnectionOdd]->con->write_blocking(cInfos[offsetConnectionOdd]->sign_buffer1,
+            cInfos[offsetConnectionOdd]->con1->write_blocking(cInfos[offsetConnectionOdd]->sign_buffer1,
                     cInfos[offsetConnectionOdd]->sign_token, idxConOdd*sizeof(size_t),
                     idxConOdd*sizeof(size_t), sizeof(size_t));
 
@@ -479,22 +480,22 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
                 cInfos[offsetConnectionEven]->buffer_ready_sign[idxConEven] = BUFFER_USED_SENDER_DONE;
                 cInfos[offsetConnectionOdd]->buffer_ready_sign[idxConOdd] = BUFFER_USED_SENDER_DONE;
 
-                cInfos[offsetConnectionEven]->con->write_blocking(cInfos[offsetConnectionEven]->sign_buffer1,
+                cInfos[offsetConnectionEven]->con1->write_blocking(cInfos[offsetConnectionEven]->sign_buffer1,
                         cInfos[offsetConnectionEven]->sign_token, idxConEven*sizeof(size_t), idxConEven*sizeof(size_t), sizeof(size_t));
                 cout << "numanode=" << outerThread << " Sent last tuples and marked as BUFFER_USED_SENDER_DONE at index=" << idxConEven << " numanode=" << outerThread << " con=" << offsetConnectionEven << endl;
 
-                cInfos[offsetConnectionOdd]->con->write_blocking(cInfos[offsetConnectionOdd]->sign_buffer1, cInfos[offsetConnectionOdd]->sign_token,
+                cInfos[offsetConnectionOdd]->con1->write_blocking(cInfos[offsetConnectionOdd]->sign_buffer1, cInfos[offsetConnectionOdd]->sign_token,
                         idxConOdd*sizeof(size_t), idxConOdd*sizeof(size_t), sizeof(size_t));
                 cout << "numanode=" << outerThread << " Sent last tuples and marked as BUFFER_USED_SENDER_DONE at index=" << idxConOdd << " numanode=" << outerThread << " con=" << offsetConnectionOdd << endl;
             }
             else
             {
                 cInfos[offsetConnectionEven]->buffer_ready_sign[idxConEven] = BUFFER_USED_FLAG;
-                cInfos[offsetConnectionEven]->con->write(cInfos[offsetConnectionEven]->sign_buffer1,
+                cInfos[offsetConnectionEven]->con1->write(cInfos[offsetConnectionEven]->sign_buffer1,
                         cInfos[offsetConnectionEven]->sign_token, idxConEven*sizeof(size_t), idxConEven*sizeof(size_t), sizeof(size_t));
 
                 cInfos[offsetConnectionOdd]->buffer_ready_sign[idxConOdd] = BUFFER_USED_FLAG;
-                cInfos[offsetConnectionOdd]->con->write(cInfos[offsetConnectionOdd]->sign_buffer1,
+                cInfos[offsetConnectionOdd]->con1->write(cInfos[offsetConnectionOdd]->sign_buffer1,
                         cInfos[offsetConnectionOdd]->sign_token, idxConOdd*sizeof(size_t), idxConOdd*sizeof(size_t), sizeof(size_t));
 
                 cout << "numanode=" << outerThread << " thread" << omp_get_thread_num() << " prod finished" << endl;
@@ -1185,7 +1186,7 @@ int main(int argc, char *argv[])
 
                 cout << "setup con numa node " << numaNode  << " connectionID=" << connectionID << endl;
                 conInfos[connectionID] = setupRDMAProducer(connections[connectionID], bufferSizeInTups);
-                conInfos[connectionID]->con = connections[connectionID];
+                conInfos[connectionID]->con1 = connections[connectionID];
                 cout << "setup con numa node " << numaNode  << " connectionID=" << connectionID << " finished"<< endl;
 
                 conInfos[connectionID]->records = new record*[numberOfProducer/numaNodes];
@@ -1233,7 +1234,7 @@ int main(int argc, char *argv[])
 
                     cout << "setup con numa node " << numaNode  << " connectionID=" << connectionID << endl;
                     conInfos[connectionID] = setupRDMAProducer(connections[connectionID], bufferSizeInTups);
-                    conInfos[connectionID]->con = connections[connectionID];
+                    conInfos[connectionID]->con1 = connections[connectionID];
                     cout << "setup con numa node " << numaNode  << " connectionID=" << connectionID << " finished"<< endl;
                 }
                 else
@@ -1383,7 +1384,8 @@ int main(int argc, char *argv[])
                 << " start=" << startIdx
                 << " endidx=" << endIdx
                 << " share=" << share
-                << " con=" << conInfos[0]->con
+                << " con1=" << conInfos[outer_thread_id]->con1
+                << " con2=" << conInfos[outer_thread_id]->con2
                 << std::endl;
              }
 //#endif
