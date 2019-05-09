@@ -49,7 +49,7 @@ using namespace std;
 #define BUFFER_WILL_BE_PROCESSED_FLAG 3
 
 #define NUMBER_OF_GEN_TUPLE 1000000
-//#define DEBUG
+#define DEBUG
 void printSingleHT(std::atomic<size_t>* hashTable, size_t campaingCnt);
 //std::vector<std::shared_ptr<std::thread>> buffer_threads;
 std::atomic<size_t>* outputTable;
@@ -647,8 +647,7 @@ void runConsumerOnePartition(std::atomic<size_t>** hashTable, size_t windowSizeI
 #ifdef DEBUG
     cout << "Thread=" << omp_get_thread_num()<< "/" << outerThread << " Done Receiving a total of " << total_received_tuples
             << " tuples and " << total_received_buffers << " buffers"
-            <<  "total_received_buffersIdxOne=" << total_received_buffersIdxOne << " total_received_buffersIdxTwo=" << total_received_buffersIdxTwo
-                << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIDX << endl;
+                << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << endIdx << endl;
 #endif
 }
 
