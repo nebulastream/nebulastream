@@ -18,4 +18,5 @@ add_source_iotdb(
         ForLoopStatement.cpp
         FunctionCallStatement.cpp
         UserDefinedDataType.cpp
+        CompoundStatement.cpp
         )
