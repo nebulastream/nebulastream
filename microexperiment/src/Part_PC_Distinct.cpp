@@ -601,8 +601,8 @@ void runConsumerOnePartition(std::atomic<size_t>** hashTable, size_t windowSizeI
         else
         {
             noBufferFound++;
-            cout << "read idx=" << index << " infoID=" << infoID<< endl;
-            sleep(1);
+//            cout << "read idx=" << index << " infoID=" << infoID<< endl;
+//            sleep(1);
         }
 
         index++;
