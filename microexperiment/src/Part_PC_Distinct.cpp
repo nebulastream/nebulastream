@@ -423,9 +423,9 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
         size_t* tupCntBuffOdd = new size_t(0);
         readTuples += produce_window_mem_two_buffers(records, bufferSizeInTuples, cInfos[offsetConnectionEven]->sendBuffers[idxConEven]->tups,
                 cInfos[offsetConnectionOdd]->sendBuffers[idxConOdd]->tups, tupCntBuffEven, tupCntBuffOdd);
-//#ifdef DEBUG
+#ifdef DEBUG
         cout << "numanode=" << outerThread << " buffer fill finsihed bufferEven=" << *tupCntBuffEven<< " bufferOdd=" << *tupCntBuffOdd << endl;
-//#endif
+#endif
         cInfos[offsetConnectionEven]->sendBuffers[idxConEven]->setNumberOfTuples(*tupCntBuffEven);
         cInfos[offsetConnectionOdd]->sendBuffers[idxConOdd]->setNumberOfTuples(*tupCntBuffOdd);
 
@@ -604,7 +604,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 //            total_received_tuples += bufferSizeInTuples;
             size_t currentBufferSizeInTups = *(size_t*)cInfos[currentIdx]->recv_buffers[index]->getAddressWithOffset(bufferSizeInTuples * sizeof(Tuple));
             total_received_tuples += currentBufferSizeInTups;
-            cout << "received buffer size=" << currentBufferSizeInTups << endl;
+//            cout << "received buffer size=" << currentBufferSizeInTups << endl;
             total_received_buffers++;
 
 
@@ -653,7 +653,6 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 #endif
             size_t currentBufferSizeInTups = *(size_t*)cInfos[idxOne]->recv_buffers[index]->getAddressWithOffset(bufferSizeInTuples * sizeof(Tuple));
             total_received_tuples += currentBufferSizeInTups;
-            cout << "received buffer size=" << currentBufferSizeInTups << endl;
 
             total_received_buffers++;
             consumed += runConsumerOneOnOne((Tuple*)cInfos[idxOne]->recv_buffers[index]->getData(), currentBufferSizeInTups,
@@ -669,7 +668,6 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
             total_received_tuples += bufferSizeInTuples;
             size_t currentBufferSizeInTups = *(size_t*)cInfos[idxTwo]->recv_buffers[index]->getAddressWithOffset(bufferSizeInTuples * sizeof(Tuple));
             total_received_tuples += currentBufferSizeInTups;
-            cout << "received buffer size=" << currentBufferSizeInTups << endl;
 
             total_received_buffers++;
             consumed += runConsumerOneOnOne((Tuple*)cInfos[idxTwo]->recv_buffers[index]->getData(), currentBufferSizeInTups,
