@@ -106,10 +106,10 @@ InputQueryPtr createYSBTestQuery()
                                                              //           .window(WindowPtr())
                                                              .printInputQueryPlan());
 
-    InputQueryPtr ptr = std::make_shared<InputQuery>(InputQuery::create(config, source)
-                                                         .filter(PredicatePtr())
-                                                         //			  .window(WindowPtr())
-                                                         .printInputQueryPlan());
+//    InputQueryPtr ptr = std::make_shared<InputQuery>(InputQuery::create(config, source)
+//                                                         .filter(PredicatePtr())
+//                                                         //			  .window(WindowPtr())
+//                                                         .printInputQueryPlan());
 
     return ptr;
 }
