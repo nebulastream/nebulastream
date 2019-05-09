@@ -1463,7 +1463,9 @@ int main(int argc, char *argv[])
           {
              auto inner_thread_id = omp_get_thread_num();
              size_t i = inner_thread_id;
-             size_t share = NUM_SEND_BUFFERS/(numberOfConsumer/numaNodes);
+//             size_t share = NUM_SEND_BUFFERS/(numberOfConsumer/numaNodes);
+             size_t share = NUM_SEND_BUFFERS/(numberOfConsumer);
+
              size_t startIdx = i* share;
              size_t endIdx = (i+1)*share;
              if(i == numberOfConsumer -1)
