@@ -679,11 +679,13 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
     *consumedTuples = consumed;
     *consumedBuffers = total_received_buffers;
     *consumerNoBufferFound = noBufferFound;
+//#ifdef DEBUG
     cout << "Thread=" << omp_get_thread_num()<< "/" << outerThread << " Done Receiving a total of " << total_received_tuples
             << " tuples and " << total_received_buffers << " buffers"
             <<  "total_received_buffersIdxOne=" << total_received_buffersIdxOne << " total_received_buffersIdxTwo=" << total_received_buffersIdxTwo
                 << " nobufferFound=" << noBufferFound << " startIDX=" << startIdx << " endIDX=" << " idxOne=" << idxOne << " idxTwo="
                 << idxTwo<< endIdx << endl;
+//#endif
 }
 
 
@@ -1382,7 +1384,7 @@ int main(int argc, char *argv[])
              {
                  endIdx = NUM_SEND_BUFFERS;
              }
-//#ifdef DEBUG
+#ifdef DEBUG
              #pragma omp critical
              {
              std::cout
@@ -1398,7 +1400,7 @@ int main(int argc, char *argv[])
                 << " share=" << share
                 << std::endl;
              }
-//#endif
+#endif
              runConsumerNew(conInfos[outer_thread_id]->hashTable, windowSizeInSeconds, campaingCnt, outer_thread_id, numberOfProducer , bufferSizeInTups,
                      &consumedTuples[outer_thread_id][i], &consumedBuffers[outer_thread_id][i], &consumerNoBufferFound[outer_thread_id][i], startIdx,
                      endIdx, conInfos, outer_thread_id, rank, numberOfNodes);
