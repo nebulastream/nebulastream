@@ -1426,21 +1426,21 @@ int main(int argc, char *argv[])
              size_t idx = 0;
 
 #ifdef ONEPARTITIONMODE
-             size_t share = NUM_SEND_BUFFERS/(numberOfConsumer/4);
-             size_t threadsPerCon = numberOfConsumer/4;
+             size_t share = NUM_SEND_BUFFERS/(numberOfConsumer/2);
+             size_t threadsPerCon = numberOfConsumer/2;
              size_t startIdx = i%threadsPerCon*share;
              size_t endIdx = (i%threadsPerCon+1)*share;
 
              if(outer_thread_id == 0)
              {
-                 if(i < (numberOfConsumer/4))
+                 if(i < (numberOfConsumer/2))
                      idx = 0;
                  else
                      idx = 1;
              }
              if(outer_thread_id == 1)
              {
-                 if(i < (numberOfConsumer/4))
+                 if(i < (numberOfConsumer/2))
                       idx = 2;
                   else
                       idx = 3;
