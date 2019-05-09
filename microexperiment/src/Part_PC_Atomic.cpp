@@ -1423,7 +1423,7 @@ int main(int argc, char *argv[])
           {
              auto inner_thread_id = omp_get_thread_num();
              size_t i = inner_thread_id;
-             size_t idx = 0;
+             size_t idx = outer_thread_id;
 
 #ifdef ONEPARTITIONMODE
              size_t share = NUM_SEND_BUFFERS/(numberOfConsumer/2);
@@ -1431,20 +1431,20 @@ int main(int argc, char *argv[])
              size_t startIdx = i%threadsPerCon*share;
              size_t endIdx = (i%threadsPerCon+1)*share;
 
-             if(outer_thread_id == 0)
-             {
-                 if(i < (numberOfConsumer/2))
-                     idx = 0;
-                 else
-                     idx = 1;
-             }
-             if(outer_thread_id == 1)
-             {
-                 if(i < (numberOfConsumer/2))
-                      idx = 2;
-                  else
-                      idx = 3;
-             }
+//             if(outer_thread_id == 0)
+//             {
+//                 if(i < (numberOfConsumer/2))
+//                     idx = 0;
+//                 else
+//                     idx = 1;
+//             }
+//             if(outer_thread_id == 1)
+//             {
+//                 if(i < (numberOfConsumer/2))
+//                      idx = 2;
+//                  else
+//                      idx = 3;
+//             }
 
 #endif
 #ifdef TWOPARTITIONMODE
