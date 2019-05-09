@@ -71,6 +71,12 @@ class GeneratedCode {
     std::vector<VariableDeclaration> variable_decls;
     std::vector<StatementPtr> variable_init_stmts;
     std::shared_ptr<FOR> for_loop_stmt;
+    /* points to the current scope (compound statement)
+     * to insert the code of the next operation,
+     * important when multiple levels of nesting occur
+     * due to loops (for(){ <cursor> }) or
+     * if statements (if(..){ <cursor>}) */
+    CompoundStatementPtr current_code_insertion_point;
     std::vector<StatementPtr> cleanup_stmts;
     StatementPtr return_stmt;
     std::shared_ptr<VariableDeclaration> var_decl_id;
