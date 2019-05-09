@@ -1162,7 +1162,7 @@ int main(int argc, char *argv[])
         {
                 size_t numaNode = omp_get_thread_num();
                 size_t connectionID = omp_get_thread_num() * 2;
-//                cout << "rank " << rank << ": connecting to" << target_rank << " on numa node " << numaNode << " connectionID=" << connectionID << endl;
+//                cout << "rank " << rmainank << ": connecting to" << target_rank << " on numa node " << numaNode << " connectionID=" << connectionID << endl;
 
                 if(numaNode == 0)
                 {
@@ -1303,8 +1303,8 @@ int main(int argc, char *argv[])
                                            << " on numa node " << numaNode  << " connectionID=" << connectionID << endl;
             }
 
-            conInfos[connectionID] = setupRDMAConsumer(connections[connectionID], bufferSizeInTups, campaingCnt);
-            conInfos[connectionID]->con = connections[connectionID];
+            setupRDMAConsumerSecondCon(connections[connectionID], bufferSizeInTups, campaingCnt, conInfos[omp_get_thread_num() * 2]);
+//            conInfos[connectionID]->con = connections[connectionID];
         }
         cout << "thread out of critical = " << omp_get_thread_num() << endl;
     }
