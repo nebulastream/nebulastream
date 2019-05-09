@@ -121,7 +121,7 @@ public:
         requestToken = connection.create_request_token();
         requestToken->setCompleted(true);
         tups = (Tuple*)(send_buffer->getAddress());
-        numberOfTuples = (size_t*) (send_buffer->getAddress() + bufferSizeInTuples * sizeof(Tuple)+ sizeof(size_t));
+        numberOfTuples = (size_t*) (send_buffer->getAddressWithOffset((bufferSizeInTuples * sizeof(Tuple)/sizeof(uint64_t))));
         *numberOfTuples = 0;
     }
 
