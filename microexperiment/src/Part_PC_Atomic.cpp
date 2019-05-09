@@ -51,7 +51,7 @@ using namespace std;
 #define BUFFER_BEING_PROCESSED_FLAG 2
 
 #define NUMBER_OF_GEN_TUPLE 1000000
-#define DEBUG
+//#define DEBUG
 void printSingleHT(std::atomic<size_t>* hashTable, size_t campaingCnt);
 //std::vector<std::shared_ptr<std::thread>> buffer_threads;
 std::atomic<size_t>* outputTable;
@@ -400,7 +400,7 @@ void runProducerOneOnOneFourNodes(record* records, size_t bufferSizeInTuples, si
 #ifdef DEBUG
                     cout << "!!!!!!!!!!!numanode=" << outerThread << " buffer already taken with val=" << prevValue << " connection=" << offsetConnectionEven << endl;
 #endif
-                    assert(0);
+//                    assert(0);
                     continue;
                 }
                 else
