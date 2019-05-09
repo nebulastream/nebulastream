@@ -31,6 +31,14 @@ namespace iotdb
 	}
 
 
+	bool PredicateItem::isItem() const{
+	    return true;
+	}
+
+    bool Predicate::isItem() const {
+        return false;
+    }
+
 	bool PredicateItem::attributeEquals(const AttributeFieldPtr& pAttribute){
 	  /* \todo: change this, use an isEqual method defined on AttributeField! */
 	    return (pAttribute->toString() == _attribute->toString());
@@ -39,7 +47,10 @@ namespace iotdb
 
     const ExpressionStatmentPtr Predicate::generateCode(GeneratedCode& code) const{
 		//toDo: implement code-generation
-		return nullptr;
+		//BinaryOperatorStatement bin_op(VarRefStatement(var_decl_i), PLUS_OP, VarRefStatement(var_decl_j));
+
+		return BinaryOperatorStatement(*(_left->generateCode(code)), _op, *(_right->generateCode(code))).copy();
+
 	}
 
 
@@ -47,17 +58,20 @@ namespace iotdb
     const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCode& code) const{
 		//toDo: implement code-generation
 
-		/*
+
 		if(_attribute){
 
 		    //toDo: Need an equals operator instead of true
 		    if(code.struct_decl_input_tuple.getField(_attribute->name) &&
 		            code.struct_decl_input_tuple.getField(_attribute->name)->getType() == _attribute->getDataType()){
 
+                return  VarRefStatement(
+                        VariableDeclaration::create(code.struct_decl_input_tuple.getField(_attribute->name)->getType(),
+                                                    code.struct_decl_input_tuple.getField(_attribute->name)->getIdentifierName())
+                        ).copy();
+		    } // else ERROR.
 
-
-		        //_attribute->
-		    }
+		    /*
 			VariableDeclaration var_decl_i =
 				VariableDeclaration::create(createDataType(BasicType(INT32)), "i", createBasicTypeValue(BasicType(INT32), "0"));
 			VariableDeclaration var_decl_j =
@@ -68,19 +82,16 @@ namespace iotdb
 				VariableDeclaration::create(createDataType(BasicType(INT32)), "l", createBasicTypeValue(BasicType(INT32), "2"));
 
             {
-                BinaryOperatorStatement bin_op(VarRefStatement(var_decl_i), PLUS_OP, VarRefStatement(var_decl_j));
                 std::cout << bin_op.getCode()->code_ << std::endl;
                 //CodeExpressionPtr code = bin_op.addRight(PLUS_OP, VarRefStatement(var_decl_k)).getCode();
 
                 //std::cout << code->code_ << std::endl;
             }
+            */
 		}
 		if(_value){
-            //code.
+		    return ConstantExprStatement(_value).copy();
 		}
-		//ExpressionStatmentPtr temp;
-		*/
-		return nullptr;
 	}
 	
 	const std::string Predicate::toString() const{
