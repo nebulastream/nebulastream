@@ -5,6 +5,18 @@
 
 namespace iotdb {
 
+DataType::DataType(){
+
+}
+
+DataType::DataType(const DataType&){
+
+}
+
+DataType& DataType::operator=(const DataType&){
+  return *this;
+}
+
 DataType::~DataType() {}
 
 AttributeField::AttributeField(const std::string& _name, DataTypePtr _data_type) : name(_name), data_type(_data_type)
@@ -33,6 +45,35 @@ const std::string AttributeField::toString() const
     return ss.str();
 }
 
+const AttributeFieldPtr AttributeField::copy() const{
+  return std::make_shared<AttributeField>(*this);
+}
+
+bool AttributeField::isEqual(const AttributeField& attr){
+  if(attr.name==name && attr.data_type->toString() == data_type->toString()){
+      return true;
+  }
+  return false;
+}
+
+bool AttributeField::isEqual(const AttributeFieldPtr& attr){
+  if(!attr) return false;
+  return this->isEqual(attr);
+}
+
+AttributeField::AttributeField(const AttributeField& other)
+  : name(other.name), data_type(other.data_type->copy())
+{
+}
+
+AttributeField& AttributeField::operator=(const AttributeField& other){
+  if(this!=&other){
+      this->name=other.name;
+      this->data_type=other.data_type->copy();
+  }
+  return *this;
+}
+
 const AttributeFieldPtr createField(const std::string name, const BasicType& type)
 {
     AttributeFieldPtr ptr = std::make_shared<AttributeField>(name, type);
@@ -45,17 +86,31 @@ const AttributeFieldPtr createField(const std::string name, uint32_t size)
     return ptr;
 }
 
+ValueType::ValueType(){
+
+}
+ValueType::ValueType(const ValueType&){
+
+}
+ValueType& ValueType::operator=(const ValueType&){
+  return *this;
+}
+
 ValueType::~ValueType() {}
 
 class BasicValueType : public ValueType {
   public:
     BasicValueType(const BasicType& type, const std::string& value) : type_(type), value_(value) {}
 
-    const DataTypePtr getType() const { return createDataType(type_); }
+    const DataTypePtr getType() const override{ return createDataType(type_); }
 
-    const CodeExpressionPtr getCodeExpression() const { return std::make_shared<CodeExpression>(value_); }
+    const CodeExpressionPtr getCodeExpression() const override{ return std::make_shared<CodeExpression>(value_); }
 
-    ~BasicValueType();
+    const ValueTypePtr copy() const override{
+      return std::make_shared<BasicValueType>(*this);
+    }
+
+    ~BasicValueType() override;
 
   private:
     const BasicType type_;
@@ -70,11 +125,11 @@ class BasicDataType : public DataType {
 
     BasicDataType(const BasicType& _type, uint32_t _size) : type(_type), dataSize(_size) {}
 
-    ValueTypePtr getDefaultInitValue() const { return ValueTypePtr(); }
+    ValueTypePtr getDefaultInitValue() const  override{ return ValueTypePtr(); }
 
-    ValueTypePtr getNullValue() const { return ValueTypePtr(); }
+    ValueTypePtr getNullValue() const  override{ return ValueTypePtr(); }
 
-    uint32_t getSizeBytes() const
+    uint32_t getSizeBytes() const override
     {
         if (dataSize == 0) {
             return getFixSizeBytes();
@@ -118,7 +173,7 @@ class BasicDataType : public DataType {
         }
         return 0;
     }
-    const std::string toString() const
+    const std::string toString() const override
     {
         switch (type) {
         case INT8:
@@ -196,7 +251,7 @@ class BasicDataType : public DataType {
         return "";
     }
 
-    const CodeExpressionPtr getCode() const
+    const CodeExpressionPtr getCode() const override
     {
         switch (type) {
         case INT8:
@@ -231,9 +286,13 @@ class BasicDataType : public DataType {
         return nullptr;
     }
 
-    const CodeExpressionPtr getTypeDefinitionCode() const { return std::make_shared<CodeExpression>(""); }
+    const CodeExpressionPtr getTypeDefinitionCode() const override{ return std::make_shared<CodeExpression>(""); }
 
-    ~BasicDataType();
+    const DataTypePtr copy() const override{
+      return std::make_shared<BasicDataType>(*this);
+    }
+
+    ~BasicDataType() override;
 
   private:
     BasicType type;
@@ -245,27 +304,32 @@ BasicDataType::~BasicDataType() {}
 class PointerDataType : public DataType {
   public:
     PointerDataType(const DataTypePtr& type) : DataType(), base_type_(type) {}
-    ValueTypePtr getDefaultInitValue() const { return ValueTypePtr(); }
+    ValueTypePtr getDefaultInitValue() const override{ return ValueTypePtr(); }
 
-    ValueTypePtr getNullValue() const { return ValueTypePtr(); }
-    uint32_t getSizeBytes() const
+    ValueTypePtr getNullValue() const override{ return ValueTypePtr(); }
+    uint32_t getSizeBytes() const override
     {
         /* assume a 64 bit architecture, each pointer is 8 bytes */
         return 8;
     }
-    const std::string toString() const { return base_type_->toString() + "*"; }
+    const std::string toString() const override{ return base_type_->toString() + "*"; }
     const std::string convertRawToString(void* data) const override
     {
         if (!data)
             return "";
         return "POINTER"; // std::to_string(data);
     }
-    const CodeExpressionPtr getCode() const
+    const CodeExpressionPtr getCode() const override
     {
         return std::make_shared<CodeExpression>(base_type_->getCode()->code_ + "*");
     }
-    const CodeExpressionPtr getTypeDefinitionCode() const { return base_type_->getTypeDefinitionCode(); }
-    virtual ~PointerDataType();
+    const CodeExpressionPtr getTypeDefinitionCode() const override{ return base_type_->getTypeDefinitionCode(); }
+
+    const DataTypePtr copy() const override{
+      return std::make_shared<PointerDataType>(*this);
+    }
+
+    virtual ~PointerDataType() override;
 
   private:
     DataTypePtr base_type_;

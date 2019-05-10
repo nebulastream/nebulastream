@@ -512,6 +512,8 @@ int CodeGeneratorTest()
     return 0;
 }
 
+    const PredicatePtr createPredicate();
+
     int CodeGeneratorFilterTest()
     {
         /* prepare objects for test */
@@ -524,6 +526,10 @@ int CodeGeneratorTest()
         std::cout << "Generate Code" << std::endl;
         /* generate code for scanning input buffer */
         code_gen->generateCode(source, context, std::cout);
+
+	std::cout << std::make_shared<Predicate>(
+		      (PredicateItem(input_schema[0])<PredicateItem(createBasicTypeValue(iotdb::BasicType::INT64,"5")))
+		    )->toString() << std::endl;
 
 	PredicatePtr pred=std::dynamic_pointer_cast<Predicate>(
 	      (PredicateItem(input_schema[0])<PredicateItem(createBasicTypeValue(iotdb::BasicType::INT64,"5"))).copy()
