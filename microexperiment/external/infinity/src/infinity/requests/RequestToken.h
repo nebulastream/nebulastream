@@ -43,6 +43,7 @@ public:
 	bool hasUserData();
 	void* getUserData();
 	uint32_t getUserDataSize();
+    std::atomic<bool> success;
 
 protected:
 
@@ -50,7 +51,6 @@ protected:
 	infinity::memory::Region * region;
 
 	std::atomic<bool> completed;
-	std::atomic<bool> success;
 
 	void *userData;
 	uint32_t userDataSize;

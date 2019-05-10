@@ -46,19 +46,14 @@ using namespace std;
 #define BUFFER_USED_FLAG 1
 #define BUFFER_BEING_PROCESSED_FLAG 2
 #define NUMBER_OF_GEN_TUPLE 1000000
-//#define JOIN_WRITE_BUFFER_SIZE 1024*1024*8
 //#define DEBUG
 void printSingleHT(std::atomic<size_t>* hashTable, size_t campaingCnt);
-
+std::vector<std::shared_ptr<std::thread>> buffer_threads;
 
 size_t NUM_SEND_BUFFERS;
-//std::atomic<size_t>** htPtrs;
 VerbsConnection* sharedHTConnection;
 infinity::memory::RegionToken** sharedHT_region_token;
 infinity::memory::Buffer** sharedHT_buffer;
-char* ht_sign_ready;
-infinity::memory::Buffer* ht_sign_ready_buffer;
-RegionToken* ready_token;
 std::atomic<size_t>* outputTable;
 
 struct __attribute__((packed)) record {
@@ -134,11 +129,11 @@ public:
             std::swap(requestToken, other.requestToken);
         }
 
-    bool add(Tuple& tup)
-    {
-           tups[numberOfTuples] = tup;
-           return numberOfTuples == maxNumberOfTuples;
-    }
+//    bool add(Tuple& tup)
+//    {
+//           tups[numberOfTuples] = tup;
+//           return numberOfTuples == maxNumberOfTuples;
+//    }
 
     size_t maxNumberOfTuples;
     Buffer* send_buffer;
@@ -442,6 +437,33 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         }
 //                        cout << "post rec id " << consumerID << " ranK=" << rank << " thread=" << omp_get_thread_num() << "done=" << done<< endl;
                         //TODO: DO THIS AS LAMDA FUNC CALL
+
+                        buffer_threads.push_back(std::make_shared<std::thread>([&sharedHTConnection, consumerID, exitConsumer,
+                          sharedHT_buffer, outputTable, campaingCnt] {
+                            cout << "run buffer thread" << endl;
+                            ReceiveElement receiveElement;
+                            receiveElement.buffer = sharedHT_buffer[consumerID];
+                            sharedHTConnection->post_receive(receiveElement.buffer);
+                            while(!sharedHTConnection->check_receive(receiveElement) && std::atomic_load(exitConsumer) != 1)
+                            {
+    //                            cout << "wait receive " << std::atomic_load(exitConsumer)<< endl;
+    //                            sleep(1);
+                            }
+                            cout << "revceived" << endl;
+    //                        sharedHTConnection->post_and_receive_blocking(sharedHT_buffer[consumerID]);
+
+    //                        cout << "got rec" << endl;
+                            std::atomic<size_t>* tempTable = (std::atomic<size_t>*) sharedHT_buffer[consumerID]->getData();
+
+                            #pragma omp parallel for num_threads(20)
+                            for(size_t i = 0; i < campaingCnt; i++)
+                            {
+                                outputTable[i] += tempTable[i];
+                            }
+
+
+                        }));
+#if 0
                         ReceiveElement receiveElement;
                         receiveElement.buffer = sharedHT_buffer[consumerID];
                         sharedHTConnection->post_receive(receiveElement.buffer);
@@ -461,6 +483,7 @@ size_t runConsumerOneOnOne(Tuple* buffer, size_t bufferSizeInTuples, std::atomic
                         {
                             outputTable[i] += tempTable[i];
                         }
+#endif
                     }//end of else
             }//end of if to change
             current_window = current_window == 0 ? 1 : 0;
@@ -526,7 +549,7 @@ void runConsumerNew(std::atomic<size_t>** hashTable, size_t windowSizeInSec,
 
         index++;
 
-        if(index > endIdx)
+        if(index >= endIdx)
             index = startIdx;
 
         if(cInfos->exitConsumer == 1)
@@ -577,28 +600,13 @@ void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numbe
 
     infinity::memory::Buffer* tokenbuffer = connection->allocate_buffer((numberOfParticipant+1) * sizeof(RegionToken));
 
-    ht_sign_ready = new char[numberOfParticipant];
-    for(size_t i = 0; i < numberOfParticipant; i++)
-    {
-        ht_sign_ready[i] = BUFFER_READY_FLAG;
-    }
-    ht_sign_ready_buffer = connection->register_buffer(ht_sign_ready, numberOfParticipant);
-
     if(rank == 1)//reveiver cloud40
     {
-        for(size_t i = 0; i <= numberOfParticipant; i++)
-           {
-               if (i < numberOfParticipant)
-               {
-                   sharedHT_region_token[i] = sharedHT_buffer[i]->createRegionToken();
-               }
-               else
-               {
-                   sharedHT_region_token[i] = ht_sign_ready_buffer->createRegionToken();
-               }
-
-               memcpy((RegionToken*)tokenbuffer->getData() + i, sharedHT_region_token[i], sizeof(RegionToken));
-           }
+        for(size_t i = 0; i < numberOfParticipant; i++)
+        {
+           sharedHT_region_token[i] = sharedHT_buffer[i]->createRegionToken();
+           memcpy((RegionToken*)tokenbuffer->getData() + i, sharedHT_region_token[i], sizeof(RegionToken));
+        }
 
         connection->send_blocking(tokenbuffer);
         cout << "setupRDMAConsumer finished" << endl;
@@ -606,22 +614,12 @@ void setupSharedHT(VerbsConnection* connection, size_t campaingCnt, size_t numbe
     else//sender cloud43 rank3
     {
         connection->post_and_receive_blocking(tokenbuffer);
-        for(size_t i = 0; i <= numberOfParticipant; i++)
+        for(size_t i = 0; i < numberOfParticipant; i++)
         {
-            if (i < numberOfParticipant)
-            {
-                sharedHT_region_token[i] = new RegionToken();
-                memcpy(sharedHT_region_token[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
-                cout << "recv region getSizeInBytes=" << sharedHT_region_token[i]->getSizeInBytes() << " getAddress=" << sharedHT_region_token[i]->getAddress()
-                                                           << " getLocalKey=" << sharedHT_region_token[i]->getLocalKey() << " getRemoteKey=" << sharedHT_region_token[i]->getRemoteKey() << endl;
-            }
-            else
-            {
-                ready_token = new RegionToken();
-                memcpy(ready_token, (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
-                cout << "sign token region getSizeInBytes=" << ready_token->getSizeInBytes() << " getAddress=" << ready_token->getAddress()
-                                          << " getLocalKey=" << ready_token->getLocalKey() << " getRemoteKey=" << ready_token->getRemoteKey() << endl;
-            }
+            sharedHT_region_token[i] = new RegionToken();
+            memcpy(sharedHT_region_token[i], (RegionToken*)tokenbuffer->getData() + i, sizeof(RegionToken));
+            cout << "recv region getSizeInBytes=" << sharedHT_region_token[i]->getSizeInBytes() << " getAddress=" << sharedHT_region_token[i]->getAddress()
+                   << " getLocalKey=" << sharedHT_region_token[i]->getLocalKey() << " getRemoteKey=" << sharedHT_region_token[i]->getRemoteKey() << endl;
         }
         cout << "received token" << endl;
     }
@@ -941,7 +939,7 @@ size_t getNumaNodeFromPtr(void* ptr)
 
     int status[1];
     status[0]=-1;
-    int ret_code = move_pages(0 /*self memory */, 1, &ptr, NULL, status, 0);
+    int ret_code = move_pages(0 /*selbuffer_threadsf memory */, 1, &ptr, NULL, status, 0);
     int numa_node2 = status[0];
     assert(numa_node1 == numa_node2);
     return numa_node1;
@@ -1064,6 +1062,9 @@ int main(int argc, char *argv[])
                 {
                     conInfos[omp_get_thread_num()]->records[i] = generateTuplesOneArray(numberOfProducer, campaingCnt);
                 }
+                int numa_node = -1;
+                get_mempolicy(&numa_node, NULL, 0, (void*)conInfos[omp_get_thread_num()]->records[0], MPOL_F_NODE | MPOL_F_ADDR);
+                cout << "ht numa=" << numa_node << " outthread=" << omp_get_thread_num() << endl;
             }
             cout << "thread out of critical = " << omp_get_thread_num() << endl;
         }//end of pragma
@@ -1220,6 +1221,11 @@ int main(int argc, char *argv[])
        connections[0]->send_blocking(finishBuffer);
        cout << "buffer sending finished, shutdown "<< getTimestamp() << endl;
 
+    }
+
+    for(size_t i = 0; i < buffer_threads.size(); i++)
+    {
+        buffer_threads[i]->join();
     }
 
     Timestamp end = getTimestamp();

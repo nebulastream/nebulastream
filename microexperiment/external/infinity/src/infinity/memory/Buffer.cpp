@@ -31,7 +31,7 @@ Buffer::Buffer(infinity::core::Context* context, uint64_t sizeInBytes) {
 	memset(this->data, 0, sizeInBytes);
 
 	this->ibvMemoryRegion = ibv_reg_mr(this->context->getProtectionDomain(), this->data, this->sizeInBytes,
-			IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ);
+			IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ| IBV_ACCESS_REMOTE_ATOMIC);
 	INFINITY_ASSERT(this->ibvMemoryRegion != NULL, "[INFINITY][MEMORY][BUFFER] Registration failed.\n");
 
 	this->memoryAllocated = true;
@@ -61,7 +61,7 @@ Buffer::Buffer(infinity::core::Context *context, void *memory, uint64_t sizeInBy
 
 	this->data = memory;
 	this->ibvMemoryRegion = ibv_reg_mr(this->context->getProtectionDomain(), this->data, this->sizeInBytes,
-			IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ);
+			IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ| IBV_ACCESS_REMOTE_ATOMIC);
 	INFINITY_ASSERT(this->ibvMemoryRegion != NULL, "[INFINITY][MEMORY][BUFFER] Registration failed.\n");
 
 	this->memoryAllocated = false;
@@ -101,7 +101,7 @@ void Buffer::resize(uint64_t newSize, void* newData) {
 	if (memoryRegistered) {
 		ibv_dereg_mr(this->ibvMemoryRegion);
 		this->ibvMemoryRegion = ibv_reg_mr(this->context->getProtectionDomain(), newData, newSize,
-				IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ);
+				IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ| IBV_ACCESS_REMOTE_ATOMIC);
 		this->data = newData;
 		this->sizeInBytes = newSize;
 	} else {
