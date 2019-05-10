@@ -12,6 +12,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include  <sys/socket.h>
+#include "Debug.h"
 
 #include <infinity/core/Configuration.h>
 #include <infinity/utils/Debug.h>
@@ -131,7 +132,7 @@ QueuePair * QueuePairFactory::connectToRemoteHost(const char* hostAddress, uint1
 
 	int connectionSocket = socket(AF_INET, SOCK_STREAM, 0);
 	INFINITY_ASSERT(connectionSocket >= 0, "[INFINITY][QUEUES][FACTORY] Cannot open connection socket.\n");
-
+	TRACE("port=%d.\n", port);
 	int returnValue = connect(connectionSocket, (sockaddr *) &(remoteAddress), sizeof(sockaddr_in));
 	INFINITY_ASSERT(returnValue == 0, "[INFINITY][QUEUES][FACTORY] Could not connect to server.\n");
 
