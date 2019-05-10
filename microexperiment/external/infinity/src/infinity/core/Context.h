@@ -39,13 +39,18 @@ class RequestToken;
 namespace infinity {
 namespace core {
 
-typedef struct {
+typedef struct receive_element_t{
+    receive_element_t(){};
+    receive_element_t(infinity::memory::Buffer *buf)
+    {
+        buffer = buf;
+    };
 	infinity::memory::Buffer *buffer;
 	uint32_t bytesWritten;
 	uint32_t immediateValue;
 	bool immediateValueValid;
 	infinity::queues::QueuePair *queuePair;
-} receive_element_t;
+} ;
 
 class Context {
 

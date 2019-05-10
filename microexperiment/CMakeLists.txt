@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.4)
 project(MAMPI CXX)
 
 set(CMAKE_CXX_STANDARD 14)
+#fsanitize=address
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O3 -Wall -ansi -pthread -lpthread -ltbb -fopenmp -lboost_program_options")
 #set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -pg -pthread -lpthread -ltbb -fopenmp -lboost_program_options")
 #set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -pthread -lpthread -ltbb -fopenmp -lboost_program_options")
@@ -76,8 +77,8 @@ add_executable(LM_PC
     )
 target_link_libraries(LM_PC infinity ibverbs numa json11 tbb boost_program_options)
 
-add_executable(YSB_PART
-        src/YSB_PART.cpp
+add_executable(LM_Ponly
+        src/LM_Ponly.cpp
         rdma_lib/Utilities/MPI_Helper_Fake.cpp
         rdma_lib/Utilities/ConnectionInfoProvider/SimpleInfoProvider.cpp
         rdma_lib/Utilities/VerbsConnection.cpp
@@ -89,7 +90,39 @@ add_executable(YSB_PART
         rdma_lib/Utilities/ConnectionInfoProvider/ConnectionUtilities.cpp
         rdma_lib/Utilities/DeviceMemoryAllocator/GPUMemoryAllocator.cu
     )
-target_link_libraries(YSB_PART infinity ibverbs numa json11 tbb boost_program_options)
+target_link_libraries(LM_Ponly infinity ibverbs numa json11 tbb boost_program_options)
+
+
+add_executable(Part_PC_Distinct
+        src/Part_PC_Distinct.cpp
+        rdma_lib/Utilities/MPI_Helper_Fake.cpp
+        rdma_lib/Utilities/ConnectionInfoProvider/SimpleInfoProvider.cpp
+        rdma_lib/Utilities/VerbsConnection.cpp
+        rdma_lib/Utilities/TimeTools.cpp
+        rdma_lib/Utilities/BenchmarkTools.cpp
+        rdma_lib/Utilities/ComputationParameters.cpp
+        rdma_lib/Utilities/DeviceMemoryAllocator/CPUMemoryAllocator.cpp
+        rdma_lib/Utilities/ConnectionCollection.cpp
+        rdma_lib/Utilities/ConnectionInfoProvider/ConnectionUtilities.cpp
+        rdma_lib/Utilities/DeviceMemoryAllocator/GPUMemoryAllocator.cu
+    )
+target_link_libraries(Part_PC_Distinct infinity ibverbs numa json11 tbb boost_program_options)
+
+add_executable(Part_PC_Atomic
+        src/Part_PC_Atomic.cpp
+        rdma_lib/Utilities/MPI_Helper_Fake.cpp
+        rdma_lib/Utilities/ConnectionInfoProvider/SimpleInfoProvider.cpp
+        rdma_lib/Utilities/VerbsConnection.cpp
+        rdma_lib/Utilities/TimeTools.cpp
+        rdma_lib/Utilities/BenchmarkTools.cpp
+        rdma_lib/Utilities/ComputationParameters.cpp
+        rdma_lib/Utilities/DeviceMemoryAllocator/CPUMemoryAllocator.cpp
+        rdma_lib/Utilities/ConnectionCollection.cpp
+        rdma_lib/Utilities/ConnectionInfoProvider/ConnectionUtilities.cpp
+        rdma_lib/Utilities/DeviceMemoryAllocator/GPUMemoryAllocator.cu
+    )
+target_link_libraries(Part_PC_Atomic infinity ibverbs numa json11 tbb boost_program_options)
+
 
 add_executable(numatest
         src/numa.cpp

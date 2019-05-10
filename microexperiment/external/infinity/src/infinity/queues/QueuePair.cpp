@@ -485,9 +485,11 @@ void QueuePair::read(infinity::memory::Buffer* buffer, uint64_t localOffset, inf
 
 }
 
-void QueuePair::compareAndSwap(infinity::memory::RegionToken* destination, infinity::memory::Atomic* previousValue, uint64_t compare, uint64_t swap,
-		OperationFlags send_flags, infinity::requests::RequestToken *requestToken) {
 
+void QueuePair::compareAndSwap(infinity::memory::RegionToken* destination, infinity::memory::Atomic* previousValue, uint64_t compare, uint64_t swap,
+		 infinity::requests::RequestToken *requestToken) {
+
+    OperationFlags send_flags = OperationFlags();
 	if (requestToken != NULL) {
 		requestToken->reset();
 		requestToken->setRegion(previousValue);
@@ -525,7 +527,7 @@ void QueuePair::compareAndSwap(infinity::memory::RegionToken* destination, infin
 }
 
 void QueuePair::compareAndSwap(infinity::memory::RegionToken* destination, uint64_t compare, uint64_t swap, infinity::requests::RequestToken *requestToken) {
-	compareAndSwap(destination, context->defaultAtomic, compare, swap, OperationFlags(), requestToken);
+	compareAndSwap(destination, context->defaultAtomic, compare, swap, requestToken);
 }
 
 void QueuePair::fetchAndAdd(infinity::memory::RegionToken* destination, uint64_t add, infinity::requests::RequestToken *requestToken) {

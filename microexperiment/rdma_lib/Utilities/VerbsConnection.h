@@ -31,7 +31,13 @@ private:
     bool is_receiving = false;
 
 
+
+
 public:
+    infinity::memory::Atomic* getAtomic()
+    {
+        return new infinity::memory::Atomic(context);
+    }
     Buffer * preregistered_size_buffer;
     Buffer * preregistered_region_token_buffer;
     explicit VerbsConnection(const ConnectionInfoProvider * infoProvier);
@@ -40,6 +46,9 @@ public:
 
     virtual ~VerbsConnection();
 
+    void atomic_cas(RegionToken * remote_token, int64_t compare, int64_t set);
+    bool atomic_cas_blocking(RegionToken * remote_token, int64_t compare, int64_t set, RequestToken * pRequestToken);
+    size_t atomic_cas_blocking(RegionToken* remote_token, size_t offset, int64_t compare, int64_t set, RequestToken* pRequestToken);
 
 
     bool check_receive(infinity::core::receive_element_t & receive_element);
@@ -50,6 +59,8 @@ public:
     void send(Buffer* buffer, size_t localOffset, size_t size, RequestToken * pRequestToken = nullptr);
     void post_receive(Buffer * buffer);
     void post_and_receive_blocking(Buffer* buffer);
+
+    void compareAndSwap(infinity::memory::RegionToken* destination, infinity::memory::Atomic* previousValue, uint64_t compare, uint64_t swap);
 
     template <typename T>
     T receive() {

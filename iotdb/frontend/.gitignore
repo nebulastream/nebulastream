@@ -1,0 +1,6 @@
+.DS_Store
+dist/*
+package-lock.json
+node_modules/*
+VBB-GTFS-TestData/*
+data/*
