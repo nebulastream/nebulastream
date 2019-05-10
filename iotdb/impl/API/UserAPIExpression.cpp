@@ -60,8 +60,6 @@ namespace iotdb
 		      } else{
 			IOTDB_FATAL_ERROR("Could not Retrieve Attribute from StructDeclaration!");
 		      }
-
-
 		}else if(_value){
 		    return ConstantExprStatement(_value).copy();
 		  }else{
