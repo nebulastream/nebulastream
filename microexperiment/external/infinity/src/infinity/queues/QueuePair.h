@@ -135,7 +135,7 @@ public:
 
 	void compareAndSwap(infinity::memory::RegionToken *destination, uint64_t compare, uint64_t swap, infinity::requests::RequestToken *requestToken = NULL);
 	void compareAndSwap(infinity::memory::RegionToken *destination, infinity::memory::Atomic *previousValue, uint64_t compare, uint64_t swap,
-			OperationFlags flags, infinity::requests::RequestToken *requestToken = NULL);
+			 infinity::requests::RequestToken *requestToken = NULL);
 	void fetchAndAdd(infinity::memory::RegionToken *destination, uint64_t add, infinity::requests::RequestToken *requestToken = NULL);
 	void fetchAndAdd(infinity::memory::RegionToken *destination, infinity::memory::Atomic *previousValue, uint64_t add,
 			OperationFlags flags, infinity::requests::RequestToken *requestToken = NULL);

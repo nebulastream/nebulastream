@@ -93,7 +93,7 @@ void VerbsConnection::receive_test_message(Buffer* buffer) {
     }
     else {
         fprintf(stderr, "Something weird happened on test-message %lu->%lu, rec=%lu \n", target_rank, MPIHelper::get_rank(), received_value);
-        throw "error";
+//        throw "error";
     }
 
 }
@@ -132,6 +132,67 @@ void VerbsConnection::send_blocking(Buffer* buffer, RequestToken * pRequestToken
         pRequestToken->waitUntilCompleted();
     }
 
+}
+
+void VerbsConnection::compareAndSwap(infinity::memory::RegionToken* destination, infinity::memory::Atomic* previousValue, uint64_t compare, uint64_t swap)
+{
+    infinity::requests::RequestToken requestToken(context);
+    qp->compareAndSwap(destination, previousValue, compare, swap,  &requestToken);
+    requestToken.waitUntilCompleted();
+
+}
+
+void VerbsConnection::atomic_cas(RegionToken * remote_token, int64_t compare, int64_t set)
+{
+    qp->compareAndSwap(remote_token, compare, set);
+}
+bool VerbsConnection::atomic_cas_blocking(RegionToken * remote_token, int64_t compare, int64_t set, RequestToken * pRequestToken)
+{
+    bool created_request_token = false;
+    if ( pRequestToken == nullptr){
+        pRequestToken = create_request_token();
+        created_request_token = true;
+    }
+
+    qp->compareAndSwap(remote_token, compare, set, pRequestToken);
+    pRequestToken->waitUntilCompleted();
+    bool success = pRequestToken->success;
+
+    if(created_request_token){
+        delete pRequestToken;
+        pRequestToken = nullptr;
+    }
+    return success;
+}
+
+size_t VerbsConnection::atomic_cas_blocking(RegionToken* remote_token, size_t offset, int64_t compare, int64_t set, RequestToken* pRequestToken)
+{
+    bool created_request_token = false;
+    if ( pRequestToken == nullptr){
+        pRequestToken = create_request_token();
+        created_request_token = true;
+    }
+
+    RegionToken test(
+            remote_token->getMemoryRegion(),
+            remote_token->getMemoryRegionType(),
+            remote_token->getSizeInBytes(),
+            remote_token->getAddress() + offset,
+            remote_token->getLocalKey(),
+            remote_token->getRemoteKey());
+
+    infinity::memory::Atomic* prevValue = new infinity::memory::Atomic(context);
+
+    qp->compareAndSwap(&test, prevValue, compare, set, pRequestToken);
+    pRequestToken->waitUntilCompleted();
+    bool success = pRequestToken->success;
+
+    if(created_request_token){
+        delete pRequestToken;
+        pRequestToken = nullptr;
+    }
+    return prevValue->getValue();
+//    return success;
 }
 
 void VerbsConnection::post_receive(Buffer* buffer) {

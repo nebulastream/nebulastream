@@ -132,11 +132,11 @@ public:
             std::swap(requestToken, other.requestToken);
         }
 
-    bool add(Tuple& tup)
-    {
-           tups[numberOfTuples] = tup;
-           return numberOfTuples == maxNumberOfTuples;
-    }
+//    bool add(Tuple& tup)
+//    {
+//           tups[numberOfTuples] = tup;
+//           return numberOfTuples == maxNumberOfTuples;
+//    }
 
     size_t maxNumberOfTuples;
     Buffer* send_buffer;
@@ -260,6 +260,15 @@ void producer_only(record* records, size_t runCnt, ConnectionInfos** connectInfo
                             ss << "send blocking id=" << producerID  << " rank=" << rank
                                     << " thread=" << omp_get_thread_num()<< " connection=" << connectID << " numaNode=" << numaNode << endl;
                             cout << ss.str() << endl;
+
+                            //join local tables
+                            std::atomic<size_t>* otherTable = connectInfos[1]->hashTable[current_window];
+                            #pragma omp parallel for num_threads(10)
+                            for(size_t i = 0; i < campaingCnt; i++)
+                            {
+                                hashTable[current_window][i] += otherTable[i];
+                            }
+
                             memcpy(sharedHT_buffer[numaNode]->getData(), hashTable[current_window], sizeof(std::atomic<size_t>) * campaingCnt);
 
 //                            connectInfos[connectID]->con->send_blocking(sharedHT_buffer[numaNode]);//send_blocking
