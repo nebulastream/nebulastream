@@ -50,33 +50,23 @@ namespace iotdb
 		    if(code.struct_decl_input_tuple.getField(_attribute->name) &&
 		            code.struct_decl_input_tuple.getField(_attribute->name)->getType() == _attribute->getDataType()){
 
-                return  VarRefStatement(
-                        VariableDeclaration::create(code.struct_decl_input_tuple.getField(_attribute->name)->getType(),
-                                                    code.struct_decl_input_tuple.getField(_attribute->name)->getIdentifierName())
-                        ).copy();
-		    } // else ERROR.
+                      VariableDeclaration var_decl_attr = code.struct_decl_input_tuple.getVariableDeclaration(_attribute->name);
+                      return ((VarRef(code.var_decl_input_tuple)[VarRef(*code.var_decl_id)]).accessRef(VarRef(var_decl_attr))).copy();
 
-		    /*
-			VariableDeclaration var_decl_i =
-				VariableDeclaration::create(createDataType(BasicType(INT32)), "i", createBasicTypeValue(BasicType(INT32), "0"));
-			VariableDeclaration var_decl_j =
-				VariableDeclaration::create(createDataType(BasicType(INT32)), "j", createBasicTypeValue(BasicType(INT32), "5"));
-			VariableDeclaration var_decl_k =
-				VariableDeclaration::create(createDataType(BasicType(INT32)), "k", createBasicTypeValue(BasicType(INT32), "7"));
-			VariableDeclaration var_decl_l =
-				VariableDeclaration::create(createDataType(BasicType(INT32)), "l", createBasicTypeValue(BasicType(INT32), "2"));
+//                return  VarRefStatement(
+//                        VariableDeclaration::create(code.struct_decl_input_tuple.getField(_attribute->name)->getType(),
+//                                                    code.struct_decl_input_tuple.getField(_attribute->name)->getIdentifierName())
+//                        ).copy();
+		      } else{
+			IOTDB_FATAL_ERROR("Could not Retrieve Attribute from StructDeclaration!");
+		      }
 
-            {
-                std::cout << bin_op.getCode()->code_ << std::endl;
-                //CodeExpressionPtr code = bin_op.addRight(PLUS_OP, VarRefStatement(var_decl_k)).getCode();
 
-                //std::cout << code->code_ << std::endl;
-            }
-            */
-		}
-		if(_value){
+		}else if(_value){
 		    return ConstantExprStatement(_value).copy();
-		}
+		  }else{
+		    IOTDB_FATAL_ERROR("PredicateItem has only NULL Pointers!");
+		  }
 	}
 	
 	const std::string Predicate::toString() const{
