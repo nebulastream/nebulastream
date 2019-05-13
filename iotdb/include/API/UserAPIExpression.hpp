@@ -71,6 +71,12 @@ private:
 	ValueTypePtr _value=nullptr;
 };
 
+template <class T>
+UserAPIExpressionPtr getNeededExpression(T value);
+template <class T>
+UserAPIExpressionPtr getNeededExpression( void );
+
+//template <class T>
 Predicate operator == (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
 Predicate operator != (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
 Predicate operator < (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
