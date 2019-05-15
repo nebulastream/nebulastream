@@ -51,6 +51,42 @@ namespace iotdb {
       return source;
   }
 
+
+    const DataSourcePtr createTestSourceCodeGenFilter()
+    {
+        // Shall this go to the UnitTest Directory in future?
+        class Functor {
+        public:
+            Functor(){}
+
+            TupleBufferPtr operator()()
+            {
+                // 10 tuples of size one
+                TupleBufferPtr buf = BufferManager::instance().getBuffer();
+                size_t tupleCnt = buf->buffer_size / (2 * sizeof(uint32_t));
+
+                assert(buf->buffer != NULL);
+
+                uint32_t* tuples = (uint32_t*)buf->buffer;
+                for (uint32_t i = 0; i < tupleCnt; i = i+2) {
+                    tuples[i] = i + 1;
+                    tuples[i+1] = (i + 1) * (i + 2);
+                }
+                buf->tuple_size_bytes = sizeof(uint64_t);
+                buf->num_tuples = tupleCnt;
+                return buf;
+            }
+        };
+
+        DataSourcePtr source(new GeneratorSource<Functor>(
+                Schema::create()
+                    .addField("id", BasicType::UINT32)
+                    .addField("value", BasicType::INT32), 1));
+
+        return source;
+    }
+
+
 /* TODO: make proper test suite out of these */
 int CodeGenTestCases()
 {
@@ -517,15 +553,15 @@ int CodeGeneratorTest()
     int CodeGeneratorFilterTest()
     {
         /* prepare objects for test */
-        DataSourcePtr source = createTestSourceCodeGen();
-        CodeGeneratorPtr code_gen = createCodeGenerator();
-        PipelineContextPtr context = createPipelineContext();
+    DataSourcePtr source = createTestSourceCodeGenFilter();
+    CodeGeneratorPtr code_gen = createCodeGenerator();
+    PipelineContextPtr context = createPipelineContext();
 
-        Schema input_schema = source->getSchema();
+    Schema input_schema = source->getSchema();
 
-        std::cout << "Generate Code" << std::endl;
-        /* generate code for scanning input buffer */
-        code_gen->generateCode(source, context, std::cout);
+    std::cout << "Generate Filter Code" << std::endl;
+    /* generate code for scanning input buffer */
+    code_gen->generateCode(source, context, std::cout);
 
 	std::cout << std::make_shared<Predicate>(
 		      (PredicateItem(input_schema[0])<PredicateItem(createBasicTypeValue(iotdb::BasicType::INT64,"5")))
@@ -536,45 +572,47 @@ int CodeGeneratorTest()
 	    );
 	code_gen->generateCode(pred, context, std::cout);
 
-        /* generate code for writing result tuples to output buffer */
-        code_gen->generateCode(createPrintSink(Schema::create().addField("campaign_id",UINT64),std::cout), context, std::cout);
-        /* compile code to pipeline stage */
-        PipelineStagePtr stage = code_gen->compile(CompilerArgs());
-        if(!stage)
-            return -1;
-        /* prepare input tuple buffer */
-        Schema s = Schema::create()
-                .addField("i64", UINT64);
-        TupleBufferPtr buf = source->receiveData();
-        std::vector<TupleBuffer*> input_buffers;
-        input_buffers.push_back(buf.get());
-        //std::cout << iotdb::toString(buf.get(),source->getSchema()) << std::endl;
-        std::cout << "Processing " << buf->num_tuples << " tuples: " << std::endl;
-        size_t buffer_size = buf->num_tuples*sizeof (uint64_t);
-        TupleBuffer result_buffer(malloc(buffer_size), buffer_size,sizeof(uint64_t),0);
+    /* generate code for writing result tuples to output buffer */
+    code_gen->generateCode(createPrintSink(Schema::create()
+                                                   .addField("id", BasicType::UINT32)
+                                                   .addField("value", BasicType::INT32), std::cout), context, std::cout);
 
-        /* execute Stage */
-        stage->execute(input_buffers, NULL, &result_buffer);
+    /* compile code to pipeline stage */
+    PipelineStagePtr stage = code_gen->compile(CompilerArgs());
+    if(!stage)
+        return -1;
 
-        /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
-        //std::cout << "Result Buffer: #tuples: " << result_buffer.num_tuples << std::endl;
-        std::cout << "---------- My Number of tuples...." << buf->num_tuples;
-        if(buf->num_tuples!=result_buffer.num_tuples){
-            std::cout << "Wrong number of tuples in output: " << result_buffer.num_tuples
-                      << " (should have been: " << buf->num_tuples << ")" << std::endl;
+    /* prepare input tuple buffer */
+    TupleBufferPtr buf = source->receiveData();
+    std::vector<TupleBuffer*> input_buffers;
+    input_buffers.push_back(buf.get());
+    //std::cout << iotdb::toString(buf.get(),source->getSchema()) << std::endl;
+    std::cout << "Processing " << buf->num_tuples << " tuples: " << std::endl;
+    size_t buffer_size = buf->num_tuples*sizeof (uint64_t);
+    TupleBuffer result_buffer(malloc(buffer_size), buffer_size,sizeof(uint64_t),0);
+
+    /* execute Stage */
+    stage->execute(input_buffers, NULL, &result_buffer);
+
+    /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
+    //std::cout << "Result Buffer: #tuples: " << result_buffer.num_tuples << std::endl;
+    std::cout << "---------- My Number of tuples...." << buf->num_tuples << std::endl;
+    if(buf->num_tuples!=result_buffer.num_tuples){
+        std::cout << "Wrong number of tuples in output: " << result_buffer.num_tuples
+                  << " (should have been: " << buf->num_tuples << ")" << std::endl;
+        return -1;
+    }
+    uint64_t* result_data = (uint64_t*) result_buffer.buffer;
+    for(uint64_t i=0;i<buf->num_tuples;++i){
+        if(result_data[i]!=1){
+            std::cout << "Error in Result! Mismatch position: " << i << std::endl;
             return -1;
         }
-        uint64_t* result_data = (uint64_t*) result_buffer.buffer;
-        for(uint64_t i=0;i<buf->num_tuples;++i){
-            if(result_data[i]!=1){
-                std::cout << "Error in Result! Mismatch position: " << i << std::endl;
-                return -1;
-            }
-        }
+    }
 
         //std::cout << iotdb::toString(result_buffer,s) << std::endl;
 
-        return 0;
+    return 0;
     }
 
 int testTupleBufferPrinting()
