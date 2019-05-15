@@ -98,11 +98,112 @@ namespace iotdb
 	UserAPIExpressionPtr PredicateItem::copy() const{
 		return std::make_shared<PredicateItem>(*this);
 	}
-	
-	
-	Predicate operator == (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
-		return Predicate(BinaryOperatorType::EQUAL_OP, lhs.copy(), rhs.copy());
+
+
+	//create UserAPIExpression depending on the input value
+    template<>
+    UserAPIExpressionPtr getNeededExpression<bool>( bool value ){
+        std::stringstream streamer;
+        streamer << value;
+        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::BOOLEAN, streamer.str())));
+    }
+    template<>
+    UserAPIExpressionPtr getNeededExpression<char>( char value ){
+        std::stringstream streamer;
+        streamer << value;
+        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::CHAR, streamer.str())));
+    }
+    template<>
+    UserAPIExpressionPtr getNeededExpression<int8_t>( int8_t value ){
+        std::stringstream streamer;
+        streamer << value;
+        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::INT8, streamer.str())));
+    }
+    template<>
+    UserAPIExpressionPtr getNeededExpression<uint8_t>( uint8_t value ){
+        std::stringstream streamer;
+        streamer << value;
+        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::UINT8, streamer.str())));
+    }
+    template<>
+    UserAPIExpressionPtr getNeededExpression<int16_t>( int16_t value ){
+        std::stringstream streamer;
+        streamer << value;
+        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::INT16, streamer.str())));
+    }
+    template<>
+    UserAPIExpressionPtr getNeededExpression<uint16_t>( uint16_t value ){
+        std::stringstream streamer;
+        streamer << value;
+        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::UINT16, streamer.str())));
+    }
+    template<>
+    UserAPIExpressionPtr getNeededExpression<int32_t>( int32_t value ){
+        std::stringstream streamer;
+        streamer << value;
+        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::INT32, streamer.str())));
+    }
+    template<>
+    UserAPIExpressionPtr getNeededExpression<uint32_t >( uint32_t value ){
+        std::stringstream streamer;
+        streamer << value;
+        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::UINT32, streamer.str())));
+    }
+    template<>
+    UserAPIExpressionPtr getNeededExpression<int64_t >( int64_t value ){
+        std::stringstream streamer;
+        streamer << value;
+        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::INT64, streamer.str())));
+    }
+    template<>
+    UserAPIExpressionPtr getNeededExpression<uint64_t >( uint64_t value ){
+        std::stringstream streamer;
+        streamer << value;
+        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::UINT64, streamer.str())));
+    }
+    template<>
+    UserAPIExpressionPtr getNeededExpression<float>( float value ){
+	    std::stringstream streamer;
+	    streamer << value;
+        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::FLOAT32, streamer.str())));
 	}
+    template<>
+    UserAPIExpressionPtr getNeededExpression<double>( double value ){
+        std::stringstream streamer;
+        streamer << value;
+        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::FLOAT64, streamer.str())));
+    }
+
+    // What about the Date-Expression? How to get the difference between uint 32? Not needed maybe?
+    /*
+	template<>
+    UserAPIExpressionPtr getNeededExpression<uint32_t>( int value ){
+        std::stringstream streamer;
+        streamer << value;
+        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::INT32, streamer.str())));
+    }
+    */
+
+    template<>
+    UserAPIExpressionPtr getNeededExpression<void>( void ){
+        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::VOID_TYPE, "")));
+    }
+
+    template<>
+    UserAPIExpressionPtr getNeededExpression<UserAPIExpressionPtr>( UserAPIExpressionPtr value ){
+        return value;
+    }
+
+    //Define operator overloading
+    /*
+    template<class T>
+	Predicate operator == (const UserAPIExpression &lhs, const T& rhs){
+		return Predicate(BinaryOperatorType::EQUAL_OP, lhs.copy(), getNeededExpression<T>(rhs));
+	}
+     */
+    Predicate operator == (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+        return Predicate(BinaryOperatorType::EQUAL_OP, lhs.copy(), rhs.copy());
+    }
 	Predicate operator != (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
 		return Predicate(BinaryOperatorType::UNEQUAL_OP, lhs.copy(), rhs.copy());
 	}
