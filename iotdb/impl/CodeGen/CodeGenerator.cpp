@@ -49,16 +49,6 @@ class PipelineContext {
 void PipelineContext::addTypeDeclaration(const Declaration& decl) { type_declarations.push_back(decl.copy()); }
 void PipelineContext::addVariableDeclaration(const Declaration& decl) { variable_declarations.push_back(decl.copy()); }
 
-//bool PipelineContext::hasDeclaration(const Declaration& search_decl) const{
-
-////  for(auto& decl : type_declarations){
-////      if(decl.isEqual(search_decl)){
-////          return true;
-////      }
-////  }
-//  return false;
-//}
-
 typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
 
 const PipelineContextPtr createPipelineContext() { return std::make_shared<PipelineContext>(); }
@@ -135,8 +125,7 @@ const StructDeclaration getStructDeclarationFromSchema(const std::string struct_
         std::cout << "Field " << i << ": " << schema[i]->getDataType()->toString() << " " << schema[i]->name
                   << std::endl;
     }
-    //.addField(VariableDeclaration::create(createDataType(BasicType(UINT64)), "campaign_id"));
-    //.addField(VariableDeclaration::create(createDataType(BasicType(UINT64)), "sum"));
+
     return struct_decl_tuple;
 }
 
@@ -379,11 +368,12 @@ bool C_CodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContex
                 .assign(VarRef(code_.var_decl_input_tuple)[VarRef(*(code_.var_decl_id))].accessRef(VarRef(*var_decl)))
                 .copy());
         /* */
-        code_.current_code_insertion_point->addStatement((++VarRef(var_decl_num_result_tuples)).copy());
 
         // var_decls.push_back(*var_decl);
         // write_result_tuples.push_back(VarRef(var_decl_result_tuple)[VarRef(*(code_.var_decl_id))].assign(VarRef(var_decl_result_tuple)[VarRef(*(code_.var_decl_id))]).copy());
     }
+    code_.current_code_insertion_point->addStatement((++VarRef(var_decl_num_result_tuples)).copy());
+
 
     /* TODO: set number of output tuples to result buffer */
     code_.cleanup_stmts.push_back(

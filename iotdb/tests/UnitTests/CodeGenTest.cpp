@@ -52,36 +52,43 @@ namespace iotdb {
   }
 
 
+  class SelectionDataGenFunctor {
+  public:
+      SelectionDataGenFunctor(){}
+
+      struct __attribute__((packed)) InputTuple {
+        uint32_t id;
+        uint32_t value;
+      };
+
+
+      TupleBufferPtr operator()()
+      {
+          // 10 tuples of size one
+          TupleBufferPtr buf = BufferManager::instance().getBuffer();
+          uint64_t tupleCnt = buf->buffer_size / sizeof(InputTuple);
+
+          assert(buf->buffer != NULL);
+
+          InputTuple* tuples = (InputTuple*)buf->buffer;
+          for (uint32_t i = 0; i < tupleCnt; i++) {
+              tuples[i].id = i;
+              tuples[i].value = i*2;
+          }
+          buf->tuple_size_bytes = sizeof(InputTuple);
+          buf->num_tuples = tupleCnt;
+          return buf;
+      }
+  };
+
+
     const DataSourcePtr createTestSourceCodeGenFilter()
     {
-        // Shall this go to the UnitTest Directory in future?
-        class Functor {
-        public:
-            Functor(){}
 
-            TupleBufferPtr operator()()
-            {
-                // 10 tuples of size one
-                TupleBufferPtr buf = BufferManager::instance().getBuffer();
-                size_t tupleCnt = buf->buffer_size / (2 * sizeof(uint32_t));
-
-                assert(buf->buffer != NULL);
-
-                uint32_t* tuples = (uint32_t*)buf->buffer;
-                for (uint32_t i = 0; i < tupleCnt; i = i+2) {
-                    tuples[i] = i + 1;
-                    tuples[i+1] = (i + 1) * (i + 2);
-                }
-                buf->tuple_size_bytes = sizeof(uint64_t);
-                buf->num_tuples = tupleCnt;
-                return buf;
-            }
-        };
-
-        DataSourcePtr source(new GeneratorSource<Functor>(
+        DataSourcePtr source(new GeneratorSource<SelectionDataGenFunctor>(
                 Schema::create()
                     .addField("id", BasicType::UINT32)
-                    .addField("value", BasicType::INT32), 1));
+                    .addField("value", BasicType::UINT32), 1));
 
         return source;
     }
@@ -575,7 +582,7 @@ int CodeGeneratorTest()
     /* generate code for writing result tuples to output buffer */
     code_gen->generateCode(createPrintSink(Schema::create()
                                                    .addField("id", BasicType::UINT32)
-                                                   .addField("value", BasicType::INT32), std::cout), context, std::cout);
+                                                   .addField("value", BasicType::UINT32), std::cout), context, std::cout);
 
     /* compile code to pipeline stage */
     PipelineStagePtr stage = code_gen->compile(CompilerArgs());
@@ -594,23 +601,26 @@ int CodeGeneratorTest()
     /* execute Stage */
     stage->execute(input_buffers, NULL, &result_buffer);
 
-    /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
-    //std::cout << "Result Buffer: #tuples: " << result_buffer.num_tuples << std::endl;
-    std::cout << "---------- My Number of tuples...." << buf->num_tuples << std::endl;
-    if(buf->num_tuples!=result_buffer.num_tuples){
+    /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
+    std::cout << "---------- My Number of tuples...." << result_buffer.num_tuples << std::endl;
+    if(result_buffer.num_tuples!=5){
         std::cout << "Wrong number of tuples in output: " << result_buffer.num_tuples
                   << " (should have been: " << buf->num_tuples << ")" << std::endl;
         return -1;
     }
-    uint64_t* result_data = (uint64_t*) result_buffer.buffer;
-    for(uint64_t i=0;i<buf->num_tuples;++i){
-        if(result_data[i]!=1){
+    SelectionDataGenFunctor::InputTuple* result_data = (SelectionDataGenFunctor::InputTuple*) result_buffer.buffer;
+    for(uint64_t i=0;i<5;++i){
+        if(result_data[i].id!=i || result_data[i].value!=i*2){
             std::cout << "Error in Result! Mismatch position: " << i << std::endl;
             return -1;
         }
     }
 
-        //std::cout << iotdb::toString(result_buffer,s) << std::endl;
+    std::cout << iotdb::toString(result_buffer,Schema::create()
+                                 .addField("id", BasicType::UINT32)
+                                 .addField("value", BasicType::UINT32)) << std::endl;
+
+    std::cout << "Result of SelectionCodeGenTest is Correct!" << std::endl;
 
     return 0;
     }
