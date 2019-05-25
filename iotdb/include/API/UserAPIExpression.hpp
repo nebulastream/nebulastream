@@ -44,7 +44,8 @@ public:
 
 class Predicate : public UserAPIExpression{
 public:
-	Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right, bool bracket);
+	Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right, const std::string& functionCallOverload, bool bracket = false);
+    Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right, bool bracket = false);
 	
 	virtual const ExpressionStatmentPtr generateCode(GeneratedCode& code) const override;
 	virtual const std::string toString() const override;
@@ -54,6 +55,7 @@ private:
 	const UserAPIExpressionPtr _left;
 	const UserAPIExpressionPtr _right;
 	bool _bracket;
+	const std::string _functionCallOverload;
 };
 
 
@@ -62,40 +64,108 @@ public:
 	PredicateItem(AttributeFieldPtr attribute);
 	PredicateItem(ValueTypePtr value);
 
+	PredicateItem(int8_t val);
+    PredicateItem(uint8_t val);
+    PredicateItem(int16_t val);
+    PredicateItem(uint16_t val);
+    PredicateItem(int32_t val);
+    PredicateItem(uint32_t val);
+    PredicateItem(int64_t val);
+    PredicateItem(uint64_t val);
+    PredicateItem(float val);
+    PredicateItem(double val);
+    PredicateItem(bool val);
+    PredicateItem(char val);
+
     virtual const ExpressionStatmentPtr generateCode(GeneratedCode& code) const override;
     virtual const std::string toString() const override;
 	virtual UserAPIExpressionPtr copy() const override;
+
+	const bool isArrayType() const;
 private:
 	PredicateItemMutation _mutation;
 	AttributeFieldPtr _attribute=nullptr;
 	ValueTypePtr _value=nullptr;
 };
 
-template <class T>
-UserAPIExpressionPtr getNeededExpression(T value);
-template <class T>
-UserAPIExpressionPtr getNeededExpression( void );
+Predicate operator == (const UserAPIExpression &lhs, const UserAPIExpression &rhs);
+Predicate operator != (const UserAPIExpression &lhs, const UserAPIExpression &rhs);
+Predicate operator < (const UserAPIExpression &lhs, const UserAPIExpression &rhs);
+Predicate operator > (const UserAPIExpression &lhs, const UserAPIExpression &rhs);
+Predicate operator >= (const UserAPIExpression &lhs, const UserAPIExpression &rhs);
+Predicate operator <= (const UserAPIExpression &lhs, const UserAPIExpression &rhs);
+Predicate operator + (const UserAPIExpression &lhs, const UserAPIExpression &rhs);
+Predicate operator - (const UserAPIExpression &lhs, const UserAPIExpression &rhs);
+Predicate operator * (const UserAPIExpression &lhs, const UserAPIExpression &rhs);
+Predicate operator / (const UserAPIExpression &lhs, const UserAPIExpression &rhs);
+Predicate operator % (const UserAPIExpression &lhs, const UserAPIExpression &rhs);
+Predicate operator && (const UserAPIExpression &lhs, const UserAPIExpression &rhs);
+Predicate operator || (const UserAPIExpression &lhs, const UserAPIExpression &rhs);
+Predicate operator & (const UserAPIExpression &lhs, const UserAPIExpression &rhs);
+Predicate operator | (const UserAPIExpression &lhs, const UserAPIExpression &rhs);
+Predicate operator ^ (const UserAPIExpression &lhs, const UserAPIExpression &rhs);
+Predicate operator << (const UserAPIExpression &lhs, const UserAPIExpression &rhs);
+Predicate operator >> (const UserAPIExpression &lhs, const UserAPIExpression &rhs);
 
-//template <class T>
-Predicate operator == (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
-Predicate operator != (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
-Predicate operator < (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
-Predicate operator > (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
-Predicate operator >= (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
-Predicate operator <= (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
-Predicate operator + (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
-Predicate operator - (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
-Predicate operator * (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
-Predicate operator / (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
-Predicate operator % (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
-Predicate operator && (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
-Predicate operator || (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
-Predicate operator & (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
-Predicate operator | (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
-Predicate operator ^ (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
-Predicate operator << (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
-Predicate operator >> (const UserAPIExpression &rhs, const UserAPIExpression &lhs);
 
+Predicate operator == (const PredicateItem &lhs, const UserAPIExpression &rhs);
+Predicate operator != (const PredicateItem &lhs, const UserAPIExpression &rhs);
+Predicate operator < (const PredicateItem &lhs, const UserAPIExpression &rhs);
+Predicate operator > (const PredicateItem &lhs, const UserAPIExpression &rhs);
+Predicate operator >= (const PredicateItem &lhs, const UserAPIExpression &rhs);
+Predicate operator <= (const PredicateItem &lhs, const UserAPIExpression &rhs);
+Predicate operator + (const PredicateItem &lhs, const UserAPIExpression &rhs);
+Predicate operator - (const PredicateItem &lhs, const UserAPIExpression &rhs);
+Predicate operator * (const PredicateItem &lhs, const UserAPIExpression &rhs);
+Predicate operator / (const PredicateItem &lhs, const UserAPIExpression &rhs);
+Predicate operator % (const PredicateItem &lhs, const UserAPIExpression &rhs);
+Predicate operator && (const PredicateItem &lhs, const UserAPIExpression &rhs);
+Predicate operator || (const PredicateItem &lhs, const UserAPIExpression &rhs);
+Predicate operator & (const PredicateItem &lhs, const UserAPIExpression &rhs);
+Predicate operator | (const PredicateItem &lhs, const UserAPIExpression &rhs);
+Predicate operator ^ (const PredicateItem &lhs, const UserAPIExpression &rhs);
+Predicate operator << (const PredicateItem &lhs, const UserAPIExpression &rhs);
+Predicate operator >> (const PredicateItem &lhs, const UserAPIExpression &rhs);
+
+
+Predicate operator == (const UserAPIExpression &lhs, const PredicateItem &rhs);
+Predicate operator != (const UserAPIExpression &lhs, const PredicateItem &rhs);
+Predicate operator < (const UserAPIExpression &lhs, const PredicateItem &rhs);
+Predicate operator > (const UserAPIExpression &lhs, const PredicateItem &rhs);
+Predicate operator >= (const UserAPIExpression &lhs, const PredicateItem &rhs);
+Predicate operator <= (const UserAPIExpression &lhs, const PredicateItem &rhs);
+Predicate operator + (const UserAPIExpression &lhs, const PredicateItem &rhs);
+Predicate operator - (const UserAPIExpression &lhs, const PredicateItem &rhs);
+Predicate operator * (const UserAPIExpression &lhs, const PredicateItem &rhs);
+Predicate operator / (const UserAPIExpression &lhs, const PredicateItem &rhs);
+Predicate operator % (const UserAPIExpression &lhs, const PredicateItem &rhs);
+Predicate operator && (const UserAPIExpression &lhs, const PredicateItem &rhs);
+Predicate operator || (const UserAPIExpression &lhs, const PredicateItem &rhs);
+Predicate operator & (const UserAPIExpression &lhs, const PredicateItem &rhs);
+Predicate operator | (const UserAPIExpression &lhs, const PredicateItem &rhs);
+Predicate operator ^ (const UserAPIExpression &lhs, const PredicateItem &rhs);
+Predicate operator << (const UserAPIExpression &lhs, const PredicateItem &rhs);
+Predicate operator >> (const UserAPIExpression &lhs, const PredicateItem &rhs);
+
+
+Predicate operator == (const PredicateItem &lhs, const PredicateItem &rhs);
+Predicate operator != (const PredicateItem &lhs, const PredicateItem &rhs);
+Predicate operator < (const PredicateItem &lhs, const PredicateItem &rhs);
+Predicate operator > (const PredicateItem &lhs, const PredicateItem &rhs);
+Predicate operator >= (const PredicateItem &lhs, const PredicateItem &rhs);
+Predicate operator <= (const PredicateItem &lhs, const PredicateItem &rhs);
+Predicate operator + (const PredicateItem &lhs, const PredicateItem &rhs);
+Predicate operator - (const PredicateItem &lhs, const PredicateItem &rhs);
+Predicate operator * (const PredicateItem &lhs, const PredicateItem &rhs);
+Predicate operator / (const PredicateItem &lhs, const PredicateItem &rhs);
+Predicate operator % (const PredicateItem &lhs, const PredicateItem &rhs);
+Predicate operator && (const PredicateItem &lhs, const PredicateItem &rhs);
+Predicate operator || (const PredicateItem &lhs, const PredicateItem &rhs);
+Predicate operator & (const PredicateItem &lhs, const PredicateItem &rhs);
+Predicate operator | (const PredicateItem &lhs, const PredicateItem &rhs);
+Predicate operator ^ (const PredicateItem &lhs, const PredicateItem &rhs);
+Predicate operator << (const PredicateItem &lhs, const PredicateItem &rhs);
+Predicate operator >> (const PredicateItem &lhs, const PredicateItem &rhs);
 
 } //end of namespace iotdb
 #endif 

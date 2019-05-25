@@ -15,15 +15,26 @@
 #include <CodeGen/C_CodeGen/UnaryOperatorStatement.hpp>
 
 #include <API/UserAPIExpression.hpp>
+#include <Core/DataTypes.hpp>
 
 namespace iotdb
 {
-	
-	Predicate::Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right, bool bracket = false) :
+
+    Predicate::Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right, const std::string& functionCallOverload, bool bracket) :
+            _op(op),
+            _left(left),
+            _right(right),
+            _bracket(bracket),
+            _functionCallOverload(functionCallOverload)
+
+    {}
+
+	Predicate::Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right, bool bracket) :
 		_op(op),
 		_left(left),
 		_right(right),
-		_bracket(bracket)
+		_bracket(bracket),
+		_functionCallOverload("")
 	{}
 	
 	UserAPIExpressionPtr Predicate::copy() const{
@@ -31,11 +42,21 @@ namespace iotdb
 	}
 
     const ExpressionStatmentPtr Predicate::generateCode(GeneratedCode& code) const{
-		//toDo: implement code-generation
-		//BinaryOperatorStatement bin_op(VarRefStatement(var_decl_i), PLUS_OP, VarRefStatement(var_decl_j));
+		if(_functionCallOverload.empty()) {
+            return BinaryOperatorStatement(*(_left->generateCode(code)), _op, *(_right->generateCode(code))).copy();
+        } else {
+		    //todo function call statement? what about that. - maybe switch the return here with that
 
-		return BinaryOperatorStatement(*(_left->generateCode(code)), _op, *(_right->generateCode(code))).copy();
-
+            std::stringstream str;
+            str << _functionCallOverload;
+            str << "(";
+            str << (_left->generateCode(code)->getCode()->code_);
+            str << ", ";
+            str << (_right->generateCode(code)->getCode()->code_);
+            str << ")";
+            //first param not a nice solution...
+            return BinaryOperatorStatement(ConstantExprStatement(createStringTypeValue(str.str(), false)) ,_op, (ConstantExprStatement((createBasicTypeValue(BasicType::UINT8, "0"))))).copy();
+        }
 	}
 
 
@@ -49,14 +70,8 @@ namespace iotdb
 		    //toDo: Need an equals operator instead of true
 		    if(code.struct_decl_input_tuple.getField(_attribute->name) &&
 		            code.struct_decl_input_tuple.getField(_attribute->name)->getType() == _attribute->getDataType()){
-
                       VariableDeclaration var_decl_attr = code.struct_decl_input_tuple.getVariableDeclaration(_attribute->name);
                       return ((VarRef(code.var_decl_input_tuple)[VarRef(*code.var_decl_id)]).accessRef(VarRef(var_decl_attr))).copy();
-
-//                return  VarRefStatement(
-//                        VariableDeclaration::create(code.struct_decl_input_tuple.getField(_attribute->name)->getType(),
-//                                                    code.struct_decl_input_tuple.getField(_attribute->name)->getIdentifierName())
-//                        ).copy();
 		      } else{
 			IOTDB_FATAL_ERROR("Could not Retrieve Attribute from StructDeclaration!");
 		      }
@@ -77,13 +92,49 @@ namespace iotdb
 	
 	PredicateItem::PredicateItem(AttributeFieldPtr attribute) : 
 	_mutation(PredicateItemMutation::ATTRIBUTE),
-	_attribute(attribute)
-	{}
+	_attribute(attribute) {}
 	
 	PredicateItem::PredicateItem(ValueTypePtr value) : 
 	_mutation(PredicateItemMutation::VALUE),
-	_value(value)
-	{}
+	_value(value) {}
+
+    PredicateItem::PredicateItem(int8_t val) :
+            _mutation(PredicateItemMutation::VALUE),
+            _value(createBasicTypeValue(BasicType::INT8, std::to_string(val))){}
+    PredicateItem::PredicateItem(uint8_t val) :
+            _mutation(PredicateItemMutation::VALUE),
+            _value(createBasicTypeValue(BasicType::UINT8, std::to_string(val))) {}
+    PredicateItem::PredicateItem(int16_t val) :
+            _mutation(PredicateItemMutation::VALUE),
+            _value(createBasicTypeValue(BasicType::INT16, std::to_string(val))) {}
+    PredicateItem::PredicateItem(uint16_t val) :
+            _mutation(PredicateItemMutation::VALUE),
+            _value(createBasicTypeValue(BasicType::UINT16, std::to_string(val))) {}
+    PredicateItem::PredicateItem(int32_t val) :
+            _mutation(PredicateItemMutation::VALUE),
+            _value(createBasicTypeValue(BasicType::INT32, std::to_string(val))) {}
+    PredicateItem::PredicateItem(uint32_t val) :
+            _mutation(PredicateItemMutation::VALUE),
+            _value(createBasicTypeValue(BasicType::UINT32, std::to_string(val))) {}
+    PredicateItem::PredicateItem(int64_t val) :
+            _mutation(PredicateItemMutation::VALUE),
+            _value(createBasicTypeValue(BasicType::INT64, std::to_string(val))) {}
+    PredicateItem::PredicateItem(uint64_t val) :
+            _mutation(PredicateItemMutation::VALUE),
+            _value(createBasicTypeValue(BasicType::UINT64, std::to_string(val))) {}
+    PredicateItem::PredicateItem(float val) :
+            _mutation(PredicateItemMutation::VALUE),
+            _value(createBasicTypeValue(BasicType::FLOAT32, std::to_string(val))) {}
+    PredicateItem::PredicateItem(double val) :
+            _mutation(PredicateItemMutation::VALUE),
+            _value(createBasicTypeValue(BasicType::FLOAT64, std::to_string(val))) {}
+    PredicateItem::PredicateItem(bool val) :
+            _mutation(PredicateItemMutation::VALUE),
+            _value(createBasicTypeValue(BasicType::BOOLEAN, std::to_string(val))) {}
+    PredicateItem::PredicateItem(char val) :
+            _mutation(PredicateItemMutation::VALUE),
+            _value(createBasicTypeValue(BasicType::CHAR, std::to_string(val))) {}
+
 	
 	const std::string PredicateItem::toString() const{
 			switch(_mutation)
@@ -95,112 +146,20 @@ namespace iotdb
 			}
 	}
 
+	const bool PredicateItem::isArrayType() const {
+	    // todo: check attribute field for better "string"-understanding
+	    if(_attribute){
+            //return (_attribute->data_type->isArrayDataType());
+            return true;
+	    }
+	    return _value->isArrayValueType();
+	}
+
 	UserAPIExpressionPtr PredicateItem::copy() const{
 		return std::make_shared<PredicateItem>(*this);
 	}
 
 
-	//create UserAPIExpression depending on the input value
-    template<>
-    UserAPIExpressionPtr getNeededExpression<bool>( bool value ){
-        std::stringstream streamer;
-        streamer << value;
-        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::BOOLEAN, streamer.str())));
-    }
-    template<>
-    UserAPIExpressionPtr getNeededExpression<char>( char value ){
-        std::stringstream streamer;
-        streamer << value;
-        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::CHAR, streamer.str())));
-    }
-    template<>
-    UserAPIExpressionPtr getNeededExpression<int8_t>( int8_t value ){
-        std::stringstream streamer;
-        streamer << value;
-        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::INT8, streamer.str())));
-    }
-    template<>
-    UserAPIExpressionPtr getNeededExpression<uint8_t>( uint8_t value ){
-        std::stringstream streamer;
-        streamer << value;
-        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::UINT8, streamer.str())));
-    }
-    template<>
-    UserAPIExpressionPtr getNeededExpression<int16_t>( int16_t value ){
-        std::stringstream streamer;
-        streamer << value;
-        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::INT16, streamer.str())));
-    }
-    template<>
-    UserAPIExpressionPtr getNeededExpression<uint16_t>( uint16_t value ){
-        std::stringstream streamer;
-        streamer << value;
-        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::UINT16, streamer.str())));
-    }
-    template<>
-    UserAPIExpressionPtr getNeededExpression<int32_t>( int32_t value ){
-        std::stringstream streamer;
-        streamer << value;
-        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::INT32, streamer.str())));
-    }
-    template<>
-    UserAPIExpressionPtr getNeededExpression<uint32_t >( uint32_t value ){
-        std::stringstream streamer;
-        streamer << value;
-        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::UINT32, streamer.str())));
-    }
-    template<>
-    UserAPIExpressionPtr getNeededExpression<int64_t >( int64_t value ){
-        std::stringstream streamer;
-        streamer << value;
-        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::INT64, streamer.str())));
-    }
-    template<>
-    UserAPIExpressionPtr getNeededExpression<uint64_t >( uint64_t value ){
-        std::stringstream streamer;
-        streamer << value;
-        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::UINT64, streamer.str())));
-    }
-    template<>
-    UserAPIExpressionPtr getNeededExpression<float>( float value ){
-	    std::stringstream streamer;
-	    streamer << value;
-        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::FLOAT32, streamer.str())));
-	}
-    template<>
-    UserAPIExpressionPtr getNeededExpression<double>( double value ){
-        std::stringstream streamer;
-        streamer << value;
-        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::FLOAT64, streamer.str())));
-    }
-
-    // What about the Date-Expression? How to get the difference between uint 32? Not needed maybe?
-    /*
-	template<>
-    UserAPIExpressionPtr getNeededExpression<uint32_t>( int value ){
-        std::stringstream streamer;
-        streamer << value;
-        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::INT32, streamer.str())));
-    }
-    */
-
-    template<>
-    UserAPIExpressionPtr getNeededExpression<void>( void ){
-        return std::make_shared<PredicateItem>(PredicateItem(createBasicTypeValue(BasicType::VOID_TYPE, "")));
-    }
-
-    template<>
-    UserAPIExpressionPtr getNeededExpression<UserAPIExpressionPtr>( UserAPIExpressionPtr value ){
-        return value;
-    }
-
-    //Define operator overloading
-    /*
-    template<class T>
-	Predicate operator == (const UserAPIExpression &lhs, const T& rhs){
-		return Predicate(BinaryOperatorType::EQUAL_OP, lhs.copy(), getNeededExpression<T>(rhs));
-	}
-     */
     Predicate operator == (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
         return Predicate(BinaryOperatorType::EQUAL_OP, lhs.copy(), rhs.copy());
     }
@@ -255,5 +214,171 @@ namespace iotdb
 	Predicate operator >> (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
 		return Predicate(BinaryOperatorType::BITWISE_RIGHT_SHIFT_OP, lhs.copy(), rhs.copy());
 	}
-	
+
+    Predicate operator== (const UserAPIExpression &lhs, const PredicateItem &rhs){
+        return (lhs == dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator != (const UserAPIExpression &lhs, const PredicateItem &rhs){
+        return operator !=(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator > (const UserAPIExpression &lhs, const PredicateItem &rhs){
+        return operator >(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator < (const UserAPIExpression &lhs, const PredicateItem &rhs){
+        return operator <(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator >= (const UserAPIExpression &lhs, const PredicateItem &rhs){
+        return operator >=(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator <= (const UserAPIExpression &lhs, const PredicateItem &rhs){
+        return operator <=(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator + (const UserAPIExpression &lhs, const PredicateItem &rhs){
+        return operator +(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator - (const UserAPIExpression &lhs, const PredicateItem &rhs){
+        return operator -(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator * (const UserAPIExpression &lhs, const PredicateItem &rhs){
+        return operator *(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator / (const UserAPIExpression &lhs, const PredicateItem &rhs){
+        return operator /(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator % (const UserAPIExpression &lhs, const PredicateItem &rhs){
+        return operator %(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator && (const UserAPIExpression &lhs, const PredicateItem &rhs){
+        return operator &&(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator || (const UserAPIExpression &lhs, const PredicateItem &rhs){
+        return operator ||(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator | (const UserAPIExpression &lhs, const PredicateItem &rhs){
+        return operator |(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator ^ (const UserAPIExpression &lhs, const PredicateItem &rhs){
+        return operator ^(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator << (const UserAPIExpression &lhs, const PredicateItem &rhs){
+        return operator <<(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator >> (const UserAPIExpression &lhs, const PredicateItem &rhs){
+        return operator >>(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+
+    Predicate operator== (const PredicateItem &lhs, const UserAPIExpression &rhs){
+        return (dynamic_cast<const UserAPIExpression&>(lhs) == rhs);
+    }
+    Predicate operator != (const PredicateItem &lhs, const UserAPIExpression &rhs){
+        return operator !=(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
+    }
+    Predicate operator > (const PredicateItem &lhs, const UserAPIExpression &rhs){
+        return operator >(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
+    }
+    Predicate operator < (const PredicateItem &lhs, const UserAPIExpression &rhs){
+        return operator <(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
+    }
+    Predicate operator >= (const PredicateItem &lhs, const UserAPIExpression &rhs){
+        return operator >=(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
+    }
+    Predicate operator <= (const PredicateItem &lhs, const UserAPIExpression &rhs){
+        return operator <=(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
+    }
+    Predicate operator + (const PredicateItem &lhs, const UserAPIExpression &rhs){
+        return operator +(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
+    }
+    Predicate operator - (const PredicateItem &lhs, const UserAPIExpression &rhs){
+        return operator -(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
+    }
+    Predicate operator * (const PredicateItem &lhs, const UserAPIExpression &rhs){
+        return operator *(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
+    }
+    Predicate operator / (const PredicateItem &lhs, const UserAPIExpression &rhs){
+        return operator /(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
+    }
+    Predicate operator % (const PredicateItem &lhs, const UserAPIExpression &rhs){
+        return operator %(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
+    }
+    Predicate operator && (const PredicateItem &lhs, const UserAPIExpression &rhs){
+        return operator &&(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
+    }
+    Predicate operator || (const PredicateItem &lhs, const UserAPIExpression &rhs){
+        return operator ||(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
+    }
+    Predicate operator | (const PredicateItem &lhs, const UserAPIExpression &rhs){
+        return operator |(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
+    }
+    Predicate operator ^ (const PredicateItem &lhs, const UserAPIExpression &rhs){
+        return operator ^(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
+    }
+    Predicate operator << (const PredicateItem &lhs, const UserAPIExpression &rhs){
+        return operator <<(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
+    }
+    Predicate operator >> (const PredicateItem &lhs, const UserAPIExpression &rhs){
+        return operator >>(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
+    }
+
+    /**
+     * Operator overload includes String compare by define a function-call-overload in the code generation process
+     * @param lhs
+     * @param rhs
+     * @return
+     */
+    Predicate operator== (const PredicateItem &lhs, const PredicateItem &rhs){
+        //possible use of memcmp when arraytypes equal with length is equal...
+        int checktype = lhs.isArrayType();
+        checktype += rhs.isArrayType();
+        if(checktype == 1) IOTDB_ERROR("NOT COMPARABLE TYPES")
+        if(checktype == 2) return Predicate(BinaryOperatorType::EQUAL_OP, lhs.copy(),rhs.copy(), "strcmp", false);
+        return (dynamic_cast<const UserAPIExpression&>(lhs) == dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator != (const PredicateItem &lhs, const PredicateItem &rhs){
+        return operator !=(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator > (const PredicateItem &lhs, const PredicateItem &rhs){
+        return operator >(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator < (const PredicateItem &lhs, const PredicateItem &rhs){
+        return operator <(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator >= (const PredicateItem &lhs, const PredicateItem &rhs){
+        return operator >=(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator <= (const PredicateItem &lhs, const PredicateItem &rhs){
+        return operator <=(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator + (const PredicateItem &lhs, const PredicateItem &rhs){
+        return operator +(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator - (const PredicateItem &lhs, const PredicateItem &rhs){
+        return operator -(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator * (const PredicateItem &lhs, const PredicateItem &rhs){
+        return operator *(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator / (const PredicateItem &lhs, const PredicateItem &rhs){
+        return operator /(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator % (const PredicateItem &lhs, const PredicateItem &rhs){
+        return operator %(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator && (const PredicateItem &lhs, const PredicateItem &rhs){
+        return operator &&(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator || (const PredicateItem &lhs, const PredicateItem &rhs){
+        return operator ||(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator | (const PredicateItem &lhs, const PredicateItem &rhs){
+        return operator |(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator ^ (const PredicateItem &lhs, const PredicateItem &rhs){
+        return operator ^(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator << (const PredicateItem &lhs, const PredicateItem &rhs){
+        return operator <<(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
+    }
+    Predicate operator >> (const PredicateItem &lhs, const PredicateItem &rhs){
+        return operator >>(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
+    }
 } //end namespace iotdb

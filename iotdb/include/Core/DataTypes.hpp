@@ -61,6 +61,7 @@ class ValueType {
     virtual const DataTypePtr getType() const = 0;
     virtual const CodeExpressionPtr getCodeExpression() const = 0;
     virtual const ValueTypePtr copy() const = 0;
+    virtual const bool isArrayValueType() const = 0;
     virtual ~ValueType();
 protected:
   ValueType();
@@ -105,6 +106,8 @@ const DataTypePtr createPointerDataType(const DataTypePtr& type);
 const DataTypePtr createPointerDataType(const BasicType& type);
 
 const ValueTypePtr createBasicTypeValue(const BasicType& type, const std::string& value);
+
+const ValueTypePtr createStringTypeValue(const std::string& value, bool stringFlag = true);
 
 } // namespace iotdb
 #endif
