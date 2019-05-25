@@ -2,6 +2,7 @@
 #include <CodeGen/CodeExpression.hpp>
 #include <Core/DataTypes.hpp>
 #include <sstream>
+#include <vector>
 
 namespace iotdb {
 
@@ -100,7 +101,7 @@ ValueType::~ValueType() {}
 
 class BasicValueType : public ValueType {
   public:
-    BasicValueType(const BasicType& type, const std::string& value) : type_(type), value_(value) {}
+    BasicValueType(const BasicType& type, const std::string& value) : type_(type), value_(value){};
 
     const DataTypePtr getType() const override{ return createDataType(type_); }
 
@@ -110,11 +111,13 @@ class BasicValueType : public ValueType {
       return std::make_shared<BasicValueType>(*this);
     }
 
+    const bool isArrayValueType() const { return false; }
+
     ~BasicValueType() override;
 
   private:
     const BasicType type_;
-    const std::string value_;
+    std::string value_;
 };
 
 BasicValueType::~BasicValueType() {}
@@ -368,6 +371,65 @@ const ValueTypePtr createBasicTypeValue(const BasicType& type, const std::string
     /** \todo: create instance of datatype and add a parseValue() method to datatype, so we can check whether the value
      * inside the string matches the type */
     return std::make_shared<BasicValueType>(type, value);
+}
+
+
+
+
+//todo: ------------------------------
+
+/**
+ * class ArrayValueType keeps a field of values of basic types
+ */
+    class ArrayValueType : public ValueType {
+    public:
+        ArrayValueType(const BasicType& type, const std::vector<std::string>& value) : type_(type), value_(value){};
+        ArrayValueType(const BasicType& type, const std::string& value) : type_(type), isString_(true){
+            value_.push_back(value);
+        };
+
+        const DataTypePtr getType() const override{ return createDataType(type_); }
+
+        const CodeExpressionPtr getCodeExpression() const override{
+            if(isString_) return std::make_shared<CodeExpression>(value_.at(0));
+            std::stringstream str;
+            str << "{";
+            for(int i = 0; i < value_.size(); i++){
+                if(i != 0) str << ", ";
+                str << value_.at(i);
+            }
+            str << "}";
+            return std::make_shared<CodeExpression>(str.str());
+        }
+
+        const ValueTypePtr copy() const override{
+            return std::make_shared<ArrayValueType>(*this);
+        }
+
+        const bool isArrayValueType() const { return true; }
+
+        ~ArrayValueType() override;
+
+    private:
+        const BasicType type_;
+        bool isString_ = false;
+        std::vector<std::string> value_;
+    };
+
+    ArrayValueType::~ArrayValueType() {}
+
+/**
+ * creates a "string"-value (means char *)
+ * @param value : std:string : the string value
+ * @return ValueTypePtr : the structure keeping the given values (-- here it keeps it as a single string)
+ */
+const ValueTypePtr createStringTypeValue(const std::string& value, bool stringFlag)
+{
+    std::stringstream str;
+    if(stringFlag) str << "\"" ;
+    str << value;
+    if(stringFlag) str << "\"";
+    return std::make_shared<ArrayValueType>(BasicType::CHAR, str.str());
 }
 
 } // namespace iotdb
