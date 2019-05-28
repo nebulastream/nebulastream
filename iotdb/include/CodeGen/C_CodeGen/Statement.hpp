@@ -288,6 +288,16 @@ class UserDefinedDataType : public DataType {
     const DataTypePtr copy() const override{
       return std::make_shared<UserDefinedDataType>(*this);
     }
+    const bool isEqual(DataTypePtr ptr) const override{
+        std::shared_ptr<UserDefinedDataType> temp = std::dynamic_pointer_cast<UserDefinedDataType>(ptr);
+        if(temp) return isEqual(temp);
+        return false;
+    }
+
+    // \todo: isEqual for structType
+    const bool isEqual(std::shared_ptr<UserDefinedDataType> btr){
+        return true;
+    }
 
     ~UserDefinedDataType();
 

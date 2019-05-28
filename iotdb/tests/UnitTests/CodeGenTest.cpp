@@ -266,8 +266,12 @@ int CodeGenTestCases()
                                                                      createBasicTypeValue(BasicType(INT32), "0"));
         VariableDeclaration var_decl_p = VariableDeclaration::create(val, "array");
 
-        std::cout << var_decl_i.getCode() << std::endl;
+        /* new String Type */
+        DataTypePtr charptr = createPointerDataType(BasicType(CHAR));
+        VariableDeclaration var_decl_temp = VariableDeclaration::create(charptr, "i", createStringTypeValue("Hello World"));
         std::cout << var_decl_p.getCode() << std::endl;
+
+        std::cout << var_decl_temp.getCode() << std::endl;
 
         StructDeclaration struct_decl =
             StructDeclaration::create("TupleBuffer", "buffer")
@@ -570,6 +574,7 @@ int CodeGeneratorTest()
     /* generate code for scanning input buffer */
     code_gen->generateCode(source, context, std::cout);
 
+
 	std::cout << std::make_shared<Predicate>(
 		      (PredicateItem(input_schema[0])<PredicateItem(createBasicTypeValue(iotdb::BasicType::INT64,"5")))
 		    )->toString() << std::endl;
@@ -577,6 +582,23 @@ int CodeGeneratorTest()
 	PredicatePtr pred=std::dynamic_pointer_cast<Predicate>(
 	      (PredicateItem(input_schema[0])<PredicateItem(createBasicTypeValue(iotdb::BasicType::INT64,"5"))).copy()
 	    );
+    /*
+	PredicatePtr pred=std::dynamic_pointer_cast<Predicate>(
+        (PredicateItem(input_schema[0]) == 5).copy()
+    );
+
+    PredicatePtr pred=std::dynamic_pointer_cast<Predicate>(
+        (5 == input_schema[0]).copy()
+    );
+
+
+	std::cout << std::make_shared<Predicate>(
+	        (PredicateItem(createStringTypeValue("abc"))==PredicateItem(createStringTypeValue("def"))))->toString() << std::endl;
+
+	PredicatePtr pred=std::dynamic_pointer_cast<Predicate>(
+            (PredicateItem(createStringTypeValue("abc"))==PredicateItem(createStringTypeValue("abc"))).copy()
+            );
+    */
 	code_gen->generateCode(pred, context, std::cout);
 
     /* generate code for writing result tuples to output buffer */
