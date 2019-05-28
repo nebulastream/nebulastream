@@ -111,7 +111,7 @@ class BasicValueType : public ValueType {
       return std::make_shared<BasicValueType>(*this);
     }
 
-    const bool isArrayValueType() const { return false; }
+    const bool isArrayValueType() const override { return false; }
 
     ~BasicValueType() override;
 
@@ -131,6 +131,16 @@ class BasicDataType : public DataType {
     ValueTypePtr getDefaultInitValue() const  override{ return ValueTypePtr(); }
 
     ValueTypePtr getNullValue() const  override{ return ValueTypePtr(); }
+
+    const bool isEqual(DataTypePtr ptr) const override{
+        std::shared_ptr<BasicDataType> temp = std::dynamic_pointer_cast<BasicDataType>(ptr);
+        if(temp) return isEqual(temp);
+        return false;
+    }
+
+    const bool isEqual(std::shared_ptr<BasicDataType> btr) const{
+        return ((btr->type == this->type) && (btr->getSizeBytes() == this->getSizeBytes()));
+    }
 
     uint32_t getSizeBytes() const override
     {
@@ -326,6 +336,15 @@ class PointerDataType : public DataType {
     {
         return std::make_shared<CodeExpression>(base_type_->getCode()->code_ + "*");
     }
+    const bool isEqual(DataTypePtr ptr) const override{
+        std::shared_ptr<PointerDataType> temp = std::dynamic_pointer_cast<PointerDataType>(ptr);
+        if(temp) return isEqual(temp);
+        return false;
+    }
+
+    const bool isEqual(std::shared_ptr<PointerDataType> btr) const {
+        return base_type_->isEqual(btr->base_type_);
+    }
     const CodeExpressionPtr getTypeDefinitionCode() const override{ return base_type_->getTypeDefinitionCode(); }
 
     const DataTypePtr copy() const override{
@@ -406,7 +425,7 @@ const ValueTypePtr createBasicTypeValue(const BasicType& type, const std::string
             return std::make_shared<ArrayValueType>(*this);
         }
 
-        const bool isArrayValueType() const { return true; }
+        const bool isArrayValueType() const override{ return true; }
 
         ~ArrayValueType() override;
 

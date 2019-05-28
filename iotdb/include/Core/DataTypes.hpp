@@ -47,6 +47,7 @@ class DataType {
     virtual const std::string toString() const = 0;
     virtual const std::string convertRawToString(void* data) const = 0;
     virtual const CodeExpressionPtr getCode() const = 0;
+    virtual const bool isEqual(DataTypePtr ptr) const = 0;
     virtual const CodeExpressionPtr getTypeDefinitionCode() const = 0;
     virtual const DataTypePtr copy() const = 0;
     virtual ~DataType();

@@ -81,7 +81,8 @@ public:
     virtual const std::string toString() const override;
 	virtual UserAPIExpressionPtr copy() const override;
 
-	const bool isArrayType() const;
+    const bool isStringType() const;
+    const DataTypePtr getDataTypePtr() const;
 private:
 	PredicateItemMutation _mutation;
 	AttributeFieldPtr _attribute=nullptr;
