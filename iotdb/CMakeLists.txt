@@ -127,6 +127,9 @@ add_library(iotdb SHARED ${iotdb_SOURCE_FILES} ${iotdb_HEADER_FILES})
 target_include_directories(iotdb PUBLIC "include")
 target_link_libraries(iotdb ${CLANG_LIBS} ${LIBRARIES} ${LLVM_LIBRARIES} ${LLVM_LDFLAGS})
 
+# Documentation
+add_subdirectory(docs)
+
 message( STATUS "LLVM_LIBRARIES:" ${LLVM_LIBRARIES} )
 message( STATUS "LLVM_INCLUDE:" ${INCLUDE_DIRS} )
 
