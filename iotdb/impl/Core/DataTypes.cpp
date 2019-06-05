@@ -442,12 +442,10 @@ const ValueTypePtr createBasicTypeValue(const BasicType& type, const std::string
  * @param value : std:string : the string value
  * @return ValueTypePtr : the structure keeping the given values (-- here it keeps it as a single string)
  */
-const ValueTypePtr createStringTypeValue(const std::string& value, bool stringFlag)
+const ValueTypePtr createStringValueType(const std::string& value)
 {
     std::stringstream str;
-    if(stringFlag) str << "\"" ;
-    str << value;
-    if(stringFlag) str << "\"";
+    str << "\"" << value<< "\"";
     return std::make_shared<ArrayValueType>(BasicType::CHAR, str.str());
 }
 

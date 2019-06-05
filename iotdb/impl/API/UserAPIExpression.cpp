@@ -45,15 +45,11 @@ namespace iotdb
 		if(_functionCallOverload.empty()) {
             return BinaryOperatorStatement(*(_left->generateCode(code)), _op, *(_right->generateCode(code))).copy();
         } else {
-            std::stringstream str;
-            str << _functionCallOverload;
-            str << "(";
-            str << (_left->generateCode(code)->getCode()->code_);
-            str << ", ";
-            str << (_right->generateCode(code)->getCode()->code_);
-            str << ")";
-            // \todo function call statement? what about that. - maybe switch the return here with that
-            return BinaryOperatorStatement(ConstantExprStatement(createStringTypeValue(str.str(), false)) ,_op, (ConstantExprStatement((createBasicTypeValue(BasicType::UINT8, "0"))))).copy();
+		    std::stringstream str;
+            FunctionCallExpressionStatement expr = FunctionCallExpressionStatement(_functionCallOverload);
+            expr.addParameter(_left->generateCode(code));
+            expr.addParameter(_right->generateCode(code));
+            return BinaryOperatorStatement(expr , _op, (ConstantExprStatement((createBasicTypeValue(BasicType::UINT8, "0"))))).copy();
         }
 	}
 
@@ -142,7 +138,7 @@ namespace iotdb
 
 	const bool PredicateItem::isStringType() const {
 	    if(_attribute) return (getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)) && (_attribute->getFieldSize() > 1));
-	    return getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)) && (getDataTypePtr()->getSizeBytes() > 1);
+        return getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)) && (_value->isArrayValueType());
 	}
 
 	const DataTypePtr PredicateItem::getDataTypePtr() const {

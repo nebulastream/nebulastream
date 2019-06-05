@@ -257,6 +257,40 @@ class ForLoopStatement : public Statement {
 
 typedef ForLoopStatement FOR;
 
+
+
+class FunctionCallExpressionStatement : public ExpressionStatment {
+public:
+    virtual StatementType getStamentType() const { return FUNC_CALL_STMT; }
+
+    virtual const CodeExpressionPtr getCode() const
+    {
+        int i;
+        CodeExpressionPtr code;
+        code = combine(std::make_shared<CodeExpression>(functionname_), std::make_shared<CodeExpression>("("));
+        for(i = 0; i < expr_.size(); i++){
+            if(i != 0) code = combine(code, std::make_shared<CodeExpression>(", "));
+            code = combine(code, expr_.at(i)->getCode());
+        }
+        code = combine(code, std::make_shared<CodeExpression>(")"));
+        return code;
+    }
+
+    virtual const ExpressionStatmentPtr copy() const { return std::make_shared<FunctionCallExpressionStatement>(*this); }
+
+    virtual void addParameter(const ExpressionStatment& expr) { expr_.push_back(expr.copy()); }
+    virtual void addParameter(ExpressionStatmentPtr expr) { expr_.push_back(expr); }
+
+    FunctionCallExpressionStatement(const std::string functionname) : functionname_(functionname) {}
+
+    virtual ~FunctionCallExpressionStatement();
+
+private:
+    std::string functionname_;
+    std::vector<ExpressionStatmentPtr> expr_;
+};
+
+/**
 class FunctionCallStatement : public Statement {
 public:
     virtual StatementType getStamentType() const { return FUNC_CALL_STMT; }
@@ -268,6 +302,7 @@ public:
   }
     virtual ~FunctionCallStatement();
 };
+*/
 
 class UserDefinedDataType : public DataType {
   public:
