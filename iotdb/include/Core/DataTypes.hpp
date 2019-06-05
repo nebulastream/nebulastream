@@ -108,7 +108,7 @@ const DataTypePtr createPointerDataType(const BasicType& type);
 
 const ValueTypePtr createBasicTypeValue(const BasicType& type, const std::string& value);
 
-const ValueTypePtr createStringTypeValue(const std::string& value, bool stringFlag = true);
+const ValueTypePtr createStringValueType(const std::string& value);
 
 } // namespace iotdb
 #endif

@@ -28,6 +28,8 @@ IfStatement::~IfStatement() {}
 ForLoopStatement::~ForLoopStatement() {}
 UserDefinedDataType::~UserDefinedDataType() {}
 
+FunctionCallExpressionStatement::~FunctionCallExpressionStatement() {}
+
 const DataTypePtr createUserDefinedType(const StructDeclaration& decl)
 {
     return std::make_shared<UserDefinedDataType>(decl);
