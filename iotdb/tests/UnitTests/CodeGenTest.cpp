@@ -268,7 +268,7 @@ int CodeGenTestCases()
 
         /* new String Type */
         DataTypePtr charptr = createPointerDataType(BasicType(CHAR));
-        VariableDeclaration var_decl_temp = VariableDeclaration::create(charptr, "i", createStringTypeValue("Hello World"));
+        VariableDeclaration var_decl_temp = VariableDeclaration::create(charptr, "i", createStringValueType("Hello World"));
         std::cout << var_decl_p.getCode() << std::endl;
 
         std::cout << var_decl_temp.getCode() << std::endl;
