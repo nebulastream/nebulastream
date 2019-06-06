@@ -64,6 +64,7 @@ const AttributeFieldPtr Schema::operator[](uint32_t index) const
         return fields[index];
     }
     else {
+
         return AttributeFieldPtr();
     }
 }

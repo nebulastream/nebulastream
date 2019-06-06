@@ -19,15 +19,21 @@ enum StatementType {
     VAR_REF_STMT,
     CONSTANT_VALUE_EXPR_STMT,
     BINARY_OP_STMT,
-    UNARY_OP_STMT
+    UNARY_OP_STMT,
+    COMPOUND_STMT
 };
 
 enum BracketMode { NO_BRACKETS, BRACKETS };
+
+class Statement;
+typedef std::shared_ptr<Statement> StatementPtr;
 
 class Statement {
   public:
     virtual StatementType getStamentType() const = 0;
     virtual const CodeExpressionPtr getCode() const = 0;
+    virtual const StatementPtr createCopy() const = 0;
+  /** \brief virtual copy constructor */
     virtual ~Statement();
 };
 
@@ -42,7 +48,10 @@ class ExpressionStatment : public Statement {
     virtual const CodeExpressionPtr getCode() const = 0;
     /** \brief virtual copy constructor */
     virtual const ExpressionStatmentPtr copy() const = 0;
-
+    /** \brief virtual copy constructor of base class
+     *  \todo create one unified version, having this twice is problematic
+    */
+    const StatementPtr createCopy() const override final;
     //  UnaryOperatorStatement operator sizeof(const ExpressionStatment &ref){
     //  return UnaryOperatorStatement(ref, SIZE_OF_TYPE_OP);
     //  }
@@ -63,7 +72,7 @@ class ExpressionStatment : public Statement {
     virtual ~ExpressionStatment();
 };
 
-typedef std::shared_ptr<Statement> StatementPtr;
+
 typedef std::string Code;
 
 class ConstantExprStatement : public ExpressionStatment {
@@ -144,30 +153,65 @@ class ReturnStatement : public Statement {
         stmt << "return " << var_ref_.getCode()->code_ << ";";
         return std::make_shared<CodeExpression>(stmt.str());
     }
+    const StatementPtr createCopy() const override{
+      return std::make_shared<ReturnStatement>(*this);
+    }
     virtual ~ReturnStatement() {}
 };
 
+/** \brief stores a sequence of statements and is a basic building block for any AST */
+class CompoundStatement : public Statement {
+  public:
+    CompoundStatement();
+
+    virtual StatementType getStamentType() const override;
+    virtual const CodeExpressionPtr getCode() const override;
+    const StatementPtr createCopy() const override{
+      return std::make_shared<CompoundStatement>(*this);
+    }
+
+    void addStatement(StatementPtr stmt);
+
+    virtual ~CompoundStatement() override;
+
+  private:
+    std::vector<StatementPtr> statements_;
+};
+typedef std::shared_ptr<CompoundStatement> CompoundStatementPtr;
+
 class IfStatement : public Statement {
   public:
+  IfStatement(const Statement& cond_expr) : cond_expr_(cond_expr.createCopy()), cond_true_stmt_(new CompoundStatement())
+  {
+  }
     IfStatement(const Statement& cond_expr, const Statement& cond_true_stmt)
-        : cond_expr_(cond_expr), cond_true_stmt_(cond_true_stmt)
+        : cond_expr_(cond_expr.createCopy()), cond_true_stmt_(new CompoundStatement())
     {
+      cond_true_stmt_->addStatement(cond_true_stmt.createCopy());
     }
 
     virtual StatementType getStamentType() const { return IF_STMT; }
     virtual const CodeExpressionPtr getCode() const
     {
         std::stringstream code;
-        code << "if(" << cond_expr_.getCode()->code_ << "){" << std::endl;
-        code << cond_true_stmt_.getCode()->code_ << std::endl;
+        code << "if(" << cond_expr_->getCode()->code_ << "){" << std::endl;
+        code << cond_true_stmt_->getCode()->code_ << std::endl;
         code << "}" << std::endl;
         return std::make_shared<CodeExpression>(code.str());
     }
+    const StatementPtr createCopy() const override{
+      return std::make_shared<IfStatement>(*this);
+    }
+
+    const CompoundStatementPtr getCompoundStatement(){
+      return cond_true_stmt_;
+    }
+
     virtual ~IfStatement();
 
   private:
-    const Statement& cond_expr_;
-    const Statement& cond_true_stmt_;
+    const StatementPtr cond_expr_;
+    CompoundStatementPtr cond_true_stmt_;
 };
 
 typedef IfStatement IF;
@@ -180,6 +224,9 @@ class IfElseStatement : public Statement {
     virtual const CodeExpressionPtr getCode() const {
         return std::make_shared<CodeExpression>("");
     }
+    const StatementPtr createCopy() const override{
+      return std::make_shared<IfElseStatement>(*this);
+    }
     virtual ~IfElseStatement();
 };
 
@@ -191,27 +238,71 @@ class ForLoopStatement : public Statement {
 
     virtual StatementType getStamentType() const;
     virtual const CodeExpressionPtr getCode() const;
+    const StatementPtr createCopy() const override{
+      return std::make_shared<ForLoopStatement>(*this);
+    }
 
     void addStatement(StatementPtr stmt);
-
+    const CompoundStatementPtr getCompoundStatement(){
+      return loop_body_;
+    }
     virtual ~ForLoopStatement();
 
   private:
     VariableDeclaration var_decl_;
     ExpressionStatmentPtr condition_;
     ExpressionStatmentPtr advance_;
-    std::vector<StatementPtr> loop_body_;
+    CompoundStatementPtr loop_body_;
 };
 
 typedef ForLoopStatement FOR;
 
+
+
+class FunctionCallExpressionStatement : public ExpressionStatment {
+public:
+    virtual StatementType getStamentType() const { return FUNC_CALL_STMT; }
+
+    virtual const CodeExpressionPtr getCode() const
+    {
+        int i;
+        CodeExpressionPtr code;
+        code = combine(std::make_shared<CodeExpression>(functionname_), std::make_shared<CodeExpression>("("));
+        for(i = 0; i < expr_.size(); i++){
+            if(i != 0) code = combine(code, std::make_shared<CodeExpression>(", "));
+            code = combine(code, expr_.at(i)->getCode());
+        }
+        code = combine(code, std::make_shared<CodeExpression>(")"));
+        return code;
+    }
+
+    virtual const ExpressionStatmentPtr copy() const { return std::make_shared<FunctionCallExpressionStatement>(*this); }
+
+    virtual void addParameter(const ExpressionStatment& expr) { expr_.push_back(expr.copy()); }
+    virtual void addParameter(ExpressionStatmentPtr expr) { expr_.push_back(expr); }
+
+    FunctionCallExpressionStatement(const std::string functionname) : functionname_(functionname) {}
+
+    virtual ~FunctionCallExpressionStatement();
+
+private:
+    std::string functionname_;
+    std::vector<ExpressionStatmentPtr> expr_;
+};
+
+/**
 class FunctionCallStatement : public Statement {
+public:
     virtual StatementType getStamentType() const { return FUNC_CALL_STMT; }
     virtual const CodeExpressionPtr getCode() const {
         return std::make_shared<CodeExpression>("");
     }
+  const StatementPtr createCopy() const override{
+    return std::make_shared<FunctionCallStatement>(*this);
+  }
     virtual ~FunctionCallStatement();
 };
+*/
 
 class UserDefinedDataType : public DataType {
   public:
@@ -229,6 +320,19 @@ class UserDefinedDataType : public DataType {
     const std::string convertRawToString(void* data) const override { return ""; }
     const CodeExpressionPtr getTypeDefinitionCode() const { return std::make_shared<CodeExpression>(decl_.getCode()); }
     const CodeExpressionPtr getCode() const { return std::make_shared<CodeExpression>(decl_.getTypeName()); }
+    const DataTypePtr copy() const override{
+      return std::make_shared<UserDefinedDataType>(*this);
+    }
+    const bool isEqual(DataTypePtr ptr) const override{
+        std::shared_ptr<UserDefinedDataType> temp = std::dynamic_pointer_cast<UserDefinedDataType>(ptr);
+        if(temp) return isEqual(temp);
+        return false;
+    }
+
+    // \todo: isEqual for structType
+    const bool isEqual(std::shared_ptr<UserDefinedDataType> btr){
+        return true;
+    }
 
     ~UserDefinedDataType();
 

@@ -47,15 +47,27 @@ class DataType {
     virtual const std::string toString() const = 0;
     virtual const std::string convertRawToString(void* data) const = 0;
     virtual const CodeExpressionPtr getCode() const = 0;
+    virtual const bool isEqual(DataTypePtr ptr) const = 0;
     virtual const CodeExpressionPtr getTypeDefinitionCode() const = 0;
+    virtual const DataTypePtr copy() const = 0;
     virtual ~DataType();
+protected:
+  DataType();
+  DataType(const DataType&);
+  DataType& operator=(const DataType&);
 };
 
 class ValueType {
   public:
     virtual const DataTypePtr getType() const = 0;
     virtual const CodeExpressionPtr getCodeExpression() const = 0;
+    virtual const ValueTypePtr copy() const = 0;
+    virtual const bool isArrayValueType() const = 0;
     virtual ~ValueType();
+protected:
+  ValueType();
+  ValueType(const ValueType&);
+  ValueType& operator=(const ValueType&);
 };
 
 class AttributeField;
@@ -73,7 +85,15 @@ class AttributeField {
     const DataTypePtr getDataType() const;
     const std::string toString() const;
 
+    const AttributeFieldPtr copy() const;
+
+    bool isEqual(const AttributeField& attr);
+    bool isEqual(const AttributeFieldPtr& attr);
+  //protected:
+    AttributeField(const AttributeField&);
+    AttributeField& operator=(const AttributeField&);
   private:
+
 };
 
 const AttributeFieldPtr createField(const std::string name, const BasicType& type);
@@ -87,6 +107,8 @@ const DataTypePtr createPointerDataType(const DataTypePtr& type);
 const DataTypePtr createPointerDataType(const BasicType& type);
 
 const ValueTypePtr createBasicTypeValue(const BasicType& type, const std::string& value);
+
+const ValueTypePtr createStringValueType(const std::string& value);
 
 } // namespace iotdb
 #endif

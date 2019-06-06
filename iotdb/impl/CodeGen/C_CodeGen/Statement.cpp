@@ -13,6 +13,11 @@
 namespace iotdb {
 
 Statement::~Statement() {}
+
+const StatementPtr ExpressionStatment::createCopy() const{
+  return this->copy();
+}
+
 ExpressionStatment::~ExpressionStatment() {}
 ConstantExprStatement::~ConstantExprStatement() {}
 
@@ -22,6 +27,8 @@ IfStatement::~IfStatement() {}
 
 ForLoopStatement::~ForLoopStatement() {}
 UserDefinedDataType::~UserDefinedDataType() {}
+
+FunctionCallExpressionStatement::~FunctionCallExpressionStatement() {}
 
 const DataTypePtr createUserDefinedType(const StructDeclaration& decl)
 {

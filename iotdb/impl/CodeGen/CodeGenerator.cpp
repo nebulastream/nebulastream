@@ -15,31 +15,12 @@
 #include <Core/DataTypes.hpp>
 #include <Runtime/DataSink.hpp>
 #include <Util/ErrorHandling.hpp>
+#include <API/UserAPIExpression.hpp>
 
 namespace iotdb {
 
-const StructDeclaration getStructDeclarationTupleBuffer();
-const StructDeclaration getStructDeclarationWindowState();
-
-class PipelineContext {
-  public:
-    void addTypeDeclaration(const Declaration&);
-    void addVariableDeclaration(const Declaration&);
-    std::vector<DeclarationPtr> type_declarations;
-    std::vector<DeclarationPtr> variable_declarations;
-};
-
-void PipelineContext::addTypeDeclaration(const Declaration& decl) { type_declarations.push_back(decl.copy()); }
-void PipelineContext::addVariableDeclaration(const Declaration& decl) { variable_declarations.push_back(decl.copy()); }
-
-typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
-
-const PipelineContextPtr createPipelineContext() { return std::make_shared<PipelineContext>(); }
-
-class GeneratedCode {
-  public:
-    GeneratedCode()
-        : variable_decls(), variable_init_stmts(), for_loop_stmt(), cleanup_stmts(), return_stmt(), var_decl_id(),
+GeneratedCode::GeneratedCode()
+        : variable_decls(), variable_init_stmts(), for_loop_stmt(), current_code_insertion_point(), cleanup_stmts(), return_stmt(), var_decl_id(),
           var_decl_return(), struct_decl_tuple_buffer(getStructDeclarationTupleBuffer()),
           struct_decl_state(getStructDeclarationWindowState()),
           struct_decl_input_tuple(StructDeclaration::create("InputTuple", "")),
@@ -56,25 +37,22 @@ class GeneratedCode {
     {
     }
 
-    std::vector<VariableDeclaration> variable_decls;
-    std::vector<StatementPtr> variable_init_stmts;
-    std::shared_ptr<FOR> for_loop_stmt;
-    std::vector<StatementPtr> cleanup_stmts;
-    StatementPtr return_stmt;
-    std::shared_ptr<VariableDeclaration> var_decl_id;
-    std::shared_ptr<VariableDeclaration> var_decl_return;
-    StructDeclaration struct_decl_tuple_buffer;
-    StructDeclaration struct_decl_state;
-    StructDeclaration struct_decl_input_tuple;
-    StructDeclaration struct_decl_result_tuple;
-    VariableDeclaration var_decl_tuple_buffers;
-    VariableDeclaration var_decl_tuple_buffer_output;
-    VariableDeclaration var_decl_state;
-    VariableDeclaration decl_field_num_tuples_struct_tuple_buf;
-    VariableDeclaration decl_field_data_ptr_struct_tuple_buf;
-    VariableDeclaration var_decl_input_tuple;
-    std::vector<StructDeclaration> type_decls;
+class PipelineContext {
+  public:
+    void addTypeDeclaration(const Declaration&);
+    void addVariableDeclaration(const Declaration&);
+    //bool hasDeclaration(const Declaration&) const;
+    std::vector<DeclarationPtr> type_declarations;
+    std::vector<DeclarationPtr> variable_declarations;
 };
+
+void PipelineContext::addTypeDeclaration(const Declaration& decl) { type_declarations.push_back(decl.copy()); }
+void PipelineContext::addVariableDeclaration(const Declaration& decl) { variable_declarations.push_back(decl.copy()); }
+
+typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
+
+const PipelineContextPtr createPipelineContext() { return std::make_shared<PipelineContext>(); }
+
 
 typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
 
@@ -147,8 +125,7 @@ const StructDeclaration getStructDeclarationFromSchema(const std::string struct_
         std::cout << "Field " << i << ": " << schema[i]->getDataType()->toString() << " " << schema[i]->name
                   << std::endl;
     }
-    //.addField(VariableDeclaration::create(createDataType(BasicType(UINT64)), "campaign_id"));
-    //.addField(VariableDeclaration::create(createDataType(BasicType(UINT64)), "sum"));
+
     return struct_decl_tuple;
 }
 
@@ -315,6 +292,7 @@ bool C_CodeGenerator::generateCode(const DataSourcePtr& source, const PipelineCo
         (VarRef(*(code_.var_decl_id.get())) <
          (VarRef(var_decl_tuple_buffer_1).accessPtr(VarRef(decl_field_num_tuples_struct_tuple_buf)))),
         ++VarRef(*(code_.var_decl_id.get())));
+    code_.current_code_insertion_point = code_.for_loop_stmt->getCompoundStatement();
 
     code_.return_stmt = std::make_shared<ReturnStatement>(VarRefStatement(*code_.var_decl_return));
 
@@ -323,6 +301,26 @@ bool C_CodeGenerator::generateCode(const DataSourcePtr& source, const PipelineCo
 
 bool C_CodeGenerator::generateCode(const PredicatePtr& pred, const PipelineContextPtr& context, std::ostream& out)
 {
+	
+    ExpressionStatmentPtr expr = pred->generateCode(this->code_);
+
+//    VariableDeclaration var_decl_i =
+//        VariableDeclaration::create(createDataType(BasicType(INT32)), "my_int", createBasicTypeValue(BasicType(INT32), "1"));
+
+//    bool found=false;
+//    for(auto& decl : code_.variable_decls){
+//        if(decl.getIdentifierName()==var_decl_i.getIdentifierName()){
+//          found=true;
+//        }
+//    }
+//    if(!found)
+//      code_.variable_decls.push_back(var_decl_i);
+
+    std::shared_ptr<IF> if_stmt = std::make_shared<IF>(*expr);
+    CompoundStatementPtr compound_stmt = if_stmt->getCompoundStatement();
+    /* update current compound_stmt*/
+    code_.current_code_insertion_point->addStatement(if_stmt);
+    code_.current_code_insertion_point=compound_stmt;
 
     return true;
 }
@@ -364,17 +362,18 @@ bool C_CodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContex
         // code_.struct_decl_result_tuple.getVariableDeclaration(result_schema_[i]->name);
         code_.variable_decls.push_back(*var_decl);
         /** \FIXME: we need to handle the case where the field in the result tuple is not part of the input schema! */
-        code_.for_loop_stmt->addStatement(
+        code_.current_code_insertion_point->addStatement(
             VarRef(var_decl_result_tuple)[VarRef(var_decl_num_result_tuples)]
                 .accessRef(VarRef(*var_decl))
                 .assign(VarRef(code_.var_decl_input_tuple)[VarRef(*(code_.var_decl_id))].accessRef(VarRef(*var_decl)))
                 .copy());
         /* */
-        code_.for_loop_stmt->addStatement((++VarRef(var_decl_num_result_tuples)).copy());
 
         // var_decls.push_back(*var_decl);
         // write_result_tuples.push_back(VarRef(var_decl_result_tuple)[VarRef(*(code_.var_decl_id))].assign(VarRef(var_decl_result_tuple)[VarRef(*(code_.var_decl_id))]).copy());
     }
+    code_.current_code_insertion_point->addStatement((++VarRef(var_decl_num_result_tuples)).copy());
+
 
     /* TODO: set number of output tuples to result buffer */
     code_.cleanup_stmts.push_back(
