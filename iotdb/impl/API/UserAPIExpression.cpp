@@ -134,6 +134,7 @@ namespace iotdb
 				case PredicateItemMutation::VALUE:
 					return _value->getCodeExpression()->code_;
 			}
+			return "";
 	}
 
 	const bool PredicateItem::isStringType() const {
