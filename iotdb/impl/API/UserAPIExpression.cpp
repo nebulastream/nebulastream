@@ -46,7 +46,7 @@ namespace iotdb
             return BinaryOperatorStatement(*(_left->generateCode(code)), _op, *(_right->generateCode(code))).copy();
         } else {
 		    std::stringstream str;
-            FunctionCallExpressionStatement expr = FunctionCallExpressionStatement(_functionCallOverload);
+            FunctionCallStatement expr = FunctionCallStatement(_functionCallOverload);
             expr.addParameter(_left->generateCode(code));
             expr.addParameter(_right->generateCode(code));
             return BinaryOperatorStatement(expr , _op, (ConstantExprStatement((createBasicTypeValue(BasicType::UINT8, "0"))))).copy();
