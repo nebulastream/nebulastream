@@ -541,13 +541,31 @@ const ValueTypePtr createStringValueType(const std::string& value)
     return std::make_shared<ArrayValueType>(ArrayDataType(BasicDataType(BasicType::CHAR).copy(), value.size()), value);
 }
 
-const ValueTypePtr createStringValueType(const char* value)
+const ValueTypePtr createStringValueType(const char* value, u_int16_t dimension)
 {
-    u_int32_t i;
+    u_int32_t i = 0;
     std::stringstream str;
-    for(i = 0; i < sizeof(value); i++) str << value[i];
-    str << "\0";
-    return std::make_shared<ArrayValueType>(ArrayDataType(BasicDataType(BasicType::CHAR).copy(), str.str().size()), str.str());
+    /**
+     * caused by while-loop it could make sense to include a maximum string-size here.
+     * ERROR-POSSIBILITY: INFINITE-LOOP - CHARPOINTER WITHOUT PREDEFINED SIZE DOES NOT END WITH '\0'
+     */
+    if(dimension == 0) while(value[i] != '\0'){
+        str << value[i];
+        i++;
+    } else {
+        u_int32_t j;
+        for (j = 0; j < dimension; j++) {
+            str << value[j];
+            if(value[j] == '\0') break;
+        }
+        if (j == dimension){
+            str << '\0';
+            j++;
+        }
+        i = j;
+    }
+
+    return std::make_shared<ArrayValueType>(ArrayDataType(BasicDataType(BasicType::CHAR).copy(), i), str.str());
 }
 
 const ValueTypePtr createArrayValueType(const BasicType& type, const std::vector<std::string>& value)
