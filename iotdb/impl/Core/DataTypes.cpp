@@ -88,6 +88,11 @@ const AttributeFieldPtr createField(const std::string name, uint32_t size)
     return ptr;
 }
 
+const AttributeFieldPtr createField(const std::string name, DataTypePtr type){
+    AttributeFieldPtr ptr = std::make_shared<AttributeField>(name, type);
+    return ptr;
+}
+
 ValueType::ValueType(){
 
 }
@@ -431,6 +436,8 @@ const ValueTypePtr createBasicTypeValue(const BasicType& type, const std::string
     class ArrayDataType : public DataType {
     public:
         ArrayDataType (DataTypePtr ptr, u_int32_t dimension) : DataType(), _data(ptr), _dimension(dimension) {}
+        //ArrayDataType (const BasicType& basictype, u_int32_t dimension) : DataType(), _data(std::make_shared<DataType>(basictype)), _dimension(dimension) {}
+
         ValueTypePtr getDefaultInitValue() const override { return ValueTypePtr(); }
         ValueTypePtr getNullValue() const override { return ValueTypePtr(); }
         uint32_t getSizeBytes() const override { return (_dimension * _data->getSizeBytes()); }
@@ -446,8 +453,8 @@ const ValueTypePtr createBasicTypeValue(const BasicType& type, const std::string
         const CodeExpressionPtr getDeclCode(const std::string& identifier) const override {
             CodeExpressionPtr ptr;
             if(identifier != ""){
-                ptr = std::make_shared<CodeExpression>(identifier + " ");
-                ptr = combine(ptr, _data->getCode());
+                ptr = _data->getCode();
+                ptr = combine(ptr, std::make_shared<CodeExpression>(" " + identifier));
                 ptr = combine(ptr, std::make_shared<CodeExpression>("["));
                 ptr = combine(ptr, std::make_shared<CodeExpression>(std::to_string(_dimension)));
                 ptr = combine(ptr, std::make_shared<CodeExpression>("]"));

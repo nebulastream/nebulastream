@@ -108,6 +108,7 @@ class AttributeField {
 
 const AttributeFieldPtr createField(const std::string name, const BasicType& type);
 const AttributeFieldPtr createField(const std::string name, uint32_t size);
+const AttributeFieldPtr createField(const std::string name, DataTypePtr type);
 
 const DataTypePtr createDataType(const BasicType&);
 const DataTypePtr createDataTypeVarChar(const uint32_t& max_length);
