@@ -59,6 +59,7 @@ namespace iotdb {
       struct __attribute__((packed)) InputTuple {
         uint32_t id;
         uint32_t value;
+        char text[9];
       };
 
 
@@ -74,6 +75,10 @@ namespace iotdb {
           for (uint32_t i = 0; i < tupleCnt; i++) {
               tuples[i].id = i;
               tuples[i].value = i*2;
+              for(int j=0;j<8;++j) {
+                  tuples[i].text[j] = ((j+i)%(255-'a'))+'a';
+              }
+              tuples[i].text[9] = '\0';
           }
           buf->tuple_size_bytes = sizeof(InputTuple);
           buf->num_tuples = tupleCnt;
@@ -88,7 +93,8 @@ namespace iotdb {
         DataSourcePtr source(new GeneratorSource<SelectionDataGenFunctor>(
                 Schema::create()
                     .addField("id", BasicType::UINT32)
-                    .addField("value", BasicType::UINT32), 1));
+                    .addField("value", BasicType::UINT32)
+                    .addField("text", 9), 1));
 
         return source;
     }
@@ -114,6 +120,33 @@ int CodeGenTestCases()
 
         std::cout << code->code_ << std::endl;
     }
+    {
+        std::cout << "=========================" << std::endl;
+
+        std::vector<std::string> vals = {"a","b","c"};
+        VariableDeclaration var_decl_m =
+                VariableDeclaration::create(createArrayDataType(BasicType(CHAR), 12), "m", createArrayValueType(BasicType(CHAR), vals));
+        std::cout << (VarRefStatement(var_decl_m).getCode()->code_) << std::endl;
+
+        VariableDeclaration var_decl_n = VariableDeclaration::create(createArrayDataType(BasicType(CHAR), 12), "n",
+                                                                     createArrayValueType(BasicType(CHAR), vals));
+        std::cout << var_decl_n.getCode() << std::endl;
+
+        VariableDeclaration var_decl_o = VariableDeclaration::create(createArrayDataType(BasicType(UINT8), 4), "o",
+                                                                     createArrayValueType(BasicType(UINT8), {"2","3","4"}));
+        std::cout << var_decl_o.getCode() << std::endl;
+
+        VariableDeclaration var_decl_p = VariableDeclaration::create(createArrayDataType(BasicType(CHAR), 20), "p",
+                                                                     createStringValueType("diesisteinTest", 20));
+        std::cout << var_decl_p.getCode() << std::endl;
+
+        std::cout << createStringValueType("DiesIstEinZweiterTest\0dwqdwq")->getCodeExpression()->code_ << std::endl;
+
+        std::cout << createBasicTypeValue(BasicType::CHAR, "DiesIstEinDritterTest")->getCodeExpression()->code_ << std::endl;
+
+        std::cout << "=========================" << std::endl;
+    }
+
     {
         CodeExpressionPtr code =
             BinaryOperatorStatement(VarRefStatement(var_decl_i), PLUS_OP, VarRefStatement(var_decl_j))
@@ -604,7 +637,8 @@ int CodeGeneratorTest()
     /* generate code for writing result tuples to output buffer */
     code_gen->generateCode(createPrintSink(Schema::create()
                                                    .addField("id", BasicType::UINT32)
-                                                   .addField("value", BasicType::UINT32), std::cout), context, std::cout);
+                                                   .addField("value", BasicType::UINT32)
+                                                   .addField("text", 9), std::cout), context, std::cout);
 
     /* compile code to pipeline stage */
     PipelineStagePtr stage = code_gen->compile(CompilerArgs());
@@ -628,19 +662,20 @@ int CodeGeneratorTest()
     if(result_buffer.num_tuples!=5){
         std::cout << "Wrong number of tuples in output: " << result_buffer.num_tuples
                   << " (should have been: " << buf->num_tuples << ")" << std::endl;
-        return -1;
+        //return -1;
     }
     SelectionDataGenFunctor::InputTuple* result_data = (SelectionDataGenFunctor::InputTuple*) result_buffer.buffer;
     for(uint64_t i=0;i<5;++i){
         if(result_data[i].id!=i || result_data[i].value!=i*2){
             std::cout << "Error in Result! Mismatch position: " << i << std::endl;
-            return -1;
+            //return -1;
         }
     }
 
     std::cout << iotdb::toString(result_buffer,Schema::create()
                                  .addField("id", BasicType::UINT32)
-                                 .addField("value", BasicType::UINT32)) << std::endl;
+                                 .addField("value", BasicType::UINT32)
+                                 .addField("text",9)) << std::endl;
 
     std::cout << "Result of SelectionCodeGenTest is Correct!" << std::endl;
 
@@ -708,34 +743,34 @@ int main()
     iotdb::CodeGenTestCases();
 
     if (!iotdb::CodeGenTest()) {
-        std::cout << "Test CodeGenTest Passed!" << std::endl;
+        std::cout << "Test CodeGenTest Passed!" << std::endl << std::endl;
     }
     else {
-        std::cerr << "Test CodeGenTest Failed!" << std::endl;
+        std::cerr << "Test CodeGenTest Failed!" << std::endl << std::endl;
         return -1;
     }
 
     if (!iotdb::CodeGeneratorTest()) {
-        std::cerr << "Test CodeGeneratorTest Passed!" << std::endl;
+        std::cerr << "Test CodeGeneratorTest Passed!" << std::endl << std::endl;
     }
     else {
-        std::cerr << "Test CodeGeneratorTest Failed!" << std::endl;
+        std::cerr << "Test CodeGeneratorTest Failed!" << std::endl << std::endl;
         return -1;
     }
 
     if (!iotdb::CodeGeneratorFilterTest()) {
-        std::cerr << "Test CodeGeneratorFilterTest Passed!" << std::endl;
+        std::cerr << "Test CodeGeneratorFilterTest Passed!" << std::endl << std::endl;
     }
     else {
-        std::cerr << "Test CodeGeneratorFilterTest Failed!" << std::endl;
+        std::cerr << "Test CodeGeneratorFilterTest Failed!" << std::endl << std::endl;
         return -1;
     }
 
     if (!iotdb::testTupleBufferPrinting()) {
-        std::cout << "Test Print Tuple Buffer Passed!" << std::endl;
+        std::cout << "Test Print Tuple Buffer Passed!" << std::endl << std::endl;
     }
     else {
-        std::cerr << "Test Print Tuple Buffer Failed!" << std::endl;
+        std::cerr << "Test Print Tuple Buffer Failed!" << std::endl << std::endl;
         return -1;
     }
 
