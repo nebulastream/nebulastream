@@ -59,7 +59,7 @@ namespace iotdb {
       struct __attribute__((packed)) InputTuple {
         uint32_t id;
         uint32_t value;
-        char text[9];
+        char text[12];
       };
 
 
@@ -75,10 +75,11 @@ namespace iotdb {
           for (uint32_t i = 0; i < tupleCnt; i++) {
               tuples[i].id = i;
               tuples[i].value = i*2;
-              for(int j=0;j<8;++j) {
-                  tuples[i].text[j] = ((j+i)%(255-'a'))+'a';
+              for(int j=0;j<11;++j) {
+                  tuples[i].text[j] = 'a';
+                  //tuples[i].text[j] = ((j+i)%(255-'a'))+'a';
               }
-              tuples[i].text[9] = '\0';
+              tuples[i].text[12] = '\0';
           }
           buf->tuple_size_bytes = sizeof(InputTuple);
           buf->num_tuples = tupleCnt;
@@ -94,7 +95,7 @@ namespace iotdb {
                 Schema::create()
                     .addField("id", BasicType::UINT32)
                     .addField("value", BasicType::UINT32)
-                    .addField("text", 9), 1));
+                    .addField("text", createArrayDataType(BasicType::CHAR, 12)), 1));
 
         return source;
     }
@@ -638,7 +639,7 @@ int CodeGeneratorTest()
     code_gen->generateCode(createPrintSink(Schema::create()
                                                    .addField("id", BasicType::UINT32)
                                                    .addField("value", BasicType::UINT32)
-                                                   .addField("text", 9), std::cout), context, std::cout);
+                                                   .addField("text", createArrayDataType(BasicType::CHAR, 12)), std::cout), context, std::cout);
 
     /* compile code to pipeline stage */
     PipelineStagePtr stage = code_gen->compile(CompilerArgs());
@@ -649,10 +650,13 @@ int CodeGeneratorTest()
     TupleBufferPtr buf = source->receiveData();
     std::vector<TupleBuffer*> input_buffers;
     input_buffers.push_back(buf.get());
+    std::cout << "My Test" << std::endl;
     //std::cout << iotdb::toString(buf.get(),source->getSchema()) << std::endl;
     std::cout << "Processing " << buf->num_tuples << " tuples: " << std::endl;
-    size_t buffer_size = buf->num_tuples*sizeof (uint64_t);
-    TupleBuffer result_buffer(malloc(buffer_size), buffer_size,sizeof(uint64_t),0);
+    uint32_t sizeoftuples = (sizeof(uint32_t) + sizeof(uint32_t) + sizeof(char) * 12);
+    size_t buffer_size = buf->num_tuples * sizeoftuples;
+    std::cout << "This is my NUMBER....: " << buffer_size << std::endl;
+    TupleBuffer result_buffer(malloc(buffer_size), buffer_size, sizeoftuples, 0);
 
     /* execute Stage */
     stage->execute(input_buffers, NULL, &result_buffer);
@@ -671,11 +675,11 @@ int CodeGeneratorTest()
             //return -1;
         }
     }
-
+    std::cout << "Jetzt gehts los" << std::endl;
     std::cout << iotdb::toString(result_buffer,Schema::create()
                                  .addField("id", BasicType::UINT32)
                                  .addField("value", BasicType::UINT32)
-                                 .addField("text",9)) << std::endl;
+                                 .addField("text", createArrayDataType(BasicType(CHAR), 12))) << std::endl;
 
     std::cout << "Result of SelectionCodeGenTest is Correct!" << std::endl;
 
