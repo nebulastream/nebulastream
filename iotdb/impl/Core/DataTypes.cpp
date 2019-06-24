@@ -4,6 +4,8 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <CodeGen/C_CodeGen/Statement.hpp>
+#include <CodeGen/C_CodeGen/BinaryOperatorStatement.hpp>
 
 namespace iotdb {
 
@@ -17,6 +19,12 @@ DataType::DataType(const DataType&){
 
 DataType& DataType::operator=(const DataType&){
   return *this;
+}
+
+const StatementPtr DataType::getStmtCopyAssignment(const AssignmentStatment& aParam) const{
+    return VarRef(aParam.lhs_tuple_var)[VarRef(aParam.lhs_index_var)].accessRef(VarRef(aParam.lhs_field_var))
+                      .assign(VarRef(aParam.rhs_tuple_var)[VarRef(aParam.rhs_index_var)].accessRef(VarRef(aParam.rhs_field_var)))
+                      .copy();
 }
 
 DataType::~DataType() {}
@@ -259,7 +267,7 @@ class BasicDataType : public DataType {
             return std::to_string(*reinterpret_cast<bool*>(data));
         case CHAR:
             if (dataSize == 0) {
-                return std::to_string(*reinterpret_cast<char*>(data));
+                return std::to_string((char) *reinterpret_cast<char*>(data));
             }
             else {
                 return std::string(reinterpret_cast<char*>(data));
@@ -448,8 +456,22 @@ const ValueTypePtr createBasicTypeValue(const BasicType& type, const std::string
         }
         const std::string convertRawToString(void* data) const override{
             if(!data) return "";
-            return "ARRAY";
+            uint32_t i;
+            char* pointer = static_cast<char*>(data);
+            std::stringstream str;
+            uint32_t step = _data->getSizeBytes() / _dimension;
+            if(!isCharDataType()) str << '[';
+            for(i = 0; i < _dimension; i++) {
+                char temp[step];
+                temp[0] = pointer[step * i];
+                if ((i != 0) && !isCharDataType()) str << ", ";
+                str << _data->convertRawToString(temp);
+            }
+            if(!isCharDataType()) str << ']';
+            return str.str();
         }
+
+
         const CodeExpressionPtr getDeclCode(const std::string& identifier) const override {
             CodeExpressionPtr ptr;
             if(identifier != ""){
@@ -462,6 +484,14 @@ const ValueTypePtr createBasicTypeValue(const BasicType& type, const std::string
                 ptr = _data->getCode();
             }
             return ptr;
+        }
+
+        virtual const StatementPtr getStmtCopyAssignment(const AssignmentStatment& aParam) const override {
+            FunctionCallStatement func_call("memcpy");
+            func_call.addParameter(VarRef(aParam.lhs_tuple_var)[VarRef(aParam.lhs_index_var)].accessRef(VarRef(aParam.lhs_field_var)));
+            func_call.addParameter(VarRef(aParam.rhs_tuple_var)[VarRef(aParam.rhs_index_var)].accessRef(VarRef(aParam.rhs_field_var)));
+            func_call.addParameter(ConstantExprStatement(createBasicTypeValue(UINT64, std::to_string(this->_dimension))));
+            return func_call.copy();
         }
 
         const CodeExpressionPtr getCode() const override {

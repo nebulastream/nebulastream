@@ -328,6 +328,16 @@ class UserDefinedDataType : public DataType {
     StructDeclaration decl_;
 };
 
+
+struct AssignmentStatment{
+    VariableDeclaration lhs_tuple_var;
+    VariableDeclaration lhs_field_var;
+    VariableDeclaration lhs_index_var;
+    VariableDeclaration rhs_tuple_var;
+    VariableDeclaration rhs_field_var;
+    VariableDeclaration rhs_index_var;
+};
+
 const DataTypePtr createUserDefinedType(const StructDeclaration& decl);
 
 } // namespace iotdb

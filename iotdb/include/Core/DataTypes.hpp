@@ -47,6 +47,11 @@ typedef std::shared_ptr<ArrayValueType> ArrayValueTypePtr;
 class CodeExpression;
 typedef std::shared_ptr<CodeExpression> CodeExpressionPtr;
 
+class Statement;
+typedef std::shared_ptr<Statement> StatementPtr;
+
+class AssignmentStatment;
+
 class DataType {
   public:
     virtual ValueTypePtr getDefaultInitValue() const = 0;
@@ -55,6 +60,7 @@ class DataType {
     virtual const std::string toString() const = 0;
     virtual const std::string convertRawToString(void* data) const = 0;
     virtual const CodeExpressionPtr getDeclCode(const std::string& identifier) const = 0;
+    virtual const StatementPtr getStmtCopyAssignment(const AssignmentStatment& aParam) const;
     virtual const CodeExpressionPtr getCode() const = 0;
     virtual const bool isEqual(DataTypePtr ptr) const = 0;
     virtual const bool isArrayDataType() const = 0;

@@ -177,7 +177,7 @@ std::string toString(const TupleBuffer* buffer, const Schema& schema)
         offsets[i] = prefix_sum;
         prefix_sum += val;
         IOTDB_DEBUG(std::string("Prefix Sum: ") + schema[i]->toString() + std::string(": ") +
-                    std::to_string(offsets[i]));
+                    std::to_string(offsets[i]) );
     }
 
     str << "+----------------------------------------------------+" << std::endl;
@@ -362,11 +362,31 @@ bool C_CodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContex
         // code_.struct_decl_result_tuple.getVariableDeclaration(result_schema_[i]->name);
         code_.variable_decls.push_back(*var_decl);
         /** \FIXME: we need to handle the case where the field in the result tuple is not part of the input schema! */
+        /** \todo: we need to add an arraybased assignment here. (for-loop or memcpy) */
+        /*
         code_.current_code_insertion_point->addStatement(
             VarRef(var_decl_result_tuple)[VarRef(var_decl_num_result_tuples)]
                 .accessRef(VarRef(*var_decl))
                 .assign(VarRef(code_.var_decl_input_tuple)[VarRef(*(code_.var_decl_id))].accessRef(VarRef(*var_decl)))
-                .copy());
+                .copy()
+            );*/
+        /*
+         *
+    VariableDeclaration lhs_tuple_var;
+    VariableDeclaration lhs_field_var;
+    VariableDeclaration lhs_index_var;
+    VariableDeclaration rhs_tuple_var;
+    VariableDeclaration rhs_field_var;
+    VariableDeclaration rhs_index_var;
+         */
+        AssignmentStatment as = {var_decl_result_tuple,
+                                 *(var_decl),
+                                 var_decl_num_result_tuples,
+                                 code_.var_decl_input_tuple,
+                                 *(var_decl),
+                                 *(code_.var_decl_id)};
+        StatementPtr stmt = var_decl->getDataType()->getStmtCopyAssignment(as);
+        code_.current_code_insertion_point->addStatement(stmt);
         /* */
 
         // var_decls.push_back(*var_decl);
