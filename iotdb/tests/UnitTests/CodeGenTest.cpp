@@ -76,8 +76,7 @@ namespace iotdb {
               tuples[i].id = i;
               tuples[i].value = i*2;
               for(int j=0;j<11;++j) {
-                  tuples[i].text[j] = 'a';
-                  //tuples[i].text[j] = ((j+i)%(255-'a'))+'a';
+                  tuples[i].text[j] = ((j+i)%(255-'a'))+'a';
               }
               tuples[i].text[12] = '\0';
           }

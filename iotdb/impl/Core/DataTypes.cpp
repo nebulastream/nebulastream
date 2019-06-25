@@ -267,13 +267,15 @@ class BasicDataType : public DataType {
             return std::to_string(*reinterpret_cast<bool*>(data));
         case CHAR:
             if (dataSize == 0) {
-                return std::to_string((char) *reinterpret_cast<char*>(data));
+                str << static_cast<char>(*static_cast<char*>(data));
             }
             else {
-                return std::string(reinterpret_cast<char*>(data));
+                str << static_cast<char>(*static_cast<char*>(data));
             }
+            return str.str();
         case DATE:
-            return std::to_string(*reinterpret_cast<uint32_t*>(data));
+            str << *static_cast<char*>(data);
+            return str.str();
         case VOID_TYPE:
             return "";
         }
