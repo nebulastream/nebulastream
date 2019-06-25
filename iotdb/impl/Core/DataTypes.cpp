@@ -270,7 +270,7 @@ class BasicDataType : public DataType {
                 str << static_cast<char>(*static_cast<char*>(data));
             }
             else {
-                str << static_cast<char>(*static_cast<char*>(data));
+                str << static_cast<char*>(data);
             }
             return str.str();
         case DATE:
