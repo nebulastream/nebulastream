@@ -89,6 +89,8 @@ private:
 	ValueTypePtr _value=nullptr;
 };
 
+const PredicatePtr createPredicate(const UserAPIExpression& expression);
+
 Predicate operator == (const UserAPIExpression &lhs, const UserAPIExpression &rhs);
 Predicate operator != (const UserAPIExpression &lhs, const UserAPIExpression &rhs);
 Predicate operator < (const UserAPIExpression &lhs, const UserAPIExpression &rhs);

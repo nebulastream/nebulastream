@@ -152,6 +152,14 @@ namespace iotdb
 	}
 
 
+    const PredicatePtr createPredicate(const UserAPIExpression& expression){
+        PredicatePtr value = std::dynamic_pointer_cast<Predicate>(expression.copy());
+        if(!value){
+            IOTDB_FATAL_ERROR("UserAPIExpression is not a predicate")
+        }
+        return value;
+    }
+
     Predicate operator == (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
         return Predicate(BinaryOperatorType::EQUAL_OP, lhs.copy(), rhs.copy());
     }
