@@ -5,6 +5,8 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
 #include <iostream>
+#include <random>
+
 BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::YSBGeneratorSource);
 BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::YSBFunctor);
 
