@@ -9,6 +9,7 @@
 #include <gtest/gtest.h>
 #include <Util/Logger.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <random>
 
 
 namespace iotdb {
