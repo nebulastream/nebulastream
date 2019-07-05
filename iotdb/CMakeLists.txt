@@ -71,6 +71,9 @@ foreach(dir ${dirs})
     message(STATUS "  - ${dir}")
 endforeach()
 
+# C++ Rest SDK
+set(cpprestsdk_DIR /usr/lib/x86_64-linux-gnu/cmake/)
+find_package(cpprestsdk REQUIRED)
 
 # Definition of runtime variables ######################################################################################
 
@@ -160,6 +163,10 @@ target_include_directories(iotClient PUBLIC "include")
 add_executable(iotServer iotServer.cpp)
 target_link_libraries(iotServer ${LIBRARIES})
 target_include_directories(iotServer PUBLIC "include")
+
+add_executable(iotRestServer iotRestServer.cpp impl/Rest/svc_controller.cpp ./impl/Rest/basic_controller.cpp ./impl/Rest/network_utils.cpp )
+target_link_libraries(iotRestServer ${LIBRARIES} cpprestsdk::cpprest)
+target_include_directories(iotRestServer PUBLIC "include" cpprestsdk::cpprest)
 
 # Add tests with command
 enable_testing()
