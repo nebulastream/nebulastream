@@ -64,6 +64,9 @@ set(LIBRARIES ${LIBRARIES} ${Boost_LIBRARIES})
 # Library containing dlopen and dlcose.
 set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
 
+# Library containing rest dependencies
+set(LIBRARIES ${LIBRARIES} cpprestsdk::cpprest)
+
 # Print all used include directories
 message(STATUS "INCLUDE_DIRS:")
 get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
@@ -165,7 +168,7 @@ target_link_libraries(iotServer ${LIBRARIES})
 target_include_directories(iotServer PUBLIC "include")
 
 add_executable(iotRestServer iotRestServer.cpp)
-target_link_libraries(iotRestServer ${LIBRARIES} cpprestsdk::cpprest iotdb)
+target_link_libraries(iotRestServer ${LIBRARIES} iotdb)
 target_include_directories(iotRestServer PUBLIC "include")
 
 # Add tests with command

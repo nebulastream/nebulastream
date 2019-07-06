@@ -6,6 +6,7 @@ import {Tree} from "react-d3-tree";
 import 'brace/mode/c_cpp';
 import 'brace/theme/github';
 import ButtonGroup from "reactstrap/es/ButtonGroup";
+import Alert from "reactstrap/es/Alert";
 
 export default class QueryInterface extends React.Component {
 
@@ -48,7 +49,16 @@ export default class QueryInterface extends React.Component {
                 "x": -10
             }
         };
-        this.userQuery = '';
+        this.userQuery = 'Config config = Config::create()\n' +
+            '   .setBufferCount(2000)\n' +
+            '   .setBufferSizeInByte(8*1024)\n' +
+            '   .setNumberOfWorker(2);\n' +
+            'Schema schema = Schema::create()\n' +
+            '   .addField("",INT32);\n' +
+            'DataSourcePtr source = createTestSource();\n' +
+            'return InputQuery::create(config, source)\n' +
+            '   .filter(PredicatePtr())\n' +
+            '   .printInputQueryPlan();';
         this.getQueryPlan = this.getQueryPlan.bind(this);
         this.updateQuery = this.updateQuery.bind(this);
         this.updateGraphData = this.updateGraphData.bind(this);
@@ -106,12 +116,13 @@ export default class QueryInterface extends React.Component {
                                 <h1>IotDB WebInterface</h1>
                             </CardHeader>
                             <CardBody>
+                                    <Alert>Feed Your Query Here</Alert>
                                 <Row className="m-md-2">
                                     <Col className="mb-auto">
                                         <AceEditor
                                             mode="c_cpp"
                                             theme="github"
-                                            fontSize={20}
+                                            fontSize={14}
                                             showPrintMargin={true}
                                             showGutter={true} l
                                             editorProps={{$blockScrolling: true}}
@@ -121,6 +132,7 @@ export default class QueryInterface extends React.Component {
                                             }}
                                             name="query"
                                             onChange={this.updateQuery}
+                                            value={this.userQuery}
                                         />
                                     </Col>
                                 </Row>
@@ -145,7 +157,7 @@ export default class QueryInterface extends React.Component {
                                                     pathFunc='diagonal'
                                                     orientation='vertical'
                                                     nodeSvgShape={this.svgSquare}
-                                                    separation={{siblings: 2, nonSiblings: 3}}
+                                                    separation={{siblings: 1, nonSiblings: 1}}
                                                     translate={{x: 200, y: 50}}
                                                     textLayout={{}}
                                                 />
