@@ -15,7 +15,7 @@ int main(int argc, const char *argv[]) {
     InterruptHandler::hookSIGINT();
 
     ServiceController server;
-    server.setEndpoint("http://"+HOST_NAME+":"+ to_string(REST_PORT) +"/v1/iotdb/");
+    server.setEndpoint("http://" + HOST_NAME + ":" + to_string(REST_PORT) + "/v1/iotdb/");
 
     try {
         // wait for server initialization...
@@ -26,12 +26,13 @@ int main(int argc, const char *argv[]) {
 
         server.shutdown().wait();
     }
-    catch(std::exception & e) {
+    catch (std::exception &e) {
         std::cerr << "something wrong happen! :(" << '\n';
     }
-    catch(...) {
+    catch (...) {
         RuntimeUtils::printStackTrace();
     }
 
     return 0;
 }
+
