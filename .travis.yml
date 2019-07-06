@@ -1,7 +1,7 @@
 matrix:
   include:
     os: linux
-    dist: bioneal
+    dist: bionic
     addons:
       apt:
         packages:
