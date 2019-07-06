@@ -59,10 +59,26 @@ void ServiceController::handlePost(http_request message) {
                 message.extract_string(true).then(
                         [message](utility::string_t body) // this receieves the body of the message from our html page
                         {
-
                             std::string newbody(body.begin(),
                                                 body.end()); //using this to convert from wstring to string, then
 
+                            std::stringstream code;
+                            code << "Config config = Config::create()"
+                                    ".setBufferCount(2000)"
+                                    ".setBufferSizeInByte(8*1024)"
+                                    ".setNumberOfWorker(2);"
+                                 << std::endl;
+
+                            code << "Schema schema = Schema::create().addField(\"\",INT32);" << std::endl;
+
+                            code << "DataSourcePtr source = createTestSource();" << std::endl;
+
+                            code << "return InputQuery::create(config, source)" << std::endl
+                                 << ".filter(PredicatePtr())" << std::endl
+                                 << ".printInputQueryPlan();" << std::endl;
+
+                            InputQuery q(iotdb::createQueryFromCodeString(code.str()));
+                            q.printInputQueryPlan();
                         });
 
                 http_response response(status_codes::OK);
@@ -70,14 +86,14 @@ void ServiceController::handlePost(http_request message) {
                 auto lvl2Node = json::value::object();
                 lvl2Node["name"] = json::value::string("Sink-3");
 
-                std::vector<json::value>listOfLvl2Children;
+                std::vector<json::value> listOfLvl2Children;
                 listOfLvl2Children.push_back(lvl2Node);
 
                 auto lvl1Node = json::value::object();
                 lvl1Node["name"] = json::value::string("Map-1");
                 lvl1Node["children"] = json::value::array(listOfLvl2Children);
 
-                std::vector<json::value>listOfLvl1Children;
+                std::vector<json::value> listOfLvl1Children;
                 listOfLvl1Children.push_back(lvl1Node);
 
                 auto rootNode = json::value::object();
@@ -88,7 +104,7 @@ void ServiceController::handlePost(http_request message) {
                 response.set_body(rootNode);
                 message.reply(response);
 
-//            InputQuery q(iotdb::createQueryFromCodeString(std::to_string(message.body())));
+
             } else {
                 http_response response(status_codes::NotFound);
                 response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
