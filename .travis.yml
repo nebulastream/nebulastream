@@ -18,7 +18,7 @@ before_install:
   - sudo apt-get install -y libboost1.65-all-dev
   - sudo apt-get install -y liblog4cxx-dev
   - sudo apt-get install -y libcpprest-dev
-
+  - sudo apt-get install -y libssl-dev
 script:
   - clang --version
   - clang++ --version
