@@ -5,30 +5,87 @@ import AceEditor from "react-ace";
 import {Graph} from "react-d3-graph";
 import 'brace/mode/c_cpp';
 import 'brace/theme/github';
+import ButtonGroup from "reactstrap/es/ButtonGroup";
 
 export default class QueryInterface extends React.Component {
 
-    data = {
-        nodes: [{id: 'Harry'}, {id: 'Sally'}, {id: 'Alice'}],
-        links: [{source: 'Harry', target: 'Sally', label: "son"}, {source: 'Harry', target: 'Alice', label: "brother"}]
-    };
+    constructor(props, context) {
+        super(props, context);
+        this.state = {
+            data: {
+                nodes: [{id: 'Harry'}, {id: 'Sally'}, {id: 'Alice'}],
+                links: [{source: 'Harry', target: 'Sally', label: "son"}, {
+                    source: 'Harry',
+                    target: 'Alice',
+                    label: "brother"
+                }]
+            },
+            myConfig: {
+                maxZoom: 4,
+                nodeHighlightBehavior: true,
+                node: {
+                    color: 'lightgreen',
+                    size: 420,
+                    highlightStrokeColor: 'blue'
+                },
+                link: {
+                    highlightColor: 'lightblue',
+                    renderLabel: true
+                }
+            },
+        };
+        this.userQuery = '';
+        this.getQueryPlan = this.getQueryPlan.bind(this);
+        this.updateQuery = this.updateQuery.bind(this);
+        this.updateGraphData = this.updateGraphData.bind(this);
+    }
 
-    myConfig = {
-        maxZoom: 4,
-        nodeHighlightBehavior: true,
-        node: {
-            color: 'lightgreen',
-            size: 420,
-            highlightStrokeColor: 'blue'
-        },
-        link: {
-            highlightColor: 'lightblue',
-            renderLabel: true
-        }
-    };
+    updateQuery(newQuery) {
+        console.log(newQuery);
+        this.userQuery = newQuery;
+        console.log(this.userQuery);
+    }
 
-    getQueryPlan() {
+    getQueryPlan(userQuery) {
+        console.log("Fetching query plan");
+        console.log(userQuery);
+        fetch('http://127.0.0.1:8081/v1/iotdb/service/query-plan', {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                },
+                body: userQuery,
+            }
+        )
+            .then(response => {
+                if (!response.ok) {
+                    this.handleResponseError(response);
+                }
+                return response.json();
+            })
+            .then(data => {
 
+                this.updateGraphData(data);
+            })
+            .catch(err => {
+                console.log(err);
+            });
+        console.log("Fetching completed")
+    }
+
+    updateGraphData(jsonObject) {
+
+        var nodes = [];
+        // while(jsonObject.hasOwnProperty("Child")) {
+        //
+        //     nodes.push({Id : jsonObject['ID']})
+        // }
+        console.log(nodes);
+    }
+
+
+    handleResponseError(response) {
+        throw new Error("HTTP error, status = " + response.status);
     }
 
     render() {
@@ -47,7 +104,6 @@ export default class QueryInterface extends React.Component {
                                         <AceEditor
                                             mode="c_cpp"
                                             theme="github"
-                                            width="800px"
                                             fontSize={20}
                                             showPrintMargin={true}
                                             showGutter={true} l
@@ -56,13 +112,20 @@ export default class QueryInterface extends React.Component {
                                                 showLineNumbers: true,
                                                 tabSize: 2,
                                             }}
+                                            name="query"
+                                            onChange={this.updateQuery}
                                         />
                                     </Col>
                                 </Row>
                                 <Row className="m-md-2">
                                     <Col>
-                                        <Button color="primary">Query</Button>{' '}
-                                        <Button color="primary" id="queryplan">Query Plan</Button>
+                                        <ButtonGroup>
+                                            <Button color="primary">Query</Button>
+                                            <Button color="primary" id="queryplan" onClick={() => {
+                                                this.getQueryPlan(this.userQuery)
+                                            }}>Query
+                                                Plan</Button>
+                                        </ButtonGroup>
                                     </Col>
                                 </Row>
                                 <Row className="m-md-2">
@@ -72,8 +135,8 @@ export default class QueryInterface extends React.Component {
                                                 <CardBody>
                                                     <Graph
                                                         id="graph-id" // id is mandatory, if no id is defined rd3g will throw an error
-                                                        data={this.data}
-                                                        config={this.myConfig}
+                                                        data={this.state.data}
+                                                        config={this.state.myConfig}
                                                     />
                                                 </CardBody>
                                             </Card>

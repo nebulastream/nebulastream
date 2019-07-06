@@ -166,7 +166,7 @@ target_include_directories(iotServer PUBLIC "include")
 
 add_executable(iotRestServer iotRestServer.cpp impl/Rest/svc_controller.cpp ./impl/Rest/basic_controller.cpp ./impl/Rest/network_utils.cpp )
 target_link_libraries(iotRestServer ${LIBRARIES} cpprestsdk::cpprest)
-target_include_directories(iotRestServer PUBLIC "include" cpprestsdk::cpprest)
+target_include_directories(iotRestServer PUBLIC "include")
 
 # Add tests with command
 enable_testing()

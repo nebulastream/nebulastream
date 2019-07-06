@@ -48,8 +48,8 @@ namespace cfx {
         pplx::task<void> accept();
         pplx::task<void> shutdown();
 
-        virtual void initRestOpHandlers() { 
-            /* had to be implemented by the child class */ 
+        virtual void initRestOpHandlers() {
+            /* had to be implemented by the child class */
         }
 
         std::vector<utility::string_t> requestPath(const http_request & message);
