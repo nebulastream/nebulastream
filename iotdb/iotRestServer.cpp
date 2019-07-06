@@ -21,13 +21,13 @@ int main(int argc, const char *argv[]) {
         // wait for server initialization...
         server.accept().wait();
         std::cout << "Modern C++ Microservice now listening for requests at: " << server.endpoint() << '\n';
-
+        std::cout << "Rest Server started" << std::endl;
         InterruptHandler::waitForUserInterrupt();
 
         server.shutdown().wait();
     }
     catch(std::exception & e) {
-        std::cerr << "somehitng wrong happen! :(" << '\n';
+        std::cerr << "something wrong happen! :(" << '\n';
     }
     catch(...) {
         RuntimeUtils::printStackTrace();

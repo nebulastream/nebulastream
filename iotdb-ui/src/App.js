@@ -2,12 +2,16 @@ import React from 'react';
 
 import QueryInterface from "./views/QueryInterface";
 
-function App() {
-    return (
-        <div className="content">
-            <QueryInterface/>
-        </div>
-    );
+class App extends React.Component {
+
+    render() {
+        return (
+            <div className="content">
+                <QueryInterface/>
+            </div>
+        );
+
+    }
 
 }
 

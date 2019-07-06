@@ -36,6 +36,7 @@ namespace cfx {
 
     }
     void BasicController::setEndpoint(const std::string & value) {
+        std::cout << "Defining endpoint using " +  value << std::endl;
         uri endpointURI(value);
         uri_builder endpointBuilder;
 
