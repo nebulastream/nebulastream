@@ -27,7 +27,7 @@
 #include "Rest/basic_controller.hpp"
 #include "Rest/network_utils.hpp"
 
-namespace cfx {
+namespace iotdb {
     BasicController::BasicController() {
 
     }
