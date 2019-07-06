@@ -32,7 +32,7 @@
 using namespace boost::asio;
 using namespace boost::asio::ip;
 
-namespace cfx {
+namespace iotdb {
    
    using HostInetInfo = tcp::resolver::iterator;
 
