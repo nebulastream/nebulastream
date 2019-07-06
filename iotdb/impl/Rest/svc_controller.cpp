@@ -68,24 +68,21 @@ void ServiceController::handlePost(http_request message) {
                 http_response response(status_codes::OK);
 
                 auto lvl2Node = json::value::object();
-                lvl2Node["ID"] = json::value::string("3");
-                lvl2Node["Name"] = json::value::string("Sink");
+                lvl2Node["name"] = json::value::string("Sink-3");
 
                 std::vector<json::value>listOfLvl2Children;
                 listOfLvl2Children.push_back(lvl2Node);
 
                 auto lvl1Node = json::value::object();
-                lvl1Node["ID"] = json::value::string("2");
-                lvl1Node["Name"] = json::value::string("Map");
-                lvl1Node["Child"] = json::value::array(listOfLvl2Children);
+                lvl1Node["name"] = json::value::string("Map-1");
+                lvl1Node["children"] = json::value::array(listOfLvl2Children);
 
                 std::vector<json::value>listOfLvl1Children;
                 listOfLvl1Children.push_back(lvl1Node);
 
                 auto rootNode = json::value::object();
-                rootNode["ID"] = json::value::string("1");
-                rootNode["Name"] = json::value::string("Source");
-                rootNode["Child"] = json::value::array(listOfLvl1Children);
+                rootNode["name"] = json::value::string("Source-0");
+                rootNode["children"] = json::value::array(listOfLvl1Children);
                 response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
                 response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
                 response.set_body(rootNode);
