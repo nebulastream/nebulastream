@@ -46,8 +46,7 @@ export default class QueryInterface extends React.Component {
             'DataSourcePtr source = createTestSource();\n' +
             'return InputQuery::create(config, source)\n' +
             '   .filter(PredicatePtr())\n' +
-            '   .print(std::cout)\n' +
-            '   .printInputQueryPlan();';
+            '   .print(std::cout);';
         this.getQueryPlan = this.getQueryPlan.bind(this);
         this.updateQuery = this.updateQuery.bind(this);
         this.updateGraphData = this.updateGraphData.bind(this);
