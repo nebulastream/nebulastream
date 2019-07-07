@@ -1,32 +1,18 @@
 import React from 'react'
-import {Button, Card, CardBody, CardHeader, Col, UncontrolledCollapse} from "reactstrap";
-import Row from "reactstrap/es/Row";
+import {Alert, Button, Card, CardBody, CardHeader, Col, Collapse, Row} from "reactstrap";
 import AceEditor from "react-ace";
 import {Tree} from "react-d3-tree";
 import 'brace/mode/c_cpp';
-import 'brace/theme/github';
+import 'brace/theme/monokai';
 import ButtonGroup from "reactstrap/es/ButtonGroup";
-import Alert from "reactstrap/es/Alert";
 
 export default class QueryInterface extends React.Component {
 
     constructor(props, context) {
         super(props, context);
         this.state = {
-            data: [{},],
-            myConfig: {
-                maxZoom: 4,
-                nodeHighlightBehavior: true,
-                node: {
-                    color: 'lightgreen',
-                    size: 420,
-                    highlightStrokeColor: 'blue'
-                },
-                link: {
-                    highlightColor: 'lightblue',
-                    renderLabel: true
-                }
-            },
+            data: [{"name": "Empty"}],
+            displayBasePlan: false,
         };
         this.svgSquare = {
             "shape": "rect",
@@ -34,7 +20,8 @@ export default class QueryInterface extends React.Component {
                 "width": 140,
                 "height": 20,
                 "y": -10,
-                "x": -10
+                "x": -10,
+                fill: 'olive',
             }
         };
         this.userQuery = 'Config config = Config::create()\n' +
@@ -50,6 +37,7 @@ export default class QueryInterface extends React.Component {
         this.getQueryPlan = this.getQueryPlan.bind(this);
         this.updateQuery = this.updateQuery.bind(this);
         this.updateGraphData = this.updateGraphData.bind(this);
+        this.hideBasePlan = this.hideBasePlan.bind(this);
     }
 
     updateQuery(newQuery) {
@@ -82,11 +70,16 @@ export default class QueryInterface extends React.Component {
             .catch(err => {
                 console.log(err);
             });
+        this.setState({displayBasePlan: true});
         console.log("Fetching completed")
     }
 
     updateGraphData(jsonObject) {
         this.setState({data: jsonObject})
+    }
+
+    hideBasePlan() {
+        this.setState({displayBasePlan: false});
     }
 
     handleResponseError(response) {
@@ -109,8 +102,10 @@ export default class QueryInterface extends React.Component {
                                     <Col className="mb-auto">
                                         <AceEditor
                                             mode="c_cpp"
-                                            theme="github"
-                                            fontSize={14}
+                                            theme="monokai"
+                                            fontSize={16}
+                                            width='50em'
+                                            height='30em'
                                             showPrintMargin={true}
                                             showGutter={true} l
                                             editorProps={{$blockScrolling: true}}
@@ -128,16 +123,23 @@ export default class QueryInterface extends React.Component {
                                     <Col>
                                         <ButtonGroup>
                                             <Button color="primary">Query</Button>
-                                            <Button color="primary" id="queryplan" onClick={() => {
+                                            <Button color="primary" onClick={() => {
                                                 this.getQueryPlan(this.userQuery)
                                             }}>Query
+                                                Plan</Button>
+                                        </ButtonGroup>
+                                        {' '}
+                                        <ButtonGroup>
+                                            <Button color="info" onClick={() => {
+                                                this.hideBasePlan()
+                                            }}>Hide
                                                 Plan</Button>
                                         </ButtonGroup>
                                     </Col>
                                 </Row>
                                 <Row className="m-md-2">
                                     <Col md="8">
-                                        <UncontrolledCollapse toggler="#queryplan">
+                                        <Collapse isOpen={this.state.displayBasePlan} toggler="#queryplan">
                                             <div style={{width: '50em', height: '30em'}}>
                                                 <Tree
                                                     id="tree" // id is mandatory, if no id is defined rd3g will throw an error
@@ -148,9 +150,10 @@ export default class QueryInterface extends React.Component {
                                                     separation={{siblings: 1, nonSiblings: 1}}
                                                     translate={{x: 200, y: 50}}
                                                     textLayout={{}}
+                                                    styles={{fill: 'red'}}
                                                 />
                                             </div>
-                                        </UncontrolledCollapse>
+                                        </Collapse>
                                     </Col>
                                 </Row>
                             </CardBody>
