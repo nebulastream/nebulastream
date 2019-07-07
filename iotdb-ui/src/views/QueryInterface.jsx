@@ -13,19 +13,7 @@ export default class QueryInterface extends React.Component {
     constructor(props, context) {
         super(props, context);
         this.state = {
-            data: [
-                {
-                    name: 'Top Level',
-                    children: [
-                        {
-                            name: 'Level 2: A',
-                        },
-                        {
-                            name: 'Level 2: B',
-                        },
-                    ],
-                },
-            ],
+            data: [{},],
             myConfig: {
                 maxZoom: 4,
                 nodeHighlightBehavior: true,
@@ -58,6 +46,7 @@ export default class QueryInterface extends React.Component {
             'DataSourcePtr source = createTestSource();\n' +
             'return InputQuery::create(config, source)\n' +
             '   .filter(PredicatePtr())\n' +
+            '   .print(std::cout)\n' +
             '   .printInputQueryPlan();';
         this.getQueryPlan = this.getQueryPlan.bind(this);
         this.updateQuery = this.updateQuery.bind(this);
@@ -116,7 +105,7 @@ export default class QueryInterface extends React.Component {
                                 <h1>IotDB WebInterface</h1>
                             </CardHeader>
                             <CardBody>
-                                    <Alert>Feed Your Query Here</Alert>
+                                <Alert>Feed Your Query Here</Alert>
                                 <Row className="m-md-2">
                                     <Col className="mb-auto">
                                         <AceEditor
