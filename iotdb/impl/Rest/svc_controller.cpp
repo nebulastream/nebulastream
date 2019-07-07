@@ -2,6 +2,8 @@
 #include <Rest/std_service.hpp>
 #include <Rest/svc_controller.hpp>
 #include <API/InputQuery.hpp>
+#include <CodeGen/QueryPlanBuilder.hpp>
+#include <Rest/runtime_utils.hpp>
 
 using namespace web;
 using namespace http;
@@ -56,54 +58,24 @@ void ServiceController::handlePost(http_request message) {
         if (!path.empty()) {
             if (path[0] == "service" && path[1] == "query-plan") {
 
-                message.extract_string(true).then(
-                        [message](utility::string_t body) // this receieves the body of the message from our html page
-                        {
-                            std::string newbody(body.begin(),
-                                                body.end()); //using this to convert from wstring to string, then
+                message.extract_string(true)
+                        .then([message](utility::string_t body) {
 
-                            std::stringstream code;
-                            code << "Config config = Config::create()"
-                                    ".setBufferCount(2000)"
-                                    ".setBufferSizeInByte(8*1024)"
-                                    ".setNumberOfWorker(2);"
-                                 << std::endl;
+                                  //Prepare Input query from user string
+                                  std::string userQuery(body.begin(), body.end());
+                                  InputQuery q(iotdb::createQueryFromCodeString(userQuery));
 
-                            code << "Schema schema = Schema::create().addField(\"\",INT32);" << std::endl;
-
-                            code << "DataSourcePtr source = createTestSource();" << std::endl;
-
-                            code << "return InputQuery::create(config, source)" << std::endl
-                                 << ".filter(PredicatePtr())" << std::endl
-                                 << ".printInputQueryPlan();" << std::endl;
-
-                            InputQuery q(iotdb::createQueryFromCodeString(code.str()));
-                            q.printInputQueryPlan();
-                        });
-
-                http_response response(status_codes::OK);
-
-                auto lvl2Node = json::value::object();
-                lvl2Node["name"] = json::value::string("Sink-3");
-
-                std::vector<json::value> listOfLvl2Children;
-                listOfLvl2Children.push_back(lvl2Node);
-
-                auto lvl1Node = json::value::object();
-                lvl1Node["name"] = json::value::string("Map-1");
-                lvl1Node["children"] = json::value::array(listOfLvl2Children);
-
-                std::vector<json::value> listOfLvl1Children;
-                listOfLvl1Children.push_back(lvl1Node);
-
-                auto rootNode = json::value::object();
-                rootNode["name"] = json::value::string("Source-0");
-                rootNode["children"] = json::value::array(listOfLvl1Children);
-                response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-                response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-                response.set_body(rootNode);
-                message.reply(response);
-
+                                  //Prepare response
+                                  http_response response(status_codes::OK);
+                                  QueryPlanBuilder queryPlanBuilder(q);
+                                  const json::value &basePlan = queryPlanBuilder.getBasePlan();
+                                  response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
+                                  response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
+                                  response.set_body(basePlan);
+                                  message.reply(response);
+                              }
+                        )
+                        .wait();
 
             } else {
                 http_response response(status_codes::NotFound);
@@ -116,12 +88,9 @@ void ServiceController::handlePost(http_request message) {
             message.reply(response);
         }
     } catch (const std::exception &ex) {
-        std::cout << ex.what();
-    } catch (const std::string &ex) {
-        std::cout << ex;
-        // ...
+        std::cout << "Exception occurred during post request.";
     } catch (...) {
-        std::cout << "Exception occured";
+        RuntimeUtils::printStackTrace();
     }
 
 }

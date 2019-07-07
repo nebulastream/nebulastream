@@ -42,12 +42,13 @@ class InputQuery {
     // helper operators
     InputQuery& printInputQueryPlan();
     DataSourcePtr getSource() { return source; };
+    OperatorPtr getRoot() { return root; };
 
-  private:
+    OperatorPtr root;
+private:
     InputQuery(const Config& config, const DataSourcePtr& source);
     Config config;
     DataSourcePtr source;
-    OperatorPtr root;
     void printInputQueryPlan(const OperatorPtr& curr, int depth);
 };
 
