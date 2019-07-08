@@ -18,6 +18,7 @@ typedef std::shared_ptr<Operator> OperatorPtr;
 class InputQuery {
   public:
     static InputQuery create(const Config& config, const DataSourcePtr& source);
+    InputQuery& operator=(const InputQuery& query);
     InputQuery(const InputQuery&);
     ~InputQuery();
 
