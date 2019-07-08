@@ -69,6 +69,7 @@ namespace iotdb {
             if(!grandChildren.empty()) {
                 childJson["children"] = json::value::array(grandChildren);
             }
+            childrenNode.push_back(childJson);
         }
 
         return childrenNode;
