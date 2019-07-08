@@ -22,8 +22,6 @@ before_install:
   - sudo apt-get install -y libcpprest-dev
   - sudo apt-get install -y libssl-dev
 script:
-  - sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-3.9 100
-  - sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-3.9 100
   - clang --version
   - clang++ --version
   - cd iotdb && mkdir debug-build && cd debug-build
