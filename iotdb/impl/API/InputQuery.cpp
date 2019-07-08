@@ -10,6 +10,21 @@
 #include <Util/ErrorHandling.hpp>
 
 namespace iotdb {
+    
+const OperatorPtr recursiveCopy(OperatorPtr ptr) {
+    OperatorPtr operatorPtr = ptr->copy();
+    std::vector<OperatorPtr> children = ptr->childs;
+    
+    for(int i=0; i< children.size(); i++) {
+        const OperatorPtr copiedChild = recursiveCopy(children[i]);
+        if(!copiedChild) {
+            return nullptr;
+        }
+        operatorPtr->childs.push_back(copiedChild);
+    }
+
+    return operatorPtr;
+}
 
 /* some utility functions to encapsulate node handling to be
  * independent of implementation of query graph */
@@ -25,6 +40,7 @@ const InputQuery createQueryFromCodeString(const std::string& query_code_snippet
     code << "#include <API/InputQuery.hpp>" << std::endl;
     code << "#include <API/Config.hpp>" << std::endl;
     code << "#include <API/Schema.hpp>" << std::endl;
+    code << "#include <Runtime/DataSource.hpp>" << std::endl;
     code << "namespace iotdb{" << std::endl;
     code << "InputQuery createQuery(){" << std::endl;
     code << query_code_snippet << std::endl;
@@ -43,6 +59,8 @@ const InputQuery createQueryFromCodeString(const std::string& query_code_snippet
     }
     /* call loaded function to create query object */
     InputQuery query((*func)());
+    query.printInputQueryPlan();
+
 
     return query;
 }
@@ -59,9 +77,19 @@ const InputQuery createQueryFromCodeString(const std::string& query_code_snippet
 InputQuery::InputQuery(const Config& config, const DataSourcePtr& source) : config(config), source(source), root() {}
 
 /* TODO: perform deep copy of operator graph */
-InputQuery::InputQuery(const InputQuery& query) : config(query.config), source(query.source), root(query.root->copy())
+InputQuery::InputQuery(const InputQuery& query) : config(query.config), source(query.source), root(recursiveCopy(query.root))
 {
 }
+
+InputQuery& InputQuery::operator=(const InputQuery& query){
+    if(&query != this) {
+        this->config = query.config;
+        this->source = query.source;
+        this->root = recursiveCopy(query.root);
+    }
+    return *this;
+}
+
 
 InputQuery::~InputQuery() {}
 
