@@ -28,8 +28,6 @@ script:
   - sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-3.9 100
   - clang --version
   - clang++ --version
-  - sudo apt list --installed | grep llvm
-  - sudo apt list --installed | grep clang
   - cd iotdb && mkdir debug-build && cd debug-build
   - cmake -DCMAKE_BUILD_TYPE=Debug -DBoost_NO_SYSTEM_PATHS=TRUE -DBoost_INCLUDE_DIR="/usr/include" -DBoost_LIBRARY_DIR="/usr/lib/x86_64-linux-gnu" ..
   - make -j8 && make test_debug

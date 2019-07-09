@@ -64,7 +64,6 @@ void ServiceController::handlePost(http_request message) {
                                   //Prepare Input query from user string
                                   std::string userQuery(body.begin(), body.end());
                                   InputQuery q(iotdb::createQueryFromCodeString(userQuery));
-                                  q.printInputQueryPlan();
                                   //Prepare response
                                   http_response response(status_codes::OK);
                                   QueryPlanBuilder queryPlanBuilder(q);
