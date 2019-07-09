@@ -45,10 +45,10 @@ class InputQuery {
     OperatorPtr getRoot() { return root; };
 
 private:
-    OperatorPtr root;
     InputQuery(const Config& config, const DataSourcePtr& source);
     Config config;
     DataSourcePtr source;
+    OperatorPtr root;
     void printInputQueryPlan(const OperatorPtr& curr, int depth);
 };
 
