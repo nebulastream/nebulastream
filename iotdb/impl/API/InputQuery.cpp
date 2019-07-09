@@ -59,9 +59,6 @@ const InputQuery createQueryFromCodeString(const std::string& query_code_snippet
     }
     /* call loaded function to create query object */
     InputQuery query((*func)());
-    query.printInputQueryPlan();
-
-
     return query;
 }
 
