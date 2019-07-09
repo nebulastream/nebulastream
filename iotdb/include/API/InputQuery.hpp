@@ -44,8 +44,8 @@ class InputQuery {
     DataSourcePtr getSource() { return source; };
     OperatorPtr getRoot() { return root; };
 
-    OperatorPtr root;
 private:
+    OperatorPtr root;
     InputQuery(const Config& config, const DataSourcePtr& source);
     Config config;
     DataSourcePtr source;

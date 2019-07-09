@@ -60,19 +60,26 @@ void ServiceController::handlePost(http_request message) {
 
                 message.extract_string(true)
                         .then([message](utility::string_t body) {
+                                  try {
+                                      //Prepare Input query from user string
+                                      std::string userQuery(body.begin(), body.end());
+                                      InputQuery q(iotdb::createQueryFromCodeString(userQuery));
+                                      //Prepare response
+                                      http_response response(status_codes::OK);
+                                      QueryPlanBuilder queryPlanBuilder(q);
+                                      const json::value &basePlan = queryPlanBuilder.getBasePlan();
+                                      response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
+                                      response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
+                                      response.set_body(basePlan);
+                                      message.reply(response);
 
-                                  //Prepare Input query from user string
-                                  std::string userQuery(body.begin(), body.end());
-                                  InputQuery q(iotdb::createQueryFromCodeString(userQuery));
-                                  //Prepare response
-                                  http_response response(status_codes::OK);
-                                  QueryPlanBuilder queryPlanBuilder(q);
-                                  const json::value &basePlan = queryPlanBuilder.getBasePlan();
-                                  std::cout<< basePlan.size();
-                                  response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-                                  response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-                                  response.set_body(basePlan);
-                                  message.reply(response);
+                                  } catch (...) {
+                                      std::cout << "Exception occurred while building the query plan for user request.";
+                                      http_response response(status_codes::InternalError);
+                                      response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
+                                      response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
+                                      message.reply(response);
+                                  }
                               }
                         )
                         .wait();

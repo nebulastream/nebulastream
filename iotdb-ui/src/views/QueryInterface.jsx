@@ -13,6 +13,7 @@ export default class QueryInterface extends React.Component {
         this.state = {
             data: [{"name": "Empty"}],
             displayBasePlan: false,
+            internalError: false,
         };
         this.svgSquare = {
             "shape": "rect",
@@ -38,6 +39,9 @@ export default class QueryInterface extends React.Component {
         this.updateQuery = this.updateQuery.bind(this);
         this.updateGraphData = this.updateGraphData.bind(this);
         this.hideBasePlan = this.hideBasePlan.bind(this);
+        this.resetTreeData = this.resetTreeData.bind(this);
+        this.onDismiss = this.onDismiss.bind(this);
+        this.showAlert = this.showAlert.bind(this);
     }
 
     updateQuery(newQuery) {
@@ -61,6 +65,7 @@ export default class QueryInterface extends React.Component {
                 if (!response.ok) {
                     this.handleResponseError(response);
                 }
+                this.onDismiss();
                 return response.json();
             })
             .then(data => {
@@ -68,7 +73,12 @@ export default class QueryInterface extends React.Component {
                 this.updateGraphData(data);
             })
             .catch(err => {
-                console.log(err);
+                this.resetTreeData();
+                if (err.message.includes("500")) {
+                    this.showAlert()
+                } else {
+                    console.log(err)
+                }
             });
         this.setState({displayBasePlan: true});
         console.log("Fetching completed")
@@ -82,8 +92,20 @@ export default class QueryInterface extends React.Component {
         this.setState({displayBasePlan: false});
     }
 
+    resetTreeData() {
+        this.setState({data: [{"name": "empty"}]});
+    }
+
     handleResponseError(response) {
         throw new Error("HTTP error, status = " + response.status);
+    }
+
+    showAlert() {
+        this.setState({internalError: true});
+    }
+
+    onDismiss() {
+        this.setState({internalError: false});
     }
 
     render() {
@@ -98,6 +120,11 @@ export default class QueryInterface extends React.Component {
                             </CardHeader>
                             <CardBody>
                                 <Alert>Feed Your Query Here</Alert>
+                                <Alert color="danger" isOpen={this.state.internalError} toggle={this.onDismiss}
+                                       fade={true}>
+                                    Received internal server error for user query. Please make sure the input query is
+                                    correct.
+                                </Alert>
                                 <Row className="m-md-2">
                                     <Col className="mb-auto">
                                         <AceEditor
