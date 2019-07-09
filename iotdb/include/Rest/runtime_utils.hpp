@@ -7,6 +7,7 @@ namespace iotdb {
     class RuntimeUtils {
     public:
         static void printStackTrace() {
+            //Size of the array storing the stack trace in case of the error
             const int MAX_CALLSTACK = 100;
             void * callstack[MAX_CALLSTACK];
             int frames;
