@@ -43,12 +43,14 @@ namespace iotdb
 
     const ExpressionStatmentPtr Predicate::generateCode(GeneratedCode& code) const{
 		if(_functionCallOverload.empty()) {
+		    if (_bracket) return BinaryOperatorStatement(*(_left->generateCode(code)), _op, *(_right->generateCode(code)), BRACKETS).copy();
             return BinaryOperatorStatement(*(_left->generateCode(code)), _op, *(_right->generateCode(code))).copy();
         } else {
 		    std::stringstream str;
             FunctionCallStatement expr = FunctionCallStatement(_functionCallOverload);
             expr.addParameter(_left->generateCode(code));
             expr.addParameter(_right->generateCode(code));
+            if(_bracket) return BinaryOperatorStatement(expr , _op, (ConstantExprStatement((createBasicTypeValue(BasicType::UINT8, "0")))), BRACKETS).copy();
             return BinaryOperatorStatement(expr , _op, (ConstantExprStatement((createBasicTypeValue(BasicType::UINT8, "0"))))).copy();
         }
 	}
@@ -124,7 +126,9 @@ namespace iotdb
     PredicateItem::PredicateItem(char val) :
             _mutation(PredicateItemMutation::VALUE),
             _value(createBasicTypeValue(BasicType::CHAR, std::to_string(val))) {}
-
+    PredicateItem::PredicateItem(const char* val) :
+            _mutation(PredicateItemMutation::VALUE),
+            _value(createStringValueType(val)) {}
 	
 	const std::string PredicateItem::toString() const{
 			switch(_mutation)
@@ -138,8 +142,7 @@ namespace iotdb
 	}
 
 	const bool PredicateItem::isStringType() const {
-	    if(_attribute) return (getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)) && (_attribute->getFieldSize() > 1));
-        return getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)) && (_value->isArrayValueType());
+	    return (getDataTypePtr()->isCharDataType()) && (getDataTypePtr()->isArrayDataType());
 	}
 
 	const DataTypePtr PredicateItem::getDataTypePtr() const {

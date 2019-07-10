@@ -64,6 +64,7 @@ class DataType {
     virtual const CodeExpressionPtr getCode() const = 0;
     virtual const bool isEqual(DataTypePtr ptr) const = 0;
     virtual const bool isArrayDataType() const = 0;
+    virtual const bool isCharDataType() const = 0;
     virtual const CodeExpressionPtr getTypeDefinitionCode() const = 0;
     virtual const DataTypePtr copy() const = 0;
     virtual ~DataType();

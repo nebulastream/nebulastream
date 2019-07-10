@@ -131,7 +131,7 @@ namespace iotdb {
                 tuples[i].valueDouble = i*M_PI*2;
                 tuples[i].singleChar = ((i+1)%(127-'A'))+'A';
                 for(int j=0;j<11;++j) {
-                    tuples[i].text[j] = ((i+j)%(127-'A'))+'A';
+                    tuples[i].text[j] = ((i+1)%64)+64;
                 }
                 tuples[i].text[12] = '\0';
             }
@@ -568,6 +568,9 @@ int CodeGenTest()
     std::vector<TupleBuffer*> bufs;
     bufs.push_back(&buf);
 
+
+
+
     TupleBuffer result_buf{result_array, sizeof(uint64_t), sizeof(uint64_t), 1};
 
     /* execute code */
@@ -756,36 +759,13 @@ int CodeGeneratorTest()
         Schema input_schema = source->getSchema();
 
         std::cout << "Generate Predicate Code" << std::endl;
-        /* generate code for scanning input buffer */
         code_gen->generateCode(source, context, std::cout);
-        PredicatePtr pred = createPredicate(input_schema[1] + 2);
-        /*
-        std::cout << std::make_shared<Predicate>(
-                (PredicateItem(input_schema[0])<PredicateItem(createBasicTypeValue(iotdb::BasicType::INT64,"5")))
-        )->toString() << std::endl;
 
-        PredicatePtr pred=std::dynamic_pointer_cast<Predicate>(
-                (PredicateItem(input_schema[0])<PredicateItem(createBasicTypeValue(iotdb::BasicType::INT64,"5"))).copy()
-        );
-         */
-        /*
-        PredicatePtr pred=std::dynamic_pointer_cast<Predicate>(
-            (PredicateItem(input_schema[0]) == 5).copy()
-        );
+        //predicate definition
+        code_gen->generateCode(createPredicate((input_schema[2] > 30.4) && (input_schema[4] == 'F' || (input_schema[5] == "HHHHHHHHHHH")))
+                , context, std::cout);
 
-        PredicatePtr pred=std::dynamic_pointer_cast<Predicate>(
-            (5 == input_schema[0]).copy()
-        );
-
-
-        std::cout << std::make_shared<Predicate>(
-                (PredicateItem(createStringTypeValue("abc"))==PredicateItem(createStringTypeValue("def"))))->toString() << std::endl;
-
-        PredicatePtr pred=std::dynamic_pointer_cast<Predicate>(
-                (PredicateItem(createStringTypeValue("abc"))==PredicateItem(createStringTypeValue("abc"))).copy()
-                );
-        */
-        //code_gen->generateCode(pred, context, std::cout);
+        unsigned int numberOfResultTuples = 3;
 
         /* generate code for writing result tuples to output buffer */
         code_gen->generateCode(createPrintSink(Schema::create()
@@ -809,7 +789,6 @@ int CodeGeneratorTest()
         std::cout << "Processing " << buf->num_tuples << " tuples: " << std::endl;
         uint32_t sizeoftuples = (sizeof(uint32_t) + sizeof(int16_t) +sizeof(float) + sizeof(double) + sizeof(char) + sizeof(char) * 12);
         size_t buffer_size = buf->num_tuples * sizeoftuples;
-        std::cout << "This is my NUMBER....: " << buffer_size << std::endl;
         TupleBuffer result_buffer(malloc(buffer_size), buffer_size, sizeoftuples, 0);
 
         /* execute Stage */
@@ -817,18 +796,12 @@ int CodeGeneratorTest()
 
         /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
         std::cout << "---------- My Number of tuples...." << result_buffer.num_tuples << std::endl;
-        if(result_buffer.num_tuples!=132){
+        if(result_buffer.num_tuples!=numberOfResultTuples){
             std::cout << "Wrong number of tuples in output: " << result_buffer.num_tuples
                       << " (should have been: " << buf->num_tuples << ")" << std::endl;
             return -1;
         }
-        SelectionDataGenFunctor::InputTuple* result_data = (SelectionDataGenFunctor::InputTuple*) result_buffer.buffer;
-        /*for(uint64_t i=0;i<5;++i){
-            if(result_data[i].id!=i || result_data[i].value!=i*2){
-                std::cout << "Error in Result! Mismatch position: " << i << std::endl;
-                return -1;
-            }
-        }*/
+
         std::cout << iotdb::toString(result_buffer,Schema::create()
                 .addField("id", BasicType::UINT32)
                 .addField("valueSmall", BasicType::INT16)
