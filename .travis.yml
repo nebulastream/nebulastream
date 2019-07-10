@@ -1,24 +1,31 @@
 matrix:
   include:
     os: linux
-    dist: xenial
+    dist: bionic
     addons:
       apt:
         packages:
-          clang-3.8
-          llvm-3.8-dev
+          clang-3.9
+          llvm-3.9-dev
 
 language: cpp
 compiler: gcc
 
 before_install:
   - sudo apt-get update
-  - sudo apt-get install -y libclang-dev
-  - sudo apt-get install -y libzmq-dev
-  - sudo apt-get install -y libboost1.58-all-dev
-  - sudo apt-get install -y liblog4cxx10-dev
-
+  - sudo apt remove -y llvm-6.0
+  - sudo apt autoremove
+  - sudo apt-get install -y clang-3.9
+  - sudo apt-get install -y llvm-3.9-dev
+  - sudo apt-get install -y libclang-3.9-dev
+  - sudo apt-get install -y libzmq3-dev
+  - sudo apt-get install -y libboost1.65-all-dev
+  - sudo apt-get install -y liblog4cxx-dev
+  - sudo apt-get install -y libcpprest-dev
+  - sudo apt-get install -y libssl-dev
 script:
+  - sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-3.9 100
+  - sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-3.9 100
   - clang --version
   - clang++ --version
   - cd iotdb && mkdir debug-build && cd debug-build
