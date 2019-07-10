@@ -156,7 +156,9 @@ class BasicDataType : public DataType {
         return ((btr->type == this->type) && (btr->getSizeBytes() == this->getSizeBytes()));
     }
 
-    const bool isArrayDataType() const { return false; }
+    const bool isArrayDataType() const override { return false; }
+
+    const bool isCharDataType() const override {return (this->type == BasicType::CHAR); }
 
     uint32_t getSizeBytes() const override
     {
@@ -369,6 +371,8 @@ class PointerDataType : public DataType {
         return std::make_shared<CodeExpression>(base_type_->getCode()->code_ + "*");
     }
 
+    const bool isCharDataType() const override {return this->base_type_->isCharDataType();}
+
     /*
     const CodeExpressionPtr getCodeDeclaration(const std::string& identifier) const override
     {
@@ -503,7 +507,7 @@ const ValueTypePtr createBasicTypeValue(const BasicType& type, const std::string
         }
 
         const bool isEqual(DataTypePtr ptr) const override { return (this->toString().compare(ptr->toString()) == 0); };
-        const bool isCharDataType() const { return _data->isEqual(BasicDataType(BasicType::CHAR).copy()); }
+        const bool isCharDataType() const override {return this->_data->isCharDataType();}
         const bool isArrayDataType() const override { return true; }
 
         const CodeExpressionPtr getTypeDefinitionCode() const override{ return std::make_shared<CodeExpression>(""); }

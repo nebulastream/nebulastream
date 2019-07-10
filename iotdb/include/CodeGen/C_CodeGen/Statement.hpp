@@ -308,6 +308,7 @@ class UserDefinedDataType : public DataType {
     const CodeExpressionPtr getCode() const { return std::make_shared<CodeExpression>(decl_.getTypeName()); }
     const CodeExpressionPtr getDeclCode(const std::string& identifier) const override { return getCode(); }
     const bool isArrayDataType() const override { return false; }
+    const bool isCharDataType() const override {return false;}
     const DataTypePtr copy() const override{
       return std::make_shared<UserDefinedDataType>(*this);
     }
