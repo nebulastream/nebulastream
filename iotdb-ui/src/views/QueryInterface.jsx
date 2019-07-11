@@ -84,6 +84,39 @@ export default class QueryInterface extends React.Component {
         console.log("Fetching completed")
     }
 
+    getFogTopology() {
+        console.log("Fetching Fog Topology");
+        fetch('http://127.0.0.1:8081/v1/iotdb/service/fog-plan', {
+                method: 'GET',
+                headers: {
+                    Accept: 'application/json',
+                }
+            }
+        )
+            .then(response => {
+                // if (!response.ok) {
+                //     this.handleResponseError(response);
+                // }
+                // this.onDismiss();
+                return response.json();
+            })
+            .then(data => {
+
+                console.log(data);
+                // this.updateGraphData(data);
+            })
+            .catch(err => {
+                // this.resetTreeData();
+                // if (err.message.includes("500")) {
+                //     this.showAlert()
+                // } else {
+                console.log(err)
+                // }
+            });
+        // this.setState({displayBasePlan: true});
+        console.log("Fetching completed")
+    }
+
     updateGraphData(jsonObject) {
         this.setState({data: jsonObject})
     }
@@ -152,8 +185,12 @@ export default class QueryInterface extends React.Component {
                                             <Button color="primary">Query</Button>
                                             <Button color="primary" onClick={() => {
                                                 this.getQueryPlan(this.userQuery)
-                                            }}>Query
+                                            }}>Show Query
                                                 Plan</Button>
+                                            <Button color="primary" onClick={() => {
+                                                this.getFogTopology()
+                                            }}>Show Fog
+                                                Topology</Button>
                                         </ButtonGroup>
                                         {' '}
                                         <ButtonGroup>

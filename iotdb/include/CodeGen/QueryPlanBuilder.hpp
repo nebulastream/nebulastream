@@ -15,12 +15,11 @@ namespace iotdb {
     class QueryPlanBuilder {
 
     public:
-        QueryPlanBuilder(InputQuery userQuery);
+        QueryPlanBuilder();
         ~QueryPlanBuilder();
-        json::value getBasePlan();
+        json::value getBasePlan(InputQuery inputQuery);
 
     private:
-        InputQuery userquery;
         json::value emptyPlan();
         std::vector<json::value> getChildren(const OperatorPtr &root);
     };
