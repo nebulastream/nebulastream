@@ -23,13 +23,13 @@ class FogTopologyManager {
     FogTopologyManager(FogTopologyManager const&); // Don't Implement
     void operator=(FogTopologyManager const&);     // Don't implement
 
-    FogTopologyWorkerNodePtr createFogWorkerNode() { return currentPlan->createFogWorkerNode(); }
+    FogTopologyWorkerNodePtr createFogWorkerNode(CPUCapacity cpuCapacity) { return currentPlan->createFogWorkerNode(cpuCapacity); }
 
     bool removeFogWorkerNode(FogTopologyWorkerNodePtr ptr) { return currentPlan->removeFogWorkerNode(ptr); }
 
     bool removeFogSensorNode(FogTopologySensorNodePtr ptr) { return currentPlan->removeFogSensorNode(ptr); }
 
-    FogTopologySensorNodePtr createFogSensorNode(CPUCapacity capacity) { return currentPlan->createFogSensorNode(capacity); }
+    FogTopologySensorNodePtr createFogSensorNode(CPUCapacity cpuCapacity) { return currentPlan->createFogSensorNode(cpuCapacity); }
 
     FogTopologyLinkPtr createFogTopologyLink(FogTopologyEntryPtr pSourceNode, FogTopologyEntryPtr pDestNode)
     {
