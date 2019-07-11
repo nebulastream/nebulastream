@@ -4,4 +4,5 @@ add_source_iotdb(
         SharedLibrary.cpp
         TimeMeasurement.cpp
         FogTopologyGenerator.cpp
+        ../../include/Util/CPUCapacity.hpp
 )

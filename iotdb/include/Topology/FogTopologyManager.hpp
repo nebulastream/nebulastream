@@ -4,7 +4,7 @@
 #include <memory>
 
 #include <Topology/FogTopologyPlan.hpp>
-#include <Util/NodeCapacityEnum.hpp>
+#include "Util/CPUCapacity.hpp"
 
 /**
  * TODO: add return of create

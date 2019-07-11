@@ -10,6 +10,7 @@
 #include "Topology/FogTopologyPlan.hpp"
 #include "Topology/FogTopologySensorNode.hpp"
 #include "Topology/FogTopologyWorkerNode.hpp"
+#include "Util/CPUCapacity.hpp"
 
 using namespace iotdb;
 
@@ -41,13 +42,13 @@ TEST_F(FogTopologyManagerTest, create_node)
 {
     size_t invalid_id = INVALID_NODE_ID;
 
-    auto worker_node = FogTopologyManager::getInstance().createFogWorkerNode();
+    auto worker_node = FogTopologyManager::getInstance().createFogWorkerNode(CPUCapacity::MEDIUM);
     EXPECT_NE(worker_node.get(), nullptr);
     EXPECT_EQ(worker_node->getEntryType(), Worker);
     EXPECT_EQ(worker_node->getEntryTypeString(), "Worker");
     EXPECT_NE(worker_node->getId(), invalid_id);
 
-    auto sensor_node = FogTopologyManager::getInstance().createFogSensorNode();
+    auto sensor_node = FogTopologyManager::getInstance().createFogSensorNode(CPUCapacity::LOW);
     EXPECT_NE(sensor_node.get(), nullptr);
     EXPECT_EQ(sensor_node->getEntryType(), Sensor);
     EXPECT_EQ(sensor_node->getEntryTypeString(), "Sensor");
@@ -59,11 +60,11 @@ TEST_F(FogTopologyManagerTest, create_node)
 /* Remove an existing node. */
 TEST_F(FogTopologyManagerTest, remove_node)
 {
-    auto worker_node = FogTopologyManager::getInstance().createFogWorkerNode();
+    auto worker_node = FogTopologyManager::getInstance().createFogWorkerNode(CPUCapacity::MEDIUM);
     auto result_worker = FogTopologyManager::getInstance().removeFogWorkerNode(worker_node);
     EXPECT_TRUE(result_worker);
 
-    auto sensor_node = FogTopologyManager::getInstance().createFogSensorNode();
+    auto sensor_node = FogTopologyManager::getInstance().createFogSensorNode(CPUCapacity::LOW);
     auto result_sensor = FogTopologyManager::getInstance().removeFogSensorNode(sensor_node);
     EXPECT_TRUE(result_sensor);
 }
@@ -71,11 +72,11 @@ TEST_F(FogTopologyManagerTest, remove_node)
 /* Remove a non-existing node. */
 TEST_F(FogTopologyManagerTest, remove_non_existing_node)
 {
-    auto worker_node = FogTopologyManager::getInstance().createFogWorkerNode();
+    auto worker_node = FogTopologyManager::getInstance().createFogWorkerNode(CPUCapacity::MEDIUM);
     EXPECT_TRUE(FogTopologyManager::getInstance().removeFogWorkerNode(worker_node));
     EXPECT_FALSE(FogTopologyManager::getInstance().removeFogWorkerNode(worker_node));
 
-    auto sensor_node = FogTopologyManager::getInstance().createFogSensorNode();
+    auto sensor_node = FogTopologyManager::getInstance().createFogSensorNode(CPUCapacity::LOW);
     EXPECT_TRUE(FogTopologyManager::getInstance().removeFogSensorNode(sensor_node));
     EXPECT_FALSE(FogTopologyManager::getInstance().removeFogSensorNode(sensor_node));
 }
@@ -84,13 +85,13 @@ TEST_F(FogTopologyManagerTest, remove_non_existing_node)
 /* Create a new link. */
 TEST_F(FogTopologyManagerTest, create_link)
 {
-    auto worker_node_0 = FogTopologyManager::getInstance().createFogWorkerNode();
-    auto worker_node_1 = FogTopologyManager::getInstance().createFogWorkerNode();
-    auto worker_node_2 = FogTopologyManager::getInstance().createFogWorkerNode();
-    auto worker_node_3 = FogTopologyManager::getInstance().createFogWorkerNode();
+    auto worker_node_0 = FogTopologyManager::getInstance().createFogWorkerNode(CPUCapacity::MEDIUM);
+    auto worker_node_1 = FogTopologyManager::getInstance().createFogWorkerNode(CPUCapacity::MEDIUM);
+    auto worker_node_2 = FogTopologyManager::getInstance().createFogWorkerNode(CPUCapacity::MEDIUM);
+    auto worker_node_3 = FogTopologyManager::getInstance().createFogWorkerNode(CPUCapacity::MEDIUM);
 
-    auto sensor_node_0 = FogTopologyManager::getInstance().createFogSensorNode();
-    auto sensor_node_1 = FogTopologyManager::getInstance().createFogSensorNode();
+    auto sensor_node_0 = FogTopologyManager::getInstance().createFogSensorNode(CPUCapacity::LOW);
+    auto sensor_node_1 = FogTopologyManager::getInstance().createFogSensorNode(CPUCapacity::LOW);
 
     auto link_node_node = FogTopologyManager::getInstance().createFogTopologyLink(worker_node_0, worker_node_1);
 
@@ -132,8 +133,8 @@ TEST_F(FogTopologyManagerTest, create_link)
 /* Create link, where a link already exists. */
 TEST_F(FogTopologyManagerTest, create_existing_link)
 {
-    auto node_0 = FogTopologyManager::getInstance().createFogWorkerNode();
-    auto node_1 = FogTopologyManager::getInstance().createFogWorkerNode();
+    auto node_0 = FogTopologyManager::getInstance().createFogWorkerNode(CPUCapacity::MEDIUM);
+    auto node_1 = FogTopologyManager::getInstance().createFogWorkerNode(CPUCapacity::MEDIUM);
     auto link = FogTopologyManager::getInstance().createFogTopologyLink(node_0, node_1);
     EXPECT_EQ(link, FogTopologyManager::getInstance().createFogTopologyLink(node_0, node_1));
 }
@@ -141,8 +142,8 @@ TEST_F(FogTopologyManagerTest, create_existing_link)
 /* Remove an existing link. */
 TEST_F(FogTopologyManagerTest, remove_link)
 {
-    auto node_0 = FogTopologyManager::getInstance().createFogWorkerNode();
-    auto node_1 = FogTopologyManager::getInstance().createFogWorkerNode();
+    auto node_0 = FogTopologyManager::getInstance().createFogWorkerNode(CPUCapacity::MEDIUM);
+    auto node_1 = FogTopologyManager::getInstance().createFogWorkerNode(CPUCapacity::MEDIUM);
     auto link = FogTopologyManager::getInstance().createFogTopologyLink(node_0, node_1);
 
     EXPECT_TRUE(FogTopologyManager::getInstance().removeFogTopologyLink(link));
@@ -151,8 +152,8 @@ TEST_F(FogTopologyManagerTest, remove_link)
 /* Remove a non-existing link. */
 TEST_F(FogTopologyManagerTest, remove_non_existing_link)
 {
-    auto node_0 = FogTopologyManager::getInstance().createFogWorkerNode();
-    auto node_1 = FogTopologyManager::getInstance().createFogWorkerNode();
+    auto node_0 = FogTopologyManager::getInstance().createFogWorkerNode(CPUCapacity::MEDIUM);
+    auto node_1 = FogTopologyManager::getInstance().createFogWorkerNode(CPUCapacity::MEDIUM);
     auto link = FogTopologyManager::getInstance().createFogTopologyLink(node_0, node_1);
 
     EXPECT_TRUE(FogTopologyManager::getInstance().removeFogTopologyLink(link));
@@ -172,13 +173,13 @@ TEST_F(FogTopologyManagerTest, many_nodes)
     // creater workers
     std::vector<std::shared_ptr<FogTopologyWorkerNode>> workers;
     for (uint32_t i = 0; i != 15; ++i) {
-        workers.push_back(FogTopologyManager::getInstance().createFogWorkerNode());
+        workers.push_back(FogTopologyManager::getInstance().createFogWorkerNode(CPUCapacity::MEDIUM));
     }
 
     // create sensors
     std::vector<std::shared_ptr<FogTopologySensorNode>> sensors;
     for (uint32_t i = 0; i != 30; ++i) {
-        sensors.push_back(FogTopologyManager::getInstance().createFogSensorNode());
+        sensors.push_back(FogTopologyManager::getInstance().createFogSensorNode(CPUCapacity::LOW));
     }
 
     // remove some workers
@@ -188,7 +189,7 @@ TEST_F(FogTopologyManagerTest, many_nodes)
 
     // creater some workers
     for (uint32_t i = 0; i != 5; ++i) {
-        workers.push_back(FogTopologyManager::getInstance().createFogWorkerNode());
+        workers.push_back(FogTopologyManager::getInstance().createFogWorkerNode(CPUCapacity::MEDIUM));
     }
 
     // remove some sensors
@@ -198,7 +199,7 @@ TEST_F(FogTopologyManagerTest, many_nodes)
 
     // create some sensors
     for (uint32_t i = 0; i != 10; ++i) {
-        sensors.push_back(FogTopologyManager::getInstance().createFogSensorNode());
+        sensors.push_back(FogTopologyManager::getInstance().createFogSensorNode(CPUCapacity::LOW));
     }
 }
 
@@ -208,13 +209,13 @@ TEST_F(FogTopologyManagerTest, many_links)
     // creater workers
     std::vector<std::shared_ptr<FogTopologyWorkerNode>> workers;
     for (uint32_t i = 0; i != 15; ++i) {
-        workers.push_back(FogTopologyManager::getInstance().createFogWorkerNode());
+        workers.push_back(FogTopologyManager::getInstance().createFogWorkerNode(CPUCapacity::MEDIUM));
     }
 
     // create sensors
     std::vector<std::shared_ptr<FogTopologySensorNode>> sensors;
     for (uint32_t i = 0; i != 30; ++i) {
-        sensors.push_back(FogTopologyManager::getInstance().createFogSensorNode());
+        sensors.push_back(FogTopologyManager::getInstance().createFogSensorNode(CPUCapacity::LOW));
     }
 
     // link each worker with all other workers
@@ -253,13 +254,13 @@ TEST_F(FogTopologyManagerTest, print_graph)
     // creater workers
     std::vector<std::shared_ptr<FogTopologyWorkerNode>> workers;
     for (uint32_t i = 0; i != 7; ++i) {
-        workers.push_back(FogTopologyManager::getInstance().createFogWorkerNode());
+        workers.push_back(FogTopologyManager::getInstance().createFogWorkerNode(CPUCapacity::MEDIUM));
     }
 
     // create sensors
     std::vector<std::shared_ptr<FogTopologySensorNode>> sensors;
     for (uint32_t i = 0; i != 15; ++i) {
-        sensors.push_back(FogTopologyManager::getInstance().createFogSensorNode());
+        sensors.push_back(FogTopologyManager::getInstance().createFogSensorNode(CPUCapacity::LOW));
     }
 
     // link each worker with its neighbor
@@ -318,13 +319,13 @@ TEST_F(FogTopologyManagerTest, print_graph_without_edges)
     // creater workers
     std::vector<std::shared_ptr<FogTopologyWorkerNode>> workers;
     for (uint32_t i = 0; i != 7; ++i) {
-        workers.push_back(FogTopologyManager::getInstance().createFogWorkerNode());
+        workers.push_back(FogTopologyManager::getInstance().createFogWorkerNode(CPUCapacity::MEDIUM));
     }
 
     // create sensors
     std::vector<std::shared_ptr<FogTopologySensorNode>> sensors;
     for (uint32_t i = 0; i != 15; ++i) {
-        sensors.push_back(FogTopologyManager::getInstance().createFogSensorNode());
+        sensors.push_back(FogTopologyManager::getInstance().createFogSensorNode(CPUCapacity::LOW));
     }
 
     std::string expected_result = "graph G {\n0[label=\"0 type=Worker\"];\n1[label=\"1 type=Worker\"];\n"
