@@ -164,7 +164,8 @@ void CCodeCompiler::callSystemCompiler(const std::vector<std::string>& args)
     auto ret = system(compiler_call.str().c_str());
 
     if (ret != 0) {
-        IOTDB_FATAL_ERROR("PrecompiledHeader compilation failed!");
+        std::cout << "PrecompiledHeader compilation failed!";
+        throw "PrecompiledHeader compilation failed!";
     }
 }
 

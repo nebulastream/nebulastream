@@ -265,7 +265,9 @@ public:
 
     virtual const CodeExpressionPtr getCode() const
     {
+      
         u_int32_t i;
+      
         CodeExpressionPtr code;
         code = combine(std::make_shared<CodeExpression>(functionname_), std::make_shared<CodeExpression>("("));
         for(i = 0; i < expr_.size(); i++){
