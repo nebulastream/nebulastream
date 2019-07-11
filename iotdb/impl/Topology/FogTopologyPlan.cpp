@@ -13,7 +13,7 @@
 #include "Topology/FogTopologyPlan.hpp"
 #include "Topology/FogTopologySensorNode.hpp"
 #include "Topology/FogTopologyWorkerNode.hpp"
-#include "Util/NodeCapacityEnum.hpp"
+#include "Util/CPUCapacity.hpp"
 
 /**
  * Links for Boost Graph:
@@ -238,7 +238,7 @@ namespace iotdb {
         // create worker node
         auto ptr = std::make_shared<FogTopologyWorkerNode>();
         ptr->setId(getNextFreeNodeId());
-        ptr->setCpuCapacity(cpuCapacity);
+        ptr->setCpuCapacity(cpuCapacity.toInt());
         fGraph->addVertex(ptr);
 
         return ptr;
@@ -253,7 +253,7 @@ namespace iotdb {
         // create sensor node
         FogTopologySensorNodePtr ptr = std::make_shared<FogTopologySensorNode>();
         ptr->setId(getNextFreeNodeId());
-        ptr->setCpuCapacity(cpuCapacity);
+        ptr->setCpuCapacity(cpuCapacity.toInt());
         fGraph->addVertex(ptr);
 
         return ptr;

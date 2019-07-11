@@ -11,7 +11,7 @@
 #include "Topology/FogTopologyLink.hpp"
 #include "Topology/FogTopologySensorNode.hpp"
 #include "Topology/FogTopologyWorkerNode.hpp"
-#include "Util/NodeCapacityEnum.hpp"
+#include "Util/CPUCapacity.hpp"
 
 namespace iotdb {
 

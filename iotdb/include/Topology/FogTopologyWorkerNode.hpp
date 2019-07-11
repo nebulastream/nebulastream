@@ -69,6 +69,7 @@ namespace iotdb {
             return "Worker";
         }
 
+        void setQuery(InputQueryPtr pQuery) { this->query = pQuery; };
 
     private:
         size_t node_id;
