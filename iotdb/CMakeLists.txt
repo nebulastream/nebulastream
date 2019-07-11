@@ -64,6 +64,9 @@ set(LIBRARIES ${LIBRARIES} ${Boost_LIBRARIES})
 # Library containing dlopen and dlcose.
 set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
 
+# Library containing rest dependencies
+set(LIBRARIES ${LIBRARIES} cpprestsdk::cpprest)
+
 # Print all used include directories
 message(STATUS "INCLUDE_DIRS:")
 get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
@@ -71,6 +74,9 @@ foreach(dir ${dirs})
     message(STATUS "  - ${dir}")
 endforeach()
 
+# C++ Rest SDK
+set(cpprestsdk_DIR /usr/lib/x86_64-linux-gnu/cmake/)
+find_package(cpprestsdk REQUIRED)
 
 # Definition of runtime variables ######################################################################################
 
@@ -133,13 +139,13 @@ add_subdirectory(docs)
 message( STATUS "LLVM_LIBRARIES:" ${LLVM_LIBRARIES} )
 message( STATUS "LLVM_INCLUDE:" ${INCLUDE_DIRS} )
 
-add_executable(llvm_test llvm_test.cpp)
-target_link_libraries(llvm_test iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
-target_include_directories(llvm_test PUBLIC "include")
+#add_executable(llvm_test llvm_test.cpp)
+#target_link_libraries(llvm_test iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
+#target_include_directories(llvm_test PUBLIC "include")
 
-add_executable(ClangAstBuilder ClangAstBuilder.cpp)
-target_link_libraries(ClangAstBuilder iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
-target_include_directories(ClangAstBuilder PUBLIC "include")
+#add_executable(ClangAstBuilder ClangAstBuilder.cpp)
+#target_link_libraries(ClangAstBuilder iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
+#target_include_directories(ClangAstBuilder PUBLIC "include")
 
 add_executable(iotNode iotNode.cpp)
 target_link_libraries(iotNode iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS})
@@ -160,6 +166,10 @@ target_include_directories(iotClient PUBLIC "include")
 add_executable(iotServer iotServer.cpp)
 target_link_libraries(iotServer ${LIBRARIES})
 target_include_directories(iotServer PUBLIC "include")
+
+add_executable(iotRestServer iotRestServer.cpp)
+target_link_libraries(iotRestServer ${LIBRARIES} iotdb)
+target_include_directories(iotRestServer PUBLIC "include")
 
 # Add tests with command
 enable_testing()
