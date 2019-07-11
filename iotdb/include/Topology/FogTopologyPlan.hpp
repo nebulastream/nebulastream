@@ -11,6 +11,7 @@
 #include "Topology/FogTopologyLink.hpp"
 #include "Topology/FogTopologySensorNode.hpp"
 #include "Topology/FogTopologyWorkerNode.hpp"
+#include "Util/NodeCapacityEnum.hpp"
 
 namespace iotdb {
 
@@ -68,7 +69,7 @@ class FogTopologyPlan {
     FogTopologyWorkerNodePtr createFogWorkerNode();
     bool removeFogWorkerNode(FogTopologyWorkerNodePtr ptr);
 
-    FogTopologySensorNodePtr createFogSensorNode();
+    FogTopologySensorNodePtr createFogSensorNode(CPUCapacity capacity);
     bool removeFogSensorNode(FogTopologySensorNodePtr ptr);
 
     FogTopologyLinkPtr createFogTopologyLink(FogTopologyEntryPtr pSourceNode, FogTopologyEntryPtr pDestNode);

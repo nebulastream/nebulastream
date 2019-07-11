@@ -13,6 +13,7 @@
 #include "Topology/FogTopologyPlan.hpp"
 #include "Topology/FogTopologySensorNode.hpp"
 #include "Topology/FogTopologyWorkerNode.hpp"
+#include "Util/NodeCapacityEnum.hpp"
 
 /**
  * Links for Boost Graph:
@@ -258,12 +259,13 @@ FogTopologyWorkerNodePtr FogTopologyPlan::createFogWorkerNode()
 
 bool FogTopologyPlan::removeFogWorkerNode(FogTopologyWorkerNodePtr ptr) { return fGraph->removeVertex(ptr->getId()); }
 
-FogTopologySensorNodePtr FogTopologyPlan::createFogSensorNode()
+FogTopologySensorNodePtr FogTopologyPlan::createFogSensorNode(CPUCapacity capacity)
 {
 
     // create sensor node
     FogTopologySensorNodePtr ptr = std::make_shared<FogTopologySensorNode>();
     ptr->setId(getNextFreeNodeId());
+    ptr->setCpuCapacity(capacity);
     fGraph->addVertex(ptr);
 
     return ptr;
