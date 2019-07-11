@@ -4,6 +4,7 @@
 #include <memory>
 
 #include <Topology/FogTopologyPlan.hpp>
+#include <Util/NodeCapacityEnum.hpp>
 
 /**
  * TODO: add return of create
@@ -28,7 +29,7 @@ class FogTopologyManager {
 
     bool removeFogSensorNode(FogTopologySensorNodePtr ptr) { return currentPlan->removeFogSensorNode(ptr); }
 
-    FogTopologySensorNodePtr createFogSensorNode() { return currentPlan->createFogSensorNode(); }
+    FogTopologySensorNodePtr createFogSensorNode(CPUCapacity capacity) { return currentPlan->createFogSensorNode(capacity); }
 
     FogTopologyLinkPtr createFogTopologyLink(FogTopologyEntryPtr pSourceNode, FogTopologyEntryPtr pDestNode)
     {
