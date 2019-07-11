@@ -66,10 +66,10 @@ class FogTopologyPlan {
 
     FogTopologyEntryPtr getRootNode() const;
 
-    FogTopologyWorkerNodePtr createFogWorkerNode();
+    FogTopologyWorkerNodePtr createFogWorkerNode(CPUCapacity cpuCapacity);
     bool removeFogWorkerNode(FogTopologyWorkerNodePtr ptr);
 
-    FogTopologySensorNodePtr createFogSensorNode(CPUCapacity capacity);
+    FogTopologySensorNodePtr createFogSensorNode(CPUCapacity cpuCapacity);
     bool removeFogSensorNode(FogTopologySensorNodePtr ptr);
 
     FogTopologyLinkPtr createFogTopologyLink(FogTopologyEntryPtr pSourceNode, FogTopologyEntryPtr pDestNode);
