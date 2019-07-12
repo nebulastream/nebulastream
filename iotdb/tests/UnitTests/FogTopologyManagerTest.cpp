@@ -504,25 +504,6 @@ TEST_F(FogTopologyGraphTest, remove_non_existing_edge)
     EXPECT_FALSE(fog_graph->removeEdge(link_0->getId()));
 }
 
-TEST_F(FogTopologyGraphTest, create_example_topology)
-{
-
-    FogTopologyManager::getInstance().createExampleTopology();
-//    auto worker_node = std::make_shared<FogTopologyWorkerNode>();
-//    worker_node->setId(0);
-//    EXPECT_TRUE(fog_graph->addVertex(worker_node));
-//
-//    auto sensor_node = std::make_shared<FogTopologySensorNode>();
-//    sensor_node->setId(1);
-//    EXPECT_TRUE(fog_graph->addVertex(sensor_node));
-//
-//    auto link_0 = std::make_shared<FogTopologyLink>(sensor_node, worker_node);
-//    EXPECT_TRUE(fog_graph->addEdge(link_0));
-//
-//    EXPECT_TRUE(fog_graph->removeEdge(link_0->getId()));
-//    EXPECT_FALSE(fog_graph->removeEdge(link_0->getId()));
-}
-
 TEST_F(FogTopologyGraphTest, get_example_topology_as_json)
 {
 
