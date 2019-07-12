@@ -11,7 +11,8 @@
 
 namespace iotdb {
 
-    /**
+    /**\breif:
+    *
     * This class represent a worker node in fog topology.
     *
     * When you create a worker node you need to use the setters to define the node id and its cpu capacity.

@@ -4,7 +4,7 @@
 #include <API/InputQuery.hpp>
 #include <CodeGen/QueryPlanBuilder.hpp>
 #include <Rest/runtime_utils.hpp>
-#include <Util/FogTopologyGenerator.hpp>
+#include <Topology/FogTopologyManager.hpp>
 
 using namespace web;
 using namespace http;
@@ -24,16 +24,17 @@ void ServiceController::handleGet(http_request message) {
     if (!path.empty()) {
         if (path[0] == "service" && path[1] == "fog-plan") {
 
-            FogTopologyGenerator fogTopologyGenerator;
-            const std::shared_ptr<FogTopologyPlan> &exampleTopology = fogTopologyGenerator.generateExampleTopology();
-            fogTopologyGenerator.getFogTopologyAsJson(&exampleTopology);
+            FogTopologyManager &fogTopologyManager = FogTopologyManager::getInstance();
+
+            fogTopologyManager.createExampleTopology();
+            auto fogTopology = fogTopologyManager.getFogTopologyGraphAsTreeJson();
 
             http_response response(status_codes::OK);
             auto jsonResponse = json::value::object();
             jsonResponse["version"] = json::value::string("0.1.1.23232");
             jsonResponse["status"] = json::value::string("ready!");
             response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-            response.set_body(jsonResponse);
+            response.set_body(fogTopology);
             message.reply(response);
         } else {
             http_response response(status_codes::NotFound);
