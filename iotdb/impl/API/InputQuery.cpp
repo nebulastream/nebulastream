@@ -297,6 +297,7 @@ InputQuery &InputQuery::print() {
     void addChild(const OperatorPtr &op_parent, const OperatorPtr &op_child) {
         if (op_parent && op_child) {
             op_parent->childs.push_back(op_child);
+            op_child->parent = op_parent;
         }
     }
 
