@@ -62,7 +62,7 @@ InputQueryPtr createTestQuery()
     DataSourcePtr source = createTestSource();
 
     InputQueryPtr ptr =
-        std::make_shared<InputQuery>(InputQuery::create(config, source).filter(PredicatePtr()).printInputQueryPlan());
+        std::make_shared<InputQuery>(InputQuery::create(source).filter(PredicatePtr()));
 
     return ptr;
 }
@@ -101,10 +101,9 @@ InputQueryPtr createYSBTestQuery()
 
 
 
-        InputQueryPtr ptr = std::make_shared<InputQuery>(InputQuery::create(config, source)
-                                                             .filter(PredicatePtr())
-                                                             //           .window(WindowPtr())
-                                                             .printInputQueryPlan());
+        InputQueryPtr ptr = std::make_shared<InputQuery>(InputQuery::create(source)
+                                                             .filter(PredicatePtr()));
+                                                             //           .window(WindowPtr()));
 
 //    InputQueryPtr ptr = std::make_shared<InputQuery>(InputQuery::create(config, source)
 //                                                         .filter(PredicatePtr())

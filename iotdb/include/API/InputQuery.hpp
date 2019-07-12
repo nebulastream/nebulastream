@@ -17,15 +17,14 @@ typedef std::shared_ptr<Operator> OperatorPtr;
 /** \brief the central abstraction for the user to define queries */
 class InputQuery {
   public:
-    static InputQuery create(const Config& config, const DataSourcePtr& source);
+    static InputQuery create(const DataSourcePtr& source);
     InputQuery& operator=(const InputQuery& query);
     InputQuery(const InputQuery&);
     ~InputQuery();
 
-    void execute();
-
     // relational operators
     InputQuery& filter(const PredicatePtr& predicate);
+    InputQuery& filter(Predicate predicate);
     InputQuery& groupBy(const Attributes& grouping_fields, const AggregationPtr& aggr_spec);
     InputQuery& orderBy(const Sort& fields);
     InputQuery& join(const InputQuery& sub_query, const JoinPredicatePtr& joinPred);
@@ -40,16 +39,13 @@ class InputQuery {
     InputQuery& print(std::ostream& = std::cout);
 
     // helper operators
-    InputQuery& printInputQueryPlan();
     DataSourcePtr getSource() { return source; };
-    OperatorPtr getRoot() { return root; };
+    OperatorPtr getRoot() const { return root; };
 
 private:
-    InputQuery(const Config& config, const DataSourcePtr& source);
-    Config config;
+    InputQuery(const DataSourcePtr& source);
     DataSourcePtr source;
     OperatorPtr root;
-    void printInputQueryPlan(const OperatorPtr& curr, int depth);
 };
 
 /* this function **executes** the code provided by the user and returns an InputQuery Object */
