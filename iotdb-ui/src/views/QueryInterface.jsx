@@ -11,7 +11,7 @@ export default class QueryInterface extends React.Component {
     constructor(props, context) {
         super(props, context);
         this.state = {
-            data: [{"name": "Empty"}],
+            queryPlan: [{"name": "Empty"}],
             displayBasePlan: false,
             internalError: false,
         };
@@ -45,9 +45,7 @@ export default class QueryInterface extends React.Component {
     }
 
     updateQuery(newQuery) {
-        console.log(newQuery);
         this.userQuery = newQuery;
-        console.log(this.userQuery);
     }
 
     getQueryPlan(userQuery) {
@@ -103,7 +101,7 @@ export default class QueryInterface extends React.Component {
             .then(data => {
 
                 console.log(data);
-                // this.updateGraphData(data);
+                // this.updateGraphData(queryPlan);
             })
             .catch(err => {
                 // this.resetTreeData();
@@ -118,7 +116,7 @@ export default class QueryInterface extends React.Component {
     }
 
     updateGraphData(jsonObject) {
-        this.setState({data: jsonObject})
+        this.setState({queryPlan: jsonObject})
     }
 
     hideBasePlan() {
@@ -126,7 +124,7 @@ export default class QueryInterface extends React.Component {
     }
 
     resetTreeData() {
-        this.setState({data: [{"name": "empty"}]});
+        this.setState({queryPlan: [{"name": "empty"}]});
     }
 
     handleResponseError(response) {
@@ -202,23 +200,22 @@ export default class QueryInterface extends React.Component {
                                     </Col>
                                 </Row>
                                 <Row className="m-md-2">
-                                    <Col md="8">
-                                        <Collapse isOpen={this.state.displayBasePlan} toggler="#queryplan">
-                                            <div style={{width: '50em', height: '30em'}}>
-                                                <Tree
-                                                    id="tree" // id is mandatory, if no id is defined rd3g will throw an error
-                                                    data={this.state.data}
-                                                    pathFunc='diagonal'
-                                                    orientation='vertical'
-                                                    nodeSvgShape={this.svgSquare}
-                                                    separation={{siblings: 1, nonSiblings: 1}}
-                                                    translate={{x: 200, y: 50}}
-                                                    textLayout={{}}
-                                                    styles={{fill: 'red'}}
-                                                />
-                                            </div>
-                                        </Collapse>
-                                    </Col>
+                                    <Collapse isOpen={this.state.displayBasePlan} toggler="#queryplan">
+                                        <Col xl={19}
+                                             style={{backgroundColor: 'lightblue', height: '300px'}}>
+                                            <Tree
+                                                id="tree" // id is mandatory, if no id is defined rd3g will throw an error
+                                                data={this.state.queryPlan}
+                                                pathFunc='diagonal'
+                                                orientation='vertical'
+                                                nodeSvgShape={this.svgSquare}
+                                                separation={{siblings: 1, nonSiblings: 1}}
+                                                translate={{x: 200, y: 50}}
+                                                textLayout={{}}
+                                                styles={{fill: 'red'}}
+                                            />
+                                        </Col>
+                                    </Collapse>
                                 </Row>
                             </CardBody>
                         </Card>

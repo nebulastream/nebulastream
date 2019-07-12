@@ -12,7 +12,9 @@ namespace iotdb {
         const OperatorPtr &root = inputQuery.getRoot();
 
         if (!root) {
-            return emptyPlan();
+            auto emptyPlan = json::value::object();
+            emptyPlan["name"] = json::value::string("Empty-0");
+            return emptyPlan;
         }
 
         auto basePlan = json::value::object();
@@ -23,13 +25,6 @@ namespace iotdb {
         }
 
         return basePlan;
-    }
-
-    json::value QueryPlanBuilder::emptyPlan() {
-
-        auto emptyPlan = json::value::object();
-        emptyPlan["name"] = json::value::string("Empty-0");
-        return emptyPlan;
     }
 
     std::vector<json::value> QueryPlanBuilder::getChildren(const OperatorPtr &root) {
