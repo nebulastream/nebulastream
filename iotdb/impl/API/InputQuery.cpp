@@ -7,7 +7,7 @@
 #include <Runtime/DataSink.hpp>
 
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
-#include <Util/ErrorHandling.hpp>
+#include <API/UserAPIExpression.hpp>
 
 namespace iotdb {
 
@@ -78,17 +78,16 @@ namespace iotdb {
 // return sub_query
 //}
 
-    InputQuery::InputQuery(const Config &config, const DataSourcePtr &source) : config(config), source(source),
+    InputQuery::InputQuery(const DataSourcePtr &source) : source(source),
                                                                                 root() {}
 
 /* TODO: perform deep copy of operator graph */
-    InputQuery::InputQuery(const InputQuery &query) : config(query.config), source(query.source),
+    InputQuery::InputQuery(const InputQuery &query) : source(query.source),
                                                       root(recursiveCopy(query.root)) {
     }
 
     InputQuery &InputQuery::operator=(const InputQuery &query) {
         if (&query != this) {
-            this->config = query.config;
             this->source = query.source;
             this->root = recursiveCopy(query.root);
         }
@@ -98,20 +97,26 @@ namespace iotdb {
 
     InputQuery::~InputQuery() {}
 
-    InputQuery InputQuery::create(const Config &config, const DataSourcePtr &source) {
-        InputQuery q(config, source);
+    InputQuery InputQuery::create(const DataSourcePtr &source) {
+        InputQuery q(source);
         OperatorPtr op = createSourceOperator(source);
         q.root = op;
         return q;
     }
 
-    void InputQuery::execute() {}
-
 /*
  * Relational Operators
  */
+    InputQuery &InputQuery::filter(Predicate predicate) {
+        PredicatePtr pred = std::dynamic_pointer_cast<Predicate>(
+                predicate.copy()
+        );
+        return filter(pred);
+    }
+
     InputQuery &InputQuery::filter(const PredicatePtr &predicate) {
         OperatorPtr op = createFilterOperator(predicate);
+        //op->parent = root;
         addChild(op, root);
         root = op;
         return *this;
@@ -294,6 +299,7 @@ InputQuery &InputQuery::print() {
 // class Operator;
 // typedef std::shared_ptr<Operator> OperatorPtr;
 
+
     void addChild(const OperatorPtr &op_parent, const OperatorPtr &op_child) {
         if (op_parent && op_child) {
             op_parent->childs.push_back(op_child);
@@ -301,45 +307,6 @@ InputQuery &InputQuery::print() {
         }
     }
 
-    const std::vector<OperatorPtr> getChildNodes(const OperatorPtr &op) {
-        std::vector<OperatorPtr> result;
-        if (!op) {
-            return result;
-        } else {
-            return op->childs;
-        }
-    }
-
-    void InputQuery::printInputQueryPlan(const OperatorPtr &p, int indent) {
-        if (p) {
-            if (indent) {
-                std::cout << std::setw(indent) << ' ';
-            }
-            if (p) {
-                std::cout << "  \n" << std::setw(indent) << ' ';
-            }
-            std::cout << p->toString() << "\n ";
-            std::vector<OperatorPtr> childs = getChildNodes(p);
-
-            for (const OperatorPtr &op : childs) {
-                if (op) {
-                    printInputQueryPlan(op, indent + 4);
-                }
-            }
-        }
-    }
-
-    InputQuery &InputQuery::printInputQueryPlan() {
-        std::cout << "InputQuery Plan " << std::string(50, '-') << std::endl;
-
-        if (!root) {
-            printf("No root node; cannot print InputQueryplan\n");
-        } else {
-            printInputQueryPlan(root, 0);
-            printf("\n");
-        }
-        return *this;
-    }
 
 // InputQuery &InputQuery::printPipelinePermutations() {
 //  std::cout << "InputQuery Plan - Permutations of the longest Pipeline " << std::string(30, '-') << std::endl;

@@ -5,4 +5,5 @@ add_source_iotdb(
         ParameterTypes.cpp
 	InputQuery.cpp
 	UserAPIExpression.cpp
+		Environment.cpp
 	)
