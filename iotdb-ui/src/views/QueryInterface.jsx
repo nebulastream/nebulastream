@@ -54,7 +54,7 @@ export default class QueryInterface extends React.Component {
             '   .print(std::cout);';
         this.getQueryPlan = this.getQueryPlan.bind(this);
         this.updateQuery = this.updateQuery.bind(this);
-        this.updateGraphData = this.updateGraphData.bind(this);
+        this.updateData = this.updateData.bind(this);
         this.hideBasePlan = this.hideBasePlan.bind(this);
         this.resetTreeData = this.resetTreeData.bind(this);
         this.onDismiss = this.onDismiss.bind(this);
@@ -85,7 +85,7 @@ export default class QueryInterface extends React.Component {
             })
             .then(data => {
 
-                this.updateGraphData(data);
+                this.updateData("query", data);
             })
             .catch(err => {
                 this.resetTreeData();
@@ -109,31 +109,33 @@ export default class QueryInterface extends React.Component {
             }
         )
             .then(response => {
-                // if (!response.ok) {
-                //     this.handleResponseError(response);
-                // }
-                // this.onDismiss();
+                if (!response.ok) {
+                    this.handleResponseError(response);
+                }
+                this.onDismiss();
                 return response.json();
             })
             .then(data => {
-
-                console.log(data);
-                // this.updateGraphData(queryPlan);
+                this.updateData("topology", data);
             })
             .catch(err => {
-                // this.resetTreeData();
-                // if (err.message.includes("500")) {
-                //     this.showAlert()
-                // } else {
-                console.log(err)
-                // }
+                this.resetTreeData();
+                if (err.message.includes("500")) {
+                    this.showAlert()
+                } else {
+                    console.log(err)
+                }
             });
-        // this.setState({displayBasePlan: true});
+        this.setState({displayTopologyPlan: true});
         console.log("Fetching completed")
     }
 
-    updateGraphData(jsonObject) {
-        this.setState({queryPlan: jsonObject})
+    updateData(modelName, jsonObject) {
+        if (modelName === 'query') {
+            this.setState({queryPlan: jsonObject})
+        } else if (modelName === 'topology') {
+            this.setState({topologyPlan: jsonObject})
+        }
     }
 
     hideBasePlan() {
