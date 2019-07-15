@@ -247,13 +247,14 @@ export default class QueryInterface extends React.Component {
                                             Dropdown
                                         </DropdownToggle>
                                         <DropdownMenu>
-                                            <DropdownItem header>Header</DropdownItem>
-                                            <DropdownItem>Some Action</DropdownItem>
-                                            <DropdownItem disabled>Action (disabled)</DropdownItem>
-                                            <DropdownItem>Foo Action</DropdownItem>
+                                            <DropdownItem header>Placement</DropdownItem>
+                                            <DropdownItem>HLF</DropdownItem>
+                                            <DropdownItem>TD</DropdownItem>
+                                            <DropdownItem header>Optimization Steps</DropdownItem>
+                                            <DropdownItem>Step1</DropdownItem>
                                         </DropdownMenu>
                                     </UncontrolledDropdown>
-                                    <Alert className="m-md-2">Query Execution Plan : {}</Alert>
+                                    <Alert className="m-md-2">Query Execution Plan For </Alert>
                                     <Tree
                                         id="queryExecutionPlanTree"
                                         data={this.state.executionPlan}
