@@ -82,7 +82,7 @@ namespace iotdb {
 
             auto topologyAsJson = json::value::object();
 
-            const auto label = std::to_string(rootNode->getId()) + " : " + rootNode->getEntryTypeString();
+            const auto label = std::to_string(rootNode->getId()) + "-" + rootNode->getEntryTypeString();
             topologyAsJson["name"] = json::value::string(label);
             auto children = getChildrenNode(rootNode);
             if (!children.empty()) {
@@ -107,7 +107,8 @@ namespace iotdb {
                 const FogTopologyEntryPtr &sourceNode = edge.ptr->getSourceNode();
                 if(sourceNode){
                     auto child = json::value::object();
-                    child["name"] = json::value::string(sourceNode->getId() +  ":"+ sourceNode->getEntryTypeString());
+                    const auto label = std::to_string(sourceNode->getId()) + "-" + sourceNode->getEntryTypeString();
+                    child["name"] = json::value::string(label);
                     const std::vector<json::value> &grandChildren = getChildrenNode(sourceNode);
                     if(!grandChildren.empty()) {
                         child["children"] = json::value::array(grandChildren);

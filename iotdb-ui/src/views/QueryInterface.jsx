@@ -21,6 +21,7 @@ import ButtonGroup from "reactstrap/es/ButtonGroup";
 
 export default class QueryInterface extends React.Component {
 
+
     constructor(props, context) {
         super(props, context);
         this.state = {
@@ -35,11 +36,11 @@ export default class QueryInterface extends React.Component {
         this.svgSquare = {
             "shape": "rect",
             "shapeProps": {
-                "width": 140,
+                "width": 110,
                 "height": 20,
                 "y": -10,
                 "x": -10,
-                fill: 'olive',
+                fill: 'lightblue',
             }
         };
         this.userQuery = 'Config config = Config::create()\n' +
@@ -52,6 +53,7 @@ export default class QueryInterface extends React.Component {
             'return InputQuery::create(config, source)\n' +
             '   .filter(PredicatePtr())\n' +
             '   .print(std::cout);';
+        this.queryEditor = React.createRef();
         this.getQueryPlan = this.getQueryPlan.bind(this);
         this.updateQuery = this.updateQuery.bind(this);
         this.updateData = this.updateData.bind(this);
@@ -59,6 +61,7 @@ export default class QueryInterface extends React.Component {
         this.resetTreeData = this.resetTreeData.bind(this);
         this.onDismiss = this.onDismiss.bind(this);
         this.showAlert = this.showAlert.bind(this);
+        this.getExecutionPlan = this.getExecutionPlan.bind(this);
     }
 
     updateQuery(newQuery) {
@@ -130,6 +133,11 @@ export default class QueryInterface extends React.Component {
         console.log("Fetching completed")
     }
 
+    getExecutionPlan() {
+        this.setState({displayExecutionPlan : true});
+        // this.queryEditor.current.focus();
+    }
+
     updateData(modelName, jsonObject) {
         if (modelName === 'query') {
             this.setState({queryPlan: jsonObject})
@@ -161,127 +169,123 @@ export default class QueryInterface extends React.Component {
     render() {
 
         return (
-            <>
-                <div>
-                    <Col md="12">
-                        <Card>
-                            <CardHeader>
-                                <h1>IotDB WebInterface</h1>
-                            </CardHeader>
-                            <CardBody>
-                                <Alert className="m-md-2">Feed Your Query Here</Alert>
-                                <Alert className="m-md-2" color="danger" isOpen={this.state.internalError}
-                                       toggle={this.onDismiss}
-                                       fade={true}>
-                                    Received internal server error for user query. Please make sure the input query is
-                                    correct.
-                                </Alert>
-                                <Card className="m-md-2">
-                                    <AceEditor
-                                        mode="c_cpp"
-                                        theme="github"
-                                        fontSize={16}
-                                        width="100%"
-                                        showPrintMargin={true}
-                                        showGutter={true} l
-                                        editorProps={{$blockScrolling: true}}
-                                        setOptions={{
-                                            showLineNumbers: true,
-                                            tabSize: 2,
-                                        }}
-                                        name="query"
-                                        onChange={this.updateQuery}
-                                        value={this.userQuery}
+            <div>
+                <Col md="12">
+                    <Card>
+                        <CardHeader>
+                            <h1>IotDB WebInterface</h1>
+                        </CardHeader>
+                        <CardBody>
+                            <Alert className="m-md-2">Feed Your Query Here</Alert>
+                            <Alert className="m-md-2" color="danger" isOpen={this.state.internalError}
+                                   toggle={this.onDismiss}
+                                   fade={true}>
+                                Received internal server error for user query. Please make sure the input query is
+                                correct.
+                            </Alert>
+                            <Card className="m-md-2">
+                                <AceEditor
+                                    focus={true}
+                                    mode="c_cpp"
+                                    theme="github"
+                                    fontSize={16}
+                                    width="100%"
+                                    height="300px"
+                                    showPrintMargin={true}
+                                    showGutter={true}
+                                    editorProps={{$blockScrolling: true}}
+                                    setOptions={{
+                                        showLineNumbers: true,
+                                        tabSize: 2,
+                                    }}
+                                    name="query"
+                                    onChange={this.updateQuery}
+                                    value={this.userQuery}
+                                />
+                            </Card>
+                            <Row className="m-md-2">
+                                <ButtonGroup>
+                                    <Button color="primary">Query</Button>
+                                    <Button color="primary" onClick={() => {
+                                        this.getQueryPlan(this.userQuery)
+                                    }}>Show Query
+                                        Plan</Button>
+                                    <Button color="primary" onClick={() => {
+                                        this.getFogTopology()
+                                    }}>Show Fog
+                                        Topology</Button>
+                                    <Button color="primary" onClick={() => {this.getExecutionPlan()}}>Show Execution Plan</Button>
+                                </ButtonGroup>
+                                <ButtonGroup>
+                                    <Button color="info" onClick={() => {
+                                        this.hideBasePlan()
+                                    }}>Hide
+                                        Plan</Button>
+                                </ButtonGroup>
+                            </Row>
+                            <Row className="m-md-2">
+                                <Collapse isOpen={this.state.displayBasePlan}
+                                          style={{width: '100%', height: '30em'}} className="border">
+                                    <Alert className="m-md-2">Query Plan</Alert>
+                                    <Tree
+                                        id="queryPlanTree"
+                                        data={this.state.queryPlan}
+                                        pathFunc='diagonal'
+                                        orientation='vertical'
+                                        nodeSvgShape={this.svgSquare}
+                                        separation={{siblings: 1, nonSiblings: 1}}
+                                        translate={{x: 400, y: 50}}
+                                        textLayout={{}}
                                     />
-                                </Card>
-                                <Row className="m-md-2">
-                                    <ButtonGroup>
-                                        <Button color="primary">Query</Button>
-                                        <Button color="primary" onClick={() => {
-                                            this.getQueryPlan(this.userQuery)
-                                        }}>Show Query
-                                            Plan</Button>
-                                        <Button color="primary" onClick={() => {
-                                            this.getFogTopology()
-                                        }}>Show Fog
-                                            Topology</Button>
-                                    </ButtonGroup>
-                                    <ButtonGroup>
-                                        <Button color="info" onClick={() => {
-                                            this.hideBasePlan()
-                                        }}>Hide
-                                            Plan</Button>
-                                    </ButtonGroup>
-                                </Row>
-                                <Row className="m-md-1">
-                                    <Col>
-                                        <Row className="m-md-1 border">
-                                            <Collapse isOpen={this.state.displayBasePlan}
-                                                      style={{width: '30em', height: '30em'}}>
-                                                <Tree
-                                                    id="tree" // id is mandatory, if no id is defined rd3g will throw an error
-                                                    data={this.state.queryPlan}
-                                                    pathFunc='diagonal'
-                                                    orientation='vertical'
-                                                    nodeSvgShape={this.svgSquare}
-                                                    separation={{siblings: 1, nonSiblings: 1}}
-                                                    translate={{x: 200, y: 50}}
-                                                    textLayout={{}}
-                                                />
-                                            </Collapse>
-                                        </Row>
-                                    </Col>
-                                    <Col>
-                                        <Row className="m-md-1 border">
-                                            <Collapse isOpen={this.state.displayExecutionPlan}
-                                                      style={{width: '30em', height: '30em'}}>
-                                                <UncontrolledDropdown className="m-md-1">
-                                                    <DropdownToggle caret>
-                                                        Dropdown
-                                                    </DropdownToggle>
-                                                    <DropdownMenu>
-                                                        <DropdownItem header>Header</DropdownItem>
-                                                        <DropdownItem>Some Action</DropdownItem>
-                                                        <DropdownItem disabled>Action (disabled)</DropdownItem>
-                                                        <DropdownItem>Foo Action</DropdownItem>
-                                                    </DropdownMenu>
-                                                </UncontrolledDropdown>
-                                                <Tree
-                                                    id="tree" // id is mandatory, if no id is defined rd3g will throw an error
-                                                    data={this.state.executionPlan}
-                                                    pathFunc='diagonal'
-                                                    orientation='vertical'
-                                                    nodeSvgShape={this.svgSquare}
-                                                    separation={{siblings: 1, nonSiblings: 1}}
-                                                    translate={{x: 200, y: 50}}
-                                                    textLayout={{}}
-                                                />
-                                            </Collapse>
-                                        </Row>
-                                    </Col>
-                                    <Col>
-                                        <Row className="m-md-1 border">
-                                            <Collapse isOpen={this.state.displayTopologyPlan}
-                                                      style={{width: '30em', height: '30em'}}>
-                                                <Tree
-                                                    id="tree" // id is mandatory, if no id is defined rd3g will throw an error
-                                                    data={this.state.topologyPlan}
-                                                    pathFunc='diagonal'
-                                                    orientation='vertical'
-                                                    nodeSvgShape={this.svgSquare}
-                                                    separation={{siblings: 1, nonSiblings: 1}}
-                                                    translate={{x: 200, y: 50}}
-                                                    textLayout={{}}
-                                                />
-                                            </Collapse>
-                                        </Row>
-                                    </Col>
-                                </Row>
-                            </CardBody>
-                        </Card>
-                    </Col>
-                </div>
-            </>
+                                </Collapse>
+                            </Row>
+                            <Row className="m-md-2">
+                                <Collapse isOpen={this.state.displayExecutionPlan}
+                                          style={{width: '100%', height: '30em'}} className="border">
+                                    <UncontrolledDropdown className="m-md-1">
+                                        <DropdownToggle caret>
+                                            Dropdown
+                                        </DropdownToggle>
+                                        <DropdownMenu>
+                                            <DropdownItem header>Header</DropdownItem>
+                                            <DropdownItem>Some Action</DropdownItem>
+                                            <DropdownItem disabled>Action (disabled)</DropdownItem>
+                                            <DropdownItem>Foo Action</DropdownItem>
+                                        </DropdownMenu>
+                                    </UncontrolledDropdown>
+                                    <Alert className="m-md-2">Query Execution Plan : {}</Alert>
+                                    <Tree
+                                        id="queryExecutionPlanTree"
+                                        data={this.state.executionPlan}
+                                        pathFunc='diagonal'
+                                        orientation='vertical'
+                                        nodeSvgShape={this.svgSquare}
+                                        separation={{siblings: 1, nonSiblings: 1}}
+                                        translate={{x: 200, y: 50}}
+                                        textLayout={{}}
+                                    />
+                                </Collapse>
+                            </Row>
+                            <Row className="m-md-2">
+                                <Collapse isOpen={this.state.displayTopologyPlan}
+                                          style={{width: '100%', height: '30em'}} className="border">
+                                    <Alert className="m-md-2">Fog Topology</Alert>
+                                    <Tree
+                                        id="fogTopologyTree"
+                                        data={this.state.topologyPlan}
+                                        pathFunc='diagonal'
+                                        orientation='vertical'
+                                        nodeSvgShape={this.svgSquare}
+                                        separation={{siblings: 1, nonSiblings: 1}}
+                                        translate={{x: 400, y: 50}}
+                                        textLayout={{}}
+                                    />
+                                </Collapse>
+                            </Row>
+                        </CardBody>
+                    </Card>
+                </Col>
+            </div>
         );
     }
 };
