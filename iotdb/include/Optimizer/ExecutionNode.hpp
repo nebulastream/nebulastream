@@ -10,6 +10,8 @@
 #define IOTDB_EXECUTIONNODE_HPP
 
 
+#include <Topology/FogTopologyEntry.hpp>
+
 namespace iotdb {
     static size_t currentNodeId = 1;
 
@@ -23,7 +25,7 @@ namespace iotdb {
             this->nodeAndOperator = nodeAndOperator;
         };
 
-        int getId() { return this->id };
+        int getId() { return this->id; };
 
         std::string getOperatorName() {
             return this->operatorName;
@@ -33,7 +35,7 @@ namespace iotdb {
             return this->nodeName;
         }
 
-        std::string getNoeAndOperator() {
+        FogTopologyEntryPtr getNoeAndOperator() {
             return this->nodeAndOperator;
         }
 
