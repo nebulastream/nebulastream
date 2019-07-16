@@ -4,6 +4,7 @@
 #include <Topology/FogTopologyManager.hpp>
 
 #include "include/API/InputQuery.hpp"
+#include <API/UserAPIExpression.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Optimizer/FogOptimizer.hpp>
 #include <Optimizer/FogRunTime.hpp>
@@ -62,7 +63,9 @@ InputQueryPtr createTestQuery()
     DataSourcePtr source = createTestSource();
 
     InputQueryPtr ptr =
-        std::make_shared<InputQuery>(InputQuery::create(source).filter(PredicatePtr()));
+        std::make_shared<InputQuery>(
+                InputQuery::from("test")
+                .filter(Field("test")==10);
 
     return ptr;
 }
@@ -101,8 +104,8 @@ InputQueryPtr createYSBTestQuery()
 
 
 
-        InputQueryPtr ptr = std::make_shared<InputQuery>(InputQuery::create(source)
-                                                             .filter(PredicatePtr()));
+      //  InputQueryPtr ptr = std::make_shared<InputQuery>(InputQuery::create(source)
+        //                                                     .filter(PredicatePtr()));
                                                              //           .window(WindowPtr()));
 
 //    InputQueryPtr ptr = std::make_shared<InputQuery>(InputQuery::create(config, source)

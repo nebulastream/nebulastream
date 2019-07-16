@@ -33,6 +33,8 @@ typedef std::shared_ptr<UserAPIExpression> UserAPIExpressionPtr;
 class Predicate;
 typedef std::shared_ptr<Predicate> PredicatePtr;
 
+class Field;
+typedef std::shared_ptr<Field> FieldPtr;
 	
 class UserAPIExpression{
 public:
