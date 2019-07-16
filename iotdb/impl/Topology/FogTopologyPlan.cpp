@@ -67,18 +67,6 @@ namespace iotdb {
         // should never happen
         return vertex_t();
     }
-
-    const std::vector<FogTopologyEntryPtr> FogGraph::getAllVertex() const {
-
-        vertex_iterator vertex, vertex_end, next_vertex;
-        boost::tie(vertex, vertex_end) = vertices(graph);
-        std::vector<FogTopologyEntryPtr> allVertex;
-        for (next_vertex = vertex; vertex != vertex_end; vertex = next_vertex) {
-            ++next_vertex;
-            allVertex.push_back(graph[*vertex].ptr);
-        }
-        return allVertex;
-    }
     
     bool FogGraph::addVertex(FogTopologyEntryPtr ptr) {
         // does graph already contain vertex?
