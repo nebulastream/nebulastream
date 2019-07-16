@@ -134,9 +134,9 @@ CompiledDummyPlanPtr createDummyQEP()
 
 void createTestTopo(FogTopologyManager& fMgnr)
 {
-    FogTopologyWorkerNodePtr f1 = fMgnr.createFogWorkerNode();
+    FogTopologyWorkerNodePtr f1 = fMgnr.createFogWorkerNode(CPUCapacity::HIGH);
 
-    FogTopologySensorNodePtr s1 = fMgnr.createFogSensorNode();
+    FogTopologySensorNodePtr s1 = fMgnr.createFogSensorNode(CPUCapacity::LOW);
 
     FogTopologyLinkPtr l1 = fMgnr.createFogTopologyLink(s1, f1);
 
