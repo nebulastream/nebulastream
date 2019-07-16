@@ -3,11 +3,11 @@
 #include <iostream>
 
 #include <API/InputQuery.hpp>
+#include <API/UserAPIExpression.hpp>
 #include <Operators/Operator.hpp>
 #include <Runtime/DataSink.hpp>
 
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
-#include <API/UserAPIExpression.hpp>
 
 namespace iotdb {
 
@@ -42,6 +42,8 @@ namespace iotdb {
             code << "#include <API/Config.hpp>" << std::endl;
             code << "#include <API/Schema.hpp>" << std::endl;
             code << "#include <Runtime/DataSource.hpp>" << std::endl;
+            code << "#include <API/InputQuery.hpp>" << std::endl;
+            code << "#include <API/Environment.hpp>" << std::endl;
             code << "namespace iotdb{" << std::endl;
             code << "InputQuery createQuery(){" << std::endl;
             code << query_code_snippet << std::endl;
@@ -79,7 +81,7 @@ namespace iotdb {
 //}
 
     InputQuery::InputQuery(const std::string source_stream) : source_stream(source_stream),
-                                                                                root() {}
+                                                              root() {}
 
 /* TODO: perform deep copy of operator graph */
     InputQuery::InputQuery(const InputQuery &query) : source_stream(query.source_stream),
@@ -98,28 +100,23 @@ namespace iotdb {
     InputQuery::~InputQuery() {}
 
 
-    InputQuery InputQuery::from(const std::string source_stream) {
+    InputQuery InputQuery::from(const std::string source_stream, const Schema &schema) {
         InputQuery q(source_stream);
-        //OperatorPtr op = createSourceOperator(source);
-        //q.root = op;
+        OperatorPtr op = createSourceOperator(createSchemaTestDataSource(schema));
+        q.root = op;
         return q;
     }
 
     /*
- * Relational Operators
- */
+    * Relational Operators
+    */
 
-    InputQuery &InputQuery::select(Field field) {
+    InputQuery &InputQuery::select(const Field &field) {
         IOTDB_NOT_IMPLEMENTED
         return *this;
     }
 
-    InputQuery &InputQuery::select(const Field field1, const  Field field2) {
-        IOTDB_NOT_IMPLEMENTED
-        return *this;
-    }
-
-    InputQuery &InputQuery::select(const Field field1, const Field field2, const Field field3) {
+    InputQuery &InputQuery::select(const Field &field1, const Field &field2) {
         IOTDB_NOT_IMPLEMENTED
         return *this;
     }
@@ -135,11 +132,8 @@ namespace iotdb {
         return *this;
     }
 
-    InputQuery &InputQuery::map(const MapperPtr &mapper) {
-        OperatorPtr op = createMapOperator(mapper);
-        addChild(op, root);
-        root = op;
-        return *this;
+    InputQuery &InputQuery::map(const Field &field, const Predicate predicate) {
+        IOTDB_NOT_IMPLEMENTED
     }
 
     InputQuery &InputQuery::combine(const iotdb::InputQuery &sub_query) {
@@ -157,14 +151,16 @@ namespace iotdb {
         return *this;
     }
 
-    InputQuery &InputQuery::extractTimestamp(const Field field) {
-        return *this;
-    }
-
 // streaming operators
-    InputQuery &InputQuery::window(const WindowPtr &window) {
+    InputQuery &InputQuery::windowByKey(const iotdb::Field &field, const iotdb::WindowTypePtr windowType,
+                                        const iotdb::WindowAggregation &aggregation) {
         IOTDB_NOT_IMPLEMENTED
     }
+
+    InputQuery &InputQuery::window(const iotdb::WindowTypePtr windowType, const iotdb::WindowAggregation &aggregation) {
+        IOTDB_NOT_IMPLEMENTED
+    }
+
 
 // output operators
     InputQuery &InputQuery::writeToFile(const std::string &file_name) {

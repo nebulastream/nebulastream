@@ -64,6 +64,7 @@ class DataSource {
 
 typedef std::shared_ptr<DataSource> DataSourcePtr;
 
+const DataSourcePtr createSchemaTestDataSource(const Schema& schema);
 const DataSourcePtr createTestSource();
 const DataSourcePtr createYSBSource(size_t bufferCnt, size_t campaingCnt, bool preGen);
 

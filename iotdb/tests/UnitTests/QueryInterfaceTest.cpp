@@ -62,13 +62,21 @@ namespace iotdb {
          * const DataSourcePtr createTestSource();
          * const DataSourcePtr createBinaryFileSource(const Schema& schema, const std::string& path_to_file);
          * const DataSourcePtr createRemoteTCPSource(const Schema& schema, const std::string& server_ip, int port);
-         */
 
-        DataSourcePtr source(new GeneratorSource<SelectionDataGenFunctor>(schema, 1));
-        InputQuery &query = InputQuery::create(source)
-                .filter((PredicateItem(schema[0]) < PredicateItem(schema[1])))
+        InputQuery &query = InputQuery::from("cars", schema)
+                .filter(Field("rents") <= 10)
+                .map(Field("revenue"), Field("price") - Field("tax"))
+                .windowByKey(
+                        Field("id"),
+                        TumblingWindow::of(Seconds(10)),
+                        Sum(Field("revenue")).as(Field("revenuePerCar"))
+                )
                 .print(std::cout);
+  */
 
+        InputQuery &query = InputQuery::from("cars", schema)
+                .filter(Field("value") <= 10)
+                .print(std::cout);
         env.printInputQueryPlan(query);
         env.executeQuery(query);
 
@@ -84,12 +92,12 @@ namespace iotdb {
                 ".setNumberOfWorker(2);"
              << std::endl;
 
-        code << "Schema schema = Schema::create().addField(\"\",INT32);" << std::endl;
+        code << "Schema schema = Schema::create().addField(\"test\",INT32);" << std::endl;
 
         code << "DataSourcePtr source = createTestSource();" << std::endl;
 
-        code << "return InputQuery::create(source)" << std::endl
-             << ".filter(PredicatePtr())" << std::endl
+        code << "return InputQuery::from(\"test\", schema)" << std::endl
+             << "" << std::endl
              << ";" << std::endl;
 
         InputQuery q(createQueryFromCodeString(code.str()));

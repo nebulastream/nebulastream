@@ -1,0 +1,1328 @@
+diff --git a/iotdb/impl/API/Environment.cpp b/iotdb/impl/API/Environment.cpp
+index 5c9e318..6793014 100644
+--- a/iotdb/impl/API/Environment.cpp
++++ b/iotdb/impl/API/Environment.cpp
+@@ -12,18 +12,25 @@
+ #include <CodeGen/C_CodeGen/Declaration.hpp>
+ #include <CodeGen/C_CodeGen/FunctionBuilder.hpp>
+ #include <CodeGen/C_CodeGen/FileBuilder.hpp>
++#include <CodeGen/PipelineStage.hpp>
+ #include <CodeGen/CodeGen.hpp>
++#include <Runtime/Dispatcher.hpp>
++#include <CodeGen/GeneratedQueryExecutionPlan.hpp>
+ 
+ namespace iotdb {
+     Environment::Environment(const Config& config) : config(config) {}
+     Environment Environment::create(const Config& config) { return Environment(config); }
+-    void Environment::executeQuery(const InputQuery& inputQuery) {
++    void Environment::executeQuery(InputQuery& inputQuery) {
+ 
+         CodeGeneratorPtr code_gen = createCodeGenerator();
+         PipelineContextPtr context = createPipelineContext();
+         inputQuery.getRoot()->produce(code_gen, context, std::cout);
+ 
+         PipelineStagePtr stage = code_gen->compile(CompilerArgs());
++        GeneratedQueryExecutionPlan *plan = new GeneratedQueryExecutionPlan(&inputQuery, &stage);
++        const std::shared_ptr<GeneratedQueryExecutionPlan> &ptl = std::shared_ptr<GeneratedQueryExecutionPlan>(plan);
++        Dispatcher::instance().registerQuery(ptl);
++
+     }
+ 
+     const std::vector<OperatorPtr> getChildNodes(const OperatorPtr &op) {
+diff --git a/iotdb/impl/API/InputQuery.cpp b/iotdb/impl/API/InputQuery.cpp
+index d13ce7c..1dc9a68 100644
+--- a/iotdb/impl/API/InputQuery.cpp
++++ b/iotdb/impl/API/InputQuery.cpp
+@@ -78,17 +78,17 @@ namespace iotdb {
+ // return sub_query
+ //}
+ 
+-    InputQuery::InputQuery(const DataSourcePtr &source) : source(source),
++    InputQuery::InputQuery(const std::string source_stream) : source_stream(source_stream),
+                                                                                 root() {}
+ 
+ /* TODO: perform deep copy of operator graph */
+-    InputQuery::InputQuery(const InputQuery &query) : source(query.source),
++    InputQuery::InputQuery(const InputQuery &query) : source_stream(query.source_stream),
+                                                       root(recursiveCopy(query.root)) {
+     }
+ 
+     InputQuery &InputQuery::operator=(const InputQuery &query) {
+         if (&query != this) {
+-            this->source = query.source;
++            this->source_stream = query.source_stream;
+             this->root = recursiveCopy(query.root);
+         }
+         return *this;
+@@ -97,47 +97,57 @@ namespace iotdb {
+ 
+     InputQuery::~InputQuery() {}
+ 
+-    InputQuery InputQuery::create(const DataSourcePtr &source) {
+-        InputQuery q(source);
+-        OperatorPtr op = createSourceOperator(source);
+-        q.root = op;
++
++    InputQuery InputQuery::from(const std::string source_stream) {
++        InputQuery q(source_stream);
++        //OperatorPtr op = createSourceOperator(source);
++        //q.root = op;
+         return q;
+     }
+ 
+-/*
++    /*
+  * Relational Operators
+  */
++
++    InputQuery &InputQuery::select(Field field) {
++        IOTDB_NOT_IMPLEMENTED
++        return *this;
++    }
++
++    InputQuery &InputQuery::select(const Field field1, const  Field field2) {
++        IOTDB_NOT_IMPLEMENTED
++        return *this;
++    }
++
++    InputQuery &InputQuery::select(const Field field1, const Field field2, const Field field3) {
++        IOTDB_NOT_IMPLEMENTED
++        return *this;
++    }
++
+     InputQuery &InputQuery::filter(Predicate predicate) {
+         PredicatePtr pred = std::dynamic_pointer_cast<Predicate>(
+                 predicate.copy()
+         );
+-        return filter(pred);
+-    }
+-
+-    InputQuery &InputQuery::filter(const PredicatePtr &predicate) {
+-        OperatorPtr op = createFilterOperator(predicate);
++        OperatorPtr op = createFilterOperator(pred);
+         //op->parent = root;
+         addChild(op, root);
+         root = op;
+         return *this;
+     }
+ 
+-    InputQuery &InputQuery::groupBy(const Attributes &grouping_fields, const AggregationPtr &aggr_spec) {
+-        OperatorPtr op;
+-        //  = createAggregationOperator(AggregationSpec
+-        //  {grouping_fields, aggr_spec});
++    InputQuery &InputQuery::map(const MapperPtr &mapper) {
++        OperatorPtr op = createMapOperator(mapper);
+         addChild(op, root);
+         root = op;
+         return *this;
+     }
+ 
+-    InputQuery &InputQuery::orderBy(const Sort &fields) {
+-        OperatorPtr op = createSortOperator(fields);
+-        addChild(op, root);
+-        root = op;
++    InputQuery &InputQuery::combine(const iotdb::InputQuery &sub_query) {
++        IOTDB_NOT_IMPLEMENTED
+         return *this;
+     }
+ 
++
+     InputQuery &InputQuery::join(const InputQuery &sub_query, const JoinPredicatePtr &joinPred) {
+         OperatorPtr op = createJoinOperator(joinPred);
+         addChild(op, root);
+@@ -147,26 +157,13 @@ namespace iotdb {
+         return *this;
+     }
+ 
+-// streaming operators
+-    InputQuery &InputQuery::window(const WindowPtr &window) {
+-        OperatorPtr op = createWindowOperator(window);
+-        addChild(op, root);
+-        root = op;
+-        return *this;
+-    }
+-
+-    InputQuery &InputQuery::keyBy(const Attributes &fields) {
+-        OperatorPtr op = createKeyByOperator(fields);
+-        addChild(op, root);
+-        root = op;
++    InputQuery &InputQuery::extractTimestamp(const Field field) {
+         return *this;
+     }
+ 
+-    InputQuery &InputQuery::map(const MapperPtr &mapper) {
+-        OperatorPtr op = createMapOperator(mapper);
+-        addChild(op, root);
+-        root = op;
+-        return *this;
++// streaming operators
++    InputQuery &InputQuery::window(const WindowPtr &window) {
++        IOTDB_NOT_IMPLEMENTED
+     }
+ 
+ // output operators
+@@ -184,121 +181,6 @@ namespace iotdb {
+         return *this;
+     }
+ 
+-/*
+-InputQuery &InputQuery::groupBy(const AttributeFieldPtr& field) {
+-//  Operator *newOp = new GroupByOperator(field, current);
+-//  if (current)
+-//    newOp->rightChild = current;
+-//  root = newOp;
+-//  current = newOp;
+-  return *this;
+-}
+-
+-InputQuery &InputQuery::groupBy(const VecAttributeFieldPtr& field){
+-//  Operator *newOp = new GroupByOperator(schema.get(fieldId), current);
+-//  if (current)
+-//    newOp->rightChild = current;
+-//  root = newOp;
+-//  current = newOp;
+-  return *this;
+-}
+-
+-
+-InputQuery &InputQuery::orderBy(std::string& fieldId, std::string& sortedness) {
+-  Operator *newOp = new OrderByOperator(schema.get(fieldId), current);
+-  if (current)
+-    newOp->rightChild = current;
+-  root = newOp;
+-  current = newOp;
+-  return *this;
+-}
+-
+-InputQuery &InputQuery::aggregate(Aggregation &&aggregation) {
+-  // TODO: diff between window and batch
+-  Operator *newOp = new ReadWindowOperator(schema, new AggregateOperator(aggregation, current));
+-  if (current)
+-    newOp->rightChild = current;
+-  root = newOp;
+-  current = newOp;
+-  return *this;
+-}
+-
+-InputQuery &InputQuery::join(Operator* op, JoinPredicate &&joinPred) {
+-  Operator *newOp = new JoinOperator(joinPred, current, op);
+-  root = newOp;
+-  current = newOp;
+-  return *this;
+-}
+-*/
+-
+-/*
+- * Streaming Operators
+- */
+-/*
+-InputQuery &InputQuery::window(Window &&window) {
+-  Operator *newOp = new WindowOperator(window.assigner, window.trigger, current);
+-  if (current)
+-    newOp->rightChild = current;
+-  root = newOp;
+-  current = newOp;
+-  return *this;
+-}
+-
+-InputQuery &InputQuery::keyBy(std::string& fieldId) {
+-  Operator *newOp = new KeyOperator(schema.get(fieldId), new GroupByOperator(schema.get(fieldId), current));
+-  if (current)
+-    newOp->rightChild = current;
+-  root = newOp;
+-  current = newOp;
+-  return *this;
+-}
+-
+-InputQuery &InputQuery::map(Mapper &&mapper) {
+-  Operator *newOp = new MapOperator(mapper, current);
+-  if (current)
+-    newOp->rightChild = current;
+-  root = newOp;
+-  current = newOp;
+-  return *this;
+-}
+-*/
+-
+-/*
+- * Input Operators
+- */
+-
+-/*
+-InputQuery &InputQuery::input(InputType type, std::string path) {
+-  assert(0);
+-  Operator *newOp = new InputOperator(type, path, current);
+-  root = newOp;
+-  current = newOp;
+-  return *this;
+-}
+-
+-
+-InputQuery &InputQuery::write(std::string file_name) {
+-  Operator *newOp = new WriteOperator(current, file_name);
+-  if (current)
+-    newOp->rightChild = current;
+-  root = newOp;
+-  current = newOp;
+-  return *this;
+-}
+-
+-InputQuery &InputQuery::print() {
+-  Operator *newOp = new PrintOperator(current);
+-  if (current)
+-    newOp->rightChild = current;
+-  root = newOp;
+-  current = newOp;
+-  return *this;
+-}
+-*/
+-
+-// class Operator;
+-// typedef std::shared_ptr<Operator> OperatorPtr;
+-
+ 
+     void addChild(const OperatorPtr &op_parent, const OperatorPtr &op_child) {
+         if (op_parent && op_child) {
+@@ -307,24 +189,4 @@ InputQuery &InputQuery::print() {
+         }
+     }
+ 
+-
+-// InputQuery &InputQuery::printPipelinePermutations() {
+-//  std::cout << "InputQuery Plan - Permutations of the longest Pipeline " << std::string(30, '-') << std::endl;
+-//
+-//  /* Produce Code Generator */
+-//  CodeGenerator code_generator = CodeGenerator(config, schema);
+-//  InputQueryContext InputQuery_context = InputQueryContext(schema);
+-//  code_generator.addInputQueryContext(InputQuery_context);
+-//  current->produce(code_generator);
+-//
+-//  /* Choose longest Pipeline and get enumerator. */
+-//  CMethod::Builder longest_pipeline = code_generator.pipeline(code_generator.longestPipeline());
+-//  CMethod::PipelineEnumerator enumerator = CMethod::PipelineEnumerator(longest_pipeline);
+-//
+-//  /* Print all permutations. */
+-//  enumerator.printPermutations();
+-//  std::cout << std::endl;
+-//
+-//  return *this;
+-//}
+ } // namespace iotdb
+diff --git a/iotdb/impl/API/UserAPIExpression.cpp b/iotdb/impl/API/UserAPIExpression.cpp
+index 97d86e2..d8abf5d 100644
+--- a/iotdb/impl/API/UserAPIExpression.cpp
++++ b/iotdb/impl/API/UserAPIExpression.cpp
+@@ -17,307 +17,377 @@
+ #include <API/UserAPIExpression.hpp>
+ #include <Core/DataTypes.hpp>
+ 
+-namespace iotdb
+-{
++namespace iotdb {
+ 
+-    Predicate::Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right, const std::string& functionCallOverload, bool bracket) :
++    std::shared_ptr<AttributeField> getAttributeField(std::string name){
++        const AttributeField &add = AttributeField(name, UINT32);
++        const std::shared_ptr<AttributeField> &ptl = std::shared_ptr<AttributeField>(add.copy());
++        return ptl;
++    }
++
++    Field::Field(std::string name): PredicateItem(getAttributeField(name)){
++        _name = name;
++    };
++
++    Predicate::Predicate(const BinaryOperatorType &op, const UserAPIExpressionPtr left,
++                         const UserAPIExpressionPtr right, const std::string &functionCallOverload, bool bracket) :
++            _op(op),
++            _left(left),
++            _right(right),
++            _bracket(bracket),
++            _functionCallOverload(functionCallOverload) {}
++
++    Predicate::Predicate(const BinaryOperatorType &op, const UserAPIExpressionPtr left,
++                         const UserAPIExpressionPtr right, bool bracket) :
+             _op(op),
+             _left(left),
+             _right(right),
+             _bracket(bracket),
+-            _functionCallOverload(functionCallOverload)
+-
+-    {}
+-
+-	Predicate::Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right, bool bracket) :
+-		_op(op),
+-		_left(left),
+-		_right(right),
+-		_bracket(bracket),
+-		_functionCallOverload("")
+-	{}
+-	
+-	UserAPIExpressionPtr Predicate::copy() const{
+-		return std::make_shared<Predicate>(*this);
+-	}
+-
+-    const ExpressionStatmentPtr Predicate::generateCode(GeneratedCode& code) const{
+-		if(_functionCallOverload.empty()) {
++            _functionCallOverload("") {}
++
++    UserAPIExpressionPtr Predicate::copy() const {
++        return std::make_shared<Predicate>(*this);
++    }
++
++    const ExpressionStatmentPtr Predicate::generateCode(GeneratedCode &code) const {
++        if (_functionCallOverload.empty()) {
+             return BinaryOperatorStatement(*(_left->generateCode(code)), _op, *(_right->generateCode(code))).copy();
+         } else {
+-		    std::stringstream str;
++            std::stringstream str;
+             FunctionCallExpressionStatement expr = FunctionCallExpressionStatement(_functionCallOverload);
+             expr.addParameter(_left->generateCode(code));
+             expr.addParameter(_right->generateCode(code));
+-            return BinaryOperatorStatement(expr , _op, (ConstantExprStatement((createBasicTypeValue(BasicType::UINT8, "0"))))).copy();
++            return BinaryOperatorStatement(expr, _op, (ConstantExprStatement(
++                    (createBasicTypeValue(BasicType::UINT8, "0"))))).copy();
+         }
+-	}
+-
+-
+-
+-    const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCode& code) const{
+-		if(_attribute){
+-		    //toDo: Need an equals operator instead of true
+-		    if(code.struct_decl_input_tuple.getField(_attribute->name) &&
+-		            code.struct_decl_input_tuple.getField(_attribute->name)->getType() == _attribute->getDataType()){
+-                      VariableDeclaration var_decl_attr = code.struct_decl_input_tuple.getVariableDeclaration(_attribute->name);
+-                      return ((VarRef(code.var_decl_input_tuple)[VarRef(*code.var_decl_id)]).accessRef(VarRef(var_decl_attr))).copy();
+-		      } else{
+-			IOTDB_FATAL_ERROR("Could not Retrieve Attribute from StructDeclaration!");
+-		      }
+-		}else if(_value){
+-		    return ConstantExprStatement(_value).copy();
+-		  }else{
+-		    IOTDB_FATAL_ERROR("PredicateItem has only NULL Pointers!");
+-		  }
+-	}
+-	
+-	const std::string Predicate::toString() const{
+-			std::stringstream stream;
+-			if(_bracket) stream << "(";
+-			stream << _left->toString() << " " << ::iotdb::toCodeExpression(_op)->code_ << " " << _right->toString() << " ";
+-			if(_bracket) stream << ")";
+-			return stream.str();
+-	}
+-	
+-	PredicateItem::PredicateItem(AttributeFieldPtr attribute) : 
+-	_mutation(PredicateItemMutation::ATTRIBUTE),
+-	_attribute(attribute) {}
+-	
+-	PredicateItem::PredicateItem(ValueTypePtr value) : 
+-	_mutation(PredicateItemMutation::VALUE),
+-	_value(value) {}
++    }
++
++
++    const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCode &code) const {
++        if (_attribute) {
++            //toDo: Need an equals operator instead of true
++            if (code.struct_decl_input_tuple.getField(_attribute->name) &&
++                code.struct_decl_input_tuple.getField(_attribute->name)->getType() == _attribute->getDataType()) {
++                VariableDeclaration var_decl_attr = code.struct_decl_input_tuple.getVariableDeclaration(
++                        _attribute->name);
++                return ((VarRef(code.var_decl_input_tuple)[VarRef(*code.var_decl_id)]).accessRef(
++                        VarRef(var_decl_attr))).copy();
++            } else {
++                IOTDB_FATAL_ERROR("Could not Retrieve Attribute from StructDeclaration!");
++            }
++        } else if (_value) {
++            return ConstantExprStatement(_value).copy();
++        } else {
++            IOTDB_FATAL_ERROR("PredicateItem has only NULL Pointers!");
++        }
++    }
++
++    const std::string Predicate::toString() const {
++        std::stringstream stream;
++        if (_bracket) stream << "(";
++        stream << _left->toString() << " " << ::iotdb::toCodeExpression(_op)->code_ << " " << _right->toString() << " ";
++        if (_bracket) stream << ")";
++        return stream.str();
++    }
++
++    PredicateItem::PredicateItem(AttributeFieldPtr attribute) :
++            _mutation(PredicateItemMutation::ATTRIBUTE),
++            _attribute(attribute) {}
++
++    PredicateItem::PredicateItem(ValueTypePtr value) :
++            _mutation(PredicateItemMutation::VALUE),
++            _value(value) {}
+ 
+     PredicateItem::PredicateItem(int8_t val) :
+             _mutation(PredicateItemMutation::VALUE),
+-            _value(createBasicTypeValue(BasicType::INT8, std::to_string(val))){}
++            _value(createBasicTypeValue(BasicType::INT8, std::to_string(val))) {}
++
+     PredicateItem::PredicateItem(uint8_t val) :
+             _mutation(PredicateItemMutation::VALUE),
+             _value(createBasicTypeValue(BasicType::UINT8, std::to_string(val))) {}
++
+     PredicateItem::PredicateItem(int16_t val) :
+             _mutation(PredicateItemMutation::VALUE),
+             _value(createBasicTypeValue(BasicType::INT16, std::to_string(val))) {}
++
+     PredicateItem::PredicateItem(uint16_t val) :
+             _mutation(PredicateItemMutation::VALUE),
+             _value(createBasicTypeValue(BasicType::UINT16, std::to_string(val))) {}
++
+     PredicateItem::PredicateItem(int32_t val) :
+             _mutation(PredicateItemMutation::VALUE),
+             _value(createBasicTypeValue(BasicType::INT32, std::to_string(val))) {}
++
+     PredicateItem::PredicateItem(uint32_t val) :
+             _mutation(PredicateItemMutation::VALUE),
+             _value(createBasicTypeValue(BasicType::UINT32, std::to_string(val))) {}
++
+     PredicateItem::PredicateItem(int64_t val) :
+             _mutation(PredicateItemMutation::VALUE),
+             _value(createBasicTypeValue(BasicType::INT64, std::to_string(val))) {}
++
+     PredicateItem::PredicateItem(uint64_t val) :
+             _mutation(PredicateItemMutation::VALUE),
+             _value(createBasicTypeValue(BasicType::UINT64, std::to_string(val))) {}
++
+     PredicateItem::PredicateItem(float val) :
+             _mutation(PredicateItemMutation::VALUE),
+             _value(createBasicTypeValue(BasicType::FLOAT32, std::to_string(val))) {}
++
+     PredicateItem::PredicateItem(double val) :
+             _mutation(PredicateItemMutation::VALUE),
+             _value(createBasicTypeValue(BasicType::FLOAT64, std::to_string(val))) {}
++
+     PredicateItem::PredicateItem(bool val) :
+             _mutation(PredicateItemMutation::VALUE),
+             _value(createBasicTypeValue(BasicType::BOOLEAN, std::to_string(val))) {}
++
+     PredicateItem::PredicateItem(char val) :
+             _mutation(PredicateItemMutation::VALUE),
+             _value(createBasicTypeValue(BasicType::CHAR, std::to_string(val))) {}
+ 
+-	
+-	const std::string PredicateItem::toString() const{
+-			switch(_mutation)
+-			{
+-				case PredicateItemMutation::ATTRIBUTE:
+-					return _attribute->toString();
+-				case PredicateItemMutation::VALUE:
+-					return _value->getCodeExpression()->code_;
+-			}
+-	}
+-
+-	const bool PredicateItem::isStringType() const {
+-	    if(_attribute) return (getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)) && (_attribute->getFieldSize() > 1));
++
++    const std::string PredicateItem::toString() const {
++        switch (_mutation) {
++            case PredicateItemMutation::ATTRIBUTE:
++                return _attribute->toString();
++            case PredicateItemMutation::VALUE:
++                return _value->getCodeExpression()->code_;
++        }
++    }
++
++    const bool PredicateItem::isStringType() const {
++        if (_attribute)
++            return (getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)) && (_attribute->getFieldSize() > 1));
+         return getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)) && (_value->isArrayValueType());
+-	}
++    }
+ 
+-	const DataTypePtr PredicateItem::getDataTypePtr() const {
+-        if(_attribute) return _attribute->getDataType();
++    const DataTypePtr PredicateItem::getDataTypePtr() const {
++        if (_attribute) return _attribute->getDataType();
+         return _value->getType();
+     };
+ 
+-	UserAPIExpressionPtr PredicateItem::copy() const{
+-		return std::make_shared<PredicateItem>(*this);
+-	}
++    UserAPIExpressionPtr PredicateItem::copy() const {
++        return std::make_shared<PredicateItem>(*this);
++    }
+ 
+ 
+-    Predicate operator == (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
++    Predicate operator==(const UserAPIExpression &lhs, const UserAPIExpression &rhs) {
+         return Predicate(BinaryOperatorType::EQUAL_OP, lhs.copy(), rhs.copy());
+     }
+-	Predicate operator != (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+-		return Predicate(BinaryOperatorType::UNEQUAL_OP, lhs.copy(), rhs.copy());
+-	}
+-	Predicate operator > (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+-		return Predicate(BinaryOperatorType::GREATER_THEN_OP, lhs.copy(), rhs.copy());
+-	}
+-	Predicate operator < (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+-		return Predicate(BinaryOperatorType::LESS_THEN_OP, lhs.copy(), rhs.copy());
+-	}
+-	Predicate operator >= (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+-		return Predicate(BinaryOperatorType::GREATER_THEN_OP , lhs.copy(), rhs.copy());
+-	}
+-	Predicate operator <= (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+-		return Predicate(BinaryOperatorType::LESS_THEN_EQUAL_OP, lhs.copy(), rhs.copy());
+-	}
+-	Predicate operator + (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+-		return Predicate(BinaryOperatorType::PLUS_OP, lhs.copy(), rhs.copy());
+-	}
+-	Predicate operator - (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+-		return Predicate(BinaryOperatorType::MINUS_OP, lhs.copy(), rhs.copy());
+-	}
+-	Predicate operator * (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+-		return Predicate(BinaryOperatorType::MULTIPLY_OP, lhs.copy(), rhs.copy());
+-	}
+-	Predicate operator / (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+-		return Predicate(BinaryOperatorType::DIVISION_OP, lhs.copy(), rhs.copy());
+-	}
+-	Predicate operator % (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+-		return Predicate(BinaryOperatorType::MODULO_OP, lhs.copy(), rhs.copy());
+-	}
+-	Predicate operator && (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+-		return Predicate(BinaryOperatorType::LOGICAL_AND_OP, lhs.copy(), rhs.copy());
+-	}
+-	Predicate operator || (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+-		return Predicate(BinaryOperatorType::LOGICAL_OR_OP, lhs.copy(), rhs.copy());
+-	}
+-	Predicate operator & (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+-		return Predicate(BinaryOperatorType::BITWISE_AND_OP, lhs.copy(), rhs.copy());
+-	}
+-	Predicate operator | (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+-		return Predicate(BinaryOperatorType::BITWISE_OR_OP, lhs.copy(), rhs.copy());
+-	}
+-	Predicate operator ^ (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+-		return Predicate(BinaryOperatorType::BITWISE_XOR_OP, lhs.copy(), rhs.copy());
+-	}
+-	Predicate operator << (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+-		return Predicate(BinaryOperatorType::BITWISE_LEFT_SHIFT_OP, lhs.copy(), rhs.copy());
+-	}
+-	Predicate operator >> (const UserAPIExpression &lhs, const UserAPIExpression &rhs){
+-		return Predicate(BinaryOperatorType::BITWISE_RIGHT_SHIFT_OP, lhs.copy(), rhs.copy());
+-	}
+-
+-    Predicate operator== (const UserAPIExpression &lhs, const PredicateItem &rhs){
+-        return (lhs == dynamic_cast<const UserAPIExpression&>(rhs));
+-    }
+-    Predicate operator != (const UserAPIExpression &lhs, const PredicateItem &rhs){
+-        return operator !=(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+-    }
+-    Predicate operator > (const UserAPIExpression &lhs, const PredicateItem &rhs){
+-        return operator >(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+-    }
+-    Predicate operator < (const UserAPIExpression &lhs, const PredicateItem &rhs){
+-        return operator <(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+-    }
+-    Predicate operator >= (const UserAPIExpression &lhs, const PredicateItem &rhs){
+-        return operator >=(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+-    }
+-    Predicate operator <= (const UserAPIExpression &lhs, const PredicateItem &rhs){
+-        return operator <=(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+-    }
+-    Predicate operator + (const UserAPIExpression &lhs, const PredicateItem &rhs){
+-        if(rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
+-        return operator +(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+-    }
+-    Predicate operator - (const UserAPIExpression &lhs, const PredicateItem &rhs){
+-        if(rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
+-        return operator -(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+-    }
+-    Predicate operator * (const UserAPIExpression &lhs, const PredicateItem &rhs){
+-        if(rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
+-        return operator *(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+-    }
+-    Predicate operator / (const UserAPIExpression &lhs, const PredicateItem &rhs){
+-        if(rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
+-        return operator /(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+-    }
+-    Predicate operator % (const UserAPIExpression &lhs, const PredicateItem &rhs){
+-        if(rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
+-        return operator %(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+-    }
+-    Predicate operator && (const UserAPIExpression &lhs, const PredicateItem &rhs){
+-        return operator &&(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+-    }
+-    Predicate operator || (const UserAPIExpression &lhs, const PredicateItem &rhs){
+-        return operator ||(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+-    }
+-    Predicate operator | (const UserAPIExpression &lhs, const PredicateItem &rhs){
+-        return operator |(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+-    }
+-    Predicate operator ^ (const UserAPIExpression &lhs, const PredicateItem &rhs){
+-        return operator ^(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+-    }
+-    Predicate operator << (const UserAPIExpression &lhs, const PredicateItem &rhs){
+-        return operator <<(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+-    }
+-    Predicate operator >> (const UserAPIExpression &lhs, const PredicateItem &rhs){
+-        return operator >>(lhs,dynamic_cast<const UserAPIExpression&>(rhs));
+-    }
+-
+-    Predicate operator== (const PredicateItem &lhs, const UserAPIExpression &rhs){
+-        return (dynamic_cast<const UserAPIExpression&>(lhs) == rhs);
+-    }
+-    Predicate operator != (const PredicateItem &lhs, const UserAPIExpression &rhs){
+-        return operator !=(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
+-    }
+-    Predicate operator > (const PredicateItem &lhs, const UserAPIExpression &rhs){
+-        return operator >(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
++
++    Predicate operator!=(const UserAPIExpression &lhs, const UserAPIExpression &rhs) {
++        return Predicate(BinaryOperatorType::UNEQUAL_OP, lhs.copy(), rhs.copy());
++    }
++
++    Predicate operator>(const UserAPIExpression &lhs, const UserAPIExpression &rhs) {
++        return Predicate(BinaryOperatorType::GREATER_THEN_OP, lhs.copy(), rhs.copy());
++    }
++
++    Predicate operator<(const UserAPIExpression &lhs, const UserAPIExpression &rhs) {
++        return Predicate(BinaryOperatorType::LESS_THEN_OP, lhs.copy(), rhs.copy());
++    }
++
++    Predicate operator>=(const UserAPIExpression &lhs, const UserAPIExpression &rhs) {
++        return Predicate(BinaryOperatorType::GREATER_THEN_OP, lhs.copy(), rhs.copy());
++    }
++
++    Predicate operator<=(const UserAPIExpression &lhs, const UserAPIExpression &rhs) {
++        return Predicate(BinaryOperatorType::LESS_THEN_EQUAL_OP, lhs.copy(), rhs.copy());
++    }
++
++    Predicate operator+(const UserAPIExpression &lhs, const UserAPIExpression &rhs) {
++        return Predicate(BinaryOperatorType::PLUS_OP, lhs.copy(), rhs.copy());
++    }
++
++    Predicate operator-(const UserAPIExpression &lhs, const UserAPIExpression &rhs) {
++        return Predicate(BinaryOperatorType::MINUS_OP, lhs.copy(), rhs.copy());
++    }
++
++    Predicate operator*(const UserAPIExpression &lhs, const UserAPIExpression &rhs) {
++        return Predicate(BinaryOperatorType::MULTIPLY_OP, lhs.copy(), rhs.copy());
+     }
+-    Predicate operator < (const PredicateItem &lhs, const UserAPIExpression &rhs){
+-        return operator <(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
++
++    Predicate operator/(const UserAPIExpression &lhs, const UserAPIExpression &rhs) {
++        return Predicate(BinaryOperatorType::DIVISION_OP, lhs.copy(), rhs.copy());
+     }
+-    Predicate operator >= (const PredicateItem &lhs, const UserAPIExpression &rhs){
+-        return operator >=(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
++
++    Predicate operator%(const UserAPIExpression &lhs, const UserAPIExpression &rhs) {
++        return Predicate(BinaryOperatorType::MODULO_OP, lhs.copy(), rhs.copy());
+     }
+-    Predicate operator <= (const PredicateItem &lhs, const UserAPIExpression &rhs){
+-        return operator <=(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
++
++    Predicate operator&&(const UserAPIExpression &lhs, const UserAPIExpression &rhs) {
++        return Predicate(BinaryOperatorType::LOGICAL_AND_OP, lhs.copy(), rhs.copy());
+     }
+-    Predicate operator + (const PredicateItem &lhs, const UserAPIExpression &rhs){
+-        if(lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
+-        return operator +(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
++
++    Predicate operator||(const UserAPIExpression &lhs, const UserAPIExpression &rhs) {
++        return Predicate(BinaryOperatorType::LOGICAL_OR_OP, lhs.copy(), rhs.copy());
+     }
+-    Predicate operator - (const PredicateItem &lhs, const UserAPIExpression &rhs){
+-        if(lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
+-        return operator -(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
++
++    Predicate operator&(const UserAPIExpression &lhs, const UserAPIExpression &rhs) {
++        return Predicate(BinaryOperatorType::BITWISE_AND_OP, lhs.copy(), rhs.copy());
++    }
++
++    Predicate operator|(const UserAPIExpression &lhs, const UserAPIExpression &rhs) {
++        return Predicate(BinaryOperatorType::BITWISE_OR_OP, lhs.copy(), rhs.copy());
+     }
+-    Predicate operator * (const PredicateItem &lhs, const UserAPIExpression &rhs){
+-        if(lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
+-        return operator *(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
++
++    Predicate operator^(const UserAPIExpression &lhs, const UserAPIExpression &rhs) {
++        return Predicate(BinaryOperatorType::BITWISE_XOR_OP, lhs.copy(), rhs.copy());
+     }
+-    Predicate operator / (const PredicateItem &lhs, const UserAPIExpression &rhs){
+-        if(lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
+-        return operator /(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
++
++    Predicate operator<<(const UserAPIExpression &lhs, const UserAPIExpression &rhs) {
++        return Predicate(BinaryOperatorType::BITWISE_LEFT_SHIFT_OP, lhs.copy(), rhs.copy());
+     }
+-    Predicate operator % (const PredicateItem &lhs, const UserAPIExpression &rhs){
+-        if(lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
+-        return operator %(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
++
++    Predicate operator>>(const UserAPIExpression &lhs, const UserAPIExpression &rhs) {
++        return Predicate(BinaryOperatorType::BITWISE_RIGHT_SHIFT_OP, lhs.copy(), rhs.copy());
+     }
+-    Predicate operator && (const PredicateItem &lhs, const UserAPIExpression &rhs){
+-        return operator &&(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
++
++    Predicate operator==(const UserAPIExpression &lhs, const PredicateItem &rhs) {
++        return (lhs == dynamic_cast<const UserAPIExpression &>(rhs));
+     }
+-    Predicate operator || (const PredicateItem &lhs, const UserAPIExpression &rhs){
+-        return operator ||(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
++
++    Predicate operator!=(const UserAPIExpression &lhs, const PredicateItem &rhs) {
++        return operator!=(lhs, dynamic_cast<const UserAPIExpression &>(rhs));
+     }
+-    Predicate operator | (const PredicateItem &lhs, const UserAPIExpression &rhs){
+-        return operator |(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
++
++    Predicate operator>(const UserAPIExpression &lhs, const PredicateItem &rhs) {
++        return operator>(lhs, dynamic_cast<const UserAPIExpression &>(rhs));
+     }
+-    Predicate operator ^ (const PredicateItem &lhs, const UserAPIExpression &rhs){
+-        return operator ^(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
++
++    Predicate operator<(const UserAPIExpression &lhs, const PredicateItem &rhs) {
++        return operator<(lhs, dynamic_cast<const UserAPIExpression &>(rhs));
+     }
+-    Predicate operator << (const PredicateItem &lhs, const UserAPIExpression &rhs){
+-        return operator <<(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
++
++    Predicate operator>=(const UserAPIExpression &lhs, const PredicateItem &rhs) {
++        return operator>=(lhs, dynamic_cast<const UserAPIExpression &>(rhs));
+     }
+-    Predicate operator >> (const PredicateItem &lhs, const UserAPIExpression &rhs){
+-        return operator >>(dynamic_cast<const UserAPIExpression&>(lhs),rhs);
++
++    Predicate operator<=(const UserAPIExpression &lhs, const PredicateItem &rhs) {
++        return operator<=(lhs, dynamic_cast<const UserAPIExpression &>(rhs));
++    }
++
++    Predicate operator+(const UserAPIExpression &lhs, const PredicateItem &rhs) {
++        if (rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
++        return operator+(lhs, dynamic_cast<const UserAPIExpression &>(rhs));
++    }
++
++    Predicate operator-(const UserAPIExpression &lhs, const PredicateItem &rhs) {
++        if (rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
++        return operator-(lhs, dynamic_cast<const UserAPIExpression &>(rhs));
++    }
++
++    Predicate operator*(const UserAPIExpression &lhs, const PredicateItem &rhs) {
++        if (rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
++        return operator*(lhs, dynamic_cast<const UserAPIExpression &>(rhs));
++    }
++
++    Predicate operator/(const UserAPIExpression &lhs, const PredicateItem &rhs) {
++        if (rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
++        return operator/(lhs, dynamic_cast<const UserAPIExpression &>(rhs));
++    }
++
++    Predicate operator%(const UserAPIExpression &lhs, const PredicateItem &rhs) {
++        if (rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
++        return operator%(lhs, dynamic_cast<const UserAPIExpression &>(rhs));
++    }
++
++    Predicate operator&&(const UserAPIExpression &lhs, const PredicateItem &rhs) {
++        return operator&&(lhs, dynamic_cast<const UserAPIExpression &>(rhs));
++    }
++
++    Predicate operator||(const UserAPIExpression &lhs, const PredicateItem &rhs) {
++        return operator||(lhs, dynamic_cast<const UserAPIExpression &>(rhs));
++    }
++
++    Predicate operator|(const UserAPIExpression &lhs, const PredicateItem &rhs) {
++        return operator|(lhs, dynamic_cast<const UserAPIExpression &>(rhs));
++    }
++
++    Predicate operator^(const UserAPIExpression &lhs, const PredicateItem &rhs) {
++        return operator^(lhs, dynamic_cast<const UserAPIExpression &>(rhs));
++    }
++
++    Predicate operator<<(const UserAPIExpression &lhs, const PredicateItem &rhs) {
++        return operator<<(lhs, dynamic_cast<const UserAPIExpression &>(rhs));
++    }
++
++    Predicate operator>>(const UserAPIExpression &lhs, const PredicateItem &rhs) {
++        return operator>>(lhs, dynamic_cast<const UserAPIExpression &>(rhs));
++    }
++
++    Predicate operator==(const PredicateItem &lhs, const UserAPIExpression &rhs) {
++        return (dynamic_cast<const UserAPIExpression &>(lhs) == rhs);
++    }
++
++    Predicate operator!=(const PredicateItem &lhs, const UserAPIExpression &rhs) {
++        return operator!=(dynamic_cast<const UserAPIExpression &>(lhs), rhs);
++    }
++
++    Predicate operator>(const PredicateItem &lhs, const UserAPIExpression &rhs) {
++        return operator>(dynamic_cast<const UserAPIExpression &>(lhs), rhs);
++    }
++
++    Predicate operator<(const PredicateItem &lhs, const UserAPIExpression &rhs) {
++        return operator<(dynamic_cast<const UserAPIExpression &>(lhs), rhs);
++    }
++
++    Predicate operator>=(const PredicateItem &lhs, const UserAPIExpression &rhs) {
++        return operator>=(dynamic_cast<const UserAPIExpression &>(lhs), rhs);
++    }
++
++    Predicate operator<=(const PredicateItem &lhs, const UserAPIExpression &rhs) {
++        return operator<=(dynamic_cast<const UserAPIExpression &>(lhs), rhs);
++    }
++
++    Predicate operator+(const PredicateItem &lhs, const UserAPIExpression &rhs) {
++        if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
++        return operator+(dynamic_cast<const UserAPIExpression &>(lhs), rhs);
++    }
++
++    Predicate operator-(const PredicateItem &lhs, const UserAPIExpression &rhs) {
++        if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
++        return operator-(dynamic_cast<const UserAPIExpression &>(lhs), rhs);
++    }
++
++    Predicate operator*(const PredicateItem &lhs, const UserAPIExpression &rhs) {
++        if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
++        return operator*(dynamic_cast<const UserAPIExpression &>(lhs), rhs);
++    }
++
++    Predicate operator/(const PredicateItem &lhs, const UserAPIExpression &rhs) {
++        if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
++        return operator/(dynamic_cast<const UserAPIExpression &>(lhs), rhs);
++    }
++
++    Predicate operator%(const PredicateItem &lhs, const UserAPIExpression &rhs) {
++        if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
++        return operator%(dynamic_cast<const UserAPIExpression &>(lhs), rhs);
++    }
++
++    Predicate operator&&(const PredicateItem &lhs, const UserAPIExpression &rhs) {
++        return operator&&(dynamic_cast<const UserAPIExpression &>(lhs), rhs);
++    }
++
++    Predicate operator||(const PredicateItem &lhs, const UserAPIExpression &rhs) {
++        return operator||(dynamic_cast<const UserAPIExpression &>(lhs), rhs);
++    }
++
++    Predicate operator|(const PredicateItem &lhs, const UserAPIExpression &rhs) {
++        return operator|(dynamic_cast<const UserAPIExpression &>(lhs), rhs);
++    }
++
++    Predicate operator^(const PredicateItem &lhs, const UserAPIExpression &rhs) {
++        return operator^(dynamic_cast<const UserAPIExpression &>(lhs), rhs);
++    }
++
++    Predicate operator<<(const PredicateItem &lhs, const UserAPIExpression &rhs) {
++        return operator<<(dynamic_cast<const UserAPIExpression &>(lhs), rhs);
++    }
++
++    Predicate operator>>(const PredicateItem &lhs, const UserAPIExpression &rhs) {
++        return operator>>(dynamic_cast<const UserAPIExpression &>(lhs), rhs);
+     }
+ 
+     /**
+@@ -326,75 +396,86 @@ namespace iotdb
+      * @param rhs
+      * @return
+      */
+-    Predicate operator== (const PredicateItem &lhs, const PredicateItem &rhs){
++    Predicate operator==(const PredicateItem &lhs, const PredicateItem &rhs) {
+         //possible use of memcmp when arraytypes equal with length is equal...
+         int checktype = lhs.isStringType();
+         checktype += rhs.isStringType();
+-        if(checktype == 1) IOTDB_ERROR("NOT COMPARABLE TYPES")
+-        if(checktype == 2) return Predicate(BinaryOperatorType::EQUAL_OP, lhs.copy(),rhs.copy(), "strcmp", false);
+-        return (dynamic_cast<const UserAPIExpression&>(lhs) == dynamic_cast<const UserAPIExpression&>(rhs));
++        if (checktype == 1) IOTDB_ERROR("NOT COMPARABLE TYPES")
++        if (checktype == 2) return Predicate(BinaryOperatorType::EQUAL_OP, lhs.copy(), rhs.copy(), "strcmp", false);
++        return (dynamic_cast<const UserAPIExpression &>(lhs) == dynamic_cast<const UserAPIExpression &>(rhs));
+     }
+-    Predicate operator != (const PredicateItem &lhs, const PredicateItem &rhs){
+-        return operator !=(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
++
++    Predicate operator!=(const PredicateItem &lhs, const PredicateItem &rhs) {
++        return operator!=(dynamic_cast<const UserAPIExpression &>(lhs), dynamic_cast<const UserAPIExpression &>(rhs));
+     }
+-    Predicate operator > (const PredicateItem &lhs, const PredicateItem &rhs){
+-        return operator >(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
++
++    Predicate operator>(const PredicateItem &lhs, const PredicateItem &rhs) {
++        return operator>(dynamic_cast<const UserAPIExpression &>(lhs), dynamic_cast<const UserAPIExpression &>(rhs));
+     }
+-    Predicate operator < (const PredicateItem &lhs, const PredicateItem &rhs){
+-        return operator <(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
++
++    Predicate operator<(const PredicateItem &lhs, const PredicateItem &rhs) {
++        return operator<(dynamic_cast<const UserAPIExpression &>(lhs), dynamic_cast<const UserAPIExpression &>(rhs));
+     }
+-    Predicate operator >= (const PredicateItem &lhs, const PredicateItem &rhs){
+-        return operator >=(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
++
++    Predicate operator>=(const PredicateItem &lhs, const PredicateItem &rhs) {
++        return operator>=(dynamic_cast<const UserAPIExpression &>(lhs), dynamic_cast<const UserAPIExpression &>(rhs));
+     }
+-    Predicate operator <= (const PredicateItem &lhs, const PredicateItem &rhs){
+-        return operator <=(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
++
++    Predicate operator<=(const PredicateItem &lhs, const PredicateItem &rhs) {
++        return operator<=(dynamic_cast<const UserAPIExpression &>(lhs), dynamic_cast<const UserAPIExpression &>(rhs));
+     }
+-    Predicate operator + (const PredicateItem &lhs, const PredicateItem &rhs){
+-        if(lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))
+-            || rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)))
+-            IOTDB_ERROR("NOT A NUMERICAL VALUE")
+-        return operator +(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
++
++    Predicate operator+(const PredicateItem &lhs, const PredicateItem &rhs) {
++        if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))
++            || rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
++        return operator+(dynamic_cast<const UserAPIExpression &>(lhs), dynamic_cast<const UserAPIExpression &>(rhs));
+     }
+-    Predicate operator - (const PredicateItem &lhs, const PredicateItem &rhs){
+-        if(lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))
+-            || rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)))
+-            IOTDB_ERROR("NOT A NUMERICAL VALUE")
+-        return operator -(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
++
++    Predicate operator-(const PredicateItem &lhs, const PredicateItem &rhs) {
++        if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))
++            || rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
++        return operator-(dynamic_cast<const UserAPIExpression &>(lhs), dynamic_cast<const UserAPIExpression &>(rhs));
+     }
+-    Predicate operator * (const PredicateItem &lhs, const PredicateItem &rhs){
+-        if(lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))
+-            || rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)))
+-            IOTDB_ERROR("NOT A NUMERICAL VALUE")
+-        return operator *(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
++
++    Predicate operator*(const PredicateItem &lhs, const PredicateItem &rhs) {
++        if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))
++            || rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
++        return operator*(dynamic_cast<const UserAPIExpression &>(lhs), dynamic_cast<const UserAPIExpression &>(rhs));
+     }
+-    Predicate operator / (const PredicateItem &lhs, const PredicateItem &rhs){
+-        if(lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))
+-            || rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)))
+-            IOTDB_ERROR("NOT A NUMERICAL VALUE")
+-        return operator /(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
++
++    Predicate operator/(const PredicateItem &lhs, const PredicateItem &rhs) {
++        if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))
++            || rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
++        return operator/(dynamic_cast<const UserAPIExpression &>(lhs), dynamic_cast<const UserAPIExpression &>(rhs));
+     }
+-    Predicate operator % (const PredicateItem &lhs, const PredicateItem &rhs){
+-        if(lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))
+-            || rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR)))
+-            IOTDB_ERROR("NOT A NUMERICAL VALUE")
+-        return operator %(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
++
++    Predicate operator%(const PredicateItem &lhs, const PredicateItem &rhs) {
++        if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))
++            || rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
++        return operator%(dynamic_cast<const UserAPIExpression &>(lhs), dynamic_cast<const UserAPIExpression &>(rhs));
+     }
+-    Predicate operator && (const PredicateItem &lhs, const PredicateItem &rhs){
+-        return operator &&(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
++
++    Predicate operator&&(const PredicateItem &lhs, const PredicateItem &rhs) {
++        return operator&&(dynamic_cast<const UserAPIExpression &>(lhs), dynamic_cast<const UserAPIExpression &>(rhs));
+     }
+-    Predicate operator || (const PredicateItem &lhs, const PredicateItem &rhs){
+-        return operator ||(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
++
++    Predicate operator||(const PredicateItem &lhs, const PredicateItem &rhs) {
++        return operator||(dynamic_cast<const UserAPIExpression &>(lhs), dynamic_cast<const UserAPIExpression &>(rhs));
+     }
+-    Predicate operator | (const PredicateItem &lhs, const PredicateItem &rhs){
+-        return operator |(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
++
++    Predicate operator|(const PredicateItem &lhs, const PredicateItem &rhs) {
++        return operator|(dynamic_cast<const UserAPIExpression &>(lhs), dynamic_cast<const UserAPIExpression &>(rhs));
+     }
+-    Predicate operator ^ (const PredicateItem &lhs, const PredicateItem &rhs){
+-        return operator ^(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
++
++    Predicate operator^(const PredicateItem &lhs, const PredicateItem &rhs) {
++        return operator^(dynamic_cast<const UserAPIExpression &>(lhs), dynamic_cast<const UserAPIExpression &>(rhs));
+     }
+-    Predicate operator << (const PredicateItem &lhs, const PredicateItem &rhs){
+-        return operator <<(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
++
++    Predicate operator<<(const PredicateItem &lhs, const PredicateItem &rhs) {
++        return operator<<(dynamic_cast<const UserAPIExpression &>(lhs), dynamic_cast<const UserAPIExpression &>(rhs));
+     }
+-    Predicate operator >> (const PredicateItem &lhs, const PredicateItem &rhs){
+-        return operator >>(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
++
++    Predicate operator>>(const PredicateItem &lhs, const PredicateItem &rhs) {
++        return operator>>(dynamic_cast<const UserAPIExpression &>(lhs), dynamic_cast<const UserAPIExpression &>(rhs));
+     }
+ } //end namespace iotdb
+diff --git a/iotdb/impl/CodeGen/CMakeLists.txt b/iotdb/impl/CodeGen/CMakeLists.txt
+index 3f730f0..39d06a8 100644
+--- a/iotdb/impl/CodeGen/CMakeLists.txt
++++ b/iotdb/impl/CodeGen/CMakeLists.txt
+@@ -4,6 +4,7 @@ add_source_iotdb(
+         QueryExecutionPlan.cpp
+         PipelineStage.cpp
+         HandCodedQueryExecutionPlan.cpp
++		GeneratedQueryExecutionPlan.cpp
+ 		QueryPlanBuilder.cpp
+ 	)
+ add_subdirectory(C_CodeGen)
+diff --git a/iotdb/impl/CodeGen/GeneratedQueryExecutionPlan.cpp b/iotdb/impl/CodeGen/GeneratedQueryExecutionPlan.cpp
+index ab9a3ce..ff3d26f 100644
+--- a/iotdb/impl/CodeGen/GeneratedQueryExecutionPlan.cpp
++++ b/iotdb/impl/CodeGen/GeneratedQueryExecutionPlan.cpp
+@@ -7,14 +7,19 @@
+ #include <boost/serialization/export.hpp>
+ #include <boost/archive/text_iarchive.hpp>
+ #include <boost/archive/text_oarchive.hpp>
+-#include <CodeGen/HandCodedQueryExecutionPlan.hpp>
+-BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::HandCodedQueryExecutionPlan);
++#include <CodeGen/GeneratedQueryExecutionPlan.hpp>
++
++BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::GeneratedQueryExecutionPlan);
+ 
+ #include <CodeGen/QueryExecutionPlan.hpp>
++#include <API/InputQuery.hpp>
+ 
+ namespace iotdb {
++    GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan():query(), ptr() {
+ 
+-HandCodedQueryExecutionPlan::HandCodedQueryExecutionPlan() : QueryExecutionPlan() {}
++    }
++    GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan(InputQuery* query, PipelineStagePtr* ptr)
++            : query(query), ptr(ptr) {
++    }
+ 
+-HandCodedQueryExecutionPlan::~HandCodedQueryExecutionPlan() {}
+ } // namespace iotdb
+diff --git a/iotdb/impl/Operators/Impl/SourceOperator.cpp b/iotdb/impl/Operators/Impl/SourceOperator.cpp
+index 77b37d2..e695120 100644
+--- a/iotdb/impl/Operators/Impl/SourceOperator.cpp
++++ b/iotdb/impl/Operators/Impl/SourceOperator.cpp
+@@ -45,6 +45,7 @@ OperatorType SourceOperator::getOperatorType() const { return SOURCE_OP; }
+ 
+ SourceOperator::~SourceOperator() {}
+ 
+-const OperatorPtr createSourceOperator(const DataSourcePtr& source) { return std::make_shared<SourceOperator>(source); }
++const OperatorPtr createSourceOperator(const DataSourcePtr& source) {
++    return std::make_shared<SourceOperator>(source); }
+ 
+ } // namespace iotdb
+diff --git a/iotdb/include/API/Environment.hpp b/iotdb/include/API/Environment.hpp
+index b12891b..0771eb3 100644
+--- a/iotdb/include/API/Environment.hpp
++++ b/iotdb/include/API/Environment.hpp
+@@ -18,7 +18,7 @@ namespace iotdb {
+     public:
+ 
+         static Environment create(const Config& config);
+-        void executeQuery(const InputQuery& inputQuery);
++        void executeQuery(InputQuery& inputQuery);
+ 
+         // helper operators
+         void printInputQueryPlan(const InputQuery& inputQuery);
+diff --git a/iotdb/include/API/InputQuery.hpp b/iotdb/include/API/InputQuery.hpp
+index 784d854..3706bb6 100644
+--- a/iotdb/include/API/InputQuery.hpp
++++ b/iotdb/include/API/InputQuery.hpp
+@@ -8,6 +8,7 @@
+ #include <Runtime/Window.hpp>
+ #include <iostream>
+ #include <string>
++#include "UserAPIExpression.hpp"
+ 
+ namespace iotdb {
+ 
+@@ -17,35 +18,37 @@ typedef std::shared_ptr<Operator> OperatorPtr;
+ /** \brief the central abstraction for the user to define queries */
+ class InputQuery {
+   public:
+-    static InputQuery create(const DataSourcePtr& source);
++    static InputQuery from(const std::string sourceStream);
+     InputQuery& operator=(const InputQuery& query);
+     InputQuery(const InputQuery&);
+     ~InputQuery();
+ 
+-    // relational operators
+-    InputQuery& filter(const PredicatePtr& predicate);
+-    InputQuery& filter(Predicate predicate);
+-    InputQuery& groupBy(const Attributes& grouping_fields, const AggregationPtr& aggr_spec);
+-    InputQuery& orderBy(const Sort& fields);
++    InputQuery& select(const Field field);
++    InputQuery& select(const Field field1, const Field field2);
++    InputQuery& select(const Field field1, const Field field2, const Field field3);
++
++    InputQuery& filter(const Predicate predicate);
++    InputQuery& map(const MapperPtr& mapper);
++    InputQuery& combine(const InputQuery& sub_query);
+     InputQuery& join(const InputQuery& sub_query, const JoinPredicatePtr& joinPred);
++    InputQuery& extractTimestamp(const Field field);
+ 
+-    // streaming operators
+     InputQuery& window(const WindowPtr& window);
+-    InputQuery& keyBy(const Attributes& fields);
+-    InputQuery& map(const MapperPtr& mapper);
++
++
+ 
+     // output operators
++    InputQuery& to(const std::string& resultStream);
+     InputQuery& writeToFile(const std::string& file_name);
+     InputQuery& print(std::ostream& = std::cout);
+ 
+     // helper operators
+-    DataSourcePtr getSource() { return source; };
+     OperatorPtr getRoot() const { return root; };
+ 
+ private:
+-    InputQuery(const DataSourcePtr& source);
+-    DataSourcePtr source;
++    InputQuery(const std::string source_stream);
+     OperatorPtr root;
++    std::string source_stream;
+ };
+ 
+ /* this function **executes** the code provided by the user and returns an InputQuery Object */
+diff --git a/iotdb/include/API/UserAPIExpression.hpp b/iotdb/include/API/UserAPIExpression.hpp
+index 04bcfd1..d0747f1 100644
+--- a/iotdb/include/API/UserAPIExpression.hpp
++++ b/iotdb/include/API/UserAPIExpression.hpp
+@@ -20,7 +20,7 @@ class GeneratedCode;
+ typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
+ 
+ class ExpressionStatment;
+-typedef std::shared_ptr<ExpressionStatment> ExpressionStatmentPtr; 
++typedef std::shared_ptr<ExpressionStatment> ExpressionStatmentPtr;
+ 
+ enum class PredicateItemMutation{
+ 	ATTRIBUTE,
+@@ -33,7 +33,7 @@ typedef std::shared_ptr<UserAPIExpression> UserAPIExpressionPtr;
+ class Predicate;
+ typedef std::shared_ptr<Predicate> PredicatePtr;
+ 
+-	
++
+ class UserAPIExpression{
+ public:
+ 	virtual ~UserAPIExpression(){};
+@@ -46,7 +46,7 @@ class Predicate : public UserAPIExpression{
+ public:
+ 	Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right, const std::string& functionCallOverload, bool bracket = false);
+     Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right, bool bracket = false);
+-	
++
+ 	virtual const ExpressionStatmentPtr generateCode(GeneratedCode& code) const override;
+ 	virtual const std::string toString() const override;
+ 	virtual UserAPIExpressionPtr copy() const override;
+@@ -59,6 +59,7 @@ private:
+ };
+ 
+ 
++
+ class PredicateItem : public UserAPIExpression{
+ public:
+ 	PredicateItem(AttributeFieldPtr attribute);
+@@ -89,6 +90,13 @@ private:
+ 	ValueTypePtr _value=nullptr;
+ };
+ 
++class Field : public PredicateItem{
++    public:
++        Field(std::string name);
++
++    std::string _name;
++};
++
+ Predicate operator == (const UserAPIExpression &lhs, const UserAPIExpression &rhs);
+ Predicate operator != (const UserAPIExpression &lhs, const UserAPIExpression &rhs);
+ Predicate operator < (const UserAPIExpression &lhs, const UserAPIExpression &rhs);
+diff --git a/iotdb/include/CodeGen/CodeGen.hpp b/iotdb/include/CodeGen/CodeGen.hpp
+index 4507cc1..d9fae5a 100644
+--- a/iotdb/include/CodeGen/CodeGen.hpp
++++ b/iotdb/include/CodeGen/CodeGen.hpp
+@@ -16,6 +16,7 @@
+ #include <Core/DataTypes.hpp>
+ #include <Runtime/DataSink.hpp>
+ #include <Util/ErrorHandling.hpp>
++#include <Operators/Operator.hpp>
+ 
+ namespace iotdb {
+ 
+diff --git a/iotdb/include/CodeGen/GeneratedQueryExecutionPlan.hpp b/iotdb/include/CodeGen/GeneratedQueryExecutionPlan.hpp
+index 9576ac7..5419387 100644
+--- a/iotdb/include/CodeGen/GeneratedQueryExecutionPlan.hpp
++++ b/iotdb/include/CodeGen/GeneratedQueryExecutionPlan.hpp
+@@ -5,26 +5,32 @@
+  *      Author: zeuchste
+  */
+ 
+-#ifndef INCLUDE_HANDCODEDQUERYEXECUTIONPLAN_H_
+-#define INCLUDE_HANDCODEDQUERYEXECUTIONPLAN_H_
++#ifndef INCLUDE_GENERATEDQUERYEXECUTIONPLAN_H_
++#define INCLUDE_GENERATEDQUERYEXECUTIONPLAN_H_
+ 
+ #include <CodeGen/QueryExecutionPlan.hpp>
+ #include <boost/serialization/export.hpp>
+ #include <boost/archive/text_iarchive.hpp>
+ #include <boost/archive/text_oarchive.hpp>
+ #include <stdint.h>
++#include <API/InputQuery.hpp>
+ // class TupleBuffer;
+ 
+ namespace iotdb {
+ 
+-class HandCodedQueryExecutionPlan : public QueryExecutionPlan {
++class GeneratedQueryExecutionPlan : public QueryExecutionPlan {
+ public:
+-  HandCodedQueryExecutionPlan();
+-  virtual ~HandCodedQueryExecutionPlan();
+-  virtual bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf) = 0;
++    GeneratedQueryExecutionPlan();
++    GeneratedQueryExecutionPlan(InputQuery* query, PipelineStagePtr* ptr);
++
++    bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf){
++        return 0;
++    };
++protected:
++    InputQuery* query;
++    PipelineStagePtr* ptr;
+ private:
+   friend class boost::serialization::access;
+-
+   template<class Archive>
+   void serialize(Archive & ar, const unsigned int version)
+   {
+@@ -35,5 +41,5 @@ private:
+ #include <boost/serialization/export.hpp>
+ #include <boost/archive/text_iarchive.hpp>
+ #include <boost/archive/text_oarchive.hpp>
+-BOOST_CLASS_EXPORT_KEY(iotdb::HandCodedQueryExecutionPlan)
+-#endif /* INCLUDE_HANDCODEDQUERYEXECUTIONPLAN_H_ */
++BOOST_CLASS_EXPORT_KEY(iotdb::GeneratedQueryExecutionPlan)
++#endif /* INCLUDE_GENERATEDQUERYEXECUTIONPLAN_H_ */
+diff --git a/iotdb/tests/UnitTests/QueryInterfaceTest.cpp b/iotdb/tests/UnitTests/QueryInterfaceTest.cpp
+index fa9dbf1..9c438dc 100644
+--- a/iotdb/tests/UnitTests/QueryInterfaceTest.cpp
++++ b/iotdb/tests/UnitTests/QueryInterfaceTest.cpp
+@@ -65,14 +65,15 @@ namespace iotdb {
+          */
+ 
+         DataSourcePtr source(new GeneratorSource<SelectionDataGenFunctor>(schema, 1));
+-        InputQuery &query = InputQuery::create(source)
+-                .filter((PredicateItem(schema[0]) < PredicateItem(schema[1])))
++
++        InputQuery &query = InputQuery::from("clicks")
++                .filter(Field("id") < Field("value"))
+                 .print(std::cout);
+ 
+         env.printInputQueryPlan(query);
+         env.executeQuery(query);
+ 
+-        // AttributeFieldPtr attr = schema[0];
++        // AttributeFieldPtr attr = schema[0];ff
+     }
+ 
+     void createQueryString() {
