@@ -4,6 +4,7 @@
 #include <API/InputQuery.hpp>
 #include <CodeGen/QueryPlanBuilder.hpp>
 #include <Rest/runtime_utils.hpp>
+#include <Topology/FogTopologyManager.hpp>
 
 using namespace web;
 using namespace http;
@@ -21,15 +22,19 @@ void ServiceController::handleGet(http_request message) {
 
     auto path = requestPath(message);
     if (!path.empty()) {
-        if (path[0] == "service" && path[1] == "test") {
+        if (path[0] == "service" && path[1] == "fog-plan") {
+
+            FogTopologyManager &fogTopologyManager = FogTopologyManager::getInstance();
+
+            fogTopologyManager.createExampleTopology();
+            auto fogTopology = fogTopologyManager.getFogTopologyGraphAsTreeJson();
 
             http_response response(status_codes::OK);
-
             auto jsonResponse = json::value::object();
             jsonResponse["version"] = json::value::string("0.1.1.23232");
             jsonResponse["status"] = json::value::string("ready!");
             response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-            response.set_body(jsonResponse);
+            response.set_body(fogTopology);
             message.reply(response);
         } else {
             http_response response(status_codes::NotFound);
@@ -63,11 +68,11 @@ void ServiceController::handlePost(http_request message) {
                                   try {
                                       //Prepare Input query from user string
                                       std::string userQuery(body.begin(), body.end());
-                                      InputQuery q(iotdb::createQueryFromCodeString(userQuery));
+                                      InputQuery inputQuery(iotdb::createQueryFromCodeString(userQuery));
                                       //Prepare response
                                       http_response response(status_codes::OK);
-                                      QueryPlanBuilder queryPlanBuilder(q);
-                                      const json::value &basePlan = queryPlanBuilder.getBasePlan();
+                                      QueryPlanBuilder queryPlanBuilder;
+                                      const json::value &basePlan = queryPlanBuilder.getBasePlan(inputQuery);
                                       response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
                                       response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
                                       response.set_body(basePlan);
