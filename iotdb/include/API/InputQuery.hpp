@@ -8,6 +8,7 @@
 #include <Runtime/Window.hpp>
 #include <iostream>
 #include <string>
+#include "UserAPIExpression.hpp"
 
 namespace iotdb {
 
@@ -17,35 +18,37 @@ typedef std::shared_ptr<Operator> OperatorPtr;
 /** \brief the central abstraction for the user to define queries */
 class InputQuery {
   public:
-    static InputQuery create(const DataSourcePtr& source);
+    static InputQuery from(const std::string sourceStream);
     InputQuery& operator=(const InputQuery& query);
     InputQuery(const InputQuery&);
     ~InputQuery();
 
-    // relational operators
-    InputQuery& filter(const PredicatePtr& predicate);
-    InputQuery& filter(Predicate predicate);
-    InputQuery& groupBy(const Attributes& grouping_fields, const AggregationPtr& aggr_spec);
-    InputQuery& orderBy(const Sort& fields);
-    InputQuery& join(const InputQuery& sub_query, const JoinPredicatePtr& joinPred);
+    InputQuery& select(const Field field);
+    InputQuery& select(const Field field1, const Field field2);
+    InputQuery& select(const Field field1, const Field field2, const Field field3);
 
-    // streaming operators
-    InputQuery& window(const WindowPtr& window);
-    InputQuery& keyBy(const Attributes& fields);
+    InputQuery& filter(const Predicate predicate);
     InputQuery& map(const MapperPtr& mapper);
+    InputQuery& combine(const InputQuery& sub_query);
+    InputQuery& join(const InputQuery& sub_query, const JoinPredicatePtr& joinPred);
+    InputQuery& extractTimestamp(const Field field);
+
+    InputQuery& window(const WindowPtr& window);
+
+
 
     // output operators
+    InputQuery& to(const std::string& resultStream);
     InputQuery& writeToFile(const std::string& file_name);
     InputQuery& print(std::ostream& = std::cout);
 
     // helper operators
-    DataSourcePtr getSource() { return source; };
     OperatorPtr getRoot() const { return root; };
 
 private:
-    InputQuery(const DataSourcePtr& source);
-    DataSourcePtr source;
+    InputQuery(const std::string source_stream);
     OperatorPtr root;
+    std::string source_stream;
 };
 
 /* this function **executes** the code provided by the user and returns an InputQuery Object */

@@ -78,17 +78,17 @@ namespace iotdb {
 // return sub_query
 //}
 
-    InputQuery::InputQuery(const DataSourcePtr &source) : source(source),
+    InputQuery::InputQuery(const std::string source_stream) : source_stream(source_stream),
                                                                                 root() {}
 
 /* TODO: perform deep copy of operator graph */
-    InputQuery::InputQuery(const InputQuery &query) : source(query.source),
+    InputQuery::InputQuery(const InputQuery &query) : source_stream(query.source_stream),
                                                       root(recursiveCopy(query.root)) {
     }
 
     InputQuery &InputQuery::operator=(const InputQuery &query) {
         if (&query != this) {
-            this->source = query.source;
+            this->source_stream = query.source_stream;
             this->root = recursiveCopy(query.root);
         }
         return *this;
@@ -97,66 +97,39 @@ namespace iotdb {
 
     InputQuery::~InputQuery() {}
 
-    InputQuery InputQuery::create(const DataSourcePtr &source) {
-        InputQuery q(source);
-        OperatorPtr op = createSourceOperator(source);
-        q.root = op;
+
+    InputQuery InputQuery::from(const std::string source_stream) {
+        InputQuery q(source_stream);
+        //OperatorPtr op = createSourceOperator(source);
+        //q.root = op;
         return q;
     }
 
-/*
+    /*
  * Relational Operators
  */
+
+    InputQuery &InputQuery::select(Field field) {
+        IOTDB_NOT_IMPLEMENTED
+        return *this;
+    }
+
+    InputQuery &InputQuery::select(const Field field1, const  Field field2) {
+        IOTDB_NOT_IMPLEMENTED
+        return *this;
+    }
+
+    InputQuery &InputQuery::select(const Field field1, const Field field2, const Field field3) {
+        IOTDB_NOT_IMPLEMENTED
+        return *this;
+    }
+
     InputQuery &InputQuery::filter(Predicate predicate) {
         PredicatePtr pred = std::dynamic_pointer_cast<Predicate>(
                 predicate.copy()
         );
-        return filter(pred);
-    }
-
-    InputQuery &InputQuery::filter(const PredicatePtr &predicate) {
-        OperatorPtr op = createFilterOperator(predicate);
+        OperatorPtr op = createFilterOperator(pred);
         //op->parent = root;
-        addChild(op, root);
-        root = op;
-        return *this;
-    }
-
-    InputQuery &InputQuery::groupBy(const Attributes &grouping_fields, const AggregationPtr &aggr_spec) {
-        OperatorPtr op;
-        //  = createAggregationOperator(AggregationSpec
-        //  {grouping_fields, aggr_spec});
-        addChild(op, root);
-        root = op;
-        return *this;
-    }
-
-    InputQuery &InputQuery::orderBy(const Sort &fields) {
-        OperatorPtr op = createSortOperator(fields);
-        addChild(op, root);
-        root = op;
-        return *this;
-    }
-
-    InputQuery &InputQuery::join(const InputQuery &sub_query, const JoinPredicatePtr &joinPred) {
-        OperatorPtr op = createJoinOperator(joinPred);
-        addChild(op, root);
-        // addChild(op, copyRecursive(sub_query,sub_query.root));
-        addChild(op, sub_query.root);
-        root = op;
-        return *this;
-    }
-
-// streaming operators
-    InputQuery &InputQuery::window(const WindowPtr &window) {
-        OperatorPtr op = createWindowOperator(window);
-        addChild(op, root);
-        root = op;
-        return *this;
-    }
-
-    InputQuery &InputQuery::keyBy(const Attributes &fields) {
-        OperatorPtr op = createKeyByOperator(fields);
         addChild(op, root);
         root = op;
         return *this;
@@ -167,6 +140,30 @@ namespace iotdb {
         addChild(op, root);
         root = op;
         return *this;
+    }
+
+    InputQuery &InputQuery::combine(const iotdb::InputQuery &sub_query) {
+        IOTDB_NOT_IMPLEMENTED
+        return *this;
+    }
+
+
+    InputQuery &InputQuery::join(const InputQuery &sub_query, const JoinPredicatePtr &joinPred) {
+        OperatorPtr op = createJoinOperator(joinPred);
+        addChild(op, root);
+        // addChild(op, copyRecursive(sub_query,sub_query.root));
+        addChild(op, sub_query.root);
+        root = op;
+        return *this;
+    }
+
+    InputQuery &InputQuery::extractTimestamp(const Field field) {
+        return *this;
+    }
+
+// streaming operators
+    InputQuery &InputQuery::window(const WindowPtr &window) {
+        IOTDB_NOT_IMPLEMENTED
     }
 
 // output operators
@@ -184,121 +181,6 @@ namespace iotdb {
         return *this;
     }
 
-/*
-InputQuery &InputQuery::groupBy(const AttributeFieldPtr& field) {
-//  Operator *newOp = new GroupByOperator(field, current);
-//  if (current)
-//    newOp->rightChild = current;
-//  root = newOp;
-//  current = newOp;
-  return *this;
-}
-
-InputQuery &InputQuery::groupBy(const VecAttributeFieldPtr& field){
-//  Operator *newOp = new GroupByOperator(schema.get(fieldId), current);
-//  if (current)
-//    newOp->rightChild = current;
-//  root = newOp;
-//  current = newOp;
-  return *this;
-}
-
-
-InputQuery &InputQuery::orderBy(std::string& fieldId, std::string& sortedness) {
-  Operator *newOp = new OrderByOperator(schema.get(fieldId), current);
-  if (current)
-    newOp->rightChild = current;
-  root = newOp;
-  current = newOp;
-  return *this;
-}
-
-InputQuery &InputQuery::aggregate(Aggregation &&aggregation) {
-  // TODO: diff between window and batch
-  Operator *newOp = new ReadWindowOperator(schema, new AggregateOperator(aggregation, current));
-  if (current)
-    newOp->rightChild = current;
-  root = newOp;
-  current = newOp;
-  return *this;
-}
-
-InputQuery &InputQuery::join(Operator* op, JoinPredicate &&joinPred) {
-  Operator *newOp = new JoinOperator(joinPred, current, op);
-  root = newOp;
-  current = newOp;
-  return *this;
-}
-*/
-
-/*
- * Streaming Operators
- */
-/*
-InputQuery &InputQuery::window(Window &&window) {
-  Operator *newOp = new WindowOperator(window.assigner, window.trigger, current);
-  if (current)
-    newOp->rightChild = current;
-  root = newOp;
-  current = newOp;
-  return *this;
-}
-
-InputQuery &InputQuery::keyBy(std::string& fieldId) {
-  Operator *newOp = new KeyOperator(schema.get(fieldId), new GroupByOperator(schema.get(fieldId), current));
-  if (current)
-    newOp->rightChild = current;
-  root = newOp;
-  current = newOp;
-  return *this;
-}
-
-InputQuery &InputQuery::map(Mapper &&mapper) {
-  Operator *newOp = new MapOperator(mapper, current);
-  if (current)
-    newOp->rightChild = current;
-  root = newOp;
-  current = newOp;
-  return *this;
-}
-*/
-
-/*
- * Input Operators
- */
-
-/*
-InputQuery &InputQuery::input(InputType type, std::string path) {
-  assert(0);
-  Operator *newOp = new InputOperator(type, path, current);
-  root = newOp;
-  current = newOp;
-  return *this;
-}
-
-
-InputQuery &InputQuery::write(std::string file_name) {
-  Operator *newOp = new WriteOperator(current, file_name);
-  if (current)
-    newOp->rightChild = current;
-  root = newOp;
-  current = newOp;
-  return *this;
-}
-
-InputQuery &InputQuery::print() {
-  Operator *newOp = new PrintOperator(current);
-  if (current)
-    newOp->rightChild = current;
-  root = newOp;
-  current = newOp;
-  return *this;
-}
-*/
-
-// class Operator;
-// typedef std::shared_ptr<Operator> OperatorPtr;
-
 
     void addChild(const OperatorPtr &op_parent, const OperatorPtr &op_child) {
         if (op_parent && op_child) {
@@ -307,24 +189,4 @@ InputQuery &InputQuery::print() {
         }
     }
 
-
-// InputQuery &InputQuery::printPipelinePermutations() {
-//  std::cout << "InputQuery Plan - Permutations of the longest Pipeline " << std::string(30, '-') << std::endl;
-//
-//  /* Produce Code Generator */
-//  CodeGenerator code_generator = CodeGenerator(config, schema);
-//  InputQueryContext InputQuery_context = InputQueryContext(schema);
-//  code_generator.addInputQueryContext(InputQuery_context);
-//  current->produce(code_generator);
-//
-//  /* Choose longest Pipeline and get enumerator. */
-//  CMethod::Builder longest_pipeline = code_generator.pipeline(code_generator.longestPipeline());
-//  CMethod::PipelineEnumerator enumerator = CMethod::PipelineEnumerator(longest_pipeline);
-//
-//  /* Print all permutations. */
-//  enumerator.printPermutations();
-//  std::cout << std::endl;
-//
-//  return *this;
-//}
 } // namespace iotdb
