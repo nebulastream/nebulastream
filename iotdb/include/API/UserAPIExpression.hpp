@@ -9,9 +9,8 @@
 #include <string>
 #include <memory>
 
-#include <CodeGen/C_CodeGen/BinaryOperatorStatement.hpp>
-#include <CodeGen/CodeGen.hpp>
 #include <Core/DataTypes.hpp>
+#include <Operators/OperatorTypes.hpp>
 
 namespace iotdb
 {
@@ -35,7 +34,7 @@ typedef std::shared_ptr<Predicate> PredicatePtr;
 
 class Field;
 typedef std::shared_ptr<Field> FieldPtr;
-	
+
 class UserAPIExpression{
 public:
 	virtual ~UserAPIExpression(){};
