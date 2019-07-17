@@ -64,8 +64,8 @@ InputQueryPtr createTestQuery()
 
     InputQueryPtr ptr =
         std::make_shared<InputQuery>(
-                InputQuery::from("test")
-                .filter(Field("test")==10);
+                InputQuery::from("test",schema)
+                .filter(Field("test")==10));
 
     return ptr;
 }
@@ -113,7 +113,7 @@ InputQueryPtr createYSBTestQuery()
 //                                                         //			  .window(WindowPtr())
 //                                                         .printInputQueryPlan());
 
-    return ptr;
+    return nullptr;
 }
 
 CompiledDummyPlanPtr createDummyQEP()
