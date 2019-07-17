@@ -68,7 +68,7 @@ namespace iotdb {
         ExecutionNodePtr getRootNode() const;
 
         ExecutionNodePtr
-        createExecutionNode(std::string operatorName, std::string nodeName, FogTopologyEntryPtr nodeAndOperator);
+        createExecutionNode(std::string operatorName, std::string nodeName);
 
         bool removeExecutionNode(ExecutionNodePtr ptr);
 

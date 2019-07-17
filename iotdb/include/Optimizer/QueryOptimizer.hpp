@@ -6,15 +6,19 @@
  *         information about the operators to be executed and the nodes where the execution is to be done.
  */
 
+
 #ifndef IOTDB_QUERYOPTIMIZER_HPP
 #define IOTDB_QUERYOPTIMIZER_HPP
 
 
-class QueryOptimizer {
+namespace iotdb {
 
+    class QueryOptimizer {
 
-
-};
+    public:
+        OptimizedExecutionGraph prepareExecutionGraph(std::string strategy, InputQuery inputQuery, FogTopologyPlan fogTopologyPlan);
+    };
+}
 
 
 #endif //IOTDB_QUERYOPTIMIZER_HPP
