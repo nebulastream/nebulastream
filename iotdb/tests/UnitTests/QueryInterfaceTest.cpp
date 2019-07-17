@@ -56,7 +56,7 @@ namespace iotdb {
 //    Config::create().withParallelism(1).withPreloading().withBufferSize(1000).withNumberOfPassesOverInput(1);
         Schema schema = Schema::create()
                 .addField("id", BasicType::UINT32)
-                .addField("value", BasicType::UINT32);
+                .addField("value", BasicType::UINT64);
 
         /** \brief create a source using the following functions:
          * const DataSourcePtr createTestSource();
@@ -75,7 +75,7 @@ namespace iotdb {
   */
 
         InputQuery &query = InputQuery::from("cars", schema)
-                .filter(Field("value") <= 10)
+                .filter(Field("value")  == 42)
                 .print(std::cout);
         env.printInputQueryPlan(query);
         env.executeQuery(query);
@@ -110,7 +110,7 @@ int main(int argc, const char *argv[]) {
     iotdb::Dispatcher::instance();
 
     iotdb::createQuery();
-    iotdb::createQueryString();
+    //iotdb::createQueryString();
 
     return 0;
 }

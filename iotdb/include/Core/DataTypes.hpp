@@ -77,12 +77,14 @@ class AttributeField {
   public:
     AttributeField(const std::string& name, DataTypePtr data_type);
     AttributeField(const std::string& name, const BasicType&);
+    AttributeField(const std::string& name);
     AttributeField(const std::string& name, uint32_t dataTypeSize);
 
     std::string name;
     DataTypePtr data_type;
     uint32_t getFieldSize() const;
     const DataTypePtr getDataType() const;
+    const bool hasType() const;
     const std::string toString() const;
 
     const AttributeFieldPtr copy() const;
