@@ -11,6 +11,7 @@
 #include "Topology/FogTopologyLink.hpp"
 #include "Topology/FogTopologySensorNode.hpp"
 #include "Topology/FogTopologyWorkerNode.hpp"
+#include "Util/CPUCapacity.hpp"
 
 namespace iotdb {
 
@@ -37,6 +38,7 @@ class FogGraph {
 
     const vertex_t getVertex(size_t search_id) const;
     bool hasVertex(size_t search_id) const;
+    const std::vector<FogTopologyEntryPtr> getAllVertex() const;
 
     bool addVertex(FogTopologyEntryPtr ptr);
     bool removeVertex(size_t search_id);
@@ -47,6 +49,7 @@ class FogGraph {
     bool hasLink(FogTopologyEntryPtr sourceNode, FogTopologyEntryPtr destNode) const;
 
     const Edge* getEdge(size_t search_id) const;
+    const std::vector<Edge> getAllEdgesToNode(FogTopologyEntryPtr destNode) const;
     bool hasEdge(size_t search_id) const;
 
     bool addEdge(FogTopologyLinkPtr ptr);
@@ -65,16 +68,18 @@ class FogTopologyPlan {
 
     FogTopologyEntryPtr getRootNode() const;
 
-    FogTopologyWorkerNodePtr createFogWorkerNode();
+    FogTopologyWorkerNodePtr createFogWorkerNode(CPUCapacity cpuCapacity);
     bool removeFogWorkerNode(FogTopologyWorkerNodePtr ptr);
 
-    FogTopologySensorNodePtr createFogSensorNode();
+    FogTopologySensorNodePtr createFogSensorNode(CPUCapacity cpuCapacity);
     bool removeFogSensorNode(FogTopologySensorNodePtr ptr);
 
     FogTopologyLinkPtr createFogTopologyLink(FogTopologyEntryPtr pSourceNode, FogTopologyEntryPtr pDestNode);
     bool removeFogTopologyLink(FogTopologyLinkPtr linkPtr);
 
     std::string getTopologyPlanString() const;
+
+    FogGraph getFogGraph();
 
   private:
     size_t getNextFreeNodeId();
