@@ -72,7 +72,7 @@ void CCodeCompiler::init()
 
 void CCodeCompiler::initCompilerArgs()
 {
-    compiler_args_ = {"-std=c++11",      "-fno-trigraphs", "-fpic", "",
+    compiler_args_ = {"-std=c++11",      "-fno-trigraphs", "-fpic", "-Werror",
 #ifdef SSE41_FOUND
                       "-msse4.1",
 #endif
