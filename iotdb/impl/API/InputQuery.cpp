@@ -44,6 +44,7 @@ namespace iotdb {
             code << "#include <Runtime/DataSource.hpp>" << std::endl;
             code << "#include <API/InputQuery.hpp>" << std::endl;
             code << "#include <API/Environment.hpp>" << std::endl;
+            code << "#include <API/UserAPIExpression.hpp>" << std::endl;
             code << "namespace iotdb{" << std::endl;
             code << "InputQuery createQuery(){" << std::endl;
             code << query_code_snippet << std::endl;

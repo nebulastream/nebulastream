@@ -96,7 +96,7 @@ namespace iotdb {
 
         code << "DataSourcePtr source = createTestSource();" << std::endl;
 
-        code << "return InputQuery::from(\"test\", schema)" << std::endl
+        code << "return InputQuery::from(\"test\", schema).filter(Field(\"test\")==5)" << std::endl
              << "" << std::endl
              << ";" << std::endl;
 
