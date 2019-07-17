@@ -18,11 +18,10 @@ namespace iotdb {
     class ExecutionNode {
 
     public:
-        ExecutionNode(std::string operatorName, std::string nodeName, FogTopologyEntryPtr nodeAndOperator) {
+        ExecutionNode(std::string operatorName, std::string nodeName) {
             this->id = currentNodeId++;
             this->operatorName = operatorName;
             this->nodeName = nodeName;
-            this->nodeAndOperator = nodeAndOperator;
         };
 
         int getId() { return this->id; };
@@ -35,15 +34,10 @@ namespace iotdb {
             return this->nodeName;
         }
 
-        FogTopologyEntryPtr getNoeAndOperator() {
-            return this->nodeAndOperator;
-        }
-
     private:
         int id;
         std::string operatorName;
         std::string nodeName;
-        FogTopologyEntryPtr nodeAndOperator;
     };
 
 
