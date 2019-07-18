@@ -44,8 +44,8 @@ public:
 
 class Predicate : public UserAPIExpression{
 public:
-	Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right, const std::string& functionCallOverload, bool bracket = false);
-    Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right, bool bracket = false);
+	Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right, const std::string& functionCallOverload, bool bracket = true);
+    Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right, bool bracket = true);
 	
 	virtual const ExpressionStatmentPtr generateCode(GeneratedCode& code) const override;
 	virtual const std::string toString() const override;
@@ -76,6 +76,7 @@ public:
     PredicateItem(double val);
     PredicateItem(bool val);
     PredicateItem(char val);
+    PredicateItem(const char* val);
 
     virtual const ExpressionStatmentPtr generateCode(GeneratedCode& code) const override;
     virtual const std::string toString() const override;
@@ -88,6 +89,8 @@ private:
 	AttributeFieldPtr _attribute=nullptr;
 	ValueTypePtr _value=nullptr;
 };
+
+const PredicatePtr createPredicate(const UserAPIExpression& expression);
 
 Predicate operator == (const UserAPIExpression &lhs, const UserAPIExpression &rhs);
 Predicate operator != (const UserAPIExpression &lhs, const UserAPIExpression &rhs);

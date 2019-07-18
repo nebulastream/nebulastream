@@ -2,6 +2,8 @@
 #include <cassert>
 #include <iostream>
 
+#include <math.h>
+
 #include <CodeGen/CodeGen.hpp>
 #include <CodeGen/PipelineStage.hpp>
 #include <Core/DataTypes.hpp>
@@ -59,6 +61,7 @@ namespace iotdb {
       struct __attribute__((packed)) InputTuple {
         uint32_t id;
         uint32_t value;
+        char text[12];
       };
 
 
@@ -74,21 +77,83 @@ namespace iotdb {
           for (uint32_t i = 0; i < tupleCnt; i++) {
               tuples[i].id = i;
               tuples[i].value = i*2;
+              for(int j=0;j<11;++j) {
+                  tuples[i].text[j] = ((j+i)%(255-'a'))+'a';
+              }
+              tuples[i].text[12] = '\0';
           }
+
           buf->tuple_size_bytes = sizeof(InputTuple);
           buf->num_tuples = tupleCnt;
           return buf;
       }
   };
 
-
-    const DataSourcePtr createTestSourceCodeGenFilter()
-    {
+    const DataSourcePtr createTestSourceCodeGenFilter() {
 
         DataSourcePtr source(new GeneratorSource<SelectionDataGenFunctor>(
                 Schema::create()
+                        .addField("id", BasicType::UINT32)
+                        .addField("value", BasicType::UINT32)
+                        .addField("text", createArrayDataType(BasicType::CHAR, 12)), 1));
+
+        return source;
+    }
+
+    class PredicateTestingDataGeneratorFunctor {
+    public:
+        PredicateTestingDataGeneratorFunctor(){}
+
+        struct __attribute__((packed)) InputTuple {
+            uint32_t id;
+            int16_t valueSmall;
+            float valueFloat;
+            double valueDouble;
+            char singleChar;
+            char text[12];
+        };
+
+
+        TupleBufferPtr operator()()
+        {
+            // 10 tuples of size one
+            TupleBufferPtr buf = BufferManager::instance().getBuffer();
+            uint64_t tupleCnt = buf->buffer_size / sizeof(InputTuple);
+
+            assert(buf->buffer != NULL);
+
+            InputTuple* tuples = (InputTuple*)buf->buffer;
+
+            for (uint32_t i = 0; i < tupleCnt; i++) {
+                tuples[i].id = i;
+                tuples[i].valueSmall = -123+(i*2);
+                tuples[i].valueFloat = i*M_PI;
+                tuples[i].valueDouble = i*M_PI*2;
+                tuples[i].singleChar = ((i+1)%(127-'A'))+'A';
+                for(int j=0;j<11;++j) {
+                    tuples[i].text[j] = ((i+1)%64)+64;
+                }
+                tuples[i].text[12] = '\0';
+            }
+
+            buf->tuple_size_bytes = sizeof(InputTuple);
+            buf->num_tuples = tupleCnt;
+            return buf;
+        }
+    };
+
+
+    const DataSourcePtr createTestSourceCodeGenPredicate()
+    {
+
+        DataSourcePtr source(new GeneratorSource<PredicateTestingDataGeneratorFunctor>(
+                Schema::create()
                     .addField("id", BasicType::UINT32)
-                    .addField("value", BasicType::UINT32), 1));
+                    .addField("valueSmall", BasicType::INT16)
+                    .addField("valueFloat", BasicType::FLOAT32)
+                    .addField("valueDouble", BasicType::FLOAT64)
+                    .addField("valueChar", BasicType::CHAR)
+                    .addField("text", createArrayDataType(BasicType::CHAR, 12)), 1));
 
         return source;
     }
@@ -114,6 +179,33 @@ int CodeGenTestCases()
 
         std::cout << code->code_ << std::endl;
     }
+    {
+        std::cout << "=========================" << std::endl;
+
+        std::vector<std::string> vals = {"a","b","c"};
+        VariableDeclaration var_decl_m =
+                VariableDeclaration::create(createArrayDataType(BasicType(CHAR), 12), "m", createArrayValueType(BasicType(CHAR), vals));
+        std::cout << (VarRefStatement(var_decl_m).getCode()->code_) << std::endl;
+
+        VariableDeclaration var_decl_n = VariableDeclaration::create(createArrayDataType(BasicType(CHAR), 12), "n",
+                                                                     createArrayValueType(BasicType(CHAR), vals));
+        std::cout << var_decl_n.getCode() << std::endl;
+
+        VariableDeclaration var_decl_o = VariableDeclaration::create(createArrayDataType(BasicType(UINT8), 4), "o",
+                                                                     createArrayValueType(BasicType(UINT8), {"2","3","4"}));
+        std::cout << var_decl_o.getCode() << std::endl;
+
+        VariableDeclaration var_decl_p = VariableDeclaration::create(createArrayDataType(BasicType(CHAR), 20), "p",
+                                                                     createStringValueType("diesisteinTest", 20));
+        std::cout << var_decl_p.getCode() << std::endl;
+
+        std::cout << createStringValueType("DiesIstEinZweiterTest\0dwqdwq")->getCodeExpression()->code_ << std::endl;
+
+        std::cout << createBasicTypeValue(BasicType::CHAR, "DiesIstEinDritterTest")->getCodeExpression()->code_ << std::endl;
+
+        std::cout << "=========================" << std::endl;
+    }
+
     {
         CodeExpressionPtr code =
             BinaryOperatorStatement(VarRefStatement(var_decl_i), PLUS_OP, VarRefStatement(var_decl_j))
@@ -476,6 +568,9 @@ int CodeGenTest()
     std::vector<TupleBuffer*> bufs;
     bufs.push_back(&buf);
 
+
+
+
     TupleBuffer result_buf{result_array, sizeof(uint64_t), sizeof(uint64_t), 1};
 
     /* execute code */
@@ -604,7 +699,8 @@ int CodeGeneratorTest()
     /* generate code for writing result tuples to output buffer */
     code_gen->generateCode(createPrintSink(Schema::create()
                                                    .addField("id", BasicType::UINT32)
-                                                   .addField("value", BasicType::UINT32), std::cout), context, std::cout);
+                                                   .addField("value", BasicType::UINT32)
+                                                   .addField("text", createArrayDataType(BasicType::CHAR, 12)), std::cout), context, std::cout);
 
     /* compile code to pipeline stage */
     PipelineStagePtr stage = code_gen->compile(CompilerArgs());
@@ -617,8 +713,10 @@ int CodeGeneratorTest()
     input_buffers.push_back(buf.get());
     //std::cout << iotdb::toString(buf.get(),source->getSchema()) << std::endl;
     std::cout << "Processing " << buf->num_tuples << " tuples: " << std::endl;
-    size_t buffer_size = buf->num_tuples*sizeof (uint64_t);
-    TupleBuffer result_buffer(malloc(buffer_size), buffer_size,sizeof(uint64_t),0);
+    uint32_t sizeoftuples = (sizeof(uint32_t) + sizeof(uint32_t) + sizeof(char) * 12);
+    size_t buffer_size = buf->num_tuples * sizeoftuples;
+    std::cout << "This is my NUMBER....: " << buffer_size << std::endl;
+    TupleBuffer result_buffer(malloc(buffer_size), buffer_size, sizeoftuples, 0);
 
     /* execute Stage */
     stage->execute(input_buffers, NULL, &result_buffer);
@@ -637,15 +735,85 @@ int CodeGeneratorTest()
             return -1;
         }
     }
-
     std::cout << iotdb::toString(result_buffer,Schema::create()
                                  .addField("id", BasicType::UINT32)
-                                 .addField("value", BasicType::UINT32)) << std::endl;
+                                 .addField("value", BasicType::UINT32)
+                                 .addField("text", createArrayDataType(BasicType(CHAR), 12))) << std::endl;
 
     std::cout << "Result of SelectionCodeGenTest is Correct!" << std::endl;
 
     return 0;
     }
+
+    /**
+     * New Predicatetests for showing stuff
+     * @return
+     */
+    int CodePredicateTests()
+    {
+        /* prepare objects for test */
+        DataSourcePtr source = createTestSourceCodeGenPredicate();
+        CodeGeneratorPtr code_gen = createCodeGenerator();
+        PipelineContextPtr context = createPipelineContext();
+
+        Schema input_schema = source->getSchema();
+
+        std::cout << "Generate Predicate Code" << std::endl;
+        code_gen->generateCode(source, context, std::cout);
+
+        //predicate definition
+        code_gen->generateCode(createPredicate((input_schema[2] > 30.4) && (input_schema[4] == 'F' || (input_schema[5] == "HHHHHHHHHHH")))
+                , context, std::cout);
+
+        unsigned int numberOfResultTuples = 3;
+
+        /* generate code for writing result tuples to output buffer */
+        code_gen->generateCode(createPrintSink(Schema::create()
+                                                       .addField("id", BasicType::UINT32)
+                                                       .addField("valueSmall", BasicType::INT16)
+                                                       .addField("valueFloat", BasicType::FLOAT32)
+                                                       .addField("valueDouble", BasicType::FLOAT64)
+                                                       .addField("valueChar", BasicType::CHAR)
+                                                       .addField("text", createArrayDataType(BasicType::CHAR, 12)), std::cout), context, std::cout);
+
+        /* compile code to pipeline stage */
+        PipelineStagePtr stage = code_gen->compile(CompilerArgs());
+        if(!stage)
+            return -1;
+
+        /* prepare input tuple buffer */
+        TupleBufferPtr buf = source->receiveData();
+        std::vector<TupleBuffer*> input_buffers;
+        input_buffers.push_back(buf.get());
+        //std::cout << iotdb::toString(buf.get(),source->getSchema()) << std::endl;
+        std::cout << "Processing " << buf->num_tuples << " tuples: " << std::endl;
+        uint32_t sizeoftuples = (sizeof(uint32_t) + sizeof(int16_t) +sizeof(float) + sizeof(double) + sizeof(char) + sizeof(char) * 12);
+        size_t buffer_size = buf->num_tuples * sizeoftuples;
+        TupleBuffer result_buffer(malloc(buffer_size), buffer_size, sizeoftuples, 0);
+
+        /* execute Stage */
+        stage->execute(input_buffers, NULL, &result_buffer);
+
+        /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
+        std::cout << "---------- My Number of tuples...." << result_buffer.num_tuples << std::endl;
+        if(result_buffer.num_tuples!=numberOfResultTuples){
+            std::cout << "Wrong number of tuples in output: " << result_buffer.num_tuples
+                      << " (should have been: " << buf->num_tuples << ")" << std::endl;
+            return -1;
+        }
+
+        std::cout << iotdb::toString(result_buffer,Schema::create()
+                .addField("id", BasicType::UINT32)
+                .addField("valueSmall", BasicType::INT16)
+                .addField("valueFloat", BasicType::FLOAT32)
+                .addField("valueDouble", BasicType::FLOAT64)
+                .addField("valueChar", BasicType::CHAR)
+                .addField("text", createArrayDataType(BasicType::CHAR, 12))) << std::endl;
+        std::cout << "Result of SelectionCodeGenTest is Correct!" << std::endl;
+
+        return 0;
+    }
+
 
 int testTupleBufferPrinting()
 {
@@ -708,34 +876,42 @@ int main()
     iotdb::CodeGenTestCases();
 
     if (!iotdb::CodeGenTest()) {
-        std::cout << "Test CodeGenTest Passed!" << std::endl;
+        std::cout << "Test CodeGenTest Passed!" << std::endl << std::endl;
     }
     else {
-        std::cerr << "Test CodeGenTest Failed!" << std::endl;
+        std::cerr << "Test CodeGenTest Failed!" << std::endl << std::endl;
         return -1;
     }
 
     if (!iotdb::CodeGeneratorTest()) {
-        std::cerr << "Test CodeGeneratorTest Passed!" << std::endl;
+        std::cerr << "Test CodeGeneratorTest Passed!" << std::endl << std::endl;
     }
     else {
-        std::cerr << "Test CodeGeneratorTest Failed!" << std::endl;
+        std::cerr << "Test CodeGeneratorTest Failed!" << std::endl << std::endl;
         return -1;
     }
 
     if (!iotdb::CodeGeneratorFilterTest()) {
-        std::cerr << "Test CodeGeneratorFilterTest Passed!" << std::endl;
+        std::cerr << "Test CodeGeneratorFilterTest Passed!" << std::endl << std::endl;
     }
     else {
-        std::cerr << "Test CodeGeneratorFilterTest Failed!" << std::endl;
+        std::cerr << "Test CodeGeneratorFilterTest Failed!" << std::endl << std::endl;
         return -1;
     }
 
     if (!iotdb::testTupleBufferPrinting()) {
-        std::cout << "Test Print Tuple Buffer Passed!" << std::endl;
+        std::cout << "Test Print Tuple Buffer Passed!" << std::endl << std::endl;
     }
     else {
-        std::cerr << "Test Print Tuple Buffer Failed!" << std::endl;
+        std::cerr << "Test Print Tuple Buffer Failed!" << std::endl << std::endl;
+        return -1;
+    }
+
+    if (!iotdb::CodePredicateTests()) {
+        std::cout << "Test Predicate Passed!" << std::endl << std::endl;
+    }
+    else {
+        std::cerr << "Test Predicate Failed!" << std::endl << std::endl;
         return -1;
     }
 
