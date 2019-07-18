@@ -21,6 +21,7 @@ class Schema {
     Schema& copyFields(Schema const& schema);
     Schema& addField(AttributeFieldPtr field);
     Schema& addField(const std::string& name, const BasicType&);
+    Schema& addField(const std::string& name, DataTypePtr data);
     Schema& addField(const std::string& name, uint32_t size);
 
     // Schema &addFixSizeField(const std::string name, const APIDataType data_type);

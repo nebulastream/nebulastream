@@ -2,7 +2,10 @@
 #include <CodeGen/CodeExpression.hpp>
 #include <Core/DataTypes.hpp>
 #include <sstream>
+#include <string>
 #include <vector>
+#include <CodeGen/C_CodeGen/Statement.hpp>
+#include <CodeGen/C_CodeGen/BinaryOperatorStatement.hpp>
 
 namespace iotdb {
 
@@ -16,6 +19,12 @@ DataType::DataType(const DataType&){
 
 DataType& DataType::operator=(const DataType&){
   return *this;
+}
+
+const StatementPtr DataType::getStmtCopyAssignment(const AssignmentStatment& aParam) const{
+    return VarRef(aParam.lhs_tuple_var)[VarRef(aParam.lhs_index_var)].accessRef(VarRef(aParam.lhs_field_var))
+                      .assign(VarRef(aParam.rhs_tuple_var)[VarRef(aParam.rhs_index_var)].accessRef(VarRef(aParam.rhs_field_var)))
+                      .copy();
 }
 
 DataType::~DataType() {}
@@ -87,6 +96,11 @@ const AttributeFieldPtr createField(const std::string name, uint32_t size)
     return ptr;
 }
 
+const AttributeFieldPtr createField(const std::string name, DataTypePtr type){
+    AttributeFieldPtr ptr = std::make_shared<AttributeField>(name, type);
+    return ptr;
+}
+
 ValueType::ValueType(){
 
 }
@@ -141,6 +155,10 @@ class BasicDataType : public DataType {
     const bool isEqual(std::shared_ptr<BasicDataType> btr) const{
         return ((btr->type == this->type) && (btr->getSizeBytes() == this->getSizeBytes()));
     }
+
+    const bool isArrayDataType() const override { return false; }
+
+    const bool isCharDataType() const override {return (this->type == BasicType::CHAR); }
 
     uint32_t getSizeBytes() const override
     {
@@ -251,17 +269,26 @@ class BasicDataType : public DataType {
             return std::to_string(*reinterpret_cast<bool*>(data));
         case CHAR:
             if (dataSize == 0) {
-                return std::to_string(*reinterpret_cast<char*>(data));
+                str << static_cast<char>(*static_cast<char*>(data));
             }
             else {
-                return std::string(reinterpret_cast<char*>(data));
+                str << static_cast<char*>(data);
             }
+            return str.str();
         case DATE:
-            return std::to_string(*reinterpret_cast<uint32_t*>(data));
+            str << *static_cast<char*>(data);
+            return str.str();
         case VOID_TYPE:
             return "";
         }
         return "";
+    }
+
+    const CodeExpressionPtr getDeclCode(const std::string& identifier) const override
+    {
+        std::stringstream str;
+        str << " " << identifier;
+        return combine(getCode(), std::make_shared<CodeExpression>(str.str()));
     }
 
     const CodeExpressionPtr getCode() const override
@@ -332,10 +359,26 @@ class PointerDataType : public DataType {
             return "";
         return "POINTER"; // std::to_string(data);
     }
+    const bool isArrayDataType() const { return false; }
+
+    const CodeExpressionPtr getDeclCode(const std::string& identifier) const override
+    {
+        return std::make_shared<CodeExpression>(base_type_->getCode()->code_ + "* " + identifier);
+    }
+
     const CodeExpressionPtr getCode() const override
     {
         return std::make_shared<CodeExpression>(base_type_->getCode()->code_ + "*");
     }
+
+    const bool isCharDataType() const override {return this->base_type_->isCharDataType();}
+
+    /*
+    const CodeExpressionPtr getCodeDeclaration(const std::string& identifier) const override
+    {
+        return std::make_shared<CodeExpression>("char "+base_type_->getCodeDeclaration(identifier)->code_ + "[25]");
+    }*/
+
     const bool isEqual(DataTypePtr ptr) const override{
         std::shared_ptr<PointerDataType> temp = std::dynamic_pointer_cast<PointerDataType>(ptr);
         if(temp) return isEqual(temp);
@@ -345,6 +388,7 @@ class PointerDataType : public DataType {
     const bool isEqual(std::shared_ptr<PointerDataType> btr) const {
         return base_type_->isEqual(btr->base_type_);
     }
+
     const CodeExpressionPtr getTypeDefinitionCode() const override{ return base_type_->getTypeDefinitionCode(); }
 
     const DataTypePtr copy() const override{
@@ -397,25 +441,112 @@ const ValueTypePtr createBasicTypeValue(const BasicType& type, const std::string
 
 //todo: ------------------------------
 
+    class ArrayDataType;
+    typedef std::shared_ptr<ArrayDataType> ArrayDataTypePtr;
+
+    class ArrayValueType;
+    typedef std::shared_ptr<ArrayValueType> ArrayValueTypePtr;
+
+    class ArrayDataType : public DataType {
+    public:
+        ArrayDataType (DataTypePtr ptr, u_int32_t dimension) : DataType(), _data(ptr), _dimension(dimension) {}
+        //ArrayDataType (const BasicType& basictype, u_int32_t dimension) : DataType(), _data(std::make_shared<DataType>(basictype)), _dimension(dimension) {}
+
+        ValueTypePtr getDefaultInitValue() const override { return ValueTypePtr(); }
+        ValueTypePtr getNullValue() const override { return ValueTypePtr(); }
+        uint32_t getSizeBytes() const override { return (_dimension * _data->getSizeBytes()); }
+        const std::string toString() const override {
+            std::stringstream sstream;
+            sstream << _data->toString() << "[" << _dimension << "]";
+            return sstream.str();
+        }
+        const std::string convertRawToString(void* data) const override{
+            if(!data) return "";
+            uint32_t i;
+            char* pointer = static_cast<char*>(data);
+            std::stringstream str;
+            uint32_t step = _data->getSizeBytes() / _dimension;
+            if(!isCharDataType()) str << '[';
+            for(i = 0; i < _dimension; i++) {
+                char temp[step];
+                temp[0] = pointer[step * i];
+                if ((i != 0) && !isCharDataType()) str << ", ";
+                str << _data->convertRawToString(temp);
+            }
+            if(!isCharDataType()) str << ']';
+            return str.str();
+        }
+
+
+        const CodeExpressionPtr getDeclCode(const std::string& identifier) const override {
+            CodeExpressionPtr ptr;
+            if(identifier != ""){
+                ptr = _data->getCode();
+                ptr = combine(ptr, std::make_shared<CodeExpression>(" " + identifier));
+                ptr = combine(ptr, std::make_shared<CodeExpression>("["));
+                ptr = combine(ptr, std::make_shared<CodeExpression>(std::to_string(_dimension)));
+                ptr = combine(ptr, std::make_shared<CodeExpression>("]"));
+            } else {
+                ptr = _data->getCode();
+            }
+            return ptr;
+        }
+
+        virtual const StatementPtr getStmtCopyAssignment(const AssignmentStatment& aParam) const override {
+            FunctionCallStatement func_call("memcpy");
+            func_call.addParameter(VarRef(aParam.lhs_tuple_var)[VarRef(aParam.lhs_index_var)].accessRef(VarRef(aParam.lhs_field_var)));
+            func_call.addParameter(VarRef(aParam.rhs_tuple_var)[VarRef(aParam.rhs_index_var)].accessRef(VarRef(aParam.rhs_field_var)));
+            func_call.addParameter(ConstantExprStatement(createBasicTypeValue(UINT64, std::to_string(this->_dimension))));
+            return func_call.copy();
+        }
+
+        const CodeExpressionPtr getCode() const override {
+            std::stringstream str;
+            str << "[" << _dimension << "]";
+            return combine(_data->getCode(), std::make_shared<CodeExpression>(str.str()));
+        }
+
+        const bool isEqual(DataTypePtr ptr) const override { return (this->toString().compare(ptr->toString()) == 0); };
+        const bool isCharDataType() const override {return this->_data->isCharDataType();}
+        const bool isArrayDataType() const override { return true; }
+
+        const CodeExpressionPtr getTypeDefinitionCode() const override{ return std::make_shared<CodeExpression>(""); }
+
+        const DataTypePtr copy() const override { return std::make_shared<ArrayDataType>(*this); }
+        virtual ~ArrayDataType() override;
+    private:
+        DataTypePtr _data;
+        u_int32_t _dimension;
+    };
+
+    ArrayDataType::~ArrayDataType() {}
+
 /**
  * class ArrayValueType keeps a field of values of basic types
  */
     class ArrayValueType : public ValueType {
     public:
-        ArrayValueType(const BasicType& type, const std::vector<std::string>& value) : type_(type), value_(value){};
-        ArrayValueType(const BasicType& type, const std::string& value) : type_(type), isString_(true){
+        ArrayValueType(const ArrayDataType& type, const std::vector<std::string>& value) : type_(std::make_shared<ArrayDataType>(type)), value_(value){};
+        ArrayValueType(const ArrayDataType& type, const std::string& value) : type_(std::make_shared<ArrayDataType>(type)), isString_(true){
             value_.push_back(value);
         };
 
-        const DataTypePtr getType() const override{ return createDataType(type_); }
+        const DataTypePtr getType() const override{ return type_; }
 
         const CodeExpressionPtr getCodeExpression() const override{
-            if(isString_) return std::make_shared<CodeExpression>(value_.at(0));
             std::stringstream str;
+            if(isString_) {
+                str << "\"" << value_.at(0) << "\"";
+                return std::make_shared<CodeExpression>(str.str());
+            }
+            bool isCharArray = (type_->isCharDataType());
             str << "{";
-            for(int i = 0; i < value_.size(); i++){
+            u_int32_t i;
+            for(i = 0; i < value_.size(); i++){
                 if(i != 0) str << ", ";
+                if(isCharArray) str << "\'";
                 str << value_.at(i);
+                if(isCharArray) str << "\'";
             }
             str << "}";
             return std::make_shared<CodeExpression>(str.str());
@@ -427,16 +558,22 @@ const ValueTypePtr createBasicTypeValue(const BasicType& type, const std::string
 
         const bool isArrayValueType() const override{ return true; }
 
-        ~ArrayValueType() override;
+        virtual ~ArrayValueType() override;
 
     private:
-        const BasicType type_;
+        const ArrayDataTypePtr type_;
         bool isString_ = false;
         std::vector<std::string> value_;
     };
 
     ArrayValueType::~ArrayValueType() {}
 
+
+
+const DataTypePtr createArrayDataType(const BasicType& type, uint32_t dimension)
+{
+    return std::make_shared<ArrayDataType>(ArrayDataType(BasicDataType(type).copy(), dimension));
+}
 /**
  * creates a "string"-value (means char *)
  * @param value : std:string : the string value
@@ -444,9 +581,41 @@ const ValueTypePtr createBasicTypeValue(const BasicType& type, const std::string
  */
 const ValueTypePtr createStringValueType(const std::string& value)
 {
+    return std::make_shared<ArrayValueType>(ArrayDataType(BasicDataType(BasicType::CHAR).copy(), value.size()), value);
+}
+
+const ValueTypePtr createStringValueType(const char* value, u_int16_t dimension)
+{
+    u_int32_t i = 0;
     std::stringstream str;
-    str << "\"" << value<< "\"";
-    return std::make_shared<ArrayValueType>(BasicType::CHAR, str.str());
+    /**
+     * caused by while-loop it could make sense to include a maximum string-size here.
+     * ERROR-POSSIBILITY: INFINITE-LOOP - CHARPOINTER WITHOUT PREDEFINED SIZE DOES NOT END WITH '\0'
+     */
+    if(dimension == 0) while(value[i] != '\0'){
+        str << value[i];
+        i++;
+    } else {
+        u_int32_t j;
+        for (j = 0; j < dimension; j++) {
+            str << value[j];
+            if(value[j] == '\0') break;
+        }
+        if (j == dimension){
+            str << '\0';
+            j++;
+        }
+        i = j;
+    }
+
+    return std::make_shared<ArrayValueType>(ArrayDataType(BasicDataType(BasicType::CHAR).copy(), i), str.str());
+}
+
+const ValueTypePtr createArrayValueType(const BasicType& type, const std::vector<std::string>& value)
+{
+    /** \todo: as above. Missing type-check for the values*/
+    return std::make_shared<ArrayValueType>(ArrayDataType(BasicDataType(type).copy(), value.size()), value);
 }
 
 } // namespace iotdb
+
