@@ -13,15 +13,17 @@
 #include <Topology/FogTopologyEntry.hpp>
 
 namespace iotdb {
-    static size_t currentNodeId = 1;
 
     class ExecutionNode {
 
     public:
-        ExecutionNode(std::string operatorName, std::string nodeName) {
-            this->id = currentNodeId++;
+        ExecutionNode(std::string operatorName, std::string nodeName, FogTopologyEntryPtr fogNode,
+                      OperatorPtr executableOperator) {
+            this->id = fogNode->getId();
             this->operatorName = operatorName;
             this->nodeName = nodeName;
+            this->fogNode = fogNode;
+            this->executableOperator = executableOperator;
         };
 
         int getId() { return this->id; };
@@ -34,14 +36,32 @@ namespace iotdb {
             return this->nodeName;
         }
 
+        FogTopologyEntryPtr &getFogNode() {
+            return fogNode;
+        }
+
+        void setFogNode(FogTopologyEntryPtr &fogNode) {
+            ExecutionNode::fogNode = fogNode;
+        }
+
+        OperatorPtr &getExecutableOperator() {
+            return executableOperator;
+        }
+
+        void setExecutableOperator(OperatorPtr &executableOperator) {
+            ExecutionNode::executableOperator = executableOperator;
+        }
+
     private:
         int id;
         std::string operatorName;
         std::string nodeName;
+        FogTopologyEntryPtr fogNode;
+        OperatorPtr executableOperator;
     };
 
 
-    typedef std::shared_ptr <ExecutionNode> ExecutionNodePtr;
+    typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
 }
 
 #endif //IOTDB_EXECUTIONNODE_HPP
