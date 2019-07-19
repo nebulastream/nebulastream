@@ -13,7 +13,7 @@
 
 
 namespace iotdb {
-    static size_t currentLinkID = 1;
+    static int currentLinkID = 1;
 
     class ExecutionNodeLink {
 

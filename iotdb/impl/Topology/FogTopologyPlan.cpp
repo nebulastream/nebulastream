@@ -30,7 +30,7 @@ namespace iotdb {
     bool FogGraph::hasVertex(size_t search_id) const {
 
         // build vertice iterator
-        vertex_iterator vertex, vertex_end, next_vertex;
+        fogVertex_iterator vertex, vertex_end, next_vertex;
         boost::tie(vertex, vertex_end) = vertices(graph);
 
         // iterator over vertices
@@ -46,12 +46,12 @@ namespace iotdb {
         return false;
     }
 
-    const vertex_t FogGraph::getVertex(size_t search_id) const {
+    const fogVertex_t FogGraph::getVertex(size_t search_id) const {
 
         assert(hasVertex(search_id));
 
         // build vertice iterator
-        vertex_iterator vertex, vertex_end, next_vertex;
+        fogVertex_iterator vertex, vertex_end, next_vertex;
         boost::tie(vertex, vertex_end) = vertices(graph);
 
         // iterator over vertices
@@ -65,7 +65,7 @@ namespace iotdb {
         }
 
         // should never happen
-        return vertex_t();
+        return fogVertex_t();
     }
     
     bool FogGraph::addVertex(FogTopologyEntryPtr ptr) {
@@ -91,7 +91,7 @@ namespace iotdb {
     }
 
     FogTopologyEntryPtr FogGraph::getRoot() {
-        vertex_iterator vi, vi_end, next;
+        fogVertex_iterator vi, vi_end, next;
         boost::tie(vi, vi_end) = vertices(graph);
         for (next = vi; vi != vi_end; vi = next) {
             ++next;
@@ -106,7 +106,7 @@ namespace iotdb {
     FogTopologyLinkPtr FogGraph::getLink(FogTopologyEntryPtr sourceNode, FogTopologyEntryPtr destNode) const {
 
         // build edge iterator
-        boost::graph_traits<graph_t>::edge_iterator edge, edge_end, next_edge;
+        boost::graph_traits<fogGraph_t>::edge_iterator edge, edge_end, next_edge;
         boost::tie(edge, edge_end) = edges(graph);
 
         // iterate over edges and check for matching links
@@ -139,7 +139,7 @@ namespace iotdb {
     const Edge *FogGraph::getEdge(size_t search_id) const {
 
         // build edge iterator
-        edge_iterator edge, edge_end, next_edge;
+        fogEdge_iterator edge, edge_end, next_edge;
         boost::tie(edge, edge_end) = edges(graph);
 
         // iterate over edges
@@ -161,7 +161,7 @@ namespace iotdb {
 
         std::vector<Edge> result={};
         
-        edge_iterator edge, edge_end, next_edge;
+        fogEdge_iterator edge, edge_end, next_edge;
         boost::tie(edge, edge_end) = edges(graph);
 
         for (next_edge = edge; edge != edge_end; edge = next_edge) {

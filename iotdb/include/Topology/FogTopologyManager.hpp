@@ -121,7 +121,7 @@ namespace iotdb {
 
         void resetFogTopologyPlan() {
             currentPlan.reset(new FogTopologyPlan());
-            currentLinkID = 1;
+            linkID = 1;
         }
 
     private:
