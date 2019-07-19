@@ -26,17 +26,17 @@ struct Edge {
     FogTopologyLinkPtr ptr;
 };
 
-using graph_t = boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS, Vertex, Edge>;
-using vertex_t = boost::graph_traits<graph_t>::vertex_descriptor;
-using vertex_iterator = boost::graph_traits<graph_t>::vertex_iterator;
-using edge_t = boost::graph_traits<graph_t>::edge_descriptor;
-using edge_iterator = boost::graph_traits<graph_t>::edge_iterator;
+using fogGraph_t = boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS, Vertex, Edge>;
+using fogVertex_t = boost::graph_traits<fogGraph_t>::vertex_descriptor;
+using fogVertex_iterator = boost::graph_traits<fogGraph_t>::vertex_iterator;
+using fogEdge_t = boost::graph_traits<fogGraph_t>::edge_descriptor;
+using fogEdge_iterator = boost::graph_traits<fogGraph_t>::edge_iterator;
 
 class FogGraph {
   public:
     FogGraph(){};
 
-    const vertex_t getVertex(size_t search_id) const;
+    const fogVertex_t getVertex(size_t search_id) const;
     bool hasVertex(size_t search_id) const;
 
     bool addVertex(FogTopologyEntryPtr ptr);
@@ -57,7 +57,7 @@ class FogGraph {
     std::string getGraphString();
 
   private:
-    graph_t graph;
+    fogGraph_t graph;
 };
 
 class FogTopologyPlan {
