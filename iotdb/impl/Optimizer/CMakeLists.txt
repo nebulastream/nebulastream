@@ -4,4 +4,5 @@ add_source_iotdb(
 		BaseOptimizer.cpp
 		QueryOptimizer.cpp
 		impl/HLF.cpp
+		OptimizedExecutionGraph.cpp
 	)

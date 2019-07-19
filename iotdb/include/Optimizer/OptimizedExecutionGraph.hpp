@@ -7,16 +7,16 @@
 
 namespace iotdb {
 
-    struct Vertex {
-        size_t id;
+    struct ExecutionVertex {
+        int id;
         ExecutionNodePtr ptr;
     };
-    struct Edge {
-        size_t id;
+    struct ExecutionEdge {
+        int id;
         ExecutionNodeLinkPtr ptr;
     };
 
-    using graph_t = boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS, Vertex, Edge>;
+    using graph_t = boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS, ExecutionVertex, ExecutionEdge>;
     using vertex_t = boost::graph_traits<graph_t>::vertex_descriptor;
     using vertex_iterator = boost::graph_traits<graph_t>::vertex_iterator;
     using edge_t = boost::graph_traits<graph_t>::edge_descriptor;
@@ -27,31 +27,25 @@ namespace iotdb {
     public:
         ExecutionGraph() {}
 
-        const vertex_t getVertex(size_t search_id) const;
+        ExecutionVertex getRoot();
 
-        bool hasVertex(size_t search_id) const;
+        const vertex_t getVertex(int search_id) const;
 
-        const std::vector<Vertex> getAllVertex() const;
+        bool hasVertex(int search_id) const;
 
-        bool addVertex(FogTopologyEntryPtr ptr);
+        bool addVertex(ExecutionNodePtr ptr);
 
-        bool removeVertex(size_t search_id);
+        bool removeVertex(int search_id);
 
-        Vertex getRoot();
+        ExecutionNodeLinkPtr getLink(ExecutionNodePtr sourceNode, ExecutionNodePtr destNode) const;
 
-        Vertex getLink(FogTopologyEntryPtr sourceNode, FogTopologyEntryPtr destNode) const;
+        bool hasLink(ExecutionNodePtr sourceNode, ExecutionNodePtr destNode) const;
 
-        bool hasLink(FogTopologyEntryPtr sourceNode, FogTopologyEntryPtr destNode) const;
+        const ExecutionEdge *getEdge(int search_id) const;
 
-        const Edge *getEdge(size_t search_id) const;
-
-        const std::vector<Edge> getAllEdgesToNode(FogTopologyEntryPtr destNode) const;
-
-        bool hasEdge(size_t search_id) const;
+        bool hasEdge(int search_id) const;
 
         bool addEdge(ExecutionNodeLinkPtr ptr);
-
-        bool removeEdge(size_t search_id);
 
         std::string getGraphString();
 
@@ -68,21 +62,16 @@ namespace iotdb {
         ExecutionNodePtr getRootNode() const;
 
         ExecutionNodePtr
-        createExecutionNode(std::string operatorName, std::string nodeName);
+        createExecutionNode(std::string operatorName, std::string nodeName, FogTopologyEntryPtr fogNode,
+                            OperatorPtr executableOperator);
 
-        bool removeExecutionNode(ExecutionNodePtr ptr);
-
-        ExecutionNodeLinkPtr createExecutionNodeLink(FogTopologyEntryPtr src, FogTopologyEntryPtr dst);
-
-        bool removeFogTopologyLink(ExecutionNodeLinkPtr linkPtr);
+        ExecutionNodeLinkPtr createExecutionNodeLink(ExecutionNodePtr src, ExecutionNodePtr dst);
 
         std::string getTopologyPlanString() const;
 
         ExecutionGraph getExecutionGraph();
 
     private:
-        size_t getNextFreeNodeId();
-
         size_t currentId;
         ExecutionGraph *fGraph;
     };
