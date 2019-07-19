@@ -9,10 +9,13 @@
 #include <Optimizer/OptimizedExecutionGraph.hpp>
 #include <iostream>
 #include <Topology/FogTopologyPlan.hpp>
+#include <Topology/FogTopologyManager.hpp>
 
 namespace iotdb {
     class BaseOptimizer {
     public:
+
+        BaseOptimizer() {};
 
         /**
          * Returns an execution graph based on the input query and fog topology.
@@ -20,14 +23,19 @@ namespace iotdb {
          * @param fogTopologyPlan
          * @return
          */
-        virtual ExecutionGraph prepareExecutionPlan(InputQuery inputQuery, FogTopologyPlan fogTopologyPlan);
+//        ExecutionGraph prepareExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan) {
+//            throw "Unimplemented Placement strategy";
+//        };
+
+        virtual ExecutionGraph prepareExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan) = 0;
 
         /**
          * Factory method returning different kind of optimizer.
          * @param optimizerName
          * @return instance of type BaseOptimizer
          */
-        static BaseOptimizer* getOptimizer(std::string optimizerName);
+        static BaseOptimizer *getOptimizer(std::string optimizerName);
+
     };
 
 }

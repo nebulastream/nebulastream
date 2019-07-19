@@ -1,11 +1,12 @@
 #include <Optimizer/BaseOptimizer.hpp>
 #include <Topology/FogTopologyPlan.hpp>
 #include <Optimizer/QueryOptimizer.hpp>
+#include <Topology/FogTopologyManager.hpp>
 
 using namespace iotdb;
 
 ExecutionGraph QueryOptimizer::prepareExecutionGraph(std::string strategy, InputQuery inputQuery,
-                                                              FogTopologyPlan fogTopologyPlan) {
+                                                     FogTopologyPlanPtr fogTopologyPlan) {
 
     BaseOptimizer *pBaseOptimizer = BaseOptimizer::getOptimizer(strategy);
 

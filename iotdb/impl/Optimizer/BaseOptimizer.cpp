@@ -2,13 +2,14 @@
 #include <iostream>
 #include <Optimizer/impl/HLF.hpp>
 
-using namespace iotdb;
+namespace iotdb {
 
-BaseOptimizer* BaseOptimizer::getOptimizer(std::string optimizerName) {
-    if(optimizerName == "HLF") {
-        return new HLF;
-    } else {
-        return new BaseOptimizer;
+    BaseOptimizer *BaseOptimizer::getOptimizer(std::string optimizerName) {
+        if (optimizerName == "HLF") {
+            return new HLF();
+        } else {
+            throw "Unkown optimizer type : " + optimizerName;
+        }
     }
-}
 
+}
