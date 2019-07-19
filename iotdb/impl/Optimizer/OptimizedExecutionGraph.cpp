@@ -12,7 +12,7 @@ namespace iotdb {
             // first worker node is root TODO:change this
             return graph[*vi];
         }
-    }
+    };
 
     bool ExecutionGraph::hasVertex(int search_id) const {
         // build vertice iterator
@@ -41,7 +41,7 @@ namespace iotdb {
         // add vertex
         boost::add_vertex(ExecutionVertex{ptr->getId(), ptr}, graph);
         return true;
-    }
+    };
 
     bool ExecutionGraph::removeVertex(int search_id) {
         // does graph contain vertex?
@@ -51,7 +51,7 @@ namespace iotdb {
         }
 
         return false;
-    }
+    };
 
     const vertex_t ExecutionGraph::getVertex(int search_id) const {
         assert(hasVertex(search_id));
@@ -72,7 +72,7 @@ namespace iotdb {
 
         // should never happen
         return vertex_t();
-    }
+    };
 
     ExecutionNodeLinkPtr ExecutionGraph::getLink(ExecutionNodePtr sourceNode, ExecutionNodePtr destNode) const {
         // build edge iterator
@@ -103,7 +103,7 @@ namespace iotdb {
 
         // no edge found
         return false;
-    }
+    };
 
     const ExecutionEdge *ExecutionGraph::getEdge(int search_id) const {
         // build edge iterator
@@ -122,7 +122,7 @@ namespace iotdb {
 
         // no matching edge found
         return nullptr;
-    }
+    };
 
     bool ExecutionGraph::hasEdge(int search_id) const {
         // edge found
@@ -132,7 +132,7 @@ namespace iotdb {
 
         // no edge found
         return false;
-    }
+    };
 
     bool ExecutionGraph::addEdge(ExecutionNodeLinkPtr ptr) {
         // link id is already in graph
@@ -156,24 +156,26 @@ namespace iotdb {
         boost::add_edge(src, dst, ExecutionEdge{ptr->getLinkId(), ptr}, graph);
 
         return true;
-    }
+    };
 
     std::string ExecutionGraph::getGraphString() {
         std::stringstream ss;
         boost::write_graphviz(ss, graph,
                               [&](auto &out, auto v) {
-                                  out << "[label=\"" << graph[v].id << " type=" << graph[v].ptr->getEntryTypeString()
+                                  out << "[label=\"" << graph[v].id << " operatorName="
+                                      << graph[v].ptr->getOperatorName() << " nodeName="
+                                      << graph[v].ptr->getNodeName()
                                       << "\"]";
                               },
                               [&](auto &out, auto e) { out << "[label=\"" << graph[e].id << "\"]"; });
         ss << std::flush;
         return ss.str();
-    }
+    };
 
 
     ExecutionNodePtr OptimizedExecutionGraph::getRootNode() const {
         return fGraph->getRoot().ptr;
-    }
+    };
 
     ExecutionNodePtr
     OptimizedExecutionGraph::createExecutionNode(std::string operatorName, std::string nodeName,
@@ -186,7 +188,7 @@ namespace iotdb {
         auto ptr = std::make_shared<ExecutionNode>(executionNode);
         fGraph->addVertex(ptr);
         return ptr;
-    }
+    };
 
     ExecutionNodeLinkPtr OptimizedExecutionGraph::createExecutionNodeLink(ExecutionNodePtr src, ExecutionNodePtr dst) {
 
@@ -200,14 +202,14 @@ namespace iotdb {
         auto linkPtr = std::make_shared<ExecutionNodeLink>(src, dst);
         assert(fGraph->addEdge(linkPtr));
         return linkPtr;
-    }
+    };
 
     std::string OptimizedExecutionGraph::getTopologyPlanString() const {
         return fGraph->getGraphString();
-    }
+    };
 
     ExecutionGraph OptimizedExecutionGraph::getExecutionGraph() {
         return *fGraph;
-    }
+    };
 
 }

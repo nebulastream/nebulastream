@@ -10,13 +10,14 @@
 #ifndef IOTDB_QUERYOPTIMIZER_HPP
 #define IOTDB_QUERYOPTIMIZER_HPP
 
+#include "OptimizedExecutionGraph.hpp"
 
 namespace iotdb {
 
     class QueryOptimizer {
 
     public:
-        ExecutionGraph prepareExecutionGraph(std::string strategy, InputQuery inputQuery, FogTopologyPlan fogTopologyPlan);
+        ExecutionGraph prepareExecutionGraph(std::string strategy, InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan);
     };
 }
 

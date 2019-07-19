@@ -57,7 +57,7 @@ namespace iotdb {
     class OptimizedExecutionGraph {
 
     public:
-        OptimizedExecutionGraph();
+        OptimizedExecutionGraph(){};
 
         ExecutionNodePtr getRootNode() const;
 

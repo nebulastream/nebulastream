@@ -16,7 +16,8 @@ namespace iotdb {
      */
     class HLF : public BaseOptimizer {
     public:
-        ExecutionGraph prepareExecutionPlan(InputQuery inputQuery, FogTopologyPlan fogTopologyPlan);
+        HLF(){};
+        ExecutionGraph prepareExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan);
 
     private:
 
@@ -31,7 +32,7 @@ namespace iotdb {
         };
 
         static void
-        placeOperators(OptimizedExecutionGraph executionGraph, FogTopologyPlan fogTopologyPlan,
+        placeOperators(OptimizedExecutionGraph executionGraph, FogTopologyPlanPtr fogTopologyPlan,
                        vector<OperatorPtr> sourceOptrs,
                        deque<FogTopologyEntryPtr> sourceNodes) {
 
@@ -65,7 +66,7 @@ namespace iotdb {
                         node = fogNode;
                     } else {
                         // else find the neighbouring higher level nodes connected to it
-                        const vector<Edge> &allEdgesToNode = fogTopologyPlan.getFogGraph().getAllEdgesToNode(fogNode);
+                        const vector<Edge> &allEdgesToNode = fogTopologyPlan->getFogGraph().getAllEdgesToNode(fogNode);
 
                         vector<FogTopologyEntryPtr> neighbouringNodes;
 
@@ -139,9 +140,9 @@ namespace iotdb {
             return listOfSourceOperators;
         };
 
-        static deque<FogTopologyEntryPtr> getSourceNodes(FogTopologyPlan fogTopologyPlan) {
+        static deque<FogTopologyEntryPtr> getSourceNodes(FogTopologyPlanPtr fogTopologyPlan) {
 
-            const FogTopologyEntryPtr &rootNode = fogTopologyPlan.getRootNode();
+            const FogTopologyEntryPtr &rootNode = fogTopologyPlan->getRootNode();
             deque<FogTopologyEntryPtr> listOfSourceNodes;
             deque<FogTopologyEntryPtr> bfsTraverse;
             bfsTraverse.push_back(rootNode);
@@ -156,9 +157,11 @@ namespace iotdb {
                 }
 
 
-                const vector<Edge> &children = fogTopologyPlan.getFogGraph().getAllEdgesToNode(node);
+                const vector<Edge> &children = fogTopologyPlan->getFogGraph().getAllEdgesToNode(node);
 
-                copy(children.begin(), children.end(), back_inserter(bfsTraverse));
+                for (Edge child: children) {
+                    bfsTraverse.push_back(child.ptr->getSourceNode());
+                }
             }
 
             return listOfSourceNodes;

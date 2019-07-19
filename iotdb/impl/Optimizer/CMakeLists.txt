@@ -3,6 +3,6 @@ add_source_iotdb(
         FogRunTime.cpp
 		BaseOptimizer.cpp
 		QueryOptimizer.cpp
-		impl/HLF.cpp
 		OptimizedExecutionGraph.cpp
+		impl/HLF.cpp
 	)
