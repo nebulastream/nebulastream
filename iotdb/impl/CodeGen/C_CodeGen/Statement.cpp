@@ -28,7 +28,7 @@ IfStatement::~IfStatement() {}
 ForLoopStatement::~ForLoopStatement() {}
 UserDefinedDataType::~UserDefinedDataType() {}
 
-FunctionCallExpressionStatement::~FunctionCallExpressionStatement() {}
+FunctionCallStatement::~FunctionCallStatement() {}
 
 const DataTypePtr createUserDefinedType(const StructDeclaration& decl)
 {

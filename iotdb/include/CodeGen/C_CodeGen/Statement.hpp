@@ -259,13 +259,15 @@ typedef ForLoopStatement FOR;
 
 
 
-class FunctionCallExpressionStatement : public ExpressionStatment {
+class FunctionCallStatement : public ExpressionStatment {
 public:
     virtual StatementType getStamentType() const { return FUNC_CALL_STMT; }
 
     virtual const CodeExpressionPtr getCode() const
     {
-        u_int i;
+      
+        u_int32_t i;
+      
         CodeExpressionPtr code;
         code = combine(std::make_shared<CodeExpression>(functionname_), std::make_shared<CodeExpression>("("));
         for(i = 0; i < expr_.size(); i++){
@@ -276,33 +278,19 @@ public:
         return code;
     }
 
-    virtual const ExpressionStatmentPtr copy() const { return std::make_shared<FunctionCallExpressionStatement>(*this); }
+    virtual const ExpressionStatmentPtr copy() const { return std::make_shared<FunctionCallStatement>(*this); }
 
     virtual void addParameter(const ExpressionStatment& expr) { expr_.push_back(expr.copy()); }
     virtual void addParameter(ExpressionStatmentPtr expr) { expr_.push_back(expr); }
 
-    FunctionCallExpressionStatement(const std::string functionname) : functionname_(functionname) {}
+    FunctionCallStatement(const std::string functionname) : functionname_(functionname) {}
 
-    virtual ~FunctionCallExpressionStatement();
+    virtual ~FunctionCallStatement();
 
 private:
     std::string functionname_;
     std::vector<ExpressionStatmentPtr> expr_;
 };
-
-/**
-class FunctionCallStatement : public Statement {
-public:
-    virtual StatementType getStamentType() const { return FUNC_CALL_STMT; }
-    virtual const CodeExpressionPtr getCode() const {
-        return std::make_shared<CodeExpression>("");
-    }
-  const StatementPtr createCopy() const override{
-    return std::make_shared<FunctionCallStatement>(*this);
-  }
-    virtual ~FunctionCallStatement();
-};
-*/
 
 class UserDefinedDataType : public DataType {
   public:
@@ -320,6 +308,9 @@ class UserDefinedDataType : public DataType {
     const std::string convertRawToString(void* data) const override { return ""; }
     const CodeExpressionPtr getTypeDefinitionCode() const { return std::make_shared<CodeExpression>(decl_.getCode()); }
     const CodeExpressionPtr getCode() const { return std::make_shared<CodeExpression>(decl_.getTypeName()); }
+    const CodeExpressionPtr getDeclCode(const std::string& identifier) const override { return getCode(); }
+    const bool isArrayDataType() const override { return false; }
+    const bool isCharDataType() const override {return false;}
     const DataTypePtr copy() const override{
       return std::make_shared<UserDefinedDataType>(*this);
     }
@@ -338,6 +329,16 @@ class UserDefinedDataType : public DataType {
 
   private:
     StructDeclaration decl_;
+};
+
+
+struct AssignmentStatment{
+    VariableDeclaration lhs_tuple_var;
+    VariableDeclaration lhs_field_var;
+    VariableDeclaration lhs_index_var;
+    VariableDeclaration rhs_tuple_var;
+    VariableDeclaration rhs_field_var;
+    VariableDeclaration rhs_index_var;
 };
 
 const DataTypePtr createUserDefinedType(const StructDeclaration& decl);

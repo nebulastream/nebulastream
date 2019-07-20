@@ -2,10 +2,10 @@ add_source_iotdb(
 	Config.cpp
 	Schema.cpp
 	Source.cpp
-        ParameterTypes.cpp
+	ParameterTypes.cpp
 	InputQuery.cpp
 	UserAPIExpression.cpp
-		Environment.cpp
-		WindowDefinition.cpp
-		Stream.cpp
-	)
+	Environment.cpp
+	WindowDefinition.cpp
+	Stream.cpp
+)

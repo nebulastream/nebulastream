@@ -77,7 +77,7 @@ namespace iotdb {
         Stream cars = Stream("cars", schema);
 
         InputQuery& query = InputQuery::from(cars)
-                .filter(cars["id"]  == 42)
+                .filter(cars["value"]  > 42)
                 .print(std::cout);
         env.printInputQueryPlan(query);
         env.executeQuery(query);

@@ -3,11 +3,11 @@
 #include <iostream>
 
 #include <API/InputQuery.hpp>
-#include <API/UserAPIExpression.hpp>
 #include <Operators/Operator.hpp>
 #include <Runtime/DataSink.hpp>
 
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
+#include <API/UserAPIExpression.hpp>
 
 namespace iotdb {
 
@@ -113,6 +113,8 @@ namespace iotdb {
     */
 
     InputQuery &InputQuery::select(const Field &field) {
+        Field* f1;
+        const Field& f2 = field;
         IOTDB_NOT_IMPLEMENTED
         return *this;
     }
@@ -122,10 +124,8 @@ namespace iotdb {
         return *this;
     }
 
-    InputQuery &InputQuery::filter(Predicate predicate) {
-        PredicatePtr pred = std::dynamic_pointer_cast<Predicate>(
-                predicate.copy()
-        );
+    InputQuery &InputQuery::filter(const UserAPIExpression& predicate) {
+        PredicatePtr pred = createPredicate(predicate);
         OperatorPtr op = createFilterOperator(pred);
         addChild(op, root);
         root = op;

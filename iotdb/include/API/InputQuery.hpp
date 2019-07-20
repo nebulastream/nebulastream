@@ -57,7 +57,7 @@ namespace iotdb {
          * @param predicate
          * @return query
          */
-        InputQuery &filter(const Predicate predicate);
+        InputQuery &filter(const UserAPIExpression& predicate);
 
         /**
          * Map records to the resultField by the predicate.

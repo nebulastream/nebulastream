@@ -38,6 +38,8 @@ Schema& Schema::addField(const std::string& name, const BasicType& type) { retur
 
 Schema& Schema::addField(const std::string& name, uint32_t size) { return addField(createField(name, size)); }
 
+Schema& Schema::addField(const std::string& name, DataTypePtr data) { return addField(createField(name, data)); }
+
 // Schema &Schema::addFixSizeField(const std::string name, const APIDataType data_type) {
 //  fields.emplace_back(name, data_type, data_type.defaultSize());
 //  return *this;

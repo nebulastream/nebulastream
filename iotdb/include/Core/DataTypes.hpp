@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace iotdb {
 
@@ -32,12 +33,24 @@ typedef std::shared_ptr<DataType> DataTypePtr;
 class PointerDataType;
 typedef std::shared_ptr<PointerDataType> PointerDataTypePtr;
 
+
+class ArrayDataType;
+typedef std::shared_ptr<ArrayDataType> ArrayDataTypePtr;
+
 /** \brief represents a value of a particular DataType */
 class ValueType;
 typedef std::shared_ptr<ValueType> ValueTypePtr;
 
+class ArrayValueType;
+typedef std::shared_ptr<ArrayValueType> ArrayValueTypePtr;
+
 class CodeExpression;
 typedef std::shared_ptr<CodeExpression> CodeExpressionPtr;
+
+class Statement;
+typedef std::shared_ptr<Statement> StatementPtr;
+
+class AssignmentStatment;
 
 class DataType {
   public:
@@ -46,8 +59,12 @@ class DataType {
     virtual uint32_t getSizeBytes() const = 0;
     virtual const std::string toString() const = 0;
     virtual const std::string convertRawToString(void* data) const = 0;
+    virtual const CodeExpressionPtr getDeclCode(const std::string& identifier) const = 0;
+    virtual const StatementPtr getStmtCopyAssignment(const AssignmentStatment& aParam) const;
     virtual const CodeExpressionPtr getCode() const = 0;
     virtual const bool isEqual(DataTypePtr ptr) const = 0;
+    virtual const bool isArrayDataType() const = 0;
+    virtual const bool isCharDataType() const = 0;
     virtual const CodeExpressionPtr getTypeDefinitionCode() const = 0;
     virtual const DataTypePtr copy() const = 0;
     virtual ~DataType();
@@ -100,6 +117,7 @@ class AttributeField {
 
 const AttributeFieldPtr createField(const std::string name, const BasicType& type);
 const AttributeFieldPtr createField(const std::string name, uint32_t size);
+const AttributeFieldPtr createField(const std::string name, DataTypePtr type);
 
 const DataTypePtr createDataType(const BasicType&);
 const DataTypePtr createDataTypeVarChar(const uint32_t& max_length);
@@ -110,7 +128,13 @@ const DataTypePtr createPointerDataType(const BasicType& type);
 
 const ValueTypePtr createBasicTypeValue(const BasicType& type, const std::string& value);
 
+const DataTypePtr createArrayDataType(const BasicType& type, uint32_t dimension);
+
 const ValueTypePtr createStringValueType(const std::string& value);
+
+const ValueTypePtr createStringValueType(const char* value, u_int16_t dimension = 0);
+
+const ValueTypePtr createArrayValueType(const BasicType& type, const std::vector<std::string>& value);
 
 } // namespace iotdb
 #endif
