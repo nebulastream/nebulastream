@@ -27,7 +27,6 @@ namespace iotdb {
     void FilterOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream &out) {
         codegen->generateCode(predicate_, context, out);
         parent->consume(codegen, context, out);
-
     }
 
     const OperatorPtr FilterOperator::copy() const { return std::make_shared<FilterOperator>(*this); }

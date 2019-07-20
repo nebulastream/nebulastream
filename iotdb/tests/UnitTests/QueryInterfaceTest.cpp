@@ -64,7 +64,7 @@ namespace iotdb {
          * const DataSourcePtr createRemoteTCPSource(const Schema& schema, const std::string& server_ip, int port);
 
         InputQuery &query = InputQuery::from("cars", schema)
-                .filter(Field("rents") <= 10)
+                .filter(Field("rents", Int) <= 10)
                 .map(Field("revenue"), Field("price") - Field("tax"))
                 .windowByKey(
                         Field("id"),
@@ -74,8 +74,10 @@ namespace iotdb {
                 .print(std::cout);
   */
 
-        InputQuery &query = InputQuery::from("cars", schema)
-                .filter(Field("value")  == 42)
+        Stream cars = Stream("cars", schema);
+
+        InputQuery& query = InputQuery::from(cars)
+                .filter(cars["id"]  == 42)
                 .print(std::cout);
         env.printInputQueryPlan(query);
         env.executeQuery(query);

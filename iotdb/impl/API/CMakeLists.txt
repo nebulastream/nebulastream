@@ -7,4 +7,5 @@ add_source_iotdb(
 	UserAPIExpression.cpp
 		Environment.cpp
 		WindowDefinition.cpp
+		Stream.cpp
 	)

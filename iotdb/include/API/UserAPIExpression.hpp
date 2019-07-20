@@ -92,7 +92,7 @@ private:
 
 class Field : public PredicateItem{
     public:
-        Field(std::string name);
+        Field(std::shared_ptr<AttributeField> name);
 
     std::string _name;
 };

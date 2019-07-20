@@ -61,11 +61,11 @@ InputQueryPtr createTestQuery()
      * const DataSourcePtr createRemoteTCPSource(const Schema& schema, const std::string& server_ip, int port);
      */
     DataSourcePtr source = createTestSource();
-
+    Stream stream = Stream("test", schema);
     InputQueryPtr ptr =
         std::make_shared<InputQuery>(
-                InputQuery::from("test",schema)
-                .filter(Field("test")==10));
+                InputQuery::from(stream)
+                .filter(stream["test"]==10));
 
     return ptr;
 }
