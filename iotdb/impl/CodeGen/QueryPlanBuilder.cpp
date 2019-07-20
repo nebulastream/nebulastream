@@ -3,16 +3,18 @@
 
 namespace iotdb {
 
-    QueryPlanBuilder::QueryPlanBuilder(iotdb::InputQuery userQuery) : userquery(userQuery) {};
+    QueryPlanBuilder::QueryPlanBuilder() {};
 
     QueryPlanBuilder::~QueryPlanBuilder() {};
 
-    json::value QueryPlanBuilder::getBasePlan() {
+    json::value QueryPlanBuilder::getBasePlan(InputQuery inputQuery) {
 
-        const OperatorPtr &root = userquery.getRoot();
+        const OperatorPtr &root = inputQuery.getRoot();
 
         if (!root) {
-            return emptyPlan();
+            auto emptyPlan = json::value::object();
+            emptyPlan["name"] = json::value::string("Empty-0");
+            return emptyPlan;
         }
 
         auto basePlan = json::value::object();
@@ -22,33 +24,7 @@ namespace iotdb {
             basePlan["children"] = json::value::array(children);
         }
 
-//
-//        auto lvl2Node = json::value::object();
-//        lvl2Node["name"] = json::value::string("Sink-3");
-//
-//        std::vector<json::value> listOfLvl2Children;
-//        listOfLvl2Children.push_back(lvl2Node);
-//
-//        auto lvl1Node = json::value::object();
-//        lvl1Node["name"] = json::value::string("Map-1");
-//        lvl1Node["children"] = json::value::array(listOfLvl2Children);
-//
-//        std::vector<json::value> listOfLvl1Children;
-//        listOfLvl1Children.push_back(lvl1Node);
-//
-//        auto rootNode = json::value::object();
-//        rootNode["name"] = json::value::string("Source-0");
-//        rootNode["children"] = json::value::array(listOfLvl1Children);
-
         return basePlan;
-    }
-
-
-    json::value QueryPlanBuilder::emptyPlan() {
-
-        auto emptyPlan = json::value::object();
-        emptyPlan["name"] = json::value::string("Empty-0");
-        return emptyPlan;
     }
 
     std::vector<json::value> QueryPlanBuilder::getChildren(const OperatorPtr &root) {
@@ -74,5 +50,4 @@ namespace iotdb {
 
         return childrenNode;
     }
-
 }
