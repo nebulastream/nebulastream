@@ -106,7 +106,7 @@ const Code VariableDeclaration::getTypeDefinitionCode() const
 const Code VariableDeclaration::getCode() const
 {
     std::stringstream str;
-    str << type_->getCode()->code_ << " " << identifier_;
+    str << type_->getDeclCode(identifier_)->code_;
     if (init_value_) {
         str << " = " << init_value_->getCodeExpression()->code_;
     }
