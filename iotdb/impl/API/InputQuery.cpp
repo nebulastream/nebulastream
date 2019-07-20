@@ -81,7 +81,7 @@ namespace iotdb {
 // return sub_query
 //}
 
-    InputQuery::InputQuery(const std::string source_stream) : source_stream(source_stream),
+    InputQuery::InputQuery(Stream& source_stream) : source_stream(source_stream),
                                                               root() {}
 
 /* TODO: perform deep copy of operator graph */
@@ -101,9 +101,9 @@ namespace iotdb {
     InputQuery::~InputQuery() {}
 
 
-    InputQuery InputQuery::from(const std::string source_stream, const Schema &schema) {
-        InputQuery q(source_stream);
-        OperatorPtr op = createSourceOperator(createSchemaTestDataSource(schema));
+    InputQuery InputQuery::from(Stream& stream) {
+        InputQuery q(stream);
+        OperatorPtr op = createSourceOperator(createSchemaTestDataSource(stream.getSchema()));
         q.root = op;
         return q;
     }
@@ -127,7 +127,6 @@ namespace iotdb {
                 predicate.copy()
         );
         OperatorPtr op = createFilterOperator(pred);
-        //op->parent = root;
         addChild(op, root);
         root = op;
         return *this;
@@ -150,12 +149,6 @@ namespace iotdb {
         addChild(op, sub_query.root);
         root = op;
         return *this;
-    }
-
-// streaming operators
-    InputQuery &InputQuery::windowByKey(const iotdb::Field &field, const iotdb::WindowTypePtr windowType,
-                                        const iotdb::WindowAggregation &aggregation) {
-        IOTDB_NOT_IMPLEMENTED
     }
 
     InputQuery &InputQuery::window(const iotdb::WindowTypePtr windowType, const iotdb::WindowAggregation &aggregation) {
