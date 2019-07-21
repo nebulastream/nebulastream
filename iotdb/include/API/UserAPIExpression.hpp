@@ -19,7 +19,7 @@ class GeneratedCode;
 typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
 
 class ExpressionStatment;
-typedef std::shared_ptr<ExpressionStatment> ExpressionStatmentPtr; 
+typedef std::shared_ptr<ExpressionStatment> ExpressionStatmentPtr;
 
 enum class PredicateItemMutation{
 	ATTRIBUTE,
@@ -47,7 +47,7 @@ class Predicate : public UserAPIExpression{
 public:
 	Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right, const std::string& functionCallOverload, bool bracket = true);
     Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right, bool bracket = true);
-	
+
 	virtual const ExpressionStatmentPtr generateCode(GeneratedCode& code) const override;
 	virtual const std::string toString() const override;
 	virtual UserAPIExpressionPtr copy() const override;
@@ -95,9 +95,9 @@ const PredicatePtr createPredicate(const UserAPIExpression& expression);
 
 class Field : public PredicateItem{
     public:
-        Field(std::shared_ptr<AttributeField> name);
-
-    std::string _name;
+        Field(AttributeFieldPtr name);
+    private:
+        std::string _name;
 };
 
 Predicate operator == (const UserAPIExpression &lhs, const UserAPIExpression &rhs);

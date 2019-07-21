@@ -4,3 +4,4 @@
 #Build files
 build*
 cmake-build-debug
+.settings
