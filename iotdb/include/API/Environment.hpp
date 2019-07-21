@@ -17,10 +17,23 @@ namespace iotdb {
     class Environment {
     public:
 
+        /**
+         * Initializes a execution environment according to the configuration.
+         * @param config for the execution environment
+         * @return
+         */
         static Environment create(const Config& config);
+
+        /**
+         * Execute the query on environment.
+         * @param inputQuery
+         */
         void executeQuery(const InputQuery& inputQuery);
 
-        // helper operators
+        /**
+         * Prints a query plan for debugging.
+         * @param inputQuery
+         */
         void printInputQueryPlan(const InputQuery& inputQuery);
 
 
@@ -30,8 +43,6 @@ namespace iotdb {
         void printInputQueryPlan(const OperatorPtr& curr, int depth);
     };
 
-/* this function **executes** the code provided by the user and returns an InputQuery Object */
-    const InputQuery createQueryFromCodeString(const std::string&);
     typedef std::shared_ptr<InputQuery> InputQueryPtr;
 
 } // namespace iotdb
