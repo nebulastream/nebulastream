@@ -75,7 +75,7 @@ namespace iotdb {
         }
 
         // add vertex
-        boost::add_vertex(Vertex{ptr->getId(), ptr}, graph);
+        boost::add_vertex(FogVertex{ptr->getId(), ptr}, graph);
         return true;
     }
 
@@ -136,7 +136,7 @@ namespace iotdb {
         return false;
     }
 
-    const Edge *FogGraph::getEdge(size_t search_id) const {
+    const FogEdge *FogGraph::getEdge(size_t search_id) const {
 
         // build edge iterator
         fogEdge_iterator edge, edge_end, next_edge;
@@ -156,10 +156,10 @@ namespace iotdb {
         return nullptr;
     }
 
-    const std::vector<Edge> FogGraph::getAllEdgesToNode(FogTopologyEntryPtr destNode) const {
+    const std::vector<FogEdge> FogGraph::getAllEdgesToNode(FogTopologyEntryPtr destNode) const {
 
 
-        std::vector<Edge> result={};
+        std::vector<FogEdge> result={};
         
         fogEdge_iterator edge, edge_end, next_edge;
         boost::tie(edge, edge_end) = edges(graph);
@@ -206,7 +206,7 @@ namespace iotdb {
         // add edge with link
         auto src = getVertex(ptr->getSourceNodeId());
         auto dst = getVertex(ptr->getDestNodeId());
-        boost::add_edge(src, dst, Edge{ptr->getId(), ptr}, graph);
+        boost::add_edge(src, dst, FogEdge{ptr->getId(), ptr}, graph);
 
         return true;
     }

@@ -17,16 +17,16 @@ namespace iotdb {
 
 #define MAX_NUMBER_OF_NODES 10 // TODO: make this dynamic
 
-struct Vertex {
+struct FogVertex {
     size_t id;
     FogTopologyEntryPtr ptr;
 };
-struct Edge {
+struct FogEdge {
     size_t id;
     FogTopologyLinkPtr ptr;
 };
 
-using fogGraph_t = boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS, Vertex, Edge>;
+using fogGraph_t = boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS, FogVertex, FogEdge>;
 using fogVertex_t = boost::graph_traits<fogGraph_t>::vertex_descriptor;
 using fogVertex_iterator = boost::graph_traits<fogGraph_t>::vertex_iterator;
 using fogEdge_t = boost::graph_traits<fogGraph_t>::edge_descriptor;
@@ -47,8 +47,8 @@ class FogGraph {
     FogTopologyLinkPtr getLink(FogTopologyEntryPtr sourceNode, FogTopologyEntryPtr destNode) const;
     bool hasLink(FogTopologyEntryPtr sourceNode, FogTopologyEntryPtr destNode) const;
 
-    const Edge* getEdge(size_t search_id) const;
-    const std::vector<Edge> getAllEdgesToNode(FogTopologyEntryPtr destNode) const;
+    const FogEdge* getEdge(size_t search_id) const;
+    const std::vector<FogEdge> getAllEdgesToNode(FogTopologyEntryPtr destNode) const;
     bool hasEdge(size_t search_id) const;
 
     bool addEdge(FogTopologyLinkPtr ptr);

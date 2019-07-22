@@ -16,7 +16,8 @@ namespace iotdb {
      */
     class HLF : public BaseOptimizer {
     public:
-        HLF(){};
+        HLF() {};
+
         ExecutionGraph prepareExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan);
 
     private:
@@ -66,12 +67,12 @@ namespace iotdb {
                         node = fogNode;
                     } else {
                         // else find the neighbouring higher level nodes connected to it
-                        const vector<Edge> &allEdgesToNode = fogTopologyPlan->getFogGraph().getAllEdgesToNode(fogNode);
+                        const vector<FogEdge> &allEdgesToNode = fogTopologyPlan->getFogGraph().getAllEdgesToNode(fogNode);
 
                         vector<FogTopologyEntryPtr> neighbouringNodes;
 
                         transform(allEdgesToNode.begin(), allEdgesToNode.end(), back_inserter(neighbouringNodes),
-                                  [](Edge edge) {
+                                  [](FogEdge edge) {
                                       return edge.ptr->getSourceNode();
                                   });
 
@@ -98,22 +99,44 @@ namespace iotdb {
 
                 if (node == nullptr) {
                     //throw and exception that scheduling can't be done
+                    throw "Can't schedule The Query";
                 }
 
-                // Now create the executable node and the links to child nodes
-                const ExecutionNodePtr &executionNode = executionGraph.createExecutionNode(optr->toString(),
-                                                                                           to_string(
-                                                                                                   node->getId()),
-                                                                                           node, optr);
                 //Reduce the processing capacity
                 node->reduceCpuCapacity(1);
-                ExecutionNodePtr &childExecutionNode = operatorToProcess.childExecutionNode;
 
-                if (childExecutionNode != nullptr) {
-                    executionGraph.createExecutionNodeLink(executionNode, childExecutionNode);
+                if (executionGraph.hasVertex(node->getId())) {
+
+                    const ExecutionNodePtr &existingExecutionNode = executionGraph.getExecutionNode(node->getId());
+
+                    string oldOperatorName = existingExecutionNode->getOperatorName();
+                    string newName = oldOperatorName + " : " + optr->toString();
+
+                    existingExecutionNode->setOperatorName(newName);
+                    existingExecutionNode->addExecutableOperator(optr);
+
+                    ExecutionNodePtr &childExecutionNode = operatorToProcess.childExecutionNode;
+
+                    if (childExecutionNode != nullptr) {
+                        executionGraph.createExecutionNodeLink(existingExecutionNode, childExecutionNode);
+                    }
+                    optr->markScheduled(true);
+                    operatorsToProcess.emplace_back(ProcessOperator(optr->parent, existingExecutionNode));
+                } else {
+
+                    // Now create the executable node and the links to child nodes
+                    const ExecutionNodePtr &newExecutionNode = executionGraph.createExecutionNode(optr->toString(),
+                                                                                                  to_string(
+                                                                                                          node->getId()),
+                                                                                                  node, optr);
+                    ExecutionNodePtr &childExecutionNode = operatorToProcess.childExecutionNode;
+
+                    if (childExecutionNode != nullptr) {
+                        executionGraph.createExecutionNodeLink(newExecutionNode, childExecutionNode);
+                    }
+                    optr->markScheduled(true);
+                    operatorsToProcess.emplace_back(ProcessOperator(optr->parent, newExecutionNode));
                 }
-                optr->markScheduled(true);
-                operatorsToProcess.emplace_back(ProcessOperator(optr->parent, executionNode));
             }
         };
 
@@ -157,9 +180,9 @@ namespace iotdb {
                 }
 
 
-                const vector<Edge> &children = fogTopologyPlan->getFogGraph().getAllEdgesToNode(node);
+                const vector<FogEdge> &children = fogTopologyPlan->getFogGraph().getAllEdgesToNode(node);
 
-                for (Edge child: children) {
+                for (FogEdge child: children) {
                     bfsTraverse.push_back(child.ptr->getSourceNode());
                 }
             }
