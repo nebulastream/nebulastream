@@ -4,6 +4,7 @@
 #include <Topology/FogTopologyManager.hpp>
 
 #include "include/API/InputQuery.hpp"
+#include <API/UserAPIExpression.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Optimizer/FogOptimizer.hpp>
 #include <Optimizer/FogRunTime.hpp>
@@ -60,9 +61,11 @@ InputQueryPtr createTestQuery()
      * const DataSourcePtr createRemoteTCPSource(const Schema& schema, const std::string& server_ip, int port);
      */
     DataSourcePtr source = createTestSource();
-
+    Stream stream = Stream("test", schema);
     InputQueryPtr ptr =
-        std::make_shared<InputQuery>(InputQuery::create(config, source).filter(PredicatePtr()).printInputQueryPlan());
+        std::make_shared<InputQuery>(
+                InputQuery::from(stream)
+                .filter(stream["test"]==10));
 
     return ptr;
 }
@@ -101,17 +104,16 @@ InputQueryPtr createYSBTestQuery()
 
 
 
-        InputQueryPtr ptr = std::make_shared<InputQuery>(InputQuery::create(config, source)
-                                                             .filter(PredicatePtr())
-                                                             //           .window(WindowPtr())
-                                                             .printInputQueryPlan());
+      //  InputQueryPtr ptr = std::make_shared<InputQuery>(InputQuery::create(source)
+        //                                                     .filter(PredicatePtr()));
+                                                             //           .window(WindowPtr()));
 
 //    InputQueryPtr ptr = std::make_shared<InputQuery>(InputQuery::create(config, source)
 //                                                         .filter(PredicatePtr())
 //                                                         //			  .window(WindowPtr())
 //                                                         .printInputQueryPlan());
 
-    return ptr;
+    return nullptr;
 }
 
 CompiledDummyPlanPtr createDummyQEP()

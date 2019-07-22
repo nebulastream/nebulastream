@@ -20,8 +20,13 @@ WindowOperator& WindowOperator::operator=(const WindowOperator& other)
     return *this;
 }
 
-void WindowOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {}
-void WindowOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {}
+void WindowOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
+
+}
+
+void WindowOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
+
+}
 
 const OperatorPtr WindowOperator::copy() const { return std::make_shared<WindowOperator>(*this); }
 
