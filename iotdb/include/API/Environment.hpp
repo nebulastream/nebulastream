@@ -43,8 +43,6 @@ namespace iotdb {
         void printInputQueryPlan(const OperatorPtr& curr, int depth);
     };
 
-    typedef std::shared_ptr<InputQuery> InputQueryPtr;
-
 } // namespace iotdb
 
 #endif
