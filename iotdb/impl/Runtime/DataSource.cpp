@@ -93,6 +93,38 @@ void DataSource::run()
     IOTDB_DEBUG("DataSource " << this << ": Data Source Finished")
 }
 
+
+const DataSourcePtr createSchemaTestDataSource(const Schema& schema)
+    {
+        // Shall this go to the UnitTest Directory in future?
+        class Functor {
+        public:
+            Functor() : one(1) {}
+            TupleBufferPtr operator()()
+            {
+                // 10 tuples of size one
+                TupleBufferPtr buf = BufferManager::instance().getBuffer();
+                size_t tupleCnt = buf->buffer_size / sizeof(uint64_t);
+
+                assert(buf->buffer != NULL);
+
+                uint64_t* tuples = (uint64_t*)buf->buffer;
+                for (uint64_t i = 0; i < tupleCnt; i++) {
+                    tuples[i] = one;
+                }
+                buf->tuple_size_bytes = sizeof(uint64_t);
+                buf->num_tuples = tupleCnt;
+                return buf;
+            }
+
+            uint64_t one;
+        };
+
+        DataSourcePtr source(new GeneratorSource<Functor>(schema, 1));
+
+        return source;
+}
+
 const DataSourcePtr createTestSource()
 {
     // Shall this go to the UnitTest Directory in future?

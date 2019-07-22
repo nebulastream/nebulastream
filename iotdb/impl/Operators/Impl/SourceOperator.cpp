@@ -29,7 +29,7 @@ void SourceOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr contex
 void SourceOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out)
 {
     codegen->generateCode(source_, context, out);
-    // parent->consume(codegen,context,out);
+    parent->consume(codegen,context,out);
 }
 
 const OperatorPtr SourceOperator::copy() const { return std::make_shared<SourceOperator>(*this); }

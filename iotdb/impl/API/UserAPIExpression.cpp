@@ -129,7 +129,7 @@ namespace iotdb
     PredicateItem::PredicateItem(const char* val) :
             _mutation(PredicateItemMutation::VALUE),
             _value(createStringValueType(val)) {}
-	
+
 	const std::string PredicateItem::toString() const{
 			switch(_mutation)
 			{
@@ -153,6 +153,8 @@ namespace iotdb
 	UserAPIExpressionPtr PredicateItem::copy() const{
 		return std::make_shared<PredicateItem>(*this);
 	}
+
+    Field::Field(AttributeFieldPtr field) : PredicateItem(field), _name(field->name) {}
 
 
     const PredicatePtr createPredicate(const UserAPIExpression& expression){
