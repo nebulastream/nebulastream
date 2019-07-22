@@ -14,6 +14,8 @@
 
 namespace iotdb {
 
+    using namespace std;
+
     class ExecutionNode {
 
     public:
@@ -23,7 +25,8 @@ namespace iotdb {
             this->operatorName = operatorName;
             this->nodeName = nodeName;
             this->fogNode = fogNode;
-            this->executableOperator = executableOperator;
+            vector<OperatorPtr> operators{executableOperator};
+            this->executableOperators = operators;
         };
 
         int getId() { return this->id; };
@@ -36,28 +39,32 @@ namespace iotdb {
             return this->nodeName;
         }
 
+        void setOperatorName(const string &operatorName) {
+            this->operatorName = operatorName;
+        }
+
         FogTopologyEntryPtr &getFogNode() {
             return fogNode;
         }
 
         void setFogNode(FogTopologyEntryPtr &fogNode) {
-            ExecutionNode::fogNode = fogNode;
+            this->fogNode = fogNode;
         }
 
-        OperatorPtr &getExecutableOperator() {
-            return executableOperator;
+        vector<OperatorPtr> &getExecutableOperator() {
+            return executableOperators;
         }
 
-        void setExecutableOperator(OperatorPtr &executableOperator) {
-            ExecutionNode::executableOperator = executableOperator;
+        void addExecutableOperator(OperatorPtr &executableOperator) {
+            this->executableOperators.push_back(executableOperator);
         }
 
     private:
         int id;
-        std::string operatorName;
-        std::string nodeName;
+        string operatorName;
+        string nodeName;
         FogTopologyEntryPtr fogNode;
-        OperatorPtr executableOperator;
+        vector<OperatorPtr> executableOperators;
     };
 
 

@@ -11,9 +11,10 @@
  * TODO: add return of create
  */
 namespace iotdb {
-    typedef std::shared_ptr<FogTopologyPlan> FogTopologyPlanPtr;
 
     using namespace web;
+
+    typedef std::shared_ptr<FogTopologyPlan> FogTopologyPlanPtr;
 
     class FogTopologyManager {
     public:
@@ -95,7 +96,7 @@ namespace iotdb {
         std::vector<json::value> getChildrenNode(FogTopologyEntryPtr fogParentNode) {
 
             const FogGraph &fogGraph = getTopologyPlan()->getFogGraph();
-            const std::vector<Edge> &edgesToNode = fogGraph.getAllEdgesToNode(fogParentNode);
+            const std::vector<FogEdge> &edgesToNode = fogGraph.getAllEdgesToNode(fogParentNode);
 
             std::vector<json::value> children = {};
 
@@ -103,7 +104,7 @@ namespace iotdb {
                 return {};
             }
 
-            for (Edge edge: edgesToNode) {
+            for (FogEdge edge: edgesToNode) {
                 const FogTopologyEntryPtr &sourceNode = edge.ptr->getSourceNode();
                 if(sourceNode){
                     auto child = json::value::object();

@@ -15,27 +15,31 @@ namespace iotdb {
         int id;
         ExecutionNodeLinkPtr ptr;
     };
-
-    using graph_t = boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS, ExecutionVertex, ExecutionEdge>;
-    using vertex_t = boost::graph_traits<graph_t>::vertex_descriptor;
-    using vertex_iterator = boost::graph_traits<graph_t>::vertex_iterator;
-    using edge_t = boost::graph_traits<graph_t>::edge_descriptor;
-    using edge_iterator = boost::graph_traits<graph_t>::edge_iterator;
+    using executionGraph_t = boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS, ExecutionVertex, ExecutionEdge>;
+    using executionVertex_t = boost::graph_traits<executionGraph_t>::vertex_descriptor;
+    using executionVertex_iterator = boost::graph_traits<executionGraph_t>::vertex_iterator;
+    using executionEdge_t = boost::graph_traits<executionGraph_t>::edge_descriptor;
+    using executionEdge_iterator = boost::graph_traits<executionGraph_t>::edge_iterator;
 
     class ExecutionGraph {
 
+    private:
+        executionGraph_t graph;
+
     public:
-        ExecutionGraph() {}
+        ExecutionGraph();
 
-        ExecutionVertex getRoot();
+        ExecutionNodePtr getRoot();
 
-        const vertex_t getVertex(int search_id) const;
+        const executionVertex_t getVertex(int search_id) const;
 
         bool hasVertex(int search_id) const;
 
         bool addVertex(ExecutionNodePtr ptr);
 
         bool removeVertex(int search_id);
+
+        const ExecutionNodePtr getNode(int search_id) const;
 
         ExecutionNodeLinkPtr getLink(ExecutionNodePtr sourceNode, ExecutionNodePtr destNode) const;
 
@@ -49,15 +53,12 @@ namespace iotdb {
 
         std::string getGraphString();
 
-    private:
-        graph_t graph;
-
     };
 
     class OptimizedExecutionGraph {
 
     public:
-        OptimizedExecutionGraph(){};
+        OptimizedExecutionGraph();
 
         ExecutionNodePtr getRootNode() const;
 
@@ -71,8 +72,11 @@ namespace iotdb {
 
         ExecutionGraph getExecutionGraph();
 
+        bool hasVertex(int search_id);
+
+        ExecutionNodePtr getExecutionNode(int search_id);
+
     private:
-        size_t currentId;
         ExecutionGraph *fGraph;
     };
 };

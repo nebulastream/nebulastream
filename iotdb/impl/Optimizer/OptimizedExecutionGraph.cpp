@@ -4,19 +4,20 @@
 
 namespace iotdb {
 
-    ExecutionVertex ExecutionGraph::getRoot() {
-        vertex_iterator vi, vi_end, next;
+    ExecutionNodePtr ExecutionGraph::getRoot() {
+        executionVertex_iterator vi, vi_end, next;
         boost::tie(vi, vi_end) = vertices(graph);
         for (next = vi; vi != vi_end; vi = next) {
             ++next;
-            // first worker node is root TODO:change this
-            return graph[*vi];
+            return graph[*vi].ptr;
         }
+
+        return 0;
     };
 
     bool ExecutionGraph::hasVertex(int search_id) const {
-        // build vertice iterator
-        vertex_iterator vertex, vertex_end, next_vertex;
+        // build vertex iterator
+        executionVertex_iterator vertex, vertex_end, next_vertex;
         boost::tie(vertex, vertex_end) = vertices(graph);
 
         // iterator over vertices
@@ -53,11 +54,11 @@ namespace iotdb {
         return false;
     };
 
-    const vertex_t ExecutionGraph::getVertex(int search_id) const {
+    const executionVertex_t ExecutionGraph::getVertex(int search_id) const {
         assert(hasVertex(search_id));
 
         // build vertex iterator
-        vertex_iterator vertex, vertex_end, next_vertex;
+        executionVertex_iterator vertex, vertex_end, next_vertex;
         boost::tie(vertex, vertex_end) = vertices(graph);
 
         // iterator over vertices
@@ -71,12 +72,31 @@ namespace iotdb {
         }
 
         // should never happen
-        return vertex_t();
+        return executionVertex_t();
     };
+
+    const ExecutionNodePtr ExecutionGraph::getNode(int search_id) const {
+        // build vertex iterator
+        executionVertex_iterator vertex, vertex_end, next_vertex;
+        boost::tie(vertex, vertex_end) = vertices(graph);
+
+        // iterator over vertices
+        for (next_vertex = vertex; vertex != vertex_end; vertex = next_vertex) {
+            ++next_vertex;
+
+            // check for matching vertex
+            if (graph[*vertex].id == search_id) {
+                return graph[*vertex].ptr;
+            }
+        }
+
+        // should never happen
+        return nullptr;
+    }
 
     ExecutionNodeLinkPtr ExecutionGraph::getLink(ExecutionNodePtr sourceNode, ExecutionNodePtr destNode) const {
         // build edge iterator
-        boost::graph_traits<graph_t>::edge_iterator edge, edge_end, next_edge;
+        boost::graph_traits<executionGraph_t>::edge_iterator edge, edge_end, next_edge;
         boost::tie(edge, edge_end) = edges(graph);
 
         // iterate over edges and check for matching links
@@ -107,7 +127,7 @@ namespace iotdb {
 
     const ExecutionEdge *ExecutionGraph::getEdge(int search_id) const {
         // build edge iterator
-        edge_iterator edge, edge_end, next_edge;
+        executionEdge_iterator edge, edge_end, next_edge;
         boost::tie(edge, edge_end) = edges(graph);
 
         // iterate over edges
@@ -174,7 +194,7 @@ namespace iotdb {
 
 
     ExecutionNodePtr OptimizedExecutionGraph::getRootNode() const {
-        return fGraph->getRoot().ptr;
+        return fGraph->getRoot();
     };
 
     ExecutionNodePtr
@@ -189,6 +209,14 @@ namespace iotdb {
         fGraph->addVertex(ptr);
         return ptr;
     };
+
+    bool OptimizedExecutionGraph::hasVertex(int search_id) {
+        return fGraph->hasVertex(search_id);
+    }
+
+    ExecutionNodePtr OptimizedExecutionGraph::getExecutionNode(int search_id) {
+        return fGraph->getNode(search_id);
+    }
 
     ExecutionNodeLinkPtr OptimizedExecutionGraph::createExecutionNodeLink(ExecutionNodePtr src, ExecutionNodePtr dst) {
 
