@@ -113,15 +113,11 @@ namespace iotdb {
     */
 
     InputQuery &InputQuery::select(const Field &field) {
-        Field* f1;
-        const Field& f2 = field;
         IOTDB_NOT_IMPLEMENTED
-        return *this;
     }
 
     InputQuery &InputQuery::select(const Field &field1, const Field &field2) {
         IOTDB_NOT_IMPLEMENTED
-        return *this;
     }
 
     InputQuery &InputQuery::filter(const UserAPIExpression& predicate) {
@@ -138,7 +134,6 @@ namespace iotdb {
 
     InputQuery &InputQuery::combine(const iotdb::InputQuery &sub_query) {
         IOTDB_NOT_IMPLEMENTED
-        return *this;
     }
 
 
