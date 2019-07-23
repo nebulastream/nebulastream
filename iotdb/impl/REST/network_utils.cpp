@@ -1,4 +1,4 @@
-#include "Rest/network_utils.hpp"
+#include "REST/network_utils.hpp"
 
 namespace iotdb {
 
