@@ -43,16 +43,12 @@ export default class QueryInterface extends React.Component {
                 fill: 'lightblue',
             }
         };
-        this.userQuery = 'Config config = Config::create()\n' +
-            '   .setBufferCount(2000)\n' +
-            '   .setBufferSizeInByte(8*1024)\n' +
-            '   .setNumberOfWorker(2);\n' +
-            'Schema schema = Schema::create()\n' +
-            '   .addField("",INT32);\n' +
-            'DataSourcePtr source = createTestSource();\n' +
-            'return InputQuery::create(config, source)\n' +
-            '   .filter(PredicatePtr())\n' +
-            '   .print(std::cout);';
+        this.userQuery = 'Schema schema = Schema::create()\n'+
+            '   .addField("measurement",INT32);\n\n'+
+        'Stream temperature = Stream("temperature", schema);\n\n' +
+        'return InputQuery::from(temperature)\n' +
+            '   .filter(temperature["measurement"] > 100)\n'+
+            '   .print(std::cout);\n'
         this.queryEditor = React.createRef();
         this.getQueryPlan = this.getQueryPlan.bind(this);
         this.updateQuery = this.updateQuery.bind(this);

@@ -88,17 +88,10 @@ namespace iotdb {
     void createQueryString() {
 
         std::stringstream code;
-        code << "Config config = Config::create()"
-                ".setBufferCount(2000)"
-                ".setBufferSizeInByte(8*1024)"
-                ".setNumberOfWorker(2);"
-             << std::endl;
 
         code << "Schema schema = Schema::create().addField(\"test\",INT32);" << std::endl;
-
-        code << "DataSourcePtr source = createTestSource();" << std::endl;
-
-        code << "return InputQuery::from(\"test\", schema).filter(Field(\"test\")==5)" << std::endl
+        code << "Stream testStream = Stream(\"test-stream\",schema);" << std::endl;
+        code << "return InputQuery::from(testStream).filter(testStream[\"test\"]==5)" << std::endl
              << "" << std::endl
              << ";" << std::endl;
 
@@ -112,7 +105,7 @@ int main(int argc, const char *argv[]) {
     iotdb::Dispatcher::instance();
 
     iotdb::createQuery();
-    //iotdb::createQueryString();
+    iotdb::createQueryString();
 
     return 0;
 }
