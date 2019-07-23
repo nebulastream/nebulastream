@@ -1,38 +1,32 @@
 
-#include <Rest/std_service.hpp>
-#include <Rest/svc_controller.hpp>
+#include <REST/runtime_utils.hpp>
+#include <REST/std_service.hpp>
+#include <REST/Controller/RestController.hpp>
 #include <API/InputQuery.hpp>
 #include <CodeGen/QueryPlanBuilder.hpp>
-#include <Rest/runtime_utils.hpp>
 #include <Topology/FogTopologyManager.hpp>
 
 using namespace web;
 using namespace http;
 using namespace iotdb;
 
-void ServiceController::initRestOpHandlers() {
-    _listener.support(methods::GET, std::bind(&ServiceController::handleGet, this, std::placeholders::_1));
-    _listener.support(methods::PUT, std::bind(&ServiceController::handlePut, this, std::placeholders::_1));
-    _listener.support(methods::POST, std::bind(&ServiceController::handlePost, this, std::placeholders::_1));
-    _listener.support(methods::DEL, std::bind(&ServiceController::handleDelete, this, std::placeholders::_1));
-    _listener.support(methods::PATCH, std::bind(&ServiceController::handlePatch, this, std::placeholders::_1));
+void RestController::initRestOpHandlers() {
+    _listener.support(methods::GET, std::bind(&RestController::handleGet, this, std::placeholders::_1));
+    _listener.support(methods::PUT, std::bind(&RestController::handlePut, this, std::placeholders::_1));
+    _listener.support(methods::POST, std::bind(&RestController::handlePost, this, std::placeholders::_1));
+    _listener.support(methods::DEL, std::bind(&RestController::handleDelete, this, std::placeholders::_1));
+    _listener.support(methods::PATCH, std::bind(&RestController::handlePatch, this, std::placeholders::_1));
 }
 
-void ServiceController::handleGet(http_request message) {
+void RestController::handleGet(http_request message) {
 
     auto path = requestPath(message);
     if (!path.empty()) {
         if (path[0] == "service" && path[1] == "fog-plan") {
 
-            FogTopologyManager &fogTopologyManager = FogTopologyManager::getInstance();
-
-            fogTopologyManager.createExampleTopology();
-            auto fogTopology = fogTopologyManager.getFogTopologyGraphAsTreeJson();
+            const auto &fogTopology = fogTopologyService.getFogTopologyAsJson();
 
             http_response response(status_codes::OK);
-            auto jsonResponse = json::value::object();
-            jsonResponse["version"] = json::value::string("0.1.1.23232");
-            jsonResponse["status"] = json::value::string("ready!");
             response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
             response.set_body(fogTopology);
             message.reply(response);
@@ -48,15 +42,15 @@ void ServiceController::handleGet(http_request message) {
     }
 }
 
-void ServiceController::handlePatch(http_request message) {
+void RestController::handlePatch(http_request message) {
     message.reply(status_codes::NotImplemented, responseNotImpl(methods::PATCH));
 }
 
-void ServiceController::handlePut(http_request message) {
+void RestController::handlePut(http_request message) {
     message.reply(status_codes::NotImplemented, responseNotImpl(methods::PUT));
 }
 
-void ServiceController::handlePost(http_request message) {
+void RestController::handlePost(http_request message) {
     try {
 
         auto path = requestPath(message);
@@ -64,15 +58,17 @@ void ServiceController::handlePost(http_request message) {
             if (path[0] == "service" && path[1] == "query-plan") {
 
                 message.extract_string(true)
-                        .then([message](utility::string_t body) {
+                        .then([this, message](utility::string_t body) {
                                   try {
                                       //Prepare Input query from user string
                                       std::string userQuery(body.begin(), body.end());
-                                      InputQuery inputQuery(iotdb::createQueryFromCodeString(userQuery));
-                                      //Prepare response
+
+                                      //Call the service
+                                      const auto &basePlan = queryService.generateBaseQueryPlanFromQueryString(
+                                              userQuery);
+
+                                      //Prepare the response
                                       http_response response(status_codes::OK);
-                                      QueryPlanBuilder queryPlanBuilder;
-                                      const json::value &basePlan = queryPlanBuilder.getBasePlan(inputQuery);
                                       response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
                                       response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
                                       response.set_body(basePlan);
@@ -107,15 +103,15 @@ void ServiceController::handlePost(http_request message) {
 
 }
 
-void ServiceController::handleDelete(http_request message) {
+void RestController::handleDelete(http_request message) {
     message.reply(status_codes::NotImplemented, responseNotImpl(methods::DEL));
 }
 
-void ServiceController::handleHead(http_request message) {
+void RestController::handleHead(http_request message) {
     message.reply(status_codes::NotImplemented, responseNotImpl(methods::HEAD));
 }
 
-void ServiceController::handleOptions(http_request message) {
+void RestController::handleOptions(http_request message) {
     http_response response(status_codes::OK);
     response.headers().add(U("Allow"), U("GET, POST, OPTIONS"));
     response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
@@ -124,19 +120,19 @@ void ServiceController::handleOptions(http_request message) {
     message.reply(response);
 }
 
-void ServiceController::handleTrace(http_request message) {
+void RestController::handleTrace(http_request message) {
     message.reply(status_codes::NotImplemented, responseNotImpl(methods::TRCE));
 }
 
-void ServiceController::handleConnect(http_request message) {
+void RestController::handleConnect(http_request message) {
     message.reply(status_codes::NotImplemented, responseNotImpl(methods::CONNECT));
 }
 
-void ServiceController::handleMerge(http_request message) {
+void RestController::handleMerge(http_request message) {
     message.reply(status_codes::NotImplemented, responseNotImpl(methods::MERGE));
 }
 
-json::value ServiceController::responseNotImpl(const http::method &method) {
+json::value RestController::responseNotImpl(const http::method &method) {
     auto response = json::value::object();
     response["serviceName"] = json::value::string("IotDB");
     response["http_method"] = json::value::string(method);

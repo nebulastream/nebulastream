@@ -3,19 +3,19 @@
 #include <string>
 #include <cpprest/http_listener.h>
 #include <pplx/pplxtasks.h>
-#include "controller.hpp"
+#include <REST/controller.hpp>
 
 using namespace web;
 using namespace http::experimental::listener;
 
 namespace iotdb {
-    class BasicController {
+    class BaseController {
     protected:
         http_listener _listener; // main micro service network endpoint
 
     public:
-        BasicController();
-        ~BasicController();
+        BaseController();
+        ~BaseController();
 
         void setEndpoint(const std::string & value);
         std::string endpoint() const;
