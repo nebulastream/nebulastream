@@ -1,15 +1,13 @@
-#include "Rest/basic_controller.hpp"
-#include "Rest/network_utils.hpp"
+#include "REST/Controller/BaseController.hpp"
+#include "REST/network_utils.hpp"
 
 namespace iotdb {
-    BasicController::BasicController() {
 
-    }
+    BaseController::BaseController() {}
 
-    BasicController::~BasicController() {
+    BaseController::~BaseController() {}
 
-    }
-    void BasicController::setEndpoint(const std::string & value) {
+    void BaseController::setEndpoint(const std::string & value) {
         std::cout << "Defining endpoint using " +  value << std::endl;
         uri endpointURI(value);
         uri_builder endpointBuilder;
@@ -23,20 +21,20 @@ namespace iotdb {
         _listener = http_listener(endpointBuilder.to_uri());
     }
 
-    std::string BasicController::endpoint() const {
+    std::string BaseController::endpoint() const {
         return _listener.uri().to_string();
     }
 
-    pplx::task<void> BasicController::accept() {
+    pplx::task<void> BaseController::accept() {
         initRestOpHandlers();
         return _listener.open();
     }
 
-    pplx::task<void> BasicController::shutdown() {
+    pplx::task<void> BaseController::shutdown() {
         return _listener.close();
     }
 
-    std::vector<utility::string_t> BasicController::requestPath(const http_request & message) {
+    std::vector<utility::string_t> BaseController::requestPath(const http_request & message) {
         auto relativePath = uri::decode(message.relative_uri().path());
         return uri::split_path(relativePath);        
     }

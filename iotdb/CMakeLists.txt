@@ -74,7 +74,7 @@ foreach(dir ${dirs})
     message(STATUS "  - ${dir}")
 endforeach()
 
-# C++ Rest SDK
+# C++ REST SDK
 set(cpprestsdk_DIR /usr/lib/x86_64-linux-gnu/cmake/)
 find_package(cpprestsdk REQUIRED)
 

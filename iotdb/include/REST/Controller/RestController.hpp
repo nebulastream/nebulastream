@@ -1,13 +1,16 @@
 #pragma once
 
-#include <Rest/basic_controller.hpp>
+#include <REST/Controller/BaseController.hpp>
+#include <Services/QueryService.hpp>
+#include <Services/FogTopologyService.hpp>
+#include <REST/controller.hpp>
 
 using namespace iotdb;
 
-class ServiceController : public BasicController, Controller {
+class RestController : public BaseController, Controller {
 public:
-    ServiceController() : BasicController() {}
-    ~ServiceController() {}
+    RestController() : BaseController() {}
+    ~RestController() {}
     void handleGet(http_request message) override;
     void handlePut(http_request message) override;
     void handlePost(http_request message) override;
@@ -18,8 +21,10 @@ public:
     void handleTrace(http_request message) override;
     void handleConnect(http_request message) override;
     void handleMerge(http_request message) override;
-    void initRestOpHandlers() override;    
+    void initRestOpHandlers() override;
 
 private:
     static json::value responseNotImpl(const http::method & method);
+    QueryService queryService;
+    FogTopologyService fogTopologyService;
 };
