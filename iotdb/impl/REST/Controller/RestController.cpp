@@ -94,14 +94,14 @@ void RestController::handlePost(http_request message) {
                                       std::string userQuery(body.begin(), body.end());
 
                                       //Call the service
-                                      const auto &basePlan = fogTopologyService.getExecutionPlanAsJson(
+                                      const auto &executionPlan = fogTopologyService.getExecutionPlanAsJson(
                                               userQuery);
 
                                       //Prepare the response
                                       http_response response(status_codes::OK);
                                       response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
                                       response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-                                      response.set_body(basePlan);
+                                      response.set_body(executionPlan);
                                       message.reply(response);
 
                                   } catch (...) {

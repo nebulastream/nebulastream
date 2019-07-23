@@ -43,11 +43,11 @@ export default class QueryInterface extends React.Component {
                 fill: 'lightblue',
             }
         };
-        this.userQuery = 'Schema schema = Schema::create()\n'+
-            '   .addField("measurement",INT32);\n\n'+
-        'Stream temperature = Stream("temperature", schema);\n\n' +
-        'return InputQuery::from(temperature)\n' +
-            '   .filter(temperature["measurement"] > 100)\n'+
+        this.userQuery = 'Schema schema = Schema::create()\n' +
+            '   .addField("measurement",INT32);\n\n' +
+            'Stream temperature = Stream("temperature", schema);\n\n' +
+            'return InputQuery::from(temperature)\n' +
+            '   .filter(temperature["measurement"] > 100)\n' +
             '   .print(std::cout);\n'
         this.queryEditor = React.createRef();
         this.getQueryPlan = this.getQueryPlan.bind(this);
@@ -130,7 +130,7 @@ export default class QueryInterface extends React.Component {
     }
 
     getExecutionPlan(userQuery) {
-        this.setState({displayExecutionPlan : true});
+        this.setState({displayExecutionPlan: true});
         console.log("Fetching query plan");
         console.log(userQuery);
         fetch('http://127.0.0.1:8081/v1/iotdb/service/execution-plan', {
@@ -150,7 +150,7 @@ export default class QueryInterface extends React.Component {
             })
             .then(data => {
 
-                this.updateData("query", data);
+                this.updateData("execution", data);
             })
             .catch(err => {
                 this.resetTreeData();
@@ -168,6 +168,8 @@ export default class QueryInterface extends React.Component {
             this.setState({queryPlan: jsonObject})
         } else if (modelName === 'topology') {
             this.setState({topologyPlan: jsonObject})
+        } else if (modelName === 'execution') {
+            this.setState({executionPlan: jsonObject})
         }
     }
 
@@ -239,7 +241,9 @@ export default class QueryInterface extends React.Component {
                                         this.getFogTopology()
                                     }}>Show Fog
                                         Topology</Button>
-                                    <Button color="primary" onClick={() => {this.getExecutionPlan(this.userQuery)}}>Show Execution Plan</Button>
+                                    <Button color="primary" onClick={() => {
+                                        this.getExecutionPlan(this.userQuery)
+                                    }}>Show Execution Plan</Button>
                                 </ButtonGroup>
                                 <ButtonGroup>
                                     <Button color="info" onClick={() => {

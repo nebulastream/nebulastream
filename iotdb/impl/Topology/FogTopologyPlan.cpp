@@ -67,7 +67,7 @@ namespace iotdb {
         // should never happen
         return fogVertex_t();
     }
-    
+
     bool FogGraph::addVertex(FogTopologyEntryPtr ptr) {
         // does graph already contain vertex?
         if (hasVertex(ptr->getId())) {
@@ -159,19 +159,32 @@ namespace iotdb {
     const std::vector<FogEdge> FogGraph::getAllEdgesToNode(FogTopologyEntryPtr destNode) const {
 
 
-        std::vector<FogEdge> result={};
-        
+        std::vector<FogEdge> result = {};
+
         fogEdge_iterator edge, edge_end, next_edge;
         boost::tie(edge, edge_end) = edges(graph);
 
         for (next_edge = edge; edge != edge_end; edge = next_edge) {
             ++next_edge;
 
-            if(graph[*edge].ptr->getDestNode()->getId() == destNode.get()->getId()) {
+            if (graph[*edge].ptr->getDestNode()->getId() == destNode.get()->getId()) {
                 result.push_back(graph[*edge]);
             }
         }
 
+        return result;
+    }
+
+    const std::vector<FogEdge> FogGraph::getAllEdges() const {
+
+        std::vector<FogEdge> result = {};
+        fogEdge_iterator edge, edge_end, next_edge;
+        boost::tie(edge, edge_end) = edges(graph);
+
+        for (next_edge = edge; edge != edge_end; edge = next_edge) {
+            ++next_edge;
+            result.push_back(graph[*edge]);
+        }
         return result;
     }
 
