@@ -39,7 +39,10 @@ namespace iotdb {
 
         size_t getId() { return node_id; }
 
-        void setCpuCapacity(int cpuCapacity) { this->cpuCapacity = cpuCapacity; }
+        void setCpuCapacity(int cpuCapacity) {
+            this->cpuCapacity = cpuCapacity;
+            this->remainingCPUCapacity = cpuCapacity;
+        }
 
         int getCpuCapacity() { return cpuCapacity; }
 

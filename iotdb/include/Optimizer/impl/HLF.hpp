@@ -59,15 +59,22 @@ namespace iotdb {
 
                 FogTopologyEntryPtr node;
 
-                if (operatorToProcess.childExecutionNode != nullptr) {
+                //If the operator is the sink node
+                if (operatorToProcess.operatorToProcess->parent == nullptr) {
+
+                    node = fogTopologyPlan->getRootNode();
+                }
+                    //If the operator is not the source node
+                else if (operatorToProcess.childExecutionNode != nullptr) {
                     FogTopologyEntryPtr &fogNode = operatorToProcess.childExecutionNode->getFogNode();
 
                     //if the previous child node still have capacity. Use it for further operator assignment
-                    if (fogNode->getCpuCapacity() != 0) {
+                    if (fogNode->getCpuCapacity() > 0) {
                         node = fogNode;
                     } else {
                         // else find the neighbouring higher level nodes connected to it
-                        const vector<FogEdge> &allEdgesToNode = fogTopologyPlan->getFogGraph().getAllEdgesToNode(fogNode);
+                        const vector<FogEdge> &allEdgesToNode = fogTopologyPlan->getFogGraph().getAllEdgesToNode(
+                                fogNode);
 
                         vector<FogTopologyEntryPtr> neighbouringNodes;
 
@@ -97,7 +104,7 @@ namespace iotdb {
                     sourceNodes.pop_front();
                 }
 
-                if (node == nullptr) {
+                if ((node == nullptr) or node->getCpuCapacity() <= 0) {
                     //throw and exception that scheduling can't be done
                     throw "Can't schedule The Query";
                 }
@@ -117,11 +124,15 @@ namespace iotdb {
 
                     ExecutionNodePtr &childExecutionNode = operatorToProcess.childExecutionNode;
 
-                    if (childExecutionNode != nullptr) {
+                    //child and parent should be on different node to have a link
+                    if ((childExecutionNode != nullptr) and
+                        (childExecutionNode->getId() != existingExecutionNode->getId())) {
                         executionGraph.createExecutionNodeLink(existingExecutionNode, childExecutionNode);
                     }
                     optr->markScheduled(true);
-                    operatorsToProcess.emplace_back(ProcessOperator(optr->parent, existingExecutionNode));
+                    if (optr->parent != nullptr) {
+                        operatorsToProcess.emplace_back(ProcessOperator(optr->parent, existingExecutionNode));
+                    }
                 } else {
 
                     // Now create the executable node and the links to child nodes
@@ -131,11 +142,15 @@ namespace iotdb {
                                                                                                   node, optr);
                     ExecutionNodePtr &childExecutionNode = operatorToProcess.childExecutionNode;
 
-                    if (childExecutionNode != nullptr) {
+                    //child and parent should be on different node to have a link
+                    if ((childExecutionNode != nullptr) and
+                        (childExecutionNode->getId() != newExecutionNode->getId())) {
                         executionGraph.createExecutionNodeLink(newExecutionNode, childExecutionNode);
                     }
                     optr->markScheduled(true);
-                    operatorsToProcess.emplace_back(ProcessOperator(optr->parent, newExecutionNode));
+                    if (optr->parent != nullptr) {
+                        operatorsToProcess.emplace_back(ProcessOperator(optr->parent, newExecutionNode));
+                    }
                 }
             }
         };
