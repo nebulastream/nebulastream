@@ -28,6 +28,8 @@ namespace iotdb {
          * @return a json object representing the fog topology
          */
         json::value getFogTopologyAsJson();
+
+        json::value getExecutionPlanAsJson(string userQuery);
     };
 }
 

@@ -27,7 +27,7 @@ namespace iotdb {
         executionGraph_t graph;
 
     public:
-        ExecutionGraph();
+        ExecutionGraph(){};
 
         ExecutionNodePtr getRoot();
 

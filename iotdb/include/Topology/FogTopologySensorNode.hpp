@@ -34,7 +34,10 @@ namespace iotdb {
 
         size_t getId() { return sensor_id; }
 
-        void setCpuCapacity(int cpuCapacity) { this->cpuCapacity = cpuCapacity; }
+        void setCpuCapacity(int cpuCapacity) {
+            this->cpuCapacity = cpuCapacity;
+            this->remainingCPUCapacity = cpuCapacity;
+        }
 
         int getCpuCapacity() { return cpuCapacity; }
 

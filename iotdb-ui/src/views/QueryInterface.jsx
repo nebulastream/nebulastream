@@ -129,9 +129,38 @@ export default class QueryInterface extends React.Component {
         console.log("Fetching completed")
     }
 
-    getExecutionPlan() {
+    getExecutionPlan(userQuery) {
         this.setState({displayExecutionPlan : true});
-        // this.queryEditor.current.focus();
+        console.log("Fetching query plan");
+        console.log(userQuery);
+        fetch('http://127.0.0.1:8081/v1/iotdb/service/execution-plan', {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                },
+                body: userQuery,
+            }
+        )
+            .then(response => {
+                if (!response.ok) {
+                    this.handleResponseError(response);
+                }
+                this.onDismiss();
+                return response.json();
+            })
+            .then(data => {
+
+                this.updateData("query", data);
+            })
+            .catch(err => {
+                this.resetTreeData();
+                if (err.message.includes("500")) {
+                    this.showAlert()
+                } else {
+                    console.log(err)
+                }
+            });
+        console.log("Fetching completed")
     }
 
     updateData(modelName, jsonObject) {
@@ -210,7 +239,7 @@ export default class QueryInterface extends React.Component {
                                         this.getFogTopology()
                                     }}>Show Fog
                                         Topology</Button>
-                                    <Button color="primary" onClick={() => {this.getExecutionPlan()}}>Show Execution Plan</Button>
+                                    <Button color="primary" onClick={() => {this.getExecutionPlan(this.userQuery)}}>Show Execution Plan</Button>
                                 </ButtonGroup>
                                 <ButtonGroup>
                                     <Button color="info" onClick={() => {

@@ -192,6 +192,9 @@ namespace iotdb {
         return ss.str();
     };
 
+    OptimizedExecutionGraph::OptimizedExecutionGraph() {
+        fGraph = new ExecutionGraph();
+    }
 
     ExecutionNodePtr OptimizedExecutionGraph::getRootNode() const {
         return fGraph->getRoot();
