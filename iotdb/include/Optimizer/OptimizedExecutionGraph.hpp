@@ -4,8 +4,11 @@
 #include <Optimizer/ExecutionNode.hpp>
 #include <Optimizer/ExecutionNodeLink.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <cpprest/json.h>
 
 namespace iotdb {
+
+    using namespace web;
 
     struct ExecutionVertex {
         int id;
@@ -53,6 +56,7 @@ namespace iotdb {
 
         std::string getGraphString();
 
+        const vector <ExecutionEdge> getAllEdgesToNode(ExecutionNodePtr destNode) const;
     };
 
     class OptimizedExecutionGraph {
@@ -70,14 +74,18 @@ namespace iotdb {
 
         std::string getTopologyPlanString() const;
 
-        ExecutionGraph getExecutionGraph();
+        ExecutionGraph getExecutionGraph() const;
 
         bool hasVertex(int search_id);
 
         ExecutionNodePtr getExecutionNode(int search_id);
 
+        json::value getExecutionGraphAsJson() const;
+
     private:
         ExecutionGraph *fGraph;
+
+        vector <json::value> getChildrenNode(ExecutionNodePtr fogParentNode) const;
     };
 };
 

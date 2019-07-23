@@ -24,8 +24,7 @@ json::value FogTopologyService::getExecutionPlanAsJson(std::string userQuery) {
     
     QueryOptimizer queryOptimizer;
 
-    const ExecutionGraph &graph = queryOptimizer.prepareExecutionGraph("HLF", inputQuery, topologyPlan);
+    const OptimizedExecutionGraph &optimizedExecutionGraph = queryOptimizer.prepareExecutionGraph("HLF", inputQuery, topologyPlan);
 
-    json::value val;
-    return val;
+    return optimizedExecutionGraph.getExecutionGraphAsJson();
 }

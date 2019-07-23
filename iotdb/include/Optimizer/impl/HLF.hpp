@@ -18,7 +18,7 @@ namespace iotdb {
     public:
         HLF() {};
 
-        ExecutionGraph prepareExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan);
+        OptimizedExecutionGraph prepareExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan);
 
     private:
 
@@ -32,11 +32,10 @@ namespace iotdb {
             ExecutionNodePtr childExecutionNode;
         };
 
-        static void
+        void
         placeOperators(OptimizedExecutionGraph executionGraph, FogTopologyPlanPtr fogTopologyPlan,
                        vector<OperatorPtr> sourceOptrs,
                        deque<FogTopologyEntryPtr> sourceNodes) {
-
 
             deque<ProcessOperator> operatorsToProcess;
 
@@ -117,18 +116,11 @@ namespace iotdb {
                     const ExecutionNodePtr &existingExecutionNode = executionGraph.getExecutionNode(node->getId());
 
                     string oldOperatorName = existingExecutionNode->getOperatorName();
-                    string newName = oldOperatorName + " : " + optr->toString();
+                    string newName = optr->toString() + "\n : \n" + oldOperatorName;
 
                     existingExecutionNode->setOperatorName(newName);
                     existingExecutionNode->addExecutableOperator(optr);
 
-                    ExecutionNodePtr &childExecutionNode = operatorToProcess.childExecutionNode;
-
-                    //child and parent should be on different node to have a link
-                    if ((childExecutionNode != nullptr) and
-                        (childExecutionNode->getId() != existingExecutionNode->getId())) {
-                        executionGraph.createExecutionNodeLink(existingExecutionNode, childExecutionNode);
-                    }
                     optr->markScheduled(true);
                     if (optr->parent != nullptr) {
                         operatorsToProcess.emplace_back(ProcessOperator(optr->parent, existingExecutionNode));
@@ -140,13 +132,7 @@ namespace iotdb {
                                                                                                   to_string(
                                                                                                           node->getId()),
                                                                                                   node, optr);
-                    ExecutionNodePtr &childExecutionNode = operatorToProcess.childExecutionNode;
 
-                    //child and parent should be on different node to have a link
-                    if ((childExecutionNode != nullptr) and
-                        (childExecutionNode->getId() != newExecutionNode->getId())) {
-                        executionGraph.createExecutionNodeLink(newExecutionNode, childExecutionNode);
-                    }
                     optr->markScheduled(true);
                     if (optr->parent != nullptr) {
                         operatorsToProcess.emplace_back(ProcessOperator(optr->parent, newExecutionNode));
@@ -204,6 +190,46 @@ namespace iotdb {
 
             return listOfSourceNodes;
 
+        };
+
+        void completeExecutionGraphWithFogTopology(OptimizedExecutionGraph graph, FogTopologyPlanPtr sharedPtr) {
+
+            const vector<FogEdge> &allEdges = sharedPtr->getFogGraph().getAllEdges();
+
+            for (FogEdge fogEdge: allEdges) {
+
+                FogTopologyLinkPtr &topologyLink = fogEdge.ptr;
+                size_t srcId = topologyLink->getSourceNode()->getId();
+                size_t destId = topologyLink->getDestNode()->getId();
+                if (graph.hasVertex(srcId)) {
+                    const ExecutionNodePtr &srcExecutionNode = graph.getExecutionNode(srcId);
+                    if (graph.hasVertex(destId)) {
+                        const ExecutionNodePtr &destExecutionNode = graph.getExecutionNode(destId);
+                        graph.createExecutionNodeLink(srcExecutionNode, destExecutionNode);
+                    } else {
+                        const ExecutionNodePtr &destExecutionNode = graph.createExecutionNode("empty",
+                                                                                              to_string(destId),
+                                                                                              topologyLink->getDestNode(),
+                                                                                              nullptr);
+                        graph.createExecutionNodeLink(srcExecutionNode, destExecutionNode);
+                    }
+                } else {
+
+                    const ExecutionNodePtr &srcExecutionNode = graph.createExecutionNode("empty", to_string(srcId),
+                                                                                         topologyLink->getSourceNode(),
+                                                                                         nullptr);
+                    if (graph.hasVertex(destId)) {
+                        const ExecutionNodePtr &destExecutionNode = graph.getExecutionNode(destId);
+                        graph.createExecutionNodeLink(srcExecutionNode, destExecutionNode);
+                    } else {
+                        const ExecutionNodePtr &destExecutionNode = graph.createExecutionNode("empty",
+                                                                                              to_string(destId),
+                                                                                              topologyLink->getDestNode(),
+                                                                                              nullptr);
+                        graph.createExecutionNodeLink(srcExecutionNode, destExecutionNode);
+                    }
+                }
+            }
         };
     };
 }

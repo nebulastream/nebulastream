@@ -4,19 +4,16 @@
 using namespace iotdb;
 using namespace std;
 
-ExecutionGraph HLF::prepareExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan) {
-
+OptimizedExecutionGraph HLF::prepareExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan) {
 
     OptimizedExecutionGraph executionGraph;
-
     const OperatorPtr &sinkOperator = inputQuery.getRoot();
     const vector<OperatorPtr> &sourceOperators = getSourceOperators(sinkOperator);
     const deque<FogTopologyEntryPtr> &sourceNodes = getSourceNodes(fogTopologyPlan);
-
     placeOperators(executionGraph, fogTopologyPlan, sourceOperators, sourceNodes);
+    completeExecutionGraphWithFogTopology(executionGraph, fogTopologyPlan);
     executionGraph.getTopologyPlanString();
-
-    return executionGraph.getExecutionGraph();
+    return executionGraph;
 }
 
 

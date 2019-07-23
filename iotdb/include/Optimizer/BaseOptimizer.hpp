@@ -23,11 +23,7 @@ namespace iotdb {
          * @param fogTopologyPlan
          * @return
          */
-//        ExecutionGraph prepareExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan) {
-//            throw "Unimplemented Placement strategy";
-//        };
-
-        virtual ExecutionGraph prepareExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan) = 0;
+        virtual OptimizedExecutionGraph prepareExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan) = 0;
 
         /**
          * Factory method returning different kind of optimizer.
