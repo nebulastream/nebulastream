@@ -10,8 +10,7 @@ import {
     DropdownItem,
     DropdownMenu,
     DropdownToggle,
-    Row,
-    UncontrolledDropdown
+    Row
 } from "reactstrap";
 import AceEditor from "react-ace";
 import {Tree} from "react-d3-tree";
@@ -29,6 +28,7 @@ export default class QueryInterface extends React.Component {
             queryPlan: [{"name": "Empty"}],
             executionPlan: [{"name": "Empty"}],
             topologyPlan: [{"name": "Empty"}],
+            selectedStrategy: "NONE",
             displayBasePlan: false,
             displayExecutionPlan: false,
             displayTopologyPlan: false,
@@ -54,7 +54,7 @@ export default class QueryInterface extends React.Component {
         this.getQueryPlan = this.getQueryPlan.bind(this);
         this.updateQuery = this.updateQuery.bind(this);
         this.updateData = this.updateData.bind(this);
-        this.hideBasePlan = this.hideBasePlan.bind(this);
+        this.hideEverything = this.hideEverything.bind(this);
         this.resetTreeData = this.resetTreeData.bind(this);
         this.onDismiss = this.onDismiss.bind(this);
         this.showAlert = this.showAlert.bind(this);
@@ -132,6 +132,7 @@ export default class QueryInterface extends React.Component {
     }
 
     getExecutionPlan(userQuery, strategyName) {
+        this.setState({selectedStrategy: strategyName});
         this.setState({displayExecutionPlan: true});
         console.log("Fetching query plan");
         console.log(userQuery);
@@ -178,8 +179,12 @@ export default class QueryInterface extends React.Component {
         }
     }
 
-    hideBasePlan() {
-        this.setState({displayBasePlan: false});
+    hideEverything() {
+        this.setState({
+            displayBasePlan: false,
+            displayExecutionPlan: false,
+            displayTopologyPlan: false,
+        });
     }
 
     resetTreeData(modelName) {
@@ -258,7 +263,8 @@ export default class QueryInterface extends React.Component {
                                         this.getFogTopology()
                                     }}>Show Fog
                                         Topology</Button>
-                                    <ButtonDropdown isOpen={this.state.openExecutionStrategy} toggle={this.toggleExecutionStrategy}>
+                                    <ButtonDropdown isOpen={this.state.openExecutionStrategy}
+                                                    toggle={this.toggleExecutionStrategy}>
                                         <Button id="caret" color="primary">Show Execution Plan</Button>
                                         <DropdownToggle caret color="primary"/>
                                         <DropdownMenu>
@@ -270,9 +276,8 @@ export default class QueryInterface extends React.Component {
                                 </ButtonGroup>
                                 <ButtonGroup>
                                     <Button color="info" onClick={() => {
-                                        this.hideBasePlan()
-                                    }}>Hide
-                                        Plan</Button>
+                                        this.hideEverything()
+                                    }}>Hide All</Button>
                                 </ButtonGroup>
                             </Row>
                             <Row className="m-md-2">
@@ -294,19 +299,8 @@ export default class QueryInterface extends React.Component {
                             <Row className="m-md-2">
                                 <Collapse isOpen={this.state.displayExecutionPlan}
                                           style={{width: '100%', height: '30em'}} className="border">
-                                    <UncontrolledDropdown className="m-md-1">
-                                        <DropdownToggle caret>
-                                            Dropdown
-                                        </DropdownToggle>
-                                        <DropdownMenu>
-                                            <DropdownItem header>Placement</DropdownItem>
-                                            <DropdownItem>HLF</DropdownItem>
-                                            <DropdownItem>TD</DropdownItem>
-                                            <DropdownItem header>Optimization Steps</DropdownItem>
-                                            <DropdownItem>Step1</DropdownItem>
-                                        </DropdownMenu>
-                                    </UncontrolledDropdown>
-                                    <Alert className="m-md-2">Query Execution Plan For </Alert>
+                                    <Alert className="m-md-2">Query execution plan for "{this.state.selectedStrategy}"
+                                        strategy</Alert>
                                     <Tree
                                         id="queryExecutionPlanTree"
                                         data={this.state.executionPlan}
