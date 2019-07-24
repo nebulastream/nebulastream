@@ -107,6 +107,11 @@ add_executable(predicate-tree-tests "UnitTests/PredicateTest.cpp")
 target_link_libraries(predicate-tree-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME predicate-tree-tests COMMAND predicate-tree-tests)
 
+# Predicate Tree Tests
+add_executable(fog-topology-service-tests "UnitTests/Services/FogTopologyServiceTest.cpp")
+target_link_libraries(fog-topology-service-tests iotdb ${GTEST_LIBRARIES})
+add_test(NAME fog-topology-service-tests COMMAND fog-topology-service-tests)
+
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
         DEPENDS ${UNITTESTS})

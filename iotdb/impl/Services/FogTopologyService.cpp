@@ -1,7 +1,7 @@
 
 #include <cpprest/json.h>
 #include <Topology/FogTopologyManager.hpp>
-#include <Optimizer/QueryOptimizer.hpp>
+#include <Optimizer/FogOptimizer.hpp>
 #include "Services/FogTopologyService.hpp"
 
 using namespace iotdb;
@@ -22,9 +22,9 @@ json::value FogTopologyService::getExecutionPlanAsJson(std::string userQuery) {
     fogTopologyManager.createExampleTopology();
     const FogTopologyPlanPtr &topologyPlan = fogTopologyManager.getTopologyPlan();
     
-    QueryOptimizer queryOptimizer;
+    FogOptimizer queryOptimizer;
 
-    const OptimizedExecutionGraph &optimizedExecutionGraph = queryOptimizer.prepareExecutionGraph("BottomUp", inputQuery, topologyPlan);
+    const FogExecutionPlan &fogExecutionPlan = queryOptimizer.prepareExecutionGraph("BottomUp", inputQuery, topologyPlan);
 
-    return optimizedExecutionGraph.getExecutionGraphAsJson();
+    return fogExecutionPlan.getExecutionGraphAsJson();
 }

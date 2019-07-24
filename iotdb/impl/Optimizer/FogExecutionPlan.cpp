@@ -1,5 +1,5 @@
 
-#include <Optimizer/OptimizedExecutionGraph.hpp>
+#include <Optimizer/FogExecutionPlan.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <cpprest/json.h>
 
@@ -215,16 +215,16 @@ std::string ExecutionGraph::getGraphString() {
     return ss.str();
 };
 
-OptimizedExecutionGraph::OptimizedExecutionGraph() {
+FogExecutionPlan::FogExecutionPlan() {
     fGraph = new ExecutionGraph();
 }
 
-ExecutionNodePtr OptimizedExecutionGraph::getRootNode() const {
+ExecutionNodePtr FogExecutionPlan::getRootNode() const {
     return fGraph->getRoot();
 };
 
 ExecutionNodePtr
-OptimizedExecutionGraph::createExecutionNode(std::string operatorName, std::string nodeName,
+FogExecutionPlan::createExecutionNode(std::string operatorName, std::string nodeName,
                                              FogTopologyEntryPtr fogNode,
                                              OperatorPtr executableOperator) {
 
@@ -236,15 +236,15 @@ OptimizedExecutionGraph::createExecutionNode(std::string operatorName, std::stri
     return ptr;
 };
 
-bool OptimizedExecutionGraph::hasVertex(int search_id) {
+bool FogExecutionPlan::hasVertex(int search_id) {
     return fGraph->hasVertex(search_id);
 }
 
-ExecutionNodePtr OptimizedExecutionGraph::getExecutionNode(int search_id) {
+ExecutionNodePtr FogExecutionPlan::getExecutionNode(int search_id) {
     return fGraph->getNode(search_id);
 }
 
-json::value OptimizedExecutionGraph::getExecutionGraphAsJson() const {
+json::value FogExecutionPlan::getExecutionGraphAsJson() const {
     const ExecutionNodePtr &rootNode = getRootNode();
 
     auto topologyAsJson = json::value::object();
@@ -259,7 +259,7 @@ json::value OptimizedExecutionGraph::getExecutionGraphAsJson() const {
     return topologyAsJson;
 }
 
-std::vector<json::value> OptimizedExecutionGraph::getChildrenNode(ExecutionNodePtr executionParentNode) const {
+std::vector<json::value> FogExecutionPlan::getChildrenNode(ExecutionNodePtr executionParentNode) const {
 
 
     const ExecutionGraph &executionGraph = getExecutionGraph();
@@ -288,7 +288,7 @@ std::vector<json::value> OptimizedExecutionGraph::getChildrenNode(ExecutionNodeP
     return children;
 }
 
-ExecutionNodeLinkPtr OptimizedExecutionGraph::createExecutionNodeLink(ExecutionNodePtr src, ExecutionNodePtr dst) {
+ExecutionNodeLinkPtr FogExecutionPlan::createExecutionNodeLink(ExecutionNodePtr src, ExecutionNodePtr dst) {
 
     // check if link already exists
     if (fGraph->hasLink(src, dst)) {
@@ -302,11 +302,11 @@ ExecutionNodeLinkPtr OptimizedExecutionGraph::createExecutionNodeLink(ExecutionN
     return linkPtr;
 };
 
-std::string OptimizedExecutionGraph::getTopologyPlanString() const {
+std::string FogExecutionPlan::getTopologyPlanString() const {
     return fGraph->getGraphString();
 };
 
-ExecutionGraph OptimizedExecutionGraph::getExecutionGraph() const {
+ExecutionGraph FogExecutionPlan::getExecutionGraph() const {
     return *fGraph;
 };
     

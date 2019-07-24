@@ -3,19 +3,20 @@
  *
  */
 
-#ifndef IOTDB_BASEOPTIMIZER_HPP
-#define IOTDB_BASEOPTIMIZER_HPP
+#ifndef IOTDB_FOGPLACEMENTOPTIMIZER_HPP
+#define IOTDB_FOGPLACEMENTOPTIMIZER_HPP
 
-#include <Optimizer/OptimizedExecutionGraph.hpp>
+#include <Optimizer/FogExecutionPlan.hpp>
 #include <iostream>
 #include <Topology/FogTopologyPlan.hpp>
 #include <Topology/FogTopologyManager.hpp>
 
 namespace iotdb {
-    class BaseOptimizer {
-    public:
+    class FogPlacementOptimizer {
+    private:
 
-        BaseOptimizer() {};
+    public:
+        FogPlacementOptimizer() {};
 
         /**
          * Returns an execution graph based on the input query and fog topology.
@@ -23,17 +24,17 @@ namespace iotdb {
          * @param fogTopologyPlan
          * @return
          */
-        virtual OptimizedExecutionGraph prepareExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan) = 0;
+        virtual FogExecutionPlan prepareExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan) = 0;
 
         /**
          * Factory method returning different kind of optimizer.
          * @param optimizerName
          * @return instance of type BaseOptimizer
          */
-        static BaseOptimizer *getOptimizer(std::string optimizerName);
+        static FogPlacementOptimizer *getOptimizer(std::string optimizerName);
 
     };
 
 }
 
-#endif //IOTDB_BASEOPTIMIZER_HPP
+#endif //IOTDB_FOGPLACEMENTOPTIMIZER_HPP

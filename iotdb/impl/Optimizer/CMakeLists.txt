@@ -1,8 +1,7 @@
 add_source_iotdb(
-        Optimizer.cpp
         FogRunTime.cpp
-		BaseOptimizer.cpp
-		QueryOptimizer.cpp
-		OptimizedExecutionGraph.cpp
+        FogPlacementOptimizer.cpp
+		FogOptimizer.cpp
+        FogExecutionPlan.cpp
 		impl/BottomUp.cpp
 	)
