@@ -1,7 +1,7 @@
 #ifndef IOTDB_BOTTOMUP_HPP
 #define IOTDB_BOTTOMUP_HPP
 
-#include <Optimizer/BaseOptimizer.hpp>
+#include <Optimizer/FogPlacementOptimizer.hpp>
 #include <Operators/Operator.hpp>
 #include <iostream>
 
@@ -14,11 +14,13 @@ namespace iotdb {
      *          here the operator at highest level (bottom most level) is placed at compatible node at highest level of
      *          the fog topology.
      */
-    class BottomUp : public BaseOptimizer {
+    class BottomUp : public FogPlacementOptimizer {
+    private:
+
     public:
         BottomUp() {};
 
-        OptimizedExecutionGraph prepareExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan);
+        FogExecutionPlan prepareExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan);
 
     private:
 
@@ -33,7 +35,7 @@ namespace iotdb {
         };
 
         void
-        placeOperators(OptimizedExecutionGraph executionGraph, FogTopologyPlanPtr fogTopologyPlan,
+        placeOperators(FogExecutionPlan executionGraph, FogTopologyPlanPtr fogTopologyPlan,
                        vector<OperatorPtr> sourceOptrs,
                        deque<FogTopologyEntryPtr> sourceNodes) {
 
@@ -197,7 +199,7 @@ namespace iotdb {
 
         };
 
-        void completeExecutionGraphWithFogTopology(OptimizedExecutionGraph graph, FogTopologyPlanPtr sharedPtr) {
+        void completeExecutionGraphWithFogTopology(FogExecutionPlan graph, FogTopologyPlanPtr sharedPtr) {
 
             const vector<FogEdge> &allEdges = sharedPtr->getFogGraph().getAllEdges();
 

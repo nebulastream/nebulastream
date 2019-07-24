@@ -5,6 +5,8 @@
 #ifndef IOTDB_FOGTOPOLOGYSERVICE_HPP
 #define IOTDB_FOGTOPOLOGYSERVICE_HPP
 
+#include <cpprest/json.h>
+
 namespace iotdb {
 
     using namespace std;
