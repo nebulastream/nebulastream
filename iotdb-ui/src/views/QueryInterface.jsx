@@ -18,6 +18,7 @@ import {Tree} from "react-d3-tree";
 import 'brace/mode/c_cpp';
 import 'brace/theme/github';
 import ButtonGroup from "reactstrap/es/ButtonGroup";
+import ButtonDropdown from "reactstrap/es/ButtonDropdown";
 
 export default class QueryInterface extends React.Component {
 
@@ -32,6 +33,7 @@ export default class QueryInterface extends React.Component {
             displayExecutionPlan: false,
             displayTopologyPlan: false,
             internalError: false,
+            openExecutionStrategy: false,
         };
         this.svgSquare = {
             "shape": "rect",
@@ -48,8 +50,7 @@ export default class QueryInterface extends React.Component {
             'Stream temperature = Stream("temperature", schema);\n\n' +
             'return InputQuery::from(temperature)\n' +
             '   .filter(temperature["measurement"] > 100)\n' +
-            '   .print(std::cout);\n'
-        this.queryEditor = React.createRef();
+            '   .print(std::cout);\n';
         this.getQueryPlan = this.getQueryPlan.bind(this);
         this.updateQuery = this.updateQuery.bind(this);
         this.updateData = this.updateData.bind(this);
@@ -58,6 +59,7 @@ export default class QueryInterface extends React.Component {
         this.onDismiss = this.onDismiss.bind(this);
         this.showAlert = this.showAlert.bind(this);
         this.getExecutionPlan = this.getExecutionPlan.bind(this);
+        this.toggleExecutionStrategy = this.toggleExecutionStrategy.bind(this);
     }
 
     updateQuery(newQuery) {
@@ -129,7 +131,7 @@ export default class QueryInterface extends React.Component {
         console.log("Fetching completed")
     }
 
-    getExecutionPlan(userQuery) {
+    getExecutionPlan(userQuery, strategyName) {
         this.setState({displayExecutionPlan: true});
         console.log("Fetching query plan");
         console.log(userQuery);
@@ -138,7 +140,10 @@ export default class QueryInterface extends React.Component {
                 headers: {
                     Accept: 'application/json',
                 },
-                body: userQuery,
+                body: JSON.stringify({
+                    userQuery: userQuery,
+                    strategyName: strategyName
+                }),
             }
         )
             .then(response => {
@@ -179,7 +184,7 @@ export default class QueryInterface extends React.Component {
 
     resetTreeData(modelName) {
         if (modelName === 'query') {
-        this.setState({queryPlan: [{"name": "empty"}]});
+            this.setState({queryPlan: [{"name": "empty"}]});
         } else if (modelName === 'topology') {
             this.setState({topologyPlan: [{"name": "empty"}]});
         } else if (modelName === 'execution') {
@@ -197,6 +202,12 @@ export default class QueryInterface extends React.Component {
 
     onDismiss() {
         this.setState({internalError: false});
+    }
+
+    toggleExecutionStrategy() {
+        this.setState({
+            openExecutionStrategy: !this.state.openExecutionStrategy
+        });
     }
 
     render() {
@@ -247,9 +258,15 @@ export default class QueryInterface extends React.Component {
                                         this.getFogTopology()
                                     }}>Show Fog
                                         Topology</Button>
-                                    <Button color="primary" onClick={() => {
-                                        this.getExecutionPlan(this.userQuery)
-                                    }}>Show Execution Plan</Button>
+                                    <ButtonDropdown isOpen={this.state.openExecutionStrategy} toggle={this.toggleExecutionStrategy}>
+                                        <Button id="caret" color="primary">Show Execution Plan</Button>
+                                        <DropdownToggle caret color="primary"/>
+                                        <DropdownMenu>
+                                            <DropdownItem onClick={() => {
+                                                this.getExecutionPlan(this.userQuery, "BottomUp")
+                                            }}>Bottom-Up</DropdownItem>
+                                        </DropdownMenu>
+                                    </ButtonDropdown>
                                 </ButtonGroup>
                                 <ButtonGroup>
                                     <Button color="info" onClick={() => {

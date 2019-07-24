@@ -14,7 +14,7 @@ json::value FogTopologyService::getFogTopologyAsJson() {
     return fogTopology;
 }
 
-json::value FogTopologyService::getExecutionPlanAsJson(std::string userQuery) {
+json::value FogTopologyService::getExecutionPlanAsJson(string userQuery, string optimizationStrategyName) {
     //build query from string
     InputQuery inputQuery(iotdb::createQueryFromCodeString(userQuery));
 
@@ -24,7 +24,7 @@ json::value FogTopologyService::getExecutionPlanAsJson(std::string userQuery) {
     
     FogOptimizer queryOptimizer;
 
-    const FogExecutionPlan &fogExecutionPlan = queryOptimizer.prepareExecutionGraph("BottomUp", inputQuery, topologyPlan);
+    const FogExecutionPlan &fogExecutionPlan = queryOptimizer.prepareExecutionGraph(optimizationStrategyName, inputQuery, topologyPlan);
 
     return fogExecutionPlan.getExecutionGraphAsJson();
 }
