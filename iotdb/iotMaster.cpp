@@ -300,9 +300,9 @@ int main(int argc, const char *argv[]) {
     //	qep->setDataSource(query->getSource());
     // skipping LogicalPlanManager
 
-    FogOptimizer& fogOpt = FogOptimizer::getInstance();
-    FogExecutionPlanPtr execPlan = fogOpt.map(query, fMgnr.getTopologyPlan());
-    fogOpt.optimize(execPlan); // TODO: does nothing atm
+//    FogOptimizer& fogOpt = FogOptimizer::getInstance();
+//    FogExecutionPlanPtr execPlan = fogOpt.map(query, fMgnr.getTopologyPlan());
+//    fogOpt.optimize(execPlan); // TODO: does nothing atm
 
     FogRunTime& runtime = FogRunTime::getInstance();
     NodeEnginePtr nodePtr = createTestNode();
