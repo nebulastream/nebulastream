@@ -87,7 +87,7 @@ export default class QueryInterface extends React.Component {
                 this.updateData("query", data);
             })
             .catch(err => {
-                this.resetTreeData();
+                this.resetTreeData("query");
                 if (err.message.includes("500")) {
                     this.showAlert()
                 } else {
@@ -118,7 +118,7 @@ export default class QueryInterface extends React.Component {
                 this.updateData("topology", data);
             })
             .catch(err => {
-                this.resetTreeData();
+                this.resetTreeData("topology");
                 if (err.message.includes("500")) {
                     this.showAlert()
                 } else {
@@ -153,7 +153,7 @@ export default class QueryInterface extends React.Component {
                 this.updateData("execution", data);
             })
             .catch(err => {
-                this.resetTreeData();
+                this.resetTreeData("execution");
                 if (err.message.includes("500")) {
                     this.showAlert()
                 } else {
@@ -177,8 +177,14 @@ export default class QueryInterface extends React.Component {
         this.setState({displayBasePlan: false});
     }
 
-    resetTreeData() {
+    resetTreeData(modelName) {
+        if (modelName === 'query') {
         this.setState({queryPlan: [{"name": "empty"}]});
+        } else if (modelName === 'topology') {
+            this.setState({topologyPlan: [{"name": "empty"}]});
+        } else if (modelName === 'execution') {
+            this.setState({executionPlan: [{"name": "empty"}]});
+        }
     }
 
     handleResponseError(response) {

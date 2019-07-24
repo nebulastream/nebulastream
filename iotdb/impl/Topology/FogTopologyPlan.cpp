@@ -175,6 +175,25 @@ namespace iotdb {
         return result;
     }
 
+    const std::vector<FogEdge> FogGraph::getAllEdgesFromNode(FogTopologyEntryPtr srcNode) const {
+
+
+        std::vector<FogEdge> result = {};
+
+        fogEdge_iterator edge, edge_end, next_edge;
+        boost::tie(edge, edge_end) = edges(graph);
+
+        for (next_edge = edge; edge != edge_end; edge = next_edge) {
+            ++next_edge;
+
+            if (graph[*edge].ptr->getSourceNode()->getId() == srcNode.get()->getId()) {
+                result.push_back(graph[*edge]);
+            }
+        }
+
+        return result;
+    }
+
     const std::vector<FogEdge> FogGraph::getAllEdges() const {
 
         std::vector<FogEdge> result = {};

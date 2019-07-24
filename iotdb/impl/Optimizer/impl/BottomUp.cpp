@@ -1,10 +1,10 @@
-#include "Optimizer/impl/HLF.hpp"
+#include "Optimizer/impl/BottomUp.hpp"
 #include <Operators/Operator.hpp>
 
 using namespace iotdb;
 using namespace std;
 
-OptimizedExecutionGraph HLF::prepareExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan) {
+OptimizedExecutionGraph BottomUp::prepareExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan) {
 
     OptimizedExecutionGraph executionGraph;
     const OperatorPtr &sinkOperator = inputQuery.getRoot();

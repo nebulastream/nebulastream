@@ -1,5 +1,5 @@
-#ifndef IOTDB_HLF_HPP
-#define IOTDB_HLF_HPP
+#ifndef IOTDB_BOTTOMUP_HPP
+#define IOTDB_BOTTOMUP_HPP
 
 #include <Optimizer/BaseOptimizer.hpp>
 #include <Operators/Operator.hpp>
@@ -14,9 +14,9 @@ namespace iotdb {
      *          here the operator at highest level (bottom most level) is placed at compatible node at highest level of
      *          the fog topology.
      */
-    class HLF : public BaseOptimizer {
+    class BottomUp : public BaseOptimizer {
     public:
-        HLF() {};
+        BottomUp() {};
 
         OptimizedExecutionGraph prepareExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan);
 
@@ -68,32 +68,37 @@ namespace iotdb {
                     FogTopologyEntryPtr &fogNode = operatorToProcess.childExecutionNode->getFogNode();
 
                     //if the previous child node still have capacity. Use it for further operator assignment
-                    if (fogNode->getCpuCapacity() > 0) {
+                    if (fogNode->getRemainingCpuCapacity() > 0) {
                         node = fogNode;
                     } else {
                         // else find the neighbouring higher level nodes connected to it
-                        const vector<FogEdge> &allEdgesToNode = fogTopologyPlan->getFogGraph().getAllEdgesToNode(
+                        const vector<FogEdge> &allEdgesToNode = fogTopologyPlan->getFogGraph().getAllEdgesFromNode(
                                 fogNode);
 
                         vector<FogTopologyEntryPtr> neighbouringNodes;
 
                         transform(allEdgesToNode.begin(), allEdgesToNode.end(), back_inserter(neighbouringNodes),
                                   [](FogEdge edge) {
-                                      return edge.ptr->getSourceNode();
+                                      return edge.ptr->getDestNode();
                                   });
 
                         FogTopologyEntryPtr neighbouringNodeWithMaxCPU = nullptr;
 
                         for (FogTopologyEntryPtr neighbouringNode: neighbouringNodes) {
 
-                            if ((neighbouringNode == nullptr) ||
-                                (neighbouringNode->getCpuCapacity() > neighbouringNodeWithMaxCPU->getCpuCapacity())) {
+                            if ((neighbouringNodeWithMaxCPU == nullptr) ||
+                                (neighbouringNode->getRemainingCpuCapacity() > neighbouringNodeWithMaxCPU->getRemainingCpuCapacity())) {
 
                                 neighbouringNodeWithMaxCPU = neighbouringNode;
                             }
                         }
 
-                        if (neighbouringNodeWithMaxCPU->getCpuCapacity() > 0) {
+                        if ((neighbouringNodeWithMaxCPU == nullptr) or neighbouringNodeWithMaxCPU->getRemainingCpuCapacity() <= 0) {
+                            //throw and exception that scheduling can't be done
+                            throw "Can't schedule The Query";
+                        }
+
+                        if (neighbouringNodeWithMaxCPU->getRemainingCpuCapacity() > 0) {
 
                             node = neighbouringNodeWithMaxCPU;
                         }
@@ -103,7 +108,7 @@ namespace iotdb {
                     sourceNodes.pop_front();
                 }
 
-                if ((node == nullptr) or node->getCpuCapacity() <= 0) {
+                if ((node == nullptr) or node->getRemainingCpuCapacity() <= 0) {
                     //throw and exception that scheduling can't be done
                     throw "Can't schedule The Query";
                 }
@@ -234,4 +239,4 @@ namespace iotdb {
     };
 }
 
-#endif //IOTDB_HLF_HPP
+#endif //IOTDB_BOTTOMUP_HPP
