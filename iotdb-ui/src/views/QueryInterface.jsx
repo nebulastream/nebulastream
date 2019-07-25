@@ -178,7 +178,6 @@ export default class QueryInterface extends React.Component {
                 } else {
                     this.notify("info", "Fetched execution plan for user query")
                 }
-                this.onDismiss();
                 return response.json();
             })
             .then(data => {
