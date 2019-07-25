@@ -278,8 +278,7 @@ export default class QueryInterface extends React.Component {
                                     Topology</Button>
                                 <ButtonDropdown isOpen={this.state.openExecutionStrategy}
                                                 toggle={this.toggleExecutionStrategy}>
-                                    <Button id="caret" color="primary">Show Execution Plan</Button>
-                                    <DropdownToggle caret color="primary"/>
+                                    <DropdownToggle caret color="primary">Show Execution Plan</DropdownToggle>
                                     <DropdownMenu>
                                         <DropdownItem onClick={() => {
                                             this.getExecutionPlan(this.userQuery, "BottomUp")
