@@ -10,6 +10,7 @@
     "react-alert": "^5.5.0",
     "react-alert-template-basic": "^1.0.0",
     "react-d3-tree": "^1.13.0",
+    "react-digraph": "^6.4.1",
     "react-dom": "^16.8.6",
     "react-scripts": "3.0.1",
     "react-toast-notifications": "^2.2.1",

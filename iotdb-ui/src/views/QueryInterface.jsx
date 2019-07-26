@@ -19,6 +19,7 @@ import 'brace/theme/github';
 import ButtonGroup from "reactstrap/es/ButtonGroup";
 import ButtonDropdown from "reactstrap/es/ButtonDropdown";
 import {toast} from "react-toastify";
+import Graph from "./dag/Graph";
 
 export default class QueryInterface extends React.Component {
 
@@ -236,7 +237,6 @@ export default class QueryInterface extends React.Component {
     }
 
     render() {
-
         return (
             <Col md="12">
                 <Card>
@@ -341,6 +341,9 @@ export default class QueryInterface extends React.Component {
                                     textLayout={{}}
                                 />
                             </Collapse>
+                        </Row>
+                        <Row className="m-md-2" style={{width: '90em', height: '70em'}}>
+                            <Graph  className="border"/>
                         </Row>
                     </CardBody>
                 </Card>
