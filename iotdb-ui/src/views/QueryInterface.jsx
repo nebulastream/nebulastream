@@ -27,7 +27,22 @@ export default class QueryInterface extends React.Component {
         super(props, context);
         this.state = {
             queryPlan: [{"name": "Empty"}],
-            executionPlan: [{"name": "Empty"}],
+            executionPlan: [
+                {
+                    "id": "a1",
+                    "children": [
+                        {
+                            "id": "b1",
+                            "children": [
+                                {"id": "c1"},
+                                {"id": "c2"}
+                            ]
+                        },
+                        {"id": "b2"},
+                        {"id": "b3"}
+                    ]
+                }
+            ],
             topologyPlan: [{"name": "Empty"}],
             selectedStrategy: "NONE",
             displayBasePlan: false,
@@ -342,8 +357,8 @@ export default class QueryInterface extends React.Component {
                                 />
                             </Collapse>
                         </Row>
-                        <Row className="m-md-2" style={{width: '90em', height: '70em'}}>
-                            <Graph  className="border"/>
+                        <Row className="m-md-2 bg-dark boarder" style={{width: '100%', height: '30em'}}>
+                            <Graph  inputJson={this.state.executionPlan} sampleSize={3} className="bg-dark"/>
                         </Row>
                     </CardBody>
                 </Card>
