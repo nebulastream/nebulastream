@@ -52,14 +52,14 @@ const SpecialShape = (
 );
 
 const PolyShape = (
-    <symbol viewBox="0 0 88 72" id="poly" width="88" height="88">
+    <symbol viewBox="0 0 88 72" id="poly" width="88" height="88" fill="lightblue">
         <path d="M 0 36 18 0 70 0 88 36 70 72 18 72Z" />
     </symbol>
 );
 
 const SkinnyShape = (
-    <symbol viewBox="0 0 154 54" width="154" height="54" id="skinny">
-        <rect x="0" y="0" rx="2" ry="2" width="154" height="54" />
+    <symbol viewBox="0 0 130 74" width="130" height="74" id="skinny" fill="gray">
+        <rect x="0" y="0" rx="2" ry="2" width="129" height="73" />
     </symbol>
 );
 
@@ -130,12 +130,12 @@ export default {
         skinny: {
             shape: SkinnyShape,
             shapeId: '#skinny',
-            typeText: 'Skinny',
+            typeText: 'worker',
         },
         poly: {
             shape: PolyShape,
             shapeId: '#poly',
-            typeText: 'Poly',
+            typeText: 'source',
         },
     },
 };
