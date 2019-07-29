@@ -48,6 +48,22 @@ bool ExecutionGraph::addVertex(ExecutionNodePtr ptr) {
     return true;
 };
 
+vector<ExecutionVertex> ExecutionGraph::getAllVertex() const {
+
+    vector<ExecutionVertex> result = {};
+    
+    executionVertex_iterator vertex, vertex_end, next_vertex;
+    boost::tie(vertex, vertex_end) = vertices(graph);
+
+    // iterator over vertices
+    for (next_vertex = vertex; vertex != vertex_end; vertex = next_vertex) {
+        ++next_vertex;
+        result.push_back(graph[*vertex]);
+    }
+
+    return result;
+}
+
 bool ExecutionGraph::removeVertex(int search_id) {
     // does graph contain vertex?
     if (hasVertex(search_id)) {
@@ -148,6 +164,22 @@ const ExecutionEdge *ExecutionGraph::getEdge(int search_id) const {
     return nullptr;
 };
 
+vector<ExecutionEdge> ExecutionGraph::getAllEdges() const {
+    
+    vector<ExecutionEdge> result = {};
+    
+    executionEdge_iterator edge, edge_end, next_edge;
+    boost::tie(edge, edge_end) = edges(graph);
+
+    // iterate over edges
+    for (next_edge = edge; edge != edge_end; edge = next_edge) {
+        ++next_edge;
+        result.push_back(graph[*edge]);
+    }
+
+    return result;
+}
+
 bool ExecutionGraph::hasEdge(int search_id) const {
     // edge found
     if (getEdge(search_id) != nullptr) {
@@ -225,8 +257,8 @@ ExecutionNodePtr FogExecutionPlan::getRootNode() const {
 
 ExecutionNodePtr
 FogExecutionPlan::createExecutionNode(std::string operatorName, std::string nodeName,
-                                             FogTopologyEntryPtr fogNode,
-                                             OperatorPtr executableOperator) {
+                                      FogTopologyEntryPtr fogNode,
+                                      OperatorPtr executableOperator) {
 
     ExecutionNode executionNode(operatorName, nodeName, fogNode, executableOperator);
 
@@ -247,16 +279,43 @@ ExecutionNodePtr FogExecutionPlan::getExecutionNode(int search_id) {
 json::value FogExecutionPlan::getExecutionGraphAsJson() const {
     const ExecutionNodePtr &rootNode = getRootNode();
 
-    auto topologyAsJson = json::value::object();
+    const ExecutionGraph &graph = getExecutionGraph();
 
-    const auto label = std::to_string(rootNode->getId()) + "-" + rootNode->getOperatorName();
-    topologyAsJson["name"] = json::value::string(label);
-    auto children = getChildrenNode(rootNode);
-    if (!children.empty()) {
-        topologyAsJson["children"] = json::value::array(children);
+    const vector<ExecutionEdge> &allEdges = graph.getAllEdges();
+    const vector<ExecutionVertex> &allVertex = graph.getAllVertex();
+
+    auto result = json::value::object();
+    std::vector<json::value> edges{};
+    std::vector<json::value> vertices{};
+    for(u_int i= 0; i< allEdges.size(); i++) {
+        const ExecutionEdge &edge = allEdges[i];
+        const ExecutionNodePtr &sourceNode = edge.ptr->getSource();
+        const ExecutionNodePtr &destNode = edge.ptr->getDestination();
+        auto edgeInfo = json::value::object();
+        const auto source = std::to_string(sourceNode->getId());
+        const auto dest = std::to_string(destNode->getId());
+        edgeInfo["source"] = json::value::string(source);
+        edgeInfo["target"] = json::value::string(dest);
+        edges.push_back(edgeInfo);
     }
 
-    return topologyAsJson;
+    for(u_int i= 0; i < allVertex.size(); i++) {
+        const ExecutionVertex &vertex = allVertex[i];
+        auto vertexInfo = json::value::object();
+        const ExecutionNodePtr &executionNodePtr = vertex.ptr;
+        const auto id = std::to_string(executionNodePtr->getId());
+        const auto nodeType = executionNodePtr->getFogNode()->getEntryTypeString();
+        const string &operatorName = executionNodePtr->getOperatorName();
+        
+        vertexInfo["id"] = json::value::string(id);
+        vertexInfo["title"] = json::value::string(operatorName);
+        vertexInfo["nodeType"] = json::value::string(nodeType);
+        vertices.push_back(vertexInfo);
+    }
+
+    result["nodes"] = json::value::array(vertices);
+    result["edges"] = json::value::array(edges);
+    return result;
 }
 
 std::vector<json::value> FogExecutionPlan::getChildrenNode(ExecutionNodePtr executionParentNode) const {

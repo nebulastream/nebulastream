@@ -20,7 +20,7 @@ namespace iotdb {
         json::value getBasePlan(InputQuery inputQuery);
 
     private:
-        std::vector<json::value> getChildren(const OperatorPtr &root);
+        void getChildren(const OperatorPtr &root, std::vector<json::value> &nodes, std::vector<json::value> &edges);
     };
 }
 

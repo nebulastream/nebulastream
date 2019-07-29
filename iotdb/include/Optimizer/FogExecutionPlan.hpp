@@ -30,7 +30,7 @@ namespace iotdb {
         executionGraph_t graph;
 
     public:
-        ExecutionGraph(){};
+        ExecutionGraph() {};
 
         ExecutionNodePtr getRoot();
 
@@ -39,6 +39,8 @@ namespace iotdb {
         bool hasVertex(int search_id) const;
 
         bool addVertex(ExecutionNodePtr ptr);
+
+        vector<ExecutionVertex> getAllVertex() const;
 
         bool removeVertex(int search_id);
 
@@ -50,13 +52,15 @@ namespace iotdb {
 
         const ExecutionEdge *getEdge(int search_id) const;
 
+        vector<ExecutionEdge> getAllEdges() const;
+
         bool hasEdge(int search_id) const;
 
         bool addEdge(ExecutionNodeLinkPtr ptr);
 
         std::string getGraphString();
 
-        const vector <ExecutionEdge> getAllEdgesToNode(ExecutionNodePtr destNode) const;
+        const vector<ExecutionEdge> getAllEdgesToNode(ExecutionNodePtr destNode) const;
     };
 
     class FogExecutionPlan {
@@ -85,7 +89,7 @@ namespace iotdb {
     private:
         ExecutionGraph *fGraph;
 
-        vector <json::value> getChildrenNode(ExecutionNodePtr fogParentNode) const;
+        vector<json::value> getChildrenNode(ExecutionNodePtr fogParentNode) const;
     };
 };
 
