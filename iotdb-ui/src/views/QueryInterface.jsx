@@ -19,31 +19,26 @@ import 'brace/theme/github';
 import ButtonGroup from "reactstrap/es/ButtonGroup";
 import ButtonDropdown from "reactstrap/es/ButtonDropdown";
 import {toast} from "react-toastify";
-import Graph from "./dag/Graph";
+import {GraphView} from 'react-digraph';
+import GraphConfig, {
+    EMPTY_EDGE_TYPE,
+    NODE_KEY,
+    POLY_TYPE,
+    SKINNY_TYPE,
+} from './dag/graph-config';
 
 export default class QueryInterface extends React.Component {
 
     constructor(props, context) {
         super(props, context);
         this.state = {
-            queryPlan: [{"name": "Empty"}],
-            executionPlan: [
-                {
-                    "id": "a1",
-                    "children": [
-                        {
-                            "id": "b1",
-                            "children": [
-                                {"id": "c1"},
-                                {"id": "c2"}
-                            ]
-                        },
-                        {"id": "b2"},
-                        {"id": "b3"}
-                    ]
-                }
-            ],
-            topologyPlan: [{"name": "Empty"}],
+            graph: {
+                nodes: [],
+                edges: []
+            },
+            queryPlan: [{"id": "Empty"}],
+            executionPlan: [{"id": "Empty"}],
+            topologyPlan: [{"id": "Empty"}],
             selectedStrategy: "NONE",
             displayBasePlan: false,
             displayExecutionPlan: false,
@@ -74,6 +69,8 @@ export default class QueryInterface extends React.Component {
         this.getExecutionPlan = this.getExecutionPlan.bind(this);
         this.toggleExecutionStrategy = this.toggleExecutionStrategy.bind(this);
         this.notify = this.notify.bind(this);
+        this.generateDagFromJson = this.generateDagFromJson.bind(this);
+        this.dagRef = React.createRef();
     }
 
     notify = (type, message) => {
@@ -217,7 +214,10 @@ export default class QueryInterface extends React.Component {
         if (modelName === 'query') {
             this.setState({queryPlan: jsonObject})
         } else if (modelName === 'topology') {
-            this.setState({topologyPlan: jsonObject})
+            let generatedSample = this.generateDagFromJson(jsonObject);
+            console.log("new value");
+            console.log(generatedSample);
+            this.setState({graph: generatedSample});
         } else if (modelName === 'execution') {
             this.setState({executionPlan: jsonObject})
         }
@@ -235,6 +235,10 @@ export default class QueryInterface extends React.Component {
         if (modelName === 'query') {
             this.setState({queryPlan: [{"name": "empty"}]});
         } else if (modelName === 'topology') {
+            let generatedSample = {nodes: [], edges: []};
+            console.log("reset value");
+            console.log(generatedSample);
+            this.setState({graph: generatedSample});
             this.setState({topologyPlan: [{"name": "empty"}]});
         } else if (modelName === 'execution') {
             this.setState({executionPlan: [{"name": "empty"}]});
@@ -251,7 +255,47 @@ export default class QueryInterface extends React.Component {
         });
     }
 
+    generateDagFromJson(input) {
+
+        let generatedSample = {nodes: [], edges: []};
+
+        for (let i = 0; i < input.nodes.length; i++) {
+            let inputNode = input.nodes[i];
+
+            let type;
+            if (inputNode.nodeType === "Sensor") {
+                type = POLY_TYPE;
+            } else {
+                type = SKINNY_TYPE;
+            }
+
+            let node = {
+                id: inputNode.id,
+                title: inputNode.id,
+                type: type,
+                x: 0,
+                y: 0,
+            };
+            generatedSample.nodes.push(node);
+        }
+
+        for (let i = 0; i < input.edges.length; i++) {
+            let inputEdge = input.edges[i];
+
+            let edge = {
+                source: inputEdge.source,
+                target: inputEdge.target,
+                type: EMPTY_EDGE_TYPE,
+            };
+            generatedSample.edges.push(edge);
+        }
+
+        return generatedSample;
+    };
+
     render() {
+        const {NodeTypes, NodeSubtypes, EdgeTypes} = GraphConfig;
+
         return (
             <Col md="12">
                 <Card>
@@ -342,23 +386,25 @@ export default class QueryInterface extends React.Component {
                             </Collapse>
                         </Row>
                         <Row className="m-md-2">
-                            <Collapse isOpen={this.state.displayTopologyPlan}
-                                      style={{width: '100%', height: '30em'}} className="border">
+
+                            <Collapse isOpen={this.state.displayTopologyPlan} style={{width: '100%', height: '30em'}}
+                                      className="border">
                                 <Alert className="m-md-2">Fog Topology</Alert>
-                                <Tree
-                                    id="fogTopologyTree"
-                                    data={this.state.topologyPlan}
-                                    pathFunc='diagonal'
-                                    orientation='vertical'
-                                    nodeSvgShape={this.svgSquare}
-                                    separation={{siblings: 1, nonSiblings: 1}}
-                                    translate={{x: 400, y: 50}}
-                                    textLayout={{}}
-                                />
+
+                                <div className="m-md-2" style={{height: '100%'}}>
+                                    <GraphView
+                                        ref={this.dagRef}
+                                        nodes={this.state.graph.nodes}
+                                        edges={this.state.graph.edges}
+                                        nodeKey={NODE_KEY}
+                                        nodeTypes={NodeTypes}
+                                        nodeSubtypes={NodeSubtypes}
+                                        edgeTypes={EdgeTypes}
+                                        layoutEngineType={'VerticalTree'}
+                                        gridDotSize={0}
+                                    />
+                                </div>
                             </Collapse>
-                        </Row>
-                        <Row className="m-md-2 bg-dark boarder" style={{width: '100%', height: '30em'}}>
-                            <Graph  inputJson={this.state.executionPlan} sampleSize={3} className="bg-dark"/>
                         </Row>
                     </CardBody>
                 </Card>

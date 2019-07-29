@@ -10,7 +10,7 @@ json::value FogTopologyService::getFogTopologyAsJson() {
 
     FogTopologyManager &fogTopologyManager = FogTopologyManager::getInstance();
     fogTopologyManager.createExampleTopology();
-    auto fogTopology = fogTopologyManager.getFogTopologyGraphAsTreeJson();
+    auto fogTopology = fogTopologyManager.getFogTopologyGraphAsJson();
     return fogTopology;
 }
 
