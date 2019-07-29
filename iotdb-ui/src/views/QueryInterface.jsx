@@ -6,39 +6,37 @@ import {
     CardBody,
     CardHeader,
     Col,
-    Collapse,
     DropdownItem,
     DropdownMenu,
     DropdownToggle,
     Row
 } from "reactstrap";
 import AceEditor from "react-ace";
-import {Tree} from "react-d3-tree";
 import 'brace/mode/c_cpp';
 import 'brace/theme/github';
 import ButtonGroup from "reactstrap/es/ButtonGroup";
 import ButtonDropdown from "reactstrap/es/ButtonDropdown";
 import {toast} from "react-toastify";
 import {GraphView} from 'react-digraph';
-import GraphConfig, {
-    EMPTY_EDGE_TYPE,
-    NODE_KEY,
-    POLY_TYPE,
-    SKINNY_TYPE,
-} from './dag/graph-config';
+import GraphConfig, {EMPTY_EDGE_TYPE, NODE_KEY, POLY_TYPE, SKINNY_TYPE,} from './dag/graph-config';
 
 export default class QueryInterface extends React.Component {
 
     constructor(props, context) {
         super(props, context);
         this.state = {
-            graph: {
+            topologyGraph: {
                 nodes: [],
                 edges: []
             },
-            queryPlan: [{"id": "Empty"}],
-            executionPlan: [{"id": "Empty"}],
-            topologyPlan: [{"id": "Empty"}],
+            queryGraph: {
+                nodes: [],
+                edges: []
+            },
+            executionGraph: {
+                nodes: [],
+                edges: []
+            },
             selectedStrategy: "NONE",
             displayBasePlan: false,
             displayExecutionPlan: false,
@@ -70,7 +68,6 @@ export default class QueryInterface extends React.Component {
         this.toggleExecutionStrategy = this.toggleExecutionStrategy.bind(this);
         this.notify = this.notify.bind(this);
         this.generateDagFromJson = this.generateDagFromJson.bind(this);
-        this.dagRef = React.createRef();
     }
 
     notify = (type, message) => {
@@ -211,15 +208,13 @@ export default class QueryInterface extends React.Component {
     }
 
     updateData(modelName, jsonObject) {
+        let generatedSample = this.generateDagFromJson(jsonObject);
         if (modelName === 'query') {
-            this.setState({queryPlan: jsonObject})
+            this.setState({queryGraph: generatedSample})
         } else if (modelName === 'topology') {
-            let generatedSample = this.generateDagFromJson(jsonObject);
-            console.log("new value");
-            console.log(generatedSample);
-            this.setState({graph: generatedSample});
+            this.setState({topologyGraph: generatedSample});
         } else if (modelName === 'execution') {
-            this.setState({executionPlan: jsonObject})
+            this.setState({executionGraph: generatedSample})
         }
     }
 
@@ -232,16 +227,13 @@ export default class QueryInterface extends React.Component {
     }
 
     resetTreeData(modelName) {
+        let generatedSample = {nodes: [], edges: []};
         if (modelName === 'query') {
-            this.setState({queryPlan: [{"name": "empty"}]});
+            this.setState({queryGraph: generatedSample});
         } else if (modelName === 'topology') {
-            let generatedSample = {nodes: [], edges: []};
-            console.log("reset value");
-            console.log(generatedSample);
-            this.setState({graph: generatedSample});
-            this.setState({topologyPlan: [{"name": "empty"}]});
+            this.setState({topologyGraph: generatedSample});
         } else if (modelName === 'execution') {
-            this.setState({executionPlan: [{"name": "empty"}]});
+            this.setState({executionGraph: generatedSample});
         }
     }
 
@@ -271,10 +263,10 @@ export default class QueryInterface extends React.Component {
 
             let node = {
                 id: inputNode.id,
-                title: inputNode.id,
+                title: inputNode.title,
                 type: type,
-                x: 0,
-                y: 0,
+                x: 10,
+                y: 390,
             };
             generatedSample.nodes.push(node);
         }
@@ -351,61 +343,67 @@ export default class QueryInterface extends React.Component {
                                 }}>Hide All</Button>
                             </ButtonGroup>
                         </Row>
-                        <Row className="m-md-2">
-                            <Collapse isOpen={this.state.displayBasePlan}
-                                      style={{width: '100%', height: '30em'}} className="border">
-                                <Alert className="m-md-2">Query Plan</Alert>
-                                <Tree
-                                    id="queryPlanTree"
-                                    data={this.state.queryPlan}
-                                    pathFunc='diagonal'
-                                    orientation='vertical'
-                                    nodeSvgShape={this.svgSquare}
-                                    separation={{siblings: 1, nonSiblings: 1}}
-                                    translate={{x: 400, y: 50}}
-                                    textLayout={{}}
-                                />
-                            </Collapse>
-                        </Row>
-                        <Row className="m-md-2">
-                            <Collapse isOpen={this.state.displayExecutionPlan}
-                                      style={{width: '100%', height: '30em'}} className="border">
-                                <Alert className="m-md-2">Query execution plan for
-                                    "{this.state.selectedStrategy}"
-                                    strategy</Alert>
-                                <Tree
-                                    id="queryExecutionPlanTree"
-                                    data={this.state.executionPlan}
-                                    pathFunc='diagonal'
-                                    orientation='vertical'
-                                    nodeSvgShape={this.svgSquare}
-                                    separation={{siblings: 1, nonSiblings: 1}}
-                                    translate={{x: 200, y: 50}}
-                                    textLayout={{}}
-                                />
-                            </Collapse>
-                        </Row>
-                        <Row className="m-md-2">
+                        <Row>
+                            {this.state.displayBasePlan ?
+                                <Col className="m-md-1" style={{width: '50%', height: '30em'}}>
+                                    <div className="m-md-2 border" style={{width: '100%', height: '100%'}}>
+                                        <Alert className="m-md-2">Query Plan</Alert>
+                                        <div className="m-md-2" style={{height: '85%'}}>
+                                            <GraphView
+                                                nodes={this.state.queryGraph.nodes}
+                                                edges={this.state.queryGraph.edges}
+                                                nodeKey={NODE_KEY}
+                                                nodeTypes={NodeTypes}
+                                                nodeSubtypes={NodeSubtypes}
+                                                edgeTypes={EdgeTypes}
+                                                layoutEngineType={'VerticalTree'}
+                                                gridDotSize={0}
+                                            />
+                                        </div>
+                                    </div>
+                                </Col> : null}
 
-                            <Collapse isOpen={this.state.displayTopologyPlan} style={{width: '100%', height: '30em'}}
-                                      className="border">
-                                <Alert className="m-md-2">Fog Topology</Alert>
+                            {this.state.displayTopologyPlan ?
+                                <Col className="m-md-1" style={{width: '50%', height: '30em'}}>
 
-                                <div className="m-md-2" style={{height: '100%'}}>
-                                    <GraphView
-                                        ref={this.dagRef}
-                                        nodes={this.state.graph.nodes}
-                                        edges={this.state.graph.edges}
-                                        nodeKey={NODE_KEY}
-                                        nodeTypes={NodeTypes}
-                                        nodeSubtypes={NodeSubtypes}
-                                        edgeTypes={EdgeTypes}
-                                        layoutEngineType={'VerticalTree'}
-                                        gridDotSize={0}
-                                    />
+                                    <div className="m-md-2 border" style={{width: '100%', height: '100%'}}>
+                                        <Alert className="m-md-2">Fog Topology</Alert>
+                                        <div className="m-md-2" style={{height: '85%'}}>
+                                            <GraphView
+                                                nodes={this.state.topologyGraph.nodes}
+                                                edges={this.state.topologyGraph.edges}
+                                                nodeKey={NODE_KEY}
+                                                nodeTypes={NodeTypes}
+                                                nodeSubtypes={NodeSubtypes}
+                                                edgeTypes={EdgeTypes}
+                                                layoutEngineType={'VerticalTree'}
+                                                gridDotSize={0}
+                                            />
+                                        </div>
+                                    </div>
+                                </Col> : null}
+                        </Row>
+                        {this.state.displayExecutionPlan ?
+                            <Row className="m-md-1" style={{width: '50%', height: '30em'}}>
+
+                                <div className="m-md-2 border" style={{width: '100%', height: '100%'}}>
+                                    <Alert className="m-md-2">Query execution plan for
+                                        "{this.state.selectedStrategy}"
+                                        strategy</Alert>
+                                    <div className="m-md-2" style={{height: '85%'}}>
+                                        <GraphView
+                                            nodes={this.state.executionGraph.nodes}
+                                            edges={this.state.executionGraph.edges}
+                                            nodeKey={NODE_KEY}
+                                            nodeTypes={NodeTypes}
+                                            nodeSubtypes={NodeSubtypes}
+                                            edgeTypes={EdgeTypes}
+                                            layoutEngineType={'VerticalTree'}
+                                            gridDotSize={0}
+                                        />
+                                    </div>
                                 </div>
-                            </Collapse>
-                        </Row>
+                            </Row> : null}
                     </CardBody>
                 </Card>
             </Col>

@@ -39,7 +39,7 @@ class FogGraph {
     const fogVertex_t getVertex(size_t search_id) const;
     bool hasVertex(size_t search_id) const;
 
-    const std::vector<FogVertex> getAllVetrex() const;
+    const std::vector<FogVertex> getAllVertex() const;
     bool addVertex(FogTopologyEntryPtr ptr);
     bool removeVertex(size_t search_id);
 

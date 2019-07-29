@@ -87,7 +87,7 @@ namespace iotdb {
                     const ExecutionNodePtr &existingExecutionNode = executionGraph.getExecutionNode(node->getId());
 
                     string oldOperatorName = existingExecutionNode->getOperatorName();
-                    string newName = optr->toString() + "\n : \n" + oldOperatorName;
+                    string newName = oldOperatorName + "=>" + optr->toString();
 
                     existingExecutionNode->setOperatorName(newName);
                     existingExecutionNode->addExecutableOperator(optr);
@@ -110,7 +110,7 @@ namespace iotdb {
                     }
                 }
             }
-        }
+        };
 
         // finds a suitable for node for the operator to be placed.
         FogTopologyEntryPtr findSuitableFogNodeForOperatorPlacement(const ProcessOperator &operatorToProcess,

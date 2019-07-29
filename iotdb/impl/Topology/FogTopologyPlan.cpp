@@ -68,7 +68,7 @@ namespace iotdb {
         return fogVertex_t();
     }
 
-    const std::vector<FogVertex> FogGraph::getAllVetrex() const {
+    const std::vector<FogVertex> FogGraph::getAllVertex() const {
         std::vector<FogVertex> result = {};
 
         fogVertex_iterator vertex, vertex_end, next_vertex;

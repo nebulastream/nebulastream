@@ -81,11 +81,11 @@ namespace iotdb {
 
             const FogGraph &graph = getTopologyPlan()->getFogGraph();
             const std::vector<FogEdge> &allEdges = graph.getAllEdges();
-            const std::vector<FogVertex> &allVetrex = graph.getAllVetrex();
+            const std::vector<FogVertex> &allVertex = graph.getAllVertex();
 
             auto result = json::value::object();
             std::vector<json::value> edges{};
-            std::vector<json::value> verteces{};
+            std::vector<json::value> vertices{};
             for(u_int i= 0; i< allEdges.size(); i++) {
                 const FogEdge &edge = allEdges[i];
                 const FogTopologyEntryPtr &sourceNode = edge.ptr->getSourceNode();
@@ -98,18 +98,19 @@ namespace iotdb {
                 edges.push_back(edgeInfo);
             }
 
-            for(u_int i= 0; i< allVetrex.size(); i++) {
-                const FogVertex &vertex = allVetrex[i];
+            for(u_int i= 0; i < allVertex.size(); i++) {
+                const FogVertex &vertex = allVertex[i];
                 auto vertexInfo = json::value::object();
                 const auto id = std::to_string(vertex.ptr->getId()) + "-" + vertex.ptr->getEntryTypeString();
                 const auto nodeType = vertex.ptr->getEntryTypeString();
 
                 vertexInfo["id"] = json::value::string(id);
+                vertexInfo["title"] = json::value::string(id);
                 vertexInfo["nodeType"] = json::value::string(nodeType);
-                verteces.push_back(vertexInfo);
+                vertices.push_back(vertexInfo);
             }
             
-            result["nodes"] = json::value::array(verteces);
+            result["nodes"] = json::value::array(vertices);
             result["edges"] = json::value::array(edges);
             return result;
         }
