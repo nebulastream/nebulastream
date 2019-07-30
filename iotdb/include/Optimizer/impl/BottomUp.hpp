@@ -41,20 +41,21 @@ namespace iotdb {
          * This method is responsible for placing the operators to the fog nodes and generating ExecutionNodes.
          * @param executionGraph : graph containing the information about the execution nodes.
          * @param fogTopologyPlan : Fog Topology plan used for extracting information about the fog topology.
-         * @param sourceOptrs : List of source operators.
+         * @param sourceOperators : List of source operators.
          * @param sourceNodes : List of sensor nodes which can act as source.
          *
          * @throws exception if the operator can't be placed anywhere.
          */
         void placeOperators(FogExecutionPlan executionGraph, FogTopologyPlanPtr fogTopologyPlan,
-                            vector<OperatorPtr> sourceOptrs, deque<FogTopologyEntryPtr> sourceNodes) {
+                            vector<OperatorPtr> sourceOperators, deque<FogTopologyEntryPtr> sourceNodes) {
 
             deque<ProcessOperator> operatorsToProcess;
 
             //lambda to convert source optr vector to a friendly struct
-            transform(sourceOptrs.begin(), sourceOptrs.end(), back_inserter(operatorsToProcess), [](OperatorPtr optr) {
-                return ProcessOperator(optr, nullptr);
-            });
+            transform(sourceOperators.begin(), sourceOperators.end(), back_inserter(operatorsToProcess),
+                      [](OperatorPtr optr) {
+                          return ProcessOperator(optr, nullptr);
+                      });
 
             while (!operatorsToProcess.empty()) {
 
@@ -68,7 +69,7 @@ namespace iotdb {
 
                 // find the node where the operator will be executed
                 FogTopologyEntryPtr node = findSuitableFogNodeForOperatorPlacement(operatorToProcess, fogTopologyPlan,
-                                                                                   sourceNodes);
+                                                        sourceNodes);
 
                 if ((node == nullptr) or node->getRemainingCpuCapacity() <= 0) {
                     // throw and exception that scheduling can't be done
@@ -112,11 +113,11 @@ namespace iotdb {
         }
 
         // finds a suitable for node for the operator to be placed.
-        FogTopologyEntryPtr &findSuitableFogNodeForOperatorPlacement(const ProcessOperator &operatorToProcess,
+        FogTopologyEntryPtr findSuitableFogNodeForOperatorPlacement(const ProcessOperator &operatorToProcess,
                                                                      FogTopologyPlanPtr &fogTopologyPlan,
                                                                      deque<FogTopologyEntryPtr> &sourceNodes) {
 
-            FogTopologyEntryPtr node = nullptr;
+            FogTopologyEntryPtr node;
 
             if (operatorToProcess.operatorToProcess->getOperatorType() == OperatorType::SINK_OP) {
                 node = fogTopologyPlan->getRootNode();
