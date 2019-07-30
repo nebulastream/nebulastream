@@ -216,46 +216,6 @@ namespace iotdb {
             return listOfSourceNodes;
 
         };
-
-        void completeExecutionGraphWithFogTopology(FogExecutionPlan graph, FogTopologyPlanPtr sharedPtr) {
-
-            const vector<FogEdge> &allEdges = sharedPtr->getFogGraph().getAllEdges();
-
-            for (FogEdge fogEdge: allEdges) {
-
-                FogTopologyLinkPtr &topologyLink = fogEdge.ptr;
-                size_t srcId = topologyLink->getSourceNode()->getId();
-                size_t destId = topologyLink->getDestNode()->getId();
-                if (graph.hasVertex(srcId)) {
-                    const ExecutionNodePtr &srcExecutionNode = graph.getExecutionNode(srcId);
-                    if (graph.hasVertex(destId)) {
-                        const ExecutionNodePtr &destExecutionNode = graph.getExecutionNode(destId);
-                        graph.createExecutionNodeLink(srcExecutionNode, destExecutionNode);
-                    } else {
-                        const ExecutionNodePtr &destExecutionNode = graph.createExecutionNode("empty",
-                                                                                              to_string(destId),
-                                                                                              topologyLink->getDestNode(),
-                                                                                              nullptr);
-                        graph.createExecutionNodeLink(srcExecutionNode, destExecutionNode);
-                    }
-                } else {
-
-                    const ExecutionNodePtr &srcExecutionNode = graph.createExecutionNode("empty", to_string(srcId),
-                                                                                         topologyLink->getSourceNode(),
-                                                                                         nullptr);
-                    if (graph.hasVertex(destId)) {
-                        const ExecutionNodePtr &destExecutionNode = graph.getExecutionNode(destId);
-                        graph.createExecutionNodeLink(srcExecutionNode, destExecutionNode);
-                    } else {
-                        const ExecutionNodePtr &destExecutionNode = graph.createExecutionNode("empty",
-                                                                                              to_string(destId),
-                                                                                              topologyLink->getDestNode(),
-                                                                                              nullptr);
-                        graph.createExecutionNodeLink(srcExecutionNode, destExecutionNode);
-                    }
-                }
-            }
-        };
     };
 }
 

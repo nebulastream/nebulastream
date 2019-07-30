@@ -292,7 +292,7 @@ export default class QueryInterface extends React.Component {
             <Col md="12">
                 <Card>
                     <CardHeader>
-                        <h1>IotDB WebInterface</h1>
+                        <h1>Nebula Stream WebInterface</h1>
                     </CardHeader>
                     <CardBody>
                         <Alert className="m-md-2">Feed Your Query Here</Alert>
@@ -334,6 +334,9 @@ export default class QueryInterface extends React.Component {
                                         <DropdownItem onClick={() => {
                                             this.getExecutionPlan(this.userQuery, "BottomUp")
                                         }}>Bottom-Up</DropdownItem>
+                                        <DropdownItem onClick={() => {
+                                            this.getExecutionPlan(this.userQuery, "BottomUp")
+                                        }}>Top-Down</DropdownItem>
                                     </DropdownMenu>
                                 </ButtonDropdown>
                             </ButtonGroup>
