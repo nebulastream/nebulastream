@@ -43,7 +43,7 @@ class FogGraph {
     bool addVertex(FogTopologyEntryPtr ptr);
     bool removeVertex(size_t search_id);
 
-    FogTopologyEntryPtr getRoot();
+    FogTopologyEntryPtr getRoot() const;
 
     FogTopologyLinkPtr getLink(FogTopologyEntryPtr sourceNode, FogTopologyEntryPtr destNode) const;
     bool hasLink(FogTopologyEntryPtr sourceNode, FogTopologyEntryPtr destNode) const;
@@ -81,7 +81,7 @@ class FogTopologyPlan {
 
     std::string getTopologyPlanString() const;
 
-    FogGraph getFogGraph();
+    FogGraph getFogGraph() const;
 
   private:
     size_t getNextFreeNodeId();

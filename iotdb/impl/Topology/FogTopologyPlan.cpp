@@ -104,7 +104,7 @@ namespace iotdb {
         return false;
     }
 
-    FogTopologyEntryPtr FogGraph::getRoot() {
+    FogTopologyEntryPtr FogGraph::getRoot() const {
         fogVertex_iterator vi, vi_end, next;
         boost::tie(vi, vi_end) = vertices(graph);
         for (next = vi; vi != vi_end; vi = next) {
@@ -356,7 +356,7 @@ namespace iotdb {
         return currentId;
     }
 
-    FogGraph FogTopologyPlan::getFogGraph() {
+    FogGraph FogTopologyPlan::getFogGraph() const{
         return *fGraph;
     }
 
