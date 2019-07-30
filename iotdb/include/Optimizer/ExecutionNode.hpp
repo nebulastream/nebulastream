@@ -1,9 +1,5 @@
 /**\brief:
- *          Contains information about the operator and the node where the operator is to be executed.
- *
- * Assumption : We will have only one operator and one node at a given point of time. In case of parallelization, we
- * will have collection of this object.
- *
+ *          Contains information about the list of operators and the node where the operators are to be executed.
  */
 
 #ifndef IOTDB_EXECUTIONNODE_HPP
