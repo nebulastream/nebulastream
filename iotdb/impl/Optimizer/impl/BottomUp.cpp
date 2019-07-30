@@ -12,7 +12,6 @@ FogExecutionPlan BottomUp::prepareExecutionPlan(InputQuery inputQuery, FogTopolo
     const deque<FogTopologyEntryPtr> &sourceNodes = getSourceNodes(fogTopologyPlan);
     placeOperators(executionGraph, fogTopologyPlan, sourceOperators, sourceNodes);
     completeExecutionGraphWithFogTopology(executionGraph, fogTopologyPlan);
-    executionGraph.getTopologyPlanString();
     return executionGraph;
 }
 
