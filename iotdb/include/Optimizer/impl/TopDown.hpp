@@ -2,6 +2,7 @@
 #define IOTDB_TOPDOWN_HPP
 
 #include <Optimizer/FogPlacementOptimizer.hpp>
+#include <Operators/Operator.hpp>
 #include <stack>
 
 namespace iotdb {
@@ -32,10 +33,10 @@ namespace iotdb {
             const OperatorPtr &sinkOperator = query.getRoot();
             const FogGraph &fogGraph = fogTopologyPlanPtr->getFogGraph();
 
-            deque<ProcessOperator> operatorToProcess = {};
-            operatorToProcess.push_back(ProcessOperator(sinkOperator, nullptr));
+            deque<ProcessOperator> operatorsToProcess = {};
+            operatorsToProcess.push_back(ProcessOperator(sinkOperator, nullptr));
 
-            //find the source
+            //find the source Node
             vector<FogVertex> sourceNodes;
             const vector<FogVertex> &allVertex = fogGraph.getAllVertex();
             copy_if(allVertex.begin(), allVertex.end(), back_inserter(sourceNodes),
@@ -55,38 +56,87 @@ namespace iotdb {
 
             // Find the nodes where we can place the operators. First node will be sink and last one will be the target
             // source.
-            vector<FogTopologyEntryPtr> candidateNodes = {};
+            deque<FogTopologyEntryPtr> candidateNodes = {};
 
             const FogTopologyEntryPtr &rootNode = fogGraph.getRoot();
-            candidateNodes.push_back(rootNode);
 
-            stack<FogTopologyEntryPtr> visited;
+            deque<int> visitedNodes = {};
+            candidateNodes.push_back(rootNode);
 
 
             while (!candidateNodes.empty()) {
 
+                FogTopologyEntryPtr &back = candidateNodes.back();
 
-                const vector<FogEdge> &allEdgesToNode = fogGraph.getAllEdgesToNode(rootNode);
+                if (back->getId() == targetSource->getId()) {
+                    break;
+                }
 
-                vector<FogTopologyEntryPtr> childrens = {};
+                const vector<FogEdge> &allEdgesToNode = fogGraph.getAllEdgesToNode(back);
 
-                transform(allEdgesToNode.begin(), allEdgesToNode.end(), back_inserter(childrens),
-                          [](FogEdge edge) {
-                              return edge.ptr->getSourceNode();
-                          });
+                if (!allEdgesToNode.empty()) {
+                    bool found = false;
+                    for (FogEdge edge: allEdgesToNode) {
+                        const FogTopologyEntryPtr &sourceNode = edge.ptr->getSourceNode();
+                        if (!count(visitedNodes.begin(), visitedNodes.end(), sourceNode->getId())) {
+                            candidateNodes.push_back(sourceNode);
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        candidateNodes.pop_back();
+                    }
+                } else {
+                    candidateNodes.pop_back();
+                }
 
-                if()
-
-                visited.push(rootNode);
+                if (!count(visitedNodes.begin(), visitedNodes.end(), back->getId())) {
+                    visitedNodes.push_front(back->getId());
+                }
 
             }
 
-
-            while (!operatorToProcess.empty()) {
-
+            if (candidateNodes.empty()) {
+                throw "No path exists between sink and source";
             }
 
+            while (!operatorsToProcess.empty()) {
+                ProcessOperator &processOperator = operatorsToProcess.front();
 
+                OperatorPtr &operatorToProcess = processOperator.operatorToProcess;
+
+                if (operatorToProcess->isScheduled()) {
+                    break;
+                }
+
+                if (operatorToProcess->getOperatorType() == OperatorType::SOURCE_OP) {
+                    FogTopologyEntryPtr sourceNode = candidateNodes.back();
+                    if (sourceNode->getRemainingCpuCapacity() <= 0){
+                        throw "Unable to schedule source operator";
+                    }
+
+                    sourceNode->reduceCpuCapacity(1);
+
+
+                } else {
+                    bool scheduled = false;
+                    for (FogTopologyEntryPtr node : candidateNodes) {
+
+
+                        if (node->getRemainingCpuCapacity() > 0) {
+
+                            scheduled = true;
+                        }
+                    }
+
+                    if (!scheduled) {
+                        throw "Unable to schedule operator on the node";
+                    }
+
+                }
+
+            }
         };
     };
 

@@ -335,7 +335,7 @@ export default class QueryInterface extends React.Component {
                                             this.getExecutionPlan(this.userQuery, "BottomUp")
                                         }}>Bottom-Up</DropdownItem>
                                         <DropdownItem onClick={() => {
-                                            this.getExecutionPlan(this.userQuery, "BottomUp")
+                                            this.getExecutionPlan(this.userQuery, "TopDown")
                                         }}>Top-Down</DropdownItem>
                                     </DropdownMenu>
                                 </ButtonDropdown>
