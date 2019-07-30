@@ -197,7 +197,6 @@ namespace iotdb {
             deque<FogTopologyEntryPtr> bfsTraverse;
             bfsTraverse.push_back(rootNode);
 
-
             while (!bfsTraverse.empty()) {
                 auto &node = bfsTraverse.front();
                 bfsTraverse.pop_front();
@@ -205,7 +204,6 @@ namespace iotdb {
                 if (node->getEntryType() == FogNodeType::Sensor) {
                     listOfSourceNodes.push_back(node);
                 }
-
 
                 const vector<FogEdge> &children = fogTopologyPlan->getFogGraph().getAllEdgesToNode(node);
 
