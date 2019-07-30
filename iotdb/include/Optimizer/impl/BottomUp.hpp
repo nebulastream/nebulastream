@@ -10,9 +10,9 @@ namespace iotdb {
     using namespace std;
 
     /**\brief:
-     *          This class implements Highest Level First placement strategy. It is similar to Bottom Up strategy but
-     *          here the operator at highest level (bottom most level) is placed at compatible node at highest level of
-     *          the fog topology.
+     *          This class implements Bottom Up placement strategy. In this strategy, the source and sink operators are
+     *          placed at respective fog nodes but rest of the operators are placed starting near to the source and then
+     *          if the resources are not available they are placed on a node neighbouring to the node or one level up.
      */
     class BottomUp : public FogPlacementOptimizer {
     private:
@@ -24,20 +24,30 @@ namespace iotdb {
 
     private:
 
+        // This structure hold information about the current operator to place and previously placed parent operator.
+        // It helps in deciding if the operator is to be placed in the fog node where the parent operator was placed
+        // or on another suitable neighbouring node.
         struct ProcessOperator {
             ProcessOperator(OperatorPtr operatorPtr, ExecutionNodePtr executionNodePtr) {
                 this->operatorToProcess = operatorPtr;
-                this->childExecutionNode = executionNodePtr;
+                this->parentExecutionNode = executionNodePtr;
             }
 
             OperatorPtr operatorToProcess;
-            ExecutionNodePtr childExecutionNode;
+            ExecutionNodePtr parentExecutionNode;
         };
 
-        void
-        placeOperators(FogExecutionPlan executionGraph, FogTopologyPlanPtr fogTopologyPlan,
-                       vector<OperatorPtr> sourceOptrs,
-                       deque<FogTopologyEntryPtr> sourceNodes) {
+        /**
+         * This method is responsible for placing the operators to the fog nodes and generating ExecutionNodes.
+         * @param executionGraph : graph containing the information about the execution nodes.
+         * @param fogTopologyPlan : Fog Topology plan used for extracting information about the fog topology.
+         * @param sourceOptrs : List of source operators.
+         * @param sourceNodes : List of sensor nodes which can act as source.
+         *
+         * @throws exception if the operator can't be placed anywhere.
+         */
+        void placeOperators(FogExecutionPlan executionGraph, FogTopologyPlanPtr fogTopologyPlan,
+                            vector<OperatorPtr> sourceOptrs, deque<FogTopologyEntryPtr> sourceNodes) {
 
             deque<ProcessOperator> operatorsToProcess;
 
@@ -56,68 +66,21 @@ namespace iotdb {
                     continue;
                 }
 
-                // find the node where the operator will be scheduled
-
-                FogTopologyEntryPtr node;
-
-                //If the operator is the sink node
-                if (operatorToProcess.operatorToProcess->parent == nullptr) {
-
-                    node = fogTopologyPlan->getRootNode();
-                }
-                    //If the operator is not the source node
-                else if (operatorToProcess.childExecutionNode != nullptr) {
-                    FogTopologyEntryPtr &fogNode = operatorToProcess.childExecutionNode->getFogNode();
-
-                    //if the previous child node still have capacity. Use it for further operator assignment
-                    if (fogNode->getRemainingCpuCapacity() > 0) {
-                        node = fogNode;
-                    } else {
-                        // else find the neighbouring higher level nodes connected to it
-                        const vector<FogEdge> &allEdgesToNode = fogTopologyPlan->getFogGraph().getAllEdgesFromNode(
-                                fogNode);
-
-                        vector<FogTopologyEntryPtr> neighbouringNodes;
-
-                        transform(allEdgesToNode.begin(), allEdgesToNode.end(), back_inserter(neighbouringNodes),
-                                  [](FogEdge edge) {
-                                      return edge.ptr->getDestNode();
-                                  });
-
-                        FogTopologyEntryPtr neighbouringNodeWithMaxCPU = nullptr;
-
-                        for (FogTopologyEntryPtr neighbouringNode: neighbouringNodes) {
-
-                            if ((neighbouringNodeWithMaxCPU == nullptr) ||
-                                (neighbouringNode->getRemainingCpuCapacity() > neighbouringNodeWithMaxCPU->getRemainingCpuCapacity())) {
-
-                                neighbouringNodeWithMaxCPU = neighbouringNode;
-                            }
-                        }
-
-                        if ((neighbouringNodeWithMaxCPU == nullptr) or neighbouringNodeWithMaxCPU->getRemainingCpuCapacity() <= 0) {
-                            //throw and exception that scheduling can't be done
-                            throw "Can't schedule The Query";
-                        }
-
-                        if (neighbouringNodeWithMaxCPU->getRemainingCpuCapacity() > 0) {
-
-                            node = neighbouringNodeWithMaxCPU;
-                        }
-                    }
-                } else {
-                    node = sourceNodes.front();
-                    sourceNodes.pop_front();
-                }
+                // find the node where the operator will be executed
+                FogTopologyEntryPtr node = findSuitableFogNodeForOperatorPlacement(operatorToProcess, fogTopologyPlan,
+                                                                                   sourceNodes);
 
                 if ((node == nullptr) or node->getRemainingCpuCapacity() <= 0) {
-                    //throw and exception that scheduling can't be done
+                    // throw and exception that scheduling can't be done
                     throw "Can't schedule The Query";
                 }
 
-                //Reduce the processing capacity
+                // Reduce the processing capacity by 1
+                // FIXME: Bring some logic here where the cpu capacity is reduced based on operator workload
                 node->reduceCpuCapacity(1);
 
+                // If the selected Fog node was already used by another operator for placement then do not create a
+                // new execution node rather add operator to existing node.
                 if (executionGraph.hasVertex(node->getId())) {
 
                     const ExecutionNodePtr &existingExecutionNode = executionGraph.getExecutionNode(node->getId());
@@ -134,7 +97,7 @@ namespace iotdb {
                     }
                 } else {
 
-                    // Now create the executable node and the links to child nodes
+                    // Create a new execution node
                     const ExecutionNodePtr &newExecutionNode = executionGraph.createExecutionNode(optr->toString(),
                                                                                                   to_string(
                                                                                                           node->getId()),
@@ -146,8 +109,63 @@ namespace iotdb {
                     }
                 }
             }
+        }
+
+        // finds a suitable for node for the operator to be placed.
+        FogTopologyEntryPtr &findSuitableFogNodeForOperatorPlacement(const ProcessOperator &operatorToProcess,
+                                                                     FogTopologyPlanPtr &fogTopologyPlan,
+                                                                     deque<FogTopologyEntryPtr> &sourceNodes) {
+
+            FogTopologyEntryPtr node = nullptr;
+
+            if (operatorToProcess.operatorToProcess->getOperatorType() == OperatorType::SINK_OP) {
+                node = fogTopologyPlan->getRootNode();
+            } else if (operatorToProcess.operatorToProcess->getOperatorType() == OperatorType::SOURCE_OP) {
+                node = sourceNodes.front();
+                sourceNodes.pop_front();
+            } else {
+                FogTopologyEntryPtr &fogNode = operatorToProcess.parentExecutionNode->getFogNode();
+
+                //if the previous parent node still have capacity. Use it for further operator assignment
+                if (fogNode->getRemainingCpuCapacity() > 0) {
+                    node = fogNode;
+                } else {
+                    // else find the neighbouring higher level nodes connected to it
+                    const vector<FogEdge> &allEdgesToNode = fogTopologyPlan->getFogGraph().getAllEdgesFromNode(
+                            fogNode);
+
+                    vector<FogTopologyEntryPtr> neighbouringNodes;
+
+                    transform(allEdgesToNode.begin(), allEdgesToNode.end(), back_inserter(neighbouringNodes),
+                              [](FogEdge edge) {
+                                  return edge.ptr->getDestNode();
+                              });
+
+                    FogTopologyEntryPtr neighbouringNodeWithMaxCPU = nullptr;
+
+                    for (FogTopologyEntryPtr neighbouringNode: neighbouringNodes) {
+
+                        if ((neighbouringNodeWithMaxCPU == nullptr) ||
+                            (neighbouringNode->getRemainingCpuCapacity() >
+                             neighbouringNodeWithMaxCPU->getRemainingCpuCapacity())) {
+
+                            neighbouringNodeWithMaxCPU = neighbouringNode;
+                        }
+                    }
+
+                    if ((neighbouringNodeWithMaxCPU == nullptr) or
+                        neighbouringNodeWithMaxCPU->getRemainingCpuCapacity() <= 0) {
+                        node = nullptr;
+                    } else if (neighbouringNodeWithMaxCPU->getRemainingCpuCapacity() > 0) {
+                        node = neighbouringNodeWithMaxCPU;
+                    }
+                }
+            }
+
+            return node;
         };
 
+        // This method returns all the source operators in the user input query
         static vector<OperatorPtr> getSourceOperators(OperatorPtr root) {
 
             vector<OperatorPtr> listOfSourceOperators;
@@ -171,6 +189,7 @@ namespace iotdb {
             return listOfSourceOperators;
         };
 
+        // This method returns all sensor nodes that can act as the source in the fog topology.
         static deque<FogTopologyEntryPtr> getSourceNodes(FogTopologyPlanPtr fogTopologyPlan) {
 
             const FogTopologyEntryPtr &rootNode = fogTopologyPlan->getRootNode();
