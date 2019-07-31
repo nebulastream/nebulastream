@@ -15,26 +15,13 @@ namespace iotdb {
         FogExecutionPlan prepareExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan);
 
     private:
-        // This structure hold information about the current operator to place and previously placed parent operator.
-        // It helps in deciding if the operator is to be placed in the fog node where the parent operator was placed
-        // or on another suitable neighbouring node.
-        struct ProcessOperator {
-            ProcessOperator(OperatorPtr operatorPtr, ExecutionNodePtr executionNodePtr) {
-                this->operatorToProcess = operatorPtr;
-                this->parentExecutionNode = executionNodePtr;
-            }
-
-            OperatorPtr operatorToProcess;
-            ExecutionNodePtr parentExecutionNode;
-        };
 
         void placeOperators(FogExecutionPlan executionPlan, InputQuery query, FogTopologyPlanPtr fogTopologyPlanPtr) {
 
             const OperatorPtr &sinkOperator = query.getRoot();
             const FogGraph &fogGraph = fogTopologyPlanPtr->getFogGraph();
 
-            deque<ProcessOperator> operatorsToProcess = {};
-            operatorsToProcess.push_back(ProcessOperator(sinkOperator, nullptr));
+            deque<OperatorPtr> operatorsToProcess = {sinkOperator};
 
             //find the source Node
             vector<FogVertex> sourceNodes;
@@ -102,40 +89,73 @@ namespace iotdb {
             }
 
             while (!operatorsToProcess.empty()) {
-                ProcessOperator &processOperator = operatorsToProcess.front();
+                OperatorPtr &processOperator = operatorsToProcess.front();
+                operatorsToProcess.pop_front();
 
-                OperatorPtr &operatorToProcess = processOperator.operatorToProcess;
-
-                if (operatorToProcess->isScheduled()) {
-                    break;
+                if (processOperator->isScheduled()) {
+                    continue;
                 }
 
-                if (operatorToProcess->getOperatorType() == OperatorType::SOURCE_OP) {
-                    FogTopologyEntryPtr sourceNode = candidateNodes.back();
-                    if (sourceNode->getRemainingCpuCapacity() <= 0){
-                        throw "Unable to schedule source operator";
+                if (processOperator->getOperatorType() == OperatorType::SOURCE_OP) {
+                    FogTopologyEntryPtr sourceNode = targetSource;
+
+                    if (executionPlan.hasVertex(targetSource->getId())) {
+
+                        const ExecutionNodePtr &executionNode = executionPlan.getExecutionNode(targetSource->getId());
+                        string oldOperatorName = executionNode->getOperatorName();
+                        string newName = processOperator->toString() + "=>" + oldOperatorName;
+                        executionNode->setOperatorName(newName);
+                        executionNode->addExecutableOperator(processOperator);
+                        targetSource->reduceCpuCapacity(1);
+                    } else {
+
+                        if (sourceNode->getRemainingCpuCapacity() <= 0) {
+                            throw "Unable to schedule source operator";
+                        }
+
+                        executionPlan.createExecutionNode(processOperator->toString(), to_string(sourceNode->getId()),
+                                                          sourceNode, processOperator);
+                        processOperator->markScheduled(true);
+                        sourceNode->reduceCpuCapacity(1);
                     }
-
-                    sourceNode->reduceCpuCapacity(1);
-
-
                 } else {
                     bool scheduled = false;
                     for (FogTopologyEntryPtr node : candidateNodes) {
-
-
                         if (node->getRemainingCpuCapacity() > 0) {
-
                             scheduled = true;
+
+                            if (executionPlan.hasVertex(node->getId())) {
+
+                                const ExecutionNodePtr &executionNode = executionPlan.getExecutionNode(node->getId());
+                                string oldOperatorName = executionNode->getOperatorName();
+                                string newName = processOperator->toString() + "=>" + oldOperatorName;
+                                executionNode->setOperatorName(newName);
+                                executionNode->addExecutableOperator(processOperator);
+                                node->reduceCpuCapacity(1);
+
+                                vector<OperatorPtr> &nextOperatorsToProcess = processOperator->childs;
+
+                                copy(nextOperatorsToProcess.begin(), nextOperatorsToProcess.end(), back_inserter(operatorsToProcess));
+
+                            } else {
+
+                                const ExecutionNodePtr &executionNode = executionPlan.createExecutionNode(
+                                        processOperator->toString(), to_string(node->getId()),
+                                        node, processOperator);
+                                processOperator->markScheduled(true);
+                                node->reduceCpuCapacity(1);
+
+                                vector<OperatorPtr> &nextOperatorsToProcess = processOperator->childs;
+
+                                copy(nextOperatorsToProcess.begin(), nextOperatorsToProcess.end(), back_inserter(operatorsToProcess));
+                            }
+                            break;
                         }
                     }
-
                     if (!scheduled) {
                         throw "Unable to schedule operator on the node";
                     }
-
                 }
-
             }
         };
     };
