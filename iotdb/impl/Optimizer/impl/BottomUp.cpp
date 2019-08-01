@@ -4,7 +4,7 @@
 using namespace iotdb;
 using namespace std;
 
-FogExecutionPlan BottomUp::prepareExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan) {
+FogExecutionPlan BottomUp::initializeExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan) {
 
     FogExecutionPlan executionGraph;
     const OperatorPtr &sinkOperator = inputQuery.getRoot();

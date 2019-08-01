@@ -24,7 +24,7 @@ namespace iotdb {
          * @param fogTopologyPlan
          * @return
          */
-        virtual FogExecutionPlan prepareExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan) = 0;
+        virtual FogExecutionPlan initializeExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan) = 0;
 
         /**
          * Factory method returning different kind of optimizer.
