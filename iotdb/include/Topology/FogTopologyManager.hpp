@@ -77,20 +77,42 @@ namespace iotdb {
             createFogTopologyLink(sensorNode4, workerNode2);
         }
 
-        json::value getFogTopologyGraphAsTreeJson() {
+        json::value getFogTopologyGraphAsJson() {
 
-            const FogTopologyEntryPtr &rootNode = getRootNode();
+            const FogGraph &graph = getTopologyPlan()->getFogGraph();
+            const std::vector<FogEdge> &allEdges = graph.getAllEdges();
+            const std::vector<FogVertex> &allVertex = graph.getAllVertex();
 
-            auto topologyAsJson = json::value::object();
-
-            const auto label = std::to_string(rootNode->getId()) + "-" + rootNode->getEntryTypeString();
-            topologyAsJson["name"] = json::value::string(label);
-            auto children = getChildrenNode(rootNode);
-            if (!children.empty()) {
-                topologyAsJson["children"] = json::value::array(children);
+            auto result = json::value::object();
+            std::vector<json::value> edges{};
+            std::vector<json::value> vertices{};
+            for(u_int i= 0; i< allEdges.size(); i++) {
+                const FogEdge &edge = allEdges[i];
+                const FogTopologyEntryPtr &sourceNode = edge.ptr->getSourceNode();
+                const FogTopologyEntryPtr &destNode = edge.ptr->getDestNode();
+                auto edgeInfo = json::value::object();
+                const auto source = std::to_string(sourceNode->getId()) + "-" + sourceNode->getEntryTypeString();
+                const auto dest = std::to_string(destNode->getId()) + "-" + destNode->getEntryTypeString();
+                edgeInfo["source"] = json::value::string(source);
+                edgeInfo["target"] = json::value::string(dest);
+                edges.push_back(edgeInfo);
             }
 
-            return topologyAsJson;
+            for(u_int i= 0; i < allVertex.size(); i++) {
+                const FogVertex &vertex = allVertex[i];
+                auto vertexInfo = json::value::object();
+                const auto id = std::to_string(vertex.ptr->getId()) + "-" + vertex.ptr->getEntryTypeString();
+                const auto nodeType = vertex.ptr->getEntryTypeString();
+
+                vertexInfo["id"] = json::value::string(id);
+                vertexInfo["title"] = json::value::string(id);
+                vertexInfo["nodeType"] = json::value::string(nodeType);
+                vertices.push_back(vertexInfo);
+            }
+            
+            result["nodes"] = json::value::array(vertices);
+            result["edges"] = json::value::array(edges);
+            return result;
         }
 
         std::vector<json::value> getChildrenNode(FogTopologyEntryPtr fogParentNode) {
@@ -106,12 +128,12 @@ namespace iotdb {
 
             for (FogEdge edge: edgesToNode) {
                 const FogTopologyEntryPtr &sourceNode = edge.ptr->getSourceNode();
-                if(sourceNode){
+                if (sourceNode) {
                     auto child = json::value::object();
                     const auto label = std::to_string(sourceNode->getId()) + "-" + sourceNode->getEntryTypeString();
-                    child["name"] = json::value::string(label);
+                    child["id"] = json::value::string(label);
                     const std::vector<json::value> &grandChildren = getChildrenNode(sourceNode);
-                    if(!grandChildren.empty()) {
+                    if (!grandChildren.empty()) {
                         child["children"] = json::value::array(grandChildren);
                     }
                     children.push_back(child);

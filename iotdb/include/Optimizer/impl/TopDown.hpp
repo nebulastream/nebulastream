@@ -1,0 +1,180 @@
+#ifndef IOTDB_TOPDOWN_HPP
+#define IOTDB_TOPDOWN_HPP
+
+#include <Optimizer/FogPlacementOptimizer.hpp>
+#include <Operators/Operator.hpp>
+#include <stack>
+
+namespace iotdb {
+
+    using namespace std;
+
+    class TopDown : public FogPlacementOptimizer {
+
+    public:
+        FogExecutionPlan initializeExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan);
+
+    private:
+
+        void placeOperators(FogExecutionPlan executionPlan, InputQuery query, FogTopologyPlanPtr fogTopologyPlanPtr) {
+
+            const OperatorPtr &sinkOperator = query.getRoot();
+            const FogGraph &fogGraph = fogTopologyPlanPtr->getFogGraph();
+
+            deque<OperatorPtr> operatorsToProcess = {sinkOperator};
+
+            //find the source Node
+            vector<FogVertex> sourceNodes;
+            const vector<FogVertex> &allVertex = fogGraph.getAllVertex();
+            copy_if(allVertex.begin(), allVertex.end(), back_inserter(sourceNodes),
+                    [](const FogVertex vertex) {
+                        return vertex.ptr->getEntryType() == FogNodeType::Sensor &&
+                               vertex.ptr->getRemainingCpuCapacity() > 0;
+                    });
+
+            // FIXME: In the absence of link between source operator and sensor node we will pick first sensor with some capacity 
+            //  as the source. Refer issue 122.
+
+            if (sourceNodes.empty()) {
+                throw "No available source node found in the network to place the operator";
+            }
+
+            const FogTopologyEntryPtr &targetSource = sourceNodes[0].ptr;
+
+            // Find the nodes where we can place the operators. First node will be sink and last one will be the target
+            // source.
+            deque<FogTopologyEntryPtr> candidateNodes = getCandidateFogNodes(fogGraph, targetSource);
+
+
+            if (candidateNodes.empty()) {
+                throw "No path exists between sink and source";
+            }
+
+            while (!operatorsToProcess.empty()) {
+                OperatorPtr &processOperator = operatorsToProcess.front();
+                operatorsToProcess.pop_front();
+
+                if (processOperator->isScheduled()) {
+                    continue;
+                }
+
+                if (processOperator->getOperatorType() == OperatorType::SOURCE_OP) {
+                    FogTopologyEntryPtr sourceNode = targetSource;
+
+                    if (executionPlan.hasVertex(targetSource->getId())) {
+
+                        const ExecutionNodePtr &executionNode = executionPlan.getExecutionNode(targetSource->getId());
+                        string oldOperatorName = executionNode->getOperatorName();
+                        string newName = processOperator->toString() + "=>" + oldOperatorName;
+                        executionNode->setOperatorName(newName);
+                        executionNode->addExecutableOperator(processOperator);
+                        targetSource->reduceCpuCapacity(1);
+                    } else {
+
+                        if (sourceNode->getRemainingCpuCapacity() <= 0) {
+                            throw "Unable to schedule source operator";
+                        }
+
+                        executionPlan.createExecutionNode(processOperator->toString(), to_string(sourceNode->getId()),
+                                                          sourceNode, processOperator);
+                        processOperator->markScheduled(true);
+                        sourceNode->reduceCpuCapacity(1);
+                    }
+                } else {
+                    bool scheduled = false;
+                    for (FogTopologyEntryPtr node : candidateNodes) {
+                        if (node->getRemainingCpuCapacity() > 0) {
+                            scheduled = true;
+
+                            if (executionPlan.hasVertex(node->getId())) {
+
+                                const ExecutionNodePtr &executionNode = executionPlan.getExecutionNode(node->getId());
+                                string oldOperatorName = executionNode->getOperatorName();
+                                string newName = processOperator->toString() + "=>" + oldOperatorName;
+                                executionNode->setOperatorName(newName);
+                                executionNode->addExecutableOperator(processOperator);
+                                node->reduceCpuCapacity(1);
+
+                                vector<OperatorPtr> &nextOperatorsToProcess = processOperator->childs;
+
+                                copy(nextOperatorsToProcess.begin(), nextOperatorsToProcess.end(),
+                                     back_inserter(operatorsToProcess));
+
+                            } else {
+
+                                const ExecutionNodePtr &executionNode = executionPlan.createExecutionNode(
+                                        processOperator->toString(), to_string(node->getId()),
+                                        node, processOperator);
+                                processOperator->markScheduled(true);
+                                node->reduceCpuCapacity(1);
+
+                                vector<OperatorPtr> &nextOperatorsToProcess = processOperator->childs;
+
+                                copy(nextOperatorsToProcess.begin(), nextOperatorsToProcess.end(),
+                                     back_inserter(operatorsToProcess));
+                            }
+                            break;
+                        }
+                    }
+                    if (!scheduled) {
+                        throw "Unable to schedule operator on the node";
+                    }
+                }
+            }
+        }
+
+        /**
+         * Get all candidate node from sink to the target source node.
+         * @param fogGraph
+         * @param targetSource
+         * @return deque containing Fog nodes with top element being sink node and bottom most being the targetSource node.
+         */
+        deque<FogTopologyEntryPtr> getCandidateFogNodes(const FogGraph &fogGraph,
+                                                        const FogTopologyEntryPtr &targetSource) const {
+
+            deque<FogTopologyEntryPtr> candidateNodes = {};
+
+            const FogTopologyEntryPtr &rootNode = fogGraph.getRoot();
+
+            deque<int> visitedNodes = {};
+            candidateNodes.push_back(rootNode);
+
+
+            while (!candidateNodes.empty()) {
+
+                FogTopologyEntryPtr &back = candidateNodes.back();
+
+                if (back->getId() == targetSource->getId()) {
+                    break;
+                }
+
+                const vector<FogEdge> &allEdgesToNode = fogGraph.getAllEdgesToNode(back);
+
+                if (!allEdgesToNode.empty()) {
+                    bool found = false;
+                    for (FogEdge edge: allEdgesToNode) {
+                        const FogTopologyEntryPtr &sourceNode = edge.ptr->getSourceNode();
+                        if (!count(visitedNodes.begin(), visitedNodes.end(), sourceNode->getId())) {
+                            candidateNodes.push_back(sourceNode);
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        candidateNodes.pop_back();
+                    }
+                } else {
+                    candidateNodes.pop_back();
+                }
+
+                if (!count(visitedNodes.begin(), visitedNodes.end(), back->getId())) {
+                    visitedNodes.push_front(back->getId());
+                }
+
+            }
+            return candidateNodes;
+        };
+    };
+
+}
+#endif //IOTDB_TOPDOWN_HPP

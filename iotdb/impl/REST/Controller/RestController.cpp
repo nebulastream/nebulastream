@@ -91,11 +91,16 @@ void RestController::handlePost(http_request message) {
                         .then([this, message](utility::string_t body) {
                                   try {
                                       //Prepare Input query from user string
-                                      std::string userQuery(body.begin(), body.end());
+                                      string userRequest(body.begin(), body.end());
+
+                                      json::value req = json::value::parse(userRequest);
+
+                                      string userQuery = req.at("userQuery").as_string();
+                                      string optimizationStrategyName = req.at("strategyName").as_string();
 
                                       //Call the service
                                       const auto &executionPlan = fogTopologyService.getExecutionPlanAsJson(
-                                              userQuery);
+                                              userQuery, optimizationStrategyName);
 
                                       //Prepare the response
                                       http_response response(status_codes::OK);

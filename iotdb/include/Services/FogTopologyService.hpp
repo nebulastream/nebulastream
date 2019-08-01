@@ -31,7 +31,7 @@ namespace iotdb {
          */
         json::value getFogTopologyAsJson();
 
-        json::value getExecutionPlanAsJson(string userQuery);
+        json::value getExecutionPlanAsJson(string userQuery, string optimizationStrategyName);
     };
 }
 
