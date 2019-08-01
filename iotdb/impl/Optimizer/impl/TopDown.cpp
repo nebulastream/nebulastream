@@ -2,7 +2,7 @@
 
 using namespace iotdb;
 
-FogExecutionPlan TopDown::prepareExecutionPlan(iotdb::InputQuery inputQuery,
+FogExecutionPlan TopDown::initializeExecutionPlan(iotdb::InputQuery inputQuery,
                                                iotdb::FogTopologyPlanPtr fogTopologyPlan) {
     FogExecutionPlan executionGraph;
     const OperatorPtr &sinkOperator = inputQuery.getRoot();
