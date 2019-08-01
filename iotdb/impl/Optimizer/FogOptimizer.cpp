@@ -10,7 +10,7 @@ FogExecutionPlan FogOptimizer::prepareExecutionGraph(std::string strategy, Input
 
     FogPlacementOptimizer *pBaseOptimizer = FogPlacementOptimizer::getOptimizer(strategy);
 
-    const FogExecutionPlan &executionGraph = pBaseOptimizer->prepareExecutionPlan(inputQuery, fogTopologyPlan);
+    const FogExecutionPlan &executionGraph = pBaseOptimizer->initializeExecutionPlan(inputQuery, fogTopologyPlan);
 
     return executionGraph;
 

@@ -20,7 +20,7 @@ namespace iotdb {
     public:
         BottomUp() {};
 
-        FogExecutionPlan prepareExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan);
+        FogExecutionPlan initializeExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan);
 
     private:
 
