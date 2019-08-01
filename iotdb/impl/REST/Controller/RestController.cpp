@@ -85,6 +85,36 @@ void RestController::handlePost(http_request message) {
                         )
                         .wait();
 
+            } else if (path[0] == "service" && path[1] == "execution-plan") {
+
+                message.extract_string(true)
+                        .then([this, message](utility::string_t body) {
+                                  try {
+                                      //Prepare Input query from user string
+                                      std::string userQuery(body.begin(), body.end());
+
+                                      //Call the service
+                                      const auto &executionPlan = fogTopologyService.getExecutionPlanAsJson(
+                                              userQuery);
+
+                                      //Prepare the response
+                                      http_response response(status_codes::OK);
+                                      response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
+                                      response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
+                                      response.set_body(executionPlan);
+                                      message.reply(response);
+
+                                  } catch (...) {
+                                      std::cout << "Exception occurred while building the query plan for user request.";
+                                      http_response response(status_codes::InternalError);
+                                      response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
+                                      response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
+                                      message.reply(response);
+                                  }
+                              }
+                        )
+                        .wait();
+
             } else {
                 http_response response(status_codes::NotFound);
                 response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
