@@ -68,6 +68,20 @@ namespace iotdb {
         return fogVertex_t();
     }
 
+    const std::vector<FogVertex> FogGraph::getAllVertex() const {
+        std::vector<FogVertex> result = {};
+
+        fogVertex_iterator vertex, vertex_end, next_vertex;
+        boost::tie(vertex, vertex_end) = vertices(graph);
+
+        for (next_vertex = vertex; vertex != vertex_end; vertex = next_vertex) {
+            ++next_vertex;
+            result.push_back(graph[*vertex]);
+        }
+
+        return result;
+    }
+
     bool FogGraph::addVertex(FogTopologyEntryPtr ptr) {
         // does graph already contain vertex?
         if (hasVertex(ptr->getId())) {
@@ -90,7 +104,7 @@ namespace iotdb {
         return false;
     }
 
-    FogTopologyEntryPtr FogGraph::getRoot() {
+    FogTopologyEntryPtr FogGraph::getRoot() const {
         fogVertex_iterator vi, vi_end, next;
         boost::tie(vi, vi_end) = vertices(graph);
         for (next = vi; vi != vi_end; vi = next) {
@@ -342,7 +356,7 @@ namespace iotdb {
         return currentId;
     }
 
-    FogGraph FogTopologyPlan::getFogGraph() {
+    FogGraph FogTopologyPlan::getFogGraph() const{
         return *fGraph;
     }
 

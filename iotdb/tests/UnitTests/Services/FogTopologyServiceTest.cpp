@@ -34,7 +34,7 @@ TEST_F(FogTopologyServiceTest, create_fog_execution_plan_for_valid_query) {
     code << "return InputQuery::from(testStream).filter(testStream[\"test\"]==5)" << std::endl
          << "" << std::endl
          << ";" << std::endl;
-    const json::value &plan = fogTopologyService.getExecutionPlanAsJson(code.str());
+    const json::value &plan = fogTopologyService.getExecutionPlanAsJson(code.str(), "BottomUp");
     EXPECT_TRUE(plan.size() != 0);
 }
 
@@ -44,7 +44,26 @@ TEST_F(FogTopologyServiceTest, create_fog_execution_plan_for_invalid_query) {
     try {
         std::stringstream code;
         code << "" << std::endl;
-        const json::value &plan = fogTopologyService.getExecutionPlanAsJson(code.str());
+        fogTopologyService.getExecutionPlanAsJson(code.str(), "BottomUp");
+        FAIL();
+    } catch (...) {
+        //TODO: We need to look into exception handling soon enough
+        SUCCEED();
+    }
+}
+
+/* Test Fog topology service create plan for invalid optimization strategy */
+TEST_F(FogTopologyServiceTest, create_fog_execution_plan_for_invalid_optimization_strategy) {
+
+    try {
+        std::stringstream code;
+        code << "Schema schema = Schema::create().addField(\"test\",INT32);" << std::endl;
+        code << "Stream testStream = Stream(\"test-stream\",schema);" << std::endl;
+        code << "return InputQuery::from(testStream).filter(testStream[\"test\"]==5)" << std::endl
+             << "" << std::endl
+             << ";" << std::endl;
+
+        fogTopologyService.getExecutionPlanAsJson(code.str(), "random");
         FAIL();
     } catch (...) {
         //TODO: We need to look into exception handling soon enough

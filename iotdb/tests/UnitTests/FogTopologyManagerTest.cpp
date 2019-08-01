@@ -509,6 +509,6 @@ TEST_F(FogTopologyGraphTest, get_example_topology_as_json)
 
     FogTopologyManager &topologyManager = FogTopologyManager::getInstance();
     topologyManager.createExampleTopology();
-    const json::value &treeJson = topologyManager.getFogTopologyGraphAsTreeJson();
+    const json::value &treeJson = topologyManager.getFogTopologyGraphAsJson();
     EXPECT_TRUE(treeJson.size()>0);
 }
