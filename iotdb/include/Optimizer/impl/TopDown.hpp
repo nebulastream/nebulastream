@@ -12,7 +12,7 @@ namespace iotdb {
     class TopDown : public FogPlacementOptimizer {
 
     public:
-        FogExecutionPlan prepareExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan);
+        FogExecutionPlan initializeExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan);
 
     private:
 
@@ -43,46 +43,8 @@ namespace iotdb {
 
             // Find the nodes where we can place the operators. First node will be sink and last one will be the target
             // source.
-            deque<FogTopologyEntryPtr> candidateNodes = {};
+            deque<FogTopologyEntryPtr> candidateNodes = getCandidateFogNodes(fogGraph, targetSource);
 
-            const FogTopologyEntryPtr &rootNode = fogGraph.getRoot();
-
-            deque<int> visitedNodes = {};
-            candidateNodes.push_back(rootNode);
-
-
-            while (!candidateNodes.empty()) {
-
-                FogTopologyEntryPtr &back = candidateNodes.back();
-
-                if (back->getId() == targetSource->getId()) {
-                    break;
-                }
-
-                const vector<FogEdge> &allEdgesToNode = fogGraph.getAllEdgesToNode(back);
-
-                if (!allEdgesToNode.empty()) {
-                    bool found = false;
-                    for (FogEdge edge: allEdgesToNode) {
-                        const FogTopologyEntryPtr &sourceNode = edge.ptr->getSourceNode();
-                        if (!count(visitedNodes.begin(), visitedNodes.end(), sourceNode->getId())) {
-                            candidateNodes.push_back(sourceNode);
-                            found = true;
-                            break;
-                        }
-                    }
-                    if (!found) {
-                        candidateNodes.pop_back();
-                    }
-                } else {
-                    candidateNodes.pop_back();
-                }
-
-                if (!count(visitedNodes.begin(), visitedNodes.end(), back->getId())) {
-                    visitedNodes.push_front(back->getId());
-                }
-
-            }
 
             if (candidateNodes.empty()) {
                 throw "No path exists between sink and source";
@@ -135,7 +97,8 @@ namespace iotdb {
 
                                 vector<OperatorPtr> &nextOperatorsToProcess = processOperator->childs;
 
-                                copy(nextOperatorsToProcess.begin(), nextOperatorsToProcess.end(), back_inserter(operatorsToProcess));
+                                copy(nextOperatorsToProcess.begin(), nextOperatorsToProcess.end(),
+                                     back_inserter(operatorsToProcess));
 
                             } else {
 
@@ -147,7 +110,8 @@ namespace iotdb {
 
                                 vector<OperatorPtr> &nextOperatorsToProcess = processOperator->childs;
 
-                                copy(nextOperatorsToProcess.begin(), nextOperatorsToProcess.end(), back_inserter(operatorsToProcess));
+                                copy(nextOperatorsToProcess.begin(), nextOperatorsToProcess.end(),
+                                     back_inserter(operatorsToProcess));
                             }
                             break;
                         }
@@ -157,6 +121,58 @@ namespace iotdb {
                     }
                 }
             }
+        }
+
+        /**
+         * Get all candidate node from sink to the target source node.
+         * @param fogGraph
+         * @param targetSource
+         * @return deque containing Fog nodes with top element being sink node and bottom most being the targetSource node.
+         */
+        deque<FogTopologyEntryPtr> getCandidateFogNodes(const FogGraph &fogGraph,
+                                                        const FogTopologyEntryPtr &targetSource) const {
+
+            deque<FogTopologyEntryPtr> candidateNodes = {};
+
+            const FogTopologyEntryPtr &rootNode = fogGraph.getRoot();
+
+            deque<int> visitedNodes = {};
+            candidateNodes.push_back(rootNode);
+
+
+            while (!candidateNodes.empty()) {
+
+                FogTopologyEntryPtr &back = candidateNodes.back();
+
+                if (back->getId() == targetSource->getId()) {
+                    break;
+                }
+
+                const vector<FogEdge> &allEdgesToNode = fogGraph.getAllEdgesToNode(back);
+
+                if (!allEdgesToNode.empty()) {
+                    bool found = false;
+                    for (FogEdge edge: allEdgesToNode) {
+                        const FogTopologyEntryPtr &sourceNode = edge.ptr->getSourceNode();
+                        if (!count(visitedNodes.begin(), visitedNodes.end(), sourceNode->getId())) {
+                            candidateNodes.push_back(sourceNode);
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                        candidateNodes.pop_back();
+                    }
+                } else {
+                    candidateNodes.pop_back();
+                }
+
+                if (!count(visitedNodes.begin(), visitedNodes.end(), back->getId())) {
+                    visitedNodes.push_front(back->getId());
+                }
+
+            }
+            return candidateNodes;
         };
     };
 
