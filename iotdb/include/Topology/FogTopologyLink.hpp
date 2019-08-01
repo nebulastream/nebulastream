@@ -12,14 +12,14 @@ namespace iotdb {
 
 enum LinkType { NodeToNode, NodeToSensor, SensorToNode };
 
-static size_t currentLinkID = 1;
+static size_t linkID = 1;
 
 class FogTopologyLink {
 
   public:
     FogTopologyLink(FogTopologyEntryPtr pSourceNode, FogTopologyEntryPtr pDestNode)
     {
-        linkId = currentLinkID++;
+        linkId = linkID++;
         sourceNode = pSourceNode;
         destNode = pDestNode;
     }

@@ -13,6 +13,7 @@ namespace iotdb {
 
     const OperatorPtr recursiveCopy(OperatorPtr ptr) {
         OperatorPtr operatorPtr = ptr->copy();
+        operatorPtr->parent = ptr->parent;
         std::vector<OperatorPtr> children = ptr->childs;
 
         for (u_int i = 0; i < children.size(); i++) {
@@ -169,6 +170,7 @@ namespace iotdb {
 
     void addChild(const OperatorPtr &op_parent, const OperatorPtr &op_child) {
         if (op_parent && op_child) {
+            op_child->parent = op_parent;
             op_parent->childs.push_back(op_child);
             op_child->parent = op_parent;
         }

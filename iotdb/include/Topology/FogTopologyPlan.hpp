@@ -17,28 +17,27 @@ namespace iotdb {
 
 #define MAX_NUMBER_OF_NODES 10 // TODO: make this dynamic
 
-struct Vertex {
+struct FogVertex {
     size_t id;
     FogTopologyEntryPtr ptr;
 };
-struct Edge {
+struct FogEdge {
     size_t id;
     FogTopologyLinkPtr ptr;
 };
 
-using graph_t = boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS, Vertex, Edge>;
-using vertex_t = boost::graph_traits<graph_t>::vertex_descriptor;
-using vertex_iterator = boost::graph_traits<graph_t>::vertex_iterator;
-using edge_t = boost::graph_traits<graph_t>::edge_descriptor;
-using edge_iterator = boost::graph_traits<graph_t>::edge_iterator;
+using fogGraph_t = boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS, FogVertex, FogEdge>;
+using fogVertex_t = boost::graph_traits<fogGraph_t>::vertex_descriptor;
+using fogVertex_iterator = boost::graph_traits<fogGraph_t>::vertex_iterator;
+using fogEdge_t = boost::graph_traits<fogGraph_t>::edge_descriptor;
+using fogEdge_iterator = boost::graph_traits<fogGraph_t>::edge_iterator;
 
 class FogGraph {
   public:
     FogGraph(){};
 
-    const vertex_t getVertex(size_t search_id) const;
+    const fogVertex_t getVertex(size_t search_id) const;
     bool hasVertex(size_t search_id) const;
-    const std::vector<FogTopologyEntryPtr> getAllVertex() const;
 
     bool addVertex(FogTopologyEntryPtr ptr);
     bool removeVertex(size_t search_id);
@@ -48,8 +47,10 @@ class FogGraph {
     FogTopologyLinkPtr getLink(FogTopologyEntryPtr sourceNode, FogTopologyEntryPtr destNode) const;
     bool hasLink(FogTopologyEntryPtr sourceNode, FogTopologyEntryPtr destNode) const;
 
-    const Edge* getEdge(size_t search_id) const;
-    const std::vector<Edge> getAllEdgesToNode(FogTopologyEntryPtr destNode) const;
+    const FogEdge* getEdge(size_t search_id) const;
+    const std::vector<FogEdge> getAllEdgesToNode(FogTopologyEntryPtr destNode) const;
+    const std::vector<FogEdge> getAllEdgesFromNode(FogTopologyEntryPtr srcNode) const;
+    const std::vector<FogEdge> getAllEdges() const;
     bool hasEdge(size_t search_id) const;
 
     bool addEdge(FogTopologyLinkPtr ptr);
@@ -58,7 +59,7 @@ class FogGraph {
     std::string getGraphString();
 
   private:
-    graph_t graph;
+    fogGraph_t graph;
 };
 
 class FogTopologyPlan {

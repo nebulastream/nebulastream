@@ -43,11 +43,11 @@ export default class QueryInterface extends React.Component {
                 fill: 'lightblue',
             }
         };
-        this.userQuery = 'Schema schema = Schema::create()\n'+
-            '   .addField("measurement",INT32);\n\n'+
-        'Stream temperature = Stream("temperature", schema);\n\n' +
-        'return InputQuery::from(temperature)\n' +
-            '   .filter(temperature["measurement"] > 100)\n'+
+        this.userQuery = 'Schema schema = Schema::create()\n' +
+            '   .addField("measurement",INT32);\n\n' +
+            'Stream temperature = Stream("temperature", schema);\n\n' +
+            'return InputQuery::from(temperature)\n' +
+            '   .filter(temperature["measurement"] > 100)\n' +
             '   .print(std::cout);\n'
         this.queryEditor = React.createRef();
         this.getQueryPlan = this.getQueryPlan.bind(this);
@@ -87,7 +87,7 @@ export default class QueryInterface extends React.Component {
                 this.updateData("query", data);
             })
             .catch(err => {
-                this.resetTreeData();
+                this.resetTreeData("query");
                 if (err.message.includes("500")) {
                     this.showAlert()
                 } else {
@@ -118,7 +118,7 @@ export default class QueryInterface extends React.Component {
                 this.updateData("topology", data);
             })
             .catch(err => {
-                this.resetTreeData();
+                this.resetTreeData("topology");
                 if (err.message.includes("500")) {
                     this.showAlert()
                 } else {
@@ -129,9 +129,38 @@ export default class QueryInterface extends React.Component {
         console.log("Fetching completed")
     }
 
-    getExecutionPlan() {
-        this.setState({displayExecutionPlan : true});
-        // this.queryEditor.current.focus();
+    getExecutionPlan(userQuery) {
+        this.setState({displayExecutionPlan: true});
+        console.log("Fetching query plan");
+        console.log(userQuery);
+        fetch('http://127.0.0.1:8081/v1/iotdb/service/execution-plan', {
+                method: 'POST',
+                headers: {
+                    Accept: 'application/json',
+                },
+                body: userQuery,
+            }
+        )
+            .then(response => {
+                if (!response.ok) {
+                    this.handleResponseError(response);
+                }
+                this.onDismiss();
+                return response.json();
+            })
+            .then(data => {
+
+                this.updateData("execution", data);
+            })
+            .catch(err => {
+                this.resetTreeData("execution");
+                if (err.message.includes("500")) {
+                    this.showAlert()
+                } else {
+                    console.log(err)
+                }
+            });
+        console.log("Fetching completed")
     }
 
     updateData(modelName, jsonObject) {
@@ -139,6 +168,8 @@ export default class QueryInterface extends React.Component {
             this.setState({queryPlan: jsonObject})
         } else if (modelName === 'topology') {
             this.setState({topologyPlan: jsonObject})
+        } else if (modelName === 'execution') {
+            this.setState({executionPlan: jsonObject})
         }
     }
 
@@ -146,8 +177,14 @@ export default class QueryInterface extends React.Component {
         this.setState({displayBasePlan: false});
     }
 
-    resetTreeData() {
+    resetTreeData(modelName) {
+        if (modelName === 'query') {
         this.setState({queryPlan: [{"name": "empty"}]});
+        } else if (modelName === 'topology') {
+            this.setState({topologyPlan: [{"name": "empty"}]});
+        } else if (modelName === 'execution') {
+            this.setState({executionPlan: [{"name": "empty"}]});
+        }
     }
 
     handleResponseError(response) {
@@ -210,7 +247,9 @@ export default class QueryInterface extends React.Component {
                                         this.getFogTopology()
                                     }}>Show Fog
                                         Topology</Button>
-                                    <Button color="primary" onClick={() => {this.getExecutionPlan()}}>Show Execution Plan</Button>
+                                    <Button color="primary" onClick={() => {
+                                        this.getExecutionPlan(this.userQuery)
+                                    }}>Show Execution Plan</Button>
                                 </ButtonGroup>
                                 <ButtonGroup>
                                     <Button color="info" onClick={() => {

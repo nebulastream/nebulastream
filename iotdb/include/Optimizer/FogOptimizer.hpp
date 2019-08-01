@@ -1,41 +1,25 @@
-#ifndef INCLUDE_OPTIMIZER_FOGOPTIMIZER_HPP_
-#define INCLUDE_OPTIMIZER_FOGOPTIMIZER_HPP_
 
-#include <API/InputQuery.hpp>
-#include <Optimizer/FogExecutionPlan.hpp>
-#include <Topology/FogTopologyPlan.hpp>
+/**\brief:
+ *         This class is responsible for producing the execution graph for the queries on fog topology. We can have
+ *         different type of optimizers that can be provided as input the query and fog topology information and based
+ *         on that a query execution graph will be computed. The output will be a graph where the edges contain the
+ *         information about the operators to be executed and the nodes where the execution is to be done.
+ */
+
+
+#ifndef IOTDB_FOGOPTIMIZER_HPP
+#define IOTDB_FOGOPTIMIZER_HPP
+
+#include "FogExecutionPlan.hpp"
 
 namespace iotdb {
-class FogOptimizer {
-  public:
-    static FogOptimizer& getInstance()
-    {
-        static FogOptimizer instance; // Guaranteed to be destroyed.
-                                      // Instantiated on first use.
-        return instance;
-    }
-    FogOptimizer(FogOptimizer const&);   // Don't Implement
-    void operator=(FogOptimizer const&); // Don't implement
 
-    FogExecutionPlanPtr map(InputQueryPtr query, FogTopologyPlanPtr plan)
-    {
-        FogExecutionPlanPtr execPlan = std::make_shared<FogExecutionPlan>();
+    class FogOptimizer {
 
-        // get Root
-        FogTopologyEntryPtr rootNode = plan->getRootNode();
-        rootNode->setQuery(query);
+    public:
+        FogExecutionPlan prepareExecutionGraph(std::string strategy, InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan);
+    };
+}
 
-        return execPlan;
-    }
 
-    void optimize(FogExecutionPlanPtr execPlan)
-    {
-        // TODO: do the magic
-    }
-
-  private:
-    FogOptimizer(){};
-};
-} // namespace iotdb
-
-#endif /* INCLUDE_OPTIMIZER_FOGOPTIMIZER_HPP_ */
+#endif //IOTDB_FOGOPTIMIZER_HPP

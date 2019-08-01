@@ -5,6 +5,8 @@
 #ifndef IOTDB_FOGTOPOLOGYSERVICE_HPP
 #define IOTDB_FOGTOPOLOGYSERVICE_HPP
 
+#include <cpprest/json.h>
+
 namespace iotdb {
 
     using namespace std;
@@ -28,6 +30,8 @@ namespace iotdb {
          * @return a json object representing the fog topology
          */
         json::value getFogTopologyAsJson();
+
+        json::value getExecutionPlanAsJson(string userQuery);
     };
 }
 
