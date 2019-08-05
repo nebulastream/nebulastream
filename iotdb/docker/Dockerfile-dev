@@ -11,4 +11,6 @@ VOLUME ["/iotdb"]
 
 ADD ./scripts/entrypoint.sh /entrypoint.sh
 
+EXPOSE 8081
+EXPOSE 38938
 ENTRYPOINT ["/entrypoint.sh"]
