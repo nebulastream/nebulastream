@@ -33,7 +33,9 @@ typedef std::shared_ptr<UserAPIExpression> UserAPIExpressionPtr;
 class Predicate;
 typedef std::shared_ptr<Predicate> PredicatePtr;
 
-	
+class Map;
+typedef std::shared_ptr<Map> MapPtr;
+
 class UserAPIExpression{
 public:
 	virtual ~UserAPIExpression(){};
@@ -44,7 +46,7 @@ public:
 
 class Predicate : public UserAPIExpression{
 public:
-	Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right, const std::string& functionCallOverload, bool bracket = true);
+    Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right, const std::string& functionCallOverload, bool bracket = true);
     Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right, bool bracket = true);
 	
 	virtual const ExpressionStatmentPtr generateCode(GeneratedCode& code) const override;
@@ -57,7 +59,6 @@ private:
 	bool _bracket;
 	const std::string _functionCallOverload;
 };
-
 
 class PredicateItem : public UserAPIExpression{
 public:

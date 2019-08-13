@@ -46,6 +46,8 @@ class CodeGenerator {
     // virtual bool addOperator(OperatorPtr) = 0;
     virtual bool generateCode(const DataSourcePtr& source, const PipelineContextPtr& context, std::ostream& out) = 0;
     virtual bool generateCode(const PredicatePtr& pred, const PipelineContextPtr& context, std::ostream& out) = 0;
+    virtual bool generateCode(const AttributeFieldPtr field, const PredicatePtr& pred, const iotdb::PipelineContextPtr &context,
+                              std::ostream &out) = 0;
     virtual bool generateCode(const DataSinkPtr& sink, const PipelineContextPtr& context, std::ostream& out) = 0;
     virtual PipelineStagePtr compile(const CompilerArgs&) = 0;
     virtual ~CodeGenerator();
@@ -91,6 +93,7 @@ class GeneratedCode {
     VariableDeclaration decl_field_num_tuples_struct_tuple_buf;
     VariableDeclaration decl_field_data_ptr_struct_tuple_buf;
     VariableDeclaration var_decl_input_tuple;
+    VariableDeclaration var_num_for_loop;
     std::vector<StructDeclaration> type_decls;
 };
 

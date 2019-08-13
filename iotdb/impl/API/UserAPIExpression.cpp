@@ -26,7 +26,6 @@ namespace iotdb
             _right(right),
             _bracket(bracket),
             _functionCallOverload(functionCallOverload)
-
     {}
 
 	Predicate::Predicate(const BinaryOperatorType& op, const UserAPIExpressionPtr left, const UserAPIExpressionPtr right, bool bracket) :
