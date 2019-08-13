@@ -33,6 +33,7 @@ GeneratedCode::GeneratedCode()
           decl_field_data_ptr_struct_tuple_buf(
               VariableDeclaration::create(createDataType(INT32), "decl_field_data_ptr_NOT_DEFINED")),
           var_decl_input_tuple(VariableDeclaration::create(createDataType(INT32), "input_tuple_NOT_DEFINED")),
+          var_num_for_loop(VariableDeclaration::create(createDataType(UINT64), "num_result_tuples")),
           type_decls()
     {
     }
@@ -66,6 +67,8 @@ class C_CodeGenerator : public CodeGenerator {
     virtual bool generateCode(const DataSourcePtr& source, const PipelineContextPtr& context,
                               std::ostream& out) override;
     virtual bool generateCode(const PredicatePtr& pred, const PipelineContextPtr& context, std::ostream& out) override;
+    virtual bool generateCode(const AttributeFieldPtr field, const PredicatePtr& pred, const iotdb::PipelineContextPtr &context,
+                              std::ostream &out) override;
     virtual bool generateCode(const DataSinkPtr& sink, const PipelineContextPtr& context, std::ostream& out) override;
     PipelineStagePtr compile(const CompilerArgs&) override;
     ~C_CodeGenerator() override;
@@ -304,26 +307,39 @@ bool C_CodeGenerator::generateCode(const PredicatePtr& pred, const PipelineConte
 	
     ExpressionStatmentPtr expr = pred->generateCode(this->code_);
 
-//    VariableDeclaration var_decl_i =
-//        VariableDeclaration::create(createDataType(BasicType(INT32)), "my_int", createBasicTypeValue(BasicType(INT32), "1"));
-
-//    bool found=false;
-//    for(auto& decl : code_.variable_decls){
-//        if(decl.getIdentifierName()==var_decl_i.getIdentifierName()){
-//          found=true;
-//        }
-//    }
-//    if(!found)
-//      code_.variable_decls.push_back(var_decl_i);
-
     std::shared_ptr<IF> if_stmt = std::make_shared<IF>(*expr);
     CompoundStatementPtr compound_stmt = if_stmt->getCompoundStatement();
+
     /* update current compound_stmt*/
     code_.current_code_insertion_point->addStatement(if_stmt);
     code_.current_code_insertion_point=compound_stmt;
 
     return true;
 }
+
+bool C_CodeGenerator::generateCode(const AttributeFieldPtr field, const PredicatePtr& pred, const iotdb::PipelineContextPtr &context,
+                                   std::ostream &out) {
+
+    StructDeclaration struct_decl_result_tuple = (getStructDeclarationFromSchema("result_tuples", result_schema_));
+    VariableDeclaration var_decl_result_tuple = VariableDeclaration::create(
+            createPointerDataType(createUserDefinedType(struct_decl_result_tuple)), "result_tuples");
+
+    DeclarationPtr declaredMapVar = getVariableDeclarationForField(code_.struct_decl_result_tuple, field);
+    if(!declaredMapVar){
+        result_schema_.addField(field);
+        code_.struct_decl_result_tuple.addField(VariableDeclaration::create(field->data_type, field->name));
+    }
+
+    VariableDeclaration var_map_i = code_.struct_decl_result_tuple.getVariableDeclaration(field->name);
+
+    BinaryOperatorStatement callVar = VarRef(var_decl_result_tuple)[VarRef(code_.var_num_for_loop)].accessRef(VarRef(var_map_i));
+    ExpressionStatmentPtr expr = pred->generateCode(this->code_);
+    BinaryOperatorStatement assignedMap = (callVar).assign(*expr);
+    code_.current_code_insertion_point->addStatement(assignedMap.copy());
+
+    return true;
+}
+
 bool C_CodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContextPtr& context, std::ostream& out)
 {
 
@@ -338,6 +354,7 @@ bool C_CodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContex
 
     VariableDeclaration var_decl_num_result_tuples = VariableDeclaration::create(
         createDataType(BasicType(UINT64)), "num_result_tuples",createBasicTypeValue(BasicType(INT64), "0"));
+    code_.var_num_for_loop = var_decl_num_result_tuples;
     code_.variable_decls.push_back(var_decl_num_result_tuples);
 
 
@@ -358,35 +375,21 @@ bool C_CodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContex
             IOTDB_FATAL_ERROR("Could not extract field " << result_schema_[i]->toString() << " from struct "
                                                          << struct_decl_result_tuple.getTypeName());
         }
-        // VariableDeclaration var_decl =
-        // code_.struct_decl_result_tuple.getVariableDeclaration(result_schema_[i]->name);
         code_.variable_decls.push_back(*var_decl);
-        /** \FIXME: we need to handle the case where the field in the result tuple is not part of the input schema! */
-        /** \todo: we need to add an arraybased assignment here. (for-loop or memcpy) */
-        /*
-        code_.current_code_insertion_point->addStatement(
-            VarRef(var_decl_result_tuple)[VarRef(var_decl_num_result_tuples)]
-                .accessRef(VarRef(*var_decl))
-                .assign(VarRef(code_.var_decl_input_tuple)[VarRef(*(code_.var_decl_id))].accessRef(VarRef(*var_decl)))
-                .copy()
-            );*/
-        /*
-         *
-    VariableDeclaration lhs_tuple_var;
-    VariableDeclaration lhs_field_var;
-    VariableDeclaration lhs_index_var;
-    VariableDeclaration rhs_tuple_var;
-    VariableDeclaration rhs_field_var;
-    VariableDeclaration rhs_index_var;
-         */
-        AssignmentStatment as = {var_decl_result_tuple,
-                                 *(var_decl),
-                                 var_decl_num_result_tuples,
-                                 code_.var_decl_input_tuple,
-                                 *(var_decl),
-                                 *(code_.var_decl_id)};
-        StatementPtr stmt = var_decl->getDataType()->getStmtCopyAssignment(as);
-        code_.current_code_insertion_point->addStatement(stmt);
+
+        /** \done \FIXME: we need to handle the case where the field in the result tuple is not part of the input schema! */
+        DeclarationPtr var_decl_input = getVariableDeclarationForField(code_.struct_decl_input_tuple, result_schema_[i]);
+        if(var_decl_input) {
+
+            AssignmentStatment as = {var_decl_result_tuple,
+                                     *(var_decl),
+                                     var_decl_num_result_tuples,
+                                     code_.var_decl_input_tuple,
+                                     *(var_decl),
+                                     *(code_.var_decl_id)};
+            StatementPtr stmt = var_decl->getDataType()->getStmtCopyAssignment(as);
+            code_.current_code_insertion_point->addStatement(stmt);
+        }
         /* */
 
         // var_decls.push_back(*var_decl);
@@ -395,7 +398,7 @@ bool C_CodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContex
     code_.current_code_insertion_point->addStatement((++VarRef(var_decl_num_result_tuples)).copy());
 
 
-    /* TODO: set number of output tuples to result buffer */
+    /*  TODO: set number of output tuples to result buffer */
     code_.cleanup_stmts.push_back(
     VarRef(code_.var_decl_tuple_buffer_output).accessPtr(VarRef(code_.decl_field_num_tuples_struct_tuple_buf)).assign(VarRef(var_decl_num_result_tuples)).copy()
         );
