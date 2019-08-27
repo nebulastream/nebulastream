@@ -90,6 +90,13 @@ private:
 	ValueTypePtr _value=nullptr;
 };
 
+class Field : public PredicateItem{
+public:
+    Field(AttributeFieldPtr name);
+private:
+    std::string _name;
+};
+
 const PredicatePtr createPredicate(const UserAPIExpression& expression);
 
 Predicate operator == (const UserAPIExpression &lhs, const UserAPIExpression &rhs);
