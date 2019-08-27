@@ -40,10 +40,19 @@ class Operator {
     virtual const OperatorPtr copy() const = 0;
     size_t cost;
     std::vector<OperatorPtr> childs;
+    OperatorPtr parent;
     virtual void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) = 0;
     virtual void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) = 0;
     virtual const std::string toString() const = 0;
     virtual OperatorType getOperatorType() const = 0;
+    bool isScheduled() {
+        return this->scheduled;
+    };
+    void markScheduled(bool scheduled){
+        this->scheduled = scheduled;
+    };
+  private:
+    bool scheduled=false;
 };
 
 const OperatorPtr createAggregationOperator(const AggregationSpec& aggr_spec);

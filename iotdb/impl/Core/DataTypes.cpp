@@ -34,6 +34,11 @@ AttributeField::AttributeField(const std::string& _name, DataTypePtr _data_type)
     // assert(data_type!=nullptr);
 }
 
+AttributeField::AttributeField(const std::string& _name)
+            : name(_name), data_type(nullptr)
+{
+}
+
 AttributeField::AttributeField(const std::string& _name, const BasicType& _type)
     : name(_name), data_type(createDataType(_type))
 {
@@ -44,6 +49,10 @@ AttributeField::AttributeField(const std::string& _name, uint32_t _size)
 {
 }
 uint32_t AttributeField::getFieldSize() const { return data_type->getSizeBytes(); }
+
+const bool AttributeField::hasType() const {
+    return data_type != nullptr;
+}
 
 const DataTypePtr AttributeField::getDataType() const { return data_type; }
 
@@ -72,7 +81,7 @@ bool AttributeField::isEqual(const AttributeFieldPtr& attr){
 }
 
 AttributeField::AttributeField(const AttributeField& other)
-  : name(other.name), data_type(other.data_type->copy())
+  : name(other.name), data_type(other.data_type)
 {
 }
 

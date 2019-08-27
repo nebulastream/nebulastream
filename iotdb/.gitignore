@@ -1,1 +1,7 @@
+#Idea
+.idea
+
+#Build files
 build*
+cmake-build-debug
+.settings

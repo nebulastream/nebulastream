@@ -9,6 +9,12 @@ namespace iotdb {
 class AttributeField;
 typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
 
+class UserAPIExpression;
+typedef std::shared_ptr<UserAPIExpression> UserAPIExpressionPtr;
+
+class Field;
+typedef std::shared_ptr<Field> FieldPtr;
+
 class Predicate;
 typedef std::shared_ptr<Predicate> PredicatePtr;
 
