@@ -72,7 +72,7 @@ void CCodeCompiler::init()
 
 void CCodeCompiler::initCompilerArgs()
 {
-    compiler_args_ = {"-std=c++11",      "-fno-trigraphs", "-fpic", "-Werror",
+    compiler_args_ = {"-std=c++11",      "-fno-trigraphs", "-fpic", "-Werror", "-Wparentheses-equality",
 #ifdef SSE41_FOUND
                       "-msse4.1",
 #endif
@@ -164,7 +164,8 @@ void CCodeCompiler::callSystemCompiler(const std::vector<std::string>& args)
     auto ret = system(compiler_call.str().c_str());
 
     if (ret != 0) {
-        IOTDB_FATAL_ERROR("PrecompiledHeader compilation failed!");
+        std::cout << "PrecompiledHeader compilation failed!";
+        throw "PrecompiledHeader compilation failed!";
     }
 }
 

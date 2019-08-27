@@ -22,6 +22,11 @@ class FogTopologyEntry {
     virtual std::string getEntryTypeString() = 0;
 
     virtual void setQuery(InputQueryPtr pQuery) = 0;
+
+    virtual int getCpuCapacity() =0;
+    virtual int getRemainingCpuCapacity() =0;
+    virtual void reduceCpuCapacity(int usedCapacity) =0;
+    virtual void increaseCpuCapacity(int freedCapacity) = 0;
 };
 
 typedef std::shared_ptr<FogTopologyEntry> FogTopologyEntryPtr;
