@@ -19,6 +19,7 @@ import ButtonDropdown from "reactstrap/es/ButtonDropdown";
 import {toast} from "react-toastify";
 import {GraphView} from 'react-digraph';
 import GraphConfig, {EMPTY_EDGE_TYPE, NODE_KEY, POLY_TYPE, SKINNY_TYPE,} from './dag/graph-config';
+import DagreD3 from "./dag/DagreD3";
 
 export default class QueryInterface extends React.Component {
 
@@ -34,8 +35,43 @@ export default class QueryInterface extends React.Component {
                 edges: []
             },
             executionGraph: {
-                nodes: [],
-                edges: []
+                nodes: {
+                    '1': {
+                        label: 'Node 1',
+                        style: "fill: #f47"
+                    },
+                    '2': {
+                        label: 'Node 2',
+                        style: "fill: #f57"
+                    },
+                    '3': {
+                        label: 'Node 3',
+                        style: "fill: #fff"
+                    },
+                    '4': {
+                        label: 'Node 4',
+                        description: "represents no connection state at all.",
+                        style: "fill: #f77"
+                    },
+                    '5': {
+                        label: 'Node 5',
+                        description: "represents no connection state at all.",
+                        style: "fill: #f77"
+                    },
+                    '6': {
+                        label: 'Node 6',
+                        description: "represents no connection state at all.",
+                        style: "fill: #f77"
+                    }
+                },
+                edges: [
+                    ['1', '2', {label: 'lalala'}],
+                    ['1', '3', {label: 'lalalal'}],
+                    ['2', '4', {label: 'sd'}],
+                    ['3', '4', {label: 'asdw'}],
+                    ['3', '5', {label: 'asdw'}],
+                    ['3', '6', {label: 'asdw'}]
+                ]
             },
             selectedStrategy: "NONE",
             displayBasePlan: false,
@@ -408,6 +444,12 @@ export default class QueryInterface extends React.Component {
                                 </div>
                             </Row> : null}
                     </CardBody>
+                    <DagreD3
+                        edges={this.state.executionGraph.edges}
+                        nodes={this.state.executionGraph.nodes}
+                        interactive={false}
+                        fit={true}
+                    />
                 </Card>
             </Col>
         );
