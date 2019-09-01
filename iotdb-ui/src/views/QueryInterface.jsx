@@ -20,6 +20,7 @@ import {toast} from "react-toastify";
 import {GraphView} from 'react-digraph';
 import GraphConfig, {EMPTY_EDGE_TYPE, NODE_KEY, POLY_TYPE, SKINNY_TYPE,} from './dag/graph-config';
 import DagreD3 from "./dag/DagreD3";
+import Tipsy from 'react-tipsy'
 
 export default class QueryInterface extends React.Component {
 
@@ -383,9 +384,11 @@ export default class QueryInterface extends React.Component {
                                 </ButtonDropdown>
                             </ButtonGroup>
                             <ButtonGroup>
+                                <Tipsy content="alalalals" placement="right">
                                 <Button color="info" onClick={() => {
                                     this.hideEverything()
                                 }}>Hide All</Button>
+                                </Tipsy>
                             </ButtonGroup>
                         </Row>
                         <Row>
@@ -453,12 +456,14 @@ export default class QueryInterface extends React.Component {
 
                 </Card>
                 <div>
+                    <Tipsy ref="tooltip" content="alalalalwwweewws" placement="right">
                     <DagreD3
                         edges={this.state.executionGraph.edges}
                         nodes={this.state.executionGraph.nodes}
                         interactive={false}
                         fit={true}
                     />
+                    </Tipsy>
                 </div>
             </Col>
         );

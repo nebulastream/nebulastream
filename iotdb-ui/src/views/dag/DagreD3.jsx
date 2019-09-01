@@ -2,6 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import * as dagreD3 from 'dagre-d3'
 import * as d3 from 'd3'
+import Tipsy from 'react-tipsy'
 
 import isEqual from 'react-fast-compare'
 
@@ -24,6 +25,7 @@ class DagreD3 extends React.Component {
         width: PropTypes.string,
         shapeRenderers: PropTypes.objectOf(PropTypes.func),
         onNodeClick: PropTypes.func,
+        tipsy: Tipsy,
     };
 
     shouldComponentUpdate(nextProps, nextState) {
@@ -101,7 +103,8 @@ class DagreD3 extends React.Component {
                 return styleTooltip(v, g.node(v).description)
             })
             .each(function (v) {
-                console.log("ankit" + v)
+                console.log("ankit" + v);
+                return ( <Tipsy content="dhdsjdfsjdsffd"></Tipsy>);
             });
 
         if (this.props.onNodeClick)
