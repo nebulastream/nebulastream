@@ -6,9 +6,6 @@ import * as d3 from 'd3'
 import isEqual from 'react-fast-compare'
 
 class DagreD3 extends React.Component {
-    constructor(props) {
-        super(props);
-    }
 
     static defaultProps = {
         height: "1",
@@ -44,14 +41,20 @@ class DagreD3 extends React.Component {
     }
 
     renderDag() {
-        let g = new dagreD3.graphlib.Graph().setGraph({});
+        let g = new dagreD3.graphlib.Graph().setGraph({rankdir: "BT", acyclicer: "greedy", align:"UR"});
 
 
         for (let [id, node] of Object.entries(this.props.nodes))
             g.setNode(id, node);
 
-        for (let edge of this.props.edges)
-            g.setEdge(edge[0], edge[1], edge[2]); // from, to, props
+
+        for (let edge of this.props.edges) {
+            let edgeProp = {
+                style: "stroke: #f77; fill: #fff;stroke-width:4px;",
+                arrowheadStyle: "fill: #f77", ...edge[2]
+            };
+            g.setEdge(edge[0], edge[1], edgeProp); // from, to, props
+        }
 
         // Set up an SVG group so that we can translate the final graph.
         let svg = d3.select(this.nodeTree);
@@ -87,18 +90,36 @@ class DagreD3 extends React.Component {
             inner.attr("transform", d3.zoomIdentity.translate(transX, transY))
         }
 
+        let styleTooltip = function (name, description) {
+            console.log(name + "-" + description)
+            return "<p class='name'>" + name + "</p><p class='description'>" + description + "</p>";
+        };
+
+        //Defining the tool tip section
+        svg.selectAll("g.node")
+            .attr("title", function (v) {
+                return styleTooltip(v, g.node(v).description)
+            })
+            .each(function (v) {
+                console.log("ankit" + v)
+            });
+
         if (this.props.onNodeClick)
-            svg.selectAll('.dagre-d3 .node').on('click',
-                id => this.props.onNodeClick(id));
+            svg.selectAll('.dagre-d3 .node')
+                .on('click', id => this.props.onNodeClick(id));
     }
 
     render() {
         return (
-            <svg className='dagre-d3' ref={(r) => {this.nodeTree = r}}
+            <svg className='dagre-d3' ref={(r) => {
+                this.nodeTree = r
+            }}
                  width={this.props.height}
                  height={this.props.width}>
 
-                <g ref={(r) => {this.nodeTreeGroup = r}}/>
+                <g ref={(r) => {
+                    this.nodeTreeGroup = r
+                }}/>
             </svg>
         );
     }
