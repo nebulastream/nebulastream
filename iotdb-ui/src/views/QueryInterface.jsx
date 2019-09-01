@@ -36,6 +36,12 @@ export default class QueryInterface extends React.Component {
             },
             executionGraph: {
                 nodes: {
+
+                    '6': {
+                        label: 'A',
+                        description: "represents state at all.",
+                        style: "fill: #f77"
+                    },
                     '1': {
                         label: 'Node 1',
                         style: "fill: #f47"
@@ -46,31 +52,26 @@ export default class QueryInterface extends React.Component {
                     },
                     '3': {
                         label: 'Node 3',
-                        style: "fill: #fff"
+                        style: "fill: #aff"
                     },
                     '4': {
                         label: 'Node 4',
-                        description: "represents no connection state at all.",
+                        description: "connection state at all.",
                         style: "fill: #f77"
                     },
                     '5': {
                         label: 'Node 5',
-                        description: "represents no connection state at all.",
-                        style: "fill: #f77"
-                    },
-                    '6': {
-                        label: 'Node 6',
-                        description: "represents no connection state at all.",
+                        description: "represents no connectio at all.",
                         style: "fill: #f77"
                     }
+
                 },
                 edges: [
-                    ['1', '2', {label: 'lalala'}],
-                    ['1', '3', {label: 'lalalal'}],
-                    ['2', '4', {label: 'sd'}],
-                    ['3', '4', {label: 'asdw'}],
-                    ['3', '5', {label: 'asdw'}],
-                    ['3', '6', {label: 'asdw'}]
+                    ['1', '3', {label: 'lalala', style:"stroke: #f77; fill: #fff;stroke-width:4px;",arrowheadStyle:"fill: #f77"}],
+                    ['2', '3', {label: 'lalalal'}],
+                    ['3', '5', {label: 'sd'}],
+                    ['4', '5', {label: 'asdw'}],
+                    ['5', '6', {label: 'asdw'}],
                 ]
             },
             selectedStrategy: "NONE",
@@ -104,6 +105,7 @@ export default class QueryInterface extends React.Component {
         this.toggleExecutionStrategy = this.toggleExecutionStrategy.bind(this);
         this.notify = this.notify.bind(this);
         this.generateDagFromJson = this.generateDagFromJson.bind(this);
+        this.showNodeDescription=this.showNodeDescription.bind(this);
     }
 
     notify = (type, message) => {
@@ -283,6 +285,10 @@ export default class QueryInterface extends React.Component {
         });
     }
 
+    showNodeDescription(id) {
+        console.log(id);
+    }
+
     generateDagFromJson(input) {
 
         let generatedSample = {nodes: [], edges: []};
@@ -444,14 +450,18 @@ export default class QueryInterface extends React.Component {
                                 </div>
                             </Row> : null}
                     </CardBody>
+
+                </Card>
+                <div>
                     <DagreD3
                         edges={this.state.executionGraph.edges}
                         nodes={this.state.executionGraph.nodes}
                         interactive={false}
                         fit={true}
                     />
-                </Card>
+                </div>
             </Col>
         );
     }
 };
+
