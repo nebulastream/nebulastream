@@ -17,8 +17,6 @@ import 'brace/theme/github';
 import ButtonGroup from "reactstrap/es/ButtonGroup";
 import ButtonDropdown from "reactstrap/es/ButtonDropdown";
 import {toast} from "react-toastify";
-import {GraphView} from 'react-digraph';
-import GraphConfig, {EMPTY_EDGE_TYPE, NODE_KEY, POLY_TYPE, SKINNY_TYPE,} from './dag/graph-config';
 import DagreD3 from "./dag/DagreD3";
 import Tipsy from 'react-tipsy'
 
@@ -36,44 +34,8 @@ export default class QueryInterface extends React.Component {
                 edges: []
             },
             executionGraph: {
-                nodes: {
-
-                    '6': {
-                        label: 'A',
-                        description: "represents state at all.",
-                        style: "fill: #f77"
-                    },
-                    '1': {
-                        label: 'Node 1',
-                        style: "fill: #f47"
-                    },
-                    '2': {
-                        label: 'Node 2',
-                        style: "fill: #f57"
-                    },
-                    '3': {
-                        label: 'Node 3',
-                        style: "fill: #aff"
-                    },
-                    '4': {
-                        label: 'Node 4',
-                        description: "connection state at all.",
-                        style: "fill: #f77"
-                    },
-                    '5': {
-                        label: 'Node 5',
-                        description: "represents no connectio at all.",
-                        style: "fill: #f77"
-                    }
-
-                },
-                edges: [
-                    ['1', '3', {label: 'lalala', style:"stroke: #f77; fill: #fff;stroke-width:4px;",arrowheadStyle:"fill: #f77"}],
-                    ['2', '3', {label: 'lalalal'}],
-                    ['3', '5', {label: 'sd'}],
-                    ['4', '5', {label: 'asdw'}],
-                    ['5', '6', {label: 'asdw'}],
-                ]
+                nodes: [],
+                edges: []
             },
             selectedStrategy: "NONE",
             displayBasePlan: false,
@@ -106,7 +68,7 @@ export default class QueryInterface extends React.Component {
         this.toggleExecutionStrategy = this.toggleExecutionStrategy.bind(this);
         this.notify = this.notify.bind(this);
         this.generateDagFromJson = this.generateDagFromJson.bind(this);
-        this.showNodeDescription=this.showNodeDescription.bind(this);
+        this.showNodeDescription = this.showNodeDescription.bind(this);
     }
 
     notify = (type, message) => {
@@ -294,42 +256,41 @@ export default class QueryInterface extends React.Component {
 
         let generatedSample = {nodes: [], edges: []};
 
+        let nodes = {};
+
         for (let i = 0; i < input.nodes.length; i++) {
             let inputNode = input.nodes[i];
 
-            let type;
+            let style;
+            let shape = 'rect';
             if (inputNode.nodeType === "Sensor") {
-                type = POLY_TYPE;
+                style = "fill : #FF7365";
+                shape = "ellipse";
+            } else if (inputNode.nodeType === "Worker") {
+                style = "fill: #2B88FF; rx:15; ry:15;";
             } else {
-                type = SKINNY_TYPE;
+                style = "fill: #FFF376; rx:15; ry:15;";
             }
 
-            let node = {
-                id: inputNode.id,
-                title: inputNode.title,
-                type: type,
-                x: 10,
-                y: 390,
+            nodes[`${inputNode.id}`] = {
+                labelType: "html",
+                label: inputNode.title,
+                style: style,
+                shape: shape
             };
-            generatedSample.nodes.push(node);
         }
+        generatedSample.nodes = nodes;
 
         for (let i = 0; i < input.edges.length; i++) {
             let inputEdge = input.edges[i];
 
-            let edge = {
-                source: inputEdge.source,
-                target: inputEdge.target,
-                type: EMPTY_EDGE_TYPE,
-            };
-            generatedSample.edges.push(edge);
+            generatedSample.edges.push([inputEdge.source, inputEdge.target, {}]);
         }
 
         return generatedSample;
     };
 
     render() {
-        const {NodeTypes, NodeSubtypes, EdgeTypes} = GraphConfig;
 
         return (
             <Col md="12">
@@ -385,9 +346,9 @@ export default class QueryInterface extends React.Component {
                             </ButtonGroup>
                             <ButtonGroup>
                                 <Tipsy content="alalalals" placement="right">
-                                <Button color="info" onClick={() => {
-                                    this.hideEverything()
-                                }}>Hide All</Button>
+                                    <Button color="info" onClick={() => {
+                                        this.hideEverything()
+                                    }}>Hide All</Button>
                                 </Tipsy>
                             </ButtonGroup>
                         </Row>
@@ -396,16 +357,14 @@ export default class QueryInterface extends React.Component {
                                 <Col className="m-md-1" style={{width: '50%', height: '30em'}}>
                                     <div className="m-md-2 border" style={{width: '100%', height: '100%'}}>
                                         <Alert className="m-md-2">Query Plan</Alert>
-                                        <div className="m-md-2" style={{height: '85%'}}>
-                                            <GraphView
+                                        <div className="m-md-2 align-items-center" style={{height: '85%'}}>
+                                            <DagreD3
                                                 nodes={this.state.queryGraph.nodes}
                                                 edges={this.state.queryGraph.edges}
-                                                nodeKey={NODE_KEY}
-                                                nodeTypes={NodeTypes}
-                                                nodeSubtypes={NodeSubtypes}
-                                                edgeTypes={EdgeTypes}
-                                                layoutEngineType={'VerticalTree'}
-                                                gridDotSize={0}
+                                                interactive={true}
+                                                fit={false}
+                                                width="100%"
+                                                height="100%"
                                             />
                                         </div>
                                     </div>
@@ -417,15 +376,13 @@ export default class QueryInterface extends React.Component {
                                     <div className="m-md-2 border" style={{width: '100%', height: '100%'}}>
                                         <Alert className="m-md-2">Fog Topology</Alert>
                                         <div className="m-md-2" style={{height: '85%'}}>
-                                            <GraphView
-                                                nodes={this.state.topologyGraph.nodes}
+                                            <DagreD3
                                                 edges={this.state.topologyGraph.edges}
-                                                nodeKey={NODE_KEY}
-                                                nodeTypes={NodeTypes}
-                                                nodeSubtypes={NodeSubtypes}
-                                                edgeTypes={EdgeTypes}
-                                                layoutEngineType={'VerticalTree'}
-                                                gridDotSize={0}
+                                                nodes={this.state.topologyGraph.nodes}
+                                                interactive={false}
+                                                fit={true}
+                                                width="100%"
+                                                height="100%"
                                             />
                                         </div>
                                     </div>
@@ -439,32 +396,19 @@ export default class QueryInterface extends React.Component {
                                         "{this.state.selectedStrategy}"
                                         strategy</Alert>
                                     <div className="m-md-2" style={{height: '85%'}}>
-                                        <GraphView
-                                            nodes={this.state.executionGraph.nodes}
+                                        <DagreD3
                                             edges={this.state.executionGraph.edges}
-                                            nodeKey={NODE_KEY}
-                                            nodeTypes={NodeTypes}
-                                            nodeSubtypes={NodeSubtypes}
-                                            edgeTypes={EdgeTypes}
-                                            layoutEngineType={'VerticalTree'}
-                                            gridDotSize={0}
+                                            nodes={this.state.executionGraph.nodes}
+                                            interactive={false}
+                                            fit={true}
+                                            width="100%"
+                                            height="100%"
                                         />
                                     </div>
                                 </div>
                             </Row> : null}
                     </CardBody>
-
                 </Card>
-                <div>
-                    <Tipsy ref="tooltip" content="alalalalwwweewws" placement="right">
-                    <DagreD3
-                        edges={this.state.executionGraph.edges}
-                        nodes={this.state.executionGraph.nodes}
-                        interactive={false}
-                        fit={true}
-                    />
-                    </Tipsy>
-                </div>
             </Col>
         );
     }

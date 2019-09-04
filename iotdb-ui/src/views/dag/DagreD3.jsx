@@ -43,17 +43,22 @@ class DagreD3 extends React.Component {
     }
 
     renderDag() {
-        let g = new dagreD3.graphlib.Graph().setGraph({rankdir: "BT", acyclicer: "greedy", align:"UR"});
+        let g = new dagreD3.graphlib.Graph().setGraph({rankdir: "BT", acyclicer: "greedy", align: "UR"});
 
 
-        for (let [id, node] of Object.entries(this.props.nodes))
+        for (let [id, node] of Object.entries(this.props.nodes)) {
+
+            let defaultStyle = "fill: white;stroke: #000000; stroke-width: 1.5px;";
+            let userDefined = node.style;
+            node.style = defaultStyle + userDefined;
             g.setNode(id, node);
+        }
 
 
         for (let edge of this.props.edges) {
             let edgeProp = {
-                style: "stroke: #f77; fill: #fff;stroke-width:4px;",
-                arrowheadStyle: "fill: #f77", ...edge[2]
+                style: "stroke: blue; fill: #fff;stroke-width:2px;",
+                arrowheadStyle: "fill: blue", ...edge[2]
             };
             g.setEdge(edge[0], edge[1], edgeProp); // from, to, props
         }
@@ -104,7 +109,7 @@ class DagreD3 extends React.Component {
             })
             .each(function (v) {
                 console.log("ankit" + v);
-                return ( <Tipsy content="dhdsjdfsjdsffd"></Tipsy>);
+                return (<Tipsy content="inside dagre"></Tipsy>);
             });
 
         if (this.props.onNodeClick)
