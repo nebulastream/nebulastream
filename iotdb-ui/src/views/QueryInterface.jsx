@@ -263,7 +263,9 @@ export default class QueryInterface extends React.Component {
 
             let style;
             let shape = 'rect';
+            let label = inputNode.title;
             if (inputNode.nodeType === "Sensor") {
+                label = inputNode.sensorType;
                 style = "fill : #FF7365";
                 shape = "ellipse";
             } else if (inputNode.nodeType === "Worker") {
@@ -274,7 +276,7 @@ export default class QueryInterface extends React.Component {
 
             nodes[`${inputNode.id}`] = {
                 labelType: "html",
-                label: inputNode.title,
+                label: label,
                 style: style,
                 shape: shape
             };

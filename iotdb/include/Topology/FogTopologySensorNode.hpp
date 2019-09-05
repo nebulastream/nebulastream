@@ -8,62 +8,71 @@
 
 namespace iotdb {
 
-    /**\breif:
-     * 
-     * This class represent a sensor node in fog topology.
-     *
-     * When you create a sensor node you need to use the setters to define the node id and its cpu capacity.
-     *
-     * Following are the set of properties that can be defined:
-     *
-     * sensor_id : Defines the unique identifier of the node
-     *
-     * cpuCapacity : Defines the actual CPU capacity of the node
-     *
-     * remainingCPUCapacity : Defined the remaining CPU capacity of the node
-     *
-     * query : Defines the query that need to be executed by the node
-     *
-     */
-    class FogTopologySensorNode : public FogTopologyEntry {
+/**\breif:
+ *
+ * This class represent a sensor node in fog topology.
+ *
+ * When you create a sensor node you need to use the setters to define the node id and its cpu capacity.
+ *
+ * Following are the set of properties that can be defined:
+ *
+ * sensor_id : Defines the unique identifier of the node
+ *
+ * cpuCapacity : Defines the actual CPU capacity of the node
+ *
+ * remainingCPUCapacity : Defined the remaining CPU capacity of the node
+ *
+ * query : Defines the query that need to be executed by the node
+ *
+ */
+class FogTopologySensorNode : public FogTopologyEntry {
 
-    public:
-        FogTopologySensorNode() { sensor_id = INVALID_NODE_ID; }
+ public:
+  FogTopologySensorNode() { sensor_id = INVALID_NODE_ID; }
 
-        void setId(size_t id) { this->sensor_id = id; }
+  void setId(size_t id) { this->sensor_id = id; }
 
-        size_t getId() { return sensor_id; }
+  size_t getId() { return sensor_id; }
 
-        void setCpuCapacity(int cpuCapacity) {
-            this->cpuCapacity = cpuCapacity;
-            this->remainingCPUCapacity = cpuCapacity;
-        }
+  void setCpuCapacity(int cpuCapacity) {
+    this->cpuCapacity = cpuCapacity;
+    this->remainingCPUCapacity = cpuCapacity;
+  }
 
-        int getCpuCapacity() { return cpuCapacity; }
+  int getCpuCapacity() { return cpuCapacity; }
 
-        void reduceCpuCapacity(int usedCapacity) {
-            this->remainingCPUCapacity = this->remainingCPUCapacity - usedCapacity;
-        }
+  void reduceCpuCapacity(int usedCapacity) {
+    this->remainingCPUCapacity = this->remainingCPUCapacity - usedCapacity;
+  }
 
-        void increaseCpuCapacity(int freedCapacity) {
-            this->remainingCPUCapacity = this->remainingCPUCapacity + freedCapacity;
-        }
+  void increaseCpuCapacity(int freedCapacity) {
+    this->remainingCPUCapacity = this->remainingCPUCapacity + freedCapacity;
+  }
 
-        int getRemainingCpuCapacity() { return remainingCPUCapacity; }
+  int getRemainingCpuCapacity() { return remainingCPUCapacity; }
 
-        FogNodeType getEntryType() { return Sensor; }
+  FogNodeType getEntryType() { return Sensor; }
 
-        std::string getEntryTypeString() { return "Sensor"; }
+  std::string getEntryTypeString() { return "Sensor"; }
 
-        void setQuery(InputQueryPtr pQuery) { this->query = pQuery; };
+  void setQuery(InputQueryPtr pQuery) { this->query = pQuery; };
 
-    private:
-        size_t sensor_id;
-        int cpuCapacity;
-        int remainingCPUCapacity;
-        InputQueryPtr query;
-    };
+  std::string getSensorType() {
+    return sensorType;
+  }
 
-    typedef std::shared_ptr<FogTopologySensorNode> FogTopologySensorNodePtr;
+  void setSensorType(std::string sensorType) {
+    this->sensorType = sensorType;
+  }
+
+ private:
+  size_t sensor_id;
+  int cpuCapacity;
+  int remainingCPUCapacity;
+  std::string sensorType;
+  InputQueryPtr query;
+};
+
+typedef std::shared_ptr<FogTopologySensorNode> FogTopologySensorNodePtr;
 } // namespace iotdb
 #endif /* INCLUDE_TOPOLOGY_FOGTOPOLOGYSENSOR_HPP_ */

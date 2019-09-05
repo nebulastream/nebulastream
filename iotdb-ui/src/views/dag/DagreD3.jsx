@@ -43,7 +43,7 @@ class DagreD3 extends React.Component {
     }
 
     renderDag() {
-        let g = new dagreD3.graphlib.Graph().setGraph({rankdir: "BT", acyclicer: "greedy", align: "UR"});
+        let g = new dagreD3.graphlib.Graph().setGraph({rankdir: "BT", acyclicer: "greedy"});
 
 
         for (let [id, node] of Object.entries(this.props.nodes)) {
