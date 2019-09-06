@@ -272,8 +272,10 @@ export default class QueryInterface extends React.Component {
 
                 label = "<b>" + inputNode.sensorType + "</b>";
 
+                console.log("Operators " + inputNode.hasOwnProperty('operators'));
+
                 if (modelName === EP) {
-                    label = label + "<br><b><sub style='color:yellow;'>" + (inputNode.operators === ""?"":inputNode.operators) + "</sub></b>";
+                    label = label + "<br><b><sub style='color:yellow;'>" + (inputNode.hasOwnProperty('operators') ? inputNode.operators : "") + "</sub></b>";
                 }
 
                 label = label +
