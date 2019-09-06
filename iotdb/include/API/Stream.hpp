@@ -9,17 +9,19 @@
 
 namespace iotdb {
 
-    class Stream {
-    public:
-        Stream(std::string name, const Schema schema);
+class Stream {
+ public:
+  Stream(std::string name, const Schema schema);
 
-        Field operator[](const std::string fieldName);
+  Field operator[](const std::string fieldName);
 
-        Schema &getSchema();
+  std::string getName() { return name; }
 
-    private:
-        std::string name;
-        Schema schema;
-    };
+  Schema &getSchema();
+
+ private:
+  std::string name;
+  Schema schema;
+};
 }
 #endif //IOTDB_STREAM_HPP

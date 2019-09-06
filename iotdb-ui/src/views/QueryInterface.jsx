@@ -265,11 +265,17 @@ export default class QueryInterface extends React.Component {
             let shape = 'rect';
             let label = inputNode.title;
             if (inputNode.nodeType === "Sensor") {
-                label = inputNode.sensorType;
-                style = "fill : #FF7365";
-                shape = "ellipse";
+                label = "<b>" + inputNode.sensorType + "</b>" +
+                    "<br><sub>TotalCompute:" + inputNode.capacity + "</sub>";
+                style = "fill : #FF7365 ; rx:15; ry:15;";
+                // shape = "ellipse";
             } else if (inputNode.nodeType === "Worker") {
+                label = "<b>" + inputNode.title + "</b>" +
+                    "<br><sub>UsedCompute:</sub>" +
+                    "<br><sub>TotalCompute:</sub>";
                 style = "fill: #2B88FF; rx:15; ry:15;";
+            } else if (inputNode.nodeType === "Source") {
+                style = "fill: #9ACD32; rx:15; ry:15;";
             } else {
                 style = "fill: #FFF376; rx:15; ry:15;";
             }

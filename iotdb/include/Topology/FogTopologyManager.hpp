@@ -95,8 +95,8 @@ class FogTopologyManager {
       const FogTopologyEntryPtr &sourceNode = edge.ptr->getSourceNode();
       const FogTopologyEntryPtr &destNode = edge.ptr->getDestNode();
       auto edgeInfo = json::value::object();
-      const auto source = std::to_string(sourceNode->getId()) + "-" + sourceNode->getEntryTypeString();
-      const auto dest = std::to_string(destNode->getId()) + "-" + destNode->getEntryTypeString();
+      const auto source = "Node-" + std::to_string(sourceNode->getId());
+      const auto dest = "Node-" + std::to_string(destNode->getId());
       edgeInfo["source"] = json::value::string(source);
       edgeInfo["target"] = json::value::string(dest);
       edges.push_back(edgeInfo);
@@ -105,7 +105,7 @@ class FogTopologyManager {
     for (u_int i = 0; i < allVertex.size(); i++) {
       const FogVertex &vertex = allVertex[i];
       auto vertexInfo = json::value::object();
-      const std::string id = std::to_string(vertex.ptr->getId()) + "-" + vertex.ptr->getEntryTypeString();
+      const std::string id = "Node-" + std::to_string(vertex.ptr->getId());
       const std::string nodeType = vertex.ptr->getEntryTypeString();
       int cpuCapacity = vertex.ptr->getCpuCapacity();
       int remainingCapacity = vertex.ptr->getRemainingCpuCapacity();
@@ -116,9 +116,8 @@ class FogTopologyManager {
       vertexInfo["capacity"] = json::value::string(std::to_string(cpuCapacity));
       vertexInfo["remainingCapacity"] = json::value::string(std::to_string(remainingCapacity));
 
-      FogTopologySensorNodePtr ptr = std::static_pointer_cast<FogTopologySensorNode>(vertex.ptr);
-
       if (nodeType == "Sensor") {
+        FogTopologySensorNodePtr ptr = std::static_pointer_cast<FogTopologySensorNode>(vertex.ptr);
         vertexInfo["sensorType"] = json::value::string(ptr->getSensorType());
       }
 

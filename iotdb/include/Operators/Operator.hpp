@@ -22,37 +22,51 @@ class DataSource;
 typedef std::shared_ptr<DataSource> DataSourcePtr;
 
 enum OperatorType {
-    SOURCE_OP,
-    FILTER_OP,
-    AGGREGATION_OP,
-    SORT_OP,
-    JOIN_OP,
-    SET_OP,
-    WINDOW_OP,
-    KEYBY_OP,
-    MAP_OP,
-    SINK_OP
+  SOURCE_OP,
+  FILTER_OP,
+  AGGREGATION_OP,
+  SORT_OP,
+  JOIN_OP,
+  SET_OP,
+  WINDOW_OP,
+  KEYBY_OP,
+  MAP_OP,
+  SINK_OP
+};
+
+static std::map<OperatorType, std::string> operatorTypeToString{
+    {SOURCE_OP, "SOURCE"},
+    {FILTER_OP, "FILTER"},
+    {AGGREGATION_OP, "AGGREGATION"},
+    {SORT_OP, "SORT"},
+    {JOIN_OP, "JOIN"},
+    {SET_OP, "SET"},
+    {WINDOW_OP, "WINDOW"},
+    {KEYBY_OP, "KEYBY"},
+    {MAP_OP, "MAP"},
+    {SINK_OP, "SINK"},
 };
 
 class Operator {
-  public:
-    virtual ~Operator();
-    virtual const OperatorPtr copy() const = 0;
-    size_t cost;
-    std::vector<OperatorPtr> childs;
-    OperatorPtr parent;
-    virtual void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) = 0;
-    virtual void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) = 0;
-    virtual const std::string toString() const = 0;
-    virtual OperatorType getOperatorType() const = 0;
-    bool isScheduled() {
-        return this->scheduled;
-    };
-    void markScheduled(bool scheduled){
-        this->scheduled = scheduled;
-    };
-  private:
-    bool scheduled=false;
+ public:
+  virtual ~Operator();
+  virtual const OperatorPtr copy() const = 0;
+  size_t cost;
+  int operatorId;
+  std::vector<OperatorPtr> childs;
+  OperatorPtr parent;
+  virtual void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream &out) = 0;
+  virtual void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream &out) = 0;
+  virtual const std::string toString() const = 0;
+  virtual OperatorType getOperatorType() const = 0;
+
+  int getOperatorId() { return this->operatorId; };
+  void setOperatorId(int operatorId) { this->operatorId = operatorId; };
+  bool isScheduled() { return this->scheduled; };
+  void markScheduled(bool scheduled) { this->scheduled = scheduled; };
+
+ private:
+  bool scheduled = false;
 };
 
 const OperatorPtr createAggregationOperator(const AggregationSpec& aggr_spec);
