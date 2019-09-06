@@ -65,7 +65,7 @@ namespace iotdb {
 
                         const ExecutionNodePtr &executionNode = executionPlan.getExecutionNode(targetSource->getId());
                         string oldOperatorName = executionNode->getOperatorName();
-                        string newName = processOperator->toString() + "=>" + oldOperatorName;
+                        string newName = processOperator->toString() + "\n=>" + oldOperatorName;
                         executionNode->setOperatorName(newName);
                         executionNode->addExecutableOperator(processOperator);
                         targetSource->reduceCpuCapacity(1);

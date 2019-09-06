@@ -20,6 +20,10 @@ import {toast} from "react-toastify";
 import DagreD3 from "./dag/DagreD3";
 import Tipsy from 'react-tipsy'
 
+const QUERY = "query";
+const TOPOLOGY = "topology";
+const EP = "ep";
+
 export default class QueryInterface extends React.Component {
 
     constructor(props, context) {
@@ -55,7 +59,7 @@ export default class QueryInterface extends React.Component {
         };
         this.userQuery = 'Schema schema = Schema::create()\n' +
             '   .addField("measurement",INT32);\n\n' +
-            'Stream temperature = Stream("temperature", schema);\n\n' +
+            'Stream temperature = Stream("temperature1", schema);\n\n' +
             'return InputQuery::from(temperature)\n' +
             '   .filter(temperature["measurement"] > 100)\n' +
             '   .print(std::cout);\n';
@@ -121,11 +125,11 @@ export default class QueryInterface extends React.Component {
                 return response.json();
             })
             .then(data => {
-                this.updateData("query", data);
+                this.updateData(QUERY, data);
                 this.setState({displayBasePlan: true});
             })
             .catch(err => {
-                this.resetTreeData("query");
+                this.resetTreeData(QUERY);
                 if (err.message.includes("500")) {
                     this.notify("err", "Unable to fetch plan for input query!")
                 } else if (err.message.includes("404")) {
@@ -154,11 +158,11 @@ export default class QueryInterface extends React.Component {
                 return response.json();
             })
             .then(data => {
-                this.updateData("topology", data);
+                this.updateData(TOPOLOGY, data);
                 this.setState({displayTopologyPlan: true});
             })
             .catch(err => {
-                this.resetTreeData("topology");
+                this.resetTreeData(TOPOLOGY);
                 if (err.message.includes("500")) {
                     this.notify("err", "Unable to fetch topology graph!")
                 } else if (err.message.includes("404")) {
@@ -192,11 +196,11 @@ export default class QueryInterface extends React.Component {
                 return response.json();
             })
             .then(data => {
-                this.updateData("execution", data);
+                this.updateData(EP, data);
                 this.setState({displayExecutionPlan: true});
             })
             .catch(err => {
-                this.resetTreeData("execution");
+                this.resetTreeData(EP);
                 if (err.message.includes("500")) {
                     this.notify("err", "Unable to fetch execution plan for input query!")
                 } else if (err.message.includes("404")) {
@@ -209,12 +213,12 @@ export default class QueryInterface extends React.Component {
     }
 
     updateData(modelName, jsonObject) {
-        let generatedSample = this.generateDagFromJson(jsonObject);
-        if (modelName === 'query') {
+        let generatedSample = this.generateDagFromJson(modelName, jsonObject);
+        if (modelName === QUERY) {
             this.setState({queryGraph: generatedSample})
-        } else if (modelName === 'topology') {
+        } else if (modelName === TOPOLOGY) {
             this.setState({topologyGraph: generatedSample});
-        } else if (modelName === 'execution') {
+        } else if (modelName === EP) {
             this.setState({executionGraph: generatedSample})
         }
     }
@@ -229,11 +233,11 @@ export default class QueryInterface extends React.Component {
 
     resetTreeData(modelName) {
         let generatedSample = {nodes: [], edges: []};
-        if (modelName === 'query') {
+        if (modelName === QUERY) {
             this.setState({queryGraph: generatedSample});
-        } else if (modelName === 'topology') {
+        } else if (modelName === TOPOLOGY) {
             this.setState({topologyGraph: generatedSample});
-        } else if (modelName === 'execution') {
+        } else if (modelName === EP) {
             this.setState({executionGraph: generatedSample});
         }
     }
@@ -252,7 +256,7 @@ export default class QueryInterface extends React.Component {
         console.log(id);
     }
 
-    generateDagFromJson(input) {
+    generateDagFromJson(modelName, input) {
 
         let generatedSample = {nodes: [], edges: []};
 
@@ -263,16 +267,30 @@ export default class QueryInterface extends React.Component {
 
             let style;
             let shape = 'rect';
-            let label = inputNode.title;
+            let label = inputNode.id;
             if (inputNode.nodeType === "Sensor") {
-                label = "<b>" + inputNode.sensorType + "</b>" +
+
+                label = "<b>" + inputNode.sensorType + "</b>";
+
+                if (modelName === EP) {
+                    label = label + "<br><b><sub style='color:yellow;'>" + (inputNode.operators === ""?"":inputNode.operators) + "</sub></b>";
+                }
+
+                label = label +
+                    "<br><sub>FreeCompute:" + inputNode.remainingCapacity + "</sub>" +
                     "<br><sub>TotalCompute:" + inputNode.capacity + "</sub>";
+
                 style = "fill : #FF7365 ; rx:15; ry:15;";
-                // shape = "ellipse";
             } else if (inputNode.nodeType === "Worker") {
-                label = "<b>" + inputNode.title + "</b>" +
-                    "<br><sub>UsedCompute:</sub>" +
-                    "<br><sub>TotalCompute:</sub>";
+
+                label = "<b>" + inputNode.id + "</b>";
+
+                if (modelName === EP) {
+                    label = label + "<br><b><sub style='color:yellow;'>" + inputNode.operators + "</sub></b>";
+                }
+                label = label +
+                    "<br><sub>FreeCompute:" + inputNode.remainingCapacity + "</sub>" +
+                    "<br><sub>TotalCompute:" + inputNode.capacity + "</sub>";
                 style = "fill: #2B88FF; rx:15; ry:15;";
             } else if (inputNode.nodeType === "Source") {
                 style = "fill: #9ACD32; rx:15; ry:15;";
