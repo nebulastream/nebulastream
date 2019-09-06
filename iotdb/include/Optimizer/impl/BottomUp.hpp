@@ -87,7 +87,9 @@ class BottomUp : public FogPlacementOptimizer {
         const ExecutionNodePtr &existingExecutionNode = executionGraph.getExecutionNode(node->getId());
 
         string oldOperatorName = existingExecutionNode->getOperatorName();
-        string newName = oldOperatorName + "=>" + optr->toString();
+        string newName =
+            oldOperatorName + "\n=>" + operatorTypeToString[optr->getOperatorType()] + "(OP-"
+                + std::to_string(optr->operatorId) + ")";
 
         existingExecutionNode->setOperatorName(newName);
         existingExecutionNode->addExecutableOperator(optr);
@@ -99,10 +101,12 @@ class BottomUp : public FogPlacementOptimizer {
       } else {
 
         // Create a new execution node
-        const ExecutionNodePtr &newExecutionNode = executionGraph.createExecutionNode(optr->toString(),
-                                                                                      to_string(
-                                                                                          node->getId()),
-                                                                                      node, optr);
+        const ExecutionNodePtr &newExecutionNode =
+            executionGraph.createExecutionNode(operatorTypeToString[optr->getOperatorType()] + "(OP-"
+                                                   + std::to_string(optr->operatorId) + ")",
+                                               to_string(
+                                                   node->getId()),
+                                               node, optr);
 
         optr->markScheduled(true);
         if (optr->parent != nullptr) {
