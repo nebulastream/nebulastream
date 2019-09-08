@@ -23,13 +23,19 @@ namespace iotdb {
 
             deque<OperatorPtr> operatorsToProcess = {sinkOperator};
 
+            string sourceName = query.source_stream.getName();
+
             //find the source Node
             vector<FogVertex> sourceNodes;
             const vector<FogVertex> &allVertex = fogGraph.getAllVertex();
             copy_if(allVertex.begin(), allVertex.end(), back_inserter(sourceNodes),
-                    [](const FogVertex vertex) {
-                        return vertex.ptr->getEntryType() == FogNodeType::Sensor &&
-                               vertex.ptr->getRemainingCpuCapacity() > 0;
+                    [sourceName](const FogVertex vertex) {
+                        if (vertex.ptr->getEntryType() == FogNodeType::Sensor &&
+                               vertex.ptr->getRemainingCpuCapacity() > 0) {
+                            FogTopologySensorNodePtr ptr = std::static_pointer_cast<FogTopologySensorNode>(vertex.ptr);
+                            return  ptr->getSensorType() == sourceName;
+                        }
+                        return false;
                     });
 
             // FIXME: In the absence of link between source operator and sensor node we will pick first sensor with some capacity 
