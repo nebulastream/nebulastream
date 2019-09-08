@@ -18,7 +18,6 @@ import ButtonGroup from "reactstrap/es/ButtonGroup";
 import ButtonDropdown from "reactstrap/es/ButtonDropdown";
 import {toast} from "react-toastify";
 import DagreD3 from "./dag/DagreD3";
-import Tipsy from 'react-tipsy'
 
 const QUERY = "query";
 const TOPOLOGY = "topology";
@@ -272,28 +271,37 @@ export default class QueryInterface extends React.Component {
 
                 label = "<b>" + inputNode.sensorType + "</b>";
 
-                console.log("Operators " + inputNode.hasOwnProperty('operators'));
-
                 if (modelName === EP) {
-                    label = label + "<br><b><sub style='color:yellow;'>" + (inputNode.hasOwnProperty('operators') ? inputNode.operators : "") + "</sub></b>";
+                    if (inputNode.operators === 'empty') {
+                        style = "fill : #999999 ; rx:15; ry:15;";
+                    } else {
+                        label = label + "<br><b><sub style='color:yellow;'>" + inputNode.operators + "</sub></b>";
+                        style = "fill : #FF7365 ; rx:15; ry:15;";
+                    }
+                } else {
+                    style = "fill : #FF7365 ; rx:15; ry:15;";
                 }
-
                 label = label +
                     "<br><sub>FreeCompute:" + inputNode.remainingCapacity + "</sub>" +
                     "<br><sub>TotalCompute:" + inputNode.capacity + "</sub>";
-
-                style = "fill : #FF7365 ; rx:15; ry:15;";
             } else if (inputNode.nodeType === "Worker") {
 
                 label = "<b>" + inputNode.id + "</b>";
 
                 if (modelName === EP) {
-                    label = label + "<br><b><sub style='color:yellow;'>" + inputNode.operators + "</sub></b>";
+                    if (inputNode.operators === 'empty') {
+                        style = "fill : #999999 ; rx:15; ry:15;";
+                    } else {
+                        label = label + "<br><b><sub style='color:yellow;'>" + inputNode.operators + "</sub></b>";
+                        style = "fill : #FF7365 ; rx:15; ry:15;";
+                    }
+                } else {
+                    style = "fill : #FF7365 ; rx:15; ry:15;";
                 }
+
                 label = label +
                     "<br><sub>FreeCompute:" + inputNode.remainingCapacity + "</sub>" +
                     "<br><sub>TotalCompute:" + inputNode.capacity + "</sub>";
-                style = "fill: #2B88FF; rx:15; ry:15;";
             } else if (inputNode.nodeType === "Source") {
                 style = "fill: #9ACD32; rx:15; ry:15;";
             } else {
@@ -329,24 +337,26 @@ export default class QueryInterface extends React.Component {
                     <CardBody>
                         <Alert className="m-md-2">Feed Your Query Here</Alert>
                         <Card className="m-md-2">
-                            <AceEditor
-                                focus={true}
-                                mode="c_cpp"
-                                theme="github"
-                                fontSize={16}
-                                width="100%"
-                                height="300px"
-                                showPrintMargin={true}
-                                showGutter={true}
-                                editorProps={{$blockScrolling: true}}
-                                setOptions={{
-                                    showLineNumbers: true,
-                                    tabSize: 2,
-                                }}
-                                name="query"
-                                onChange={this.updateQuery}
-                                value={this.userQuery}
-                            />
+                            <Row className="m-md-0" style={{width: '100%', height: '100%'}}>
+                                <AceEditor
+                                    focus={true}
+                                    mode="c_cpp"
+                                    theme="github"
+                                    fontSize={16}
+                                    width="100%"
+                                    height="30em"
+                                    showPrintMargin={true}
+                                    showGutter={true}
+                                    editorProps={{$blockScrolling: true}}
+                                    setOptions={{
+                                        showLineNumbers: true,
+                                        tabSize: 2,
+                                    }}
+                                    name="query"
+                                    onChange={this.updateQuery}
+                                    value={this.userQuery}
+                                />
+                            </Row>
                         </Card>
                         <Row className="m-md-2">
                             <ButtonGroup>
@@ -373,57 +383,56 @@ export default class QueryInterface extends React.Component {
                                 </ButtonDropdown>
                             </ButtonGroup>
                             <ButtonGroup>
-                                <Tipsy content="alalalals" placement="right">
-                                    <Button color="info" onClick={() => {
-                                        this.hideEverything()
-                                    }}>Hide All</Button>
-                                </Tipsy>
+                                <Button color="info" onClick={() => {
+                                    this.hideEverything()
+                                }}>Hide All</Button>
                             </ButtonGroup>
                         </Row>
-                        <Row>
-                            {this.state.displayBasePlan ?
-                                <Col className="m-md-1" style={{width: '50%', height: '30em'}}>
-                                    <div className="m-md-2 border" style={{width: '100%', height: '100%'}}>
-                                        <Alert className="m-md-2">Query Plan</Alert>
-                                        <div className="m-md-2 align-items-center" style={{height: '85%'}}>
-                                            <DagreD3
-                                                nodes={this.state.queryGraph.nodes}
-                                                edges={this.state.queryGraph.edges}
-                                                interactive={true}
-                                                fit={false}
-                                                width="100%"
-                                                height="100%"
-                                            />
-                                        </div>
-                                    </div>
-                                </Col> : null}
 
-                            {this.state.displayTopologyPlan ?
-                                <Col className="m-md-1" style={{width: '50%', height: '30em'}}>
-
-                                    <div className="m-md-2 border" style={{width: '100%', height: '100%'}}>
-                                        <Alert className="m-md-2">Fog Topology</Alert>
-                                        <div className="m-md-2" style={{height: '85%'}}>
-                                            <DagreD3
-                                                edges={this.state.topologyGraph.edges}
-                                                nodes={this.state.topologyGraph.nodes}
-                                                interactive={false}
-                                                fit={true}
-                                                width="100%"
-                                                height="100%"
-                                            />
-                                        </div>
+                        {this.state.displayBasePlan ?
+                            <Row className="m-md-1" style={{width: '100%', height: '100%'}}>
+                                <div className="m-md-2 border" style={{width: '100%', height: '100%'}}>
+                                    <Alert className="m-md-2">Query Plan</Alert>
+                                    <div className="m-md-2"
+                                         style={{height: '85%', display: 'flex', justifyContent: 'center'}}>
+                                        <DagreD3
+                                            nodes={this.state.queryGraph.nodes}
+                                            edges={this.state.queryGraph.edges}
+                                            interactive={false}
+                                            fit={true}
+                                            width="100%"
+                                            height="100%"
+                                        />
                                     </div>
-                                </Col> : null}
-                        </Row>
+                                </div>
+                            </Row> : null}
+
+                        {this.state.displayTopologyPlan ?
+                            <Row className="m-md-1" style={{width: '100%', height: '100%'}}>
+                                <div className="m-md-2 border" style={{width: '100%', height: '100%'}}>
+                                    <Alert className="m-md-2">Fog Topology</Alert>
+                                    <div className="m-md-2"
+                                         style={{height: '85%', display: 'flex', justifyContent: 'center'}}>
+                                        <DagreD3
+                                            edges={this.state.topologyGraph.edges}
+                                            nodes={this.state.topologyGraph.nodes}
+                                            interactive={false}
+                                            fit={true}
+                                            width="100%"
+                                            height="100%"
+                                        />
+                                    </div>
+                                </div>
+                            </Row> : null}
+
                         {this.state.displayExecutionPlan ?
-                            <Row className="m-md-1" style={{width: '50%', height: '30em'}}>
-
+                            <Row className="m-md-1" style={{width: '100%', height: '100%'}}>
                                 <div className="m-md-2 border" style={{width: '100%', height: '100%'}}>
                                     <Alert className="m-md-2">Query execution plan for
                                         "{this.state.selectedStrategy}"
                                         strategy</Alert>
-                                    <div className="m-md-2" style={{height: '85%'}}>
+                                    <div className="m-md-2"
+                                         style={{height: '85%', display: 'flex', justifyContent: 'center'}}>
                                         <DagreD3
                                             edges={this.state.executionGraph.edges}
                                             nodes={this.state.executionGraph.nodes}
