@@ -65,7 +65,7 @@ namespace iotdb {
          * @param predicate
          * @return query
          */
-        InputQuery &map(const Field &resultField, const Predicate predicate);
+        InputQuery &map(const AttributeField& resultField, const Predicate predicate);
 
         /**
          * Unify two queries.
