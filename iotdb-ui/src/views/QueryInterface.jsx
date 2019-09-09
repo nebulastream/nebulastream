@@ -267,45 +267,43 @@ export default class QueryInterface extends React.Component {
             let style;
             let shape = 'rect';
             let label = inputNode.id;
+
             if (inputNode.nodeType === "Sensor") {
 
-                label = "<b>" + inputNode.sensorType + "</b>";
-
+                label = "<b>" + inputNode.sensorType + "</b>" +
+                    "<br><sub>FreeCompute:" + inputNode.remainingCapacity + "</sub>" +
+                    "<br><sub>TotalCompute:" + inputNode.capacity + "</sub>";
                 if (modelName === EP) {
                     if (inputNode.operators === 'empty') {
                         style = "fill : #999999 ; rx:15; ry:15;";
                     } else {
-                        label = label + "<br><b><sub style='color:yellow;'>" + inputNode.operators + "</sub></b>";
-                        style = "fill : #FF7365 ; rx:15; ry:15;";
+                        let operators = inputNode.operators;
+                        // operators = operators.replace("=>", "<br>\u2191<br>");
+                        label = label + "<br><b><sub>" + operators + "</sub></b>";
+                        style = "fill : #ffa299 ; rx:15; ry:15;";
                     }
                 } else {
-                    style = "fill : #FF7365 ; rx:15; ry:15;";
+                    style = "fill : #ffa299 ; rx:15; ry:15;";
                 }
-                label = label +
-                    "<br><sub>FreeCompute:" + inputNode.remainingCapacity + "</sub>" +
-                    "<br><sub>TotalCompute:" + inputNode.capacity + "</sub>";
             } else if (inputNode.nodeType === "Worker") {
 
-                label = "<b>" + inputNode.id + "</b>";
-
+                label = "<b>" + inputNode.id + "</b>" +
+                    "<br><sub>FreeCompute:" + inputNode.remainingCapacity + "</sub>" +
+                    "<br><sub>TotalCompute:" + inputNode.capacity + "</sub>";
                 if (modelName === EP) {
                     if (inputNode.operators === 'empty') {
                         style = "fill : #999999 ; rx:15; ry:15;";
                     } else {
-                        label = label + "<br><b><sub style='color:yellow;'>" + inputNode.operators + "</sub></b>";
-                        style = "fill : #FF7365 ; rx:15; ry:15;";
+                        label = label + "<br><b><sub>" + inputNode.operators + "</sub></b>";
+                        style = "fill : #5c85d6 ; rx:15; ry:15;";
                     }
                 } else {
-                    style = "fill : #FF7365 ; rx:15; ry:15;";
+                    style = "fill : #5c85d6 ; rx:15; ry:15;";
                 }
-
-                label = label +
-                    "<br><sub>FreeCompute:" + inputNode.remainingCapacity + "</sub>" +
-                    "<br><sub>TotalCompute:" + inputNode.capacity + "</sub>";
             } else if (inputNode.nodeType === "Source") {
-                style = "fill: #9ACD32; rx:15; ry:15;";
+                style = "fill: #c2e184; rx:15; ry:15;";
             } else {
-                style = "fill: #FFF376; rx:15; ry:15;";
+                style = "fill: #fff799; rx:15; ry:15;";
             }
 
             nodes[`${inputNode.id}`] = {
