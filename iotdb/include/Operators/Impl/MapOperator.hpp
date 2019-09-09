@@ -7,12 +7,13 @@
 
 #include <API/ParameterTypes.hpp>
 #include <Operators/Operator.hpp>
+#include <API/UserAPIExpression.hpp>
 
 namespace iotdb {
 
 class MapOperator : public Operator {
   public:
-    MapOperator(const MapperPtr& mapper);
+    MapOperator(AttributeFieldPtr field, PredicatePtr ptr);
     MapOperator(const MapOperator& other);
     MapOperator& operator=(const MapOperator& other);
     void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
@@ -21,9 +22,9 @@ class MapOperator : public Operator {
     const std::string toString() const override;
     OperatorType getOperatorType() const override;
     ~MapOperator() override;
-
   private:
-    MapperPtr mapper_;
+    PredicatePtr predicate_;
+    AttributeFieldPtr field_;
 };
 
 } // namespace iotdb

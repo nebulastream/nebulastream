@@ -129,8 +129,13 @@ namespace iotdb {
         return *this;
     }
 
-    InputQuery &InputQuery::map(const Field &field, const Predicate predicate) {
-        IOTDB_NOT_IMPLEMENTED
+    InputQuery &InputQuery::map(const AttributeField& field, const Predicate predicate) {
+        PredicatePtr pred = createPredicate(predicate);
+        AttributeFieldPtr attr = field.copy();
+        OperatorPtr op = createMapOperator(attr, pred);
+        addChild(op, root);
+        root = op;
+        return *this;
     }
 
     InputQuery &InputQuery::combine(const iotdb::InputQuery &sub_query) {

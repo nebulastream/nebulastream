@@ -948,7 +948,7 @@ int main()
     /** \todo make proper test case out of this function! */
     //iotdb::CodeGenTestCases();
 
-    
+
     if (!iotdb::CodeGenTest()) {
         std::cout << "Test CodeGenTest Passed!" << std::endl << std::endl;
     }
