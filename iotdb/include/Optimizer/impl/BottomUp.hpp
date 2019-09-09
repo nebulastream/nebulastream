@@ -49,9 +49,10 @@ class BottomUp : public FogPlacementOptimizer {
   void placeOperators(FogExecutionPlan executionGraph, FogTopologyPlanPtr fogTopologyPlan,
                       vector<OperatorPtr> sourceOperators, deque<FogTopologyEntryPtr> sourceNodes) {
 
-    deque<ProcessOperator> operatorsToProcess;
+    FogTopologyEntryPtr &targetSource = sourceNodes[0];
 
     //lambda to convert source optr vector to a friendly struct
+    deque<ProcessOperator> operatorsToProcess;
     transform(sourceOperators.begin(), sourceOperators.end(), back_inserter(operatorsToProcess),
               [](OperatorPtr optr) {
                 return ProcessOperator(optr, nullptr);
@@ -86,9 +87,9 @@ class BottomUp : public FogPlacementOptimizer {
 
         const ExecutionNodePtr &existingExecutionNode = executionGraph.getExecutionNode(node->getId());
 
-        string oldOperatorName = existingExecutionNode->getOperatorName();
+        string oldOperatorName = existingExecutionNode->getOperatorName() ;
         string newName =
-            oldOperatorName + "\n=>" + operatorTypeToString[optr->getOperatorType()] + "(OP-"
+            oldOperatorName + "=>" + operatorTypeToString[optr->getOperatorType()] + "(OP-"
                 + std::to_string(optr->operatorId) + ")";
 
         existingExecutionNode->setOperatorName(newName);
@@ -114,6 +115,18 @@ class BottomUp : public FogPlacementOptimizer {
         }
       }
     }
+
+    const FogGraph &fogGraph = fogTopologyPlan->getFogGraph();
+    deque<FogTopologyEntryPtr> candidateNodes = getCandidateFogNodes(fogGraph, targetSource);
+    while (!candidateNodes.empty()) {
+      shared_ptr<FogTopologyEntry> node = candidateNodes.front();
+      candidateNodes.pop_front();
+      if (node->getCpuCapacity() == node->getRemainingCpuCapacity()) {
+        executionGraph.createExecutionNode("FWD", to_string(node->getId()), node, nullptr);
+        node->reduceCpuCapacity(1);
+      }
+    }
+    
   };
 
   // finds a suitable for node for the operator to be placed.
