@@ -174,6 +174,7 @@ export default class QueryInterface extends React.Component {
     }
 
     getExecutionPlan(userQuery, strategyName) {
+        this.getQueryPlan(userQuery);
         this.setState({selectedStrategy: strategyName});
         fetch('http://127.0.0.1:8081/v1/iotdb/service/execution-plan', {
                 method: 'POST',
@@ -278,7 +279,6 @@ export default class QueryInterface extends React.Component {
                         style = "fill : #999999 ; rx:15; ry:15;";
                     } else {
                         let operators = inputNode.operators;
-                        // operators = operators.replace("=>", "<br>\u2191<br>");
                         label = label + "<br><b><sub>" + operators + "</sub></b>";
                         style = "fill : #ffa299 ; rx:15; ry:15;";
                     }
@@ -293,12 +293,17 @@ export default class QueryInterface extends React.Component {
                 if (modelName === EP) {
                     if (inputNode.operators === 'empty') {
                         style = "fill : #999999 ; rx:15; ry:15;";
+                    } else if (inputNode.id === "Node-0") {
+                        label = label + "<br><b><sub>" + inputNode.operators + "</sub></b>";
+                        style = "fill : #b3e6ff ; rx:15; ry:15;";
                     } else {
                         label = label + "<br><b><sub>" + inputNode.operators + "</sub></b>";
-                        style = "fill : #5c85d6 ; rx:15; ry:15;";
+                        style = "fill : #adc2eb ; rx:15; ry:15;";
                     }
+                } else if (inputNode.id === "Node-0") {
+                    style = "fill : #b3e6ff ; rx:15; ry:15;";
                 } else {
-                    style = "fill : #5c85d6 ; rx:15; ry:15;";
+                    style = "fill : #adc2eb ; rx:15; ry:15;";
                 }
             } else if (inputNode.nodeType === "Source") {
                 style = "fill: #c2e184; rx:15; ry:15;";
@@ -365,11 +370,10 @@ export default class QueryInterface extends React.Component {
                                     Plan</Button>
                                 <Button color="primary" onClick={() => {
                                     this.getFogTopology()
-                                }}>Show Fog
-                                    Topology</Button>
+                                }}>Show Topology</Button>
                                 <ButtonDropdown isOpen={this.state.openExecutionStrategy}
                                                 toggle={this.toggleExecutionStrategy}>
-                                    <DropdownToggle caret color="primary">Show Execution Plan</DropdownToggle>
+                                    <DropdownToggle caret color="primary">Execution Plan</DropdownToggle>
                                     <DropdownMenu>
                                         <DropdownItem onClick={() => {
                                             this.getExecutionPlan(this.userQuery, "BottomUp")
@@ -377,6 +381,12 @@ export default class QueryInterface extends React.Component {
                                         <DropdownItem onClick={() => {
                                             this.getExecutionPlan(this.userQuery, "TopDown")
                                         }}>Top-Down</DropdownItem>
+                                        <DropdownItem divider/>
+                                        <DropdownItem disabled>Latency</DropdownItem>
+                                        <DropdownItem disabled>Fault-Tolerance</DropdownItem>
+                                        <DropdownItem disabled>Throughput</DropdownItem>
+                                        <DropdownItem disabled>Energy Efficiency</DropdownItem>
+                                        <DropdownItem disabled>Resource Efficiency</DropdownItem>
                                     </DropdownMenu>
                                 </ButtonDropdown>
                             </ButtonGroup>
@@ -408,7 +418,7 @@ export default class QueryInterface extends React.Component {
                         {this.state.displayTopologyPlan ?
                             <Row className="m-md-1" style={{width: '100%', height: '100%'}}>
                                 <div className="m-md-2 border" style={{width: '100%', height: '100%'}}>
-                                    <Alert className="m-md-2">Fog Topology</Alert>
+                                    <Alert className="m-md-2">NES Topology</Alert>
                                     <div className="m-md-2"
                                          style={{height: '85%', display: 'flex', justifyContent: 'center'}}>
                                         <DagreD3
