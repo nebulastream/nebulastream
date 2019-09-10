@@ -318,6 +318,51 @@ export default class QueryInterface extends React.Component {
                 shape: shape
             };
         }
+
+        if (modelName === TOPOLOGY || modelName === EP) {
+
+            // nodes['cloud'] = {
+            //     labelType: 'html',
+            //     label: 'Cloud Node',
+            //     shape: 'rect',
+            //     style: 'fill : #b3e6ff ; rx:5; ry:5;'
+            // };
+            //
+            // nodes['fog'] = {
+            //     label: 'Fog Node',
+            //     shape: 'rect',
+            //     style: 'fill : #adc2eb ; rx:5; ry:5;'
+            // };
+            //
+            // nodes['sensor'] = {
+            //     label: 'Sensor',
+            //     shape: 'rect',
+            //     style: 'fill : #ffa299 ; rx:5; ry:5;'
+            // };
+            //
+            // if (modelName === EP) {
+            //     nodes['unused'] = {
+            //         label: 'Unused Node',
+            //         shape: 'rect',
+            //         style: 'fill : #999999 ; rx:5; ry:5;'
+            //     };
+            // }
+
+        } else {
+            // nodes['source'] = {
+            //     label: 'Source/Sink Operator',
+            //     shape: 'rect',
+            //     style: 'fill : #c2e184 ; rx:15; ry:15;'
+            // };
+            //
+            // nodes['operator'] = {
+            //     label: 'Other Operators',
+            //     shape: 'rect',
+            //     style: 'fill : #fff799 ; rx:15; ry:15;'
+            // };
+        }
+
+
         generatedSample.nodes = nodes;
 
         for (let i = 0; i < input.edges.length; i++) {
@@ -335,10 +380,10 @@ export default class QueryInterface extends React.Component {
             <Col md="12">
                 <Card>
                     <CardHeader>
-                        <h1>Nebula Stream WebInterface</h1>
+                        <h1>NebulaStream Web Interface</h1>
                     </CardHeader>
                     <CardBody>
-                        <Alert className="m-md-2">Feed Your Query Here</Alert>
+                        <Alert className="m-md-2" color="info">Feed Your Query Here</Alert>
                         <Card className="m-md-2">
                             <Row className="m-md-0" style={{width: '100%', height: '100%'}}>
                                 <AceEditor
@@ -363,14 +408,14 @@ export default class QueryInterface extends React.Component {
                         </Card>
                         <Row className="m-md-2">
                             <ButtonGroup>
-                                <Button color="primary">Query</Button>
+                                {/*<Button color="primary">Query</Button>*/}
+                                <Button color="primary" onClick={() => {
+                                    this.getFogTopology()
+                                }}>Show Topology</Button>
                                 <Button color="primary" onClick={() => {
                                     this.getQueryPlan(this.userQuery)
                                 }}>Show Query
                                     Plan</Button>
-                                <Button color="primary" onClick={() => {
-                                    this.getFogTopology()
-                                }}>Show Topology</Button>
                                 <ButtonDropdown isOpen={this.state.openExecutionStrategy}
                                                 toggle={this.toggleExecutionStrategy}>
                                     <DropdownToggle caret color="primary">Execution Plan</DropdownToggle>
@@ -397,28 +442,10 @@ export default class QueryInterface extends React.Component {
                             </ButtonGroup>
                         </Row>
 
-                        {this.state.displayBasePlan ?
-                            <Row className="m-md-1" style={{width: '100%', height: '100%'}}>
-                                <div className="m-md-2 border" style={{width: '100%', height: '100%'}}>
-                                    <Alert className="m-md-2">Query Plan</Alert>
-                                    <div className="m-md-2"
-                                         style={{height: '85%', display: 'flex', justifyContent: 'center'}}>
-                                        <DagreD3
-                                            nodes={this.state.queryGraph.nodes}
-                                            edges={this.state.queryGraph.edges}
-                                            interactive={false}
-                                            fit={true}
-                                            width="100%"
-                                            height="100%"
-                                        />
-                                    </div>
-                                </div>
-                            </Row> : null}
-
                         {this.state.displayTopologyPlan ?
-                            <Row className="m-md-1" style={{width: '100%', height: '100%'}}>
-                                <div className="m-md-2 border" style={{width: '100%', height: '100%'}}>
-                                    <Alert className="m-md-2">NES Topology</Alert>
+                            <Row className="m-md-1" style={{width: '70%', height: '100%'}}>
+                                <Col className="m-md-2 border" style={{width: '100%', height: '100%'}}>
+                                    <Alert className="m-md-2" color="info">Infrastructure Topology</Alert>
                                     <div className="m-md-2"
                                          style={{height: '85%', display: 'flex', justifyContent: 'center'}}>
                                         <DagreD3
@@ -430,13 +457,45 @@ export default class QueryInterface extends React.Component {
                                             height="100%"
                                         />
                                     </div>
-                                </div>
+                                </Col>
+                                <Col className="m-md-2" style={{width: '30%', height: '10%'}}>
+                                    <Alert className="m-md-2" color="info">Legend</Alert>
+                                    <div className="m-md-0"
+                                         style={{height: '50%', display: 'flex', justifyContent: 'center'}}>
+                                    <img src="infra-legend.png" alt="infra-legend" width="50%" height="50%"/>
+                                    </div>
+                                </Col>
+                            </Row> : null}
+
+                        {this.state.displayBasePlan ?
+                            <Row className="m-md-1" style={{width: '70%', height: '100%'}}>
+                                <Col className="m-md-2 border" style={{width: '100%', height: '100%'}}>
+                                    <Alert className="m-md-2" color="info">Query Plan</Alert>
+                                    <div className="m-md-2"
+                                         style={{height: '85%', display: 'flex', justifyContent: 'center'}}>
+                                        <DagreD3
+                                            nodes={this.state.queryGraph.nodes}
+                                            edges={this.state.queryGraph.edges}
+                                            interactive={false}
+                                            fit={true}
+                                            width="100%"
+                                            height="100%"
+                                        />
+                                    </div>
+                                </Col>
+                                <Col className="m-md-2" style={{width: '30%', height: '100%'}}>
+                                    <Alert className="m-md-2" color="info">Legend</Alert>
+                                    <div className="m-md-0"
+                                         style={{height: '100%', display: 'flex', justifyContent: 'center'}}>
+                                        <img src="query-plan-legend.png" alt="query-legend" width="40%" height="20%"/>
+                                    </div>
+                                </Col>
                             </Row> : null}
 
                         {this.state.displayExecutionPlan ?
-                            <Row className="m-md-1" style={{width: '100%', height: '100%'}}>
-                                <div className="m-md-2 border" style={{width: '100%', height: '100%'}}>
-                                    <Alert className="m-md-2">Query execution plan for
+                            <Row className="m-md-1" style={{width: '70%', height: '100%'}}>
+                                <Col className="m-md-2 border" style={{width: '100%', height: '100%'}}>
+                                    <Alert className="m-md-2" color="info">Query execution plan for
                                         "{this.state.selectedStrategy}"
                                         strategy</Alert>
                                     <div className="m-md-2"
@@ -450,7 +509,14 @@ export default class QueryInterface extends React.Component {
                                             height="100%"
                                         />
                                     </div>
-                                </div>
+                                </Col>
+                                <Col className="m-md-2" style={{width: '30%', height: '100%'}}>
+                                    <Alert className="m-md-2" color="info">Legend</Alert>
+                                    <div className="m-md-0"
+                                         style={{height: '100%', display: 'flex', justifyContent: 'center'}}>
+                                        <img src="ep-legend.png" alt="query-legend" width="70%" height="50%"/>
+                                    </div>
+                                </Col>
                             </Row> : null}
                     </CardBody>
                 </Card>
