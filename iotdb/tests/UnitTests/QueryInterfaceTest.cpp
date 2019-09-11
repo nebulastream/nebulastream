@@ -98,10 +98,10 @@ namespace iotdb {
 
         Stream cars = Stream("cars", schema);
 
-        AttributeField mappedField("speed", BasicType::UINT64);
+        AttributeField mappedField("id", BasicType::UINT64);
 
         InputQuery& query = InputQuery::from(cars)
-                .map(mappedField, schema[1] + schema[1])
+                .map(*schema[0], cars["value"] + schema[1])
                 .print(std::cout);
         env.printInputQueryPlan(query);
         env.executeQuery(query);
@@ -127,10 +127,10 @@ namespace iotdb {
 int main(int argc, const char *argv[]) {
 
     iotdb::Dispatcher::instance();
-    //iotdb::createQueryFilter();
+    iotdb::createQueryFilter();
 
     iotdb::createQueryMap();
-    //iotdb::createQueryString();
+    iotdb::createQueryString();
 
     return 0;
 }

@@ -95,6 +95,7 @@ class GeneratedCode {
     VariableDeclaration var_decl_input_tuple;
     VariableDeclaration var_num_for_loop;
     std::vector<StructDeclaration> type_decls;
+    std::vector<DeclarationPtr> override_fields;
 };
 
 typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
