@@ -328,8 +328,9 @@ bool C_CodeGenerator::generateCode(const AttributeFieldPtr field, const Predicat
     if(!declaredMapVar){
         result_schema_.addField(field);
         code_.struct_decl_result_tuple.addField(VariableDeclaration::create(field->data_type, field->name));
+        declaredMapVar = getVariableDeclarationForField(code_.struct_decl_result_tuple, field);
     }
-
+    code_.override_fields.push_back(declaredMapVar);
     VariableDeclaration var_map_i = code_.struct_decl_result_tuple.getVariableDeclaration(field->name);
 
     BinaryOperatorStatement callVar = VarRef(var_decl_result_tuple)[VarRef(code_.var_num_for_loop)].accessRef(VarRef(var_map_i));
@@ -357,8 +358,6 @@ bool C_CodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContex
     code_.var_num_for_loop = var_decl_num_result_tuples;
     code_.variable_decls.push_back(var_decl_num_result_tuples);
 
-
-
     /* result_tuples = (ResultTuple *)output_tuple_buffer->data;*/
     code_.variable_init_stmts.push_back(
         VarRef(var_decl_result_tuple)
@@ -380,15 +379,23 @@ bool C_CodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContex
         /** \done \FIXME: we need to handle the case where the field in the result tuple is not part of the input schema! */
         DeclarationPtr var_decl_input = getVariableDeclarationForField(code_.struct_decl_input_tuple, result_schema_[i]);
         if(var_decl_input) {
-
-            AssignmentStatment as = {var_decl_result_tuple,
-                                     *(var_decl),
-                                     var_decl_num_result_tuples,
-                                     code_.var_decl_input_tuple,
-                                     *(var_decl),
-                                     *(code_.var_decl_id)};
-            StatementPtr stmt = var_decl->getDataType()->getStmtCopyAssignment(as);
-            code_.current_code_insertion_point->addStatement(stmt);
+            bool override = false;
+            for(size_t j = 0; j < code_.override_fields.size(); j++){
+                if(code_.override_fields.at(j)->getIdentifierName().compare(var_decl_input->getIdentifierName()) == 0){
+                    override = true;
+                    break;
+                }
+            }
+            if(!override) {
+                AssignmentStatment as = {var_decl_result_tuple,
+                                         *(var_decl),
+                                         var_decl_num_result_tuples,
+                                         code_.var_decl_input_tuple,
+                                         *(var_decl),
+                                         *(code_.var_decl_id)};
+                StatementPtr stmt = var_decl->getDataType()->getStmtCopyAssignment(as);
+                code_.current_code_insertion_point->addStatement(stmt);
+            }
         }
         /* */
 
