@@ -392,7 +392,7 @@ export default class QueryInterface extends React.Component {
                                     theme="github"
                                     fontSize={16}
                                     width="100%"
-                                    height="30em"
+                                    height="20em"
                                     showPrintMargin={true}
                                     showGutter={true}
                                     editorProps={{$blockScrolling: true}}
@@ -443,7 +443,7 @@ export default class QueryInterface extends React.Component {
                         </Row>
 
                         {this.state.displayTopologyPlan ?
-                            <Row className="m-md-1" style={{width: '70%', height: '100%'}}>
+                            <Row className="m-md-1" style={{width: '80%', height: '100%'}}>
                                 <Col className="m-md-2 border" style={{width: '100%', height: '100%'}}>
                                     <Alert className="m-md-2" color="info">Infrastructure Topology</Alert>
                                     <div className="m-md-2"
@@ -458,17 +458,17 @@ export default class QueryInterface extends React.Component {
                                         />
                                     </div>
                                 </Col>
-                                <Col className="m-md-2" style={{width: '30%', height: '10%'}}>
+                                <Col className="m-md-2" style={{width: '20%', height: '10%'}}>
                                     <Alert className="m-md-2" color="info">Legend</Alert>
                                     <div className="m-md-0"
-                                         style={{height: '50%', display: 'flex', justifyContent: 'center'}}>
-                                    <img src="infra-legend.png" alt="infra-legend" width="50%" height="50%"/>
+                                         style={{height: '100%', display: 'flex', justifyContent: 'center'}}>
+                                    <img src="infra-legend.png" alt="infra-legend" width="40%" height="50%"/>
                                     </div>
                                 </Col>
                             </Row> : null}
 
                         {this.state.displayBasePlan ?
-                            <Row className="m-md-1" style={{width: '70%', height: '100%'}}>
+                            <Row className="m-md-1" style={{width: '80%', height: '100%'}}>
                                 <Col className="m-md-2 border" style={{width: '100%', height: '100%'}}>
                                     <Alert className="m-md-2" color="info">Query Plan</Alert>
                                     <div className="m-md-2"
@@ -483,7 +483,7 @@ export default class QueryInterface extends React.Component {
                                         />
                                     </div>
                                 </Col>
-                                <Col className="m-md-2" style={{width: '30%', height: '100%'}}>
+                                <Col className="m-md-2" style={{width: '20%', height: '100%'}}>
                                     <Alert className="m-md-2" color="info">Legend</Alert>
                                     <div className="m-md-0"
                                          style={{height: '100%', display: 'flex', justifyContent: 'center'}}>
@@ -493,7 +493,7 @@ export default class QueryInterface extends React.Component {
                             </Row> : null}
 
                         {this.state.displayExecutionPlan ?
-                            <Row className="m-md-1" style={{width: '70%', height: '100%'}}>
+                            <Row className="m-md-1" style={{width: '80%', height: '100%'}}>
                                 <Col className="m-md-2 border" style={{width: '100%', height: '100%'}}>
                                     <Alert className="m-md-2" color="info">Query execution plan for
                                         "{this.state.selectedStrategy}"
@@ -510,11 +510,11 @@ export default class QueryInterface extends React.Component {
                                         />
                                     </div>
                                 </Col>
-                                <Col className="m-md-2" style={{width: '30%', height: '100%'}}>
+                                <Col className="m-md-2" style={{width: '20%', height: '100%'}}>
                                     <Alert className="m-md-2" color="info">Legend</Alert>
                                     <div className="m-md-0"
                                          style={{height: '100%', display: 'flex', justifyContent: 'center'}}>
-                                        <img src="ep-legend.png" alt="query-legend" width="70%" height="50%"/>
+                                        <img src="ep-legend.png" alt="query-legend" width="40%" height="50%"/>
                                     </div>
                                 </Col>
                             </Row> : null}
