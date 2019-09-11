@@ -814,6 +814,79 @@ int CodeGeneratorTest()
         return 0;
     }
 
+    /**
+     * New Predicatetests for showing stuff
+     * @return
+     */
+    int CodeMapPredicatePtrTests()
+    {
+        /* prepare objects for test */
+        DataSourcePtr source = createTestSourceCodeGenPredicate();
+        CodeGeneratorPtr code_gen = createCodeGenerator();
+        PipelineContextPtr context = createPipelineContext();
+
+        Schema input_schema = source->getSchema();
+
+        std::cout << "Generate Predicate Code" << std::endl;
+        code_gen->generateCode(source, context, std::cout);
+
+        //predicate definition
+        AttributeFieldPtr mappedValue = AttributeField("mappedValue", BasicType::FLOAT64).copy();
+        code_gen->generateCode(mappedValue, createPredicate((input_schema[2] * input_schema[3]) + 2 )
+                , context, std::cout);
+
+        /* generate code for writing result tuples to output buffer */
+        code_gen->generateCode(createPrintSink(Schema::create()
+                                                       .addField("id", BasicType::UINT32)
+                                                       .addField("valueSmall", BasicType::INT16)
+                                                       .addField("valueFloat", BasicType::FLOAT32)
+                                                       .addField("valueDouble", BasicType::FLOAT64)
+                                                       .addField(mappedValue)
+                                                       .addField("valueChar", BasicType::CHAR)
+                                                       .addField("text", createArrayDataType(BasicType::CHAR, 12)), std::cout), context, std::cout);
+
+
+        unsigned int numberOfResultTuples = 132;
+
+        /* compile code to pipeline stage */
+        PipelineStagePtr stage = code_gen->compile(CompilerArgs());
+        if(!stage)
+            return -1;
+
+        /* prepare input tuple buffer */
+        TupleBufferPtr buf = source->receiveData();
+        std::vector<TupleBuffer*> input_buffers;
+        input_buffers.push_back(buf.get());
+        //std::cout << iotdb::toString(buf.get(),source->getSchema()) << std::endl;
+        std::cout << "Processing " << buf->num_tuples << " tuples: " << std::endl;
+        uint32_t sizeoftuples = (sizeof(uint32_t) + sizeof(int16_t) +sizeof(float) + sizeof(double) + sizeof(double) + sizeof(char) + sizeof(char) * 12);
+        size_t buffer_size = buf->num_tuples * sizeoftuples;
+        TupleBuffer result_buffer(malloc(buffer_size), buffer_size, sizeoftuples, 0);
+
+        /* execute Stage */
+        stage->execute(input_buffers, NULL, &result_buffer);
+
+        /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
+        std::cout << "---------- My Number of tuples...." << result_buffer.num_tuples << std::endl;
+        if(result_buffer.num_tuples!=numberOfResultTuples){
+            std::cout << "Wrong number of tuples in output: " << result_buffer.num_tuples
+                      << " (should have been: " << buf->num_tuples << ")" << std::endl;
+            return -1;
+        }
+
+        std::cout << iotdb::toString(result_buffer,Schema::create()
+                .addField("id", BasicType::UINT32)
+                .addField("valueSmall", BasicType::INT16)
+                .addField("valueFloat", BasicType::FLOAT32)
+                .addField("valueDouble", BasicType::FLOAT64)
+                .addField("mappedValue", BasicType::FLOAT64)
+                .addField("valueChar", BasicType::CHAR)
+                .addField("text", createArrayDataType(BasicType::CHAR, 12))) << std::endl;
+        std::cout << "Result of MapPredPtrCodeGenTest is Correct!" << std::endl;
+
+        return 0;
+    }
+
 
 int testTupleBufferPrinting()
 {
@@ -873,7 +946,8 @@ int main()
 {
 
     /** \todo make proper test case out of this function! */
-    iotdb::CodeGenTestCases();
+    //iotdb::CodeGenTestCases();
+
 
     if (!iotdb::CodeGenTest()) {
         std::cout << "Test CodeGenTest Passed!" << std::endl << std::endl;
@@ -915,5 +989,13 @@ int main()
         return -1;
     }
 
-    return 0;
+    if (!iotdb::CodeMapPredicatePtrTests()) {
+        std::cout << "Test Map for Predicate Pointers Passed!" << std::endl << std::endl;
+    }
+    else {
+        std::cerr << "Test Map for Predicate Pointers Failed!" << std::endl << std::endl;
+        return -1;
+    }
+
+return 0;
 }

@@ -47,7 +47,7 @@ namespace iotdb {
         }
     };
 
-    void createQuery() {
+    void createQueryFilter() {
         // define config
         Config config = Config::create();
 
@@ -85,6 +85,30 @@ namespace iotdb {
         // AttributeFieldPtr attr = schema[0];
     }
 
+    void createQueryMap() {
+        // define config
+        Config config = Config::create();
+
+        Environment env = Environment::create(config);
+
+//    Config::create().withParallelism(1).withPreloading().withBufferSize(1000).withNumberOfPassesOverInput(1);
+        Schema schema = Schema::create()
+                .addField("id", BasicType::UINT32)
+                .addField("value", BasicType::UINT64);
+
+        Stream cars = Stream("cars", schema);
+
+        AttributeField mappedField("id", BasicType::UINT64);
+
+        InputQuery& query = InputQuery::from(cars)
+                .map(*schema[0], cars["value"] + schema[1])
+                .print(std::cout);
+        env.printInputQueryPlan(query);
+        env.executeQuery(query);
+
+        // AttributeFieldPtr attr = schema[0];
+    }
+
     void createQueryString() {
 
         std::stringstream code;
@@ -103,8 +127,9 @@ namespace iotdb {
 int main(int argc, const char *argv[]) {
 
     iotdb::Dispatcher::instance();
+    iotdb::createQueryFilter();
 
-    iotdb::createQuery();
+    iotdb::createQueryMap();
     iotdb::createQueryString();
 
     return 0;
