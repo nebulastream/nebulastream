@@ -4,16 +4,15 @@
   "private": true,
   "dependencies": {
     "bootstrap": "^4.3.1",
-    "d3": "^5.9.7",
+    "d3": "^5.11.0",
+    "dagre-d3": "^0.6.3",
     "react": "^16.8.6",
     "react-ace": "^7.0.2",
-    "react-alert": "^5.5.0",
-    "react-alert-template-basic": "^1.0.0",
-    "react-d3-tree": "^1.13.0",
-    "react-digraph": "^6.4.1",
+    "react-digraph": "^6.5.0",
     "react-dom": "^16.8.6",
+    "react-fast-compare": "^2.0.4",
     "react-scripts": "3.0.1",
-    "react-toast-notifications": "^2.2.1",
+    "react-tipsy": "^0.6.2",
     "react-toastify": "^5.3.2",
     "reactstrap": "^8.0.0"
   },
@@ -37,5 +36,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "prop-types": "^15.7.2"
   }
 }

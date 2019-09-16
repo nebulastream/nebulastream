@@ -17,8 +17,11 @@ import 'brace/theme/github';
 import ButtonGroup from "reactstrap/es/ButtonGroup";
 import ButtonDropdown from "reactstrap/es/ButtonDropdown";
 import {toast} from "react-toastify";
-import {GraphView} from 'react-digraph';
-import GraphConfig, {EMPTY_EDGE_TYPE, NODE_KEY, POLY_TYPE, SKINNY_TYPE,} from './dag/graph-config';
+import DagreD3 from "./dag/DagreD3";
+
+const QUERY = "query";
+const TOPOLOGY = "topology";
+const EP = "ep";
 
 export default class QueryInterface extends React.Component {
 
@@ -55,7 +58,7 @@ export default class QueryInterface extends React.Component {
         };
         this.userQuery = 'Schema schema = Schema::create()\n' +
             '   .addField("measurement",INT32);\n\n' +
-            'Stream temperature = Stream("temperature", schema);\n\n' +
+            'Stream temperature = Stream("temperature1", schema);\n\n' +
             'return InputQuery::from(temperature)\n' +
             '   .filter(temperature["measurement"] > 100)\n' +
             '   .print(std::cout);\n';
@@ -68,6 +71,7 @@ export default class QueryInterface extends React.Component {
         this.toggleExecutionStrategy = this.toggleExecutionStrategy.bind(this);
         this.notify = this.notify.bind(this);
         this.generateDagFromJson = this.generateDagFromJson.bind(this);
+        this.showNodeDescription = this.showNodeDescription.bind(this);
     }
 
     notify = (type, message) => {
@@ -120,11 +124,11 @@ export default class QueryInterface extends React.Component {
                 return response.json();
             })
             .then(data => {
-                this.updateData("query", data);
+                this.updateData(QUERY, data);
                 this.setState({displayBasePlan: true});
             })
             .catch(err => {
-                this.resetTreeData("query");
+                this.resetTreeData(QUERY);
                 if (err.message.includes("500")) {
                     this.notify("err", "Unable to fetch plan for input query!")
                 } else if (err.message.includes("404")) {
@@ -153,11 +157,11 @@ export default class QueryInterface extends React.Component {
                 return response.json();
             })
             .then(data => {
-                this.updateData("topology", data);
+                this.updateData(TOPOLOGY, data);
                 this.setState({displayTopologyPlan: true});
             })
             .catch(err => {
-                this.resetTreeData("topology");
+                this.resetTreeData(TOPOLOGY);
                 if (err.message.includes("500")) {
                     this.notify("err", "Unable to fetch topology graph!")
                 } else if (err.message.includes("404")) {
@@ -170,6 +174,7 @@ export default class QueryInterface extends React.Component {
     }
 
     getExecutionPlan(userQuery, strategyName) {
+        this.getQueryPlan(userQuery);
         this.setState({selectedStrategy: strategyName});
         fetch('http://127.0.0.1:8081/v1/iotdb/service/execution-plan', {
                 method: 'POST',
@@ -191,11 +196,11 @@ export default class QueryInterface extends React.Component {
                 return response.json();
             })
             .then(data => {
-                this.updateData("execution", data);
+                this.updateData(EP, data);
                 this.setState({displayExecutionPlan: true});
             })
             .catch(err => {
-                this.resetTreeData("execution");
+                this.resetTreeData(EP);
                 if (err.message.includes("500")) {
                     this.notify("err", "Unable to fetch execution plan for input query!")
                 } else if (err.message.includes("404")) {
@@ -208,12 +213,12 @@ export default class QueryInterface extends React.Component {
     }
 
     updateData(modelName, jsonObject) {
-        let generatedSample = this.generateDagFromJson(jsonObject);
-        if (modelName === 'query') {
+        let generatedSample = this.generateDagFromJson(modelName, jsonObject);
+        if (modelName === QUERY) {
             this.setState({queryGraph: generatedSample})
-        } else if (modelName === 'topology') {
+        } else if (modelName === TOPOLOGY) {
             this.setState({topologyGraph: generatedSample});
-        } else if (modelName === 'execution') {
+        } else if (modelName === EP) {
             this.setState({executionGraph: generatedSample})
         }
     }
@@ -228,11 +233,11 @@ export default class QueryInterface extends React.Component {
 
     resetTreeData(modelName) {
         let generatedSample = {nodes: [], edges: []};
-        if (modelName === 'query') {
+        if (modelName === QUERY) {
             this.setState({queryGraph: generatedSample});
-        } else if (modelName === 'topology') {
+        } else if (modelName === TOPOLOGY) {
             this.setState({topologyGraph: generatedSample});
-        } else if (modelName === 'execution') {
+        } else if (modelName === EP) {
             this.setState({executionGraph: generatedSample});
         }
     }
@@ -247,89 +252,173 @@ export default class QueryInterface extends React.Component {
         });
     }
 
-    generateDagFromJson(input) {
+    showNodeDescription(id) {
+        console.log(id);
+    }
+
+    generateDagFromJson(modelName, input) {
 
         let generatedSample = {nodes: [], edges: []};
+
+        let nodes = {};
 
         for (let i = 0; i < input.nodes.length; i++) {
             let inputNode = input.nodes[i];
 
-            let type;
+            let style;
+            let shape = 'rect';
+            let label = inputNode.id;
+
             if (inputNode.nodeType === "Sensor") {
-                type = POLY_TYPE;
+
+                label = "<b>" + inputNode.sensorType + "</b>" +
+                    "<br><sub>FreeCompute:" + inputNode.remainingCapacity + "</sub>" +
+                    "<br><sub>TotalCompute:" + inputNode.capacity + "</sub>";
+                if (modelName === EP) {
+                    if (inputNode.operators === 'empty') {
+                        style = "fill : #999999 ; rx:15; ry:15;";
+                    } else {
+                        let operators = inputNode.operators;
+                        label = label + "<br><b><sub>" + operators + "</sub></b>";
+                        style = "fill : #ffa299 ; rx:15; ry:15;";
+                    }
+                } else {
+                    style = "fill : #ffa299 ; rx:15; ry:15;";
+                }
+            } else if (inputNode.nodeType === "Worker") {
+
+                label = "<b>" + inputNode.id + "</b>" +
+                    "<br><sub>FreeCompute:" + inputNode.remainingCapacity + "</sub>" +
+                    "<br><sub>TotalCompute:" + inputNode.capacity + "</sub>";
+                if (modelName === EP) {
+                    if (inputNode.operators === 'empty') {
+                        style = "fill : #999999 ; rx:15; ry:15;";
+                    } else if (inputNode.id === "Node-0") {
+                        label = label + "<br><b><sub>" + inputNode.operators + "</sub></b>";
+                        style = "fill : #b3e6ff ; rx:15; ry:15;";
+                    } else {
+                        label = label + "<br><b><sub>" + inputNode.operators + "</sub></b>";
+                        style = "fill : #adc2eb ; rx:15; ry:15;";
+                    }
+                } else if (inputNode.id === "Node-0") {
+                    style = "fill : #b3e6ff ; rx:15; ry:15;";
+                } else {
+                    style = "fill : #adc2eb ; rx:15; ry:15;";
+                }
+            } else if (inputNode.nodeType === "Source") {
+                style = "fill: #c2e184; rx:15; ry:15;";
             } else {
-                type = SKINNY_TYPE;
+                style = "fill: #fff799; rx:15; ry:15;";
             }
 
-            let node = {
-                id: inputNode.id,
-                title: inputNode.title,
-                type: type,
-                x: 10,
-                y: 390,
+            nodes[`${inputNode.id}`] = {
+                labelType: "html",
+                label: label,
+                style: style,
+                shape: shape
             };
-            generatedSample.nodes.push(node);
         }
+
+        if (modelName === TOPOLOGY || modelName === EP) {
+
+            // nodes['cloud'] = {
+            //     labelType: 'html',
+            //     label: 'Cloud Node',
+            //     shape: 'rect',
+            //     style: 'fill : #b3e6ff ; rx:5; ry:5;'
+            // };
+            //
+            // nodes['fog'] = {
+            //     label: 'Fog Node',
+            //     shape: 'rect',
+            //     style: 'fill : #adc2eb ; rx:5; ry:5;'
+            // };
+            //
+            // nodes['sensor'] = {
+            //     label: 'Sensor',
+            //     shape: 'rect',
+            //     style: 'fill : #ffa299 ; rx:5; ry:5;'
+            // };
+            //
+            // if (modelName === EP) {
+            //     nodes['unused'] = {
+            //         label: 'Unused Node',
+            //         shape: 'rect',
+            //         style: 'fill : #999999 ; rx:5; ry:5;'
+            //     };
+            // }
+
+        } else {
+            // nodes['source'] = {
+            //     label: 'Source/Sink Operator',
+            //     shape: 'rect',
+            //     style: 'fill : #c2e184 ; rx:15; ry:15;'
+            // };
+            //
+            // nodes['operator'] = {
+            //     label: 'Other Operators',
+            //     shape: 'rect',
+            //     style: 'fill : #fff799 ; rx:15; ry:15;'
+            // };
+        }
+
+
+        generatedSample.nodes = nodes;
 
         for (let i = 0; i < input.edges.length; i++) {
             let inputEdge = input.edges[i];
 
-            let edge = {
-                source: inputEdge.source,
-                target: inputEdge.target,
-                type: EMPTY_EDGE_TYPE,
-            };
-            generatedSample.edges.push(edge);
+            generatedSample.edges.push([inputEdge.source, inputEdge.target, {}]);
         }
 
         return generatedSample;
     };
 
     render() {
-        const {NodeTypes, NodeSubtypes, EdgeTypes} = GraphConfig;
 
         return (
             <Col md="12">
                 <Card>
                     <CardHeader>
-                        <h1>Nebula Stream WebInterface</h1>
+                        <h1>NebulaStream Web Interface</h1>
                     </CardHeader>
                     <CardBody>
-                        <Alert className="m-md-2">Feed Your Query Here</Alert>
+                        <Alert className="m-md-2" color="info">Feed Your Query Here</Alert>
                         <Card className="m-md-2">
-                            <AceEditor
-                                focus={true}
-                                mode="c_cpp"
-                                theme="github"
-                                fontSize={16}
-                                width="100%"
-                                height="300px"
-                                showPrintMargin={true}
-                                showGutter={true}
-                                editorProps={{$blockScrolling: true}}
-                                setOptions={{
-                                    showLineNumbers: true,
-                                    tabSize: 2,
-                                }}
-                                name="query"
-                                onChange={this.updateQuery}
-                                value={this.userQuery}
-                            />
+                            <Row className="m-md-0" style={{width: '100%', height: '100%'}}>
+                                <AceEditor
+                                    focus={true}
+                                    mode="c_cpp"
+                                    theme="github"
+                                    fontSize={16}
+                                    width="100%"
+                                    height="20em"
+                                    showPrintMargin={true}
+                                    showGutter={true}
+                                    editorProps={{$blockScrolling: true}}
+                                    setOptions={{
+                                        showLineNumbers: true,
+                                        tabSize: 2,
+                                    }}
+                                    name="query"
+                                    onChange={this.updateQuery}
+                                    value={this.userQuery}
+                                />
+                            </Row>
                         </Card>
                         <Row className="m-md-2">
                             <ButtonGroup>
-                                <Button color="primary">Query</Button>
+                                {/*<Button color="primary">Query</Button>*/}
+                                <Button color="primary" onClick={() => {
+                                    this.getFogTopology()
+                                }}>Show Topology</Button>
                                 <Button color="primary" onClick={() => {
                                     this.getQueryPlan(this.userQuery)
                                 }}>Show Query
                                     Plan</Button>
-                                <Button color="primary" onClick={() => {
-                                    this.getFogTopology()
-                                }}>Show Fog
-                                    Topology</Button>
                                 <ButtonDropdown isOpen={this.state.openExecutionStrategy}
                                                 toggle={this.toggleExecutionStrategy}>
-                                    <DropdownToggle caret color="primary">Show Execution Plan</DropdownToggle>
+                                    <DropdownToggle caret color="primary">Execution Plan</DropdownToggle>
                                     <DropdownMenu>
                                         <DropdownItem onClick={() => {
                                             this.getExecutionPlan(this.userQuery, "BottomUp")
@@ -337,6 +426,12 @@ export default class QueryInterface extends React.Component {
                                         <DropdownItem onClick={() => {
                                             this.getExecutionPlan(this.userQuery, "TopDown")
                                         }}>Top-Down</DropdownItem>
+                                        <DropdownItem divider/>
+                                        <DropdownItem disabled>Latency</DropdownItem>
+                                        <DropdownItem disabled>Fault-Tolerance</DropdownItem>
+                                        <DropdownItem disabled>Throughput</DropdownItem>
+                                        <DropdownItem disabled>Energy Efficiency</DropdownItem>
+                                        <DropdownItem disabled>Resource Efficiency</DropdownItem>
                                     </DropdownMenu>
                                 </ButtonDropdown>
                             </ButtonGroup>
@@ -346,66 +441,82 @@ export default class QueryInterface extends React.Component {
                                 }}>Hide All</Button>
                             </ButtonGroup>
                         </Row>
-                        <Row>
-                            {this.state.displayBasePlan ?
-                                <Col className="m-md-1" style={{width: '50%', height: '30em'}}>
-                                    <div className="m-md-2 border" style={{width: '100%', height: '100%'}}>
-                                        <Alert className="m-md-2">Query Plan</Alert>
-                                        <div className="m-md-2" style={{height: '85%'}}>
-                                            <GraphView
-                                                nodes={this.state.queryGraph.nodes}
-                                                edges={this.state.queryGraph.edges}
-                                                nodeKey={NODE_KEY}
-                                                nodeTypes={NodeTypes}
-                                                nodeSubtypes={NodeSubtypes}
-                                                edgeTypes={EdgeTypes}
-                                                layoutEngineType={'VerticalTree'}
-                                                gridDotSize={0}
-                                            />
-                                        </div>
-                                    </div>
-                                </Col> : null}
 
-                            {this.state.displayTopologyPlan ?
-                                <Col className="m-md-1" style={{width: '50%', height: '30em'}}>
-
-                                    <div className="m-md-2 border" style={{width: '100%', height: '100%'}}>
-                                        <Alert className="m-md-2">Fog Topology</Alert>
-                                        <div className="m-md-2" style={{height: '85%'}}>
-                                            <GraphView
-                                                nodes={this.state.topologyGraph.nodes}
-                                                edges={this.state.topologyGraph.edges}
-                                                nodeKey={NODE_KEY}
-                                                nodeTypes={NodeTypes}
-                                                nodeSubtypes={NodeSubtypes}
-                                                edgeTypes={EdgeTypes}
-                                                layoutEngineType={'VerticalTree'}
-                                                gridDotSize={0}
-                                            />
-                                        </div>
-                                    </div>
-                                </Col> : null}
-                        </Row>
-                        {this.state.displayExecutionPlan ?
-                            <Row className="m-md-1" style={{width: '50%', height: '30em'}}>
-
-                                <div className="m-md-2 border" style={{width: '100%', height: '100%'}}>
-                                    <Alert className="m-md-2">Query execution plan for
-                                        "{this.state.selectedStrategy}"
-                                        strategy</Alert>
-                                    <div className="m-md-2" style={{height: '85%'}}>
-                                        <GraphView
-                                            nodes={this.state.executionGraph.nodes}
-                                            edges={this.state.executionGraph.edges}
-                                            nodeKey={NODE_KEY}
-                                            nodeTypes={NodeTypes}
-                                            nodeSubtypes={NodeSubtypes}
-                                            edgeTypes={EdgeTypes}
-                                            layoutEngineType={'VerticalTree'}
-                                            gridDotSize={0}
+                        {this.state.displayTopologyPlan ?
+                            <Row className="m-md-1" style={{width: '80%', height: '100%'}}>
+                                <Col className="m-md-2 border" style={{width: '100%', height: '100%'}}>
+                                    <Alert className="m-md-2" color="info">Infrastructure Topology</Alert>
+                                    <div className="m-md-2"
+                                         style={{height: '85%', display: 'flex', justifyContent: 'center'}}>
+                                        <DagreD3
+                                            edges={this.state.topologyGraph.edges}
+                                            nodes={this.state.topologyGraph.nodes}
+                                            interactive={false}
+                                            fit={true}
+                                            width="100%"
+                                            height="100%"
                                         />
                                     </div>
-                                </div>
+                                </Col>
+                                <Col className="m-md-2" style={{width: '20%', height: '10%'}}>
+                                    <Alert className="m-md-2" color="info">Legend</Alert>
+                                    <div className="m-md-0"
+                                         style={{height: '100%', display: 'flex', justifyContent: 'center'}}>
+                                    <img src="infra-legend.png" alt="infra-legend" width="40%" height="50%"/>
+                                    </div>
+                                </Col>
+                            </Row> : null}
+
+                        {this.state.displayBasePlan ?
+                            <Row className="m-md-1" style={{width: '80%', height: '100%'}}>
+                                <Col className="m-md-2 border" style={{width: '100%', height: '100%'}}>
+                                    <Alert className="m-md-2" color="info">Query Plan</Alert>
+                                    <div className="m-md-2"
+                                         style={{height: '85%', display: 'flex', justifyContent: 'center'}}>
+                                        <DagreD3
+                                            nodes={this.state.queryGraph.nodes}
+                                            edges={this.state.queryGraph.edges}
+                                            interactive={false}
+                                            fit={true}
+                                            width="100%"
+                                            height="100%"
+                                        />
+                                    </div>
+                                </Col>
+                                <Col className="m-md-2" style={{width: '20%', height: '100%'}}>
+                                    <Alert className="m-md-2" color="info">Legend</Alert>
+                                    <div className="m-md-0"
+                                         style={{height: '100%', display: 'flex', justifyContent: 'center'}}>
+                                        <img src="query-plan-legend.png" alt="query-legend" width="40%" height="20%"/>
+                                    </div>
+                                </Col>
+                            </Row> : null}
+
+                        {this.state.displayExecutionPlan ?
+                            <Row className="m-md-1" style={{width: '80%', height: '100%'}}>
+                                <Col className="m-md-2 border" style={{width: '100%', height: '100%'}}>
+                                    <Alert className="m-md-2" color="info">Query execution plan for
+                                        "{this.state.selectedStrategy}"
+                                        strategy</Alert>
+                                    <div className="m-md-2"
+                                         style={{height: '85%', display: 'flex', justifyContent: 'center'}}>
+                                        <DagreD3
+                                            edges={this.state.executionGraph.edges}
+                                            nodes={this.state.executionGraph.nodes}
+                                            interactive={false}
+                                            fit={true}
+                                            width="100%"
+                                            height="100%"
+                                        />
+                                    </div>
+                                </Col>
+                                <Col className="m-md-2" style={{width: '20%', height: '100%'}}>
+                                    <Alert className="m-md-2" color="info">Legend</Alert>
+                                    <div className="m-md-0"
+                                         style={{height: '100%', display: 'flex', justifyContent: 'center'}}>
+                                        <img src="ep-legend.png" alt="query-legend" width="40%" height="50%"/>
+                                    </div>
+                                </Col>
                             </Row> : null}
                     </CardBody>
                 </Card>
@@ -413,3 +524,4 @@ export default class QueryInterface extends React.Component {
         );
     }
 };
+
