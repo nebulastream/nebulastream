@@ -226,6 +226,12 @@ bool C_CodeGenerator::generateCode(const DataSourcePtr& source, const PipelineCo
     code_.struct_decl_state = struct_decl_state;
     code_.struct_decl_input_tuple = struct_decl_tuple;
 
+    /** === set the result tuple depending on the input tuple===*/
+    result_schema_ = source->getSchema();
+    StructDeclaration struct_result_tuple = getStructDeclarationResultTuple(result_schema_);
+    code_.struct_decl_result_tuple = struct_result_tuple;
+    context->addTypeDeclaration(struct_result_tuple);
+
     /* === declarations === */
 
     VariableDeclaration var_decl_tuple_buffers = VariableDeclaration::create(
@@ -302,6 +308,13 @@ bool C_CodeGenerator::generateCode(const DataSourcePtr& source, const PipelineCo
     return true;
 }
 
+/**
+ * generates code for predicates
+ * @param pred - defined predicate for the query
+ * @param context - includes the context of the used fields
+ * @param out - sending some other information if wanted
+ * @return modified query-code
+ */
 bool C_CodeGenerator::generateCode(const PredicatePtr& pred, const PipelineContextPtr& context, std::ostream& out)
 {
 	
@@ -309,7 +322,6 @@ bool C_CodeGenerator::generateCode(const PredicatePtr& pred, const PipelineConte
 
     std::shared_ptr<IF> if_stmt = std::make_shared<IF>(*expr);
     CompoundStatementPtr compound_stmt = if_stmt->getCompoundStatement();
-
     /* update current compound_stmt*/
     code_.current_code_insertion_point->addStatement(if_stmt);
     code_.current_code_insertion_point=compound_stmt;
@@ -317,6 +329,14 @@ bool C_CodeGenerator::generateCode(const PredicatePtr& pred, const PipelineConte
     return true;
 }
 
+/**
+ * generates code for a mapper with an defined AttributeField and a PredicatePtr
+ * @param field - existing or new created field that includes the mapped function
+ * @param pred - mapping function as a predicate tree for easy single lined functions.
+ * @param context - includes the context of the used fields
+ * @param out - sending some other information if wanted
+ * @return modified query-code
+ */
 bool C_CodeGenerator::generateCode(const AttributeFieldPtr field, const PredicatePtr& pred, const iotdb::PipelineContextPtr &context,
                                    std::ostream &out) {
 
@@ -343,7 +363,6 @@ bool C_CodeGenerator::generateCode(const AttributeFieldPtr field, const Predicat
 
 bool C_CodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContextPtr& context, std::ostream& out)
 {
-
     result_schema_ = sink->getSchema();
 
     StructDeclaration struct_decl_result_tuple = getStructDeclarationResultTuple(result_schema_);
@@ -373,10 +392,10 @@ bool C_CodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContex
         if (!var_decl) {
             IOTDB_FATAL_ERROR("Could not extract field " << result_schema_[i]->toString() << " from struct "
                                                          << struct_decl_result_tuple.getTypeName());
+            IOTDB_DEBUG("W>");
         }
         code_.variable_decls.push_back(*var_decl);
 
-        /** \done \FIXME: we need to handle the case where the field in the result tuple is not part of the input schema! */
         DeclarationPtr var_decl_input = getVariableDeclarationForField(code_.struct_decl_input_tuple, result_schema_[i]);
         if(var_decl_input) {
             bool override = false;
