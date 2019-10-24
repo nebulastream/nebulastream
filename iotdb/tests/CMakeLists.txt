@@ -89,6 +89,11 @@ add_executable(window-manager-tests "UnitTests/WindowManagerTest.cpp")
 target_link_libraries(window-manager-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME window-manager-tests COMMAND window-manager-tests)
 
+# State Manager Test
+add_executable(state-manager-tests "UnitTests/StateTest.cpp")
+target_link_libraries(state-manager-tests iotdb ${GTEST_LIBRARIES})
+add_test(NAME state-manager-tests COMMAND state-manager-tests)
+
 # Test data sources and data sinks of runtime
 add_executable(runtime-data-source-sink-tests "UnitTests/RuntimeDataSourceSinkTest.cpp")
 target_link_libraries(runtime-data-source-sink-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
