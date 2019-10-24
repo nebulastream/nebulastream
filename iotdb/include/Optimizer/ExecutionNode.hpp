@@ -5,66 +5,64 @@
 #ifndef IOTDB_EXECUTIONNODE_HPP
 #define IOTDB_EXECUTIONNODE_HPP
 
-
 #include <Topology/FogTopologyEntry.hpp>
 
 namespace iotdb {
 
-    using namespace std;
+using namespace std;
 
-    class ExecutionNode {
+class ExecutionNode {
 
-    public:
-        ExecutionNode(std::string operatorName, std::string nodeName, FogTopologyEntryPtr fogNode,
-                      OperatorPtr executableOperator) {
-            this->id = fogNode->getId();
-            this->operatorName = operatorName;
-            this->nodeName = nodeName;
-            this->fogNode = fogNode;
-            vector<OperatorPtr> operators{executableOperator};
-            this->executableOperators = operators;
-        };
+ public:
+  ExecutionNode(std::string operatorName, std::string nodeName, FogTopologyEntryPtr fogNode,
+                OperatorPtr rootOperator) {
+    this->id = fogNode->getId();
+    this->operatorName = operatorName;
+    this->nodeName = nodeName;
+    this->fogNode = fogNode;
+    this->rootOperator = rootOperator;
+  };
 
-        int getId() { return this->id; };
+  int getId() { return this->id; };
 
-        std::string getOperatorName() {
-            return this->operatorName;
-        }
+  std::string getOperatorName() {
+    return this->operatorName;
+  }
 
-        std::string getNodeName() {
-            return this->nodeName;
-        }
+  std::string getNodeName() {
+    return this->nodeName;
+  }
 
-        void setOperatorName(const string &operatorName) {
-            this->operatorName = operatorName;
-        }
+  void setOperatorName(const string &operatorName) {
+    this->operatorName = operatorName;
+  }
 
-        FogTopologyEntryPtr &getFogNode() {
-            return fogNode;
-        }
+  FogTopologyEntryPtr &getFogNode() {
+    return fogNode;
+  }
 
-        void setFogNode(FogTopologyEntryPtr &fogNode) {
-            this->fogNode = fogNode;
-        }
+  OperatorPtr &getRootOperator() {
+    return rootOperator;
+  }
 
-        vector<OperatorPtr> &getExecutableOperator() {
-            return executableOperators;
-        }
+  vector<int> &getChildOperatorIds() {
+    return childOperatorIds;
+  }
 
-        void addExecutableOperator(OperatorPtr &executableOperator) {
-            this->executableOperators.push_back(executableOperator);
-        }
+  void addChildOperatorId(int childOperatorId) {
+    this->childOperatorIds.push_back(childOperatorId);
+  }
 
-    private:
-        int id;
-        string operatorName;
-        string nodeName;
-        FogTopologyEntryPtr fogNode;
-        vector<OperatorPtr> executableOperators;
-    };
+ private:
+  int id;
+  string operatorName;
+  string nodeName;
+  OperatorPtr rootOperator;
+  FogTopologyEntryPtr fogNode;
+  vector<int> childOperatorIds{};
+};
 
-
-    typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
+typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
 }
 
 #endif //IOTDB_EXECUTIONNODE_HPP
