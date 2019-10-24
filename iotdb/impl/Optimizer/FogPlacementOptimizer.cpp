@@ -21,25 +21,41 @@ void FogPlacementOptimizer::removeNonResidentOperators(FogExecutionPlan graph) {
   for (ExecutionVertex executionNode: executionNodes) {
     OperatorPtr &rootOperator = executionNode.ptr->getRootOperator();
     vector<int> &childOperatorIds = executionNode.ptr->getChildOperatorIds();
-    invalidateChildOperators(rootOperator, childOperatorIds);
+    invalidateUnscheduledOperators(rootOperator, childOperatorIds);
   }
 }
 
-void FogPlacementOptimizer::invalidateChildOperators(OperatorPtr &rootOperator, vector<int> &childOperatorIds) {
+void FogPlacementOptimizer::invalidateUnscheduledOperators(OperatorPtr &rootOperator, vector<int> &childOperatorIds) {
   vector<OperatorPtr> &childs = rootOperator->childs;
+  OperatorPtr &parent = rootOperator->parent;
+
+  if (rootOperator == nullptr) {
+    return;
+  }
+
+  if (parent != nullptr) {
+    if (std::find(childOperatorIds.begin(), childOperatorIds.end(), parent->operatorId) != childOperatorIds.end()) {
+      invalidateUnscheduledOperators(parent, childOperatorIds);
+    } else {
+      rootOperator->parent = nullptr;
+    }
+  }
+
   for (size_t i = 0; i < childs.size(); i++) {
     OperatorPtr child = childs[i];
     if (std::find(childOperatorIds.begin(), childOperatorIds.end(), child->operatorId) != childOperatorIds.end()) {
-      invalidateChildOperators(child, childOperatorIds);
+      invalidateUnscheduledOperators(child, childOperatorIds);
     } else {
       childs.erase(childs.begin() + i);
     }
   }
 
+
   //TODO: Check if we have to make the child object null;
 }
 
-void FogPlacementOptimizer::completeExecutionGraphWithFogTopology(FogExecutionPlan graph, FogTopologyPlanPtr sharedPtr) {
+void FogPlacementOptimizer::completeExecutionGraphWithFogTopology(FogExecutionPlan graph,
+                                                                  FogTopologyPlanPtr sharedPtr) {
 
   const vector<FogEdge> &allEdges = sharedPtr->getFogGraph().getAllEdges();
 
@@ -80,7 +96,7 @@ void FogPlacementOptimizer::completeExecutionGraphWithFogTopology(FogExecutionPl
 };
 
 deque<FogTopologyEntryPtr> FogPlacementOptimizer::getCandidateFogNodes(const FogGraph &fogGraph,
-                                                const FogTopologyEntryPtr &targetSource) const {
+                                                                       const FogTopologyEntryPtr &targetSource) const {
 
   deque<FogTopologyEntryPtr> candidateNodes = {};
 
