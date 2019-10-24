@@ -1,5 +1,8 @@
 #pragma once
 
+#if defined(__APPLE__) || defined(__MACH__)
+#include <xlocale.h>
+#endif
 #include <string>
 #include <cpprest/http_listener.h>
 #include <pplx/pplxtasks.h>

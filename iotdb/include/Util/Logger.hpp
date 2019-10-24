@@ -6,6 +6,8 @@
 #include <log4cxx/logger.h>
 #include <log4cxx/patternlayout.h>
 
+#include <iostream>
+
 using namespace log4cxx;
 using namespace log4cxx::helpers;
 
