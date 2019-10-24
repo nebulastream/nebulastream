@@ -53,7 +53,7 @@ class Operator {
   virtual const OperatorPtr copy() const = 0;
   size_t cost;
   int operatorId;
-  std::vector<OperatorPtr> childs;
+  std::vector<OperatorPtr> childs{};
   OperatorPtr parent;
   virtual void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream &out) = 0;
   virtual void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream &out) = 0;

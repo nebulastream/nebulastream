@@ -26,7 +26,7 @@ class FogPlacementOptimizer {
    */
   virtual FogExecutionPlan initializeExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan) = 0;
 
-  void invalidateChildOperators(OperatorPtr &rootOperator, vector<int> &childOperatorIds);
+  void invalidateUnscheduledOperators(OperatorPtr &rootOperator, vector<int> &childOperatorIds);
 
   /**
    * @brief This method will traverse through all the nodes of the graphs and remove any reference to the operator not 
