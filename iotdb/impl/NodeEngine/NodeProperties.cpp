@@ -98,6 +98,7 @@ std::string NodeProperties::getClientPort()
     return port;
 }
 
+#if defined(__linux__)
 
 void NodeProperties::readNetworkStats() {
   this->_nets.clear();
@@ -188,6 +189,13 @@ void NodeProperties::readNetworkStats() {
   this->_metrics["nets"] = this->_nets;
 }
 
+#elif defined(__APPLE__) || defined(__MACH__)
+    void NodeProperties::readNetworkStats() {
+
+    }
+#else
+#error "Unsupported platform"
+#endif
 void NodeProperties::print()
 {
     std::cout << "cpu stats=" << std::endl;
@@ -202,6 +210,7 @@ void NodeProperties::print()
     std::cout << "filesystem stats=" << std::endl;
     std::cout << getFsStats() << std::endl;
 }
+#if defined(__linux__)
 void NodeProperties::readMemStats() {
   this->_mem.clear();
 
@@ -227,7 +236,11 @@ void NodeProperties::readMemStats() {
 
   this->_metrics["mem"] = this->_mem;
 }
+#else
+    void NodeProperties::readMemStats() {
 
+    }
+#endif
 void NodeProperties::readFsStats() {
   // this->_cpus = JSON({});
   this->_fs.clear();

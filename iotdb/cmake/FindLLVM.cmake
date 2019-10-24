@@ -31,7 +31,7 @@
 # system default locations such as /usr/local/bin. Executing find_program()
 # multiples times is the approach recommended in the docs.
 
-set(llvm_config_names llvm-config-8.0 llvm-config80
+set(llvm_config_names llvm-config-8.0 llvm-config80 llvm-config8
 llvm-config-7.0 llvm-config70
 llvm-config-6.0 llvm-config60
 llvm-config-5.0 llvm-config50

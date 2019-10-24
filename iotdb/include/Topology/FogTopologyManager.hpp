@@ -4,6 +4,9 @@
 #include <memory>
 
 #include <Topology/FogTopologyPlan.hpp>
+#if defined(__APPLE__) || defined(__MACH__)
+#include <xlocale.h>
+#endif
 #include <cpprest/json.h>
 #include "Util/CPUCapacity.hpp"
 

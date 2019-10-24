@@ -1,8 +1,8 @@
+#include <API/InputQuery.hpp>
 
 #include <REST/runtime_utils.hpp>
 #include <REST/std_service.hpp>
 #include <REST/Controller/RestController.hpp>
-#include <API/InputQuery.hpp>
 #include <CodeGen/QueryPlanBuilder.hpp>
 #include <Topology/FogTopologyManager.hpp>
 

@@ -4,7 +4,7 @@
 
 if [ $# -eq 0 ]
 then
-    mkdir -p /iotdb/build &&  cd /iotdb/build && cmake -DCMAKE_BUILD_TYPE=Debug -DBoost_NO_SYSTEM_PATHS=TRUE -DBoost_INCLUDE_DIR="/usr/include" -DBoost_LIBRARY_DIR="/usr/lib/x86_64-linux-gnu" ..
+    mkdir -p /iotdb/build &&  cd /iotdb/build && cmake -DCMAKE_BUILD_TYPE=Debug -DBoost_NO_SYSTEM_PATHS=TRUE -DBoost_INCLUDE_DIR="/usr/include" -DBoost_LIBRARY_DIR="/usr/lib/x86_64-linux-gnu" -DCPPRESTSDK_DIR="/usr/lib/x86_64-linux-gnu/cmake/" ..
     make -j8 && make test_debug
     tail -f
 else
