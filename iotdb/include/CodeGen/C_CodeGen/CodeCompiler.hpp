@@ -2,19 +2,10 @@
 #define C_CODE_COMPILER_HPP
 
 #include <Util/TimeMeasurement.hpp>
-#include <clang/Basic/LLVM.h>
 #include <memory>
 #include <string>
 #include <vector>
 
-namespace llvm {
-class LLVMContext;
-class ExecutionEngine;
-} // namespace llvm
-
-namespace clang {
-class CompilerInstance;
-}
 
 namespace iotdb {
 class PipelineStage;
@@ -79,21 +70,8 @@ class CCodeCompiler {
 
     void callSystemCompiler(const std::vector<std::string>& args);
 
-    CompiledCCodePtr compileWithJITCompiler(const std::string& source, const Timestamp pch_time);
-
-    void initLLVM();
-
-    void prepareClangCompiler(const std::string& source, const std::vector<const char*>& args,
-                              clang::CompilerInstance& compiler);
-
-    std::pair<std::shared_ptr<llvm::LLVMContext>, std::shared_ptr<llvm::ExecutionEngine>>
-    createLLVMContextAndEngine(clang::CompilerInstance& compiler);
-
-    std::vector<const char*> convertStringToCharPtrVec(const std::vector<std::string>& data);
-
     void handleDebugging(const std::string& source);
 
-    bool use_clang_jit_ = false;
     bool show_generated_code_ = false;
     bool debug_code_generator_ = false;
     bool keep_last_generated_query_code_ = false;
