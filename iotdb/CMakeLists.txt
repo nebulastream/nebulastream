@@ -27,7 +27,7 @@ if(COMPILER_SUPPORTS_MARCH_NATIVE)
 endif()
 
 # LLVM
-find_package(LLVM 3.6.0 REQUIRED)
+find_package(LLVM 3 REQUIRED)
 find_package(clang REQUIRED)
 
 # ZMQ
@@ -86,27 +86,17 @@ set(CLANG_FORMAT_EXECUTABLE ${LLVM_ROOT_DIR}/bin/clang-format)
 set(GENERATED_CODE_DIRECTORY ${PROJECT_BINARY_DIR}/generated-code)
 set(PATH_TO_IOTDB_SOURCE_CODE ${PROJECT_SOURCE_DIR})
 
-# set clang binary for query compilation
-execute_process(COMMAND ${LLVM_CONFIG_EXECUTABLE} --prefix OUTPUT_VARIABLE LLVM_INSTALL_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
-set(QUERY_COMPILATION_CC ${LLVM_INSTALL_PREFIX}/bin/clang)
-set(QUERY_COMPILATION_CXX ${LLVM_INSTALL_PREFIX}/bin/clang++)
-
-execute_process(COMMAND ${LLVM_CONFIG_EXECUTABLE} --version OUTPUT_VARIABLE CLANG_VERSION OUTPUT_STRIP_TRAILING_WHITESPACE)
-set(QUERY_COMPILATION_CLANG_VERSION ${CLANG_VERSION})
-
 # Print definition values.
 message( STATUS "Clang Executable: ${CLANG_EXECUTABLE}" )
 message( STATUS "Clang-Format Executable: ${CLANG_FORMAT_EXECUTABLE}" )
 message( STATUS "Generated Code Directory: ${GENERATED_CODE_DIRECTORY}" )
 
 # Add definitions as compile flag.
-add_definitions(-DLLVM_VERSION=${LLVM_VERSION_MAJOR}${LLVM_VERSION_MINOR})
 add_definitions( -D 'CLANG_EXECUTABLE=\"${CLANG_EXECUTABLE}\"' )
 add_definitions( -D 'CLANG_FORMAT_EXECUTABLE=\"${CLANG_FORMAT_EXECUTABLE}\"' )
 add_definitions( -D 'GENERATED_CODE_DIRECTORY=\"${GENERATED_CODE_DIRECTORY}\"' )
 add_definitions( -D 'PATH_TO_IOTDB_SOURCE_CODE=\"${PATH_TO_IOTDB_SOURCE_CODE}\"' )
 
-add_definitions( -D 'QUERY_COMPILATION_CLANG_VERSION=\"${LLVM_VERSION_BASE_STRING}\"')
 add_definitions( -D 'QUERY_COMPILATION_CC=\"${QUERY_COMPILATION_CC}\"' )
 add_definitions( -D 'CLANG_INCLUDE_DIRS=\"${CLANG_INCLUDE_DIRS}\"' )
 
@@ -114,12 +104,10 @@ add_definitions( -D 'CLANG_INCLUDE_DIRS=\"${CLANG_INCLUDE_DIRS}\"' )
 add_definitions( -D '__STDC_CONSTANT_MACROS')
 add_definitions( -D '__STDC_LIMIT_MACROS' )
 
-include_directories(${CLANG_INCLUDE_DIRS})
-include_directories(${LLVM_INCLUDE_DIRS})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLVM_CFLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LLVM_LDFLAGS}")
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${LLVM_LDFLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
+set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
 
 ###########################################################################################
 
@@ -131,32 +119,21 @@ get_source_iotdb(iotdb_SOURCE_FILES)
 get_header_iotdb(iotdb_HEADER_FILES)
 add_library(iotdb SHARED ${iotdb_SOURCE_FILES} ${iotdb_HEADER_FILES})
 target_include_directories(iotdb PUBLIC "include")
-target_link_libraries(iotdb ${CLANG_LIBS} ${LIBRARIES} ${LLVM_LIBRARIES} ${LLVM_LDFLAGS})
+target_link_libraries(iotdb ${LIBRARIES})
 
 # Documentation
 add_subdirectory(docs)
 
-message( STATUS "LLVM_LIBRARIES:" ${LLVM_LIBRARIES} )
-message( STATUS "LLVM_INCLUDE:" ${INCLUDE_DIRS} )
-
-#add_executable(llvm_test llvm_test.cpp)
-#target_link_libraries(llvm_test iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
-#target_include_directories(llvm_test PUBLIC "include")
-
-#add_executable(ClangAstBuilder ClangAstBuilder.cpp)
-#target_link_libraries(ClangAstBuilder iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
-#target_include_directories(ClangAstBuilder PUBLIC "include")
-
 add_executable(iotNode iotNode.cpp)
-target_link_libraries(iotNode iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS})
+target_link_libraries(iotNode iotdb)
 target_include_directories(iotNode PUBLIC "include")
 
 add_executable(iotBroker iotBroker.cpp)
-target_link_libraries(iotBroker iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS})
+target_link_libraries(iotBroker iotdb)
 target_include_directories(iotBroker PUBLIC "include")
 
 add_executable(iotMaster iotMaster.cpp)
-target_link_libraries(iotMaster iotdb ${LLVM_MODULE_LIBS} ${LLVM_LDFLAGS} clangTooling)
+target_link_libraries(iotMaster iotdb)
 target_include_directories(iotMaster PUBLIC "include")
 
 add_executable(iotClient iotClient.cpp)
