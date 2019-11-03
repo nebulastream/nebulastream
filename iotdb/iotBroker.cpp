@@ -48,7 +48,7 @@ void session(socket_ptr sock)
         throw boost::system::system_error(error); // Some other error.g
 
       NodePropertiesPtr ptr = std::make_shared<NodeProperties>();
-      ptr->load(data);
+      ptr->set(data);
       IOTDB_DEBUG("IOTBROKER: sending replay")
       char reply[14];
       IOTDB_DEBUG("IOTBROKER: Host= " << ptr->getClientName() << ":" << ptr->getClientPort() << " try to register")

@@ -11,7 +11,7 @@ JSON NodeEngine::getNodePropertiesAsJSON()
 	props->readMemStats();
 	props->readCpuStats();
 	props->readNetworkStats();
-	props->readFsStats();
+	props->readDiskStats();
 
 	return props->load();
 }
