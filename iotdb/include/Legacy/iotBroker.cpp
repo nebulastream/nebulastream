@@ -15,7 +15,7 @@
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 #include <thread>
-#include <NodeEngine/json.hpp>
+//#include <NodeEngine/json.hpp>
 #include <NodeEngine/NodeProperties.hpp>
 #include <string>
 #include <boost/lexical_cast.hpp>
