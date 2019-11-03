@@ -23,6 +23,11 @@ using JSON = nlohmann::json;
 
 class NodeProperties {
 public:
+
+    /**
+     * @brief create a new NodeProperties object
+     * @param default 0 cpus
+     */
     NodeProperties():nbrProcessors(0) {};
 
     ~NodeProperties() {}
