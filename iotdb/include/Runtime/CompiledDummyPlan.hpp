@@ -9,7 +9,7 @@
 #define TESTS_TESTPLANS_COMPILEDDUMMYPLAN_HPP_
 #include <API/InputQuery.hpp>
 #include <CodeGen/HandCodedQueryExecutionPlan.hpp>
-#include <Runtime/Dispatcher.hpp>
+#include <NodeEngine/Dispatcher.hpp>
 #include <Runtime/GeneratorSource.hpp>
 #include <memory>
 

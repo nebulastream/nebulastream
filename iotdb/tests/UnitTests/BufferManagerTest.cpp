@@ -8,7 +8,7 @@
 #include <log4cxx/appender.h>
 #include <gtest/gtest.h>
 #include <Util/Logger.hpp>
-#include <Runtime/BufferManager.hpp>
+#include <NodeEngine/BufferManager.hpp>
 #include <random>
 
 

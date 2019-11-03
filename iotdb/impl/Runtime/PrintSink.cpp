@@ -4,7 +4,7 @@
 
 #include <zmq.hpp>
 
-#include <Runtime/Dispatcher.hpp>
+#include <NodeEngine/Dispatcher.hpp>
 #include <Runtime/PrintSink.hpp>
 #include <Util/Logger.hpp>
 

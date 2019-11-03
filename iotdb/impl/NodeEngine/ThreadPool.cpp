@@ -5,9 +5,9 @@
  *      Author: zeuchste
  */
 
-#include <Runtime/Dispatcher.hpp>
-#include <Runtime/Task.hpp>
-#include <Runtime/ThreadPool.hpp>
+#include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/Task.hpp>
+#include <NodeEngine/ThreadPool.hpp>
 #include <Util/Logger.hpp>
 #include <functional>
 
