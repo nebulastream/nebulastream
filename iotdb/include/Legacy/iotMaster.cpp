@@ -7,7 +7,7 @@
 #include <API/UserAPIExpression.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Optimizer/FogOptimizer.hpp>
-#include <Optimizer/FogRunTime.hpp>
+//#include <Optimizer/FogRunTime.hpp>
 #include <Runtime/CompiledDummyPlan.hpp>
 #include <Util/Logger.hpp>
 

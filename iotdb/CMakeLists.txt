@@ -132,9 +132,9 @@ add_executable(iotBroker iotBroker.cpp)
 target_link_libraries(iotBroker iotdb)
 target_include_directories(iotBroker PUBLIC "include")
 
-add_executable(iotMaster iotMaster.cpp)
-target_link_libraries(iotMaster iotdb)
-target_include_directories(iotMaster PUBLIC "include")
+#add_executable(iotMaster iotMaster.cpp)
+#target_link_libraries(iotMaster iotdb)
+#target_include_directories(iotMaster PUBLIC "include")
 
 add_executable(iotClient iotClient.cpp)
 target_link_libraries(iotClient ${LIBRARIES})
