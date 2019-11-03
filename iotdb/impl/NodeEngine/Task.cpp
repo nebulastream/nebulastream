@@ -7,9 +7,9 @@
 
 #include <CodeGen/QueryExecutionPlan.hpp>
 #include <Core/TupleBuffer.hpp>
-#include <Runtime/BufferManager.hpp>
+#include <NodeEngine/BufferManager.hpp>
 #include <Runtime/DataSource.hpp>
-#include <Runtime/Task.hpp>
+#include <NodeEngine/Task.hpp>
 
 namespace iotdb {
 

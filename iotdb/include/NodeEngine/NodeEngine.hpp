@@ -1,18 +1,20 @@
-#ifndef _IOT_NODE_H
-#define _IOT_NODE_H
+#ifndef NODE_ENGINE_H
+#define NODE_ENGINE_H
 
-#include "../Runtime/CompiledDummyPlan.hpp"
+//#include "../Runtime/CompiledDummyPlan.hpp"
 #include "NodeProperties.hpp"
 //#include "json.hpp"
 #include <CodeGen/QueryExecutionPlan.hpp>
-#include <Runtime/Dispatcher.hpp>
-#include <Runtime/ThreadPool.hpp>
+#include <API/Config.hpp>
+#include <NodeEngine/ThreadPool.hpp>
+#include <NodeEngine/Dispatcher.hpp>
 #include <iostream>
 #include <pthread.h>
 #include <string>
 #include <unistd.h>
 #include <vector>
 #include <zmq.hpp>
+
 
 namespace iotdb {
 using JSON = nlohmann::json;
@@ -26,6 +28,9 @@ public:
 
 	void init();
 	void deployQuery(QueryExecutionPlanPtr ptr);
+	void undeployQuery(QueryExecutionPlanPtr qep);
+
+	void applyConfig(Config& conf);
 	void start();
 	void stop();
 
@@ -34,9 +39,11 @@ public:
 
 private:
   NodeProperties* props;
+  std::vector<QueryExecutionPlanPtr> qeps;
+
 };
 
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
 
 } // namespace iotdb
-#endif // _IOT_NODE_H
+#endif // NODE_ENGINE_H

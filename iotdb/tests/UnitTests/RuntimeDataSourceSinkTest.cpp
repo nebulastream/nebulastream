@@ -7,7 +7,7 @@
 
 #include <API/Schema.hpp>
 #include <Core/TupleBuffer.hpp>
-#include <Runtime/BufferManager.hpp>
+#include <NodeEngine/BufferManager.hpp>
 #include <Runtime/DataSink.hpp>
 #include <Runtime/DataSource.hpp>
 #include <Util/Logger.hpp>

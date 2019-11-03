@@ -7,7 +7,7 @@
 
 #include <Runtime/CSVSource.hpp>
 #include <Runtime/DataSource.hpp>
-#include <Runtime/Dispatcher.hpp>
+#include <NodeEngine/Dispatcher.hpp>
 #include <assert.h>
 #include <fstream>
 #include <sstream>

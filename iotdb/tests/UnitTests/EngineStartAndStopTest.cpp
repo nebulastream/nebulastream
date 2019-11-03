@@ -10,9 +10,9 @@
 
 #include "../../include/Runtime/CompiledDummyPlan.hpp"
 #include <Runtime/DataSource.hpp>
-#include <Runtime/Dispatcher.hpp>
+#include <NodeEngine/Dispatcher.hpp>
 #include <Runtime/GeneratorSource.hpp>
-#include <Runtime/ThreadPool.hpp>
+#include <NodeEngine/ThreadPool.hpp>
 
 namespace iotdb {
 

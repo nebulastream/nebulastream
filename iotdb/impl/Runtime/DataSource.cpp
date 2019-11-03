@@ -5,7 +5,7 @@
 #include <random>
 
 #include <Runtime/BinarySource.hpp>
-#include <Runtime/Dispatcher.hpp>
+#include <NodeEngine/Dispatcher.hpp>
 #include <Runtime/GeneratorSource.hpp>
 #include <Runtime/YSBGeneratorSource.hpp>
 #include <Runtime/CSVSource.hpp>

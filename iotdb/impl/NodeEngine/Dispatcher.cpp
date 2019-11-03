@@ -4,7 +4,7 @@
  *  Created on: Dec 19, 2018
  *      Author: zeuchste
  */
-#include <Runtime/Dispatcher.hpp>
+#include <NodeEngine/Dispatcher.hpp>
 #include <Runtime/Window.hpp>
 #include <Util/Logger.hpp>
 #include <assert.h>

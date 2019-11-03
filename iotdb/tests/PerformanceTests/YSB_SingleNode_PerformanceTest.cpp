@@ -12,8 +12,8 @@
 #include <Runtime/Window.hpp>
 #include <Runtime/YSBWindow.hpp>
 
-#include <Runtime/Dispatcher.hpp>
-#include <Runtime/ThreadPool.hpp>
+#include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/ThreadPool.hpp>
 #include <Runtime/YSBGeneratorSource.hpp>
 #include <Util/Logger.hpp>
 #include <boost/program_options.hpp>
