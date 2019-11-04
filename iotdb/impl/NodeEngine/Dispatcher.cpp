@@ -1,6 +1,6 @@
 /*
  * General considerations:
- *  - do we really need all mutexex=
+ *  - do we really need all mutex?
  */
 #include <NodeEngine/Dispatcher.hpp>
 #include <Runtime/Window.hpp>
@@ -20,11 +20,12 @@ Dispatcher::Dispatcher()
       workerHitEmptyTaskQueue(0),
       processedTasks(0),
       processedTuple(0),
-      startTime(0) {
+      processedBuffers(0){
   IOTDB_DEBUG("Init Dispatcher")
 }
 
 Dispatcher::~Dispatcher() {
+  IOTDB_DEBUG("Reset Dispatcher")
   resetDispatcher();
 }
 
@@ -37,11 +38,16 @@ void Dispatcher::resetDispatcher() {
   sink_to_query_map.clear();
   IOTDB_DEBUG("Dispatcher: Destroy window_to_query_map")
   window_to_query_map.clear();
+
+  workerHitEmptyTaskQueue = 0;
+  processedTasks = 0;
+  processedTuple = 0;
+  processedBuffers = 0;
 }
 
 bool Dispatcher::registerQuery(const QueryExecutionPlanPtr qep) {
   std::unique_lock<std::mutex> lock(queryMutex);
-  //TODO: do we have to test/enforce here that each QEP has at least one sink and source?
+//TODO: do we have to test/enforce here that each QEP has at least one sink and source?
 
   /**
    * test if elements already exist
@@ -81,26 +87,24 @@ bool Dispatcher::registerQuery(const QueryExecutionPlanPtr qep) {
   /**
    * add elements
    */
-  auto sources = qep->getSources();
   for (auto source : sources) {
     IOTDB_DEBUG("Dispatcher: add source" << source)
     source_to_query_map[source.get()].emplace_back(qep);
     source->start();
   }
 
-  auto windows = qep->getWindows();
   for (auto window : windows) {
     IOTDB_DEBUG("Dispatcher: add window" << window)
     window_to_query_map[window.get()].emplace_back(qep);
     window->setup();
   }
 
-  auto sinks = qep->getSinks();
   for (auto sink : sinks) {
     IOTDB_DEBUG("Dispatcher: add sink" << sink)
     sink_to_query_map[sink.get()].emplace_back(qep);
     sink->setup();
   }
+  return true;
 }
 
 void Dispatcher::deregisterQuery(const QueryExecutionPlanPtr qep) {
@@ -170,7 +174,7 @@ void Dispatcher::deregisterQuery(const QueryExecutionPlanPtr qep) {
 TaskPtr Dispatcher::getWork(bool& threadPool_running) {
   std::unique_lock<std::mutex> lock(workMutex);
 
-  //wait while queue is empty but thread pool is running
+//wait while queue is empty but thread pool is running
   while (task_queue.empty() && threadPool_running) {
     workerHitEmptyTaskQueue++;
     cv.wait(lock);
@@ -181,7 +185,7 @@ TaskPtr Dispatcher::getWork(bool& threadPool_running) {
     }
   }
 
-  //there is a potential task in the queue and the thread pool is running
+//there is a potential task in the queue and the thread pool is running
   TaskPtr task;
   if (threadPool_running) {
     task = task_queue.front();
@@ -198,7 +202,7 @@ TaskPtr Dispatcher::getWork(bool& threadPool_running) {
 void Dispatcher::addWork(const TupleBufferPtr buf, DataSource* source) {
   std::unique_lock<std::mutex> lock(workMutex);
 
-  //get the queries that fetches data from this source
+//get the queries that fetches data from this source
   std::vector<QueryExecutionPlanPtr>& queries = source_to_query_map[source];
   for (uint64_t i = 0; i < queries.size(); ++i) {
     // for each respective source, create new task and put it into queue
@@ -216,6 +220,7 @@ void Dispatcher::completedWork(TaskPtr task) {
   std::unique_lock<std::mutex> lock(workMutex);
 
   processedTasks++;
+  processedBuffers++;//TODO:add Intermediate buffer count here
   processedTuple += task->getNumberOfTuples();
 
   task->releaseInputBuffer();

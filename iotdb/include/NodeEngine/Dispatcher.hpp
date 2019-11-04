@@ -24,7 +24,6 @@ namespace iotdb {
  * 2.) a window map to map one window to N queries TODO:maybe should be removed later
  * 3.) a data_sink to map one data sink to N queries
  */
-
 class Dispatcher {
  public:
 
@@ -78,19 +77,26 @@ class Dispatcher {
    */
   void printQEPStatistics(const QueryExecutionPlanPtr qep);
 
+  /**
+   * @brief Singleton implementation of dispatcher
+   */
   static Dispatcher& instance();
 
+  /**
+     * @brief notify all waiting threads in getWork() to wake up and try again
+     */
   void unblockThreads() {
     cv.notify_all();
   }
-  const size_t getProcessedTasks() const {
-    return processedTasks;
-  }
+
+  /**
+     * @brief reset dispatcher to inital state
+     */
   void resetDispatcher();
 
  private:
   /* implement singleton semantics: no construction,
-   * copying or destruction of Dispatcher objects
+   * copying or destruction of Dispatinitialcher objects
    * outside of the class */
   Dispatcher();
   Dispatcher(const Dispatcher&);
@@ -98,6 +104,7 @@ class Dispatcher {
   ~Dispatcher();
 
   std::vector<TaskPtr> task_queue;
+
   std::map<DataSource*, std::vector<QueryExecutionPlanPtr>> source_to_query_map;
   std::map<Window*, std::vector<QueryExecutionPlanPtr>> window_to_query_map;
   std::map<DataSink*, std::vector<QueryExecutionPlanPtr>> sink_to_query_map;
@@ -112,9 +119,7 @@ class Dispatcher {
   std::atomic<size_t> workerHitEmptyTaskQueue;
   std::atomic<size_t> processedTasks;
   std::atomic<size_t> processedTuple;
-
   std::atomic<size_t> processedBuffers;
-  size_t startTime;
 };
 typedef std::shared_ptr<Dispatcher> DispatcherPtr;
 }
