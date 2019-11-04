@@ -23,6 +23,8 @@
 #include <stdio.h>
 
 namespace iotdb {
+using NanoSeconds = std::chrono::nanoseconds;
+using Clock = std::chrono::high_resolution_clock;
 size_t getTimestamp() { return std::chrono::duration_cast<NanoSeconds>(Clock::now().time_since_epoch()).count(); }
 
 struct __attribute__((packed)) ysbRecord {
@@ -168,7 +170,8 @@ int test(size_t toProcessedBuffers, size_t threadCnt, size_t campaignCnt, size_t
 
 	ThreadPool::instance().stop();
 
-	Dispatcher::instance().printGeneralStatistics(qep);
+	Dispatcher::instance().printGeneralStatistics();
+	Dispatcher::instance().printQEPStatistics(qep);
 	Dispatcher::instance().deregisterQuery(qep);
 }
 
