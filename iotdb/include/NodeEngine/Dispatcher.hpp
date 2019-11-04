@@ -14,60 +14,109 @@
 #include <Runtime/DataSource.hpp>
 #include <NodeEngine/Task.hpp>
 
-
 namespace iotdb {
-using NanoSeconds = std::chrono::nanoseconds;
-using Clock = std::chrono::high_resolution_clock;
 
-//Timestamp getTimestamp() { return std::chrono::duration_cast<NanoSeconds>(Clock::now().time_since_epoch()).count(); }
-
+/**
+ * @brief the dispatcher is the central class to process queries.
+ * It is source-driven. Each incoming buffer will add a task to the queue.
+ * The dispatcher maintains three structures:
+ * 1.) a data_source map to map one data source to N queries
+ * 2.) a window map to map one window to N queries TODO:maybe should be removed later
+ * 3.) a data_sink to map one data sink to N queries
+ */
 
 class Dispatcher {
-  public:
-    void registerQuery(const QueryExecutionPlanPtr);
-    void deregisterQuery(const QueryExecutionPlanPtr);
+ public:
 
-    TaskPtr getWork(bool& run_thread);
-    void addWork(const TupleBufferPtr, DataSource*);
-    void completedWork(TaskPtr task);
+  /**
+   * @brief register a query by extracting sources, windows and sink and add them to
+   * respective map
+   * @param QueryExecutionPlan to be deployed
+   */
+  bool registerQuery(const QueryExecutionPlanPtr);
 
-    void printStatistics(const QueryExecutionPlanPtr qep);
+  /**
+   * @brief deregister a query by extracting sources, windows and sink and remove them
+   * from respective map
+   * @param QueryExecutionPlan to be deployed
+   * @return bool indicating if register was successful
+   */
+  void deregisterQuery(const QueryExecutionPlanPtr);
 
-    static Dispatcher& instance();
+  /**
+   * @brief get task from task queue
+   * @param bool indicating if the thread pool is still running
+   * @return Pointer to task to execute
+   * if thread pool was shut down while waiting, pointer points to empty task
+   * TODO: how is an empty task defined?
+   */
+  TaskPtr getWork(bool& threadPool_running);
 
-    void unblockThreads() { cv.notify_all(); }
-    const size_t getProcessedTasks() const { return processedTasks; }
-    void resetDispatcher();
+  /**
+   * @brief add work to the dispatcher, this methods is source-driven and is called
+   * for each incoming buffer
+   * @param Pointer to the tuple buffer containing the data
+   * @param Pointer to the source at which the data arrived
+   */
+  void addWork(const TupleBufferPtr, DataSource*);
 
-  private:
-    /* implement singleton semantics: no construction,
-     * copying or destruction of Dispatcher objects
-     * outside of the class */
-    Dispatcher();
-    Dispatcher(const Dispatcher&);
-    Dispatcher& operator=(const Dispatcher&);
-    ~Dispatcher();
+  /**
+   * @brief finalize task execution by:
+   * 1.) update statistics (number of processed tuples and tasks)
+   * 2.) release input buffer (give back to the buffer manager)
+   * @param Pointer processed task
+   */
+  void completedWork(TaskPtr task);
 
-    std::vector<TaskPtr> task_queue;
-    std::map<DataSource*, std::vector<QueryExecutionPlanPtr>> source_to_query_map;
-    std::map<Window*, std::vector<QueryExecutionPlanPtr>> window_to_query_map;
-    std::map<DataSink*, std::vector<QueryExecutionPlanPtr>> sink_to_query_map;
+  /**
+   * @brief print general statistics of Dispatcher and Buffer Manager
+   */
+  void printGeneralStatistics();
 
-    std::mutex bufferMutex;
-    std::mutex queryMutex;
-    std::mutex workMutex;
+  /**
+   * @brief print QEP statistics of Dispatcher and buffer Manager
+   */
+  void printQEPStatistics(const QueryExecutionPlanPtr qep);
 
-    std::condition_variable cv;
+  static Dispatcher& instance();
 
-    // statistics:
-    std::atomic<size_t> workerHitEmptyTaskQueue;
-    std::atomic<size_t> processedTasks;
-    std::atomic<size_t> processedTuple;
+  void unblockThreads() {
+    cv.notify_all();
+  }
+  const size_t getProcessedTasks() const {
+    return processedTasks;
+  }
+  void resetDispatcher();
 
-    std::atomic<size_t> processedBuffers;
-    size_t startTime;
+ private:
+  /* implement singleton semantics: no construction,
+   * copying or destruction of Dispatcher objects
+   * outside of the class */
+  Dispatcher();
+  Dispatcher(const Dispatcher&);
+  Dispatcher& operator=(const Dispatcher&);
+  ~Dispatcher();
+
+  std::vector<TaskPtr> task_queue;
+  std::map<DataSource*, std::vector<QueryExecutionPlanPtr>> source_to_query_map;
+  std::map<Window*, std::vector<QueryExecutionPlanPtr>> window_to_query_map;
+  std::map<DataSink*, std::vector<QueryExecutionPlanPtr>> sink_to_query_map;
+
+  std::mutex bufferMutex;
+  std::mutex queryMutex;
+  std::mutex workMutex;
+
+  std::condition_variable cv;
+
+  // statistics:
+  std::atomic<size_t> workerHitEmptyTaskQueue;
+  std::atomic<size_t> processedTasks;
+  std::atomic<size_t> processedTuple;
+
+  std::atomic<size_t> processedBuffers;
+  size_t startTime;
 };
 typedef std::shared_ptr<Dispatcher> DispatcherPtr;
-} // namespace iotdb
+}
 
 #endif /* INCLUDE_DISPATCHER_H_ */

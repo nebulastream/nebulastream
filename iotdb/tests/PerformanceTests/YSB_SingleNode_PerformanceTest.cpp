@@ -168,7 +168,7 @@ int test(size_t toProcessedBuffers, size_t threadCnt, size_t campaignCnt, size_t
 
 	ThreadPool::instance().stop();
 
-	Dispatcher::instance().printStatistics(qep);
+	Dispatcher::instance().printGeneralStatistics(qep);
 	Dispatcher::instance().deregisterQuery(qep);
 }
 
