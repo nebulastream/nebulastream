@@ -22,6 +22,8 @@ NodeProperties* NodeEngine::getNodeProperties()
 
 void NodeEngine::deployQuery(QueryExecutionPlanPtr qep)
 {
+  IOTDB_DEBUG("NODEENGINE: deploy query" << qep)
+
 	Dispatcher::instance().registerQuery(qep);
 	qeps.push_back(qep);
 //	ThreadPool::instance().start(1);
