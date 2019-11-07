@@ -1,16 +1,12 @@
-/*
- * FogTopologyEntry.hpp
- *
- *  Created on: Jan 31, 2019
- *      Author: zeuchste
- */
-
 #ifndef INCLUDE_TOPOLOGY_FOGTOPOLOGYENTRY_HPP_
 #define INCLUDE_TOPOLOGY_FOGTOPOLOGYENTRY_HPP_
 #include <API/InputQuery.hpp>
 #include <string>
 
 namespace iotdb {
+
+#define INVALID_NODE_ID -1
+
 enum FogNodeType { Worker, Sensor };
 
 class FogTopologyEntry {

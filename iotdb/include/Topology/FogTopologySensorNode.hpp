@@ -4,8 +4,6 @@
 #include "FogTopologyEntry.hpp"
 #include <memory>
 
-#define INVALID_NODE_ID 101
-
 namespace iotdb {
 
 /**
@@ -50,7 +48,7 @@ class FogTopologySensorNode : public FogTopologyEntry {
 
   std::string getEntryTypeString() { return "Sensor"; }
 
-  string getHostname() override {
+  std::string getHostname() override {
     return hostName;
   }
 
@@ -64,7 +62,7 @@ class FogTopologySensorNode : public FogTopologyEntry {
     this->sensorType = sensorType;
   }
 
-  void setHostName(const string &host_name) {
+  void setHostName(const std::string &host_name) {
     hostName = host_name;
   }
 

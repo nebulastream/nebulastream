@@ -52,12 +52,14 @@ void FogPlacementOptimizer::invalidateUnscheduledOperators(OperatorPtr &rootOper
   }
 }
 
+static const int zmqDefaultPort = 5555;
 //FIXME: Currently the system is not designed for multiple children. Therefore, the logic is ignoring the fact
 // that there could be more than one child. Once the code generator able to deal with it this logic need to be
 // fixed.
 void FogPlacementOptimizer::addSystemGeneratedSourceSinkOperators(const Schema &schema, FogExecutionPlan graph) {
 
-  const vector<ExecutionVertex> &executionNodes = graph.getExecutionGraph().getAllVertex();
+  const ExecutionGraph &exeGraph = graph.getExecutionGraph();
+  const vector<ExecutionVertex> &executionNodes = exeGraph.getAllVertex();
   for (ExecutionVertex executionNode: executionNodes) {
     ExecutionNodePtr &executionNodePtr = executionNode.ptr;
 
@@ -72,10 +74,10 @@ void FogPlacementOptimizer::addSystemGeneratedSourceSinkOperators(const Schema &
       continue;
     }
 
-    vector<int> &childOperatorIds = executionNodePtr->getChildOperatorIds();
     if (rootOperator->getOperatorType() != SOURCE_OP) {
       //create sys introduced src operator
-      const OperatorPtr &sysSrcOptr = createSourceOperator(createZmqSource(schema, "localhost", 3));
+      //Note: the source zmq is always located at localhost
+      const OperatorPtr &sysSrcOptr = createSourceOperator(createZmqSource(schema, "localhost", zmqDefaultPort));
 
       //bind sys introduced operators to each other
       rootOperator->childs = {sysSrcOptr};
@@ -98,7 +100,12 @@ void FogPlacementOptimizer::addSystemGeneratedSourceSinkOperators(const Schema &
     if (traverse->getOperatorType() != SINK_OP) {
 
       //create sys introduced sink operator
-      const OperatorPtr &sysSinkOptr = createSinkOperator(createZmqSink(schema, "localhost", 3));
+
+      const vector<ExecutionEdge> &edges = exeGraph.getAllEdgesFromNode(executionNodePtr);
+      //FIXME: More than two sources are not supported feature at this moment. Once the feature is available please
+      // fix the source code
+      const string &destHostName = edges[0].ptr->getDestination()->getFogNode()->getHostname();
+      const OperatorPtr &sysSinkOptr = createSinkOperator(createZmqSink(schema, destHostName, zmqDefaultPort));
 
       //Update the operator name
       string optrName = executionNodePtr->getOperatorName();
@@ -117,8 +124,8 @@ void FogPlacementOptimizer::convertFwdOptr(const Schema &schema,
                                            ExecutionNodePtr &executionNodePtr) const {//create sys introduced src and sink operators
 
   //Note: src operator is using localhost because src zmq will run locally
-  const OperatorPtr &sysSrcOptr = createSourceOperator(createZmqSource(schema, "localhost", 3));
-  const OperatorPtr &sysSinkOptr = createSinkOperator(createZmqSink(schema, "localhost", 3));
+  const OperatorPtr &sysSrcOptr = createSourceOperator(createZmqSource(schema, "localhost", zmqDefaultPort));
+  const OperatorPtr &sysSinkOptr = createSinkOperator(createZmqSink(schema, "localhost", zmqDefaultPort));
 
   sysSrcOptr->parent = sysSinkOptr;
   sysSinkOptr->childs = {sysSrcOptr};

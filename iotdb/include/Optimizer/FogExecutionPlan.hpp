@@ -11,89 +11,105 @@
 
 namespace iotdb {
 
-    using namespace web;
+using namespace web;
 
-    struct ExecutionVertex {
-        int id;
-        ExecutionNodePtr ptr;
-    };
-    struct ExecutionEdge {
-        int id;
-        ExecutionNodeLinkPtr ptr;
-    };
-    using executionGraph_t = boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS, ExecutionVertex, ExecutionEdge>;
-    using executionVertex_t = boost::graph_traits<executionGraph_t>::vertex_descriptor;
-    using executionVertex_iterator = boost::graph_traits<executionGraph_t>::vertex_iterator;
-    using executionEdge_t = boost::graph_traits<executionGraph_t>::edge_descriptor;
-    using executionEdge_iterator = boost::graph_traits<executionGraph_t>::edge_iterator;
+struct ExecutionVertex {
+  int id;
+  ExecutionNodePtr ptr;
+};
+struct ExecutionEdge {
+  int id;
+  ExecutionNodeLinkPtr ptr;
+};
+using executionGraph_t = boost::adjacency_list<boost::listS,
+                                               boost::vecS,
+                                               boost::undirectedS,
+                                               ExecutionVertex,
+                                               ExecutionEdge>;
+using executionVertex_t = boost::graph_traits<executionGraph_t>::vertex_descriptor;
+using executionVertex_iterator = boost::graph_traits<executionGraph_t>::vertex_iterator;
+using executionEdge_t = boost::graph_traits<executionGraph_t>::edge_descriptor;
+using executionEdge_iterator = boost::graph_traits<executionGraph_t>::edge_iterator;
 
-    class ExecutionGraph {
+class ExecutionGraph {
 
-    private:
-        executionGraph_t graph;
+ private:
+  executionGraph_t graph;
 
-    public:
-        ExecutionGraph() {};
+ public:
+  ExecutionGraph() {};
 
-        ExecutionNodePtr getRoot();
+  ExecutionNodePtr getRoot();
 
-        const executionVertex_t getVertex(int search_id) const;
+  const executionVertex_t getVertex(int search_id) const;
 
-        bool hasVertex(int search_id) const;
+  bool hasVertex(int search_id) const;
 
-        bool addVertex(ExecutionNodePtr ptr);
+  bool addVertex(ExecutionNodePtr ptr);
 
-        vector<ExecutionVertex> getAllVertex() const;
+  vector<ExecutionVertex> getAllVertex() const;
 
-        bool removeVertex(int search_id);
+  bool removeVertex(int search_id);
 
-        const ExecutionNodePtr getNode(int search_id) const;
+  const ExecutionNodePtr getNode(int search_id) const;
 
-        ExecutionNodeLinkPtr getLink(ExecutionNodePtr sourceNode, ExecutionNodePtr destNode) const;
+  ExecutionNodeLinkPtr getLink(ExecutionNodePtr sourceNode, ExecutionNodePtr destNode) const;
 
-        bool hasLink(ExecutionNodePtr sourceNode, ExecutionNodePtr destNode) const;
+  bool hasLink(ExecutionNodePtr sourceNode, ExecutionNodePtr destNode) const;
 
-        const ExecutionEdge *getEdge(int search_id) const;
+  const ExecutionEdge *getEdge(int search_id) const;
 
-        vector<ExecutionEdge> getAllEdges() const;
+  vector<ExecutionEdge> getAllEdges() const;
 
-        bool hasEdge(int search_id) const;
+  bool hasEdge(int search_id) const;
 
-        bool addEdge(ExecutionNodeLinkPtr ptr);
+  bool addEdge(ExecutionNodeLinkPtr ptr);
 
-        std::string getGraphString();
+  std::string getGraphString();
 
-        const vector<ExecutionEdge> getAllEdgesToNode(ExecutionNodePtr destNode) const;
-    };
+  /**
+   * @brief get all edges coming to the node
+   * @param destNode
+   * @return
+   */
+  const vector<ExecutionEdge> getAllEdgesToNode(ExecutionNodePtr destNode) const;
 
-    class FogExecutionPlan {
+  /**
+   * @brief get all edges starting from the node.
+   * @param srcNode
+   * @return vector of edges
+   */
+  const vector<ExecutionEdge> getAllEdgesFromNode(ExecutionNodePtr srcNode) const;
+};
 
-    public:
-        FogExecutionPlan();
+class FogExecutionPlan {
 
-        ExecutionNodePtr getRootNode() const;
+ public:
+  FogExecutionPlan();
 
-        ExecutionNodePtr
-        createExecutionNode(std::string operatorName, std::string nodeName, FogTopologyEntryPtr fogNode,
-                            OperatorPtr executableOperator);
+  ExecutionNodePtr getRootNode() const;
 
-        ExecutionNodeLinkPtr createExecutionNodeLink(ExecutionNodePtr src, ExecutionNodePtr dst);
+  ExecutionNodePtr
+  createExecutionNode(std::string operatorName, std::string nodeName, FogTopologyEntryPtr fogNode,
+                      OperatorPtr executableOperator);
 
-        std::string getTopologyPlanString() const;
+  ExecutionNodeLinkPtr createExecutionNodeLink(ExecutionNodePtr src, ExecutionNodePtr dst);
 
-        ExecutionGraph getExecutionGraph() const;
+  std::string getTopologyPlanString() const;
 
-        bool hasVertex(int search_id);
+  ExecutionGraph getExecutionGraph() const;
 
-        ExecutionNodePtr getExecutionNode(int search_id);
+  bool hasVertex(int search_id);
 
-        json::value getExecutionGraphAsJson() const;
+  ExecutionNodePtr getExecutionNode(int search_id);
 
-    private:
-        ExecutionGraph *fGraph;
+  json::value getExecutionGraphAsJson() const;
 
-        vector<json::value> getChildrenNode(ExecutionNodePtr fogParentNode) const;
-    };
+ private:
+  ExecutionGraph *fGraph;
+
+  vector<json::value> getChildrenNode(ExecutionNodePtr fogParentNode) const;
+};
 };
 
 #endif //IOTDB_FOGEXECUTIONPLAN_HPP
