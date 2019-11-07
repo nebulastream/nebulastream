@@ -49,6 +49,14 @@ class FogTopologyWorkerNode : public FogTopologyEntry {
 
   int getRemainingCpuCapacity() { return remainingCPUCapacity; }
 
+  string getHostname() override {
+    return hostName;
+  }
+
+  void setHostName(const string &host_name) {
+    this->hostName = host_name;
+  }
+
   void isASinkNode(bool isASink) {
     this->isASink = isASink;
   }
@@ -73,6 +81,7 @@ class FogTopologyWorkerNode : public FogTopologyEntry {
   int cpuCapacity;
   int remainingCPUCapacity;
   bool isASink = false;
+  std::string hostName;
   InputQueryPtr query;
 };
 

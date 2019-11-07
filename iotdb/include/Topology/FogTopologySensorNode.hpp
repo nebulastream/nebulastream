@@ -50,6 +50,10 @@ class FogTopologySensorNode : public FogTopologyEntry {
 
   std::string getEntryTypeString() { return "Sensor"; }
 
+  string getHostname() override {
+    return hostName;
+  }
+
   void setQuery(InputQueryPtr pQuery) { this->query = pQuery; };
 
   std::string getSensorType() {
@@ -60,11 +64,16 @@ class FogTopologySensorNode : public FogTopologyEntry {
     this->sensorType = sensorType;
   }
 
+  void setHostName(const string &host_name) {
+    hostName = host_name;
+  }
+
  private:
   size_t sensor_id;
   int cpuCapacity;
   int remainingCPUCapacity;
   std::string sensorType;
+  std::string hostName;
   InputQueryPtr query;
 };
 
