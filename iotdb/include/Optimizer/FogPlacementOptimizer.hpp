@@ -69,6 +69,7 @@ class FogPlacementOptimizer {
    */
   deque<FogTopologyEntryPtr> getCandidateFogNodes(const FogGraph &fogGraph,
                                                   const FogTopologyEntryPtr &targetSource) const;
+  void convertFwdOptr(const Schema &schema, ExecutionNodePtr &executionNodePtr) const;
 };
 
 }
