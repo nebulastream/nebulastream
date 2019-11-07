@@ -20,7 +20,7 @@ Dispatcher::Dispatcher()
       workerHitEmptyTaskQueue(0),
       processedTasks(0),
       processedTuple(0),
-      processedBuffers(0){
+      processedBuffers(0) {
   IOTDB_DEBUG("Init Dispatcher")
 }
 
@@ -206,9 +206,9 @@ void Dispatcher::addWork(const TupleBufferPtr buf, DataSource* source) {
   std::vector<QueryExecutionPlanPtr>& queries = source_to_query_map[source];
   for (uint64_t i = 0; i < queries.size(); ++i) {
     // for each respective source, create new task and put it into queue
+    //TODO: is this handeled right? how do we get the stateID here?
     TaskPtr task(
-        new Task(queries[i], queries[i]->stageIdFromSource(source), source,
-                 buf));
+        new Task(queries[i], queries[i]->stageIdFromSource(source), buf));
     task_queue.push_back(task);
     IOTDB_DEBUG(
         "Dispatcher: added Task " << task.get() << " for source " << source << " for QEP " << queries[i].get() << " inputBuffer " << buf)
@@ -220,7 +220,7 @@ void Dispatcher::completedWork(TaskPtr task) {
   std::unique_lock<std::mutex> lock(workMutex);
 
   processedTasks++;
-  processedBuffers++;//TODO:add Intermediate buffer count here
+  processedBuffers++;
   processedTuple += task->getNumberOfTuples();
 
   task->releaseInputBuffer();
