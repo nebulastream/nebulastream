@@ -40,7 +40,7 @@ BufferManager &BufferManager::instance() {
 }
 
 void BufferManager::setNumberOfBuffers(size_t n) {
-  std::unique_lock<std::mutex> lock(mutex);
+//TODO: this should be somehow be protected
 
   //delete all existing buffers
   for (auto &entry : buffer_pool) {
@@ -55,8 +55,7 @@ void BufferManager::setNumberOfBuffers(size_t n) {
 }
 
 void BufferManager::setBufferSize(size_t size) {
-  std::unique_lock<std::mutex> lock(mutex);
-
+  //TODO: this should be somehow be protected
   size_t tmpBufferCnt = buffer_pool.size();
   //delete all existing buffers
   for (auto &entry : buffer_pool) {
