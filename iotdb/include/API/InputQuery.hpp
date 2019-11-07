@@ -29,7 +29,7 @@ class InputQuery {
   ~InputQuery();
 
   /**
-  * Creates a query from a particualr stream.
+  * @brief: Creates a query from a particualr stream.
   * @param sourceStream name of the stream to query.
   * @param schema @deprecated will be removed when we have the catalog.
   * @return the input query
@@ -37,43 +37,43 @@ class InputQuery {
   static InputQuery from(Stream &stream);
 
   /**
-   * Selects a field from the input schema and place it in the output schema.
+   * @brief: Selects a field from the input schema and place it in the output schema.
    * @param field
    * @return query
    */
   InputQuery &select(const Field &field);
 
   /**
-   * Selects two fields from the input schema and place them in the output schema.
+   * @brief: Selects two fields from the input schema and place them in the output schema.
    * @param field
    * @return query
    */
   InputQuery &select(const Field &field1, const Field &field2);
 
   /**
-   * Filter records according to the predicate.
+   * @brief: Filter records according to the predicate.
    * @param predicate
    * @return query
    */
   InputQuery &filter(const UserAPIExpression &predicate);
 
-        /**
-         * Map records to the resultField by the predicate.
-         * @param resultField
-         * @param predicate
-         * @return query
-         */
-        InputQuery &map(const AttributeField& resultField, const Predicate predicate);
+  /**
+   * @brief: Map records to the resultField by the predicate.
+   * @param resultField
+   * @param predicate
+   * @return query
+   */
+  InputQuery &map(const AttributeField &resultField, const Predicate predicate);
 
   /**
-   * Unify two queries.
+   * @brief: Unify two queries.
    * All records are contained in the result stream
    * @return query
    */
   InputQuery &combine(const InputQuery &sub_query);
 
   /**
-   * Joins two streams according to the join predicate.
+   * @brief: Joins two streams according to the join predicate.
    * @param sub_query right query.
    * @param joinPred join predicate.
    * @return query.
@@ -81,7 +81,7 @@ class InputQuery {
   InputQuery &join(const InputQuery &sub_query, const JoinPredicatePtr &joinPred);
 
   /**
-   * Creates a window aggregation.
+   * @brief: Creates a window aggregation.
    * @param windowType Window definition.
    * @param aggregation Window aggregation function.
    * @return query.
@@ -89,16 +89,24 @@ class InputQuery {
   InputQuery &window(const WindowTypePtr windowType, const WindowAggregationPtr aggregation);
 
   /**
-  * Registers the query as a source in the catalog.
+  * @brief: Registers the query as a source in the catalog.
   * @param name the name for the result stream.
   */
   InputQuery &to(const std::string &name);
 
   /**
-   * Adds a file sink, which writes all stream records to the destination file.
+   * @brief: Adds a file sink, which writes all stream records to the destination file.
    * @param file_name
    */
   InputQuery &writeToFile(const std::string &file_name);
+
+  /**
+   * @brief: Adds a zmq sink, which writes all stream records with a schema to a destination zmq.
+   * @param schema : schema of the event
+   * @param host : host where zmq server is running
+   * @param port : port zmq server is listening on
+   */
+  InputQuery &writeToZmq(const iotdb::Schema &schema, const std::string &host, const uint16_t &port);
 
   /**
    * Adds a print sink, which prints all query results to the output stream.

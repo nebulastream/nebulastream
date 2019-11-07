@@ -133,16 +133,16 @@ InputQuery &InputQuery::filter(const UserAPIExpression &predicate) {
   return *this;
 }
 
-    InputQuery &InputQuery::map(const AttributeField& field, const Predicate predicate) {
-        PredicatePtr pred = createPredicate(predicate);
-        AttributeFieldPtr attr = field.copy();
-        OperatorPtr op = createMapOperator(attr, pred);
-        int operatorId = this->getNextOperatorId();
-        op->setOperatorId(operatorId);
-        addChild(op, root);
-        root = op;
-        return *this;
-    }
+InputQuery &InputQuery::map(const AttributeField &field, const Predicate predicate) {
+  PredicatePtr pred = createPredicate(predicate);
+  AttributeFieldPtr attr = field.copy();
+  OperatorPtr op = createMapOperator(attr, pred);
+  int operatorId = this->getNextOperatorId();
+  op->setOperatorId(operatorId);
+  addChild(op, root);
+  root = op;
+  return *this;
+}
 
 InputQuery &InputQuery::combine(const iotdb::InputQuery &sub_query) {
   IOTDB_NOT_IMPLEMENTED
@@ -174,6 +174,15 @@ InputQuery &InputQuery::join(const InputQuery &sub_query, const JoinPredicatePtr
 // output operators
 InputQuery &InputQuery::writeToFile(const std::string &file_name) {
   OperatorPtr op = createSinkOperator(createBinaryFileSink(file_name));
+  int operatorId = this->getNextOperatorId();
+  op->setOperatorId(operatorId);
+  addChild(op, root);
+  root = op;
+  return *this;
+}
+
+InputQuery &InputQuery::writeToZmq(const iotdb::Schema &schema, const std::string &host, const uint16_t &port) {
+  OperatorPtr op = createSinkOperator(createZmqSink(schema, host, port));
   int operatorId = this->getNextOperatorId();
   op->setOperatorId(operatorId);
   addChild(op, root);
