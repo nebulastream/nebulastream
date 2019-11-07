@@ -41,6 +41,10 @@ class ExecutionNode {
     return fogNode;
   }
 
+  void setRootOperator(const OperatorPtr root) {
+    this->rootOperator = root;
+  }
+
   OperatorPtr &getRootOperator() {
     return rootOperator;
   }

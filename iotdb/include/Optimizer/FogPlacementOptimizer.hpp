@@ -37,6 +37,17 @@ class FogPlacementOptimizer {
   void removeNonResidentOperators(FogExecutionPlan graph);
 
   /**
+   * @brief This method will add system generated zmq source and sinks for each execution node.
+   * @note We use zmq for internal message transfer therefore the source and sink will be zmq based.
+   * @note This method will not append zmq source or sink if the operator chain in an execution node already contains
+   * user defined source or sink operator respectively.
+   *
+   * @param schema
+   * @param graph
+   */
+  void addSystemGeneratedSourceSinkOperators(const Schema &schema, FogExecutionPlan graph);
+
+  /**
    * @brief Fill the execution graph with forward operators in fog topology. 
    * @param graph 
    * @param sharedPtr 

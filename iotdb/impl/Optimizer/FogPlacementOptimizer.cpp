@@ -2,6 +2,7 @@
 #include <iostream>
 #include <Optimizer/impl/BottomUp.hpp>
 #include <Optimizer/impl/TopDown.hpp>
+#include <Runtime/DataSink.hpp>
 
 namespace iotdb {
 
@@ -50,8 +51,135 @@ void FogPlacementOptimizer::invalidateUnscheduledOperators(OperatorPtr &rootOper
     }
   }
 
-
   //TODO: Check if we have to make the child object null;
+}
+
+void FogPlacementOptimizer::addSystemGeneratedSourceSinkOperators(const Schema &schema, FogExecutionPlan graph) {
+
+  const vector<ExecutionVertex> &executionNodes = graph.getExecutionGraph().getAllVertex();
+  for (ExecutionVertex executionNode: executionNodes) {
+    ExecutionNodePtr &executionNodePtr = executionNode.ptr;
+
+    //Convert fwd operator
+    if (executionNodePtr->getOperatorName() == "FWD") {
+
+      //create sys introduced src and sink operators
+      const OperatorPtr &sysSrcOptr = createSourceOperator(createZmqSource(schema, "localhost", 3));
+      const OperatorPtr &sysSinkOptr = createSinkOperator(createZmqSink(schema, "localhost", 3));
+
+      sysSrcOptr->parent = sysSinkOptr;
+      sysSinkOptr->childs = {sysSrcOptr};
+
+      executionNodePtr->setRootOperator(sysSrcOptr);
+      executionNodePtr->setOperatorName("SOURCE(SYS)=>SINK(SYS)");
+      continue;
+    }
+
+    OperatorPtr &rootOperator = executionNodePtr->getRootOperator();
+    if (rootOperator == nullptr) {
+      continue;
+    }
+
+    vector<int> &childOperatorIds = executionNodePtr->getChildOperatorIds();
+
+    //If only one operator scheduled on the node
+    if (childOperatorIds.empty()) {
+
+      if (rootOperator->getOperatorType() != SOURCE_OP && rootOperator->getOperatorType()
+          != SINK_OP) { //Add source and sink operator if operator type not in (sink, source)
+
+        //create sys introduced src and sink operators
+        const OperatorPtr &sysSrcOptr = createSourceOperator(createZmqSource(schema, "localhost", 3));
+        const OperatorPtr &sysSinkOptr = createSinkOperator(createZmqSink(schema, "localhost", 3));
+
+        //bind sys introduced operators to each other
+        sysSrcOptr->parent = rootOperator;
+        rootOperator->childs = {sysSrcOptr};
+        rootOperator->parent = sysSinkOptr;
+        sysSinkOptr->childs = {rootOperator};
+
+        //Update the operator name
+        string optrName = executionNodePtr->getOperatorName();
+        optrName = "SOURCE(SYS)=>" + optrName + "=>SINK(SYS)";
+        executionNodePtr->setOperatorName(optrName);
+
+        //change the root operator to point to the sys introduced sink operator
+        executionNodePtr->setRootOperator(sysSrcOptr);
+      } else if (rootOperator->getOperatorType()
+          == SOURCE_OP) { //Add sink operator as child to the root operator and update root operator to point to child operator
+
+        //create sys introduced sink operator
+        const OperatorPtr &sysSinkOptr = createSinkOperator(createZmqSink(schema, "localhost", 3));
+
+        //bind sys introduced operators to each other
+        rootOperator->parent = sysSinkOptr;
+        sysSinkOptr->childs = {rootOperator};
+
+        //Update the operator name
+        string optrName = executionNodePtr->getOperatorName();
+        optrName = optrName + "=>SINK(SYS)";
+        executionNodePtr->setOperatorName(optrName);
+
+      } else if (rootOperator->getOperatorType() == SINK_OP) { //Add source operator as parent to the root operator
+
+        //create sys introduced src operator
+        const OperatorPtr &sysSrcOptr = createSourceOperator(createZmqSource(schema, "localhost", 3));
+
+        //bind sys introduced operators to each other
+        sysSrcOptr->parent = rootOperator;
+        rootOperator->childs = {sysSrcOptr};
+
+        //Update the operator name
+        string optrName = executionNodePtr->getOperatorName();
+        optrName = "SOURCE(SYS)=>" + optrName;
+        executionNodePtr->setOperatorName(optrName);
+
+        //change the root operator to point to the sys introduced sink operator
+        executionNodePtr->setRootOperator(sysSrcOptr);
+      }
+    } else {
+
+      if (rootOperator->getOperatorType() != SOURCE_OP) {
+        //create sys introduced src operator
+        const OperatorPtr &sysSrcOptr = createSourceOperator(createZmqSource(schema, "localhost", 3));
+
+        //bind sys introduced operators to each other
+        rootOperator->childs = {sysSrcOptr};
+        sysSrcOptr->parent = rootOperator;
+
+        //Update the operator name
+        string optrName = executionNodePtr->getOperatorName();
+        optrName = "SOURCE(SYS)=>" + optrName;
+        executionNodePtr->setOperatorName(optrName);
+
+        //change the root operator to point to the sys introduced sink operator
+        executionNodePtr->setRootOperator(sysSrcOptr);
+      }
+
+      //FIXME: Currently the system is not designed for multiple children. Therefore, the logic is ignoring the fact
+      // that there could be more than one child. Once the code generator able to deal with it this logic need to be
+      // fixed.
+      OperatorPtr traverse = rootOperator;
+      while (traverse->parent != nullptr) {
+        traverse = traverse->parent;
+      }
+
+      if (traverse->getOperatorType() != SINK_OP) {
+
+        //create sys introduced sink operator
+        const OperatorPtr &sysSinkOptr = createSinkOperator(createZmqSink(schema, "localhost", 3));
+
+        //Update the operator name
+        string optrName = executionNodePtr->getOperatorName();
+        optrName = optrName + "=>SINK(SYS)";
+        executionNodePtr->setOperatorName(optrName);
+
+        //bind sys introduced operators to each other
+        sysSinkOptr->childs = {traverse};
+        traverse->parent = sysSinkOptr;
+      }
+    }
+  }
 }
 
 void FogPlacementOptimizer::completeExecutionGraphWithFogTopology(FogExecutionPlan graph,
