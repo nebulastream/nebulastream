@@ -47,7 +47,7 @@ int test()
 
     Dispatcher::instance().registerQuery(qep);
 
-    ThreadPool::instance().start(1);
+    ThreadPool::instance().start();
 
     std::cout << "Waiting 2 seconds " << std::endl;
     std::this_thread::sleep_for(std::chrono::seconds(3));

@@ -12,14 +12,15 @@ BufferManager::BufferManager()
       noFreeBuffer(0),
       providedBuffer(0),
       releasedBuffer(0) {
-  IOTDB_DEBUG("BufferManager: Enter Constructor of BufferManager.")
-  maxBufferCnt = 1000;  //changed from 3
-  bufferSizeInByte = 1 * 4 * 1024;  //set buffer to 1024
+
+  size_t initalBufferCnt = 1000;
+  bufferSizeInByte = 4 * 1024;  //set buffer to 1024
   IOTDB_DEBUG(
-      "BufferManager: Set maximun number of buffer to " << maxBufferCnt << " and a bufferSize of KB:" << bufferSizeInByte / 1024)
+      "BufferManager: Set maximum number of buffer to " << initalBufferCnt << " and a bufferSize of KB:" << bufferSizeInByte / 1024)
+
   IOTDB_DEBUG("BufferManager: initialize buffers")
-  for (size_t i = 0; i < maxBufferCnt; i++) {
-    addBuffer();
+  for (size_t i = 0; i < initalBufferCnt; i++) {
+    addOneBufferWithDefaultSize();
   }
 }
 
@@ -38,51 +39,46 @@ BufferManager &BufferManager::instance() {
   return instance;
 }
 
-void BufferManager::setNumberOfBuffers(size_t size) {
+void BufferManager::setNumberOfBuffers(size_t n) {
+  std::unique_lock<std::mutex> lock(mutex);
+
+  //delete all existing buffers
   for (auto &entry : buffer_pool) {
     delete[] (char *) entry.first->buffer;
   }
   buffer_pool.clear();
-  maxBufferCnt = size;
-  for (size_t i = 0; i < maxBufferCnt; i++) {
-    addBuffer();
+
+  //add n new buffer
+  for (size_t i = 0; i < n; i++) {
+    addOneBufferWithDefaultSize();
   }
 }
 
 void BufferManager::setBufferSize(size_t size) {
+  std::unique_lock<std::mutex> lock(mutex);
+
+  size_t tmpBufferCnt = buffer_pool.size();
+  //delete all existing buffers
   for (auto &entry : buffer_pool) {
     delete[] (char *) entry.first->buffer;
   }
   buffer_pool.clear();
+
+  //recreate buffer with new size
   bufferSizeInByte = size;
-  for (size_t i = 0; i < maxBufferCnt; i++) {
-    addBuffer();
+  for (size_t i = 0; i < tmpBufferCnt; i++) {
+    addOneBufferWithDefaultSize();
   }
-}
-
-void BufferManager::removeBuffer(TupleBufferPtr tuple_buffer) {
-  std::unique_lock<std::mutex> lock(mutex);
-
-  for (auto &entry : buffer_pool) {
-    if (entry.first.get() == tuple_buffer.get()) {
-      delete (char *) entry.first->buffer;
-      buffer_pool.erase(tuple_buffer);
-      IOTDB_DEBUG("BufferManager: found and remove Buffer buffer")
-      return;
-    }
-  }
-  IOTDB_DEBUG("BufferManager: could not remove buffer, buffer not found")
-  return;
 }
 
 size_t BufferManager::getBufferSize() {
   return bufferSizeInByte;
 }
 
-void BufferManager::addBuffer() {
+void BufferManager::addOneBufferWithDefaultSize() {
   std::unique_lock<std::mutex> lock(mutex);
 
-  char *buffer = new char[bufferSizeInByte];
+  char* buffer = new char[bufferSizeInByte];
   TupleBufferPtr buff = std::make_shared<TupleBuffer>(buffer, bufferSizeInByte,
                                                       0, 0);
   buffer_pool.emplace(std::piecewise_construct, std::forward_as_tuple(buff),
@@ -90,8 +86,30 @@ void BufferManager::addBuffer() {
 
 }
 
+bool BufferManager::removeBuffer(TupleBufferPtr tuple_buffer) {
+  std::unique_lock<std::mutex> lock(mutex);
+
+  for (auto &entry : buffer_pool) {
+    if (entry.first.get() == tuple_buffer.get()) {
+      if (entry.second == true) {
+        IOTDB_DEBUG(
+            "BufferManager: could not remove Buffer buffer because it is in use" << tuple_buffer)
+        return false;
+      }
+
+      delete (char *) entry.first->buffer;
+      buffer_pool.erase(tuple_buffer);
+      IOTDB_DEBUG(
+          "BufferManager: found and remove Buffer buffer" << tuple_buffer)
+      return true;
+    }
+  }
+  IOTDB_DEBUG(
+      "BufferManager: could not remove buffer, buffer not found" << tuple_buffer)
+  return false;
+}
+
 TupleBufferPtr BufferManager::getBuffer() {
-  IOTDB_DEBUG("BufferManager: getBuffer()")
 
   while (true) {
     //find a free buffer
@@ -99,6 +117,8 @@ TupleBufferPtr BufferManager::getBuffer() {
       bool used = false;
       if (entry.second.compare_exchange_weak(used, true)) {
         providedBuffer++;
+        IOTDB_DEBUG(
+            "BufferManager: getBuffer() provide free buffer" << entry.first)
         return entry.first;
       }
     }
@@ -107,7 +127,6 @@ TupleBufferPtr BufferManager::getBuffer() {
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
     IOTDB_DEBUG("BufferManager: no buffer free yet --- retry")
   }
-
 }
 
 size_t BufferManager::getNumberOfBuffers() {
@@ -123,49 +142,27 @@ size_t BufferManager::getNumberOfFreeBuffers() {
   return result;
 }
 
-void BufferManager::releaseBuffer(const TupleBuffer *tuple_buffer) {
-  IOTDB_DEBUG("BufferManager: releaseBuffer(TupleBufferPtr)")
-
+bool BufferManager::releaseBuffer(const TupleBufferPtr tuple_buffer) {
   std::unique_lock<std::mutex> lock(mutex);
+  //TODO: do we really need this or can we solve it by a cas?
 
-  //find a free buffer
   for (auto &entry : buffer_pool) {
-    if (entry.first.get() == tuple_buffer)  //found entry
-        {
+    if (entry.first.get() == tuple_buffer.get()) {  //found entry
       entry.second = false;
       IOTDB_DEBUG("BufferManager: found and release buffer")
+
+      //reset buffer for next use
       entry.first->num_tuples = 0;
       entry.first->tuple_size_bytes = 0;
+
+      //update statistics
       releasedBuffer++;
-      return;
+
+      return true;
     }
   }
   IOTDB_ERROR("BufferManager: buffer not found")
-
-  assert(0);
-}
-
-void BufferManager::releaseBuffer(const TupleBufferPtr tuple_buffer) {
-  IOTDB_DEBUG("BufferManager: releaseBuffer(TupleBufferPtr)")
-
-  std::unique_lock<std::mutex> lock(mutex);
-
-  //find a free buffer
-  for (auto &entry : buffer_pool) {
-    if (entry.first.get() == tuple_buffer.get())  //found entry
-        {
-      entry.second = false;
-      IOTDB_DEBUG("BufferManager: found and release buffer")
-      entry.first->num_tuples = 0;
-      entry.first->tuple_size_bytes = 0;
-      releasedBuffer++;
-
-      return;
-    }
-  }
-  IOTDB_ERROR("BufferManager: buffer not found")
-
-  assert(0);
+  return false;
 }
 
 void BufferManager::printStatistics() {

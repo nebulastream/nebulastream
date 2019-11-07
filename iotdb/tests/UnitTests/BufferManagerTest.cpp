@@ -55,7 +55,7 @@ namespace iotdb {
         ASSERT_EQ(buffers_count, buffers_managed);
         ASSERT_EQ(buffers_free, buffers_managed);
 
-        BufferManager::instance().addBuffer();
+        BufferManager::instance().addOneBufferWithDefaultSize();
         TupleBufferPtr buffer = BufferManager::instance().getBuffer();
 
         buffers_count = BufferManager::instance().getNumberOfBuffers();

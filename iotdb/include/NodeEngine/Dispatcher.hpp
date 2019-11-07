@@ -23,9 +23,15 @@ namespace iotdb {
  * 1.) a data_source map to map one data source to N queries
  * 2.) a window map to map one window to N queries TODO:maybe should be removed later
  * 3.) a data_sink to map one data sink to N queries
+ * @Limitations:
+ *    - statistics do not cover intermediate buffers
  */
 class Dispatcher {
  public:
+  /**
+   * @brief Singleton implementation of dispatcher
+   */
+    static Dispatcher& instance();
 
   /**
    * @brief register a query by extracting sources, windows and sink and add them to
@@ -77,10 +83,6 @@ class Dispatcher {
    */
   void printQEPStatistics(const QueryExecutionPlanPtr qep);
 
-  /**
-   * @brief Singleton implementation of dispatcher
-   */
-  static Dispatcher& instance();
 
   /**
      * @brief notify all waiting threads in getWork() to wake up and try again
@@ -90,13 +92,13 @@ class Dispatcher {
   }
 
   /**
-     * @brief reset dispatcher to inital state
+     * @brief reset dispatcher to intial state
      */
   void resetDispatcher();
 
  private:
   /* implement singleton semantics: no construction,
-   * copying or destruction of Dispatinitialcher objects
+   * copying or destruction of Dispatcher objects
    * outside of the class */
   Dispatcher();
   Dispatcher(const Dispatcher&);

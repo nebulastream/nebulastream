@@ -135,7 +135,7 @@ int test(size_t toProcessedBuffers, size_t threadCnt, size_t campaignCnt, size_t
 	ThreadPool::instance().setNumberOfThreads(threadCnt);
 
 	size_t start = getTimestamp();
-	ThreadPool::instance().start(1);
+	ThreadPool::instance().start();
 
 	size_t endedRuns = 0;
 	while(sourceCnt != endedRuns){
