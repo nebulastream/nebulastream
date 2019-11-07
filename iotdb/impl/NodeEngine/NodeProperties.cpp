@@ -22,7 +22,7 @@ void NodeProperties::readCpuStats() {
       };
 
       // check columns
-      if (tokens.size() != PROC_STAT_CPU_COLUMNS) {
+      if (tokens.size() != 11) {
         std::cerr << "ERROR: /proc/stat incorrect" << std::endl;
       }
       JSON cpu;
