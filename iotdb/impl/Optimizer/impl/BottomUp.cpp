@@ -20,8 +20,15 @@ FogExecutionPlan BottomUp::initializeExecutionPlan(InputQuery inputQuery, FogTop
   }
 
   placeOperators(executionGraph, fogTopologyPlan, sourceOperators, sourceNodes);
+
   removeNonResidentOperators(executionGraph);
+
+  //FIXME: We are assuming that throughout the pipeline the schema would not change.
+  Schema &schema = inputQuery.source_stream.getSchema();
+  addSystemGeneratedSourceSinkOperators(schema, executionGraph);
+
   completeExecutionGraphWithFogTopology(executionGraph, fogTopologyPlan);
+
   return executionGraph;
 }
 
