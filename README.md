@@ -1,4 +1,4 @@
-# IoTDB [![Build Status](https://travis-ci.com/Dima-IoT-System/IoTDB.svg?token=TQvLNjkNrxwrxs343My4&branch=master)](https://travis-ci.com/Dima-IoT-System/IoTDB)
+# IoTDB [![Build Status](https://travis-ci.com/nebulastream/IoTDB.svg?token=ucXZaks2p5zNzXrQWU11&branch=master)](https://travis-ci.com/nebulastream/IoTDB)
 
 Our awesome new IoT data stream management system :-)
 
