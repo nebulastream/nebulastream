@@ -233,6 +233,23 @@ const std::vector<ExecutionEdge> ExecutionGraph::getAllEdgesToNode(ExecutionNode
   return result;
 }
 
+const vector<ExecutionEdge> ExecutionGraph::getAllEdgesFromNode(iotdb::ExecutionNodePtr srcNode) const {
+  std::vector<ExecutionEdge> result = {};
+
+  executionEdge_iterator edge, edge_end, next_edge;
+  boost::tie(edge, edge_end) = edges(graph);
+
+  for (next_edge = edge; edge != edge_end; edge = next_edge) {
+    ++next_edge;
+
+    if (graph[*edge].ptr->getSource()->getId() == srcNode.get()->getId()) {
+      result.push_back(graph[*edge]);
+    }
+  }
+
+  return result;
+}
+
 std::string ExecutionGraph::getGraphString() {
   std::stringstream ss;
   boost::write_graphviz(ss, graph,

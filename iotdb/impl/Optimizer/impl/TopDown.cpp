@@ -10,11 +10,11 @@ FogExecutionPlan TopDown::initializeExecutionPlan(iotdb::InputQuery inputQuery,
   placeOperators(executionGraph, inputQuery, fogTopologyPlan);
   removeNonResidentOperators(executionGraph);
 
+  completeExecutionGraphWithFogTopology(executionGraph, fogTopologyPlan);
+
   //FIXME: We are assuming that throughout the pipeline the schema would not change.
   Schema &schema = inputQuery.source_stream.getSchema();
   addSystemGeneratedSourceSinkOperators(schema, executionGraph);
-
-  completeExecutionGraphWithFogTopology(executionGraph, fogTopologyPlan);
 
   return executionGraph;
 }

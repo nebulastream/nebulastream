@@ -7,8 +7,6 @@
 #include <memory>
 #include <vector>
 
-#define INVALID_NODE_ID 101
-
 namespace iotdb {
 
 /**
@@ -49,11 +47,11 @@ class FogTopologyWorkerNode : public FogTopologyEntry {
 
   int getRemainingCpuCapacity() { return remainingCPUCapacity; }
 
-  string getHostname() override {
+  std::string getHostname() override {
     return hostName;
   }
 
-  void setHostName(const string &host_name) {
+  void setHostName(const std::string &host_name) {
     this->hostName = host_name;
   }
 
