@@ -17,7 +17,7 @@ const OperatorPtr recursiveCopy(OperatorPtr ptr) {
   operatorPtr->operatorId = ptr->operatorId;
   std::vector<OperatorPtr> children = ptr->childs;
 
-  for (u_int i = 0; i < children.size(); i++) {
+  for (uint32_t i = 0; i < children.size(); i++) {
     const OperatorPtr copiedChild = recursiveCopy(children[i]);
     if (!copiedChild) {
       return nullptr;
