@@ -1,8 +1,9 @@
 
-#include <cpprest/json.h>
 #include <Topology/FogTopologyManager.hpp>
 #include <Optimizer/FogOptimizer.hpp>
 #include "Services/FogTopologyService.hpp"
+
+#include <cpprest/json.h>
 
 using namespace iotdb;
 

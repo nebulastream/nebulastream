@@ -5,6 +5,7 @@
 namespace iotdb{
 
 void NodeProperties::readCpuStats() {
+
   this->_cpus.clear();
 
   std::ifstream fileStat("/proc/stat");
@@ -21,8 +22,7 @@ void NodeProperties::readCpuStats() {
       };
 
       // check columns
-      int number_of_lines = 11;
-      if (tokens.size() != number_of_lines) {
+      if (tokens.size() != PROC_STAT_CPU_COLUMNS) {
         std::cerr << "ERROR: /proc/stat incorrect" << std::endl;
       }
       JSON cpu;
@@ -183,6 +183,7 @@ void NodeProperties::readNetworkStats() {
     } else {
       this->_nets.push_back(net);
     }
+
   }
 
   this->_metrics["nets"] = this->_nets;

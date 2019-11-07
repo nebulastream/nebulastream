@@ -11,7 +11,7 @@ include(cmake/macros.cmake)
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 
 # C++ Standard
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Set Optimization Flags
@@ -29,9 +29,15 @@ endif()
 # LLVM
 find_package(LLVM 3 REQUIRED)
 find_package(clang REQUIRED)
+message("-- LLVM version ${LLVM_VERSION_STRING}")
 
 # ZMQ
 find_package(ZMQ REQUIRED)
+if(ZMQ_FOUND)
+    message(STATUS "ZMQ found ${ZMQ_INCLUDE_DIRS}")
+else(ZMQ_FOUND)
+    message(ERROR "ZMQ not found")
+endif(ZMQ_FOUND)
 include_directories(${ZMQ_INCLUDE_DIRS})
 set(LIBRARIES ${LIBRARIES} ${ZMQ_LIBRARIES})
 
@@ -56,7 +62,7 @@ if(TRAVIS_INCLUDE_DIR)
 endif()
 
 # Boost Libraries
-find_package(Boost 1.47.0 REQUIRED system thread program_options filesystem serialization) # Only check if lib is available on system for generated code.
+find_package(Boost 1.47.0 REQUIRED system thread program_options filesystem serialization chrono) # Only check if lib is available on system for generated code.
 link_directories(${Boost_LIBRARY_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
 set(LIBRARIES ${LIBRARIES} ${Boost_LIBRARIES})
@@ -64,6 +70,10 @@ set(LIBRARIES ${LIBRARIES} ${Boost_LIBRARIES})
 # Library containing dlopen and dlcose.
 set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
 
+# C++ REST SDK
+set(cpprestsdk_DIR ${CPPRESTSDK_DIR})
+message("Found cpprestsdk in ${cpprestsdk_DIR}")
+find_package(cpprestsdk REQUIRED)
 # Library containing rest dependencies
 set(LIBRARIES ${LIBRARIES} cpprestsdk::cpprest)
 
@@ -74,9 +84,7 @@ foreach(dir ${dirs})
     message(STATUS "  - ${dir}")
 endforeach()
 
-# C++ REST SDK
-set(cpprestsdk_DIR /usr/lib/x86_64-linux-gnu/cmake/)
-find_package(cpprestsdk REQUIRED)
+message(STATUS " Libraries: ${LIBRARIES}")
 
 # Definition of runtime variables ######################################################################################
 

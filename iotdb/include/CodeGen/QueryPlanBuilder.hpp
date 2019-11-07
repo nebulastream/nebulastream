@@ -6,6 +6,9 @@
 #define IOTDB_QUERYPLANBUILDER_HPP
 
 #include <API/InputQuery.hpp>
+#if defined(__APPLE__) || defined(__MACH__)
+#include <xlocale.h>
+#endif
 #include <cpprest/json.h>
 
 using namespace web;

@@ -4,6 +4,9 @@
 #include <Optimizer/ExecutionNode.hpp>
 #include <Optimizer/ExecutionNodeLink.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#if defined(__APPLE__) || defined(__MACH__)
+#include <xlocale.h>
+#endif
 #include <cpprest/json.h>
 
 namespace iotdb {

@@ -1,5 +1,6 @@
 
 #include <API/ParameterTypes.hpp>
+#include <string>
 
 namespace iotdb {
 
