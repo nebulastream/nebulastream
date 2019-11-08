@@ -53,7 +53,7 @@ bool ZmqSink::writeData(const TupleBufferPtr input_buffer)
 
     bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
     bool rc_msg = socket.send(msg);
-    processedBuffer++;
+    sentBuffer++;
     if (!rc_env || !rc_msg) {
         IOTDB_DEBUG("ZMQSINK  " << this << ": send NOT successful")
 //       TODO: here we use tuple Buffer instead of TupleBuffer Pointer, FIXME
