@@ -18,12 +18,12 @@ namespace iotdb {
 #define MAX_NUMBER_OF_NODES 10 // TODO: make this dynamic
 
 struct FogVertex {
-    size_t id;
-    FogTopologyEntryPtr ptr;
+  size_t id;
+  FogTopologyEntryPtr ptr;
 };
 struct FogEdge {
-    size_t id;
-    FogTopologyLinkPtr ptr;
+  size_t id;
+  FogTopologyLinkPtr ptr;
 };
 
 using fogGraph_t = boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS, FogVertex, FogEdge>;
@@ -33,61 +33,64 @@ using fogEdge_t = boost::graph_traits<fogGraph_t>::edge_descriptor;
 using fogEdge_iterator = boost::graph_traits<fogGraph_t>::edge_iterator;
 
 class FogGraph {
-  public:
-    FogGraph(){};
+ public:
+  FogGraph() {};
 
-    const fogVertex_t getVertex(size_t search_id) const;
-    bool hasVertex(size_t search_id) const;
+  const fogVertex_t getVertex(size_t search_id) const;
+  bool hasVertex(size_t search_id) const;
 
-    const std::vector<FogVertex> getAllVertex() const;
-    bool addVertex(FogTopologyEntryPtr ptr);
-    bool removeVertex(size_t search_id);
+  const std::vector<FogVertex> getAllVertex() const;
+  bool addVertex(FogTopologyEntryPtr ptr);
+  bool removeVertex(size_t search_id);
 
-    FogTopologyEntryPtr getRoot() const;
+  FogTopologyEntryPtr getRoot() const;
 
-    FogTopologyLinkPtr getLink(FogTopologyEntryPtr sourceNode, FogTopologyEntryPtr destNode) const;
-    bool hasLink(FogTopologyEntryPtr sourceNode, FogTopologyEntryPtr destNode) const;
+  FogTopologyLinkPtr getLink(FogTopologyEntryPtr sourceNode, FogTopologyEntryPtr destNode) const;
+  bool hasLink(FogTopologyEntryPtr sourceNode, FogTopologyEntryPtr destNode) const;
+  bool hasLink(size_t searchId) const;
 
-    const FogEdge* getEdge(size_t search_id) const;
-    const std::vector<FogEdge> getAllEdgesToNode(FogTopologyEntryPtr destNode) const;
-    const std::vector<FogEdge> getAllEdgesFromNode(FogTopologyEntryPtr srcNode) const;
-    const std::vector<FogEdge> getAllEdges() const;
-    bool hasEdge(size_t search_id) const;
+  const FogEdge *getEdge(size_t search_id) const;
+  const std::vector<FogEdge> getAllEdgesToNode(FogTopologyEntryPtr destNode) const;
+  const std::vector<FogEdge> getAllEdgesFromNode(FogTopologyEntryPtr srcNode) const;
+  const std::vector<FogEdge> getAllEdges() const;
+  bool hasEdge(size_t search_id) const;
 
-    bool addEdge(FogTopologyLinkPtr ptr);
-    bool removeEdge(size_t search_id);
+  bool addEdge(FogTopologyLinkPtr ptr);
+  bool removeEdge(size_t search_id);
 
-    std::string getGraphString();
+  std::string getGraphString();
 
-  private:
-    fogGraph_t graph;
+ private:
+  fogGraph_t graph;
 };
 
 class FogTopologyPlan {
 
-  public:
-    FogTopologyPlan();
+ public:
+  FogTopologyPlan();
 
-    FogTopologyEntryPtr getRootNode() const;
+  FogTopologyEntryPtr getRootNode() const;
 
-    FogTopologyWorkerNodePtr createFogWorkerNode(CPUCapacity cpuCapacity);
-    bool removeFogWorkerNode(FogTopologyWorkerNodePtr ptr);
+  FogTopologyWorkerNodePtr createFogWorkerNode(CPUCapacity cpuCapacity);
+  bool removeFogWorkerNode(FogTopologyWorkerNodePtr ptr);
 
-    FogTopologySensorNodePtr createFogSensorNode(CPUCapacity cpuCapacity);
-    bool removeFogSensorNode(FogTopologySensorNodePtr ptr);
+  FogTopologySensorNodePtr createFogSensorNode(CPUCapacity cpuCapacity);
+  bool removeFogSensorNode(FogTopologySensorNodePtr ptr);
 
-    FogTopologyLinkPtr createFogTopologyLink(FogTopologyEntryPtr pSourceNode, FogTopologyEntryPtr pDestNode);
-    bool removeFogTopologyLink(FogTopologyLinkPtr linkPtr);
+  FogTopologyLinkPtr createFogTopologyLink(FogTopologyEntryPtr pSourceNode, FogTopologyEntryPtr pDestNode);
+  bool removeFogTopologyLink(FogTopologyLinkPtr linkPtr);
 
-    std::string getTopologyPlanString() const;
+  std::string getTopologyPlanString() const;
 
-    FogGraph getFogGraph() const;
+  FogGraph getFogGraph() const;
 
-  private:
-    size_t getNextFreeNodeId();
+ private:
+  size_t getNextFreeNodeId();
 
-    size_t currentId;
-    FogGraph* fGraph;
+  size_t currentNodeId;
+  size_t currentLinkId;
+  FogGraph *fGraph;
+  size_t getNextFreeLinkId();
 };
 } // namespace iotdb
 

@@ -26,338 +26,356 @@
 
 namespace iotdb {
 
-    /* FogGraph ------------------------------------------------------------ */
-    bool FogGraph::hasVertex(size_t search_id) const {
+/* FogGraph ------------------------------------------------------------ */
+bool FogGraph::hasVertex(size_t search_id) const {
 
-        // build vertice iterator
-        fogVertex_iterator vertex, vertex_end, next_vertex;
-        boost::tie(vertex, vertex_end) = vertices(graph);
+  // build vertice iterator
+  fogVertex_iterator vertex, vertex_end, next_vertex;
+  boost::tie(vertex, vertex_end) = vertices(graph);
 
-        // iterator over vertices
-        for (next_vertex = vertex; vertex != vertex_end; vertex = next_vertex) {
-            ++next_vertex;
+  // iterator over vertices
+  for (next_vertex = vertex; vertex != vertex_end; vertex = next_vertex) {
+    ++next_vertex;
 
-            // check for matching vertex
-            if (graph[*vertex].id == search_id) {
-                return true;
-            }
-        }
-
-        return false;
+    // check for matching vertex
+    if (graph[*vertex].id == search_id) {
+      return true;
     }
+  }
 
-    const fogVertex_t FogGraph::getVertex(size_t search_id) const {
+  return false;
+}
 
-        assert(hasVertex(search_id));
+const fogVertex_t FogGraph::getVertex(size_t search_id) const {
 
-        // build vertice iterator
-        fogVertex_iterator vertex, vertex_end, next_vertex;
-        boost::tie(vertex, vertex_end) = vertices(graph);
+  assert(hasVertex(search_id));
 
-        // iterator over vertices
-        for (next_vertex = vertex; vertex != vertex_end; vertex = next_vertex) {
-            ++next_vertex;
+  // build vertice iterator
+  fogVertex_iterator vertex, vertex_end, next_vertex;
+  boost::tie(vertex, vertex_end) = vertices(graph);
 
-            // check for matching vertex
-            if (graph[*vertex].id == search_id) {
-                return *vertex;
-            }
-        }
+  // iterator over vertices
+  for (next_vertex = vertex; vertex != vertex_end; vertex = next_vertex) {
+    ++next_vertex;
 
-        // should never happen
-        return fogVertex_t();
+    // check for matching vertex
+    if (graph[*vertex].id == search_id) {
+      return *vertex;
     }
+  }
 
-    const std::vector<FogVertex> FogGraph::getAllVertex() const {
-        std::vector<FogVertex> result = {};
+  // should never happen
+  return fogVertex_t();
+}
 
-        fogVertex_iterator vertex, vertex_end, next_vertex;
-        boost::tie(vertex, vertex_end) = vertices(graph);
+const std::vector<FogVertex> FogGraph::getAllVertex() const {
+  std::vector<FogVertex> result = {};
 
-        for (next_vertex = vertex; vertex != vertex_end; vertex = next_vertex) {
-            ++next_vertex;
-            result.push_back(graph[*vertex]);
-        }
+  fogVertex_iterator vertex, vertex_end, next_vertex;
+  boost::tie(vertex, vertex_end) = vertices(graph);
 
-        return result;
+  for (next_vertex = vertex; vertex != vertex_end; vertex = next_vertex) {
+    ++next_vertex;
+    result.push_back(graph[*vertex]);
+  }
+
+  return result;
+}
+
+bool FogGraph::addVertex(FogTopologyEntryPtr ptr) {
+  // does graph already contain vertex?
+  if (hasVertex(ptr->getId())) {
+    return false;
+  }
+
+  // add vertex
+  boost::add_vertex(FogVertex{ptr->getId(), ptr}, graph);
+  return true;
+}
+
+bool FogGraph::removeVertex(size_t search_id) {
+
+  // does graph contain vertex?
+  if (hasVertex(search_id)) {
+    remove_vertex(getVertex(search_id), graph);
+    return true;
+  }
+
+  return false;
+}
+
+FogTopologyEntryPtr FogGraph::getRoot() const {
+  fogVertex_iterator vi, vi_end, next;
+  boost::tie(vi, vi_end) = vertices(graph);
+  for (next = vi; vi != vi_end; vi = next) {
+    ++next;
+    // first worker node is root TODO:change this
+    if (graph[*vi].ptr->getEntryType() == Worker) {
+      return graph[*vi].ptr;
     }
+  }
+  return 0;
+}
 
-    bool FogGraph::addVertex(FogTopologyEntryPtr ptr) {
-        // does graph already contain vertex?
-        if (hasVertex(ptr->getId())) {
-            return false;
-        }
+FogTopologyLinkPtr FogGraph::getLink(FogTopologyEntryPtr sourceNode, FogTopologyEntryPtr destNode) const {
 
-        // add vertex
-        boost::add_vertex(FogVertex{ptr->getId(), ptr}, graph);
-        return true;
+  // build edge iterator
+  fogEdge_iterator edge, edge_end, next_edge;
+  boost::tie(edge, edge_end) = edges(graph);
+
+  // iterate over edges and check for matching links
+  for (next_edge = edge; edge != edge_end; edge = next_edge) {
+    ++next_edge;
+
+    // check, if link does match
+    auto current_link = graph[*edge].ptr;
+    if (current_link->getSourceNodeId() == sourceNode->getId() &&
+        current_link->getDestNodeId() == destNode->getId()) {
+      return current_link;
     }
+  }
 
-    bool FogGraph::removeVertex(size_t search_id) {
+  // no edge matched
+  return nullptr;
+}
 
-        // does graph contain vertex?
-        if (hasVertex(search_id)) {
-            remove_vertex(getVertex(search_id), graph);
-            return true;
-        }
+bool FogGraph::hasLink(const FogTopologyEntryPtr sourceNode, const FogTopologyEntryPtr destNode) const {
 
-        return false;
+  return getLink(sourceNode, destNode) != nullptr;
+}
+
+bool FogGraph::hasLink(size_t searchId) const {
+  // build edge iterator
+  fogEdge_iterator edge, edge_end, next_edge;
+  boost::tie(edge, edge_end) = edges(graph);
+
+  // iterate over edges and check for matching links
+  for (next_edge = edge; edge != edge_end; edge = next_edge) {
+    ++next_edge;
+
+    // check, if link does match
+    if (graph[*edge].id == searchId) {
+      return true;
     }
+  }
+  return false;
+}
 
-    FogTopologyEntryPtr FogGraph::getRoot() const {
-        fogVertex_iterator vi, vi_end, next;
-        boost::tie(vi, vi_end) = vertices(graph);
-        for (next = vi; vi != vi_end; vi = next) {
-            ++next;
-            // first worker node is root TODO:change this
-            if (graph[*vi].ptr->getEntryType() == Worker) {
-                return graph[*vi].ptr;
-            }
-        }
-        return 0;
+const FogEdge *FogGraph::getEdge(size_t search_id) const {
+
+  // build edge iterator
+  fogEdge_iterator edge, edge_end, next_edge;
+  boost::tie(edge, edge_end) = edges(graph);
+
+  // iterate over edges
+  for (next_edge = edge; edge != edge_end; edge = next_edge) {
+    ++next_edge;
+
+    // return matching edge
+    if (graph[*edge].id == search_id) {
+      return &graph[*edge];
     }
+  }
 
-    FogTopologyLinkPtr FogGraph::getLink(FogTopologyEntryPtr sourceNode, FogTopologyEntryPtr destNode) const {
+  // no matching edge found
+  return nullptr;
+}
 
-        // build edge iterator
-        boost::graph_traits<fogGraph_t>::edge_iterator edge, edge_end, next_edge;
-        boost::tie(edge, edge_end) = edges(graph);
+const std::vector<FogEdge> FogGraph::getAllEdgesToNode(FogTopologyEntryPtr destNode) const {
 
-        // iterate over edges and check for matching links
-        for (next_edge = edge; edge != edge_end; edge = next_edge) {
-            ++next_edge;
+  std::vector<FogEdge> result = {};
 
-            // check, if link does match
-            auto current_link = graph[*edge].ptr;
-            if (current_link->getSourceNodeId() == sourceNode->getId() &&
-                current_link->getDestNodeId() == destNode->getId()) {
-                return current_link;
-            }
-        }
+  fogEdge_iterator edge, edge_end, next_edge;
+  boost::tie(edge, edge_end) = edges(graph);
 
-        // no edge matched
-        return nullptr;
+  for (next_edge = edge; edge != edge_end; edge = next_edge) {
+    ++next_edge;
+
+    if (graph[*edge].ptr->getDestNode()->getId() == destNode.get()->getId()) {
+      result.push_back(graph[*edge]);
     }
+  }
 
-    bool FogGraph::hasLink(FogTopologyEntryPtr sourceNode, FogTopologyEntryPtr destNode) const {
+  return result;
+}
 
-        // edge found
-        if (getLink(sourceNode, destNode) != nullptr) {
-            return true;
-        }
+const std::vector<FogEdge> FogGraph::getAllEdgesFromNode(FogTopologyEntryPtr srcNode) const {
 
-        // no edge found
-        return false;
+  std::vector<FogEdge> result = {};
+
+  fogEdge_iterator edge, edge_end, next_edge;
+  boost::tie(edge, edge_end) = edges(graph);
+
+  for (next_edge = edge; edge != edge_end; edge = next_edge) {
+    ++next_edge;
+
+    if (graph[*edge].ptr->getSourceNode()->getId() == srcNode.get()->getId()) {
+      result.push_back(graph[*edge]);
     }
+  }
 
-    const FogEdge *FogGraph::getEdge(size_t search_id) const {
+  return result;
+}
 
-        // build edge iterator
-        fogEdge_iterator edge, edge_end, next_edge;
-        boost::tie(edge, edge_end) = edges(graph);
+const std::vector<FogEdge> FogGraph::getAllEdges() const {
 
-        // iterate over edges
-        for (next_edge = edge; edge != edge_end; edge = next_edge) {
-            ++next_edge;
+  std::vector<FogEdge> result = {};
+  fogEdge_iterator edge, edge_end, next_edge;
+  boost::tie(edge, edge_end) = edges(graph);
 
-            // return matching edge
-            if (graph[*edge].id == search_id) {
-                return &graph[*edge];
-            }
-        }
+  for (next_edge = edge; edge != edge_end; edge = next_edge) {
+    ++next_edge;
+    result.push_back(graph[*edge]);
+  }
+  return result;
+}
 
-        // no matching edge found
-        return nullptr;
-    }
+bool FogGraph::hasEdge(size_t search_id) const {
 
-    const std::vector<FogEdge> FogGraph::getAllEdgesToNode(FogTopologyEntryPtr destNode) const {
+  // edge found
+  if (getEdge(search_id) != nullptr) {
+    return true;
+  }
 
+  // no edge found
+  return false;
+}
 
-        std::vector<FogEdge> result = {};
+bool FogGraph::addEdge(FogTopologyLinkPtr ptr) {
 
-        fogEdge_iterator edge, edge_end, next_edge;
-        boost::tie(edge, edge_end) = edges(graph);
+  // link id is already in graph
+  if (hasEdge(ptr->getId())) {
+    return false;
+  }
 
-        for (next_edge = edge; edge != edge_end; edge = next_edge) {
-            ++next_edge;
+  // there is already a link between those two vertices
+  if (hasLink(ptr->getSourceNode(), ptr->getDestNode())) {
+    return false;
+  }
 
-            if (graph[*edge].ptr->getDestNode()->getId() == destNode.get()->getId()) {
-                result.push_back(graph[*edge]);
-            }
-        }
+  // check if vertices are in graph
+  if (!hasVertex(ptr->getSourceNodeId()) || !hasVertex(ptr->getDestNodeId())) {
+    return false;
+  }
 
-        return result;
-    }
+  // add edge with link
+  auto src = getVertex(ptr->getSourceNodeId());
+  auto dst = getVertex(ptr->getDestNodeId());
+  boost::add_edge(src, dst, FogEdge{ptr->getId(), ptr}, graph);
 
-    const std::vector<FogEdge> FogGraph::getAllEdgesFromNode(FogTopologyEntryPtr srcNode) const {
+  return true;
+}
 
+bool FogGraph::removeEdge(size_t search_id) {
 
-        std::vector<FogEdge> result = {};
+  // does graph contain edge?
+  if (!hasEdge(search_id)) {
+    return false;
+  }
 
-        fogEdge_iterator edge, edge_end, next_edge;
-        boost::tie(edge, edge_end) = edges(graph);
+  // check if vertices are in graph
+  auto edge = getEdge(search_id);
+  if (!hasVertex(edge->ptr->getSourceNodeId()) || !hasVertex(edge->ptr->getDestNodeId())) {
+    return false;
+  }
 
-        for (next_edge = edge; edge != edge_end; edge = next_edge) {
-            ++next_edge;
+  // remove edge
+  auto src = getVertex(edge->ptr->getSourceNodeId());
+  auto dst = getVertex(edge->ptr->getDestNodeId());
+  remove_edge(src, dst, graph);
 
-            if (graph[*edge].ptr->getSourceNode()->getId() == srcNode.get()->getId()) {
-                result.push_back(graph[*edge]);
-            }
-        }
+  return true;
+}
 
-        return result;
-    }
-
-    const std::vector<FogEdge> FogGraph::getAllEdges() const {
-
-        std::vector<FogEdge> result = {};
-        fogEdge_iterator edge, edge_end, next_edge;
-        boost::tie(edge, edge_end) = edges(graph);
-
-        for (next_edge = edge; edge != edge_end; edge = next_edge) {
-            ++next_edge;
-            result.push_back(graph[*edge]);
-        }
-        return result;
-    }
-
-    bool FogGraph::hasEdge(size_t search_id) const {
-
-        // edge found
-        if (getEdge(search_id) != nullptr) {
-            return true;
-        }
-
-        // no edge found
-        return false;
-    }
-
-    bool FogGraph::addEdge(FogTopologyLinkPtr ptr) {
-
-        // link id is already in graph
-        if (hasEdge(ptr->getId())) {
-            return false;
-        }
-
-        // there is already a link between those two vertices
-        if (hasLink(ptr->getSourceNode(), ptr->getDestNode())) {
-            return false;
-        }
-
-        // check if vertices are in graph
-        if (!hasVertex(ptr->getSourceNodeId()) || !hasVertex(ptr->getDestNodeId())) {
-            return false;
-        }
-
-        // add edge with link
-        auto src = getVertex(ptr->getSourceNodeId());
-        auto dst = getVertex(ptr->getDestNodeId());
-        boost::add_edge(src, dst, FogEdge{ptr->getId(), ptr}, graph);
-
-        return true;
-    }
-
-    bool FogGraph::removeEdge(size_t search_id) {
-
-        // does graph contain edge?
-        if (!hasEdge(search_id)) {
-            return false;
-        }
-
-        // check if vertices are in graph
-        auto edge = getEdge(search_id);
-        if (!hasVertex(edge->ptr->getSourceNodeId()) || !hasVertex(edge->ptr->getDestNodeId())) {
-            return false;
-        }
-
-        // remove edge
-        auto src = getVertex(edge->ptr->getSourceNodeId());
-        auto dst = getVertex(edge->ptr->getDestNodeId());
-        remove_edge(src, dst, graph);
-
-        return true;
-    }
-
-    std::string FogGraph::getGraphString() {
-        std::stringstream ss;
-        boost::write_graphviz(ss, graph,
-                              [&](auto &out, auto v) {
-                                  out << "[label=\"" << graph[v].id << " type=" << graph[v].ptr->getEntryTypeString()
-                                      << "\"]";
-                              },
-                              [&](auto &out, auto e) { out << "[label=\"" << graph[e].id << "\"]"; });
-        ss << std::flush;
-        return ss.str();
-    }
+std::string FogGraph::getGraphString() {
+  std::stringstream ss;
+  boost::write_graphviz(ss, graph,
+                        [&](auto &out, auto v) {
+                          out << "[label=\"" << graph[v].id << " type=" << graph[v].ptr->getEntryTypeString()
+                              << "\"]";
+                        },
+                        [&](auto &out, auto e) { out << "[label=\"" << graph[e].id << "\"]"; });
+  ss << std::flush;
+  return ss.str();
+}
 
 /* FogTopologyPlan ----------------------------------------------------- */
-    FogTopologyPlan::FogTopologyPlan() {
-        fGraph = new FogGraph();
-        currentId = 0;
-    }
+FogTopologyPlan::FogTopologyPlan() {
+  fGraph = new FogGraph();
+  currentNodeId = 0;
+  currentLinkId = 0;
+}
 
-    FogTopologyEntryPtr FogTopologyPlan::getRootNode() const { return fGraph->getRoot(); }
+FogTopologyEntryPtr FogTopologyPlan::getRootNode() const { return fGraph->getRoot(); }
 
-    FogTopologyWorkerNodePtr FogTopologyPlan::createFogWorkerNode(CPUCapacity cpuCapacity) {
+FogTopologyWorkerNodePtr FogTopologyPlan::createFogWorkerNode(CPUCapacity cpuCapacity) {
 
-        // create worker node
-        auto ptr = std::make_shared<FogTopologyWorkerNode>();
-        ptr->setId(getNextFreeNodeId());
-        ptr->setCpuCapacity(cpuCapacity.toInt());
-        fGraph->addVertex(ptr);
+  // create worker node
+  auto ptr = std::make_shared<FogTopologyWorkerNode>();
+  ptr->setId(getNextFreeNodeId());
+  ptr->setCpuCapacity(cpuCapacity.toInt());
+  fGraph->addVertex(ptr);
 
-        return ptr;
-    }
+  return ptr;
+}
 
-    bool FogTopologyPlan::removeFogWorkerNode(FogTopologyWorkerNodePtr ptr) {
-        return fGraph->removeVertex(ptr->getId());
-    }
+bool FogTopologyPlan::removeFogWorkerNode(FogTopologyWorkerNodePtr ptr) {
+  return fGraph->removeVertex(ptr->getId());
+}
 
-    FogTopologySensorNodePtr FogTopologyPlan::createFogSensorNode(CPUCapacity cpuCapacity) {
+FogTopologySensorNodePtr FogTopologyPlan::createFogSensorNode(CPUCapacity cpuCapacity) {
 
-        // create sensor node
-        FogTopologySensorNodePtr ptr = std::make_shared<FogTopologySensorNode>();
-        ptr->setId(getNextFreeNodeId());
-        ptr->setCpuCapacity(cpuCapacity.toInt());
-        fGraph->addVertex(ptr);
+  // create sensor node
+  FogTopologySensorNodePtr ptr = std::make_shared<FogTopologySensorNode>();
+  ptr->setId(getNextFreeNodeId());
+  ptr->setCpuCapacity(cpuCapacity.toInt());
+  fGraph->addVertex(ptr);
 
-        return ptr;
-    }
+  return ptr;
+}
 
-    bool FogTopologyPlan::removeFogSensorNode(FogTopologySensorNodePtr ptr) {
-        return fGraph->removeVertex(ptr->getId());
-    }
+bool FogTopologyPlan::removeFogSensorNode(FogTopologySensorNodePtr ptr) {
+  return fGraph->removeVertex(ptr->getId());
+}
 
-    FogTopologyLinkPtr FogTopologyPlan::createFogTopologyLink(FogTopologyEntryPtr pSourceNode,
-                                                              FogTopologyEntryPtr pDestNode) {
+FogTopologyLinkPtr FogTopologyPlan::createFogTopologyLink(FogTopologyEntryPtr pSourceNode,
+                                                          FogTopologyEntryPtr pDestNode) {
 
-        // check if link already exists
-        if (fGraph->hasLink(pSourceNode, pDestNode)) {
-            // return already existing link
-            return fGraph->getLink(pSourceNode, pDestNode);
-        }
+  // check if link already exists
+  if (fGraph->hasLink(pSourceNode, pDestNode)) {
+    // return already existing link
+    return fGraph->getLink(pSourceNode, pDestNode);
+  }
 
-        // create new link
-        auto linkPtr = std::make_shared<FogTopologyLink>(pSourceNode, pDestNode);
-        assert(fGraph->addEdge(linkPtr));
-        return linkPtr;
-    }
+  // create new link
+  auto linkPtr = std::make_shared<FogTopologyLink>(pSourceNode, pDestNode);
+  linkPtr->setLinkID(getNextFreeLinkId());
+  assert(fGraph->addEdge(linkPtr));
+  return linkPtr;
+}
 
-    bool FogTopologyPlan::removeFogTopologyLink(FogTopologyLinkPtr linkPtr) {
-        return fGraph->removeEdge(linkPtr->getId());
-    }
+bool FogTopologyPlan::removeFogTopologyLink(FogTopologyLinkPtr linkPtr) {
+  return fGraph->removeEdge(linkPtr->getId());
+}
 
-    std::string FogTopologyPlan::getTopologyPlanString() const { return fGraph->getGraphString(); }
+std::string FogTopologyPlan::getTopologyPlanString() const { return fGraph->getGraphString(); }
 
-    size_t FogTopologyPlan::getNextFreeNodeId() {
-        while (fGraph->hasVertex(currentId)) {
-            currentId++;
-        }
-        return currentId;
-    }
+size_t FogTopologyPlan::getNextFreeNodeId() {
+  while (fGraph->hasVertex(currentNodeId)) {
+    currentNodeId++;
+  }
+  return currentNodeId;
+}
 
-    FogGraph FogTopologyPlan::getFogGraph() const{
-        return *fGraph;
-    }
+size_t FogTopologyPlan::getNextFreeLinkId() {
+  while (fGraph->hasLink(currentLinkId)) {
+    currentLinkId++;
+  }
+  return currentLinkId;
+}
+
+FogGraph FogTopologyPlan::getFogGraph() const {
+  return *fGraph;
+}
 
 } // namespace iotdb

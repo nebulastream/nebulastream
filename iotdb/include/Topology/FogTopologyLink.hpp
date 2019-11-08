@@ -7,8 +7,7 @@
 #include "Util/ErrorHandling.hpp"
 
 namespace iotdb {
-#define NOT_EXISTING_LINK_ID 0
-#define INVALID_NODE_ID 101
+#define NOT_EXISTING_LINK_ID INT_MAX
 
 enum LinkType { NodeToNode, NodeToSensor, SensorToNode };
 
@@ -19,7 +18,7 @@ class FogTopologyLink {
   public:
     FogTopologyLink(FogTopologyEntryPtr pSourceNode, FogTopologyEntryPtr pDestNode)
     {
-        linkId = linkID++;
+        linkId = NOT_EXISTING_LINK_ID;
         sourceNode = pSourceNode;
         destNode = pDestNode;
     }
