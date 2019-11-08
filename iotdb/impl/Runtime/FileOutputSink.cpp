@@ -13,7 +13,7 @@ FileOutputSink::FileOutputSink() : DataSink() {}
 FileOutputSink::FileOutputSink(const Schema& schema) : DataSink(schema) {}
 FileOutputSink::~FileOutputSink() {}
 
-bool FileOutputSink::writeData(const TupleBuffer* input_buffer) { IOTDB_FATAL_ERROR("Called Uninplemented Function!"); }
+bool FileOutputSink::writeData(const TupleBufferPtr input_buffer) { IOTDB_FATAL_ERROR("Called Uninplemented Function!"); }
 
 const std::string FileOutputSink::toString() const
 {

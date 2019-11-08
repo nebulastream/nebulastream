@@ -12,8 +12,8 @@
 #include <Runtime/Window.hpp>
 #include <Runtime/YSBWindow.hpp>
 
-#include <Runtime/Dispatcher.hpp>
-#include <Runtime/ThreadPool.hpp>
+#include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/ThreadPool.hpp>
 #include <Runtime/YSBGeneratorSource.hpp>
 #include <Util/Logger.hpp>
 #include <boost/program_options.hpp>
@@ -23,6 +23,8 @@
 #include <stdio.h>
 
 namespace iotdb {
+using NanoSeconds = std::chrono::nanoseconds;
+using Clock = std::chrono::high_resolution_clock;
 size_t getTimestamp() { return std::chrono::duration_cast<NanoSeconds>(Clock::now().time_since_epoch()).count(); }
 
 struct __attribute__((packed)) ysbRecord {
@@ -133,7 +135,7 @@ int test(size_t toProcessedBuffers, size_t threadCnt, size_t campaignCnt, size_t
 	ThreadPool::instance().setNumberOfThreads(threadCnt);
 
 	size_t start = getTimestamp();
-	ThreadPool::instance().start(1);
+	ThreadPool::instance().start();
 
 	size_t endedRuns = 0;
 	while(sourceCnt != endedRuns){
@@ -168,7 +170,8 @@ int test(size_t toProcessedBuffers, size_t threadCnt, size_t campaignCnt, size_t
 
 	ThreadPool::instance().stop();
 
-	Dispatcher::instance().printStatistics(qep);
+	Dispatcher::instance().printGeneralStatistics();
+	Dispatcher::instance().printQEPStatistics(qep);
 	Dispatcher::instance().deregisterQuery(qep);
 }
 

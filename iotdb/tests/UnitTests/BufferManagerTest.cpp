@@ -8,15 +8,19 @@
 #include <log4cxx/appender.h>
 #include <gtest/gtest.h>
 #include <Util/Logger.hpp>
-#include <Runtime/BufferManager.hpp>
+#include <NodeEngine/BufferManager.hpp>
 #include <random>
 
+
+//#define DEBUG_OUTPUT
 
 namespace iotdb {
     class BufferManagerTest : public testing::Test {
     public:
         static void SetUpTestCase() {
+#ifdef DEBUG_OUTPUT
             setupLogging();
+#endif
             IOTDB_INFO("Setup BufferMangerTest test class.");
             BufferManager::instance().setNumberOfBuffers(10);
         }
@@ -39,8 +43,8 @@ namespace iotdb {
             log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
 
             // set log level
-            // logger->setLevel(log4cxx::Level::getDebug());
-            logger->setLevel(log4cxx::Level::getInfo());
+             logger->setLevel(log4cxx::Level::getDebug());
+//            logger->setLevel(log4cxx::Level::getInfo());
 
             // add appenders and other will inherit the settings
             logger->addAppender(file);
@@ -55,7 +59,7 @@ namespace iotdb {
         ASSERT_EQ(buffers_count, buffers_managed);
         ASSERT_EQ(buffers_free, buffers_managed);
 
-        BufferManager::instance().addBuffer();
+        BufferManager::instance().addOneBufferWithDefaultSize();
         TupleBufferPtr buffer = BufferManager::instance().getBuffer();
 
         buffers_count = BufferManager::instance().getNumberOfBuffers();
@@ -64,6 +68,7 @@ namespace iotdb {
         ASSERT_EQ(buffers_count, expected);
         ASSERT_EQ(buffers_free, buffers_managed);
 
+        BufferManager::instance().releaseBuffer(buffer);
         BufferManager::instance().removeBuffer(buffer);
 
         buffers_count = BufferManager::instance().getNumberOfBuffers();
@@ -217,7 +222,7 @@ namespace iotdb {
         std::mt19937 mt(rd());
         std::uniform_int_distribution<size_t> sleeptime(1, 100);
 
-        for(size_t i = 0; i < 1000; i++) {
+        for(size_t i = 0; i < 100; i++) {
             threads.emplace_back(run_and_release, i, sleeptime(mt));
         }
 

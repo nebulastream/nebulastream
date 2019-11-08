@@ -27,7 +27,7 @@ DataSink::DataSink() : schema(Schema::create()), processedBuffer(0), processedTu
 
 const Schema& DataSink::getSchema() const { return schema; }
 
-bool DataSink::writeData(const std::vector<TupleBuffer*>& input_buffers)
+bool DataSink::writeDataInBatch(const std::vector<TupleBufferPtr>& input_buffers)
 {
     for (const auto& buf : input_buffers) {
         if (!writeData(buf)) {
@@ -37,16 +37,8 @@ bool DataSink::writeData(const std::vector<TupleBuffer*>& input_buffers)
     return true;
 }
 
-bool DataSink::writeData(const std::vector<TupleBufferPtr>& input_buffers)
-{
-    std::vector<TupleBuffer*> buffs;
-    for (const auto& buf : input_buffers) {
-        buffs.push_back(buf.get());
-    }
-    return writeData(buffs);
-}
 
-bool DataSink::writeData(const TupleBufferPtr input_buffer) { return writeData(input_buffer.get()); }
+bool DataSink::writeData(const TupleBufferPtr input_buffer) { return writeData(input_buffer); }
 
 DataSink::~DataSink() { IOTDB_DEBUG("Destroy Data Sink  " << this) }
 

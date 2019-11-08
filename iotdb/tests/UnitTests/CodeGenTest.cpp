@@ -10,7 +10,7 @@
 #include <Util/ErrorHandling.hpp>
 #include <Runtime/DataSink.hpp>
 #include <Runtime/GeneratorSource.hpp>
-#include <Runtime/BufferManager.hpp>
+#include <NodeEngine/BufferManager.hpp>
 
 #include <CodeGen/C_CodeGen/BinaryOperatorStatement.hpp>
 #include <CodeGen/C_CodeGen/Declaration.hpp>

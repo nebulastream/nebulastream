@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 namespace iotdb{
+
 void NodeProperties::readCpuStats() {
 
   this->_cpus.clear();
@@ -21,7 +22,7 @@ void NodeProperties::readCpuStats() {
       };
 
       // check columns
-      if (tokens.size() != PROC_STAT_CPU_COLUMNS) {
+      if (tokens.size() != 11) {
         std::cerr << "ERROR: /proc/stat incorrect" << std::endl;
       }
       JSON cpu;
@@ -62,9 +63,9 @@ std::string NodeProperties::getMemStats()
     return _mem.dump();
 }
 
-std::string NodeProperties::getFsStats()
+std::string NodeProperties::getDiskStats()
 {
-    return _fs.dump();
+    return _disk.dump();
 }
 
 std::string NodeProperties::getMetric()
@@ -98,7 +99,6 @@ std::string NodeProperties::getClientPort()
     return port;
 }
 
-#if defined(__linux__)
 
 void NodeProperties::readNetworkStats() {
   this->_nets.clear();
@@ -107,8 +107,8 @@ void NodeProperties::readNetworkStats() {
   std::string s1 = hostnameChar;
   JSON hname;
 
-  hname["hostname"] = clientName;//TODO: replace this later with s1
-  hname["port"] = clientPort;//TODO: replace this later with s1
+  hname["hostname"] = clientName;
+  hname["port"] = clientPort;
   this->_nets.push_back(hname);
 
   struct ifaddrs* ifa;
@@ -189,13 +189,6 @@ void NodeProperties::readNetworkStats() {
   this->_metrics["nets"] = this->_nets;
 }
 
-#elif defined(__APPLE__) || defined(__MACH__)
-    void NodeProperties::readNetworkStats() {
-
-    }
-#else
-#error "Unsupported platform"
-#endif
 void NodeProperties::print()
 {
     std::cout << "cpu stats=" << std::endl;
@@ -204,13 +197,13 @@ void NodeProperties::print()
     std::cout << "network stats=" << std::endl;
     std::cout << getNetworkStats() << std::endl;
 
-    std::cout << "mbemory stats=" << std::endl;
+    std::cout << "memory stats=" << std::endl;
     std::cout << getMemStats() << std::endl;
 
     std::cout << "filesystem stats=" << std::endl;
-    std::cout << getFsStats() << std::endl;
+    std::cout << getDiskStats() << std::endl;
 }
-#if defined(__linux__)
+
 void NodeProperties::readMemStats() {
   this->_mem.clear();
 
@@ -236,38 +229,34 @@ void NodeProperties::readMemStats() {
 
   this->_metrics["mem"] = this->_mem;
 }
-#else
-    void NodeProperties::readMemStats() {
 
-    }
-#endif
-void NodeProperties::readFsStats() {
+void NodeProperties::readDiskStats() {
   // this->_cpus = JSON({});
-  this->_fs.clear();
+  this->_disk.clear();
   struct statvfs *svfs = (struct statvfs *)malloc(sizeof(struct statvfs));
 
   int ret = statvfs("/", svfs);
   if (ret == EFAULT)
     perror("ERROR: read filesystem ");
 
-  this->_fs["f_bsize"] = svfs->f_bsize;
-  this->_fs["f_frsize"] = svfs->f_frsize;
-  this->_fs["f_blocks"] = svfs->f_blocks;
-  this->_fs["f_bfree"] = svfs->f_bfree;
-  this->_fs["f_bavail"] = svfs->f_bavail;
+  this->_disk["f_bsize"] = svfs->f_bsize;
+  this->_disk["f_frsize"] = svfs->f_frsize;
+  this->_disk["f_blocks"] = svfs->f_blocks;
+  this->_disk["f_bfree"] = svfs->f_bfree;
+  this->_disk["f_bavail"] = svfs->f_bavail;
 
-  this->_metrics["fs"] = this->_fs;
+  this->_metrics["fs"] = this->_disk;
 }
 
 std::string NodeProperties::dump(int setw) {
   return _metrics.dump(setw);
 }
 
-void NodeProperties::load(const char* metricsBuffer) {
+void NodeProperties::set(const char* metricsBuffer) {
   this->_metrics = JSON::parse(metricsBuffer);
 
   _mem = this->_metrics["mem"];
-  _fs = this->_metrics["fs"];
+  _disk = this->_metrics["fs"];
   _cpus = this->_metrics["cpus"];
   _nets = this->_metrics["nets"];
 }

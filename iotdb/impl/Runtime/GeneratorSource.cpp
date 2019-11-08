@@ -5,7 +5,7 @@
  *      Author: zeuchste
  */
 
-#include <Runtime/Dispatcher.hpp>
+#include <NodeEngine/Dispatcher.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>

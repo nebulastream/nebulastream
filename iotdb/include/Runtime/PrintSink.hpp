@@ -19,7 +19,7 @@ class PrintSink : public DataSink {
     virtual void setup() override {}
     virtual void shutdown() override {}
 
-    bool writeData(const TupleBuffer* input_buffer) override;
+    bool writeData(const TupleBufferPtr input_buffer);
     const std::string toString() const override;
 
   protected:

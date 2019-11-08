@@ -1,13 +1,9 @@
 add_source_iotdb(
         DataSource.cpp
         DataSink.cpp
-        ThreadPool.cpp
-        Dispatcher.cpp
-        Task.cpp
         RemoteSocketSource.cpp
         GeneratorSource.cpp
         BinarySource.cpp
-        BufferManager.cpp
         ZmqSink.cpp
         ZmqSource.cpp
         Window.cpp

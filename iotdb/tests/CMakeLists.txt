@@ -53,10 +53,10 @@ message( STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}" )
 
 # Test Suites -----------------------------------------------------------------
 
-# Engine Start and Stop Tests
-add_executable(engine-start-stop-test "UnitTests/EngineStartAndStopTest.cpp")
-target_link_libraries(engine-start-stop-test iotdb ${GTEST_LIBRARIES})
-add_test(NAME engine-start-stop-test COMMAND engine-start-stop-test)
+# Engine Tests
+add_executable(engine-test "UnitTests/EngineTest.cpp")
+target_link_libraries(engine-test  iotdb ${GTEST_LIBRARIES})
+add_test(NAME engine-test  COMMAND engine-test )
 
 # Code Generation Tests
 add_executable(code-generation-tests "UnitTests/CodeGenTest.cpp")
@@ -74,9 +74,9 @@ target_link_libraries(fog-topology-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME fog-topology-tests COMMAND fog-topology-tests)
 
 # Client Server Communication Tests
-add_executable(client-server-communication-tests "UnitTests/ClientServerCommunicationTest.cpp")
-target_link_libraries(client-server-communication-tests ${GTEST_LIBRARIES})
-add_test(NAME client-server-communication-tests COMMAND client-server-communication-tests)
+#add_executable(client-server-communication-tests "UnitTests/ClientServerCommunicationTest.cpp")
+#target_link_libraries(client-server-communication-tests ${GTEST_LIBRARIES})
+#add_test(NAME client-server-communication-tests COMMAND client-server-communication-tests)
 
 # Buffer Manager Test
 add_executable(buffer-manager-tests "UnitTests/BufferManagerTest.cpp")
