@@ -6,11 +6,12 @@
 
 namespace iotdb {
 
-FogPlacementOptimizer *FogPlacementOptimizer::getOptimizer(std::string optimizerName) {
+std::shared_ptr<FogPlacementOptimizer> FogPlacementOptimizer::getOptimizer(std::string optimizerName) {
+
   if (optimizerName == "BottomUp") {
-    return new BottomUp();
+    return std::make_unique<BottomUp>(BottomUp());
   } else if (optimizerName == "TopDown") {
-    return new TopDown();
+    return std::make_unique<TopDown>(TopDown());
   } else {
     throw "Unknown optimizer type : " + optimizerName;
   }
@@ -18,7 +19,7 @@ FogPlacementOptimizer *FogPlacementOptimizer::getOptimizer(std::string optimizer
 
 void FogPlacementOptimizer::removeNonResidentOperators(FogExecutionPlan graph) {
 
-  const vector<ExecutionVertex> &executionNodes = graph.getExecutionGraph().getAllVertex();
+  const vector<ExecutionVertex> &executionNodes = graph.getExecutionGraph()->getAllVertex();
   for (ExecutionVertex executionNode: executionNodes) {
     OperatorPtr &rootOperator = executionNode.ptr->getRootOperator();
     vector<int> &childOperatorIds = executionNode.ptr->getChildOperatorIds();
@@ -58,8 +59,8 @@ static const int zmqDefaultPort = 5555;
 // fixed.
 void FogPlacementOptimizer::addSystemGeneratedSourceSinkOperators(const Schema &schema, FogExecutionPlan graph) {
 
-  const ExecutionGraph &exeGraph = graph.getExecutionGraph();
-  const vector<ExecutionVertex> &executionNodes = exeGraph.getAllVertex();
+  const std::shared_ptr<ExecutionGraph> &exeGraph = graph.getExecutionGraph();
+  const vector<ExecutionVertex> &executionNodes = exeGraph->getAllVertex();
   for (ExecutionVertex executionNode: executionNodes) {
     ExecutionNodePtr &executionNodePtr = executionNode.ptr;
 
@@ -101,7 +102,7 @@ void FogPlacementOptimizer::addSystemGeneratedSourceSinkOperators(const Schema &
 
       //create sys introduced sink operator
 
-      const vector<ExecutionEdge> &edges = exeGraph.getAllEdgesFromNode(executionNodePtr);
+      const vector<ExecutionEdge> &edges = exeGraph->getAllEdgesFromNode(executionNodePtr);
       //FIXME: More than two sources are not supported feature at this moment. Once the feature is available please
       // fix the source code
       const string &destHostName = edges[0].ptr->getDestination()->getFogNode()->getIpAddr();

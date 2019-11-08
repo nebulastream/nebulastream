@@ -97,7 +97,7 @@ class FogExecutionPlan {
 
   std::string getTopologyPlanString() const;
 
-  ExecutionGraph getExecutionGraph() const;
+  std::shared_ptr<ExecutionGraph> getExecutionGraph() const;
 
   bool hasVertex(int search_id);
 
@@ -106,7 +106,7 @@ class FogExecutionPlan {
   json::value getExecutionGraphAsJson() const;
 
  private:
-  ExecutionGraph *fGraph;
+  std::shared_ptr<ExecutionGraph> exeGraphPtr;
 
   vector<json::value> getChildrenNode(ExecutionNodePtr fogParentNode) const;
 };

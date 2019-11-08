@@ -265,11 +265,11 @@ std::string ExecutionGraph::getGraphString() {
 };
 
 FogExecutionPlan::FogExecutionPlan() {
-  fGraph = new ExecutionGraph();
+  exeGraphPtr = std::make_shared<ExecutionGraph>(ExecutionGraph());
 }
 
 ExecutionNodePtr FogExecutionPlan::getRootNode() const {
-  return fGraph->getRoot();
+  return exeGraphPtr->getRoot();
 };
 
 ExecutionNodePtr
@@ -281,25 +281,25 @@ FogExecutionPlan::createExecutionNode(std::string operatorName, std::string node
 
   // create worker node
   auto ptr = std::make_shared<ExecutionNode>(executionNode);
-  fGraph->addVertex(ptr);
+  exeGraphPtr->addVertex(ptr);
   return ptr;
 };
 
 bool FogExecutionPlan::hasVertex(int search_id) {
-  return fGraph->hasVertex(search_id);
+  return exeGraphPtr->hasVertex(search_id);
 }
 
 ExecutionNodePtr FogExecutionPlan::getExecutionNode(int search_id) {
-  return fGraph->getNode(search_id);
+  return exeGraphPtr->getNode(search_id);
 }
 
 json::value FogExecutionPlan::getExecutionGraphAsJson() const {
   const ExecutionNodePtr &rootNode = getRootNode();
 
-  const ExecutionGraph &graph = getExecutionGraph();
+  const shared_ptr<ExecutionGraph> &exeGraph = getExecutionGraph();
 
-  const vector<ExecutionEdge> &allEdges = graph.getAllEdges();
-  const vector<ExecutionVertex> &allVertex = graph.getAllVertex();
+  const vector<ExecutionEdge> &allEdges = exeGraph->getAllEdges();
+  const vector<ExecutionVertex> &allVertex = exeGraph->getAllVertex();
 
   auto result = json::value::object();
   std::vector<json::value> edges{};
@@ -346,9 +346,9 @@ json::value FogExecutionPlan::getExecutionGraphAsJson() const {
 
 std::vector<json::value> FogExecutionPlan::getChildrenNode(ExecutionNodePtr executionParentNode) const {
 
-  const ExecutionGraph &executionGraph = getExecutionGraph();
+  const shared_ptr<ExecutionGraph> &exeGraph = getExecutionGraph();
 
-  const std::vector<ExecutionEdge> &edgesToNode = executionGraph.getAllEdgesToNode(executionParentNode);
+  const std::vector<ExecutionEdge> &edgesToNode = exeGraph->getAllEdgesToNode(executionParentNode);
 
   std::vector<json::value> children = {};
 
@@ -375,22 +375,22 @@ std::vector<json::value> FogExecutionPlan::getChildrenNode(ExecutionNodePtr exec
 ExecutionNodeLinkPtr FogExecutionPlan::createExecutionNodeLink(ExecutionNodePtr src, ExecutionNodePtr dst) {
 
   // check if link already exists
-  if (fGraph->hasLink(src, dst)) {
+  if (exeGraphPtr->hasLink(src, dst)) {
     // return already existing link
-    return fGraph->getLink(src, dst);
+    return exeGraphPtr->getLink(src, dst);
   }
 
   // create new link
   auto linkPtr = std::make_shared<ExecutionNodeLink>(src, dst);
-  assert(fGraph->addEdge(linkPtr));
+  assert(exeGraphPtr->addEdge(linkPtr));
   return linkPtr;
 };
 
 std::string FogExecutionPlan::getTopologyPlanString() const {
-  return fGraph->getGraphString();
+  return exeGraphPtr->getGraphString();
 };
 
-ExecutionGraph FogExecutionPlan::getExecutionGraph() const {
-  return *fGraph;
+std::shared_ptr<ExecutionGraph> FogExecutionPlan::getExecutionGraph() const {
+  return exeGraphPtr;
 };
     
