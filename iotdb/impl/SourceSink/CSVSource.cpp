@@ -5,8 +5,8 @@
  *      Author: zeuchste
  */
 
-#include <Runtime/CSVSource.hpp>
-#include <Runtime/DataSource.hpp>
+#include "../../include/SourceSink/CSVSource.hpp"
+
 #include <NodeEngine/Dispatcher.hpp>
 #include <assert.h>
 #include <fstream>
@@ -14,6 +14,7 @@
 #include <vector>
 #include <string>
 #include <boost/algorithm/string.hpp>
+#include "../../include/SourceSink/DataSource.hpp"
 
 
 namespace iotdb {

@@ -3,9 +3,9 @@
 
 #include <atomic>
 #include <iostream>
-#include <Runtime/Window.hpp>
 #include <mutex>
 #include <condition_variable>
+#include "../SourceSink/Window.hpp"
 
 namespace iotdb{
 

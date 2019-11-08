@@ -10,8 +10,8 @@
 #include <API/InputQuery.hpp>
 #include <CodeGen/HandCodedQueryExecutionPlan.hpp>
 #include <NodeEngine/Dispatcher.hpp>
-#include <Runtime/GeneratorSource.hpp>
 #include <memory>
+#include "../SourceSink/GeneratorSource.hpp"
 
 namespace iotdb {
 

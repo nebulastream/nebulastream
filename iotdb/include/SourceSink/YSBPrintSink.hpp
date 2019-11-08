@@ -6,7 +6,7 @@
 #include <string>
 #include <zmq.hpp>
 
-#include <Runtime/PrintSink.hpp>
+#include "../SourceSink/PrintSink.hpp"
 
 namespace iotdb {
 

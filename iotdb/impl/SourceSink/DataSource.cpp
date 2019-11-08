@@ -4,199 +4,116 @@
 #include <memory>
 #include <random>
 
-#include <Runtime/BinarySource.hpp>
 #include <NodeEngine/Dispatcher.hpp>
-#include <Runtime/GeneratorSource.hpp>
-#include <Runtime/YSBGeneratorSource.hpp>
-#include <Runtime/CSVSource.hpp>
-
-#include <Runtime/RemoteSocketSource.hpp>
-#include <Runtime/ZmqSource.hpp>
 #include <Util/ErrorHandling.hpp>
 #include <Util/Logger.hpp>
 
-#include <Runtime/DataSource.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
+
+#include <SourceSink/DataSource.hpp>
+
 BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::DataSource);
 
 namespace iotdb {
 
 DataSource::DataSource(const Schema& _schema)
-    : run_thread(false), thread(), schema(_schema), generatedTuples(0),
-      generatedBuffers(0){IOTDB_DEBUG("DataSource " << this << ": Init Data Source!")}
-
-      DataSource::DataSource()
-    : run_thread(false), thread(), generatedTuples(0), generatedBuffers(0)
-{
-    IOTDB_DEBUG("DataSource " << this << ": Init Data Source Default!")
+    : running(false),
+      thread(),
+      schema(_schema),
+      generatedTuples(0),
+      generatedBuffers(0),
+      num_buffers_to_process(UINT64_MAX) {
+  IOTDB_DEBUG("DataSource " << this << ": Init Data Source with schema")
 }
 
-const Schema& DataSource::getSchema() const { return schema; }
-
-DataSource::~DataSource()
-{
-    stop();
-    IOTDB_DEBUG("DataSource " << this << ": Destroy Data Source.")
+DataSource::DataSource()
+    : running(false),
+      thread(),
+      generatedTuples(0),
+      generatedBuffers(0),
+      num_buffers_to_process(UINT64_MAX) {
+  IOTDB_DEBUG("DataSource " << this << ": Init Data Source Default w/o schema")
 }
 
-void DataSource::start()
-{
-    if (run_thread)
-        return;
-    run_thread = true;
-    IOTDB_DEBUG("DataSource " << this << ": Spawn thread")
-    thread = std::thread(std::bind(&DataSource::run, this));
+const Schema& DataSource::getSchema() const {
+  return schema;
 }
 
-void DataSource::stop()
-{
-    IOTDB_DEBUG("DataSource " << this << ": Stop called")
-
-    //	if (!run_thread)
-    //	  return;
-
-    run_thread = false;
-
-    if (thread.joinable())
-        thread.join();
-
-    IOTDB_DEBUG("DataSource " << this << ": Thread joinded")
+DataSource::~DataSource() {
+  stop();
+  IOTDB_DEBUG("DataSource " << this << ": Destroy Data Source.")
 }
 
-bool DataSource::isRunning() { return run_thread; }
+bool DataSource::start() {
+  if (running)
+    return false;
+  running = true;
 
-void DataSource::run()
-{
-    IOTDB_DEBUG("DataSource " << this << ": Running Data Source")
-    size_t cnt = 0;
-
-    while (run_thread) {
-        if (cnt < this->num_buffers_to_process) {
-            TupleBufferPtr buf = receiveData();
-            IOTDB_DEBUG("DataSource " << this << ": Received Data: " << buf->num_tuples << "tuples")
-            if (buf->buffer) {
-                Dispatcher::instance().addWork(buf, this);
-                cnt++;
-            }
-            else {
-                assert(0);
-            }
-        }
-        else {
-            IOTDB_DEBUG("DataSource " << this << ": Stop running")
-            run_thread = false;
-            break;
-        }
-    } // end of while
-    IOTDB_DEBUG("DataSource " << this << ": Data Source Finished")
+  IOTDB_DEBUG("DataSource " << this << ": Spawn thread")
+  thread = std::thread(std::bind(&DataSource::running_routine, this));
+  return true;
 }
 
+bool DataSource::stop() {
+  IOTDB_DEBUG("DataSource " << this << ": Stop called")
 
-const DataSourcePtr createSchemaTestDataSource(const Schema& schema)
-    {
-        // Shall this go to the UnitTest Directory in future?
-        class Functor {
-        public:
-            Functor() : one(1) {}
-            TupleBufferPtr operator()()
-            {
-                // 10 tuples of size one
-                TupleBufferPtr buf = BufferManager::instance().getBuffer();
-                size_t tupleCnt = buf->buffer_size / sizeof(uint64_t);
+  if (!running)
+    return false;
+  running = false;
 
-                assert(buf->buffer != NULL);
-
-                uint64_t* tuples = (uint64_t*)buf->buffer;
-                for (uint64_t i = 0; i < tupleCnt; i++) {
-                    tuples[i] = one;
-                }
-                buf->tuple_size_bytes = sizeof(uint64_t);
-                buf->num_tuples = tupleCnt;
-                return buf;
-            }
-
-            uint64_t one;
-        };
-
-        DataSourcePtr source(new GeneratorSource<Functor>(schema, 1));
-
-        return source;
+  if (thread.joinable())
+    thread.join();
+  IOTDB_DEBUG("DataSource " << this << ": Thread joinded")
+  return true;
 }
 
-const DataSourcePtr createTestSource()
-{
-    // Shall this go to the UnitTest Directory in future?
-    class Functor {
-      public:
-        Functor() : one(1) {}
-        TupleBufferPtr operator()()
-        {
-            // 10 tuples of size one
-            TupleBufferPtr buf = BufferManager::instance().getBuffer();
-            size_t tupleCnt = buf->buffer_size / sizeof(uint64_t);
-
-            assert(buf->buffer != NULL);
-
-            uint64_t* tuples = (uint64_t*)buf->buffer;
-            for (uint64_t i = 0; i < tupleCnt; i++) {
-                tuples[i] = one;
-            }
-            buf->tuple_size_bytes = sizeof(uint64_t);
-            buf->num_tuples = tupleCnt;
-            return buf;
-        }
-
-        uint64_t one;
-    };
-
-    DataSourcePtr source(new GeneratorSource<Functor>(Schema::create().addField(createField("id", UINT32)), 1));
-
-    return source;
+bool DataSource::isRunning() {
+  return running;
 }
 
-const DataSourcePtr createYSBSource(size_t bufferCnt, size_t campaingCnt, bool preGenerated)
-{
+void DataSource::running_routine() {
+  IOTDB_DEBUG("DataSource " << this << ": Running Data Source")
+  size_t cnt = 0;
 
-    Schema schema = Schema::create()
-                        .addField("user_id", 16)
-                        .addField("page_id", 16)
-                        .addField("campaign_id", 16)
-                        .addField("event_type", 16)
-                        .addField("ad_type", 16)
-                        .addField("current_ms", UINT64)
-                        .addField("ip", INT32);
-
-    //  DataSourcePtr source(new GeneratorSource<Functor>(Schema::create().addField(createField("id", UINT32)), 100));
-    DataSourcePtr source(new YSBGeneratorSource(schema, bufferCnt, campaingCnt, preGenerated));
-
-    return source;
+  while (running) {
+    if (cnt < num_buffers_to_process) {
+      TupleBufferPtr buf = receiveData();
+      IOTDB_DEBUG(
+          "DataSource " << this << ": Received Data: " << buf->num_tuples << "tuples")
+      if (buf->buffer) {
+        Dispatcher::instance().addWork(buf, this);
+        cnt++;
+      } else {
+        IOTDB_DEBUG("DataSource " << this << ": Received buffer is invalid")
+        assert(0);
+      }
+    } else {
+      IOTDB_DEBUG(
+          "DataSource " << this << ": All buffers processed ... stopping")
+      running = false;
+      break;
+    }
+  }
+  IOTDB_DEBUG("DataSource " << this << ": Data Source finished processing")
 }
 
-const DataSourcePtr createZmqSource(const Schema& schema, const std::string& host, const uint16_t port)
-{
-    return std::make_shared<ZmqSource>(schema, host, port);
+// debugging
+void DataSource::setNumBuffersToProcess(size_t cnt) {
+  num_buffers_to_process = cnt;
 }
-
-const DataSourcePtr createBinaryFileSource(const Schema& schema, const std::string& path_to_file)
-{
-    // instantiate BinaryFileSource
-    DataSourcePtr source(new BinarySource(schema, path_to_file));
-    return source;
+;
+size_t DataSource::getNumberOfGeneratedTuples() {
+  return generatedTuples;
 }
-
-const DataSourcePtr createRemoteTCPSource(const Schema& schema, const std::string& server_ip, int port)
-{
-    // instantiate RemoDataSource: teSocketSource
-    IOTDB_FATAL_ERROR("DataSource: Called unimplemented Function");
+;
+size_t DataSource::getNumberOfGeneratedBuffers() {
+  return generatedBuffers;
 }
-
-const DataSourcePtr createCSVFileSource(const Schema& schema, const std::string& path_to_file)
-{
-    // instantiate CSVFileSource
-    DataSourcePtr source(new CSVSource(schema, path_to_file));
-    return source;
+;
+const std::string DataSource::getSourceSchemaAsString() {
+  return schema.toString();
 }
-
-} // namespace iotdb
+;
+}  // namespace iotdb

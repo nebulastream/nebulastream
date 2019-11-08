@@ -5,12 +5,13 @@
  *      Author: zeuchste
  */
 
-#include <Runtime/BinarySource.hpp>
-#include <Runtime/DataSource.hpp>
+#include "../../include/SourceSink/BinarySource.hpp"
+
 #include <NodeEngine/Dispatcher.hpp>
 #include <assert.h>
 #include <fstream>
 #include <sstream>
+#include "../../include/SourceSink/DataSource.hpp"
 
 namespace iotdb {
 

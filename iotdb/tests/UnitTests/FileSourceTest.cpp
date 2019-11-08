@@ -3,15 +3,17 @@
 #include <iostream>
 #include <string>
 #include <cstring>
-#include <Runtime/DataSource.hpp>
 #include <NodeEngine/Dispatcher.hpp>
-#include <Runtime/GeneratorSource.hpp>
 #include <NodeEngine/ThreadPool.hpp>
 #include <NodeEngine/BufferManager.hpp>
 
 #include <Core/DataTypes.hpp>
 
 #include <Util/Logger.hpp>
+#include <SourceSink/DataSource.hpp>
+#include <SourceSink/GeneratorSource.hpp>
+#include <SourceSink/TestSources.hpp>
+
 namespace iotdb {
 
 struct __attribute__((packed)) ysbRecord {

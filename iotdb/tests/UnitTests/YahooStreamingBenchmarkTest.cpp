@@ -9,15 +9,14 @@
 
 #include "gtest/gtest.h"
 
-#include <Runtime/DataSink.hpp>
-#include <Runtime/DataSource.hpp>
 #include <NodeEngine/Dispatcher.hpp>
-#include <Runtime/GeneratorSource.hpp>
 #include <NodeEngine/ThreadPool.hpp>
-#include <Runtime/Window.hpp>
-#include <Runtime/YSBWindow.hpp>
-
 #include <CodeGen/HandCodedQueryExecutionPlan.hpp>
+#include "../../include/SourceSink/DataSink.hpp"
+#include "../../include/SourceSink/DataSource.hpp"
+#include "../../include/SourceSink/GeneratorSource.hpp"
+#include "../../include/SourceSink/Window.hpp"
+#include "../../include/SourceSink/YSBWindow.hpp"
 
 #ifndef LOCAL_HOST
 #define LOCAL_HOST "127.0.0.1"

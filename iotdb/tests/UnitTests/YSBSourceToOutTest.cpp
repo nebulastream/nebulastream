@@ -7,16 +7,15 @@
 #include <CodeGen/HandCodedQueryExecutionPlan.hpp>
 #include <Core/TupleBuffer.hpp>
 
-#include <Runtime/DataSource.hpp>
-#include <Runtime/Window.hpp>
-#include <Runtime/YSBWindow.hpp>
-
 #include <NodeEngine/Dispatcher.hpp>
-#include <Runtime/GeneratorSource.hpp>
 #include <NodeEngine/ThreadPool.hpp>
 #include <Util/Logger.hpp>
 #include <cstring>
 #include <QEPs/CompiledYSBTestQueryExecutionPlan.hpp>
+#include "../../include/SourceSink/DataSource.hpp"
+#include "../../include/SourceSink/GeneratorSource.hpp"
+#include "../../include/SourceSink/Window.hpp"
+#include "../../include/SourceSink/YSBWindow.hpp"
 
 namespace iotdb {
 sig_atomic_t user_wants_to_quit = 0;

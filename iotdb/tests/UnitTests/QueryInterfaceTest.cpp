@@ -8,14 +8,14 @@
 #include <CodeGen/HandCodedQueryExecutionPlan.hpp>
 #include <Core/TupleBuffer.hpp>
 
-#include <Runtime/DataSource.hpp>
 #include <NodeEngine/Dispatcher.hpp>
-#include <Runtime/GeneratorSource.hpp>
 #include <NodeEngine/ThreadPool.hpp>
 
 #include <API/InputQuery.hpp>
 #include <API/UserAPIExpression.hpp>
 #include <API/Environment.hpp>
+#include "../../include/SourceSink/DataSource.hpp"
+#include "../../include/SourceSink/GeneratorSource.hpp"
 
 namespace iotdb {
 

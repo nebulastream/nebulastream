@@ -1,3 +1,5 @@
+#include "../../include/SourceSink/YSBPrintSink.hpp"
+
 #include <cstring>
 #include <iostream>
 #include <memory>
@@ -5,7 +7,6 @@
 #include <string>
 #include <zmq.hpp>
 
-#include <Runtime/YSBPrintSink.hpp>
 BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::YSBPrintSink)
 #include <NodeEngine/Dispatcher.hpp>
 #include <Util/Logger.hpp>

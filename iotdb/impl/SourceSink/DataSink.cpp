@@ -1,15 +1,16 @@
+#include "../../include/SourceSink/DataSink.hpp"
+
 #include <cassert>
 #include <iostream>
 #include <memory>
 
 #include <API/Schema.hpp>
-#include <Runtime/DataSink.hpp>
 BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::DataSink)
 
-#include <Runtime/FileOutputSink.hpp>
-#include <Runtime/PrintSink.hpp>
-#include <Runtime/YSBPrintSink.hpp>
-#include <Runtime/ZmqSink.hpp>
+#include "../../include/SourceSink/FileOutputSink.hpp"
+#include "../../include/SourceSink/PrintSink.hpp"
+#include "../../include/SourceSink/YSBPrintSink.hpp"
+#include "../../include/SourceSink/ZmqSink.hpp"
 
 #include <Util/ErrorHandling.hpp>
 #include <Util/Logger.hpp>

@@ -3,10 +3,11 @@
  *  - do we really need all mutex?
  */
 #include <NodeEngine/Dispatcher.hpp>
-#include <Runtime/Window.hpp>
 #include <Util/Logger.hpp>
 #include <assert.h>
 #include <iostream>
+
+#include "../../include/SourceSink/Window.hpp"
 namespace iotdb {
 
 Dispatcher::Dispatcher()

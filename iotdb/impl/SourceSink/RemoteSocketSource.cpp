@@ -4,7 +4,7 @@
  *  Created on: Dec 19, 2018
  *      Author: zeuchste
  */
-#include <Runtime/RemoteSocketSource.hpp>
+#include "../../include/SourceSink/RemoteSocketSource.hpp"
 
 namespace iotdb {
 }

@@ -1,6 +1,7 @@
 
+#include "../../include/SourceSink/YSBGeneratorSource.hpp"
+
 #include <NodeEngine/Dispatcher.hpp>
-#include <Runtime/YSBGeneratorSource.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>

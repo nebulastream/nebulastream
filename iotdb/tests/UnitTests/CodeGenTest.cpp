@@ -8,8 +8,6 @@
 #include <CodeGen/PipelineStage.hpp>
 #include <Core/DataTypes.hpp>
 #include <Util/ErrorHandling.hpp>
-#include <Runtime/DataSink.hpp>
-#include <Runtime/GeneratorSource.hpp>
 #include <NodeEngine/BufferManager.hpp>
 
 #include <CodeGen/C_CodeGen/BinaryOperatorStatement.hpp>
@@ -19,6 +17,8 @@
 #include <CodeGen/C_CodeGen/Statement.hpp>
 #include <CodeGen/C_CodeGen/UnaryOperatorStatement.hpp>
 #include <API/UserAPIExpression.hpp>
+#include "../../include/SourceSink/DataSink.hpp"
+#include "../../include/SourceSink/GeneratorSource.hpp"
 
 namespace iotdb {
 
