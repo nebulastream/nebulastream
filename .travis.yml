@@ -9,6 +9,7 @@ matrix:
           llvm-dev
 
 language: cpp
+cache: ccache
 compiler: gcc
 
 before_install:
