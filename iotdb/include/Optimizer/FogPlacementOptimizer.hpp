@@ -59,7 +59,7 @@ class FogPlacementOptimizer {
    * @param optimizerName
    * @return instance of type BaseOptimizer
    */
-  static FogPlacementOptimizer *getOptimizer(std::string optimizerName);
+  static std::shared_ptr<FogPlacementOptimizer> getOptimizer(std::string optimizerName);
 
   /**
    * @brief Get all candidate node from sink to the target source node.

@@ -14,12 +14,13 @@
 
 namespace iotdb {
 
-    class FogOptimizer {
+class FogOptimizer {
 
-    public:
-        FogExecutionPlan prepareExecutionGraph(std::string strategy, InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan);
-    };
+ public:
+  FogExecutionPlan prepareExecutionGraph(std::string strategy,
+                                         InputQuery inputQuery,
+                                         FogTopologyPlanPtr fogTopologyPlan);
+};
 }
-
 
 #endif //IOTDB_FOGOPTIMIZER_HPP
