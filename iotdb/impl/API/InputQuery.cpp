@@ -7,7 +7,8 @@
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
 #include <API/UserAPIExpression.hpp>
 #include <SourceSink/DataSink.hpp>
-#include <SourceSink/TestSources.hpp>
+#include "../../include/SourceSink/SinkCreator.hpp"
+#include "../../include/SourceSink/SourceCreator.hpp"
 
 namespace iotdb {
 
@@ -173,7 +174,7 @@ InputQuery &InputQuery::writeToFile(const std::string &file_name) {
 }
 
 InputQuery &InputQuery::print(std::ostream &out) {
-  OperatorPtr op = createSinkOperator(createPrintSink(out));
+  OperatorPtr op = createSinkOperator(createPrintSinkWithoutSchema(out));
   int operatorId = this->getNextOperatorId();
   op->setOperatorId(operatorId);
   addChild(op, root);

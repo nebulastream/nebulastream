@@ -53,7 +53,7 @@ class YahooStreamingBenchmarkTest : public testing::Test {
 
         ysbSource = createYSBSource(1024, 10, false); // 1024 buffers * 32 kb = 32 MB
         ysbWindow = createTestWindow(2, 10);          // windows of 2 seconds, 10 campaigns
-        ysbSink = createPrintSink(ysbRecordResultSchema, outputStream);
+        ysbSink = createPrintSinkWithSink(ysbRecordResultSchema, outputStream);
         zmqSink = createZmqSink(ysbRecordResultSchema, LOCAL_HOST, LOCAL_PORT);
     }
 

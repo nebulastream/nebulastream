@@ -20,7 +20,7 @@
 #include <SourceSink/Window.hpp>
 #include <SourceSink/YSBGeneratorSource.hpp>
 #include <SourceSink/YSBWindow.hpp>
-#include <SourceSink/TestSources.hpp>
+#include "../../include/SourceSink/SourceCreator.hpp"
 
 
 namespace iotdb {

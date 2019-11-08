@@ -106,20 +106,8 @@ class DataSink {
     ar & sentTuples;
   }
 };
+
 typedef std::shared_ptr<DataSink> DataSinkPtr;
-
-const DataSinkPtr createTestSink();
-
-const DataSinkPtr createPrintSink(std::ostream& out);
-const DataSinkPtr createPrintSink(const Schema& schema, std::ostream& out);
-const DataSinkPtr createBinaryFileSink(const std::string& path_to_file);
-const DataSinkPtr createBinaryFileSink(const Schema& schema,
-                                       const std::string& path_to_file);
-const DataSinkPtr createRemoteTCPSink(const Schema& schema,
-                                      const std::string& server_ip, int port);
-const DataSinkPtr createZmqSink(const Schema& schema, const std::string& host,
-                                const uint16_t port);
-const DataSinkPtr createYSBPrintSink();
 
 }  // namespace iotdb
 #include <boost/archive/text_iarchive.hpp>
