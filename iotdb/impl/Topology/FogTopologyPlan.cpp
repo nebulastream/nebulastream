@@ -326,12 +326,13 @@ bool FogTopologyPlan::removeFogWorkerNode(FogTopologyWorkerNodePtr ptr) {
   return fGraph->removeVertex(ptr->getId());
 }
 
-FogTopologySensorNodePtr FogTopologyPlan::createFogSensorNode(CPUCapacity cpuCapacity) {
+FogTopologySensorNodePtr FogTopologyPlan::createFogSensorNode(const std::string ipAddr, CPUCapacity cpuCapacity) {
 
   // create sensor node
   FogTopologySensorNodePtr ptr = std::make_shared<FogTopologySensorNode>();
   ptr->setId(getNextFreeNodeId());
   ptr->setCpuCapacity(cpuCapacity.toInt());
+  ptr->setIpAddr(ipAddr);
   fGraph->addVertex(ptr);
 
   return ptr;

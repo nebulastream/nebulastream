@@ -38,8 +38,8 @@ class FogTopologyManager {
 
   bool removeFogSensorNode(FogTopologySensorNodePtr ptr) { return currentPlan->removeFogSensorNode(ptr); }
 
-  FogTopologySensorNodePtr createFogSensorNode(const std::string hostname, CPUCapacity cpuCapacity) {
-    return currentPlan->createFogSensorNode(hostname, cpuCapacity);
+  FogTopologySensorNodePtr createFogSensorNode(const std::string ipAddr, CPUCapacity cpuCapacity) {
+    return currentPlan->createFogSensorNode(ipAddr, cpuCapacity);
   }
 
   FogTopologyLinkPtr createFogTopologyLink(FogTopologyEntryPtr pSourceNode, FogTopologyEntryPtr pDestNode) {
