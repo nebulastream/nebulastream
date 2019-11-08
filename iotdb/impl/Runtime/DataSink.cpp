@@ -37,14 +37,6 @@ bool DataSink::writeDataInBatch(const std::vector<TupleBufferPtr>& input_buffers
     return true;
 }
 
-//bool DataSink::writeDataInBatch(const std::vector<TupleBufferPtr>& input_buffers)
-//{
-//    std::vector<TupleBufferPtr> buffs;
-//    for (const auto& buf : input_buffers) {
-//        buffs.push_back(buf);
-//    }
-//    return writeData(buffs);
-//}
 
 bool DataSink::writeData(const TupleBufferPtr input_buffer) { return writeData(input_buffer); }
 

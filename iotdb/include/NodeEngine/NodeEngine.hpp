@@ -16,6 +16,12 @@
 namespace iotdb {
 using JSON = nlohmann::json;
 
+/**
+ * @brief this class represents the interface and entrance point into the
+ * query processing part of NES. It provides basic functionality
+ * such as deploying, undeploying, starting, and stoping.
+ *
+ */
 class NodeEngine {
  public:
 

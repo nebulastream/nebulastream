@@ -21,8 +21,6 @@ class DataSink {
     virtual void shutdown() = 0;
     bool writeDataInBatch(const std::vector<TupleBufferPtr>& input_buffers);
     bool writeData(const TupleBufferPtr input_buffer);
-//    virtual bool writeData(const std::vector<TupleBuffer*>& input_buffers);
-//    virtual bool writeData(const TupleBufferPtr input_buffer) = 0;
     size_t getNumberOfProcessedBuffers() { return processedBuffer; }
     size_t getNumberOfProcessedTuples() { return processedTuples; }
 
