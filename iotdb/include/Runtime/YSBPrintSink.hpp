@@ -15,7 +15,7 @@ class YSBPrintSink : public PrintSink {
     YSBPrintSink();
     ~YSBPrintSink();
 
-    bool writeData(const TupleBuffer* input_buffer) override;
+    bool writeData(const TupleBufferPtr input_buffer);
     void setup() override{};
     void shutdown() override{};
     const std::string toString() const override;
