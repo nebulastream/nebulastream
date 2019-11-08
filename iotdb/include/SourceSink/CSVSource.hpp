@@ -29,9 +29,9 @@ class CSVSource : public DataSource {
   TupleBufferPtr receiveData();
 
   /**
-     * @brief override the toString method for the csv source
-     * @return returns string describing the binary source
-     */
+   * @brief override the toString method for the csv source
+   * @return returns string describing the binary source
+   */
   const std::string toString() const;
 
   /**
