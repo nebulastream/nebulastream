@@ -51,10 +51,10 @@ bool YSBPrintSink::writeData(const TupleBufferPtr input_buffer)
                                           << " type=" << recordBuffer[u].event_type
                                           << " timestamp=" << recordBuffer[u].current_ms)
 
-        processedTuples++;
+        sentTuples++;
     }
     IOTDB_INFO(" ============= YSBPrintSink: FINISHED ============")
-    processedBuffer++;
+    sentBuffer++;
 
     // Dispatcher::instance().releaseBuffer(input_buffer);
     return true;

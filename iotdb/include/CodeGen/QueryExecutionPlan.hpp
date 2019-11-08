@@ -64,8 +64,8 @@ public:
 		}
 		for (auto sink : sinks) {
 			IOTDB_INFO("Sink:" << sink)
-			IOTDB_INFO("\t Generated Buffers=" << sink->getNumberOfProcessedBuffers())
-			IOTDB_INFO("\t Generated Tuples=" << sink->getNumberOfProcessedTuples())
+			IOTDB_INFO("\t Generated Buffers=" << sink->getNumberOfSentBuffers())
+			IOTDB_INFO("\t Generated Tuples=" << sink->getNumberOfSentTuples())
 		}
     }
 
