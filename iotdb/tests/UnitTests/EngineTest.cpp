@@ -14,7 +14,7 @@
 #include <gtest/gtest.h>
 #include <SourceSink/DataSource.hpp>
 #include <SourceSink/GeneratorSource.hpp>
-#include <SourceSink/TestSources.hpp>
+#include "../../include/SourceSink/SourceCreator.hpp"
 
 #define DEBUG_OUTPUT
 namespace iotdb {

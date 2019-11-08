@@ -1,4 +1,4 @@
-#include "../../include/SourceSink/DataSink.hpp"
+#include <SourceSink/DataSink.hpp>
 
 #include <cassert>
 #include <iostream>
@@ -7,10 +7,6 @@
 #include <API/Schema.hpp>
 BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::DataSink)
 
-#include "../../include/SourceSink/FileOutputSink.hpp"
-#include "../../include/SourceSink/PrintSink.hpp"
-#include "../../include/SourceSink/YSBPrintSink.hpp"
-#include "../../include/SourceSink/ZmqSink.hpp"
 
 #include <Util/ErrorHandling.hpp>
 #include <Util/Logger.hpp>
@@ -60,45 +56,6 @@ void DataSink::setSchema(const Schema& pSchema) {
 }
 
 DataSink::~DataSink() {
-  shutdown();
   IOTDB_DEBUG("Destroy Data Sink  " << this)
 }
-
-const DataSinkPtr createTestSink() {
-  // instantiate TestSink
-  IOTDB_FATAL_ERROR("Called unimplemented Function");
-}
-
-const DataSinkPtr createYSBPrintSink() {
-  return std::make_shared<YSBPrintSink>();
-}
-
-const DataSinkPtr createRemoteTCPSink(const Schema& schema,
-                                      const std::string& server_ip, int port) {
-  // instantiate RemoteSocketSink
-  IOTDB_FATAL_ERROR("Called unimplemented Function");
-}
-
-const DataSinkPtr createBinaryFileSink(const std::string& path_to_file) {
-  return std::make_shared<FileOutputSink>(/* path_to_file */);
-}
-
-const DataSinkPtr createBinaryFileSink(const Schema& schema,
-                                       const std::string& path_to_file) {
-  return std::make_shared<FileOutputSink>(schema /*, path_to_file */);
-}
-
-const DataSinkPtr createPrintSink(std::ostream& out) {
-  return std::make_shared<PrintSink>(out);
-}
-
-const DataSinkPtr createPrintSink(const Schema& schema, std::ostream& out) {
-  return std::make_shared<PrintSink>(schema, out);
-}
-
-const DataSinkPtr createZmqSink(const Schema& schema, const std::string& host,
-                                const uint16_t port) {
-  return std::make_shared<ZmqSink>(schema, host, port);
-}
-
 }  // namespace iotdb

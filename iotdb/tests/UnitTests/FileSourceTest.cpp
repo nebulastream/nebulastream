@@ -12,7 +12,7 @@
 #include <Util/Logger.hpp>
 #include <SourceSink/DataSource.hpp>
 #include <SourceSink/GeneratorSource.hpp>
-#include <SourceSink/TestSources.hpp>
+#include "../../include/SourceSink/SourceCreator.hpp"
 
 namespace iotdb {
 
