@@ -38,7 +38,7 @@ ZmqSink::ZmqSink()
     IOTDB_DEBUG("ZMQSINK  " << this << ": Destroy ZMQ Source")
 }
 
-bool ZmqSink::writeData(const TupleBuffer* input_buffer)
+bool ZmqSink::writeData(const TupleBufferPtr input_buffer)
 {
     assert(connect());
     IOTDB_DEBUG("ZMQSINK  " << this << ": writes buffer " << input_buffer)
@@ -46,7 +46,7 @@ bool ZmqSink::writeData(const TupleBuffer* input_buffer)
     zmq::message_t msg(input_buffer->buffer_size);
     // TODO: If possible only copy the content not the empty part
     std::memcpy(msg.data(), input_buffer->buffer, input_buffer->buffer_size);
-    tupleCnt = input_buffer->num_tuples;
+    tupleCnt = input_buffer.get()->num_tuples;
     zmq::message_t envelope(sizeof(tupleCnt));
     memcpy(envelope.data(), &tupleCnt, sizeof(tupleCnt));
 
@@ -56,15 +56,13 @@ bool ZmqSink::writeData(const TupleBuffer* input_buffer)
     if (!rc_env || !rc_msg) {
         IOTDB_DEBUG("ZMQSINK  " << this << ": send NOT successful")
 //       TODO: here we use tuple Buffer instead of TupleBuffer Pointer, FIXME
-        assert(0);//
-//        BufferManager::instance().releaseBuffer(input_buffer);
+        BufferManager::instance().releaseBuffer(input_buffer);
         return false;
     }
     else {
         IOTDB_DEBUG("ZMQSINK  " << this << ": send successful")
     //       TODO: here we use tuple Buffer instead of TupleBuffer Pointer, FIXME
-            assert(0);//
-    //        BufferManager::instance().releaseBuffer(input_buffer);
+               BufferManager::instance().releaseBuffer(input_buffer);
 //        BufferManager::instance().releaseBuffer(input_buffer);
 
         return true;

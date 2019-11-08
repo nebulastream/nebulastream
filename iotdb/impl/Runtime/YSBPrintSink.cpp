@@ -33,7 +33,7 @@ YSBPrintSink::YSBPrintSink()
 
 YSBPrintSink::~YSBPrintSink() {}
 
-bool YSBPrintSink::writeData(const TupleBuffer* input_buffer)
+bool YSBPrintSink::writeData(const TupleBufferPtr input_buffer)
 {
 
     ysbRecordOut* recordBuffer = (ysbRecordOut*)input_buffer->buffer;

@@ -222,7 +222,7 @@ namespace iotdb {
         std::mt19937 mt(rd());
         std::uniform_int_distribution<size_t> sleeptime(1, 100);
 
-        for(size_t i = 0; i < 1000; i++) {
+        for(size_t i = 0; i < 100; i++) {
             threads.emplace_back(run_and_release, i, sleeptime(mt));
         }
 
