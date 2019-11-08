@@ -14,7 +14,7 @@ BufferManager::BufferManager()
       releasedBuffer(0) {
 
   size_t initalBufferCnt = 1000;
-  bufferSizeInByte = 4 * 1024;  //set buffer to 1024
+  bufferSizeInByte = 4 * 1024;
   IOTDB_DEBUG(
       "BufferManager: Set maximum number of buffer to " << initalBufferCnt << " and a bufferSize of KB:" << bufferSizeInByte / 1024)
 

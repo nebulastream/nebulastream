@@ -1,10 +1,3 @@
-/*
- * Task.cpp
- *
- *  Created on: Dec 19, 2018
- *      Author: zeuchste
- */
-
 #include <CodeGen/QueryExecutionPlan.hpp>
 #include <Core/TupleBuffer.hpp>
 #include <NodeEngine/BufferManager.hpp>
