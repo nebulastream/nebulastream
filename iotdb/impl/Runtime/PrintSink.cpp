@@ -4,7 +4,7 @@
 
 #include <zmq.hpp>
 
-#include <Runtime/Dispatcher.hpp>
+#include <NodeEngine/Dispatcher.hpp>
 #include <Runtime/PrintSink.hpp>
 #include <Util/Logger.hpp>
 
@@ -21,9 +21,9 @@ PrintSink::PrintSink(const Schema& pSchema, std::ostream& pOutputStream)
 
 PrintSink::~PrintSink() {}
 
-bool PrintSink::writeData(const TupleBuffer* input_buffer)
+bool PrintSink::writeData(const TupleBufferPtr input_buffer)
 {
-    outputStream << iotdb::toString(input_buffer, this->getSchema()) << std::endl;
+    outputStream << iotdb::toString(input_buffer.get(), this->getSchema()) << std::endl;
     return true;
 }
 

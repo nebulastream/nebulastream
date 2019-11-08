@@ -4,10 +4,10 @@
 #include <string>
 #include <cstring>
 #include <Runtime/DataSource.hpp>
-#include <Runtime/Dispatcher.hpp>
+#include <NodeEngine/Dispatcher.hpp>
 #include <Runtime/GeneratorSource.hpp>
-#include <Runtime/ThreadPool.hpp>
-#include <Runtime/BufferManager.hpp>
+#include <NodeEngine/ThreadPool.hpp>
+#include <NodeEngine/BufferManager.hpp>
 
 #include <Core/DataTypes.hpp>
 

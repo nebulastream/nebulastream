@@ -1,0 +1,53 @@
+#ifndef INCLUDE_TASK_H_
+#define INCLUDE_TASK_H_
+#include <Core/TupleBuffer.hpp>
+#include <memory>
+
+namespace iotdb {
+class DataSource;
+class QueryExecutionPlan;
+typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
+
+/**
+ * @brief Task abstraction to bind processing (compiled binary) and data (incoming buffers
+ * @Limitations:
+ *    -
+ */
+class Task {
+ public:
+
+  /**
+   * @brief Task constructor
+   * @param pointer to query execution plan that should be applied on the incoming buffer
+   * @param id of the pipeline stage inside the QEP that should be applied
+   * @param pointer to the tuple buffer that has to be process
+   */
+  Task(QueryExecutionPlanPtr _qep, uint32_t _pipeline_stage_id,
+       const TupleBufferPtr buf);
+
+  /**
+   * @brief release the input buffer of this task, i.e., return it to buffer manager
+   */
+  void releaseInputBuffer();
+
+  /**
+   * @brief execute the task by calling executeStage of QEP and providing the stageId and the buffer
+   */
+  bool execute();
+
+  /**
+   * @brief return the number of tuples in the input buffer (for statistics)
+   * @return number of input tuples in buffer
+   */
+  size_t getNumberOfTuples();
+
+ private:
+  QueryExecutionPlanPtr qep;
+  uint32_t pipeline_stage_id;
+  const TupleBufferPtr buf;
+};
+
+typedef std::shared_ptr<Task> TaskPtr;
+}  // namespace iotdb
+
+#endif /* INCLUDE_TASK_H_ */

@@ -9,9 +9,9 @@
 #include <Core/TupleBuffer.hpp>
 
 #include <Runtime/DataSource.hpp>
-#include <Runtime/Dispatcher.hpp>
+#include <NodeEngine/Dispatcher.hpp>
 #include <Runtime/GeneratorSource.hpp>
-#include <Runtime/ThreadPool.hpp>
+#include <NodeEngine/ThreadPool.hpp>
 
 #include <API/InputQuery.hpp>
 #include <API/UserAPIExpression.hpp>

@@ -7,9 +7,9 @@
 #include <zmq.hpp>
 
 #include <Core/TupleBuffer.hpp>
-#include <Runtime/BufferManager.hpp>
+#include <NodeEngine/BufferManager.hpp>
 #include <Runtime/DataSource.hpp>
-#include <Runtime/Dispatcher.hpp>
+#include <NodeEngine/Dispatcher.hpp>
 
 #include <Runtime/ZmqSource.hpp>
 #include <boost/archive/text_iarchive.hpp>
