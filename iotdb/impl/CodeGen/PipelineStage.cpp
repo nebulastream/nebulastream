@@ -7,9 +7,9 @@
 
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
 #include <CodeGen/PipelineStage.hpp>
-#include <Runtime/DataSink.hpp>
 #include <Util/ErrorHandling.hpp>
 #include <iostream>
+#include "../../include/SourceSink/DataSink.hpp"
 
 namespace iotdb {
 

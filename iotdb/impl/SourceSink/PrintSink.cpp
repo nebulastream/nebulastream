@@ -1,3 +1,5 @@
+#include "../../include/SourceSink/PrintSink.hpp"
+
 #include <memory>
 #include <sstream>
 #include <string>
@@ -5,7 +7,6 @@
 #include <zmq.hpp>
 
 #include <NodeEngine/Dispatcher.hpp>
-#include <Runtime/PrintSink.hpp>
 #include <Util/Logger.hpp>
 
 BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::PrintSink)

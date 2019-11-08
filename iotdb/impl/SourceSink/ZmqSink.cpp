@@ -1,3 +1,5 @@
+#include "../../include/SourceSink/ZmqSink.hpp"
+
 #include <cassert>
 #include <cstdint>
 #include <cstring>
@@ -13,7 +15,6 @@
 #include <Util/ErrorHandling.hpp>
 #include <Util/Logger.hpp>
 
-#include <Runtime/ZmqSink.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::ZmqSink);

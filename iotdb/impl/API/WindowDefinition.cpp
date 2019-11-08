@@ -5,9 +5,8 @@
 #include <API/WindowDefinition.hpp>
 #include <API/UserAPIExpression.hpp>
 #include <Operators/Operator.hpp>
-#include <Runtime/DataSink.hpp>
-
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
+#include "../../include/SourceSink/DataSink.hpp"
 
 namespace iotdb {
 

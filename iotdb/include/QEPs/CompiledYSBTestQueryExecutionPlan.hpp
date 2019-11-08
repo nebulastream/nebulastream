@@ -3,12 +3,12 @@
 #include <CodeGen/HandCodedQueryExecutionPlan.hpp>
 #include <Core/TupleBuffer.hpp>
 
-#include <Runtime/DataSource.hpp>
-#include <Runtime/Window.hpp>
-#include <Runtime/YSBWindow.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
+#include "../SourceSink/DataSource.hpp"
+#include "../SourceSink/Window.hpp"
+#include "../SourceSink/YSBWindow.hpp"
 
 namespace iotdb{
 struct __attribute__((packed)) ysbRecord {

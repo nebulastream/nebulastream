@@ -5,7 +5,7 @@
 #include <memory>
 #include <string>
 
-#include <Runtime/DataSink.hpp>
+#include "../SourceSink/DataSink.hpp"
 
 namespace iotdb {
 

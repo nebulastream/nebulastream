@@ -1,5 +1,5 @@
-#ifndef INCLUDE_RUNTIME_YSBGENERATORSOURCE_HPP_
-#define INCLUDE_RUNTIME_YSBGENERATORSOURCE_HPP_
+#ifndef INCLUDE_SOURCESINK_YSBGENERATORSOURCE_HPP_
+#define INCLUDE_SOURCESINK_YSBGENERATORSOURCE_HPP_
 
 #include <Core/TupleBuffer.hpp>
 
@@ -7,8 +7,7 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/vector.hpp>
-// BOOST_SERIALIZATION_ASSUME_ABSTRACT(iotdb::DataSource)
-// BOOST_CLASS_EXPORT_KEY(iotdb::YSBGeneratorSource)
+#include "DataSource.hpp"
 
 namespace iotdb {
 
@@ -63,4 +62,4 @@ private:
 BOOST_CLASS_EXPORT_KEY(iotdb::YSBGeneratorSource)
 BOOST_CLASS_EXPORT_KEY(iotdb::YSBFunctor)
 
-#endif /* INCLUDE_RUNTIME_YSBGENERATORSOURCE_HPP_ */
+#endif /* INCLUDE_SOURCESINK_YSBGENERATORSOURCE_HPP_ */

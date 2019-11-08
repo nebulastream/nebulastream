@@ -4,10 +4,10 @@
 
 #include <API/InputQuery.hpp>
 #include <Operators/Operator.hpp>
-#include <Runtime/DataSink.hpp>
-
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
 #include <API/UserAPIExpression.hpp>
+#include <SourceSink/DataSink.hpp>
+#include <SourceSink/TestSources.hpp>
 
 namespace iotdb {
 
@@ -103,7 +103,7 @@ InputQuery::~InputQuery() {}
 
 InputQuery InputQuery::from(Stream &stream) {
   InputQuery q(stream);
-  OperatorPtr op = createSourceOperator(createSchemaTestDataSource(stream.getSchema()));
+  OperatorPtr op = createSourceOperator(createTestDataSourceWithSchema(stream.getSchema()));
   int operatorId = q.getNextOperatorId();
   op->setOperatorId(operatorId);
   q.root = op;

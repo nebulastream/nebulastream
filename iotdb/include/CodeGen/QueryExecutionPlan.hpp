@@ -8,13 +8,12 @@
 #ifndef INCLUDE_QUERYEXECUTIONPLAN_H_
 #define INCLUDE_QUERYEXECUTIONPLAN_H_
 #include <CodeGen/PipelineStage.hpp>
-#include <Runtime/DataSource.hpp>
-//#include <vector>
-#include <Runtime/DataSink.hpp>
-#include <Runtime/Window.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/vector.hpp>
 #include <map>
+#include "../SourceSink/DataSink.hpp"
+#include "../SourceSink/DataSource.hpp"
+#include "../SourceSink/Window.hpp"
 
 namespace iotdb {
 class QueryExecutionPlan;
@@ -55,7 +54,7 @@ public:
 			IOTDB_INFO("Source:" << source)
 			IOTDB_INFO("\t Generated Buffers=" << source->getNumberOfGeneratedBuffers())
 			IOTDB_INFO("\t Generated Tuples=" << source->getNumberOfGeneratedTuples())
-			IOTDB_INFO("\t Schema=" << source->getSourceSchema())
+			IOTDB_INFO("\t Schema=" << source->getSourceSchemaAsString())
 		}
 		for (auto window : windows) {
 			IOTDB_INFO("Window:" << window)

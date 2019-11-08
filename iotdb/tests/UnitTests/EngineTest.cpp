@@ -7,13 +7,14 @@
 #include <CodeGen/HandCodedQueryExecutionPlan.hpp>
 #include <Core/TupleBuffer.hpp>
 
-#include <Runtime/DataSource.hpp>
 #include <NodeEngine/Dispatcher.hpp>
-#include <Runtime/GeneratorSource.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Util/Logger.hpp>
 #include <log4cxx/appender.h>
 #include <gtest/gtest.h>
+#include <SourceSink/DataSource.hpp>
+#include <SourceSink/GeneratorSource.hpp>
+#include <SourceSink/TestSources.hpp>
 
 #define DEBUG_OUTPUT
 namespace iotdb {
@@ -106,7 +107,7 @@ TEST_F(EngineTest, start_stop_engine_empty) {
 TEST_F(EngineTest, start_stop_engine_one_query) {
   NodeEngine* ptr = new NodeEngine();
   CompiledTestQueryExecutionPlanPtr qep(new CompiledTestQueryExecutionPlan());
-  DataSourcePtr source = createTestSource();
+  DataSourcePtr source = createTestSourceWithoutSchema();
   qep->setDataSource(source);
   ptr->deployQuery(qep);
   ptr->start();

@@ -1,16 +1,18 @@
-#ifndef INCLUDE_CSVSOURCE_H_
-#define INCLUDE_CSVSOURCE_H_
+#ifndef INCLUDE_BINARYSOURCE_H_
+#define INCLUDE_BINARYSOURCE_H_
 
 #include <Core/TupleBuffer.hpp>
-#include <Runtime/DataSource.hpp>
 #include <fstream>
-#include <string>
+#include "../SourceSink/DataSource.hpp"
 
 namespace iotdb {
 
-class CSVSource : public DataSource {
+/**
+ * @brief
+ */
+class BinarySource : public DataSource {
   public:
-    CSVSource(const Schema& schema, const std::string& file_path, const uint64_t& num_tuples_to_process=-1, const std::string& delimiter=",");
+    BinarySource(const Schema& schema, const std::string& file_path, const uint64_t& num_tuples_to_process=-1);
     TupleBufferPtr receiveData();
     const std::string toString() const;
     void fillBuffer(TupleBuffer&);
@@ -22,8 +24,7 @@ class CSVSource : public DataSource {
     // helper variables
     int64_t file_size;
     size_t tuple_size;
-    std::string delimiter;
 };
 } // namespace iotdb
 
-#endif /* INCLUDE_CSVSOURCE_H_ */
+#endif /* INCLUDE_BINARYSOURCE_H_ */

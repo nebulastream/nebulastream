@@ -9,7 +9,6 @@
 #define INCLUDE_GENERATORSOURCE_H_
 
 #include <Core/TupleBuffer.hpp>
-#include <Runtime/DataSource.hpp>
 #include <iostream>
 #include <sstream>
 
@@ -17,6 +16,7 @@
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/vector.hpp>
+#include "../SourceSink/DataSource.hpp"
 
 namespace iotdb {
 

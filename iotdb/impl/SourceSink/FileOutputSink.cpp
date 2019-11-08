@@ -1,11 +1,12 @@
+#include "../../include/SourceSink/FileOutputSink.hpp"
+
 #include <cstring>
 #include <memory>
 #include <sstream>
 #include <string>
 
-#include <Runtime/DataSink.hpp>
-#include <Runtime/FileOutputSink.hpp>
 #include <Util/Logger.hpp>
+#include "../../include/SourceSink/DataSink.hpp"
 
 namespace iotdb {
 
