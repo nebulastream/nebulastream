@@ -47,8 +47,12 @@ class FogTopologyWorkerNode : public FogTopologyEntry {
 
   int getRemainingCpuCapacity() { return remainingCPUCapacity; }
 
-  std::string getHostname() override {
-    return hostName;
+  std::string getIpAddr() override {
+    return ipAddr;
+  }
+
+  void setIpAddr(std::string ipAddr) override {
+    this->ipAddr=ipAddr;
   }
 
   void setHostName(const std::string &host_name) {

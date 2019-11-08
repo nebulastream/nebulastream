@@ -5,22 +5,25 @@
 
 namespace iotdb {
 
-#define INVALID_NODE_ID -1
+#define INVALID_NODE_ID INT64_MAX
 
 enum FogNodeType { Worker, Sensor };
 
 class FogTopologyEntry {
-  public:
-    virtual void setId(size_t id) = 0;
-    virtual size_t getId() = 0;
+ public:
+  virtual void setId(size_t id) = 0;
+  virtual size_t getId() = 0;
 
-    virtual FogNodeType getEntryType() = 0;
-    virtual std::string getEntryTypeString() = 0;
-    virtual std::string getHostname() = 0;
-    virtual int getCpuCapacity() =0;
-    virtual int getRemainingCpuCapacity() =0;
-    virtual void reduceCpuCapacity(int usedCapacity) =0;
-    virtual void increaseCpuCapacity(int freedCapacity) = 0;
+  virtual FogNodeType getEntryType() = 0;
+  virtual std::string getEntryTypeString() = 0;
+  virtual std::string getIpAddr() = 0;
+  virtual void setIpAddr(std::string ipAddr) = 0;
+  virtual int getCpuCapacity() = 0;
+  virtual int getRemainingCpuCapacity() = 0;
+  virtual void reduceCpuCapacity(int usedCapacity) = 0;
+  virtual void increaseCpuCapacity(int freedCapacity) = 0;
+
+  std::string ipAddr;
 };
 
 typedef std::shared_ptr<FogTopologyEntry> FogTopologyEntryPtr;

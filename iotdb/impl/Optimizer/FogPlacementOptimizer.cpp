@@ -104,7 +104,7 @@ void FogPlacementOptimizer::addSystemGeneratedSourceSinkOperators(const Schema &
       const vector<ExecutionEdge> &edges = exeGraph.getAllEdgesFromNode(executionNodePtr);
       //FIXME: More than two sources are not supported feature at this moment. Once the feature is available please
       // fix the source code
-      const string &destHostName = edges[0].ptr->getDestination()->getFogNode()->getHostname();
+      const string &destHostName = edges[0].ptr->getDestination()->getFogNode()->getIpAddr();
       const OperatorPtr &sysSinkOptr = createSinkOperator(createZmqSink(schema, destHostName, zmqDefaultPort));
 
       //Update the operator name
