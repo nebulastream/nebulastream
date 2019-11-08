@@ -8,27 +8,22 @@
 
 namespace iotdb {
 
-/**\breif:
- *
- * This class represent a sensor node in fog topology.
- *
- * When you create a sensor node you need to use the setters to define the node id and its cpu capacity.
+/**
+ * @breif: This class represent a sensor node in fog topology. When you create a sensor node you need to use the setters to
+ * define the node id and its cpu capacity.
  *
  * Following are the set of properties that can be defined:
- *
- * sensor_id : Defines the unique identifier of the node
- *
- * cpuCapacity : Defines the actual CPU capacity of the node
- *
- * remainingCPUCapacity : Defined the remaining CPU capacity of the node
- *
- * query : Defines the query that need to be executed by the node
- *
+ * 1.) sensor_id : Defines the unique identifier of the node
+ * 2.) cpuCapacity : Defines the actual CPU capacity of the node
+ * 3.) remainingCPUCapacity : Defined the remaining CPU capacity of the node
+ * 4.) query : Defines the query that need to be executed by the node
  */
 class FogTopologySensorNode : public FogTopologyEntry {
 
  public:
   FogTopologySensorNode() { sensor_id = INVALID_NODE_ID; }
+
+  ~FogTopologySensorNode() {};
 
   void setId(size_t id) { this->sensor_id = id; }
 
