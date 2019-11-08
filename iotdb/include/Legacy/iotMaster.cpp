@@ -68,7 +68,6 @@ InputQueryPtr createTestQuery()
     return ptr;
 }
 
-
 /** \brief create a source using the following functions:
  * const DataSourcePtr createTestSource();
  * const DataSourcePtr createBinaryFileSource(const Schema& schema, const std::string& path_to_file);
