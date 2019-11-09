@@ -10,37 +10,81 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
-#include "../SourceSink/DataSource.hpp"
+#include <SourceSink/DataSource.hpp>
 namespace iotdb {
 
+/**
+ * @brief this class provide a zmq as data source
+ */
 class ZmqSource : public DataSource {
 
-  public:
-    ZmqSource(const Schema& schema, const std::string& host, const uint16_t port);
-    ~ZmqSource();
+ public:
+  /**
+   * @brief constructor for the zmq source
+   * @param schema of the input buffer
+   * @param host name of the source queue
+   * @param port of the source queue
+   */
+  ZmqSource(const Schema& schema, const std::string& host, const uint16_t port);
 
-    TupleBufferPtr receiveData() override;
-    const std::string toString() const override;
+  /**
+   * @brief destructor of zmq sink that disconnects the queue before deconstruction
+   * @note if queue cannot be disconnected, an assertion is raised
+   */
+  ~ZmqSource();
 
-  private:
-    ZmqSource();
-    friend class boost::serialization::access;
-    template <class Archive> void serialize(Archive& ar, const unsigned int version)
-    {
-        ar& boost::serialization::base_object<DataSource>(*this);
-        ar& host;
-        ar& port;
-    }
-    std::string host;
-    uint16_t port;
-    bool connected;
-    zmq::context_t context;
-    zmq::socket_t socket;
+  /**
+   * @brief blocking method to receive a buffer from the zmq source
+   * @return TupleBufferPtr containing thre received buffer
+   */
+  TupleBufferPtr receiveData() override;
 
-    bool connect();
-    bool disconnect();
+  /**
+   * @brief override the toString method for the zmq source
+   * @return returns string describing the zmq source
+   */
+  const std::string toString() const override;
+
+ private:
+  /**
+   * @brief default constructor required for boost serialization
+   */
+  ZmqSource();
+
+  /**
+   * @brief method to connect zmq using the host and port specified before
+   * check if already connected, if not connect try to connect, if already connected return
+   * @return bool indicating if connection could be established
+   */
+  bool connect();
+
+  /**
+   * @brief method to disconnect zmq
+   * check if already disconnected, if not disconnected try to disconnect, if already disconnected return
+   * @return bool indicating if connection could be established
+   */
+  bool disconnect();
+
+  /**
+   * @brief method for serialization, all listed variable below are added to the
+   * serialization/deserialization process
+   */
+  friend class boost::serialization::access;
+  template<class Archive> void serialize(Archive& ar,
+                                         const unsigned int version) {
+    ar & boost::serialization::base_object<DataSource>(*this);
+    ar & host;
+    ar & port;
+  }
+  std::string host;
+  uint16_t port;
+  bool connected;
+  zmq::context_t context;
+  zmq::socket_t socket;
+
+
 };
-} // namespace iotdb
+}  // namespace iotdb
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>

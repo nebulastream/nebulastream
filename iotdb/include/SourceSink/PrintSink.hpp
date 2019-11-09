@@ -62,8 +62,11 @@ class PrintSink : public DataSink {
   const std::string toString() const override;
 
  protected:
+  /**
+     * @brief method for serialization, all listed variable below are added to the
+     * serialization/deserialization process
+     */
   friend class boost::serialization::access;
-
   template<class Archive> void serialize(Archive& ar,
                                          const unsigned int version) {
     ar & boost::serialization::base_object<DataSink>(*this);
