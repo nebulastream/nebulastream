@@ -16,7 +16,7 @@
 #include "../../include/SourceSink/DataSource.hpp"
 #include "../../include/SourceSink/GeneratorSource.hpp"
 #include "../../include/SourceSink/Window.hpp"
-#include "../../include/window_legacy/YSBWindow.hpp"
+#include "../../include/Window_legacy/YSBWindow.hpp"
 
 #ifndef LOCAL_HOST
 #define LOCAL_HOST "127.0.0.1"

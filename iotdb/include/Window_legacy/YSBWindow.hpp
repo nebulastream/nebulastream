@@ -5,7 +5,7 @@
 #include <iostream>
 #include <mutex>
 #include <condition_variable>
-#include "../SourceSink/Window.hpp"
+#include <Window_legacy/Window.hpp>
 
 namespace iotdb{
 

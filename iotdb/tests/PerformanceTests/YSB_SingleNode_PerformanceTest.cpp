@@ -19,9 +19,8 @@
 #include <SourceSink/DataSource.hpp>
 #include <SourceSink/YSBGeneratorSource.hpp>
 #include "../../include/SourceSink/SourceCreator.hpp"
-#include "../../include/window_legacy/Window.hpp"
-#include "../../include/window_legacy/YSBWindow.hpp"
-
+#include <Window_legacy/Window.hpp>
+#include <Window_legacy/YSBWindow.hpp>
 
 namespace iotdb {
 using NanoSeconds = std::chrono::nanoseconds;

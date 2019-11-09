@@ -7,8 +7,8 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include "../SourceSink/DataSource.hpp"
-#include "../SourceSink/Window.hpp"
-#include "../window_legacy/YSBWindow.hpp"
+#include "../Window_legacy/Window.hpp"
+#include "../Window_legacy/YSBWindow.hpp"
 
 namespace iotdb{
 struct __attribute__((packed)) ysbRecord {

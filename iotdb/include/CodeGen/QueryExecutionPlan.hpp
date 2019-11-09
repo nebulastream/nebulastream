@@ -13,7 +13,7 @@
 #include <map>
 #include "../SourceSink/DataSink.hpp"
 #include "../SourceSink/DataSource.hpp"
-#include "../window_legacy/Window.hpp"
+#include "../Window_legacy/Window.hpp"
 
 namespace iotdb {
 class QueryExecutionPlan;
