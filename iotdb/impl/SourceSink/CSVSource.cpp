@@ -7,8 +7,17 @@
 #include <string>
 #include <boost/algorithm/string.hpp>
 #include <SourceSink/DataSource.hpp>
+BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::CSVSource);
 
 namespace iotdb {
+
+CSVSource::CSVSource()
+    : file_path(""),
+      file_size(0),
+      tuple_size(0),
+      delimiter("") {
+
+}
 
 CSVSource::CSVSource(const Schema& schema, const std::string& _file_path,
                      const std::string& delimiter)

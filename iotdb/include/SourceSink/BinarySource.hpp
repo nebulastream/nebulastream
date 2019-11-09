@@ -3,7 +3,12 @@
 
 #include <Core/TupleBuffer.hpp>
 #include <fstream>
-#include "../SourceSink/DataSource.hpp"
+#include <SourceSink/DataSource.hpp>
+#include <boost/archive/text_oarchive.hpp>
+
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/shared_ptr.hpp>
+#include <boost/serialization/vector.hpp>
 
 namespace iotdb {
 
@@ -39,12 +44,32 @@ class BinarySource : public DataSource {
   void fillBuffer(TupleBuffer&);
 
  private:
+  //this one only required for serialization
+  BinarySource();
   std::ifstream input;
-  const std::string file_path;
+  std::string file_path;
 
-  int64_t file_size;
+  int file_size;
   size_t tuple_size;
+
+  /**
+     * @brief method for serialization, all listed variable below are added to the
+     * serialization/deserialization process
+     */
+    friend class boost::serialization::access;
+    template<class Archive> void serialize(Archive& ar,
+                                           const unsigned int version) {
+      ar& boost::serialization::base_object<DataSource>(*this);
+      ar & file_path;
+      ar & file_size;
+      ar & tuple_size;
+      ar & generatedTuples;
+      ar & generatedBuffers;
+    }
 };
 }  // namespace iotdb
-
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/export.hpp>
+BOOST_CLASS_EXPORT_KEY(iotdb::BinarySource)
 #endif /* INCLUDE_BINARYSOURCE_H_ */

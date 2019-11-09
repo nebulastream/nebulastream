@@ -1,7 +1,6 @@
 add_source_iotdb(
         DataSource.cpp
         DataSink.cpp
-        RemoteSocketSource.cpp
         GeneratorSource.cpp
         BinarySource.cpp
         ZmqSink.cpp

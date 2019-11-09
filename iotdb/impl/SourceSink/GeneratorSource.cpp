@@ -1,19 +1,16 @@
-/*
- * GeneratorSource.cpp
- *
- *  Created on: Dec 19, 2018
- *      Author: zeuchste
- */
+#include <SourceSink/GeneratorSource.hpp>
 
-#include "../../include/SourceSink/GeneratorSource.hpp"
-
+#include <API/Schema.hpp>
 #include <NodeEngine/Dispatcher.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/export.hpp>
+#include <SourceSink/DataSource.hpp>
 
 #include <Core/TupleBuffer.hpp>
 #include <iostream>
+
 namespace iotdb {
+//TODO: move functions here which is not trivial cause of templates
+
+
+
 
 }
