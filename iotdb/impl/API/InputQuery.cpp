@@ -44,7 +44,7 @@ const InputQuery createQueryFromCodeString(const std::string &query_code_snippet
     code << "#include <API/InputQuery.hpp>" << std::endl;
     code << "#include <API/Config.hpp>" << std::endl;
     code << "#include <API/Schema.hpp>" << std::endl;
-    code << "#include <Runtime/DataSource.hpp>" << std::endl;
+    code << "#include <SourceSink/DataSource.hpp>" << std::endl;
     code << "#include <API/InputQuery.hpp>" << std::endl;
     code << "#include <API/Environment.hpp>" << std::endl;
     code << "#include <API/UserAPIExpression.hpp>" << std::endl;
