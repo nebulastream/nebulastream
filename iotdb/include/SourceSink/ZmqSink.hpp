@@ -6,44 +6,96 @@
 #include <string>
 #include <zmq.hpp>
 
-#include "../SourceSink/DataSink.hpp"
+#include <SourceSink/DataSink.hpp>
 
 namespace iotdb {
 
+/**
+ * @brief this class provide a zmq as data sink
+ */
 class ZmqSink : public DataSink {
 
-  public:
-    ZmqSink(const Schema& schema, const std::string& host, const uint16_t port);
-    ~ZmqSink() override;
+ public:
+  /**
+   * @brief constructor for the zmq sink
+   * @param schema of the output buffer
+   * @param host name of the target queue
+   * @param port of the target queue
+   */
+  ZmqSink(const Schema& schema, const std::string& host, const uint16_t port);
 
-    bool writeData(const TupleBufferPtr input_buffer);
-    void setup() override { connect(); };
-    void shutdown() override{};
-    const std::string toString() const override;
+  /**
+   * @brief destructor of zmq sink that disconnects the queue before deconstruction
+   * @note if queue cannot be disconnected, an assertion is raised
+   */
+  ~ZmqSink() override;
 
-  private:
-    ZmqSink();
+  /**
+   * @brief method to write data into the sink
+   * @param TupleBufferPtr to the buffer to write
+   * @return bool indicating the success of the write operation
+   */
+  bool writeData(const TupleBufferPtr input_buffer);
 
-    friend class boost::serialization::access;
-    template <class Archive> void serialize(Archive& ar, const unsigned int version)
-    {
-        ar& boost::serialization::base_object<DataSink>(*this);
-        ar& host;
-        ar& port;
-    }
+  /**
+   * @brief setup method for zmq sink
+   * @Note required due to derivation but does nothing
+   */
+  void setup() override;
 
-    std::string host;
-    uint16_t port;
-    size_t tupleCnt;
+  /**
+   * @brief shutdown method for zmq sink
+   * @Note required due to derivation but does nothing
+   */
+  void shutdown() override;
 
-    bool connected;
-    zmq::context_t context;
-    zmq::socket_t socket;
+  /**
+   * @brief override the toString method for the zmq sink
+   * @return returns string describing the zmq sink
+   */
+  const std::string toString() const override;
 
-    bool connect();
-    bool disconnect();
+ private:
+  /**
+   * @brief method to connect zmq using the host and port specified before
+   * check if already connected, if not connect try to connect, if already connected return
+   * @return bool indicating if connection could be established
+   */
+  bool connect();
+
+  /**
+   * @brief method to disconnect zmq
+   * check if already disconnected, if not disconnected try to disconnect, if already disconnected return
+   * @return bool indicating if connection could be established
+   */
+  bool disconnect();
+
+  /**
+   * @brief default constructor required by boost serialize
+   */
+  ZmqSink();
+
+  /**
+   * @brief method for serialization, all listed variable below are added to the
+   * serialization/deserialization process
+   */
+  friend class boost::serialization::access;
+  template<class Archive> void serialize(Archive& ar,
+                                         const unsigned int version) {
+    ar & boost::serialization::base_object<DataSink>(*this);
+    ar & host;
+    ar & port;
+  }
+
+  std::string host;
+  uint16_t port;
+  size_t tupleCnt;
+
+  bool connected;
+  zmq::context_t context;
+  zmq::socket_t socket;
 };
-} // namespace iotdb
+}  // namespace iotdb
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
