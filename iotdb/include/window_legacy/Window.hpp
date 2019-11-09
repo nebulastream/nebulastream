@@ -1,5 +1,5 @@
-#ifndef INCLUDE_SOURCESINK_WINDOW_HPP_
-#define INCLUDE_SOURCESINK_WINDOW_HPP_
+#ifndef INCLUDE_WINDOW_LEGACY_WINDOW_HPP_
+#define INCLUDE_WINDOW_LEGACY_WINDOW_HPP_
 
 #include <atomic>
 #include <iostream>
@@ -35,4 +35,4 @@ const WindowPtr createTestWindow(size_t pCampaingCnt, size_t windowSizeInSec);
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
 BOOST_CLASS_EXPORT_KEY(iotdb::Window)
-#endif /* INCLUDE_SOURCESINK_WINDOW_HPP_ */
+#endif /* INCLUDE_WINDOW_LEGACY_WINDOW_HPP_ */

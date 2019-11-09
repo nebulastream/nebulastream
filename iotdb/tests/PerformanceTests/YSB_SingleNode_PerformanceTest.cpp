@@ -17,10 +17,10 @@
 #include <signal.h>
 #include <stdio.h>
 #include <SourceSink/DataSource.hpp>
-#include <SourceSink/Window.hpp>
 #include <SourceSink/YSBGeneratorSource.hpp>
-#include <SourceSink/YSBWindow.hpp>
 #include "../../include/SourceSink/SourceCreator.hpp"
+#include "../../include/window_legacy/Window.hpp"
+#include "../../include/window_legacy/YSBWindow.hpp"
 
 
 namespace iotdb {

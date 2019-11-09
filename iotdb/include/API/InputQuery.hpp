@@ -9,7 +9,7 @@
 #include <iostream>
 #include <string>
 #include "../SourceSink/DataSource.hpp"
-#include "../SourceSink/Window.hpp"
+#include "../window_legacy/Window.hpp"
 
 namespace iotdb {
 
