@@ -24,10 +24,10 @@
 
 #include <QEPs/CompiledYSBTestQueryExecutionPlan.hpp>
 #include "../SourceSink/CompiledDummyPlan.hpp"
-#include "../SourceSink/YSBGeneratorSource.hpp"
-#include "../SourceSink/YSBPrintSink.hpp"
 #include "../SourceSink/ZmqSink.hpp"
 #include "../SourceSink/ZmqSource.hpp"
+#include "../YSB_legacy/YSBGeneratorSource.hpp"
+#include "../YSB_legacy/YSBPrintSink.hpp"
 
 using namespace iotdb;
 

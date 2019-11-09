@@ -7,8 +7,6 @@ add_source_iotdb(
         ZmqSource.cpp
         FileOutputSink.cpp
         PrintSink.cpp
-        YSBGeneratorSource.cpp
-        YSBPrintSink.cpp
         CSVSource.cpp
         TestSources.cpp
         TestSinks.cpp
