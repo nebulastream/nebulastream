@@ -1,12 +1,22 @@
-#include "../../include/SourceSink/BinarySource.hpp"
-
 #include <NodeEngine/Dispatcher.hpp>
 #include <assert.h>
 #include <fstream>
 #include <sstream>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/export.hpp>
+
+#include <SourceSink/BinarySource.hpp>
 #include <SourceSink/DataSource.hpp>
+BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::BinarySource);
 
 namespace iotdb {
+
+BinarySource::BinarySource()
+    : file_path(""),
+      file_size(0),
+      tuple_size(0) {
+}
 
 BinarySource::BinarySource(const Schema& schema, const std::string& _file_path)
     : DataSource(schema),

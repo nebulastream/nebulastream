@@ -6,6 +6,7 @@
 #include <Util/Logger.hpp>
 #include <SourceSink/FileOutputSink.hpp>
 #include <SourceSink/DataSink.hpp>
+BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::FileOutputSink);
 
 namespace iotdb {
 

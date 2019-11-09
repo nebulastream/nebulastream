@@ -13,7 +13,6 @@
 #include <boost/serialization/export.hpp>
 
 #include <SourceSink/DataSource.hpp>
-
 BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::DataSource);
 
 namespace iotdb {

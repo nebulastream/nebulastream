@@ -5,6 +5,10 @@
 #include <memory>
 #include <string>
 
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/shared_ptr.hpp>
+#include <boost/serialization/vector.hpp>
+
 #include <SourceSink/DataSink.hpp>
 
 namespace iotdb {
@@ -48,9 +52,9 @@ class FileOutputSink : public DataSink {
 
 
   /**
-     * @brief override the toString method for the file output sink
-     * @return returns string describing the file output sink
-     */
+   * @brief override the toString method for the file output sink
+   * @return returns string describing the file output sink
+   */
   const std::string toString() const override;
 
  private:
