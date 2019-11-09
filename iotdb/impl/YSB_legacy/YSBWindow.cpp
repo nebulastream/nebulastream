@@ -1,4 +1,4 @@
-#include "../../include/Window_legacy/YSBWindow.hpp"
+#include "../../include/YSB_legacy/YSBWindow.hpp"
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>

@@ -1,5 +1,5 @@
 
-#include "../../include/SourceSink/YSBGeneratorSource.hpp"
+#include "../../include/YSB_legacy/YSBGeneratorSource.hpp"
 
 #include <NodeEngine/Dispatcher.hpp>
 #include <boost/archive/text_iarchive.hpp>

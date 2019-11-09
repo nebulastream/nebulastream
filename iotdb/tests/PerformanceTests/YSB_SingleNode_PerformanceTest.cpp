@@ -17,10 +17,10 @@
 #include <signal.h>
 #include <stdio.h>
 #include <SourceSink/DataSource.hpp>
-#include <SourceSink/YSBGeneratorSource.hpp>
 #include "../../include/SourceSink/SourceCreator.hpp"
 #include <Window_legacy/Window.hpp>
-#include <Window_legacy/YSBWindow.hpp>
+#include "../../include/YSB_legacy/YSBGeneratorSource.hpp"
+#include "../../include/YSB_legacy/YSBWindow.hpp"
 
 namespace iotdb {
 using NanoSeconds = std::chrono::nanoseconds;

@@ -1,4 +1,4 @@
-#include "../../include/SourceSink/YSBPrintSink.hpp"
+#include "../../include/YSB_legacy/YSBPrintSink.hpp"
 
 #include <cstring>
 #include <iostream>
