@@ -161,7 +161,6 @@ class FogTopologyManager {
 
   void resetFogTopologyPlan() {
     currentPlan.reset(new FogTopologyPlan());
-    linkID = 1;
   }
 
  private:

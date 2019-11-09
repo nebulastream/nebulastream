@@ -34,6 +34,7 @@ namespace iotdb {
 
     public:
         FogTopologyWorkerNode() { node_id = INVALID_NODE_ID; }
+        ~FogTopologyWorkerNode()= default;
 
         void setId(size_t id) { this->node_id = id; }
 

@@ -23,7 +23,7 @@ class FogTopologySensorNode : public FogTopologyEntry {
  public:
   FogTopologySensorNode() { sensor_id = INVALID_NODE_ID; }
 
-  ~FogTopologySensorNode() {};
+  ~FogTopologySensorNode() = default;
 
   void setId(size_t id) { this->sensor_id = id; }
 

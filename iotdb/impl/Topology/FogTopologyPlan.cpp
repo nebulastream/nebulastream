@@ -46,7 +46,7 @@ bool FogGraph::hasVertex(size_t search_id) const {
   return false;
 }
 
-const fogVertex_t FogGraph::getVertex(size_t search_id) const {
+const FogGraph::fogVertex_t FogGraph::getVertex(size_t search_id) const {
 
   assert(hasVertex(search_id));
 
@@ -287,7 +287,7 @@ bool FogGraph::removeEdge(size_t search_id) {
   return true;
 }
 
-std::string FogGraph::getGraphString() {
+std::string FogGraph::getGraphString() const {
   std::stringstream ss;
   boost::write_graphviz(ss, graph,
                         [&](auto &out, auto v) {
