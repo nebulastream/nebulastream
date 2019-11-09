@@ -14,13 +14,11 @@ enum LinkType { NodeToNode, NodeToSensor, SensorToNode };
 class FogTopologyLink {
 
  public:
-  explicit FogTopologyLink(FogTopologyEntryPtr pSourceNode, FogTopologyEntryPtr pDestNode) {
-    linkId = NOT_EXISTING_LINK_ID;
+  explicit FogTopologyLink(size_t pLinkId, FogTopologyEntryPtr pSourceNode, FogTopologyEntryPtr pDestNode) {
+    linkId = pLinkId;
     sourceNode = pSourceNode;
     destNode = pDestNode;
   }
-
-  void setLinkID(size_t pLinkID) { linkId = pLinkID; }
 
   size_t getId() { return linkId; }
 

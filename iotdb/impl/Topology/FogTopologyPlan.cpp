@@ -348,8 +348,8 @@ FogTopologyLinkPtr FogTopologyPlan::createFogTopologyLink(FogTopologyEntryPtr pS
   }
 
   // create new link
-  auto linkPtr = std::make_shared<FogTopologyLink>(pSourceNode, pDestNode);
-  linkPtr->setLinkID(getNextFreeLinkId());
+  size_t linkId = getNextFreeLinkId();
+  auto linkPtr = std::make_shared<FogTopologyLink>(linkId, pSourceNode, pDestNode);
   assert(fGraph->addEdge(linkPtr));
   return linkPtr;
 }
