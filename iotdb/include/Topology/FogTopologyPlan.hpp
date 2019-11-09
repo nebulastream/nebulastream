@@ -50,10 +50,10 @@ class FogGraph {
   bool hasLink(FogTopologyEntryPtr sourceNode, FogTopologyEntryPtr destNode) const;
   bool hasLink(size_t searchId) const;
 
-  const FogEdge *getEdge(size_t search_id) const;
-  const std::vector<FogEdge> getAllEdgesToNode(FogTopologyEntryPtr destNode) const;
-  const std::vector<FogEdge> getAllEdgesFromNode(FogTopologyEntryPtr srcNode) const;
-  const std::vector<FogEdge> getAllEdges() const;
+  const FogTopologyLinkPtr getEdge(size_t search_id) const;
+  const std::vector<FogTopologyLinkPtr> getAllEdgesToNode(FogTopologyEntryPtr destNode) const;
+  const std::vector<FogTopologyLinkPtr> getAllEdgesFromNode(FogTopologyEntryPtr srcNode) const;
+  const std::vector<FogTopologyLinkPtr> getAllEdges() const;
   bool hasEdge(size_t search_id) const;
 
   bool addEdge(FogTopologyLinkPtr ptr);
