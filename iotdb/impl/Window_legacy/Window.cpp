@@ -1,10 +1,10 @@
-#include "../../include/window_legacy/Window.hpp"
+#include "../../include/Window_legacy/Window.hpp"
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
 
-#include "../../include/window_legacy/YSBWindow.hpp"
+#include "../../include/Window_legacy/YSBWindow.hpp"
 BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::Window)
 namespace iotdb{
 

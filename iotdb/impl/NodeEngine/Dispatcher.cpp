@@ -7,7 +7,8 @@
 #include <assert.h>
 #include <iostream>
 
-#include "../../include/SourceSink/Window.hpp"
+#include <Window_legacy/Window.hpp>
+
 namespace iotdb {
 
 Dispatcher::Dispatcher()
