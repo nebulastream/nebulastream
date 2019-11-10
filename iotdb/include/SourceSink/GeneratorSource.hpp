@@ -59,7 +59,7 @@ template<typename F>
 TupleBufferPtr GeneratorSource<F>::receiveData() {
   // we wait until the buffer is filled
   TupleBufferPtr buf = functor();
-  generatedTuples += buf->num_tuples;
+  generatedTuples += buf->getNumberOfTuples();
   generatedBuffers++;
 
   return buf;

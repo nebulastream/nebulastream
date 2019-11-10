@@ -68,7 +68,7 @@ int test(createFileSourceFuncPtr funcPtr, std::string& path_to_file) {
         TupleBufferPtr buf = source->receiveData();
         size_t i = 0;
         while (i * tuple_size < buffer_size) {
-            ysbRecord record(*((ysbRecord *)((char *)buf->buffer + i*tuple_size)));
+            ysbRecord record(*((ysbRecord *)((char *)buf->getBuffer() + i*tuple_size)));
             // std::cout << "record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type << std::endl;
             EXPECT_STREQ(record.ad_type, "banner78");
             EXPECT_TRUE((! strcmp(record.event_type, "view") ||

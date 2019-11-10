@@ -80,8 +80,8 @@ void DataSource::running_routine() {
     if (cnt < num_buffers_to_process) {
       TupleBufferPtr buf = receiveData();
       IOTDB_DEBUG(
-          "DataSource " << this << ": Received Data: " << buf->num_tuples << "tuples")
-      if (buf->buffer) {
+          "DataSource " << this << ": Received Data: " << buf->getNumberOfTuples() << "tuples")
+      if (buf->getBuffer()) {
         Dispatcher::instance().addWork(buf, this);
         cnt++;
       } else {

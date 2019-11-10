@@ -25,34 +25,40 @@ class TupleBuffer {
   void print();
 
   size_t getNumberOfTuples();
+  size_t getBufferSizeInBytes();
+  size_t getTupleSizeInBytes();
   void* getBuffer();
+
+  void setNumberOfTuples(size_t number);
+  void setBufferSizeInBytes(size_t size);
+  void setTupleSizeInBytes(size_t size);
 
  private:
   TupleBuffer()
       : buffer(nullptr),
-        buffer_size(0),
+        buffer_size_bytes(0),
         tuple_size_bytes(0),
         num_tuples(0) {
   }
-  ;
+
   friend class boost::serialization::access;
   template<class Archive>
   void serialize(Archive & ar, const unsigned int version) {
 //        ar & char(*)buffer;
-    ar & buffer_size;
+    ar & buffer_size_bytes;
     ar & tuple_size_bytes;
     ar & num_tuples;
   }
 
   void* buffer;
-  size_t buffer_size;
+  size_t buffer_size_bytes;
   size_t tuple_size_bytes;
   size_t num_tuples;
 };
 
 class Schema;
-std::string toString(const TupleBuffer& buffer, const Schema& schema);
-std::string toString(const TupleBuffer* buffer, const Schema& schema);
+std::string toString(TupleBuffer& buffer, const Schema& schema);
+std::string toString(TupleBuffer* buffer, const Schema& schema);
 
 }  // namespace iotdb
 #include <boost/archive/text_iarchive.hpp>

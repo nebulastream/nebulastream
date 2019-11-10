@@ -37,7 +37,7 @@ CSVSource::CSVSource(const Schema& schema, const std::string& _file_path,
 
 TupleBufferPtr CSVSource::receiveData() {
   TupleBufferPtr buf = BufferManager::instance().getBuffer();
-  fillBuffer(*buf);
+  fillBuffer(buf);
   return buf;
 }
 
@@ -48,13 +48,13 @@ const std::string CSVSource::toString() const {
   return ss.str();
 }
 
-void CSVSource::fillBuffer(TupleBuffer& buf) {
+void CSVSource::fillBuffer(TupleBufferPtr buf) {
   /** while(generated_tuples < num_tuples_to_process)
    read <buf.buffer_size> bytes data from file into buffer
    advance internal file pointer, if we reach the file end, set to file begin
    */
 
-  uint64_t generated_tuples_this_pass = buf.buffer_size / tuple_size;
+  uint64_t generated_tuples_this_pass = buf->getBufferSizeInBytes() / tuple_size;
 
   std::string line;
   std::vector<std::string> tokens;
@@ -71,7 +71,7 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
       auto field = schema[j];
       // std::cout << field->toString() << ": " << tokens[j] << ", ";
       size_t field_size = field->getFieldSize();
-      memcpy((char *) buf.buffer + offset + i * tuple_size, tokens[j].c_str(),
+      memcpy((char *) buf->getBuffer() + offset + i * tuple_size, tokens[j].c_str(),
              field_size);
       offset += field_size;
     }

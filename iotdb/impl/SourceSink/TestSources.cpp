@@ -20,16 +20,16 @@ const DataSourcePtr createTestDataSourceWithSchema(const Schema& schema) {
     TupleBufferPtr operator()() {
       // 10 tuples of size one
       TupleBufferPtr buf = BufferManager::instance().getBuffer();
-      size_t tupleCnt = buf->buffer_size / sizeof(uint64_t);
+      size_t tupleCnt = buf->getBufferSizeInBytes() / sizeof(uint64_t);
 
-      assert(buf->buffer != NULL);
+      assert(buf->getBuffer() != NULL);
 
-      uint64_t* tuples = (uint64_t*) buf->buffer;
+      uint64_t* tuples = (uint64_t*) buf->getBuffer();
       for (uint64_t i = 0; i < tupleCnt; i++) {
         tuples[i] = one;
       }
-      buf->tuple_size_bytes = sizeof(uint64_t);
-      buf->num_tuples = tupleCnt;
+      buf->setTupleSizeInBytes(sizeof(uint64_t));
+      buf->setNumberOfTuples(tupleCnt);
       return buf;
     }
 
@@ -51,16 +51,16 @@ const DataSourcePtr createTestSourceWithoutSchema() {
     TupleBufferPtr operator()() {
       // 10 tuples of size one
       TupleBufferPtr buf = BufferManager::instance().getBuffer();
-      size_t tupleCnt = buf->buffer_size / sizeof(uint64_t);
+      size_t tupleCnt = buf->getBufferSizeInBytes() / sizeof(uint64_t);
 
-      assert(buf->buffer != NULL);
+      assert(buf->getBuffer() != NULL);
 
-      uint64_t* tuples = (uint64_t*) buf->buffer;
+      uint64_t* tuples = (uint64_t*) buf->getBuffer();
       for (uint64_t i = 0; i < tupleCnt; i++) {
         tuples[i] = one;
       }
-      buf->tuple_size_bytes = sizeof(uint64_t);
-      buf->num_tuples = tupleCnt;
+      buf->setTupleSizeInBytes(sizeof(uint64_t));
+      buf->setNumberOfTuples(tupleCnt);
       return buf;
     }
 
