@@ -6,7 +6,6 @@
 
 #include <CodeGen/CodeGen.hpp>
 #include <CodeGen/PipelineStage.hpp>
-#include <Core/DataTypes.hpp>
 #include <Util/ErrorHandling.hpp>
 #include <NodeEngine/BufferManager.hpp>
 
@@ -19,6 +18,7 @@
 #include <API/UserAPIExpression.hpp>
 #include <SourceSink/DataSink.hpp>
 #include <SourceSink/GeneratorSource.hpp>
+#include "../../include/CodeGen/DataTypes.hpp"
 #include "../../include/SourceSink/SinkCreator.hpp"
 #include "../../include/SourceSink/SourceCreator.hpp"
 

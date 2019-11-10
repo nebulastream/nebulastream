@@ -8,8 +8,8 @@
 #include <mutex>
 #include <vector>
 
-#include <Core/DataTypes.hpp>
-#include <Core/TupleBuffer.hpp>
+#include "../CodeGen/DataTypes.hpp"
+#include "TupleBuffer.hpp"
 
 namespace iotdb {
 

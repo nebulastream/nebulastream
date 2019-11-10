@@ -8,7 +8,6 @@
 #include <string>
 #include <zmq.hpp>
 
-#include <Core/TupleBuffer.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/Dispatcher.hpp>
 
@@ -17,6 +16,7 @@
 #include <boost/serialization/export.hpp>
 
 #include <SourceSink/DataSource.hpp>
+#include "../../include/NodeEngine/TupleBuffer.hpp"
 BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::ZmqSource);
 
 namespace iotdb {

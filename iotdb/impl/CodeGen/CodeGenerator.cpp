@@ -12,9 +12,9 @@
 #include <CodeGen/C_CodeGen/Statement.hpp>
 #include <CodeGen/C_CodeGen/UnaryOperatorStatement.hpp>
 #include <CodeGen/CodeGen.hpp>
-#include <Core/DataTypes.hpp>
 #include <Util/ErrorHandling.hpp>
 #include <API/UserAPIExpression.hpp>
+#include "../../include/CodeGen/DataTypes.hpp"
 #include "../../include/SourceSink/DataSink.hpp"
 
 namespace iotdb {

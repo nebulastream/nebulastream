@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Operators/Operator.hpp"
-#include <Core/DataTypes.hpp>
 #include <memory>
 
 #include <API/Schema.hpp>
@@ -13,9 +12,10 @@
 #include <CodeGen/C_CodeGen/Statement.hpp>
 #include <CodeGen/C_CodeGen/UnaryOperatorStatement.hpp>
 #include <CodeGen/CodeGen.hpp>
-#include <Core/DataTypes.hpp>
 #include <Util/ErrorHandling.hpp>
 #include "../SourceSink/DataSink.hpp"
+#include "DataTypes.hpp"
+#include "DataTypes.hpp"
 
 namespace iotdb {
 
