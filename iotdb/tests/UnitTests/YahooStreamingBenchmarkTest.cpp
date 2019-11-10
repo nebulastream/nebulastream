@@ -159,7 +159,7 @@ class YahooStreamingBenchmarkTest : public testing::Test {
         bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf)
         {
 
-            ysbRecord* tuples = (ysbRecord*)buf->buffer;
+            ysbRecord* tuples = (ysbRecord*)buf->getBuffer();
 
             // windowing vars
             YSBWindow* window = (YSBWindow*)this->getWindows()[0].get();
@@ -178,7 +178,7 @@ class YahooStreamingBenchmarkTest : public testing::Test {
             char key[] = "view";
 
             // iterate over tuples
-            for (size_t i = 0; i < buf->num_tuples; i++) {
+            for (size_t i = 0; i < buf->getNumberOfTuples(); i++) {
 
                 // slow down a bit
                 std::this_thread::sleep_for(std::chrono::microseconds(100));
@@ -256,7 +256,7 @@ class YahooStreamingBenchmarkTest : public testing::Test {
         {
 
             // Input and output buffer
-            ysbRecord* inputBufferPtr = (ysbRecord*)buf->buffer;
+            ysbRecord* inputBufferPtr = (ysbRecord*)buf->getBuffer();
             DataSinkPtr sink = this->getSinks()[0];
 
             // windowing vars
@@ -271,7 +271,7 @@ class YahooStreamingBenchmarkTest : public testing::Test {
             char key[] = "view";
 
             // iterate over tuples
-            for (size_t i = 0; i < buf->num_tuples; i++) {
+            for (size_t i = 0; i < buf->getNumberOfTuples(); i++) {
 
                 // slow down a bit
                 std::this_thread::sleep_for(std::chrono::microseconds(100));

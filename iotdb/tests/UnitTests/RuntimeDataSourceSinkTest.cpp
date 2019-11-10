@@ -6,11 +6,11 @@
 #include <zmq.hpp>
 
 #include <API/Schema.hpp>
-#include <Core/TupleBuffer.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <Util/Logger.hpp>
 #include <SourceSink/DataSink.hpp>
 #include <SourceSink/DataSource.hpp>
+#include "../../include/NodeEngine/TupleBuffer.hpp"
 #include "../../include/SourceSink/SinkCreator.hpp"
 #include "../../include/SourceSink/SourceCreator.hpp"
 using namespace iotdb;
@@ -114,8 +114,8 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSourceReceiveData) {
 
       // Test received data.
       size_t sum = 0;
-      uint32_t* tuple = (uint32_t*)tuple_buffer->buffer;
-      for (size_t i = 0; i != tuple_buffer->num_tuples; ++i) {
+      uint32_t* tuple = (uint32_t*)tuple_buffer->getBuffer();
+      for (size_t i = 0; i != tuple_buffer->getNumberOfTuples(); ++i) {
         sum += *(tuple++);
       }
       size_t expected = 400;
@@ -157,7 +157,7 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSinkSendData) {
   //  auto tuple_buffer = TupleBuffer(buffer, test_data_size, sizeof(uint32_t) * 2, test_data.size() / 2);
   auto tuple_buffer = BufferManager::instance().getBuffer();
 
-  std::memcpy(tuple_buffer->buffer, &test_data, test_data_size);
+  std::memcpy(tuple_buffer->getBuffer(), &test_data, test_data_size);
   auto tuple_buffer_vec = std::vector<TupleBufferPtr>();
   tuple_buffer_vec.push_back(tuple_buffer);
 
@@ -210,7 +210,7 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSinkToSource) {
   //  auto tuple_buffer = TupleBuffer(buffer, test_data_size, sizeof(uint32_t) * 2, test_data.size() / 2);
   auto tuple_buffer = BufferManager::instance().getBuffer();
 
-  std::memcpy(tuple_buffer->buffer, &test_data, test_data_size);
+  std::memcpy(tuple_buffer->getBuffer(), &test_data, test_data_size);
   auto tuple_buffer_vec = std::vector<TupleBufferPtr>();
   tuple_buffer_vec.push_back(tuple_buffer);
 
@@ -229,8 +229,8 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSinkToSource) {
       auto new_data = zmq_source->receiveData();
 
       // Test received data.
-      uint32_t* tuple = (uint32_t*)new_data->buffer;
-      for (size_t i = 0; i != new_data->num_tuples; ++i) {
+      uint32_t* tuple = (uint32_t*)new_data->getBuffer();
+      for (size_t i = 0; i != new_data->getNumberOfTuples(); ++i) {
         EXPECT_EQ(*(tuple++), i);
         size_t expected = 100 - i;
         EXPECT_EQ(*(tuple++), expected);

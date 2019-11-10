@@ -1,3 +1,4 @@
+
 #define BREAKIFFAILED 1
 
 #include <string>
@@ -8,7 +9,7 @@
 #include <API/ParameterTypes.hpp>
 #include <API/Schema.hpp>
 
-#include <Core/DataTypes.hpp>
+#include "../../include/CodeGen/DataTypes.hpp"
 
 namespace iotdb{
 

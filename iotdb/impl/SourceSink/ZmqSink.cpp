@@ -69,86 +69,87 @@ bool ZmqSink::writeData(const TupleBufferPtr input_buffer) {
 
   IOTDB_DEBUG("ZMQSINK  " << this << ": writes buffer " << input_buffer)
   //	size_t usedBufferSize = input_buffer->num_tuples * input_buffer->tuple_size_bytes;
-  zmq::message_t msg(input_buffer->buffer_size);
+  zmq::message_t msg(input_buffer->getBufferSizeInBytes());
   // TODO: If possible only copy the content not the empty part
-  std::memcpy(msg.data(), input_buffer->buffer, input_buffer->buffer_size);
-  tupleCnt = input_buffer.get()->num_tuples;
-  zmq::message_t envelope(sizeof(tupleCnt));
-  memcpy(envelope.data(), &tupleCnt, sizeof(tupleCnt));
+  std::memcpy(msg.data(), input_buffer->getBuffer(), input_buffer->getBufferSizeInBytes());
+  tupleCnt = input_buffer->getNumberOfTuples();
+      zmq::message_t envelope(sizeof(tupleCnt));
+      memcpy(envelope.data(), &tupleCnt, sizeof(tupleCnt));
 
-  bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
-  bool rc_msg = socket.send(msg);
-  sentBuffer++;
-  if (!rc_env || !rc_msg) {
-    IOTDB_DEBUG("ZMQSINK  " << this << ": send NOT successful")
-    BufferManager::instance().releaseBuffer(input_buffer);
-    return false;
-  } else {
-    IOTDB_DEBUG("ZMQSINK  " << this << ": send successful")
-    BufferManager::instance().releaseBuffer(input_buffer);
+      bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
+      bool rc_msg = socket.send(msg);
+      sentBuffer++;
+      if (!rc_env || !rc_msg) {
+        IOTDB_DEBUG("ZMQSINK  " << this << ": send NOT successful")
+        BufferManager::instance().releaseBuffer(input_buffer);
+        return false;
+      } else {
+        IOTDB_DEBUG("ZMQSINK  " << this << ": send successful")
+        BufferManager::instance().releaseBuffer(input_buffer);
 
-    return true;
-  }
-}
-
-const std::string ZmqSink::toString() const {
-  std::stringstream ss;
-  ss << "ZMQ_SINK(";
-  ss << "SCHEMA(" << schema.toString() << "), ";
-  ss << "HOST=" << host << ", ";
-  ss << "PORT=" << port << ", ";
-  ss << "TupleCnt=\"" << tupleCnt << "\")";
-  return ss.str();
-}
-
-bool ZmqSink::connect() {
-  if (!connected) {
-    IOTDB_DEBUG("ZMQSINK  " << this << ": not connected yet, try to connect")
-    int linger = 0;
-    auto address = std::string("tcp://") + host + std::string(":")
-        + std::to_string(port);
-
-    try {
-      socket.bind(address.c_str());
-      socket.setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
-      connected = true;
-      IOTDB_DEBUG("ZMQSINK  " << this << ": connected")
-    } catch (...) {
-      connected = false;
-      IOTDB_DEBUG("ZMQSINK  " << this << ": NOT connected")
+        return true;
+      }
     }
-  } else {
-    IOTDB_DEBUG("ZMQSINK  " << this << ": already connected")
-  }
 
-  return connected;
-}
-
-void ZmqSink::setup() {
-  connect();
-}
-void ZmqSink::shutdown() {
-}
-
-bool ZmqSink::disconnect() {
-  if (connected) {
-    IOTDB_DEBUG(
-        "ZMQSINK  " << this << ": not disconnected yet, try to disconnect")
-
-    try {
-      socket.close();
-      connected = false;
-      IOTDB_DEBUG("ZMQSINK  " << this << ": disconnected")
-
-    } catch (...) {
-      connected = true;
-      IOTDB_DEBUG("ZMQSINK  " << this << ": NOT disconnected")
+    const std::string ZmqSink::toString() const {
+      std::stringstream ss;
+      ss << "ZMQ_SINK(";
+      ss << "SCHEMA(" << schema.toString() << "), ";
+      ss << "HOST=" << host << ", ";
+      ss << "PORT=" << port << ", ";
+      ss << "TupleCnt=\"" << tupleCnt << "\")";
+      return ss.str();
     }
-  } else {
-    IOTDB_DEBUG("ZMQSINK  " << this << ": is not connected")
-  }
 
-  return !connected;
-}
+    bool ZmqSink::connect() {
+      if (!connected) {
+        IOTDB_DEBUG(
+            "ZMQSINK  " << this << ": not connected yet, try to connect")
+        int linger = 0;
+        auto address = std::string("tcp://") + host + std::string(":")
+            + std::to_string(port);
 
-}  // namespace iotdb
+        try {
+          socket.bind(address.c_str());
+          socket.setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
+          connected = true;
+          IOTDB_DEBUG("ZMQSINK  " << this << ": connected")
+        } catch (...) {
+          connected = false;
+          IOTDB_DEBUG("ZMQSINK  " << this << ": NOT connected")
+        }
+      } else {
+        IOTDB_DEBUG("ZMQSINK  " << this << ": already connected")
+      }
+
+      return connected;
+    }
+
+    void ZmqSink::setup() {
+      connect();
+    }
+    void ZmqSink::shutdown() {
+    }
+
+    bool ZmqSink::disconnect() {
+      if (connected) {
+        IOTDB_DEBUG(
+            "ZMQSINK  " << this << ": not disconnected yet, try to disconnect")
+
+        try {
+          socket.close();
+          connected = false;
+          IOTDB_DEBUG("ZMQSINK  " << this << ": disconnected")
+
+        } catch (...) {
+          connected = true;
+          IOTDB_DEBUG("ZMQSINK  " << this << ": NOT disconnected")
+        }
+      } else {
+        IOTDB_DEBUG("ZMQSINK  " << this << ": is not connected")
+      }
+
+      return !connected;
+    }
+
+    }  // namespace iotdb

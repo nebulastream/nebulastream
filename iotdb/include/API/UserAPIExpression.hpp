@@ -9,8 +9,8 @@
 #include <string>
 #include <memory>
 
-#include <Core/DataTypes.hpp>
 #include <Operators/OperatorTypes.hpp>
+#include "../CodeGen/DataTypes.hpp"
 
 namespace iotdb
 {

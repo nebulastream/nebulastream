@@ -3,17 +3,15 @@
 #include <cassert>
 #include <iostream>
 
-#include <Core/DataTypes.hpp>
-
 #include <CodeGen/HandCodedQueryExecutionPlan.hpp>
-#include <Core/TupleBuffer.hpp>
-
 #include <NodeEngine/Dispatcher.hpp>
 #include <NodeEngine/ThreadPool.hpp>
 
 #include <API/InputQuery.hpp>
 #include <API/UserAPIExpression.hpp>
 #include <API/Environment.hpp>
+#include "../../include/CodeGen/DataTypes.hpp"
+#include "../../include/NodeEngine/TupleBuffer.hpp"
 #include "../../include/SourceSink/DataSource.hpp"
 #include "../../include/SourceSink/GeneratorSource.hpp"
 
@@ -32,17 +30,17 @@ namespace iotdb {
         TupleBufferPtr operator()() {
             // 10 tuples of size one
             TupleBufferPtr buf = BufferManager::instance().getBuffer();
-            uint64_t tupleCnt = buf->buffer_size / sizeof(InputTuple);
+            uint64_t tupleCnt = buf->getNumberOfTuples();
 
-            assert(buf->buffer != NULL);
+            assert(buf->getBuffer() != NULL);
 
-            InputTuple *tuples = (InputTuple *) buf->buffer;
+            InputTuple *tuples = (InputTuple *) buf->getBuffer();
             for (uint32_t i = 0; i < tupleCnt; i++) {
                 tuples[i].id = i;
                 tuples[i].value = i * 2;
             }
-            buf->tuple_size_bytes = sizeof(InputTuple);
-            buf->num_tuples = tupleCnt;
+            buf->setTupleSizeInBytes(sizeof(InputTuple));
+            buf->setNumberOfTuples(tupleCnt);
             return buf;
         }
     };

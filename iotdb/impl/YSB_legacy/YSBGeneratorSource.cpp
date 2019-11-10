@@ -120,13 +120,13 @@ void generate(ysbRecord* data, size_t generated_tuples_this_pass, size_t campain
 TupleBufferPtr YSBFunctor::operator()(size_t numberOfCampaings)
 {
     TupleBufferPtr buf = BufferManager::instance().getBuffer();
-    assert(buf->buffer != NULL);
-    uint64_t generated_tuples_this_pass = buf->buffer_size / sizeof(ysbRecord);
+    assert(buf->getBuffer() != NULL);
+    uint64_t generated_tuples_this_pass = buf->getBufferSizeInBytes() / sizeof(ysbRecord);
 
-	generate((ysbRecord*) buf->buffer, generated_tuples_this_pass, numberOfCampaings);
+	generate((ysbRecord*) buf->getBuffer(), generated_tuples_this_pass, numberOfCampaings);
 
-    buf->tuple_size_bytes = sizeof(ysbRecord);
-    buf->num_tuples = generated_tuples_this_pass;
+    buf->setTupleSizeInBytes(sizeof(ysbRecord));
+    buf->setNumberOfTuples(generated_tuples_this_pass);
     return buf;
 }
 
@@ -135,7 +135,7 @@ TupleBufferPtr YSBGeneratorSource::receiveData() {
 	if(!preGenerated)
 	{
 		TupleBufferPtr buf = functor(numberOfCampaings);
-		generatedTuples += buf->num_tuples;
+		generatedTuples += buf->getNumberOfTuples();
 		generatedBuffers++;
 		return buf;
 	}
@@ -150,7 +150,7 @@ TupleBufferPtr YSBGeneratorSource::receiveData() {
 		TupleBufferPtr buf = BufferManager::instance().getBuffer();
 		buf->copyInto(copyBuffer);
 		generatedBuffers++;
-		generatedTuples += buf->num_tuples;
+		generatedTuples += buf->getNumberOfTuples();
 		return buf;
 	}
 }

@@ -8,7 +8,6 @@
 #include <string>
 #include <zmq.hpp>
 
-#include <Core/TupleBuffer.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/Dispatcher.hpp>
 
@@ -17,6 +16,7 @@
 #include <boost/serialization/export.hpp>
 
 #include <SourceSink/DataSource.hpp>
+#include "../../include/NodeEngine/TupleBuffer.hpp"
 BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::ZmqSource);
 
 namespace iotdb {
@@ -80,11 +80,11 @@ TupleBufferPtr ZmqSource::receiveData() {
   IOTDB_DEBUG("ZMQSource  " << this << ": got buffer ")
 
   // TODO: If possible only copy the content not the empty part
-  std::memcpy(buffer->buffer, new_data.data(), buffer->buffer_size);
-  buffer->num_tuples = tupleCnt;
-  buffer->tuple_size_bytes = tuple_size;
+  std::memcpy(buffer->getBuffer(), new_data.data(), buffer->getBufferSizeInBytes());
+  buffer->setNumberOfTuples(tupleCnt);
+  buffer->setTupleSizeInBytes(tuple_size);
 
-  assert(buffer->buffer_size == new_data.size());
+  assert(buffer->getBufferSizeInBytes() == new_data.size());
   IOTDB_DEBUG("ZMQSource  " << this << ": return buffer ")
 
   return buffer;

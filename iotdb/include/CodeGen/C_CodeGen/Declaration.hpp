@@ -7,8 +7,8 @@
 #include <vector>
 
 #include <CodeGen/CodeExpression.hpp>
-#include <Core/DataTypes.hpp>
 #include <Util/ErrorHandling.hpp>
+#include "../DataTypes.hpp"
 
 namespace iotdb {
 

@@ -2,12 +2,12 @@
 #define INCLUDE_DATASOURCE_H_
 
 #include <API/Schema.hpp>
-#include <Core/TupleBuffer.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/vector.hpp>
 #include <thread>
+#include "../NodeEngine/TupleBuffer.hpp"
 
 namespace iotdb {
 

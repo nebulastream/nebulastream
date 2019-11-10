@@ -1,7 +1,8 @@
 #include <CodeGen/QueryExecutionPlan.hpp>
-#include <Core/TupleBuffer.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/Task.hpp>
+
+#include "../../include/NodeEngine/TupleBuffer.hpp"
 #include "../../include/SourceSink/DataSource.hpp"
 
 namespace iotdb {
@@ -22,7 +23,7 @@ void Task::releaseInputBuffer() {
 }
 
 size_t Task::getNumberOfTuples() {
-    return buf->num_tuples;
+    return buf->getNumberOfTuples();
   }
 
 }  // namespace iotdb

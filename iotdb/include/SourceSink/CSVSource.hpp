@@ -1,7 +1,6 @@
 #ifndef INCLUDE_CSVSOURCE_H_
 #define INCLUDE_CSVSOURCE_H_
 
-#include <Core/TupleBuffer.hpp>
 #include <fstream>
 #include <string>
 #include <SourceSink/DataSource.hpp>
@@ -9,6 +8,7 @@
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/vector.hpp>
+#include "../NodeEngine/TupleBuffer.hpp"
 
 namespace iotdb {
 
@@ -33,17 +33,16 @@ class CSVSource : public DataSource {
   TupleBufferPtr receiveData();
 
   /**
-     *  @brief method to fill the buffer with tuples
-     *  @param buffer to be filled
-     */
-    void fillBuffer(TupleBuffer&);
+   *  @brief method to fill the buffer with tuples
+   *  @param buffer to be filled
+   */
+  void fillBuffer(TupleBufferPtr);
 
   /**
    * @brief override the toString method for the csv source
    * @return returns string describing the binary source
    */
   const std::string toString() const;
-
 
  private:
   CSVSource();
@@ -55,20 +54,20 @@ class CSVSource : public DataSource {
   std::string delimiter;
 
   /**
-     * @brief method for serialization, all listed variable below are added to the
-     * serialization/deserialization process
-     */
-    friend class boost::serialization::access;
-    template<class Archive> void serialize(Archive& ar,
-                                           const unsigned int version) {
-      ar& boost::serialization::base_object<DataSource>(*this);
-      ar & file_path;
-      ar & file_size;
-      ar & tuple_size;
-      ar & delimiter;
-      ar & generatedTuples;
-      ar & generatedBuffers;
-    }
+   * @brief method for serialization, all listed variable below are added to the
+   * serialization/deserialization process
+   */
+  friend class boost::serialization::access;
+  template<class Archive> void serialize(Archive& ar,
+                                         const unsigned int version) {
+    ar & boost::serialization::base_object<DataSource>(*this);
+    ar & file_path;
+    ar & file_size;
+    ar & tuple_size;
+    ar & delimiter;
+    ar & generatedTuples;
+    ar & generatedBuffers;
+  }
 };
 }  // namespace iotdb
 #include <boost/archive/text_iarchive.hpp>

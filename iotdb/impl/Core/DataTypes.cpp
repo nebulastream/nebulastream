@@ -1,6 +1,7 @@
 
+#include "../../include/CodeGen/DataTypes.hpp"
+
 #include <CodeGen/CodeExpression.hpp>
-#include <Core/DataTypes.hpp>
 #include <sstream>
 #include <string>
 #include <vector>
