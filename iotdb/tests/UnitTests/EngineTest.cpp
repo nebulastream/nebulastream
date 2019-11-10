@@ -2,11 +2,7 @@
 #include <cassert>
 #include <iostream>
 
-#include <Core/DataTypes.hpp>
-
 #include <CodeGen/HandCodedQueryExecutionPlan.hpp>
-#include <Core/TupleBuffer.hpp>
-
 #include <NodeEngine/Dispatcher.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Util/Logger.hpp>
@@ -14,6 +10,8 @@
 #include <gtest/gtest.h>
 #include <SourceSink/DataSource.hpp>
 #include <SourceSink/GeneratorSource.hpp>
+#include "../../include/CodeGen/DataTypes.hpp"
+#include "../../include/NodeEngine/TupleBuffer.hpp"
 #include "../../include/SourceSink/SourceCreator.hpp"
 
 #define DEBUG_OUTPUT

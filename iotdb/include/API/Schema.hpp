@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include <Core/DataTypes.hpp>
+#include "../CodeGen/DataTypes.hpp"
 
 namespace iotdb {
 

@@ -40,7 +40,7 @@ bool YSBPrintSink::writeData(const TupleBufferPtr input_buffer)
     ysbRecordOut* recordBuffer = (ysbRecordOut*)input_buffer->buffer;
     //	Schema s = Schema::create().addField("",UINT32);
     //	std::cout << iotdb::toString(input_buffer,s) << std::endl;
-    for (size_t u = 0; u < input_buffer->num_tuples; u++) {
+    for (size_t u = 0; u < input_buffer->getNumberOfTuples(); u++) {
         //		std::cout << "id=" << recordBuffer[u].id << std::endl;
         //		std::cout << " ms=" << recordBuffer[u].current_ms << std::endl;
         //		std::cout << " type=" << std::string(recordBuffer[u].event_type) << std::endl;

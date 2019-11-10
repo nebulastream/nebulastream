@@ -6,11 +6,11 @@
 #include <string>
 #include <zmq.hpp>
 
-#include <Core/TupleBuffer.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
 #include <SourceSink/DataSource.hpp>
+#include "../NodeEngine/TupleBuffer.hpp"
 namespace iotdb {
 
 /**

@@ -1,11 +1,11 @@
 #ifndef INCLUDE_GENERATORSOURCE_H_
 #define INCLUDE_GENERATORSOURCE_H_
 
-#include <Core/TupleBuffer.hpp>
 #include <iostream>
 #include <sstream>
 
 #include <SourceSink/DataSource.hpp>
+#include "../NodeEngine/TupleBuffer.hpp"
 
 namespace iotdb {
 

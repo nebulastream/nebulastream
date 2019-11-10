@@ -2,16 +2,14 @@
 #include <cassert>
 #include <iostream>
 
-#include <Core/DataTypes.hpp>
-
 #include <CodeGen/HandCodedQueryExecutionPlan.hpp>
-#include <Core/TupleBuffer.hpp>
-
 #include <NodeEngine/Dispatcher.hpp>
 #include <NodeEngine/ThreadPool.hpp>
 #include <Util/Logger.hpp>
 #include <cstring>
 #include <QEPs/CompiledYSBTestQueryExecutionPlan.hpp>
+#include "../../include/CodeGen/DataTypes.hpp"
+#include "../../include/NodeEngine/TupleBuffer.hpp"
 #include "../../include/SourceSink/DataSource.hpp"
 #include "../../include/SourceSink/GeneratorSource.hpp"
 #include "../../include/SourceSink/Window.hpp"

@@ -3,17 +3,15 @@
 #include <cassert>
 #include <iostream>
 
-#include <Core/DataTypes.hpp>
-
 #include <CodeGen/HandCodedQueryExecutionPlan.hpp>
-#include <Core/TupleBuffer.hpp>
-
 #include <NodeEngine/Dispatcher.hpp>
 #include <NodeEngine/ThreadPool.hpp>
 
 #include <API/InputQuery.hpp>
 #include <API/UserAPIExpression.hpp>
 #include <API/Environment.hpp>
+#include "../../include/CodeGen/DataTypes.hpp"
+#include "../../include/NodeEngine/TupleBuffer.hpp"
 #include "../../include/SourceSink/DataSource.hpp"
 #include "../../include/SourceSink/GeneratorSource.hpp"
 

@@ -1,7 +1,6 @@
 #ifndef INCLUDE_CSVSOURCE_H_
 #define INCLUDE_CSVSOURCE_H_
 
-#include <Core/TupleBuffer.hpp>
 #include <fstream>
 #include <string>
 #include <SourceSink/DataSource.hpp>
@@ -9,6 +8,7 @@
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/vector.hpp>
+#include "../NodeEngine/TupleBuffer.hpp"
 
 namespace iotdb {
 

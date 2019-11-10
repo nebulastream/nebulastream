@@ -1,7 +1,7 @@
 #ifndef INCLUDE_TASK_H_
 #define INCLUDE_TASK_H_
-#include <Core/TupleBuffer.hpp>
 #include <memory>
+#include "TupleBuffer.hpp"
 
 namespace iotdb {
 class DataSource;

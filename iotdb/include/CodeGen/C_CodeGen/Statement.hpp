@@ -6,7 +6,7 @@
 
 #include <CodeGen/C_CodeGen/Declaration.hpp>
 #include <CodeGen/CodeExpression.hpp>
-#include <Core/DataTypes.hpp>
+#include "../DataTypes.hpp"
 
 namespace iotdb {
 

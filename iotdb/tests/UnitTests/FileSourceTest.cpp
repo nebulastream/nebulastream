@@ -7,11 +7,10 @@
 #include <NodeEngine/ThreadPool.hpp>
 #include <NodeEngine/BufferManager.hpp>
 
-#include <Core/DataTypes.hpp>
-
 #include <Util/Logger.hpp>
 #include <SourceSink/DataSource.hpp>
 #include <SourceSink/GeneratorSource.hpp>
+#include "../../include/CodeGen/DataTypes.hpp"
 #include "../../include/SourceSink/SourceCreator.hpp"
 
 namespace iotdb {
