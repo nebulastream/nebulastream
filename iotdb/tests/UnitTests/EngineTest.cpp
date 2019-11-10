@@ -35,16 +35,16 @@ bool firstPipelineStage(const TupleBuffer&) {
 }
 
 bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf) {
-  uint64_t* tuples = (uint64_t*) buf->buffer;
+  uint64_t* tuples = (uint64_t*) buf->getBuffer();
 
   IOTDB_INFO("Test: Start execution");
 
-  for (size_t i = 0; i < buf->num_tuples; ++i) {
+  for (size_t i = 0; i < buf->getNumberOfTuples(); ++i) {
     count++;
     sum += tuples[i];
   }
 
-  IOTDB_INFO("Test: query result = Processed Block:" << buf->num_tuples << " count: " << count
+  IOTDB_INFO("Test: query result = Processed Block:" << buf->getNumberOfTuples() << " count: " << count
             << "sum: " << sum )
   assert(sum == 512);
   return true;

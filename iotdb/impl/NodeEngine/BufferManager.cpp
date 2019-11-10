@@ -29,7 +29,7 @@ BufferManager::~BufferManager() {
 
   // Release memory.
   for (auto const &buffer_pool_entry : buffer_pool) {
-    delete[] (char *) buffer_pool_entry.first->buffer;
+    delete[] (char *) buffer_pool_entry.first->getBuffer();
   }
   buffer_pool.clear();
 }
@@ -44,7 +44,7 @@ void BufferManager::setNumberOfBuffers(size_t n) {
 
   //delete all existing buffers
   for (auto &entry : buffer_pool) {
-    delete[] (char *) entry.first->buffer;
+    delete[] (char *) entry.first->getBuffer();
   }
   buffer_pool.clear();
 
@@ -59,7 +59,7 @@ void BufferManager::setBufferSize(size_t size) {
   size_t tmpBufferCnt = buffer_pool.size();
   //delete all existing buffers
   for (auto &entry : buffer_pool) {
-    delete[] (char *) entry.first->buffer;
+    delete[] (char *) entry.first->getBuffer();
   }
   buffer_pool.clear();
 
@@ -96,7 +96,7 @@ bool BufferManager::removeBuffer(TupleBufferPtr tuple_buffer) {
         return false;
       }
 
-      delete (char *) entry.first->buffer;
+      delete (char *) entry.first->getBuffer();
       buffer_pool.erase(tuple_buffer);
       IOTDB_DEBUG(
           "BufferManager: found and remove Buffer buffer" << tuple_buffer)
@@ -151,8 +151,8 @@ bool BufferManager::releaseBuffer(const TupleBufferPtr tuple_buffer) {
       IOTDB_DEBUG("BufferManager: found and release buffer")
 
       //reset buffer for next use
-      entry.first->num_tuples = 0;
-      entry.first->tuple_size_bytes = 0;
+      entry.first->setNumberOfTuples(0);
+      entry.first->setTupleSizeInBytes(0);
 
       //update statistics
       releasedBuffer++;

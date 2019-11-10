@@ -23,7 +23,7 @@ void Task::releaseInputBuffer() {
 }
 
 size_t Task::getNumberOfTuples() {
-    return buf->num_tuples;
+    return buf->getNumberOfTuples();
   }
 
 }  // namespace iotdb
