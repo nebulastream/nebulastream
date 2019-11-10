@@ -71,7 +71,7 @@ namespace iotdb {
       {
           // 10 tuples of size one
           TupleBufferPtr buf = BufferManager::instance().getBuffer();
-          uint64_t tupleCnt = buf->getNumberOfTuples();
+          uint64_t tupleCnt = buf->getBufferSizeInBytes() / sizeof(InputTuple);
 
           assert(buf->getBuffer() != NULL);
 
@@ -120,7 +120,7 @@ namespace iotdb {
         {
             // 10 tuples of size one
             TupleBufferPtr buf = BufferManager::instance().getBuffer();
-            uint64_t tupleCnt = buf->getNumberOfTuples();
+            uint64_t tupleCnt = buf->getBufferSizeInBytes() / sizeof(InputTuple);
 
             assert(buf->getBuffer() != NULL);
 
