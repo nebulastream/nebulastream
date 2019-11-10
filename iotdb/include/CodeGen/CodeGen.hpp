@@ -14,8 +14,8 @@
 #include <CodeGen/C_CodeGen/UnaryOperatorStatement.hpp>
 #include <CodeGen/CodeGen.hpp>
 #include <Core/DataTypes.hpp>
-#include <Runtime/DataSink.hpp>
 #include <Util/ErrorHandling.hpp>
+#include "../SourceSink/DataSink.hpp"
 
 namespace iotdb {
 

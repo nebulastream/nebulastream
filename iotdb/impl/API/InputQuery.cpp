@@ -4,10 +4,11 @@
 
 #include <API/InputQuery.hpp>
 #include <Operators/Operator.hpp>
-#include <Runtime/DataSink.hpp>
-
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
 #include <API/UserAPIExpression.hpp>
+#include <SourceSink/DataSink.hpp>
+#include "../../include/SourceSink/SinkCreator.hpp"
+#include "../../include/SourceSink/SourceCreator.hpp"
 
 namespace iotdb {
 
@@ -43,7 +44,7 @@ const InputQuery createQueryFromCodeString(const std::string &query_code_snippet
     code << "#include <API/InputQuery.hpp>" << std::endl;
     code << "#include <API/Config.hpp>" << std::endl;
     code << "#include <API/Schema.hpp>" << std::endl;
-    code << "#include <Runtime/DataSource.hpp>" << std::endl;
+    code << "#include <SourceSink/DataSource.hpp>" << std::endl;
     code << "#include <API/InputQuery.hpp>" << std::endl;
     code << "#include <API/Environment.hpp>" << std::endl;
     code << "#include <API/UserAPIExpression.hpp>" << std::endl;
@@ -103,7 +104,7 @@ InputQuery::~InputQuery() {}
 
 InputQuery InputQuery::from(Stream &stream) {
   InputQuery q(stream);
-  OperatorPtr op = createSourceOperator(createSchemaTestDataSource(stream.getSchema()));
+  OperatorPtr op = createSourceOperator(createTestDataSourceWithSchema(stream.getSchema()));
   int operatorId = q.getNextOperatorId();
   op->setOperatorId(operatorId);
   q.root = op;
@@ -173,7 +174,7 @@ InputQuery &InputQuery::writeToFile(const std::string &file_name) {
 }
 
 InputQuery &InputQuery::print(std::ostream &out) {
-  OperatorPtr op = createSinkOperator(createPrintSink(out));
+  OperatorPtr op = createSinkOperator(createPrintSinkWithoutSchema(out));
   int operatorId = this->getNextOperatorId();
   op->setOperatorId(operatorId);
   addChild(op, root);

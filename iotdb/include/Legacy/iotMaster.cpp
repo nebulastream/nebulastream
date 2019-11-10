@@ -8,7 +8,6 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <Optimizer/FogOptimizer.hpp>
 //#include <Optimizer/FogRunTime.hpp>
-#include <Runtime/CompiledDummyPlan.hpp>
 #include <Util/Logger.hpp>
 
 #include <memory>
@@ -19,17 +18,16 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
-#include <Runtime/YSBGeneratorSource.hpp>
-#include <Runtime/ZmqSink.hpp>
-#include <Runtime/ZmqSource.hpp>
-
-#include <Runtime/YSBPrintSink.hpp>
-
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/stream.hpp>
 
 #include <QEPs/CompiledYSBTestQueryExecutionPlan.hpp>
+#include "../SourceSink/CompiledDummyPlan.hpp"
+#include "../SourceSink/ZmqSink.hpp"
+#include "../SourceSink/ZmqSource.hpp"
+#include "../YSB_legacy/YSBGeneratorSource.hpp"
+#include "../YSB_legacy/YSBPrintSink.hpp"
 
 using namespace iotdb;
 
@@ -60,7 +58,7 @@ InputQueryPtr createTestQuery()
      * const DataSourcePtr createBinaryFileSource(const Schema& schema, const std::string& path_to_file);
      * const DataSourcePtr createRemoteTCPSource(const Schema& schema, const std::string& server_ip, int port);
      */
-    DataSourcePtr source = createTestSource();
+    DataSourcePtr source = createTestSourceWithoutSchema();
     Stream stream = Stream("test", schema);
     InputQueryPtr ptr =
         std::make_shared<InputQuery>(

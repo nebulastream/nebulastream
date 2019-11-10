@@ -1,0 +1,117 @@
+#ifndef INCLUDE_DATASINK_H_
+#define INCLUDE_DATASINK_H_
+
+#include <API/Schema.hpp>
+#include <Core/TupleBuffer.hpp>
+#include <Util/ErrorHandling.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/shared_ptr.hpp>
+#include <boost/serialization/vector.hpp>
+
+namespace iotdb {
+
+/**
+ * @brief Base class for all data sinks in NES
+ */
+class DataSink {
+
+ public:
+  /**
+   * @brief public constructor for data sink
+   */
+  DataSink();
+
+  /**
+   * @brief public constructor for data sink with schema provisioning
+   */
+  DataSink(const Schema& schema);
+
+  /**
+   * @brief Internal destructor to make sure that the data source is stopped before deconstrcuted
+   * @Note must be public because of boost serialize
+   */
+  virtual ~DataSink();
+
+  /**
+   * @brief virtual method to setup sink
+   * @Note this method will be overwritten by derived classes
+   */
+  virtual void setup() = 0;
+
+  /**
+   * @brief virtual method to shutdown sink
+   * @Note this method will be overwritten by derived classes
+   */
+  virtual void shutdown() = 0;
+
+  /**
+   * @brief method to write a vector of TupleBuffers
+   * @param vector of tuple buffers pointer
+   * @return bool indicating if the write was complete
+   */
+  bool writeDataInBatch(const std::vector<TupleBufferPtr>& input_buffers);
+
+  /**
+   * @brief method to write a TupleBuffer
+   * @param a tuple buffers pointer
+   * @return bool indicating if the write was complete
+   */
+  bool writeData(const TupleBufferPtr input_buffer);
+
+  /**
+   * @brief debug function for testing to get number of sent buffers
+   * @return number of sent buffer
+   */
+  size_t getNumberOfSentBuffers();
+
+  /**
+   * @brief debug function for testing to get number of sent tuples
+   * @return number of sent buffer
+   */
+  size_t getNumberOfSentTuples();
+
+  /**
+   * @brief virtual function to get a string describing the particular sink
+   * @Note this function is overwritten by the particular data sink
+   * @return string with name and additional information about the sink
+   */
+  virtual const std::string toString() const = 0;
+
+  /**
+   * @brief method to return the current schema of the sink
+   * @return schema description of the sink
+   */
+  const Schema& getSchema() const;
+
+  /**
+   * @brief method to set the current schema of the sink
+   * @param schema description of the sink
+   */
+  void setSchema(const Schema& pSchema);
+
+ protected:
+  Schema schema;
+  size_t sentBuffer;
+  size_t sentTuples;
+
+  /**
+   * @brief method for serialization, all listed variable below are added to the
+   * serialization/deserialization process
+   */
+  friend class boost::serialization::access;
+  template<class Archive> void serialize(Archive& ar,
+                                         const unsigned int version) {
+    ar & schema;
+    ar & sentBuffer;
+    ar & sentTuples;
+  }
+};
+
+typedef std::shared_ptr<DataSink> DataSinkPtr;
+
+}  // namespace iotdb
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/export.hpp>
+BOOST_CLASS_EXPORT_KEY(iotdb::DataSink)
+#endif // INCLUDE_DATASINK_H_
