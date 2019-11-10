@@ -8,8 +8,6 @@
 #include <CodeGen/PipelineStage.hpp>
 #include <Core/DataTypes.hpp>
 #include <Util/ErrorHandling.hpp>
-#include <Runtime/DataSink.hpp>
-#include <Runtime/GeneratorSource.hpp>
 #include <NodeEngine/BufferManager.hpp>
 
 #include <CodeGen/C_CodeGen/BinaryOperatorStatement.hpp>
@@ -19,6 +17,10 @@
 #include <CodeGen/C_CodeGen/Statement.hpp>
 #include <CodeGen/C_CodeGen/UnaryOperatorStatement.hpp>
 #include <API/UserAPIExpression.hpp>
+#include <SourceSink/DataSink.hpp>
+#include <SourceSink/GeneratorSource.hpp>
+#include "../../include/SourceSink/SinkCreator.hpp"
+#include "../../include/SourceSink/SourceCreator.hpp"
 
 namespace iotdb {
 
@@ -615,7 +617,7 @@ int CodeGeneratorTest()
     /* generate code for scanning input buffer */
     code_gen->generateCode(source, context, std::cout);
     /* generate code for writing result tuples to output buffer */
-    code_gen->generateCode(createPrintSink(Schema::create().addField("campaign_id",UINT64),std::cout), context, std::cout);
+    code_gen->generateCode(createPrintSinkWithSink(Schema::create().addField("campaign_id",UINT64),std::cout), context, std::cout);
     /* compile code to pipeline stage */
     PipelineStagePtr stage = code_gen->compile(CompilerArgs());
     if(!stage)
@@ -697,7 +699,7 @@ int CodeGeneratorTest()
 	code_gen->generateCode(pred, context, std::cout);
 
     /* generate code for writing result tuples to output buffer */
-    code_gen->generateCode(createPrintSink(Schema::create()
+    code_gen->generateCode(createPrintSinkWithSink(Schema::create()
                                                    .addField("id", BasicType::UINT32)
                                                    .addField("value", BasicType::UINT32)
                                                    .addField("text", createArrayDataType(BasicType::CHAR, 12)), std::cout), context, std::cout);
@@ -768,7 +770,7 @@ int CodeGeneratorTest()
         unsigned int numberOfResultTuples = 3;
 
         /* generate code for writing result tuples to output buffer */
-        code_gen->generateCode(createPrintSink(Schema::create()
+        code_gen->generateCode(createPrintSinkWithSink(Schema::create()
                                                        .addField("id", BasicType::UINT32)
                                                        .addField("valueSmall", BasicType::INT16)
                                                        .addField("valueFloat", BasicType::FLOAT32)
@@ -836,7 +838,7 @@ int CodeGeneratorTest()
                 , context, std::cout);
 
         /* generate code for writing result tuples to output buffer */
-        code_gen->generateCode(createPrintSink(Schema::create()
+        code_gen->generateCode(createPrintSinkWithSink(Schema::create()
                                                        .addField("id", BasicType::UINT32)
                                                        .addField("valueSmall", BasicType::INT16)
                                                        .addField("valueFloat", BasicType::FLOAT32)

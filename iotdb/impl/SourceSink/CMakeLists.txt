@@ -1,0 +1,13 @@
+add_source_iotdb(
+        DataSource.cpp
+        DataSink.cpp
+        GeneratorSource.cpp
+        BinarySource.cpp
+        ZmqSink.cpp
+        ZmqSource.cpp
+        FileOutputSink.cpp
+        PrintSink.cpp
+        CSVSource.cpp
+        TestSources.cpp
+        TestSinks.cpp
+                )

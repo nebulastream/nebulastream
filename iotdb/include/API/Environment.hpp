@@ -6,11 +6,10 @@
 #include <API/ParameterTypes.hpp>
 #include <API/Schema.hpp>
 #include <API/InputQuery.hpp>
-#include <Runtime/DataSource.hpp>
-#include <Runtime/Window.hpp>
 #include <iostream>
 #include <string>
-
+#include "../SourceSink/DataSource.hpp"
+#include <Window_legacy/Window.hpp>
 namespace iotdb {
 
 /** \brief the central abstraction for the user to define queries */

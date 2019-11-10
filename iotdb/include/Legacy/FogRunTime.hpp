@@ -1,12 +1,12 @@
 #ifndef INCLUDE_OPTIMIZER_FOGRUNTIME_HPP_
 #define INCLUDE_OPTIMIZER_FOGRUNTIME_HPP_
-#include "../Runtime/CompiledDummyPlan.hpp"
 #include <CodeGen/QueryExecutionPlan.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/json.hpp>
 #include <Optimizer/FogExecutionPlan.hpp>
 #include <map>
 #include <zmq.hpp>
+#include "../SourceSink/CompiledDummyPlan.hpp"
 
 namespace iotdb {
 using JSON = nlohmann::json;

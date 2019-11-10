@@ -6,10 +6,10 @@
 #include <API/Schema.hpp>
 #include <API/Stream.hpp>
 #include <API/WindowDefinition.hpp>
-#include <Runtime/DataSource.hpp>
-#include <Runtime/Window.hpp>
 #include <iostream>
 #include <string>
+#include "../SourceSink/DataSource.hpp"
+#include "../Window_legacy/Window.hpp"
 
 namespace iotdb {
 

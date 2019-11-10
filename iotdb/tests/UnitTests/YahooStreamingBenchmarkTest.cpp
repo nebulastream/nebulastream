@@ -9,15 +9,14 @@
 
 #include "gtest/gtest.h"
 
-#include <Runtime/DataSink.hpp>
-#include <Runtime/DataSource.hpp>
 #include <NodeEngine/Dispatcher.hpp>
-#include <Runtime/GeneratorSource.hpp>
 #include <NodeEngine/ThreadPool.hpp>
-#include <Runtime/Window.hpp>
-#include <Runtime/YSBWindow.hpp>
-
 #include <CodeGen/HandCodedQueryExecutionPlan.hpp>
+#include "../../include/SourceSink/DataSink.hpp"
+#include "../../include/SourceSink/DataSource.hpp"
+#include "../../include/SourceSink/GeneratorSource.hpp"
+#include "../../include/SourceSink/Window.hpp"
+#include "../../include/YSB_legacy/YSBWindow.hpp"
 
 #ifndef LOCAL_HOST
 #define LOCAL_HOST "127.0.0.1"
@@ -54,7 +53,7 @@ class YahooStreamingBenchmarkTest : public testing::Test {
 
         ysbSource = createYSBSource(1024, 10, false); // 1024 buffers * 32 kb = 32 MB
         ysbWindow = createTestWindow(2, 10);          // windows of 2 seconds, 10 campaigns
-        ysbSink = createPrintSink(ysbRecordResultSchema, outputStream);
+        ysbSink = createPrintSinkWithSink(ysbRecordResultSchema, outputStream);
         zmqSink = createZmqSink(ysbRecordResultSchema, LOCAL_HOST, LOCAL_PORT);
     }
 

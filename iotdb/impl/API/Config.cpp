@@ -3,7 +3,7 @@ BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::Config)
 
 #include <string>
 #include <Util/Logger.hpp>
-#include <Runtime/DataSink.hpp>
+#include "../../include/SourceSink/DataSink.hpp"
 
 namespace iotdb {
 Config::Config()

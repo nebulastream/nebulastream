@@ -8,19 +8,19 @@
 #include <CodeGen/HandCodedQueryExecutionPlan.hpp>
 #include <Core/TupleBuffer.hpp>
 
-#include <Runtime/DataSource.hpp>
-#include <Runtime/Window.hpp>
-#include <Runtime/YSBWindow.hpp>
-
 #include <NodeEngine/Dispatcher.hpp>
 #include <NodeEngine/ThreadPool.hpp>
-#include <Runtime/YSBGeneratorSource.hpp>
 #include <Util/Logger.hpp>
 #include <boost/program_options.hpp>
 #include <cstring>
 #include <memory>
 #include <signal.h>
 #include <stdio.h>
+#include <SourceSink/DataSource.hpp>
+#include "../../include/SourceSink/SourceCreator.hpp"
+#include <Window_legacy/Window.hpp>
+#include "../../include/YSB_legacy/YSBGeneratorSource.hpp"
+#include "../../include/YSB_legacy/YSBWindow.hpp"
 
 namespace iotdb {
 using NanoSeconds = std::chrono::nanoseconds;

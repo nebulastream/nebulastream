@@ -8,9 +8,11 @@
 #include <API/Schema.hpp>
 #include <Core/TupleBuffer.hpp>
 #include <NodeEngine/BufferManager.hpp>
-#include <Runtime/DataSink.hpp>
-#include <Runtime/DataSource.hpp>
 #include <Util/Logger.hpp>
+#include <SourceSink/DataSink.hpp>
+#include <SourceSink/DataSource.hpp>
+#include "../../include/SourceSink/SinkCreator.hpp"
+#include "../../include/SourceSink/SourceCreator.hpp"
 using namespace iotdb;
 
 #ifndef LOCAL_HOST
