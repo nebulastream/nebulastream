@@ -88,10 +88,10 @@ namespace iotdb {
         for (size_t i = 1; i <= BufferManager::instance().getNumberOfBuffers(); ++i) {
             TupleBufferPtr buf = BufferManager::instance().getBuffer();
             size_t expected = 0;
-            ASSERT_TRUE(buf->buffer != nullptr);
-            ASSERT_EQ(buf->buffer_size, buffer_size);
-            ASSERT_EQ(buf->num_tuples, expected);
-            ASSERT_EQ(buf->tuple_size_bytes, expected);
+            ASSERT_TRUE(buf->getBuffer() != nullptr);
+            ASSERT_EQ(buf->getBufferSizeInBytes(), buffer_size);
+            ASSERT_EQ(buf->getNumberOfTuples(), expected);
+            ASSERT_EQ(buf->getTupleSizeInBytes(), expected);
 
             buffers_count = BufferManager::instance().getNumberOfBuffers();
             buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
@@ -148,12 +148,12 @@ namespace iotdb {
 
         BufferManager::instance().setBufferSize(buffer_size * 2);
         TupleBufferPtr buf = BufferManager::instance().getBuffer();
-        ASSERT_EQ(buf->buffer_size, 2 * buffer_size);
+        ASSERT_EQ(buf->getBufferSizeInBytes(), 2 * buffer_size);
         BufferManager::instance().releaseBuffer(buf);
 
         BufferManager::instance().setBufferSize(buffer_size);
         buf = BufferManager::instance().getBuffer();
-        ASSERT_EQ(buf->buffer_size, buffer_size);
+        ASSERT_EQ(buf->getBufferSizeInBytes(), buffer_size);
         BufferManager::instance().releaseBuffer(buf);
 
 

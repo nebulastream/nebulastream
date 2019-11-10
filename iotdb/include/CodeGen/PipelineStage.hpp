@@ -7,9 +7,9 @@
 
 #ifndef INCLUDE_PIPELINESTAGE_H_
 #define INCLUDE_PIPELINESTAGE_H_
-#include <Core/TupleBuffer.hpp>
 #include <memory>
 #include <vector>
+#include "../NodeEngine/TupleBuffer.hpp"
 
 namespace iotdb {
 

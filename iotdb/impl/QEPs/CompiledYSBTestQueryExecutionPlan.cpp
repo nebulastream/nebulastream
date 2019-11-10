@@ -16,14 +16,14 @@ bool CompiledYSBTestQueryExecutionPlan::firstPipelineStage(const TupleBuffer&){
 }
 bool CompiledYSBTestQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf)
 {
-    ysbRecord* tuples = (ysbRecord*) buf->buffer;
+    ysbRecord* tuples = (ysbRecord*) buf->getBuffer();
     char key[] = "view";
     YSBWindow* window = (YSBWindow*)this->getWindows()[0].get();
     size_t current_window = window->getCurrentWindow();
     size_t windowSizeInSec = window->getWindowSizeInSec();
     size_t campaingCnt = window->getCampaignCnt();
     std::atomic<size_t>** hashTable = window->getHashTable();
-    for(size_t i = 0; i < buf->num_tuples; i++)
+    for(size_t i = 0; i < buf->getNumberOfTuples(); i++)
     {
         if(strcmp(key,tuples[i].event_type) != 0)
         {
@@ -54,7 +54,7 @@ bool CompiledYSBTestQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id,
 }
 
 /**
- * for(size_t i = 0; i < buf->num_tuples; i++)
+ * for(size_t i = 0; i < buf->getNumberOfTuples(); i++)
     {
         if(strcmp(key,tuples[i].event_type) != 0)
         {

@@ -15,7 +15,8 @@
 #include <CodeGen/C_CodeGen/UnaryOperatorStatement.hpp>
 
 #include <API/UserAPIExpression.hpp>
-#include <Core/DataTypes.hpp>
+
+#include "../../include/CodeGen/DataTypes.hpp"
 
 namespace iotdb
 {

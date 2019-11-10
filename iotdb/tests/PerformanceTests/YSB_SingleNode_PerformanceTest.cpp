@@ -3,11 +3,7 @@
 #include <chrono>
 #include <iostream>
 
-#include <Core/DataTypes.hpp>
-
 #include <CodeGen/HandCodedQueryExecutionPlan.hpp>
-#include <Core/TupleBuffer.hpp>
-
 #include <NodeEngine/Dispatcher.hpp>
 #include <NodeEngine/ThreadPool.hpp>
 #include <Util/Logger.hpp>
@@ -19,6 +15,8 @@
 #include <SourceSink/DataSource.hpp>
 #include "../../include/SourceSink/SourceCreator.hpp"
 #include <Window_legacy/Window.hpp>
+#include "../../include/CodeGen/DataTypes.hpp"
+#include "../../include/NodeEngine/TupleBuffer.hpp"
 #include "../../include/YSB_legacy/YSBGeneratorSource.hpp"
 #include "../../include/YSB_legacy/YSBWindow.hpp"
 
@@ -72,7 +70,7 @@ class YSB_SingleNode_PerformanceTest : public HandCodedQueryExecutionPlan {
 
     bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf)
     {
-        ysbRecord* tuples = (ysbRecord*)buf->buffer;
+        ysbRecord* tuples = (ysbRecord*)buf->getBuffer();
         size_t lastTimeStamp = time(NULL);
         size_t current_window = 0;
         char key[] = "view";
@@ -80,7 +78,7 @@ class YSB_SingleNode_PerformanceTest : public HandCodedQueryExecutionPlan {
         size_t campaingCnt = 10;
         YSBWindow* window = (YSBWindow*)this->getWindows()[0].get();
         std::atomic<size_t>** hashTable = window->getHashTable();
-        for (size_t i = 0; i < buf->num_tuples; i++) {
+        for (size_t i = 0; i < buf->getNumberOfTuples(); i++) {
             if (strcmp(key, tuples[i].event_type) != 0) {
                 continue;
             }

@@ -7,7 +7,6 @@
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
 #include <CodeGen/CodeExpression.hpp>
 #include <CodeGen/PipelineStage.hpp>
-#include <Core/DataTypes.hpp>
 #include <Util/ErrorHandling.hpp>
 
 #include <CodeGen/C_CodeGen/BinaryOperatorStatement.hpp>
@@ -16,6 +15,7 @@
 #include <CodeGen/C_CodeGen/FunctionBuilder.hpp>
 #include <CodeGen/C_CodeGen/Statement.hpp>
 #include <CodeGen/C_CodeGen/UnaryOperatorStatement.hpp>
+#include "../../../include/CodeGen/DataTypes.hpp"
 
 namespace iotdb {
 

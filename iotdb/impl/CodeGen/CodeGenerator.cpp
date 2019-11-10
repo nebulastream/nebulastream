@@ -12,9 +12,9 @@
 #include <CodeGen/C_CodeGen/Statement.hpp>
 #include <CodeGen/C_CodeGen/UnaryOperatorStatement.hpp>
 #include <CodeGen/CodeGen.hpp>
-#include <Core/DataTypes.hpp>
 #include <Util/ErrorHandling.hpp>
 #include <API/UserAPIExpression.hpp>
+#include "../../include/CodeGen/DataTypes.hpp"
 #include "../../include/SourceSink/DataSink.hpp"
 
 namespace iotdb {
@@ -158,9 +158,9 @@ const std::string toString(void* value, DataTypePtr type)
     return "";
 }
 
-std::string toString(const TupleBuffer& buffer, const Schema& schema) { return toString(&buffer, schema); }
+std::string toString(TupleBuffer& buffer, const Schema& schema) { return toString(&buffer, schema); }
 
-std::string toString(const TupleBuffer* buffer, const Schema& schema)
+std::string toString(TupleBuffer* buffer, const Schema& schema)
 {
     if (!buffer)
         return "INVALID_BUFFER_PTR";
@@ -191,8 +191,10 @@ std::string toString(const TupleBuffer* buffer, const Schema& schema)
     str << std::endl;
     str << "+----------------------------------------------------+" << std::endl;
 
-    char* buf = (char*)buffer->buffer;
-    for (uint32_t i = 0; i < buffer->num_tuples * buffer->tuple_size_bytes; i += buffer->tuple_size_bytes) {
+    char* buf = (char*)buffer->getBuffer();
+  for (uint32_t i = 0;
+      i < buffer->getNumberOfTuples() * buffer->getTupleSizeInBytes(); i +=
+          buffer->getTupleSizeInBytes()) {
         str << "|";
         for (uint32_t s = 0; s < offsets.size(); ++s) {
             void* value = &buf[i + offsets[s]];

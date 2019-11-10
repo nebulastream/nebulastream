@@ -1,11 +1,11 @@
 #ifndef CompiledYSBTestQueryExecutionPlan_HPP_
 #define CompiledYSBTestQueryExecutionPlan_HPP_
 #include <CodeGen/HandCodedQueryExecutionPlan.hpp>
-#include <Core/TupleBuffer.hpp>
-
 #include <boost/serialization/export.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
+
+#include "../NodeEngine/TupleBuffer.hpp"
 #include "../SourceSink/DataSource.hpp"
 #include "../Window_legacy/Window.hpp"
 #include "../YSB_legacy/YSBWindow.hpp"

@@ -1,11 +1,11 @@
 #ifndef INCLUDE_GENERATORSOURCE_H_
 #define INCLUDE_GENERATORSOURCE_H_
 
-#include <Core/TupleBuffer.hpp>
 #include <iostream>
 #include <sstream>
 
 #include <SourceSink/DataSource.hpp>
+#include "../NodeEngine/TupleBuffer.hpp"
 
 namespace iotdb {
 
@@ -59,7 +59,7 @@ template<typename F>
 TupleBufferPtr GeneratorSource<F>::receiveData() {
   // we wait until the buffer is filled
   TupleBufferPtr buf = functor();
-  generatedTuples += buf->num_tuples;
+  generatedTuples += buf->getNumberOfTuples();
   generatedBuffers++;
 
   return buf;

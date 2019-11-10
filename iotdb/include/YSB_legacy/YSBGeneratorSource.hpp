@@ -1,13 +1,12 @@
 #ifndef INCLUDE_YSB_LEGACY_YSBGENERATORSOURCE_HPP_
 #define INCLUDE_YSB_LEGACY_YSBGENERATORSOURCE_HPP_
 
-#include <Core/TupleBuffer.hpp>
-
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/vector.hpp>
 #include <SourceSink/DataSource.hpp>
+#include "../NodeEngine/TupleBuffer.hpp"
 
 namespace iotdb {
 

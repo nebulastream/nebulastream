@@ -6,7 +6,6 @@
 
 #include <CodeGen/CodeGen.hpp>
 #include <CodeGen/PipelineStage.hpp>
-#include <Core/DataTypes.hpp>
 #include <Util/ErrorHandling.hpp>
 #include <NodeEngine/BufferManager.hpp>
 
@@ -19,6 +18,7 @@
 #include <API/UserAPIExpression.hpp>
 #include <SourceSink/DataSink.hpp>
 #include <SourceSink/GeneratorSource.hpp>
+#include "../../include/CodeGen/DataTypes.hpp"
 #include "../../include/SourceSink/SinkCreator.hpp"
 #include "../../include/SourceSink/SourceCreator.hpp"
 
@@ -34,16 +34,16 @@ namespace iotdb {
           {
               // 10 tuples of size one
               TupleBufferPtr buf = BufferManager::instance().getBuffer();
-              size_t tupleCnt = buf->buffer_size / sizeof(uint64_t);
+              size_t tupleCnt = buf->getNumberOfTuples();
 
-              assert(buf->buffer != NULL);
+              assert(buf->getBuffer() != NULL);
 
-              uint64_t* tuples = (uint64_t*)buf->buffer;
+              uint64_t* tuples = (uint64_t*)buf->getBuffer();
               for (uint64_t i = 0; i < tupleCnt; i++) {
                   tuples[i] = one;
               }
-              buf->tuple_size_bytes = sizeof(uint64_t);
-              buf->num_tuples = tupleCnt;
+              buf->setTupleSizeInBytes(sizeof(uint64_t));
+              buf->setNumberOfTuples(tupleCnt);
               return buf;
           }
 
@@ -71,11 +71,11 @@ namespace iotdb {
       {
           // 10 tuples of size one
           TupleBufferPtr buf = BufferManager::instance().getBuffer();
-          uint64_t tupleCnt = buf->buffer_size / sizeof(InputTuple);
+          uint64_t tupleCnt = buf->getBufferSizeInBytes() / sizeof(InputTuple);
 
-          assert(buf->buffer != NULL);
+          assert(buf->getBuffer() != NULL);
 
-          InputTuple* tuples = (InputTuple*)buf->buffer;
+          InputTuple* tuples = (InputTuple*)buf->getBuffer();
           for (uint32_t i = 0; i < tupleCnt; i++) {
               tuples[i].id = i;
               tuples[i].value = i*2;
@@ -85,8 +85,8 @@ namespace iotdb {
               tuples[i].text[12] = '\0';
           }
 
-          buf->tuple_size_bytes = sizeof(InputTuple);
-          buf->num_tuples = tupleCnt;
+          buf->setBufferSizeInBytes(sizeof(InputTuple));
+          buf->setNumberOfTuples(tupleCnt);
           return buf;
       }
   };
@@ -120,11 +120,11 @@ namespace iotdb {
         {
             // 10 tuples of size one
             TupleBufferPtr buf = BufferManager::instance().getBuffer();
-            uint64_t tupleCnt = buf->buffer_size / sizeof(InputTuple);
+            uint64_t tupleCnt = buf->getBufferSizeInBytes() / sizeof(InputTuple);
 
-            assert(buf->buffer != NULL);
+            assert(buf->getBuffer() != NULL);
 
-            InputTuple* tuples = (InputTuple*)buf->buffer;
+            InputTuple* tuples = (InputTuple*)buf->getBuffer();
 
             for (uint32_t i = 0; i < tupleCnt; i++) {
                 tuples[i].id = i;
@@ -138,8 +138,8 @@ namespace iotdb {
                 tuples[i].text[12] = '\0';
             }
 
-            buf->tuple_size_bytes = sizeof(InputTuple);
-            buf->num_tuples = tupleCnt;
+            buf->setBufferSizeInBytes(sizeof(InputTuple));
+            buf->setNumberOfTuples(tupleCnt);
             return buf;
         }
     };
@@ -629,22 +629,22 @@ int CodeGeneratorTest()
     std::vector<TupleBuffer*> input_buffers;
     input_buffers.push_back(buf.get());
     //std::cout << iotdb::toString(buf.get(),source->getSchema()) << std::endl;
-    std::cout << "Processing " << buf->num_tuples << " tuples: " << std::endl;
-    size_t buffer_size = buf->num_tuples*sizeof (uint64_t);
+    std::cout << "Processing " << buf->getNumberOfTuples() << " tuples: " << std::endl;
+    size_t buffer_size = buf->getNumberOfTuples()*sizeof (uint64_t);
     TupleBuffer result_buffer(malloc(buffer_size), buffer_size,sizeof(uint64_t),0);
 
     /* execute Stage */
     stage->execute(input_buffers, NULL, &result_buffer);
 
     /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
-    //std::cout << "Result Buffer: #tuples: " << result_buffer.num_tuples << std::endl;
-    if(buf->num_tuples!=result_buffer.num_tuples){
-      std::cout << "Wrong number of tuples in output: " << result_buffer.num_tuples
-                << " (should have been: " << buf->num_tuples << ")" << std::endl;
+    //std::cout << "Result Buffer: #tuples: " << result_buffer.getNumberOfTuples() << std::endl;
+    if(buf->getNumberOfTuples()!=result_buffer.getNumberOfTuples()){
+      std::cout << "Wrong number of tuples in output: " << result_buffer.getNumberOfTuples()
+                << " (should have been: " << buf->getNumberOfTuples() << ")" << std::endl;
       return -1;
     }
-    uint64_t* result_data = (uint64_t*) result_buffer.buffer;
-    for(uint64_t i=0;i<buf->num_tuples;++i){
+    uint64_t* result_data = (uint64_t*) result_buffer.getBuffer();
+    for(uint64_t i=0;i<buf->getNumberOfTuples();++i){
         if(result_data[i]!=1){
           std::cout << "Error in Result! Mismatch position: " << i << std::endl;
           return -1;
@@ -714,9 +714,9 @@ int CodeGeneratorTest()
     std::vector<TupleBuffer*> input_buffers;
     input_buffers.push_back(buf.get());
     //std::cout << iotdb::toString(buf.get(),source->getSchema()) << std::endl;
-    std::cout << "Processing " << buf->num_tuples << " tuples: " << std::endl;
+    std::cout << "Processing " << buf->getNumberOfTuples() << " tuples: " << std::endl;
     uint32_t sizeoftuples = (sizeof(uint32_t) + sizeof(uint32_t) + sizeof(char) * 12);
-    size_t buffer_size = buf->num_tuples * sizeoftuples;
+    size_t buffer_size = buf->getNumberOfTuples() * sizeoftuples;
     std::cout << "This is my NUMBER....: " << buffer_size << std::endl;
     TupleBuffer result_buffer(malloc(buffer_size), buffer_size, sizeoftuples, 0);
 
@@ -724,13 +724,13 @@ int CodeGeneratorTest()
     stage->execute(input_buffers, NULL, &result_buffer);
 
     /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
-    std::cout << "---------- My Number of tuples...." << result_buffer.num_tuples << std::endl;
-    if(result_buffer.num_tuples!=5){
-        std::cout << "Wrong number of tuples in output: " << result_buffer.num_tuples
-                  << " (should have been: " << buf->num_tuples << ")" << std::endl;
+    std::cout << "---------- My Number of tuples...." << result_buffer.getNumberOfTuples() << std::endl;
+    if(result_buffer.getNumberOfTuples()!=5){
+        std::cout << "Wrong number of tuples in output: " << result_buffer.getNumberOfTuples()
+                  << " (should have been: " << buf->getNumberOfTuples() << ")" << std::endl;
         return -1;
     }
-    SelectionDataGenFunctor::InputTuple* result_data = (SelectionDataGenFunctor::InputTuple*) result_buffer.buffer;
+    SelectionDataGenFunctor::InputTuple* result_data = (SelectionDataGenFunctor::InputTuple*) result_buffer.getBuffer();
     for(uint64_t i=0;i<5;++i){
         if(result_data[i].id!=i || result_data[i].value!=i*2){
             std::cout << "Error in Result! Mismatch position: " << i << std::endl;
@@ -788,19 +788,19 @@ int CodeGeneratorTest()
         std::vector<TupleBuffer*> input_buffers;
         input_buffers.push_back(buf.get());
         //std::cout << iotdb::toString(buf.get(),source->getSchema()) << std::endl;
-        std::cout << "Processing " << buf->num_tuples << " tuples: " << std::endl;
+        std::cout << "Processing " << buf->getNumberOfTuples() << " tuples: " << std::endl;
         uint32_t sizeoftuples = (sizeof(uint32_t) + sizeof(int16_t) +sizeof(float) + sizeof(double) + sizeof(char) + sizeof(char) * 12);
-        size_t buffer_size = buf->num_tuples * sizeoftuples;
+        size_t buffer_size = buf->getNumberOfTuples() * sizeoftuples;
         TupleBuffer result_buffer(malloc(buffer_size), buffer_size, sizeoftuples, 0);
 
         /* execute Stage */
         stage->execute(input_buffers, NULL, &result_buffer);
 
         /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
-        std::cout << "---------- My Number of tuples...." << result_buffer.num_tuples << std::endl;
-        if(result_buffer.num_tuples!=numberOfResultTuples){
-            std::cout << "Wrong number of tuples in output: " << result_buffer.num_tuples
-                      << " (should have been: " << buf->num_tuples << ")" << std::endl;
+        std::cout << "---------- My Number of tuples...." << result_buffer.getNumberOfTuples() << std::endl;
+        if(result_buffer.getNumberOfTuples()!=numberOfResultTuples){
+            std::cout << "Wrong number of tuples in output: " << result_buffer.getNumberOfTuples()
+                      << " (should have been: " << buf->getNumberOfTuples() << ")" << std::endl;
             return -1;
         }
 
@@ -860,19 +860,19 @@ int CodeGeneratorTest()
         std::vector<TupleBuffer*> input_buffers;
         input_buffers.push_back(buf.get());
         //std::cout << iotdb::toString(buf.get(),source->getSchema()) << std::endl;
-        std::cout << "Processing " << buf->num_tuples << " tuples: " << std::endl;
+        std::cout << "Processing " << buf->getNumberOfTuples() << " tuples: " << std::endl;
         uint32_t sizeoftuples = (sizeof(uint32_t) + sizeof(int16_t) +sizeof(float) + sizeof(double) + sizeof(double) + sizeof(char) + sizeof(char) * 12);
-        size_t buffer_size = buf->num_tuples * sizeoftuples;
+        size_t buffer_size = buf->getNumberOfTuples() * sizeoftuples;
         TupleBuffer result_buffer(malloc(buffer_size), buffer_size, sizeoftuples, 0);
 
         /* execute Stage */
         stage->execute(input_buffers, NULL, &result_buffer);
 
         /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
-        std::cout << "---------- My Number of tuples...." << result_buffer.num_tuples << std::endl;
-        if(result_buffer.num_tuples!=numberOfResultTuples){
-            std::cout << "Wrong number of tuples in output: " << result_buffer.num_tuples
-                      << " (should have been: " << buf->num_tuples << ")" << std::endl;
+        std::cout << "---------- My Number of tuples...." << result_buffer.getNumberOfTuples() << std::endl;
+        if(result_buffer.getNumberOfTuples()!=numberOfResultTuples){
+            std::cout << "Wrong number of tuples in output: " << result_buffer.getNumberOfTuples()
+                      << " (should have been: " << buf->getNumberOfTuples() << ")" << std::endl;
             return -1;
         }
 
