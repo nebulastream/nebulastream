@@ -9,14 +9,20 @@ FogExecutionPlan TopDown::initializeExecutionPlan(iotdb::InputQuery inputQuery,
 
   placeOperators(executionGraph, inputQuery, fogTopologyPlan);
   removeNonResidentOperators(executionGraph);
+
   completeExecutionGraphWithFogTopology(executionGraph, fogTopologyPlan);
+
+  //FIXME: We are assuming that throughout the pipeline the schema would not change.
+  Schema &schema = inputQuery.source_stream.getSchema();
+  addSystemGeneratedSourceSinkOperators(schema, executionGraph);
+
   return executionGraph;
 }
 
 void TopDown::placeOperators(FogExecutionPlan executionGraph, InputQuery query, FogTopologyPlanPtr fogTopologyPlanPtr) {
 
   const OperatorPtr &sinkOperator = query.getRoot();
-  const FogGraph &fogGraph = fogTopologyPlanPtr->getFogGraph();
+  const FogGraphPtr &fogGraphPtr = fogTopologyPlanPtr->getFogGraph();
 
   deque<OperatorPtr> operatorsToProcess = {sinkOperator};
 
@@ -24,7 +30,7 @@ void TopDown::placeOperators(FogExecutionPlan executionGraph, InputQuery query, 
 
   //find the source Node
   vector<FogVertex> sourceNodes;
-  const vector<FogVertex> &allVertex = fogGraph.getAllVertex();
+  const vector<FogVertex> &allVertex = fogGraphPtr->getAllVertex();
   copy_if(allVertex.begin(), allVertex.end(), back_inserter(sourceNodes),
           [sourceName](const FogVertex vertex) {
             if (vertex.ptr->getEntryType() == FogNodeType::Sensor &&
@@ -46,7 +52,7 @@ void TopDown::placeOperators(FogExecutionPlan executionGraph, InputQuery query, 
 
   // Find the nodes where we can place the operators. First node will be sink and last one will be the target
   // source.
-  deque<FogTopologyEntryPtr> candidateNodes = getCandidateFogNodes(fogGraph, targetSource);
+  deque<FogTopologyEntryPtr> candidateNodes = getCandidateFogNodes(fogGraphPtr, targetSource);
 
   if (candidateNodes.empty()) {
     throw "No path exists between sink and source";
@@ -135,7 +141,7 @@ void TopDown::placeOperators(FogExecutionPlan executionGraph, InputQuery query, 
   }
 
   // Place forward operators
-  candidateNodes = getCandidateFogNodes(fogGraph, targetSource);
+  candidateNodes = getCandidateFogNodes(fogGraphPtr, targetSource);
   while (!candidateNodes.empty()) {
     shared_ptr<FogTopologyEntry> &node = candidateNodes.front();
     candidateNodes.pop_front();

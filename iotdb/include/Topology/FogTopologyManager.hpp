@@ -30,16 +30,16 @@ class FogTopologyManager {
   FogTopologyManager(FogTopologyManager const &); // Don't Implement
   void operator=(FogTopologyManager const &);     // Don't implement
 
-  FogTopologyWorkerNodePtr createFogWorkerNode(CPUCapacity cpuCapacity) {
-    return currentPlan->createFogWorkerNode(cpuCapacity);
+  FogTopologyWorkerNodePtr createFogWorkerNode(const std::string ipAddr, CPUCapacity cpuCapacity) {
+    return currentPlan->createFogWorkerNode(ipAddr, cpuCapacity);
   }
 
   bool removeFogWorkerNode(FogTopologyWorkerNodePtr ptr) { return currentPlan->removeFogWorkerNode(ptr); }
 
   bool removeFogSensorNode(FogTopologySensorNodePtr ptr) { return currentPlan->removeFogSensorNode(ptr); }
 
-  FogTopologySensorNodePtr createFogSensorNode(CPUCapacity cpuCapacity) {
-    return currentPlan->createFogSensorNode(cpuCapacity);
+  FogTopologySensorNodePtr createFogSensorNode(const std::string ipAddr, CPUCapacity cpuCapacity) {
+    return currentPlan->createFogSensorNode(ipAddr, cpuCapacity);
   }
 
   FogTopologyLinkPtr createFogTopologyLink(FogTopologyEntryPtr pSourceNode, FogTopologyEntryPtr pDestNode) {
@@ -64,16 +64,16 @@ class FogTopologyManager {
 
     resetFogTopologyPlan();
 
-    const FogTopologyWorkerNodePtr &sinkNode = createFogWorkerNode(CPUCapacity::HIGH);
-    const FogTopologyWorkerNodePtr &workerNode1 = createFogWorkerNode(CPUCapacity::MEDIUM);
-    const FogTopologyWorkerNodePtr &workerNode2 = createFogWorkerNode(CPUCapacity::MEDIUM);
-    const FogTopologySensorNodePtr &sensorNode1 = createFogSensorNode(CPUCapacity::HIGH);
+    const FogTopologyWorkerNodePtr &sinkNode = createFogWorkerNode("localhost", CPUCapacity::HIGH);
+    const FogTopologyWorkerNodePtr &workerNode1 = createFogWorkerNode("localhost", CPUCapacity::MEDIUM);
+    const FogTopologyWorkerNodePtr &workerNode2 = createFogWorkerNode("localhost", CPUCapacity::MEDIUM);
+    const FogTopologySensorNodePtr &sensorNode1 = createFogSensorNode("localhost", CPUCapacity::HIGH);
     sensorNode1->setSensorType("temperature1");
-    const FogTopologySensorNodePtr &sensorNode2 = createFogSensorNode(CPUCapacity::LOW);
+    const FogTopologySensorNodePtr &sensorNode2 = createFogSensorNode("localhost", CPUCapacity::LOW);
     sensorNode2->setSensorType("humidity1");
-    const FogTopologySensorNodePtr &sensorNode3 = createFogSensorNode(CPUCapacity::LOW);
+    const FogTopologySensorNodePtr &sensorNode3 = createFogSensorNode("localhost", CPUCapacity::LOW);
     sensorNode3->setSensorType("temperature2");
-    const FogTopologySensorNodePtr &sensorNode4 = createFogSensorNode(CPUCapacity::MEDIUM);
+    const FogTopologySensorNodePtr &sensorNode4 = createFogSensorNode("localhost", CPUCapacity::MEDIUM);
     sensorNode4->setSensorType("humidity2");
 
     createFogTopologyLink(workerNode1, sinkNode);
@@ -86,9 +86,9 @@ class FogTopologyManager {
 
   json::value getFogTopologyGraphAsJson() {
 
-    const FogGraph &graph = getTopologyPlan()->getFogGraph();
-    const std::vector<FogTopologyLinkPtr> &allEdges = graph.getAllEdges();
-    const std::vector<FogVertex> &allVertex = graph.getAllVertex();
+    const FogGraphPtr &fogGraphPtr = getTopologyPlan()->getFogGraph();
+    const std::vector<FogTopologyLinkPtr> &allEdges = fogGraphPtr->getAllEdges();
+    const std::vector<FogVertex> &allVertex = fogGraphPtr->getAllVertex();
 
     auto result = json::value::object();
     std::vector<json::value> edges{};
@@ -134,8 +134,8 @@ class FogTopologyManager {
 
   std::vector<json::value> getChildrenNode(FogTopologyEntryPtr fogParentNode) {
 
-    const FogGraph &fogGraph = getTopologyPlan()->getFogGraph();
-    const std::vector<FogTopologyLinkPtr> &edgesToNode = fogGraph.getAllEdgesToNode(fogParentNode);
+    const FogGraphPtr &fogGraphPtr = getTopologyPlan()->getFogGraph();
+    const std::vector<FogTopologyLinkPtr> &edgesToNode = fogGraphPtr->getAllEdgesToNode(fogParentNode);
 
     std::vector<json::value> children = {};
 

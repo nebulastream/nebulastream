@@ -65,6 +65,8 @@ class FogGraph {
   fogGraph_t graph;
 };
 
+typedef std::shared_ptr<FogGraph> FogGraphPtr;
+
 class FogTopologyPlan {
 
  public:
@@ -72,10 +74,10 @@ class FogTopologyPlan {
 
   FogTopologyEntryPtr getRootNode() const;
 
-  FogTopologyWorkerNodePtr createFogWorkerNode(CPUCapacity cpuCapacity);
+  FogTopologyWorkerNodePtr createFogWorkerNode(const std::string ipAddr, CPUCapacity cpuCapacity);
   bool removeFogWorkerNode(FogTopologyWorkerNodePtr ptr);
 
-  FogTopologySensorNodePtr createFogSensorNode(CPUCapacity cpuCapacity);
+  FogTopologySensorNodePtr createFogSensorNode(const std::string ipAddr, CPUCapacity cpuCapacity);
   bool removeFogSensorNode(FogTopologySensorNodePtr ptr);
 
   FogTopologyLinkPtr createFogTopologyLink(FogTopologyEntryPtr pSourceNode, FogTopologyEntryPtr pDestNode);
@@ -83,15 +85,15 @@ class FogTopologyPlan {
 
   std::string getTopologyPlanString() const;
 
-  FogGraph getFogGraph() const;
+  FogGraphPtr getFogGraph() const;
 
  private:
-  size_t getNextFreeNodeId();
 
+  size_t getNextFreeNodeId();
+  size_t getNextFreeLinkId();
   size_t currentNodeId;
   size_t currentLinkId;
-  FogGraph *fGraph;
-  size_t getNextFreeLinkId();
+  FogGraphPtr fGraphPtr;
 };
 } // namespace iotdb
 

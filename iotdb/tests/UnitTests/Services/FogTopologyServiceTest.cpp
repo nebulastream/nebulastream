@@ -32,8 +32,7 @@ TEST_F(FogTopologyServiceTest, create_fog_execution_plan_for_valid_query_using_b
   code << "Schema schema = Schema::create().addField(\"test\",INT32);" << std::endl;
   code << "Stream testStream = Stream(\"temperature1\",schema);" << std::endl;
   code << "return InputQuery::from(testStream).filter(testStream[\"test\"]==5)" << std::endl
-       << "" << std::endl
-       << ";" << std::endl;
+      << ".writeToZmq(schema, \"localhost\", 10);" << std::endl;
   const json::value &plan = fogTopologyService.getExecutionPlanAsJson(code.str(), "BottomUp");
   EXPECT_TRUE(plan.size() != 0);
 }
@@ -45,8 +44,7 @@ TEST_F(FogTopologyServiceTest, create_fog_execution_plan_for_valid_query_using_t
   code << "Schema schema = Schema::create().addField(\"test\",INT32);" << std::endl;
   code << "Stream testStream = Stream(\"temperature1\",schema);" << std::endl;
   code << "return InputQuery::from(testStream).filter(testStream[\"test\"]==5)" << std::endl
-       << "" << std::endl
-       << ";" << std::endl;
+       << ".writeToZmq(schema, \"localhost\", 10);" << std::endl;
   const json::value &plan = fogTopologyService.getExecutionPlanAsJson(code.str(), "TopDown");
   EXPECT_TRUE(plan.size() != 0);
 }
@@ -73,8 +71,7 @@ TEST_F(FogTopologyServiceTest, create_fog_execution_plan_for_invalid_optimizatio
     code << "Schema schema = Schema::create().addField(\"test\",INT32);" << std::endl;
     code << "Stream testStream = Stream(\"test-stream\",schema);" << std::endl;
     code << "return InputQuery::from(testStream).filter(testStream[\"test\"]==5)" << std::endl
-         << "" << std::endl
-         << ";" << std::endl;
+        << ".writeToZmq(schema, \"localhost\", 10);" << std::endl;
 
     fogTopologyService.getExecutionPlanAsJson(code.str(), "random");
     FAIL();

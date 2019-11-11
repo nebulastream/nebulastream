@@ -3,5 +3,5 @@
 
 #Build files
 build*
-cmake-build-debug
+cmake-build*
 .settings
