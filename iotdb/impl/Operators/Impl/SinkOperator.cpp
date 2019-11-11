@@ -26,10 +26,11 @@ void SinkOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context,
 }
 
 
-void SinkOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream &out) {
-  sink_->setSchema(codegen->getResultSchema());
-  codegen->generateCode(sink_, context, out);
-  /* no call to consume of parent, ends code generation */
+void SinkOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out)
+{
+    sink_->setSchema(codegen->getResultSchema());
+    codegen->generateCode(sink_, context, out);
+    /* no call to compileLiftCombine of parent, ends code generation */
 }
 
 const OperatorPtr SinkOperator::copy() const { return std::make_shared<SinkOperator>(*this); }
