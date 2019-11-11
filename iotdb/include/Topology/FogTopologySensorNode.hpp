@@ -3,6 +3,7 @@
 
 #include "FogTopologyEntry.hpp"
 #include <memory>
+#include <Util/CPUCapacity.hpp>
 
 namespace iotdb {
 
@@ -19,20 +20,21 @@ namespace iotdb {
 class FogTopologySensorNode : public FogTopologyEntry {
 
  public:
-  FogTopologySensorNode() { sensor_id = INVALID_NODE_ID; }
+  FogTopologySensorNode(size_t nodeId, std::string ipAddr) {
+    this->nodeId = nodeId;
+    this->ipAddr = ipAddr;
+  }
 
   ~FogTopologySensorNode() = default;
 
-  void setId(size_t id) { this->sensor_id = id; }
-
-  size_t getId() { return sensor_id; }
-
-  void setCpuCapacity(int cpuCapacity) {
-    this->cpuCapacity = cpuCapacity;
-    this->remainingCPUCapacity = cpuCapacity;
-  }
+  size_t getId() { return nodeId; }
 
   int getCpuCapacity() { return cpuCapacity; }
+
+  void setCpuCapacity(CPUCapacity cpuCapacity) {
+    this->cpuCapacity = cpuCapacity.toInt();
+    this->remainingCPUCapacity = this->cpuCapacity;
+  }
 
   void reduceCpuCapacity(int usedCapacity) {
     this->remainingCPUCapacity = this->remainingCPUCapacity - usedCapacity;
@@ -52,10 +54,6 @@ class FogTopologySensorNode : public FogTopologyEntry {
     return ipAddr;
   }
 
-  void setIpAddr(std::string ipAddr) override {
-    this->ipAddr = ipAddr;
-  }
-
   void setQuery(InputQueryPtr pQuery) { this->query = pQuery; };
 
   std::string getSensorType() {
@@ -67,7 +65,7 @@ class FogTopologySensorNode : public FogTopologyEntry {
   }
 
  private:
-  size_t sensor_id;
+  size_t nodeId;
   int cpuCapacity;
   int remainingCPUCapacity;
   std::string sensorType;

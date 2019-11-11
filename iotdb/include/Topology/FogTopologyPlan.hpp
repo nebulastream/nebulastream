@@ -72,7 +72,7 @@ class FogTopologyPlan {
 
   FogTopologyEntryPtr getRootNode() const;
 
-  FogTopologyWorkerNodePtr createFogWorkerNode(const std::string hostname, CPUCapacity cpuCapacity);
+  FogTopologyWorkerNodePtr createFogWorkerNode(const std::string ipAddr, CPUCapacity cpuCapacity);
   bool removeFogWorkerNode(FogTopologyWorkerNodePtr ptr);
 
   FogTopologySensorNodePtr createFogSensorNode(const std::string ipAddr, CPUCapacity cpuCapacity);

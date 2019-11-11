@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <vector>
+#include <Util/CPUCapacity.hpp>
 
 namespace iotdb {
 
@@ -23,19 +24,20 @@ namespace iotdb {
 class FogTopologyWorkerNode : public FogTopologyEntry {
 
  public:
-  FogTopologyWorkerNode() { node_id = INVALID_NODE_ID; }
+  FogTopologyWorkerNode(size_t nodeId, std::string ipAddr) {
+    this->node_id = nodeId;
+    this->ipAddr = ipAddr;
+  }
   ~FogTopologyWorkerNode() = default;
-
-  void setId(size_t id) { this->node_id = id; }
 
   size_t getId() { return node_id; }
 
-  void setCpuCapacity(int cpuCapacity) {
-    this->cpuCapacity = cpuCapacity;
-    this->remainingCPUCapacity = cpuCapacity;
-  }
-
   int getCpuCapacity() { return cpuCapacity; }
+
+  void setCpuCapacity(CPUCapacity cpuCapacity) {
+    this->cpuCapacity = cpuCapacity.toInt();
+    this->remainingCPUCapacity = this->cpuCapacity;
+  }
 
   void reduceCpuCapacity(int usedCapacity) {
     this->remainingCPUCapacity = this->remainingCPUCapacity - usedCapacity;
@@ -50,15 +52,6 @@ class FogTopologyWorkerNode : public FogTopologyEntry {
   std::string getIpAddr() override {
     return ipAddr;
   }
-
-  void setIpAddr(std::string ipAddr) override {
-    this->ipAddr=ipAddr;
-  }
-
-  void setHostName(const std::string &host_name) {
-    this->hostName = host_name;
-  }
-
   void isASinkNode(bool isASink) {
     this->isASink = isASink;
   }
@@ -83,7 +76,6 @@ class FogTopologyWorkerNode : public FogTopologyEntry {
   int cpuCapacity;
   int remainingCPUCapacity;
   bool isASink = false;
-  std::string hostName;
   InputQueryPtr query;
 };
 
