@@ -1,5 +1,7 @@
 #include "Optimizer/impl/BottomUp.hpp"
 #include <Operators/Operator.hpp>
+#include <iostream>
+#include <exception>
 
 using namespace iotdb;
 using namespace std;
@@ -14,7 +16,7 @@ FogExecutionPlan BottomUp::initializeExecutionPlan(InputQuery inputQuery, FogTop
 
   if (sourceNodes.empty()) {
     std::cout << "Unable to find the target source";
-    throw Exception("No source found in the topology");
+    throw "No source found in the topology";
   }
 
   placeOperators(executionGraph, fogTopologyPlan, sourceOperators, sourceNodes);

@@ -1,0 +1,37 @@
+#include <memory>
+
+#ifndef IOTDB_INCLUDE_QUERYLIB_ABSTRACTWINDOWDEFINITION_HPP_
+#define IOTDB_INCLUDE_QUERYLIB_ABSTRACTWINDOWDEFINITION_HPP_
+
+namespace iotdb {
+
+class WindowType {
+ public:
+  /**
+    * Calculates the next window end based on a given timestamp
+    * @param currentTs
+    * @return the next window end
+    */
+  virtual uint64_t calculateNextWindowEnd(uint64_t currentTs) const = 0;
+};
+
+typedef std::shared_ptr<WindowType> WindowTypePtr;
+
+class WindowAggregation;
+
+typedef std::shared_ptr<WindowAggregation> WindowAggregationPtr;
+
+class WindowDefinition {
+ public:
+  WindowDefinition(const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType);
+
+ public:
+  const WindowAggregationPtr windowAggregation;
+  const WindowTypePtr windowType;
+
+};
+
+typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
+}
+
+#endif //IOTDB_INCLUDE_QUERYLIB_ABSTRACTWINDOWDEFINITION_HPP_

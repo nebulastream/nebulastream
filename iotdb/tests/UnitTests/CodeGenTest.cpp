@@ -447,12 +447,16 @@ int CodeGenTest()
 
     /* === declarations === */
 
-    VariableDeclaration var_decl_tuple_buffers = VariableDeclaration::create(
-        createPointerDataType(createPointerDataType(createUserDefinedType(struct_decl_tuple_buffer))), "window_buffer");
-    VariableDeclaration var_decl_tuple_buffer_output = VariableDeclaration::create(
-        createPointerDataType(createUserDefinedType(struct_decl_tuple_buffer)), "output_tuple_buffer");
-    VariableDeclaration var_decl_state =
-        VariableDeclaration::create(createPointerDataType(createUserDefinedType(struct_decl_state)), "global_state");
+
+  VariableDeclaration var_decl_tuple_buffers = VariableDeclaration::create(
+      createPointerDataType(createPointerDataType(createUserDefinedType(struct_decl_tuple_buffer))),
+      "input_buffer");
+  VariableDeclaration var_decl_tuple_buffer_output = VariableDeclaration::create(
+      createPointerDataType(createUserDefinedType(struct_decl_tuple_buffer)), "output_tuple_buffer");
+  VariableDeclaration var_decl_window =
+      VariableDeclaration::create(createPointerDataType(createAnnonymUserDefinedType("iotdb::WindowSliceStore<int64_t>")), "window_store");
+  VariableDeclaration var_decl_window_manager =
+      VariableDeclaration::create(createPointerDataType(createAnnonymUserDefinedType("iotdb::WindowManager")), "window_manager");
 
     /* Tuple *tuples; */
 
@@ -526,7 +530,8 @@ int CodeGenTest()
         FunctionBuilder::create("compiled_query")
             .returns(createDataType(BasicType(UINT32)))
             .addParameter(var_decl_tuple_buffers)
-            .addParameter(var_decl_state)
+            .addParameter(var_decl_window)
+            .addParameter(var_decl_window_manager)
             .addParameter(var_decl_tuple_buffer_output)
             .addVariableDeclaration(var_decl_return)
             .addVariableDeclaration(var_decl_tuple)
@@ -576,7 +581,7 @@ int CodeGenTest()
     TupleBuffer result_buf{result_array, sizeof(uint64_t), sizeof(uint64_t), 1};
 
     /* execute code */
-    if (!stage->execute(bufs, nullptr, &result_buf)) {
+    if (!stage->execute(bufs, nullptr,NULL, &result_buf)) {
         std::cout << "Error!" << std::endl;
     }
 
@@ -634,7 +639,7 @@ int CodeGeneratorTest()
     TupleBuffer result_buffer(malloc(buffer_size), buffer_size,sizeof(uint64_t),0);
 
     /* execute Stage */
-    stage->execute(input_buffers, NULL, &result_buffer);
+    stage->execute(input_buffers, NULL,NULL, &result_buffer);
 
     /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
     //std::cout << "Result Buffer: #tuples: " << result_buffer.getNumberOfTuples() << std::endl;
@@ -721,7 +726,7 @@ int CodeGeneratorTest()
     TupleBuffer result_buffer(malloc(buffer_size), buffer_size, sizeoftuples, 0);
 
     /* execute Stage */
-    stage->execute(input_buffers, NULL, &result_buffer);
+    stage->execute(input_buffers, NULL,NULL, &result_buffer);
 
     /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
     std::cout << "---------- My Number of tuples...." << result_buffer.getNumberOfTuples() << std::endl;
@@ -794,7 +799,7 @@ int CodeGeneratorTest()
         TupleBuffer result_buffer(malloc(buffer_size), buffer_size, sizeoftuples, 0);
 
         /* execute Stage */
-        stage->execute(input_buffers, NULL, &result_buffer);
+        stage->execute(input_buffers, NULL,NULL, &result_buffer);
 
         /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
         std::cout << "---------- My Number of tuples...." << result_buffer.getNumberOfTuples() << std::endl;
@@ -866,7 +871,7 @@ int CodeGeneratorTest()
         TupleBuffer result_buffer(malloc(buffer_size), buffer_size, sizeoftuples, 0);
 
         /* execute Stage */
-        stage->execute(input_buffers, NULL, &result_buffer);
+        stage->execute(input_buffers, NULL,NULL, &result_buffer);
 
         /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
         std::cout << "---------- My Number of tuples...." << result_buffer.getNumberOfTuples() << std::endl;

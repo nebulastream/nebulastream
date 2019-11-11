@@ -24,8 +24,6 @@ typedef std::shared_ptr<JoinPredicate> JoinPredicatePtr;
 class Aggregation;
 typedef std::shared_ptr<Aggregation> AggregationPtr;
 
-class Window;
-typedef std::shared_ptr<Window> WindowPtr;
 
 struct AggregationSpec {
     Aggregation& grouping_fields;
@@ -33,15 +31,6 @@ struct AggregationSpec {
     AggregationSpec& operator=(const AggregationSpec&);
 };
 
-class WindowFunction;
-typedef std::shared_ptr<WindowFunction> WindowFunctionPtr;
-
-class TimeMeasure;
-typedef std::shared_ptr<TimeMeasure> TimeMeasurePtr;
-
-const WindowPtr createTumblingWindow(const TimeMeasure&, const WindowFunction&, uint32_t unit);
-const WindowPtr createSlidingWindow(const TimeMeasure&, const WindowFunction&, uint32_t slide, uint32_t step);
-const WindowPtr createSessionWindow(const TimeMeasure&, const WindowFunction&, uint32_t session_gap);
 
 class Mapper;
 typedef std::shared_ptr<Mapper> MapperPtr;
@@ -80,7 +69,6 @@ const DataSourcePtr copy(const DataSourcePtr&);
 const DataSinkPtr copy(const DataSinkPtr&);
 const PredicatePtr copy(const PredicatePtr&);
 const Sort copy(const Sort&);
-const WindowPtr copy(const WindowPtr&);
 const Attributes copy(const Attributes&);
 const MapperPtr copy(const MapperPtr&);
 const AggregationSpec copy(const AggregationSpec&);
@@ -90,7 +78,6 @@ const std::string toString(const DataSourcePtr&);
 const std::string toString(const DataSinkPtr&);
 const std::string toString(const PredicatePtr&);
 const std::string toString(const Sort&);
-const std::string toString(const WindowPtr&);
 const std::string toString(const Attributes&);
 const std::string toString(const MapperPtr&);
 const std::string toString(const AggregationSpec&);

@@ -84,6 +84,9 @@ public:
 
     const bool isStringType() const;
     const DataTypePtr getDataTypePtr() const;
+    AttributeFieldPtr getAttributeField(){
+        return this->_attribute;
+    };
 private:
 	PredicateItemMutation _mutation;
 	AttributeFieldPtr _attribute=nullptr;

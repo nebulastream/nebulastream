@@ -5,11 +5,10 @@
 #include <API/ParameterTypes.hpp>
 #include <API/Schema.hpp>
 #include <API/Stream.hpp>
-#include <API/WindowDefinition.hpp>
+#include <API/Window/WindowDefinition.hpp>
 #include <iostream>
 #include <string>
 #include "../SourceSink/DataSource.hpp"
-#include "../Window_legacy/Window.hpp"
 
 namespace iotdb {
 
@@ -87,7 +86,7 @@ class InputQuery {
    * @param aggregation Window aggregation function.
    * @return query.
    */
-  InputQuery &window(const WindowTypePtr windowType, const WindowAggregation &aggregation);
+  InputQuery &window(const WindowTypePtr windowType, const WindowAggregationPtr aggregation);
 
   /**
   * Registers the query as a source in the catalog.
