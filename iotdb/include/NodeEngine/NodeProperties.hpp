@@ -22,7 +22,7 @@
 
 namespace iotdb {
 using JSON = nlohmann::json;
-typedef unsigned long uint64_t;
+//typedef unsigned long uint64_t;
 
 /**
  * \brief: This class captures the properties of a node which are send to and updated continuously.
