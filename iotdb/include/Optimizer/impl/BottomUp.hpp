@@ -15,10 +15,9 @@ using namespace std;
  *          if the resources are not available they are placed on a node neighbouring to the node or one level up.
  */
 class BottomUp : public FogPlacementOptimizer {
- private:
-
  public:
   BottomUp() {};
+  ~BottomUp() {};
 
   FogExecutionPlan initializeExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan);
 
@@ -59,7 +58,7 @@ class BottomUp : public FogPlacementOptimizer {
 
   // This method returns all sensor nodes that act as the source in the fog topology.
   deque<FogTopologyEntryPtr> getSourceNodes(FogTopologyPlanPtr fogTopologyPlan,
-                                                   std::string streamName);
+                                            std::string streamName);
 
 };
 }

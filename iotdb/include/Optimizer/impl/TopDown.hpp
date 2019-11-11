@@ -12,7 +12,10 @@ using namespace std;
 class TopDown : public FogPlacementOptimizer {
 
  public:
-  FogExecutionPlan initializeExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan);
+  TopDown()= default;
+  ~TopDown()= default;
+
+  FogExecutionPlan initializeExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan) override;
 
  private:
 

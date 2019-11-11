@@ -5,13 +5,13 @@
 
 using namespace iotdb;
 
-FogExecutionPlan FogOptimizer::prepareExecutionGraph(std::string strategy, InputQuery inputQuery,
-                                                     FogTopologyPlanPtr fogTopologyPlan) {
+FogExecutionPlan FogOptimizer::prepareExecutionGraph(const std::string strategy, const InputQuery inputQuery,
+                                                     const FogTopologyPlanPtr fogTopologyPlan) {
 
-    FogPlacementOptimizer *pBaseOptimizer = FogPlacementOptimizer::getOptimizer(strategy);
+  const shared_ptr<FogPlacementOptimizer> optimizerPtr = FogPlacementOptimizer::getOptimizer(strategy);
 
-    const FogExecutionPlan &executionGraph = pBaseOptimizer->initializeExecutionPlan(inputQuery, fogTopologyPlan);
+  const FogExecutionPlan &executionGraph = optimizerPtr->initializeExecutionPlan(inputQuery, fogTopologyPlan);
 
-    return executionGraph;
+  return executionGraph;
 
 };
