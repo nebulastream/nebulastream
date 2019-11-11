@@ -57,13 +57,12 @@ void FogPlacementOptimizer::invalidateUnscheduledOperators(OperatorPtr &rootOper
 void FogPlacementOptimizer::completeExecutionGraphWithFogTopology(FogExecutionPlan graph,
                                                                   FogTopologyPlanPtr sharedPtr) {
 
-  const vector<FogEdge> &allEdges = sharedPtr->getFogGraph().getAllEdges();
+  const vector<FogTopologyLinkPtr> &allEdges = sharedPtr->getFogGraph().getAllEdges();
 
-  for (FogEdge fogEdge: allEdges) {
+  for (FogTopologyLinkPtr fogLink: allEdges) {
 
-    FogTopologyLinkPtr &topologyLink = fogEdge.ptr;
-    size_t srcId = topologyLink->getSourceNode()->getId();
-    size_t destId = topologyLink->getDestNode()->getId();
+    size_t srcId = fogLink->getSourceNode()->getId();
+    size_t destId = fogLink->getDestNode()->getId();
     if (graph.hasVertex(srcId)) {
       const ExecutionNodePtr &srcExecutionNode = graph.getExecutionNode(srcId);
       if (graph.hasVertex(destId)) {
@@ -72,14 +71,14 @@ void FogPlacementOptimizer::completeExecutionGraphWithFogTopology(FogExecutionPl
       } else {
         const ExecutionNodePtr &destExecutionNode = graph.createExecutionNode("empty",
                                                                               to_string(destId),
-                                                                              topologyLink->getDestNode(),
+                                                                              fogLink->getDestNode(),
                                                                               nullptr);
         graph.createExecutionNodeLink(srcExecutionNode, destExecutionNode);
       }
     } else {
 
       const ExecutionNodePtr &srcExecutionNode = graph.createExecutionNode("empty", to_string(srcId),
-                                                                           topologyLink->getSourceNode(),
+                                                                           fogLink->getSourceNode(),
                                                                            nullptr);
       if (graph.hasVertex(destId)) {
         const ExecutionNodePtr &destExecutionNode = graph.getExecutionNode(destId);
@@ -87,7 +86,7 @@ void FogPlacementOptimizer::completeExecutionGraphWithFogTopology(FogExecutionPl
       } else {
         const ExecutionNodePtr &destExecutionNode = graph.createExecutionNode("empty",
                                                                               to_string(destId),
-                                                                              topologyLink->getDestNode(),
+                                                                              fogLink->getDestNode(),
                                                                               nullptr);
         graph.createExecutionNodeLink(srcExecutionNode, destExecutionNode);
       }
@@ -113,12 +112,12 @@ deque<FogTopologyEntryPtr> FogPlacementOptimizer::getCandidateFogNodes(const Fog
       break;
     }
 
-    const vector<FogEdge> &allEdgesToNode = fogGraph.getAllEdgesToNode(back);
+    const vector<FogTopologyLinkPtr> &allEdgesToNode = fogGraph.getAllEdgesToNode(back);
 
     if (!allEdgesToNode.empty()) {
       bool found = false;
-      for (FogEdge edge: allEdgesToNode) {
-        const FogTopologyEntryPtr &sourceNode = edge.ptr->getSourceNode();
+      for (FogTopologyLinkPtr fogLink: allEdgesToNode) {
+        const FogTopologyEntryPtr &sourceNode = fogLink->getSourceNode();
         if (!count(visitedNodes.begin(), visitedNodes.end(), sourceNode->getId())) {
           candidateNodes.push_back(sourceNode);
           found = true;

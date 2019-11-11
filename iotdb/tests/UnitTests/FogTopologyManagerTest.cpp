@@ -289,25 +289,26 @@ TEST_F(FogTopologyManagerTest, print_graph)
         }
     }
 
-    std::string expected_result =
-        "graph G {\n0[label=\"0 type=Worker\"];\n1[label=\"1 type=Worker\"];\n"
-        "2[label=\"2 type=Worker\"];\n3[label=\"3 type=Worker\"];\n"
-        "4[label=\"4 type=Worker\"];\n5[label=\"5 type=Worker\"];\n"
-        "6[label=\"6 type=Worker\"];\n7[label=\"7 type=Sensor\"];\n"
-        "8[label=\"8 type=Sensor\"];\n9[label=\"9 type=Sensor\"];\n"
-        "10[label=\"10 type=Sensor\"];\n11[label=\"11 type=Sensor\"];\n"
-        "12[label=\"12 type=Sensor\"];\n13[label=\"13 type=Sensor\"];\n"
-        "14[label=\"14 type=Sensor\"];\n15[label=\"15 type=Sensor\"];\n"
-        "16[label=\"16 type=Sensor\"];\n17[label=\"17 type=Sensor\"];\n"
-        "18[label=\"18 type=Sensor\"];\n19[label=\"19 type=Sensor\"];\n"
-        "20[label=\"20 type=Sensor\"];\n21[label=\"21 type=Sensor\"];\n"
-        "0--1 [label=\"1\"];\n2--1 [label=\"2\"];\n3--4 [label=\"3\"];\n5--4 [label=\"4\"];\n"
-        "1--6 [label=\"5\"];\n4--6 [label=\"6\"];\n7--0 [label=\"7\"];\n8--0 [label=\"8\"];\n"
-        "9--0 [label=\"9\"];\n10--1 [label=\"10\"];\n11--1 [label=\"11\"];\n12--1 [label=\"12\"];\n"
-        "13--2 [label=\"13\"];\n14--2 [label=\"14\"];\n15--2 [label=\"15\"];\n16--3 [label=\"16\"];\n"
-        "17--3 [label=\"17\"];\n18--3 [label=\"18\"];\n19--4 [label=\"19\"];\n20--4 [label=\"20\"];\n"
-        "21--4 [label=\"21\"];\n}\n";
-    EXPECT_TRUE(FogTopologyManager::getInstance().getTopologyPlanString() == expected_result);
+  std::string expected_result =
+      "graph G {\n0[label=\"0 type=Worker\"];\n1[label=\"1 type=Worker\"];\n"
+      "2[label=\"2 type=Worker\"];\n3[label=\"3 type=Worker\"];\n"
+      "4[label=\"4 type=Worker\"];\n5[label=\"5 type=Worker\"];\n"
+      "6[label=\"6 type=Worker\"];\n7[label=\"7 type=Sensor\"];\n"
+      "8[label=\"8 type=Sensor\"];\n9[label=\"9 type=Sensor\"];\n"
+      "10[label=\"10 type=Sensor\"];\n11[label=\"11 type=Sensor\"];\n"
+      "12[label=\"12 type=Sensor\"];\n13[label=\"13 type=Sensor\"];\n"
+      "14[label=\"14 type=Sensor\"];\n15[label=\"15 type=Sensor\"];\n"
+      "16[label=\"16 type=Sensor\"];\n17[label=\"17 type=Sensor\"];\n"
+      "18[label=\"18 type=Sensor\"];\n19[label=\"19 type=Sensor\"];\n"
+      "20[label=\"20 type=Sensor\"];\n21[label=\"21 type=Sensor\"];\n"
+      "0--1 [label=\"0\"];\n2--1 [label=\"1\"];\n3--4 [label=\"2\"];\n5--4 [label=\"3\"];\n"
+      "1--6 [label=\"4\"];\n4--6 [label=\"5\"];\n7--0 [label=\"6\"];\n8--0 [label=\"7\"];\n"
+      "9--0 [label=\"8\"];\n10--1 [label=\"9\"];\n11--1 [label=\"10\"];\n12--1 [label=\"11\"];\n"
+      "13--2 [label=\"12\"];\n14--2 [label=\"13\"];\n15--2 [label=\"14\"];\n16--3 [label=\"15\"];\n"
+      "17--3 [label=\"16\"];\n18--3 [label=\"17\"];\n19--4 [label=\"18\"];\n20--4 [label=\"19\"];\n"
+      "21--4 [label=\"20\"];\n}\n";
+
+  EXPECT_TRUE(FogTopologyManager::getInstance().getTopologyPlanString() == expected_result);
 
     // std::cout << FogTopologyManager::getInstance().getTopologyPlanString() << std::endl;
     // std::cout << expected_result << std::endl;
@@ -328,18 +329,19 @@ TEST_F(FogTopologyManagerTest, print_graph_without_edges)
         sensors.push_back(FogTopologyManager::getInstance().createFogSensorNode(CPUCapacity::LOW));
     }
 
-    std::string expected_result = "graph G {\n0[label=\"0 type=Worker\"];\n1[label=\"1 type=Worker\"];\n"
-                                  "2[label=\"2 type=Worker\"];\n3[label=\"3 type=Worker\"];\n"
-                                  "4[label=\"4 type=Worker\"];\n5[label=\"5 type=Worker\"];\n"
-                                  "6[label=\"6 type=Worker\"];\n7[label=\"7 type=Sensor\"];\n"
-                                  "8[label=\"8 type=Sensor\"];\n9[label=\"9 type=Sensor\"];\n"
-                                  "10[label=\"10 type=Sensor\"];\n11[label=\"11 type=Sensor\"];\n"
-                                  "12[label=\"12 type=Sensor\"];\n13[label=\"13 type=Sensor\"];\n"
-                                  "14[label=\"14 type=Sensor\"];\n15[label=\"15 type=Sensor\"];\n"
-                                  "16[label=\"16 type=Sensor\"];\n17[label=\"17 type=Sensor\"];\n"
-                                  "18[label=\"18 type=Sensor\"];\n19[label=\"19 type=Sensor\"];\n"
-                                  "20[label=\"20 type=Sensor\"];\n21[label=\"21 type=Sensor\"];\n}\n";
-    EXPECT_TRUE(FogTopologyManager::getInstance().getTopologyPlanString() == expected_result);
+  std::string expected_result = "graph G {\n0[label=\"0 type=Worker\"];\n1[label=\"1 type=Worker\"];\n"
+                                "2[label=\"2 type=Worker\"];\n3[label=\"3 type=Worker\"];\n"
+                                "4[label=\"4 type=Worker\"];\n5[label=\"5 type=Worker\"];\n"
+                                "6[label=\"6 type=Worker\"];\n7[label=\"7 type=Sensor\"];\n"
+                                "8[label=\"8 type=Sensor\"];\n9[label=\"9 type=Sensor\"];\n"
+                                "10[label=\"10 type=Sensor\"];\n11[label=\"11 type=Sensor\"];\n"
+                                "12[label=\"12 type=Sensor\"];\n13[label=\"13 type=Sensor\"];\n"
+                                "14[label=\"14 type=Sensor\"];\n15[label=\"15 type=Sensor\"];\n"
+                                "16[label=\"16 type=Sensor\"];\n17[label=\"17 type=Sensor\"];\n"
+                                "18[label=\"18 type=Sensor\"];\n19[label=\"19 type=Sensor\"];\n"
+                                "20[label=\"20 type=Sensor\"];\n21[label=\"21 type=Sensor\"];\n}\n";
+
+  EXPECT_TRUE(FogTopologyManager::getInstance().getTopologyPlanString() == expected_result);
 
     // std::cout << FogTopologyManager::getInstance().getTopologyPlanString() << std::endl;
     // std::cout << expected_result << std::endl;
@@ -432,8 +434,8 @@ TEST_F(FogTopologyGraphTest, add_edge)
     sensor_node->setId(1);
     EXPECT_TRUE(fog_graph->addVertex(sensor_node));
 
-    auto link_0 = std::make_shared<FogTopologyLink>(sensor_node, worker_node);
-    auto link_1 = std::make_shared<FogTopologyLink>(worker_node, sensor_node);
+    auto link_0 = std::make_shared<FogTopologyLink>(0, sensor_node, worker_node);
+    auto link_1 = std::make_shared<FogTopologyLink>(1, worker_node, sensor_node);
 
     EXPECT_TRUE(fog_graph->addEdge(link_0));
     EXPECT_TRUE(fog_graph->addEdge(link_1));
@@ -450,8 +452,8 @@ TEST_F(FogTopologyGraphTest, add_existing_edge)
     sensor_node->setId(1);
     EXPECT_TRUE(fog_graph->addVertex(sensor_node));
 
-    auto link_0 = std::make_shared<FogTopologyLink>(sensor_node, worker_node);
-    auto link_1 = std::make_shared<FogTopologyLink>(sensor_node, worker_node);
+    auto link_0 = std::make_shared<FogTopologyLink>(0, sensor_node, worker_node);
+    auto link_1 = std::make_shared<FogTopologyLink>(1, sensor_node, worker_node);
     EXPECT_TRUE(fog_graph->addEdge(link_0));
     EXPECT_FALSE(fog_graph->addEdge(link_0));
     EXPECT_FALSE(fog_graph->addEdge(link_1));
@@ -467,7 +469,7 @@ TEST_F(FogTopologyGraphTest, add_invalid_edge)
     sensor_node->setId(1);
     // node not added to graph
 
-    auto link_0 = std::make_shared<FogTopologyLink>(worker_node, sensor_node);
+    auto link_0 = std::make_shared<FogTopologyLink>(0, worker_node, sensor_node);
     EXPECT_FALSE(fog_graph->addEdge(link_0));
 }
 
@@ -481,7 +483,7 @@ TEST_F(FogTopologyGraphTest, remove_edge)
     sensor_node->setId(1);
     EXPECT_TRUE(fog_graph->addVertex(sensor_node));
 
-    auto link_0 = std::make_shared<FogTopologyLink>(sensor_node, worker_node);
+    auto link_0 = std::make_shared<FogTopologyLink>(0, sensor_node, worker_node);
     fog_graph->addEdge(link_0);
 
     EXPECT_TRUE(fog_graph->removeEdge(link_0->getId()));
@@ -497,7 +499,7 @@ TEST_F(FogTopologyGraphTest, remove_non_existing_edge)
     sensor_node->setId(1);
     EXPECT_TRUE(fog_graph->addVertex(sensor_node));
 
-    auto link_0 = std::make_shared<FogTopologyLink>(sensor_node, worker_node);
+    auto link_0 = std::make_shared<FogTopologyLink>(0, sensor_node, worker_node);
     EXPECT_TRUE(fog_graph->addEdge(link_0));
 
     EXPECT_TRUE(fog_graph->removeEdge(link_0->getId()));

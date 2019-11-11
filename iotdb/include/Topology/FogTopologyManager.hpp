@@ -87,16 +87,16 @@ class FogTopologyManager {
   json::value getFogTopologyGraphAsJson() {
 
     const FogGraph &graph = getTopologyPlan()->getFogGraph();
-    const std::vector<FogEdge> &allEdges = graph.getAllEdges();
+    const std::vector<FogTopologyLinkPtr> &allEdges = graph.getAllEdges();
     const std::vector<FogVertex> &allVertex = graph.getAllVertex();
 
     auto result = json::value::object();
     std::vector<json::value> edges{};
     std::vector<json::value> vertices{};
     for (u_int i = 0; i < allEdges.size(); i++) {
-      const FogEdge &edge = allEdges[i];
-      const FogTopologyEntryPtr &sourceNode = edge.ptr->getSourceNode();
-      const FogTopologyEntryPtr &destNode = edge.ptr->getDestNode();
+      const FogTopologyLinkPtr &edge = allEdges[i];
+      const FogTopologyEntryPtr &sourceNode = edge->getSourceNode();
+      const FogTopologyEntryPtr &destNode = edge->getDestNode();
       auto edgeInfo = json::value::object();
       const auto source = "Node-" + std::to_string(sourceNode->getId());
       const auto dest = "Node-" + std::to_string(destNode->getId());
@@ -135,7 +135,7 @@ class FogTopologyManager {
   std::vector<json::value> getChildrenNode(FogTopologyEntryPtr fogParentNode) {
 
     const FogGraph &fogGraph = getTopologyPlan()->getFogGraph();
-    const std::vector<FogEdge> &edgesToNode = fogGraph.getAllEdgesToNode(fogParentNode);
+    const std::vector<FogTopologyLinkPtr> &edgesToNode = fogGraph.getAllEdgesToNode(fogParentNode);
 
     std::vector<json::value> children = {};
 
@@ -143,8 +143,8 @@ class FogTopologyManager {
       return {};
     }
 
-    for (FogEdge edge: edgesToNode) {
-      const FogTopologyEntryPtr &sourceNode = edge.ptr->getSourceNode();
+    for (FogTopologyLinkPtr edge: edgesToNode) {
+      const FogTopologyEntryPtr &sourceNode = edge->getSourceNode();
       if (sourceNode) {
         auto child = json::value::object();
         const auto label = std::to_string(sourceNode->getId()) + "-" + sourceNode->getEntryTypeString();
@@ -161,7 +161,6 @@ class FogTopologyManager {
 
   void resetFogTopologyPlan() {
     currentPlan.reset(new FogTopologyPlan());
-    linkID = 1;
   }
 
  private:
