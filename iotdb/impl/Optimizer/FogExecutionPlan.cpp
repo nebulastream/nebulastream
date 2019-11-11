@@ -265,7 +265,7 @@ std::string ExecutionGraph::getGraphString() {
 };
 
 FogExecutionPlan::FogExecutionPlan() {
-  exeGraphPtr = std::make_shared<ExecutionGraph>(ExecutionGraph());
+  exeGraphPtr = std::make_shared<ExecutionGraph>();
 }
 
 ExecutionNodePtr FogExecutionPlan::getRootNode() const {

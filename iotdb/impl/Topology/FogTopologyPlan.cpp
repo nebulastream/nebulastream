@@ -304,7 +304,7 @@ std::string FogGraph::getGraphString() const {
 
 /* FogTopologyPlan ----------------------------------------------------- */
 FogTopologyPlan::FogTopologyPlan() {
-  fGraphPtr = std::make_shared<FogGraph>(FogGraph());
+  fGraphPtr = std::make_shared<FogGraph>();
   currentNodeId = 0;
   currentLinkId = 0;
 }
