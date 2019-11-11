@@ -23,6 +23,7 @@ namespace iotdb {
         PipelineContextPtr context = createPipelineContext();
         inputQuery.getRoot()->produce(code_gen, context, std::cout);
 
+
         PipelineStagePtr stage = code_gen->compile(CompilerArgs());
     }
 

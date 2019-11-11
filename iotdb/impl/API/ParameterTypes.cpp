@@ -42,7 +42,8 @@ const DataSourcePtr copy(const DataSourcePtr& param) { return param; }
 const DataSinkPtr copy(const DataSinkPtr& param) { return param; }
 const PredicatePtr copy(const PredicatePtr& param) { return param; }
 const Sort copy(const Sort& param) { return param; }
-const WindowPtr copy(const WindowPtr& param) { return param; }
+//const WindowPtr copy(const WindowPtr& param) { return param; }
+//const WindowTypePtr copy(const WindowTypePtr& param) { return param; }
 const Attributes copy(const Attributes& param) { return param; }
 const MapperPtr copy(const MapperPtr& param) { return param; }
 const AggregationSpec copy(const AggregationSpec& param) { return param; }
@@ -52,7 +53,7 @@ const std::string toString(const DataSourcePtr& param) { return "***"; }
 const std::string toString(const DataSinkPtr& param) { return "***"; }
 const std::string toString(const PredicatePtr& param) { return "***"; }
 const std::string toString(const Sort& param) { return "***"; }
-const std::string toString(const WindowPtr& param) { return "***"; }
+//const std::string toString(const WindowPtr& param) { return "***"; }
 const std::string toString(const Attributes& param) { return "***"; }
 const std::string toString(const MapperPtr& param) { return "***"; }
 const std::string toString(const AggregationSpec& param) { return "***"; }

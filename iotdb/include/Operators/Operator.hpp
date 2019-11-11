@@ -77,7 +77,7 @@ const OperatorPtr createMapOperator(AttributeFieldPtr attr, PredicatePtr ptr);
 const OperatorPtr createSinkOperator(const DataSinkPtr& sink);
 const OperatorPtr createSortOperator(const Sort& sort_spec);
 const OperatorPtr createSourceOperator(const DataSourcePtr& source);
-const OperatorPtr createWindowOperator(const WindowPtr& window_spec);
+const OperatorPtr createWindowOperator(const WindowDefinitionPtr& window_definition);
 
 } // namespace iotdb
 

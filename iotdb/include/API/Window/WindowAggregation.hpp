@@ -1,0 +1,60 @@
+
+#include <API/AbstractWindowDefinition.hpp>
+#include <API/UserAPIExpression.hpp>
+
+#ifndef IOTDB_INCLUDE_API_WINDOW_WINDOWAGGREGATION_HPP_
+#define IOTDB_INCLUDE_API_WINDOW_WINDOWAGGREGATION_HPP_
+
+namespace iotdb {
+
+class BinaryOperatorStatement;
+class StructDeclaration;
+class CompoundStatement;
+typedef std::shared_ptr<CompoundStatement> CompoundStatementPtr;
+
+/**
+ * Abstract class for window aggregations. All window aggregations operate on a field and output another field.
+ */
+class WindowAggregation {
+ public:
+  /**
+   * Defines the field to which a aggregate output is assigned.
+   * @param asField
+   * @return WindowAggregation
+   */
+  WindowAggregation &as(const AttributeFieldPtr asField);
+
+  /**
+   * Generates code for the particular window aggregate.
+   * TODO in a later version we will hide this in the corresponding physical operator.
+   */
+  virtual void consume(CompoundStatementPtr currentCode,
+                       BinaryOperatorStatement expression_statment,
+                       StructDeclaration inputStruct,
+                       BinaryOperatorStatement inputRef) = 0;
+ protected:
+  WindowAggregation(const AttributeFieldPtr onField);
+  WindowAggregation()= default;
+  const AttributeFieldPtr _onField;
+  AttributeFieldPtr _asField;
+};
+
+/**
+ * The Sum aggregation calculates the running sum over the window.
+ */
+class Sum : public WindowAggregation {
+ public:
+  /**
+   * Factory method to creates a sum aggregation on a particular field.
+   */
+  static WindowAggregationPtr on(Field onField);
+  void consume(CompoundStatementPtr currentCode,
+               BinaryOperatorStatement partialRef,
+               StructDeclaration inputStruct,
+               BinaryOperatorStatement inputRef);
+ private:
+  Sum(Field onField);
+};
+}
+
+#endif //IOTDB_INCLUDE_API_WINDOW_WINDOWAGGREGATION_HPP_

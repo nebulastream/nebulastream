@@ -132,6 +132,9 @@ target_link_libraries(iotdb ${LIBRARIES})
 # Documentation
 add_subdirectory(docs)
 
+#file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/QueryLib)
+
+
 add_executable(iotNode iotNode.cpp)
 target_link_libraries(iotNode iotdb)
 target_include_directories(iotNode PUBLIC "include")
@@ -151,3 +154,6 @@ target_include_directories(iotRestServer PUBLIC "include")
 # Add tests with command
 enable_testing()
 add_subdirectory(tests)
+
+configure_file(include/QueryLib/WindowManagerLib.hpp  ${CMAKE_CURRENT_BINARY_DIR}/tests)
+configure_file(include/QueryLib/WindowManagerLib.hpp  ${CMAKE_CURRENT_BINARY_DIR})

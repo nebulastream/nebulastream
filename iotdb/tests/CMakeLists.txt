@@ -83,6 +83,12 @@ add_executable(buffer-manager-tests "UnitTests/BufferManagerTest.cpp")
 target_link_libraries(buffer-manager-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME buffer-manager-tests COMMAND buffer-manager-tests)
 
+
+# Window Manager Test
+add_executable(window-manager-tests "UnitTests/WindowManagerTest.cpp")
+target_link_libraries(window-manager-tests iotdb ${GTEST_LIBRARIES})
+add_test(NAME window-manager-tests COMMAND window-manager-tests)
+
 # Test data sources and data sinks of runtime
 add_executable(runtime-data-source-sink-tests "UnitTests/RuntimeDataSourceSinkTest.cpp")
 target_link_libraries(runtime-data-source-sink-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})

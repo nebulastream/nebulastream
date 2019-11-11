@@ -1,6 +1,6 @@
 
 #include <iostream>
-
+#include <Util/Logger.hpp>
 namespace iotdb {
 
 void printStackTrace(std::ostream& out);

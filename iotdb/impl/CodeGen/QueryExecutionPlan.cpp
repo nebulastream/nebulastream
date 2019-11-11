@@ -36,11 +36,12 @@ const std::vector<DataSinkPtr> QueryExecutionPlan::getSinks() const { return sin
 bool QueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf)
 {
     assert(0);
-    WindowState* state;
+    WindowSliceStore* state;
+    WindowManager* windowManager;
     TupleBuffer result_buf{nullptr, 0, 0, 0};
     std::vector<TupleBuffer*> v;
     v.push_back((TupleBuffer*)&buf);
-    bool ret = stages[pipeline_stage_id]->execute(v, state, &result_buf);
+    bool ret = stages[pipeline_stage_id]->execute(v, state, windowManager, &result_buf);
     return ret;
 }
 

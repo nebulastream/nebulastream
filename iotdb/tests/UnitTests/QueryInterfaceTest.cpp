@@ -76,7 +76,8 @@ namespace iotdb {
 
         InputQuery& query = InputQuery::from(cars)
                 .filter(cars["value"]  > 42)
-                .print(std::cout);
+                .window(TumblingWindow::of(Seconds(10)), Sum::on(cars["value"]));
+
         env.printInputQueryPlan(query);
         env.executeQuery(query);
 
@@ -127,8 +128,8 @@ int main(int argc, const char *argv[]) {
     iotdb::Dispatcher::instance();
     iotdb::createQueryFilter();
 
-    iotdb::createQueryMap();
-    iotdb::createQueryString();
+    //iotdb::createQueryMap();
+    //iotdb::createQueryString();
 
     return 0;
 }
