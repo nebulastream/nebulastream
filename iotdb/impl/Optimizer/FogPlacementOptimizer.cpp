@@ -137,9 +137,9 @@ void FogPlacementOptimizer::convertFwdOptr(const Schema &schema,
 }
 
 void FogPlacementOptimizer::completeExecutionGraphWithFogTopology(FogExecutionPlan graph,
-                                                                  FogTopologyPlanPtr sharedPtr) {
+                                                                  FogTopologyPlanPtr fogTopologyPtr) {
 
-  const vector<FogTopologyLinkPtr> &allEdges = sharedPtr->getFogGraph().getAllEdges();
+  const vector<FogTopologyLinkPtr> &allEdges = fogTopologyPtr->getFogGraph()->getAllEdges();
 
   for (FogTopologyLinkPtr fogLink: allEdges) {
 
@@ -176,12 +176,12 @@ void FogPlacementOptimizer::completeExecutionGraphWithFogTopology(FogExecutionPl
   }
 };
 
-deque<FogTopologyEntryPtr> FogPlacementOptimizer::getCandidateFogNodes(const FogGraph &fogGraph,
+deque<FogTopologyEntryPtr> FogPlacementOptimizer::getCandidateFogNodes(const FogGraphPtr &fogGraphPtr,
                                                                        const FogTopologyEntryPtr &targetSource) const {
 
   deque<FogTopologyEntryPtr> candidateNodes = {};
 
-  const FogTopologyEntryPtr &rootNode = fogGraph.getRoot();
+  const FogTopologyEntryPtr &rootNode = fogGraphPtr->getRoot();
 
   deque<int> visitedNodes = {};
   candidateNodes.push_back(rootNode);
@@ -194,7 +194,7 @@ deque<FogTopologyEntryPtr> FogPlacementOptimizer::getCandidateFogNodes(const Fog
       break;
     }
 
-    const vector<FogTopologyLinkPtr> &allEdgesToNode = fogGraph.getAllEdgesToNode(back);
+    const vector<FogTopologyLinkPtr> &allEdgesToNode = fogGraphPtr->getAllEdgesToNode(back);
 
     if (!allEdgesToNode.empty()) {
       bool found = false;
