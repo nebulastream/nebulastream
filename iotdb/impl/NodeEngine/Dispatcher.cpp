@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <iostream>
 
-#include <Window_legacy/Window.hpp>
+#include <Windows/Window.hpp>
 
 namespace iotdb {
 

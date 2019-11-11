@@ -5,7 +5,8 @@
 #include <iostream>
 #include <mutex>
 #include <condition_variable>
-#include <Window_legacy/Window.hpp>
+
+#include "../Windows/Window.hpp"
 
 namespace iotdb{
 
@@ -16,6 +17,11 @@ public:
 	YSBWindow(size_t pCampaingCnt, size_t windowSizeInSec);
 
     ~YSBWindow();
+
+    void start()
+    {
+    }
+
     void setup()
     {
         hashTable = new std::atomic<size_t>*[2];
