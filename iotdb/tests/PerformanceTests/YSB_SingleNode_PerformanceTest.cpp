@@ -14,9 +14,9 @@
 #include <stdio.h>
 #include <SourceSink/DataSource.hpp>
 #include "../../include/SourceSink/SourceCreator.hpp"
-#include <Window_legacy/Window.hpp>
 #include "../../include/CodeGen/DataTypes.hpp"
 #include "../../include/NodeEngine/TupleBuffer.hpp"
+#include "../../include/Windows/Window.hpp"
 #include "../../include/YSB_legacy/YSBGeneratorSource.hpp"
 #include "../../include/YSB_legacy/YSBWindow.hpp"
 
