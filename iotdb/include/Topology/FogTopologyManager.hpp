@@ -30,8 +30,8 @@ class FogTopologyManager {
   FogTopologyManager(FogTopologyManager const &); // Don't Implement
   void operator=(FogTopologyManager const &);     // Don't implement
 
-  FogTopologyWorkerNodePtr createFogWorkerNode(const std::string hostname, CPUCapacity cpuCapacity) {
-    return currentPlan->createFogWorkerNode(hostname, cpuCapacity);
+  FogTopologyWorkerNodePtr createFogWorkerNode(const std::string ipAddr, CPUCapacity cpuCapacity) {
+    return currentPlan->createFogWorkerNode(ipAddr, cpuCapacity);
   }
 
   bool removeFogWorkerNode(FogTopologyWorkerNodePtr ptr) { return currentPlan->removeFogWorkerNode(ptr); }

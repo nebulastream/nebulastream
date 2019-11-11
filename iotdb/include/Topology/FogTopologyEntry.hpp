@@ -11,13 +11,11 @@ enum FogNodeType { Worker, Sensor };
 
 class FogTopologyEntry {
  public:
-  virtual void setId(size_t id) = 0;
-  virtual size_t getId() = 0;
 
+  virtual size_t getId() = 0;
   virtual FogNodeType getEntryType() = 0;
   virtual std::string getEntryTypeString() = 0;
   virtual std::string getIpAddr() = 0;
-  virtual void setIpAddr(std::string ipAddr) = 0;
   virtual int getCpuCapacity() = 0;
   virtual int getRemainingCpuCapacity() = 0;
   virtual void reduceCpuCapacity(int usedCapacity) = 0;
