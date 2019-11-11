@@ -50,9 +50,9 @@ class FogPlacementOptimizer {
   /**
    * @brief Fill the execution graph with forward operators in fog topology. 
    * @param graph 
-   * @param sharedPtr 
+   * @param fogTopologyPtr
    */
-  void completeExecutionGraphWithFogTopology(FogExecutionPlan graph, FogTopologyPlanPtr sharedPtr);
+  void completeExecutionGraphWithFogTopology(FogExecutionPlan graph, FogTopologyPlanPtr fogTopologyPtr);
 
   /**
    * @brief Factory method returning different kind of optimizer.
@@ -63,11 +63,11 @@ class FogPlacementOptimizer {
 
   /**
    * @brief Get all candidate node from sink to the target source node.
-   * @param fogGraph
+   * @param fogGraphPtr
    * @param targetSource
    * @return deque containing Fog nodes with top element being sink node and bottom most being the targetSource node.
    */
-  deque<FogTopologyEntryPtr> getCandidateFogNodes(const FogGraph &fogGraph,
+  deque<FogTopologyEntryPtr> getCandidateFogNodes(const FogGraphPtr &fogGraphPtr,
                                                   const FogTopologyEntryPtr &targetSource) const;
   void convertFwdOptr(const Schema &schema, ExecutionNodePtr &executionNodePtr) const;
 };

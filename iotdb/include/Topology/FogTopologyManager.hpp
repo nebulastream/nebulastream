@@ -86,9 +86,9 @@ class FogTopologyManager {
 
   json::value getFogTopologyGraphAsJson() {
 
-    const FogGraph &graph = getTopologyPlan()->getFogGraph();
-    const std::vector<FogTopologyLinkPtr> &allEdges = graph.getAllEdges();
-    const std::vector<FogVertex> &allVertex = graph.getAllVertex();
+    const FogGraphPtr &fogGraphPtr = getTopologyPlan()->getFogGraph();
+    const std::vector<FogTopologyLinkPtr> &allEdges = fogGraphPtr->getAllEdges();
+    const std::vector<FogVertex> &allVertex = fogGraphPtr->getAllVertex();
 
     auto result = json::value::object();
     std::vector<json::value> edges{};
@@ -134,8 +134,8 @@ class FogTopologyManager {
 
   std::vector<json::value> getChildrenNode(FogTopologyEntryPtr fogParentNode) {
 
-    const FogGraph &fogGraph = getTopologyPlan()->getFogGraph();
-    const std::vector<FogTopologyLinkPtr> &edgesToNode = fogGraph.getAllEdgesToNode(fogParentNode);
+    const FogGraphPtr &fogGraphPtr = getTopologyPlan()->getFogGraph();
+    const std::vector<FogTopologyLinkPtr> &edgesToNode = fogGraphPtr->getAllEdgesToNode(fogParentNode);
 
     std::vector<json::value> children = {};
 

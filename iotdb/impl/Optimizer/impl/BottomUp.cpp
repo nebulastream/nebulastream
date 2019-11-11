@@ -102,8 +102,8 @@ void BottomUp::placeOperators(FogExecutionPlan executionGraph, FogTopologyPlanPt
     }
   }
 
-  const FogGraph &fogGraph = fogTopologyPlan->getFogGraph();
-  deque<FogTopologyEntryPtr> candidateNodes = getCandidateFogNodes(fogGraph, targetSource);
+  const FogGraphPtr &fogGraphPtr = fogTopologyPlan->getFogGraph();
+  deque<FogTopologyEntryPtr> candidateNodes = getCandidateFogNodes(fogGraphPtr, targetSource);
   while (!candidateNodes.empty()) {
     shared_ptr<FogTopologyEntry> node = candidateNodes.front();
     candidateNodes.pop_front();
@@ -134,7 +134,7 @@ FogTopologyEntryPtr BottomUp::findSuitableFogNodeForOperatorPlacement(const Proc
       node = fogNode;
     } else {
       // else find the neighbouring higher level nodes connected to it
-      const vector<FogTopologyLinkPtr> &allEdgesToNode = fogTopologyPlan->getFogGraph().getAllEdgesFromNode(
+      const vector<FogTopologyLinkPtr> &allEdgesToNode = fogTopologyPlan->getFogGraph()->getAllEdgesFromNode(
           fogNode);
 
       vector<FogTopologyEntryPtr> neighbouringNodes;
@@ -214,7 +214,7 @@ deque<FogTopologyEntryPtr> BottomUp::getSourceNodes(FogTopologyPlanPtr fogTopolo
       }
     }
 
-    const vector<FogTopologyLinkPtr> &edgesToNode = fogTopologyPlan->getFogGraph().getAllEdgesToNode(node);
+    const vector<FogTopologyLinkPtr> &edgesToNode = fogTopologyPlan->getFogGraph()->getAllEdgesToNode(node);
 
     for (FogTopologyLinkPtr edgeToNode: edgesToNode) {
       bfsTraverse.push_back(edgeToNode->getSourceNode());
