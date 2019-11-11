@@ -65,6 +65,8 @@ class FogGraph {
   fogGraph_t graph;
 };
 
+typedef std::shared_ptr<FogGraph> FogGraphPtr;
+
 class FogTopologyPlan {
 
  public:
@@ -83,15 +85,15 @@ class FogTopologyPlan {
 
   std::string getTopologyPlanString() const;
 
-  FogGraph getFogGraph() const;
+  FogGraphPtr getFogGraph() const;
 
  private:
-  size_t getNextFreeNodeId();
 
+  size_t getNextFreeNodeId();
+  size_t getNextFreeLinkId();
   size_t currentNodeId;
   size_t currentLinkId;
-  FogGraph *fGraph;
-  size_t getNextFreeLinkId();
+  FogGraphPtr fGraphPtr;
 };
 } // namespace iotdb
 

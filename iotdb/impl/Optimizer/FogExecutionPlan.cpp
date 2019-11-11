@@ -386,10 +386,6 @@ ExecutionNodeLinkPtr FogExecutionPlan::createExecutionNodeLink(ExecutionNodePtr 
   return linkPtr;
 };
 
-std::string FogExecutionPlan::getTopologyPlanString() const {
-  return exeGraphPtr->getGraphString();
-};
-
 std::shared_ptr<ExecutionGraph> FogExecutionPlan::getExecutionGraph() const {
   return exeGraphPtr;
 };
