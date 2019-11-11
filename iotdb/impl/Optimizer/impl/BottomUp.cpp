@@ -125,14 +125,14 @@ FogTopologyEntryPtr BottomUp::findSuitableFogNodeForOperatorPlacement(const Proc
       node = fogNode;
     } else {
       // else find the neighbouring higher level nodes connected to it
-      const vector<FogEdge> &allEdgesToNode = fogTopologyPlan->getFogGraph().getAllEdgesFromNode(
+      const vector<FogTopologyLinkPtr> &allEdgesToNode = fogTopologyPlan->getFogGraph().getAllEdgesFromNode(
           fogNode);
 
       vector<FogTopologyEntryPtr> neighbouringNodes;
 
       transform(allEdgesToNode.begin(), allEdgesToNode.end(), back_inserter(neighbouringNodes),
-                [](FogEdge edge) {
-                  return edge.ptr->getDestNode();
+                [](FogTopologyLinkPtr fogLink) {
+                  return fogLink->getDestNode();
                 });
 
       FogTopologyEntryPtr neighbouringNodeWithMaxCPU = nullptr;
@@ -205,10 +205,10 @@ deque<FogTopologyEntryPtr> BottomUp::getSourceNodes(FogTopologyPlanPtr fogTopolo
       }
     }
 
-    const vector<FogEdge> &children = fogTopologyPlan->getFogGraph().getAllEdgesToNode(node);
+    const vector<FogTopologyLinkPtr> &edgesToNode = fogTopologyPlan->getFogGraph().getAllEdgesToNode(node);
 
-    for (FogEdge child: children) {
-      bfsTraverse.push_back(child.ptr->getSourceNode());
+    for (FogTopologyLinkPtr edgeToNode: edgesToNode) {
+      bfsTraverse.push_back(edgeToNode->getSourceNode());
     }
   }
 
