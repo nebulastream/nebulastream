@@ -36,7 +36,7 @@ const std::vector<DataSinkPtr> QueryExecutionPlan::getSinks() const { return sin
 bool QueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf)
 {
     assert(0);
-    WindowSliceStore* state;
+    void * state;
     WindowManager* windowManager;
     TupleBuffer result_buf{nullptr, 0, 0, 0};
     std::vector<TupleBuffer*> v;

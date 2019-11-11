@@ -8,6 +8,7 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/vector.hpp>
+#include <API/Window/WindowDefinition.hpp>
 
 #include <Util/Logger.hpp>
 #include <thread>
@@ -33,6 +34,7 @@ class Window {
   private:
     friend class boost::serialization::access;
     bool running;
+    WindowDefinitionPtr window_difinition;
     std::thread thread;
 };
 //just for test compability

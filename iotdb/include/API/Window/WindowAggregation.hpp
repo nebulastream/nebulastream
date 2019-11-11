@@ -28,13 +28,14 @@ class WindowAggregation {
    * Generates code for the particular window aggregate.
    * TODO in a later version we will hide this in the corresponding physical operator.
    */
-  virtual void consume(CompoundStatementPtr currentCode,
-                       BinaryOperatorStatement expression_statment,
-                       StructDeclaration inputStruct,
-                       BinaryOperatorStatement inputRef) = 0;
+  virtual void compileLiftCombine(CompoundStatementPtr currentCode,
+                                  BinaryOperatorStatement expression_statment,
+                                  StructDeclaration inputStruct,
+                                  BinaryOperatorStatement inputRef) = 0;
+
  protected:
   WindowAggregation(const AttributeFieldPtr onField);
-  WindowAggregation()= default;
+  WindowAggregation() = default;
   const AttributeFieldPtr _onField;
   AttributeFieldPtr _asField;
 };
@@ -48,10 +49,27 @@ class Sum : public WindowAggregation {
    * Factory method to creates a sum aggregation on a particular field.
    */
   static WindowAggregationPtr on(Field onField);
-  void consume(CompoundStatementPtr currentCode,
-               BinaryOperatorStatement partialRef,
-               StructDeclaration inputStruct,
-               BinaryOperatorStatement inputRef);
+  void compileLiftCombine(CompoundStatementPtr currentCode,
+                          BinaryOperatorStatement partialRef,
+                          StructDeclaration inputStruct,
+                          BinaryOperatorStatement inputRef);
+
+  template<class InputType, class PartialAggregateType>
+  PartialAggregateType lift(InputType input) {
+    auto input_type = this->_onField->getDataType();
+    return input;
+  }
+
+  template<class InputType, class PartialAggregateType>
+  PartialAggregateType combine(PartialAggregateType partialType, InputType input) {
+    return partialType + input;
+  }
+
+  template<class InputType, class FinalAggregateType>
+  FinalAggregateType lower(InputType partialType) {
+    return partialType;
+  }
+
  private:
   Sum(Field onField);
 };

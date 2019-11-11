@@ -25,6 +25,7 @@ void SinkOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context,
   childs[0]->produce(codegen, context, out);
 }
 
+
 void SinkOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream &out) {
   sink_->setSchema(codegen->getResultSchema());
   codegen->generateCode(sink_, context, out);
