@@ -99,7 +99,7 @@ std::string NodeProperties::getClientPort()
     return port;
 }
 
-
+#if defined(__linux__)
 void NodeProperties::readNetworkStats() {
   this->_nets.clear();
   char hostnameChar[1024];
@@ -188,6 +188,13 @@ void NodeProperties::readNetworkStats() {
 
   this->_metrics["nets"] = this->_nets;
 }
+#elif defined(__APPLE__) || defined(__MACH__)
+    void NodeProperties::readNetworkStats() {
+
+    }
+#else
+#error "Unsupported platform"
+#endif
 
 void NodeProperties::print()
 {
@@ -203,7 +210,7 @@ void NodeProperties::print()
     std::cout << "filesystem stats=" << std::endl;
     std::cout << getDiskStats() << std::endl;
 }
-
+#if defined(__linux__)
 void NodeProperties::readMemStats() {
   this->_mem.clear();
 
@@ -229,7 +236,13 @@ void NodeProperties::readMemStats() {
 
   this->_metrics["mem"] = this->_mem;
 }
+#else
+void NodeProperties::readMemStats() {
 
+}
+#endif
+
+#if defined(__linux__)
 void NodeProperties::readDiskStats() {
   // this->_cpus = JSON({});
   this->_disk.clear();
@@ -247,7 +260,11 @@ void NodeProperties::readDiskStats() {
 
   this->_metrics["fs"] = this->_disk;
 }
+#else
+void NodeProperties::readDiskStats() {
 
+}
+#endif
 std::string NodeProperties::dump(int setw) {
   return _metrics.dump(setw);
 }

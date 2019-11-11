@@ -2,14 +2,20 @@
 #ifndef _METRICS_H
 #define _METRICS_H
 
-#include <ifaddrs.h>
+
+#if defined(__linux__)
 #include <linux/if_link.h>
+#include <sys/sysinfo.h>
+#include <ifaddrs.h>
 #include <net/if.h>
 #include <netdb.h>
 #include <sys/ioctl.h>
 #include <sys/statvfs.h>
-#include <sys/sysinfo.h>
-#include <sys/types.h>
+#elif defined(__APPLE__) || defined(__MACH__)
+
+#else
+#error "Unsupported platform"
+#endif
 
 #include "../Util/json.hpp"
 #include <fstream>
