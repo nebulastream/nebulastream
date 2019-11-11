@@ -18,10 +18,6 @@ public:
 
     ~YSBWindow();
 
-    void start()
-    {
-    }
-
     void setup()
     {
         hashTable = new std::atomic<size_t>*[2];

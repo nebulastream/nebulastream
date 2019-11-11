@@ -10,6 +10,7 @@
 #include <boost/serialization/vector.hpp>
 
 #include <Util/Logger.hpp>
+#include <thread>
 
 namespace iotdb {
 class Window;
@@ -19,16 +20,22 @@ class Window {
   public:
     virtual ~Window();
     virtual void setup() = 0;
-    virtual void start() = 0;
+    virtual bool start();
+    virtual bool stop();
+    virtual void trigger();
+
     virtual void print() = 0;
-    virtual void shutdown() = 0;
+
     virtual size_t getNumberOfEntries() = 0;
 
     template <class Archive> void serialize(Archive& ar, const unsigned int version) {}
 
   private:
     friend class boost::serialization::access;
+    bool running;
+    std::thread thread;
 };
+//just for test compability
 const WindowPtr createTestWindow(size_t campainCnt, size_t windowSizeInSec);
 
 } // namespace iotdb
