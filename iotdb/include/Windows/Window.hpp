@@ -37,6 +37,7 @@ class Window {
     WindowDefinitionPtr window_difinition;
     std::thread thread;
 };
+
 //just for test compability
 const WindowPtr createTestWindow(size_t campainCnt, size_t windowSizeInSec);
 
