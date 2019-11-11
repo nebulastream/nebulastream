@@ -304,12 +304,12 @@ std::string FogGraph::getGraphString() const {
 
 /* FogTopologyPlan ----------------------------------------------------- */
 FogTopologyPlan::FogTopologyPlan() {
-  fGraph = new FogGraph();
+  fGraphPtr = std::make_shared<FogGraph>(FogGraph());
   currentNodeId = 0;
   currentLinkId = 0;
 }
 
-FogTopologyEntryPtr FogTopologyPlan::getRootNode() const { return fGraph->getRoot(); }
+FogTopologyEntryPtr FogTopologyPlan::getRootNode() const { return fGraphPtr->getRoot(); }
 
 FogTopologyWorkerNodePtr FogTopologyPlan::createFogWorkerNode(std::string ipAddr, CPUCapacity cpuCapacity) {
 
@@ -317,12 +317,12 @@ FogTopologyWorkerNodePtr FogTopologyPlan::createFogWorkerNode(std::string ipAddr
   size_t nodeId = getNextFreeNodeId();
   auto ptr = std::make_shared<FogTopologyWorkerNode>(nodeId, ipAddr);
   ptr->setCpuCapacity(cpuCapacity);
-  fGraph->addVertex(ptr);
+  fGraphPtr->addVertex(ptr);
   return ptr;
 }
 
 bool FogTopologyPlan::removeFogWorkerNode(FogTopologyWorkerNodePtr ptr) {
-  return fGraph->removeVertex(ptr->getId());
+  return fGraphPtr->removeVertex(ptr->getId());
 }
 
 FogTopologySensorNodePtr FogTopologyPlan::createFogSensorNode(const std::string ipAddr, CPUCapacity cpuCapacity) {
@@ -331,52 +331,52 @@ FogTopologySensorNodePtr FogTopologyPlan::createFogSensorNode(const std::string 
   size_t nodeId = getNextFreeNodeId();
   auto ptr = std::make_shared<FogTopologySensorNode>(nodeId, ipAddr);
   ptr->setCpuCapacity(cpuCapacity);
-  fGraph->addVertex(ptr);
+  fGraphPtr->addVertex(ptr);
   return ptr;
 }
 
 bool FogTopologyPlan::removeFogSensorNode(FogTopologySensorNodePtr ptr) {
-  return fGraph->removeVertex(ptr->getId());
+  return fGraphPtr->removeVertex(ptr->getId());
 }
 
 FogTopologyLinkPtr FogTopologyPlan::createFogTopologyLink(FogTopologyEntryPtr pSourceNode,
                                                           FogTopologyEntryPtr pDestNode) {
 
   // check if link already exists
-  if (fGraph->hasLink(pSourceNode, pDestNode)) {
+  if (fGraphPtr->hasLink(pSourceNode, pDestNode)) {
     // return already existing link
-    return fGraph->getLink(pSourceNode, pDestNode);
+    return fGraphPtr->getLink(pSourceNode, pDestNode);
   }
 
   // create new link
   size_t linkId = getNextFreeLinkId();
   auto linkPtr = std::make_shared<FogTopologyLink>(linkId, pSourceNode, pDestNode);
-  assert(fGraph->addEdge(linkPtr));
+  assert(fGraphPtr->addEdge(linkPtr));
   return linkPtr;
 }
 
 bool FogTopologyPlan::removeFogTopologyLink(FogTopologyLinkPtr linkPtr) {
-  return fGraph->removeEdge(linkPtr->getId());
+  return fGraphPtr->removeEdge(linkPtr->getId());
 }
 
-std::string FogTopologyPlan::getTopologyPlanString() const { return fGraph->getGraphString(); }
+std::string FogTopologyPlan::getTopologyPlanString() const { return fGraphPtr->getGraphString(); }
 
 size_t FogTopologyPlan::getNextFreeNodeId() {
-  while (fGraph->hasVertex(currentNodeId)) {
+  while (fGraphPtr->hasVertex(currentNodeId)) {
     currentNodeId++;
   }
   return currentNodeId;
 }
 
 size_t FogTopologyPlan::getNextFreeLinkId() {
-  while (fGraph->hasLink(currentLinkId)) {
+  while (fGraphPtr->hasLink(currentLinkId)) {
     currentLinkId++;
   }
   return currentLinkId;
 }
 
-FogGraph FogTopologyPlan::getFogGraph() const {
-  return *fGraph;
+FogGraphPtr FogTopologyPlan::getFogGraph() const {
+  return fGraphPtr;
 }
 
 } // namespace iotdb

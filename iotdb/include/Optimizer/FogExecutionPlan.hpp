@@ -82,6 +82,8 @@ class ExecutionGraph {
   const vector<ExecutionEdge> getAllEdgesFromNode(ExecutionNodePtr srcNode) const;
 };
 
+typedef std::shared_ptr<ExecutionGraph> ExecutionGraphPtr;
+
 class FogExecutionPlan {
 
  public:
@@ -89,15 +91,12 @@ class FogExecutionPlan {
 
   ExecutionNodePtr getRootNode() const;
 
-  ExecutionNodePtr
-  createExecutionNode(std::string operatorName, std::string nodeName, FogTopologyEntryPtr fogNode,
-                      OperatorPtr executableOperator);
+  ExecutionNodePtr createExecutionNode(std::string operatorName, std::string nodeName, FogTopologyEntryPtr fogNode,
+                                       OperatorPtr executableOperator);
 
   ExecutionNodeLinkPtr createExecutionNodeLink(ExecutionNodePtr src, ExecutionNodePtr dst);
 
-  std::string getTopologyPlanString() const;
-
-  std::shared_ptr<ExecutionGraph> getExecutionGraph() const;
+  ExecutionGraphPtr getExecutionGraph() const;
 
   bool hasVertex(int search_id);
 
@@ -106,10 +105,10 @@ class FogExecutionPlan {
   json::value getExecutionGraphAsJson() const;
 
  private:
-  std::shared_ptr<ExecutionGraph> exeGraphPtr;
-
+  ExecutionGraphPtr exeGraphPtr;
   vector<json::value> getChildrenNode(ExecutionNodePtr fogParentNode) const;
 };
-};
+
+}
 
 #endif //IOTDB_FOGEXECUTIONPLAN_HPP
