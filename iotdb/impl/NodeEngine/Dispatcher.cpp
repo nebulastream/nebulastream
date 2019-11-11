@@ -99,6 +99,7 @@ bool Dispatcher::registerQuery(const QueryExecutionPlanPtr qep) {
     IOTDB_DEBUG("Dispatcher: add window" << window)
     window_to_query_map[window.get()].emplace_back(qep);
     window->setup();
+    window->start();
   }
 
   for (auto sink : sinks) {
@@ -144,7 +145,7 @@ void Dispatcher::deregisterQuery(const QueryExecutionPlanPtr qep) {
     } else  //if last qep for window, delete window
     {
       IOTDB_DEBUG("Dispatcher: stop window" << window)
-      window->shutdown();
+      window->stop();
 
       IOTDB_DEBUG("Dispatcher: delete window" << window)
       window_to_query_map[window.get()].clear();
