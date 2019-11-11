@@ -32,7 +32,7 @@ bool Operator::equals(const Operator &_rhs) {
 //  Scan(DataSourcePtr src);
 //  Scan(const Scan&);
 //  void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
-//  void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
+//  void compileLiftCombine(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
 //  const OperatorPtr copy() const override;
 //  const std::string toString() const override;
 //  OperatorType getOperatorType() const override;
@@ -52,7 +52,7 @@ bool Operator::equals(const Operator &_rhs) {
 // void Scan::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out){
 
 //}
-// void Scan::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out){
+// void Scan::compileLiftCombine(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out){
 
 //}
 
@@ -79,7 +79,7 @@ bool Operator::equals(const Operator &_rhs) {
 //  Selection(const Selection& other);
 //  Selection& operator = (const Selection& other);
 //  void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
-//  void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
+//  void compileLiftCombine(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
 //  const OperatorPtr copy() const override;
 //  const std::string toString() const override;
 //  OperatorType getOperatorType() const override;
@@ -108,7 +108,7 @@ bool Operator::equals(const Operator &_rhs) {
 // void Selection::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out){
 
 //}
-// void Selection::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out){
+// void Selection::compileLiftCombine(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out){
 
 //}
 

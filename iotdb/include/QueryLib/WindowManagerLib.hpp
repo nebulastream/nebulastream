@@ -135,8 +135,22 @@ class WindowManager {
 
  private:
   WindowDefinitionPtr windowDefinition;
+ public:
+  const WindowDefinitionPtr &GetWindowDefinition() const {
+    return windowDefinition;
+  }
+  const uint64_t GetAllowedLateness() const {
+    return allowedLateness;
+  }
+  uint64_t GetLastWatermark() const {
+    return lastWatermark;
+  }
+ private:
   const uint64_t allowedLateness;
+  uint64_t lastWatermark;
 
 };
+
+typedef std::shared_ptr<WindowManager> WindowManagerPtr;
 }
 #endif //IOTDB_WINDOWMANAGERLIB_HPP

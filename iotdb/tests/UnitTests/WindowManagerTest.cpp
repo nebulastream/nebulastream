@@ -10,6 +10,7 @@
 #include <Util/Logger.hpp>
 #include <QueryLib/WindowManagerLib.hpp>
 #include <API/Window/WindowDefinition.hpp>
+#include <API/Window/WindowAggregation.hpp>
 #include <random>
 #include <NodeEngine/BufferManager.hpp>
 
@@ -54,11 +55,26 @@ class WindowManagerTest : public testing::Test {
 class TestAggregation : public WindowAggregation {
  public:
   TestAggregation() : WindowAggregation() {};
-  void consume(CompoundStatementPtr currentCode,
-               BinaryOperatorStatement partialRef,
-               StructDeclaration inputStruct,
-               BinaryOperatorStatement inputRef){};
+  void compileLiftCombine(CompoundStatementPtr currentCode,
+                          BinaryOperatorStatement partialRef,
+                          StructDeclaration inputStruct,
+                          BinaryOperatorStatement inputRef){};
 };
+
+TEST_F(WindowManagerTest, sum_aggregation_test) {
+  auto field =createField("test",4);
+  const WindowAggregationPtr aggregation = Sum::on(Field(field));
+  if(Sum* store = dynamic_cast<Sum*>(aggregation.get())) {
+    auto partial = store->lift<int64_t,int64_t>(1L);
+    auto partial2 = store->lift<int64_t,int64_t>(2L);
+    auto combined = store->combine<int64_t>(partial, partial2);
+    auto final = store->lower<int64_t, int64_t>(combined);
+    ASSERT_EQ(final, 3);
+  }
+
+
+}
+
 
 TEST_F(WindowManagerTest, check_slice) {
   auto store = new WindowSliceStore<int64_t>(0L);

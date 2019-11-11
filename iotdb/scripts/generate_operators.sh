@@ -76,7 +76,7 @@ $CLASS_NAME& $CLASS_NAME::operator = (const $CLASS_NAME& other){
 void $CLASS_NAME::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out){
 
 }
-void $CLASS_NAME::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out){
+void $CLASS_NAME::compileLiftCombine(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out){
 
 }
 

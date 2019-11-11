@@ -481,12 +481,12 @@ bool C_CodeGenerator::generateCode(const WindowDefinitionPtr &window, const Pipe
 
   // update partial aggregate
   const BinaryOperatorStatement &partialRef = VarRef(var_decl_partial_aggregates)[current_slice_ref];
-  window->windowAggregation->consume(
+  window->windowAggregation->compileLiftCombine(
       code_.current_code_insertion_point,
       partialRef,
       code_.struct_decl_input_tuple,
       VarRef(code_.var_decl_input_tuple)[VarRefStatement(VarRef(*(code_.var_decl_id)))]
-      );
+  );
 
   return true;
 }
