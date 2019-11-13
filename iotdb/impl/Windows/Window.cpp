@@ -50,9 +50,9 @@ std::vector<FinalAggregateType> aggregateWindows(uint64_t watermark,
 
 void Window::trigger()
 {
-  auto window_state = static_cast<StateVariable<int64_t, WindowSliceStore<int64_t>*>*>(this->window_state);
+  auto window_state_variable = static_cast<StateVariable<int64_t, WindowSliceStore<int64_t>*>*>(this->window_state);
   auto tuple_buffer = BufferManager::instance().getBuffer();
-  for (auto& it : window_state->rangeAll()) {
+  for (auto& it : window_state_variable->rangeAll()) {
     auto windowAggregates = aggregateWindows<int64_t, int64_t>(0, it.second, this->window_definition_ptr);
     for(auto& aggregate : windowAggregates){
       // TODO put window aggregates in tuple buffer.
