@@ -103,8 +103,8 @@ class WindowSliceStore {
 class WindowManager {
 
  public:
-  WindowManager(WindowDefinitionPtr windowDefinition, const uint64_t allowedLateness)
-      : windowDefinition(std::move(windowDefinition)), allowedLateness(allowedLateness) {}
+  WindowManager(WindowDefinitionPtr windowDefinition)
+      : windowDefinition(std::move(windowDefinition)), allowedLateness(0) {}
 
   /**
    * Creates slices for in the window slice store if needed.

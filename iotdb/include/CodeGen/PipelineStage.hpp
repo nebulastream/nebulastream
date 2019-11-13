@@ -16,6 +16,7 @@ namespace iotdb {
 class PipelineStage;
 typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
 
+template<class PartialAggregateType>
 class WindowSliceStore;
 
 class WindowManager;
