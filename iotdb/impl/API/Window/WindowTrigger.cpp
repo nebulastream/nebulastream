@@ -10,6 +10,8 @@ void WindowTrigger::setup() {
 }
 
 void WindowTrigger::trigger() {
+  auto window_state = static_cast<StateVariable<int64_t, WindowSliceStore<int64_t>*>*>(this->window_state);
+
   auto window_slice_store =
       static_cast<WindowSliceStore<int64_t> *>(this->window_state);
 
