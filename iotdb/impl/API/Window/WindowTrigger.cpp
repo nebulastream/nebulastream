@@ -1,5 +1,6 @@
 #include <API/Window/WindowTrigger.hpp>
 #include <API/AbstractWindowDefinition.hpp>
+#include <State/StateManager.hpp>
 #include <NodeEngine/BufferManager.hpp>
 
 namespace iotdb {
