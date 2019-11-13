@@ -12,30 +12,34 @@
 
 #include <Util/Logger.hpp>
 #include <thread>
+#include <QueryLib/WindowManagerLib.hpp>
 
 namespace iotdb {
 class Window;
 typedef std::shared_ptr<Window> WindowPtr;
 
 class Window {
-  public:
-    virtual ~Window();
-    virtual void setup() = 0;
-    virtual bool start();
-    virtual bool stop();
-    virtual void trigger();
+ public:
+  virtual ~Window();
+  virtual void setup() = 0;
+  virtual bool start();
+  virtual bool stop();
+  virtual void trigger();
 
-    virtual void print() = 0;
+  virtual void print() = 0;
 
-    virtual size_t getNumberOfEntries() = 0;
+  virtual size_t getNumberOfEntries() = 0;
 
-    template <class Archive> void serialize(Archive& ar, const unsigned int version) {}
+  template<class Archive>
+  void serialize(Archive &ar, const unsigned int version) {}
 
-  private:
-    friend class boost::serialization::access;
-    bool running;
-    WindowDefinitionPtr window_difinition;
-    std::thread thread;
+ private:
+  friend class boost::serialization::access;
+  bool running;
+  WindowDefinitionPtr window_definition_ptr;
+  WindowManagerPtr window_manager_ptr_;
+  void *window_state;
+  std::thread thread;
 };
 
 //just for test compability
