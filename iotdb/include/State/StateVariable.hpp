@@ -16,14 +16,14 @@ namespace detail {
     template <typename T>
     struct StateVariableEmplaceHelper {
         template <typename... Arguments>
-        static T create(Arguments... args) {
+        static T create(Arguments&&... args) {
             return T(std::forward<Arguments>(args)...); // abstracted away with O1+
         }
     };
     template <typename T>
     struct StateVariableEmplaceHelper <T*> {
         template <typename... Arguments>
-        static T* create(Arguments... args) {
+        static T* create(Arguments&&... args) {
             // TODO change new to something else!
             return new T(std::forward<Arguments>(args)...);
         }
