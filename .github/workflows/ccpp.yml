@@ -9,6 +9,10 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
+    - name: Install xmllint
+      run: sudo apt-get install -y llvm clang libzmq3-dev libboost1.65-all-dev liblog4cxx-dev libcpprest-dev libssl-dev
+    - name: script
+      run: clang --version
     - name: configure
       run: ./configure
     - name: make
