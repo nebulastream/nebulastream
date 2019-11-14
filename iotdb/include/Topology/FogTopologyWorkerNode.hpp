@@ -33,9 +33,7 @@ class FogTopologyWorkerNode : public FogTopologyEntry {
 
   size_t getId() { return node_id; }
 
-  void setId(size_t id) override {
-    this->node_id = id;
-  }
+  void setId(size_t id) { this->node_id = id; }
 
   int getCpuCapacity() { return cpuCapacity; }
 
@@ -98,8 +96,9 @@ class FogTopologyWorkerNode : public FogTopologyEntry {
   }
 
  private:
-  int cpuCapacity{};
-  int remainingCPUCapacity{};
+  size_t node_id;
+  int cpuCapacity;
+  int remainingCPUCapacity;
   bool isASink = false;
   InputQueryPtr query;
 };

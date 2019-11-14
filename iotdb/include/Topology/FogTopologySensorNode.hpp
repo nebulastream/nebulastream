@@ -22,7 +22,7 @@ class FogTopologySensorNode : public FogTopologyEntry {
 
  public:
   FogTopologySensorNode(size_t nodeId, std::string ip_addr) {
-    this->nodeId = nodeId;
+    this->node_id = nodeId;
     this->ip_addr = std::move(ip_addr);
   }
 
@@ -51,7 +51,7 @@ class FogTopologySensorNode : public FogTopologyEntry {
 
   FogNodeType getEntryType() { return Sensor; }
 
-  std::string getEntryTypeString() { return "Sensor"; }
+  std::string getEntryTypeString() { return "Sensor(" + getSensorType() + ")"; }
 
   void setQuery(InputQueryPtr pQuery) { this->query = pQuery; };
 
@@ -88,10 +88,10 @@ class FogTopologySensorNode : public FogTopologyEntry {
   }
 
  private:
-  size_t nodeId;
+  size_t node_id;
   int cpuCapacity{};
   int remainingCPUCapacity{};
-  std::string sensorType;
+  std::string sensorType = "unknown";
   InputQueryPtr query;
 };
 
