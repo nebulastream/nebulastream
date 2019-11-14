@@ -269,8 +269,8 @@ class coordinator : public stateful_actor<coordinator_state> {
           aout(this) << "Registration failed! Only query example is supported!" << endl;
         }
       }
-      catch (const std::exception &ex) {
-        aout(this) << ": " << ex.what() << endl;
+      catch (...) {
+        //aout(this) << ": " << ex.what() << endl;
       }
     } else if (this->state.registeredQueries.find(query + sensor_type) != this->state.registeredQueries.end()) {
       aout(this) << "Query is already registered -> " << query << "-" << sensor_type << endl;
