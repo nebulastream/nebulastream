@@ -12,6 +12,8 @@ namespace iotdb {
 
 class SinkOperator : public Operator {
   public:
+        SinkOperator();
+
     SinkOperator(const DataSinkPtr& sink);
     SinkOperator(const SinkOperator& other);
     SinkOperator& operator=(const SinkOperator& other);
@@ -24,6 +26,14 @@ class SinkOperator : public Operator {
 
   private:
     DataSinkPtr sink_;
+
+        friend class boost::serialization::access;
+
+        template<class Archive>
+        void serialize(Archive &ar, unsigned) {
+            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Operator)
+            & BOOST_SERIALIZATION_NVP(sink_);
+        }
 };
 
 } // namespace iotdb

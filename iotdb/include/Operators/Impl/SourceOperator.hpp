@@ -12,6 +12,8 @@ namespace iotdb {
 
 class SourceOperator : public Operator {
   public:
+        SourceOperator();
+
     SourceOperator(const DataSourcePtr& source);
     SourceOperator(const SourceOperator& other);
     SourceOperator& operator=(const SourceOperator& other);
@@ -24,6 +26,14 @@ class SourceOperator : public Operator {
 
   private:
     DataSourcePtr source_;
+
+        friend class boost::serialization::access;
+
+        template<class Archive>
+        void serialize(Archive &ar, unsigned) {
+            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Operator)
+            & BOOST_SERIALIZATION_NVP(source_);
+        }
 };
 
 } // namespace iotdb

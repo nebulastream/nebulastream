@@ -45,7 +45,7 @@ class FogPlacementOptimizer {
    * @param schema
    * @param graph
    */
-  void addSystemGeneratedSourceSinkOperators(const Schema &schema, FogExecutionPlan graph);
+  void addSystemGeneratedSourceSinkOperators(const Schema &schema, const FogExecutionPlan& graph);
 
   /**
    * @brief Fill the execution graph with forward operators in fog topology. 
