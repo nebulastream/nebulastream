@@ -48,6 +48,10 @@ OperatorType SinkOperator::getOperatorType() const { return SINK_OP; }
 
 SinkOperator::~SinkOperator() {}
 
+SinkOperator::SinkOperator() {
+}
+
 const OperatorPtr createSinkOperator(const DataSinkPtr& sink) { return std::make_shared<SinkOperator>(sink); }
 
 } // namespace iotdb
+BOOST_CLASS_EXPORT(iotdb::SinkOperator);

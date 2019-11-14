@@ -1,9 +1,6 @@
 
 
 #include <iostream>
-#include <sstream>
-#include <vector>
-
 #include <CodeGen/CodeGen.hpp>
 #include <Operators/Impl/FilterOperator.hpp>
 

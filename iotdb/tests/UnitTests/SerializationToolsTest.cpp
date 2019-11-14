@@ -26,10 +26,6 @@ class SerializationToolsTest : public testing::Test {
       .addField("value", BasicType::UINT64);
 
   Stream cars = Stream("cars", schema);
-
-  InputQuery &query = InputQuery::from(cars)
-      .filter(cars["value"] > 42)
-      .print(std::cout);
 };
 
 /* Test serialization for Schema  */
@@ -42,6 +38,10 @@ TEST_F(SerializationToolsTest, serialize_deserialize_schema) {
 
 /* Test serialization for operators  */
 TEST_F(SerializationToolsTest, serialize_deserialize_operators) {
+  InputQuery &query = InputQuery::from(cars)
+      .filter(cars["value"] > 42)
+      .print(std::cout);
+
   OperatorPtr queryOp = query.getRoot();
   string serOp = SerializationTools::ser_operator(queryOp);
   OperatorPtr deserOp = SerializationTools::parse_operator(serOp);
