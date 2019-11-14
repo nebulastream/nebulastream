@@ -58,9 +58,10 @@ static const int zmqDefaultPort = 5555;
 //FIXME: Currently the system is not designed for multiple children. Therefore, the logic is ignoring the fact
 // that there could be more than one child. Once the code generator able to deal with it this logic need to be
 // fixed.
-void FogPlacementOptimizer::addSystemGeneratedSourceSinkOperators(const Schema &schema, const FogExecutionPlan &graph) {
-  auto execGraph = graph.getExecutionGraph();
-  const vector<ExecutionVertex> &executionNodes = execGraph->getAllVertex();
+void FogPlacementOptimizer::addSystemGeneratedSourceSinkOperators(const Schema &schema, FogExecutionPlan graph) {
+
+  const std::shared_ptr<ExecutionGraph> &exeGraph = graph.getExecutionGraph();
+  const vector<ExecutionVertex> &executionNodes = exeGraph->getAllVertex();
   for (ExecutionVertex executionNode: executionNodes) {
     ExecutionNodePtr &executionNodePtr = executionNode.ptr;
 
@@ -99,24 +100,23 @@ void FogPlacementOptimizer::addSystemGeneratedSourceSinkOperators(const Schema &
     }
 
     if (traverse->getOperatorType() != SINK_OP) {
+
       //create sys introduced sink operator
 
-      const std::set<ExecutionNodePtr> &nodes = execGraph->getAllDestinationsFromNode(executionNodePtr);
+      const vector<ExecutionEdge> &edges = exeGraph->getAllEdgesFromNode(executionNodePtr);
       //FIXME: More than two sources are not supported feature at this moment. Once the feature is available please
       // fix the source code
-      for (ExecutionNodePtr node: nodes) {
-        const string &destHostName = "unavailable";
-        const OperatorPtr &sysSinkOptr = createSinkOperator(createZmqSink(schema, destHostName, zmqDefaultPort));
+      const string &destHostName = edges[0].ptr->getDestination()->getFogNode()->getIp();
+      const OperatorPtr &sysSinkOptr = createSinkOperator(createZmqSink(schema, destHostName, zmqDefaultPort));
 
-        //Update the operator name
-        string optrName = executionNodePtr->getOperatorName();
-        optrName = optrName + "=>SINK(SYS)";
-        executionNodePtr->setOperatorName(optrName);
+      //Update the operator name
+      string optrName = executionNodePtr->getOperatorName();
+      optrName = optrName + "=>SINK(SYS)";
+      executionNodePtr->setOperatorName(optrName);
 
-        //bind sys introduced operators to each other
-        sysSinkOptr->childs = {traverse};
-        traverse->parent = sysSinkOptr;
-      }
+      //bind sys introduced operators to each other
+      sysSinkOptr->childs = {traverse};
+      traverse->parent = sysSinkOptr;
     }
 
   }

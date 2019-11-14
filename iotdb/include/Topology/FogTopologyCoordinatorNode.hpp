@@ -71,7 +71,7 @@ class FogTopologyCoordinatorNode : public FogTopologyEntry {
     return this->isASink;
   }
 
-  FogNodeType getEntryType() { return Worker; }
+  FogNodeType getEntryType() { return Coordinator; }
 
   std::string getEntryTypeString() {
     if (isASink) {

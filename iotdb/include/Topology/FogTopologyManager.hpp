@@ -70,7 +70,7 @@ class FogTopologyManager {
 
     resetFogTopologyPlan();
 
-    const FogTopologyWorkerNodePtr &sinkNode = createFogWorkerNode("localhost", CPUCapacity::HIGH);
+    const FogTopologyCoordinatorNodePtr &sinkNode = createFogCoordinatorNode("localhost", CPUCapacity::HIGH);
     const FogTopologyWorkerNodePtr &workerNode1 = createFogWorkerNode("localhost", CPUCapacity::MEDIUM);
     const FogTopologyWorkerNodePtr &workerNode2 = createFogWorkerNode("localhost", CPUCapacity::MEDIUM);
     const FogTopologySensorNodePtr &sensorNode1 = createFogSensorNode("localhost", CPUCapacity::HIGH);
