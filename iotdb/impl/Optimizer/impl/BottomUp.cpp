@@ -16,7 +16,7 @@ FogExecutionPlan BottomUp::initializeExecutionPlan(InputQuery inputQuery, FogTop
 
   if (sourceNodes.empty()) {
     std::cout << "Unable to find the target source";
-    throw "No source found in the topology";
+    throw Exception("No source found in the topology");
   }
 
   placeOperators(executionGraph, fogTopologyPlan, sourceOperators, sourceNodes);
@@ -60,7 +60,7 @@ void BottomUp::placeOperators(FogExecutionPlan executionGraph, FogTopologyPlanPt
 
     if ((node == nullptr) or node->getRemainingCpuCapacity() <= 0) {
       // throw and exception that scheduling can't be done
-      throw "Can't schedule The Query";
+      throw std::runtime_error("Can't schedule The Query. No free resources!");
     }
 
     // Reduce the processing capacity by 1
