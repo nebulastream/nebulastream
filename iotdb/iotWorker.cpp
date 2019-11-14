@@ -266,6 +266,7 @@ void start_worker(actor_system &system, const worker_config &cfg) {
   infer_handle_from_class_t<iotdb::worker> client;
 
   for (int i = 1; i <= 5; i++) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
     client = system.spawn<iotdb::worker>(cfg.ip, cfg.publish_port,
                                          cfg.receive_port,
                                          cfg.sensor_type + std::to_string(i));

@@ -34,18 +34,24 @@ namespace iotdb {
 class FogTopologyCoordinatorNode : public FogTopologyEntry {
 
  public:
-  FogTopologyCoordinatorNode() { node_id = INVALID_NODE_ID; }
-
-  void setId(size_t id) { this->node_id = id; }
+  FogTopologyCoordinatorNode(size_t nodeId, std::string ip_addr) {
+    this->node_id = nodeId;
+    this->ip_addr = std::move(ip_addr);
+  }
+  ~FogTopologyCoordinatorNode() = default;
 
   size_t getId() { return node_id; }
 
-  void setCpuCapacity(int cpuCapacity) {
-    this->cpuCapacity = cpuCapacity;
-    this->remainingCPUCapacity = cpuCapacity;
+  void setId(size_t id) override {
+    this->node_id = id;
   }
 
   int getCpuCapacity() { return cpuCapacity; }
+
+  void setCpuCapacity(CPUCapacity cpuCapacity) {
+    this->cpuCapacity = cpuCapacity.toInt();
+    this->remainingCPUCapacity = this->cpuCapacity;
+  }
 
   void reduceCpuCapacity(int usedCapacity) {
     this->remainingCPUCapacity = this->remainingCPUCapacity - usedCapacity;
@@ -65,9 +71,9 @@ class FogTopologyCoordinatorNode : public FogTopologyEntry {
     return this->isASink;
   }
 
-  FogNodeType getEntryType() { return Coordinator; }
+  FogNodeType getEntryType() { return Worker; }
 
-  std::string getEntryTypeString() override {
+  std::string getEntryTypeString() {
     if (isASink) {
       return "sink";
     }
@@ -101,9 +107,8 @@ class FogTopologyCoordinatorNode : public FogTopologyEntry {
   }
 
  private:
-  size_t node_id;
-  int cpuCapacity;
-  int remainingCPUCapacity;
+  int cpuCapacity{};
+  int remainingCPUCapacity{};
   bool isASink = false;
   InputQueryPtr query;
 };

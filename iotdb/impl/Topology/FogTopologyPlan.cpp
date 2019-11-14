@@ -314,10 +314,10 @@ FogTopologyPlan::FogTopologyPlan() {
 FogTopologyEntryPtr FogTopologyPlan::getRootNode() const { return fGraphPtr->getRoot(); }
 
 FogTopologyCoordinatorNodePtr FogTopologyPlan::createFogCoordinatorNode(std::string ipAddr, CPUCapacity cpuCapacity) {
-  // create worker node
-  auto ptr = std::make_shared<FogTopologyCoordinatorNode>();
-  ptr->setId(getNextFreeNodeId());
-  ptr->setCpuCapacity(cpuCapacity.toInt());
+  // create coordinator node
+  size_t nodeId = getNextFreeNodeId();
+  auto ptr = std::make_shared<FogTopologyCoordinatorNode>(nodeId, ipAddr);
+  ptr->setCpuCapacity(cpuCapacity);
   fGraphPtr->addVertex(ptr);
   return ptr;
 }
@@ -332,7 +332,7 @@ FogTopologyWorkerNodePtr FogTopologyPlan::createFogWorkerNode(std::string ipAddr
 }
 
 FogTopologySensorNodePtr FogTopologyPlan::createFogSensorNode(std::string ipAddr, CPUCapacity cpuCapacity) {
-  // create worker node
+  // create sensor node
   size_t nodeId = getNextFreeNodeId();
   auto ptr = std::make_shared<FogTopologySensorNode>(nodeId, ipAddr);
   ptr->setCpuCapacity(cpuCapacity);
