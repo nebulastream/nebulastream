@@ -288,14 +288,14 @@ void setupLogging() {
   // set log level
   // logger->setLevel(log4cxx::Level::getTrace());
   //	logger->setLevel(log4cxx::Level::getDebug());
-  _logger->setLevel(log4cxx::Level::getInfo());
+  iotdb::logger->setLevel(log4cxx::Level::getInfo());
   //	logger->setLevel(log4cxx::Level::getWarn());
   // logger->setLevel(log4cxx::Level::getError());
   //	logger->setLevel(log4cxx::Level::getFatal());
 
   // add appenders and other will inherit the settings
-  _logger->addAppender(file);
-  _logger->addAppender(console);
+  iotdb::logger->addAppender(file);
+  iotdb::logger->addAppender(console);
 }
 
 void caf_main(actor_system &system, const sensor_config &cfg) {

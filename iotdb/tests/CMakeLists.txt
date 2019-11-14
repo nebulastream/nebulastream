@@ -123,6 +123,11 @@ add_executable(fog-topology-service-tests "UnitTests/Services/FogTopologyService
 target_link_libraries(fog-topology-service-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME fog-topology-service-tests COMMAND fog-topology-service-tests)
 
+# Serialization Tools Tree Tests
+add_executable(serialization-tools-tests "UnitTests/SerializationToolsTest.cpp")
+target_link_libraries(serialization-tools-tests iotdb ${GTEST_LIBRARIES})
+add_test(NAME serialization-tools-tests COMMAND serialization-tools-tests)
+
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
         DEPENDS ${UNITTESTS})
