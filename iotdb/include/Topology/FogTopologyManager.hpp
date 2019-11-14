@@ -30,17 +30,23 @@ class FogTopologyManager {
   FogTopologyManager(FogTopologyManager const &); // Don't Implement
   void operator=(FogTopologyManager const &);     // Don't implement
 
+  FogTopologyCoordinatorNodePtr createFogCoordinatorNode(const std::string ipAddr, CPUCapacity cpuCapacity) {
+    return currentPlan->createFogCoordinatorNode(ipAddr, cpuCapacity);
+  }
+
   FogTopologyWorkerNodePtr createFogWorkerNode(const std::string ipAddr, CPUCapacity cpuCapacity) {
     return currentPlan->createFogWorkerNode(ipAddr, cpuCapacity);
+  }
+
+  FogTopologySensorNodePtr createFogSensorNode(const std::string ipAddr, CPUCapacity cpuCapacity) {
+    return currentPlan->createFogSensorNode(ipAddr, cpuCapacity);
   }
 
   bool removeFogWorkerNode(FogTopologyWorkerNodePtr ptr) { return currentPlan->removeFogWorkerNode(ptr); }
 
   bool removeFogSensorNode(FogTopologySensorNodePtr ptr) { return currentPlan->removeFogSensorNode(ptr); }
 
-  FogTopologySensorNodePtr createFogSensorNode(const std::string ipAddr, CPUCapacity cpuCapacity) {
-    return currentPlan->createFogSensorNode(ipAddr, cpuCapacity);
-  }
+  bool removeFogNode(FogTopologyEntryPtr ptr) { return currentPlan->removeFogNode(ptr); }
 
   FogTopologyLinkPtr createFogTopologyLink(FogTopologyEntryPtr pSourceNode, FogTopologyEntryPtr pDestNode) {
     return currentPlan->createFogTopologyLink(pSourceNode, pDestNode);

@@ -9,6 +9,18 @@ namespace iotdb {
 
 Operator::~Operator() {}
 
+std::vector<OperatorType> Operator::flattenedTypes() {
+  std::vector<OperatorType> result;
+  result.emplace_back(this->getOperatorType());
+  if (!childs.empty()) {
+    for (const OperatorPtr &op: childs) {
+      std::vector<OperatorType> tmp = op->flattenedTypes();
+      result.insert(result.end(), tmp.begin(), tmp.end());
+    }
+  }
+  return result;
+}
+
 // class Scan : public Operator {
 // public:
 //  Scan(DataSourcePtr src);

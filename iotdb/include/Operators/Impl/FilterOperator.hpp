@@ -12,6 +12,8 @@ namespace iotdb {
 
 class FilterOperator : public Operator {
   public:
+        FilterOperator() = default;
+
     FilterOperator(const PredicatePtr& predicate);
     FilterOperator(const FilterOperator& other);
     FilterOperator& operator=(const FilterOperator& other);
@@ -24,6 +26,14 @@ class FilterOperator : public Operator {
 
   private:
     PredicatePtr predicate_;
+
+        friend class boost::serialization::access;
+
+        template<class Archive>
+        void serialize(Archive &ar, unsigned) {
+            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Operator)
+            & BOOST_SERIALIZATION_NVP(predicate_);
+        }
 };
 
 } // namespace iotdb

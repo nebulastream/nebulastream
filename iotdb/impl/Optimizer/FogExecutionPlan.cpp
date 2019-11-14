@@ -3,6 +3,7 @@
 #include <boost/graph/graphviz.hpp>
 #include <cpprest/json.h>
 #include <Topology/FogTopologySensorNode.hpp>
+#include <set>
 
 using namespace iotdb;
 using namespace web;
@@ -262,6 +263,22 @@ std::string ExecutionGraph::getGraphString() {
                         [&](auto &out, auto e) { out << "[label=\"" << graph[e].id << "\"]"; });
   ss << std::flush;
   return ss.str();
+}
+
+const std::set<ExecutionNodePtr> ExecutionGraph::getAllDestinationsFromNode(ExecutionNodePtr srcNode) const {
+  std::set<ExecutionNodePtr> result = {};
+
+  executionEdge_iterator edge, edge_end, next_edge;
+  boost::tie(edge, edge_end) = edges(graph);
+
+  for (next_edge = edge; edge != edge_end; edge = next_edge) {
+    ++next_edge;
+
+    if (graph[*edge].ptr->getSource()->getId() == srcNode.get()->getId()) {
+      result.insert(graph[*edge].ptr->getDestination());
+    }
+  }
+  return result;
 };
 
 FogExecutionPlan::FogExecutionPlan() {
@@ -389,4 +406,15 @@ ExecutionNodeLinkPtr FogExecutionPlan::createExecutionNodeLink(ExecutionNodePtr 
 std::shared_ptr<ExecutionGraph> FogExecutionPlan::getExecutionGraph() const {
   return exeGraphPtr;
 };
-    
+
+void FogExecutionPlan::freeResources() {
+  for (const ExecutionVertex &v: getExecutionGraph()->getAllVertex()) {
+    if (v.ptr->getRootOperator()) {
+      v.ptr->getFogNode()->increaseCpuCapacity(1);
+    }
+  }
+}
+
+std::string FogExecutionPlan::getTopologyPlanString() const {
+  return exeGraphPtr->getGraphString();
+}

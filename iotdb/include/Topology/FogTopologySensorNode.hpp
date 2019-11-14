@@ -4,6 +4,7 @@
 #include "FogTopologyEntry.hpp"
 #include <memory>
 #include <Util/CPUCapacity.hpp>
+#include <utility>
 
 namespace iotdb {
 
@@ -20,14 +21,16 @@ namespace iotdb {
 class FogTopologySensorNode : public FogTopologyEntry {
 
  public:
-  FogTopologySensorNode(size_t nodeId, std::string ipAddr) {
+  FogTopologySensorNode(size_t nodeId, std::string ip_addr) {
     this->nodeId = nodeId;
-    this->ipAddr = ipAddr;
+    this->ip_addr = std::move(ip_addr);
   }
 
   ~FogTopologySensorNode() = default;
 
-  size_t getId() { return nodeId; }
+  void setId(size_t id) { this->node_id = id; }
+
+  size_t getId() { return node_id; }
 
   int getCpuCapacity() { return cpuCapacity; }
 
@@ -50,10 +53,6 @@ class FogTopologySensorNode : public FogTopologyEntry {
 
   std::string getEntryTypeString() { return "Sensor"; }
 
-  std::string getIpAddr() override {
-    return ipAddr;
-  }
-
   void setQuery(InputQueryPtr pQuery) { this->query = pQuery; };
 
   std::string getSensorType() {
@@ -64,10 +63,34 @@ class FogTopologySensorNode : public FogTopologyEntry {
     this->sensorType = sensorType;
   }
 
+  uint16_t getPublishPort() override {
+    return publish_port;
+  }
+
+  void setPublishPort(uint16_t publishPort) override {
+    publish_port = publishPort;
+  }
+
+  uint16_t getReceivePort() override {
+    return receive_port;
+  }
+
+  void setReceivePort(uint16_t receivePort) override {
+    receive_port = receivePort;
+  }
+
+  const string &getIp() override {
+    return this->ip_addr;
+  }
+
+  void setIp(const string &ip) override {
+    this->ip_addr = ip;
+  }
+
  private:
   size_t nodeId;
-  int cpuCapacity;
-  int remainingCPUCapacity;
+  int cpuCapacity{};
+  int remainingCPUCapacity{};
   std::string sensorType;
   InputQueryPtr query;
 };

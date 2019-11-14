@@ -12,6 +12,7 @@
 #include "Topology/FogTopologySensorNode.hpp"
 #include "Topology/FogTopologyWorkerNode.hpp"
 #include "Util/CPUCapacity.hpp"
+#include "FogTopologyCoordinatorNode.hpp"
 
 namespace iotdb {
 
@@ -74,6 +75,8 @@ class FogTopologyPlan {
 
   FogTopologyEntryPtr getRootNode() const;
 
+  FogTopologyCoordinatorNodePtr createFogCoordinatorNode(const std::string ipAddr, CPUCapacity cpuCapacity);
+
   FogTopologyWorkerNodePtr createFogWorkerNode(const std::string ipAddr, CPUCapacity cpuCapacity);
   bool removeFogWorkerNode(FogTopologyWorkerNodePtr ptr);
 
@@ -82,6 +85,8 @@ class FogTopologyPlan {
 
   FogTopologyLinkPtr createFogTopologyLink(FogTopologyEntryPtr pSourceNode, FogTopologyEntryPtr pDestNode);
   bool removeFogTopologyLink(FogTopologyLinkPtr linkPtr);
+
+  bool removeFogNode(FogTopologyEntryPtr ptr);
 
   std::string getTopologyPlanString() const;
 

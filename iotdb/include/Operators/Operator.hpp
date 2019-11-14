@@ -7,6 +7,19 @@
 #include <string>
 #include <vector>
 
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+
+#include <boost/ptr_container/ptr_vector.hpp>
+#include <boost/ptr_container/serialize_ptr_vector.hpp>
+
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/export.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
+
 namespace iotdb {
 
 class Operator;
@@ -65,19 +78,31 @@ class Operator {
   bool isScheduled() { return this->scheduled; };
   void markScheduled(bool scheduled) { this->scheduled = scheduled; };
 
+  std::vector<OperatorType> flattenedTypes();
+
  private:
   bool scheduled = false;
+
+  friend class boost::serialization::access;
+
+  template<class Archive>
+  void serialize(Archive &ar, unsigned) {
+    ar & BOOST_SERIALIZATION_NVP(cost)
+        & BOOST_SERIALIZATION_NVP(operatorId)
+        & BOOST_SERIALIZATION_NVP(childs)
+        & BOOST_SERIALIZATION_NVP(parent);
+  }
 };
 
-const OperatorPtr createAggregationOperator(const AggregationSpec& aggr_spec);
-const OperatorPtr createFilterOperator(const PredicatePtr& predicate);
-const OperatorPtr createJoinOperator(const JoinPredicatePtr& join_spec);
-const OperatorPtr createKeyByOperator(const Attributes& keyby_spec);
+const OperatorPtr createAggregationOperator(const AggregationSpec &aggr_spec);
+const OperatorPtr createFilterOperator(const PredicatePtr &predicate);
+const OperatorPtr createJoinOperator(const JoinPredicatePtr &join_spec);
+const OperatorPtr createKeyByOperator(const Attributes &keyby_spec);
 const OperatorPtr createMapOperator(AttributeFieldPtr attr, PredicatePtr ptr);
-const OperatorPtr createSinkOperator(const DataSinkPtr& sink);
-const OperatorPtr createSortOperator(const Sort& sort_spec);
-const OperatorPtr createSourceOperator(const DataSourcePtr& source);
-const OperatorPtr createWindowOperator(const WindowDefinitionPtr& window_definition);
+const OperatorPtr createSinkOperator(const DataSinkPtr &sink);
+const OperatorPtr createSortOperator(const Sort &sort_spec);
+const OperatorPtr createSourceOperator(const DataSourcePtr &source);
+const OperatorPtr createWindowOperator(const WindowDefinitionPtr &window_definition);
 
 } // namespace iotdb
 

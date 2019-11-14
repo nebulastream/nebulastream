@@ -13,6 +13,7 @@
 #include "Topology/FogTopologyPlan.hpp"
 #include "Topology/FogTopologySensorNode.hpp"
 #include "Topology/FogTopologyWorkerNode.hpp"
+#include <Topology/FogTopologyCoordinatorNode.hpp>
 #include "Util/CPUCapacity.hpp"
 
 /**
@@ -97,6 +98,7 @@ bool FogGraph::removeVertex(size_t search_id) {
 
   // does graph contain vertex?
   if (hasVertex(search_id)) {
+    clear_vertex(getVertex(search_id), graph);
     remove_vertex(getVertex(search_id), graph);
     return true;
   }
@@ -110,7 +112,7 @@ FogTopologyEntryPtr FogGraph::getRoot() const {
   for (next = vi; vi != vi_end; vi = next) {
     ++next;
     // first worker node is root TODO:change this
-    if (graph[*vi].ptr->getEntryType() == Worker) {
+    if (graph[*vi].ptr->getEntryType() == Coordinator) {
       return graph[*vi].ptr;
     }
   }
@@ -311,11 +313,28 @@ FogTopologyPlan::FogTopologyPlan() {
 
 FogTopologyEntryPtr FogTopologyPlan::getRootNode() const { return fGraphPtr->getRoot(); }
 
-FogTopologyWorkerNodePtr FogTopologyPlan::createFogWorkerNode(std::string ipAddr, CPUCapacity cpuCapacity) {
+FogTopologyCoordinatorNodePtr FogTopologyPlan::createFogCoordinatorNode(std::string ipAddr, CPUCapacity cpuCapacity) {
+  // create worker node
+  auto ptr = std::make_shared<FogTopologyCoordinatorNode>();
+  ptr->setId(getNextFreeNodeId());
+  ptr->setCpuCapacity(cpuCapacity.toInt());
+  fGraphPtr->addVertex(ptr);
+  return ptr;
+}
 
+FogTopologyWorkerNodePtr FogTopologyPlan::createFogWorkerNode(std::string ipAddr, CPUCapacity cpuCapacity) {
   // create worker node
   size_t nodeId = getNextFreeNodeId();
   auto ptr = std::make_shared<FogTopologyWorkerNode>(nodeId, ipAddr);
+  ptr->setCpuCapacity(cpuCapacity);
+  fGraphPtr->addVertex(ptr);
+  return ptr;
+}
+
+FogTopologySensorNodePtr FogTopologyPlan::createFogSensorNode(std::string ipAddr, CPUCapacity cpuCapacity) {
+  // create worker node
+  size_t nodeId = getNextFreeNodeId();
+  auto ptr = std::make_shared<FogTopologySensorNode>(nodeId, ipAddr);
   ptr->setCpuCapacity(cpuCapacity);
   fGraphPtr->addVertex(ptr);
   return ptr;
@@ -325,17 +344,11 @@ bool FogTopologyPlan::removeFogWorkerNode(FogTopologyWorkerNodePtr ptr) {
   return fGraphPtr->removeVertex(ptr->getId());
 }
 
-FogTopologySensorNodePtr FogTopologyPlan::createFogSensorNode(const std::string ipAddr, CPUCapacity cpuCapacity) {
-
-  // create sensor node
-  size_t nodeId = getNextFreeNodeId();
-  auto ptr = std::make_shared<FogTopologySensorNode>(nodeId, ipAddr);
-  ptr->setCpuCapacity(cpuCapacity);
-  fGraphPtr->addVertex(ptr);
-  return ptr;
+bool FogTopologyPlan::removeFogSensorNode(FogTopologySensorNodePtr ptr) {
+  return fGraphPtr->removeVertex(ptr->getId());
 }
 
-bool FogTopologyPlan::removeFogSensorNode(FogTopologySensorNodePtr ptr) {
+bool FogTopologyPlan::removeFogNode(FogTopologyEntryPtr ptr) {
   return fGraphPtr->removeVertex(ptr->getId());
 }
 
