@@ -92,11 +92,19 @@ class WindowSliceStore {
   inline std::vector<PartialAggregateType> &getPartialAggregates() {
     return partialAggregates;
   }
+  uint64_t getLastWatermark() const {
+    return lastWatermark;
+  }
+  void setLastWatermark(uint64_t last_watermark) {
+    lastWatermark = last_watermark;
+  }
+
   const PartialAggregateType defaultValue;
   uint64_t nextEdge = 0;
  private:
   std::vector<SliceMetaData> sliceMetaData;
   std::vector<PartialAggregateType> partialAggregates;
+  uint64_t lastWatermark;
 
 };
 
@@ -142,12 +150,8 @@ class WindowManager {
   const uint64_t GetAllowedLateness() const {
     return allowedLateness;
   }
-  uint64_t GetLastWatermark() const {
-    return lastWatermark;
-  }
  private:
   const uint64_t allowedLateness;
-  uint64_t lastWatermark;
 
 };
 

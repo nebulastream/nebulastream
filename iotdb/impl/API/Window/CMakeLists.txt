@@ -3,5 +3,4 @@ add_source_iotdb(
         WindowAggregation.cpp
         WindowMeasure.cpp
         WindowDefinition.cpp
-        WindowTrigger.cpp
 )
