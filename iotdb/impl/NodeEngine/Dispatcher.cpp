@@ -174,7 +174,7 @@ void Dispatcher::deregisterQuery(const QueryExecutionPlanPtr qep) {
   }
 }
 
-TaskPtr Dispatcher::getWork(bool& threadPool_running) {
+TaskPtr Dispatcher::getWork(bool &threadPool_running) {
   std::unique_lock<std::mutex> lock(workMutex);
 
 //wait while queue is empty but thread pool is running
@@ -202,11 +202,29 @@ TaskPtr Dispatcher::getWork(bool& threadPool_running) {
   return task;
 }
 
-void Dispatcher::addWork(const TupleBufferPtr buf, DataSource* source) {
+void Dispatcher::addWork(const iotdb::TupleBufferPtr window_aggregates, iotdb::Window *window) {
+  std::unique_lock<std::mutex> lock(workMutex);
+
+  //get the queries that contains this window
+  std::vector<QueryExecutionPlanPtr> &queries = window_to_query_map[window];
+  for (uint64_t i = 0; i < queries.size(); ++i) {
+    // for each respective sink, create output the window aggregates
+    auto sinks = queries[i]->getSinks();
+    for (auto &sink : sinks) {
+      sink->writeData(window_aggregates);
+      IOTDB_DEBUG(
+          "Dispatcher: write window aggregates to sink " << sink << " for QEP " << queries[i].get() << " tupleBuffer "
+                                                         << window_aggregates)
+    }
+  }
+  cv.notify_all();
+}
+
+void Dispatcher::addWork(const TupleBufferPtr buf, DataSource *source) {
   std::unique_lock<std::mutex> lock(workMutex);
 
 //get the queries that fetches data from this source
-  std::vector<QueryExecutionPlanPtr>& queries = source_to_query_map[source];
+  std::vector<QueryExecutionPlanPtr> &queries = source_to_query_map[source];
   for (uint64_t i = 0; i < queries.size(); ++i) {
     // for each respective source, create new task and put it into queue
     //TODO: is this handeled right? how do we get the stateID here?
@@ -214,7 +232,8 @@ void Dispatcher::addWork(const TupleBufferPtr buf, DataSource* source) {
         new Task(queries[i], queries[i]->stageIdFromSource(source), buf));
     task_queue.push_back(task);
     IOTDB_DEBUG(
-        "Dispatcher: added Task " << task.get() << " for source " << source << " for QEP " << queries[i].get() << " inputBuffer " << buf)
+        "Dispatcher: added Task " << task.get() << " for source " << source << " for QEP " << queries[i].get()
+                                  << " inputBuffer " << buf)
   }
   cv.notify_all();
 }
@@ -229,7 +248,7 @@ void Dispatcher::completedWork(TaskPtr task) {
   task->releaseInputBuffer();
 }
 
-Dispatcher& Dispatcher::instance() {
+Dispatcher &Dispatcher::instance() {
   static Dispatcher instance;
   return instance;
 }
