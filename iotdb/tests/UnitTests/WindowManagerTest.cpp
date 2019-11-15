@@ -82,7 +82,7 @@ TEST_F(WindowManagerTest, check_slice) {
 
   auto windowDef = std::make_shared<WindowDefinition>(WindowDefinition(aggregation, TumblingWindow::of(Seconds(60))));
 
-  auto windowManager = new WindowManager(windowDef, 0);
+  auto windowManager = new WindowManager(windowDef);
   uint64_t ts = 10;
 
   windowManager->sliceStream(ts, store);
