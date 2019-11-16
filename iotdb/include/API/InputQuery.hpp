@@ -86,6 +86,15 @@ class InputQuery {
    * @param aggregation Window aggregation function.
    * @return query.
    */
+  InputQuery &windowByKey(const AttributeFieldPtr onKey, const WindowTypePtr windowType, const WindowAggregationPtr aggregation);
+
+
+  /**
+   * @brief: Creates a window aggregation.
+   * @param windowType Window definition.
+   * @param aggregation Window aggregation function.
+   * @return query.
+   */
   InputQuery &window(const WindowTypePtr windowType, const WindowAggregationPtr aggregation);
 
   /**

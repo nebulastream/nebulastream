@@ -43,13 +43,17 @@ class WindowAggregation;
 
 typedef std::shared_ptr<WindowAggregation> WindowAggregationPtr;
 
+class AttributeField;
+typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
+
 class WindowDefinition {
  public:
   WindowDefinition(const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType);
+  WindowDefinition(const AttributeFieldPtr onKey, const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType);
 
- public:
   const WindowAggregationPtr windowAggregation;
   const WindowTypePtr windowType;
+  const AttributeFieldPtr onKey;
 
 };
 

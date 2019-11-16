@@ -43,15 +43,15 @@ namespace iotdb {
         keep_last_generated_query_code_ = false;
 
 #ifndef NDEBUG
-        PrecompiledHeaderName = ".debug.hpp.pch";
+       // PrecompiledHeaderName = ".debug.hpp.pch";
 #else
-        PrecompiledHeaderName = ".release.hpp.pch";
+     //   PrecompiledHeaderName = ".release.hpp.pch";
 #endif
         initCompilerArgs();
     }
 
     void CCodeCompiler::initCompilerArgs() {
-        compiler_args_ = {"-std=c++11", "-fno-trigraphs", "-fpic", "-Werror", "-Wparentheses-equality",
+        compiler_args_ = {"-std=c++17", "-fno-trigraphs", "-fpic", "-Werror", "-Wparentheses-equality",
 #ifdef SSE41_FOUND
                 "-msse4.1",
 #endif
@@ -113,9 +113,9 @@ namespace iotdb {
 
         args.push_back("-xc++");
 #ifndef NDEBUG
-        args.push_back("-include.debug.hpp");
+        //args.push_back("-include.debug.hpp");
 #else
-        args.push_back("-include.release.hpp");
+        //args.push_back("-include.release.hpp");
 #endif
 
 #ifdef __APPLE__

@@ -42,8 +42,8 @@ void aggregateWindows(uint64_t watermark,
   auto partialFinalAggregates = std::vector<PartialAggregateType>();
   auto slices = store->getSliceMetadata();
   auto partialAggregates = store->getPartialAggregates();
-  for (int s_id = 0; s_id < slices.size(); s_id++) {
-    for (int w_id = 0; w_id < windows->size(); w_id++) {
+  for (uint64_t s_id = 0; s_id < slices.size(); s_id++) {
+    for (uint64_t w_id = 0; w_id < windows->size(); w_id++) {
       auto window = (*windows)[w_id];
       // A slice is contained in a window if the window starts before the slice and ends after the slice
       if (window.getStartTs() <= slices[s_id].getStartTs() &&
@@ -58,7 +58,7 @@ void aggregateWindows(uint64_t watermark,
       }
     }
   }
-  for (int i = 0; i < partialFinalAggregates.size(); i++) {
+  for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
     //TODO Because of this condition we currently only support SUM aggregations
     if (Sum *sumAggregation = dynamic_cast<Sum *>(window_definition_ptr->windowAggregation.get())) {
       intBuffer[i] = sumAggregation->lower<FinalAggregateType, PartialAggregateType>(partialFinalAggregates[i]);
