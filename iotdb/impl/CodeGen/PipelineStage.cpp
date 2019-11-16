@@ -69,7 +69,7 @@ uint32_t CPipelineStage::callCFunction(TupleBuffer **tuple_buffers,
                                        WindowManager *window_manager,
                                        TupleBuffer *result_buffer) {
   return (*compiled_code_->getFunctionPointer<SharedCLibPipelineQueryPtr>(
-      "_Z14compiled_queryPP11TupleBufferPN5iotdb16WindowSliceStoreIlEEPNS2_13WindowManagerES0_"))(tuple_buffers,
+      "_Z14compiled_queryPP11TupleBufferPvPN5iotdb13WindowManagerES0_"))(tuple_buffers,
                                                                                                   state, window_manager,
                                                                                                   result_buffer);
 }

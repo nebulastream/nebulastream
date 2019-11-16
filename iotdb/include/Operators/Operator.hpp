@@ -35,6 +35,14 @@ typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
 class DataSource;
 typedef std::shared_ptr<DataSource> DataSourcePtr;
 
+class WindowType;
+typedef  std::shared_ptr<WindowType> WindowTypePtr;
+
+class WindowAggregation;
+typedef  std::shared_ptr<WindowAggregation> WindowAggregationPtr;
+class WindowDefinition;
+typedef  std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
+
 enum OperatorType {
   SOURCE_OP,
   FILTER_OP,
