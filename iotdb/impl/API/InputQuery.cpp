@@ -10,6 +10,8 @@
 #include "../../include/SourceSink/SinkCreator.hpp"
 #include "../../include/SourceSink/SourceCreator.hpp"
 
+#include <API/Window/WindowDefinition.hpp>
+
 namespace iotdb {
 
 const OperatorPtr recursiveCopy(OperatorPtr ptr) {

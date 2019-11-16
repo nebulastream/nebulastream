@@ -489,7 +489,6 @@ bool C_CodeGenerator::generateCode(const WindowDefinitionPtr &window, const Pipe
   code_.current_code_insertion_point->addStatement(std::make_shared<BinaryOperatorStatement>(window_state_decl));
 
 
-
   // get current timestamp
   // TODO add support for event time
   auto current_time_var = VariableDeclaration::create(
@@ -498,8 +497,6 @@ bool C_CodeGenerator::generateCode(const WindowDefinitionPtr &window, const Pipe
   auto getCurrentTsStatement = VarDeclStatement(current_time_var)
       .assign(getCurrentTs);
   code_.current_code_insertion_point->addStatement(std::make_shared<BinaryOperatorStatement>(getCurrentTsStatement));
-
-
 
   // update slices
   auto sliceStream = FunctionCallStatement("sliceStream");
