@@ -2,6 +2,7 @@
 #include <memory>
 #include "vector"
 #include <API/AbstractWindowDefinition.hpp>
+#include <State/StateVariable.hpp>
 
 #ifndef IOTDB_WINDOWMANAGERLIB_HPP
 #define IOTDB_WINDOWMANAGERLIB_HPP
@@ -34,6 +35,10 @@ class SliceMetaData {
   uint64_t start_ts;
   uint64_t end_ts;
 };
+
+inline uint64_t getTsFromClock(){
+  return time(NULL);
+}
 
 /**
  * The WindowSliceStore stores slices consisting of metadata and a partial aggregate.
