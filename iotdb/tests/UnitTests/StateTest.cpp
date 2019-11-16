@@ -213,9 +213,7 @@ namespace iotdb {
 
             uint64_t end = start + rand();
 
-          const StateVariable<uint32_t, window_metadata *, 0>::KeyValueHandle &test = var[key];
-                
-            emplace(start, end);
+            var[key].emplace(start, end);
 
             auto v = var[key].value();
 
