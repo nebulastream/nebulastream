@@ -1,15 +1,11 @@
-#include "../../include/YSB_legacy/YSBPrintSink.hpp"
-
+#include <YSB_legacy/YSBPrintSink.hpp>
 #include <cstring>
 #include <iostream>
-#include <memory>
-#include <sstream>
 #include <string>
-#include <zmq.hpp>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::YSBPrintSink)
 #include <NodeEngine/Dispatcher.hpp>
 #include <Util/Logger.hpp>
+
 namespace iotdb {
 
 struct __attribute__((packed)) ysbRecordOut {
