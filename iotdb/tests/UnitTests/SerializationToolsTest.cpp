@@ -97,24 +97,16 @@ TEST_F(SerializationToolsTest, serialize_deserialize_zmqSource) {
 /* Test serialization for zmqSink  */
 TEST_F(SerializationToolsTest, serialize_deserialize_zmqSink) {
   DataSinkPtr zmqSink = createZmqSink(schema, "", 0);
-  string serSource = SerializationTools::ser_sink(zmqSink);
-  DataSinkPtr deserZmq = SerializationTools::parse_sink(serSource);
+  string serSink = SerializationTools::ser_sink(zmqSink);
+  DataSinkPtr deserZmq = SerializationTools::parse_sink(serSink);
 
-  EXPECT_TRUE(!serSource.empty());
+  EXPECT_TRUE(!serSink.empty());
 }
 
 /* Test serialization for zmqSink  */
 TEST_F(SerializationToolsTest, serialize_deserialize_printSink) {
   DataSinkPtr sink = std::make_shared<PrintSink>(std::cout);
-
-  std::string s;
-  {
-    namespace io = boost::iostreams;
-    io::stream<io::back_insert_device<std::string>> os(s);
-
-    boost::archive::text_oarchive archive(os);
-    archive << sink;
-  }
-
-  EXPECT_TRUE(!s.empty());
+  string serSink = SerializationTools::ser_sink(sink);
+  DataSinkPtr deserZmq = SerializationTools::parse_sink(serSink);
+  EXPECT_TRUE(!serSink.empty());
 }

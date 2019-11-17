@@ -6,32 +6,28 @@
 #include <string>
 #include <zmq.hpp>
 
-#include "../SourceSink/PrintSink.hpp"
+#include <SourceSink/PrintSink.hpp>
 
 namespace iotdb {
 
 class YSBPrintSink : public PrintSink {
-  public:
-    YSBPrintSink();
-    ~YSBPrintSink();
+ public:
+  YSBPrintSink();
+  ~YSBPrintSink();
 
-    bool writeData(const TupleBufferPtr input_buffer);
-    void setup() override{};
-    void shutdown() override{};
-    const std::string toString() const override;
+  bool writeData(const TupleBufferPtr input_buffer);
+  void setup() override {};
+  void shutdown() override {};
+  const std::string toString() const override;
 
-  protected:
-    friend class boost::serialization::access;
-    template <class Archive> void serialize(Archive& ar, const unsigned int version)
-    {
-        ar& boost::serialization::base_object<PrintSink>(*this);
-    }
+ protected:
+  friend class boost::serialization::access;
+  template<class Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    ar & boost::serialization::base_object<PrintSink>(*this);
+  }
 };
 
 } // namespace iotdb
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/export.hpp>
-BOOST_CLASS_EXPORT_KEY(iotdb::YSBPrintSink)
 
 #endif // YSB_PRINTSINK_HPP

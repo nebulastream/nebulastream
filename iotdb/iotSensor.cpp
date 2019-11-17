@@ -1,29 +1,29 @@
 #include <iostream>
-#include <Runtime/DataSink.hpp>
-#include <Runtime/DataSource.hpp>
-#include <Network/atom_utils.h>
-#include <Runtime/CompiledDummyPlan.hpp>
-#include <Runtime/ThreadPool.hpp>
-#include <Runtime/YSBWindow.hpp>
-#include <Core/TupleBuffer.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <zmq.hpp>
-#include <Runtime/ZmqSink.hpp>
-#include <CodeGen/GeneratedQueryExecutionPlan.hpp>
+#include <SourceSink/DataSink.hpp>
+#include <SourceSink/DataSource.hpp>
+#include <Network/atom_utils.hpp>
 #include <Util/SerializationTools.hpp>
+#include <NodeEngine/NodeEngine.hpp>
+#include <SourceSink/SinkCreator.hpp>
+#include <SourceSink/SourceCreator.hpp>
+
+#include <CodeGen/GeneratedQueryExecutionPlan.hpp>
 
 #include <API/InputQuery.hpp>
 #include <API/UserAPIExpression.hpp>
-#include <API/Environment.hpp>
 
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
 #include <Util/ErrorHandling.hpp>
-#include <CodeGen/QueryPlanBuilder.hpp>
-#include <CodeGen/C_CodeGen/Declaration.hpp>
-#include <CodeGen/C_CodeGen/FunctionBuilder.hpp>
-#include <CodeGen/C_CodeGen/FileBuilder.hpp>
 #include <CodeGen/CodeGen.hpp>
 #include <Operators/Impl/SourceOperator.hpp>
+#include <Util/UtilityFunctions.hpp>
+
+#include <string>
+#include <utility>
+#include <stdint.h>
+
+#include "caf/all.hpp"
+#include "caf/io/all.hpp"
 
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
@@ -92,16 +92,14 @@ class CompiledTestQueryExecutionPlan : public GeneratedQueryExecutionPlan {
 
   bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf) {
     DataSinkPtr sink = this->getSinks()[0];
-    ysbRecord *record = (ysbRecord *) buf->buffer;
+    ysbRecord *record = (ysbRecord *) buf->getBuffer();
 
     //std::cout << "record.ad_type: " << record->ad_type << ", record.event_type: " << record->event_type << std::endl;
 
     TupleBufferPtr outputBuffer = BufferManager::instance().getBuffer();
-
-    outputBuffer->buffer = record;
-
-    outputBuffer->num_tuples = 1;
-    outputBuffer->tuple_size_bytes = sizeof(ysbRecord);
+    outputBuffer->setTupleSizeInBytes(sizeof(ysbRecord));
+    outputBuffer->setBufferSizeInBytes(buf->getBufferSizeInBytes());
+    outputBuffer->setNumberOfTuples(1);
 
     sink->writeData(outputBuffer);
     return true;
@@ -344,7 +342,7 @@ void caf_main(actor_system &system, const sensor_config &cfg) {
 
   // Create new Source and Sink
   //DataSourcePtr source = createCSVFileSource(schema, "tests/test_data/ysb-tuples-100-campaign-100.csv");
-  DataSourcePtr source = createSchemaTestDataSource(schema);
+  DataSourcePtr source = createTestDataSourceWithSchema(schema);
   source->setNumBuffersToProcess(10);
   qep->addDataSource(source);
 
@@ -357,7 +355,7 @@ void caf_main(actor_system &system, const sensor_config &cfg) {
 
   // start new query
   Dispatcher::instance().registerQuery(qep);
-  ThreadPool::instance().start(1);
+  ThreadPool::instance().start();
 
   struct __attribute__((packed)) ResultTuple {
     uint32_t id;
@@ -374,7 +372,7 @@ void caf_main(actor_system &system, const sensor_config &cfg) {
       auto new_data = zmqSrc->receiveData();
 
       // Test received data.
-      ResultTuple *tuple = (ResultTuple *) new_data->buffer;
+      ResultTuple *tuple = (ResultTuple *) new_data->getBuffer();
 
       std::cout << "Result-> ID: " << tuple->id << " Value: " << tuple->value << std::endl;
     }

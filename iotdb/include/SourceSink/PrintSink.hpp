@@ -72,5 +72,4 @@ class PrintSink : public DataSink {
 };
 }  // namespace iotdb
 
-
 #endif // PRINTSINK_HPP
