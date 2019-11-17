@@ -265,22 +265,6 @@ std::string ExecutionGraph::getGraphString() {
   return ss.str();
 }
 
-const std::set<ExecutionNodePtr> ExecutionGraph::getAllDestinationsFromNode(ExecutionNodePtr srcNode) const {
-  std::set<ExecutionNodePtr> result = {};
-
-  executionEdge_iterator edge, edge_end, next_edge;
-  boost::tie(edge, edge_end) = edges(graph);
-
-  for (next_edge = edge; edge != edge_end; edge = next_edge) {
-    ++next_edge;
-
-    if (graph[*edge].ptr->getSource()->getId() == srcNode.get()->getId()) {
-      result.insert(graph[*edge].ptr->getDestination());
-    }
-  }
-  return result;
-};
-
 FogExecutionPlan::FogExecutionPlan() {
   exeGraphPtr = std::make_shared<ExecutionGraph>();
 }
@@ -407,10 +391,10 @@ std::shared_ptr<ExecutionGraph> FogExecutionPlan::getExecutionGraph() const {
   return exeGraphPtr;
 };
 
-void FogExecutionPlan::freeResources() {
+void FogExecutionPlan::freeResources(int freedCapacity) {
   for (const ExecutionVertex &v: getExecutionGraph()->getAllVertex()) {
     if (v.ptr->getRootOperator()) {
-      v.ptr->getFogNode()->increaseCpuCapacity(1);
+      v.ptr->getFogNode()->increaseCpuCapacity(freedCapacity);
     }
   }
 }

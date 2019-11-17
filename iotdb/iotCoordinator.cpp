@@ -39,8 +39,7 @@ using namespace iotdb;
 namespace iotdb {
 constexpr auto task_timeout = std::chrono::seconds(10);
 
-// class-based, statically typed, event-based API
-// the client queues pending tasks
+// class-based, statically typed, event-based API for the state management in CAF
 struct coordinator_state {
   string ip;
   uint16_t publish_port;
@@ -58,8 +57,14 @@ struct coordinator_state {
   unordered_map<string, tuple<Schema, FogExecutionPlan, QueryExecutionPlanPtr>> runningQueries;
 };
 
+/**
+   * @brief the coordinator for NES
+   */
 class coordinator : public stateful_actor<coordinator_state> {
  public:
+  /**
+   * @brief the constructior of the coordinator to initialize the default objects
+   */
   explicit coordinator(actor_config &cfg, string ip, uint16_t publish_port, uint16_t receive_port)
       : stateful_actor(cfg) {
     this->state.ip = ip;
@@ -108,48 +113,59 @@ class coordinator : public stateful_actor<coordinator_state> {
         // framework internal rpcs
         [=](register_worker_atom, string &ip, uint16_t publish_port, uint16_t receive_port, int cpu,
             const strong_actor_ptr &sap) {
+          // rpc to register worker
           this->register_worker(ip, publish_port, receive_port, cpu, sap);
         },
         [=](register_sensor_atom, string &ip, uint16_t publish_port, uint16_t receive_port, int cpu,
             const string &sensor_type, const strong_actor_ptr &sap) {
+          // rpc to register sensor
           this->register_sensor(ip, publish_port, receive_port, cpu, sensor_type, sap);
         },
         [=](register_query_atom, const string &query_string, const string &sensor_type,
             const string &optimizationStrategyName) {
+          // rpc to register queries
           this->register_query(query_string, sensor_type, optimizationStrategyName);
         },
         [=](deploy_query_atom, const string &query_desc, const string &sensor_type) {
+          // rpc to deploy queries to all corresponding actors
           this->deploy_query(query_desc, sensor_type);
         },
         [=](delete_query_atom, const string &query_desc, const string &sensor_type) {
+          // rpc to unregister a registered query
           this->delete_query(query_desc, sensor_type);
         },
         [=](execute_query_atom, const string &query, string &str_schema, vector<string> &str_sources,
             vector<string> &str_destinations, string &str_ops) {
+          // internal rpc to execute a query
           this->execute_query(query, str_schema, str_sources, str_destinations, str_ops);
         },
         [=](get_operators_atom) {
+          // internal rpc to return currently running operators on this node
           return this->getOperators();
         },
         // external methods for users
         [=](topology_json_atom) {
+          // print the topology
           string topo = this->state.topologyManagerPtr->getInstance().getTopologyPlanString();
           aout(this) << "Printing Topology" << endl;
           aout(this) << topo << endl;
         },
         [=](show_registered_atom) {
+          // print registered queries
           aout(this) << "Printing Registered Queries" << endl;
           for (const auto &p : this->state.registeredQueries) {
             aout(this) << p.first << endl;
           }
         },
         [=](show_running_atom) {
+          // print running queries
           aout(this) << "Printing Running Queries" << endl;
           for (const auto &p : this->state.runningQueries) {
             aout(this) << p.first << endl;
           }
         },
         [=](show_running_operators_atom) {
+          // print running operators in the whole topology
           aout(this) << "Requesting deployed operators from connected devices.." << endl;
           this->show_operators();
         }
@@ -372,7 +388,7 @@ class coordinator : public stateful_actor<coordinator_state> {
                  << "-" << sensor_type << endl;
     } else if (this->state.registeredQueries.find(query + sensor_type) != this->state.registeredQueries.end()) {
       // Query is registered, but not running -> just remove from registered queries
-      get<1>(this->state.registeredQueries.at(query + sensor_type)).freeResources();
+      get<1>(this->state.registeredQueries.at(query + sensor_type)).freeResources(1);
       this->state.registeredQueries.erase(query + sensor_type);
       aout(this) << "Query was registered and has been succesfully removed -> " << query << "-" << sensor_type
                  << endl;
@@ -381,7 +397,7 @@ class coordinator : public stateful_actor<coordinator_state> {
       try {
         //Query is running -> stop query at every worker where it is running and delete locally
         QueryExecutionPlanPtr qep = get<2>(this->state.runningQueries.at(query + sensor_type));
-        get<1>(this->state.runningQueries.at(query + sensor_type)).freeResources();
+        get<1>(this->state.runningQueries.at(query + sensor_type)).freeResources(1);
         get<2>(this->state.runningQueries.at(query + sensor_type)).reset();
 
         if (qep) {
@@ -429,8 +445,9 @@ class coordinator : public stateful_actor<coordinator_state> {
   vector<string> create_serialized_sinks(const string &query, Schema &schema, const ExecutionVertex &v,
                                          const FogExecutionPlan &execPlan) {
     vector<string> output;
-    for (const ExecutionNodePtr &_n: execPlan.getExecutionGraph()->getAllDestinationsFromNode(v.ptr)) {
-      FogTopologyEntryPtr entry = _n->getFogNode();
+
+    for (const auto edge: execPlan.getExecutionGraph()->getAllEdgesFromNode(v.ptr)) {
+      FogTopologyEntryPtr entry = edge.ptr->getDestination()->getFogNode();
       DataSinkPtr sink = createZmqSink(schema, entry->getIp(), get_assigned_port(query));
       output.emplace_back(SerializationTools::ser_sink(sink));
     }
