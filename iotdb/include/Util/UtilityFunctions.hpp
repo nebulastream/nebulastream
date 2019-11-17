@@ -1,17 +1,12 @@
-/*
- * File:   functions.hpp
- * Author: sebastian
- *
- * Created on 10. Januar 2015, 21:15
- */
-
 #ifndef FUNCTIONS_HPP
 #define FUNCTIONS_HPP
 
 #include <cmath>
 #include <fstream>
 #include <optional>
-
+/**
+ * @brief a collection of shared utility functions
+ */
 namespace iotdb {
 
 inline uint64_t getGreaterPowerOfTwo(uint64_t val) {
