@@ -79,21 +79,21 @@ class Predicate : public UserAPIExpression {
  private:
   Predicate() = default;
   BinaryOperatorType _op;
-  const UserAPIExpressionPtr _left;
-  const UserAPIExpressionPtr _right;
+  UserAPIExpressionPtr _left;
+  UserAPIExpressionPtr _right;
   bool _bracket;
-  const std::string _functionCallOverload;
+  std::string _functionCallOverload;
 
   friend class boost::serialization::access;
 
   template<class Archive>
   void serialize(Archive &ar, unsigned) {
-    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(UserAPIExpression);
-        //& BOOST_SERIALIZATION_NVP(_op);
-        //& BOOST_SERIALIZATION_NVP(_left)
-        //& BOOST_SERIALIZATION_NVP(_right)
-        //& BOOST_SERIALIZATION_NVP(_bracket)
-        //& BOOST_SERIALIZATION_NVP(_functionCallOverload);
+    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(UserAPIExpression)
+        & BOOST_SERIALIZATION_NVP(_op)
+        & BOOST_SERIALIZATION_NVP(_left)
+        & BOOST_SERIALIZATION_NVP(_right)
+        & BOOST_SERIALIZATION_NVP(_bracket)
+        & BOOST_SERIALIZATION_NVP(_functionCallOverload);
   }
 };
 

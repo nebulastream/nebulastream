@@ -132,6 +132,15 @@ class BasicValueType : public ValueType {
  private:
   BasicType type_;
   std::string value_;
+
+  friend class boost::serialization::access;
+
+  template<class Archive>
+  void serialize(Archive &ar, unsigned) {
+    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(ValueType)
+        & BOOST_SERIALIZATION_NVP(type_)
+        & BOOST_SERIALIZATION_NVP(value_);
+  }
 };
 
 BasicValueType::~BasicValueType() {}
@@ -275,12 +284,22 @@ class BasicDataType : public DataType {
  private:
   BasicType type;
   uint32_t dataSize;
+
+  friend class boost::serialization::access;
+
+  template<class Archive>
+  void serialize(Archive &ar, unsigned) {
+    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataType)
+        & BOOST_SERIALIZATION_NVP(type)
+        & BOOST_SERIALIZATION_NVP(dataSize);
+  }
 };
 
 BasicDataType::~BasicDataType() {}
 
 class PointerDataType : public DataType {
  public:
+  PointerDataType() = default;
   PointerDataType(const DataTypePtr &type) : DataType(), base_type_(type) {}
   ValueTypePtr getDefaultInitValue() const override { return ValueTypePtr(); }
 
@@ -333,6 +352,14 @@ class PointerDataType : public DataType {
 
  private:
   DataTypePtr base_type_;
+
+  friend class boost::serialization::access;
+
+  template<class Archive>
+  void serialize(Archive &ar, unsigned) {
+    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataType)
+        & BOOST_SERIALIZATION_NVP(base_type_);
+  }
 };
 
 PointerDataType::~PointerDataType() {}
@@ -378,6 +405,7 @@ typedef std::shared_ptr<ArrayValueType> ArrayValueTypePtr;
 
 class ArrayDataType : public DataType {
  public:
+  ArrayDataType() = default;
   ArrayDataType(DataTypePtr ptr, u_int32_t dimension) : DataType(), _data(ptr), _dimension(dimension) {}
   //ArrayDataType (const BasicType& basictype, u_int32_t dimension) : DataType(), _data(std::make_shared<DataType>(basictype)), _dimension(dimension) {}
 
@@ -445,6 +473,14 @@ class ArrayDataType : public DataType {
  private:
   DataTypePtr _data;
   u_int32_t _dimension;
+
+  friend class boost::serialization::access;
+
+  template<class Archive>
+  void serialize(Archive &ar, unsigned) {
+    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataType)
+        & BOOST_SERIALIZATION_NVP(_dimension);
+  }
 };
 
 ArrayDataType::~ArrayDataType() {}
@@ -454,6 +490,7 @@ ArrayDataType::~ArrayDataType() {}
  */
 class ArrayValueType : public ValueType {
  public:
+  ArrayValueType() = default;
   ArrayValueType(const ArrayDataType &type, const std::vector<std::string> &value) : type_(std::make_shared<
       ArrayDataType>(type)), value_(value) {};
   ArrayValueType(const ArrayDataType &type, const std::string &value)
@@ -491,9 +528,19 @@ class ArrayValueType : public ValueType {
   virtual ~ArrayValueType() override;
 
  private:
-  const ArrayDataTypePtr type_;
+  ArrayDataTypePtr type_;
   bool isString_ = false;
   std::vector<std::string> value_;
+
+  friend class boost::serialization::access;
+
+  template<class Archive>
+  void serialize(Archive &ar, unsigned) {
+    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(ValueType)
+        & BOOST_SERIALIZATION_NVP(type_)
+        & BOOST_SERIALIZATION_NVP(isString_)
+        & BOOST_SERIALIZATION_NVP(value_);
+  }
 };
 
 ArrayValueType::~ArrayValueType() {}
@@ -545,5 +592,8 @@ const ValueTypePtr createArrayValueType(const BasicType &type, const std::vector
 
 } // namespace iotdb
 
+//BOOST_CLASS_EXPORT(iotdb::PointerDataType);
+//BOOST_CLASS_EXPORT(iotdb::ArrayDataType);
+//BOOST_CLASS_EXPORT(iotdb::ArrayValueType);
 BOOST_CLASS_EXPORT(iotdb::BasicValueType);
 BOOST_CLASS_EXPORT(iotdb::BasicDataType);

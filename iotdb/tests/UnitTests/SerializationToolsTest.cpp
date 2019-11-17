@@ -73,7 +73,7 @@ TEST_F(SerializationToolsTest, serialize_deserialize_sink_op) {
 
 
 /* Test serialization for operators  */
-TEST_F(SerializationToolsTest, serialize_deserialize_operators) {
+TEST_F(SerializationToolsTest, serialize_deserialize_query_operators) {
   InputQuery &query = InputQuery::from(stream)
       .filter(stream["value"] > 42)
       .print(std::cout);
