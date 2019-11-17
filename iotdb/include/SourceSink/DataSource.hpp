@@ -22,7 +22,7 @@ class DataSource {
    * by some test to produce a deterministic behavior
    * @param schema of the data that this source produces
    */
-  DataSource(const Schema& schema);
+  DataSource(const Schema &schema);
 
   /**
    * @brief method to start the source.
@@ -65,7 +65,7 @@ class DataSource {
    * @brief method to return the current schema of the source
    * @return schema description of the source
    */
-  const Schema& getSchema() const;
+  const Schema &getSchema() const;
 
   /**
    * @brief method to return the current schema of the source as string
@@ -114,31 +114,25 @@ class DataSource {
    */
   DataSource();
 
-  /**
-   * @brief method for serialization, all listed variable below are added to the
-   * serialization/deserialization process
-   */
+  Schema schema;
+  size_t generatedTuples;
+  size_t generatedBuffers;
+  size_t num_buffers_to_process;
+
+ private:
   friend class boost::serialization::access;
-  template<class Archive> void serialize(Archive& ar,
-                                         const unsigned int version) {
-    ar & running;
+
+  template<class Archive>
+  void serialize(Archive &ar, const unsigned int version) {
     ar & num_buffers_to_process;
     ar & schema;
     ar & generatedTuples;
     ar & generatedBuffers;
   }
-
-  Schema schema;
-  size_t generatedTuples;
-  size_t generatedBuffers;
-  size_t num_buffers_to_process;
 };
 
 typedef std::shared_ptr<DataSource> DataSourcePtr;
 
 }  // namespace iotdb
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/export.hpp>
-BOOST_CLASS_EXPORT_KEY(iotdb::DataSource)
+
 #endif /* INCLUDE_DATASOURCE_H_ */

@@ -43,3 +43,4 @@ namespace iotdb {
     }
 
 } // namespace iotdb
+BOOST_CLASS_EXPORT(iotdb::FilterOperator);

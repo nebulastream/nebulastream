@@ -1,20 +1,17 @@
 #include <SourceSink/PrintSink.hpp>
-#include <memory>
 #include <sstream>
 #include <string>
 #include <NodeEngine/Dispatcher.hpp>
 #include <Util/Logger.hpp>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::PrintSink)
-
 namespace iotdb {
 
-PrintSink::PrintSink(std::ostream& pOutputStream)
+PrintSink::PrintSink(std::ostream &pOutputStream)
     : DataSink(),
       outputStream(pOutputStream) {
 }
 
-PrintSink::PrintSink(const Schema& pSchema, std::ostream& pOutputStream)
+PrintSink::PrintSink(const Schema &pSchema, std::ostream &pOutputStream)
     : DataSink(pSchema),
       outputStream(pOutputStream) {
 }
@@ -43,3 +40,4 @@ void PrintSink::shutdown() {
 }
 
 }  // namespace iotdb
+BOOST_CLASS_EXPORT(iotdb::PrintSink);

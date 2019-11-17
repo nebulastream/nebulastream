@@ -3,7 +3,6 @@
 #include <cassert>
 #include <cstdint>
 #include <cstring>
-#include <memory>
 #include <sstream>
 #include <string>
 #include <zmq.hpp>
@@ -13,11 +12,6 @@
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/export.hpp>
-
-#include <SourceSink/DataSource.hpp>
-#include "../../include/NodeEngine/TupleBuffer.hpp"
-BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::ZmqSource);
 
 namespace iotdb {
 
@@ -31,7 +25,7 @@ ZmqSource::ZmqSource()
       "Default ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/")
 }
 
-ZmqSource::ZmqSource(const Schema& schema, const std::string& host,
+ZmqSource::ZmqSource(const Schema &schema, const std::string &host,
                      const uint16_t port)
     : DataSource(schema),
       host(host),
@@ -66,7 +60,7 @@ TupleBufferPtr ZmqSource::receiveData() {
   // Receive new chunk of data
   zmq::message_t new_data;
   socket.recv(&new_data);  // envelope - not needed at the moment
-  size_t tupleCnt = *((size_t*) new_data.data());
+  size_t tupleCnt = *((size_t *) new_data.data());
   IOTDB_DEBUG("ZMQSource received #tups " << tupleCnt)
 
   // actual data
@@ -143,3 +137,5 @@ bool ZmqSource::disconnect() {
 }
 
 }  // namespace iotdb
+
+BOOST_CLASS_EXPORT(iotdb::ZmqSource);

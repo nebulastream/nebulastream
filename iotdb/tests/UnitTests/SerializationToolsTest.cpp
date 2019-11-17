@@ -2,6 +2,7 @@
 #include <Util/SerializationTools.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
+#include <SourceSink/PrintSink.hpp>
 
 using namespace iotdb;
 
@@ -25,7 +26,7 @@ class SerializationToolsTest : public testing::Test {
       .addField("id", BasicType::UINT32)
       .addField("value", BasicType::UINT64);
 
-  Stream cars = Stream("cars", schema);
+  Stream stream = Stream("cars", schema);
 };
 
 /* Test serialization for Schema  */
@@ -36,10 +37,45 @@ TEST_F(SerializationToolsTest, serialize_deserialize_schema) {
   EXPECT_TRUE(!sschema.empty());
 }
 
+/* Test serialization for predicate  */
+TEST_F(SerializationToolsTest, serialize_deserialize_predicate) {
+  PredicatePtr pred = createPredicate(stream["value"] > 42);
+  string serPred = SerializationTools::ser_predicate(pred);
+  PredicatePtr deserPred = SerializationTools::parse_predicate(serPred);
+  EXPECT_TRUE(!serPred.empty());
+}
+
+/* Test serialization for predicate  */
+TEST_F(SerializationToolsTest, serialize_deserialize_filter_op) {
+  PredicatePtr pred = createPredicate(stream["value"] > 42);
+  OperatorPtr op = createFilterOperator(pred);
+
+  string serOp = SerializationTools::ser_operator(op);
+  OperatorPtr deserOp = SerializationTools::parse_operator(serOp);
+  EXPECT_TRUE(!serOp.empty());
+}
+
+/* Test serialization for predicate  */
+TEST_F(SerializationToolsTest, serialize_deserialize_source_op) {
+  OperatorPtr op = createSourceOperator(createTestDataSourceWithSchema(stream.getSchema()));
+  string serOp = SerializationTools::ser_operator(op);
+  OperatorPtr deserOp = SerializationTools::parse_operator(serOp);
+  EXPECT_TRUE(!serOp.empty());
+}
+
+/* Test serialization for predicate  */
+TEST_F(SerializationToolsTest, serialize_deserialize_sink_op) {
+  OperatorPtr op = createSinkOperator(createPrintSinkWithoutSchema(std::cout));
+  string serOp = SerializationTools::ser_operator(op);
+  OperatorPtr deserOp = SerializationTools::parse_operator(serOp);
+  EXPECT_TRUE(!serOp.empty());
+}
+
+
 /* Test serialization for operators  */
 TEST_F(SerializationToolsTest, serialize_deserialize_operators) {
-  InputQuery &query = InputQuery::from(cars)
-      .filter(cars["value"] > 42)
+  InputQuery &query = InputQuery::from(stream)
+      .filter(stream["value"] > 42)
       .print(std::cout);
 
   OperatorPtr queryOp = query.getRoot();
@@ -65,4 +101,20 @@ TEST_F(SerializationToolsTest, serialize_deserialize_zmqSink) {
   DataSinkPtr deserZmq = SerializationTools::parse_sink(serSource);
 
   EXPECT_TRUE(!serSource.empty());
+}
+
+/* Test serialization for zmqSink  */
+TEST_F(SerializationToolsTest, serialize_deserialize_printSink) {
+  DataSinkPtr sink = std::make_shared<PrintSink>(std::cout);
+
+  std::string s;
+  {
+    namespace io = boost::iostreams;
+    io::stream<io::back_insert_device<std::string>> os(s);
+
+    boost::archive::text_oarchive archive(os);
+    archive << sink;
+  }
+
+  EXPECT_TRUE(!s.empty());
 }
