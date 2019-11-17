@@ -100,7 +100,7 @@ int testCSVSource() {
 }
 
 int main(int argc, const char* argv[]) {
-    setupLogger();
+    iotdb::setupLogger();
     iotdb::Dispatcher::instance();
     iotdb::BufferManager::instance();
     iotdb::testBinarySource();
