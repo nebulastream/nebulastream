@@ -221,7 +221,7 @@ class coordinator : public stateful_actor<coordinator_state> {
       }
 
       if (operators) {
-        vector<OperatorType> flattened = operators->flattenedTypes();
+        set<OperatorType> flattened = operators->flattenedTypes();
         for (const OperatorType &_o: flattened) {
           if (!str_opts.empty())
             str_opts.append(", ");

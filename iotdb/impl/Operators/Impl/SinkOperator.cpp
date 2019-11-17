@@ -9,48 +9,43 @@
 
 namespace iotdb {
 
-SinkOperator::SinkOperator(const DataSinkPtr& sink) : Operator(), sink_(iotdb::copy(sink)) {}
+SinkOperator::SinkOperator(const DataSinkPtr &sink) : Operator(), sink_(iotdb::copy(sink)) {}
 
-SinkOperator::SinkOperator(const SinkOperator& other) : sink_(iotdb::copy(other.sink_)) {}
+SinkOperator::SinkOperator(const SinkOperator &other) : sink_(iotdb::copy(other.sink_)) {}
 
-SinkOperator& SinkOperator::operator=(const SinkOperator& other)
-{
-    if (this != &other) {
-        sink_ = iotdb::copy(other.sink_);
-    }
-    return *this;
+SinkOperator &SinkOperator::operator=(const SinkOperator &other) {
+  if (this != &other) {
+    sink_ = iotdb::copy(other.sink_);
+  }
+  return *this;
 }
 
-void SinkOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out)
-{
-    assert(!childs.empty());
-    childs[0]->produce(codegen, context, out);
+void SinkOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream &out) {
+  assert(!childs.empty());
+  childs[0]->produce(codegen, context, out);
 }
 
-void SinkOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out)
-{
-    sink_->setSchema(codegen->getResultSchema());
-    codegen->generateCode(sink_, context, out);
-    /* no call to consume of parent, ends code generation */
+void SinkOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream &out) {
+  sink_->setSchema(codegen->getResultSchema());
+  codegen->generateCode(sink_, context, out);
+  /* no call to consume of parent, ends code generation */
 }
 
 const OperatorPtr SinkOperator::copy() const { return std::make_shared<SinkOperator>(*this); }
 
-const std::string SinkOperator::toString() const
-{
-    std::stringstream ss;
-    ss << "SINK(" << iotdb::toString(sink_) << ")";
-    return ss.str();
+const std::string SinkOperator::toString() const {
+  std::stringstream ss;
+  ss << "SINK(" << iotdb::toString(sink_) << ")";
+  return ss.str();
 }
 
 OperatorType SinkOperator::getOperatorType() const { return SINK_OP; }
 
-SinkOperator::~SinkOperator() {}
+SinkOperator::~SinkOperator() = default;
 
-SinkOperator::SinkOperator() {
-}
+SinkOperator::SinkOperator() = default;
 
-const OperatorPtr createSinkOperator(const DataSinkPtr& sink) { return std::make_shared<SinkOperator>(sink); }
+const OperatorPtr createSinkOperator(const DataSinkPtr &sink) { return std::make_shared<SinkOperator>(sink); }
 
 } // namespace iotdb
 BOOST_CLASS_EXPORT(iotdb::SinkOperator);

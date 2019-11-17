@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <set>
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
@@ -78,7 +79,10 @@ class Operator {
   bool isScheduled() { return this->scheduled; };
   void markScheduled(bool scheduled) { this->scheduled = scheduled; };
 
-  std::vector<OperatorType> flattenedTypes();
+  /**
+   * @brief traverses recursively through the operatory tree and returns the operators as a flattened set
+   */
+  std::set<OperatorType> flattenedTypes();
 
  private:
   bool scheduled = false;

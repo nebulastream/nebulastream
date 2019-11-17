@@ -41,12 +41,28 @@ class FogTopologyEntry {
 
   virtual void setIp(const string &ip_addr) = 0;
 
+/**
+   * @brief the publish port is the port on which an actor framework server can be accessed
+   * @return port to access CAF
+   */
   virtual uint16_t getPublishPort() = 0;
 
+  /**
+   * @brief the publish port is the port on which an actor framework server can be accessed
+   * @param port to access CAF
+   */
   virtual void setPublishPort(uint16_t publishPort) = 0;
 
+  /**
+   * @brief the receive port is the port on which internal data transmission via ZMQ is running
+   * @return port to access ZMQ
+   */
   virtual uint16_t getReceivePort() = 0;
 
+  /**
+   * @brief the receive port is the port on which internal data transmission via ZMQ is running
+   * @param port to access ZMQ
+   */
   virtual void setReceivePort(uint16_t receivePort) = 0;
 
  protected:

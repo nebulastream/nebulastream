@@ -3,19 +3,20 @@
 #include <Operators/Operator.hpp>
 #include <Util/ErrorHandling.hpp>
 #include <sstream>
-#include "../../include/SourceSink/DataSource.hpp"
+#include <SourceSink/DataSource.hpp>
+#include <set>
 
 namespace iotdb {
 
 Operator::~Operator() {}
 
-std::vector<OperatorType> Operator::flattenedTypes() {
-  std::vector<OperatorType> result;
-  result.emplace_back(this->getOperatorType());
+std::set<OperatorType> Operator::flattenedTypes() {
+  std::set<OperatorType> result;
+  result.insert(this->getOperatorType());
   if (!childs.empty()) {
     for (const OperatorPtr &op: childs) {
-      std::vector<OperatorType> tmp = op->flattenedTypes();
-      result.insert(result.end(), tmp.begin(), tmp.end());
+      std::set<OperatorType> tmp = op->flattenedTypes();
+      result.insert(tmp.begin(), tmp.end());
     }
   }
   return result;
