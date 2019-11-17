@@ -19,9 +19,16 @@
 using std::string;
 
 namespace iotdb {
-
+/**\brief:
+ * Here are the methods which are used for boost serialization
+ */
 class SerializationTools {
  public:
+  /**
+   * @brief converts a predicate into a serialized Boost string
+   * @param PredicatePtr predicate to be serialized
+   * @return the string serialized object
+   */
   static string ser_predicate(const PredicatePtr &predicate) {
     std::string s;
     {
@@ -34,6 +41,11 @@ class SerializationTools {
     return s;
   }
 
+  /**
+   * @brief converts a Schema into a serialized Boost string
+   * @param Schema schema to be serialized
+   * @return the string serialized object
+   */
   static string ser_schema(const Schema &schema) {
     std::string s;
     {
@@ -46,6 +58,11 @@ class SerializationTools {
     return s;
   }
 
+  /**
+   * @brief converts a sink into a serialized Boost string
+   * @param DataSinkPtr sink to be serialized
+   * @return the string serialized object
+   */
   static string ser_sink(const DataSinkPtr &sink) {
     std::string s;
     {
@@ -58,6 +75,11 @@ class SerializationTools {
     return s;
   }
 
+  /**
+   * @brief converts a source into a serialized Boost string
+   * @param DataSourcePtr source to be serialized
+   * @return the string serialized object
+   */
   static string ser_source(const DataSourcePtr &source) {
     std::string s;
     {
@@ -70,6 +92,11 @@ class SerializationTools {
     return s;
   }
 
+  /**
+   * @brief converts an operator tree into a serialized Boost string
+   * @param OperatorPtr operator tree to be serialized
+   * @return the string serialized object
+   */
   static string ser_operator(const OperatorPtr &op) {
     std::string s;
     {
@@ -82,6 +109,11 @@ class SerializationTools {
     return s;
   }
 
+  /**
+   * @brief parses Boost string serialized Predicate into an PredicatePtr object
+   * @param string boost serialized string object
+   * @return the deserialized object
+   */
   static PredicatePtr parse_predicate(const string &s) {
     PredicatePtr pred;
     {
@@ -93,6 +125,11 @@ class SerializationTools {
     return pred;
   }
 
+  /**
+   * @brief parses Boost string serialized Schema into an Schema object
+   * @param string boost serialized string object
+   * @return the deserialized object
+   */
   static Schema parse_schema(const string &s) {
     Schema schema;
     {
@@ -104,6 +141,11 @@ class SerializationTools {
     return schema;
   }
 
+  /**
+   * @brief parses Boost string serialized DataSink into an DataSinkPtr object
+   * @param string boost serialized string object
+   * @return the deserialized object
+   */
   static DataSinkPtr parse_sink(const string &s) {
     DataSinkPtr sink;
     {
@@ -115,6 +157,11 @@ class SerializationTools {
     return sink;
   }
 
+  /**
+ * @brief parses Boost string serialized DataSource into an DataSourcePtr object
+ * @param string boost serialized string object
+ * @return the deserialized object
+ */
   static DataSourcePtr parse_source(const string &s) {
     DataSourcePtr source;
     {
@@ -126,6 +173,11 @@ class SerializationTools {
     return source;
   }
 
+  /**
+   * @brief parses Boost string serialized Operator tree into an OparotrPtr object
+   * @param string boost serialized string object
+   * @return the deserialized object
+   */
   static OperatorPtr parse_operator(const string &s) {
     OperatorPtr op;
     {
