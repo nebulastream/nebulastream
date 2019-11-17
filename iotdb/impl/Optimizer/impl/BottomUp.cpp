@@ -16,7 +16,7 @@ FogExecutionPlan BottomUp::initializeExecutionPlan(InputQuery inputQuery, FogTop
 
   if (sourceNodes.empty()) {
     std::cout << "Unable to find the target source";
-    throw Exception("No source found in the topology");
+    throw Exception("No source found in the topology for stream " + streamName);
   }
 
   placeOperators(executionGraph, fogTopologyPlan, sourceOperators, sourceNodes);
@@ -116,8 +116,8 @@ void BottomUp::placeOperators(FogExecutionPlan executionGraph, FogTopologyPlanPt
 }
 
 FogTopologyEntryPtr BottomUp::findSuitableFogNodeForOperatorPlacement(const ProcessOperator &operatorToProcess,
-                                                            FogTopologyPlanPtr &fogTopologyPlan,
-                                                            deque<FogTopologyEntryPtr> &sourceNodes) {
+                                                                      FogTopologyPlanPtr &fogTopologyPlan,
+                                                                      deque<FogTopologyEntryPtr> &sourceNodes) {
 
   FogTopologyEntryPtr node;
 
@@ -194,7 +194,7 @@ vector<OperatorPtr> BottomUp::getSourceOperators(OperatorPtr root) {
 
 // This method returns all sensor nodes that act as the source in the fog topology.
 deque<FogTopologyEntryPtr> BottomUp::getSourceNodes(FogTopologyPlanPtr fogTopologyPlan,
-                                                 std::string streamName) {
+                                                    std::string streamName) {
 
   const FogTopologyEntryPtr &rootNode = fogTopologyPlan->getRootNode();
   deque<FogTopologyEntryPtr> listOfSourceNodes;
