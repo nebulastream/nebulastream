@@ -24,7 +24,7 @@ class DataSink {
   /**
    * @brief public constructor for data sink with schema provisioning
    */
-  DataSink(const Schema& schema);
+  DataSink(const Schema &schema);
 
   /**
    * @brief Internal destructor to make sure that the data source is stopped before deconstrcuted
@@ -49,7 +49,7 @@ class DataSink {
    * @param vector of tuple buffers pointer
    * @return bool indicating if the write was complete
    */
-  bool writeDataInBatch(const std::vector<TupleBufferPtr>& input_buffers);
+  bool writeDataInBatch(const std::vector<TupleBufferPtr> &input_buffers);
 
   /**
    * @brief method to write a TupleBuffer
@@ -81,26 +81,24 @@ class DataSink {
    * @brief method to return the current schema of the sink
    * @return schema description of the sink
    */
-  const Schema& getSchema() const;
+  const Schema &getSchema() const;
 
   /**
    * @brief method to set the current schema of the sink
    * @param schema description of the sink
    */
-  void setSchema(const Schema& pSchema);
+  void setSchema(const Schema &pSchema);
 
  protected:
   Schema schema;
   size_t sentBuffer;
   size_t sentTuples;
 
-  /**
-   * @brief method for serialization, all listed variable below are added to the
-   * serialization/deserialization process
-   */
+ private:
   friend class boost::serialization::access;
-  template<class Archive> void serialize(Archive& ar,
-                                         const unsigned int version) {
+
+  template<class Archive>
+  void serialize(Archive &ar, const unsigned int version) {
     ar & schema;
     ar & sentBuffer;
     ar & sentTuples;
@@ -110,8 +108,5 @@ class DataSink {
 typedef std::shared_ptr<DataSink> DataSinkPtr;
 
 }  // namespace iotdb
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/export.hpp>
-BOOST_CLASS_EXPORT_KEY(iotdb::DataSink)
+
 #endif // INCLUDE_DATASINK_H_

@@ -5,7 +5,9 @@
 #include <sstream>
 
 #include <SourceSink/DataSource.hpp>
-#include "../NodeEngine/TupleBuffer.hpp"
+#include <NodeEngine/TupleBuffer.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
 
 namespace iotdb {
 
@@ -44,6 +46,11 @@ template<typename F> class GeneratorSource : public DataSource {
   F functor;
 
   GeneratorSource(){};
+
+  friend class boost::serialization::access;
+  template<class Archive>
+  void serialize(Archive &ar, unsigned) {
+  }
 };
 
 

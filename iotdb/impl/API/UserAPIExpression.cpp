@@ -15,8 +15,7 @@
 #include <CodeGen/C_CodeGen/UnaryOperatorStatement.hpp>
 
 #include <API/UserAPIExpression.hpp>
-
-#include "../../include/CodeGen/DataTypes.hpp"
+#include <CodeGen/DataTypes.hpp>
 
 namespace iotdb
 {
@@ -36,7 +35,7 @@ namespace iotdb
 		_bracket(bracket),
 		_functionCallOverload("")
 	{}
-	
+
 	UserAPIExpressionPtr Predicate::copy() const{
 		return std::make_shared<Predicate>(*this);
 	}
@@ -73,7 +72,7 @@ namespace iotdb
 		    IOTDB_FATAL_ERROR("PredicateItem has only NULL Pointers!");
 		  }
 	}
-	
+
 	const std::string Predicate::toString() const{
 			std::stringstream stream;
 			if(_bracket) stream << "(";
@@ -81,12 +80,12 @@ namespace iotdb
 			if(_bracket) stream << ")";
 			return stream.str();
 	}
-	
-	PredicateItem::PredicateItem(AttributeFieldPtr attribute) : 
+
+	PredicateItem::PredicateItem(AttributeFieldPtr attribute) :
 	_mutation(PredicateItemMutation::ATTRIBUTE),
 	_attribute(attribute) {}
-	
-	PredicateItem::PredicateItem(ValueTypePtr value) : 
+
+	PredicateItem::PredicateItem(ValueTypePtr value) :
 	_mutation(PredicateItemMutation::VALUE),
 	_value(value) {}
 
@@ -412,3 +411,5 @@ namespace iotdb
         return operator >>(dynamic_cast<const UserAPIExpression&>(lhs),dynamic_cast<const UserAPIExpression&>(rhs));
     }
 } //end namespace iotdb
+BOOST_CLASS_EXPORT(iotdb::Predicate);
+BOOST_CLASS_EXPORT(iotdb::PredicateItem);

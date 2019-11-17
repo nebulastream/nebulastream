@@ -5,8 +5,7 @@
 
 #include <CodeGen/CodeGen.hpp>
 #include <Operators/Impl/SinkOperator.hpp>
-
-#include "../../../include/SourceSink/DataSink.hpp"
+#include <SourceSink/DataSink.hpp>
 
 namespace iotdb {
 

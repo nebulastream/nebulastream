@@ -35,8 +35,9 @@ const DataSourcePtr createTestDataSourceWithSchema(const Schema& schema) {
 
     uint64_t one;
   };
-
-  DataSourcePtr source(new GeneratorSource<Functor>(schema, 1));
+  // TODO: In the future add support for GeneratorSource serialization, for now this operator cannot be used anyways
+  //DataSourcePtr source(new GeneratorSource<Functor>(schema, 1));
+  DataSourcePtr source(new ZmqSource(schema, "", 0));
 
   return source;
 }

@@ -22,6 +22,18 @@ namespace iotdb {
 
 class SerializationTools {
  public:
+  static string ser_predicate(const PredicatePtr &predicate) {
+    std::string s;
+    {
+      namespace io = boost::iostreams;
+      io::stream<io::back_insert_device<std::string>> os(s);
+
+      boost::archive::text_oarchive archive(os);
+      archive << predicate;
+    }
+    return s;
+  }
+
   static string ser_schema(const Schema &schema) {
     std::string s;
     {
@@ -68,6 +80,17 @@ class SerializationTools {
       archive << op;
     }
     return s;
+  }
+
+  static PredicatePtr parse_predicate(const string &s) {
+    PredicatePtr pred;
+    {
+      namespace io = boost::iostreams;
+      io::stream<io::array_source> is(io::array_source{s.data(), s.size()});
+      boost::archive::text_iarchive archive(is);
+      archive >> pred;
+    }
+    return pred;
   }
 
   static Schema parse_schema(const string &s) {
