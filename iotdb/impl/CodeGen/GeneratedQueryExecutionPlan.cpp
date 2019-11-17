@@ -13,11 +13,11 @@ BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::GeneratedQueryExecutionPlan);
 #include <API/InputQuery.hpp>
 
 namespace iotdb {
-    GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan():query(), ptr() {
+    GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan():query(), pipeline_stage_ptr_() {
 
     }
     GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan(InputQuery* query, PipelineStagePtr* ptr)
-            : query(query), ptr(ptr) {
+            : query(query), pipeline_stage_ptr_(ptr) {
     }
 
 } // namespace iotdb
