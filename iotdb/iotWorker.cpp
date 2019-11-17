@@ -51,6 +51,9 @@ struct worker_state {
 // class-based, statically typed, event-based API
 class worker : public stateful_actor<worker_state> {
  public:
+  /**
+   * @brief the constructior of the worker to initialize the default objects
+   */
   explicit worker(actor_config &cfg, string ip, uint16_t publish_port, uint16_t receive_port, string sensor_type)
       : stateful_actor(
       cfg) {
@@ -88,6 +91,10 @@ class worker : public stateful_actor<worker_state> {
     };
   }
 
+  /**
+   * @brief the ongoing connection state in the TSM
+   * if connection works go to running state, otherwise go to unconnected state
+   */
   void connecting(const std::string &host, uint16_t port) {
     // make sure we are not pointing to an old server
     this->state.current_server = nullptr;
@@ -120,7 +127,9 @@ class worker : public stateful_actor<worker_state> {
     );
   }
 
-  // prototype definition for transition to `running` with Calculator
+  /**
+   * @brief the running of the worker
+   */
   behavior running(const actor &coordinator) {
     auto this_actor_ptr = actor_cast<strong_actor_ptr>(this);
     //TODO: change me
@@ -130,27 +139,35 @@ class worker : public stateful_actor<worker_state> {
     //this->request(coordinator, task_timeout, register_worker_atom::value, 2, this_actor_ptr);
 
     return {
+        // the connect RPC to connect with the coordinator
         [=](connect_atom, const std::string &host, uint16_t port) {
           connecting(host, port);
         },
+        // internal rpc to execute a query
         [=](execute_query_atom, const string &query, string &str_schema, vector<string> &str_sources,
             vector<string> &str_destinations, string &str_ops) {
           this->execute_query(query, str_schema, str_sources, str_destinations, str_ops);
         },
+        // internal rpc to unregister a query
         [=](delete_query_atom, const string &query) {
           this->delete_query(query);
         },
+        // internal rpc to execute a query
         [=](get_operators_atom) {
           return this->getOperators();
         }
     };
   }
 
+  /**
+   * @brief gets the currently locally running operators and returns them as flattened strings in a vector
+   * @return the flattend vector<string> object of operators
+   */
   vector<string> getOperators() {
     vector<string> result;
     for (auto const &x : this->state.runningQueries) {
       string str_opts;
-      vector<OperatorType> flattened = get<1>(x.second)->flattenedTypes();
+      std::set<OperatorType> flattened = get<1>(x.second)->flattenedTypes();
       for (const OperatorType &_o: flattened) {
         if (!str_opts.empty())
           str_opts.append(", ");
@@ -161,6 +178,10 @@ class worker : public stateful_actor<worker_state> {
     return result;
   }
 
+  /**
+   * @brief method which is called to unregister an already running query
+   * @param query the description of the query
+   */
   void delete_query(const string &query) {
     auto sap = actor_cast<strong_actor_ptr>(this);
     if (this->state.runningQueries.find(query) != this->state.runningQueries.end()) {
@@ -175,6 +196,14 @@ class worker : public stateful_actor<worker_state> {
     }
   }
 
+  /**
+   * @brief framework internal method which is called by the coordinator to execute a query or sub-query on a node
+   * @param query a description of the query
+   * @param str_schema the serialized schema
+   * @param str_sources the serialized sources
+   * @param str_destinations the serialized destinations
+   * @param str_ops the serialized operators
+   */
   void execute_query(const string &query, string &str_schema, vector<string> &str_sources,
                      vector<string> &str_destinations, string &str_ops) {
 
@@ -235,6 +264,9 @@ class worker : public stateful_actor<worker_state> {
 };
 }
 
+/**
+* @brief The configuration file of the worker
+*/
 class worker_config : public actor_system_config {
  public:
   std::string ip = "127.0.0.1";
@@ -253,6 +285,9 @@ class worker_config : public actor_system_config {
   }
 };
 
+/**
+* @brief main method to run the worker with an interactive console command list
+*/
 void start_worker(actor_system &system, const worker_config &cfg) {
   // keeps track of requests and tries to reconnect on server failures
   auto usage = [] {
