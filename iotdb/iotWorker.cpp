@@ -54,7 +54,7 @@ class worker : public stateful_actor<worker_state> {
   /**
    * @brief the constructior of the worker to initialize the default objects
    */
-  explicit worker(actor_config &cfg, string ip, uint16_t publish_port, uint16_t receive_port, string sensor_type)
+  explicit worker(actor_config& cfg, string ip, uint16_t publish_port, uint16_t receive_port, string sensor_type)
       : stateful_actor(
       cfg) {
     this->state.ip = std::move(ip);
@@ -73,7 +73,7 @@ class worker : public stateful_actor<worker_state> {
   // starting point of our FSM
   behavior init() {
     // transition to `unconnected` on server failure
-    this->set_down_handler([=](const down_msg &dm) {
+    this->set_down_handler([=](const down_msg& dm) {
       if (dm.source == this->state.current_server) {
         aout(this) << "*** lost connection to server" << endl;
         this->state.current_server = nullptr;
@@ -85,7 +85,7 @@ class worker : public stateful_actor<worker_state> {
 
   behavior unconnected() {
     return {
-        [=](connect_atom, const std::string &host, uint16_t port) {
+        [=](connect_atom, const std::string& host, uint16_t port) {
           connecting(host, port);
         }
     };
@@ -95,14 +95,14 @@ class worker : public stateful_actor<worker_state> {
    * @brief the ongoing connection state in the TSM
    * if connection works go to running state, otherwise go to unconnected state
    */
-  void connecting(const std::string &host, uint16_t port) {
+  void connecting(const std::string& host, uint16_t port) {
     // make sure we are not pointing to an old server
     this->state.current_server = nullptr;
     // use request().await() to suspend regular behavior until MM responded
     auto mm = this->system().middleman().actor_handle();
     this->request(mm, infinite, connect_atom::value, host, port).await(
-        [=](const node_id &, strong_actor_ptr &serv,
-            const std::set<std::string> &ifs) {
+        [=](const node_id& , strong_actor_ptr& serv,
+            const std::set<std::string>& ifs) {
           if (!serv) {
             aout(this) << R"(*** no server found at ")" << host << R"(":)"
                        << port << endl;
@@ -119,7 +119,7 @@ class worker : public stateful_actor<worker_state> {
           this->monitor(hdl);
           this->become(running(hdl));
         },
-        [=](const error &err) {
+        [=](const error& err) {
           aout(this) << R"(*** cannot connect to ")" << host << R"(":)"
                      << port << " => " << this->system().render(err) << endl;
           this->become(unconnected());
@@ -130,7 +130,7 @@ class worker : public stateful_actor<worker_state> {
   /**
    * @brief the running of the worker
    */
-  behavior running(const actor &coordinator) {
+  behavior running(const actor& coordinator) {
     auto this_actor_ptr = actor_cast<strong_actor_ptr>(this);
     //TODO: change me
     this->request(coordinator, task_timeout, register_sensor_atom::value, this->state.ip,
@@ -140,16 +140,16 @@ class worker : public stateful_actor<worker_state> {
 
     return {
         // the connect RPC to connect with the coordinator
-        [=](connect_atom, const std::string &host, uint16_t port) {
+        [=](connect_atom, const std::string& host, uint16_t port) {
           connecting(host, port);
         },
         // internal rpc to execute a query
-        [=](execute_query_atom, const string &query, string &str_schema, vector<string> &str_sources,
-            vector<string> &str_destinations, string &str_ops) {
+        [=](execute_query_atom, const string& query, string& str_schema, vector<string>& str_sources,
+            vector<string>& str_destinations, string& str_ops) {
           this->execute_query(query, str_schema, str_sources, str_destinations, str_ops);
         },
         // internal rpc to unregister a query
-        [=](delete_query_atom, const string &query) {
+        [=](delete_query_atom, const string& query) {
           this->delete_query(query);
         },
         // internal rpc to execute a query
@@ -165,10 +165,10 @@ class worker : public stateful_actor<worker_state> {
    */
   vector<string> getOperators() {
     vector<string> result;
-    for (auto const &x : this->state.runningQueries) {
+    for (auto const& x : this->state.runningQueries) {
       string str_opts;
       std::set<OperatorType> flattened = get<1>(x.second)->flattenedTypes();
-      for (const OperatorType &_o: flattened) {
+      for (const OperatorType& _o: flattened) {
         if (!str_opts.empty())
           str_opts.append(", ");
         str_opts.append(operatorTypeToString.at(_o));
@@ -182,7 +182,7 @@ class worker : public stateful_actor<worker_state> {
    * @brief method which is called to unregister an already running query
    * @param query the description of the query
    */
-  void delete_query(const string &query) {
+  void delete_query(const string& query) {
     auto sap = actor_cast<strong_actor_ptr>(this);
     if (this->state.runningQueries.find(query) != this->state.runningQueries.end()) {
       QueryExecutionPlanPtr qep = get<0>(this->state.runningQueries.at(query));
@@ -204,8 +204,8 @@ class worker : public stateful_actor<worker_state> {
    * @param str_destinations the serialized destinations
    * @param str_ops the serialized operators
    */
-  void execute_query(const string &query, string &str_schema, vector<string> &str_sources,
-                     vector<string> &str_destinations, string &str_ops) {
+  void execute_query(const string& query, string& str_schema, vector<string>& str_sources,
+                     vector<string>& str_destinations, string& str_ops) {
 
     if (this->state.runningQueries.find(query) == this->state.runningQueries.end()) {
       aout(this) << "*** Executing query " << query << endl;
@@ -288,7 +288,7 @@ class worker_config : public actor_system_config {
 /**
 * @brief main method to run the worker with an interactive console command list
 */
-void start_worker(actor_system &system, const worker_config &cfg) {
+void start_worker(actor_system& system, const worker_config& cfg) {
   // keeps track of requests and tries to reconnect on server failures
   auto usage = [] {
     cout << "Usage:" << endl
@@ -323,17 +323,17 @@ void start_worker(actor_system &system, const worker_config &cfg) {
 
   // defining the handler outside the loop is more efficient as it avoids
   // re-creating the same object over and over again
-  message_handler eval{
-      [&](const string &cmd) {
+  message_handler eval(
+      [&](const string& cmd) {
         if (cmd != "quit")
           return;
         anon_send_exit(client, exit_reason::user_shutdown);
         done = true;
       },
-      [&](string &arg0, string &arg1, string &arg2) {
+      [&](string& arg0, string& arg1, string& arg2) {
         if (arg0 == "connect") {
           char *end = nullptr;
-          auto lport = strtoul(arg2.c_str(), &end, 10);
+          auto lport = strtoul(arg2.c_str(),& end, 10);
           if (end != arg2.c_str() + arg2.size())
             cout << R"(")" << arg2 << R"(" is not an unsigned integer)" << endl;
           else if (lport > std::numeric_limits<uint16_t>::max())
@@ -344,7 +344,7 @@ void start_worker(actor_system &system, const worker_config &cfg) {
                       static_cast<uint16_t>(lport));
         }
       }
-  };
+  );
   // read next line, split it, and feed to the eval handler
   string line;
   while (!done && std::getline(std::cin, line)) {
@@ -374,7 +374,7 @@ void setupLogging() {
   iotdb::logger->addAppender(console);
 }
 
-void caf_main(actor_system &system, const worker_config &cfg) {
+void caf_main(actor_system& system, const worker_config& cfg) {
   log4cxx::Logger::getLogger("IOTDB")->setLevel(log4cxx::Level::getDebug());
   setupLogging();
   start_worker(system, cfg);
