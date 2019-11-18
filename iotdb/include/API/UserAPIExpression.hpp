@@ -53,6 +53,7 @@ class UserAPIExpression {
   virtual const ExpressionStatmentPtr generateCode(GeneratedCode &code) const = 0;
   virtual const std::string toString() const = 0;
   virtual UserAPIExpressionPtr copy() const = 0;
+  virtual bool equals(const UserAPIExpression &rhs) const = 0;
  private:
   friend class boost::serialization::access;
 
@@ -76,6 +77,7 @@ class Predicate : public UserAPIExpression {
   virtual const ExpressionStatmentPtr generateCode(GeneratedCode &code) const override;
   virtual const std::string toString() const override;
   virtual UserAPIExpressionPtr copy() const override;
+  bool equals(const UserAPIExpression &rhs) const override;
  private:
   Predicate() = default;
   BinaryOperatorType _op;
@@ -119,6 +121,8 @@ class PredicateItem : public UserAPIExpression {
   virtual const ExpressionStatmentPtr generateCode(GeneratedCode &code) const override;
   virtual const std::string toString() const override;
   virtual UserAPIExpressionPtr copy() const override;
+
+  bool equals(const UserAPIExpression &rhs) const override;
 
   const bool isStringType() const;
   const DataTypePtr getDataTypePtr() const;

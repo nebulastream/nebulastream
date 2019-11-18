@@ -4,8 +4,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-
-#include "../CodeGen/DataTypes.hpp"
+#include <CodeGen/DataTypes.hpp>
 
 namespace iotdb {
 
@@ -34,6 +33,19 @@ class Schema {
   const std::string toString() const;
 
   std::vector<AttributeFieldPtr> fields;
+
+  bool operator==(const Schema &rhs) const {
+    if (fields.size() == rhs.fields.size()) {
+      for (std::vector<int>::size_type i = 0; i != fields.size(); i++) {
+        fields[i];
+        if (!(*fields[i].get() == *rhs.fields[i].get())) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
+  }
 
   template<class Archive>
   void serialize(Archive &ar, const unsigned int version) {

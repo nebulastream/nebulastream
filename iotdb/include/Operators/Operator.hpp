@@ -73,6 +73,7 @@ class Operator {
   virtual void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream &out) = 0;
   virtual const std::string toString() const = 0;
   virtual OperatorType getOperatorType() const = 0;
+  virtual bool equals(const Operator &_rhs);
 
   int getOperatorId() { return this->operatorId; };
   void setOperatorId(int operatorId) { this->operatorId = operatorId; };

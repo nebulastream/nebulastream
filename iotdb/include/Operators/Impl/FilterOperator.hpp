@@ -22,6 +22,7 @@ class FilterOperator : public Operator {
   const OperatorPtr copy() const override;
   const std::string toString() const override;
   OperatorType getOperatorType() const override;
+  virtual bool equals(const Operator &_rhs) override;
   ~FilterOperator() override;
 
  private:
