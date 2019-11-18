@@ -70,6 +70,7 @@ class DataType {
   virtual const CodeExpressionPtr getTypeDefinitionCode() const = 0;
   virtual const DataTypePtr copy() const = 0;
   virtual ~DataType();
+  virtual bool operator==(const DataType &rhs) const = 0;
  protected:
   DataType() = default;
   DataType(const DataType &);
@@ -88,6 +89,7 @@ class ValueType {
   virtual const CodeExpressionPtr getCodeExpression() const = 0;
   virtual const ValueTypePtr copy() const = 0;
   virtual const bool isArrayValueType() const = 0;
+  virtual bool operator==(const ValueType &rhs) const = 0;
   virtual ~ValueType();
  protected:
   ValueType() = default;
@@ -125,6 +127,12 @@ class AttributeField {
   //protected:
   AttributeField(const AttributeField &);
   AttributeField &operator=(const AttributeField &);
+
+  bool operator==(const AttributeField &rhs) const {
+    return name == rhs.name &&
+        *data_type.get() == *rhs.data_type.get();
+  }
+
  private:
   friend class boost::serialization::access;
 

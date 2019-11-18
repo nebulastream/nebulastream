@@ -21,6 +21,11 @@ std::set<OperatorType> Operator::flattenedTypes() {
   }
   return result;
 }
+bool Operator::equals(const Operator &_rhs) {
+  //TODO: change equals method to virtual bool equals(const Operator &_rhs) = 0;
+  assert(0);
+  return false;
+}
 
 // class Scan : public Operator {
 // public:

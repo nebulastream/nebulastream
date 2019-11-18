@@ -33,8 +33,7 @@ class SerializationToolsTest : public testing::Test {
 TEST_F(SerializationToolsTest, serialize_deserialize_schema) {
   string sschema = SerializationTools::ser_schema(schema);
   Schema dschema = SerializationTools::parse_schema(sschema);
-
-  EXPECT_TRUE(!sschema.empty());
+  EXPECT_EQ(schema, dschema);
 }
 
 /* Test serialization for predicate  */
@@ -42,21 +41,21 @@ TEST_F(SerializationToolsTest, serialize_deserialize_predicate) {
   PredicatePtr pred = createPredicate(stream["value"] > 42);
   string serPred = SerializationTools::ser_predicate(pred);
   PredicatePtr deserPred = SerializationTools::parse_predicate(serPred);
-  EXPECT_TRUE(!serPred.empty());
+  EXPECT_TRUE(pred->equals(*deserPred.get()));
 }
 
 /* Test serialization for predicate  */
 TEST_F(SerializationToolsTest, serialize_deserialize_filter_op) {
   PredicatePtr pred = createPredicate(stream["value"] > 42);
   OperatorPtr op = createFilterOperator(pred);
-
   string serOp = SerializationTools::ser_operator(op);
   OperatorPtr deserOp = SerializationTools::parse_operator(serOp);
-  EXPECT_TRUE(!serOp.empty());
+  EXPECT_TRUE(op->equals(*op.get()));
 }
 
 /* Test serialization for predicate  */
 TEST_F(SerializationToolsTest, serialize_deserialize_source_op) {
+  //TODO: implement equals method for SourceOperator
   OperatorPtr op = createSourceOperator(createTestDataSourceWithSchema(stream.getSchema()));
   string serOp = SerializationTools::ser_operator(op);
   OperatorPtr deserOp = SerializationTools::parse_operator(serOp);
@@ -74,6 +73,7 @@ TEST_F(SerializationToolsTest, serialize_deserialize_sink_op) {
 
 /* Test serialization for operators  */
 TEST_F(SerializationToolsTest, serialize_deserialize_query_operators) {
+  //TODO: implement equals method for all operators
   InputQuery &query = InputQuery::from(stream)
       .filter(stream["value"] > 42)
       .print(std::cout);
@@ -81,25 +81,24 @@ TEST_F(SerializationToolsTest, serialize_deserialize_query_operators) {
   OperatorPtr queryOp = query.getRoot();
   string serOp = SerializationTools::ser_operator(queryOp);
   OperatorPtr deserOp = SerializationTools::parse_operator(serOp);
-
   EXPECT_TRUE(!serOp.empty());
 }
 
 /* Test serialization for zmqSource  */
 TEST_F(SerializationToolsTest, serialize_deserialize_zmqSource) {
+  //TODO: implement equals method for DataSources
   DataSourcePtr zmqSource = createZmqSource(schema, "", 0);
   string serSource = SerializationTools::ser_source(zmqSource);
   DataSourcePtr deserZmq = SerializationTools::parse_source(serSource);
-
   EXPECT_TRUE(!serSource.empty());
 }
 
 /* Test serialization for zmqSink  */
 TEST_F(SerializationToolsTest, serialize_deserialize_zmqSink) {
+  //TODO: implement equals method for DataSinks
   DataSinkPtr zmqSink = createZmqSink(schema, "", 0);
   string serSink = SerializationTools::ser_sink(zmqSink);
   DataSinkPtr deserZmq = SerializationTools::parse_sink(serSink);
-
   EXPECT_TRUE(!serSink.empty());
 }
 

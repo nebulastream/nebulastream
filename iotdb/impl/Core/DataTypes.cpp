@@ -114,8 +114,9 @@ ValueType::~ValueType() {}
 class BasicValueType : public ValueType {
  public:
   BasicValueType() = default;
+  ~BasicValueType() override = default;
 
-  BasicValueType(const BasicType &type, const std::string &value) : type_(type), value_(value) {};
+  BasicValueType(const BasicType &type, std::string value) : type_(type), value_(std::move(value)) {};
 
   const DataTypePtr getType() const override { return createDataType(type_); }
 
@@ -127,7 +128,10 @@ class BasicValueType : public ValueType {
 
   const bool isArrayValueType() const override { return false; }
 
-  ~BasicValueType() override;
+  bool operator==(const ValueType &_rhs) const override {
+    auto rhs = dynamic_cast<const iotdb::BasicValueType &>(_rhs);
+    return type_ == rhs.type_ && value_ == rhs.value_;
+  }
 
  private:
   BasicType type_;
@@ -142,8 +146,6 @@ class BasicValueType : public ValueType {
         & BOOST_SERIALIZATION_NVP(value_);
   }
 };
-
-BasicValueType::~BasicValueType() {}
 
 class BasicDataType : public DataType {
  public:
@@ -279,7 +281,10 @@ class BasicDataType : public DataType {
     return std::make_shared<BasicDataType>(*this);
   }
 
-  ~BasicDataType() override;
+  bool operator==(const DataType &_rhs) const override {
+    auto rhs = dynamic_cast<const iotdb::BasicDataType &>(_rhs);
+    return type == rhs.type && dataSize == rhs.dataSize;
+  }
 
  private:
   BasicType type;
@@ -295,11 +300,10 @@ class BasicDataType : public DataType {
   }
 };
 
-BasicDataType::~BasicDataType() {}
-
 class PointerDataType : public DataType {
  public:
   PointerDataType() = default;
+  ~PointerDataType() override = default;
   PointerDataType(const DataTypePtr &type) : DataType(), base_type_(type) {}
   ValueTypePtr getDefaultInitValue() const override { return ValueTypePtr(); }
 
@@ -348,7 +352,10 @@ class PointerDataType : public DataType {
     return std::make_shared<PointerDataType>(*this);
   }
 
-  virtual ~PointerDataType() override;
+  bool operator==(const DataType &_rhs) const override {
+    auto rhs = dynamic_cast<const iotdb::PointerDataType &>(_rhs);
+    return base_type_ == rhs.base_type_;
+  }
 
  private:
   DataTypePtr base_type_;
@@ -361,8 +368,6 @@ class PointerDataType : public DataType {
         & BOOST_SERIALIZATION_NVP(base_type_);
   }
 };
-
-PointerDataType::~PointerDataType() {}
 
 const DataTypePtr createDataType(const BasicType &type) {
   DataTypePtr ptr = std::make_shared<BasicDataType>(type);
@@ -470,6 +475,12 @@ class ArrayDataType : public DataType {
 
   const DataTypePtr copy() const override { return std::make_shared<ArrayDataType>(*this); }
   virtual ~ArrayDataType() override;
+
+  bool operator==(const DataType &_rhs) const override {
+    auto rhs = dynamic_cast<const iotdb::ArrayDataType &>(_rhs);
+    return _data == rhs._data && _dimension == rhs._dimension;
+  }
+
  private:
   DataTypePtr _data;
   u_int32_t _dimension;
@@ -526,6 +537,19 @@ class ArrayValueType : public ValueType {
   const bool isArrayValueType() const override { return true; }
 
   virtual ~ArrayValueType() override;
+
+  bool operator==(const ArrayValueType &rhs) const {
+    return static_cast<const iotdb::ValueType &>(*this) == static_cast<const iotdb::ValueType &>(rhs) &&
+        type_ == rhs.type_ &&
+        isString_ == rhs.isString_ &&
+        value_ == rhs.value_;
+  }
+
+  bool operator==(const ValueType &rhs) const override {
+    return type_ == dynamic_cast<const iotdb::ArrayValueType &>(rhs).type_ &&
+        isString_ == dynamic_cast<const iotdb::ArrayValueType &>(rhs).isString_ &&
+        value_ == dynamic_cast<const iotdb::ArrayValueType &>(rhs).value_;
+  }
 
  private:
   ArrayDataTypePtr type_;

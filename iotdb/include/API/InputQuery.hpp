@@ -8,7 +8,7 @@
 #include <API/Window/WindowDefinition.hpp>
 #include <iostream>
 #include <string>
-#include "../SourceSink/DataSource.hpp"
+#include <SourceSink/DataSource.hpp>
 
 namespace iotdb {
 
