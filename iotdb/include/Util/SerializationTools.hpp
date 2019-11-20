@@ -6,7 +6,8 @@
 #define IOTDB_SERIALIZATIONTOOLS_HPP
 
 #include <string>
-#include <CodeGen/CodeGen.hpp>
+#include <Actors/ExecutableTransferObject.hpp>
+
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
 #include <boost/iostreams/stream.hpp>
@@ -19,6 +20,7 @@
 using std::string;
 
 namespace iotdb {
+
 /**\brief:
  * Here are the methods which are used for boost serialization
  */
@@ -110,6 +112,23 @@ class SerializationTools {
   }
 
   /**
+   * @brief converts an ExecutableTransferObject into a serialized Boost string
+   * @param ExecutableTransferObject to be serialized
+   * @return the string serialized object
+   */
+  static string ser_eto(const ExecutableTransferObject &eto) {
+    std::string s;
+    {
+      namespace io = boost::iostreams;
+      io::stream<io::back_insert_device<std::string>> os(s);
+
+      boost::archive::text_oarchive archive(os);
+      archive << eto;
+    }
+    return s;
+  }
+
+  /**
    * @brief parses Boost string serialized Predicate into an PredicatePtr object
    * @param string boost serialized string object
    * @return the deserialized object
@@ -187,6 +206,22 @@ class SerializationTools {
       archive >> op;
     }
     return op;
+  }
+
+  /**
+   * @brief parses Boost string serialized ExecutableTransferObject
+   * @param string boost serialized string object
+   * @return the deserialized object
+   */
+  static ExecutableTransferObject parse_eto(const string &s) {
+    ExecutableTransferObject eto;
+    {
+      namespace io = boost::iostreams;
+      io::stream<io::array_source> is(io::array_source{s.data(), s.size()});
+      boost::archive::text_iarchive archive(is);
+      archive >> eto;
+    }
+    return eto;
   }
 
 };

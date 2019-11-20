@@ -3,6 +3,7 @@
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <SourceSink/PrintSink.hpp>
+#include <Actors/ExecutableTransferObject.hpp>
 
 using namespace iotdb;
 
@@ -44,7 +45,6 @@ TEST_F(SerializationToolsTest, serialize_deserialize_predicate) {
   EXPECT_TRUE(pred->equals(*deserPred.get()));
 }
 
-/* Test serialization for predicate  */
 TEST_F(SerializationToolsTest, serialize_deserialize_filter_op) {
   PredicatePtr pred = createPredicate(stream["value"] > 42);
   OperatorPtr op = createFilterOperator(pred);
@@ -53,7 +53,6 @@ TEST_F(SerializationToolsTest, serialize_deserialize_filter_op) {
   EXPECT_TRUE(op->equals(*op.get()));
 }
 
-/* Test serialization for predicate  */
 TEST_F(SerializationToolsTest, serialize_deserialize_source_op) {
   //TODO: implement equals method for SourceOperator
   OperatorPtr op = createSourceOperator(createTestDataSourceWithSchema(stream.getSchema()));
@@ -62,7 +61,6 @@ TEST_F(SerializationToolsTest, serialize_deserialize_source_op) {
   EXPECT_TRUE(!serOp.empty());
 }
 
-/* Test serialization for predicate  */
 TEST_F(SerializationToolsTest, serialize_deserialize_sink_op) {
   OperatorPtr op = createSinkOperator(createPrintSinkWithoutSchema(std::cout));
   string serOp = SerializationTools::ser_operator(op);
@@ -102,10 +100,47 @@ TEST_F(SerializationToolsTest, serialize_deserialize_zmqSink) {
   EXPECT_TRUE(!serSink.empty());
 }
 
-/* Test serialization for zmqSink  */
+/* Test serialization for zmqSourceOperator  */
+TEST_F(SerializationToolsTest, serialize_deserialize_zmqSourceOperator) {
+  //TODO: implement equals method for DataSources
+  OperatorPtr zmqOp = createSourceOperator(createZmqSource(schema, "", 0));
+  string serOp = SerializationTools::ser_operator(zmqOp);
+  OperatorPtr deserOp = SerializationTools::parse_operator(serOp);
+  EXPECT_TRUE(!serOp.empty());
+}
+
+/* Test serialization for zmqSink Operator  */
+TEST_F(SerializationToolsTest, serialize_deserialize_zmqSinkOperator) {
+  //TODO: implement equals method for DataSinks
+  OperatorPtr zmqOp = createSinkOperator(createZmqSink(schema, "", 0));
+  string serOp = SerializationTools::ser_operator(zmqOp);
+  OperatorPtr deserOp = SerializationTools::parse_operator(serOp);
+  EXPECT_TRUE(!serOp.empty());
+}
+
+/* Test serialization for printSink  */
 TEST_F(SerializationToolsTest, serialize_deserialize_printSink) {
   DataSinkPtr sink = std::make_shared<PrintSink>(std::cout);
   string serSink = SerializationTools::ser_sink(sink);
   DataSinkPtr deserZmq = SerializationTools::parse_sink(serSink);
   EXPECT_TRUE(!serSink.empty());
+}
+
+/* Test serialization for printSink  */
+TEST_F(SerializationToolsTest, serialize_deserialize_executabletransferobject) {
+  InputQuery &query = InputQuery::from(stream)
+      .filter(stream["value"] > 42)
+      .print(std::cout);
+  OperatorPtr op = query.getRoot();
+
+  DataSourcePtr zmqSource = createZmqSource(schema, "test", 4711);
+  DataSinkPtr sink = std::make_shared<PrintSink>(std::cout);
+  vector<DataSourcePtr> sources{zmqSource};
+  vector<DataSinkPtr> destinations{sink};
+
+  ExecutableTransferObject eto = ExecutableTransferObject("example-desc", schema, sources, destinations, op);
+
+  string serEto = SerializationTools::ser_eto(eto);
+  ExecutableTransferObject deserEto = SerializationTools::parse_eto(serEto);
+  EXPECT_TRUE(!serEto.empty());
 }
