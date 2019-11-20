@@ -26,10 +26,9 @@ ZmqSink::ZmqSink()
       tupleCnt(0),
       connected(false),
       context(zmq::context_t(1)),
-      socket(zmq::socket_t(context, ZMQ_PUB)) {
+      socket(zmq::socket_t(context, ZMQ_PUSH)) {
   IOTDB_DEBUG(
       "DEFAULT ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port)
-
 }
 
 ZmqSink::ZmqSink(const Schema &schema, const std::string &host,
@@ -40,7 +39,7 @@ ZmqSink::ZmqSink(const Schema &schema, const std::string &host,
       tupleCnt(0),
       connected(false),
       context(zmq::context_t(1)),
-      socket(zmq::socket_t(context, ZMQ_PUB)) {
+      socket(zmq::socket_t(context, ZMQ_PUSH)) {
   IOTDB_DEBUG(
       "ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port)
 
@@ -102,47 +101,45 @@ const std::string ZmqSink::toString() const {
 
 bool ZmqSink::connect() {
   if (!connected) {
-    IOTDB_DEBUG(
-        "ZMQSINK  " << this << ": not connected yet, try to connect")
-    int linger = 0;
-    auto address = std::string("tcp://") + host + std::string(":")
-        + std::to_string(port);
+    auto address = std::string("tcp://") + host + std::string(":") + std::to_string(port);
 
     try {
-      socket.bind(address.c_str());
-      socket.setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
+      socket.connect(address.c_str());
       connected = true;
-      IOTDB_DEBUG("ZMQSINK  " << this << ": connected")
-    } catch (...) {
-      connected = false;
-      IOTDB_DEBUG("ZMQSINK  " << this << ": NOT connected")
     }
-  } else {
-    IOTDB_DEBUG("ZMQSINK  " << this << ": already connected")
+    catch (...) {
+      connected = false;
+    }
   }
-
+  if (connected) {
+    IOTDB_DEBUG("ZMQSINK  " << this << ": connected")
+  } else {
+    IOTDB_DEBUG("ZMQSINK  " << this << ": NOT connected")
+  }
   return connected;
 }
 
 bool ZmqSink::disconnect() {
   if (connected) {
-    IOTDB_DEBUG(
-        "ZMQSINK  " << this << ": not disconnected yet, try to disconnect")
 
     try {
       socket.close();
       connected = false;
-      IOTDB_DEBUG("ZMQSINK  " << this << ": disconnected")
-
-    } catch (...) {
-      connected = true;
-      IOTDB_DEBUG("ZMQSINK  " << this << ": NOT disconnected")
     }
-  } else {
-    IOTDB_DEBUG("ZMQSINK  " << this << ": is not connected")
+    catch (...) {
+      connected = true;
+    }
   }
-
+  if (!connected) {
+    IOTDB_DEBUG("ZMQSINK  " << this << ": disconnected")
+  } else {
+    IOTDB_DEBUG("ZMQSINK  " << this << ": NOT disconnected")
+  }
   return !connected;
+}
+
+int ZmqSink::getPort() {
+  return this->port;
 }
 
 }  // namespace iotdb

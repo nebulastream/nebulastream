@@ -1,28 +1,10 @@
 #include <iostream>
-#include <SourceSink/DataSink.hpp>
-#include <SourceSink/DataSource.hpp>
-#include <Network/atom_utils.hpp>
-#include <Util/SerializationTools.hpp>
-#include <NodeEngine/NodeEngine.hpp>
-#include <SourceSink/SinkCreator.hpp>
-#include <SourceSink/SourceCreator.hpp>
-
-#include <CodeGen/GeneratedQueryExecutionPlan.hpp>
-
-#include <API/InputQuery.hpp>
-#include <API/UserAPIExpression.hpp>
-
-#include <CodeGen/C_CodeGen/CodeCompiler.hpp>
-#include <Util/ErrorHandling.hpp>
-#include <CodeGen/CodeGen.hpp>
-#include <Operators/Impl/SourceOperator.hpp>
+#include <Actors/atom_utils.hpp>
+#include <Actors/NesCoordinator.hpp>
 #include <Util/UtilityFunctions.hpp>
 
 #include <string>
-#include <Topology/FogTopologyManager.hpp>
-#include <Optimizer/FogOptimizer.hpp>
 #include <utility>
-#include <stdint.h>
 
 #include "caf/all.hpp"
 #include "caf/io/all.hpp"
@@ -41,20 +23,12 @@ constexpr auto task_timeout = std::chrono::seconds(10);
 
 // class-based, statically typed, event-based API for the state management in CAF
 struct coordinator_state {
-  string ip;
-  uint16_t publish_port;
-  uint16_t receive_port;
-  FogTopologyEntryPtr _thisEntry;
-
-  NodeEngine *enginePtr;
-
+  std::shared_ptr<NesCoordinator> coordinatorPtr;
   unordered_map<strong_actor_ptr, FogTopologyEntryPtr> actorTopologyMap;
   unordered_map<FogTopologyEntryPtr, strong_actor_ptr> topologyActorMap;
-  unordered_map<string, int> queryToPort;
 
-  shared_ptr<FogTopologyManager> topologyManagerPtr;
-  unordered_map<string, tuple<Schema, FogExecutionPlan>> registeredQueries;
-  unordered_map<string, tuple<Schema, FogExecutionPlan, QueryExecutionPlanPtr>> runningQueries;
+  NodeEngine *enginePtr;
+  unordered_map<string, QueryExecutionPlanPtr> deployedQueries;
 };
 
 /**
@@ -67,21 +41,11 @@ class coordinator : public stateful_actor<coordinator_state> {
    */
   explicit coordinator(actor_config &cfg, string ip, uint16_t publish_port, uint16_t receive_port)
       : stateful_actor(cfg) {
-    this->state.ip = ip;
-    this->state.publish_port = publish_port;
-    this->state.receive_port = receive_port;
+    this->state.coordinatorPtr = std::make_shared<NesCoordinator>(NesCoordinator(ip, publish_port, receive_port));
 
-    this->state.topologyManagerPtr->getInstance().resetFogTopologyPlan();
-    FogTopologyCoordinatorNodePtr coordinatorNode =
-        this->state.topologyManagerPtr->getInstance().createFogCoordinatorNode(ip, CPUCapacity::HIGH);
-    coordinatorNode->setPublishPort(publish_port);
-    coordinatorNode->setReceivePort(receive_port);
-    this->state._thisEntry = coordinatorNode;
+    this->state.actorTopologyMap.insert({this->address().get(), this->state.coordinatorPtr->getThisEntry()});
+    this->state.topologyActorMap.insert({this->state.coordinatorPtr->getThisEntry(), this->address().get()});
 
-    this->state.actorTopologyMap.insert({this->address().get(), coordinatorNode});
-    this->state.topologyActorMap.insert({coordinatorNode, this->address().get()});
-
-    this->state.enginePtr = new NodeEngine();
     this->state.enginePtr->start();
   }
 
@@ -98,7 +62,7 @@ class coordinator : public stateful_actor<coordinator_state> {
       auto hdl = actor_cast<actor>(key);
       if (this->state.actorTopologyMap.find(key) != this->state.actorTopologyMap.end()) {
         // remove disconnected worker from topology
-        this->state.topologyManagerPtr->getInstance().removeFogNode(this->state.actorTopologyMap.at(key));
+        this->state.coordinatorPtr->deregister_sensor(this->state.actorTopologyMap.at(key));
         this->state.topologyActorMap.erase(this->state.actorTopologyMap.at(key));
         this->state.actorTopologyMap.erase(key);
         aout(this) << "*** lost connection to worker " << key << endl;
@@ -111,56 +75,49 @@ class coordinator : public stateful_actor<coordinator_state> {
   behavior running() {
     return {
         // framework internal rpcs
-        [=](register_worker_atom, string &ip, uint16_t publish_port, uint16_t receive_port, int cpu,
-            const strong_actor_ptr &sap) {
-          // rpc to register worker
-          this->register_worker(ip, publish_port, receive_port, cpu, sap);
-        },
         [=](register_sensor_atom, string &ip, uint16_t publish_port, uint16_t receive_port, int cpu,
             const string &sensor_type, const strong_actor_ptr &sap) {
           // rpc to register sensor
           this->register_sensor(ip, publish_port, receive_port, cpu, sensor_type, sap);
         },
-        [=](register_query_atom, const string &query_string, const string &sensor_type,
-            const string &optimizationStrategyName) {
+        [=](register_query_atom, const string &description, const string &sensor_type, const string &strategy) {
           // rpc to register queries
-          this->register_query(query_string, sensor_type, optimizationStrategyName);
+          this->state.coordinatorPtr->register_query(description, sensor_type, strategy);
         },
-        [=](deploy_query_atom, const string &query_desc, const string &sensor_type) {
+        [=](deploy_query_atom, const string &description) {
           // rpc to deploy queries to all corresponding actors
-          this->deploy_query(query_desc, sensor_type);
+          this->deploy_query(description);
         },
-        [=](delete_query_atom, const string &query_desc, const string &sensor_type) {
+        [=](delete_query_atom, const string &description) {
           // rpc to unregister a registered query
-          this->delete_query(query_desc, sensor_type);
+          this->delete_query(description);
         },
-        [=](execute_query_atom, const string &query, string &str_schema, vector<string> &str_sources,
-            vector<string> &str_destinations, string &str_ops) {
+        [=](execute_query_atom, const string &description, string &executableTransferObject) {
           // internal rpc to execute a query
-          this->execute_query(query, str_schema, str_sources, str_destinations, str_ops);
+          this->execute_query(description, executableTransferObject);
         },
         [=](get_operators_atom) {
           // internal rpc to return currently running operators on this node
-          return this->getOperators();
+          return this->state.coordinatorPtr->getOperators();
         },
         // external methods for users
         [=](topology_json_atom) {
           // print the topology
-          string topo = this->state.topologyManagerPtr->getInstance().getTopologyPlanString();
+          string topo = this->state.coordinatorPtr->getTopologyPlanString();
           aout(this) << "Printing Topology" << endl;
           aout(this) << topo << endl;
         },
         [=](show_registered_atom) {
           // print registered queries
           aout(this) << "Printing Registered Queries" << endl;
-          for (const auto &p : this->state.registeredQueries) {
+          for (const auto &p : this->state.coordinatorPtr->getRegisteredQueries()) {
             aout(this) << p.first << endl;
           }
         },
         [=](show_running_atom) {
           // print running queries
           aout(this) << "Printing Running Queries" << endl;
-          for (const auto &p : this->state.runningQueries) {
+          for (const auto &p : this->state.coordinatorPtr->getRunningQueries()) {
             aout(this) << p.first << endl;
           }
         },
@@ -172,94 +129,74 @@ class coordinator : public stateful_actor<coordinator_state> {
     };
   }
 
-  /**
-   * @brief registers a CAF worker into the NES topology and creates a corresponding FogTopologyWorkerNode object
-   * @param ip the worker ip
-   * @param publish_port the publish port of the worker
-   * @param receive_port the receive port of the worker
-   * @param cpu the cpu capacity of the worker
-   * @param sap the strong_actor_pointer CAF object to the worker
-   */
-  void register_worker(const string &ip, uint16_t publish_port, uint16_t receive_port, int cpu,
-                       const strong_actor_ptr &sap) {
-    auto hdl = actor_cast<actor>(sap);
-    FogTopologyManager &topologyManager = this->state.topologyManagerPtr->getInstance();
-    FogTopologyWorkerNodePtr workerNode = topologyManager.createFogWorkerNode(ip, CPUCapacity::Value(cpu));
-    workerNode->setPublishPort(publish_port);
-    workerNode->setReceivePort(receive_port);
-
-    topologyManager.createFogTopologyLink(workerNode, this->state.actorTopologyMap.at(this->address().get()));
-    this->state.actorTopologyMap.insert({sap, workerNode});
-    this->state.topologyActorMap.insert({workerNode, sap});
-    this->monitor(hdl);
-    aout(this) << "*** successfully registered worker (CPU=" << cpu << ") " << to_string(hdl) << endl;
-  }
-
-  /**
-   * @brief registers a CAF worker into the NES topology and creates a corresponding FogTopologyWorkerNode object
-   * @param ip the worker ip
-   * @param publish_port the publish port of the worker
-   * @param receive_port the receive port of the worker
-   * @param cpu the cpu capacity of the worker
-   * @param sensor_type the sensor type which is beeing later on registered as a Stream object
-   * @param sap the strong_actor_pointer CAF object to the worker
-   */
   void register_sensor(const string &ip, uint16_t publish_port, uint16_t receive_port, int cpu,
                        const string &sensor_type, const strong_actor_ptr &sap) {
     auto hdl = actor_cast<actor>(sap);
-    FogTopologyManager &topologyManager = this->state.topologyManagerPtr->getInstance();
-    FogTopologySensorNodePtr sensorNode = topologyManager.createFogSensorNode("ip", CPUCapacity::Value(cpu));
-    sensorNode->setSensorType(sensor_type);
-    sensorNode->setIp(ip);
-    sensorNode->setPublishPort(publish_port);
-    sensorNode->setReceivePort(receive_port);
+    FogTopologyEntryPtr
+        sensorNode = this->state.coordinatorPtr->register_sensor(ip, publish_port, receive_port, cpu, sensor_type);
 
-    topologyManager.createFogTopologyLink(sensorNode, this->state.actorTopologyMap.at(this->address().get()));
     this->state.actorTopologyMap.insert({sap, sensorNode});
     this->state.topologyActorMap.insert({sensorNode, sap});
     this->monitor(hdl);
     aout(this) << "*** successfully registered sensor (CPU=" << cpu << ", Type: "
-               << sensorNode->getSensorType() << ") "
+               << sensor_type << ") "
                << to_string(hdl) << endl;
   }
 
-  /**
-   * @brief gets the currently locally running operators and returns them as flattened strings in a vector
-   * @return the flattend vector<string> object of operators
-   */
-  vector<string> getOperators() {
-    vector<string> result;
-    for (auto const &x : this->state.runningQueries) {
-      // iterate through all running queries and get operators
-      string str_opts;
-      tuple<Schema, FogExecutionPlan, QueryExecutionPlanPtr> elements = x.second;
+  void deploy_query(const string &description) {
+    unordered_map<FogTopologyEntryPtr, ExecutableTransferObject>
+        deployments = this->state.coordinatorPtr->make_deployment(description);
 
-      OperatorPtr operators;
-      // find operators of coordinator in execution graph
-      for (const ExecutionVertex &v: get<1>(elements).getExecutionGraph()->getAllVertex()) {
-        if (v.ptr->getFogNode() == this->state._thisEntry) {
-          operators = v.ptr->getRootOperator();
-          break;
-        }
-      }
+    for (auto const &x : deployments) {
+      strong_actor_ptr sap = this->state.topologyActorMap.at(x.first);
+      auto hdl = actor_cast<actor>(sap);
+      string s_eto = SerializationTools::ser_eto(x.second);
 
-      if (operators) {
-        // if has operators convert them to a flattened string list and return
-        set<OperatorType> flattened = operators->flattenedTypes();
-        for (const OperatorType &_o: flattened) {
-          if (!str_opts.empty())
-            str_opts.append(", ");
-          str_opts.append(operatorTypeToString.at(_o));
-        }
-        result.emplace_back(x.first + "->" + str_opts);
-      }
+      this->request(hdl, task_timeout, execute_query_atom::value, description, s_eto);
     }
-    return result;
   }
 
   /**
-   * @brief send messages to all connected devices and get their operators
+   * @brief framework internal method which is called by the coordinator to execute a query or sub-query on a node
+   * @param query a description of the query
+   * @param str_schema the serialized schema
+   * @param str_sources the serialized sources
+   * @param str_destinations the serialized destinations
+   * @param str_ops the serialized operators
    */
+  void execute_query(const string &description, string &executableTransferObject) {
+    ExecutableTransferObject eto = SerializationTools::parse_eto(executableTransferObject);
+    QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan();
+    this->state.enginePtr->deployQuery(qep);
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+  }
+
+  /**
+   * @brief method which is called to unregister an already running query
+   * @param description the description of the query
+   */
+  void delete_query(const string &description) {
+    // send command to all corresponding nodes to stop the running query as well
+    for (auto const &x : this->state.actorTopologyMap) {
+      strong_actor_ptr sap = x.first;
+      FogTopologyEntryPtr e = x.second;
+
+      if (e != this->state.coordinatorPtr->getThisEntry()) {
+        auto hdl = actor_cast<actor>(sap);
+        this->request(hdl, task_timeout, delete_query_atom::value, description);
+      }
+    }
+
+    if (this->state.deployedQueries.find(description) == this->state.deployedQueries.end()) {
+      //Query is running -> stop query locally if it is running and free resources
+      this->state.enginePtr->undeployQuery(this->state.deployedQueries.at(description));
+    }
+    this->state.coordinatorPtr->deregister_query(description);
+  }
+
+  /**
+ * @brief send messages to all connected devices and get their operators
+ */
   void show_operators() {
     for (auto const &x : this->state.actorTopologyMap) {
       strong_actor_ptr sap = x.first;
@@ -276,268 +213,6 @@ class coordinator : public stateful_actor<coordinator_state> {
             aout(this) << "Error for " << to_string(hdl) << endl;
           }
       );
-    }
-  }
-
-  /**
-   * @brief registers a CAF query into the NES topology to make it deployable
-   * @param query a description of the query
-   * @param sensor_type the sensor_type to which the input source stream belongs
-   * @param optimizationStrategyName the optimization strategy (buttomUp or topDown)
-   */
-  void register_query(const string &query, const string &sensor_type, const string &optimizationStrategyName) {
-    if (this->state.registeredQueries.find(query + sensor_type) == this->state.registeredQueries.end() &&
-        this->state.runningQueries.find(query + sensor_type) == this->state.runningQueries.end()) {
-      // if query is currently not registered or running
-      aout(this) << "Registering query " << query << "-" << sensor_type << " with strategy "
-                 << optimizationStrategyName << endl;
-      FogExecutionPlan fogExecutionPlan;
-      FogOptimizer queryOptimizer;
-      FogTopologyPlanPtr topologyPlan = this->state.topologyManagerPtr->getInstance().getTopologyPlan();
-
-      // currently only one hard coded example query is supported
-      try {
-        if (query == "example") {
-          Schema schema = Schema::create()
-              .addField("id", BasicType::UINT32)
-              .addField("value", BasicType::UINT64);
-          Stream stream = Stream(sensor_type, schema);
-
-          InputQuery &inputQuery = InputQuery::from(stream)
-              .filter(stream["value"] > 42)
-              .print(std::cout);
-
-          fogExecutionPlan = queryOptimizer.prepareExecutionGraph(optimizationStrategyName,
-                                                                  inputQuery,
-                                                                  topologyPlan);
-
-          tuple<Schema, FogExecutionPlan> t = std::make_tuple(schema, fogExecutionPlan);
-          this->state.registeredQueries.insert({query + sensor_type, t});
-          aout(this) << "FogExecutionPlan: " << fogExecutionPlan.getTopologyPlanString() << endl;
-        } else {
-          // TODO: implement
-          aout(this) << "Registration failed! Only query example is supported!" << endl;
-        }
-      }
-      catch (...) {
-        //aout(this) << ": " << ex.what() << endl;
-      }
-    } else if (this->state.registeredQueries.find(query + sensor_type) != this->state.registeredQueries.end()) {
-      aout(this) << "Query is already registered -> " << query << "-" << sensor_type << endl;
-    } else {
-      aout(this) << "Query is already running -> " << query << "-" << sensor_type << endl;
-    }
-  }
-
-  /**
-   * @brief deploys a CAF query into the NES topology to the corresponding devices defined by the optimizer
-   * @param query a description of the query
-   * @param sensor_type the sensor_type to which the input source stream belongs
-   */
-  void deploy_query(const string &query, const string &sensor_type) {
-    if (this->state.registeredQueries.find(query + sensor_type) != this->state.registeredQueries.end() &&
-        this->state.runningQueries.find(query + sensor_type) == this->state.runningQueries.end()) {
-      aout(this) << "Deploying query " << query << "-" << sensor_type << endl;
-      // get the schema and FogExecutionPlan stored during query registration
-      Schema schema = get<0>(this->state.registeredQueries.at(query + sensor_type));
-      FogExecutionPlan execPlan = get<1>(this->state.registeredQueries.at(query + sensor_type));
-
-      //iterate through all vertices in the topology
-      for (const ExecutionVertex &v : execPlan.getExecutionGraph()->getAllVertex()) {
-        OperatorPtr operators = v.ptr->getRootOperator();
-        if (operators) {
-          // if node contains operators to be deployed -> serialize and send them to the according node
-          vector<string> ssources = create_serialized_sources(schema, v, execPlan);
-          vector<string> sdestinations = create_serialized_sinks(query + sensor_type, schema, v, execPlan);
-          string soperators = SerializationTools::ser_operator(operators);
-          string sschema = SerializationTools::ser_schema(schema);
-
-          FogTopologyEntryPtr fogNode = v.ptr->getFogNode();
-          auto hdl = actor_cast<actor>(this->state.topologyActorMap.at(fogNode));
-
-          aout(this) << "Sending query to " << fogNode->getEntryTypeString() << to_string(hdl) << endl;
-          this->request(hdl, task_timeout, execute_query_atom::value, query + sensor_type, sschema,
-                        ssources, sdestinations, soperators);
-        }
-      }
-
-      // move registered query to running query
-      tuple<Schema, FogExecutionPlan, QueryExecutionPlanPtr> t = std::make_tuple(schema, execPlan, nullptr);
-      this->state.runningQueries.insert({query + sensor_type, t});
-      this->state.registeredQueries.erase(query + sensor_type);
-    } else if (this->state.runningQueries.find(query + sensor_type) != this->state.runningQueries.end()) {
-      aout(this) << "Query is already running -> " << query << "-" << sensor_type << endl;
-    } else {
-      aout(this) << "Query is not registered -> " << query << "-" << sensor_type << endl;
-    }
-  }
-
-  /**
-   * @brief framework internal method which is called by the coordinator to execute a query or sub-query on a node
-   * @param query a description of the query
-   * @param str_schema the serialized schema
-   * @param str_sources the serialized sources
-   * @param str_destinations the serialized destinations
-   * @param str_ops the serialized operators
-   */
-  void execute_query(const string &query, string &str_schema, vector<string> &str_sources,
-                     vector<string> &str_destinations, string &str_ops) {
-    aout(this) << "*** Executing query " << query << endl;
-    Schema schema = SerializationTools::parse_schema(str_schema);
-    DataSourcePtr source;
-    DataSinkPtr sink;
-
-    CodeGeneratorPtr code_gen = createCodeGenerator();
-    PipelineContextPtr context = createPipelineContext();
-
-    // Parse operators
-    OperatorPtr oprtr = SerializationTools::parse_operator(str_ops);
-    oprtr->produce(code_gen, context, std::cout);
-    PipelineStagePtr stage = code_gen->compile(CompilerArgs());
-
-    // Parse sources
-    if (!str_sources.empty()) {
-      if (str_sources[0] == "example") {
-        // create example source
-        source = createTestDataSourceWithSchema(schema);
-        source->setNumBuffersToProcess(10);
-      } else {
-        aout(this) << "Query can not be executed! Only 'example' is supported -> " << query << endl;
-        //source = SerializationTools::parse_source(str_sources[0]);
-      }
-    } else {
-      // if there are no local input source operators use local zmq as source
-      source = createZmqSource(schema, this->state.ip, get_assigned_port(query));
-    }
-
-    // Parse destinations
-    if (!str_destinations.empty()) {
-      sink = SerializationTools::parse_sink(str_destinations[0]);
-    } else {
-      sink = createPrintSinkWithSink(schema, std::cout);
-    }
-
-    QueryExecutionPlanPtr qep(new GeneratedQueryExecutionPlan(nullptr, &stage));
-    qep->addDataSource(source);
-    qep->addDataSink(sink);
-
-    std::cout << source->toString() << std::endl;
-    std::cout << sink->toString() << std::endl;
-
-    this->state.enginePtr->deployQuery(qep);
-    get<2>(this->state.runningQueries.at(query)) = qep;
-
-    if (source->isRunning()) {
-      std::this_thread::sleep_for(std::chrono::seconds(2));
-    }
-  }
-
-  /**
-   * @brief method which is called to unregister an already running query
-   * @param query the description of the query
-   * @param sensor_type the sensor_type to which the input source stream belongs
-   */
-  void delete_query(const string &query, const string &sensor_type) {
-    if (this->state.registeredQueries.find(query + sensor_type) == this->state.registeredQueries.end() &&
-        this->state.runningQueries.find(query + sensor_type) == this->state.runningQueries.end()) {
-      aout(this) << "*** No deletion required! Query has neither been registered or deployed->" << query
-                 << "-" << sensor_type << endl;
-    } else if (this->state.registeredQueries.find(query + sensor_type) != this->state.registeredQueries.end()) {
-      // Query is registered, but not running -> just remove from registered queries
-      get<1>(this->state.registeredQueries.at(query + sensor_type)).freeResources(1);
-      this->state.registeredQueries.erase(query + sensor_type);
-      aout(this) << "Query was registered and has been succesfully removed -> " << query << "-" << sensor_type
-                 << endl;
-    } else {
-      aout(this) << "Deleting..." << endl;
-      try {
-        //Query is running -> stop query locally if it is running and free resources
-        QueryExecutionPlanPtr qep = get<2>(this->state.runningQueries.at(query + sensor_type));
-        get<1>(this->state.runningQueries.at(query + sensor_type)).freeResources(1);
-        get<2>(this->state.runningQueries.at(query + sensor_type)).reset();
-
-        if (qep) {
-          this->state.enginePtr->undeployQuery(qep);
-          aout(this) << "Query was running and has been succesfully removed -> " << query << "-"
-                     << sensor_type << endl;
-        } else {
-          aout(this)
-              << "Query was not running locally and deletion has been propagated to connected nodes -> "
-              << query << "-" << sensor_type << endl;
-        }
-      }
-      catch (...) {
-        aout(this) << "Caught exception during deletion!";
-      }
-
-      // send command to all corresponding nodes to stop the running query as well
-      for (auto const &x : this->state.actorTopologyMap) {
-        strong_actor_ptr sap = x.first;
-        FogTopologyEntryPtr e = x.second;
-
-        if (e != this->state._thisEntry) {
-          auto hdl = actor_cast<actor>(sap);
-          this->request(hdl, task_timeout, delete_query_atom::value, query + sensor_type);
-        }
-      }
-      //here it fails
-      this->state.runningQueries.erase(query + sensor_type);
-    }
-    aout(this) << "*** successfully deleted query " << query << "-" << sensor_type << endl;
-  }
-
-  /**
-   * @brief helper method to get all sources in a serialized format from a specific node in the topology
-   * @param schema the schema
-   * @param v the execution vertex
-   * @param execPlan the execution plan
-   */
-  static vector<string>
-  create_serialized_sources(const Schema &schema, const ExecutionVertex &v, const FogExecutionPlan &execPlan) {
-    vector<string> output;
-
-    if (execPlan.getExecutionGraph()->getAllEdgesToNode(v.ptr).empty()) {
-      //TODO: check for local source operators, for now only example source generator is supported
-      output.emplace_back("example");
-    } else {
-      // return empty list, cause it shall use local zmq
-    }
-    return output;
-  }
-
-  /**
-   * @brief helper method to get all sinks in a serialized format from a specific node in the topology
-   * @param the descriptor of the query
-   * @param schema the schema
-   * @param v the execution vertex
-   * @param execPlan the execution plan
-   */
-  vector<string> create_serialized_sinks(const string &query, Schema &schema, const ExecutionVertex &v,
-                                         const FogExecutionPlan &execPlan) {
-    vector<string> output;
-
-    for (const auto edge: execPlan.getExecutionGraph()->getAllEdgesFromNode(v.ptr)) {
-      FogTopologyEntryPtr entry = edge.ptr->getDestination()->getFogNode();
-      DataSinkPtr sink = createZmqSink(schema, entry->getIp(), get_assigned_port(query));
-      output.emplace_back(SerializationTools::ser_sink(sink));
-    }
-    return output;
-  }
-
-  /**
-   * @brief helper method to get an automatically assigned receive port where ZMQs are communicating.
-   * Currently only server/client architecture, i.e., only one layer, is supported
-   * @param query the descriptor of the query
-   */
-  int get_assigned_port(const string &query) {
-    OperatorPtr o;
-    if (this->state.queryToPort.find(query) != this->state.queryToPort.end()) {
-      return this->state.queryToPort.at(query);
-    } else {
-      // increase max port in map by 1
-      this->state.receive_port += 1;
-      this->state.queryToPort.insert({query, this->state.receive_port});
-      return this->state.receive_port;
     }
   }
 };
@@ -567,14 +242,14 @@ void run_coordinator(actor_system &system, const coordinator_config &cfg) {
   // keeps track of requests and tries to reconnect on server failures
   auto usage = [] {
     cout << "Usage:" << endl
-         << "  quit                             : terminates the program" << endl
-         << "  show topology                    : prints the topology" << endl
-         << "  show registered                  : prints the registered queries" << endl
-         << "  show running                     : prints the running queries" << endl
-         << "  show operators                   : prints the deployed operators for all connected devices" << endl
-         << "  register example <source>        : registers an example query" << endl
-         << "  deploy example <source>          : executes the example query with BottomUp strategy" << endl
-         << "  delete example <source>          : deletes the example query" << endl
+         << "  quit                                 : terminates the program" << endl
+         << "  show topology                        : prints the topology" << endl
+         << "  show registered                      : prints the registered queries" << endl
+         << "  show running                         : prints the running queries" << endl
+         << "  show operators                       : prints the deployed operators for all connected devices" << endl
+         << "  register <description> <source>      : registers an example query" << endl
+         << "  deploy <description>                 : executes the example query with BottomUp strategy" << endl
+         << "  delete <description>                 : deletes the example query" << endl
          << endl;
   };
   usage();
@@ -610,17 +285,17 @@ void run_coordinator(actor_system &system, const coordinator_config &cfg) {
           anon_send(coord, show_registered_atom::value);
         } else if (arg0 == "show" && arg1 == "operators") {
           anon_send(coord, show_running_operators_atom::value);
+        } else if (arg0 == "deploy" && !arg1.empty()) {
+          anon_send(coord, deploy_query_atom::value, arg1);
+        } else if (arg0 == "delete" && !arg1.empty()) {
+          anon_send(coord, delete_query_atom::value, arg1);
         } else {
           cout << "Unknown command" << endl;
         }
       },
       [&](string &arg0, string &arg1, string &arg2) {
-        if (arg0 == "register" && arg1 == "example") {
+        if (arg0 == "register" && arg1 == "example" && !arg2.empty()) {
           anon_send(coord, register_query_atom::value, arg1, arg2, "BottomUp");
-        } else if (arg0 == "deploy" && arg1 == "example") {
-          anon_send(coord, deploy_query_atom::value, arg1, arg2);
-        } else if (arg0 == "delete" && arg1 == "example") {
-          anon_send(coord, delete_query_atom::value, arg1, arg2);
         } else {
           cout << "Unknown command" << endl;
         }
