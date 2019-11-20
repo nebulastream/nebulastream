@@ -119,6 +119,7 @@ void NesCoordinator::deregister_query(const string &description) {
 
 unordered_map<FogTopologyEntryPtr,
               ExecutableTransferObject> NesCoordinator::make_deployment(const string &description) {
+  unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> output;
   if (this->_registeredQueries.find(description) != this->_registeredQueries.end() &&
       this->_runningQueries.find(description) == this->_runningQueries.end()) {
     IOTDB_INFO("Deploying query " << description);
@@ -133,8 +134,9 @@ unordered_map<FogTopologyEntryPtr,
         // if node contains operators to be deployed -> serialize and send them to the according node
         vector<DataSourcePtr> sources = getSources(description, v);
         vector<DataSinkPtr> destinations = getSinks(description, v);
-        ExecutableTransferObject eto = ExecutableTransferObject(description, schema, sources, destinations, operators);
         FogTopologyEntryPtr fogNode = v.ptr->getFogNode();
+        ExecutableTransferObject eto = ExecutableTransferObject(description, schema, sources, destinations, operators);
+        output.insert({fogNode, eto});
       }
     }
     // move registered query to running query
@@ -146,6 +148,7 @@ unordered_map<FogTopologyEntryPtr,
   } else {
     IOTDB_WARNING("Query is not registered -> " << description);
   }
+  return output;
 }
 
 vector<DataSourcePtr> NesCoordinator::getSources(const string &description, const ExecutionVertex &v) {
@@ -200,7 +203,7 @@ const FogTopologyEntryPtr &NesCoordinator::getThisEntry() const {
 }
 
 bool NesCoordinator::deregister_sensor(const FogTopologyEntryPtr &entry) {
-  return this->_topologyManagerPtr->removeFogNode(entry);
+  return this->_topologyManagerPtr->getInstance().removeFogNode(entry);
 }
 string NesCoordinator::getTopologyPlanString() {
   return this->_topologyManagerPtr->getInstance().getTopologyPlanString();
