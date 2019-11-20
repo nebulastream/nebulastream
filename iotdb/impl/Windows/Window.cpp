@@ -81,6 +81,10 @@ void Window::trigger() {
   Dispatcher::instance().addWork(tuple_buffer, this);
 }
 
+void *Window::getWindowState() {
+  return window_state;
+}
+
 bool Window::start() {
   if (running)
     return false;
@@ -102,6 +106,12 @@ bool Window::stop() {
     thread.join();
   IOTDB_DEBUG("Window " << this << ": Thread joinded")
   return true;
+}
+
+void Window::print() {}
+
+ size_t Window::getNumberOfEntries() {
+   return 0;
 }
 
 const WindowPtr createTestWindow(size_t campainCnt, size_t windowSizeInSec) {

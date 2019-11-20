@@ -20,18 +20,23 @@ typedef std::shared_ptr<Window> WindowPtr;
 
 class Window {
  public:
-  virtual ~Window();
-  virtual void setup() = 0;
-  virtual bool start();
-  virtual bool stop();
-  virtual void trigger();
+  ~Window();
+  void setup();
+  bool start();
+  bool stop();
+  void trigger();
 
-  virtual void print() = 0;
+  void print();
 
-  virtual size_t getNumberOfEntries() = 0;
+  size_t getNumberOfEntries();
 
   template<class Archive>
   void serialize(Archive &ar, const unsigned int version) {}
+
+  void * getWindowState();
+  WindowManagerPtr getWindowManager(){
+    return window_manager_ptr_;
+  };
 
  private:
   friend class boost::serialization::access;
