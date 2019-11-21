@@ -56,12 +56,14 @@ vector<string> NesCoordinator::getOperators() {
   return result;
 }
 
-void NesCoordinator::register_query(const string &description, const string &sensor_type, const string &strategy) {
+FogExecutionPlan NesCoordinator::register_query(const string &description,
+                                                const string &sensor_type,
+                                                const string &strategy) {
+  FogExecutionPlan fogExecutionPlan;
   if (this->_registeredQueries.find(description) == this->_registeredQueries.end() &&
       this->_runningQueries.find(description) == this->_runningQueries.end()) {
     // if query is currently not registered or running
     IOTDB_INFO("Registering query " << description << " with strategy " << strategy);
-    FogExecutionPlan fogExecutionPlan;
     FogOptimizer queryOptimizer;
     FogTopologyPlanPtr topologyPlan = this->_topologyManagerPtr->getInstance().getTopologyPlan();
 
@@ -97,6 +99,7 @@ void NesCoordinator::register_query(const string &description, const string &sen
   } else {
     IOTDB_INFO("Query is already running -> " << description);
   }
+  return fogExecutionPlan;
 }
 
 void NesCoordinator::deregister_query(const string &description) {

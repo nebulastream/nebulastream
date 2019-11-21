@@ -35,15 +35,15 @@ class ExecutableTransferObject {
   ~ExecutableTransferObject() = default;
 
  public:
-  const string &getDescription() const;
+  string &getDescription();
   void setDescription(const string &description);
-  const Schema &getSchema() const;
+  Schema &getSchema();
   void setSchema(const Schema &schema);
-  const vector<DataSourcePtr> &getSources() const;
+  vector<DataSourcePtr> &getSources();
   void setSources(const vector<DataSourcePtr> &sources);
-  const vector<DataSinkPtr> &getDestinations() const;
+  vector<DataSinkPtr> &getDestinations();
   void setDestinations(const vector<DataSinkPtr> &destinations);
-  const OperatorPtr &getOperatorTree() const;
+  OperatorPtr &getOperatorTree();
   void setOperatorTree(const OperatorPtr &operatorTree);
 
   QueryExecutionPlanPtr toQueryExecutionPlan();

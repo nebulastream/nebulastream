@@ -47,7 +47,7 @@ QueryExecutionPlanPtr ExecutableTransferObject::toQueryExecutionPlan() {
   }
 }
 
-const string &ExecutableTransferObject::getDescription() const {
+string &ExecutableTransferObject::getDescription() {
   return this->_description;
 }
 
@@ -55,7 +55,7 @@ void ExecutableTransferObject::setDescription(const string &description) {
   this->_description = description;
 }
 
-const Schema &ExecutableTransferObject::getSchema() const {
+Schema &ExecutableTransferObject::getSchema() {
   return this->_schema;
 }
 
@@ -63,7 +63,7 @@ void ExecutableTransferObject::setSchema(const Schema &schema) {
   this->_schema = schema;
 }
 
-const vector<DataSourcePtr> &ExecutableTransferObject::getSources() const {
+vector<DataSourcePtr> &ExecutableTransferObject::getSources() {
   return this->_sources;
 }
 
@@ -71,14 +71,15 @@ void ExecutableTransferObject::setSources(const vector<DataSourcePtr> &sources) 
   this->_sources = sources;
 }
 
-const vector<DataSinkPtr> &ExecutableTransferObject::getDestinations() const {
+vector<DataSinkPtr> &ExecutableTransferObject::getDestinations() {
   return this->_destinations;
 }
 
 void ExecutableTransferObject::setDestinations(const vector<DataSinkPtr> &destinations) {
   this->_destinations = destinations;
 }
-const OperatorPtr &ExecutableTransferObject::getOperatorTree() const {
+
+OperatorPtr &ExecutableTransferObject::getOperatorTree() {
   return this->_operatorTree;
 }
 
