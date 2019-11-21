@@ -79,7 +79,7 @@ void FogPlacementOptimizer::addSystemGeneratedSourceSinkOperators(const Schema& 
     if (rootOperator->getOperatorType() != SOURCE_OP) {
       //create sys introduced src operator
       //Note: the source zmq is always located at localhost
-      const OperatorPtr& sysSrcOptr = createSourceOperator(createZmqSource(schema, "localhost", zmqDefaultPort));
+      OperatorPtr sysSrcOptr = createSourceOperator(createZmqSource(schema, "localhost", zmqDefaultPort));
 
       //bind sys introduced operators to each other
       rootOperator->childs = {sysSrcOptr};
