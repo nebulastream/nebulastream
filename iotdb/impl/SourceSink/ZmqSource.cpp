@@ -20,9 +20,10 @@ ZmqSource::ZmqSource()
       port(0),
       connected(false),
       context(zmq::context_t(1)),
-      socket(zmq::socket_t(context, ZMQ_SUB)) {
+      socket(zmq::socket_t(context, ZMQ_PULL)) {
   IOTDB_DEBUG(
-      "Default ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/")
+      "Default ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/");
+  assert(0);
 }
 
 ZmqSource::ZmqSource(const Schema &schema, const std::string &host,
@@ -32,7 +33,7 @@ ZmqSource::ZmqSource(const Schema &schema, const std::string &host,
       port(port),
       connected(false),
       context(zmq::context_t(1)),
-      socket(zmq::socket_t(context, ZMQ_SUB)) {
+      socket(zmq::socket_t(context, ZMQ_PULL)) {
   IOTDB_DEBUG(
       "ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/")
 }
@@ -51,7 +52,7 @@ ZmqSource::~ZmqSource() {
 
 TupleBufferPtr ZmqSource::receiveData() {
   IOTDB_DEBUG("ZMQSource  " << this << ": receiveData ")
-  if (connected) {
+  if (connect()) {
     try {
       // Receive new chunk of data
       zmq::message_t new_data;

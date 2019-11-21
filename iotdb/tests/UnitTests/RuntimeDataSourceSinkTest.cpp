@@ -10,9 +10,9 @@
 #include <Util/Logger.hpp>
 #include <SourceSink/DataSink.hpp>
 #include <SourceSink/DataSource.hpp>
-#include "../../include/NodeEngine/TupleBuffer.hpp"
-#include "../../include/SourceSink/SinkCreator.hpp"
-#include "../../include/SourceSink/SourceCreator.hpp"
+#include <NodeEngine/TupleBuffer.hpp>
+#include <SourceSink/SinkCreator.hpp>
+#include <SourceSink/SourceCreator.hpp>
 using namespace iotdb;
 
 #ifndef LOCAL_HOST
@@ -101,11 +101,6 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSourceReceiveData) {
   std::cout << zmq_source->toString() << std::endl;
   BufferManager::instance().setBufferSize(test_data_size);
 
-  // Open Publisher
-  zmq::context_t context(1);
-  zmq::socket_t socket(context, ZMQ_PUB);
-  socket.bind(address.c_str());
-
   // Start thread for receiving the data.
   bool receiving_finished = false;
   auto receiving_thread = std::thread([&]() {
@@ -115,7 +110,7 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSourceReceiveData) {
       // Test received data.
       size_t sum = 0;
       uint32_t* tuple = (uint32_t*)tuple_buffer->getBuffer();
-      for (size_t i = 0; i != tuple_buffer->getNumberOfTuples(); ++i) {
+      for (size_t i = 0; i != 8; ++i) {
         sum += *(tuple++);
       }
       size_t expected = 400;
@@ -126,6 +121,11 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSourceReceiveData) {
     });
   size_t tupCnt = 8;
   // Wait until receiving is complete.
+
+  // Open Publisher
+  zmq::context_t context(1);
+  zmq::socket_t socket(context, ZMQ_PUSH);
+  socket.connect(address.c_str());
   while (!receiving_finished) {
 
     // Send data from here.
