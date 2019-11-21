@@ -27,7 +27,7 @@ QueryExecutionPlanPtr ExecutableTransferObject::toQueryExecutionPlan() {
     this->_operatorTree->produce(code_gen, context, std::cout);
     PipelineStagePtr stage = code_gen->compile(CompilerArgs());
 
-    QueryExecutionPlanPtr qep(new GeneratedQueryExecutionPlan(nullptr, &stage));
+    QueryExecutionPlanPtr qep(new GeneratedQueryExecutionPlan(nullptr, stage));
     //TODO: currently only one input source is supported
     if (!this->_sources.empty()) {
       qep->addDataSource(this->_sources[0]);

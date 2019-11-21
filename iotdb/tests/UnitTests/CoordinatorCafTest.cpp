@@ -161,7 +161,41 @@ TEST_F(CoordinatorCafTest, test_compile_deployment) {
   EXPECT_TRUE(coordinatorPtr->getRunningQueries().size() == 1);
 }
 
-/**
+TEST_F(CoordinatorCafTest, test_code_gen) {
+  auto *engine = new NodeEngine();
+  engine->start();
+
+  Schema schema = Schema::create()
+      .addField("id", BasicType::UINT32)
+      .addField("value", BasicType::UINT64);
+
+  Stream cars = Stream("cars", schema);
+
+  InputQuery &query = InputQuery::from(cars)
+      .filter(cars["value"] > 42)
+      .print(std::cout);
+
+  CodeGeneratorPtr code_gen = createCodeGenerator();
+  PipelineContextPtr context = createPipelineContext();
+
+  OperatorPtr queryOp = query.getRoot();
+
+  queryOp->produce(code_gen, context, std::cout);
+  PipelineStagePtr stage = code_gen->compile(CompilerArgs());
+
+  GeneratedQueryExecutionPlanPtr qep(new GeneratedQueryExecutionPlan(nullptr, stage));
+
+  // Create new Source and Sink
+  DataSourcePtr source = createTestDataSourceWithSchema(schema);
+  source->setNumBuffersToProcess(10);
+  qep->addDataSource(source);
+
+  DataSinkPtr sink = createPrintSinkWithSink(schema, std::cout);
+  qep->addDataSink(sink);
+
+  engine->deployQuery(qep);
+}
+
 TEST_F(CoordinatorCafTest, test_local_distributed_deployment) {
   auto *engine = new NodeEngine();
   engine->start();
@@ -181,4 +215,3 @@ TEST_F(CoordinatorCafTest, test_local_distributed_deployment) {
   EXPECT_TRUE(coordinatorPtr->getRegisteredQueries().empty());
   EXPECT_TRUE(coordinatorPtr->getRunningQueries().size() == 1);
 }
-*/

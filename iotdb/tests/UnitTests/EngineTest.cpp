@@ -46,7 +46,7 @@ bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf) {
 
   IOTDB_INFO("Test: query result = Processed Block:" << buf->getNumberOfTuples() << " count: " << count
             << "sum: " << sum )
-  assert(sum == 512);
+  assert(sum == 10);
   return true;
 }
 };

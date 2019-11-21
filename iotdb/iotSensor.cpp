@@ -1,7 +1,7 @@
 #include <iostream>
 #include <SourceSink/DataSink.hpp>
 #include <SourceSink/DataSource.hpp>
-#include <Network/atom_utils.hpp>
+#include <Actors/atom_utils.hpp>
 #include <Util/SerializationTools.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <SourceSink/SinkCreator.hpp>
@@ -338,7 +338,7 @@ void caf_main(actor_system &system, const sensor_config &cfg) {
   queryOpdeser->produce(code_gen, context, std::cout);
   PipelineStagePtr stage = code_gen->compile(CompilerArgs());
 
-  GeneratedQueryExecutionPlanPtr qep(new GeneratedQueryExecutionPlan(nullptr, &stage));
+  GeneratedQueryExecutionPlanPtr qep(new GeneratedQueryExecutionPlan(nullptr, stage));
 
   // Create new Source and Sink
   //DataSourcePtr source = createCSVFileSource(schema, "tests/test_data/ysb-tuples-100-campaign-100.csv");

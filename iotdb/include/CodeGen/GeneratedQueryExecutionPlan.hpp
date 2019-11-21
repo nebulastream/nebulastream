@@ -23,7 +23,7 @@ namespace iotdb {
 class GeneratedQueryExecutionPlan : public QueryExecutionPlan {
  public:
   GeneratedQueryExecutionPlan();
-  GeneratedQueryExecutionPlan(InputQuery *query, PipelineStagePtr *ptr);
+  GeneratedQueryExecutionPlan(InputQuery *query, PipelineStagePtr ptr);
 
   bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf) override {
     std::vector<TupleBuffer *> input_buffers(1, buf.get());
@@ -35,7 +35,7 @@ class GeneratedQueryExecutionPlan : public QueryExecutionPlan {
     WindowSliceStore *state = nullptr;
     WindowManager *manager = nullptr;
 
-    bool ret = pipeline_stage_ptr_->get()->execute(input_buffers, state, manager, outputBuffer.get());
+    bool ret = pipeline_stage_ptr_->execute(input_buffers, state, manager, outputBuffer.get());
 
     for (const DataSinkPtr &s: this->getSinks()) {
       s->writeData(outputBuffer);
@@ -44,7 +44,7 @@ class GeneratedQueryExecutionPlan : public QueryExecutionPlan {
   };
  protected:
   InputQuery *query;
-  PipelineStagePtr *pipeline_stage_ptr_;
+  PipelineStagePtr pipeline_stage_ptr_;
 };
 
 typedef std::shared_ptr<GeneratedQueryExecutionPlan> GeneratedQueryExecutionPlanPtr;

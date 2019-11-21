@@ -56,7 +56,7 @@ class DataSink {
    * @param a tuple buffers pointer
    * @return bool indicating if the write was complete
    */
-  bool writeData(const TupleBufferPtr input_buffer);
+  virtual bool writeData(const TupleBufferPtr input_buffer) = 0;
 
   /**
    * @brief debug function for testing to get number of sent buffers

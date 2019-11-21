@@ -16,7 +16,7 @@ namespace iotdb {
     GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan():query(), pipeline_stage_ptr_() {
 
     }
-    GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan(InputQuery* query, PipelineStagePtr* ptr)
+    GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan(InputQuery* query, PipelineStagePtr ptr)
             : query(query), pipeline_stage_ptr_(ptr) {
     }
 
