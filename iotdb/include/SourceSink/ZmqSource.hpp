@@ -10,7 +10,8 @@
 #include <boost/archive/text_oarchive.hpp>
 
 #include <SourceSink/DataSource.hpp>
-#include "../NodeEngine/TupleBuffer.hpp"
+#include <NodeEngine/TupleBuffer.hpp>
+
 namespace iotdb {
 
 /**
@@ -25,7 +26,7 @@ class ZmqSource : public DataSource {
    * @param host name of the source queue
    * @param port of the source queue
    */
-  ZmqSource(const Schema& schema, const std::string& host, const uint16_t port);
+  ZmqSource(const Schema &schema, const std::string &host, const uint16_t port);
 
   /**
    * @brief destructor of zmq sink that disconnects the queue before deconstruction
@@ -70,8 +71,9 @@ class ZmqSource : public DataSource {
    * serialization/deserialization process
    */
   friend class boost::serialization::access;
-  template<class Archive> void serialize(Archive& ar,
-                                         const unsigned int version) {
+  template<class Archive>
+  void serialize(Archive &ar,
+                 const unsigned int version) {
     ar & boost::serialization::base_object<DataSource>(*this);
     ar & host;
     ar & port;
@@ -82,11 +84,6 @@ class ZmqSource : public DataSource {
   zmq::context_t context;
   zmq::socket_t socket;
 
-
 };
 }  // namespace iotdb
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/export.hpp>
-BOOST_CLASS_EXPORT_KEY(iotdb::ZmqSource)
 #endif // ZMQSOURCE_HPP

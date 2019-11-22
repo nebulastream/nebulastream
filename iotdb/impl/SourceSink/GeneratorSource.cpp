@@ -1,16 +1,17 @@
 #include <SourceSink/GeneratorSource.hpp>
 
-#include <API/Schema.hpp>
-#include <NodeEngine/Dispatcher.hpp>
-#include <SourceSink/DataSource.hpp>
+#include <NodeEngine/BufferManager.hpp>
 
 #include <iostream>
-#include "../../include/NodeEngine/TupleBuffer.hpp"
 
 namespace iotdb {
-//TODO: move functions here which is not trivial cause of templates
 
-
-
-
+const std::string GeneratorSource::toString() const {
+  std::stringstream ss;
+  ss << "GENERATOR_SOURCE(SCHEMA(" << schema.toString();
+  ss << "), NUM_BUFFERS=" << num_buffers_to_process << "))";
+  return ss.str();
 }
+}
+
+BOOST_CLASS_EXPORT(iotdb::GeneratorSource);

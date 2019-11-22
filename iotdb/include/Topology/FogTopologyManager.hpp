@@ -4,6 +4,7 @@
 #include <memory>
 
 #include <Topology/FogTopologyPlan.hpp>
+#include <utility>
 #if defined(__APPLE__) || defined(__MACH__)
 #include <xlocale.h>
 #endif
@@ -30,17 +31,23 @@ class FogTopologyManager {
   FogTopologyManager(FogTopologyManager const &); // Don't Implement
   void operator=(FogTopologyManager const &);     // Don't implement
 
+  FogTopologyCoordinatorNodePtr createFogCoordinatorNode(const std::string ipAddr, CPUCapacity cpuCapacity) {
+    return currentPlan->createFogCoordinatorNode(ipAddr, cpuCapacity);
+  }
+
   FogTopologyWorkerNodePtr createFogWorkerNode(const std::string ipAddr, CPUCapacity cpuCapacity) {
     return currentPlan->createFogWorkerNode(ipAddr, cpuCapacity);
   }
 
-  bool removeFogWorkerNode(FogTopologyWorkerNodePtr ptr) { return currentPlan->removeFogWorkerNode(ptr); }
-
-  bool removeFogSensorNode(FogTopologySensorNodePtr ptr) { return currentPlan->removeFogSensorNode(ptr); }
-
   FogTopologySensorNodePtr createFogSensorNode(const std::string ipAddr, CPUCapacity cpuCapacity) {
     return currentPlan->createFogSensorNode(ipAddr, cpuCapacity);
   }
+
+  bool removeFogWorkerNode(FogTopologyWorkerNodePtr ptr) { return currentPlan->removeFogWorkerNode(std::move(ptr)); }
+
+  bool removeFogSensorNode(FogTopologySensorNodePtr ptr) { return currentPlan->removeFogSensorNode(std::move(ptr)); }
+
+  bool removeFogNode(FogTopologyEntryPtr ptr) { return currentPlan->removeFogNode(std::move(ptr)); }
 
   FogTopologyLinkPtr createFogTopologyLink(FogTopologyEntryPtr pSourceNode, FogTopologyEntryPtr pDestNode) {
     return currentPlan->createFogTopologyLink(pSourceNode, pDestNode);
@@ -64,7 +71,7 @@ class FogTopologyManager {
 
     resetFogTopologyPlan();
 
-    const FogTopologyWorkerNodePtr &sinkNode = createFogWorkerNode("localhost", CPUCapacity::HIGH);
+    const FogTopologyCoordinatorNodePtr &sinkNode = createFogCoordinatorNode("localhost", CPUCapacity::HIGH);
     const FogTopologyWorkerNodePtr &workerNode1 = createFogWorkerNode("localhost", CPUCapacity::MEDIUM);
     const FogTopologyWorkerNodePtr &workerNode2 = createFogWorkerNode("localhost", CPUCapacity::MEDIUM);
     const FogTopologySensorNodePtr &sensorNode1 = createFogSensorNode("localhost", CPUCapacity::HIGH);

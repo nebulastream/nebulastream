@@ -40,10 +40,6 @@ bool DataSink::writeDataInBatch(
   return true;
 }
 
-bool DataSink::writeData(const TupleBufferPtr input_buffer) {
-  return writeData(input_buffer);
-}
-
 size_t DataSink::getNumberOfSentBuffers() {
   return sentBuffer;
 }

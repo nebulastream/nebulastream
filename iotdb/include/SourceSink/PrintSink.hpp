@@ -20,14 +20,14 @@ class PrintSink : public DataSink {
    * @brief Default constructor
    * @Note the default output will be written to cout
    */
-  PrintSink(std::ostream& pOutputStream = std::cout);
+  PrintSink(std::ostream &pOutputStream = std::cout);
 
   /**
      * @brief Default constructor
      * @Note the default output will be written to cout
      * @param schema of the written buffer tuples
      */
-  PrintSink(const Schema& pSchema, std::ostream& pOutputStream = std::cout);
+  PrintSink(const Schema &pSchema, std::ostream &pOutputStream = std::cout);
 
   /**
    * @brief destructor
@@ -53,7 +53,7 @@ class PrintSink : public DataSink {
  * @param tuple buffer to write
  * @return bool indicating success of the write
  */
-  bool writeData(const TupleBufferPtr input_buffer);
+  bool writeData(const TupleBufferPtr input_buffer) override;
 
   /**
    * @brief override the toString method for the print sink
@@ -61,26 +61,15 @@ class PrintSink : public DataSink {
    */
   const std::string toString() const override;
 
- protected:
-  /**
-     * @brief method for serialization, all listed variable below are added to the
-     * serialization/deserialization process
-     */
-  friend class boost::serialization::access;
-  template<class Archive> void serialize(Archive& ar,
-                                         const unsigned int version) {
-    ar & boost::serialization::base_object<DataSink>(*this);
-  }
-
  private:
-  std::ostream& outputStream;
+  std::ostream &outputStream;
+  friend class boost::serialization::access;
+
+  template<class Archive>
+  void serialize(Archive &ar, unsigned) {
+    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataSink);
+  }
 };
-
 }  // namespace iotdb
-
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/export.hpp>
-BOOST_CLASS_EXPORT_KEY(iotdb::PrintSink)
 
 #endif // PRINTSINK_HPP

@@ -3,7 +3,6 @@
 #include <cassert>
 #include <cstdint>
 #include <cstring>
-#include <memory>
 #include <sstream>
 #include <string>
 #include <zmq.hpp>
@@ -13,11 +12,6 @@
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/export.hpp>
-
-#include <SourceSink/DataSource.hpp>
-#include "../../include/NodeEngine/TupleBuffer.hpp"
-BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::ZmqSource);
 
 namespace iotdb {
 
@@ -26,22 +20,24 @@ ZmqSource::ZmqSource()
       port(0),
       connected(false),
       context(zmq::context_t(1)),
-      socket(zmq::socket_t(context, ZMQ_SUB)) {
+      socket(zmq::socket_t(context, ZMQ_PULL)) {
   IOTDB_DEBUG(
-      "Default ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/")
+      "Default ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/");
+  //This constructor is needed for Serialization
 }
 
-ZmqSource::ZmqSource(const Schema& schema, const std::string& host,
+ZmqSource::ZmqSource(const Schema &schema, const std::string &host,
                      const uint16_t port)
     : DataSource(schema),
       host(host),
       port(port),
       connected(false),
       context(zmq::context_t(1)),
-      socket(zmq::socket_t(context, ZMQ_SUB)) {
+      socket(zmq::socket_t(context, ZMQ_PULL)) {
   IOTDB_DEBUG(
       "ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/")
 }
+
 ZmqSource::~ZmqSource() {
   bool success = disconnect();
   if (success) {
@@ -55,39 +51,42 @@ ZmqSource::~ZmqSource() {
 }
 
 TupleBufferPtr ZmqSource::receiveData() {
-  bool connected = connect();
-  if (!connected) {
-    IOTDB_DEBUG(
-        "ZMQSOURCE  " << this << ": cannot read buffer because queue is not connected")
-    assert(0);
-  }
   IOTDB_DEBUG("ZMQSource  " << this << ": receiveData ")
+  if (connect()) {
+    try {
+      // Receive new chunk of data
+      zmq::message_t new_data;
+      socket.recv(&new_data); // envelope - not needed at the moment
+      size_t tupleCnt = *((size_t *) new_data.data());
+      IOTDB_DEBUG("ZMQSource received #tups " << tupleCnt)
 
-  // Receive new chunk of data
-  zmq::message_t new_data;
-  socket.recv(&new_data);  // envelope - not needed at the moment
-  size_t tupleCnt = *((size_t*) new_data.data());
-  IOTDB_DEBUG("ZMQSource received #tups " << tupleCnt)
+      socket.recv(&new_data); // actual data
 
-  // actual data
-  socket.recv(&new_data);
+      // Get some information about received data
+      size_t tuple_size = schema.getSchemaSize();
+      // Create new TupleBuffer and copy data
+      TupleBufferPtr buffer = BufferManager::instance().getBuffer();
+      IOTDB_DEBUG("ZMQSource  " << this << ": got buffer ")
 
-  // Get some information about received data
-  size_t tuple_size = schema.getSchemaSize();
+      // TODO: If possible only copy the content not the empty part
+      std::memcpy(buffer->getBuffer(), new_data.data(), buffer->getBufferSizeInBytes());
+      buffer->setNumberOfTuples(tupleCnt);
+      buffer->setTupleSizeInBytes(tuple_size);
 
-  // Create new TupleBuffer and copy data
-  TupleBufferPtr buffer = BufferManager::instance().getBuffer();
-  IOTDB_DEBUG("ZMQSource  " << this << ": got buffer ")
-
-  // TODO: If possible only copy the content not the empty part
-  std::memcpy(buffer->getBuffer(), new_data.data(), buffer->getBufferSizeInBytes());
-  buffer->setNumberOfTuples(tupleCnt);
-  buffer->setTupleSizeInBytes(tuple_size);
-
-  assert(buffer->getBufferSizeInBytes() == new_data.size());
-  IOTDB_DEBUG("ZMQSource  " << this << ": return buffer ")
-
-  return buffer;
+      if (buffer->getBufferSizeInBytes() == new_data.size()) {
+        IOTDB_WARNING("ZMQSource  " << this << ": return buffer ")
+      } else {
+        IOTDB_DEBUG("ZMQSource  " << this << ": return buffer ")
+      }
+      return buffer;
+    }
+    catch (const zmq::error_t &ex) {
+      // recv() throws ETERM when the zmq context is destroyed,
+      //  as when AsyncZmqListener::Stop() is called
+      if (ex.num() != ETERM)
+        throw;
+    }
+  }
 }
 
 const std::string ZmqSource::toString() const {
@@ -101,37 +100,36 @@ const std::string ZmqSource::toString() const {
 
 bool ZmqSource::connect() {
   if (!connected) {
-    int linger = 0;
-    auto address = std::string("tcp://") + host + std::string(":")
-        + std::to_string(port);
+    auto address = std::string("tcp://") + host + std::string(":") + std::to_string(port);
 
     try {
-      socket.connect(address.c_str());
-      //      socket.setsockopt(ZMQ_SUBSCRIBE, topic.c_str(), topic.size());
-      socket.setsockopt(ZMQ_SUBSCRIBE, "", 0);
-      socket.setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
+      socket.setsockopt(ZMQ_LINGER, 0);
+      socket.bind(address.c_str());
       connected = true;
-    } catch (...) {
+    }
+    catch (...) {
       connected = false;
     }
   }
   if (connected) {
     IOTDB_DEBUG("ZMQSOURCE  " << this << ": connected")
   } else {
-    IOTDB_DEBUG("ZMQSOURCE  " << this << ": NOT connected")
+    IOTDB_DEBUG("Exception: ZMQSOURCE  " << this << ": NOT connected")
   }
-
   return connected;
 }
 
 bool ZmqSource::disconnect() {
   if (connected) {
-
     try {
+      //socket.close();
+      std::this_thread::sleep_for(std::chrono::seconds(2));
       socket.close();
+      std::this_thread::sleep_for(std::chrono::seconds(2));
       connected = false;
-    } catch (...) {
-      connected = true;
+    }
+    catch (...) {
+      //connected = true;
     }
   }
   if (!connected) {
@@ -143,3 +141,5 @@ bool ZmqSource::disconnect() {
 }
 
 }  // namespace iotdb
+
+BOOST_CLASS_EXPORT(iotdb::ZmqSource);

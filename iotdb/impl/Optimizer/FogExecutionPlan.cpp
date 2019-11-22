@@ -3,6 +3,7 @@
 #include <boost/graph/graphviz.hpp>
 #include <cpprest/json.h>
 #include <Topology/FogTopologySensorNode.hpp>
+#include <set>
 
 using namespace iotdb;
 using namespace web;
@@ -262,7 +263,7 @@ std::string ExecutionGraph::getGraphString() {
                         [&](auto &out, auto e) { out << "[label=\"" << graph[e].id << "\"]"; });
   ss << std::flush;
   return ss.str();
-};
+}
 
 FogExecutionPlan::FogExecutionPlan() {
   exeGraphPtr = std::make_shared<ExecutionGraph>();
@@ -389,4 +390,15 @@ ExecutionNodeLinkPtr FogExecutionPlan::createExecutionNodeLink(ExecutionNodePtr 
 std::shared_ptr<ExecutionGraph> FogExecutionPlan::getExecutionGraph() const {
   return exeGraphPtr;
 };
-    
+
+void FogExecutionPlan::freeResources(int freedCapacity) {
+  for (const ExecutionVertex &v: getExecutionGraph()->getAllVertex()) {
+    if (v.ptr->getRootOperator()) {
+      v.ptr->getFogNode()->increaseCpuCapacity(freedCapacity);
+    }
+  }
+}
+
+std::string FogExecutionPlan::getTopologyPlanString() const {
+  return exeGraphPtr->getGraphString();
+}

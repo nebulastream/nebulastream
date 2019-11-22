@@ -1,3 +1,4 @@
+add_subdirectory(Actors)
 add_subdirectory(API)
 add_subdirectory(CodeGen)
 add_subdirectory(Core)

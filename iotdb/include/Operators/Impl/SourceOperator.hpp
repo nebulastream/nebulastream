@@ -11,19 +11,29 @@
 namespace iotdb {
 
 class SourceOperator : public Operator {
-  public:
-    SourceOperator(const DataSourcePtr& source);
-    SourceOperator(const SourceOperator& other);
-    SourceOperator& operator=(const SourceOperator& other);
-    void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
-    void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;
-    const OperatorPtr copy() const override;
-    const std::string toString() const override;
-    OperatorType getOperatorType() const override;
-    ~SourceOperator() override;
+ public:
+  SourceOperator();
 
-  private:
-    DataSourcePtr source_;
+  SourceOperator(const DataSourcePtr &source);
+  SourceOperator(const SourceOperator &other);
+  SourceOperator &operator=(const SourceOperator &other);
+  void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream &out) override;
+  void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream &out) override;
+  const OperatorPtr copy() const override;
+  const std::string toString() const override;
+  OperatorType getOperatorType() const override;
+  ~SourceOperator() override;
+
+ private:
+  DataSourcePtr source_;
+
+  friend class boost::serialization::access;
+
+  template<class Archive>
+  void serialize(Archive &ar, unsigned) {
+    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Operator)
+        & BOOST_SERIALIZATION_NVP(source_);
+  }
 };
 
 } // namespace iotdb

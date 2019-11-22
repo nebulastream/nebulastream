@@ -6,7 +6,8 @@
 
 #include <CodeGen/C_CodeGen/Declaration.hpp>
 #include <CodeGen/CodeExpression.hpp>
-#include "../DataTypes.hpp"
+#include <Util/ErrorHandling.hpp>
+#include "CodeGen/DataTypes.hpp"
 
 namespace iotdb {
 
@@ -145,7 +146,8 @@ class VarDeclStatement : public ExpressionStatment {
   virtual StatementType getStamentType() const { return VAR_DEC_STMT; }
 
   virtual const CodeExpressionPtr getCode() const {
-    return std::make_shared<CodeExpression>(var_decl_->getCode()); }
+    return std::make_shared<CodeExpression>(var_decl_->getCode());
+  }
 
   virtual const ExpressionStatmentPtr copy() const { return std::make_shared<VarDeclStatement>(*this); }
 
@@ -157,7 +159,6 @@ class VarDeclStatement : public ExpressionStatment {
 };
 
 typedef VarRefStatement VarRef;
-
 
 class ReturnStatement : public Statement {
  public:
@@ -341,6 +342,16 @@ class AnnonymUserDefinedDataType : public DataType {
     return true;
   }
 
+  bool operator==(const DataType &_rhs) const override {
+    try {
+      auto rhs = dynamic_cast<const iotdb::AnnonymUserDefinedDataType &>(_rhs);
+      return name == rhs.name;
+    }
+    catch (...) {
+      return false;
+    }
+  }
+
   ~AnnonymUserDefinedDataType();
 
  private:
@@ -377,6 +388,10 @@ class UserDefinedDataType : public DataType {
   // \todo: isEqual for structType
   const bool isEqual(std::shared_ptr<UserDefinedDataType> btr) {
     return true;
+  }
+
+  bool operator==(const DataType &_rhs) const override {
+    IOTDB_NOT_IMPLEMENTED;
   }
 
   ~UserDefinedDataType();
