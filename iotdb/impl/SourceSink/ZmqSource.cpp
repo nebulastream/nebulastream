@@ -23,7 +23,7 @@ ZmqSource::ZmqSource()
       socket(zmq::socket_t(context, ZMQ_PULL)) {
   IOTDB_DEBUG(
       "Default ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/");
-  assert(0);
+  //This constructor is needed for Serialization
 }
 
 ZmqSource::ZmqSource(const Schema &schema, const std::string &host,
