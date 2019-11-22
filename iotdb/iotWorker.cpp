@@ -54,7 +54,7 @@ class worker : public stateful_actor<worker_state> {
   /**
    * @brief the constructior of the worker to initialize the default objects
    */
-  explicit worker(actor_config& cfg, string ip, uint16_t publish_port, uint16_t receive_port, string sensor_type)
+  explicit worker(actor_config &cfg, string ip, uint16_t publish_port, uint16_t receive_port, string sensor_type)
       : stateful_actor(
       cfg) {
     this->state.ip = std::move(ip);
@@ -73,7 +73,7 @@ class worker : public stateful_actor<worker_state> {
   // starting point of our FSM
   behavior init() {
     // transition to `unconnected` on server failure
-    this->set_down_handler([=](const down_msg& dm) {
+    this->set_down_handler([=](const down_msg &dm) {
       if (dm.source == this->state.current_server) {
         aout(this) << "*** lost connection to server" << endl;
         this->state.current_server = nullptr;
@@ -85,7 +85,7 @@ class worker : public stateful_actor<worker_state> {
 
   behavior unconnected() {
     return {
-        [=](connect_atom, const std::string& host, uint16_t port) {
+        [=](connect_atom, const std::string &host, uint16_t port) {
           connecting(host, port);
         }
     };
@@ -95,14 +95,14 @@ class worker : public stateful_actor<worker_state> {
    * @brief the ongoing connection state in the TSM
    * if connection works go to running state, otherwise go to unconnected state
    */
-  void connecting(const std::string& host, uint16_t port) {
+  void connecting(const std::string &host, uint16_t port) {
     // make sure we are not pointing to an old server
     this->state.current_server = nullptr;
     // use request().await() to suspend regular behavior until MM responded
     auto mm = this->system().middleman().actor_handle();
     this->request(mm, infinite, connect_atom::value, host, port).await(
-        [=](const node_id& , strong_actor_ptr& serv,
-            const std::set<std::string>& ifs) {
+        [=](const node_id &, strong_actor_ptr &serv,
+            const std::set<std::string> &ifs) {
           if (!serv) {
             aout(this) << R"(*** no server found at ")" << host << R"(":)"
                        << port << endl;
@@ -119,7 +119,7 @@ class worker : public stateful_actor<worker_state> {
           this->monitor(hdl);
           this->become(running(hdl));
         },
-        [=](const error& err) {
+        [=](const error &err) {
           aout(this) << R"(*** cannot connect to ")" << host << R"(":)"
                      << port << " => " << this->system().render(err) << endl;
           this->become(unconnected());
@@ -130,7 +130,7 @@ class worker : public stateful_actor<worker_state> {
   /**
    * @brief the running of the worker
    */
-  behavior running(const actor& coordinator) {
+  behavior running(const actor &coordinator) {
     auto this_actor_ptr = actor_cast<strong_actor_ptr>(this);
     //TODO: change me
     this->request(coordinator, task_timeout, register_sensor_atom::value, this->state.ip,
@@ -140,16 +140,16 @@ class worker : public stateful_actor<worker_state> {
 
     return {
         // the connect RPC to connect with the coordinator
-        [=](connect_atom, const std::string& host, uint16_t port) {
+        [=](connect_atom, const std::string &host, uint16_t port) {
           connecting(host, port);
         },
         // internal rpc to execute a query
-        [=](execute_query_atom, const string& query, string& str_schema, vector<string>& str_sources,
-            vector<string>& str_destinations, string& str_ops) {
-          this->execute_query(query, str_schema, str_sources, str_destinations, str_ops);
+        [=](execute_query_atom, const string &description, string &executableTransferObject) {
+          // internal rpc to execute a query
+          this->execute_query(description, executableTransferObject);
         },
         // internal rpc to unregister a query
-        [=](delete_query_atom, const string& query) {
+        [=](delete_query_atom, const string &query) {
           this->delete_query(query);
         },
         // internal rpc to execute a query
@@ -160,15 +160,51 @@ class worker : public stateful_actor<worker_state> {
   }
 
   /**
+   * @brief framework internal method which is called to execute a query or sub-query on a node
+   * @param description a description of the query
+   * @param executableTransferObject wrapper object with the schema, sources, destinations, operator
+   */
+  void execute_query(const string &description, string &executableTransferObject) {
+    ExecutableTransferObject eto = SerializationTools::parse_eto(executableTransferObject);
+    QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan();
+    this->state.runningQueries.insert({description, std::make_tuple(qep, eto.getOperatorTree())});
+    this->state.enginePtr->deployQuery(qep);
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+  }
+
+  /**
+ * @brief method which is called to unregister an already running query
+ * @param query the description of the query
+ */
+  void delete_query(const string &query) {
+    auto sap = actor_cast<strong_actor_ptr>(this);
+    try {
+      if (this->state.runningQueries.find(query) != this->state.runningQueries.end()) {
+        QueryExecutionPlanPtr qep = get<0>(this->state.runningQueries.at(query));
+        this->state.enginePtr->undeployQuery(qep);
+        std::this_thread::sleep_for(std::chrono::seconds(3));
+        this->state.runningQueries.erase(query);
+        aout(this) << to_string(sap) << ": *** Successfully deleted query " << query << endl;
+      } else {
+        aout(this) << to_string(sap) << ": *** Query not found for deletion -> " << query << endl;
+      }
+    }
+    catch (...) {
+      // TODO: catch ZMQ termination errors properly
+      IOTDB_ERROR("Uncaugth error during deletion!")
+    }
+  }
+
+  /**
    * @brief gets the currently locally running operators and returns them as flattened strings in a vector
    * @return the flattend vector<string> object of operators
    */
   vector<string> getOperators() {
     vector<string> result;
-    for (auto const& x : this->state.runningQueries) {
+    for (auto const &x : this->state.runningQueries) {
       string str_opts;
       std::set<OperatorType> flattened = get<1>(x.second)->flattenedTypes();
-      for (const OperatorType& _o: flattened) {
+      for (const OperatorType &_o: flattened) {
         if (!str_opts.empty())
           str_opts.append(", ");
         str_opts.append(operatorTypeToString.at(_o));
@@ -177,90 +213,6 @@ class worker : public stateful_actor<worker_state> {
     }
     return result;
   }
-
-  /**
-   * @brief method which is called to unregister an already running query
-   * @param query the description of the query
-   */
-  void delete_query(const string& query) {
-    auto sap = actor_cast<strong_actor_ptr>(this);
-    if (this->state.runningQueries.find(query) != this->state.runningQueries.end()) {
-      QueryExecutionPlanPtr qep = get<0>(this->state.runningQueries.at(query));
-      get<0>(this->state.runningQueries.at(query)).reset();
-      get<1>(this->state.runningQueries.at(query)).reset();
-      this->state.enginePtr->undeployQuery(qep);
-      this->state.runningQueries.erase(query);
-      aout(this) << to_string(sap) << ": *** Successfully deleted query " << query << endl;
-    } else {
-      aout(this) << to_string(sap) << ": *** Query not found for deletion -> " << query << endl;
-    }
-  }
-
-  /**
-   * @brief framework internal method which is called by the coordinator to execute a query or sub-query on a node
-   * @param query a description of the query
-   * @param str_schema the serialized schema
-   * @param str_sources the serialized sources
-   * @param str_destinations the serialized destinations
-   * @param str_ops the serialized operators
-   */
-  void execute_query(const string& query, string& str_schema, vector<string>& str_sources,
-                     vector<string>& str_destinations, string& str_ops) {
-
-    if (this->state.runningQueries.find(query) == this->state.runningQueries.end()) {
-      aout(this) << "*** Executing query " << query << endl;
-      Schema schema = SerializationTools::parse_schema(str_schema);
-      DataSourcePtr source;
-      DataSinkPtr sink;
-
-      CodeGeneratorPtr code_gen = createCodeGenerator();
-      PipelineContextPtr context = createPipelineContext();
-
-      // Parse operators
-      OperatorPtr oprtr = SerializationTools::parse_operator(str_ops);
-      oprtr->produce(code_gen, context, std::cout);
-      PipelineStagePtr stage = code_gen->compile(CompilerArgs());
-
-      // Parse sources
-      if (!str_sources.empty()) {
-        if (str_sources[0] == "example") {
-          // create example source
-          source = createTestDataSourceWithSchema(schema);
-          source->setNumBuffersToProcess(10);
-        } else {
-          aout(this) << "Query can not be executed! Only 'example' is supported -> " << query << endl;
-          //source = SerializationTools::parse_source(str_sources[0]);
-        }
-      } else {
-        // if there are no local input source operators use local zmq as source
-        source = createZmqSource(schema, this->state.ip, this->state.receive_port);
-      }
-
-      // Parse destinations
-      if (!str_destinations.empty()) {
-        sink = SerializationTools::parse_sink(str_destinations[0]);
-      } else {
-        sink = createPrintSinkWithSink(schema, std::cout);
-      }
-
-      QueryExecutionPlanPtr qep(new GeneratedQueryExecutionPlan());
-      qep->addDataSource(source);
-      qep->addDataSink(sink);
-
-      std::cout << source->toString() << std::endl;
-      std::cout << sink->toString() << std::endl;
-
-      this->state.enginePtr->deployQuery(qep);
-      this->state.runningQueries.insert({query, std::make_tuple(qep, oprtr)});
-
-      if (source->isRunning()) {
-        std::this_thread::sleep_for(std::chrono::seconds(2));
-      }
-    } else {
-      aout(this) << "*** Query already running -> " << query << endl;
-    }
-  }
-
 };
 }
 
@@ -288,7 +240,7 @@ class worker_config : public actor_system_config {
 /**
 * @brief main method to run the worker with an interactive console command list
 */
-void start_worker(actor_system& system, const worker_config& cfg) {
+void start_worker(actor_system &system, const worker_config &cfg) {
   // keeps track of requests and tries to reconnect on server failures
   auto usage = [] {
     cout << "Usage:" << endl
@@ -324,16 +276,16 @@ void start_worker(actor_system& system, const worker_config& cfg) {
   // defining the handler outside the loop is more efficient as it avoids
   // re-creating the same object over and over again
   message_handler eval(
-      [&](const string& cmd) {
+      [&](const string &cmd) {
         if (cmd != "quit")
           return;
         anon_send_exit(client, exit_reason::user_shutdown);
         done = true;
       },
-      [&](string& arg0, string& arg1, string& arg2) {
+      [&](string &arg0, string &arg1, string &arg2) {
         if (arg0 == "connect") {
           char *end = nullptr;
-          auto lport = strtoul(arg2.c_str(),& end, 10);
+          auto lport = strtoul(arg2.c_str(), &end, 10);
           if (end != arg2.c_str() + arg2.size())
             cout << R"(")" << arg2 << R"(" is not an unsigned integer)" << endl;
           else if (lport > std::numeric_limits<uint16_t>::max())
@@ -368,13 +320,13 @@ void setupLogging() {
   log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
 
   // set log level
-  iotdb::logger->setLevel(log4cxx::Level::getInfo());
+  iotdb::logger->setLevel(log4cxx::Level::getDebug());
   // add appenders and other will inherit the settings
   iotdb::logger->addAppender(file);
   iotdb::logger->addAppender(console);
 }
 
-void caf_main(actor_system& system, const worker_config& cfg) {
+void caf_main(actor_system &system, const worker_config &cfg) {
   log4cxx::Logger::getLogger("IOTDB")->setLevel(log4cxx::Level::getDebug());
   setupLogging();
   start_worker(system, cfg);
