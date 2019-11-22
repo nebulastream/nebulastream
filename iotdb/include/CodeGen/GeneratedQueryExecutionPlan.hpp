@@ -9,6 +9,8 @@
 #define INCLUDE_GENERATEDQUERYEXECUTIONPLAN_H_
 
 #include <CodeGen/QueryExecutionPlan.hpp>
+#include <CodeGen/PipelineStage.hpp>
+#include <NodeEngine/BufferManager.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
@@ -19,27 +21,33 @@
 namespace iotdb {
 
 class GeneratedQueryExecutionPlan : public QueryExecutionPlan {
-public:
-    GeneratedQueryExecutionPlan();
-    GeneratedQueryExecutionPlan(InputQuery* query, PipelineStagePtr* ptr);
+ public:
+  GeneratedQueryExecutionPlan();
+  GeneratedQueryExecutionPlan(InputQuery *query, PipelineStagePtr ptr);
 
-    bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf){
-        return 0;
-    };
-protected:
-    InputQuery* query;
-    PipelineStagePtr* ptr;
-private:
-  friend class boost::serialization::access;
-  template<class Archive>
-  void serialize(Archive & ar, const unsigned int version)
-  {
-      ar & boost::serialization::base_object<QueryExecutionPlan>(*this);
-  }
+  bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf) override {
+    std::vector<TupleBuffer *> input_buffers(1, buf.get());
+
+    TupleBufferPtr outputBuffer = BufferManager::instance().getBuffer();
+    outputBuffer->setTupleSizeInBytes(buf->getTupleSizeInBytes());
+
+    // TODO: add support for window operators here
+    WindowSliceStore *state = nullptr;
+    WindowManager *manager = nullptr;
+
+    bool ret = pipeline_stage_ptr_->execute(input_buffers, state, manager, outputBuffer.get());
+
+    for (const DataSinkPtr &s: this->getSinks()) {
+      s->writeData(outputBuffer);
+    }
+    return ret;
+  };
+ protected:
+  InputQuery *query;
+  PipelineStagePtr pipeline_stage_ptr_;
 };
+
+typedef std::shared_ptr<GeneratedQueryExecutionPlan> GeneratedQueryExecutionPlanPtr;
+
 }
-#include <boost/serialization/export.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-BOOST_CLASS_EXPORT_KEY(iotdb::GeneratedQueryExecutionPlan)
 #endif /* INCLUDE_GENERATEDQUERYEXECUTIONPLAN_H_ */

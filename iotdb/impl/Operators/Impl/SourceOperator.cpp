@@ -45,6 +45,10 @@ OperatorType SourceOperator::getOperatorType() const { return SOURCE_OP; }
 
 SourceOperator::~SourceOperator() {}
 
+SourceOperator::SourceOperator() {
+}
+
 const OperatorPtr createSourceOperator(const DataSourcePtr& source) { return std::make_shared<SourceOperator>(source); }
 
 } // namespace iotdb
+BOOST_CLASS_EXPORT(iotdb::SourceOperator);

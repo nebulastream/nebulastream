@@ -77,6 +77,10 @@ find_package(cpprestsdk REQUIRED)
 # Library containing rest dependencies
 set(LIBRARIES ${LIBRARIES} cpprestsdk::cpprest)
 
+# Library containing actor framework
+find_package(CAF COMPONENTS core io)
+set(LIBRARIES ${LIBRARIES} ${CAF_EXTRA_LDFLAGS} ${CAF_LIBRARIES} ${PTHREAD_LIBRARIES})
+
 # Print all used include directories
 message(STATUS "INCLUDE_DIRS:")
 get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
@@ -150,6 +154,18 @@ target_include_directories(iotServer PUBLIC "include")
 add_executable(iotRestServer iotRestServer.cpp)
 target_link_libraries(iotRestServer ${LIBRARIES} iotdb)
 target_include_directories(iotRestServer PUBLIC "include")
+
+add_executable(iotCoordinator iotCoordinator.cpp)
+target_link_libraries(iotCoordinator ${LIBRARIES} iotdb)
+target_include_directories(iotCoordinator PUBLIC "include")
+
+add_executable(iotWorker iotWorker.cpp)
+target_link_libraries(iotWorker ${LIBRARIES} iotdb)
+target_include_directories(iotWorker PUBLIC "include")
+
+add_executable(iotSensor iotSensor.cpp)
+target_link_libraries(iotSensor ${LIBRARIES} iotdb)
+target_include_directories(iotSensor PUBLIC "include")
 
 # Add tests with command
 enable_testing()

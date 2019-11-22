@@ -89,12 +89,16 @@ class FogExecutionPlan {
  public:
   FogExecutionPlan();
 
+  void freeResources(int freedCapacity);
+
   ExecutionNodePtr getRootNode() const;
 
   ExecutionNodePtr createExecutionNode(std::string operatorName, std::string nodeName, FogTopologyEntryPtr fogNode,
                                        OperatorPtr executableOperator);
 
   ExecutionNodeLinkPtr createExecutionNodeLink(ExecutionNodePtr src, ExecutionNodePtr dst);
+
+  std::string getTopologyPlanString() const;
 
   ExecutionGraphPtr getExecutionGraph() const;
 

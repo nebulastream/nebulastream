@@ -8,7 +8,7 @@
 #include <API/Window/WindowDefinition.hpp>
 #include <iostream>
 #include <string>
-#include "../SourceSink/DataSource.hpp"
+#include <SourceSink/DataSource.hpp>
 
 namespace iotdb {
 
@@ -116,7 +116,7 @@ class InputQuery {
   // helper operators
   OperatorPtr getRoot() const { return root; };
 
-  Stream source_stream;
+  Stream& source_stream;
 
   int getNextOperatorId() {
     operatorIdCounter++;

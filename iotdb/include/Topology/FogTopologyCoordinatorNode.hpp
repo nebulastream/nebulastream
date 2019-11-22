@@ -1,39 +1,50 @@
-#ifndef INCLUDE_TOPOLOGY_FOGTOPOLOGYWORKERNODE_HPP_
-#define INCLUDE_TOPOLOGY_FOGTOPOLOGYWORKERNODE_HPP_
+#ifndef INCLUDE_TOPOLOGY_FOGTOPOLOGYCOORDINATORNODE_HPP_
+#define INCLUDE_TOPOLOGY_FOGTOPOLOGYCOORDINATORNODE_HPP_
 
 #include "FogTopologyEntry.hpp"
 #include <API/InputQuery.hpp>
 
 #include <memory>
-#include <utility>
 #include <vector>
-#include <Util/CPUCapacity.hpp>
+#include <string>
+
+#define INVALID_NODE_ID 101
 
 namespace iotdb {
 
-/**
- * @brief: This class represent a worker node in fog topology. When you create a worker node you need to use the
- * setters to define the node id and its cpu capacity.
+/**\breif:
+*
+* This class represent a worker node in fog topology.
+*
+* When you create a worker node you need to use the setters to define the node id and its cpu capacity.
 *
 * Following are the set of properties that can be defined:
-* 1.) sensor_id : Defines the unique identifier of the node
-* 2.) cpuCapacity : Defines the actual CPU capacity of the node
-* 3.) remainingCPUCapacity : Defined the remaining CPU capacity of the node
-* 4.) isASink : Defines if the node is sink or not. By default a worker node is not a sink node
-* 5.) query : Defines the query that need to be executed by the node
+*
+* sensor_id : Defines the unique identifier of the node
+*
+* cpuCapacity : Defines the actual CPU capacity of the node
+*
+* remainingCPUCapacity : Defined the remaining CPU capacity of the node
+*
+* isASink : Defines if the node is sink or not. By default a worker node is not a sink node
+*
+* query : Defines the query that need to be executed by the node
+*
 */
-class FogTopologyWorkerNode : public FogTopologyEntry {
+class FogTopologyCoordinatorNode : public FogTopologyEntry {
 
  public:
-  FogTopologyWorkerNode(size_t nodeId, std::string ip_addr) {
+  FogTopologyCoordinatorNode(size_t nodeId, std::string ip_addr) {
     this->node_id = nodeId;
     this->ip_addr = std::move(ip_addr);
   }
-  ~FogTopologyWorkerNode() = default;
+  ~FogTopologyCoordinatorNode() = default;
 
   size_t getId() { return node_id; }
 
-  void setId(size_t id) { this->node_id = id; }
+  void setId(size_t id) override {
+    this->node_id = id;
+  }
 
   int getCpuCapacity() { return cpuCapacity; }
 
@@ -60,13 +71,13 @@ class FogTopologyWorkerNode : public FogTopologyEntry {
     return this->isASink;
   }
 
-  FogNodeType getEntryType() { return Worker; }
+  FogNodeType getEntryType() { return Coordinator; }
 
   std::string getEntryTypeString() {
     if (isASink) {
       return "sink";
     }
-    return "Worker";
+    return "Coordinator";
   }
 
   void setQuery(InputQueryPtr pQuery) { this->query = pQuery; };
@@ -87,22 +98,21 @@ class FogTopologyWorkerNode : public FogTopologyEntry {
     receive_port = receivePort;
   }
 
-  const string &getIp() override {
+  const string& getIp() override {
     return this->ip_addr;
   }
 
-  void setIp(const string &ip) override {
+  void setIp(const string& ip) override {
     this->ip_addr = ip;
   }
 
  private:
-  size_t node_id;
-  int cpuCapacity;
-  int remainingCPUCapacity;
+  int cpuCapacity{};
+  int remainingCPUCapacity{};
   bool isASink = false;
   InputQueryPtr query;
 };
 
-typedef std::shared_ptr<FogTopologyWorkerNode> FogTopologyWorkerNodePtr;
+typedef std::shared_ptr<FogTopologyCoordinatorNode> FogTopologyCoordinatorNodePtr;
 } // namespace iotdb
 #endif /* INCLUDE_TOPOLOGY_FOGTOPOLOGYWORKERNODE_HPP_ */
