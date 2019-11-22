@@ -102,7 +102,8 @@ FogExecutionPlan NesCoordinator::register_query(const string &description,
   return fogExecutionPlan;
 }
 
-void NesCoordinator::deregister_query(const string &description) {
+bool NesCoordinator::deregister_query(const string &description) {
+  bool out = false;
   if (this->_registeredQueries.find(description) == this->_registeredQueries.end() &&
       this->_runningQueries.find(description) == this->_runningQueries.end()) {
     IOTDB_INFO("*** No deletion required! Query has neither been registered or deployed->" << description);
@@ -112,12 +113,14 @@ void NesCoordinator::deregister_query(const string &description) {
     this->_registeredQueries.erase(description);
     IOTDB_INFO("Query was registered and has been succesfully removed -> " << description);
   } else {
-    IOTDB_INFO("Deleting...");
+    IOTDB_INFO("Deregistering running query...");
     //Query is running -> stop query locally if it is running and free resources
     get<1>(this->_runningQueries.at(description)).freeResources(1);
     this->_runningQueries.erase(description);
+    IOTDB_INFO("*** successfully removed query " << description);
+    out = true;
   }
-  IOTDB_INFO("*** successfully deleted query " << description);
+  return out;
 }
 
 unordered_map<FogTopologyEntryPtr,

@@ -19,8 +19,6 @@ class OneGeneratorSource : public GeneratorSource {
       GeneratorSource(schema, pNum_buffers_to_process) {
   }
 
-  ~OneGeneratorSource() = default;
-
   TupleBufferPtr receiveData() override {
     // 10 tuples of size one
     TupleBufferPtr buf = BufferManager::instance().getBuffer();

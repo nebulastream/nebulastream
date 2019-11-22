@@ -28,7 +28,7 @@ struct coordinator_state {
   unordered_map<FogTopologyEntryPtr, strong_actor_ptr> topologyActorMap;
 
   NodeEngine *enginePtr;
-  unordered_map<string, QueryExecutionPlanPtr> deployedQueries;
+  std::unordered_map<string, tuple<QueryExecutionPlanPtr, OperatorPtr>> runningQueries;
 };
 
 /**
@@ -46,6 +46,7 @@ class coordinator : public stateful_actor<coordinator_state> {
     this->state.actorTopologyMap.insert({this->address().get(), this->state.coordinatorPtr->getThisEntry()});
     this->state.topologyActorMap.insert({this->state.coordinatorPtr->getThisEntry(), this->address().get()});
 
+    this->state.enginePtr = new NodeEngine();
     this->state.enginePtr->start();
   }
 
@@ -84,13 +85,13 @@ class coordinator : public stateful_actor<coordinator_state> {
           // rpc to register queries
           this->state.coordinatorPtr->register_query(description, sensor_type, strategy);
         },
-        [=](deploy_query_atom, const string &description) {
-          // rpc to deploy queries to all corresponding actors
-          this->deploy_query(description);
-        },
         [=](delete_query_atom, const string &description) {
           // rpc to unregister a registered query
           this->delete_query(description);
+        },
+        [=](deploy_query_atom, const string &description) {
+          // rpc to deploy queries to all corresponding actors
+          this->deploy_query(description);
         },
         [=](execute_query_atom, const string &description, string &executableTransferObject) {
           // internal rpc to execute a query
@@ -151,22 +152,20 @@ class coordinator : public stateful_actor<coordinator_state> {
       strong_actor_ptr sap = this->state.topologyActorMap.at(x.first);
       auto hdl = actor_cast<actor>(sap);
       string s_eto = SerializationTools::ser_eto(x.second);
-
+      IOTDB_INFO("Sending query " << description << " to " << to_string(hdl));
       this->request(hdl, task_timeout, execute_query_atom::value, description, s_eto);
     }
   }
 
   /**
-   * @brief framework internal method which is called by the coordinator to execute a query or sub-query on a node
-   * @param query a description of the query
-   * @param str_schema the serialized schema
-   * @param str_sources the serialized sources
-   * @param str_destinations the serialized destinations
-   * @param str_ops the serialized operators
+   * @brief framework internal method which is called to execute a query or sub-query on a node
+   * @param description a description of the query
+   * @param executableTransferObject wrapper object with the schema, sources, destinations, operator
    */
   void execute_query(const string &description, string &executableTransferObject) {
     ExecutableTransferObject eto = SerializationTools::parse_eto(executableTransferObject);
     QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan();
+    this->state.runningQueries.insert({description, std::make_tuple(qep, eto.getOperatorTree())});
     this->state.enginePtr->deployQuery(qep);
     std::this_thread::sleep_for(std::chrono::seconds(2));
   }
@@ -187,11 +186,18 @@ class coordinator : public stateful_actor<coordinator_state> {
       }
     }
 
-    if (this->state.deployedQueries.find(description) == this->state.deployedQueries.end()) {
+    if (this->state.coordinatorPtr->deregister_query(description)) {
       //Query is running -> stop query locally if it is running and free resources
-      this->state.enginePtr->undeployQuery(this->state.deployedQueries.at(description));
+      try {
+        this->state.enginePtr->undeployQuery(get<0>(this->state.runningQueries.at(description)));
+        std::this_thread::sleep_for(std::chrono::seconds(3));
+        this->state.runningQueries.erase(description);
+      }
+      catch (...) {
+        // TODO: catch ZMQ termination errors properly
+        IOTDB_ERROR("Uncaugth error during deletion!")
+      }
     }
-    this->state.coordinatorPtr->deregister_query(description);
   }
 
   /**

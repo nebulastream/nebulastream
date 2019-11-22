@@ -69,8 +69,9 @@ class NesCoordinator {
   /**
    * @brief method which is called to unregister an already running query
    * @param description the description of the query
+   * @return true if deleted from running queries, otherwise false
    */
-  void deregister_query(const string &description);
+  bool deregister_query(const string &description);
 
   /**
    * @brief deploys a CAF query into the NES topology to the corresponding devices defined by the optimizer

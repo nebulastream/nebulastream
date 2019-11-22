@@ -17,7 +17,7 @@ BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::DataSource);
 
 namespace iotdb {
 
-DataSource::DataSource(const Schema& _schema)
+DataSource::DataSource(const Schema &_schema)
     : running(false),
       thread(),
       schema(_schema),
@@ -36,7 +36,7 @@ DataSource::DataSource()
   IOTDB_DEBUG("DataSource " << this << ": Init Data Source Default w/o schema")
 }
 
-const Schema& DataSource::getSchema() const {
+const Schema &DataSource::getSchema() const {
   return schema;
 }
 
@@ -57,15 +57,16 @@ bool DataSource::start() {
 
 bool DataSource::stop() {
   IOTDB_DEBUG("DataSource " << this << ": Stop called")
-
-  if (!running)
-    return false;
   running = false;
 
-  if (thread.joinable())
+  if (thread.joinable()) {
     thread.join();
-  IOTDB_DEBUG("DataSource " << this << ": Thread joinded")
-  return true;
+    IOTDB_DEBUG("DataSource " << this << ": Thread joinded")
+    return true;
+  } else {
+    IOTDB_DEBUG("DataSource " << this << ": Thread is not joinable")
+  }
+  return false;
 }
 
 bool DataSource::isRunning() {
@@ -101,18 +102,14 @@ void DataSource::running_routine() {
 // debugging
 void DataSource::setNumBuffersToProcess(size_t cnt) {
   num_buffers_to_process = cnt;
-}
-;
+};
 size_t DataSource::getNumberOfGeneratedTuples() {
   return generatedTuples;
-}
-;
+};
 size_t DataSource::getNumberOfGeneratedBuffers() {
   return generatedBuffers;
-}
-;
+};
 const std::string DataSource::getSourceSchemaAsString() {
   return schema.toString();
-}
-;
+};
 }  // namespace iotdb
