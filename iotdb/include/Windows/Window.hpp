@@ -21,6 +21,8 @@ typedef std::shared_ptr<Window> WindowPtr;
 class Window {
  public:
   ~Window();
+  Window()= default;
+  Window(WindowDefinitionPtr window_definition_ptr);
   void setup();
   bool start();
   bool stop();

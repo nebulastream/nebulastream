@@ -12,14 +12,14 @@ YSBWindow::~YSBWindow()
 	IOTDB_DEBUG("YSB Window: calling destructor")
 }
 
-YSBWindow::YSBWindow(size_t pcampaignCnt, size_t windowSizeInSec):
+YSBWindow::YSBWindow(size_t pcampaignCnt, size_t windowSizeInSec): Window(nullptr),
 mutex(), currentWindow(0), lastChangeTimeStamp(time(NULL)), windowSizeInSec(windowSizeInSec), campaignCnt(pcampaignCnt)
 {
     IOTDB_DEBUG("YSB Window: calling destructor")
     setup();
 };
 
-YSBWindow::YSBWindow():  mutex(), currentWindow(0),lastChangeTimeStamp(time(NULL)), windowSizeInSec(1), campaignCnt(1)
+YSBWindow::YSBWindow(): Window(nullptr), mutex(), currentWindow(0),lastChangeTimeStamp(time(NULL)), windowSizeInSec(1), campaignCnt(1)
 {
     IOTDB_DEBUG("YSB Window: calling default destructor")
     setup();

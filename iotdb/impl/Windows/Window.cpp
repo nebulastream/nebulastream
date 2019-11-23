@@ -12,12 +12,14 @@
 BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::Window)
 namespace iotdb {
 
+Window::Window(iotdb::WindowDefinitionPtr window_definition_ptr): window_definition_ptr(window_definition_ptr) {
+}
+
 void Window::setup() {
   // Initialize Window Manager
   this->window_manager_ptr_ = std::make_shared<WindowManager>(this->window_definition_ptr);
   // Initialize StateVariable
-  auto &state_manager = StateManager::instance();
-  this->window_state = &state_manager.registerState<int64_t, WindowSliceStore<int64_t> *>("window");
+  this->window_state = &StateManager::instance().registerState<int64_t, WindowSliceStore<int64_t> *>("window");
 }
 
 /**
