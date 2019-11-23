@@ -15,6 +15,8 @@
 #include <NodeEngine/BufferManager.hpp>
 
 #include <CodeGen/C_CodeGen/BinaryOperatorStatement.hpp>
+#include <API/Schema.hpp>
+#include <Windows/Window.hpp>
 
 namespace iotdb {
 class WindowManagerTest : public testing::Test {
@@ -97,5 +99,43 @@ TEST_F(WindowManagerTest, check_slice) {
   //ASSERT_EQ(buffers_count, buffers_managed);
   ASSERT_EQ(aggregates[sliceIndex], 2);
 }
+
+
+TEST_F(WindowManagerTest, window_trigger) {
+
+  Schema schema = Schema::create()
+      .addField("id", BasicType::UINT32)
+      .addField("value", BasicType::UINT64);
+
+  auto aggregation = std::make_shared<Sum>(Sum::on(schema.get("id")));
+
+  auto windowDef = std::make_shared<WindowDefinition>(WindowDefinition(aggregation, TumblingWindow::of(Seconds(10))));
+
+  auto w = Window(windowDef);
+
+
+
+  auto store = new WindowSliceStore<int64_t>(0L);
+
+  uint64_t ts = 7;
+  w.getWindowManager()->sliceStream(ts, store);
+  auto sliceIndex = store->getSliceIndexByTs(ts);
+  auto &aggregates = store->getPartialAggregates();
+  aggregates[sliceIndex]++;
+
+  ts = 14;
+  w.getWindowManager()->sliceStream(ts, store);
+  sliceIndex = store->getSliceIndexByTs(ts);
+  aggregates = store->getPartialAggregates();
+  aggregates[sliceIndex]++;
+  // std::cout << aggregates[sliceIndex] << std::endl;
+  //ASSERT_EQ(buffers_count, buffers_managed);
+
+
+  ASSERT_EQ(aggregates[sliceIndex], 2);
+
+  w.trigger();
+}
+
 
 }

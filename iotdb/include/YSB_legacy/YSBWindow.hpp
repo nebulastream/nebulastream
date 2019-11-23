@@ -98,6 +98,7 @@ public:
     {
         return lastChangeTimeStamp;
     }
+
 private:
     friend class boost::serialization::access;
     std::mutex mutex;

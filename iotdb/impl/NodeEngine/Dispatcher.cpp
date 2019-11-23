@@ -207,6 +207,7 @@ void Dispatcher::addWork(const iotdb::TupleBufferPtr window_aggregates, iotdb::W
 
   //get the queries that contains this window
   std::vector<QueryExecutionPlanPtr> &queries = window_to_query_map[window];
+  // TODO We currently assume that a window ends a query execution plan
   for (uint64_t i = 0; i < queries.size(); ++i) {
     // for each respective sink, create output the window aggregates
     auto sinks = queries[i]->getSinks();
