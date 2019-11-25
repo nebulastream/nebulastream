@@ -60,7 +60,8 @@ TupleBufferPtr ZmqSource::receiveData() {
       size_t tupleCnt = *((size_t *) new_data.data());
       IOTDB_DEBUG("ZMQSource received #tups " << tupleCnt)
 
-      socket.recv(&new_data); // actual data
+      zmq::message_t new_data2;
+      socket.recv(&new_data2); // actual data
 
       // Get some information about received data
       size_t tuple_size = schema.getSchemaSize();
@@ -69,11 +70,11 @@ TupleBufferPtr ZmqSource::receiveData() {
       IOTDB_DEBUG("ZMQSource  " << this << ": got buffer ")
 
       // TODO: If possible only copy the content not the empty part
-      std::memcpy(buffer->getBuffer(), new_data.data(), buffer->getBufferSizeInBytes());
+      std::memcpy(buffer->getBuffer(), new_data2.data(), buffer->getBufferSizeInBytes());
       buffer->setNumberOfTuples(tupleCnt);
       buffer->setTupleSizeInBytes(tuple_size);
 
-      if (buffer->getBufferSizeInBytes() == new_data.size()) {
+      if (buffer->getBufferSizeInBytes() == new_data2.size()) {
         IOTDB_WARNING("ZMQSource  " << this << ": return buffer ")
       } else {
         IOTDB_DEBUG("ZMQSource  " << this << ": return buffer ")
