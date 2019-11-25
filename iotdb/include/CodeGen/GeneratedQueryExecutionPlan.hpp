@@ -25,23 +25,7 @@ class GeneratedQueryExecutionPlan : public QueryExecutionPlan {
   GeneratedQueryExecutionPlan();
   GeneratedQueryExecutionPlan(InputQuery *query, PipelineStagePtr ptr);
 
-  bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf) override {
-    std::vector<TupleBuffer *> input_buffers(1, buf.get());
-
-    TupleBufferPtr outputBuffer = BufferManager::instance().getBuffer();
-    outputBuffer->setTupleSizeInBytes(buf->getTupleSizeInBytes());
-
-    // TODO: add support for window operators here
-    WindowSliceStore *state = nullptr;
-    WindowManager *manager = nullptr;
-
-    bool ret = pipeline_stage_ptr_->execute(input_buffers, state, manager, outputBuffer.get());
-
-    for (const DataSinkPtr &s: this->getSinks()) {
-      s->writeData(outputBuffer);
-    }
-    return ret;
-  };
+  bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf) override;
  protected:
   InputQuery *query;
   PipelineStagePtr pipeline_stage_ptr_;
