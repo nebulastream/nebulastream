@@ -11,9 +11,10 @@
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/vector.hpp>
 #include <map>
+#include <Windows/Window.hpp>
 #include "../SourceSink/DataSink.hpp"
 #include "../SourceSink/DataSource.hpp"
-#include "../Windows/Window.hpp"
+
 
 namespace iotdb {
 class QueryExecutionPlan;

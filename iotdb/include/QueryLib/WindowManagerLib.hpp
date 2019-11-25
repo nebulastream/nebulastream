@@ -104,12 +104,20 @@ class WindowSliceStore {
     lastWatermark = last_watermark;
   }
 
+  uint64_t getMaxTs(){
+    return maxTs;
+  };
+  void updateMaxTs(uint64_t ts){
+    maxTs = std::max(maxTs,ts);
+  };
+
   const PartialAggregateType defaultValue;
   uint64_t nextEdge = 0;
  private:
   std::vector<SliceMetaData> sliceMetaData;
   std::vector<PartialAggregateType> partialAggregates;
-  uint64_t lastWatermark;
+  uint64_t lastWatermark = 0;
+  uint64_t maxTs = 0;
 
 };
 
@@ -127,6 +135,9 @@ class WindowManager {
    */
   template<class PartialAggregateType>
   inline const void sliceStream(const uint64_t ts, WindowSliceStore<PartialAggregateType> *store) {
+
+    // updates the maximal record ts
+    store->updateMaxTs(ts);
 
     // check if the slice store is empty
     if (store->empty()) {

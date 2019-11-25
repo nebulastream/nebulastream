@@ -13,10 +13,9 @@
 #include <Util/Logger.hpp>
 #include <thread>
 #include <QueryLib/WindowManagerLib.hpp>
+#include <NodeEngine/BufferManager.hpp>
 
 namespace iotdb {
-class Window;
-typedef std::shared_ptr<Window> WindowPtr;
 
 class Window {
  public:
@@ -40,6 +39,11 @@ class Window {
     return window_manager_ptr_;
   };
 
+  template<class FinalAggregateType, class PartialAggregateType>
+  void aggregateWindows(WindowSliceStore<PartialAggregateType> *store,
+                        WindowDefinitionPtr window_definition_ptr,
+                        TupleBufferPtr tuple_buffer);
+
  private:
   friend class boost::serialization::access;
   bool running;
@@ -47,7 +51,10 @@ class Window {
   WindowManagerPtr window_manager_ptr_;
   void *window_state;
   std::thread thread;
+
 };
+
+typedef std::shared_ptr<Window> WindowPtr;
 
 //just for test compability
 const WindowPtr createTestWindow(size_t campainCnt, size_t windowSizeInSec);

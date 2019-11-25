@@ -6,13 +6,12 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
 #include <State/StateManager.hpp>
-#include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/Dispatcher.hpp>
 
 BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::Window)
 namespace iotdb {
 
-Window::Window(iotdb::WindowDefinitionPtr window_definition_ptr): window_definition_ptr(window_definition_ptr) {
+Window::Window(iotdb::WindowDefinitionPtr window_definition_ptr) : window_definition_ptr(window_definition_ptr) {
 }
 
 void Window::setup() {
@@ -33,15 +32,18 @@ void Window::setup() {
  * @param tuple_buffer
  */
 template<class FinalAggregateType, class PartialAggregateType>
-void aggregateWindows(uint64_t watermark,
-                      WindowSliceStore<PartialAggregateType> *store,
-                      WindowDefinitionPtr window_definition_ptr,
-                      TupleBufferPtr tuple_buffer) {
+void Window::aggregateWindows(
+    WindowSliceStore<PartialAggregateType> *store,
+    WindowDefinitionPtr window_definition_ptr,
+    TupleBufferPtr tuple_buffer) {
 
-  auto intBuffer = static_cast<FinalAggregateType *> (tuple_buffer->getBuffer());
+  // we use the maximal records ts as watermark.
+  // TODO we should add a allowed lateness to support out of order events
+  auto watermark = store->getMaxTs();
+
   auto windows = std::make_shared<std::vector<WindowState>>();
   window_definition_ptr->windowType->triggerWindows(windows, store->getLastWatermark(), watermark);
-  auto partialFinalAggregates = std::vector<PartialAggregateType>();
+  auto partialFinalAggregates = std::vector<PartialAggregateType>(windows->size());
   auto slices = store->getSliceMetadata();
   auto partialAggregates = store->getPartialAggregates();
   for (uint64_t s_id = 0; s_id < slices.size(); s_id++) {
@@ -53,19 +55,25 @@ void aggregateWindows(uint64_t watermark,
 
         //TODO Because of this condition we currently only support SUM aggregations
         if (Sum *sumAggregation = dynamic_cast<Sum *>(window_definition_ptr->windowAggregation.get())) {
-          auto partialAggregate = partialAggregates[s_id];
-          partialFinalAggregates[s_id] =
-              sumAggregation->combine<PartialAggregateType>(partialFinalAggregates[s_id], partialAggregate);
+          if (partialFinalAggregates.size() <= w_id) {
+            partialFinalAggregates[w_id] = partialAggregates[s_id];
+          } else {
+            partialFinalAggregates[w_id] =
+                sumAggregation->combine<PartialAggregateType>(partialFinalAggregates[w_id], partialAggregates[s_id]);
+          }
         }
       }
     }
   }
+  auto intBuffer = static_cast<FinalAggregateType *> (tuple_buffer->getBuffer());
   for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
     //TODO Because of this condition we currently only support SUM aggregations
     if (Sum *sumAggregation = dynamic_cast<Sum *>(window_definition_ptr->windowAggregation.get())) {
       intBuffer[i] = sumAggregation->lower<FinalAggregateType, PartialAggregateType>(partialFinalAggregates[i]);
     }
   }
+  tuple_buffer->setNumberOfTuples(partialFinalAggregates.size());
+
   store->setLastWatermark(watermark);
 };
 
@@ -77,7 +85,7 @@ void Window::trigger() {
   for (auto &it : window_state_variable->rangeAll()) {
     // write all window aggregates to the tuple buffer
     // TODO we currently have no handling in the case the tuple buffer is full
-    aggregateWindows<int64_t, int64_t>(0, it.second, this->window_definition_ptr, tuple_buffer);
+    this->aggregateWindows<int64_t, int64_t>(it.second, this->window_definition_ptr, tuple_buffer);
   }
   // send the tuple buffer to the next pipeline stage or sink
   Dispatcher::instance().addWork(tuple_buffer, this);
@@ -112,8 +120,8 @@ bool Window::stop() {
 
 void Window::print() {}
 
- size_t Window::getNumberOfEntries() {
-   return 0;
+size_t Window::getNumberOfEntries() {
+  return 0;
 }
 
 const WindowPtr createTestWindow(size_t campainCnt, size_t windowSizeInSec) {
