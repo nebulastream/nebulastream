@@ -88,7 +88,7 @@ TupleBufferPtr ZmqSource::receiveData() {
   }
 }
 
-std::string ZmqSource::toString() const {
+const std::string ZmqSource::toString() const {
   std::stringstream ss;
   ss << "ZMQ_SOURCE(";
   ss << "SCHEMA(" << schema.toString() << "), ";
