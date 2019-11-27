@@ -80,12 +80,6 @@ class NesCoordinator {
   unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> make_deployment(const string &description);
 
   /**
-   * @brief gets the currently locally running operators and returns them as flattened strings in a vector
-   * @return the flattend vector<string> object of operators
-   */
-  vector<string> getOperators();
-
-  /**
    * @brief creates a string representation of the topology graph
    * @return the topology as string representation
    */

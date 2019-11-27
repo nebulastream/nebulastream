@@ -21,6 +21,7 @@ using namespace caf;
 using register_worker_atom = atom_constant<atom("r_worker")>;
 using register_sensor_atom = atom_constant<atom("r_sensor")>;
 using register_query_atom = atom_constant<atom("register")>;
+using deregister_query_atom = atom_constant<atom("deregister")>;
 using deploy_query_atom  = atom_constant<atom("deploy")>;
 
 using topology_json_atom = atom_constant<atom("topology")>;

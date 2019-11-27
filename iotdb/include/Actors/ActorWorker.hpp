@@ -7,8 +7,10 @@
 
 #include <NodeEngine/NodeEngine.hpp>
 #include <Operators/Operator.hpp>
+#include <Actors/NesWorker.hpp>
 #include <caf/all.hpp>
 #include <caf/io/all.hpp>
+#include <utility>
 
 using namespace caf;
 using std::string;
@@ -42,14 +44,7 @@ class worker_config : public actor_system_config {
 // the client queues pending tasks
 struct worker_state {
   strong_actor_ptr current_server;
-  string ip;
-  uint16_t publish_port;
-  uint16_t receive_port;
-  string sensor_type;
-
-  NodeEngine *enginePtr;
-
-  std::unordered_map<string, tuple<QueryExecutionPlanPtr, OperatorPtr>> runningQueries;
+  std::unique_ptr<NesWorker> workerPtr;
 };
 
 // class-based, statically typed, event-based API
@@ -61,12 +56,8 @@ class actor_worker : public stateful_actor<worker_state> {
   explicit actor_worker(actor_config &cfg, string ip, uint16_t publish_port, uint16_t receive_port, string sensor_type)
       : stateful_actor(
       cfg) {
-    this->state.ip = std::move(ip);
-    this->state.publish_port = publish_port;
-    this->state.receive_port = receive_port;
-    this->state.sensor_type = std::move(sensor_type);
-    this->state.enginePtr = new NodeEngine();
-    this->state.enginePtr->start();
+    this->state.workerPtr = std::make_unique<NesWorker>(
+        NesWorker(std::move(ip), publish_port, receive_port, std::move(sensor_type)));
   }
 
   behavior_type make_behavior() override {
@@ -75,39 +66,14 @@ class actor_worker : public stateful_actor<worker_state> {
 
  private:
   behavior init();
-
   behavior unconnected();
+  behavior running(const actor &coordinator);
 
   /**
    * @brief the ongoing connection state in the TSM
    * if connection works go to running state, otherwise go to unconnected state
    */
   void connecting(const std::string &host, uint16_t port);
-
-  /**
-   * @brief the running of the worker
-   */
-  behavior running(const actor &coordinator);
-
-  /**
-   * @brief framework internal method which is called to execute a query or sub-query on a node
-   * @param description a description of the query
-   * @param executableTransferObject wrapper object with the schema, sources, destinations, operator
-   */
-  void execute_query(const string &description, string &executableTransferObject);
-
-  /**
- * @brief method which is called to unregister an already running query
- * @param query the description of the query
- */
-  void delete_query(const string &query);
-
-  /**
-   * @brief gets the currently locally running operators and returns them as flattened strings in a vector
-   * @return the flattend vector<string> object of operators
-   */
-  vector<string> getOperators();
-
 };
 
 }

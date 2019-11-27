@@ -64,7 +64,7 @@ void run_coordinator(actor_system &system, const coordinator_config &cfg) {
         } else if (arg0 == "deploy" && !arg1.empty()) {
           anon_send(coord, deploy_query_atom::value, arg1);
         } else if (arg0 == "delete" && !arg1.empty()) {
-          anon_send(coord, delete_query_atom::value, arg1);
+          anon_send(coord, deregister_query_atom::value, arg1);
         } else {
           cout << "Unknown command" << endl;
         }

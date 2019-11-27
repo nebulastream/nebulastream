@@ -26,36 +26,6 @@ FogTopologyEntryPtr NesCoordinator::register_sensor(const string &ip, uint16_t p
   return sensorNode;
 }
 
-vector<string> NesCoordinator::getOperators() {
-  vector<string> result;
-  for (auto const &x : this->_runningQueries) {
-    // iterate through all running queries and get operators
-    string str_opts;
-    tuple<Schema, FogExecutionPlan> elements = x.second;
-
-    OperatorPtr operators;
-    // find operators of _this in execution graph
-    for (const ExecutionVertex &v: get<1>(elements).getExecutionGraph()->getAllVertex()) {
-      if (v.ptr->getFogNode() == this->_thisEntry) {
-        operators = v.ptr->getRootOperator();
-        break;
-      }
-    }
-
-    if (operators) {
-      // if has operators convert them to a flattened string list and return
-      set<OperatorType> flattened = operators->flattenedTypes();
-      for (const OperatorType &_o: flattened) {
-        if (!str_opts.empty())
-          str_opts.append(", ");
-        str_opts.append(operatorTypeToString.at(_o));
-      }
-      result.emplace_back(x.first + "->" + str_opts);
-    }
-  }
-  return result;
-}
-
 FogExecutionPlan NesCoordinator::register_query(const string &description,
                                                 const string &sensor_type,
                                                 const string &strategy) {
