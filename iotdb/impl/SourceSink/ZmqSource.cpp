@@ -1,4 +1,4 @@
-#include "../../include/SourceSink/ZmqSource.hpp"
+#include <SourceSink/ZmqSource.hpp>
 
 #include <cassert>
 #include <cstdint>
@@ -21,8 +21,6 @@ ZmqSource::ZmqSource()
       connected(false),
       context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_PULL)) {
-  IOTDB_DEBUG(
-      "Default ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/");
   //This constructor is needed for Serialization
 }
 
@@ -76,21 +74,21 @@ TupleBufferPtr ZmqSource::receiveData() {
 
       if (buffer->getBufferSizeInBytes() == new_data2.size()) {
         IOTDB_WARNING("ZMQSource  " << this << ": return buffer ")
-      } else {
-        IOTDB_DEBUG("ZMQSource  " << this << ": return buffer ")
       }
+
       return buffer;
     }
     catch (const zmq::error_t &ex) {
       // recv() throws ETERM when the zmq context is destroyed,
       //  as when AsyncZmqListener::Stop() is called
-      if (ex.num() != ETERM)
-        throw;
+      if (ex.num() != ETERM) {
+        IOTDB_FATAL_ERROR("ZMQSOURCE: " << ex.what())
+      }
     }
   }
 }
 
-const std::string ZmqSource::toString() const {
+std::string ZmqSource::toString() const {
   std::stringstream ss;
   ss << "ZMQ_SOURCE(";
   ss << "SCHEMA(" << schema.toString() << "), ";
