@@ -66,11 +66,9 @@ void actor_worker::connecting(const std::string &host, uint16_t port) {
  */
 behavior actor_worker::running(const actor &coordinator) {
   auto this_actor_ptr = actor_cast<strong_actor_ptr>(this);
-  //TODO: change me
-  this->request(coordinator, task_timeout, register_sensor_atom::value, this->state.ip,
-                this->state.publish_port, this->state.receive_port, 2, this->state.sensor_type,
-                this_actor_ptr);
-  //this->request(coordinator, task_timeout, register_worker_atom::value, 2, this_actor_ptr);
+  this->request(coordinator, task_timeout, register_sensor_atom::value, this->state.workerPtr->getIp(),
+                this->state.workerPtr->getPublishPort(), this->state.workerPtr->getReceivePort(), 2,
+                this->state.workerPtr->getSensorType());
 
   return {
       // the connect RPC to connect with the coordinator
@@ -80,71 +78,16 @@ behavior actor_worker::running(const actor &coordinator) {
       // internal rpc to execute a query
       [=](execute_query_atom, const string &description, string &executableTransferObject) {
         // internal rpc to execute a query
-        this->execute_query(description, executableTransferObject);
+        this->state.workerPtr->execute_query(description, executableTransferObject);
       },
       // internal rpc to unregister a query
       [=](delete_query_atom, const string &query) {
-        this->delete_query(query);
+        this->state.workerPtr->delete_query(query);
       },
       // internal rpc to execute a query
       [=](get_operators_atom) {
-        return this->getOperators();
+        return this->state.workerPtr->getOperators();
       }
   };
-}
-
-/**
- * @brief framework internal method which is called to execute a query or sub-query on a node
- * @param description a description of the query
- * @param executableTransferObject wrapper object with the schema, sources, destinations, operator
- */
-void actor_worker::execute_query(const string &description, string &executableTransferObject) {
-  ExecutableTransferObject eto = SerializationTools::parse_eto(executableTransferObject);
-  QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan();
-  this->state.runningQueries.insert({description, std::make_tuple(qep, eto.getOperatorTree())});
-  this->state.enginePtr->deployQuery(qep);
-  std::this_thread::sleep_for(std::chrono::seconds(2));
-}
-
-/**
-* @brief method which is called to unregister an already running query
-* @param query the description of the query
-*/
-void actor_worker::delete_query(const string &query) {
-  auto sap = actor_cast<strong_actor_ptr>(this);
-  try {
-    if (this->state.runningQueries.find(query) != this->state.runningQueries.end()) {
-      QueryExecutionPlanPtr qep = get<0>(this->state.runningQueries.at(query));
-      this->state.enginePtr->undeployQuery(qep);
-      std::this_thread::sleep_for(std::chrono::seconds(3));
-      this->state.runningQueries.erase(query);
-      aout(this) << to_string(sap) << ": *** Successfully deleted query " << query << endl;
-    } else {
-      aout(this) << to_string(sap) << ": *** Query not found for deletion -> " << query << endl;
-    }
-  }
-  catch (...) {
-    // TODO: catch ZMQ termination errors properly
-    IOTDB_ERROR("Uncaugth error during deletion!")
-  }
-}
-
-/**
- * @brief gets the currently locally running operators and returns them as flattened strings in a vector
- * @return the flattend vector<string> object of operators
- */
-vector<string> actor_worker::getOperators() {
-  vector<string> result;
-  for (auto const &x : this->state.runningQueries) {
-    string str_opts;
-    std::set<OperatorType> flattened = get<1>(x.second)->flattenedTypes();
-    for (const OperatorType &_o: flattened) {
-      if (!str_opts.empty())
-        str_opts.append(", ");
-      str_opts.append(operatorTypeToString.at(_o));
-    }
-    result.emplace_back(x.first + "->" + str_opts);
-  }
-  return result;
 }
 }
