@@ -44,7 +44,7 @@ class ZmqSource : public DataSource {
    * @brief override the toString method for the zmq source
    * @return returns string describing the zmq source
    */
-  const std::string toString() const override;
+  std::string toString() const override;
 
  private:
   /**
