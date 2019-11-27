@@ -155,17 +155,13 @@ add_executable(iotRestServer iotRestServer.cpp)
 target_link_libraries(iotRestServer ${LIBRARIES} iotdb)
 target_include_directories(iotRestServer PUBLIC "include")
 
-add_executable(iotCoordinator iotCoordinator.cpp)
-target_link_libraries(iotCoordinator ${LIBRARIES} iotdb)
-target_include_directories(iotCoordinator PUBLIC "include")
+add_executable(entrypoint_coordinator entrypoint_coordinator.cpp)
+target_link_libraries(entrypoint_coordinator ${LIBRARIES} iotdb)
+target_include_directories(entrypoint_coordinator PUBLIC "include")
 
-add_executable(iotWorker iotWorker.cpp)
-target_link_libraries(iotWorker ${LIBRARIES} iotdb)
-target_include_directories(iotWorker PUBLIC "include")
-
-add_executable(iotSensor iotSensor.cpp)
-target_link_libraries(iotSensor ${LIBRARIES} iotdb)
-target_include_directories(iotSensor PUBLIC "include")
+add_executable(entrypoint_worker entrypoint_worker.cpp)
+target_link_libraries(entrypoint_worker ${LIBRARIES} iotdb)
+target_include_directories(entrypoint_worker PUBLIC "include")
 
 # Add tests with command
 enable_testing()
