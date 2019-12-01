@@ -1,6 +1,6 @@
 add_source_iotdb(
         ErrorHandling.cpp
-        Util.cpp
+        UtilityFunctions.cpp
         SharedLibrary.cpp
         TimeMeasurement.cpp
 )
