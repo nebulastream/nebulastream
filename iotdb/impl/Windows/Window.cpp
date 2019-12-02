@@ -118,8 +118,6 @@ bool Window::stop() {
   return true;
 }
 
-void Window::print() {}
-
 size_t Window::getNumberOfEntries() {
   return 0;
 }

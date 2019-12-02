@@ -17,32 +17,58 @@
 
 namespace iotdb {
 
+/**
+ * This represents a window during query execution.
+ */
 class Window {
  public:
-  ~Window();
-  Window()= default;
+  Window() = default;
   Window(WindowDefinitionPtr window_definition_ptr);
+  ~Window();
+
+  /**
+   * Initialises the state of this window depending on the window definition.
+   */
   void setup();
+
+  /**
+   * Starts thread to check if the window should be triggered.
+   * @return boolean if the window thread is started
+   */
   bool start();
+
+  /**
+   * Stops the window thread.
+   * @return
+   */
   bool stop();
+
+  /**
+   * @brief triggers all ready windows.
+   * @return
+   */
   void trigger();
 
-  void print();
+  /**
+   * Processes window aggregates and write results to tuple buffer.
+   * @tparam FinalAggregateType
+   * @tparam PartialAggregateType
+   * @param store
+   * @param window_definition_ptr
+   * @param tuple_buffer
+   */
+  template<class FinalAggregateType, class PartialAggregateType>
+  void aggregateWindows(WindowSliceStore <PartialAggregateType> *store,
+                        WindowDefinitionPtr window_definition_ptr,
+                        TupleBufferPtr tuple_buffer);
 
-  size_t getNumberOfEntries();
-
-  template<class Archive>
-  void serialize(Archive &ar, const unsigned int version) {}
-
-  void * getWindowState();
-  WindowManagerPtr getWindowManager(){
+  void *getWindowState();
+  WindowManagerPtr getWindowManager() {
     return window_manager_ptr_;
   };
 
-  template<class FinalAggregateType, class PartialAggregateType>
-  void aggregateWindows(WindowSliceStore<PartialAggregateType> *store,
-                        WindowDefinitionPtr window_definition_ptr,
-                        TupleBufferPtr tuple_buffer);
+  template<class Archive>
+  void serialize(Archive &ar, const unsigned int version) {}
 
  private:
   friend class boost::serialization::access;
