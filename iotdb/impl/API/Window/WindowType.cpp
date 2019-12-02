@@ -2,6 +2,7 @@
 #include <API/Window/WindowType.hpp>
 #include <API/Window/WindowMeasure.hpp>
 #include <vector>
+#include <Util/ErrorHandling.hpp>
 
 namespace iotdb {
 
@@ -30,6 +31,7 @@ WindowTypePtr SlidingWindow::of(iotdb::TimeMeasure size, TimeMeasure slide) {
 void SlidingWindow::triggerWindows(iotdb::WindowListPtr windows,
                                     uint64_t lastWatermark,
                                     uint64_t currentWatermark) const {
+  IOTDB_NOT_IMPLEMENTED
 }
 
 
@@ -42,8 +44,9 @@ WindowTypePtr SessionWindow::withGap(iotdb::TimeMeasure gap) {
 void SessionWindow::triggerWindows(iotdb::WindowListPtr windows,
                                    uint64_t lastWatermark,
                                    uint64_t currentWatermark) const {
-
+  IOTDB_NOT_IMPLEMENTED
 }
+
 WindowState::WindowState(uint64_t start, uint64_t an_end) : start(start), end(an_end) {}
 
 uint64_t WindowState::getStartTs() const {
