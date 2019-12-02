@@ -13,7 +13,7 @@ FogExecutionPlan TopDown::initializeExecutionPlan(iotdb::InputQuery inputQuery,
   completeExecutionGraphWithFogTopology(executionGraph, fogTopologyPlan);
 
   //FIXME: We are assuming that throughout the pipeline the schema would not change.
-  Schema &schema = inputQuery.source_stream.getSchema();
+  Schema &schema = inputQuery.source_stream->getSchema();
   addSystemGeneratedSourceSinkOperators(schema, executionGraph);
 
   return executionGraph;
@@ -26,7 +26,7 @@ void TopDown::placeOperators(FogExecutionPlan executionGraph, InputQuery query, 
 
   deque<OperatorPtr> operatorsToProcess = {sinkOperator};
 
-  string sourceName = query.source_stream.getName();
+  string sourceName = query.source_stream->getName();
 
   //find the source Node
   vector<FogVertex> sourceNodes;
