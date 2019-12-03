@@ -116,14 +116,14 @@ class InputQuery {
   // helper operators
   OperatorPtr getRoot() const { return root; };
 
-  Stream& source_stream;
+  StreamPtr source_stream;
 
   int getNextOperatorId() {
     operatorIdCounter++;
     return this->operatorIdCounter;
   }
  private:
-  InputQuery(Stream &source_stream);
+  InputQuery(StreamPtr source_stream);
   int operatorIdCounter = 0;
   OperatorPtr root;
 };

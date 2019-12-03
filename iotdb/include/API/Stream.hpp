@@ -23,5 +23,7 @@ class Stream {
   std::string name;
   Schema schema;
 };
+
+typedef std::shared_ptr<Stream> StreamPtr;
 }
 #endif //IOTDB_STREAM_HPP

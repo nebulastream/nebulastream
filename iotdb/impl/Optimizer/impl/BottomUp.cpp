@@ -10,7 +10,7 @@ FogExecutionPlan BottomUp::initializeExecutionPlan(InputQuery inputQuery, FogTop
 
   FogExecutionPlan executionGraph;
   const OperatorPtr &sinkOperator = inputQuery.getRoot();
-  const string &streamName = inputQuery.source_stream.getName();
+  const string &streamName = inputQuery.source_stream->getName();
   const vector<OperatorPtr> &sourceOperators = getSourceOperators(sinkOperator);
   const deque<FogTopologyEntryPtr> &sourceNodes = getSourceNodes(fogTopologyPlan, streamName);
 
@@ -26,7 +26,7 @@ FogExecutionPlan BottomUp::initializeExecutionPlan(InputQuery inputQuery, FogTop
   completeExecutionGraphWithFogTopology(executionGraph, fogTopologyPlan);
 
   //FIXME: We are assuming that throughout the pipeline the schema would not change.
-  Schema &schema = inputQuery.source_stream.getSchema();
+  Schema &schema = inputQuery.source_stream->getSchema();
   addSystemGeneratedSourceSinkOperators(schema, executionGraph);
 
   return executionGraph;

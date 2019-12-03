@@ -84,13 +84,15 @@ const InputQuery createQueryFromCodeString(const std::string &query_code_snippet
 // return sub_query
 //}
 
-InputQuery::InputQuery(Stream &source_stream) : source_stream(source_stream),
+InputQuery::InputQuery(StreamPtr source_stream) : source_stream(source_stream),
                                                 root() {}
 
 /* TODO: perform deep copy of operator graph */
 InputQuery::InputQuery(const InputQuery &query) : source_stream(query.source_stream),
                                                   root(recursiveCopy(query.root)) {
 }
+
+
 
 InputQuery &InputQuery::operator=(const InputQuery &query) {
   if (&query != this) {
@@ -102,8 +104,8 @@ InputQuery &InputQuery::operator=(const InputQuery &query) {
 
 InputQuery::~InputQuery() {}
 
-InputQuery InputQuery::from(Stream &stream) {
-  InputQuery q(stream);
+InputQuery InputQuery::from(Stream &stream) {  ;
+  InputQuery q(std::make_shared<Stream>(stream));
   OperatorPtr op = createSourceOperator(createTestDataSourceWithSchema(stream.getSchema()));
   int operatorId = q.getNextOperatorId();
   op->setOperatorId(operatorId);
