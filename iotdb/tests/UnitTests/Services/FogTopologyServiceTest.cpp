@@ -27,7 +27,7 @@ class FogTopologyServiceTest : public testing::Test {
 };
 
 /* Test Fog topology service create plan for valid query string for  */
-TEST_F(FogTopologyServiceTest, DISABLED_create_fog_execution_plan_for_valid_query_using_bottomup) {
+TEST_F(FogTopologyServiceTest, create_fog_execution_plan_for_valid_query_using_bottomup) {
 
   std::stringstream code;
   code << "Schema schema = Schema::create().addField(\"test\",INT32);" << std::endl;
@@ -39,7 +39,7 @@ TEST_F(FogTopologyServiceTest, DISABLED_create_fog_execution_plan_for_valid_quer
 }
 
 /* Test Fog topology service create plan for valid query string for  */
-TEST_F(FogTopologyServiceTest, DISABLED_create_fog_execution_plan_for_valid_query_using_topdown) {
+TEST_F(FogTopologyServiceTest, create_fog_execution_plan_for_valid_query_using_topdown) {
 
   std::stringstream code;
   code << "Schema schema = Schema::create().addField(\"test\",INT32);" << std::endl;
@@ -65,7 +65,7 @@ TEST_F(FogTopologyServiceTest, create_fog_execution_plan_for_invalid_query) {
 }
 
 /* Test Fog topology service create plan for invalid optimization strategy */
-TEST_F(FogTopologyServiceTest, DISABLED_create_fog_execution_plan_for_invalid_optimization_strategy) {
+TEST_F(FogTopologyServiceTest, create_fog_execution_plan_for_invalid_optimization_strategy) {
 
   try {
     std::stringstream code;

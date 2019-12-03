@@ -200,7 +200,7 @@ TEST_F(CoordinatorCafTest, test_local_distributed_deployment) {
   auto *engine = new NodeEngine();
   engine->start();
   FogExecutionPlan execPlan = coordinatorPtr->register_query("example", "cars1", "BottomUp");
-  EXPECT_TRUE(coordinatorPtr->getRegisteredQueries().size() == 1);
+  EXPECT_EQ(coordinatorPtr->getRegisteredQueries().size(), 1);
   unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> etos = coordinatorPtr->make_deployment("example");
   EXPECT_TRUE(etos.size() == 2);
 

@@ -45,7 +45,7 @@ FogExecutionPlan NesCoordinator::register_query(const string &description,
             .addField("value", BasicType::UINT64);
         Stream stream = Stream(sensor_type, schema);
 
-        InputQuery &inputQuery = InputQuery::from(stream)
+        InputQuery inputQuery = InputQuery::from(stream)
             .filter(stream["value"] > 42)
             .print(std::cout);
 
