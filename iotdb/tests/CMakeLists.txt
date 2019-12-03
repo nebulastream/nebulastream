@@ -139,7 +139,7 @@ target_link_libraries(actors-cli-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME actors-cli-tests COMMAND actors-cli-tests)
 
 # ActorCoordinator and ActorWorker Tests
-add_executable(actor-coordinator-worker-tests "UnitTests/ActorCoordinatorWorkerTest.cpp")
+add_executable(actor-coordinator-worker-tests "UnitTests/ActorsCliTest.cpp")
 target_link_libraries(actor-coordinator-worker-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME actor-coordinator-worker-tests COMMAND actor-coordinator-worker-tests)
 
