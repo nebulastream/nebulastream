@@ -1,11 +1,11 @@
 FROM ubuntu:18.04
 
-RUN apt-get update -y && apt-get remove -y llvm-6.0 && \
-    apt-get install -y cmake clang-3.9 llvm-3.9-dev libclang-3.9-dev
-RUN update-alternatives --install /usr/bin/clang clang /usr/bin/clang-3.9 100 && \
-    update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-3.9 100
-RUN apt-get install -y libzmq3-dev libboost1.65-all-dev liblog4cxx-dev libssl-dev libcpprest-dev && \
-    apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN apt-get update -y && apt-get install -y cmake clang \
+    llvm-dev git libzmq3-dev libboost1.65-all-dev liblog4cxx-dev libcpprest-dev libssl-dev clang-format
+RUN git clone https://github.com/actor-framework/actor-framework.git
+RUN cd actor-framework && git checkout -b 0.17.3 && bash configure && cd build && make && make install
+RUN apt-get remove -y git
+RUN rm -rf actor-framework
 
 VOLUME ["/iotdb"]
 

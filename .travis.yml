@@ -1,35 +1,13 @@
-matrix:
-  include:
-    os: linux
-    dist: bionic
-    addons:
-      apt:
-        packages:
-          clang
-          llvm-dev
-
-language: cpp
 cache: ccache
-compiler: gcc
+language: ruby
+
+services:
+        - docker
 
 before_install:
-  - sudo apt-get update
-  - sudo apt-get install -y libzmq3-dev
-  - sudo apt-get install -y libboost1.65-all-dev
-  - sudo apt-get install -y liblog4cxx-dev
-  - sudo apt-get install -y libcpprest-dev
-  - sudo apt-get install -y libssl-dev
+        - docker pull nebulastream/nes-build-image:latest 
 script:
-  - clang --version
-  - clang++ --version
-  - git clone https://github.com/actor-framework/actor-framework.git && cd actor-framework
-  - bash configure && cd build
-  - make
-  - sudo make install
-  - cd "../../"
-  - cd iotdb && mkdir debug-build && cd debug-build
-  - cmake -DCMAKE_BUILD_TYPE=Debug -DCPPRESTSDK_DIR="/usr/lib/x86_64-linux-gnu/cmake/" -DBoost_NO_SYSTEM_PATHS=TRUE -DBoost_INCLUDE_DIR="/usr/include" -DBoost_LIBRARY_DIR="/usr/lib/x86_64-linux-gnu" ..
-  - make -j8 && make test_debug
+        - docker run -v /home/travis/build/nebulastream/IoTDB/iotdb:/iotdb nebulastream/nes-build-image
 
 notifications:
   email: false
