@@ -18,8 +18,6 @@ using std::tuple;
 using std::vector;
 
 namespace iotdb {
-constexpr auto task_timeout = std::chrono::seconds(10);
-
 /**
 * @brief The configuration file of the worker
 */

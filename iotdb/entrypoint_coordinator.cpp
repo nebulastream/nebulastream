@@ -30,7 +30,7 @@ void run_coordinator(actor_system &system, const coordinator_config &cfg) {
   };
   usage();
   bool done = false;
-  auto coord = system.spawn<iotdb::actor_coordinator>(cfg.ip, cfg.publish_port, cfg.receive_port);
+  auto coord = system.spawn<actor_coordinator>(cfg.ip, cfg.publish_port, cfg.receive_port);
   // try to publish actor at given port
   cout << "*** try publish at port " << cfg.publish_port << endl;
   auto expected_port = io::publish(coord, cfg.publish_port);

@@ -19,8 +19,6 @@ using std::string;
 using std::unordered_map;
 
 namespace iotdb {
-constexpr auto task_timeout = std::chrono::seconds(10);
-
 /**
 * @brief The configuration file of the coordinator
 */

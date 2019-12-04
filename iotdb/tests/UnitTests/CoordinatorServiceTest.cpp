@@ -9,12 +9,12 @@ class CoordinatorCafTest : public testing::Test {
  public:
   /* Will be called before any test in this class are executed. */
   static void SetUpTestCase() {
-    std::cout << "Setup SerializationToolsTest test class." << std::endl;
+    std::cout << "Setup NES Coordinator test class." << std::endl;
   }
 
   /* Will be called before a test is executed. */
   void SetUp() {
-    std::cout << "Setup SerializationToolsTest test case." << std::endl;
+    std::cout << "Setup NES Coordinator test case." << std::endl;
     coordinatorPtr = std::make_shared<NesCoordinator>(NesCoordinator("127.0.0.1", 4711, 4815));
     for (int i = 0; i < 5; i++) {
       auto entry = coordinatorPtr->register_sensor(ip, publish_port, receive_port, 2, sensor_type + std::to_string(i));
@@ -22,10 +22,10 @@ class CoordinatorCafTest : public testing::Test {
   }
 
   /* Will be called before a test is executed. */
-  void TearDown() { std::cout << "Setup SerializationToolsTest test case." << std::endl; }
+  void TearDown() { std::cout << "Setup NES Coordinator test case." << std::endl; }
 
   /* Will be called after all tests in this class are finished. */
-  static void TearDownTestCase() { std::cout << "Tear down SerializationToolsTest test class." << std::endl; }
+  static void TearDownTestCase() { std::cout << "Tear down NES Coordinator test class." << std::endl; }
 
   std::shared_ptr<NesCoordinator> coordinatorPtr;
   std::string ip = "127.0.0.1";
@@ -161,7 +161,7 @@ TEST_F(CoordinatorCafTest, test_compile_deployment) {
   EXPECT_TRUE(coordinatorPtr->getRunningQueries().size() == 1);
 }
 
-TEST_F(CoordinatorCafTest, test_code_gen) {
+TEST_F(CoordinatorCafTest, DISABLED_test_code_gen) {
   auto *engine = new NodeEngine();
   engine->start();
 
@@ -196,7 +196,8 @@ TEST_F(CoordinatorCafTest, test_code_gen) {
   engine->deployQuery(qep);
 }
 
-TEST_F(CoordinatorCafTest, test_local_distributed_deployment) {
+//TODO: Fixme
+TEST_F(CoordinatorCafTest, DISABLED_test_local_distributed_deployment) {
   auto *engine = new NodeEngine();
   engine->start();
   FogExecutionPlan execPlan = coordinatorPtr->register_query("example", "cars1", "BottomUp");

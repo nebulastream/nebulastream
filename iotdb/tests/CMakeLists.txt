@@ -129,9 +129,14 @@ target_link_libraries(serialization-tools-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME serialization-tools-tests COMMAND serialization-tools-tests)
 
 # Serialization NesCoordinator Tests
-add_executable(coordinator-caf-tests "UnitTests/CoordinatorCafTest.cpp")
-target_link_libraries(coordinator-caf-tests iotdb ${GTEST_LIBRARIES})
-add_test(NAME coordinator-caf-tests COMMAND coordinator-caf-tests)
+add_executable(coordinator-service-tests "UnitTests/CoordinatorServiceTest.cpp")
+target_link_libraries(coordinator-service-tests iotdb ${GTEST_LIBRARIES})
+add_test(NAME coordinator-service-tests COMMAND coordinator-service-tests)
+
+# ActorCoordinator and ActorWorker Tests
+add_executable(actors-cli-tests "UnitTests/ActorsCliTest.cpp")
+target_link_libraries(actors-cli-tests iotdb ${GTEST_LIBRARIES})
+add_test(NAME actors-cli-tests COMMAND actors-cli-tests)
 
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
