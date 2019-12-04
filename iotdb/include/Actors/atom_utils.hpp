@@ -16,6 +16,7 @@ using std::string;
 
 namespace iotdb {
 using namespace caf;
+constexpr auto task_timeout = std::chrono::seconds(3);
 
 //coordinator stubs
 using register_worker_atom = atom_constant<atom("r_worker")>;

@@ -85,7 +85,11 @@ TupleBufferPtr ZmqSource::receiveData() {
         IOTDB_FATAL_ERROR("ZMQSOURCE: " << ex.what())
       }
     }
+  } else {
+    IOTDB_FATAL_ERROR("ZMQSOURCE: Not connected!")
   }
+  assert(0);
+  return nullptr;
 }
 
 const std::string ZmqSource::toString() const {
@@ -101,14 +105,9 @@ bool ZmqSource::connect() {
   if (!connected) {
     auto address = std::string("tcp://") + host + std::string(":") + std::to_string(port);
 
-    try {
-      socket.setsockopt(ZMQ_LINGER, 0);
-      socket.bind(address.c_str());
-      connected = true;
-    }
-    catch (...) {
-      connected = false;
-    }
+    socket.setsockopt(ZMQ_LINGER, 0);
+    socket.bind(address.c_str());
+    connected = true;
   }
   if (connected) {
     IOTDB_DEBUG("ZMQSOURCE  " << this << ": connected")
