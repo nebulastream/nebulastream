@@ -161,7 +161,7 @@ TEST_F(CoordinatorCafTest, test_compile_deployment) {
   EXPECT_TRUE(coordinatorPtr->getRunningQueries().size() == 1);
 }
 
-TEST_F(CoordinatorCafTest, test_code_gen) {
+TEST_F(CoordinatorCafTest, DISABLED_test_code_gen) {
   auto *engine = new NodeEngine();
   engine->start();
 
