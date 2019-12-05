@@ -80,7 +80,9 @@ class C_CodeGenerator : public CodeGenerator {
                             const iotdb::PipelineContextPtr &context,
                             std::ostream &out) override;
   virtual bool generateCode(const DataSinkPtr &sink, const PipelineContextPtr &context, std::ostream &out) override;
-  virtual bool generateCode(const WindowDefinitionPtr &window, const PipelineContextPtr &context, std::ostream &out) override;
+  virtual bool generateCode(const WindowDefinitionPtr &window,
+                            const PipelineContextPtr &context,
+                            std::ostream &out) override;
   PipelineStagePtr compile(const CompilerArgs &) override;
   ~C_CodeGenerator() override;
 
@@ -163,53 +165,52 @@ const std::string toString(void *value, DataTypePtr type) {
   return "";
 }
 
-std::string toString(TupleBuffer& buffer, const Schema& schema) { return toString(&buffer, schema); }
+std::string toString(TupleBuffer &buffer, const Schema &schema) { return toString(&buffer, schema); }
 
-std::string toString(TupleBuffer* buffer, const Schema& schema)
-{
-    if (!buffer)
-        return "INVALID_BUFFER_PTR";
-    std::stringstream str;
-    std::vector<uint32_t> offsets;
-    std::vector<DataTypePtr> types;
-    for (uint32_t i = 0; i < schema.getSize(); ++i) {
-        offsets.push_back(schema[i]->getFieldSize());
-        IOTDB_DEBUG(std::string("Field Size ") + schema[i]->toString() + std::string(": ") +
-                    std::to_string(schema[i]->getFieldSize()));
-        types.push_back(schema[i]->getDataType());
-    }
+std::string toString(TupleBuffer *buffer, const Schema &schema) {
+  if (!buffer)
+    return "INVALID_BUFFER_PTR";
+  std::stringstream str;
+  std::vector<uint32_t> offsets;
+  std::vector<DataTypePtr> types;
+  for (uint32_t i = 0; i < schema.getSize(); ++i) {
+    offsets.push_back(schema[i]->getFieldSize());
+    IOTDB_DEBUG(std::string("Field Size ") + schema[i]->toString() + std::string(": ") +
+        std::to_string(schema[i]->getFieldSize()));
+    types.push_back(schema[i]->getDataType());
+  }
 
-    uint32_t prefix_sum = 0;
-    for (uint32_t i = 0; i < offsets.size(); ++i) {
-        uint32_t val = offsets[i];
-        offsets[i] = prefix_sum;
-        prefix_sum += val;
-        IOTDB_DEBUG(std::string("Prefix Sum: ") + schema[i]->toString() + std::string(": ") +
-                    std::to_string(offsets[i]) );
-    }
+  uint32_t prefix_sum = 0;
+  for (uint32_t i = 0; i < offsets.size(); ++i) {
+    uint32_t val = offsets[i];
+    offsets[i] = prefix_sum;
+    prefix_sum += val;
+    IOTDB_DEBUG(std::string("Prefix Sum: ") + schema[i]->toString() + std::string(": ") +
+        std::to_string(offsets[i]));
+  }
 
-    str << "+----------------------------------------------------+" << std::endl;
+  str << "+----------------------------------------------------+" << std::endl;
+  str << "|";
+  for (uint32_t i = 0; i < schema.getSize(); ++i) {
+    str << schema[i]->toString() << "|";
+  }
+  str << std::endl;
+  str << "+----------------------------------------------------+" << std::endl;
+
+  char *buf = (char *) buffer->getBuffer();
+  for (uint32_t i = 0;
+       i < buffer->getNumberOfTuples() * buffer->getTupleSizeInBytes(); i +=
+                                                                            buffer->getTupleSizeInBytes()) {
     str << "|";
-    for (uint32_t i = 0; i < schema.getSize(); ++i) {
-        str << schema[i]->toString() << "|";
+    for (uint32_t s = 0; s < offsets.size(); ++s) {
+      void *value = &buf[i + offsets[s]];
+      std::string tmp = types[s]->convertRawToString(value);
+      str << tmp << "|";
     }
     str << std::endl;
-    str << "+----------------------------------------------------+" << std::endl;
-
-    char* buf = (char*)buffer->getBuffer();
-  for (uint32_t i = 0;
-      i < buffer->getNumberOfTuples() * buffer->getTupleSizeInBytes(); i +=
-          buffer->getTupleSizeInBytes()) {
-        str << "|";
-        for (uint32_t s = 0; s < offsets.size(); ++s) {
-            void* value = &buf[i + offsets[s]];
-            std::string tmp = types[s]->convertRawToString(value);
-            str << tmp << "|";
-        }
-        str << std::endl;
-    }
-    str << "+----------------------------------------------------+";
-    return str.str();
+  }
+  str << "+----------------------------------------------------+";
+  return str.str();
 }
 
 bool C_CodeGenerator::generateCode(const DataSourcePtr &source, const PipelineContextPtr &context, std::ostream &out) {
@@ -245,7 +246,8 @@ bool C_CodeGenerator::generateCode(const DataSourcePtr &source, const PipelineCo
   VariableDeclaration var_decl_window =
       VariableDeclaration::create(createPointerDataType(createAnnonymUserDefinedType("void")), "state_var");
   VariableDeclaration var_decl_window_manager =
-      VariableDeclaration::create(createPointerDataType(createAnnonymUserDefinedType("iotdb::WindowManager")), "window_manager");
+      VariableDeclaration::create(createPointerDataType(createAnnonymUserDefinedType("iotdb::WindowManager")),
+                                  "window_manager");
 
   code_.var_decl_tuple_buffers = var_decl_tuple_buffers;
   code_.var_decl_tuple_buffer_output = var_decl_tuple_buffer_output;
@@ -446,16 +448,15 @@ bool C_CodeGenerator::generateCode(const DataSinkPtr &sink, const PipelineContex
  * @param out
  * @return
  */
-bool C_CodeGenerator::generateCode(const WindowDefinitionPtr &window, const PipelineContextPtr &context, std::ostream &out) {
-
-
+bool C_CodeGenerator::generateCode(const WindowDefinitionPtr &window,
+                                   const PipelineContextPtr &context,
+                                   std::ostream &out) {
 
   auto constStatement = ConstantExprStatement((createBasicTypeValue(BasicType::UINT64, "0")));
 
-
-
   auto state_var = VariableDeclaration::create(
-      createPointerDataType(createAnnonymUserDefinedType("iotdb::StateVariable<int64_t, iotdb::WindowSliceStore<int64_t>*>")), "state_variable");
+      createPointerDataType(createAnnonymUserDefinedType(
+          "iotdb::StateVariable<int64_t, iotdb::WindowSliceStore<int64_t>*>")), "state_variable");
 
   auto state_var_decl = VarDeclStatement(state_var)
       .assign(TypeCast(VarRef(code_.var_decl_state), state_var.getDataType()));
@@ -483,7 +484,8 @@ bool C_CodeGenerator::generateCode(const WindowDefinitionPtr &window, const Pipe
   // access window slice state from state variable via key
   auto window_state_var = VariableDeclaration::create(
       createAnnonymUserDefinedType("auto"), "window_state");
-  auto getValueFromKeyHandle = FunctionCallStatement("value");
+  auto getValueFromKeyHandle = FunctionCallStatement("valueOrDefault");
+  getValueFromKeyHandle.addParameter(ConstantExprStatement(INT64, "0"));
   auto window_state_decl = VarDeclStatement(window_state_var)
       .assign(VarRef(key_handle_var).accessRef(getValueFromKeyHandle));
   code_.current_code_insertion_point->addStatement(std::make_shared<BinaryOperatorStatement>(window_state_decl));
