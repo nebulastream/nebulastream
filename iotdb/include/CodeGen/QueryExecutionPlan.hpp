@@ -11,7 +11,7 @@
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/vector.hpp>
 #include <map>
-#include <Windows/Window.hpp>
+#include <Windows/WindowHandler.hpp>
 #include "../SourceSink/DataSink.hpp"
 #include "../SourceSink/DataSource.hpp"
 
@@ -58,10 +58,8 @@ public:
 			IOTDB_INFO("\t Schema=" << source->getSourceSchemaAsString())
 		}
 		for (auto window : windows) {
-			IOTDB_INFO("Window:" << window)
-			IOTDB_INFO("\t NumberOfEntries=" << window->getNumberOfEntries())
-			IOTDB_INFO("Window Result:")
-			window->print();
+			IOTDB_INFO("WindowHandler:" << window)
+			IOTDB_INFO("WindowHandler Result:")
 		}
 		for (auto sink : sinks) {
 			IOTDB_INFO("Sink:" << sink)

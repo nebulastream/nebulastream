@@ -834,8 +834,8 @@ int CodeMapPredicatePtrTests() {
   code_gen->generateCode(source, context, std::cout);
 
   //predicate definition
-  AttributeFieldPtr mappedValue = AttributeField("mappedValue", BasicType::FLOAT64).copy();
-  code_gen->generateCode(mappedValue, createPredicate((input_schema[2] * input_schema[3]) + 2), context, std::cout);
+  AttributeFieldPtr mapped_value = AttributeField("mapped_value", BasicType::FLOAT64).copy();
+  code_gen->generateCode(mapped_value, createPredicate((input_schema[2] * input_schema[3]) + 2), context, std::cout);
 
   /* generate code for writing result tuples to output buffer */
   code_gen->generateCode(createPrintSinkWithSink(Schema::create()
@@ -843,7 +843,7 @@ int CodeMapPredicatePtrTests() {
                                                      .addField("valueSmall", BasicType::INT16)
                                                      .addField("valueFloat", BasicType::FLOAT32)
                                                      .addField("valueDouble", BasicType::FLOAT64)
-                                                     .addField(mappedValue)
+                                                     .addField(mapped_value)
                                                      .addField("valueChar", BasicType::CHAR)
                                                      .addField("text", createArrayDataType(BasicType::CHAR, 12)),
                                                  std::cout), context, std::cout);
@@ -883,7 +883,7 @@ int CodeMapPredicatePtrTests() {
       .addField("valueSmall", BasicType::INT16)
       .addField("valueFloat", BasicType::FLOAT32)
       .addField("valueDouble", BasicType::FLOAT64)
-      .addField("mappedValue", BasicType::FLOAT64)
+      .addField("mapped_value", BasicType::FLOAT64)
       .addField("valueChar", BasicType::CHAR)
       .addField("text", createArrayDataType(BasicType::CHAR, 12))) << std::endl;
   std::cout << "Result of MapPredPtrCodeGenTest is Correct!" << std::endl;
