@@ -1,6 +1,6 @@
 
-#ifndef IOTDB_INCLUDE_ACTORS_NESWORKER_HPP_
-#define IOTDB_INCLUDE_ACTORS_NESWORKER_HPP_
+#ifndef IOTDB_INCLUDE_ACTORS_WORKERSERVICE_HPP_
+#define IOTDB_INCLUDE_ACTORS_WORKERSERVICE_HPP_
 
 #include <NodeEngine/NodeEngine.hpp>
 #include <Operators/Operator.hpp>
@@ -14,11 +14,11 @@ using std::tuple;
 
 namespace iotdb {
 
-class NesWorker {
+class WorkerService {
 
  public:
-  NesWorker(string ip, uint16_t publish_port, uint16_t receive_port, string sensor_type);
-  ~NesWorker() = default;
+  WorkerService(string ip, uint16_t publish_port, uint16_t receive_port, string sensor_type);
+  ~WorkerService() = default;
 
   /**
    * @brief framework internal method which is called to execute a query or sub-query on a node
@@ -59,4 +59,4 @@ class NesWorker {
 
 }
 
-#endif //IOTDB_INCLUDE_ACTORS_NESWORKER_HPP_
+#endif //IOTDB_INCLUDE_ACTORS_WORKERSERVICE_HPP_

@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <SourceSink/PrintSink.hpp>
-#include <Actors/NesCoordinator.hpp>
+#include <Services/CoordinatorService.hpp>
 #include <SourceSink/ZmqSource.hpp>
 
 using namespace iotdb;
@@ -15,7 +15,7 @@ class CoordinatorCafTest : public testing::Test {
   /* Will be called before a test is executed. */
   void SetUp() {
     std::cout << "Setup NES Coordinator test case." << std::endl;
-    coordinatorPtr = std::make_shared<NesCoordinator>(NesCoordinator("127.0.0.1", 4711, 4815));
+    coordinatorPtr = std::make_shared<CoordinatorService>(CoordinatorService("127.0.0.1", 4711, 4815));
     for (int i = 0; i < 5; i++) {
       auto entry = coordinatorPtr->register_sensor(ip, publish_port, receive_port, 2, sensor_type + std::to_string(i));
     }
@@ -27,7 +27,7 @@ class CoordinatorCafTest : public testing::Test {
   /* Will be called after all tests in this class are finished. */
   static void TearDownTestCase() { std::cout << "Tear down NES Coordinator test class." << std::endl; }
 
-  std::shared_ptr<NesCoordinator> coordinatorPtr;
+  std::shared_ptr<CoordinatorService> coordinatorPtr;
   std::string ip = "127.0.0.1";
   uint16_t receive_port = 0;
   std::string host = "localhost";

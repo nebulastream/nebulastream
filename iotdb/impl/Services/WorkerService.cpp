@@ -1,10 +1,10 @@
-#include <Actors/NesWorker.hpp>
+#include <Services/WorkerService.hpp>
 #include <Actors/ExecutableTransferObject.hpp>
 #include <Util/SerializationTools.hpp>
 #include <utility>
 
 namespace iotdb {
-NesWorker::NesWorker(string ip, uint16_t publish_port, uint16_t receive_port, string sensor_type) {
+WorkerService::WorkerService(string ip, uint16_t publish_port, uint16_t receive_port, string sensor_type) {
   this->_ip = std::move(ip);
   this->_publish_port = publish_port;
   this->_receive_port = receive_port;
@@ -14,7 +14,7 @@ NesWorker::NesWorker(string ip, uint16_t publish_port, uint16_t receive_port, st
   this->_enginePtr->start();
 }
 
-void NesWorker::execute_query(const string &description, string &executableTransferObject) {
+void WorkerService::execute_query(const string &description, string &executableTransferObject) {
   ExecutableTransferObject eto = SerializationTools::parse_eto(executableTransferObject);
   QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan();
   this->_runningQueries.insert({description, std::make_tuple(qep, eto.getOperatorTree())});
@@ -22,7 +22,7 @@ void NesWorker::execute_query(const string &description, string &executableTrans
   std::this_thread::sleep_for(std::chrono::seconds(2));
 }
 
-void NesWorker::delete_query(const string &query) {
+void WorkerService::delete_query(const string &query) {
   try {
     if (this->_runningQueries.find(query) != this->_runningQueries.end()) {
       QueryExecutionPlanPtr qep = std::get<0>(this->_runningQueries.at(query));
@@ -42,7 +42,7 @@ void NesWorker::delete_query(const string &query) {
   }
 }
 
-vector<string> NesWorker::getOperators() {
+vector<string> WorkerService::getOperators() {
   vector<string> result;
   for (auto const &x : this->_runningQueries) {
     string str_opts;
@@ -57,28 +57,28 @@ vector<string> NesWorker::getOperators() {
   return result;
 }
 
-const string &NesWorker::getIp() const {
+const string &WorkerService::getIp() const {
   return _ip;
 }
-void NesWorker::setIp(const string &ip) {
+void WorkerService::setIp(const string &ip) {
   _ip = ip;
 }
-uint16_t NesWorker::getPublishPort() const {
+uint16_t WorkerService::getPublishPort() const {
   return _publish_port;
 }
-void NesWorker::setPublishPort(uint16_t publish_port) {
+void WorkerService::setPublishPort(uint16_t publish_port) {
   _publish_port = publish_port;
 }
-uint16_t NesWorker::getReceivePort() const {
+uint16_t WorkerService::getReceivePort() const {
   return _receive_port;
 }
-void NesWorker::setReceivePort(uint16_t receive_port) {
+void WorkerService::setReceivePort(uint16_t receive_port) {
   _receive_port = receive_port;
 }
-const string &NesWorker::getSensorType() const {
+const string &WorkerService::getSensorType() const {
   return _sensor_type;
 }
-void NesWorker::setSensorType(const string &sensor_type) {
+void WorkerService::setSensorType(const string &sensor_type) {
   _sensor_type = sensor_type;
 }
 

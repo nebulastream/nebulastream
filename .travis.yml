@@ -7,7 +7,7 @@ services:
 before_install:
         - docker pull nebulastream/nes-build-image:latest 
 script:
-        - docker run -v /home/travis/build/nebulastream/IoTDB/iotdb:/iotdb nebulastream/nes-build-image
+        - docker run -v /home/travis/build/nebulastream/IoTDB/iotdb:/iotdb --entrypoint /iotdb/docker/scripts/entrypoint.sh nebulastream/nes-build-image
 
 notifications:
   email: false

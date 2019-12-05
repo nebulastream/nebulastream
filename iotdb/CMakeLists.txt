@@ -154,17 +154,13 @@ add_executable(iotServer iotServer.cpp)
 target_link_libraries(iotServer ${LIBRARIES})
 target_include_directories(iotServer PUBLIC "include")
 
-add_executable(iotRestServer iotRestServer.cpp)
-target_link_libraries(iotRestServer ${LIBRARIES} iotdb)
-target_include_directories(iotRestServer PUBLIC "include")
+add_executable(nesCoordinator nesCoordinator.cpp)
+target_link_libraries(nesCoordinator ${LIBRARIES} iotdb)
+target_include_directories(nesCoordinator PUBLIC "include")
 
-add_executable(entrypoint_coordinator entrypoint_coordinator.cpp)
-target_link_libraries(entrypoint_coordinator ${LIBRARIES} iotdb)
-target_include_directories(entrypoint_coordinator PUBLIC "include")
-
-add_executable(entrypoint_worker entrypoint_worker.cpp)
-target_link_libraries(entrypoint_worker ${LIBRARIES} iotdb)
-target_include_directories(entrypoint_worker PUBLIC "include")
+add_executable(nesWorker nesWorker.cpp)
+target_link_libraries(nesWorker ${LIBRARIES} iotdb)
+target_include_directories(nesWorker PUBLIC "include")
 
 # Add tests with command
 enable_testing()
