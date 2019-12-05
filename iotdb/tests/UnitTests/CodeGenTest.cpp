@@ -948,8 +948,7 @@ int main() {
   /** \todo make proper test case out of this function! */
   //iotdb::CodeGenTestCases();
 
-  //TODO: Tests fail if GCC version < 9
-  /*if (!iotdb::CodeGenTest()) {
+  if (!iotdb::CodeGenTest()) {
     std::cout << "Test CodeGenTest Passed!" << std::endl << std::endl;
   } else {
     std::cerr << "Test CodeGenTest Failed!" << std::endl << std::endl;
@@ -989,7 +988,7 @@ int main() {
   } else {
     std::cerr << "Test Map for Predicate Pointers Failed!" << std::endl << std::endl;
     return -1;
-  }*/
+  }
 
   return 0;
 }

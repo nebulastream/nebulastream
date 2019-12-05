@@ -411,44 +411,49 @@ typedef std::shared_ptr<ArrayValueType> ArrayValueTypePtr;
 class ArrayDataType : public DataType {
  public:
   ArrayDataType() = default;
-  ArrayDataType(DataTypePtr ptr, u_int32_t dimension) : DataType(), _data(ptr), _dimension(dimension) {}
-  //ArrayDataType (const BasicType& basictype, u_int32_t dimension) : DataType(), _data(std::make_shared<DataType>(basictype)), _dimension(dimension) {}
+  ArrayDataType(DataTypePtr ptr, u_int32_t dimension) : DataType(), _dataType(ptr), _dimensions(dimension) {}
+  //ArrayDataType (const BasicType& basictype, u_int32_t dimension) : DataType(), _dataType(std::make_shared<DataType>(basictype)), _dimensions(dimension) {}
 
   ValueTypePtr getDefaultInitValue() const override { return ValueTypePtr(); }
   ValueTypePtr getNullValue() const override { return ValueTypePtr(); }
-  uint32_t getSizeBytes() const override { return (_dimension * _data->getSizeBytes()); }
+  uint32_t getSizeBytes() const override { return (_dimensions * _dataType->getSizeBytes()); }
   const std::string toString() const override {
     std::stringstream sstream;
-    sstream << _data->toString() << "[" << _dimension << "]";
+    sstream << _dataType->toString() << "[" << _dimensions << "]";
     return sstream.str();
   }
   const std::string convertRawToString(void *data) const override {
-    if (!data) return "";
-    uint32_t i;
-    char *pointer = static_cast<char *>(data);
     std::stringstream str;
-    uint32_t step = _data->getSizeBytes() / _dimension;
-    if (!isCharDataType()) str << '[';
-    for (i = 0; i < _dimension; i++) {
-      char temp[step];
-      temp[0] = pointer[step * i];
-      if ((i != 0) && !isCharDataType()) str << ", ";
-      str << _data->convertRawToString(temp);
+    // check if the pointer is valid
+    if (!data)
+      return "";
+
+    char *pointer = static_cast<char *>(data);
+
+    if (!isCharDataType())
+      str << '[';
+    for (u_int32_t dimension = 0; dimension < _dimensions; dimension++) {
+      if ((dimension != 0) && !isCharDataType())
+        str << ", ";
+      auto fieldOffset = _dataType->getSizeBytes();
+      auto componentValue = &pointer[fieldOffset * dimension];
+      str << _dataType->convertRawToString(componentValue);
     }
-    if (!isCharDataType()) str << ']';
+    if (!isCharDataType())
+      str << ']';
     return str.str();
   }
 
   const CodeExpressionPtr getDeclCode(const std::string &identifier) const override {
     CodeExpressionPtr ptr;
     if (identifier != "") {
-      ptr = _data->getCode();
+      ptr = _dataType->getCode();
       ptr = combine(ptr, std::make_shared<CodeExpression>(" " + identifier));
       ptr = combine(ptr, std::make_shared<CodeExpression>("["));
-      ptr = combine(ptr, std::make_shared<CodeExpression>(std::to_string(_dimension)));
+      ptr = combine(ptr, std::make_shared<CodeExpression>(std::to_string(_dimensions)));
       ptr = combine(ptr, std::make_shared<CodeExpression>("]"));
     } else {
-      ptr = _data->getCode();
+      ptr = _dataType->getCode();
     }
     return ptr;
   }
@@ -457,18 +462,18 @@ class ArrayDataType : public DataType {
     FunctionCallStatement func_call("memcpy");
     func_call.addParameter(VarRef(aParam.lhs_tuple_var)[VarRef(aParam.lhs_index_var)].accessRef(VarRef(aParam.lhs_field_var)));
     func_call.addParameter(VarRef(aParam.rhs_tuple_var)[VarRef(aParam.rhs_index_var)].accessRef(VarRef(aParam.rhs_field_var)));
-    func_call.addParameter(ConstantExprStatement(createBasicTypeValue(UINT64, std::to_string(this->_dimension))));
+    func_call.addParameter(ConstantExprStatement(createBasicTypeValue(UINT64, std::to_string(this->_dimensions))));
     return func_call.copy();
   }
 
   const CodeExpressionPtr getCode() const override {
     std::stringstream str;
-    str << "[" << _dimension << "]";
-    return combine(_data->getCode(), std::make_shared<CodeExpression>(str.str()));
+    str << "[" << _dimensions << "]";
+    return combine(_dataType->getCode(), std::make_shared<CodeExpression>(str.str()));
   }
 
   const bool isEqual(DataTypePtr ptr) const override { return (this->toString().compare(ptr->toString()) == 0); };
-  const bool isCharDataType() const override { return this->_data->isCharDataType(); }
+  const bool isCharDataType() const override { return this->_dataType->isCharDataType(); }
   const bool isArrayDataType() const override { return true; }
 
   const CodeExpressionPtr getTypeDefinitionCode() const override { return std::make_shared<CodeExpression>(""); }
@@ -478,19 +483,19 @@ class ArrayDataType : public DataType {
 
   bool operator==(const DataType &_rhs) const override {
     auto rhs = dynamic_cast<const iotdb::ArrayDataType &>(_rhs);
-    return _data == rhs._data && _dimension == rhs._dimension;
+    return _dataType == rhs._dataType && _dimensions == rhs._dimensions;
   }
 
  private:
-  DataTypePtr _data;
-  u_int32_t _dimension;
+  DataTypePtr _dataType;
+  u_int32_t _dimensions;
 
   friend class boost::serialization::access;
 
   template<class Archive>
   void serialize(Archive &ar, unsigned) {
     ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataType)
-        & BOOST_SERIALIZATION_NVP(_dimension);
+        & BOOST_SERIALIZATION_NVP(_dimensions);
   }
 };
 
