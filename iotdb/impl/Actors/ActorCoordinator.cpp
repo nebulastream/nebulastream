@@ -19,7 +19,7 @@ behavior actor_coordinator::init() {
       this->state.coordinatorPtr->deregister_sensor(this->state.actorTopologyMap.at(key));
       this->state.topologyActorMap.erase(this->state.actorTopologyMap.at(key));
       this->state.actorTopologyMap.erase(key);
-      aout(this) << "*** lost connection to worker " << key << endl;
+      aout(this) << "ACTORCOORDINATOR: Lost connection to worker " << key << endl;
       key->get()->unregister_from_system();
     }
   });
@@ -100,7 +100,8 @@ void actor_coordinator::register_sensor(const string &ip, uint16_t publish_port,
   this->state.actorTopologyMap.insert({sap, sensorNode});
   this->state.topologyActorMap.insert({sensorNode, sap});
   this->monitor(hdl);
-  IOTDB_INFO("*** successfully registered sensor (CPU=" << cpu << ", Type: " << sensor << ") " << to_string(hdl));
+  IOTDB_INFO("ACTORCOORDINATOR: Successfully registered sensor (CPU=" << cpu << ", Type: " << sensor << ") "
+                                                                      << to_string(hdl));
 }
 
 void actor_coordinator::deploy_query(const string &description) {
@@ -111,7 +112,7 @@ void actor_coordinator::deploy_query(const string &description) {
     strong_actor_ptr sap = this->state.topologyActorMap.at(x.first);
     auto hdl = actor_cast<actor>(sap);
     string s_eto = SerializationTools::ser_eto(x.second);
-    IOTDB_INFO("Sending query " << description << " to " << to_string(hdl));
+    IOTDB_INFO("ACTORCOORDINATOR: Sending query " << description << " to " << to_string(hdl));
     this->request(hdl, task_timeout, execute_query_atom::value, description, s_eto);
   }
 }
@@ -145,8 +146,9 @@ void actor_coordinator::show_operators() {
 
           aout(this) << ss.str() << vec << endl;
         },
-        [=](const error &) {
-          IOTDB_ERROR("Error for " << to_string(hdl));
+        [=](const error &er) {
+          string error_msg = to_string(er);
+          IOTDB_ERROR("ACTORCOORDINATOR: Error during show_operators for " << to_string(hdl) << "\n" << error_msg);
         }
     );
   }

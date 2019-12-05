@@ -138,16 +138,6 @@ add_executable(actors-cli-tests "UnitTests/ActorsCliTest.cpp")
 target_link_libraries(actors-cli-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME actors-cli-tests COMMAND actors-cli-tests)
 
-# ActorCoordinator and ActorWorker Tests
-add_executable(actors-cli-tests "UnitTests/ActorsCliTest.cpp")
-target_link_libraries(actors-cli-tests iotdb ${GTEST_LIBRARIES})
-add_test(NAME actors-cli-tests COMMAND actors-cli-tests)
-
-# ActorCoordinator and ActorWorker Tests
-add_executable(actors-cli-tests "UnitTests/ActorsCliTest.cpp")
-target_link_libraries(actors-cli-tests iotdb ${GTEST_LIBRARIES})
-add_test(NAME actors-cli-tests COMMAND actors-cli-tests)
-
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
         DEPENDS ${UNITTESTS})
