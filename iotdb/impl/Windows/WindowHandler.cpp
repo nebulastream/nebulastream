@@ -1,38 +1,26 @@
-#include "../../include/Windows/Window.hpp"
-
-#include "../../include/YSB_legacy/YSBWindow.hpp"
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
 #include <State/StateManager.hpp>
 #include <NodeEngine/Dispatcher.hpp>
+#include <Windows/WindowHandler.hpp>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::Window)
+BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::WindowHandler)
 namespace iotdb {
 
-Window::Window(iotdb::WindowDefinitionPtr window_definition_ptr) : window_definition_ptr(window_definition_ptr) {
+WindowHandler::WindowHandler(iotdb::WindowDefinitionPtr window_definition_ptr) : window_definition_ptr(window_definition_ptr) {
 }
 
-void Window::setup() {
-  // Initialize Window Manager
-  this->window_manager_ptr_ = std::make_shared<WindowManager>(this->window_definition_ptr);
+void WindowHandler::setup() {
+  // Initialize WindowHandler Manager
+  this->window_manager_ptr = std::make_shared<WindowManager>(this->window_definition_ptr);
   // Initialize StateVariable
   this->window_state = &StateManager::instance().registerState<int64_t, WindowSliceStore<int64_t> *>("window");
 }
 
-/**
- * @brief This method iterates over all slices in the slice store and creates the final window aggregates,
- * which are written to the tuple buffer.
- * @tparam FinalAggregateType
- * @tparam PartialAggregateType
- * @param watermark
- * @param store
- * @param window_definition_ptr
- * @param tuple_buffer
- */
 template<class FinalAggregateType, class PartialAggregateType>
-void Window::aggregateWindows(
+void WindowHandler::aggregateWindows(
     WindowSliceStore<PartialAggregateType> *store,
     WindowDefinitionPtr window_definition_ptr,
     TupleBufferPtr tuple_buffer) {
@@ -43,9 +31,9 @@ void Window::aggregateWindows(
 
   auto windows = std::make_shared<std::vector<WindowState>>();
   window_definition_ptr->windowType->triggerWindows(windows, store->getLastWatermark(), watermark);
-  auto partialFinalAggregates = std::vector<PartialAggregateType>(windows->size());
+  auto partial_final_aggregates = std::vector<PartialAggregateType>(windows->size());
   auto slices = store->getSliceMetadata();
-  auto partialAggregates = store->getPartialAggregates();
+  auto partial_aggregates = store->getPartialAggregates();
   for (uint64_t s_id = 0; s_id < slices.size(); s_id++) {
     for (uint64_t w_id = 0; w_id < windows->size(); w_id++) {
       auto window = (*windows)[w_id];
@@ -54,30 +42,30 @@ void Window::aggregateWindows(
           window.getEndTs() >= slices[s_id].getEndTs()) {
 
         //TODO Because of this condition we currently only support SUM aggregations
-        if (Sum *sumAggregation = dynamic_cast<Sum *>(window_definition_ptr->windowAggregation.get())) {
-          if (partialFinalAggregates.size() <= w_id) {
-            partialFinalAggregates[w_id] = partialAggregates[s_id];
+        if (Sum *sum_agregation = dynamic_cast<Sum *>(window_definition_ptr->windowAggregation.get())) {
+          if (partial_final_aggregates.size() <= w_id) {
+            partial_final_aggregates[w_id] = partial_aggregates[s_id];
           } else {
-            partialFinalAggregates[w_id] =
-                sumAggregation->combine<PartialAggregateType>(partialFinalAggregates[w_id], partialAggregates[s_id]);
+            partial_final_aggregates[w_id] =
+                sum_agregation->combine<PartialAggregateType>(partial_final_aggregates[w_id], partial_aggregates[s_id]);
           }
         }
       }
     }
   }
   auto intBuffer = static_cast<FinalAggregateType *> (tuple_buffer->getBuffer());
-  for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
+  for (uint64_t i = 0; i < partial_final_aggregates.size(); i++) {
     //TODO Because of this condition we currently only support SUM aggregations
-    if (Sum *sumAggregation = dynamic_cast<Sum *>(window_definition_ptr->windowAggregation.get())) {
-      intBuffer[i] = sumAggregation->lower<FinalAggregateType, PartialAggregateType>(partialFinalAggregates[i]);
+    if (Sum *sum_aggregation = dynamic_cast<Sum *>(window_definition_ptr->windowAggregation.get())) {
+      intBuffer[i] = sum_aggregation->lower<FinalAggregateType, PartialAggregateType>(partial_final_aggregates[i]);
     }
   }
-  tuple_buffer->setNumberOfTuples(partialFinalAggregates.size());
+  tuple_buffer->setNumberOfTuples(partial_final_aggregates.size());
 
   store->setLastWatermark(watermark);
 };
 
-void Window::trigger() {
+void WindowHandler::trigger() {
   auto window_state_variable = static_cast<StateVariable<int64_t, WindowSliceStore<int64_t> *> *>(this->window_state);
   // create the output tuple buffer
   auto tuple_buffer = BufferManager::instance().getBuffer();
@@ -91,22 +79,22 @@ void Window::trigger() {
   Dispatcher::instance().addWork(tuple_buffer, this);
 }
 
-void *Window::getWindowState() {
+void *WindowHandler::getWindowState() {
   return window_state;
 }
 
-bool Window::start() {
+bool WindowHandler::start() {
   if (running)
     return false;
   running = true;
 
-  IOTDB_DEBUG("Window " << this << ": Spawn thread")
-  thread = std::thread(std::bind(&Window::trigger, this));
+  IOTDB_DEBUG("WindowHandler " << this << ": Spawn thread")
+  thread = std::thread(std::bind(&WindowHandler::trigger, this));
   return true;
 }
 
-bool Window::stop() {
-  IOTDB_DEBUG("Window " << this << ": Stop called")
+bool WindowHandler::stop() {
+  IOTDB_DEBUG("WindowHandler " << this << ": Stop called")
 
   if (!running)
     return false;
@@ -114,21 +102,11 @@ bool Window::stop() {
 
   if (thread.joinable())
     thread.join();
-  IOTDB_DEBUG("Window " << this << ": Thread joinded")
+  IOTDB_DEBUG("WindowHandler " << this << ": Thread joinded")
   return true;
 }
 
-size_t Window::getNumberOfEntries() {
-  return 0;
-}
 
-const WindowPtr createTestWindow(size_t campainCnt, size_t windowSizeInSec) {
-
-  WindowPtr win(new YSBWindow(campainCnt, windowSizeInSec));
-
-  return win;
-}
-
-Window::~Window() {IOTDB_DEBUG("WINDOW: calling destructor")};
+WindowHandler::~WindowHandler() {IOTDB_DEBUG("WINDOW: calling destructor")};
 
 } // namespace iotdb

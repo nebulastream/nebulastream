@@ -17,7 +17,7 @@
 
 #include <CodeGen/C_CodeGen/BinaryOperatorStatement.hpp>
 #include <API/Schema.hpp>
-#include <Windows/Window.hpp>
+#include <Windows/WindowHandler.hpp>
 
 namespace iotdb {
 class WindowManagerTest : public testing::Test {
@@ -109,7 +109,7 @@ TEST_F(WindowManagerTest, window_trigger) {
 
   auto windowDef = std::make_shared<WindowDefinition>(WindowDefinition(aggregation, TumblingWindow::of(Milliseconds(10))));
 
-  auto w = Window(windowDef);
+  auto w = WindowHandler(windowDef);
   w.setup();
 
   auto windowState = (StateVariable<int64_t, WindowSliceStore<int64_t>*>*) w.getWindowState();
@@ -132,7 +132,6 @@ TEST_F(WindowManagerTest, window_trigger) {
   aggregates[sliceIndex]++;
   // std::cout << aggregates[sliceIndex] << std::endl;
   //ASSERT_EQ(buffers_count, buffers_managed);
-
 
   ASSERT_EQ(aggregates[sliceIndex],1);
 

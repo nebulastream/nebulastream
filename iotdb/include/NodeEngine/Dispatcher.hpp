@@ -13,7 +13,7 @@
 #include <NodeEngine/Task.hpp>
 #include "../SourceSink/DataSource.hpp"
 #include "TupleBuffer.hpp"
-#include <Windows/Window.hpp>
+#include <Windows/WindowHandler.hpp>
 namespace iotdb {
 
 /**
@@ -71,7 +71,7 @@ class Dispatcher {
    * @param Pointer to the tuple buffer containing the data
    * @param Pointer to the window which generated the tuplebuffer
    */
-  void addWork(const TupleBufferPtr window_aggregates, Window* window);
+  void addWork(const TupleBufferPtr window_aggregates, WindowHandler* window);
 
   /**
    * @brief finalize task execution by:
@@ -116,7 +116,7 @@ class Dispatcher {
   std::vector<TaskPtr> task_queue;
 
   std::map<DataSource*, std::vector<QueryExecutionPlanPtr>> source_to_query_map;
-  std::map<Window*, std::vector<QueryExecutionPlanPtr>> window_to_query_map;
+  std::map<WindowHandler*, std::vector<QueryExecutionPlanPtr>> window_to_query_map;
   std::map<DataSink*, std::vector<QueryExecutionPlanPtr>> sink_to_query_map;
 
   std::mutex bufferMutex;

@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <iostream>
 
-#include <Windows/Window.hpp>
+#include <Windows/WindowHandler.hpp>
 
 namespace iotdb {
 
@@ -202,7 +202,7 @@ TaskPtr Dispatcher::getWork(bool &threadPool_running) {
   return task;
 }
 
-void Dispatcher::addWork(const iotdb::TupleBufferPtr window_aggregates, iotdb::Window *window) {
+void Dispatcher::addWork(const iotdb::TupleBufferPtr window_aggregates, iotdb::WindowHandler *window) {
   std::unique_lock<std::mutex> lock(workMutex);
 
   //get the queries that contains this window
@@ -275,10 +275,10 @@ void Dispatcher::printQEPStatistics(const QueryExecutionPlanPtr qep) {
   }
   auto windows = qep->getWindows();
   for (auto window : windows) {
-    IOTDB_INFO("Window:" << window)
-    IOTDB_INFO("\t NumberOfEntries=" << window->getNumberOfEntries())
-    IOTDB_INFO("Window Result:")
-    window->print();
+    IOTDB_INFO("WindowHandler:" << window)
+    //IOTDB_INFO("\t NumberOfEntries=" << window->getNumberOfEntries())
+    IOTDB_INFO("WindowHandler Result:")
+    // window->print();
   }
   auto sinks = qep->getSinks();
   for (auto sink : sinks) {

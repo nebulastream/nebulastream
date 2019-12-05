@@ -18,27 +18,27 @@
 namespace iotdb {
 
 /**
- * This represents a window during query execution.
+ * @brief This represents a window during query execution.
  */
-class Window {
+class WindowHandler {
  public:
-  Window() = default;
-  Window(WindowDefinitionPtr window_definition_ptr);
-  ~Window();
+  WindowHandler() = default;
+  WindowHandler(WindowDefinitionPtr window_definition_ptr);
+  ~WindowHandler();
 
   /**
-   * Initialises the state of this window depending on the window definition.
+   * @brief Initialises the state of this window depending on the window definition.
    */
   void setup();
 
   /**
-   * Starts thread to check if the window should be triggered.
+   * @brief Starts thread to check if the window should be triggered.
    * @return boolean if the window thread is started
    */
   bool start();
 
   /**
-   * Stops the window thread.
+   * @brief Stops the window thread.
    * @return
    */
   bool stop();
@@ -50,21 +50,23 @@ class Window {
   void trigger();
 
   /**
-   * Processes window aggregates and write results to tuple buffer.
+   * @brief This method iterates over all slices in the slice store and creates the final window aggregates,
+   * which are written to the tuple buffer.
    * @tparam FinalAggregateType
    * @tparam PartialAggregateType
+   * @param watermark
    * @param store
    * @param window_definition_ptr
    * @param tuple_buffer
    */
   template<class FinalAggregateType, class PartialAggregateType>
-  void aggregateWindows(WindowSliceStore <PartialAggregateType> *store,
+  void aggregateWindows(WindowSliceStore<PartialAggregateType> *store,
                         WindowDefinitionPtr window_definition_ptr,
                         TupleBufferPtr tuple_buffer);
 
   void *getWindowState();
   WindowManagerPtr getWindowManager() {
-    return window_manager_ptr_;
+    return window_manager_ptr;
   };
 
   template<class Archive>
@@ -74,13 +76,13 @@ class Window {
   friend class boost::serialization::access;
   bool running;
   WindowDefinitionPtr window_definition_ptr;
-  WindowManagerPtr window_manager_ptr_;
+  WindowManagerPtr window_manager_ptr;
   void *window_state;
   std::thread thread;
 
 };
 
-typedef std::shared_ptr<Window> WindowPtr;
+typedef std::shared_ptr<WindowHandler> WindowPtr;
 
 //just for test compability
 const WindowPtr createTestWindow(size_t campainCnt, size_t windowSizeInSec);
@@ -89,5 +91,5 @@ const WindowPtr createTestWindow(size_t campainCnt, size_t windowSizeInSec);
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
-BOOST_CLASS_EXPORT_KEY(iotdb::Window)
+BOOST_CLASS_EXPORT_KEY(iotdb::WindowHandler)
 #endif /* INCLUDE_WINDOWS_WINDOW_HPP_ */

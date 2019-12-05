@@ -84,7 +84,7 @@ target_link_libraries(buffer-manager-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME buffer-manager-tests COMMAND buffer-manager-tests)
 
 
-# Window Manager Test
+# WindowHandler Manager Test
 add_executable(window-manager-tests "UnitTests/WindowManagerTest.cpp")
 target_link_libraries(window-manager-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME window-manager-tests COMMAND window-manager-tests)
