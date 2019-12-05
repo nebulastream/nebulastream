@@ -83,7 +83,7 @@ class Operator {
   /**
    * @brief traverses recursively through the operatory tree and returns the operators as a flattened set
    */
-  std::set<OperatorType> flattenedTypes();
+  std::set<OperatorType> flattenedTypes(bool traverse_children);
 
  private:
   bool scheduled = false;

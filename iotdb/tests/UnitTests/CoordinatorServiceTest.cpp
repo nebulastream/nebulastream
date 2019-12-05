@@ -161,7 +161,7 @@ TEST_F(CoordinatorCafTest, test_compile_deployment) {
   EXPECT_TRUE(coordinatorPtr->getRunningQueries().size() == 1);
 }
 
-TEST_F(CoordinatorCafTest, DISABLED_test_code_gen) {
+TEST_F(CoordinatorCafTest, test_code_gen) {
   auto *engine = new NodeEngine();
   engine->start();
 
@@ -194,10 +194,10 @@ TEST_F(CoordinatorCafTest, DISABLED_test_code_gen) {
   qep->addDataSink(sink);
 
   engine->deployQuery(qep);
+  engine->stopWithUndeploy();
 }
 
-//TODO: Fixme
-TEST_F(CoordinatorCafTest, DISABLED_test_local_distributed_deployment) {
+TEST_F(CoordinatorCafTest, test_local_distributed_deployment) {
   auto *engine = new NodeEngine();
   engine->start();
   FogExecutionPlan execPlan = coordinatorPtr->register_query("example", "cars1", "BottomUp");
@@ -205,6 +205,7 @@ TEST_F(CoordinatorCafTest, DISABLED_test_local_distributed_deployment) {
   unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> etos = coordinatorPtr->make_deployment("example");
   EXPECT_TRUE(etos.size() == 2);
 
+  vector<QueryExecutionPlanPtr> qeps;
   for (auto &x : etos) {
     FogTopologyEntryPtr v = x.first;
     cout << "Deploying QEP for " << v->getEntryTypeString() << endl;
@@ -212,7 +213,16 @@ TEST_F(CoordinatorCafTest, DISABLED_test_local_distributed_deployment) {
     QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan();
     EXPECT_TRUE(qep);
     engine->deployQuery(qep);
+    qeps.push_back(qep);
   }
   EXPECT_TRUE(coordinatorPtr->getRegisteredQueries().empty());
   EXPECT_TRUE(coordinatorPtr->getRunningQueries().size() == 1);
+
+  for (const QueryExecutionPlanPtr &qep: qeps) {
+    engine->undeployQuery(qep);
+  }
+  engine->stopWithUndeploy();
+
+  coordinatorPtr->deregister_query("example");
+  EXPECT_TRUE(coordinatorPtr->getRegisteredQueries().empty() && coordinatorPtr->getRunningQueries().empty());
 }

@@ -89,7 +89,7 @@ class FogExecutionPlan {
  public:
   FogExecutionPlan();
 
-  void freeResources(int freedCapacity);
+  void freeResources();
 
   ExecutionNodePtr getRootNode() const;
 

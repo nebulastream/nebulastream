@@ -122,11 +122,12 @@ void actor_coordinator::deploy_query(const string &description) {
  */
 void actor_coordinator::deregister_query(const string &description) {
   // send command to all corresponding nodes to stop the running query as well
-  this->state.coordinatorPtr->deregister_query(description);
   for (auto const &x : this->state.actorTopologyMap) {
     auto hdl = actor_cast<actor>(x.first);
+    IOTDB_INFO("ACTORCOORDINATOR: Sending deletion request " << description << " to " << to_string(hdl));
     this->request(hdl, task_timeout, delete_query_atom::value, description);
   }
+  this->state.coordinatorPtr->deregister_query(description);
 }
 
 /**
