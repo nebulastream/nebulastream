@@ -2,8 +2,8 @@
 // Created by xchatziliadis on 19.11.19.
 //
 
-#ifndef IOTDB_INCLUDE_ACTORS_NESCOORDINATOR_HPP_
-#define IOTDB_INCLUDE_ACTORS_NESCOORDINATOR_HPP_
+#ifndef IOTDB_INCLUDE_ACTORS_COORDINATORSERVICE_HPP_
+#define IOTDB_INCLUDE_ACTORS_COORDINATORSERVICE_HPP_
 
 #include <SourceSink/DataSource.hpp>
 #include <Actors/atom_utils.hpp>
@@ -25,7 +25,7 @@
 #include <CodeGen/CodeGen.hpp>
 #include <Operators/Impl/SourceOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include "ExecutableTransferObject.hpp"
+#include "Actors/ExecutableTransferObject.hpp"
 
 #include <cstdint>
 #include <string>
@@ -34,10 +34,10 @@ using std::string;
 
 namespace iotdb {
 
-class NesCoordinator {
+class CoordinatorService {
  public:
-  NesCoordinator(const string &ip, uint16_t publish_port, uint16_t receive_port);
-  ~NesCoordinator() = default;
+  CoordinatorService(const string &ip, uint16_t publish_port, uint16_t receive_port);
+  ~CoordinatorService() = default;
 
   /**
    * @brief registers a CAF worker into the NES topology and creates a corresponding FogTopologyWorkerNode object
@@ -128,4 +128,4 @@ class NesCoordinator {
 };
 
 }
-#endif //IOTDB_INCLUDE_ACTORS_NESCOORDINATOR_HPP_
+#endif //IOTDB_INCLUDE_ACTORS_COORDINATORSERVICE_HPP_

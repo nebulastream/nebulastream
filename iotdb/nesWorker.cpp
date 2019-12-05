@@ -1,7 +1,18 @@
+/********************************************************
+ *     _   _   ______    _____
+ *    | \ | | |  ____|  / ____|
+ *    |  \| | | |__    | (___
+ *    | . ` | |  __|    \___ \     Worker
+ *    | |\  | | |____   ____) |
+ *    |_| \_| |______| |_____/
+ *
+ ********************************************************/
+
 #include <iostream>
 
 #include <Actors/ActorWorker.hpp>
 #include <Util/UtilityFunctions.hpp>
+#include <Actors/Configurations/ActorWorkerConfig.hpp>
 
 #include "caf/all.hpp"
 #include "caf/io/all.hpp"
@@ -16,7 +27,7 @@ using namespace iotdb;
 /**
 * @brief main method to run the worker with an interactive console command list
 */
-void start_worker(actor_system &system, const worker_config &cfg) {
+void start_worker(actor_system &system, const ActorWorkerConfig &cfg) {
   // keeps track of requests and tries to reconnect on server failures
   auto usage = [] {
     cout << "Usage:" << endl
@@ -101,7 +112,7 @@ void setupLogging() {
   iotdb::logger->addAppender(console);
 }
 
-void caf_main(actor_system &system, const worker_config &cfg) {
+void caf_main(actor_system &system, const ActorWorkerConfig &cfg) {
   log4cxx::Logger::getLogger("IOTDB")->setLevel(log4cxx::Level::getDebug());
   setupLogging();
   start_worker(system, cfg);

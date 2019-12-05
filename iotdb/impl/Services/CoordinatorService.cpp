@@ -1,8 +1,8 @@
-#include <Actors/NesCoordinator.hpp>
+#include <Services/CoordinatorService.hpp>
 #include <Actors/ExecutableTransferObject.hpp>
 
 namespace iotdb {
-NesCoordinator::NesCoordinator(const std::string &ip, uint16_t publish_port, uint16_t receive_port) {
+CoordinatorService::CoordinatorService(const std::string &ip, uint16_t publish_port, uint16_t receive_port) {
   this->_ip = ip;
   this->_publish_port = publish_port;
   this->_receive_port = receive_port;
@@ -14,8 +14,8 @@ NesCoordinator::NesCoordinator(const std::string &ip, uint16_t publish_port, uin
   this->_thisEntry = coordinatorNode;
 }
 
-FogTopologyEntryPtr NesCoordinator::register_sensor(const string &ip, uint16_t publish_port,
-                                                    uint16_t receive_port, int cpu, const string &sensor_type) {
+FogTopologyEntryPtr CoordinatorService::register_sensor(const string &ip, uint16_t publish_port,
+                                                        uint16_t receive_port, int cpu, const string &sensor_type) {
   FogTopologyManager &topologyManager = this->_topologyManagerPtr->getInstance();
   FogTopologySensorNodePtr sensorNode = topologyManager.createFogSensorNode("ip", CPUCapacity::Value(cpu));
   sensorNode->setSensorType(sensor_type);
@@ -26,9 +26,9 @@ FogTopologyEntryPtr NesCoordinator::register_sensor(const string &ip, uint16_t p
   return sensorNode;
 }
 
-FogExecutionPlan NesCoordinator::register_query(const string &description,
-                                                const string &sensor_type,
-                                                const string &strategy) {
+FogExecutionPlan CoordinatorService::register_query(const string &description,
+                                                    const string &sensor_type,
+                                                    const string &strategy) {
   FogExecutionPlan fogExecutionPlan;
   if (this->_registeredQueries.find(description) == this->_registeredQueries.end() &&
       this->_runningQueries.find(description) == this->_runningQueries.end()) {
@@ -72,7 +72,7 @@ FogExecutionPlan NesCoordinator::register_query(const string &description,
   return fogExecutionPlan;
 }
 
-bool NesCoordinator::deregister_query(const string &description) {
+bool CoordinatorService::deregister_query(const string &description) {
   bool out = false;
   if (this->_registeredQueries.find(description) == this->_registeredQueries.end() &&
       this->_runningQueries.find(description) == this->_runningQueries.end()) {
@@ -94,7 +94,7 @@ bool NesCoordinator::deregister_query(const string &description) {
 }
 
 unordered_map<FogTopologyEntryPtr,
-              ExecutableTransferObject> NesCoordinator::make_deployment(const string &description) {
+              ExecutableTransferObject> CoordinatorService::make_deployment(const string &description) {
   unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> output;
   if (this->_registeredQueries.find(description) != this->_registeredQueries.end() &&
       this->_runningQueries.find(description) == this->_runningQueries.end()) {
@@ -127,7 +127,7 @@ unordered_map<FogTopologyEntryPtr,
   return output;
 }
 
-vector<DataSourcePtr> NesCoordinator::getSources(const string &description, const ExecutionVertex &v) {
+vector<DataSourcePtr> CoordinatorService::getSources(const string &description, const ExecutionVertex &v) {
   vector<DataSourcePtr> out = vector<DataSourcePtr>();
   Schema schema = get<0>(this->_registeredQueries.at(description));
   FogExecutionPlan execPlan = get<1>(this->_registeredQueries.at(description));
@@ -145,7 +145,7 @@ vector<DataSourcePtr> NesCoordinator::getSources(const string &description, cons
   return out;
 }
 
-vector<DataSinkPtr> NesCoordinator::getSinks(const string &description, const ExecutionVertex &v) {
+vector<DataSinkPtr> CoordinatorService::getSinks(const string &description, const ExecutionVertex &v) {
   vector<DataSinkPtr> out = vector<DataSinkPtr>();
   Schema schema = get<0>(this->_registeredQueries.at(description));
   FogExecutionPlan execPlan = get<1>(this->_registeredQueries.at(description));
@@ -163,7 +163,7 @@ vector<DataSinkPtr> NesCoordinator::getSinks(const string &description, const Ex
   return out;
 }
 
-int NesCoordinator::assign_port(const string &description) {
+int CoordinatorService::assign_port(const string &description) {
   if (this->_queryToPort.find(description) != this->_queryToPort.end()) {
     return this->_queryToPort.at(description);
   } else {
@@ -174,22 +174,22 @@ int NesCoordinator::assign_port(const string &description) {
   }
 }
 
-const FogTopologyEntryPtr &NesCoordinator::getThisEntry() const {
+const FogTopologyEntryPtr &CoordinatorService::getThisEntry() const {
   return _thisEntry;
 }
 
-bool NesCoordinator::deregister_sensor(const FogTopologyEntryPtr &entry) {
+bool CoordinatorService::deregister_sensor(const FogTopologyEntryPtr &entry) {
   return this->_topologyManagerPtr->getInstance().removeFogNode(entry);
 }
-string NesCoordinator::getTopologyPlanString() {
+string CoordinatorService::getTopologyPlanString() {
   return this->_topologyManagerPtr->getInstance().getTopologyPlanString();
 }
 
-const unordered_map<string, tuple<Schema, FogExecutionPlan>> &NesCoordinator::getRegisteredQueries() const {
+const unordered_map<string, tuple<Schema, FogExecutionPlan>> &CoordinatorService::getRegisteredQueries() const {
   return _registeredQueries;
 }
 
-const unordered_map<string, tuple<Schema, FogExecutionPlan>> &NesCoordinator::getRunningQueries() const {
+const unordered_map<string, tuple<Schema, FogExecutionPlan>> &CoordinatorService::getRunningQueries() const {
   return _runningQueries;
 }
 
