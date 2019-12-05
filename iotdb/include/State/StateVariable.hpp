@@ -112,6 +112,19 @@ class StateVariable : public detail::Destroyable {
     }
 
     /**
+     * Retrieves the actual value for a key.
+     * If the value is not set yet, we set a default value.
+     * @return the actual value for a key
+     */
+    template<typename ...Arguments>
+    Value valueOrDefault(Arguments &&... args) {
+      if (!backend.contains(key)){
+        emplace(std::forward<Arguments>(args)...);
+      }
+      return value();
+    }
+
+    /**
      * Perform a Read-modify-write of a key-value pair
      * @tparam F an invocable type void(StateBackendMappedType&)
      * @param func an invocable of type void(StateBackendMappedType&)

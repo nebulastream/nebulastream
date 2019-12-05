@@ -114,9 +114,7 @@ TEST_F(WindowManagerTest, window_trigger) {
 
   auto windowState = (StateVariable<int64_t, WindowSliceStore<int64_t>*>*) w.getWindowState();
   auto  keyRef = windowState->get(10);
-  if(!keyRef.contains()) {
-    keyRef.emplace(0);
-  }
+  keyRef.valueOrDefault(0);
   auto store = keyRef.value();
 
   uint64_t ts = 7;

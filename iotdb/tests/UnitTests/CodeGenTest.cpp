@@ -18,6 +18,7 @@
 #include <API/UserAPIExpression.hpp>
 #include <SourceSink/DataSink.hpp>
 #include <SourceSink/GeneratorSource.hpp>
+#include <Windows/WindowHandler.hpp>
 #include "../../include/CodeGen/DataTypes.hpp"
 #include "../../include/SourceSink/SinkCreator.hpp"
 #include "../../include/SourceSink/SourceCreator.hpp"
@@ -749,6 +750,77 @@ int CodeGeneratorFilterTest() {
 }
 
 /**
+ * Window assigner codegen test
+ * @return
+ */
+int WindowAssignerCodeGenTest() {
+  /* prepare objects for test */
+  DataSourcePtr source = createTestSourceCodeGenPredicate();
+  CodeGeneratorPtr code_gen = createCodeGenerator();
+  PipelineContextPtr context = createPipelineContext();
+
+  Schema input_schema = source->getSchema();
+
+  std::cout << "Generate Predicate Code" << std::endl;
+  code_gen->generateCode(source, context, std::cout);
+
+  auto sum = Sum::on(Field(input_schema.get("id")));
+  WindowDefinitionPtr window_definition_ptr(new WindowDefinition(input_schema.get("id"), sum, TumblingWindow::of(Seconds(10))));
+  // auto window_operator = createWindowOperator(window_definition_ptr);
+  //predicate definition
+  code_gen->generateCode(window_definition_ptr, context, std::cout);
+
+  unsigned int numberOfResultTuples = 3;
+
+
+  /* compile code to pipeline stage */
+  PipelineStagePtr stage = code_gen->compile(CompilerArgs());
+  if (!stage)
+    return -1;
+
+  // init window handler
+  auto window_handler = new WindowHandler(window_definition_ptr);
+  window_handler->setup();
+
+  /* prepare input tuple buffer */
+  TupleBufferPtr buf = source->receiveData();
+  std::vector<TupleBuffer *> input_buffers;
+  input_buffers.push_back(buf.get());
+  //std::cout << iotdb::toString(buf.get(),source->getSchema()) << std::endl;
+  std::cout << "Processing " << buf->getNumberOfTuples() << " tuples: " << std::endl;
+  uint32_t sizeoftuples =
+      (sizeof(uint32_t) + sizeof(int16_t) + sizeof(float) + sizeof(double) + sizeof(char) + sizeof(char) * 12);
+  size_t buffer_size = buf->getNumberOfTuples() * sizeoftuples;
+  TupleBuffer result_buffer(malloc(buffer_size), buffer_size, sizeoftuples, 0);
+
+  /* execute Stage */
+  stage->execute(
+      input_buffers,
+      window_handler->getWindowState(),
+      window_handler->getWindowManager().get(),
+      &result_buffer);
+
+  /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
+  std::cout << "---------- My Number of tuples...." << result_buffer.getNumberOfTuples() << std::endl;
+  if (result_buffer.getNumberOfTuples() != numberOfResultTuples) {
+    std::cout << "Wrong number of tuples in output: " << result_buffer.getNumberOfTuples()
+              << " (should have been: " << buf->getNumberOfTuples() << ")" << std::endl;
+    return -1;
+  }
+
+  std::cout << iotdb::toString(result_buffer, Schema::create()
+      .addField("id", BasicType::UINT32)
+      .addField("valueSmall", BasicType::INT16)
+      .addField("valueFloat", BasicType::FLOAT32)
+      .addField("valueDouble", BasicType::FLOAT64)
+      .addField("valueChar", BasicType::CHAR)
+      .addField("text", createArrayDataType(BasicType::CHAR, 12))) << std::endl;
+  std::cout << "Result of SelectionCodeGenTest is Correct!" << std::endl;
+
+  return 0;
+}
+
+/**
  * New Predicatetests for showing stuff
  * @return
  */
@@ -947,6 +1019,13 @@ int main() {
 
   /** \todo make proper test case out of this function! */
   //iotdb::CodeGenTestCases();
+
+  if(!iotdb::WindowAssignerCodeGenTest()){
+    std::cout << "Test CodeGenTest Passed!" << std::endl << std::endl;
+  } else {
+    std::cerr << "Test CodeGenTest Failed!" << std::endl << std::endl;
+    return -1;
+  }
 
   if (!iotdb::CodeGenTest()) {
     std::cout << "Test CodeGenTest Passed!" << std::endl << std::endl;
