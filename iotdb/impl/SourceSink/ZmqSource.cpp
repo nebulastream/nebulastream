@@ -88,7 +88,6 @@ TupleBufferPtr ZmqSource::receiveData() {
   } else {
     IOTDB_FATAL_ERROR("ZMQSOURCE: Not connected!")
   }
-  assert(0);
   return nullptr;
 }
 
@@ -105,9 +104,19 @@ bool ZmqSource::connect() {
   if (!connected) {
     auto address = std::string("tcp://") + host + std::string(":") + std::to_string(port);
 
-    socket.setsockopt(ZMQ_LINGER, 0);
-    socket.bind(address.c_str());
-    connected = true;
+    try {
+      socket.setsockopt(ZMQ_LINGER, 0);
+      socket.bind(address.c_str());
+      connected = true;
+    }
+    catch (const zmq::error_t &ex) {
+      // recv() throws ETERM when the zmq context is destroyed,
+      //  as when AsyncZmqListener::Stop() is called
+      if (ex.num() != ETERM) {
+        IOTDB_FATAL_ERROR("ZMQSOURCE: " << ex.what())
+      }
+      connected = false;
+    }
   }
   if (connected) {
     IOTDB_DEBUG("ZMQSOURCE  " << this << ": connected")
@@ -119,16 +128,8 @@ bool ZmqSource::connect() {
 
 bool ZmqSource::disconnect() {
   if (connected) {
-    try {
-      //socket.close();
-      std::this_thread::sleep_for(std::chrono::seconds(2));
-      socket.close();
-      std::this_thread::sleep_for(std::chrono::seconds(2));
-      connected = false;
-    }
-    catch (...) {
-      //connected = true;
-    }
+    socket.close();
+    connected = false;
   }
   if (!connected) {
     IOTDB_DEBUG("ZMQSOURCE  " << this << ": disconnected")

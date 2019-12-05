@@ -10,15 +10,28 @@ namespace iotdb {
 
 Operator::~Operator() {}
 
-std::set<OperatorType> Operator::flattenedTypes() {
+std::set<OperatorType> Operator::flattenedTypes(bool traverse_children) {
   std::set<OperatorType> result;
-  result.insert(this->getOperatorType());
-  if (!childs.empty()) {
+
+  if (!traverse_children && parent) {
+    std::set<OperatorType> tmp = parent->flattenedTypes(false);
+    result.insert(tmp.begin(), tmp.end());
+  }
+  else if (!traverse_children && !parent) {
+    std::set<OperatorType> tmp = this->flattenedTypes(true);
+    result.insert(tmp.begin(), tmp.end());
+  }
+  else if (traverse_children && !childs.empty()) {
+    result.insert(this->getOperatorType());
     for (const OperatorPtr &op: childs) {
-      std::set<OperatorType> tmp = op->flattenedTypes();
+      std::set<OperatorType> tmp = op->flattenedTypes(true);
       result.insert(tmp.begin(), tmp.end());
     }
   }
+  else {
+    result.insert(this->getOperatorType());
+  }
+
   return result;
 }
 bool Operator::equals(const Operator &_rhs) {

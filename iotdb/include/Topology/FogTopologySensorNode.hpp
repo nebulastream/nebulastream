@@ -28,32 +28,32 @@ class FogTopologySensorNode : public FogTopologyEntry {
 
   ~FogTopologySensorNode() = default;
 
-  void setId(size_t id) { this->node_id = id; }
+  void setId(size_t id) override { this->node_id = id; }
 
-  size_t getId() { return node_id; }
+  size_t getId() override { return node_id; }
 
-  int getCpuCapacity() { return cpuCapacity; }
+  int getCpuCapacity() override { return cpuCapacity; }
 
   void setCpuCapacity(CPUCapacity cpuCapacity) {
     this->cpuCapacity = cpuCapacity.toInt();
     this->remainingCPUCapacity = this->cpuCapacity;
   }
 
-  void reduceCpuCapacity(int usedCapacity) {
+  void reduceCpuCapacity(int usedCapacity) override {
     this->remainingCPUCapacity = this->remainingCPUCapacity - usedCapacity;
   }
 
-  void increaseCpuCapacity(int freedCapacity) {
+  void increaseCpuCapacity(int freedCapacity) override {
     this->remainingCPUCapacity = this->remainingCPUCapacity + freedCapacity;
   }
 
-  int getRemainingCpuCapacity() { return remainingCPUCapacity; }
+  int getRemainingCpuCapacity() override { return remainingCPUCapacity; }
 
-  FogNodeType getEntryType() { return Sensor; }
+  FogNodeType getEntryType() override { return Sensor; }
 
-  std::string getEntryTypeString() { return "Sensor(" + getSensorType() + ")"; }
+  std::string getEntryTypeString() override { return "Sensor(" + getSensorType() + ")"; }
 
-  void setQuery(InputQueryPtr pQuery) { this->query = pQuery; };
+  void setQuery(InputQueryPtr pQuery) override { this->query = pQuery; };
 
   std::string getSensorType() {
     return sensorType;
