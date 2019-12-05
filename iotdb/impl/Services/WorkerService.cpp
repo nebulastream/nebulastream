@@ -48,7 +48,7 @@ vector<string> WorkerService::getOperators() {
   for (auto const &x : this->_runningQueries) {
     string str_opts;
     const OperatorPtr& op = std::get<1>(x.second);
-    auto flattened = op->flattenedTypes(false);
+    auto flattened = op->flattenedTypes();
     for (const OperatorType &_o: flattened) {
       if (!str_opts.empty())
         str_opts.append(", ");

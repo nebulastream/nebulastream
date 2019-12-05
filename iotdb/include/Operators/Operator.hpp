@@ -83,10 +83,12 @@ class Operator {
   /**
    * @brief traverses recursively through the operatory tree and returns the operators as a flattened set
    */
-  std::set<OperatorType> flattenedTypes(bool traverse_children);
+  std::set<OperatorType> flattenedTypes();
 
  private:
   bool scheduled = false;
+
+  std::set<OperatorType> traverseOpTree(bool traverse_children);
 
   friend class boost::serialization::access;
 
