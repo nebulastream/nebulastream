@@ -83,6 +83,15 @@ class CoordinatorService {
    */
   string getTopologyPlanString();
 
+  /**
+   * @brief register the user query and deploy the user query using a specific deployment strategy
+   *
+   * @param userQuery
+   * @param optimizationStrategyName
+   * @return uuid for the user query
+   */
+  string executeQuery(const string userQuery, const string &optimizationStrategyName);
+
   const unordered_map<string, tuple<Schema, FogExecutionPlan>> &getRegisteredQueries() const;
   const unordered_map<string, tuple<Schema, FogExecutionPlan>> &getRunningQueries() const;
 
