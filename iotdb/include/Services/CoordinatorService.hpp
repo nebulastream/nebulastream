@@ -57,12 +57,9 @@ class CoordinatorService {
   /**
    * @brief registers a CAF query into the NES topology to make it deployable
    * @param description a description of the query
-   * @param sensor_type the sensor_type to which the input source stream belongs
    * @param optimizationStrategyName the optimization strategy (buttomUp or topDown)
    */
-  FogExecutionPlan register_query(const string &description,
-                                  const string &sensor_type,
-                                  const string &optimizationStrategyName);
+  string register_query(const string &description, const string &optimizationStrategyName);
 
   /**
    * @brief method which is called to unregister an already running query
@@ -73,9 +70,9 @@ class CoordinatorService {
 
   /**
    * @brief deploys a CAF query into the NES topology to the corresponding devices defined by the optimizer
-   * @param query a description of the query
+   * @param query a queryId of the query
    */
-  unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> make_deployment(const string &description);
+  unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> make_deployment(const string &queryId);
 
   /**
    * @brief creates a string representation of the topology graph
