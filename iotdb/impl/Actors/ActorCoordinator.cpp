@@ -1,14 +1,16 @@
 #include <Actors/ActorCoordinator.hpp>
 #include <Actors/ExecutableTransferObject.hpp>
 #include <Actors/atom_utils.hpp>
-
+#include <Topology/FogTopologyManager.hpp>
 #include <caf/all.hpp>
 
-namespace iotdb {
+using namespace iotdb;
 
 behavior actor_coordinator::init() {
   this->state.actorTopologyMap.insert({this->address().get(), this->state.coordinatorPtr->getThisEntry()});
   this->state.topologyActorMap.insert({this->state.coordinatorPtr->getThisEntry(), this->address().get()});
+
+  initializeNESTopology();
 
   // transition to `unconnected` on server failure
   this->set_down_handler([=](const down_msg &dm) {
@@ -24,6 +26,15 @@ behavior actor_coordinator::init() {
     }
   });
   return running();
+}
+
+void actor_coordinator::initializeNESTopology() {
+
+  FogTopologyManager fogTopologyManagerInstance = FogTopologyManager::getInstance();
+  fogTopologyManagerInstance.resetFogTopologyPlan();
+  auto coordinatorNode = fogTopologyManagerInstance.createFogCoordinatorNode(actorCoordinatorConfig.ip, CPUCapacity::HIGH);
+  coordinatorNode->setPublishPort(actorCoordinatorConfig.publish_port);
+  coordinatorNode->setReceivePort(actorCoordinatorConfig.receive_port);
 }
 
 behavior actor_coordinator::running() {
@@ -104,31 +115,31 @@ void actor_coordinator::register_sensor(const string &ip, uint16_t publish_port,
                                                                       << to_string(hdl));
 }
 
-void actor_coordinator::deploy_query(const string &description) {
+void actor_coordinator::deploy_query(const string &queryString) {
   unordered_map<FogTopologyEntryPtr, ExecutableTransferObject>
-      deployments = this->state.coordinatorPtr->make_deployment(description);
+      deployments = this->state.coordinatorPtr->make_deployment(queryString);
 
   for (auto const &x : deployments) {
     strong_actor_ptr sap = this->state.topologyActorMap.at(x.first);
     auto hdl = actor_cast<actor>(sap);
     string s_eto = SerializationTools::ser_eto(x.second);
-    IOTDB_INFO("ACTORCOORDINATOR: Sending query " << description << " to " << to_string(hdl));
-    this->request(hdl, task_timeout, execute_query_atom::value, description, s_eto);
+    IOTDB_INFO("Sending query " << queryString << " to " << to_string(hdl));
+    this->request(hdl, task_timeout, execute_query_atom::value, queryString, s_eto);
   }
 }
 
 /**
  * @brief method which is called to unregister an already running query
- * @param description the description of the query
+ * @param queryId the queryId of the query
  */
-void actor_coordinator::deregister_query(const string &description) {
+void actor_coordinator::deregister_query(const string &queryId) {
   // send command to all corresponding nodes to stop the running query as well
   for (auto const &x : this->state.actorTopologyMap) {
     auto hdl = actor_cast<actor>(x.first);
-    IOTDB_INFO("ACTORCOORDINATOR: Sending deletion request " << description << " to " << to_string(hdl));
-    this->request(hdl, task_timeout, delete_query_atom::value, description);
+    IOTDB_INFO("ACTORCOORDINATOR: Sending deletion request " << queryId << " to " << to_string(hdl));
+    this->request(hdl, task_timeout, delete_query_atom::value, queryId);
   }
-  this->state.coordinatorPtr->deregister_query(description);
+  this->state.coordinatorPtr->deregister_query(queryId);
 }
 
 /**
@@ -152,6 +163,4 @@ void actor_coordinator::show_operators() {
         }
     );
   }
-}
-
 }

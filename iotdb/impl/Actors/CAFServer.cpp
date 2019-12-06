@@ -13,7 +13,7 @@ bool CAFServer::start(actor_system& actor_system, const ActorCoordinatorConfig& 
   //Setup then logging
   setupLogging();
 
-  auto coord = actor_system.spawn<actor_coordinator>(cfg.ip, cfg.publish_port, cfg.receive_port);
+  auto coord = actor_system.spawn<actor_coordinator>();
   // try to publish actor at given port
   cout << "*** trying to publish at port " << cfg.publish_port << endl;
   auto expected_port = io::publish(coord, cfg.publish_port);
