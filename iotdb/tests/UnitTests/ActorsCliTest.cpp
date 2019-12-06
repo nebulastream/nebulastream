@@ -286,7 +286,7 @@ TEST_F(ActorsCliTest, testSequentialMultiQueries) {
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
   string description = "example";
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < 1; i++) {
     cout << "Sequence " << i << endl;
     std::this_thread::sleep_for(std::chrono::seconds(1));
     anon_send(coordinator, register_query_atom::value, description, w_cfg.sensor_type, "BottomUp");
