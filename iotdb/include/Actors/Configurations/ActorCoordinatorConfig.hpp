@@ -1,6 +1,6 @@
 
-#ifndef IOTDB_IMPL_ACTORS_COORDINATORCONFIGURATION_H_
-#define IOTDB_IMPL_ACTORS_COORDINATORCONFIGURATION_H_
+#ifndef __ACTOR_COORDINATOR_CONFIG_HPP__
+#define __ACTOR_COORDINATOR_CONFIG_HPP__
 
 #include <caf/all.hpp>
 
@@ -8,7 +8,7 @@ namespace iotdb {
 /**
 * @brief The configuration file of the coordinator
 */
-class ActorCoordinatorConfig : public actor_system_config {
+ class ActorCoordinatorConfig : public caf::actor_system_config {
  public:
 
   ActorCoordinatorConfig(const ActorCoordinatorConfig &config) {
@@ -33,4 +33,4 @@ class ActorCoordinatorConfig : public actor_system_config {
   uint16_t receive_port = 4815;
 };
 }
-#endif //IOTDB_IMPL_ACTORS_COORDINATORCONFIGURATION_H_
+#endif //__ACTOR_COORDINATOR_CONFIG_HPP__

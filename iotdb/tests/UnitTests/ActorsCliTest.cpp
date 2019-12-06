@@ -1,18 +1,18 @@
+#include "caf/io/all.hpp"
 #include <gtest/gtest.h>
 #include <Actors/ActorCoordinator.hpp>
-#include <Actors/ActorWorker.hpp>
 
+#include <Actors/ActorWorker.hpp>
 #include <Util/Logger.hpp>
 #include <Actors/Configurations/ActorCoordinatorConfig.hpp>
 #include <Actors/Configurations/ActorWorkerConfig.hpp>
-
-#include "caf/io/all.hpp"
+#include <Actors/atom_utils.hpp>
 
 namespace iotdb {
+
 class ActorsCliTest : public testing::Test {
  public:
   std::string host = "localhost";
-  std::string sensor_type = "cars";
 
   static void SetUpTestCase() {
     setupLogging();
