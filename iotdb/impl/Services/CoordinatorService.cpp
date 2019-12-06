@@ -2,6 +2,7 @@
 #include <Actors/ExecutableTransferObject.hpp>
 
 using namespace iotdb;
+using namespace std;
 
 FogTopologyEntryPtr CoordinatorService::register_sensor(const string &ip, uint16_t publish_port,
                                                         uint16_t receive_port, int cpu, const string &sensor_type) {
@@ -170,6 +171,12 @@ int CoordinatorService::assign_port(const string &description) {
     this->_queryToPort.insert({description, kFreeZmqPort});
     return kFreeZmqPort;
   }
+}
+
+string CoordinatorService::executeQuery(const string userQuery, const string &optimizationStrategyName) {
+
+  register_query(userQuery, "", optimizationStrategyName);
+  return "";
 }
 
 bool CoordinatorService::deregister_sensor(const FogTopologyEntryPtr &entry) {
