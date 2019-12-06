@@ -29,9 +29,17 @@ using std::string;
 
 namespace iotdb {
 
+class CoordinatorService;
+typedef std::shared_ptr<CoordinatorService> CoordinatorServicePtr;
+
 class CoordinatorService {
  public:
-  CoordinatorService() = default;
+
+  static CoordinatorServicePtr getInstance() {
+    static CoordinatorServicePtr instance{new CoordinatorService};
+    return instance;
+  }
+
   ~CoordinatorService() = default;
 
   /**
@@ -62,10 +70,10 @@ class CoordinatorService {
 
   /**
    * @brief method which is called to unregister an already running query
-   * @param description the description of the query
+   * @param queryId the queryId of the query
    * @return true if deleted from running queries, otherwise false
    */
-  bool deregister_query(const string &description);
+  bool deregister_query(const string &queryId);
 
   /**
    * @brief deploys a CAF query into the NES topology to the corresponding devices defined by the optimizer
@@ -88,10 +96,28 @@ class CoordinatorService {
    */
   string executeQuery(const string userQuery, const string &optimizationStrategyName);
 
+  //FIXME: right now we do not register query but rather the fog plan
+  /**
+   * @brief: get the registered query
+   *
+   * @param queryId
+   * @return the fog execution plan for the query
+   */
+  FogExecutionPlan getRegisteredQuery(string queryId);
+
+  /**
+   * @brief: clear query catalogs
+   * @return
+   */
+
+  bool clearQueryCatalogs();
+
   const unordered_map<string, tuple<Schema, FogExecutionPlan>> &getRegisteredQueries() const;
   const unordered_map<string, tuple<Schema, FogExecutionPlan>> &getRunningQueries() const;
 
  private:
+
+  CoordinatorService() = default; //do not implement
 
   unordered_map<string, int> _queryToPort;
   shared_ptr<FogTopologyManager> _topologyManagerPtr;

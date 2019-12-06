@@ -15,9 +15,17 @@ class CoordinatorCafTest : public testing::Test {
   /* Will be called before a test is executed. */
   void SetUp() {
     std::cout << "Setup NES Coordinator test case." << std::endl;
-    coordinatorPtr = std::make_shared<CoordinatorService>(CoordinatorService("127.0.0.1", 4711, 4815));
+
+    FogTopologyManager::getInstance().resetFogTopologyPlan();
+    const auto &kCoordinatorNode = FogTopologyManager::getInstance()
+        .createFogCoordinatorNode("127.0.0.1", CPUCapacity::HIGH);
+    kCoordinatorNode->setPublishPort(4711);
+    kCoordinatorNode->setReceivePort(4815);
+
+    coordinatorService = CoordinatorService::getInstance();
+    coordinatorService->clearQueryCatalogs();
     for (int i = 0; i < 5; i++) {
-      auto entry = coordinatorPtr->register_sensor(ip, publish_port, receive_port, 2, sensor_type + std::to_string(i));
+      auto entry = coordinatorService->register_sensor(ip, publish_port, receive_port, 2, sensor_type);
     }
   }
 
@@ -27,7 +35,7 @@ class CoordinatorCafTest : public testing::Test {
   /* Will be called after all tests in this class are finished. */
   static void TearDownTestCase() { std::cout << "Tear down NES Coordinator test class." << std::endl; }
 
-  std::shared_ptr<CoordinatorService> coordinatorPtr;
+  CoordinatorServicePtr coordinatorService;
   std::string ip = "127.0.0.1";
   uint16_t receive_port = 0;
   std::string host = "localhost";
@@ -37,14 +45,14 @@ class CoordinatorCafTest : public testing::Test {
 
 /* Test serialization for Schema  */
 TEST_F(CoordinatorCafTest, test_registration_and_topology) {
-  string topo = coordinatorPtr->getTopologyPlanString();
+  string topo = coordinatorService->getTopologyPlanString();
   string expectedTopo = "graph G {\n"
                         "0[label=\"0 type=Coordinator\"];\n"
-                        "1[label=\"1 type=Sensor(cars0)\"];\n"
-                        "2[label=\"2 type=Sensor(cars1)\"];\n"
-                        "3[label=\"3 type=Sensor(cars2)\"];\n"
-                        "4[label=\"4 type=Sensor(cars3)\"];\n"
-                        "5[label=\"5 type=Sensor(cars4)\"];\n"
+                        "1[label=\"1 type=Sensor(cars)\"];\n"
+                        "2[label=\"2 type=Sensor(cars)\"];\n"
+                        "3[label=\"3 type=Sensor(cars)\"];\n"
+                        "4[label=\"4 type=Sensor(cars)\"];\n"
+                        "5[label=\"5 type=Sensor(cars)\"];\n"
                         "1--0 [label=\"0\"];\n"
                         "2--0 [label=\"1\"];\n"
                         "3--0 [label=\"2\"];\n"
@@ -55,14 +63,14 @@ TEST_F(CoordinatorCafTest, test_registration_and_topology) {
 }
 
 TEST_F(CoordinatorCafTest, test_deregistration_and_topology) {
-  auto entry = coordinatorPtr->register_sensor(ip, publish_port, receive_port, 2, sensor_type + "_delete_me");
+  auto entry = coordinatorService->register_sensor(ip, publish_port, receive_port, 2, sensor_type + "_delete_me");
   string expectedTopo1 = "graph G {\n"
                          "0[label=\"0 type=Coordinator\"];\n"
-                         "1[label=\"1 type=Sensor(cars0)\"];\n"
-                         "2[label=\"2 type=Sensor(cars1)\"];\n"
-                         "3[label=\"3 type=Sensor(cars2)\"];\n"
-                         "4[label=\"4 type=Sensor(cars3)\"];\n"
-                         "5[label=\"5 type=Sensor(cars4)\"];\n"
+                         "1[label=\"1 type=Sensor(cars)\"];\n"
+                         "2[label=\"2 type=Sensor(cars)\"];\n"
+                         "3[label=\"3 type=Sensor(cars)\"];\n"
+                         "4[label=\"4 type=Sensor(cars)\"];\n"
+                         "5[label=\"5 type=Sensor(cars)\"];\n"
                          "6[label=\"6 type=Sensor(cars_delete_me)\"];\n"
                          "1--0 [label=\"0\"];\n"
                          "2--0 [label=\"1\"];\n"
@@ -71,56 +79,57 @@ TEST_F(CoordinatorCafTest, test_deregistration_and_topology) {
                          "5--0 [label=\"4\"];\n"
                          "6--0 [label=\"5\"];\n"
                          "}\n";
-  EXPECT_EQ(coordinatorPtr->getTopologyPlanString(), expectedTopo1);
+  EXPECT_EQ(coordinatorService->getTopologyPlanString(), expectedTopo1);
 
-  coordinatorPtr->deregister_sensor(entry);
+  coordinatorService->deregister_sensor(entry);
   string expectedTopo2 = "graph G {\n"
                          "0[label=\"0 type=Coordinator\"];\n"
-                         "1[label=\"1 type=Sensor(cars0)\"];\n"
-                         "2[label=\"2 type=Sensor(cars1)\"];\n"
-                         "3[label=\"3 type=Sensor(cars2)\"];\n"
-                         "4[label=\"4 type=Sensor(cars3)\"];\n"
-                         "5[label=\"5 type=Sensor(cars4)\"];\n"
+                         "1[label=\"1 type=Sensor(cars)\"];\n"
+                         "2[label=\"2 type=Sensor(cars)\"];\n"
+                         "3[label=\"3 type=Sensor(cars)\"];\n"
+                         "4[label=\"4 type=Sensor(cars)\"];\n"
+                         "5[label=\"5 type=Sensor(cars)\"];\n"
                          "1--0 [label=\"0\"];\n"
                          "2--0 [label=\"1\"];\n"
                          "3--0 [label=\"2\"];\n"
                          "4--0 [label=\"3\"];\n"
                          "5--0 [label=\"4\"];\n"
                          "}\n";
-  EXPECT_EQ(coordinatorPtr->getTopologyPlanString(), expectedTopo2);
+  EXPECT_EQ(coordinatorService->getTopologyPlanString(), expectedTopo2);
 }
 
 TEST_F(CoordinatorCafTest, test_register_query) {
-  FogExecutionPlan execPlan = coordinatorPtr->register_query("example", "cars1", "BottomUp");
-  EXPECT_TRUE(coordinatorPtr->getRegisteredQueries().size() == 1);
+  string queryId = coordinatorService->register_query("example", "BottomUp");
+  EXPECT_TRUE(coordinatorService->getRegisteredQueries().size() == 1);
 
   string expectedPlacement = "graph G {\n"
-                             "0[label=\"2 operatorName=SOURCE(OP-1)=>FILTER(OP-2)=>SINK(SYS) nodeName=2\"];\n"
+                             "0[label=\"1 operatorName=SOURCE(OP-1)=>FILTER(OP-2)=>SINK(SYS) nodeName=1\"];\n"
                              "1[label=\"0 operatorName=SOURCE(SYS)=>SINK(OP-3) nodeName=0\"];\n"
-                             "2[label=\"1 operatorName=empty nodeName=1\"];\n"
+                             "2[label=\"2 operatorName=empty nodeName=2\"];\n"
                              "3[label=\"3 operatorName=empty nodeName=3\"];\n"
                              "4[label=\"4 operatorName=empty nodeName=4\"];\n"
                              "5[label=\"5 operatorName=empty nodeName=5\"];\n"
-                             "2--1 [label=\"1\"];\n"
-                             "0--1 [label=\"2\"];\n"
+                             "0--1 [label=\"1\"];\n"
+                             "2--1 [label=\"2\"];\n"
                              "3--1 [label=\"3\"];\n"
                              "4--1 [label=\"4\"];\n"
                              "5--1 [label=\"5\"];\n"
                              "}\n";
-  EXPECT_EQ(execPlan.getTopologyPlanString(), expectedPlacement);
+  const FogExecutionPlan &kExecutionPlan = coordinatorService->getRegisteredQuery(queryId);
+  EXPECT_EQ(kExecutionPlan.getTopologyPlanString(), expectedPlacement);
 }
 
 TEST_F(CoordinatorCafTest, test_register_deregister_query) {
-  FogExecutionPlan execPlan = coordinatorPtr->register_query("example", "cars1", "BottomUp");
-  EXPECT_TRUE(coordinatorPtr->getRegisteredQueries().size() == 1);
-  coordinatorPtr->deregister_query("example");
-  EXPECT_TRUE(coordinatorPtr->getRegisteredQueries().empty());
+  string queryId = coordinatorService->register_query("example", "BottomUp");
+  EXPECT_TRUE(coordinatorService->getRegisteredQueries().size() == 1);
+  coordinatorService->deregister_query(queryId);
+  EXPECT_TRUE(coordinatorService->getRegisteredQueries().empty());
 }
 
 TEST_F(CoordinatorCafTest, test_make_deployment) {
-  FogExecutionPlan execPlan = coordinatorPtr->register_query("example", "cars1", "BottomUp");
-  EXPECT_TRUE(coordinatorPtr->getRegisteredQueries().size() == 1);
-  unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> etos = coordinatorPtr->make_deployment("example");
+  string queryId = coordinatorService->register_query("example", "BottomUp");
+  EXPECT_TRUE(coordinatorService->getRegisteredQueries().size() == 1);
+  unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> etos = coordinatorService->make_deployment(queryId);
   EXPECT_TRUE(etos.size() == 2);
 
   for (auto &x : etos) {
@@ -129,27 +138,27 @@ TEST_F(CoordinatorCafTest, test_make_deployment) {
     EXPECT_TRUE(!s_eto.empty());
     SerializationTools::parse_eto(s_eto);
   }
-  EXPECT_TRUE(coordinatorPtr->getRegisteredQueries().empty());
-  EXPECT_TRUE(coordinatorPtr->getRunningQueries().size() == 1);
+  EXPECT_TRUE(coordinatorService->getRegisteredQueries().empty());
+  EXPECT_TRUE(coordinatorService->getRunningQueries().size() == 1);
 }
 
 TEST_F(CoordinatorCafTest, test_run_deregister_query) {
-  FogExecutionPlan execPlan = coordinatorPtr->register_query("example", "cars1", "BottomUp");
-  EXPECT_TRUE(coordinatorPtr->getRegisteredQueries().size() == 1);
-  unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> etos = coordinatorPtr->make_deployment("example");
+  string queryId = coordinatorService->register_query("example", "BottomUp");
+  EXPECT_TRUE(coordinatorService->getRegisteredQueries().size() == 1);
+  unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> etos = coordinatorService->make_deployment(queryId);
   EXPECT_TRUE(etos.size() == 2);
-  EXPECT_TRUE(coordinatorPtr->getRegisteredQueries().empty());
-  EXPECT_TRUE(coordinatorPtr->getRunningQueries().size() == 1);
+  EXPECT_TRUE(coordinatorService->getRegisteredQueries().empty());
+  EXPECT_TRUE(coordinatorService->getRunningQueries().size() == 1);
 
-  coordinatorPtr->deregister_query("example");
-  EXPECT_TRUE(coordinatorPtr->getRegisteredQueries().empty());
-  EXPECT_TRUE(coordinatorPtr->getRunningQueries().empty());
+  coordinatorService->deregister_query(queryId);
+  EXPECT_TRUE(coordinatorService->getRegisteredQueries().empty());
+  EXPECT_TRUE(coordinatorService->getRunningQueries().empty());
 }
 
 TEST_F(CoordinatorCafTest, test_compile_deployment) {
-  FogExecutionPlan execPlan = coordinatorPtr->register_query("example", "cars1", "BottomUp");
-  EXPECT_TRUE(coordinatorPtr->getRegisteredQueries().size() == 1);
-  unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> etos = coordinatorPtr->make_deployment("example");
+  string queryId = coordinatorService->register_query("example", "BottomUp");
+  EXPECT_TRUE(coordinatorService->getRegisteredQueries().size() == 1);
+  unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> etos = coordinatorService->make_deployment(queryId);
   EXPECT_TRUE(etos.size() == 2);
 
   for (auto &x : etos) {
@@ -157,8 +166,8 @@ TEST_F(CoordinatorCafTest, test_compile_deployment) {
     QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan();
     EXPECT_TRUE(qep);
   }
-  EXPECT_TRUE(coordinatorPtr->getRegisteredQueries().empty());
-  EXPECT_TRUE(coordinatorPtr->getRunningQueries().size() == 1);
+  EXPECT_TRUE(coordinatorService->getRegisteredQueries().empty());
+  EXPECT_TRUE(coordinatorService->getRunningQueries().size() == 1);
 }
 
 TEST_F(CoordinatorCafTest, test_code_gen) {
@@ -200,9 +209,9 @@ TEST_F(CoordinatorCafTest, test_code_gen) {
 TEST_F(CoordinatorCafTest, test_local_distributed_deployment) {
   auto *engine = new NodeEngine();
   engine->start();
-  FogExecutionPlan execPlan = coordinatorPtr->register_query("example", "cars1", "BottomUp");
-  EXPECT_EQ(coordinatorPtr->getRegisteredQueries().size(), 1);
-  unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> etos = coordinatorPtr->make_deployment("example");
+  string queryId = coordinatorService->register_query("example", "BottomUp");
+  EXPECT_EQ(coordinatorService->getRegisteredQueries().size(), 1);
+  unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> etos = coordinatorService->make_deployment(queryId);
   EXPECT_TRUE(etos.size() == 2);
 
   vector<QueryExecutionPlanPtr> qeps;
@@ -215,8 +224,8 @@ TEST_F(CoordinatorCafTest, test_local_distributed_deployment) {
     engine->deployQuery(qep);
     qeps.push_back(qep);
   }
-  EXPECT_TRUE(coordinatorPtr->getRegisteredQueries().empty());
-  EXPECT_TRUE(coordinatorPtr->getRunningQueries().size() == 1);
+  EXPECT_TRUE(coordinatorService->getRegisteredQueries().empty());
+  EXPECT_TRUE(coordinatorService->getRunningQueries().size() == 1);
 
   for (const QueryExecutionPlanPtr &qep: qeps) {
     engine->undeployQuery(qep);

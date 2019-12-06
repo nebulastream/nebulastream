@@ -20,7 +20,7 @@ namespace iotdb {
 
 // class-based, statically typed, event-based API for the state management in CAF
 struct coordinator_state {
-  std::unique_ptr<CoordinatorService> coordinatorService;
+  CoordinatorServicePtr coordinatorService;
   std::unique_ptr<WorkerService> workerService;
 
   unordered_map<strong_actor_ptr, FogTopologyEntryPtr> actorTopologyMap;
@@ -38,8 +38,7 @@ class actor_coordinator : public stateful_actor<coordinator_state> {
   */
   explicit actor_coordinator(actor_config &cfg)
       : stateful_actor(cfg) {
-    this->state.coordinatorService =
-        std::make_unique<CoordinatorService>(CoordinatorService());
+    this->state.coordinatorService = CoordinatorService::getInstance();
     this->state.workerService =
         std::make_unique<WorkerService>(WorkerService(actorCoordinatorConfig.ip,
                                                       actorCoordinatorConfig.publish_port,
