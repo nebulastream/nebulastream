@@ -260,7 +260,7 @@ TEST_F(ActorsCliTest, testShowOperators) {
   anon_send_exit(coordinator, exit_reason::user_shutdown);
 }
 
-TEST_F(ActorsCliTest, testSequentialMultiQueries) {
+TEST_F(ActorsCliTest, DISABLED_testSequentialMultiQueries) {
   cout << "*** Running test testShowOperators" << endl;
   ActorCoordinatorConfig ccfg;
   ccfg.load<io::middleman>();
