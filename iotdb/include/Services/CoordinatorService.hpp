@@ -21,6 +21,9 @@
 #include <Operators/Impl/SourceOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include "Actors/ExecutableTransferObject.hpp"
+#include "Services/OptimizerService.hpp"
+#include "Services/QueryService.hpp"
+#include "Services/FogTopologyService.hpp"
 
 #include <cstdint>
 #include <string>
@@ -63,10 +66,10 @@ class CoordinatorService {
 
   /**
    * @brief registers a CAF query into the NES topology to make it deployable
-   * @param description a description of the query
+   * @param queryString a queryString of the query
    * @param optimizationStrategyName the optimization strategy (buttomUp or topDown)
    */
-  string register_query(const string &description, const string &optimizationStrategyName);
+  string register_query(const string &queryString, const string &optimizationStrategyName);
 
   /**
    * @brief method which is called to unregister an already running query
@@ -103,7 +106,7 @@ class CoordinatorService {
    * @param queryId
    * @return the fog execution plan for the query
    */
-  FogExecutionPlan getRegisteredQuery(string queryId);
+  FogExecutionPlan* getRegisteredQuery(string queryId);
 
   /**
    * @brief: clear query catalogs
@@ -123,6 +126,10 @@ class CoordinatorService {
   shared_ptr<FogTopologyManager> _topologyManagerPtr;
   unordered_map<string, tuple<Schema, FogExecutionPlan>> _registeredQueries;
   unordered_map<string, tuple<Schema, FogExecutionPlan>> _runningQueries;
+
+  OptimizerService optimizer_service_;
+  QueryService query_service_;
+  FogTopologyService fog_topology_service_;
 
   /**
    * @brief helper method to get all sources in a serialized format from a specific node in the topology

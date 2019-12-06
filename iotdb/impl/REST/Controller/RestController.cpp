@@ -99,14 +99,50 @@ void RestController::handlePost(http_request message) {
                       string optimizationStrategyName = req.at("strategyName").as_string();
 
                       //Call the service
-                      const auto &executionPlan = fogTopologyService.getExecutionPlanAsJson(
-                          userQuery, optimizationStrategyName);
+                      const string queryId = coordinatorService->register_query(userQuery, optimizationStrategyName);
+                      FogExecutionPlan *executionPlan = coordinatorService->getRegisteredQuery(queryId);
+
+                      json::value executionGraphPlan = executionPlan->getExecutionGraphAsJson();
 
                       //Prepare the response
                       http_response response(status_codes::OK);
                       response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
                       response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-                      response.set_body(executionPlan);
+                      response.set_body(executionGraphPlan);
+                      message.reply(response);
+
+                    } catch (...) {
+                      std::cout << "Exception occurred while building the query plan for user request.";
+                      http_response response(status_codes::InternalError);
+                      response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
+                      response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
+                      message.reply(response);
+                    }
+                  }
+            )
+            .wait();
+
+      } else if (path[0] == "service" && path[1] == "execute-query") {
+
+        message.extract_string(true)
+            .then([this, message](utility::string_t body) {
+                    try {
+                      //Prepare Input query from user string
+                      string userRequest(body.begin(), body.end());
+
+                      json::value req = json::value::parse(userRequest);
+
+                      string userQuery = req.at("userQuery").as_string();
+                      string optimizationStrategyName = req.at("strategyName").as_string();
+
+                      //Call the service
+                      const string queryId = coordinatorService->executeQuery(userQuery, optimizationStrategyName);
+
+                      //Prepare the response
+                      http_response response(status_codes::OK);
+                      response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
+                      response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
+                      response.set_body(queryId);
                       message.reply(response);
 
                     } catch (...) {

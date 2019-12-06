@@ -115,8 +115,8 @@ TEST_F(CoordinatorCafTest, test_register_query) {
                              "4--1 [label=\"4\"];\n"
                              "5--1 [label=\"5\"];\n"
                              "}\n";
-  const FogExecutionPlan &kExecutionPlan = coordinatorService->getRegisteredQuery(queryId);
-  EXPECT_EQ(kExecutionPlan.getTopologyPlanString(), expectedPlacement);
+  const FogExecutionPlan *kExecutionPlan = coordinatorService->getRegisteredQuery(queryId);
+  EXPECT_EQ(kExecutionPlan->getTopologyPlanString(), expectedPlacement);
 }
 
 TEST_F(CoordinatorCafTest, test_register_deregister_query) {

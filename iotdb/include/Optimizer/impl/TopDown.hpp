@@ -15,11 +15,11 @@ class TopDown : public FogPlacementOptimizer {
   TopDown()= default;
   ~TopDown()= default;
 
-  FogExecutionPlan initializeExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan) override;
+  FogExecutionPlan initializeExecutionPlan(InputQueryPtr inputQuery, FogTopologyPlanPtr fogTopologyPlan) override;
 
  private:
 
-  void placeOperators(FogExecutionPlan executionGraph, InputQuery query, FogTopologyPlanPtr fogTopologyPlanPtr);
+  void placeOperators(FogExecutionPlan executionGraph, InputQueryPtr query, FogTopologyPlanPtr fogTopologyPlanPtr);
 
 };
 

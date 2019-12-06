@@ -35,7 +35,7 @@ const std::vector<OperatorPtr> getChildNodes(const OperatorPtr &op);
 
 void addChild(const OperatorPtr &op_parent, const OperatorPtr &op_child);
 
-const InputQuery createQueryFromCodeString(const std::string &query_code_snippet) {
+const InputQueryPtr createQueryFromCodeString(const std::string &query_code_snippet) {
 
   try {
     /* translate user code to a shared library, load and execute function, then return query object */
@@ -67,7 +67,7 @@ const InputQuery createQueryFromCodeString(const std::string &query_code_snippet
     }
     /* call loaded function to create query object */
     InputQuery query((*func)());
-    return query;
+    return std::make_shared<InputQuery>(query);
 
   } catch (...) {
     std::cout << "Exception occurred while computing the user query";
