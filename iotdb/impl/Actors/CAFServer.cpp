@@ -88,6 +88,7 @@ bool CAFServer::start(actor_system& actor_system, const ActorCoordinatorConfig& 
   //    if (!message_builder(words.begin(), words.end()).apply(eval))
   //      usage();
   //  }
+  return true;
 }
 
 void CAFServer::setupLogging() {

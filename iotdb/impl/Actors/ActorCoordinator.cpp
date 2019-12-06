@@ -7,10 +7,12 @@
 using namespace iotdb;
 
 behavior actor_coordinator::init() {
-  this->state.actorTopologyMap.insert({this->address().get(), this->state.coordinatorPtr->getThisEntry()});
-  this->state.topologyActorMap.insert({this->state.coordinatorPtr->getThisEntry(), this->address().get()});
-
   initializeNESTopology();
+  
+  auto kRootNode = FogTopologyManager::getInstance().getRootNode();
+  
+  this->state.actorTopologyMap.insert({this->address().get(), kRootNode});
+  this->state.topologyActorMap.insert({kRootNode, this->address().get()});
 
   // transition to `unconnected` on server failure
   this->set_down_handler([=](const down_msg &dm) {
@@ -30,9 +32,8 @@ behavior actor_coordinator::init() {
 
 void actor_coordinator::initializeNESTopology() {
 
-  FogTopologyManager fogTopologyManagerInstance = FogTopologyManager::getInstance();
-  fogTopologyManagerInstance.resetFogTopologyPlan();
-  auto coordinatorNode = fogTopologyManagerInstance.createFogCoordinatorNode(actorCoordinatorConfig.ip, CPUCapacity::HIGH);
+  FogTopologyManager::getInstance().resetFogTopologyPlan();
+  auto coordinatorNode = FogTopologyManager::getInstance().createFogCoordinatorNode(actorCoordinatorConfig.ip, CPUCapacity::HIGH);
   coordinatorNode->setPublishPort(actorCoordinatorConfig.publish_port);
   coordinatorNode->setReceivePort(actorCoordinatorConfig.receive_port);
 }

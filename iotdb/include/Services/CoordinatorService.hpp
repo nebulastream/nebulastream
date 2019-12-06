@@ -1,7 +1,3 @@
-//
-// Created by xchatziliadis on 19.11.19.
-//
-
 #ifndef IOTDB_INCLUDE_ACTORS_COORDINATORSERVICE_HPP_
 #define IOTDB_INCLUDE_ACTORS_COORDINATORSERVICE_HPP_
 
@@ -36,7 +32,7 @@ namespace iotdb {
 
 class CoordinatorService {
  public:
-  CoordinatorService(const string &ip, uint16_t publish_port, uint16_t receive_port);
+  CoordinatorService() = default;
   ~CoordinatorService() = default;
 
   /**
@@ -87,19 +83,12 @@ class CoordinatorService {
    */
   string getTopologyPlanString();
 
-  const FogTopologyEntryPtr &getThisEntry() const;
-
   const unordered_map<string, tuple<Schema, FogExecutionPlan>> &getRegisteredQueries() const;
   const unordered_map<string, tuple<Schema, FogExecutionPlan>> &getRunningQueries() const;
 
  private:
-  string _ip;
-  uint16_t _publish_port;
-  uint16_t _receive_port;
-  FogTopologyEntryPtr _thisEntry;
 
   unordered_map<string, int> _queryToPort;
-
   shared_ptr<FogTopologyManager> _topologyManagerPtr;
   unordered_map<string, tuple<Schema, FogExecutionPlan>> _registeredQueries;
   unordered_map<string, tuple<Schema, FogExecutionPlan>> _runningQueries;
