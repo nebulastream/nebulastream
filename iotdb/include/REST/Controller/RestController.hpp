@@ -1,11 +1,12 @@
 #pragma once
 
 #include <REST/Controller/BaseController.hpp>
+#include <REST/controller.hpp>
 #include <Services/QueryService.hpp>
 #include <Services/FogTopologyService.hpp>
-#include <REST/controller.hpp>
+#include <Services/CoordinatorService.hpp>
 
-using namespace iotdb;
+namespace iotdb {
 
 class RestController : public BaseController, Controller {
  public:
@@ -27,4 +28,8 @@ class RestController : public BaseController, Controller {
   static json::value responseNotImpl(const http::method &method);
   QueryService queryService;
   FogTopologyService fogTopologyService;
+//  CoordinatorService coordinatorService;
 };
+
+}
+

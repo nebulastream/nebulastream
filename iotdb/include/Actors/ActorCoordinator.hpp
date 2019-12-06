@@ -1,11 +1,11 @@
 #ifndef IOTDB_INCLUDE_ACTORS_ACTORCOORDINATOR_HPP_
 #define IOTDB_INCLUDE_ACTORS_ACTORCOORDINATOR_HPP_
 
+#include <caf/all.hpp>
 #include <Topology/FogTopologyEntry.hpp>
 #include <Services/CoordinatorService.hpp>
 #include <Services/WorkerService.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-#include <caf/all.hpp>
 #include <Actors/Configurations/ActorCoordinatorConfig.hpp>
 #include <Topology/FogTopologyManager.hpp>
 

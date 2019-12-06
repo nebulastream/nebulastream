@@ -2,7 +2,6 @@
 #include <Actors/ExecutableTransferObject.hpp>
 #include <Actors/atom_utils.hpp>
 #include <Topology/FogTopologyManager.hpp>
-#include <caf/all.hpp>
 
 using namespace iotdb;
 

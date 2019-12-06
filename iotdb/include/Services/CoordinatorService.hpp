@@ -2,7 +2,6 @@
 #define IOTDB_INCLUDE_ACTORS_COORDINATORSERVICE_HPP_
 
 #include <SourceSink/DataSource.hpp>
-#include <Actors/atom_utils.hpp>
 #include <Util/SerializationTools.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <SourceSink/SinkCreator.hpp>
