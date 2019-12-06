@@ -64,7 +64,9 @@ class CoordinatorService {
    * @param sensor_type the sensor_type to which the input source stream belongs
    * @param optimizationStrategyName the optimization strategy (buttomUp or topDown)
    */
-  FogExecutionPlan register_query(const string &description, const string &sensor_type, const string &optimizationStrategyName);
+  FogExecutionPlan register_query(const string &description,
+                                  const string &sensor_type,
+                                  const string &optimizationStrategyName);
 
   /**
    * @brief method which is called to unregister an already running query

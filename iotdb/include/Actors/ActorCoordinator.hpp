@@ -40,7 +40,8 @@ class actor_coordinator : public stateful_actor<coordinator_state> {
   */
   explicit actor_coordinator(actor_config &cfg, string ip, uint16_t publish_port, uint16_t receive_port)
       : stateful_actor(cfg) {
-    this->state.coordinatorPtr = std::make_unique<CoordinatorService>(CoordinatorService(ip, publish_port, receive_port));
+    this->state.coordinatorPtr =
+        std::make_unique<CoordinatorService>(CoordinatorService(ip, publish_port, receive_port));
     this->state.workerPtr = std::make_unique<WorkerService>(WorkerService(ip, publish_port, receive_port, ""));
   }
 
