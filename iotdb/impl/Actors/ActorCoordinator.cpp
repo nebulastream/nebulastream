@@ -45,9 +45,9 @@ behavior actor_coordinator::running() {
         // rpc to register sensor
         this->register_sensor(ip, publish_port, receive_port, cpu, sensor_type);
       },
-      [=](register_query_atom, const string &description, const string &sensor_type, const string &strategy) {
+      [=](register_query_atom, const string &description, const string &strategy) {
         // rpc to register queries
-        this->state.coordinatorService->register_query(description, sensor_type, strategy);
+        this->state.coordinatorService->register_query(description, strategy);
       },
       [=](deregister_query_atom, const string &description) {
         // rpc to unregister a registered query
