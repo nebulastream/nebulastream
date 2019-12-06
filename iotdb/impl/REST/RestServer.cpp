@@ -20,10 +20,10 @@ bool RestServer::start(std::string host, u_int16_t port) {
     // wait for server initialization...
     server.accept().wait();
     std::cout << "REST Server started\n";
-    std::cout << "REST Server now listening for requests at: " << server.endpoint()<< '\n';
+    std::cout << "REST Server now listening for requests at: " << server.endpoint() << '\n';
     InterruptHandler::waitForUserInterrupt();
     server.shutdown().wait();
-  } catch (std::exception& e) {
+  } catch (std::exception &e) {
     std::cerr << "something wrong happen! :(" << '\n';
     return false;
   } catch (...) {
