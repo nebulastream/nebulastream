@@ -1,18 +1,7 @@
 #include <Services/CoordinatorService.hpp>
 #include <Actors/ExecutableTransferObject.hpp>
 
-namespace iotdb {
-CoordinatorService::CoordinatorService(const std::string &ip, uint16_t publish_port, uint16_t receive_port) {
-  this->_ip = ip;
-  this->_publish_port = publish_port;
-  this->_receive_port = receive_port;
-
-  this->_topologyManagerPtr->getInstance().resetFogTopologyPlan();
-  auto coordinatorNode = this->_topologyManagerPtr->getInstance().createFogCoordinatorNode(ip, CPUCapacity::HIGH);
-  coordinatorNode->setPublishPort(publish_port);
-  coordinatorNode->setReceivePort(receive_port);
-  this->_thisEntry = coordinatorNode;
-}
+using namespace iotdb;
 
 FogTopologyEntryPtr CoordinatorService::register_sensor(const string &ip, uint16_t publish_port,
                                                         uint16_t receive_port, int cpu, const string &sensor_type) {
@@ -22,7 +11,8 @@ FogTopologyEntryPtr CoordinatorService::register_sensor(const string &ip, uint16
   sensorNode->setIp(ip);
   sensorNode->setPublishPort(publish_port);
   sensorNode->setReceivePort(receive_port);
-  topologyManager.createFogTopologyLink(sensorNode, this->_thisEntry);
+  const FogTopologyEntryPtr &kRootNode = FogTopologyManager::getInstance().getRootNode();
+  topologyManager.createFogTopologyLink(sensorNode, kRootNode);
   return sensorNode;
 }
 
@@ -144,7 +134,8 @@ vector<DataSourcePtr> CoordinatorService::getSources(const string &description, 
     source = createTestDataSourceWithSchema(schema);
   } else {
     // create local zmq source
-    source = createZmqSource(schema, this->_ip, assign_port(description));
+    const FogTopologyEntryPtr &kRootNode = FogTopologyManager::getInstance().getRootNode();
+    source = createZmqSource(schema, kRootNode->getIp(), assign_port(description));
   }
   out.emplace_back(source);
   return out;
@@ -162,7 +153,8 @@ vector<DataSinkPtr> CoordinatorService::getSinks(const string &description, cons
     sink = createPrintSinkWithSink(schema, std::cout);
   } else {
     // create local zmq source
-    sink = createZmqSink(schema, this->_ip, assign_port(description));
+    const FogTopologyEntryPtr &kRootNode = FogTopologyManager::getInstance().getRootNode();
+    sink = createZmqSink(schema, kRootNode->getIp(), assign_port(description));
   }
   out.emplace_back(sink);
   return out;
@@ -173,14 +165,11 @@ int CoordinatorService::assign_port(const string &description) {
     return this->_queryToPort.at(description);
   } else {
     // increase max port in map by 1
-    this->_receive_port += 1;
-    this->_queryToPort.insert({description, this->_receive_port});
-    return this->_receive_port;
+    const FogTopologyEntryPtr &kRootNode = FogTopologyManager::getInstance().getRootNode();
+    uint16_t kFreeZmqPort = kRootNode->getNextFreeReceivePort();
+    this->_queryToPort.insert({description, kFreeZmqPort});
+    return kFreeZmqPort;
   }
-}
-
-const FogTopologyEntryPtr &CoordinatorService::getThisEntry() const {
-  return _thisEntry;
 }
 
 bool CoordinatorService::deregister_sensor(const FogTopologyEntryPtr &entry) {
@@ -197,6 +186,3 @@ const unordered_map<string, tuple<Schema, FogExecutionPlan>> &CoordinatorService
 const unordered_map<string, tuple<Schema, FogExecutionPlan>> &CoordinatorService::getRunningQueries() const {
   return _runningQueries;
 }
-
-}
-

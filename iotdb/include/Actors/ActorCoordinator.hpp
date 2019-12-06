@@ -1,7 +1,3 @@
-//
-// Created by xchatziliadis on 26.11.19.
-//
-
 #ifndef IOTDB_INCLUDE_ACTORS_ACTORCOORDINATOR_HPP_
 #define IOTDB_INCLUDE_ACTORS_ACTORCOORDINATOR_HPP_
 
@@ -11,6 +7,7 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <caf/all.hpp>
 #include <Actors/Configurations/ActorCoordinatorConfig.hpp>
+#include <Topology/FogTopologyManager.hpp>
 
 using namespace caf;
 using std::cout;
@@ -46,7 +43,7 @@ class actor_coordinator : public stateful_actor<coordinator_state> {
     uint16_t kReceivePort = actorCoordinatorConfig.receive_port;
 
     this->state.coordinatorPtr =
-        std::make_unique<CoordinatorService>(CoordinatorService(kip, kPublishPort, kReceivePort));
+        std::make_unique<CoordinatorService>(CoordinatorService());
     this->state.workerPtr =
         std::make_unique<WorkerService>(WorkerService(kip, kPublishPort, kReceivePort, ""));
   }
