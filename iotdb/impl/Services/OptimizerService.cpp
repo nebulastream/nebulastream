@@ -3,11 +3,15 @@
 #include <Optimizer/FogOptimizer.hpp>
 
 using namespace iotdb;
+using namespace web;
 using namespace std;
+
+json::value OptimizerService::getExecutionPlanAsJson(InputQueryPtr inputQuery, string optimizationStrategyName) {
+  return getExecutionPlan(inputQuery, optimizationStrategyName).getExecutionGraphAsJson();
+}
 
 FogExecutionPlan OptimizerService::getExecutionPlan(InputQueryPtr inputQuery, string optimizationStrategyName) {
   FogTopologyManager &fogTopologyManager = FogTopologyManager::getInstance();
-  fogTopologyManager.createExampleTopology();
   const FogTopologyPlanPtr &topologyPlan = fogTopologyManager.getTopologyPlan();
 
   FogOptimizer queryOptimizer;

@@ -98,6 +98,9 @@ void RestController::handlePost(http_request message) {
                       string userQuery = req.at("userQuery").as_string();
                       string optimizationStrategyName = req.at("strategyName").as_string();
 
+                      //FIXME: setup example topology
+                      FogTopologyManager::getInstance().createExampleTopology();
+
                       //Call the service
                       const string queryId = coordinatorService->register_query(userQuery, optimizationStrategyName);
                       FogExecutionPlan *executionPlan = coordinatorService->getRegisteredQuery(queryId);
