@@ -82,7 +82,7 @@ TupleBufferPtr ZmqSource::receiveData() {
       // recv() throws ETERM when the zmq context is destroyed,
       //  as when AsyncZmqListener::Stop() is called
       if (ex.num() != ETERM) {
-        IOTDB_FATAL_ERROR("ZMQSOURCE: " << ex.what())
+        IOTDB_ERROR("ZMQSOURCE: " << ex.what())
       }
     }
   } else {

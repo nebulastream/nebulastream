@@ -137,7 +137,7 @@ TEST_F(ActorsCliTest, testShowRegistered) {
   anon_send_exit(coordinator, exit_reason::user_shutdown);
 }
 
-TEST_F(ActorsCliTest, testDeleteQuery) {
+TEST_F(ActorsCliTest, DISABLED_testDeleteQuery) {
   cout << "*** Running test testDeleteQuery" << endl;
   ActorCoordinatorConfig ccfg;
   ccfg.load<io::middleman>();
@@ -178,7 +178,7 @@ TEST_F(ActorsCliTest, testDeleteQuery) {
   anon_send_exit(coordinator, exit_reason::user_shutdown);
 }
 
-TEST_F(ActorsCliTest, testShowRunning) {
+TEST_F(ActorsCliTest, DISABLED_testShowRunning) {
   cout << "*** Running test testShowRunning" << endl;
   ActorCoordinatorConfig ccfg;
   ccfg.load<io::middleman>();
@@ -219,7 +219,7 @@ TEST_F(ActorsCliTest, testShowRunning) {
   anon_send_exit(coordinator, exit_reason::user_shutdown);
 }
 
-TEST_F(ActorsCliTest, testShowOperators) {
+TEST_F(ActorsCliTest, DISABLED_testShowOperators) {
   cout << "*** Running test testShowOperators" << endl;
   ActorCoordinatorConfig ccfg;
   ccfg.load<io::middleman>();
