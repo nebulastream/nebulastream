@@ -1,12 +1,13 @@
-#include "caf/io/all.hpp"
 #include <gtest/gtest.h>
 #include <Actors/ActorCoordinator.hpp>
-
 #include <Actors/ActorWorker.hpp>
+
 #include <Util/Logger.hpp>
 #include <Actors/Configurations/ActorCoordinatorConfig.hpp>
 #include <Actors/Configurations/ActorWorkerConfig.hpp>
 #include <Actors/atom_utils.hpp>
+#include "caf/io/all.hpp"
+
 
 namespace iotdb {
 
@@ -142,7 +143,7 @@ TEST_F(ActorsCliTest, DISABLED_testDeleteQuery) {
   ActorCoordinatorConfig ccfg;
   ccfg.load<io::middleman>();
   actor_system system_coord{ccfg};
-  auto coordinator = system_coord.spawn<iotdb::actor_coordinator>(ccfg.ip, ccfg.publish_port, ccfg.receive_port);
+  auto coordinator = system_coord.spawn<iotdb::actor_coordinator>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << ccfg.publish_port << endl;
@@ -163,7 +164,7 @@ TEST_F(ActorsCliTest, DISABLED_testDeleteQuery) {
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
   string description = "example";
-  anon_send(coordinator, register_query_atom::value, description, w_cfg.sensor_type, "BottomUp");
+  anon_send(coordinator, register_query_atom::value, description, "BottomUp");
   std::this_thread::sleep_for(std::chrono::seconds(1));
   anon_send(coordinator, show_registered_atom::value);
   std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -204,7 +205,7 @@ TEST_F(ActorsCliTest, DISABLED_testShowRunning) {
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
   string description = "example";
-  anon_send(coordinator, register_query_atom::value, description, w_cfg.sensor_type, "BottomUp");
+  anon_send(coordinator, register_query_atom::value, description, "BottomUp");
   std::this_thread::sleep_for(std::chrono::seconds(1));
   anon_send(coordinator, deploy_query_atom::value, description);
   std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -245,7 +246,7 @@ TEST_F(ActorsCliTest, DISABLED_testShowOperators) {
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
   string description = "example";
-  anon_send(coordinator, register_query_atom::value, description, w_cfg.sensor_type, "BottomUp");
+  anon_send(coordinator, register_query_atom::value, description, "BottomUp");
   std::this_thread::sleep_for(std::chrono::seconds(1));
   anon_send(coordinator, deploy_query_atom::value, description);
   std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -266,7 +267,7 @@ TEST_F(ActorsCliTest, DISABLED_testSequentialMultiQueries) {
   ActorCoordinatorConfig ccfg;
   ccfg.load<io::middleman>();
   actor_system system_coord{ccfg};
-  auto coordinator = system_coord.spawn<iotdb::actor_coordinator>(ccfg.ip, ccfg.publish_port, ccfg.receive_port);
+  auto coordinator = system_coord.spawn<iotdb::actor_coordinator>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << ccfg.publish_port << endl;
@@ -290,7 +291,7 @@ TEST_F(ActorsCliTest, DISABLED_testSequentialMultiQueries) {
   for (int i = 0; i < 1; i++) {
     cout << "Sequence " << i << endl;
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    anon_send(coordinator, register_query_atom::value, description, w_cfg.sensor_type, "BottomUp");
+    anon_send(coordinator, register_query_atom::value, description, "BottomUp");
     std::this_thread::sleep_for(std::chrono::seconds(1));
     anon_send(coordinator, deploy_query_atom::value, description);
     std::this_thread::sleep_for(std::chrono::seconds(1));
