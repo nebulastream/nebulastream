@@ -232,7 +232,7 @@ TEST_F(CoordinatorCafTest, test_local_distributed_deployment) {
   }
   engine->stopWithUndeploy();
 
-  coordinatorServicePtr->deregister_query("example");
+  coordinatorServicePtr->deregister_query(queryId);
   EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().empty() && coordinatorServicePtr->getRunningQueries().empty());
 }
 

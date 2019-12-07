@@ -23,7 +23,6 @@
 #include "Actors/ExecutableTransferObject.hpp"
 #include "Services/OptimizerService.hpp"
 #include "Services/QueryService.hpp"
-#include "Services/FogTopologyService.hpp"
 
 #include <cstdint>
 #include <string>
@@ -127,9 +126,8 @@ class CoordinatorService {
   unordered_map<string, tuple<Schema, FogExecutionPlan>> _registeredQueries;
   unordered_map<string, tuple<Schema, FogExecutionPlan>> _runningQueries;
 
-  OptimizerService optimizer_service_;
-  QueryService query_service_;
-  FogTopologyService fog_topology_service_;
+  OptimizerService optimizerService;
+  QueryService queryService;
 
   /**
    * @brief helper method to get all sources in a serialized format from a specific node in the topology

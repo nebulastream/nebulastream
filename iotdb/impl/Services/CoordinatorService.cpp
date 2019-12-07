@@ -26,7 +26,8 @@ string CoordinatorService::register_query(const string &queryString, const strin
 
     InputQueryPtr inputQueryPtr;
     Schema schema;
-    //Example Query
+    //FIXME: This if condition is only for running a hard coded query in distributed setup
+    // get rid of the code once we support running arbitrary queries.
     if (queryString == "example") {
       schema = Schema::create()
           .addField("id", BasicType::UINT32)
@@ -40,11 +41,11 @@ string CoordinatorService::register_query(const string &queryString, const strin
       inputQueryPtr = std::make_shared<InputQuery>(inputQuery);
 
     } else {
-      inputQueryPtr = query_service_.getInputQueryFromQueryString(queryString);
+      inputQueryPtr = queryService.getInputQueryFromQueryString(queryString);
       schema = inputQueryPtr->source_stream->getSchema();
     }
 
-    const FogExecutionPlan &kExecutionPlan = optimizer_service_.getExecutionPlan(inputQueryPtr, strategy);
+    const FogExecutionPlan &kExecutionPlan = optimizerService.getExecutionPlan(inputQueryPtr, strategy);
 
     std::string queryId = boost::uuids::to_string(boost::uuids::random_generator()());
     tuple<Schema, FogExecutionPlan> t = std::make_tuple(schema, kExecutionPlan);
