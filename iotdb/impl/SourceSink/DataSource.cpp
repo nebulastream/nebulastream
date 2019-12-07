@@ -60,7 +60,7 @@ bool DataSource::stop() {
   running = false;
 
   if (thread.joinable()) {
-    thread.join();
+    thread.detach();
     IOTDB_DEBUG("DataSource " << this << ": Thread joinded")
     return true;
   } else {
@@ -80,18 +80,23 @@ void DataSource::running_routine() {
   while (running) {
     if (cnt < num_buffers_to_process) {
       TupleBufferPtr buf = receiveData();
-      IOTDB_DEBUG(
-          "DataSource " << this << ": Received Data: " << buf->getNumberOfTuples() << "tuples")
-      if (buf->getBuffer()) {
-        Dispatcher::instance().addWork(buf, this);
-        cnt++;
+      if (buf) {
+        IOTDB_DEBUG(
+            "DataSource " << this << ": Received Data: " << buf->getNumberOfTuples() << "tuples")
+        if (buf->getBuffer()) {
+          Dispatcher::instance().addWork(buf, this);
+          cnt++;
+        } else {
+          IOTDB_DEBUG("DataSource " << this << ": Received buffer is invalid")
+          assert(0);
+        }
       } else {
-        IOTDB_DEBUG("DataSource " << this << ": Received buffer is invalid")
-        assert(0);
+        IOTDB_DEBUG("DataSource " << this << ": Receiving thread terminated ... stopping")
+        running = false;
+        break;
       }
     } else {
-      IOTDB_DEBUG(
-          "DataSource " << this << ": All buffers processed ... stopping")
+      IOTDB_DEBUG("DataSource " << this << ": All buffers processed ... stopping")
       running = false;
       break;
     }
