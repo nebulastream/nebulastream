@@ -33,7 +33,7 @@ FogExecutionPlan CoordinatorService::register_query(const string &description,
   if (this->_registeredQueries.find(description) == this->_registeredQueries.end() &&
       this->_runningQueries.find(description) == this->_runningQueries.end()) {
     // if query is currently not registered or running
-    IOTDB_INFO("Registering query " << description << " with strategy " << strategy);
+    IOTDB_INFO("CoordinatorService: Registering query " << description << " with strategy " << strategy);
     FogOptimizer queryOptimizer;
     FogTopologyPlanPtr topologyPlan = this->_topologyManagerPtr->getInstance().getTopologyPlan();
 
@@ -55,19 +55,23 @@ FogExecutionPlan CoordinatorService::register_query(const string &description,
 
         tuple<Schema, FogExecutionPlan> t = std::make_tuple(schema, fogExecutionPlan);
         this->_registeredQueries.insert({description, t});
-        IOTDB_INFO("FogExecutionPlan: " << fogExecutionPlan.getTopologyPlanString());
+        IOTDB_INFO("CoordinatorService: FogExecutionPlan-> " << fogExecutionPlan.getTopologyPlanString());
       } else {
         // TODO: implement
-        IOTDB_INFO("Registration failed! Only query example is supported!");
+        IOTDB_INFO("CoordinatorService: Registration failed! Only query example is supported!");
       }
     }
-    catch (...) {
-      //aout(this) << ": " << ex.what() << endl;
+    catch (const std::exception &ex) {
+      IOTDB_ERROR("CoordinatorService(" << description << "):" << ex.what())
+    } catch (const std::string &ex) {
+      IOTDB_ERROR("CoordinatorService(" << description << "):" << ex)
+    } catch (...) {
+      IOTDB_ERROR("CoordinatorService(" << description << "): Unknown exception during registration!")
     }
   } else if (this->_registeredQueries.find(description) != this->_registeredQueries.end()) {
-    IOTDB_INFO("Query is already registered -> " << description);
+    IOTDB_INFO("CoordinatorService: Query is already registered -> " << description);
   } else {
-    IOTDB_INFO("Query is already running -> " << description);
+    IOTDB_INFO("CoordinatorService: Query is already running -> " << description);
   }
   return fogExecutionPlan;
 }
@@ -76,18 +80,19 @@ bool CoordinatorService::deregister_query(const string &description) {
   bool out = false;
   if (this->_registeredQueries.find(description) == this->_registeredQueries.end() &&
       this->_runningQueries.find(description) == this->_runningQueries.end()) {
-    IOTDB_INFO("*** No deletion required! Query has neither been registered or deployed->" << description);
+    IOTDB_INFO(
+        "CoordinatorService: No deletion required! Query has neither been registered or deployed->" << description);
   } else if (this->_registeredQueries.find(description) != this->_registeredQueries.end()) {
     // Query is registered, but not running -> just remove from registered queries
-    get<1>(this->_registeredQueries.at(description)).freeResources(1);
+    get<1>(this->_registeredQueries.at(description)).freeResources();
     this->_registeredQueries.erase(description);
-    IOTDB_INFO("Query was registered and has been succesfully removed -> " << description);
+    IOTDB_INFO("CoordinatorService: Query was registered and has been succesfully removed -> " << description);
   } else {
-    IOTDB_INFO("Deregistering running query...");
+    IOTDB_INFO("CoordinatorService: Deregistering running query..");
     //Query is running -> stop query locally if it is running and free resources
-    get<1>(this->_runningQueries.at(description)).freeResources(1);
+    get<1>(this->_runningQueries.at(description)).freeResources();
     this->_runningQueries.erase(description);
-    IOTDB_INFO("*** successfully removed query " << description);
+    IOTDB_INFO("CoordinatorService: Successfully removed query " << description);
     out = true;
   }
   return out;
@@ -98,7 +103,7 @@ unordered_map<FogTopologyEntryPtr,
   unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> output;
   if (this->_registeredQueries.find(description) != this->_registeredQueries.end() &&
       this->_runningQueries.find(description) == this->_runningQueries.end()) {
-    IOTDB_INFO("Deploying query " << description);
+    IOTDB_INFO("CoordinatorService: Deploying query " << description);
     // get the schema and FogExecutionPlan stored during query registration
     Schema schema = get<0>(this->_registeredQueries.at(description));
     FogExecutionPlan execPlan = get<1>(this->_registeredQueries.at(description));
@@ -120,9 +125,9 @@ unordered_map<FogTopologyEntryPtr,
     this->_runningQueries.insert({description, t});
     this->_registeredQueries.erase(description);
   } else if (this->_runningQueries.find(description) != this->_runningQueries.end()) {
-    IOTDB_WARNING("Query is already running -> " << description);
+    IOTDB_WARNING("CoordinatorService: Query is already running -> " << description);
   } else {
-    IOTDB_WARNING("Query is not registered -> " << description);
+    IOTDB_WARNING("CoordinatorService: Query is not registered -> " << description);
   }
   return output;
 }

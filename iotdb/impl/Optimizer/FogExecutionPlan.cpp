@@ -3,6 +3,8 @@
 #include <boost/graph/graphviz.hpp>
 #include <cpprest/json.h>
 #include <Topology/FogTopologySensorNode.hpp>
+#include <Util/Logger.hpp>
+#include <Operators/Operator.hpp>
 #include <set>
 
 using namespace iotdb;
@@ -391,10 +393,14 @@ std::shared_ptr<ExecutionGraph> FogExecutionPlan::getExecutionGraph() const {
   return exeGraphPtr;
 };
 
-void FogExecutionPlan::freeResources(int freedCapacity) {
+void FogExecutionPlan::freeResources() {
   for (const ExecutionVertex &v: getExecutionGraph()->getAllVertex()) {
     if (v.ptr->getRootOperator()) {
-      v.ptr->getFogNode()->increaseCpuCapacity(freedCapacity);
+      // TODO: change that when proper placement is fixed
+      IOTDB_INFO("FOGEXECUTIONPLAN: Capacity before-" << v.ptr->getFogNode()->getId() << "->" << v.ptr->getFogNode()->getRemainingCpuCapacity())
+      int usedCapacity = v.ptr->getFogNode()->getCpuCapacity() - v.ptr->getFogNode()->getRemainingCpuCapacity();
+      v.ptr->getFogNode()->increaseCpuCapacity(usedCapacity);
+      IOTDB_INFO("FOGEXECUTIONPLAN: Capacity after-" << v.ptr->getFogNode()->getId() << "->" << v.ptr->getFogNode()->getRemainingCpuCapacity())
     }
   }
 }

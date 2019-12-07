@@ -15,6 +15,7 @@ WorkerService::WorkerService(string ip, uint16_t publish_port, uint16_t receive_
 }
 
 void WorkerService::execute_query(const string &description, string &executableTransferObject) {
+  IOTDB_INFO("WORKERSERVICE (" << this->_ip << "-" << this->_sensor_type << "): Executing " << description);
   ExecutableTransferObject eto = SerializationTools::parse_eto(executableTransferObject);
   QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan();
   this->_runningQueries.insert({description, std::make_tuple(qep, eto.getOperatorTree())});
@@ -25,20 +26,20 @@ void WorkerService::execute_query(const string &description, string &executableT
 void WorkerService::delete_query(const string &query) {
   try {
     if (this->_runningQueries.find(query) != this->_runningQueries.end()) {
+      IOTDB_INFO("WORKERSERVICE (" << this->_ip << "-" << this->_sensor_type << "): Attempting deletion of " << query);
       QueryExecutionPlanPtr qep = std::get<0>(this->_runningQueries.at(query));
-      this->_enginePtr->undeployQuery(qep);
-      std::this_thread::sleep_for(std::chrono::seconds(3));
       this->_runningQueries.erase(query);
+      this->_enginePtr->undeployQuery(qep);
       IOTDB_INFO(
-          "NESWORKER (" << this->_ip << "-" << this->_sensor_type << "): *** Successfully deleted query " << query);
+          "WORKERSERVICE (" << this->_ip << "-" << this->_sensor_type << "): Successfully deleted query " << query);
     } else {
-      IOTDB_INFO("NESWORKER (" << this->_ip << "-" << this->_sensor_type << "): *** Not found for deletion -> "
-                               << query);
+      IOTDB_INFO("WORKERSERVICE (" << this->_ip << "-" << this->_sensor_type << "): *** Not found for deletion -> "
+                                   << query);
     }
   }
   catch (...) {
     // TODO: catch ZMQ termination errors properly
-    IOTDB_ERROR("Uncaugth error during deletion!")
+    IOTDB_ERROR("WORKERSERVICE (" << this->_ip << "-" << this->_sensor_type << "): Undefined error during deletion!")
   }
 }
 
@@ -46,7 +47,8 @@ vector<string> WorkerService::getOperators() {
   vector<string> result;
   for (auto const &x : this->_runningQueries) {
     string str_opts;
-    std::set<OperatorType> flattened = std::get<1>(x.second)->flattenedTypes();
+    const OperatorPtr& op = std::get<1>(x.second);
+    auto flattened = op->flattenedTypes();
     for (const OperatorType &_o: flattened) {
       if (!str_opts.empty())
         str_opts.append(", ");
