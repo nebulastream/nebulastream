@@ -65,13 +65,13 @@ bool CoordinatorService::deregister_query(const string &queryId) {
     IOTDB_INFO("CoordinatorService: No deletion required! Query has neither been registered or deployed->" << queryId);
   } else if (this->_registeredQueries.find(queryId) != this->_registeredQueries.end()) {
     // Query is registered, but not running -> just remove from registered queries
-    get<1>(this->_registeredQueries.at(queryId)).freeResources(1);
+    get<1>(this->_registeredQueries.at(queryId)).freeResources();
     this->_registeredQueries.erase(queryId);
-    IOTDB_INFO("CoordinatorService: Query was registered and has been succesfully removed -> " << queryId);
+    IOTDB_INFO("CoordinatorService: Query was registered and has been successfully removed -> " << queryId);
   } else {
-    IOTDB_INFO("CoordinatorService: Deregistering running query..");
+    IOTDB_INFO("CoordinatorService: De-registering running query..");
     //Query is running -> stop query locally if it is running and free resources
-    get<1>(this->_runningQueries.at(queryId)).freeResources(1);
+    get<1>(this->_runningQueries.at(queryId)).freeResources();
     this->_runningQueries.erase(queryId);
     IOTDB_INFO("CoordinatorService:  successfully removed query " << queryId);
     out = true;
