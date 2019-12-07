@@ -66,27 +66,36 @@ bool ZmqSink::writeData(const TupleBufferPtr input_buffer) {
   }
 
   IOTDB_DEBUG("ZMQSINK  " << this << ": writes buffer " << input_buffer)
-  //	size_t usedBufferSize = input_buffer->num_tuples * input_buffer->tuple_size_bytes;
-  zmq::message_t msg(input_buffer->getBufferSizeInBytes());
-  // TODO: If possible only copy the content not the empty part
-  std::memcpy(msg.data(), input_buffer->getBuffer(), input_buffer->getBufferSizeInBytes());
-  tupleCnt = input_buffer->getNumberOfTuples();
-  zmq::message_t envelope(sizeof(tupleCnt));
-  memcpy(envelope.data(), &tupleCnt, sizeof(tupleCnt));
+  try {
+    //	size_t usedBufferSize = input_buffer->num_tuples * input_buffer->tuple_size_bytes;
+    zmq::message_t msg(input_buffer->getBufferSizeInBytes());
+    // TODO: If possible only copy the content not the empty part
+    std::memcpy(msg.data(), input_buffer->getBuffer(), input_buffer->getBufferSizeInBytes());
+    tupleCnt = input_buffer->getNumberOfTuples();
+    zmq::message_t envelope(sizeof(tupleCnt));
+    memcpy(envelope.data(), &tupleCnt, sizeof(tupleCnt));
 
-  bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
-  bool rc_msg = socket.send(msg);
-  sentBuffer++;
-  if (!rc_env || !rc_msg) {
-    IOTDB_DEBUG("ZMQSINK  " << this << ": send NOT successful")
-    BufferManager::instance().releaseBuffer(input_buffer);
-    return false;
-  } else {
-    IOTDB_DEBUG("ZMQSINK  " << this << ": send successful")
-    BufferManager::instance().releaseBuffer(input_buffer);
-
-    return true;
+    bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
+    bool rc_msg = socket.send(msg);
+    sentBuffer++;
+    if (!rc_env || !rc_msg) {
+      IOTDB_DEBUG("ZMQSINK  " << this << ": send NOT successful")
+      BufferManager::instance().releaseBuffer(input_buffer);
+      return false;
+    } else {
+      IOTDB_DEBUG("ZMQSINK  " << this << ": send successful")
+      BufferManager::instance().releaseBuffer(input_buffer);
+      return true;
+    }
   }
+  catch (const zmq::error_t &ex) {
+    // recv() throws ETERM when the zmq context is destroyed,
+    //  as when AsyncZmqListener::Stop() is called
+    if (ex.num() != ETERM) {
+      IOTDB_FATAL_ERROR("ZMQSOURCE: " << ex.what())
+    }
+  }
+  return false;
 }
 
 const std::string ZmqSink::toString() const {
@@ -101,14 +110,17 @@ const std::string ZmqSink::toString() const {
 
 bool ZmqSink::connect() {
   if (!connected) {
-    auto address = std::string("tcp://") + host + std::string(":") + std::to_string(port);
-
     try {
+      auto address = std::string("tcp://") + host + std::string(":") + std::to_string(port);
       socket.connect(address.c_str());
       connected = true;
     }
-    catch (...) {
-      connected = false;
+    catch (const zmq::error_t &ex) {
+      // recv() throws ETERM when the zmq context is destroyed,
+      //  as when AsyncZmqListener::Stop() is called
+      if (ex.num() != ETERM) {
+        IOTDB_FATAL_ERROR("ZMQSOURCE: " << ex.what())
+      }
     }
   }
   if (connected) {
@@ -121,14 +133,8 @@ bool ZmqSink::connect() {
 
 bool ZmqSink::disconnect() {
   if (connected) {
-
-    try {
-      socket.close();
-      connected = false;
-    }
-    catch (...) {
-      connected = true;
-    }
+    socket.close();
+    connected = false;
   }
   if (!connected) {
     IOTDB_DEBUG("ZMQSINK  " << this << ": disconnected")

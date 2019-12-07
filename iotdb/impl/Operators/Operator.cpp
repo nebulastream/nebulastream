@@ -12,15 +12,38 @@ Operator::~Operator() {}
 
 std::set<OperatorType> Operator::flattenedTypes() {
   std::set<OperatorType> result;
+
+  std::set<OperatorType> tmpParent = traverseOpTree(false);
+  result.insert(tmpParent.begin(), tmpParent.end());
+
   result.insert(this->getOperatorType());
-  if (!childs.empty()) {
-    for (const OperatorPtr &op: childs) {
-      std::set<OperatorType> tmp = op->flattenedTypes();
+
+  std::set<OperatorType> tmpChild = traverseOpTree(true);
+  result.insert(tmpChild.begin(), tmpChild.end());
+
+  return result;
+}
+
+std::set<OperatorType> Operator::traverseOpTree(bool traverse_children) {
+  std::set<OperatorType> result;
+  if (traverse_children) {
+    if (!this->childs.empty()) {
+      result.insert(this->getOperatorType());
+      for (const OperatorPtr &_op: this->childs) {
+        std::set<OperatorType> tmp = _op->traverseOpTree(traverse_children);
+        result.insert(tmp.begin(), tmp.end());
+      }
+    }
+  } else {
+    if (this->parent) {
+      std::set<OperatorType> tmp = this->parent->traverseOpTree(traverse_children);
       result.insert(tmp.begin(), tmp.end());
     }
+    result.insert(this->getOperatorType());
   }
   return result;
 }
+
 bool Operator::equals(const Operator &_rhs) {
   //TODO: change equals method to virtual bool equals(const Operator &_rhs) = 0;
   assert(0);
