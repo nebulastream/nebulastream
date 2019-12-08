@@ -29,9 +29,13 @@ void WindowHandler::aggregateWindows(
   // TODO we should add a allowed lateness to support out of order events
   auto watermark = store->getMaxTs();
 
+  // create result vector of windows
   auto windows = std::make_shared<std::vector<WindowState>>();
+  // the window type addes result windows to the windows vectors
   window_definition_ptr->windowType->triggerWindows(windows, store->getLastWatermark(), watermark);
+  // allocate partial final aggregates for each window
   auto partial_final_aggregates = std::vector<PartialAggregateType>(windows->size());
+  // iterate over all slices and update the partial final aggregates
   auto slices = store->getSliceMetadata();
   auto partial_aggregates = store->getPartialAggregates();
   for (uint64_t s_id = 0; s_id < slices.size(); s_id++) {
@@ -40,12 +44,13 @@ void WindowHandler::aggregateWindows(
       // A slice is contained in a window if the window starts before the slice and ends after the slice
       if (window.getStartTs() <= slices[s_id].getStartTs() &&
           window.getEndTs() >= slices[s_id].getEndTs()) {
-
         //TODO Because of this condition we currently only support SUM aggregations
         if (Sum *sum_agregation = dynamic_cast<Sum *>(window_definition_ptr->windowAggregation.get())) {
           if (partial_final_aggregates.size() <= w_id) {
+            // initial the partial aggregate
             partial_final_aggregates[w_id] = partial_aggregates[s_id];
           } else {
+            // update the partial aggregate
             partial_final_aggregates[w_id] =
                 sum_agregation->combine<PartialAggregateType>(partial_final_aggregates[w_id], partial_aggregates[s_id]);
           }
@@ -53,6 +58,7 @@ void WindowHandler::aggregateWindows(
       }
     }
   }
+  // calculate the final aggregate
   auto intBuffer = static_cast<FinalAggregateType *> (tuple_buffer->getBuffer());
   for (uint64_t i = 0; i < partial_final_aggregates.size(); i++) {
     //TODO Because of this condition we currently only support SUM aggregations
@@ -61,7 +67,6 @@ void WindowHandler::aggregateWindows(
     }
   }
   tuple_buffer->setNumberOfTuples(partial_final_aggregates.size());
-
   store->setLastWatermark(watermark);
 };
 
