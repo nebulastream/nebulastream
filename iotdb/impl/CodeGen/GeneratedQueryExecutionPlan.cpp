@@ -20,13 +20,16 @@ bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const
 
   TupleBufferPtr outputBuffer = BufferManager::instance().getBuffer();
   outputBuffer->setTupleSizeInBytes(buf->getTupleSizeInBytes());
-
-  auto window = this->windows[pipeline_stage_id];
-  void *state = window->getWindowState();
-  auto window_manager = window->getWindowManager();
-
-  bool ret = pipeline_stage_ptr_->execute(input_buffers, state, window_manager.get(), outputBuffer.get());
-
+  bool ret;
+  // if the pipeline contains a window.
+  if (!this->windows.empty()) {
+    auto window = this->windows[pipeline_stage_id];
+    void *state = window->getWindowState();
+    auto window_manager = window->getWindowManager();
+    pipeline_stage_ptr_->execute(input_buffers, state, window_manager.get(), outputBuffer.get());
+  }else {
+     ret = pipeline_stage_ptr_->execute(input_buffers, nullptr, nullptr, outputBuffer.get());
+  }
   // only write data to the sink if the pipeline produced some output
   if (outputBuffer->getNumberOfTuples() > 0) {
     for (const DataSinkPtr &s: this->getSinks()) {
