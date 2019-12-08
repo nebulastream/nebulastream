@@ -1,12 +1,7 @@
-//
-// Created by xchatziliadis on 19.11.19.
-//
-
 #ifndef IOTDB_INCLUDE_ACTORS_COORDINATORSERVICE_HPP_
 #define IOTDB_INCLUDE_ACTORS_COORDINATORSERVICE_HPP_
 
 #include <SourceSink/DataSource.hpp>
-#include <Actors/atom_utils.hpp>
 #include <Util/SerializationTools.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <SourceSink/SinkCreator.hpp>
@@ -26,6 +21,8 @@
 #include <Operators/Impl/SourceOperator.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include "Actors/ExecutableTransferObject.hpp"
+#include "Services/OptimizerService.hpp"
+#include "Services/QueryService.hpp"
 
 #include <cstdint>
 #include <string>
@@ -34,9 +31,17 @@ using std::string;
 
 namespace iotdb {
 
+class CoordinatorService;
+typedef std::shared_ptr<CoordinatorService> CoordinatorServicePtr;
+
 class CoordinatorService {
  public:
-  CoordinatorService(const string &ip, uint16_t publish_port, uint16_t receive_port);
+
+  static CoordinatorServicePtr getInstance() {
+    static CoordinatorServicePtr instance{new CoordinatorService};
+    return instance;
+  }
+
   ~CoordinatorService() = default;
 
   /**
@@ -60,24 +65,23 @@ class CoordinatorService {
 
   /**
    * @brief registers a CAF query into the NES topology to make it deployable
-   * @param description a description of the query
-   * @param sensor_type the sensor_type to which the input source stream belongs
+   * @param queryString a queryString of the query
    * @param optimizationStrategyName the optimization strategy (buttomUp or topDown)
    */
-  FogExecutionPlan register_query(const string &description, const string &sensor_type, const string &optimizationStrategyName);
+  string register_query(const string &queryString, const string &optimizationStrategyName);
 
   /**
    * @brief method which is called to unregister an already running query
-   * @param description the description of the query
+   * @param queryId the queryId of the query
    * @return true if deleted from running queries, otherwise false
    */
-  bool deregister_query(const string &description);
+  bool deregister_query(const string &queryId);
 
   /**
    * @brief deploys a CAF query into the NES topology to the corresponding devices defined by the optimizer
-   * @param query a description of the query
+   * @param query a queryId of the query
    */
-  unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> make_deployment(const string &description);
+  unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> make_deployment(const string &queryId);
 
   /**
    * @brief creates a string representation of the topology graph
@@ -85,22 +89,45 @@ class CoordinatorService {
    */
   string getTopologyPlanString();
 
-  const FogTopologyEntryPtr &getThisEntry() const;
+  /**
+   * @brief register the user query and deploy the user query using a specific deployment strategy
+   *
+   * @param userQuery
+   * @param optimizationStrategyName
+   * @return uuid for the user query
+   */
+  string executeQuery(const string userQuery, const string &optimizationStrategyName);
+
+  //FIXME: right now we do not register query but rather the fog plan
+  /**
+   * @brief: get the registered query
+   *
+   * @param queryId
+   * @return the fog execution plan for the query
+   */
+  FogExecutionPlan* getRegisteredQuery(string queryId);
+
+  /**
+   * @brief: clear query catalogs
+   * @return
+   */
+
+  bool clearQueryCatalogs();
 
   const unordered_map<string, tuple<Schema, FogExecutionPlan>> &getRegisteredQueries() const;
   const unordered_map<string, tuple<Schema, FogExecutionPlan>> &getRunningQueries() const;
 
  private:
-  string _ip;
-  uint16_t _publish_port;
-  uint16_t _receive_port;
-  FogTopologyEntryPtr _thisEntry;
+
+  CoordinatorService() = default; //do not implement
 
   unordered_map<string, int> _queryToPort;
-
   shared_ptr<FogTopologyManager> _topologyManagerPtr;
   unordered_map<string, tuple<Schema, FogExecutionPlan>> _registeredQueries;
   unordered_map<string, tuple<Schema, FogExecutionPlan>> _runningQueries;
+
+  OptimizerService optimizerService;
+  QueryService queryService;
 
   /**
    * @brief helper method to get all sources in a serialized format from a specific node in the topology
