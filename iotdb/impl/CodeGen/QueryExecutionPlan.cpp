@@ -33,20 +33,4 @@ const std::vector<WindowPtr> QueryExecutionPlan::getWindows() const { return win
 
 const std::vector<DataSinkPtr> QueryExecutionPlan::getSinks() const { return sinks; }
 
-bool QueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf)
-{
-    assert(0);
-
-    auto window = this->windows[pipeline_stage_id];
-    void * state = window->getWindowState();
-    auto windowManager = window->getWindowManager();
-    TupleBuffer result_buf{nullptr, 0, 0, 0};
-    std::vector<TupleBuffer*> v;
-    v.push_back((TupleBuffer*)&buf);
-    bool ret = stages[pipeline_stage_id]->execute(v, state, windowManager.get(), &result_buf);
-    return ret;
-}
-
-const QueryExecutionPlanPtr createTestQEP() { return std::make_shared<QueryExecutionPlan>(); }
-
 } // namespace iotdb
