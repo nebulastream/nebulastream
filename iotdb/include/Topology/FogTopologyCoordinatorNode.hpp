@@ -98,11 +98,16 @@ class FogTopologyCoordinatorNode : public FogTopologyEntry {
     receive_port = receivePort;
   }
 
-  const string& getIp() override {
+  uint16_t getNextFreeReceivePort() override {
+    receive_port++;
+    return receive_port;
+  }
+
+  const std::string& getIp() override {
     return this->ip_addr;
   }
 
-  void setIp(const string& ip) override {
+  void setIp(const std::string& ip) override {
     this->ip_addr = ip;
   }
 

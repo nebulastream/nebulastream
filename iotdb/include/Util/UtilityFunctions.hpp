@@ -1,11 +1,7 @@
-#ifndef FUNCTIONS_HPP
-#define FUNCTIONS_HPP
+#ifndef UTILITY_FUNCTIONS_HPP
+#define UTILITY_FUNCTIONS_HPP
 
-#include <cmath>
-#include <fstream>
-#include <optional>
-
-#include "caf/all.hpp"
+#include <string>
 
 /**
  * @brief a collection of shared utility functions
@@ -17,4 +13,4 @@ std::string trim(std::string s);
 
 }
 
-#endif /* FUNCTIONS_HPP */
+#endif /* UTILITY_FUNCTIONS_HPP */
