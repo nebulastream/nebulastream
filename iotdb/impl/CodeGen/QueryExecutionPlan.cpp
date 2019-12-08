@@ -25,6 +25,10 @@ QueryExecutionPlan::~QueryExecutionPlan()
     stage_to_dest.clear();
 }
 
+bool QueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const iotdb::TupleBufferPtr buf) {
+  return false;
+}
+
 uint32_t QueryExecutionPlan::stageIdFromSource(DataSource* source) { return source_to_stage[source]; };
 
 const std::vector<DataSourcePtr> QueryExecutionPlan::getSources() const { return sources; }

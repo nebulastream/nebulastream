@@ -24,7 +24,7 @@ class QueryExecutionPlan {
 public:
     QueryExecutionPlan();
 
-    virtual bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf) = 0;
+    virtual bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf);
     const std::vector<DataSourcePtr> getSources() const;
     const std::vector<WindowPtr> getWindows() const;
     const std::vector<DataSinkPtr> getSinks() const;
