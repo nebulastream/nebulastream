@@ -5,14 +5,15 @@
 #include <Util/Logger.hpp>
 #include <Actors/Configurations/ActorCoordinatorConfig.hpp>
 #include <Actors/Configurations/ActorWorkerConfig.hpp>
-
+#include <Actors/atom_utils.hpp>
 #include "caf/io/all.hpp"
 
+
 namespace iotdb {
+
 class ActorsCliTest : public testing::Test {
  public:
   std::string host = "localhost";
-  std::string sensor_type = "cars";
 
   static void SetUpTestCase() {
     setupLogging();
@@ -47,7 +48,7 @@ TEST_F(ActorsCliTest, testSpawnDespawnCoordinatorWorkers) {
   ActorCoordinatorConfig c_cfg;
   c_cfg.load<io::middleman>();
   actor_system system_coord{c_cfg};
-  auto coordinator = system_coord.spawn<iotdb::actor_coordinator>(c_cfg.ip, c_cfg.publish_port, c_cfg.receive_port);
+  auto coordinator = system_coord.spawn<iotdb::actor_coordinator>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << c_cfg.publish_port << endl;
@@ -76,7 +77,7 @@ TEST_F(ActorsCliTest, testShowTopology) {
   ActorCoordinatorConfig c_cfg;
   c_cfg.load<io::middleman>();
   actor_system system_coord{c_cfg};
-  auto coordinator = system_coord.spawn<iotdb::actor_coordinator>(c_cfg.ip, c_cfg.publish_port, c_cfg.receive_port);
+  auto coordinator = system_coord.spawn<iotdb::actor_coordinator>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << c_cfg.publish_port << endl;
@@ -108,7 +109,7 @@ TEST_F(ActorsCliTest, testShowRegistered) {
   ActorCoordinatorConfig c_cfg;
   c_cfg.load<io::middleman>();
   actor_system system_coord{c_cfg};
-  auto coordinator = system_coord.spawn<iotdb::actor_coordinator>(c_cfg.ip, c_cfg.publish_port, c_cfg.receive_port);
+  auto coordinator = system_coord.spawn<iotdb::actor_coordinator>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << c_cfg.publish_port << endl;
@@ -137,12 +138,53 @@ TEST_F(ActorsCliTest, testShowRegistered) {
   anon_send_exit(coordinator, exit_reason::user_shutdown);
 }
 
+TEST_F(ActorsCliTest, DISABLED_testDeleteQuery) {
+  cout << "*** Running test testDeleteQuery" << endl;
+  ActorCoordinatorConfig ccfg;
+  ccfg.load<io::middleman>();
+  actor_system system_coord{ccfg};
+  auto coordinator = system_coord.spawn<iotdb::actor_coordinator>();
+
+  // try to publish actor at given port
+  cout << "*** try publish at port " << ccfg.publish_port << endl;
+  auto expected_port = io::publish(coordinator, ccfg.publish_port);
+  if (!expected_port) {
+    std::cerr << "*** publish failed: "
+              << system_coord.render(expected_port.error()) << endl;
+    return;
+  }
+  cout << "*** coordinator successfully published at port " << *expected_port << endl;
+  std::this_thread::sleep_for(std::chrono::seconds(2));
+
+  ActorWorkerConfig w_cfg;
+  w_cfg.load<io::middleman>();
+  actor_system sw{w_cfg};
+  auto worker = sw.spawn<iotdb::actor_worker>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
+  anon_send(worker, connect_atom::value, w_cfg.host, ccfg.publish_port);
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+
+  string description = "example";
+  anon_send(coordinator, register_query_atom::value, description, "BottomUp");
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  anon_send(coordinator, show_registered_atom::value);
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  anon_send(coordinator, deploy_query_atom::value, description);
+  std::this_thread::sleep_for(std::chrono::seconds(3));
+  anon_send(coordinator, deregister_query_atom::value, description);
+  std::this_thread::sleep_for(std::chrono::seconds(2));
+  anon_send(coordinator, show_running_atom::value);
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+
+  anon_send_exit(worker, exit_reason::user_shutdown);
+  anon_send_exit(coordinator, exit_reason::user_shutdown);
+}
+
 TEST_F(ActorsCliTest, DISABLED_testShowRunning) {
   cout << "*** Running test testShowRunning" << endl;
   ActorCoordinatorConfig c_cfg;
   c_cfg.load<io::middleman>();
   actor_system system_coord{c_cfg};
-  auto coordinator = system_coord.spawn<iotdb::actor_coordinator>(c_cfg.ip, c_cfg.publish_port, c_cfg.receive_port);
+  auto coordinator = system_coord.spawn<iotdb::actor_coordinator>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << c_cfg.publish_port << endl;
@@ -163,10 +205,14 @@ TEST_F(ActorsCliTest, DISABLED_testShowRunning) {
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
   string description = "example";
-  anon_send(coordinator, register_query_atom::value, description, w_cfg.sensor_type, "BottomUp");
+  anon_send(coordinator, register_query_atom::value, description, "BottomUp");
   std::this_thread::sleep_for(std::chrono::seconds(1));
   anon_send(coordinator, deploy_query_atom::value, description);
   std::this_thread::sleep_for(std::chrono::seconds(1));
+  anon_send(coordinator, show_running_atom::value);
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  anon_send(coordinator, deregister_query_atom::value, description);
+  std::this_thread::sleep_for(std::chrono::seconds(2));
   anon_send(coordinator, show_running_atom::value);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -179,7 +225,7 @@ TEST_F(ActorsCliTest, DISABLED_testShowOperators) {
   ActorCoordinatorConfig c_cfg;
   c_cfg.load<io::middleman>();
   actor_system system_coord{c_cfg};
-  auto coordinator = system_coord.spawn<iotdb::actor_coordinator>(c_cfg.ip, c_cfg.publish_port, c_cfg.receive_port);
+  auto coordinator = system_coord.spawn<iotdb::actor_coordinator>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << c_cfg.publish_port << endl;
@@ -200,11 +246,15 @@ TEST_F(ActorsCliTest, DISABLED_testShowOperators) {
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
   string description = "example";
-  anon_send(coordinator, register_query_atom::value, description, w_cfg.sensor_type, "BottomUp");
+  anon_send(coordinator, register_query_atom::value, description, "BottomUp");
   std::this_thread::sleep_for(std::chrono::seconds(1));
   anon_send(coordinator, deploy_query_atom::value, description);
   std::this_thread::sleep_for(std::chrono::seconds(1));
   anon_send(coordinator, show_running_operators_atom::value);
+  std::this_thread::sleep_for(std::chrono::seconds(2));
+  anon_send(coordinator, deregister_query_atom::value, description);
+  std::this_thread::sleep_for(std::chrono::seconds(2));
+  anon_send(coordinator, show_running_atom::value);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
   anon_send_exit(worker, exit_reason::user_shutdown);
@@ -212,16 +262,16 @@ TEST_F(ActorsCliTest, DISABLED_testShowOperators) {
 }
 
 //TODO: Fixme
-TEST_F(ActorsCliTest, DISABLED_testDeleteQuery) {
-  cout << "*** Running test DISABLED_testDeleteQuery" << endl;
-  ActorCoordinatorConfig c_cfg;
-  c_cfg.load<io::middleman>();
-  actor_system system_coord{c_cfg};
-  auto coordinator = system_coord.spawn<iotdb::actor_coordinator>(c_cfg.ip, c_cfg.publish_port, c_cfg.receive_port);
+TEST_F(ActorsCliTest, DISABLED_testSequentialMultiQueries) {
+  cout << "*** Running test testShowOperators" << endl;
+  ActorCoordinatorConfig ccfg;
+  ccfg.load<io::middleman>();
+  actor_system system_coord{ccfg};
+  auto coordinator = system_coord.spawn<iotdb::actor_coordinator>();
 
   // try to publish actor at given port
-  cout << "*** try publish at port " << c_cfg.publish_port << endl;
-  auto expected_port = io::publish(coordinator, c_cfg.publish_port);
+  cout << "*** try publish at port " << ccfg.publish_port << endl;
+  auto expected_port = io::publish(coordinator, ccfg.publish_port);
   if (!expected_port) {
     std::cerr << "*** publish failed: "
               << system_coord.render(expected_port.error()) << endl;
@@ -234,18 +284,25 @@ TEST_F(ActorsCliTest, DISABLED_testDeleteQuery) {
   w_cfg.load<io::middleman>();
   actor_system sw{w_cfg};
   auto worker = sw.spawn<iotdb::actor_worker>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
-  anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
+  anon_send(worker, connect_atom::value, w_cfg.host, ccfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
   string description = "example";
-  anon_send(coordinator, register_query_atom::value, description, w_cfg.sensor_type, "BottomUp");
+  for (int i = 0; i < 1; i++) {
+    cout << "Sequence " << i << endl;
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    anon_send(coordinator, register_query_atom::value, description, "BottomUp");
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    anon_send(coordinator, deploy_query_atom::value, description);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    anon_send(coordinator, show_running_operators_atom::value);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    anon_send(coordinator, deregister_query_atom::value, description);
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+    anon_send(coordinator, show_running_operators_atom::value);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+  }
   std::this_thread::sleep_for(std::chrono::seconds(1));
-  anon_send(coordinator, show_registered_atom::value);
-  std::this_thread::sleep_for(std::chrono::seconds(1));
-  anon_send(coordinator, deploy_query_atom::value, description);
-  std::this_thread::sleep_for(std::chrono::seconds(3));
-  anon_send(coordinator, deregister_query_atom::value, description);
-  std::this_thread::sleep_for(std::chrono::seconds(2));
 
   anon_send_exit(worker, exit_reason::user_shutdown);
   anon_send_exit(coordinator, exit_reason::user_shutdown);

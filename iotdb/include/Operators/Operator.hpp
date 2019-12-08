@@ -96,6 +96,8 @@ class Operator {
  private:
   bool scheduled = false;
 
+  std::set<OperatorType> traverseOpTree(bool traverse_children);
+
   friend class boost::serialization::access;
 
   template<class Archive>

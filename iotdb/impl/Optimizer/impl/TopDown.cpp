@@ -2,10 +2,9 @@
 
 using namespace iotdb;
 
-FogExecutionPlan TopDown::initializeExecutionPlan(iotdb::InputQuery inputQuery,
-                                                  iotdb::FogTopologyPlanPtr fogTopologyPlan) {
+FogExecutionPlan TopDown::initializeExecutionPlan(InputQueryPtr inputQuery, FogTopologyPlanPtr fogTopologyPlan) {
   FogExecutionPlan executionGraph;
-  const OperatorPtr &sinkOperator = inputQuery.getRoot();
+  const OperatorPtr &sinkOperator = inputQuery->getRoot();
 
   placeOperators(executionGraph, inputQuery, fogTopologyPlan);
   removeNonResidentOperators(executionGraph);
@@ -13,20 +12,20 @@ FogExecutionPlan TopDown::initializeExecutionPlan(iotdb::InputQuery inputQuery,
   completeExecutionGraphWithFogTopology(executionGraph, fogTopologyPlan);
 
   //FIXME: We are assuming that throughout the pipeline the schema would not change.
-  Schema &schema = inputQuery.source_stream->getSchema();
+  Schema &schema = inputQuery->source_stream->getSchema();
   addSystemGeneratedSourceSinkOperators(schema, executionGraph);
 
   return executionGraph;
 }
 
-void TopDown::placeOperators(FogExecutionPlan executionGraph, InputQuery query, FogTopologyPlanPtr fogTopologyPlanPtr) {
+void TopDown::placeOperators(FogExecutionPlan executionGraph, InputQueryPtr query, FogTopologyPlanPtr fogTopologyPlanPtr) {
 
-  const OperatorPtr &sinkOperator = query.getRoot();
+  const OperatorPtr &sinkOperator = query->getRoot();
   const FogGraphPtr &fogGraphPtr = fogTopologyPlanPtr->getFogGraph();
 
   deque<OperatorPtr> operatorsToProcess = {sinkOperator};
 
-  string sourceName = query.source_stream->getName();
+  string sourceName = query->source_stream->getName();
 
   //find the source Node
   vector<FogVertex> sourceNodes;

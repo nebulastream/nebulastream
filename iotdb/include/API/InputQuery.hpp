@@ -142,10 +142,10 @@ class InputQuery {
   OperatorPtr root;
 };
 
-/* this function **executes** the code provided by the user and returns an InputQuery Object */
-const InputQuery createQueryFromCodeString(const std::string &);
-
 typedef std::shared_ptr<InputQuery> InputQueryPtr;
+
+/* this function **executes** the code provided by the user and returns an InputQuery Object */
+const InputQueryPtr createQueryFromCodeString(const std::string &);
 
 } // namespace iotdb
 
