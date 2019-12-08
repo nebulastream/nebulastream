@@ -118,7 +118,7 @@ namespace iotdb {
              << "" << std::endl
              << ";" << std::endl;
 
-        InputQuery q(createQueryFromCodeString(code.str()));
+        InputQueryPtr inputQuery = createQueryFromCodeString(code.str());
     }
 
 } // namespace iotdb

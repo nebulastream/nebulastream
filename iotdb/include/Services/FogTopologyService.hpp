@@ -9,9 +9,6 @@
 
 namespace iotdb {
 
-    using namespace std;
-    using namespace web;
-
     /**\brief:
     *          This class is used for serving different requests related to Fog topology.
     *
@@ -29,9 +26,7 @@ namespace iotdb {
          *
          * @return a json object representing the fog topology
          */
-        json::value getFogTopologyAsJson();
-
-        json::value getExecutionPlanAsJson(string userQuery, string optimizationStrategyName);
+        web::json::value getFogTopologyAsJson();
     };
 }
 

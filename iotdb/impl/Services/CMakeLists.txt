@@ -3,4 +3,5 @@ add_source_iotdb(
         FogTopologyService.cpp
         CoordinatorService.cpp
         WorkerService.cpp
+        OptimizerService.cpp
 )

@@ -15,17 +15,16 @@ using namespace web;
 
 namespace iotdb {
 
-    class QueryPlanBuilder {
+class QueryPlanBuilder {
 
-    public:
-        QueryPlanBuilder();
-        ~QueryPlanBuilder();
-        json::value getBasePlan(InputQuery inputQuery);
+ public:
+  QueryPlanBuilder();
+  ~QueryPlanBuilder();
+  json::value getBasePlan(InputQueryPtr inputQuery);
 
-    private:
-        void getChildren(const OperatorPtr &root, std::vector<json::value> &nodes, std::vector<json::value> &edges);
-    };
+ private:
+  void getChildren(const OperatorPtr &root, std::vector<json::value> &nodes, std::vector<json::value> &edges);
+};
 }
-
 
 #endif //IOTDB_QUERYPLANBUILDER_HPP

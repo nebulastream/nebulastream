@@ -24,7 +24,7 @@ class FogPlacementOptimizer {
    * @param fogTopologyPlan
    * @return
    */
-  virtual FogExecutionPlan initializeExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan) = 0;
+  virtual FogExecutionPlan initializeExecutionPlan(InputQueryPtr inputQuery, FogTopologyPlanPtr fogTopologyPlan) = 0;
 
   void invalidateUnscheduledOperators(OperatorPtr &rootOperator, vector<int> &childOperatorIds);
 
