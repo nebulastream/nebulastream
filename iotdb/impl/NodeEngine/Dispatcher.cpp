@@ -276,9 +276,7 @@ void Dispatcher::printQEPStatistics(const QueryExecutionPlanPtr qep) {
   auto windows = qep->getWindows();
   for (auto window : windows) {
     IOTDB_INFO("WindowHandler:" << window)
-    //IOTDB_INFO("\t NumberOfEntries=" << window->getNumberOfEntries())
     IOTDB_INFO("WindowHandler Result:")
-    // window->print();
   }
   auto sinks = qep->getSinks();
   for (auto sink : sinks) {
