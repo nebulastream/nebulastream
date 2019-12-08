@@ -1,18 +1,10 @@
-/*
- * FogTopologyEntry.hpp
- *
- *  Created on: Jan 31, 2019
- *      Author: zeuchste
- */
-
 #ifndef INCLUDE_TOPOLOGY_FOGTOPOLOGYENTRY_HPP_
 #define INCLUDE_TOPOLOGY_FOGTOPOLOGYENTRY_HPP_
 
 #include <API/InputQuery.hpp>
 
-using std::string;
-
 namespace iotdb {
+
 enum FogNodeType {
   Coordinator, Worker, Sensor
 };
@@ -37,9 +29,9 @@ class FogTopologyEntry {
 
   virtual void increaseCpuCapacity(int freedCapacity) = 0;
 
-  virtual const string &getIp() = 0;
+  virtual const std::string &getIp() = 0;
 
-  virtual void setIp(const string &ip_addr) = 0;
+  virtual void setIp(const std::string &ip_addr) = 0;
 
 /**
    * @brief the publish port is the port on which an actor framework server can be accessed
@@ -65,8 +57,14 @@ class FogTopologyEntry {
    */
   virtual void setReceivePort(uint16_t receivePort) = 0;
 
+  //TODO: We need to fix this properly. Currently it just returns the +1 value of the receivePort.
+  /**
+ * @brief the next free receive port on which internal data transmission via ZMQ is running
+ */
+  virtual uint16_t getNextFreeReceivePort() = 0;
+
  protected:
-  string ip_addr;
+  std::string ip_addr;
   uint16_t publish_port;
   uint16_t receive_port;
   size_t node_id;

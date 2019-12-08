@@ -119,9 +119,9 @@ target_link_libraries(predicate-tree-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME predicate-tree-tests COMMAND predicate-tree-tests)
 
 # Predicate Tree Tests
-add_executable(fog-topology-service-tests "UnitTests/Services/FogTopologyServiceTest.cpp")
-target_link_libraries(fog-topology-service-tests iotdb ${GTEST_LIBRARIES})
-add_test(NAME fog-topology-service-tests COMMAND fog-topology-service-tests)
+add_executable(optimizer-service-tests "UnitTests/Services/OptimizerServiceTest.cpp")
+target_link_libraries(optimizer-service-tests iotdb ${GTEST_LIBRARIES})
+add_test(NAME optimizer-service-tests COMMAND optimizer-service-tests)
 
 # Serialization Tools Tree Tests
 add_executable(serialization-tools-tests "UnitTests/SerializationToolsTest.cpp")
