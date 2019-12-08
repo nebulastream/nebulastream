@@ -83,15 +83,20 @@ class FogTopologyWorkerNode : public FogTopologyEntry {
     return receive_port;
   }
 
+  uint16_t getNextFreeReceivePort() override {
+    receive_port++;
+    return receive_port;
+  }
+
   void setReceivePort(uint16_t receivePort) override {
     receive_port = receivePort;
   }
 
-  const string &getIp() override {
+  const std::string &getIp() override {
     return this->ip_addr;
   }
 
-  void setIp(const string &ip) override {
+  void setIp(const std::string &ip) override {
     this->ip_addr = ip;
   }
 

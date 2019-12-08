@@ -7,12 +7,12 @@ QueryPlanBuilder::QueryPlanBuilder() {};
 
 QueryPlanBuilder::~QueryPlanBuilder() {};
 
-json::value QueryPlanBuilder::getBasePlan(InputQuery inputQuery) {
+json::value QueryPlanBuilder::getBasePlan(InputQueryPtr inputQuery) {
 
   json::value result{};
   std::vector<json::value> nodes{};
   std::vector<json::value> edges{};
-  const OperatorPtr &root = inputQuery.getRoot();
+  const OperatorPtr &root = inputQuery->getRoot();
 
   if (!root) {
     auto node = json::value::object();

@@ -40,28 +40,28 @@ class FogTopologyCoordinatorNode : public FogTopologyEntry {
   }
   ~FogTopologyCoordinatorNode() = default;
 
-  size_t getId() { return node_id; }
+  size_t getId() override { return node_id; }
 
   void setId(size_t id) override {
     this->node_id = id;
   }
 
-  int getCpuCapacity() { return cpuCapacity; }
+  int getCpuCapacity() override { return cpuCapacity; }
 
   void setCpuCapacity(CPUCapacity cpuCapacity) {
     this->cpuCapacity = cpuCapacity.toInt();
     this->remainingCPUCapacity = this->cpuCapacity;
   }
 
-  void reduceCpuCapacity(int usedCapacity) {
+  void reduceCpuCapacity(int usedCapacity) override {
     this->remainingCPUCapacity = this->remainingCPUCapacity - usedCapacity;
   }
 
-  void increaseCpuCapacity(int freedCapacity) {
+  void increaseCpuCapacity(int freedCapacity) override{
     this->remainingCPUCapacity = this->remainingCPUCapacity + freedCapacity;
   }
 
-  int getRemainingCpuCapacity() { return remainingCPUCapacity; }
+  int getRemainingCpuCapacity() override { return remainingCPUCapacity; }
 
   void isASinkNode(bool isASink) {
     this->isASink = isASink;
@@ -71,16 +71,16 @@ class FogTopologyCoordinatorNode : public FogTopologyEntry {
     return this->isASink;
   }
 
-  FogNodeType getEntryType() { return Coordinator; }
+  FogNodeType getEntryType() override { return Coordinator; }
 
-  std::string getEntryTypeString() {
+  std::string getEntryTypeString() override {
     if (isASink) {
       return "sink";
     }
     return "Coordinator";
   }
 
-  void setQuery(InputQueryPtr pQuery) { this->query = pQuery; };
+  void setQuery(InputQueryPtr pQuery) override { this->query = pQuery; };
 
   uint16_t getPublishPort() override {
     return publish_port;
@@ -98,11 +98,16 @@ class FogTopologyCoordinatorNode : public FogTopologyEntry {
     receive_port = receivePort;
   }
 
-  const string& getIp() override {
+  uint16_t getNextFreeReceivePort() override {
+    receive_port++;
+    return receive_port;
+  }
+
+  const std::string& getIp() override {
     return this->ip_addr;
   }
 
-  void setIp(const string& ip) override {
+  void setIp(const std::string& ip) override {
     this->ip_addr = ip;
   }
 

@@ -19,7 +19,7 @@ class BottomUp : public FogPlacementOptimizer {
   BottomUp() {};
   ~BottomUp() {};
 
-  FogExecutionPlan initializeExecutionPlan(InputQuery inputQuery, FogTopologyPlanPtr fogTopologyPlan);
+  FogExecutionPlan initializeExecutionPlan(InputQueryPtr inputQuery, FogTopologyPlanPtr fogTopologyPlan);
 
  private:
 
