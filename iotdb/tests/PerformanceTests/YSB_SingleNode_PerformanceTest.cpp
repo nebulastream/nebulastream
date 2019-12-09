@@ -14,9 +14,9 @@
 #include <stdio.h>
 #include <SourceSink/DataSource.hpp>
 #include "../../include/SourceSink/SourceCreator.hpp"
-#include <Window_legacy/Window.hpp>
 #include "../../include/CodeGen/DataTypes.hpp"
 #include "../../include/NodeEngine/TupleBuffer.hpp"
+#include "Windows/WindowHandler.hpp"
 #include "../../include/YSB_legacy/YSBGeneratorSource.hpp"
 #include "../../include/YSB_legacy/YSBWindow.hpp"
 
@@ -102,7 +102,7 @@ class YSB_SingleNode_PerformanceTest : public HandCodedQueryExecutionPlan {
                 lastTimeStamp = timeStamp;
             }
 
-            // consume one tuple
+            // compileLiftCombine one tuple
             tempHash hashValue;
             hashValue.value = *(((uint64_t*)tuples[i].campaign_id) + 1);
             uint64_t bucketPos = (hashValue.value * 789 + 321) % campaingCnt;

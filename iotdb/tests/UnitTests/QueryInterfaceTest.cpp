@@ -76,7 +76,8 @@ namespace iotdb {
 
         InputQuery& query = InputQuery::from(cars)
                 .filter(cars["value"]  > 42)
-                .window(TumblingWindow::of(Seconds(10)), Sum::on(cars["value"]));
+                .windowByKey(cars["value"].getAttributeField(),TumblingWindow::of(Seconds(10)), Sum::on(cars["value"]))
+                .print(std::cout);
 
         env.printInputQueryPlan(query);
         env.executeQuery(query);

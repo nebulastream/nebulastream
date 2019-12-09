@@ -14,7 +14,7 @@
 namespace iotdb {
 
 bool PipelineStage::execute(const std::vector<TupleBuffer *> &input_buffers,
-                            WindowSliceStore *state,
+                            void *state,
                             WindowManager *window_manager,
                             TupleBuffer *result_buf) {
   std::cout << "Execute a Pipeline Stage!" << std::endl;
@@ -35,11 +35,11 @@ class CPipelineStage : public PipelineStage {
 
  protected:
   uint32_t execute_impl(const std::vector<TupleBuffer *> &input_buffers,
-                        WindowSliceStore *state,
+                        void *state,
                         WindowManager *window_manager,
                         TupleBuffer *result_buf) final;
   virtual uint32_t callCFunction(TupleBuffer **tuple_buffers,
-                                 WindowSliceStore *state,
+                                 void *state,
                                  WindowManager *window_manager,
                                  TupleBuffer *result_buffer);
 
@@ -56,20 +56,20 @@ CPipelineStage::CPipelineStage(const CPipelineStage &other) {
 const PipelineStagePtr CPipelineStage::copy() const { return PipelineStagePtr(new CPipelineStage(*this)); }
 
 uint32_t CPipelineStage::execute_impl(const std::vector<TupleBuffer *> &input_buffers,
-                                      WindowSliceStore *state,
+                                      void *state,
                                       WindowManager *window_manager,
                                       TupleBuffer *result_buf) {
   return callCFunction((TupleBuffer **) input_buffers.data(), state, window_manager, result_buf);
 }
 
-typedef uint32_t (*SharedCLibPipelineQueryPtr)(TupleBuffer **, WindowSliceStore *, WindowManager *, TupleBuffer *);
+typedef uint32_t (*SharedCLibPipelineQueryPtr)(TupleBuffer **, void *, WindowManager *, TupleBuffer *);
 
 uint32_t CPipelineStage::callCFunction(TupleBuffer **tuple_buffers,
-                                       WindowSliceStore *state,
+                                       void *state,
                                        WindowManager *window_manager,
                                        TupleBuffer *result_buffer) {
   return (*compiled_code_->getFunctionPointer<SharedCLibPipelineQueryPtr>(
-      "_Z14compiled_queryPP11TupleBufferPN5iotdb16WindowSliceStoreIlEEPNS2_13WindowManagerES0_"))(tuple_buffers,
+      "_Z14compiled_queryPP11TupleBufferPvPN5iotdb13WindowManagerES0_"))(tuple_buffers,
                                                                                                   state, window_manager,
                                                                                                   result_buffer);
 }
@@ -85,7 +85,7 @@ class DataSinkPiplineStage : public PipelineStage {
  protected:
   DataSinkPtr sink;
   uint32_t execute_impl(const std::vector<TupleBuffer *> &input_buffers,
-                        WindowSliceStore *state,
+                        void *state,
                         WindowManager *window_manager,
                         TupleBuffer *result_buf) final;
 };
@@ -93,7 +93,7 @@ class DataSinkPiplineStage : public PipelineStage {
 DataSinkPiplineStage::DataSinkPiplineStage(DataSinkPtr sink) : sink(sink) {}
 
 uint32_t DataSinkPiplineStage::execute_impl(const std::vector<TupleBuffer *> &input_buffers,
-                                            WindowSliceStore *state,
+                                            void *state,
                                             WindowManager *window_manager,
                                             TupleBuffer *result_buf) {
   for (auto &buf : input_buffers) {

@@ -3,8 +3,9 @@
 
 #include <API/AbstractWindowDefinition.hpp>
 #include <API/Window/WindowMeasure.hpp>
-
+#include <vector>
 namespace iotdb {
+
 
 /**
  * A TumblingWindow assigns records to non-overlapping windows.
@@ -31,6 +32,9 @@ class TumblingWindow : public WindowType {
     return currentTs + _size.getTime() - (currentTs) % _size.getTime();
   }
 
+  void triggerWindows(WindowListPtr windows, uint64_t lastWatermark, uint64_t currentWatermark) const;
+
+
  private:
   TumblingWindow(TimeMeasure size);
   const TimeMeasure _size;
@@ -56,6 +60,7 @@ class SlidingWindow : public WindowType {
 
   const TimeMeasure _size;
   const TimeMeasure _slide;
+  void triggerWindows(WindowListPtr windows, uint64_t lastWatermark, uint64_t currentWatermark) const;
 };
 
 /**
@@ -79,6 +84,8 @@ class SessionWindow : public WindowType {
   uint64_t calculateNextWindowEnd(uint64_t currentTs) const override {
     return 0;
   }
+
+  void triggerWindows(WindowListPtr windows, uint64_t lastWatermark, uint64_t currentWatermark) const;
  private:
   SessionWindow(TimeMeasure gap);
   const TimeMeasure _gap;

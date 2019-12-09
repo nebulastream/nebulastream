@@ -16,14 +16,16 @@ namespace iotdb {
 class PipelineStage;
 typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
 
+template<class PartialAggregateType>
 class WindowSliceStore;
+
 class WindowManager;
 
 class PipelineStage {
  public:
   /** \brief process input tuple buffer */
   bool execute(const std::vector<TupleBuffer *> &input_buffers,
-               WindowSliceStore *state,
+               void *state,
                WindowManager *window_manager,
                TupleBuffer *result_buf);
   virtual const PipelineStagePtr copy() const = 0;
@@ -31,7 +33,7 @@ class PipelineStage {
 
  protected:
   virtual uint32_t execute_impl(const std::vector<TupleBuffer *> &input_buffers,
-                                WindowSliceStore *state,
+                                void *state,
                                 WindowManager *window_manager,
                                 TupleBuffer *result_buf) = 0;
 };
