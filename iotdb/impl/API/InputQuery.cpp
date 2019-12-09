@@ -10,6 +10,8 @@
 #include "../../include/SourceSink/SinkCreator.hpp"
 #include "../../include/SourceSink/SourceCreator.hpp"
 
+#include <API/Window/WindowDefinition.hpp>
+
 namespace iotdb {
 
 const OperatorPtr recursiveCopy(OperatorPtr ptr) {
@@ -161,17 +163,30 @@ InputQuery &InputQuery::join(const InputQuery &sub_query, const JoinPredicatePtr
   return *this;
 }
 
-    InputQuery &InputQuery::window(const iotdb::WindowTypePtr windowType, const WindowAggregationPtr aggregation) {
-        auto window_def_ptr = std::make_shared<WindowDefinition>(aggregation, windowType);
-        OperatorPtr op = createWindowOperator(window_def_ptr);
-        //OperatorPtr op = createWindowOperator(windowType);
-        int operatorId = this->getNextOperatorId();
-        op->setOperatorId(operatorId);
-        addChild(op, root);
-        root = op;
-         
-        return *this;
-    }
+InputQuery &InputQuery::windowByKey(const AttributeFieldPtr onKey,
+                                    const WindowTypePtr windowType,
+                                    const WindowAggregationPtr aggregation) {
+  auto window_def_ptr = std::make_shared<WindowDefinition>(onKey, aggregation, windowType);
+  OperatorPtr op = createWindowOperator(window_def_ptr);
+  int operatorId = this->getNextOperatorId();
+  op->setOperatorId(operatorId);
+  addChild(op, root);
+  root = op;
+
+  return *this;
+}
+
+InputQuery &InputQuery::window(const iotdb::WindowTypePtr windowType, const WindowAggregationPtr aggregation) {
+  auto window_def_ptr = std::make_shared<WindowDefinition>(aggregation, windowType);
+  OperatorPtr op = createWindowOperator(window_def_ptr);
+  //OperatorPtr op = createWindowOperator(windowType);
+  int operatorId = this->getNextOperatorId();
+  op->setOperatorId(operatorId);
+  addChild(op, root);
+  root = op;
+
+  return *this;
+}
 
 // output operators
 InputQuery &InputQuery::writeToFile(const std::string &file_name) {

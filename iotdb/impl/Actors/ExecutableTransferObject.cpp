@@ -1,4 +1,5 @@
 #include <Actors/ExecutableTransferObject.hpp>
+#include <Operators/Impl/WindowOperator.hpp>
 
 using std::string;
 using std::vector;
@@ -16,6 +17,15 @@ ExecutableTransferObject::ExecutableTransferObject(string description,
   this->_operatorTree = std::move(operatorTree);
 }
 
+WindowDefinitionPtr assignWindowHandler(OperatorPtr operator_ptr){
+  for(OperatorPtr c: operator_ptr->childs) {
+    if (auto *windowOpt = dynamic_cast<WindowOperator *>(operator_ptr.get())) {
+      return windowOpt->getWindowDefinition();
+    }
+  }
+  return nullptr;
+};
+
 QueryExecutionPlanPtr ExecutableTransferObject::toQueryExecutionPlan() {
   if (!_compiled) {
     this->_compiled = true;
@@ -27,7 +37,13 @@ QueryExecutionPlanPtr ExecutableTransferObject::toQueryExecutionPlan() {
     this->_operatorTree->produce(code_gen, context, std::cout);
     PipelineStagePtr stage = code_gen->compile(CompilerArgs());
 
-    QueryExecutionPlanPtr qep(new GeneratedQueryExecutionPlan(nullptr, stage));
+    QueryExecutionPlanPtr qep(new GeneratedQueryExecutionPlan(stage));
+
+    auto window_def = assignWindowHandler(this->_operatorTree);
+    if(window_def!= nullptr){
+      auto window_handler =  std::make_shared<WindowHandler>(assignWindowHandler(this->_operatorTree));
+      qep->addWindow(window_handler);
+    }
     //TODO: currently only one input source is supported
     if (!this->_sources.empty()) {
       qep->addDataSource(this->_sources[0]);

@@ -7,7 +7,7 @@
 
 #include "../NodeEngine/TupleBuffer.hpp"
 #include "../SourceSink/DataSource.hpp"
-#include "../Window_legacy/Window.hpp"
+#include "Windows/WindowHandler.hpp"
 #include "../YSB_legacy/YSBWindow.hpp"
 
 namespace iotdb{

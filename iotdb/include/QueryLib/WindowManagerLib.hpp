@@ -2,6 +2,7 @@
 #include <memory>
 #include "vector"
 #include <API/AbstractWindowDefinition.hpp>
+#include <State/StateVariable.hpp>
 
 #ifndef IOTDB_WINDOWMANAGERLIB_HPP
 #define IOTDB_WINDOWMANAGERLIB_HPP
@@ -34,6 +35,10 @@ class SliceMetaData {
   uint64_t start_ts;
   uint64_t end_ts;
 };
+
+inline uint64_t getTsFromClock(){
+  return time(NULL);
+}
 
 /**
  * The WindowSliceStore stores slices consisting of metadata and a partial aggregate.
@@ -92,19 +97,35 @@ class WindowSliceStore {
   inline std::vector<PartialAggregateType> &getPartialAggregates() {
     return partialAggregates;
   }
+  uint64_t getLastWatermark() const {
+    return lastWatermark;
+  }
+  void setLastWatermark(uint64_t last_watermark) {
+    lastWatermark = last_watermark;
+  }
+
+  uint64_t getMaxTs(){
+    return maxTs;
+  };
+  void updateMaxTs(uint64_t ts){
+    maxTs = std::max(maxTs,ts);
+  };
+
   const PartialAggregateType defaultValue;
   uint64_t nextEdge = 0;
  private:
   std::vector<SliceMetaData> sliceMetaData;
   std::vector<PartialAggregateType> partialAggregates;
+  uint64_t lastWatermark = 0;
+  uint64_t maxTs = 0;
 
 };
 
 class WindowManager {
 
  public:
-  WindowManager(WindowDefinitionPtr windowDefinition, const uint64_t allowedLateness)
-      : windowDefinition(std::move(windowDefinition)), allowedLateness(allowedLateness) {}
+  WindowManager(WindowDefinitionPtr windowDefinition)
+      : windowDefinition(std::move(windowDefinition)), allowedLateness(0) {}
 
   /**
    * Creates slices for in the window slice store if needed.
@@ -114,6 +135,9 @@ class WindowManager {
    */
   template<class PartialAggregateType>
   inline const void sliceStream(const uint64_t ts, WindowSliceStore<PartialAggregateType> *store) {
+
+    // updates the maximal record ts
+    store->updateMaxTs(ts);
 
     // check if the slice store is empty
     if (store->empty()) {
@@ -135,8 +159,18 @@ class WindowManager {
 
  private:
   WindowDefinitionPtr windowDefinition;
+ public:
+  const WindowDefinitionPtr &GetWindowDefinition() const {
+    return windowDefinition;
+  }
+  const uint64_t GetAllowedLateness() const {
+    return allowedLateness;
+  }
+ private:
   const uint64_t allowedLateness;
 
 };
+
+typedef std::shared_ptr<WindowManager> WindowManagerPtr;
 }
 #endif //IOTDB_WINDOWMANAGERLIB_HPP
