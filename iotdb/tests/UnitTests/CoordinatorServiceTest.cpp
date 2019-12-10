@@ -236,6 +236,7 @@ TEST_F(CoordinatorCafTest, test_local_distributed_deployment) {
   EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().empty() && coordinatorServicePtr->getRunningQueries().empty());
 }
 
+//TODO: Fixme, remove Thread.Sleep
 TEST_F(CoordinatorCafTest, DISABLED_test_sequential_local_distributed_deployment) {
   auto *engine = new NodeEngine();
   engine->start();
