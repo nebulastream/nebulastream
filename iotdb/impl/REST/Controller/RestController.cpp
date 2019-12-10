@@ -102,8 +102,8 @@ void RestController::handlePost(http_request message) {
                       FogTopologyManager::getInstance().createExampleTopology();
 
                       //Call the service
-                      const string queryId = coordinatorService->register_query(userQuery, optimizationStrategyName);
-                      FogExecutionPlan *executionPlan = coordinatorService->getRegisteredQuery(queryId);
+                      const string queryId = coordinatorServicePtr->register_query(userQuery, optimizationStrategyName);
+                      FogExecutionPlan *executionPlan = coordinatorServicePtr->getRegisteredQuery(queryId);
 
                       json::value executionGraphPlan = executionPlan->getExecutionGraphAsJson();
 
@@ -143,7 +143,10 @@ void RestController::handlePost(http_request message) {
                       std::cout << "Params: " << userQuery << optimizationStrategyName << std::endl;
 
                       //Call the service
-                      const string queryId = coordinatorService->executeQuery(userQuery, optimizationStrategyName);
+                      const string queryId =
+                          coordinatorServicePtr->register_query(userQuery, optimizationStrategyName);
+
+
 
                       //Prepare the response
                       http_response response(status_codes::OK);
