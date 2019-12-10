@@ -18,6 +18,7 @@
 #include <API/UserAPIExpression.hpp>
 #include <SourceSink/DataSink.hpp>
 #include <SourceSink/GeneratorSource.hpp>
+#include <Windows/WindowHandler.hpp>
 #include "../../include/CodeGen/DataTypes.hpp"
 #include "../../include/SourceSink/SinkCreator.hpp"
 #include "../../include/SourceSink/SourceCreator.hpp"
@@ -154,6 +155,47 @@ const DataSourcePtr createTestSourceCodeGenPredicate() {
           .addField("valueChar", BasicType::CHAR)
           .addField("text", createArrayDataType(BasicType::CHAR, 12)), 1));
 
+  return source;
+}
+
+class WindowTestingDataGeneratorSource : public GeneratorSource {
+ public:
+  WindowTestingDataGeneratorSource(const Schema &schema, const uint64_t pNum_buffers_to_process) :
+      GeneratorSource(schema, pNum_buffers_to_process) {
+  }
+
+  ~WindowTestingDataGeneratorSource() = default;
+
+  struct __attribute__((packed)) InputTuple {
+    uint64_t key;
+    uint64_t value;
+  };
+
+  TupleBufferPtr receiveData() override {
+    // 10 tuples of size one
+    TupleBufferPtr buf = BufferManager::instance().getBuffer();
+    uint64_t tupleCnt = 10;
+
+    assert(buf->getBuffer() != NULL);
+
+    InputTuple *tuples = (InputTuple *) buf->getBuffer();
+
+    for (uint32_t i = 0; i < tupleCnt; i++) {
+      tuples[i].key = i % 2;
+      tuples[i].value = 1;
+    }
+
+    buf->setBufferSizeInBytes(sizeof(InputTuple));
+    buf->setNumberOfTuples(tupleCnt);
+    return buf;
+  }
+};
+
+const DataSourcePtr createWindowTestDataSource() {
+  DataSourcePtr source(std::make_shared<WindowTestingDataGeneratorSource>(
+      Schema::create()
+          .addField("key", BasicType::UINT64)
+          .addField("value", BasicType::UINT64), 10));
   return source;
 }
 
@@ -452,8 +494,8 @@ int CodeGenTest() {
   VariableDeclaration var_decl_tuple_buffer_output = VariableDeclaration::create(
       createPointerDataType(createUserDefinedType(struct_decl_tuple_buffer)), "output_tuple_buffer");
   VariableDeclaration var_decl_window =
-      VariableDeclaration::create(createPointerDataType(createAnnonymUserDefinedType("iotdb::WindowSliceStore<int64_t>")),
-                                  "window_store");
+      VariableDeclaration::create(createPointerDataType(createAnnonymUserDefinedType("void")),
+                                  "state_var");
   VariableDeclaration var_decl_window_manager =
       VariableDeclaration::create(createPointerDataType(createAnnonymUserDefinedType("iotdb::WindowManager")),
                                   "window_manager");
@@ -749,6 +791,78 @@ int CodeGeneratorFilterTest() {
 }
 
 /**
+ * Window assigner codegen test
+ * @return
+ */
+int WindowAssignerCodeGenTest() {
+  /* prepare objects for test */
+  DataSourcePtr source = createWindowTestDataSource();
+  CodeGeneratorPtr code_gen = createCodeGenerator();
+  PipelineContextPtr context = createPipelineContext();
+
+  Schema input_schema = source->getSchema();
+
+  std::cout << "Generate Predicate Code" << std::endl;
+  code_gen->generateCode(source, context, std::cout);
+
+  auto sum = Sum::on(Field(input_schema.get("value")));
+  WindowDefinitionPtr
+      window_definition_ptr(new WindowDefinition(input_schema.get("key"), sum, TumblingWindow::of(Seconds(10))));
+  // auto window_operator = createWindowOperator(window_definition_ptr);
+  //predicate definition
+  code_gen->generateCode(window_definition_ptr, context, std::cout);
+
+
+
+
+  /* compile code to pipeline stage */
+  PipelineStagePtr stage = code_gen->compile(CompilerArgs());
+  if (!stage)
+    return -1;
+
+  // init window handler
+  auto window_handler = new WindowHandler(window_definition_ptr);
+  window_handler->setup();
+
+  /* prepare input tuple buffer */
+  TupleBufferPtr buf = source->receiveData();
+  std::vector<TupleBuffer *> input_buffers;
+  input_buffers.push_back(buf.get());
+  //std::cout << iotdb::toString(buf.get(),source->getSchema()) << std::endl;
+  std::cout << "Processing " << buf->getNumberOfTuples() << " tuples: " << std::endl;
+
+  TupleBuffer result_buffer(malloc(0), 0, 0, 0);
+
+  /* execute Stage */
+  stage->execute(
+      input_buffers,
+      window_handler->getWindowState(),
+      window_handler->getWindowManager().get(),
+      &result_buffer);
+
+  /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
+  std::cout << "---------- My Number of tuples...." << result_buffer.getNumberOfTuples() << std::endl;
+  if (result_buffer.getNumberOfTuples() != 0) {
+    std::cout << "Wrong number of tuples in output: " << result_buffer.getNumberOfTuples()
+              << " (should have been: " << buf->getNumberOfTuples() << ")" << std::endl;
+    return -1;
+  }
+  auto stateVar = (StateVariable<int64_t, iotdb::WindowSliceStore<int64_t> *> *) window_handler->getWindowState();
+
+  if (stateVar->get(0).value()->getPartialAggregates()[0] != 5) {
+    std::cerr << "Result of SelectionCodeGenTest is False!" << std::endl;
+  } else {
+    std::cout << "Result of SelectionCodeGenTest is Correct!" << std::endl;
+  }
+  if (stateVar->get(1).value()->getPartialAggregates()[0] != 5) {
+    std::cerr << "Result of SelectionCodeGenTest is False!" << std::endl;
+  } else {
+    std::cout << "Result of SelectionCodeGenTest is Correct!" << std::endl;
+  }
+  return 0;
+}
+
+/**
  * New Predicatetests for showing stuff
  * @return
  */
@@ -834,8 +948,8 @@ int CodeMapPredicatePtrTests() {
   code_gen->generateCode(source, context, std::cout);
 
   //predicate definition
-  AttributeFieldPtr mappedValue = AttributeField("mappedValue", BasicType::FLOAT64).copy();
-  code_gen->generateCode(mappedValue, createPredicate((input_schema[2] * input_schema[3]) + 2), context, std::cout);
+  AttributeFieldPtr mapped_value = AttributeField("mapped_value", BasicType::FLOAT64).copy();
+  code_gen->generateCode(mapped_value, createPredicate((input_schema[2] * input_schema[3]) + 2), context, std::cout);
 
   /* generate code for writing result tuples to output buffer */
   code_gen->generateCode(createPrintSinkWithSink(Schema::create()
@@ -843,7 +957,7 @@ int CodeMapPredicatePtrTests() {
                                                      .addField("valueSmall", BasicType::INT16)
                                                      .addField("valueFloat", BasicType::FLOAT32)
                                                      .addField("valueDouble", BasicType::FLOAT64)
-                                                     .addField(mappedValue)
+                                                     .addField(mapped_value)
                                                      .addField("valueChar", BasicType::CHAR)
                                                      .addField("text", createArrayDataType(BasicType::CHAR, 12)),
                                                  std::cout), context, std::cout);
@@ -883,7 +997,7 @@ int CodeMapPredicatePtrTests() {
       .addField("valueSmall", BasicType::INT16)
       .addField("valueFloat", BasicType::FLOAT32)
       .addField("valueDouble", BasicType::FLOAT64)
-      .addField("mappedValue", BasicType::FLOAT64)
+      .addField("mapped_value", BasicType::FLOAT64)
       .addField("valueChar", BasicType::CHAR)
       .addField("text", createArrayDataType(BasicType::CHAR, 12))) << std::endl;
   std::cout << "Result of MapPredPtrCodeGenTest is Correct!" << std::endl;
@@ -947,6 +1061,13 @@ int main() {
 
   /** \todo make proper test case out of this function! */
   //iotdb::CodeGenTestCases();
+
+  if (!iotdb::WindowAssignerCodeGenTest()) {
+    std::cout << "Test CodeGenTest Passed!" << std::endl << std::endl;
+  } else {
+    std::cerr << "Test CodeGenTest Failed!" << std::endl << std::endl;
+    return -1;
+  }
 
   if (!iotdb::CodeGenTest()) {
     std::cout << "Test CodeGenTest Passed!" << std::endl << std::endl;

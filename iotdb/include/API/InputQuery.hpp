@@ -5,7 +5,6 @@
 #include <API/ParameterTypes.hpp>
 #include <API/Schema.hpp>
 #include <API/Stream.hpp>
-#include <API/Window/WindowDefinition.hpp>
 #include <iostream>
 #include <string>
 #include <SourceSink/DataSource.hpp>
@@ -15,6 +14,12 @@ namespace iotdb {
 class Operator;
 
 typedef std::shared_ptr<Operator> OperatorPtr;
+
+class WindowType;
+typedef  std::shared_ptr<WindowType> WindowTypePtr;
+
+class WindowAggregation;
+typedef  std::shared_ptr<WindowAggregation> WindowAggregationPtr;
 
 /**
  * Interface to create a query.
@@ -79,6 +84,15 @@ class InputQuery {
    * @return query.
    */
   InputQuery &join(const InputQuery &sub_query, const JoinPredicatePtr &joinPred);
+
+  /**
+   * @brief: Creates a window aggregation.
+   * @param windowType Window definition.
+   * @param aggregation Window aggregation function.
+   * @return query.
+   */
+  InputQuery &windowByKey(const AttributeFieldPtr onKey, const WindowTypePtr windowType, const WindowAggregationPtr aggregation);
+
 
   /**
    * @brief: Creates a window aggregation.

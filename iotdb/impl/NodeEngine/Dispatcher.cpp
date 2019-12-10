@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <iostream>
 
-#include <Window_legacy/Window.hpp>
+#include <Windows/WindowHandler.hpp>
 
 namespace iotdb {
 
@@ -99,6 +99,7 @@ bool Dispatcher::registerQuery(const QueryExecutionPlanPtr qep) {
     IOTDB_DEBUG("Dispatcher: add window" << window)
     window_to_query_map[window.get()].emplace_back(qep);
     window->setup();
+    window->start();
   }
 
   for (auto sink : sinks) {
@@ -144,7 +145,7 @@ void Dispatcher::deregisterQuery(const QueryExecutionPlanPtr qep) {
     } else  //if last qep for window, delete window
     {
       IOTDB_DEBUG("Dispatcher: stop window" << window)
-      window->shutdown();
+      window->stop();
 
       IOTDB_DEBUG("Dispatcher: delete window" << window)
       window_to_query_map[window.get()].clear();
@@ -173,7 +174,7 @@ void Dispatcher::deregisterQuery(const QueryExecutionPlanPtr qep) {
   }
 }
 
-TaskPtr Dispatcher::getWork(bool& threadPool_running) {
+TaskPtr Dispatcher::getWork(bool &threadPool_running) {
   std::unique_lock<std::mutex> lock(workMutex);
 
 //wait while queue is empty but thread pool is running
@@ -201,11 +202,30 @@ TaskPtr Dispatcher::getWork(bool& threadPool_running) {
   return task;
 }
 
-void Dispatcher::addWork(const TupleBufferPtr buf, DataSource* source) {
+void Dispatcher::addWork(const iotdb::TupleBufferPtr window_aggregates, iotdb::WindowHandler *window) {
+  std::unique_lock<std::mutex> lock(workMutex);
+
+  //get the queries that contains this window
+  std::vector<QueryExecutionPlanPtr> &queries = window_to_query_map[window];
+  // TODO We currently assume that a window ends a query execution plan
+  for (uint64_t i = 0; i < queries.size(); ++i) {
+    // for each respective sink, create output the window aggregates
+    auto sinks = queries[i]->getSinks();
+    for (auto &sink : sinks) {
+      sink->writeData(window_aggregates);
+      IOTDB_DEBUG(
+          "Dispatcher: write window aggregates to sink " << sink << " for QEP " << queries[i].get() << " tupleBuffer "
+                                                         << window_aggregates)
+    }
+  }
+  cv.notify_all();
+}
+
+void Dispatcher::addWork(const TupleBufferPtr buf, DataSource *source) {
   std::unique_lock<std::mutex> lock(workMutex);
 
 //get the queries that fetches data from this source
-  std::vector<QueryExecutionPlanPtr>& queries = source_to_query_map[source];
+  std::vector<QueryExecutionPlanPtr> &queries = source_to_query_map[source];
   for (uint64_t i = 0; i < queries.size(); ++i) {
     // for each respective source, create new task and put it into queue
     //TODO: is this handeled right? how do we get the stateID here?
@@ -213,7 +233,8 @@ void Dispatcher::addWork(const TupleBufferPtr buf, DataSource* source) {
         new Task(queries[i], queries[i]->stageIdFromSource(source), buf));
     task_queue.push_back(task);
     IOTDB_DEBUG(
-        "Dispatcher: added Task " << task.get() << " for source " << source << " for QEP " << queries[i].get() << " inputBuffer " << buf)
+        "Dispatcher: added Task " << task.get() << " for source " << source << " for QEP " << queries[i].get()
+                                  << " inputBuffer " << buf)
   }
   cv.notify_all();
 }
@@ -228,7 +249,7 @@ void Dispatcher::completedWork(TaskPtr task) {
   task->releaseInputBuffer();
 }
 
-Dispatcher& Dispatcher::instance() {
+Dispatcher &Dispatcher::instance() {
   static Dispatcher instance;
   return instance;
 }
@@ -254,10 +275,8 @@ void Dispatcher::printQEPStatistics(const QueryExecutionPlanPtr qep) {
   }
   auto windows = qep->getWindows();
   for (auto window : windows) {
-    IOTDB_INFO("Window:" << window)
-    IOTDB_INFO("\t NumberOfEntries=" << window->getNumberOfEntries())
-    IOTDB_INFO("Window Result:")
-    window->print();
+    IOTDB_INFO("WindowHandler:" << window)
+    IOTDB_INFO("WindowHandler Result:")
   }
   auto sinks = qep->getSinks();
   for (auto sink : sinks) {

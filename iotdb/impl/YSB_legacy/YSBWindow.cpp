@@ -9,19 +9,19 @@ BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::YSBWindow)
 namespace iotdb{
 YSBWindow::~YSBWindow()
 {
-	IOTDB_DEBUG("YSB Window: calling destructor")
+	IOTDB_DEBUG("YSB WindowHandler: calling destructor")
 }
 
-YSBWindow::YSBWindow(size_t pcampaignCnt, size_t windowSizeInSec):
+YSBWindow::YSBWindow(size_t pcampaignCnt, size_t windowSizeInSec): WindowHandler(nullptr),
 mutex(), currentWindow(0), lastChangeTimeStamp(time(NULL)), windowSizeInSec(windowSizeInSec), campaignCnt(pcampaignCnt)
 {
-    IOTDB_DEBUG("YSB Window: calling destructor")
+    IOTDB_DEBUG("YSB WindowHandler: calling destructor")
     setup();
 };
 
-YSBWindow::YSBWindow():  mutex(), currentWindow(0),lastChangeTimeStamp(time(NULL)), windowSizeInSec(1), campaignCnt(1)
+YSBWindow::YSBWindow(): WindowHandler(nullptr), mutex(), currentWindow(0),lastChangeTimeStamp(time(NULL)), windowSizeInSec(1), campaignCnt(1)
 {
-    IOTDB_DEBUG("YSB Window: calling default destructor")
+    IOTDB_DEBUG("YSB WindowHandler: calling default destructor")
     setup();
 }
 
@@ -54,5 +54,12 @@ size_t YSBWindow::checkWindow(size_t actualWindow, time_t currentTime)
             }
         }
     }
+
+const WindowPtr createTestWindow(size_t campainCnt, size_t windowSizeInSec) {
+
+  WindowPtr win(new YSBWindow(campainCnt, windowSizeInSec));
+  return win;
+}
+
 
 }//end of namespace

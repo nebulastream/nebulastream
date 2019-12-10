@@ -16,14 +16,17 @@ WindowAggregation &WindowAggregation::as(const iotdb::AttributeFieldPtr asField)
 }
 
 Sum::Sum(iotdb::Field onField) : WindowAggregation(onField.getAttributeField()) {}
+
 WindowAggregationPtr Sum::on(iotdb::Field onField) {
   return std::make_shared<Sum>(Sum(onField));
 }
 
-void Sum::consume(CompoundStatementPtr currentCode,
-                  BinaryOperatorStatement partialRef,
-                  StructDeclaration inputStruct,
-                  BinaryOperatorStatement inputRef) {
+
+
+void Sum::compileLiftCombine(CompoundStatementPtr currentCode,
+                             BinaryOperatorStatement partialRef,
+                             StructDeclaration inputStruct,
+                             BinaryOperatorStatement inputRef) {
   auto var_decl_input = inputStruct.getVariableDeclaration(this->_onField->name);
   auto sum = partialRef + inputRef.accessRef(VarRefStatement(var_decl_input));
   auto updatedPartial = partialRef.assign(sum);

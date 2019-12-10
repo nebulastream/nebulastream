@@ -25,6 +25,10 @@ QueryExecutionPlan::~QueryExecutionPlan()
     stage_to_dest.clear();
 }
 
+bool QueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const iotdb::TupleBufferPtr buf) {
+  return false;
+}
+
 uint32_t QueryExecutionPlan::stageIdFromSource(DataSource* source) { return source_to_stage[source]; };
 
 const std::vector<DataSourcePtr> QueryExecutionPlan::getSources() const { return sources; }
@@ -32,19 +36,5 @@ const std::vector<DataSourcePtr> QueryExecutionPlan::getSources() const { return
 const std::vector<WindowPtr> QueryExecutionPlan::getWindows() const { return windows; }
 
 const std::vector<DataSinkPtr> QueryExecutionPlan::getSinks() const { return sinks; }
-
-bool QueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf)
-{
-    assert(0);
-    WindowSliceStore* state;
-    WindowManager* windowManager;
-    TupleBuffer result_buf{nullptr, 0, 0, 0};
-    std::vector<TupleBuffer*> v;
-    v.push_back((TupleBuffer*)&buf);
-    bool ret = stages[pipeline_stage_id]->execute(v, state, windowManager, &result_buf);
-    return ret;
-}
-
-const QueryExecutionPlanPtr createTestQEP() { return std::make_shared<QueryExecutionPlan>(); }
 
 } // namespace iotdb

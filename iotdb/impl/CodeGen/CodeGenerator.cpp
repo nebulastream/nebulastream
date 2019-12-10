@@ -80,7 +80,9 @@ class C_CodeGenerator : public CodeGenerator {
                             const iotdb::PipelineContextPtr &context,
                             std::ostream &out) override;
   virtual bool generateCode(const DataSinkPtr &sink, const PipelineContextPtr &context, std::ostream &out) override;
-  virtual bool generateCode(const WindowDefinitionPtr &window, const PipelineContextPtr &context, std::ostream &out) override;
+  virtual bool generateCode(const WindowDefinitionPtr &window,
+                            const PipelineContextPtr &context,
+                            std::ostream &out) override;
   PipelineStagePtr compile(const CompilerArgs &) override;
   ~C_CodeGenerator() override;
 
@@ -163,53 +165,52 @@ const std::string toString(void *value, DataTypePtr type) {
   return "";
 }
 
-std::string toString(TupleBuffer& buffer, const Schema& schema) { return toString(&buffer, schema); }
+std::string toString(TupleBuffer &buffer, const Schema &schema) { return toString(&buffer, schema); }
 
-std::string toString(TupleBuffer* buffer, const Schema& schema)
-{
-    if (!buffer)
-        return "INVALID_BUFFER_PTR";
-    std::stringstream str;
-    std::vector<uint32_t> offsets;
-    std::vector<DataTypePtr> types;
-    for (uint32_t i = 0; i < schema.getSize(); ++i) {
-        offsets.push_back(schema[i]->getFieldSize());
-        IOTDB_DEBUG(std::string("Field Size ") + schema[i]->toString() + std::string(": ") +
-                    std::to_string(schema[i]->getFieldSize()));
-        types.push_back(schema[i]->getDataType());
-    }
+std::string toString(TupleBuffer *buffer, const Schema &schema) {
+  if (!buffer)
+    return "INVALID_BUFFER_PTR";
+  std::stringstream str;
+  std::vector<uint32_t> offsets;
+  std::vector<DataTypePtr> types;
+  for (uint32_t i = 0; i < schema.getSize(); ++i) {
+    offsets.push_back(schema[i]->getFieldSize());
+    IOTDB_DEBUG(std::string("Field Size ") + schema[i]->toString() + std::string(": ") +
+        std::to_string(schema[i]->getFieldSize()));
+    types.push_back(schema[i]->getDataType());
+  }
 
-    uint32_t prefix_sum = 0;
-    for (uint32_t i = 0; i < offsets.size(); ++i) {
-        uint32_t val = offsets[i];
-        offsets[i] = prefix_sum;
-        prefix_sum += val;
-        IOTDB_DEBUG(std::string("Prefix Sum: ") + schema[i]->toString() + std::string(": ") +
-                    std::to_string(offsets[i]) );
-    }
+  uint32_t prefix_sum = 0;
+  for (uint32_t i = 0; i < offsets.size(); ++i) {
+    uint32_t val = offsets[i];
+    offsets[i] = prefix_sum;
+    prefix_sum += val;
+    IOTDB_DEBUG(std::string("Prefix Sum: ") + schema[i]->toString() + std::string(": ") +
+        std::to_string(offsets[i]));
+  }
 
-    str << "+----------------------------------------------------+" << std::endl;
+  str << "+----------------------------------------------------+" << std::endl;
+  str << "|";
+  for (uint32_t i = 0; i < schema.getSize(); ++i) {
+    str << schema[i]->toString() << "|";
+  }
+  str << std::endl;
+  str << "+----------------------------------------------------+" << std::endl;
+
+  char *buf = (char *) buffer->getBuffer();
+  for (uint32_t i = 0;
+       i < buffer->getNumberOfTuples() * buffer->getTupleSizeInBytes(); i +=
+                                                                            buffer->getTupleSizeInBytes()) {
     str << "|";
-    for (uint32_t i = 0; i < schema.getSize(); ++i) {
-        str << schema[i]->toString() << "|";
+    for (uint32_t s = 0; s < offsets.size(); ++s) {
+      void *value = &buf[i + offsets[s]];
+      std::string tmp = types[s]->convertRawToString(value);
+      str << tmp << "|";
     }
     str << std::endl;
-    str << "+----------------------------------------------------+" << std::endl;
-
-    char* buf = (char*)buffer->getBuffer();
-  for (uint32_t i = 0;
-      i < buffer->getNumberOfTuples() * buffer->getTupleSizeInBytes(); i +=
-          buffer->getTupleSizeInBytes()) {
-        str << "|";
-        for (uint32_t s = 0; s < offsets.size(); ++s) {
-            void* value = &buf[i + offsets[s]];
-            std::string tmp = types[s]->convertRawToString(value);
-            str << tmp << "|";
-        }
-        str << std::endl;
-    }
-    str << "+----------------------------------------------------+";
-    return str.str();
+  }
+  str << "+----------------------------------------------------+";
+  return str.str();
 }
 
 bool C_CodeGenerator::generateCode(const DataSourcePtr &source, const PipelineContextPtr &context, std::ostream &out) {
@@ -243,9 +244,10 @@ bool C_CodeGenerator::generateCode(const DataSourcePtr &source, const PipelineCo
   VariableDeclaration var_decl_tuple_buffer_output = VariableDeclaration::create(
       createPointerDataType(createUserDefinedType(struct_decl_tuple_buffer)), "output_tuple_buffer");
   VariableDeclaration var_decl_window =
-      VariableDeclaration::create(createPointerDataType(createAnnonymUserDefinedType("iotdb::WindowSliceStore<int64_t>")), "window_store");
+      VariableDeclaration::create(createPointerDataType(createAnnonymUserDefinedType("void")), "state_var");
   VariableDeclaration var_decl_window_manager =
-      VariableDeclaration::create(createPointerDataType(createAnnonymUserDefinedType("iotdb::WindowManager")), "window_manager");
+      VariableDeclaration::create(createPointerDataType(createAnnonymUserDefinedType("iotdb::WindowManager")),
+                                  "window_manager");
 
   code_.var_decl_tuple_buffers = var_decl_tuple_buffers;
   code_.var_decl_tuple_buffer_output = var_decl_tuple_buffer_output;
@@ -446,23 +448,69 @@ bool C_CodeGenerator::generateCode(const DataSinkPtr &sink, const PipelineContex
  * @param out
  * @return
  */
-bool C_CodeGenerator::generateCode(const WindowDefinitionPtr &window, const PipelineContextPtr &context, std::ostream &out) {
-
-
+bool C_CodeGenerator::generateCode(const WindowDefinitionPtr &window,
+                                   const PipelineContextPtr &context,
+                                   std::ostream &out) {
 
   auto constStatement = ConstantExprStatement((createBasicTypeValue(BasicType::UINT64, "0")));
 
+  auto state_var = VariableDeclaration::create(
+      createPointerDataType(createAnnonymUserDefinedType(
+          "iotdb::StateVariable<int64_t, iotdb::WindowSliceStore<int64_t>*>")), "state_variable");
+
+  auto state_var_decl = VarDeclStatement(state_var)
+      .assign(TypeCast(VarRef(code_.var_decl_state), state_var.getDataType()));
+  code_.current_code_insertion_point->addStatement(std::make_shared<BinaryOperatorStatement>(state_var_decl));
+
+  // Read key value from record
+  auto key_var = VariableDeclaration::create(
+      createDataType(BasicType::INT64), "key");
+  VariableDeclaration key_var_decl_attr = code_.struct_decl_input_tuple.getVariableDeclaration(window->onKey->name);
+  auto key_var_decl = VarDeclStatement(key_var)
+      .assign(VarRef(code_.var_decl_input_tuple)[VarRef(*code_.var_decl_id)].accessRef(VarRef(key_var_decl_attr)));
+  code_.current_code_insertion_point->addStatement(std::make_shared<BinaryOperatorStatement>(key_var_decl));
+
+  // get key handle for current key
+  auto key_handle_var = VariableDeclaration::create(
+      createAnnonymUserDefinedType("auto"), "key_value_handle");
+  auto getKeyStateVariable = FunctionCallStatement("get");
+  getKeyStateVariable.addParameter(VarRef(key_var));
+  auto key_handle_dec = VarDeclStatement(key_handle_var)
+      .assign(VarRef(state_var).accessPtr(getKeyStateVariable));
+  code_.current_code_insertion_point->addStatement(std::make_shared<BinaryOperatorStatement>(key_handle_dec));
+
+
+
+  // access window slice state from state variable via key
+  auto window_state_var = VariableDeclaration::create(
+      createAnnonymUserDefinedType("auto"), "window_state");
+  auto getValueFromKeyHandle = FunctionCallStatement("valueOrDefault");
+  getValueFromKeyHandle.addParameter(ConstantExprStatement(INT64, "0"));
+  auto window_state_decl = VarDeclStatement(window_state_var)
+      .assign(VarRef(key_handle_var).accessRef(getValueFromKeyHandle));
+  code_.current_code_insertion_point->addStatement(std::make_shared<BinaryOperatorStatement>(window_state_decl));
+
+
+  // get current timestamp
+  // TODO add support for event time
+  auto current_time_var = VariableDeclaration::create(
+      createAnnonymUserDefinedType("auto"), "current_ts");
+  auto getCurrentTs = FunctionCallStatement("iotdb::getTsFromClock");
+  auto getCurrentTsStatement = VarDeclStatement(current_time_var)
+      .assign(getCurrentTs);
+  code_.current_code_insertion_point->addStatement(std::make_shared<BinaryOperatorStatement>(getCurrentTsStatement));
+
   // update slices
   auto sliceStream = FunctionCallStatement("sliceStream");
-  sliceStream.addParameter(constStatement);
-  sliceStream.addParameter(VarRef(code_.var_decl_state));
+  sliceStream.addParameter(VarRef(current_time_var));
+  sliceStream.addParameter(VarRef(window_state_var));
   auto call = std::make_shared<BinaryOperatorStatement>(VarRef(code_.var_declare_window).accessPtr(sliceStream));
   code_.current_code_insertion_point->addStatement(call);
 
   // find the slices for a time stamp
   auto getSliceIndexByTs = FunctionCallStatement("getSliceIndexByTs");
-  getSliceIndexByTs.addParameter(constStatement);
-  auto getSliceIndexByTsCall = VarRef(code_.var_decl_state).accessPtr(getSliceIndexByTs);
+  getSliceIndexByTs.addParameter(VarRef(current_time_var));
+  auto getSliceIndexByTsCall = VarRef(window_state_var).accessPtr(getSliceIndexByTs);
   auto var_decl_current_slice = VariableDeclaration::create(
       createDataType(BasicType(UINT64)), "current_slice_index");
   auto current_slice_ref = VarRef(var_decl_current_slice);
@@ -472,7 +520,7 @@ bool C_CodeGenerator::generateCode(const WindowDefinitionPtr &window, const Pipe
 
   // get the partial aggregates
   auto getPartialAggregates = FunctionCallStatement("getPartialAggregates");
-  auto getPartialAggregatesCall = VarRef(code_.var_decl_state).accessPtr(getPartialAggregates);
+  auto getPartialAggregatesCall = VarRef(window_state_var).accessPtr(getPartialAggregates);
   VariableDeclaration var_decl_partial_aggregates = VariableDeclaration::create(
       createAnnonymUserDefinedType("std::vector<int64_t>&"), "partialAggregates");
   auto assignment = VarDeclStatement(var_decl_partial_aggregates)
@@ -481,12 +529,12 @@ bool C_CodeGenerator::generateCode(const WindowDefinitionPtr &window, const Pipe
 
   // update partial aggregate
   const BinaryOperatorStatement &partialRef = VarRef(var_decl_partial_aggregates)[current_slice_ref];
-  window->windowAggregation->consume(
+  window->windowAggregation->compileLiftCombine(
       code_.current_code_insertion_point,
       partialRef,
       code_.struct_decl_input_tuple,
       VarRef(code_.var_decl_input_tuple)[VarRefStatement(VarRef(*(code_.var_decl_id)))]
-      );
+  );
 
   return true;
 }

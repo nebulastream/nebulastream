@@ -42,6 +42,9 @@ const std::string WindowOperator::toString() const {
 OperatorType WindowOperator::getOperatorType() const { return WINDOW_OP; }
 
 WindowOperator::~WindowOperator() {}
+const WindowDefinitionPtr &WindowOperator::getWindowDefinition() const {
+  return window_definition;
+}
 
 const OperatorPtr createWindowOperator(const iotdb::WindowDefinitionPtr& windowDefinitionPtr) {
   return std::make_shared<WindowOperator>(windowDefinitionPtr);

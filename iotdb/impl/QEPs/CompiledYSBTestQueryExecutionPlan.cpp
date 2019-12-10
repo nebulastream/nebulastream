@@ -37,7 +37,7 @@ bool CompiledYSBTestQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id,
             current_window = window->checkWindow(current_window, timeStamp);
         }
 
-    //consume one tuple
+    //compileLiftCombine one tuple
 //        tempHash hashValue;
 //        hashValue.value = *(((uint64_t*) tuples[i].campaign_id) + 1);
 //        uint64_t bucketPos = (hashValue.value * 789 + 321)% campaingCnt;
