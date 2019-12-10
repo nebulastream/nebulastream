@@ -11,7 +11,7 @@ namespace iotdb {
 class RestController : public BaseController, Controller {
  public:
   RestController() : BaseController() {
-    coordinatorService = CoordinatorService::getInstance();
+    coordinatorServicePtr = CoordinatorService::getInstance();
   }
   ~RestController() {}
   void handleGet(http_request message) override;
@@ -30,8 +30,7 @@ class RestController : public BaseController, Controller {
   static json::value responseNotImpl(const http::method &method);
   QueryService queryService;
   FogTopologyService fogTopologyService;
-  OptimizerService optimizerService;
-  CoordinatorServicePtr coordinatorService;
+  CoordinatorServicePtr coordinatorServicePtr;
 };
 
 }

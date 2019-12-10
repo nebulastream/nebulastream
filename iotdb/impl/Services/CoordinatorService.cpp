@@ -164,13 +164,6 @@ int CoordinatorService::assign_port(const string &description) {
   }
 }
 
-//TODO: Fixme
-string CoordinatorService::executeQuery(const string& userQuery, const string &optimizationStrategyName) {
-  std::string queryId = register_query(userQuery, optimizationStrategyName);
-  make_deployment(queryId);
-  return queryId;
-}
-
 bool CoordinatorService::deregister_sensor(const FogTopologyEntryPtr &entry) {
   return this->_topologyManagerPtr->getInstance().removeFogNode(entry);
 }
@@ -178,7 +171,7 @@ string CoordinatorService::getTopologyPlanString() {
   return this->_topologyManagerPtr->getInstance().getTopologyPlanString();
 }
 
-FogExecutionPlan* CoordinatorService::getRegisteredQuery(string queryId) {
+FogExecutionPlan *CoordinatorService::getRegisteredQuery(string queryId) {
   if (this->_registeredQueries.find(queryId) != this->_registeredQueries.end()) {
     return &(get<1>(this->_registeredQueries.at(queryId)));
   }

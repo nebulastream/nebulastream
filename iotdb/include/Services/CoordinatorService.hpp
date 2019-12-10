@@ -89,15 +89,6 @@ class CoordinatorService {
    */
   string getTopologyPlanString();
 
-  /**
-   * @brief register the user query and deploy the user query using a specific deployment strategy
-   *
-   * @param userQuery
-   * @param optimizationStrategyName
-   * @return uuid for the user query
-   */
-  string executeQuery(const string& userQuery, const string &optimizationStrategyName);
-
   //FIXME: right now we do not register query but rather the fog plan
   /**
    * @brief: get the registered query
