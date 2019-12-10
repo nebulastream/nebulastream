@@ -138,6 +138,7 @@ TEST_F(ActorsCliTest, testShowRegistered) {
   anon_send_exit(coordinator, exit_reason::user_shutdown);
 }
 
+//TODO: Fixme, remove Thread.Sleep
 TEST_F(ActorsCliTest, DISABLED_testDeleteQuery) {
   cout << "*** Running test testDeleteQuery" << endl;
   ActorCoordinatorConfig ccfg;
@@ -179,6 +180,7 @@ TEST_F(ActorsCliTest, DISABLED_testDeleteQuery) {
   anon_send_exit(coordinator, exit_reason::user_shutdown);
 }
 
+//TODO: Fixme, remove Thread.Sleep
 TEST_F(ActorsCliTest, DISABLED_testShowRunning) {
   cout << "*** Running test testShowRunning" << endl;
   ActorCoordinatorConfig c_cfg;
@@ -220,6 +222,7 @@ TEST_F(ActorsCliTest, DISABLED_testShowRunning) {
   anon_send_exit(coordinator, exit_reason::user_shutdown);
 }
 
+//TODO: Fixme, remove Thread.Sleep
 TEST_F(ActorsCliTest, DISABLED_testShowOperators) {
   cout << "*** Running test testShowOperators" << endl;
   ActorCoordinatorConfig c_cfg;
@@ -261,8 +264,8 @@ TEST_F(ActorsCliTest, DISABLED_testShowOperators) {
   anon_send_exit(coordinator, exit_reason::user_shutdown);
 }
 
-//TODO: Fixme
-TEST_F(ActorsCliTest, DISABLED_testSequentialMultiQueries) {
+//TODO: Fixme, remove Thread.Sleep
+TEST_F(ActorsCliTest, testSequentialMultiQueries) {
   cout << "*** Running test testShowOperators" << endl;
   ActorCoordinatorConfig ccfg;
   ccfg.load<io::middleman>();

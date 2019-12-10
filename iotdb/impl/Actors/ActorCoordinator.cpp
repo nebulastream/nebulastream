@@ -61,26 +61,26 @@ behavior actor_coordinator::running() {
       [=](topology_json_atom) {
         // print the topology
         string topo = this->state.coordinatorServicePtr->getTopologyPlanString();
-        aout(this) << "Printing Topology" << endl;
+        aout(this) << "ACTORCOORDINATOR: Printing Topology" << endl;
         aout(this) << topo << endl;
       },
       [=](show_registered_atom) {
         // print registered queries
-        aout(this) << "Printing Registered Queries" << endl;
+        aout(this) << "ACTORCOORDINATOR: Printing Registered Queries" << endl;
         for (const auto &p : this->state.coordinatorServicePtr->getRegisteredQueries()) {
           aout(this) << p.first << endl;
         }
       },
       [=](show_running_atom) {
         // print running queries
-        aout(this) << "Printing Running Queries" << endl;
+        aout(this) << "ACTORCOORDINATOR: Printing Running Queries" << endl;
         for (const auto &p : this->state.coordinatorServicePtr->getRunningQueries()) {
           aout(this) << p.first << endl;
         }
       },
       [=](show_running_operators_atom) {
         // print running operators in the whole topology
-        aout(this) << "Requesting deployed operators from connected devices.." << endl;
+        aout(this) << "ACTORCOORDINATOR: Requesting deployed operators from connected devices.." << endl;
         this->show_operators();
       },
 
@@ -122,7 +122,7 @@ void actor_coordinator::deploy_query(const string &queryString) {
     strong_actor_ptr sap = this->state.topologyActorMap.at(x.first);
     auto hdl = actor_cast<actor>(sap);
     string s_eto = SerializationTools::ser_eto(x.second);
-    IOTDB_INFO("Sending query " << queryString << " to " << to_string(hdl));
+    IOTDB_INFO("ACTORCOORDINATOR: Sending query " << queryString << " to " << to_string(hdl));
     this->request(hdl, task_timeout, execute_query_atom::value, queryString, s_eto);
   }
 }
