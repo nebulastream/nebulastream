@@ -11,9 +11,10 @@
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/vector.hpp>
 #include <map>
+#include <Windows/WindowHandler.hpp>
 #include "../SourceSink/DataSink.hpp"
 #include "../SourceSink/DataSource.hpp"
-#include "../Window_legacy/Window.hpp"
+
 
 namespace iotdb {
 class QueryExecutionPlan;
@@ -57,10 +58,8 @@ public:
 			IOTDB_INFO("\t Schema=" << source->getSourceSchemaAsString())
 		}
 		for (auto window : windows) {
-			IOTDB_INFO("Window:" << window)
-			IOTDB_INFO("\t NumberOfEntries=" << window->getNumberOfEntries())
-			IOTDB_INFO("Window Result:")
-			window->print();
+			IOTDB_INFO("WindowHandler:" << window)
+			IOTDB_INFO("WindowHandler Result:")
 		}
 		for (auto sink : sinks) {
 			IOTDB_INFO("Sink:" << sink)
@@ -78,14 +77,9 @@ protected:
           const std::map<uint32_t, uint32_t> &_stage_to_dest);
 
   protected:
-//    QueryExecutionPlan(const std::vector<DataSourcePtr>& _sources, const std::vector<PipelineStagePtr>& _stages,
-//                       const std::map<DataSource*, uint32_t>& _source_to_stage,
-//                       const std::map<uint32_t, uint32_t>& _stage_to_dest);
-
     std::vector<DataSourcePtr> sources;
     std::vector<DataSinkPtr> sinks;
     std::vector<WindowPtr> windows;
-
     std::vector<PipelineStagePtr> stages;
     std::map<DataSource*, uint32_t> source_to_stage;
     std::map<uint32_t, uint32_t> stage_to_dest;

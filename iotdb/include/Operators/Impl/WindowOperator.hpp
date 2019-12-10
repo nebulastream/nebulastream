@@ -30,7 +30,9 @@ namespace iotdb {
 
         ~WindowOperator() override;
 
-    private:
+        const WindowDefinitionPtr &getWindowDefinition() const;
+
+     private:
       WindowDefinitionPtr window_definition;
     };
 

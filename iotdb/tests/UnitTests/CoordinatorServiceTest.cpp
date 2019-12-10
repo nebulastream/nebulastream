@@ -192,7 +192,7 @@ TEST_F(CoordinatorCafTest, test_code_gen) {
   queryOp->produce(code_gen, context, std::cout);
   PipelineStagePtr stage = code_gen->compile(CompilerArgs());
 
-  GeneratedQueryExecutionPlanPtr qep(new GeneratedQueryExecutionPlan(nullptr, stage));
+  GeneratedQueryExecutionPlanPtr qep(new GeneratedQueryExecutionPlan(stage));
 
   // Create new Source and Sink
   DataSourcePtr source = createTestDataSourceWithSchema(schema);
