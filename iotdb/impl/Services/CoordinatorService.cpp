@@ -164,8 +164,8 @@ int CoordinatorService::assign_port(const string &description) {
   }
 }
 
-string CoordinatorService::executeQuery(const string userQuery, const string &optimizationStrategyName) {
-
+//TODO: Fixme
+string CoordinatorService::executeQuery(const string& userQuery, const string &optimizationStrategyName) {
   std::string queryId = register_query(userQuery, optimizationStrategyName);
   make_deployment(queryId);
   return queryId;

@@ -127,6 +127,8 @@ void RestController::handlePost(http_request message) {
 
       } else if (path[0] == "service" && path[1] == "execute-query") {
 
+        std::cout << "Trying to execute query: -> " << std::endl;
+
         message.extract_string(true)
             .then([this, message](utility::string_t body) {
                     try {
@@ -137,6 +139,8 @@ void RestController::handlePost(http_request message) {
 
                       string userQuery = req.at("userQuery").as_string();
                       string optimizationStrategyName = req.at("strategyName").as_string();
+
+                      std::cout << "Params: " << userQuery << optimizationStrategyName << std::endl;
 
                       //Call the service
                       const string queryId = coordinatorService->executeQuery(userQuery, optimizationStrategyName);

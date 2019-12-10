@@ -96,7 +96,7 @@ class CoordinatorService {
    * @param optimizationStrategyName
    * @return uuid for the user query
    */
-  string executeQuery(const string userQuery, const string &optimizationStrategyName);
+  string executeQuery(const string& userQuery, const string &optimizationStrategyName);
 
   //FIXME: right now we do not register query but rather the fog plan
   /**
