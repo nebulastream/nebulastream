@@ -129,7 +129,7 @@ TEST_F(ActorsCliTest, testShowRegistered) {
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
-  anon_send(coordinator, register_query_atom::value, "example", w_cfg.sensor_type, "BottomUp");
+  anon_send(coordinator, register_query_atom::value, "example", "BottomUp");
   std::this_thread::sleep_for(std::chrono::seconds(1));
   anon_send(coordinator, show_registered_atom::value);
   std::this_thread::sleep_for(std::chrono::seconds(1));
