@@ -14,7 +14,7 @@ bool RestServer::start(std::string host, u_int16_t port) {
   std::cout << "------------------------------------------------------------" << std::endl;
 
   RestController server;
-  server.setEndpoint("http://" + host + ":" + to_string(port) + "/v1/iotdb/");
+  server.setEndpoint("http://" + host + ":" + std::to_string(port) + "/v1/iotdb/");
 
   try {
     // wait for server initialization...

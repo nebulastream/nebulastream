@@ -13,14 +13,14 @@ namespace iotdb {
  * @brief : This class is responsible for starting the CAF server with coordinator services.
  */
 
-class CAFServer {
+  class CAFServer {
 
- public:
-  bool start(actor_system& actor_system, const ActorCoordinatorConfig& cfg);
+    public:
+      bool start();
 
- private:
-  void setupLogging();
-};
+    private:
+      void setupLogging();
+  };
 
 }
 

@@ -5,7 +5,7 @@
 
 using namespace iotdb;
 
-behavior actor_coordinator::init() {
+behavior ActorCoordinator::init() {
   initializeNESTopology();
 
   auto kRootNode = FogTopologyManager::getInstance().getRootNode();
@@ -28,7 +28,7 @@ behavior actor_coordinator::init() {
   return running();
 }
 
-void actor_coordinator::initializeNESTopology() {
+void ActorCoordinator::initializeNESTopology() {
 
   FogTopologyManager::getInstance().resetFogTopologyPlan();
   auto coordinatorNode = FogTopologyManager::getInstance().createFogCoordinatorNode(actorCoordinatorConfig.ip, CPUCapacity::HIGH);
@@ -36,13 +36,13 @@ void actor_coordinator::initializeNESTopology() {
   coordinatorNode->setReceivePort(actorCoordinatorConfig.receive_port);
 }
 
-behavior actor_coordinator::running() {
+behavior ActorCoordinator::running() {
   return {
       // coordinator specific methods
       [=](register_sensor_atom, string &ip, uint16_t publish_port, uint16_t receive_port, int cpu,
           const string &sensor_type) {
         // rpc to register sensor
-        this->register_sensor(ip, publish_port, receive_port, cpu, sensor_type);
+          this->registerSensor(ip, publish_port, receive_port, cpu, sensor_type);
       },
       [=](register_query_atom, const string &description, const string &strategy) {
         // rpc to register queries
@@ -50,11 +50,11 @@ behavior actor_coordinator::running() {
       },
       [=](deregister_query_atom, const string &description) {
         // rpc to unregister a registered query
-        this->deregister_query(description);
+          this->deregisterQuery(description);
       },
       [=](deploy_query_atom, const string &description) {
         // rpc to deploy queries to all corresponding actors
-        this->deploy_query(description);
+          this->deployQuery(description);
       },
 
       // external methods for users
@@ -81,7 +81,7 @@ behavior actor_coordinator::running() {
       [=](show_running_operators_atom) {
         // print running operators in the whole topology
         aout(this) << "Requesting deployed operators from connected devices.." << endl;
-        this->show_operators();
+          this->showOperators();
       },
 
       //worker specific methods
@@ -100,8 +100,8 @@ behavior actor_coordinator::running() {
   };
 }
 
-void actor_coordinator::register_sensor(const string &ip, uint16_t publish_port, uint16_t receive_port, int cpu,
-                                        const string &sensor) {
+void ActorCoordinator::registerSensor(const string &ip, uint16_t publish_port, uint16_t receive_port, int cpu,
+                                      const string &sensor) {
   auto sap = current_sender();
   auto hdl = actor_cast<actor>(sap);
   FogTopologyEntryPtr
@@ -114,7 +114,7 @@ void actor_coordinator::register_sensor(const string &ip, uint16_t publish_port,
                                                                       << to_string(hdl));
 }
 
-void actor_coordinator::deploy_query(const string &queryString) {
+void ActorCoordinator::deployQuery(const string &queryString) {
   unordered_map<FogTopologyEntryPtr, ExecutableTransferObject>
       deployments = this->state.coordinatorServicePtr->make_deployment(queryString);
 
@@ -131,7 +131,7 @@ void actor_coordinator::deploy_query(const string &queryString) {
  * @brief method which is called to unregister an already running query
  * @param queryId the queryId of the query
  */
-void actor_coordinator::deregister_query(const string &queryId) {
+void ActorCoordinator::deregisterQuery(const string &queryId) {
   // send command to all corresponding nodes to stop the running query as well
   for (auto const &x : this->state.actorTopologyMap) {
     auto hdl = actor_cast<actor>(x.first);
@@ -144,7 +144,7 @@ void actor_coordinator::deregister_query(const string &queryId) {
 /**
 * @brief send messages to all connected devices and get their operators
 */
-void actor_coordinator::show_operators() {
+void ActorCoordinator::showOperators() {
   for (auto const &x : this->state.actorTopologyMap) {
     strong_actor_ptr sap = x.first;
     auto hdl = actor_cast<actor>(sap);
@@ -158,7 +158,7 @@ void actor_coordinator::show_operators() {
         },
         [=](const error &er) {
           string error_msg = to_string(er);
-          IOTDB_ERROR("ACTORCOORDINATOR: Error during show_operators for " << to_string(hdl) << "\n" << error_msg);
+          IOTDB_ERROR("ACTORCOORDINATOR: Error during showOperators for " << to_string(hdl) << "\n" << error_msg);
         }
     );
   }

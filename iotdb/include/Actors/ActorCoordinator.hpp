@@ -19,7 +19,7 @@ using std::unordered_map;
 namespace iotdb {
 
 // class-based, statically typed, event-based API for the state management in CAF
-struct coordinator_state {
+struct CoordinatorState {
   CoordinatorServicePtr coordinatorServicePtr;
   std::unique_ptr<WorkerService> workerServicePtr;
 
@@ -30,13 +30,13 @@ struct coordinator_state {
 /**
 * @brief the coordinator for NES
 */
-class actor_coordinator : public stateful_actor<coordinator_state> {
+class ActorCoordinator : public stateful_actor<CoordinatorState> {
 
  public:
   /**
   * @brief the constructor of the coordinator to initialize the default objects
   */
-  explicit actor_coordinator(actor_config &cfg)
+  explicit ActorCoordinator(actor_config &cfg)
       : stateful_actor(cfg) {
     this->state.coordinatorServicePtr = CoordinatorService::getInstance();
     this->state.workerServicePtr =
@@ -63,26 +63,26 @@ class actor_coordinator : public stateful_actor<coordinator_state> {
    * @param cpu
    * @param sensor
    */
-  void register_sensor(const string &ip, uint16_t publish_port, uint16_t receive_port, int cpu, const string &sensor);
+  void registerSensor(const string &ip, uint16_t publish_port, uint16_t receive_port, int cpu, const string &sensor);
 
   /**
    * @brief: deploy the user query
    *
    * @param queryString
    */
-  void deploy_query(const string &queryString);
+  void deployQuery(const string &queryString);
 
   /**
    * @brief method which is called to unregister an already running query
    *
    * @param queryId of the query to be de-registered
    */
-  void deregister_query(const string &queryId);
+  void deregisterQuery(const string &queryId);
 
   /**
    * @brief send messages to all connected devices and get their operators
    */
-  void show_operators();
+  void showOperators();
 
   /**
    * @brief initialize the NES topology and add coordinator node
