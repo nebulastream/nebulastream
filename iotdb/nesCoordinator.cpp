@@ -10,18 +10,16 @@
 
 #include <iostream>
 #include <thread>
-#include <caf/all.hpp>
-#include <caf/io/all.hpp>
 #include <boost/program_options.hpp>
 #include <boost/program_options/options_description.hpp>
 
 #include "REST/RestServer.hpp"
-#include "Actors/ActorCoordinator.hpp"
-#include "Actors/Configurations/ActorCoordinatorConfig.hpp"
 #include "Actors/CAFServer.hpp"
 
+#include <Actors/temp.h>
+
 using namespace iotdb;
-using namespace caf;
+//using namespace caf;
 
 namespace po = boost::program_options;
 const uint16_t REST_PORT = 8081;
@@ -29,20 +27,17 @@ const uint16_t REST_PORT = 8081;
 void startRestServer(std::string host, u_int16_t port) {
   RestServer restServer;
   restServer.start(host, port);
+  temp tmp1;
 }
 
 //TODO: pass the configuration using CLI or using a property file
 void startCAFServer() {
   //Prepare configuration
-  ActorCoordinatorConfig actorCoordinatorConfig;
-  actorCoordinatorConfig.load<io::middleman>();
 
-  //Prepare Actor System
-  actor_system actorSystem{actorCoordinatorConfig};
 
   //Start CAF server
   CAFServer cafServer;
-  cafServer.start(actorSystem, actorCoordinatorConfig);
+  cafServer.start();
 }
 
 int main(int argc, const char* argv[]) {

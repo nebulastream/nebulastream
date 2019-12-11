@@ -37,11 +37,11 @@ void start_worker(actor_system &system, const ActorWorkerConfig &cfg) {
   };
   usage();
 
-  infer_handle_from_class_t<iotdb::actor_worker> client;
+  infer_handle_from_class_t<iotdb::ActorWorker> client;
 
   for (int i = 1; i <= 5; i++) {
-    client = system.spawn<iotdb::actor_worker>(cfg.ip, cfg.publish_port, cfg.receive_port,
-                                               cfg.sensor_type + std::to_string(i));
+    client = system.spawn<iotdb::ActorWorker>(cfg.ip, cfg.publish_port, cfg.receive_port,
+                                              cfg.sensor_type + std::to_string(i));
     if (!cfg.host.empty() && cfg.publish_port > 0)
       anon_send(client, connect_atom::value, cfg.host, cfg.publish_port);
     else
@@ -51,7 +51,7 @@ void start_worker(actor_system &system, const ActorWorkerConfig &cfg) {
   }
 
   bool done = false;
-  client = system.spawn<iotdb::actor_worker>(cfg.ip, cfg.publish_port, cfg.receive_port, cfg.sensor_type);
+  client = system.spawn<iotdb::ActorWorker>(cfg.ip, cfg.publish_port, cfg.receive_port, cfg.sensor_type);
   if (!cfg.host.empty() && cfg.publish_port > 0)
     anon_send(client, connect_atom::value, cfg.host, cfg.publish_port);
   else

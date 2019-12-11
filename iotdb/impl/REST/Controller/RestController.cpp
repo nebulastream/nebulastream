@@ -1,5 +1,3 @@
-#include <API/InputQuery.hpp>
-
 #include <REST/runtime_utils.hpp>
 #include <REST/std_service.hpp>
 #include <REST/Controller/RestController.hpp>
@@ -9,6 +7,7 @@
 using namespace web;
 using namespace http;
 using namespace iotdb;
+using namespace std;
 
 void RestController::initRestOpHandlers() {
   _listener.support(methods::GET, std::bind(&RestController::handleGet, this, std::placeholders::_1));
@@ -102,16 +101,18 @@ void RestController::handlePost(http_request message) {
                       FogTopologyManager::getInstance().createExampleTopology();
 
                       //Call the service
-                      const string queryId = coordinatorServicePtr->register_query(userQuery, optimizationStrategyName);
-                      FogExecutionPlan *executionPlan = coordinatorServicePtr->getRegisteredQuery(queryId);
+                      const string queryId = "";
+//                          coordinatorServicePtr->register_query(userQuery, optimizationStrategyName);
+//                      FogExecutionPlan *executionPlan = coordinatorServicePtr->getRegisteredQuery(queryId);
 
-                      json::value executionGraphPlan = executionPlan->getExecutionGraphAsJson();
+//                      json::value executionGraphPlan = json;
+//                          executionPlan->getExecutionGraphAsJson();
 
                       //Prepare the response
                       http_response response(status_codes::OK);
                       response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
                       response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-                      response.set_body(executionGraphPlan);
+                      response.set_body("");
                       message.reply(response);
 
                     } catch (...) {
@@ -143,8 +144,8 @@ void RestController::handlePost(http_request message) {
                       std::cout << "Params: " << userQuery << optimizationStrategyName << std::endl;
 
                       //Call the service
-                      const string queryId =
-                          coordinatorServicePtr->register_query(userQuery, optimizationStrategyName);
+                      const string queryId = "";
+//                          coordinatorServicePtr->register_query(userQuery, optimizationStrategyName);
 
 
 

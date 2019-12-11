@@ -1,17 +1,19 @@
-#pragma once
+//#pragma once
 
 #include <REST/Controller/BaseController.hpp>
 #include <REST/controller.hpp>
 #include <Services/QueryService.hpp>
 #include <Services/FogTopologyService.hpp>
-#include <Services/CoordinatorService.hpp>
+//#include <Actors/ActorCoordinator.hpp>
+//#include <Actors/Configurations/ActorCoordinatorConfig.hpp>
+//#include <Services/CoordinatorService.hpp>
 
 namespace iotdb {
 
 class RestController : public BaseController, Controller {
  public:
   RestController() : BaseController() {
-    coordinatorServicePtr = CoordinatorService::getInstance();
+
   }
   ~RestController() {}
   void handleGet(http_request message) override;
@@ -30,7 +32,7 @@ class RestController : public BaseController, Controller {
   static json::value responseNotImpl(const http::method &method);
   QueryService queryService;
   FogTopologyService fogTopologyService;
-  CoordinatorServicePtr coordinatorServicePtr;
+//  CoordinatorServicePtr coordinatorServicePtr;
 };
 
 }

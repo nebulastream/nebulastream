@@ -48,7 +48,7 @@ TEST_F(ActorsCliTest, testSpawnDespawnCoordinatorWorkers) {
   ActorCoordinatorConfig c_cfg;
   c_cfg.load<io::middleman>();
   actor_system system_coord{c_cfg};
-  auto coordinator = system_coord.spawn<iotdb::actor_coordinator>();
+  auto coordinator = system_coord.spawn<iotdb::ActorCoordinator>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << c_cfg.publish_port << endl;
@@ -64,7 +64,7 @@ TEST_F(ActorsCliTest, testSpawnDespawnCoordinatorWorkers) {
   ActorWorkerConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw{w_cfg};
-  auto worker = sw.spawn<iotdb::actor_worker>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
+  auto worker = sw.spawn<iotdb::ActorWorker>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -77,7 +77,7 @@ TEST_F(ActorsCliTest, testShowTopology) {
   ActorCoordinatorConfig c_cfg;
   c_cfg.load<io::middleman>();
   actor_system system_coord{c_cfg};
-  auto coordinator = system_coord.spawn<iotdb::actor_coordinator>();
+  auto coordinator = system_coord.spawn<iotdb::ActorCoordinator>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << c_cfg.publish_port << endl;
@@ -93,7 +93,7 @@ TEST_F(ActorsCliTest, testShowTopology) {
   ActorWorkerConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw{w_cfg};
-  auto worker = sw.spawn<iotdb::actor_worker>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
+  auto worker = sw.spawn<iotdb::ActorWorker>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -109,7 +109,7 @@ TEST_F(ActorsCliTest, testShowRegistered) {
   ActorCoordinatorConfig c_cfg;
   c_cfg.load<io::middleman>();
   actor_system system_coord{c_cfg};
-  auto coordinator = system_coord.spawn<iotdb::actor_coordinator>();
+  auto coordinator = system_coord.spawn<iotdb::ActorCoordinator>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << c_cfg.publish_port << endl;
@@ -125,7 +125,7 @@ TEST_F(ActorsCliTest, testShowRegistered) {
   ActorWorkerConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw{w_cfg};
-  auto worker = sw.spawn<iotdb::actor_worker>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
+  auto worker = sw.spawn<iotdb::ActorWorker>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -143,7 +143,7 @@ TEST_F(ActorsCliTest, DISABLED_testDeleteQuery) {
   ActorCoordinatorConfig ccfg;
   ccfg.load<io::middleman>();
   actor_system system_coord{ccfg};
-  auto coordinator = system_coord.spawn<iotdb::actor_coordinator>();
+  auto coordinator = system_coord.spawn<iotdb::ActorCoordinator>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << ccfg.publish_port << endl;
@@ -159,7 +159,7 @@ TEST_F(ActorsCliTest, DISABLED_testDeleteQuery) {
   ActorWorkerConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw{w_cfg};
-  auto worker = sw.spawn<iotdb::actor_worker>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
+  auto worker = sw.spawn<iotdb::ActorWorker>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
   anon_send(worker, connect_atom::value, w_cfg.host, ccfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -184,7 +184,7 @@ TEST_F(ActorsCliTest, DISABLED_testShowRunning) {
   ActorCoordinatorConfig c_cfg;
   c_cfg.load<io::middleman>();
   actor_system system_coord{c_cfg};
-  auto coordinator = system_coord.spawn<iotdb::actor_coordinator>();
+  auto coordinator = system_coord.spawn<iotdb::ActorCoordinator>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << c_cfg.publish_port << endl;
@@ -200,7 +200,7 @@ TEST_F(ActorsCliTest, DISABLED_testShowRunning) {
   ActorWorkerConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw{w_cfg};
-  auto worker = sw.spawn<iotdb::actor_worker>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
+  auto worker = sw.spawn<iotdb::ActorWorker>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -225,7 +225,7 @@ TEST_F(ActorsCliTest, DISABLED_testShowOperators) {
   ActorCoordinatorConfig c_cfg;
   c_cfg.load<io::middleman>();
   actor_system system_coord{c_cfg};
-  auto coordinator = system_coord.spawn<iotdb::actor_coordinator>();
+  auto coordinator = system_coord.spawn<iotdb::ActorCoordinator>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << c_cfg.publish_port << endl;
@@ -241,7 +241,7 @@ TEST_F(ActorsCliTest, DISABLED_testShowOperators) {
   ActorWorkerConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw{w_cfg};
-  auto worker = sw.spawn<iotdb::actor_worker>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
+  auto worker = sw.spawn<iotdb::ActorWorker>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -267,7 +267,7 @@ TEST_F(ActorsCliTest, DISABLED_testSequentialMultiQueries) {
   ActorCoordinatorConfig ccfg;
   ccfg.load<io::middleman>();
   actor_system system_coord{ccfg};
-  auto coordinator = system_coord.spawn<iotdb::actor_coordinator>();
+  auto coordinator = system_coord.spawn<iotdb::ActorCoordinator>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << ccfg.publish_port << endl;
@@ -283,7 +283,7 @@ TEST_F(ActorsCliTest, DISABLED_testSequentialMultiQueries) {
   ActorWorkerConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw{w_cfg};
-  auto worker = sw.spawn<iotdb::actor_worker>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
+  auto worker = sw.spawn<iotdb::ActorWorker>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
   anon_send(worker, connect_atom::value, w_cfg.host, ccfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
