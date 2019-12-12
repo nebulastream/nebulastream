@@ -69,6 +69,7 @@ behavior CoordinatorActor::running() {
         for (const auto &p : coordinatorServicePtr->getRegisteredQueries()) {
           aout(this) << p.first << endl;
         }
+        return coordinatorServicePtr->getRegisteredQueries().size();
       },
       [=](show_running_atom) {
         // print running queries
