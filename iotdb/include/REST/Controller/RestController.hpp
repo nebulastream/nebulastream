@@ -1,16 +1,12 @@
 #pragma once
 
-#include <caf/io/all.hpp>
-#include <caf/all.hpp>
-#include <Actors/ActorCoordinator.hpp>
-#include <Actors/Configurations/ActorCoordinatorConfig.hpp>
+#include <Actors/CoordinatorActor.hpp>
+#include <Actors/Configurations/CoordinatorActorConfig.hpp>
 #include <REST/Controller/BaseController.hpp>
 #include <REST/controller.hpp>
 #include <Services/QueryService.hpp>
 #include <Services/FogTopologyService.hpp>
-//#include <caf/io/all.hpp>
-//#include <Actors/Configurations/ActorCoordinatorConfig.hpp>
-//#include <Services/CoordinatorService.hpp>
+
 using namespace caf;
 
 namespace iotdb {
@@ -32,13 +28,17 @@ namespace iotdb {
       void handleConnect(http_request message) override;
       void handleMerge(http_request message) override;
       void initRestOpHandlers() override;
+      void setCoordinatorActorHandle(infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle);
 
     private:
       static json::value responseNotImpl(const http::method& method);
       QueryService queryService;
       FogTopologyService fogTopologyService;
       CoordinatorServicePtr coordinatorServicePtr;
+      infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
   };
+
+
 
 }
 

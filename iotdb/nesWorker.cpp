@@ -10,9 +10,9 @@
 
 #include <iostream>
 
-#include <Actors/ActorWorker.hpp>
+#include <Actors/WorkerActor.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <Actors/Configurations/ActorWorkerConfig.hpp>
+#include <Actors/Configurations/WorkerActorConfig.hpp>
 
 #include "caf/all.hpp"
 #include "caf/io/all.hpp"
@@ -27,7 +27,7 @@ using namespace iotdb;
 /**
 * @brief main method to run the worker with an interactive console command list
 */
-void start_worker(actor_system &system, const ActorWorkerConfig &cfg) {
+void start_worker(actor_system &system, const WorkerActorConfig &cfg) {
   // keeps track of requests and tries to reconnect on server failures
   auto usage = [] {
     cout << "Usage:" << endl
@@ -37,10 +37,10 @@ void start_worker(actor_system &system, const ActorWorkerConfig &cfg) {
   };
   usage();
 
-  infer_handle_from_class_t<iotdb::ActorWorker> client;
+  infer_handle_from_class_t<iotdb::WorkerActor> client;
 
   for (int i = 1; i <= 5; i++) {
-    client = system.spawn<iotdb::ActorWorker>(cfg.ip, cfg.publish_port, cfg.receive_port,
+    client = system.spawn<iotdb::WorkerActor>(cfg.ip, cfg.publish_port, cfg.receive_port,
                                               cfg.sensor_type + std::to_string(i));
     if (!cfg.host.empty() && cfg.publish_port > 0)
       anon_send(client, connect_atom::value, cfg.host, cfg.publish_port);
@@ -51,7 +51,7 @@ void start_worker(actor_system &system, const ActorWorkerConfig &cfg) {
   }
 
   bool done = false;
-  client = system.spawn<iotdb::ActorWorker>(cfg.ip, cfg.publish_port, cfg.receive_port, cfg.sensor_type);
+  client = system.spawn<iotdb::WorkerActor>(cfg.ip, cfg.publish_port, cfg.receive_port, cfg.sensor_type);
   if (!cfg.host.empty() && cfg.publish_port > 0)
     anon_send(client, connect_atom::value, cfg.host, cfg.publish_port);
   else
@@ -112,7 +112,7 @@ void setupLogging() {
   iotdb::logger->addAppender(console);
 }
 
-void caf_main(actor_system &system, const ActorWorkerConfig &cfg) {
+void caf_main(actor_system &system, const WorkerActorConfig &cfg) {
   log4cxx::Logger::getLogger("IOTDB")->setLevel(log4cxx::Level::getDebug());
   setupLogging();
   start_worker(system, cfg);

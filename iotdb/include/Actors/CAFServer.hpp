@@ -2,6 +2,7 @@
 #ifndef IOTDB_INCLUDE_ACTORS_CAFSERVER_H_
 #define IOTDB_INCLUDE_ACTORS_CAFSERVER_H_
 
+#include "Actors/CoordinatorActor.hpp"
 #include <iostream>
 
 namespace iotdb {
@@ -13,7 +14,7 @@ namespace iotdb {
   class CAFServer {
 
     public:
-      bool start();
+      bool start(infer_handle_from_class_t<CoordinatorActor>);
 
     private:
       void setupLogging();

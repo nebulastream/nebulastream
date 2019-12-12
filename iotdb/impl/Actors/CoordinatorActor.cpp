@@ -1,10 +1,10 @@
-#include <Actors/ActorCoordinator.hpp>
+#include <Actors/CoordinatorActor.hpp>
 #include <Actors/ExecutableTransferObject.hpp>
 #include <Topology/FogTopologyManager.hpp>
 
 using namespace iotdb;
 
-behavior ActorCoordinator::init() {
+behavior CoordinatorActor::init() {
   initializeNESTopology();
 
   auto kRootNode = FogTopologyManager::getInstance().getRootNode();
@@ -27,7 +27,7 @@ behavior ActorCoordinator::init() {
   return running();
 }
 
-void ActorCoordinator::initializeNESTopology() {
+void CoordinatorActor::initializeNESTopology() {
 
   FogTopologyManager::getInstance().resetFogTopologyPlan();
   auto coordinatorNode = FogTopologyManager::getInstance().createFogCoordinatorNode(actorCoordinatorConfig.ip, CPUCapacity::HIGH);
@@ -35,7 +35,7 @@ void ActorCoordinator::initializeNESTopology() {
   coordinatorNode->setReceivePort(actorCoordinatorConfig.receive_port);
 }
 
-behavior ActorCoordinator::running() {
+behavior CoordinatorActor::running() {
   return {
       // coordinator specific methods
       [=](register_sensor_atom, string &ip, uint16_t publish_port, uint16_t receive_port, int cpu,
@@ -99,7 +99,7 @@ behavior ActorCoordinator::running() {
   };
 }
 
-void ActorCoordinator::registerSensor(const string &ip, uint16_t publish_port, uint16_t receive_port, int cpu,
+void CoordinatorActor::registerSensor(const string &ip, uint16_t publish_port, uint16_t receive_port, int cpu,
                                       const string &sensor) {
   auto sap = current_sender();
   auto hdl = actor_cast<actor>(sap);
@@ -113,7 +113,7 @@ void ActorCoordinator::registerSensor(const string &ip, uint16_t publish_port, u
                                                                       << to_string(hdl));
 }
 
-void ActorCoordinator::deployQuery(const string &queryId) {
+void CoordinatorActor::deployQuery(const string &queryId) {
   unordered_map<FogTopologyEntryPtr, ExecutableTransferObject>
       deployments = coordinatorServicePtr->make_deployment(queryId);
 
@@ -130,7 +130,7 @@ void ActorCoordinator::deployQuery(const string &queryId) {
  * @brief method which is called to unregister an already running query
  * @param queryId the queryId of the query
  */
-void ActorCoordinator::deregisterQuery(const string &queryId) {
+void CoordinatorActor::deregisterQuery(const string &queryId) {
   // send command to all corresponding nodes to stop the running query as well
   for (auto const &x : this->state.actorTopologyMap) {
     auto hdl = actor_cast<actor>(x.first);
@@ -143,7 +143,7 @@ void ActorCoordinator::deregisterQuery(const string &queryId) {
 /**
 * @brief send messages to all connected devices and get their operators
 */
-void ActorCoordinator::showOperators() {
+void CoordinatorActor::showOperators() {
   for (auto const &x : this->state.actorTopologyMap) {
     strong_actor_ptr sap = x.first;
     auto hdl = actor_cast<actor>(sap);
@@ -163,6 +163,6 @@ void ActorCoordinator::showOperators() {
   }
 }
 
-string ActorCoordinator::registerQuery(const string& queryString, const string& strategy) {
+string CoordinatorActor::registerQuery(const string& queryString, const string& strategy) {
     return coordinatorServicePtr->register_query(queryString, strategy);
 }

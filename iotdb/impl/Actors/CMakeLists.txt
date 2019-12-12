@@ -1,6 +1,6 @@
 add_source_iotdb(
-        ActorCoordinator.cpp
-        ActorWorker.cpp
+        CoordinatorActor.cpp
+        WorkerActor.cpp
         ExecutableTransferObject.cpp
         CAFServer.cpp
 )
