@@ -2,10 +2,8 @@
 #ifndef IOTDB_INCLUDE_ACTORS_CAFSERVER_H_
 #define IOTDB_INCLUDE_ACTORS_CAFSERVER_H_
 
+#include "Actors/CoordinatorActor.hpp"
 #include <iostream>
-#include <caf/io/all.hpp>
-#include <caf/all.hpp>
-#include <Actors/Configurations/ActorCoordinatorConfig.hpp>
 
 namespace iotdb {
 
@@ -13,14 +11,14 @@ namespace iotdb {
  * @brief : This class is responsible for starting the CAF server with coordinator services.
  */
 
-class CAFServer {
+  class CAFServer {
 
- public:
-  bool start(actor_system& actor_system, const ActorCoordinatorConfig& cfg);
+    public:
+      bool start(infer_handle_from_class_t<CoordinatorActor>);
 
- private:
-  void setupLogging();
-};
+    private:
+      void setupLogging();
+  };
 
 }
 

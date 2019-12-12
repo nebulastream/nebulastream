@@ -2,16 +2,14 @@
 #ifndef __ACTOR_COORDINATOR_CONFIG_HPP__
 #define __ACTOR_COORDINATOR_CONFIG_HPP__
 
-#include <caf/all.hpp>
-
 namespace iotdb {
 /**
 * @brief The configuration file of the coordinator
 */
- class ActorCoordinatorConfig : public caf::actor_system_config {
+ class CoordinatorActorConfig : public caf::actor_system_config {
  public:
 
-  ActorCoordinatorConfig(const ActorCoordinatorConfig &config) {
+  CoordinatorActorConfig(const CoordinatorActorConfig &config) {
     ip = config.ip;
     publish_port = config.publish_port;
     receive_port = config.receive_port;
@@ -21,7 +19,7 @@ namespace iotdb {
         .add(receive_port, "receive_port,prec", "set receive_port");
   }
 
-  ActorCoordinatorConfig() {
+  CoordinatorActorConfig() {
     opt_group{custom_options_, "global"}
         .add(ip, "ip", "set ip")
         .add(publish_port, "publish_port,ppub", "set publish_port")
