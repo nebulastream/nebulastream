@@ -112,10 +112,10 @@ class CoordinatorService {
 
   CoordinatorService() = default; //do not implement
 
-  unordered_map<string, int> _queryToPort;
-  shared_ptr<FogTopologyManager> _topologyManagerPtr;
-  unordered_map<string, tuple<Schema, FogExecutionPlan>> _registeredQueries;
-  unordered_map<string, tuple<Schema, FogExecutionPlan>> _runningQueries;
+  unordered_map<string, int> queryToPort;
+  shared_ptr<FogTopologyManager> topologyManagerPtr;
+  unordered_map<string, tuple<Schema, FogExecutionPlan>> registeredQueries;
+  unordered_map<string, tuple<Schema, FogExecutionPlan>> runningQueries;
 
   OptimizerService optimizerService;
   QueryService queryService;

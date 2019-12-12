@@ -16,8 +16,6 @@
 #include "REST/RestServer.hpp"
 #include "Actors/CAFServer.hpp"
 
-#include <Actors/temp.h>
-
 using namespace iotdb;
 //using namespace caf;
 
@@ -27,15 +25,10 @@ const uint16_t REST_PORT = 8081;
 void startRestServer(std::string host, u_int16_t port) {
   RestServer restServer;
   restServer.start(host, port);
-  temp tmp1;
 }
 
 //TODO: pass the configuration using CLI or using a property file
 void startCAFServer() {
-  //Prepare configuration
-
-
-  //Start CAF server
   CAFServer cafServer;
   cafServer.start();
 }

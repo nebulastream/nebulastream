@@ -3,9 +3,6 @@
 #define IOTDB_INCLUDE_ACTORS_CAFSERVER_H_
 
 #include <iostream>
-#include <caf/io/all.hpp>
-#include <caf/all.hpp>
-#include <Actors/Configurations/ActorCoordinatorConfig.hpp>
 
 namespace iotdb {
 
