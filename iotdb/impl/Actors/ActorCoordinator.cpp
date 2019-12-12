@@ -1,6 +1,5 @@
 #include <Actors/ActorCoordinator.hpp>
 #include <Actors/ExecutableTransferObject.hpp>
-#include <Actors/atom_utils.hpp>
 #include <Topology/FogTopologyManager.hpp>
 
 using namespace iotdb;
@@ -18,7 +17,7 @@ behavior ActorCoordinator::init() {
     auto hdl = actor_cast<actor>(key);
     if (this->state.actorTopologyMap.find(key) != this->state.actorTopologyMap.end()) {
       // remove disconnected worker from topology
-      this->state.coordinatorServicePtr->deregister_sensor(this->state.actorTopologyMap.at(key));
+      coordinatorServicePtr->deregister_sensor(this->state.actorTopologyMap.at(key));
       this->state.topologyActorMap.erase(this->state.actorTopologyMap.at(key));
       this->state.actorTopologyMap.erase(key);
       aout(this) << "ACTORCOORDINATOR: Lost connection to worker " << key << endl;
@@ -44,9 +43,9 @@ behavior ActorCoordinator::running() {
         // rpc to register sensor
           this->registerSensor(ip, publish_port, receive_port, cpu, sensor_type);
       },
-      [=](register_query_atom, const string &description, const string &strategy) {
+      [=](register_query_atom, const string& description, const string& strategy) {
         // rpc to register queries
-        this->state.coordinatorServicePtr->register_query(description, strategy);
+        return registerQuery(description, strategy);
       },
       [=](deregister_query_atom, const string &description) {
         // rpc to unregister a registered query
@@ -60,21 +59,21 @@ behavior ActorCoordinator::running() {
       // external methods for users
       [=](topology_json_atom) {
         // print the topology
-        string topo = this->state.coordinatorServicePtr->getTopologyPlanString();
+        string topo = coordinatorServicePtr->getTopologyPlanString();
         aout(this) << "Printing Topology" << endl;
         aout(this) << topo << endl;
       },
       [=](show_registered_atom) {
         // print registered queries
         aout(this) << "Printing Registered Queries" << endl;
-        for (const auto &p : this->state.coordinatorServicePtr->getRegisteredQueries()) {
+        for (const auto &p : coordinatorServicePtr->getRegisteredQueries()) {
           aout(this) << p.first << endl;
         }
       },
       [=](show_running_atom) {
         // print running queries
         aout(this) << "Printing Running Queries" << endl;
-        for (const auto &p : this->state.coordinatorServicePtr->getRunningQueries()) {
+        for (const auto &p : coordinatorServicePtr->getRunningQueries()) {
           aout(this) << p.first << endl;
         }
       },
@@ -87,15 +86,15 @@ behavior ActorCoordinator::running() {
       //worker specific methods
       [=](execute_query_atom, const string &description, string &executableTransferObject) {
         // internal rpc to execute a query
-        this->state.workerServicePtr->execute_query(description, executableTransferObject);
+        workerServicePtr->execute_query(description, executableTransferObject);
       },
       // internal rpc to unregister a query
       [=](delete_query_atom, const string &query) {
-        this->state.workerServicePtr->delete_query(query);
+        workerServicePtr->delete_query(query);
       },
       // internal rpc to execute a query
       [=](get_operators_atom) {
-        return this->state.workerServicePtr->getOperators();
+        return workerServicePtr->getOperators();
       }
   };
 }
@@ -105,7 +104,7 @@ void ActorCoordinator::registerSensor(const string &ip, uint16_t publish_port, u
   auto sap = current_sender();
   auto hdl = actor_cast<actor>(sap);
   FogTopologyEntryPtr
-      sensorNode = this->state.coordinatorServicePtr->register_sensor(ip, publish_port, receive_port, cpu, sensor);
+      sensorNode = coordinatorServicePtr->register_sensor(ip, publish_port, receive_port, cpu, sensor);
 
   this->state.actorTopologyMap.insert({sap, sensorNode});
   this->state.topologyActorMap.insert({sensorNode, sap});
@@ -114,16 +113,16 @@ void ActorCoordinator::registerSensor(const string &ip, uint16_t publish_port, u
                                                                       << to_string(hdl));
 }
 
-void ActorCoordinator::deployQuery(const string &queryString) {
+void ActorCoordinator::deployQuery(const string &queryId) {
   unordered_map<FogTopologyEntryPtr, ExecutableTransferObject>
-      deployments = this->state.coordinatorServicePtr->make_deployment(queryString);
+      deployments = coordinatorServicePtr->make_deployment(queryId);
 
   for (auto const &x : deployments) {
     strong_actor_ptr sap = this->state.topologyActorMap.at(x.first);
     auto hdl = actor_cast<actor>(sap);
     string s_eto = SerializationTools::ser_eto(x.second);
-    IOTDB_INFO("Sending query " << queryString << " to " << to_string(hdl));
-    this->request(hdl, task_timeout, execute_query_atom::value, queryString, s_eto);
+    IOTDB_INFO("Sending query " << queryId << " to " << to_string(hdl));
+    this->request(hdl, task_timeout, execute_query_atom::value, queryId, s_eto);
   }
 }
 
@@ -138,7 +137,7 @@ void ActorCoordinator::deregisterQuery(const string &queryId) {
     IOTDB_INFO("ACTORCOORDINATOR: Sending deletion request " << queryId << " to " << to_string(hdl));
     this->request(hdl, task_timeout, delete_query_atom::value, queryId);
   }
-  this->state.coordinatorServicePtr->deregister_query(queryId);
+  coordinatorServicePtr->deregister_query(queryId);
 }
 
 /**
@@ -162,4 +161,8 @@ void ActorCoordinator::showOperators() {
         }
     );
   }
+}
+
+string ActorCoordinator::registerQuery(const string& queryString, const string& strategy) {
+    return coordinatorServicePtr->register_query(queryString, strategy);
 }

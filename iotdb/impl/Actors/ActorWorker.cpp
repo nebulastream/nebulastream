@@ -1,6 +1,6 @@
 #include <Actors/ActorWorker.hpp>
 #include <Actors/ExecutableTransferObject.hpp>
-#include <Actors/atom_utils.hpp>
+#include <Actors/AtomUtils.hpp>
 #include <Util/SerializationTools.hpp>
 
 namespace iotdb {

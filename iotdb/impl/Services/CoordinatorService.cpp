@@ -9,7 +9,7 @@ using namespace std;
 
 FogTopologyEntryPtr CoordinatorService::register_sensor(const string &ip, uint16_t publish_port,
                                                         uint16_t receive_port, int cpu, const string &sensor_type) {
-  FogTopologyManager &topologyManager = this->_topologyManagerPtr->getInstance();
+  FogTopologyManager &topologyManager = this->topologyManagerPtr->getInstance();
   FogTopologySensorNodePtr sensorNode = topologyManager.createFogSensorNode(ip, CPUCapacity::Value(cpu));
   sensorNode->setSensorType(sensor_type);
   sensorNode->setPublishPort(publish_port);
@@ -49,7 +49,7 @@ string CoordinatorService::register_query(const string &queryString, const strin
 
     std::string queryId = boost::uuids::to_string(boost::uuids::random_generator()());
     tuple<Schema, FogExecutionPlan> t = std::make_tuple(schema, kExecutionPlan);
-    this->_registeredQueries.insert({queryId, t});
+    this->registeredQueries.insert({queryId, t});
     return queryId;
   }
   catch (...) {
@@ -61,19 +61,19 @@ string CoordinatorService::register_query(const string &queryString, const strin
 
 bool CoordinatorService::deregister_query(const string &queryId) {
   bool out = false;
-  if (this->_registeredQueries.find(queryId) == this->_registeredQueries.end() &&
-      this->_runningQueries.find(queryId) == this->_runningQueries.end()) {
+  if (this->registeredQueries.find(queryId) == this->registeredQueries.end() &&
+      this->runningQueries.find(queryId) == this->runningQueries.end()) {
     IOTDB_INFO("CoordinatorService: No deletion required! Query has neither been registered or deployed->" << queryId);
-  } else if (this->_registeredQueries.find(queryId) != this->_registeredQueries.end()) {
+  } else if (this->registeredQueries.find(queryId) != this->registeredQueries.end()) {
     // Query is registered, but not running -> just remove from registered queries
-    get<1>(this->_registeredQueries.at(queryId)).freeResources();
-    this->_registeredQueries.erase(queryId);
+    get<1>(this->registeredQueries.at(queryId)).freeResources();
+    this->registeredQueries.erase(queryId);
     IOTDB_INFO("CoordinatorService: Query was registered and has been successfully removed -> " << queryId);
   } else {
     IOTDB_INFO("CoordinatorService: De-registering running query..");
     //Query is running -> stop query locally if it is running and free resources
-    get<1>(this->_runningQueries.at(queryId)).freeResources();
-    this->_runningQueries.erase(queryId);
+    get<1>(this->runningQueries.at(queryId)).freeResources();
+    this->runningQueries.erase(queryId);
     IOTDB_INFO("CoordinatorService:  successfully removed query " << queryId);
     out = true;
   }
@@ -83,12 +83,12 @@ bool CoordinatorService::deregister_query(const string &queryId) {
 unordered_map<FogTopologyEntryPtr,
               ExecutableTransferObject> CoordinatorService::make_deployment(const string &queryId) {
   unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> output;
-  if (this->_registeredQueries.find(queryId) != this->_registeredQueries.end() &&
-      this->_runningQueries.find(queryId) == this->_runningQueries.end()) {
+  if (this->registeredQueries.find(queryId) != this->registeredQueries.end() &&
+      this->runningQueries.find(queryId) == this->runningQueries.end()) {
     IOTDB_INFO("CoordinatorService: Deploying query " << queryId);
     // get the schema and FogExecutionPlan stored during query registration
-    Schema schema = get<0>(this->_registeredQueries.at(queryId));
-    FogExecutionPlan execPlan = get<1>(this->_registeredQueries.at(queryId));
+    Schema schema = get<0>(this->registeredQueries.at(queryId));
+    FogExecutionPlan execPlan = get<1>(this->registeredQueries.at(queryId));
 
     //iterate through all vertices in the topology
     for (const ExecutionVertex &v : execPlan.getExecutionGraph()->getAllVertex()) {
@@ -104,9 +104,9 @@ unordered_map<FogTopologyEntryPtr,
     }
     // move registered query to running query
     tuple<Schema, FogExecutionPlan> t = std::make_tuple(schema, execPlan);
-    this->_runningQueries.insert({queryId, t});
-    this->_registeredQueries.erase(queryId);
-  } else if (this->_runningQueries.find(queryId) != this->_runningQueries.end()) {
+    this->runningQueries.insert({queryId, t});
+    this->registeredQueries.erase(queryId);
+  } else if (this->runningQueries.find(queryId) != this->runningQueries.end()) {
     IOTDB_WARNING("CoordinatorService: Query is already running -> " << queryId);
   } else {
     IOTDB_WARNING("CoordinatorService: Query is not registered -> " << queryId);
@@ -116,8 +116,8 @@ unordered_map<FogTopologyEntryPtr,
 
 vector<DataSourcePtr> CoordinatorService::getSources(const string &description, const ExecutionVertex &v) {
   vector<DataSourcePtr> out = vector<DataSourcePtr>();
-  Schema schema = get<0>(this->_registeredQueries.at(description));
-  FogExecutionPlan execPlan = get<1>(this->_registeredQueries.at(description));
+  Schema schema = get<0>(this->registeredQueries.at(description));
+  FogExecutionPlan execPlan = get<1>(this->registeredQueries.at(description));
 
   DataSourcePtr source;
   if (execPlan.getExecutionGraph()->getAllEdgesToNode(v.ptr).empty()) {
@@ -135,8 +135,8 @@ vector<DataSourcePtr> CoordinatorService::getSources(const string &description, 
 
 vector<DataSinkPtr> CoordinatorService::getSinks(const string &description, const ExecutionVertex &v) {
   vector<DataSinkPtr> out = vector<DataSinkPtr>();
-  Schema schema = get<0>(this->_registeredQueries.at(description));
-  FogExecutionPlan execPlan = get<1>(this->_registeredQueries.at(description));
+  Schema schema = get<0>(this->registeredQueries.at(description));
+  FogExecutionPlan execPlan = get<1>(this->registeredQueries.at(description));
 
   DataSinkPtr sink;
   if (execPlan.getExecutionGraph()->getAllEdgesFromNode(v.ptr).empty()) {
@@ -153,35 +153,35 @@ vector<DataSinkPtr> CoordinatorService::getSinks(const string &description, cons
 }
 
 int CoordinatorService::assign_port(const string &description) {
-  if (this->_queryToPort.find(description) != this->_queryToPort.end()) {
-    return this->_queryToPort.at(description);
+  if (this->queryToPort.find(description) != this->queryToPort.end()) {
+    return this->queryToPort.at(description);
   } else {
     // increase max port in map by 1
     const FogTopologyEntryPtr &kRootNode = FogTopologyManager::getInstance().getRootNode();
     uint16_t kFreeZmqPort = kRootNode->getNextFreeReceivePort();
-    this->_queryToPort.insert({description, kFreeZmqPort});
+    this->queryToPort.insert({description, kFreeZmqPort});
     return kFreeZmqPort;
   }
 }
 
 bool CoordinatorService::deregister_sensor(const FogTopologyEntryPtr &entry) {
-  return this->_topologyManagerPtr->getInstance().removeFogNode(entry);
+  return this->topologyManagerPtr->getInstance().removeFogNode(entry);
 }
 string CoordinatorService::getTopologyPlanString() {
-  return this->_topologyManagerPtr->getInstance().getTopologyPlanString();
+  return this->topologyManagerPtr->getInstance().getTopologyPlanString();
 }
 
 FogExecutionPlan *CoordinatorService::getRegisteredQuery(string queryId) {
-  if (this->_registeredQueries.find(queryId) != this->_registeredQueries.end()) {
-    return &(get<1>(this->_registeredQueries.at(queryId)));
+  if (this->registeredQueries.find(queryId) != this->registeredQueries.end()) {
+    return &(get<1>(this->registeredQueries.at(queryId)));
   }
   return nullptr;
 }
 
 bool CoordinatorService::clearQueryCatalogs() {
   try {
-    _registeredQueries.clear();
-    _runningQueries.clear();
+    registeredQueries.clear();
+    runningQueries.clear();
   } catch (...) {
     return false;
   }
@@ -189,9 +189,9 @@ bool CoordinatorService::clearQueryCatalogs() {
 }
 
 const unordered_map<string, tuple<Schema, FogExecutionPlan>> &CoordinatorService::getRegisteredQueries() const {
-  return _registeredQueries;
+  return registeredQueries;
 }
 
 const unordered_map<string, tuple<Schema, FogExecutionPlan>> &CoordinatorService::getRunningQueries() const {
-  return _runningQueries;
+  return runningQueries;
 }

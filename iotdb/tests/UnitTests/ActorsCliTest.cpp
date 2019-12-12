@@ -5,7 +5,7 @@
 #include <Util/Logger.hpp>
 #include <Actors/Configurations/ActorCoordinatorConfig.hpp>
 #include <Actors/Configurations/ActorWorkerConfig.hpp>
-#include <Actors/atom_utils.hpp>
+#include <Actors/AtomUtils.hpp>
 #include "caf/io/all.hpp"
 
 

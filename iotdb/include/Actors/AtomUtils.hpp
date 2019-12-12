@@ -1,9 +1,7 @@
-#ifndef IOTDB_INCLUDE_ACTORS_ATOM_UTILS_HPP_
-#define IOTDB_INCLUDE_ACTORS_ATOM_UTILS_HPP_
+#ifndef IOTDB_INCLUDE_ACTORS_ATOMUTILS_HPP_
+#define IOTDB_INCLUDE_ACTORS_ATOMUTILS_HPP_
 
 #include <string>
-
-#include "caf/all.hpp"
 
 using std::cout;
 using std::cerr;
@@ -36,4 +34,4 @@ using set_type_atom = atom_constant<atom("s_type")>;
 using get_type_atom = atom_constant<atom("g_type")>;
 }
 
-#endif //IOTDB_INCLUDE_ACTORS_ATOM_UTILS_HPP_
+#endif //IOTDB_INCLUDE_ACTORS_ATOMUTILS_HPP_
