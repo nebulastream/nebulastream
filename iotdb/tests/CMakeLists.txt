@@ -133,7 +133,7 @@ add_test(NAME serialization-tools-tests COMMAND serialization-tools-tests)
 #target_link_libraries(coordinator-service-tests iotdb ${GTEST_LIBRARIES})
 #add_test(NAME coordinator-service-tests COMMAND coordinator-service-tests)
 
-# ActorCoordinator and ActorWorker Tests
+# CoordinatorActor and WorkerActor Tests
 add_executable(actors-cli-tests "UnitTests/ActorsCliTest.cpp")
 target_link_libraries(actors-cli-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME actors-cli-tests COMMAND actors-cli-tests)

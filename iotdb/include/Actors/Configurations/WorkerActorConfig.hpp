@@ -8,7 +8,7 @@ namespace iotdb {
 /**
 * @brief The configuration for worker
 */
-class ActorWorkerConfig : public actor_system_config {
+class WorkerActorConfig : public actor_system_config {
  public:
   std::string ip = "127.0.0.1";
   uint16_t receive_port = 0;
@@ -16,7 +16,7 @@ class ActorWorkerConfig : public actor_system_config {
   uint16_t publish_port = 4711;
   std::string sensor_type = "cars";
 
-  ActorWorkerConfig() {
+  WorkerActorConfig() {
     opt_group{custom_options_, "global"}
         .add(ip, "ip", "set ip")
         .add(publish_port, "publish_port,ppub", "set publish_port")

@@ -1,11 +1,11 @@
-#include <Actors/ActorWorker.hpp>
+#include <Actors/WorkerActor.hpp>
 #include <Actors/ExecutableTransferObject.hpp>
-#include <Actors/atom_utils.hpp>
+#include <Actors/AtomUtils.hpp>
 #include <Util/SerializationTools.hpp>
 
 namespace iotdb {
 // starting point of our FSM
-behavior actor_worker::init() {
+behavior WorkerActor::init() {
   // transition to `unconnected` on server failure
   this->set_down_handler([=](const down_msg &dm) {
     if (dm.source == this->state.current_server) {
@@ -17,7 +17,7 @@ behavior actor_worker::init() {
   return unconnected();
 }
 
-behavior actor_worker::unconnected() {
+behavior WorkerActor::unconnected() {
   return {
       [=](connect_atom, const std::string &host, uint16_t port) {
         connecting(host, port);
@@ -29,7 +29,7 @@ behavior actor_worker::unconnected() {
  * @brief the ongoing connection state in the TSM
  * if connection works go to running state, otherwise go to unconnected state
  */
-void actor_worker::connecting(const std::string &host, uint16_t port) {
+void WorkerActor::connecting(const std::string &host, uint16_t port) {
   // make sure we are not pointing to an old server
   this->state.current_server = nullptr;
   // use request().await() to suspend regular behavior until MM responded
@@ -64,7 +64,7 @@ void actor_worker::connecting(const std::string &host, uint16_t port) {
 /**
  * @brief the running of the worker
  */
-behavior actor_worker::running(const actor &coordinator) {
+behavior WorkerActor::running(const actor &coordinator) {
   auto this_actor_ptr = actor_cast<strong_actor_ptr>(this);
   this->request(coordinator, task_timeout, register_sensor_atom::value, this->state.workerPtr->getIp(),
                 this->state.workerPtr->getPublishPort(), this->state.workerPtr->getReceivePort(), 2,
