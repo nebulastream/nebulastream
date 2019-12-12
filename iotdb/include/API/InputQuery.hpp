@@ -5,7 +5,7 @@
 #include <API/ParameterTypes.hpp>
 #include <API/Schema.hpp>
 #include <API/Stream.hpp>
-#include <iostream>
+
 #include <string>
 #include <SourceSink/DataSource.hpp>
 

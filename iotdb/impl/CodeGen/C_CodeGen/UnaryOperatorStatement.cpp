@@ -8,7 +8,7 @@
 #include <CodeGen/CodeExpression.hpp>
 
 #include <Util/ErrorHandling.hpp>
-#include "../../../include/CodeGen/DataTypes.hpp"
+#include <API/Types/DataTypes.hpp>
 
 namespace iotdb {
 

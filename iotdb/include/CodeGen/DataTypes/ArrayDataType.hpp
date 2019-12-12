@@ -1,0 +1,54 @@
+#ifndef IOTDB_INCLUDE_ARRAYDATATYPE_HPP_
+#define IOTDB_INCLUDE_ARRAYDATATYPE_HPP_
+
+#pragma once
+
+#include <API/Types/DataTypes.hpp>
+
+namespace iotdb {
+
+class ArrayDataType;
+typedef std::shared_ptr<ArrayDataType> ArrayDataTypePtr;
+
+class ArrayDataType : public DataType {
+ public:
+  ArrayDataType() = default;
+  ArrayDataType(DataTypePtr ptr, u_int32_t dimension);
+
+  ValueTypePtr getDefaultInitValue() const override;
+  ValueTypePtr getNullValue() const override;
+  uint32_t getSizeBytes() const override;
+  const std::string toString() const override;
+  const std::string convertRawToString(void *data) const override;
+
+  const CodeExpressionPtr getDeclCode(const std::string &identifier) const override;
+
+  virtual const StatementPtr getStmtCopyAssignment(const AssignmentStatment &aParam) const override ;
+
+  const CodeExpressionPtr getCode() const override ;
+
+  const bool isEqual(DataTypePtr ptr) const override ;
+  const bool isCharDataType() const override;
+  const bool isArrayDataType() const override ;
+
+  const CodeExpressionPtr getTypeDefinitionCode() const override;
+
+  const DataTypePtr copy() const override ;
+  virtual ~ArrayDataType() override;
+
+  bool operator==(const DataType &_rhs) const override ;
+
+ private:
+  DataTypePtr _dataType;
+  u_int32_t _dimensions;
+
+  friend class boost::serialization::access;
+
+  template<class Archive>
+  void serialize(Archive &ar, unsigned) {
+    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataType)
+        & BOOST_SERIALIZATION_NVP(_dimensions);
+  }
+};
+}
+#endif //IOTDB_INCLUDE_ARRAYDATATYPE_HPP_

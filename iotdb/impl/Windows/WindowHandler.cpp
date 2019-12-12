@@ -1,6 +1,8 @@
 
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
+#include <atomic>
+#include <iostream>
+#include <memory>
+
 #include <boost/serialization/export.hpp>
 #include <State/StateManager.hpp>
 #include <NodeEngine/Dispatcher.hpp>
