@@ -1,7 +1,6 @@
 #include "Optimizer/impl/BottomUp.hpp"
 #include <Operators/Operator.hpp>
 #include <iostream>
-#include <exception>
 
 using namespace iotdb;
 using namespace std;

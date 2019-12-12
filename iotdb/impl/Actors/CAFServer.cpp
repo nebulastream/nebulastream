@@ -1,17 +1,14 @@
 
 #include <iostream>
-#include <caf/io/all.hpp>
-#include <caf/all.hpp>
 
-#include "Actors/ActorCoordinator.hpp"
 #include "Actors/CAFServer.hpp"
 
 using namespace iotdb;
 using namespace caf;
 
-bool CAFServer::start() {
+bool CAFServer::start(infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle) {
 
-    ActorCoordinatorConfig actorCoordinatorConfig;
+    CoordinatorActorConfig actorCoordinatorConfig;
     actorCoordinatorConfig.load<io::middleman>();
 
     //Prepare Actor System
@@ -19,10 +16,8 @@ bool CAFServer::start() {
     //Setup then logging
     setupLogging();
 
-    auto coord = actorSystem.spawn<ActorCoordinator>();
-    // try to publish actor at given port
     cout << "*** trying to publish at port " << actorCoordinatorConfig.publish_port << endl;
-    auto expected_port = io::publish(coord, actorCoordinatorConfig.publish_port);
+    auto expected_port = io::publish(coordinatorActorHandle, actorCoordinatorConfig.publish_port);
     if (!expected_port) {
         std::cerr << "*** publish failed: "
                   << actorSystem.render(expected_port.error()) << endl;

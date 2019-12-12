@@ -6,7 +6,7 @@
 
 using namespace iotdb;
 
-bool RestServer::start(std::string host, u_int16_t port) {
+bool RestServer::start(std::string host, u_int16_t port, infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle) {
 
   std::cout << "IoT-DB REST server port set to " << port << std::endl;
   std::cout << "To adjust the value supply: --host <value> --rest_port <value>, as command line argument"
@@ -14,6 +14,7 @@ bool RestServer::start(std::string host, u_int16_t port) {
   std::cout << "------------------------------------------------------------" << std::endl;
 
   RestController server;
+  server.setCoordinatorActorHandle(coordinatorActorHandle);
   server.setEndpoint("http://" + host + ":" + std::to_string(port) + "/v1/iotdb/");
 
   try {

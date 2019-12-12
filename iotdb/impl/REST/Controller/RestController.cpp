@@ -17,6 +17,10 @@ void RestController::initRestOpHandlers() {
     _listener.support(methods::PATCH, std::bind(&RestController::handlePatch, this, std::placeholders::_1));
 }
 
+void RestController::setCoordinatorActorHandle(infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle) {
+    this->coordinatorActorHandle = coordinatorActorHandle;
+};
+
 void RestController::handleGet(http_request message) {
 
     auto path = requestPath(message);
@@ -101,12 +105,11 @@ void RestController::handlePost(http_request message) {
                                 FogTopologyManager::getInstance().createExampleTopology();
 
                                 //Call the service
-                                const string queryId = "";
-                                //                          coordinatorServicePtr->register_query(userQuery, optimizationStrategyName);
-                                //                      FogExecutionPlan *executionPlan = coordinatorServicePtr->getRegisteredQuery(queryId);
+                                const string
+                                    queryId = coordinatorServicePtr->register_query(userQuery, optimizationStrategyName);
+                                FogExecutionPlan* executionPlan = coordinatorServicePtr->getRegisteredQuery(queryId);
 
-                                //                      json::value executionGraphPlan = json;
-                                //                          executionPlan->getExecutionGraphAsJson();
+                                json::value executionGraphPlan = executionPlan->getExecutionGraphAsJson();
 
                                 //Prepare the response
                                 http_response response(status_codes::OK);
@@ -144,18 +147,17 @@ void RestController::handlePost(http_request message) {
                                 std::cout << "Params: " << userQuery << optimizationStrategyName << std::endl;
 
                                 //Call directly the service for registering the query
-                                const string
-                                    queryId = coordinatorServicePtr->register_query(userQuery, optimizationStrategyName);
+                                const string queryId = coordinatorServicePtr->register_query(userQuery,
+                                                                                             optimizationStrategyName);
 
                                 //Perform async call for deploying the query using actor
                                 //Note: This is an async call and would not know if the deployment has failed
-                                ActorCoordinatorConfig actorCoordinatorConfig;
+                                CoordinatorActorConfig actorCoordinatorConfig;
                                 actorCoordinatorConfig.load<io::middleman>();
                                 //Prepare Actor System
                                 actor_system actorSystem{actorCoordinatorConfig};
                                 scoped_actor self{actorSystem};
-                                auto aut = self->spawn<ActorCoordinator>();
-                                self->send(aut, deploy_query_atom::value, queryId);
+                                self->send(coordinatorActorHandle, deploy_query_atom::value, queryId);
 
                                 json::value result{};
                                 result["queryId"] = json::value::string(queryId);

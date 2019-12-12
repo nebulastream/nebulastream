@@ -1,13 +1,14 @@
-#ifndef IOTDB_INCLUDE_ACTORS_ACTORCOORDINATOR_HPP_
-#define IOTDB_INCLUDE_ACTORS_ACTORCOORDINATOR_HPP_
+#ifndef IOTDB_INCLUDE_ACTORS_COORDINATORACTOR_HPP_
+#define IOTDB_INCLUDE_ACTORS_COORDINATORACTOR_HPP_
 
+#include <caf/io/all.hpp>
 #include <caf/all.hpp>
 #include <Actors/AtomUtils.hpp>
 #include <Topology/FogTopologyEntry.hpp>
 #include <Services/CoordinatorService.hpp>
 #include <Services/WorkerService.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-#include <Actors/Configurations/ActorCoordinatorConfig.hpp>
+#include <Actors/Configurations/CoordinatorActorConfig.hpp>
 #include <Topology/FogTopologyManager.hpp>
 
 using std::cout;
@@ -27,13 +28,13 @@ namespace iotdb {
   /**
    * @brief the coordinator for NES
    */
-  class ActorCoordinator : public caf::stateful_actor<CoordinatorState> {
+  class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
 
     public:
       /**
       * @brief the constructor of the coordinator to initialize the default objects
       */
-      explicit ActorCoordinator(caf::actor_config& cfg)
+      explicit CoordinatorActor(caf::actor_config& cfg)
           : stateful_actor(cfg) {
           coordinatorServicePtr = CoordinatorService::getInstance();
           workerServicePtr = std::make_unique<WorkerService>(WorkerService(actorCoordinatorConfig.ip,
@@ -96,11 +97,10 @@ namespace iotdb {
        */
       void initializeNESTopology();
 
-      ActorCoordinatorConfig actorCoordinatorConfig;
+      CoordinatorActorConfig actorCoordinatorConfig;
       CoordinatorServicePtr coordinatorServicePtr;
       std::unique_ptr<WorkerService> workerServicePtr;
   };
-
 }
 
-#endif //IOTDB_INCLUDE_ACTORS_ACTORCOORDINATOR_HPP_
+#endif //IOTDB_INCLUDE_ACTORS_COORDINATORACTOR_HPP_
