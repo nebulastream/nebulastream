@@ -6,7 +6,6 @@
 
 #include <CodeGen/CodeGen.hpp>
 #include <CodeGen/PipelineStage.hpp>
-#include <Util/ErrorHandling.hpp>
 #include <NodeEngine/BufferManager.hpp>
 
 #include <CodeGen/C_CodeGen/BinaryOperatorStatement.hpp>
@@ -16,12 +15,11 @@
 #include <CodeGen/C_CodeGen/Statement.hpp>
 #include <CodeGen/C_CodeGen/UnaryOperatorStatement.hpp>
 #include <API/UserAPIExpression.hpp>
-#include <SourceSink/DataSink.hpp>
 #include <SourceSink/GeneratorSource.hpp>
 #include <Windows/WindowHandler.hpp>
-#include "../../include/CodeGen/DataTypes.hpp"
-#include "../../include/SourceSink/SinkCreator.hpp"
-#include "../../include/SourceSink/SourceCreator.hpp"
+#include <API/Types/DataTypes.hpp>
+#include <SourceSink/SinkCreator.hpp>
+#include <SourceSink/SourceCreator.hpp>
 
 namespace iotdb {
 

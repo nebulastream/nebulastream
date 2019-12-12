@@ -7,9 +7,7 @@ add_source_iotdb(
         ExpressionStatment.cpp
         BinaryOperatorStatement.cpp
         ExpressionStatment.cpp
-        ConstantExprStatement.cpp
         TypeCastExprStatement.cpp
-        VarRefStatement.cpp
         UnaryOperatorStatement.cpp
         BinaryOperatorStatement.cpp
         ReturnStatement.cpp
