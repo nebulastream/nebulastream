@@ -13,8 +13,6 @@ namespace iotdb {
 class ActorsCliTest : public testing::Test {
  public:
   std::string host = "localhost";
-  infer_handle_from_class_t<CoordinatorActor> coordinator;
-  infer_handle_from_class_t<CoordinatorActor> worker;
 
   static void SetUpTestCase() {
     setupLogging();
