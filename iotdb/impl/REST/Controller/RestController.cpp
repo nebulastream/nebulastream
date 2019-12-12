@@ -10,226 +10,232 @@ using namespace iotdb;
 using namespace std;
 
 void RestController::initRestOpHandlers() {
-    _listener.support(methods::GET, std::bind(&RestController::handleGet, this, std::placeholders::_1));
-    _listener.support(methods::PUT, std::bind(&RestController::handlePut, this, std::placeholders::_1));
-    _listener.support(methods::POST, std::bind(&RestController::handlePost, this, std::placeholders::_1));
-    _listener.support(methods::DEL, std::bind(&RestController::handleDelete, this, std::placeholders::_1));
-    _listener.support(methods::PATCH, std::bind(&RestController::handlePatch, this, std::placeholders::_1));
+  _listener.support(methods::GET, std::bind(&RestController::handleGet, this, std::placeholders::_1));
+  _listener.support(methods::PUT, std::bind(&RestController::handlePut, this, std::placeholders::_1));
+  _listener.support(methods::POST, std::bind(&RestController::handlePost, this, std::placeholders::_1));
+  _listener.support(methods::DEL, std::bind(&RestController::handleDelete, this, std::placeholders::_1));
+  _listener.support(methods::PATCH, std::bind(&RestController::handlePatch, this, std::placeholders::_1));
 }
 
 void RestController::setCoordinatorActorHandle(infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle) {
-    this->coordinatorActorHandle = coordinatorActorHandle;
+  this->coordinatorActorHandle = coordinatorActorHandle;
 };
 
 void RestController::handleGet(http_request message) {
 
-    auto path = requestPath(message);
-    if (!path.empty()) {
-        if (path[0] == "service" && path[1] == "fog-plan") {
+  auto path = requestPath(message);
+  if (!path.empty()) {
+    if (path[0] == "service" && path[1] == "fog-plan") {
 
-            const auto& fogTopology = fogTopologyService.getFogTopologyAsJson();
+      const auto &fogTopology = fogTopologyService.getFogTopologyAsJson();
 
-            http_response response(status_codes::OK);
-            response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-            response.set_body(fogTopology);
-            message.reply(response);
-        } else {
-            http_response response(status_codes::NotFound);
-            response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-            message.reply(response);
-        }
+      http_response response(status_codes::OK);
+      response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
+      response.set_body(fogTopology);
+      message.reply(response);
     } else {
-        http_response response(status_codes::NotFound);
-        response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-        message.reply(response);
+      http_response response(status_codes::NotFound);
+      response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
+      message.reply(response);
     }
+  } else {
+    http_response response(status_codes::NotFound);
+    response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
+    message.reply(response);
+  }
 }
 
 void RestController::handlePatch(http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::PATCH));
+  message.reply(status_codes::NotImplemented, responseNotImpl(methods::PATCH));
 }
 
 void RestController::handlePut(http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::PUT));
+  message.reply(status_codes::NotImplemented, responseNotImpl(methods::PUT));
 }
 
 void RestController::handlePost(http_request message) {
-    try {
+  try {
 
-        auto path = requestPath(message);
-        if (!path.empty()) {
-            if (path[0] == "service" && path[1] == "query-plan") {
+    auto path = requestPath(message);
+    if (!path.empty()) {
+      if (path[0] == "service" && path[1] == "query-plan") {
 
-                message.extract_string(true)
-                    .then([this, message](utility::string_t body) {
-                            try {
-                                //Prepare Input query from user string
-                                std::string userQuery(body.begin(), body.end());
+        message.extract_string(true)
+            .then([this, message](utility::string_t body) {
+                    try {
+                      //Prepare Input query from user string
+                      std::string userQuery(body.begin(), body.end());
 
-                                //Call the service
-                                const auto& basePlan = queryService.generateBaseQueryPlanFromQueryString(
-                                    userQuery);
+                      //Call the service
+                      const auto &basePlan = queryService.generateBaseQueryPlanFromQueryString(
+                          userQuery);
 
-                                //Prepare the response
-                                http_response response(status_codes::OK);
-                                response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-                                response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-                                response.set_body(basePlan);
-                                message.reply(response);
+                      //Prepare the response
+                      http_response response(status_codes::OK);
+                      response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
+                      response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
+                      response.set_body(basePlan);
+                      message.reply(response);
 
-                            } catch (...) {
-                                std::cout << "Exception occurred while building the query plan for user request.";
-                                http_response response(status_codes::InternalError);
-                                response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-                                response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-                                message.reply(response);
-                            }
-                          }
-                    )
-                    .wait();
+                    } catch (...) {
+                      std::cout << "Exception occurred while building the query plan for user request.";
+                      http_response response(status_codes::InternalError);
+                      response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
+                      response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
+                      message.reply(response);
+                    }
+                  }
+            )
+            .wait();
 
-            } else if (path[0] == "service" && path[1] == "execution-plan") {
+      } else if (path[0] == "service" && path[1] == "execution-plan") {
 
-                message.extract_string(true)
-                    .then([this, message](utility::string_t body) {
-                            try {
-                                //Prepare Input query from user string
-                                string userRequest(body.begin(), body.end());
+        message.extract_string(true)
+            .then([this, message](utility::string_t body) {
+                    try {
+                      //Prepare Input query from user string
+                      string userRequest(body.begin(), body.end());
 
-                                json::value req = json::value::parse(userRequest);
+                      json::value req = json::value::parse(userRequest);
 
-                                string userQuery = req.at("userQuery").as_string();
-                                string optimizationStrategyName = req.at("strategyName").as_string();
+                      string userQuery = req.at("userQuery").as_string();
+                      string optimizationStrategyName = req.at("strategyName").as_string();
 
-                                //FIXME: setup example topology
-                                FogTopologyManager::getInstance().createExampleTopology();
+                      //FIXME: setup example topology
+                      FogTopologyManager::getInstance().createExampleTopology();
 
-                                //Call the service
-                                const string
-                                    queryId = coordinatorServicePtr->register_query(userQuery, optimizationStrategyName);
-                                FogExecutionPlan* executionPlan = coordinatorServicePtr->getRegisteredQuery(queryId);
+                      //Call the service
+                      const string
+                          queryId = coordinatorServicePtr->register_query(userQuery, optimizationStrategyName);
+                      FogExecutionPlan *executionPlan = coordinatorServicePtr->getRegisteredQuery(queryId);
 
-                                json::value executionGraphPlan = executionPlan->getExecutionGraphAsJson();
+                      json::value executionGraphPlan = executionPlan->getExecutionGraphAsJson();
 
-                                //Prepare the response
-                                http_response response(status_codes::OK);
-                                response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-                                response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-                                response.set_body("");
-                                message.reply(response);
+                      //Prepare the response
+                      http_response response(status_codes::OK);
+                      response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
+                      response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
+                      response.set_body("");
+                      message.reply(response);
 
-                            } catch (...) {
-                                std::cout << "Exception occurred while building the query plan for user request.";
-                                http_response response(status_codes::InternalError);
-                                response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-                                response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-                                message.reply(response);
-                            }
-                          }
-                    )
-                    .wait();
+                    } catch (...) {
+                      std::cout << "Exception occurred while building the query plan for user request.";
+                      http_response response(status_codes::InternalError);
+                      response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
+                      response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
+                      message.reply(response);
+                    }
+                  }
+            )
+            .wait();
 
-            } else if (path[0] == "service" && path[1] == "execute-query") {
+      } else if (path[0] == "service" && path[1] == "execute-query") {
 
-                std::cout << "Trying to execute query: -> " << std::endl;
+        std::cout << "Trying to execute query: -> " << std::endl;
 
-                message.extract_string(true)
-                    .then([this, message](utility::string_t body) {
-                            try {
-                                //Prepare Input query from user string
-                                string userRequest(body.begin(), body.end());
+        message.extract_string(true)
+            .then([this, message](utility::string_t body) {
+                    try {
+                      //Prepare Input query from user string
+                      string userRequest(body.begin(), body.end());
 
-                                json::value req = json::value::parse(userRequest);
+                      json::value req = json::value::parse(userRequest);
 
-                                string userQuery = req.at("userQuery").as_string();
-                                string optimizationStrategyName = req.at("strategyName").as_string();
+                      string userQuery = req.at("userQuery").as_string();
+                      string optimizationStrategyName = req.at("strategyName").as_string();
 
-                                std::cout << "Params: " << userQuery << optimizationStrategyName << std::endl;
+                      std::cout << "Params: " << userQuery << optimizationStrategyName << std::endl;
 
-                                //Call directly the service for registering the query
-                                const string queryId = coordinatorServicePtr->register_query(userQuery,
-                                                                                             optimizationStrategyName);
+                      //Perform async call for deploying the query using actor
+                      //Note: This is an async call and would not know if the deployment has failed
+                      CoordinatorActorConfig actorCoordinatorConfig;
+                      actorCoordinatorConfig.load<io::middleman>();
+                      //Prepare Actor System
+                      actor_system actorSystem{actorCoordinatorConfig};
+                      scoped_actor self{actorSystem};
 
-                                //Perform async call for deploying the query using actor
-                                //Note: This is an async call and would not know if the deployment has failed
-                                CoordinatorActorConfig actorCoordinatorConfig;
-                                actorCoordinatorConfig.load<io::middleman>();
-                                //Prepare Actor System
-                                actor_system actorSystem{actorCoordinatorConfig};
-                                scoped_actor self{actorSystem};
-                                self->send(coordinatorActorHandle, deploy_query_atom::value, queryId);
+                      string queryId;
+                      self->request(coordinatorActorHandle, task_timeout, register_query_atom::value, userQuery, optimizationStrategyName).receive(
+                          [&queryId](const string &_uuid) mutable {
+                            queryId = _uuid;
+                          },
+                          [=](const error &er) {
+                            string error_msg = to_string(er);
+                          });
 
-                                json::value result{};
-                                result["queryId"] = json::value::string(queryId);
+                      anon_send(coordinatorActorHandle, deploy_query_atom::value, queryId);
 
-                                //Prepare the response
-                                http_response response(status_codes::OK);
-                                response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-                                response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-                                response.set_body(result);
-                                message.reply(response);
+                      json::value result{};
+                      result["queryId"] = json::value::string(queryId);
 
-                            } catch (...) {
-                                std::cout << "Exception occurred while building the query plan for user request.";
-                                http_response response(status_codes::InternalError);
-                                response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-                                response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-                                message.reply(response);
-                            }
-                          }
-                    )
-                    .wait();
+                      //Prepare the response
+                      http_response response(status_codes::OK);
+                      response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
+                      response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
+                      response.set_body(result);
+                      message.reply(response);
 
-            } else {
-                http_response response(status_codes::NotFound);
-                response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-                message.reply(response);
-            }
-        } else {
-            http_response response(status_codes::NotFound);
-            response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-            message.reply(response);
-        }
-    } catch (const std::exception& ex) {
-        std::cout << "Exception occurred during post request.";
-    } catch (...) {
-        RuntimeUtils::printStackTrace();
+                    } catch (...) {
+                      std::cout << "Exception occurred while building the query plan for user request.";
+                      http_response response(status_codes::InternalError);
+                      response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
+                      response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
+                      message.reply(response);
+                    }
+                  }
+            )
+            .wait();
+
+      } else {
+        http_response response(status_codes::NotFound);
+        response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
+        message.reply(response);
+      }
+    } else {
+      http_response response(status_codes::NotFound);
+      response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
+      message.reply(response);
     }
+  } catch (const std::exception &ex) {
+    std::cout << "Exception occurred during post request.";
+  } catch (...) {
+    RuntimeUtils::printStackTrace();
+  }
 
 }
 
 void RestController::handleDelete(http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::DEL));
+  message.reply(status_codes::NotImplemented, responseNotImpl(methods::DEL));
 }
 
 void RestController::handleHead(http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::HEAD));
+  message.reply(status_codes::NotImplemented, responseNotImpl(methods::HEAD));
 }
 
 void RestController::handleOptions(http_request message) {
-    http_response response(status_codes::OK);
-    response.headers().add(U("Allow"), U("GET, POST, OPTIONS"));
-    response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-    response.headers().add(U("Access-Control-Allow-Methods"), U("GET, POST, OPTIONS"));
-    response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-    message.reply(response);
+  http_response response(status_codes::OK);
+  response.headers().add(U("Allow"), U("GET, POST, OPTIONS"));
+  response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
+  response.headers().add(U("Access-Control-Allow-Methods"), U("GET, POST, OPTIONS"));
+  response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
+  message.reply(response);
 }
 
 void RestController::handleTrace(http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::TRCE));
+  message.reply(status_codes::NotImplemented, responseNotImpl(methods::TRCE));
 }
 
 void RestController::handleConnect(http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::CONNECT));
+  message.reply(status_codes::NotImplemented, responseNotImpl(methods::CONNECT));
 }
 
 void RestController::handleMerge(http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::MERGE));
+  message.reply(status_codes::NotImplemented, responseNotImpl(methods::MERGE));
 }
 
-json::value RestController::responseNotImpl(const http::method& method) {
-    auto response = json::value::object();
-    response["serviceName"] = json::value::string("IotDB");
-    response["http_method"] = json::value::string(method);
-    return response;
+json::value RestController::responseNotImpl(const http::method &method) {
+  auto response = json::value::object();
+  response["serviceName"] = json::value::string("IotDB");
+  response["http_method"] = json::value::string(method);
+  return response;
 }

@@ -21,6 +21,7 @@ behavior WorkerActor::unconnected() {
   return {
       [=](connect_atom, const std::string &host, uint16_t port) {
         connecting(host, port);
+        return true;
       }
   };
 }

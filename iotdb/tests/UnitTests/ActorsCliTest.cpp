@@ -8,19 +8,20 @@
 #include <Actors/AtomUtils.hpp>
 #include "caf/io/all.hpp"
 
-
 namespace iotdb {
 
 class ActorsCliTest : public testing::Test {
  public:
   std::string host = "localhost";
+  infer_handle_from_class_t<CoordinatorActor> coordinator;
+  infer_handle_from_class_t<CoordinatorActor> worker;
 
   static void SetUpTestCase() {
     setupLogging();
     IOTDB_INFO("Setup ActorCoordinatorWorkerTest test class.");
   }
 
-  static void TearDownTestCase() { std::cout << "Tear down ActorCoordinatorWorkerTest test class." << std::endl; }
+  static void TearDownTestCase() { std::cout << "Tear down ActorsCli test class." << std::endl; }
  protected:
   static void setupLogging() {
     // create PatternLayout
@@ -126,13 +127,46 @@ TEST_F(ActorsCliTest, testShowRegistered) {
   w_cfg.load<io::middleman>();
   actor_system sw{w_cfg};
   auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
-  anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
-  std::this_thread::sleep_for(std::chrono::seconds(1));
 
-  anon_send(coordinator, register_query_atom::value, "example", "BottomUp");
-  std::this_thread::sleep_for(std::chrono::seconds(1));
-  anon_send(coordinator, show_registered_atom::value);
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+  //Prepare Actor System
+  scoped_actor self{system_coord};
+  bool connected = false;
+  self->request(worker, task_timeout, connect_atom::value, w_cfg.host, c_cfg.publish_port).receive(
+      [&connected](const bool &c) mutable {
+        connected = c;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+      },
+      [=](const error &er) {
+        string error_msg = to_string(er);
+        IOTDB_ERROR("ACTORSCLITEST: Error during testShowRegistered " << "\n" << error_msg);
+      });
+  EXPECT_TRUE(connected);
+
+  // check registration
+  string uuid;
+  self->request(coordinator, task_timeout, register_query_atom::value, "example", "BottomUp").receive(
+      [&uuid](const string &_uuid) mutable {
+        uuid = _uuid;
+      },
+      [=](const error &er) {
+        string error_msg = to_string(er);
+        IOTDB_ERROR("ACTORSCLITEST: Error during testShowRegistered " << "\n" << error_msg);
+      });
+  IOTDB_INFO("ACTORSCLITEST: Registration completed with query ID " << uuid);
+  EXPECT_TRUE(!uuid.empty());
+
+  // check length of registered queries
+  size_t query_size = 0;
+  self->request(coordinator, task_timeout, show_registered_atom::value).receive(
+      [&query_size](const size_t length) mutable {
+        query_size = length;
+        IOTDB_INFO("ACTORSCLITEST: Query length " << length);
+      },
+      [=](const error &er) {
+        string error_msg = to_string(er);
+        IOTDB_ERROR("ACTORSCLITEST: Error during testShowRegistered " << "\n" << error_msg);
+      });
+  EXPECT_EQ(query_size, 1);
 
   anon_send_exit(worker, exit_reason::user_shutdown);
   anon_send_exit(coordinator, exit_reason::user_shutdown);
@@ -141,37 +175,74 @@ TEST_F(ActorsCliTest, testShowRegistered) {
 //TODO: Fixme, remove Thread.Sleep
 TEST_F(ActorsCliTest, DISABLED_testDeleteQuery) {
   cout << "*** Running test testDeleteQuery" << endl;
-  CoordinatorActorConfig ccfg;
-  ccfg.load<io::middleman>();
-  actor_system system_coord{ccfg};
+  CoordinatorActorConfig c_cfg;
+  c_cfg.load<io::middleman>();
+  actor_system system_coord{c_cfg};
   auto coordinator = system_coord.spawn<iotdb::CoordinatorActor>();
 
   // try to publish actor at given port
-  cout << "*** try publish at port " << ccfg.publish_port << endl;
-  auto expected_port = io::publish(coordinator, ccfg.publish_port);
+  cout << "*** try publish at port " << c_cfg.publish_port << endl;
+  auto expected_port = io::publish(coordinator, c_cfg.publish_port);
   if (!expected_port) {
     std::cerr << "*** publish failed: "
               << system_coord.render(expected_port.error()) << endl;
     return;
   }
   cout << "*** coordinator successfully published at port " << *expected_port << endl;
-  std::this_thread::sleep_for(std::chrono::seconds(2));
+  std::this_thread::sleep_for(std::chrono::seconds(1));
 
   WorkerActorConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw{w_cfg};
   auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
-  anon_send(worker, connect_atom::value, w_cfg.host, ccfg.publish_port);
-  std::this_thread::sleep_for(std::chrono::seconds(1));
 
+  //Prepare Actor System
+  scoped_actor self{system_coord};
+  bool connected = false;
+  self->request(worker, task_timeout, connect_atom::value, w_cfg.host, c_cfg.publish_port).receive(
+      [&connected](const bool &c) mutable {
+        connected = c;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+      },
+      [=](const error &er) {
+        string error_msg = to_string(er);
+        IOTDB_ERROR("ACTORSCLITEST: Error during testShowRegistered " << "\n" << error_msg);
+      });
+  EXPECT_TRUE(connected);
+
+  // check registration
+  string uuid;
   string description = "example";
-  anon_send(coordinator, register_query_atom::value, description, "BottomUp");
-  std::this_thread::sleep_for(std::chrono::seconds(1));
-  anon_send(coordinator, show_registered_atom::value);
-  std::this_thread::sleep_for(std::chrono::seconds(1));
-  anon_send(coordinator, deploy_query_atom::value, description);
+  self->request(coordinator, task_timeout, register_query_atom::value, description, "BottomUp").receive(
+      [&uuid](const string &_uuid) mutable {
+        uuid = _uuid;
+      },
+      [=](const error &er) {
+        string error_msg = to_string(er);
+        IOTDB_ERROR("ACTORSCLITEST: Error during testShowRegistered " << "\n" << error_msg);
+      });
+  IOTDB_INFO("ACTORSCLITEST: Registration completed with query ID " << uuid);
+  EXPECT_TRUE(!uuid.empty());
+
+  // check length of registered queries
+  size_t query_size = 0;
+  self->request(coordinator, task_timeout, show_registered_atom::value).receive(
+      [&query_size](const size_t length) mutable {
+        query_size = length;
+        IOTDB_INFO("ACTORSCLITEST: Query length " << length);
+      },
+      [=](const error &er) {
+        string error_msg = to_string(er);
+        IOTDB_ERROR("ACTORSCLITEST: Error during testShowRegistered " << "\n" << error_msg);
+      });
+  EXPECT_EQ(query_size, 1);
+
+  anon_send(coordinator, deploy_query_atom::value, uuid);
+
+  // let query run for some arbitrary seconds
   std::this_thread::sleep_for(std::chrono::seconds(3));
   anon_send(coordinator, deregister_query_atom::value, description);
+
   std::this_thread::sleep_for(std::chrono::seconds(2));
   anon_send(coordinator, show_running_atom::value);
   std::this_thread::sleep_for(std::chrono::seconds(1));
