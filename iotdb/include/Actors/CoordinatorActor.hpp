@@ -67,6 +67,14 @@ namespace iotdb {
                           const string& sensor);
 
       /**
+       * @brief execute user query will first register the query and then deploy it.
+       * @param queryString : user query, in string form, to be executed
+       * @param strategy : deployment strategy for the query operators
+       * @return UUID of the submitted user query.
+       */
+      string executeQuery(const string& queryString, const string& strategy);
+
+      /**
        * @brief register the user query
        * @param queryString string representation of the query
        * @return uuid of the registered query

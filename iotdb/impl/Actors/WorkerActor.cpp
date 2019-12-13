@@ -77,9 +77,9 @@ behavior WorkerActor::running(const actor &coordinator) {
         connecting(host, port);
       },
       // internal rpc to execute a query
-      [=](execute_query_atom, const string &description, string &executableTransferObject) {
+      [=](execute_operators_atom, const string &queryId, string &executableTransferObject) {
         // internal rpc to execute a query
-        this->state.workerPtr->execute_query(description, executableTransferObject);
+        this->state.workerPtr->execute_query(queryId, executableTransferObject);
       },
       // internal rpc to unregister a query
       [=](delete_query_atom, const string &query) {
