@@ -139,9 +139,9 @@ target_link_libraries(actors-cli-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME actors-cli-tests COMMAND actors-cli-tests)
 
 # e2e Tests
-#add_executable(e2e-rest-test "e2e_tests/E2eRestTest.cpp")
-#target_link_libraries(e2e-rest-test iotdb ${GTEST_LIBRARIES})
-#add_test(NAME e2e-rest-test COMMAND e2e-rest-test)
+add_executable(e2e-rest-test "E2e/E2eRestTest.cpp")
+target_link_libraries(e2e-rest-test iotdb ${GTEST_LIBRARIES})
+add_test(NAME e2e-rest-test COMMAND e2e-rest-test)
 
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure

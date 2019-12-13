@@ -139,6 +139,7 @@ void RestController::handlePost(http_request message) {
                     try {
                       //Prepare Input query from user string
                       string userRequest(body.begin(), body.end());
+                      std::cout << "Request body: " << userRequest << std::endl;
 
                       json::value req = json::value::parse(userRequest);
 
