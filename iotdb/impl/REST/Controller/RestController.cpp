@@ -104,6 +104,7 @@ void RestController::handlePost(http_request message) {
                       //FIXME: setup example topology
                       FogTopologyManager::getInstance().createExampleTopology();
 
+
                       //Call the service
                       const string
                           queryId = coordinatorServicePtr->register_query(userQuery, optimizationStrategyName);
@@ -115,7 +116,7 @@ void RestController::handlePost(http_request message) {
                       http_response response(status_codes::OK);
                       response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
                       response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-                      response.set_body("");
+                      response.set_body(executionGraphPlan);
                       message.reply(response);
 
                     } catch (...) {
@@ -144,7 +145,7 @@ void RestController::handlePost(http_request message) {
                       string userQuery = req.at("userQuery").as_string();
                       string optimizationStrategyName = req.at("strategyName").as_string();
 
-                      std::cout << "Params: " << userQuery << optimizationStrategyName << std::endl;
+                      std::cout << "Params: userQuery= " << userQuery << ", strategyName= "<< optimizationStrategyName << std::endl;
 
                       //Perform async call for deploying the query using actor
                       //Note: This is an async call and would not know if the deployment has failed
@@ -155,15 +156,13 @@ void RestController::handlePost(http_request message) {
                       scoped_actor self{actorSystem};
 
                       string queryId;
-                      self->request(coordinatorActorHandle, task_timeout, register_query_atom::value, userQuery, optimizationStrategyName).receive(
+                      self->request(coordinatorActorHandle, task_timeout, execute_query_atom::value, userQuery, optimizationStrategyName).receive(
                           [&queryId](const string &_uuid) mutable {
                             queryId = _uuid;
                           },
                           [=](const error &er) {
                             string error_msg = to_string(er);
                           });
-
-                      anon_send(coordinatorActorHandle, deploy_query_atom::value, queryId);
 
                       json::value result{};
                       result["queryId"] = json::value::string(queryId);
