@@ -1,6 +1,3 @@
-//
-// Created by xchatziliadis on 01.11.19.
-//
 
 #ifndef IOTDB_SERIALIZATIONTOOLS_HPP
 #define IOTDB_SERIALIZATIONTOOLS_HPP
