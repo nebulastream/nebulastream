@@ -22,10 +22,10 @@ class WorkerService {
 
   /**
    * @brief framework internal method which is called to execute a query or sub-query on a node
-   * @param description a description of the query
+   * @param queryId a queryId of the query
    * @param executableTransferObject wrapper object with the schema, sources, destinations, operator
    */
-  void execute_query(const string &description, string &executableTransferObject);
+  void execute_query(const string &queryId, string &executableTransferObject);
 
   /**
  * @brief method which is called to unregister an already running query

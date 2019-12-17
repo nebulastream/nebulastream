@@ -14,11 +14,11 @@ WorkerService::WorkerService(string ip, uint16_t publish_port, uint16_t receive_
   this->_enginePtr->start();
 }
 
-void WorkerService::execute_query(const string &description, string &executableTransferObject) {
-  IOTDB_INFO("WORKERSERVICE (" << this->_ip << "-" << this->_sensor_type << "): Executing " << description);
+void WorkerService::execute_query(const string &queryId, string &executableTransferObject) {
+  IOTDB_INFO("WORKERSERVICE (" << this->_ip << "-" << this->_sensor_type << "): Executing " << queryId);
   ExecutableTransferObject eto = SerializationTools::parse_eto(executableTransferObject);
   QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan();
-  this->_runningQueries.insert({description, std::make_tuple(qep, eto.getOperatorTree())});
+  this->_runningQueries.insert({queryId, std::make_tuple(qep, eto.getOperatorTree())});
   this->_enginePtr->deployQuery(qep);
   std::this_thread::sleep_for(std::chrono::seconds(2));
 }

@@ -1,5 +1,3 @@
-#include <API/InputQuery.hpp>
-
 #include <REST/runtime_utils.hpp>
 #include <REST/std_service.hpp>
 #include <REST/Controller/RestController.hpp>
@@ -9,6 +7,7 @@
 using namespace web;
 using namespace http;
 using namespace iotdb;
+using namespace std;
 
 void RestController::initRestOpHandlers() {
   _listener.support(methods::GET, std::bind(&RestController::handleGet, this, std::placeholders::_1));
@@ -17,6 +16,10 @@ void RestController::initRestOpHandlers() {
   _listener.support(methods::DEL, std::bind(&RestController::handleDelete, this, std::placeholders::_1));
   _listener.support(methods::PATCH, std::bind(&RestController::handlePatch, this, std::placeholders::_1));
 }
+
+void RestController::setCoordinatorActorHandle(infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle) {
+  this->coordinatorActorHandle = coordinatorActorHandle;
+};
 
 void RestController::handleGet(http_request message) {
 
@@ -101,9 +104,11 @@ void RestController::handlePost(http_request message) {
                       //FIXME: setup example topology
                       FogTopologyManager::getInstance().createExampleTopology();
 
+
                       //Call the service
-                      const string queryId = coordinatorService->register_query(userQuery, optimizationStrategyName);
-                      FogExecutionPlan *executionPlan = coordinatorService->getRegisteredQuery(queryId);
+                      const string
+                          queryId = coordinatorServicePtr->register_query(userQuery, optimizationStrategyName);
+                      FogExecutionPlan *executionPlan = coordinatorServicePtr->getRegisteredQuery(queryId);
 
                       json::value executionGraphPlan = executionPlan->getExecutionGraphAsJson();
 
@@ -127,25 +132,47 @@ void RestController::handlePost(http_request message) {
 
       } else if (path[0] == "service" && path[1] == "execute-query") {
 
+        std::cout << "Trying to execute query: -> " << std::endl;
+
         message.extract_string(true)
             .then([this, message](utility::string_t body) {
                     try {
                       //Prepare Input query from user string
                       string userRequest(body.begin(), body.end());
+                      std::cout << "Request body: " << userRequest << std::endl;
 
                       json::value req = json::value::parse(userRequest);
 
                       string userQuery = req.at("userQuery").as_string();
                       string optimizationStrategyName = req.at("strategyName").as_string();
 
-                      //Call the service
-                      const string queryId = coordinatorService->executeQuery(userQuery, optimizationStrategyName);
+                      std::cout << "Params: userQuery= " << userQuery << ", strategyName= "<< optimizationStrategyName << std::endl;
+
+                      //Perform async call for deploying the query using actor
+                      //Note: This is an async call and would not know if the deployment has failed
+                      CoordinatorActorConfig actorCoordinatorConfig;
+                      actorCoordinatorConfig.load<io::middleman>();
+                      //Prepare Actor System
+                      actor_system actorSystem{actorCoordinatorConfig};
+                      scoped_actor self{actorSystem};
+
+                      string queryId;
+                      self->request(coordinatorActorHandle, task_timeout, execute_query_atom::value, userQuery, optimizationStrategyName).receive(
+                          [&queryId](const string &_uuid) mutable {
+                            queryId = _uuid;
+                          },
+                          [=](const error &er) {
+                            string error_msg = to_string(er);
+                          });
+
+                      json::value result{};
+                      result["queryId"] = json::value::string(queryId);
 
                       //Prepare the response
                       http_response response(status_codes::OK);
                       response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
                       response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-                      response.set_body(queryId);
+                      response.set_body(result);
                       message.reply(response);
 
                     } catch (...) {
