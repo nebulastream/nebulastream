@@ -33,7 +33,7 @@ class OneGeneratorSource : public GeneratorSource {
     assert(buf->getBuffer() != NULL);
 
     for (uint64_t recordIndex = 0; recordIndex < tupleCnt; recordIndex++) {
-      for (uint64_t fieldIndex = 0; fieldIndex < this->schema.getSchemaSize(); fieldIndex++) {
+      for (uint64_t fieldIndex = 0; fieldIndex < this->schema.getSize(); fieldIndex++) {
         layout->writeField<uint64_t>(buf, recordIndex, fieldIndex, 1);
       }
     }
