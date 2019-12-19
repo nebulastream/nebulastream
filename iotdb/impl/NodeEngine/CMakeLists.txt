@@ -6,3 +6,4 @@ add_source_iotdb(
         ThreadPool.cpp
         Task.cpp
     	)
+add_subdirectory(MemoryLayout)
