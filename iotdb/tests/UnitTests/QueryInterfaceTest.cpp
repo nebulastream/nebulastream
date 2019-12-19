@@ -56,27 +56,12 @@ namespace iotdb {
                 .addField("id", BasicType::UINT32)
                 .addField("value", BasicType::UINT64);
 
-        /** \brief create a source using the following functions:
-         * const DataSourcePtr createTestSource();
-         * const DataSourcePtr createBinaryFileSource(const Schema& schema, const std::string& path_to_file);
-         * const DataSourcePtr createRemoteTCPSource(const Schema& schema, const std::string& server_ip, int port);
 
-        InputQuery &query = InputQuery::from("cars", schema)
-                .filter(Field("rents", Int) <= 10)
-                .map(Field("revenue"), Field("price") - Field("tax"))
-                .windowByKey(
-                        Field("id"),
-                        TumblingWindow::of(Seconds(10)),
-                        Sum(Field("revenue")).as(Field("revenuePerCar"))
-                )
-                .print(std::cout);
-  */
+        Stream def = Stream("default", schema);
 
-        Stream cars = Stream("cars", schema);
-
-        InputQuery& query = InputQuery::from(cars)
-                .filter(cars["value"]  > 42)
-                .windowByKey(cars["value"].getAttributeField(),TumblingWindow::of(Seconds(10)), Sum::on(cars["value"]))
+        InputQuery& query = InputQuery::from(def)
+                .filter(def["value"]  > 42)
+                .windowByKey(def["value"].getAttributeField(),TumblingWindow::of(Seconds(10)), Sum::on(def["value"]))
                 .print(std::cout);
 
         env.printInputQueryPlan(query);
@@ -96,12 +81,12 @@ namespace iotdb {
                 .addField("id", BasicType::UINT32)
                 .addField("value", BasicType::UINT64);
 
-        Stream cars = Stream("cars", schema);
+        Stream def = Stream("default", schema);
 
         AttributeField mappedField("id", BasicType::UINT64);
 
-        InputQuery& query = InputQuery::from(cars)
-                .map(*schema[0], cars["value"] + schema[1])
+        InputQuery& query = InputQuery::from(def)
+                .map(*schema[0], def["value"] + schema[1])
                 .print(std::cout);
         env.printInputQueryPlan(query);
         env.executeQuery(query);
