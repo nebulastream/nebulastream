@@ -24,10 +24,11 @@ using std::string;
 using namespace caf;
 using namespace iotdb;
 
+#define DEFAULT_NUMBER_OF_WORKER_INSTANCES 1
 /**
 * @brief main method to run the worker with an interactive console command list
 */
-void start_worker(actor_system &system, const WorkerActorConfig &cfg) {
+void start_worker(actor_system &system, const WorkerActorConfig &cfg, size_t numberOfWorker) {
   // keeps track of requests and tries to reconnect on server failures
   auto usage = [] {
     cout << "Usage:" << endl
@@ -39,7 +40,7 @@ void start_worker(actor_system &system, const WorkerActorConfig &cfg) {
 
   infer_handle_from_class_t<iotdb::WorkerActor> client;
 
-  for (int i = 1; i <= 5; i++) {
+  for (size_t i = 1; i <= numberOfWorker; i++) {
     client = system.spawn<iotdb::WorkerActor>(cfg.ip, cfg.publish_port, cfg.receive_port,
                                               cfg.sensor_type + std::to_string(i));
     if (!cfg.host.empty() && cfg.publish_port > 0)
@@ -112,10 +113,28 @@ void setupLogging() {
   iotdb::logger->addAppender(console);
 }
 
-void caf_main(actor_system &system, const WorkerActorConfig &cfg) {
-  log4cxx::Logger::getLogger("IOTDB")->setLevel(log4cxx::Level::getDebug());
+void caf_main(actor_system &system, WorkerActorConfig &cfg, size_t numberOfWorker) {
   setupLogging();
-  start_worker(system, cfg);
+//  cout << argc << endl;
+  start_worker(system, cfg, numberOfWorker);
 }
 
-CAF_MAIN(io::middleman)
+int main(int argc, char** argv) {
+  // keeps track of requests and tries to reconnect on server failures
+  auto usage = [] {
+    cout << "Usage:" << endl
+         << "  provide the number of worker threads spawned" << endl
+         << endl;
+  };
+  usage();
+
+  WorkerActorConfig cfg;
+  cfg.load<io::middleman>();
+  actor_system system{cfg};
+
+  size_t numberOfWorker = DEFAULT_NUMBER_OF_WORKER_INSTANCES;
+  if(argc == 2)
+    numberOfWorker = atoi(argv[1]);
+
+  caf_main(system, cfg, numberOfWorker);
+}
