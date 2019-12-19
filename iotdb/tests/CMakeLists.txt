@@ -128,6 +128,10 @@ add_executable(serialization-tools-tests "UnitTests/SerializationToolsTest.cpp")
 target_link_libraries(serialization-tools-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME serialization-tools-tests COMMAND serialization-tools-tests)
 
+add_executable(memory-layout-tests "UnitTests/MemoryLayoutTest.cpp")
+target_link_libraries(memory-layout-tests iotdb ${GTEST_LIBRARIES})
+add_test(NAME memory-layout-tests COMMAND memory-layout-tests)
+
 # CoordinatorService Tests
 add_executable(coordinator-service-tests "UnitTests/CoordinatorServiceTest.cpp")
 target_link_libraries(coordinator-service-tests iotdb ${GTEST_LIBRARIES})
