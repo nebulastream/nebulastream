@@ -2,7 +2,7 @@
 #define IOTDB_INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALSCHEMA_HPP_
 #include <memory>
 #include <vector>
-#include <CodeGen/DataTypes.hpp>
+#include <API/Types/DataTypes.hpp>
 namespace iotdb {
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
