@@ -4,6 +4,9 @@
 #include <SourceSink/ZmqSource.hpp>
 #include <SourceSink/DataSource.hpp>
 #include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
+#include <NodeEngine/MemoryLayout/PhysicalSchema.hpp>
+#include <NodeEngine/MemoryLayout/PhysicalField.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <YSB_legacy/YSBGeneratorSource.hpp>
 
@@ -17,18 +20,22 @@ class OneGeneratorSource : public GeneratorSource {
   OneGeneratorSource() = default;
   OneGeneratorSource(const Schema &schema, const uint64_t pNum_buffers_to_process) :
       GeneratorSource(schema, pNum_buffers_to_process) {
+
+
   }
 
   TupleBufferPtr receiveData() override {
     // 10 tuples of size one
     TupleBufferPtr buf = BufferManager::instance().getBuffer();
     size_t tupleCnt = 10;
+    auto layout = createRowLayout(std::make_shared<Schema>(schema));
 
     assert(buf->getBuffer() != NULL);
 
-    uint64_t *tuples = (uint64_t *) buf->getBuffer();
-    for (uint64_t i = 0; i < tupleCnt; i++) {
-      tuples[i] = 1;
+    for (uint64_t recordIndex = 0; recordIndex < tupleCnt; recordIndex++) {
+      for (uint64_t fieldIndex = 0; fieldIndex < this->schema.getSchemaSize(); fieldIndex++) {
+        layout->writeField<uint64_t>(buf, recordIndex, fieldIndex, 1);
+      }
     }
     buf->setTupleSizeInBytes(sizeof(uint64_t));
     buf->setNumberOfTuples(tupleCnt);
