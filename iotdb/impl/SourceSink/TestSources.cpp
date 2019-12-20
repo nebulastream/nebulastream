@@ -16,13 +16,11 @@
 namespace iotdb {
 
 class OneGeneratorSource : public GeneratorSource {
- public:
-  OneGeneratorSource() = default;
-  OneGeneratorSource(const Schema &schema, const uint64_t pNum_buffers_to_process) :
-      GeneratorSource(schema, pNum_buffers_to_process) {
-
-
-  }
+  public:
+    OneGeneratorSource() = default;
+    OneGeneratorSource(const Schema& schema, const uint64_t pNum_buffers_to_process) :
+        GeneratorSource(schema, pNum_buffers_to_process) {
+    }
 
   TupleBufferPtr receiveData() override {
     // 10 tuples of size one

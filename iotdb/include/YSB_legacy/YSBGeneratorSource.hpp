@@ -30,28 +30,30 @@ private:
 };
 
 class YSBGeneratorSource : public DataSource {
-public:
+  public:
     YSBGeneratorSource();
-	YSBGeneratorSource(const Schema& schema, const uint64_t pNum_buffers_to_process, size_t pCampaingCnt, bool preGenerated);
+    YSBGeneratorSource(const Schema& schema,
+                       const uint64_t pNum_buffers_to_process,
+                       size_t pCampaingCnt,
+                       bool preGenerated);
 
-  TupleBufferPtr receiveData();
-  const std::string toString() const;
-  uint64_t numberOfCampaings;
+    TupleBufferPtr receiveData();
+    const std::string toString() const;
+    uint64_t numberOfCampaings;
+    SourceType getType() const override;
+  private:
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive& ar, const unsigned int version) {
+        ar & boost::serialization::base_object<DataSource>(*this);
+        ar & numberOfCampaings;
+        ar & preGenerated;
+        //		ar & copyBuffer;
+    }
 
-private:
-	friend class boost::serialization::access;
-	template<class Archive>
-	void serialize(Archive & ar, const unsigned int version)
-	{
-		ar & boost::serialization::base_object<DataSource>(*this);
-		ar & numberOfCampaings;
-		ar & preGenerated;
-//		ar & copyBuffer;
-	}
-
-  iotdb::YSBFunctor functor;
-  bool preGenerated;
-  TupleBufferPtr copyBuffer;
+    iotdb::YSBFunctor functor;
+    bool preGenerated;
+    TupleBufferPtr copyBuffer;
 };
 
 } // namespace iotdb

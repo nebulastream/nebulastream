@@ -43,6 +43,10 @@ const std::string SourceOperator::toString() const
 
 OperatorType SourceOperator::getOperatorType() const { return SOURCE_OP; }
 
+iotdb::DataSourcePtr SourceOperator::getDataSourcePtr() {
+    return source_;
+}
+
 SourceOperator::~SourceOperator() {}
 
 SourceOperator::SourceOperator() {

@@ -43,8 +43,8 @@ class CSVSource : public DataSource {
    * @return returns string describing the binary source
    */
   const std::string toString() const;
-
- private:
+    SourceType getType() const override;
+  private:
   CSVSource();
   std::ifstream input;
   std::string file_path;
