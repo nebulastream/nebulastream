@@ -84,6 +84,10 @@ set(LIBRARIES ${LIBRARIES} cpprestsdk::cpprest)
 find_package(CAF COMPONENTS core io)
 set(LIBRARIES ${LIBRARIES} ${CAF_EXTRA_LDFLAGS} ${CAF_LIBRARIES} ${PTHREAD_LIBRARIES})
 
+# Library containing Kafka client
+find_package(CppKafka REQUIRED)
+set(LIBRARIES ${LIBRARIES} ${CppKafka_LIBRARIES})
+
 # Print all used include directories
 message(STATUS "INCLUDE_DIRS:")
 get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)

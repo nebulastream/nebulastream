@@ -108,6 +108,11 @@ add_executable(file-source-tests "UnitTests/FileSourceTest.cpp")
 target_link_libraries(file-source-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME file-source-tests COMMAND file-source-tests)
 
+add_executable(kafka-tests "UnitTests/KafkaTest.cpp")
+message("libraies: ${LIBRARIES}")
+target_link_libraries(kafka-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
+add_test(NAME kafka-tests COMMAND kafka-tests)
+
 # YSB Performance Test
 add_executable(ysb_performance_test "PerformanceTests/YSB_SingleNode_PerformanceTest.cpp")
 target_link_libraries(ysb_performance_test iotdb ${GTEST_LIBRARIES})

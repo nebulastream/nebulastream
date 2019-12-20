@@ -1,6 +1,7 @@
 #ifndef INCLUDE_SOURCESINK_SINKCREATOR_HPP_
 #define INCLUDE_SOURCESINK_SINKCREATOR_HPP_
 #include <SourceSink/DataSink.hpp>
+#include <cppkafka/configuration.h>
 
 namespace iotdb {
 
@@ -55,6 +56,27 @@ const DataSinkPtr createZmqSink(const Schema& schema, const std::string& host,
  * @brief create test sink of YSB benchmark
  */
 const DataSinkPtr createYSBPrintSink();
+
+/**
+ * @brief create kafka sink
+ * @param schema: schema of the data
+ * @param brokers: broker list
+ * @param topic: kafka topic to write to
+ * @param kafkaProducerTimeout: kafka producer timeout
+ * @return a data sink pointer
+ */
+const DataSinkPtr createKafkaSinkWithSchema(const Schema& schema, const std::string& brokers, const std::string& topic,
+                                            const size_t kafkaProducerTimeout);
+
+/**
+ * @brief create kafka sink
+ * @param schema: schema of the data
+ * @param topic: kafka topic to write to
+ * @param config: kafka producer configuration
+ * @return a data sink pointer
+ */
+const DataSinkPtr createKafkaSinkWithSchema(const Schema& schema, const std::string& topic,
+                                            const cppkafka::Configuration& config);
 
 }
 #endif /* INCLUDE_SOURCESINK_SINKCREATOR_HPP_ */
