@@ -9,3 +9,4 @@ add_source_iotdb(
 	Stream.cpp
 )
 add_subdirectory(Window)
+add_subdirectory(Types)

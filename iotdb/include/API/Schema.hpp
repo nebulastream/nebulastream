@@ -4,13 +4,9 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <CodeGen/DataTypes.hpp>
+#include <API/Types/AttributeField.hpp>
 
 namespace iotdb {
-
-class AttributeField;
-typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
-typedef std::vector<AttributeFieldPtr> VecAttributeFieldPtr;
 
 class Schema {
  public:
