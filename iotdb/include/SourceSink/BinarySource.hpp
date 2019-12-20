@@ -42,8 +42,8 @@ class BinarySource : public DataSource {
    *  @param buffer to be filled
    */
   void fillBuffer(TupleBuffer&);
-
- private:
+    SourceType getType() const override;
+  private:
   //this one only required for serialization
   BinarySource();
   std::ifstream input;

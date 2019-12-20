@@ -24,16 +24,14 @@ YSBPrintSink::YSBPrintSink()
                     .addField("ad_type", 16)
                     .addField("current_ms", UINT64)
                     .addField("ip", INT32),
-                std::cout)
-{
+                std::cout) {
 }
 
 YSBPrintSink::~YSBPrintSink() {}
 
-bool YSBPrintSink::writeData(const TupleBufferPtr input_buffer)
-{
+bool YSBPrintSink::writeData(const TupleBufferPtr input_buffer) {
 
-    ysbRecordOut* recordBuffer = (ysbRecordOut*)input_buffer->getBuffer();
+    ysbRecordOut* recordBuffer = (ysbRecordOut*) input_buffer->getBuffer();
     //	Schema s = Schema::create().addField("",UINT32);
     //	std::cout << iotdb::toString(input_buffer,s) << std::endl;
     for (size_t u = 0; u < input_buffer->getNumberOfTuples(); u++) {
@@ -56,12 +54,14 @@ bool YSBPrintSink::writeData(const TupleBufferPtr input_buffer)
     return true;
 }
 
-const std::string YSBPrintSink::toString() const
-{
+const std::string YSBPrintSink::toString() const {
     std::stringstream ss;
     ss << "YSB_PRINT_SINK(";
     ss << "SCHEMA(" << schema.toString() << "), ";
     return ss.str();
+}
+SinkType YSBPrintSink::getType() const {
+    return YSB_SINK;
 }
 
 } // namespace iotdb

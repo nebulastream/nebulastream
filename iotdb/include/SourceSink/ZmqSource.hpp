@@ -45,8 +45,8 @@ class ZmqSource : public DataSource {
    * @return returns string describing the zmq source
    */
   const std::string toString() const override;
-
- private:
+    SourceType getType() const override;
+  private:
   /**
    * @brief default constructor required for boost serialization
    */

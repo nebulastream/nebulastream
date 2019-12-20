@@ -23,14 +23,14 @@ const DataSinkPtr createPrintSinkWithoutSchema(std::ostream& out);
  * @param output stream
  * @return a data sink pointer
  */
-const DataSinkPtr createPrintSinkWithSink(const Schema& schema, std::ostream& out);
+const DataSinkPtr createPrintSinkWithSchema(const Schema& schema, std::ostream& out);
 
 /**
  * @brief create a binary test sink without a schema
  * @param path to file
  * @return a data sink pointer
  */
-const DataSinkPtr createBinaryFileSink(const std::string& path_to_file);
+const DataSinkPtr createBinaryFileSinkWithoutSchema(const std::string& filePath);
 
 /**
  * @brief create a binary test sink with a schema
@@ -38,8 +38,8 @@ const DataSinkPtr createBinaryFileSink(const std::string& path_to_file);
  * @param path to file
  * @return a data sink pointer
  */
-const DataSinkPtr createBinaryFileSink(const Schema& schema,
-                                       const std::string& path_to_file);
+const DataSinkPtr createBinaryFileSinkWithSchema(const Schema& schema,
+                                                 const std::string& filePath);
 
 /**
  * @brief create a ZMQ test sink with a schema

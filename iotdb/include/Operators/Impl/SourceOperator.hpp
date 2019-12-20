@@ -22,6 +22,7 @@ class SourceOperator : public Operator {
   const OperatorPtr copy() const override;
   const std::string toString() const override;
   OperatorType getOperatorType() const override;
+  DataSourcePtr getDataSourcePtr();
   ~SourceOperator() override;
 
  private:
@@ -35,5 +36,7 @@ class SourceOperator : public Operator {
         & BOOST_SERIALIZATION_NVP(source_);
   }
 };
+
+typedef std::shared_ptr<SourceOperator> SourceOperatorPtr;
 
 } // namespace iotdb

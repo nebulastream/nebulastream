@@ -15,20 +15,20 @@ const DataSinkPtr createYSBPrintSink() {
   return std::make_shared<YSBPrintSink>();
 }
 
-const DataSinkPtr createBinaryFileSink(const std::string& path_to_file) {
-  return std::make_shared<FileOutputSink>(/* path_to_file */);
+const DataSinkPtr createBinaryFileSinkWithoutSchema(const std::string& filePath) {
+  return std::make_shared<FileOutputSink>(filePath);
 }
 
-const DataSinkPtr createBinaryFileSink(const Schema& schema,
-                                       const std::string& path_to_file) {
-  return std::make_shared<FileOutputSink>(schema /*, path_to_file */);
+const DataSinkPtr createBinaryFileSinkWithSchema(const Schema& schema,
+                                                 const std::string& filePath) {
+  return std::make_shared<FileOutputSink>(schema , filePath);
 }
 
 const DataSinkPtr createPrintSinkWithoutSchema(std::ostream& out) {
   return std::make_shared<PrintSink>(out);
 }
 
-const DataSinkPtr createPrintSinkWithSink(const Schema& schema, std::ostream& out) {
+const DataSinkPtr createPrintSinkWithSchema(const Schema& schema, std::ostream& out) {
   return std::make_shared<PrintSink>(schema, out);
 }
 
