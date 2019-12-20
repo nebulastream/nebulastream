@@ -12,6 +12,9 @@ const std::string GeneratorSource::toString() const {
   ss << "), NUM_BUFFERS=" << num_buffers_to_process << "))";
   return ss.str();
 }
+SourceType GeneratorSource::getType() const {
+    return TEST_SOURCE;
+}
 }
 
 BOOST_CLASS_EXPORT(iotdb::GeneratorSource);

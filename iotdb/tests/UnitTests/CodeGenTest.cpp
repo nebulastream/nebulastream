@@ -657,7 +657,7 @@ int CodeGeneratorTest() {
   /* generate code for scanning input buffer */
   code_gen->generateCode(source, context, std::cout);
   /* generate code for writing result tuples to output buffer */
-  code_gen->generateCode(createPrintSinkWithSink(Schema::create().addField("campaign_id", UINT64), std::cout),
+  code_gen->generateCode(createPrintSinkWithSchema(Schema::create().addField("campaign_id", UINT64), std::cout),
                          context,
                          std::cout);
   /* compile code to pipeline stage */
@@ -739,11 +739,11 @@ int CodeGeneratorFilterTest() {
   code_gen->generateCode(pred, context, std::cout);
 
   /* generate code for writing result tuples to output buffer */
-  code_gen->generateCode(createPrintSinkWithSink(Schema::create()
-                                                     .addField("id", BasicType::UINT32)
-                                                     .addField("value", BasicType::UINT32)
-                                                     .addField("text", createArrayDataType(BasicType::CHAR, 12)),
-                                                 std::cout), context, std::cout);
+  code_gen->generateCode(createPrintSinkWithSchema(Schema::create()
+                                                       .addField("id", BasicType::UINT32)
+                                                       .addField("value", BasicType::UINT32)
+                                                       .addField("text", createArrayDataType(BasicType::CHAR, 12)),
+                                                   std::cout), context, std::cout);
 
   /* compile code to pipeline stage */
   PipelineStagePtr stage = code_gen->compile(CompilerArgs());
@@ -882,14 +882,14 @@ int CodePredicateTests() {
   unsigned int numberOfResultTuples = 3;
 
   /* generate code for writing result tuples to output buffer */
-  code_gen->generateCode(createPrintSinkWithSink(Schema::create()
-                                                     .addField("id", BasicType::UINT32)
-                                                     .addField("valueSmall", BasicType::INT16)
-                                                     .addField("valueFloat", BasicType::FLOAT32)
-                                                     .addField("valueDouble", BasicType::FLOAT64)
-                                                     .addField("valueChar", BasicType::CHAR)
-                                                     .addField("text", createArrayDataType(BasicType::CHAR, 12)),
-                                                 std::cout), context, std::cout);
+  code_gen->generateCode(createPrintSinkWithSchema(Schema::create()
+                                                       .addField("id", BasicType::UINT32)
+                                                       .addField("valueSmall", BasicType::INT16)
+                                                       .addField("valueFloat", BasicType::FLOAT32)
+                                                       .addField("valueDouble", BasicType::FLOAT64)
+                                                       .addField("valueChar", BasicType::CHAR)
+                                                       .addField("text", createArrayDataType(BasicType::CHAR, 12)),
+                                                   std::cout), context, std::cout);
 
   /* compile code to pipeline stage */
   PipelineStagePtr stage = code_gen->compile(CompilerArgs());
@@ -950,15 +950,15 @@ int CodeMapPredicatePtrTests() {
   code_gen->generateCode(mapped_value, createPredicate((input_schema[2] * input_schema[3]) + 2), context, std::cout);
 
   /* generate code for writing result tuples to output buffer */
-  code_gen->generateCode(createPrintSinkWithSink(Schema::create()
-                                                     .addField("id", BasicType::UINT32)
-                                                     .addField("valueSmall", BasicType::INT16)
-                                                     .addField("valueFloat", BasicType::FLOAT32)
-                                                     .addField("valueDouble", BasicType::FLOAT64)
-                                                     .addField(mapped_value)
-                                                     .addField("valueChar", BasicType::CHAR)
-                                                     .addField("text", createArrayDataType(BasicType::CHAR, 12)),
-                                                 std::cout), context, std::cout);
+  code_gen->generateCode(createPrintSinkWithSchema(Schema::create()
+                                                       .addField("id", BasicType::UINT32)
+                                                       .addField("valueSmall", BasicType::INT16)
+                                                       .addField("valueFloat", BasicType::FLOAT32)
+                                                       .addField("valueDouble", BasicType::FLOAT64)
+                                                       .addField(mapped_value)
+                                                       .addField("valueChar", BasicType::CHAR)
+                                                       .addField("text", createArrayDataType(BasicType::CHAR, 12)),
+                                                   std::cout), context, std::cout);
 
   unsigned int numberOfResultTuples = 132;
 

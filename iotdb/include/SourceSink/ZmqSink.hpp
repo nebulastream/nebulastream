@@ -21,8 +21,8 @@ class ZmqSink : public DataSink {
   void shutdown() override{};
   const std::string toString() const override;
   int getPort();
-
- private:
+    SinkType getType() const override;
+  private:
   ZmqSink();
 
   friend class boost::serialization::access;

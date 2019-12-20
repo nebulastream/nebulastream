@@ -18,46 +18,67 @@ namespace iotdb {
  */
 class FileOutputSink : public DataSink {
 
- public:
-/**
- * @brief default constructor that creates an empty file sink
- */
-  FileOutputSink();
+  public:
+    /**
+     * @brief default constructor that creates an empty file sink
+     */
+    FileOutputSink();
 
-  /**
-   * @brief constructor that creates an empty file sink using a schema
-   * @param schema of the print sink
-   */
-  FileOutputSink(const Schema& schema);
+    /**
+     * @brief constructor that creates an empty file sink using a schema
+     * @param schema of the print sink
+     */
+    FileOutputSink(const Schema& schema);
 
-  /**
-   * @brief method to override virtual setup function
-   * @Note currently the method does nothing
-   */
-  void setup() override;
+    /**
+    * @brief constructor that creates an empty file sink using a schema
+    * @param filePath location of file on sink server
+    */
+    FileOutputSink(std::string filePath);
 
-  /**
-   * @brief method to override virtual shutdown function
-   * @Note currently the method does nothing
-   */
-  void shutdown() override;
+    /**
+     * @brief constructor that creates an empty file sink using a schema
+     * @param schema of the print sink
+     * @param filePath location of file on sink server
+     */
+    FileOutputSink(const Schema& schema, std::string filePath);
 
-  /**
-   * @brief method to override virtual write data function
-   * @Note currently not implemented
-   * @param tuple buffer pointer to be filled
-   * @return bool indicating write success
-   */
-  bool writeData(const TupleBufferPtr input_buffer);
+    /**
+     * @brief method to override virtual setup function
+     * @Note currently the method does nothing
+     */
+    void setup() override;
 
+    /**
+     * @brief method to override virtual shutdown function
+     * @Note currently the method does nothing
+     */
+    void shutdown() override;
 
-  /**
-   * @brief override the toString method for the file output sink
-   * @return returns string describing the file output sink
-   */
-  const std::string toString() const override;
+    /**
+     * @brief method to override virtual write data function
+     * @Note currently not implemented
+     * @param tuple buffer pointer to be filled
+     * @return bool indicating write success
+     */
+    bool writeData(const TupleBufferPtr input_buffer);
 
- private:
+    /**
+     * @brief override the toString method for the file output sink
+     * @return returns string describing the file output sink
+     */
+    const std::string toString() const override;
+
+    SinkType getType() const override;
+  private:
+    std::string filePath;
+    friend class boost::serialization::access;
+
+    template<class Archive>
+    void serialize(Archive& ar, unsigned) {
+        ar & filePath;
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataSink);
+    }
 };
 }  // namespace iotdb
 

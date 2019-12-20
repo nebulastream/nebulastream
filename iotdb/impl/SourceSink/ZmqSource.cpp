@@ -138,6 +138,9 @@ bool ZmqSource::disconnect() {
   }
   return !connected;
 }
+SourceType ZmqSource::getType() const {
+    return ZMQ_SOURCE;
+}
 
 }  // namespace iotdb
 

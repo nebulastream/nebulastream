@@ -39,8 +39,8 @@ class GeneratorSource : public DataSource {
    * @return returns string describing the generator source
    */
   const std::string toString() const override;
-
- protected:
+    SourceType getType() const override;
+  protected:
   GeneratorSource() = default;
  private:
   friend class boost::serialization::access;

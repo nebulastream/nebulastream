@@ -6,20 +6,20 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
-
 #include <CodeGen/GeneratedQueryExecutionPlan.hpp>
-
 #include <Topology/FogTopologyManager.hpp>
+
 #include <Optimizer/FogOptimizer.hpp>
-
 #include <API/InputQuery.hpp>
-#include <API/UserAPIExpression.hpp>
 
+#include <API/UserAPIExpression.hpp>
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
+
 #include <Util/ErrorHandling.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <CodeGen/CodeGen.hpp>
 #include <Operators/Impl/SourceOperator.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Operators/Impl/SinkOperator.hpp>
 #include "Actors/ExecutableTransferObject.hpp"
 #include "Services/OptimizerService.hpp"
 #include "Services/QueryService.hpp"
@@ -126,23 +126,49 @@ class CoordinatorService {
    * @param v the execution vertex
    * @param execPlan the execution plan
    */
-  vector<DataSourcePtr> getSources(const string &description, const ExecutionVertex &v);
+  vector<DataSourcePtr> getSources(const string &queryId, const ExecutionVertex &v);
+
 
   /**
    * @brief helper method to get all sinks in a serialized format from a specific node in the topology
-   * @param the descriptor of the query
-   * @param schema the schema
-   * @param v the execution vertex
-   * @param execPlan the execution plan
+   * @param queryId
+   * @param v execution vertex
+   * @return DataSinkPtr
    */
-  vector<DataSinkPtr> getSinks(const string &description, const ExecutionVertex &v);
+  vector<DataSinkPtr> getSinks(const string &queryId, const ExecutionVertex &v);
+
+  /**
+   * @brief find the sink operator starting from the child operator.
+   *    IF the child operator has no parent AND the type is of SinkOperator THEN
+   *        return the child's DataSinkPtr
+   *    ELSE IF the child has a parent THEN
+   *        find the parent of child and call findDataSinkPointer method
+   *    ELSE
+   *        return nullptr and register a WARN message
+   * @param operatorPtr
+   * @return Data Sink pointer
+   */
+  DataSinkPtr findDataSinkPointer(OperatorPtr operatorPtr);
+
+    /**
+   * @brief find the source operator starting from the child operator.
+   *    IF the child operator has no further children AND the type is of SourceOperator THEN
+   *        return the child's DataSourcePtr
+   *    ELSE IF the child has children THEN
+   *        find the children list and call for each child findDataSourcePointer method
+   *    ELSE
+   *        return nullptr and register a WARN message
+   * @param operatorPtr
+   * @return Data Source pointer
+   */
+    DataSourcePtr findDataSourcePointer(OperatorPtr operatorPtr);
 
   /**
    * @brief helper method to get an automatically assigned receive port where ZMQs are communicating.
    * Currently only server/client architecture, i.e., only one layer, is supported
    * @param query the descriptor of the query
    */
-  int assign_port(const string &description);
+  int assign_port(const string &queryId);
 };
 
 }

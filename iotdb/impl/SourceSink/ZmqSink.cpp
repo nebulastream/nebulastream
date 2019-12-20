@@ -147,6 +147,9 @@ bool ZmqSink::disconnect() {
 int ZmqSink::getPort() {
   return this->port;
 }
+SinkType ZmqSink::getType() const {
+    return ZMQ_SINK;
+}
 
 }  // namespace iotdb
 BOOST_CLASS_EXPORT(iotdb::ZmqSink);

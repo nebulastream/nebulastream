@@ -71,12 +71,20 @@ bool CAFServer::start(
           anon_send(coordinatorActorHandle, deploy_query_atom::value, arg1);
         } else if (arg0 == "delete" && !arg1.empty()) {
           anon_send(coordinatorActorHandle, deregister_query_atom::value, arg1);
-        } else if (arg0 == "register" && arg1 == "example") {
+        } else if (arg0 == "register") {
           anon_send(coordinatorActorHandle, register_query_atom::value, arg1, "BottomUp");
         } else {
           cout << "Unknown command" << endl;
         }
-      } };
+      },
+      [&](string& arg0, string& arg1, string& arg2) {
+        if (arg0 == "register") {
+          anon_send(coordinatorActorHandle, register_query_atom::value, arg1, arg2);
+        } else {
+          cout << "Unknown command" << endl;
+        }
+      }
+  };
   // read next line, split it, and feed to the eval handler
   string line;
   while (!done && std::getline(std::cin, line)) {
@@ -87,6 +95,7 @@ bool CAFServer::start(
       usage();
   }
   return true;
+
 }
 
 void CAFServer::setupLogging() {
