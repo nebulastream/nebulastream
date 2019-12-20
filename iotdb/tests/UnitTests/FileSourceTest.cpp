@@ -4,14 +4,11 @@
 #include <string>
 #include <cstring>
 #include <NodeEngine/Dispatcher.hpp>
-#include <NodeEngine/ThreadPool.hpp>
 #include <NodeEngine/BufferManager.hpp>
 
 #include <Util/Logger.hpp>
-#include <SourceSink/DataSource.hpp>
-#include <SourceSink/GeneratorSource.hpp>
-#include "../../include/CodeGen/DataTypes.hpp"
-#include "../../include/SourceSink/SourceCreator.hpp"
+#include <API/Types/DataTypes.hpp>
+#include <SourceSink/SourceCreator.hpp>
 
 namespace iotdb {
 

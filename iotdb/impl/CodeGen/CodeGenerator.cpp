@@ -1,10 +1,8 @@
 
 #include <iostream>
 #include <list>
-#include <sstream>
 
 #include <API/Schema.hpp>
-#include <API/Window/WindowDefinition.hpp>
 #include <CodeGen/C_CodeGen/BinaryOperatorStatement.hpp>
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
 #include <CodeGen/C_CodeGen/Declaration.hpp>
@@ -14,10 +12,9 @@
 #include <CodeGen/C_CodeGen/UnaryOperatorStatement.hpp>
 #include <CodeGen/CodeGen.hpp>
 #include <Util/ErrorHandling.hpp>
-#include <API/UserAPIExpression.hpp>
 
-#include "../../include/CodeGen/DataTypes.hpp"
-#include "../../include/SourceSink/DataSink.hpp"
+#include <API/Types/DataTypes.hpp>
+#include <SourceSink/DataSink.hpp>
 
 namespace iotdb {
 

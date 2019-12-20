@@ -8,7 +8,7 @@
 #include <Util/Logger.hpp>
 #include <cstring>
 #include <QEPs/CompiledYSBTestQueryExecutionPlan.hpp>
-#include "../../include/CodeGen/DataTypes.hpp"
+#include <Core/DataTypes.hpp>
 #include "../../include/NodeEngine/TupleBuffer.hpp"
 #include "../../include/SourceSink/DataSource.hpp"
 #include "../../include/SourceSink/GeneratorSource.hpp"
