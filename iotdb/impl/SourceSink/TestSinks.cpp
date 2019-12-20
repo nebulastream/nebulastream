@@ -2,6 +2,8 @@
 #include <SourceSink/PrintSink.hpp>
 #include <SourceSink/ZmqSink.hpp>
 #include <SourceSink/DataSink.hpp>
+#include <SourceSink/SinkCreator.hpp>
+#include <SourceSink/KafkaSink.hpp>
 #include "../../include/YSB_legacy/YSBPrintSink.hpp"
 
 namespace iotdb {
@@ -35,6 +37,16 @@ const DataSinkPtr createPrintSinkWithSchema(const Schema& schema, std::ostream& 
 const DataSinkPtr createZmqSink(const Schema& schema, const std::string& host,
                                 const uint16_t port) {
   return std::make_shared<ZmqSink>(schema, host, port);
+}
+
+const DataSinkPtr createKafkaSinkWithSchema(const Schema& schema, const std::string& brokers, const std::string& topic,
+                                            const size_t kafkaProducerTimeout) {
+    return std::make_shared<KafkaSink>(schema, brokers, topic, kafkaProducerTimeout);
+}
+
+const DataSinkPtr createKafkaSinkWithSchema(const Schema& schema, const std::string& topic,
+                                            const cppkafka::Configuration& config) {
+    return std::make_shared<KafkaSink>(schema, topic, config);
 }
 
 }

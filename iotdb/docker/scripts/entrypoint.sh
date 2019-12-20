@@ -7,7 +7,7 @@ then
     mkdir -p /iotdb/build
     cd /iotdb/build
     cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DBoost_INCLUDE_DIR="/usr/include" -DBoost_LIBRARY_DIR="/usr/lib/x86_64-linux-gnu" -DCPPRESTSDK_DIR="/usr/lib/x86_64-linux-gnu/cmake/" ..
-    make -j4 && make test
+    make -j4 && make test_debug
 else
     exec $@
 fi

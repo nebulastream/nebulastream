@@ -10,4 +10,6 @@ add_source_iotdb(
         CSVSource.cpp
         TestSources.cpp
         TestSinks.cpp
+        KafkaSink.cpp
+        KafkaSource.cpp
                 )
