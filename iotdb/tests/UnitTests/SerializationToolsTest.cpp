@@ -27,7 +27,7 @@ class SerializationToolsTest : public testing::Test {
       .addField("id", BasicType::UINT32)
       .addField("value", BasicType::UINT64);
 
-  Stream stream = Stream("cars", schema);
+  Stream stream = Stream("default", schema);
 };
 
 /* Test serialization for Schema  */

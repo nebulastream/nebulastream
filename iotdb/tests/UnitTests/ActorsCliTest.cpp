@@ -16,7 +16,7 @@ class ActorsCliTest : public testing::Test {
   std::string queryString = "Schema schema = Schema::create()"
     ".addField(\"id\", BasicType::UINT32)"
     ".addField(\"value\", BasicType::UINT64);"
-    "Stream stream = Stream(\"cars\", schema);"
+    "Stream stream = Stream(\"default\", schema);"
     "InputQuery inputQuery = InputQuery::from(stream).filter(stream[\"value\"] > 42).print(std::cout); "
     "return inputQuery;";
 

@@ -141,23 +141,6 @@ add_subdirectory(docs)
 
 #file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/QueryLib)
 
-
-add_executable(iotNode iotNode.cpp)
-target_link_libraries(iotNode iotdb)
-target_include_directories(iotNode PUBLIC "include")
-
-add_executable(iotClient iotClient.cpp)
-target_link_libraries(iotClient ${LIBRARIES})
-target_include_directories(iotClient PUBLIC "include")
-
-add_executable(iotServer iotServer.cpp)
-target_link_libraries(iotServer ${LIBRARIES})
-target_include_directories(iotServer PUBLIC "include")
-
-add_executable(nesCoordinator nesCoordinator.cpp)
-target_link_libraries(nesCoordinator ${LIBRARIES} iotdb)
-target_include_directories(nesCoordinator PUBLIC "include")
-
 add_executable(nesWorker nesWorker.cpp)
 target_link_libraries(nesWorker ${LIBRARIES} iotdb)
 target_include_directories(nesWorker PUBLIC "include")

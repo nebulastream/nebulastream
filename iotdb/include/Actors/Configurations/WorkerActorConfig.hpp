@@ -14,7 +14,7 @@ class WorkerActorConfig : public actor_system_config {
   uint16_t receive_port = 0;
   std::string host = "localhost";
   uint16_t publish_port = 4711;
-  std::string sensor_type = "cars";
+  std::string sensor_type = "default";
 
   WorkerActorConfig() {
     opt_group{custom_options_, "global"}
