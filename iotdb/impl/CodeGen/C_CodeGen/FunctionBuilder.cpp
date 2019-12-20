@@ -1,21 +1,12 @@
 
 #include <iostream>
-#include <sstream>
 #include <string>
 #include <vector>
 
-#include <CodeGen/C_CodeGen/CodeCompiler.hpp>
-#include <CodeGen/CodeExpression.hpp>
-#include <CodeGen/PipelineStage.hpp>
-#include <Util/ErrorHandling.hpp>
-
-#include <CodeGen/C_CodeGen/BinaryOperatorStatement.hpp>
 #include <CodeGen/C_CodeGen/Declaration.hpp>
-#include <CodeGen/C_CodeGen/FileBuilder.hpp>
 #include <CodeGen/C_CodeGen/FunctionBuilder.hpp>
 #include <CodeGen/C_CodeGen/Statement.hpp>
-#include <CodeGen/C_CodeGen/UnaryOperatorStatement.hpp>
-#include "../../../include/CodeGen/DataTypes.hpp"
+#include <API/Types/DataTypes.hpp>
 
 namespace iotdb {
 

@@ -10,7 +10,7 @@
 #include <memory>
 
 #include <Operators/OperatorTypes.hpp>
-#include <CodeGen/DataTypes.hpp>
+#include <API/Types/DataTypes.hpp>
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>

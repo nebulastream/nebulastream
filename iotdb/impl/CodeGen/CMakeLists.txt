@@ -8,3 +8,4 @@ add_source_iotdb(
 		QueryPlanBuilder.cpp
 	)
 add_subdirectory(C_CodeGen)
+add_subdirectory(DataTypes)

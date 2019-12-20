@@ -1,21 +1,13 @@
-/**
- * UserAPIExpression class file
- * 
- * */
-
 #include <string>
 #include <sstream>
 
 #include <CodeGen/CodeGen.hpp>
 #include <CodeGen/C_CodeGen/BinaryOperatorStatement.hpp>
 #include <CodeGen/C_CodeGen/Declaration.hpp>
-#include <CodeGen/C_CodeGen/FileBuilder.hpp>
-#include <CodeGen/C_CodeGen/FunctionBuilder.hpp>
 #include <CodeGen/C_CodeGen/Statement.hpp>
-#include <CodeGen/C_CodeGen/UnaryOperatorStatement.hpp>
 
 #include <API/UserAPIExpression.hpp>
-#include <CodeGen/DataTypes.hpp>
+#include <API/Types/DataTypes.hpp>
 
 namespace iotdb {
 
