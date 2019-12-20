@@ -10,7 +10,7 @@ class CoordinatorCafTest : public testing::Test {
     std::string queryString = "Schema schema = Schema::create()"
                                ".addField(\"id\", BasicType::UINT32)"
                                ".addField(\"value\", BasicType::UINT64);"
-                               "Stream stream = Stream(\"cars\", schema);"
+                               "Stream stream = Stream(\"default\", schema);"
                                "InputQuery inputQuery = InputQuery::from(stream).filter(stream[\"value\"] > 42).print(std::cout); "
                                "return inputQuery;";
 
@@ -42,67 +42,67 @@ class CoordinatorCafTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down NES Coordinator test class." << std::endl; }
 
-    CoordinatorServicePtr coordinatorServicePtr;
-    std::string ip = "127.0.0.1";
-    uint16_t receive_port = 0;
-    std::string host = "localhost";
-    uint16_t publish_port = 4711;
-    std::string sensor_type = "cars";
+  CoordinatorServicePtr coordinatorServicePtr;
+  std::string ip = "127.0.0.1";
+  uint16_t receive_port = 0;
+  std::string host = "localhost";
+  uint16_t publish_port = 4711;
+  std::string sensor_type = "default";
 };
 
 /* Test serialization for Schema  */
 TEST_F(CoordinatorCafTest, test_registration_and_topology) {
-    string topo = coordinatorServicePtr->getTopologyPlanString();
-    string expectedTopo = "graph G {\n"
-                          "0[label=\"0 type=Coordinator\"];\n"
-                          "1[label=\"1 type=Sensor(cars)\"];\n"
-                          "2[label=\"2 type=Sensor(cars)\"];\n"
-                          "3[label=\"3 type=Sensor(cars)\"];\n"
-                          "4[label=\"4 type=Sensor(cars)\"];\n"
-                          "5[label=\"5 type=Sensor(cars)\"];\n"
-                          "1--0 [label=\"0\"];\n"
-                          "2--0 [label=\"1\"];\n"
-                          "3--0 [label=\"2\"];\n"
-                          "4--0 [label=\"3\"];\n"
-                          "5--0 [label=\"4\"];\n"
-                          "}\n";
-    EXPECT_EQ(topo, expectedTopo);
+  string topo = coordinatorServicePtr->getTopologyPlanString();
+  string expectedTopo = "graph G {\n"
+                        "0[label=\"0 type=Coordinator\"];\n"
+                        "1[label=\"1 type=Sensor(default)\"];\n"
+                        "2[label=\"2 type=Sensor(default)\"];\n"
+                        "3[label=\"3 type=Sensor(default)\"];\n"
+                        "4[label=\"4 type=Sensor(default)\"];\n"
+                        "5[label=\"5 type=Sensor(default)\"];\n"
+                        "1--0 [label=\"0\"];\n"
+                        "2--0 [label=\"1\"];\n"
+                        "3--0 [label=\"2\"];\n"
+                        "4--0 [label=\"3\"];\n"
+                        "5--0 [label=\"4\"];\n"
+                        "}\n";
+  EXPECT_EQ(topo, expectedTopo);
 }
 
 TEST_F(CoordinatorCafTest, test_deregistration_and_topology) {
-    auto entry = coordinatorServicePtr->register_sensor(ip, publish_port, receive_port, 2, sensor_type + "_delete_me");
-    string expectedTopo1 = "graph G {\n"
-                           "0[label=\"0 type=Coordinator\"];\n"
-                           "1[label=\"1 type=Sensor(cars)\"];\n"
-                           "2[label=\"2 type=Sensor(cars)\"];\n"
-                           "3[label=\"3 type=Sensor(cars)\"];\n"
-                           "4[label=\"4 type=Sensor(cars)\"];\n"
-                           "5[label=\"5 type=Sensor(cars)\"];\n"
-                           "6[label=\"6 type=Sensor(cars_delete_me)\"];\n"
-                           "1--0 [label=\"0\"];\n"
-                           "2--0 [label=\"1\"];\n"
-                           "3--0 [label=\"2\"];\n"
-                           "4--0 [label=\"3\"];\n"
-                           "5--0 [label=\"4\"];\n"
-                           "6--0 [label=\"5\"];\n"
-                           "}\n";
-    EXPECT_EQ(coordinatorServicePtr->getTopologyPlanString(), expectedTopo1);
+  auto entry = coordinatorServicePtr->register_sensor(ip, publish_port, receive_port, 2, sensor_type + "_delete_me");
+  string expectedTopo1 = "graph G {\n"
+                         "0[label=\"0 type=Coordinator\"];\n"
+                         "1[label=\"1 type=Sensor(default)\"];\n"
+                         "2[label=\"2 type=Sensor(default)\"];\n"
+                         "3[label=\"3 type=Sensor(default)\"];\n"
+                         "4[label=\"4 type=Sensor(default)\"];\n"
+                         "5[label=\"5 type=Sensor(default)\"];\n"
+                         "6[label=\"6 type=Sensor(default_delete_me)\"];\n"
+                         "1--0 [label=\"0\"];\n"
+                         "2--0 [label=\"1\"];\n"
+                         "3--0 [label=\"2\"];\n"
+                         "4--0 [label=\"3\"];\n"
+                         "5--0 [label=\"4\"];\n"
+                         "6--0 [label=\"5\"];\n"
+                         "}\n";
+  EXPECT_EQ(coordinatorServicePtr->getTopologyPlanString(), expectedTopo1);
 
-    coordinatorServicePtr->deregister_sensor(entry);
-    string expectedTopo2 = "graph G {\n"
-                           "0[label=\"0 type=Coordinator\"];\n"
-                           "1[label=\"1 type=Sensor(cars)\"];\n"
-                           "2[label=\"2 type=Sensor(cars)\"];\n"
-                           "3[label=\"3 type=Sensor(cars)\"];\n"
-                           "4[label=\"4 type=Sensor(cars)\"];\n"
-                           "5[label=\"5 type=Sensor(cars)\"];\n"
-                           "1--0 [label=\"0\"];\n"
-                           "2--0 [label=\"1\"];\n"
-                           "3--0 [label=\"2\"];\n"
-                           "4--0 [label=\"3\"];\n"
-                           "5--0 [label=\"4\"];\n"
-                           "}\n";
-    EXPECT_EQ(coordinatorServicePtr->getTopologyPlanString(), expectedTopo2);
+  coordinatorServicePtr->deregister_sensor(entry);
+  string expectedTopo2 = "graph G {\n"
+                         "0[label=\"0 type=Coordinator\"];\n"
+                         "1[label=\"1 type=Sensor(default)\"];\n"
+                         "2[label=\"2 type=Sensor(default)\"];\n"
+                         "3[label=\"3 type=Sensor(default)\"];\n"
+                         "4[label=\"4 type=Sensor(default)\"];\n"
+                         "5[label=\"5 type=Sensor(default)\"];\n"
+                         "1--0 [label=\"0\"];\n"
+                         "2--0 [label=\"1\"];\n"
+                         "3--0 [label=\"2\"];\n"
+                         "4--0 [label=\"3\"];\n"
+                         "5--0 [label=\"4\"];\n"
+                         "}\n";
+  EXPECT_EQ(coordinatorServicePtr->getTopologyPlanString(), expectedTopo2);
 }
 
 TEST_F(CoordinatorCafTest, test_register_query) {
@@ -181,14 +181,15 @@ TEST_F(CoordinatorCafTest, test_code_gen) {
     auto* engine = new NodeEngine();
     engine->start();
 
+
     Schema schema = Schema::create()
         .addField("id", BasicType::UINT32)
         .addField("value", BasicType::UINT64);
 
-    Stream cars = Stream("cars", schema);
+    Stream def = Stream("default", schema);
 
-    InputQuery& query = InputQuery::from(cars)
-        .filter(cars["value"] > 42)
+    InputQuery& query = InputQuery::from(def)
+        .filter(def["value"] > 42)
         .print(std::cout);
 
     CodeGeneratorPtr code_gen = createCodeGenerator();
