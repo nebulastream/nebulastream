@@ -43,6 +43,8 @@ const std::string SinkOperator::toString() const {
 
 OperatorType SinkOperator::getOperatorType() const { return SINK_OP; }
 
+iotdb::DataSinkPtr SinkOperator::getDataSinkPtr() { return sink_; }
+
 SinkOperator::~SinkOperator() = default;
 
 SinkOperator::SinkOperator() = default;

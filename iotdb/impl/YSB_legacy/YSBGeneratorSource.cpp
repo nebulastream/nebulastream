@@ -162,5 +162,8 @@ const std::string YSBGeneratorSource::toString() const
     ss << "), NUM_BUFFERS=" << num_buffers_to_process << " numberOfCampaings=" << numberOfCampaings << "))";
     return ss.str();
 }
+SourceType YSBGeneratorSource::getType() const {
+    return YSB_SOURCE;
+}
 
 } // namespace iotdb

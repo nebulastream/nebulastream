@@ -13,6 +13,12 @@ namespace iotdb {
 class ActorsCliTest : public testing::Test {
  public:
   std::string host = "localhost";
+  std::string queryString = "Schema schema = Schema::create()"
+    ".addField(\"id\", BasicType::UINT32)"
+    ".addField(\"value\", BasicType::UINT64);"
+    "Stream stream = Stream(\"default\", schema);"
+    "InputQuery inputQuery = InputQuery::from(stream).filter(stream[\"value\"] > 42).print(std::cout); "
+    "return inputQuery;";
 
   static void SetUpTestCase() {
     setupLogging();
@@ -142,7 +148,7 @@ TEST_F(ActorsCliTest, testShowRegistered) {
 
   // check registration
   string uuid;
-  self->request(coordinator, task_timeout, register_query_atom::value, "example", "BottomUp").receive(
+  self->request(coordinator, task_timeout, register_query_atom::value, queryString, "BottomUp").receive(
       [&uuid](const string &_uuid) mutable {
         uuid = _uuid;
       },
@@ -210,8 +216,7 @@ TEST_F(ActorsCliTest, DISABLED_testDeleteQuery) {
 
   // check registration
   string uuid;
-  string description = "example";
-  self->request(coordinator, task_timeout, register_query_atom::value, description, "BottomUp").receive(
+  self->request(coordinator, task_timeout, register_query_atom::value, queryString, "BottomUp").receive(
       [&uuid](const string &_uuid) mutable {
         uuid = _uuid;
       },
@@ -239,7 +244,7 @@ TEST_F(ActorsCliTest, DISABLED_testDeleteQuery) {
 
   // let query run for some arbitrary seconds
   std::this_thread::sleep_for(std::chrono::seconds(3));
-  anon_send(coordinator, deregister_query_atom::value, description);
+  anon_send(coordinator, deregister_query_atom::value, uuid);
 
   std::this_thread::sleep_for(std::chrono::seconds(2));
   anon_send(coordinator, show_running_atom::value);
@@ -275,14 +280,13 @@ TEST_F(ActorsCliTest, DISABLED_testShowRunning) {
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
-  string description = "example";
-  anon_send(coordinator, register_query_atom::value, description, "BottomUp");
+  anon_send(coordinator, register_query_atom::value, queryString, "BottomUp");
   std::this_thread::sleep_for(std::chrono::seconds(1));
-  anon_send(coordinator, deploy_query_atom::value, description);
+  anon_send(coordinator, deploy_query_atom::value, "FIXME_USE_UUID");
   std::this_thread::sleep_for(std::chrono::seconds(1));
   anon_send(coordinator, show_running_atom::value);
   std::this_thread::sleep_for(std::chrono::seconds(1));
-  anon_send(coordinator, deregister_query_atom::value, description);
+  anon_send(coordinator, deregister_query_atom::value, "FIXME_USE_UUID");
   std::this_thread::sleep_for(std::chrono::seconds(2));
   anon_send(coordinator, show_running_atom::value);
   std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -317,14 +321,14 @@ TEST_F(ActorsCliTest, DISABLED_testShowOperators) {
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
-  string description = "example";
-  anon_send(coordinator, register_query_atom::value, description, "BottomUp");
+
+  anon_send(coordinator, register_query_atom::value, queryString, "BottomUp");
   std::this_thread::sleep_for(std::chrono::seconds(1));
-  anon_send(coordinator, deploy_query_atom::value, description);
+  anon_send(coordinator, deploy_query_atom::value, "FIXME_USE_UUID");
   std::this_thread::sleep_for(std::chrono::seconds(1));
   anon_send(coordinator, show_running_operators_atom::value);
   std::this_thread::sleep_for(std::chrono::seconds(2));
-  anon_send(coordinator, deregister_query_atom::value, description);
+  anon_send(coordinator, deregister_query_atom::value, "FIXME_USE_UUID");
   std::this_thread::sleep_for(std::chrono::seconds(2));
   anon_send(coordinator, show_running_atom::value);
   std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -359,17 +363,16 @@ TEST_F(ActorsCliTest, testSequentialMultiQueries) {
   anon_send(worker, connect_atom::value, w_cfg.host, ccfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
-  string description = "example";
   for (int i = 0; i < 1; i++) {
     cout << "Sequence " << i << endl;
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    anon_send(coordinator, register_query_atom::value, description, "BottomUp");
+    anon_send(coordinator, register_query_atom::value, queryString, "BottomUp");
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    anon_send(coordinator, deploy_query_atom::value, description);
+    anon_send(coordinator, deploy_query_atom::value, "FIXME_USE_UUID");
     std::this_thread::sleep_for(std::chrono::seconds(1));
     anon_send(coordinator, show_running_operators_atom::value);
     std::this_thread::sleep_for(std::chrono::seconds(1));
-    anon_send(coordinator, deregister_query_atom::value, description);
+    anon_send(coordinator, deregister_query_atom::value, "FIXME_USE_UUID");
     std::this_thread::sleep_for(std::chrono::seconds(3));
     anon_send(coordinator, show_running_operators_atom::value);
     std::this_thread::sleep_for(std::chrono::seconds(1));

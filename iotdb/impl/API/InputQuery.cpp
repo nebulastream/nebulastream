@@ -189,7 +189,7 @@ namespace iotdb {
 
   // output operators
   InputQuery& InputQuery::writeToFile(const std::string& file_name) {
-      OperatorPtr op = createSinkOperator(createBinaryFileSink(file_name));
+      OperatorPtr op = createSinkOperator(createBinaryFileSinkWithSchema(this->source_stream->getSchema(), file_name));
       int operatorId = this->getNextOperatorId();
       op->setOperatorId(operatorId);
       addChild(op, root);
@@ -207,7 +207,7 @@ namespace iotdb {
   }
 
   InputQuery& InputQuery::print(std::ostream& out) {
-      OperatorPtr op = createSinkOperator(createPrintSinkWithoutSchema(out));
+      OperatorPtr op = createSinkOperator(createPrintSinkWithSchema(this->source_stream->getSchema(), out));
       int operatorId = this->getNextOperatorId();
       op->setOperatorId(operatorId);
       addChild(op, root);

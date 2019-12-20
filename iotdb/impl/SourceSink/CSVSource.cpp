@@ -80,4 +80,7 @@ void CSVSource::fillBuffer(TupleBufferPtr buf) {
   generatedTuples += generated_tuples_this_pass;
   generatedBuffers++;
 }
+SourceType CSVSource::getType() const {
+    return CSV_SOURCE;
+}
 }  // namespace iotdb

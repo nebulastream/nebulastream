@@ -64,4 +64,7 @@ void BinarySource::fillBuffer(TupleBuffer& buf) {
   generatedTuples += generated_tuples_this_pass;
   generatedBuffers++;
 }
+SourceType BinarySource::getType() const {
+    return BINARY_SOURCE;
+}
 }  // namespace iotdb

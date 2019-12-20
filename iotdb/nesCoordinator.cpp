@@ -41,7 +41,7 @@ int main(int argc, const char* argv[]) {
 
     po::options_description serverOptions("Coordinator Server Options");
     serverOptions.add_options()
-        ("host", po::value<std::string>(), "Set NES Coordinator server host address (default: localhost).")
+        ("rest_host", po::value<std::string>(), "Set NES Coordinator server host address (default: localhost).")
         ("start_rest_server", po::value<bool>(), "Start NES REST server (default: true).")
         ("rest_port", po::value<uint16_t>(), "Set NES REST server port (default: 8081).");
 

@@ -10,6 +10,14 @@
 
 namespace iotdb {
 
+enum SinkType {
+    ZMQ_SINK,
+    FILE_SINK,
+    KAFKA_SINK,
+    PRINT_SINK,
+    YSB_SINK
+};
+
 /**
  * @brief Base class for all data sinks in NES
  */
@@ -88,6 +96,8 @@ class DataSink {
    * @param schema description of the sink
    */
   void setSchema(const Schema &pSchema);
+
+  virtual SinkType getType() const=0;
 
  protected:
   Schema schema;
