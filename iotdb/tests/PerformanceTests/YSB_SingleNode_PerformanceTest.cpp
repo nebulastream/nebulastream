@@ -10,14 +10,9 @@
 #include <boost/program_options.hpp>
 #include <cstring>
 #include <memory>
-#include <signal.h>
-#include <stdio.h>
-#include <SourceSink/DataSource.hpp>
-#include "../../include/SourceSink/SourceCreator.hpp"
-#include "../../include/CodeGen/DataTypes.hpp"
-#include "../../include/NodeEngine/TupleBuffer.hpp"
-#include "Windows/WindowHandler.hpp"
-#include "../../include/YSB_legacy/YSBGeneratorSource.hpp"
+#include <SourceSink/SourceCreator.hpp>
+#include <API/Types/DataTypes.hpp>
+#include <Windows/WindowHandler.hpp>
 #include "../../include/YSB_legacy/YSBWindow.hpp"
 
 namespace iotdb {

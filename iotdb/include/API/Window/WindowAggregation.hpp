@@ -1,9 +1,9 @@
-
-#include <API/AbstractWindowDefinition.hpp>
-#include <API/UserAPIExpression.hpp>
-
 #ifndef IOTDB_INCLUDE_API_WINDOW_WINDOWAGGREGATION_HPP_
 #define IOTDB_INCLUDE_API_WINDOW_WINDOWAGGREGATION_HPP_
+#include <API/AbstractWindowDefinition.hpp>
+#include <API/UserAPIExpression.hpp>
+#include <API/Types/AttributeField.hpp>
+
 
 namespace iotdb {
 
