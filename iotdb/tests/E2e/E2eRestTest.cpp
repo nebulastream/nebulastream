@@ -2,7 +2,8 @@
 #include <Util/Logger.hpp>
 #include <string>
 #include <thread>
-
+#include <unistd.h>
+#define GetCurrentDir getcwd
 #include <cpprest/http_client.h>
 #include <cpprest/filestream.h>
 #include <boost/process.hpp>
@@ -77,13 +78,25 @@ class E2eRestTest : public testing::Test {
   }
 };
 
+std::string GetCurrentWorkingDir(void) {
+  char buff[FILENAME_MAX];
+  GetCurrentDir(buff, FILENAME_MAX);
+  std::string current_working_dir(buff);
+  return current_working_dir;
+}
+
 TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
   cout << " start coordinator" << endl;
-  bp::child coordinatorProc("../nesCoordinator");
+  string path = GetCurrentWorkingDir();
+  path += "../nesCoordinator";
+  bp::child coordinatorProc(path.c_str());
+
   cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
   sleep(2);
-  bp::child workerProc("../nesWorker");
-  cout << "started worker with pid = " << workerProc.id() << endl;
+
+  string path2 = GetCurrentWorkingDir();
+  path2 += "../nesWorker";
+  bp::child workerProc(path2.c_str());
   coordinatorPid = workerProc.id();
   workerPid = coordinatorProc.id();
   sleep(3);
@@ -133,15 +146,17 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
 
 TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
   cout << " start coordinator" << endl;
-  char cwd[PATH_MAX];
-  if (getcwd(cwd, sizeof(cwd)) != NULL) {
-    printf("Current working dir: %s\n", cwd);
-  }
 
-  bp::child coordinatorProc("../nesCoordinator");
+  string path = GetCurrentWorkingDir();
+  path += "../nesCoordinator";
+  bp::child coordinatorProc(path.c_str());
+
   cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
   sleep(2);
-  bp::child workerProc("../nesWorker");
+
+  string path2 = GetCurrentWorkingDir();
+  path2 += "../nesWorker";
+  bp::child workerProc(path2.c_str());
   cout << "started worker with pid = " << workerProc.id() << endl;
   coordinatorPid = workerProc.id();
   workerPid = coordinatorProc.id();
@@ -204,7 +219,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
           "|1|1|\n"
           "|1|1|\n"
           "+----------------------------------------------------+";
-  cout << "content=" << content  << endl;
+  cout << "content=" << content << endl;
   cout << "expContent=" << expectedContent << endl;
   EXPECT_EQ(content, expectedContent);
 
