@@ -4,6 +4,7 @@
 #include <thread>
 #include <unistd.h>
 #define GetCurrentDir getcwd
+#include <gtest/gtest.h>
 #include <cpprest/http_client.h>
 #include <cpprest/filestream.h>
 #include <boost/process.hpp>
@@ -85,17 +86,16 @@ std::string GetCurrentWorkingDir(void) {
   return current_working_dir;
 }
 
+
 TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
   cout << " start coordinator" << endl;
-  string path = GetCurrentWorkingDir();
-  path += "../nesCoordinator";
+  string path = "./nesCoordinator";
   bp::child coordinatorProc(path.c_str());
 
   cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
   sleep(2);
 
-  string path2 = GetCurrentWorkingDir();
-  path2 += "../nesWorker";
+  string path2 = "./nesWorker";
   bp::child workerProc(path2.c_str());
   coordinatorPid = workerProc.id();
   workerPid = coordinatorProc.id();
@@ -147,15 +147,13 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
 TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
   cout << " start coordinator" << endl;
 
-  string path = GetCurrentWorkingDir();
-  path += "../nesCoordinator";
+  string path = "./nesCoordinator";
   bp::child coordinatorProc(path.c_str());
 
   cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
   sleep(2);
 
-  string path2 = GetCurrentWorkingDir();
-  path2 += "../nesWorker";
+  string path2 = "./nesWorker";
   bp::child workerProc(path2.c_str());
   cout << "started worker with pid = " << workerProc.id() << endl;
   coordinatorPid = workerProc.id();
