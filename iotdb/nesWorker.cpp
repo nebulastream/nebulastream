@@ -51,15 +51,6 @@ void start_worker(actor_system &system, const WorkerActorConfig &cfg, size_t num
            << endl;
   }
 
-  bool done = false;
-  client = system.spawn<iotdb::WorkerActor>(cfg.ip, cfg.publish_port, cfg.receive_port, cfg.sensor_type);
-  if (!cfg.host.empty() && cfg.publish_port > 0)
-    anon_send(client, connect_atom::value, cfg.host, cfg.publish_port);
-  else
-    cout << "*** no server received via config, "
-         << R"(please use "connect <host> <port>" before using the calculator)"
-         << endl;
-
   // defining the handler outside the loop is more efficient as it avoids
   // re-creating the same object over and over again
   message_handler eval(
