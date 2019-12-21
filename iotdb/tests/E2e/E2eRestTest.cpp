@@ -122,12 +122,6 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
   std::cout << "Query ID: " << queryId << std::endl;
   EXPECT_TRUE(!queryId.empty());
 
-//  ifstream my_file(outputFilePath);
-//  EXPECT_TRUE(my_file.good());
-
-//  int response = remove(outputFilePath.c_str());
-//
-//  EXPECT_TRUE(response == 0);
   sleep(2);
   cout << "Killing worker process->PID: " << workerPid << endl;
   workerProc.terminate();
