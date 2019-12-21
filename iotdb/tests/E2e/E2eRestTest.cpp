@@ -78,7 +78,6 @@ class E2eRestTest : public testing::Test {
 };
 
 TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
-  return;
   cout << " start coordinator" << endl;
   bp::child coordinatorProc("./nesCoordinator");
   cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
