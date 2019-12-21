@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sstream>
-
+#include <unistd.h>
 using namespace std;
 using namespace utility;
 // Common utilities like string conversions
@@ -79,10 +79,10 @@ class E2eRestTest : public testing::Test {
 
 TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
   cout << " start coordinator" << endl;
-  bp::child coordinatorProc("./nesCoordinator");
+  bp::child coordinatorProc("../nesCoordinator");
   cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
   sleep(2);
-  bp::child workerProc("./nesWorker");
+  bp::child workerProc("../nesWorker");
   cout << "started worker with pid = " << workerProc.id() << endl;
   coordinatorPid = workerProc.id();
   workerPid = coordinatorProc.id();
@@ -133,10 +133,15 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
 
 TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
   cout << " start coordinator" << endl;
-  bp::child coordinatorProc("./nesCoordinator");
+  char cwd[PATH_MAX];
+  if (getcwd(cwd, sizeof(cwd)) != NULL) {
+    printf("Current working dir: %s\n", cwd);
+  }
+
+  bp::child coordinatorProc("../nesCoordinator");
   cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
   sleep(2);
-  bp::child workerProc("./nesWorker");
+  bp::child workerProc("../nesWorker");
   cout << "started worker with pid = " << workerProc.id() << endl;
   coordinatorPid = workerProc.id();
   workerPid = coordinatorProc.id();
@@ -180,9 +185,33 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
   ifstream my_file(outputFilePath);
   EXPECT_TRUE(my_file.good());
 
+  std::ifstream ifs(outputFilePath.c_str());
+  std::string content((std::istreambuf_iterator<char>(ifs)),
+                      (std::istreambuf_iterator<char>()));
+
+  string expectedContent =
+      "+----------------------------------------------------+\n"
+          "|id:UINT32|value:UINT64|\n"
+          "+----------------------------------------------------+\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "+----------------------------------------------------+";
+  cout << "content=" << content  << endl;
+  cout << "expContent=" << expectedContent << endl;
+  EXPECT_EQ(content, expectedContent);
+
   int response = remove(outputFilePath.c_str());
 
   EXPECT_TRUE(response == 0);
+
   sleep(2);
   cout << "Killing worker process->PID: " << workerPid << endl;
   workerProc.terminate();

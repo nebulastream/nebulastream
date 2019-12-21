@@ -15,14 +15,14 @@ json::value OptimizerService::getExecutionPlanAsJson(InputQueryPtr inputQuery, s
 FogExecutionPlan OptimizerService::getExecutionPlan(InputQueryPtr inputQuery, string optimizationStrategyName) {
   FogTopologyManager &fogTopologyManager = FogTopologyManager::getInstance();
   const FogTopologyPlanPtr &topologyPlan = fogTopologyManager.getTopologyPlan();
-  cout << "topo=" << topologyPlan->getTopologyPlanString() << endl;
+  IOTDB_DEBUG("OptimizerService: topology=" << topologyPlan->getTopologyPlanString())
+
   FogOptimizer queryOptimizer;
 
   QueryPlanBuilder queryPlanBuilder;
   const json::value &basePlan = queryPlanBuilder.getBasePlan(inputQuery);
 
-  cout << "query plan=" << basePlan << endl;
-
+  IOTDB_DEBUG("OptimizerService: query plan=" << basePlan)
 
   return queryOptimizer.prepareExecutionGraph(optimizationStrategyName, inputQuery, topologyPlan);
 }

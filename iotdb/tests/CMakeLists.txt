@@ -56,7 +56,7 @@ message( STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}" )
 # Engine Tests
 add_executable(engine-test "UnitTests/EngineTest.cpp")
 target_link_libraries(engine-test  iotdb ${GTEST_LIBRARIES})
-add_test(NAME engine-test  COMMAND engine-test )
+add_test(NAME engine-test COMMAND engine-test )
 
 # Code Generation Tests
 add_executable(code-generation-tests "UnitTests/CodeGenTest.cpp")
