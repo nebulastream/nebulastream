@@ -18,6 +18,9 @@ bool CAFServer::start(
 
   cout << "*** trying to publish at port "
        << actorCoordinatorConfig.publish_port << endl;
+
+  io::unpublish(coordinatorActorHandle, actorCoordinatorConfig.publish_port);
+
   auto expected_port = io::publish(coordinatorActorHandle,
                                    actorCoordinatorConfig.publish_port);
   if (!expected_port) {

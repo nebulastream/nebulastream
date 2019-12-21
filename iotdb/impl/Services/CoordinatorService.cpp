@@ -28,6 +28,9 @@ string CoordinatorService::register_query(const string& queryString, const strin
 
         const FogExecutionPlan& kExecutionPlan = optimizerService.getExecutionPlan(inputQueryPtr, strategy);
 
+//        cout << "input query=" << inputQueryPtr->
+        cout << "final plan=" << kExecutionPlan.getTopologyPlanString() << endl;
+
         std::string queryId = boost::uuids::to_string(boost::uuids::random_generator()());
         tuple<Schema, FogExecutionPlan> t = std::make_tuple(schema, kExecutionPlan);
         this->registeredQueries.insert({queryId, t});
