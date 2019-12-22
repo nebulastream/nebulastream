@@ -35,6 +35,7 @@ class E2eRestTest : public testing::Test {
   string host = "localhost";
   int port = 8081;
   string url = "http://localhost:8081/v1/iotdb/service/execute-query";
+  std::string outputFilePath = "blob.txt";
   int coordinatorPid;
   int workerPid;
 
@@ -89,13 +90,13 @@ std::string GetCurrentWorkingDir(void) {
 
 TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
   cout << " start coordinator" << endl;
-  string path = "./nesCoordinator";
+  string path = "../nesCoordinator";
   bp::child coordinatorProc(path.c_str());
 
   cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
   sleep(2);
 
-  string path2 = "./nesWorker";
+  string path2 = "../nesWorker";
   bp::child workerProc(path2.c_str());
   coordinatorPid = workerProc.id();
   workerPid = coordinatorProc.id();
@@ -147,19 +148,18 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
 TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
   cout << " start coordinator" << endl;
 
-  string path = "./nesCoordinator";
+  string path = "../nesCoordinator";
   bp::child coordinatorProc(path.c_str());
 
   cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
   sleep(2);
 
-  string path2 = "./nesWorker";
+  string path2 = "../nesWorker";
   bp::child workerProc(path2.c_str());
   cout << "started worker with pid = " << workerProc.id() << endl;
   coordinatorPid = workerProc.id();
   workerPid = coordinatorProc.id();
   sleep(3);
-  std::string outputFilePath = "blob.txt";
 
   std::stringstream ss;
   ss << "{\"userQuery\" : \"Schema schema = Schema::create().addField(\\\"id\\\", BasicType::UINT32).addField(\\\"value\\\", BasicType::UINT64);";
@@ -194,6 +194,8 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
   string queryId = json_return.at("queryId").as_string();
   std::cout << "Query ID: " << queryId << std::endl;
   EXPECT_TRUE(!queryId.empty());
+
+  sleep(2);
 
   ifstream my_file(outputFilePath);
   EXPECT_TRUE(my_file.good());
