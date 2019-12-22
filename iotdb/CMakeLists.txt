@@ -18,6 +18,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "-Wall -g")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNO_RACE_CHECK ")
 set(CMAKE_CXX_FLAGS_RELEASE "-Wextra -O3")
+#-Wno-unused-parameter -Wno-ignored-qualifiers -Wno-sign-compare -Wno-extra -Wno-reorder
 
 # Compiler should produce specific code for system architecture
 include(CheckCXXCompilerFlag)
@@ -145,6 +146,10 @@ add_subdirectory(docs)
 
 #file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/QueryLib)
 
+add_executable(nesCoordinator nesCoordinator.cpp)
+target_link_libraries(nesCoordinator ${LIBRARIES} iotdb)
+target_include_directories(nesCoordinator PUBLIC "include")
+
 add_executable(nesWorker nesWorker.cpp)
 target_link_libraries(nesWorker ${LIBRARIES} iotdb)
 target_include_directories(nesWorker PUBLIC "include")
@@ -157,3 +162,4 @@ configure_file(include/QueryLib/WindowManagerLib.hpp  ${CMAKE_CURRENT_BINARY_DIR
 configure_file(include/QueryLib/WindowManagerLib.hpp  ${CMAKE_CURRENT_BINARY_DIR})
 
 project_enable_clang_format()
+

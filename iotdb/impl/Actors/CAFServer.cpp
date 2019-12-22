@@ -18,6 +18,9 @@ bool CAFServer::start(
 
   cout << "*** trying to publish at port "
        << actorCoordinatorConfig.publish_port << endl;
+
+  io::unpublish(coordinatorActorHandle, actorCoordinatorConfig.publish_port);
+
   auto expected_port = io::publish(coordinatorActorHandle,
                                    actorCoordinatorConfig.publish_port);
   if (!expected_port) {
@@ -57,33 +60,45 @@ bool CAFServer::start(
     }
     anon_send_exit(coordinatorActorHandle, exit_reason::user_shutdown);
     done = true;
+  }, [&](string &arg0) {
+    if ( arg0 == "st") {
+      anon_send(coordinatorActorHandle, topology_json_atom::value);
+    } else if (arg0 == "sd") {
+      anon_send(coordinatorActorHandle, show_registered_atom::value);
+    } else if (arg0 == "sr") {
+      anon_send(coordinatorActorHandle, show_running_atom::value);
+    } else if (arg0 == "so") {
+      anon_send(coordinatorActorHandle, show_running_operators_atom::value);
+    } else {
+      cout << "Unknown command" << endl;
+    }
   },
-      [&](string &arg0, string &arg1) {
-        if ((arg0 == "show" && arg1 == "topology") || arg0 == "st") {
-          anon_send(coordinatorActorHandle, topology_json_atom::value);
-        } else if ((arg0 == "show" && arg1 == "deployed") || arg0 == "sd") {
-          anon_send(coordinatorActorHandle, show_registered_atom::value);
-        } else if ((arg0 == "show" && arg1 == "running")|| arg0 == "sr") {
-          anon_send(coordinatorActorHandle, show_running_atom::value);
-        } else if ((arg0 == "show" && arg1 == "operators") || arg0 == "so") {
-          anon_send(coordinatorActorHandle, show_running_operators_atom::value);
-        } else if (arg0 == "deploy" && !arg1.empty()) {
-          anon_send(coordinatorActorHandle, deploy_query_atom::value, arg1);
-        } else if (arg0 == "delete" && !arg1.empty()) {
-          anon_send(coordinatorActorHandle, deregister_query_atom::value, arg1);
-        } else if (arg0 == "register") {
-          anon_send(coordinatorActorHandle, register_query_atom::value, arg1, "BottomUp");
-        } else {
-          cout << "Unknown command" << endl;
-        }
-      },
-      [&](string& arg0, string& arg1, string& arg2) {
-        if (arg0 == "register") {
-          anon_send(coordinatorActorHandle, register_query_atom::value, arg1, arg2);
-        } else {
-          cout << "Unknown command" << endl;
-        }
+    [&](string &arg0, string &arg1) {
+      if ((arg0 == "show" && arg1 == "topology") || arg0 == "st") {
+        anon_send(coordinatorActorHandle, topology_json_atom::value);
+      } else if ((arg0 == "show" && arg1 == "deployed") || arg0 == "sd") {
+        anon_send(coordinatorActorHandle, show_registered_atom::value);
+      } else if ((arg0 == "show" && arg1 == "running")|| arg0 == "sr") {
+        anon_send(coordinatorActorHandle, show_running_atom::value);
+      } else if ((arg0 == "show" && arg1 == "operators") || arg0 == "so") {
+        anon_send(coordinatorActorHandle, show_running_operators_atom::value);
+      } else if (arg0 == "deploy" && !arg1.empty()) {
+        anon_send(coordinatorActorHandle, deploy_query_atom::value, arg1);
+      } else if (arg0 == "delete" && !arg1.empty()) {
+        anon_send(coordinatorActorHandle, deregister_query_atom::value, arg1);
+      } else if (arg0 == "register") {
+        anon_send(coordinatorActorHandle, register_query_atom::value, arg1, "BottomUp");
+      } else {
+        cout << "Unknown command" << endl;
       }
+    },
+    [&](string& arg0, string& arg1, string& arg2) {
+      if (arg0 == "register") {
+        anon_send(coordinatorActorHandle, register_query_atom::value, arg1, arg2);
+      } else {
+        cout << "Unknown command" << endl;
+      }
+    }
   };
   // read next line, split it, and feed to the eval handler
   string line;

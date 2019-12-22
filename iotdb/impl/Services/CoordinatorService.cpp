@@ -27,6 +27,7 @@ string CoordinatorService::register_query(const string& queryString, const strin
         Schema schema = inputQueryPtr->source_stream->getSchema();
 
         const FogExecutionPlan& kExecutionPlan = optimizerService.getExecutionPlan(inputQueryPtr, strategy);
+        IOTDB_DEBUG("OptimizerService: Final Execution Plan =" << kExecutionPlan.getTopologyPlanString())
 
         std::string queryId = boost::uuids::to_string(boost::uuids::random_generator()());
         tuple<Schema, FogExecutionPlan> t = std::make_tuple(schema, kExecutionPlan);
