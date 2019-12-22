@@ -89,13 +89,13 @@ std::string GetCurrentWorkingDir(void) {
 
 TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
   cout << " start coordinator" << endl;
-  string path = "./nesCoordinator";
+  string path = "/home/travis/build/nebulastream/IoTDB/iotdb/build/nesCoordinator";
   bp::child coordinatorProc(path.c_str());
 
   cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
   sleep(2);
 
-  string path2 = "./nesWorker";
+  string path2 = "/home/travis/build/nebulastream/IoTDB/iotdb/build/nesWorker";
   bp::child workerProc(path2.c_str());
   coordinatorPid = workerProc.id();
   workerPid = coordinatorProc.id();
@@ -147,13 +147,13 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
 TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
   cout << " start coordinator" << endl;
 
-  string path = "./nesCoordinator";
+  string path = "/home/travis/build/nebulastream/IoTDB/iotdb/build/nesCoordinator";
   bp::child coordinatorProc(path.c_str());
 
   cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
   sleep(2);
 
-  string path2 = "./nesWorker";
+  string path2 = "/home/travis/build/nebulastream/IoTDB/iotdb/build/nesWorker";
   bp::child workerProc(path2.c_str());
   cout << "started worker with pid = " << workerProc.id() << endl;
   coordinatorPid = workerProc.id();
