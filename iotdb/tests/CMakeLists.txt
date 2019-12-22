@@ -53,6 +53,15 @@ message( STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}" )
 
 # Test Suites -----------------------------------------------------------------
 
+
+# e2e Tests
+add_executable(e2e-rest-test "E2e/E2eRestTest.cpp")
+target_link_libraries(e2e-rest-test iotdb ${GTEST_LIBRARIES})
+add_test(NAME e2e-rest-test COMMAND e2e-rest-test)
+set_tests_properties(e2e-rest-test PROPERTIES
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+
+
 # Engine Tests
 add_executable(engine-test "UnitTests/EngineTest.cpp")
 target_link_libraries(engine-test  iotdb ${GTEST_LIBRARIES})
@@ -146,13 +155,6 @@ add_test(NAME coordinator-service-tests COMMAND coordinator-service-tests)
 add_executable(actors-cli-tests "UnitTests/ActorsCliTest.cpp")
 target_link_libraries(actors-cli-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME actors-cli-tests COMMAND actors-cli-tests)
-
-# e2e Tests
-add_executable(e2e-rest-test "E2e/E2eRestTest.cpp")
-target_link_libraries(e2e-rest-test iotdb ${GTEST_LIBRARIES})
-add_test(NAME e2e-rest-test COMMAND e2e-rest-test)
-set_tests_properties(e2e-rest-test PROPERTIES
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
