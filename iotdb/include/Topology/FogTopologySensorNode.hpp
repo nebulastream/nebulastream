@@ -5,7 +5,6 @@
 #include <memory>
 #include <Util/CPUCapacity.hpp>
 #include <utility>
-#include <NodeEngine/NodeProperties.hpp>
 
 namespace iotdb {
 
@@ -79,13 +78,6 @@ class FogTopologySensorNode : public FogTopologyEntry {
     this->sensorType = sensorType;
   }
 
-  void setNodeProperties(std::string nodeProperties) {
-    if(nodeProperties != "")
-      this->nodeProperties = std::make_shared<NodeProperties>(nodeProperties);
-    else
-      this->nodeProperties = std::make_shared<NodeProperties>();
-  }
-
   NodePropertiesPtr getNodeProperties(NodePropertiesPtr nodeProperties) {
     return nodeProperties;
   }
@@ -125,7 +117,6 @@ class FogTopologySensorNode : public FogTopologyEntry {
   int remainingCPUCapacity { };
   std::string sensorType = "unknown";
   InputQueryPtr query;
-  NodePropertiesPtr nodeProperties;
 };
 
 typedef std::shared_ptr<FogTopologySensorNode> FogTopologySensorNodePtr;

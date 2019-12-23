@@ -7,6 +7,12 @@
 using namespace iotdb;
 using namespace std;
 
+string CoordinatorService::getNodePropertiesAsString(const FogTopologyEntryPtr& entry)
+{
+  return entry->getNodeProperty();
+}
+
+
 FogTopologyEntryPtr CoordinatorService::register_sensor(const string& ip, uint16_t publish_port,
                                                         uint16_t receive_port, int cpu, const string& sensor_type, const string& nodeProperties) {
     FogTopologyManager& topologyManager = this->topologyManagerPtr->getInstance();
@@ -15,7 +21,7 @@ FogTopologyEntryPtr CoordinatorService::register_sensor(const string& ip, uint16
     sensorNode->setPublishPort(publish_port);
     sensorNode->setReceivePort(receive_port);
     if(nodeProperties != "defaultProperties")
-      sensorNode->setNodeProperties(nodeProperties);
+      sensorNode->setNodeProperty(nodeProperties);
 
     const FogTopologyEntryPtr& kRootNode = FogTopologyManager::getInstance().getRootNode();
     topologyManager.createFogTopologyLink(sensorNode, kRootNode);

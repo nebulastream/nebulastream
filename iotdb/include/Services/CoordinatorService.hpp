@@ -90,6 +90,8 @@ class CoordinatorService {
    */
   string getTopologyPlanString();
 
+  string getNodePropertiesAsString(const FogTopologyEntryPtr& entry);
+
   //FIXME: right now we do not register query but rather the fog plan
   /**
    * @brief: get the registered query
