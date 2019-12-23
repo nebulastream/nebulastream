@@ -2,11 +2,14 @@
 #define INCLUDE_TOPOLOGY_FOGTOPOLOGYENTRY_HPP_
 
 #include <API/InputQuery.hpp>
+#include <NodeEngine/NodeProperties.hpp>
 
 namespace iotdb {
 
 enum FogNodeType {
-  Coordinator, Worker, Sensor
+  Coordinator,
+  Worker,
+  Sensor
 };
 
 class FogTopologyEntry {
@@ -33,7 +36,7 @@ class FogTopologyEntry {
 
   virtual void setIp(const std::string &ip_addr) = 0;
 
-/**
+  /**
    * @brief the publish port is the port on which an actor framework server can be accessed
    * @return port to access CAF
    */
@@ -59,17 +62,30 @@ class FogTopologyEntry {
 
   //TODO: We need to fix this properly. Currently it just returns the +1 value of the receivePort.
   /**
- * @brief the next free receive port on which internal data transmission via ZMQ is running
- */
+   * @brief the next free receive port on which internal data transmission via ZMQ is running
+   */
   virtual uint16_t getNextFreeReceivePort() = 0;
+
+  void setNodeProperty(std::string nodeProperties) {
+    if (nodeProperties != "")
+      this->nodeProperties = std::make_shared<NodeProperties>(nodeProperties);
+    else
+      this->nodeProperties = std::make_shared<NodeProperties>();
+  }
+
+  std::string getNodeProperty() {
+    return this->nodeProperties->dump();
+  }
 
  protected:
   std::string ip_addr;
   uint16_t publish_port;
   uint16_t receive_port;
   size_t node_id;
+  NodePropertiesPtr nodeProperties;
+
 };
 
 typedef std::shared_ptr<FogTopologyEntry> FogTopologyEntryPtr;
-} // namespace iotdb
+}  // namespace iotdb
 #endif /* INCLUDE_TOPOLOGY_FOGTOPOLOGYENTRY_HPP_ */
