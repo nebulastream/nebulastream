@@ -72,6 +72,7 @@ TEST_F(CoordinatorCafTest, test_registration_and_topology) {
 }
 
 TEST_F(CoordinatorCafTest, test_deregistration_and_topology) {
+  //FIXME:provide own properties
   auto entry = coordinatorServicePtr->register_sensor(ip, publish_port, receive_port, 2, sensor_type + "_delete_me", "");
   string expectedTopo1 = "graph G {\n"
                          "0[label=\"0 type=Coordinator\"];\n"
