@@ -1,7 +1,5 @@
-
 #ifndef _METRICS_H
 #define _METRICS_H
-
 
 #if defined(__linux__)
 #include <linux/if_link.h>
@@ -11,12 +9,12 @@
 #include <netdb.h>
 #include <sys/ioctl.h>
 #include <sys/statvfs.h>
+#include <string>
 #elif defined(__APPLE__) || defined(__MACH__)
 
 #else
 #error "Unsupported platform"
 #endif
-
 #include "../Util/json.hpp"
 #include <fstream>
 
@@ -38,6 +36,10 @@ class NodeProperties {
       : nbrProcessors(0) {
   }
   ;
+
+  NodeProperties(std::string props) {
+    loadExistingProperties(props);
+  }
 
   ~NodeProperties() {
   }
@@ -62,10 +64,16 @@ class NodeProperties {
   void set(const char *metricsBuffer);
 
   /**
-   * @brief load existing serialized node property
-   * @param char pointer to serialized JSON
+   * @brief create the properties and return them
+   * @return char pointer to serialized JSON
    */
-  JSON load();
+  JSON getExistingMetrics();
+
+  /**
+   * @brief load existing properties
+   * @param properteis
+   */
+  void loadExistingProperties(std::string props);
 
   /**
    * @brief gather cpu information from /proc/stat

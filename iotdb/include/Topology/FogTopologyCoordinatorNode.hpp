@@ -13,24 +13,24 @@
 namespace iotdb {
 
 /**\breif:
-*
-* This class represent a worker node in fog topology.
-*
-* When you create a worker node you need to use the setters to define the node id and its cpu capacity.
-*
-* Following are the set of properties that can be defined:
-*
-* sensor_id : Defines the unique identifier of the node
-*
-* cpuCapacity : Defines the actual CPU capacity of the node
-*
-* remainingCPUCapacity : Defined the remaining CPU capacity of the node
-*
-* isASink : Defines if the node is sink or not. By default a worker node is not a sink node
-*
-* query : Defines the query that need to be executed by the node
-*
-*/
+ *
+ * This class represent a worker node in fog topology.
+ *
+ * When you create a worker node you need to use the setters to define the node id and its cpu capacity.
+ *
+ * Following are the set of properties that can be defined:
+ *
+ * sensor_id : Defines the unique identifier of the node
+ *
+ * cpuCapacity : Defines the actual CPU capacity of the node
+ *
+ * remainingCPUCapacity : Defined the remaining CPU capacity of the node
+ *
+ * isASink : Defines if the node is sink or not. By default a worker node is not a sink node
+ *
+ * query : Defines the query that need to be executed by the node
+ *
+ */
 class FogTopologyCoordinatorNode : public FogTopologyEntry {
 
  public:
@@ -40,13 +40,19 @@ class FogTopologyCoordinatorNode : public FogTopologyEntry {
   }
   ~FogTopologyCoordinatorNode() = default;
 
-  size_t getId() override { return node_id; }
+  size_t getId() override {
+    return node_id;
+  }
 
   void setId(size_t id) override {
     this->node_id = id;
   }
 
-  int getCpuCapacity() override { return cpuCapacity; }
+  std::string getNodeProperty();
+
+  int getCpuCapacity() override {
+    return cpuCapacity;
+  }
 
   void setCpuCapacity(CPUCapacity cpuCapacity) {
     this->cpuCapacity = cpuCapacity.toInt();
@@ -57,11 +63,13 @@ class FogTopologyCoordinatorNode : public FogTopologyEntry {
     this->remainingCPUCapacity = this->remainingCPUCapacity - usedCapacity;
   }
 
-  void increaseCpuCapacity(int freedCapacity) override{
+  void increaseCpuCapacity(int freedCapacity) override {
     this->remainingCPUCapacity = this->remainingCPUCapacity + freedCapacity;
   }
 
-  int getRemainingCpuCapacity() override { return remainingCPUCapacity; }
+  int getRemainingCpuCapacity() override {
+    return remainingCPUCapacity;
+  }
 
   void isASinkNode(bool isASink) {
     this->isASink = isASink;
@@ -71,7 +79,9 @@ class FogTopologyCoordinatorNode : public FogTopologyEntry {
     return this->isASink;
   }
 
-  FogNodeType getEntryType() override { return Coordinator; }
+  FogNodeType getEntryType() override {
+    return Coordinator;
+  }
 
   std::string getEntryTypeString() override {
     if (isASink) {
@@ -80,7 +90,10 @@ class FogTopologyCoordinatorNode : public FogTopologyEntry {
     return "Coordinator";
   }
 
-  void setQuery(InputQueryPtr pQuery) override { this->query = pQuery; };
+  void setQuery(InputQueryPtr pQuery) override {
+    this->query = pQuery;
+  }
+  ;
 
   uint16_t getPublishPort() override {
     return publish_port;
@@ -112,12 +125,12 @@ class FogTopologyCoordinatorNode : public FogTopologyEntry {
   }
 
  private:
-  int cpuCapacity{};
-  int remainingCPUCapacity{};
+  int cpuCapacity { };
+  int remainingCPUCapacity { };
   bool isASink = false;
   InputQueryPtr query;
 };
 
 typedef std::shared_ptr<FogTopologyCoordinatorNode> FogTopologyCoordinatorNodePtr;
-} // namespace iotdb
+}  // namespace iotdb
 #endif /* INCLUDE_TOPOLOGY_FOGTOPOLOGYWORKERNODE_HPP_ */

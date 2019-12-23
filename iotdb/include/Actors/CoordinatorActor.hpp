@@ -59,12 +59,14 @@ namespace iotdb {
        * @param receive_port
        * @param cpu
        * @param sensor
+       * @param properties of this worker
        */
       void registerSensor(const string& ip,
                           uint16_t publish_port,
                           uint16_t receive_port,
                           int cpu,
-                          const string& sensor);
+                          const string& sensor,
+                          const string& nodeProperties);
 
       /**
        * @brief execute user query will first register the query and then deploy it.

@@ -11,6 +11,7 @@
 using std::string;
 using std::vector;
 using std::tuple;
+using JSON = nlohmann::json;
 
 namespace iotdb {
 
@@ -47,6 +48,8 @@ class WorkerService {
   void setReceivePort(uint16_t receive_port);
   const string &getSensorType() const;
   void setSensorType(const string &sensor_type);
+
+  string getNodeProperties();
  private:
   string _ip;
   uint16_t _publish_port;
