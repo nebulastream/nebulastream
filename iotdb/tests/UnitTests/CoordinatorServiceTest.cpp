@@ -32,7 +32,8 @@ class CoordinatorCafTest : public testing::Test {
         coordinatorServicePtr = CoordinatorService::getInstance();
         coordinatorServicePtr->clearQueryCatalogs();
         for (int i = 0; i < 5; i++) {
-            auto entry = coordinatorServicePtr->register_sensor(ip, publish_port, receive_port, 2, sensor_type);
+          //FIXME: add node properties
+            auto entry = coordinatorServicePtr->register_sensor(ip, publish_port, receive_port, 2, sensor_type, "");
         }
     }
 
@@ -53,6 +54,7 @@ class CoordinatorCafTest : public testing::Test {
 /* Test serialization for Schema  */
 TEST_F(CoordinatorCafTest, test_registration_and_topology) {
   string topo = coordinatorServicePtr->getTopologyPlanString();
+  std::cout << "current topo=" << topo << std::endl;
   string expectedTopo = "graph G {\n"
                         "0[label=\"0 type=Coordinator\"];\n"
                         "1[label=\"1 type=Sensor(default)\"];\n"
@@ -70,7 +72,7 @@ TEST_F(CoordinatorCafTest, test_registration_and_topology) {
 }
 
 TEST_F(CoordinatorCafTest, test_deregistration_and_topology) {
-  auto entry = coordinatorServicePtr->register_sensor(ip, publish_port, receive_port, 2, sensor_type + "_delete_me");
+  auto entry = coordinatorServicePtr->register_sensor(ip, publish_port, receive_port, 2, sensor_type + "_delete_me", "");
   string expectedTopo1 = "graph G {\n"
                          "0[label=\"0 type=Coordinator\"];\n"
                          "1[label=\"1 type=Sensor(default)\"];\n"
