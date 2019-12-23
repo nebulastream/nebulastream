@@ -40,8 +40,8 @@ namespace iotdb {
       return {
           // coordinator specific methods
           [=](register_sensor_atom, string& ip, uint16_t publish_port, uint16_t receive_port, int cpu,
-              const string& sensor_type) {
-            this->registerSensor(ip, publish_port, receive_port, cpu, sensor_type);
+              const string& sensor_type, const string& nodeProperties) {
+            this->registerSensor(ip, publish_port, receive_port, cpu, sensor_type, nodeProperties);
           },
           [=](execute_query_atom, const string& description, const string& strategy) {
             return executeQuery(description, strategy);
@@ -94,11 +94,11 @@ namespace iotdb {
   }
 
   void CoordinatorActor::registerSensor(const string& ip, uint16_t publish_port, uint16_t receive_port, int cpu,
-                                        const string& sensor) {
+                                        const string& sensor, const string& nodeProperties) {
       auto sap = current_sender();
       auto hdl = actor_cast<actor>(sap);
       FogTopologyEntryPtr
-          sensorNode = coordinatorServicePtr->register_sensor(ip, publish_port, receive_port, cpu, sensor);
+          sensorNode = coordinatorServicePtr->register_sensor(ip, publish_port, receive_port, cpu, sensor, nodeProperties);
 
       this->state.actorTopologyMap.insert({sap, sensorNode});
       this->state.topologyActorMap.insert({sensorNode, sap});

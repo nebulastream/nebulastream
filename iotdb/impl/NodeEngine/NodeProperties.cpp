@@ -50,6 +50,11 @@ void NodeProperties::readCpuStats() {
   this->_metrics["cpus"] = this->_cpus;
 }
 
+void NodeProperties::loadExistingProperties(std::string props)
+{
+  set(props.c_str());
+}
+
 std::string NodeProperties::getCpuStats()
 {
     return _cpus.dump();
@@ -278,7 +283,7 @@ void NodeProperties::set(const char* metricsBuffer) {
   _nets = this->_metrics["nets"];
 }
 
-JSON NodeProperties::load() {
+JSON NodeProperties::getExistingMetrics() {
   return this->_metrics;
 }
 }

@@ -14,6 +14,11 @@ WorkerService::WorkerService(string ip, uint16_t publish_port, uint16_t receive_
   this->_enginePtr->start();
 }
 
+string WorkerService::getNodeProperties()
+{
+  return this->_enginePtr->getNodePropertiesAsString();
+}
+
 void WorkerService::execute_query(const string &queryId, string &executableTransferObject) {
   IOTDB_INFO("WORKERSERVICE (" << this->_ip << "-" << this->_sensor_type << "): Executing " << queryId);
   ExecutableTransferObject eto = SerializationTools::parse_eto(executableTransferObject);

@@ -5,6 +5,7 @@
 #include <memory>
 #include <Util/CPUCapacity.hpp>
 #include <utility>
+#include <NodeEngine/NodeProperties.hpp>
 
 namespace iotdb {
 
@@ -28,11 +29,17 @@ class FogTopologySensorNode : public FogTopologyEntry {
 
   ~FogTopologySensorNode() = default;
 
-  void setId(size_t id) override { this->node_id = id; }
+  void setId(size_t id) override {
+    this->node_id = id;
+  }
 
-  size_t getId() override { return node_id; }
+  size_t getId() override {
+    return node_id;
+  }
 
-  int getCpuCapacity() override { return cpuCapacity; }
+  int getCpuCapacity() override {
+    return cpuCapacity;
+  }
 
   void setCpuCapacity(CPUCapacity cpuCapacity) {
     this->cpuCapacity = cpuCapacity.toInt();
@@ -47,13 +54,22 @@ class FogTopologySensorNode : public FogTopologyEntry {
     this->remainingCPUCapacity = this->remainingCPUCapacity + freedCapacity;
   }
 
-  int getRemainingCpuCapacity() override { return remainingCPUCapacity; }
+  int getRemainingCpuCapacity() override {
+    return remainingCPUCapacity;
+  }
 
-  FogNodeType getEntryType() override { return Sensor; }
+  FogNodeType getEntryType() override {
+    return Sensor;
+  }
 
-  std::string getEntryTypeString() override { return "Sensor(" + getSensorType() + ")"; }
+  std::string getEntryTypeString() override {
+    return "Sensor(" + getSensorType() + ")";
+  }
 
-  void setQuery(InputQueryPtr pQuery) override { this->query = pQuery; };
+  void setQuery(InputQueryPtr pQuery) override {
+    this->query = pQuery;
+  }
+  ;
 
   std::string getSensorType() {
     return sensorType;
@@ -61,6 +77,17 @@ class FogTopologySensorNode : public FogTopologyEntry {
 
   void setSensorType(std::string sensorType) {
     this->sensorType = sensorType;
+  }
+
+  void setNodeProperties(std::string nodeProperties) {
+    if(nodeProperties != "")
+      this->nodeProperties = std::make_shared<NodeProperties>(nodeProperties);
+    else
+      this->nodeProperties = std::make_shared<NodeProperties>();
+  }
+
+  NodePropertiesPtr getNodeProperties(NodePropertiesPtr nodeProperties) {
+    return nodeProperties;
   }
 
   uint16_t getPublishPort() override {
@@ -94,12 +121,13 @@ class FogTopologySensorNode : public FogTopologyEntry {
 
  private:
   size_t node_id;
-  int cpuCapacity{};
-  int remainingCPUCapacity{};
+  int cpuCapacity { };
+  int remainingCPUCapacity { };
   std::string sensorType = "unknown";
   InputQueryPtr query;
+  NodePropertiesPtr nodeProperties;
 };
 
 typedef std::shared_ptr<FogTopologySensorNode> FogTopologySensorNodePtr;
-} // namespace iotdb
+}  // namespace iotdb
 #endif /* INCLUDE_TOPOLOGY_FOGTOPOLOGYSENSOR_HPP_ */
