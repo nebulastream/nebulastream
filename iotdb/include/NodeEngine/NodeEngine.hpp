@@ -30,7 +30,7 @@ class NodeEngine {
    * and initialize Dispatcher, BufferManager and ThreadPool
    */
   NodeEngine() {
-    props = new NodeProperties();
+    props = std::make_shared<NodeProperties>();
     init();
   }
 
@@ -79,6 +79,9 @@ class NodeEngine {
   void resetQEPs();
 
   JSON getNodePropertiesAsJSON();
+
+  std::string getNodePropertiesAsString();
+
   NodeProperties* getNodeProperties();
 
  private:
@@ -87,7 +90,7 @@ class NodeEngine {
    */
   void init();
 
-  NodeProperties* props;
+  NodePropertiesPtr props;
   std::vector<QueryExecutionPlanPtr> qeps;
 
 };

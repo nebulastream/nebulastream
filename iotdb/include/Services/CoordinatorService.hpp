@@ -51,10 +51,11 @@ class CoordinatorService {
    * @param receive_port the receive port of the worker
    * @param cpu the cpu capacity of the worker
    * @param sensor_type the sensor type which is beeing later on registered as a Stream object
+   * @param nodeProperties of the to be added sensor
    * @param sap the strong_actor_pointer CAF object to the worker
    */
   FogTopologyEntryPtr register_sensor(const string &ip, uint16_t publish_port, uint16_t receive_port, int cpu,
-                                      const string &sensor_type);
+                                      const string &sensor_type, const string& nodeProperties);
 
   /**
    * @brief deregisters a CAF worker from the NES topology
@@ -88,6 +89,8 @@ class CoordinatorService {
    * @return the topology as string representation
    */
   string getTopologyPlanString();
+
+  string getNodePropertiesAsString(const FogTopologyEntryPtr& entry);
 
   //FIXME: right now we do not register query but rather the fog plan
   /**
