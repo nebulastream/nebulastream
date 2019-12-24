@@ -1,15 +1,14 @@
-#ifndef INCLUDE_TOPOLOGY_FOGTOPOLOGYSENSOR_HPP_
-#define INCLUDE_TOPOLOGY_FOGTOPOLOGYSENSOR_HPP_
+#ifndef INCLUDE_TOPOLOGY_NESTOPOLOGYSENSOR_HPP_
+#define INCLUDE_TOPOLOGY_NESTOPOLOGYSENSOR_HPP_
 
-#include "FogTopologyEntry.hpp"
 #include <memory>
-#include <Util/CPUCapacity.hpp>
 #include <utility>
+#include "NESTopologyEntry.hpp"
 
 namespace iotdb {
 
 /**
- * @brief: This class represent a sensor node in fog topology. When you create a sensor node you need to use the setters to
+ * @brief: This class represent a sensor node in nes topology. When you create a sensor node you need to use the setters to
  * define the node id and its cpu capacity.
  *
  * Following are the set of properties that can be defined:
@@ -18,15 +17,15 @@ namespace iotdb {
  * 3.) remainingCPUCapacity : Defined the remaining CPU capacity of the node
  * 4.) query : Defines the query that need to be executed by the node
  */
-class FogTopologySensorNode : public FogTopologyEntry {
+class NESTopologySensorNode : public NESTopologyEntry {
 
  public:
-  FogTopologySensorNode(size_t nodeId, std::string ip_addr) {
+  NESTopologySensorNode(size_t nodeId, std::string ip_addr) {
     this->node_id = nodeId;
     this->ip_addr = std::move(ip_addr);
   }
 
-  ~FogTopologySensorNode() = default;
+  ~NESTopologySensorNode() = default;
 
   void setId(size_t id) override {
     this->node_id = id;
@@ -57,7 +56,7 @@ class FogTopologySensorNode : public FogTopologyEntry {
     return remainingCPUCapacity;
   }
 
-  FogNodeType getEntryType() override {
+  NESNodeType getEntryType() override {
     return Sensor;
   }
 
@@ -119,6 +118,6 @@ class FogTopologySensorNode : public FogTopologyEntry {
   InputQueryPtr query;
 };
 
-typedef std::shared_ptr<FogTopologySensorNode> FogTopologySensorNodePtr;
+typedef std::shared_ptr<NESTopologySensorNode> NESTopologySensorNodePtr;
 }  // namespace iotdb
-#endif /* INCLUDE_TOPOLOGY_FOGTOPOLOGYSENSOR_HPP_ */
+#endif /* INCLUDE_TOPOLOGY_NESTOPOLOGYSENSOR_HPP_ */

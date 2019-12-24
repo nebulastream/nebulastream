@@ -7,24 +7,24 @@
 using namespace iotdb;
 using namespace std;
 
-string CoordinatorService::getNodePropertiesAsString(const FogTopologyEntryPtr& entry)
+string CoordinatorService::getNodePropertiesAsString(const NESTopologyEntryPtr& entry)
 {
   return entry->getNodeProperty();
 }
 
 
-FogTopologyEntryPtr CoordinatorService::register_sensor(const string& ip, uint16_t publish_port,
+NESTopologyEntryPtr CoordinatorService::register_sensor(const string& ip, uint16_t publish_port,
                                                         uint16_t receive_port, int cpu, const string& sensor_type, const string& nodeProperties) {
-    FogTopologyManager& topologyManager = this->topologyManagerPtr->getInstance();
-    FogTopologySensorNodePtr sensorNode = topologyManager.createFogSensorNode(ip, CPUCapacity::Value(cpu));
+    NESTopologyManager& topologyManager = this->topologyManagerPtr->getInstance();
+    NESTopologySensorNodePtr sensorNode = topologyManager.createNESSensorNode(ip, CPUCapacity::Value(cpu));
     sensorNode->setSensorType(sensor_type);
     sensorNode->setPublishPort(publish_port);
     sensorNode->setReceivePort(receive_port);
     if(nodeProperties != "defaultProperties")
       sensorNode->setNodeProperty(nodeProperties);
 
-    const FogTopologyEntryPtr& kRootNode = FogTopologyManager::getInstance().getRootNode();
-    topologyManager.createFogTopologyLink(sensorNode, kRootNode);
+    const NESTopologyEntryPtr& kRootNode = NESTopologyManager::getInstance().getRootNode();
+    topologyManager.createNESTopologyLink(sensorNode, kRootNode);
     return sensorNode;
 }
 
@@ -35,11 +35,11 @@ string CoordinatorService::register_query(const string& queryString, const strin
         InputQueryPtr inputQueryPtr = queryService.getInputQueryFromQueryString(queryString);
         Schema schema = inputQueryPtr->source_stream->getSchema();
 
-        const FogExecutionPlan& kExecutionPlan = optimizerService.getExecutionPlan(inputQueryPtr, strategy);
+        const NESExecutionPlan& kExecutionPlan = optimizerService.getExecutionPlan(inputQueryPtr, strategy);
         IOTDB_DEBUG("OptimizerService: Final Execution Plan =" << kExecutionPlan.getTopologyPlanString())
 
         std::string queryId = boost::uuids::to_string(boost::uuids::random_generator()());
-        tuple<Schema, FogExecutionPlan> t = std::make_tuple(schema, kExecutionPlan);
+        tuple<Schema, NESExecutionPlan> t = std::make_tuple(schema, kExecutionPlan);
         this->registeredQueries.insert({queryId, t});
         return queryId;
     }
@@ -72,15 +72,15 @@ bool CoordinatorService::deregister_query(const string& queryId) {
     return out;
 }
 
-unordered_map<FogTopologyEntryPtr,
+unordered_map<NESTopologyEntryPtr,
               ExecutableTransferObject> CoordinatorService::make_deployment(const string& queryId) {
-    unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> output;
+    unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> output;
     if (this->registeredQueries.find(queryId) != this->registeredQueries.end() &&
         this->runningQueries.find(queryId) == this->runningQueries.end()) {
         IOTDB_INFO("CoordinatorService: Deploying query " << queryId);
-        // get the schema and FogExecutionPlan stored during query registration
+        // get the schema and NESExecutionPlan stored during query registration
         Schema schema = get<0>(this->registeredQueries.at(queryId));
-        FogExecutionPlan execPlan = get<1>(this->registeredQueries.at(queryId));
+        NESExecutionPlan execPlan = get<1>(this->registeredQueries.at(queryId));
 
         //iterate through all vertices in the topology
         for (const ExecutionVertex& v : execPlan.getExecutionGraph()->getAllVertex()) {
@@ -89,14 +89,14 @@ unordered_map<FogTopologyEntryPtr,
                 // if node contains operators to be deployed -> serialize and send them to the according node
                 vector<DataSourcePtr> sources = getSources(queryId, v);
                 vector<DataSinkPtr> destinations = getSinks(queryId, v);
-                FogTopologyEntryPtr fogNode = v.ptr->getFogNode();
+                NESTopologyEntryPtr nesNode = v.ptr->getNESNode();
                 ExecutableTransferObject
                     eto = ExecutableTransferObject(queryId, schema, sources, destinations, operators);
-                output.insert({fogNode, eto});
+                output.insert({nesNode, eto});
             }
         }
         // move registered query to running query
-        tuple<Schema, FogExecutionPlan> t = std::make_tuple(schema, execPlan);
+        tuple<Schema, NESExecutionPlan> t = std::make_tuple(schema, execPlan);
         this->runningQueries.insert({queryId, t});
         this->registeredQueries.erase(queryId);
     } else if (this->runningQueries.find(queryId) != this->runningQueries.end()) {
@@ -110,7 +110,7 @@ unordered_map<FogTopologyEntryPtr,
 vector<DataSourcePtr> CoordinatorService::getSources(const string& queryId, const ExecutionVertex& v) {
     vector<DataSourcePtr> out = vector<DataSourcePtr>();
     Schema schema = get<0>(this->registeredQueries.at(queryId));
-    FogExecutionPlan execPlan = get<1>(this->registeredQueries.at(queryId));
+    NESExecutionPlan execPlan = get<1>(this->registeredQueries.at(queryId));
 
     DataSourcePtr source = findDataSourcePointer(v.ptr->getRootOperator());
 
@@ -118,7 +118,7 @@ vector<DataSourcePtr> CoordinatorService::getSources(const string& queryId, cons
     if (source->getType() == ZMQ_SOURCE) {
         //FIXME: Maybe a better way to do it? perhaps type cast to ZMQSource type and just update the port number
         // create local zmq source
-        const FogTopologyEntryPtr& kRootNode = FogTopologyManager::getInstance().getRootNode();
+        const NESTopologyEntryPtr& kRootNode = NESTopologyManager::getInstance().getRootNode();
         source = createZmqSource(schema, kRootNode->getIp(), assign_port(queryId));
     }
     out.emplace_back(source);
@@ -129,14 +129,14 @@ vector<DataSinkPtr> CoordinatorService::getSinks(const string& queryId, const Ex
 
     vector<DataSinkPtr> out = vector<DataSinkPtr>();
     Schema schema = get<0>(this->registeredQueries.at(queryId));
-    FogExecutionPlan execPlan = get<1>(this->registeredQueries.at(queryId));
+    NESExecutionPlan execPlan = get<1>(this->registeredQueries.at(queryId));
     DataSinkPtr sink = findDataSinkPointer(v.ptr->getRootOperator());
 
     //FIXME: what about user defined a ZMQ sink?
     if (sink->getType() == ZMQ_SINK) {
         //FIXME: Maybe a better way to do it? perhaps type cast to ZMQSink type and just update the port number
         //create local zmq sink
-        const FogTopologyEntryPtr& kRootNode = FogTopologyManager::getInstance().getRootNode();
+        const NESTopologyEntryPtr& kRootNode = NESTopologyManager::getInstance().getRootNode();
         sink = createZmqSink(schema, kRootNode->getIp(), assign_port(queryId));
     }
     out.emplace_back(sink);
@@ -177,21 +177,21 @@ int CoordinatorService::assign_port(const string& queryId) {
         return this->queryToPort.at(queryId);
     } else {
         // increase max port in map by 1
-        const FogTopologyEntryPtr& kRootNode = FogTopologyManager::getInstance().getRootNode();
+        const NESTopologyEntryPtr& kRootNode = NESTopologyManager::getInstance().getRootNode();
         uint16_t kFreeZmqPort = kRootNode->getNextFreeReceivePort();
         this->queryToPort.insert({queryId, kFreeZmqPort});
         return kFreeZmqPort;
     }
 }
 
-bool CoordinatorService::deregister_sensor(const FogTopologyEntryPtr& entry) {
-    return this->topologyManagerPtr->getInstance().removeFogNode(entry);
+bool CoordinatorService::deregister_sensor(const NESTopologyEntryPtr& entry) {
+    return this->topologyManagerPtr->getInstance().removeNESNode(entry);
 }
 string CoordinatorService::getTopologyPlanString() {
-    return this->topologyManagerPtr->getInstance().getTopologyPlanString();
+    return this->topologyManagerPtr->getInstance().getNESTopologyPlanString();
 }
 
-FogExecutionPlan* CoordinatorService::getRegisteredQuery(string queryId) {
+NESExecutionPlan* CoordinatorService::getRegisteredQuery(string queryId) {
     if (this->registeredQueries.find(queryId) != this->registeredQueries.end()) {
         return &(get<1>(this->registeredQueries.at(queryId)));
     }
@@ -208,10 +208,10 @@ bool CoordinatorService::clearQueryCatalogs() {
     return true;
 }
 
-const unordered_map<string, tuple<Schema, FogExecutionPlan>>& CoordinatorService::getRegisteredQueries() const {
+const unordered_map<string, tuple<Schema, NESExecutionPlan>>& CoordinatorService::getRegisteredQueries() const {
     return registeredQueries;
 }
 
-const unordered_map<string, tuple<Schema, FogExecutionPlan>>& CoordinatorService::getRunningQueries() const {
+const unordered_map<string, tuple<Schema, NESExecutionPlan>>& CoordinatorService::getRunningQueries() const {
     return runningQueries;
 }

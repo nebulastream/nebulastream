@@ -1,7 +1,7 @@
 #include "Services/OptimizerService.hpp"
-#include <Topology/FogTopologyManager.hpp>
-#include <Optimizer/FogOptimizer.hpp>
 #include <CodeGen/QueryPlanBuilder.hpp>
+#include "../../include/Optimizer/NESOptimizer.hpp"
+#include "../../include/Topology/NESTopologyManager.hpp"
 
 
 using namespace iotdb;
@@ -12,12 +12,12 @@ json::value OptimizerService::getExecutionPlanAsJson(InputQueryPtr inputQuery, s
   return getExecutionPlan(inputQuery, optimizationStrategyName).getExecutionGraphAsJson();
 }
 
-FogExecutionPlan OptimizerService::getExecutionPlan(InputQueryPtr inputQuery, string optimizationStrategyName) {
-  FogTopologyManager &fogTopologyManager = FogTopologyManager::getInstance();
-  const FogTopologyPlanPtr &topologyPlan = fogTopologyManager.getTopologyPlan();
+NESExecutionPlan OptimizerService::getExecutionPlan(InputQueryPtr inputQuery, string optimizationStrategyName) {
+  NESTopologyManager &nesTopologyManager = NESTopologyManager::getInstance();
+  const NESTopologyPlanPtr &topologyPlan = nesTopologyManager.getNESTopologyPlan();
   IOTDB_DEBUG("OptimizerService: topology=" << topologyPlan->getTopologyPlanString())
 
-  FogOptimizer queryOptimizer;
+  NESOptimizer queryOptimizer;
 
   QueryPlanBuilder queryPlanBuilder;
   const json::value &basePlan = queryPlanBuilder.getBasePlan(inputQuery);

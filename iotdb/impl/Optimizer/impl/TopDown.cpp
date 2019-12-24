@@ -2,41 +2,41 @@
 
 using namespace iotdb;
 
-FogExecutionPlan TopDown::initializeExecutionPlan(InputQueryPtr inputQuery, FogTopologyPlanPtr fogTopologyPlan) {
-    FogExecutionPlan executionGraph;
+NESExecutionPlan TopDown::initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan) {
+    NESExecutionPlan executionGraph;
     const OperatorPtr& sinkOperator = inputQuery->getRoot();
 
-    placeOperators(executionGraph, inputQuery, fogTopologyPlan);
+    placeOperators(executionGraph, inputQuery, nesTopologyPlan);
     removeNonResidentOperators(executionGraph);
 
-    completeExecutionGraphWithFogTopology(executionGraph, fogTopologyPlan);
+    completeExecutionGraphWithNESTopology(executionGraph, nesTopologyPlan);
 
-    //FIXME: We are assuming that throughout the pipeline the schema would not change.
+    //FIXME: We are assuming that throughout the pipeline the schema would not change.F
     Schema& schema = inputQuery->source_stream->getSchema();
     addSystemGeneratedSourceSinkOperators(schema, executionGraph);
 
     return executionGraph;
 }
 
-void TopDown::placeOperators(FogExecutionPlan executionGraph,
+void TopDown::placeOperators(NESExecutionPlan executionGraph,
                              InputQueryPtr query,
-                             FogTopologyPlanPtr fogTopologyPlanPtr) {
+                             NESTopologyPlanPtr nesTopologyPlanPtr) {
 
     const OperatorPtr& sinkOperator = query->getRoot();
-    const FogGraphPtr& fogGraphPtr = fogTopologyPlanPtr->getFogGraph();
+    const NESGraphPtr& nesGraphPtr = nesTopologyPlanPtr->getNESGraph();
 
     deque<OperatorPtr> operatorsToProcess = {sinkOperator};
 
     string sourceName = query->source_stream->getName();
 
     //find the source Node
-    vector<FogVertex> sourceNodes;
-    const vector<FogVertex>& allVertex = fogGraphPtr->getAllVertex();
+    vector<NESVertex> sourceNodes;
+    const vector<NESVertex>& allVertex = nesGraphPtr->getAllVertex();
     copy_if(allVertex.begin(), allVertex.end(), back_inserter(sourceNodes),
-            [sourceName](const FogVertex vertex) {
-              if (vertex.ptr->getEntryType() == FogNodeType::Sensor &&
+            [sourceName](const NESVertex vertex) {
+              if (vertex.ptr->getEntryType() == NESNodeType::Sensor &&
                   vertex.ptr->getRemainingCpuCapacity() > 0) {
-                  FogTopologySensorNodePtr ptr = std::static_pointer_cast<FogTopologySensorNode>(vertex.ptr);
+                  NESTopologySensorNodePtr ptr = std::static_pointer_cast<NESTopologySensorNode>(vertex.ptr);
                   return ptr->getSensorType() == sourceName;
               }
               return false;
@@ -50,11 +50,11 @@ void TopDown::placeOperators(FogExecutionPlan executionGraph,
         throw "No available source node found in the network to place the operator";
     }
 
-    const FogTopologyEntryPtr& targetSource = sourceNodes[0].ptr;
+    const NESTopologyEntryPtr& targetSource = sourceNodes[0].ptr;
 
     // Find the nodes where we can place the operators. First node will be sink and last one will be the target
     // source.
-    deque<FogTopologyEntryPtr> candidateNodes = getCandidateFogNodes(fogGraphPtr, targetSource);
+    deque<NESTopologyEntryPtr> candidateNodes = getCandidateNESNodes(nesGraphPtr, targetSource);
 
     if (candidateNodes.empty()) {
         throw "No path exists between sink and source";
@@ -71,7 +71,7 @@ void TopDown::placeOperators(FogExecutionPlan executionGraph,
 
         // if operator is of source type then find the sensor node and schedule it there directly.
         if (processOperator->getOperatorType() == OperatorType::SOURCE_OP) {
-            FogTopologyEntryPtr sourceNode = targetSource;
+            NESTopologyEntryPtr sourceNode = targetSource;
 
             if (executionGraph.hasVertex(targetSource->getId())) {
 
@@ -98,7 +98,7 @@ void TopDown::placeOperators(FogExecutionPlan executionGraph,
             }
         } else {
             bool scheduled = false;
-            for (FogTopologyEntryPtr node : candidateNodes) {
+            for (NESTopologyEntryPtr node : candidateNodes) {
                 if (node->getRemainingCpuCapacity() > 0) {
                     scheduled = true;
 
@@ -143,9 +143,9 @@ void TopDown::placeOperators(FogExecutionPlan executionGraph,
     }
 
     // Place forward operators
-    candidateNodes = getCandidateFogNodes(fogGraphPtr, targetSource);
+    candidateNodes = getCandidateNESNodes(nesGraphPtr, targetSource);
     while (!candidateNodes.empty()) {
-        shared_ptr<FogTopologyEntry>& node = candidateNodes.front();
+        shared_ptr<NESTopologyEntry>& node = candidateNodes.front();
         candidateNodes.pop_front();
         if (node->getCpuCapacity() == node->getRemainingCpuCapacity()) {
             executionGraph.createExecutionNode("FWD", to_string(node->getId()), node, nullptr);

@@ -24,9 +24,9 @@ class CoordinatorCafTest : public testing::Test {
   void SetUp() {
     std::cout << "Setup NES Coordinator test case." << std::endl;
 
-    FogTopologyManager::getInstance().resetFogTopologyPlan();
-    const auto& kCoordinatorNode = FogTopologyManager::getInstance()
-        .createFogCoordinatorNode("127.0.0.1", CPUCapacity::HIGH);
+    NESTopologyManager::getInstance().resetNESTopologyPlan();
+    const auto& kCoordinatorNode = NESTopologyManager::getInstance()
+        .createNESCoordinatorNode("127.0.0.1", CPUCapacity::HIGH);
     kCoordinatorNode->setPublishPort(4711);
     kCoordinatorNode->setReceivePort(4815);
 
@@ -147,7 +147,7 @@ TEST_F(CoordinatorCafTest, test_register_query) {
           "4--1 [label=\"4\"];\n"
           "5--1 [label=\"5\"];\n"
           "}\n";
-  const FogExecutionPlan* kExecutionPlan = coordinatorServicePtr
+  const NESExecutionPlan* kExecutionPlan = coordinatorServicePtr
       ->getRegisteredQuery(queryId);
   EXPECT_EQ(kExecutionPlan->getTopologyPlanString(), expectedPlacement);
 }
@@ -164,7 +164,7 @@ TEST_F(CoordinatorCafTest, test_make_deployment) {
   string queryId = coordinatorServicePtr->register_query(queryString,
                                                          "BottomUp");
   EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
-  unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> etos =
+  unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
       coordinatorServicePtr->make_deployment(queryId);
   EXPECT_TRUE(etos.size() == 2);
 
@@ -182,7 +182,7 @@ TEST_F(CoordinatorCafTest, test_run_deregister_query) {
   string queryId = coordinatorServicePtr->register_query(queryString,
                                                          "BottomUp");
   EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
-  unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> etos =
+  unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
       coordinatorServicePtr->make_deployment(queryId);
   EXPECT_TRUE(etos.size() == 2);
   EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().empty());
@@ -197,7 +197,7 @@ TEST_F(CoordinatorCafTest, test_compile_deployment) {
   string queryId = coordinatorServicePtr->register_query(queryString,
                                                          "BottomUp");
   EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
-  unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> etos =
+  unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
       coordinatorServicePtr->make_deployment(queryId);
   EXPECT_TRUE(etos.size() == 2);
 
@@ -250,13 +250,13 @@ TEST_F(CoordinatorCafTest, test_local_distributed_deployment) {
   string queryId = coordinatorServicePtr->register_query(queryString,
                                                          "BottomUp");
   EXPECT_EQ(coordinatorServicePtr->getRegisteredQueries().size(), 1);
-  unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> etos =
+  unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
       coordinatorServicePtr->make_deployment(queryId);
   EXPECT_TRUE(etos.size() == 2);
 
   vector<QueryExecutionPlanPtr> qeps;
   for (auto& x : etos) {
-    FogTopologyEntryPtr v = x.first;
+    NESTopologyEntryPtr v = x.first;
     cout << "Deploying QEP for " << v->getEntryTypeString() << endl;
     ExecutableTransferObject eto = x.second;
     QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan();
@@ -286,13 +286,13 @@ TEST_F(CoordinatorCafTest, DISABLED_test_sequential_local_distributed_deployment
     string queryId = coordinatorServicePtr->register_query(queryString,
                                                            "BottomUp");
     EXPECT_EQ(coordinatorServicePtr->getRegisteredQueries().size(), 1);
-    unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> etos =
+    unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
         coordinatorServicePtr->make_deployment(queryId);
     EXPECT_TRUE(etos.size() == 2);
 
     vector<QueryExecutionPlanPtr> qeps;
     for (auto& x : etos) {
-      FogTopologyEntryPtr v = x.first;
+      NESTopologyEntryPtr v = x.first;
       cout << "Deploying QEP for " << v->getEntryTypeString() << endl;
       ExecutableTransferObject eto = x.second;
       QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan();

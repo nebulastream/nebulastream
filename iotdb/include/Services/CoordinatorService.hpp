@@ -7,9 +7,6 @@
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <CodeGen/GeneratedQueryExecutionPlan.hpp>
-#include <Topology/FogTopologyManager.hpp>
-
-#include <Optimizer/FogOptimizer.hpp>
 #include <API/InputQuery.hpp>
 
 #include <API/UserAPIExpression.hpp>
@@ -26,6 +23,8 @@
 
 #include <cstdint>
 #include <string>
+#include "../Optimizer/NESOptimizer.hpp"
+#include "../Topology/NESTopologyManager.hpp"
 
 using std::string;
 
@@ -45,7 +44,7 @@ class CoordinatorService {
   ~CoordinatorService() = default;
 
   /**
-   * @brief registers a CAF worker into the NES topology and creates a corresponding FogTopologyWorkerNode object
+   * @brief registers a CAF worker into the NES topology and creates a corresponding NESTopologyWorkerNode object
    * @param ip the worker ip
    * @param publish_port the publish port of the worker
    * @param receive_port the receive port of the worker
@@ -54,7 +53,7 @@ class CoordinatorService {
    * @param nodeProperties of the to be added sensor
    * @param sap the strong_actor_pointer CAF object to the worker
    */
-  FogTopologyEntryPtr register_sensor(const string &ip, uint16_t publish_port, uint16_t receive_port, int cpu,
+  NESTopologyEntryPtr register_sensor(const string &ip, uint16_t publish_port, uint16_t receive_port, int cpu,
                                       const string &sensor_type, const string& nodeProperties);
 
   /**
@@ -62,7 +61,7 @@ class CoordinatorService {
    * @param entry
    * @return true, if it succeeded, otherwise false
    */
-  bool deregister_sensor(const FogTopologyEntryPtr &entry);
+  bool deregister_sensor(const NESTopologyEntryPtr &entry);
 
   /**
    * @brief registers a CAF query into the NES topology to make it deployable
@@ -82,7 +81,7 @@ class CoordinatorService {
    * @brief deploys a CAF query into the NES topology to the corresponding devices defined by the optimizer
    * @param query a queryId of the query
    */
-  unordered_map<FogTopologyEntryPtr, ExecutableTransferObject> make_deployment(const string &queryId);
+  unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> make_deployment(const string &queryId);
 
   /**
    * @brief creates a string representation of the topology graph
@@ -90,16 +89,16 @@ class CoordinatorService {
    */
   string getTopologyPlanString();
 
-  string getNodePropertiesAsString(const FogTopologyEntryPtr& entry);
+  string getNodePropertiesAsString(const NESTopologyEntryPtr& entry);
 
-  //FIXME: right now we do not register query but rather the fog plan
+  //FIXME: right now we do not register query but rather the nes plan
   /**
    * @brief: get the registered query
    *
    * @param queryId
-   * @return the fog execution plan for the query
+   * @return the nes execution plan for the query
    */
-  FogExecutionPlan* getRegisteredQuery(string queryId);
+  NESExecutionPlan* getRegisteredQuery(string queryId);
 
   /**
    * @brief: clear query catalogs
@@ -108,17 +107,17 @@ class CoordinatorService {
 
   bool clearQueryCatalogs();
 
-  const unordered_map<string, tuple<Schema, FogExecutionPlan>> &getRegisteredQueries() const;
-  const unordered_map<string, tuple<Schema, FogExecutionPlan>> &getRunningQueries() const;
+  const unordered_map<string, tuple<Schema, NESExecutionPlan>> &getRegisteredQueries() const;
+  const unordered_map<string, tuple<Schema, NESExecutionPlan>> &getRunningQueries() const;
 
  private:
 
   CoordinatorService() = default; //do not implement
 
   unordered_map<string, int> queryToPort;
-  shared_ptr<FogTopologyManager> topologyManagerPtr;
-  unordered_map<string, tuple<Schema, FogExecutionPlan>> registeredQueries;
-  unordered_map<string, tuple<Schema, FogExecutionPlan>> runningQueries;
+  shared_ptr<NESTopologyManager> topologyManagerPtr;
+  unordered_map<string, tuple<Schema, NESExecutionPlan>> registeredQueries;
+  unordered_map<string, tuple<Schema, NESExecutionPlan>> runningQueries;
 
   OptimizerService optimizerService;
   QueryService queryService;

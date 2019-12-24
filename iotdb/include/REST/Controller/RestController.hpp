@@ -5,7 +5,7 @@
 #include <REST/Controller/BaseController.hpp>
 #include <REST/controller.hpp>
 #include <Services/QueryService.hpp>
-#include <Services/FogTopologyService.hpp>
+#include "../../Services/NESTopologyService.hpp"
 
 using namespace caf;
 
@@ -33,7 +33,7 @@ namespace iotdb {
     private:
       static json::value responseNotImpl(const http::method& method);
       QueryService queryService;
-      FogTopologyService fogTopologyService;
+      NESTopologyService nesTopologyService;
       CoordinatorServicePtr coordinatorServicePtr;
       infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
   };

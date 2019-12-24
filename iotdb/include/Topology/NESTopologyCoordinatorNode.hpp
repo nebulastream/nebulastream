@@ -1,12 +1,12 @@
-#ifndef INCLUDE_TOPOLOGY_FOGTOPOLOGYCOORDINATORNODE_HPP_
-#define INCLUDE_TOPOLOGY_FOGTOPOLOGYCOORDINATORNODE_HPP_
+#ifndef INCLUDE_TOPOLOGY_NESTOPOLOGYCOORDINATORNODE_HPP_
+#define INCLUDE_TOPOLOGY_NESTOPOLOGYCOORDINATORNODE_HPP_
 
-#include "FogTopologyEntry.hpp"
 #include <API/InputQuery.hpp>
 
 #include <memory>
 #include <vector>
 #include <string>
+#include "NESTopologyEntry.hpp"
 
 #define INVALID_NODE_ID 101
 
@@ -14,7 +14,7 @@ namespace iotdb {
 
 /**\breif:
  *
- * This class represent a worker node in fog topology.
+ * This class represent a worker node in nes topology.
  *
  * When you create a worker node you need to use the setters to define the node id and its cpu capacity.
  *
@@ -31,14 +31,14 @@ namespace iotdb {
  * query : Defines the query that need to be executed by the node
  *
  */
-class FogTopologyCoordinatorNode : public FogTopologyEntry {
+class NESTopologyCoordinatorNode : public NESTopologyEntry {
 
  public:
-  FogTopologyCoordinatorNode(size_t nodeId, std::string ip_addr) {
+  NESTopologyCoordinatorNode(size_t nodeId, std::string ip_addr) {
     this->node_id = nodeId;
     this->ip_addr = std::move(ip_addr);
   }
-  ~FogTopologyCoordinatorNode() = default;
+  ~NESTopologyCoordinatorNode() = default;
 
   size_t getId() override {
     return node_id;
@@ -79,7 +79,7 @@ class FogTopologyCoordinatorNode : public FogTopologyEntry {
     return this->isASink;
   }
 
-  FogNodeType getEntryType() override {
+  NESNodeType getEntryType() override {
     return Coordinator;
   }
 
@@ -131,6 +131,6 @@ class FogTopologyCoordinatorNode : public FogTopologyEntry {
   InputQueryPtr query;
 };
 
-typedef std::shared_ptr<FogTopologyCoordinatorNode> FogTopologyCoordinatorNodePtr;
+typedef std::shared_ptr<NESTopologyCoordinatorNode> NESTopologyCoordinatorNodePtr;
 }  // namespace iotdb
-#endif /* INCLUDE_TOPOLOGY_FOGTOPOLOGYWORKERNODE_HPP_ */
+#endif

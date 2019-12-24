@@ -77,10 +77,10 @@ add_executable(query-interface-tests "UnitTests/QueryInterfaceTest.cpp")
 target_link_libraries(query-interface-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME query-interface-tests COMMAND query-interface-tests)
 
-# Fog Topology Tests
-add_executable(fog-topology-tests "UnitTests/FogTopologyManagerTest.cpp")
-target_link_libraries(fog-topology-tests iotdb ${GTEST_LIBRARIES})
-add_test(NAME fog-topology-tests COMMAND fog-topology-tests)
+# NES Topology Tests
+add_executable(nes-topology-tests "UnitTests/NESTopologyManagerTest.cpp")
+target_link_libraries(nes-topology-tests iotdb ${GTEST_LIBRARIES})
+add_test(NAME nes-topology-tests COMMAND nes-topology-tests)
 
 # Client Server Communication Tests
 #add_executable(client-server-communication-tests "UnitTests/ClientServerCommunicationTest.cpp")
@@ -154,7 +154,7 @@ add_test(NAME coordinator-service-tests COMMAND coordinator-service-tests)
 # Actors Tests
 add_executable(actors-cli-tests "UnitTests/ActorsCliTest.cpp")
 target_link_libraries(actors-cli-tests iotdb ${GTEST_LIBRARIES})
-add_test(NAME actors-cli-tests COMMAND actors-cli-tests)
+#dd_test(NAME actors-cli-tests COMMAND actors-cli-tests)
 
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
