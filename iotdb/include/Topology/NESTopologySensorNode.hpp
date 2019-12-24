@@ -8,7 +8,7 @@
 namespace iotdb {
 
 /**
- * @brief: This class represent a sensor node in fog topology. When you create a sensor node you need to use the setters to
+ * @brief: This class represent a sensor node in nes topology. When you create a sensor node you need to use the setters to
  * define the node id and its cpu capacity.
  *
  * Following are the set of properties that can be defined:
@@ -118,6 +118,6 @@ class NESTopologySensorNode : public NESTopologyEntry {
   InputQueryPtr query;
 };
 
-typedef std::shared_ptr<NESTopologySensorNode> FogTopologySensorNodePtr;
+typedef std::shared_ptr<NESTopologySensorNode> NESTopologySensorNodePtr;
 }  // namespace iotdb
 #endif /* INCLUDE_TOPOLOGY_FOGTOPOLOGYSENSOR_HPP_ */

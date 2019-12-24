@@ -24,9 +24,9 @@ class CoordinatorCafTest : public testing::Test {
   void SetUp() {
     std::cout << "Setup NES Coordinator test case." << std::endl;
 
-    NESTopologyManager::getInstance().resetFogTopologyPlan();
+    NESTopologyManager::getInstance().resetNESTopologyPlan();
     const auto& kCoordinatorNode = NESTopologyManager::getInstance()
-        .createFogCoordinatorNode("127.0.0.1", CPUCapacity::HIGH);
+        .createNESCoordinatorNode("127.0.0.1", CPUCapacity::HIGH);
     kCoordinatorNode->setPublishPort(4711);
     kCoordinatorNode->setReceivePort(4815);
 

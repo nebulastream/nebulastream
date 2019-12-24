@@ -11,6 +11,7 @@ namespace iotdb {
 
 enum LinkType { NodeToNode, NodeToSensor, SensorToNode };
 
+//FIXME: add docu here
 class NESTopologyLink {
 
  public:

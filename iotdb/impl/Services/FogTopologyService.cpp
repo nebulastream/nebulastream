@@ -10,5 +10,5 @@ json::value FogTopologyService::getFogTopologyAsJson() {
 
   NESTopologyManager &fogTopologyManager = NESTopologyManager::getInstance();
   fogTopologyManager.createExampleTopology();
-  return fogTopologyManager.getFogTopologyGraphAsJson();
+  return fogTopologyManager.getNESTopologyGraphAsJson();
 }

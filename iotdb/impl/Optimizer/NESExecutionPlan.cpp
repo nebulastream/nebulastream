@@ -337,7 +337,7 @@ json::value NESExecutionPlan::getExecutionGraphAsJson() const {
     vertexInfo["operators"] = json::value::string(operatorName);
     vertexInfo["nodeType"] = json::value::string(nodeType);
     if (nodeType == "Sensor") {
-      FogTopologySensorNodePtr ptr = std::static_pointer_cast<NESTopologySensorNode>(vertex.ptr->getFogNode());
+      NESTopologySensorNodePtr ptr = std::static_pointer_cast<NESTopologySensorNode>(vertex.ptr->getFogNode());
       vertexInfo["sensorType"] = json::value::string(ptr->getSensorType());
     }
     vertices.push_back(vertexInfo);

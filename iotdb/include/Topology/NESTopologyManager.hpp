@@ -19,6 +19,7 @@ namespace iotdb {
 
 using namespace web;
 
+//FIXME:add docu here
 class NESTopologyManager {
  public:
   static NESTopologyManager &getInstance() {
@@ -30,29 +31,29 @@ class NESTopologyManager {
   NESTopologyManager(NESTopologyManager const &); // Don't Implement
   void operator=(NESTopologyManager const &);     // Don't implement
 
-  FogTopologyCoordinatorNodePtr createFogCoordinatorNode(const std::string ipAddr, CPUCapacity cpuCapacity) {
-    return currentPlan->createFogCoordinatorNode(ipAddr, cpuCapacity);
+  NESTopologyCoordinatorNodePtr createNESCoordinatorNode(const std::string ipAddr, CPUCapacity cpuCapacity) {
+    return currentPlan->createNESCoordinatorNode(ipAddr, cpuCapacity);
   }
 
-  NESTopologyWorkerNodePtr createFogWorkerNode(const std::string ipAddr, CPUCapacity cpuCapacity) {
-    return currentPlan->createFogWorkerNode(ipAddr, cpuCapacity);
+  NESTopologyWorkerNodePtr createNESWorkerNode(const std::string ipAddr, CPUCapacity cpuCapacity) {
+    return currentPlan->createNESWorkerNode(ipAddr, cpuCapacity);
   }
 
-  FogTopologySensorNodePtr createFogSensorNode(const std::string ipAddr, CPUCapacity cpuCapacity) {
-    return currentPlan->createFogSensorNode(ipAddr, cpuCapacity);
+  NESTopologySensorNodePtr createNESSensorNode(const std::string ipAddr, CPUCapacity cpuCapacity) {
+    return currentPlan->createNESSensorNode(ipAddr, cpuCapacity);
   }
 
-  bool removeFogWorkerNode(NESTopologyWorkerNodePtr ptr) { return currentPlan->removeFogWorkerNode(std::move(ptr)); }
+  bool removeNESWorkerNode(NESTopologyWorkerNodePtr ptr) { return currentPlan->removeNESWorkerNode(std::move(ptr)); }
 
-  bool removeFogSensorNode(FogTopologySensorNodePtr ptr) { return currentPlan->removeFogSensorNode(std::move(ptr)); }
+  bool removeNESSensorNode(NESTopologySensorNodePtr ptr) { return currentPlan->removeNESSensorNode(std::move(ptr)); }
 
-  bool removeFogNode(NESTopologyEntryPtr ptr) { return currentPlan->removeFogNode(std::move(ptr)); }
+  bool removeNESNode(NESTopologyEntryPtr ptr) { return currentPlan->removeNESNode(std::move(ptr)); }
 
-  NESTopologyLinkPtr createFogTopologyLink(NESTopologyEntryPtr pSourceNode, NESTopologyEntryPtr pDestNode) {
-    return currentPlan->createFogTopologyLink(pSourceNode, pDestNode);
+  NESTopologyLinkPtr createNESTopologyLink(NESTopologyEntryPtr pSourceNode, NESTopologyEntryPtr pDestNode) {
+    return currentPlan->createNESTopologyLink(pSourceNode, pDestNode);
   }
 
-  bool removeFogTopologyLink(NESTopologyLinkPtr linkPtr) { return currentPlan->removeFogTopologyLink(linkPtr); }
+  bool removeNESTopologyLink(NESTopologyLinkPtr linkPtr) { return currentPlan->removeNESTopologyLink(linkPtr); }
 
   void printTopologyPlan() { std::cout << getTopologyPlanString() << std::endl; }
 
@@ -68,31 +69,31 @@ class NESTopologyManager {
    */
   void createExampleTopology() {
 
-    resetFogTopologyPlan();
+    resetNESTopologyPlan();
 
-    const FogTopologyCoordinatorNodePtr &sinkNode = createFogCoordinatorNode("localhost", CPUCapacity::HIGH);
-    const NESTopologyWorkerNodePtr &workerNode1 = createFogWorkerNode("localhost", CPUCapacity::MEDIUM);
-    const NESTopologyWorkerNodePtr &workerNode2 = createFogWorkerNode("localhost", CPUCapacity::MEDIUM);
-    const FogTopologySensorNodePtr &sensorNode1 = createFogSensorNode("localhost", CPUCapacity::HIGH);
+    const NESTopologyCoordinatorNodePtr &sinkNode = createNESCoordinatorNode("localhost", CPUCapacity::HIGH);
+    const NESTopologyWorkerNodePtr &workerNode1 = createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr &workerNode2 = createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+    const NESTopologySensorNodePtr &sensorNode1 = createNESSensorNode("localhost", CPUCapacity::HIGH);
     sensorNode1->setSensorType("temperature1");
-    const FogTopologySensorNodePtr &sensorNode2 = createFogSensorNode("localhost", CPUCapacity::LOW);
+    const NESTopologySensorNodePtr &sensorNode2 = createNESSensorNode("localhost", CPUCapacity::LOW);
     sensorNode2->setSensorType("humidity1");
-    const FogTopologySensorNodePtr &sensorNode3 = createFogSensorNode("localhost", CPUCapacity::LOW);
+    const NESTopologySensorNodePtr &sensorNode3 = createNESSensorNode("localhost", CPUCapacity::LOW);
     sensorNode3->setSensorType("temperature2");
-    const FogTopologySensorNodePtr &sensorNode4 = createFogSensorNode("localhost", CPUCapacity::MEDIUM);
+    const NESTopologySensorNodePtr &sensorNode4 = createNESSensorNode("localhost", CPUCapacity::MEDIUM);
     sensorNode4->setSensorType("humidity2");
 
-    createFogTopologyLink(workerNode1, sinkNode);
-    createFogTopologyLink(workerNode2, sinkNode);
-    createFogTopologyLink(sensorNode1, workerNode1);
-    createFogTopologyLink(sensorNode2, workerNode1);
-    createFogTopologyLink(sensorNode3, workerNode2);
-    createFogTopologyLink(sensorNode4, workerNode2);
+    createNESTopologyLink(workerNode1, sinkNode);
+    createNESTopologyLink(workerNode2, sinkNode);
+    createNESTopologyLink(sensorNode1, workerNode1);
+    createNESTopologyLink(sensorNode2, workerNode1);
+    createNESTopologyLink(sensorNode3, workerNode2);
+    createNESTopologyLink(sensorNode4, workerNode2);
   }
 
-  json::value getFogTopologyGraphAsJson() {
+  json::value getNESTopologyGraphAsJson() {
 
-    const NESGraphPtr &fogGraphPtr = getTopologyPlan()->getFogGraph();
+    const NESGraphPtr &fogGraphPtr = getTopologyPlan()->getNESGraph();
     const std::vector<NESTopologyLinkPtr> &allEdges = fogGraphPtr->getAllEdges();
     const std::vector<NESVertex> &allVertex = fogGraphPtr->getAllVertex();
 
@@ -126,7 +127,7 @@ class NESTopologyManager {
       vertexInfo["remainingCapacity"] = json::value::string(std::to_string(remainingCapacity));
 
       if (nodeType == "Sensor") {
-        FogTopologySensorNodePtr ptr = std::static_pointer_cast<NESTopologySensorNode>(vertex.ptr);
+        NESTopologySensorNodePtr ptr = std::static_pointer_cast<NESTopologySensorNode>(vertex.ptr);
         vertexInfo["sensorType"] = json::value::string(ptr->getSensorType());
       }
 
@@ -140,7 +141,7 @@ class NESTopologyManager {
 
   std::vector<json::value> getChildrenNode(NESTopologyEntryPtr fogParentNode) {
 
-    const NESGraphPtr &fogGraphPtr = getTopologyPlan()->getFogGraph();
+    const NESGraphPtr &fogGraphPtr = getTopologyPlan()->getNESGraph();
     const std::vector<NESTopologyLinkPtr> &edgesToNode = fogGraphPtr->getAllEdgesToNode(fogParentNode);
 
     std::vector<json::value> children = {};
@@ -165,7 +166,7 @@ class NESTopologyManager {
     return children;
   }
 
-  void resetFogTopologyPlan() {
+  void resetNESTopologyPlan() {
     currentPlan.reset(new NESTopologyPlan());
   }
 

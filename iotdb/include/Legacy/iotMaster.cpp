@@ -133,9 +133,9 @@ void createTestTopo(NESTopologyManager& fMgnr)
 {
     NESTopologyWorkerNodePtr f1 = fMgnr.createFogWorkerNode(CPUCapacity::HIGH);
 
-    FogTopologySensorNodePtr s1 = fMgnr.createFogSensorNode(CPUCapacity::LOW);
+    NESTopologySensorNodePtr s1 = fMgnr.createFogSensorNode(CPUCapacity::LOW);
 
-    NESTopologyLinkPtr l1 = fMgnr.createFogTopologyLink(s1, f1);
+    NESTopologyLinkPtr l1 = fMgnr.createNESTopologyLink(s1, f1);
 
     fMgnr.printTopologyPlan();
 }

@@ -32,7 +32,7 @@ namespace iotdb {
 bool NESGraph::hasVertex(size_t search_id) const {
 
   // build vertice iterator
-  fogVertex_iterator vertex, vertex_end, next_vertex;
+  nesVertex_iterator vertex, vertex_end, next_vertex;
   boost::tie(vertex, vertex_end) = vertices(graph);
 
   // iterator over vertices
@@ -48,12 +48,12 @@ bool NESGraph::hasVertex(size_t search_id) const {
   return false;
 }
 
-const NESGraph::fogVertex_t NESGraph::getVertex(size_t search_id) const {
+const NESGraph::nesVertex_t NESGraph::getVertex(size_t search_id) const {
 
   assert(hasVertex(search_id));
 
   // build vertice iterator
-  fogVertex_iterator vertex, vertex_end, next_vertex;
+  nesVertex_iterator vertex, vertex_end, next_vertex;
   boost::tie(vertex, vertex_end) = vertices(graph);
 
   // iterator over vertices
@@ -67,13 +67,13 @@ const NESGraph::fogVertex_t NESGraph::getVertex(size_t search_id) const {
   }
 
   // should never happen
-  return fogVertex_t();
+  return nesVertex_t();
 }
 
 const std::vector<NESVertex> NESGraph::getAllVertex() const {
   std::vector<NESVertex> result = {};
 
-  fogVertex_iterator vertex, vertex_end, next_vertex;
+  nesVertex_iterator vertex, vertex_end, next_vertex;
   boost::tie(vertex, vertex_end) = vertices(graph);
 
   for (next_vertex = vertex; vertex != vertex_end; vertex = next_vertex) {
@@ -108,7 +108,7 @@ bool NESGraph::removeVertex(size_t search_id) {
 }
 
 NESTopologyEntryPtr NESGraph::getRoot() const {
-  fogVertex_iterator vi, vi_end, next;
+  nesVertex_iterator vi, vi_end, next;
   boost::tie(vi, vi_end) = vertices(graph);
   for (next = vi; vi != vi_end; vi = next) {
     ++next;
@@ -123,7 +123,7 @@ NESTopologyEntryPtr NESGraph::getRoot() const {
 NESTopologyLinkPtr NESGraph::getLink(NESTopologyEntryPtr sourceNode, NESTopologyEntryPtr destNode) const {
 
   // build edge iterator
-  fogEdge_iterator edge, edge_end, next_edge;
+  nesEdge_iterator edge, edge_end, next_edge;
   boost::tie(edge, edge_end) = edges(graph);
 
   // iterate over edges and check for matching links
@@ -149,7 +149,7 @@ bool NESGraph::hasLink(const NESTopologyEntryPtr sourceNode, const NESTopologyEn
 
 bool NESGraph::hasLink(size_t searchId) const {
   // build edge iterator
-  fogEdge_iterator edge, edge_end, next_edge;
+  nesEdge_iterator edge, edge_end, next_edge;
   boost::tie(edge, edge_end) = edges(graph);
 
   // iterate over edges and check for matching links
@@ -167,7 +167,7 @@ bool NESGraph::hasLink(size_t searchId) const {
 const NESTopologyLinkPtr NESGraph::getEdge(size_t search_id) const {
 
   // build edge iterator
-  fogEdge_iterator edge, edge_end, next_edge;
+  nesEdge_iterator edge, edge_end, next_edge;
   boost::tie(edge, edge_end) = edges(graph);
 
   // iterate over edges
@@ -188,7 +188,7 @@ const std::vector<NESTopologyLinkPtr> NESGraph::getAllEdgesToNode(NESTopologyEnt
 
   std::vector<NESTopologyLinkPtr> result = {};
 
-  fogEdge_iterator edge, edge_end, next_edge;
+  nesEdge_iterator edge, edge_end, next_edge;
   boost::tie(edge, edge_end) = edges(graph);
 
   for (next_edge = edge; edge != edge_end; edge = next_edge) {
@@ -208,7 +208,7 @@ const std::vector<NESTopologyLinkPtr> NESGraph::getAllEdgesFromNode(NESTopologyE
 
   std::vector<NESTopologyLinkPtr> result = {};
 
-  fogEdge_iterator edge, edge_end, next_edge;
+  nesEdge_iterator edge, edge_end, next_edge;
   boost::tie(edge, edge_end) = edges(graph);
 
   for (next_edge = edge; edge != edge_end; edge = next_edge) {
@@ -226,7 +226,7 @@ const std::vector<NESTopologyLinkPtr> NESGraph::getAllEdgesFromNode(NESTopologyE
 const std::vector<NESTopologyLinkPtr> NESGraph::getAllEdges() const {
 
   std::vector<NESTopologyLinkPtr> result = {};
-  fogEdge_iterator edge, edge_end, next_edge;
+  nesEdge_iterator edge, edge_end, next_edge;
   boost::tie(edge, edge_end) = edges(graph);
 
   for (next_edge = edge; edge != edge_end; edge = next_edge) {
@@ -314,7 +314,7 @@ NESTopologyPlan::NESTopologyPlan() {
 
 NESTopologyEntryPtr NESTopologyPlan::getRootNode() const { return fGraphPtr->getRoot(); }
 
-FogTopologyCoordinatorNodePtr NESTopologyPlan::createFogCoordinatorNode(std::string ipAddr, CPUCapacity cpuCapacity) {
+NESTopologyCoordinatorNodePtr NESTopologyPlan::createNESCoordinatorNode(std::string ipAddr, CPUCapacity cpuCapacity) {
   // create coordinator node
   size_t nodeId = getNextFreeNodeId();
   auto ptr = std::make_shared<NESTopologyCoordinatorNode>(nodeId, ipAddr);
@@ -323,7 +323,7 @@ FogTopologyCoordinatorNodePtr NESTopologyPlan::createFogCoordinatorNode(std::str
   return ptr;
 }
 
-NESTopologyWorkerNodePtr NESTopologyPlan::createFogWorkerNode(std::string ipAddr, CPUCapacity cpuCapacity) {
+NESTopologyWorkerNodePtr NESTopologyPlan::createNESWorkerNode(std::string ipAddr, CPUCapacity cpuCapacity) {
   // create worker node
   size_t nodeId = getNextFreeNodeId();
   auto ptr = std::make_shared<NESTopologyWorkerNode>(nodeId, ipAddr);
@@ -332,7 +332,7 @@ NESTopologyWorkerNodePtr NESTopologyPlan::createFogWorkerNode(std::string ipAddr
   return ptr;
 }
 
-FogTopologySensorNodePtr NESTopologyPlan::createFogSensorNode(std::string ipAddr, CPUCapacity cpuCapacity) {
+NESTopologySensorNodePtr NESTopologyPlan::createNESSensorNode(std::string ipAddr, CPUCapacity cpuCapacity) {
   // create sensor node
   size_t nodeId = getNextFreeNodeId();
   auto ptr = std::make_shared<NESTopologySensorNode>(nodeId, ipAddr);
@@ -341,19 +341,19 @@ FogTopologySensorNodePtr NESTopologyPlan::createFogSensorNode(std::string ipAddr
   return ptr;
 }
 
-bool NESTopologyPlan::removeFogWorkerNode(NESTopologyWorkerNodePtr ptr) {
+bool NESTopologyPlan::removeNESWorkerNode(NESTopologyWorkerNodePtr ptr) {
   return fGraphPtr->removeVertex(ptr->getId());
 }
 
-bool NESTopologyPlan::removeFogSensorNode(FogTopologySensorNodePtr ptr) {
+bool NESTopologyPlan::removeNESSensorNode(NESTopologySensorNodePtr ptr) {
   return fGraphPtr->removeVertex(ptr->getId());
 }
 
-bool NESTopologyPlan::removeFogNode(NESTopologyEntryPtr ptr) {
+bool NESTopologyPlan::removeNESNode(NESTopologyEntryPtr ptr) {
   return fGraphPtr->removeVertex(ptr->getId());
 }
 
-NESTopologyLinkPtr NESTopologyPlan::createFogTopologyLink(NESTopologyEntryPtr pSourceNode,
+NESTopologyLinkPtr NESTopologyPlan::createNESTopologyLink(NESTopologyEntryPtr pSourceNode,
                                                           NESTopologyEntryPtr pDestNode) {
 
   // check if link already exists
@@ -369,7 +369,7 @@ NESTopologyLinkPtr NESTopologyPlan::createFogTopologyLink(NESTopologyEntryPtr pS
   return linkPtr;
 }
 
-bool NESTopologyPlan::removeFogTopologyLink(NESTopologyLinkPtr linkPtr) {
+bool NESTopologyPlan::removeNESTopologyLink(NESTopologyLinkPtr linkPtr) {
   return fGraphPtr->removeEdge(linkPtr->getId());
 }
 
@@ -389,7 +389,7 @@ size_t NESTopologyPlan::getNextFreeLinkId() {
   return currentLinkId;
 }
 
-NESGraphPtr NESTopologyPlan::getFogGraph() const {
+NESGraphPtr NESTopologyPlan::getNESGraph() const {
   return fGraphPtr;
 }
 
