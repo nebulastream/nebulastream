@@ -26,7 +26,7 @@ class FogTopologyManagerTest : public testing::Test {
   /* Will be called before a test is executed. */
   void SetUp() {
     std::cout << "Setup FogTopologyManager test case." << std::endl;
-    NESTopologyManager::getInstance().resetFogTopologyPlan();
+    NESTopologyManager::getInstance().resetNESTopologyPlan();
   }
 
   /* Will be called before a test is executed. */
@@ -42,13 +42,13 @@ class FogTopologyManagerTest : public testing::Test {
 TEST_F(FogTopologyManagerTest, create_node) {
   size_t invalid_id = INVALID_NODE_ID;
 
-  auto worker_node = NESTopologyManager::getInstance().createFogWorkerNode("localhost", CPUCapacity::MEDIUM);
+  auto worker_node = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
   EXPECT_NE(worker_node.get(), nullptr);
   EXPECT_EQ(worker_node->getEntryType(), Worker);
   EXPECT_EQ(worker_node->getEntryTypeString(), "Worker");
   EXPECT_NE(worker_node->getId(), invalid_id);
 
-  auto sensor_node = NESTopologyManager::getInstance().createFogSensorNode("localhost", CPUCapacity::LOW);
+  auto sensor_node = NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::LOW);
   EXPECT_NE(sensor_node.get(), nullptr);
   EXPECT_EQ(sensor_node->getEntryType(), Sensor);
   EXPECT_EQ(sensor_node->getEntryTypeString(), "Sensor(" + sensor_node->getSensorType() + ")");
@@ -59,38 +59,38 @@ TEST_F(FogTopologyManagerTest, create_node) {
 
 /* Remove an existing node. */
 TEST_F(FogTopologyManagerTest, remove_node) {
-  auto worker_node = NESTopologyManager::getInstance().createFogWorkerNode("localhost", CPUCapacity::MEDIUM);
-  auto result_worker = NESTopologyManager::getInstance().removeFogWorkerNode(worker_node);
+  auto worker_node = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+  auto result_worker = NESTopologyManager::getInstance().removeNESWorkerNode(worker_node);
   EXPECT_TRUE(result_worker);
 
-  auto sensor_node = NESTopologyManager::getInstance().createFogSensorNode("localhost", CPUCapacity::LOW);
-  auto result_sensor = NESTopologyManager::getInstance().removeFogSensorNode(sensor_node);
+  auto sensor_node = NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::LOW);
+  auto result_sensor = NESTopologyManager::getInstance().removeNESSensorNode(sensor_node);
   EXPECT_TRUE(result_sensor);
 }
 
 /* Remove a non-existing node. */
 TEST_F(FogTopologyManagerTest, remove_non_existing_node) {
-  auto worker_node = NESTopologyManager::getInstance().createFogWorkerNode("localhost", CPUCapacity::MEDIUM);
-  EXPECT_TRUE(NESTopologyManager::getInstance().removeFogWorkerNode(worker_node));
-  EXPECT_FALSE(NESTopologyManager::getInstance().removeFogWorkerNode(worker_node));
+  auto worker_node = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+  EXPECT_TRUE(NESTopologyManager::getInstance().removeNESWorkerNode(worker_node));
+  EXPECT_FALSE(NESTopologyManager::getInstance().removeNESWorkerNode(worker_node));
 
-  auto sensor_node = NESTopologyManager::getInstance().createFogSensorNode("localhost", CPUCapacity::LOW);
-  EXPECT_TRUE(NESTopologyManager::getInstance().removeFogSensorNode(sensor_node));
-  EXPECT_FALSE(NESTopologyManager::getInstance().removeFogSensorNode(sensor_node));
+  auto sensor_node = NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::LOW);
+  EXPECT_TRUE(NESTopologyManager::getInstance().removeNESSensorNode(sensor_node));
+  EXPECT_FALSE(NESTopologyManager::getInstance().removeNESSensorNode(sensor_node));
 }
 
 /* - Links ----------------------------------------------------------------- */
 /* Create a new link. */
 TEST_F(FogTopologyManagerTest, create_link) {
-  auto worker_node_0 = NESTopologyManager::getInstance().createFogWorkerNode("localhost", CPUCapacity::MEDIUM);
-  auto worker_node_1 = NESTopologyManager::getInstance().createFogWorkerNode("localhost", CPUCapacity::MEDIUM);
-  auto worker_node_2 = NESTopologyManager::getInstance().createFogWorkerNode("localhost", CPUCapacity::MEDIUM);
-  auto worker_node_3 = NESTopologyManager::getInstance().createFogWorkerNode("localhost", CPUCapacity::MEDIUM);
+  auto worker_node_0 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+  auto worker_node_1 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+  auto worker_node_2 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+  auto worker_node_3 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
 
-  auto sensor_node_0 = NESTopologyManager::getInstance().createFogSensorNode("localhost", CPUCapacity::LOW);
-  auto sensor_node_1 = NESTopologyManager::getInstance().createFogSensorNode("localhost", CPUCapacity::LOW);
+  auto sensor_node_0 = NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::LOW);
+  auto sensor_node_1 = NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::LOW);
 
-  auto link_node_node = NESTopologyManager::getInstance().createFogTopologyLink(worker_node_0, worker_node_1);
+  auto link_node_node = NESTopologyManager::getInstance().createNESTopologyLink(worker_node_0, worker_node_1);
 
   size_t not_existing_link_id = NOT_EXISTING_LINK_ID;
 
@@ -103,7 +103,7 @@ TEST_F(FogTopologyManagerTest, create_link) {
   EXPECT_EQ(link_node_node->getLinkType(), NodeToNode);
   EXPECT_EQ(link_node_node->getLinkTypeString(), "NodeToNode");
 
-  auto link_node_sensor = NESTopologyManager::getInstance().createFogTopologyLink(worker_node_2, sensor_node_0);
+  auto link_node_sensor = NESTopologyManager::getInstance().createNESTopologyLink(worker_node_2, sensor_node_0);
   EXPECT_NE(link_node_sensor.get(), nullptr);
   EXPECT_NE(link_node_sensor->getId(), not_existing_link_id);
   EXPECT_EQ(link_node_sensor->getSourceNode().get(), worker_node_2.get());
@@ -113,7 +113,7 @@ TEST_F(FogTopologyManagerTest, create_link) {
   EXPECT_EQ(link_node_sensor->getLinkType(), NodeToSensor);
   EXPECT_EQ(link_node_sensor->getLinkTypeString(), "NodeToSensor");
 
-  auto link_sensor_node = NESTopologyManager::getInstance().createFogTopologyLink(sensor_node_1, worker_node_3);
+  auto link_sensor_node = NESTopologyManager::getInstance().createNESTopologyLink(sensor_node_1, worker_node_3);
   EXPECT_NE(link_sensor_node.get(), nullptr);
   EXPECT_NE(link_sensor_node->getId(), not_existing_link_id);
   EXPECT_EQ(link_sensor_node->getSourceNode().get(), sensor_node_1.get());
@@ -129,35 +129,35 @@ TEST_F(FogTopologyManagerTest, create_link) {
 
 /* Create link, where a link already exists. */
 TEST_F(FogTopologyManagerTest, create_existing_link) {
-  auto node_0 = NESTopologyManager::getInstance().createFogWorkerNode("localhost", CPUCapacity::MEDIUM);
-  auto node_1 = NESTopologyManager::getInstance().createFogWorkerNode("localhost", CPUCapacity::MEDIUM);
-  auto link = NESTopologyManager::getInstance().createFogTopologyLink(node_0, node_1);
-  EXPECT_EQ(link, NESTopologyManager::getInstance().createFogTopologyLink(node_0, node_1));
+  auto node_0 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+  auto node_1 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+  auto link = NESTopologyManager::getInstance().createNESTopologyLink(node_0, node_1);
+  EXPECT_EQ(link, NESTopologyManager::getInstance().createNESTopologyLink(node_0, node_1));
 }
 
 /* Remove an existing link. */
 TEST_F(FogTopologyManagerTest, remove_link) {
-  auto node_0 = NESTopologyManager::getInstance().createFogWorkerNode("localhost", CPUCapacity::MEDIUM);
-  auto node_1 = NESTopologyManager::getInstance().createFogWorkerNode("localhost", CPUCapacity::MEDIUM);
-  auto link = NESTopologyManager::getInstance().createFogTopologyLink(node_0, node_1);
+  auto node_0 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+  auto node_1 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+  auto link = NESTopologyManager::getInstance().createNESTopologyLink(node_0, node_1);
 
-  EXPECT_TRUE(NESTopologyManager::getInstance().removeFogTopologyLink(link));
+  EXPECT_TRUE(NESTopologyManager::getInstance().removeNESTopologyLink(link));
 }
 
 /* Remove a non-existing link. */
 TEST_F(FogTopologyManagerTest, remove_non_existing_link) {
-  auto node_0 = NESTopologyManager::getInstance().createFogWorkerNode("localhost", CPUCapacity::MEDIUM);
-  auto node_1 = NESTopologyManager::getInstance().createFogWorkerNode("localhost", CPUCapacity::MEDIUM);
-  auto link = NESTopologyManager::getInstance().createFogTopologyLink(node_0, node_1);
+  auto node_0 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+  auto node_1 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+  auto link = NESTopologyManager::getInstance().createNESTopologyLink(node_0, node_1);
 
-  EXPECT_TRUE(NESTopologyManager::getInstance().removeFogTopologyLink(link));
-  EXPECT_FALSE(NESTopologyManager::getInstance().removeFogTopologyLink(link));
+  EXPECT_TRUE(NESTopologyManager::getInstance().removeNESTopologyLink(link));
+  EXPECT_FALSE(NESTopologyManager::getInstance().removeNESTopologyLink(link));
 
   // What happens to a link, if one node was removed?
   // Expectation: Link is removed as well.
-  link = NESTopologyManager::getInstance().createFogTopologyLink(node_0, node_1);
-  EXPECT_TRUE(NESTopologyManager::getInstance().removeFogWorkerNode(node_0));
-  EXPECT_FALSE(NESTopologyManager::getInstance().removeFogTopologyLink(link));
+  link = NESTopologyManager::getInstance().createNESTopologyLink(node_0, node_1);
+  EXPECT_TRUE(NESTopologyManager::getInstance().removeNESWorkerNode(node_0));
+  EXPECT_FALSE(NESTopologyManager::getInstance().removeNESTopologyLink(link));
 }
 
 /* - Usage Pattern --------------------------------------------------------- */
@@ -166,33 +166,33 @@ TEST_F(FogTopologyManagerTest, many_nodes) {
   // creater workers
   std::vector<std::shared_ptr<NESTopologyWorkerNode>> workers;
   for (uint32_t i = 0; i != 15; ++i) {
-    workers.push_back(NESTopologyManager::getInstance().createFogWorkerNode("localhost", CPUCapacity::MEDIUM));
+    workers.push_back(NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM));
   }
 
   // create sensors
   std::vector<std::shared_ptr<NESTopologySensorNode>> sensors;
   for (uint32_t i = 0; i != 30; ++i) {
-    sensors.push_back(NESTopologyManager::getInstance().createFogSensorNode("localhost", CPUCapacity::LOW));
+    sensors.push_back(NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::LOW));
   }
 
   // remove some workers
   for (uint32_t i = 0; i < workers.size(); i += 4) {
-    NESTopologyManager::getInstance().removeFogWorkerNode(workers.at(i));
+    NESTopologyManager::getInstance().removeNESWorkerNode(workers.at(i));
   }
 
   // creater some workers
   for (uint32_t i = 0; i != 5; ++i) {
-    workers.push_back(NESTopologyManager::getInstance().createFogWorkerNode("localhost", CPUCapacity::MEDIUM));
+    workers.push_back(NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM));
   }
 
   // remove some sensors
   for (uint32_t i = 0; i < sensors.size(); i += 3) {
-    NESTopologyManager::getInstance().removeFogSensorNode(sensors.at(i));
+    NESTopologyManager::getInstance().removeNESSensorNode(sensors.at(i));
   }
 
   // create some sensors
   for (uint32_t i = 0; i != 10; ++i) {
-    sensors.push_back(NESTopologyManager::getInstance().createFogSensorNode("localhost", CPUCapacity::LOW));
+    sensors.push_back(NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::LOW));
   }
 }
 
@@ -201,13 +201,13 @@ TEST_F(FogTopologyManagerTest, many_links) {
   // creater workers
   std::vector<std::shared_ptr<NESTopologyWorkerNode>> workers;
   for (uint32_t i = 0; i != 15; ++i) {
-    workers.push_back(NESTopologyManager::getInstance().createFogWorkerNode("localhost", CPUCapacity::MEDIUM));
+    workers.push_back(NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM));
   }
 
   // create sensors
   std::vector<std::shared_ptr<NESTopologySensorNode>> sensors;
   for (uint32_t i = 0; i != 30; ++i) {
-    sensors.push_back(NESTopologyManager::getInstance().createFogSensorNode("localhost", CPUCapacity::LOW));
+    sensors.push_back(NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::LOW));
   }
 
   // link each worker with all other workers
@@ -215,7 +215,7 @@ TEST_F(FogTopologyManagerTest, many_links) {
   for (uint32_t i = 0; i != 15; ++i) {
     for (uint32_t j = i; j != 15; ++j) {
       if (i != j) {
-        links.push_back(NESTopologyManager::getInstance().createFogTopologyLink(workers.at(i), workers.at(j)));
+        links.push_back(NESTopologyManager::getInstance().createNESTopologyLink(workers.at(i), workers.at(j)));
       }
     }
   }
@@ -224,17 +224,17 @@ TEST_F(FogTopologyManagerTest, many_links) {
   for (uint32_t i = 0; i != 30; ++i) {
     if (i % 2 == 0) {
       // even sensor
-      links.push_back(NESTopologyManager::getInstance().createFogTopologyLink(sensors.at(i), workers.at(i / 2)));
+      links.push_back(NESTopologyManager::getInstance().createNESTopologyLink(sensors.at(i), workers.at(i / 2)));
     } else {
       // odd sensor
       links.push_back(
-          NESTopologyManager::getInstance().createFogTopologyLink(sensors.at(i), workers.at((i - 1) / 2)));
+          NESTopologyManager::getInstance().createNESTopologyLink(sensors.at(i), workers.at((i - 1) / 2)));
     }
   }
 
   // remove some links
   for (uint32_t i = 0; i < links.size(); i += 4) {
-    EXPECT_TRUE(NESTopologyManager::getInstance().removeFogTopologyLink(links.at(i)));
+    EXPECT_TRUE(NESTopologyManager::getInstance().removeNESTopologyLink(links.at(i)));
   }
 }
 
@@ -244,36 +244,36 @@ TEST_F(FogTopologyManagerTest, print_graph) {
   // creater workers
   std::vector<std::shared_ptr<NESTopologyWorkerNode>> workers;
   for (uint32_t i = 0; i != 7; ++i) {
-    workers.push_back(NESTopologyManager::getInstance().createFogWorkerNode("localhost", CPUCapacity::MEDIUM));
+    workers.push_back(NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM));
   }
 
   // create sensors
   std::vector<std::shared_ptr<NESTopologySensorNode>> sensors;
   for (uint32_t i = 0; i != 15; ++i) {
-    sensors.push_back(NESTopologyManager::getInstance().createFogSensorNode("localhost", CPUCapacity::LOW));
+    sensors.push_back(NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::LOW));
   }
 
   // link each worker with its neighbor
   std::vector<std::shared_ptr<NESTopologyLink>> links;
-  links.push_back(NESTopologyManager::getInstance().createFogTopologyLink(workers.at(0), workers.at(1)));
-  links.push_back(NESTopologyManager::getInstance().createFogTopologyLink(workers.at(2), workers.at(1)));
+  links.push_back(NESTopologyManager::getInstance().createNESTopologyLink(workers.at(0), workers.at(1)));
+  links.push_back(NESTopologyManager::getInstance().createNESTopologyLink(workers.at(2), workers.at(1)));
 
-  links.push_back(NESTopologyManager::getInstance().createFogTopologyLink(workers.at(3), workers.at(4)));
-  links.push_back(NESTopologyManager::getInstance().createFogTopologyLink(workers.at(5), workers.at(4)));
+  links.push_back(NESTopologyManager::getInstance().createNESTopologyLink(workers.at(3), workers.at(4)));
+  links.push_back(NESTopologyManager::getInstance().createNESTopologyLink(workers.at(5), workers.at(4)));
 
-  links.push_back(NESTopologyManager::getInstance().createFogTopologyLink(workers.at(1), workers.at(6)));
-  links.push_back(NESTopologyManager::getInstance().createFogTopologyLink(workers.at(4), workers.at(6)));
+  links.push_back(NESTopologyManager::getInstance().createNESTopologyLink(workers.at(1), workers.at(6)));
+  links.push_back(NESTopologyManager::getInstance().createNESTopologyLink(workers.at(4), workers.at(6)));
 
   // each worker has three sensors
   for (uint32_t i = 0; i != 15; ++i) {
     if (i % 3 == 0) {
-      links.push_back(NESTopologyManager::getInstance().createFogTopologyLink(sensors.at(i), workers.at(i / 3)));
+      links.push_back(NESTopologyManager::getInstance().createNESTopologyLink(sensors.at(i), workers.at(i / 3)));
     } else if (i % 3 == 1) {
       links.push_back(
-          NESTopologyManager::getInstance().createFogTopologyLink(sensors.at(i), workers.at((i - 1) / 3)));
+          NESTopologyManager::getInstance().createNESTopologyLink(sensors.at(i), workers.at((i - 1) / 3)));
     } else {
       links.push_back(
-          NESTopologyManager::getInstance().createFogTopologyLink(sensors.at(i), workers.at((i - 2) / 3)));
+          NESTopologyManager::getInstance().createNESTopologyLink(sensors.at(i), workers.at((i - 2) / 3)));
     }
   }
 
@@ -336,13 +336,13 @@ TEST_F(FogTopologyManagerTest, print_graph_without_edges) {
   // creater workers
   std::vector<std::shared_ptr<NESTopologyWorkerNode>> workers;
   for (uint32_t i = 0; i != 7; ++i) {
-    workers.push_back(NESTopologyManager::getInstance().createFogWorkerNode("localhost", CPUCapacity::MEDIUM));
+    workers.push_back(NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM));
   }
 
   // create sensors
   std::vector<std::shared_ptr<NESTopologySensorNode>> sensors;
   for (uint32_t i = 0; i != 15; ++i) {
-    sensors.push_back(NESTopologyManager::getInstance().createFogSensorNode("localhost", CPUCapacity::LOW));
+    sensors.push_back(NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::LOW));
   }
 
   std::cout << NESTopologyManager::getInstance().getTopologyPlanString() << std::endl;
@@ -514,6 +514,6 @@ TEST_F(FogTopologyGraphTest, get_example_topology_as_json) {
 
   NESTopologyManager &topologyManager = NESTopologyManager::getInstance();
   topologyManager.createExampleTopology();
-  const json::value &treeJson = topologyManager.getFogTopologyGraphAsJson();
+  const json::value &treeJson = topologyManager.getNESTopologyGraphAsJson();
   EXPECT_TRUE(treeJson.size() > 0);
 }

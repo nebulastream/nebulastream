@@ -16,7 +16,7 @@ string CoordinatorService::getNodePropertiesAsString(const NESTopologyEntryPtr& 
 NESTopologyEntryPtr CoordinatorService::register_sensor(const string& ip, uint16_t publish_port,
                                                         uint16_t receive_port, int cpu, const string& sensor_type, const string& nodeProperties) {
     NESTopologyManager& topologyManager = this->topologyManagerPtr->getInstance();
-    FogTopologySensorNodePtr sensorNode = topologyManager.createFogSensorNode(ip, CPUCapacity::Value(cpu));
+    NESTopologySensorNodePtr sensorNode = topologyManager.createNESSensorNode(ip, CPUCapacity::Value(cpu));
     sensorNode->setSensorType(sensor_type);
     sensorNode->setPublishPort(publish_port);
     sensorNode->setReceivePort(receive_port);
@@ -24,7 +24,7 @@ NESTopologyEntryPtr CoordinatorService::register_sensor(const string& ip, uint16
       sensorNode->setNodeProperty(nodeProperties);
 
     const NESTopologyEntryPtr& kRootNode = NESTopologyManager::getInstance().getRootNode();
-    topologyManager.createFogTopologyLink(sensorNode, kRootNode);
+    topologyManager.createNESTopologyLink(sensorNode, kRootNode);
     return sensorNode;
 }
 
@@ -185,7 +185,7 @@ int CoordinatorService::assign_port(const string& queryId) {
 }
 
 bool CoordinatorService::deregister_sensor(const NESTopologyEntryPtr& entry) {
-    return this->topologyManagerPtr->getInstance().removeFogNode(entry);
+    return this->topologyManagerPtr->getInstance().removeNESNode(entry);
 }
 string CoordinatorService::getTopologyPlanString() {
     return this->topologyManagerPtr->getInstance().getTopologyPlanString();

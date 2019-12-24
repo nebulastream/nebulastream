@@ -14,7 +14,7 @@ namespace iotdb {
 
 /**\breif:
  *
- * This class represent a worker node in fog topology.
+ * This class represent a worker node in nes topology.
  *
  * When you create a worker node you need to use the setters to define the node id and its cpu capacity.
  *
@@ -131,6 +131,6 @@ class NESTopologyCoordinatorNode : public NESTopologyEntry {
   InputQueryPtr query;
 };
 
-typedef std::shared_ptr<NESTopologyCoordinatorNode> FogTopologyCoordinatorNodePtr;
+typedef std::shared_ptr<NESTopologyCoordinatorNode> NESTopologyCoordinatorNodePtr;
 }  // namespace iotdb
-#endif /* INCLUDE_TOPOLOGY_FOGTOPOLOGYWORKERNODE_HPP_ */
+#endif

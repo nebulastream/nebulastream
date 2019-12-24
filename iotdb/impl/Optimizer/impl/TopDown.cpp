@@ -23,7 +23,7 @@ void TopDown::placeOperators(NESExecutionPlan executionGraph,
                              NESTopologyPlanPtr fogTopologyPlanPtr) {
 
     const OperatorPtr& sinkOperator = query->getRoot();
-    const NESGraphPtr& fogGraphPtr = fogTopologyPlanPtr->getFogGraph();
+    const NESGraphPtr& fogGraphPtr = fogTopologyPlanPtr->getNESGraph();
 
     deque<OperatorPtr> operatorsToProcess = {sinkOperator};
 
@@ -36,7 +36,7 @@ void TopDown::placeOperators(NESExecutionPlan executionGraph,
             [sourceName](const NESVertex vertex) {
               if (vertex.ptr->getEntryType() == NESNodeType::Sensor &&
                   vertex.ptr->getRemainingCpuCapacity() > 0) {
-                  FogTopologySensorNodePtr ptr = std::static_pointer_cast<NESTopologySensorNode>(vertex.ptr);
+                  NESTopologySensorNodePtr ptr = std::static_pointer_cast<NESTopologySensorNode>(vertex.ptr);
                   return ptr->getSensorType() == sourceName;
               }
               return false;

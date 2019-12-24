@@ -13,6 +13,7 @@ enum NESNodeType {
   Sensor
 };
 
+//FIXME:add docu here
 class NESTopologyEntry {
  public:
   virtual void setId(size_t id) = 0;

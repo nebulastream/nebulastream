@@ -102,7 +102,7 @@ void BottomUp::placeOperators(NESExecutionPlan executionGraph, NESTopologyPlanPt
         }
     }
 
-    const NESGraphPtr& fogGraphPtr = fogTopologyPlan->getFogGraph();
+    const NESGraphPtr& fogGraphPtr = fogTopologyPlan->getNESGraph();
     deque<NESTopologyEntryPtr> candidateNodes = getCandidateFogNodes(fogGraphPtr, targetSource);
     while (!candidateNodes.empty()) {
         shared_ptr<NESTopologyEntry> node = candidateNodes.front();
@@ -134,7 +134,7 @@ NESTopologyEntryPtr BottomUp::findSuitableFogNodeForOperatorPlacement(const Proc
             node = fogNode;
         } else {
             // else find the neighbouring higher level nodes connected to it
-            const vector<NESTopologyLinkPtr>& allEdgesToNode = fogTopologyPlan->getFogGraph()->getAllEdgesFromNode(
+            const vector<NESTopologyLinkPtr>& allEdgesToNode = fogTopologyPlan->getNESGraph()->getAllEdgesFromNode(
                 fogNode);
 
             vector<NESTopologyEntryPtr> neighbouringNodes;
@@ -207,14 +207,14 @@ deque<NESTopologyEntryPtr> BottomUp::getSourceNodes(NESTopologyPlanPtr fogTopolo
 
         if (node->getEntryType() == NESNodeType::Sensor) {
 
-            FogTopologySensorNodePtr ptr = std::static_pointer_cast<NESTopologySensorNode>(node);
+            NESTopologySensorNodePtr ptr = std::static_pointer_cast<NESTopologySensorNode>(node);
 
             if (ptr->getSensorType() == streamName) {
                 listOfSourceNodes.push_back(node);
             }
         }
 
-        const vector<NESTopologyLinkPtr>& edgesToNode = fogTopologyPlan->getFogGraph()->getAllEdgesToNode(node);
+        const vector<NESTopologyLinkPtr>& edgesToNode = fogTopologyPlan->getNESGraph()->getAllEdgesToNode(node);
 
         for (NESTopologyLinkPtr edgeToNode: edgesToNode) {
             bfsTraverse.push_back(edgeToNode->getSourceNode());

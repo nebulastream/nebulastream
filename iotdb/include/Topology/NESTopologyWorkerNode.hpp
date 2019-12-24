@@ -12,7 +12,7 @@
 namespace iotdb {
 
 /**
- * @brief: This class represent a worker node in fog topology. When you create a worker node you need to use the
+ * @brief: This class represent a worker node in nes topology. When you create a worker node you need to use the
  * setters to define the node id and its cpu capacity.
 *
 * Following are the set of properties that can be defined:

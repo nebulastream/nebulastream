@@ -29,16 +29,16 @@ struct NESEdge {
 
 class NESGraph {
 
-  using fogGraph_t = boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS, NESVertex, NESEdge>;
-  using fogVertex_t = boost::graph_traits<fogGraph_t>::vertex_descriptor;
-  using fogVertex_iterator = boost::graph_traits<fogGraph_t>::vertex_iterator;
-  using fogEdge_t = boost::graph_traits<fogGraph_t>::edge_descriptor;
-  using fogEdge_iterator = boost::graph_traits<fogGraph_t>::edge_iterator;
+  using nesGraph_t = boost::adjacency_list<boost::listS, boost::vecS, boost::undirectedS, NESVertex, NESEdge>;
+  using nesVertex_t = boost::graph_traits<nesGraph_t>::vertex_descriptor;
+  using nesVertex_iterator = boost::graph_traits<nesGraph_t>::vertex_iterator;
+  using nesEdge_t = boost::graph_traits<nesGraph_t>::edge_descriptor;
+  using nesEdge_iterator = boost::graph_traits<nesGraph_t>::edge_iterator;
 
  public:
   NESGraph() {};
 
-  const fogVertex_t getVertex(size_t search_id) const;
+  const nesVertex_t getVertex(size_t search_id) const;
   bool hasVertex(size_t search_id) const;
 
   const std::vector<NESVertex> getAllVertex() const;
@@ -63,34 +63,35 @@ class NESGraph {
   std::string getGraphString() const;
 
  private:
-  fogGraph_t graph;
+  nesGraph_t graph;
 };
 
 typedef std::shared_ptr<NESGraph> NESGraphPtr;
 
 class NESTopologyPlan {
 
+  //FIXME: add docu here
  public:
   NESTopologyPlan();
 
   NESTopologyEntryPtr getRootNode() const;
 
-  FogTopologyCoordinatorNodePtr createFogCoordinatorNode(const std::string ipAddr, CPUCapacity cpuCapacity);
+  NESTopologyCoordinatorNodePtr createNESCoordinatorNode(const std::string ipAddr, CPUCapacity cpuCapacity);
 
-  NESTopologyWorkerNodePtr createFogWorkerNode(const std::string ipAddr, CPUCapacity cpuCapacity);
-  bool removeFogWorkerNode(NESTopologyWorkerNodePtr ptr);
+  NESTopologyWorkerNodePtr createNESWorkerNode(const std::string ipAddr, CPUCapacity cpuCapacity);
+  bool removeNESWorkerNode(NESTopologyWorkerNodePtr ptr);
 
-  FogTopologySensorNodePtr createFogSensorNode(const std::string ipAddr, CPUCapacity cpuCapacity);
-  bool removeFogSensorNode(FogTopologySensorNodePtr ptr);
+  NESTopologySensorNodePtr createNESSensorNode(const std::string ipAddr, CPUCapacity cpuCapacity);
+  bool removeNESSensorNode(NESTopologySensorNodePtr ptr);
 
-  NESTopologyLinkPtr createFogTopologyLink(NESTopologyEntryPtr pSourceNode, NESTopologyEntryPtr pDestNode);
-  bool removeFogTopologyLink(NESTopologyLinkPtr linkPtr);
+  NESTopologyLinkPtr createNESTopologyLink(NESTopologyEntryPtr pSourceNode, NESTopologyEntryPtr pDestNode);
+  bool removeNESTopologyLink(NESTopologyLinkPtr linkPtr);
 
-  bool removeFogNode(NESTopologyEntryPtr ptr);
+  bool removeNESNode(NESTopologyEntryPtr ptr);
 
   std::string getTopologyPlanString() const;
 
-  NESGraphPtr getFogGraph() const;
+  NESGraphPtr getNESGraph() const;
 
  private:
 

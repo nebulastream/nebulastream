@@ -140,7 +140,7 @@ void NESPlacementOptimizer::convertFwdOptr(const Schema& schema,
 void NESPlacementOptimizer::completeExecutionGraphWithFogTopology(NESExecutionPlan graph,
                                                                   NESTopologyPlanPtr fogTopologyPtr) {
 
-  const vector<NESTopologyLinkPtr>& allEdges = fogTopologyPtr->getFogGraph()->getAllEdges();
+  const vector<NESTopologyLinkPtr>& allEdges = fogTopologyPtr->getNESGraph()->getAllEdges();
 
   for (NESTopologyLinkPtr fogLink: allEdges) {
 
