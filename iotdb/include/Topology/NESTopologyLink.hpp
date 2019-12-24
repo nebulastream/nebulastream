@@ -1,9 +1,9 @@
-#ifndef INCLUDE_TOPOLOGY_FOGTOPOLOGYLINK_HPP_
-#define INCLUDE_TOPOLOGY_FOGTOPOLOGYLINK_HPP_
+#ifndef INCLUDE_TOPOLOGY_NESTOPOLOGYLINK_HPP_
+#define INCLUDE_TOPOLOGY_NESTOPOLOGYLINK_HPP_
 
 #include <memory>
 
-#include "FogTopologyEntry.hpp"
+#include "NESTopologyEntry.hpp"
 #include "Util/ErrorHandling.hpp"
 
 namespace iotdb {
@@ -11,10 +11,10 @@ namespace iotdb {
 
 enum LinkType { NodeToNode, NodeToSensor, SensorToNode };
 
-class FogTopologyLink {
+class NESTopologyLink {
 
  public:
-  explicit FogTopologyLink(size_t pLinkId, FogTopologyEntryPtr pSourceNode, FogTopologyEntryPtr pDestNode) {
+  explicit NESTopologyLink(size_t pLinkId, NESTopologyEntryPtr pSourceNode, NESTopologyEntryPtr pDestNode) {
     linkId = pLinkId;
     sourceNode = pSourceNode;
     destNode = pDestNode;
@@ -22,11 +22,11 @@ class FogTopologyLink {
 
   size_t getId() { return linkId; }
 
-  FogTopologyEntryPtr getSourceNode() { return sourceNode; }
+  NESTopologyEntryPtr getSourceNode() { return sourceNode; }
 
   size_t getSourceNodeId() { return sourceNode->getId(); }
 
-  FogTopologyEntryPtr getDestNode() { return destNode; }
+  NESTopologyEntryPtr getDestNode() { return destNode; }
 
   size_t getDestNodeId() { return destNode->getId(); }
 
@@ -53,10 +53,10 @@ class FogTopologyLink {
  private:
   size_t linkId;
 
-  FogTopologyEntryPtr sourceNode;
-  FogTopologyEntryPtr destNode;
+  NESTopologyEntryPtr sourceNode;
+  NESTopologyEntryPtr destNode;
 };
 
-typedef std::shared_ptr<FogTopologyLink> FogTopologyLinkPtr;
+typedef std::shared_ptr<NESTopologyLink> NESTopologyLinkPtr;
 } // namespace iotdb
-#endif /* INCLUDE_TOPOLOGY_FOGTOPOLOGYLINK_HPP_ */
+#endif /* INCLUDE_TOPOLOGY_NESTOPOLOGYLINK_HPP_ */

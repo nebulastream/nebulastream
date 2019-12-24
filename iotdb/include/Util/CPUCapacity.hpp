@@ -1,7 +1,3 @@
-//
-// Created by achaudhary on 11.07.19.
-//
-
 #ifndef IOTDB_CPUCAPACITY_H
 #define IOTDB_CPUCAPACITY_H
 

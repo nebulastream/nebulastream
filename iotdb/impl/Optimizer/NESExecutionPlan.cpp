@@ -1,11 +1,12 @@
 
-#include <Optimizer/FogExecutionPlan.hpp>
+#include "../../include/Optimizer/NESExecutionPlan.hpp"
+
 #include <boost/graph/graphviz.hpp>
 #include <cpprest/json.h>
-#include <Topology/FogTopologySensorNode.hpp>
 #include <Util/Logger.hpp>
 #include <Operators/Operator.hpp>
 #include <set>
+#include "../../include/Topology/NESTopologySensorNode.hpp"
 
 using namespace iotdb;
 using namespace web;
@@ -267,17 +268,17 @@ std::string ExecutionGraph::getGraphString() {
   return ss.str();
 }
 
-FogExecutionPlan::FogExecutionPlan() {
+NESExecutionPlan::NESExecutionPlan() {
   exeGraphPtr = std::make_shared<ExecutionGraph>();
 }
 
-ExecutionNodePtr FogExecutionPlan::getRootNode() const {
+ExecutionNodePtr NESExecutionPlan::getRootNode() const {
   return exeGraphPtr->getRoot();
 };
 
 ExecutionNodePtr
-FogExecutionPlan::createExecutionNode(std::string operatorName, std::string nodeName,
-                                      FogTopologyEntryPtr fogNode,
+NESExecutionPlan::createExecutionNode(std::string operatorName, std::string nodeName,
+                                      NESTopologyEntryPtr fogNode,
                                       OperatorPtr executableOperator) {
 
   ExecutionNode executionNode(operatorName, nodeName, fogNode, executableOperator);
@@ -288,15 +289,15 @@ FogExecutionPlan::createExecutionNode(std::string operatorName, std::string node
   return ptr;
 };
 
-bool FogExecutionPlan::hasVertex(int search_id) {
+bool NESExecutionPlan::hasVertex(int search_id) {
   return exeGraphPtr->hasVertex(search_id);
 }
 
-ExecutionNodePtr FogExecutionPlan::getExecutionNode(int search_id) {
+ExecutionNodePtr NESExecutionPlan::getExecutionNode(int search_id) {
   return exeGraphPtr->getNode(search_id);
 }
 
-json::value FogExecutionPlan::getExecutionGraphAsJson() const {
+json::value NESExecutionPlan::getExecutionGraphAsJson() const {
   const ExecutionNodePtr &rootNode = getRootNode();
 
   const shared_ptr<ExecutionGraph> &exeGraph = getExecutionGraph();
@@ -336,7 +337,7 @@ json::value FogExecutionPlan::getExecutionGraphAsJson() const {
     vertexInfo["operators"] = json::value::string(operatorName);
     vertexInfo["nodeType"] = json::value::string(nodeType);
     if (nodeType == "Sensor") {
-      FogTopologySensorNodePtr ptr = std::static_pointer_cast<FogTopologySensorNode>(vertex.ptr->getFogNode());
+      FogTopologySensorNodePtr ptr = std::static_pointer_cast<NESTopologySensorNode>(vertex.ptr->getFogNode());
       vertexInfo["sensorType"] = json::value::string(ptr->getSensorType());
     }
     vertices.push_back(vertexInfo);
@@ -347,7 +348,7 @@ json::value FogExecutionPlan::getExecutionGraphAsJson() const {
   return result;
 }
 
-std::vector<json::value> FogExecutionPlan::getChildrenNode(ExecutionNodePtr executionParentNode) const {
+std::vector<json::value> NESExecutionPlan::getChildrenNode(ExecutionNodePtr executionParentNode) const {
 
   const shared_ptr<ExecutionGraph> &exeGraph = getExecutionGraph();
 
@@ -375,7 +376,7 @@ std::vector<json::value> FogExecutionPlan::getChildrenNode(ExecutionNodePtr exec
   return children;
 }
 
-ExecutionNodeLinkPtr FogExecutionPlan::createExecutionNodeLink(ExecutionNodePtr src, ExecutionNodePtr dst) {
+ExecutionNodeLinkPtr NESExecutionPlan::createExecutionNodeLink(ExecutionNodePtr src, ExecutionNodePtr dst) {
 
   // check if link already exists
   if (exeGraphPtr->hasLink(src, dst)) {
@@ -389,11 +390,11 @@ ExecutionNodeLinkPtr FogExecutionPlan::createExecutionNodeLink(ExecutionNodePtr 
   return linkPtr;
 };
 
-std::shared_ptr<ExecutionGraph> FogExecutionPlan::getExecutionGraph() const {
+std::shared_ptr<ExecutionGraph> NESExecutionPlan::getExecutionGraph() const {
   return exeGraphPtr;
 };
 
-void FogExecutionPlan::freeResources() {
+void NESExecutionPlan::freeResources() {
   for (const ExecutionVertex &v: getExecutionGraph()->getAllVertex()) {
     if (v.ptr->getRootOperator()) {
       // TODO: change that when proper placement is fixed
@@ -405,6 +406,6 @@ void FogExecutionPlan::freeResources() {
   }
 }
 
-std::string FogExecutionPlan::getTopologyPlanString() const {
+std::string NESExecutionPlan::getTopologyPlanString() const {
   return exeGraphPtr->getGraphString();
 }

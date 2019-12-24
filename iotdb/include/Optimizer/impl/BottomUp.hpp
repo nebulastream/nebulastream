@@ -1,9 +1,9 @@
 #ifndef IOTDB_BOTTOMUP_HPP
 #define IOTDB_BOTTOMUP_HPP
 
-#include <Optimizer/FogPlacementOptimizer.hpp>
 #include <Operators/Operator.hpp>
 #include <iostream>
+#include "../NESPlacementOptimizer.hpp"
 
 namespace iotdb {
 
@@ -14,12 +14,12 @@ using namespace std;
  *          placed at respective fog nodes but rest of the operators are placed starting near to the source and then
  *          if the resources are not available they are placed on a node neighbouring to the node or one level up.
  */
-class BottomUp : public FogPlacementOptimizer {
+class BottomUp : public NESPlacementOptimizer {
  public:
   BottomUp() {};
   ~BottomUp() {};
 
-  FogExecutionPlan initializeExecutionPlan(InputQueryPtr inputQuery, FogTopologyPlanPtr fogTopologyPlan);
+  NESExecutionPlan initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr fogTopologyPlan);
 
  private:
 
@@ -45,19 +45,19 @@ class BottomUp : public FogPlacementOptimizer {
    *
    * @throws exception if the operator can't be placed anywhere.
    */
-  void placeOperators(FogExecutionPlan executionGraph, FogTopologyPlanPtr fogTopologyPlan,
-                      vector<OperatorPtr> sourceOperators, deque<FogTopologyEntryPtr> sourceNodes);
+  void placeOperators(NESExecutionPlan executionGraph, NESTopologyPlanPtr fogTopologyPlan,
+                      vector<OperatorPtr> sourceOperators, deque<NESTopologyEntryPtr> sourceNodes);
 
   // finds a suitable for node for the operator to be placed.
-  FogTopologyEntryPtr findSuitableFogNodeForOperatorPlacement(const ProcessOperator &operatorToProcess,
-                                                              FogTopologyPlanPtr &fogTopologyPlan,
-                                                              deque<FogTopologyEntryPtr> &sourceNodes);
+  NESTopologyEntryPtr findSuitableFogNodeForOperatorPlacement(const ProcessOperator &operatorToProcess,
+                                                              NESTopologyPlanPtr &fogTopologyPlan,
+                                                              deque<NESTopologyEntryPtr> &sourceNodes);
 
   // This method returns all the source operators in the user input query
   vector<OperatorPtr> getSourceOperators(OperatorPtr root);
 
   // This method returns all sensor nodes that act as the source in the fog topology.
-  deque<FogTopologyEntryPtr> getSourceNodes(FogTopologyPlanPtr fogTopologyPlan,
+  deque<NESTopologyEntryPtr> getSourceNodes(NESTopologyPlanPtr fogTopologyPlan,
                                             std::string streamName);
 
 };

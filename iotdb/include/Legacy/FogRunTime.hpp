@@ -3,9 +3,10 @@
 #include <CodeGen/QueryExecutionPlan.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/json.hpp>
-#include <Optimizer/FogExecutionPlan.hpp>
 #include <map>
 #include <zmq.hpp>
+
+#include "../Optimizer/NESExecutionPlan.hpp"
 #include "../SourceSink/CompiledDummyPlan.hpp"
 
 namespace iotdb {
@@ -22,7 +23,7 @@ class FogRunTime {
     FogRunTime(FogRunTime const&);     // Don't Implement
     void operator=(FogRunTime const&); // Don't implement
 
-    void deployQuery(FogExecutionPlan fogPlan);
+    void deployQuery(NESExecutionPlan fogPlan);
     void deployQuery(QueryExecutionPlanPtr cPlan);
 
     void registerNode(NodeEnginePtr ptr);

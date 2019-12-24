@@ -5,13 +5,13 @@
 using namespace iotdb;
 using namespace std;
 
-FogExecutionPlan BottomUp::initializeExecutionPlan(InputQueryPtr inputQuery, FogTopologyPlanPtr fogTopologyPlan) {
+NESExecutionPlan BottomUp::initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr fogTopologyPlan) {
 
-    FogExecutionPlan executionGraph;
+    NESExecutionPlan executionGraph;
     const OperatorPtr& sinkOperator = inputQuery->getRoot();
     const string& streamName = inputQuery->source_stream->getName();
     const vector<OperatorPtr>& sourceOperators = getSourceOperators(sinkOperator);
-    const deque<FogTopologyEntryPtr>& sourceNodes = getSourceNodes(fogTopologyPlan, streamName);
+    const deque<NESTopologyEntryPtr>& sourceNodes = getSourceNodes(fogTopologyPlan, streamName);
 
     if (sourceNodes.empty()) {
         IOTDB_ERROR("Unable to find the target source: " << streamName);
@@ -31,10 +31,10 @@ FogExecutionPlan BottomUp::initializeExecutionPlan(InputQueryPtr inputQuery, Fog
     return executionGraph;
 }
 
-void BottomUp::placeOperators(FogExecutionPlan executionGraph, FogTopologyPlanPtr fogTopologyPlan,
-                              vector<OperatorPtr> sourceOperators, deque<FogTopologyEntryPtr> sourceNodes) {
+void BottomUp::placeOperators(NESExecutionPlan executionGraph, NESTopologyPlanPtr fogTopologyPlan,
+                              vector<OperatorPtr> sourceOperators, deque<NESTopologyEntryPtr> sourceNodes) {
 
-    FogTopologyEntryPtr& targetSource = sourceNodes[0];
+    NESTopologyEntryPtr& targetSource = sourceNodes[0];
 
     //lambda to convert source optr vector to a friendly struct
     deque<ProcessOperator> operatorsToProcess;
@@ -54,7 +54,7 @@ void BottomUp::placeOperators(FogExecutionPlan executionGraph, FogTopologyPlanPt
         }
 
         // find the node where the operator will be executed
-        FogTopologyEntryPtr node = findSuitableFogNodeForOperatorPlacement(operatorToProcess, fogTopologyPlan,
+        NESTopologyEntryPtr node = findSuitableFogNodeForOperatorPlacement(operatorToProcess, fogTopologyPlan,
                                                                            sourceNodes);
 
         if ((node == nullptr) or node->getRemainingCpuCapacity() <= 0) {
@@ -102,10 +102,10 @@ void BottomUp::placeOperators(FogExecutionPlan executionGraph, FogTopologyPlanPt
         }
     }
 
-    const FogGraphPtr& fogGraphPtr = fogTopologyPlan->getFogGraph();
-    deque<FogTopologyEntryPtr> candidateNodes = getCandidateFogNodes(fogGraphPtr, targetSource);
+    const NESGraphPtr& fogGraphPtr = fogTopologyPlan->getFogGraph();
+    deque<NESTopologyEntryPtr> candidateNodes = getCandidateFogNodes(fogGraphPtr, targetSource);
     while (!candidateNodes.empty()) {
-        shared_ptr<FogTopologyEntry> node = candidateNodes.front();
+        shared_ptr<NESTopologyEntry> node = candidateNodes.front();
         candidateNodes.pop_front();
         if (node->getCpuCapacity() == node->getRemainingCpuCapacity()) {
             executionGraph.createExecutionNode("FWD", to_string(node->getId()), node, nullptr);
@@ -115,11 +115,11 @@ void BottomUp::placeOperators(FogExecutionPlan executionGraph, FogTopologyPlanPt
 
 }
 
-FogTopologyEntryPtr BottomUp::findSuitableFogNodeForOperatorPlacement(const ProcessOperator& operatorToProcess,
-                                                                      FogTopologyPlanPtr& fogTopologyPlan,
-                                                                      deque<FogTopologyEntryPtr>& sourceNodes) {
+NESTopologyEntryPtr BottomUp::findSuitableFogNodeForOperatorPlacement(const ProcessOperator& operatorToProcess,
+                                                                      NESTopologyPlanPtr& fogTopologyPlan,
+                                                                      deque<NESTopologyEntryPtr>& sourceNodes) {
 
-    FogTopologyEntryPtr node;
+    NESTopologyEntryPtr node;
 
     if (operatorToProcess.operatorToProcess->getOperatorType() == OperatorType::SINK_OP) {
         node = fogTopologyPlan->getRootNode();
@@ -127,26 +127,26 @@ FogTopologyEntryPtr BottomUp::findSuitableFogNodeForOperatorPlacement(const Proc
         node = sourceNodes.front();
         sourceNodes.pop_front();
     } else {
-        FogTopologyEntryPtr& fogNode = operatorToProcess.parentExecutionNode->getFogNode();
+        NESTopologyEntryPtr& fogNode = operatorToProcess.parentExecutionNode->getFogNode();
 
         //if the previous parent node still have capacity. Use it for further operator assignment
         if (fogNode->getRemainingCpuCapacity() > 0) {
             node = fogNode;
         } else {
             // else find the neighbouring higher level nodes connected to it
-            const vector<FogTopologyLinkPtr>& allEdgesToNode = fogTopologyPlan->getFogGraph()->getAllEdgesFromNode(
+            const vector<NESTopologyLinkPtr>& allEdgesToNode = fogTopologyPlan->getFogGraph()->getAllEdgesFromNode(
                 fogNode);
 
-            vector<FogTopologyEntryPtr> neighbouringNodes;
+            vector<NESTopologyEntryPtr> neighbouringNodes;
 
             transform(allEdgesToNode.begin(), allEdgesToNode.end(), back_inserter(neighbouringNodes),
-                      [](FogTopologyLinkPtr fogLink) {
+                      [](NESTopologyLinkPtr fogLink) {
                         return fogLink->getDestNode();
                       });
 
-            FogTopologyEntryPtr neighbouringNodeWithMaxCPU = nullptr;
+            NESTopologyEntryPtr neighbouringNodeWithMaxCPU = nullptr;
 
-            for (FogTopologyEntryPtr neighbouringNode: neighbouringNodes) {
+            for (NESTopologyEntryPtr neighbouringNode: neighbouringNodes) {
 
                 if ((neighbouringNodeWithMaxCPU == nullptr) ||
                     (neighbouringNode->getRemainingCpuCapacity() >
@@ -193,30 +193,30 @@ vector<OperatorPtr> BottomUp::getSourceOperators(OperatorPtr root) {
 };
 
 // This method returns all sensor nodes that act as the source in the fog topology.
-deque<FogTopologyEntryPtr> BottomUp::getSourceNodes(FogTopologyPlanPtr fogTopologyPlan,
+deque<NESTopologyEntryPtr> BottomUp::getSourceNodes(NESTopologyPlanPtr fogTopologyPlan,
                                                     std::string streamName) {
 
-    const FogTopologyEntryPtr& rootNode = fogTopologyPlan->getRootNode();
-    deque<FogTopologyEntryPtr> listOfSourceNodes;
-    deque<FogTopologyEntryPtr> bfsTraverse;
+    const NESTopologyEntryPtr& rootNode = fogTopologyPlan->getRootNode();
+    deque<NESTopologyEntryPtr> listOfSourceNodes;
+    deque<NESTopologyEntryPtr> bfsTraverse;
     bfsTraverse.push_back(rootNode);
 
     while (!bfsTraverse.empty()) {
         auto& node = bfsTraverse.front();
         bfsTraverse.pop_front();
 
-        if (node->getEntryType() == FogNodeType::Sensor) {
+        if (node->getEntryType() == NESNodeType::Sensor) {
 
-            FogTopologySensorNodePtr ptr = std::static_pointer_cast<FogTopologySensorNode>(node);
+            FogTopologySensorNodePtr ptr = std::static_pointer_cast<NESTopologySensorNode>(node);
 
             if (ptr->getSensorType() == streamName) {
                 listOfSourceNodes.push_back(node);
             }
         }
 
-        const vector<FogTopologyLinkPtr>& edgesToNode = fogTopologyPlan->getFogGraph()->getAllEdgesToNode(node);
+        const vector<NESTopologyLinkPtr>& edgesToNode = fogTopologyPlan->getFogGraph()->getAllEdgesToNode(node);
 
-        for (FogTopologyLinkPtr edgeToNode: edgesToNode) {
+        for (NESTopologyLinkPtr edgeToNode: edgesToNode) {
             bfsTraverse.push_back(edgeToNode->getSourceNode());
         }
     }

@@ -84,16 +84,16 @@ class ExecutionGraph {
 
 typedef std::shared_ptr<ExecutionGraph> ExecutionGraphPtr;
 
-class FogExecutionPlan {
+class NESExecutionPlan {
 
  public:
-  FogExecutionPlan();
+  NESExecutionPlan();
 
   void freeResources();
 
   ExecutionNodePtr getRootNode() const;
 
-  ExecutionNodePtr createExecutionNode(std::string operatorName, std::string nodeName, FogTopologyEntryPtr fogNode,
+  ExecutionNodePtr createExecutionNode(std::string operatorName, std::string nodeName, NESTopologyEntryPtr fogNode,
                                        OperatorPtr executableOperator);
 
   ExecutionNodeLinkPtr createExecutionNodeLink(ExecutionNodePtr src, ExecutionNodePtr dst);

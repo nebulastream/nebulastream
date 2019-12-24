@@ -1,13 +1,13 @@
-#ifndef INCLUDE_TOPOLOGY_FOGTOPOLOGYWORKERNODE_HPP_
-#define INCLUDE_TOPOLOGY_FOGTOPOLOGYWORKERNODE_HPP_
+#ifndef INCLUDE_TOPOLOGY_NESTOPOLOGYWORKERNODE_HPP_
+#define INCLUDE_TOPOLOGY_NESTOPOLOGYWORKERNODE_HPP_
 
-#include "FogTopologyEntry.hpp"
 #include <API/InputQuery.hpp>
 
 #include <memory>
 #include <utility>
 #include <vector>
 #include <Util/CPUCapacity.hpp>
+#include "NESTopologyEntry.hpp"
 
 namespace iotdb {
 
@@ -22,14 +22,14 @@ namespace iotdb {
 * 4.) isASink : Defines if the node is sink or not. By default a worker node is not a sink node
 * 5.) query : Defines the query that need to be executed by the node
 */
-class FogTopologyWorkerNode : public FogTopologyEntry {
+class NESTopologyWorkerNode : public NESTopologyEntry {
 
  public:
-  FogTopologyWorkerNode(size_t nodeId, std::string ip_addr) {
+  NESTopologyWorkerNode(size_t nodeId, std::string ip_addr) {
     this->node_id = nodeId;
     this->ip_addr = std::move(ip_addr);
   }
-  ~FogTopologyWorkerNode() = default;
+  ~NESTopologyWorkerNode() = default;
 
   size_t getId() { return node_id; }
 
@@ -60,7 +60,7 @@ class FogTopologyWorkerNode : public FogTopologyEntry {
     return this->isASink;
   }
 
-  FogNodeType getEntryType() { return Worker; }
+  NESNodeType getEntryType() { return Worker; }
 
   std::string getEntryTypeString() {
     if (isASink) {
@@ -108,6 +108,6 @@ class FogTopologyWorkerNode : public FogTopologyEntry {
   InputQueryPtr query;
 };
 
-typedef std::shared_ptr<FogTopologyWorkerNode> FogTopologyWorkerNodePtr;
+typedef std::shared_ptr<NESTopologyWorkerNode> NESTopologyWorkerNodePtr;
 } // namespace iotdb
-#endif /* INCLUDE_TOPOLOGY_FOGTOPOLOGYWORKERNODE_HPP_ */
+#endif /* INCLUDE_TOPOLOGY_NESTOPOLOGYWORKERNODE_HPP_ */
