@@ -137,7 +137,7 @@ void createTestTopo(NESTopologyManager& fMgnr)
 
     NESTopologyLinkPtr l1 = fMgnr.createNESTopologyLink(s1, f1);
 
-    fMgnr.printTopologyPlan();
+    fMgnr.printNESTopologyPlan();
 }
 
 NodeEnginePtr createTestNode()

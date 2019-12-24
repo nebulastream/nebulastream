@@ -78,7 +78,7 @@ unordered_map<NESTopologyEntryPtr,
     if (this->registeredQueries.find(queryId) != this->registeredQueries.end() &&
         this->runningQueries.find(queryId) == this->runningQueries.end()) {
         IOTDB_INFO("CoordinatorService: Deploying query " << queryId);
-        // get the schema and FogExecutionPlan stored during query registration
+        // get the schema and NESExecutionPlan stored during query registration
         Schema schema = get<0>(this->registeredQueries.at(queryId));
         NESExecutionPlan execPlan = get<1>(this->registeredQueries.at(queryId));
 
@@ -89,10 +89,10 @@ unordered_map<NESTopologyEntryPtr,
                 // if node contains operators to be deployed -> serialize and send them to the according node
                 vector<DataSourcePtr> sources = getSources(queryId, v);
                 vector<DataSinkPtr> destinations = getSinks(queryId, v);
-                NESTopologyEntryPtr fogNode = v.ptr->getFogNode();
+                NESTopologyEntryPtr nesNode = v.ptr->getNESNode();
                 ExecutableTransferObject
                     eto = ExecutableTransferObject(queryId, schema, sources, destinations, operators);
-                output.insert({fogNode, eto});
+                output.insert({nesNode, eto});
             }
         }
         // move registered query to running query
@@ -188,7 +188,7 @@ bool CoordinatorService::deregister_sensor(const NESTopologyEntryPtr& entry) {
     return this->topologyManagerPtr->getInstance().removeNESNode(entry);
 }
 string CoordinatorService::getTopologyPlanString() {
-    return this->topologyManagerPtr->getInstance().getTopologyPlanString();
+    return this->topologyManagerPtr->getInstance().getNESTopologyPlanString();
 }
 
 NESExecutionPlan* CoordinatorService::getRegisteredQuery(string queryId) {

@@ -28,7 +28,7 @@
 
 namespace iotdb {
 
-/* FogGraph ------------------------------------------------------------ */
+/* NESGraph ------------------------------------------------------------ */
 bool NESGraph::hasVertex(size_t search_id) const {
 
   // build vertice iterator
@@ -194,10 +194,10 @@ const std::vector<NESTopologyLinkPtr> NESGraph::getAllEdgesToNode(NESTopologyEnt
   for (next_edge = edge; edge != edge_end; edge = next_edge) {
     ++next_edge;
 
-    auto &fogEdgePtr = graph[*edge].ptr;
-    if (fogEdgePtr->getDestNode()->getId() == destNode.get()->getId()) {
+    auto &edgePtr = graph[*edge].ptr;
+    if (edgePtr->getDestNode()->getId() == destNode.get()->getId()) {
 
-      result.push_back(fogEdgePtr);
+      result.push_back(edgePtr);
     }
   }
 
@@ -214,9 +214,9 @@ const std::vector<NESTopologyLinkPtr> NESGraph::getAllEdgesFromNode(NESTopologyE
   for (next_edge = edge; edge != edge_end; edge = next_edge) {
     ++next_edge;
 
-    auto &fogEdgePtr = graph[*edge].ptr;
-    if (fogEdgePtr->getSourceNode()->getId() == srcNode.get()->getId()) {
-      result.push_back(fogEdgePtr);
+    auto &edgePtr = graph[*edge].ptr;
+    if (edgePtr->getSourceNode()->getId() == srcNode.get()->getId()) {
+      result.push_back(edgePtr);
     }
   }
 
@@ -305,7 +305,7 @@ std::string NESGraph::getGraphString() const {
   return ss.str();
 }
 
-/* FogTopologyPlan ----------------------------------------------------- */
+/* NESTopologyPlan ----------------------------------------------------- */
 NESTopologyPlan::NESTopologyPlan() {
   fGraphPtr = std::make_shared<NESGraph>();
   currentNodeId = 0;

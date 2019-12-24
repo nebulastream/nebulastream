@@ -1,5 +1,5 @@
-#ifndef INCLUDE_TOPOLOGY_FOGTOPOLOGYSENSOR_HPP_
-#define INCLUDE_TOPOLOGY_FOGTOPOLOGYSENSOR_HPP_
+#ifndef INCLUDE_TOPOLOGY_NESTOPOLOGYSENSOR_HPP_
+#define INCLUDE_TOPOLOGY_NESTOPOLOGYSENSOR_HPP_
 
 #include <memory>
 #include <utility>
@@ -120,4 +120,4 @@ class NESTopologySensorNode : public NESTopologyEntry {
 
 typedef std::shared_ptr<NESTopologySensorNode> NESTopologySensorNodePtr;
 }  // namespace iotdb
-#endif /* INCLUDE_TOPOLOGY_FOGTOPOLOGYSENSOR_HPP_ */
+#endif /* INCLUDE_TOPOLOGY_NESTOPOLOGYSENSOR_HPP_ */

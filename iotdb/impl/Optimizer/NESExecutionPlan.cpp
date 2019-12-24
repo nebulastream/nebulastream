@@ -278,10 +278,10 @@ ExecutionNodePtr NESExecutionPlan::getRootNode() const {
 
 ExecutionNodePtr
 NESExecutionPlan::createExecutionNode(std::string operatorName, std::string nodeName,
-                                      NESTopologyEntryPtr fogNode,
+                                      NESTopologyEntryPtr nesNode,
                                       OperatorPtr executableOperator) {
 
-  ExecutionNode executionNode(operatorName, nodeName, fogNode, executableOperator);
+  ExecutionNode executionNode(operatorName, nodeName, nesNode, executableOperator);
 
   // create worker node
   auto ptr = std::make_shared<ExecutionNode>(executionNode);
@@ -326,10 +326,10 @@ json::value NESExecutionPlan::getExecutionGraphAsJson() const {
     const ExecutionNodePtr &executionNodePtr = vertex.ptr;
     const string id = "Node-" + std::to_string(executionNodePtr->getId());
     const string &operatorName = executionNodePtr->getOperatorName();
-    const string nodeType = executionNodePtr->getFogNode()->getEntryTypeString();
+    const string nodeType = executionNodePtr->getNESNode()->getEntryTypeString();
 
-    int cpuCapacity = vertex.ptr->getFogNode()->getCpuCapacity();
-    int remainingCapacity = vertex.ptr->getFogNode()->getRemainingCpuCapacity();
+    int cpuCapacity = vertex.ptr->getNESNode()->getCpuCapacity();
+    int remainingCapacity = vertex.ptr->getNESNode()->getRemainingCpuCapacity();
 
     vertexInfo["id"] = json::value::string(id);
     vertexInfo["capacity"] = json::value::string(std::to_string(cpuCapacity));
@@ -337,7 +337,7 @@ json::value NESExecutionPlan::getExecutionGraphAsJson() const {
     vertexInfo["operators"] = json::value::string(operatorName);
     vertexInfo["nodeType"] = json::value::string(nodeType);
     if (nodeType == "Sensor") {
-      NESTopologySensorNodePtr ptr = std::static_pointer_cast<NESTopologySensorNode>(vertex.ptr->getFogNode());
+      NESTopologySensorNodePtr ptr = std::static_pointer_cast<NESTopologySensorNode>(vertex.ptr->getNESNode());
       vertexInfo["sensorType"] = json::value::string(ptr->getSensorType());
     }
     vertices.push_back(vertexInfo);
@@ -398,10 +398,10 @@ void NESExecutionPlan::freeResources() {
   for (const ExecutionVertex &v: getExecutionGraph()->getAllVertex()) {
     if (v.ptr->getRootOperator()) {
       // TODO: change that when proper placement is fixed
-      IOTDB_INFO("FOGEXECUTIONPLAN: Capacity before-" << v.ptr->getFogNode()->getId() << "->" << v.ptr->getFogNode()->getRemainingCpuCapacity())
-      int usedCapacity = v.ptr->getFogNode()->getCpuCapacity() - v.ptr->getFogNode()->getRemainingCpuCapacity();
-      v.ptr->getFogNode()->increaseCpuCapacity(usedCapacity);
-      IOTDB_INFO("FOGEXECUTIONPLAN: Capacity after-" << v.ptr->getFogNode()->getId() << "->" << v.ptr->getFogNode()->getRemainingCpuCapacity())
+      IOTDB_INFO("NESEXECUTIONPLAN: Capacity before-" << v.ptr->getNESNode()->getId() << "->" << v.ptr->getNESNode()->getRemainingCpuCapacity())
+      int usedCapacity = v.ptr->getNESNode()->getCpuCapacity() - v.ptr->getNESNode()->getRemainingCpuCapacity();
+      v.ptr->getNESNode()->increaseCpuCapacity(usedCapacity);
+      IOTDB_INFO("NESEXECUTIONPLAN: Capacity after-" << v.ptr->getNESNode()->getId() << "->" << v.ptr->getNESNode()->getRemainingCpuCapacity())
     }
   }
 }

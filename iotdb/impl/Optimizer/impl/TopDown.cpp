@@ -2,16 +2,16 @@
 
 using namespace iotdb;
 
-NESExecutionPlan TopDown::initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr fogTopologyPlan) {
+NESExecutionPlan TopDown::initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan) {
     NESExecutionPlan executionGraph;
     const OperatorPtr& sinkOperator = inputQuery->getRoot();
 
-    placeOperators(executionGraph, inputQuery, fogTopologyPlan);
+    placeOperators(executionGraph, inputQuery, nesTopologyPlan);
     removeNonResidentOperators(executionGraph);
 
-    completeExecutionGraphWithFogTopology(executionGraph, fogTopologyPlan);
+    completeExecutionGraphWithNESTopology(executionGraph, nesTopologyPlan);
 
-    //FIXME: We are assuming that throughout the pipeline the schema would not change.
+    //FIXME: We are assuming that throughout the pipeline the schema would not change.F
     Schema& schema = inputQuery->source_stream->getSchema();
     addSystemGeneratedSourceSinkOperators(schema, executionGraph);
 
@@ -20,10 +20,10 @@ NESExecutionPlan TopDown::initializeExecutionPlan(InputQueryPtr inputQuery, NEST
 
 void TopDown::placeOperators(NESExecutionPlan executionGraph,
                              InputQueryPtr query,
-                             NESTopologyPlanPtr fogTopologyPlanPtr) {
+                             NESTopologyPlanPtr nesTopologyPlanPtr) {
 
     const OperatorPtr& sinkOperator = query->getRoot();
-    const NESGraphPtr& fogGraphPtr = fogTopologyPlanPtr->getNESGraph();
+    const NESGraphPtr& nesGraphPtr = nesTopologyPlanPtr->getNESGraph();
 
     deque<OperatorPtr> operatorsToProcess = {sinkOperator};
 
@@ -31,7 +31,7 @@ void TopDown::placeOperators(NESExecutionPlan executionGraph,
 
     //find the source Node
     vector<NESVertex> sourceNodes;
-    const vector<NESVertex>& allVertex = fogGraphPtr->getAllVertex();
+    const vector<NESVertex>& allVertex = nesGraphPtr->getAllVertex();
     copy_if(allVertex.begin(), allVertex.end(), back_inserter(sourceNodes),
             [sourceName](const NESVertex vertex) {
               if (vertex.ptr->getEntryType() == NESNodeType::Sensor &&
@@ -54,7 +54,7 @@ void TopDown::placeOperators(NESExecutionPlan executionGraph,
 
     // Find the nodes where we can place the operators. First node will be sink and last one will be the target
     // source.
-    deque<NESTopologyEntryPtr> candidateNodes = getCandidateFogNodes(fogGraphPtr, targetSource);
+    deque<NESTopologyEntryPtr> candidateNodes = getCandidateNESNodes(nesGraphPtr, targetSource);
 
     if (candidateNodes.empty()) {
         throw "No path exists between sink and source";
@@ -143,7 +143,7 @@ void TopDown::placeOperators(NESExecutionPlan executionGraph,
     }
 
     // Place forward operators
-    candidateNodes = getCandidateFogNodes(fogGraphPtr, targetSource);
+    candidateNodes = getCandidateNESNodes(nesGraphPtr, targetSource);
     while (!candidateNodes.empty()) {
         shared_ptr<NESTopologyEntry>& node = candidateNodes.front();
         candidateNodes.pop_front();
