@@ -4,12 +4,12 @@
 #include <caf/io/all.hpp>
 #include <caf/all.hpp>
 #include <Actors/AtomUtils.hpp>
-#include <Topology/FogTopologyEntry.hpp>
 #include <Services/CoordinatorService.hpp>
 #include <Services/WorkerService.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Actors/Configurations/CoordinatorActorConfig.hpp>
-#include <Topology/FogTopologyManager.hpp>
+#include "../Topology/NESTopologyEntry.hpp"
+#include "../Topology/NESTopologyManager.hpp"
 
 using std::cout;
 using std::cerr;
@@ -21,8 +21,8 @@ namespace iotdb {
 
   // class-based, statically typed, event-based API for the state management in CAF
   struct CoordinatorState {
-      unordered_map<caf::strong_actor_ptr, FogTopologyEntryPtr> actorTopologyMap;
-      unordered_map<FogTopologyEntryPtr, caf::strong_actor_ptr> topologyActorMap;
+      unordered_map<caf::strong_actor_ptr, NESTopologyEntryPtr> actorTopologyMap;
+      unordered_map<NESTopologyEntryPtr, caf::strong_actor_ptr> topologyActorMap;
   };
 
   /**

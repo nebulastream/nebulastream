@@ -3,28 +3,28 @@
  *
  */
 
-#ifndef IOTDB_FOGPLACEMENTOPTIMIZER_HPP
-#define IOTDB_FOGPLACEMENTOPTIMIZER_HPP
+#ifndef IOTDB_NESPLACEMENTOPTIMIZER_HPP
+#define IOTDB_NESPLACEMENTOPTIMIZER_HPP
 
-#include <Optimizer/FogExecutionPlan.hpp>
 #include <iostream>
-#include <Topology/FogTopologyPlan.hpp>
-#include <Topology/FogTopologyManager.hpp>
+#include "../Topology/NESTopologyManager.hpp"
+#include "../Topology/NESTopologyPlan.hpp"
+#include "NESExecutionPlan.hpp"
 
 namespace iotdb {
-class FogPlacementOptimizer {
+class NESPlacementOptimizer {
  private:
 
  public:
-  FogPlacementOptimizer() {};
+  NESPlacementOptimizer() {};
 
   /**
-   * @brief Returns an execution graph based on the input query and fog topology.
+   * @brief Returns an execution graph based on the input query and nes topology.
    * @param inputQuery
-   * @param fogTopologyPlan
+   * @param nesTopologyPlan
    * @return
    */
-  virtual FogExecutionPlan initializeExecutionPlan(InputQueryPtr inputQuery, FogTopologyPlanPtr fogTopologyPlan) = 0;
+  virtual NESExecutionPlan initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan) = 0;
 
   void invalidateUnscheduledOperators(OperatorPtr &rootOperator, vector<int> &childOperatorIds);
 
@@ -34,7 +34,7 @@ class FogPlacementOptimizer {
    * 
    * @param graph 
    */
-  void removeNonResidentOperators(FogExecutionPlan graph);
+  void removeNonResidentOperators(NESExecutionPlan graph);
 
   /**
    * @brief This method will add system generated zmq source and sinks for each execution node.
@@ -45,33 +45,33 @@ class FogPlacementOptimizer {
    * @param schema
    * @param graph
    */
-  void addSystemGeneratedSourceSinkOperators(const Schema &schema, FogExecutionPlan graph);
+  void addSystemGeneratedSourceSinkOperators(const Schema &schema, NESExecutionPlan graph);
 
   /**
-   * @brief Fill the execution graph with forward operators in fog topology. 
+   * @brief Fill the execution graph with forward operators in nes topology.
    * @param graph 
-   * @param fogTopologyPtr
+   * @param nesTopologyPtr
    */
-  void completeExecutionGraphWithFogTopology(FogExecutionPlan graph, FogTopologyPlanPtr fogTopologyPtr);
+  void completeExecutionGraphWithNESTopology(NESExecutionPlan graph, NESTopologyPlanPtr nesTopologyPtr);
 
   /**
    * @brief Factory method returning different kind of optimizer.
    * @param optimizerName
    * @return instance of type BaseOptimizer
    */
-  static std::shared_ptr<FogPlacementOptimizer> getOptimizer(std::string optimizerName);
+  static std::shared_ptr<NESPlacementOptimizer> getOptimizer(std::string optimizerName);
 
   /**
    * @brief Get all candidate node from sink to the target source node.
-   * @param fogGraphPtr
+   * @param nesGraphPtr
    * @param targetSource
-   * @return deque containing Fog nodes with top element being sink node and bottom most being the targetSource node.
+   * @return deque containing nes nodes with top element being sink node and bottom most being the targetSource node.
    */
-  deque<FogTopologyEntryPtr> getCandidateFogNodes(const FogGraphPtr &fogGraphPtr,
-                                                  const FogTopologyEntryPtr &targetSource) const;
+  deque<NESTopologyEntryPtr> getCandidateNESNodes(const NESGraphPtr &nesGraphPtr,
+                                                  const NESTopologyEntryPtr &targetSource) const;
   void convertFwdOptr(const Schema &schema, ExecutionNodePtr &executionNodePtr) const;
 };
 
 }
 
-#endif //IOTDB_FOGPLACEMENTOPTIMIZER_HPP
+#endif //IOTDB_NESPLACEMENTOPTIMIZER_HPP

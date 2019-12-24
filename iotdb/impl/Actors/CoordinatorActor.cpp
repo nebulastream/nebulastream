@@ -1,13 +1,13 @@
 #include <Actors/CoordinatorActor.hpp>
 #include <Actors/ExecutableTransferObject.hpp>
-#include <Topology/FogTopologyManager.hpp>
+#include "../../include/Topology/NESTopologyManager.hpp"
 
 namespace iotdb {
 
   behavior CoordinatorActor::init() {
       initializeNESTopology();
 
-      auto kRootNode = FogTopologyManager::getInstance().getRootNode();
+      auto kRootNode = NESTopologyManager::getInstance().getRootNode();
       this->state.actorTopologyMap.insert({this->address().get(), kRootNode});
       this->state.topologyActorMap.insert({kRootNode, this->address().get()});
 
@@ -29,9 +29,9 @@ namespace iotdb {
 
   void CoordinatorActor::initializeNESTopology() {
 
-      FogTopologyManager::getInstance().resetFogTopologyPlan();
+      NESTopologyManager::getInstance().resetNESTopologyPlan();
       auto coordinatorNode =
-          FogTopologyManager::getInstance().createFogCoordinatorNode(actorCoordinatorConfig.ip, CPUCapacity::HIGH);
+          NESTopologyManager::getInstance().createNESCoordinatorNode(actorCoordinatorConfig.ip, CPUCapacity::HIGH);
       coordinatorNode->setPublishPort(actorCoordinatorConfig.publish_port);
       coordinatorNode->setReceivePort(actorCoordinatorConfig.receive_port);
   }
@@ -97,7 +97,7 @@ namespace iotdb {
                                         const string& sensor, const string& nodeProperties) {
       auto sap = current_sender();
       auto hdl = actor_cast<actor>(sap);
-      FogTopologyEntryPtr
+      NESTopologyEntryPtr
           sensorNode = coordinatorServicePtr->register_sensor(ip, publish_port, receive_port, cpu, sensor, nodeProperties);
 
       this->state.actorTopologyMap.insert({sap, sensorNode});
@@ -108,7 +108,7 @@ namespace iotdb {
   }
 
   void CoordinatorActor::deployQuery(const string& queryId) {
-      unordered_map<FogTopologyEntryPtr, ExecutableTransferObject>
+      unordered_map<NESTopologyEntryPtr, ExecutableTransferObject>
           deployments = coordinatorServicePtr->make_deployment(queryId);
 
       for (auto const& x : deployments) {

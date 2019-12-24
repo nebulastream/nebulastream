@@ -1,13 +1,9 @@
 #include <API/Config.hpp>
 #include <API/InputQuery.hpp>
 #include <API/Schema.hpp>
-#include <Topology/FogTopologyManager.hpp>
-
 #include "include/API/InputQuery.hpp"
 #include <API/UserAPIExpression.hpp>
 #include <NodeEngine/NodeEngine.hpp>
-#include <Optimizer/FogOptimizer.hpp>
-//#include <Optimizer/FogRunTime.hpp>
 #include <Util/Logger.hpp>
 
 #include <memory>
@@ -23,9 +19,11 @@
 #include <boost/iostreams/stream.hpp>
 
 #include <QEPs/CompiledYSBTestQueryExecutionPlan.hpp>
+#include "../Optimizer/NESOptimizer.hpp"
 #include "../SourceSink/CompiledDummyPlan.hpp"
 #include "../SourceSink/ZmqSink.hpp"
 #include "../SourceSink/ZmqSource.hpp"
+#include "../Topology/NESTopologyManager.hpp"
 #include "../YSB_legacy/YSBGeneratorSource.hpp"
 #include "../YSB_legacy/YSBPrintSink.hpp"
 
@@ -131,15 +129,15 @@ CompiledDummyPlanPtr createDummyQEP()
 //    return qep;
 //}
 
-void createTestTopo(FogTopologyManager& fMgnr)
+void createTestTopo(NESTopologyManager& fMgnr)
 {
-    FogTopologyWorkerNodePtr f1 = fMgnr.createFogWorkerNode(CPUCapacity::HIGH);
+    NESTopologyWorkerNodePtr f1 = fMgnr.createFogWorkerNode(CPUCapacity::HIGH);
 
-    FogTopologySensorNodePtr s1 = fMgnr.createFogSensorNode(CPUCapacity::LOW);
+    NESTopologySensorNodePtr s1 = fMgnr.createFogSensorNode(CPUCapacity::LOW);
 
-    FogTopologyLinkPtr l1 = fMgnr.createFogTopologyLink(s1, f1);
+    NESTopologyLinkPtr l1 = fMgnr.createNESTopologyLink(s1, f1);
 
-    fMgnr.printTopologyPlan();
+    fMgnr.printNESTopologyPlan();
 }
 
 NodeEnginePtr createTestNode()
@@ -284,7 +282,7 @@ int main(int argc, const char *argv[]) {
     return 0;
 
     printWelcome();
-    FogTopologyManager& fMgnr = FogTopologyManager::getInstance();
+    NESTopologyManager& fMgnr = NESTopologyManager::getInstance();
     createTestTopo(fMgnr);
 
     // normal test query

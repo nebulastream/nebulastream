@@ -2,7 +2,7 @@
 #include <REST/std_service.hpp>
 #include <REST/Controller/RestController.hpp>
 #include <CodeGen/QueryPlanBuilder.hpp>
-#include <Topology/FogTopologyManager.hpp>
+#include "../../../include/Topology/NESTopologyManager.hpp"
 
 using namespace web;
 using namespace http;
@@ -25,13 +25,13 @@ void RestController::handleGet(http_request message) {
 
   auto path = requestPath(message);
   if (!path.empty()) {
-    if (path[0] == "service" && path[1] == "fog-plan") {
+    if (path[0] == "service" && path[1] == "fog-plan") {//FIXME:@ankit please change this to nes-plan
 
-      const auto &fogTopology = fogTopologyService.getFogTopologyAsJson();
+      const auto &nesTopology = nesTopologyService.getNESTopologyAsJson();
 
       http_response response(status_codes::OK);
       response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-      response.set_body(fogTopology);
+      response.set_body(nesTopology);
       message.reply(response);
     } else {
       http_response response(status_codes::NotFound);
@@ -102,13 +102,13 @@ void RestController::handlePost(http_request message) {
                       string optimizationStrategyName = req.at("strategyName").as_string();
 
                       //FIXME: setup example topology
-                      FogTopologyManager::getInstance().createExampleTopology();
+                      NESTopologyManager::getInstance().createExampleTopology();
 
 
                       //Call the service
                       const string
                           queryId = coordinatorServicePtr->register_query(userQuery, optimizationStrategyName);
-                      FogExecutionPlan *executionPlan = coordinatorServicePtr->getRegisteredQuery(queryId);
+                      NESExecutionPlan *executionPlan = coordinatorServicePtr->getRegisteredQuery(queryId);
 
                       json::value executionGraphPlan = executionPlan->getExecutionGraphAsJson();
 

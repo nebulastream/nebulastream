@@ -1,5 +1,5 @@
-#ifndef IOTDB_FOGEXECUTIONPLAN_HPP
-#define IOTDB_FOGEXECUTIONPLAN_HPP
+#ifndef IOTDB_NESEXECUTIONPLAN_HPP
+#define IOTDB_NESEXECUTIONPLAN_HPP
 
 #include <Optimizer/ExecutionNode.hpp>
 #include <Optimizer/ExecutionNodeLink.hpp>
@@ -84,16 +84,16 @@ class ExecutionGraph {
 
 typedef std::shared_ptr<ExecutionGraph> ExecutionGraphPtr;
 
-class FogExecutionPlan {
+class NESExecutionPlan {
 
  public:
-  FogExecutionPlan();
+  NESExecutionPlan();
 
   void freeResources();
 
   ExecutionNodePtr getRootNode() const;
 
-  ExecutionNodePtr createExecutionNode(std::string operatorName, std::string nodeName, FogTopologyEntryPtr fogNode,
+  ExecutionNodePtr createExecutionNode(std::string operatorName, std::string nodeName, NESTopologyEntryPtr nesNode,
                                        OperatorPtr executableOperator);
 
   ExecutionNodeLinkPtr createExecutionNodeLink(ExecutionNodePtr src, ExecutionNodePtr dst);
@@ -110,9 +110,9 @@ class FogExecutionPlan {
 
  private:
   ExecutionGraphPtr exeGraphPtr;
-  vector<json::value> getChildrenNode(ExecutionNodePtr fogParentNode) const;
+  vector<json::value> getChildrenNode(ExecutionNodePtr nesParentNode) const;
 };
 
 }
 
-#endif //IOTDB_FOGEXECUTIONPLAN_HPP
+#endif //IOTDB_NESEXECUTIONPLAN_HPP
