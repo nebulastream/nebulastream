@@ -10,17 +10,18 @@
 #ifndef IOTDB_FOGOPTIMIZER_HPP
 #define IOTDB_FOGOPTIMIZER_HPP
 
-#include "FogExecutionPlan.hpp"
+#include "NESExecutionPlan.hpp"
+#include "../Topology/NESTopologyPlan.hpp"
 
 namespace iotdb {
 
-class FogOptimizer {
+class NESOptimizer {
 
  public:
 
-  FogExecutionPlan prepareExecutionGraph(std::string strategy,
+  NESExecutionPlan prepareExecutionGraph(std::string strategy,
                                          InputQueryPtr inputQuery,
-                                         FogTopologyPlanPtr fogTopologyPlan);
+                                         NESTopologyPlanPtr fogTopologyPlan);
 };
 }
 

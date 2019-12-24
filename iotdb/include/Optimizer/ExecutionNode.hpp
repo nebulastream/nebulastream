@@ -5,7 +5,7 @@
 #ifndef IOTDB_EXECUTIONNODE_HPP
 #define IOTDB_EXECUTIONNODE_HPP
 
-#include <Topology/FogTopologyEntry.hpp>
+#include "../Topology/NESTopologyEntry.hpp"
 
 namespace iotdb {
 
@@ -14,7 +14,7 @@ using namespace std;
 class ExecutionNode {
 
  public:
-  ExecutionNode(std::string operatorName, std::string nodeName, FogTopologyEntryPtr fogNode,
+  ExecutionNode(std::string operatorName, std::string nodeName, NESTopologyEntryPtr fogNode,
                 OperatorPtr rootOperator) {
     this->id = fogNode->getId();
     this->operatorName = operatorName;
@@ -37,7 +37,7 @@ class ExecutionNode {
     this->operatorName = operatorName;
   }
 
-  FogTopologyEntryPtr &getFogNode() {
+  NESTopologyEntryPtr &getFogNode() {
     return fogNode;
   }
 
@@ -62,7 +62,7 @@ class ExecutionNode {
   string operatorName;
   string nodeName;
   OperatorPtr rootOperator;
-  FogTopologyEntryPtr fogNode;
+  NESTopologyEntryPtr fogNode;
   vector<int> childOperatorIds{};
 };
 

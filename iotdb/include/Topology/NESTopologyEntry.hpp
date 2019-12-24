@@ -1,30 +1,33 @@
-#ifndef INCLUDE_TOPOLOGY_FOGTOPOLOGYENTRY_HPP_
-#define INCLUDE_TOPOLOGY_FOGTOPOLOGYENTRY_HPP_
+#ifndef INCLUDE_TOPOLOGY_NESTOPOLOGYENTRY_HPP_
+#define INCLUDE_TOPOLOGY_NESTOPOLOGYENTRY_HPP_
 
 #include <API/InputQuery.hpp>
 #include <NodeEngine/NodeProperties.hpp>
+#include <Util/CPUCapacity.hpp>
 
 namespace iotdb {
 
-enum FogNodeType {
+enum NESNodeType {
   Coordinator,
   Worker,
   Sensor
 };
 
-class FogTopologyEntry {
+class NESTopologyEntry {
  public:
   virtual void setId(size_t id) = 0;
 
   virtual size_t getId() = 0;
 
-  virtual FogNodeType getEntryType() = 0;
+  virtual NESNodeType getEntryType() = 0;
 
   virtual std::string getEntryTypeString() = 0;
 
   virtual void setQuery(InputQueryPtr pQuery) = 0;
 
   virtual int getCpuCapacity() = 0;
+
+  virtual void setCpuCapacity(CPUCapacity cpuCapacity) = 0;
 
   virtual int getRemainingCpuCapacity() = 0;
 
@@ -86,6 +89,6 @@ class FogTopologyEntry {
 
 };
 
-typedef std::shared_ptr<FogTopologyEntry> FogTopologyEntryPtr;
+typedef std::shared_ptr<NESTopologyEntry> NESTopologyEntryPtr;
 }  // namespace iotdb
-#endif /* INCLUDE_TOPOLOGY_FOGTOPOLOGYENTRY_HPP_ */
+#endif /* INCLUDE_TOPOLOGY_NESTOPOLOGYENTRY_HPP_ */

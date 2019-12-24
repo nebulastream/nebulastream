@@ -3,8 +3,8 @@
 
 #include <string>
 #include <cpprest/json.h>
-#include <Optimizer/FogExecutionPlan.hpp>
 #include <API/InputQuery.hpp>
+#include "../Optimizer/NESExecutionPlan.hpp"
 
 namespace iotdb {
 
@@ -28,7 +28,7 @@ class OptimizerService {
  * @param optimizationStrategyName
  * @return
  */
-  FogExecutionPlan getExecutionPlan(InputQueryPtr inputQuery, std::string optimizationStrategyName);
+  NESExecutionPlan getExecutionPlan(InputQueryPtr inputQuery, std::string optimizationStrategyName);
 
 };
 }

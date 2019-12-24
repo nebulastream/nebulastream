@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 #include <Services/OptimizerService.hpp>
 #include <Services/QueryService.hpp>
-#include <Topology/FogTopologyManager.hpp>
+#include "../../../include/Topology/NESTopologyManager.hpp"
 
 using namespace iotdb;
 using namespace web;
@@ -15,7 +15,7 @@ class OptimizerServiceTest : public testing::Test {
 
   /* Will be called before a test is executed. */
   void SetUp() {
-    FogTopologyManager::getInstance().createExampleTopology();
+    NESTopologyManager::getInstance().createExampleTopology();
     std::cout << "Setup OptimizerServiceTest test case." << std::endl;
   }
 

@@ -1,4 +1,5 @@
-#include <Optimizer/FogPlacementOptimizer.hpp>
+#include "../../include/Optimizer/NESPlacementOptimizer.hpp"
+
 #include <iostream>
 #include <Optimizer/impl/BottomUp.hpp>
 #include <Optimizer/impl/TopDown.hpp>
@@ -7,7 +8,7 @@
 
 namespace iotdb {
 
-std::shared_ptr<FogPlacementOptimizer> FogPlacementOptimizer::getOptimizer(std::string optimizerName) {
+std::shared_ptr<NESPlacementOptimizer> NESPlacementOptimizer::getOptimizer(std::string optimizerName) {
 
   if (optimizerName == "BottomUp") {
     return std::make_unique<BottomUp>(BottomUp());
@@ -18,7 +19,7 @@ std::shared_ptr<FogPlacementOptimizer> FogPlacementOptimizer::getOptimizer(std::
   }
 }
 
-void FogPlacementOptimizer::removeNonResidentOperators(FogExecutionPlan graph) {
+void NESPlacementOptimizer::removeNonResidentOperators(NESExecutionPlan graph) {
 
   const vector<ExecutionVertex>& executionNodes = graph.getExecutionGraph()->getAllVertex();
   for (ExecutionVertex executionNode: executionNodes) {
@@ -28,7 +29,7 @@ void FogPlacementOptimizer::removeNonResidentOperators(FogExecutionPlan graph) {
   }
 }
 
-void FogPlacementOptimizer::invalidateUnscheduledOperators(OperatorPtr& rootOperator, vector<int>& childOperatorIds) {
+void NESPlacementOptimizer::invalidateUnscheduledOperators(OperatorPtr& rootOperator, vector<int>& childOperatorIds) {
   vector<OperatorPtr>& childs = rootOperator->childs;
   OperatorPtr& parent = rootOperator->parent;
 
@@ -58,7 +59,7 @@ static const int zmqDefaultPort = 5555;
 //FIXME: Currently the system is not designed for multiple children. Therefore, the logic is ignoring the fact
 // that there could be more than one child. Once the code generator able to deal with it this logic need to be
 // fixed.
-void FogPlacementOptimizer::addSystemGeneratedSourceSinkOperators(const Schema& schema, FogExecutionPlan graph) {
+void NESPlacementOptimizer::addSystemGeneratedSourceSinkOperators(const Schema& schema, NESExecutionPlan graph) {
 
   const std::shared_ptr<ExecutionGraph>& exeGraph = graph.getExecutionGraph();
   const vector<ExecutionVertex>& executionNodes = exeGraph->getAllVertex();
@@ -122,7 +123,7 @@ void FogPlacementOptimizer::addSystemGeneratedSourceSinkOperators(const Schema& 
   }
 }
 
-void FogPlacementOptimizer::convertFwdOptr(const Schema& schema,
+void NESPlacementOptimizer::convertFwdOptr(const Schema& schema,
                                            ExecutionNodePtr& executionNodePtr) const {//create sys introduced src and sink operators
 
   //Note: src operator is using localhost because src zmq will run locally
@@ -136,12 +137,12 @@ void FogPlacementOptimizer::convertFwdOptr(const Schema& schema,
   executionNodePtr->setOperatorName("SOURCE(SYS)=>SINK(SYS)");
 }
 
-void FogPlacementOptimizer::completeExecutionGraphWithFogTopology(FogExecutionPlan graph,
-                                                                  FogTopologyPlanPtr fogTopologyPtr) {
+void NESPlacementOptimizer::completeExecutionGraphWithFogTopology(NESExecutionPlan graph,
+                                                                  NESTopologyPlanPtr fogTopologyPtr) {
 
-  const vector<FogTopologyLinkPtr>& allEdges = fogTopologyPtr->getFogGraph()->getAllEdges();
+  const vector<NESTopologyLinkPtr>& allEdges = fogTopologyPtr->getFogGraph()->getAllEdges();
 
-  for (FogTopologyLinkPtr fogLink: allEdges) {
+  for (NESTopologyLinkPtr fogLink: allEdges) {
 
     size_t srcId = fogLink->getSourceNode()->getId();
     size_t destId = fogLink->getDestNode()->getId();
@@ -176,30 +177,30 @@ void FogPlacementOptimizer::completeExecutionGraphWithFogTopology(FogExecutionPl
   }
 };
 
-deque<FogTopologyEntryPtr> FogPlacementOptimizer::getCandidateFogNodes(const FogGraphPtr& fogGraphPtr,
-                                                                       const FogTopologyEntryPtr& targetSource) const {
+deque<NESTopologyEntryPtr> NESPlacementOptimizer::getCandidateFogNodes(const NESGraphPtr& fogGraphPtr,
+                                                                       const NESTopologyEntryPtr& targetSource) const {
 
-  deque<FogTopologyEntryPtr> candidateNodes = {};
+  deque<NESTopologyEntryPtr> candidateNodes = {};
 
-  const FogTopologyEntryPtr& rootNode = fogGraphPtr->getRoot();
+  const NESTopologyEntryPtr& rootNode = fogGraphPtr->getRoot();
 
   deque<int> visitedNodes = {};
   candidateNodes.push_back(rootNode);
 
   while (!candidateNodes.empty()) {
 
-    FogTopologyEntryPtr& back = candidateNodes.back();
+    NESTopologyEntryPtr& back = candidateNodes.back();
 
     if (back->getId() == targetSource->getId()) {
       break;
     }
 
-    const vector<FogTopologyLinkPtr>& allEdgesToNode = fogGraphPtr->getAllEdgesToNode(back);
+    const vector<NESTopologyLinkPtr>& allEdgesToNode = fogGraphPtr->getAllEdgesToNode(back);
 
     if (!allEdgesToNode.empty()) {
       bool found = false;
-      for (FogTopologyLinkPtr fogLink: allEdgesToNode) {
-        const FogTopologyEntryPtr& sourceNode = fogLink->getSourceNode();
+      for (NESTopologyLinkPtr fogLink: allEdgesToNode) {
+        const NESTopologyEntryPtr& sourceNode = fogLink->getSourceNode();
         if (!count(visitedNodes.begin(), visitedNodes.end(), sourceNode->getId())) {
           candidateNodes.push_back(sourceNode);
           found = true;
