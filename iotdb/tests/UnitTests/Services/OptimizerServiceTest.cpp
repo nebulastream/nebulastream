@@ -29,8 +29,8 @@ class OptimizerServiceTest : public testing::Test {
   OptimizerService optimizerService;
 };
 
-/* Test Fog topology service create plan for valid query string for  */
-TEST_F(OptimizerServiceTest, create_fog_execution_plan_for_valid_query_using_bottomup) {
+/* Test nes topology service create plan for valid query string for  */
+TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_valid_query_using_bottomup) {
 
   std::stringstream code;
   code << "Schema schema = Schema::create().addField(\"test\",INT32);" << std::endl;
@@ -43,8 +43,8 @@ TEST_F(OptimizerServiceTest, create_fog_execution_plan_for_valid_query_using_bot
   EXPECT_TRUE(plan.size() != 0);
 }
 
-/* Test Fog topology service create plan for valid query string for  */
-TEST_F(OptimizerServiceTest, create_fog_execution_plan_for_valid_query_using_topdown) {
+/* Test nes topology service create plan for valid query string for  */
+TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_valid_query_using_topdown) {
 
   std::stringstream code;
   code << "Schema schema = Schema::create().addField(\"test\",INT32);" << std::endl;
@@ -56,8 +56,8 @@ TEST_F(OptimizerServiceTest, create_fog_execution_plan_for_valid_query_using_top
   EXPECT_TRUE(plan.size() != 0);
 }
 
-/* Test Fog topology service create plan for invalid query string for  */
-TEST_F(OptimizerServiceTest, create_fog_execution_plan_for_invalid_query) {
+/* Test nes topology service create plan for invalid query string for  */
+TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_query) {
 
   try {
     std::stringstream code;
@@ -70,8 +70,8 @@ TEST_F(OptimizerServiceTest, create_fog_execution_plan_for_invalid_query) {
   }
 }
 
-/* Test Fog topology service create plan for invalid optimization strategy */
-TEST_F(OptimizerServiceTest, create_fog_execution_plan_for_invalid_optimization_strategy) {
+/* Test nes topology service create plan for invalid optimization strategy */
+TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_optimization_strategy) {
 
   try {
     std::stringstream code;
