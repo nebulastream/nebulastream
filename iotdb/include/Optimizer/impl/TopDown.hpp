@@ -15,11 +15,11 @@ class TopDown : public NESPlacementOptimizer {
   TopDown()= default;
   ~TopDown()= default;
 
-  NESExecutionPlan initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr fogTopologyPlan) override;
+  NESExecutionPlan initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan) override;
 
  private:
 
-  void placeOperators(NESExecutionPlan executionGraph, InputQueryPtr query, NESTopologyPlanPtr fogTopologyPlanPtr);
+  void placeOperators(NESExecutionPlan executionGraph, InputQueryPtr query, NESTopologyPlanPtr nesTopologyPlanPtr);
 
 };
 

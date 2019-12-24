@@ -1,6 +1,6 @@
 add_source_iotdb(
         QueryService.cpp
-        FogTopologyService.cpp
+        NESTopologyService.cpp
         CoordinatorService.cpp
         WorkerService.cpp
         OptimizerService.cpp

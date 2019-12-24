@@ -55,11 +55,11 @@ class NESTopologyManager {
 
   bool removeNESTopologyLink(NESTopologyLinkPtr linkPtr) { return currentPlan->removeNESTopologyLink(linkPtr); }
 
-  void printTopologyPlan() { std::cout << getTopologyPlanString() << std::endl; }
+  void printNESTopologyPlan() { std::cout << getNESTopologyPlanString() << std::endl; }
 
-  std::string getTopologyPlanString() { return currentPlan->getTopologyPlanString(); }
+  std::string getNESTopologyPlanString() { return currentPlan->getTopologyPlanString(); }
 
-  NESTopologyPlanPtr getTopologyPlan() { return currentPlan; }
+  NESTopologyPlanPtr getNESTopologyPlan() { return currentPlan; }
 
   NESTopologyEntryPtr getRootNode() { return currentPlan->getRootNode(); };
 
@@ -93,9 +93,9 @@ class NESTopologyManager {
 
   json::value getNESTopologyGraphAsJson() {
 
-    const NESGraphPtr &fogGraphPtr = getTopologyPlan()->getNESGraph();
-    const std::vector<NESTopologyLinkPtr> &allEdges = fogGraphPtr->getAllEdges();
-    const std::vector<NESVertex> &allVertex = fogGraphPtr->getAllVertex();
+    const NESGraphPtr &nesGraphPtr = getNESTopologyPlan()->getNESGraph();
+    const std::vector<NESTopologyLinkPtr> &allEdges = nesGraphPtr->getAllEdges();
+    const std::vector<NESVertex> &allVertex = nesGraphPtr->getAllVertex();
 
     auto result = json::value::object();
     std::vector<json::value> edges{};
@@ -139,10 +139,10 @@ class NESTopologyManager {
     return result;
   }
 
-  std::vector<json::value> getChildrenNode(NESTopologyEntryPtr fogParentNode) {
+  std::vector<json::value> getChildrenNode(NESTopologyEntryPtr nesParentNode) {
 
-    const NESGraphPtr &fogGraphPtr = getTopologyPlan()->getNESGraph();
-    const std::vector<NESTopologyLinkPtr> &edgesToNode = fogGraphPtr->getAllEdgesToNode(fogParentNode);
+    const NESGraphPtr &nesGraphPtr = getNESTopologyPlan()->getNESGraph();
+    const std::vector<NESTopologyLinkPtr> &edgesToNode = nesGraphPtr->getAllEdgesToNode(nesParentNode);
 
     std::vector<json::value> children = {};
 

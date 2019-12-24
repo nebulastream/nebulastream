@@ -44,7 +44,7 @@ class CoordinatorService {
   ~CoordinatorService() = default;
 
   /**
-   * @brief registers a CAF worker into the NES topology and creates a corresponding FogTopologyWorkerNode object
+   * @brief registers a CAF worker into the NES topology and creates a corresponding NESTopologyWorkerNode object
    * @param ip the worker ip
    * @param publish_port the publish port of the worker
    * @param receive_port the receive port of the worker
@@ -91,12 +91,12 @@ class CoordinatorService {
 
   string getNodePropertiesAsString(const NESTopologyEntryPtr& entry);
 
-  //FIXME: right now we do not register query but rather the fog plan
+  //FIXME: right now we do not register query but rather the nes plan
   /**
    * @brief: get the registered query
    *
    * @param queryId
-   * @return the fog execution plan for the query
+   * @return the nes execution plan for the query
    */
   NESExecutionPlan* getRegisteredQuery(string queryId);
 

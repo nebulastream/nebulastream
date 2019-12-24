@@ -3,8 +3,8 @@
  *
  */
 
-#ifndef IOTDB_FOGPLACEMENTOPTIMIZER_HPP
-#define IOTDB_FOGPLACEMENTOPTIMIZER_HPP
+#ifndef IOTDB_NESPLACEMENTOPTIMIZER_HPP
+#define IOTDB_NESPLACEMENTOPTIMIZER_HPP
 
 #include <iostream>
 #include "../Topology/NESTopologyManager.hpp"
@@ -19,12 +19,12 @@ class NESPlacementOptimizer {
   NESPlacementOptimizer() {};
 
   /**
-   * @brief Returns an execution graph based on the input query and fog topology.
+   * @brief Returns an execution graph based on the input query and nes topology.
    * @param inputQuery
-   * @param fogTopologyPlan
+   * @param nesTopologyPlan
    * @return
    */
-  virtual NESExecutionPlan initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr fogTopologyPlan) = 0;
+  virtual NESExecutionPlan initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan) = 0;
 
   void invalidateUnscheduledOperators(OperatorPtr &rootOperator, vector<int> &childOperatorIds);
 
@@ -48,11 +48,11 @@ class NESPlacementOptimizer {
   void addSystemGeneratedSourceSinkOperators(const Schema &schema, NESExecutionPlan graph);
 
   /**
-   * @brief Fill the execution graph with forward operators in fog topology. 
+   * @brief Fill the execution graph with forward operators in nes topology.
    * @param graph 
-   * @param fogTopologyPtr
+   * @param nesTopologyPtr
    */
-  void completeExecutionGraphWithFogTopology(NESExecutionPlan graph, NESTopologyPlanPtr fogTopologyPtr);
+  void completeExecutionGraphWithNESTopology(NESExecutionPlan graph, NESTopologyPlanPtr nesTopologyPtr);
 
   /**
    * @brief Factory method returning different kind of optimizer.
@@ -63,15 +63,15 @@ class NESPlacementOptimizer {
 
   /**
    * @brief Get all candidate node from sink to the target source node.
-   * @param fogGraphPtr
+   * @param nesGraphPtr
    * @param targetSource
-   * @return deque containing Fog nodes with top element being sink node and bottom most being the targetSource node.
+   * @return deque containing nes nodes with top element being sink node and bottom most being the targetSource node.
    */
-  deque<NESTopologyEntryPtr> getCandidateFogNodes(const NESGraphPtr &fogGraphPtr,
+  deque<NESTopologyEntryPtr> getCandidateNESNodes(const NESGraphPtr &nesGraphPtr,
                                                   const NESTopologyEntryPtr &targetSource) const;
   void convertFwdOptr(const Schema &schema, ExecutionNodePtr &executionNodePtr) const;
 };
 
 }
 
-#endif //IOTDB_FOGPLACEMENTOPTIMIZER_HPP
+#endif //IOTDB_NESPLACEMENTOPTIMIZER_HPP

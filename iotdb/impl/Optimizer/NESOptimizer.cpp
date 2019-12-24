@@ -7,11 +7,11 @@
 using namespace iotdb;
 
 NESExecutionPlan NESOptimizer::prepareExecutionGraph(const std::string strategy, const InputQueryPtr inputQuery,
-                                                     const NESTopologyPlanPtr fogTopologyPlan) {
+                                                     const NESTopologyPlanPtr nesTopologyPlan) {
 
   const shared_ptr<NESPlacementOptimizer> optimizerPtr = NESPlacementOptimizer::getOptimizer(strategy);
 
-  const NESExecutionPlan executionGraph = optimizerPtr->initializeExecutionPlan(inputQuery, fogTopologyPlan);
+  const NESExecutionPlan executionGraph = optimizerPtr->initializeExecutionPlan(inputQuery, nesTopologyPlan);
 
   return executionGraph;
 

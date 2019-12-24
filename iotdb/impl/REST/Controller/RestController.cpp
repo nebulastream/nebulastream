@@ -25,13 +25,13 @@ void RestController::handleGet(http_request message) {
 
   auto path = requestPath(message);
   if (!path.empty()) {
-    if (path[0] == "service" && path[1] == "fog-plan") {
+    if (path[0] == "service" && path[1] == "fog-plan") {//FIXME:@ankit please change this to nes-plan
 
-      const auto &fogTopology = fogTopologyService.getFogTopologyAsJson();
+      const auto &nesTopology = nesTopologyService.getNESTopologyAsJson();
 
       http_response response(status_codes::OK);
       response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-      response.set_body(fogTopology);
+      response.set_body(nesTopology);
       message.reply(response);
     } else {
       http_response response(status_codes::NotFound);

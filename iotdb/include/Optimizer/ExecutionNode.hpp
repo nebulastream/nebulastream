@@ -14,12 +14,12 @@ using namespace std;
 class ExecutionNode {
 
  public:
-  ExecutionNode(std::string operatorName, std::string nodeName, NESTopologyEntryPtr fogNode,
+  ExecutionNode(std::string operatorName, std::string nodeName, NESTopologyEntryPtr nesNode,
                 OperatorPtr rootOperator) {
-    this->id = fogNode->getId();
+    this->id = nesNode->getId();
     this->operatorName = operatorName;
     this->nodeName = nodeName;
-    this->fogNode = fogNode;
+    this->nesNode = nesNode;
     this->rootOperator = rootOperator;
   };
 
@@ -37,8 +37,8 @@ class ExecutionNode {
     this->operatorName = operatorName;
   }
 
-  NESTopologyEntryPtr &getFogNode() {
-    return fogNode;
+  NESTopologyEntryPtr &getNESNode() {
+    return nesNode;
   }
 
   void setRootOperator(const OperatorPtr root) {
@@ -62,7 +62,7 @@ class ExecutionNode {
   string operatorName;
   string nodeName;
   OperatorPtr rootOperator;
-  NESTopologyEntryPtr fogNode;
+  NESTopologyEntryPtr nesNode;
   vector<int> childOperatorIds{};
 };
 

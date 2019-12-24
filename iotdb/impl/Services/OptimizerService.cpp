@@ -13,8 +13,8 @@ json::value OptimizerService::getExecutionPlanAsJson(InputQueryPtr inputQuery, s
 }
 
 NESExecutionPlan OptimizerService::getExecutionPlan(InputQueryPtr inputQuery, string optimizationStrategyName) {
-  NESTopologyManager &fogTopologyManager = NESTopologyManager::getInstance();
-  const NESTopologyPlanPtr &topologyPlan = fogTopologyManager.getTopologyPlan();
+  NESTopologyManager &nesTopologyManager = NESTopologyManager::getInstance();
+  const NESTopologyPlanPtr &topologyPlan = nesTopologyManager.getNESTopologyPlan();
   IOTDB_DEBUG("OptimizerService: topology=" << topologyPlan->getTopologyPlanString())
 
   NESOptimizer queryOptimizer;

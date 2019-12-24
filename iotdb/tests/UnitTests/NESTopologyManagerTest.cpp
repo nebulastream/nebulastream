@@ -16,30 +16,29 @@
 
 using namespace iotdb;
 
-/* ------------------------------------------------------------------------- */
-/* - FogTopologyManager ---------------------------------------------------- */
-class FogTopologyManagerTest : public testing::Test {
+/* - nesTopologyManager ---------------------------------------------------- */
+class NesTopologyManagerTest : public testing::Test {
  public:
   /* Will be called before any test in this class are executed. */
-  static void SetUpTestCase() { std::cout << "Setup FogTopologyManager test class." << std::endl; }
+  static void SetUpTestCase() { std::cout << "Setup NesTopologyManager test class." << std::endl; }
 
   /* Will be called before a test is executed. */
   void SetUp() {
-    std::cout << "Setup FogTopologyManager test case." << std::endl;
+    std::cout << "Setup NesTopologyManager test case." << std::endl;
     NESTopologyManager::getInstance().resetNESTopologyPlan();
   }
 
   /* Will be called before a test is executed. */
-  void TearDown() { std::cout << "Tear down FogTopologyManager test case." << std::endl; }
+  void TearDown() { std::cout << "Tear down NesTopologyManager test case." << std::endl; }
 
   /* Will be called after all tests in this class are finished. */
-  static void TearDownTestCase() { std::cout << "Tear down FogTopologyManager test class." << std::endl; }
+  static void TearDownTestCase() { std::cout << "Tear down NesTopologyManager test class." << std::endl; }
 };
 
 /* - Nodes ----------------------------------------------------------------- */
 /* Create a new node. */
 
-TEST_F(FogTopologyManagerTest, create_node) {
+TEST_F(NesTopologyManagerTest, create_node) {
   size_t invalid_id = INVALID_NODE_ID;
 
   auto worker_node = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
@@ -58,7 +57,7 @@ TEST_F(FogTopologyManagerTest, create_node) {
 }
 
 /* Remove an existing node. */
-TEST_F(FogTopologyManagerTest, remove_node) {
+TEST_F(NesTopologyManagerTest, remove_node) {
   auto worker_node = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
   auto result_worker = NESTopologyManager::getInstance().removeNESWorkerNode(worker_node);
   EXPECT_TRUE(result_worker);
@@ -69,7 +68,7 @@ TEST_F(FogTopologyManagerTest, remove_node) {
 }
 
 /* Remove a non-existing node. */
-TEST_F(FogTopologyManagerTest, remove_non_existing_node) {
+TEST_F(NesTopologyManagerTest, remove_non_existing_node) {
   auto worker_node = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
   EXPECT_TRUE(NESTopologyManager::getInstance().removeNESWorkerNode(worker_node));
   EXPECT_FALSE(NESTopologyManager::getInstance().removeNESWorkerNode(worker_node));
@@ -81,7 +80,7 @@ TEST_F(FogTopologyManagerTest, remove_non_existing_node) {
 
 /* - Links ----------------------------------------------------------------- */
 /* Create a new link. */
-TEST_F(FogTopologyManagerTest, create_link) {
+TEST_F(NesTopologyManagerTest, create_link) {
   auto worker_node_0 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
   auto worker_node_1 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
   auto worker_node_2 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
@@ -128,7 +127,7 @@ TEST_F(FogTopologyManagerTest, create_link) {
 }
 
 /* Create link, where a link already exists. */
-TEST_F(FogTopologyManagerTest, create_existing_link) {
+TEST_F(NesTopologyManagerTest, create_existing_link) {
   auto node_0 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
   auto node_1 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
   auto link = NESTopologyManager::getInstance().createNESTopologyLink(node_0, node_1);
@@ -136,7 +135,7 @@ TEST_F(FogTopologyManagerTest, create_existing_link) {
 }
 
 /* Remove an existing link. */
-TEST_F(FogTopologyManagerTest, remove_link) {
+TEST_F(NesTopologyManagerTest, remove_link) {
   auto node_0 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
   auto node_1 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
   auto link = NESTopologyManager::getInstance().createNESTopologyLink(node_0, node_1);
@@ -145,7 +144,7 @@ TEST_F(FogTopologyManagerTest, remove_link) {
 }
 
 /* Remove a non-existing link. */
-TEST_F(FogTopologyManagerTest, remove_non_existing_link) {
+TEST_F(NesTopologyManagerTest, remove_non_existing_link) {
   auto node_0 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
   auto node_1 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
   auto link = NESTopologyManager::getInstance().createNESTopologyLink(node_0, node_1);
@@ -161,7 +160,7 @@ TEST_F(FogTopologyManagerTest, remove_non_existing_link) {
 }
 
 /* - Usage Pattern --------------------------------------------------------- */
-TEST_F(FogTopologyManagerTest, many_nodes) {
+TEST_F(NesTopologyManagerTest, many_nodes) {
 
   // creater workers
   std::vector<std::shared_ptr<NESTopologyWorkerNode>> workers;
@@ -196,7 +195,7 @@ TEST_F(FogTopologyManagerTest, many_nodes) {
   }
 }
 
-TEST_F(FogTopologyManagerTest, many_links) {
+TEST_F(NesTopologyManagerTest, many_links) {
 
   // creater workers
   std::vector<std::shared_ptr<NESTopologyWorkerNode>> workers;
@@ -239,7 +238,7 @@ TEST_F(FogTopologyManagerTest, many_links) {
 }
 
 /* - Print ----------------------------------------------------------------- */
-TEST_F(FogTopologyManagerTest, print_graph) {
+TEST_F(NesTopologyManagerTest, print_graph) {
 
   // creater workers
   std::vector<std::shared_ptr<NESTopologyWorkerNode>> workers;
@@ -277,7 +276,7 @@ TEST_F(FogTopologyManagerTest, print_graph) {
     }
   }
 
-  std::cout << NESTopologyManager::getInstance().getTopologyPlanString() << std::endl;
+  std::cout << NESTopologyManager::getInstance().getNESTopologyPlanString() << std::endl;
 
   std::string expected_result = "graph G {\n"
                                 "0[label=\"0 type=Worker\"];\n"
@@ -325,13 +324,13 @@ TEST_F(FogTopologyManagerTest, print_graph) {
                                 "21--4 [label=\"20\"];\n"
                                 "}\n";
 
-  EXPECT_TRUE(NESTopologyManager::getInstance().getTopologyPlanString() == expected_result);
+  EXPECT_TRUE(NESTopologyManager::getInstance().getNESTopologyPlanString() == expected_result);
 
-  // std::cout << FogTopologyManager::getInstance().getTopologyPlanString() << std::endl;
+  // std::cout << NesTopologyManager::getInstance().getTopologyPlanString() << std::endl;
   // std::cout << expected_result << std::endl;
 }
 
-TEST_F(FogTopologyManagerTest, print_graph_without_edges) {
+TEST_F(NesTopologyManagerTest, print_graph_without_edges) {
 
   // creater workers
   std::vector<std::shared_ptr<NESTopologyWorkerNode>> workers;
@@ -345,7 +344,7 @@ TEST_F(FogTopologyManagerTest, print_graph_without_edges) {
     sensors.push_back(NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::LOW));
   }
 
-  std::cout << NESTopologyManager::getInstance().getTopologyPlanString() << std::endl;
+  std::cout << NESTopologyManager::getInstance().getNESTopologyPlanString() << std::endl;
 
   std::string expected_result = "graph G {\n"
                                 "0[label=\"0 type=Worker\"];\n"
@@ -372,145 +371,145 @@ TEST_F(FogTopologyManagerTest, print_graph_without_edges) {
                                 "21[label=\"21 type=Sensor(unknown)\"];\n"
                                 "}\n";
 
-  EXPECT_TRUE(NESTopologyManager::getInstance().getTopologyPlanString() == expected_result);
+  EXPECT_TRUE(NESTopologyManager::getInstance().getNESTopologyPlanString() == expected_result);
 
-  // std::cout << FogTopologyManager::getInstance().getTopologyPlanString() << std::endl;
+  // std::cout << NesTopologyManager::getInstance().getTopologyPlanString() << std::endl;
   // std::cout << expected_result << std::endl;
 }
 
-TEST_F(FogTopologyManagerTest, print_graph_without_anything) {
+TEST_F(NesTopologyManagerTest, print_graph_without_anything) {
 
   std::string expected_result = "graph G {\n}\n";
-  EXPECT_TRUE(NESTopologyManager::getInstance().getTopologyPlanString() == expected_result);
+  EXPECT_TRUE(NESTopologyManager::getInstance().getNESTopologyPlanString() == expected_result);
 
-  // std::cout << FogTopologyManager::getInstance().getTopologyPlanString() << std::endl;
+  // std::cout << NesTopologyManager::getInstance().getTopologyPlanString() << std::endl;
   // std::cout << expected_result << std::endl;
 }
 
 /* ------------------------------------------------------------------------- */
-/* - FogTopologyGraph ------------------------------------------------------ */
-class FogTopologyGraphTest : public testing::Test {
+/* - NesTopologyGraph ------------------------------------------------------ */
+class NesTopologyGraphTest : public testing::Test {
  public:
   /* Will be called before any test in this class are executed. */
-  static void SetUpTestCase() { std::cout << "Setup FogTopologyGraph test class." << std::endl; }
+  static void SetUpTestCase() { std::cout << "Setup NesTopologyGraph test class." << std::endl; }
 
   /* Will be called before a test is executed. */
   void SetUp() {
-    std::cout << "Setup FogTopologyGraph test case." << std::endl;
-    fog_graph = std::make_shared<NESGraph>();
+    std::cout << "Setup NesTopologyGraph test case." << std::endl;
+    nes_graph = std::make_shared<NESGraph>();
   }
 
   /* Will be called before a test is executed. */
-  void TearDown() { std::cout << "Setup FogTopologyGraph test case." << std::endl; }
+  void TearDown() { std::cout << "Setup NesTopologyGraph test case." << std::endl; }
 
   /* Will be called after all tests in this class are finished. */
-  static void TearDownTestCase() { std::cout << "Tear down FogTopologyGraph test class." << std::endl; }
-  std::shared_ptr<NESGraph> fog_graph;
+  static void TearDownTestCase() { std::cout << "Tear down NesTopologyGraph test class." << std::endl; }
+  std::shared_ptr<NESGraph> nes_graph;
 };
 
 /* - Vertices -------------------------------------------------------------- */
-TEST_F(FogTopologyGraphTest, add_vertex) {
+TEST_F(NesTopologyGraphTest, add_vertex) {
   auto worker_node = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
-  EXPECT_TRUE(fog_graph->addVertex(worker_node));
+  EXPECT_TRUE(nes_graph->addVertex(worker_node));
 
   auto sensor_node = std::make_shared<NESTopologySensorNode>(1, "addr2");
-  EXPECT_TRUE(fog_graph->addVertex(sensor_node));
+  EXPECT_TRUE(nes_graph->addVertex(sensor_node));
 }
 
-TEST_F(FogTopologyGraphTest, add_existing_vertex) {
+TEST_F(NesTopologyGraphTest, add_existing_vertex) {
   auto worker_node = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
-  EXPECT_TRUE(fog_graph->addVertex(worker_node));
-  EXPECT_FALSE(fog_graph->addVertex(worker_node));
+  EXPECT_TRUE(nes_graph->addVertex(worker_node));
+  EXPECT_FALSE(nes_graph->addVertex(worker_node));
 }
 
-TEST_F(FogTopologyGraphTest, remove_vertex) {
+TEST_F(NesTopologyGraphTest, remove_vertex) {
   auto worker_node = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
-  EXPECT_TRUE(fog_graph->addVertex(worker_node));
+  EXPECT_TRUE(nes_graph->addVertex(worker_node));
 
   auto sensor_node = std::make_shared<NESTopologySensorNode>(1, "addr2");
-  EXPECT_TRUE(fog_graph->addVertex(sensor_node));
+  EXPECT_TRUE(nes_graph->addVertex(sensor_node));
 
-  EXPECT_TRUE(fog_graph->removeVertex(worker_node->getId()));
-  EXPECT_TRUE(fog_graph->removeVertex(sensor_node->getId()));
+  EXPECT_TRUE(nes_graph->removeVertex(worker_node->getId()));
+  EXPECT_TRUE(nes_graph->removeVertex(sensor_node->getId()));
 }
 
-TEST_F(FogTopologyGraphTest, remove_non_existing_vertex) {
+TEST_F(NesTopologyGraphTest, remove_non_existing_vertex) {
   auto worker_node = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
-  fog_graph->addVertex(worker_node);
+  nes_graph->addVertex(worker_node);
 
-  EXPECT_TRUE(fog_graph->removeVertex(worker_node->getId()));
-  EXPECT_FALSE(fog_graph->removeVertex(worker_node->getId()));
+  EXPECT_TRUE(nes_graph->removeVertex(worker_node->getId()));
+  EXPECT_FALSE(nes_graph->removeVertex(worker_node->getId()));
 }
 
 /* - Edges ----------------------------------------------------------------- */
-TEST_F(FogTopologyGraphTest, add_edge) {
+TEST_F(NesTopologyGraphTest, add_edge) {
   auto worker_node = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
-  EXPECT_TRUE(fog_graph->addVertex(worker_node));
+  EXPECT_TRUE(nes_graph->addVertex(worker_node));
 
   auto sensor_node = std::make_shared<NESTopologySensorNode>(1, "addr2");
-  EXPECT_TRUE(fog_graph->addVertex(sensor_node));
+  EXPECT_TRUE(nes_graph->addVertex(sensor_node));
 
   auto link_0 = std::make_shared<NESTopologyLink>(0, sensor_node, worker_node);
   auto link_1 = std::make_shared<NESTopologyLink>(1, worker_node, sensor_node);
 
-  EXPECT_TRUE(fog_graph->addEdge(link_0));
-  EXPECT_TRUE(fog_graph->addEdge(link_1));
+  EXPECT_TRUE(nes_graph->addEdge(link_0));
+  EXPECT_TRUE(nes_graph->addEdge(link_1));
 }
 
-TEST_F(FogTopologyGraphTest, add_existing_edge) {
+TEST_F(NesTopologyGraphTest, add_existing_edge) {
 
   auto worker_node = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
-  EXPECT_TRUE(fog_graph->addVertex(worker_node));
+  EXPECT_TRUE(nes_graph->addVertex(worker_node));
 
   auto sensor_node = std::make_shared<NESTopologySensorNode>(1, "addr2");
-  EXPECT_TRUE(fog_graph->addVertex(sensor_node));
+  EXPECT_TRUE(nes_graph->addVertex(sensor_node));
 
   auto link_0 = std::make_shared<NESTopologyLink>(0, sensor_node, worker_node);
   auto link_1 = std::make_shared<NESTopologyLink>(1, sensor_node, worker_node);
-  EXPECT_TRUE(fog_graph->addEdge(link_0));
-  EXPECT_FALSE(fog_graph->addEdge(link_0));
-  EXPECT_FALSE(fog_graph->addEdge(link_1));
+  EXPECT_TRUE(nes_graph->addEdge(link_0));
+  EXPECT_FALSE(nes_graph->addEdge(link_0));
+  EXPECT_FALSE(nes_graph->addEdge(link_1));
 }
 
-TEST_F(FogTopologyGraphTest, add_invalid_edge) {
+TEST_F(NesTopologyGraphTest, add_invalid_edge) {
   auto worker_node = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
-  EXPECT_TRUE(fog_graph->addVertex(worker_node));
+  EXPECT_TRUE(nes_graph->addVertex(worker_node));
 
   auto sensor_node = std::make_shared<NESTopologySensorNode>(1, "addr2");
   // node not added to graph
 
   auto link_0 = std::make_shared<NESTopologyLink>(0, worker_node, sensor_node);
-  EXPECT_FALSE(fog_graph->addEdge(link_0));
+  EXPECT_FALSE(nes_graph->addEdge(link_0));
 }
 
-TEST_F(FogTopologyGraphTest, remove_edge) {
+TEST_F(NesTopologyGraphTest, remove_edge) {
   auto worker_node = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
-  EXPECT_TRUE(fog_graph->addVertex(worker_node));
+  EXPECT_TRUE(nes_graph->addVertex(worker_node));
 
   auto sensor_node = std::make_shared<NESTopologySensorNode>(1, "addr2");
-  EXPECT_TRUE(fog_graph->addVertex(sensor_node));
+  EXPECT_TRUE(nes_graph->addVertex(sensor_node));
 
   auto link_0 = std::make_shared<NESTopologyLink>(0, sensor_node, worker_node);
-  fog_graph->addEdge(link_0);
+  nes_graph->addEdge(link_0);
 
-  EXPECT_TRUE(fog_graph->removeEdge(link_0->getId()));
+  EXPECT_TRUE(nes_graph->removeEdge(link_0->getId()));
 }
 
-TEST_F(FogTopologyGraphTest, remove_non_existing_edge) {
+TEST_F(NesTopologyGraphTest, remove_non_existing_edge) {
   auto worker_node = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
-  EXPECT_TRUE(fog_graph->addVertex(worker_node));
+  EXPECT_TRUE(nes_graph->addVertex(worker_node));
 
   auto sensor_node = std::make_shared<NESTopologySensorNode>(1, "addr2");
-  EXPECT_TRUE(fog_graph->addVertex(sensor_node));
+  EXPECT_TRUE(nes_graph->addVertex(sensor_node));
 
   auto link_0 = std::make_shared<NESTopologyLink>(0, sensor_node, worker_node);
-  EXPECT_TRUE(fog_graph->addEdge(link_0));
+  EXPECT_TRUE(nes_graph->addEdge(link_0));
 
-  EXPECT_TRUE(fog_graph->removeEdge(link_0->getId()));
-  EXPECT_FALSE(fog_graph->removeEdge(link_0->getId()));
+  EXPECT_TRUE(nes_graph->removeEdge(link_0->getId()));
+  EXPECT_FALSE(nes_graph->removeEdge(link_0->getId()));
 }
 
-TEST_F(FogTopologyGraphTest, get_example_topology_as_json) {
+TEST_F(NesTopologyGraphTest, get_example_topology_as_json) {
 
   NESTopologyManager &topologyManager = NESTopologyManager::getInstance();
   topologyManager.createExampleTopology();

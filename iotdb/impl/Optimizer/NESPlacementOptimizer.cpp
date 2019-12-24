@@ -107,7 +107,7 @@ void NESPlacementOptimizer::addSystemGeneratedSourceSinkOperators(const Schema& 
       const vector<ExecutionEdge>& edges = exeGraph->getAllEdgesFromNode(executionNodePtr);
       //FIXME: More than two sources are not supported feature at this moment. Once the feature is available please
       // fix the source code
-      const string& destHostName = edges[0].ptr->getDestination()->getFogNode()->getIp();
+      const string& destHostName = edges[0].ptr->getDestination()->getNESNode()->getIp();
       const OperatorPtr& sysSinkOptr = createSinkOperator(createZmqSink(schema, destHostName, zmqDefaultPort));
 
       //Update the operator name
@@ -137,15 +137,15 @@ void NESPlacementOptimizer::convertFwdOptr(const Schema& schema,
   executionNodePtr->setOperatorName("SOURCE(SYS)=>SINK(SYS)");
 }
 
-void NESPlacementOptimizer::completeExecutionGraphWithFogTopology(NESExecutionPlan graph,
-                                                                  NESTopologyPlanPtr fogTopologyPtr) {
+void NESPlacementOptimizer::completeExecutionGraphWithNESTopology(NESExecutionPlan graph,
+                                                                  NESTopologyPlanPtr nesTopologyPtr) {
 
-  const vector<NESTopologyLinkPtr>& allEdges = fogTopologyPtr->getNESGraph()->getAllEdges();
+  const vector<NESTopologyLinkPtr>& allEdges = nesTopologyPtr->getNESGraph()->getAllEdges();
 
-  for (NESTopologyLinkPtr fogLink: allEdges) {
+  for (NESTopologyLinkPtr nesLink: allEdges) {
 
-    size_t srcId = fogLink->getSourceNode()->getId();
-    size_t destId = fogLink->getDestNode()->getId();
+    size_t srcId = nesLink->getSourceNode()->getId();
+    size_t destId = nesLink->getDestNode()->getId();
     if (graph.hasVertex(srcId)) {
       const ExecutionNodePtr& srcExecutionNode = graph.getExecutionNode(srcId);
       if (graph.hasVertex(destId)) {
@@ -154,14 +154,14 @@ void NESPlacementOptimizer::completeExecutionGraphWithFogTopology(NESExecutionPl
       } else {
         const ExecutionNodePtr& destExecutionNode = graph.createExecutionNode("empty",
                                                                               to_string(destId),
-                                                                              fogLink->getDestNode(),
+                                                                              nesLink->getDestNode(),
                                                                               nullptr);
         graph.createExecutionNodeLink(srcExecutionNode, destExecutionNode);
       }
     } else {
 
       const ExecutionNodePtr& srcExecutionNode = graph.createExecutionNode("empty", to_string(srcId),
-                                                                           fogLink->getSourceNode(),
+                                                                           nesLink->getSourceNode(),
                                                                            nullptr);
       if (graph.hasVertex(destId)) {
         const ExecutionNodePtr& destExecutionNode = graph.getExecutionNode(destId);
@@ -169,7 +169,7 @@ void NESPlacementOptimizer::completeExecutionGraphWithFogTopology(NESExecutionPl
       } else {
         const ExecutionNodePtr& destExecutionNode = graph.createExecutionNode("empty",
                                                                               to_string(destId),
-                                                                              fogLink->getDestNode(),
+                                                                              nesLink->getDestNode(),
                                                                               nullptr);
         graph.createExecutionNodeLink(srcExecutionNode, destExecutionNode);
       }
@@ -177,12 +177,12 @@ void NESPlacementOptimizer::completeExecutionGraphWithFogTopology(NESExecutionPl
   }
 };
 
-deque<NESTopologyEntryPtr> NESPlacementOptimizer::getCandidateFogNodes(const NESGraphPtr& fogGraphPtr,
+deque<NESTopologyEntryPtr> NESPlacementOptimizer::getCandidateNESNodes(const NESGraphPtr& nesGraphPtr,
                                                                        const NESTopologyEntryPtr& targetSource) const {
 
   deque<NESTopologyEntryPtr> candidateNodes = {};
 
-  const NESTopologyEntryPtr& rootNode = fogGraphPtr->getRoot();
+  const NESTopologyEntryPtr& rootNode = nesGraphPtr->getRoot();
 
   deque<int> visitedNodes = {};
   candidateNodes.push_back(rootNode);
@@ -195,12 +195,12 @@ deque<NESTopologyEntryPtr> NESPlacementOptimizer::getCandidateFogNodes(const NES
       break;
     }
 
-    const vector<NESTopologyLinkPtr>& allEdgesToNode = fogGraphPtr->getAllEdgesToNode(back);
+    const vector<NESTopologyLinkPtr>& allEdgesToNode = nesGraphPtr->getAllEdgesToNode(back);
 
     if (!allEdgesToNode.empty()) {
       bool found = false;
-      for (NESTopologyLinkPtr fogLink: allEdgesToNode) {
-        const NESTopologyEntryPtr& sourceNode = fogLink->getSourceNode();
+      for (NESTopologyLinkPtr nesLink: allEdgesToNode) {
+        const NESTopologyEntryPtr& sourceNode = nesLink->getSourceNode();
         if (!count(visitedNodes.begin(), visitedNodes.end(), sourceNode->getId())) {
           candidateNodes.push_back(sourceNode);
           found = true;
