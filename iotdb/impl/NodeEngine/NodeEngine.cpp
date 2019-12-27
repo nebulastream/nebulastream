@@ -81,7 +81,7 @@ void NodeEngine::applyConfig(Config& conf) {
   if (conf.getNumberOfWorker() != ThreadPool::instance().getNumberOfThreads()) {
     IOTDB_DEBUG(
         "NODEENGINE: changing numberOfWorker from " << ThreadPool::instance().getNumberOfThreads() << " to " << conf.getNumberOfWorker())
-    ThreadPool::instance().setNumberOfThreads(conf.getNumberOfWorker());
+    ThreadPool::instance().setNumberOfThreadsWithRestart(conf.getNumberOfWorker());
   }
   if (conf.getBufferCount() != BufferManager::instance().getNumberOfBuffers()) {
     IOTDB_DEBUG(
@@ -104,6 +104,21 @@ void NodeEngine::resetQEPs() {
   IOTDB_DEBUG("NODEENGINE: clear qeps")
 
   qeps.clear();
+}
+
+
+void NodeEngine::setDOPWithRestart(size_t dop)
+{
+  iotdb::ThreadPool::instance().setNumberOfThreadsWithRestart(dop);
+}
+void NodeEngine::setDOPWithoutRestart(size_t dop)
+{
+  iotdb::ThreadPool::instance().setNumberOfThreadsWithoutRestart(dop);
+}
+
+size_t NodeEngine::getDOP()
+{
+return iotdb::ThreadPool::instance().getNumberOfThreads();
 }
 
 }

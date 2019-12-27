@@ -77,8 +77,18 @@ bool ThreadPool::stop() {
   return true;
 }
 
-void ThreadPool::setNumberOfThreads(size_t size) {
+void ThreadPool::restart() {
+  stop();
+  start();
+}
+
+void ThreadPool::setNumberOfThreadsWithoutRestart(size_t size) {
   numThreads = size;
+}
+
+void ThreadPool::setNumberOfThreadsWithRestart(size_t size) {
+  numThreads = size;
+  restart();
 }
 
 size_t ThreadPool::getNumberOfThreads() {

@@ -55,15 +55,29 @@ class ThreadPool {
 
   /**
    * @brief set the number of threads in the thread pool
+   * @note this effect will take place after the next restart
    * @param number of threads
    */
-  void setNumberOfThreads(size_t size);
+  void setNumberOfThreadsWithoutRestart(size_t size);
+
+  /**
+    * @brief set the number of threads in the thread pool
+    * @param number of threads
+    * @caution this will restart the engine
+    */
+   void setNumberOfThreadsWithRestart(size_t size);
+
 
   /**
    * @brief get the current number of threads in thread pool
    * @return number of current threads
    */
   size_t getNumberOfThreads();
+
+  /**
+   *@brief restart the node engine
+   */
+  void restart();
 
  private:
   /* implement singleton semantics: no construction,
