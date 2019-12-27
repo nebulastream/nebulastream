@@ -125,7 +125,7 @@ int test(size_t toProcessedBuffers, size_t threadCnt, size_t campaignCnt, size_t
 
 	Dispatcher::instance().registerQuery(qep);
 
-	ThreadPool::instance().setNumberOfThreads(threadCnt);
+	ThreadPool::instance().setNumberOfThreadsWithRestart(threadCnt);
 
 	size_t start = getTimestamp();
 	ThreadPool::instance().start();

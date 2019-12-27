@@ -84,6 +84,11 @@ class NodeEngine {
 
   NodeProperties* getNodeProperties();
 
+  void setDOPWithRestart(size_t dop);
+  void setDOPWithoutRestart(size_t dop);
+
+  size_t getDOP();
+
  private:
   /**
    * @brief initialize Dispatcher, BufferManager and ThreadPool
