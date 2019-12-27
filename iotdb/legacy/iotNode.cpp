@@ -30,7 +30,7 @@ void start()
     for(auto& q : qeps)
     {
         IOTDB_DEBUG("IOTNODE: register query " << q)
-        Dispatcher::instance().registerQuery(q);
+        Dispatcher::instance().registerQueryWithStart(q);
     }
     IOTDB_DEBUG("IOTNODE: start thread pool")
     ThreadPool::instance().start();
@@ -87,7 +87,7 @@ void applyConfig(Config& conf)
     if(conf.getNumberOfWorker() != ThreadPool::instance().getNumberOfThreads())
     {
         IOTDB_DEBUG("IOTNODE: changing numberOfWorker from " << ThreadPool::instance().getNumberOfThreads() << " to " << conf.getNumberOfWorker())
-        ThreadPool::instance().setNumberOfThreads(conf.getNumberOfWorker());
+        ThreadPool::instance().setNumberOfThreadsWithRestart(conf.getNumberOfWorker());
     }
     if(conf.getBufferCount() !=  BufferManager::instance().getNumberOfBuffers())
     {

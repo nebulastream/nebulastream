@@ -62,10 +62,10 @@ set_tests_properties(e2e-rest-test PROPERTIES
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
 
-# Engine Tests
-add_executable(engine-test "UnitTests/EngineTest.cpp")
-target_link_libraries(engine-test  iotdb ${GTEST_LIBRARIES})
-add_test(NAME engine-test COMMAND engine-test )
+# Node Engine Tests
+add_executable(node-engine-test "UnitTests/NodeEngineTest.cpp")
+target_link_libraries(node-engine-test  iotdb ${GTEST_LIBRARIES})
+add_test(NAME node-engine-test COMMAND node-engine-test)
 
 # Code Generation Tests
 add_executable(code-generation-tests "UnitTests/CodeGenTest.cpp")

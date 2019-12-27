@@ -41,6 +41,13 @@ class NodeEngine {
   void deployQuery(QueryExecutionPlanPtr ptr);
 
   /**
+   * @brief deploy a new query plan to via the dispatcher
+   * @caution this will not start the sources/sinks, this has to be done manually
+   * @param new query plan
+   */
+  void deployQueryWithoutStart(QueryExecutionPlanPtr ptr);
+
+  /**
    * @brief undeploy an existing query plan to via the dispatcher
    * @param query plan to deploy
    */
@@ -83,6 +90,11 @@ class NodeEngine {
   std::string getNodePropertiesAsString();
 
   NodeProperties* getNodeProperties();
+
+  void setDOPWithRestart(size_t dop);
+  void setDOPWithoutRestart(size_t dop);
+
+  size_t getDOP();
 
  private:
   /**

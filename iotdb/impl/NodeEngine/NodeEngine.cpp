@@ -30,7 +30,14 @@ NodeProperties* NodeEngine::getNodeProperties() {
 void NodeEngine::deployQuery(QueryExecutionPlanPtr qep) {
   IOTDB_DEBUG("NODEENGINE: deploy query" << qep)
 
-  Dispatcher::instance().registerQuery(qep);
+  Dispatcher::instance().registerQueryWithStart(qep);
+  qeps.push_back(qep);
+}
+
+void NodeEngine::deployQueryWithoutStart(QueryExecutionPlanPtr qep) {
+  IOTDB_DEBUG("NODEENGINE: deploy query" << qep)
+
+  Dispatcher::instance().registerQueryWithoutStart(qep);
   qeps.push_back(qep);
 }
 
@@ -57,7 +64,7 @@ void NodeEngine::start() {
 void NodeEngine::startWithRedeploy() {
   for (auto& q : qeps) {
     IOTDB_DEBUG("NODEENGINE: register query " << q)
-    Dispatcher::instance().registerQuery(q);
+    Dispatcher::instance().registerQueryWithStart(q);
   }
   IOTDB_DEBUG("NODEENGINE: start thread pool")
   ThreadPool::instance().start();
@@ -81,7 +88,7 @@ void NodeEngine::applyConfig(Config& conf) {
   if (conf.getNumberOfWorker() != ThreadPool::instance().getNumberOfThreads()) {
     IOTDB_DEBUG(
         "NODEENGINE: changing numberOfWorker from " << ThreadPool::instance().getNumberOfThreads() << " to " << conf.getNumberOfWorker())
-    ThreadPool::instance().setNumberOfThreads(conf.getNumberOfWorker());
+    ThreadPool::instance().setNumberOfThreadsWithRestart(conf.getNumberOfWorker());
   }
   if (conf.getBufferCount() != BufferManager::instance().getNumberOfBuffers()) {
     IOTDB_DEBUG(
@@ -104,6 +111,21 @@ void NodeEngine::resetQEPs() {
   IOTDB_DEBUG("NODEENGINE: clear qeps")
 
   qeps.clear();
+}
+
+
+void NodeEngine::setDOPWithRestart(size_t dop)
+{
+  iotdb::ThreadPool::instance().setNumberOfThreadsWithRestart(dop);
+}
+void NodeEngine::setDOPWithoutRestart(size_t dop)
+{
+  iotdb::ThreadPool::instance().setNumberOfThreadsWithoutRestart(dop);
+}
+
+size_t NodeEngine::getDOP()
+{
+return iotdb::ThreadPool::instance().getNumberOfThreads();
 }
 
 }
