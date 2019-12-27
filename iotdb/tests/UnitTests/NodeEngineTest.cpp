@@ -115,7 +115,7 @@ TEST_F(EngineTest, start_stop_engine_empty) {
 TEST_F(EngineTest, deploy_start_stop_test) {
   CompiledTestQueryExecutionPlanPtr qep(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source = createTestSourceWithoutSchema();
-  Schema& sch = Schema::create().addField("sum", 4);
+  Schema sch = Schema::create().addField("sum", 4);
 //  Schema& sch = Schema::create().addField("sum", BasicType::UINT32);
   DataSinkPtr sink = createBinaryFileSinkWithSchema(sch, "file.txt");
   qep->setDataSource(source);
