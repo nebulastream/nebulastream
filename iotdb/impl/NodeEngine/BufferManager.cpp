@@ -42,7 +42,7 @@ BufferManager &BufferManager::instance() {
 void BufferManager::setNumberOfBuffers(size_t n) {
 //TODO: this should be somehow be protected
 
-  //delete all existing buffers
+//delete all existing buffers
   for (auto &entry : buffer_pool) {
     delete[] (char *) entry.first->getBuffer();
   }
@@ -148,14 +148,22 @@ bool BufferManager::releaseBuffer(const TupleBufferPtr tuple_buffer) {
   for (auto &entry : buffer_pool) {
     if (entry.first.get() == tuple_buffer.get()) {  //found entry
       entry.second = false;
-      IOTDB_DEBUG("BufferManager: found and release buffer")
+      IOTDB_DEBUG(
+          "BufferManager: found buffer with useCnt " << entry.first->getUseCnt())
 
-      //reset buffer for next use
-      entry.first->setNumberOfTuples(0);
-      entry.first->setTupleSizeInBytes(0);
+      if (entry.first->decrementUseCntAndTestForZero()) {
 
-      //update statistics
-      releasedBuffer++;
+        IOTDB_DEBUG("BufferManager: release buffer as useCnt gets zero")
+        //reset buffer for next use
+        entry.first->setNumberOfTuples(0);
+        entry.first->setTupleSizeInBytes(0);
+        //update statistics
+        releasedBuffer++;
+      }
+      else
+      {
+        IOTDB_DEBUG("BufferManager: Dont release buffer as useCnt gets " << entry.first->getUseCnt())
+      }
 
       return true;
     }

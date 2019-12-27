@@ -76,6 +76,21 @@ size_t TupleBuffer::getTupleSizeInBytes() {
 void TupleBuffer::setTupleSizeInBytes(size_t size) {
   tuple_size_bytes = size;
 }
+
+void TupleBuffer::setUseCnt(size_t size) {
+  useCnt = size;
+}
+
+size_t TupleBuffer::getUseCnt() {
+  return useCnt;
+}
+
+bool TupleBuffer::decrementUseCntAndTestForZero()
+{
+  useCnt--;
+  return useCnt == 0;
+}
+
 }
 
 // namespace iotdb

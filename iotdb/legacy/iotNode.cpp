@@ -30,7 +30,7 @@ void start()
     for(auto& q : qeps)
     {
         IOTDB_DEBUG("IOTNODE: register query " << q)
-        Dispatcher::instance().registerQuery(q);
+        Dispatcher::instance().registerQueryWithStart(q);
     }
     IOTDB_DEBUG("IOTNODE: start thread pool")
     ThreadPool::instance().start();

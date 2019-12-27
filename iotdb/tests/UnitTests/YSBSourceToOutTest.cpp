@@ -29,7 +29,7 @@ int test() {
 	qep->addWindow(window);
     YSBWindow* res_window = (YSBWindow*)qep->getWindows()[0].get();
 
-    Dispatcher::instance().registerQuery(qep);
+    Dispatcher::instance().registerQueryWithStart(qep);
 
 	ThreadPool::instance().start(1);
 	while(source->isRunning()){

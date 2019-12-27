@@ -353,7 +353,7 @@ TEST_F(YahooStreamingBenchmarkTest, sourceToOut)
                                                                  &lastTimestamp, &processedBuffers));
     qep->addDataSource(ysbSource);
     qep->addWindow(ysbWindow);
-    Dispatcher::instance().registerQuery(qep);
+    Dispatcher::instance().registerQueryWithStart(qep);
 
     while (ysbSource->isRunning()) {
         std::this_thread::sleep_for(std::chrono::seconds(10));
@@ -380,7 +380,7 @@ TEST_F(YahooStreamingBenchmarkTest, sourceToSink)
     qep->addDataSink(ysbSink);
 
     size_t beginTimestamp = time(NULL);
-    Dispatcher::instance().registerQuery(qep);
+    Dispatcher::instance().registerQueryWithStart(qep);
 
     while (ysbSource->isRunning()) {
         std::this_thread::sleep_for(std::chrono::seconds(10));
@@ -443,7 +443,7 @@ TEST_F(YahooStreamingBenchmarkTest, nodeToNode)
     qep->addDataSink(zmqSink);
 
     size_t beginTimestamp = time(NULL);
-    Dispatcher::instance().registerQuery(qep);
+    Dispatcher::instance().registerQueryWithStart(qep);
 
     while (ysbSource->isRunning()) {
         std::this_thread::sleep_for(std::chrono::seconds(10));
