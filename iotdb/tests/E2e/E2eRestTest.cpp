@@ -225,7 +225,6 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
   EXPECT_EQ(content, expectedContent);
 
   int response = remove(outputFilePath.c_str());
-
   EXPECT_TRUE(response == 0);
 
   sleep(2);
