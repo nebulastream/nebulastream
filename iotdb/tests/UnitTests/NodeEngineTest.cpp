@@ -21,6 +21,16 @@ std::string expectedOutput =
         "+----------------------------------------------------+\n"
         "|10|\n"
         "+----------------------------------------------------+";
+
+std::string joinedExpectedOutput = "+----------------------------------------------------+\n"
+    "|sum:UINT32|\n"
+    "+----------------------------------------------------+\n"
+    "|10|\n"
+    "+----------------------------------------------------++----------------------------------------------------+\n"
+    "|sum:UINT32|\n"
+    "+----------------------------------------------------+\n"
+    "|10|\n"
+    "+----------------------------------------------------+";
 std::string filePath = "file.txt";
 
 class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
@@ -151,6 +161,18 @@ void testOutput(std::string path) {
   EXPECT_TRUE(response == 0);
 }
 
+void testOutput(std::string path, std::string expectedOutput) {
+  ifstream testFile(path.c_str());
+  EXPECT_TRUE(testFile.good());
+  std::ifstream ifs(path.c_str());
+  std::string content((std::istreambuf_iterator<char>(ifs)),
+                      (std::istreambuf_iterator<char>()));
+
+  EXPECT_EQ(content, expectedOutput);
+  ifs.close();
+  int response = remove(path.c_str());
+  EXPECT_TRUE(response == 0);
+}
 
 CompiledTestQueryExecutionPlanPtr setupQEP() {
   CompiledTestQueryExecutionPlanPtr qep(new CompiledTestQueryExecutionPlan());
@@ -165,7 +187,6 @@ CompiledTestQueryExecutionPlanPtr setupQEP() {
 /**
  * Test methods
  */
-#if 0
 TEST_F(EngineTest, start_stop_engine_empty) {
   NodeEngine* ptr = new NodeEngine();
   ptr->start();
@@ -276,7 +297,7 @@ TEST_F(EngineTest, change_dop_without_restart_test) {
   testOutput();
 }
 
-TEST_F(EngineTest, parallel_different_source_qep_test) {
+TEST_F(EngineTest, parallel_different_source_test) {
   CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source1 = createTestSourceWithoutSchema();
   Schema sch1 = Schema::create().addField("sum", BasicType::UINT32);
@@ -303,7 +324,8 @@ TEST_F(EngineTest, parallel_different_source_qep_test) {
   testOutput("qep2.txt");
 }
 
-TEST_F(EngineTest, parallel_same_source_qep_test) {
+
+TEST_F(EngineTest, parallel_same_source_test) {
   CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source1 = createTestSourceWithoutSchema();
   Schema sch1 = Schema::create().addField("sum", BasicType::UINT32);
@@ -319,7 +341,6 @@ TEST_F(EngineTest, parallel_same_source_qep_test) {
 
   NodeEngine* ptr = new NodeEngine();
   ptr->deployQueryWithoutStart(qep1);
-//  sleep(1);
   ptr->deployQueryWithoutStart(qep2);
   ptr->start();
   source1->start();
@@ -330,8 +351,8 @@ TEST_F(EngineTest, parallel_same_source_qep_test) {
   testOutput("qep1.txt");
   testOutput("qep2.txt");
 }
-#endif
-TEST_F(EngineTest, parallel_same_sink_qep_test) {//TODO:add same sink source
+
+TEST_F(EngineTest, parallel_same_sink_test) {
   CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source1 = createTestSourceWithoutSchema();
   Schema sch1 = Schema::create().addField("sum", BasicType::UINT32);
@@ -348,7 +369,29 @@ TEST_F(EngineTest, parallel_same_sink_qep_test) {//TODO:add same sink source
 
   NodeEngine* ptr = new NodeEngine();
   ptr->deployQueryWithoutStart(qep1);
-//  sleep(1);
+  ptr->deployQueryWithoutStart(qep2);
+  ptr->start();
+  source1->start();
+
+  sleep(1);
+  ptr->stop();
+  testOutput("qep12.txt", joinedExpectedOutput);
+}
+TEST_F(EngineTest, parallel_same_source_and_sink_test) {
+  CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
+  DataSourcePtr source1 = createTestSourceWithoutSchema();
+  Schema sch1 = Schema::create().addField("sum", BasicType::UINT32);
+  DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep3.txt");
+  qep1->setDataSource(source1);
+  qep1->setDataSink(sink1);
+
+  CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
+  qep2->setDataSource(source1);
+  qep2->setDataSink(sink1);
+
+
+  NodeEngine* ptr = new NodeEngine();
+  ptr->deployQueryWithoutStart(qep1);
   ptr->deployQueryWithoutStart(qep2);
   ptr->start();
   source1->start();
@@ -356,8 +399,6 @@ TEST_F(EngineTest, parallel_same_sink_qep_test) {//TODO:add same sink source
   sleep(1);
   ptr->stop();
 
-  testOutput("qep1.txt");
-  testOutput("qep2.txt");
+  testOutput("qep3.txt", joinedExpectedOutput);
 }
-
 }
