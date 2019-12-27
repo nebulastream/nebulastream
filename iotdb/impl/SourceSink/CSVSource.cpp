@@ -16,7 +16,6 @@ CSVSource::CSVSource()
       file_size(0),
       tuple_size(0),
       delimiter("") {
-
 }
 
 CSVSource::CSVSource(const Schema& schema, const std::string& _file_path,

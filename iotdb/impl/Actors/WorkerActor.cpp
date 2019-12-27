@@ -67,6 +67,7 @@ void WorkerActor::connecting(const std::string &host, uint16_t port) {
  */
 behavior WorkerActor::running(const actor &coordinator) {
   auto this_actor_ptr = actor_cast<strong_actor_ptr>(this);
+
   string nodeProps = this->state.workerPtr->getNodeProperties();
   this->request(coordinator, task_timeout, register_sensor_atom::value, this->state.workerPtr->getIp(),
                 this->state.workerPtr->getPublishPort(), this->state.workerPtr->getReceivePort(), 2,
