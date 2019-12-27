@@ -123,9 +123,9 @@ int test(size_t toProcessedBuffers, size_t threadCnt, size_t campaignCnt, size_t
 	WindowPtr window = createTestWindow(campaignCnt,1);
 	qep->addWindow(window);
 
-	Dispatcher::instance().registerQuery(qep);
+	Dispatcher::instance().registerQueryWithStart(qep);
 
-	ThreadPool::instance().setNumberOfThreads(threadCnt);
+	ThreadPool::instance().setNumberOfThreadsWithRestart(threadCnt);
 
 	size_t start = getTimestamp();
 	ThreadPool::instance().start();

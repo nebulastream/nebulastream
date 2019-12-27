@@ -35,10 +35,18 @@ class Dispatcher {
 
   /**
    * @brief register a query by extracting sources, windows and sink and add them to
-   * respective map
+   * respective map + start them
    * @param QueryExecutionPlan to be deployed
    */
-  bool registerQuery(const QueryExecutionPlanPtr);
+  bool registerQueryWithStart(const QueryExecutionPlanPtr);
+
+  /**
+     * @brief register a query by extracting sources, windows and sink and add them to
+     * respective map
+     * @param QueryExecutionPlan to be deployed
+     */
+    bool registerQueryWithoutStart(const QueryExecutionPlanPtr);
+
 
   /**
    * @brief deregister a query by extracting sources, windows and sink and remove them

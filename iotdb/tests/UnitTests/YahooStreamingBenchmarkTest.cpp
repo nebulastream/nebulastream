@@ -43,7 +43,7 @@ class YahooStreamingBenchmarkTest : public testing::Test {
         IOTDB_INFO("Setup YahooStreamingBenchmarkTest test case.");
         Dispatcher::instance();
         BufferManager::instance().setBufferSize(32 * 1024); // 32 kb / 78 bytes = 420 tuples per buffer
-        ThreadPool::instance().setNumberOfThreads(8);       // 420 tuples per buffer * 8 threads
+        ThreadPool::instance().setNumberOfThreadsWithRestart(8);       // 420 tuples per buffer * 8 threads
         ThreadPool::instance().start(8);                    // 3360 tuples in parallel
 
         ysbRecordResultSchema = Schema::create()
@@ -353,7 +353,7 @@ TEST_F(YahooStreamingBenchmarkTest, sourceToOut)
                                                                  &lastTimestamp, &processedBuffers));
     qep->addDataSource(ysbSource);
     qep->addWindow(ysbWindow);
-    Dispatcher::instance().registerQuery(qep);
+    Dispatcher::instance().registerQueryWithStart(qep);
 
     while (ysbSource->isRunning()) {
         std::this_thread::sleep_for(std::chrono::seconds(10));
@@ -380,7 +380,7 @@ TEST_F(YahooStreamingBenchmarkTest, sourceToSink)
     qep->addDataSink(ysbSink);
 
     size_t beginTimestamp = time(NULL);
-    Dispatcher::instance().registerQuery(qep);
+    Dispatcher::instance().registerQueryWithStart(qep);
 
     while (ysbSource->isRunning()) {
         std::this_thread::sleep_for(std::chrono::seconds(10));
@@ -443,7 +443,7 @@ TEST_F(YahooStreamingBenchmarkTest, nodeToNode)
     qep->addDataSink(zmqSink);
 
     size_t beginTimestamp = time(NULL);
-    Dispatcher::instance().registerQuery(qep);
+    Dispatcher::instance().registerQueryWithStart(qep);
 
     while (ysbSource->isRunning()) {
         std::this_thread::sleep_for(std::chrono::seconds(10));

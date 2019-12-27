@@ -47,7 +47,7 @@ void Dispatcher::resetDispatcher() {
   processedBuffers = 0;
 }
 
-bool Dispatcher::registerQuery(const QueryExecutionPlanPtr qep) {
+bool Dispatcher::registerQueryWithStart(const QueryExecutionPlanPtr qep) {
   std::unique_lock<std::mutex> lock(queryMutex);
 //TODO: do we have to test/enforce here that each QEP has at least one sink and source?
 
@@ -106,6 +106,66 @@ bool Dispatcher::registerQuery(const QueryExecutionPlanPtr qep) {
     IOTDB_DEBUG("Dispatcher: add sink" << sink)
     sink_to_query_map[sink.get()].emplace_back(qep);
     sink->setup();
+  }
+  return true;
+}
+
+bool Dispatcher::registerQueryWithoutStart(const QueryExecutionPlanPtr qep) {
+  std::unique_lock<std::mutex> lock(queryMutex);
+//TODO: do we have to test/enforce here that each QEP has at least one sink and source?
+
+  /**
+   * test if elements already exist
+   */
+  auto sources = qep->getSources();
+  for (auto source : sources) {
+    IOTDB_DEBUG("Dispatcher: search for source" << source.get())
+    if (std::find(source_to_query_map[source.get()].begin(),
+                  source_to_query_map[source.get()].end(), qep)
+        != source_to_query_map[source.get()].end()) {
+      IOTDB_ERROR("Dispatcher: source/qep already exists" << source)
+      return false;
+    }
+  }
+  auto windows = qep->getWindows();
+  for (auto window : windows) {
+    IOTDB_DEBUG("Dispatcher: search for window" << window.get())
+    if (std::find(window_to_query_map[window.get()].begin(),
+                  window_to_query_map[window.get()].end(), qep)
+        != window_to_query_map[window.get()].end()) {
+      IOTDB_ERROR("Dispatcher: window/qep already exists" << window)
+      return false;
+    }
+  }
+
+  auto sinks = qep->getSinks();
+  for (auto sink : sinks) {
+    IOTDB_DEBUG("Dispatcher: search for sink" << sink.get())
+    if (std::find(sink_to_query_map[sink.get()].begin(),
+                  sink_to_query_map[sink.get()].end(), qep)
+        != sink_to_query_map[sink.get()].end()) {
+      IOTDB_ERROR("Dispatcher: sink/qep already exists" << sink)
+      return false;
+    }
+  }
+
+  /**
+   * add elements
+   */
+  for (auto source : sources) {
+    IOTDB_DEBUG("Dispatcher: add source" << source.get())
+    source_to_query_map[source.get()].emplace_back(qep);
+  }
+
+  for (auto window : windows) {
+    IOTDB_DEBUG("Dispatcher: add window" << window)
+    window_to_query_map[window.get()].emplace_back(qep);
+    window->setup();
+  }
+
+  for (auto sink : sinks) {
+    IOTDB_DEBUG("Dispatcher: add sink" << sink)
+    sink_to_query_map[sink.get()].emplace_back(qep);
   }
   return true;
 }
@@ -224,8 +284,12 @@ void Dispatcher::addWork(const iotdb::TupleBufferPtr window_aggregates, iotdb::W
 void Dispatcher::addWork(const TupleBufferPtr buf, DataSource *source) {
   std::unique_lock<std::mutex> lock(workMutex);
 
-//get the queries that fetches data from this source
+  //get the queries that fetches data from this source
   std::vector<QueryExecutionPlanPtr> &queries = source_to_query_map[source];
+
+  //set the useCount of the buffer
+  buf->setUseCnt(queries.size());
+
   for (uint64_t i = 0; i < queries.size(); ++i) {
     // for each respective source, create new task and put it into queue
     //TODO: is this handeled right? how do we get the stateID here?
@@ -241,6 +305,7 @@ void Dispatcher::addWork(const TupleBufferPtr buf, DataSource *source) {
 
 void Dispatcher::completedWork(TaskPtr task) {
   std::unique_lock<std::mutex> lock(workMutex);
+  IOTDB_INFO("Complete Work for task" << task)
 
   processedTasks++;
   processedBuffers++;
