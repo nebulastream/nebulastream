@@ -89,6 +89,19 @@ class TupleBuffer {
    */
   void setTupleSizeInBytes(size_t size);
 
+  /**
+   * @brief setter/getter for the counter how often this buffer is use (to prevent early release)
+   * @param tuple size in bytes
+   */
+  void setUseCnt(size_t size);
+  size_t getUseCnt();
+
+  /**
+   * @brief decrement the counter by one and test if now zero
+   * @param tuple size in bytes
+   */
+  bool decrementUseCntAndTestForZero();
+
  private:
   /**
    * @brief default constructor for serialization with boost
@@ -97,7 +110,8 @@ class TupleBuffer {
       : buffer(nullptr),
         buffer_size_bytes(0),
         tuple_size_bytes(0),
-        num_tuples(0) {
+        num_tuples(0),
+        useCnt(0) {
   }
 
   /**
@@ -117,6 +131,7 @@ class TupleBuffer {
   size_t buffer_size_bytes;
   size_t tuple_size_bytes;
   size_t num_tuples;
+  size_t useCnt;
 };
 
 class Schema;

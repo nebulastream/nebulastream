@@ -133,6 +133,19 @@ void testOutput() {
   EXPECT_TRUE(response == 0);
 }
 
+void testOutput(std::string path) {
+  ifstream testFile(path.c_str());
+  EXPECT_TRUE(testFile.good());
+  std::ifstream ifs(path.c_str());
+  std::string content((std::istreambuf_iterator<char>(ifs)),
+                      (std::istreambuf_iterator<char>()));
+
+  EXPECT_EQ(content, expectedOutput);
+  ifs.close();
+  int response = remove(path.c_str());
+  EXPECT_TRUE(response == 0);
+}
+
 CompiledTestQueryExecutionPlanPtr setupQEP() {
   CompiledTestQueryExecutionPlanPtr qep(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source = createTestSourceWithoutSchema();
@@ -252,4 +265,62 @@ TEST_F(EngineTest, change_dop_without_restart_test) {
 
   testOutput();
 }
+
+TEST_F(EngineTest, parallel_different_source_qep_test) {
+  CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
+  DataSourcePtr source1 = createTestSourceWithoutSchema();
+  Schema sch1 = Schema::create().addField("sum", BasicType::UINT32);
+  DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep1.txt");
+  qep1->setDataSource(source1);
+  qep1->setDataSink(sink1);
+
+  CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
+  DataSourcePtr source2 = createTestSourceWithoutSchema();
+  Schema sch2 = Schema::create().addField("sum", BasicType::UINT32);
+  DataSinkPtr sink2 = createBinaryFileSinkWithSchema(sch2, "qep2.txt");
+  qep2->setDataSource(source2);
+  qep2->setDataSink(sink2);
+
+
+  NodeEngine* ptr = new NodeEngine();
+  ptr->start();
+  ptr->deployQuery(qep1);
+  ptr->deployQuery(qep2);
+  sleep(1);
+  ptr->stop();
+
+  testOutput("qep1.txt");
+  testOutput("qep2.txt");
+}
+
+TEST_F(EngineTest, parallel_same_source_qep_test) {
+  CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
+  DataSourcePtr source1 = createTestSourceWithoutSchema();
+  Schema sch1 = Schema::create().addField("sum", BasicType::UINT32);
+  DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep1.txt");
+  qep1->setDataSource(source1);
+  qep1->setDataSink(sink1);
+
+  CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
+//  DataSourcePtr source2 = createTestSourceWithoutSchema();
+//  Schema sch2 = Schema::create().addField("sum", BasicType::UINT32);
+  DataSinkPtr sink2 = createBinaryFileSinkWithSchema(sch1, "qep2.txt");
+  qep2->setDataSource(source1);
+  qep2->setDataSink(sink2);
+
+
+  NodeEngine* ptr = new NodeEngine();
+  ptr->deployQueryWithoutStart(qep1);
+//  sleep(1);
+  ptr->deployQueryWithoutStart(qep2);
+  ptr->start();
+  source1->start();
+
+  sleep(1);
+  ptr->stop();
+
+  testOutput("qep1.txt");
+  testOutput("qep2.txt");
+}
+
 }
