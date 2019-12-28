@@ -18,7 +18,7 @@ NESTopologyEntryPtr CoordinatorService::register_sensor(const string& ip, uint16
     NESTopologyManager& topologyManager = this->topologyManagerPtr->getInstance();
     NESTopologySensorNodePtr sensorNode = topologyManager.createNESSensorNode(ip, CPUCapacity::Value(cpu));
 
-    sensorNode->setSensorType(streamConf.physicalStreamName);
+    sensorNode->setPhysicalStreamName(streamConf.physicalStreamName);
     sensorNode->setPublishPort(publish_port);
     sensorNode->setReceivePort(receive_port);
     if(nodeProperties != "defaultProperties")

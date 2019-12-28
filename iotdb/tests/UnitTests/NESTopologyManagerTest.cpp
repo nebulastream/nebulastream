@@ -50,7 +50,7 @@ TEST_F(NesTopologyManagerTest, create_node) {
   auto sensor_node = NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::LOW);
   EXPECT_NE(sensor_node.get(), nullptr);
   EXPECT_EQ(sensor_node->getEntryType(), Sensor);
-  EXPECT_EQ(sensor_node->getEntryTypeString(), "Sensor(" + sensor_node->getSensorType() + ")");
+  EXPECT_EQ(sensor_node->getEntryTypeString(), "Sensor(" + sensor_node->getPhysicalStreamName() + ")");
   EXPECT_NE(sensor_node->getId(), invalid_id);
 
   EXPECT_EQ(worker_node->getId() + 1, sensor_node->getId());
