@@ -40,8 +40,9 @@ namespace iotdb {
       return {
           // coordinator specific methods
           [=](register_sensor_atom, string& ip, uint16_t publish_port, uint16_t receive_port, int cpu,
-              const string& sensor_type, const string& nodeProperties) {
-            this->registerSensor(ip, publish_port, receive_port, cpu, sensor_type, nodeProperties);
+              const string& nodeProperties, std::string filePath, std::string physicalStreamName, std::string logicalStreamName) {
+            PhysicalStreamConfig streamConf(filePath, physicalStreamName, logicalStreamName);
+            this->registerSensor(ip, publish_port, receive_port, cpu, nodeProperties, streamConf);
           },
           [=](execute_query_atom, const string& description, const string& strategy) {
             return executeQuery(description, strategy);
@@ -94,16 +95,16 @@ namespace iotdb {
   }
 
   void CoordinatorActor::registerSensor(const string& ip, uint16_t publish_port, uint16_t receive_port, int cpu,
-                                        const string& sensor, const string& nodeProperties) {
+                                        const string& nodeProperties, PhysicalStreamConfig streamConf) {
       auto sap = current_sender();
       auto hdl = actor_cast<actor>(sap);
       NESTopologyEntryPtr
-          sensorNode = coordinatorServicePtr->register_sensor(ip, publish_port, receive_port, cpu, sensor, nodeProperties);
+          sensorNode = coordinatorServicePtr->register_sensor(ip, publish_port, receive_port, cpu, nodeProperties, streamConf);
 
       this->state.actorTopologyMap.insert({sap, sensorNode});
       this->state.topologyActorMap.insert({sensorNode, sap});
       this->monitor(hdl);
-      IOTDB_INFO("ACTORCOORDINATOR: Successfully registered sensor (CPU=" << cpu << ", Type: " << sensor << ") "
+      IOTDB_INFO("ACTORCOORDINATOR: Successfully registered sensor (CPU=" << cpu << ", PhysicalStream: " << streamConf.physicalStreamName << ") "
                                                                           << to_string(hdl));
   }
 

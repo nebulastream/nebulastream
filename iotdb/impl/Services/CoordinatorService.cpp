@@ -14,14 +14,25 @@ string CoordinatorService::getNodePropertiesAsString(const NESTopologyEntryPtr& 
 
 
 NESTopologyEntryPtr CoordinatorService::register_sensor(const string& ip, uint16_t publish_port,
-                                                        uint16_t receive_port, int cpu, const string& sensor_type, const string& nodeProperties) {
+                                                        uint16_t receive_port, int cpu, const string& nodeProperties, PhysicalStreamConfig streamConf) {
     NESTopologyManager& topologyManager = this->topologyManagerPtr->getInstance();
     NESTopologySensorNodePtr sensorNode = topologyManager.createNESSensorNode(ip, CPUCapacity::Value(cpu));
-    sensorNode->setSensorType(sensor_type);
+
+    sensorNode->setSensorType(streamConf.physicalStreamName);
     sensorNode->setPublishPort(publish_port);
     sensorNode->setReceivePort(receive_port);
     if(nodeProperties != "defaultProperties")
       sensorNode->setNodeProperty(nodeProperties);
+
+    //check if logical stream exists
+    if(!StreamCatalog::instance().testIfLogicalStreamExists(streamConf.logicalStreamName))
+    {
+      IOTDB_ERROR("Coordinator: error logical stream" << streamConf.logicalStreamName << " does not exist when adding physical stream " << streamConf.physicalStreamName)
+    }
+    SchemaPtr schem = StreamCatalog::instance().getSchemaForLogicalStream(streamConf.logicalStreamName);
+    DataSourcePtr source = std::make_shared<CSVSource>(*schem.get(), streamConf.filePath);
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(source, sensorNode, streamConf.physicalStreamName);
+    StreamCatalog::instance().addPhysicalStream(streamConf.logicalStreamName, sce);
 
     const NESTopologyEntryPtr& kRootNode = NESTopologyManager::getInstance().getRootNode();
     topologyManager.createNESTopologyLink(sensorNode, kRootNode);

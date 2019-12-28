@@ -59,12 +59,11 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
    * @param publish_port
    * @param receive_port
    * @param cpu
-   * @param sensor
    * @param properties of this worker
+   * @param configuration of the sensor
    */
   void registerSensor(const string& ip, uint16_t publish_port,
-                      uint16_t receive_port, int cpu, const string& sensor,
-                      const string& nodeProperties);
+                      uint16_t receive_port, int cpu, const string& nodeProperties, PhysicalStreamConfig streamConf);
 
   /**
    * @brief execute user query will first register the query and then deploy it.

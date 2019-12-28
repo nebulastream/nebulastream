@@ -130,8 +130,8 @@ int main(int argc, char** argv) {
   po::options_description desc("Options");
   size_t numberOfWorker = DEFAULT_NUMBER_OF_WORKER_INSTANCES;
   std::string filePath = "";
-  std::string physicalStreamName = "";
-  std::string logicalStreamName = "";
+  std::string physicalStreamName = "default";
+  std::string logicalStreamName = "default";
 
   desc.add_options()("help", "Print help messages")(
       "numberOfWorker",

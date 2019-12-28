@@ -25,6 +25,9 @@
 #include <string>
 #include "../Optimizer/NESOptimizer.hpp"
 #include "../Topology/NESTopologyManager.hpp"
+#include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Catalogs/StreamCatalog.hpp>
+#include <SourceSink/CSVSource.hpp>
 
 using std::string;
 
@@ -49,12 +52,12 @@ class CoordinatorService {
    * @param publish_port the publish port of the worker
    * @param receive_port the receive port of the worker
    * @param cpu the cpu capacity of the worker
-   * @param sensor_type the sensor type which is beeing later on registered as a Stream object
    * @param nodeProperties of the to be added sensor
+   * @param config of the node
    * @param sap the strong_actor_pointer CAF object to the worker
    */
   NESTopologyEntryPtr register_sensor(const string &ip, uint16_t publish_port, uint16_t receive_port, int cpu,
-                                      const string &sensor_type, const string& nodeProperties);
+                                      const string& nodeProperties, PhysicalStreamConfig streamConf);
 
   /**
    * @brief deregisters a CAF worker from the NES topology
