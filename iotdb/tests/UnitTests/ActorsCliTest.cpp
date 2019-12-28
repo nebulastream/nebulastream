@@ -7,6 +7,7 @@
 #include <Actors/Configurations/WorkerActorConfig.hpp>
 #include <Actors/AtomUtils.hpp>
 #include "caf/io/all.hpp"
+#include <Catalogs/PhysicalStreamConfig.hpp>
 
 namespace iotdb {
 
@@ -69,7 +70,8 @@ TEST_F(ActorsCliTest, testSpawnDespawnCoordinatorWorkers) {
   WorkerActorConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw{w_cfg};
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
+  PhysicalStreamConfig streamConf; //streamConf.physicalStreamName
+  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, streamConf);
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -98,7 +100,8 @@ TEST_F(ActorsCliTest, testShowTopology) {
   WorkerActorConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw{w_cfg};
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
+  PhysicalStreamConfig streamConf;
+  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, streamConf);
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -130,7 +133,8 @@ TEST_F(ActorsCliTest, testShowRegistered) {
   WorkerActorConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw{w_cfg};
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
+  PhysicalStreamConfig streamConf;
+  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, streamConf);
 
   //Prepare Actor System
   scoped_actor self{system_coord};
@@ -198,7 +202,8 @@ TEST_F(ActorsCliTest, DISABLED_testDeleteQuery) {
   WorkerActorConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw{w_cfg};
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
+  PhysicalStreamConfig streamConf;
+  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, streamConf);
 
   //Prepare Actor System
   scoped_actor self{system_coord};
@@ -276,7 +281,8 @@ TEST_F(ActorsCliTest, DISABLED_testShowRunning) {
   WorkerActorConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw{w_cfg};
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
+  PhysicalStreamConfig streamConf;
+  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, streamConf);
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -317,7 +323,8 @@ TEST_F(ActorsCliTest, DISABLED_testShowOperators) {
   WorkerActorConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw{w_cfg};
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
+  PhysicalStreamConfig streamConf;
+  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, streamConf);
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -359,7 +366,8 @@ TEST_F(ActorsCliTest, testSequentialMultiQueries) {
   WorkerActorConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw{w_cfg};
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
+  PhysicalStreamConfig streamConf;
+  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, streamConf);
   anon_send(worker, connect_atom::value, w_cfg.host, ccfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
