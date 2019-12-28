@@ -61,7 +61,7 @@ class NESTopologySensorNode : public NESTopologyEntry {
   }
 
   std::string getEntryTypeString() override {
-    return "Sensor(" + getSensorType() + ")";
+    return "Sensor(" + physicalStreamName + ")";
   }
 
   void setQuery(InputQueryPtr pQuery) override {
@@ -69,12 +69,12 @@ class NESTopologySensorNode : public NESTopologyEntry {
   }
   ;
 
-  std::string getSensorType() {
-    return sensorType;
+  std::string getPhysicalStreamName() {
+    return physicalStreamName;
   }
 
-  void setSensorType(std::string sensorType) {
-    this->sensorType = sensorType;
+  void setPhysicalStreamName(std::string name) {
+    this->physicalStreamName = physicalStreamName;
   }
 
   NodePropertiesPtr getNodeProperties(NodePropertiesPtr nodeProperties) {
@@ -112,9 +112,9 @@ class NESTopologySensorNode : public NESTopologyEntry {
 
  private:
   size_t node_id;
-  int cpuCapacity { };
-  int remainingCPUCapacity { };
-  std::string sensorType = "unknown";
+  int cpuCapacity;
+  int remainingCPUCapacity;
+  std::string physicalStreamName = "unknown";
   InputQueryPtr query;
 };
 

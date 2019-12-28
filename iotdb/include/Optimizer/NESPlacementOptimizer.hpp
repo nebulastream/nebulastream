@@ -9,6 +9,7 @@
 #include <iostream>
 #include "../Topology/NESTopologyManager.hpp"
 #include "../Topology/NESTopologyPlan.hpp"
+#include <Catalogs/StreamCatalog.hpp>
 #include "NESExecutionPlan.hpp"
 
 namespace iotdb {

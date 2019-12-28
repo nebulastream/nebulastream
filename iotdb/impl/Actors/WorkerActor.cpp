@@ -52,6 +52,7 @@ void WorkerActor::connecting(const std::string &host, uint16_t port) {
         this->state.current_server = serv;
         auto coordinator = actor_cast<actor>(serv);
         //TODO: make getPhysicalStreamConfig serializable with the caf framework
+        cout << "send properties to server" << endl;
         this->request(coordinator, task_timeout, register_sensor_atom::value, this->state.workerPtr->getIp(),
             this->state.workerPtr->getPublishPort(), this->state.workerPtr->getReceivePort(), 2,
             this->state.workerPtr->getNodeProperties(),
@@ -59,7 +60,7 @@ void WorkerActor::connecting(const std::string &host, uint16_t port) {
             this->state.workerPtr->getPhysicalStreamConfig().physicalStreamName,
             this->state.workerPtr->getPhysicalStreamConfig().logicalStreamName
         );
-
+        cout << "properties set successful, now changing state" << endl;
         this->monitor(coordinator);
         this->become(running(coordinator));
       },

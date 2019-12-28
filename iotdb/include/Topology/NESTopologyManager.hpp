@@ -75,13 +75,13 @@ class NESTopologyManager {
     const NESTopologyWorkerNodePtr &workerNode1 = createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
     const NESTopologyWorkerNodePtr &workerNode2 = createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
     const NESTopologySensorNodePtr &sensorNode1 = createNESSensorNode("localhost", CPUCapacity::HIGH);
-    sensorNode1->setSensorType("temperature1");
+    sensorNode1->setPhysicalStreamName("temperature1");
     const NESTopologySensorNodePtr &sensorNode2 = createNESSensorNode("localhost", CPUCapacity::LOW);
-    sensorNode2->setSensorType("humidity1");
+    sensorNode2->setPhysicalStreamName("humidity1");
     const NESTopologySensorNodePtr &sensorNode3 = createNESSensorNode("localhost", CPUCapacity::LOW);
-    sensorNode3->setSensorType("temperature2");
+    sensorNode3->setPhysicalStreamName("temperature2");
     const NESTopologySensorNodePtr &sensorNode4 = createNESSensorNode("localhost", CPUCapacity::MEDIUM);
-    sensorNode4->setSensorType("humidity2");
+    sensorNode4->setPhysicalStreamName("humidity2");
 
     createNESTopologyLink(workerNode1, sinkNode);
     createNESTopologyLink(workerNode2, sinkNode);
@@ -128,7 +128,8 @@ class NESTopologyManager {
 
       if (nodeType == "Sensor") {
         NESTopologySensorNodePtr ptr = std::static_pointer_cast<NESTopologySensorNode>(vertex.ptr);
-        vertexInfo["sensorType"] = json::value::string(ptr->getSensorType());
+        //TODO: ankit please check if this ok for you
+        vertexInfo["physicalStreamName"] = json::value::string(ptr->getPhysicalStreamName());
       }
 
       vertices.push_back(vertexInfo);
