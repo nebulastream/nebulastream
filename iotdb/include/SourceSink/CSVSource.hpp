@@ -46,10 +46,10 @@ class CSVSource : public DataSource {
     SourceType getType() const override;
   private:
   CSVSource();
-  std::ifstream input;
+
   std::string file_path;
 
-  int file_size;
+//  int file_size;
   size_t tuple_size;
   std::string delimiter;
 
@@ -62,7 +62,7 @@ class CSVSource : public DataSource {
                                          const unsigned int version) {
     ar & boost::serialization::base_object<DataSource>(*this);
     ar & file_path;
-    ar & file_size;
+//    ar & file_size;
     ar & tuple_size;
     ar & delimiter;
     ar & generatedTuples;
