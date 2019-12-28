@@ -19,10 +19,10 @@ behavior WorkerActor::init() {
 
 behavior WorkerActor::unconnected() {
   return {
-      [=](connect_atom, const std::string &host, uint16_t port) {
-        connecting(host, port);
-        return true;
-      }
+    [=](connect_atom, const std::string &host, uint16_t port) {
+      connecting(host, port);
+      return true;
+    }
   };
 }
 
@@ -40,26 +40,34 @@ void WorkerActor::connecting(const std::string &host, uint16_t port) {
           const std::set<std::string> &ifs) {
         if (!serv) {
           aout(this) << R"(*** no server found at ")" << host << R"(":)"
-                     << port << endl;
+          << port << endl;
           return;
         }
         if (!ifs.empty()) {
           aout(this) << R"(*** typed actor found at ")" << host << R"(":)"
-                     << port << ", but expected an untyped actor " << endl;
+          << port << ", but expected an untyped actor " << endl;
           return;
         }
         aout(this) << "*** successfully connected to server" << endl;
         this->state.current_server = serv;
-        auto hdl = actor_cast<actor>(serv);
-        this->monitor(hdl);
-        this->become(running(hdl));
+        auto coordinator = actor_cast<actor>(serv);
+        //TODO: make getPhysicalStreamConfig serializable with the caf framework
+        this->request(coordinator, task_timeout, register_sensor_atom::value, this->state.workerPtr->getIp(),
+            this->state.workerPtr->getPublishPort(), this->state.workerPtr->getReceivePort(), 2,
+            this->state.workerPtr->getNodeProperties(),
+            this->state.workerPtr->getPhysicalStreamConfig().filePath,
+            this->state.workerPtr->getPhysicalStreamConfig().physicalStreamName,
+            this->state.workerPtr->getPhysicalStreamConfig().logicalStreamName
+        );
+
+        this->monitor(coordinator);
+        this->become(running(coordinator));
       },
       [=](const error &err) {
         aout(this) << R"(*** cannot connect to ")" << host << R"(":)"
-                   << port << " => " << this->system().render(err) << endl;
+        << port << " => " << this->system().render(err) << endl;
         this->become(unconnected());
-      }
-  );
+      });
 }
 
 /**
@@ -68,29 +76,25 @@ void WorkerActor::connecting(const std::string &host, uint16_t port) {
 behavior WorkerActor::running(const actor &coordinator) {
   auto this_actor_ptr = actor_cast<strong_actor_ptr>(this);
 
-  string nodeProps = this->state.workerPtr->getNodeProperties();
-  this->request(coordinator, task_timeout, register_sensor_atom::value, this->state.workerPtr->getIp(),
-                this->state.workerPtr->getPublishPort(), this->state.workerPtr->getReceivePort(), 2,
-                this->state.workerPtr->getSensorType(), nodeProps);
-
+  //waiting for incoming messages
   return {
-      // the connect RPC to connect with the coordinator
-      [=](connect_atom, const std::string &host, uint16_t port) {
-        connecting(host, port);
-      },
+    // the connect RPC to connect with the coordinator
+    [=](connect_atom, const std::string &host, uint16_t port) {
+      connecting(host, port);
+    },
+    // internal rpc to execute a query
+    [=](execute_operators_atom, const string &queryId, string &executableTransferObject) {
       // internal rpc to execute a query
-      [=](execute_operators_atom, const string &queryId, string &executableTransferObject) {
-        // internal rpc to execute a query
-        this->state.workerPtr->execute_query(queryId, executableTransferObject);
-      },
-      // internal rpc to unregister a query
-      [=](delete_query_atom, const string &query) {
-        this->state.workerPtr->delete_query(query);
-      },
-      // internal rpc to execute a query
-      [=](get_operators_atom) {
-        return this->state.workerPtr->getOperators();
-      }
+      this->state.workerPtr->execute_query(queryId, executableTransferObject);
+    },
+    // internal rpc to unregister a query
+    [=](delete_query_atom, const string &query) {
+      this->state.workerPtr->delete_query(query);
+    },
+    // internal rpc to execute a query
+    [=](get_operators_atom) {
+      return this->state.workerPtr->getOperators();
+    }
   };
 }
 }

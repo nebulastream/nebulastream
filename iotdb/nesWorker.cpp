@@ -18,6 +18,7 @@
 #include "caf/io/all.hpp"
 #include "boost/program_options.hpp"
 
+#include <Catalogs/PhysicalStreamConfig.hpp>
 using std::cout;
 using std::endl;
 using std::string;
@@ -27,11 +28,15 @@ using namespace caf;
 using namespace iotdb;
 
 #define DEFAULT_NUMBER_OF_WORKER_INSTANCES 1
+
+
 /**
  * @brief main method to run the worker with an interactive console command list
  */
+size_t numberOfWorker = DEFAULT_NUMBER_OF_WORKER_INSTANCES;
+
 void start_worker(actor_system &system, const WorkerActorConfig &cfg,
-                  size_t numberOfWorker) {
+                  size_t numberOfWorker, PhysicalStreamConfig streamConf) {
   // keeps track of requests and tries to reconnect on server failures
 //  auto usage = [] {
 //    cout << "Usage:" << endl
@@ -46,9 +51,12 @@ void start_worker(actor_system &system, const WorkerActorConfig &cfg,
   for (size_t i = 1; i <= numberOfWorker; i++) {
     client = system.spawn<iotdb::WorkerActor>(cfg.ip, cfg.publish_port,
                                               cfg.receive_port,
-                                              cfg.sensor_type);
+                                              streamConf);
     if (!cfg.host.empty() && cfg.publish_port > 0)
+    {
+      //send connect message to worker to try to connect
       anon_send(client, connect_atom::value, cfg.host, cfg.publish_port);
+    }
     else
       cout
           << "*** no server received via config, "
@@ -111,10 +119,10 @@ void setupLogging() {
 }
 
 void caf_main(actor_system &system, WorkerActorConfig &cfg,
-              size_t numberOfWorker) {
+              size_t numberOfWorker, PhysicalStreamConfig streamConf) {
   setupLogging();
 //  cout << argc << endl;
-  start_worker(system, cfg, numberOfWorker);
+  start_worker(system, cfg, numberOfWorker, streamConf);
 }
 
 int main(int argc, char** argv) {
@@ -125,12 +133,18 @@ int main(int argc, char** argv) {
   std::string physicalStreamName = "";
   std::string logicalStreamName = "";
 
-  desc.add_options()("help", "Print help messages")
-      ("numberOfWorker", po::value<size_t>(&numberOfWorker)->default_value(numberOfWorker),"The number of workers to spawn")
-      ("filePath", po::value<string>(&filePath)->default_value(filePath),"path to the input file")
-      ("physicalStreamName", po::value<string>(&physicalStreamName)->default_value(physicalStreamName),"the name of the physical stream send by this node")
-      ("logicalStreamName", po::value<string>(&logicalStreamName)->default_value(logicalStreamName),"the name of the logical stream to which this nodes contribute")
-      ;
+  desc.add_options()("help", "Print help messages")(
+      "numberOfWorker",
+      po::value<size_t>(&numberOfWorker)->default_value(numberOfWorker),
+      "The number of workers to spawn")(
+      "filePath", po::value<string>(&filePath)->default_value(filePath),
+      "path to the input file")(
+      "physicalStreamName",
+      po::value<string>(&physicalStreamName)->default_value(physicalStreamName),
+      "the name of the physical stream send by this node")(
+      "logicalStreamName",
+      po::value<string>(&logicalStreamName)->default_value(logicalStreamName),
+      "the name of the logical stream to which this nodes contribute");
 
   po::variables_map vm;
   po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
@@ -141,16 +155,19 @@ int main(int argc, char** argv) {
               << std::endl;
     return 0;
   }
-  std::cout << "Settings: "
-      << "\n numberOfWorker: " << numberOfWorker
-      << "\n filePath: " << filePath
-      << "\n physicalStreamName: " << physicalStreamName
-      << "\n logicalStreamName: " << logicalStreamName
-            << std::endl;
+  std::cout << "Settings: " << "\n numberOfWorker: " << numberOfWorker
+            << "\n filePath: " << filePath << "\n physicalStreamName: "
+            << physicalStreamName << "\n logicalStreamName: "
+            << logicalStreamName << std::endl;
+
+  PhysicalStreamConfig streamConf;
+  streamConf.filePath = filePath;
+  streamConf.physicalStreamName = physicalStreamName;
+  streamConf.logicalStreamName = logicalStreamName;
 
   WorkerActorConfig cfg;
   cfg.load<io::middleman>();
   actor_system system { cfg };
 
-  caf_main(system, cfg, numberOfWorker);
+  caf_main(system, cfg, numberOfWorker, streamConf);
 }
