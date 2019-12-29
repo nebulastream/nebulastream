@@ -3,6 +3,7 @@
 #include <REST/Controller/RestController.hpp>
 #include <CodeGen/QueryPlanBuilder.hpp>
 #include "../../../include/Topology/NESTopologyManager.hpp"
+#include <Topology/TestTopology.hpp>
 
 using namespace web;
 using namespace http;
@@ -102,7 +103,8 @@ void RestController::handlePost(http_request message) {
                       string optimizationStrategyName = req.at("strategyName").as_string();
 
                       //FIXME: setup example topology
-                      NESTopologyManager::getInstance().createExampleTopology();
+
+                      createExampleTopology();
 
 
                       //Call the service

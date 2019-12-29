@@ -46,8 +46,11 @@ void StreamCatalog::addPhysicalStream(std::string logicalStreamName,
       == logicalStreamToSchemaMapping.end()) {
     IOTDB_ERROR(
         "StreamCatalog: logical stream " << logicalStreamName << " does not exists when inserting physical stream " << newEntry->getPhysicalName())
+    throw Exception(
+        "StreamCatalog: logical stream " + logicalStreamName
+            + " does not exists when inserting physical stream "
+            + newEntry->getPhysicalName());
   } else {
-
     IOTDB_DEBUG(
         "StreamCatalog: logical stream " << logicalStreamName << " exists try to add physical stream " << newEntry->getPhysicalName())
 
@@ -57,19 +60,28 @@ void StreamCatalog::addPhysicalStream(std::string logicalStreamName,
 
     //check if physical stream does not exist yet
     for (StreamCatalogEntryPtr &entry : physicalStreams) {
-      if (entry->getPhysicalName() == newEntry->getPhysicalName()
-          && entry->getNode()->getNodeId() == newEntry->getNode()->getNodeId()) {
-        IOTDB_ERROR(
-            "StreamCatalog: node with id=" << newEntry->getNode()->getNodeId()<< " name=" << newEntry->getPhysicalName() << " already exists")
-        return;
+      IOTDB_DEBUG(
+          "test node id=" << entry->getNode()->getId() << " phyStr=" << entry->getPhysicalName())
+      IOTDB_DEBUG(
+          "test to be inserted id=" << newEntry->getNode()->getId() << " phyStr=" << newEntry->getPhysicalName())
+      if (entry->getPhysicalName() == newEntry->getPhysicalName()) {
+        if (entry->getNode()->getId() == newEntry->getNode()->getId()) {
+          IOTDB_ERROR(
+              "StreamCatalog: node with id=" << newEntry->getNode()->getId() << " name=" << newEntry->getPhysicalName() << " already exists")
+          throw Exception(
+              "StreamCatalog: node already exists with id="
+                  + ::to_string(newEntry->getNode()->getId()) + " name="
+                  + newEntry->getPhysicalName());
+        }
       }
     }
-    IOTDB_DEBUG(
-        "StreamCatalog: physical stream " << newEntry->getPhysicalName() << " does not exist, try to add")
-    logicalToPhysicalStreamMapping[logicalStreamName].push_back(newEntry);
-
-    IOTDB_DEBUG("StreamCatalog: physical stream " << newEntry->getPhysicalName() << " successful added")
   }
+  IOTDB_DEBUG(
+      "StreamCatalog: physical stream " << newEntry->getPhysicalName() << " does not exist, try to add")
+  logicalToPhysicalStreamMapping[logicalStreamName].push_back(newEntry);
+
+  IOTDB_DEBUG(
+      "StreamCatalog: physical stream " << newEntry->getPhysicalName() << " id=" << newEntry->getNode()->getId() << " successful added")
 }
 
 SchemaPtr StreamCatalog::getSchemaForLogicalStream(
@@ -87,7 +99,7 @@ bool StreamCatalog::testIfLogicalStreamExists(std::string logicalStreamName) {
 deque<NESTopologyEntryPtr> StreamCatalog::getSourceNodesForLogicalStream(
     std::string logicalStreamName) {
 
-  //get current physical stream for this logical stream
+//get current physical stream for this logical stream
   std::vector<StreamCatalogEntryPtr> physicalStreams =
       logicalToPhysicalStreamMapping[logicalStreamName];
 
@@ -97,5 +109,14 @@ deque<NESTopologyEntryPtr> StreamCatalog::getSourceNodesForLogicalStream(
   }
 
   return listOfSourceNodes;
+}
+
+void StreamCatalog::reset() {
+  //TODO: check for potential memory loss
+  logicalStreamToSchemaMapping.clear();
+  logicalToPhysicalStreamMapping.clear();
+  Schema schema = Schema::create().addField("id", BasicType::UINT32).addField(
+      "value", BasicType::UINT64);
+  addLogicalStream("default_logical", std::make_shared<Schema>(schema));
 }
 }

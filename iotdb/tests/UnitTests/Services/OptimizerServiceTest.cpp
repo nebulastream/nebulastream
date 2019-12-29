@@ -3,6 +3,7 @@
 #include <Services/OptimizerService.hpp>
 #include <Services/QueryService.hpp>
 #include "../../../include/Topology/NESTopologyManager.hpp"
+#include <Topology/TestTopology.hpp>
 
 using namespace iotdb;
 using namespace web;
@@ -15,7 +16,7 @@ class OptimizerServiceTest : public testing::Test {
 
   /* Will be called before a test is executed. */
   void SetUp() {
-    NESTopologyManager::getInstance().createExampleTopology();
+    createExampleTopology();
     std::cout << "Setup OptimizerServiceTest test case." << std::endl;
   }
 

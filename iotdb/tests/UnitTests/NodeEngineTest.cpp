@@ -316,8 +316,9 @@ TEST_F(EngineTest, parallel_different_source_test) {
   NodeEngine* ptr = new NodeEngine();
   ptr->start();
   ptr->deployQuery(qep1);
-  ptr->deployQuery(qep2);
   sleep(1);
+  ptr->deployQuery(qep2);
+  sleep(2);
   ptr->stop();
 
   testOutput("qep1.txt");

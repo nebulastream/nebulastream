@@ -56,7 +56,8 @@ void WorkerActor::connecting(const std::string &host, uint16_t port) {
         this->request(coordinator, task_timeout, register_sensor_atom::value, this->state.workerPtr->getIp(),
             this->state.workerPtr->getPublishPort(), this->state.workerPtr->getReceivePort(), 2,
             this->state.workerPtr->getNodeProperties(),
-            this->state.workerPtr->getPhysicalStreamConfig().filePath,
+            this->state.workerPtr->getPhysicalStreamConfig().sourceType,
+            this->state.workerPtr->getPhysicalStreamConfig().sourceConfig,
             this->state.workerPtr->getPhysicalStreamConfig().physicalStreamName,
             this->state.workerPtr->getPhysicalStreamConfig().logicalStreamName
         );

@@ -5,7 +5,6 @@ using namespace iotdb;
 NESExecutionPlan TopDown::initializeExecutionPlan(
     InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan) {
 
-  assert(0);
   NESExecutionPlan executionGraph;
   const OperatorPtr& sinkOperator = inputQuery->getRoot();
 

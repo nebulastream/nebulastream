@@ -29,7 +29,6 @@ using namespace iotdb;
 
 #define DEFAULT_NUMBER_OF_WORKER_INSTANCES 1
 
-
 /**
  * @brief main method to run the worker with an interactive console command list
  */
@@ -50,14 +49,11 @@ void start_worker(actor_system &system, const WorkerActorConfig &cfg,
 
   for (size_t i = 1; i <= numberOfWorker; i++) {
     client = system.spawn<iotdb::WorkerActor>(cfg.ip, cfg.publish_port,
-                                              cfg.receive_port,
-                                              streamConf);
-    if (!cfg.host.empty() && cfg.publish_port > 0)
-    {
+                                              cfg.receive_port, streamConf);
+    if (!cfg.host.empty() && cfg.publish_port > 0) {
       //send connect message to worker to try to connect
       anon_send(client, connect_atom::value, cfg.host, cfg.publish_port);
-    }
-    else
+    } else
       cout
           << "*** no server received via config, "
           << R"(please use "connect <host> <port>" before using the calculator)"
@@ -129,7 +125,8 @@ int main(int argc, char** argv) {
   namespace po = boost::program_options;
   po::options_description desc("Options");
   size_t numberOfWorker = DEFAULT_NUMBER_OF_WORKER_INSTANCES;
-  std::string filePath = "";
+  std::string sourceType = "OneGeneratorSource";
+  std::string sourceConf = "1";
   std::string physicalStreamName = "default_physical";
   std::string logicalStreamName = "default_logical";
 
@@ -137,8 +134,10 @@ int main(int argc, char** argv) {
       "numberOfWorker",
       po::value<size_t>(&numberOfWorker)->default_value(numberOfWorker),
       "The number of workers to spawn")(
-      "filePath", po::value<string>(&filePath)->default_value(filePath),
-      "path to the input file")(
+      "sourceType", po::value<string>(&sourceType)->default_value(sourceType),
+      "type of the source, currently OneGeneratorSource or CSVSource")(
+      "sourceConf", po::value<string>(&sourceConf)->default_value(sourceConf),
+      "type of the source, currently numberOfBuffersToProudcue or filePath")(
       "physicalStreamName",
       po::value<string>(&physicalStreamName)->default_value(physicalStreamName),
       "the name of the physical stream send by this node")(
@@ -156,12 +155,15 @@ int main(int argc, char** argv) {
     return 0;
   }
   std::cout << "Settings: " << "\n numberOfWorker: " << numberOfWorker
-            << "\n filePath: " << filePath << "\n physicalStreamName: "
-            << physicalStreamName << "\n logicalStreamName: "
-            << logicalStreamName << std::endl;
+      << "\n sourceType: " << sourceType
+      << "\n sourceConf: " << sourceConf
+      << "\n physicalStreamName: "
+      << physicalStreamName << "\n logicalStreamName: " << logicalStreamName
+      << std::endl;
 
   PhysicalStreamConfig streamConf;
-  streamConf.filePath = filePath;
+  streamConf.sourceType = sourceType;
+  streamConf.sourceConfig = sourceConf;
   streamConf.physicalStreamName = physicalStreamName;
   streamConf.logicalStreamName = logicalStreamName;
 
