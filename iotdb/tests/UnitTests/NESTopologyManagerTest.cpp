@@ -11,6 +11,7 @@
 #include "../../include/Topology/NESTopologySensorNode.hpp"
 #include "../../include/Topology/NESTopologyWorkerNode.hpp"
 #include "../../include/Topology/NESTopologyManager.hpp"
+#include <Topology/TestTopology.hpp>
 
 #include "Util/CPUCapacity.hpp"
 
@@ -512,7 +513,7 @@ TEST_F(NesTopologyGraphTest, remove_non_existing_edge) {
 TEST_F(NesTopologyGraphTest, get_example_topology_as_json) {
 
   NESTopologyManager &topologyManager = NESTopologyManager::getInstance();
-  topologyManager.createExampleTopology();
+  createExampleTopology();
   const json::value &treeJson = topologyManager.getNESTopologyGraphAsJson();
   EXPECT_TRUE(treeJson.size() > 0);
 }

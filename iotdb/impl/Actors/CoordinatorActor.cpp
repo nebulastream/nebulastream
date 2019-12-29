@@ -40,8 +40,8 @@ namespace iotdb {
       return {
           // coordinator specific methods
           [=](register_sensor_atom, string& ip, uint16_t publish_port, uint16_t receive_port, int cpu,
-              const string& nodeProperties, std::string filePath, std::string physicalStreamName, std::string logicalStreamName) {
-            PhysicalStreamConfig streamConf(filePath, physicalStreamName, logicalStreamName);
+              const string& nodeProperties, std::string sourceType, std::string sourceConf, std::string physicalStreamName, std::string logicalStreamName) {
+            PhysicalStreamConfig streamConf(sourceType, sourceConf, physicalStreamName, logicalStreamName);
             this->registerSensor(ip, publish_port, receive_port, cpu, nodeProperties, streamConf);
           },
           [=](execute_query_atom, const string& description, const string& strategy) {

@@ -81,16 +81,10 @@ class NESTopologyEntry {
     return this->nodeProperties->dump();
   }
 
-  size_t getNodeId()
-  {
-    return node_id;
-  }
-
  protected:
   std::string ip_addr;
   uint16_t publish_port;
   uint16_t receive_port;
-  size_t node_id;
   NodePropertiesPtr nodeProperties;
 
 };

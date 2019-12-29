@@ -74,7 +74,7 @@ class NESTopologySensorNode : public NESTopologyEntry {
   }
 
   void setPhysicalStreamName(std::string name) {
-    this->physicalStreamName = physicalStreamName;
+    this->physicalStreamName = name;
   }
 
   NodePropertiesPtr getNodeProperties(NodePropertiesPtr nodeProperties) {
@@ -114,7 +114,7 @@ class NESTopologySensorNode : public NESTopologyEntry {
   size_t node_id;
   int cpuCapacity;
   int remainingCPUCapacity;
-  std::string physicalStreamName = "unknown";
+  std::string physicalStreamName;
   InputQueryPtr query;
 };
 

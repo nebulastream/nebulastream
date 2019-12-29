@@ -64,9 +64,13 @@ void BottomUp::placeOperators(NESExecutionPlan executionGraph,
     NESTopologyEntryPtr node = findSuitableNESNodeForOperatorPlacement(
         operatorToProcess, nesTopologyPlan, sourceNodes);
 
-    if ((node == nullptr) or node->getRemainingCpuCapacity() <= 0) {
+    if (node != nullptr) {
       // throw and exception that scheduling can't be done
-      IOTDB_ERROR("Can not schedule the operator. No free resource available.");
+      IOTDB_ERROR("Can not schedule the operator. No node found.");
+      throw std::runtime_error(
+          "Can not schedule the operator. No node found.");
+    } else if (node->getRemainingCpuCapacity() <= 0) {
+      IOTDB_ERROR("Can not schedule the operator. No free resource available capacity is=" << node->getRemainingCpuCapacity());
       throw std::runtime_error(
           "Can not schedule the operator. No free resource available.");
     }
@@ -215,7 +219,8 @@ vector<OperatorPtr> BottomUp::getSourceOperators(OperatorPtr root) {
 deque<NESTopologyEntryPtr> BottomUp::getSourceNodes(
     NESTopologyPlanPtr nesTopologyPlan, std::string streamName) {
 
-  assert(0);
+//  assert(0);
+//TODO:should not be called anymore in the future
   const NESTopologyEntryPtr& rootNode = nesTopologyPlan->getRootNode();
   deque<NESTopologyEntryPtr> listOfSourceNodes;
   deque<NESTopologyEntryPtr> bfsTraverse;
