@@ -67,13 +67,15 @@ string CoordinatorService::register_query(const string& queryString,
       "CoordinatorService: Registering query " << queryString << " with strategy " << strategy);
 
   if (queryString.find("Stream(") != std::string::npos) {
-    IOTDB_ERROR("CoordinatorService: queries are not allowed to specify streams anymore.")
-      throw Exception("Queries are not allowed to define streams anymore");
+    IOTDB_ERROR(
+        "CoordinatorService: queries are not allowed to specify streams anymore.")
+    throw Exception("Queries are not allowed to define streams anymore");
   }
   if (queryString.find("Schema::create()") != std::string::npos) {
-      IOTDB_ERROR("CoordinatorService: queries are not allowed to specify schemas anymore.")
-        throw Exception("Queries are not allowed to define schemas anymore");
-    }
+    IOTDB_ERROR(
+        "CoordinatorService: queries are not allowed to specify schemas anymore.")
+    throw Exception("Queries are not allowed to define schemas anymore");
+  }
 
   try {
     InputQueryPtr inputQueryPtr = queryService.getInputQueryFromQueryString(

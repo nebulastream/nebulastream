@@ -42,6 +42,10 @@ class StreamCatalogEntry {
     return physicalStreamName;
   }
 
+  std::string toString()
+  {
+    return "physicalName=" + physicalStreamName + " on node=" + std::to_string(node->getId());
+  }
  private:
   std::string dataSourceType;
   std::string dataSourceConfig;

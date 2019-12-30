@@ -165,7 +165,7 @@ TEST_F(ActorsCliTest, testShowRegistered) {
 
   // check length of registered queries
   size_t query_size = 0;
-  self->request(coordinator, task_timeout, show_registered_atom::value).receive(
+  self->request(coordinator, task_timeout, show_registered_queries_atom::value).receive(
       [&query_size](const size_t length) mutable {
         query_size = length;
         IOTDB_INFO("ACTORSCLITEST: Query length " << length);
@@ -234,7 +234,7 @@ TEST_F(ActorsCliTest, DISABLED_testDeleteQuery) {
 
   // check length of registered queries
   size_t query_size = 0;
-  self->request(coordinator, task_timeout, show_registered_atom::value).receive(
+  self->request(coordinator, task_timeout, show_registered_queries_atom::value).receive(
       [&query_size](const size_t length) mutable {
         query_size = length;
         IOTDB_INFO("ACTORSCLITEST: Query length " << length);
@@ -252,7 +252,7 @@ TEST_F(ActorsCliTest, DISABLED_testDeleteQuery) {
   anon_send(coordinator, deregister_query_atom::value, uuid);
 
   std::this_thread::sleep_for(std::chrono::seconds(2));
-  anon_send(coordinator, show_running_atom::value);
+  anon_send(coordinator, show_running_queries_atom::value);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
   anon_send_exit(worker, exit_reason::user_shutdown);
@@ -290,11 +290,11 @@ TEST_F(ActorsCliTest, DISABLED_testShowRunning) {
   std::this_thread::sleep_for(std::chrono::seconds(1));
   anon_send(coordinator, deploy_query_atom::value, "FIXME_USE_UUID");
   std::this_thread::sleep_for(std::chrono::seconds(1));
-  anon_send(coordinator, show_running_atom::value);
+  anon_send(coordinator, show_running_queries_atom::value);
   std::this_thread::sleep_for(std::chrono::seconds(1));
   anon_send(coordinator, deregister_query_atom::value, "FIXME_USE_UUID");
   std::this_thread::sleep_for(std::chrono::seconds(2));
-  anon_send(coordinator, show_running_atom::value);
+  anon_send(coordinator, show_running_queries_atom::value);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
   anon_send_exit(worker, exit_reason::user_shutdown);
@@ -337,7 +337,7 @@ TEST_F(ActorsCliTest, DISABLED_testShowOperators) {
   std::this_thread::sleep_for(std::chrono::seconds(2));
   anon_send(coordinator, deregister_query_atom::value, "FIXME_USE_UUID");
   std::this_thread::sleep_for(std::chrono::seconds(2));
-  anon_send(coordinator, show_running_atom::value);
+  anon_send(coordinator, show_running_queries_atom::value);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
   anon_send_exit(worker, exit_reason::user_shutdown);

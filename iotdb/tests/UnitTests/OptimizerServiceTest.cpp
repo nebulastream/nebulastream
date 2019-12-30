@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <Services/OptimizerService.hpp>
 #include <Services/QueryService.hpp>
-#include "../../../include/Topology/NESTopologyManager.hpp"
+#include <Topology/NESTopologyManager.hpp>
 #include <Topology/TestTopology.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 
