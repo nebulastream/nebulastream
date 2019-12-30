@@ -105,7 +105,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
 
   std::stringstream ss;
   ss << "{\"userQuery\" : \"Schema schema = Schema::create().addField(\\\"id\\\", BasicType::UINT32).addField(\\\"value\\\", BasicType::UINT64);";
-  ss << "Stream stream = Stream(\\\"default\\\", schema); InputQuery inputQuery = InputQuery::from(stream).print(std::cout);";
+  ss << "Stream stream = Stream(\\\"default_logical\\\", schema); InputQuery inputQuery = InputQuery::from(stream).print(std::cout);";
   ss << " return inputQuery;\",\"strategyName\" : \"BottomUp\"}";
   ss << endl;
   cout << "string submit=" << ss.str();
@@ -164,7 +164,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
 
   std::stringstream ss;
   ss << "{\"userQuery\" : \"Schema schema = Schema::create().addField(\\\"id\\\", BasicType::UINT32).addField(\\\"value\\\", BasicType::UINT64);";
-  ss << "Stream stream = Stream(\\\"default\\\", schema); InputQuery inputQuery = InputQuery::from(stream).writeToFile(\\\"";
+  ss << "Stream stream = Stream(\\\"default_logical\\\", schema); InputQuery inputQuery = InputQuery::from(stream).writeToFile(\\\"";
   ss << outputFilePath;
   ss << "\\\"); return inputQuery;\",\"strategyName\" : \"BottomUp\"}";
   ss << endl;
