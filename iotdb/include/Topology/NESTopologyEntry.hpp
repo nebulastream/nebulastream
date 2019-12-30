@@ -4,7 +4,7 @@
 #include <API/InputQuery.hpp>
 #include <NodeEngine/NodeProperties.hpp>
 #include <Util/CPUCapacity.hpp>
-
+#include <string>
 namespace iotdb {
 
 enum NESNodeType {
@@ -81,6 +81,11 @@ class NESTopologyEntry {
     return this->nodeProperties->dump();
   }
 
+  std::string toString()
+  {
+
+    return "id=" + std::to_string(getId()) + " type=" + getEntryTypeString();
+  }
  protected:
   std::string ip_addr;
   uint16_t publish_port;

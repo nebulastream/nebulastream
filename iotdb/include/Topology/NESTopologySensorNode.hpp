@@ -23,6 +23,7 @@ class NESTopologySensorNode : public NESTopologyEntry {
   NESTopologySensorNode(size_t nodeId, std::string ip_addr) {
     this->node_id = nodeId;
     this->ip_addr = std::move(ip_addr);
+    physicalStreamName = "default_physical";
   }
 
   ~NESTopologySensorNode() = default;
