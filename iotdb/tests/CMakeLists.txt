@@ -78,9 +78,9 @@ target_link_libraries(query-interface-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME query-interface-tests COMMAND query-interface-tests)
 
 # NES Topology Tests
-add_executable(nes-topology-tests "UnitTests/NESTopologyManagerTest.cpp")
-target_link_libraries(nes-topology-tests iotdb ${GTEST_LIBRARIES})
-add_test(NAME nes-topology-tests COMMAND nes-topology-tests)
+add_executable(nes-topology-manager-tests "UnitTests/NESTopologyManagerTest.cpp")
+target_link_libraries(nes-topology-manager-tests iotdb ${GTEST_LIBRARIES})
+add_test(NAME nes-topology-manager-tests COMMAND nes-topology-manager-tests)
 
 # Client Server Communication Tests
 #add_executable(client-server-communication-tests "UnitTests/ClientServerCommunicationTest.cpp")

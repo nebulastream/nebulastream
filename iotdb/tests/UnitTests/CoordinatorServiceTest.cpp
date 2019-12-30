@@ -40,6 +40,7 @@ class CoordinatorCafTest : public testing::Test {
         receive_port, 2
         ,"", streamConf);
   }
+    IOTDB_DEBUG("FINISHED ADDING 5 Nodes to topology")
 }
 
 /* Will be called before a test is executed. */
@@ -85,7 +86,6 @@ uint16_t publish_port = 4711;
 //std::string sensor_type = "default";
 };
 
-#if 0
 /* Test serialization for Schema  */
 TEST_F(CoordinatorCafTest, test_registration_and_topology) {
   string topo = coordinatorServicePtr->getTopologyPlanString();
@@ -166,7 +166,7 @@ TEST_F(CoordinatorCafTest, test_deregistration_and_topology) {
       "}\n";
   EXPECT_EQ(coordinatorServicePtr->getTopologyPlanString(), expectedTopo2);
 }
-#endif
+
 TEST_F(CoordinatorCafTest, test_register_query) {
   string queryId = coordinatorServicePtr->register_query(queryString,
                                                          "BottomUp");
@@ -191,7 +191,7 @@ TEST_F(CoordinatorCafTest, test_register_query) {
   EXPECT_EQ(kExecutionPlan->getTopologyPlanString(), expectedPlacement);
 }
 
-TEST_F(CoordinatorCafTest, DISABLED_test_register_deregister_query) {
+TEST_F(CoordinatorCafTest, test_register_deregister_query) {
   string queryId = coordinatorServicePtr->register_query(queryString,
                                                          "BottomUp");
   EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
@@ -199,7 +199,7 @@ TEST_F(CoordinatorCafTest, DISABLED_test_register_deregister_query) {
   EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().empty());
 }
 
-TEST_F(CoordinatorCafTest, DISABLED_test_make_deployment) {
+TEST_F(CoordinatorCafTest, test_make_deployment) {
   string queryId = coordinatorServicePtr->register_query(queryString,
                                                          "BottomUp");
   EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
@@ -217,7 +217,7 @@ TEST_F(CoordinatorCafTest, DISABLED_test_make_deployment) {
   EXPECT_TRUE(coordinatorServicePtr->getRunningQueries().size() == 1);
 }
 
-TEST_F(CoordinatorCafTest, DISABLED_test_run_deregister_query) {
+TEST_F(CoordinatorCafTest, test_run_deregister_query) {
   string queryId = coordinatorServicePtr->register_query(queryString,
                                                          "BottomUp");
   EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
@@ -232,7 +232,7 @@ TEST_F(CoordinatorCafTest, DISABLED_test_run_deregister_query) {
   EXPECT_TRUE(coordinatorServicePtr->getRunningQueries().empty());
 }
 
-TEST_F(CoordinatorCafTest, DISABLED_test_compile_deployment) {
+TEST_F(CoordinatorCafTest, test_compile_deployment) {
   string queryId = coordinatorServicePtr->register_query(queryString,
                                                          "BottomUp");
   EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
@@ -249,7 +249,7 @@ TEST_F(CoordinatorCafTest, DISABLED_test_compile_deployment) {
   EXPECT_TRUE(coordinatorServicePtr->getRunningQueries().size() == 1);
 }
 
-TEST_F(CoordinatorCafTest, DISABLED_test_code_gen) {
+TEST_F(CoordinatorCafTest, test_code_gen) {
   auto* engine = new NodeEngine();
   engine->start();
 
@@ -280,10 +280,11 @@ TEST_F(CoordinatorCafTest, DISABLED_test_code_gen) {
   qep->addDataSink(sink);
 
   engine->deployQuery(qep);
+  sleep(2);
   engine->stopWithUndeploy();
 }
 
-TEST_F(CoordinatorCafTest, DISABLED_test_local_distributed_deployment) {
+TEST_F(CoordinatorCafTest, test_local_distributed_deployment) {
   auto* engine = new NodeEngine();
   engine->start();
   string queryId = coordinatorServicePtr->register_query(queryString,

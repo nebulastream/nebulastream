@@ -277,8 +277,7 @@ TEST_F(NesTopologyManagerTest, print_graph) {
     }
   }
 
-  std::cout << NESTopologyManager::getInstance().getNESTopologyPlanString() << std::endl;
-
+  std::cout << " current plan from topo="<< NESTopologyManager::getInstance().getNESTopologyPlanString() << std::endl;
   std::string expected_result = "graph G {\n"
                                 "0[label=\"0 type=Worker\"];\n"
                                 "1[label=\"1 type=Worker\"];\n"
@@ -287,21 +286,21 @@ TEST_F(NesTopologyManagerTest, print_graph) {
                                 "4[label=\"4 type=Worker\"];\n"
                                 "5[label=\"5 type=Worker\"];\n"
                                 "6[label=\"6 type=Worker\"];\n"
-                                "7[label=\"7 type=Sensor(unknown)\"];\n"
-                                "8[label=\"8 type=Sensor(unknown)\"];\n"
-                                "9[label=\"9 type=Sensor(unknown)\"];\n"
-                                "10[label=\"10 type=Sensor(unknown)\"];\n"
-                                "11[label=\"11 type=Sensor(unknown)\"];\n"
-                                "12[label=\"12 type=Sensor(unknown)\"];\n"
-                                "13[label=\"13 type=Sensor(unknown)\"];\n"
-                                "14[label=\"14 type=Sensor(unknown)\"];\n"
-                                "15[label=\"15 type=Sensor(unknown)\"];\n"
-                                "16[label=\"16 type=Sensor(unknown)\"];\n"
-                                "17[label=\"17 type=Sensor(unknown)\"];\n"
-                                "18[label=\"18 type=Sensor(unknown)\"];\n"
-                                "19[label=\"19 type=Sensor(unknown)\"];\n"
-                                "20[label=\"20 type=Sensor(unknown)\"];\n"
-                                "21[label=\"21 type=Sensor(unknown)\"];\n"
+                                "7[label=\"7 type=Sensor(default_physical)\"];\n"
+                                "8[label=\"8 type=Sensor(default_physical)\"];\n"
+                                "9[label=\"9 type=Sensor(default_physical)\"];\n"
+                                "10[label=\"10 type=Sensor(default_physical)\"];\n"
+                                "11[label=\"11 type=Sensor(default_physical)\"];\n"
+                                "12[label=\"12 type=Sensor(default_physical)\"];\n"
+                                "13[label=\"13 type=Sensor(default_physical)\"];\n"
+                                "14[label=\"14 type=Sensor(default_physical)\"];\n"
+                                "15[label=\"15 type=Sensor(default_physical)\"];\n"
+                                "16[label=\"16 type=Sensor(default_physical)\"];\n"
+                                "17[label=\"17 type=Sensor(default_physical)\"];\n"
+                                "18[label=\"18 type=Sensor(default_physical)\"];\n"
+                                "19[label=\"19 type=Sensor(default_physical)\"];\n"
+                                "20[label=\"20 type=Sensor(default_physical)\"];\n"
+                                "21[label=\"21 type=Sensor(default_physical)\"];\n"
                                 "0--1 [label=\"0\"];\n"
                                 "2--1 [label=\"1\"];\n"
                                 "3--4 [label=\"2\"];\n"
@@ -325,7 +324,9 @@ TEST_F(NesTopologyManagerTest, print_graph) {
                                 "21--4 [label=\"20\"];\n"
                                 "}\n";
 
-  EXPECT_TRUE(NESTopologyManager::getInstance().getNESTopologyPlanString() == expected_result);
+  cout << "expected_result=" << expected_result << endl;
+
+  EXPECT_EQ(NESTopologyManager::getInstance().getNESTopologyPlanString(),expected_result);
 
   // std::cout << NesTopologyManager::getInstance().getTopologyPlanString() << std::endl;
   // std::cout << expected_result << std::endl;
@@ -355,21 +356,21 @@ TEST_F(NesTopologyManagerTest, print_graph_without_edges) {
                                 "4[label=\"4 type=Worker\"];\n"
                                 "5[label=\"5 type=Worker\"];\n"
                                 "6[label=\"6 type=Worker\"];\n"
-                                "7[label=\"7 type=Sensor(unknown)\"];\n"
-                                "8[label=\"8 type=Sensor(unknown)\"];\n"
-                                "9[label=\"9 type=Sensor(unknown)\"];\n"
-                                "10[label=\"10 type=Sensor(unknown)\"];\n"
-                                "11[label=\"11 type=Sensor(unknown)\"];\n"
-                                "12[label=\"12 type=Sensor(unknown)\"];\n"
-                                "13[label=\"13 type=Sensor(unknown)\"];\n"
-                                "14[label=\"14 type=Sensor(unknown)\"];\n"
-                                "15[label=\"15 type=Sensor(unknown)\"];\n"
-                                "16[label=\"16 type=Sensor(unknown)\"];\n"
-                                "17[label=\"17 type=Sensor(unknown)\"];\n"
-                                "18[label=\"18 type=Sensor(unknown)\"];\n"
-                                "19[label=\"19 type=Sensor(unknown)\"];\n"
-                                "20[label=\"20 type=Sensor(unknown)\"];\n"
-                                "21[label=\"21 type=Sensor(unknown)\"];\n"
+                                "7[label=\"7 type=Sensor(default_physical)\"];\n"
+                                "8[label=\"8 type=Sensor(default_physical)\"];\n"
+                                "9[label=\"9 type=Sensor(default_physical)\"];\n"
+                                "10[label=\"10 type=Sensor(default_physical)\"];\n"
+                                "11[label=\"11 type=Sensor(default_physical)\"];\n"
+                                "12[label=\"12 type=Sensor(default_physical)\"];\n"
+                                "13[label=\"13 type=Sensor(default_physical)\"];\n"
+                                "14[label=\"14 type=Sensor(default_physical)\"];\n"
+                                "15[label=\"15 type=Sensor(default_physical)\"];\n"
+                                "16[label=\"16 type=Sensor(default_physical)\"];\n"
+                                "17[label=\"17 type=Sensor(default_physical)\"];\n"
+                                "18[label=\"18 type=Sensor(default_physical)\"];\n"
+                                "19[label=\"19 type=Sensor(default_physical)\"];\n"
+                                "20[label=\"20 type=Sensor(default_physical)\"];\n"
+                                "21[label=\"21 type=Sensor(default_physical)\"];\n"
                                 "}\n";
 
   EXPECT_TRUE(NESTopologyManager::getInstance().getNESTopologyPlanString() == expected_result);
