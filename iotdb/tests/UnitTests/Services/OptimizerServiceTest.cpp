@@ -1,9 +1,9 @@
-
 #include <gtest/gtest.h>
 #include <Services/OptimizerService.hpp>
 #include <Services/QueryService.hpp>
 #include "../../../include/Topology/NESTopologyManager.hpp"
 #include <Topology/TestTopology.hpp>
+#include <Catalogs/StreamCatalog.hpp>
 
 using namespace iotdb;
 using namespace web;
@@ -12,48 +12,83 @@ using namespace web;
 class OptimizerServiceTest : public testing::Test {
  public:
   /* Will be called before any test in this class are executed. */
-  static void SetUpTestCase() { std::cout << "Setup OptimizerServiceTest test class." << std::endl; }
+  static void SetUpTestCase() {
+    std::cout << "Setup OptimizerServiceTest test class." << std::endl;
+  }
 
   /* Will be called before a test is executed. */
   void SetUp() {
+    setupLogging();
     createExampleTopology();
     std::cout << "Setup OptimizerServiceTest test case." << std::endl;
   }
 
   /* Will be called before a test is executed. */
-  void TearDown() { std::cout << "Setup OptimizerServiceTest test case." << std::endl; }
+  void TearDown() {
+    std::cout << "Setup OptimizerServiceTest test case." << std::endl;
+  }
 
   /* Will be called after all tests in this class are finished. */
-  static void TearDownTestCase() { std::cout << "Tear down OptimizerServiceTest test class." << std::endl; }
+  static void TearDownTestCase() {
+    std::cout << "Tear down OptimizerServiceTest test class." << std::endl;
+  }
 
   QueryService queryService;
   OptimizerService optimizerService;
+
+ protected:
+  static void setupLogging() {
+    // create PatternLayout
+    log4cxx::LayoutPtr layoutPtr(
+        new log4cxx::PatternLayout(
+            "%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
+
+    // create FileAppender
+    LOG4CXX_DECODE_CHAR(fileName, "EngineTest.log");
+    log4cxx::FileAppenderPtr file(
+        new log4cxx::FileAppender(layoutPtr, fileName));
+
+    // create ConsoleAppender
+    log4cxx::ConsoleAppenderPtr console(
+        new log4cxx::ConsoleAppender(layoutPtr));
+
+    // set log level
+    logger->setLevel(log4cxx::Level::getDebug());
+    //    logger->setLevel(log4cxx::Level::getInfo());
+
+    // add appenders and other will inherit the settings
+    logger->addAppender(file);
+    logger->addAppender(console);
+  }
+
 };
 
 /* Test nes topology service create plan for valid query string for  */
 TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_valid_query_using_bottomup) {
 
   std::stringstream code;
-  code << "Schema schema = Schema::create().addField(\"test\",INT32);" << std::endl;
-  code << "Stream testStream = Stream(\"temperature1\",schema);" << std::endl;
-  code << "return InputQuery::from(testStream).filter(testStream[\"test\"]==5)" << std::endl
-      << ".writeToZmq(schema, \"localhost\", 10);" << std::endl;
+  code << "return InputQuery::from(temperature1)"
+       << ".filter(temperature1[\"id\"]==5)" << std::endl
+       << ".writeToZmq(temperature1, \"localhost\", 10);" << std::endl;
 
-  const InputQueryPtr &inputQuery = queryService.getInputQueryFromQueryString(code.str());
-  const json::value &plan = optimizerService.getExecutionPlanAsJson(inputQuery, "BottomUp");
+  const InputQueryPtr &inputQuery = queryService.getInputQueryFromQueryString(
+      code.str());
+  const json::value &plan = optimizerService.getExecutionPlanAsJson(inputQuery,
+                                                                    "BottomUp");
   EXPECT_TRUE(plan.size() != 0);
 }
-
 /* Test nes topology service create plan for valid query string for  */
 TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_valid_query_using_topdown) {
 
   std::stringstream code;
-  code << "Schema schema = Schema::create().addField(\"test\",INT32);" << std::endl;
-  code << "Stream testStream = Stream(\"temperature1\",schema);" << std::endl;
-  code << "return InputQuery::from(testStream).filter(testStream[\"test\"]==5)" << std::endl
-       << ".writeToZmq(schema, \"localhost\", 10);" << std::endl;
-  const InputQueryPtr &inputQuery = queryService.getInputQueryFromQueryString(code.str());
-  const json::value &plan = optimizerService.getExecutionPlanAsJson(inputQuery, "BottomUp");
+  code
+      << "return InputQuery::from(temperature1).filter(temperature1[\"value\"]==5)"
+      << std::endl << ".writeToZmq(temperature1, \"localhost\", 10);"
+      << std::endl;
+  const InputQueryPtr &inputQuery = queryService.getInputQueryFromQueryString(
+      code.str());
+  const json::value &plan = optimizerService.getExecutionPlanAsJson(inputQuery,
+                                                                    "BottomUp");
   EXPECT_TRUE(plan.size() != 0);
 }
 
@@ -76,13 +111,71 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_optimization_
 
   try {
     std::stringstream code;
-    code << "Schema schema = Schema::create().addField(\"test\",INT32);" << std::endl;
-    code << "Stream testStream = Stream(\"test-stream\",schema);" << std::endl;
-    code << "return InputQuery::from(testStream).filter(testStream[\"test\"]==5)" << std::endl
-        << ".writeToZmq(schema, \"localhost\", 10);" << std::endl;
+//    code << "Schema schema = Schema::create().addField(\"test\",INT32);" << std::endl;
+//    code << "Stream testStream = Stream(\"test-stream\",schema);" << std::endl;
+    code
+        << "return InputQuery::from(temperature134).filter(temperature134[\"id\"]==5)"
+        << ".writeToZmq(temperature134, \"localhost\", 10);"
+        << std::endl;
 
-    const InputQueryPtr &inputQuery = queryService.getInputQueryFromQueryString(code.str());
-    const json::value &plan = optimizerService.getExecutionPlanAsJson(inputQuery, "BottomUp");
+    const InputQueryPtr &inputQuery = queryService.getInputQueryFromQueryString(
+        code.str());
+    const json::value &plan = optimizerService.getExecutionPlanAsJson(
+        inputQuery, "BottomUp");
+    FAIL();
+  } catch (...) {
+    //TODO: We need to look into exception handling soon enough
+    SUCCEED();
+  }
+
+  try {
+    //test wrong stream in filter
+    std::stringstream code;
+    code
+        << "return InputQuery::from(temperature1).filter(testStream[\"wrong_field\"]==5)"
+        << std::endl << ".writeToZmq(temperature1, \"localhost\", 10);"
+        << std::endl;
+
+    const InputQueryPtr &inputQuery = queryService.getInputQueryFromQueryString(
+        code.str());
+    const json::value &plan = optimizerService.getExecutionPlanAsJson(
+        inputQuery, "BottomUp");
+    FAIL();
+  } catch (...) {
+    //TODO: We need to look into exception handling soon enough
+    SUCCEED();
+  }
+
+  try {
+    //test wrong field in filter
+    std::stringstream code;
+    code
+        << "return InputQuery::from(temperature1).filter(temperature1[\"wrong_field\"]==5)"
+        << std::endl << ".writeToZmq(temperature1, \"localhost\", 10);"
+        << std::endl;
+
+    const InputQueryPtr &inputQuery = queryService.getInputQueryFromQueryString(
+        code.str());
+    const json::value &plan = optimizerService.getExecutionPlanAsJson(
+        inputQuery, "BottomUp");
+    FAIL();
+  } catch (...) {
+    //TODO: We need to look into exception handling soon enough
+    SUCCEED();
+  }
+
+  try {
+    //test wrong stream in writeToZmq
+    std::stringstream code;
+    code
+        << "return InputQuery::from(temperature1).filter(temperature1[\"id\"]==5)"
+        << std::endl << ".writeToZmq(temperature331, \"localhost\", 10);"
+        << std::endl;
+
+    const InputQueryPtr &inputQuery = queryService.getInputQueryFromQueryString(
+        code.str());
+    const json::value &plan = optimizerService.getExecutionPlanAsJson(
+        inputQuery, "BottomUp");
     FAIL();
   } catch (...) {
     //TODO: We need to look into exception handling soon enough

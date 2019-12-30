@@ -118,11 +118,11 @@ class InputQuery {
 
     /**
      * @brief: Adds a zmq sink, which writes all stream records with a schema to a destination zmq.
-     * @param schema : schema of the event
+     * @param stream from where to get the schema
      * @param host : host where zmq server is running
      * @param port : port zmq server is listening on
      */
-    InputQuery& writeToZmq(const iotdb::Schema& schema, const std::string& host, const uint16_t& port);
+    InputQuery& writeToZmq(const std::string& logicalStreamName, const std::string& host, const uint16_t& port);
 
     /**
    * @brief write to a kafka sink

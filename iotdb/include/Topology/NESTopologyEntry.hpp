@@ -5,7 +5,9 @@
 #include <NodeEngine/NodeProperties.hpp>
 #include <Util/CPUCapacity.hpp>
 #include <string>
+
 namespace iotdb {
+typedef std::shared_ptr<InputQuery> InputQueryPtr;
 
 enum NESNodeType {
   Coordinator,

@@ -103,9 +103,8 @@ void RestController::handlePost(http_request message) {
                       string optimizationStrategyName = req.at("strategyName").as_string();
 
                       //FIXME: setup example topology
-
+                      //TODO: do we really have to do this for each submitted query? Cannot we solve it somehow else
                       createExampleTopology();
-
 
                       //Call the service
                       const string
