@@ -8,12 +8,11 @@ using namespace iotdb;
 class CoordinatorCafTest : public testing::Test {
  public:
   std::string queryString =
-      "Schema schema = Schema::create()"
-          ".addField(\"id\", BasicType::UINT32)"
-          ".addField(\"value\", BasicType::UINT64);"
-          "Stream stream = Stream(\"default_logical\", schema);"
-          "InputQuery inputQuery = InputQuery::from(stream).filter(stream[\"value\"] > 42).print(std::cout); "
-          "return inputQuery;";
+//      "Schema schema = Schema::create()"
+//          ".addField(\"id\", BasicType::UINT32)"
+//          ".addField(\"value\", BasicType::UINT64);"
+//          "Stream stream = Stream(\"default_logical\", schema);"
+          "return InputQuery::from(default_logical).filter(default_logical[\"value\"] > 42).print(std::cout); ";
 
   /* Will be called before any test in this class are executed. */
   static void SetUpTestCase() {
