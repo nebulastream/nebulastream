@@ -1,6 +1,6 @@
 #include <iostream>
 #include <stdexcept>
-
+#include <sstream>
 #include "API/Schema.hpp"
 
 using namespace iotdb;
@@ -56,8 +56,8 @@ AttributeFieldPtr Schema::get(const std::string pName)
         if (f->name == pName)
             return f;
     }
-    return AttributeFieldPtr();
-    // throw std::invalid_argument("field " + pName + " does not exist");
+//    return AttributeFieldPtr();
+     throw std::invalid_argument("field " + pName + " does not exist");
 }
 
 const AttributeFieldPtr Schema::operator[](uint32_t index) const
@@ -73,6 +73,10 @@ const AttributeFieldPtr Schema::operator[](uint32_t index) const
 
 const std::string Schema::toString() const
 {
-    // TODO: change to return entire schema
-    return "schema";
+  std::stringstream ss;
+  for (auto& f : fields) {
+    ss << " name=" << f->name << " " << f->getDataType()->toString() << std::endl;
+  }
+
+  return ss.str();
 }

@@ -89,6 +89,33 @@ SchemaPtr StreamCatalog::getSchemaForLogicalStream(
   return logicalStreamToSchemaMapping[logicalStreamName];
 }
 
+SchemaPtr StreamCatalog::getSchemaForLogicalStreamOrThrowException(
+    std::string logicalStreamName) {
+  if (logicalStreamToSchemaMapping.find(logicalStreamName)
+      != logicalStreamToSchemaMapping.end()) {
+    return logicalStreamToSchemaMapping[logicalStreamName];
+  } else {
+    throw Exception("Required stream does not exists " + logicalStreamName);
+  }
+}
+
+StreamPtr StreamCatalog::getStreamForLogicalStream(
+    std::string logicalStreamName) {
+  return std::make_shared<Stream>(
+      logicalStreamName, logicalStreamToSchemaMapping[logicalStreamName]);
+}
+
+StreamPtr StreamCatalog::getStreamForLogicalStreamOrThrowException(
+    std::string logicalStreamName) {
+  if (logicalStreamToSchemaMapping.find(logicalStreamName)
+      != logicalStreamToSchemaMapping.end()) {
+    return std::make_shared<Stream>(
+        logicalStreamName, logicalStreamToSchemaMapping[logicalStreamName]);
+  } else {
+    throw Exception("Required stream does not exists " + logicalStreamName);
+  }
+}
+
 bool StreamCatalog::testIfLogicalStreamExists(std::string logicalStreamName) {
   if (logicalStreamToSchemaMapping.count(logicalStreamName))
     return true;

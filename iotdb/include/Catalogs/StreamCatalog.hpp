@@ -7,56 +7,11 @@
 #include <deque>
 #include <SourceSink/DataSource.hpp>
 #include <API/Schema.hpp>
-
+#include <API/Stream.hpp>
 #include <Topology/NESTopologyEntry.hpp>
-
+#include <Catalogs/StreamCatalogEntry.hpp>
 using namespace std;
 namespace iotdb {
-
-/**
- * @brief one entry in the catalog contains
- *    - the dataSource that can be created there
- *    - the entry in the topology that offer this stream
- *    - the name of the physical stream
- * @caution combination of node and name has to be unique
- * @Limitations
- *
- */
-class StreamCatalogEntry {
-
- public:
-  StreamCatalogEntry(std::string dataSourceType, std::string dataSourceConfig,
-                     NESTopologyEntryPtr node, std::string physicalStreamName)
-      : dataSourceType(dataSourceType),
-        dataSourceConfig(dataSourceConfig),
-        node(node),
-        physicalStreamName(physicalStreamName) {
-  }
-  ;
-
-  std::string getSourceType() {
-    return dataSourceType;
-  }
-
-  std::string getSourceConfig() {
-    return dataSourceConfig;
-  }
-
-  NESTopologyEntryPtr getNode() {
-    return node;
-  }
-
-  std::string getPhysicalName() {
-    return physicalStreamName;
-  }
-
- private:
-  std::string dataSourceType;
-  std::string dataSourceConfig;
-  NESTopologyEntryPtr node;
-  std::string physicalStreamName;
-};
-typedef std::shared_ptr<StreamCatalogEntry> StreamCatalogEntryPtr;
 
 /**
  * @brief the stream catalog handles the mapping of logical to physical streams
@@ -87,9 +42,38 @@ class StreamCatalog {
 
   /**
    * @brief method to return the schema for an existing logical stream
+   * @param name of logical stream
+   * @return smart pointer to the schema
    * @caution there is only one schema per logical stream allowed
    */
   SchemaPtr getSchemaForLogicalStream(std::string logicalStreamName);
+
+
+  /**
+   * @brief method to return the schema for an existing logical stream or throw exception
+   * @param name of logical stream
+   * @return smart pointer to the schema
+   * @caution there is only one schema per logical stream allowed
+   */
+  SchemaPtr getSchemaForLogicalStreamOrThrowException(std::string logicalStreamName);
+
+
+  /**
+   * @brief method to return the stream for an existing logical stream
+   * @param name of logical stream
+   * @return smart pointer to a newly created stream
+   * @note the stream will also contain the schema
+   */
+  StreamPtr getStreamForLogicalStream(std::string logicalStreamName);
+
+  /**
+    * @brief method to return the stream for an existing logical stream or throw exception
+    * @param name of logical stream
+    * @return smart pointer to a newly created stream
+    * @note the stream will also contain the schema
+    */
+   StreamPtr getStreamForLogicalStreamOrThrowException(std::string logicalStreamName);
+
 
   /**
    * @brief test if logical stream with this name exists
