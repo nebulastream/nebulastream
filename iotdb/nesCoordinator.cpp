@@ -21,8 +21,8 @@ using namespace iotdb;
 namespace po = boost::program_options;
 const uint16_t REST_PORT = 8081;
 
-void startRestServer(std::string host, u_int16_t port, infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle) {
     RestServer restServer;
+  void startRestServer(std::string host, u_int16_t port, infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle) {
     restServer.start(host, port, coordinatorActorHandle);
 }
 

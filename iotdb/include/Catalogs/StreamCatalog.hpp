@@ -90,7 +90,24 @@ class StreamCatalog {
   deque<NESTopologyEntryPtr> getSourceNodesForLogicalStream(
       std::string logicalStreamName);
 
+  /**
+   * @brief reset the catalog and recreate the default_logical stream
+   */
   void reset();
+
+  /**
+   * @brief method to return the logical stream and the associated schemas
+   * @return string containing the content of the catalog
+   */
+  std::string getLogicalStreamAndSchemaAsString();
+
+  /**
+   * @brief method to return the physical stream and the associated schemas
+   * @return string containing the content of the catalog
+   */
+  std::string getPhysicalStreamAndSchemaAsString();
+
+
  private:
   /* implement singleton semantics: no construction,
    * copying or destruction of stream catalog objects

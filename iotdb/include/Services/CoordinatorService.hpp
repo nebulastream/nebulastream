@@ -110,8 +110,8 @@ class CoordinatorService {
 
   bool clearQueryCatalogs();
 
-  const unordered_map<string, tuple<Schema, NESExecutionPlan>> &getRegisteredQueries() const;
-  const unordered_map<string, tuple<Schema, NESExecutionPlan>> &getRunningQueries() const;
+  const unordered_map<string, tuple<Schema, NESExecutionPlan>>& getRegisteredQueries() const;
+  const unordered_map<string, tuple<Schema, NESExecutionPlan>>& getRunningQueries() const;
 
  private:
 

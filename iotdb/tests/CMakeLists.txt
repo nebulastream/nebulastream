@@ -133,7 +133,7 @@ target_link_libraries(predicate-tree-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME predicate-tree-tests COMMAND predicate-tree-tests)
 
 # Predicate Tree Tests
-add_executable(optimizer-service-tests "UnitTests/Services/OptimizerServiceTest.cpp")
+add_executable(optimizer-service-tests "UnitTests/OptimizerServiceTest.cpp")
 target_link_libraries(optimizer-service-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME optimizer-service-tests COMMAND optimizer-service-tests)
 
@@ -154,7 +154,13 @@ add_test(NAME coordinator-service-tests COMMAND coordinator-service-tests)
 # Actors Tests
 add_executable(actors-cli-tests "UnitTests/ActorsCliTest.cpp")
 target_link_libraries(actors-cli-tests iotdb ${GTEST_LIBRARIES})
-#dd_test(NAME actors-cli-tests COMMAND actors-cli-tests)
+add_test(NAME actors-cli-tests COMMAND actors-cli-tests)
+
+# Catalog Tests
+add_executable(stream-catalog-test "UnitTests/StreamCatalogTest.cpp")
+target_link_libraries(stream-catalog-test iotdb ${GTEST_LIBRARIES})
+add_test(NAME stream-catalog-test COMMAND stream-catalog-test)
+
 
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure

@@ -146,4 +146,28 @@ void StreamCatalog::reset() {
       "value", BasicType::UINT64);
   addLogicalStream("default_logical", std::make_shared<Schema>(schema));
 }
+
+std::string StreamCatalog::getLogicalStreamAndSchemaAsString() {
+  stringstream ss;
+  for(auto entry : logicalStreamToSchemaMapping)
+  {
+    ss << "logical stream name=" << entry.first << " schema:" << entry.second->toString() << std::endl;
+  }
+  return ss.str();
+}
+
+std::string StreamCatalog::getPhysicalStreamAndSchemaAsString() {
+  stringstream ss;
+  for(auto entry : logicalToPhysicalStreamMapping)
+  {
+    ss << "stream name=" << entry.first << " with " <<  entry.second.size() << " elements:";
+    for(StreamCatalogEntryPtr& sce : entry.second)
+    {
+      ss << sce->toString();
+    }
+    ss << std::endl;
+  }
+  return ss.str();
+}
+
 }
