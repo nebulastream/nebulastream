@@ -14,11 +14,12 @@ namespace iotdb {
 class ActorsCliTest : public testing::Test {
  public:
   std::string host = "localhost";
-  std::string queryString = "Schema schema = Schema::create()"
-    ".addField(\"id\", BasicType::UINT32)"
-    ".addField(\"value\", BasicType::UINT64);"
-    "Stream stream = Stream(\"default\", schema);"
-    "InputQuery inputQuery = InputQuery::from(stream).filter(stream[\"value\"] > 42).print(std::cout); "
+  std::string queryString =
+//    "Schema schema = Schema::create()"
+//    ".addField(\"id\", BasicType::UINT32)"
+//    ".addField(\"value\", BasicType::UINT64);"
+//    "Stream stream = Stream(\"default\", schema);"
+    "InputQuery inputQuery = InputQuery::from(default_logical).filter(default_logical[\"id\"] > 42).print(std::cout); "
     "return inputQuery;";
 
   static void SetUpTestCase() {

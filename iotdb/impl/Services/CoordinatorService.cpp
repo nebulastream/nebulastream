@@ -29,7 +29,7 @@ NESTopologyEntryPtr CoordinatorService::register_sensor(
   IOTDB_DEBUG(
       "try to register sensor phyName=" << streamConf.physicalStreamName << " logName=" << streamConf.logicalStreamName << " nodeID=" << sensorNode->getId())
   //check if logical stream exists
-  if (!StreamCatalog::instance().testIfLogicalStreamExists(
+  if (!StreamCatalog::instance().testIfLogicalStreamExistsInSchemaMapping(
       streamConf.logicalStreamName)) {
     IOTDB_ERROR(
         "Coordinator: error logical stream" << streamConf.logicalStreamName << " does not exist when adding physical stream " << streamConf.physicalStreamName)
@@ -51,8 +51,16 @@ NESTopologyEntryPtr CoordinatorService::register_sensor(
   StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
       streamConf.sourceType, streamConf.sourceConfig, sensorNode,
       streamConf.physicalStreamName);
-  StreamCatalog::instance().addPhysicalStream(streamConf.logicalStreamName,
+
+  bool success = StreamCatalog::instance().addPhysicalStream(streamConf.logicalStreamName,
                                               sce);
+  if(!success){
+    IOTDB_ERROR(
+        "Coordinator: physical stream " << streamConf.physicalStreamName << " could not be added to catalog")
+    throw Exception(
+        "Coordinator: physical stream " + streamConf.physicalStreamName + " could not be added to catalog");
+
+  }
 
   const NESTopologyEntryPtr& kRootNode = NESTopologyManager::getInstance()
       .getRootNode();

@@ -24,25 +24,25 @@ namespace iotdb{
     sensorNode1->setPhysicalStreamName("temperature1");
     StreamCatalog::instance().addLogicalStream("temperature1", std::make_shared<Schema>(schema));
     StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>("", "", sensorNode1, "temperature1");
-    StreamCatalog::instance().addPhysicalStream("temperature1", e1);
+    assert(StreamCatalog::instance().addPhysicalStream("temperature1", e1));
 
     const NESTopologySensorNodePtr &sensorNode2 = NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::LOW);
     sensorNode2->setPhysicalStreamName("humidity1");
     StreamCatalog::instance().addLogicalStream("humidity1", std::make_shared<Schema>(schema));
     StreamCatalogEntryPtr e2 = std::make_shared<StreamCatalogEntry>("", "", sensorNode2, "humidity1");
-    StreamCatalog::instance().addPhysicalStream("humidity1", e2);
+    assert(StreamCatalog::instance().addPhysicalStream("humidity1", e2));
 
     const NESTopologySensorNodePtr &sensorNode3 = NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::LOW);
     sensorNode3->setPhysicalStreamName("temperature2");
     StreamCatalog::instance().addLogicalStream("temperature2", std::make_shared<Schema>(schema));
     StreamCatalogEntryPtr e3 = std::make_shared<StreamCatalogEntry>("", "", sensorNode3, "temperature2");
-    StreamCatalog::instance().addPhysicalStream("temperature2", e3);
+    assert(StreamCatalog::instance().addPhysicalStream("temperature2", e3));
 
     const NESTopologySensorNodePtr &sensorNode4 = NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::MEDIUM);
     sensorNode4->setPhysicalStreamName("humidity2");
     StreamCatalog::instance().addLogicalStream("humidity2", std::make_shared<Schema>(schema));
     StreamCatalogEntryPtr e4 = std::make_shared<StreamCatalogEntry>("", "", sensorNode4, "humidity2");
-    StreamCatalog::instance().addPhysicalStream("humidity2", e4);
+    assert(StreamCatalog::instance().addPhysicalStream("humidity2", e4));
 
     NESTopologyManager::getInstance().createNESTopologyLink(workerNode1, sinkNode);
     NESTopologyManager::getInstance().createNESTopologyLink(workerNode2, sinkNode);
