@@ -18,6 +18,7 @@ namespace iotdb {
  * @Limitations
  *    - TODO: do we really want to identify streams by name or would it be better to introduce an id?
  *    - TODO: add mutex to make it secure
+ *    - TODO: delete methods only delete catalog entries not the entries in the topology
  */
 class StreamCatalog {
  public:
@@ -30,15 +31,34 @@ class StreamCatalog {
    * @brief method to add a logical stream
    * @param logical stream name
    * @param schema of logical stream
+   * @return bool indicating if insert was successful
    */
-  void addLogicalStream(std::string logicalStreamName, SchemaPtr schemaPtr);
+  bool addLogicalStream(std::string logicalStreamName, SchemaPtr schemaPtr);
+
+  /**
+   * @brief method to delete a logical stream
+   * @caution this method only remove the entry from the catalog not from the topology
+   * @param name of logical stream to delete
+   * @param bool indicating the success of the removal
+   */
+  bool removeLogicalStream(std::string logicalStreamName);
+
 
   /**
    * @brief method to add a physical stream
    * @caution combination of node and name has to be unique
+   * @return bool indicating success of insert stream
    */
-  void addPhysicalStream(std::string logicalStreamName,
+  bool addPhysicalStream(std::string logicalStreamName,
                          StreamCatalogEntryPtr entry);
+
+  /**
+   * @brief method to remove a physical stream
+   * @caution this will not update the topology
+   * @return bool indicating success of remove stream
+   */
+  bool removePhysicalStream(std::string logicalStreamName,
+                           StreamCatalogEntryPtr entry);
 
   /**
    * @brief method to return the schema for an existing logical stream
@@ -47,16 +67,6 @@ class StreamCatalog {
    * @caution there is only one schema per logical stream allowed
    */
   SchemaPtr getSchemaForLogicalStream(std::string logicalStreamName);
-
-
-  /**
-   * @brief method to return the schema for an existing logical stream or throw exception
-   * @param name of logical stream
-   * @return smart pointer to the schema
-   * @caution there is only one schema per logical stream allowed
-   */
-  SchemaPtr getSchemaForLogicalStreamOrThrowException(std::string logicalStreamName);
-
 
   /**
    * @brief method to return the stream for an existing logical stream
@@ -67,20 +77,28 @@ class StreamCatalog {
   StreamPtr getStreamForLogicalStream(std::string logicalStreamName);
 
   /**
-    * @brief method to return the stream for an existing logical stream or throw exception
-    * @param name of logical stream
-    * @return smart pointer to a newly created stream
-    * @note the stream will also contain the schema
-    */
-   StreamPtr getStreamForLogicalStreamOrThrowException(std::string logicalStreamName);
-
+   * @brief method to return the stream for an existing logical stream or throw exception
+   * @param name of logical stream
+   * @return smart pointer to a newly created stream
+   * @note the stream will also contain the schema
+   */
+  StreamPtr getStreamForLogicalStreamOrThrowException(
+      std::string logicalStreamName);
 
   /**
-   * @brief test if logical stream with this name exists
+   * @brief test if logical stream with this name exists in the log to schema mapping
    * @param name of the logical stream to test
    * @return bool indicating if stream exists
    */
-  bool testIfLogicalStreamExists(std::string logicalStreamName);
+  bool testIfLogicalStreamExistsInSchemaMapping(std::string logicalStreamName);
+
+
+  /**
+   * @brief test if logical stream with this name exists in the log to phy mapping
+   * @param name of the logical stream to test
+   * @return bool indicating if stream exists
+   */
+  bool testIfLogicalStreamExistsInLogicalToPhysicalMapping(std::string logicalStreamName);
 
   /**
    * @brief return all physical nodes that contribute to this logical stream
@@ -106,7 +124,6 @@ class StreamCatalog {
    * @return string containing the content of the catalog
    */
   std::string getPhysicalStreamAndSchemaAsString();
-
 
  private:
   /* implement singleton semantics: no construction,
