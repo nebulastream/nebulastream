@@ -15,7 +15,7 @@
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 
-#include <QueryCompiler/C_CodeGen/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/C_CodeGenerator/BinaryOperatorStatement.hpp>
 #include <API/Schema.hpp>
 #include <Windows/WindowHandler.hpp>
 

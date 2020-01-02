@@ -3,13 +3,13 @@
 #include <list>
 
 #include <API/Schema.hpp>
-#include <QueryCompiler/C_CodeGen/BinaryOperatorStatement.hpp>
-#include <QueryCompiler/C_CodeGen/CodeCompiler.hpp>
-#include <QueryCompiler/C_CodeGen/Declaration.hpp>
-#include <QueryCompiler/C_CodeGen/FileBuilder.hpp>
-#include <QueryCompiler/C_CodeGen/FunctionBuilder.hpp>
-#include <QueryCompiler/C_CodeGen/Statement.hpp>
-#include <QueryCompiler/C_CodeGen/UnaryOperatorStatement.hpp>
+#include <QueryCompiler/C_CodeGenerator/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/C_CodeGenerator/CodeCompiler.hpp>
+#include <QueryCompiler/C_CodeGenerator/Declaration.hpp>
+#include <QueryCompiler/C_CodeGenerator/FileBuilder.hpp>
+#include <QueryCompiler/C_CodeGenerator/FunctionBuilder.hpp>
+#include <QueryCompiler/C_CodeGenerator/Statement.hpp>
+#include <QueryCompiler/C_CodeGenerator/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <Util/ErrorHandling.hpp>
 

@@ -4,7 +4,7 @@
 
 #include <API/InputQuery.hpp>
 #include <Operators/Operator.hpp>
-#include <QueryCompiler/C_CodeGen/CodeCompiler.hpp>
+#include <QueryCompiler/C_CodeGenerator/CodeCompiler.hpp>
 #include <API/UserAPIExpression.hpp>
 #include <SourceSink/DataSink.hpp>
 #include "../../include/SourceSink/SinkCreator.hpp"
