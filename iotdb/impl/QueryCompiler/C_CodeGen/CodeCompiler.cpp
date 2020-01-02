@@ -1,4 +1,4 @@
-#include <QueryCompiler/C_CodeGen/CodeCompiler.hpp>
+#include <QueryCompiler/C_CodeGenerator/CodeCompiler.hpp>
 
 #include <Util/ErrorHandling.hpp>
 #include <Util/SharedLibrary.hpp>

@@ -5,7 +5,7 @@
  *      Author: zeuchste
  */
 
-#include <QueryCompiler/C_CodeGen/CodeCompiler.hpp>
+#include <QueryCompiler/C_CodeGenerator/CodeCompiler.hpp>
 #include <QueryCompiler/PipelineStage.hpp>
 #include <Util/ErrorHandling.hpp>
 #include <iostream>
