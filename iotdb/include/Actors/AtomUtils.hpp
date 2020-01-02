@@ -15,6 +15,8 @@ constexpr auto task_timeout = std::chrono::seconds(3);
 //coordinator stubs
 using register_worker_atom = atom_constant<atom("r_worker")>;
 using register_sensor_atom = atom_constant<atom("r_sensor")>;
+using register_stream_atom = atom_constant<atom("r_stream")>;
+
 using execute_query_atom = atom_constant<atom("exe_query")>;
 using register_query_atom = atom_constant<atom("register")>;
 using deregister_query_atom = atom_constant<atom("deregister")>;
