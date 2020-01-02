@@ -16,6 +16,10 @@ size_t Schema::getSize() const {
   return fields.size();
 }
 
+Schema::Schema(const Schema& query) {
+  copyFields(query);
+}
+
 /* Return size of one row of schema in bytes. */
 size_t Schema::getSchemaSize() const {
   size_t size = 0;
