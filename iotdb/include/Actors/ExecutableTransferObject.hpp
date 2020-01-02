@@ -10,7 +10,7 @@
 #include <SourceSink/DataSink.hpp>
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
-#include <QueryCompiler/CodeGen.hpp>
+#include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 
 #include <string>

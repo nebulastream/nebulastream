@@ -1,7 +1,7 @@
 #include <string>
 #include <sstream>
 
-#include <QueryCompiler/CodeGen.hpp>
+#include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/C_CodeGen/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/C_CodeGen/Declaration.hpp>
 #include <QueryCompiler/C_CodeGen/Statement.hpp>

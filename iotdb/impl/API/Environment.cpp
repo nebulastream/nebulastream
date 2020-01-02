@@ -12,7 +12,7 @@
 #include <QueryCompiler/C_CodeGen/Declaration.hpp>
 #include <QueryCompiler/C_CodeGen/FunctionBuilder.hpp>
 #include <QueryCompiler/C_CodeGen/FileBuilder.hpp>
-#include <QueryCompiler/CodeGen.hpp>
+#include <QueryCompiler/CodeGenerator.hpp>
 
 namespace iotdb {
     Environment::Environment(const Config& config) : config(config) {}
