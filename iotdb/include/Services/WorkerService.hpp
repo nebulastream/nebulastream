@@ -1,4 +1,3 @@
-
 #ifndef IOTDB_INCLUDE_ACTORS_WORKERSERVICE_HPP_
 #define IOTDB_INCLUDE_ACTORS_WORKERSERVICE_HPP_
 
@@ -7,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <tuple>
+#include <Catalogs/PhysicalStreamConfig.hpp>
 
 using std::string;
 using std::vector;
@@ -18,7 +18,17 @@ namespace iotdb {
 class WorkerService {
 
  public:
-  WorkerService(string ip, uint16_t publish_port, uint16_t receive_port, string sensor_type);
+  /**
+   * @brief constructor for worker without a stream/sensor attached
+   */
+  WorkerService(string ip, uint16_t publish_port, uint16_t receive_port);
+
+  /**
+   * @brief constructor for worker with a stream/sensor attached
+   */
+  WorkerService(string ip, uint16_t publish_port, uint16_t receive_port,
+               PhysicalStreamConfig streamConf);
+
   ~WorkerService() = default;
 
   /**
@@ -29,9 +39,9 @@ class WorkerService {
   void execute_query(const string &queryId, string &executableTransferObject);
 
   /**
- * @brief method which is called to unregister an already running query
- * @param query the description of the query
- */
+   * @brief method which is called to unregister an already running query
+   * @param query the description of the query
+   */
   void delete_query(const string &query);
 
   /**
@@ -46,15 +56,15 @@ class WorkerService {
   void setPublishPort(uint16_t publish_port);
   uint16_t getReceivePort() const;
   void setReceivePort(uint16_t receive_port);
-  const string &getSensorType() const;
-  void setSensorType(const string &sensor_type);
 
   string getNodeProperties();
+  PhysicalStreamConfig getPhysicalStreamConfig();
+
  private:
   string _ip;
   uint16_t _publish_port;
   uint16_t _receive_port;
-  string _sensor_type;
+  PhysicalStreamConfig streamConf;
 
   NodeEngine *_enginePtr;
   std::unordered_map<string, tuple<QueryExecutionPlanPtr, OperatorPtr>> _runningQueries;

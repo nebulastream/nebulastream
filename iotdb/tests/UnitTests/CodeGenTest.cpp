@@ -20,33 +20,35 @@
 #include <API/Types/DataTypes.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
+#include <SourceSink/SourceCreator.hpp>
+
 
 namespace iotdb {
-
-class OneGeneratorSource : public GeneratorSource {
- public:
-  OneGeneratorSource(const Schema &schema, const uint64_t pNum_buffers_to_process) :
-      GeneratorSource(schema, pNum_buffers_to_process) {
-  }
-
-  ~OneGeneratorSource() = default;
-
-  TupleBufferPtr receiveData() override {
-    // 10 tuples of size one
-    TupleBufferPtr buf = BufferManager::instance().getBuffer();
-    size_t tupleCnt = buf->getNumberOfTuples();
-
-    assert(buf->getBuffer() != NULL);
-
-    uint64_t *tuples = (uint64_t *) buf->getBuffer();
-    for (uint64_t i = 0; i < tupleCnt; i++) {
-      tuples[i] = 1;
-    }
-    buf->setTupleSizeInBytes(sizeof(uint64_t));
-    buf->setNumberOfTuples(tupleCnt);
-    return buf;
-  }
-};
+//
+//class OneGeneratorSource : public GeneratorSource {
+// public:
+//  OneGeneratorSource(const Schema &schema, const uint64_t pNum_buffers_to_process) :
+//      GeneratorSource(schema, pNum_buffers_to_process) {
+//  }
+//
+//  ~OneGeneratorSource() = default;
+//
+//  TupleBufferPtr receiveData() override {
+//    // 10 tuples of size one
+//    TupleBufferPtr buf = BufferManager::instance().getBuffer();
+//    size_t tupleCnt = buf->getNumberOfTuples();
+//
+//    assert(buf->getBuffer() != NULL);
+//
+//    uint64_t *tuples = (uint64_t *) buf->getBuffer();
+//    for (uint64_t i = 0; i < tupleCnt; i++) {
+//      tuples[i] = 1;
+//    }
+//    buf->setTupleSizeInBytes(sizeof(uint64_t));
+//    buf->setNumberOfTuples(tupleCnt);
+//    return buf;
+//  }
+//};
 
 const DataSourcePtr createTestSourceCodeGen() {
   return std::make_shared<OneGeneratorSource>(Schema::create().addField(createField("campaign_id", UINT64)), 1);

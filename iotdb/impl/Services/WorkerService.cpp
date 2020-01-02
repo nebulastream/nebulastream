@@ -4,26 +4,43 @@
 #include <utility>
 
 namespace iotdb {
-WorkerService::WorkerService(string ip, uint16_t publish_port, uint16_t receive_port, string sensor_type) {
+WorkerService::WorkerService(string ip, uint16_t publish_port,
+                             uint16_t receive_port) {
   this->_ip = std::move(ip);
   this->_publish_port = publish_port;
   this->_receive_port = receive_port;
-  this->_sensor_type = std::move(sensor_type);
-
   this->_enginePtr = new NodeEngine();
   this->_enginePtr->start();
 }
 
-string WorkerService::getNodeProperties()
-{
+WorkerService::WorkerService(string ip, uint16_t publish_port,
+                             uint16_t receive_port,
+                             PhysicalStreamConfig streamConf) {
+  this->_ip = std::move(ip);
+  this->_publish_port = publish_port;
+  this->_receive_port = receive_port;
+  this->streamConf = streamConf;
+  this->_enginePtr = new NodeEngine();
+  this->_enginePtr->start();
+}
+
+string WorkerService::getNodeProperties() {
   return this->_enginePtr->getNodePropertiesAsString();
 }
 
-void WorkerService::execute_query(const string &queryId, string &executableTransferObject) {
-  IOTDB_INFO("WORKERSERVICE (" << this->_ip << "-" << this->_sensor_type << "): Executing " << queryId);
-  ExecutableTransferObject eto = SerializationTools::parse_eto(executableTransferObject);
+PhysicalStreamConfig WorkerService::getPhysicalStreamConfig() {
+  return streamConf;
+}
+
+void WorkerService::execute_query(const string &queryId,
+                                  string &executableTransferObject) {
+  IOTDB_INFO(
+      "WORKERSERVICE (" << this->_ip << "- logStream=" << this->getPhysicalStreamConfig().logicalStreamName << " phyStream=" << this->getPhysicalStreamConfig().physicalStreamName << "): Executing " << queryId);
+  ExecutableTransferObject eto = SerializationTools::parse_eto(
+      executableTransferObject);
   QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan();
-  this->_runningQueries.insert({queryId, std::make_tuple(qep, eto.getOperatorTree())});
+  this->_runningQueries.insert(
+      { queryId, std::make_tuple(qep, eto.getOperatorTree()) });
   this->_enginePtr->deployQuery(qep);
   std::this_thread::sleep_for(std::chrono::seconds(2));
 }
@@ -31,20 +48,21 @@ void WorkerService::execute_query(const string &queryId, string &executableTrans
 void WorkerService::delete_query(const string &query) {
   try {
     if (this->_runningQueries.find(query) != this->_runningQueries.end()) {
-      IOTDB_INFO("WORKERSERVICE (" << this->_ip << "-" << this->_sensor_type << "): Attempting deletion of " << query);
+      IOTDB_INFO(
+          "WORKERSERVICE (" << this->_ip << "-" << this->getPhysicalStreamConfig().physicalStreamName  << "): Attempting deletion of " << query);
       QueryExecutionPlanPtr qep = std::get<0>(this->_runningQueries.at(query));
       this->_runningQueries.erase(query);
       this->_enginePtr->undeployQuery(qep);
       IOTDB_INFO(
-          "WORKERSERVICE (" << this->_ip << "-" << this->_sensor_type << "): Successfully deleted query " << query);
+          "WORKERSERVICE (" << this->_ip << "-" << this->getPhysicalStreamConfig().physicalStreamName  << "): Successfully deleted query " << query);
     } else {
-      IOTDB_INFO("WORKERSERVICE (" << this->_ip << "-" << this->_sensor_type << "): *** Not found for deletion -> "
-                                   << query);
+      IOTDB_INFO(
+          "WORKERSERVICE (" << this->_ip << "-" << this->getPhysicalStreamConfig().physicalStreamName  << "): *** Not found for deletion -> " << query);
     }
-  }
-  catch (...) {
+  } catch (...) {
     // TODO: catch ZMQ termination errors properly
-    IOTDB_ERROR("WORKERSERVICE (" << this->_ip << "-" << this->_sensor_type << "): Undefined error during deletion!")
+    IOTDB_ERROR(
+        "WORKERSERVICE (" << this->_ip << "-" << this->getPhysicalStreamConfig().physicalStreamName  << "): Undefined error during deletion!")
   }
 }
 
@@ -54,7 +72,7 @@ vector<string> WorkerService::getOperators() {
     string str_opts;
     const OperatorPtr& op = std::get<1>(x.second);
     auto flattened = op->flattenedTypes();
-    for (const OperatorType &_o: flattened) {
+    for (const OperatorType &_o : flattened) {
       if (!str_opts.empty())
         str_opts.append(", ");
       str_opts.append(operatorTypeToString.at(_o));
@@ -82,13 +100,6 @@ uint16_t WorkerService::getReceivePort() const {
 void WorkerService::setReceivePort(uint16_t receive_port) {
   _receive_port = receive_port;
 }
-const string &WorkerService::getSensorType() const {
-  return _sensor_type;
-}
-void WorkerService::setSensorType(const string &sensor_type) {
-  _sensor_type = sensor_type;
-}
 
 }
-
 
