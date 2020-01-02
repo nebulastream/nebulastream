@@ -1,5 +1,3 @@
-
-
 #include <cassert>
 #include <iostream>
 
@@ -10,7 +8,7 @@
 #include <API/UserAPIExpression.hpp>
 #include <API/Environment.hpp>
 #include <API/Types/DataTypes.hpp>
-
+#include <Util/UtilityFunctions.hpp>
 namespace iotdb {
 
     class SelectionDataGenFunctor {
@@ -100,7 +98,7 @@ namespace iotdb {
              << "" << std::endl
              << ";" << std::endl;
 
-        InputQueryPtr inputQuery = createQueryFromCodeString(code.str());
+        InputQueryPtr inputQuery = UtilityFunctions::createQueryFromCodeString(code.str());
     }
 
 } // namespace iotdb

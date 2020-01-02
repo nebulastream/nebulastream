@@ -19,6 +19,7 @@
 #include "boost/program_options.hpp"
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Util/UtilityFunctions.hpp>
 using std::cout;
 using std::endl;
 using std::string;
@@ -44,6 +45,16 @@ void start_worker(actor_system &system, const WorkerActorConfig &cfg,
 //    << endl;
 //  };
 //  usage();
+
+
+//  Test Code
+
+//  getSchemaFromCode
+  std::string testSchema = "Schema schema = Schema::create().addField(\"id\", BasicType::UINT32).addField(\"value\", BasicType::UINT64);";
+
+  SchemaPtr sch = UtilityFunctions::createSchemaFromCode(testSchema);
+  cout << "schema=" << sch->toString() << endl;
+
 
   infer_handle_from_class_t<iotdb::WorkerActor> client;
 
@@ -86,7 +97,7 @@ void start_worker(actor_system &system, const WorkerActorConfig &cfg,
   // read next line, split it, and feed to the eval handler
   string line;
   while (!done && std::getline(std::cin, line)) {
-    line = trim(std::move(line));  // ignore leading and trailing whitespaces
+    line = iotdb::UtilityFunctions::trim(std::move(line));  // ignore leading and trailing whitespaces
     std::vector<string> words;
     split(words, line, is_any_of(" "), token_compress_on);
 //    if (!message_builder(words.begin(), words.end()).apply(eval))
