@@ -5,7 +5,7 @@
 #include <REST/Controller/BaseController.hpp>
 #include <REST/controller.hpp>
 #include <Services/QueryService.hpp>
-#include "../../Services/NESTopologyService.hpp"
+#include <Services/NESTopologyService.hpp>
 
 using namespace caf;
 

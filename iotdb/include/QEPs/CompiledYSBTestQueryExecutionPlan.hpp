@@ -1,6 +1,6 @@
 #ifndef CompiledYSBTestQueryExecutionPlan_HPP_
 #define CompiledYSBTestQueryExecutionPlan_HPP_
-#include <CodeGen/HandCodedQueryExecutionPlan.hpp>
+#include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
