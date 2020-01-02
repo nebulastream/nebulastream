@@ -52,6 +52,7 @@ void WorkerActor::connecting(const std::string &host, uint16_t port) {
         this->state.current_server = serv;
         auto coordinator = actor_cast<actor>(serv);
         //TODO: make getPhysicalStreamConfig serializable with the caf framework
+        //TODO: add serializable shipping object
         cout << "send properties to server" << endl;
         this->request(coordinator, task_timeout, register_sensor_atom::value, this->state.workerPtr->getIp(),
             this->state.workerPtr->getPublishPort(), this->state.workerPtr->getReceivePort(), 2,

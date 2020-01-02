@@ -1,5 +1,6 @@
 #include <API/Stream.hpp>
 #include <API/UserAPIExpression.hpp>
+#include <Util/Logger.hpp>
 
 namespace iotdb {
 
@@ -22,7 +23,7 @@ Field Stream::operator[](const std::string fieldName) {
 }
 
 Field Stream::getField(const std::string fieldName) {
-  std::cout << " streamName=" << name <<  " schema=" << schema.toString() << std::endl;
+  IOTDB_DEBUG("getField() streamName=" << fieldName <<  " schema=" << schema.toString())
   return Field(schema.get(fieldName));
 }
 

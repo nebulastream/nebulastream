@@ -23,13 +23,6 @@ CSVSource::CSVSource(const Schema& schema, const std::string& _file_path,
     : DataSource(schema),
       file_path(_file_path),
       delimiter(delimiter) {
-//  input.seekg(0, input.end);
-//  file_size = input.tellg();
-//  if (file_size == -1) {
-//    IOTDB_ERROR("ERROR: File " << _file_path << " is corrupted")
-//    assert(0);
-//  }
-//  input.seekg(0, input.beg);
   tuple_size = schema.getSchemaSize();
 }
 

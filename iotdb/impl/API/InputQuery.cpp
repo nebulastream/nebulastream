@@ -59,6 +59,8 @@ const InputQueryPtr createQueryFromCodeString(
     code << "#include <Catalogs/StreamCatalog.hpp>" << std::endl;
     code << "namespace iotdb{" << std::endl;
     code << "InputQuery createQuery(){" << std::endl;
+
+    //we will get the schema from the catalog, if stream does not exists this will through an exception
     std::string streamName = query_code_snippet.substr(
         query_code_snippet.find("::from("));
     streamName = streamName.substr(7, streamName.find(").") - 7);
@@ -69,14 +71,14 @@ const InputQueryPtr createQueryFromCodeString(
 //    code << "Stream& stream = *sPtr.get();" << std::endl;
     std::string newQuery = query_code_snippet;
 
-    //replace from clause
+    //replace the stream "xyz" provided by the user with the reference to the generated stream for the from clause
     boost::replace_all(newQuery, "from(" + streamName, "from(*sPtr.get()");
 
-    //replace .writeToZmq
+    //please the stream "xyz" provided by the user with the variable name of the generated stream for the writeToZmQ
     boost::replace_all(newQuery, "writeToZmq(" + streamName + ",",
                        "writeToZmq(\"" + streamName + "\",");
 
-    //replace filter
+    //replace the stream "xyz" provided by the user with the variable name of the generated stream for the access inside the filter predicate
     boost::replace_all(newQuery, "filter(" + streamName,
                        "filter((*sPtr.get())");
 
