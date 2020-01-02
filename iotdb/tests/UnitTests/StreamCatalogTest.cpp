@@ -68,7 +68,7 @@ TEST_F(StreamCatalogTest, add_get_log_stream_test) {
   EXPECT_NE(sPtr, nullptr);
 
   string exp =
-      "logical stream name=default_logical schema: name=id UINT32 name=value UINT64\n\nlogical stream name=test_stream schema:\n\n";
+      "logical stream name=default_logical schema:id:UINT32value:UINT64\n\nlogical stream name=test_stream schema:\n\n";
   EXPECT_EQ(exp, StreamCatalog::instance().getLogicalStreamAndSchemaAsString());
 }
 
