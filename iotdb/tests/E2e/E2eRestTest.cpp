@@ -101,13 +101,12 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
   coordinatorPid = workerProc.id();
   workerPid = coordinatorProc.id();
   sleep(3);
-//  std::string outputFilePath = "blob.txt";
 
   std::stringstream ss;
-  ss << "{\"userQuery\" : \"Schema schema = Schema::create().addField(\\\"id\\\", BasicType::UINT32).addField(\\\"value\\\", BasicType::UINT64);";
-  ss << "Stream stream = Stream(\\\"default\\\", schema); InputQuery inputQuery = InputQuery::from(stream).print(std::cout);";
-  ss << " return inputQuery;\",\"strategyName\" : \"BottomUp\"}";
-  ss << endl;
+    ss << "{\"userQuery\" : ";
+    ss << "\" InputQuery inputQuery = InputQuery::from(default_logical).print(std::cout);";
+    ss << " return inputQuery;\",\"strategyName\" : \"BottomUp\"}";
+    ss << endl;
   cout << "string submit=" << ss.str();
   string body = ss.str();
 
@@ -163,8 +162,8 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
   sleep(3);
 
   std::stringstream ss;
-  ss << "{\"userQuery\" : \"Schema schema = Schema::create().addField(\\\"id\\\", BasicType::UINT32).addField(\\\"value\\\", BasicType::UINT64);";
-  ss << "Stream stream = Stream(\\\"default\\\", schema); InputQuery inputQuery = InputQuery::from(stream).writeToFile(\\\"";
+  ss << "{\"userQuery\" : ";
+  ss <<  "\" InputQuery inputQuery = InputQuery::from(default_logical).writeToFile(\\\"";
   ss << outputFilePath;
   ss << "\\\"); return inputQuery;\",\"strategyName\" : \"BottomUp\"}";
   ss << endl;

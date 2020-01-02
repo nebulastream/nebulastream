@@ -337,6 +337,7 @@ NESTopologySensorNodePtr NESTopologyPlan::createNESSensorNode(std::string ipAddr
   size_t nodeId = getNextFreeNodeId();
   auto ptr = std::make_shared<NESTopologySensorNode>(nodeId, ipAddr);
   ptr->setCpuCapacity(cpuCapacity);
+  ptr->setPhysicalStreamName("default_physical");
   fGraphPtr->addVertex(ptr);
   return ptr;
 }

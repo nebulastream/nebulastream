@@ -11,7 +11,7 @@
 #include <CodeGen/QueryExecutionPlan.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/Task.hpp>
-#include "../SourceSink/DataSource.hpp"
+#include <SourceSink/DataSource.hpp>
 #include "TupleBuffer.hpp"
 #include <Windows/WindowHandler.hpp>
 namespace iotdb {
@@ -31,7 +31,7 @@ class Dispatcher {
   /**
    * @brief Singleton implementation of dispatcher
    */
-    static Dispatcher& instance();
+  static Dispatcher& instance();
 
   /**
    * @brief register a query by extracting sources, windows and sink and add them to
@@ -41,12 +41,11 @@ class Dispatcher {
   bool registerQueryWithStart(const QueryExecutionPlanPtr);
 
   /**
-     * @brief register a query by extracting sources, windows and sink and add them to
-     * respective map
-     * @param QueryExecutionPlan to be deployed
-     */
-    bool registerQueryWithoutStart(const QueryExecutionPlanPtr);
-
+   * @brief register a query by extracting sources, windows and sink and add them to
+   * respective map
+   * @param QueryExecutionPlan to be deployed
+   */
+  bool registerQueryWithoutStart(const QueryExecutionPlanPtr);
 
   /**
    * @brief deregister a query by extracting sources, windows and sink and remove them
@@ -99,17 +98,16 @@ class Dispatcher {
    */
   void printQEPStatistics(const QueryExecutionPlanPtr qep);
 
-
   /**
-     * @brief notify all waiting threads in getWork() to wake up and try again
-     */
+   * @brief notify all waiting threads in getWork() to wake up and try again
+   */
   void unblockThreads() {
     cv.notify_all();
   }
 
   /**
-     * @brief reset dispatcher to intial state
-     */
+   * @brief reset dispatcher to intial state
+   */
   void resetDispatcher();
 
  private:
