@@ -1,4 +1,4 @@
-#include <CodeGen/QueryPlanBuilder.hpp>
+#include <QueryCompiler/QueryPlanBuilder.hpp>
 #include "Services/QueryService.hpp"
 
 using namespace iotdb;

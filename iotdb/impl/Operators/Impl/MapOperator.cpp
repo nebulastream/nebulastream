@@ -6,7 +6,7 @@
 
 #include <Operators/Impl/MapOperator.hpp>
 #include <API/UserAPIExpression.hpp>
-#include <CodeGen/CodeGen.hpp>
+#include <QueryCompiler/CodeGenerator.hpp>
 
 namespace iotdb {
 

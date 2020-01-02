@@ -9,9 +9,9 @@
 #include <SourceSink/DataSource.hpp>
 #include <SourceSink/DataSink.hpp>
 #include <Operators/Operator.hpp>
-#include <CodeGen/QueryExecutionPlan.hpp>
-#include <CodeGen/CodeGen.hpp>
-#include <CodeGen/GeneratedQueryExecutionPlan.hpp>
+#include <QueryCompiler/QueryExecutionPlan.hpp>
+#include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 
 #include <string>
 #include <vector>

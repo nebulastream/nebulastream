@@ -4,7 +4,7 @@
 #include <string>
 #include <cpprest/json.h>
 #include <API/InputQuery.hpp>
-#include "../Optimizer/NESExecutionPlan.hpp"
+#include <Optimizer/NESExecutionPlan.hpp>
 
 namespace iotdb {
 

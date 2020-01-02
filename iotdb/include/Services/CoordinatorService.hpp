@@ -6,15 +6,15 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
-#include <CodeGen/GeneratedQueryExecutionPlan.hpp>
+#include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <API/InputQuery.hpp>
 
 #include <API/UserAPIExpression.hpp>
-#include <CodeGen/C_CodeGen/CodeCompiler.hpp>
+#include <QueryCompiler/CCodeGenerator/CodeCompiler.hpp>
 
 #include <Util/ErrorHandling.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <CodeGen/CodeGen.hpp>
+#include <QueryCompiler/CodeGenerator.hpp>
 #include <Operators/Impl/SourceOperator.hpp>
 #include <Operators/Impl/SinkOperator.hpp>
 #include "Actors/ExecutableTransferObject.hpp"
