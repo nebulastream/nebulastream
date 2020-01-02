@@ -1,14 +1,13 @@
 #include <cstddef>
-#include <iomanip>
 #include <iostream>
 #include <boost/algorithm/string/replace.hpp>
 #include <API/InputQuery.hpp>
 #include <Operators/Operator.hpp>
-#include <QueryCompiler/C_CodeGenerator/CodeCompiler.hpp>
+#include <QueryCompiler/CCodeGenerator/CodeCompiler.hpp>
 #include <API/UserAPIExpression.hpp>
 #include <SourceSink/DataSink.hpp>
-#include "../../include/SourceSink/SinkCreator.hpp"
-#include "../../include/SourceSink/SourceCreator.hpp"
+#include <SourceSink/SinkCreator.hpp>
+#include <SourceSink/SourceCreator.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 
 #include <API/Window/WindowDefinition.hpp>

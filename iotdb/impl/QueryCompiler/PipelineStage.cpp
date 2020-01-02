@@ -1,15 +1,9 @@
-/*
- * PipelineStage.cpp
- *
- *  Created on: Dec 19, 2018
- *      Author: zeuchste
- */
 
-#include <QueryCompiler/C_CodeGenerator/CodeCompiler.hpp>
+#include <iostream>
+#include <QueryCompiler/CCodeGenerator/CodeCompiler.hpp>
 #include <QueryCompiler/PipelineStage.hpp>
 #include <Util/ErrorHandling.hpp>
-#include <iostream>
-#include "../../include/SourceSink/DataSink.hpp"
+#include <SourceSink/DataSink.hpp>
 
 namespace iotdb {
 

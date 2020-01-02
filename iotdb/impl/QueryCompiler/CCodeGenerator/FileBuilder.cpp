@@ -1,9 +1,9 @@
 
 #include <string>
 
-#include <QueryCompiler/C_CodeGenerator/CodeCompiler.hpp>
-#include <QueryCompiler/C_CodeGenerator/Declaration.hpp>
-#include <QueryCompiler/C_CodeGenerator/FileBuilder.hpp>
+#include <QueryCompiler/CCodeGenerator/CodeCompiler.hpp>
+#include <QueryCompiler/CCodeGenerator/Declaration.hpp>
+#include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/PipelineStage.hpp>
 #include <Util/ErrorHandling.hpp>
 

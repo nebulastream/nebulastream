@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 
-#include <QueryCompiler/C_CodeGenerator/Declaration.hpp>
+#include <QueryCompiler/CCodeGenerator/Declaration.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 #include <Util/ErrorHandling.hpp>
 #include <API/Types/DataTypes.hpp>

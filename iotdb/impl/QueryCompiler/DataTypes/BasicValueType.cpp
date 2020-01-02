@@ -1,7 +1,7 @@
 
 #include <QueryCompiler/DataTypes/BasicValueType.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
-#include <QueryCompiler/C_CodeGenerator/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/export.hpp>
