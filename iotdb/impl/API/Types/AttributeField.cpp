@@ -1,7 +1,7 @@
 
 #include <API/Types/AttributeField.hpp>
-#include <CodeGen/CodeExpression.hpp>
-#include <CodeGen/C_CodeGen/Statement.hpp>
+#include <QueryCompiler/CodeExpression.hpp>
+#include <QueryCompiler/C_CodeGen/Statement.hpp>
 namespace iotdb {
 
 AttributeField::AttributeField(const std::string &_name, DataTypePtr _data_type) : name(_name), data_type(_data_type) {

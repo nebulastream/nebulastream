@@ -1,4 +1,4 @@
-#include <CodeGen/QueryExecutionPlan.hpp>
+#include <QueryCompiler/QueryExecutionPlan.hpp>
 BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::QueryExecutionPlan);
 
 #include <assert.h>

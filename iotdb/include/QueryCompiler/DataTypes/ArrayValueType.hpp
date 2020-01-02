@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <CodeGen/DataTypes/ValueType.hpp>
+#include <QueryCompiler/DataTypes/ValueType.hpp>
 
 namespace iotdb{
 

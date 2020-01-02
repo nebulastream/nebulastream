@@ -1,4 +1,4 @@
-#include <CodeGen/DataTypes/ValueType.hpp>
+#include <QueryCompiler/DataTypes/ValueType.hpp>
 using namespace iotdb;
 
 ValueType::ValueType(const ValueType &) {

@@ -1,6 +1,6 @@
 #ifndef INCLUDE_OPTIMIZER_FOGRUNTIME_HPP_
 #define INCLUDE_OPTIMIZER_FOGRUNTIME_HPP_
-#include <CodeGen/QueryExecutionPlan.hpp>
+#include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/json.hpp>
 #include <map>

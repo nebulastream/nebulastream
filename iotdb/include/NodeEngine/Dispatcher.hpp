@@ -8,7 +8,7 @@
 #include <vector>
 #include <chrono>
 
-#include <CodeGen/QueryExecutionPlan.hpp>
+#include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/Task.hpp>
 #include "../SourceSink/DataSource.hpp"

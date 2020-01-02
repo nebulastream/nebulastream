@@ -1,10 +1,10 @@
 #include <string>
 #include <sstream>
 
-#include <CodeGen/CodeGen.hpp>
-#include <CodeGen/C_CodeGen/BinaryOperatorStatement.hpp>
-#include <CodeGen/C_CodeGen/Declaration.hpp>
-#include <CodeGen/C_CodeGen/Statement.hpp>
+#include <QueryCompiler/CodeGen.hpp>
+#include <QueryCompiler/C_CodeGen/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/C_CodeGen/Declaration.hpp>
+#include <QueryCompiler/C_CodeGen/Statement.hpp>
 
 #include <API/UserAPIExpression.hpp>
 #include <API/Types/DataTypes.hpp>

@@ -1,7 +1,7 @@
 
 
 #include <iostream>
-#include <CodeGen/CodeGen.hpp>
+#include <QueryCompiler/CodeGen.hpp>
 #include <Operators/Impl/FilterOperator.hpp>
 
 namespace iotdb {

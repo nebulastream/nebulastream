@@ -1,9 +1,9 @@
 #include <memory>
 #include <string>
 
-#include <CodeGen/C_CodeGen/BinaryOperatorStatement.hpp>
-#include <CodeGen/C_CodeGen/Statement.hpp>
-#include <CodeGen/CodeExpression.hpp>
+#include <QueryCompiler/C_CodeGen/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/C_CodeGen/Statement.hpp>
+#include <QueryCompiler/CodeExpression.hpp>
 
 namespace iotdb {
 

@@ -4,7 +4,7 @@
 #include <sstream>
 #include <vector>
 
-#include <CodeGen/CodeGen.hpp>
+#include <QueryCompiler/CodeGen.hpp>
 #include <Operators/Impl/SourceOperator.hpp>
 
 namespace iotdb {

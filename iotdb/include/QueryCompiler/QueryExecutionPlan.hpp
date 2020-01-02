@@ -7,7 +7,7 @@
 
 #ifndef INCLUDE_QUERYEXECUTIONPLAN_H_
 #define INCLUDE_QUERYEXECUTIONPLAN_H_
-#include <CodeGen/PipelineStage.hpp>
+#include <QueryCompiler/PipelineStage.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/vector.hpp>
 #include <map>

@@ -2,7 +2,7 @@
 #include <boost/serialization/export.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-#include <CodeGen/GeneratedQueryExecutionPlan.hpp>
+#include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 
 BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::GeneratedQueryExecutionPlan);
 

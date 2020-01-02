@@ -8,7 +8,7 @@
 #ifndef INCLUDE_HANDCODEDQUERYEXECUTIONPLAN_H_
 #define INCLUDE_HANDCODEDQUERYEXECUTIONPLAN_H_
 
-#include <CodeGen/QueryExecutionPlan.hpp>
+#include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>

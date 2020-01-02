@@ -21,7 +21,7 @@
 #include <boost/lexical_cast.hpp>
 #include <Util/Logger.hpp>
 #include <string>
-#include <CodeGen/QueryExecutionPlan.hpp>
+#include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <QEPs/CompiledYSBTestQueryExecutionPlan.hpp>
 #include <API/Config.hpp>
 

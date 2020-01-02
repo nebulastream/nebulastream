@@ -1,6 +1,6 @@
-#include <CodeGen/DataTypes/PointerDataType.hpp>
-#include <CodeGen/CodeExpression.hpp>
-#include <CodeGen/C_CodeGen/Statement.hpp>
+#include <QueryCompiler/DataTypes/PointerDataType.hpp>
+#include <QueryCompiler/CodeExpression.hpp>
+#include <QueryCompiler/C_CodeGen/Statement.hpp>
 
 namespace iotdb {
 

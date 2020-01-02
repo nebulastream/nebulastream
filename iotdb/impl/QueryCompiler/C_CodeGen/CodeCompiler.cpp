@@ -1,4 +1,4 @@
-#include <CodeGen/C_CodeGen/CodeCompiler.hpp>
+#include <QueryCompiler/C_CodeGen/CodeCompiler.hpp>
 
 #include <Util/ErrorHandling.hpp>
 #include <Util/SharedLibrary.hpp>
@@ -22,7 +22,7 @@ namespace iotdb {
 
 const std::string CCodeCompiler::IncludePath = PATH_TO_IOTDB_SOURCE_CODE "/include/";
 
-const std::string CCodeCompiler::MinimalApiHeaderPath = PATH_TO_IOTDB_SOURCE_CODE "/include/CodeGen/"
+const std::string CCodeCompiler::MinimalApiHeaderPath = PATH_TO_IOTDB_SOURCE_CODE "/include/QueryCompiler/"
                                                         "MinimalApi.hpp";
 
 class CompilerFlags {
