@@ -3,9 +3,9 @@
 #include <string>
 #include <vector>
 
-#include <CodeGen/C_CodeGen/Declaration.hpp>
-#include <CodeGen/C_CodeGen/FunctionBuilder.hpp>
-#include <CodeGen/C_CodeGen/Statement.hpp>
+#include <QueryCompiler/C_CodeGen/Declaration.hpp>
+#include <QueryCompiler/C_CodeGen/FunctionBuilder.hpp>
+#include <QueryCompiler/C_CodeGen/Statement.hpp>
 #include <API/Types/DataTypes.hpp>
 
 namespace iotdb {

@@ -4,16 +4,16 @@
 
 #include <math.h>
 
-#include <CodeGen/CodeGen.hpp>
-#include <CodeGen/PipelineStage.hpp>
+#include <QueryCompiler/CodeGen.hpp>
+#include <QueryCompiler/PipelineStage.hpp>
 #include <NodeEngine/BufferManager.hpp>
 
-#include <CodeGen/C_CodeGen/BinaryOperatorStatement.hpp>
-#include <CodeGen/C_CodeGen/Declaration.hpp>
-#include <CodeGen/C_CodeGen/FileBuilder.hpp>
-#include <CodeGen/C_CodeGen/FunctionBuilder.hpp>
-#include <CodeGen/C_CodeGen/Statement.hpp>
-#include <CodeGen/C_CodeGen/UnaryOperatorStatement.hpp>
+#include <QueryCompiler/C_CodeGen/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/C_CodeGen/Declaration.hpp>
+#include <QueryCompiler/C_CodeGen/FileBuilder.hpp>
+#include <QueryCompiler/C_CodeGen/FunctionBuilder.hpp>
+#include <QueryCompiler/C_CodeGen/Statement.hpp>
+#include <QueryCompiler/C_CodeGen/UnaryOperatorStatement.hpp>
 #include <API/UserAPIExpression.hpp>
 #include <SourceSink/GeneratorSource.hpp>
 #include <Windows/WindowHandler.hpp>

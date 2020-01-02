@@ -6,13 +6,13 @@
 #include <API/InputQuery.hpp>
 #include <Operators/Operator.hpp>
 
-#include <CodeGen/C_CodeGen/CodeCompiler.hpp>
+#include <QueryCompiler/C_CodeGen/CodeCompiler.hpp>
 #include <Util/ErrorHandling.hpp>
-#include <CodeGen/QueryPlanBuilder.hpp>
-#include <CodeGen/C_CodeGen/Declaration.hpp>
-#include <CodeGen/C_CodeGen/FunctionBuilder.hpp>
-#include <CodeGen/C_CodeGen/FileBuilder.hpp>
-#include <CodeGen/CodeGen.hpp>
+#include <QueryCompiler/QueryPlanBuilder.hpp>
+#include <QueryCompiler/C_CodeGen/Declaration.hpp>
+#include <QueryCompiler/C_CodeGen/FunctionBuilder.hpp>
+#include <QueryCompiler/C_CodeGen/FileBuilder.hpp>
+#include <QueryCompiler/CodeGen.hpp>
 
 namespace iotdb {
     Environment::Environment(const Config& config) : config(config) {}

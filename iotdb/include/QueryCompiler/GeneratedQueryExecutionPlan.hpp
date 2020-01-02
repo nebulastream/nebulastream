@@ -1,8 +1,8 @@
 #ifndef INCLUDE_GENERATEDQUERYEXECUTIONPLAN_H_
 #define INCLUDE_GENERATEDQUERYEXECUTIONPLAN_H_
 
-#include <CodeGen/QueryExecutionPlan.hpp>
-#include <CodeGen/PipelineStage.hpp>
+#include <QueryCompiler/QueryExecutionPlan.hpp>
+#include <QueryCompiler/PipelineStage.hpp>
 #include <API/InputQuery.hpp>
 
 #include <NodeEngine/BufferManager.hpp>

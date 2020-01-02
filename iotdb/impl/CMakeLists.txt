@@ -1,7 +1,7 @@
 add_subdirectory(Actors)
 add_subdirectory(API)
 add_subdirectory(Core)
-add_subdirectory(CodeGen)
+add_subdirectory(QueryCompiler)
 add_subdirectory(Operators)
 add_subdirectory(Optimizer)
 add_subdirectory(SourceSink)

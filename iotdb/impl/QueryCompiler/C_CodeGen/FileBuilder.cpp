@@ -1,10 +1,10 @@
 
 #include <string>
 
-#include <CodeGen/C_CodeGen/CodeCompiler.hpp>
-#include <CodeGen/C_CodeGen/Declaration.hpp>
-#include <CodeGen/C_CodeGen/FileBuilder.hpp>
-#include <CodeGen/PipelineStage.hpp>
+#include <QueryCompiler/C_CodeGen/CodeCompiler.hpp>
+#include <QueryCompiler/C_CodeGen/Declaration.hpp>
+#include <QueryCompiler/C_CodeGen/FileBuilder.hpp>
+#include <QueryCompiler/PipelineStage.hpp>
 #include <Util/ErrorHandling.hpp>
 
 namespace iotdb {

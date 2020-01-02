@@ -1,11 +1,11 @@
 
-#include <CodeGen/CodeExpression.hpp>
-#include <CodeGen/C_CodeGen/Statement.hpp>
-#include <CodeGen/C_CodeGen/BinaryOperatorStatement.hpp>
-#include <CodeGen/DataTypes/ValueType.hpp>
-#include <CodeGen/DataTypes/BasicDataType.hpp>
-#include <CodeGen/DataTypes/ArrayDataType.hpp>
-#include <CodeGen/DataTypes/ArrayValueType.hpp>
+#include <QueryCompiler/CodeExpression.hpp>
+#include <QueryCompiler/C_CodeGen/Statement.hpp>
+#include <QueryCompiler/C_CodeGen/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/DataTypes/ValueType.hpp>
+#include <QueryCompiler/DataTypes/BasicDataType.hpp>
+#include <QueryCompiler/DataTypes/ArrayDataType.hpp>
+#include <QueryCompiler/DataTypes/ArrayValueType.hpp>
 
 namespace iotdb {
 

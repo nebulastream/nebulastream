@@ -8,7 +8,7 @@
 #ifndef TESTS_TESTPLANS_COMPILEDDUMMYPLAN_HPP_
 #define TESTS_TESTPLANS_COMPILEDDUMMYPLAN_HPP_
 #include <API/InputQuery.hpp>
-#include <CodeGen/HandCodedQueryExecutionPlan.hpp>
+#include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
 #include <NodeEngine/Dispatcher.hpp>
 #include <memory>
 #include "../SourceSink/GeneratorSource.hpp"

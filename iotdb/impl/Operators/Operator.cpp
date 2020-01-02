@@ -1,5 +1,5 @@
 
-#include <CodeGen/CodeGen.hpp>
+#include <QueryCompiler/CodeGen.hpp>
 #include <Operators/Operator.hpp>
 #include <Util/ErrorHandling.hpp>
 #include <sstream>

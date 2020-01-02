@@ -1,5 +1,5 @@
 #include "Services/OptimizerService.hpp"
-#include <CodeGen/QueryPlanBuilder.hpp>
+#include <QueryCompiler/QueryPlanBuilder.hpp>
 #include "../../include/Optimizer/NESOptimizer.hpp"
 #include "../../include/Topology/NESTopologyManager.hpp"
 

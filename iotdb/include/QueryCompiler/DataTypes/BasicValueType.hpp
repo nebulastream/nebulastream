@@ -4,7 +4,7 @@
 #pragma once
 
 #include <API/Types/DataTypes.hpp>
-#include <CodeGen/DataTypes/ValueType.hpp>
+#include <QueryCompiler/DataTypes/ValueType.hpp>
 
 namespace iotdb {
 
