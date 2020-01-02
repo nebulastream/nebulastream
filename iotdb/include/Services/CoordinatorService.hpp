@@ -14,7 +14,7 @@
 
 #include <Util/ErrorHandling.hpp>
 #include <Util/UtilityFunctions.hpp>
-#include <QueryCompiler/CodeGen.hpp>
+#include <QueryCompiler/CodeGenerator.hpp>
 #include <Operators/Impl/SourceOperator.hpp>
 #include <Operators/Impl/SinkOperator.hpp>
 #include "Actors/ExecutableTransferObject.hpp"

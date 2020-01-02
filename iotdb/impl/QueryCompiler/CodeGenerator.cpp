@@ -10,7 +10,7 @@
 #include <QueryCompiler/C_CodeGen/FunctionBuilder.hpp>
 #include <QueryCompiler/C_CodeGen/Statement.hpp>
 #include <QueryCompiler/C_CodeGen/UnaryOperatorStatement.hpp>
-#include <QueryCompiler/CodeGen.hpp>
+#include <QueryCompiler/CodeGenerator.hpp>
 #include <Util/ErrorHandling.hpp>
 
 #include <API/Types/DataTypes.hpp>

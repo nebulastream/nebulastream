@@ -4,7 +4,7 @@
 
 #include <math.h>
 
-#include <QueryCompiler/CodeGen.hpp>
+#include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/PipelineStage.hpp>
 #include <NodeEngine/BufferManager.hpp>
 

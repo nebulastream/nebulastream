@@ -3,7 +3,7 @@
 #include <sstream>
 #include <vector>
 
-#include <QueryCompiler/CodeGen.hpp>
+#include <QueryCompiler/CodeGenerator.hpp>
 #include <Operators/Impl/SinkOperator.hpp>
 #include <SourceSink/DataSink.hpp>
 
