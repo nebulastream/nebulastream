@@ -4,8 +4,10 @@
 #include <API/InputQuery.hpp>
 #include <NodeEngine/NodeProperties.hpp>
 #include <Util/CPUCapacity.hpp>
+#include <string>
 
 namespace iotdb {
+typedef std::shared_ptr<InputQuery> InputQueryPtr;
 
 enum NESNodeType {
   Coordinator,
@@ -81,11 +83,15 @@ class NESTopologyEntry {
     return this->nodeProperties->dump();
   }
 
+  std::string toString()
+  {
+
+    return "id=" + std::to_string(getId()) + " type=" + getEntryTypeString();
+  }
  protected:
   std::string ip_addr;
   uint16_t publish_port;
   uint16_t receive_port;
-  size_t node_id;
   NodePropertiesPtr nodeProperties;
 
 };
