@@ -79,7 +79,7 @@ const AttributeFieldPtr Schema::operator[](uint32_t index) const {
 const std::string Schema::toString() const {
   std::stringstream ss;
   for (auto& f : fields) {
-    ss << " name=" << f->name << " " << f->getDataType()->toString();
+    ss << f->toString();
   }
   ss << std::endl;
   return ss.str();
