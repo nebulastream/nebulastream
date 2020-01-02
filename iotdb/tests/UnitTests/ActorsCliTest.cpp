@@ -7,17 +7,19 @@
 #include <Actors/Configurations/WorkerActorConfig.hpp>
 #include <Actors/AtomUtils.hpp>
 #include "caf/io/all.hpp"
+#include <Catalogs/PhysicalStreamConfig.hpp>
 
 namespace iotdb {
 
 class ActorsCliTest : public testing::Test {
  public:
   std::string host = "localhost";
-  std::string queryString = "Schema schema = Schema::create()"
-    ".addField(\"id\", BasicType::UINT32)"
-    ".addField(\"value\", BasicType::UINT64);"
-    "Stream stream = Stream(\"default\", schema);"
-    "InputQuery inputQuery = InputQuery::from(stream).filter(stream[\"value\"] > 42).print(std::cout); "
+  std::string queryString =
+//    "Schema schema = Schema::create()"
+//    ".addField(\"id\", BasicType::UINT32)"
+//    ".addField(\"value\", BasicType::UINT64);"
+//    "Stream stream = Stream(\"default\", schema);"
+    "InputQuery inputQuery = InputQuery::from(default_logical).filter(default_logical[\"id\"] > 42).print(std::cout); "
     "return inputQuery;";
 
   static void SetUpTestCase() {
@@ -69,7 +71,8 @@ TEST_F(ActorsCliTest, testSpawnDespawnCoordinatorWorkers) {
   WorkerActorConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw{w_cfg};
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
+  PhysicalStreamConfig streamConf; //streamConf.physicalStreamName
+  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, streamConf);
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -98,7 +101,8 @@ TEST_F(ActorsCliTest, testShowTopology) {
   WorkerActorConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw{w_cfg};
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
+  PhysicalStreamConfig streamConf;
+  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, streamConf);
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -130,7 +134,8 @@ TEST_F(ActorsCliTest, testShowRegistered) {
   WorkerActorConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw{w_cfg};
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
+  PhysicalStreamConfig streamConf;
+  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, streamConf);
 
   //Prepare Actor System
   scoped_actor self{system_coord};
@@ -161,7 +166,7 @@ TEST_F(ActorsCliTest, testShowRegistered) {
 
   // check length of registered queries
   size_t query_size = 0;
-  self->request(coordinator, task_timeout, show_registered_atom::value).receive(
+  self->request(coordinator, task_timeout, show_registered_queries_atom::value).receive(
       [&query_size](const size_t length) mutable {
         query_size = length;
         IOTDB_INFO("ACTORSCLITEST: Query length " << length);
@@ -198,7 +203,8 @@ TEST_F(ActorsCliTest, DISABLED_testDeleteQuery) {
   WorkerActorConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw{w_cfg};
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
+  PhysicalStreamConfig streamConf;
+  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, streamConf);
 
   //Prepare Actor System
   scoped_actor self{system_coord};
@@ -229,7 +235,7 @@ TEST_F(ActorsCliTest, DISABLED_testDeleteQuery) {
 
   // check length of registered queries
   size_t query_size = 0;
-  self->request(coordinator, task_timeout, show_registered_atom::value).receive(
+  self->request(coordinator, task_timeout, show_registered_queries_atom::value).receive(
       [&query_size](const size_t length) mutable {
         query_size = length;
         IOTDB_INFO("ACTORSCLITEST: Query length " << length);
@@ -247,7 +253,7 @@ TEST_F(ActorsCliTest, DISABLED_testDeleteQuery) {
   anon_send(coordinator, deregister_query_atom::value, uuid);
 
   std::this_thread::sleep_for(std::chrono::seconds(2));
-  anon_send(coordinator, show_running_atom::value);
+  anon_send(coordinator, show_running_queries_atom::value);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
   anon_send_exit(worker, exit_reason::user_shutdown);
@@ -276,7 +282,8 @@ TEST_F(ActorsCliTest, DISABLED_testShowRunning) {
   WorkerActorConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw{w_cfg};
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
+  PhysicalStreamConfig streamConf;
+  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, streamConf);
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -284,11 +291,11 @@ TEST_F(ActorsCliTest, DISABLED_testShowRunning) {
   std::this_thread::sleep_for(std::chrono::seconds(1));
   anon_send(coordinator, deploy_query_atom::value, "FIXME_USE_UUID");
   std::this_thread::sleep_for(std::chrono::seconds(1));
-  anon_send(coordinator, show_running_atom::value);
+  anon_send(coordinator, show_running_queries_atom::value);
   std::this_thread::sleep_for(std::chrono::seconds(1));
   anon_send(coordinator, deregister_query_atom::value, "FIXME_USE_UUID");
   std::this_thread::sleep_for(std::chrono::seconds(2));
-  anon_send(coordinator, show_running_atom::value);
+  anon_send(coordinator, show_running_queries_atom::value);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
   anon_send_exit(worker, exit_reason::user_shutdown);
@@ -317,7 +324,8 @@ TEST_F(ActorsCliTest, DISABLED_testShowOperators) {
   WorkerActorConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw{w_cfg};
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
+  PhysicalStreamConfig streamConf;
+  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, streamConf);
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
@@ -330,7 +338,7 @@ TEST_F(ActorsCliTest, DISABLED_testShowOperators) {
   std::this_thread::sleep_for(std::chrono::seconds(2));
   anon_send(coordinator, deregister_query_atom::value, "FIXME_USE_UUID");
   std::this_thread::sleep_for(std::chrono::seconds(2));
-  anon_send(coordinator, show_running_atom::value);
+  anon_send(coordinator, show_running_queries_atom::value);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
   anon_send_exit(worker, exit_reason::user_shutdown);
@@ -359,7 +367,8 @@ TEST_F(ActorsCliTest, testSequentialMultiQueries) {
   WorkerActorConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw{w_cfg};
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, w_cfg.sensor_type);
+  PhysicalStreamConfig streamConf;
+  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port, streamConf);
   anon_send(worker, connect_atom::value, w_cfg.host, ccfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 

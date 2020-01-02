@@ -2,7 +2,29 @@
 #define INCLUDE_SOURCESINK_SOURCECREATOR_HPP_
 
 #include <SourceSink/DataSource.hpp>
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <SourceSink/GeneratorSource.hpp>
+
 namespace iotdb {
+
+
+class OneGeneratorSource : public GeneratorSource {
+  public:
+    OneGeneratorSource() = default;
+    OneGeneratorSource(const Schema& schema, const uint64_t pNum_buffers_to_process) :
+        GeneratorSource(schema, pNum_buffers_to_process) {
+    }
+
+  TupleBufferPtr receiveData() override;
+
+ private:
+  friend class boost::serialization::access;
+  template<class Archive>
+  void serialize(Archive &ar, const unsigned int version) {
+    ar & boost::serialization::base_object<GeneratorSource>(*this);
+  }
+};
 
 /**
  * @brief function to create a test source which produces 10 tuples with value one based on a schema

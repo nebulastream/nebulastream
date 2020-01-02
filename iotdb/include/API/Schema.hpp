@@ -48,5 +48,8 @@ class Schema {
     ar & fields;
   }
 };
+
+typedef std::shared_ptr<Schema> SchemaPtr;
+
 } // namespace iotdb
 #endif // API_SCHEMA_H

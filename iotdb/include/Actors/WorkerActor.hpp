@@ -7,6 +7,7 @@
 #include <caf/all.hpp>
 #include <caf/io/all.hpp>
 #include <utility>
+#include <Catalogs/PhysicalStreamConfig.hpp>
 
 using namespace caf;
 using std::string;
@@ -21,17 +22,24 @@ struct WorkerState {
   std::unique_ptr<WorkerService> workerPtr;
 };
 
-// class-based, statically typed, event-based API
+/**
+ * @brief this class handles the actor implementation of the worker
+ * class-based, statically typed, event-based API
+ * Limitations:
+ *  - TODO: this does not handle connection lost
+ *  - TODO:
+ */
 class WorkerActor : public stateful_actor<WorkerState> {
  public:
   /**
-   * @brief the constructior of the worker to initialize the default objects
+   * @brief the constructor to  of the worker to initialize the default objects
    */
-  explicit WorkerActor(actor_config &cfg, string ip, uint16_t publish_port, uint16_t receive_port, string sensor_type)
-      : stateful_actor(
-      cfg) {
+  explicit WorkerActor(actor_config &cfg, string ip, uint16_t publish_port,
+                       uint16_t receive_port, PhysicalStreamConfig streamConf)
+      : stateful_actor(cfg) {
     this->state.workerPtr = std::make_unique<WorkerService>(
-        WorkerService(std::move(ip), publish_port, receive_port, std::move(sensor_type)));
+        WorkerService(std::move(ip), publish_port, receive_port,
+                      std::move(streamConf)));
   }
 
   behavior_type make_behavior() override {

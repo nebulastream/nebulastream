@@ -1,10 +1,3 @@
-/*
- * ThreadPool.cpp
- *
- *  Created on: Dec 19, 2018
- *      Author: zeuchste
- */
-
 #include <NodeEngine/Dispatcher.hpp>
 #include <NodeEngine/Task.hpp>
 #include <NodeEngine/ThreadPool.hpp>

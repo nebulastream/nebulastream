@@ -10,19 +10,11 @@
 #include <SourceSink/SourceCreator.hpp>
 #include <YSB_legacy/YSBGeneratorSource.hpp>
 
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
+
 
 namespace iotdb {
 
-class OneGeneratorSource : public GeneratorSource {
-  public:
-    OneGeneratorSource() = default;
-    OneGeneratorSource(const Schema& schema, const uint64_t pNum_buffers_to_process) :
-        GeneratorSource(schema, pNum_buffers_to_process) {
-    }
-
-  TupleBufferPtr receiveData() override {
+TupleBufferPtr OneGeneratorSource::receiveData(){
     // 10 tuples of size one
     TupleBufferPtr buf = BufferManager::instance().getBuffer();
     size_t tupleCnt = 10;
@@ -40,13 +32,6 @@ class OneGeneratorSource : public GeneratorSource {
     return buf;
   }
 
- private:
-  friend class boost::serialization::access;
-  template<class Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar & boost::serialization::base_object<GeneratorSource>(*this);
-  }
-};
 
 const DataSourcePtr createTestDataSourceWithSchema(const Schema &schema) {
   return std::make_shared<OneGeneratorSource>(schema, 1);

@@ -13,8 +13,11 @@ class Stream {
  public:
   Stream(std::string name, const Schema schema);
 
+  Stream(std::string name, SchemaPtr schema);
+
   Field operator[](const std::string fieldName);
 
+  Field getField(const std::string fieldName);
   std::string getName() { return name; }
 
   Schema &getSchema();
