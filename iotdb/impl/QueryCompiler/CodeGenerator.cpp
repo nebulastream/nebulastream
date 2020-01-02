@@ -3,13 +3,13 @@
 #include <list>
 
 #include <API/Schema.hpp>
-#include <QueryCompiler/C_CodeGenerator/BinaryOperatorStatement.hpp>
-#include <QueryCompiler/C_CodeGenerator/CodeCompiler.hpp>
-#include <QueryCompiler/C_CodeGenerator/Declaration.hpp>
-#include <QueryCompiler/C_CodeGenerator/FileBuilder.hpp>
-#include <QueryCompiler/C_CodeGenerator/FunctionBuilder.hpp>
-#include <QueryCompiler/C_CodeGenerator/Statement.hpp>
-#include <QueryCompiler/C_CodeGenerator/UnaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/CodeCompiler.hpp>
+#include <QueryCompiler/CCodeGenerator/Declaration.hpp>
+#include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
+#include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
+#include <QueryCompiler/CCodeGenerator/Statement.hpp>
+#include <QueryCompiler/CCodeGenerator/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <Util/ErrorHandling.hpp>
 
@@ -66,9 +66,9 @@ CodeGenerator::CodeGenerator(const CodeGenArgs &args) : args_(args) {}
 
 CodeGenerator::~CodeGenerator() {}
 
-class C_CodeGenerator : public CodeGenerator {
+class CCodeGenerator : public CodeGenerator {
  public:
-  C_CodeGenerator(const CodeGenArgs &args);
+  CCodeGenerator(const CodeGenArgs &args);
   virtual bool generateCode(const DataSourcePtr &source, const PipelineContextPtr &context,
                             std::ostream &out) override;
   virtual bool generateCode(const PredicatePtr &pred, const PipelineContextPtr &context, std::ostream &out) override;
@@ -81,13 +81,13 @@ class C_CodeGenerator : public CodeGenerator {
                             const PipelineContextPtr &context,
                             std::ostream &out) override;
   PipelineStagePtr compile(const CompilerArgs &) override;
-  ~C_CodeGenerator() override;
+  ~CCodeGenerator() override;
 
  private:
   GeneratedCode code_;
 };
 
-C_CodeGenerator::C_CodeGenerator(const CodeGenArgs &args) : CodeGenerator(args) {}
+CCodeGenerator::CCodeGenerator(const CodeGenArgs &args) : CodeGenerator(args) {}
 
 const StructDeclaration getStructDeclarationTupleBuffer() {
   /** define structure of TupleBuffer
@@ -210,7 +210,7 @@ std::string toString(TupleBuffer *buffer, const Schema &schema) {
   return str.str();
 }
 
-bool C_CodeGenerator::generateCode(const DataSourcePtr &source, const PipelineContextPtr &context, std::ostream &out) {
+bool CCodeGenerator::generateCode(const DataSourcePtr &source, const PipelineContextPtr &context, std::ostream &out) {
 
   input_schema_ = source->getSchema();
 
@@ -320,7 +320,7 @@ bool C_CodeGenerator::generateCode(const DataSourcePtr &source, const PipelineCo
  * @param out - sending some other information if wanted
  * @return modified query-code
  */
-bool C_CodeGenerator::generateCode(const PredicatePtr &pred, const PipelineContextPtr &context, std::ostream &out) {
+bool CCodeGenerator::generateCode(const PredicatePtr &pred, const PipelineContextPtr &context, std::ostream &out) {
 
   ExpressionStatmentPtr expr = pred->generateCode(this->code_);
 
@@ -341,7 +341,7 @@ bool C_CodeGenerator::generateCode(const PredicatePtr &pred, const PipelineConte
  * @param out - sending some other information if wanted
  * @return modified query-code
  */
-bool C_CodeGenerator::generateCode(const AttributeFieldPtr field,
+bool CCodeGenerator::generateCode(const AttributeFieldPtr field,
                                    const PredicatePtr &pred,
                                    const iotdb::PipelineContextPtr &context,
                                    std::ostream &out) {
@@ -368,7 +368,7 @@ bool C_CodeGenerator::generateCode(const AttributeFieldPtr field,
   return true;
 }
 
-bool C_CodeGenerator::generateCode(const DataSinkPtr &sink, const PipelineContextPtr &context, std::ostream &out) {
+bool CCodeGenerator::generateCode(const DataSinkPtr &sink, const PipelineContextPtr &context, std::ostream &out) {
   result_schema_ = sink->getSchema();
 
   StructDeclaration struct_decl_result_tuple = getStructDeclarationResultTuple(result_schema_);
@@ -445,7 +445,7 @@ bool C_CodeGenerator::generateCode(const DataSinkPtr &sink, const PipelineContex
  * @param out
  * @return
  */
-bool C_CodeGenerator::generateCode(const WindowDefinitionPtr &window,
+bool CCodeGenerator::generateCode(const WindowDefinitionPtr &window,
                                    const PipelineContextPtr &context,
                                    std::ostream &out) {
 
@@ -536,7 +536,7 @@ bool C_CodeGenerator::generateCode(const WindowDefinitionPtr &window,
   return true;
 }
 
-PipelineStagePtr C_CodeGenerator::compile(const CompilerArgs &) {
+PipelineStagePtr CCodeGenerator::compile(const CompilerArgs &) {
 
   /* function signature:
    * typedef uint32_t (*SharedCLibPipelineQueryPtr)(TupleBuffer**, WindowState*, TupleBuffer*);
@@ -585,8 +585,8 @@ PipelineStagePtr C_CodeGenerator::compile(const CompilerArgs &) {
   return stage;
 }
 
-C_CodeGenerator::~C_CodeGenerator() {}
+CCodeGenerator::~CCodeGenerator() {}
 
-CodeGeneratorPtr createCodeGenerator() { return std::make_shared<C_CodeGenerator>(CodeGenArgs()); }
+CodeGeneratorPtr createCodeGenerator() { return std::make_shared<CCodeGenerator>(CodeGenArgs()); }
 
 } // namespace iotdb

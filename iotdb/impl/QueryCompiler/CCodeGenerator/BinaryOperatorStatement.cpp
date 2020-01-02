@@ -1,8 +1,8 @@
 #include <memory>
 #include <string>
 
-#include <QueryCompiler/C_CodeGenerator/BinaryOperatorStatement.hpp>
-#include <QueryCompiler/C_CodeGenerator/Statement.hpp>
+#include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 
 namespace iotdb {

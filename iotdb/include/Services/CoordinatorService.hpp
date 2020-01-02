@@ -10,7 +10,7 @@
 #include <API/InputQuery.hpp>
 
 #include <API/UserAPIExpression.hpp>
-#include <QueryCompiler/C_CodeGenerator/CodeCompiler.hpp>
+#include <QueryCompiler/CCodeGenerator/CodeCompiler.hpp>
 
 #include <Util/ErrorHandling.hpp>
 #include <Util/UtilityFunctions.hpp>

@@ -12,7 +12,7 @@
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/Task.hpp>
 #include <SourceSink/DataSource.hpp>
-#include "TupleBuffer.hpp"
+#include <NodeEngine/TupleBuffer.hpp>
 #include <Windows/WindowHandler.hpp>
 namespace iotdb {
 

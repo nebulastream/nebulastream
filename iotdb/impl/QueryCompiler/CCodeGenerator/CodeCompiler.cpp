@@ -1,6 +1,6 @@
-#include <QueryCompiler/C_CodeGenerator/CodeCompiler.hpp>
+#include <QueryCompiler/CCodeGenerator/CodeCompiler.hpp>
 
-#include <Util/ErrorHandling.hpp>
+
 #include <Util/SharedLibrary.hpp>
 
 #include <boost/filesystem/operations.hpp>
@@ -9,7 +9,6 @@
 
 #include <fstream>
 #include <sstream>
-#include <utility>
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wstrict-aliasing"

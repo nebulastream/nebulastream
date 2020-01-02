@@ -6,7 +6,7 @@
 #include <API/InputQuery.hpp>
 #include <Operators/Operator.hpp>
 
-#include <QueryCompiler/C_CodeGenerator/CodeCompiler.hpp>
+#include <QueryCompiler/CCodeGenerator/CodeCompiler.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 
 namespace iotdb {
