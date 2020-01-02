@@ -11,7 +11,7 @@
 #include <Topology/NESTopologyEntry.hpp>
 #include <Topology/NESTopologyManager.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
-
+#include <API/Schema.hpp>
 using std::cout;
 using std::cerr;
 using std::endl;
@@ -51,6 +51,14 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
  private:
   caf::behavior init();
   caf::behavior running();
+
+  /**
+   * @brief method to add a logical stream
+   * @param logical stream name
+   * @param schema of logical stream
+   * @return bool indicating if insert was successful
+   */
+  void registerLogicalStream(std::string logicalStreamName, SchemaPtr schemaPtr);
 
   /**
    * @brief : registering a new sensor node

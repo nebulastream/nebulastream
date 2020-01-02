@@ -1,7 +1,7 @@
 #include <Actors/CoordinatorActor.hpp>
 #include <Actors/ExecutableTransferObject.hpp>
-#include "../../include/Topology/NESTopologyManager.hpp"
-
+#include <Topology/NESTopologyManager.hpp>
+#include <Util/SerializationTools.hpp>
 namespace iotdb {
 
 behavior CoordinatorActor::init() {
@@ -44,6 +44,10 @@ behavior CoordinatorActor::running() {
         const string& nodeProperties, std::string sourceType, std::string sourceConf, std::string physicalStreamName, std::string logicalStreamName) {
       PhysicalStreamConfig streamConf(sourceType, sourceConf, physicalStreamName, logicalStreamName);
       this->registerSensor(ip, publish_port, receive_port, cpu, nodeProperties, streamConf);
+    },
+    [=](register_stream_atom, const string& streamName, const string& streamSchema) {
+      SchemaPtr sch = std::make_shared<Schema>(SerializationTools::parse_schema(streamSchema));
+      return registerLogicalStream(streamName, sch);
     },
     [=](execute_query_atom, const string& description, const string& strategy) {
       return executeQuery(description, strategy);
@@ -101,6 +105,11 @@ behavior CoordinatorActor::running() {
       this->showOperators();
     }
   };
+}
+
+void CoordinatorActor::registerLogicalStream(std::string logicalStreamName,
+                                        SchemaPtr schemaPtr) {
+  StreamCatalog::instance().addLogicalStream(logicalStreamName, schemaPtr);
 }
 
 void CoordinatorActor::registerSensor(const string& ip, uint16_t publish_port,
