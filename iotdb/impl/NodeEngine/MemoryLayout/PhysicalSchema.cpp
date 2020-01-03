@@ -1,8 +1,8 @@
-
 #include <NodeEngine/MemoryLayout/PhysicalSchema.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
 #include <API/Schema.hpp>
-#include <Util/ErrorHandling.hpp>
+#include <Util/Logger.hpp>
+
 namespace iotdb {
 
 PhysicalSchema::PhysicalSchema(const SchemaPtr &schema) : schema(schema) {

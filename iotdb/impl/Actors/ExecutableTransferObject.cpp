@@ -1,6 +1,6 @@
 #include <Actors/ExecutableTransferObject.hpp>
 #include <Operators/Impl/WindowOperator.hpp>
-
+#include <Util/Logger.hpp>
 using std::string;
 using std::vector;
 
@@ -48,18 +48,18 @@ QueryExecutionPlanPtr ExecutableTransferObject::toQueryExecutionPlan() {
     if (!this->_sources.empty()) {
       qep->addDataSource(this->_sources[0]);
     } else {
-      IOTDB_FATAL_ERROR("The query " << this->_description << " has no input sources!")
+      IOTDB_ERROR("The query " << this->_description << " has no input sources!")
     }
 
     if (!this->_destinations.empty()) {
       qep->addDataSink(this->_destinations[0]);
     } else {
-      IOTDB_FATAL_ERROR("The query " << this->_description << " has no destinations!")
+      IOTDB_ERROR("The query " << this->_description << " has no destinations!")
     }
 
     return qep;
   } else {
-    IOTDB_FATAL_ERROR(this->_description + " has already been compiled and cannot be recreated!")
+    IOTDB_ERROR(this->_description + " has already been compiled and cannot be recreated!")
   }
 }
 

@@ -2,7 +2,6 @@
 #define INCLUDE_DATASINK_H_
 
 #include <API/Schema.hpp>
-#include <Util/ErrorHandling.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/vector.hpp>

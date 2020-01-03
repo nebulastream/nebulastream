@@ -13,7 +13,6 @@
 #include <CodeGen/C_CodeGen/Statement.hpp>
 #include <CodeGen/C_CodeGen/UnaryOperatorStatement.hpp>
 #include <CodeGen/CodeGen.hpp>
-#include <Util/ErrorHandling.hpp>
 #include <SourceSink/DataSink.hpp>
 #include <API/Types/DataTypes.hpp>
 

@@ -20,7 +20,7 @@
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Actors/AtomUtils.hpp>
-
+#include <Util/Logger.hpp>
 using std::cout;
 using std::endl;
 using std::string;
@@ -128,7 +128,7 @@ eval(
   }
 }
 
-void setupLogging() {
+static void setupLogging() {
   // create PatternLayout
   log4cxx::LayoutPtr layoutPtr(
       new log4cxx::PatternLayout(

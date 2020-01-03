@@ -2,6 +2,7 @@
 #include <Actors/ExecutableTransferObject.hpp>
 #include <Util/SerializationTools.hpp>
 #include <utility>
+#include <Util/Logger.hpp>
 
 namespace iotdb {
 WorkerService::WorkerService(string ip, uint16_t publish_port,

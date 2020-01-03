@@ -1,11 +1,15 @@
 #include "gtest/gtest.h"
+//#include <Actors/WorkerActor.hpp>
+
 #include <iostream>
 
 #include <Catalogs/StreamCatalog.hpp>
-#include <Catalogs/StreamCatalogEntry.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
+
 #include <Topology/NESTopologyManager.hpp>
 #include <API/Schema.hpp>
+//#include <Actors/CoordinatorActor.hpp>
+#include <Util/Logger.hpp>
 
 using namespace iotdb;
 
@@ -51,10 +55,10 @@ class StreamCatalogTest : public testing::Test {
         new log4cxx::ConsoleAppender(layoutPtr));
 
     // set log level
-     logger->setLevel(log4cxx::Level::getDebug());
+    logger->setLevel(log4cxx::Level::getDebug());
 //    logger->setLevel(log4cxx::Level::getInfo());
 
-    // add appenders and other will inherit the settings
+// add appenders and other will inherit the settings
     logger->addAppender(file);
     logger->addAppender(console);
   }
@@ -145,10 +149,12 @@ TEST_F(StreamCatalogTest, add_remove_physical_stream_test) {
       StreamCatalog::instance().addPhysicalStream(streamConf.logicalStreamName,
                                                   sce));
 
-  EXPECT_TRUE(StreamCatalog::instance().removePhysicalStream(streamConf.logicalStreamName,
-                                                 sce));
+  EXPECT_TRUE(
+      StreamCatalog::instance().removePhysicalStream(
+          streamConf.logicalStreamName, sce));
 
-  cout << StreamCatalog::instance().getPhysicalStreamAndSchemaAsString() << endl;
+  cout << StreamCatalog::instance().getPhysicalStreamAndSchemaAsString()
+       << endl;
 }
 
 TEST_F(StreamCatalogTest, add_physical_for_not_existing_logical_stream_test) {
@@ -169,5 +175,28 @@ TEST_F(StreamCatalogTest, add_physical_for_not_existing_logical_stream_test) {
       "stream name=default_logical with 1 elements:physicalName=default_physical on node=0\n";
   EXPECT_EQ(expected,
             StreamCatalog::instance().getPhysicalStreamAndSchemaAsString());
+}
+
+TEST_F(StreamCatalogTest, register_log_stream_from_node_test) {
+
+  // Create Coordinator
+
+  // Create Worker
+//  WorkerActorConfig cfg;
+//  cfg.load<io::middleman>();
+//  actor_system system { cfg };
+//  infer_handle_from_class_t<iotdb::WorkerActor> client;
+//
+//  PhysicalStreamConfig defaultConf;
+//  client = system.spawn<iotdb::WorkerActor>(cfg.ip, cfg.publish_port,
+//                                            cfg.receive_port, defaultConf);
+//  if (!cfg.host.empty() && cfg.publish_port > 0) {
+//    //send connect message to worker to try to connect
+//    anon_send(client, connect_atom::value, cfg.host, cfg.publish_port);
+//  } else
+//    cout << "*** no server received via config, "
+//         << R"(please use "connect <host> <port>" before using the calculator)"
+//         << endl;
+
 }
 

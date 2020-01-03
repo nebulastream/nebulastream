@@ -1,6 +1,7 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeProperties.hpp>
 #include <string>
+#include <Util/Logger.hpp>
 //#include <tests/testPlans/compiledTestPlan.hpp>
 
 using namespace std;

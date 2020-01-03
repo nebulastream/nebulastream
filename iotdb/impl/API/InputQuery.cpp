@@ -6,11 +6,12 @@
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
 #include <API/UserAPIExpression.hpp>
 #include <SourceSink/DataSink.hpp>
-#include "../../include/SourceSink/SinkCreator.hpp"
-#include "../../include/SourceSink/SourceCreator.hpp"
+#include <SourceSink/SinkCreator.hpp>
+#include <SourceSink/SourceCreator.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 
 #include <API/Window/WindowDefinition.hpp>
+#include <Util/Logger.hpp>
 
 namespace iotdb {
 

@@ -6,10 +6,9 @@
 
 #include <CodeGen/C_CodeGen/Declaration.hpp>
 #include <CodeGen/CodeExpression.hpp>
-#include <Util/ErrorHandling.hpp>
 #include <API/Types/DataTypes.hpp>
 #include <CodeGen/DataTypes/ValueType.hpp>
-
+#include <Util/Logger.hpp>
 namespace iotdb {
 
 enum StatementType {

@@ -1,16 +1,8 @@
-/*
- * PipelineStage.cpp
- *
- *  Created on: Dec 19, 2018
- *      Author: zeuchste
- */
-
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
 #include <CodeGen/PipelineStage.hpp>
-#include <Util/ErrorHandling.hpp>
 #include <iostream>
-#include "../../include/SourceSink/DataSink.hpp"
-
+#include <SourceSink/DataSink.hpp>
+#include <Util/Logger.hpp>
 namespace iotdb {
 
 bool PipelineStage::execute(const std::vector<TupleBuffer *> &input_buffers,
@@ -19,7 +11,7 @@ bool PipelineStage::execute(const std::vector<TupleBuffer *> &input_buffers,
                             TupleBuffer *result_buf) {
   std::cout << "Execute a Pipeline Stage!" << std::endl;
   uint32_t ret = execute_impl(input_buffers, state, window_manager, result_buf);
-  if (ret) IOTDB_FATAL_ERROR("Execution of Compled PipelineStage Failed!");
+  if (ret) IOTDB_ERROR("Execution of Compled PipelineStage Failed!");
 
   return true;
 }

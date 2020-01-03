@@ -8,6 +8,7 @@
 
 #include <SourceSink/BinarySource.hpp>
 #include <SourceSink/DataSource.hpp>
+#include <Util/Logger.hpp>
 BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::BinarySource);
 
 namespace iotdb {

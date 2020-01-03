@@ -12,7 +12,6 @@
 #include <API/UserAPIExpression.hpp>
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
 
-#include <Util/ErrorHandling.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <CodeGen/CodeGen.hpp>
 #include <Operators/Impl/SourceOperator.hpp>

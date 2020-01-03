@@ -8,7 +8,6 @@
 #include <CodeGen/C_CodeGen/Statement.hpp>
 #include <CodeGen/CodeExpression.hpp>
 
-#include <Util/ErrorHandling.hpp>
 #include <API/Types/DataTypes.hpp>
 
 namespace iotdb {

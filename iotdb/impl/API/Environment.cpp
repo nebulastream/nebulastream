@@ -7,7 +7,6 @@
 #include <Operators/Operator.hpp>
 
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
-#include <Util/ErrorHandling.hpp>
 #include <CodeGen/QueryPlanBuilder.hpp>
 #include <CodeGen/C_CodeGen/Declaration.hpp>
 #include <CodeGen/C_CodeGen/FunctionBuilder.hpp>

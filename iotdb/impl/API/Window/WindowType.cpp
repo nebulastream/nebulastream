@@ -2,7 +2,7 @@
 #include <API/Window/WindowType.hpp>
 #include <API/Window/WindowMeasure.hpp>
 #include <vector>
-#include <Util/ErrorHandling.hpp>
+#include <Util/Logger.hpp>
 
 namespace iotdb {
 

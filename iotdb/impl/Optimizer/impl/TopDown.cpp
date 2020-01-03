@@ -1,5 +1,5 @@
 #include "Optimizer/impl/TopDown.hpp"
-
+#include <Util/Logger.hpp>
 using namespace iotdb;
 
 NESExecutionPlan TopDown::initializeExecutionPlan(
