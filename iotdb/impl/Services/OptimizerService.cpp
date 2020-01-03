@@ -1,7 +1,8 @@
 #include "Services/OptimizerService.hpp"
 #include <CodeGen/QueryPlanBuilder.hpp>
-#include "../../include/Optimizer/NESOptimizer.hpp"
-#include "../../include/Topology/NESTopologyManager.hpp"
+#include <Optimizer/NESOptimizer.hpp>
+#include <Topology/NESTopologyManager.hpp>
+#include <Util/Logger.hpp>
 
 
 using namespace iotdb;

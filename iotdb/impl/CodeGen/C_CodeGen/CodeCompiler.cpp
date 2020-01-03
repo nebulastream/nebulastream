@@ -1,6 +1,5 @@
 #include <CodeGen/C_CodeGen/CodeCompiler.hpp>
 
-#include <Util/ErrorHandling.hpp>
 #include <Util/SharedLibrary.hpp>
 
 #include <boost/filesystem/operations.hpp>

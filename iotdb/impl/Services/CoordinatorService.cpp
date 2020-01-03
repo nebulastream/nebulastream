@@ -4,6 +4,7 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <SourceSink/SourceCreator.hpp>
+#include <Util/Logger.hpp>
 
 using namespace iotdb;
 using namespace std;
@@ -101,7 +102,7 @@ string CoordinatorService::register_query(const string& queryString,
     this->registeredQueries.insert( { queryId, t });
     return queryId;
   } catch (...) {
-    IOTDB_FATAL_ERROR(
+    IOTDB_ERROR(
         "Unable to process input request with: queryString: " << queryString << "\n strategy: " << strategy);
     return nullptr;
   }

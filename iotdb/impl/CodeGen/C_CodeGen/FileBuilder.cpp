@@ -5,7 +5,6 @@
 #include <CodeGen/C_CodeGen/Declaration.hpp>
 #include <CodeGen/C_CodeGen/FileBuilder.hpp>
 #include <CodeGen/PipelineStage.hpp>
-#include <Util/ErrorHandling.hpp>
 
 namespace iotdb {
 

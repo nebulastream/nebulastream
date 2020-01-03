@@ -8,7 +8,7 @@
 
 #include <API/UserAPIExpression.hpp>
 #include <API/Types/DataTypes.hpp>
-
+#include <Util/Logger.hpp>
 namespace iotdb {
 
 Predicate::Predicate(const BinaryOperatorType &op,
@@ -68,12 +68,12 @@ const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCode &code) con
       VariableDeclaration var_decl_attr = code.struct_decl_input_tuple.getVariableDeclaration(_attribute->name);
       return ((VarRef(code.var_decl_input_tuple)[VarRef(*code.var_decl_id)]).accessRef(VarRef(var_decl_attr))).copy();
     } else {
-      IOTDB_FATAL_ERROR("Could not Retrieve Attribute from StructDeclaration!");
+      IOTDB_ERROR("Could not Retrieve Attribute from StructDeclaration!");
     }
   } else if (_value) {
     return ConstantExprStatement(_value).copy();
   } else {
-    IOTDB_FATAL_ERROR("PredicateItem has only NULL Pointers!");
+    IOTDB_ERROR("PredicateItem has only NULL Pointers!");
   }
 }
 
@@ -189,7 +189,7 @@ Field::Field(AttributeFieldPtr field) : PredicateItem(field), _name(field->name)
 const PredicatePtr createPredicate(const UserAPIExpression &expression) {
   PredicatePtr value = std::dynamic_pointer_cast<Predicate>(expression.copy());
   if (!value) {
-    IOTDB_FATAL_ERROR("UserAPIExpression is not a predicate")
+    IOTDB_ERROR("UserAPIExpression is not a predicate")
   }
   return value;
 }

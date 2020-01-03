@@ -7,7 +7,6 @@
 #include <vector>
 
 #include <CodeGen/CodeExpression.hpp>
-#include <Util/ErrorHandling.hpp>
 #include "API/Types/DataTypes.hpp"
 
 namespace iotdb {

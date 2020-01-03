@@ -1,6 +1,7 @@
-
 #ifndef __ACTOR_COORDINATOR_CONFIG_HPP__
 #define __ACTOR_COORDINATOR_CONFIG_HPP__
+
+//#include <caf/all.hpp>
 
 namespace iotdb {
 /**

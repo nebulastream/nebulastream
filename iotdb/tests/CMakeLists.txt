@@ -122,11 +122,6 @@ message("libraies: ${LIBRARIES}")
 target_link_libraries(kafka-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME kafka-tests COMMAND kafka-tests)
 
-# YSB Performance Test
-add_executable(ysb_performance_test "PerformanceTests/YSB_SingleNode_PerformanceTest.cpp")
-target_link_libraries(ysb_performance_test iotdb ${GTEST_LIBRARIES})
-add_test(NAME ysb_performance_test COMMAND ysb_performance_test)
-
 # Predicate Tree Tests
 add_executable(predicate-tree-tests "UnitTests/PredicateTest.cpp")
 target_link_libraries(predicate-tree-tests iotdb ${GTEST_LIBRARIES})

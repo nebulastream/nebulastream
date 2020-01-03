@@ -5,6 +5,7 @@
 #include <iostream>
 #include <mutex>
 #include <condition_variable>
+#include <Util/Logger.hpp>
 
 #include "Windows/WindowHandler.hpp"
 

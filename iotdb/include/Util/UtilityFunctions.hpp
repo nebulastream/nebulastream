@@ -3,10 +3,6 @@
 
 #include <string>
 #include <API/InputQuery.hpp>
-#include <Operators/Operator.hpp>
-#include <CodeGen/C_CodeGen/CodeCompiler.hpp>
-#include <Util/Logger.hpp>
-#include <boost/algorithm/string/replace.hpp>
 
 /**
  * @brief a collection of shared utility functions
@@ -14,17 +10,9 @@
 namespace iotdb {
 
 class UtilityFunctions {
-public:
+ public:
 // removes leading and trailing whitespaces
-  static std::string trim(std::string s)
-  {
-    auto not_space = [](char c) { return isspace(c) == 0; };
-    // trim left
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), not_space));
-    // trim right
-    s.erase(find_if(s.rbegin(), s.rend(), not_space).base(), s.end());
-    return s;
-  }
+  static std::string trim(std::string s);
 
   /**
    *  @brief this function **executes** the code provided by the user and returns an InputQuery Object
@@ -33,119 +21,15 @@ public:
    *  @return Smart pointer to InputQuery object of the query
    *  */
   static InputQueryPtr createQueryFromCodeString(
-      const std::string& query_code_snippet) {
-    try {
-      /* translate user code to a shared library, load and execute function, then return query object */
-      std::stringstream code;
-      code << "#include <API/InputQuery.hpp>" << std::endl;
-      code << "#include <API/Config.hpp>" << std::endl;
-      code << "#include <API/Schema.hpp>" << std::endl;
-      code << "#include <SourceSink/DataSource.hpp>" << std::endl;
-      code << "#include <API/InputQuery.hpp>" << std::endl;
-      code << "#include <API/Environment.hpp>" << std::endl;
-      code << "#include <API/UserAPIExpression.hpp>" << std::endl;
-      code << "#include <Catalogs/StreamCatalog.hpp>" << std::endl;
-      code << "namespace iotdb{" << std::endl;
-      code << "InputQuery createQuery(){" << std::endl;
-
-      //we will get the schema from the catalog, if stream does not exists this will through an exception
-      std::string streamName = query_code_snippet.substr(
-          query_code_snippet.find("::from("));
-      streamName = streamName.substr(7, streamName.find(").") - 7);
-      std::cout << " stream name = " << streamName << std::endl;
-      code
-          << "StreamPtr sPtr = StreamCatalog::instance().getStreamForLogicalStreamOrThrowException(\""
-          << streamName << "\");";
-  //    code << "Stream& stream = *sPtr.get();" << std::endl;
-      std::string newQuery = query_code_snippet;
-
-      //replace the stream "xyz" provided by the user with the reference to the generated stream for the from clause
-      boost::replace_all(newQuery, "from(" + streamName, "from(*sPtr.get()");
-
-      //please the stream "xyz" provided by the user with the variable name of the generated stream for the writeToZmQ
-      boost::replace_all(newQuery, "writeToZmq(" + streamName + ",",
-                         "writeToZmq(\"" + streamName + "\",");
-
-      //replace the stream "xyz" provided by the user with the variable name of the generated stream for the access inside the filter predicate
-      boost::replace_all(newQuery, "filter(" + streamName,
-                         "filter((*sPtr.get())");
-
-      code << newQuery << std::endl;
-      code << "}" << std::endl;
-      code << "}" << std::endl;
-      CCodeCompiler compiler;
-      CompiledCCodePtr compiled_code = compiler.compile(code.str());
-      if (!code) {
-        IOTDB_ERROR(
-            "Compilation of query code failed! Code: " << code.str());
-      }
-
-      typedef InputQuery (*CreateQueryFunctionPtr)();
-      CreateQueryFunctionPtr func = compiled_code
-          ->getFunctionPointer<CreateQueryFunctionPtr>(
-          "_ZN5iotdb11createQueryEv");
-      if (!func) {
-        IOTDB_ERROR("Error retrieving function! Symbol not found!");
-      }
-      /* call loaded function to create query object */
-      InputQuery query((*func)());
-      return std::make_shared<InputQuery>(query);
-
-    } catch (...) {
-      IOTDB_ERROR(
-          "Failed to create the query from input code string: " << query_code_snippet);
-      throw "Failed to create the query from input code string";
-    }
-  }
-
+      const std::string& query_code_snippet);
 
   /**
    *  @brief this function **executes** the code provided by the user and returns an schema Object
    *  @param query as a string
    *  @return Smart pointer to InputQuery object of the query
    *  */
-  static SchemaPtr createSchemaFromCode(const std::string& query_code_snippet) {
-    try {
-      /* translate user code to a shared library, load and execute function, then return query object */
-      std::stringstream code;
-      code << "#include <API/InputQuery.hpp>" << std::endl;
-      code << "#include <API/Config.hpp>" << std::endl;
-      code << "#include <API/Schema.hpp>" << std::endl;
-      code << "#include <SourceSink/DataSource.hpp>" << std::endl;
-      code << "#include <API/InputQuery.hpp>" << std::endl;
-      code << "#include <API/Environment.hpp>" << std::endl;
-      code << "#include <API/UserAPIExpression.hpp>" << std::endl;
-      code << "#include <Catalogs/StreamCatalog.hpp>" << std::endl;
-      code << "namespace iotdb{" << std::endl;
+  static SchemaPtr createSchemaFromCode(const std::string& query_code_snippet);
 
-      code << "Schema createSchema(){" << std::endl;
-      code << query_code_snippet;
-      code << "return schema;";
-      code << "}" << std::endl;
-      code << "}" << std::endl;
-      CCodeCompiler compiler;
-      CompiledCCodePtr compiled_code = compiler.compile(code.str());
-      if (!code) {
-        IOTDB_ERROR("Compilation of schema code failed! Code: " << code.str());
-      }
-
-      typedef Schema (*CreateSchemaFunctionPtr)();
-      CreateSchemaFunctionPtr func = compiled_code
-          ->getFunctionPointer<CreateSchemaFunctionPtr>(
-          "_ZN5iotdb12createSchemaEv");
-      if (!func) {
-        IOTDB_ERROR("Error retrieving function! Symbol not found!");
-      }
-      /* call loaded function to create query object */
-      Schema query((*func)());
-      return std::make_shared<Schema>(query);
-
-    } catch (...) {
-      IOTDB_ERROR(
-          "Failed to create the query from input code string: " << query_code_snippet);
-      throw "Failed to create the query from input code string";
-    }
-  }
 };
 }
 
