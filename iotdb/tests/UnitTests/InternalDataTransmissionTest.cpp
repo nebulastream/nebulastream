@@ -37,8 +37,8 @@ class InternalDataTransmissionTest : public testing::Test {
     log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
 
     // set log level
-    // logger->setLevel(log4cxx::Level::getDebug());
-    logger->setLevel(log4cxx::Level::getInfo());
+    logger->setLevel(log4cxx::Level::getDebug());
+    //logger->setLevel(log4cxx::Level::getInfo());
 
     // add appenders and other will inherit the settings
     logger->addAppender(file);
@@ -48,7 +48,7 @@ class InternalDataTransmissionTest : public testing::Test {
 
 TEST_F(InternalDataTransmissionTest, testInternalTransmission) {
   string queryString =
-      "InputQuery inputQuery = InputQuery::from(default_logical).filter(default_logical[\"id\"] > 42).print(std::cout); "
+      "InputQuery inputQuery = InputQuery::from(default_logical).filter(default_logical[\"id\"] < 42).print(std::cout); "
       "return inputQuery;";
 
   InputQueryPtr query = createQueryFromCodeString(queryString);
