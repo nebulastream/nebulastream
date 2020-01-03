@@ -15,7 +15,8 @@ constexpr auto task_timeout = std::chrono::seconds(3);
 //coordinator stubs
 using register_worker_atom = atom_constant<atom("r_worker")>;
 using register_sensor_atom = atom_constant<atom("r_sensor")>;
-using register_stream_atom = atom_constant<atom("r_stream")>;
+using register_phy_stream_atom = atom_constant<atom("r_phy_str")>;
+using register_log_stream_atom = atom_constant<atom("r_log_str")>;
 
 using execute_query_atom = atom_constant<atom("exe_query")>;
 using register_query_atom = atom_constant<atom("register")>;
@@ -34,9 +35,12 @@ using get_local_sink_port_atom = atom_constant<atom("g_sinkp")>;
 using execute_operators_atom = atom_constant<atom("exe_ops")>;
 using delete_query_atom = atom_constant<atom("delete")>;
 using get_operators_atom = atom_constant<atom("g_ops")>;
+using reg_phy_stream = atom_constant<atom("g_reg_ps")>;
+using reg_log_stream = atom_constant<atom("g_reg_ls")>;
 
 using set_type_atom = atom_constant<atom("s_type")>;
 using get_type_atom = atom_constant<atom("g_type")>;
 }
 
 #endif //IOTDB_INCLUDE_ACTORS_ATOMUTILS_HPP_
+

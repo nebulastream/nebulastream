@@ -39,6 +39,7 @@ class NESGraph {
   NESGraph() {};
 
   const nesVertex_t getVertex(size_t search_id) const;
+  const NESTopologyEntryPtr getVertexByIp(std::string ip) const;
   bool hasVertex(size_t search_id) const;
 
   const std::vector<NESVertex> getAllVertex() const;
@@ -75,6 +76,8 @@ class NESTopologyPlan {
   NESTopologyPlan();
 
   NESTopologyEntryPtr getRootNode() const;
+
+  NESTopologyEntryPtr getNodeByIp(std::string ip);
 
   NESTopologyCoordinatorNodePtr createNESCoordinatorNode(const std::string ipAddr, CPUCapacity cpuCapacity);
 
