@@ -2,6 +2,7 @@
 #include <Actors/ExecutableTransferObject.hpp>
 #include <Topology/NESTopologyManager.hpp>
 #include <Util/SerializationTools.hpp>
+#include <Util/Logger.hpp>
 namespace iotdb {
 
 behavior CoordinatorActor::init() {

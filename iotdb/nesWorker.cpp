@@ -20,7 +20,7 @@
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Actors/AtomUtils.hpp>
-#include <Util/Logger.hpp>
+//#include <Util/Logger.hpp>
 using std::cout;
 using std::endl;
 using std::string;
@@ -128,29 +128,29 @@ eval(
   }
 }
 
-static void setupLogging() {
-  // create PatternLayout
-  log4cxx::LayoutPtr layoutPtr(
-      new log4cxx::PatternLayout(
-          "%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
-
-  // create FileAppender
-  LOG4CXX_DECODE_CHAR(fileName, "iotdb.log");
-  log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
-
-  // create ConsoleAppender
-  log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
-
-  // set log level
-  iotdb::logger->setLevel(log4cxx::Level::getDebug());
-  // add appenders and other will inherit the settings
-  iotdb::logger->addAppender(file);
-  iotdb::logger->addAppender(console);
-}
+//static void setupLogging() {
+//  // create PatternLayout
+//  log4cxx::LayoutPtr layoutPtr(
+//      new log4cxx::PatternLayout(
+//          "%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
+//
+//  // create FileAppender
+//  LOG4CXX_DECODE_CHAR(fileName, "iotdb.log");
+//  log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
+//
+//  // create ConsoleAppender
+//  log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
+//
+//  // set log level
+//  iotdb::logger->setLevel(log4cxx::Level::getDebug());
+//  // add appenders and other will inherit the settings
+//  iotdb::logger->addAppender(file);
+//  iotdb::logger->addAppender(console);
+//}
 
 void caf_main(actor_system &system, WorkerActorConfig &cfg,
     size_t numberOfWorker) {
-  setupLogging();
+//  setupLogging();
 //  cout << argc << endl;
   start_worker(system, cfg, numberOfWorker);
 }

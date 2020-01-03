@@ -4,6 +4,7 @@
 
 #include <CodeGen/C_CodeGen/Declaration.hpp>
 #include <CodeGen/C_CodeGen/Statement.hpp>
+#include <Util/Logger.hpp>
 
 namespace iotdb {
 

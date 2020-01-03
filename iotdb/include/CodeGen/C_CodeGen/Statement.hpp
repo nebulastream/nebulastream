@@ -8,7 +8,6 @@
 #include <CodeGen/CodeExpression.hpp>
 #include <API/Types/DataTypes.hpp>
 #include <CodeGen/DataTypes/ValueType.hpp>
-#include <Util/Logger.hpp>
 namespace iotdb {
 
 enum StatementType {
@@ -391,7 +390,7 @@ class UserDefinedDataType : public DataType {
   }
 
   bool operator==(const DataType &_rhs) const override {
-    IOTDB_NOT_IMPLEMENTED;
+    assert(0);
   }
 
   ~UserDefinedDataType();

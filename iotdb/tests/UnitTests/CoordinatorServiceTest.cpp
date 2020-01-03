@@ -2,7 +2,7 @@
 #include <SourceSink/PrintSink.hpp>
 #include <Services/CoordinatorService.hpp>
 #include <SourceSink/ZmqSource.hpp>
-
+#include <Util/Logger.hpp>
 using namespace iotdb;
 
 class CoordinatorCafTest : public testing::Test {
@@ -68,12 +68,12 @@ static void TearDownTestCase() {
           new log4cxx::ConsoleAppender(layoutPtr));
 
       // set log level
-      logger->setLevel(log4cxx::Level::getDebug());
+      iotdbLogger->setLevel(log4cxx::Level::getDebug());
   //    logger->setLevel(log4cxx::Level::getInfo());
 
   // add appenders and other will inherit the settings
-      logger->addAppender(file);
-      logger->addAppender(console);
+      iotdbLogger->addAppender(file);
+      iotdbLogger->addAppender(console);
     }
 
 

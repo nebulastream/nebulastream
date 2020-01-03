@@ -3,7 +3,7 @@
 #include <REST/runtime_utils.hpp>
 #include <REST/Controller/RestController.hpp>
 #include <REST/RestServer.hpp>
-
+#include <Util/Logger.hpp>
 using namespace iotdb;
 
 bool RestServer::start(std::string host,
