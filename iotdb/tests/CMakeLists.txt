@@ -161,6 +161,11 @@ add_executable(stream-catalog-test "UnitTests/StreamCatalogTest.cpp")
 target_link_libraries(stream-catalog-test iotdb ${GTEST_LIBRARIES})
 add_test(NAME stream-catalog-test COMMAND stream-catalog-test)
 
+# InternalDataTransmission Tests
+add_executable(internal-data-transmission-test "UnitTests/InternalDataTransmissionTest.cpp")
+target_link_libraries(internal-data-transmission-test iotdb ${GTEST_LIBRARIES})
+add_test(NAME internal-data-transmission-test COMMAND internal-data-transmission-test)
+
 
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure

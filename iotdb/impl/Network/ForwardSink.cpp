@@ -1,4 +1,4 @@
-#include <SourceSink/ZmqSink.hpp>
+#include <Network/ForwardSink.hpp>
 
 #include <cassert>
 #include <cstdint>
@@ -15,9 +15,11 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
+using std::string;
+
 namespace iotdb {
 
-ZmqSink::ZmqSink()
+ForwardSink::ForwardSink()
     : host(""),
       port(0),
       tupleCnt(0),
@@ -25,10 +27,10 @@ ZmqSink::ZmqSink()
       context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_PUSH)) {
   IOTDB_DEBUG(
-      "DEFAULT ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port)
+      "DEFAULT ForwardSink  " << this << ": Init ZMQ Sink to " << host << ":" << port)
 }
 
-ZmqSink::ZmqSink(const Schema &schema, const std::string &host,
+ForwardSink::ForwardSink(const Schema &schema, const std::string &host,
                  const uint16_t port)
     : DataSink(schema),
       host(host),
@@ -38,49 +40,53 @@ ZmqSink::ZmqSink(const Schema &schema, const std::string &host,
       context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_PUSH)) {
   IOTDB_DEBUG(
-      "ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port)
+      "ForwardSink  " << this << ": Init ZMQ Sink to " << host << ":" << port)
 
 }
-ZmqSink::~ZmqSink() {
+ForwardSink::~ForwardSink() {
   bool success = disconnect();
   if (success) {
-    IOTDB_DEBUG("ZMQSINK  " << this << ": Destroy ZMQ Sink")
+    IOTDB_DEBUG("ForwardSink  " << this << ": Destroy ZMQ Sink")
   } else {
     IOTDB_ERROR(
-        "ZMQSINK  " << this << ": Destroy ZMQ Sink failed cause it could not be disconnected")
+        "ForwardSink  " << this << ": Destroy ZMQ Sink failed cause it could not be disconnected")
     assert(0);
   }
-  IOTDB_DEBUG("ZMQSINK  " << this << ": Destroy ZMQ Sink")
+  IOTDB_DEBUG("ForwardSink  " << this << ": Destroy ZMQ Sink")
 
 }
 
-bool ZmqSink::writeData(const TupleBufferPtr input_buffer) {
+bool ForwardSink::writeData(const TupleBufferPtr input_buffer) {
+  this->getSchema();
+
   connected = connect();
   if (!connected) {
     IOTDB_DEBUG(
-        "ZMQSINK  " << this << ": cannot write buffer " << input_buffer << " because queue is not connected")
+        "ForwardSink  " << this << ": cannot write buffer " << input_buffer << " because queue is not connected")
     assert(0);
   }
 
-  IOTDB_DEBUG("ZMQSINK  " << this << ": writes buffer " << input_buffer)
+  IOTDB_DEBUG("ForwardSink  " << this << ": writes buffer " << input_buffer)
   try {
-    //	size_t usedBufferSize = input_buffer->num_tuples * input_buffer->tuple_size_bytes;
+    //send envelope with schema information
+    string schemaStr = this->getSchema().toString();
+    zmq::message_t message(schemaStr.size());
+    memcpy (message.data(), schemaStr.data(), schemaStr.size());
+    bool rcS = socket.send (message, ZMQ_SNDMORE);
+
+    //send actual data
     zmq::message_t msg(input_buffer->getBufferSizeInBytes());
-    // TODO: If possible only copy the content not the empty part
     std::memcpy(msg.data(), input_buffer->getBuffer(), input_buffer->getBufferSizeInBytes());
     tupleCnt = input_buffer->getNumberOfTuples();
-    zmq::message_t envelope(sizeof(tupleCnt));
-    memcpy(envelope.data(), &tupleCnt, sizeof(tupleCnt));
+    bool rcM = socket.send(msg);
 
-    bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
-    bool rc_msg = socket.send(msg);
     sentBuffer++;
-    if (!rc_env || !rc_msg) {
-      IOTDB_DEBUG("ZMQSINK  " << this << ": send NOT successful")
+    if (!rcS || !rcM) {
+      IOTDB_DEBUG("ForwardSink  " << this << ": send NOT successful")
       BufferManager::instance().releaseBuffer(input_buffer);
       return false;
     } else {
-      IOTDB_DEBUG("ZMQSINK  " << this << ": send successful")
+      IOTDB_DEBUG("ForwardSink  " << this << ": send successful")
       BufferManager::instance().releaseBuffer(input_buffer);
       return true;
     }
@@ -95,7 +101,7 @@ bool ZmqSink::writeData(const TupleBufferPtr input_buffer) {
   return false;
 }
 
-const std::string ZmqSink::toString() const {
+const std::string ForwardSink::toString() const {
   std::stringstream ss;
   ss << "ZMQ_SINK(";
   ss << "SCHEMA(" << schema.toString() << "), ";
@@ -105,7 +111,7 @@ const std::string ZmqSink::toString() const {
   return ss.str();
 }
 
-bool ZmqSink::connect() {
+bool ForwardSink::connect() {
   if (!connected) {
     try {
       auto address = std::string("tcp://") + host + std::string(":") + std::to_string(port);
@@ -121,32 +127,32 @@ bool ZmqSink::connect() {
     }
   }
   if (connected) {
-    IOTDB_DEBUG("ZMQSINK  " << this << ": connected")
+    IOTDB_DEBUG("ForwardSink  " << this << ": connected")
   } else {
-    IOTDB_DEBUG("ZMQSINK  " << this << ": NOT connected")
+    IOTDB_DEBUG("ForwardSink  " << this << ": NOT connected")
   }
   return connected;
 }
 
-bool ZmqSink::disconnect() {
+bool ForwardSink::disconnect() {
   if (connected) {
     socket.close();
     connected = false;
   }
   if (!connected) {
-    IOTDB_DEBUG("ZMQSINK  " << this << ": disconnected")
+    IOTDB_DEBUG("ForwardSink  " << this << ": disconnected")
   } else {
-    IOTDB_DEBUG("ZMQSINK  " << this << ": NOT disconnected")
+    IOTDB_DEBUG("ForwardSink  " << this << ": NOT disconnected")
   }
   return !connected;
 }
 
-int ZmqSink::getPort() {
+int ForwardSink::getPort() {
   return this->port;
 }
-SinkType ZmqSink::getType() const {
-    return ZMQ_SINK;
+SinkType ForwardSink::getType() const {
+  return ZMQ_SINK;
 }
 
 }  // namespace iotdb
-BOOST_CLASS_EXPORT(iotdb::ZmqSink);
+BOOST_CLASS_EXPORT(iotdb::ForwardSink);
