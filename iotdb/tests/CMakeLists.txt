@@ -156,6 +156,11 @@ add_executable(stream-catalog-test "UnitTests/StreamCatalogTest.cpp")
 target_link_libraries(stream-catalog-test iotdb ${GTEST_LIBRARIES})
 add_test(NAME stream-catalog-test COMMAND stream-catalog-test)
 
+# Catalog Remote Tests
+add_executable(stream-catalog-remote-test "UnitTests/StreamCatalogRemoteTest.cpp")
+target_link_libraries(stream-catalog-remote-test iotdb ${GTEST_LIBRARIES})
+add_test(NAME stream-catalog-remote-test COMMAND stream-catalog-remote-test)
+
 
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure

@@ -17,7 +17,7 @@ namespace iotdb {
       bool start(const infer_handle_from_class_t<CoordinatorActor>&);
 
     private:
-      void setupLogging();
+//      void setupLogging();
   };
 
 }

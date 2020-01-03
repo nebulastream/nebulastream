@@ -68,11 +68,11 @@ class E2eRestTest : public testing::Test {
 
     // set log level
     // logger->setLevel(log4cxx::Level::getDebug());
-    logger->setLevel(log4cxx::Level::getInfo());
+    iotdbLogger->setLevel(log4cxx::Level::getInfo());
 
     // add appenders and other will inherit the settings
-    logger->addAppender(file);
-    logger->addAppender(console);
+    iotdbLogger->addAppender(file);
+    iotdbLogger->addAppender(console);
   }
 
   static void startProcess(string cmd) {

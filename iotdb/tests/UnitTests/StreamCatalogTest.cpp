@@ -1,5 +1,4 @@
 #include "gtest/gtest.h"
-//#include <Actors/WorkerActor.hpp>
 
 #include <iostream>
 
@@ -8,8 +7,11 @@
 
 #include <Topology/NESTopologyManager.hpp>
 #include <API/Schema.hpp>
+
 //#include <Actors/CoordinatorActor.hpp>
 #include <Util/Logger.hpp>
+//#include <Actors/WorkerActor.hpp>
+
 
 using namespace iotdb;
 
@@ -55,12 +57,12 @@ class StreamCatalogTest : public testing::Test {
         new log4cxx::ConsoleAppender(layoutPtr));
 
     // set log level
-    logger->setLevel(log4cxx::Level::getDebug());
+    iotdb::iotdbLogger->setLevel(log4cxx::Level::getDebug());
 //    logger->setLevel(log4cxx::Level::getInfo());
 
 // add appenders and other will inherit the settings
-    logger->addAppender(file);
-    logger->addAppender(console);
+    iotdb::iotdbLogger->addAppender(file);
+    iotdb::iotdbLogger->addAppender(console);
   }
 };
 

@@ -185,14 +185,14 @@ void setupLogging()
     // set log level
     // logger->setLevel(log4cxx::Level::getTrace());
     //	logger->setLevel(log4cxx::Level::getDebug());
-    iotdb::logger->setLevel(log4cxx::Level::getInfo());
+    iotdb::iotdbLogger->setLevel(log4cxx::Level::getInfo());
     //	logger->setLevel(log4cxx::Level::getWarn());
     // logger->setLevel(log4cxx::Level::getError());
     //	logger->setLevel(log4cxx::Level::getFatal());
 
     // add appenders and other will inherit the settings
-    iotdb::logger->addAppender(file);
-    iotdb::logger->addAppender(console);
+    iotdb::iotdbLogger->addAppender(file);
+    iotdb::iotdbLogger->addAppender(console);
 }
 
 int main(int argc, const char* argv[])

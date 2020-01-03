@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include "Actors/CAFServer.hpp"
-
+#include <Util/Logger.hpp>
 using namespace iotdb;
 using namespace caf;
 
@@ -14,22 +14,21 @@ bool CAFServer::start(
   //Prepare Actor System
   actor_system actorSystem { actorCoordinatorConfig };
   //Setup then logging
-  setupLogging();
+//  setupLogging();
 
-  cout << "*** trying to publish at port "
-       << actorCoordinatorConfig.publish_port << endl;
+  IOTDB_DEBUG("*** trying to publish at port "
+       << actorCoordinatorConfig.publish_port)
 
   io::unpublish(coordinatorActorHandle, actorCoordinatorConfig.publish_port);
 
   auto expected_port = io::publish(coordinatorActorHandle,
                                    actorCoordinatorConfig.publish_port);
   if (!expected_port) {
-    std::cerr << "*** publish failed: "
-        << actorSystem.render(expected_port.error()) << endl;
+    IOTDB_ERROR("*** publish failed: "
+        << actorSystem.render(expected_port.error()))
     return false;
   }
-  cout << "*** coordinator successfully published at port " << *expected_port
-      << endl;
+  IOTDB_DEBUG("*** coordinator successfully published at port " << *expected_port)
 
   //TODO: This code is to be migrated when we create CLI based client for interacting with the actor_system
 
@@ -125,25 +124,25 @@ bool CAFServer::start(
 
 }
 
-void CAFServer::setupLogging() {
-
-  // create PatternLayout
-  log4cxx::LayoutPtr layoutPtr(
-      new log4cxx::PatternLayout(
-          "%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
-
-  // create FileAppender
-  LOG4CXX_DECODE_CHAR(fileName, "iotdb.log");
-  log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
-
-  // create ConsoleAppender
-  log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
-
-  iotdb::logger->setLevel(log4cxx::Level::getDebug());
-  iotdb::logger->addAppender(file);
-  iotdb::logger->addAppender(console);
-
-  // set log level
-  log4cxx::Logger::getLogger("IOTDB")->setLevel(log4cxx::Level::getDebug());
-}
+//void CAFServer::setupLogging() {
+//
+//  // create PatternLayout
+//  log4cxx::LayoutPtr layoutPtr(
+//      new log4cxx::PatternLayout(
+//          "%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
+//
+//  // create FileAppender
+//  LOG4CXX_DECODE_CHAR(fileName, "iotdb.log");
+//  log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
+//
+//  // create ConsoleAppender
+//  log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
+//
+//  iotdb::logger->setLevel(log4cxx::Level::getDebug());
+//  iotdb::logger->addAppender(file);
+//  iotdb::logger->addAppender(console);
+//
+//  // set log level
+//  log4cxx::Logger::getLogger("IOTDB")->setLevel(log4cxx::Level::getDebug());
+//}
 
