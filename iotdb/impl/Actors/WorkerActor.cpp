@@ -2,6 +2,9 @@
 #include <Actors/ExecutableTransferObject.hpp>
 #include <Actors/AtomUtils.hpp>
 #include <Util/SerializationTools.hpp>
+#include <fstream>
+#include <boost/filesystem.hpp>
+
 
 namespace iotdb {
 // starting point of our FSM
@@ -25,6 +28,58 @@ behavior WorkerActor::unconnected() {
     }
   };
 }
+
+void WorkerActor::registerPhysicalStream(std::string sourceType,
+                                         std::string sourceConf,
+                                         std::string physicalStreamName,
+                                         std::string logicalStreamName) {
+
+  PhysicalStreamConfig conf(sourceType, sourceConf, physicalStreamName,
+                            logicalStreamName);
+  //register physical stream with worker
+  this->state.workerPtr->addPhysicalStreamConfig(conf);
+
+  //send request to coordinator
+  auto coordinator = actor_cast<actor>(this->state.current_server);
+  this->request(
+      coordinator,
+      task_timeout,
+      register_phy_stream_atom::value,
+      this->state.workerPtr->getIp(),
+      this->state.workerPtr->getPhysicalStreamConfig(physicalStreamName)
+          .sourceType,
+      this->state.workerPtr->getPhysicalStreamConfig(physicalStreamName)
+          .sourceConfig,
+      this->state.workerPtr->getPhysicalStreamConfig(physicalStreamName)
+          .physicalStreamName,
+      this->state.workerPtr->getPhysicalStreamConfig(physicalStreamName)
+          .logicalStreamName);
+
+}
+
+void WorkerActor::registerLogicalStream(std::string streamName, std::string filePath){
+  //send request to coordinator
+    auto coordinator = actor_cast<actor>(this->state.current_server);
+    /* Check if file can be found on system and read. */
+    boost::filesystem::path path{filePath.c_str()};
+    if (!boost::filesystem::exists(path) || !boost::filesystem::is_regular_file(path)) {
+        assert(0 == 1 && "No file found at given path.");
+    }
+
+    /* Read file from file system. */
+    std::ifstream ifs(path.string().c_str());
+    std::string file_content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+
+    this->request(
+        coordinator,
+        task_timeout,
+        register_log_stream_atom::value,
+        streamName,
+        file_content);
+
+
+}
+
 
 /**
  * @brief the ongoing connection state in the TSM
@@ -54,13 +109,14 @@ void WorkerActor::connecting(const std::string &host, uint16_t port) {
         //TODO: make getPhysicalStreamConfig serializable with the caf framework
         //TODO: add serializable shipping object
         cout << "send properties to server" << endl;
+        //send default physical stream
         this->request(coordinator, task_timeout, register_sensor_atom::value, this->state.workerPtr->getIp(),
             this->state.workerPtr->getPublishPort(), this->state.workerPtr->getReceivePort(), 2,
             this->state.workerPtr->getNodeProperties(),
-            this->state.workerPtr->getPhysicalStreamConfig().sourceType,
-            this->state.workerPtr->getPhysicalStreamConfig().sourceConfig,
-            this->state.workerPtr->getPhysicalStreamConfig().physicalStreamName,
-            this->state.workerPtr->getPhysicalStreamConfig().logicalStreamName
+            this->state.workerPtr->getPhysicalStreamConfig("default_physical").sourceType,
+            this->state.workerPtr->getPhysicalStreamConfig("default_physical").sourceConfig,
+            this->state.workerPtr->getPhysicalStreamConfig("default_physical").physicalStreamName,
+            this->state.workerPtr->getPhysicalStreamConfig("default_physical").logicalStreamName
         );
         cout << "properties set successful, now changing state" << endl;
         this->monitor(coordinator);
@@ -84,6 +140,14 @@ behavior WorkerActor::running(const actor &coordinator) {
     // the connect RPC to connect with the coordinator
     [=](connect_atom, const std::string &host, uint16_t port) {
       connecting(host, port);
+    },
+    // register physical stream
+    [=](reg_phy_stream, std::string sourceType, std::string sourceConf, std::string physicalStreamName, std::string logicalStreamName) {
+      registerPhysicalStream(sourceType, sourceConf, physicalStreamName, logicalStreamName);
+    },
+    // register logical stream
+    [=](reg_log_stream, std::string name, std::string path) {
+      registerLogicalStream(name, path);
     },
     // internal rpc to execute a query
     [=](execute_operators_atom, const string &queryId, string &executableTransferObject) {

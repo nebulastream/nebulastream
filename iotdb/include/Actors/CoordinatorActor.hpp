@@ -60,6 +60,14 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
    */
   void registerLogicalStream(std::string logicalStreamName, SchemaPtr schemaPtr);
 
+
+  /**
+   * @brief method to add a physical stream
+   * @param ip as string
+   * @param config of the physical stream
+   */
+  void registerPhysicalStream(std::string ip, PhysicalStreamConfig streamConf);
+
   /**
    * @brief : registering a new sensor node
    *

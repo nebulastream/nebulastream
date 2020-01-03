@@ -45,7 +45,11 @@ behavior CoordinatorActor::running() {
       PhysicalStreamConfig streamConf(sourceType, sourceConf, physicalStreamName, logicalStreamName);
       this->registerSensor(ip, publish_port, receive_port, cpu, nodeProperties, streamConf);
     },
-    [=](register_stream_atom, const string& streamName, const string& streamSchema) {
+    [=](register_phy_stream_atom, std::string ip, std::string sourceType, std::string sourceConf,std::string physicalStreamName,std::string logicalStreamName) {
+      PhysicalStreamConfig conf(sourceType, sourceConf, physicalStreamName, logicalStreamName);
+      return registerPhysicalStream(ip, conf);
+    },
+    [=](register_log_stream_atom, const string& streamName, const string& streamSchema) {
       SchemaPtr sch = std::make_shared<Schema>(SerializationTools::parse_schema(streamSchema));
       return registerLogicalStream(streamName, sch);
     },
@@ -108,9 +112,22 @@ behavior CoordinatorActor::running() {
 }
 
 void CoordinatorActor::registerLogicalStream(std::string logicalStreamName,
-                                        SchemaPtr schemaPtr) {
+                                             SchemaPtr schemaPtr) {
   StreamCatalog::instance().addLogicalStream(logicalStreamName, schemaPtr);
 }
+
+void CoordinatorActor::registerPhysicalStream(std::string ip, PhysicalStreamConfig streamConf) {
+
+  NESTopologyEntryPtr sensorNode = NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeByIp(ip);
+
+  StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
+        streamConf.sourceType, streamConf.sourceConfig, sensorNode,
+        streamConf.physicalStreamName);
+
+
+  StreamCatalog::instance().addPhysicalStream(streamConf.logicalStreamName, sce);
+}
+
 
 void CoordinatorActor::registerSensor(const string& ip, uint16_t publish_port,
                                       uint16_t receive_port, int cpu,

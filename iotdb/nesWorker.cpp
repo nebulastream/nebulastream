@@ -19,7 +19,8 @@
 #include "boost/program_options.hpp"
 
 #include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Util/UtilityFunctions.hpp>
+#include <Actors/AtomUtils.hpp>
+
 using std::cout;
 using std::endl;
 using std::string;
@@ -36,31 +37,36 @@ using namespace iotdb;
 size_t numberOfWorker = DEFAULT_NUMBER_OF_WORKER_INSTANCES;
 
 void start_worker(actor_system &system, const WorkerActorConfig &cfg,
-                  size_t numberOfWorker, PhysicalStreamConfig streamConf) {
-  // keeps track of requests and tries to reconnect on server failures
-//  auto usage = [] {
-//    cout << "Usage:" << endl
-//    << "  quit                  : terminates the program" << endl
-//    << "  connect <host> <port> : connects to a remote actor" << endl
-//    << endl;
-//  };
-//  usage();
-
+                  size_t numberOfWorker) {
+  auto usage =
+      [] {
+        cout << "Usage:" << endl
+        << "  quit                  : terminates the program" << endl
+        << "  connect <host> <port> : connects to a remote actor" << endl
+        << "  register_sensor "
+        "<sourceType (OneGeneratorSource||CSVSource)> " "<sourceConf (1..n|filePath)> "
+        "<physical stream name> " "<logical stream name> " ":register a physical stream"
+        << "  register_stream " "<logical stream name> " "<pathToSchemaFile> " ": register a logical stream"
+        << endl;
+      };
+  usage();
 
 //  Test Code
 
 //  getSchemaFromCode
-  std::string testSchema = "Schema schema = Schema::create().addField(\"id\", BasicType::UINT32).addField(\"value\", BasicType::UINT64);";
+//  std::string testSchema =
+//      "Schema schema = Schema::create().addField(\"id\", BasicType::UINT32).addField(\"value\", BasicType::UINT64);";
 
-  SchemaPtr sch = UtilityFunctions::createSchemaFromCode(testSchema);
-  cout << "schema=" << sch->toString() << endl;
-
+//  SchemaPtr sch = UtilityFunctions::createSchemaFromCode(testSchema);
+//  cout << "schema=" << sch->toString() << endl;
 
   infer_handle_from_class_t<iotdb::WorkerActor> client;
 
+  PhysicalStreamConfig defaultConf;
+
   for (size_t i = 1; i <= numberOfWorker; i++) {
     client = system.spawn<iotdb::WorkerActor>(cfg.ip, cfg.publish_port,
-                                              cfg.receive_port, streamConf);
+                                              cfg.receive_port, defaultConf);
     if (!cfg.host.empty() && cfg.publish_port > 0) {
       //send connect message to worker to try to connect
       anon_send(client, connect_atom::value, cfg.host, cfg.publish_port);
@@ -73,35 +79,52 @@ void start_worker(actor_system &system, const WorkerActorConfig &cfg,
   bool done = false;
   // defining the handler outside the loop is more efficient as it avoids
   // re-creating the same object over and over again
-  message_handler eval(
-      [&](const string &cmd) {
-        if (cmd != "quit")
-        return;
-        anon_send_exit(client, exit_reason::user_shutdown);
-        done = true;
+  message_handler
+eval(
+    [&](const string &cmd) {
+      if (cmd != "quit")
+      return;
+      anon_send_exit(client, exit_reason::user_shutdown);
+      done = true;
+    },
+    [&](string &arg0, string &arg1, string &arg2) {
+      if (arg0 == "connect") {
+        char *end = nullptr;
+        auto lport = strtoul(arg2.c_str(), &end, 10);
+        if (end != arg2.c_str() + arg2.size())
+        cout << R"(")" << arg2 << R"(" is not an unsigned integer)" << endl;
+        else if (lport > std::numeric_limits<uint16_t>::max())
+        cout << R"(")" << arg2 << R"(" > )"
+        << std::numeric_limits<uint16_t>::max() << endl;
+        else
+        anon_send(client, connect_atom::value, move(arg1),
+            static_cast<uint16_t>(lport));
+      }
+      else if (arg0 == "register_stream") {
+        cout << "NESWorker: register logical stream: stream name=" << arg1 << " filePath=" << arg2;
+        anon_send(client, reg_log_stream::value, arg1, arg2);
+
+      }
+
       },
-      [&](string &arg0, string &arg1, string &arg2) {
-        if (arg0 == "connect") {
-          char *end = nullptr;
-          auto lport = strtoul(arg2.c_str(), &end, 10);
-          if (end != arg2.c_str() + arg2.size())
-          cout << R"(")" << arg2 << R"(" is not an unsigned integer)" << endl;
-          else if (lport > std::numeric_limits<uint16_t>::max())
-          cout << R"(")" << arg2 << R"(" > )"
-          << std::numeric_limits<uint16_t>::max() << endl;
-          else
-          anon_send(client, connect_atom::value, move(arg1),
-              static_cast<uint16_t>(lport));
+      [&](string &arg0, string &arg1, string &arg2, string &arg3, string &arg4) {
+        if (arg0 == "register_sesnor") {
+          cout << "NESWorker: register physical stream: source type="
+          << arg1 << " sourceConf=" << arg2
+          << " physical stream name=" << arg3
+          << " logical stream name=" << arg4 << endl;
         }
-      });
+          anon_send(client, reg_phy_stream::value, arg1, arg2, arg3, arg4);
+      }
+  );
   // read next line, split it, and feed to the eval handler
   string line;
   while (!done && std::getline(std::cin, line)) {
     line = iotdb::UtilityFunctions::trim(std::move(line));  // ignore leading and trailing whitespaces
     std::vector<string> words;
     split(words, line, is_any_of(" "), token_compress_on);
-//    if (!message_builder(words.begin(), words.end()).apply(eval))
-//      usage();
+    if (!message_builder(words.begin(), words.end()).apply(eval))
+    usage();
   }
 }
 
@@ -126,35 +149,21 @@ void setupLogging() {
 }
 
 void caf_main(actor_system &system, WorkerActorConfig &cfg,
-              size_t numberOfWorker, PhysicalStreamConfig streamConf) {
+    size_t numberOfWorker) {
   setupLogging();
 //  cout << argc << endl;
-  start_worker(system, cfg, numberOfWorker, streamConf);
+  start_worker(system, cfg, numberOfWorker);
 }
 
 int main(int argc, char** argv) {
   namespace po = boost::program_options;
   po::options_description desc("Options");
   size_t numberOfWorker = DEFAULT_NUMBER_OF_WORKER_INSTANCES;
-  std::string sourceType = "OneGeneratorSource";
-  std::string sourceConf = "1";
-  std::string physicalStreamName = "default_physical";
-  std::string logicalStreamName = "default_logical";
 
   desc.add_options()("help", "Print help messages")(
       "numberOfWorker",
       po::value<size_t>(&numberOfWorker)->default_value(numberOfWorker),
-      "The number of workers to spawn")(
-      "sourceType", po::value<string>(&sourceType)->default_value(sourceType),
-      "type of the source, currently OneGeneratorSource or CSVSource")(
-      "sourceConf", po::value<string>(&sourceConf)->default_value(sourceConf),
-      "type of the source, currently numberOfBuffersToProudcue or filePath")(
-      "physicalStreamName",
-      po::value<string>(&physicalStreamName)->default_value(physicalStreamName),
-      "the name of the physical stream send by this node")(
-      "logicalStreamName",
-      po::value<string>(&logicalStreamName)->default_value(logicalStreamName),
-      "the name of the logical stream to which this nodes contribute");
+      "The number of workers to spawn");
 
   po::variables_map vm;
   po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
@@ -162,25 +171,18 @@ int main(int argc, char** argv) {
 
   if (vm.count("help")) {
     std::cout << "Basic Command Line Parameter " << std::endl << desc
-              << std::endl;
+    << std::endl;
     return 0;
   }
-  std::cout << "Settings: " << "\n numberOfWorker: " << numberOfWorker
-      << "\n sourceType: " << sourceType
-      << "\n sourceConf: " << sourceConf
-      << "\n physicalStreamName: "
-      << physicalStreamName << "\n logicalStreamName: " << logicalStreamName
-      << std::endl;
+  std::cout << "Basic Command Line Parameter " << std::endl << desc
+  << std::endl;
 
-  PhysicalStreamConfig streamConf;
-  streamConf.sourceType = sourceType;
-  streamConf.sourceConfig = sourceConf;
-  streamConf.physicalStreamName = physicalStreamName;
-  streamConf.logicalStreamName = logicalStreamName;
+  std::cout << "Settings: " << "\n numberOfWorker: " << numberOfWorker
+  << std::endl;
 
   WorkerActorConfig cfg;
   cfg.load<io::middleman>();
-  actor_system system { cfg };
+  actor_system system {cfg};
 
-  caf_main(system, cfg, numberOfWorker, streamConf);
+  caf_main(system, cfg, numberOfWorker);
 }
