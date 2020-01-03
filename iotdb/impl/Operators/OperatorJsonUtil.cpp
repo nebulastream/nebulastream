@@ -1,13 +1,13 @@
-#include <QueryCompiler/QueryPlanBuilder.hpp>
+#include <Operators/OperatorJsonUtil.hpp>
 #include <Operators/Operator.hpp>
 
 namespace iotdb {
 
-QueryPlanBuilder::QueryPlanBuilder() {};
+OperatorJsonUtil::OperatorJsonUtil() {};
 
-QueryPlanBuilder::~QueryPlanBuilder() {};
+OperatorJsonUtil::~OperatorJsonUtil() {};
 
-json::value QueryPlanBuilder::getBasePlan(InputQueryPtr inputQuery) {
+json::value OperatorJsonUtil::getBasePlan(InputQueryPtr inputQuery) {
 
   json::value result{};
   std::vector<json::value> nodes{};
@@ -43,7 +43,7 @@ json::value QueryPlanBuilder::getBasePlan(InputQueryPtr inputQuery) {
   return result;
 }
 
-void QueryPlanBuilder::getChildren(const OperatorPtr &root, std::vector<json::value> &nodes,
+void OperatorJsonUtil::getChildren(const OperatorPtr &root, std::vector<json::value> &nodes,
                                    std::vector<json::value> &edges) {
 
   std::vector<json::value> childrenNode;
