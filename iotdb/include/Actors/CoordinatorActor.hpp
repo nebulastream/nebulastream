@@ -58,7 +58,7 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
    * @param schema of logical stream
    * @return bool indicating if insert was successful
    */
-  void registerLogicalStream(std::string logicalStreamName, SchemaPtr schemaPtr);
+  bool registerLogicalStream(std::string logicalStreamName, SchemaPtr schemaPtr);
 
 
   /**
