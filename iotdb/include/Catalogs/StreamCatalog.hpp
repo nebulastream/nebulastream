@@ -126,6 +126,7 @@ class StreamCatalog {
    */
   std::string getPhysicalStreamAndSchemaAsString();
 
+  std::vector<StreamCatalogEntryPtr> getPhysicalStreams(std::string logicalStreamName);
  private:
   /* implement singleton semantics: no construction,
    * copying or destruction of stream catalog objects

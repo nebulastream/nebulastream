@@ -72,6 +72,12 @@ class WorkerActor : public stateful_actor<WorkerState> {
    */
   void removeLogicalStream(std::string streamName);
 
+  /**
+   * @brief this method removes a physical stream from a logical stream in the coordinator
+   * @param logical stream to be deleted
+   */
+  void removePhysicalStream(std::string logicalStreamName, std::string physicalStreamName);
+
  private:
   behavior init();
   behavior unconnected();

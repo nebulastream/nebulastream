@@ -18,6 +18,7 @@ using register_sensor_atom = atom_constant<atom("r_sensor")>;
 using register_phy_stream_atom = atom_constant<atom("r_phy_str")>;
 using register_log_stream_atom = atom_constant<atom("re_log_str")>;
 using remove_log_stream_atom = atom_constant<atom("rm_log_str")>;
+using remove_phy_stream_atom = atom_constant<atom("rm_phy_str")>;
 
 using execute_query_atom = atom_constant<atom("exe_query")>;
 using register_query_atom = atom_constant<atom("register")>;
@@ -28,17 +29,18 @@ using topology_json_atom = atom_constant<atom("topology")>;
 using show_registered_queries_atom = atom_constant<atom("s_reg")>;
 using show_running_queries_atom = atom_constant<atom("s_run")>;
 using show_running_operators_atom = atom_constant<atom("s_ops")>;
-using show_reg_log_streams_atom = atom_constant<atom("s_log_str")>;
-using show_reg_phy_streams_atom = atom_constant<atom("s_phy_str")>;
+using show_reg_log_stream_atom = atom_constant<atom("s_log_str")>;
+using show_reg_phy_stream_atom = atom_constant<atom("s_phy_str")>;
 
 //worker stubs
 using get_local_sink_port_atom = atom_constant<atom("g_sinkp")>;
 using execute_operators_atom = atom_constant<atom("exe_ops")>;
 using delete_query_atom = atom_constant<atom("delete")>;
 using get_operators_atom = atom_constant<atom("g_ops")>;
-using reg_phy_stream = atom_constant<atom("g_reg_ps")>;
-using reg_log_stream = atom_constant<atom("g_reg_ls")>;
-using remove_log_stream = atom_constant<atom("g_rm_ls")>;
+//using reg_phy_stream = atom_constant<atom("g_reg_ps")>;
+//using reg_log_stream = atom_constant<atom("g_reg_ls")>;
+//using remove_log_stream = atom_constant<atom("g_rm_ls")>;
+//using remove_phy_stream = atom_constant<atom("g_rm_ps")>;
 
 using set_type_atom = atom_constant<atom("s_type")>;
 using get_type_atom = atom_constant<atom("g_type")>;

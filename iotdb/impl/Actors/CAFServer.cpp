@@ -72,9 +72,9 @@ bool CAFServer::start(
         } else if (arg0 == "sro") {
           anon_send(coordinatorActorHandle, show_running_operators_atom::value);
         } else if (arg0 == "sls") {
-          anon_send(coordinatorActorHandle, show_reg_log_streams_atom::value);
+          anon_send(coordinatorActorHandle, show_reg_log_stream_atom::value);
         } else if (arg0 == "sph") {
-          anon_send(coordinatorActorHandle, show_reg_phy_streams_atom::value);
+          anon_send(coordinatorActorHandle, show_reg_phy_stream_atom::value);
         } else {
           cout << "Unknown command " << arg0 << endl;
         }
@@ -102,9 +102,9 @@ bool CAFServer::start(
         } else if ((arg0 == "show" && arg1 == "running" && arg2 == "operators")) {
           anon_send(coordinatorActorHandle, show_running_operators_atom::value);
         } else if ((arg0 == "show" && arg1 == "logical" && arg2 == "streams")) {
-          anon_send(coordinatorActorHandle, show_reg_log_streams_atom::value);
+          anon_send(coordinatorActorHandle, show_reg_log_stream_atom::value);
         } else if ((arg0 == "show" && arg1 == "physical" && arg2 == "streams")) {
-          anon_send(coordinatorActorHandle, show_reg_phy_streams_atom::value);
+          anon_send(coordinatorActorHandle, show_reg_phy_stream_atom::value);
         } else {
           cout << "Unknown command " << arg0 << "," << arg1 << "," << arg2 << endl;
         }

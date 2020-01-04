@@ -133,6 +133,8 @@ TEST_F(StreamCatalogTest, add_get_physical_stream_test) {
             StreamCatalog::instance().getPhysicalStreamAndSchemaAsString());
 }
 
+//TODO: add test for a second physical stream add
+
 TEST_F(StreamCatalogTest, add_remove_physical_stream_test) {
   NESTopologyManager::getInstance().resetNESTopologyPlan();
   StreamCatalog::instance().addLogicalStream(
