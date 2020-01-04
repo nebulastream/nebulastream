@@ -1,7 +1,3 @@
-//
-// Created by achaudhary on 07.07.19.
-//
-
 #ifndef IOTDB_QUERYPLANBUILDER_HPP
 #define IOTDB_QUERYPLANBUILDER_HPP
 
@@ -15,11 +11,11 @@ using namespace web;
 
 namespace iotdb {
 
-class QueryPlanBuilder {
+class OperatorJsonUtil {
 
  public:
-  QueryPlanBuilder();
-  ~QueryPlanBuilder();
+  OperatorJsonUtil();
+  ~OperatorJsonUtil();
   json::value getBasePlan(InputQueryPtr inputQuery);
 
  private:
