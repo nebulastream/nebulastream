@@ -25,6 +25,7 @@ bool StreamCatalog::addLogicalStream(std::string logicalStreamName,
   //check if stream already exist
   IOTDB_DEBUG(
       "StreamCatalog: search for logical stream in addLogicalStream() " << logicalStreamName)
+        IOTDB_DEBUG("stream before=" << getLogicalStreamAndSchemaAsString())
 
   if (!testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)) {
     IOTDB_DEBUG("StreamCatalog: add logical stream " << logicalStreamName)
@@ -33,6 +34,7 @@ bool StreamCatalog::addLogicalStream(std::string logicalStreamName,
   } else {
     IOTDB_ERROR(
         "StreamCatalog: logical stream " << logicalStreamName << " already exists")
+    IOTDB_DEBUG("stream=" << getLogicalStreamAndSchemaAsString())
     return false;
   }
 }
@@ -48,9 +50,14 @@ bool StreamCatalog::removeLogicalStream(std::string logicalStreamName) {
     return false;
   } else {
     IOTDB_DEBUG("StreamCatalog: remove logical stream " << logicalStreamName)
+
+    if (logicalToPhysicalStreamMapping[logicalStreamName].size() != 0) {
+      IOTDB_DEBUG(
+          "StreamCatalog: cannot remove " << logicalStreamName << " because there are physical entries for this stream")
+      return false;
+    }
     size_t cnt = logicalStreamToSchemaMapping.erase(logicalStreamName);
     IOTDB_DEBUG("StreamCatalog: removed " << cnt << " copies of the stream")
-
     assert(!testIfLogicalStreamExistsInSchemaMapping(logicalStreamName));
     return true;
   }
@@ -188,7 +195,7 @@ deque<NESTopologyEntryPtr> StreamCatalog::getSourceNodesForLogicalStream(
       logicalToPhysicalStreamMapping[logicalStreamName];
 
   deque<NESTopologyEntryPtr> listOfSourceNodes;
-  for (StreamCatalogEntryPtr& entry : physicalStreams) {
+  for (StreamCatalogEntryPtr &entry : physicalStreams) {
     listOfSourceNodes.push_back(entry->getNode());
   }
 
@@ -222,7 +229,7 @@ std::string StreamCatalog::getPhysicalStreamAndSchemaAsString() {
   for (auto entry : logicalToPhysicalStreamMapping) {
     ss << "stream name=" << entry.first << " with " << entry.second.size()
        << " elements:";
-    for (StreamCatalogEntryPtr& sce : entry.second) {
+    for (StreamCatalogEntryPtr &sce : entry.second) {
       ss << sce->toString();
     }
     ss << std::endl;

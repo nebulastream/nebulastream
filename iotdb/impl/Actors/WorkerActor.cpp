@@ -6,6 +6,16 @@
 #include <boost/filesystem.hpp>
 #include <Util/Logger.hpp>
 namespace iotdb {
+
+
+WorkerActor::WorkerActor(actor_config &cfg, string ip, uint16_t publish_port,
+                       uint16_t receive_port)
+      :
+      stateful_actor(cfg) {
+    this->state.workerPtr = std::make_unique<WorkerService>(
+        WorkerService(std::move(ip), publish_port, receive_port));
+  }
+
 // starting point of our FSM
 behavior WorkerActor::init() {
   // transition to `unconnected` on server failure
@@ -77,10 +87,9 @@ void WorkerActor::registerLogicalStream(std::string streamName,
                           (std::istreambuf_iterator<char>()));
 
   IOTDB_DEBUG("WorkerActor: file content:" << fileContent)
-  bool inserted = false;
   this->request(coordinator, task_timeout, register_log_stream_atom::value,
                 streamName, fileContent).await(
-      [&, &inserted](bool ret) {
+      [&](bool ret) {
         if (ret == true) {
           IOTDB_DEBUG("WorkerActor: stream successfully added")
         } else {
@@ -92,6 +101,30 @@ void WorkerActor::registerLogicalStream(std::string streamName,
         string error_msg = to_string(er);
         IOTDB_ERROR(
             "WorkerActor: Error during registerLogicalStream for " << to_string(coordinator) << "\n" << error_msg);
+        throw Exception("error while register stream");
+      });
+}
+
+void WorkerActor::removeLogicalStream(std::string streamName) {
+  //send request to coordinator
+  auto coordinator = actor_cast<actor>(this->state.current_server);
+
+  IOTDB_DEBUG("WorkerActor: removeLogicalStream stream" << streamName)
+
+  this->request(coordinator, task_timeout, remove_log_stream_atom::value,
+                streamName).await(
+      [&](bool ret) {
+        if (ret == true) {
+          IOTDB_DEBUG("WorkerActor: stream successfully removed")
+        } else {
+          IOTDB_DEBUG("WorkerActor: stream not removed")
+        }
+      }
+      ,
+      [=](const error &er) {
+        string error_msg = to_string(er);
+        IOTDB_ERROR(
+            "WorkerActor: Error during removeLogicalStream for " << to_string(coordinator) << "\n" << error_msg);
       });
 }
 
@@ -172,6 +205,10 @@ behavior WorkerActor::running(const actor &coordinator) {
     // register logical stream
     [=](reg_log_stream, std::string name, std::string path) {
       registerLogicalStream(name, path);
+    },
+    // register logical stream
+    [=](remove_log_stream, std::string name) {
+      removeLogicalStream(name);
     },
     // internal rpc to execute a query
     [=](execute_operators_atom, const string &queryId, string &executableTransferObject) {

@@ -57,9 +57,12 @@ behavior CoordinatorActor::running() {
     [=](register_log_stream_atom, const string& streamName, const string& streamSchema) {
       IOTDB_DEBUG("CoordinatorActor: got request for register logical stream " << streamName << " and schema " << streamSchema)
       SchemaPtr sch = UtilityFunctions::createSchemaFromCode(streamSchema);
-//      SchemaPtr sch = std::make_shared<Schema>(SerializationTools::parse_schema(streamSchema));
-      IOTDB_DEBUG("CoordinatorActor: register schema")
+      IOTDB_DEBUG("CoordinatorActor: schema successfully created")
       return registerLogicalStream(streamName, sch);
+    },
+    [=](remove_log_stream_atom, const string& streamName) {
+      IOTDB_DEBUG("CoordinatorActor: got request for removel of logical stream " << streamName)
+      return removeLogicalStream(streamName);
     },
     [=](execute_query_atom, const string& description, const string& strategy) {
       return executeQuery(description, strategy);
@@ -119,9 +122,14 @@ behavior CoordinatorActor::running() {
   };
 }
 
+bool CoordinatorActor::removeLogicalStream(std::string logicalStreamName) {
+  return StreamCatalog::instance().removeLogicalStream(logicalStreamName);
+}
+
 bool CoordinatorActor::registerLogicalStream(std::string logicalStreamName,
                                              SchemaPtr schemaPtr) {
-  return StreamCatalog::instance().addLogicalStream(logicalStreamName, schemaPtr);
+  return StreamCatalog::instance().addLogicalStream(logicalStreamName,
+                                                    schemaPtr);
 }
 
 void CoordinatorActor::registerPhysicalStream(std::string ip,
@@ -188,7 +196,7 @@ void CoordinatorActor::showOperators() {
         [=](const vector<string> &vec) {
           std::ostringstream ss;
           ss << x.second->getEntryTypeString() << "::" << to_string(hdl) << ":"
-              << endl;
+             << endl;
 
           aout(this) << ss.str() << vec << endl;
         }

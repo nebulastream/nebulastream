@@ -66,7 +66,7 @@ void start_worker(actor_system &system, const WorkerActorConfig &cfg,
 
   for (size_t i = 1; i <= numberOfWorker; i++) {
     client = system.spawn<iotdb::WorkerActor>(cfg.ip, cfg.publish_port,
-                                              cfg.receive_port, defaultConf);
+                                              cfg.receive_port);
     if (!cfg.host.empty() && cfg.publish_port > 0) {
       //send connect message to worker to try to connect
       anon_send(client, connect_atom::value, cfg.host, cfg.publish_port);
