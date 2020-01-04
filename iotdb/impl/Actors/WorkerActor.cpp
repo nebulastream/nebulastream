@@ -4,8 +4,7 @@
 #include <Util/SerializationTools.hpp>
 #include <fstream>
 #include <boost/filesystem.hpp>
-
-
+#include <Util/Logger.hpp>
 namespace iotdb {
 // starting point of our FSM
 behavior WorkerActor::init() {
@@ -57,29 +56,44 @@ void WorkerActor::registerPhysicalStream(std::string sourceType,
 
 }
 
-void WorkerActor::registerLogicalStream(std::string streamName, std::string filePath){
+void WorkerActor::registerLogicalStream(std::string streamName,
+                                        std::string filePath) {
   //send request to coordinator
-    auto coordinator = actor_cast<actor>(this->state.current_server);
-    /* Check if file can be found on system and read. */
-    boost::filesystem::path path{filePath.c_str()};
-    if (!boost::filesystem::exists(path) || !boost::filesystem::is_regular_file(path)) {
-        assert(0 == 1 && "No file found at given path.");
-    }
+  auto coordinator = actor_cast<actor>(this->state.current_server);
 
-    /* Read file from file system. */
-    std::ifstream ifs(path.string().c_str());
-    std::string file_content((std::istreambuf_iterator<char>(ifs)), (std::istreambuf_iterator<char>()));
+  IOTDB_DEBUG(
+      "WorkerActor: registerLog stream" << streamName << " with path" << filePath)
+  /* Check if file can be found on system and read. */
+  boost::filesystem::path path { filePath.c_str() };
+  if (!boost::filesystem::exists(path)
+      || !boost::filesystem::is_regular_file(path)) {
+    IOTDB_ERROR("WorkerActor: file does not exits")
+    throw Exception("files does not exist");
+  }
 
-    this->request(
-        coordinator,
-        task_timeout,
-        register_log_stream_atom::value,
-        streamName,
-        file_content);
+  /* Read file from file system. */
+  std::ifstream ifs(path.string().c_str());
+  std::string fileContent((std::istreambuf_iterator<char>(ifs)),
+                          (std::istreambuf_iterator<char>()));
 
-
+  IOTDB_DEBUG("WorkerActor: file content:" << fileContent)
+  bool inserted = false;
+  this->request(coordinator, task_timeout, register_log_stream_atom::value,
+                streamName, fileContent).await(
+      [&, &inserted](bool ret) {
+        if (ret == true) {
+          IOTDB_DEBUG("WorkerActor: stream successfully added")
+        } else {
+          IOTDB_DEBUG("WorkerActor: stream not added")
+        }
+      }
+      ,
+      [=](const error &er) {
+        string error_msg = to_string(er);
+        IOTDB_ERROR(
+            "WorkerActor: Error during registerLogicalStream for " << to_string(coordinator) << "\n" << error_msg);
+      });
 }
-
 
 /**
  * @brief the ongoing connection state in the TSM
@@ -91,16 +105,16 @@ void WorkerActor::connecting(const std::string &host, uint16_t port) {
   // use request().await() to suspend regular behavior until MM responded
   auto mm = this->system().middleman().actor_handle();
   this->request(mm, infinite, connect_atom::value, host, port).await(
-      [=](const node_id &, strong_actor_ptr &serv,
+      [=](const node_id&, strong_actor_ptr &serv,
           const std::set<std::string> &ifs) {
         if (!serv) {
-          aout(this) << R"(*** no server found at ")" << host << R"(":)"
-          << port << endl;
+          aout(this) << R"(*** no server found at ")" << host << R"(":)" << port
+                     << endl;
           return;
         }
         if (!ifs.empty()) {
           aout(this) << R"(*** typed actor found at ")" << host << R"(":)"
-          << port << ", but expected an untyped actor " << endl;
+                     << port << ", but expected an untyped actor " << endl;
           return;
         }
         aout(this) << "*** successfully connected to server" << endl;
@@ -110,21 +124,31 @@ void WorkerActor::connecting(const std::string &host, uint16_t port) {
         //TODO: add serializable shipping object
         cout << "send properties to server" << endl;
         //send default physical stream
-        this->request(coordinator, task_timeout, register_sensor_atom::value, this->state.workerPtr->getIp(),
-            this->state.workerPtr->getPublishPort(), this->state.workerPtr->getReceivePort(), 2,
+        this->request(
+            coordinator,
+            task_timeout,
+            register_sensor_atom::value,
+            this->state.workerPtr->getIp(),
+            this->state.workerPtr->getPublishPort(),
+            this->state.workerPtr->getReceivePort(),
+            2,
             this->state.workerPtr->getNodeProperties(),
-            this->state.workerPtr->getPhysicalStreamConfig("default_physical").sourceType,
-            this->state.workerPtr->getPhysicalStreamConfig("default_physical").sourceConfig,
-            this->state.workerPtr->getPhysicalStreamConfig("default_physical").physicalStreamName,
-            this->state.workerPtr->getPhysicalStreamConfig("default_physical").logicalStreamName
-        );
+            this->state.workerPtr->getPhysicalStreamConfig("default_physical")
+                .sourceType,
+            this->state.workerPtr->getPhysicalStreamConfig("default_physical")
+                .sourceConfig,
+            this->state.workerPtr->getPhysicalStreamConfig("default_physical")
+                .physicalStreamName,
+            this->state.workerPtr->getPhysicalStreamConfig("default_physical")
+                .logicalStreamName);
         cout << "properties set successful, now changing state" << endl;
         this->monitor(coordinator);
         this->become(running(coordinator));
-      },
+      }
+      ,
       [=](const error &err) {
-        aout(this) << R"(*** cannot connect to ")" << host << R"(":)"
-        << port << " => " << this->system().render(err) << endl;
+        aout(this) << R"(*** cannot connect to ")" << host << R"(":)" << port
+                   << " => " << this->system().render(err) << endl;
         this->become(unconnected());
       });
 }

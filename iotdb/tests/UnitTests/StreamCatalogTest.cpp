@@ -179,26 +179,3 @@ TEST_F(StreamCatalogTest, add_physical_for_not_existing_logical_stream_test) {
             StreamCatalog::instance().getPhysicalStreamAndSchemaAsString());
 }
 
-TEST_F(StreamCatalogTest, register_log_stream_from_node_test) {
-
-  // Create Coordinator
-
-  // Create Worker
-//  WorkerActorConfig cfg;
-//  cfg.load<io::middleman>();
-//  actor_system system { cfg };
-//  infer_handle_from_class_t<iotdb::WorkerActor> client;
-//
-//  PhysicalStreamConfig defaultConf;
-//  client = system.spawn<iotdb::WorkerActor>(cfg.ip, cfg.publish_port,
-//                                            cfg.receive_port, defaultConf);
-//  if (!cfg.host.empty() && cfg.publish_port > 0) {
-//    //send connect message to worker to try to connect
-//    anon_send(client, connect_atom::value, cfg.host, cfg.publish_port);
-//  } else
-//    cout << "*** no server received via config, "
-//         << R"(please use "connect <host> <port>" before using the calculator)"
-//         << endl;
-
-}
-

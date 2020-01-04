@@ -7,22 +7,26 @@ namespace iotdb {
 
 behavior CoordinatorActor::init() {
   initializeNESTopology();
-
+  StreamCatalog::instance();
   auto kRootNode = NESTopologyManager::getInstance().getRootNode();
   this->state.actorTopologyMap.insert( { this->address().get(), kRootNode });
   this->state.topologyActorMap.insert( { kRootNode, this->address().get() });
 
   // transition to `unconnected` on server failure
   this->set_down_handler(
-      [=](const down_msg& dm) {
+      [=](const down_msg &dm) {
         strong_actor_ptr key = dm.source.get();
         auto hdl = actor_cast<actor>(key);
-        if (this->state.actorTopologyMap.find(key) != this->state.actorTopologyMap.end()) {
+        if (this->state.actorTopologyMap.find(key)
+            != this->state.actorTopologyMap.end()) {
           // remove disconnected worker from topology
-          coordinatorServicePtr->deregister_sensor(this->state.actorTopologyMap.at(key));
-          this->state.topologyActorMap.erase(this->state.actorTopologyMap.at(key));
+          coordinatorServicePtr->deregister_sensor(
+              this->state.actorTopologyMap.at(key));
+          this->state.topologyActorMap.erase(
+              this->state.actorTopologyMap.at(key));
           this->state.actorTopologyMap.erase(key);
-          aout(this) << "ACTORCOORDINATOR: Lost connection to worker " << key << endl;
+          aout(this) << "ACTORCOORDINATOR: Lost connection to worker " << key
+                     << endl;
           key->get()->unregister_from_system();
         }
       });
@@ -51,7 +55,10 @@ behavior CoordinatorActor::running() {
       return registerPhysicalStream(ip, conf);
     },
     [=](register_log_stream_atom, const string& streamName, const string& streamSchema) {
-      SchemaPtr sch = std::make_shared<Schema>(SerializationTools::parse_schema(streamSchema));
+      IOTDB_DEBUG("CoordinatorActor: got request for register logical stream " << streamName << " and schema " << streamSchema)
+      SchemaPtr sch = UtilityFunctions::createSchemaFromCode(streamSchema);
+//      SchemaPtr sch = std::make_shared<Schema>(SerializationTools::parse_schema(streamSchema));
+      IOTDB_DEBUG("CoordinatorActor: register schema")
       return registerLogicalStream(streamName, sch);
     },
     [=](execute_query_atom, const string& description, const string& strategy) {
@@ -112,27 +119,28 @@ behavior CoordinatorActor::running() {
   };
 }
 
-void CoordinatorActor::registerLogicalStream(std::string logicalStreamName,
+bool CoordinatorActor::registerLogicalStream(std::string logicalStreamName,
                                              SchemaPtr schemaPtr) {
-  StreamCatalog::instance().addLogicalStream(logicalStreamName, schemaPtr);
+  return StreamCatalog::instance().addLogicalStream(logicalStreamName, schemaPtr);
 }
 
-void CoordinatorActor::registerPhysicalStream(std::string ip, PhysicalStreamConfig streamConf) {
+void CoordinatorActor::registerPhysicalStream(std::string ip,
+                                              PhysicalStreamConfig streamConf) {
 
-  NESTopologyEntryPtr sensorNode = NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeByIp(ip);
+  NESTopologyEntryPtr sensorNode = NESTopologyManager::getInstance()
+      .getNESTopologyPlan()->getNodeByIp(ip);
 
   StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
-        streamConf.sourceType, streamConf.sourceConfig, sensorNode,
-        streamConf.physicalStreamName);
+      streamConf.sourceType, streamConf.sourceConfig, sensorNode,
+      streamConf.physicalStreamName);
 
-
-  StreamCatalog::instance().addPhysicalStream(streamConf.logicalStreamName, sce);
+  StreamCatalog::instance().addPhysicalStream(streamConf.logicalStreamName,
+                                              sce);
 }
 
-
-void CoordinatorActor::registerSensor(const string& ip, uint16_t publish_port,
+void CoordinatorActor::registerSensor(const string &ip, uint16_t publish_port,
                                       uint16_t receive_port, int cpu,
-                                      const string& nodeProperties,
+                                      const string &nodeProperties,
                                       PhysicalStreamConfig streamConf) {
   auto sap = current_sender();
   auto hdl = actor_cast<actor>(sap);
@@ -146,11 +154,11 @@ void CoordinatorActor::registerSensor(const string& ip, uint16_t publish_port,
       "ACTORCOORDINATOR: Successfully registered sensor (CPU=" << cpu << ", PhysicalStream: " << streamConf.physicalStreamName << ") " << to_string(hdl));
 }
 
-void CoordinatorActor::deployQuery(const string& queryId) {
+void CoordinatorActor::deployQuery(const string &queryId) {
   unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> deployments =
       coordinatorServicePtr->make_deployment(queryId);
 
-  for (auto const& x : deployments) {
+  for (auto const &x : deployments) {
     strong_actor_ptr sap = this->state.topologyActorMap.at(x.first);
     auto hdl = actor_cast<actor>(sap);
     string s_eto = SerializationTools::ser_eto(x.second);
@@ -160,9 +168,9 @@ void CoordinatorActor::deployQuery(const string& queryId) {
   }
 }
 
-void CoordinatorActor::deregisterQuery(const string& queryId) {
+void CoordinatorActor::deregisterQuery(const string &queryId) {
   // send command to all corresponding nodes to stop the running query as well
-  for (auto const& x : this->state.actorTopologyMap) {
+  for (auto const &x : this->state.actorTopologyMap) {
     auto hdl = actor_cast<actor>(x.first);
     IOTDB_INFO(
         "ACTORCOORDINATOR: Sending deletion request " << queryId << " to " << to_string(hdl));
@@ -172,31 +180,34 @@ void CoordinatorActor::deregisterQuery(const string& queryId) {
 }
 
 void CoordinatorActor::showOperators() {
-  for (auto const& x : this->state.actorTopologyMap) {
+  for (auto const &x : this->state.actorTopologyMap) {
     strong_actor_ptr sap = x.first;
     auto hdl = actor_cast<actor>(sap);
 
     this->request(hdl, task_timeout, get_operators_atom::value).then(
-        [=](const vector<string>& vec) {
+        [=](const vector<string> &vec) {
           std::ostringstream ss;
-          ss << x.second->getEntryTypeString() << "::" << to_string(hdl) << ":" << endl;
+          ss << x.second->getEntryTypeString() << "::" << to_string(hdl) << ":"
+              << endl;
 
           aout(this) << ss.str() << vec << endl;
-        },
-        [=](const error& er) {
+        }
+        ,
+        [=](const error &er) {
           string error_msg = to_string(er);
-          IOTDB_ERROR("ACTORCOORDINATOR: Error during showOperators for " << to_string(hdl) << "\n" << error_msg);
+          IOTDB_ERROR(
+              "ACTORCOORDINATOR: Error during showOperators for " << to_string(hdl) << "\n" << error_msg);
         });
   }
 }
 
-string CoordinatorActor::registerQuery(const string& queryString,
-                                       const string& strategy) {
+string CoordinatorActor::registerQuery(const string &queryString,
+                                       const string &strategy) {
   return coordinatorServicePtr->register_query(queryString, strategy);
 }
 
-string CoordinatorActor::executeQuery(const string& queryString,
-                                      const string& strategy) {
+string CoordinatorActor::executeQuery(const string &queryString,
+                                      const string &strategy) {
   string queryId = coordinatorServicePtr->register_query(queryString, strategy);
   deployQuery(queryId);
   return queryId;
