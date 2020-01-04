@@ -31,6 +31,7 @@ class StreamCatalog {
    * @brief method to add a logical stream
    * @param logical stream name
    * @param schema of logical stream
+   * TODO: what to do if logical stream exists but the new one has a different schema
    * @return bool indicating if insert was successful
    */
   bool addLogicalStream(std::string logicalStreamName, SchemaPtr schemaPtr);

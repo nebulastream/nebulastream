@@ -60,6 +60,14 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
    */
   bool registerLogicalStream(std::string logicalStreamName, SchemaPtr schemaPtr);
 
+  /**
+   * @brief method to remove a logical stream
+   * @caution this does not remove the corresponding physical streams
+   * @caution will fail if there are pyhsical streams for this logical entry, delete them first
+   * @param logical stream name
+   * @return bool indicating if removal was successful
+   */
+  bool removeLogicalStream(std::string logicalStreamName);
 
   /**
    * @brief method to add a physical stream
