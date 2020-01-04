@@ -70,11 +70,23 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
   bool removeLogicalStream(std::string logicalStreamName);
 
   /**
-   * @brief method to add a physical stream
+   * @brief method to add a physical stream to the catalog AND to the topology
+   * @caution every external register call can only register streams for himself
    * @param ip as string
    * @param config of the physical stream
+   * @return bool indicating if removal was successful
    */
-  void registerPhysicalStream(std::string ip, PhysicalStreamConfig streamConf);
+  bool registerPhysicalStream(std::string ip, PhysicalStreamConfig streamConf);
+
+  /**
+    * @brief method to remove a physical stream to the catalog AND to the topology
+    * @caution every external register call can only remove streams from himself
+    * @param ip as string
+    * @param config of the physical stream
+    * @return bool indicating if removal was successful
+    */
+   bool removePhysicalStream(std::string ip, PhysicalStreamConfig streamConf);
+
 
   /**
    * @brief : registering a new sensor node

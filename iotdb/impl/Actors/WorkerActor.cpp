@@ -7,14 +7,13 @@
 #include <Util/Logger.hpp>
 namespace iotdb {
 
-
 WorkerActor::WorkerActor(actor_config &cfg, string ip, uint16_t publish_port,
-                       uint16_t receive_port)
-      :
-      stateful_actor(cfg) {
-    this->state.workerPtr = std::make_unique<WorkerService>(
-        WorkerService(std::move(ip), publish_port, receive_port));
-  }
+                         uint16_t receive_port)
+    :
+    stateful_actor(cfg) {
+  this->state.workerPtr = std::make_unique<WorkerService>(
+      WorkerService(std::move(ip), publish_port, receive_port));
+}
 
 // starting point of our FSM
 behavior WorkerActor::init() {
@@ -91,9 +90,9 @@ void WorkerActor::registerLogicalStream(std::string streamName,
                 streamName, fileContent).await(
       [&](bool ret) {
         if (ret == true) {
-          IOTDB_DEBUG("WorkerActor: stream successfully added")
+          IOTDB_DEBUG("WorkerActor: logical stream " << streamName << " successfully added")
         } else {
-          IOTDB_DEBUG("WorkerActor: stream not added")
+          IOTDB_DEBUG("WorkerActor: logical stream " << streamName << " could not be added")
         }
       }
       ,
@@ -104,6 +103,31 @@ void WorkerActor::registerLogicalStream(std::string streamName,
         throw Exception("error while register stream");
       });
 }
+
+void WorkerActor::removePhysicalStream(std::string logicalStreamName, std::string physicalStreamName)
+{
+  //send request to coordinator
+   auto coordinator = actor_cast<actor>(this->state.current_server);
+
+   IOTDB_DEBUG("WorkerActor: removePhysicalStream physical stream" << physicalStreamName << " from logical stream " << logicalStreamName)
+
+   this->request(coordinator, task_timeout, remove_phy_stream_atom::value, state.workerPtr->getIp(),
+                 logicalStreamName, physicalStreamName).await(
+       [&](bool ret) {
+         if (ret == true) {
+           IOTDB_DEBUG("WorkerActor: physical stream " << physicalStreamName << " successfully removed from " << logicalStreamName)
+         } else {
+           IOTDB_DEBUG("WorkerActor: physical stream " << physicalStreamName << " could not be removed from " << logicalStreamName)
+         }
+       }
+       ,
+       [=](const error &er) {
+         string error_msg = to_string(er);
+         IOTDB_ERROR(
+             "WorkerActor: Error during removeLogicalStream for " << to_string(coordinator) << "\n" << error_msg);
+       });
+}
+
 
 void WorkerActor::removeLogicalStream(std::string streamName) {
   //send request to coordinator
@@ -199,16 +223,19 @@ behavior WorkerActor::running(const actor &coordinator) {
       connecting(host, port);
     },
     // register physical stream
-    [=](reg_phy_stream, std::string sourceType, std::string sourceConf, std::string physicalStreamName, std::string logicalStreamName) {
+    [=](register_phy_stream_atom, std::string sourceType, std::string sourceConf, std::string physicalStreamName, std::string logicalStreamName) {
       registerPhysicalStream(sourceType, sourceConf, physicalStreamName, logicalStreamName);
     },
-    // register logical stream
-    [=](reg_log_stream, std::string name, std::string path) {
+    // remove logical stream
+    [=](register_log_stream_atom, std::string name, std::string path) {
       registerLogicalStream(name, path);
     },
     // register logical stream
-    [=](remove_log_stream, std::string name) {
+    [=](remove_log_stream_atom, std::string name) {
       removeLogicalStream(name);
+    },//remove physical stream
+    [=](remove_phy_stream_atom, std::string logicalName, std::string physicalName) {
+      removePhysicalStream(logicalName, physicalName);
     },
     // internal rpc to execute a query
     [=](execute_operators_atom, const string &queryId, string &executableTransferObject) {

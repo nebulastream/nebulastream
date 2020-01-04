@@ -64,6 +64,11 @@ behavior CoordinatorActor::running() {
       IOTDB_DEBUG("CoordinatorActor: got request for removel of logical stream " << streamName)
       return removeLogicalStream(streamName);
     },
+    [=](remove_phy_stream_atom, std::string ip, const string& logicalStreamName, const string& physicalStreamName) {
+      IOTDB_DEBUG("CoordinatorActor: got request for removel of physical stream " << physicalStreamName << " from logical stream " << logicalStreamName)
+      PhysicalStreamConfig conf("", "", physicalStreamName, logicalStreamName);
+      return removePhysicalStream(ip, conf);
+    },
     [=](execute_query_atom, const string& description, const string& strategy) {
       return executeQuery(description, strategy);
     },
@@ -107,11 +112,11 @@ behavior CoordinatorActor::running() {
         aout(this) << p.first << endl;
       }
     },
-    [=](show_reg_log_streams_atom) {
+    [=](show_reg_log_stream_atom) {
       aout(this) << "Printing logical streams" << endl;
       aout(this) << StreamCatalog::instance().getLogicalStreamAndSchemaAsString();
     },
-    [=](show_reg_phy_streams_atom) {
+    [=](show_reg_phy_stream_atom) {
       aout(this) << "Printing physical streams" << endl;
       aout(this) << StreamCatalog::instance().getPhysicalStreamAndSchemaAsString();
     },
@@ -132,7 +137,20 @@ bool CoordinatorActor::registerLogicalStream(std::string logicalStreamName,
                                                     schemaPtr);
 }
 
-void CoordinatorActor::registerPhysicalStream(std::string ip,
+bool CoordinatorActor::removePhysicalStream(std::string ip, PhysicalStreamConfig streamConf) {
+  NESTopologyEntryPtr sensorNode = NESTopologyManager::getInstance()
+      .getNESTopologyPlan()->getNodeByIpWithoutCoordinator(ip);
+
+  IOTDB_DEBUG("node type=" << sensorNode->getEntryTypeString())
+  StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
+      streamConf.sourceType, streamConf.sourceConfig, sensorNode,
+      streamConf.physicalStreamName);
+
+  return StreamCatalog::instance().removePhysicalStream(
+      streamConf.logicalStreamName, sce);
+}
+
+bool CoordinatorActor::registerPhysicalStream(std::string ip,
                                               PhysicalStreamConfig streamConf) {
 
   NESTopologyEntryPtr sensorNode = NESTopologyManager::getInstance()
@@ -142,8 +160,8 @@ void CoordinatorActor::registerPhysicalStream(std::string ip,
       streamConf.sourceType, streamConf.sourceConfig, sensorNode,
       streamConf.physicalStreamName);
 
-  StreamCatalog::instance().addPhysicalStream(streamConf.logicalStreamName,
-                                              sce);
+  return StreamCatalog::instance().addPhysicalStream(
+      streamConf.logicalStreamName, sce);
 }
 
 void CoordinatorActor::registerSensor(const string &ip, uint16_t publish_port,

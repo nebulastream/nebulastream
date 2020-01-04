@@ -49,9 +49,28 @@ bool NESGraph::hasVertex(size_t search_id) const {
 }
 
 
+const NESTopologyEntryPtr NESGraph::getVertexByIpWithoutCoordinator(std::string ip) const
+{
+  // build vertice iterator
+  nesVertex_iterator vertex, vertex_end, next_vertex;
+  boost::tie(vertex, vertex_end) = vertices(graph);
+
+  // iterator over vertices
+  for (next_vertex = vertex; vertex != vertex_end; vertex = next_vertex) {
+    ++next_vertex;
+
+    // check for matching vertex
+    if (graph[*vertex].ptr->getIp() == ip && graph[*vertex].ptr->getEntryType() != Coordinator) {
+      return graph[*vertex].ptr;
+    }
+  }
+  // should never happen
+  return nullptr;
+}
+
+
 const NESTopologyEntryPtr NESGraph::getVertexByIp(std::string ip) const
 {
-
   // build vertice iterator
   nesVertex_iterator vertex, vertex_end, next_vertex;
   boost::tie(vertex, vertex_end) = vertices(graph);
@@ -339,6 +358,10 @@ NESTopologyPlan::NESTopologyPlan() {
 
 NESTopologyEntryPtr NESTopologyPlan::getRootNode() const { return fGraphPtr->getRoot(); }
 
+
+NESTopologyEntryPtr NESTopologyPlan::getNodeByIpWithoutCoordinator(std::string ip){
+ return fGraphPtr->getVertexByIpWithoutCoordinator(ip);
+}
 
 NESTopologyEntryPtr NESTopologyPlan::getNodeByIp(std::string ip)
 {

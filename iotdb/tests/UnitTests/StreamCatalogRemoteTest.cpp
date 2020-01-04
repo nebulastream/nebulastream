@@ -52,7 +52,7 @@ class StreamCatalogRemoteTest : public testing::Test {
   }
 };
 
-TEST_F(StreamCatalogRemoteTest, DISABLED_test_add_log_stream_remote_test) {
+TEST_F(StreamCatalogRemoteTest, test_add_log_stream_remote_test) {
   cout << "*** Running test testSpawnDespawnCoordinatorWorkers" << endl;
   CoordinatorActorConfig c_cfg;
   c_cfg.load<io::middleman>();
@@ -90,7 +90,7 @@ TEST_F(StreamCatalogRemoteTest, DISABLED_test_add_log_stream_remote_test) {
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
-  anon_send(worker, reg_log_stream::value, "testStream", testSchemaFileName);
+  anon_send(worker, register_log_stream_atom::value, "testStream", testSchemaFileName);
   std::this_thread::sleep_for(std::chrono::seconds(2));
 
   cout << "streams="
@@ -103,7 +103,7 @@ TEST_F(StreamCatalogRemoteTest, DISABLED_test_add_log_stream_remote_test) {
   anon_send_exit(coordinator, exit_reason::user_shutdown);
 }
 
-TEST_F(StreamCatalogRemoteTest, DISABLED_test_add_existing_log_stream_remote_test) {
+TEST_F(StreamCatalogRemoteTest, test_add_existing_log_stream_remote_test) {
   cout << "*** Running test testSpawnDespawnCoordinatorWorkers" << endl;
   CoordinatorActorConfig c_cfg;
   c_cfg.load<io::middleman>();
@@ -141,7 +141,7 @@ TEST_F(StreamCatalogRemoteTest, DISABLED_test_add_existing_log_stream_remote_tes
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
-  anon_send(worker, reg_log_stream::value, "default_logical",
+  anon_send(worker, register_log_stream_atom::value, "default_logical",
             testSchemaFileName);
   std::this_thread::sleep_for(std::chrono::seconds(2));
 
@@ -199,7 +199,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_remove_empty_log_stream_remote_test) {
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(2));
 
-  anon_send(worker, reg_log_stream::value, "testStream", testSchemaFileName);
+  anon_send(worker, register_log_stream_atom::value, "testStream", testSchemaFileName);
   std::this_thread::sleep_for(std::chrono::seconds(2));
 
   cout << StreamCatalog::instance().getLogicalStreamAndSchemaAsString() << endl;
@@ -207,7 +207,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_remove_empty_log_stream_remote_test) {
       "testStream");
   EXPECT_NE(sPtr, nullptr);
 
-  anon_send(worker, remove_log_stream::value, "testStream");
+  anon_send(worker, remove_log_stream_atom::value, "testStream");
   std::this_thread::sleep_for(std::chrono::seconds(2));
 
   cout << StreamCatalog::instance().getLogicalStreamAndSchemaAsString() << endl;
@@ -244,17 +244,175 @@ TEST_F(StreamCatalogRemoteTest, test_add_remove_not_empty_log_stream_remote_test
   auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
                                              w_cfg.receive_port);
 
-
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(2));
 
-  anon_send(worker, remove_log_stream::value, "default_logical");
+  anon_send(worker, remove_log_stream_atom::value, "default_logical");
   std::this_thread::sleep_for(std::chrono::seconds(2));
 
   cout << StreamCatalog::instance().getLogicalStreamAndSchemaAsString() << endl;
   SchemaPtr sPtr = StreamCatalog::instance().getSchemaForLogicalStream(
       "default_logical");
   EXPECT_NE(sPtr, nullptr);
+
+  anon_send_exit(worker, exit_reason::user_shutdown);
+  anon_send_exit(coordinator, exit_reason::user_shutdown);
+}
+
+TEST_F(StreamCatalogRemoteTest, add_physical_to_existing_logical_stream_remote_test) {
+  cout << "*** Running test testSpawnDespawnCoordinatorWorkers" << endl;
+  CoordinatorActorConfig c_cfg;
+  c_cfg.load<io::middleman>();
+  actor_system system_coord { c_cfg };
+  auto coordinator = system_coord.spawn<iotdb::CoordinatorActor>();
+
+  // try to publish actor at given port
+  cout << "*** try publish at port " << c_cfg.publish_port << endl;
+  auto expected_port = io::publish(coordinator, c_cfg.publish_port);
+  if (!expected_port) {
+    std::cerr << "*** publish failed: "
+        << system_coord.render(expected_port.error()) << endl;
+    return;
+  }
+  cout << "*** coordinator successfully published at port " << *expected_port
+      << endl;
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+
+  WorkerActorConfig w_cfg;
+  w_cfg.load<io::middleman>();
+  actor_system sw { w_cfg };
+  PhysicalStreamConfig streamConf;  //streamConf.physicalStreamName
+  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
+                                             w_cfg.receive_port);
+
+  anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+
+  PhysicalStreamConfig conf;
+  conf.logicalStreamName = "default_logical";
+  conf.physicalStreamName = "physical_test";
+  conf.sourceType = "OneGeneratorSource";
+  conf.sourceConfig = "2";
+
+  anon_send(worker, register_phy_stream_atom::value, conf.sourceType, conf.sourceConfig,
+            conf.physicalStreamName, conf.logicalStreamName);
+  std::this_thread::sleep_for(std::chrono::seconds(2));
+
+  cout << StreamCatalog::instance().getPhysicalStreamAndSchemaAsString()
+       << endl;
+  std::vector<StreamCatalogEntryPtr> phys = StreamCatalog::instance()
+      .getPhysicalStreams("default_logical");
+
+  EXPECT_EQ(phys.size(), 2);
+  EXPECT_EQ(phys[0]->getPhysicalName(), "default_physical");
+  EXPECT_EQ(phys[1]->getPhysicalName(), "physical_test");
+
+  anon_send_exit(worker, exit_reason::user_shutdown);
+  anon_send_exit(coordinator, exit_reason::user_shutdown);
+}
+
+TEST_F(StreamCatalogRemoteTest, add_physical_to_new_logical_stream_remote_test) {
+  cout << "*** Running test testSpawnDespawnCoordinatorWorkers" << endl;
+  CoordinatorActorConfig c_cfg;
+  c_cfg.load<io::middleman>();
+  actor_system system_coord { c_cfg };
+  auto coordinator = system_coord.spawn<iotdb::CoordinatorActor>();
+
+  // try to publish actor at given port
+  cout << "*** try publish at port " << c_cfg.publish_port << endl;
+  auto expected_port = io::publish(coordinator, c_cfg.publish_port);
+  if (!expected_port) {
+    std::cerr << "*** publish failed: "
+        << system_coord.render(expected_port.error()) << endl;
+    return;
+  }
+  cout << "*** coordinator successfully published at port " << *expected_port
+      << endl;
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+
+  WorkerActorConfig w_cfg;
+  w_cfg.load<io::middleman>();
+  actor_system sw { w_cfg };
+  PhysicalStreamConfig streamConf;  //streamConf.physicalStreamName
+  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
+                                             w_cfg.receive_port);
+
+  anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+
+  //create test schema
+  std::string testSchema =
+      "Schema schema = Schema::create().addField(\"id\", BasicType::UINT32).addField("
+          "\"value\", BasicType::UINT64);";
+  std::string testSchemaFileName = "testSchema.hpp";
+  std::ofstream out(testSchemaFileName);
+  out << testSchema;
+  out.close();
+
+  anon_send(worker, register_log_stream_atom::value, "testStream", testSchemaFileName);
+  std::this_thread::sleep_for(std::chrono::seconds(2));
+
+  PhysicalStreamConfig conf;
+  conf.logicalStreamName = "testStream";
+  conf.physicalStreamName = "physical_test";
+  conf.sourceType = "OneGeneratorSource";
+  conf.sourceConfig = "2";
+
+  anon_send(worker, register_phy_stream_atom::value, conf.sourceType, conf.sourceConfig,
+            conf.physicalStreamName, conf.logicalStreamName);
+  std::this_thread::sleep_for(std::chrono::seconds(2));
+
+  cout << StreamCatalog::instance().getPhysicalStreamAndSchemaAsString()
+       << endl;
+  std::vector<StreamCatalogEntryPtr> phys = StreamCatalog::instance()
+      .getPhysicalStreams("testStream");
+
+  EXPECT_EQ(phys.size(), 1);
+  EXPECT_EQ(phys[0]->getPhysicalName(), "physical_test");
+
+  anon_send_exit(worker, exit_reason::user_shutdown);
+  anon_send_exit(coordinator, exit_reason::user_shutdown);
+}
+
+TEST_F(StreamCatalogRemoteTest, remove_physical_from_new_logical_stream_remote_test) {
+  cout << "*** Running test testSpawnDespawnCoordinatorWorkers" << endl;
+  CoordinatorActorConfig c_cfg;
+  c_cfg.load<io::middleman>();
+  actor_system system_coord { c_cfg };
+  auto coordinator = system_coord.spawn<iotdb::CoordinatorActor>();
+
+  // try to publish actor at given port
+  cout << "*** try publish at port " << c_cfg.publish_port << endl;
+  auto expected_port = io::publish(coordinator, c_cfg.publish_port);
+  if (!expected_port) {
+    std::cerr << "*** publish failed: "
+        << system_coord.render(expected_port.error()) << endl;
+    return;
+  }
+  cout << "*** coordinator successfully published at port " << *expected_port
+      << endl;
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+
+  WorkerActorConfig w_cfg;
+  w_cfg.load<io::middleman>();
+  actor_system sw { w_cfg };
+  PhysicalStreamConfig streamConf;  //streamConf.physicalStreamName
+  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
+                                             w_cfg.receive_port);
+
+  anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+
+  anon_send(worker, remove_phy_stream_atom::value, "default_logical", "default_physical");
+  std::this_thread::sleep_for(std::chrono::seconds(2));
+
+  cout << StreamCatalog::instance().getPhysicalStreamAndSchemaAsString()
+       << endl;
+  std::vector<StreamCatalogEntryPtr> phys = StreamCatalog::instance()
+      .getPhysicalStreams("default_logical");
+
+  EXPECT_EQ(phys.size(), 0);
+  std::this_thread::sleep_for(std::chrono::seconds(1));
 
   anon_send_exit(worker, exit_reason::user_shutdown);
   anon_send_exit(coordinator, exit_reason::user_shutdown);

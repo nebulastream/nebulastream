@@ -102,7 +102,7 @@ eval(
       }
       else if (arg0 == "register_stream") {
         cout << "NESWorker: register logical stream: stream name=" << arg1 << " filePath=" << arg2;
-        anon_send(client, reg_log_stream::value, arg1, arg2);
+        anon_send(client, register_log_stream_atom::value, arg1, arg2);
 
       }
 
@@ -114,7 +114,7 @@ eval(
           << " physical stream name=" << arg3
           << " logical stream name=" << arg4 << endl;
         }
-          anon_send(client, reg_phy_stream::value, arg1, arg2, arg3, arg4);
+          anon_send(client, register_phy_stream_atom::value, arg1, arg2, arg3, arg4);
       }
   );
   // read next line, split it, and feed to the eval handler
