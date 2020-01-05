@@ -14,7 +14,7 @@ bool CAFServer::start(
   //Prepare Actor System
   actor_system actorSystem { actorCoordinatorConfig };
   //Setup then logging
-//  setupLogging();
+  setupLogging();
 
   IOTDB_DEBUG("*** trying to publish at port "
        << actorCoordinatorConfig.publish_port)
@@ -124,25 +124,25 @@ bool CAFServer::start(
 
 }
 
-//void CAFServer::setupLogging() {
-//
-//  // create PatternLayout
-//  log4cxx::LayoutPtr layoutPtr(
-//      new log4cxx::PatternLayout(
-//          "%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
-//
-//  // create FileAppender
-//  LOG4CXX_DECODE_CHAR(fileName, "iotdb.log");
-//  log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
-//
-//  // create ConsoleAppender
-//  log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
-//
-//  iotdb::logger->setLevel(log4cxx::Level::getDebug());
-//  iotdb::logger->addAppender(file);
-//  iotdb::logger->addAppender(console);
-//
-//  // set log level
-//  log4cxx::Logger::getLogger("IOTDB")->setLevel(log4cxx::Level::getDebug());
-//}
+void CAFServer::setupLogging() {
+
+  // create PatternLayout
+  log4cxx::LayoutPtr layoutPtr(
+      new log4cxx::PatternLayout(
+          "%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
+
+  // create FileAppender
+  LOG4CXX_DECODE_CHAR(fileName, "cafServer.log");
+  log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
+
+  // create ConsoleAppender
+  log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
+
+  iotdb::iotdbLogger->setLevel(log4cxx::Level::getDebug());
+  iotdb::iotdbLogger->addAppender(file);
+  iotdb::iotdbLogger->addAppender(console);
+
+  // set log level
+  log4cxx::Logger::getLogger("IOTDB")->setLevel(log4cxx::Level::getDebug());
+}
 

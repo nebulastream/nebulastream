@@ -7,7 +7,7 @@ namespace iotdb {
 
 behavior CoordinatorActor::init() {
   initializeNESTopology();
-  StreamCatalog::instance();
+  StreamCatalog::instance();  //initialize catalog
   auto kRootNode = NESTopologyManager::getInstance().getRootNode();
   this->state.actorTopologyMap.insert( { this->address().get(), kRootNode });
   this->state.topologyActorMap.insert( { kRootNode, this->address().get() });
@@ -143,6 +143,8 @@ bool CoordinatorActor::registerLogicalStream(std::string logicalStreamName,
 
 bool CoordinatorActor::removePhysicalStream(std::string ip,
                                             PhysicalStreamConfig streamConf) {
+  IOTDB_DEBUG(
+      "CoordinatorActor: try to remove physical stream with ip " << ip << " physical name " << streamConf.physicalStreamName << " logical name " << streamConf.logicalStreamName)
   std::vector<NESTopologyEntryPtr> sensorNodes =
       NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeByIp(ip);
 
@@ -153,6 +155,11 @@ bool CoordinatorActor::removePhysicalStream(std::string ip,
       sensorNode = e;
       break;
     }
+  }
+
+  if (sensorNode == nullptr) {
+    IOTDB_DEBUG("CoordinatorActor: sensor not found with ip " << ip)
+    return false;
   }
 
   IOTDB_DEBUG("node type=" << sensorNode->getEntryTypeString())

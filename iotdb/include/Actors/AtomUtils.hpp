@@ -40,10 +40,6 @@ using get_local_sink_port_atom = atom_constant<atom("g_sinkp")>;
 using execute_operators_atom = atom_constant<atom("exe_ops")>;
 using delete_query_atom = atom_constant<atom("delete")>;
 using get_operators_atom = atom_constant<atom("g_ops")>;
-//using reg_phy_stream = atom_constant<atom("g_reg_ps")>;
-//using reg_log_stream = atom_constant<atom("g_reg_ls")>;
-//using remove_log_stream = atom_constant<atom("g_rm_ls")>;
-//using remove_phy_stream = atom_constant<atom("g_rm_ps")>;
 
 using set_type_atom = atom_constant<atom("s_type")>;
 using get_type_atom = atom_constant<atom("g_type")>;
