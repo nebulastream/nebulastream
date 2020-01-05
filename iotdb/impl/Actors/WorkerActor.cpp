@@ -90,9 +90,11 @@ void WorkerActor::registerLogicalStream(std::string streamName,
                 streamName, fileContent).await(
       [&](bool ret) {
         if (ret == true) {
-          IOTDB_DEBUG("WorkerActor: logical stream " << streamName << " successfully added")
+          IOTDB_DEBUG(
+              "WorkerActor: logical stream " << streamName << " successfully added")
         } else {
-          IOTDB_DEBUG("WorkerActor: logical stream " << streamName << " could not be added")
+          IOTDB_DEBUG(
+              "WorkerActor: logical stream " << streamName << " could not be added")
         }
       }
       ,
@@ -104,30 +106,33 @@ void WorkerActor::registerLogicalStream(std::string streamName,
       });
 }
 
-void WorkerActor::removePhysicalStream(std::string logicalStreamName, std::string physicalStreamName)
-{
+void WorkerActor::removePhysicalStream(std::string logicalStreamName,
+                                       std::string physicalStreamName) {
   //send request to coordinator
-   auto coordinator = actor_cast<actor>(this->state.current_server);
+  auto coordinator = actor_cast<actor>(this->state.current_server);
 
-   IOTDB_DEBUG("WorkerActor: removePhysicalStream physical stream" << physicalStreamName << " from logical stream " << logicalStreamName)
+  IOTDB_DEBUG(
+      "WorkerActor: removePhysicalStream physical stream" << physicalStreamName << " from logical stream " << logicalStreamName)
 
-   this->request(coordinator, task_timeout, remove_phy_stream_atom::value, state.workerPtr->getIp(),
-                 logicalStreamName, physicalStreamName).await(
-       [&](bool ret) {
-         if (ret == true) {
-           IOTDB_DEBUG("WorkerActor: physical stream " << physicalStreamName << " successfully removed from " << logicalStreamName)
-         } else {
-           IOTDB_DEBUG("WorkerActor: physical stream " << physicalStreamName << " could not be removed from " << logicalStreamName)
-         }
-       }
-       ,
-       [=](const error &er) {
-         string error_msg = to_string(er);
-         IOTDB_ERROR(
-             "WorkerActor: Error during removeLogicalStream for " << to_string(coordinator) << "\n" << error_msg);
-       });
+  this->request(coordinator, task_timeout, remove_phy_stream_atom::value,
+                state.workerPtr->getIp(), logicalStreamName, physicalStreamName)
+      .await(
+      [&](bool ret) {
+        if (ret == true) {
+          IOTDB_DEBUG(
+              "WorkerActor: physical stream " << physicalStreamName << " successfully removed from " << logicalStreamName)
+        } else {
+          IOTDB_DEBUG(
+              "WorkerActor: physical stream " << physicalStreamName << " could not be removed from " << logicalStreamName)
+        }
+      }
+      ,
+      [=](const error &er) {
+        string error_msg = to_string(er);
+        IOTDB_ERROR(
+            "WorkerActor: Error during removeLogicalStream for " << to_string(coordinator) << "\n" << error_msg);
+      });
 }
-
 
 void WorkerActor::removeLogicalStream(std::string streamName) {
   //send request to coordinator
@@ -152,6 +157,26 @@ void WorkerActor::removeLogicalStream(std::string streamName) {
       });
 }
 
+void WorkerActor::disconnecting() {
+  //TODO: add coorect behaviour if disconnect fails
+  auto coordinator = actor_cast<actor>(this->state.current_server);
+  IOTDB_DEBUG("WorkerActor: try to disconnect with ip " << this->state.workerPtr->getIp())
+  bool disconnected = false;
+  this->request(coordinator, task_timeout, deregister_sensor_atom::value,
+                this->state.workerPtr->getIp()).await(
+      [&disconnected](const bool &c) mutable {
+        disconnected = c;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+      }
+      ,
+      [=](const error &er) {
+        string error_msg = to_string(er);
+        IOTDB_ERROR(
+            "WorkerActor: Error during disconnecting " << "\n" << error_msg);
+      });
+  this->monitor(coordinator);
+  this->become(unconnected());
+}
 /**
  * @brief the ongoing connection state in the TSM
  * if connection works go to running state, otherwise go to unconnected state
@@ -222,6 +247,9 @@ behavior WorkerActor::running(const actor &coordinator) {
     [=](connect_atom, const std::string &host, uint16_t port) {
       connecting(host, port);
     },
+    [=](disconnect_atom) {
+      disconnecting();
+    },
     // register physical stream
     [=](register_phy_stream_atom, std::string sourceType, std::string sourceConf, std::string physicalStreamName, std::string logicalStreamName) {
       registerPhysicalStream(sourceType, sourceConf, physicalStreamName, logicalStreamName);
@@ -233,7 +261,7 @@ behavior WorkerActor::running(const actor &coordinator) {
     // register logical stream
     [=](remove_log_stream_atom, std::string name) {
       removeLogicalStream(name);
-    },//remove physical stream
+    },        //remove physical stream
     [=](remove_phy_stream_atom, std::string logicalName, std::string physicalName) {
       removePhysicalStream(logicalName, physicalName);
     },

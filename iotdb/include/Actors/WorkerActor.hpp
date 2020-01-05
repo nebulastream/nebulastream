@@ -41,8 +41,6 @@ class WorkerActor : public stateful_actor<WorkerState> {
   explicit WorkerActor(actor_config &cfg, string ip, uint16_t publish_port,
                        uint16_t receive_port);
 
-
-
   behavior_type make_behavior() override {
     return init();
   }
@@ -76,7 +74,8 @@ class WorkerActor : public stateful_actor<WorkerState> {
    * @brief this method removes a physical stream from a logical stream in the coordinator
    * @param logical stream to be deleted
    */
-  void removePhysicalStream(std::string logicalStreamName, std::string physicalStreamName);
+  void removePhysicalStream(std::string logicalStreamName,
+                            std::string physicalStreamName);
 
  private:
   behavior init();
@@ -88,6 +87,12 @@ class WorkerActor : public stateful_actor<WorkerState> {
    * if connection works go to running state, otherwise go to unconnected state
    */
   void connecting(const std::string &host, uint16_t port);
+
+  /**
+   * @brief this method disconnect the node
+   * if connection works go to unconnected state
+   */
+  void disconnecting();
 
 };
 

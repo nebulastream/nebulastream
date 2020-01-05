@@ -37,7 +37,7 @@ static inline void setupLogger(log4cxx::LayoutPtr layoutPtr = nullptr,
   iotdbLogger->addAppender(appenderPtr);
 }
 //TODO:add throw exception
-#define IOTDB_NOT_IMPLEMENTED IOTDB_ERROR("Function Not Implemented!")
+#define IOTDB_NOT_IMPLEMENTED IOTDB_ERROR("Function Not Implemented!") throw Exception("not implemented");
 
 }
 
