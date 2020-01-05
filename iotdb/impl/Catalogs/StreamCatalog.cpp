@@ -116,6 +116,32 @@ bool StreamCatalog::addPhysicalStream(std::string logicalStreamName,
   return true;
 }
 
+bool StreamCatalog::removePhysicalStreamsByIp(std::string ip) {
+  for (auto logStream : logicalToPhysicalStreamMapping) {
+    IOTDB_DEBUG("StreamCatalog: check log stream " << logStream.first)
+    for (vector<StreamCatalogEntryPtr>::const_iterator entry =
+        logicalToPhysicalStreamMapping[logStream.first].cbegin();
+        entry != logicalToPhysicalStreamMapping[logStream.first].cend(); entry++) {
+        if(entry->get()->getNode()->getIp() == ip)
+        {
+          IOTDB_DEBUG(
+                     "StreamCatalog: found entry with ip " << ip << " nodeid="
+                     << entry->get()->getNode()->getId()
+                     << " physicalStream=" << entry->get()->getPhysicalName()
+                     << " logicalStream=" << logStream.first)
+              logicalToPhysicalStreamMapping[logStream.first].erase(entry);
+          IOTDB_DEBUG("StreamCatalog: deleted successfully")
+          return true;
+        }
+    }
+  }
+  return false;
+}
+
+bool StreamCatalog::removeAllPhysicalStreams(std::string physicalStreamName) {
+  IOTDB_NOT_IMPLEMENTED
+}
+
 bool StreamCatalog::removePhysicalStream(std::string logicalStreamName,
                                          StreamCatalogEntryPtr newEntry) {
   IOTDB_DEBUG(
@@ -144,7 +170,8 @@ bool StreamCatalog::removePhysicalStream(std::string logicalStreamName,
           IOTDB_DEBUG(
               "StreamCatalog: node with id=" << newEntry->getNode()->getId() << " name=" << newEntry->getPhysicalName() << " exists try to erase")
           logicalToPhysicalStreamMapping[logicalStreamName].erase(entry);
-          IOTDB_DEBUG("StreamCatalog: number of entries afterwards " << logicalToPhysicalStreamMapping[logicalStreamName].size())
+          IOTDB_DEBUG(
+              "StreamCatalog: number of entries afterwards " << logicalToPhysicalStreamMapping[logicalStreamName].size())
           return true;
         }
       }
@@ -162,16 +189,16 @@ SchemaPtr StreamCatalog::getSchemaForLogicalStream(
 
 StreamPtr StreamCatalog::getStreamForLogicalStream(
     std::string logicalStreamName) {
-  return std::make_shared<Stream>(
-      logicalStreamName, logicalStreamToSchemaMapping[logicalStreamName]);
+  return std::make_shared < Stream
+      > (logicalStreamName, logicalStreamToSchemaMapping[logicalStreamName]);
 }
 
 StreamPtr StreamCatalog::getStreamForLogicalStreamOrThrowException(
     std::string logicalStreamName) {
   if (logicalStreamToSchemaMapping.find(logicalStreamName)
       != logicalStreamToSchemaMapping.end()) {
-    return std::make_shared<Stream>(
-        logicalStreamName, logicalStreamToSchemaMapping[logicalStreamName]);
+    return std::make_shared < Stream
+        > (logicalStreamName, logicalStreamToSchemaMapping[logicalStreamName]);
   } else {
     throw Exception("Required stream does not exists " + logicalStreamName);
   }
@@ -192,10 +219,10 @@ deque<NESTopologyEntryPtr> StreamCatalog::getSourceNodesForLogicalStream(
     std::string logicalStreamName) {
 
 //get current physical stream for this logical stream
-  std::vector<StreamCatalogEntryPtr> physicalStreams =
+  std::vector < StreamCatalogEntryPtr > physicalStreams =
       logicalToPhysicalStreamMapping[logicalStreamName];
 
-  deque<NESTopologyEntryPtr> listOfSourceNodes;
+  deque < NESTopologyEntryPtr > listOfSourceNodes;
   for (StreamCatalogEntryPtr &entry : physicalStreams) {
     listOfSourceNodes.push_back(entry->getNode());
   }
@@ -209,7 +236,7 @@ void StreamCatalog::reset() {
   logicalToPhysicalStreamMapping.clear();
   Schema schema = Schema::create().addField("id", BasicType::UINT32).addField(
       "value", BasicType::UINT64);
-  addLogicalStream("default_logical", std::make_shared<Schema>(schema));
+  addLogicalStream("default_logical", std::make_shared < Schema > (schema));
 }
 
 std::string StreamCatalog::getLogicalStreamAndSchemaAsString() {
@@ -229,7 +256,7 @@ std::string StreamCatalog::getPhysicalStreamAndSchemaAsString() {
   stringstream ss;
   for (auto entry : logicalToPhysicalStreamMapping) {
     ss << "stream name=" << entry.first << " with " << entry.second.size()
-       << " elements:";
+        << " elements:";
     for (StreamCatalogEntryPtr &sce : entry.second) {
       ss << sce->toString();
     }

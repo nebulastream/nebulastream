@@ -50,6 +50,10 @@ behavior CoordinatorActor::running() {
       PhysicalStreamConfig streamConf(sourceType, sourceConf, physicalStreamName, logicalStreamName);
       this->registerSensor(ip, publish_port, receive_port, cpu, nodeProperties, streamConf);
     },
+    [=](deregister_sensor_atom, string& ip) {
+      IOTDB_DEBUG("CoordinatorActor: got request to remove node with ip " << ip)
+      return this->deregisterSensor(ip);
+    },
     [=](register_phy_stream_atom, std::string ip, std::string sourceType, std::string sourceConf,std::string physicalStreamName,std::string logicalStreamName) {
       PhysicalStreamConfig conf(sourceType, sourceConf, physicalStreamName, logicalStreamName);
       return registerPhysicalStream(ip, conf);
@@ -137,9 +141,19 @@ bool CoordinatorActor::registerLogicalStream(std::string logicalStreamName,
                                                     schemaPtr);
 }
 
-bool CoordinatorActor::removePhysicalStream(std::string ip, PhysicalStreamConfig streamConf) {
-  NESTopologyEntryPtr sensorNode = NESTopologyManager::getInstance()
-      .getNESTopologyPlan()->getNodeByIpWithoutCoordinator(ip);
+bool CoordinatorActor::removePhysicalStream(std::string ip,
+                                            PhysicalStreamConfig streamConf) {
+  std::vector<NESTopologyEntryPtr> sensorNodes =
+      NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeByIp(ip);
+
+  //TODO: note that we remove on the first node with this id
+  NESTopologyEntryPtr sensorNode;
+  for (auto e : sensorNodes) {
+    if (e->getEntryType() != Coordinator) {
+      sensorNode = e;
+      break;
+    }
+  }
 
   IOTDB_DEBUG("node type=" << sensorNode->getEntryTypeString())
   StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
@@ -153,8 +167,17 @@ bool CoordinatorActor::removePhysicalStream(std::string ip, PhysicalStreamConfig
 bool CoordinatorActor::registerPhysicalStream(std::string ip,
                                               PhysicalStreamConfig streamConf) {
 
-  NESTopologyEntryPtr sensorNode = NESTopologyManager::getInstance()
-      .getNESTopologyPlan()->getNodeByIp(ip);
+  std::vector<NESTopologyEntryPtr> sensorNodes =
+      NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeByIp(ip);
+
+  //TODO: note that we register on the first node with this id
+  NESTopologyEntryPtr sensorNode;
+  for (auto e : sensorNodes) {
+    if (e->getEntryType() != Coordinator) {
+      sensorNode = e;
+      break;
+    }
+  }
 
   StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
       streamConf.sourceType, streamConf.sourceConfig, sensorNode,
@@ -162,6 +185,43 @@ bool CoordinatorActor::registerPhysicalStream(std::string ip,
 
   return StreamCatalog::instance().addPhysicalStream(
       streamConf.logicalStreamName, sce);
+}
+
+bool CoordinatorActor::deregisterSensor(const string &ip) {
+  IOTDB_DEBUG("CoordinatorActor: try to disconnect sensor with ip " << ip)
+  auto sap = current_sender();
+  auto hdl = actor_cast<actor>(sap);
+
+  std::vector<NESTopologyEntryPtr> sensorNodes =
+      NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeByIp(ip);
+  size_t cnt = 0;
+  NESTopologyEntryPtr sensorNode;
+  for (auto e : sensorNodes) {
+    if (e->getEntryType() != Coordinator) {
+      sensorNode = e;
+      cnt++;
+    }
+  }
+  if (cnt != 1) {
+    IOTDB_ERROR(
+        "CoordinatorActor: more than one worker node found with ip " << ip)
+    throw Exception("node is ambitious");
+  }
+  IOTDB_DEBUG("CoordinatorActor: found sensor, try to delete it in catalog")
+  //remove from catalog
+  bool successCatalog = StreamCatalog::instance().removePhysicalStreamsByIp(ip);
+  IOTDB_DEBUG("CoordinatorActor: success in catalog is " << successCatalog)
+
+  IOTDB_DEBUG("CoordinatorActor: found sensor, try to delete it in toplogy")
+  //remove from topology
+  bool successTopology = coordinatorServicePtr->deregister_sensor(sensorNode);
+  IOTDB_DEBUG("CoordinatorActor: success in topologyy is " << successTopology)
+
+  if (successCatalog && successTopology)
+    IOTDB_DEBUG("CoordinatorActor: sensor successfully removed")
+  else
+    IOTDB_ERROR("CoordinatorActor: sensor was not removed")
+
 }
 
 void CoordinatorActor::registerSensor(const string &ip, uint16_t publish_port,

@@ -44,7 +44,6 @@ class StreamCatalog {
    */
   bool removeLogicalStream(std::string logicalStreamName);
 
-
   /**
    * @brief method to add a physical stream
    * @caution combination of node and name has to be unique
@@ -56,10 +55,26 @@ class StreamCatalog {
   /**
    * @brief method to remove a physical stream
    * @caution this will not update the topology
+   * @param logical stream where this physical stream reports to
+   * @param structure describing the entry in the catalog
    * @return bool indicating success of remove stream
    */
   bool removePhysicalStream(std::string logicalStreamName,
-                           StreamCatalogEntryPtr entry);
+                            StreamCatalogEntryPtr entry);
+
+  /**
+   * @brief method to remove a physical stream from all logical streams
+   * @param physical stream to be deleted
+   * @return bool indicating success of remove stream
+   */
+  bool removeAllPhysicalStreams(std::string physicalStreamName);
+
+  /**
+   * @brief method to remove a physical stream from all logical streams
+   * @param param of the node to be deleted
+   * @return bool indicating success of remove stream
+   */
+  bool removePhysicalStreamsByIp(std::string ip);
 
   /**
    * @brief method to return the schema for an existing logical stream
@@ -93,13 +108,13 @@ class StreamCatalog {
    */
   bool testIfLogicalStreamExistsInSchemaMapping(std::string logicalStreamName);
 
-
   /**
    * @brief test if logical stream with this name exists in the log to phy mapping
    * @param name of the logical stream to test
    * @return bool indicating if stream exists
    */
-  bool testIfLogicalStreamExistsInLogicalToPhysicalMapping(std::string logicalStreamName);
+  bool testIfLogicalStreamExistsInLogicalToPhysicalMapping(
+      std::string logicalStreamName);
 
   /**
    * @brief return all physical nodes that contribute to this logical stream
@@ -126,7 +141,8 @@ class StreamCatalog {
    */
   std::string getPhysicalStreamAndSchemaAsString();
 
-  std::vector<StreamCatalogEntryPtr> getPhysicalStreams(std::string logicalStreamName);
+  std::vector<StreamCatalogEntryPtr> getPhysicalStreams(
+      std::string logicalStreamName);
  private:
   /* implement singleton semantics: no construction,
    * copying or destruction of stream catalog objects
