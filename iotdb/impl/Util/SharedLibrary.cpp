@@ -14,10 +14,7 @@ SharedLibrary::SharedLibrary(void* _shared_lib)
 }
 
 SharedLibrary::~SharedLibrary() {
-  //  if (!VariableManager::instance().getVariableValueBoolean(
-  //          "profiling.keep_shared_libraries_loaded")) {
   dlclose(shared_lib_);
-  //}
 }
 
 void* SharedLibrary::getSymbol(const std::string& mangeled_symbol_name) const {

@@ -52,15 +52,6 @@ void start_worker(actor_system &system, const WorkerActorConfig &cfg,
       };
   usage();
 
-//  Test Code
-
-//  getSchemaFromCode
-//  std::string testSchema =
-//      "Schema schema = Schema::create().addField(\"id\", BasicType::UINT32).addField(\"value\", BasicType::UINT64);";
-
-//  SchemaPtr sch = UtilityFunctions::createSchemaFromCode(testSchema);
-//  cout << "schema=" << sch->toString() << endl;
-
   infer_handle_from_class_t<iotdb::WorkerActor> client;
 
   PhysicalStreamConfig defaultConf;
@@ -151,8 +142,6 @@ static void setupLogging() {
 
 void caf_main(actor_system &system, WorkerActorConfig &cfg,
     size_t numberOfWorker) {
-//  setupLogging();
-//  cout << argc << endl;
   start_worker(system, cfg, numberOfWorker);
 }
 
