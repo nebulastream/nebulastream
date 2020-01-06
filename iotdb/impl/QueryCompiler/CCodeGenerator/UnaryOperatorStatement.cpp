@@ -6,6 +6,7 @@
 #include <QueryCompiler/CCodeGenerator/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 
+#include <API/Types/DataTypes.hpp>
 
 namespace iotdb {
 

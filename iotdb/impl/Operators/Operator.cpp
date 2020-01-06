@@ -1,7 +1,6 @@
 
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <Operators/Operator.hpp>
-#include <Util/ErrorHandling.hpp>
 #include <sstream>
 #include <SourceSink/DataSource.hpp>
 #include <set>

@@ -8,7 +8,6 @@
 BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::DataSink)
 
 
-#include <Util/ErrorHandling.hpp>
 #include <Util/Logger.hpp>
 
 namespace iotdb {

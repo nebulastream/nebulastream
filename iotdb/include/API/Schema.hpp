@@ -13,6 +13,8 @@ class Schema {
   Schema();
   static Schema create();
 
+  Schema(const Schema& query);
+
   Schema &copyFields(Schema const &schema);
   Schema &addField(AttributeFieldPtr field);
   Schema &addField(const std::string &name, const BasicType &);
@@ -51,5 +53,5 @@ class Schema {
 
 typedef std::shared_ptr<Schema> SchemaPtr;
 
-} // namespace iotdb
+}  // namespace iotdb
 #endif // API_SCHEMA_H

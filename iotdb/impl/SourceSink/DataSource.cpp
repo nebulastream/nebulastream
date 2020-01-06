@@ -5,7 +5,6 @@
 #include <random>
 
 #include <NodeEngine/Dispatcher.hpp>
-#include <Util/ErrorHandling.hpp>
 #include <Util/Logger.hpp>
 
 #include <boost/archive/text_iarchive.hpp>

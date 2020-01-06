@@ -11,7 +11,7 @@
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-
+#include <Util/Logger.hpp>
 namespace iotdb {
 
 KafkaSource::KafkaSource() {}

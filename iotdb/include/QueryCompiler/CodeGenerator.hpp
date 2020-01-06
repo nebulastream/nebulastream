@@ -13,7 +13,6 @@
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
 #include <QueryCompiler/CCodeGenerator/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
-#include <Util/ErrorHandling.hpp>
 #include <SourceSink/DataSink.hpp>
 #include <API/Types/DataTypes.hpp>
 

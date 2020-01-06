@@ -2,7 +2,7 @@
 #include <atomic>
 #include <iostream>
 #include <memory>
-
+#include <Util/Logger.hpp>
 #include <boost/serialization/export.hpp>
 #include <State/StateManager.hpp>
 #include <NodeEngine/Dispatcher.hpp>

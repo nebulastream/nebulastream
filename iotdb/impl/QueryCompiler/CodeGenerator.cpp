@@ -11,10 +11,10 @@
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
 #include <QueryCompiler/CCodeGenerator/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
-#include <Util/ErrorHandling.hpp>
 
 #include <API/Types/DataTypes.hpp>
 #include <SourceSink/DataSink.hpp>
+#include <Util/Logger.hpp>
 
 namespace iotdb {
 
@@ -396,7 +396,7 @@ bool CCodeGenerator::generateCode(const DataSinkPtr &sink, const PipelineContext
   for (size_t i = 0; i < result_schema_.getSize(); ++i) {
     VariableDeclarationPtr var_decl = getVariableDeclarationForField(struct_decl_result_tuple, result_schema_[i]);
     if (!var_decl) {
-      IOTDB_FATAL_ERROR("Could not extract field " << result_schema_[i]->toString() << " from struct "
+      IOTDB_ERROR("Could not extract field " << result_schema_[i]->toString() << " from struct "
                                                    << struct_decl_result_tuple.getTypeName());
       IOTDB_DEBUG("W>");
     }

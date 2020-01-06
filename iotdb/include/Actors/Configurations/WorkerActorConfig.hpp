@@ -1,8 +1,7 @@
-
 #ifndef IOTDB_INCLUDE_ACTORS_CONFIGURATIONS_ACTORWORKERCONFIG_H_
 #define IOTDB_INCLUDE_ACTORS_CONFIGURATIONS_ACTORWORKERCONFIG_H_
 
-#include <caf/all.hpp>
+//#include <caf/all.hpp>
 
 namespace iotdb {
 /**

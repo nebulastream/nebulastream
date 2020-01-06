@@ -3,6 +3,7 @@ BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::QueryExecutionPlan);
 
 #include <assert.h>
 #include <iostream>
+#include <Util/Logger.hpp>
 
 namespace iotdb {
 
@@ -24,6 +25,26 @@ QueryExecutionPlan::~QueryExecutionPlan()
     source_to_stage.clear();
     stage_to_dest.clear();
 }
+
+void QueryExecutionPlan::print() {
+   for (auto source : sources) {
+     IOTDB_INFO("Source:" << source)
+     IOTDB_INFO(
+         "\t Generated Buffers=" << source->getNumberOfGeneratedBuffers())
+     IOTDB_INFO("\t Generated Tuples=" << source->getNumberOfGeneratedTuples())
+     IOTDB_INFO("\t Schema=" << source->getSourceSchemaAsString())
+   }
+   for (auto window : windows) {
+     IOTDB_INFO("WindowHandler:" << window)
+     IOTDB_INFO("WindowHandler Result:")
+   }
+   for (auto sink : sinks) {
+     IOTDB_INFO("Sink:" << sink)
+     IOTDB_INFO("\t Generated Buffers=" << sink->getNumberOfSentBuffers())
+     IOTDB_INFO("\t Generated Tuples=" << sink->getNumberOfSentTuples())
+   }
+ }
+
 
 bool QueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const iotdb::TupleBufferPtr buf) {
   return false;

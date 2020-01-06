@@ -12,7 +12,7 @@
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-
+#include <Util/Logger.hpp>
 namespace iotdb {
 
 ZmqSource::ZmqSource()
@@ -86,7 +86,7 @@ TupleBufferPtr ZmqSource::receiveData() {
       }
     }
   } else {
-    IOTDB_FATAL_ERROR("ZMQSOURCE: Not connected!")
+    IOTDB_ERROR("ZMQSOURCE: Not connected!")
   }
   return nullptr;
 }
@@ -113,7 +113,7 @@ bool ZmqSource::connect() {
       // recv() throws ETERM when the zmq context is destroyed,
       //  as when AsyncZmqListener::Stop() is called
       if (ex.num() != ETERM) {
-        IOTDB_FATAL_ERROR("ZMQSOURCE: " << ex.what())
+        IOTDB_ERROR("ZMQSOURCE: " << ex.what())
       }
       connected = false;
     }

@@ -75,7 +75,7 @@ bool KafkaSink::writeData(const TupleBufferPtr input_buffer) {
     throw ex;
   }
   catch (...) {
-    IOTDB_FATAL_ERROR("KAFKASINK Unknown error occurs")
+    IOTDB_ERROR("KAFKASINK Unknown error occurs")
   }
 
   return true;
