@@ -2,7 +2,7 @@
 #include <cassert>
 #include <iostream>
 
-#include <CodeGen/HandCodedQueryExecutionPlan.hpp>
+#include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
 #include <NodeEngine/Dispatcher.hpp>
 #include <NodeEngine/ThreadPool.hpp>
 #include <Util/Logger.hpp>

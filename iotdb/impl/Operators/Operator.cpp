@@ -1,5 +1,5 @@
 
-#include <CodeGen/CodeGen.hpp>
+#include <QueryCompiler/CodeGenerator.hpp>
 #include <Operators/Operator.hpp>
 #include <sstream>
 #include <SourceSink/DataSource.hpp>

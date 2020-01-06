@@ -6,24 +6,16 @@
 #include <API/InputQuery.hpp>
 #include <Operators/Operator.hpp>
 
-#include <CodeGen/C_CodeGen/CodeCompiler.hpp>
-#include <CodeGen/QueryPlanBuilder.hpp>
-#include <CodeGen/C_CodeGen/Declaration.hpp>
-#include <CodeGen/C_CodeGen/FunctionBuilder.hpp>
-#include <CodeGen/C_CodeGen/FileBuilder.hpp>
-#include <CodeGen/CodeGen.hpp>
+#include <QueryCompiler/CCodeGenerator/CodeCompiler.hpp>
+#include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
 
 namespace iotdb {
     Environment::Environment(const Config& config) : config(config) {}
     Environment Environment::create(const Config& config) { return Environment(config); }
     void Environment::executeQuery(const InputQuery& inputQuery) {
-
-        CodeGeneratorPtr code_gen = createCodeGenerator();
-        PipelineContextPtr context = createPipelineContext();
-        inputQuery.getRoot()->produce(code_gen, context, std::cout);
-
-
-        PipelineStagePtr stage = code_gen->compile(CompilerArgs());
+      auto queryCompiler = createDefaultQueryCompiler();
+      QueryExecutionPlanPtr qep = queryCompiler->compile(inputQuery.getRoot());
     }
 
     const std::vector<OperatorPtr> getChildNodes(const OperatorPtr &op) {

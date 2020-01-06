@@ -1,6 +1,7 @@
 #include <Actors/ExecutableTransferObject.hpp>
 #include <Operators/Impl/WindowOperator.hpp>
-#include <Util/Logger.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
+
 using std::string;
 using std::vector;
 
@@ -30,14 +31,9 @@ QueryExecutionPlanPtr ExecutableTransferObject::toQueryExecutionPlan() {
   if (!_compiled) {
     this->_compiled = true;
     IOTDB_INFO("*** Creating QueryExecutionPlan for " << this->_description);
-    CodeGeneratorPtr code_gen = createCodeGenerator();
-    PipelineContextPtr context = createPipelineContext();
-
-    // Parse operators
-    this->_operatorTree->produce(code_gen, context, std::cout);
-    PipelineStagePtr stage = code_gen->compile(CompilerArgs());
-
-    QueryExecutionPlanPtr qep(new GeneratedQueryExecutionPlan(stage));
+    //TODO the query compiler dont has to be initialised per query so we can factore it out.
+    auto queryCompiler = createDefaultQueryCompiler();
+    QueryExecutionPlanPtr qep = queryCompiler->compile(this->_operatorTree);
 
     auto window_def = assignWindowHandler(this->_operatorTree);
     if(window_def!= nullptr){

@@ -1,0 +1,11 @@
+add_source_iotdb(
+        CodeExpression.cpp
+        CodeGenerator.cpp
+        QueryExecutionPlan.cpp
+        PipelineStage.cpp
+        HandCodedQueryExecutionPlan.cpp
+		GeneratedQueryExecutionPlan.cpp
+		QueryCompiler.cpp
+	)
+add_subdirectory(CCodeGenerator)
+add_subdirectory(DataTypes)

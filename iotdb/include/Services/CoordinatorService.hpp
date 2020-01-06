@@ -6,24 +6,22 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
-#include <CodeGen/GeneratedQueryExecutionPlan.hpp>
 #include <API/InputQuery.hpp>
 
 #include <API/UserAPIExpression.hpp>
-#include <CodeGen/C_CodeGen/CodeCompiler.hpp>
 
 #include <Util/UtilityFunctions.hpp>
-#include <CodeGen/CodeGen.hpp>
+#include <QueryCompiler/CodeGenerator.hpp>
 #include <Operators/Impl/SourceOperator.hpp>
 #include <Operators/Impl/SinkOperator.hpp>
-#include "Actors/ExecutableTransferObject.hpp"
-#include "Services/OptimizerService.hpp"
-#include "Services/QueryService.hpp"
+#include <Actors/ExecutableTransferObject.hpp>
+#include <Services/OptimizerService.hpp>
+#include <Services/QueryService.hpp>
 
 #include <cstdint>
 #include <string>
-#include "../Optimizer/NESOptimizer.hpp"
-#include "../Topology/NESTopologyManager.hpp"
+#include <Optimizer/NESOptimizer.hpp>
+#include <Topology/NESTopologyManager.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <SourceSink/CSVSource.hpp>

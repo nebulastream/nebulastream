@@ -1,8 +1,8 @@
 #include <iostream>
 #include <API/Window/WindowAggregation.hpp>
 #include <Operators/Operator.hpp>
-#include <CodeGen/C_CodeGen/CodeCompiler.hpp>
-#include <CodeGen/C_CodeGen/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/CodeCompiler.hpp>
+#include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
 
 namespace iotdb {
 
