@@ -25,8 +25,9 @@ void RestController::handleGet(http_request message) {
 
   auto path = requestPath(message);
   if (!path.empty()) {
-    if (path[0] == "service" && path[1] == "fog-plan") {//FIXME:@ankit please change this to nes-plan
+    if (path[0] == "service" && path[1] == "nes-topology") {
 
+      createExampleTopology();
       const auto &nesTopology = nesTopologyService.getNESTopologyAsJson();
 
       http_response response(status_codes::OK);
