@@ -2,7 +2,9 @@
 #include <SourceSink/PrintSink.hpp>
 #include <Services/CoordinatorService.hpp>
 #include <SourceSink/ZmqSource.hpp>
-#include <Util/Logger.hpp>
+
+#include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
 using namespace iotdb;
 
 class CoordinatorCafTest : public testing::Test {
@@ -260,16 +262,8 @@ TEST_F(CoordinatorCafTest, test_code_gen) {
   InputQuery& query = InputQuery::from(def).filter(def["value"] > 42).print(
       std::cout);
 
-  CodeGeneratorPtr code_gen = createCodeGenerator();
-  PipelineContextPtr context = createPipelineContext();
-
-  OperatorPtr queryOp = query.getRoot();
-
-  queryOp->produce(code_gen, context, std::cout);
-  PipelineStagePtr stage = code_gen->compile(CompilerArgs());
-
-  GeneratedQueryExecutionPlanPtr qep(new GeneratedQueryExecutionPlan(stage));
-
+  auto queryCompiler = createDefaultQueryCompiler();
+  QueryExecutionPlanPtr qep = queryCompiler->compile(query.getRoot());
   // Create new Source and Sink
   DataSourcePtr source = createTestDataSourceWithSchema(schema);
   source->setNumBuffersToProcess(10);

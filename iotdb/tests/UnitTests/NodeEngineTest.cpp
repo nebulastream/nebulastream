@@ -1,7 +1,7 @@
 #include <cassert>
 #include <iostream>
 
-#include <CodeGen/HandCodedQueryExecutionPlan.hpp>
+#include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Util/Logger.hpp>
 #include <log4cxx/appender.h>

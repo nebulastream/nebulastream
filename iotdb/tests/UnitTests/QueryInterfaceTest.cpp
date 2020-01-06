@@ -1,7 +1,7 @@
 #include <cassert>
 #include <iostream>
 
-#include <CodeGen/HandCodedQueryExecutionPlan.hpp>
+#include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
 #include <NodeEngine/Dispatcher.hpp>
 
 #include <API/InputQuery.hpp>

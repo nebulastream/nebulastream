@@ -1,4 +1,4 @@
-#include <CodeGen/QueryPlanBuilder.hpp>
+#include <Operators/OperatorJsonUtil.hpp>
 #include "Services/QueryService.hpp"
 #include <Util/UtilityFunctions.hpp>
 
@@ -10,7 +10,7 @@ json::value QueryService::generateBaseQueryPlanFromQueryString(std::string userQ
     InputQueryPtr inputQuery = getInputQueryFromQueryString(userQuery);
 
     //build the query plan
-    QueryPlanBuilder queryPlanBuilder;
+    OperatorJsonUtil queryPlanBuilder;
     const json::value &basePlan = queryPlanBuilder.getBasePlan(inputQuery);
 
     return basePlan;

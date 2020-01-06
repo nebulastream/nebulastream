@@ -11,7 +11,7 @@
 
 #include <NodeEngine/Dispatcher.hpp>
 #include <NodeEngine/ThreadPool.hpp>
-#include <CodeGen/HandCodedQueryExecutionPlan.hpp>
+#include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
 #include "../../include/SourceSink/DataSink.hpp"
 #include "../../include/SourceSink/DataSource.hpp"
 #include "../../include/SourceSink/GeneratorSource.hpp"

@@ -1,8 +1,7 @@
 #include <REST/runtime_utils.hpp>
 #include <REST/std_service.hpp>
 #include <REST/Controller/RestController.hpp>
-#include <CodeGen/QueryPlanBuilder.hpp>
-#include "../../../include/Topology/NESTopologyManager.hpp"
+#include <Operators/OperatorJsonUtil.hpp>
 #include <Topology/TestTopology.hpp>
 
 using namespace web;

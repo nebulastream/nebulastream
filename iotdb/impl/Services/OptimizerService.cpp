@@ -1,8 +1,7 @@
-#include "Services/OptimizerService.hpp"
-#include <CodeGen/QueryPlanBuilder.hpp>
+#include <Services/OptimizerService.hpp>
+#include <Operators/OperatorJsonUtil.hpp>
 #include <Optimizer/NESOptimizer.hpp>
 #include <Topology/NESTopologyManager.hpp>
-#include <Util/Logger.hpp>
 
 
 using namespace iotdb;
@@ -20,8 +19,8 @@ NESExecutionPlan OptimizerService::getExecutionPlan(InputQueryPtr inputQuery, st
 
   NESOptimizer queryOptimizer;
 
-  QueryPlanBuilder queryPlanBuilder;
-  const json::value &basePlan = queryPlanBuilder.getBasePlan(inputQuery);
+  OperatorJsonUtil operatorJsonUtil;
+  const json::value &basePlan = operatorJsonUtil.getBasePlan(inputQuery);
 
   IOTDB_DEBUG("OptimizerService: query plan=" << basePlan)
 

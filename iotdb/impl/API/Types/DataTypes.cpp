@@ -1,6 +1,6 @@
 #include <API/Types/DataTypes.hpp>
-#include <CodeGen/C_CodeGen/Statement.hpp>
-#include <CodeGen/C_CodeGen/BinaryOperatorStatement.hpp>
+#include <QueryCompiler/CCodeGenerator/Statement.hpp>
+#include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
 
 namespace iotdb {
 

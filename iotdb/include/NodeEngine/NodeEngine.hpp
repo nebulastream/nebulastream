@@ -2,7 +2,7 @@
 #define NODE_ENGINE_H
 
 #include "NodeProperties.hpp"
-#include <CodeGen/QueryExecutionPlan.hpp>
+#include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <API/Config.hpp>
 #include <NodeEngine/ThreadPool.hpp>
 #include <NodeEngine/Dispatcher.hpp>
