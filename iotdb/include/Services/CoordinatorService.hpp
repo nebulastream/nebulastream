@@ -10,7 +10,6 @@
 
 #include <API/UserAPIExpression.hpp>
 
-#include <Util/ErrorHandling.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <Operators/Impl/SourceOperator.hpp>

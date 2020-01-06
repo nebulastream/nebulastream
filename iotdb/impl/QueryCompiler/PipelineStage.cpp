@@ -1,9 +1,8 @@
-
 #include <iostream>
 #include <QueryCompiler/CCodeGenerator/CodeCompiler.hpp>
 #include <QueryCompiler/PipelineStage.hpp>
-#include <Util/ErrorHandling.hpp>
 #include <SourceSink/DataSink.hpp>
+#include <Util/Logger.hpp>
 
 namespace iotdb {
 
@@ -13,7 +12,7 @@ bool PipelineStage::execute(const std::vector<TupleBuffer *> &input_buffers,
                             TupleBuffer *result_buf) {
   std::cout << "Execute a Pipeline Stage!" << std::endl;
   uint32_t ret = execute_impl(input_buffers, state, window_manager, result_buf);
-  if (ret) IOTDB_FATAL_ERROR("Execution of Compled PipelineStage Failed!");
+  if (ret) IOTDB_ERROR("Execution of Compled PipelineStage Failed!");
 
   return true;
 }

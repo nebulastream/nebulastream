@@ -9,10 +9,8 @@
 #include <zmq.hpp>
 
 #include <NodeEngine/Dispatcher.hpp>
-#include <Util/ErrorHandling.hpp>
 #include <Util/Logger.hpp>
 
-#include <Util/ErrorHandling.hpp>
 #include <Util/Logger.hpp>
 
 #include <boost/archive/text_iarchive.hpp>
@@ -92,7 +90,7 @@ bool ZmqSink::writeData(const TupleBufferPtr input_buffer) {
     // recv() throws ETERM when the zmq context is destroyed,
     //  as when AsyncZmqListener::Stop() is called
     if (ex.num() != ETERM) {
-      IOTDB_FATAL_ERROR("ZMQSOURCE: " << ex.what())
+      IOTDB_ERROR("ZMQSOURCE: " << ex.what())
     }
   }
   return false;
@@ -119,7 +117,7 @@ bool ZmqSink::connect() {
       // recv() throws ETERM when the zmq context is destroyed,
       //  as when AsyncZmqListener::Stop() is called
       if (ex.num() != ETERM) {
-        IOTDB_FATAL_ERROR("ZMQSOURCE: " << ex.what())
+        IOTDB_ERROR("ZMQSOURCE: " << ex.what())
       }
     }
   }

@@ -4,18 +4,14 @@
 #include <SourceSink/DataSink.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/KafkaSink.hpp>
-#include "../../include/YSB_legacy/YSBPrintSink.hpp"
-
+#include <Util/Logger.hpp>
 namespace iotdb {
 
 const DataSinkPtr createTestSink() {
-  IOTDB_FATAL_ERROR("Called unimplemented Function");
+  IOTDB_ERROR("Called unimplemented Function");
   IOTDB_NOT_IMPLEMENTED
 }
 
-const DataSinkPtr createYSBPrintSink() {
-  return std::make_shared<YSBPrintSink>();
-}
 
 const DataSinkPtr createBinaryFileSinkWithoutSchema(const std::string& filePath) {
   return std::make_shared<FileOutputSink>(filePath);

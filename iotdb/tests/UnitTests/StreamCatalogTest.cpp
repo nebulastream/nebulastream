@@ -1,11 +1,17 @@
 #include "gtest/gtest.h"
+
 #include <iostream>
 
 #include <Catalogs/StreamCatalog.hpp>
-#include <Catalogs/StreamCatalogEntry.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
+
 #include <Topology/NESTopologyManager.hpp>
 #include <API/Schema.hpp>
+
+//#include <Actors/CoordinatorActor.hpp>
+#include <Util/Logger.hpp>
+//#include <Actors/WorkerActor.hpp>
+
 
 using namespace iotdb;
 
@@ -51,12 +57,12 @@ class StreamCatalogTest : public testing::Test {
         new log4cxx::ConsoleAppender(layoutPtr));
 
     // set log level
-     logger->setLevel(log4cxx::Level::getDebug());
+    iotdb::iotdbLogger->setLevel(log4cxx::Level::getDebug());
 //    logger->setLevel(log4cxx::Level::getInfo());
 
-    // add appenders and other will inherit the settings
-    logger->addAppender(file);
-    logger->addAppender(console);
+// add appenders and other will inherit the settings
+    iotdb::iotdbLogger->addAppender(file);
+    iotdb::iotdbLogger->addAppender(console);
   }
 };
 
@@ -127,6 +133,8 @@ TEST_F(StreamCatalogTest, add_get_physical_stream_test) {
             StreamCatalog::instance().getPhysicalStreamAndSchemaAsString());
 }
 
+//TODO: add test for a second physical stream add
+
 TEST_F(StreamCatalogTest, add_remove_physical_stream_test) {
   NESTopologyManager::getInstance().resetNESTopologyPlan();
   StreamCatalog::instance().addLogicalStream(
@@ -145,10 +153,12 @@ TEST_F(StreamCatalogTest, add_remove_physical_stream_test) {
       StreamCatalog::instance().addPhysicalStream(streamConf.logicalStreamName,
                                                   sce));
 
-  EXPECT_TRUE(StreamCatalog::instance().removePhysicalStream(streamConf.logicalStreamName,
-                                                 sce));
+  EXPECT_TRUE(
+      StreamCatalog::instance().removePhysicalStream(
+          streamConf.logicalStreamName, sce));
 
-  cout << StreamCatalog::instance().getPhysicalStreamAndSchemaAsString() << endl;
+  cout << StreamCatalog::instance().getPhysicalStreamAndSchemaAsString()
+       << endl;
 }
 
 TEST_F(StreamCatalogTest, add_physical_for_not_existing_logical_stream_test) {

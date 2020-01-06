@@ -4,7 +4,6 @@
 #include <memory>
 
 #include "NESTopologyEntry.hpp"
-#include "Util/ErrorHandling.hpp"
 
 namespace iotdb {
 #define NOT_EXISTING_LINK_ID std::numeric_limits<size_t>::max()
@@ -31,25 +30,9 @@ class NESTopologyLink {
 
   size_t getDestNodeId() { return destNode->getId(); }
 
-  LinkType getLinkType() {
-    if (sourceNode->getEntryType() == Worker && destNode->getEntryType() == Worker) {
-      return NodeToNode;
-    } else if (sourceNode->getEntryType() == Sensor && destNode->getEntryType() == Worker) {
-      return SensorToNode;
-    } else if (sourceNode->getEntryType() == Worker && destNode->getEntryType() == Sensor) {
-      return NodeToSensor;
-    }
-    IOTDB_FATAL_ERROR("Unrecognized LinkType!");
-  }
+  LinkType getLinkType();
 
-  std::string getLinkTypeString() {
-    switch (getLinkType()) {
-      case NodeToNode:return "NodeToNode";
-      case SensorToNode:return "SensorToNode";
-      case NodeToSensor:return "NodeToSensor";
-    }
-    IOTDB_FATAL_ERROR("String for LinkType not found!");
-  }
+  std::string getLinkTypeString();
 
  private:
   size_t linkId;

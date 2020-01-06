@@ -5,6 +5,7 @@
 #include <sstream>
 #include <vector>
 #include <string>
+#include <Util/Logger.hpp>
 #include <boost/algorithm/string.hpp>
 #include <SourceSink/DataSource.hpp>
 BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::CSVSource);

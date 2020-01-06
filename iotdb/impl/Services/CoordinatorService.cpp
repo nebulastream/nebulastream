@@ -4,19 +4,20 @@
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
 #include <SourceSink/SourceCreator.hpp>
+#include <Util/Logger.hpp>
 
 using namespace iotdb;
 using namespace std;
 
 string CoordinatorService::getNodePropertiesAsString(
-    const NESTopologyEntryPtr& entry) {
+    const NESTopologyEntryPtr &entry) {
   return entry->getNodeProperty();
 }
 
 NESTopologyEntryPtr CoordinatorService::register_sensor(
-    const string& ip, uint16_t publish_port, uint16_t receive_port, int cpu,
-    const string& nodeProperties, PhysicalStreamConfig streamConf) {
-  NESTopologyManager& topologyManager = this->topologyManagerPtr->getInstance();
+    const string &ip, uint16_t publish_port, uint16_t receive_port, int cpu,
+    const string &nodeProperties, PhysicalStreamConfig streamConf) {
+  NESTopologyManager &topologyManager = this->topologyManagerPtr->getInstance();
   NESTopologySensorNodePtr sensorNode = topologyManager.createNESSensorNode(
       ip, CPUCapacity::Value(cpu));
 
@@ -52,24 +53,25 @@ NESTopologyEntryPtr CoordinatorService::register_sensor(
       streamConf.sourceType, streamConf.sourceConfig, sensorNode,
       streamConf.physicalStreamName);
 
-  bool success = StreamCatalog::instance().addPhysicalStream(streamConf.logicalStreamName,
-                                              sce);
-  if(!success){
+  bool success = StreamCatalog::instance().addPhysicalStream(
+      streamConf.logicalStreamName, sce);
+  if (!success) {
     IOTDB_ERROR(
         "Coordinator: physical stream " << streamConf.physicalStreamName << " could not be added to catalog")
     throw Exception(
-        "Coordinator: physical stream " + streamConf.physicalStreamName + " could not be added to catalog");
+        "Coordinator: physical stream " + streamConf.physicalStreamName
+            + " could not be added to catalog");
 
   }
 
-  const NESTopologyEntryPtr& kRootNode = NESTopologyManager::getInstance()
+  const NESTopologyEntryPtr &kRootNode = NESTopologyManager::getInstance()
       .getRootNode();
   topologyManager.createNESTopologyLink(sensorNode, kRootNode);
   return sensorNode;
 }
 
-string CoordinatorService::register_query(const string& queryString,
-                                          const string& strategy) {
+string CoordinatorService::register_query(const string &queryString,
+                                          const string &strategy) {
 
   IOTDB_INFO(
       "CoordinatorService: Registering query " << queryString << " with strategy " << strategy);
@@ -90,7 +92,7 @@ string CoordinatorService::register_query(const string& queryString,
         queryString);
     Schema schema = inputQueryPtr->source_stream->getSchema();
 
-    const NESExecutionPlan& kExecutionPlan = optimizerService.getExecutionPlan(
+    const NESExecutionPlan &kExecutionPlan = optimizerService.getExecutionPlan(
         inputQueryPtr, strategy);
     IOTDB_DEBUG(
         "OptimizerService: Final Execution Plan =" << kExecutionPlan.getTopologyPlanString())
@@ -101,13 +103,13 @@ string CoordinatorService::register_query(const string& queryString,
     this->registeredQueries.insert( { queryId, t });
     return queryId;
   } catch (...) {
-    IOTDB_FATAL_ERROR(
+    IOTDB_ERROR(
         "Unable to process input request with: queryString: " << queryString << "\n strategy: " << strategy);
     return nullptr;
   }
 }
 
-bool CoordinatorService::deregister_query(const string& queryId) {
+bool CoordinatorService::deregister_query(const string &queryId) {
   bool out = false;
   if (this->registeredQueries.find(queryId) == this->registeredQueries.end()
       && this->runningQueries.find(queryId) == this->runningQueries.end()) {
@@ -132,7 +134,7 @@ bool CoordinatorService::deregister_query(const string& queryId) {
 }
 
 unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> CoordinatorService::make_deployment(
-    const string& queryId) {
+    const string &queryId) {
   unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> output;
   if (this->registeredQueries.find(queryId) != this->registeredQueries.end()
       && this->runningQueries.find(queryId) == this->runningQueries.end()) {
@@ -142,7 +144,7 @@ unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> CoordinatorService:
     NESExecutionPlan execPlan = get<1>(this->registeredQueries.at(queryId));
 
     //iterate through all vertices in the topology
-    for (const ExecutionVertex& v : execPlan.getExecutionGraph()->getAllVertex()) {
+    for (const ExecutionVertex &v : execPlan.getExecutionGraph()->getAllVertex()) {
       OperatorPtr operators = v.ptr->getRootOperator();
       if (operators) {
         // if node contains operators to be deployed -> serialize and send them to the according node
@@ -168,8 +170,8 @@ unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> CoordinatorService:
   return output;
 }
 
-vector<DataSourcePtr> CoordinatorService::getSources(const string& queryId,
-                                                     const ExecutionVertex& v) {
+vector<DataSourcePtr> CoordinatorService::getSources(const string &queryId,
+                                                     const ExecutionVertex &v) {
   vector<DataSourcePtr> out = vector<DataSourcePtr>();
   Schema schema = get<0>(this->registeredQueries.at(queryId));
   NESExecutionPlan execPlan = get<1>(this->registeredQueries.at(queryId));
@@ -180,7 +182,7 @@ vector<DataSourcePtr> CoordinatorService::getSources(const string& queryId,
   if (source->getType() == ZMQ_SOURCE) {
     //FIXME: Maybe a better way to do it? perhaps type cast to ZMQSource type and just update the port number
     // create local zmq source
-    const NESTopologyEntryPtr& kRootNode = NESTopologyManager::getInstance()
+    const NESTopologyEntryPtr &kRootNode = NESTopologyManager::getInstance()
         .getRootNode();
     source = createZmqSource(schema, kRootNode->getIp(), assign_port(queryId));
   }
@@ -188,8 +190,8 @@ vector<DataSourcePtr> CoordinatorService::getSources(const string& queryId,
   return out;
 }
 
-vector<DataSinkPtr> CoordinatorService::getSinks(const string& queryId,
-                                                 const ExecutionVertex& v) {
+vector<DataSinkPtr> CoordinatorService::getSinks(const string &queryId,
+                                                 const ExecutionVertex &v) {
 
   vector<DataSinkPtr> out = vector<DataSinkPtr>();
   Schema schema = get<0>(this->registeredQueries.at(queryId));
@@ -200,7 +202,7 @@ vector<DataSinkPtr> CoordinatorService::getSinks(const string& queryId,
   if (sink->getType() == ZMQ_SINK) {
     //FIXME: Maybe a better way to do it? perhaps type cast to ZMQSink type and just update the port number
     //create local zmq sink
-    const NESTopologyEntryPtr& kRootNode = NESTopologyManager::getInstance()
+    const NESTopologyEntryPtr &kRootNode = NESTopologyManager::getInstance()
         .getRootNode();
     sink = createZmqSink(schema, kRootNode->getIp(), assign_port(queryId));
   }
@@ -212,7 +214,7 @@ DataSinkPtr CoordinatorService::findDataSinkPointer(OperatorPtr operatorPtr) {
 
   if (operatorPtr->parent == nullptr
       && operatorPtr->getOperatorType() == SINK_OP) {
-    SinkOperator* sinkOperator = dynamic_cast<SinkOperator*>(operatorPtr.get());
+    SinkOperator *sinkOperator = dynamic_cast<SinkOperator*>(operatorPtr.get());
     return sinkOperator->getDataSinkPtr();
   } else if (operatorPtr->parent != nullptr) {
     return findDataSinkPointer(operatorPtr->parent);
@@ -224,9 +226,9 @@ DataSinkPtr CoordinatorService::findDataSinkPointer(OperatorPtr operatorPtr) {
 
 DataSourcePtr CoordinatorService::findDataSourcePointer(
     OperatorPtr operatorPtr) {
-  vector<OperatorPtr>& children = operatorPtr->childs;
+  vector<OperatorPtr> &children = operatorPtr->childs;
   if (children.empty() && operatorPtr->getOperatorType() == SOURCE_OP) {
-    SourceOperator* sourceOperator = dynamic_cast<SourceOperator*>(operatorPtr
+    SourceOperator *sourceOperator = dynamic_cast<SourceOperator*>(operatorPtr
         .get());
     return sourceOperator->getDataSourcePtr();
   } else if (!children.empty()) {
@@ -240,12 +242,12 @@ DataSourcePtr CoordinatorService::findDataSourcePointer(
   return nullptr;
 }
 
-int CoordinatorService::assign_port(const string& queryId) {
+int CoordinatorService::assign_port(const string &queryId) {
   if (this->queryToPort.find(queryId) != this->queryToPort.end()) {
     return this->queryToPort.at(queryId);
   } else {
     // increase max port in map by 1
-    const NESTopologyEntryPtr& kRootNode = NESTopologyManager::getInstance()
+    const NESTopologyEntryPtr &kRootNode = NESTopologyManager::getInstance()
         .getRootNode();
     uint16_t kFreeZmqPort = kRootNode->getNextFreeReceivePort();
     this->queryToPort.insert( { queryId, kFreeZmqPort });
@@ -253,8 +255,10 @@ int CoordinatorService::assign_port(const string& queryId) {
   }
 }
 
-bool CoordinatorService::deregister_sensor(const NESTopologyEntryPtr& entry) {
+bool CoordinatorService::deregister_sensor(const NESTopologyEntryPtr &entry) {
+
   return this->topologyManagerPtr->getInstance().removeNESNode(entry);
+
 }
 string CoordinatorService::getTopologyPlanString() {
   return this->topologyManagerPtr->getInstance().getNESTopologyPlanString();

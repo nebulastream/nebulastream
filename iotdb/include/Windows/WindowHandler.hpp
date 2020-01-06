@@ -7,7 +7,7 @@
 #include <boost/serialization/vector.hpp>
 #include <API/Window/WindowDefinition.hpp>
 
-#include <Util/Logger.hpp>
+
 #include <thread>
 #include <QueryLib/WindowManagerLib.hpp>
 #include <NodeEngine/BufferManager.hpp>

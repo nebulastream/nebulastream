@@ -1,5 +1,6 @@
 #include <Operators/OperatorJsonUtil.hpp>
 #include "Services/QueryService.hpp"
+#include <Util/UtilityFunctions.hpp>
 
 using namespace iotdb;
 
@@ -16,5 +17,5 @@ json::value QueryService::generateBaseQueryPlanFromQueryString(std::string userQ
 }
 
 InputQueryPtr QueryService::getInputQueryFromQueryString(std::string userQuery) {
-  return iotdb::createQueryFromCodeString(userQuery);
+  return UtilityFunctions::createQueryFromCodeString(userQuery);
 }

@@ -48,6 +48,28 @@ bool NESGraph::hasVertex(size_t search_id) const {
   return false;
 }
 
+
+const std::vector<NESTopologyEntryPtr> NESGraph::getVertexByIp(std::string ip) const
+{
+  // build vertice iterator
+  nesVertex_iterator vertex, vertex_end, next_vertex;
+  boost::tie(vertex, vertex_end) = vertices(graph);
+  std::vector<NESTopologyEntryPtr> vec;
+
+  // iterator over vertices
+  for (next_vertex = vertex; vertex != vertex_end; vertex = next_vertex) {
+    ++next_vertex;
+
+    // check for matching vertex
+    if (graph[*vertex].ptr->getIp() == ip) {
+      vec.push_back(graph[*vertex].ptr);
+    }
+  }
+
+  // should never happen
+  return vec;
+}
+
 const NESGraph::nesVertex_t NESGraph::getVertex(size_t search_id) const {
 
   assert(hasVertex(search_id));
@@ -163,6 +185,9 @@ bool NESGraph::hasLink(size_t searchId) const {
   }
   return false;
 }
+
+
+
 
 const NESTopologyLinkPtr NESGraph::getEdge(size_t search_id) const {
 
@@ -313,6 +338,14 @@ NESTopologyPlan::NESTopologyPlan() {
 }
 
 NESTopologyEntryPtr NESTopologyPlan::getRootNode() const { return fGraphPtr->getRoot(); }
+
+
+
+std::vector<NESTopologyEntryPtr> NESTopologyPlan::getNodeByIp(std::string ip)
+{
+  return fGraphPtr->getVertexByIp(ip);
+}
+
 
 NESTopologyCoordinatorNodePtr NESTopologyPlan::createNESCoordinatorNode(std::string ipAddr, CPUCapacity cpuCapacity) {
   // create coordinator node

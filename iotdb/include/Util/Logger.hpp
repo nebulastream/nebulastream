@@ -12,13 +12,14 @@ using namespace log4cxx;
 using namespace log4cxx::helpers;
 
 namespace iotdb {
-static log4cxx::LoggerPtr logger(log4cxx::Logger::getLogger("IOTDB"));
+static log4cxx::LoggerPtr iotdbLogger(log4cxx::Logger::getLogger("IOTDB"));
 
 // LoggerPtr logger(Logger::getLogger("IOTDB"));
-#define IOTDB_DEBUG(TEXT) LOG4CXX_DEBUG(logger, TEXT)
-#define IOTDB_INFO(TEXT) LOG4CXX_INFO(logger, TEXT)
-#define IOTDB_RES(TEXT) LOG4CXX_WARN(logger, TEXT)
-#define IOTDB_ERROR(TEXT) LOG4CXX_ERROR(logger, TEXT)
+#define IOTDB_DEBUG(TEXT) LOG4CXX_DEBUG(iotdbLogger, TEXT)
+#define IOTDB_INFO(TEXT) LOG4CXX_INFO(iotdbLogger, TEXT)
+#define IOTDB_WARNING(TEXT) LOG4CXX_WARN(iotdbLogger, TEXT)
+#define IOTDB_RES(TEXT) LOG4CXX_WARN(iotdbLogger, TEXT)
+#define IOTDB_ERROR(TEXT) LOG4CXX_ERROR(iotdbLogger, TEXT)
 
 static inline void setupLogger(log4cxx::LayoutPtr layoutPtr = nullptr,
                                log4cxx::AppenderPtr appenderPtr = nullptr,
@@ -32,9 +33,12 @@ static inline void setupLogger(log4cxx::LayoutPtr layoutPtr = nullptr,
     appenderPtr = new log4cxx::ConsoleAppender(layoutPtr);
   }
 
-  logger->setLevel(levelPtr);
-  logger->addAppender(appenderPtr);
+  iotdbLogger->setLevel(levelPtr);
+  iotdbLogger->addAppender(appenderPtr);
 }
+//TODO:add throw exception
+#define IOTDB_NOT_IMPLEMENTED IOTDB_ERROR("Function Not Implemented!") throw Exception("not implemented");
+
 }
 
 #endif /* INCLUDE_UTIL_LOGGER_HPP_ */

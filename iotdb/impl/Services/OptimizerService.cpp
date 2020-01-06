@@ -2,7 +2,7 @@
 #include <Operators/OperatorJsonUtil.hpp>
 #include <Optimizer/NESOptimizer.hpp>
 #include <Topology/NESTopologyManager.hpp>
-
+#include <Util/Logger.hpp>
 
 using namespace iotdb;
 using namespace web;
