@@ -5,8 +5,7 @@
 #include <QueryCompiler/CCodeGenerator/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
-
-#include <Util/ErrorHandling.hpp>
+#include <Util/Logger.hpp>
 
 namespace iotdb {
 

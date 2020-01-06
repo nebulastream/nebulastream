@@ -1,7 +1,7 @@
 #include <Util/UtilityFunctions.hpp>
 #include <algorithm>
 #include <Operators/Operator.hpp>
-#include <CodeGen/C_CodeGen/CodeCompiler.hpp>
+#include <QueryCompiler/CCodeGenerator/CodeCompiler.hpp>
 #include <Util/Logger.hpp>
 #include <boost/algorithm/string/replace.hpp>
 
