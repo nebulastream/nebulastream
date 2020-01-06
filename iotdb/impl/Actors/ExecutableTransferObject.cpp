@@ -1,6 +1,7 @@
 #include <Actors/ExecutableTransferObject.hpp>
 #include <Operators/Impl/WindowOperator.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
+#include <Util/Logger.hpp>
 
 using std::string;
 using std::vector;

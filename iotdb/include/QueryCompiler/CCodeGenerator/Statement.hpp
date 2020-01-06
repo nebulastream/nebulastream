@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <memory>
@@ -6,7 +5,6 @@
 
 #include <QueryCompiler/CCodeGenerator/Declaration.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
-#include <Util/ErrorHandling.hpp>
 #include <API/Types/DataTypes.hpp>
 #include <QueryCompiler/DataTypes/ValueType.hpp>
 

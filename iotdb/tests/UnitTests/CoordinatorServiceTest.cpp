@@ -5,6 +5,8 @@
 
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
+#include <Util/Logger.hpp>
+
 using namespace iotdb;
 
 class CoordinatorCafTest : public testing::Test {
