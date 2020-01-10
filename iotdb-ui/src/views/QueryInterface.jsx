@@ -1,6 +1,7 @@
 import React from 'react'
 import {
     Alert,
+    Badge,
     Button,
     Card,
     CardBody,
@@ -389,7 +390,7 @@ export default class QueryInterface extends React.Component {
                                     theme="github"
                                     fontSize={16}
                                     width="100%"
-                                    height="20em"
+                                    height="6em"
                                     showPrintMargin={true}
                                     showGutter={true}
                                     editorProps={{$blockScrolling: true}}
@@ -408,14 +409,13 @@ export default class QueryInterface extends React.Component {
                                 {/*<Button color="primary">Query</Button>*/}
                                 <Button color="primary" onClick={() => {
                                     this.getNESTopology()
-                                }}>Show Topology</Button>
+                                }}><b>Show Topology</b></Button>
                                 <Button color="primary" onClick={() => {
                                     this.getQueryPlan(this.userQuery)
-                                }}>Show Query
-                                    Plan</Button>
+                                }}><b>Show Query Plan</b></Button>
                                 <ButtonDropdown isOpen={this.state.openExecutionStrategy}
                                                 toggle={this.toggleExecutionStrategy}>
-                                    <DropdownToggle caret color="primary">Execution Plan</DropdownToggle>
+                                    <DropdownToggle caret color="primary"><b>Execution Plan</b></DropdownToggle>
                                     <DropdownMenu>
                                         <DropdownItem onClick={() => {
                                             this.getExecutionPlan(this.userQuery, "BottomUp")
@@ -433,10 +433,12 @@ export default class QueryInterface extends React.Component {
                                 </ButtonDropdown>
                             </ButtonGroup>
                             <ButtonGroup>
-                                <Button color="info" onClick={() => {
+                                <Button color="secondary" onClick={() => {
                                     this.hideEverything()
-                                }}>Hide All</Button>
+                                }}><b>Hide All</b></Button>
                             </ButtonGroup>
+                            <h5 className="m-2"><Badge color="info">Compute Time:</Badge><Badge color="success">156
+                                ms</Badge></h5>
                         </Row>
 
                         {this.state.displayTopology ?
@@ -493,7 +495,6 @@ export default class QueryInterface extends React.Component {
                             <Row className="m-md-1" style={{width: '40%', height: '100%'}}>
                                 <Col className="m-md-2 border" style={{width: '100%', height: '100%'}}>
                                     <Alert className="m-md-2" color="info">Execution Plan</Alert>
-                                    <Alert className="m-md-2" color="info">Total Plan Computation Time: <b>156 ms</b></Alert>
                                     <div className="m-md-2"
                                          style={{height: '85%', display: 'flex', justifyContent: 'center'}}>
                                         <DagreD3
@@ -517,7 +518,7 @@ export default class QueryInterface extends React.Component {
                     </CardBody>
                 </Card>
             </Col>
-        );
+    );
     }
-};
+    };
 
