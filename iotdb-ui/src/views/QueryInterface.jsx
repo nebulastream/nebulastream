@@ -56,11 +56,8 @@ export default class QueryInterface extends React.Component {
                 fill: 'lightblue',
             }
         };
-        this.userQuery = 'Schema schema = Schema::create()\n' +
-            '   .addField("measurement",INT32);\n\n' +
-            'Stream temperature = Stream("temperature1", schema);\n\n' +
-            'return InputQuery::from(temperature)\n' +
-            '   .filter(temperature["measurement"] > 100)\n' +
+        this.userQuery = 'return InputQuery::from(temperature1)\n' +
+            '   .filter(temperature1["value"] > 100)\n' +
             '   .print(std::cout);\n';
         this.getQueryPlan = this.getQueryPlan.bind(this);
         this.updateQuery = this.updateQuery.bind(this);
@@ -443,7 +440,7 @@ export default class QueryInterface extends React.Component {
                         </Row>
 
                         {this.state.displayTopology ?
-                            <Row className="m-md-1" style={{width: '100%', height: '100%'}}>
+                            <Row className="m-md-1" style={{width: '40%', height: '100%'}}>
                                 <Col className="m-md-2 border" style={{width: '100%', height: '100%'}}>
                                     <Alert className="m-md-2" color="info">Infrastructure Topology</Alert>
                                     <div className="m-md-2"
@@ -468,7 +465,7 @@ export default class QueryInterface extends React.Component {
                             </Row> : null}
 
                         {this.state.displayBasePlan ?
-                            <Row className="m-md-1" style={{width: '100%', height: '100%'}}>
+                            <Row className="m-md-1" style={{width: '40%', height: '100%'}}>
                                 <Col className="m-md-2 border" style={{width: '100%', height: '100%'}}>
                                     <Alert className="m-md-2" color="info">Query Plan</Alert>
                                     <div className="m-md-2"
@@ -493,11 +490,10 @@ export default class QueryInterface extends React.Component {
                             </Row> : null}
 
                         {this.state.displayExecutionPlan ?
-                            <Row className="m-md-1" style={{width: '100%', height: '100%'}}>
+                            <Row className="m-md-1" style={{width: '40%', height: '100%'}}>
                                 <Col className="m-md-2 border" style={{width: '100%', height: '100%'}}>
-                                    <Alert className="m-md-2" color="info">Query execution plan for
-                                        "{this.state.selectedStrategy}"
-                                        strategy</Alert>
+                                    <Alert className="m-md-2" color="info">Execution Plan</Alert>
+                                    <Alert className="m-md-2" color="info">Total Plan Computation Time: <b>156 ms</b></Alert>
                                     <div className="m-md-2"
                                          style={{height: '85%', display: 'flex', justifyContent: 'center'}}>
                                         <DagreD3
