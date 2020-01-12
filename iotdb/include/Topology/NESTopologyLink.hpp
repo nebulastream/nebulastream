@@ -8,30 +8,63 @@
 namespace iotdb {
 #define NOT_EXISTING_LINK_ID std::numeric_limits<size_t>::max()
 
-enum LinkType { NodeToNode, NodeToSensor, SensorToNode };
+enum LinkType {
+  NodeToNode,
+  NodeToSensor,
+  SensorToNode
+};
 
 //FIXME: add docu here
 class NESTopologyLink {
 
  public:
-  explicit NESTopologyLink(size_t pLinkId, NESTopologyEntryPtr pSourceNode, NESTopologyEntryPtr pDestNode) {
+  explicit NESTopologyLink(size_t pLinkId, NESTopologyEntryPtr pSourceNode,
+                           NESTopologyEntryPtr pDestNode) {
     linkId = pLinkId;
     sourceNode = pSourceNode;
     destNode = pDestNode;
   }
 
-  size_t getId() { return linkId; }
+  /**
+   * @brief method to get the id of the node
+   * @return id as a size_t
+   */
+  size_t getId();
 
-  NESTopologyEntryPtr getSourceNode() { return sourceNode; }
+  /**
+   * @brief get the source node of a link
+   * @return NESTopologyEntryPtr to the source node
+   */
+  NESTopologyEntryPtr getSourceNode();
 
-  size_t getSourceNodeId() { return sourceNode->getId(); }
+  /**
+   * @brief method to get the id of the source of a lin
+   * @return size_t id of the source node
+   */
+  size_t getSourceNodeId();
 
-  NESTopologyEntryPtr getDestNode() { return destNode; }
+  /**
+   * @brief get the destination node of a link
+   * @return NESTopologyEntryPtr to the destination node
+   */
+  NESTopologyEntryPtr getDestNode();
 
-  size_t getDestNodeId() { return destNode->getId(); }
+  /**
+   * @brief get the id of the destination node of the link
+   * @return size_t of destination node
+   */
+  size_t getDestNodeId();
 
+  /**
+   * @brief get the type of the link
+   * @return LinkType
+   */
   LinkType getLinkType();
 
+  /**
+   * @brief get the type of the link as a string
+   * @return link type as string
+   */
   std::string getLinkTypeString();
 
  private:
@@ -42,5 +75,5 @@ class NESTopologyLink {
 };
 
 typedef std::shared_ptr<NESTopologyLink> NESTopologyLinkPtr;
-} // namespace iotdb
+}  // namespace iotdb
 #endif /* INCLUDE_TOPOLOGY_NESTOPOLOGYLINK_HPP_ */
