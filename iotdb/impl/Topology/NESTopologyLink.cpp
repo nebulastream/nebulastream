@@ -2,6 +2,26 @@
 #include <Util/Logger.hpp>
 namespace iotdb {
 
+size_t NESTopologyLink::getId() {
+  return linkId;
+}
+
+NESTopologyEntryPtr NESTopologyLink::getSourceNode() {
+  return sourceNode;
+}
+
+size_t NESTopologyLink::getSourceNodeId() {
+  return sourceNode->getId();
+}
+
+NESTopologyEntryPtr NESTopologyLink::getDestNode() {
+  return destNode;
+}
+
+size_t NESTopologyLink::getDestNodeId() {
+  return destNode->getId();
+}
+
 LinkType NESTopologyLink::getLinkType() {
   if (sourceNode->getEntryType() == Worker
       && destNode->getEntryType() == Worker) {
@@ -13,7 +33,7 @@ LinkType NESTopologyLink::getLinkType() {
       && destNode->getEntryType() == Sensor) {
     return NodeToSensor;
   }
-  IOTDB_ERROR("Unrecognized LinkType!");
+  IOTDB_FATAL_ERROR("Unrecognized LinkType!");
 }
 
 std::string NESTopologyLink::getLinkTypeString() {
@@ -25,6 +45,7 @@ std::string NESTopologyLink::getLinkTypeString() {
     case NodeToSensor:
       return "NodeToSensor";
   }
-  IOTDB_ERROR("String for LinkType not found!");
+  IOTDB_FATAL_ERROR("String for LinkType not found!");
 }
+
 }
