@@ -1,7 +1,7 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Util/Logger.hpp>
 
-namespace iotdb {
+namespace NES {
 
 StreamCatalog& StreamCatalog::instance() {
   static StreamCatalog instance;

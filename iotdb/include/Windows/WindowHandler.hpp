@@ -12,7 +12,7 @@
 #include <QueryLib/WindowManagerLib.hpp>
 #include <NodeEngine/BufferManager.hpp>
 
-namespace iotdb {
+namespace NES {
 
 /**
  * @brief This represents a window during query execution.
@@ -84,9 +84,9 @@ typedef std::shared_ptr<WindowHandler> WindowPtr;
 //just for test compability
 const WindowPtr createTestWindow(size_t campainCnt, size_t windowSizeInSec);
 
-} // namespace iotdb
+} // namespace NES
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
-BOOST_CLASS_EXPORT_KEY(iotdb::WindowHandler)
+BOOST_CLASS_EXPORT_KEY(NES::WindowHandler)
 #endif /* INCLUDE_WINDOWS_WINDOW_HPP_ */

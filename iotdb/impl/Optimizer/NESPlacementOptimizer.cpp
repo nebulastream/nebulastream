@@ -6,7 +6,7 @@
 #include <SourceSink/SourceCreator.hpp>
 #include <SourceSink/SinkCreator.hpp>
 
-namespace iotdb {
+namespace NES {
 
 std::shared_ptr<NESPlacementOptimizer> NESPlacementOptimizer::getOptimizer(std::string optimizerName) {
 

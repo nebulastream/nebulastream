@@ -4,7 +4,7 @@
 #include <Util/Logger.hpp>
 #include <functional>
 
-namespace iotdb {
+namespace NES {
 
 ThreadPool& ThreadPool::instance() {
   static ThreadPool instance;
@@ -88,4 +88,4 @@ size_t ThreadPool::getNumberOfThreads() {
   return numThreads;
 }
 
-}  // namespace iotdb
+}  // namespace NES

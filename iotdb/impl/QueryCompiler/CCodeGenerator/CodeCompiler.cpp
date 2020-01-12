@@ -17,7 +17,7 @@
 
 #pragma GCC diagnostic pop
 
-namespace iotdb {
+namespace NES {
 
 const std::string CCodeCompiler::IncludePath = PATH_TO_IOTDB_SOURCE_CODE "/include/";
 
@@ -260,4 +260,4 @@ CompiledCCodePtr CCodeCompiler::compileWithSystemCompiler(const std::string &sou
   return std::make_shared<SystemCompilerCompiledCCode>(compile_time, shared_library, basename);
 }
 
-} // namespace iotdb
+} // namespace NES

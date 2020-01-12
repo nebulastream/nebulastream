@@ -7,7 +7,7 @@
 #ifndef IOTDB_WINDOWMANAGERLIB_HPP
 #define IOTDB_WINDOWMANAGERLIB_HPP
 
-namespace iotdb {
+namespace NES {
 
 /**
 * SliceMetaData stores the meta data of a slice to identify if a record can be assigned to a particular slice.

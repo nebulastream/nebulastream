@@ -13,7 +13,7 @@
 //#include <Actors/WorkerActor.hpp>
 
 
-using namespace iotdb;
+using namespace NES;
 
 /* - nesTopologyManager ---------------------------------------------------- */
 class StreamCatalogTest : public testing::Test {
@@ -57,12 +57,12 @@ class StreamCatalogTest : public testing::Test {
         new log4cxx::ConsoleAppender(layoutPtr));
 
     // set log level
-    iotdb::iotdbLogger->setLevel(log4cxx::Level::getDebug());
+    NES::iotdbLogger->setLevel(log4cxx::Level::getDebug());
 //    logger->setLevel(log4cxx::Level::getInfo());
 
 // add appenders and other will inherit the settings
-    iotdb::iotdbLogger->addAppender(file);
-    iotdb::iotdbLogger->addAppender(console);
+    NES::iotdbLogger->addAppender(file);
+    NES::iotdbLogger->addAppender(console);
   }
 };
 

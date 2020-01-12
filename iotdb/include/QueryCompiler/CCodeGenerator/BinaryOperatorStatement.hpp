@@ -9,7 +9,7 @@
 #include <Operators/OperatorTypes.hpp>
 #include <API/Types/DataTypes.hpp>
 
-namespace iotdb {
+namespace NES {
 
 const CodeExpressionPtr toCodeExpression(const BinaryOperatorType& type);
 
@@ -82,4 +82,4 @@ BinaryOperatorStatement operator<<(const ExpressionStatment& lhs, const Expressi
 
 BinaryOperatorStatement operator>>(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
 
-} // namespace iotdb
+} // namespace NES

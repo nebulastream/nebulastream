@@ -5,12 +5,12 @@
 #include <memory>
 
 #include <API/Schema.hpp>
-BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::DataSink)
+BOOST_CLASS_EXPORT_IMPLEMENT(NES::DataSink)
 
 
 #include <Util/Logger.hpp>
 
-namespace iotdb {
+namespace NES {
 
 DataSink::DataSink(const Schema& _schema)
     : schema(_schema),
@@ -53,4 +53,4 @@ void DataSink::setSchema(const Schema& pSchema) {
 DataSink::~DataSink() {
   IOTDB_DEBUG("Destroy Data Sink  " << this)
 }
-}  // namespace iotdb
+}  // namespace NES

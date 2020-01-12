@@ -8,7 +8,7 @@
 #include <API/Types/DataTypes.hpp>
 #include <QueryCompiler/DataTypes/ValueType.hpp>
 
-namespace iotdb {
+namespace NES {
 
 enum StatementType {
   RETURN_STMT,
@@ -343,7 +343,7 @@ class AnnonymUserDefinedDataType : public DataType {
 
   bool operator==(const DataType &_rhs) const override {
     try {
-      auto rhs = dynamic_cast<const iotdb::AnnonymUserDefinedDataType &>(_rhs);
+      auto rhs = dynamic_cast<const NES::AnnonymUserDefinedDataType &>(_rhs);
       return name == rhs.name;
     }
     catch (...) {
@@ -411,4 +411,4 @@ struct AssignmentStatment {
 const DataTypePtr createUserDefinedType(const StructDeclaration &decl);
 const DataTypePtr createAnnonymUserDefinedType(const std::string name);
 
-} // namespace iotdb
+} // namespace NES

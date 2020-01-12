@@ -4,15 +4,15 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <Operators/Impl/FilterOperator.hpp>
 
-namespace iotdb {
+namespace NES {
 
-FilterOperator::FilterOperator(const PredicatePtr &predicate) : Operator(), predicate_(iotdb::copy(predicate)) {}
+FilterOperator::FilterOperator(const PredicatePtr &predicate) : Operator(), predicate_(NES::copy(predicate)) {}
 
-FilterOperator::FilterOperator(const FilterOperator &other) : predicate_(iotdb::copy(other.predicate_)) {}
+FilterOperator::FilterOperator(const FilterOperator &other) : predicate_(NES::copy(other.predicate_)) {}
 
 FilterOperator &FilterOperator::operator=(const FilterOperator &other) {
   if (this != &other) {
-    predicate_ = iotdb::copy(other.predicate_);
+    predicate_ = NES::copy(other.predicate_);
   }
   return *this;
 }
@@ -30,7 +30,7 @@ const OperatorPtr FilterOperator::copy() const { return std::make_shared<FilterO
 
 const std::string FilterOperator::toString() const {
   std::stringstream ss;
-  ss << "FILTER(" << iotdb::toString(predicate_) << ")";
+  ss << "FILTER(" << NES::toString(predicate_) << ")";
   return ss.str();
 }
 
@@ -40,7 +40,7 @@ FilterOperator::~FilterOperator() {}
 
 bool FilterOperator::equals(const Operator &_rhs) {
   try {
-    auto rhs = dynamic_cast<const iotdb::FilterOperator &>(_rhs);
+    auto rhs = dynamic_cast<const NES::FilterOperator &>(_rhs);
     return predicate_->equals(*rhs.predicate_.get());
   }
   catch (const std::bad_cast &e) {
@@ -52,5 +52,5 @@ const OperatorPtr createFilterOperator(const PredicatePtr &predicate) {
   return std::make_shared<FilterOperator>(predicate);
 }
 
-} // namespace iotdb
-BOOST_CLASS_EXPORT(iotdb::FilterOperator);
+} // namespace NES
+BOOST_CLASS_EXPORT(NES::FilterOperator);

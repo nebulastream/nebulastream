@@ -11,7 +11,7 @@
 #include <vector>
 #include "../NodeEngine/TupleBuffer.hpp"
 
-namespace iotdb {
+namespace NES {
 
 class PipelineStage;
 typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
@@ -44,6 +44,6 @@ typedef std::shared_ptr<CompiledCCode> CompiledCCodePtr;
 
 PipelineStagePtr createPipelineStage(const CompiledCCodePtr compiled_code);
 
-} // namespace iotdb
+} // namespace NES
 
 #endif /* INCLUDE_PIPELINESTAGE_H_ */

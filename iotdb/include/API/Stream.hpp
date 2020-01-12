@@ -7,7 +7,7 @@
 #include <API/Schema.hpp>
 #include <API/Stream.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class Stream {
  public:

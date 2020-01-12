@@ -1,5 +1,5 @@
 #include <Topology/NESTopologySensorNode.hpp>
-namespace iotdb {
+namespace NES {
 
 void NESTopologySensorNode::setId(size_t id) {
   this->node_id = id;

@@ -1,6 +1,6 @@
 #include <Optimizer/FogRunTime.hpp>
 
-namespace iotdb {
+namespace NES {
 
 void FogRunTime::registerNode(NodeEnginePtr ptr)
 {
@@ -52,4 +52,4 @@ void FogRunTime::receiveNodeInfo()
     }
 }
 
-} // namespace iotdb
+} // namespace NES

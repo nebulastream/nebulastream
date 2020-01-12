@@ -1,7 +1,7 @@
 #ifndef IOTDB_INCLUDE_API_WINDOW_WINDOWMEASURE_HPP_
 #define IOTDB_INCLUDE_API_WINDOW_WINDOWMEASURE_HPP_
 
-namespace iotdb {
+namespace NES {
 
 /**
  * Defines the measure of a window, common measures are time and count.

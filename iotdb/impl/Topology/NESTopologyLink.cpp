@@ -1,6 +1,6 @@
 #include <Topology/NESTopologyLink.hpp>
 #include <Util/Logger.hpp>
-namespace iotdb {
+namespace NES {
 
 size_t NESTopologyLink::getId() {
   return linkId;

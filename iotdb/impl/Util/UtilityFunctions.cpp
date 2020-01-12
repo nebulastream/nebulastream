@@ -5,7 +5,7 @@
 #include <Util/Logger.hpp>
 #include <boost/algorithm/string/replace.hpp>
 
-namespace iotdb {
+namespace NES {
 
 // removes leading and trailing whitespaces
 
@@ -33,7 +33,7 @@ InputQueryPtr UtilityFunctions::createQueryFromCodeString(
       code << "#include <API/Environment.hpp>" << std::endl;
       code << "#include <API/UserAPIExpression.hpp>" << std::endl;
       code << "#include <Catalogs/StreamCatalog.hpp>" << std::endl;
-      code << "namespace iotdb{" << std::endl;
+      code << "namespace NES{" << std::endl;
       code << "InputQuery createQuery(){" << std::endl;
 
       //we will get the schema from the catalog, if stream does not exists this will through an exception
@@ -99,7 +99,7 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(const std::string& query_code_s
       code << "#include <API/Environment.hpp>" << std::endl;
       code << "#include <API/UserAPIExpression.hpp>" << std::endl;
       code << "#include <Catalogs/StreamCatalog.hpp>" << std::endl;
-      code << "namespace iotdb{" << std::endl;
+      code << "namespace NES{" << std::endl;
 
       code << "Schema createSchema(){" << std::endl;
       code << query_code_snippet;
@@ -129,4 +129,4 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(const std::string& query_code_s
       throw "Failed to create the query from input code string";
     }
   }
-} // namespace iotdb
+} // namespace NES

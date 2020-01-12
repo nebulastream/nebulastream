@@ -9,7 +9,7 @@
 #include <API/Config.hpp>
 
 using boost::asio::ip::tcp;
-using namespace iotdb;
+using namespace NES;
 using namespace std; // For strlen.
 
 const size_t serverPort = 5555;
@@ -202,11 +202,11 @@ void setupLogging()
 
 void initNodeEngine()
 {
-    iotdb::Dispatcher::instance();
-    iotdb::BufferManager::instance();
-    iotdb::ThreadPool::instance();
+    NES::Dispatcher::instance();
+    NES::BufferManager::instance();
+    NES::ThreadPool::instance();
     //optional
-//    iotdb::BufferManager::instance().setBufferSize(bufferSizeInByte);
+//    NES::BufferManager::instance().setBufferSize(bufferSizeInByte);
 //    ThreadPool::instance().setNumberOfThreads(threadCnt);
 }
 

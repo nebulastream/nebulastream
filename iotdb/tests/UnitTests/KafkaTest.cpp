@@ -15,15 +15,15 @@
 
 constexpr char* KAFKA_BROKER = "localhost:9092";
 
-namespace iotdb {
+namespace NES {
 
 class KafkaTest : public testing::Test {
 public:
   static void SetUpTestSuite() {
-    iotdb::setupLogger(nullptr, nullptr, log4cxx::Level::getDebug());
-    // iotdb::setupLogger();
-    iotdb::Dispatcher::instance();
-    iotdb::BufferManager::instance();
+    NES::setupLogger(nullptr, nullptr, log4cxx::Level::getDebug());
+    // NES::setupLogger();
+    NES::Dispatcher::instance();
+    NES::BufferManager::instance();
   }
 
   void SetUp() {

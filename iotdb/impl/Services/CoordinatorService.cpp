@@ -6,7 +6,7 @@
 #include <SourceSink/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 
-using namespace iotdb;
+using namespace NES;
 using namespace std;
 
 string CoordinatorService::getNodePropertiesAsString(

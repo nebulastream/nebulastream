@@ -5,7 +5,7 @@
 
 #include <API/Types/DataTypes.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class ArrayDataType;
 typedef std::shared_ptr<ArrayDataType> ArrayDataTypePtr;

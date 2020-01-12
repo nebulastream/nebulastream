@@ -6,7 +6,7 @@
 #include <API/InputQuery.hpp>
 #include <Optimizer/NESExecutionPlan.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class OptimizerService {
 

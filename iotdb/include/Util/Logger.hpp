@@ -11,7 +11,7 @@
 using namespace log4cxx;
 using namespace log4cxx::helpers;
 
-namespace iotdb {
+namespace NES {
 static log4cxx::LoggerPtr iotdbLogger(log4cxx::Logger::getLogger("IOTDB"));
 
 // LoggerPtr logger(Logger::getLogger("IOTDB"));

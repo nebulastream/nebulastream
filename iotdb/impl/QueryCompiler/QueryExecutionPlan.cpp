@@ -1,11 +1,11 @@
 #include <QueryCompiler/QueryExecutionPlan.hpp>
-BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::QueryExecutionPlan);
+BOOST_CLASS_EXPORT_IMPLEMENT(NES::QueryExecutionPlan);
 
 #include <assert.h>
 #include <iostream>
 #include <Util/Logger.hpp>
 
-namespace iotdb {
+namespace NES {
 
 QueryExecutionPlan::QueryExecutionPlan() : sources(), stages() {}
 
@@ -46,7 +46,7 @@ void QueryExecutionPlan::print() {
  }
 
 
-bool QueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const iotdb::TupleBufferPtr buf) {
+bool QueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const NES::TupleBufferPtr buf) {
   return false;
 }
 
@@ -58,4 +58,4 @@ const std::vector<WindowPtr> QueryExecutionPlan::getWindows() const { return win
 
 const std::vector<DataSinkPtr> QueryExecutionPlan::getSinks() const { return sinks; }
 
-} // namespace iotdb
+} // namespace NES

@@ -6,7 +6,7 @@
 #include <vector>
 #include <API/Types/AttributeField.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class Schema {
  public:
@@ -53,5 +53,5 @@ class Schema {
 
 typedef std::shared_ptr<Schema> SchemaPtr;
 
-}  // namespace iotdb
+}  // namespace NES
 #endif // API_SCHEMA_H

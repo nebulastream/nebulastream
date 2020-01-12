@@ -4,7 +4,7 @@
 #include <API/AbstractWindowDefinition.hpp>
 #include <API/Window/WindowMeasure.hpp>
 #include <vector>
-namespace iotdb {
+namespace NES {
 
 
 /**

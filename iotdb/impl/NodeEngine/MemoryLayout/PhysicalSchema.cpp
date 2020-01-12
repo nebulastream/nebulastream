@@ -3,7 +3,7 @@
 #include <API/Schema.hpp>
 #include <Util/Logger.hpp>
 
-namespace iotdb {
+namespace NES {
 
 PhysicalSchema::PhysicalSchema(const SchemaPtr &schema) : schema(schema) {
   for (auto field : schema->fields) {
@@ -12,7 +12,7 @@ PhysicalSchema::PhysicalSchema(const SchemaPtr &schema) : schema(schema) {
   };
 };
 
-PhysicalFieldPtr PhysicalSchema::createPhysicalField(const iotdb::DataTypePtr dataType) {
+PhysicalFieldPtr PhysicalSchema::createPhysicalField(const NES::DataTypePtr dataType) {
   if (dataType->isEqual(createDataType(UINT8))) {
     const auto field = new BasicPhysicalField<uint8_t>();
     return field->copy();

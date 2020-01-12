@@ -14,7 +14,7 @@ using std::string;
 using std::tuple;
 using std::vector;
 
-namespace iotdb {
+namespace NES {
 
 // the client queues pending tasks
 struct WorkerState {

@@ -9,7 +9,7 @@
 
 #include "libcuckoo/cuckoohash_map.hh"
 
-namespace iotdb {
+namespace NES {
 
 namespace detail {
 

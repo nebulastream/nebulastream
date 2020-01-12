@@ -23,7 +23,7 @@
 #include <SourceSink/SourceCreator.hpp>
 
 
-namespace iotdb {
+namespace NES {
 //
 //class OneGeneratorSource : public GeneratorSource {
 // public:
@@ -497,7 +497,7 @@ int CodeGenTest() {
       VariableDeclaration::create(createPointerDataType(createAnnonymUserDefinedType("void")),
                                   "state_var");
   VariableDeclaration var_decl_window_manager =
-      VariableDeclaration::create(createPointerDataType(createAnnonymUserDefinedType("iotdb::WindowManager")),
+      VariableDeclaration::create(createPointerDataType(createAnnonymUserDefinedType("NES::WindowManager")),
                                   "window_manager");
 
   /* Tuple *tuples; */
@@ -672,7 +672,7 @@ int CodeGeneratorTest() {
   TupleBufferPtr buf = source->receiveData();
   std::vector<TupleBuffer *> input_buffers;
   input_buffers.push_back(buf.get());
-  //std::cout << iotdb::toString(buf.get(),source->getSchema()) << std::endl;
+  //std::cout << NES::toString(buf.get(),source->getSchema()) << std::endl;
   std::cout << "Processing " << buf->getNumberOfTuples() << " tuples: " << std::endl;
   size_t buffer_size = buf->getNumberOfTuples() * sizeof(uint64_t);
   TupleBuffer result_buffer(malloc(buffer_size), buffer_size, sizeof(uint64_t), 0);
@@ -695,7 +695,7 @@ int CodeGeneratorTest() {
     }
   }
 
-  //std::cout << iotdb::toString(result_buffer,s) << std::endl;
+  //std::cout << NES::toString(result_buffer,s) << std::endl;
 
   return 0;
 }
@@ -715,11 +715,11 @@ int CodeGeneratorFilterTest() {
   code_gen->generateCode(source, context, std::cout);
 
   std::cout << std::make_shared<Predicate>(
-      (PredicateItem(input_schema[0]) < PredicateItem(createBasicTypeValue(iotdb::BasicType::INT64, "5")))
+      (PredicateItem(input_schema[0]) < PredicateItem(createBasicTypeValue(NES::BasicType::INT64, "5")))
   )->toString() << std::endl;
 
   PredicatePtr pred = std::dynamic_pointer_cast<Predicate>(
-      (PredicateItem(input_schema[0]) < PredicateItem(createBasicTypeValue(iotdb::BasicType::INT64, "5"))).copy()
+      (PredicateItem(input_schema[0]) < PredicateItem(createBasicTypeValue(NES::BasicType::INT64, "5"))).copy()
   );
   /*
   PredicatePtr pred=std::dynamic_pointer_cast<Predicate>(
@@ -756,7 +756,7 @@ int CodeGeneratorFilterTest() {
   TupleBufferPtr buf = source->receiveData();
   std::vector<TupleBuffer *> input_buffers;
   input_buffers.push_back(buf.get());
-  //std::cout << iotdb::toString(buf.get(),source->getSchema()) << std::endl;
+  //std::cout << NES::toString(buf.get(),source->getSchema()) << std::endl;
   std::cout << "Processing " << buf->getNumberOfTuples() << " tuples: " << std::endl;
   uint32_t sizeoftuples = (sizeof(uint32_t) + sizeof(uint32_t) + sizeof(char) * 12);
   size_t buffer_size = buf->getNumberOfTuples() * sizeoftuples;
@@ -780,7 +780,7 @@ int CodeGeneratorFilterTest() {
       return -1;
     }
   }
-  std::cout << iotdb::toString(result_buffer, Schema::create()
+  std::cout << NES::toString(result_buffer, Schema::create()
       .addField("id", BasicType::UINT32)
       .addField("value", BasicType::UINT32)
       .addField("text", createArrayDataType(BasicType(CHAR), 12))) << std::endl;
@@ -828,7 +828,7 @@ int WindowAssignerCodeGenTest() {
   TupleBufferPtr buf = source->receiveData();
   std::vector<TupleBuffer *> input_buffers;
   input_buffers.push_back(buf.get());
-  //std::cout << iotdb::toString(buf.get(),source->getSchema()) << std::endl;
+  //std::cout << NES::toString(buf.get(),source->getSchema()) << std::endl;
   std::cout << "Processing " << buf->getNumberOfTuples() << " tuples: " << std::endl;
 
   TupleBuffer result_buffer(malloc(0), 0, 0, 0);
@@ -847,7 +847,7 @@ int WindowAssignerCodeGenTest() {
               << " (should have been: " << buf->getNumberOfTuples() << ")" << std::endl;
     return -1;
   }
-  auto stateVar = (StateVariable<int64_t, iotdb::WindowSliceStore<int64_t> *> *) window_handler->getWindowState();
+  auto stateVar = (StateVariable<int64_t, NES::WindowSliceStore<int64_t> *> *) window_handler->getWindowState();
 
   if (stateVar->get(0).value()->getPartialAggregates()[0] != 5) {
     std::cerr << "Result of SelectionCodeGenTest is False!" << std::endl;
@@ -902,7 +902,7 @@ int CodePredicateTests() {
   TupleBufferPtr buf = source->receiveData();
   std::vector<TupleBuffer *> input_buffers;
   input_buffers.push_back(buf.get());
-  //std::cout << iotdb::toString(buf.get(),source->getSchema()) << std::endl;
+  //std::cout << NES::toString(buf.get(),source->getSchema()) << std::endl;
   std::cout << "Processing " << buf->getNumberOfTuples() << " tuples: " << std::endl;
   uint32_t sizeoftuples =
       (sizeof(uint32_t) + sizeof(int16_t) + sizeof(float) + sizeof(double) + sizeof(char) + sizeof(char) * 12);
@@ -920,7 +920,7 @@ int CodePredicateTests() {
     return -1;
   }
 
-  std::cout << iotdb::toString(result_buffer, Schema::create()
+  std::cout << NES::toString(result_buffer, Schema::create()
       .addField("id", BasicType::UINT32)
       .addField("valueSmall", BasicType::INT16)
       .addField("valueFloat", BasicType::FLOAT32)
@@ -973,7 +973,7 @@ int CodeMapPredicatePtrTests() {
   TupleBufferPtr buf = source->receiveData();
   std::vector<TupleBuffer *> input_buffers;
   input_buffers.push_back(buf.get());
-  //std::cout << iotdb::toString(buf.get(),source->getSchema()) << std::endl;
+  //std::cout << NES::toString(buf.get(),source->getSchema()) << std::endl;
   std::cout << "Processing " << buf->getNumberOfTuples() << " tuples: " << std::endl;
   uint32_t sizeoftuples =
       (sizeof(uint32_t) + sizeof(int16_t) + sizeof(float) + sizeof(double) + sizeof(double) + sizeof(char)
@@ -992,7 +992,7 @@ int CodeMapPredicatePtrTests() {
     return -1;
   }
 
-  std::cout << iotdb::toString(result_buffer, Schema::create()
+  std::cout << NES::toString(result_buffer, Schema::create()
       .addField("id", BasicType::UINT32)
       .addField("valueSmall", BasicType::INT16)
       .addField("valueFloat", BasicType::FLOAT32)
@@ -1040,7 +1040,7 @@ int testTupleBufferPrinting() {
                           "|4|2.000000|0.800000|8|1234|\n"
                           "+----------------------------------------------------+";
 
-  std::string result = iotdb::toString(buf, s);
+  std::string result = NES::toString(buf, s);
   std::cout << "'" << reference << "'" << reference.size() << std::endl;
   std::cout << "'" << result << "'" << result.size() << std::endl;
 
@@ -1055,56 +1055,56 @@ int testTupleBufferPrinting() {
   return 0;
 }
 
-} // namespace iotdb
+} // namespace NES
 
 int main() {
 
   /** \todo make proper test case out of this function! */
-  //iotdb::CodeGenTestCases();
+  //NES::CodeGenTestCases();
 
-  if (!iotdb::WindowAssignerCodeGenTest()) {
+  if (!NES::WindowAssignerCodeGenTest()) {
     std::cout << "Test CodeGenTest Passed!" << std::endl << std::endl;
   } else {
     std::cerr << "Test CodeGenTest Failed!" << std::endl << std::endl;
     return -1;
   }
 
-  if (!iotdb::CodeGenTest()) {
+  if (!NES::CodeGenTest()) {
     std::cout << "Test CodeGenTest Passed!" << std::endl << std::endl;
   } else {
     std::cerr << "Test CodeGenTest Failed!" << std::endl << std::endl;
     return -1;
   }
 
-  if (!iotdb::CodeGeneratorTest()) {
+  if (!NES::CodeGeneratorTest()) {
     std::cerr << "Test CodeGeneratorTest Passed!" << std::endl << std::endl;
   } else {
     std::cerr << "Test CodeGeneratorTest Failed!" << std::endl << std::endl;
     return -1;
   }
 
-  if (!iotdb::CodeGeneratorFilterTest()) {
+  if (!NES::CodeGeneratorFilterTest()) {
     std::cerr << "Test CodeGeneratorFilterTest Passed!" << std::endl << std::endl;
   } else {
     std::cerr << "Test CodeGeneratorFilterTest Failed!" << std::endl << std::endl;
     return -1;
   }
 
-  if (!iotdb::testTupleBufferPrinting()) {
+  if (!NES::testTupleBufferPrinting()) {
     std::cout << "Test Print Tuple Buffer Passed!" << std::endl << std::endl;
   } else {
     std::cerr << "Test Print Tuple Buffer Failed!" << std::endl << std::endl;
     return -1;
   }
 
-  if (!iotdb::CodePredicateTests()) {
+  if (!NES::CodePredicateTests()) {
     std::cout << "Test Predicate Passed!" << std::endl << std::endl;
   } else {
     std::cerr << "Test Predicate Failed!" << std::endl << std::endl;
     return -1;
   }
 
-  if (!iotdb::CodeMapPredicatePtrTests()) {
+  if (!NES::CodeMapPredicatePtrTests()) {
     std::cout << "Test Map for Predicate Pointers Passed!" << std::endl << std::endl;
   } else {
     std::cerr << "Test Map for Predicate Pointers Failed!" << std::endl << std::endl;

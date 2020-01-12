@@ -8,7 +8,7 @@
 using namespace std::chrono_literals;
 
 
-namespace iotdb {
+namespace NES {
 
 KafkaSink::KafkaSink() {}
 
@@ -114,6 +114,6 @@ SinkType KafkaSink::getType() const {
     return KAFKA_SINK;
 }
 
-}  // namespace iotdb
+}  // namespace NES
 
-BOOST_CLASS_EXPORT(iotdb::KafkaSink);
+BOOST_CLASS_EXPORT(NES::KafkaSink);

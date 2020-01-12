@@ -5,7 +5,7 @@
 #ifndef IOTDB_WINDOWDEFINITION_HPP
 #define IOTDB_WINDOWDEFINITION_HPP
 
-namespace iotdb {
+namespace NES {
 
 }
 

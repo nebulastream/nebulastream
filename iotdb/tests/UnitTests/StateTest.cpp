@@ -5,7 +5,7 @@
 #include <State/StateManager.hpp>
 #include <State/StateVariable.hpp>
 
-namespace iotdb {
+namespace NES {
 class StateTest : public testing::Test {
  public:
   static void SetUpTestCase() {

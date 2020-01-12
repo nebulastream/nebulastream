@@ -12,7 +12,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <Util/Logger.hpp>
-namespace iotdb {
+namespace NES {
 
 KafkaSource::KafkaSource() {}
 
@@ -129,4 +129,4 @@ SourceType KafkaSource::getType() const {
 }
 
 }  // namespace
-BOOST_CLASS_EXPORT(iotdb::KafkaSource);
+BOOST_CLASS_EXPORT(NES::KafkaSource);

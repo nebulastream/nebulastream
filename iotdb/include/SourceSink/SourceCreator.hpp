@@ -6,7 +6,7 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <SourceSink/GeneratorSource.hpp>
 
-namespace iotdb {
+namespace NES {
 
 
 class OneGeneratorSource : public GeneratorSource {

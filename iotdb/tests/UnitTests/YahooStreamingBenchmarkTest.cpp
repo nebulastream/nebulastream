@@ -26,7 +26,7 @@
 #define LOCAL_PORT 38938
 #endif
 
-using namespace iotdb;
+using namespace NES;
 
 class YahooStreamingBenchmarkTest : public testing::Test {
   public:

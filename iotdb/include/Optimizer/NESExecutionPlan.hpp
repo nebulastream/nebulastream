@@ -9,7 +9,7 @@
 #endif
 #include <cpprest/json.h>
 
-namespace iotdb {
+namespace NES {
 
 using namespace web;
 

@@ -5,7 +5,7 @@
 #include <API/Types/AttributeField.hpp>
 
 
-namespace iotdb {
+namespace NES {
 
 class BinaryOperatorStatement;
 class StructDeclaration;

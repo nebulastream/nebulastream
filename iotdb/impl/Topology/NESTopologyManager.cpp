@@ -1,6 +1,6 @@
 #include <Topology/NESTopologyManager.hpp>
 #include <Util/Logger.hpp>
-namespace iotdb {
+namespace NES {
 
 
 NESTopologyCoordinatorNodePtr NESTopologyManager::createNESCoordinatorNode(

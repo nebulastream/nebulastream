@@ -1,6 +1,6 @@
 #include <Topology/NESTopologyCoordinatorNode.hpp>
 
-namespace iotdb{
+namespace NES{
 
 NESTopologyCoordinatorNode::NESTopologyCoordinatorNode(size_t nodeId, std::string ip_addr) {
   this->node_id = nodeId;

@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 #include <API/Types/DataTypes.hpp>
-namespace iotdb {
+namespace NES {
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
 

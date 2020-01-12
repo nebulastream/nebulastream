@@ -13,7 +13,7 @@
 using namespace std;
 
 #define DEBUG_OUTPUT
-namespace iotdb {
+namespace NES {
 
 std::string expectedOutput =
     "+----------------------------------------------------+\n"

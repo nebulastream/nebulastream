@@ -21,7 +21,7 @@
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class Operator;
 typedef std::shared_ptr<Operator> OperatorPtr;
@@ -119,6 +119,6 @@ const OperatorPtr createSortOperator(const Sort &sort_spec);
 const OperatorPtr createSourceOperator(const DataSourcePtr &source);
 const OperatorPtr createWindowOperator(const WindowDefinitionPtr &window_definition);
 
-} // namespace iotdb
+} // namespace NES
 
 #endif // OPERATOR_OPERATOR_H

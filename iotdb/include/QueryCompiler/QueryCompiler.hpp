@@ -1,7 +1,7 @@
 #ifndef IOTDB_INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_
 #define IOTDB_INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_
 #include <memory>
-namespace iotdb {
+namespace NES {
 
 class QueryExecutionPlan;
 typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;

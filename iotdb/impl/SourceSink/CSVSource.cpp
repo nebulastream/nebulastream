@@ -8,9 +8,9 @@
 #include <Util/Logger.hpp>
 #include <boost/algorithm/string.hpp>
 #include <SourceSink/DataSource.hpp>
-BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::CSVSource);
+BOOST_CLASS_EXPORT_IMPLEMENT(NES::CSVSource);
 
-namespace iotdb {
+namespace NES {
 
 CSVSource::CSVSource()
     : file_path(""),
@@ -85,4 +85,4 @@ void CSVSource::fillBuffer(TupleBufferPtr buf) {
 SourceType CSVSource::getType() const {
   return CSV_SOURCE;
 }
-}  // namespace iotdb
+}  // namespace NES

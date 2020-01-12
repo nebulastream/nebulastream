@@ -13,7 +13,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <Util/Logger.hpp>
-namespace iotdb {
+namespace NES {
 
 ZmqSource::ZmqSource()
     : host(""),
@@ -142,6 +142,6 @@ SourceType ZmqSource::getType() const {
     return ZMQ_SOURCE;
 }
 
-}  // namespace iotdb
+}  // namespace NES
 
-BOOST_CLASS_EXPORT(iotdb::ZmqSource);
+BOOST_CLASS_EXPORT(NES::ZmqSource);

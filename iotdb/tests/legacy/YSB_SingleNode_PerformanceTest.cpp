@@ -15,7 +15,7 @@
 #include <Windows/WindowHandler.hpp>
 #include "../../include/YSB_legacy/YSBWindow.hpp"
 
-namespace iotdb {
+namespace NES {
 using NanoSeconds = std::chrono::nanoseconds;
 using Clock = std::chrono::high_resolution_clock;
 size_t getTimestamp() { return std::chrono::duration_cast<NanoSeconds>(Clock::now().time_since_epoch()).count(); }
@@ -168,7 +168,7 @@ int test(size_t toProcessedBuffers, size_t threadCnt, size_t campaignCnt, size_t
 	Dispatcher::instance().deregisterQuery(qep);
 }
 
-} // namespace iotdb
+} // namespace NES
 
 void setupLogging()
 {
@@ -185,21 +185,21 @@ void setupLogging()
     // set log level
     // logger->setLevel(log4cxx::Level::getTrace());
     //	logger->setLevel(log4cxx::Level::getDebug());
-    iotdb::iotdbLogger->setLevel(log4cxx::Level::getInfo());
+    NES::iotdbLogger->setLevel(log4cxx::Level::getInfo());
     //	logger->setLevel(log4cxx::Level::getWarn());
     // logger->setLevel(log4cxx::Level::getError());
     //	logger->setLevel(log4cxx::Level::getFatal());
 
     // add appenders and other will inherit the settings
-    iotdb::iotdbLogger->addAppender(file);
-    iotdb::iotdbLogger->addAppender(console);
+    NES::iotdbLogger->addAppender(file);
+    NES::iotdbLogger->addAppender(console);
 }
 
 int main(int argc, const char* argv[])
 {
 
     setupLogging();
-    iotdb::Dispatcher::instance();
+    NES::Dispatcher::instance();
 
     namespace po = boost::program_options;
     po::options_description desc("Options");
@@ -229,11 +229,11 @@ int main(int argc, const char* argv[])
     std::cout << "Settings: "
               << "\nnumBuffers: " << numBuffers << "\nnumThreads: " << numThreads << "\nnumCampaings: " << numCampaings
               << "\nnumSources: " << numSources << "\nBufferSizeInBytes: " << bufferSizeInByte
-              << "\nnumTuplesPerBuffer: " << bufferSizeInByte / sizeof(iotdb::ysbRecord) << std::endl;
+              << "\nnumTuplesPerBuffer: " << bufferSizeInByte / sizeof(NES::ysbRecord) << std::endl;
 
-    iotdb::BufferManager::instance().setBufferSize(bufferSizeInByte);
+    NES::BufferManager::instance().setBufferSize(bufferSizeInByte);
 
-    iotdb::test(numBuffers, numThreads, numCampaings, numSources);
+    NES::test(numBuffers, numThreads, numCampaings, numSources);
 
     return 0;
 }

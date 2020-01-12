@@ -7,7 +7,7 @@
 
 #include <API/Types/DataTypes.hpp>
 
-namespace iotdb {
+namespace NES {
 
 ForLoopStatement::ForLoopStatement(const VariableDeclaration& var_decl, const ExpressionStatment& condition,
                                    const ExpressionStatment& advance, const std::vector<StatementPtr>& loop_body)
@@ -39,4 +39,4 @@ void ForLoopStatement::addStatement(StatementPtr stmt)
         loop_body_->addStatement(stmt);
 }
 
-} // namespace iotdb
+} // namespace NES

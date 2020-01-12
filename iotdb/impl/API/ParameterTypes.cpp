@@ -2,7 +2,7 @@
 #include <API/ParameterTypes.hpp>
 #include <string>
 
-namespace iotdb {
+namespace NES {
 
 AggregationSpec& AggregationSpec::operator=(const AggregationSpec& other)
 {
@@ -59,4 +59,4 @@ const std::string toString(const MapperPtr& param) { return "***"; }
 const std::string toString(const AggregationSpec& param) { return "***"; }
 const std::string toString(const JoinPredicatePtr& param) { return "***"; }
 
-} // namespace iotdb
+} // namespace NES

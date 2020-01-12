@@ -13,7 +13,7 @@
 #include "NESExecutionPlan.hpp"
 #include "../Topology/NESTopologyPlan.hpp"
 
-namespace iotdb {
+namespace NES {
 
 class NESOptimizer {
 

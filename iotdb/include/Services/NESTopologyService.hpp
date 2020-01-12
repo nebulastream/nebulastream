@@ -4,7 +4,7 @@
 #include <cpprest/json.h>
 //#include <Topology/TestTopology.hpp>
 
-namespace iotdb {
+namespace NES {
 
     /**\brief:
     *          This class is used for serving different requests related to nes topology.

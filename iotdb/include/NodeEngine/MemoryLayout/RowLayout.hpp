@@ -2,7 +2,7 @@
 #define IOTDB_INCLUDE_NODEENGINE_MEMORYLAYOUT_ROWLAYOUT_HPP_
 
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
-namespace iotdb {
+namespace NES {
 
 class RowLayout : public MemoryLayout {
  public:

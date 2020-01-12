@@ -1,7 +1,7 @@
 #include <Operators/OperatorJsonUtil.hpp>
 #include <Operators/Operator.hpp>
 
-namespace iotdb {
+namespace NES {
 
 OperatorJsonUtil::OperatorJsonUtil() {};
 

@@ -1,6 +1,6 @@
 #include <API/Window/WindowDefinition.hpp>
 #include <API/AbstractWindowDefinition.hpp>
-namespace iotdb {
+namespace NES {
 
 WindowDefinition::WindowDefinition(const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType)
     : windowAggregation(windowAggregation), windowType(windowType), onKey(nullptr) {}

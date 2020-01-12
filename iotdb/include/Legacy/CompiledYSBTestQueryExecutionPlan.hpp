@@ -10,7 +10,7 @@
 #include "Windows/WindowHandler.hpp"
 #include "../YSB_legacy/YSBWindow.hpp"
 
-namespace iotdb{
+namespace NES{
 struct __attribute__((packed)) ysbRecord {
       uint8_t user_id[16];
       uint8_t page_id[16];
@@ -69,10 +69,10 @@ typedef std::shared_ptr<CompiledYSBTestQueryExecutionPlan> CompiledYSBTestQueryE
 #include <boost/serialization/export.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-BOOST_CLASS_EXPORT_KEY(iotdb::CompiledYSBTestQueryExecutionPlan)
+BOOST_CLASS_EXPORT_KEY(NES::CompiledYSBTestQueryExecutionPlan)
 //#include <boost/serialization/export.hpp>
 //#include <boost/archive/text_iarchive.hpp>
 //#include <boost/archive/text_oarchive.hpp>
-//BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::CompiledYSBTestQueryExecutionPlan);
+//BOOST_CLASS_EXPORT_IMPLEMENT(NES::CompiledYSBTestQueryExecutionPlan);
 
 #endif /* TESTS_QEPS_TEST_HPP_ */

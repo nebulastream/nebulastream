@@ -1,6 +1,6 @@
 #include "Optimizer/impl/TopDown.hpp"
 #include <Util/Logger.hpp>
-using namespace iotdb;
+using namespace NES;
 
 NESExecutionPlan TopDown::initializeExecutionPlan(
     InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan) {

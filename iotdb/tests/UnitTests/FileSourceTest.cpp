@@ -10,7 +10,7 @@
 #include <API/Types/DataTypes.hpp>
 #include <SourceSink/SourceCreator.hpp>
 
-namespace iotdb {
+namespace NES {
 
 struct __attribute__((packed)) ysbRecord {
     char user_id[16];
@@ -97,10 +97,10 @@ int testCSVSource() {
 }
 
 int main(int argc, const char* argv[]) {
-    iotdb::setupLogger();
-    iotdb::Dispatcher::instance();
-    iotdb::BufferManager::instance();
-    iotdb::testBinarySource();
-    iotdb::testCSVSource();
+    NES::setupLogger();
+    NES::Dispatcher::instance();
+    NES::BufferManager::instance();
+    NES::testBinarySource();
+    NES::testCSVSource();
     return 0;
 }

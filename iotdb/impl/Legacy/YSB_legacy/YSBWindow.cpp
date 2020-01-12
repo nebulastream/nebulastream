@@ -5,8 +5,8 @@
 #include <boost/serialization/export.hpp>
 #include <Util/Logger.hpp>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::YSBWindow)
-namespace iotdb{
+BOOST_CLASS_EXPORT_IMPLEMENT(NES::YSBWindow)
+namespace NES{
 YSBWindow::~YSBWindow()
 {
 	IOTDB_DEBUG("YSB WindowHandler: calling destructor")

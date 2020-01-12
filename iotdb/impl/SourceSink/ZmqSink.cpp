@@ -16,7 +16,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
-namespace iotdb {
+namespace NES {
 
 ZmqSink::ZmqSink()
     : host(""),
@@ -149,5 +149,5 @@ SinkType ZmqSink::getType() const {
     return ZMQ_SINK;
 }
 
-}  // namespace iotdb
-BOOST_CLASS_EXPORT(iotdb::ZmqSink);
+}  // namespace NES
+BOOST_CLASS_EXPORT(NES::ZmqSink);

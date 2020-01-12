@@ -10,7 +10,7 @@
 #include <boost/serialization/vector.hpp>
 #include "../NodeEngine/TupleBuffer.hpp"
 
-namespace iotdb {
+namespace NES {
 
 /**
  * @brief this class provides a binary file as source
@@ -67,9 +67,9 @@ class BinarySource : public DataSource {
       ar & generatedBuffers;
     }
 };
-}  // namespace iotdb
+}  // namespace NES
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
-BOOST_CLASS_EXPORT_KEY(iotdb::BinarySource)
+BOOST_CLASS_EXPORT_KEY(NES::BinarySource)
 #endif /* INCLUDE_BINARYSOURCE_H_ */

@@ -9,7 +9,7 @@
 #include <string>
 #include "../SourceSink/DataSource.hpp"
 
-namespace iotdb {
+namespace NES {
 
 /** \brief the central abstraction for the user to define queries */
     class Environment {
@@ -41,6 +41,6 @@ namespace iotdb {
         void printInputQueryPlan(const OperatorPtr& curr, int depth);
     };
 
-} // namespace iotdb
+} // namespace NES
 
 #endif

@@ -22,7 +22,7 @@
 using std::string;
 using std::vector;
 
-namespace iotdb {
+namespace NES {
 
 class ExecutableTransferObject {
  public:

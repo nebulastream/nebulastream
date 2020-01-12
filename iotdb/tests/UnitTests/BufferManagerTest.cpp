@@ -13,7 +13,7 @@
 
 //#define DEBUG_OUTPUT
 
-namespace iotdb {
+namespace NES {
 class BufferManagerTest : public testing::Test {
  public:
   static void SetUpTestCase() {

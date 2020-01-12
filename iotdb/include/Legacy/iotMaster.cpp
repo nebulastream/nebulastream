@@ -27,7 +27,7 @@
 #include "../YSB_legacy/YSBGeneratorSource.hpp"
 #include "../YSB_legacy/YSBPrintSink.hpp"
 
-using namespace iotdb;
+using namespace NES;
 
 void printWelcome()
 {

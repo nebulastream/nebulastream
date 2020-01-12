@@ -9,7 +9,7 @@
 
 using namespace caf;
 
-namespace iotdb {
+namespace NES {
 
   class RestController : public BaseController, Controller {
     public:

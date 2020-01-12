@@ -1,6 +1,6 @@
 #include <Topology/NESTopologyEntry.hpp>
 
-namespace iotdb{
+namespace NES{
 
 void NESTopologyEntry::setNodeProperty(std::string nodeProperties) {
     if (nodeProperties != "")

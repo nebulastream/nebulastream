@@ -5,7 +5,7 @@
 
 #include <API/Types/DataTypes.hpp>
 
-namespace iotdb {
+namespace NES {
 class PointerDataType : public DataType {
  public:
   PointerDataType() = default;

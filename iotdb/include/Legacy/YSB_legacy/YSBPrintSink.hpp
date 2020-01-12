@@ -8,7 +8,7 @@
 
 #include <SourceSink/PrintSink.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class YSBPrintSink : public PrintSink {
   public:
@@ -29,6 +29,6 @@ class YSBPrintSink : public PrintSink {
     }
 };
 
-} // namespace iotdb
+} // namespace NES
 
 #endif // YSB_PRINTSINK_HPP

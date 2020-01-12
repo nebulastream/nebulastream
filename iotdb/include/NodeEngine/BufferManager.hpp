@@ -11,7 +11,7 @@
 #include "API/Types/DataTypes.hpp"
 #include "TupleBuffer.hpp"
 
-namespace iotdb {
+namespace NES {
 
 class TupleBuffer;
 typedef std::shared_ptr<TupleBuffer> TupleBufferPtr;

@@ -6,7 +6,7 @@
 #include <API/Types/DataTypes.hpp>
 #include <QueryCompiler/DataTypes/ValueType.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class BasicValueType : public ValueType {
  public:

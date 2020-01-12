@@ -9,7 +9,7 @@
 #include "caf/io/all.hpp"
 #include <Catalogs/PhysicalStreamConfig.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class ActorsCliTest : public testing::Test {
  public:
@@ -57,7 +57,7 @@ TEST_F(ActorsCliTest, testRegisterUnregisterSensor) {
   CoordinatorActorConfig c_cfg;
   c_cfg.load<io::middleman>();
   actor_system system_coord { c_cfg };
-  auto coordinator = system_coord.spawn<iotdb::CoordinatorActor>();
+  auto coordinator = system_coord.spawn<NES::CoordinatorActor>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << c_cfg.publish_port << endl;
@@ -75,7 +75,7 @@ TEST_F(ActorsCliTest, testRegisterUnregisterSensor) {
   w_cfg.load<io::middleman>();
   actor_system sw { w_cfg };
   PhysicalStreamConfig streamConf;  //streamConf.physicalStreamName
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
+  auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
                                              w_cfg.receive_port);
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -97,7 +97,7 @@ TEST_F(ActorsCliTest, testSpawnDespawnCoordinatorWorkers) {
   CoordinatorActorConfig c_cfg;
   c_cfg.load<io::middleman>();
   actor_system system_coord { c_cfg };
-  auto coordinator = system_coord.spawn<iotdb::CoordinatorActor>();
+  auto coordinator = system_coord.spawn<NES::CoordinatorActor>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << c_cfg.publish_port << endl;
@@ -115,7 +115,7 @@ TEST_F(ActorsCliTest, testSpawnDespawnCoordinatorWorkers) {
   w_cfg.load<io::middleman>();
   actor_system sw { w_cfg };
   PhysicalStreamConfig streamConf;  //streamConf.physicalStreamName
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
+  auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
                                              w_cfg.receive_port);
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -129,7 +129,7 @@ TEST_F(ActorsCliTest, testShowTopology) {
   CoordinatorActorConfig c_cfg;
   c_cfg.load<io::middleman>();
   actor_system system_coord { c_cfg };
-  auto coordinator = system_coord.spawn<iotdb::CoordinatorActor>();
+  auto coordinator = system_coord.spawn<NES::CoordinatorActor>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << c_cfg.publish_port << endl;
@@ -147,7 +147,7 @@ TEST_F(ActorsCliTest, testShowTopology) {
   w_cfg.load<io::middleman>();
   actor_system sw { w_cfg };
   PhysicalStreamConfig streamConf;
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
+  auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
                                              w_cfg.receive_port);
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -164,7 +164,7 @@ TEST_F(ActorsCliTest, testShowRegistered) {
   CoordinatorActorConfig c_cfg;
   c_cfg.load<io::middleman>();
   actor_system system_coord { c_cfg };
-  auto coordinator = system_coord.spawn<iotdb::CoordinatorActor>();
+  auto coordinator = system_coord.spawn<NES::CoordinatorActor>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << c_cfg.publish_port << endl;
@@ -182,7 +182,7 @@ TEST_F(ActorsCliTest, testShowRegistered) {
   w_cfg.load<io::middleman>();
   actor_system sw { w_cfg };
   PhysicalStreamConfig streamConf;
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
+  auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
                                              w_cfg.receive_port);
 
   //Prepare Actor System
@@ -244,7 +244,7 @@ TEST_F(ActorsCliTest, DISABLED_testDeleteQuery) {
   CoordinatorActorConfig c_cfg;
   c_cfg.load<io::middleman>();
   actor_system system_coord { c_cfg };
-  auto coordinator = system_coord.spawn<iotdb::CoordinatorActor>();
+  auto coordinator = system_coord.spawn<NES::CoordinatorActor>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << c_cfg.publish_port << endl;
@@ -262,7 +262,7 @@ TEST_F(ActorsCliTest, DISABLED_testDeleteQuery) {
   w_cfg.load<io::middleman>();
   actor_system sw { w_cfg };
   PhysicalStreamConfig streamConf;
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
+  auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
                                              w_cfg.receive_port);
 
   //Prepare Actor System
@@ -334,7 +334,7 @@ TEST_F(ActorsCliTest, DISABLED_testShowRunning) {
   CoordinatorActorConfig c_cfg;
   c_cfg.load<io::middleman>();
   actor_system system_coord { c_cfg };
-  auto coordinator = system_coord.spawn<iotdb::CoordinatorActor>();
+  auto coordinator = system_coord.spawn<NES::CoordinatorActor>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << c_cfg.publish_port << endl;
@@ -352,7 +352,7 @@ TEST_F(ActorsCliTest, DISABLED_testShowRunning) {
   w_cfg.load<io::middleman>();
   actor_system sw { w_cfg };
   PhysicalStreamConfig streamConf;
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
+  auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
                                              w_cfg.receive_port);
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -378,7 +378,7 @@ TEST_F(ActorsCliTest, DISABLED_testShowOperators) {
   CoordinatorActorConfig c_cfg;
   c_cfg.load<io::middleman>();
   actor_system system_coord { c_cfg };
-  auto coordinator = system_coord.spawn<iotdb::CoordinatorActor>();
+  auto coordinator = system_coord.spawn<NES::CoordinatorActor>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << c_cfg.publish_port << endl;
@@ -396,7 +396,7 @@ TEST_F(ActorsCliTest, DISABLED_testShowOperators) {
   w_cfg.load<io::middleman>();
   actor_system sw { w_cfg };
   PhysicalStreamConfig streamConf;
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
+  auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
                                              w_cfg.receive_port);
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -422,7 +422,7 @@ TEST_F(ActorsCliTest, testSequentialMultiQueries) {
   CoordinatorActorConfig ccfg;
   ccfg.load<io::middleman>();
   actor_system system_coord { ccfg };
-  auto coordinator = system_coord.spawn<iotdb::CoordinatorActor>();
+  auto coordinator = system_coord.spawn<NES::CoordinatorActor>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << ccfg.publish_port << endl;
@@ -440,7 +440,7 @@ TEST_F(ActorsCliTest, testSequentialMultiQueries) {
   w_cfg.load<io::middleman>();
   actor_system sw { w_cfg };
   PhysicalStreamConfig streamConf;
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
+  auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
                                              w_cfg.receive_port);
   anon_send(worker, connect_atom::value, w_cfg.host, ccfg.publish_port);
   std::this_thread::sleep_for(std::chrono::seconds(1));

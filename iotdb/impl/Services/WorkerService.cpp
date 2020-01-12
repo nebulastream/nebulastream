@@ -4,7 +4,7 @@
 #include <utility>
 #include <Util/Logger.hpp>
 
-namespace iotdb {
+namespace NES {
 WorkerService::WorkerService(string ip, uint16_t publish_port,
                              uint16_t receive_port) {
   this->_ip = std::move(ip);
