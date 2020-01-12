@@ -20,6 +20,7 @@ static log4cxx::LoggerPtr iotdbLogger(log4cxx::Logger::getLogger("IOTDB"));
 #define IOTDB_WARNING(TEXT) LOG4CXX_WARN(iotdbLogger, TEXT)
 #define IOTDB_RES(TEXT) LOG4CXX_WARN(iotdbLogger, TEXT)
 #define IOTDB_ERROR(TEXT) LOG4CXX_ERROR(iotdbLogger, TEXT)
+#define IOTDB_FATAL_ERROR(TEXT) LOG4CXX_ERROR(iotdbLogger, TEXT)
 
 static inline void setupLogger(log4cxx::LayoutPtr layoutPtr = nullptr,
                                log4cxx::AppenderPtr appenderPtr = nullptr,

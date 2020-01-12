@@ -12,7 +12,7 @@
 #include "../../include/Topology/NESTopologyWorkerNode.hpp"
 #include "../../include/Topology/NESTopologyManager.hpp"
 #include <Topology/TestTopology.hpp>
-
+#include <Topology/NESTopologyGraph.hpp>
 #include "Util/CPUCapacity.hpp"
 
 using namespace iotdb;
@@ -398,7 +398,7 @@ class NesTopologyGraphTest : public testing::Test {
   /* Will be called before a test is executed. */
   void SetUp() {
     std::cout << "Setup NesTopologyGraph test case." << std::endl;
-    nes_graph = std::make_shared<NESGraph>();
+    nes_graph = std::make_shared<NESTopologyGraph>();
   }
 
   /* Will be called before a test is executed. */
@@ -406,7 +406,7 @@ class NesTopologyGraphTest : public testing::Test {
 
   /* Will be called after all tests in this class are finished. */
   static void TearDownTestCase() { std::cout << "Tear down NesTopologyGraph test class." << std::endl; }
-  std::shared_ptr<NESGraph> nes_graph;
+  std::shared_ptr<NESTopologyGraph> nes_graph;
 };
 
 /* - Vertices -------------------------------------------------------------- */

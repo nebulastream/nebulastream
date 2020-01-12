@@ -15,31 +15,80 @@ enum NESNodeType {
   Sensor
 };
 
-//FIXME:add docu here
 class NESTopologyEntry {
  public:
+
+  /**
+   * @biref method to set the id of a node
+   * @param size_t of the id
+   */
   virtual void setId(size_t id) = 0;
 
+  /**
+   * @brief method to get the id of the node
+   * @return id as a size_t
+   */
   virtual size_t getId() = 0;
 
+  /**
+   * @brief method to return the type of this entry
+   * @return Coordinator as a parameter
+   */
   virtual NESNodeType getEntryType() = 0;
 
+  /**
+   * @brief method to return the entry type as a string
+   * @return entry type as string
+   */
   virtual std::string getEntryTypeString() = 0;
 
+  /**
+   * @brief method to deploy a query here
+   * @param InputQueryPtr to the query for this node
+   */
   virtual void setQuery(InputQueryPtr pQuery) = 0;
 
-  virtual int getCpuCapacity() = 0;
+  /**
+   * @brief method to get the overall cpu capacity of the node
+   * @return size_t cpu capacity
+   */
+  virtual size_t getCpuCapacity() = 0;
 
+  /**
+   * @brief method to set CPU capacity
+   * @param CPUCapacity class describing the node capacity
+   */
   virtual void setCpuCapacity(CPUCapacity cpuCapacity) = 0;
 
-  virtual int getRemainingCpuCapacity() = 0;
+  /**
+   * @brief method to get the actual cpu capacity
+   * @param size_t of the current capacity
+   */
+  virtual size_t getRemainingCpuCapacity() = 0;
 
-  virtual void reduceCpuCapacity(int usedCapacity) = 0;
+  /**
+   * @brief method to reduce the cpu capacity of the node
+   * @param size_t of the value that has to be subtracted
+   * TODO: this should check if the value becomes less than 0
+   */
+  virtual void reduceCpuCapacity(size_t usedCapacity) = 0;
 
-  virtual void increaseCpuCapacity(int freedCapacity) = 0;
+  /**
+   * @brief method to increase CPU capacity
+   * @param size_t of the vlaue that has to be added
+   */
+  virtual void increaseCpuCapacity(size_t freedCapacity) = 0;
 
-  virtual const std::string &getIp() = 0;
+  /**
+   * @brief get the ip of this node
+   * @return ip as string
+   */
+  virtual const std::string& getIp() = 0;
 
+  /**
+   * @biref method to set the id of a coordinator node
+   * @param size_t of the id
+   */
   virtual void setIp(const std::string &ip_addr) = 0;
 
   /**
@@ -66,28 +115,37 @@ class NESTopologyEntry {
    */
   virtual void setReceivePort(uint16_t receivePort) = 0;
 
-  //TODO: We need to fix this properly. Currently it just returns the +1 value of the receivePort.
   /**
    * @brief the next free receive port on which internal data transmission via ZMQ is running
+   * @return receive port as a uint16_t
+   * TODO: We need to fix this properly. Currently it just returns the +1 value of the receivePort.
    */
   virtual uint16_t getNextFreeReceivePort() = 0;
 
-  void setNodeProperty(std::string nodeProperties) {
-    if (nodeProperties != "")
-      this->nodeProperties = std::make_shared<NodeProperties>(nodeProperties);
-    else
-      this->nodeProperties = std::make_shared<NodeProperties>();
-  }
+  /**
+   * @brief method to set the property of the node by creating a NodeProperties object
+   * @param a string of the serialized json object of the properties
+   */
+  void setNodeProperty(std::string nodeProperties);
 
-  std::string getNodeProperty() {
-    return this->nodeProperties->dump();
-  }
+  /**
+   * @brief method to get the node properties
+   * @return serialized json of the node properties object
+   */
+  std::string getNodeProperty();
 
-  std::string toString()
-  {
+  /**
+   * @brief method to get the node properties
+   * @NodePropertiesPtr to the properties of this node
+   */
+  NodePropertiesPtr getNodeProperties();
 
-    return "id=" + std::to_string(getId()) + " type=" + getEntryTypeString();
-  }
+  /**
+   * @brief method to return this node as a string
+   * @param string with the id and the type
+   */
+  std::string toString();
+
  protected:
   std::string ip_addr;
   uint16_t publish_port;

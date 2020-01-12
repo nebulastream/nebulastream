@@ -14,100 +14,149 @@ namespace iotdb {
 /**
  * @brief: This class represent a worker node in nes topology. When you create a worker node you need to use the
  * setters to define the node id and its cpu capacity.
-*
-* Following are the set of properties that can be defined:
-* 1.) sensor_id : Defines the unique identifier of the node
-* 2.) cpuCapacity : Defines the actual CPU capacity of the node
-* 3.) remainingCPUCapacity : Defined the remaining CPU capacity of the node
-* 4.) isASink : Defines if the node is sink or not. By default a worker node is not a sink node
-* 5.) query : Defines the query that need to be executed by the node
-*/
+ *
+ * Following are the set of properties that can be defined:
+ * 1.) sensor_id : Defines the unique identifier of the node
+ * 2.) cpuCapacity : Defines the actual CPU capacity of the node
+ * 3.) remainingCPUCapacity : Defined the remaining CPU capacity of the node
+ * 4.) isASink : Defines if the node is sink or not. By default a worker node is not a sink node
+ * 5.) query : Defines the query that need to be executed by the node
+ */
 class NESTopologyWorkerNode : public NESTopologyEntry {
 
  public:
   NESTopologyWorkerNode(size_t nodeId, std::string ip_addr) {
     this->node_id = nodeId;
     this->ip_addr = std::move(ip_addr);
+    isASink = false;
+    cpuCapacity = 0;
+    remainingCPUCapacity = 0;
   }
   ~NESTopologyWorkerNode() = default;
 
-  size_t getId() { return node_id; }
+  /**
+   * @brief method to get the id of the node
+   * @return id as a size_t
+   */
+  size_t getId();
 
-  void setId(size_t id) { this->node_id = id; }
+  /**
+   * @biref method to set the id of a node
+   * @param size_t of the id
+   */
+  void setId(size_t id);
 
-  int getCpuCapacity() { return cpuCapacity; }
+  /**
+   * @brief method to get the overall cpu capacity of the node
+   * @return size_t cpu capacity
+   */
+  size_t getCpuCapacity();
 
-  void setCpuCapacity(CPUCapacity cpuCapacity) {
-    this->cpuCapacity = cpuCapacity.toInt();
-    this->remainingCPUCapacity = this->cpuCapacity;
-  }
+  /**
+   * @brief method to set CPU capacity
+   * @param CPUCapacity class describing the node capacity
+   */
+  void setCpuCapacity(CPUCapacity cpuCapacity);
 
-  void reduceCpuCapacity(int usedCapacity) {
-    this->remainingCPUCapacity = this->remainingCPUCapacity - usedCapacity;
-  }
+  /**
+   * @brief method to reduce the cpu capacity of the node
+   * @param size_t of the value that has to be subtracted
+   * TODO: this should check if the value becomes less than 0
+   */
+  void reduceCpuCapacity(size_t usedCapacity);
 
-  void increaseCpuCapacity(int freedCapacity) {
-    this->remainingCPUCapacity = this->remainingCPUCapacity + freedCapacity;
-  }
+  /**
+   * @brief method to increase CPU capacity
+   * @param size_t of the vlaue that has to be added
+   */
+  void increaseCpuCapacity(size_t freedCapacity);
 
-  int getRemainingCpuCapacity() { return remainingCPUCapacity; }
+  /**
+   * @brief method to get the actual cpu capacity
+   * @param size_t of the current capacity
+   */
+  size_t getRemainingCpuCapacity();
 
-  void isASinkNode(bool isASink) {
-    this->isASink = isASink;
-  }
+  /**
+   * @brief method to make this node a sink node
+   * @param bool ifSinkNode
+   */
+  void setSinkNode(bool isASink);
 
-  bool getIsASinkNode() {
-    return this->isASink;
-  }
+  /**
+   * @brief method to get the info if this node is a sink node
+   * @return true if this is a sink node otherwise false
+   */
+  bool getIsASinkNode();
 
-  NESNodeType getEntryType() { return Worker; }
+  /**
+   * @brief method to return the type of this entry
+   * @return Coordinator as a parameter
+   */
+  NESNodeType getEntryType();
 
-  std::string getEntryTypeString() {
-    if (isASink) {
-      return "sink";
-    }
-    return "Worker";
-  }
+  /**
+   * @brief method to return the entry type as a string
+   * @return if this is a sink then sink else Coordinator"
+   */
+  std::string getEntryTypeString();
 
-  void setQuery(InputQueryPtr pQuery) { this->query = pQuery; };
+  /**
+   * @brief method to deploy a query here
+   * @param InputQueryPtr to the query for this node
+   */
+  void setQuery(InputQueryPtr pQuery);
 
-  uint16_t getPublishPort() override {
-    return publish_port;
-  }
+  /**
+   * @brief method to get the publish port of the node
+   * @return publish port
+   */
+  uint16_t getPublishPort() override;
 
-  void setPublishPort(uint16_t publishPort) override {
-    publish_port = publishPort;
-  }
+  /**
+   * @brief method to set the publish port of the node
+   * @param publish port as a uint16_t
+   */
+  void setPublishPort(uint16_t publishPort) override;
 
-  uint16_t getReceivePort() override {
-    return receive_port;
-  }
+  /**
+   * @brief method to get the receive port of the node
+   * @return receive port as a uint16_t
+   */
+  uint16_t getReceivePort() override;
 
-  uint16_t getNextFreeReceivePort() override {
-    receive_port++;
-    return receive_port;
-  }
+  /**
+   * @brief method to get the next port (increment by one) based on the current port
+   * @return receive port as a uint16_t
+   */
+  uint16_t getNextFreeReceivePort() override;
 
-  void setReceivePort(uint16_t receivePort) override {
-    receive_port = receivePort;
-  }
+  /**
+   * @brief method to set the receive port of this node
+   * @param recieve port as an uint16_t
+   */
+  void setReceivePort(uint16_t receivePort) override;
 
-  const std::string &getIp() override {
-    return this->ip_addr;
-  }
+  /**
+   * @brief get the ip of this node
+   * @return ip as string
+   */
+  const std::string& getIp() override;
 
-  void setIp(const std::string &ip) override {
-    this->ip_addr = ip;
-  }
+  /**
+   * @biref method to set the id of a coordinator node
+   * @param size_t of the id
+   */
+  void setIp(const std::string &ip) override;
 
  private:
   size_t node_id;
-  int cpuCapacity;
-  int remainingCPUCapacity;
-  bool isASink = false;
+  size_t cpuCapacity;
+  size_t remainingCPUCapacity;
+  bool isASink;
   InputQueryPtr query;
 };
 
 typedef std::shared_ptr<NESTopologyWorkerNode> NESTopologyWorkerNodePtr;
-} // namespace iotdb
+}  // namespace iotdb
 #endif /* INCLUDE_TOPOLOGY_NESTOPOLOGYWORKERNODE_HPP_ */
