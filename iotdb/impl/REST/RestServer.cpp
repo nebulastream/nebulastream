@@ -4,7 +4,7 @@
 #include <REST/Controller/RestController.hpp>
 #include <REST/RestServer.hpp>
 #include <Util/Logger.hpp>
-using namespace iotdb;
+using namespace NES;
 
 bool RestServer::start(std::string host,
                        u_int16_t port,

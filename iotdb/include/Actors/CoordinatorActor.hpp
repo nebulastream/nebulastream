@@ -18,7 +18,7 @@ using std::endl;
 using std::string;
 using std::unordered_map;
 
-namespace iotdb {
+namespace NES {
 
 // class-based, statically typed, event-based API for the state management in CAF
 struct CoordinatorState {

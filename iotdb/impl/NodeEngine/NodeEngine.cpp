@@ -5,7 +5,7 @@
 //#include <tests/testPlans/compiledTestPlan.hpp>
 
 using namespace std;
-namespace iotdb {
+namespace NES {
 JSON NodeEngine::getNodePropertiesAsJSON() {
   props->readMemStats();
   props->readCpuStats();
@@ -52,9 +52,9 @@ void NodeEngine::undeployQuery(QueryExecutionPlanPtr qep) {
 void NodeEngine::init() {
   IOTDB_DEBUG("NODEENGINE: init node engine")
 
-  iotdb::Dispatcher::instance();
-  iotdb::BufferManager::instance();
-  iotdb::ThreadPool::instance();
+  NES::Dispatcher::instance();
+  NES::BufferManager::instance();
+  NES::ThreadPool::instance();
 }
 
 void NodeEngine::start() {
@@ -117,16 +117,16 @@ void NodeEngine::resetQEPs() {
 
 void NodeEngine::setDOPWithRestart(size_t dop)
 {
-  iotdb::ThreadPool::instance().setNumberOfThreadsWithRestart(dop);
+  NES::ThreadPool::instance().setNumberOfThreadsWithRestart(dop);
 }
 void NodeEngine::setDOPWithoutRestart(size_t dop)
 {
-  iotdb::ThreadPool::instance().setNumberOfThreadsWithoutRestart(dop);
+  NES::ThreadPool::instance().setNumberOfThreadsWithoutRestart(dop);
 }
 
 size_t NodeEngine::getDOP()
 {
-return iotdb::ThreadPool::instance().getNumberOfThreads();
+return NES::ThreadPool::instance().getNumberOfThreads();
 }
 
 }

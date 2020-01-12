@@ -28,7 +28,7 @@
 
 using std::string;
 
-namespace iotdb {
+namespace NES {
 
 class CoordinatorService;
 typedef std::shared_ptr<CoordinatorService> CoordinatorServicePtr;

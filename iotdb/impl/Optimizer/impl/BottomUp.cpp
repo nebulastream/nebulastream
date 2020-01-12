@@ -3,7 +3,7 @@
 #include <iostream>
 #include <Util/Logger.hpp>
 
-using namespace iotdb;
+using namespace NES;
 using namespace std;
 
 NESExecutionPlan BottomUp::initializeExecutionPlan(

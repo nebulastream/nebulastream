@@ -9,7 +9,7 @@
 #include <API/UserAPIExpression.hpp>
 #include <API/Types/DataTypes.hpp>
 #include <Util/Logger.hpp>
-namespace iotdb {
+namespace NES {
 
 Predicate::Predicate(const BinaryOperatorType &op,
                      const UserAPIExpressionPtr left,
@@ -80,14 +80,14 @@ const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCode &code) con
 const std::string Predicate::toString() const {
   std::stringstream stream;
   if (_bracket) stream << "(";
-  stream << _left->toString() << " " << ::iotdb::toCodeExpression(_op)->code_ << " " << _right->toString() << " ";
+  stream << _left->toString() << " " << ::NES::toCodeExpression(_op)->code_ << " " << _right->toString() << " ";
   if (_bracket) stream << ")";
   return stream.str();
 }
 
 bool Predicate::equals(const UserAPIExpression &_rhs) const {
   try {
-    auto rhs = dynamic_cast<const iotdb::Predicate &>(_rhs);
+    auto rhs = dynamic_cast<const NES::Predicate &>(_rhs);
     if ((_left == nullptr && rhs._left == nullptr) || (_left->equals(*rhs._left.get()))) {
       if ((_right == nullptr && rhs._right == nullptr) || (_right->equals(*rhs._right.get()))) {
         return _op == rhs._op && _bracket == rhs._bracket && _functionCallOverload == rhs._functionCallOverload;
@@ -171,7 +171,7 @@ UserAPIExpressionPtr PredicateItem::copy() const {
 
 bool PredicateItem::equals(const UserAPIExpression &_rhs) const {
   try {
-    auto rhs = dynamic_cast<const iotdb::PredicateItem &>(_rhs);
+    auto rhs = dynamic_cast<const NES::PredicateItem &>(_rhs);
     if ((_attribute == nullptr && rhs._attribute == nullptr) || (*_attribute.get() == *rhs._attribute.get())) {
       if ((_value == nullptr && rhs._value == nullptr) || (*_value.get() == *rhs._value.get())) {
         return _mutation == rhs._mutation;
@@ -435,6 +435,6 @@ Predicate operator<<(const PredicateItem &lhs, const PredicateItem &rhs) {
 Predicate operator>>(const PredicateItem &lhs, const PredicateItem &rhs) {
   return operator>>(dynamic_cast<const UserAPIExpression &>(lhs), dynamic_cast<const UserAPIExpression &>(rhs));
 }
-} //end namespace iotdb
-BOOST_CLASS_EXPORT(iotdb::Predicate);
-BOOST_CLASS_EXPORT(iotdb::PredicateItem);
+} //end namespace NES
+BOOST_CLASS_EXPORT(NES::Predicate);
+BOOST_CLASS_EXPORT(NES::PredicateItem);

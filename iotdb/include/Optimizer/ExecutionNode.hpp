@@ -7,7 +7,7 @@
 
 #include "../Topology/NESTopologyEntry.hpp"
 
-namespace iotdb {
+namespace NES {
 
 using namespace std;
 

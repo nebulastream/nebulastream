@@ -5,7 +5,7 @@
 #include <API/InputQuery.hpp>
 #include <cpprest/json.h>
 
-namespace iotdb {
+namespace NES {
 
 /**\brief:
  *          This class is used for serving different requests related to user query.

@@ -15,7 +15,7 @@
 #include <stdint.h>
 // class TupleBuffer;
 
-namespace iotdb {
+namespace NES {
 
 class HandCodedQueryExecutionPlan : public QueryExecutionPlan {
 public:
@@ -35,5 +35,5 @@ private:
 #include <boost/serialization/export.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-BOOST_CLASS_EXPORT_KEY(iotdb::HandCodedQueryExecutionPlan)
+BOOST_CLASS_EXPORT_KEY(NES::HandCodedQueryExecutionPlan)
 #endif /* INCLUDE_HANDCODEDQUERYEXECUTIONPLAN_H_ */

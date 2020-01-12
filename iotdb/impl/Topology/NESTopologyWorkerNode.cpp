@@ -1,6 +1,6 @@
 #include <Topology/NESTopologyWorkerNode.hpp>
 
-namespace iotdb {
+namespace NES {
 
 size_t NESTopologyWorkerNode::getId() {
   return node_id;

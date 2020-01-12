@@ -28,7 +28,7 @@ using namespace concurrency::streams;
 // Asynchronous streams
 namespace bp = boost::process;
 
-namespace iotdb {
+namespace NES {
 
 class E2eRestTest : public testing::Test {
  public:

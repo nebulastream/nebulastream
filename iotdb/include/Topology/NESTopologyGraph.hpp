@@ -7,7 +7,7 @@
 #include <Topology/NESTopologyEntry.hpp>
 #include <Topology/NESTopologyLink.hpp>
 
-namespace iotdb {
+namespace NES {
 
 struct NESVertex {
   size_t id;

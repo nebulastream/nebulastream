@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-namespace iotdb{
+namespace NES{
 
 void NodeProperties::readCpuStats() {
 

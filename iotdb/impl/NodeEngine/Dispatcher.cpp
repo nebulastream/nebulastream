@@ -9,7 +9,7 @@
 
 #include <Windows/WindowHandler.hpp>
 
-namespace iotdb {
+namespace NES {
 
 Dispatcher::Dispatcher()
     : task_queue(),
@@ -262,7 +262,7 @@ TaskPtr Dispatcher::getWork(bool &threadPool_running) {
   return task;
 }
 
-void Dispatcher::addWork(const iotdb::TupleBufferPtr window_aggregates, iotdb::WindowHandler *window) {
+void Dispatcher::addWork(const NES::TupleBufferPtr window_aggregates, NES::WindowHandler *window) {
   std::unique_lock<std::mutex> lock(workMutex);
 
   //get the queries that contains this window
@@ -351,4 +351,4 @@ void Dispatcher::printQEPStatistics(const QueryExecutionPlanPtr qep) {
   }
 }
 
-}  // namespace iotdb
+}  // namespace NES

@@ -7,7 +7,7 @@
 #include <QueryCompiler/QueryCompiler.hpp>
 #include <Util/Logger.hpp>
 
-using namespace iotdb;
+using namespace NES;
 
 class CoordinatorCafTest : public testing::Test {
  public:

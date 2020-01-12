@@ -2,7 +2,7 @@
 #include <API/Window/WindowMeasure.hpp>
 
 
-namespace iotdb {
+namespace NES {
 
 TimeMeasure::TimeMeasure(uint64_t ms) : _ms(ms) {}
 

@@ -4,7 +4,7 @@
 #include <SourceSink/DataSink.hpp>
 #include <Util/Logger.hpp>
 
-namespace iotdb {
+namespace NES {
 
 bool PipelineStage::execute(const std::vector<TupleBuffer *> &input_buffers,
                             void *state,
@@ -101,4 +101,4 @@ uint32_t DataSinkPiplineStage::execute_impl(const std::vector<TupleBuffer *> &in
   //    else
   //        return 1;
 }
-} // namespace iotdb
+} // namespace NES

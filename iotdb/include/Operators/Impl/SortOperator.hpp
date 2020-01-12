@@ -8,7 +8,7 @@
 #include <API/ParameterTypes.hpp>
 #include <Operators/Operator.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class SortOperator : public Operator {
   public:
@@ -26,4 +26,4 @@ class SortOperator : public Operator {
     Sort sort_spec_;
 };
 
-} // namespace iotdb
+} // namespace NES

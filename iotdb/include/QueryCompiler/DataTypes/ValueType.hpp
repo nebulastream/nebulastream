@@ -10,7 +10,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class ValueType;
 typedef std::shared_ptr<ValueType> ValueTypePtr;

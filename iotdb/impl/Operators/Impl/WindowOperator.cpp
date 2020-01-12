@@ -6,7 +6,7 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <Operators/Impl/WindowOperator.hpp>
 
-namespace iotdb {
+namespace NES {
 
 WindowOperator::WindowOperator(const WindowDefinitionPtr &window_definition)
     : Operator(), window_definition(window_definition) {}
@@ -46,8 +46,8 @@ const WindowDefinitionPtr &WindowOperator::getWindowDefinition() const {
   return window_definition;
 }
 
-const OperatorPtr createWindowOperator(const iotdb::WindowDefinitionPtr& windowDefinitionPtr) {
+const OperatorPtr createWindowOperator(const NES::WindowDefinitionPtr& windowDefinitionPtr) {
   return std::make_shared<WindowOperator>(windowDefinitionPtr);
 }
 
-} // namespace iotdb
+} // namespace NES

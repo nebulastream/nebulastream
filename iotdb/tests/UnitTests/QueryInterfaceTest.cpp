@@ -9,7 +9,7 @@
 #include <API/Environment.hpp>
 #include <API/Types/DataTypes.hpp>
 #include <Util/UtilityFunctions.hpp>
-namespace iotdb {
+namespace NES {
 
     class SelectionDataGenFunctor {
     public:
@@ -101,15 +101,15 @@ namespace iotdb {
         InputQueryPtr inputQuery = UtilityFunctions::createQueryFromCodeString(code.str());
     }
 
-} // namespace iotdb
+} // namespace NES
 
 int main(int argc, const char *argv[]) {
 
-    iotdb::Dispatcher::instance();
-    iotdb::createQueryFilter();
+    NES::Dispatcher::instance();
+    NES::createQueryFilter();
 
-    //iotdb::createQueryMap();
-    //iotdb::createQueryString();
+    //NES::createQueryMap();
+    //NES::createQueryString();
 
     return 0;
 }

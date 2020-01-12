@@ -5,7 +5,7 @@
 #include <utility>
 #include "NESTopologyEntry.hpp"
 
-namespace iotdb {
+namespace NES {
 
 /**
  * @brief: This class represent a sensor node in nes topology. When you create a sensor node you need to use the setters to
@@ -157,5 +157,5 @@ class NESTopologySensorNode : public NESTopologyEntry {
 };
 
 typedef std::shared_ptr<NESTopologySensorNode> NESTopologySensorNodePtr;
-}  // namespace iotdb
+}  // namespace NES
 #endif /* INCLUDE_TOPOLOGY_NESTOPOLOGYSENSOR_HPP_ */

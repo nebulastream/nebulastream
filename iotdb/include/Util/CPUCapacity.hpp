@@ -1,7 +1,7 @@
 #ifndef IOTDB_CPUCAPACITY_H
 #define IOTDB_CPUCAPACITY_H
 
-namespace iotdb {
+namespace NES {
     class CPUCapacity {
 
     public:

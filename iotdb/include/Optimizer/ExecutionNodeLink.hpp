@@ -12,7 +12,7 @@
 #include "ExecutionNode.hpp"
 
 
-namespace iotdb {
+namespace NES {
     static int currentLinkID = 1;
 
     class ExecutionNodeLink {

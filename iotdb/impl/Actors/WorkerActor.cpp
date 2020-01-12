@@ -5,7 +5,7 @@
 #include <fstream>
 #include <boost/filesystem.hpp>
 #include <Util/Logger.hpp>
-namespace iotdb {
+namespace NES {
 
 WorkerActor::WorkerActor(actor_config &cfg, string ip, uint16_t publish_port,
                          uint16_t receive_port)

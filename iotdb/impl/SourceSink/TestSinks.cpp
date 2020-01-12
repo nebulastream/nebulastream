@@ -5,7 +5,7 @@
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/KafkaSink.hpp>
 #include <Util/Logger.hpp>
-namespace iotdb {
+namespace NES {
 
 const DataSinkPtr createTestSink() {
   IOTDB_ERROR("Called unimplemented Function");

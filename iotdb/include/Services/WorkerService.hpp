@@ -13,7 +13,7 @@ using std::vector;
 using std::tuple;
 using JSON = nlohmann::json;
 
-namespace iotdb {
+namespace NES {
 
 class WorkerService {
 

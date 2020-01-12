@@ -16,7 +16,7 @@
 #include <Topology/NESTopologyWorkerNode.hpp>
 #include <Util/CPUCapacity.hpp>
 #include <Util/Logger.hpp>
-namespace iotdb {
+namespace NES {
 
 std::vector<NESTopologyEntryPtr> NESTopologyPlan::getNodeByIp(std::string ip)
 {
@@ -117,4 +117,4 @@ NESGraphPtr NESTopologyPlan::getNESGraph() const {
   return fGraphPtr;
 }
 
-} // namespace iotdb
+} // namespace NES

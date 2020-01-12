@@ -6,7 +6,7 @@
 #include <memory>
 #include <Util/Logger.hpp>
 
-namespace iotdb {
+namespace NES {
 
 SharedLibrary::SharedLibrary(void* _shared_lib)
     : shared_lib_(_shared_lib) {
@@ -44,4 +44,4 @@ SharedLibraryPtr SharedLibrary::load(const std::string& file_path) {
   return SharedLibraryPtr(new SharedLibrary(myso));
 }
 
-}  // namespace iotdb
+}  // namespace NES

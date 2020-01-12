@@ -3,7 +3,7 @@
 #include <SourceSink/DataSink.hpp>
 #include <cppkafka/configuration.h>
 
-namespace iotdb {
+namespace NES {
 
 /**
  * @brief create test sink

@@ -8,7 +8,7 @@ using std::cerr;
 using std::endl;
 using std::string;
 
-namespace iotdb {
+namespace NES {
 using namespace caf;
 constexpr auto task_timeout = std::chrono::seconds(3);
 

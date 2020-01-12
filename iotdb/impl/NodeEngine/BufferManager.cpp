@@ -5,7 +5,7 @@
 #include <utility>
 #include <Util/Logger.hpp>
 
-namespace iotdb {
+namespace NES {
 
 BufferManager::BufferManager()
     : mutex(),
@@ -179,4 +179,4 @@ void BufferManager::printStatistics() {
   IOTDB_INFO("\t releasedBuffer=" << releasedBuffer)
 }
 
-}  // namespace iotdb
+}  // namespace NES

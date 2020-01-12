@@ -3,7 +3,7 @@
 
 #include <string>
 
-namespace iotdb {
+namespace NES {
 
 /**
  * @brief this struct covers the information about the attached sensor

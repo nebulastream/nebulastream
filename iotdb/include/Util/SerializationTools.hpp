@@ -15,7 +15,7 @@
 
 using std::string;
 
-namespace iotdb {
+namespace NES {
 
 /**\brief:
  * Here are the methods which are used for boost serialization
@@ -222,6 +222,6 @@ class SerializationTools {
 
 };
 
-} // namespace iotdb
+} // namespace NES
 
 #endif //IOTDB_SERIALIZATIONTOOLS_HPP

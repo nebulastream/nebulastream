@@ -6,7 +6,7 @@
 
 using namespace web;
 using namespace http;
-using namespace iotdb;
+using namespace NES;
 using namespace std;
 
 void RestController::initRestOpHandlers() {

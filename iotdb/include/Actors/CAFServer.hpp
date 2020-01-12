@@ -5,7 +5,7 @@
 #include "Actors/CoordinatorActor.hpp"
 #include <iostream>
 
-namespace iotdb {
+namespace NES {
 
 /**
  * @brief : This class is responsible for starting the CAF server with coordinator services.

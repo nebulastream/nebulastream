@@ -4,7 +4,7 @@
 
 #include "Actors/CoordinatorActor.hpp"
 
-namespace iotdb {
+namespace NES {
 
   /**
    * @brief : This class is responsible for starting the REST server.

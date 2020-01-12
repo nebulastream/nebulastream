@@ -8,9 +8,9 @@
 #include <Util/Logger.hpp>
 #include <SourceSink/FileOutputSink.hpp>
 #include <SourceSink/DataSink.hpp>
-BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::FileOutputSink);
+BOOST_CLASS_EXPORT_IMPLEMENT(NES::FileOutputSink);
 
-namespace iotdb {
+namespace NES {
 
 FileOutputSink::FileOutputSink()
     : DataSink() {
@@ -28,7 +28,7 @@ FileOutputSink::FileOutputSink(const Schema& schema, const std::string filePath)
 bool FileOutputSink::writeData(const TupleBufferPtr input_buffer) {
 
     std::fstream outputFile(filePath, std::fstream::in | std::fstream::out | std::fstream::app);
-    outputFile << iotdb::toString(input_buffer.get(), this->getSchema());
+    outputFile << NES::toString(input_buffer.get(), this->getSchema());
     outputFile.close();
     return true;
 }
@@ -52,4 +52,4 @@ SinkType FileOutputSink::getType() const {
     return FILE_SINK;
 }
 
-}  // namespace iotdb
+}  // namespace NES

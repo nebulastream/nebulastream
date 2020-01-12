@@ -12,9 +12,9 @@
 #include <boost/serialization/export.hpp>
 
 #include <SourceSink/DataSource.hpp>
-BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::DataSource);
+BOOST_CLASS_EXPORT_IMPLEMENT(NES::DataSource);
 
-namespace iotdb {
+namespace NES {
 
 DataSource::DataSource(const Schema &_schema)
     : running(false),
@@ -116,4 +116,4 @@ size_t DataSource::getNumberOfGeneratedBuffers() {
 const std::string DataSource::getSourceSchemaAsString() {
   return schema.toString();
 };
-}  // namespace iotdb
+}  // namespace NES

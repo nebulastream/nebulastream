@@ -19,7 +19,7 @@
 #include <API/Schema.hpp>
 #include <Windows/WindowHandler.hpp>
 
-namespace iotdb {
+namespace NES {
 class WindowManagerTest : public testing::Test {
  public:
   static void SetUpTestCase() {

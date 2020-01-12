@@ -6,7 +6,7 @@
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/PipelineStage.hpp>
 
-namespace iotdb {
+namespace NES {
 
 PipelineStagePtr compile(const CodeFile &file) {
   CCodeCompiler compiler;
@@ -31,4 +31,4 @@ CodeFile FileBuilder::build() {
   return file;
 }
 
-} // namespace iotdb
+} // namespace NES

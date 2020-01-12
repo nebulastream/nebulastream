@@ -5,7 +5,7 @@
 #ifndef IOTDB_OPERATORTYPES_HPP
 #define IOTDB_OPERATORTYPES_HPP
 
-namespace iotdb {
+namespace NES {
 
     enum UnaryOperatorType {
         ADDRESS_OF_OP,

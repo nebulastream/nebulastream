@@ -12,7 +12,7 @@
 #include "Util/CPUCapacity.hpp"
 #include <Topology/NESTopologyGraph.hpp>
 
-namespace iotdb {
+namespace NES {
 
 #define MAX_NUMBER_OF_NODES 10 // TODO: make this dynamic
 
@@ -119,6 +119,6 @@ class NESTopologyPlan {
   NESGraphPtr fGraphPtr;
 };
 typedef std::shared_ptr<NESTopologyPlan> NESTopologyPlanPtr;
-}  // namespace iotdb
+}  // namespace NES
 
 #endif /* INCLUDE_TOPOLOGY_NESTOPOLOGYPLAN_HPP_ */

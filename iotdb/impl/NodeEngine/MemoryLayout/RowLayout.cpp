@@ -2,7 +2,7 @@
 #include <NodeEngine/MemoryLayout/PhysicalSchema.hpp>
 #include <utility>
 
-namespace iotdb {
+namespace NES {
 
 RowLayout::RowLayout(PhysicalSchemaPtr physicalSchema) : MemoryLayout(std::move(physicalSchema)) {}
 

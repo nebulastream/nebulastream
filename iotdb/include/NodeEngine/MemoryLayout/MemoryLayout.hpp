@@ -3,7 +3,7 @@
 #include <memory>
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalSchema.hpp>
-namespace iotdb {
+namespace NES {
 
 class TupleBuffer;
 typedef std::shared_ptr<TupleBuffer> TupleBufferPtr;

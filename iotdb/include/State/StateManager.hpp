@@ -5,7 +5,7 @@
 #include <State/StateVariable.hpp>
 #include <mutex>
 #include <unordered_map>
-namespace iotdb {
+namespace NES {
 
 /**
  * This class is the entry point for stateful operators that require state

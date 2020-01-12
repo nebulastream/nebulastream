@@ -28,7 +28,7 @@
 
 using boost::asio::ip::tcp;
 using JSON = nlohmann::json;
-using namespace iotdb;
+using namespace NES;
 using namespace std;
 const int max_length = 1024*10;
 const size_t serverPort = 5555;

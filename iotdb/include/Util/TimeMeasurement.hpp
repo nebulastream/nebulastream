@@ -3,12 +3,12 @@
 
 #include <cstdint>
 
-namespace iotdb {
+namespace NES {
 
 typedef uint64_t Timestamp;
 
 Timestamp getTimestamp();
 
-} // namespace iotdb
+} // namespace NES
 
 #endif //#ifndef TIME_MEASUREMENT_HPP

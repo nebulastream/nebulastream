@@ -16,7 +16,7 @@
 /**
  * TODO: add return of create
  */
-namespace iotdb {
+namespace NES {
 
 using namespace web;
 
@@ -144,5 +144,5 @@ class NESTopologyManager {
 
   NESTopologyPlanPtr currentPlan;
 };
-}  // namespace iotdb
+}  // namespace NES
 #endif /* INCLUDE_TOPOLOGY_NESTOPOLOGYMANAGER_HPP_ */

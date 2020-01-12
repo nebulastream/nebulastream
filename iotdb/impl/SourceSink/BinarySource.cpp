@@ -9,9 +9,9 @@
 #include <SourceSink/BinarySource.hpp>
 #include <SourceSink/DataSource.hpp>
 #include <Util/Logger.hpp>
-BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::BinarySource);
+BOOST_CLASS_EXPORT_IMPLEMENT(NES::BinarySource);
 
-namespace iotdb {
+namespace NES {
 
 BinarySource::BinarySource()
     : file_path(""),
@@ -68,4 +68,4 @@ void BinarySource::fillBuffer(TupleBuffer& buf) {
 SourceType BinarySource::getType() const {
     return BINARY_SOURCE;
 }
-}  // namespace iotdb
+}  // namespace NES

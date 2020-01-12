@@ -10,7 +10,7 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
 
-namespace iotdb {
+namespace NES {
     Environment::Environment(const Config& config) : config(config) {}
     Environment Environment::create(const Config& config) { return Environment(config); }
     void Environment::executeQuery(const InputQuery& inputQuery) {
@@ -57,4 +57,4 @@ namespace iotdb {
         }
     }
 
-} // namespace iotdb
+} // namespace NES

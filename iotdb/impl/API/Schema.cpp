@@ -3,7 +3,7 @@
 #include <sstream>
 #include "API/Schema.hpp"
 
-using namespace iotdb;
+using namespace NES;
 
 Schema::Schema() {
 }

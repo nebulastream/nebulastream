@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-namespace iotdb {
+namespace NES {
 
 const std::string GeneratorSource::toString() const {
   std::stringstream ss;
@@ -17,4 +17,4 @@ SourceType GeneratorSource::getType() const {
 }
 }
 
-BOOST_CLASS_EXPORT(iotdb::GeneratorSource);
+BOOST_CLASS_EXPORT(NES::GeneratorSource);

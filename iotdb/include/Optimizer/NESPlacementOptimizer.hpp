@@ -12,7 +12,7 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include "NESExecutionPlan.hpp"
 
-namespace iotdb {
+namespace NES {
 class NESPlacementOptimizer {
  private:
 

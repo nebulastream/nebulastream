@@ -1,5 +1,5 @@
 #include <QueryCompiler/DataTypes/ValueType.hpp>
-using namespace iotdb;
+using namespace NES;
 
 ValueType::ValueType(const ValueType &) {
 

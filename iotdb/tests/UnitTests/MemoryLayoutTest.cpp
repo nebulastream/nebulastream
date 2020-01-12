@@ -16,7 +16,7 @@
 
 //#define DEBUG_OUTPUT
 
-namespace iotdb {
+namespace NES {
 class MemoryLayoutTest : public testing::Test {
  public:
   static void SetUpTestCase() {

@@ -9,7 +9,7 @@
 #include <cppkafka/cppkafka.h>
 #include <SourceSink/DataSink.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class KafkaSink : public DataSink {
  constexpr static size_t INVALID_PARTITION_NUMBER = -1;
@@ -52,6 +52,6 @@ class KafkaSink : public DataSink {
 
   std::chrono::milliseconds kafkaProducerTimeout;
 };
-} // namespace iotdb
+} // namespace NES
 
 #endif // KAFKASINK_HPP

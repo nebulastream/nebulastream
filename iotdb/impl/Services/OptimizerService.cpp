@@ -4,7 +4,7 @@
 #include <Topology/NESTopologyManager.hpp>
 #include <Util/Logger.hpp>
 
-using namespace iotdb;
+using namespace NES;
 using namespace web;
 using namespace std;
 

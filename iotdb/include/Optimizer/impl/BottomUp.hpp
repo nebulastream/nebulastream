@@ -5,7 +5,7 @@
 #include <iostream>
 #include "../NESPlacementOptimizer.hpp"
 
-namespace iotdb {
+namespace NES {
 
 using namespace std;
 

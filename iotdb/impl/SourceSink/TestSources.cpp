@@ -9,7 +9,7 @@
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
 #include <SourceSink/SourceCreator.hpp>
 
-namespace iotdb {
+namespace NES {
 
 TupleBufferPtr OneGeneratorSource::receiveData(){
     // 10 tuples of size one
@@ -56,4 +56,4 @@ const DataSourcePtr createCSVFileSource(const Schema &schema,
 
 }
 
-BOOST_CLASS_EXPORT(iotdb::OneGeneratorSource);
+BOOST_CLASS_EXPORT(NES::OneGeneratorSource);

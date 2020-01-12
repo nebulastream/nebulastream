@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 
-namespace iotdb {
+namespace NES {
 
 class CodeExpression;
 typedef std::shared_ptr<CodeExpression> CodeExpressionPtr;
@@ -18,4 +18,4 @@ class CodeExpression {
 
 const CodeExpressionPtr combine(const CodeExpressionPtr& lhs, const CodeExpressionPtr& rhs);
 
-} // namespace iotdb
+} // namespace NES

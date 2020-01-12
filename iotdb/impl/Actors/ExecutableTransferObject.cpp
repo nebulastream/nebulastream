@@ -6,7 +6,7 @@
 using std::string;
 using std::vector;
 
-namespace iotdb {
+namespace NES {
 ExecutableTransferObject::ExecutableTransferObject(string description,
                                                    Schema schema,
                                                    vector<DataSourcePtr> sources,

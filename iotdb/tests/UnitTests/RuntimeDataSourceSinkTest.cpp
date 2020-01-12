@@ -13,7 +13,7 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
-using namespace iotdb;
+using namespace NES;
 
 #ifndef LOCAL_HOST
 #define LOCAL_HOST "127.0.0.1"

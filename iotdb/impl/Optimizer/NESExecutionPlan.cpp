@@ -8,7 +8,7 @@
 #include <set>
 #include "../../include/Topology/NESTopologySensorNode.hpp"
 
-using namespace iotdb;
+using namespace NES;
 using namespace web;
 
 ExecutionNodePtr ExecutionGraph::getRoot() {
@@ -237,7 +237,7 @@ const std::vector<ExecutionEdge> ExecutionGraph::getAllEdgesToNode(ExecutionNode
   return result;
 }
 
-const vector<ExecutionEdge> ExecutionGraph::getAllEdgesFromNode(iotdb::ExecutionNodePtr srcNode) const {
+const vector<ExecutionEdge> ExecutionGraph::getAllEdgesFromNode(NES::ExecutionNodePtr srcNode) const {
   std::vector<ExecutionEdge> result = {};
 
   executionEdge_iterator edge, edge_end, next_edge;

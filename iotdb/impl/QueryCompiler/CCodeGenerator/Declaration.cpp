@@ -7,7 +7,7 @@
 #include <QueryCompiler/CodeExpression.hpp>
 #include <Util/Logger.hpp>
 
-namespace iotdb {
+namespace NES {
 
 Declaration::~Declaration() {}
 
@@ -157,4 +157,4 @@ const Code FunctionDeclaration::getTypeDefinitionCode() const { return Code(); }
 const Code FunctionDeclaration::getCode() const { return function_code; }
 const DeclarationPtr FunctionDeclaration::copy() const { return std::make_shared<FunctionDeclaration>(*this); }
 
-} // namespace iotdb
+} // namespace NES

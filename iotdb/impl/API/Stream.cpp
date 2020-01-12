@@ -2,14 +2,14 @@
 #include <API/UserAPIExpression.hpp>
 #include <Util/Logger.hpp>
 
-namespace iotdb {
+namespace NES {
 
-Stream::Stream(std::string name, const iotdb::Schema schema)
+Stream::Stream(std::string name, const NES::Schema schema)
     : name(name),
       schema(schema) {
 }
 
-Stream::Stream(std::string name, iotdb::SchemaPtr schemaPtr)
+Stream::Stream(std::string name, NES::SchemaPtr schemaPtr)
     : name(name) {
   schema.copyFields(*schemaPtr);
 }

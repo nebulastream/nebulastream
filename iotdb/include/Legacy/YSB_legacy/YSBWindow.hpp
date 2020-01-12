@@ -9,7 +9,7 @@
 
 #include "Windows/WindowHandler.hpp"
 
-namespace iotdb {
+namespace NES {
 
 class YSBWindow : public WindowHandler {
  public:
@@ -102,10 +102,10 @@ class YSBWindow : public WindowHandler {
 };
 
 
-} // namespace iotdb
+} // namespace NES
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
-BOOST_CLASS_EXPORT_KEY(iotdb::YSBWindow)
+BOOST_CLASS_EXPORT_KEY(NES::YSBWindow)
 
 #endif /* INCLUDE_RUNTIME_WINDOW_HPP_ */

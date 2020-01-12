@@ -25,7 +25,7 @@ echo "
 #include <API/ParameterTypes.hpp>
 #include <Operators/Operator.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class $CLASS_NAME : public Operator {
 public:
@@ -54,21 +54,21 @@ echo "
 
 #include <Operators/Impl/$CLASS_NAME.hpp>
 
-namespace iotdb {
+namespace NES {
 
 $CLASS_NAME::$CLASS_NAME(const $PARAMETER_TYPE& $VAR_NAME)
-  : Operator (), $VAR_NAME_INTERN(iotdb::copy($VAR_NAME))
+  : Operator (), $VAR_NAME_INTERN(NES::copy($VAR_NAME))
 {
 }
 
 $CLASS_NAME::$CLASS_NAME(const $CLASS_NAME& other)
-  : $VAR_NAME_INTERN(iotdb::copy(other.$VAR_NAME_INTERN))
+  : $VAR_NAME_INTERN(NES::copy(other.$VAR_NAME_INTERN))
 {
 }
 
 $CLASS_NAME& $CLASS_NAME::operator = (const $CLASS_NAME& other){
   if (this != &other){
-    $VAR_NAME_INTERN = iotdb::copy(other.$VAR_NAME_INTERN);
+    $VAR_NAME_INTERN = NES::copy(other.$VAR_NAME_INTERN);
   }
   return *this;
 }
@@ -86,7 +86,7 @@ const OperatorPtr $CLASS_NAME::copy() const{
 
 const std::string $CLASS_NAME::toString() const{
   std::stringstream ss;
-  ss << \"$OPERATOR_NAME(\" << iotdb::toString($VAR_NAME_INTERN) << \")\";
+  ss << \"$OPERATOR_NAME(\" << NES::toString($VAR_NAME_INTERN) << \")\";
   return ss.str();
 }
 

@@ -1,7 +1,7 @@
 #include "REST/Controller/BaseController.hpp"
 #include "REST/NetworkUtils.hpp"
 
-namespace iotdb {
+namespace NES {
 
     BaseController::BaseController() {}
 

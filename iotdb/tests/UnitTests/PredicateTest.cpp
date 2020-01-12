@@ -11,7 +11,7 @@
 
 #include <API/Types/DataTypes.hpp>
 
-namespace iotdb{
+namespace NES{
 
 int testUserPredicateAPIstdToString(UserAPIExpression &left, UserAPIExpression &right)
 {
@@ -31,7 +31,7 @@ int testUserPredicateAPIcombToString(UserAPIExpression &left, UserAPIExpression 
     return 0;
 }
 
-} //end namespace iotdb
+} //end namespace NES
 
 
 int main(){
@@ -41,10 +41,10 @@ int main(){
 			  << std::endl << "---------------------------------------" 
 			  << std::endl << std::endl;
 			  
-	iotdb::PredicateItem attNum = iotdb::PredicateItem(createField("field1", iotdb::BasicType::FLOAT32));
-	iotdb::PredicateItem attChar = iotdb::PredicateItem(createField("field1", iotdb::BasicType::CHAR));
-	iotdb::PredicateItem valDate = iotdb::PredicateItem(createBasicTypeValue(iotdb::BasicType::DATE,"1990.01.01"));
-	iotdb::PredicateItem valInt = iotdb::PredicateItem(createBasicTypeValue(iotdb::BasicType::INT64,"654378"));
+	NES::PredicateItem attNum = NES::PredicateItem(createField("field1", NES::BasicType::FLOAT32));
+	NES::PredicateItem attChar = NES::PredicateItem(createField("field1", NES::BasicType::CHAR));
+	NES::PredicateItem valDate = NES::PredicateItem(createBasicTypeValue(NES::BasicType::DATE,"1990.01.01"));
+	NES::PredicateItem valInt = NES::PredicateItem(createBasicTypeValue(NES::BasicType::INT64,"654378"));
 	
 	if(testUserPredicateAPIstdToString(attNum, attChar)){
 		std::cout << "ATTRIBUTE-ATTRIBUTE-easy: some tests failed" << std::endl << std::endl;

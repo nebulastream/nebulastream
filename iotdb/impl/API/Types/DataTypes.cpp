@@ -2,7 +2,7 @@
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
 #include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
 
-namespace iotdb {
+namespace NES {
 
 DataType::DataType(const DataType &) {
 
@@ -20,8 +20,8 @@ const StatementPtr DataType::getStmtCopyAssignment(const AssignmentStatment &aPa
 
 DataType::~DataType() {}
 
-} // namespace iotdb
+} // namespace NES
 
-//BOOST_CLASS_EXPORT(iotdb::PointerDataType);
-//BOOST_CLASS_EXPORT(iotdb::ArrayDataType);
-//BOOST_CLASS_EXPORT(iotdb::ArrayValueType);
+//BOOST_CLASS_EXPORT(NES::PointerDataType);
+//BOOST_CLASS_EXPORT(NES::ArrayDataType);
+//BOOST_CLASS_EXPORT(NES::ArrayValueType);

@@ -4,7 +4,7 @@
 #pragma once
 
 #include <API/Types/DataTypes.hpp>
-namespace iotdb {
+namespace NES {
 class BasicDataType : public DataType {
  public:
   BasicDataType() = default;

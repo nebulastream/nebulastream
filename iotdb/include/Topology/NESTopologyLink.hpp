@@ -5,7 +5,7 @@
 
 #include "NESTopologyEntry.hpp"
 
-namespace iotdb {
+namespace NES {
 #define NOT_EXISTING_LINK_ID std::numeric_limits<size_t>::max()
 
 enum LinkType {
@@ -75,5 +75,5 @@ class NESTopologyLink {
 };
 
 typedef std::shared_ptr<NESTopologyLink> NESTopologyLinkPtr;
-}  // namespace iotdb
+}  // namespace NES
 #endif /* INCLUDE_TOPOLOGY_NESTOPOLOGYLINK_HPP_ */

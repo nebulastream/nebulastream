@@ -5,7 +5,7 @@
 using namespace web;
 using namespace http;
 
-namespace iotdb {
+namespace NES {
 
    /*!
     * Dispatcher class represents the basic interface for a 

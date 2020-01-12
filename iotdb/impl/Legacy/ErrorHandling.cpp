@@ -4,7 +4,7 @@
 #include <iostream>
 #include <stdlib.h>
 
-namespace iotdb {
+namespace NES {
 
 void printStackTrace(std::ostream& out) {}
 
@@ -20,4 +20,4 @@ void exit(int status)
     std::exit(status);
 }
 
-} // namespace iotdb
+} // namespace NES

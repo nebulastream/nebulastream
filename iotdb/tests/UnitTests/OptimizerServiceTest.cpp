@@ -6,7 +6,7 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Util/Logger.hpp>
 
-using namespace iotdb;
+using namespace NES;
 using namespace web;
 
 //FIXME: Classes are disabled because of bad memory allocation in InputQuery creation

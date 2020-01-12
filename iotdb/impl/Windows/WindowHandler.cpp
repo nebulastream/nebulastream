@@ -8,10 +8,10 @@
 #include <NodeEngine/Dispatcher.hpp>
 #include <Windows/WindowHandler.hpp>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::WindowHandler)
-namespace iotdb {
+BOOST_CLASS_EXPORT_IMPLEMENT(NES::WindowHandler)
+namespace NES {
 
-WindowHandler::WindowHandler(iotdb::WindowDefinitionPtr window_definition_ptr) : window_definition_ptr(window_definition_ptr) {
+WindowHandler::WindowHandler(NES::WindowDefinitionPtr window_definition_ptr) : window_definition_ptr(window_definition_ptr) {
 }
 
 void WindowHandler::setup() {
@@ -116,4 +116,4 @@ bool WindowHandler::stop() {
 
 WindowHandler::~WindowHandler() {IOTDB_DEBUG("WINDOW: calling destructor")};
 
-} // namespace iotdb
+} // namespace NES

@@ -13,7 +13,7 @@
 #include <vector>
 #include <zmq.hpp>
 
-namespace iotdb {
+namespace NES {
 using JSON = nlohmann::json;
 
 /**
@@ -109,5 +109,5 @@ class NodeEngine {
 
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
 
-}  // namespace iotdb
+}  // namespace NES
 #endif // NODE_ENGINE_H
