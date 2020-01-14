@@ -7,8 +7,8 @@
  */
 
 
-#ifndef IOTDB_NESOPTIMIZER_HPP
-#define IOTDB_NESOPTIMIZER_HPP
+#ifndef NESOPTIMIZER_HPP
+#define NESOPTIMIZER_HPP
 
 #include "NESExecutionPlan.hpp"
 #include "../Topology/NESTopologyPlan.hpp"
@@ -25,4 +25,4 @@ class NESOptimizer {
 };
 }
 
-#endif //IOTDB_NESOPTIMIZER_HPP
+#endif //NESOPTIMIZER_HPP

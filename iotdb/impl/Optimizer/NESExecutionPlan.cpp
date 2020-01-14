@@ -398,10 +398,10 @@ void NESExecutionPlan::freeResources() {
   for (const ExecutionVertex &v: getExecutionGraph()->getAllVertex()) {
     if (v.ptr->getRootOperator()) {
       // TODO: change that when proper placement is fixed
-      IOTDB_INFO("NESEXECUTIONPLAN: Capacity before-" << v.ptr->getNESNode()->getId() << "->" << v.ptr->getNESNode()->getRemainingCpuCapacity())
+      NES_INFO("NESEXECUTIONPLAN: Capacity before-" << v.ptr->getNESNode()->getId() << "->" << v.ptr->getNESNode()->getRemainingCpuCapacity())
       int usedCapacity = v.ptr->getNESNode()->getCpuCapacity() - v.ptr->getNESNode()->getRemainingCpuCapacity();
       v.ptr->getNESNode()->increaseCpuCapacity(usedCapacity);
-      IOTDB_INFO("NESEXECUTIONPLAN: Capacity after-" << v.ptr->getNESNode()->getId() << "->" << v.ptr->getNESNode()->getRemainingCpuCapacity())
+      NES_INFO("NESEXECUTIONPLAN: Capacity after-" << v.ptr->getNESNode()->getId() << "->" << v.ptr->getNESNode()->getRemainingCpuCapacity())
     }
   }
 }

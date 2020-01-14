@@ -23,7 +23,7 @@ DataSource::DataSource(const Schema &_schema)
       generatedTuples(0),
       generatedBuffers(0),
       num_buffers_to_process(UINT64_MAX) {
-  IOTDB_DEBUG("DataSource " << this << ": Init Data Source with schema")
+  NES_DEBUG("DataSource " << this << ": Init Data Source with schema")
 }
 
 DataSource::DataSource()
@@ -32,7 +32,7 @@ DataSource::DataSource()
       generatedTuples(0),
       generatedBuffers(0),
       num_buffers_to_process(UINT64_MAX) {
-  IOTDB_DEBUG("DataSource " << this << ": Init Data Source Default w/o schema")
+  NES_DEBUG("DataSource " << this << ": Init Data Source Default w/o schema")
 }
 
 const Schema &DataSource::getSchema() const {
@@ -41,7 +41,7 @@ const Schema &DataSource::getSchema() const {
 
 DataSource::~DataSource() {
   stop();
-  IOTDB_DEBUG("DataSource " << this << ": Destroy Data Source.")
+  NES_DEBUG("DataSource " << this << ": Destroy Data Source.")
 }
 
 bool DataSource::start() {
@@ -49,21 +49,21 @@ bool DataSource::start() {
     return false;
   running = true;
 
-  IOTDB_DEBUG("DataSource " << this << ": Spawn thread")
+  NES_DEBUG("DataSource " << this << ": Spawn thread")
   thread = std::thread(std::bind(&DataSource::running_routine, this));
   return true;
 }
 
 bool DataSource::stop() {
-  IOTDB_DEBUG("DataSource " << this << ": Stop called")
+  NES_DEBUG("DataSource " << this << ": Stop called")
   running = false;
 
   if (thread.joinable()) {
     thread.detach();
-    IOTDB_DEBUG("DataSource " << this << ": Thread joinded")
+    NES_DEBUG("DataSource " << this << ": Thread joinded")
     return true;
   } else {
-    IOTDB_DEBUG("DataSource " << this << ": Thread is not joinable")
+    NES_DEBUG("DataSource " << this << ": Thread is not joinable")
   }
   return false;
 }
@@ -73,34 +73,34 @@ bool DataSource::isRunning() {
 }
 
 void DataSource::running_routine() {
-  IOTDB_DEBUG("DataSource " << this << ": Running Data Source")
+  NES_DEBUG("DataSource " << this << ": Running Data Source")
   size_t cnt = 0;
 
   while (running) {
     if (cnt < num_buffers_to_process) {
       TupleBufferPtr buf = receiveData();
       if (buf) {
-        IOTDB_DEBUG(
+        NES_DEBUG(
             "DataSource " << this << ": Received Data: " << buf->getNumberOfTuples() << "tuples")
         if (buf->getBuffer()) {
           Dispatcher::instance().addWork(buf, this);
           cnt++;
         } else {
-          IOTDB_DEBUG("DataSource " << this << ": Received buffer is invalid")
+          NES_DEBUG("DataSource " << this << ": Received buffer is invalid")
           assert(0);
         }
       } else {
-        IOTDB_DEBUG("DataSource " << this << ": Receiving thread terminated ... stopping")
+        NES_DEBUG("DataSource " << this << ": Receiving thread terminated ... stopping")
         running = false;
         break;
       }
     } else {
-      IOTDB_DEBUG("DataSource " << this << ": All buffers processed ... stopping")
+      NES_DEBUG("DataSource " << this << ": All buffers processed ... stopping")
       running = false;
       break;
     }
   }
-  IOTDB_DEBUG("DataSource " << this << ": Data Source finished processing")
+  NES_DEBUG("DataSource " << this << ": Data Source finished processing")
 }
 
 // debugging

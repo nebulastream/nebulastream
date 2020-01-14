@@ -22,7 +22,7 @@ void* SharedLibrary::getSymbol(const std::string& mangeled_symbol_name) const {
   auto error = dlerror();
 
   if (error) {
-    IOTDB_ERROR(
+    NES_ERROR(
         "Could not load symbol: " << mangeled_symbol_name << " Error:" << error);
   }
 
@@ -34,10 +34,10 @@ SharedLibraryPtr SharedLibrary::load(const std::string& file_path) {
 
   auto error = dlerror();
   if (error) {
-    IOTDB_ERROR(
+    NES_ERROR(
         "Could not load shared library: " << file_path << " Error:" << error);
   } else if (!myso) {
-    IOTDB_ERROR(
+    NES_ERROR(
         "Could not load shared library: " << file_path << "Error unknown!");
   }
 

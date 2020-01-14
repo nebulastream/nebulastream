@@ -23,7 +23,7 @@ Field Stream::operator[](const std::string fieldName) {
 }
 
 Field Stream::getField(const std::string fieldName) {
-  IOTDB_DEBUG("getField() streamName=" << fieldName <<  " schema=" << schema.toString())
+  NES_DEBUG("getField() streamName=" << fieldName <<  " schema=" << schema.toString())
   return Field(schema.get(fieldName));
 }
 

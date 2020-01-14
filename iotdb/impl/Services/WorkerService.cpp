@@ -30,7 +30,7 @@ void WorkerService::addPhysicalStreamConfig(PhysicalStreamConfig conf)
 
 void WorkerService::execute_query(const string &queryId,
                                   string &executableTransferObject) {
-  IOTDB_DEBUG(
+  NES_DEBUG(
       "WORKERSERVICE (" << this->_ip << ": Executing " << queryId);
   ExecutableTransferObject eto = SerializationTools::parse_eto(
       executableTransferObject);
@@ -44,20 +44,20 @@ void WorkerService::execute_query(const string &queryId,
 void WorkerService::delete_query(const string &query) {
   try {
     if (this->_runningQueries.find(query) != this->_runningQueries.end()) {
-      IOTDB_DEBUG(
+      NES_DEBUG(
           "WORKERSERVICE (" << this->_ip << ": Attempting deletion of " << query);
       QueryExecutionPlanPtr qep = std::get<0>(this->_runningQueries.at(query));
       this->_runningQueries.erase(query);
       this->_enginePtr->undeployQuery(qep);
-      IOTDB_INFO(
+      NES_INFO(
           "WORKERSERVICE (" << this->_ip << ": Successfully deleted query " << query);
     } else {
-      IOTDB_INFO(
+      NES_INFO(
           "WORKERSERVICE (" << this->_ip << ": *** Not found for deletion -> " << query);
     }
   } catch (...) {
     // TODO: catch ZMQ termination errors properly
-    IOTDB_ERROR(
+    NES_ERROR(
         "WORKERSERVICE (" << this->_ip << "): Undefined error during deletion!")
   }
 }

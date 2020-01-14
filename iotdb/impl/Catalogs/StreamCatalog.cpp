@@ -13,51 +13,51 @@ StreamCatalog::StreamCatalog() {
   Schema schema = Schema::create().addField("id", BasicType::UINT32).addField(
       "value", BasicType::UINT64);
   addLogicalStream("default_logical", std::make_shared<Schema>(schema));
-  IOTDB_DEBUG("StreamCatalog: construct stream catalog")
+  NES_DEBUG("StreamCatalog: construct stream catalog")
 }
 
 StreamCatalog::~StreamCatalog() {
-  IOTDB_DEBUG("StreamCatalog: deconstruct stream catalog")
+  NES_DEBUG("StreamCatalog: deconstruct stream catalog")
 }
 
 bool StreamCatalog::addLogicalStream(std::string logicalStreamName,
                                      SchemaPtr schemaPtr) {
   //check if stream already exist
-  IOTDB_DEBUG(
+  NES_DEBUG(
       "StreamCatalog: search for logical stream in addLogicalStream() " << logicalStreamName)
-  IOTDB_DEBUG("stream before=" << getLogicalStreamAndSchemaAsString())
+  NES_DEBUG("stream before=" << getLogicalStreamAndSchemaAsString())
 
   if (!testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)) {
-    IOTDB_DEBUG("StreamCatalog: add logical stream " << logicalStreamName)
+    NES_DEBUG("StreamCatalog: add logical stream " << logicalStreamName)
     logicalStreamToSchemaMapping[logicalStreamName] = schemaPtr;
     return true;
   } else {
-    IOTDB_ERROR(
+    NES_ERROR(
         "StreamCatalog: logical stream " << logicalStreamName << " already exists")
-    IOTDB_DEBUG("stream=" << getLogicalStreamAndSchemaAsString())
+    NES_DEBUG("stream=" << getLogicalStreamAndSchemaAsString())
     return false;
   }
 }
 
 bool StreamCatalog::removeLogicalStream(std::string logicalStreamName) {
-  IOTDB_DEBUG(
+  NES_DEBUG(
       "StreamCatalog: search for logical stream in removeLogicalStream() " << logicalStreamName)
 
   if (logicalStreamToSchemaMapping.find(logicalStreamName)  //if log stream does not exists
   == logicalStreamToSchemaMapping.end()) {
-    IOTDB_ERROR(
+    NES_ERROR(
         "StreamCatalog: logical stream " << logicalStreamName << " does not exists")
     return false;
   } else {
-    IOTDB_DEBUG("StreamCatalog: remove logical stream " << logicalStreamName)
+    NES_DEBUG("StreamCatalog: remove logical stream " << logicalStreamName)
 
     if (logicalToPhysicalStreamMapping[logicalStreamName].size() != 0) {
-      IOTDB_DEBUG(
+      NES_DEBUG(
           "StreamCatalog: cannot remove " << logicalStreamName << " because there are physical entries for this stream")
       return false;
     }
     size_t cnt = logicalStreamToSchemaMapping.erase(logicalStreamName);
-    IOTDB_DEBUG("StreamCatalog: removed " << cnt << " copies of the stream")
+    NES_DEBUG("StreamCatalog: removed " << cnt << " copies of the stream")
     assert(!testIfLogicalStreamExistsInSchemaMapping(logicalStreamName));
     return true;
   }
@@ -65,16 +65,16 @@ bool StreamCatalog::removeLogicalStream(std::string logicalStreamName) {
 
 bool StreamCatalog::addPhysicalStream(std::string logicalStreamName,
                                       StreamCatalogEntryPtr newEntry) {
-  IOTDB_DEBUG(
+  NES_DEBUG(
       "StreamCatalog: search for logical stream in addPhysicalStream() " << logicalStreamName)
 
   // check if logical stream exists
   if (!testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)) {
-    IOTDB_ERROR(
+    NES_ERROR(
         "StreamCatalog: logical stream " << logicalStreamName << " does not exists when inserting physical stream " << newEntry->getPhysicalName())
     return false;
   } else {
-    IOTDB_DEBUG(
+    NES_DEBUG(
         "StreamCatalog: logical stream " << logicalStreamName << " exists try to add physical stream " << newEntry->getPhysicalName())
 
     //get current physical stream for this logical stream
@@ -83,54 +83,54 @@ bool StreamCatalog::addPhysicalStream(std::string logicalStreamName,
 
     //check if physical stream does not exist yet
     for (StreamCatalogEntryPtr &entry : physicalStreams) {
-      IOTDB_DEBUG(
+      NES_DEBUG(
           "test node id=" << entry->getNode()->getId() << " phyStr=" << entry->getPhysicalName())
-      IOTDB_DEBUG(
+      NES_DEBUG(
           "test to be inserted id=" << newEntry->getNode()->getId() << " phyStr=" << newEntry->getPhysicalName())
       if (entry->getPhysicalName() == newEntry->getPhysicalName()) {
         if (entry->getNode()->getId() == newEntry->getNode()->getId()) {
-          IOTDB_ERROR(
+          NES_ERROR(
               "StreamCatalog: node with id=" << newEntry->getNode()->getId() << " name=" << newEntry->getPhysicalName() << " already exists")
           return false;
         }
       }
     }
   }
-  IOTDB_DEBUG(
+  NES_DEBUG(
       "StreamCatalog: physical stream " << newEntry->getPhysicalName() << " does not exist, try to add")
 
   //if first one
   if (testIfLogicalStreamExistsInLogicalToPhysicalMapping(logicalStreamName)) {
-    IOTDB_DEBUG("stream already exist, just add new entry")
+    NES_DEBUG("stream already exist, just add new entry")
     logicalToPhysicalStreamMapping[logicalStreamName].push_back(newEntry);
   } else {
-    IOTDB_DEBUG("stream does not exist, create new item")
+    NES_DEBUG("stream does not exist, create new item")
     logicalToPhysicalStreamMapping.insert(
         pair<std::string, std::vector<StreamCatalogEntryPtr>>(
             logicalStreamName, std::vector<StreamCatalogEntryPtr>()));
     logicalToPhysicalStreamMapping[logicalStreamName].push_back(newEntry);
   }
 
-  IOTDB_DEBUG(
+  NES_DEBUG(
       "StreamCatalog: physical stream " << newEntry->getPhysicalName() << " id=" << newEntry->getNode()->getId() << " successful added")
   return true;
 }
 
 bool StreamCatalog::removePhysicalStreamsByIp(std::string ip) {
   for (auto logStream : logicalToPhysicalStreamMapping) {
-    IOTDB_DEBUG("StreamCatalog: check log stream " << logStream.first)
+    NES_DEBUG("StreamCatalog: check log stream " << logStream.first)
     for (vector<StreamCatalogEntryPtr>::const_iterator entry =
         logicalToPhysicalStreamMapping[logStream.first].cbegin();
         entry != logicalToPhysicalStreamMapping[logStream.first].cend(); entry++) {
         if(entry->get()->getNode()->getIp() == ip)
         {
-          IOTDB_DEBUG(
+          NES_DEBUG(
                      "StreamCatalog: found entry with ip " << ip << " nodeid="
                      << entry->get()->getNode()->getId()
                      << " physicalStream=" << entry->get()->getPhysicalName()
                      << " logicalStream=" << logStream.first)
               logicalToPhysicalStreamMapping[logStream.first].erase(entry);
-          IOTDB_DEBUG("StreamCatalog: deleted successfully")
+          NES_DEBUG("StreamCatalog: deleted successfully")
           return true;
         }
     }
@@ -139,45 +139,45 @@ bool StreamCatalog::removePhysicalStreamsByIp(std::string ip) {
 }
 
 bool StreamCatalog::removeAllPhysicalStreams(std::string physicalStreamName) {
-  IOTDB_NOT_IMPLEMENTED
+  NES_NOT_IMPLEMENTED
 }
 
 bool StreamCatalog::removePhysicalStream(std::string logicalStreamName,
                                          StreamCatalogEntryPtr newEntry) {
-  IOTDB_DEBUG(
+  NES_DEBUG(
       "StreamCatalog: search for logical stream in removePhysicalStream() " << logicalStreamName)
 
   // check if logical stream exists
   if (logicalStreamToSchemaMapping.find(logicalStreamName)  //log stream does not exists
   == logicalStreamToSchemaMapping.end()) {
-    IOTDB_ERROR(
+    NES_ERROR(
         "StreamCatalog: logical stream " << logicalStreamName << " does not exists when removing physical stream " << newEntry->getPhysicalName())
     return false;
   } else {
-    IOTDB_DEBUG(
+    NES_DEBUG(
         "StreamCatalog: logical stream " << logicalStreamName << " exists try to remove physical stream " << newEntry->getPhysicalName())
 
     for (vector<StreamCatalogEntryPtr>::const_iterator entry =
         logicalToPhysicalStreamMapping[logicalStreamName].cbegin();
         entry != logicalToPhysicalStreamMapping[logicalStreamName].cend();
         entry++) {
-      IOTDB_DEBUG(
+      NES_DEBUG(
           "test node id=" << entry->get()->getNode()->getId() << " phyStr=" << entry->get()->getPhysicalName())
-      IOTDB_DEBUG(
+      NES_DEBUG(
           "test to be deleted id=" << newEntry->getNode()->getId() << " phyStr=" << newEntry->getPhysicalName())
       if (entry->get()->getPhysicalName() == newEntry->getPhysicalName()) {
         if (entry->get()->getNode()->getId() == newEntry->getNode()->getId()) {
-          IOTDB_DEBUG(
+          NES_DEBUG(
               "StreamCatalog: node with id=" << newEntry->getNode()->getId() << " name=" << newEntry->getPhysicalName() << " exists try to erase")
           logicalToPhysicalStreamMapping[logicalStreamName].erase(entry);
-          IOTDB_DEBUG(
+          NES_DEBUG(
               "StreamCatalog: number of entries afterwards " << logicalToPhysicalStreamMapping[logicalStreamName].size())
           return true;
         }
       }
     }
   }
-  IOTDB_DEBUG(
+  NES_DEBUG(
       "StreamCatalog: physical stream " << newEntry->getPhysicalName() << " does not exist")
   return false;
 }

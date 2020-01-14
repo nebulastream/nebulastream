@@ -40,7 +40,7 @@ NESTopologyCoordinatorNodePtr NESTopologyManager::createNESCoordinatorNode(
   }
 
   void NESTopologyManager::printNESTopologyPlan() {
-    IOTDB_DEBUG(getNESTopologyPlanString())
+    NES_DEBUG(getNESTopologyPlanString())
   }
 
   std::string NESTopologyManager::getNESTopologyPlanString() {

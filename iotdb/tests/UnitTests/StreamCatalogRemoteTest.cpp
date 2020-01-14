@@ -20,7 +20,7 @@ class StreamCatalogRemoteTest : public testing::Test {
 
   static void SetUpTestCase() {
     setupLogging();
-    IOTDB_INFO("Setup StreamCatalogRemoteTest test class.");
+    NES_INFO("Setup StreamCatalogRemoteTest test class.");
   }
 
   static void TearDownTestCase() {
@@ -43,12 +43,11 @@ class StreamCatalogRemoteTest : public testing::Test {
         new log4cxx::ConsoleAppender(layoutPtr));
 
     // set log level
-    iotdbLogger->setLevel(log4cxx::Level::getDebug());
-//    iotdbLogger->setLevel(log4cxx::Level::getInfo());
+    NESLogger->setLevel(log4cxx::Level::getDebug());
 
 // add appenders and other will inherit the settings
-    iotdbLogger->addAppender(file);
-    iotdbLogger->addAppender(console);
+    NESLogger->addAppender(file);
+    NESLogger->addAppender(console);
   }
 };
 

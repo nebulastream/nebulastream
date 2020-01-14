@@ -1,5 +1,5 @@
-#ifndef IOTDB_STREAM_HPP
-#define IOTDB_STREAM_HPP
+#ifndef STREAM_HPP
+#define STREAM_HPP
 
 #include <iostream>
 #include <string>
@@ -29,4 +29,4 @@ class Stream {
 
 typedef std::shared_ptr<Stream> StreamPtr;
 }
-#endif //IOTDB_STREAM_HPP
+#endif //STREAM_HPP

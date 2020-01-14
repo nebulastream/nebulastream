@@ -1,6 +1,6 @@
 
-#ifndef IOTDB_STATEVARIABLE_HPP
-#define IOTDB_STATEVARIABLE_HPP
+#ifndef STATEVARIABLE_HPP
+#define STATEVARIABLE_HPP
 
 #include <unordered_map>
 #include <utility>
@@ -298,4 +298,4 @@ class StateVariable : public detail::Destroyable {
 
 };
 }
-#endif //IOTDB_STATEVARIABLE_HPP
+#endif //STATEVARIABLE_HPP

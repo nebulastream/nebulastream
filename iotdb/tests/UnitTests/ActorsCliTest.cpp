@@ -20,7 +20,7 @@ class ActorsCliTest : public testing::Test {
 
   static void SetUpTestCase() {
     setupLogging();
-    IOTDB_INFO("Setup ActorCoordinatorWorkerTest test class.");
+    NES_INFO("Setup ActorCoordinatorWorkerTest test class.");
   }
 
   static void TearDownTestCase() {
@@ -43,12 +43,11 @@ class ActorsCliTest : public testing::Test {
         new log4cxx::ConsoleAppender(layoutPtr));
 
     // set log level
-    iotdbLogger->setLevel(log4cxx::Level::getDebug());
-//    iotdbLogger->setLevel(log4cxx::Level::getInfo());
+    NESLogger->setLevel(log4cxx::Level::getDebug());
 
     // add appenders and other will inherit the settings
-    iotdbLogger->addAppender(file);
-    iotdbLogger->addAppender(console);
+    NESLogger->addAppender(file);
+    NESLogger->addAppender(console);
   }
 };
 
@@ -197,7 +196,7 @@ TEST_F(ActorsCliTest, testShowRegistered) {
       ,
       [=](const error &er) {
         string error_msg = to_string(er);
-        IOTDB_ERROR(
+        NES_ERROR(
             "ACTORSCLITEST: Error during testShowRegistered " << "\n" << error_msg);
       });
   EXPECT_TRUE(connected);
@@ -212,10 +211,10 @@ TEST_F(ActorsCliTest, testShowRegistered) {
       ,
       [=](const error &er) {
         string error_msg = to_string(er);
-        IOTDB_ERROR(
+        NES_ERROR(
             "ACTORSCLITEST: Error during testShowRegistered " << "\n" << error_msg);
       });
-  IOTDB_INFO("ACTORSCLITEST: Registration completed with query ID " << uuid);
+  NES_INFO("ACTORSCLITEST: Registration completed with query ID " << uuid);
   EXPECT_TRUE(!uuid.empty());
 
   // check length of registered queries
@@ -224,12 +223,12 @@ TEST_F(ActorsCliTest, testShowRegistered) {
       .receive(
       [&query_size](const size_t length) mutable {
         query_size = length;
-        IOTDB_INFO("ACTORSCLITEST: Query length " << length);
+        NES_INFO("ACTORSCLITEST: Query length " << length);
       }
       ,
       [=](const error &er) {
         string error_msg = to_string(er);
-        IOTDB_ERROR(
+        NES_ERROR(
             "ACTORSCLITEST: Error during testShowRegistered " << "\n" << error_msg);
       });
   EXPECT_EQ(query_size, 1);
@@ -277,7 +276,7 @@ TEST_F(ActorsCliTest, DISABLED_testDeleteQuery) {
       ,
       [=](const error &er) {
         string error_msg = to_string(er);
-        IOTDB_ERROR(
+        NES_ERROR(
             "ACTORSCLITEST: Error during testShowRegistered " << "\n" << error_msg);
       });
   EXPECT_TRUE(connected);
@@ -292,10 +291,10 @@ TEST_F(ActorsCliTest, DISABLED_testDeleteQuery) {
       ,
       [=](const error &er) {
         string error_msg = to_string(er);
-        IOTDB_ERROR(
+        NES_ERROR(
             "ACTORSCLITEST: Error during testShowRegistered " << "\n" << error_msg);
       });
-  IOTDB_INFO("ACTORSCLITEST: Registration completed with query ID " << uuid);
+  NES_INFO("ACTORSCLITEST: Registration completed with query ID " << uuid);
   EXPECT_TRUE(!uuid.empty());
 
   // check length of registered queries
@@ -304,12 +303,12 @@ TEST_F(ActorsCliTest, DISABLED_testDeleteQuery) {
       .receive(
       [&query_size](const size_t length) mutable {
         query_size = length;
-        IOTDB_INFO("ACTORSCLITEST: Query length " << length);
+        NES_INFO("ACTORSCLITEST: Query length " << length);
       }
       ,
       [=](const error &er) {
         string error_msg = to_string(er);
-        IOTDB_ERROR(
+        NES_ERROR(
             "ACTORSCLITEST: Error during testShowRegistered " << "\n" << error_msg);
       });
   EXPECT_EQ(query_size, 1);

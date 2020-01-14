@@ -50,7 +50,7 @@ PhysicalFieldPtr PhysicalSchema::createPhysicalField(const NES::DataTypePtr data
     auto field = new BasicPhysicalField<char>();
     return field->copy();
   }
-  IOTDB_NOT_IMPLEMENTED;
+  NES_NOT_IMPLEMENTED;
 }
 
 PhysicalSchemaPtr PhysicalSchema::createPhysicalSchema(SchemaPtr schema) {

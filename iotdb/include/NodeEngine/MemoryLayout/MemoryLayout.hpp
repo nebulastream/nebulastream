@@ -1,5 +1,5 @@
-#ifndef IOTDB_INCLUDE_NODEENGINE_PHYSICALLAYOUT_HPP_
-#define IOTDB_INCLUDE_NODEENGINE_PHYSICALLAYOUT_HPP_
+#ifndef INCLUDE_NODEENGINE_PHYSICALLAYOUT_HPP_
+#define INCLUDE_NODEENGINE_PHYSICALLAYOUT_HPP_
 #include <memory>
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalSchema.hpp>
@@ -76,4 +76,4 @@ MemoryLayoutPtr createRowLayout(const SchemaPtr &schema);
 
 }
 
-#endif //IOTDB_INCLUDE_NODEENGINE_PHYSICALLAYOUT_HPP_
+#endif //INCLUDE_NODEENGINE_PHYSICALLAYOUT_HPP_

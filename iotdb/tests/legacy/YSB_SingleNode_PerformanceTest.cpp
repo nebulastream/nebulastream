@@ -103,7 +103,7 @@ class YSB_SingleNode_PerformanceTest : public HandCodedQueryExecutionPlan {
             uint64_t bucketPos = (hashValue.value * 789 + 321) % campaingCnt;
             atomic_fetch_add(&hashTable[current_window][bucketPos], size_t(1));
         }
-        IOTDB_DEBUG("task " << this << " finished processing")
+        NES_DEBUG("task " << this << " finished processing")
         return true;
     }
 };
@@ -185,14 +185,14 @@ void setupLogging()
     // set log level
     // logger->setLevel(log4cxx::Level::getTrace());
     //	logger->setLevel(log4cxx::Level::getDebug());
-    NES::iotdbLogger->setLevel(log4cxx::Level::getInfo());
+    NES::NESLogger->setLevel(log4cxx::Level::getInfo());
     //	logger->setLevel(log4cxx::Level::getWarn());
     // logger->setLevel(log4cxx::Level::getError());
     //	logger->setLevel(log4cxx::Level::getFatal());
 
     // add appenders and other will inherit the settings
-    NES::iotdbLogger->addAppender(file);
-    NES::iotdbLogger->addAppender(console);
+    NES::NESLogger->addAppender(file);
+    NES::NESLogger->addAppender(console);
 }
 
 int main(int argc, const char* argv[])

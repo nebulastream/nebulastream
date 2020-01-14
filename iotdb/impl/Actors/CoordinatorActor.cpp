@@ -51,7 +51,7 @@ behavior CoordinatorActor::running() {
       this->registerSensor(ip, publish_port, receive_port, cpu, nodeProperties, streamConf);
     },
     [=](deregister_sensor_atom, string& ip) {
-      IOTDB_DEBUG("CoordinatorActor: got request to remove node with ip " << ip)
+      NES_DEBUG("CoordinatorActor: got request to remove node with ip " << ip)
       return this->deregisterSensor(ip);
     },
     [=](register_phy_stream_atom, std::string ip, std::string sourceType, std::string sourceConf,std::string physicalStreamName,std::string logicalStreamName) {
@@ -59,17 +59,17 @@ behavior CoordinatorActor::running() {
       return registerPhysicalStream(ip, conf);
     },
     [=](register_log_stream_atom, const string& streamName, const string& streamSchema) {
-      IOTDB_DEBUG("CoordinatorActor: got request for register logical stream " << streamName << " and schema " << streamSchema)
+      NES_DEBUG("CoordinatorActor: got request for register logical stream " << streamName << " and schema " << streamSchema)
       SchemaPtr sch = UtilityFunctions::createSchemaFromCode(streamSchema);
-      IOTDB_DEBUG("CoordinatorActor: schema successfully created")
+      NES_DEBUG("CoordinatorActor: schema successfully created")
       return registerLogicalStream(streamName, sch);
     },
     [=](remove_log_stream_atom, const string& streamName) {
-      IOTDB_DEBUG("CoordinatorActor: got request for removel of logical stream " << streamName)
+      NES_DEBUG("CoordinatorActor: got request for removel of logical stream " << streamName)
       return removeLogicalStream(streamName);
     },
     [=](remove_phy_stream_atom, std::string ip, const string& logicalStreamName, const string& physicalStreamName) {
-      IOTDB_DEBUG("CoordinatorActor: got request for removel of physical stream " << physicalStreamName << " from logical stream " << logicalStreamName)
+      NES_DEBUG("CoordinatorActor: got request for removel of physical stream " << physicalStreamName << " from logical stream " << logicalStreamName)
       PhysicalStreamConfig conf("", "", physicalStreamName, logicalStreamName);
       return removePhysicalStream(ip, conf);
     },
@@ -143,7 +143,7 @@ bool CoordinatorActor::registerLogicalStream(std::string logicalStreamName,
 
 bool CoordinatorActor::removePhysicalStream(std::string ip,
                                             PhysicalStreamConfig streamConf) {
-  IOTDB_DEBUG(
+  NES_DEBUG(
       "CoordinatorActor: try to remove physical stream with ip " << ip << " physical name " << streamConf.physicalStreamName << " logical name " << streamConf.logicalStreamName)
   std::vector<NESTopologyEntryPtr> sensorNodes =
       NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeByIp(ip);
@@ -158,11 +158,11 @@ bool CoordinatorActor::removePhysicalStream(std::string ip,
   }
 
   if (sensorNode == nullptr) {
-    IOTDB_DEBUG("CoordinatorActor: sensor not found with ip " << ip)
+    NES_DEBUG("CoordinatorActor: sensor not found with ip " << ip)
     return false;
   }
 
-  IOTDB_DEBUG("node type=" << sensorNode->getEntryTypeString())
+  NES_DEBUG("node type=" << sensorNode->getEntryTypeString())
   StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
       streamConf.sourceType, streamConf.sourceConfig, sensorNode,
       streamConf.physicalStreamName);
@@ -195,7 +195,7 @@ bool CoordinatorActor::registerPhysicalStream(std::string ip,
 }
 
 bool CoordinatorActor::deregisterSensor(const string &ip) {
-  IOTDB_DEBUG("CoordinatorActor: try to disconnect sensor with ip " << ip)
+  NES_DEBUG("CoordinatorActor: try to disconnect sensor with ip " << ip)
   auto sap = current_sender();
   auto hdl = actor_cast<actor>(sap);
 
@@ -210,24 +210,24 @@ bool CoordinatorActor::deregisterSensor(const string &ip) {
     }
   }
   if (cnt != 1) {
-    IOTDB_ERROR(
+    NES_ERROR(
         "CoordinatorActor: more than one worker node found with ip " << ip)
     throw Exception("node is ambitious");
   }
-  IOTDB_DEBUG("CoordinatorActor: found sensor, try to delete it in catalog")
+  NES_DEBUG("CoordinatorActor: found sensor, try to delete it in catalog")
   //remove from catalog
   bool successCatalog = StreamCatalog::instance().removePhysicalStreamsByIp(ip);
-  IOTDB_DEBUG("CoordinatorActor: success in catalog is " << successCatalog)
+  NES_DEBUG("CoordinatorActor: success in catalog is " << successCatalog)
 
-  IOTDB_DEBUG("CoordinatorActor: found sensor, try to delete it in toplogy")
+  NES_DEBUG("CoordinatorActor: found sensor, try to delete it in toplogy")
   //remove from topology
   bool successTopology = coordinatorServicePtr->deregister_sensor(sensorNode);
-  IOTDB_DEBUG("CoordinatorActor: success in topologyy is " << successTopology)
+  NES_DEBUG("CoordinatorActor: success in topologyy is " << successTopology)
 
   if (successCatalog && successTopology)
-    IOTDB_DEBUG("CoordinatorActor: sensor successfully removed")
+    NES_DEBUG("CoordinatorActor: sensor successfully removed")
   else
-    IOTDB_ERROR("CoordinatorActor: sensor was not removed")
+    NES_ERROR("CoordinatorActor: sensor was not removed")
 
 }
 
@@ -243,7 +243,7 @@ void CoordinatorActor::registerSensor(const string &ip, uint16_t publish_port,
   this->state.actorTopologyMap.insert( { sap, sensorNode });
   this->state.topologyActorMap.insert( { sensorNode, sap });
   this->monitor(hdl);
-  IOTDB_INFO(
+  NES_INFO(
       "ACTORCOORDINATOR: Successfully registered sensor (CPU=" << cpu << ", PhysicalStream: " << streamConf.physicalStreamName << ") " << to_string(hdl));
 }
 
@@ -255,7 +255,7 @@ void CoordinatorActor::deployQuery(const string &queryId) {
     strong_actor_ptr sap = this->state.topologyActorMap.at(x.first);
     auto hdl = actor_cast<actor>(sap);
     string s_eto = SerializationTools::ser_eto(x.second);
-    IOTDB_INFO("Sending query " << queryId << " to " << to_string(hdl));
+    NES_INFO("Sending query " << queryId << " to " << to_string(hdl));
     this->request(hdl, task_timeout, execute_operators_atom::value, queryId,
                   s_eto);
   }
@@ -265,7 +265,7 @@ void CoordinatorActor::deregisterQuery(const string &queryId) {
   // send command to all corresponding nodes to stop the running query as well
   for (auto const &x : this->state.actorTopologyMap) {
     auto hdl = actor_cast<actor>(x.first);
-    IOTDB_INFO(
+    NES_INFO(
         "ACTORCOORDINATOR: Sending deletion request " << queryId << " to " << to_string(hdl));
     this->request(hdl, task_timeout, delete_query_atom::value, queryId);
   }
@@ -288,7 +288,7 @@ void CoordinatorActor::showOperators() {
         ,
         [=](const error &er) {
           string error_msg = to_string(er);
-          IOTDB_ERROR(
+          NES_ERROR(
               "ACTORCOORDINATOR: Error during showOperators for " << to_string(hdl) << "\n" << error_msg);
         });
   }

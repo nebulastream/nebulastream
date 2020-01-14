@@ -163,14 +163,14 @@ void setupLogging()
     // set log level
     // logger->setLevel(log4cxx::Level::getTrace());
     //	logger->setLevel(log4cxx::Level::getDebug());
-    iotdbLogger->setLevel(log4cxx::Level::getInfo());
+    NESLogger->setLevel(log4cxx::Level::getInfo());
     //	logger->setLevel(log4cxx::Level::getWarn());
     // logger->setLevel(log4cxx::Level::getError());
     //	logger->setLevel(log4cxx::Level::getFatal());
 
     // add appenders and other will inherit the settings
-    iotdbLogger->addAppender(file);
-    iotdbLogger->addAppender(console);
+    NESLogger->addAppender(file);
+    NESLogger->addAppender(console);
 }
 void save_qep(const QueryExecutionPlan* s, const char* filename)
 {
@@ -218,7 +218,7 @@ static QueryExecutionPlan load(std::string const& s)
 }
 
 int main(int argc, const char *argv[]) {
-	log4cxx::Logger::getLogger("IOTDB")->setLevel(log4cxx::Level::getInfo());
+	log4cxx::Logger::getLogger("NES")->setLevel(log4cxx::Level::getInfo());
 	Schema schema = Schema::create()
 		.addField("campaign_id", 16)
 		.addField("event_type", 9)

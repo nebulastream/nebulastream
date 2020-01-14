@@ -2,8 +2,8 @@
 // Created by pgrulich on 17.07.19.
 //
 
-#ifndef IOTDB_OPERATORTYPES_HPP
-#define IOTDB_OPERATORTYPES_HPP
+#ifndef OPERATORTYPES_HPP
+#define OPERATORTYPES_HPP
 
 namespace NES {
 
@@ -49,4 +49,4 @@ namespace NES {
     const std::string toString(const BinaryOperatorType& type);
 }
 
-#endif //IOTDB_OPERATORTYPES_HPP
+#endif //OPERATORTYPES_HPP

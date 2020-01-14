@@ -4,8 +4,8 @@
 #include <API/AbstractWindowDefinition.hpp>
 #include <State/StateVariable.hpp>
 
-#ifndef IOTDB_WINDOWMANAGERLIB_HPP
-#define IOTDB_WINDOWMANAGERLIB_HPP
+#ifndef WINDOWMANAGERLIB_HPP
+#define WINDOWMANAGERLIB_HPP
 
 namespace NES {
 
@@ -173,4 +173,4 @@ class WindowManager {
 
 typedef std::shared_ptr<WindowManager> WindowManagerPtr;
 }
-#endif //IOTDB_WINDOWMANAGERLIB_HPP
+#endif //WINDOWMANAGERLIB_HPP

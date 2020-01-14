@@ -20,7 +20,7 @@ class BufferManagerTest : public testing::Test {
 #ifdef DEBUG_OUTPUT
     setupLogging();
 #endif
-    IOTDB_INFO("Setup BufferMangerTest test class.");
+    NES_INFO("Setup BufferMangerTest test class.");
     BufferManager::instance().setNumberOfBuffers(10);
   }
   static void TearDownTestCase() {
@@ -46,12 +46,12 @@ class BufferManagerTest : public testing::Test {
         new log4cxx::ConsoleAppender(layoutPtr));
 
     // set log level
-    iotdbLogger->setLevel(log4cxx::Level::getDebug());
+    NESLogger->setLevel(log4cxx::Level::getDebug());
 //            logger->setLevel(log4cxx::Level::getInfo());
 
 // add appenders and other will inherit the settings
-    iotdbLogger->addAppender(file);
-    iotdbLogger->addAppender(console);
+    NESLogger->addAppender(file);
+    NESLogger->addAppender(console);
   }
 
 };

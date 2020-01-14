@@ -95,13 +95,13 @@ bool WindowHandler::start() {
     return false;
   running = true;
 
-  IOTDB_DEBUG("WindowHandler " << this << ": Spawn thread")
+  NES_DEBUG("WindowHandler " << this << ": Spawn thread")
   thread = std::thread(std::bind(&WindowHandler::trigger, this));
   return true;
 }
 
 bool WindowHandler::stop() {
-  IOTDB_DEBUG("WindowHandler " << this << ": Stop called")
+  NES_DEBUG("WindowHandler " << this << ": Stop called")
 
   if (!running)
     return false;
@@ -109,11 +109,11 @@ bool WindowHandler::stop() {
 
   if (thread.joinable())
     thread.join();
-  IOTDB_DEBUG("WindowHandler " << this << ": Thread joinded")
+  NES_DEBUG("WindowHandler " << this << ": Thread joinded")
   return true;
 }
 
 
-WindowHandler::~WindowHandler() {IOTDB_DEBUG("WINDOW: calling destructor")};
+WindowHandler::~WindowHandler() {NES_DEBUG("WINDOW: calling destructor")};
 
 } // namespace NES

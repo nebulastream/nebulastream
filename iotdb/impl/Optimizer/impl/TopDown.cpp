@@ -51,7 +51,7 @@ void TopDown::placeOperators(NESExecutionPlan executionGraph,
   //  as the source. Refer issue 122.
 
   if (sourceNodes.empty()) {
-    IOTDB_ERROR("Unable to find the source node to place the operator");
+    NES_ERROR("Unable to find the source node to place the operator");
     throw "No available source node found in the network to place the operator";
   }
 

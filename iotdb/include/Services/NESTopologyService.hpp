@@ -1,5 +1,5 @@
-#ifndef IOTDB_NESTOPOLOGYSERVICE_HPP
-#define IOTDB_NESTOPOLOGYSERVICE_HPP
+#ifndef NESTOPOLOGYSERVICE_HPP
+#define NESTOPOLOGYSERVICE_HPP
 
 #include <cpprest/json.h>
 //#include <Topology/TestTopology.hpp>
@@ -28,4 +28,4 @@ namespace NES {
 }
 
 
-#endif //IOTDB_NESTOPOLOGYSERVICE_HPP
+#endif //NESTOPOLOGYSERVICE_HPP

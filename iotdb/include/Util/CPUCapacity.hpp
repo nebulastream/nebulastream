@@ -1,5 +1,5 @@
-#ifndef IOTDB_CPUCAPACITY_H
-#define IOTDB_CPUCAPACITY_H
+#ifndef CPUCAPACITY_H
+#define CPUCAPACITY_H
 
 namespace NES {
     class CPUCapacity {
@@ -18,4 +18,4 @@ namespace NES {
         Value value;
     };
 }
-#endif //IOTDB_CPUCAPACITY_H
+#endif //CPUCAPACITY_H

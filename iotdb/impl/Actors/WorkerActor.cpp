@@ -70,13 +70,13 @@ void WorkerActor::registerLogicalStream(std::string streamName,
   //send request to coordinator
   auto coordinator = actor_cast<actor>(this->state.current_server);
 
-  IOTDB_DEBUG(
+  NES_DEBUG(
       "WorkerActor: registerLog stream" << streamName << " with path" << filePath)
   /* Check if file can be found on system and read. */
   boost::filesystem::path path { filePath.c_str() };
   if (!boost::filesystem::exists(path)
       || !boost::filesystem::is_regular_file(path)) {
-    IOTDB_ERROR("WorkerActor: file does not exits")
+    NES_ERROR("WorkerActor: file does not exits")
     throw Exception("files does not exist");
   }
 
@@ -85,22 +85,22 @@ void WorkerActor::registerLogicalStream(std::string streamName,
   std::string fileContent((std::istreambuf_iterator<char>(ifs)),
                           (std::istreambuf_iterator<char>()));
 
-  IOTDB_DEBUG("WorkerActor: file content:" << fileContent)
+  NES_DEBUG("WorkerActor: file content:" << fileContent)
   this->request(coordinator, task_timeout, register_log_stream_atom::value,
                 streamName, fileContent).await(
       [&](bool ret) {
         if (ret == true) {
-          IOTDB_DEBUG(
+          NES_DEBUG(
               "WorkerActor: logical stream " << streamName << " successfully added")
         } else {
-          IOTDB_DEBUG(
+          NES_DEBUG(
               "WorkerActor: logical stream " << streamName << " could not be added")
         }
       }
       ,
       [=](const error &er) {
         string error_msg = to_string(er);
-        IOTDB_ERROR(
+        NES_ERROR(
             "WorkerActor: Error during registerLogicalStream for " << to_string(coordinator) << "\n" << error_msg);
         throw Exception("error while register stream");
       });
@@ -111,7 +111,7 @@ void WorkerActor::removePhysicalStream(std::string logicalStreamName,
   //send request to coordinator
   auto coordinator = actor_cast<actor>(this->state.current_server);
 
-  IOTDB_DEBUG(
+  NES_DEBUG(
       "WorkerActor: removePhysicalStream physical stream" << physicalStreamName << " from logical stream " << logicalStreamName)
 
   this->request(coordinator, task_timeout, remove_phy_stream_atom::value,
@@ -119,17 +119,17 @@ void WorkerActor::removePhysicalStream(std::string logicalStreamName,
       .await(
       [&](bool ret) {
         if (ret == true) {
-          IOTDB_DEBUG(
+          NES_DEBUG(
               "WorkerActor: physical stream " << physicalStreamName << " successfully removed from " << logicalStreamName)
         } else {
-          IOTDB_DEBUG(
+          NES_DEBUG(
               "WorkerActor: physical stream " << physicalStreamName << " could not be removed from " << logicalStreamName)
         }
       }
       ,
       [=](const error &er) {
         string error_msg = to_string(er);
-        IOTDB_ERROR(
+        NES_ERROR(
             "WorkerActor: Error during removeLogicalStream for " << to_string(coordinator) << "\n" << error_msg);
       });
 }
@@ -138,21 +138,21 @@ void WorkerActor::removeLogicalStream(std::string streamName) {
   //send request to coordinator
   auto coordinator = actor_cast<actor>(this->state.current_server);
 
-  IOTDB_DEBUG("WorkerActor: removeLogicalStream stream" << streamName)
+  NES_DEBUG("WorkerActor: removeLogicalStream stream" << streamName)
 
   this->request(coordinator, task_timeout, remove_log_stream_atom::value,
                 streamName).await(
       [&](bool ret) {
         if (ret == true) {
-          IOTDB_DEBUG("WorkerActor: stream successfully removed")
+          NES_DEBUG("WorkerActor: stream successfully removed")
         } else {
-          IOTDB_DEBUG("WorkerActor: stream not removed")
+          NES_DEBUG("WorkerActor: stream not removed")
         }
       }
       ,
       [=](const error &er) {
         string error_msg = to_string(er);
-        IOTDB_ERROR(
+        NES_ERROR(
             "WorkerActor: Error during removeLogicalStream for " << to_string(coordinator) << "\n" << error_msg);
       });
 }
@@ -160,7 +160,7 @@ void WorkerActor::removeLogicalStream(std::string streamName) {
 void WorkerActor::disconnecting() {
   //TODO: add coorect behaviour if disconnect fails
   auto coordinator = actor_cast<actor>(this->state.current_server);
-  IOTDB_DEBUG("WorkerActor: try to disconnect with ip " << this->state.workerPtr->getIp())
+  NES_DEBUG("WorkerActor: try to disconnect with ip " << this->state.workerPtr->getIp())
   bool disconnected = false;
   this->request(coordinator, task_timeout, deregister_sensor_atom::value,
                 this->state.workerPtr->getIp()).await(
@@ -171,7 +171,7 @@ void WorkerActor::disconnecting() {
       ,
       [=](const error &er) {
         string error_msg = to_string(er);
-        IOTDB_ERROR(
+        NES_ERROR(
             "WorkerActor: Error during disconnecting " << "\n" << error_msg);
       });
   this->monitor(coordinator);

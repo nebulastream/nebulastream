@@ -31,7 +31,7 @@ WindowTypePtr SlidingWindow::of(NES::TimeMeasure size, TimeMeasure slide) {
 void SlidingWindow::triggerWindows(NES::WindowListPtr windows,
                                     uint64_t lastWatermark,
                                     uint64_t currentWatermark) const {
-  IOTDB_NOT_IMPLEMENTED
+  NES_NOT_IMPLEMENTED
 }
 
 
@@ -44,7 +44,7 @@ WindowTypePtr SessionWindow::withGap(NES::TimeMeasure gap) {
 void SessionWindow::triggerWindows(NES::WindowListPtr windows,
                                    uint64_t lastWatermark,
                                    uint64_t currentWatermark) const {
-  IOTDB_NOT_IMPLEMENTED
+  NES_NOT_IMPLEMENTED
 }
 
 WindowState::WindowState(uint64_t start, uint64_t an_end) : start(start), end(an_end) {}

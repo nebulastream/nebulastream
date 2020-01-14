@@ -15,10 +15,10 @@ Config::Config()
 
 void Config::print()
 {
-    IOTDB_DEBUG("Config:")
-    IOTDB_DEBUG("numberOfWorker=" << numberOfWorker)
-    IOTDB_DEBUG("bufferCount=" << bufferCount)
-    IOTDB_DEBUG("bufferSizeInByte=" << bufferSizeInByte)
+    NES_DEBUG("Config:")
+    NES_DEBUG("numberOfWorker=" << numberOfWorker)
+    NES_DEBUG("bufferCount=" << bufferCount)
+    NES_DEBUG("bufferSizeInByte=" << bufferSizeInByte)
 }
 
 Config Config::create() { return Config(); }

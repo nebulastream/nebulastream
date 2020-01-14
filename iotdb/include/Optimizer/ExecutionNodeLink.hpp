@@ -6,8 +6,8 @@
  *
  */
 
-#ifndef IOTDB_EXECUTIONNODELINK_HPP
-#define IOTDB_EXECUTIONNODELINK_HPP
+#ifndef EXECUTIONNODELINK_HPP
+#define EXECUTIONNODELINK_HPP
 
 #include "ExecutionNode.hpp"
 
@@ -39,4 +39,4 @@ namespace NES {
     typedef std::shared_ptr <ExecutionNodeLink> ExecutionNodeLinkPtr;
 }
 
-#endif //IOTDB_EXECUTIONNODELINK_HPP
+#endif //EXECUTIONNODELINK_HPP

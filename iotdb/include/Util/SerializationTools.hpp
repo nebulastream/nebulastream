@@ -1,5 +1,5 @@
-#ifndef IOTDB_SERIALIZATIONTOOLS_HPP
-#define IOTDB_SERIALIZATIONTOOLS_HPP
+#ifndef SERIALIZATIONTOOLS_HPP
+#define SERIALIZATIONTOOLS_HPP
 
 #include <string>
 #include <Actors/ExecutableTransferObject.hpp>
@@ -224,4 +224,4 @@ class SerializationTools {
 
 } // namespace NES
 
-#endif //IOTDB_SERIALIZATIONTOOLS_HPP
+#endif //SERIALIZATIONTOOLS_HPP

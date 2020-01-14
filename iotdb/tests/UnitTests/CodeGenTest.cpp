@@ -1111,5 +1111,6 @@ int main() {
     return -1;
   }
 
+  std::cout << " all tests are passed" << std::endl;
   return 0;
 }

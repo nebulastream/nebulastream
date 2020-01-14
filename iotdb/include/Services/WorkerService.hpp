@@ -1,5 +1,5 @@
-#ifndef IOTDB_INCLUDE_ACTORS_WORKERSERVICE_HPP_
-#define IOTDB_INCLUDE_ACTORS_WORKERSERVICE_HPP_
+#ifndef INCLUDE_ACTORS_WORKERSERVICE_HPP_
+#define INCLUDE_ACTORS_WORKERSERVICE_HPP_
 
 #include <NodeEngine/NodeEngine.hpp>
 #include <Operators/Operator.hpp>
@@ -68,4 +68,4 @@ class WorkerService {
 
 }
 
-#endif //IOTDB_INCLUDE_ACTORS_WORKERSERVICE_HPP_
+#endif //INCLUDE_ACTORS_WORKERSERVICE_HPP_

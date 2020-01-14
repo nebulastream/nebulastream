@@ -1,6 +1,5 @@
 #include <QueryCompiler/CCodeGenerator/CodeCompiler.hpp>
 
-
 #include <Util/SharedLibrary.hpp>
 
 #include <boost/filesystem/operations.hpp>
@@ -19,10 +18,10 @@
 
 namespace NES {
 
-const std::string CCodeCompiler::IncludePath = PATH_TO_IOTDB_SOURCE_CODE "/include/";
+const std::string CCodeCompiler::IncludePath = PATH_TO_NES_SOURCE_CODE "/include/";
 
-const std::string CCodeCompiler::MinimalApiHeaderPath = PATH_TO_IOTDB_SOURCE_CODE "/include/QueryCompiler/"
-                                                        "MinimalApi.hpp";
+const std::string CCodeCompiler::MinimalApiHeaderPath = PATH_TO_NES_SOURCE_CODE "/include/QueryCompiler/"
+"MinimalApi.hpp";
 
 class CompilerFlags {
  public:
@@ -32,7 +31,8 @@ class CompilerFlags {
   //Position Independent Code means that the generated machine code is not dependent on being located at a specific address in order to work.
   inline static const std::string FPIC = "-fpic";
   inline static const std::string WERROR = "-Werror";
-  inline static const std::string WPARENTHESES_EQUALITY = "-Wparentheses-equality";
+  inline static const std::string WPARENTHESES_EQUALITY =
+      "-Wparentheses-equality";
   // Vector extensions
   inline static const std::string SSE_4_1 = "-msse4.1";
   inline static const std::string SSE_4_2 = "-msse4.2";
@@ -40,7 +40,9 @@ class CompilerFlags {
   inline static const std::string AVX2 = "-mavx2";
 };
 
-CCodeCompiler::CCodeCompiler() { init(); }
+CCodeCompiler::CCodeCompiler() {
+  init();
+}
 
 CompiledCCodePtr CCodeCompiler::compile(const std::string &source) {
   handleDebugging(source);
@@ -55,11 +57,10 @@ void CCodeCompiler::init() {
   initCompilerArgs();
 }
 
-void
-CCodeCompiler::
-initCompilerArgs() {
-  compiler_args_ = {CompilerFlags::CXX_VERSION, CompilerFlags::NO_TRIGRAPHS, CompilerFlags::FPIC, CompilerFlags::WERROR,
-                    CompilerFlags::WPARENTHESES_EQUALITY,
+void CCodeCompiler::initCompilerArgs() {
+  compiler_args_ = { CompilerFlags::CXX_VERSION, CompilerFlags::NO_TRIGRAPHS,
+      CompilerFlags::FPIC, CompilerFlags::WERROR,
+      CompilerFlags::WPARENTHESES_EQUALITY,
 #ifdef SSE41_FOUND
       CompilerFlags::SSE_4_1,
 #endif
@@ -72,7 +73,7 @@ initCompilerArgs() {
 #ifdef AVX2_FOUND
       CompilerFlags::AVX2,
 #endif
-                    "-I" + IncludePath};
+      "-I" + IncludePath };
 
 #ifndef NDEBUG
   compiler_args_.push_back("-g");
@@ -96,8 +97,10 @@ bool CCodeCompiler::rebuildPrecompiledHeader() {
   if (!boost::filesystem::exists(PrecompiledHeaderName)) {
     return true;
   } else {
-    auto last_access_pch = boost::filesystem::last_write_time(PrecompiledHeaderName);
-    auto last_access_header = boost::filesystem::last_write_time(MinimalApiHeaderPath);
+    auto last_access_pch = boost::filesystem::last_write_time(
+        PrecompiledHeaderName);
+    auto last_access_header = boost::filesystem::last_write_time(
+        MinimalApiHeaderPath);
 
     /* pre-compiled header outdated? */
     return last_access_header > last_access_pch;
@@ -153,10 +156,10 @@ void CCodeCompiler::callSystemCompiler(const std::vector<std::string> &args) {
 void pretty_print_code(const std::string &source) {
   int ret = system("which clang-format > /dev/null");
   if (ret != 0) {
-    IOTDB_ERROR("Did not find external tool 'clang-format'. "
-                "Please install 'clang-format' and try again."
-                "If 'clang-format-X' is installed, try to create a "
-                "symbolic link.");
+    NES_ERROR("Did not find external tool 'clang-format'. "
+              "Please install 'clang-format' and try again."
+              "If 'clang-format-X' is installed, try to create a "
+              "symbolic link.");
     return;
   }
   const std::string filename = "temporary_file.c";
@@ -176,7 +179,8 @@ void pretty_print_code(const std::string &source) {
 }
 
 void CCodeCompiler::handleDebugging(const std::string &source) {
-  if (!show_generated_code_ && !debug_code_generator_ && !keep_last_generated_query_code_) {
+  if (!show_generated_code_ && !debug_code_generator_
+      && !keep_last_generated_query_code_) {
     return;
   }
 
@@ -193,25 +197,31 @@ void CCodeCompiler::handleDebugging(const std::string &source) {
   }
 }
 
-void exportSourceToFile(const std::string &filename, const std::string &source) {
+void exportSourceToFile(const std::string &filename,
+                        const std::string &source) {
   std::ofstream result_file(filename, std::ios::trunc | std::ios::out);
   result_file << source;
 }
 
 class SystemCompilerCompiledCCode : public CompiledCCode {
  public:
-  SystemCompilerCompiledCCode(Timestamp compile_time,
-                              SharedLibraryPtr library,
+  SystemCompilerCompiledCCode(Timestamp compile_time, SharedLibraryPtr library,
                               const std::string &base_name)
-      : CompiledCCode(compile_time), library_(library), base_file_name_(base_name) {
+      :
+      CompiledCCode(compile_time),
+      library_(library),
+      base_file_name_(base_name) {
   }
 
-  ~SystemCompilerCompiledCCode() { cleanUp(); }
+  ~SystemCompilerCompiledCCode() {
+    cleanUp();
+  }
 
  protected:
-  void *getFunctionPointerImpl(const std::string &name)
-  override
-  final { return library_->getSymbol(name); }
+  void* getFunctionPointerImpl(const std::string &name) override
+  final {
+    return library_->getSymbol(name);
+  }
 
  private:
   void cleanUp() {
@@ -236,7 +246,8 @@ class SystemCompilerCompiledCCode : public CompiledCCode {
   std::string base_file_name_;
 };
 
-CompiledCCodePtr CCodeCompiler::compileWithSystemCompiler(const std::string &source, const Timestamp pch_time) {
+CompiledCCodePtr CCodeCompiler::compileWithSystemCompiler(
+    const std::string &source, const Timestamp pch_time) {
   auto start = getTimestamp();
 
   boost::uuids::uuid uuid = boost::uuids::random_generator()();
@@ -257,7 +268,8 @@ CompiledCCodePtr CCodeCompiler::compileWithSystemCompiler(const std::string &sou
   auto end = getTimestamp();
 
   auto compile_time = end - start + pch_time;
-  return std::make_shared<SystemCompilerCompiledCCode>(compile_time, shared_library, basename);
+  return std::make_shared<SystemCompilerCompiledCCode>(compile_time,
+                                                       shared_library, basename);
 }
 
-} // namespace NES
+}  // namespace NES

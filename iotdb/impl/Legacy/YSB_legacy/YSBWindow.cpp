@@ -9,19 +9,19 @@ BOOST_CLASS_EXPORT_IMPLEMENT(NES::YSBWindow)
 namespace NES{
 YSBWindow::~YSBWindow()
 {
-	IOTDB_DEBUG("YSB WindowHandler: calling destructor")
+	NES_DEBUG("YSB WindowHandler: calling destructor")
 }
 
 YSBWindow::YSBWindow(size_t pcampaignCnt, size_t windowSizeInSec): WindowHandler(nullptr),
 mutex(), currentWindow(0), lastChangeTimeStamp(time(NULL)), windowSizeInSec(windowSizeInSec), campaignCnt(pcampaignCnt)
 {
-    IOTDB_DEBUG("YSB WindowHandler: calling destructor")
+    NES_DEBUG("YSB WindowHandler: calling destructor")
     setup();
 };
 
 YSBWindow::YSBWindow(): WindowHandler(nullptr), mutex(), currentWindow(0),lastChangeTimeStamp(time(NULL)), windowSizeInSec(1), campaignCnt(1)
 {
-    IOTDB_DEBUG("YSB WindowHandler: calling default destructor")
+    NES_DEBUG("YSB WindowHandler: calling default destructor")
     setup();
 }
 

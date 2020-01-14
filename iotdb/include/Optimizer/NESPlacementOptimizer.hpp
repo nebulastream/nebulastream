@@ -3,8 +3,8 @@
  *
  */
 
-#ifndef IOTDB_NESPLACEMENTOPTIMIZER_HPP
-#define IOTDB_NESPLACEMENTOPTIMIZER_HPP
+#ifndef NESPLACEMENTOPTIMIZER_HPP
+#define NESPLACEMENTOPTIMIZER_HPP
 
 #include <iostream>
 #include "../Topology/NESTopologyManager.hpp"
@@ -75,4 +75,4 @@ class NESPlacementOptimizer {
 
 }
 
-#endif //IOTDB_NESPLACEMENTOPTIMIZER_HPP
+#endif //NESPLACEMENTOPTIMIZER_HPP
