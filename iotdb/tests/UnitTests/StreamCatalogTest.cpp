@@ -57,12 +57,12 @@ class StreamCatalogTest : public testing::Test {
         new log4cxx::ConsoleAppender(layoutPtr));
 
     // set log level
-    NES::iotdbLogger->setLevel(log4cxx::Level::getDebug());
+    NES::NESLogger->setLevel(log4cxx::Level::getDebug());
 //    logger->setLevel(log4cxx::Level::getInfo());
 
 // add appenders and other will inherit the settings
-    NES::iotdbLogger->addAppender(file);
-    NES::iotdbLogger->addAppender(console);
+    NES::NESLogger->addAppender(file);
+    NES::NESLogger->addAppender(console);
   }
 };
 

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project (iotdb CXX)
+project (NES CXX)
 
 if(POLICY CMP0004)
   cmake_policy(SET CMP0004 OLD)
@@ -104,7 +104,7 @@ message(STATUS " Libraries: ${LIBRARIES}")
 set(CLANG_EXECUTABLE ${LLVM_ROOT_DIR}/bin/clang++)
 set(CLANG_FORMAT_EXECUTABLE ${LLVM_ROOT_DIR}/bin/clang-format)
 set(GENERATED_CODE_DIRECTORY ${PROJECT_BINARY_DIR}/generated-code)
-set(PATH_TO_IOTDB_SOURCE_CODE ${PROJECT_SOURCE_DIR})
+set(PATH_TO_NES_SOURCE_CODE ${PROJECT_SOURCE_DIR})
 
 # Print definition values.
 message( STATUS "Clang Executable: ${CLANG_EXECUTABLE}" )
@@ -115,7 +115,7 @@ message( STATUS "Generated Code Directory: ${GENERATED_CODE_DIRECTORY}" )
 add_definitions( -D 'CLANG_EXECUTABLE=\"${CLANG_EXECUTABLE}\"' )
 add_definitions( -D 'CLANG_FORMAT_EXECUTABLE=\"${CLANG_FORMAT_EXECUTABLE}\"' )
 add_definitions( -D 'GENERATED_CODE_DIRECTORY=\"${GENERATED_CODE_DIRECTORY}\"' )
-add_definitions( -D 'PATH_TO_IOTDB_SOURCE_CODE=\"${PATH_TO_IOTDB_SOURCE_CODE}\"' )
+add_definitions( -D 'PATH_TO_NES_SOURCE_CODE=\"${PATH_TO_NES_SOURCE_CODE}\"' )
 
 add_definitions( -D 'QUERY_COMPILATION_CC=\"${QUERY_COMPILATION_CC}\"' )
 add_definitions( -D 'CLANG_INCLUDE_DIRS=\"${CLANG_INCLUDE_DIRS}\"' )

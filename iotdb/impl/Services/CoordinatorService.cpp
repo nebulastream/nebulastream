@@ -27,12 +27,12 @@ NESTopologyEntryPtr CoordinatorService::register_sensor(
   if (nodeProperties != "defaultProperties")
     sensorNode->setNodeProperty(nodeProperties);
 
-  IOTDB_DEBUG(
+  NES_DEBUG(
       "try to register sensor phyName=" << streamConf.physicalStreamName << " logName=" << streamConf.logicalStreamName << " nodeID=" << sensorNode->getId())
   //check if logical stream exists
   if (!StreamCatalog::instance().testIfLogicalStreamExistsInSchemaMapping(
       streamConf.logicalStreamName)) {
-    IOTDB_ERROR(
+    NES_ERROR(
         "Coordinator: error logical stream" << streamConf.logicalStreamName << " does not exist when adding physical stream " << streamConf.physicalStreamName)
     throw Exception(
         "logical stream does not exist " + streamConf.logicalStreamName);
@@ -43,7 +43,7 @@ NESTopologyEntryPtr CoordinatorService::register_sensor(
   DataSourcePtr source;
   if (streamConf.sourceType != "CSVSource"
       && streamConf.sourceType != "OneGeneratorSource") {
-    IOTDB_ERROR(
+    NES_ERROR(
         "Coordinator: error source type " << streamConf.sourceType << " is not supported")
     throw Exception(
         "Coordinator: error source type " + streamConf.sourceType
@@ -56,7 +56,7 @@ NESTopologyEntryPtr CoordinatorService::register_sensor(
   bool success = StreamCatalog::instance().addPhysicalStream(
       streamConf.logicalStreamName, sce);
   if (!success) {
-    IOTDB_ERROR(
+    NES_ERROR(
         "Coordinator: physical stream " << streamConf.physicalStreamName << " could not be added to catalog")
     throw Exception(
         "Coordinator: physical stream " + streamConf.physicalStreamName
@@ -73,16 +73,16 @@ NESTopologyEntryPtr CoordinatorService::register_sensor(
 string CoordinatorService::register_query(const string &queryString,
                                           const string &strategy) {
 
-  IOTDB_INFO(
+  NES_INFO(
       "CoordinatorService: Registering query " << queryString << " with strategy " << strategy);
 
   if (queryString.find("Stream(") != std::string::npos) {
-    IOTDB_ERROR(
+    NES_ERROR(
         "CoordinatorService: queries are not allowed to specify streams anymore.")
     throw Exception("Queries are not allowed to define streams anymore");
   }
   if (queryString.find("Schema::create()") != std::string::npos) {
-    IOTDB_ERROR(
+    NES_ERROR(
         "CoordinatorService: queries are not allowed to specify schemas anymore.")
     throw Exception("Queries are not allowed to define schemas anymore");
   }
@@ -94,7 +94,7 @@ string CoordinatorService::register_query(const string &queryString,
 
     const NESExecutionPlan &kExecutionPlan = optimizerService.getExecutionPlan(
         inputQueryPtr, strategy);
-    IOTDB_DEBUG(
+    NES_DEBUG(
         "OptimizerService: Final Execution Plan =" << kExecutionPlan.getTopologyPlanString())
 
     std::string queryId = boost::uuids::to_string(
@@ -103,7 +103,7 @@ string CoordinatorService::register_query(const string &queryString,
     this->registeredQueries.insert( { queryId, t });
     return queryId;
   } catch (...) {
-    IOTDB_ERROR(
+    NES_ERROR(
         "Unable to process input request with: queryString: " << queryString << "\n strategy: " << strategy);
     return nullptr;
   }
@@ -113,21 +113,21 @@ bool CoordinatorService::deregister_query(const string &queryId) {
   bool out = false;
   if (this->registeredQueries.find(queryId) == this->registeredQueries.end()
       && this->runningQueries.find(queryId) == this->runningQueries.end()) {
-    IOTDB_INFO(
+    NES_INFO(
         "CoordinatorService: No deletion required! Query has neither been registered or deployed->" << queryId);
   } else if (this->registeredQueries.find(queryId)
       != this->registeredQueries.end()) {
     // Query is registered, but not running -> just remove from registered queries
     get<1>(this->registeredQueries.at(queryId)).freeResources();
     this->registeredQueries.erase(queryId);
-    IOTDB_INFO(
+    NES_INFO(
         "CoordinatorService: Query was registered and has been successfully removed -> " << queryId);
   } else {
-    IOTDB_INFO("CoordinatorService: De-registering running query..");
+    NES_INFO("CoordinatorService: De-registering running query..");
     //Query is running -> stop query locally if it is running and free resources
     get<1>(this->runningQueries.at(queryId)).freeResources();
     this->runningQueries.erase(queryId);
-    IOTDB_INFO("CoordinatorService:  successfully removed query " << queryId);
+    NES_INFO("CoordinatorService:  successfully removed query " << queryId);
     out = true;
   }
   return out;
@@ -138,7 +138,7 @@ unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> CoordinatorService:
   unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> output;
   if (this->registeredQueries.find(queryId) != this->registeredQueries.end()
       && this->runningQueries.find(queryId) == this->runningQueries.end()) {
-    IOTDB_INFO("CoordinatorService: Deploying query " << queryId);
+    NES_INFO("CoordinatorService: Deploying query " << queryId);
     // get the schema and NESExecutionPlan stored during query registration
     Schema schema = get<0>(this->registeredQueries.at(queryId));
     NESExecutionPlan execPlan = get<1>(this->registeredQueries.at(queryId));
@@ -163,9 +163,9 @@ unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> CoordinatorService:
     this->runningQueries.insert( { queryId, t });
     this->registeredQueries.erase(queryId);
   } else if (this->runningQueries.find(queryId) != this->runningQueries.end()) {
-    IOTDB_WARNING("CoordinatorService: Query is already running -> " << queryId);
+    NES_WARNING("CoordinatorService: Query is already running -> " << queryId);
   } else {
-    IOTDB_WARNING("CoordinatorService: Query is not registered -> " << queryId);
+    NES_WARNING("CoordinatorService: Query is not registered -> " << queryId);
   }
   return output;
 }
@@ -219,7 +219,7 @@ DataSinkPtr CoordinatorService::findDataSinkPointer(OperatorPtr operatorPtr) {
   } else if (operatorPtr->parent != nullptr) {
     return findDataSinkPointer(operatorPtr->parent);
   } else {
-    IOTDB_WARNING("Found query graph without a SINK.");
+    NES_WARNING("Found query graph without a SINK.");
     return nullptr;
   }
 }
@@ -238,7 +238,7 @@ DataSourcePtr CoordinatorService::findDataSourcePointer(
       return findDataSourcePointer(operatorPtr->parent);
     }
   }
-  IOTDB_WARNING("Found query graph without a SOURCE.");
+  NES_WARNING("Found query graph without a SOURCE.");
   return nullptr;
 }
 

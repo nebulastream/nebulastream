@@ -64,23 +64,23 @@ InputQueryPtr UtilityFunctions::createQueryFromCodeString(
       CCodeCompiler compiler;
       CompiledCCodePtr compiled_code = compiler.compile(code.str());
       if (!code) {
-        IOTDB_ERROR(
+        NES_ERROR(
             "Compilation of query code failed! Code: " << code.str());
       }
 
       typedef InputQuery (*CreateQueryFunctionPtr)();
       CreateQueryFunctionPtr func = compiled_code
           ->getFunctionPointer<CreateQueryFunctionPtr>(
-          "_ZN5iotdb11createQueryEv");
+          "_ZN3NES11createQueryEv");//was  _ZN5iotdb11createQueryEv
       if (!func) {
-        IOTDB_ERROR("Error retrieving function! Symbol not found!");
+        NES_ERROR("Error retrieving function! Symbol not found!");
       }
       /* call loaded function to create query object */
       InputQuery query((*func)());
       return std::make_shared<InputQuery>(query);
 
     } catch (...) {
-      IOTDB_ERROR(
+      NES_ERROR(
           "Failed to create the query from input code string: " << query_code_snippet);
       throw "Failed to create the query from input code string";
     }
@@ -109,22 +109,22 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(const std::string& query_code_s
       CCodeCompiler compiler;
       CompiledCCodePtr compiled_code = compiler.compile(code.str());
       if (!code) {
-        IOTDB_ERROR("Compilation of schema code failed! Code: " << code.str());
+        NES_ERROR("Compilation of schema code failed! Code: " << code.str());
       }
 
       typedef Schema (*CreateSchemaFunctionPtr)();
       CreateSchemaFunctionPtr func = compiled_code
           ->getFunctionPointer<CreateSchemaFunctionPtr>(
-          "_ZN5iotdb12createSchemaEv");
+          "_ZN3NES12createSchemaEv");// was   _ZN5iotdb12createSchemaEv
       if (!func) {
-        IOTDB_ERROR("Error retrieving function! Symbol not found!");
+        NES_ERROR("Error retrieving function! Symbol not found!");
       }
       /* call loaded function to create query object */
       Schema query((*func)());
       return std::make_shared<Schema>(query);
 
     } catch (...) {
-      IOTDB_ERROR(
+      NES_ERROR(
           "Failed to create the query from input code string: " << query_code_snippet);
       throw "Failed to create the query from input code string";
     }

@@ -23,7 +23,7 @@ class MemoryLayoutTest : public testing::Test {
 #ifdef DEBUG_OUTPUT
     setupLogging();
 #endif
-    IOTDB_INFO("Setup MemoryLayout test class.");
+    NES_INFO("Setup MemoryLayout test class.");
   }
   static void TearDownTestCase() { std::cout << "Tear down MemoryLayout test class." << std::endl; }
 

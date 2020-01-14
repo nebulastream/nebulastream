@@ -1,5 +1,5 @@
-#ifndef IOTDB_BOTTOMUP_HPP
-#define IOTDB_BOTTOMUP_HPP
+#ifndef BOTTOMUP_HPP
+#define BOTTOMUP_HPP
 
 #include <Operators/Operator.hpp>
 #include <iostream>
@@ -63,4 +63,4 @@ class BottomUp : public NESPlacementOptimizer {
 };
 }
 
-#endif //IOTDB_BOTTOMUP_HPP
+#endif //BOTTOMUP_HPP

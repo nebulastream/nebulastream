@@ -172,7 +172,7 @@ std::string toString(TupleBuffer *buffer, const Schema &schema) {
   std::vector<DataTypePtr> types;
   for (uint32_t i = 0; i < schema.getSize(); ++i) {
     offsets.push_back(schema[i]->getFieldSize());
-    IOTDB_DEBUG(std::string("Field Size ") + schema[i]->toString() + std::string(": ") +
+    NES_DEBUG(std::string("Field Size ") + schema[i]->toString() + std::string(": ") +
         std::to_string(schema[i]->getFieldSize()));
     types.push_back(schema[i]->getDataType());
   }
@@ -182,7 +182,7 @@ std::string toString(TupleBuffer *buffer, const Schema &schema) {
     uint32_t val = offsets[i];
     offsets[i] = prefix_sum;
     prefix_sum += val;
-    IOTDB_DEBUG(std::string("Prefix Sum: ") + schema[i]->toString() + std::string(": ") +
+    NES_DEBUG(std::string("Prefix Sum: ") + schema[i]->toString() + std::string(": ") +
         std::to_string(offsets[i]));
   }
 
@@ -396,9 +396,9 @@ bool CCodeGenerator::generateCode(const DataSinkPtr &sink, const PipelineContext
   for (size_t i = 0; i < result_schema_.getSize(); ++i) {
     VariableDeclarationPtr var_decl = getVariableDeclarationForField(struct_decl_result_tuple, result_schema_[i]);
     if (!var_decl) {
-      IOTDB_ERROR("Could not extract field " << result_schema_[i]->toString() << " from struct "
+      NES_ERROR("Could not extract field " << result_schema_[i]->toString() << " from struct "
                                                    << struct_decl_result_tuple.getTypeName());
-      IOTDB_DEBUG("W>");
+      NES_DEBUG("W>");
     }
     code_.variable_decls.push_back(*var_decl);
 

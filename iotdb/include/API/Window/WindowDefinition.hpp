@@ -2,11 +2,11 @@
 #include <API/Window/WindowMeasure.hpp>
 #include <API/Window/WindowType.hpp>
 
-#ifndef IOTDB_WINDOWDEFINITION_HPP
-#define IOTDB_WINDOWDEFINITION_HPP
+#ifndef WINDOWDEFINITION_HPP
+#define WINDOWDEFINITION_HPP
 
 namespace NES {
 
 }
 
-#endif //IOTDB_WINDOWDEFINITION_HPP
+#endif //WINDOWDEFINITION_HPP

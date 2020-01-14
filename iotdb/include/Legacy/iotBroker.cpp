@@ -49,25 +49,25 @@ void session(socket_ptr sock)
 
       NodePropertiesPtr ptr = std::make_shared<NodeProperties>();
       ptr->set(data);
-      IOTDB_DEBUG("IOTBROKER: sending replay")
+      NES_DEBUG("IOTBROKER: sending replay")
       char reply[14];
-      IOTDB_DEBUG("IOTBROKER: Host= " << ptr->getClientName() << ":" << ptr->getClientPort() << " try to register")
+      NES_DEBUG("IOTBROKER: Host= " << ptr->getClientName() << ":" << ptr->getClientPort() << " try to register")
       if ( nodes.find(ptr->getClientName()) == nodes.end() ) {
-          IOTDB_DEBUG("IOTBROKER: registering node")
+          NES_DEBUG("IOTBROKER: registering node")
 
           nodes[ptr->getClientName()] = ptr;
           memcpy(reply, "REG_COMPLETED", 13);
       } else {
-          IOTDB_DEBUG("IOTBROKER: Node already registered")
+          NES_DEBUG("IOTBROKER: Node already registered")
           memcpy(reply, "ALREADY_REG", 11);
 
       }
     boost::asio::write(*sock, boost::asio::buffer(reply, sizeof(reply)));
-    IOTDB_DEBUG("IOTBROKER: registration process completed")
+    NES_DEBUG("IOTBROKER: registration process completed")
   }
   catch (std::exception& e)
   {
-      IOTDB_ERROR("IOTBROKER: Exception in registration: " << e.what())
+      NES_ERROR("IOTBROKER: Exception in registration: " << e.what())
   }
 }
 
@@ -155,22 +155,22 @@ void sendCommandToNodes(std::string command)
     {
         boost::asio::io_service io_service;
         tcp::resolver resolver(io_service);
-        IOTDB_DEBUG("IOTBROKER: resolve address for " << node.first)
+        NES_DEBUG("IOTBROKER: resolve address for " << node.first)
         tcp::resolver::query query(tcp::v4(), node.first, node.second->getClientPort(), boost::asio::ip::resolver_query_base::numeric_service);
         tcp::resolver::iterator iterator = resolver.resolve(query);
         tcp::socket s(io_service);
         s.connect(*iterator);
-        IOTDB_DEBUG("IOTBROKER: connected to " << node.first << ":" << node.second->getClientPort() << " successfully")
+        NES_DEBUG("IOTBROKER: connected to " << node.first << ":" << node.second->getClientPort() << " successfully")
 
 
         if(command == "3")
         {
-            IOTDB_DEBUG("IOTBROKER: sending QEP")
+            NES_DEBUG("IOTBROKER: sending QEP")
             size_t fileSize = 0;
             std::string fileName = generateTestQEP();
 //          std::string fileName = "/home/zeuchste/git/IoTDB/iotdb/build/tests/demofile.txt";
             char* data = readFile(fileName, fileSize);
-            IOTDB_DEBUG("IOTBROKER: send QEP serialized data:" << data)
+            NES_DEBUG("IOTBROKER: send QEP serialized data:" << data)
 
             char* sendBuffer = new char[fileSize + 1];
             char cmdChar = command[0];
@@ -183,11 +183,11 @@ void sendCommandToNodes(std::string command)
         }
         else if(command == "4")
         {
-            IOTDB_DEBUG("IOTBROKER: sending Config")
+            NES_DEBUG("IOTBROKER: sending Config")
             std::string filename = getTestConfig();
             size_t fileSize = 0;
             char* data = readFile(filename, fileSize);
-            IOTDB_DEBUG("IOTBROKER: send Config serialized data:" << data)
+            NES_DEBUG("IOTBROKER: send Config serialized data:" << data)
 
             char* sendBuffer = new char[fileSize + 1];
             char cmdChar = command[0];
@@ -200,11 +200,11 @@ void sendCommandToNodes(std::string command)
         }
         else
         {
-            IOTDB_DEBUG("IOTBROKER: send command " << command << " size=" << sizeof(command))
+            NES_DEBUG("IOTBROKER: send command " << command << " size=" << sizeof(command))
             boost::asio::write(s, boost::asio::buffer(command.c_str(), sizeof(command)));
         }
 
-        IOTDB_DEBUG("IOTBROKER: send command completed")
+        NES_DEBUG("IOTBROKER: send command completed")
 
     }
 }
@@ -246,7 +246,7 @@ int main(int argc, char* argv[])
     }
 
     boost::thread t(server);
-    IOTDB_DEBUG("IOTBROKER: server started")
+    NES_DEBUG("IOTBROKER: server started")
 
     std::string command = "0";
 
@@ -259,7 +259,7 @@ int main(int argc, char* argv[])
         std::cout << "5 = QUIT"  <<std::endl;
         cin >> command; // input the length
 
-        IOTDB_DEBUG("IOTBROKER: User entered command " << command)
+        NES_DEBUG("IOTBROKER: User entered command " << command)
         sendCommandToNodes(command);
     }
 

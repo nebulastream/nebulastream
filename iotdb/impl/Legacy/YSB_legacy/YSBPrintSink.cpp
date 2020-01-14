@@ -40,14 +40,14 @@ bool YSBPrintSink::writeData(const TupleBufferPtr input_buffer) {
         //		std::cout << " type=" << std::string(recordBuffer[u].event_type) << std::endl;
         //		std::cout << " camp=" << std::string(recordBuffer[u].campaign_id) << std::endl;
 
-        IOTDB_INFO("YSBPrintSink: tuple:" << u << " = "
+        NES_INFO("YSBPrintSink: tuple:" << u << " = "
                                           << " id=" << recordBuffer[u].id << " campaign=" << recordBuffer[u].campaign_id
                                           << " type=" << recordBuffer[u].event_type
                                           << " timestamp=" << recordBuffer[u].current_ms)
 
         sentTuples++;
     }
-    IOTDB_INFO(" ============= YSBPrintSink: FINISHED ============")
+    NES_INFO(" ============= YSBPrintSink: FINISHED ============")
     sentBuffer++;
 
     // Dispatcher::instance().releaseBuffer(input_buffer);

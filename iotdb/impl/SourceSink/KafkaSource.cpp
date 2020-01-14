@@ -35,7 +35,7 @@ KafkaSource::KafkaSource(const Schema &schema,
 
   _connect();
 
-  IOTDB_INFO("KAFKASOURCE " << this << ": Init KAFKA SOURCE to brokers " << brokers
+  NES_INFO("KAFKASOURCE " << this << ": Init KAFKA SOURCE to brokers " << brokers
              << ", topic " << topic)
 }
 
@@ -54,20 +54,20 @@ KafkaSource::KafkaSource(const Schema& schema,
   std::istringstream(config.get("enable.auto.commit")) >> std::boolalpha >> autoCommit;
 
   _connect();
-  IOTDB_INFO("KAFKASOURCE " << this << ": Init KAFKA SOURCE with config")
+  NES_INFO("KAFKASOURCE " << this << ": Init KAFKA SOURCE with config")
 }
 
 KafkaSource::~KafkaSource() { }
 
 TupleBufferPtr KafkaSource::receiveData() {
-  IOTDB_DEBUG("KAFKASOURCE tries to receive data...")
+  NES_DEBUG("KAFKASOURCE tries to receive data...")
 
   cppkafka::Message msg = consumer->poll(kafkaConsumerTimeout);
 
   if (msg) {
     if (msg.get_error()) {
       if (! msg.is_eof()) {
-        IOTDB_WARNING("KAFKASOURCE received error notification: " << msg.get_error())
+        NES_WARNING("KAFKASOURCE received error notification: " << msg.get_error())
           }
       return nullptr;
       } else {
@@ -76,7 +76,7 @@ TupleBufferPtr KafkaSource::receiveData() {
       const size_t tupleSize = schema.getSchemaSize();
       const size_t tupleCnt = msg.get_payload().get_size() / tupleSize;
 
-      IOTDB_DEBUG("KAFKASOURCE recv #tups: " << tupleCnt << ", tupleSize: " << tupleSize << ", msg: " << msg.get_payload())
+      NES_DEBUG("KAFKASOURCE recv #tups: " << tupleCnt << ", tupleSize: " << tupleSize << ", msg: " << msg.get_payload())
 
       std::memcpy(buffer->getBuffer(), msg.get_payload().get_data(), buffer->getBufferSizeInBytes());
       buffer->setNumberOfTuples(tupleCnt);
@@ -107,18 +107,18 @@ void KafkaSource::_connect() {
   consumer->set_assignment_callback([&](cppkafka::TopicPartitionList& topicPartitions) {
                                       for (auto&& tpp : topicPartitions) {
                                         if (tpp.get_offset() == cppkafka::TopicPartition::Offset::OFFSET_INVALID) {
-                                          IOTDB_WARNING("topic " << tpp.get_topic() << ", partition " << tpp.get_partition() << " get invalid offset " << tpp.get_offset())
+                                          NES_WARNING("topic " << tpp.get_topic() << ", partition " << tpp.get_partition() << " get invalid offset " << tpp.get_offset())
                                           // TODO: enforce to set offset to -1 or abort ?
                                           auto tuple = consumer->query_offsets(tpp);
                                           size_t high = std::get<1>(tuple);
                                           tpp.set_offset(high-1);
                                         }
                                       }
-                                      IOTDB_DEBUG("Got assigned " << topicPartitions.size() << " partitions")
+                                      NES_DEBUG("Got assigned " << topicPartitions.size() << " partitions")
   });
   // set the revocation callback
   consumer->set_revocation_callback([&](const cppkafka::TopicPartitionList& topicPartitions) {
-                                      IOTDB_DEBUG(topicPartitions.size() << " partitions revoked")
+                                      NES_DEBUG(topicPartitions.size() << " partitions revoked")
   });
 
   consumer->subscribe({ topic });

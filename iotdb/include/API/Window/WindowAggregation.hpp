@@ -1,5 +1,5 @@
-#ifndef IOTDB_INCLUDE_API_WINDOW_WINDOWAGGREGATION_HPP_
-#define IOTDB_INCLUDE_API_WINDOW_WINDOWAGGREGATION_HPP_
+#ifndef INCLUDE_API_WINDOW_WINDOWAGGREGATION_HPP_
+#define INCLUDE_API_WINDOW_WINDOWAGGREGATION_HPP_
 #include <API/AbstractWindowDefinition.hpp>
 #include <API/UserAPIExpression.hpp>
 #include <API/Types/AttributeField.hpp>
@@ -75,4 +75,4 @@ class Sum : public WindowAggregation {
 };
 }
 
-#endif //IOTDB_INCLUDE_API_WINDOW_WINDOWAGGREGATION_HPP_
+#endif //INCLUDE_API_WINDOW_WINDOWAGGREGATION_HPP_

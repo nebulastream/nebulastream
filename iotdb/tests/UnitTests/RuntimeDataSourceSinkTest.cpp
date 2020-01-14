@@ -30,7 +30,7 @@ void setupLogging() {
           "%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
 
   // create FileAppender
-  LOG4CXX_DECODE_CHAR(fileName, "iotdb.log");
+  LOG4CXX_DECODE_CHAR(fileName, "nes.log");
   log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
 
   // create ConsoleAppender
@@ -38,15 +38,15 @@ void setupLogging() {
 
   // set log level
   // logger->setLevel(log4cxx::Level::getTrace());
-  iotdbLogger->setLevel(log4cxx::Level::getDebug());
+  NESLogger->setLevel(log4cxx::Level::getDebug());
   //	logger->setLevel(log4cxx::Level::getInfo());
   //	logger->setLevel(log4cxx::Level::getWarn());
   // logger->setLevel(log4cxx::Level::getError());
   //	logger->setLevel(log4cxx::Level::getFatal());
 
   // add appenders and other will inherit the settings
-  iotdbLogger->addAppender(file);
-  iotdbLogger->addAppender(console);
+  NESLogger->addAppender(file);
+  NESLogger->addAppender(console);
 }
 
 class RuntimeDataSourceSinkTest : public testing::Test {

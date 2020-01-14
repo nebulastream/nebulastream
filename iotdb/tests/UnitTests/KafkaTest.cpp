@@ -44,10 +44,10 @@ public:
     BufferManager::instance().setNumberOfBuffers(num_of_buffers);
     BufferManager::instance().setBufferSize(buffer_size);
 
-    IOTDB_DEBUG("Setup KafkaTest")
+    NES_DEBUG("Setup KafkaTest")
   }
   void TearDown() {
-    IOTDB_DEBUG("Tear down KafkaTest")
+    NES_DEBUG("Tear down KafkaTest")
   }
 protected:
   const std::string brokers = std::string(KAFKA_BROKER);
@@ -349,4 +349,4 @@ TEST_F(KafkaTest, KafkaSinkInitWithEmptyTopic) {
   }
 }
 
-} // end of iotdb namespace
+}

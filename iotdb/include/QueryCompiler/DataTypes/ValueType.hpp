@@ -1,5 +1,5 @@
-#ifndef IOTDB_INCLUDE_VALUETYPE_HPP_
-#define IOTDB_INCLUDE_VALUETYPE_HPP_
+#ifndef INCLUDE_VALUETYPE_HPP_
+#define INCLUDE_VALUETYPE_HPP_
 
 #pragma once
 
@@ -41,4 +41,4 @@ class ValueType {
 };
 }
 
-#endif //IOTDB_INCLUDE_VALUETYPE_HPP_
+#endif //INCLUDE_VALUETYPE_HPP_

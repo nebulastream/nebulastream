@@ -1,5 +1,5 @@
-#ifndef IOTDB_INCLUDE_ARRAYDATATYPE_HPP_
-#define IOTDB_INCLUDE_ARRAYDATATYPE_HPP_
+#ifndef INCLUDE_ARRAYDATATYPE_HPP_
+#define INCLUDE_ARRAYDATATYPE_HPP_
 
 #pragma once
 
@@ -51,4 +51,4 @@ class ArrayDataType : public DataType {
   }
 };
 }
-#endif //IOTDB_INCLUDE_ARRAYDATATYPE_HPP_
+#endif //INCLUDE_ARRAYDATATYPE_HPP_

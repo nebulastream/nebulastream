@@ -50,7 +50,7 @@ void CSVSource::fillBuffer(TupleBufferPtr buf) {
   input.seekg(0, input.end);
   size_t file_size = input.tellg();
   if (file_size == -1) {
-    IOTDB_ERROR("ERROR: File " << file_path << " is corrupted")
+    NES_ERROR("ERROR: File " << file_path << " is corrupted")
     assert(0);
   }
   input.seekg(0, input.beg);

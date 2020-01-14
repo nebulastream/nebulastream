@@ -43,7 +43,7 @@ class CoordinatorCafTest : public testing::Test {
         receive_port, 2
         ,"", streamConf);
   }
-    IOTDB_DEBUG("FINISHED ADDING 5 Nodes to topology")
+    NES_DEBUG("FINISHED ADDING 5 Nodes to topology")
 }
 
 /* Will be called before a test is executed. */
@@ -72,12 +72,12 @@ static void TearDownTestCase() {
           new log4cxx::ConsoleAppender(layoutPtr));
 
       // set log level
-      iotdbLogger->setLevel(log4cxx::Level::getDebug());
+      NESLogger->setLevel(log4cxx::Level::getDebug());
   //    logger->setLevel(log4cxx::Level::getInfo());
 
   // add appenders and other will inherit the settings
-      iotdbLogger->addAppender(file);
-      iotdbLogger->addAppender(console);
+      NESLogger->addAppender(file);
+      NESLogger->addAppender(console);
     }
 
 

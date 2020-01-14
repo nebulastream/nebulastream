@@ -1,5 +1,5 @@
-#ifndef IOTDB_INCLUDE_ACTORS_COORDINATORACTOR_HPP_
-#define IOTDB_INCLUDE_ACTORS_COORDINATORACTOR_HPP_
+#ifndef INCLUDE_ACTORS_COORDINATORACTOR_HPP_
+#define INCLUDE_ACTORS_COORDINATORACTOR_HPP_
 
 #include <caf/io/all.hpp>
 #include <caf/all.hpp>
@@ -159,4 +159,4 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
 };
 }
 
-#endif //IOTDB_INCLUDE_ACTORS_COORDINATORACTOR_HPP_
+#endif //INCLUDE_ACTORS_COORDINATORACTOR_HPP_

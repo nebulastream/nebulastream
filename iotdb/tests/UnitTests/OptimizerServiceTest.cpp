@@ -54,12 +54,12 @@ class OptimizerServiceTest : public testing::Test {
         new log4cxx::ConsoleAppender(layoutPtr));
 
     // set log level
-    iotdbLogger->setLevel(log4cxx::Level::getDebug());
+    NESLogger->setLevel(log4cxx::Level::getDebug());
     //    logger->setLevel(log4cxx::Level::getInfo());
 
     // add appenders and other will inherit the settings
-    iotdbLogger->addAppender(file);
-    iotdbLogger->addAppender(console);
+    NESLogger->addAppender(file);
+    NESLogger->addAppender(console);
   }
 
 };

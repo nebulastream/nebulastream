@@ -93,11 +93,11 @@ InputQuery InputQuery::from(Stream& stream) {
  */
 
 InputQuery& InputQuery::select(const Field& field) {
-  IOTDB_NOT_IMPLEMENTED
+  NES_NOT_IMPLEMENTED
 }
 
 InputQuery& InputQuery::select(const Field& field1, const Field& field2) {
-  IOTDB_NOT_IMPLEMENTED
+  NES_NOT_IMPLEMENTED
 }
 
 InputQuery& InputQuery::filter(const UserAPIExpression& predicate) {
@@ -123,7 +123,7 @@ InputQuery& InputQuery::map(const AttributeField& field,
 }
 
 InputQuery& InputQuery::combine(const NES::InputQuery& sub_query) {
-  IOTDB_NOT_IMPLEMENTED
+  NES_NOT_IMPLEMENTED
 }
 
 InputQuery& InputQuery::join(const InputQuery& sub_query,

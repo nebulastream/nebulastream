@@ -1,5 +1,5 @@
-#ifndef IOTDB_INCLUDE_ACTORS_WORKERACTOR_HPP_
-#define IOTDB_INCLUDE_ACTORS_WORKERACTOR_HPP_
+#ifndef INCLUDE_ACTORS_WORKERACTOR_HPP_
+#define INCLUDE_ACTORS_WORKERACTOR_HPP_
 
 #include <NodeEngine/NodeEngine.hpp>
 #include <Operators/Operator.hpp>
@@ -98,4 +98,4 @@ class WorkerActor : public stateful_actor<WorkerState> {
 
 }
 
-#endif //IOTDB_INCLUDE_ACTORS_WORKERACTOR_HPP_
+#endif //INCLUDE_ACTORS_WORKERACTOR_HPP_

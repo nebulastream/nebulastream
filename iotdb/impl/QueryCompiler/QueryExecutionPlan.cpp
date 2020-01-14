@@ -19,7 +19,7 @@ QueryExecutionPlan::QueryExecutionPlan(const std::vector<DataSourcePtr>& _source
 
 QueryExecutionPlan::~QueryExecutionPlan()
 {
-    IOTDB_DEBUG("destroy qep")
+    NES_DEBUG("destroy qep")
     sources.clear();
     stages.clear();
     source_to_stage.clear();
@@ -28,20 +28,20 @@ QueryExecutionPlan::~QueryExecutionPlan()
 
 void QueryExecutionPlan::print() {
    for (auto source : sources) {
-     IOTDB_INFO("Source:" << source)
-     IOTDB_INFO(
+     NES_INFO("Source:" << source)
+     NES_INFO(
          "\t Generated Buffers=" << source->getNumberOfGeneratedBuffers())
-     IOTDB_INFO("\t Generated Tuples=" << source->getNumberOfGeneratedTuples())
-     IOTDB_INFO("\t Schema=" << source->getSourceSchemaAsString())
+     NES_INFO("\t Generated Tuples=" << source->getNumberOfGeneratedTuples())
+     NES_INFO("\t Schema=" << source->getSourceSchemaAsString())
    }
    for (auto window : windows) {
-     IOTDB_INFO("WindowHandler:" << window)
-     IOTDB_INFO("WindowHandler Result:")
+     NES_INFO("WindowHandler:" << window)
+     NES_INFO("WindowHandler Result:")
    }
    for (auto sink : sinks) {
-     IOTDB_INFO("Sink:" << sink)
-     IOTDB_INFO("\t Generated Buffers=" << sink->getNumberOfSentBuffers())
-     IOTDB_INFO("\t Generated Tuples=" << sink->getNumberOfSentTuples())
+     NES_INFO("Sink:" << sink)
+     NES_INFO("\t Generated Buffers=" << sink->getNumberOfSentBuffers())
+     NES_INFO("\t Generated Tuples=" << sink->getNumberOfSentTuples())
    }
  }
 

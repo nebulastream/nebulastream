@@ -32,18 +32,18 @@ class YSBWindow : public WindowHandler {
       std::atomic_init(&hashTable[1][i], std::size_t(0));
   }
   void print() {
-    IOTDB_INFO("windowSizeInSec=" << windowSizeInSec
+    NES_INFO("windowSizeInSec=" << windowSizeInSec
                                   << " campaingCnt=" << campaignCnt
                                   << " currentWindow=" << currentWindow
                                   << " lastChangeTimeStamp=" << lastChangeTimeStamp)
-    IOTDB_INFO("Hash Table Content with window 1:")
+    NES_INFO("Hash Table Content with window 1:")
     for (size_t i = 0; i < campaignCnt; i++) {
-      if (hashTable[0][i] != 0) IOTDB_INFO("id=" << i << " cnt=" << hashTable[0][i])
+      if (hashTable[0][i] != 0) NES_INFO("id=" << i << " cnt=" << hashTable[0][i])
     }
 
-    IOTDB_INFO("Hash Table Content with window 2:")
+    NES_INFO("Hash Table Content with window 2:")
     for (size_t i = 0; i < campaignCnt; i++) {
-      if (hashTable[1][i] != 0) IOTDB_INFO("id=" << i << " cnt=" << hashTable[1][i])
+      if (hashTable[1][i] != 0) NES_INFO("id=" << i << " cnt=" << hashTable[1][i])
     }
   }
 
@@ -54,7 +54,7 @@ class YSBWindow : public WindowHandler {
         numEntries += hashTable[0][i];
     }
 
-    IOTDB_INFO("Hash Table Content with window 2:")
+    NES_INFO("Hash Table Content with window 2:")
     for (size_t i = 0; i < campaignCnt; i++) {
       if (hashTable[1][i] != 0)
         numEntries += hashTable[1][i];

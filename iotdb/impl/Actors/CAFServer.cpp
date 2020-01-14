@@ -16,7 +16,7 @@ bool CAFServer::start(
   //Setup then logging
   setupLogging();
 
-  IOTDB_DEBUG("*** trying to publish at port "
+  NES_DEBUG("*** trying to publish at port "
        << actorCoordinatorConfig.publish_port)
 
   io::unpublish(coordinatorActorHandle, actorCoordinatorConfig.publish_port);
@@ -24,11 +24,11 @@ bool CAFServer::start(
   auto expected_port = io::publish(coordinatorActorHandle,
                                    actorCoordinatorConfig.publish_port);
   if (!expected_port) {
-    IOTDB_ERROR("*** publish failed: "
+    NES_ERROR("*** publish failed: "
         << actorSystem.render(expected_port.error()))
     return false;
   }
-  IOTDB_DEBUG("*** coordinator successfully published at port " << *expected_port)
+  NES_DEBUG("*** coordinator successfully published at port " << *expected_port)
 
   //TODO: This code is to be migrated when we create CLI based client for interacting with the actor_system
 
@@ -138,11 +138,11 @@ void CAFServer::setupLogging() {
   // create ConsoleAppender
   log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
 
-  NES::iotdbLogger->setLevel(log4cxx::Level::getDebug());
-  NES::iotdbLogger->addAppender(file);
-  NES::iotdbLogger->addAppender(console);
+  NES::NESLogger->setLevel(log4cxx::Level::getDebug());
+  NES::NESLogger->addAppender(file);
+  NES::NESLogger->addAppender(console);
 
   // set log level
-  log4cxx::Logger::getLogger("IOTDB")->setLevel(log4cxx::Level::getDebug());
+  log4cxx::Logger::getLogger("NES")->setLevel(log4cxx::Level::getDebug());
 }
 

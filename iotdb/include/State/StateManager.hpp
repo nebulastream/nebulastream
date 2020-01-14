@@ -1,6 +1,6 @@
 
-#ifndef IOTDB_STATEMANAGER_HPP
-#define IOTDB_STATEMANAGER_HPP
+#ifndef STATEMANAGER_HPP
+#define STATEMANAGER_HPP
 
 #include <State/StateVariable.hpp>
 #include <mutex>
@@ -47,4 +47,4 @@ public:
     static StateManager& instance();
 };
 }
-#endif //IOTDB_STATEMANAGER_HPP
+#endif //STATEMANAGER_HPP

@@ -56,14 +56,14 @@ class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
   bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf) {
     uint64_t* tuples = (uint64_t*) buf->getBuffer();
 
-    IOTDB_INFO("Test: Start execution");
+    NES_INFO("Test: Start execution");
 
     for (size_t i = 0; i < buf->getNumberOfTuples(); ++i) {
       count++;
       sum += tuples[i];
     }
 
-    IOTDB_INFO(
+    NES_INFO(
         "Test: query result = Processed Block:" << buf->getNumberOfTuples() << " count: " << count << "sum: " << sum)
     assert(sum == 10);
 
@@ -96,7 +96,7 @@ class EngineTest : public testing::Test {
     setupLogging();
     remove(filePath.c_str());
 #endif
-    IOTDB_INFO("Setup EngineTest test class.");
+    NES_INFO("Setup EngineTest test class.");
   }
   static void TearDownTestCase() {
     remove(filePath.c_str());
@@ -123,12 +123,12 @@ class EngineTest : public testing::Test {
         new log4cxx::ConsoleAppender(layoutPtr));
 
     // set log level
-    iotdbLogger->setLevel(log4cxx::Level::getDebug());
+    NESLogger->setLevel(log4cxx::Level::getDebug());
 //    logger->setLevel(log4cxx::Level::getInfo());
 
 // add appenders and other will inherit the settings
-    iotdbLogger->addAppender(file);
-    iotdbLogger->addAppender(console);
+    NESLogger->addAppender(file);
+    NESLogger->addAppender(console);
   }
 
 };

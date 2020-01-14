@@ -134,10 +134,10 @@ static void setupLogging() {
   log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
 
   // set log level
-  NES::iotdbLogger->setLevel(log4cxx::Level::getDebug());
+  NES::NESLogger->setLevel(log4cxx::Level::getDebug());
   // add appenders and other will inherit the settings
-  NES::iotdbLogger->addAppender(file);
-  NES::iotdbLogger->addAppender(console);
+  NES::NESLogger->addAppender(file);
+  NES::NESLogger->addAppender(console);
 }
 
 void caf_main(actor_system &system, WorkerActorConfig &cfg,

@@ -26,7 +26,7 @@ BinarySource::BinarySource(const Schema& schema, const std::string& _file_path)
   input.seekg(0, input.end);
   file_size = input.tellg();
   if (file_size == -1) {
-    IOTDB_ERROR("ERROR: File " << _file_path << " is corrupted");
+    NES_ERROR("ERROR: File " << _file_path << " is corrupted");
     assert(0);
   }
   input.seekg(0, input.beg);
