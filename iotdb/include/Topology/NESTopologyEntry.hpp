@@ -6,7 +6,7 @@
 #include <Util/CPUCapacity.hpp>
 #include <string>
 
-namespace iotdb {
+namespace NES {
 typedef std::shared_ptr<InputQuery> InputQueryPtr;
 
 enum NESNodeType {
@@ -155,5 +155,5 @@ class NESTopologyEntry {
 };
 
 typedef std::shared_ptr<NESTopologyEntry> NESTopologyEntryPtr;
-}  // namespace iotdb
+}  // namespace NES
 #endif /* INCLUDE_TOPOLOGY_NESTOPOLOGYENTRY_HPP_ */

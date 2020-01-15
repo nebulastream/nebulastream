@@ -3,7 +3,7 @@
 #include <iostream>
 #include <Util/Logger.hpp>
 
-using namespace iotdb;
+using namespace NES;
 using namespace std;
 
 NESExecutionPlan BottomUp::initializeExecutionPlan(
@@ -13,9 +13,9 @@ NESExecutionPlan BottomUp::initializeExecutionPlan(
   const OperatorPtr& sinkOperator = inputQuery->getRoot();
   const string& streamName = inputQuery->source_stream->getName();
   const vector<OperatorPtr>& sourceOperators = getSourceOperators(sinkOperator);
-  IOTDB_DEBUG("BottomUp: try to place the following source operators:")
+  NES_DEBUG("BottomUp: try to place the following source operators:")
   for (OperatorPtr op : sourceOperators)
-    IOTDB_DEBUG("\t BottomUp: " << op->toString())
+    NES_DEBUG("\t BottomUp: " << op->toString())
 
   //TODO: this is the old version without catalog
 //    const deque<NESTopologyEntryPtr>& sourceNodes = getSourceNodes(nesTopologyPlan, streamName);
@@ -23,13 +23,13 @@ NESExecutionPlan BottomUp::initializeExecutionPlan(
       .getSourceNodesForLogicalStream(streamName);
 
   if (sourceNodes.empty()) {
-    IOTDB_ERROR("BottomUp: Unable to find the target source: " << streamName);
+    NES_ERROR("BottomUp: Unable to find the target source: " << streamName);
     throw Exception("No source found in the topology for stream " + streamName);
   }
 
-  IOTDB_DEBUG("BottomUp: try to place on following source nodes:")
+  NES_DEBUG("BottomUp: try to place on following source nodes:")
   for (NESTopologyEntryPtr node : sourceNodes)
-    IOTDB_DEBUG("\t BottomUp: " << node->toString())
+    NES_DEBUG("\t BottomUp: " << node->toString())
 
   placeOperators(executionGraph, nesTopologyPlan, sourceOperators, sourceNodes);
 
@@ -68,7 +68,7 @@ void BottomUp::placeOperators(NESExecutionPlan executionGraph,
       continue;
     }
 
-    IOTDB_DEBUG("BottomUp: try to place operator " << optr->toString())
+    NES_DEBUG("BottomUp: try to place operator " << optr->toString())
 
     // find the node where the operator will be executed
     NESTopologyEntryPtr node = findSuitableNESNodeForOperatorPlacement(
@@ -76,16 +76,16 @@ void BottomUp::placeOperators(NESExecutionPlan executionGraph,
 
     if (node == nullptr) {
       // throw and exception that scheduling can't be done
-      IOTDB_ERROR("BottomUp: Can not schedule the operator. No node found.");
+      NES_ERROR("BottomUp: Can not schedule the operator. No node found.");
       throw std::runtime_error("Can not schedule the operator. No node found.");
     } else if (node->getRemainingCpuCapacity() <= 0) {
-      IOTDB_ERROR(
+      NES_ERROR(
           "BottomUp: Can not schedule the operator. No free resource available capacity is=" << node->getRemainingCpuCapacity());
       throw std::runtime_error(
           "Can not schedule the operator. No free resource available.");
     }
 
-    IOTDB_DEBUG("BottomUp: suitable placement for operator " << optr->toString() << " is " << node->toString())
+    NES_DEBUG("BottomUp: suitable placement for operator " << optr->toString() << " is " << node->toString())
 
     // Reduce the processing capacity by 1
     // FIXME: Bring some logic here where the cpu capacity is reduced based on operator workload
@@ -94,7 +94,7 @@ void BottomUp::placeOperators(NESExecutionPlan executionGraph,
     // If the selected nes node was already used by another operator for placement then do not create a
     // new execution node rather add operator to existing node.
     if (executionGraph.hasVertex(node->getId())) {
-      IOTDB_DEBUG("BottomUp: node " << node->toString() << " was already used by other deployment")
+      NES_DEBUG("BottomUp: node " << node->toString() << " was already used by other deployment")
 
       const ExecutionNodePtr& existingExecutionNode = executionGraph
           .getExecutionNode(node->getId());
@@ -113,7 +113,7 @@ void BottomUp::placeOperators(NESExecutionPlan executionGraph,
             ProcessOperator(optr->parent, existingExecutionNode));
       }
     } else {
-      IOTDB_DEBUG("BottomUp: create new execution node " << node->toString())
+      NES_DEBUG("BottomUp: create new execution node " << node->toString())
 
       // Create a new execution node
       const ExecutionNodePtr& newExecutionNode = executionGraph
@@ -157,12 +157,12 @@ NESTopologyEntryPtr BottomUp::findSuitableNESNodeForOperatorPlacement(
       == OperatorType::SINK_OP) {
     node = nesTopologyPlan->getRootNode();
     return node;
-    IOTDB_DEBUG("BottomUp: place sink on root node " << node->toString())
+    NES_DEBUG("BottomUp: place sink on root node " << node->toString())
   } else if (operatorToProcess.operatorToProcess->getOperatorType()
       == OperatorType::SOURCE_OP) {
     node = sourceNodes.front();
     sourceNodes.pop_front();
-    IOTDB_DEBUG("BottomUp: place source on source node " << node->toString())
+    NES_DEBUG("BottomUp: place source on source node " << node->toString())
     return node;
   } else {
     NESTopologyEntryPtr& nesNode = operatorToProcess.parentExecutionNode
@@ -170,9 +170,9 @@ NESTopologyEntryPtr BottomUp::findSuitableNESNodeForOperatorPlacement(
     //if the previous parent node still have capacity. Use it for further operator assignment
     if (nesNode->getRemainingCpuCapacity() > 0) {
       node = nesNode;
-      IOTDB_DEBUG("BottomUp: place operator on node with remaining capacity " << node->toString())
+      NES_DEBUG("BottomUp: place operator on node with remaining capacity " << node->toString())
     } else {
-      IOTDB_DEBUG("BottomUp: place operator on node neighbouring node")
+      NES_DEBUG("BottomUp: place operator on node neighbouring node")
 
       // else find the neighbouring higher level nodes connected to it
       const vector<NESTopologyLinkPtr>& allEdgesToNode = nesTopologyPlan

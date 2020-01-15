@@ -13,7 +13,7 @@
 #include <memory>
 #include "../SourceSink/GeneratorSource.hpp"
 
-namespace iotdb {
+namespace NES {
 
 class CompiledDummyPlan : public HandCodedQueryExecutionPlan {
   public:
@@ -27,5 +27,5 @@ class CompiledDummyPlan : public HandCodedQueryExecutionPlan {
 };
 typedef std::shared_ptr<CompiledDummyPlan> CompiledDummyPlanPtr;
 
-};     // namespace iotdb
+};     // namespace NES
 #endif /* TESTS_TESTPLANS_COMPILEDTESTPLAN_HPP_ */

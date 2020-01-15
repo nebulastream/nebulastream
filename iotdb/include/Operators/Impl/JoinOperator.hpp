@@ -8,7 +8,7 @@
 #include <API/ParameterTypes.hpp>
 #include <Operators/Operator.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class JoinOperator : public Operator {
   public:
@@ -26,4 +26,4 @@ class JoinOperator : public Operator {
     JoinPredicatePtr join_spec_;
 };
 
-} // namespace iotdb
+} // namespace NES

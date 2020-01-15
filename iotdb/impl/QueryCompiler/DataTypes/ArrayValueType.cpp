@@ -7,7 +7,7 @@
 #include <QueryCompiler/DataTypes/ArrayDataType.hpp>
 #include <QueryCompiler/DataTypes/ArrayValueType.hpp>
 
-namespace iotdb {
+namespace NES {
 
 /**
  * class ArrayValueType keeps a field of values of basic types
@@ -49,16 +49,16 @@ const ValueTypePtr ArrayValueType::copy() const {
 const bool ArrayValueType::isArrayValueType() const { return true; }
 
 bool ArrayValueType::operator==(const ArrayValueType &rhs) const {
-  return static_cast<const iotdb::ValueType &>(*this) == static_cast<const iotdb::ValueType &>(rhs) &&
+  return static_cast<const NES::ValueType &>(*this) == static_cast<const NES::ValueType &>(rhs) &&
       type_ == rhs.type_ &&
       isString_ == rhs.isString_ &&
       value_ == rhs.value_;
 }
 
 bool ArrayValueType::operator==(const ValueType &rhs) const {
-  return type_ == dynamic_cast<const iotdb::ArrayValueType &>(rhs).type_ &&
-      isString_ == dynamic_cast<const iotdb::ArrayValueType &>(rhs).isString_ &&
-      value_ == dynamic_cast<const iotdb::ArrayValueType &>(rhs).value_;
+  return type_ == dynamic_cast<const NES::ArrayValueType &>(rhs).type_ &&
+      isString_ == dynamic_cast<const NES::ArrayValueType &>(rhs).isString_ &&
+      value_ == dynamic_cast<const NES::ArrayValueType &>(rhs).value_;
 }
 
 ArrayValueType::~ArrayValueType() {}

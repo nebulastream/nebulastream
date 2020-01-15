@@ -4,7 +4,7 @@
 #include <memory>
 #include <vector>
 
-namespace iotdb {
+namespace NES {
 
 class AttributeField;
 typedef std::shared_ptr<AttributeField> AttributeFieldPtr;
@@ -83,4 +83,4 @@ const std::string toString(const MapperPtr&);
 const std::string toString(const AggregationSpec&);
 const std::string toString(const JoinPredicatePtr&);
 
-} // namespace iotdb
+} // namespace NES

@@ -5,7 +5,7 @@
 #include <SourceSink/DataSource.hpp>
 #include <set>
 
-namespace iotdb {
+namespace NES {
 
 Operator::~Operator() {}
 
@@ -48,4 +48,4 @@ bool Operator::equals(const Operator &_rhs) {
   assert(0);
   return false;
 }
-} // namespace iotdb
+} // namespace NES

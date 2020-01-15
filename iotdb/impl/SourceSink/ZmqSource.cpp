@@ -13,7 +13,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <Util/Logger.hpp>
-namespace iotdb {
+namespace NES {
 
 ZmqSource::ZmqSource()
     : host(""),
@@ -32,31 +32,31 @@ ZmqSource::ZmqSource(const Schema &schema, const std::string &host,
       connected(false),
       context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_PULL)) {
-  IOTDB_DEBUG(
+  NES_DEBUG(
       "ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/")
 }
 
 ZmqSource::~ZmqSource() {
   bool success = disconnect();
   if (success) {
-    IOTDB_DEBUG("ZMQSOURCE  " << this << ": Destroy ZMQ Source")
+    NES_DEBUG("ZMQSOURCE  " << this << ": Destroy ZMQ Source")
   } else {
-    IOTDB_ERROR(
+    NES_ERROR(
         "ZMQSOURCE  " << this << ": Destroy ZMQ Source failed cause it could not be disconnected")
     assert(0);
   }
-  IOTDB_DEBUG("ZMQSOURCE  " << this << ": Destroy ZMQ Source")
+  NES_DEBUG("ZMQSOURCE  " << this << ": Destroy ZMQ Source")
 }
 
 TupleBufferPtr ZmqSource::receiveData() {
-  IOTDB_DEBUG("ZMQSource  " << this << ": receiveData ")
+  NES_DEBUG("ZMQSource  " << this << ": receiveData ")
   if (connect()) {
     try {
       // Receive new chunk of data
       zmq::message_t new_data;
       socket.recv(&new_data); // envelope - not needed at the moment
       size_t tupleCnt = *((size_t *) new_data.data());
-      IOTDB_DEBUG("ZMQSource received #tups " << tupleCnt)
+      NES_DEBUG("ZMQSource received #tups " << tupleCnt)
 
       zmq::message_t new_data2;
       socket.recv(&new_data2); // actual data
@@ -65,7 +65,7 @@ TupleBufferPtr ZmqSource::receiveData() {
       size_t tuple_size = schema.getSchemaSize();
       // Create new TupleBuffer and copy data
       TupleBufferPtr buffer = BufferManager::instance().getBuffer();
-      IOTDB_DEBUG("ZMQSource  " << this << ": got buffer ")
+      NES_DEBUG("ZMQSource  " << this << ": got buffer ")
 
       // TODO: If possible only copy the content not the empty part
       std::memcpy(buffer->getBuffer(), new_data2.data(), buffer->getBufferSizeInBytes());
@@ -73,7 +73,7 @@ TupleBufferPtr ZmqSource::receiveData() {
       buffer->setTupleSizeInBytes(tuple_size);
 
       if (buffer->getBufferSizeInBytes() == new_data2.size()) {
-        IOTDB_WARNING("ZMQSource  " << this << ": return buffer ")
+        NES_WARNING("ZMQSource  " << this << ": return buffer ")
       }
 
       return buffer;
@@ -82,11 +82,11 @@ TupleBufferPtr ZmqSource::receiveData() {
       // recv() throws ETERM when the zmq context is destroyed,
       //  as when AsyncZmqListener::Stop() is called
       if (ex.num() != ETERM) {
-        IOTDB_ERROR("ZMQSOURCE: " << ex.what())
+        NES_ERROR("ZMQSOURCE: " << ex.what())
       }
     }
   } else {
-    IOTDB_ERROR("ZMQSOURCE: Not connected!")
+    NES_ERROR("ZMQSOURCE: Not connected!")
   }
   return nullptr;
 }
@@ -113,15 +113,15 @@ bool ZmqSource::connect() {
       // recv() throws ETERM when the zmq context is destroyed,
       //  as when AsyncZmqListener::Stop() is called
       if (ex.num() != ETERM) {
-        IOTDB_ERROR("ZMQSOURCE: " << ex.what())
+        NES_ERROR("ZMQSOURCE: " << ex.what())
       }
       connected = false;
     }
   }
   if (connected) {
-    IOTDB_DEBUG("ZMQSOURCE  " << this << ": connected")
+    NES_DEBUG("ZMQSOURCE  " << this << ": connected")
   } else {
-    IOTDB_DEBUG("Exception: ZMQSOURCE  " << this << ": NOT connected")
+    NES_DEBUG("Exception: ZMQSOURCE  " << this << ": NOT connected")
   }
   return connected;
 }
@@ -132,9 +132,9 @@ bool ZmqSource::disconnect() {
     connected = false;
   }
   if (!connected) {
-    IOTDB_DEBUG("ZMQSOURCE  " << this << ": disconnected")
+    NES_DEBUG("ZMQSOURCE  " << this << ": disconnected")
   } else {
-    IOTDB_DEBUG("ZMQSOURCE  " << this << ": NOT disconnected")
+    NES_DEBUG("ZMQSOURCE  " << this << ": NOT disconnected")
   }
   return !connected;
 }
@@ -142,6 +142,6 @@ SourceType ZmqSource::getType() const {
     return ZMQ_SOURCE;
 }
 
-}  // namespace iotdb
+}  // namespace NES
 
-BOOST_CLASS_EXPORT(iotdb::ZmqSource);
+BOOST_CLASS_EXPORT(NES::ZmqSource);

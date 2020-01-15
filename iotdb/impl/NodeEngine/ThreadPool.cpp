@@ -4,7 +4,7 @@
 #include <Util/Logger.hpp>
 #include <functional>
 
-namespace iotdb {
+namespace NES {
 
 ThreadPool& ThreadPool::instance() {
   static ThreadPool instance;
@@ -18,9 +18,9 @@ ThreadPool::ThreadPool()
 }
 
 ThreadPool::~ThreadPool() {
-  IOTDB_DEBUG("Threadpool: Destroying Thread Pool")
+  NES_DEBUG("Threadpool: Destroying Thread Pool")
   stop();
-  IOTDB_DEBUG("Dispatcher: Destroy threads Queue")
+  NES_DEBUG("Dispatcher: Destroy threads Queue")
   threads.clear();
 }
 
@@ -32,9 +32,9 @@ void ThreadPool::runningRoutine() {
     if (task) {
       task->execute();
       dispatcher.completedWork(task);
-      IOTDB_DEBUG("Threadpool: finished task " << task)
+      NES_DEBUG("Threadpool: finished task " << task)
     } else {
-      IOTDB_DEBUG("Threadpool: task invalid " << task)
+      NES_DEBUG("Threadpool: task invalid " << task)
 
     }
   }
@@ -46,7 +46,7 @@ bool ThreadPool::start() {
 
   running = true;
   /* spawn threads */
-  IOTDB_DEBUG("Threadpool: Spawning " << numThreads << " threads")
+  NES_DEBUG("Threadpool: Spawning " << numThreads << " threads")
   for (uint64_t i = 0; i < numThreads; ++i) {
     threads.push_back(
         std::thread(std::bind(&ThreadPool::runningRoutine, this)));
@@ -88,4 +88,4 @@ size_t ThreadPool::getNumberOfThreads() {
   return numThreads;
 }
 
-}  // namespace iotdb
+}  // namespace NES

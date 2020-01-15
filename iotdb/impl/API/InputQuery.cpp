@@ -12,7 +12,7 @@
 #include <API/Window/WindowDefinition.hpp>
 #include <Util/Logger.hpp>
 
-namespace iotdb {
+namespace NES {
 
 const OperatorPtr recursiveCopy(OperatorPtr ptr) {
   OperatorPtr operatorPtr = ptr->copy();
@@ -93,11 +93,11 @@ InputQuery InputQuery::from(Stream& stream) {
  */
 
 InputQuery& InputQuery::select(const Field& field) {
-  IOTDB_NOT_IMPLEMENTED
+  NES_NOT_IMPLEMENTED
 }
 
 InputQuery& InputQuery::select(const Field& field1, const Field& field2) {
-  IOTDB_NOT_IMPLEMENTED
+  NES_NOT_IMPLEMENTED
 }
 
 InputQuery& InputQuery::filter(const UserAPIExpression& predicate) {
@@ -122,8 +122,8 @@ InputQuery& InputQuery::map(const AttributeField& field,
   return *this;
 }
 
-InputQuery& InputQuery::combine(const iotdb::InputQuery& sub_query) {
-  IOTDB_NOT_IMPLEMENTED
+InputQuery& InputQuery::combine(const NES::InputQuery& sub_query) {
+  NES_NOT_IMPLEMENTED
 }
 
 InputQuery& InputQuery::join(const InputQuery& sub_query,
@@ -152,7 +152,7 @@ InputQuery& InputQuery::windowByKey(const AttributeFieldPtr onKey,
   return *this;
 }
 
-InputQuery& InputQuery::window(const iotdb::WindowTypePtr windowType,
+InputQuery& InputQuery::window(const NES::WindowTypePtr windowType,
                                const WindowAggregationPtr aggregation) {
   auto window_def_ptr = std::make_shared<WindowDefinition>(aggregation,
                                                            windowType);
@@ -234,4 +234,4 @@ void addChild(const OperatorPtr& op_parent, const OperatorPtr& op_child) {
   }
 }
 
-}  // namespace iotdb
+}  // namespace NES

@@ -1,11 +1,11 @@
-#ifndef IOTDB_INCLUDE_ARRAYVALUETYPE_HPP_
-#define IOTDB_INCLUDE_ARRAYVALUETYPE_HPP_
+#ifndef INCLUDE_ARRAYVALUETYPE_HPP_
+#define INCLUDE_ARRAYVALUETYPE_HPP_
 
 #pragma once
 
 #include <QueryCompiler/DataTypes/ValueType.hpp>
 
-namespace iotdb{
+namespace NES{
 
 class ArrayDataType;
 typedef std::shared_ptr<ArrayDataType> ArrayDataTypePtr;
@@ -51,4 +51,4 @@ class ArrayValueType : public ValueType {
 
 
 
-#endif //IOTDB_INCLUDE_ARRAYVALUETYPE_HPP_
+#endif //INCLUDE_ARRAYVALUETYPE_HPP_

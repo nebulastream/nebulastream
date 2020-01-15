@@ -1,7 +1,7 @@
 #ifndef INCLUDE_TOPOLOGY_TESTTOPOLOGY_HPP_
 #define INCLUDE_TOPOLOGY_TESTTOPOLOGY_HPP_
 
-namespace iotdb{
+namespace NES{
 //#include "NESTopologyPlan.hpp"
 #include <Catalogs/StreamCatalog.hpp>
 #include <Topology/NESTopologyManager.hpp>

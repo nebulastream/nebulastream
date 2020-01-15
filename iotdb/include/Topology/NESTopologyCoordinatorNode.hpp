@@ -10,7 +10,7 @@
 
 #define INVALID_NODE_ID 101
 
-namespace iotdb {
+namespace NES {
 
 /**\breif:
  *
@@ -159,5 +159,5 @@ class NESTopologyCoordinatorNode : public NESTopologyEntry {
 };
 
 typedef std::shared_ptr<NESTopologyCoordinatorNode> NESTopologyCoordinatorNodePtr;
-}  // namespace iotdb
+}  // namespace NES
 #endif

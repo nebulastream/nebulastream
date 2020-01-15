@@ -8,10 +8,10 @@
 #include <iostream>
 #include <random>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::YSBGeneratorSource);
-BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::YSBFunctor);
+BOOST_CLASS_EXPORT_IMPLEMENT(NES::YSBGeneratorSource);
+BOOST_CLASS_EXPORT_IMPLEMENT(NES::YSBFunctor);
 
-namespace iotdb {
+namespace NES {
 
 YSBFunctor::YSBFunctor(): campaingCnt(0)
 {
@@ -166,4 +166,4 @@ SourceType YSBGeneratorSource::getType() const {
     return YSB_SOURCE;
 }
 
-} // namespace iotdb
+} // namespace NES

@@ -10,7 +10,7 @@
 #include <SourceSink/DataSource.hpp>
 #include <cppkafka/configuration.h>
 
-namespace iotdb {
+namespace NES {
 
 class Operator;
 
@@ -163,6 +163,6 @@ class InputQuery {
 
 typedef std::shared_ptr<InputQuery> InputQueryPtr;
 
-} // namespace iotdb
+} // namespace NES
 
 #endif

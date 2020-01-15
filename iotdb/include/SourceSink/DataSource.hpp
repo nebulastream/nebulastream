@@ -9,7 +9,7 @@
 #include <thread>
 #include "../NodeEngine/TupleBuffer.hpp"
 
-namespace iotdb {
+namespace NES {
 
 enum SourceType {
     ZMQ_SOURCE,
@@ -148,6 +148,6 @@ class DataSource {
 
 typedef std::shared_ptr<DataSource> DataSourcePtr;
 
-}  // namespace iotdb
+}  // namespace NES
 
 #endif /* INCLUDE_DATASOURCE_H_ */

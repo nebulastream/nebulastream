@@ -15,7 +15,7 @@
 #include <Topology/NESTopologyGraph.hpp>
 #include "Util/CPUCapacity.hpp"
 
-using namespace iotdb;
+using namespace NES;
 
 /* - nesTopologyManager ---------------------------------------------------- */
 class NesTopologyManagerTest : public testing::Test {

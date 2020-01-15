@@ -1,7 +1,7 @@
 
 #include "../../include/Services/NESTopologyService.hpp"
 #include "../../include/Topology/NESTopologyManager.hpp"
-using namespace iotdb;
+using namespace NES;
 
 json::value NESTopologyService::getNESTopologyAsJson() {
 

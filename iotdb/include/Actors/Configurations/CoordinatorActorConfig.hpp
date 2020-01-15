@@ -3,7 +3,7 @@
 
 //#include <caf/all.hpp>
 
-namespace iotdb {
+namespace NES {
 /**
 * @brief The configuration file of the coordinator
 */

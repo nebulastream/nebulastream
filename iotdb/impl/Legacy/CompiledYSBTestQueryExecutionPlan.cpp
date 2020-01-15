@@ -3,9 +3,9 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <QEPs/CompiledYSBTestQueryExecutionPlan.hpp>
 #include <memory>
-BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::CompiledYSBTestQueryExecutionPlan);
+BOOST_CLASS_EXPORT_IMPLEMENT(NES::CompiledYSBTestQueryExecutionPlan);
 
-namespace iotdb{
+namespace NES{
 
 CompiledYSBTestQueryExecutionPlan::CompiledYSBTestQueryExecutionPlan()
     : HandCodedQueryExecutionPlan(), count(0), sum(0){

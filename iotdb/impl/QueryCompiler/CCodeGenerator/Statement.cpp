@@ -5,7 +5,7 @@
 #include <QueryCompiler/CCodeGenerator/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
 
-namespace iotdb {
+namespace NES {
 
 Statement::~Statement() {}
 
@@ -35,4 +35,4 @@ const DataTypePtr createAnnonymUserDefinedType(const std::string name) {
   return std::make_shared<AnnonymUserDefinedDataType>(name);
 }
 
-} // namespace iotdb
+} // namespace NES

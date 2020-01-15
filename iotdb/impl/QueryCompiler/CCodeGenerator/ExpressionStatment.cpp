@@ -2,7 +2,7 @@
 #include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
 
-namespace iotdb {
+namespace NES {
 
 BinaryOperatorStatement ExpressionStatment::operator[](const ExpressionStatment& ref)
 {
@@ -24,4 +24,4 @@ BinaryOperatorStatement ExpressionStatment::assign(const ExpressionStatment& ref
     return BinaryOperatorStatement(*this, ASSIGNMENT_OP, ref);
 }
 
-} // namespace iotdb
+} // namespace NES

@@ -5,7 +5,7 @@
 #include "../../include/NodeEngine/TupleBuffer.hpp"
 #include "../../include/SourceSink/DataSource.hpp"
 
-namespace iotdb {
+namespace NES {
 
 Task::Task(QueryExecutionPlanPtr _qep, uint32_t _pipeline_stage_id,
            const TupleBufferPtr pBuf)
@@ -26,4 +26,4 @@ size_t Task::getNumberOfTuples() {
     return buf->getNumberOfTuples();
   }
 
-}  // namespace iotdb
+}  // namespace NES

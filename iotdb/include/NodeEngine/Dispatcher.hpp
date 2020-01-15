@@ -14,7 +14,7 @@
 #include <SourceSink/DataSource.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <Windows/WindowHandler.hpp>
-namespace iotdb {
+namespace NES {
 
 /**
  * @brief the dispatcher is the central class to process queries.

@@ -9,7 +9,7 @@
 #include <Operators/Operator.hpp>
 #include <API/UserAPIExpression.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class MapOperator : public Operator {
   public:
@@ -27,4 +27,4 @@ class MapOperator : public Operator {
     AttributeFieldPtr field_;
 };
 
-} // namespace iotdb
+} // namespace NES

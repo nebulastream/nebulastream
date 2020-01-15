@@ -4,7 +4,7 @@
 #include <NodeEngine/Dispatcher.hpp>
 #include <Util/Logger.hpp>
 
-namespace iotdb {
+namespace NES {
 
 PrintSink::PrintSink(std::ostream& pOutputStream)
     : DataSink(),
@@ -20,7 +20,7 @@ PrintSink::~PrintSink() {
 }
 
 bool PrintSink::writeData(const TupleBufferPtr input_buffer) {
-    outputStream << iotdb::toString(input_buffer.get(), this->getSchema())
+    outputStream << NES::toString(input_buffer.get(), this->getSchema())
                  << std::endl;
     return true;
 }
@@ -43,5 +43,5 @@ SinkType PrintSink::getType() const {
     return PRINT_SINK;
 }
 
-}  // namespace iotdb
-BOOST_CLASS_EXPORT(iotdb::PrintSink);
+}  // namespace NES
+BOOST_CLASS_EXPORT(NES::PrintSink);

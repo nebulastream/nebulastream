@@ -1,10 +1,10 @@
-#ifndef IOTDB_INCLUDE_BASICDATATYPE_HPP_
-#define IOTDB_INCLUDE_BASICDATATYPE_HPP_
+#ifndef INCLUDE_BASICDATATYPE_HPP_
+#define INCLUDE_BASICDATATYPE_HPP_
 
 #pragma once
 
 #include <API/Types/DataTypes.hpp>
-namespace iotdb {
+namespace NES {
 class BasicDataType : public DataType {
  public:
   BasicDataType() = default;
@@ -47,4 +47,4 @@ class BasicDataType : public DataType {
   }
 };
 }
-#endif //IOTDB_INCLUDE_BASICDATATYPE_HPP_
+#endif //INCLUDE_BASICDATATYPE_HPP_

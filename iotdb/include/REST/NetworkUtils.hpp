@@ -6,7 +6,7 @@
 using namespace boost::asio;
 using namespace boost::asio::ip;
 
-namespace iotdb {
+namespace NES {
    
    using HostInetInfo = tcp::resolver::iterator;
 

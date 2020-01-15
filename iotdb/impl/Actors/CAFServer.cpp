@@ -2,7 +2,7 @@
 
 #include "Actors/CAFServer.hpp"
 #include <Util/Logger.hpp>
-using namespace iotdb;
+using namespace NES;
 using namespace caf;
 
 bool CAFServer::start(
@@ -16,7 +16,7 @@ bool CAFServer::start(
   //Setup then logging
   setupLogging();
 
-  IOTDB_DEBUG("*** trying to publish at port "
+  NES_DEBUG("*** trying to publish at port "
        << actorCoordinatorConfig.publish_port)
 
   io::unpublish(coordinatorActorHandle, actorCoordinatorConfig.publish_port);
@@ -24,11 +24,11 @@ bool CAFServer::start(
   auto expected_port = io::publish(coordinatorActorHandle,
                                    actorCoordinatorConfig.publish_port);
   if (!expected_port) {
-    IOTDB_ERROR("*** publish failed: "
+    NES_ERROR("*** publish failed: "
         << actorSystem.render(expected_port.error()))
     return false;
   }
-  IOTDB_DEBUG("*** coordinator successfully published at port " << *expected_port)
+  NES_DEBUG("*** coordinator successfully published at port " << *expected_port)
 
   //TODO: This code is to be migrated when we create CLI based client for interacting with the actor_system
 
@@ -114,7 +114,7 @@ bool CAFServer::start(
   string line;
   while (!done && std::getline(std::cin, line)) {
     cout << "line=" << line << " done=" << done << endl;
-    line = iotdb::UtilityFunctions::trim(std::move(line));  // ignore leading and trailing whitespaces
+    line = NES::UtilityFunctions::trim(std::move(line));  // ignore leading and trailing whitespaces
     std::vector<string> words;
     split(words, line, is_any_of(" "), token_compress_on);
     if (!message_builder(words.begin(), words.end()).apply(eval))
@@ -138,11 +138,11 @@ void CAFServer::setupLogging() {
   // create ConsoleAppender
   log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
 
-  iotdb::iotdbLogger->setLevel(log4cxx::Level::getDebug());
-  iotdb::iotdbLogger->addAppender(file);
-  iotdb::iotdbLogger->addAppender(console);
+  NES::NESLogger->setLevel(log4cxx::Level::getDebug());
+  NES::NESLogger->addAppender(file);
+  NES::NESLogger->addAppender(console);
 
   // set log level
-  log4cxx::Logger::getLogger("IOTDB")->setLevel(log4cxx::Level::getDebug());
+  log4cxx::Logger::getLogger("NES")->setLevel(log4cxx::Level::getDebug());
 }
 

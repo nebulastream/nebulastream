@@ -5,7 +5,7 @@
 #include <utility>
 #include <Util/Logger.hpp>
 
-namespace iotdb {
+namespace NES {
 
 BufferManager::BufferManager()
     : mutex(),
@@ -15,17 +15,17 @@ BufferManager::BufferManager()
 
   size_t initalBufferCnt = 1000;
   bufferSizeInByte = 4 * 1024;
-  IOTDB_DEBUG(
+  NES_DEBUG(
       "BufferManager: Set maximum number of buffer to " << initalBufferCnt << " and a bufferSize of KB:" << bufferSizeInByte / 1024)
 
-  IOTDB_DEBUG("BufferManager: initialize buffers")
+  NES_DEBUG("BufferManager: initialize buffers")
   for (size_t i = 0; i < initalBufferCnt; i++) {
     addOneBufferWithDefaultSize();
   }
 }
 
 BufferManager::~BufferManager() {
-  IOTDB_DEBUG("BufferManager: Enter Destructor of BufferManager.")
+  NES_DEBUG("BufferManager: Enter Destructor of BufferManager.")
 
   // Release memory.
   for (auto const &buffer_pool_entry : buffer_pool) {
@@ -91,19 +91,19 @@ bool BufferManager::removeBuffer(TupleBufferPtr tuple_buffer) {
   for (auto &entry : buffer_pool) {
     if (entry.first.get() == tuple_buffer.get()) {
       if (entry.second == true) {
-        IOTDB_DEBUG(
+        NES_DEBUG(
             "BufferManager: could not remove Buffer buffer because it is in use" << tuple_buffer)
         return false;
       }
 
       delete (char *) entry.first->getBuffer();
       buffer_pool.erase(tuple_buffer);
-      IOTDB_DEBUG(
+      NES_DEBUG(
           "BufferManager: found and remove Buffer buffer" << tuple_buffer)
       return true;
     }
   }
-  IOTDB_DEBUG(
+  NES_DEBUG(
       "BufferManager: could not remove buffer, buffer not found" << tuple_buffer)
   return false;
 }
@@ -116,7 +116,7 @@ TupleBufferPtr BufferManager::getBuffer() {
       bool used = false;
       if (entry.second.compare_exchange_weak(used, true)) {
         providedBuffer++;
-        IOTDB_DEBUG(
+        NES_DEBUG(
             "BufferManager: getBuffer() provide free buffer" << entry.first)
         return entry.first;
       }
@@ -124,7 +124,7 @@ TupleBufferPtr BufferManager::getBuffer() {
     //add wait
     noFreeBuffer++;
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    IOTDB_DEBUG("BufferManager: no buffer free yet --- retry")
+    NES_DEBUG("BufferManager: no buffer free yet --- retry")
   }
 }
 
@@ -148,12 +148,12 @@ bool BufferManager::releaseBuffer(const TupleBufferPtr tuple_buffer) {
   for (auto &entry : buffer_pool) {
     if (entry.first.get() == tuple_buffer.get()) {  //found entry
       entry.second = false;
-      IOTDB_DEBUG(
+      NES_DEBUG(
           "BufferManager: found buffer with useCnt " << entry.first->getUseCnt())
 
       if (entry.first->decrementUseCntAndTestForZero()) {
 
-        IOTDB_DEBUG("BufferManager: release buffer as useCnt gets zero")
+        NES_DEBUG("BufferManager: release buffer as useCnt gets zero")
         //reset buffer for next use
         entry.first->setNumberOfTuples(0);
         entry.first->setTupleSizeInBytes(0);
@@ -162,21 +162,21 @@ bool BufferManager::releaseBuffer(const TupleBufferPtr tuple_buffer) {
       }
       else
       {
-        IOTDB_DEBUG("BufferManager: Dont release buffer as useCnt gets " << entry.first->getUseCnt())
+        NES_DEBUG("BufferManager: Dont release buffer as useCnt gets " << entry.first->getUseCnt())
       }
 
       return true;
     }
   }
-  IOTDB_ERROR("BufferManager: buffer not found")
+  NES_ERROR("BufferManager: buffer not found")
   return false;
 }
 
 void BufferManager::printStatistics() {
-  IOTDB_INFO("BufferManager Statistics:")
-  IOTDB_INFO("\t noFreeBuffer=" << noFreeBuffer)
-  IOTDB_INFO("\t providedBuffer=" << providedBuffer)
-  IOTDB_INFO("\t releasedBuffer=" << releasedBuffer)
+  NES_INFO("BufferManager Statistics:")
+  NES_INFO("\t noFreeBuffer=" << noFreeBuffer)
+  NES_INFO("\t providedBuffer=" << providedBuffer)
+  NES_INFO("\t releasedBuffer=" << releasedBuffer)
 }
 
-}  // namespace iotdb
+}  // namespace NES

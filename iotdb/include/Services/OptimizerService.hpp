@@ -1,12 +1,12 @@
-#ifndef IOTDB_IMPL_SERVICES_OPTIMIZERSERVICE_H_
-#define IOTDB_IMPL_SERVICES_OPTIMIZERSERVICE_H_
+#ifndef IMPL_SERVICES_OPTIMIZERSERVICE_H_
+#define IMPL_SERVICES_OPTIMIZERSERVICE_H_
 
 #include <string>
 #include <cpprest/json.h>
 #include <API/InputQuery.hpp>
 #include <Optimizer/NESExecutionPlan.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class OptimizerService {
 
@@ -33,4 +33,4 @@ class OptimizerService {
 };
 }
 
-#endif //IOTDB_IMPL_SERVICES_OPTIMIZERSERVICE_H_
+#endif //IMPL_SERVICES_OPTIMIZERSERVICE_H_

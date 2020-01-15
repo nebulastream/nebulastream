@@ -6,7 +6,7 @@
 
 using namespace web;
 using namespace http;
-using namespace iotdb;
+using namespace NES;
 using namespace std;
 
 void RestController::initRestOpHandlers() {
@@ -235,7 +235,7 @@ void RestController::handleMerge(http_request message) {
 
 json::value RestController::responseNotImpl(const http::method &method) {
   auto response = json::value::object();
-  response["serviceName"] = json::value::string("IotDB");
+  response["serviceName"] = json::value::string("NES");
   response["http_method"] = json::value::string(method);
   return response;
 }

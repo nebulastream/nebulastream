@@ -1,5 +1,5 @@
-#ifndef IOTDB_QUERYPLANBUILDER_HPP
-#define IOTDB_QUERYPLANBUILDER_HPP
+#ifndef QUERYPLANBUILDER_HPP
+#define QUERYPLANBUILDER_HPP
 
 #include <API/InputQuery.hpp>
 #if defined(__APPLE__) || defined(__MACH__)
@@ -9,7 +9,7 @@
 
 using namespace web;
 
-namespace iotdb {
+namespace NES {
 
 class OperatorJsonUtil {
 
@@ -23,4 +23,4 @@ class OperatorJsonUtil {
 };
 }
 
-#endif //IOTDB_QUERYPLANBUILDER_HPP
+#endif //QUERYPLANBUILDER_HPP

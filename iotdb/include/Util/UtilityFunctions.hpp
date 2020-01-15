@@ -7,7 +7,7 @@
 /**
  * @brief a collection of shared utility functions
  */
-namespace iotdb {
+namespace NES {
 
 class UtilityFunctions {
  public:
