@@ -1,12 +1,12 @@
-#ifndef IOTDB_INCLUDE_BASICVALUETYPE_HPP_
-#define IOTDB_INCLUDE_BASICVALUETYPE_HPP_
+#ifndef INCLUDE_BASICVALUETYPE_HPP_
+#define INCLUDE_BASICVALUETYPE_HPP_
 
 #pragma once
 
 #include <API/Types/DataTypes.hpp>
 #include <QueryCompiler/DataTypes/ValueType.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class BasicValueType : public ValueType {
  public:
@@ -40,4 +40,4 @@ class BasicValueType : public ValueType {
 };
 }
 
-#endif //IOTDB_INCLUDE_BASICVALUETYPE_HPP_
+#endif //INCLUDE_BASICVALUETYPE_HPP_

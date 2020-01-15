@@ -1,10 +1,10 @@
-#ifndef IOTDB_INCLUDE_API_WINDOW_WINDOWTYPE_HPP_
-#define IOTDB_INCLUDE_API_WINDOW_WINDOWTYPE_HPP_
+#ifndef INCLUDE_API_WINDOW_WINDOWTYPE_HPP_
+#define INCLUDE_API_WINDOW_WINDOWTYPE_HPP_
 
 #include <API/AbstractWindowDefinition.hpp>
 #include <API/Window/WindowMeasure.hpp>
 #include <vector>
-namespace iotdb {
+namespace NES {
 
 
 /**
@@ -92,4 +92,4 @@ class SessionWindow : public WindowType {
 };
 }
 
-#endif //IOTDB_INCLUDE_API_WINDOW_WINDOWTYPE_HPP_
+#endif //INCLUDE_API_WINDOW_WINDOWTYPE_HPP_

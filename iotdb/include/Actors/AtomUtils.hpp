@@ -1,5 +1,5 @@
-#ifndef IOTDB_INCLUDE_ACTORS_ATOMUTILS_HPP_
-#define IOTDB_INCLUDE_ACTORS_ATOMUTILS_HPP_
+#ifndef INCLUDE_ACTORS_ATOMUTILS_HPP_
+#define INCLUDE_ACTORS_ATOMUTILS_HPP_
 
 #include <string>
 
@@ -8,7 +8,7 @@ using std::cerr;
 using std::endl;
 using std::string;
 
-namespace iotdb {
+namespace NES {
 using namespace caf;
 constexpr auto task_timeout = std::chrono::seconds(3);
 
@@ -45,5 +45,5 @@ using set_type_atom = atom_constant<atom("s_type")>;
 using get_type_atom = atom_constant<atom("g_type")>;
 }
 
-#endif //IOTDB_INCLUDE_ACTORS_ATOMUTILS_HPP_
+#endif //INCLUDE_ACTORS_ATOMUTILS_HPP_
 

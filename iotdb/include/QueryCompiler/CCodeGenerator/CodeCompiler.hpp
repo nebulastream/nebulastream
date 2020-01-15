@@ -7,7 +7,7 @@
 #include <vector>
 
 
-namespace iotdb {
+namespace NES {
 class PipelineStage;
 typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
 
@@ -85,6 +85,6 @@ class CCodeCompiler {
 void exportSourceToFile(const std::string& filename, const std::string& source);
 void pretty_print_code(const std::string& source);
 
-} // namespace iotdb
+} // namespace NES
 
 #endif // C_CODE_COMPILER_HPP

@@ -1,5 +1,5 @@
-#ifndef IOTDB_NESEXECUTIONPLAN_HPP
-#define IOTDB_NESEXECUTIONPLAN_HPP
+#ifndef NESEXECUTIONPLAN_HPP
+#define NESEXECUTIONPLAN_HPP
 
 #include <Optimizer/ExecutionNode.hpp>
 #include <Optimizer/ExecutionNodeLink.hpp>
@@ -9,7 +9,7 @@
 #endif
 #include <cpprest/json.h>
 
-namespace iotdb {
+namespace NES {
 
 using namespace web;
 
@@ -115,4 +115,4 @@ class NESExecutionPlan {
 
 }
 
-#endif //IOTDB_NESEXECUTIONPLAN_HPP
+#endif //NESEXECUTIONPLAN_HPP

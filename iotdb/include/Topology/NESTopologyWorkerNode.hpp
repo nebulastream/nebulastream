@@ -9,7 +9,7 @@
 #include <Util/CPUCapacity.hpp>
 #include "NESTopologyEntry.hpp"
 
-namespace iotdb {
+namespace NES {
 
 /**
  * @brief: This class represent a worker node in nes topology. When you create a worker node you need to use the
@@ -158,5 +158,5 @@ class NESTopologyWorkerNode : public NESTopologyEntry {
 };
 
 typedef std::shared_ptr<NESTopologyWorkerNode> NESTopologyWorkerNodePtr;
-}  // namespace iotdb
+}  // namespace NES
 #endif /* INCLUDE_TOPOLOGY_NESTOPOLOGYWORKERNODE_HPP_ */

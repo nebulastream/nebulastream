@@ -8,7 +8,7 @@
 #include <SourceSink/DataSource.hpp>
 #include "../NodeEngine/TupleBuffer.hpp"
 
-namespace iotdb {
+namespace NES {
 
 class YSBFunctor {
 public:
@@ -51,16 +51,16 @@ class YSBGeneratorSource : public DataSource {
         //		ar & copyBuffer;
     }
 
-    iotdb::YSBFunctor functor;
+    NES::YSBFunctor functor;
     bool preGenerated;
     TupleBufferPtr copyBuffer;
 };
 
-} // namespace iotdb
+} // namespace NES
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
-BOOST_CLASS_EXPORT_KEY(iotdb::YSBGeneratorSource)
-BOOST_CLASS_EXPORT_KEY(iotdb::YSBFunctor)
+BOOST_CLASS_EXPORT_KEY(NES::YSBGeneratorSource)
+BOOST_CLASS_EXPORT_KEY(NES::YSBFunctor)
 
 #endif /* INCLUDE_YSB_LEGACY_YSBGENERATORSOURCE_HPP_ */

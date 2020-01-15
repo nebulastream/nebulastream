@@ -2,12 +2,12 @@
  *          Contains information about the list of operators and the node where the operators are to be executed.
  */
 
-#ifndef IOTDB_EXECUTIONNODE_HPP
-#define IOTDB_EXECUTIONNODE_HPP
+#ifndef EXECUTIONNODE_HPP
+#define EXECUTIONNODE_HPP
 
 #include "../Topology/NESTopologyEntry.hpp"
 
-namespace iotdb {
+namespace NES {
 
 using namespace std;
 
@@ -69,4 +69,4 @@ class ExecutionNode {
 typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
 }
 
-#endif //IOTDB_EXECUTIONNODE_HPP
+#endif //EXECUTIONNODE_HPP

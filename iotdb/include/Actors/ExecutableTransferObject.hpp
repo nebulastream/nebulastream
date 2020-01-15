@@ -1,9 +1,5 @@
-//
-// Created by xchatziliadis on 19.11.19.
-//
-
-#ifndef IOTDB_INCLUDE_ACTORS_EXECUTABLETRANSFEROBJECT_HPP_
-#define IOTDB_INCLUDE_ACTORS_EXECUTABLETRANSFEROBJECT_HPP_
+#ifndef INCLUDE_ACTORS_EXECUTABLETRANSFEROBJECT_HPP_
+#define INCLUDE_ACTORS_EXECUTABLETRANSFEROBJECT_HPP_
 
 #include <API/Schema.hpp>
 #include <SourceSink/DataSource.hpp>
@@ -22,7 +18,7 @@
 using std::string;
 using std::vector;
 
-namespace iotdb {
+namespace NES {
 
 class ExecutableTransferObject {
  public:
@@ -75,4 +71,4 @@ class ExecutableTransferObject {
 
 }
 
-#endif //IOTDB_INCLUDE_ACTORS_EXECUTABLETRANSFEROBJECT_HPP_
+#endif //INCLUDE_ACTORS_EXECUTABLETRANSFEROBJECT_HPP_

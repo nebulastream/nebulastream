@@ -9,7 +9,7 @@
 #include "caf/io/all.hpp"
 #include <Catalogs/PhysicalStreamConfig.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class StreamCatalogRemoteTest : public testing::Test {
  public:
@@ -20,7 +20,7 @@ class StreamCatalogRemoteTest : public testing::Test {
 
   static void SetUpTestCase() {
     setupLogging();
-    IOTDB_INFO("Setup StreamCatalogRemoteTest test class.");
+    NES_INFO("Setup StreamCatalogRemoteTest test class.");
   }
 
   static void TearDownTestCase() {
@@ -43,12 +43,11 @@ class StreamCatalogRemoteTest : public testing::Test {
         new log4cxx::ConsoleAppender(layoutPtr));
 
     // set log level
-    iotdbLogger->setLevel(log4cxx::Level::getDebug());
-//    iotdbLogger->setLevel(log4cxx::Level::getInfo());
+    NESLogger->setLevel(log4cxx::Level::getDebug());
 
 // add appenders and other will inherit the settings
-    iotdbLogger->addAppender(file);
-    iotdbLogger->addAppender(console);
+    NESLogger->addAppender(file);
+    NESLogger->addAppender(console);
   }
 };
 
@@ -57,7 +56,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_log_stream_remote_test) {
   CoordinatorActorConfig c_cfg;
   c_cfg.load<io::middleman>();
   actor_system system_coord { c_cfg };
-  auto coordinator = system_coord.spawn<iotdb::CoordinatorActor>();
+  auto coordinator = system_coord.spawn<NES::CoordinatorActor>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << c_cfg.publish_port << endl;
@@ -75,7 +74,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_log_stream_remote_test) {
   w_cfg.load<io::middleman>();
   actor_system sw { w_cfg };
   PhysicalStreamConfig streamConf;  //streamConf.physicalStreamName
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
+  auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
                                              w_cfg.receive_port);
 
   //create test schema
@@ -109,7 +108,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_existing_log_stream_remote_test) {
   CoordinatorActorConfig c_cfg;
   c_cfg.load<io::middleman>();
   actor_system system_coord { c_cfg };
-  auto coordinator = system_coord.spawn<iotdb::CoordinatorActor>();
+  auto coordinator = system_coord.spawn<NES::CoordinatorActor>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << c_cfg.publish_port << endl;
@@ -127,7 +126,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_existing_log_stream_remote_test) {
   w_cfg.load<io::middleman>();
   actor_system sw { w_cfg };
   PhysicalStreamConfig streamConf;  //streamConf.physicalStreamName
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
+  auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
                                              w_cfg.receive_port);
 
   //create test schema
@@ -169,7 +168,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_remove_empty_log_stream_remote_test) {
   CoordinatorActorConfig c_cfg;
   c_cfg.load<io::middleman>();
   actor_system system_coord { c_cfg };
-  auto coordinator = system_coord.spawn<iotdb::CoordinatorActor>();
+  auto coordinator = system_coord.spawn<NES::CoordinatorActor>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << c_cfg.publish_port << endl;
@@ -186,7 +185,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_remove_empty_log_stream_remote_test) {
   WorkerActorConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw { w_cfg };
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
+  auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
                                              w_cfg.receive_port);
 
   //create test schema
@@ -228,7 +227,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_remove_not_empty_log_stream_remote_test
   CoordinatorActorConfig c_cfg;
   c_cfg.load<io::middleman>();
   actor_system system_coord { c_cfg };
-  auto coordinator = system_coord.spawn<iotdb::CoordinatorActor>();
+  auto coordinator = system_coord.spawn<NES::CoordinatorActor>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << c_cfg.publish_port << endl;
@@ -245,7 +244,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_remove_not_empty_log_stream_remote_test
   WorkerActorConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw { w_cfg };
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
+  auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
                                              w_cfg.receive_port);
 
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
@@ -269,7 +268,7 @@ TEST_F(StreamCatalogRemoteTest, add_physical_to_existing_logical_stream_remote_t
   CoordinatorActorConfig c_cfg;
   c_cfg.load<io::middleman>();
   actor_system system_coord { c_cfg };
-  auto coordinator = system_coord.spawn<iotdb::CoordinatorActor>();
+  auto coordinator = system_coord.spawn<NES::CoordinatorActor>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << c_cfg.publish_port << endl;
@@ -287,7 +286,7 @@ TEST_F(StreamCatalogRemoteTest, add_physical_to_existing_logical_stream_remote_t
   w_cfg.load<io::middleman>();
   actor_system sw { w_cfg };
   PhysicalStreamConfig streamConf;  //streamConf.physicalStreamName
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
+  auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
                                              w_cfg.receive_port);
 
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
@@ -322,7 +321,7 @@ TEST_F(StreamCatalogRemoteTest, add_physical_to_new_logical_stream_remote_test) 
   CoordinatorActorConfig c_cfg;
   c_cfg.load<io::middleman>();
   actor_system system_coord { c_cfg };
-  auto coordinator = system_coord.spawn<iotdb::CoordinatorActor>();
+  auto coordinator = system_coord.spawn<NES::CoordinatorActor>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << c_cfg.publish_port << endl;
@@ -340,7 +339,7 @@ TEST_F(StreamCatalogRemoteTest, add_physical_to_new_logical_stream_remote_test) 
   w_cfg.load<io::middleman>();
   actor_system sw { w_cfg };
   PhysicalStreamConfig streamConf;  //streamConf.physicalStreamName
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
+  auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
                                              w_cfg.receive_port);
 
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
@@ -387,7 +386,7 @@ TEST_F(StreamCatalogRemoteTest, remove_physical_from_new_logical_stream_remote_t
   CoordinatorActorConfig c_cfg;
   c_cfg.load<io::middleman>();
   actor_system system_coord { c_cfg };
-  auto coordinator = system_coord.spawn<iotdb::CoordinatorActor>();
+  auto coordinator = system_coord.spawn<NES::CoordinatorActor>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << c_cfg.publish_port << endl;
@@ -405,7 +404,7 @@ TEST_F(StreamCatalogRemoteTest, remove_physical_from_new_logical_stream_remote_t
   w_cfg.load<io::middleman>();
   actor_system sw { w_cfg };
   PhysicalStreamConfig streamConf;  //streamConf.physicalStreamName
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
+  auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
                                              w_cfg.receive_port);
 
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);
@@ -433,7 +432,7 @@ TEST_F(StreamCatalogRemoteTest, remove_not_existing_stream_remote_test) {
   CoordinatorActorConfig c_cfg;
   c_cfg.load<io::middleman>();
   actor_system system_coord { c_cfg };
-  auto coordinator = system_coord.spawn<iotdb::CoordinatorActor>();
+  auto coordinator = system_coord.spawn<NES::CoordinatorActor>();
 
   // try to publish actor at given port
   cout << "*** try publish at port " << c_cfg.publish_port << endl;
@@ -451,7 +450,7 @@ TEST_F(StreamCatalogRemoteTest, remove_not_existing_stream_remote_test) {
   w_cfg.load<io::middleman>();
   actor_system sw { w_cfg };
   PhysicalStreamConfig streamConf;  //streamConf.physicalStreamName
-  auto worker = sw.spawn<iotdb::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
+  auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
                                              w_cfg.receive_port);
 
   anon_send(worker, connect_atom::value, w_cfg.host, c_cfg.publish_port);

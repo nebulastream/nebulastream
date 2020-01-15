@@ -6,7 +6,7 @@
 #include <NodeEngine/Dispatcher.hpp>
 #include <Util/Logger.hpp>
 
-namespace iotdb {
+namespace NES {
 
 struct __attribute__((packed)) ysbRecordOut {
     char campaign_id[16];
@@ -33,21 +33,21 @@ bool YSBPrintSink::writeData(const TupleBufferPtr input_buffer) {
 
     ysbRecordOut* recordBuffer = (ysbRecordOut*) input_buffer->getBuffer();
     //	Schema s = Schema::create().addField("",UINT32);
-    //	std::cout << iotdb::toString(input_buffer,s) << std::endl;
+    //	std::cout << NES::toString(input_buffer,s) << std::endl;
     for (size_t u = 0; u < input_buffer->getNumberOfTuples(); u++) {
         //		std::cout << "id=" << recordBuffer[u].id << std::endl;
         //		std::cout << " ms=" << recordBuffer[u].current_ms << std::endl;
         //		std::cout << " type=" << std::string(recordBuffer[u].event_type) << std::endl;
         //		std::cout << " camp=" << std::string(recordBuffer[u].campaign_id) << std::endl;
 
-        IOTDB_INFO("YSBPrintSink: tuple:" << u << " = "
+        NES_INFO("YSBPrintSink: tuple:" << u << " = "
                                           << " id=" << recordBuffer[u].id << " campaign=" << recordBuffer[u].campaign_id
                                           << " type=" << recordBuffer[u].event_type
                                           << " timestamp=" << recordBuffer[u].current_ms)
 
         sentTuples++;
     }
-    IOTDB_INFO(" ============= YSBPrintSink: FINISHED ============")
+    NES_INFO(" ============= YSBPrintSink: FINISHED ============")
     sentBuffer++;
 
     // Dispatcher::instance().releaseBuffer(input_buffer);
@@ -64,4 +64,4 @@ SinkType YSBPrintSink::getType() const {
     return YSB_SINK;
 }
 
-} // namespace iotdb
+} // namespace NES

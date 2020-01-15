@@ -8,7 +8,7 @@
 #include <API/ParameterTypes.hpp>
 #include <Operators/Operator.hpp>
 
-namespace iotdb {
+namespace NES {
 
     class WindowOperator : public Operator {
     public:
@@ -36,4 +36,4 @@ namespace iotdb {
       WindowDefinitionPtr window_definition;
     };
 
-} // namespace iotdb
+} // namespace NES

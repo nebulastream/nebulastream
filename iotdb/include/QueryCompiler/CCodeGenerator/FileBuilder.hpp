@@ -10,7 +10,7 @@
 
 #include <API/Types/DataTypes.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class CodeFile {
   public:
@@ -32,4 +32,4 @@ class FileBuilder {
     CodeFile build();
 };
 
-} // namespace iotdb
+} // namespace NES

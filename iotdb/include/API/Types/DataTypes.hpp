@@ -11,7 +11,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class DataType;
 typedef std::shared_ptr<DataType> DataTypePtr;
@@ -90,5 +90,5 @@ const ValueTypePtr createStringValueType(const std::string &value);
 const ValueTypePtr createStringValueType(const char *value, u_int16_t dimension = 0);
 const ValueTypePtr createArrayValueType(const BasicType &type, const std::vector<std::string> &value);
 
-} // namespace iotdb
+} // namespace NES
 #endif

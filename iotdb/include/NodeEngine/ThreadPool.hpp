@@ -4,7 +4,7 @@
 #include <iostream>
 #include <thread>
 #include <vector>
-namespace iotdb {
+namespace NES {
 
 /**
  * @brief the tread pool handles the dynamic scheduling of tasks during runtime
@@ -95,6 +95,6 @@ class ThreadPool {
 
   std::vector<std::thread> threads;
 };
-}  // namespace iotdb
+}  // namespace NES
 
 #endif /* THREADPOOL_H_ */

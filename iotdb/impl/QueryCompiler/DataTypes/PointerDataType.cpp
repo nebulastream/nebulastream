@@ -2,7 +2,7 @@
 #include <QueryCompiler/CodeExpression.hpp>
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
 
-namespace iotdb {
+namespace NES {
 
 PointerDataType::PointerDataType(const DataTypePtr &type) : DataType(), base_type_(type) {}
 ValueTypePtr PointerDataType::getDefaultInitValue() const { return ValueTypePtr(); }
@@ -47,7 +47,7 @@ const DataTypePtr PointerDataType::copy() const {
 }
 
 bool PointerDataType::operator==(const DataType &_rhs) const {
-  auto rhs = dynamic_cast<const iotdb::PointerDataType &>(_rhs);
+  auto rhs = dynamic_cast<const NES::PointerDataType &>(_rhs);
   return base_type_ == rhs.base_type_;
 }
 

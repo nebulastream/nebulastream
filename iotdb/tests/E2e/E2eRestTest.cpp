@@ -28,20 +28,20 @@ using namespace concurrency::streams;
 // Asynchronous streams
 namespace bp = boost::process;
 
-namespace iotdb {
+namespace NES {
 
 class E2eRestTest : public testing::Test {
  public:
   string host = "localhost";
   int port = 8081;
-  string url = "http://localhost:8081/v1/iotdb/service/execute-query";
+  string url = "http://localhost:8081/v1/nes/service/execute-query";
   std::string outputFilePath = "blob.txt";
   int coordinatorPid;
   int workerPid;
 
   static void SetUpTestCase() {
     setupLogging();
-    IOTDB_INFO("Setup E2e test class.");
+    NES_INFO("Setup E2e test class.");
   }
 
   static void TearDownTestCase() {
@@ -68,11 +68,11 @@ class E2eRestTest : public testing::Test {
 
     // set log level
     // logger->setLevel(log4cxx::Level::getDebug());
-    iotdbLogger->setLevel(log4cxx::Level::getInfo());
+    NESLogger->setLevel(log4cxx::Level::getInfo());
 
     // add appenders and other will inherit the settings
-    iotdbLogger->addAppender(file);
-    iotdbLogger->addAppender(console);
+    NESLogger->addAppender(file);
+    NESLogger->addAppender(console);
   }
 
   static void startProcess(string cmd) {
@@ -113,7 +113,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
   web::json::value json_return;
 
   web::http::client::http_client client(
-      "http://localhost:8081/v1/iotdb/service/execute-query");
+      "http://localhost:8081/v1/nes/service/execute-query");
   client.request(web::http::methods::POST, U("/"), body).then(
       [](const web::http::http_response& response) {
         cout << "get first then" << endl;
@@ -173,7 +173,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
   web::json::value json_return;
 
   web::http::client::http_client client(
-      "http://localhost:8081/v1/iotdb/service/execute-query");
+      "http://localhost:8081/v1/nes/service/execute-query");
   client.request(web::http::methods::POST, U("/"), body).then(
       [](const web::http::http_response& response) {
         cout << "get first then" << endl;

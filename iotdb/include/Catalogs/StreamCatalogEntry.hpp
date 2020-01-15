@@ -4,7 +4,7 @@
 #include <string>
 #include <Topology/NESTopologyEntry.hpp>
 
-namespace iotdb {
+namespace NES {
 /**
  * @brief one entry in the catalog contains
  *    - the dataSource that can be created there

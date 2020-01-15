@@ -1,11 +1,11 @@
-#ifndef IOTDB_TOPDOWN_HPP
-#define IOTDB_TOPDOWN_HPP
+#ifndef TOPDOWN_HPP
+#define TOPDOWN_HPP
 
 #include <Operators/Operator.hpp>
 #include <stack>
 #include "../NESPlacementOptimizer.hpp"
 
-namespace iotdb {
+namespace NES {
 
 using namespace std;
 
@@ -24,4 +24,4 @@ class TopDown : public NESPlacementOptimizer {
 };
 
 }
-#endif //IOTDB_TOPDOWN_HPP
+#endif //TOPDOWN_HPP

@@ -28,7 +28,7 @@ using std::string;
 namespace po = boost::program_options;
 
 using namespace caf;
-using namespace iotdb;
+using namespace NES;
 
 #define DEFAULT_NUMBER_OF_WORKER_INSTANCES 1
 
@@ -52,12 +52,12 @@ void start_worker(actor_system &system, const WorkerActorConfig &cfg,
       };
   usage();
 
-  infer_handle_from_class_t<iotdb::WorkerActor> client;
+  infer_handle_from_class_t<NES::WorkerActor> client;
 
   PhysicalStreamConfig defaultConf;
 
   for (size_t i = 1; i <= numberOfWorker; i++) {
-    client = system.spawn<iotdb::WorkerActor>(cfg.ip, cfg.publish_port,
+    client = system.spawn<NES::WorkerActor>(cfg.ip, cfg.publish_port,
                                               cfg.receive_port);
     if (!cfg.host.empty() && cfg.publish_port > 0) {
       //send connect message to worker to try to connect
@@ -112,7 +112,7 @@ eval(
   // read next line, split it, and feed to the eval handler
   string line;
   while (!done && std::getline(std::cin, line)) {
-    line = iotdb::UtilityFunctions::trim(std::move(line));  // ignore leading and trailing whitespaces
+    line = NES::UtilityFunctions::trim(std::move(line));  // ignore leading and trailing whitespaces
     std::vector<string> words;
     split(words, line, is_any_of(" "), token_compress_on);
     if (!message_builder(words.begin(), words.end()).apply(eval))
@@ -134,10 +134,10 @@ static void setupLogging() {
   log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
 
   // set log level
-  iotdb::iotdbLogger->setLevel(log4cxx::Level::getDebug());
+  NES::NESLogger->setLevel(log4cxx::Level::getDebug());
   // add appenders and other will inherit the settings
-  iotdb::iotdbLogger->addAppender(file);
-  iotdb::iotdbLogger->addAppender(console);
+  NES::NESLogger->addAppender(file);
+  NES::NESLogger->addAppender(console);
 }
 
 void caf_main(actor_system &system, WorkerActorConfig &cfg,

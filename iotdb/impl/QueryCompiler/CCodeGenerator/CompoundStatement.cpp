@@ -7,7 +7,7 @@
 
 #include <API/Types/DataTypes.hpp>
 
-namespace iotdb {
+namespace NES {
 
   CompoundStatement::CompoundStatement()
       : statements_()
@@ -37,4 +37,4 @@ namespace iotdb {
 
   }
 
-} // namespace iotdb
+} // namespace NES

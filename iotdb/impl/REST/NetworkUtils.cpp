@@ -1,6 +1,6 @@
 #include "REST/NetworkUtils.hpp"
 
-namespace iotdb {
+namespace NES {
 
    HostInetInfo NetworkUtils::queryHostInetInfo() {
        io_service ios;

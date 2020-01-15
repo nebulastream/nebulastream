@@ -4,20 +4,20 @@
 #include <QueryCompiler/CCodeGenerator/CodeCompiler.hpp>
 #include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
 
-namespace iotdb {
+namespace NES {
 
-WindowAggregation::WindowAggregation(const iotdb::AttributeFieldPtr onField) : _onField(onField), _asField(
+WindowAggregation::WindowAggregation(const NES::AttributeFieldPtr onField) : _onField(onField), _asField(
     const_cast<AttributeFieldPtr &>(onField)) {
 }
 
-WindowAggregation &WindowAggregation::as(const iotdb::AttributeFieldPtr asField) {
+WindowAggregation &WindowAggregation::as(const NES::AttributeFieldPtr asField) {
   this->_asField = asField;
   return *this;
 }
 
-Sum::Sum(iotdb::Field onField) : WindowAggregation(onField.getAttributeField()) {}
+Sum::Sum(NES::Field onField) : WindowAggregation(onField.getAttributeField()) {}
 
-WindowAggregationPtr Sum::on(iotdb::Field onField) {
+WindowAggregationPtr Sum::on(NES::Field onField) {
   return std::make_shared<Sum>(Sum(onField));
 }
 

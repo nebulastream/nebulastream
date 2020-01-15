@@ -1,11 +1,11 @@
 
-#ifndef IOTDB_STATEMANAGER_HPP
-#define IOTDB_STATEMANAGER_HPP
+#ifndef STATEMANAGER_HPP
+#define STATEMANAGER_HPP
 
 #include <State/StateVariable.hpp>
 #include <mutex>
 #include <unordered_map>
-namespace iotdb {
+namespace NES {
 
 /**
  * This class is the entry point for stateful operators that require state
@@ -47,4 +47,4 @@ public:
     static StateManager& instance();
 };
 }
-#endif //IOTDB_STATEMANAGER_HPP
+#endif //STATEMANAGER_HPP

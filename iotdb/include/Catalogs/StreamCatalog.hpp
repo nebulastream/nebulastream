@@ -11,7 +11,7 @@
 #include <Topology/NESTopologyEntry.hpp>
 #include <Catalogs/StreamCatalogEntry.hpp>
 using namespace std;
-namespace iotdb {
+namespace NES {
 
 /**
  * @brief the stream catalog handles the mapping of logical to physical streams

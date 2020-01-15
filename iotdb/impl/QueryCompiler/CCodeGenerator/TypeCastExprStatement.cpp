@@ -7,6 +7,6 @@
 #include <QueryCompiler/CodeExpression.hpp>
 #include <API/Types/DataTypes.hpp>
 
-namespace iotdb {
+namespace NES {
 
 }

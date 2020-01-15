@@ -11,7 +11,7 @@
 
 #include <SourceSink/DataSink.hpp>
 
-namespace iotdb {
+namespace NES {
 
 /**
  * @brief this class implements the File output sink
@@ -80,11 +80,11 @@ class FileOutputSink : public DataSink {
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataSink);
     }
 };
-}  // namespace iotdb
+}  // namespace NES
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
-BOOST_CLASS_EXPORT_KEY(iotdb::FileOutputSink)
+BOOST_CLASS_EXPORT_KEY(NES::FileOutputSink)
 
 #endif // FILEOUTPUTSINK_HPP

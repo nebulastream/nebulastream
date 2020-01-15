@@ -8,7 +8,7 @@
 #include <set>
 #include "../../include/Topology/NESTopologySensorNode.hpp"
 
-using namespace iotdb;
+using namespace NES;
 using namespace web;
 
 ExecutionNodePtr ExecutionGraph::getRoot() {
@@ -237,7 +237,7 @@ const std::vector<ExecutionEdge> ExecutionGraph::getAllEdgesToNode(ExecutionNode
   return result;
 }
 
-const vector<ExecutionEdge> ExecutionGraph::getAllEdgesFromNode(iotdb::ExecutionNodePtr srcNode) const {
+const vector<ExecutionEdge> ExecutionGraph::getAllEdgesFromNode(NES::ExecutionNodePtr srcNode) const {
   std::vector<ExecutionEdge> result = {};
 
   executionEdge_iterator edge, edge_end, next_edge;
@@ -398,10 +398,10 @@ void NESExecutionPlan::freeResources() {
   for (const ExecutionVertex &v: getExecutionGraph()->getAllVertex()) {
     if (v.ptr->getRootOperator()) {
       // TODO: change that when proper placement is fixed
-      IOTDB_INFO("NESEXECUTIONPLAN: Capacity before-" << v.ptr->getNESNode()->getId() << "->" << v.ptr->getNESNode()->getRemainingCpuCapacity())
+      NES_INFO("NESEXECUTIONPLAN: Capacity before-" << v.ptr->getNESNode()->getId() << "->" << v.ptr->getNESNode()->getRemainingCpuCapacity())
       int usedCapacity = v.ptr->getNESNode()->getCpuCapacity() - v.ptr->getNESNode()->getRemainingCpuCapacity();
       v.ptr->getNESNode()->increaseCpuCapacity(usedCapacity);
-      IOTDB_INFO("NESEXECUTIONPLAN: Capacity after-" << v.ptr->getNESNode()->getId() << "->" << v.ptr->getNESNode()->getRemainingCpuCapacity())
+      NES_INFO("NESEXECUTIONPLAN: Capacity after-" << v.ptr->getNESNode()->getId() << "->" << v.ptr->getNESNode()->getRemainingCpuCapacity())
     }
   }
 }

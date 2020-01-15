@@ -1,8 +1,8 @@
-#ifndef IOTDB_INCLUDE_NODEENGINE_MEMORYLAYOUT_ROWLAYOUT_HPP_
-#define IOTDB_INCLUDE_NODEENGINE_MEMORYLAYOUT_ROWLAYOUT_HPP_
+#ifndef INCLUDE_NODEENGINE_MEMORYLAYOUT_ROWLAYOUT_HPP_
+#define INCLUDE_NODEENGINE_MEMORYLAYOUT_ROWLAYOUT_HPP_
 
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
-namespace iotdb {
+namespace NES {
 
 class RowLayout : public MemoryLayout {
  public:
@@ -15,4 +15,4 @@ class RowLayout : public MemoryLayout {
 
 }
 
-#endif //IOTDB_INCLUDE_NODEENGINE_MEMORYLAYOUT_ROWLAYOUT_HPP_
+#endif //INCLUDE_NODEENGINE_MEMORYLAYOUT_ROWLAYOUT_HPP_

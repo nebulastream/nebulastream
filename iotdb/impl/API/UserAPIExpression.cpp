@@ -9,7 +9,7 @@
 #include <API/UserAPIExpression.hpp>
 #include <API/Types/DataTypes.hpp>
 #include <Util/Logger.hpp>
-namespace iotdb {
+namespace NES {
 
 Predicate::Predicate(const BinaryOperatorType &op,
                      const UserAPIExpressionPtr left,
@@ -68,26 +68,26 @@ const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCode &code) con
       VariableDeclaration var_decl_attr = code.struct_decl_input_tuple.getVariableDeclaration(_attribute->name);
       return ((VarRef(code.var_decl_input_tuple)[VarRef(*code.var_decl_id)]).accessRef(VarRef(var_decl_attr))).copy();
     } else {
-      IOTDB_ERROR("Could not Retrieve Attribute from StructDeclaration!");
+      NES_ERROR("Could not Retrieve Attribute from StructDeclaration!");
     }
   } else if (_value) {
     return ConstantExprStatement(_value).copy();
   } else {
-    IOTDB_ERROR("PredicateItem has only NULL Pointers!");
+    NES_ERROR("PredicateItem has only NULL Pointers!");
   }
 }
 
 const std::string Predicate::toString() const {
   std::stringstream stream;
   if (_bracket) stream << "(";
-  stream << _left->toString() << " " << ::iotdb::toCodeExpression(_op)->code_ << " " << _right->toString() << " ";
+  stream << _left->toString() << " " << ::NES::toCodeExpression(_op)->code_ << " " << _right->toString() << " ";
   if (_bracket) stream << ")";
   return stream.str();
 }
 
 bool Predicate::equals(const UserAPIExpression &_rhs) const {
   try {
-    auto rhs = dynamic_cast<const iotdb::Predicate &>(_rhs);
+    auto rhs = dynamic_cast<const NES::Predicate &>(_rhs);
     if ((_left == nullptr && rhs._left == nullptr) || (_left->equals(*rhs._left.get()))) {
       if ((_right == nullptr && rhs._right == nullptr) || (_right->equals(*rhs._right.get()))) {
         return _op == rhs._op && _bracket == rhs._bracket && _functionCallOverload == rhs._functionCallOverload;
@@ -171,7 +171,7 @@ UserAPIExpressionPtr PredicateItem::copy() const {
 
 bool PredicateItem::equals(const UserAPIExpression &_rhs) const {
   try {
-    auto rhs = dynamic_cast<const iotdb::PredicateItem &>(_rhs);
+    auto rhs = dynamic_cast<const NES::PredicateItem &>(_rhs);
     if ((_attribute == nullptr && rhs._attribute == nullptr) || (*_attribute.get() == *rhs._attribute.get())) {
       if ((_value == nullptr && rhs._value == nullptr) || (*_value.get() == *rhs._value.get())) {
         return _mutation == rhs._mutation;
@@ -189,7 +189,7 @@ Field::Field(AttributeFieldPtr field) : PredicateItem(field), _name(field->name)
 const PredicatePtr createPredicate(const UserAPIExpression &expression) {
   PredicatePtr value = std::dynamic_pointer_cast<Predicate>(expression.copy());
   if (!value) {
-    IOTDB_ERROR("UserAPIExpression is not a predicate")
+    NES_ERROR("UserAPIExpression is not a predicate")
   }
   return value;
 }
@@ -268,23 +268,23 @@ Predicate operator<=(const UserAPIExpression &lhs, const PredicateItem &rhs) {
   return operator<=(lhs, dynamic_cast<const UserAPIExpression &>(rhs));
 }
 Predicate operator+(const UserAPIExpression &lhs, const PredicateItem &rhs) {
-  if (rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
+  if (rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) NES_ERROR("NOT A NUMERICAL VALUE")
   return operator+(lhs, dynamic_cast<const UserAPIExpression &>(rhs));
 }
 Predicate operator-(const UserAPIExpression &lhs, const PredicateItem &rhs) {
-  if (rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
+  if (rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) NES_ERROR("NOT A NUMERICAL VALUE")
   return operator-(lhs, dynamic_cast<const UserAPIExpression &>(rhs));
 }
 Predicate operator*(const UserAPIExpression &lhs, const PredicateItem &rhs) {
-  if (rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
+  if (rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) NES_ERROR("NOT A NUMERICAL VALUE")
   return operator*(lhs, dynamic_cast<const UserAPIExpression &>(rhs));
 }
 Predicate operator/(const UserAPIExpression &lhs, const PredicateItem &rhs) {
-  if (rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
+  if (rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) NES_ERROR("NOT A NUMERICAL VALUE")
   return operator/(lhs, dynamic_cast<const UserAPIExpression &>(rhs));
 }
 Predicate operator%(const UserAPIExpression &lhs, const PredicateItem &rhs) {
-  if (rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
+  if (rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) NES_ERROR("NOT A NUMERICAL VALUE")
   return operator%(lhs, dynamic_cast<const UserAPIExpression &>(rhs));
 }
 Predicate operator&&(const UserAPIExpression &lhs, const PredicateItem &rhs) {
@@ -325,23 +325,23 @@ Predicate operator<=(const PredicateItem &lhs, const UserAPIExpression &rhs) {
   return operator<=(dynamic_cast<const UserAPIExpression &>(lhs), rhs);
 }
 Predicate operator+(const PredicateItem &lhs, const UserAPIExpression &rhs) {
-  if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
+  if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) NES_ERROR("NOT A NUMERICAL VALUE")
   return operator+(dynamic_cast<const UserAPIExpression &>(lhs), rhs);
 }
 Predicate operator-(const PredicateItem &lhs, const UserAPIExpression &rhs) {
-  if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
+  if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) NES_ERROR("NOT A NUMERICAL VALUE")
   return operator-(dynamic_cast<const UserAPIExpression &>(lhs), rhs);
 }
 Predicate operator*(const PredicateItem &lhs, const UserAPIExpression &rhs) {
-  if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
+  if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) NES_ERROR("NOT A NUMERICAL VALUE")
   return operator*(dynamic_cast<const UserAPIExpression &>(lhs), rhs);
 }
 Predicate operator/(const PredicateItem &lhs, const UserAPIExpression &rhs) {
-  if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
+  if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) NES_ERROR("NOT A NUMERICAL VALUE")
   return operator/(dynamic_cast<const UserAPIExpression &>(lhs), rhs);
 }
 Predicate operator%(const PredicateItem &lhs, const UserAPIExpression &rhs) {
-  if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
+  if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) NES_ERROR("NOT A NUMERICAL VALUE")
   return operator%(dynamic_cast<const UserAPIExpression &>(lhs), rhs);
 }
 Predicate operator&&(const PredicateItem &lhs, const UserAPIExpression &rhs) {
@@ -373,7 +373,7 @@ Predicate operator==(const PredicateItem &lhs, const PredicateItem &rhs) {
   //possible use of memcmp when arraytypes equal with length is equal...
   int checktype = lhs.isStringType();
   checktype += rhs.isStringType();
-  if (checktype == 1) IOTDB_ERROR("NOT COMPARABLE TYPES")
+  if (checktype == 1) NES_ERROR("NOT COMPARABLE TYPES")
   if (checktype == 2) return Predicate(BinaryOperatorType::EQUAL_OP, lhs.copy(), rhs.copy(), "strcmp", false);
   return (dynamic_cast<const UserAPIExpression &>(lhs) == dynamic_cast<const UserAPIExpression &>(rhs));
 }
@@ -394,27 +394,27 @@ Predicate operator<=(const PredicateItem &lhs, const PredicateItem &rhs) {
 }
 Predicate operator+(const PredicateItem &lhs, const PredicateItem &rhs) {
   if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))
-      || rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
+      || rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) NES_ERROR("NOT A NUMERICAL VALUE")
   return operator+(dynamic_cast<const UserAPIExpression &>(lhs), dynamic_cast<const UserAPIExpression &>(rhs));
 }
 Predicate operator-(const PredicateItem &lhs, const PredicateItem &rhs) {
   if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))
-      || rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
+      || rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) NES_ERROR("NOT A NUMERICAL VALUE")
   return operator-(dynamic_cast<const UserAPIExpression &>(lhs), dynamic_cast<const UserAPIExpression &>(rhs));
 }
 Predicate operator*(const PredicateItem &lhs, const PredicateItem &rhs) {
   if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))
-      || rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
+      || rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) NES_ERROR("NOT A NUMERICAL VALUE")
   return operator*(dynamic_cast<const UserAPIExpression &>(lhs), dynamic_cast<const UserAPIExpression &>(rhs));
 }
 Predicate operator/(const PredicateItem &lhs, const PredicateItem &rhs) {
   if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))
-      || rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
+      || rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) NES_ERROR("NOT A NUMERICAL VALUE")
   return operator/(dynamic_cast<const UserAPIExpression &>(lhs), dynamic_cast<const UserAPIExpression &>(rhs));
 }
 Predicate operator%(const PredicateItem &lhs, const PredicateItem &rhs) {
   if (lhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))
-      || rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) IOTDB_ERROR("NOT A NUMERICAL VALUE")
+      || rhs.getDataTypePtr()->isEqual(createDataType(BasicType::CHAR))) NES_ERROR("NOT A NUMERICAL VALUE")
   return operator%(dynamic_cast<const UserAPIExpression &>(lhs), dynamic_cast<const UserAPIExpression &>(rhs));
 }
 Predicate operator&&(const PredicateItem &lhs, const PredicateItem &rhs) {
@@ -435,6 +435,6 @@ Predicate operator<<(const PredicateItem &lhs, const PredicateItem &rhs) {
 Predicate operator>>(const PredicateItem &lhs, const PredicateItem &rhs) {
   return operator>>(dynamic_cast<const UserAPIExpression &>(lhs), dynamic_cast<const UserAPIExpression &>(rhs));
 }
-} //end namespace iotdb
-BOOST_CLASS_EXPORT(iotdb::Predicate);
-BOOST_CLASS_EXPORT(iotdb::PredicateItem);
+} //end namespace NES
+BOOST_CLASS_EXPORT(NES::Predicate);
+BOOST_CLASS_EXPORT(NES::PredicateItem);

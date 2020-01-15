@@ -4,7 +4,7 @@
 #include <Topology/NESTopologyManager.hpp>
 #include <Util/Logger.hpp>
 
-using namespace iotdb;
+using namespace NES;
 using namespace web;
 using namespace std;
 
@@ -15,14 +15,14 @@ json::value OptimizerService::getExecutionPlanAsJson(InputQueryPtr inputQuery, s
 NESExecutionPlan OptimizerService::getExecutionPlan(InputQueryPtr inputQuery, string optimizationStrategyName) {
   NESTopologyManager &nesTopologyManager = NESTopologyManager::getInstance();
   const NESTopologyPlanPtr &topologyPlan = nesTopologyManager.getNESTopologyPlan();
-  IOTDB_DEBUG("OptimizerService: topology=" << topologyPlan->getTopologyPlanString())
+  NES_DEBUG("OptimizerService: topology=" << topologyPlan->getTopologyPlanString())
 
   NESOptimizer queryOptimizer;
 
   OperatorJsonUtil operatorJsonUtil;
   const json::value &basePlan = operatorJsonUtil.getBasePlan(inputQuery);
 
-  IOTDB_DEBUG("OptimizerService: query plan=" << basePlan)
+  NES_DEBUG("OptimizerService: query plan=" << basePlan)
 
   return queryOptimizer.prepareExecutionGraph(optimizationStrategyName, inputQuery, topologyPlan);
 }

@@ -16,7 +16,7 @@
 #include <SourceSink/DataSink.hpp>
 #include <Util/Logger.hpp>
 
-namespace iotdb {
+namespace NES {
 
 GeneratedCode::GeneratedCode()
     : variable_decls(),
@@ -74,7 +74,7 @@ class CCodeGenerator : public CodeGenerator {
   virtual bool generateCode(const PredicatePtr &pred, const PipelineContextPtr &context, std::ostream &out) override;
   virtual bool generateCode(const AttributeFieldPtr field,
                             const PredicatePtr &pred,
-                            const iotdb::PipelineContextPtr &context,
+                            const NES::PipelineContextPtr &context,
                             std::ostream &out) override;
   virtual bool generateCode(const DataSinkPtr &sink, const PipelineContextPtr &context, std::ostream &out) override;
   virtual bool generateCode(const WindowDefinitionPtr &window,
@@ -172,7 +172,7 @@ std::string toString(TupleBuffer *buffer, const Schema &schema) {
   std::vector<DataTypePtr> types;
   for (uint32_t i = 0; i < schema.getSize(); ++i) {
     offsets.push_back(schema[i]->getFieldSize());
-    IOTDB_DEBUG(std::string("Field Size ") + schema[i]->toString() + std::string(": ") +
+    NES_DEBUG(std::string("Field Size ") + schema[i]->toString() + std::string(": ") +
         std::to_string(schema[i]->getFieldSize()));
     types.push_back(schema[i]->getDataType());
   }
@@ -182,7 +182,7 @@ std::string toString(TupleBuffer *buffer, const Schema &schema) {
     uint32_t val = offsets[i];
     offsets[i] = prefix_sum;
     prefix_sum += val;
-    IOTDB_DEBUG(std::string("Prefix Sum: ") + schema[i]->toString() + std::string(": ") +
+    NES_DEBUG(std::string("Prefix Sum: ") + schema[i]->toString() + std::string(": ") +
         std::to_string(offsets[i]));
   }
 
@@ -243,7 +243,7 @@ bool CCodeGenerator::generateCode(const DataSourcePtr &source, const PipelineCon
   VariableDeclaration var_decl_window =
       VariableDeclaration::create(createPointerDataType(createAnnonymUserDefinedType("void")), "state_var");
   VariableDeclaration var_decl_window_manager =
-      VariableDeclaration::create(createPointerDataType(createAnnonymUserDefinedType("iotdb::WindowManager")),
+      VariableDeclaration::create(createPointerDataType(createAnnonymUserDefinedType("NES::WindowManager")),
                                   "window_manager");
 
   code_.var_decl_tuple_buffers = var_decl_tuple_buffers;
@@ -343,7 +343,7 @@ bool CCodeGenerator::generateCode(const PredicatePtr &pred, const PipelineContex
  */
 bool CCodeGenerator::generateCode(const AttributeFieldPtr field,
                                    const PredicatePtr &pred,
-                                   const iotdb::PipelineContextPtr &context,
+                                   const NES::PipelineContextPtr &context,
                                    std::ostream &out) {
 
   StructDeclaration struct_decl_result_tuple = (getStructDeclarationFromSchema("result_tuples", result_schema_));
@@ -396,9 +396,9 @@ bool CCodeGenerator::generateCode(const DataSinkPtr &sink, const PipelineContext
   for (size_t i = 0; i < result_schema_.getSize(); ++i) {
     VariableDeclarationPtr var_decl = getVariableDeclarationForField(struct_decl_result_tuple, result_schema_[i]);
     if (!var_decl) {
-      IOTDB_ERROR("Could not extract field " << result_schema_[i]->toString() << " from struct "
+      NES_ERROR("Could not extract field " << result_schema_[i]->toString() << " from struct "
                                                    << struct_decl_result_tuple.getTypeName());
-      IOTDB_DEBUG("W>");
+      NES_DEBUG("W>");
     }
     code_.variable_decls.push_back(*var_decl);
 
@@ -453,7 +453,7 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr &window,
 
   auto state_var = VariableDeclaration::create(
       createPointerDataType(createAnnonymUserDefinedType(
-          "iotdb::StateVariable<int64_t, iotdb::WindowSliceStore<int64_t>*>")), "state_variable");
+          "NES::StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>")), "state_variable");
 
   auto state_var_decl = VarDeclStatement(state_var)
       .assign(TypeCast(VarRef(code_.var_decl_state), state_var.getDataType()));
@@ -492,7 +492,7 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr &window,
   // TODO add support for event time
   auto current_time_var = VariableDeclaration::create(
       createAnnonymUserDefinedType("auto"), "current_ts");
-  auto getCurrentTs = FunctionCallStatement("iotdb::getTsFromClock");
+  auto getCurrentTs = FunctionCallStatement("NES::getTsFromClock");
   auto getCurrentTsStatement = VarDeclStatement(current_time_var)
       .assign(getCurrentTs);
   code_.current_code_insertion_point->addStatement(std::make_shared<BinaryOperatorStatement>(getCurrentTsStatement));
@@ -581,7 +581,7 @@ PipelineStagePtr CCodeGenerator::compile(const CompilerArgs &) {
   CodeFile file = file_builder.addDeclaration(func_builder.build()).build();
 
   PipelineStagePtr stage;
-  stage = iotdb::compile(file);
+  stage = NES::compile(file);
   return stage;
 }
 
@@ -589,4 +589,4 @@ CCodeGenerator::~CCodeGenerator() {}
 
 CodeGeneratorPtr createCodeGenerator() { return std::make_shared<CCodeGenerator>(CodeGenArgs()); }
 
-} // namespace iotdb
+} // namespace NES

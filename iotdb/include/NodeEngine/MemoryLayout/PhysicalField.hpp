@@ -1,9 +1,9 @@
-#ifndef IOTDB_INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELD_HPP_
-#define IOTDB_INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELD_HPP_
+#ifndef INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELD_HPP_
+#define INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELD_HPP_
 
 #include <memory>
 #include <NodeEngine/TupleBuffer.hpp>
-namespace iotdb {
+namespace NES {
 class PhysicalField;
 typedef std::shared_ptr<PhysicalField> PhysicalFieldPtr;
 
@@ -49,4 +49,4 @@ class BasicPhysicalField : public PhysicalField {
 };
 }
 
-#endif //IOTDB_INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELD_HPP_
+#endif //INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELD_HPP_

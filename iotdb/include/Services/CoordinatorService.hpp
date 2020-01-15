@@ -1,5 +1,5 @@
-#ifndef IOTDB_INCLUDE_ACTORS_COORDINATORSERVICE_HPP_
-#define IOTDB_INCLUDE_ACTORS_COORDINATORSERVICE_HPP_
+#ifndef INCLUDE_ACTORS_COORDINATORSERVICE_HPP_
+#define INCLUDE_ACTORS_COORDINATORSERVICE_HPP_
 
 #include <SourceSink/DataSource.hpp>
 #include <Util/SerializationTools.hpp>
@@ -28,7 +28,7 @@
 
 using std::string;
 
-namespace iotdb {
+namespace NES {
 
 class CoordinatorService;
 typedef std::shared_ptr<CoordinatorService> CoordinatorServicePtr;
@@ -174,4 +174,4 @@ class CoordinatorService {
 };
 
 }
-#endif //IOTDB_INCLUDE_ACTORS_COORDINATORSERVICE_HPP_
+#endif //INCLUDE_ACTORS_COORDINATORSERVICE_HPP_

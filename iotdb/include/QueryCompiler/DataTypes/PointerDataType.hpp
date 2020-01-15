@@ -1,11 +1,11 @@
-#ifndef IOTDB_INCLUDE_POINTERDATATYPE_HPP_
-#define IOTDB_INCLUDE_POINTERDATATYPE_HPP_
+#ifndef INCLUDE_POINTERDATATYPE_HPP_
+#define INCLUDE_POINTERDATATYPE_HPP_
 
 #pragma once
 
 #include <API/Types/DataTypes.hpp>
 
-namespace iotdb {
+namespace NES {
 class PointerDataType : public DataType {
  public:
   PointerDataType() = default;
@@ -47,4 +47,4 @@ class PointerDataType : public DataType {
   }
 };
 }
-#endif //IOTDB_INCLUDE_POINTERDATATYPE_HPP_
+#endif //INCLUDE_POINTERDATATYPE_HPP_

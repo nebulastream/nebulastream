@@ -6,7 +6,7 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/export.hpp>
 
-namespace iotdb {
+namespace NES {
 
 BasicDataType::BasicDataType(const BasicType &_type) : type(_type), dataSize(0) {}
 
@@ -142,7 +142,7 @@ const DataTypePtr BasicDataType::copy() const {
 }
 
 bool BasicDataType::operator==(const DataType &_rhs) const {
-  auto rhs = dynamic_cast<const iotdb::BasicDataType &>(_rhs);
+  auto rhs = dynamic_cast<const NES::BasicDataType &>(_rhs);
   return type == rhs.type && dataSize == rhs.dataSize;
 }
 
@@ -162,4 +162,4 @@ const DataTypePtr createDataTypeVarChar(const uint32_t &size) {
 }
 
 }
-BOOST_CLASS_EXPORT(iotdb::BasicDataType);
+BOOST_CLASS_EXPORT(NES::BasicDataType);

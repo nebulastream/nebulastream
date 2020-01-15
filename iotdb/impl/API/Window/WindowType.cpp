@@ -4,15 +4,15 @@
 #include <vector>
 #include <Util/Logger.hpp>
 
-namespace iotdb {
+namespace NES {
 
-TumblingWindow::TumblingWindow(iotdb::TimeMeasure size) : _size(size) {}
+TumblingWindow::TumblingWindow(NES::TimeMeasure size) : _size(size) {}
 
-WindowTypePtr TumblingWindow::of(iotdb::TimeMeasure size) {
+WindowTypePtr TumblingWindow::of(NES::TimeMeasure size) {
   return std::make_shared<TumblingWindow>(TumblingWindow(size));
 }
 
-void TumblingWindow::triggerWindows(iotdb::WindowListPtr windows,
+void TumblingWindow::triggerWindows(NES::WindowListPtr windows,
                                     uint64_t lastWatermark,
                                     uint64_t currentWatermark) const {
   long lastStart = lastWatermark - ((lastWatermark + _size.getTime()) % _size.getTime());
@@ -22,29 +22,29 @@ void TumblingWindow::triggerWindows(iotdb::WindowListPtr windows,
 }
 
 
-SlidingWindow::SlidingWindow(iotdb::TimeMeasure size, iotdb::TimeMeasure slide) : _size(size), _slide(slide) {}
+SlidingWindow::SlidingWindow(NES::TimeMeasure size, NES::TimeMeasure slide) : _size(size), _slide(slide) {}
 
-WindowTypePtr SlidingWindow::of(iotdb::TimeMeasure size, TimeMeasure slide) {
+WindowTypePtr SlidingWindow::of(NES::TimeMeasure size, TimeMeasure slide) {
   return std::make_shared<SlidingWindow>(SlidingWindow(size, slide));
 }
 
-void SlidingWindow::triggerWindows(iotdb::WindowListPtr windows,
+void SlidingWindow::triggerWindows(NES::WindowListPtr windows,
                                     uint64_t lastWatermark,
                                     uint64_t currentWatermark) const {
-  IOTDB_NOT_IMPLEMENTED
+  NES_NOT_IMPLEMENTED
 }
 
 
-SessionWindow::SessionWindow(iotdb::TimeMeasure gap) : _gap(gap) {}
+SessionWindow::SessionWindow(NES::TimeMeasure gap) : _gap(gap) {}
 
-WindowTypePtr SessionWindow::withGap(iotdb::TimeMeasure gap) {
+WindowTypePtr SessionWindow::withGap(NES::TimeMeasure gap) {
   return std::make_shared<SessionWindow>(SessionWindow(gap));
 }
 
-void SessionWindow::triggerWindows(iotdb::WindowListPtr windows,
+void SessionWindow::triggerWindows(NES::WindowListPtr windows,
                                    uint64_t lastWatermark,
                                    uint64_t currentWatermark) const {
-  IOTDB_NOT_IMPLEMENTED
+  NES_NOT_IMPLEMENTED
 }
 
 WindowState::WindowState(uint64_t start, uint64_t an_end) : start(start), end(an_end) {}

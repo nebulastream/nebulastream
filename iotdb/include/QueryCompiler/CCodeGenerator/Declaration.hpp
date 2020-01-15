@@ -9,7 +9,7 @@
 #include <QueryCompiler/CodeExpression.hpp>
 #include "API/Types/DataTypes.hpp"
 
-namespace iotdb {
+namespace NES {
 
 typedef std::string Code;
 
@@ -112,4 +112,4 @@ class FunctionDeclaration : public Declaration {
     const DeclarationPtr copy() const override;
 };
 
-} // namespace iotdb
+} // namespace NES

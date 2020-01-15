@@ -6,7 +6,7 @@
 static std::condition_variable _condition;
 static std::mutex _mutex;
 
-namespace iotdb {
+namespace NES {
 
     class InterruptHandler {
     public:

@@ -3,7 +3,7 @@
 
 #include <cassert>
 #include <string>
-namespace iotdb {
+namespace NES {
 
 class InputType {
   public:
@@ -38,5 +38,5 @@ class InputType {
   private:
     InputTypeEnum type;
 };
-} // namespace iotdb
+} // namespace NES
 #endif // API_INPUT_TYPES_H

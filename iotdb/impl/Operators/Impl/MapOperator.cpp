@@ -8,7 +8,7 @@
 #include <API/UserAPIExpression.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 
-namespace iotdb {
+namespace NES {
 
 MapOperator::MapOperator(AttributeFieldPtr field, PredicatePtr ptr) : predicate_(ptr), field_(field) {}
 
@@ -17,7 +17,7 @@ MapOperator::MapOperator(const MapOperator& other) : predicate_(other.predicate_
 MapOperator& MapOperator::operator=(const MapOperator& other)
 {
    if (this != &other) {
-        predicate_ = iotdb::copy(other.predicate_);
+        predicate_ = NES::copy(other.predicate_);
         field_ = other.field_->copy();
     }
     return *this;
@@ -57,4 +57,4 @@ const OperatorPtr createMapOperator(AttributeFieldPtr field, PredicatePtr ptr)
     return std::make_shared<MapOperator>(field, ptr);
 }
 
-} // namespace iotdb
+} // namespace NES

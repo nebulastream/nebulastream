@@ -8,7 +8,7 @@
 #include "../SourceSink/DataSink.hpp"
 #include "../SourceSink/DataSource.hpp"
 
-namespace iotdb {
+namespace NES {
 class QueryExecutionPlan;
 typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 
@@ -72,6 +72,6 @@ class QueryExecutionPlan {
 };
 const QueryExecutionPlanPtr createTestQEP();
 
-}  // namespace iotdb
+}  // namespace NES
 
 #endif /* INCLUDE_QUERYEXECUTIONPLAN_H_ */

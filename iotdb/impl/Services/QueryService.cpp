@@ -2,7 +2,7 @@
 #include "Services/QueryService.hpp"
 #include <Util/UtilityFunctions.hpp>
 
-using namespace iotdb;
+using namespace NES;
 
 json::value QueryService::generateBaseQueryPlanFromQueryString(std::string userQuery) {
 

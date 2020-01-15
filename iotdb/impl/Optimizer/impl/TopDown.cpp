@@ -1,6 +1,6 @@
 #include "Optimizer/impl/TopDown.hpp"
 #include <Util/Logger.hpp>
-using namespace iotdb;
+using namespace NES;
 
 NESExecutionPlan TopDown::initializeExecutionPlan(
     InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan) {
@@ -51,7 +51,7 @@ void TopDown::placeOperators(NESExecutionPlan executionGraph,
   //  as the source. Refer issue 122.
 
   if (sourceNodes.empty()) {
-    IOTDB_ERROR("Unable to find the source node to place the operator");
+    NES_ERROR("Unable to find the source node to place the operator");
     throw "No available source node found in the network to place the operator";
   }
 

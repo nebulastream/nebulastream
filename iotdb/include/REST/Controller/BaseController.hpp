@@ -11,7 +11,7 @@
 using namespace web;
 using namespace http::experimental::listener;
 
-namespace iotdb {
+namespace NES {
     class BaseController {
     protected:
         http_listener _listener; // main micro service network endpoint

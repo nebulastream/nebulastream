@@ -16,11 +16,10 @@
 #include <Topology/NESTopologyWorkerNode.hpp>
 #include <Util/CPUCapacity.hpp>
 #include <Util/Logger.hpp>
-namespace iotdb {
+namespace NES {
 
 std::vector<NESTopologyEntryPtr> NESTopologyPlan::getNodeByIp(std::string ip)
 {
-//  IOTDB_NOT_IMPLEMENTED
    return fGraphPtr->getVertexByIp(ip);
 }
 
@@ -87,7 +86,7 @@ NESTopologyLinkPtr NESTopologyPlan::createNESTopologyLink(NESTopologyEntryPtr pS
   bool success = fGraphPtr->addEdge(linkPtr);
   if(!success)
   {
-    IOTDB_ERROR("NESTopologyPlan: could not add node");
+    NES_ERROR("NESTopologyPlan: could not add node");
     return nullptr;
   }
   return linkPtr;
@@ -117,4 +116,4 @@ NESGraphPtr NESTopologyPlan::getNESGraph() const {
   return fGraphPtr;
 }
 
-} // namespace iotdb
+} // namespace NES

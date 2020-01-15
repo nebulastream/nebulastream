@@ -1,5 +1,5 @@
 #include <Topology/NESTopologyGraph.hpp>
-namespace iotdb {
+namespace NES {
 
 
 /* NESGraph ------------------------------------------------------------ */

@@ -1,11 +1,11 @@
 
-#ifndef IOTDB_QUERYSERVICE_HPP
-#define IOTDB_QUERYSERVICE_HPP
+#ifndef QUERYSERVICE_HPP
+#define QUERYSERVICE_HPP
 
 #include <API/InputQuery.hpp>
 #include <cpprest/json.h>
 
-namespace iotdb {
+namespace NES {
 
 /**\brief:
  *          This class is used for serving different requests related to user query.
@@ -39,4 +39,4 @@ class QueryService {
 
 };
 
-#endif //IOTDB_QUERYSERVICE_HPP
+#endif //QUERYSERVICE_HPP
