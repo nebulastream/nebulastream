@@ -9,7 +9,7 @@
 
 using namespace caf;
 
-namespace iotdb {
+namespace NES {
 
   class StreamCatalogController : public BaseController, Controller {
     public:
