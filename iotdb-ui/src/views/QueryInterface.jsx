@@ -105,7 +105,7 @@ export default class QueryInterface extends React.Component {
     }
 
     getQueryPlan(userQuery) {
-        fetch('http://127.0.0.1:8081/v1/iotdb/service/query-plan', {
+        fetch('http://127.0.0.1:8081/v1/nes/service/query-plan', {
                 method: 'POST',
                 headers: {
                     Accept: 'application/json',
@@ -139,7 +139,7 @@ export default class QueryInterface extends React.Component {
     }
 
     getNESTopology() {
-        fetch('http://127.0.0.1:8081/v1/iotdb/service/nes-topology', {
+        fetch('http://127.0.0.1:8081/v1/nes/service/nes-topology', {
                 method: 'GET',
                 headers: {
                     Accept: 'application/json',
@@ -174,7 +174,7 @@ export default class QueryInterface extends React.Component {
     getExecutionPlan(userQuery, strategyName) {
         this.getQueryPlan(userQuery);
         this.setState({selectedStrategy: strategyName});
-        fetch('http://127.0.0.1:8081/v1/iotdb/service/execution-plan', {
+        fetch('http://127.0.0.1:8081/v1/nes/service/execution-plan', {
                 method: 'POST',
                 headers: {
                     Accept: 'application/json',
