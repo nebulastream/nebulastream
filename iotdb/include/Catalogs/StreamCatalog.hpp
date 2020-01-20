@@ -136,6 +136,12 @@ class StreamCatalog {
   std::string getLogicalStreamAndSchemaAsString();
 
   /**
+   * @brief Return a list of logical stream names registered at catalog
+   * @return
+   */
+  std::vector<std::string> getAllLogicalStreamNames();
+
+  /**
    * @brief method to return the physical stream and the associated schemas
    * @return string containing the content of the catalog
    */

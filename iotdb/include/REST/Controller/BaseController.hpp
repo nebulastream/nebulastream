@@ -5,6 +5,7 @@
 #endif
 #include <string>
 #include <cpprest/http_listener.h>
+#include <cpprest/details/http_server.h>
 #include <pplx/pplxtasks.h>
 #include <REST/controller.hpp>
 
