@@ -94,7 +94,6 @@ class CoordinatorService {
   //FIXME: right now we do not register query but rather the nes plan
   /**
    * @brief: get the registered query
-   *
    * @param queryId
    * @return the nes execution plan for the query
    */
@@ -107,8 +106,6 @@ class CoordinatorService {
 
   bool clearQueryCatalogs();
 
-  const unordered_map<string, tuple<Schema, NESExecutionPlan>>& getRegisteredQueries() const;
-  const unordered_map<string, tuple<Schema, NESExecutionPlan>>& getRunningQueries() const;
 
  private:
 
@@ -116,8 +113,7 @@ class CoordinatorService {
 
   unordered_map<string, int> queryToPort;
   shared_ptr<NESTopologyManager> topologyManagerPtr;
-  unordered_map<string, tuple<Schema, NESExecutionPlan>> registeredQueries;
-  unordered_map<string, tuple<Schema, NESExecutionPlan>> runningQueries;
+
 
   OptimizerService optimizerService;
   QueryService queryService;
