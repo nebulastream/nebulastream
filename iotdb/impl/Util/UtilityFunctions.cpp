@@ -39,7 +39,7 @@ InputQueryPtr UtilityFunctions::createQueryFromCodeString(
       //we will get the schema from the catalog, if stream does not exists this will through an exception
       std::string streamName = query_code_snippet.substr(
           query_code_snippet.find("::from("));
-      streamName = streamName.substr(7, streamName.find(").") - 7);
+      streamName = streamName.substr(7, streamName.find(")") - 7);
       std::cout << " stream name = " << streamName << std::endl;
       code
           << "StreamPtr sPtr = StreamCatalog::instance().getStreamForLogicalStreamOrThrowException(\""
