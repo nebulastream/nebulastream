@@ -130,14 +130,8 @@ class StreamCatalog {
   void reset();
 
   /**
-   * @brief method to return the logical stream and the associated schemas
-   * @return string containing the content of the catalog
-   */
-  std::string getLogicalStreamAndSchemaAsString();
-
-  /**
    * @brief Return a list of logical stream names registered at catalog
-   * @return
+   * @return map containing stream name as key and schema object as value
    */
   std::map<std::string, SchemaPtr> getAllLogicalStream();
 

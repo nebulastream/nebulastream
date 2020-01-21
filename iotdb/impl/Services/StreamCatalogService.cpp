@@ -1,13 +1,15 @@
+#include <Util/Logger.hpp>
 #include "Services/StreamCatalogService.hpp"
 
 namespace NES {
 
-bool StreamCatalogService::addNewLogicalStream(std::string& streamName, std::string& streamSchema) {
+bool StreamCatalogService::addNewLogicalStream(const std::string& streamName, const std::string& streamSchema) {
     SchemaPtr schema = UtilityFunctions::createSchemaFromCode(streamSchema);
+    NES_DEBUG("StreamCatalogService: schema successfully created")
     return StreamCatalog::instance().addLogicalStream(streamName, schema);
 }
 
-bool StreamCatalogService::removeLogicalStream(std::string& streamName) {
+bool StreamCatalogService::removeLogicalStream(const std::string& streamName) {
     return StreamCatalog::instance().removeLogicalStream(streamName);
 }
 
