@@ -10,14 +10,11 @@ using namespace std;
 
 namespace NES {
 
-void QueryController::setCoordinatorActorHandle(infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle) {
-    this->coordinatorActorHandle = coordinatorActorHandle;
-};
-
 void QueryController::handleGet(vector<utility::string_t> path, http_request message) {
 
-    if (path[1] == "fog-plan") {//FIXME:@ankit please change this to nes-plan
+    if (path[1] == "nes-topology") {
 
+        createExampleTopology();
         const auto& nesTopology = nesTopologyService.getNESTopologyAsJson();
 
         http_response response(status_codes::OK);
@@ -35,6 +32,7 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
 void QueryController::handlePost(vector<utility::string_t> path, http_request message) {
 
     try {
+
         if (path[1] == "query-plan") {
 
             message.extract_string(true)
@@ -53,13 +51,11 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                             response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
                             response.set_body(basePlan);
                             message.reply(response);
-
+                            return;
                         } catch (...) {
                             std::cout << "Exception occurred while building the query plan for user request.";
-                            http_response response(status_codes::InternalError);
-                            response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-                            response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-                            message.reply(response);
+                            internalServerErrorImpl(message);
+                            return;
                         }
                       }
                 )
@@ -95,13 +91,11 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                             response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
                             response.set_body(executionGraphPlan);
                             message.reply(response);
-
+                            return;
                         } catch (...) {
                             std::cout << "Exception occurred while building the query plan for user request.";
-                            http_response response(status_codes::InternalError);
-                            response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-                            response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-                            message.reply(response);
+                            internalServerErrorImpl(message);
+                            return;
                         }
                       }
                 )
@@ -156,18 +150,16 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                             response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
                             response.set_body(result);
                             message.reply(response);
+                            return;
 
                         } catch (...) {
                             std::cout << "Exception occurred while building the query plan for user request.";
-                            http_response response(status_codes::InternalError);
-                            response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-                            response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-                            message.reply(response);
+                            internalServerErrorImpl(message);
+                            return;
                         }
                       }
                 )
                 .wait();
-
         }
 
         http_response response(status_codes::NotFound);
@@ -176,10 +168,22 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
 
     } catch (const std::exception& ex) {
         std::cout << "Exception occurred during post request.";
+        internalServerErrorImpl(message);
     } catch (...) {
         RuntimeUtils::printStackTrace();
+        internalServerErrorImpl(message);
     }
+}
 
+void QueryController::internalServerErrorImpl(http_request message) {
+    http_response response(status_codes::InternalError);
+    response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
+    response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
+    message.reply(response);
+}
+
+void QueryController::setCoordinatorActorHandle(infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle) {
+    this->coordinatorActorHandle = coordinatorActorHandle;
 }
 
 }

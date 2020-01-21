@@ -36,13 +36,11 @@ void BaseRestController::handleGet(http_request message) {
     auto paths = splitPath(path);
 
     if (!paths.empty()) {
-        if (paths[0] == "NES") {
-            if (paths[1] == "query") {
-                queryController.handleGet(paths, message);
-                return;
-            } else if (paths[0] == "catalog") {
-                return;
-            }
+        if (paths[0] == "query") {
+            queryController.handleGet(paths, message);
+            return;
+        } else if (paths[0] == "catalog") {
+            return;
         }
     }
     message.reply(status_codes::NotImplemented, responseNotImpl(methods::GET, path));
@@ -54,7 +52,7 @@ void BaseRestController::handlePost(http_request message) {
 
     if (!paths.empty()) {
         if (paths[0] == "query") {
-            queryController.handleGet(paths, message);
+            queryController.handlePost(paths, message);
             return;
         } else if (paths[0] == "catalog") {
             return;
@@ -64,19 +62,19 @@ void BaseRestController::handlePost(http_request message) {
 }
 
 void BaseRestController::handlePatch(http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::PATCH));
+    message.reply(status_codes::NotImplemented, responseNotImpl(methods::PATCH, getPath(message)));
 }
 
 void BaseRestController::handlePut(http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::PUT));
+    message.reply(status_codes::NotImplemented, responseNotImpl(methods::PUT, getPath(message)));
 }
 
 void BaseRestController::handleDelete(http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::DEL));
+    message.reply(status_codes::NotImplemented, responseNotImpl(methods::DEL, getPath(message)));
 }
 
 void BaseRestController::handleHead(http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::HEAD));
+    message.reply(status_codes::NotImplemented, responseNotImpl(methods::HEAD, getPath(message)));
 }
 
 void BaseRestController::handleOptions(http_request message) {
@@ -89,20 +87,20 @@ void BaseRestController::handleOptions(http_request message) {
 }
 
 void BaseRestController::handleTrace(http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::TRCE));
+    message.reply(status_codes::NotImplemented, responseNotImpl(methods::TRCE, getPath(message)));
 }
 
 void BaseRestController::handleConnect(http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::CONNECT));
+    message.reply(status_codes::NotImplemented, responseNotImpl(methods::CONNECT, getPath(message)));
 }
 
 void BaseRestController::handleMerge(http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::MERGE));
+    message.reply(status_codes::NotImplemented, responseNotImpl(methods::MERGE, getPath(message)));
 }
 
 json::value BaseRestController::responseNotImpl(const http::method& method, utility::string_t path) {
     auto response = json::value::object();
-    response["path"] = json::value::string("NES");
+    response["path"] = json::value::string(path);
     response["http_method"] = json::value::string(method);
     return response;
 }
@@ -124,7 +122,7 @@ std::vector<utility::string_t> BaseRestController::splitPath(const utility::stri
     return web::uri::split_path(relativePath);
 }
 
-utility::string_t BaseRestController::getPath(http_request &message) {
+utility::string_t BaseRestController::getPath(http_request& message) {
     return web::uri::decode(message.relative_uri().path());
 }
 
