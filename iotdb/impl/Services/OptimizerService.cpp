@@ -12,7 +12,7 @@ json::value OptimizerService::getExecutionPlanAsJson(InputQueryPtr inputQuery, s
   return getExecutionPlan(inputQuery, optimizationStrategyName).getExecutionGraphAsJson();
 }
 
-NESExecutionPlan OptimizerService::getExecutionPlan(InputQueryPtr inputQuery, string optimizationStrategyName) {
+NESExecutionPlanPtr OptimizerService::getExecutionPlan(InputQueryPtr inputQuery, string optimizationStrategyName) {
   NESTopologyManager &nesTopologyManager = NESTopologyManager::getInstance();
   const NESTopologyPlanPtr &topologyPlan = nesTopologyManager.getNESTopologyPlan();
   NES_DEBUG("OptimizerService: topology=" << topologyPlan->getTopologyPlanString())
@@ -24,5 +24,5 @@ NESExecutionPlan OptimizerService::getExecutionPlan(InputQueryPtr inputQuery, st
 
   NES_DEBUG("OptimizerService: query plan=" << basePlan)
 
-  return queryOptimizer.prepareExecutionGraph(optimizationStrategyName, inputQuery, topologyPlan);
+  return std::make_shared<NESExecutionPlan>(queryOptimizer.prepareExecutionGraph(optimizationStrategyName, inputQuery, topologyPlan);
 }

@@ -5,6 +5,7 @@
 #include <boost/uuid/uuid_io.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <Util/Logger.hpp>
+#include <Catalogs/QueryCatalog.hpp>
 
 using namespace NES;
 using namespace std;
@@ -70,78 +71,30 @@ NESTopologyEntryPtr CoordinatorService::register_sensor(
   return sensorNode;
 }
 
-string CoordinatorService::register_query(const string &queryString,
-                                          const string &strategy) {
-
-  NES_INFO(
-      "CoordinatorService: Registering query " << queryString << " with strategy " << strategy);
-
-  if (queryString.find("Stream(") != std::string::npos) {
-    NES_ERROR(
-        "CoordinatorService: queries are not allowed to specify streams anymore.")
-    throw Exception("Queries are not allowed to define streams anymore");
-  }
-  if (queryString.find("Schema::create()") != std::string::npos) {
-    NES_ERROR(
-        "CoordinatorService: queries are not allowed to specify schemas anymore.")
-    throw Exception("Queries are not allowed to define schemas anymore");
-  }
-
-  try {
-    InputQueryPtr inputQueryPtr = queryService.getInputQueryFromQueryString(
-        queryString);
-    Schema schema = inputQueryPtr->source_stream->getSchema();
-
-    const NESExecutionPlan &kExecutionPlan = optimizerService.getExecutionPlan(
-        inputQueryPtr, strategy);
-    NES_DEBUG(
-        "OptimizerService: Final Execution Plan =" << kExecutionPlan.getTopologyPlanString())
-
-    std::string queryId = boost::uuids::to_string(
-        boost::uuids::random_generator()());
-    tuple<Schema, NESExecutionPlan> t = std::make_tuple(schema, kExecutionPlan);
-    this->registeredQueries.insert( { queryId, t });
-    return queryId;
-  } catch (...) {
-    NES_ERROR(
-        "Unable to process input request with: queryString: " << queryString << "\n strategy: " << strategy);
-    return nullptr;
-  }
+string CoordinatorService::register_query(
+    const string &queryString, const string &optimizationStrategyName) {
+  QueryCatalog::instance().register_query(queryString,
+                                          optimizationStrategyName);
 }
 
 bool CoordinatorService::deregister_query(const string &queryId) {
-  bool out = false;
-  if (this->registeredQueries.find(queryId) == this->registeredQueries.end()
-      && this->runningQueries.find(queryId) == this->runningQueries.end()) {
-    NES_INFO(
-        "CoordinatorService: No deletion required! Query has neither been registered or deployed->" << queryId);
-  } else if (this->registeredQueries.find(queryId)
-      != this->registeredQueries.end()) {
-    // Query is registered, but not running -> just remove from registered queries
-    get<1>(this->registeredQueries.at(queryId)).freeResources();
-    this->registeredQueries.erase(queryId);
-    NES_INFO(
-        "CoordinatorService: Query was registered and has been successfully removed -> " << queryId);
-  } else {
-    NES_INFO("CoordinatorService: De-registering running query..");
-    //Query is running -> stop query locally if it is running and free resources
-    get<1>(this->runningQueries.at(queryId)).freeResources();
-    this->runningQueries.erase(queryId);
-    NES_INFO("CoordinatorService:  successfully removed query " << queryId);
-    out = true;
-  }
-  return out;
+  QueryCatalog::instance().deregister_query(queryId);
 }
 
 unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> CoordinatorService::make_deployment(
     const string &queryId) {
+  unordered_map<string, tuple<Schema, NESExecutionPlan>> registeredQueries =
+      QueryCatalog::instance().getRegisteredQueries();
+  unordered_map<string, tuple<Schema, NESExecutionPlan>> runningQueries =
+      QueryCatalog::instance().getRunningQueries();
+
   unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> output;
-  if (this->registeredQueries.find(queryId) != this->registeredQueries.end()
-      && this->runningQueries.find(queryId) == this->runningQueries.end()) {
+  if (registeredQueries.find(queryId) != registeredQueries.end()
+      && runningQueries.find(queryId) == runningQueries.end()) {
     NES_INFO("CoordinatorService: Deploying query " << queryId);
     // get the schema and NESExecutionPlan stored during query registration
-    Schema schema = get<0>(this->registeredQueries.at(queryId));
-    NESExecutionPlan execPlan = get<1>(this->registeredQueries.at(queryId));
+    Schema schema = get<0>(registeredQueries.at(queryId));
+    NESExecutionPlan execPlan = get<1>(registeredQueries.at(queryId));
 
     //iterate through all vertices in the topology
     for (const ExecutionVertex &v : execPlan.getExecutionGraph()->getAllVertex()) {
@@ -159,10 +112,17 @@ unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> CoordinatorService:
       }
     }
     // move registered query to running query
-    tuple<Schema, NESExecutionPlan> t = std::make_tuple(schema, execPlan);
-    this->runningQueries.insert( { queryId, t });
-    this->registeredQueries.erase(queryId);
-  } else if (this->runningQueries.find(queryId) != this->runningQueries.end()) {
+    tuple<Schema, NESExecutionPlan, bool> tup = std::make_tuple(schema,
+                                                                execPlan,
+                                                                false);
+    QueryCatalog::instance().startQuery(queryId);  //TODO: I am not totally sure what happens here
+//    QueryCatalog::instance().register_query(queryId, tup);
+//    QueryCatalog::instance().register_query(queryId, tup);
+//    this->runningQueries.insert( { queryId, t });
+//    this->registeredQueries.erase(queryId);
+
+  } else if (QueryCatalog::instance().getRunningQueries().find(queryId)
+      != QueryCatalog::instance().getRunningQueries().end()) {
     NES_WARNING("CoordinatorService: Query is already running -> " << queryId);
   } else {
     NES_WARNING("CoordinatorService: Query is not registered -> " << queryId);
@@ -192,10 +152,10 @@ vector<DataSourcePtr> CoordinatorService::getSources(const string &queryId,
 
 vector<DataSinkPtr> CoordinatorService::getSinks(const string &queryId,
                                                  const ExecutionVertex &v) {
-
   vector<DataSinkPtr> out = vector<DataSinkPtr>();
-  Schema schema = get<0>(this->registeredQueries.at(queryId));
-  NESExecutionPlan execPlan = get<1>(this->registeredQueries.at(queryId));
+  //TODO: I am not sure what is happening here with the idx 0 and 1
+  Schema schema = get<0>(QueryCatalog::instance().getRegisteredQueries().at(queryId));
+  NESExecutionPlan execPlan = get<1>(this->QueryCatalog::instance().getRegisteredQueries().at(queryId));
   DataSinkPtr sink = findDataSinkPointer(v.ptr->getRootOperator());
 
   //FIXME: what about user defined a ZMQ sink?
