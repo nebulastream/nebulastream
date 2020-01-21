@@ -1,6 +1,7 @@
 add_source_iotdb(
-        Controller/BaseController.cpp
-        Controller/RestController.cpp
+        Controller/BaseRestController.cpp
+        Controller/QueryController.cpp
+        Controller/StreamCatalogController.cpp
         NetworkUtils.cpp
         RestServer.cpp
 )

@@ -1,10 +1,11 @@
 #include <iostream>
 #include <REST/usr_interrupt_handler.hpp>
 #include <REST/runtime_utils.hpp>
-#include <REST/Controller/RestController.hpp>
 #include <REST/RestServer.hpp>
 #include <Util/Logger.hpp>
-using namespace NES;
+#include <REST/Controller/BaseRestController.hpp>
+
+namespace NES{
 
 bool RestServer::start(std::string host,
                        u_int16_t port,
@@ -15,7 +16,7 @@ bool RestServer::start(std::string host,
               << std::endl;
     std::cout << "------------------------------------------------------------" << std::endl;
 
-    RestController server;
+    BaseRestController server;
     server.setCoordinatorActorHandle(coordinatorActorHandle);
     server.setEndpoint("http://" + host + ":" + std::to_string(port) + "/v1/nes/");
 
@@ -37,6 +38,4 @@ bool RestServer::start(std::string host,
 }
 
 
-
-
-
+}
