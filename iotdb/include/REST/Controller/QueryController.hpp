@@ -18,6 +18,7 @@ class QueryController {
     void setCoordinatorActorHandle(infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle);
     void handleGet(std::vector<utility::string_t> path, web::http::http_request message);
     void handlePost(std::vector<utility::string_t> path, web::http::http_request message);
+    void internalServerErrorImpl(web::http::http_request message);
 
   private:
     QueryService queryService;

@@ -18,7 +18,7 @@ class StreamCatalogService {
     /**
      * @brief For updating the logical stream
      */
-    void updatedLogicalStream();
+    void updatedLogicalStream(std::string &streamName, std::string &streamSchema);
 
     /**
      * @brief Remove logical stream from the catalog
@@ -28,7 +28,7 @@ class StreamCatalogService {
     /**
      * @brief Returns a vector containing name of logical streams
      */
-    std::vector<string> getAllLogicalStreamNames();
+    std::vector<string> getAllLogicalStream();
 
 };
 
