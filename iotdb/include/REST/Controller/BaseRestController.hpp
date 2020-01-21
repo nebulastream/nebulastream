@@ -11,6 +11,7 @@
 #include <pplx/pplxtasks.h>
 #include "REST/controller.hpp"
 #include "QueryController.hpp"
+#include "StreamCatalogController.hpp"
 
 using namespace web;
 using namespace http;
@@ -21,6 +22,7 @@ class BaseRestController : public Controller {
   protected:
     http_listener _listener; // main micro service network endpoint
     QueryController queryController;
+    StreamCatalogController streamCatalogController;
 
   public:
     BaseRestController() {};

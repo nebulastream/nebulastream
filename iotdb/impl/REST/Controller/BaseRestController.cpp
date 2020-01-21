@@ -40,6 +40,7 @@ void BaseRestController::handleGet(http_request message) {
             queryController.handleGet(paths, message);
             return;
         } else if (paths[0] == "catalog") {
+            streamCatalogController.handleGet(paths, message);
             return;
         }
     }
@@ -55,10 +56,11 @@ void BaseRestController::handlePost(http_request message) {
             queryController.handlePost(paths, message);
             return;
         } else if (paths[0] == "catalog") {
+            streamCatalogController.handlePost(paths, message);
             return;
         }
     }
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::GET, path));
+    message.reply(status_codes::NotImplemented, responseNotImpl(methods::POST, path));
 }
 
 void BaseRestController::handlePatch(http_request message) {
@@ -70,7 +72,16 @@ void BaseRestController::handlePut(http_request message) {
 }
 
 void BaseRestController::handleDelete(http_request message) {
-    message.reply(status_codes::NotImplemented, responseNotImpl(methods::DEL, getPath(message)));
+    auto path = getPath(message);
+    auto paths = splitPath(path);
+
+    if (!paths.empty()) {
+        if (paths[0] == "catalog") {
+            streamCatalogController.handleDelete(paths, message);
+            return;
+        }
+    }
+    message.reply(status_codes::NotImplemented, responseNotImpl(methods::DEL, path));
 }
 
 void BaseRestController::handleHead(http_request message) {
