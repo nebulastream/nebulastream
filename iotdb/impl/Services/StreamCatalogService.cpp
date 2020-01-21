@@ -12,7 +12,7 @@ bool StreamCatalogService::removeLogicalStream(std::string &streamName) {
 }
 
 std::vector<string> StreamCatalogService::getAllLogicalStreamNames() {
-    return StreamCatalog::instance().
+    return vector<string>{};
 }
 
 }
