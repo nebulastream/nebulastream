@@ -270,4 +270,8 @@ std::vector<StreamCatalogEntryPtr> StreamCatalog::getPhysicalStreams(
   return logicalToPhysicalStreamMapping[logicalStreamName];
 }
 
+std::map<std::string, SchemaPtr> StreamCatalog::getAllLogicalStream() {
+    return logicalStreamToSchemaMapping;
+}
+
 }

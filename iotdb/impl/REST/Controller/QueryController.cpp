@@ -17,16 +17,12 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
         createExampleTopology();
         const auto& nesTopology = nesTopologyService.getNESTopologyAsJson();
 
-        http_response response(status_codes::OK);
-        response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-        response.set_body(nesTopology);
-        message.reply(response);
+        //Prepare the response
+        successMessageImpl(message, nesTopology);
         return;
     }
 
-    http_response response(status_codes::NotFound);
-    response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-    message.reply(response);
+    resourceNotFoundImpl(message);
 }
 
 void QueryController::handlePost(vector<utility::string_t> path, http_request message) {
@@ -46,11 +42,7 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                                 userQuery);
 
                             //Prepare the response
-                            http_response response(status_codes::OK);
-                            response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-                            response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-                            response.set_body(basePlan);
-                            message.reply(response);
+                            successMessageImpl(message, basePlan);
                             return;
                         } catch (...) {
                             std::cout << "Exception occurred while building the query plan for user request.";
@@ -86,11 +78,7 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                             json::value executionGraphPlan = executionPlan->getExecutionGraphAsJson();
 
                             //Prepare the response
-                            http_response response(status_codes::OK);
-                            response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-                            response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-                            response.set_body(executionGraphPlan);
-                            message.reply(response);
+                            successMessageImpl(message, executionGraphPlan);
                             return;
                         } catch (...) {
                             std::cout << "Exception occurred while building the query plan for user request.";
@@ -145,11 +133,7 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                             result["queryId"] = json::value::string(queryId);
 
                             //Prepare the response
-                            http_response response(status_codes::OK);
-                            response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-                            response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-                            response.set_body(result);
-                            message.reply(response);
+                            successMessageImpl(message, result);
                             return;
 
                         } catch (...) {
@@ -162,9 +146,7 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                 .wait();
         }
 
-        http_response response(status_codes::NotFound);
-        response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-        message.reply(response);
+        resourceNotFoundImpl(message);
 
     } catch (const std::exception& ex) {
         std::cout << "Exception occurred during post request.";
@@ -175,7 +157,21 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
     }
 }
 
-void QueryController::internalServerErrorImpl(http_request message) {
+void QueryController::resourceNotFoundImpl(const http_request& message) const {
+    http_response response(status_codes::NotFound);
+    response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
+    message.reply(response);
+}
+
+void QueryController::successMessageImpl(const http_request& message, const json::value& result) const {
+    http_response response(status_codes::OK);
+    response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
+    response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
+    response.set_body(result);
+    message.reply(response);
+}
+
+void QueryController::internalServerErrorImpl(const http_request& message) const {
     http_response response(status_codes::InternalError);
     response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
     response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));

@@ -139,7 +139,7 @@ class StreamCatalog {
    * @brief Return a list of logical stream names registered at catalog
    * @return
    */
-  std::vector<std::string> getAllLogicalStreamNames();
+  std::map<std::string, SchemaPtr> getAllLogicalStream();
 
   /**
    * @brief method to return the physical stream and the associated schemas
