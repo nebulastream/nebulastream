@@ -13,7 +13,7 @@ class StreamCatalogService {
     /**
      * @brief For adding new logical stream to the catalog
      */
-    bool addNewLogicalStream(std::string &streamName, std::string &streamSchema);
+    bool addNewLogicalStream(const std::string &streamName, const std::string &streamSchema);
 
     /**
      * @brief For updating the logical stream
@@ -23,7 +23,7 @@ class StreamCatalogService {
     /**
      * @brief Remove logical stream from the catalog
      */
-    bool removeLogicalStream(std::string &streamName);
+    bool removeLogicalStream(const std::string &streamName);
 
     /**
      * @brief Returns a map containing name of all logical streams and corresponding schemas

@@ -25,7 +25,6 @@ bool StreamCatalog::addLogicalStream(std::string logicalStreamName,
   //check if stream already exist
   NES_DEBUG(
       "StreamCatalog: search for logical stream in addLogicalStream() " << logicalStreamName)
-  NES_DEBUG("stream before=" << getLogicalStreamAndSchemaAsString())
 
   if (!testIfLogicalStreamExistsInSchemaMapping(logicalStreamName)) {
     NES_DEBUG("StreamCatalog: add logical stream " << logicalStreamName)
@@ -33,8 +32,7 @@ bool StreamCatalog::addLogicalStream(std::string logicalStreamName,
     return true;
   } else {
     NES_ERROR(
-        "StreamCatalog: logical stream " << logicalStreamName << " already exists")
-    NES_DEBUG("stream=" << getLogicalStreamAndSchemaAsString())
+        "StreamCatalog: logical stream " << logicalStreamName << " already exists");
     return false;
   }
 }
@@ -237,19 +235,6 @@ void StreamCatalog::reset() {
   Schema schema = Schema::create().addField("id", BasicType::UINT32).addField(
       "value", BasicType::UINT64);
   addLogicalStream("default_logical", std::make_shared < Schema > (schema));
-}
-
-std::string StreamCatalog::getLogicalStreamAndSchemaAsString() {
-  stringstream ss;
-  for (auto entry : logicalStreamToSchemaMapping) {
-    //FIXME: this has to be done beacuas somehow the name is not deleted in the list
-    if (testIfLogicalStreamExistsInSchemaMapping(entry.first)) {
-      ss << "logical stream name=" << entry.first;
-      if (entry.second != nullptr)
-        ss << " schema:" << entry.second->toString() << std::endl;
-    }
-  }
-  return ss.str();
 }
 
 std::string StreamCatalog::getPhysicalStreamAndSchemaAsString() {

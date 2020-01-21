@@ -39,7 +39,7 @@ void BaseRestController::handleGet(http_request message) {
         if (paths[0] == "query") {
             queryController.handleGet(paths, message);
             return;
-        } else if (paths[0] == "catalog") {
+        } else if (paths[0] == "streamCatalog") {
             streamCatalogController.handleGet(paths, message);
             return;
         }
@@ -55,7 +55,7 @@ void BaseRestController::handlePost(http_request message) {
         if (paths[0] == "query") {
             queryController.handlePost(paths, message);
             return;
-        } else if (paths[0] == "catalog") {
+        } else if (paths[0] == "streamCatalog") {
             streamCatalogController.handlePost(paths, message);
             return;
         }
