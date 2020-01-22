@@ -5,10 +5,11 @@
 #include <Services/QueryService.hpp>
 #include <Services/NESTopologyService.hpp>
 #include <cpprest/http_msg.h>
+#include "BaseController.hpp"
 
 namespace NES {
 
-class QueryController {
+class QueryController: public BaseController {
   public:
     QueryController() {
         coordinatorServicePtr = CoordinatorService::getInstance();
@@ -24,10 +25,6 @@ class QueryController {
     NESTopologyService nesTopologyService;
     CoordinatorServicePtr coordinatorServicePtr;
     infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
-
-    void internalServerErrorImpl(const web::http::http_request& message) const;
-    void successMessageImpl(const http::http_request& message, const json::value& result) const;
-    void resourceNotFoundImpl(const http::http_request& message) const;
 };
 
 }
