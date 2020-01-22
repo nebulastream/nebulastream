@@ -36,8 +36,8 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
 
                         vector<json::value> allStream = {};
 
-                        for (auto const& e : std::as_const(allPhysicalStream)) {
-                            allStream.push_back(json::value::string(e->toString()));
+                        for (auto const& physicalStream : std::as_const(allPhysicalStream)) {
+                            allStream.push_back(json::value::string(physicalStream->toString()));
                         }
 
                         //Prepare the response
