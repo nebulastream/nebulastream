@@ -33,4 +33,8 @@ bool StreamCatalogService::updatedLogicalStream(std::string& streamName, std::st
     return StreamCatalog::instance().addLogicalStream(streamName, schema);
 }
 
+vector<StreamCatalogEntryPtr> StreamCatalogService::getAllPhysicalStream(const std::string logicalStreamName) {
+    return StreamCatalog::instance().getPhysicalStreams(logicalStreamName);
+}
+
 }

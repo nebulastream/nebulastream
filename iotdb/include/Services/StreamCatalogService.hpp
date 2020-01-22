@@ -31,6 +31,12 @@ class StreamCatalogService {
     std::map<std::string, SchemaPtr> getAllLogicalStream();
 
     /**
+     * @brief get all physical streams registered for the given logical stream
+     * @param logicalStreamName
+     */
+    vector<StreamCatalogEntryPtr> getAllPhysicalStream(const std::string logicalStreamName);
+
+    /**
      * @brief Returns a map containing name of all logical streams and corresponding schemas as string
      * @return
      */
