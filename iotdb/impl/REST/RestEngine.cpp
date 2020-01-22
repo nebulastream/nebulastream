@@ -71,7 +71,7 @@ void RestEngine::handleDelete(http_request message) {
     auto paths = splitPath(path);
 
     if (!paths.empty()) {
-        if (paths[0] == "catalog") {
+        if (paths[0] == "streamCatalog") {
             streamCatalogController.handleDelete(paths, message);
             return;
         }
