@@ -157,27 +157,6 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
     }
 }
 
-void QueryController::resourceNotFoundImpl(const http_request& message) const {
-    http_response response(status_codes::NotFound);
-    response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-    message.reply(response);
-}
-
-void QueryController::successMessageImpl(const http_request& message, const json::value& result) const {
-    http_response response(status_codes::OK);
-    response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-    response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-    response.set_body(result);
-    message.reply(response);
-}
-
-void QueryController::internalServerErrorImpl(const http_request& message) const {
-    http_response response(status_codes::InternalError);
-    response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-    response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-    message.reply(response);
-}
-
 void QueryController::setCoordinatorActorHandle(infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle) {
     this->coordinatorActorHandle = coordinatorActorHandle;
 }

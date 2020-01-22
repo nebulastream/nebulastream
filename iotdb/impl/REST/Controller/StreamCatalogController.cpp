@@ -118,25 +118,4 @@ void StreamCatalogController::handleDelete(std::vector<utility::string_t> path, 
     resourceNotFoundImpl(message);
 }
 
-void StreamCatalogController::successMessageImpl(const http_request& message, const json::value& result) const {
-    http_response response(status_codes::OK);
-    response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-    response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-    response.set_body(result);
-    message.reply(response);
-}
-
-void StreamCatalogController::internalServerErrorImpl(http_request message) const {
-    http_response response(status_codes::InternalError);
-    response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-    response.headers().add(U("Access-Control-Allow-Headers"), U("Content-Type"));
-    message.reply(response);
-}
-
-void StreamCatalogController::resourceNotFoundImpl(const http_request& message) const {
-    http_response response(status_codes::NotFound);
-    response.headers().add(U("Access-Control-Allow-Origin"), U("*"));
-    message.reply(response);
-}
-
 }

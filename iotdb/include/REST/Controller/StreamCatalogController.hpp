@@ -6,10 +6,11 @@
 #include <cpprest/details/basic_types.h>
 #include <cpprest/http_msg.h>
 #include <cpprest/json.h>
+#include "BaseController.hpp"
 
 namespace NES {
 
-class StreamCatalogController {
+class StreamCatalogController : public BaseController {
 
   public:
     void handleGet(std::vector<utility::string_t> path, web::http::http_request message);
@@ -19,9 +20,6 @@ class StreamCatalogController {
   private:
     StreamCatalogService streamCatalogService;
 
-    void internalServerErrorImpl(web::http::http_request message) const;
-    void successMessageImpl(const web::http::http_request& message, const web::json::value& result) const;
-    void resourceNotFoundImpl(const web::http::http_request& message) const;
 };
 }
 
