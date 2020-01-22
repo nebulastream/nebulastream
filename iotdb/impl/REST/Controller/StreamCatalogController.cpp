@@ -18,6 +18,41 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
         }
         successMessageImpl(message, result);
         return;
+        
+    } else if (path[1] == "allPhysicalStream") {
+
+        message.extract_string(true)
+            .then([this, message](utility::string_t body) {
+                    try {
+                        //Prepare Input query from user string
+                        std::string payload(body.begin(), body.end());
+
+                        json::value req = json::value::parse(payload);
+
+                        string logicalStreamName = req.at("streamName").as_string();
+
+                        const vector<StreamCatalogEntryPtr>
+                            & allPhysicalStream = streamCatalogService.getAllPhysicalStream(logicalStreamName);
+
+                        vector<json::value> allStream = {};
+
+                        for (auto const& e : std::as_const(allPhysicalStream)) {
+                            allStream.push_back(json::value::string(e->toString()));
+                        }
+
+                        //Prepare the response
+                        json::value result{};
+                        result["Physical Streams"] = json::value::array(allStream);
+                        successMessageImpl(message, result);
+                        return;
+                    } catch (...) {
+                        std::cout << "Exception occurred while building the query plan for user request.";
+                        internalServerErrorImpl(message);
+                        return;
+                    }
+                  }
+            )
+            .wait();
     }
 
     resourceNotFoundImpl(message);
