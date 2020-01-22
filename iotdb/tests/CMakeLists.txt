@@ -128,7 +128,7 @@ target_link_libraries(predicate-tree-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME predicate-tree-tests COMMAND predicate-tree-tests)
 
 # Predicate Tree Tests
-add_executable(optimizer-service-tests "UnitTests/OptimizerServiceTest.cpp")
+add_executable(optimizer-service-tests "UnitTests/Services/OptimizerServiceTest.cpp")
 target_link_libraries(optimizer-service-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME optimizer-service-tests COMMAND optimizer-service-tests)
 
@@ -142,7 +142,7 @@ target_link_libraries(memory-layout-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME memory-layout-tests COMMAND memory-layout-tests)
 
 # CoordinatorService Tests
-add_executable(coordinator-service-tests "UnitTests/CoordinatorServiceTest.cpp")
+add_executable(coordinator-service-tests "UnitTests/Services/CoordinatorServiceTest.cpp")
 target_link_libraries(coordinator-service-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME coordinator-service-tests COMMAND coordinator-service-tests)
 
