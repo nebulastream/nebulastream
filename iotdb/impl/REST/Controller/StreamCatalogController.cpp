@@ -13,12 +13,16 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
             & allLogicalStreamAsString = streamCatalogService.getAllLogicalStreamAsString();
 
         json::value result{};
-        for (auto const&[key, val] : allLogicalStreamAsString) {
-            result[key] = json::value::string(val);
+        if (allLogicalStreamAsString.empty()) {
+            result = json::value::string("No Logical Stream Found.");
+        } else {
+            for (auto const&[key, val] : allLogicalStreamAsString) {
+                result[key] = json::value::string(val);
+            }
         }
         successMessageImpl(message, result);
         return;
-        
+
     } else if (path[1] == "allPhysicalStream") {
 
         message.extract_string(true)
@@ -34,15 +38,17 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
                         const vector<StreamCatalogEntryPtr>
                             & allPhysicalStream = streamCatalogService.getAllPhysicalStream(logicalStreamName);
 
-                        vector<json::value> allStream = {};
-
-                        for (auto const& physicalStream : std::as_const(allPhysicalStream)) {
-                            allStream.push_back(json::value::string(physicalStream->toString()));
-                        }
-
                         //Prepare the response
                         json::value result{};
-                        result["Physical Streams"] = json::value::array(allStream);
+                        if (allPhysicalStream.empty()) {
+                            result = json::value::string("No Physical Stream Found.");
+                        } else {
+                            vector<json::value> allStream = {};
+                            for (auto const& physicalStream : std::as_const(allPhysicalStream)) {
+                                allStream.push_back(json::value::string(physicalStream->toString()));
+                            }
+                            result["Physical Streams"] = json::value::array(allStream);
+                        }
                         successMessageImpl(message, result);
                         return;
                     } catch (...) {
