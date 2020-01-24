@@ -9,6 +9,11 @@
 
 namespace NES {
 
+QueryCatalog& QueryCatalog::instance() {
+  static QueryCatalog instance;
+  return instance;
+}
+
 string QueryCatalog::register_query(const string &queryString,
                                     const string &optimizationStrategyName) {
   NES_INFO(
@@ -30,7 +35,8 @@ string QueryCatalog::register_query(const string &queryString,
         queryString);
     Schema schema = inputQueryPtr->source_stream->getSchema();
 
-    NESExecutionPlanPtr nPtr = OptimizerService::instance().getExecutionPlan(inputQueryPtr, optimizationStrategyName);
+    NESExecutionPlanPtr nPtr = OptimizerService::instance().getExecutionPlan(
+        inputQueryPtr, optimizationStrategyName);
 //    const NESExecutionPlan &kExecutionPlan = optimizerService.getExecutionPlan(
 //        inputQueryPtr, optimizationStrategyName);
 
@@ -39,42 +45,70 @@ string QueryCatalog::register_query(const string &queryString,
 
     boost::uuids::basic_random_generator<boost::mt19937> gen;
     boost::uuids::uuid u = gen();
-    std::string queryId = boost::uuids::to_string(u);//TODO: I am not sure this will not create a unique one
+    std::string queryId = boost::uuids::to_string(u);  //TODO: I am not sure this will not create a unique one
 
-    QueryCatalogEntry entry(queryId, inputQueryPtr, nPtr, schema, false);
+    QueryCatalogEntryPtr entry = std::make_shared<QueryCatalogEntry>(
+        queryId, inputQueryPtr, nPtr, schema, false);
 //    tuple<Schema, NESExecutionPlan> t = std::make_tuple(schema, kExecutionPlan);
-    queries.insert(queryId, entry);
+    //TODO: check if query already exists
+    queries[queryId] = entry;
 
     return queryId;
   } catch (...) {
     NES_ERROR(
-        "Unable to process input request with: queryString: " << queryString << "\n strategy: " << optimizationStrategyName);
+        "QueryCatalog: Unable to process input request with: queryString: " << queryString << "\n strategy: " << optimizationStrategyName);
     return nullptr;
   }
 }
 
 bool QueryCatalog::deregister_query(const string &queryId) {
-  bool out = false;
-  if (this->registeredQueries.find(queryId) == this->registeredQueries.end()
-      && this->runningQueries.find(queryId) == this->runningQueries.end()) {
+  if (testIfQueryExists(queryId)) {
     NES_INFO(
-        "CoordinatorService: No deletion required! Query has neither been registered or deployed->" << queryId);
-  } else if (this->registeredQueries.find(queryId)
-      != this->registeredQueries.end()) {
-    // Query is registered, but not running -> just remove from registered queries
-    get<1>(this->registeredQueries.at(queryId)).freeResources();
-    this->registeredQueries.erase(queryId);
-    NES_INFO(
-        "CoordinatorService: Query was registered and has been successfully removed -> " << queryId);
-  } else {
-    NES_INFO("CoordinatorService: De-registering running query..");
-    //Query is running -> stop query locally if it is running and free resources
-    get<1>(this->runningQueries.at(queryId)).freeResources();
-    this->runningQueries.erase(queryId);
-    NES_INFO("CoordinatorService:  successfully removed query " << queryId);
-    out = true;
+        "QueryCatalog: No deletion required! Query has neither been registered or deployed->" << queryId);
+    return false;
+  } else if (testIfQueryExists(queryId)) {
+    NES_INFO("QueryCatalog: De-registering query ...");
+    NESExecutionPlanPtr execPlan = QueryCatalog::instance().getQuery(queryId)
+        ->nesPlanPtr;
+    execPlan->freeResources();
+    if (QueryCatalog::instance().getQuery(queryId)->running == true) {
+      NES_INFO("QueryCatalog: query is running, stopping it");
+      QueryCatalog::instance().stopQuery(queryId);
+    }
+    std::map<string, QueryCatalogEntryPtr>::iterator it;
+    it = queries.find(queryId);
+    queries.erase(it);
+
+    return true;
   }
-  return out;
+  return false;
+}
+bool QueryCatalog::startQuery(string queryId) {
+  NES_NOT_IMPLEMENTED
+}
+
+bool QueryCatalog::stopQuery(string queryId) {
+  NES_NOT_IMPLEMENTED
+}
+
+map<string, QueryCatalogEntryPtr> QueryCatalog::getRegisteredQueries() {
+  NES_NOT_IMPLEMENTED
+}
+
+QueryCatalogEntryPtr QueryCatalog::getQuery(std::string queryID) {
+  NES_NOT_IMPLEMENTED
+}
+
+bool QueryCatalog::testIfQueryExists(std::string queryID) {
+  NES_NOT_IMPLEMENTED
+}
+
+map<string, QueryCatalogEntryPtr> QueryCatalog::getRunningQueries() {
+  NES_NOT_IMPLEMENTED
+}
+
+void QueryCatalog::clearQueries() {
+  NES_NOT_IMPLEMENTED
 }
 
 }

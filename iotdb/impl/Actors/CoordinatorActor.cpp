@@ -248,7 +248,7 @@ void CoordinatorActor::registerSensor(const string &ip, uint16_t publish_port,
 }
 
 void CoordinatorActor::deployQuery(const string &queryId) {
-  unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> deployments =
+  map<NESTopologyEntryPtr, ExecutableTransferObject> deployments =
       coordinatorServicePtr->make_deployment(queryId);
 
   for (auto const &x : deployments) {

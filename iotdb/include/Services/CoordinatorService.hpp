@@ -25,6 +25,7 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <SourceSink/CSVSource.hpp>
+#include <Catalogs/QueryCatalog.hpp>
 
 using std::string;
 
@@ -81,7 +82,7 @@ class CoordinatorService {
    * @brief deploys a CAF query into the NES topology to the corresponding devices defined by the optimizer
    * @param query a queryId of the query
    */
-  unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> make_deployment(const string &queryId);
+  map<NESTopologyEntryPtr, ExecutableTransferObject> make_deployment(const string &queryId);
 
   /**
    * @brief creates a string representation of the topology graph
@@ -97,7 +98,7 @@ class CoordinatorService {
    * @param queryId
    * @return the nes execution plan for the query
    */
-  NESExecutionPlan* getRegisteredQuery(string queryId);
+  NESExecutionPlanPtr getRegisteredQuery(string queryId);
 
   /**
    * @brief: clear query catalogs
@@ -106,6 +107,8 @@ class CoordinatorService {
 
   bool clearQueryCatalogs();
 
+  const map<string, QueryCatalogEntryPtr>& getRegisteredQueries();
+  const map<string, QueryCatalogEntryPtr>& getRunningQueries();
 
  private:
 
