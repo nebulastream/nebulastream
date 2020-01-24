@@ -91,10 +91,8 @@ TEST_F(StreamCatalogRemoteTest, test_add_log_stream_remote_test) {
 
   anon_send(worker, register_log_stream_atom::value, "testStream",
             testSchemaFileName);
-  std::this_thread::sleep_for(std::chrono::seconds(2));
+  std::this_thread::sleep_for(std::chrono::seconds(5));
 
-  cout << "streams="
-       << StreamCatalog::instance().getLogicalStreamAndSchemaAsString() << endl;
   SchemaPtr sPtr = StreamCatalog::instance().getSchemaForLogicalStream(
       "testStream");
   EXPECT_NE(sPtr, nullptr);
@@ -143,7 +141,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_existing_log_stream_remote_test) {
 
   anon_send(worker, register_log_stream_atom::value, "default_logical",
             testSchemaFileName);
-  std::this_thread::sleep_for(std::chrono::seconds(2));
+  std::this_thread::sleep_for(std::chrono::seconds(5));
 
   SchemaPtr sPtr = StreamCatalog::instance().getSchemaForLogicalStream(
       "default_logical");
@@ -154,9 +152,13 @@ TEST_F(StreamCatalogRemoteTest, test_add_existing_log_stream_remote_test) {
       "default_logical");
   EXPECT_NE(sch, nullptr);
 
+  map<std::string, SchemaPtr> allLogicalStream = StreamCatalog::instance().getAllLogicalStream();
   string exp =
-      "logical stream name=default_logical schema:id:UINT32value:UINT64\n\n";
-  EXPECT_EQ(exp, StreamCatalog::instance().getLogicalStreamAndSchemaAsString());
+        "id:UINT32value:UINT64\n";
+  EXPECT_EQ(1, allLogicalStream.size());
+
+  SchemaPtr defaultSchema = allLogicalStream["default_logical"];
+  EXPECT_EQ(exp, defaultSchema->toString());
 
   anon_send_exit(worker, exit_reason::user_shutdown);
   anon_send_exit(coordinator, exit_reason::user_shutdown);
@@ -204,7 +206,6 @@ TEST_F(StreamCatalogRemoteTest, test_add_remove_empty_log_stream_remote_test) {
             testSchemaFileName);
   std::this_thread::sleep_for(std::chrono::seconds(2));
 
-  cout << StreamCatalog::instance().getLogicalStreamAndSchemaAsString() << endl;
   SchemaPtr sPtr = StreamCatalog::instance().getSchemaForLogicalStream(
       "testStream");
   EXPECT_NE(sPtr, nullptr);
@@ -212,7 +213,6 @@ TEST_F(StreamCatalogRemoteTest, test_add_remove_empty_log_stream_remote_test) {
   anon_send(worker, remove_log_stream_atom::value, "testStream");
   std::this_thread::sleep_for(std::chrono::seconds(2));
 
-  cout << StreamCatalog::instance().getLogicalStreamAndSchemaAsString() << endl;
   SchemaPtr sPtr2 = StreamCatalog::instance().getSchemaForLogicalStream(
       "testStream");
   EXPECT_EQ(sPtr2, nullptr);
@@ -253,7 +253,6 @@ TEST_F(StreamCatalogRemoteTest, test_add_remove_not_empty_log_stream_remote_test
   anon_send(worker, remove_log_stream_atom::value, "default_logical");
   std::this_thread::sleep_for(std::chrono::seconds(2));
 
-  cout << StreamCatalog::instance().getLogicalStreamAndSchemaAsString() << endl;
   SchemaPtr sPtr = StreamCatalog::instance().getSchemaForLogicalStream(
       "default_logical");
   EXPECT_NE(sPtr, nullptr);

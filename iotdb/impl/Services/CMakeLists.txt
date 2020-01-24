@@ -4,4 +4,5 @@ add_source_iotdb(
         CoordinatorService.cpp
         WorkerService.cpp
         OptimizerService.cpp
+        StreamCatalogService.cpp
 )
