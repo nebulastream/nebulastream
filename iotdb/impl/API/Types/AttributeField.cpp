@@ -14,6 +14,8 @@ AttributeField::AttributeField(const std::string &_name)
 
 AttributeField::AttributeField(const std::string &_name, const BasicType &_type)
     : name(_name), data_type(createDataType(_type)) {
+
+
 }
 
 AttributeField::AttributeField(const std::string &_name, uint32_t _size)
