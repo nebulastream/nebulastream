@@ -81,23 +81,25 @@ bool CoordinatorService::deregister_query(const string &queryId) {
   QueryCatalog::instance().deregister_query(queryId);
 }
 
-unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> CoordinatorService::make_deployment(
+map<NESTopologyEntryPtr, ExecutableTransferObject> CoordinatorService::make_deployment(
     const string &queryId) {
-  unordered_map<string, tuple<Schema, NESExecutionPlan>> registeredQueries =
-      QueryCatalog::instance().getRegisteredQueries();
-  unordered_map<string, tuple<Schema, NESExecutionPlan>> runningQueries =
-      QueryCatalog::instance().getRunningQueries();
+  map<string, QueryCatalogEntryPtr> registeredQueries = QueryCatalog::instance()
+      .getRegisteredQueries();
+  map<string, QueryCatalogEntryPtr> runningQueries = QueryCatalog::instance()
+      .getRunningQueries();
 
-  unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> output;
+  map<NESTopologyEntryPtr, ExecutableTransferObject> output;
   if (registeredQueries.find(queryId) != registeredQueries.end()
       && runningQueries.find(queryId) == runningQueries.end()) {
     NES_INFO("CoordinatorService: Deploying query " << queryId);
     // get the schema and NESExecutionPlan stored during query registration
-    Schema schema = get<0>(registeredQueries.at(queryId));
-    NESExecutionPlan execPlan = get<1>(registeredQueries.at(queryId));
+
+    Schema schema = QueryCatalog::instance().getQuery(queryId)->schema;
+    NESExecutionPlanPtr execPlan = QueryCatalog::instance().getQuery(queryId)
+        ->nesPlanPtr;
 
     //iterate through all vertices in the topology
-    for (const ExecutionVertex &v : execPlan.getExecutionGraph()->getAllVertex()) {
+    for (const ExecutionVertex &v : execPlan->getExecutionGraph()->getAllVertex()) {
       OperatorPtr operators = v.ptr->getRootOperator();
       if (operators) {
         // if node contains operators to be deployed -> serialize and send them to the according node
@@ -112,9 +114,9 @@ unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> CoordinatorService:
       }
     }
     // move registered query to running query
-    tuple<Schema, NESExecutionPlan, bool> tup = std::make_tuple(schema,
-                                                                execPlan,
-                                                                false);
+//    tuple<Schema, NESExecutionPlan, bool> tup = std::make_tuple(schema,
+//                                                                execPlan,
+//                                                                false);
     QueryCatalog::instance().startQuery(queryId);  //TODO: I am not totally sure what happens here
 //    QueryCatalog::instance().register_query(queryId, tup);
 //    QueryCatalog::instance().register_query(queryId, tup);
@@ -133,8 +135,9 @@ unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> CoordinatorService:
 vector<DataSourcePtr> CoordinatorService::getSources(const string &queryId,
                                                      const ExecutionVertex &v) {
   vector<DataSourcePtr> out = vector<DataSourcePtr>();
-  Schema schema = get<0>(this->registeredQueries.at(queryId));
-  NESExecutionPlan execPlan = get<1>(this->registeredQueries.at(queryId));
+  Schema schema = QueryCatalog::instance().getQuery(queryId)->schema;
+  NESExecutionPlanPtr execPlan = QueryCatalog::instance().getQuery(queryId)
+      ->nesPlanPtr;
 
   DataSourcePtr source = findDataSourcePointer(v.ptr->getRootOperator());
 
@@ -154,8 +157,9 @@ vector<DataSinkPtr> CoordinatorService::getSinks(const string &queryId,
                                                  const ExecutionVertex &v) {
   vector<DataSinkPtr> out = vector<DataSinkPtr>();
   //TODO: I am not sure what is happening here with the idx 0 and 1
-  Schema schema = get<0>(QueryCatalog::instance().getRegisteredQueries().at(queryId));
-  NESExecutionPlan execPlan = get<1>(this->QueryCatalog::instance().getRegisteredQueries().at(queryId));
+  Schema schema = QueryCatalog::instance().getQuery(queryId)->schema;
+  NESExecutionPlanPtr execPlan = QueryCatalog::instance().getQuery(queryId)
+    ->nesPlanPtr;
   DataSinkPtr sink = findDataSinkPointer(v.ptr->getRootOperator());
 
   //FIXME: what about user defined a ZMQ sink?
@@ -224,27 +228,26 @@ string CoordinatorService::getTopologyPlanString() {
   return this->topologyManagerPtr->getInstance().getNESTopologyPlanString();
 }
 
-NESExecutionPlan* CoordinatorService::getRegisteredQuery(string queryId) {
-  if (this->registeredQueries.find(queryId) != this->registeredQueries.end()) {
-    return &(get<1>(this->registeredQueries.at(queryId)));
+NESExecutionPlanPtr CoordinatorService::getRegisteredQuery(string queryId) {
+  if (QueryCatalog::instance().testIfQueryExists(queryId)) {
+    return QueryCatalog::instance().getQuery(queryId)->nesPlanPtr;
   }
   return nullptr;
 }
 
 bool CoordinatorService::clearQueryCatalogs() {
   try {
-    registeredQueries.clear();
-    runningQueries.clear();
+    QueryCatalog::instance().clearQueries();
   } catch (...) {
     return false;
   }
   return true;
 }
 
-const unordered_map<string, tuple<Schema, NESExecutionPlan>>& CoordinatorService::getRegisteredQueries() const {
-  return registeredQueries;
+const map<string, QueryCatalogEntryPtr>& CoordinatorService::getRegisteredQueries() {
+  return QueryCatalog::instance().getRegisteredQueries();
 }
 
-const unordered_map<string, tuple<Schema, NESExecutionPlan>>& CoordinatorService::getRunningQueries() const {
-  return runningQueries;
+const map<string, QueryCatalogEntryPtr>& CoordinatorService::getRunningQueries() {
+  return QueryCatalog::instance().getRunningQueries();
 }

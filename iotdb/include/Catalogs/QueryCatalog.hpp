@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <string>
 #include <Optimizer/NESExecutionPlan.hpp>
+#include <Catalogs/QueryCatalog.hpp>
 
 using namespace std;
 namespace NES {
@@ -30,7 +31,11 @@ class QueryCatalogEntry {
   NESExecutionPlanPtr nesPlanPtr;
   Schema schema;  //TODO: do we really need this?
   bool running;
+
 };
+
+typedef std::shared_ptr<QueryCatalogEntry> QueryCatalogEntryPtr;
+
 
 class QueryCatalog {
  public:
@@ -55,15 +60,21 @@ class QueryCatalog {
 
   bool stopQuery(string queryId);
 
-  unordered_map<string, QueryCatalogEntry> getRegisteredQueries();
+  map<string, QueryCatalogEntryPtr> getRegisteredQueries();
 
-  unordered_map<string, QueryCatalogEntry> getRunningQueries();
+  QueryCatalogEntryPtr getQuery(std::string queryID);
+
+  bool testIfQueryExists(std::string queryID);
+  map<string, QueryCatalogEntryPtr> getRunningQueries();
+
+  void clearQueries();
 
  private:
 
-  unordered_map<string, QueryCatalogEntry> queries;
+  map<string, QueryCatalogEntryPtr> queries;
 //  unordered_map<string, tuple<Schema, NESExecutionPlan>> runningQueries;
 };
 }
 
 #endif /* INCLUDE_CATALOGS_QUERYCATALOG_HPP_ */
+

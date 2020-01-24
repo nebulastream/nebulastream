@@ -8,8 +8,13 @@ using namespace NES;
 using namespace web;
 using namespace std;
 
+OptimizerService& OptimizerService::instance() {
+  static OptimizerService instance;
+  return instance;
+}
+
 json::value OptimizerService::getExecutionPlanAsJson(InputQueryPtr inputQuery, string optimizationStrategyName) {
-  return getExecutionPlan(inputQuery, optimizationStrategyName).getExecutionGraphAsJson();
+  return getExecutionPlan(inputQuery, optimizationStrategyName)->getExecutionGraphAsJson();
 }
 
 NESExecutionPlanPtr OptimizerService::getExecutionPlan(InputQueryPtr inputQuery, string optimizationStrategyName) {
@@ -24,5 +29,5 @@ NESExecutionPlanPtr OptimizerService::getExecutionPlan(InputQueryPtr inputQuery,
 
   NES_DEBUG("OptimizerService: query plan=" << basePlan)
 
-  return std::make_shared<NESExecutionPlan>(queryOptimizer.prepareExecutionGraph(optimizationStrategyName, inputQuery, topologyPlan);
+  return queryOptimizer.prepareExecutionGraph(optimizationStrategyName, inputQuery, topologyPlan);
 }
