@@ -48,7 +48,7 @@ TEST_F(NesTopologyManagerTest, create_node) {
   EXPECT_EQ(worker_node->getEntryTypeString(), "Worker");
   EXPECT_NE(worker_node->getId(), invalid_id);
 
-  auto sensor_node = NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::LOW);
+  auto sensor_node = NESTopologyManager::getInstance().createNESSensorNode(1, "localhost", CPUCapacity::LOW);
   EXPECT_NE(sensor_node.get(), nullptr);
   EXPECT_EQ(sensor_node->getEntryType(), Sensor);
   EXPECT_EQ(sensor_node->getEntryTypeString(), "Sensor(" + sensor_node->getPhysicalStreamName() + ")");
@@ -63,7 +63,7 @@ TEST_F(NesTopologyManagerTest, remove_node) {
   auto result_worker = NESTopologyManager::getInstance().removeNESWorkerNode(worker_node);
   EXPECT_TRUE(result_worker);
 
-  auto sensor_node = NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::LOW);
+  auto sensor_node = NESTopologyManager::getInstance().createNESSensorNode(1, "localhost", CPUCapacity::LOW);
   auto result_sensor = NESTopologyManager::getInstance().removeNESSensorNode(sensor_node);
   EXPECT_TRUE(result_sensor);
 }
@@ -74,7 +74,7 @@ TEST_F(NesTopologyManagerTest, remove_non_existing_node) {
   EXPECT_TRUE(NESTopologyManager::getInstance().removeNESWorkerNode(worker_node));
   EXPECT_FALSE(NESTopologyManager::getInstance().removeNESWorkerNode(worker_node));
 
-  auto sensor_node = NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::LOW);
+  auto sensor_node = NESTopologyManager::getInstance().createNESSensorNode(1, "localhost", CPUCapacity::LOW);
   EXPECT_TRUE(NESTopologyManager::getInstance().removeNESSensorNode(sensor_node));
   EXPECT_FALSE(NESTopologyManager::getInstance().removeNESSensorNode(sensor_node));
 }
@@ -87,8 +87,8 @@ TEST_F(NesTopologyManagerTest, create_link) {
   auto worker_node_2 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
   auto worker_node_3 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
 
-  auto sensor_node_0 = NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::LOW);
-  auto sensor_node_1 = NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::LOW);
+  auto sensor_node_0 = NESTopologyManager::getInstance().createNESSensorNode(1, "localhost", CPUCapacity::LOW);
+  auto sensor_node_1 = NESTopologyManager::getInstance().createNESSensorNode(2, "localhost", CPUCapacity::LOW);
 
   auto link_node_node = NESTopologyManager::getInstance().createNESTopologyLink(worker_node_0, worker_node_1);
 
@@ -172,7 +172,7 @@ TEST_F(NesTopologyManagerTest, many_nodes) {
   // create sensors
   std::vector<std::shared_ptr<NESTopologySensorNode>> sensors;
   for (uint32_t i = 0; i != 30; ++i) {
-    sensors.push_back(NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::LOW));
+    sensors.push_back(NESTopologyManager::getInstance().createNESSensorNode(1, "localhost", CPUCapacity::LOW));
   }
 
   // remove some workers
@@ -192,7 +192,7 @@ TEST_F(NesTopologyManagerTest, many_nodes) {
 
   // create some sensors
   for (uint32_t i = 0; i != 10; ++i) {
-    sensors.push_back(NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::LOW));
+    sensors.push_back(NESTopologyManager::getInstance().createNESSensorNode(1,"localhost", CPUCapacity::LOW));
   }
 }
 
@@ -207,7 +207,7 @@ TEST_F(NesTopologyManagerTest, many_links) {
   // create sensors
   std::vector<std::shared_ptr<NESTopologySensorNode>> sensors;
   for (uint32_t i = 0; i != 30; ++i) {
-    sensors.push_back(NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::LOW));
+    sensors.push_back(NESTopologyManager::getInstance().createNESSensorNode(1, "localhost", CPUCapacity::LOW));
   }
 
   // link each worker with all other workers
@@ -250,7 +250,7 @@ TEST_F(NesTopologyManagerTest, print_graph) {
   // create sensors
   std::vector<std::shared_ptr<NESTopologySensorNode>> sensors;
   for (uint32_t i = 0; i != 15; ++i) {
-    sensors.push_back(NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::LOW));
+    sensors.push_back(NESTopologyManager::getInstance().createNESSensorNode(1, "localhost", CPUCapacity::LOW));
   }
 
   // link each worker with its neighbor
@@ -343,7 +343,7 @@ TEST_F(NesTopologyManagerTest, print_graph_without_edges) {
   // create sensors
   std::vector<std::shared_ptr<NESTopologySensorNode>> sensors;
   for (uint32_t i = 0; i != 15; ++i) {
-    sensors.push_back(NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::LOW));
+    sensors.push_back(NESTopologyManager::getInstance().createNESSensorNode(1, "localhost", CPUCapacity::LOW));
   }
 
   std::cout << NESTopologyManager::getInstance().getNESTopologyPlanString() << std::endl;

@@ -59,7 +59,7 @@ class NESTopologyPlan {
    * @param CPUCapacity of the node
    * @return NESTopologySensorNodePtr of the created node
    */
-  NESTopologySensorNodePtr createNESSensorNode(const std::string ipAddr,
+  NESTopologySensorNodePtr createNESSensorNode(size_t id, std::string ip,
                                                CPUCapacity cpuCapacity);
 
   /**

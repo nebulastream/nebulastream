@@ -36,30 +36,6 @@ class NESTopologyCoordinatorNode : public NESTopologyEntry {
   ~NESTopologyCoordinatorNode() = default;
 
   /**
-   * @brief method to get the id of a coordinator node
-   * @return id as a size_t
-   */
-  size_t getId() override;
-
-  /**
-   * @biref method to set the id of a coordinator node
-   * @param size_t of the id
-   */
-  void setId(size_t id) override;
-
-  /**
-   * @brief get the ip of this node
-   * @return ip as string
-   */
-  const std::string& getIp() override;
-
-  /**
-   * @brief method to set the ip of the node
-   * @param ip as string
-   */
-  void setIp(const std::string &ip) override;
-
-  /**
    * @brief method to get the overall cpu capacity of the node
    * @return size_t cpu capacity
    */
@@ -120,42 +96,11 @@ class NESTopologyCoordinatorNode : public NESTopologyEntry {
    */
   void setQuery(InputQueryPtr pQuery) override;
 
-  /**
-   * @brief method to get the publish port of the node
-   * @return publish port
-   */
-  uint16_t getPublishPort() override;
-
-  /**
-   * @brief method to set the publish port of the node
-   * @param publish port as a uint16_t
-   */
-  void setPublishPort(uint16_t publishPort) override;
-
-  /**
-   * @brief method to get the receive port of the node
-   * @return receive port as a uint16_t
-   */
-  uint16_t getReceivePort() override;
-
-  /**
-   * @brief method to set the receive port of this node
-   * @param recieve port as an uint16_t
-   */
-  void setReceivePort(uint16_t receivePort) override;
-
-  /**
-   * @brief method to get the next port (increment by one) based on the current port
-   * @return receive port as a uint16_t
-   */
-  uint16_t getNextFreeReceivePort() override;
-
  private:
   size_t cpuCapacity;
   size_t remainingCPUCapacity;
   bool isASink;
   InputQueryPtr query;
-  size_t node_id;
 };
 
 typedef std::shared_ptr<NESTopologyCoordinatorNode> NESTopologyCoordinatorNodePtr;

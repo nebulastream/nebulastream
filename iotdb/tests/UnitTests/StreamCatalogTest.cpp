@@ -120,7 +120,7 @@ TEST_F(StreamCatalogTest, add_get_physical_stream_test) {
       "test_stream", std::make_shared<Schema>(Schema()));
 
   NESTopologySensorNodePtr sensorNode = NESTopologyManager::getInstance()
-      .createNESSensorNode("localhost", CPUCapacity::HIGH);
+      .createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
 
   PhysicalStreamConfig streamConf;
   streamConf.physicalStreamName = "test2";
@@ -151,7 +151,7 @@ TEST_F(StreamCatalogTest, add_remove_physical_stream_test) {
       "test_stream", std::make_shared<Schema>(Schema()));
 
   NESTopologySensorNodePtr sensorNode = NESTopologyManager::getInstance()
-      .createNESSensorNode("localhost", CPUCapacity::HIGH);
+      .createNESSensorNode(1,"localhost", CPUCapacity::HIGH);
 
   PhysicalStreamConfig streamConf;
   streamConf.physicalStreamName = "test2";
@@ -174,7 +174,7 @@ TEST_F(StreamCatalogTest, add_remove_physical_stream_test) {
 TEST_F(StreamCatalogTest, add_physical_for_not_existing_logical_stream_test) {
   NESTopologyManager::getInstance().resetNESTopologyPlan();
   NESTopologySensorNodePtr sensorNode = NESTopologyManager::getInstance()
-      .createNESSensorNode("localhost", CPUCapacity::HIGH);
+      .createNESSensorNode(1,"localhost", CPUCapacity::HIGH);
 
   PhysicalStreamConfig streamConf;
   StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(

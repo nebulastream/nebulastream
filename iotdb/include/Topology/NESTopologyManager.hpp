@@ -53,11 +53,12 @@ class NESTopologyManager {
 
   /**
    * @brief create a nes sensor node
+   * @param id of the node
    * @param ip of sensor node as string
    * @param CPUCapacity of the node
    * @return NESTopologySensorNodePtr to the created sensor
    */
-  NESTopologySensorNodePtr createNESSensorNode(const std::string ipAddr,
+  NESTopologySensorNodePtr createNESSensorNode(size_t id, const std::string ipAddr,
                                                CPUCapacity cpuCapacity);
 
   /**
