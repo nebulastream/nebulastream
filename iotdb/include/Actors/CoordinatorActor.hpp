@@ -5,6 +5,7 @@
 #include <caf/all.hpp>
 #include <Actors/AtomUtils.hpp>
 #include <Services/CoordinatorService.hpp>
+#include <Services/StreamCatalogService.hpp>
 #include <Services/WorkerService.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Actors/Configurations/CoordinatorActorConfig.hpp>
@@ -12,6 +13,7 @@
 #include <Topology/NESTopologyManager.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <API/Schema.hpp>
+
 using std::cout;
 using std::cerr;
 using std::endl;
@@ -153,6 +155,7 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
    */
   void initializeNESTopology();
 
+  StreamCatalogService streamCatalogService;
   CoordinatorActorConfig actorCoordinatorConfig;
   CoordinatorServicePtr coordinatorServicePtr;
   std::unique_ptr<WorkerService> workerServicePtr;

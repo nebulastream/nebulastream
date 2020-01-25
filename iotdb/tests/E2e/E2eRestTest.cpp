@@ -34,7 +34,7 @@ class E2eRestTest : public testing::Test {
  public:
   string host = "localhost";
   int port = 8081;
-  string url = "http://localhost:8081/v1/nes/service/execute-query";
+  string url = "http://localhost:8081/v1/nes/query/execute-query";
   std::string outputFilePath = "blob.txt";
   int coordinatorPid;
   int workerPid;
@@ -47,7 +47,6 @@ class E2eRestTest : public testing::Test {
   static void TearDownTestCase() {
     std::cout << "Tear down ActorCoordinatorWorkerTest test class."
               << std::endl;
-
   }
 
  protected:
@@ -104,8 +103,8 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
 
   std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\" InputQuery inputQuery = InputQuery::from(default_logical).print(std::cout);";
-    ss << " return inputQuery;\",\"strategyName\" : \"BottomUp\"}";
+    ss << "\"InputQuery::from(default_logical).print(std::cout);\"";
+    ss << ",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
   cout << "string submit=" << ss.str();
   string body = ss.str();
@@ -113,7 +112,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
   web::json::value json_return;
 
   web::http::client::http_client client(
-      "http://localhost:8081/v1/nes/service/execute-query");
+      "http://localhost:8081/v1/nes/query/execute-query");
   client.request(web::http::methods::POST, U("/"), body).then(
       [](const web::http::http_response& response) {
         cout << "get first then" << endl;
@@ -163,9 +162,9 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
 
   std::stringstream ss;
   ss << "{\"userQuery\" : ";
-  ss <<  "\" InputQuery inputQuery = InputQuery::from(default_logical).writeToFile(\\\"";
+  ss <<  "\"InputQuery::from(default_logical).writeToFile(\\\"";
   ss << outputFilePath;
-  ss << "\\\"); return inputQuery;\",\"strategyName\" : \"BottomUp\"}";
+  ss << "\\\");\",\"strategyName\" : \"BottomUp\"}";
   ss << endl;
   cout << "string submit=" << ss.str();
   string body = ss.str();
@@ -173,7 +172,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
   web::json::value json_return;
 
   web::http::client::http_client client(
-      "http://localhost:8081/v1/nes/service/execute-query");
+      "http://localhost:8081/v1/nes/query/execute-query");
   client.request(web::http::methods::POST, U("/"), body).then(
       [](const web::http::http_response& response) {
         cout << "get first then" << endl;

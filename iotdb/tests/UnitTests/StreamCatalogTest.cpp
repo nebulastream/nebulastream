@@ -73,9 +73,16 @@ TEST_F(StreamCatalogTest, add_get_log_stream_test) {
       "test_stream");
   EXPECT_NE(sPtr, nullptr);
 
+  map<std::string, SchemaPtr> allLogicalStream = StreamCatalog::instance().getAllLogicalStream();
   string exp =
-      "logical stream name=default_logical schema:id:UINT32value:UINT64\n\nlogical stream name=test_stream schema:\n\n";
-  EXPECT_EQ(exp, StreamCatalog::instance().getLogicalStreamAndSchemaAsString());
+      "id:UINT32value:UINT64\n";
+  EXPECT_EQ(allLogicalStream.size(), 2);
+
+  SchemaPtr testSchema = allLogicalStream["test_stream"];
+  EXPECT_EQ("\n", testSchema->toString());
+
+  SchemaPtr defaultSchema = allLogicalStream["default_logical"];
+  EXPECT_EQ(exp, defaultSchema->toString());
 }
 
 TEST_F(StreamCatalogTest, add_remove_log_stream_test) {
@@ -90,7 +97,10 @@ TEST_F(StreamCatalogTest, add_remove_log_stream_test) {
 
   string exp =
       "logical stream name=default_logical schema: name=id UINT32 name=value UINT64\n\nlogical stream name=test_stream schema:\n\n";
-  EXPECT_NE(exp, StreamCatalog::instance().getLogicalStreamAndSchemaAsString());
+
+  map<std::string, SchemaPtr> allLogicalStream = StreamCatalog::instance().getAllLogicalStream();
+
+  EXPECT_NE(1, allLogicalStream.size());
 
   EXPECT_FALSE(StreamCatalog::instance().removeLogicalStream("test_stream22"));
 
