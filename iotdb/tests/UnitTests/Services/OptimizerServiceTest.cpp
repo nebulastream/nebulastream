@@ -68,7 +68,7 @@ class OptimizerServiceTest : public testing::Test {
 TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_valid_query_using_bottomup) {
 
   std::stringstream code;
-  code << "return InputQuery::from(temperature1)"
+  code << "InputQuery::from(temperature1)"
        << ".filter(temperature1[\"id\"]==5)" << std::endl
        << ".writeToZmq(temperature1, \"localhost\", 10);" << std::endl;
 
@@ -83,7 +83,7 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_valid_query_using_top
 
   std::stringstream code;
   code
-      << "return InputQuery::from(temperature1).filter(temperature1[\"value\"]==5)"
+      << "InputQuery::from(temperature1).filter(temperature1[\"value\"]==5)"
       << std::endl << ".writeToZmq(temperature1, \"localhost\", 10);"
       << std::endl;
   const InputQueryPtr &inputQuery = queryService.getInputQueryFromQueryString(
