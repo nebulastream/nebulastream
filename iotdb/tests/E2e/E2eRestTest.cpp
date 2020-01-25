@@ -103,8 +103,8 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
 
   std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\" InputQuery inputQuery = InputQuery::from(default_logical).print(std::cout);";
-    ss << " return inputQuery;\",\"strategyName\" : \"BottomUp\"}";
+    ss << "\"InputQuery::from(default_logical).print(std::cout);\"";
+    ss << ",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
   cout << "string submit=" << ss.str();
   string body = ss.str();
@@ -162,9 +162,9 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
 
   std::stringstream ss;
   ss << "{\"userQuery\" : ";
-  ss <<  "\" InputQuery inputQuery = InputQuery::from(default_logical).writeToFile(\\\"";
+  ss <<  "\"InputQuery::from(default_logical).writeToFile(\\\"";
   ss << outputFilePath;
-  ss << "\\\"); return inputQuery;\",\"strategyName\" : \"BottomUp\"}";
+  ss << "\\\");\",\"strategyName\" : \"BottomUp\"}";
   ss << endl;
   cout << "string submit=" << ss.str();
   string body = ss.str();

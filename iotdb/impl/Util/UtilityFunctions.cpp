@@ -58,6 +58,10 @@ InputQueryPtr UtilityFunctions::createQueryFromCodeString(
       boost::replace_all(newQuery, "filter(" + streamName,
                          "filter((*sPtr.get())");
 
+      // add return statement in front of input query
+      // NOTE: This will not work if you have created object of Input query and do further manipulation
+      boost::replace_all(newQuery, "InputQuery::from", "return InputQuery::from");
+
       code << newQuery << std::endl;
       code << "}" << std::endl;
       code << "}" << std::endl;

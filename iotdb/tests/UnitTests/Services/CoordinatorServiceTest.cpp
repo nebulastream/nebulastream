@@ -12,7 +12,7 @@ using namespace NES;
 class CoordinatorCafTest : public testing::Test {
  public:
   std::string queryString =
-          "return InputQuery::from(default_logical).filter(default_logical[\"value\"] > 42).print(std::cout); ";
+          "InputQuery::from(default_logical).filter(default_logical[\"value\"] > 42).print(std::cout); ";
 
   /* Will be called before any test in this class are executed. */
   static void SetUpTestCase() {
