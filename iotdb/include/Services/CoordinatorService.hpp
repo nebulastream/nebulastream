@@ -107,8 +107,8 @@ class CoordinatorService {
 
   bool clearQueryCatalogs();
 
-  const map<string, QueryCatalogEntryPtr>& getRegisteredQueries();
-  const map<string, QueryCatalogEntryPtr>& getRunningQueries();
+  const map<string, QueryCatalogEntryPtr> getRegisteredQueries();
+  const map<string, QueryCatalogEntryPtr> getRunningQueries();
 
  private:
 
