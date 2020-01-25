@@ -53,7 +53,7 @@ class CoordinatorService {
    * @param config of the node
    * @param sap the strong_actor_pointer CAF object to the worker
    */
-  NESTopologyEntryPtr register_sensor(const string &ip, uint16_t publish_port, uint16_t receive_port, int cpu,
+  NESTopologyEntryPtr register_sensor(size_t id, const string &ip, uint16_t publish_port, uint16_t receive_port, int cpu,
                                       const string& nodeProperties, PhysicalStreamConfig streamConf);
 
   /**

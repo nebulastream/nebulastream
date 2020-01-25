@@ -217,6 +217,7 @@ bool CoordinatorActor::deregisterSensor(const string &ip) {
   else
     NES_ERROR("CoordinatorActor: sensor was not removed")
 
+  return true;
 }
 
 void CoordinatorActor::registerSensor(const string &ip, uint16_t publish_port,
@@ -226,7 +227,8 @@ void CoordinatorActor::registerSensor(const string &ip, uint16_t publish_port,
   auto sap = current_sender();
   auto hdl = actor_cast<actor>(sap);
   NESTopologyEntryPtr sensorNode = coordinatorServicePtr->register_sensor(
-      ip, publish_port, receive_port, cpu, nodeProperties, streamConf);
+      sap->id(), ip, publish_port, receive_port, cpu, nodeProperties,
+      streamConf);
 
   this->state.actorTopologyMap.insert( { sap, sensorNode });
   this->state.topologyActorMap.insert( { sensorNode, sap });
