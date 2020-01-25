@@ -60,13 +60,11 @@ behavior CoordinatorActor::running() {
     },
     [=](register_log_stream_atom, const string& streamName, const string& streamSchema) {
       NES_DEBUG("CoordinatorActor: got request for register logical stream " << streamName << " and schema " << streamSchema)
-      SchemaPtr sch = UtilityFunctions::createSchemaFromCode(streamSchema);
-      NES_DEBUG("CoordinatorActor: schema successfully created")
-      return registerLogicalStream(streamName, sch);
+      return streamCatalogService.addNewLogicalStream(streamName, streamSchema);
     },
     [=](remove_log_stream_atom, const string& streamName) {
       NES_DEBUG("CoordinatorActor: got request for removel of logical stream " << streamName)
-      return removeLogicalStream(streamName);
+      return streamCatalogService.removeLogicalStream(streamName);
     },
     [=](remove_phy_stream_atom, std::string ip, const string& logicalStreamName, const string& physicalStreamName) {
       NES_DEBUG("CoordinatorActor: got request for removel of physical stream " << physicalStreamName << " from logical stream " << logicalStreamName)
@@ -118,27 +116,17 @@ behavior CoordinatorActor::running() {
     },
     [=](show_reg_log_stream_atom) {
       aout(this) << "Printing logical streams" << endl;
-      aout(this) << StreamCatalog::instance().getLogicalStreamAndSchemaAsString();
+      aout(this) << streamCatalogService.getAllLogicalStreamAsString();
     },
     [=](show_reg_phy_stream_atom) {
       aout(this) << "Printing physical streams" << endl;
-      aout(this) << StreamCatalog::instance().getPhysicalStreamAndSchemaAsString();
+      aout(this) << StreamCatalog::instance().getPhysicalStreamAndSchemaAsString()<<endl;
     },
     [=](show_running_operators_atom) {
       aout(this) << "Requesting deployed operators from connected devices.." << endl;
       this->showOperators();
     }
   };
-}
-
-bool CoordinatorActor::removeLogicalStream(std::string logicalStreamName) {
-  return StreamCatalog::instance().removeLogicalStream(logicalStreamName);
-}
-
-bool CoordinatorActor::registerLogicalStream(std::string logicalStreamName,
-                                             SchemaPtr schemaPtr) {
-  return StreamCatalog::instance().addLogicalStream(logicalStreamName,
-                                                    schemaPtr);
 }
 
 bool CoordinatorActor::removePhysicalStream(std::string ip,

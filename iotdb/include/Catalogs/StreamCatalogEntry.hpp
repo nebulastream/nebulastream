@@ -16,41 +16,39 @@ namespace NES {
  */
 class StreamCatalogEntry {
 
- public:
-  StreamCatalogEntry(std::string dataSourceType, std::string dataSourceConfig,
-                     NESTopologyEntryPtr node, std::string physicalStreamName)
-      : dataSourceType(dataSourceType),
-        dataSourceConfig(dataSourceConfig),
-        node(node),
-        physicalStreamName(physicalStreamName) {
-  }
-  ;
+  public:
+    StreamCatalogEntry(std::string dataSourceType, std::string dataSourceConfig,
+                       NESTopologyEntryPtr node, std::string physicalStreamName)
+        : dataSourceType(dataSourceType),
+          dataSourceConfig(dataSourceConfig),
+          node(node),
+          physicalStreamName(physicalStreamName) {
+    };
 
-  std::string getSourceType() {
-    return dataSourceType;
-  }
+    std::string getSourceType() {
+        return dataSourceType;
+    }
 
-  std::string getSourceConfig() {
-    return dataSourceConfig;
-  }
+    std::string getSourceConfig() {
+        return dataSourceConfig;
+    }
 
-  NESTopologyEntryPtr getNode() {
-    return node;
-  }
+    NESTopologyEntryPtr getNode() {
+        return node;
+    }
 
-  std::string getPhysicalName() {
-    return physicalStreamName;
-  }
+    std::string getPhysicalName() {
+        return physicalStreamName;
+    }
 
-  std::string toString()
-  {
-    return "physicalName=" + physicalStreamName + " on node=" + std::to_string(node->getId());
-  }
- private:
-  std::string dataSourceType;
-  std::string dataSourceConfig;
-  NESTopologyEntryPtr node;
-  std::string physicalStreamName;
+    std::string toString() {
+        return "physicalName=" + physicalStreamName + " on node=" + std::to_string(node->getId());
+    }
+  private:
+    std::string dataSourceType;
+    std::string dataSourceConfig;
+    NESTopologyEntryPtr node;
+    std::string physicalStreamName;
 };
 typedef std::shared_ptr<StreamCatalogEntry> StreamCatalogEntryPtr;
 
