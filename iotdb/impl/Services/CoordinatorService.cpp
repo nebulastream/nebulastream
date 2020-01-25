@@ -73,7 +73,7 @@ NESTopologyEntryPtr CoordinatorService::register_sensor(
 
 string CoordinatorService::register_query(
     const string &queryString, const string &optimizationStrategyName) {
-  QueryCatalog::instance().register_query(queryString,
+  return QueryCatalog::instance().register_query(queryString,
                                           optimizationStrategyName);
 }
 
@@ -230,8 +230,10 @@ string CoordinatorService::getTopologyPlanString() {
 
 NESExecutionPlanPtr CoordinatorService::getRegisteredQuery(string queryId) {
   if (QueryCatalog::instance().testIfQueryExists(queryId)) {
+    NES_DEBUG("CoordinatorService: return existing query " << queryId)
     return QueryCatalog::instance().getQuery(queryId)->nesPlanPtr;
   }
+  NES_DEBUG("CoordinatorService: query with id does not exits" << queryId)
   return nullptr;
 }
 
@@ -239,15 +241,16 @@ bool CoordinatorService::clearQueryCatalogs() {
   try {
     QueryCatalog::instance().clearQueries();
   } catch (...) {
+    assert(0);
     return false;
   }
   return true;
 }
 
-const map<string, QueryCatalogEntryPtr>& CoordinatorService::getRegisteredQueries() {
+const map<string, QueryCatalogEntryPtr> CoordinatorService::getRegisteredQueries() {
   return QueryCatalog::instance().getRegisteredQueries();
 }
 
-const map<string, QueryCatalogEntryPtr>& CoordinatorService::getRunningQueries() {
+const map<string, QueryCatalogEntryPtr> CoordinatorService::getRunningQueries() {
   return QueryCatalog::instance().getRunningQueries();
 }
