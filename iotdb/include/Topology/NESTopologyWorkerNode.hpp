@@ -25,7 +25,8 @@ namespace NES {
 class NESTopologyWorkerNode : public NESTopologyEntry {
 
  public:
-  NESTopologyWorkerNode(size_t nodeId, std::string ip_addr) {
+  NESTopologyWorkerNode(size_t id, std::string ip_addr) {
+    this->id = id;
     this->ipAddress = std::move(ip_addr);
     isASink = false;
     cpuCapacity = 0;

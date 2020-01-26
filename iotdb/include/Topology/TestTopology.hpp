@@ -22,61 +22,61 @@ void createExampleTopology() {
           "localhost", CPUCapacity::HIGH);
   const NESTopologyWorkerNodePtr &workerNode1 =
       NESTopologyManager::getInstance().createNESWorkerNode(
-          "localhost", CPUCapacity::MEDIUM);
+          1, "localhost", CPUCapacity::MEDIUM);
   const NESTopologyWorkerNodePtr &workerNode2 =
       NESTopologyManager::getInstance().createNESWorkerNode(
-          "localhost", CPUCapacity::MEDIUM);
+          2, "localhost", CPUCapacity::MEDIUM);
   const NESTopologyWorkerNodePtr &workerNode3 =
       NESTopologyManager::getInstance().createNESWorkerNode(
-          "localhost", CPUCapacity::MEDIUM);
+          3, "localhost", CPUCapacity::MEDIUM);
   const NESTopologyWorkerNodePtr &workerNode4 =
       NESTopologyManager::getInstance().createNESWorkerNode(
-          "localhost", CPUCapacity::MEDIUM);
+          4, "localhost", CPUCapacity::MEDIUM);
   const NESTopologyWorkerNodePtr &workerNode5 =
       NESTopologyManager::getInstance().createNESWorkerNode(
-          "localhost", CPUCapacity::MEDIUM);
+          5, "localhost", CPUCapacity::MEDIUM);
   const NESTopologyWorkerNodePtr &workerNode6 =
       NESTopologyManager::getInstance().createNESWorkerNode(
-          "localhost", CPUCapacity::MEDIUM);
+          6, "localhost", CPUCapacity::MEDIUM);
   const NESTopologyWorkerNodePtr &workerNode7 =
-      NESTopologyManager::getInstance().createNESWorkerNode("localhost",
+      NESTopologyManager::getInstance().createNESWorkerNode(7, "localhost",
                                                             CPUCapacity::HIGH);
   const NESTopologyWorkerNodePtr &workerNode8 =
-      NESTopologyManager::getInstance().createNESWorkerNode(
+      NESTopologyManager::getInstance().createNESWorkerNode(8,
           "localhost", CPUCapacity::MEDIUM);
   const NESTopologyWorkerNodePtr &workerNode9 =
-      NESTopologyManager::getInstance().createNESWorkerNode("localhost",
+      NESTopologyManager::getInstance().createNESWorkerNode(9, "localhost",
                                                             CPUCapacity::LOW);
   const NESTopologyWorkerNodePtr &workerNode10 =
-      NESTopologyManager::getInstance().createNESWorkerNode(
+      NESTopologyManager::getInstance().createNESWorkerNode(10,
           "localhost", CPUCapacity::MEDIUM);
   const NESTopologyWorkerNodePtr &workerNode11 =
-      NESTopologyManager::getInstance().createNESWorkerNode("localhost",
+      NESTopologyManager::getInstance().createNESWorkerNode(11, "localhost",
                                                             CPUCapacity::HIGH);
   const NESTopologyWorkerNodePtr &workerNode12 =
-      NESTopologyManager::getInstance().createNESWorkerNode(
+      NESTopologyManager::getInstance().createNESWorkerNode(12,
           "localhost", CPUCapacity::MEDIUM);
   const NESTopologyWorkerNodePtr &workerNode13 =
-      NESTopologyManager::getInstance().createNESWorkerNode(
+      NESTopologyManager::getInstance().createNESWorkerNode(13,
           "localhost", CPUCapacity::MEDIUM);
   const NESTopologyWorkerNodePtr &workerNode14 =
-      NESTopologyManager::getInstance().createNESWorkerNode(
+      NESTopologyManager::getInstance().createNESWorkerNode(14,
           "localhost", CPUCapacity::MEDIUM);
   const NESTopologyWorkerNodePtr &workerNode15 =
-      NESTopologyManager::getInstance().createNESWorkerNode("localhost",
+      NESTopologyManager::getInstance().createNESWorkerNode(15, "localhost",
                                                             CPUCapacity::LOW);
   const NESTopologyWorkerNodePtr &workerNode16 =
-      NESTopologyManager::getInstance().createNESWorkerNode(
+      NESTopologyManager::getInstance().createNESWorkerNode(16,
           "localhost", CPUCapacity::MEDIUM);
   const NESTopologyWorkerNodePtr &workerNode17 =
-      NESTopologyManager::getInstance().createNESWorkerNode(
+      NESTopologyManager::getInstance().createNESWorkerNode(17,
           "localhost", CPUCapacity::MEDIUM);
   const NESTopologyWorkerNodePtr &workerNode18 =
-      NESTopologyManager::getInstance().createNESWorkerNode(
+      NESTopologyManager::getInstance().createNESWorkerNode(18,
           "localhost", CPUCapacity::MEDIUM);
 
   const NESTopologySensorNodePtr &sensorNode1 =
-      NESTopologyManager::getInstance().createNESSensorNode(1, "localhost",
+      NESTopologyManager::getInstance().createNESSensorNode(19, "localhost",
                                                             CPUCapacity::HIGH);
   sensorNode1->setPhysicalStreamName("temperature1");
   StreamCatalog::instance().addLogicalStream("temperature1",
@@ -86,7 +86,7 @@ void createExampleTopology() {
   assert(StreamCatalog::instance().addPhysicalStream("temperature1", e1));
 
   const NESTopologySensorNodePtr &sensorNode2 =
-      NESTopologyManager::getInstance().createNESSensorNode(2, "localhost",
+      NESTopologyManager::getInstance().createNESSensorNode(20, "localhost",
                                                             CPUCapacity::LOW);
   sensorNode2->setPhysicalStreamName("humidity1");
   StreamCatalog::instance().addLogicalStream("humidity1",
@@ -97,7 +97,7 @@ void createExampleTopology() {
   assert(StreamCatalog::instance().addPhysicalStream("humidity1", e2));
 
   const NESTopologySensorNodePtr &sensorNode3 =
-      NESTopologyManager::getInstance().createNESSensorNode(3, "localhost",
+      NESTopologyManager::getInstance().createNESSensorNode(21, "localhost",
                                                             CPUCapacity::LOW);
   sensorNode3->setPhysicalStreamName("temperature2");
   StreamCatalog::instance().addLogicalStream("temperature2",
@@ -107,8 +107,8 @@ void createExampleTopology() {
   assert(StreamCatalog::instance().addPhysicalStream("temperature2", e3));
 
   const NESTopologySensorNodePtr &sensorNode4 =
-      NESTopologyManager::getInstance().createNESSensorNode(4,
-          "localhost", CPUCapacity::MEDIUM);
+      NESTopologyManager::getInstance().createNESSensorNode(
+          22, "localhost", CPUCapacity::MEDIUM);
   sensorNode4->setPhysicalStreamName("humidity2");
   StreamCatalog::instance().addLogicalStream("humidity2",
                                              std::make_shared<Schema>(schema));
