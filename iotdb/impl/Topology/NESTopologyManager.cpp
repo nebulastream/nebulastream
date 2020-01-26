@@ -8,8 +8,8 @@ NESTopologyCoordinatorNodePtr NESTopologyManager::createNESCoordinatorNode(
 }
 
 NESTopologyWorkerNodePtr NESTopologyManager::createNESWorkerNode(
-    const std::string ipAddr, CPUCapacity cpuCapacity) {
-  return currentPlan->createNESWorkerNode(ipAddr, cpuCapacity);
+    size_t id, const std::string ipAddr, CPUCapacity cpuCapacity) {
+  return currentPlan->createNESWorkerNode(id, ipAddr, cpuCapacity);
 }
 
 NESTopologySensorNodePtr NESTopologyManager::createNESSensorNode(size_t id, std::string ip,

@@ -35,20 +35,21 @@ NESTopologyEntryPtr NESTopologyPlan::getRootNode() const {
 NESTopologyCoordinatorNodePtr NESTopologyPlan::createNESCoordinatorNode(
     std::string ipAddr, CPUCapacity cpuCapacity) {
   // create coordinator node
-  size_t nodeId = getNextFreeNodeId();
-  auto ptr = std::make_shared<NESTopologyCoordinatorNode>(nodeId, ipAddr);
+//  size_t nodeId = getNextFreeNodeId();
+  //TODO: check if it ok that the coordinator always has id zero
+  auto ptr = std::make_shared<NESTopologyCoordinatorNode>(0, ipAddr);
   ptr->setCpuCapacity(cpuCapacity);
-  fGraphPtr->addVertex(ptr);
+  assert(fGraphPtr->addVertex(ptr));
   return ptr;
 }
 
 NESTopologyWorkerNodePtr NESTopologyPlan::createNESWorkerNode(
-    std::string ipAddr, CPUCapacity cpuCapacity) {
+    size_t id, std::string ipAddr, CPUCapacity cpuCapacity) {
   // create worker node
-  size_t nodeId = getNextFreeNodeId();
-  auto ptr = std::make_shared<NESTopologyWorkerNode>(nodeId, ipAddr);
+//  size_t nodeId = getNextFreeNodeId();
+  auto ptr = std::make_shared<NESTopologyWorkerNode>(id, ipAddr);
   ptr->setCpuCapacity(cpuCapacity);
-  fGraphPtr->addVertex(ptr);
+  assert(fGraphPtr->addVertex(ptr));
   return ptr;
 }
 
@@ -60,7 +61,7 @@ NESTopologySensorNodePtr NESTopologyPlan::createNESSensorNode(
   ptr->setCpuCapacity(cpuCapacity);
 
   ptr->setPhysicalStreamName("default_physical");
-  fGraphPtr->addVertex(ptr);
+  assert(fGraphPtr->addVertex(ptr));
   return ptr;
 }
 
@@ -106,6 +107,7 @@ std::string NESTopologyPlan::getTopologyPlanString() const {
 }
 
 size_t NESTopologyPlan::getNextFreeNodeId() {
+  assert(0);
   while (fGraphPtr->hasVertex(currentNodeId)) {
     currentNodeId++;
   }

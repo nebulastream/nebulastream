@@ -44,11 +44,12 @@ class NESTopologyManager {
 
   /**
    * @brief create a nes worker node
+   * @param actor id of the node
    * @param ip of worker node as string
    * @param CPUCapacity of the node
    * @return NESTopologyWorkerNodePtr to the created worker
    */
-  NESTopologyWorkerNodePtr createNESWorkerNode(const std::string ipAddr,
+  NESTopologyWorkerNodePtr createNESWorkerNode(size_t id, const std::string ipAddr,
                                                CPUCapacity cpuCapacity);
 
   /**
