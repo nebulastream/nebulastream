@@ -84,7 +84,6 @@ std::string host = "localhost";
 uint16_t publish_port = 4711;
 //std::string sensor_type = "default";
 };
-
 /* Test serialization for Schema  */
 TEST_F(CoordinatorCafTest, test_registration_and_topology) {
   string topo = coordinatorServicePtr->getTopologyPlanString();
@@ -165,11 +164,12 @@ TEST_F(CoordinatorCafTest, test_deregistration_and_topology) {
       "}\n";
   EXPECT_EQ(coordinatorServicePtr->getTopologyPlanString(), expectedTopo2);
 }
-
 TEST_F(CoordinatorCafTest, test_register_query) {
   string queryId = coordinatorServicePtr->register_query(queryString,
                                                          "BottomUp");
-  EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
+  const map<string, QueryCatalogEntryPtr> mq = coordinatorServicePtr->getRegisteredQueries();
+  cout << "size=" << mq.size() << endl;
+  EXPECT_TRUE(mq.size() == 1);
 
   string expectedPlacement =
       "graph G {\n"
@@ -185,8 +185,9 @@ TEST_F(CoordinatorCafTest, test_register_query) {
           "4--1 [label=\"4\"];\n"
           "5--1 [label=\"5\"];\n"
           "}\n";
-  const NESExecutionPlan* kExecutionPlan = coordinatorServicePtr
+  const NESExecutionPlanPtr kExecutionPlan = coordinatorServicePtr
       ->getRegisteredQuery(queryId);
+
   EXPECT_EQ(kExecutionPlan->getTopologyPlanString(), expectedPlacement);
 }
 
@@ -202,7 +203,7 @@ TEST_F(CoordinatorCafTest, test_make_deployment) {
   string queryId = coordinatorServicePtr->register_query(queryString,
                                                          "BottomUp");
   EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
-  unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
+  map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
       coordinatorServicePtr->make_deployment(queryId);
   EXPECT_TRUE(etos.size() == 2);
 
@@ -212,7 +213,8 @@ TEST_F(CoordinatorCafTest, test_make_deployment) {
     EXPECT_TRUE(!s_eto.empty());
     SerializationTools::parse_eto(s_eto);
   }
-  EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().empty());
+
+  EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
   EXPECT_TRUE(coordinatorServicePtr->getRunningQueries().size() == 1);
 }
 
@@ -220,10 +222,11 @@ TEST_F(CoordinatorCafTest, test_run_deregister_query) {
   string queryId = coordinatorServicePtr->register_query(queryString,
                                                          "BottomUp");
   EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
-  unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
+  map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
       coordinatorServicePtr->make_deployment(queryId);
   EXPECT_TRUE(etos.size() == 2);
-  EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().empty());
+
+  EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
   EXPECT_TRUE(coordinatorServicePtr->getRunningQueries().size() == 1);
 
   coordinatorServicePtr->deregister_query(queryId);
@@ -235,7 +238,7 @@ TEST_F(CoordinatorCafTest, test_compile_deployment) {
   string queryId = coordinatorServicePtr->register_query(queryString,
                                                          "BottomUp");
   EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
-  unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
+  map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
       coordinatorServicePtr->make_deployment(queryId);
   EXPECT_TRUE(etos.size() == 2);
 
@@ -244,7 +247,7 @@ TEST_F(CoordinatorCafTest, test_compile_deployment) {
     QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan();
     EXPECT_TRUE(qep);
   }
-  EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().empty());
+  EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
   EXPECT_TRUE(coordinatorServicePtr->getRunningQueries().size() == 1);
 }
 
@@ -282,7 +285,7 @@ TEST_F(CoordinatorCafTest, DISABLED_test_local_distributed_deployment) {
   string queryId = coordinatorServicePtr->register_query(queryString,
                                                          "BottomUp");
   EXPECT_EQ(coordinatorServicePtr->getRegisteredQueries().size(), 1);
-  unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
+  map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
       coordinatorServicePtr->make_deployment(queryId);
   EXPECT_TRUE(etos.size() == 2);
 
@@ -296,7 +299,7 @@ TEST_F(CoordinatorCafTest, DISABLED_test_local_distributed_deployment) {
     engine->deployQuery(qep);
     qeps.push_back(qep);
   }
-  EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().empty());
+  EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
   EXPECT_TRUE(coordinatorServicePtr->getRunningQueries().size() == 1);
 
   for (const QueryExecutionPlanPtr& qep : qeps) {
@@ -318,7 +321,7 @@ TEST_F(CoordinatorCafTest, DISABLED_test_sequential_local_distributed_deployment
     string queryId = coordinatorServicePtr->register_query(queryString,
                                                            "BottomUp");
     EXPECT_EQ(coordinatorServicePtr->getRegisteredQueries().size(), 1);
-    unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
+    map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
         coordinatorServicePtr->make_deployment(queryId);
     EXPECT_TRUE(etos.size() == 2);
 
@@ -332,7 +335,7 @@ TEST_F(CoordinatorCafTest, DISABLED_test_sequential_local_distributed_deployment
       engine->deployQuery(qep);
       qeps.push_back(qep);
     }
-    EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().empty());
+    EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
     EXPECT_TRUE(coordinatorServicePtr->getRunningQueries().size() == 1);
 
     for (const QueryExecutionPlanPtr& qep : qeps) {
