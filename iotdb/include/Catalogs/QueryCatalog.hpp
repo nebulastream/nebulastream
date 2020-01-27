@@ -20,19 +20,17 @@ namespace NES {
 class QueryCatalogEntry {
  public:
   QueryCatalogEntry(string queryId, InputQueryPtr inputQuery,
-                    NESExecutionPlanPtr nesPlanPtr, Schema schema, bool running)
+                    NESExecutionPlanPtr nesPlanPtr, bool running)
       :
       queryId(queryId),
       inputQuery(inputQuery),
       nesPlanPtr(nesPlanPtr),
-      schema(schema),
       running(running) {
   }
 
   string queryId;
   InputQueryPtr inputQuery;
   NESExecutionPlanPtr nesPlanPtr;
-  Schema schema;  //TODO: do we really need this?
   bool running;
 };
 

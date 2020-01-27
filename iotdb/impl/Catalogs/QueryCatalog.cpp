@@ -35,18 +35,18 @@ string QueryCatalog::register_query(const string &queryString,
         queryString);
     Schema schema = inputQueryPtr->source_stream->getSchema();
 
-    NESExecutionPlanPtr nPtr = OptimizerService::instance().getExecutionPlan(
+    NESExecutionPlanPtr nesExecutionPtr = OptimizerService::instance().getExecutionPlan(
         inputQueryPtr, optimizationStrategyName);
 
     NES_DEBUG(
-        "QueryCatalog: Final Execution Plan =" << nPtr->getTopologyPlanString())
+        "QueryCatalog: Final Execution Plan =" << nesExecutionPtr->getTopologyPlanString())
 
     boost::uuids::basic_random_generator<boost::mt19937> gen;
     boost::uuids::uuid u = gen();
     std::string queryId = boost::uuids::to_string(u);  //TODO: I am not sure this will not create a unique one
 
     QueryCatalogEntryPtr entry = std::make_shared<QueryCatalogEntry>(
-        queryId, inputQueryPtr, nPtr, schema, false);
+        queryId, inputQueryPtr, nesExecutionPtr, false);
 
     queries[queryId] = entry;
     NES_DEBUG("number of quieries after insert=" << queries.size())
