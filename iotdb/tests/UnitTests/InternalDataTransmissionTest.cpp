@@ -8,9 +8,11 @@
 #include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <SourceSink/SinkCreator.hpp>
-#include <Network/ForwardSink.hpp>
+#include <Network/ZmqReceiver.hpp>
+#include <Util/UtilityFunctions.hpp>
 
-using namespace iotdb;
+
+using namespace NES;
 using namespace std;
 
 class InternalDataTransmissionTest : public testing::Test {
@@ -20,7 +22,7 @@ class InternalDataTransmissionTest : public testing::Test {
 
   static void SetUpTestCase() {
     setupLogging();
-    IOTDB_INFO("Setup InternalDataTransmissionTest test class.");
+    NES_INFO("Setup InternalDataTransmissionTest test class.");
   }
 
   static void TearDownTestCase() { std::cout << "Tear down InternalDataTransmissionTest test class." << std::endl; }
@@ -37,21 +39,19 @@ class InternalDataTransmissionTest : public testing::Test {
     log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
 
     // set log level
-    logger->setLevel(log4cxx::Level::getDebug());
+    NESLogger->setLevel(log4cxx::Level::getDebug());
     //logger->setLevel(log4cxx::Level::getInfo());
 
     // add appenders and other will inherit the settings
-    logger->addAppender(file);
-    logger->addAppender(console);
+    NESLogger->addAppender(file);
+    NESLogger->addAppender(console);
   }
 };
 
 TEST_F(InternalDataTransmissionTest, testInternalTransmission) {
-  string queryString =
-      "InputQuery inputQuery = InputQuery::from(default_logical).filter(default_logical[\"id\"] < 42).print(std::cout); "
-      "return inputQuery;";
+  string queryString = "InputQuery::from(default_logical).filter(default_logical[\"id\"] < 42).print(std::cout); ";
 
-  InputQueryPtr query = createQueryFromCodeString(queryString);
+  InputQueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
   OperatorPtr operatorTree = query->getRoot();
 
   CodeGeneratorPtr code_gen = createCodeGenerator();
