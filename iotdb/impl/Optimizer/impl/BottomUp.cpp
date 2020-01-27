@@ -64,9 +64,9 @@ void BottomUp::placeOperators(NESExecutionPlan executionGraph,
             operatorsToProcess.pop_front();
 
             OperatorPtr& optr = operatorToProcess.operatorToProcess;
-            if (optr->isScheduled()) {
-                continue;
-            }
+            //            if (optr->isScheduled()) {
+            //                continue;
+            //            }
 
             NES_DEBUG("BottomUp: try to place operator " << optr->toString())
 
@@ -88,10 +88,6 @@ void BottomUp::placeOperators(NESExecutionPlan executionGraph,
 
             NES_DEBUG("BottomUp: suitable placement for operator " << optr->toString() << " is " << node->toString())
 
-            // Reduce the processing capacity by 1
-            // FIXME: Bring some logic here where the cpu capacity is reduced based on operator workload
-            node->reduceCpuCapacity(1);
-
             // If the selected nes node was already used by another operator for placement then do not create a
             // new execution node rather add operator to existing node.
             if (executionGraph.hasVertex(node->getId())) {
@@ -101,17 +97,23 @@ void BottomUp::placeOperators(NESExecutionPlan executionGraph,
                     .getExecutionNode(node->getId());
 
                 string oldOperatorName = existingExecutionNode->getOperatorName();
-                string newName = oldOperatorName + "=>"
-                    + operatorTypeToString[optr->getOperatorType()] + "(OP-"
-                    + std::to_string(optr->operatorId) + ")";
 
-                existingExecutionNode->setOperatorName(newName);
-                existingExecutionNode->addChildOperatorId(optr->operatorId);
+                string operatorId = "(OP-" + std::to_string(optr->operatorId) + ")";
+                if (oldOperatorName.find(operatorId) == string::npos) {
+                    string newName = oldOperatorName.append("=>")
+                        .append(operatorTypeToString[optr->getOperatorType()])
+                        .append(operatorId);
+                    existingExecutionNode->setOperatorName(newName);
+                    existingExecutionNode->addChildOperatorId(optr->operatorId);
 
-                optr->markScheduled(true);
-                if (optr->parent != nullptr) {
-                    operatorsToProcess.emplace_back(
-                        ProcessOperator(optr->parent, existingExecutionNode));
+                    optr->markScheduled(true);
+                    if (optr->parent != nullptr) {
+                        operatorsToProcess.emplace_back(
+                            ProcessOperator(optr->parent, existingExecutionNode));
+                    }
+                } else {
+                    //skip adding rest of the operator chains as they already exists.
+                    continue;
                 }
             } else {
                 NES_DEBUG("BottomUp: create new execution node " << node->toString())
@@ -129,6 +131,10 @@ void BottomUp::placeOperators(NESExecutionPlan executionGraph,
                         ProcessOperator(optr->parent, newExecutionNode));
                 }
             }
+
+            // Reduce the processing capacity by 1
+            // FIXME: Bring some logic here where the cpu capacity is reduced based on operator workload
+            node->reduceCpuCapacity(1);
         }
 
 
@@ -146,7 +152,6 @@ void BottomUp::placeOperators(NESExecutionPlan executionGraph,
             }
         }
     }
-
 }
 
 NESTopologyEntryPtr BottomUp::findSuitableNESNodeForOperatorPlacement(
