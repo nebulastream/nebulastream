@@ -36,7 +36,7 @@ class QueryCatalogTest : public testing::Test {
 
     CoordinatorServicePtr coordinatorServicePtr = CoordinatorService::getInstance();
     coordinatorServicePtr->clearQueryCatalogs();
-    for (int i = 0; i < 5; i++) {
+    for (int i = 1; i < 5; i++) {
       //FIXME: add node properties
       PhysicalStreamConfig streamConf;
       auto entry = coordinatorServicePtr->register_sensor(i, ip, publish_port,
