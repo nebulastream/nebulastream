@@ -3,9 +3,9 @@
 namespace NES {
 
 NESTopologyCoordinatorNode::NESTopologyCoordinatorNode(size_t nodeId,
-                                                       std::string ip_addr) {
+                                                       std::string ipAddress) {
   this->id = nodeId;
-  this->ipAddress = std::move(ip_addr);
+  this->ipAddress = std::move(ipAddress);
   isASink = false;
   cpuCapacity = 0;
   remainingCPUCapacity = 0;

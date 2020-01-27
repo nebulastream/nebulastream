@@ -30,11 +30,12 @@ class NESTopologyPlan {
 
   /**
    * @brief method to create the coordinator node
+   * @param id as size_t
    * @param ip as string
    * @param CPUCapacity of the node
    * @return NESTopologyCoordinatorNodePtr of the created node
    */
-  NESTopologyCoordinatorNodePtr createNESCoordinatorNode(
+  NESTopologyCoordinatorNodePtr createNESCoordinatorNode(size_t id,
       const std::string ipAddr, CPUCapacity cpuCapacity);
 
   /**

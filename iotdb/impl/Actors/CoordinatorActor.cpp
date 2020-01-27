@@ -37,7 +37,7 @@ void CoordinatorActor::initializeNESTopology() {
 
   NESTopologyManager::getInstance().resetNESTopologyPlan();
   auto coordinatorNode = NESTopologyManager::getInstance()
-      .createNESCoordinatorNode(actorCoordinatorConfig.ip, CPUCapacity::HIGH);
+      .createNESCoordinatorNode(0, actorCoordinatorConfig.ip, CPUCapacity::HIGH);
   coordinatorNode->setPublishPort(actorCoordinatorConfig.publish_port);
   coordinatorNode->setReceivePort(actorCoordinatorConfig.receive_port);
 }
@@ -212,12 +212,13 @@ bool CoordinatorActor::deregisterSensor(const string &ip) {
   bool successTopology = coordinatorServicePtr->deregister_sensor(sensorNode);
   NES_DEBUG("CoordinatorActor: success in topologyy is " << successTopology)
 
-  if (successCatalog && successTopology)
+  if (successCatalog && successTopology) {
     NES_DEBUG("CoordinatorActor: sensor successfully removed")
-  else
+    return true;
+  } else {
     NES_ERROR("CoordinatorActor: sensor was not removed")
-
-  return true;
+    return false;
+  }
 }
 
 void CoordinatorActor::registerSensor(const string &ip, uint16_t publish_port,

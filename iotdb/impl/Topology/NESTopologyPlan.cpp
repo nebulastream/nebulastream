@@ -32,12 +32,9 @@ NESTopologyEntryPtr NESTopologyPlan::getRootNode() const {
   return fGraphPtr->getRoot();
 }
 
-NESTopologyCoordinatorNodePtr NESTopologyPlan::createNESCoordinatorNode(
+NESTopologyCoordinatorNodePtr NESTopologyPlan::createNESCoordinatorNode(size_t id,
     std::string ipAddr, CPUCapacity cpuCapacity) {
-  // create coordinator node
-//  size_t nodeId = getNextFreeNodeId();
-  //TODO: check if it ok that the coordinator always has id zero
-  auto ptr = std::make_shared<NESTopologyCoordinatorNode>(0, ipAddr);
+  auto ptr = std::make_shared<NESTopologyCoordinatorNode>(id, ipAddr);
   ptr->setCpuCapacity(cpuCapacity);
   assert(fGraphPtr->addVertex(ptr));
   return ptr;

@@ -2,9 +2,9 @@
 #include <Util/Logger.hpp>
 namespace NES {
 
-NESTopologyCoordinatorNodePtr NESTopologyManager::createNESCoordinatorNode(
+NESTopologyCoordinatorNodePtr NESTopologyManager::createNESCoordinatorNode(size_t id,
     const std::string ipAddr, CPUCapacity cpuCapacity) {
-  return currentPlan->createNESCoordinatorNode(ipAddr, cpuCapacity);
+  return currentPlan->createNESCoordinatorNode(id, ipAddr, cpuCapacity);
 }
 
 NESTopologyWorkerNodePtr NESTopologyManager::createNESWorkerNode(
