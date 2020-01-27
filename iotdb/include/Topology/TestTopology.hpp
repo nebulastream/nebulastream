@@ -18,7 +18,7 @@ void createExampleTopology() {
   Schema schema = Schema::create().addField("id", BasicType::UINT32).addField(
       "value", BasicType::UINT64);
   const NESTopologyCoordinatorNodePtr &sinkNode =
-      NESTopologyManager::getInstance().createNESCoordinatorNode(
+      NESTopologyManager::getInstance().createNESCoordinatorNode(0,
           "localhost", CPUCapacity::HIGH);
   const NESTopologyWorkerNodePtr &workerNode1 =
       NESTopologyManager::getInstance().createNESWorkerNode(

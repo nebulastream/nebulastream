@@ -35,11 +35,12 @@ class NESTopologyManager {
 
   /**
    * @brief create a nes coordinator node
+   * @param id of the coordinator as size_t
    * @param ip of coordinator node as string
    * @param CPUCapacity of the node
    * @return NESTopologyCoordinatorNodePtr to the created coordinator
    */
-  NESTopologyCoordinatorNodePtr createNESCoordinatorNode(
+  NESTopologyCoordinatorNodePtr createNESCoordinatorNode(size_t id,
       const std::string ipAddr, CPUCapacity cpuCapacity);
 
   /**

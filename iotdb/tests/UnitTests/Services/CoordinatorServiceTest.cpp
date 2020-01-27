@@ -26,7 +26,7 @@ class CoordinatorCafTest : public testing::Test {
 
     NESTopologyManager::getInstance().resetNESTopologyPlan();
     const auto& kCoordinatorNode = NESTopologyManager::getInstance()
-        .createNESCoordinatorNode("127.0.0.1", CPUCapacity::HIGH);
+        .createNESCoordinatorNode(0, "127.0.0.1", CPUCapacity::HIGH);
     kCoordinatorNode->setPublishPort(4711);
     kCoordinatorNode->setReceivePort(4815);
 
