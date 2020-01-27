@@ -73,7 +73,7 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                             //Call the service
                             const string
                                 queryId = coordinatorServicePtr->register_query(userQuery, optimizationStrategyName);
-                            NESExecutionPlan* executionPlan = coordinatorServicePtr->getRegisteredQuery(queryId);
+                            NESExecutionPlanPtr executionPlan = coordinatorServicePtr->getRegisteredQuery(queryId);
 
                             json::value executionGraphPlan = executionPlan->getExecutionGraphAsJson();
 
