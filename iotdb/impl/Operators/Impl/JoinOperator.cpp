@@ -6,16 +6,16 @@
 
 #include <Operators/Impl/JoinOperator.hpp>
 
-namespace iotdb {
+namespace NES {
 
-JoinOperator::JoinOperator(const JoinPredicatePtr& join_spec) : Operator(), join_spec_(iotdb::copy(join_spec)) {}
+JoinOperator::JoinOperator(const JoinPredicatePtr& join_spec) : Operator(), join_spec_(NES::copy(join_spec)) {}
 
-JoinOperator::JoinOperator(const JoinOperator& other) : join_spec_(iotdb::copy(other.join_spec_)) {}
+JoinOperator::JoinOperator(const JoinOperator& other) : join_spec_(NES::copy(other.join_spec_)) {}
 
 JoinOperator& JoinOperator::operator=(const JoinOperator& other)
 {
     if (this != &other) {
-        join_spec_ = iotdb::copy(other.join_spec_);
+        join_spec_ = NES::copy(other.join_spec_);
     }
     return *this;
 }
@@ -28,7 +28,7 @@ const OperatorPtr JoinOperator::copy() const { return std::make_shared<JoinOpera
 const std::string JoinOperator::toString() const
 {
     std::stringstream ss;
-    ss << "JOIN(" << iotdb::toString(join_spec_) << ")";
+    ss << "JOIN(" << NES::toString(join_spec_) << ")";
     return ss.str();
 }
 
@@ -41,4 +41,4 @@ const OperatorPtr createJoinOperator(const JoinPredicatePtr& join_spec)
     return std::make_shared<JoinOperator>(join_spec);
 }
 
-} // namespace iotdb
+} // namespace NES

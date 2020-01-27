@@ -6,7 +6,7 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/export.hpp>
 
-namespace iotdb {
+namespace NES {
 
 BasicValueType::BasicValueType(const BasicType &type, std::string value) : type_(type), value_(std::move(value)) {};
 
@@ -33,4 +33,4 @@ const ValueTypePtr createBasicTypeValue(const BasicType &type, const std::string
 };
 
 }
-BOOST_CLASS_EXPORT(iotdb::BasicValueType);
+BOOST_CLASS_EXPORT(NES::BasicValueType);

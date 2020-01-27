@@ -4,7 +4,7 @@
 #include "../../include/Topology/NESTopologyManager.hpp"
 #include "../../include/Topology/NESTopologyPlan.hpp"
 
-using namespace iotdb;
+using namespace NES;
 
 NESExecutionPlan NESOptimizer::prepareExecutionGraph(const std::string strategy, const InputQueryPtr inputQuery,
                                                      const NESTopologyPlanPtr nesTopologyPlan) {

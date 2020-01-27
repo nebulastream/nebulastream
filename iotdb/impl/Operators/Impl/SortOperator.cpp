@@ -6,16 +6,16 @@
 
 #include <Operators/Impl/SortOperator.hpp>
 
-namespace iotdb {
+namespace NES {
 
-SortOperator::SortOperator(const Sort& sort_spec) : Operator(), sort_spec_(iotdb::copy(sort_spec)) {}
+SortOperator::SortOperator(const Sort& sort_spec) : Operator(), sort_spec_(NES::copy(sort_spec)) {}
 
-SortOperator::SortOperator(const SortOperator& other) : sort_spec_(iotdb::copy(other.sort_spec_)) {}
+SortOperator::SortOperator(const SortOperator& other) : sort_spec_(NES::copy(other.sort_spec_)) {}
 
 SortOperator& SortOperator::operator=(const SortOperator& other)
 {
     if (this != &other) {
-        sort_spec_ = iotdb::copy(other.sort_spec_);
+        sort_spec_ = NES::copy(other.sort_spec_);
     }
     return *this;
 }
@@ -28,7 +28,7 @@ const OperatorPtr SortOperator::copy() const { return std::make_shared<SortOpera
 const std::string SortOperator::toString() const
 {
     std::stringstream ss;
-    ss << "SORT(" << iotdb::toString(sort_spec_) << ")";
+    ss << "SORT(" << NES::toString(sort_spec_) << ")";
     return ss.str();
 }
 
@@ -38,4 +38,4 @@ SortOperator::~SortOperator() {}
 
 const OperatorPtr createSortOperator(const Sort& sort_spec) { return std::make_shared<SortOperator>(sort_spec); }
 
-} // namespace iotdb
+} // namespace NES

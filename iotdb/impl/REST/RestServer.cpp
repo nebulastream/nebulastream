@@ -1,10 +1,11 @@
 #include <iostream>
 #include <REST/usr_interrupt_handler.hpp>
 #include <REST/runtime_utils.hpp>
-#include <REST/Controller/RestController.hpp>
 #include <REST/RestServer.hpp>
+#include <Util/Logger.hpp>
+#include <REST/RestEngine.hpp>
 
-using namespace iotdb;
+namespace NES{
 
 bool RestServer::start(std::string host,
                        u_int16_t port,
@@ -15,9 +16,9 @@ bool RestServer::start(std::string host,
               << std::endl;
     std::cout << "------------------------------------------------------------" << std::endl;
 
-    RestController server;
+    RestEngine server;
     server.setCoordinatorActorHandle(coordinatorActorHandle);
-    server.setEndpoint("http://" + host + ":" + std::to_string(port) + "/v1/iotdb/");
+    server.setEndpoint("http://" + host + ":" + std::to_string(port) + "/v1/nes/");
 
     try {
         // wait for server initialization...
@@ -27,7 +28,7 @@ bool RestServer::start(std::string host,
         InterruptHandler::waitForUserInterrupt();
         server.shutdown().wait();
     } catch (std::exception& e) {
-        IOTDB_ERROR("Unable to start REST server");
+        NES_ERROR("Unable to start REST server");
         return false;
     } catch (...) {
         RuntimeUtils::printStackTrace();
@@ -37,6 +38,4 @@ bool RestServer::start(std::string host,
 }
 
 
-
-
-
+}

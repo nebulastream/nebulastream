@@ -1,8 +1,9 @@
-
 #ifndef __ACTOR_COORDINATOR_CONFIG_HPP__
 #define __ACTOR_COORDINATOR_CONFIG_HPP__
 
-namespace iotdb {
+//#include <caf/all.hpp>
+
+namespace NES {
 /**
 * @brief The configuration file of the coordinator
 */

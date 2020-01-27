@@ -1,11 +1,11 @@
-#ifndef IOTDB_BOTTOMUP_HPP
-#define IOTDB_BOTTOMUP_HPP
+#ifndef BOTTOMUP_HPP
+#define BOTTOMUP_HPP
 
 #include <Operators/Operator.hpp>
 #include <iostream>
 #include "../NESPlacementOptimizer.hpp"
 
-namespace iotdb {
+namespace NES {
 
 using namespace std;
 
@@ -63,4 +63,4 @@ class BottomUp : public NESPlacementOptimizer {
 };
 }
 
-#endif //IOTDB_BOTTOMUP_HPP
+#endif //BOTTOMUP_HPP

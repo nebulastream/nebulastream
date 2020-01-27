@@ -15,7 +15,7 @@
 #include "../../include/SourceSink/Window.hpp"
 #include "../../include/SourceSink/YSBWindow.hpp"
 
-namespace iotdb {
+namespace NES {
 sig_atomic_t user_wants_to_quit = 0;
 
 void signal_handler(int) { user_wants_to_quit = 1; }
@@ -74,7 +74,7 @@ int test() {
 
     ThreadPool::instance().stop();
 }
-} // namespace iotdb
+} // namespace NES
 
 void setupLogging()
 {
@@ -105,9 +105,9 @@ int main(int argc, const char* argv[])
 {
 
     setupLogging();
-    iotdb::Dispatcher::instance();
+    NES::Dispatcher::instance();
 
-    iotdb::test();
+    NES::test();
 
     return 0;
 }

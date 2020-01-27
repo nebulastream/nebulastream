@@ -5,11 +5,12 @@
 #include <sstream>
 #include <vector>
 #include <string>
+#include <Util/Logger.hpp>
 #include <boost/algorithm/string.hpp>
 #include <SourceSink/DataSource.hpp>
-BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::CSVSource);
+BOOST_CLASS_EXPORT_IMPLEMENT(NES::CSVSource);
 
-namespace iotdb {
+namespace NES {
 
 CSVSource::CSVSource()
     : file_path(""),
@@ -49,7 +50,7 @@ void CSVSource::fillBuffer(TupleBufferPtr buf) {
   input.seekg(0, input.end);
   size_t file_size = input.tellg();
   if (file_size == -1) {
-    IOTDB_ERROR("ERROR: File " << file_path << " is corrupted")
+    NES_ERROR("ERROR: File " << file_path << " is corrupted")
     assert(0);
   }
   input.seekg(0, input.beg);
@@ -84,4 +85,4 @@ void CSVSource::fillBuffer(TupleBufferPtr buf) {
 SourceType CSVSource::getType() const {
   return CSV_SOURCE;
 }
-}  // namespace iotdb
+}  // namespace NES

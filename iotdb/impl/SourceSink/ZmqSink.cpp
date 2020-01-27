@@ -1,4 +1,4 @@
-#include <SourceSink/ZmqSink.hpp>
+#include "../../include/SourceSink/ZmqSink.hpp"
 
 #include <cassert>
 #include <cstdint>
@@ -9,13 +9,14 @@
 #include <zmq.hpp>
 
 #include <NodeEngine/Dispatcher.hpp>
-#include <Util/ErrorHandling.hpp>
+#include <Util/Logger.hpp>
+
 #include <Util/Logger.hpp>
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
-namespace iotdb {
+namespace NES {
 
 ZmqSink::ZmqSink()
     : host(""),
@@ -24,7 +25,7 @@ ZmqSink::ZmqSink()
       connected(false),
       context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_PUSH)) {
-  IOTDB_DEBUG(
+  NES_DEBUG(
       "DEFAULT ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port)
 }
 
@@ -37,32 +38,32 @@ ZmqSink::ZmqSink(const Schema &schema, const std::string &host,
       connected(false),
       context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_PUSH)) {
-  IOTDB_DEBUG(
+  NES_DEBUG(
       "ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port)
 
 }
 ZmqSink::~ZmqSink() {
   bool success = disconnect();
   if (success) {
-    IOTDB_DEBUG("ZMQSINK  " << this << ": Destroy ZMQ Sink")
+    NES_DEBUG("ZMQSINK  " << this << ": Destroy ZMQ Sink")
   } else {
-    IOTDB_ERROR(
+    NES_ERROR(
         "ZMQSINK  " << this << ": Destroy ZMQ Sink failed cause it could not be disconnected")
     assert(0);
   }
-  IOTDB_DEBUG("ZMQSINK  " << this << ": Destroy ZMQ Sink")
+  NES_DEBUG("ZMQSINK  " << this << ": Destroy ZMQ Sink")
 
 }
 
 bool ZmqSink::writeData(const TupleBufferPtr input_buffer) {
-  connected = connect();
+  bool connected = connect();
   if (!connected) {
-    IOTDB_DEBUG(
+    NES_DEBUG(
         "ZMQSINK  " << this << ": cannot write buffer " << input_buffer << " because queue is not connected")
     assert(0);
   }
 
-  IOTDB_DEBUG("ZMQSINK  " << this << ": writes buffer " << input_buffer)
+  NES_DEBUG("ZMQSINK  " << this << ": writes buffer " << input_buffer)
   try {
     //	size_t usedBufferSize = input_buffer->num_tuples * input_buffer->tuple_size_bytes;
     zmq::message_t msg(input_buffer->getBufferSizeInBytes());
@@ -76,11 +77,11 @@ bool ZmqSink::writeData(const TupleBufferPtr input_buffer) {
     bool rc_msg = socket.send(msg);
     sentBuffer++;
     if (!rc_env || !rc_msg) {
-      IOTDB_DEBUG("ZMQSINK  " << this << ": send NOT successful")
+      NES_DEBUG("ZMQSINK  " << this << ": send NOT successful")
       BufferManager::instance().releaseBuffer(input_buffer);
       return false;
     } else {
-      IOTDB_DEBUG("ZMQSINK  " << this << ": send successful")
+      NES_DEBUG("ZMQSINK  " << this << ": send successful")
       BufferManager::instance().releaseBuffer(input_buffer);
       return true;
     }
@@ -89,7 +90,7 @@ bool ZmqSink::writeData(const TupleBufferPtr input_buffer) {
     // recv() throws ETERM when the zmq context is destroyed,
     //  as when AsyncZmqListener::Stop() is called
     if (ex.num() != ETERM) {
-      IOTDB_FATAL_ERROR("ZMQSOURCE: " << ex.what())
+      NES_ERROR("ZMQSOURCE: " << ex.what())
     }
   }
   return false;
@@ -116,14 +117,14 @@ bool ZmqSink::connect() {
       // recv() throws ETERM when the zmq context is destroyed,
       //  as when AsyncZmqListener::Stop() is called
       if (ex.num() != ETERM) {
-        IOTDB_FATAL_ERROR("ZMQSOURCE: " << ex.what())
+        NES_ERROR("ZMQSOURCE: " << ex.what())
       }
     }
   }
   if (connected) {
-    IOTDB_DEBUG("ZMQSINK  " << this << ": connected")
+    NES_DEBUG("ZMQSINK  " << this << ": connected")
   } else {
-    IOTDB_DEBUG("ZMQSINK  " << this << ": NOT connected")
+    NES_DEBUG("ZMQSINK  " << this << ": NOT connected")
   }
   return connected;
 }
@@ -134,9 +135,9 @@ bool ZmqSink::disconnect() {
     connected = false;
   }
   if (!connected) {
-    IOTDB_DEBUG("ZMQSINK  " << this << ": disconnected")
+    NES_DEBUG("ZMQSINK  " << this << ": disconnected")
   } else {
-    IOTDB_DEBUG("ZMQSINK  " << this << ": NOT disconnected")
+    NES_DEBUG("ZMQSINK  " << this << ": NOT disconnected")
   }
   return !connected;
 }
@@ -148,5 +149,5 @@ SinkType ZmqSink::getType() const {
     return ZMQ_SINK;
 }
 
-}  // namespace iotdb
-BOOST_CLASS_EXPORT(iotdb::ZmqSink);
+}  // namespace NES
+BOOST_CLASS_EXPORT(NES::ZmqSink);

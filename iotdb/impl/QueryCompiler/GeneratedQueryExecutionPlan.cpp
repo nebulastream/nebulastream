@@ -4,9 +4,9 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::GeneratedQueryExecutionPlan);
+BOOST_CLASS_EXPORT_IMPLEMENT(NES::GeneratedQueryExecutionPlan);
 
-namespace iotdb {
+namespace NES {
 
 GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan() : pipeline_stage_ptr_() {
 
@@ -15,7 +15,7 @@ GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan(PipelineStagePtr ptr)
     : pipeline_stage_ptr_(ptr) {
 }
 
-bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const iotdb::TupleBufferPtr buf) {
+bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const NES::TupleBufferPtr buf) {
   std::vector<TupleBuffer *> input_buffers(1, buf.get());
 
   TupleBufferPtr outputBuffer = BufferManager::instance().getBuffer();
@@ -39,4 +39,4 @@ bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const
   return ret;
 }
 
-} // namespace iotdb
+} // namespace NES

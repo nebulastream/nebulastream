@@ -6,8 +6,9 @@
 #include <QueryCompiler/CCodeGenerator/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 
+#include <API/Types/DataTypes.hpp>
 
-namespace iotdb {
+namespace NES {
 
 const std::string toString(const UnaryOperatorType& type)
 {
@@ -84,4 +85,4 @@ UnaryOperatorStatement operator!(const ExpressionStatment& ref) { return UnaryOp
 
 UnaryOperatorStatement sizeOf(const ExpressionStatment& ref) { return UnaryOperatorStatement(ref, SIZE_OF_TYPE_OP); }
 
-} // namespace iotdb
+} // namespace NES

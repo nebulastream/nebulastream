@@ -1,6 +1,7 @@
 import React from 'react'
 import {
     Alert,
+    Badge,
     Button,
     Card,
     CardBody,
@@ -43,7 +44,7 @@ export default class QueryInterface extends React.Component {
             selectedStrategy: "NONE",
             displayBasePlan: false,
             displayExecutionPlan: false,
-            displayTopologyPlan: false,
+            displayTopology: false,
             openExecutionStrategy: false,
         };
         this.svgSquare = {
@@ -56,11 +57,8 @@ export default class QueryInterface extends React.Component {
                 fill: 'lightblue',
             }
         };
-        this.userQuery = 'Schema schema = Schema::create()\n' +
-            '   .addField("measurement",INT32);\n\n' +
-            'Stream temperature = Stream("temperature1", schema);\n\n' +
-            'return InputQuery::from(temperature)\n' +
-            '   .filter(temperature["measurement"] > 100)\n' +
+        this.userQuery = 'return InputQuery::from(temperature1)\n' +
+            '   .filter(temperature1["value"] > 100)\n' +
             '   .print(std::cout);\n';
         this.getQueryPlan = this.getQueryPlan.bind(this);
         this.updateQuery = this.updateQuery.bind(this);
@@ -107,7 +105,7 @@ export default class QueryInterface extends React.Component {
     }
 
     getQueryPlan(userQuery) {
-        fetch('http://127.0.0.1:8081/v1/iotdb/service/query-plan', {
+        fetch('http://127.0.0.1:8081/v1/nes/service/query-plan', {
                 method: 'POST',
                 headers: {
                     Accept: 'application/json',
@@ -140,8 +138,8 @@ export default class QueryInterface extends React.Component {
             });
     }
 
-    getFogTopology() {
-        fetch('http://127.0.0.1:8081/v1/iotdb/service/fog-plan', {
+    getNESTopology() {
+        fetch('http://127.0.0.1:8081/v1/nes/service/nes-topology', {
                 method: 'GET',
                 headers: {
                     Accept: 'application/json',
@@ -158,7 +156,7 @@ export default class QueryInterface extends React.Component {
             })
             .then(data => {
                 this.updateData(TOPOLOGY, data);
-                this.setState({displayTopologyPlan: true});
+                this.setState({displayTopology: true});
             })
             .catch(err => {
                 this.resetTreeData(TOPOLOGY);
@@ -169,14 +167,14 @@ export default class QueryInterface extends React.Component {
                 } else {
                     this.notify("err", err.message)
                 }
-                this.setState({displayTopologyPlan: false});
+                this.setState({displayTopology: false});
             });
     }
 
     getExecutionPlan(userQuery, strategyName) {
         this.getQueryPlan(userQuery);
         this.setState({selectedStrategy: strategyName});
-        fetch('http://127.0.0.1:8081/v1/iotdb/service/execution-plan', {
+        fetch('http://127.0.0.1:8081/v1/nes/service/execution-plan', {
                 method: 'POST',
                 headers: {
                     Accept: 'application/json',
@@ -227,7 +225,7 @@ export default class QueryInterface extends React.Component {
         this.setState({
             displayBasePlan: false,
             displayExecutionPlan: false,
-            displayTopologyPlan: false,
+            displayTopology: false,
         });
     }
 
@@ -269,9 +267,9 @@ export default class QueryInterface extends React.Component {
             let shape = 'rect';
             let label = inputNode.id;
 
-            if (inputNode.nodeType === "Sensor") {
+            if (inputNode.nodeType.includes("Sensor")) {
 
-                label = "<b>" + inputNode.sensorType + "</b>" +
+                label = "<b>" + inputNode.nodeType + "</b>" +
                     "<br><sub>FreeCompute:" + inputNode.remainingCapacity + "</sub>" +
                     "<br><sub>TotalCompute:" + inputNode.capacity + "</sub>";
                 if (modelName === EP) {
@@ -285,7 +283,7 @@ export default class QueryInterface extends React.Component {
                 } else {
                     style = "fill : #ffa299 ; rx:15; ry:15;";
                 }
-            } else if (inputNode.nodeType === "Worker") {
+            } else if (inputNode.nodeType === "Worker" || inputNode.nodeType === "Coordinator") {
 
                 label = "<b>" + inputNode.id + "</b>" +
                     "<br><sub>FreeCompute:" + inputNode.remainingCapacity + "</sub>" +
@@ -392,7 +390,7 @@ export default class QueryInterface extends React.Component {
                                     theme="github"
                                     fontSize={16}
                                     width="100%"
-                                    height="20em"
+                                    height="6em"
                                     showPrintMargin={true}
                                     showGutter={true}
                                     editorProps={{$blockScrolling: true}}
@@ -410,15 +408,14 @@ export default class QueryInterface extends React.Component {
                             <ButtonGroup>
                                 {/*<Button color="primary">Query</Button>*/}
                                 <Button color="primary" onClick={() => {
-                                    this.getFogTopology()
-                                }}>Show Topology</Button>
+                                    this.getNESTopology()
+                                }}><b>Show Topology</b></Button>
                                 <Button color="primary" onClick={() => {
                                     this.getQueryPlan(this.userQuery)
-                                }}>Show Query
-                                    Plan</Button>
+                                }}><b>Show Query Plan</b></Button>
                                 <ButtonDropdown isOpen={this.state.openExecutionStrategy}
                                                 toggle={this.toggleExecutionStrategy}>
-                                    <DropdownToggle caret color="primary">Execution Plan</DropdownToggle>
+                                    <DropdownToggle caret color="primary"><b>Execution Plan</b></DropdownToggle>
                                     <DropdownMenu>
                                         <DropdownItem onClick={() => {
                                             this.getExecutionPlan(this.userQuery, "BottomUp")
@@ -436,14 +433,16 @@ export default class QueryInterface extends React.Component {
                                 </ButtonDropdown>
                             </ButtonGroup>
                             <ButtonGroup>
-                                <Button color="info" onClick={() => {
+                                <Button color="secondary" onClick={() => {
                                     this.hideEverything()
-                                }}>Hide All</Button>
+                                }}><b>Hide All</b></Button>
                             </ButtonGroup>
+                            <h5 className="m-2"><Badge color="info">Compute Time:</Badge><Badge color="success">156
+                                ms</Badge></h5>
                         </Row>
 
-                        {this.state.displayTopologyPlan ?
-                            <Row className="m-md-1" style={{width: '80%', height: '100%'}}>
+                        {this.state.displayTopology ?
+                            <Row className="m-md-1" style={{width: '40%', height: '100%'}}>
                                 <Col className="m-md-2 border" style={{width: '100%', height: '100%'}}>
                                     <Alert className="m-md-2" color="info">Infrastructure Topology</Alert>
                                     <div className="m-md-2"
@@ -458,17 +457,17 @@ export default class QueryInterface extends React.Component {
                                         />
                                     </div>
                                 </Col>
-                                <Col className="m-md-2" style={{width: '20%', height: '10%'}}>
-                                    <Alert className="m-md-2" color="info">Legend</Alert>
-                                    <div className="m-md-0"
-                                         style={{height: '100%', display: 'flex', justifyContent: 'center'}}>
-                                    <img src="infra-legend.png" alt="infra-legend" width="40%" height="50%"/>
-                                    </div>
-                                </Col>
+                                {/*<Col className="m-md-2" style={{width: '20%', height: '10%'}}>*/}
+                                {/*    <Alert className="m-md-2" color="info">Legend</Alert>*/}
+                                {/*    <div className="m-md-0"*/}
+                                {/*         style={{height: '100%', display: 'flex', justifyContent: 'center'}}>*/}
+                                {/*    <img src="infra-legend.png" alt="infra-legend" width="40%" height="50%"/>*/}
+                                {/*    </div>*/}
+                                {/*</Col>*/}
                             </Row> : null}
 
                         {this.state.displayBasePlan ?
-                            <Row className="m-md-1" style={{width: '80%', height: '100%'}}>
+                            <Row className="m-md-1" style={{width: '40%', height: '100%'}}>
                                 <Col className="m-md-2 border" style={{width: '100%', height: '100%'}}>
                                     <Alert className="m-md-2" color="info">Query Plan</Alert>
                                     <div className="m-md-2"
@@ -483,21 +482,19 @@ export default class QueryInterface extends React.Component {
                                         />
                                     </div>
                                 </Col>
-                                <Col className="m-md-2" style={{width: '20%', height: '100%'}}>
-                                    <Alert className="m-md-2" color="info">Legend</Alert>
-                                    <div className="m-md-0"
-                                         style={{height: '100%', display: 'flex', justifyContent: 'center'}}>
-                                        <img src="query-plan-legend.png" alt="query-legend" width="40%" height="20%"/>
-                                    </div>
-                                </Col>
+                                {/*<Col className="m-md-2" style={{width: '20%', height: '100%'}}>*/}
+                                {/*    <Alert className="m-md-2" color="info">Legend</Alert>*/}
+                                {/*    <div className="m-md-0"*/}
+                                {/*         style={{height: '100%', display: 'flex', justifyContent: 'center'}}>*/}
+                                {/*        <img src="query-plan-legend.png" alt="query-legend" width="40%" height="20%"/>*/}
+                                {/*    </div>*/}
+                                {/*</Col>*/}
                             </Row> : null}
 
                         {this.state.displayExecutionPlan ?
-                            <Row className="m-md-1" style={{width: '80%', height: '100%'}}>
+                            <Row className="m-md-1" style={{width: '40%', height: '100%'}}>
                                 <Col className="m-md-2 border" style={{width: '100%', height: '100%'}}>
-                                    <Alert className="m-md-2" color="info">Query execution plan for
-                                        "{this.state.selectedStrategy}"
-                                        strategy</Alert>
+                                    <Alert className="m-md-2" color="info">Execution Plan</Alert>
                                     <div className="m-md-2"
                                          style={{height: '85%', display: 'flex', justifyContent: 'center'}}>
                                         <DagreD3
@@ -510,18 +507,18 @@ export default class QueryInterface extends React.Component {
                                         />
                                     </div>
                                 </Col>
-                                <Col className="m-md-2" style={{width: '20%', height: '100%'}}>
-                                    <Alert className="m-md-2" color="info">Legend</Alert>
-                                    <div className="m-md-0"
-                                         style={{height: '100%', display: 'flex', justifyContent: 'center'}}>
-                                        <img src="ep-legend.png" alt="query-legend" width="40%" height="50%"/>
-                                    </div>
-                                </Col>
+                                {/*<Col className="m-md-2" style={{width: '20%', height: '100%'}}>*/}
+                                {/*    <Alert className="m-md-2" color="info">Legend</Alert>*/}
+                                {/*    <div className="m-md-0"*/}
+                                {/*         style={{height: '100%', display: 'flex', justifyContent: 'center'}}>*/}
+                                {/*        <img src="ep-legend.png" alt="query-legend" width="40%" height="50%"/>*/}
+                                {/*    </div>*/}
+                                {/*</Col>*/}
                             </Row> : null}
                     </CardBody>
                 </Card>
             </Col>
-        );
+    );
     }
-};
+    };
 

@@ -13,11 +13,10 @@
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
 #include <QueryCompiler/CCodeGenerator/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
-#include <Util/ErrorHandling.hpp>
 #include <SourceSink/DataSink.hpp>
 #include <API/Types/DataTypes.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class AttributeReference;
 typedef std::shared_ptr<AttributeReference> AttributeReferencePtr;
@@ -48,7 +47,7 @@ class CodeGenerator {
   virtual bool generateCode(const PredicatePtr &pred, const PipelineContextPtr &context, std::ostream &out) = 0;
   virtual bool generateCode(const AttributeFieldPtr field,
                             const PredicatePtr &pred,
-                            const iotdb::PipelineContextPtr &context,
+                            const NES::PipelineContextPtr &context,
                             std::ostream &out) = 0;
   virtual bool generateCode(const DataSinkPtr &sink, const PipelineContextPtr &context, std::ostream &out) = 0;
   virtual bool generateCode(const WindowDefinitionPtr &window, const PipelineContextPtr &context, std::ostream &out) = 0;
@@ -110,5 +109,5 @@ const StructDeclaration getStructDeclarationTupleBuffer();
 const StructDeclaration getStructDeclarationTupleBuffer();
 //const StructDeclaration getStructDeclarationWindowState();
 const StructDeclaration getStructDeclarationFromSchema(const std::string struct_name, const Schema &schema);
-} // namespace iotdb
+} // namespace NES
 

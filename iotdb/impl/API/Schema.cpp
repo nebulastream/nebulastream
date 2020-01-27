@@ -3,7 +3,7 @@
 #include <sstream>
 #include "API/Schema.hpp"
 
-using namespace iotdb;
+using namespace NES;
 
 Schema::Schema() {
 }
@@ -14,6 +14,10 @@ Schema Schema::create() {
 
 size_t Schema::getSize() const {
   return fields.size();
+}
+
+Schema::Schema(const Schema& query) {
+  copyFields(query);
 }
 
 /* Return size of one row of schema in bytes. */

@@ -2,8 +2,19 @@
 #include <Actors/ExecutableTransferObject.hpp>
 #include <Actors/AtomUtils.hpp>
 #include <Util/SerializationTools.hpp>
+#include <fstream>
+#include <boost/filesystem.hpp>
+#include <Util/Logger.hpp>
+namespace NES {
 
-namespace iotdb {
+WorkerActor::WorkerActor(actor_config &cfg, string ip, uint16_t publish_port,
+                         uint16_t receive_port)
+    :
+    stateful_actor(cfg) {
+  this->state.workerPtr = std::make_unique<WorkerService>(
+      WorkerService(std::move(ip), publish_port, receive_port));
+}
+
 // starting point of our FSM
 behavior WorkerActor::init() {
   // transition to `unconnected` on server failure
@@ -26,6 +37,146 @@ behavior WorkerActor::unconnected() {
   };
 }
 
+void WorkerActor::registerPhysicalStream(std::string sourceType,
+                                         std::string sourceConf,
+                                         std::string physicalStreamName,
+                                         std::string logicalStreamName) {
+
+  PhysicalStreamConfig conf(sourceType, sourceConf, physicalStreamName,
+                            logicalStreamName);
+  //register physical stream with worker
+  this->state.workerPtr->addPhysicalStreamConfig(conf);
+
+  //send request to coordinator
+  auto coordinator = actor_cast<actor>(this->state.current_server);
+  this->request(
+      coordinator,
+      task_timeout,
+      register_phy_stream_atom::value,
+      this->state.workerPtr->getIp(),
+      this->state.workerPtr->getPhysicalStreamConfig(physicalStreamName)
+          .sourceType,
+      this->state.workerPtr->getPhysicalStreamConfig(physicalStreamName)
+          .sourceConfig,
+      this->state.workerPtr->getPhysicalStreamConfig(physicalStreamName)
+          .physicalStreamName,
+      this->state.workerPtr->getPhysicalStreamConfig(physicalStreamName)
+          .logicalStreamName);
+
+}
+
+void WorkerActor::registerLogicalStream(std::string streamName,
+                                        std::string filePath) {
+  //send request to coordinator
+  auto coordinator = actor_cast<actor>(this->state.current_server);
+
+  NES_DEBUG(
+      "WorkerActor: registerLog stream" << streamName << " with path" << filePath)
+  /* Check if file can be found on system and read. */
+  boost::filesystem::path path { filePath.c_str() };
+  if (!boost::filesystem::exists(path)
+      || !boost::filesystem::is_regular_file(path)) {
+    NES_ERROR("WorkerActor: file does not exits")
+    throw Exception("files does not exist");
+  }
+
+  /* Read file from file system. */
+  std::ifstream ifs(path.string().c_str());
+  std::string fileContent((std::istreambuf_iterator<char>(ifs)),
+                          (std::istreambuf_iterator<char>()));
+
+  NES_DEBUG("WorkerActor: file content:" << fileContent)
+  this->request(coordinator, task_timeout, register_log_stream_atom::value,
+                streamName, fileContent).await(
+      [&](bool ret) {
+        if (ret == true) {
+          NES_DEBUG(
+              "WorkerActor: logical stream " << streamName << " successfully added")
+        } else {
+          NES_DEBUG(
+              "WorkerActor: logical stream " << streamName << " could not be added")
+        }
+      }
+      ,
+      [=](const error &er) {
+        string error_msg = to_string(er);
+        NES_ERROR(
+            "WorkerActor: Error during registerLogicalStream for " << to_string(coordinator) << "\n" << error_msg);
+        throw Exception("error while register stream");
+      });
+}
+
+void WorkerActor::removePhysicalStream(std::string logicalStreamName,
+                                       std::string physicalStreamName) {
+  //send request to coordinator
+  auto coordinator = actor_cast<actor>(this->state.current_server);
+
+  NES_DEBUG(
+      "WorkerActor: removePhysicalStream physical stream" << physicalStreamName << " from logical stream " << logicalStreamName)
+
+  this->request(coordinator, task_timeout, remove_phy_stream_atom::value,
+                state.workerPtr->getIp(), logicalStreamName, physicalStreamName)
+      .await(
+      [&](bool ret) {
+        if (ret == true) {
+          NES_DEBUG(
+              "WorkerActor: physical stream " << physicalStreamName << " successfully removed from " << logicalStreamName)
+        } else {
+          NES_DEBUG(
+              "WorkerActor: physical stream " << physicalStreamName << " could not be removed from " << logicalStreamName)
+        }
+      }
+      ,
+      [=](const error &er) {
+        string error_msg = to_string(er);
+        NES_ERROR(
+            "WorkerActor: Error during removeLogicalStream for " << to_string(coordinator) << "\n" << error_msg);
+      });
+}
+
+void WorkerActor::removeLogicalStream(std::string streamName) {
+  //send request to coordinator
+  auto coordinator = actor_cast<actor>(this->state.current_server);
+
+  NES_DEBUG("WorkerActor: removeLogicalStream stream" << streamName)
+
+  this->request(coordinator, task_timeout, remove_log_stream_atom::value,
+                streamName).await(
+      [&](bool ret) {
+        if (ret == true) {
+          NES_DEBUG("WorkerActor: stream successfully removed")
+        } else {
+          NES_DEBUG("WorkerActor: stream not removed")
+        }
+      }
+      ,
+      [=](const error &er) {
+        string error_msg = to_string(er);
+        NES_ERROR(
+            "WorkerActor: Error during removeLogicalStream for " << to_string(coordinator) << "\n" << error_msg);
+      });
+}
+
+void WorkerActor::disconnecting() {
+  //TODO: add coorect behaviour if disconnect fails
+  auto coordinator = actor_cast<actor>(this->state.current_server);
+  NES_DEBUG("WorkerActor: try to disconnect with ip " << this->state.workerPtr->getIp())
+  bool disconnected = false;
+  this->request(coordinator, task_timeout, deregister_sensor_atom::value,
+                this->state.workerPtr->getIp()).await(
+      [&disconnected](const bool &c) mutable {
+        disconnected = c;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+      }
+      ,
+      [=](const error &er) {
+        string error_msg = to_string(er);
+        NES_ERROR(
+            "WorkerActor: Error during disconnecting " << "\n" << error_msg);
+      });
+  this->monitor(coordinator);
+  this->become(unconnected());
+}
 /**
  * @brief the ongoing connection state in the TSM
  * if connection works go to running state, otherwise go to unconnected state
@@ -36,16 +187,16 @@ void WorkerActor::connecting(const std::string &host, uint16_t port) {
   // use request().await() to suspend regular behavior until MM responded
   auto mm = this->system().middleman().actor_handle();
   this->request(mm, infinite, connect_atom::value, host, port).await(
-      [=](const node_id &, strong_actor_ptr &serv,
+      [=](const node_id&, strong_actor_ptr &serv,
           const std::set<std::string> &ifs) {
         if (!serv) {
-          aout(this) << R"(*** no server found at ")" << host << R"(":)"
-          << port << endl;
+          aout(this) << R"(*** no server found at ")" << host << R"(":)" << port
+                     << endl;
           return;
         }
         if (!ifs.empty()) {
           aout(this) << R"(*** typed actor found at ")" << host << R"(":)"
-          << port << ", but expected an untyped actor " << endl;
+                     << port << ", but expected an untyped actor " << endl;
           return;
         }
         aout(this) << "*** successfully connected to server" << endl;
@@ -54,21 +205,32 @@ void WorkerActor::connecting(const std::string &host, uint16_t port) {
         //TODO: make getPhysicalStreamConfig serializable with the caf framework
         //TODO: add serializable shipping object
         cout << "send properties to server" << endl;
-        this->request(coordinator, task_timeout, register_sensor_atom::value, this->state.workerPtr->getIp(),
-            this->state.workerPtr->getPublishPort(), this->state.workerPtr->getReceivePort(), 2,
+        //send default physical stream
+        this->request(
+            coordinator,
+            task_timeout,
+            register_sensor_atom::value,
+            this->state.workerPtr->getIp(),
+            this->state.workerPtr->getPublishPort(),
+            this->state.workerPtr->getReceivePort(),
+            2,
             this->state.workerPtr->getNodeProperties(),
-            this->state.workerPtr->getPhysicalStreamConfig().sourceType,
-            this->state.workerPtr->getPhysicalStreamConfig().sourceConfig,
-            this->state.workerPtr->getPhysicalStreamConfig().physicalStreamName,
-            this->state.workerPtr->getPhysicalStreamConfig().logicalStreamName
-        );
+            this->state.workerPtr->getPhysicalStreamConfig("default_physical")
+                .sourceType,
+            this->state.workerPtr->getPhysicalStreamConfig("default_physical")
+                .sourceConfig,
+            this->state.workerPtr->getPhysicalStreamConfig("default_physical")
+                .physicalStreamName,
+            this->state.workerPtr->getPhysicalStreamConfig("default_physical")
+                .logicalStreamName);
         cout << "properties set successful, now changing state" << endl;
         this->monitor(coordinator);
         this->become(running(coordinator));
-      },
+      }
+      ,
       [=](const error &err) {
-        aout(this) << R"(*** cannot connect to ")" << host << R"(":)"
-        << port << " => " << this->system().render(err) << endl;
+        aout(this) << R"(*** cannot connect to ")" << host << R"(":)" << port
+                   << " => " << this->system().render(err) << endl;
         this->become(unconnected());
       });
 }
@@ -84,6 +246,24 @@ behavior WorkerActor::running(const actor &coordinator) {
     // the connect RPC to connect with the coordinator
     [=](connect_atom, const std::string &host, uint16_t port) {
       connecting(host, port);
+    },
+    [=](disconnect_atom) {
+      disconnecting();
+    },
+    // register physical stream
+    [=](register_phy_stream_atom, std::string sourceType, std::string sourceConf, std::string physicalStreamName, std::string logicalStreamName) {
+      registerPhysicalStream(sourceType, sourceConf, physicalStreamName, logicalStreamName);
+    },
+    // remove logical stream
+    [=](register_log_stream_atom, std::string name, std::string path) {
+      registerLogicalStream(name, path);
+    },
+    // register logical stream
+    [=](remove_log_stream_atom, std::string name) {
+      removeLogicalStream(name);
+    },        //remove physical stream
+    [=](remove_phy_stream_atom, std::string logicalName, std::string physicalName) {
+      removePhysicalStream(logicalName, physicalName);
     },
     // internal rpc to execute a query
     [=](execute_operators_atom, const string &queryId, string &executableTransferObject) {

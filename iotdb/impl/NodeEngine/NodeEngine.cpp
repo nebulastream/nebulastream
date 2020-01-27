@@ -1,10 +1,11 @@
 #include <NodeEngine/NodeEngine.hpp>
 #include <NodeEngine/NodeProperties.hpp>
 #include <string>
+#include <Util/Logger.hpp>
 //#include <tests/testPlans/compiledTestPlan.hpp>
 
 using namespace std;
-namespace iotdb {
+namespace NES {
 JSON NodeEngine::getNodePropertiesAsJSON() {
   props->readMemStats();
   props->readCpuStats();
@@ -28,87 +29,87 @@ NodeProperties* NodeEngine::getNodeProperties() {
 }
 
 void NodeEngine::deployQuery(QueryExecutionPlanPtr qep) {
-  IOTDB_DEBUG("NODEENGINE: deploy query" << qep)
+  NES_DEBUG("NODEENGINE: deploy query" << qep)
 
   Dispatcher::instance().registerQueryWithStart(qep);
   qeps.push_back(qep);
 }
 
 void NodeEngine::deployQueryWithoutStart(QueryExecutionPlanPtr qep) {
-  IOTDB_DEBUG("NODEENGINE: deploy query" << qep)
+  NES_DEBUG("NODEENGINE: deploy query" << qep)
 
   Dispatcher::instance().registerQueryWithoutStart(qep);
   qeps.push_back(qep);
 }
 
 void NodeEngine::undeployQuery(QueryExecutionPlanPtr qep) {
-  IOTDB_DEBUG("NODEENGINE: deregister query" << qep)
+  NES_DEBUG("NODEENGINE: deregister query" << qep)
   Dispatcher::instance().deregisterQuery(qep);
 
   qeps.erase(std::find(qeps.begin(), qeps.end(), qep));
 }
 
 void NodeEngine::init() {
-  IOTDB_DEBUG("NODEENGINE: init node engine")
+  NES_DEBUG("NODEENGINE: init node engine")
 
-  iotdb::Dispatcher::instance();
-  iotdb::BufferManager::instance();
-  iotdb::ThreadPool::instance();
+  NES::Dispatcher::instance();
+  NES::BufferManager::instance();
+  NES::ThreadPool::instance();
 }
 
 void NodeEngine::start() {
-  IOTDB_DEBUG("NODEENGINE: start thread pool")
+  NES_DEBUG("NODEENGINE: start thread pool")
   ThreadPool::instance().start();
 }
 
 void NodeEngine::startWithRedeploy() {
   for (auto& q : qeps) {
-    IOTDB_DEBUG("NODEENGINE: register query " << q)
+    NES_DEBUG("NODEENGINE: register query " << q)
     Dispatcher::instance().registerQueryWithStart(q);
   }
-  IOTDB_DEBUG("NODEENGINE: start thread pool")
+  NES_DEBUG("NODEENGINE: start thread pool")
   ThreadPool::instance().start();
 }
 
 void NodeEngine::stop() {
-  IOTDB_DEBUG("NODEENGINE: stop thread pool")
+  NES_DEBUG("NODEENGINE: stop thread pool")
   ThreadPool::instance().stop();
 }
 
 void NodeEngine::stopWithUndeploy() {
-  IOTDB_DEBUG("NODEENGINE: stop thread pool")
+  NES_DEBUG("NODEENGINE: stop thread pool")
   ThreadPool::instance().stop();
   for (auto& q : qeps) {
-    IOTDB_DEBUG("NODEENGINE: deregister query " << q)
+    NES_DEBUG("NODEENGINE: deregister query " << q)
     Dispatcher::instance().deregisterQuery(q);
   }
 }
 
 void NodeEngine::applyConfig(Config& conf) {
   if (conf.getNumberOfWorker() != ThreadPool::instance().getNumberOfThreads()) {
-    IOTDB_DEBUG(
+    NES_DEBUG(
         "NODEENGINE: changing numberOfWorker from " << ThreadPool::instance().getNumberOfThreads() << " to " << conf.getNumberOfWorker())
     ThreadPool::instance().setNumberOfThreadsWithRestart(conf.getNumberOfWorker());
   }
   if (conf.getBufferCount() != BufferManager::instance().getNumberOfBuffers()) {
-    IOTDB_DEBUG(
+    NES_DEBUG(
         "NODEENGINE: changing bufferCount from " << BufferManager::instance().getNumberOfBuffers() << " to " << conf.getBufferCount())
     BufferManager::instance().setNumberOfBuffers(conf.getBufferCount());
   }
   if (conf.getBufferSizeInByte() != BufferManager::instance().getBufferSize()) {
-    IOTDB_DEBUG(
+    NES_DEBUG(
         "NODEENGINE: changing buffer size from " << BufferManager::instance().getBufferSize() << " to " << conf.getBufferSizeInByte())
     BufferManager::instance().setBufferSize(conf.getBufferSizeInByte());
   }
-  IOTDB_DEBUG("NODEENGINE: config successuflly changed")
+  NES_DEBUG("NODEENGINE: config successuflly changed")
 }
 
 void NodeEngine::resetQEPs() {
   for (auto& q : qeps) {
-    IOTDB_DEBUG("NODEENGINE: deregister query " << q)
+    NES_DEBUG("NODEENGINE: deregister query " << q)
     Dispatcher::instance().deregisterQuery(q);
   }
-  IOTDB_DEBUG("NODEENGINE: clear qeps")
+  NES_DEBUG("NODEENGINE: clear qeps")
 
   qeps.clear();
 }
@@ -116,16 +117,16 @@ void NodeEngine::resetQEPs() {
 
 void NodeEngine::setDOPWithRestart(size_t dop)
 {
-  iotdb::ThreadPool::instance().setNumberOfThreadsWithRestart(dop);
+  NES::ThreadPool::instance().setNumberOfThreadsWithRestart(dop);
 }
 void NodeEngine::setDOPWithoutRestart(size_t dop)
 {
-  iotdb::ThreadPool::instance().setNumberOfThreadsWithoutRestart(dop);
+  NES::ThreadPool::instance().setNumberOfThreadsWithoutRestart(dop);
 }
 
 size_t NodeEngine::getDOP()
 {
-return iotdb::ThreadPool::instance().getNumberOfThreads();
+return NES::ThreadPool::instance().getNumberOfThreads();
 }
 
 }

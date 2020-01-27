@@ -1,9 +1,9 @@
-
 #include <NodeEngine/MemoryLayout/PhysicalSchema.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
 #include <API/Schema.hpp>
-#include <Util/ErrorHandling.hpp>
-namespace iotdb {
+#include <Util/Logger.hpp>
+
+namespace NES {
 
 PhysicalSchema::PhysicalSchema(const SchemaPtr &schema) : schema(schema) {
   for (auto field : schema->fields) {
@@ -12,7 +12,7 @@ PhysicalSchema::PhysicalSchema(const SchemaPtr &schema) : schema(schema) {
   };
 };
 
-PhysicalFieldPtr PhysicalSchema::createPhysicalField(const iotdb::DataTypePtr dataType) {
+PhysicalFieldPtr PhysicalSchema::createPhysicalField(const NES::DataTypePtr dataType) {
   if (dataType->isEqual(createDataType(UINT8))) {
     const auto field = new BasicPhysicalField<uint8_t>();
     return field->copy();
@@ -50,7 +50,7 @@ PhysicalFieldPtr PhysicalSchema::createPhysicalField(const iotdb::DataTypePtr da
     auto field = new BasicPhysicalField<char>();
     return field->copy();
   }
-  IOTDB_NOT_IMPLEMENTED;
+  NES_NOT_IMPLEMENTED;
 }
 
 PhysicalSchemaPtr PhysicalSchema::createPhysicalSchema(SchemaPtr schema) {

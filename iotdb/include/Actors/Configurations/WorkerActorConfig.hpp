@@ -1,10 +1,9 @@
+#ifndef INCLUDE_ACTORS_CONFIGURATIONS_ACTORWORKERCONFIG_H_
+#define INCLUDE_ACTORS_CONFIGURATIONS_ACTORWORKERCONFIG_H_
 
-#ifndef IOTDB_INCLUDE_ACTORS_CONFIGURATIONS_ACTORWORKERCONFIG_H_
-#define IOTDB_INCLUDE_ACTORS_CONFIGURATIONS_ACTORWORKERCONFIG_H_
+//#include <caf/all.hpp>
 
-#include <caf/all.hpp>
-
-namespace iotdb {
+namespace NES {
 /**
 * @brief The configuration for worker
 */
@@ -28,4 +27,4 @@ class WorkerActorConfig : public actor_system_config {
 
 }
 
-#endif //IOTDB_INCLUDE_ACTORS_CONFIGURATIONS_ACTORWORKERCONFIG_H_
+#endif //INCLUDE_ACTORS_CONFIGURATIONS_ACTORWORKERCONFIG_H_

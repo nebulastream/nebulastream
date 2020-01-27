@@ -5,10 +5,9 @@
 #include <QueryCompiler/CCodeGenerator/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
+#include <Util/Logger.hpp>
 
-#include <Util/ErrorHandling.hpp>
-
-namespace iotdb {
+namespace NES {
 
 Declaration::~Declaration() {}
 
@@ -48,7 +47,7 @@ const Code StructDeclaration::getCode() const
 
 const uint32_t StructDeclaration::getTypeSizeInBytes() const
 {
-    IOTDB_FATAL_ERROR("Called unimplemented function!");
+    NES_ERROR("Called unimplemented function!");
     return 0;
 }
 
@@ -124,7 +123,7 @@ VariableDeclaration StructDeclaration::getVariableDeclaration(const std::string&
 {
     DeclarationPtr decl = getField(field_name);
     if (!decl)
-        IOTDB_FATAL_ERROR("Error during Code Generation: Field '" << field_name << "' does not exist in struct '"
+        NES_ERROR("Error during Code Generation: Field '" << field_name << "' does not exist in struct '"
                                                                   << getTypeName() << "'");
     return VariableDeclaration::create(decl->getType(), decl->getIdentifierName());
 }
@@ -144,7 +143,7 @@ VariableDeclaration::VariableDeclaration(const VariableDeclaration& var_decl)
 VariableDeclaration VariableDeclaration::create(DataTypePtr type, const std::string& identifier, ValueTypePtr value)
 {
     if (!type)
-        IOTDB_FATAL_ERROR("DataTypePtr type is nullptr!");
+        NES_ERROR("DataTypePtr type is nullptr!");
     return VariableDeclaration(type, identifier, value);
 }
 
@@ -158,4 +157,4 @@ const Code FunctionDeclaration::getTypeDefinitionCode() const { return Code(); }
 const Code FunctionDeclaration::getCode() const { return function_code; }
 const DeclarationPtr FunctionDeclaration::copy() const { return std::make_shared<FunctionDeclaration>(*this); }
 
-} // namespace iotdb
+} // namespace NES

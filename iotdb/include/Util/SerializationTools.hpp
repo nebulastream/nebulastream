@@ -1,6 +1,5 @@
-
-#ifndef IOTDB_SERIALIZATIONTOOLS_HPP
-#define IOTDB_SERIALIZATIONTOOLS_HPP
+#ifndef SERIALIZATIONTOOLS_HPP
+#define SERIALIZATIONTOOLS_HPP
 
 #include <string>
 #include <Actors/ExecutableTransferObject.hpp>
@@ -16,7 +15,7 @@
 
 using std::string;
 
-namespace iotdb {
+namespace NES {
 
 /**\brief:
  * Here are the methods which are used for boost serialization
@@ -223,6 +222,6 @@ class SerializationTools {
 
 };
 
-} // namespace iotdb
+} // namespace NES
 
-#endif //IOTDB_SERIALIZATIONTOOLS_HPP
+#endif //SERIALIZATIONTOOLS_HPP

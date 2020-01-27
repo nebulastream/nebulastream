@@ -2,13 +2,12 @@
 #define INCLUDE_DATASINK_H_
 
 #include <API/Schema.hpp>
-#include <Util/ErrorHandling.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/vector.hpp>
 #include "../NodeEngine/TupleBuffer.hpp"
 
-namespace iotdb {
+namespace NES {
 
 enum SinkType {
     ZMQ_SINK,
@@ -117,6 +116,6 @@ class DataSink {
 
 typedef std::shared_ptr<DataSink> DataSinkPtr;
 
-}  // namespace iotdb
+}  // namespace NES
 
 #endif // INCLUDE_DATASINK_H_

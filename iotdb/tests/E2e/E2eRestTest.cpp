@@ -28,26 +28,25 @@ using namespace concurrency::streams;
 // Asynchronous streams
 namespace bp = boost::process;
 
-namespace iotdb {
+namespace NES {
 
 class E2eRestTest : public testing::Test {
  public:
   string host = "localhost";
   int port = 8081;
-  string url = "http://localhost:8081/v1/iotdb/service/execute-query";
+  string url = "http://localhost:8081/v1/nes/query/execute-query";
   std::string outputFilePath = "blob.txt";
   int coordinatorPid;
   int workerPid;
 
   static void SetUpTestCase() {
     setupLogging();
-    IOTDB_INFO("Setup E2e test class.");
+    NES_INFO("Setup E2e test class.");
   }
 
   static void TearDownTestCase() {
     std::cout << "Tear down ActorCoordinatorWorkerTest test class."
               << std::endl;
-
   }
 
  protected:
@@ -68,11 +67,11 @@ class E2eRestTest : public testing::Test {
 
     // set log level
     // logger->setLevel(log4cxx::Level::getDebug());
-    logger->setLevel(log4cxx::Level::getInfo());
+    NESLogger->setLevel(log4cxx::Level::getInfo());
 
     // add appenders and other will inherit the settings
-    logger->addAppender(file);
-    logger->addAppender(console);
+    NESLogger->addAppender(file);
+    NESLogger->addAppender(console);
   }
 
   static void startProcess(string cmd) {
@@ -104,8 +103,8 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
 
   std::stringstream ss;
     ss << "{\"userQuery\" : ";
-    ss << "\" InputQuery inputQuery = InputQuery::from(default_logical).print(std::cout);";
-    ss << " return inputQuery;\",\"strategyName\" : \"BottomUp\"}";
+    ss << "\"InputQuery::from(default_logical).print(std::cout);\"";
+    ss << ",\"strategyName\" : \"BottomUp\"}";
     ss << endl;
   cout << "string submit=" << ss.str();
   string body = ss.str();
@@ -113,7 +112,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
   web::json::value json_return;
 
   web::http::client::http_client client(
-      "http://localhost:8081/v1/iotdb/service/execute-query");
+      "http://localhost:8081/v1/nes/query/execute-query");
   client.request(web::http::methods::POST, U("/"), body).then(
       [](const web::http::http_response& response) {
         cout << "get first then" << endl;
@@ -163,9 +162,9 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
 
   std::stringstream ss;
   ss << "{\"userQuery\" : ";
-  ss <<  "\" InputQuery inputQuery = InputQuery::from(default_logical).writeToFile(\\\"";
+  ss <<  "\"InputQuery::from(default_logical).writeToFile(\\\"";
   ss << outputFilePath;
-  ss << "\\\"); return inputQuery;\",\"strategyName\" : \"BottomUp\"}";
+  ss << "\\\");\",\"strategyName\" : \"BottomUp\"}";
   ss << endl;
   cout << "string submit=" << ss.str();
   string body = ss.str();
@@ -173,7 +172,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
   web::json::value json_return;
 
   web::http::client::http_client client(
-      "http://localhost:8081/v1/iotdb/service/execute-query");
+      "http://localhost:8081/v1/nes/query/execute-query");
   client.request(web::http::methods::POST, U("/"), body).then(
       [](const web::http::http_response& response) {
         cout << "get first then" << endl;

@@ -5,7 +5,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
-namespace iotdb {
+namespace NES {
 
 //forward declaration
 class TupleBuffer;
@@ -138,9 +138,9 @@ class Schema;
 std::string toString(TupleBuffer& buffer, const Schema& schema);
 std::string toString(TupleBuffer* buffer, const Schema& schema);
 
-}  // namespace iotdb
+}  // namespace NES
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
-BOOST_CLASS_EXPORT_KEY(iotdb::TupleBuffer)
+BOOST_CLASS_EXPORT_KEY(NES::TupleBuffer)
 #endif /* INCLUDE_TUPLEBUFFER_H_ */

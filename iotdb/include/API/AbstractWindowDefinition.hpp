@@ -1,10 +1,10 @@
 #include <memory>
 #include <vector>
 
-#ifndef IOTDB_INCLUDE_QUERYLIB_ABSTRACTWINDOWDEFINITION_HPP_
-#define IOTDB_INCLUDE_QUERYLIB_ABSTRACTWINDOWDEFINITION_HPP_
+#ifndef INCLUDE_QUERYLIB_ABSTRACTWINDOWDEFINITION_HPP_
+#define INCLUDE_QUERYLIB_ABSTRACTWINDOWDEFINITION_HPP_
 
-namespace iotdb {
+namespace NES {
 
 class WindowState {
 
@@ -60,4 +60,4 @@ class WindowDefinition {
 typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 }
 
-#endif //IOTDB_INCLUDE_QUERYLIB_ABSTRACTWINDOWDEFINITION_HPP_
+#endif //INCLUDE_QUERYLIB_ABSTRACTWINDOWDEFINITION_HPP_

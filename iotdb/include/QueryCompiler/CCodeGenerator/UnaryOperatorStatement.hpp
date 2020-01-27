@@ -9,10 +9,9 @@
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 
-#include <Util/ErrorHandling.hpp>
 #include <API/Types/DataTypes.hpp>
 
-namespace iotdb {
+namespace NES {
 
 const CodeExpressionPtr toCodeExpression(const UnaryOperatorType& type);
 
@@ -49,4 +48,4 @@ UnaryOperatorStatement operator!(const ExpressionStatment& ref);
 
 UnaryOperatorStatement sizeOf(const ExpressionStatment& ref);
 
-} // namespace iotdb
+} // namespace NES

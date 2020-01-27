@@ -8,11 +8,8 @@
 #include <NodeEngine/MemoryLayout/PhysicalSchema.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
 #include <SourceSink/SourceCreator.hpp>
-#include <YSB_legacy/YSBGeneratorSource.hpp>
 
-
-
-namespace iotdb {
+namespace NES {
 
 TupleBufferPtr OneGeneratorSource::receiveData(){
     // 10 tuples of size one
@@ -41,17 +38,6 @@ const DataSourcePtr createTestSourceWithoutSchema() {
   return std::make_shared<OneGeneratorSource>(Schema::create().addField(createField("id", UINT64)), 1);
 }
 
-const DataSourcePtr createYSBSource(size_t bufferCnt, size_t campaingCnt,
-                                    bool preGenerated) {
-
-  Schema schema =
-      Schema::create().addField("user_id", 16).addField("page_id", 16).addField(
-              "campaign_id", 16).addField("event_type", 16).addField("ad_type", 16)
-          .addField("current_ms", UINT64).addField("ip", INT32);
-
-  return std::make_shared<YSBGeneratorSource>(schema, bufferCnt, campaingCnt, preGenerated);
-}
-
 const DataSourcePtr createZmqSource(const Schema &schema,
                                     const std::string &host,
                                     const uint16_t port) {
@@ -70,4 +56,4 @@ const DataSourcePtr createCSVFileSource(const Schema &schema,
 
 }
 
-BOOST_CLASS_EXPORT(iotdb::OneGeneratorSource);
+BOOST_CLASS_EXPORT(NES::OneGeneratorSource);

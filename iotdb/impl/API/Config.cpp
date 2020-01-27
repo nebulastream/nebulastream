@@ -1,11 +1,11 @@
 #include <API/Config.hpp>
-BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::Config)
+BOOST_CLASS_EXPORT_IMPLEMENT(NES::Config)
 
 #include <string>
 #include <Util/Logger.hpp>
 #include "../../include/SourceSink/DataSink.hpp"
 
-namespace iotdb {
+namespace NES {
 Config::Config()
 {
     numberOfWorker = 1;
@@ -15,10 +15,10 @@ Config::Config()
 
 void Config::print()
 {
-    IOTDB_DEBUG("Config:")
-    IOTDB_DEBUG("numberOfWorker=" << numberOfWorker)
-    IOTDB_DEBUG("bufferCount=" << bufferCount)
-    IOTDB_DEBUG("bufferSizeInByte=" << bufferSizeInByte)
+    NES_DEBUG("Config:")
+    NES_DEBUG("numberOfWorker=" << numberOfWorker)
+    NES_DEBUG("bufferCount=" << bufferCount)
+    NES_DEBUG("bufferSizeInByte=" << bufferSizeInByte)
 }
 
 Config Config::create() { return Config(); }
@@ -47,4 +47,4 @@ Config& Config::setNumberOfWorker(size_t numberOfWorker)
 size_t Config::getNumberOfWorker() { return numberOfWorker; }
 
 
-} // namespace iotdb
+} // namespace NES

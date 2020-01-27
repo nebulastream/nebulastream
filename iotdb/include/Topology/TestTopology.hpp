@@ -1,7 +1,7 @@
 #ifndef INCLUDE_TOPOLOGY_TESTTOPOLOGY_HPP_
 #define INCLUDE_TOPOLOGY_TESTTOPOLOGY_HPP_
 
-namespace iotdb{
+namespace NES{
 //#include "NESTopologyPlan.hpp"
 #include <Catalogs/StreamCatalog.hpp>
 #include <Topology/NESTopologyManager.hpp>
@@ -20,6 +20,24 @@ namespace iotdb{
     const NESTopologyCoordinatorNodePtr &sinkNode = NESTopologyManager::getInstance().createNESCoordinatorNode("localhost", CPUCapacity::HIGH);
     const NESTopologyWorkerNodePtr &workerNode1 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
     const NESTopologyWorkerNodePtr &workerNode2 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr &workerNode3 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr &workerNode4 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr &workerNode5 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr &workerNode6 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr &workerNode7 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::HIGH);
+    const NESTopologyWorkerNodePtr &workerNode8 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr &workerNode9 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::LOW);
+    const NESTopologyWorkerNodePtr &workerNode10 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr &workerNode11 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::HIGH);
+    const NESTopologyWorkerNodePtr &workerNode12 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr &workerNode13 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr &workerNode14 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr &workerNode15 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::LOW);
+    const NESTopologyWorkerNodePtr &workerNode16 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr &workerNode17 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr &workerNode18 = NESTopologyManager::getInstance().createNESWorkerNode("localhost", CPUCapacity::MEDIUM);
+
+
     const NESTopologySensorNodePtr &sensorNode1 = NESTopologyManager::getInstance().createNESSensorNode("localhost", CPUCapacity::HIGH);
     sensorNode1->setPhysicalStreamName("temperature1");
     StreamCatalog::instance().addLogicalStream("temperature1", std::make_shared<Schema>(schema));
@@ -46,10 +64,33 @@ namespace iotdb{
 
     NESTopologyManager::getInstance().createNESTopologyLink(workerNode1, sinkNode);
     NESTopologyManager::getInstance().createNESTopologyLink(workerNode2, sinkNode);
-    NESTopologyManager::getInstance().createNESTopologyLink(sensorNode1, workerNode1);
-    NESTopologyManager::getInstance().createNESTopologyLink(sensorNode2, workerNode1);
-    NESTopologyManager::getInstance().createNESTopologyLink(sensorNode3, workerNode2);
-    NESTopologyManager::getInstance().createNESTopologyLink(sensorNode4, workerNode2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode3, sinkNode);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode4, workerNode1);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode5, workerNode2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode6, workerNode3);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode10, workerNode6);
+
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode7, workerNode4);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode8, workerNode4);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode8, workerNode5);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode9, workerNode6);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode10, workerNode5);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode11, workerNode7);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode12, workerNode8);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode13, workerNode12);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode13, workerNode11);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode14, workerNode12);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode15, workerNode10);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode16, workerNode15);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode17, workerNode15);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode18, workerNode9);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode12, workerNode7);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode15, workerNode18);
+    NESTopologyManager::getInstance().createNESTopologyLink(sensorNode1, workerNode13);
+    NESTopologyManager::getInstance().createNESTopologyLink(sensorNode2, workerNode14);
+    NESTopologyManager::getInstance().createNESTopologyLink(sensorNode3, workerNode16);
+    NESTopologyManager::getInstance().createNESTopologyLink(sensorNode4, workerNode17);
+
   }
 }
 #endif /* INCLUDE_TOPOLOGY_TESTTOPOLOGY_HPP_ */

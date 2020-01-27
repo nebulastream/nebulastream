@@ -5,7 +5,7 @@
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 
-namespace iotdb {
+namespace NES {
 
 const std::string toString(const BinaryOperatorType& type)
 {
@@ -189,4 +189,4 @@ BinaryOperatorStatement operator>>(const ExpressionStatment& lhs, const Expressi
     return BinaryOperatorStatement(lhs, BITWISE_RIGHT_SHIFT_OP, rhs);
 }
 
-} // namespace iotdb
+} // namespace NES

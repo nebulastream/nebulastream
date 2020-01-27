@@ -5,7 +5,7 @@
 #include <SourceSink/PrintSink.hpp>
 #include <Actors/ExecutableTransferObject.hpp>
 
-using namespace iotdb;
+using namespace NES;
 
 class SerializationToolsTest : public testing::Test {
  public:

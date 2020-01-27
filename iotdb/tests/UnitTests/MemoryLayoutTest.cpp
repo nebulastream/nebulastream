@@ -16,14 +16,14 @@
 
 //#define DEBUG_OUTPUT
 
-namespace iotdb {
+namespace NES {
 class MemoryLayoutTest : public testing::Test {
  public:
   static void SetUpTestCase() {
 #ifdef DEBUG_OUTPUT
     setupLogging();
 #endif
-    IOTDB_INFO("Setup MemoryLayout test class.");
+    NES_INFO("Setup MemoryLayout test class.");
   }
   static void TearDownTestCase() { std::cout << "Tear down MemoryLayout test class." << std::endl; }
 

@@ -8,7 +8,7 @@
 
 #include <SourceSink/DataSink.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class ZmqSink : public DataSink {
 
@@ -44,6 +44,6 @@ class ZmqSink : public DataSink {
   bool connect();
   bool disconnect();
 };
-} // namespace iotdb
+} // namespace NES
 
 #endif // ZMQSINK_HPP

@@ -8,7 +8,7 @@
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
 #include <API/Types/DataTypes.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class StructBuilder {
   public:
@@ -80,4 +80,4 @@ FunctionBuilder& FunctionBuilder::addVariableDeclaration(VariableDeclaration var
     return *this;
 }
 
-} // namespace iotdb
+} // namespace NES

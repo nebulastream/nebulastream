@@ -5,7 +5,7 @@
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/vector.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class Config {
   public:
@@ -37,9 +37,9 @@ class Config {
     size_t bufferSizeInByte;
 
 };
-} // namespace iotdb
+} // namespace NES
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
-BOOST_CLASS_EXPORT_KEY(iotdb::Config)
+BOOST_CLASS_EXPORT_KEY(NES::Config)
 

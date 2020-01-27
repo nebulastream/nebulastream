@@ -2,24 +2,15 @@
 #include <Actors/ExecutableTransferObject.hpp>
 #include <Util/SerializationTools.hpp>
 #include <utility>
+#include <Util/Logger.hpp>
 
-namespace iotdb {
+namespace NES {
 WorkerService::WorkerService(string ip, uint16_t publish_port,
                              uint16_t receive_port) {
   this->_ip = std::move(ip);
   this->_publish_port = publish_port;
   this->_receive_port = receive_port;
-  this->_enginePtr = new NodeEngine();
-  this->_enginePtr->start();
-}
-
-WorkerService::WorkerService(string ip, uint16_t publish_port,
-                             uint16_t receive_port,
-                             PhysicalStreamConfig streamConf) {
-  this->_ip = std::move(ip);
-  this->_publish_port = publish_port;
-  this->_receive_port = receive_port;
-  this->streamConf = streamConf;
+  physicalStreams.insert(std::make_pair("default_physical", PhysicalStreamConfig()));
   this->_enginePtr = new NodeEngine();
   this->_enginePtr->start();
 }
@@ -28,14 +19,19 @@ string WorkerService::getNodeProperties() {
   return this->_enginePtr->getNodePropertiesAsString();
 }
 
-PhysicalStreamConfig WorkerService::getPhysicalStreamConfig() {
-  return streamConf;
+PhysicalStreamConfig WorkerService::getPhysicalStreamConfig(std::string name) {
+  return physicalStreams[name];
+}
+
+void WorkerService::addPhysicalStreamConfig(PhysicalStreamConfig conf)
+{
+  physicalStreams.insert(std::make_pair(conf.physicalStreamName, conf));
 }
 
 void WorkerService::execute_query(const string &queryId,
                                   string &executableTransferObject) {
-  IOTDB_INFO(
-      "WORKERSERVICE (" << this->_ip << "- logStream=" << this->getPhysicalStreamConfig().logicalStreamName << " phyStream=" << this->getPhysicalStreamConfig().physicalStreamName << "): Executing " << queryId);
+  NES_DEBUG(
+      "WORKERSERVICE (" << this->_ip << ": Executing " << queryId);
   ExecutableTransferObject eto = SerializationTools::parse_eto(
       executableTransferObject);
   QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan();
@@ -48,21 +44,21 @@ void WorkerService::execute_query(const string &queryId,
 void WorkerService::delete_query(const string &query) {
   try {
     if (this->_runningQueries.find(query) != this->_runningQueries.end()) {
-      IOTDB_INFO(
-          "WORKERSERVICE (" << this->_ip << "-" << this->getPhysicalStreamConfig().physicalStreamName  << "): Attempting deletion of " << query);
+      NES_DEBUG(
+          "WORKERSERVICE (" << this->_ip << ": Attempting deletion of " << query);
       QueryExecutionPlanPtr qep = std::get<0>(this->_runningQueries.at(query));
       this->_runningQueries.erase(query);
       this->_enginePtr->undeployQuery(qep);
-      IOTDB_INFO(
-          "WORKERSERVICE (" << this->_ip << "-" << this->getPhysicalStreamConfig().physicalStreamName  << "): Successfully deleted query " << query);
+      NES_INFO(
+          "WORKERSERVICE (" << this->_ip << ": Successfully deleted query " << query);
     } else {
-      IOTDB_INFO(
-          "WORKERSERVICE (" << this->_ip << "-" << this->getPhysicalStreamConfig().physicalStreamName  << "): *** Not found for deletion -> " << query);
+      NES_INFO(
+          "WORKERSERVICE (" << this->_ip << ": *** Not found for deletion -> " << query);
     }
   } catch (...) {
     // TODO: catch ZMQ termination errors properly
-    IOTDB_ERROR(
-        "WORKERSERVICE (" << this->_ip << "-" << this->getPhysicalStreamConfig().physicalStreamName  << "): Undefined error during deletion!")
+    NES_ERROR(
+        "WORKERSERVICE (" << this->_ip << "): Undefined error during deletion!")
   }
 }
 

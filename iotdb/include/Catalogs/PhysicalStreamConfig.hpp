@@ -2,9 +2,8 @@
 #define INCLUDE_CATALOGS_PHYSICALSTREAMCONFIG_HPP_
 
 #include <string>
-//#include <caf/all.hpp>
 
-namespace iotdb {
+namespace NES {
 
 /**
  * @brief this struct covers the information about the attached sensor

@@ -8,7 +8,7 @@
 #include <API/ParameterTypes.hpp>
 #include <Operators/Operator.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class KeyByOperator : public Operator {
   public:
@@ -26,4 +26,4 @@ class KeyByOperator : public Operator {
     Attributes keyby_spec_;
 };
 
-} // namespace iotdb
+} // namespace NES

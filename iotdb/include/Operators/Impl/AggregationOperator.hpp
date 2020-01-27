@@ -8,7 +8,7 @@
 #include <API/ParameterTypes.hpp>
 #include <Operators/Operator.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class AggregationOperator : public Operator {
   public:
@@ -26,4 +26,4 @@ class AggregationOperator : public Operator {
     AggregationSpec aggr_spec_;
 };
 
-} // namespace iotdb
+} // namespace NES
