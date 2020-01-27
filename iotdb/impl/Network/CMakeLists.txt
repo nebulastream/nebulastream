@@ -1,3 +1,3 @@
 add_source_iotdb(
-        ForwardSink.cpp
+        ZmqReceiver.cpp
 )
