@@ -1,13 +1,19 @@
 #include "gtest/gtest.h"
+
 #include <iostream>
 
 #include <Catalogs/StreamCatalog.hpp>
-#include <Catalogs/StreamCatalogEntry.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
+
 #include <Topology/NESTopologyManager.hpp>
 #include <API/Schema.hpp>
 
-using namespace iotdb;
+//#include <Actors/CoordinatorActor.hpp>
+#include <Util/Logger.hpp>
+//#include <Actors/WorkerActor.hpp>
+
+
+using namespace NES;
 
 /* - nesTopologyManager ---------------------------------------------------- */
 class StreamCatalogTest : public testing::Test {
@@ -51,12 +57,12 @@ class StreamCatalogTest : public testing::Test {
         new log4cxx::ConsoleAppender(layoutPtr));
 
     // set log level
-     logger->setLevel(log4cxx::Level::getDebug());
+    NES::NESLogger->setLevel(log4cxx::Level::getDebug());
 //    logger->setLevel(log4cxx::Level::getInfo());
 
-    // add appenders and other will inherit the settings
-    logger->addAppender(file);
-    logger->addAppender(console);
+// add appenders and other will inherit the settings
+    NES::NESLogger->addAppender(file);
+    NES::NESLogger->addAppender(console);
   }
 };
 
@@ -67,9 +73,16 @@ TEST_F(StreamCatalogTest, add_get_log_stream_test) {
       "test_stream");
   EXPECT_NE(sPtr, nullptr);
 
+  map<std::string, SchemaPtr> allLogicalStream = StreamCatalog::instance().getAllLogicalStream();
   string exp =
-      "logical stream name=default_logical schema:id:UINT32value:UINT64\n\nlogical stream name=test_stream schema:\n\n";
-  EXPECT_EQ(exp, StreamCatalog::instance().getLogicalStreamAndSchemaAsString());
+      "id:UINT32value:UINT64\n";
+  EXPECT_EQ(allLogicalStream.size(), 2);
+
+  SchemaPtr testSchema = allLogicalStream["test_stream"];
+  EXPECT_EQ("\n", testSchema->toString());
+
+  SchemaPtr defaultSchema = allLogicalStream["default_logical"];
+  EXPECT_EQ(exp, defaultSchema->toString());
 }
 
 TEST_F(StreamCatalogTest, add_remove_log_stream_test) {
@@ -84,7 +97,10 @@ TEST_F(StreamCatalogTest, add_remove_log_stream_test) {
 
   string exp =
       "logical stream name=default_logical schema: name=id UINT32 name=value UINT64\n\nlogical stream name=test_stream schema:\n\n";
-  EXPECT_NE(exp, StreamCatalog::instance().getLogicalStreamAndSchemaAsString());
+
+  map<std::string, SchemaPtr> allLogicalStream = StreamCatalog::instance().getAllLogicalStream();
+
+  EXPECT_NE(1, allLogicalStream.size());
 
   EXPECT_FALSE(StreamCatalog::instance().removeLogicalStream("test_stream22"));
 
@@ -127,6 +143,8 @@ TEST_F(StreamCatalogTest, add_get_physical_stream_test) {
             StreamCatalog::instance().getPhysicalStreamAndSchemaAsString());
 }
 
+//TODO: add test for a second physical stream add
+
 TEST_F(StreamCatalogTest, add_remove_physical_stream_test) {
   NESTopologyManager::getInstance().resetNESTopologyPlan();
   StreamCatalog::instance().addLogicalStream(
@@ -145,10 +163,12 @@ TEST_F(StreamCatalogTest, add_remove_physical_stream_test) {
       StreamCatalog::instance().addPhysicalStream(streamConf.logicalStreamName,
                                                   sce));
 
-  EXPECT_TRUE(StreamCatalog::instance().removePhysicalStream(streamConf.logicalStreamName,
-                                                 sce));
+  EXPECT_TRUE(
+      StreamCatalog::instance().removePhysicalStream(
+          streamConf.logicalStreamName, sce));
 
-  cout << StreamCatalog::instance().getPhysicalStreamAndSchemaAsString() << endl;
+  cout << StreamCatalog::instance().getPhysicalStreamAndSchemaAsString()
+       << endl;
 }
 
 TEST_F(StreamCatalogTest, add_physical_for_not_existing_logical_stream_test) {

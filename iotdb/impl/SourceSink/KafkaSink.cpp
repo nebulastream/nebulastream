@@ -8,7 +8,7 @@
 using namespace std::chrono_literals;
 
 
-namespace iotdb {
+namespace NES {
 
 KafkaSink::KafkaSink() {}
 
@@ -26,7 +26,7 @@ KafkaSink::KafkaSink(const Schema& schema,
   };
 
   _connect();
-  IOTDB_DEBUG("KAFKASINK  " << this << ": Init KAFKA SINK to brokers " << brokers
+  NES_DEBUG("KAFKASINK  " << this << ": Init KAFKA SINK to brokers " << brokers
               << ", topic " << topic << ", partition " <<  partition)
 }
 
@@ -47,13 +47,13 @@ KafkaSink::KafkaSink(const Schema& schema,
   }
 
   _connect();
-  IOTDB_DEBUG("KAFKASINK  " << this << ": Init KAFKA SINK with config")
+  NES_DEBUG("KAFKASINK  " << this << ": Init KAFKA SINK with config")
 }
 
 KafkaSink::~KafkaSink() {}
 
 bool KafkaSink::writeData(const TupleBufferPtr input_buffer) {
-  IOTDB_DEBUG("KAFKASINK " << this << ": writes buffer " << input_buffer)
+  NES_DEBUG("KAFKASINK " << this << ": writes buffer " << input_buffer)
 
   // Allow to write nothing to kafka broker, however we return false to indicate that case
   if (input_buffer == nullptr) {
@@ -65,17 +65,17 @@ bool KafkaSink::writeData(const TupleBufferPtr input_buffer) {
                             input_buffer->getBufferSizeInBytes());
     msgBuilder->payload(buffer);
 
-    IOTDB_DEBUG("KAFKASINK buffer to send " << buffer.get_size() << " bytes, content: " << msgBuilder->payload())
+    NES_DEBUG("KAFKASINK buffer to send " << buffer.get_size() << " bytes, content: " << msgBuilder->payload())
     producer->produce(*msgBuilder);
     producer->flush(kafkaProducerTimeout);
-    IOTDB_DEBUG("KAFKASINK " << this << ": send successfully")
+    NES_DEBUG("KAFKASINK " << this << ": send successfully")
     BufferManager::instance().releaseBuffer(input_buffer);
   }
   catch (const cppkafka::HandleException &ex) {
     throw ex;
   }
   catch (...) {
-    IOTDB_FATAL_ERROR("KAFKASINK Unknown error occurs")
+    NES_ERROR("KAFKASINK Unknown error occurs")
   }
 
   return true;
@@ -101,7 +101,7 @@ void KafkaSink::shutdown() {
 
 void KafkaSink::_connect() {
 
-  IOTDB_DEBUG("KAFKASINK connecting...")
+  NES_DEBUG("KAFKASINK connecting...")
   producer = std::make_unique<cppkafka::Producer>(config);
   msgBuilder = std::make_unique<cppkafka::MessageBuilder>(topic);
   // FIXME: should we provide user to access partition ?
@@ -114,6 +114,6 @@ SinkType KafkaSink::getType() const {
     return KAFKA_SINK;
 }
 
-}  // namespace iotdb
+}  // namespace NES
 
-BOOST_CLASS_EXPORT(iotdb::KafkaSink);
+BOOST_CLASS_EXPORT(NES::KafkaSink);

@@ -5,7 +5,7 @@
 #include <utility>
 #include "NESTopologyEntry.hpp"
 
-namespace iotdb {
+namespace NES {
 
 /**
  * @brief: This class represent a sensor node in nes topology. When you create a sensor node you need to use the setters to
@@ -24,101 +24,138 @@ class NESTopologySensorNode : public NESTopologyEntry {
     this->node_id = nodeId;
     this->ip_addr = std::move(ip_addr);
     physicalStreamName = "default_physical";
+    cpuCapacity = 0;
+    remainingCPUCapacity = 0;
   }
 
   ~NESTopologySensorNode() = default;
 
-  void setId(size_t id) override {
-    this->node_id = id;
-  }
+  /**
+   * @biref method to set the id of a node
+   * @param size_t of the id
+   */
+  void setId(size_t id);
 
-  size_t getId() override {
-    return node_id;
-  }
+  /**
+   * @brief method to get the id of the node
+   * @return id as a size_t
+   */
+  size_t getId();
 
-  int getCpuCapacity() override {
-    return cpuCapacity;
-  }
+  /**
+   * @brief method to get the overall cpu capacity of the node
+   * @return size_t cpu capacity
+   */
+  size_t getCpuCapacity();
 
-  void setCpuCapacity(CPUCapacity cpuCapacity) {
-    this->cpuCapacity = cpuCapacity.toInt();
-    this->remainingCPUCapacity = this->cpuCapacity;
-  }
+  /**
+   * @brief method to set CPU capacity
+   * @param CPUCapacity class describing the node capacity
+   */
+  void setCpuCapacity(CPUCapacity cpuCapacity);
 
-  void reduceCpuCapacity(int usedCapacity) override {
-    this->remainingCPUCapacity = this->remainingCPUCapacity - usedCapacity;
-  }
+  /**
+   * @brief method to reduce the cpu capacity of the node
+   * @param size_t of the value that has to be subtracted
+   * TODO: this should check if the value becomes less than 0
+   */
+  void reduceCpuCapacity(size_t usedCapacity);
 
-  void increaseCpuCapacity(int freedCapacity) override {
-    this->remainingCPUCapacity = this->remainingCPUCapacity + freedCapacity;
-  }
+  /**
+   * @brief method to increase CPU capacity
+   * @param size_t of the vlaue that has to be added
+   */
+  void increaseCpuCapacity(size_t freedCapacity);
 
-  int getRemainingCpuCapacity() override {
-    return remainingCPUCapacity;
-  }
+  /**
+   * @brief method to get the actual cpu capacity
+   * @param size_t of the current capacity
+   */
+  size_t getRemainingCpuCapacity();
 
-  NESNodeType getEntryType() override {
-    return Sensor;
-  }
+  /**
+   * @brief method to return the type of this entry
+   * @return Coordinator as a parameter
+   */
+  NESNodeType getEntryType();
 
-  std::string getEntryTypeString() override {
-    return "Sensor(" + physicalStreamName + ")";
-  }
+  /**
+   * @brief method to return the entry type as a string
+   * @return entry type as string
+   */
+  std::string getEntryTypeString();
 
-  void setQuery(InputQueryPtr pQuery) override {
-    this->query = pQuery;
-  }
-  ;
+  /**
+   * @brief method to get the overall cpu capacity of the node
+   * @return size_t cpu capacity
+   * TODO: should this really be here?
+   */
+  void setQuery(InputQueryPtr pQuery);
 
-  std::string getPhysicalStreamName() {
-    return physicalStreamName;
-  }
+  /**
+   * @brief method to get the physical stream name of this sensor
+   * @return string containing the stream name
+   * TODO: add vector mehtod because a node can contain more than one stream
+   */
+  std::string getPhysicalStreamName();
 
-  void setPhysicalStreamName(std::string name) {
-    this->physicalStreamName = name;
-  }
+  /**
+   * @brief method to set the physical stream
+   * @param string containing the physical stream name
+   */
+  void setPhysicalStreamName(std::string name);
 
-  NodePropertiesPtr getNodeProperties(NodePropertiesPtr nodeProperties) {
-    return nodeProperties;
-  }
+  /**
+   * @brief the publish port is the port on which an actor framework server can be accessed
+   * @return port to access CAF
+   */
+  uint16_t getPublishPort() override;
 
-  uint16_t getPublishPort() override {
-    return publish_port;
-  }
+  /**
+   * @brief the publish port is the port on which an actor framework server can be accessed
+   * @param port to access CAF
+   */
+  void setPublishPort(uint16_t publishPort) override;
 
-  void setPublishPort(uint16_t publishPort) override {
-    publish_port = publishPort;
-  }
+  /**
+   * @brief the receive port is the port on which internal data transmission via ZMQ is running
+   * @return port to access ZMQ
+   */
+  uint16_t getReceivePort() override;
 
-  uint16_t getReceivePort() override {
-    return receive_port;
-  }
+  /**
+   * @brief the receive port is the port on which internal data transmission via ZMQ is running
+   * @param port to access ZMQ
+   */
+  void setReceivePort(uint16_t receivePort) override;
 
-  uint16_t getNextFreeReceivePort() override {
-    receive_port++;
-    return receive_port;
-  }
+  /**
+   * @brief the next free receive port on which internal data transmission via ZMQ is running
+   * @return receive port as a uint16_t
+   * TODO: We need to fix this properly. Currently it just returns the +1 value of the receivePort.
+   */
+  uint16_t getNextFreeReceivePort() override;
 
-  void setReceivePort(uint16_t receivePort) override {
-    receive_port = receivePort;
-  }
+  /**
+   * @brief get the ip of this node
+   * @return ip as string
+   */
+  const std::string& getIp() override;
 
-  const std::string &getIp() override {
-    return this->ip_addr;
-  }
-
-  void setIp(const std::string &ip) override {
-    this->ip_addr = ip;
-  }
+  /**
+   * @biref method to set the id of a coordinator node
+   * @param size_t of the id
+   */
+  void setIp(const std::string &ip) override;
 
  private:
   size_t node_id;
-  int cpuCapacity;
-  int remainingCPUCapacity;
+  size_t cpuCapacity;
+  size_t remainingCPUCapacity;
   std::string physicalStreamName;
   InputQueryPtr query;
 };
 
 typedef std::shared_ptr<NESTopologySensorNode> NESTopologySensorNodePtr;
-}  // namespace iotdb
+}  // namespace NES
 #endif /* INCLUDE_TOPOLOGY_NESTOPOLOGYSENSOR_HPP_ */

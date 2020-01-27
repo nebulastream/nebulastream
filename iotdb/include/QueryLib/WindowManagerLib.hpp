@@ -4,10 +4,10 @@
 #include <API/AbstractWindowDefinition.hpp>
 #include <State/StateVariable.hpp>
 
-#ifndef IOTDB_WINDOWMANAGERLIB_HPP
-#define IOTDB_WINDOWMANAGERLIB_HPP
+#ifndef WINDOWMANAGERLIB_HPP
+#define WINDOWMANAGERLIB_HPP
 
-namespace iotdb {
+namespace NES {
 
 /**
 * SliceMetaData stores the meta data of a slice to identify if a record can be assigned to a particular slice.
@@ -173,4 +173,4 @@ class WindowManager {
 
 typedef std::shared_ptr<WindowManager> WindowManagerPtr;
 }
-#endif //IOTDB_WINDOWMANAGERLIB_HPP
+#endif //WINDOWMANAGERLIB_HPP

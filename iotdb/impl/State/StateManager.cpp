@@ -1,6 +1,6 @@
 #include "State/StateManager.hpp"
 
-namespace iotdb {
+namespace NES {
 
 StateManager& StateManager::instance() {
     static StateManager singleton;

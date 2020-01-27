@@ -1,10 +1,12 @@
 #include <Actors/ExecutableTransferObject.hpp>
 #include <Operators/Impl/WindowOperator.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
+#include <Util/Logger.hpp>
 
 using std::string;
 using std::vector;
 
-namespace iotdb {
+namespace NES {
 ExecutableTransferObject::ExecutableTransferObject(string description,
                                                    Schema schema,
                                                    vector<DataSourcePtr> sources,
@@ -29,15 +31,10 @@ WindowDefinitionPtr assignWindowHandler(OperatorPtr operator_ptr){
 QueryExecutionPlanPtr ExecutableTransferObject::toQueryExecutionPlan() {
   if (!_compiled) {
     this->_compiled = true;
-    IOTDB_INFO("*** Creating QueryExecutionPlan for " << this->_description);
-    CodeGeneratorPtr code_gen = createCodeGenerator();
-    PipelineContextPtr context = createPipelineContext();
-
-    // Parse operators
-    this->_operatorTree->produce(code_gen, context, std::cout);
-    PipelineStagePtr stage = code_gen->compile(CompilerArgs());
-
-    QueryExecutionPlanPtr qep(new GeneratedQueryExecutionPlan(stage));
+    NES_INFO("*** Creating QueryExecutionPlan for " << this->_description);
+    //TODO the query compiler dont has to be initialised per query so we can factore it out.
+    auto queryCompiler = createDefaultQueryCompiler();
+    QueryExecutionPlanPtr qep = queryCompiler->compile(this->_operatorTree);
 
     auto window_def = assignWindowHandler(this->_operatorTree);
     if(window_def!= nullptr){
@@ -48,18 +45,18 @@ QueryExecutionPlanPtr ExecutableTransferObject::toQueryExecutionPlan() {
     if (!this->_sources.empty()) {
       qep->addDataSource(this->_sources[0]);
     } else {
-      IOTDB_FATAL_ERROR("The query " << this->_description << " has no input sources!")
+      NES_ERROR("The query " << this->_description << " has no input sources!")
     }
 
     if (!this->_destinations.empty()) {
       qep->addDataSink(this->_destinations[0]);
     } else {
-      IOTDB_FATAL_ERROR("The query " << this->_description << " has no destinations!")
+      NES_ERROR("The query " << this->_description << " has no destinations!")
     }
 
     return qep;
   } else {
-    IOTDB_FATAL_ERROR(this->_description + " has already been compiled and cannot be recreated!")
+    NES_ERROR(this->_description + " has already been compiled and cannot be recreated!")
   }
 }
 

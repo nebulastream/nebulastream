@@ -122,18 +122,13 @@ message("libraies: ${LIBRARIES}")
 target_link_libraries(kafka-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME kafka-tests COMMAND kafka-tests)
 
-# YSB Performance Test
-add_executable(ysb_performance_test "PerformanceTests/YSB_SingleNode_PerformanceTest.cpp")
-target_link_libraries(ysb_performance_test iotdb ${GTEST_LIBRARIES})
-add_test(NAME ysb_performance_test COMMAND ysb_performance_test)
-
 # Predicate Tree Tests
 add_executable(predicate-tree-tests "UnitTests/PredicateTest.cpp")
 target_link_libraries(predicate-tree-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME predicate-tree-tests COMMAND predicate-tree-tests)
 
 # Predicate Tree Tests
-add_executable(optimizer-service-tests "UnitTests/OptimizerServiceTest.cpp")
+add_executable(optimizer-service-tests "UnitTests/Services/OptimizerServiceTest.cpp")
 target_link_libraries(optimizer-service-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME optimizer-service-tests COMMAND optimizer-service-tests)
 
@@ -147,7 +142,7 @@ target_link_libraries(memory-layout-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME memory-layout-tests COMMAND memory-layout-tests)
 
 # CoordinatorService Tests
-add_executable(coordinator-service-tests "UnitTests/CoordinatorServiceTest.cpp")
+add_executable(coordinator-service-tests "UnitTests/Services/CoordinatorServiceTest.cpp")
 target_link_libraries(coordinator-service-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME coordinator-service-tests COMMAND coordinator-service-tests)
 
@@ -161,11 +156,15 @@ add_executable(stream-catalog-test "UnitTests/StreamCatalogTest.cpp")
 target_link_libraries(stream-catalog-test iotdb ${GTEST_LIBRARIES})
 add_test(NAME stream-catalog-test COMMAND stream-catalog-test)
 
-# InternalDataTransmission Tests
-add_executable(internal-data-transmission-test "UnitTests/InternalDataTransmissionTest.cpp")
-target_link_libraries(internal-data-transmission-test iotdb ${GTEST_LIBRARIES})
-add_test(NAME internal-data-transmission-test COMMAND internal-data-transmission-test)
+# Catalog Remote Tests
+add_executable(stream-catalog-remote-test "UnitTests/StreamCatalogRemoteTest.cpp")
+target_link_libraries(stream-catalog-remote-test iotdb ${GTEST_LIBRARIES})
+add_test(NAME stream-catalog-remote-test COMMAND stream-catalog-remote-test)
 
+# StreamCatalogService Tests
+add_executable(stream-catalog-service-tests "UnitTests/Services/StreamCatalogServiceTest.cpp")
+target_link_libraries(stream-catalog-service-tests iotdb ${GTEST_LIBRARIES})
+add_test(NAME stream-catalog-service-tests COMMAND stream-catalog-service-tests)
 
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure

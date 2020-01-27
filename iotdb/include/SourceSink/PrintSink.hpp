@@ -8,7 +8,7 @@
 
 #include <SourceSink/DataSink.hpp>
 
-namespace iotdb {
+namespace NES {
 
 /**
  * @brief this class provides a print sink
@@ -72,6 +72,6 @@ class PrintSink : public DataSink {
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataSink);
     }
 };
-}  // namespace iotdb
+}  // namespace NES
 
 #endif // PRINTSINK_HPP

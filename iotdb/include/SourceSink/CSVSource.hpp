@@ -10,7 +10,7 @@
 #include <boost/serialization/vector.hpp>
 #include "../NodeEngine/TupleBuffer.hpp"
 
-namespace iotdb {
+namespace NES {
 
 /**
  * @brief this class implement the CSV as an input source
@@ -69,9 +69,9 @@ class CSVSource : public DataSource {
     ar & generatedBuffers;
   }
 };
-}  // namespace iotdb
+}  // namespace NES
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
-BOOST_CLASS_EXPORT_KEY(iotdb::CSVSource)
+BOOST_CLASS_EXPORT_KEY(NES::CSVSource)
 #endif /* INCLUDE_CSVSOURCE_H_ */

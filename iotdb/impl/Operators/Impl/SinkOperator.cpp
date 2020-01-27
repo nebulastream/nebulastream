@@ -7,15 +7,15 @@
 #include <Operators/Impl/SinkOperator.hpp>
 #include <SourceSink/DataSink.hpp>
 
-namespace iotdb {
+namespace NES {
 
-SinkOperator::SinkOperator(const DataSinkPtr &sink) : Operator(), sink_(iotdb::copy(sink)) {}
+SinkOperator::SinkOperator(const DataSinkPtr &sink) : Operator(), sink_(NES::copy(sink)) {}
 
-SinkOperator::SinkOperator(const SinkOperator &other) : sink_(iotdb::copy(other.sink_)) {}
+SinkOperator::SinkOperator(const SinkOperator &other) : sink_(NES::copy(other.sink_)) {}
 
 SinkOperator &SinkOperator::operator=(const SinkOperator &other) {
   if (this != &other) {
-    sink_ = iotdb::copy(other.sink_);
+    sink_ = NES::copy(other.sink_);
   }
   return *this;
 }
@@ -37,13 +37,13 @@ const OperatorPtr SinkOperator::copy() const { return std::make_shared<SinkOpera
 
 const std::string SinkOperator::toString() const {
   std::stringstream ss;
-  ss << "SINK(" << iotdb::toString(sink_) << ")";
+  ss << "SINK(" << NES::toString(sink_) << ")";
   return ss.str();
 }
 
 OperatorType SinkOperator::getOperatorType() const { return SINK_OP; }
 
-iotdb::DataSinkPtr SinkOperator::getDataSinkPtr() { return sink_; }
+NES::DataSinkPtr SinkOperator::getDataSinkPtr() { return sink_; }
 
 SinkOperator::~SinkOperator() = default;
 
@@ -51,5 +51,5 @@ SinkOperator::SinkOperator() = default;
 
 const OperatorPtr createSinkOperator(const DataSinkPtr &sink) { return std::make_shared<SinkOperator>(sink); }
 
-} // namespace iotdb
-BOOST_CLASS_EXPORT(iotdb::SinkOperator);
+} // namespace NES
+BOOST_CLASS_EXPORT(NES::SinkOperator);

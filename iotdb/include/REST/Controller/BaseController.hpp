@@ -1,34 +1,33 @@
 #pragma once
 
-#if defined(__APPLE__) || defined(__MACH__)
-#include <xlocale.h>
-#endif
-#include <string>
-#include <cpprest/http_listener.h>
-#include <pplx/pplxtasks.h>
-#include <REST/controller.hpp>
+#include <cpprest/http_msg.h>
 
 using namespace web;
-using namespace http::experimental::listener;
+using namespace http;
 
-namespace iotdb {
+namespace NES {
+
+   /*!
+    * Dispatcher class represents the basic interface for a 
+    * web serivce handler.
+    */
     class BaseController {
-    protected:
-        http_listener _listener; // main micro service network endpoint
+    public: 
+        void handleGet(std::vector<utility::string_t> path, http_request message);
+        void handlePut(std::vector<utility::string_t> path, http_request message);
+        void handlePost(std::vector<utility::string_t> path, http_request message);
+        void handleDelete(std::vector<utility::string_t> path, http_request message);
+        void handlePatch(std::vector<utility::string_t> path, http_request message);
+        void handleHead(std::vector<utility::string_t> path, http_request message);
+        void handleTrace(std::vector<utility::string_t> path, http_request message);
+        void handleMerge(std::vector<utility::string_t> path, http_request message);
 
-    public:
-        BaseController();
-        ~BaseController();
+        void handleOptions(http_request message);
 
-        void setEndpoint(const std::string & value);
-        std::string endpoint() const;
-        pplx::task<void> accept();
-        pplx::task<void> shutdown();
-
-        virtual void initRestOpHandlers() {
-            /* had to be implemented by the child class */
-        }
-
-        std::vector<utility::string_t> requestPath(const http_request & message);
+        json::value responseNotImpl(const http::method& method, utility::string_t path);
+        void internalServerErrorImpl(web::http::http_request message) const;
+        void successMessageImpl(const web::http::http_request& message, const web::json::value& result) const;
+        void resourceNotFoundImpl(const web::http::http_request& message) const;
+        utility::string_t getPath(http_request &message);
     };
 }

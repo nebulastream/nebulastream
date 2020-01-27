@@ -16,7 +16,7 @@
 #include "REST/RestServer.hpp"
 #include "Actors/CAFServer.hpp"
 
-using namespace iotdb;
+using namespace NES;
 
 namespace po = boost::program_options;
 const uint16_t REST_PORT = 8081;

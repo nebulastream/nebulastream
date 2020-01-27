@@ -2,7 +2,7 @@
 #include <API/Types/AttributeField.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
-namespace iotdb {
+namespace NES {
 
 AttributeField::AttributeField(const std::string &_name, DataTypePtr _data_type) : name(_name), data_type(_data_type) {
   // assert(data_type!=nullptr);

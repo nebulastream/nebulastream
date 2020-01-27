@@ -3,7 +3,7 @@
 #include <execinfo.h>
 #include <unistd.h>
 
-namespace iotdb {
+namespace NES {
     class RuntimeUtils {
     public:
         static void printStackTrace() {

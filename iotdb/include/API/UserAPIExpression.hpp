@@ -25,7 +25,7 @@
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class GeneratedCode;
 typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
@@ -231,5 +231,5 @@ Predicate operator^(const PredicateItem &lhs, const PredicateItem &rhs);
 Predicate operator<<(const PredicateItem &lhs, const PredicateItem &rhs);
 Predicate operator>>(const PredicateItem &lhs, const PredicateItem &rhs);
 
-} //end of namespace iotdb
+} //end of namespace NES
 #endif 

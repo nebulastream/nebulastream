@@ -19,12 +19,12 @@
 #include <API/Schema.hpp>
 #include <Windows/WindowHandler.hpp>
 
-namespace iotdb {
+namespace NES {
 class WindowManagerTest : public testing::Test {
  public:
   static void SetUpTestCase() {
     setupLogging();
-    IOTDB_INFO("Setup WindowMangerTest test class.");
+    NES_INFO("Setup WindowMangerTest test class.");
   }
 
   static void TearDownTestCase() { std::cout << "Tear down WindowManager test class." << std::endl; }
@@ -46,11 +46,11 @@ class WindowManagerTest : public testing::Test {
 
     // set log level
     // logger->setLevel(log4cxx::Level::getDebug());
-    logger->setLevel(log4cxx::Level::getInfo());
+    NESLogger->setLevel(log4cxx::Level::getInfo());
 
     // add appenders and other will inherit the settings
-    logger->addAppender(file);
-    logger->addAppender(console);
+    NESLogger->addAppender(file);
+    NESLogger->addAppender(console);
   }
 
 };

@@ -8,7 +8,7 @@
 #include <memory>
 #include <string>
 
-namespace iotdb {
+namespace NES {
 
 class SharedLibrary;
 typedef std::shared_ptr<SharedLibrary> SharedLibraryPtr;
@@ -30,7 +30,7 @@ class SharedLibrary {
     void* shared_lib_;
 };
 
-} // namespace iotdb
+} // namespace NES
 
 #pragma GCC diagnostic pop
 

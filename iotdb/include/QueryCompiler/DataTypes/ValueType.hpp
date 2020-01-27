@@ -1,5 +1,5 @@
-#ifndef IOTDB_INCLUDE_VALUETYPE_HPP_
-#define IOTDB_INCLUDE_VALUETYPE_HPP_
+#ifndef INCLUDE_VALUETYPE_HPP_
+#define INCLUDE_VALUETYPE_HPP_
 
 #pragma once
 
@@ -10,7 +10,7 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class ValueType;
 typedef std::shared_ptr<ValueType> ValueTypePtr;
@@ -41,4 +41,4 @@ class ValueType {
 };
 }
 
-#endif //IOTDB_INCLUDE_VALUETYPE_HPP_
+#endif //INCLUDE_VALUETYPE_HPP_

@@ -5,7 +5,7 @@
 #include <QueryCompiler/DataTypes/ArrayDataType.hpp>
 #include <QueryCompiler/DataTypes/BasicDataType.hpp>
 
-namespace iotdb {
+namespace NES {
 
 ArrayDataType::ArrayDataType(DataTypePtr ptr, u_int32_t dimension)
     : DataType(), _dataType(ptr), _dimensions(dimension) {}
@@ -86,7 +86,7 @@ const DataTypePtr ArrayDataType::copy() const {
 }
 
 bool ArrayDataType::operator==(const DataType &_rhs) const {
-  auto rhs = dynamic_cast<const iotdb::ArrayDataType &>(_rhs);
+  auto rhs = dynamic_cast<const NES::ArrayDataType &>(_rhs);
   return _dataType == rhs._dataType && _dimensions == rhs._dimensions;
 }
 

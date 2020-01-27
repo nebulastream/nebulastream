@@ -1,6 +1,5 @@
 #include <cstddef>
 #include <iostream>
-#include <boost/algorithm/string/replace.hpp>
 #include <API/InputQuery.hpp>
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/CCodeGenerator/CodeCompiler.hpp>
@@ -11,8 +10,9 @@
 #include <Catalogs/StreamCatalog.hpp>
 
 #include <API/Window/WindowDefinition.hpp>
+#include <Util/Logger.hpp>
 
-namespace iotdb {
+namespace NES {
 
 const OperatorPtr recursiveCopy(OperatorPtr ptr) {
   OperatorPtr operatorPtr = ptr->copy();
@@ -43,71 +43,8 @@ static inline void ltrim(std::string &s) {
   }));
 }
 
-const InputQueryPtr createQueryFromCodeString(
-    const std::string& query_code_snippet) {
-  try {
-    /* translate user code to a shared library, load and execute function, then return query object */
-    std::stringstream code;
-    code << "#include <API/InputQuery.hpp>" << std::endl;
-    code << "#include <API/Config.hpp>" << std::endl;
-    code << "#include <API/Schema.hpp>" << std::endl;
-    code << "#include <SourceSink/DataSource.hpp>" << std::endl;
-    code << "#include <API/InputQuery.hpp>" << std::endl;
-    code << "#include <API/Environment.hpp>" << std::endl;
-    code << "#include <API/UserAPIExpression.hpp>" << std::endl;
-    code << "#include <Catalogs/StreamCatalog.hpp>" << std::endl;
-    code << "namespace iotdb{" << std::endl;
-    code << "InputQuery createQuery(){" << std::endl;
 
-    //we will get the schema from the catalog, if stream does not exists this will through an exception
-    std::string streamName = query_code_snippet.substr(
-        query_code_snippet.find("::from("));
-    streamName = streamName.substr(7, streamName.find(").") - 7);
-    std::cout << " stream name = " << streamName << std::endl;
-    code
-        << "StreamPtr sPtr = StreamCatalog::instance().getStreamForLogicalStreamOrThrowException(\""
-        << streamName << "\");";
-//    code << "Stream& stream = *sPtr.get();" << std::endl;
-    std::string newQuery = query_code_snippet;
 
-    //replace the stream "xyz" provided by the user with the reference to the generated stream for the from clause
-    boost::replace_all(newQuery, "from(" + streamName, "from(*sPtr.get()");
-
-    //please the stream "xyz" provided by the user with the variable name of the generated stream for the writeToZmQ
-    boost::replace_all(newQuery, "writeToZmq(" + streamName + ",",
-                       "writeToZmq(\"" + streamName + "\",");
-
-    //replace the stream "xyz" provided by the user with the variable name of the generated stream for the access inside the filter predicate
-    boost::replace_all(newQuery, "filter(" + streamName,
-                       "filter((*sPtr.get())");
-
-    code << newQuery << std::endl;
-    code << "}" << std::endl;
-    code << "}" << std::endl;
-    CCodeCompiler compiler;
-    CompiledCCodePtr compiled_code = compiler.compile(code.str());
-    if (!code) {
-      IOTDB_FATAL_ERROR(
-          "Compilation of query code failed! Code: " << code.str());
-    }
-
-    typedef InputQuery (*CreateQueryFunctionPtr)();
-    CreateQueryFunctionPtr func = compiled_code
-        ->getFunctionPointer<CreateQueryFunctionPtr>(
-        "_ZN5iotdb11createQueryEv");
-    if (!func) {
-      IOTDB_FATAL_ERROR("Error retrieving function! Symbol not found!");
-    }
-    /* call loaded function to create query object */
-    InputQuery query((*func)());
-    return std::make_shared<InputQuery>(query);
-
-  } catch (...) {
-    IOTDB_ERROR(
-        "Failed to create the query from input code string: " << query_code_snippet);
-    throw "Failed to create the query from input code string";
-  }
-}
 
 // const OperatorPtr recursiveOperatorCopy(const OperatorPtr& op){
 
@@ -156,11 +93,11 @@ InputQuery InputQuery::from(Stream& stream) {
  */
 
 InputQuery& InputQuery::select(const Field& field) {
-  IOTDB_NOT_IMPLEMENTED
+  NES_NOT_IMPLEMENTED
 }
 
 InputQuery& InputQuery::select(const Field& field1, const Field& field2) {
-  IOTDB_NOT_IMPLEMENTED
+  NES_NOT_IMPLEMENTED
 }
 
 InputQuery& InputQuery::filter(const UserAPIExpression& predicate) {
@@ -185,8 +122,8 @@ InputQuery& InputQuery::map(const AttributeField& field,
   return *this;
 }
 
-InputQuery& InputQuery::combine(const iotdb::InputQuery& sub_query) {
-  IOTDB_NOT_IMPLEMENTED
+InputQuery& InputQuery::combine(const NES::InputQuery& sub_query) {
+  NES_NOT_IMPLEMENTED
 }
 
 InputQuery& InputQuery::join(const InputQuery& sub_query,
@@ -215,7 +152,7 @@ InputQuery& InputQuery::windowByKey(const AttributeFieldPtr onKey,
   return *this;
 }
 
-InputQuery& InputQuery::window(const iotdb::WindowTypePtr windowType,
+InputQuery& InputQuery::window(const NES::WindowTypePtr windowType,
                                const WindowAggregationPtr aggregation) {
   auto window_def_ptr = std::make_shared<WindowDefinition>(aggregation,
                                                            windowType);
@@ -297,4 +234,4 @@ void addChild(const OperatorPtr& op_parent, const OperatorPtr& op_child) {
   }
 }
 
-}  // namespace iotdb
+}  // namespace NES

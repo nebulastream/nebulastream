@@ -12,7 +12,7 @@
 #include <SourceSink/DataSource.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 
-namespace iotdb {
+namespace NES {
 
 /**
  * @brief this class provide a zmq as data source
@@ -85,5 +85,5 @@ class ZmqSource : public DataSource {
   zmq::socket_t socket;
 
 };
-}  // namespace iotdb
+}  // namespace NES
 #endif // ZMQSOURCE_HPP

@@ -18,7 +18,7 @@
 #include "../Util/json.hpp"
 #include <fstream>
 
-namespace iotdb {
+namespace NES {
 using JSON = nlohmann::json;
 //typedef unsigned long uint64_t;
 

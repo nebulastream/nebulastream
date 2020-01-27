@@ -8,13 +8,13 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
-BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::HandCodedQueryExecutionPlan);
+BOOST_CLASS_EXPORT_IMPLEMENT(NES::HandCodedQueryExecutionPlan);
 
 #include <QueryCompiler/QueryExecutionPlan.hpp>
 
-namespace iotdb {
+namespace NES {
 
 HandCodedQueryExecutionPlan::HandCodedQueryExecutionPlan() : QueryExecutionPlan() {}
 
 HandCodedQueryExecutionPlan::~HandCodedQueryExecutionPlan() {}
-} // namespace iotdb
+} // namespace NES

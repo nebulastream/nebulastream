@@ -8,9 +8,10 @@
 
 #include <SourceSink/BinarySource.hpp>
 #include <SourceSink/DataSource.hpp>
-BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::BinarySource);
+#include <Util/Logger.hpp>
+BOOST_CLASS_EXPORT_IMPLEMENT(NES::BinarySource);
 
-namespace iotdb {
+namespace NES {
 
 BinarySource::BinarySource()
     : file_path(""),
@@ -25,7 +26,7 @@ BinarySource::BinarySource(const Schema& schema, const std::string& _file_path)
   input.seekg(0, input.end);
   file_size = input.tellg();
   if (file_size == -1) {
-    IOTDB_ERROR("ERROR: File " << _file_path << " is corrupted");
+    NES_ERROR("ERROR: File " << _file_path << " is corrupted");
     assert(0);
   }
   input.seekg(0, input.beg);
@@ -67,4 +68,4 @@ void BinarySource::fillBuffer(TupleBuffer& buf) {
 SourceType BinarySource::getType() const {
     return BINARY_SOURCE;
 }
-}  // namespace iotdb
+}  // namespace NES

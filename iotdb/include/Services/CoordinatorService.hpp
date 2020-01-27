@@ -1,37 +1,34 @@
-#ifndef IOTDB_INCLUDE_ACTORS_COORDINATORSERVICE_HPP_
-#define IOTDB_INCLUDE_ACTORS_COORDINATORSERVICE_HPP_
+#ifndef INCLUDE_ACTORS_COORDINATORSERVICE_HPP_
+#define INCLUDE_ACTORS_COORDINATORSERVICE_HPP_
 
 #include <SourceSink/DataSource.hpp>
 #include <Util/SerializationTools.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
-#include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <API/InputQuery.hpp>
 
 #include <API/UserAPIExpression.hpp>
-#include <QueryCompiler/CCodeGenerator/CodeCompiler.hpp>
 
-#include <Util/ErrorHandling.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <Operators/Impl/SourceOperator.hpp>
 #include <Operators/Impl/SinkOperator.hpp>
-#include "Actors/ExecutableTransferObject.hpp"
-#include "Services/OptimizerService.hpp"
-#include "Services/QueryService.hpp"
+#include <Actors/ExecutableTransferObject.hpp>
+#include <Services/OptimizerService.hpp>
+#include <Services/QueryService.hpp>
 
 #include <cstdint>
 #include <string>
-#include "../Optimizer/NESOptimizer.hpp"
-#include "../Topology/NESTopologyManager.hpp"
+#include <Optimizer/NESOptimizer.hpp>
+#include <Topology/NESTopologyManager.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <SourceSink/CSVSource.hpp>
 
 using std::string;
 
-namespace iotdb {
+namespace NES {
 
 class CoordinatorService;
 typedef std::shared_ptr<CoordinatorService> CoordinatorServicePtr;
@@ -177,4 +174,4 @@ class CoordinatorService {
 };
 
 }
-#endif //IOTDB_INCLUDE_ACTORS_COORDINATORSERVICE_HPP_
+#endif //INCLUDE_ACTORS_COORDINATORSERVICE_HPP_

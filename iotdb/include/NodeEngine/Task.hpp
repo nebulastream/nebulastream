@@ -3,7 +3,7 @@
 #include <memory>
 #include "TupleBuffer.hpp"
 
-namespace iotdb {
+namespace NES {
 class DataSource;
 class QueryExecutionPlan;
 typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
@@ -48,6 +48,6 @@ class Task {
 };
 
 typedef std::shared_ptr<Task> TaskPtr;
-}  // namespace iotdb
+}  // namespace NES
 
 #endif /* INCLUDE_TASK_H_ */

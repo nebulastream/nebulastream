@@ -1,11 +1,11 @@
-#ifndef IOTDB_INCLUDE_CORE_ATTRIBUTEFIELD_HPP_
-#define IOTDB_INCLUDE_CORE_ATTRIBUTEFIELD_HPP_
+#ifndef INCLUDE_CORE_ATTRIBUTEFIELD_HPP_
+#define INCLUDE_CORE_ATTRIBUTEFIELD_HPP_
 
 #pragma once
 
 #include <API/Types/DataTypes.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class AttributeField {
  public:
@@ -45,4 +45,4 @@ class AttributeField {
 };
 
 }
-#endif //IOTDB_INCLUDE_CORE_ATTRIBUTEFIELD_HPP_
+#endif //INCLUDE_CORE_ATTRIBUTEFIELD_HPP_

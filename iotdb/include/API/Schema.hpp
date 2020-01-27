@@ -6,12 +6,14 @@
 #include <vector>
 #include <API/Types/AttributeField.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class Schema {
  public:
   Schema();
   static Schema create();
+
+  Schema(const Schema& query);
 
   Schema &copyFields(Schema const &schema);
   Schema &addField(AttributeFieldPtr field);
@@ -51,5 +53,5 @@ class Schema {
 
 typedef std::shared_ptr<Schema> SchemaPtr;
 
-} // namespace iotdb
+}  // namespace NES
 #endif // API_SCHEMA_H

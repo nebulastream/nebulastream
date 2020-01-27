@@ -9,7 +9,7 @@
 #include <API/Config.hpp>
 
 using boost::asio::ip::tcp;
-using namespace iotdb;
+using namespace NES;
 using namespace std; // For strlen.
 
 const size_t serverPort = 5555;
@@ -29,20 +29,20 @@ void start()
 {
     for(auto& q : qeps)
     {
-        IOTDB_DEBUG("IOTNODE: register query " << q)
+        NES_DEBUG("IOTNODE: register query " << q)
         Dispatcher::instance().registerQueryWithStart(q);
     }
-    IOTDB_DEBUG("IOTNODE: start thread pool")
+    NES_DEBUG("IOTNODE: start thread pool")
     ThreadPool::instance().start();
 }
 
 void stop()
 {
-    IOTDB_DEBUG("IOTNODE: stop thread pool")
+    NES_DEBUG("IOTNODE: stop thread pool")
     ThreadPool::instance().stop();
     for(auto& q : qeps)
     {
-        IOTDB_DEBUG("IOTNODE: deregister query " << q)
+        NES_DEBUG("IOTNODE: deregister query " << q)
         Dispatcher::instance().deregisterQuery(q);
     }
 
@@ -50,13 +50,13 @@ void stop()
 
 bool registerNodeInFog(string host, string clientName, string clientPort)
 {
-    IOTDB_DEBUG("IOTNODE: register with server " << host << ":" << serverPort)
+    NES_DEBUG("IOTNODE: register with server " << host << ":" << serverPort)
     tcp::resolver resolver(io_service);
     tcp::resolver::query query(tcp::v4(), host, serverPortStr);
     tcp::resolver::iterator iterator = resolver.resolve(query);
     tcp::socket s(io_service);
     s.connect(*iterator);
-    IOTDB_DEBUG("connected to " << host << ":" << serverPort << " successfully")
+    NES_DEBUG("connected to " << host << ":" << serverPort << " successfully")
 
     NodeEnginePtr node = std::make_shared<NodeEngine>();
     NodeProperties* ptr = node->getNodeProperties();
@@ -69,15 +69,15 @@ bool registerNodeInFog(string host, string clientName, string clientPort)
 //
     char reply[14];
     boost::asio::read(s, boost::asio::buffer(reply, max_length));
-    IOTDB_DEBUG("IOTNODE: Server replyied " << reply)
+    NES_DEBUG("IOTNODE: Server replyied " << reply)
     if(strcmp(reply, "REG_COMPLETED") == 0)
     {
-        IOTDB_DEBUG("IOTNODE: registration successful" << reply)
+        NES_DEBUG("IOTNODE: registration successful" << reply)
         return true;
     }
     else
     {
-        IOTDB_DEBUG("IOTNODE: registration unsuccessful" << reply)
+        NES_DEBUG("IOTNODE: registration unsuccessful" << reply)
         return false;
     }
 }
@@ -86,30 +86,30 @@ void applyConfig(Config& conf)
 {
     if(conf.getNumberOfWorker() != ThreadPool::instance().getNumberOfThreads())
     {
-        IOTDB_DEBUG("IOTNODE: changing numberOfWorker from " << ThreadPool::instance().getNumberOfThreads() << " to " << conf.getNumberOfWorker())
+        NES_DEBUG("IOTNODE: changing numberOfWorker from " << ThreadPool::instance().getNumberOfThreads() << " to " << conf.getNumberOfWorker())
         ThreadPool::instance().setNumberOfThreadsWithRestart(conf.getNumberOfWorker());
     }
     if(conf.getBufferCount() !=  BufferManager::instance().getNumberOfBuffers())
     {
-        IOTDB_DEBUG("IOTNODE: changing bufferCount from " << BufferManager::instance().getNumberOfBuffers() << " to " << conf.getBufferCount())
+        NES_DEBUG("IOTNODE: changing bufferCount from " << BufferManager::instance().getNumberOfBuffers() << " to " << conf.getBufferCount())
         BufferManager::instance().setNumberOfBuffers(conf.getBufferCount());
     }
     if(conf.getBufferSizeInByte() !=  BufferManager::instance().getBufferSize())
     {
-        IOTDB_DEBUG("IOTNODE: changing buffer size from " << BufferManager::instance().getBufferSize() << " to " << conf.getBufferSizeInByte())
+        NES_DEBUG("IOTNODE: changing buffer size from " << BufferManager::instance().getBufferSize() << " to " << conf.getBufferSizeInByte())
         BufferManager::instance().setBufferSize(conf.getBufferSizeInByte());
     }
-    IOTDB_DEBUG("IOTNODE: config successuflly changed")
+    NES_DEBUG("IOTNODE: config successuflly changed")
 
 }
 void commandProcess(socket_ptr sock)
 {
-    IOTDB_DEBUG("IOTNODE: process incomming command")
+    NES_DEBUG("IOTNODE: process incomming command")
     char data[max_length];
     boost::system::error_code error;
     size_t length = sock->read_some(boost::asio::buffer(data), error);
     assert(length < max_length);
-    IOTDB_DEBUG("IOTNODE: received command=" << data)
+    NES_DEBUG("IOTNODE: received command=" << data)
     if (error)
         throw boost::system::system_error(error);
 
@@ -118,19 +118,19 @@ void commandProcess(socket_ptr sock)
     //first char identifies cmd
     if(cmd == '1')
     {
-        IOTDB_DEBUG("IOTNODE: received start query command")
+        NES_DEBUG("IOTNODE: received start query command")
         start();
     }
     else if(cmd == '2')
     {
-        IOTDB_DEBUG("IOTNODE: received stop query command")
+        NES_DEBUG("IOTNODE: received stop query command")
         stop();
     }
     else if(cmd == '3')
     {
-        IOTDB_DEBUG("IOTNODE: received deploy query command")
+        NES_DEBUG("IOTNODE: received deploy query command")
         std::string qepFile = &data[1];
-        IOTDB_DEBUG("qepFile=" << qepFile)
+        NES_DEBUG("qepFile=" << qepFile)
         std::stringstream ifs(qepFile.c_str());
         boost::archive::text_iarchive ia(ifs);
         QueryExecutionPlan* q = new QueryExecutionPlan();
@@ -138,23 +138,23 @@ void commandProcess(socket_ptr sock)
         QueryExecutionPlanPtr qPtr = std::make_shared<QueryExecutionPlan>();
         qPtr.reset(q);
         qeps.push_back(qPtr);
-        IOTDB_DEBUG("received QEP after deserialization:")
+        NES_DEBUG("received QEP after deserialization:")
         q->print();
     }
     else if(cmd == '4')
     {
-        IOTDB_DEBUG("IOTNODE: received deploy config command")
+        NES_DEBUG("IOTNODE: received deploy config command")
         std::string confFile = &data[1];
-        IOTDB_DEBUG("confFile=" << confFile)
+        NES_DEBUG("confFile=" << confFile)
         std::stringstream ifs(confFile.c_str());
         boost::archive::text_iarchive ia(ifs);
         Config conf = Config::create();
         ia >> conf;
 //
-        IOTDB_DEBUG("received Config after deserialization:")
+        NES_DEBUG("received Config after deserialization:")
         conf.print();
 
-        IOTDB_DEBUG("applying config")
+        NES_DEBUG("applying config")
         applyConfig(conf);
 
     }
@@ -165,7 +165,7 @@ void commandProcess(socket_ptr sock)
 }
 
 void listen(boost::asio::io_service& io_service, short port){
-    IOTDB_DEBUG("IOTNODE: start listener for incoming commands")
+    NES_DEBUG("IOTNODE: start listener for incoming commands")
     tcp::acceptor a(io_service, tcp::endpoint(tcp::v4(), port));
       for (;;)
       {
@@ -189,24 +189,24 @@ void setupLogging()
 
     // set log level
     //logger->setLevel(log4cxx::Level::getTrace());
-  logger->setLevel(log4cxx::Level::getDebug());
+  NESLogger->setLevel(log4cxx::Level::getDebug());
 //    logger->setLevel(log4cxx::Level::getInfo());
 //  logger->setLevel(log4cxx::Level::getWarn());
     //logger->setLevel(log4cxx::Level::getError());
 //  logger->setLevel(log4cxx::Level::getFatal());
 
     // add appenders and other will inherit the settings
-    logger->addAppender(file);
-    logger->addAppender(console);
+    NESLogger->addAppender(file);
+    NESLogger->addAppender(console);
 }
 
 void initNodeEngine()
 {
-    iotdb::Dispatcher::instance();
-    iotdb::BufferManager::instance();
-    iotdb::ThreadPool::instance();
+    NES::Dispatcher::instance();
+    NES::BufferManager::instance();
+    NES::ThreadPool::instance();
     //optional
-//    iotdb::BufferManager::instance().setBufferSize(bufferSizeInByte);
+//    NES::BufferManager::instance().setBufferSize(bufferSizeInByte);
 //    ThreadPool::instance().setNumberOfThreads(threadCnt);
 }
 
@@ -227,24 +227,24 @@ int main(int argc, char* argv[])
         std::string clientName = argv[3];
         bool successReg = registerNodeInFog(host, clientName, clientPort);
 
-        IOTDB_DEBUG("IOTNODE: initialize node engine")
+        NES_DEBUG("IOTNODE: initialize node engine")
         initNodeEngine();
 
         if(successReg)
         {
-            IOTDB_DEBUG("IOTNODE: waiting for commands")
+            NES_DEBUG("IOTNODE: waiting for commands")
             boost::asio::io_service io_service;
             listen(io_service, atoi(clientPort.c_str( )));
         }
         else
         {
-            IOTDB_ERROR("IOTNODE: register failed")
+            NES_ERROR("IOTNODE: register failed")
             return -1;
         }
     }//end of try
     catch (std::exception& e)
     {
-        IOTDB_ERROR("Exception: " << e.what())
+        NES_ERROR("Exception: " << e.what())
     }
 
     return 0;

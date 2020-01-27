@@ -6,16 +6,16 @@
 
 #include <Operators/Impl/KeyByOperator.hpp>
 
-namespace iotdb {
+namespace NES {
 
-KeyByOperator::KeyByOperator(const Attributes& keyby_spec) : Operator(), keyby_spec_(iotdb::copy(keyby_spec)) {}
+KeyByOperator::KeyByOperator(const Attributes& keyby_spec) : Operator(), keyby_spec_(NES::copy(keyby_spec)) {}
 
-KeyByOperator::KeyByOperator(const KeyByOperator& other) : keyby_spec_(iotdb::copy(other.keyby_spec_)) {}
+KeyByOperator::KeyByOperator(const KeyByOperator& other) : keyby_spec_(NES::copy(other.keyby_spec_)) {}
 
 KeyByOperator& KeyByOperator::operator=(const KeyByOperator& other)
 {
     if (this != &other) {
-        keyby_spec_ = iotdb::copy(other.keyby_spec_);
+        keyby_spec_ = NES::copy(other.keyby_spec_);
     }
     return *this;
 }
@@ -28,7 +28,7 @@ const OperatorPtr KeyByOperator::copy() const { return std::make_shared<KeyByOpe
 const std::string KeyByOperator::toString() const
 {
     std::stringstream ss;
-    ss << "KEYBY(" << iotdb::toString(keyby_spec_) << ")";
+    ss << "KEYBY(" << NES::toString(keyby_spec_) << ")";
     return ss.str();
 }
 
@@ -41,4 +41,4 @@ const OperatorPtr createKeyByOperator(const Attributes& keyby_spec)
     return std::make_shared<KeyByOperator>(keyby_spec);
 }
 
-} // namespace iotdb
+} // namespace NES

@@ -1,10 +1,11 @@
 #include <QueryCompiler/QueryExecutionPlan.hpp>
-BOOST_CLASS_EXPORT_IMPLEMENT(iotdb::QueryExecutionPlan);
+BOOST_CLASS_EXPORT_IMPLEMENT(NES::QueryExecutionPlan);
 
 #include <assert.h>
 #include <iostream>
+#include <Util/Logger.hpp>
 
-namespace iotdb {
+namespace NES {
 
 QueryExecutionPlan::QueryExecutionPlan() : sources(), stages() {}
 
@@ -18,14 +19,34 @@ QueryExecutionPlan::QueryExecutionPlan(const std::vector<DataSourcePtr>& _source
 
 QueryExecutionPlan::~QueryExecutionPlan()
 {
-    IOTDB_DEBUG("destroy qep")
+    NES_DEBUG("destroy qep")
     sources.clear();
     stages.clear();
     source_to_stage.clear();
     stage_to_dest.clear();
 }
 
-bool QueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const iotdb::TupleBufferPtr buf) {
+void QueryExecutionPlan::print() {
+   for (auto source : sources) {
+     NES_INFO("Source:" << source)
+     NES_INFO(
+         "\t Generated Buffers=" << source->getNumberOfGeneratedBuffers())
+     NES_INFO("\t Generated Tuples=" << source->getNumberOfGeneratedTuples())
+     NES_INFO("\t Schema=" << source->getSourceSchemaAsString())
+   }
+   for (auto window : windows) {
+     NES_INFO("WindowHandler:" << window)
+     NES_INFO("WindowHandler Result:")
+   }
+   for (auto sink : sinks) {
+     NES_INFO("Sink:" << sink)
+     NES_INFO("\t Generated Buffers=" << sink->getNumberOfSentBuffers())
+     NES_INFO("\t Generated Tuples=" << sink->getNumberOfSentTuples())
+   }
+ }
+
+
+bool QueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const NES::TupleBufferPtr buf) {
   return false;
 }
 
@@ -37,4 +58,4 @@ const std::vector<WindowPtr> QueryExecutionPlan::getWindows() const { return win
 
 const std::vector<DataSinkPtr> QueryExecutionPlan::getSinks() const { return sinks; }
 
-} // namespace iotdb
+} // namespace NES

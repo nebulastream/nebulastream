@@ -3,7 +3,7 @@
 #include <algorithm>
 
 #include "API/InputQuery.hpp"
-namespace iotdb_test {
+namespace NES_test {
 
 /** Client Side **/
 class InputQuery; // API
@@ -174,4 +174,4 @@ void test_design()
     }
 }
 
-} // namespace iotdb_test
+} // namespace NES_test

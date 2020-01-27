@@ -8,7 +8,7 @@
 #include <API/ParameterTypes.hpp>
 #include <Operators/Operator.hpp>
 
-namespace iotdb {
+namespace NES {
 
   class SinkOperator : public Operator {
     public:
@@ -38,4 +38,4 @@ namespace iotdb {
   };
 
   typedef std::shared_ptr<SinkOperator> SinkOperatorPtr;
-} // namespace iotdb
+} // namespace NES

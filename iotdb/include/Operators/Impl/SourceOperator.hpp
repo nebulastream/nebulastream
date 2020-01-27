@@ -8,7 +8,7 @@
 #include <API/ParameterTypes.hpp>
 #include <Operators/Operator.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class SourceOperator : public Operator {
  public:
@@ -39,4 +39,4 @@ class SourceOperator : public Operator {
 
 typedef std::shared_ptr<SourceOperator> SourceOperatorPtr;
 
-} // namespace iotdb
+} // namespace NES

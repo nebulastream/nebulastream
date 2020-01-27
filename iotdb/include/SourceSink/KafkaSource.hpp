@@ -8,7 +8,7 @@
 #include <cppkafka/cppkafka.h>
 #include <SourceSink/DataSource.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class KafkaSource : public DataSource {
 
@@ -58,6 +58,6 @@ class KafkaSource : public DataSource {
 
   std::chrono::milliseconds kafkaConsumerTimeout;
 };
-} // namespace iotdb
+} // namespace NES
 
 #endif // KAFKASOURCE_HPP

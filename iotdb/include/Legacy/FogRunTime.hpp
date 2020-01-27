@@ -9,7 +9,7 @@
 #include "../Optimizer/NESExecutionPlan.hpp"
 #include "../SourceSink/CompiledDummyPlan.hpp"
 
-namespace iotdb {
+namespace NES {
 using JSON = nlohmann::json;
 
 class FogRunTime {
@@ -38,6 +38,6 @@ class FogRunTime {
     std::map<size_t, NodeEnginePtr> nodeInfos;
 };
 
-} // namespace iotdb
+} // namespace NES
 
 #endif /* INCLUDE_OPTIMIZER_FOGRUNTIME_HPP_ */

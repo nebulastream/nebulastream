@@ -7,7 +7,7 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <Operators/Impl/SourceOperator.hpp>
 
-namespace iotdb {
+namespace NES {
 
 SourceOperator::SourceOperator(const DataSourcePtr& source) : Operator(), source_(source) {}
 
@@ -37,13 +37,13 @@ const OperatorPtr SourceOperator::copy() const { return std::make_shared<SourceO
 const std::string SourceOperator::toString() const
 {
     std::stringstream ss;
-    ss << "SOURCE(" << iotdb::toString(source_) << ")";
+    ss << "SOURCE(" << NES::toString(source_) << ")";
     return ss.str();
 }
 
 OperatorType SourceOperator::getOperatorType() const { return SOURCE_OP; }
 
-iotdb::DataSourcePtr SourceOperator::getDataSourcePtr() {
+NES::DataSourcePtr SourceOperator::getDataSourcePtr() {
     return source_;
 }
 
@@ -54,5 +54,5 @@ SourceOperator::SourceOperator() {
 
 const OperatorPtr createSourceOperator(const DataSourcePtr& source) { return std::make_shared<SourceOperator>(source); }
 
-} // namespace iotdb
-BOOST_CLASS_EXPORT(iotdb::SourceOperator);
+} // namespace NES
+BOOST_CLASS_EXPORT(NES::SourceOperator);

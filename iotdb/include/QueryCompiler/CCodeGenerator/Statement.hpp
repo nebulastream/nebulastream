@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include <memory>
@@ -6,11 +5,10 @@
 
 #include <QueryCompiler/CCodeGenerator/Declaration.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
-#include <Util/ErrorHandling.hpp>
 #include <API/Types/DataTypes.hpp>
 #include <QueryCompiler/DataTypes/ValueType.hpp>
 
-namespace iotdb {
+namespace NES {
 
 enum StatementType {
   RETURN_STMT,
@@ -345,7 +343,7 @@ class AnnonymUserDefinedDataType : public DataType {
 
   bool operator==(const DataType &_rhs) const override {
     try {
-      auto rhs = dynamic_cast<const iotdb::AnnonymUserDefinedDataType &>(_rhs);
+      auto rhs = dynamic_cast<const NES::AnnonymUserDefinedDataType &>(_rhs);
       return name == rhs.name;
     }
     catch (...) {
@@ -392,7 +390,7 @@ class UserDefinedDataType : public DataType {
   }
 
   bool operator==(const DataType &_rhs) const override {
-    IOTDB_NOT_IMPLEMENTED;
+    assert(0);
   }
 
   ~UserDefinedDataType();
@@ -413,4 +411,4 @@ struct AssignmentStatment {
 const DataTypePtr createUserDefinedType(const StructDeclaration &decl);
 const DataTypePtr createAnnonymUserDefinedType(const std::string name);
 
-} // namespace iotdb
+} // namespace NES

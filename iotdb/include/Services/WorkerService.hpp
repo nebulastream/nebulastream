@@ -1,5 +1,5 @@
-#ifndef IOTDB_INCLUDE_ACTORS_WORKERSERVICE_HPP_
-#define IOTDB_INCLUDE_ACTORS_WORKERSERVICE_HPP_
+#ifndef INCLUDE_ACTORS_WORKERSERVICE_HPP_
+#define INCLUDE_ACTORS_WORKERSERVICE_HPP_
 
 #include <NodeEngine/NodeEngine.hpp>
 #include <Operators/Operator.hpp>
@@ -13,21 +13,15 @@ using std::vector;
 using std::tuple;
 using JSON = nlohmann::json;
 
-namespace iotdb {
+namespace NES {
 
 class WorkerService {
 
  public:
   /**
-   * @brief constructor for worker without a stream/sensor attached
+   * @brief constructor for worker with a stream/sensor attached and create default physical stream
    */
   WorkerService(string ip, uint16_t publish_port, uint16_t receive_port);
-
-  /**
-   * @brief constructor for worker with a stream/sensor attached
-   */
-  WorkerService(string ip, uint16_t publish_port, uint16_t receive_port,
-               PhysicalStreamConfig streamConf);
 
   ~WorkerService() = default;
 
@@ -58,13 +52,15 @@ class WorkerService {
   void setReceivePort(uint16_t receive_port);
 
   string getNodeProperties();
-  PhysicalStreamConfig getPhysicalStreamConfig();
+  PhysicalStreamConfig getPhysicalStreamConfig(std::string name);
+  void addPhysicalStreamConfig(PhysicalStreamConfig conf);
 
  private:
   string _ip;
   uint16_t _publish_port;
   uint16_t _receive_port;
-  PhysicalStreamConfig streamConf;
+  //TODO: this should be a ref or a pointer instead of an object
+  std::map<std::string, PhysicalStreamConfig> physicalStreams;
 
   NodeEngine *_enginePtr;
   std::unordered_map<string, tuple<QueryExecutionPlanPtr, OperatorPtr>> _runningQueries;
@@ -72,4 +68,4 @@ class WorkerService {
 
 }
 
-#endif //IOTDB_INCLUDE_ACTORS_WORKERSERVICE_HPP_
+#endif //INCLUDE_ACTORS_WORKERSERVICE_HPP_

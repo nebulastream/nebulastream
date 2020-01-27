@@ -8,7 +8,7 @@
 #include <API/ParameterTypes.hpp>
 #include <Operators/Operator.hpp>
 
-namespace iotdb {
+namespace NES {
 
 class FilterOperator : public Operator {
  public:
@@ -37,4 +37,4 @@ class FilterOperator : public Operator {
   }
 };
 
-} // namespace iotdb
+} // namespace NES

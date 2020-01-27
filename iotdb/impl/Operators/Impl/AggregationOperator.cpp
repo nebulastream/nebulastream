@@ -6,21 +6,21 @@
 
 #include <Operators/Impl/AggregationOperator.hpp>
 
-namespace iotdb {
+namespace NES {
 
 AggregationOperator::AggregationOperator(const AggregationSpec& aggr_spec)
-    : Operator(), aggr_spec_(iotdb::copy(aggr_spec))
+    : Operator(), aggr_spec_(NES::copy(aggr_spec))
 {
 }
 
-AggregationOperator::AggregationOperator(const AggregationOperator& other) : aggr_spec_(iotdb::copy(other.aggr_spec_))
+AggregationOperator::AggregationOperator(const AggregationOperator& other) : aggr_spec_(NES::copy(other.aggr_spec_))
 {
 }
 
 AggregationOperator& AggregationOperator::operator=(const AggregationOperator& other)
 {
     if (this != &other) {
-        aggr_spec_ = iotdb::copy(other.aggr_spec_);
+        aggr_spec_ = NES::copy(other.aggr_spec_);
     }
     return *this;
 }
@@ -33,7 +33,7 @@ const OperatorPtr AggregationOperator::copy() const { return std::make_shared<Ag
 const std::string AggregationOperator::toString() const
 {
     std::stringstream ss;
-    ss << "AGGREGATE(" << iotdb::toString(aggr_spec_) << ")";
+    ss << "AGGREGATE(" << NES::toString(aggr_spec_) << ")";
     return ss.str();
 }
 
@@ -46,4 +46,4 @@ const OperatorPtr createAggregationOperator(const AggregationSpec& aggr_spec)
     return std::make_shared<AggregationOperator>(aggr_spec);
 }
 
-} // namespace iotdb
+} // namespace NES
