@@ -9,8 +9,9 @@
 namespace NES {
 
 class OptimizerService {
-
  public:
+
+  static OptimizerService& instance();
 
   /**
    * @brief: get execution plan as json.
@@ -19,16 +20,18 @@ class OptimizerService {
    * @param optimizationStrategyName
    * @return
    */
-  web::json::value getExecutionPlanAsJson(InputQueryPtr inputQuery, std::string optimizationStrategyName);
+  web::json::value getExecutionPlanAsJson(InputQueryPtr inputQuery,
+                                          std::string optimizationStrategyName);
 
   /**
- * @brief: get execution plan.
- *
- * @param userQuery
- * @param optimizationStrategyName
- * @return
- */
-  NESExecutionPlan getExecutionPlan(InputQueryPtr inputQuery, std::string optimizationStrategyName);
+   * @brief: get execution plan.
+   *
+   * @param userQuery
+   * @param optimizationStrategyName
+   * @return
+   */
+  NESExecutionPlanPtr getExecutionPlan(InputQueryPtr inputQuery,
+                                       std::string optimizationStrategyName);
 
 };
 }

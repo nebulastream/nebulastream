@@ -113,6 +113,8 @@ class NESExecutionPlan {
   vector<json::value> getChildrenNode(ExecutionNodePtr nesParentNode) const;
 };
 
+typedef std::shared_ptr <NESExecutionPlan> NESExecutionPlanPtr;
+
 }
 
 #endif //NESEXECUTIONPLAN_HPP
