@@ -2,6 +2,7 @@
 #include <Operators/Operator.hpp>
 #include <iostream>
 #include <Util/Logger.hpp>
+#include <utility>
 
 using namespace NES;
 using namespace std;
@@ -11,10 +12,10 @@ NESExecutionPlan BottomUp::initializeExecutionPlan(
 
     NESExecutionPlan executionGraph;
     const OperatorPtr& sinkOperator = inputQuery->getRoot();
+
+    // FIXME: current implementation assumes that we have only one source stream and therefore only one source operator.
     const string& streamName = inputQuery->source_stream->getName();
-    const vector<OperatorPtr>& sourceOperators = getSourceOperators(sinkOperator);
-    NES_DEBUG("BottomUp: try to place the following source operators:")
-    for (OperatorPtr op : sourceOperators) NES_DEBUG("\t BottomUp: " << op->toString())
+    const OperatorPtr sourceOperator = getSourceOperator(sinkOperator);
 
     const deque<NESTopologyEntryPtr>& sourceNodes = StreamCatalog::instance()
         .getSourceNodesForLogicalStream(streamName);
@@ -24,10 +25,7 @@ NESExecutionPlan BottomUp::initializeExecutionPlan(
         throw Exception("No source found in the topology for stream " + streamName);
     }
 
-    NES_DEBUG("BottomUp: try to place on following source nodes:")
-    for (NESTopologyEntryPtr node : sourceNodes) NES_DEBUG("\t BottomUp: " << node->toString())
-
-    placeOperators(executionGraph, nesTopologyPlan, sourceOperators, sourceNodes);
+    placeOperators(executionGraph, nesTopologyPlan, sourceOperator, sourceNodes);
 
     //TODO: Think of a better name for this
     removeNonResidentOperators(executionGraph);
@@ -41,10 +39,8 @@ NESExecutionPlan BottomUp::initializeExecutionPlan(
     return executionGraph;
 }
 
-void BottomUp::placeOperators(NESExecutionPlan executionGraph,
-                              NESTopologyPlanPtr nesTopologyPlan,
-                              vector<OperatorPtr> sourceOperators,
-                              deque<NESTopologyEntryPtr> sourceNodes) {
+void BottomUp::placeOperators(NESExecutionPlan executionGraph, NESTopologyPlanPtr nesTopologyPlan,
+                              OperatorPtr sourceOperator, deque<NESTopologyEntryPtr> sourceNodes) {
 
     // Loop over all the source nodes
     for (NESTopologyEntryPtr sourceNode: sourceNodes) {
@@ -52,11 +48,7 @@ void BottomUp::placeOperators(NESExecutionPlan executionGraph,
         NESTopologyEntryPtr& targetSource = sourceNode;
 
         //lambda to convert source optr vector to a friendly struct
-        deque<ProcessOperator> operatorsToProcess;
-        transform(sourceOperators.begin(), sourceOperators.end(),
-                  back_inserter(operatorsToProcess), [](OperatorPtr optr) {
-              return ProcessOperator(optr, nullptr);
-            });
+        deque<ProcessOperator> operatorsToProcess = {ProcessOperator(sourceOperator, nullptr)};
 
         while (!operatorsToProcess.empty()) {
 
@@ -218,12 +210,9 @@ NESTopologyEntryPtr BottomUp::findSuitableNESNodeForOperatorPlacement(
     return node;
 };
 
-// This method returns all the source operators in the user input query
-vector<OperatorPtr> BottomUp::getSourceOperators(OperatorPtr root) {
+OperatorPtr BottomUp::getSourceOperator(OperatorPtr root) {
 
-    vector<OperatorPtr> listOfSourceOperators;
-    deque<OperatorPtr> bfsTraverse;
-    bfsTraverse.push_back(root);
+    deque<OperatorPtr> bfsTraverse = {root};
 
     while (!bfsTraverse.empty()) {
 
@@ -232,14 +221,14 @@ vector<OperatorPtr> BottomUp::getSourceOperators(OperatorPtr root) {
             bfsTraverse.pop_front();
 
             if (optr->getOperatorType() == OperatorType::SOURCE_OP) {
-                listOfSourceOperators.push_back(optr);
+                return optr;
             }
 
             vector<OperatorPtr>& children = optr->childs;
             copy(children.begin(), children.end(), back_inserter(bfsTraverse));
         }
     }
-    return listOfSourceOperators;
+    return nullptr;
 };
 
 // This method returns all sensor nodes that act as the source in the nes topology.
