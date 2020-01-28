@@ -20,27 +20,15 @@ namespace NES {
 class NESTopologySensorNode : public NESTopologyEntry {
 
  public:
-  NESTopologySensorNode(size_t nodeId, std::string ip_addr) {
-    this->node_id = nodeId;
-    this->ip_addr = std::move(ip_addr);
+  NESTopologySensorNode(size_t nodeId, std::string ip) {
+    this->id = nodeId;
+    this->ipAddress = ip;
     physicalStreamName = "default_physical";
     cpuCapacity = 0;
     remainingCPUCapacity = 0;
   }
 
   ~NESTopologySensorNode() = default;
-
-  /**
-   * @biref method to set the id of a node
-   * @param size_t of the id
-   */
-  void setId(size_t id);
-
-  /**
-   * @brief method to get the id of the node
-   * @return id as a size_t
-   */
-  size_t getId();
 
   /**
    * @brief method to get the overall cpu capacity of the node
@@ -105,51 +93,7 @@ class NESTopologySensorNode : public NESTopologyEntry {
    */
   void setPhysicalStreamName(std::string name);
 
-  /**
-   * @brief the publish port is the port on which an actor framework server can be accessed
-   * @return port to access CAF
-   */
-  uint16_t getPublishPort() override;
-
-  /**
-   * @brief the publish port is the port on which an actor framework server can be accessed
-   * @param port to access CAF
-   */
-  void setPublishPort(uint16_t publishPort) override;
-
-  /**
-   * @brief the receive port is the port on which internal data transmission via ZMQ is running
-   * @return port to access ZMQ
-   */
-  uint16_t getReceivePort() override;
-
-  /**
-   * @brief the receive port is the port on which internal data transmission via ZMQ is running
-   * @param port to access ZMQ
-   */
-  void setReceivePort(uint16_t receivePort) override;
-
-  /**
-   * @brief the next free receive port on which internal data transmission via ZMQ is running
-   * @return receive port as a uint16_t
-   * TODO: We need to fix this properly. Currently it just returns the +1 value of the receivePort.
-   */
-  uint16_t getNextFreeReceivePort() override;
-
-  /**
-   * @brief get the ip of this node
-   * @return ip as string
-   */
-  const std::string& getIp() override;
-
-  /**
-   * @biref method to set the id of a coordinator node
-   * @param size_t of the id
-   */
-  void setIp(const std::string &ip) override;
-
  private:
-  size_t node_id;
   size_t cpuCapacity;
   size_t remainingCPUCapacity;
   std::string physicalStreamName;

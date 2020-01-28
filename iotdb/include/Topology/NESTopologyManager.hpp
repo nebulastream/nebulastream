@@ -35,29 +35,32 @@ class NESTopologyManager {
 
   /**
    * @brief create a nes coordinator node
+   * @param id of the coordinator as size_t
    * @param ip of coordinator node as string
    * @param CPUCapacity of the node
    * @return NESTopologyCoordinatorNodePtr to the created coordinator
    */
-  NESTopologyCoordinatorNodePtr createNESCoordinatorNode(
+  NESTopologyCoordinatorNodePtr createNESCoordinatorNode(size_t id,
       const std::string ipAddr, CPUCapacity cpuCapacity);
 
   /**
    * @brief create a nes worker node
+   * @param actor id of the node
    * @param ip of worker node as string
    * @param CPUCapacity of the node
    * @return NESTopologyWorkerNodePtr to the created worker
    */
-  NESTopologyWorkerNodePtr createNESWorkerNode(const std::string ipAddr,
+  NESTopologyWorkerNodePtr createNESWorkerNode(size_t id, const std::string ipAddr,
                                                CPUCapacity cpuCapacity);
 
   /**
    * @brief create a nes sensor node
+   * @param id of the node
    * @param ip of sensor node as string
    * @param CPUCapacity of the node
    * @return NESTopologySensorNodePtr to the created sensor
    */
-  NESTopologySensorNodePtr createNESSensorNode(const std::string ipAddr,
+  NESTopologySensorNodePtr createNESSensorNode(size_t id, const std::string ipAddr,
                                                CPUCapacity cpuCapacity);
 
   /**

@@ -25,7 +25,7 @@ class QueryCatalogTest : public testing::Test {
     QueryCatalog::instance().clearQueries();
     NESTopologyManager::getInstance().resetNESTopologyPlan();
     const auto &kCoordinatorNode = NESTopologyManager::getInstance()
-        .createNESCoordinatorNode("127.0.0.1", CPUCapacity::HIGH);
+        .createNESCoordinatorNode(0, "127.0.0.1", CPUCapacity::HIGH);
     kCoordinatorNode->setPublishPort(4711);
     kCoordinatorNode->setReceivePort(4815);
 
@@ -36,10 +36,10 @@ class QueryCatalogTest : public testing::Test {
 
     CoordinatorServicePtr coordinatorServicePtr = CoordinatorService::getInstance();
     coordinatorServicePtr->clearQueryCatalogs();
-    for (int i = 0; i < 5; i++) {
+    for (int i = 1; i < 5; i++) {
       //FIXME: add node properties
       PhysicalStreamConfig streamConf;
-      auto entry = coordinatorServicePtr->register_sensor(ip, publish_port,
+      auto entry = coordinatorServicePtr->register_sensor(i, ip, publish_port,
                                                           receive_port, 2, "",
                                                           streamConf);
     }
