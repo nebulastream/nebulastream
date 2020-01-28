@@ -11,15 +11,16 @@ using namespace std;
 
 class TopDown : public NESPlacementOptimizer {
 
- public:
-  TopDown()= default;
-  ~TopDown()= default;
+  public:
+    TopDown() = default;
+    ~TopDown() = default;
 
-  NESExecutionPlan initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan) override;
+    NESExecutionPlan initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlanPtr) override;
 
- private:
+  private:
 
-  void placeOperators(NESExecutionPlan executionGraph, InputQueryPtr query, NESTopologyPlanPtr nesTopologyPlanPtr);
+    void placeOperators(NESExecutionPlan executionGraph, const OperatorPtr& sinkOperator,
+                        deque<NESTopologyEntryPtr> sourceNodes, const NESTopologyGraphPtr& nesGraphPtr);
 
 };
 
