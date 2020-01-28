@@ -68,9 +68,9 @@ class OptimizerServiceTest : public testing::Test {
 TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_valid_query_using_bottomup) {
 
   std::stringstream code;
-  code << "InputQuery::from(temperature1)"
-       << ".filter(temperature1[\"id\"]==5)" << std::endl
-       << ".writeToZmq(temperature1, \"localhost\", 10);" << std::endl;
+  code << "InputQuery::from(temperature)"
+       << ".filter(temperature[\"id\"]==5)" << std::endl
+       << ".writeToZmq(temperature, \"localhost\", 10);" << std::endl;
 
   const InputQueryPtr &inputQuery = queryService.getInputQueryFromQueryString(
       code.str());
@@ -83,8 +83,8 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_valid_query_using_top
 
   std::stringstream code;
   code
-      << "InputQuery::from(temperature1).filter(temperature1[\"value\"]==5)"
-      << std::endl << ".writeToZmq(temperature1, \"localhost\", 10);"
+      << "InputQuery::from(temperature).filter(temperature[\"value\"]==5)"
+      << std::endl << ".writeToZmq(temperature, \"localhost\", 10);"
       << std::endl;
   const InputQueryPtr &inputQuery = queryService.getInputQueryFromQueryString(
       code.str());
@@ -112,10 +112,8 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_optimization_
 
   try {
     std::stringstream code;
-//    code << "Schema schema = Schema::create().addField(\"test\",INT32);" << std::endl;
-//    code << "Stream testStream = Stream(\"test-stream\",schema);" << std::endl;
     code
-        << "return InputQuery::from(temperature134).filter(temperature134[\"id\"]==5)"
+        << "InputQuery::from(temperature134).filter(temperature134[\"id\"]==5)"
         << ".writeToZmq(temperature134, \"localhost\", 10);"
         << std::endl;
 
@@ -133,7 +131,7 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_optimization_
     //test wrong stream in filter
     std::stringstream code;
     code
-        << "return InputQuery::from(temperature1).filter(testStream[\"wrong_field\"]==5)"
+        << "InputQuery::from(temperature1).filter(testStream[\"wrong_field\"]==5)"
         << std::endl << ".writeToZmq(temperature1, \"localhost\", 10);"
         << std::endl;
 
@@ -151,7 +149,7 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_optimization_
     //test wrong field in filter
     std::stringstream code;
     code
-        << "return InputQuery::from(temperature1).filter(temperature1[\"wrong_field\"]==5)"
+        << "InputQuery::from(temperature1).filter(temperature1[\"wrong_field\"]==5)"
         << std::endl << ".writeToZmq(temperature1, \"localhost\", 10);"
         << std::endl;
 
@@ -169,7 +167,7 @@ TEST_F(OptimizerServiceTest, create_nes_execution_plan_for_invalid_optimization_
     //test wrong stream in writeToZmq
     std::stringstream code;
     code
-        << "return InputQuery::from(temperature1).filter(temperature1[\"id\"]==5)"
+        << "InputQuery::from(temperature1).filter(temperature1[\"id\"]==5)"
         << std::endl << ".writeToZmq(temperature331, \"localhost\", 10);"
         << std::endl;
 

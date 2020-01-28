@@ -52,8 +52,6 @@ void BottomUp::placeOperators(NESExecutionPlan executionGraph, const NESTopology
     // Loop over all the source nodes
     for (NESTopologyEntryPtr sourceNode: sourceNodes) {
 
-        NESTopologyEntryPtr& targetSource = sourceNode;
-
         //lambda to convert source optr vector to a friendly struct
         deque<ProcessOperator> operatorsToProcess = {ProcessOperator(sourceOperator, nullptr)};
 
