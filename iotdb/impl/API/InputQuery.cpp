@@ -17,7 +17,7 @@ namespace NES {
 const OperatorPtr recursiveCopy(OperatorPtr ptr) {
   OperatorPtr operatorPtr = ptr->copy();
   operatorPtr->parent = ptr->parent;
-  operatorPtr->operatorId = ptr->operatorId;
+  operatorPtr->setOperatorId(ptr->getOperatorId());
   std::vector<OperatorPtr> children = ptr->childs;
 
   for (uint32_t i = 0; i < children.size(); i++) {
