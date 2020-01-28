@@ -38,15 +38,15 @@ NESExecutionPlan TopDown::initializeExecutionPlan(
 }
 
 void TopDown::placeOperators(NESExecutionPlan nesExecutionPlan, const OperatorPtr& sinkOperator,
-                             deque<NESTopologyEntryPtr> sourceNodes, const NESTopologyGraphPtr& nesTopologyGraphPtr) {
+                             deque<NESTopologyEntryPtr> nesSourceNodes, const NESTopologyGraphPtr& nesTopologyGraphPtr) {
 
-    for (NESTopologyEntryPtr& targetSource : sourceNodes) {
+    for (NESTopologyEntryPtr& nesSourceNode : nesSourceNodes) {
 
         deque<OperatorPtr> operatorsToProcess = {sinkOperator};
 
         // Find the nodes where we can place the operators. First node will be sink and last one will be the target
         // source.
-        deque<NESTopologyEntryPtr> candidateNodes = getCandidateNESNodes(nesTopologyGraphPtr, targetSource);
+        deque<NESTopologyEntryPtr> candidateNodes = getCandidateNESNodes(nesTopologyGraphPtr, nesSourceNode);
 
         if (candidateNodes.empty()) {
             throw std::runtime_error("No path exists between sink and source");
@@ -57,7 +57,6 @@ void TopDown::placeOperators(NESExecutionPlan nesExecutionPlan, const OperatorPt
             OperatorPtr& targetOperator = operatorsToProcess.front();
             operatorsToProcess.pop_front();
 
-            // if operator is of source type then find the sensor node and schedule it there directly.
             if (targetOperator->getOperatorType() != OperatorType::SOURCE_OP) {
 
                 string newOperatorName = "(OP-" + std::to_string(targetOperator->getOperatorId()) + ")";
@@ -85,7 +84,7 @@ void TopDown::placeOperators(NESExecutionPlan nesExecutionPlan, const OperatorPt
                         if (nesExecutionPlan.hasVertex(node->getId())) {
 
                             const ExecutionNodePtr& executionNode = nesExecutionPlan.getExecutionNode(node->getId());
-                            addOperatorToExistingNode(targetSource, targetOperator, executionNode);
+                            addOperatorToExistingNode(targetOperator, executionNode);
                         } else {
                             createNewExecutionNode(nesExecutionPlan, targetOperator, node);
                         }
@@ -94,55 +93,54 @@ void TopDown::placeOperators(NESExecutionPlan nesExecutionPlan, const OperatorPt
                         vector<OperatorPtr>& nextOperatorsToProcess = targetOperator->childs;
                         copy(nextOperatorsToProcess.begin(), nextOperatorsToProcess.end(),
                              back_inserter(operatorsToProcess));
-
                         break;
                     }
                 }
-                throw std::runtime_error("Unable to schedule operator on the node");
 
+                if (operatorsToProcess.empty()) {
+                    throw std::runtime_error("Unable to schedule operator on the node");
+                }
             } else {
+                // if operator is of source type then find the sensor node and schedule it there directly.
 
-                NESTopologyEntryPtr sourceNode = targetSource;
-
-                if (sourceNode->getRemainingCpuCapacity() <= 0) {
+                if (nesSourceNode->getRemainingCpuCapacity() <= 0) {
                     throw std::runtime_error("Unable to schedule source operator" + targetOperator->toString());
                 }
 
-                if (nesExecutionPlan.hasVertex(targetSource->getId())) {
+                if (nesExecutionPlan.hasVertex(nesSourceNode->getId())) {
 
-                    const ExecutionNodePtr& executionNode = nesExecutionPlan.getExecutionNode(targetSource->getId());
-                    addOperatorToExistingNode(targetSource, targetOperator, executionNode);
+                    const ExecutionNodePtr& executionNode = nesExecutionPlan.getExecutionNode(nesSourceNode->getId());
+                    addOperatorToExistingNode(targetOperator, executionNode);
                 } else {
-                    createNewExecutionNode(nesExecutionPlan, targetOperator, sourceNode);
+                    createNewExecutionNode(nesExecutionPlan, targetOperator, nesSourceNode);
                 }
             }
         }
     }
 }
 
-void TopDown::createNewExecutionNode(NESExecutionPlan& executionGraph,
-                                     OperatorPtr& processOperator,
-                                     NESTopologyEntryPtr& node) const {
+void TopDown::createNewExecutionNode(NESExecutionPlan& executionGraph, OperatorPtr& processOperator,
+                                     NESTopologyEntryPtr& nesNode) const {
+
     string operatorName = operatorTypeToString[processOperator->getOperatorType()];
     operatorName.append("(OP-")
         .append(to_string(processOperator->getOperatorId()))
         .append(")");
-
-    const ExecutionNodePtr& executionNode = executionGraph.createExecutionNode(operatorName, to_string(node->getId()),
-                                                                               node, processOperator->copy());
+    const ExecutionNodePtr
+        & executionNode = executionGraph.createExecutionNode(operatorName, to_string(nesNode->getId()),
+                                                             nesNode, processOperator->copy());
     executionNode->addChildOperatorId(processOperator->getOperatorId());
-    node->reduceCpuCapacity(1);
+    executionNode->getNESNode()->reduceCpuCapacity(1);
 }
 
-void TopDown::addOperatorToExistingNode(NESTopologyEntryPtr& targetSource,
-                                        OperatorPtr& processOperator,
-                                        const ExecutionNodePtr& executionNode) const {
+void TopDown::addOperatorToExistingNode(OperatorPtr& operatorPtr, const ExecutionNodePtr& executionNode) const {
+
     string oldOperatorName = executionNode->getOperatorName();
     string newName =
-        operatorTypeToString[processOperator->getOperatorType()] + "(OP-"
-            + to_string(processOperator->getOperatorId()) + ")" + "=>"
+        operatorTypeToString[operatorPtr->getOperatorType()] + "(OP-"
+            + to_string(operatorPtr->getOperatorId()) + ")" + "=>"
             + oldOperatorName;
     executionNode->setOperatorName(newName);
-    executionNode->addChildOperatorId(processOperator->getOperatorId());
-    targetSource->reduceCpuCapacity(1);
+    executionNode->addChildOperatorId(operatorPtr->getOperatorId());
+    executionNode->getNESNode()->reduceCpuCapacity(1);
 }

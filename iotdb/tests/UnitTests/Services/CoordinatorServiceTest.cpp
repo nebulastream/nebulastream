@@ -175,10 +175,10 @@ TEST_F(CoordinatorCafTest, test_register_query) {
       "graph G {\n"
           "0[label=\"1 operatorName=SOURCE(OP-1)=>FILTER(OP-2)=>SINK(SYS) nodeName=1\"];\n"
           "1[label=\"0 operatorName=SOURCE(SYS)=>SINK(OP-3) nodeName=0\"];\n"
-          "2[label=\"2 operatorName=empty nodeName=2\"];\n"
-          "3[label=\"3 operatorName=empty nodeName=3\"];\n"
-          "4[label=\"4 operatorName=empty nodeName=4\"];\n"
-          "5[label=\"5 operatorName=empty nodeName=5\"];\n"
+          "2[label=\"2 operatorName=SOURCE(OP-1)=>FILTER(OP-2)=>SINK(SYS) nodeName=2\"];\n"
+          "3[label=\"3 operatorName=SOURCE(OP-1)=>FILTER(OP-2)=>SINK(SYS) nodeName=3\"];\n"
+          "4[label=\"4 operatorName=SOURCE(OP-1)=>FILTER(OP-2)=>SINK(SYS) nodeName=4\"];\n"
+          "5[label=\"5 operatorName=SOURCE(OP-1)=>FILTER(OP-2)=>SINK(SYS) nodeName=5\"];\n"
           "0--1 [label=\"1\"];\n"
           "2--1 [label=\"2\"];\n"
           "3--1 [label=\"3\"];\n"
@@ -205,7 +205,7 @@ TEST_F(CoordinatorCafTest, test_make_deployment) {
   EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
   map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
       coordinatorServicePtr->make_deployment(queryId);
-  EXPECT_TRUE(etos.size() == 2);
+  EXPECT_TRUE(etos.size() == 6);
 
   for (auto& x : etos) {
     EXPECT_TRUE(x.first);
@@ -224,7 +224,7 @@ TEST_F(CoordinatorCafTest, test_run_deregister_query) {
   EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
   map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
       coordinatorServicePtr->make_deployment(queryId);
-  EXPECT_TRUE(etos.size() == 2);
+  EXPECT_TRUE(etos.size() == 6);
 
   EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
   EXPECT_TRUE(coordinatorServicePtr->getRunningQueries().size() == 1);
@@ -240,7 +240,7 @@ TEST_F(CoordinatorCafTest, test_compile_deployment) {
   EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
   map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
       coordinatorServicePtr->make_deployment(queryId);
-  EXPECT_TRUE(etos.size() == 2);
+  EXPECT_TRUE(etos.size() == 6);
 
   for (auto& x : etos) {
     ExecutableTransferObject eto = x.second;

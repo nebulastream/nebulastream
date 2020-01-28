@@ -204,7 +204,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_remove_empty_log_stream_remote_test) {
 
   anon_send(worker, register_log_stream_atom::value, "testStream",
             testSchemaFileName);
-  std::this_thread::sleep_for(std::chrono::seconds(2));
+  std::this_thread::sleep_for(std::chrono::seconds(5));
 
   SchemaPtr sPtr = StreamCatalog::instance().getSchemaForLogicalStream(
       "testStream");
