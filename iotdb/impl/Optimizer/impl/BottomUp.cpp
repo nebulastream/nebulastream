@@ -35,7 +35,6 @@ NESExecutionPlan BottomUp::initializeExecutionPlan(InputQueryPtr inputQuery, NES
 
     addForwardOperators(sourceNodes, nesTopologyGraphPtr, nesExecutionPlan);
 
-    //TODO: Think of a better name for this
     removeNonResidentOperators(nesExecutionPlan);
 
     completeExecutionGraphWithNESTopology(nesExecutionPlan, nesTopologyPlan);
