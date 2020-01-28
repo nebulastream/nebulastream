@@ -38,9 +38,7 @@ void NESPlacementOptimizer::invalidateUnscheduledOperators(OperatorPtr& rootOper
     vector<OperatorPtr>& childs = rootOperator->childs;
     OperatorPtr& parent = rootOperator->parent;
 
-    cout << rootOperator->toString() << endl;
     if (parent != nullptr) {
-        cout << parent->getOperatorId() << endl;
         if (std::find(childOperatorIds.begin(), childOperatorIds.end(), parent->getOperatorId())
             != childOperatorIds.end()) {
             invalidateUnscheduledOperators(parent, childOperatorIds);
