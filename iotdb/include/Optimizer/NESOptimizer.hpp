@@ -19,7 +19,7 @@ class NESOptimizer {
 
  public:
 
-  NESExecutionPlan prepareExecutionGraph(std::string strategy,
+  NESExecutionPlanPtr prepareExecutionGraph(std::string strategy,
                                          InputQueryPtr inputQuery,
                                          NESTopologyPlanPtr nesTopologyPlan);
 };

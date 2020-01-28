@@ -166,6 +166,13 @@ add_executable(stream-catalog-service-tests "UnitTests/Services/StreamCatalogSer
 target_link_libraries(stream-catalog-service-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME stream-catalog-service-tests COMMAND stream-catalog-service-tests)
 
+# QueryCatalog Tests
+add_executable(query-catalog-tests "UnitTests/QueryCatalogTest.cpp")
+target_link_libraries(query-catalog-tests iotdb ${GTEST_LIBRARIES})
+add_test(NAME query-catalog-tests COMMAND query-catalog-tests)
+
+
+
 # Internal Networking Tests
 add_executable(internal-data-transmission-test "UnitTests/InternalDataTransmissionTest.cpp")
 target_link_libraries(internal-data-transmission-test iotdb ${GTEST_LIBRARIES})

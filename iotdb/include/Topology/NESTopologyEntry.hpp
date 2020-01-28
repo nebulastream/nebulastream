@@ -19,16 +19,28 @@ class NESTopologyEntry {
  public:
 
   /**
-   * @biref method to set the id of a node
+   * @brief method to set the id of a node
    * @param size_t of the id
    */
-  virtual void setId(size_t id) = 0;
+  void setId(size_t id);
 
   /**
    * @brief method to get the id of the node
    * @return id as a size_t
    */
-  virtual size_t getId() = 0;
+  size_t getId();
+
+  /**
+   * @brief method to set the ip of a node
+   * @param string of the ip
+   */
+  void setIp(std::string ip);
+
+  /**
+   * @brief method to get the id of the node
+   * @return ip as a string
+   */
+  std::string getIp();
 
   /**
    * @brief method to return the type of this entry
@@ -80,47 +92,35 @@ class NESTopologyEntry {
   virtual void increaseCpuCapacity(size_t freedCapacity) = 0;
 
   /**
-   * @brief get the ip of this node
-   * @return ip as string
-   */
-  virtual const std::string& getIp() = 0;
-
-  /**
-   * @biref method to set the id of a coordinator node
-   * @param size_t of the id
-   */
-  virtual void setIp(const std::string &ip_addr) = 0;
-
-  /**
    * @brief the publish port is the port on which an actor framework server can be accessed
    * @return port to access CAF
    */
-  virtual uint16_t getPublishPort() = 0;
+  uint16_t getPublishPort();
 
   /**
    * @brief the publish port is the port on which an actor framework server can be accessed
    * @param port to access CAF
    */
-  virtual void setPublishPort(uint16_t publishPort) = 0;
+  void setPublishPort(uint16_t publishPort);
 
   /**
    * @brief the receive port is the port on which internal data transmission via ZMQ is running
    * @return port to access ZMQ
    */
-  virtual uint16_t getReceivePort() = 0;
+  uint16_t getReceivePort();
 
   /**
    * @brief the receive port is the port on which internal data transmission via ZMQ is running
    * @param port to access ZMQ
    */
-  virtual void setReceivePort(uint16_t receivePort) = 0;
+  void setReceivePort(uint16_t receivePort);
 
   /**
    * @brief the next free receive port on which internal data transmission via ZMQ is running
    * @return receive port as a uint16_t
    * TODO: We need to fix this properly. Currently it just returns the +1 value of the receivePort.
    */
-  virtual uint16_t getNextFreeReceivePort() = 0;
+  uint16_t getNextFreeReceivePort();
 
   /**
    * @brief method to set the property of the node by creating a NodeProperties object
@@ -147,7 +147,8 @@ class NESTopologyEntry {
   std::string toString();
 
  protected:
-  std::string ip_addr;
+  size_t id;
+  std::string ipAddress;
   uint16_t publish_port;
   uint16_t receive_port;
   NodePropertiesPtr nodeProperties;

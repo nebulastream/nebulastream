@@ -32,21 +32,20 @@ class NESTopologyGraph {
  public:
   NESTopologyGraph() {
   }
-  ;
 
   /**
    * @brief method to get a node/vertex by an id
    * @param id of the node
    * @return vertex_descriptor of the node
    */
-  const nesVertex_t getVertex(size_t search_id) const;
+  const nesVertex_t getVertex(size_t vertexId) const;
 
   /**
    * @brief method to check if a node/vertex exists
    * @param id of the node
    * @return bool indicating if node exists
    */
-  bool hasVertex(size_t search_id) const;
+  bool hasVertex(size_t vertexId) const;
 
   /**
    * @brief method to get all nodes/vertices
@@ -66,7 +65,7 @@ class NESTopologyGraph {
    * @param id of the node to be deleted
    * @bool indicating the success of the deletion (if node does not exists, false is returned)
    */
-  bool removeVertex(size_t search_id);
+  bool removeVertex(size_t vertexId);
 
   /**
    * @brief method to get the root of the graph
@@ -97,21 +96,21 @@ class NESTopologyGraph {
    * @param id of the to to test
    * @return bool indicating if the node is connected
    */
-  bool hasLink(size_t searchId) const;
+  bool hasLink(size_t edgeId) const;
 
   /**
    * @brief method to get the first edge
    * @param id of the node to test
    * @return NESTopologyEntryPtr with the link, otherwise a nullptr
    */
-  const NESTopologyLinkPtr getEdge(size_t search_id) const;
+  const NESTopologyLinkPtr getEdge(size_t edgeId) const;
 
   /**
    * @brief test if a node has edges
    * @param id of the node to test
    * @return bool indicating if the node has an edge
    */
-  bool hasEdge(size_t search_id) const;
+  bool hasEdge(size_t edgeId) const;
 
   /**
    * @brief method to add an edge
@@ -125,7 +124,7 @@ class NESTopologyGraph {
    * @param id of the edge to be delete
    * @return bool indicating the success of the deletion
    */
-  bool removeEdge(size_t search_id);
+  bool removeEdge(size_t edgeId);
 
   /**
    * @brief method to get all edges that lead to a given node/vertex
