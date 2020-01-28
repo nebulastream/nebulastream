@@ -38,7 +38,7 @@ void NESPlacementOptimizer::invalidateUnscheduledOperators(OperatorPtr& rootOper
   }
 
   if (parent != nullptr) {
-    if (std::find(childOperatorIds.begin(), childOperatorIds.end(), parent->operatorId) != childOperatorIds.end()) {
+    if (std::find(childOperatorIds.begin(), childOperatorIds.end(), parent->getOperatorId()) != childOperatorIds.end()) {
       invalidateUnscheduledOperators(parent, childOperatorIds);
     } else {
       rootOperator->parent = nullptr;
@@ -47,7 +47,7 @@ void NESPlacementOptimizer::invalidateUnscheduledOperators(OperatorPtr& rootOper
 
   for (size_t i = 0; i < childs.size(); i++) {
     OperatorPtr child = childs[i];
-    if (std::find(childOperatorIds.begin(), childOperatorIds.end(), child->operatorId) != childOperatorIds.end()) {
+    if (std::find(childOperatorIds.begin(), childOperatorIds.end(), child->getOperatorId()) != childOperatorIds.end()) {
       invalidateUnscheduledOperators(child, childOperatorIds);
     } else {
       childs.erase(childs.begin() + i);

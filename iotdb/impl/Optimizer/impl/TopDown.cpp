@@ -86,10 +86,10 @@ void TopDown::placeOperators(NESExecutionPlan executionGraph,
         string oldOperatorName = executionNode->getOperatorName();
         string newName =
             operatorTypeToString[processOperator->getOperatorType()] + "(OP-"
-                + std::to_string(processOperator->operatorId) + ")" + "=>"
+                + std::to_string(processOperator->getOperatorId()) + ")" + "=>"
                 + oldOperatorName;
         executionNode->setOperatorName(newName);
-        executionNode->addChildOperatorId(processOperator->operatorId);
+        executionNode->addChildOperatorId(processOperator->getOperatorId());
         targetSource->reduceCpuCapacity(1);
       } else {
 
@@ -99,7 +99,7 @@ void TopDown::placeOperators(NESExecutionPlan executionGraph,
 
         string operatorName = operatorTypeToString[processOperator
             ->getOperatorType()] + "(OP-"
-            + std::to_string(processOperator->operatorId) + ")";
+            + std::to_string(processOperator->getOperatorId()) + ")";
 
         executionGraph.createExecutionNode(operatorName,
                                            to_string(sourceNode->getId()),
@@ -120,10 +120,10 @@ void TopDown::placeOperators(NESExecutionPlan executionGraph,
             string oldOperatorName = executionNode->getOperatorName();
             string newName = operatorTypeToString[processOperator
                 ->getOperatorType()] + "(OP-"
-                + std::to_string(processOperator->operatorId) + ")" + "=>"
+                + std::to_string(processOperator->getOperatorId()) + ")" + "=>"
                 + oldOperatorName;
             executionNode->setOperatorName(newName);
-            executionNode->addChildOperatorId(processOperator->operatorId);
+            executionNode->addChildOperatorId(processOperator->getOperatorId());
             node->reduceCpuCapacity(1);
 
             vector<OperatorPtr>& nextOperatorsToProcess = processOperator
@@ -136,7 +136,7 @@ void TopDown::placeOperators(NESExecutionPlan executionGraph,
 
             string operatorName = operatorTypeToString[processOperator
                 ->getOperatorType()] + "(OP-"
-                + std::to_string(processOperator->operatorId) + ")";
+                + std::to_string(processOperator->getOperatorId()) + ")";
 
             const ExecutionNodePtr& executionNode = executionGraph
                 .createExecutionNode(operatorName, to_string(node->getId()),

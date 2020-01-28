@@ -1,5 +1,3 @@
-
-
 #include <iostream>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <Operators/Impl/FilterOperator.hpp>

@@ -17,12 +17,17 @@ NESExecutionPlan BottomUp::initializeExecutionPlan(
     const string& streamName = inputQuery->source_stream->getName();
     const OperatorPtr sourceOperator = getSourceOperator(sinkOperator);
 
+    if (nullptr == sourceOperator) {
+        NES_ERROR("BottomUp: Unable to find the source operator.");
+        throw std::runtime_error("No source operator found in the query plan");
+    }
+
     const deque<NESTopologyEntryPtr>& sourceNodes = StreamCatalog::instance()
         .getSourceNodesForLogicalStream(streamName);
 
     if (sourceNodes.empty()) {
         NES_ERROR("BottomUp: Unable to find the target source: " << streamName);
-        throw Exception("No source found in the topology for stream " + streamName);
+        throw std::runtime_error("No source found in the topology for stream " + streamName);
     }
 
     placeOperators(executionGraph, nesTopologyPlan, sourceOperator, sourceNodes);
@@ -56,9 +61,6 @@ void BottomUp::placeOperators(NESExecutionPlan executionGraph, NESTopologyPlanPt
             operatorsToProcess.pop_front();
 
             OperatorPtr& optr = operatorToProcess.operatorToProcess;
-            //            if (optr->isScheduled()) {
-            //                continue;
-            //            }
 
             NES_DEBUG("BottomUp: try to place operator " << optr->toString())
 
@@ -83,6 +85,7 @@ void BottomUp::placeOperators(NESExecutionPlan executionGraph, NESTopologyPlanPt
             // If the selected nes node was already used by another operator for placement then do not create a
             // new execution node rather add operator to existing node.
             if (executionGraph.hasVertex(node->getId())) {
+
                 NES_DEBUG("BottomUp: node " << node->toString() << " was already used by other deployment")
 
                 const ExecutionNodePtr& existingExecutionNode = executionGraph
@@ -90,34 +93,37 @@ void BottomUp::placeOperators(NESExecutionPlan executionGraph, NESTopologyPlanPt
 
                 string oldOperatorName = existingExecutionNode->getOperatorName();
 
-                string operatorId = "(OP-" + std::to_string(optr->operatorId) + ")";
-                if (oldOperatorName.find(operatorId) == string::npos) {
+                string operatorId = "(OP-" + std::to_string(optr->getOperatorId()) + ")";
+
+                if (oldOperatorName.find(operatorId) != string::npos) {
+
+                    //skip adding rest of the operator chains as they already exists.
+                    NES_DEBUG("BottomUp: skip adding rest of the operator chains as they already exists.")
+                    continue;
+                } else {
+
                     string newName = oldOperatorName.append("=>")
                         .append(operatorTypeToString[optr->getOperatorType()])
                         .append(operatorId);
                     existingExecutionNode->setOperatorName(newName);
-                    existingExecutionNode->addChildOperatorId(optr->operatorId);
+                    existingExecutionNode->addChildOperatorId(optr->getOperatorId());
 
-                    optr->markScheduled(true);
                     if (optr->parent != nullptr) {
                         operatorsToProcess.emplace_back(
                             ProcessOperator(optr->parent, existingExecutionNode));
                     }
-                } else {
-                    //skip adding rest of the operator chains as they already exists.
-                    continue;
                 }
             } else {
+
                 NES_DEBUG("BottomUp: create new execution node " << node->toString())
 
                 // Create a new execution node
                 const ExecutionNodePtr& newExecutionNode = executionGraph
                     .createExecutionNode(
                         operatorTypeToString[optr->getOperatorType()] + "(OP-"
-                            + std::to_string(optr->operatorId) + ")",
-                        to_string(node->getId()), node, optr);
+                            + std::to_string(optr->getOperatorId()) + ")",
+                        to_string(node->getId()), node, optr->copy());
 
-                optr->markScheduled(true);
                 if (optr->parent != nullptr) {
                     operatorsToProcess.emplace_back(
                         ProcessOperator(optr->parent, newExecutionNode));
