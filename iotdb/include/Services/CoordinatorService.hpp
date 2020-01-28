@@ -25,6 +25,7 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <SourceSink/CSVSource.hpp>
+#include <Catalogs/QueryCatalog.hpp>
 
 using std::string;
 
@@ -53,7 +54,7 @@ class CoordinatorService {
    * @param config of the node
    * @param sap the strong_actor_pointer CAF object to the worker
    */
-  NESTopologyEntryPtr register_sensor(const string &ip, uint16_t publish_port, uint16_t receive_port, int cpu,
+  NESTopologyEntryPtr register_sensor(size_t id, const string &ip, uint16_t publish_port, uint16_t receive_port, int cpu,
                                       const string& nodeProperties, PhysicalStreamConfig streamConf);
 
   /**
@@ -81,7 +82,7 @@ class CoordinatorService {
    * @brief deploys a CAF query into the NES topology to the corresponding devices defined by the optimizer
    * @param query a queryId of the query
    */
-  unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> make_deployment(const string &queryId);
+  map<NESTopologyEntryPtr, ExecutableTransferObject> make_deployment(const string &queryId);
 
   /**
    * @brief creates a string representation of the topology graph
@@ -94,11 +95,10 @@ class CoordinatorService {
   //FIXME: right now we do not register query but rather the nes plan
   /**
    * @brief: get the registered query
-   *
    * @param queryId
    * @return the nes execution plan for the query
    */
-  NESExecutionPlan* getRegisteredQuery(string queryId);
+  NESExecutionPlanPtr getRegisteredQuery(string queryId);
 
   /**
    * @brief: clear query catalogs
@@ -107,8 +107,8 @@ class CoordinatorService {
 
   bool clearQueryCatalogs();
 
-  const unordered_map<string, tuple<Schema, NESExecutionPlan>>& getRegisteredQueries() const;
-  const unordered_map<string, tuple<Schema, NESExecutionPlan>>& getRunningQueries() const;
+  const map<string, QueryCatalogEntryPtr> getRegisteredQueries();
+  const map<string, QueryCatalogEntryPtr> getRunningQueries();
 
  private:
 
@@ -116,8 +116,7 @@ class CoordinatorService {
 
   unordered_map<string, int> queryToPort;
   shared_ptr<NESTopologyManager> topologyManagerPtr;
-  unordered_map<string, tuple<Schema, NESExecutionPlan>> registeredQueries;
-  unordered_map<string, tuple<Schema, NESExecutionPlan>> runningQueries;
+
 
   OptimizerService optimizerService;
   QueryService queryService;

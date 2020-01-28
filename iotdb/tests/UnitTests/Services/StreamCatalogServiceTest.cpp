@@ -85,7 +85,7 @@ TEST_F(StreamCatalogServiceTest, get_physicalStream_for_logical_stream) {
     streamCatalogService.addNewLogicalStream(newLogicalStreamName, testSchema);
 
     NESTopologyManager &topologyManager = NESTopologyManager::getInstance();
-    NESTopologySensorNodePtr sensorNode = topologyManager.createNESSensorNode(
+    NESTopologySensorNodePtr sensorNode = topologyManager.createNESSensorNode(1,
         "127.0.0.1", CPUCapacity::LOW);
 
     StreamCatalogEntryPtr catalogEntryPtr = std::make_shared<StreamCatalogEntry>(

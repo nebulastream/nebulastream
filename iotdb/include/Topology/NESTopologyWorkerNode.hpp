@@ -25,26 +25,14 @@ namespace NES {
 class NESTopologyWorkerNode : public NESTopologyEntry {
 
  public:
-  NESTopologyWorkerNode(size_t nodeId, std::string ip_addr) {
-    this->node_id = nodeId;
-    this->ip_addr = std::move(ip_addr);
+  NESTopologyWorkerNode(size_t id, std::string ip_addr) {
+    this->id = id;
+    this->ipAddress = std::move(ip_addr);
     isASink = false;
     cpuCapacity = 0;
     remainingCPUCapacity = 0;
   }
   ~NESTopologyWorkerNode() = default;
-
-  /**
-   * @brief method to get the id of the node
-   * @return id as a size_t
-   */
-  size_t getId();
-
-  /**
-   * @biref method to set the id of a node
-   * @param size_t of the id
-   */
-  void setId(size_t id);
 
   /**
    * @brief method to get the overall cpu capacity of the node
@@ -107,50 +95,7 @@ class NESTopologyWorkerNode : public NESTopologyEntry {
    */
   void setQuery(InputQueryPtr pQuery);
 
-  /**
-   * @brief method to get the publish port of the node
-   * @return publish port
-   */
-  uint16_t getPublishPort() override;
-
-  /**
-   * @brief method to set the publish port of the node
-   * @param publish port as a uint16_t
-   */
-  void setPublishPort(uint16_t publishPort) override;
-
-  /**
-   * @brief method to get the receive port of the node
-   * @return receive port as a uint16_t
-   */
-  uint16_t getReceivePort() override;
-
-  /**
-   * @brief method to get the next port (increment by one) based on the current port
-   * @return receive port as a uint16_t
-   */
-  uint16_t getNextFreeReceivePort() override;
-
-  /**
-   * @brief method to set the receive port of this node
-   * @param recieve port as an uint16_t
-   */
-  void setReceivePort(uint16_t receivePort) override;
-
-  /**
-   * @brief get the ip of this node
-   * @return ip as string
-   */
-  const std::string& getIp() override;
-
-  /**
-   * @biref method to set the id of a coordinator node
-   * @param size_t of the id
-   */
-  void setIp(const std::string &ip) override;
-
  private:
-  size_t node_id;
   size_t cpuCapacity;
   size_t remainingCPUCapacity;
   bool isASink;

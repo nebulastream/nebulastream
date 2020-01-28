@@ -37,7 +37,7 @@ void CoordinatorActor::initializeNESTopology() {
 
   NESTopologyManager::getInstance().resetNESTopologyPlan();
   auto coordinatorNode = NESTopologyManager::getInstance()
-      .createNESCoordinatorNode(actorCoordinatorConfig.ip, CPUCapacity::HIGH);
+      .createNESCoordinatorNode(0, actorCoordinatorConfig.ip, CPUCapacity::HIGH);
   coordinatorNode->setPublishPort(actorCoordinatorConfig.publish_port);
   coordinatorNode->setReceivePort(actorCoordinatorConfig.receive_port);
 }
@@ -212,11 +212,13 @@ bool CoordinatorActor::deregisterSensor(const string &ip) {
   bool successTopology = coordinatorServicePtr->deregister_sensor(sensorNode);
   NES_DEBUG("CoordinatorActor: success in topologyy is " << successTopology)
 
-  if (successCatalog && successTopology)
+  if (successCatalog && successTopology) {
     NES_DEBUG("CoordinatorActor: sensor successfully removed")
-  else
+    return true;
+  } else {
     NES_ERROR("CoordinatorActor: sensor was not removed")
-
+    return false;
+  }
 }
 
 void CoordinatorActor::registerSensor(const string &ip, uint16_t publish_port,
@@ -226,7 +228,8 @@ void CoordinatorActor::registerSensor(const string &ip, uint16_t publish_port,
   auto sap = current_sender();
   auto hdl = actor_cast<actor>(sap);
   NESTopologyEntryPtr sensorNode = coordinatorServicePtr->register_sensor(
-      ip, publish_port, receive_port, cpu, nodeProperties, streamConf);
+      sap->id(), ip, publish_port, receive_port, cpu, nodeProperties,
+      streamConf);
 
   this->state.actorTopologyMap.insert( { sap, sensorNode });
   this->state.topologyActorMap.insert( { sensorNode, sap });
@@ -236,7 +239,7 @@ void CoordinatorActor::registerSensor(const string &ip, uint16_t publish_port,
 }
 
 void CoordinatorActor::deployQuery(const string &queryId) {
-  unordered_map<NESTopologyEntryPtr, ExecutableTransferObject> deployments =
+  map<NESTopologyEntryPtr, ExecutableTransferObject> deployments =
       coordinatorServicePtr->make_deployment(queryId);
 
   for (auto const &x : deployments) {

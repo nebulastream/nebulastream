@@ -18,9 +18,8 @@
 #include <Util/Logger.hpp>
 namespace NES {
 
-std::vector<NESTopologyEntryPtr> NESTopologyPlan::getNodeByIp(std::string ip)
-{
-   return fGraphPtr->getVertexByIp(ip);
+std::vector<NESTopologyEntryPtr> NESTopologyPlan::getNodeByIp(std::string ip) {
+  return fGraphPtr->getVertexByIp(ip);
 }
 
 NESTopologyPlan::NESTopologyPlan() {
@@ -29,33 +28,37 @@ NESTopologyPlan::NESTopologyPlan() {
   currentLinkId = 0;
 }
 
-NESTopologyEntryPtr NESTopologyPlan::getRootNode() const { return fGraphPtr->getRoot(); }
+NESTopologyEntryPtr NESTopologyPlan::getRootNode() const {
+  return fGraphPtr->getRoot();
+}
 
-NESTopologyCoordinatorNodePtr NESTopologyPlan::createNESCoordinatorNode(std::string ipAddr, CPUCapacity cpuCapacity) {
-  // create coordinator node
-  size_t nodeId = getNextFreeNodeId();
-  auto ptr = std::make_shared<NESTopologyCoordinatorNode>(nodeId, ipAddr);
+NESTopologyCoordinatorNodePtr NESTopologyPlan::createNESCoordinatorNode(size_t id,
+    std::string ipAddr, CPUCapacity cpuCapacity) {
+  auto ptr = std::make_shared<NESTopologyCoordinatorNode>(id, ipAddr);
   ptr->setCpuCapacity(cpuCapacity);
-  fGraphPtr->addVertex(ptr);
+  assert(fGraphPtr->addVertex(ptr));
   return ptr;
 }
 
-NESTopologyWorkerNodePtr NESTopologyPlan::createNESWorkerNode(std::string ipAddr, CPUCapacity cpuCapacity) {
+NESTopologyWorkerNodePtr NESTopologyPlan::createNESWorkerNode(
+    size_t id, std::string ipAddr, CPUCapacity cpuCapacity) {
   // create worker node
-  size_t nodeId = getNextFreeNodeId();
-  auto ptr = std::make_shared<NESTopologyWorkerNode>(nodeId, ipAddr);
+//  size_t nodeId = getNextFreeNodeId();
+  auto ptr = std::make_shared<NESTopologyWorkerNode>(id, ipAddr);
   ptr->setCpuCapacity(cpuCapacity);
-  fGraphPtr->addVertex(ptr);
+  assert(fGraphPtr->addVertex(ptr));
   return ptr;
 }
 
-NESTopologySensorNodePtr NESTopologyPlan::createNESSensorNode(std::string ipAddr, CPUCapacity cpuCapacity) {
+NESTopologySensorNodePtr NESTopologyPlan::createNESSensorNode(
+    size_t id, std::string ip, CPUCapacity cpuCapacity) {
   // create sensor node
-  size_t nodeId = getNextFreeNodeId();
-  auto ptr = std::make_shared<NESTopologySensorNode>(nodeId, ipAddr);
+//  size_t nodeId = getNextFreeNodeId();
+  auto ptr = std::make_shared<NESTopologySensorNode>(id, ip);
   ptr->setCpuCapacity(cpuCapacity);
+
   ptr->setPhysicalStreamName("default_physical");
-  fGraphPtr->addVertex(ptr);
+  assert(fGraphPtr->addVertex(ptr));
   return ptr;
 }
 
@@ -71,8 +74,8 @@ bool NESTopologyPlan::removeNESNode(NESTopologyEntryPtr ptr) {
   return fGraphPtr->removeVertex(ptr->getId());
 }
 
-NESTopologyLinkPtr NESTopologyPlan::createNESTopologyLink(NESTopologyEntryPtr pSourceNode,
-                                                          NESTopologyEntryPtr pDestNode) {
+NESTopologyLinkPtr NESTopologyPlan::createNESTopologyLink(
+    NESTopologyEntryPtr pSourceNode, NESTopologyEntryPtr pDestNode) {
 
   // check if link already exists
   if (fGraphPtr->hasLink(pSourceNode, pDestNode)) {
@@ -82,10 +85,10 @@ NESTopologyLinkPtr NESTopologyPlan::createNESTopologyLink(NESTopologyEntryPtr pS
 
   // create new link
   size_t linkId = getNextFreeLinkId();
-  auto linkPtr = std::make_shared<NESTopologyLink>(linkId, pSourceNode, pDestNode);
+  auto linkPtr = std::make_shared<NESTopologyLink>(linkId, pSourceNode,
+                                                   pDestNode);
   bool success = fGraphPtr->addEdge(linkPtr);
-  if(!success)
-  {
+  if (!success) {
     NES_ERROR("NESTopologyPlan: could not add node");
     return nullptr;
   }
@@ -96,9 +99,12 @@ bool NESTopologyPlan::removeNESTopologyLink(NESTopologyLinkPtr linkPtr) {
   return fGraphPtr->removeEdge(linkPtr->getId());
 }
 
-std::string NESTopologyPlan::getTopologyPlanString() const { return fGraphPtr->getGraphString(); }
+std::string NESTopologyPlan::getTopologyPlanString() const {
+  return fGraphPtr->getGraphString();
+}
 
 size_t NESTopologyPlan::getNextFreeNodeId() {
+  assert(0);
   while (fGraphPtr->hasVertex(currentNodeId)) {
     currentNodeId++;
   }
@@ -116,4 +122,4 @@ NESGraphPtr NESTopologyPlan::getNESGraph() const {
   return fGraphPtr;
 }
 
-} // namespace NES
+}  // namespace NES

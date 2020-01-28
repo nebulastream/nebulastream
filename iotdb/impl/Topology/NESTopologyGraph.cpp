@@ -1,9 +1,9 @@
 #include <Topology/NESTopologyGraph.hpp>
+#include <Util/Logger.hpp>
 namespace NES {
 
-
 /* NESGraph ------------------------------------------------------------ */
-bool NESTopologyGraph::hasVertex(size_t search_id) const {
+bool NESTopologyGraph::hasVertex(size_t vertexId) const {
 
   // build vertice iterator
   nesVertex_iterator vertex, vertex_end, next_vertex;
@@ -14,7 +14,7 @@ bool NESTopologyGraph::hasVertex(size_t search_id) const {
     ++next_vertex;
 
     // check for matching vertex
-    if (graph[*vertex].id == search_id) {
+    if (graph[*vertex].id == vertexId) {
       return true;
     }
   }
@@ -22,8 +22,8 @@ bool NESTopologyGraph::hasVertex(size_t search_id) const {
   return false;
 }
 
-const std::vector<NESTopologyEntryPtr> NESTopologyGraph::getVertexByIp(std::string ip) const
-{
+const std::vector<NESTopologyEntryPtr> NESTopologyGraph::getVertexByIp(
+    std::string ip) const {
   // build vertice iterator
   nesVertex_iterator vertex, vertex_end, next_vertex;
   boost::tie(vertex, vertex_end) = vertices(graph);
@@ -42,9 +42,10 @@ const std::vector<NESTopologyEntryPtr> NESTopologyGraph::getVertexByIp(std::stri
   // should never happen
   return vec;
 }
-const NESTopologyGraph::nesVertex_t NESTopologyGraph::getVertex(size_t search_id) const {
+const NESTopologyGraph::nesVertex_t NESTopologyGraph::getVertex(
+    size_t vertexId) const {
 
-  assert(hasVertex(search_id));
+  assert(hasVertex(vertexId));
 
   // build vertice iterator
   nesVertex_iterator vertex, vertex_end, next_vertex;
@@ -55,7 +56,7 @@ const NESTopologyGraph::nesVertex_t NESTopologyGraph::getVertex(size_t search_id
     ++next_vertex;
 
     // check for matching vertex
-    if (graph[*vertex].id == search_id) {
+    if (graph[*vertex].id == vertexId) {
       return *vertex;
     }
   }
@@ -65,7 +66,7 @@ const NESTopologyGraph::nesVertex_t NESTopologyGraph::getVertex(size_t search_id
 }
 
 const std::vector<NESVertex> NESTopologyGraph::getAllVertex() const {
-  std::vector<NESVertex> result = {};
+  std::vector<NESVertex> result = { };
 
   nesVertex_iterator vertex, vertex_end, next_vertex;
   boost::tie(vertex, vertex_end) = vertices(graph);
@@ -81,20 +82,20 @@ const std::vector<NESVertex> NESTopologyGraph::getAllVertex() const {
 bool NESTopologyGraph::addVertex(NESTopologyEntryPtr ptr) {
   // does graph already contain vertex?
   if (hasVertex(ptr->getId())) {
+    NES_DEBUG("NESTopologyGraph: addVertex error id already exists " << ptr->getId())
     return false;
   }
 
   // add vertex
-  boost::add_vertex(NESVertex{ptr->getId(), ptr}, graph);
+  boost::add_vertex(NESVertex { ptr->getId(), ptr }, graph);
   return true;
 }
 
-bool NESTopologyGraph::removeVertex(size_t search_id) {
-
+bool NESTopologyGraph::removeVertex(size_t vertexId) {
   // does graph contain vertex?
-  if (hasVertex(search_id)) {
-    clear_vertex(getVertex(search_id), graph);
-    remove_vertex(getVertex(search_id), graph);
+  if (hasVertex(vertexId)) {
+    clear_vertex(getVertex(vertexId), graph);
+    remove_vertex(getVertex(vertexId), graph);
     return true;
   }
 
@@ -114,7 +115,8 @@ NESTopologyEntryPtr NESTopologyGraph::getRoot() const {
   return 0;
 }
 
-NESTopologyLinkPtr NESTopologyGraph::getLink(NESTopologyEntryPtr sourceNode, NESTopologyEntryPtr destNode) const {
+NESTopologyLinkPtr NESTopologyGraph::getLink(
+    NESTopologyEntryPtr sourceNode, NESTopologyEntryPtr destNode) const {
 
   // build edge iterator
   nesEdge_iterator edge, edge_end, next_edge;
@@ -126,8 +128,8 @@ NESTopologyLinkPtr NESTopologyGraph::getLink(NESTopologyEntryPtr sourceNode, NES
 
     // check, if link does match
     auto current_link = graph[*edge].ptr;
-    if (current_link->getSourceNodeId() == sourceNode->getId() &&
-        current_link->getDestNodeId() == destNode->getId()) {
+    if (current_link->getSourceNodeId() == sourceNode->getId()
+        && current_link->getDestNodeId() == destNode->getId()) {
       return current_link;
     }
   }
@@ -136,12 +138,13 @@ NESTopologyLinkPtr NESTopologyGraph::getLink(NESTopologyEntryPtr sourceNode, NES
   return nullptr;
 }
 
-bool NESTopologyGraph::hasLink(const NESTopologyEntryPtr sourceNode, const NESTopologyEntryPtr destNode) const {
+bool NESTopologyGraph::hasLink(const NESTopologyEntryPtr sourceNode,
+                               const NESTopologyEntryPtr destNode) const {
 
   return getLink(sourceNode, destNode) != nullptr;
 }
 
-bool NESTopologyGraph::hasLink(size_t searchId) const {
+bool NESTopologyGraph::hasLink(size_t edgeId) const {
   // build edge iterator
   nesEdge_iterator edge, edge_end, next_edge;
   boost::tie(edge, edge_end) = edges(graph);
@@ -151,14 +154,14 @@ bool NESTopologyGraph::hasLink(size_t searchId) const {
     ++next_edge;
 
     // check, if link does match
-    if (graph[*edge].id == searchId) {
+    if (graph[*edge].id == edgeId) {
       return true;
     }
   }
   return false;
 }
 
-const NESTopologyLinkPtr NESTopologyGraph::getEdge(size_t search_id) const {
+const NESTopologyLinkPtr NESTopologyGraph::getEdge(size_t edgeId) const {
 
   // build edge iterator
   nesEdge_iterator edge, edge_end, next_edge;
@@ -169,7 +172,7 @@ const NESTopologyLinkPtr NESTopologyGraph::getEdge(size_t search_id) const {
     ++next_edge;
 
     // return matching edge
-    if (graph[*edge].id == search_id) {
+    if (graph[*edge].id == edgeId) {
       return graph[*edge].ptr;
     }
   }
@@ -178,9 +181,10 @@ const NESTopologyLinkPtr NESTopologyGraph::getEdge(size_t search_id) const {
   return nullptr;
 }
 
-const std::vector<NESTopologyLinkPtr> NESTopologyGraph::getAllEdgesToNode(NESTopologyEntryPtr destNode) const {
+const std::vector<NESTopologyLinkPtr> NESTopologyGraph::getAllEdgesToNode(
+    NESTopologyEntryPtr destNode) const {
 
-  std::vector<NESTopologyLinkPtr> result = {};
+  std::vector<NESTopologyLinkPtr> result = { };
 
   nesEdge_iterator edge, edge_end, next_edge;
   boost::tie(edge, edge_end) = edges(graph);
@@ -198,9 +202,10 @@ const std::vector<NESTopologyLinkPtr> NESTopologyGraph::getAllEdgesToNode(NESTop
   return result;
 }
 
-const std::vector<NESTopologyLinkPtr> NESTopologyGraph::getAllEdgesFromNode(NESTopologyEntryPtr srcNode) const {
+const std::vector<NESTopologyLinkPtr> NESTopologyGraph::getAllEdgesFromNode(
+    NESTopologyEntryPtr srcNode) const {
 
-  std::vector<NESTopologyLinkPtr> result = {};
+  std::vector<NESTopologyLinkPtr> result = { };
 
   nesEdge_iterator edge, edge_end, next_edge;
   boost::tie(edge, edge_end) = edges(graph);
@@ -219,7 +224,7 @@ const std::vector<NESTopologyLinkPtr> NESTopologyGraph::getAllEdgesFromNode(NEST
 
 const std::vector<NESTopologyLinkPtr> NESTopologyGraph::getAllEdges() const {
 
-  std::vector<NESTopologyLinkPtr> result = {};
+  std::vector<NESTopologyLinkPtr> result = { };
   nesEdge_iterator edge, edge_end, next_edge;
   boost::tie(edge, edge_end) = edges(graph);
 
@@ -230,13 +235,12 @@ const std::vector<NESTopologyLinkPtr> NESTopologyGraph::getAllEdges() const {
   return result;
 }
 
-bool NESTopologyGraph::hasEdge(size_t search_id) const {
+bool NESTopologyGraph::hasEdge(size_t edgeId) const {
 
   // edge found
-  if (getEdge(search_id) != nullptr) {
+  if (getEdge(edgeId) != nullptr) {
     return true;
   }
-
   // no edge found
   return false;
 }
@@ -261,21 +265,22 @@ bool NESTopologyGraph::addEdge(NESTopologyLinkPtr ptr) {
   // add edge with link
   auto src = getVertex(ptr->getSourceNodeId());
   auto dst = getVertex(ptr->getDestNodeId());
-  boost::add_edge(src, dst, NESEdge{ptr->getId(), ptr}, graph);
+  boost::add_edge(src, dst, NESEdge { ptr->getId(), ptr }, graph);
 
   return true;
 }
 
-bool NESTopologyGraph::removeEdge(size_t search_id) {
+bool NESTopologyGraph::removeEdge(size_t edgeId) {
 
   // does graph contain edge?
-  if (!hasEdge(search_id)) {
+  if (!hasEdge(edgeId)) {
     return false;
   }
 
   // check if vertices are in graph
-  auto edgePtr = getEdge(search_id);
-  if (!hasVertex(edgePtr->getSourceNodeId()) || !hasVertex(edgePtr->getDestNodeId())) {
+  auto edgePtr = getEdge(edgeId);
+  if (!hasVertex(edgePtr->getSourceNodeId())
+      || !hasVertex(edgePtr->getDestNodeId())) {
     return false;
   }
 
@@ -289,12 +294,17 @@ bool NESTopologyGraph::removeEdge(size_t search_id) {
 
 std::string NESTopologyGraph::getGraphString() const {
   std::stringstream ss;
-  boost::write_graphviz(ss, graph,
-                        [&](auto &out, auto v) {
-                          out << "[label=\"" << graph[v].id << " type=" << graph[v].ptr->getEntryTypeString()
-                              << "\"]";
-                        },
-                        [&](auto &out, auto e) { out << "[label=\"" << graph[e].id << "\"]"; });
+  boost::write_graphviz(
+      ss,
+      graph,
+      [&](auto &out, auto v) {
+        out << "[label=\"" << graph[v].id << " type="
+            << graph[v].ptr->getEntryTypeString() << "\"]";
+      }
+      ,
+      [&](auto &out, auto e) {
+        out << "[label=\"" << graph[e].id << "\"]";
+      });
   ss << std::flush;
   return ss.str();
 }
