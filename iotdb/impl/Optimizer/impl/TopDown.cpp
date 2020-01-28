@@ -3,172 +3,169 @@
 using namespace NES;
 
 NESExecutionPlan TopDown::initializeExecutionPlan(
-    InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan) {
+    InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlanPtr) {
 
-  NESExecutionPlan executionGraph;
-  const OperatorPtr& sinkOperator = inputQuery->getRoot();
+    const OperatorPtr& sinkOperator = inputQuery->getRoot();
 
-  placeOperators(executionGraph, inputQuery, nesTopologyPlan);
-  removeNonResidentOperators(executionGraph);
+    //find the source Node
+    string streamName = inputQuery->source_stream->getName();
+    const deque<NESTopologyEntryPtr>& sourceNodes = StreamCatalog::instance()
+        .getSourceNodesForLogicalStream(streamName);
 
-  completeExecutionGraphWithNESTopology(executionGraph, nesTopologyPlan);
+    if (sourceNodes.empty()) {
+        NES_ERROR("Unable to find the source node to place the operator");
+        throw std::runtime_error("No available source node found in the network to place the operator");
+    }
 
-  //FIXME: We are assuming that throughout the pipeline the schema would not change.F
-  Schema& schema = inputQuery->source_stream->getSchema();
-  addSystemGeneratedSourceSinkOperators(schema, executionGraph);
+    const NESTopologyGraphPtr& nesTopologyGraphPtr = nesTopologyPlanPtr->getNESTopologyGraph();
 
-  return executionGraph;
+    NESExecutionPlan nesExecutionPlan;
+
+    //Perform operator placement
+    placeOperators(nesExecutionPlan, sinkOperator, sourceNodes, nesTopologyGraphPtr);
+
+    addForwardOperators(sourceNodes, nesTopologyGraphPtr, nesExecutionPlan);
+
+    removeNonResidentOperators(nesExecutionPlan);
+
+    completeExecutionGraphWithNESTopology(nesExecutionPlan, nesTopologyPlanPtr);
+
+    //FIXME: We are assuming that throughout the pipeline the schema would not change.
+    Schema& schema = inputQuery->source_stream->getSchema();
+    addSystemGeneratedSourceSinkOperators(schema, nesExecutionPlan);
+
+    return nesExecutionPlan;
 }
 
-void TopDown::placeOperators(NESExecutionPlan executionGraph,
-                             InputQueryPtr query,
-                             NESTopologyPlanPtr nesTopologyPlanPtr) {
+void TopDown::placeOperators(NESExecutionPlan executionGraph, const OperatorPtr& sinkOperator,
+                             deque<NESTopologyEntryPtr> sourceNodes, const NESTopologyGraphPtr& nesGraphPtr) {
 
-  const OperatorPtr& sinkOperator = query->getRoot();
-  const NESGraphPtr& nesGraphPtr = nesTopologyPlanPtr->getNESGraph();
+    for (NESTopologyEntryPtr& targetSource : sourceNodes) {
 
-  deque<OperatorPtr> operatorsToProcess = { sinkOperator };
+        deque<OperatorPtr> operatorsToProcess = {sinkOperator};
 
-  string sourceName = query->source_stream->getName();
+        // Find the nodes where we can place the operators. First node will be sink and last one will be the target
+        // source.
+        deque<NESTopologyEntryPtr> candidateNodes = getCandidateNESNodes(
+            nesGraphPtr, targetSource);
 
-  //find the source Node
-  vector<NESVertex> sourceNodes;
-  const vector<NESVertex>& allVertex = nesGraphPtr->getAllVertex();
-  copy_if(
-      allVertex.begin(),
-      allVertex.end(),
-      back_inserter(sourceNodes),
-      [sourceName](const NESVertex vertex) {
-        if (vertex.ptr->getEntryType() == NESNodeType::Sensor &&
-            vertex.ptr->getRemainingCpuCapacity() > 0) {
-          NESTopologySensorNodePtr ptr = std::static_pointer_cast<NESTopologySensorNode>(vertex.ptr);
-          return ptr->getPhysicalStreamName() == sourceName;
-        }
-        return false;
-      });
-
-  // FIXME: In the absence of link between source operator and sensor node we will pick first sensor with some capacity
-  //  as the source. Refer issue 122.
-
-  if (sourceNodes.empty()) {
-    NES_ERROR("Unable to find the source node to place the operator");
-    throw "No available source node found in the network to place the operator";
-  }
-
-  const NESTopologyEntryPtr& targetSource = sourceNodes[0].ptr;
-
-  // Find the nodes where we can place the operators. First node will be sink and last one will be the target
-  // source.
-  deque<NESTopologyEntryPtr> candidateNodes = getCandidateNESNodes(
-      nesGraphPtr, targetSource);
-
-  if (candidateNodes.empty()) {
-    throw "No path exists between sink and source";
-  }
-
-  // Loop till all operators are not placed.
-  while (!operatorsToProcess.empty()) {
-    OperatorPtr& processOperator = operatorsToProcess.front();
-    operatorsToProcess.pop_front();
-
-    if (processOperator->isScheduled()) {
-      continue;
-    }
-
-    // if operator is of source type then find the sensor node and schedule it there directly.
-    if (processOperator->getOperatorType() == OperatorType::SOURCE_OP) {
-      NESTopologyEntryPtr sourceNode = targetSource;
-
-      if (executionGraph.hasVertex(targetSource->getId())) {
-
-        const ExecutionNodePtr& executionNode = executionGraph.getExecutionNode(
-            targetSource->getId());
-        string oldOperatorName = executionNode->getOperatorName();
-        string newName =
-            operatorTypeToString[processOperator->getOperatorType()] + "(OP-"
-                + std::to_string(processOperator->getOperatorId()) + ")" + "=>"
-                + oldOperatorName;
-        executionNode->setOperatorName(newName);
-        executionNode->addChildOperatorId(processOperator->getOperatorId());
-        targetSource->reduceCpuCapacity(1);
-      } else {
-
-        if (sourceNode->getRemainingCpuCapacity() <= 0) {
-          throw "Unable to schedule source operator";
+        if (candidateNodes.empty()) {
+            throw "No path exists between sink and source";
         }
 
-        string operatorName = operatorTypeToString[processOperator
-            ->getOperatorType()] + "(OP-"
-            + std::to_string(processOperator->getOperatorId()) + ")";
+        // Loop till all operators are not placed.
+        while (!operatorsToProcess.empty()) {
+            OperatorPtr& processOperator = operatorsToProcess.front();
+            operatorsToProcess.pop_front();
 
-        executionGraph.createExecutionNode(operatorName,
-                                           to_string(sourceNode->getId()),
-                                           sourceNode, processOperator);
-        processOperator->markScheduled(true);
-        sourceNode->reduceCpuCapacity(1);
-      }
-    } else {
-      bool scheduled = false;
-      for (NESTopologyEntryPtr node : candidateNodes) {
-        if (node->getRemainingCpuCapacity() > 0) {
-          scheduled = true;
+            // if operator is of source type then find the sensor node and schedule it there directly.
+            if (processOperator->getOperatorType() == OperatorType::SOURCE_OP) {
+                NESTopologyEntryPtr sourceNode = targetSource;
 
-          if (executionGraph.hasVertex(node->getId())) {
+                if (executionGraph.hasVertex(targetSource->getId())) {
 
-            const ExecutionNodePtr& executionNode = executionGraph
-                .getExecutionNode(node->getId());
-            string oldOperatorName = executionNode->getOperatorName();
-            string newName = operatorTypeToString[processOperator
-                ->getOperatorType()] + "(OP-"
-                + std::to_string(processOperator->getOperatorId()) + ")" + "=>"
-                + oldOperatorName;
-            executionNode->setOperatorName(newName);
-            executionNode->addChildOperatorId(processOperator->getOperatorId());
-            node->reduceCpuCapacity(1);
+                    const ExecutionNodePtr& executionNode = executionGraph.getExecutionNode(
+                        targetSource->getId());
+                    string oldOperatorName = executionNode->getOperatorName();
+                    string newName =
+                        operatorTypeToString[processOperator->getOperatorType()] + "(OP-"
+                            + std::to_string(processOperator->getOperatorId()) + ")" + "=>"
+                            + oldOperatorName;
+                    executionNode->setOperatorName(newName);
+                    executionNode->addChildOperatorId(processOperator->getOperatorId());
+                    targetSource->reduceCpuCapacity(1);
+                } else {
 
-            vector<OperatorPtr>& nextOperatorsToProcess = processOperator
-                ->childs;
+                    if (sourceNode->getRemainingCpuCapacity() <= 0) {
+                        throw std::runtime_error("Unable to schedule source operator");
+                    }
 
-            copy(nextOperatorsToProcess.begin(), nextOperatorsToProcess.end(),
-                 back_inserter(operatorsToProcess));
+                    string operatorName = operatorTypeToString[processOperator->getOperatorType()] + "(OP-"
+                        + std::to_string(processOperator->getOperatorId()) + ")";
 
-          } else {
+                    ExecutionNodePtr executionNode = executionGraph.createExecutionNode(operatorName,
+                                                                                        to_string(sourceNode->getId()),
+                                                                                        sourceNode,
+                                                                                        processOperator->copy());
+                    executionNode->addChildOperatorId(processOperator->getOperatorId());
+                    sourceNode->reduceCpuCapacity(1);
+                }
+            } else {
+                bool scheduled = false;
+                for (NESTopologyEntryPtr node : candidateNodes) {
 
-            string operatorName = operatorTypeToString[processOperator
-                ->getOperatorType()] + "(OP-"
-                + std::to_string(processOperator->getOperatorId()) + ")";
+                    string newOperatorName = "(OP-" + std::to_string(processOperator->getOperatorId()) + ")";
 
-            const ExecutionNodePtr& executionNode = executionGraph
-                .createExecutionNode(operatorName, to_string(node->getId()),
-                                     node, processOperator);
-            processOperator->markScheduled(true);
-            node->reduceCpuCapacity(1);
+                    if (executionGraph.hasVertex(node->getId())) {
 
-            vector<OperatorPtr>& nextOperatorsToProcess = processOperator
-                ->childs;
+                        const ExecutionNodePtr& executionNode = executionGraph
+                            .getExecutionNode(node->getId());
+                        string oldOperatorName = executionNode->getOperatorName();
 
-            copy(nextOperatorsToProcess.begin(), nextOperatorsToProcess.end(),
-                 back_inserter(operatorsToProcess));
-          }
-          break;
+                        if (oldOperatorName.find(newOperatorName) != string::npos) {
+
+                            //Skip placement of the operator as already placed.
+                            //Load the child operators and proceed further
+                            scheduled = true;
+                            vector<OperatorPtr>& nextOperatorsToProcess = processOperator
+                                ->childs;
+                            copy(nextOperatorsToProcess.begin(), nextOperatorsToProcess.end(),
+                                 back_inserter(operatorsToProcess));
+                            break;
+                        }
+                    }
+
+                    if (node->getRemainingCpuCapacity() > 0) {
+                        scheduled = true;
+
+                        if (executionGraph.hasVertex(node->getId())) {
+
+                            const ExecutionNodePtr& executionNode = executionGraph
+                                .getExecutionNode(node->getId());
+                            string oldOperatorName = executionNode->getOperatorName();
+
+                            string newName = operatorTypeToString[processOperator->getOperatorType()];
+                            newName.append(newOperatorName)
+                                .append("=>")
+                                .append(oldOperatorName);
+
+                            executionNode->setOperatorName(newName);
+                            executionNode->addChildOperatorId(processOperator->getOperatorId());
+                            node->reduceCpuCapacity(1);
+
+                            vector<OperatorPtr>& nextOperatorsToProcess = processOperator
+                                ->childs;
+
+                            copy(nextOperatorsToProcess.begin(), nextOperatorsToProcess.end(),
+                                 back_inserter(operatorsToProcess));
+
+                        } else {
+
+                            string operatorName = operatorTypeToString[processOperator->getOperatorType()];
+                            operatorName.append("(OP-")
+                                .append(std::to_string(processOperator->getOperatorId()))
+                                .append(")");
+
+                            const ExecutionNodePtr& executionNode = executionGraph
+                                .createExecutionNode(operatorName, to_string(node->getId()),
+                                                     node, processOperator->copy());
+                            executionNode->addChildOperatorId(processOperator->getOperatorId());
+                            node->reduceCpuCapacity(1);
+
+                            vector<OperatorPtr>& nextOperatorsToProcess = processOperator
+                                ->childs;
+
+                            copy(nextOperatorsToProcess.begin(), nextOperatorsToProcess.end(),
+                                 back_inserter(operatorsToProcess));
+                        }
+                        break;
+                    }
+                }
+                if (!scheduled) {
+                    throw std::runtime_error("Unable to schedule operator on the node");
+                }
+            }
         }
-      }
-      if (!scheduled) {
-        throw "Unable to schedule operator on the node";
-      }
     }
-  }
-
-  // Place forward operators
-  candidateNodes = getCandidateNESNodes(nesGraphPtr, targetSource);
-  while (!candidateNodes.empty()) {
-    shared_ptr<NESTopologyEntry>& node = candidateNodes.front();
-    candidateNodes.pop_front();
-    if (node->getCpuCapacity() == node->getRemainingCpuCapacity()) {
-      executionGraph.createExecutionNode("FWD", to_string(node->getId()), node,
-                                         nullptr);
-      node->reduceCpuCapacity(1);
-    }
-  }
 
 }

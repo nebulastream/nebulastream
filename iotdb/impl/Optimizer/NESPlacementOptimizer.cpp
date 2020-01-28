@@ -10,49 +10,54 @@ namespace NES {
 
 std::shared_ptr<NESPlacementOptimizer> NESPlacementOptimizer::getOptimizer(std::string optimizerName) {
 
-  if (optimizerName == "BottomUp") {
-    return std::make_unique<BottomUp>(BottomUp());
-  } else if (optimizerName == "TopDown") {
-    return std::make_unique<TopDown>(TopDown());
-  } else {
-    throw "Unknown optimizer type : " + optimizerName;
-  }
+    if (optimizerName == "BottomUp") {
+        return std::make_unique<BottomUp>(BottomUp());
+    } else if (optimizerName == "TopDown") {
+        return std::make_unique<TopDown>(TopDown());
+    } else {
+        throw "Unknown optimizer type : " + optimizerName;
+    }
 }
 
 void NESPlacementOptimizer::removeNonResidentOperators(NESExecutionPlan graph) {
 
-  const vector<ExecutionVertex>& executionNodes = graph.getExecutionGraph()->getAllVertex();
-  for (ExecutionVertex executionNode: executionNodes) {
-    OperatorPtr& rootOperator = executionNode.ptr->getRootOperator();
-    vector<int>& childOperatorIds = executionNode.ptr->getChildOperatorIds();
-    invalidateUnscheduledOperators(rootOperator, childOperatorIds);
-  }
+    const vector<ExecutionVertex>& executionNodes = graph.getExecutionGraph()->getAllVertex();
+    for (ExecutionVertex executionNode: executionNodes) {
+        OperatorPtr& rootOperator = executionNode.ptr->getRootOperator();
+        vector<int>& childOperatorIds = executionNode.ptr->getChildOperatorIds();
+        invalidateUnscheduledOperators(rootOperator, childOperatorIds);
+    }
 }
 
 void NESPlacementOptimizer::invalidateUnscheduledOperators(OperatorPtr& rootOperator, vector<int>& childOperatorIds) {
-  vector<OperatorPtr>& childs = rootOperator->childs;
-  OperatorPtr& parent = rootOperator->parent;
 
-  if (rootOperator == nullptr) {
-    return;
-  }
-
-  if (parent != nullptr) {
-    if (std::find(childOperatorIds.begin(), childOperatorIds.end(), parent->getOperatorId()) != childOperatorIds.end()) {
-      invalidateUnscheduledOperators(parent, childOperatorIds);
-    } else {
-      rootOperator->parent = nullptr;
+    if (rootOperator == nullptr) {
+        return;
     }
-  }
 
-  for (size_t i = 0; i < childs.size(); i++) {
-    OperatorPtr child = childs[i];
-    if (std::find(childOperatorIds.begin(), childOperatorIds.end(), child->getOperatorId()) != childOperatorIds.end()) {
-      invalidateUnscheduledOperators(child, childOperatorIds);
-    } else {
-      childs.erase(childs.begin() + i);
+    vector<OperatorPtr>& childs = rootOperator->childs;
+    OperatorPtr& parent = rootOperator->parent;
+
+    cout << rootOperator->toString() << endl;
+    if (parent != nullptr) {
+        cout << parent->getOperatorId() << endl;
+        if (std::find(childOperatorIds.begin(), childOperatorIds.end(), parent->getOperatorId())
+            != childOperatorIds.end()) {
+            invalidateUnscheduledOperators(parent, childOperatorIds);
+        } else {
+            rootOperator->parent = nullptr;
+        }
     }
-  }
+
+    for (size_t i = 0; i < childs.size(); i++) {
+        OperatorPtr child = childs[i];
+        if (std::find(childOperatorIds.begin(), childOperatorIds.end(), child->getOperatorId())
+            != childOperatorIds.end()) {
+            invalidateUnscheduledOperators(child, childOperatorIds);
+        } else {
+            childs.erase(childs.begin() + i);
+        }
+    }
 }
 
 static const int zmqDefaultPort = 5555;
@@ -61,165 +66,185 @@ static const int zmqDefaultPort = 5555;
 // fixed.
 void NESPlacementOptimizer::addSystemGeneratedSourceSinkOperators(const Schema& schema, NESExecutionPlan graph) {
 
-  const std::shared_ptr<ExecutionGraph>& exeGraph = graph.getExecutionGraph();
-  const vector<ExecutionVertex>& executionNodes = exeGraph->getAllVertex();
-  for (ExecutionVertex executionNode: executionNodes) {
-    ExecutionNodePtr& executionNodePtr = executionNode.ptr;
+    const std::shared_ptr<ExecutionGraph>& exeGraph = graph.getExecutionGraph();
+    const vector<ExecutionVertex>& executionNodes = exeGraph->getAllVertex();
+    for (ExecutionVertex executionNode: executionNodes) {
+        ExecutionNodePtr& executionNodePtr = executionNode.ptr;
 
-    //Convert fwd operator
-    if (executionNodePtr->getOperatorName() == "FWD") {
-      convertFwdOptr(schema, executionNodePtr);
-      continue;
+        //Convert fwd operator
+        if (executionNodePtr->getOperatorName() == "FWD") {
+            convertFwdOptr(schema, executionNodePtr);
+            continue;
+        }
+
+        OperatorPtr& rootOperator = executionNodePtr->getRootOperator();
+        if (rootOperator == nullptr) {
+            continue;
+        }
+
+        if (rootOperator->getOperatorType() != SOURCE_OP) {
+            //create sys introduced src operator
+            //Note: the source zmq is always located at localhost
+            OperatorPtr sysSrcOptr = createSourceOperator(createZmqSource(schema, "localhost", zmqDefaultPort));
+
+            //bind sys introduced operators to each other
+            rootOperator->childs = {sysSrcOptr};
+            sysSrcOptr->parent = rootOperator;
+
+            //Update the operator name
+            string optrName = executionNodePtr->getOperatorName();
+            optrName = "SOURCE(SYS)=>" + optrName;
+            executionNodePtr->setOperatorName(optrName);
+
+            //change the root operator to point to the sys introduced sink operator
+            executionNodePtr->setRootOperator(sysSrcOptr);
+        }
+
+        OperatorPtr traverse = rootOperator;
+        while (traverse->parent != nullptr) {
+            traverse = traverse->parent;
+        }
+
+        if (traverse->getOperatorType() != SINK_OP) {
+
+            //create sys introduced sink operator
+
+            const vector<ExecutionEdge>& edges = exeGraph->getAllEdgesFromNode(executionNodePtr);
+            //FIXME: More than two sources are not supported feature at this moment. Once the feature is available please
+            // fix the source code
+            const string& destHostName = edges[0].ptr->getDestination()->getNESNode()->getIp();
+            const OperatorPtr& sysSinkOptr = createSinkOperator(createZmqSink(schema, destHostName, zmqDefaultPort));
+
+            //Update the operator name
+            string optrName = executionNodePtr->getOperatorName();
+            optrName = optrName + "=>SINK(SYS)";
+            executionNodePtr->setOperatorName(optrName);
+
+            //bind sys introduced operators to each other
+            sysSinkOptr->childs = {traverse};
+            traverse->parent = sysSinkOptr;
+        }
+
     }
-
-    OperatorPtr& rootOperator = executionNodePtr->getRootOperator();
-    if (rootOperator == nullptr) {
-      continue;
-    }
-
-    if (rootOperator->getOperatorType() != SOURCE_OP) {
-      //create sys introduced src operator
-      //Note: the source zmq is always located at localhost
-      OperatorPtr sysSrcOptr = createSourceOperator(createZmqSource(schema, "localhost", zmqDefaultPort));
-
-      //bind sys introduced operators to each other
-      rootOperator->childs = {sysSrcOptr};
-      sysSrcOptr->parent = rootOperator;
-
-      //Update the operator name
-      string optrName = executionNodePtr->getOperatorName();
-      optrName = "SOURCE(SYS)=>" + optrName;
-      executionNodePtr->setOperatorName(optrName);
-
-      //change the root operator to point to the sys introduced sink operator
-      executionNodePtr->setRootOperator(sysSrcOptr);
-    }
-
-    OperatorPtr traverse = rootOperator;
-    while (traverse->parent != nullptr) {
-      traverse = traverse->parent;
-    }
-
-    if (traverse->getOperatorType() != SINK_OP) {
-
-      //create sys introduced sink operator
-
-      const vector<ExecutionEdge>& edges = exeGraph->getAllEdgesFromNode(executionNodePtr);
-      //FIXME: More than two sources are not supported feature at this moment. Once the feature is available please
-      // fix the source code
-      const string& destHostName = edges[0].ptr->getDestination()->getNESNode()->getIp();
-      const OperatorPtr& sysSinkOptr = createSinkOperator(createZmqSink(schema, destHostName, zmqDefaultPort));
-
-      //Update the operator name
-      string optrName = executionNodePtr->getOperatorName();
-      optrName = optrName + "=>SINK(SYS)";
-      executionNodePtr->setOperatorName(optrName);
-
-      //bind sys introduced operators to each other
-      sysSinkOptr->childs = {traverse};
-      traverse->parent = sysSinkOptr;
-    }
-
-  }
 }
 
 void NESPlacementOptimizer::convertFwdOptr(const Schema& schema,
                                            ExecutionNodePtr& executionNodePtr) const {//create sys introduced src and sink operators
 
-  //Note: src operator is using localhost because src zmq will run locally
-  const OperatorPtr& sysSrcOptr = createSourceOperator(createZmqSource(schema, "localhost", zmqDefaultPort));
-  const OperatorPtr& sysSinkOptr = createSinkOperator(createZmqSink(schema, "localhost", zmqDefaultPort));
+    //Note: src operator is using localhost because src zmq will run locally
+    const OperatorPtr& sysSrcOptr = createSourceOperator(createZmqSource(schema, "localhost", zmqDefaultPort));
+    const OperatorPtr& sysSinkOptr = createSinkOperator(createZmqSink(schema, "localhost", zmqDefaultPort));
 
-  sysSrcOptr->parent = sysSinkOptr;
-  sysSinkOptr->childs = {sysSrcOptr};
+    sysSrcOptr->parent = sysSinkOptr;
+    sysSinkOptr->childs = {sysSrcOptr};
 
-  executionNodePtr->setRootOperator(sysSrcOptr);
-  executionNodePtr->setOperatorName("SOURCE(SYS)=>SINK(SYS)");
+    executionNodePtr->setRootOperator(sysSrcOptr);
+    executionNodePtr->setOperatorName("SOURCE(SYS)=>SINK(SYS)");
 }
 
 void NESPlacementOptimizer::completeExecutionGraphWithNESTopology(NESExecutionPlan graph,
                                                                   NESTopologyPlanPtr nesTopologyPtr) {
 
-  const vector<NESTopologyLinkPtr>& allEdges = nesTopologyPtr->getNESGraph()->getAllEdges();
+    const vector<NESTopologyLinkPtr>& allEdges = nesTopologyPtr->getNESTopologyGraph()->getAllEdges();
 
-  for (NESTopologyLinkPtr nesLink: allEdges) {
+    for (NESTopologyLinkPtr nesLink: allEdges) {
 
-    size_t srcId = nesLink->getSourceNode()->getId();
-    size_t destId = nesLink->getDestNode()->getId();
-    if (graph.hasVertex(srcId)) {
-      const ExecutionNodePtr& srcExecutionNode = graph.getExecutionNode(srcId);
-      if (graph.hasVertex(destId)) {
-        const ExecutionNodePtr& destExecutionNode = graph.getExecutionNode(destId);
-        graph.createExecutionNodeLink(srcExecutionNode, destExecutionNode);
-      } else {
-        const ExecutionNodePtr& destExecutionNode = graph.createExecutionNode("empty",
-                                                                              to_string(destId),
-                                                                              nesLink->getDestNode(),
-                                                                              nullptr);
-        graph.createExecutionNodeLink(srcExecutionNode, destExecutionNode);
-      }
-    } else {
+        size_t srcId = nesLink->getSourceNode()->getId();
+        size_t destId = nesLink->getDestNode()->getId();
+        if (graph.hasVertex(srcId)) {
+            const ExecutionNodePtr& srcExecutionNode = graph.getExecutionNode(srcId);
+            if (graph.hasVertex(destId)) {
+                const ExecutionNodePtr& destExecutionNode = graph.getExecutionNode(destId);
+                graph.createExecutionNodeLink(srcExecutionNode, destExecutionNode);
+            } else {
+                const ExecutionNodePtr& destExecutionNode = graph.createExecutionNode("empty",
+                                                                                      to_string(destId),
+                                                                                      nesLink->getDestNode(),
+                                                                                      nullptr);
+                graph.createExecutionNodeLink(srcExecutionNode, destExecutionNode);
+            }
+        } else {
 
-      const ExecutionNodePtr& srcExecutionNode = graph.createExecutionNode("empty", to_string(srcId),
-                                                                           nesLink->getSourceNode(),
-                                                                           nullptr);
-      if (graph.hasVertex(destId)) {
-        const ExecutionNodePtr& destExecutionNode = graph.getExecutionNode(destId);
-        graph.createExecutionNodeLink(srcExecutionNode, destExecutionNode);
-      } else {
-        const ExecutionNodePtr& destExecutionNode = graph.createExecutionNode("empty",
-                                                                              to_string(destId),
-                                                                              nesLink->getDestNode(),
-                                                                              nullptr);
-        graph.createExecutionNodeLink(srcExecutionNode, destExecutionNode);
-      }
+            const ExecutionNodePtr& srcExecutionNode = graph.createExecutionNode("empty", to_string(srcId),
+                                                                                 nesLink->getSourceNode(),
+                                                                                 nullptr);
+            if (graph.hasVertex(destId)) {
+                const ExecutionNodePtr& destExecutionNode = graph.getExecutionNode(destId);
+                graph.createExecutionNodeLink(srcExecutionNode, destExecutionNode);
+            } else {
+                const ExecutionNodePtr& destExecutionNode = graph.createExecutionNode("empty",
+                                                                                      to_string(destId),
+                                                                                      nesLink->getDestNode(),
+                                                                                      nullptr);
+                graph.createExecutionNodeLink(srcExecutionNode, destExecutionNode);
+            }
+        }
     }
-  }
 };
 
-deque<NESTopologyEntryPtr> NESPlacementOptimizer::getCandidateNESNodes(const NESGraphPtr& nesGraphPtr,
+deque<NESTopologyEntryPtr> NESPlacementOptimizer::getCandidateNESNodes(const NESTopologyGraphPtr& nesGraphPtr,
                                                                        const NESTopologyEntryPtr& targetSource) const {
 
-  deque<NESTopologyEntryPtr> candidateNodes = {};
+    deque<NESTopologyEntryPtr> candidateNodes = {};
 
-  const NESTopologyEntryPtr& rootNode = nesGraphPtr->getRoot();
+    const NESTopologyEntryPtr& rootNode = nesGraphPtr->getRoot();
 
-  deque<int> visitedNodes = {};
-  candidateNodes.push_back(rootNode);
+    deque<int> visitedNodes = {};
+    candidateNodes.push_back(rootNode);
 
-  while (!candidateNodes.empty()) {
+    while (!candidateNodes.empty()) {
 
-    NESTopologyEntryPtr& back = candidateNodes.back();
+        NESTopologyEntryPtr& back = candidateNodes.back();
 
-    if (back->getId() == targetSource->getId()) {
-      break;
-    }
-
-    const vector<NESTopologyLinkPtr>& allEdgesToNode = nesGraphPtr->getAllEdgesToNode(back);
-
-    if (!allEdgesToNode.empty()) {
-      bool found = false;
-      for (NESTopologyLinkPtr nesLink: allEdgesToNode) {
-        const NESTopologyEntryPtr& sourceNode = nesLink->getSourceNode();
-        if (!count(visitedNodes.begin(), visitedNodes.end(), sourceNode->getId())) {
-          candidateNodes.push_back(sourceNode);
-          found = true;
-          break;
+        if (back->getId() == targetSource->getId()) {
+            break;
         }
-      }
-      if (!found) {
-        candidateNodes.pop_back();
-      }
-    } else {
-      candidateNodes.pop_back();
-    }
 
-    if (!count(visitedNodes.begin(), visitedNodes.end(), back->getId())) {
-      visitedNodes.push_front(back->getId());
-    }
+        const vector<NESTopologyLinkPtr>& allEdgesToNode = nesGraphPtr->getAllEdgesToNode(back);
 
-  }
-  return candidateNodes;
+        if (!allEdgesToNode.empty()) {
+            bool found = false;
+            for (NESTopologyLinkPtr nesLink: allEdgesToNode) {
+                const NESTopologyEntryPtr& sourceNode = nesLink->getSourceNode();
+                if (!count(visitedNodes.begin(), visitedNodes.end(), sourceNode->getId())) {
+                    candidateNodes.push_back(sourceNode);
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                candidateNodes.pop_back();
+            }
+        } else {
+            candidateNodes.pop_back();
+        }
+
+        if (!count(visitedNodes.begin(), visitedNodes.end(), back->getId())) {
+            visitedNodes.push_front(back->getId());
+        }
+    }
+    return candidateNodes;
 };
+
+void NESPlacementOptimizer::addForwardOperators(const deque<NESTopologyEntryPtr>& sourceNodes,
+                                                const NESTopologyGraphPtr& nesTopologyGraphPtr,
+                                                NESExecutionPlan& nesExecutionPlan) const {
+
+    for (NESTopologyEntryPtr targetSource: sourceNodes) {
+
+        //Find the list of nodes connecting the source and destination nodes
+        deque<NESTopologyEntryPtr> candidateNodes = getCandidateNESNodes(nesTopologyGraphPtr, targetSource);
+
+        while (!candidateNodes.empty()) {
+            shared_ptr<NESTopologyEntry>& node = candidateNodes.front();
+            candidateNodes.pop_front();
+            if (node->getCpuCapacity() == node->getRemainingCpuCapacity()) {
+                nesExecutionPlan.createExecutionNode("FWD", to_string(node->getId()), node,
+                                                     nullptr);
+                node->reduceCpuCapacity(1);
+            }
+        }
+    }
+}
 
 }
