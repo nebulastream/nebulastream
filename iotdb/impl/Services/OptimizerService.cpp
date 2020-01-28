@@ -14,7 +14,7 @@ OptimizerService& OptimizerService::instance() {
 }
 
 json::value OptimizerService::getExecutionPlanAsJson(InputQueryPtr inputQuery, string optimizationStrategyName) {
-  return getExecutionPlan(inputQuery, optimizationStrategyName)->getExecutionGraphAsJson();
+    return getExecutionPlan(inputQuery, optimizationStrategyName)->getExecutionGraphAsJson();
 }
 
 NESExecutionPlanPtr OptimizerService::getExecutionPlan(InputQueryPtr inputQuery, string optimizationStrategyName) {
