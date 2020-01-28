@@ -16,10 +16,11 @@ string CoordinatorService::getNodePropertiesAsString(
 }
 
 NESTopologyEntryPtr CoordinatorService::register_sensor(
+    size_t id,
     const string &ip, uint16_t publish_port, uint16_t receive_port, int cpu,
     const string &nodeProperties, PhysicalStreamConfig streamConf) {
   NESTopologyManager &topologyManager = this->topologyManagerPtr->getInstance();
-  NESTopologySensorNodePtr sensorNode = topologyManager.createNESSensorNode(
+  NESTopologySensorNodePtr sensorNode = topologyManager.createNESSensorNode(id,
       ip, CPUCapacity::Value(cpu));
 
   sensorNode->setPhysicalStreamName(streamConf.physicalStreamName);
