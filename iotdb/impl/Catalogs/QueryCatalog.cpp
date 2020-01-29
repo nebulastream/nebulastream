@@ -129,7 +129,7 @@ bool QueryCatalog::isQueryExists(std::string queryId) {
 
 map<string, QueryCatalogEntryPtr> QueryCatalog::getQueries(QueryStatus queryStatus) {
     NES_DEBUG(
-        "QueryCatalog: getQueries() registered queries=" << printQueries())
+        "QueryCatalog: getQueriesWithStatus() registered queries=" << printQueries())
 
     map<string, QueryCatalogEntryPtr> runningQueries;
     for (auto q : queries) {

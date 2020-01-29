@@ -21,6 +21,14 @@ namespace NES {
  */
 enum QueryStatus { Registered, Scheduling, Running, Stopped, Failed };
 
+static std::map<std::string, QueryStatus> StringToQueryStatus{
+    {"REGISTERED", Registered},
+    {"SCHEDULING", Scheduling},
+    {"RUNNING", Running},
+    {"STOPPED", Stopped},
+    {"FAILED", Failed},
+};
+
 /**
  * @brief class to handle the entry in the query catalog
  * @param queryId: id of the query (is also the key in the queries map)
