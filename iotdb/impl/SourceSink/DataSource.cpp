@@ -73,34 +73,38 @@ bool DataSource::isRunning() {
 }
 
 void DataSource::running_routine() {
-  NES_DEBUG("DataSource " << this << ": Running Data Source")
-  size_t cnt = 0;
+  if (!this->queryId.empty()) {
+    NES_DEBUG("DataSource " << this << ": Running Data Source")
+    size_t cnt = 0;
 
-  while (running) {
-    if (cnt < num_buffers_to_process) {
-      TupleBufferPtr buf = receiveData();
-      if (buf) {
-        NES_DEBUG(
-            "DataSource " << this << ": Received Data: " << buf->getNumberOfTuples() << "tuples")
-        if (buf->getBuffer()) {
-          Dispatcher::instance().addWork(buf, this);
-          cnt++;
+    while (running) {
+      if (cnt < num_buffers_to_process) {
+        TupleBufferPtr buf = receiveData();
+        if (buf) {
+          NES_DEBUG("DataSource " << this << ": Received Data: " << buf->getNumberOfTuples() << "tuples")
+          if (buf->getBuffer()) {
+            Dispatcher::instance().addWork(this->queryId, buf);
+            cnt++;
+          } else {
+            NES_DEBUG("DataSource " << this << ": Received buffer is invalid")
+            assert(0);
+          }
         } else {
-          NES_DEBUG("DataSource " << this << ": Received buffer is invalid")
-          assert(0);
+          NES_DEBUG("DataSource " << this << ": Receiving thread terminated ... stopping")
+          running = false;
+          break;
         }
       } else {
-        NES_DEBUG("DataSource " << this << ": Receiving thread terminated ... stopping")
+        NES_DEBUG("DataSource " << this << ": All buffers processed ... stopping")
         running = false;
         break;
       }
-    } else {
-      NES_DEBUG("DataSource " << this << ": All buffers processed ... stopping")
-      running = false;
-      break;
     }
+    NES_DEBUG("DataSource " << this << ": Data Source finished processing")
+  } else {
+    NES_FATAL_ERROR("DataSource " << this << ": No queryId assigned. Running_routine is not possible!")
+    throw std::logic_error("No queryId assigned. Running_routine is not possible!");
   }
-  NES_DEBUG("DataSource " << this << ": Data Source finished processing")
 }
 
 // debugging
@@ -113,7 +117,17 @@ size_t DataSource::getNumberOfGeneratedTuples() {
 size_t DataSource::getNumberOfGeneratedBuffers() {
   return generatedBuffers;
 };
-const std::string DataSource::getSourceSchemaAsString() {
+
+std::string DataSource::getSourceSchemaAsString() {
   return schema.toString();
+}
+
+const std::string &DataSource::getQueryId() const {
+  return this->queryId;
+}
+
+void DataSource::setQueryId(std::string &_queryId) {
+  this->queryId = _queryId;
 };
+
 }  // namespace NES

@@ -28,25 +28,24 @@ NodeProperties* NodeEngine::getNodeProperties() {
   return props.get();
 }
 
-void NodeEngine::deployQuery(QueryExecutionPlanPtr qep) {
+void NodeEngine::deployQuery(const std::string& queryId, QueryExecutionPlanPtr qep) {
   NES_DEBUG("NODEENGINE: deploy query" << qep)
 
-  Dispatcher::instance().registerQueryWithStart(qep);
-  qeps.push_back(qep);
+  Dispatcher::instance().registerQueryWithStart(queryId, qep);
+  qeps.insert({queryId, qep});
 }
 
-void NodeEngine::deployQueryWithoutStart(QueryExecutionPlanPtr qep) {
+void NodeEngine::deployQueryWithoutStart(const std::string& queryId, QueryExecutionPlanPtr qep) {
   NES_DEBUG("NODEENGINE: deploy query" << qep)
 
-  Dispatcher::instance().registerQueryWithoutStart(qep);
-  qeps.push_back(qep);
+  Dispatcher::instance().registerQueryWithoutStart(queryId, qep);
+  qeps.insert({queryId, qep});
 }
 
-void NodeEngine::undeployQuery(QueryExecutionPlanPtr qep) {
-  NES_DEBUG("NODEENGINE: deregister query" << qep)
-  Dispatcher::instance().deregisterQuery(qep);
-
-  qeps.erase(std::find(qeps.begin(), qeps.end(), qep));
+void NodeEngine::undeployQuery(const std::string& queryId) {
+  NES_DEBUG("NODEENGINE: deregister query" << queryId)
+  Dispatcher::instance().deregisterQuery(queryId);
+  qeps.erase(queryId);
 }
 
 void NodeEngine::init() {
@@ -63,10 +62,11 @@ void NodeEngine::start() {
 }
 
 void NodeEngine::startWithRedeploy() {
-  for (auto& q : qeps) {
-    NES_DEBUG("NODEENGINE: register query " << q)
-    Dispatcher::instance().registerQueryWithStart(q);
+  for (std::pair<std::string, QueryExecutionPlanPtr> e : qeps) {
+    NES_DEBUG("NODEENGINE: register query " << e.first)
+    Dispatcher::instance().registerQueryWithStart(e.first, e.second);
   }
+
   NES_DEBUG("NODEENGINE: start thread pool")
   ThreadPool::instance().start();
 }
@@ -79,9 +79,10 @@ void NodeEngine::stop() {
 void NodeEngine::stopWithUndeploy() {
   NES_DEBUG("NODEENGINE: stop thread pool")
   ThreadPool::instance().stop();
-  for (auto& q : qeps) {
-    NES_DEBUG("NODEENGINE: deregister query " << q)
-    Dispatcher::instance().deregisterQuery(q);
+
+  for (std::pair<std::string, QueryExecutionPlanPtr> e : qeps) {
+    NES_DEBUG("NODEENGINE: deregister query " << e.first)
+    Dispatcher::instance().deregisterQuery(e.first);
   }
 }
 
@@ -105,15 +106,13 @@ void NodeEngine::applyConfig(Config& conf) {
 }
 
 void NodeEngine::resetQEPs() {
-  for (auto& q : qeps) {
-    NES_DEBUG("NODEENGINE: deregister query " << q)
-    Dispatcher::instance().deregisterQuery(q);
+  for (std::pair<std::string, QueryExecutionPlanPtr> e : qeps) {
+    NES_DEBUG("NODEENGINE: deregister query " << e.first)
+    Dispatcher::instance().deregisterQuery(e.first);
   }
   NES_DEBUG("NODEENGINE: clear qeps")
-
   qeps.clear();
 }
-
 
 void NodeEngine::setDOPWithRestart(size_t dop)
 {

@@ -7,11 +7,13 @@ using std::string;
 using std::vector;
 
 namespace NES {
-ExecutableTransferObject::ExecutableTransferObject(string description,
+ExecutableTransferObject::ExecutableTransferObject(string queryId,
+                                                   string description,
                                                    Schema schema,
                                                    vector<DataSourcePtr> sources,
                                                    vector<DataSinkPtr> destinations,
                                                    OperatorPtr operatorTree) {
+  this->_queryId = std::move(queryId);
   this->_description = std::move(description);
   this->_schema = std::move(schema);
   this->_sources = std::move(sources);
@@ -66,6 +68,13 @@ string &ExecutableTransferObject::getDescription() {
 
 void ExecutableTransferObject::setDescription(const string &description) {
   this->_description = description;
+}
+
+string &ExecutableTransferObject::getQueryId() {
+  return this->_queryId;
+}
+void ExecutableTransferObject::setQueryId(const string &queryId) {
+  this->_queryId = queryId;
 }
 
 Schema &ExecutableTransferObject::getSchema() {

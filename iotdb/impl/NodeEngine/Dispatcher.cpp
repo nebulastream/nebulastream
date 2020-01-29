@@ -4,25 +4,23 @@
  */
 #include <NodeEngine/Dispatcher.hpp>
 #include <Util/Logger.hpp>
-#include <assert.h>
 #include <iostream>
 
 #include <Windows/WindowHandler.hpp>
 
 namespace NES {
+using std::string;
 
 Dispatcher::Dispatcher()
     : task_queue(),
-      source_to_query_map(),
-      window_to_query_map(),
-      sink_to_query_map(),
+      queryId_to_query_map(),
       bufferMutex(),
       queryMutex(),
       workMutex(),
       workerHitEmptyTaskQueue(0),
       processedTasks(0),
       processedTuple(0),
-      processedBuffers(0) {
+      processedBuffers(0){
   NES_DEBUG("Init Dispatcher")
 }
 
@@ -34,12 +32,8 @@ Dispatcher::~Dispatcher() {
 void Dispatcher::resetDispatcher() {
   NES_DEBUG("Dispatcher: Destroy Task Queue")
   task_queue.clear();
-  NES_DEBUG("Dispatcher: Destroy source_to_query_map")
-  source_to_query_map.clear();
-  NES_DEBUG("Dispatcher: Destroy sink_to_query_map")
-  sink_to_query_map.clear();
-  NES_DEBUG("Dispatcher: Destroy window_to_query_map")
-  window_to_query_map.clear();
+  NES_DEBUG("Dispatcher: Destroy queryId_to_query_map")
+  queryId_to_query_map.clear();
 
   workerHitEmptyTaskQueue = 0;
   processedTasks = 0;
@@ -47,190 +41,88 @@ void Dispatcher::resetDispatcher() {
   processedBuffers = 0;
 }
 
-bool Dispatcher::registerQueryWithStart(const QueryExecutionPlanPtr qep) {
+bool Dispatcher::registerQueryWithStart(const string& queryId, const QueryExecutionPlanPtr& qep) {
   std::unique_lock<std::mutex> lock(queryMutex);
-//TODO: do we have to test/enforce here that each QEP has at least one sink and source?
 
+  registerQueryWithoutStart(queryId, qep);
   /**
-   * test if elements already exist
+   * start elements
    */
   auto sources = qep->getSources();
-  for (auto source : sources) {
-    NES_DEBUG("Dispatcher: search for source" << source)
-    if (std::find(source_to_query_map[source.get()].begin(),
-                  source_to_query_map[source.get()].end(), qep)
-        != source_to_query_map[source.get()].end()) {
-      NES_ERROR("Dispatcher: source/qep already exists" << source)
-      return false;
-    }
-  }
-  auto windows = qep->getWindows();
-  for (auto window : windows) {
-    NES_DEBUG("Dispatcher: search for window" << window)
-    if (std::find(window_to_query_map[window.get()].begin(),
-                  window_to_query_map[window.get()].end(), qep)
-        != window_to_query_map[window.get()].end()) {
-      NES_ERROR("Dispatcher: window/qep already exists" << window)
-      return false;
-    }
-  }
-
-  auto sinks = qep->getSinks();
-  for (auto sink : sinks) {
-    NES_DEBUG("Dispatcher: search for sink" << sink)
-    if (std::find(sink_to_query_map[sink.get()].begin(),
-                  sink_to_query_map[sink.get()].end(), qep)
-        != sink_to_query_map[sink.get()].end()) {
-      NES_ERROR("Dispatcher: sink/qep already exists" << sink)
-      return false;
-    }
-  }
-
-  /**
-   * add elements
-   */
-  for (auto source : sources) {
-    NES_DEBUG("Dispatcher: add source" << source)
-    source_to_query_map[source.get()].emplace_back(qep);
+  for (const auto& source : sources) {
+    NES_DEBUG("Dispatcher: start source" << source)
     source->start();
   }
 
-  for (auto window : windows) {
-    NES_DEBUG("Dispatcher: add window" << window)
-    window_to_query_map[window.get()].emplace_back(qep);
+  auto windows = qep->getWindows();
+  for (const auto& window : windows) {
+    NES_DEBUG("Dispatcher: start window" << window)
     window->setup();
     window->start();
   }
 
-  for (auto sink : sinks) {
-    NES_DEBUG("Dispatcher: add sink" << sink)
-    sink_to_query_map[sink.get()].emplace_back(qep);
+  auto sinks = qep->getSinks();
+  for (const auto& sink : sinks) {
+    NES_DEBUG("Dispatcher: start sink" << sink)
     sink->setup();
   }
   return true;
 }
 
-bool Dispatcher::registerQueryWithoutStart(const QueryExecutionPlanPtr qep) {
+bool Dispatcher::registerQueryWithoutStart(const string& queryId, const QueryExecutionPlanPtr& qep) {
   std::unique_lock<std::mutex> lock(queryMutex);
-//TODO: do we have to test/enforce here that each QEP has at least one sink and source?
 
   /**
    * test if elements already exist
    */
-  auto sources = qep->getSources();
-  for (auto source : sources) {
-    NES_DEBUG("Dispatcher: search for source" << source.get())
-    if (std::find(source_to_query_map[source.get()].begin(),
-                  source_to_query_map[source.get()].end(), qep)
-        != source_to_query_map[source.get()].end()) {
-      NES_ERROR("Dispatcher: source/qep already exists" << source)
-      return false;
+  NES_DEBUG("Dispatcher: search for query" << queryId)
+
+  if (this->queryId_to_query_map.find(queryId) != this->queryId_to_query_map.end()) {
+    NES_ERROR("Dispatcher: qep already exists" << queryId)
+    return false;
+  }
+  else {
+    this->queryId_to_query_map.insert({queryId, qep});
+
+    auto windows = qep->getWindows();
+    for (const auto& window : windows) {
+      NES_DEBUG("Dispatcher: stop window" << window)
+      window_to_query_map.insert({window.get(), qep});
     }
-  }
-  auto windows = qep->getWindows();
-  for (auto window : windows) {
-    NES_DEBUG("Dispatcher: search for window" << window.get())
-    if (std::find(window_to_query_map[window.get()].begin(),
-                  window_to_query_map[window.get()].end(), qep)
-        != window_to_query_map[window.get()].end()) {
-      NES_ERROR("Dispatcher: window/qep already exists" << window)
-      return false;
-    }
-  }
 
-  auto sinks = qep->getSinks();
-  for (auto sink : sinks) {
-    NES_DEBUG("Dispatcher: search for sink" << sink.get())
-    if (std::find(sink_to_query_map[sink.get()].begin(),
-                  sink_to_query_map[sink.get()].end(), qep)
-        != sink_to_query_map[sink.get()].end()) {
-      NES_ERROR("Dispatcher: sink/qep already exists" << sink)
-      return false;
-    }
+    return true;
   }
-
-  /**
-   * add elements
-   */
-  for (auto source : sources) {
-    NES_DEBUG("Dispatcher: add source" << source.get())
-    source_to_query_map[source.get()].emplace_back(qep);
-  }
-
-  for (auto window : windows) {
-    NES_DEBUG("Dispatcher: add window" << window)
-    window_to_query_map[window.get()].emplace_back(qep);
-    window->setup();
-  }
-
-  for (auto sink : sinks) {
-    NES_DEBUG("Dispatcher: add sink" << sink)
-    sink_to_query_map[sink.get()].emplace_back(qep);
-  }
-  return true;
 }
 
-void Dispatcher::deregisterQuery(const QueryExecutionPlanPtr qep) {
+void Dispatcher::deregisterQuery(const string& queryId) {
   std::unique_lock<std::mutex> lock(queryMutex);
 
-  auto sources = qep->getSources();
-  for (auto source : sources) {
-    NES_DEBUG("Dispatcher: try remove source" << source)
-    if (source_to_query_map[source.get()].size() > 1) {
-      //if more than one qep for the source, delete only qep
-      NES_DEBUG("Dispatcher: remove only qep" << qep)
-      source_to_query_map[source.get()].erase(
-          std::find(source_to_query_map[source.get()].begin(),
-                    source_to_query_map[source.get()].end(), qep));
-    } else  //if last qep for source, delete source
-    {
-      NES_DEBUG("Dispatcher: stop source" << qep)
+  if (this->queryId_to_query_map.find(queryId) != this->queryId_to_query_map.end()) {
+    NES_ERROR("Dispatcher: qep does not exists for query " << queryId)
+  }
+  else {
+    QueryExecutionPlanPtr qep = queryId_to_query_map.at(queryId);
+
+    auto sources = qep->getSources();
+    for (const auto& source : sources) {
+      NES_DEBUG("Dispatcher: stop source" << source)
       source->stop();
-
-      NES_DEBUG("Dispatcher: delete source" << qep)
-      source_to_query_map[source.get()].clear();
-      source_to_query_map.erase(source.get());
     }
-  }
 
-  auto windows = qep->getWindows();
-  for (auto window : windows) {
-    NES_DEBUG("Dispatcher: try remove window" << window)
-    if (window_to_query_map[window.get()].size() > 1) {
-      //if more than one qep for the window, delete only qep
-      NES_DEBUG("Dispatcher: remove only qep" << qep)
-      window_to_query_map[window.get()].erase(
-          std::find(window_to_query_map[window.get()].begin(),
-                    window_to_query_map[window.get()].end(), qep));
-    } else  //if last qep for window, delete window
-    {
-      NES_DEBUG("Dispatcher: stop window" << window)
-      window->stop();
-
-      NES_DEBUG("Dispatcher: delete window" << window)
-      window_to_query_map[window.get()].clear();
-      window_to_query_map.erase(window.get());
+    auto windows = qep->getWindows();
+    for (const auto& window : windows) {
+        NES_DEBUG("Dispatcher: stop window" << window)
+        window->stop();
+        window_to_query_map.erase(window.get());
     }
-  }
 
-  auto sinks = qep->getSinks();
-  for (auto sink : sinks) {
-    NES_DEBUG("Dispatcher: try remove sink" << sink)
-    if (sink_to_query_map[sink.get()].size() > 1) {
-      //if more than one qep for the window, delete only qep
-      NES_DEBUG("Dispatcher: remove only qep" << qep)
-      sink_to_query_map[sink.get()].erase(
-          std::find(sink_to_query_map[sink.get()].begin(),
-                    sink_to_query_map[sink.get()].end(), qep));
-    } else  //if last qep for window, delete window
-    {
-      NES_DEBUG("Dispatcher: stop sink" << sink)
-      sink->shutdown();
-
-      NES_DEBUG("Dispatcher: delete sink" << sink)
-      sink_to_query_map[sink.get()].clear();
-      sink_to_query_map.erase(sink.get());
+    auto sinks = qep->getSinks();
+    for (const auto& sink : sinks) {
+        NES_DEBUG("Dispatcher: stop sink" << sink)
+        sink->shutdown();
     }
+
+    queryId_to_query_map.erase(queryId);
   }
 }
 
@@ -266,40 +158,41 @@ void Dispatcher::addWork(const NES::TupleBufferPtr window_aggregates, NES::Windo
   std::unique_lock<std::mutex> lock(workMutex);
 
   //get the queries that contains this window
-  std::vector<QueryExecutionPlanPtr> &queries = window_to_query_map[window];
+  QueryExecutionPlanPtr qep = window_to_query_map[window];
+
   // TODO We currently assume that a window ends a query execution plan
-  for (uint64_t i = 0; i < queries.size(); ++i) {
-    // for each respective sink, create output the window aggregates
-    auto sinks = queries[i]->getSinks();
-    for (auto &sink : sinks) {
-      sink->writeData(window_aggregates);
-      NES_DEBUG(
-          "Dispatcher: write window aggregates to sink " << sink << " for QEP " << queries[i].get() << " tupleBuffer "
-                                                         << window_aggregates)
-    }
+  // for each respective sink, create output the window aggregates
+  auto sinks = qep->getSinks();
+  for (auto &sink : sinks) {
+    sink->writeData(window_aggregates);
+    NES_DEBUG(
+        "Dispatcher: write window aggregates to sink " << sink << " for QEP " << qep << " tupleBuffer "
+                                                       << window_aggregates)
   }
   cv.notify_all();
 }
 
-void Dispatcher::addWork(const TupleBufferPtr buf, DataSource *source) {
+void Dispatcher::addWork(const string& queryId, const TupleBufferPtr& buf) {
   std::unique_lock<std::mutex> lock(workMutex);
 
   //get the queries that fetches data from this source
-  std::vector<QueryExecutionPlanPtr> &queries = source_to_query_map[source];
+  QueryExecutionPlanPtr qep = queryId_to_query_map[queryId];
 
   //set the useCount of the buffer
-  buf->setUseCnt(queries.size());
+  buf->setUseCnt(1);
 
-  for (uint64_t i = 0; i < queries.size(); ++i) {
+  auto sources = qep->getSources();
+  for (const auto& source : sources) {
     // for each respective source, create new task and put it into queue
     //TODO: is this handeled right? how do we get the stateID here?
-    TaskPtr task(
-        new Task(queries[i], queries[i]->stageIdFromSource(source), buf));
+    //TODO: change that in the future that stageId is used properly
+    TaskPtr task(new Task(qep, qep->stageIdFromSource(source.get()), buf));
     task_queue.push_back(task);
     NES_DEBUG(
-        "Dispatcher: added Task " << task.get() << " for source " << source << " for QEP " << queries[i].get()
+        "Dispatcher: added Task " << task.get() << " for query " << queryId << " for QEP " << qep
                                   << " inputBuffer " << buf)
   }
+
   cv.notify_all();
 }
 

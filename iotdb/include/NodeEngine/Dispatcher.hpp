@@ -38,14 +38,14 @@ class Dispatcher {
    * respective map + start them
    * @param QueryExecutionPlan to be deployed
    */
-  bool registerQueryWithStart(const QueryExecutionPlanPtr);
+  bool registerQueryWithStart(const std::string&, const QueryExecutionPlanPtr&);
 
   /**
    * @brief register a query by extracting sources, windows and sink and add them to
    * respective map
    * @param QueryExecutionPlan to be deployed
    */
-  bool registerQueryWithoutStart(const QueryExecutionPlanPtr);
+  bool registerQueryWithoutStart(const std::string&, const QueryExecutionPlanPtr&);
 
   /**
    * @brief deregister a query by extracting sources, windows and sink and remove them
@@ -53,7 +53,7 @@ class Dispatcher {
    * @param QueryExecutionPlan to be deployed
    * @return bool indicating if register was successful
    */
-  void deregisterQuery(const QueryExecutionPlanPtr);
+  void deregisterQuery(const std::string&);
 
   /**
    * @brief get task from task queue
@@ -70,7 +70,7 @@ class Dispatcher {
    * @param Pointer to the tuple buffer containing the data
    * @param Pointer to the source at which the data arrived
    */
-  void addWork(const TupleBufferPtr, DataSource*);
+  void addWork(const std::string&, const TupleBufferPtr&);
 
   /**
    * @brief add work to the dispatcher, this methods is source-driven and is called
@@ -121,9 +121,8 @@ class Dispatcher {
 
   std::vector<TaskPtr> task_queue;
 
-  std::map<DataSource*, std::vector<QueryExecutionPlanPtr>> source_to_query_map;
-  std::map<WindowHandler*, std::vector<QueryExecutionPlanPtr>> window_to_query_map;
-  std::map<DataSink*, std::vector<QueryExecutionPlanPtr>> sink_to_query_map;
+  std::map<std::string, QueryExecutionPlanPtr> queryId_to_query_map;
+  std::map<WindowHandler*, QueryExecutionPlanPtr> window_to_query_map;
 
   std::mutex bufferMutex;
   std::mutex queryMutex;
