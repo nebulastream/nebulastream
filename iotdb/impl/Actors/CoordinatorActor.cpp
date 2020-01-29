@@ -240,7 +240,7 @@ void CoordinatorActor::registerSensor(const string &ip, uint16_t publish_port,
 
 void CoordinatorActor::deployQuery(const string &queryId) {
   map<NESTopologyEntryPtr, ExecutableTransferObject> deployments =
-      coordinatorServicePtr->make_deployment(queryId);
+      coordinatorServicePtr->prepareExecutableTransferObject(queryId);
 
   for (auto const &x : deployments) {
     strong_actor_ptr sap = this->state.topologyActorMap.at(x.first);
@@ -250,6 +250,7 @@ void CoordinatorActor::deployQuery(const string &queryId) {
     this->request(hdl, task_timeout, execute_operators_atom::value, queryId,
                   s_eto);
   }
+  QueryCatalog::instance().markQueryAsRunning(queryId);
 }
 
 void CoordinatorActor::deregisterQuery(const string &queryId) {
@@ -260,7 +261,7 @@ void CoordinatorActor::deregisterQuery(const string &queryId) {
         "ACTORCOORDINATOR: Sending deletion request " << queryId << " to " << to_string(hdl));
     this->request(hdl, task_timeout, delete_query_atom::value, queryId);
   }
-  coordinatorServicePtr->deregister_query(queryId);
+  coordinatorServicePtr->deleteQuery(queryId);
 }
 
 void CoordinatorActor::showOperators() {
@@ -287,12 +288,12 @@ void CoordinatorActor::showOperators() {
 
 string CoordinatorActor::registerQuery(const string &queryString,
                                        const string &strategy) {
-  return coordinatorServicePtr->register_query(queryString, strategy);
+  return coordinatorServicePtr->registerQuery(queryString, strategy);
 }
 
 string CoordinatorActor::executeQuery(const string &queryString,
                                       const string &strategy) {
-  string queryId = coordinatorServicePtr->register_query(queryString, strategy);
+  string queryId = coordinatorServicePtr->registerQuery(queryString, strategy);
   deployQuery(queryId);
   return queryId;
 }
