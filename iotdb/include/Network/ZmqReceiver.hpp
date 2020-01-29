@@ -22,7 +22,7 @@ class ZmqReceiver : public DataSource {
    * @param host name of the source queue
    * @param port of the source queue
    */
-  ZmqReceiver(const Schema &schema, const std::string &host, const uint16_t port);
+  ZmqReceiver(const std::string &host, const uint16_t port);
 
   /**
    * @brief destructor of zmq sink that disconnects the queue before deconstruction
@@ -53,14 +53,14 @@ class ZmqReceiver : public DataSource {
    * check if already connected, if not connect try to connect, if already connected return
    * @return bool indicating if connection could be established
    */
-  bool connect();
+  bool setup();
 
   /**
    * @brief method to disconnect zmq
    * check if already disconnected, if not disconnected try to disconnect, if already disconnected return
    * @return bool indicating if connection could be established
    */
-  bool disconnect();
+  bool teardown();
 
   /**
    * @brief method for serialization, all listed variable below are added to the
@@ -76,7 +76,7 @@ class ZmqReceiver : public DataSource {
   }
   std::string host;
   uint16_t port;
-  bool connected;
+  bool isReady;
   zmq::context_t context;
   zmq::socket_t socket;
 };

@@ -104,7 +104,7 @@ map<NESTopologyEntryPtr, ExecutableTransferObject> CoordinatorService::make_depl
         vector<DataSinkPtr> destinations = getSinks(queryId, v);
         NESTopologyEntryPtr nesNode = v.ptr->getNESNode();
         //TODO: this will break for multiple streams
-        ExecutableTransferObject eto = ExecutableTransferObject(queryId, schema,
+        ExecutableTransferObject eto = ExecutableTransferObject(queryId, "", schema,
                                                                 sources,
                                                                 destinations,
                                                                 operators);

@@ -7,13 +7,14 @@ BOOST_CLASS_EXPORT_IMPLEMENT(NES::QueryExecutionPlan);
 
 namespace NES {
 
-QueryExecutionPlan::QueryExecutionPlan() : sources(), stages() {}
+QueryExecutionPlan::QueryExecutionPlan(const std::string& _queryId) : queryId(_queryId), sources(), stages() {}
 
-QueryExecutionPlan::QueryExecutionPlan(const std::vector<DataSourcePtr>& _sources,
+QueryExecutionPlan::QueryExecutionPlan(const std::string& _queryId,
+                                       const std::vector<DataSourcePtr>& _sources,
                                        const std::vector<PipelineStagePtr>& _stages,
                                        const std::map<DataSource*, uint32_t>& _source_to_stage,
                                        const std::map<uint32_t, uint32_t>& _stage_to_dest)
-    : sources(_sources), stages(_stages), source_to_stage(_source_to_stage), stage_to_dest(_stage_to_dest)
+    : queryId(_queryId), sources(_sources), stages(_stages), source_to_stage(_source_to_stage), stage_to_dest(_stage_to_dest)
 {
 }
 
@@ -57,5 +58,9 @@ const std::vector<DataSourcePtr> QueryExecutionPlan::getSources() const { return
 const std::vector<WindowPtr> QueryExecutionPlan::getWindows() const { return windows; }
 
 const std::vector<DataSinkPtr> QueryExecutionPlan::getSinks() const { return sinks; }
+
+const std::string &QueryExecutionPlan::getQueryId() const {
+  return this->queryId;
+}
 
 } // namespace NES

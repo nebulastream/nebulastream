@@ -1,4 +1,5 @@
 add_source_iotdb(
+        MultiDataSource.cpp
         DataSource.cpp
         DataSink.cpp
         GeneratorSource.cpp

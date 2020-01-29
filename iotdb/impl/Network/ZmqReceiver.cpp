@@ -18,18 +18,17 @@ namespace NES {
 ZmqReceiver::ZmqReceiver()
     : host(""),
       port(0),
-      connected(false),
+      isReady(false),
       context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_PULL)) {
   //This constructor is needed for Serialization
 }
 
-ZmqReceiver::ZmqReceiver(const Schema &schema, const std::string &host,
-                     const uint16_t port)
+ZmqReceiver::ZmqReceiver(const std::string &host, const uint16_t port)
     : DataSource(schema),
       host(host),
       port(port),
-      connected(false),
+      isReady(false),
       context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_PULL)) {
   NES_DEBUG(
@@ -37,7 +36,7 @@ ZmqReceiver::ZmqReceiver(const Schema &schema, const std::string &host,
 }
 
 ZmqReceiver::~ZmqReceiver() {
-  bool success = disconnect();
+  bool success = teardown();
   if (success) {
     NES_DEBUG("ZmqReceiver  " << this << ": Destroy ZMQ Source")
   } else {
@@ -50,7 +49,7 @@ ZmqReceiver::~ZmqReceiver() {
 
 TupleBufferPtr ZmqReceiver::receiveData() {
   NES_DEBUG("ZmqReceiver  " << this << ": receiveData ")
-  if (connect()) {
+  if (isReady) {
     try {
       // Receive new chunk of data
       zmq::message_t new_data;
@@ -100,14 +99,14 @@ const std::string ZmqReceiver::toString() const {
   return ss.str();
 }
 
-bool ZmqReceiver::connect() {
-  if (!connected) {
+bool ZmqReceiver::setup() {
+  if (!isReady) {
     auto address = std::string("tcp://") + host + std::string(":") + std::to_string(port);
 
     try {
       socket.setsockopt(ZMQ_LINGER, 0);
       socket.bind(address.c_str());
-      connected = true;
+      isReady = true;
     }
     catch (const zmq::error_t &ex) {
       // recv() throws ETERM when the zmq context is destroyed,
@@ -115,29 +114,30 @@ bool ZmqReceiver::connect() {
       if (ex.num() != ETERM) {
         NES_ERROR("ZmqReceiver: " << ex.what())
       }
-      connected = false;
+      isReady = false;
     }
   }
-  if (connected) {
+  if (isReady) {
     NES_DEBUG("ZmqReceiver  " << this << ": connected")
   } else {
     NES_DEBUG("Exception: ZmqReceiver  " << this << ": NOT connected")
   }
-  return connected;
+  return isReady;
 }
 
-bool ZmqReceiver::disconnect() {
-  if (connected) {
+bool ZmqReceiver::teardown() {
+  if (isReady) {
     socket.close();
-    connected = false;
+    isReady = false;
+    NES_DEBUG("ZmqReceiver  " << this << ": socket closed successfully")
+    return true;
   }
-  if (!connected) {
-    NES_DEBUG("ZmqReceiver  " << this << ": disconnected")
-  } else {
-    NES_DEBUG("ZmqReceiver  " << this << ": NOT disconnected")
+  else {
+    NES_DEBUG("ZmqReceiver  " << this << ": Tear down failed! No open socket found.")
   }
-  return !connected;
+  return false;
 }
+
 SourceType ZmqReceiver::getType() const {
   return ZMQ_SOURCE;
 }
