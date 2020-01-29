@@ -74,21 +74,21 @@ NESTopologyEntryPtr CoordinatorService::register_sensor(
     return sensorNode;
 }
 
-string CoordinatorService::register_query(
+string CoordinatorService::registerQuery(
     const string& queryString, const string& optimizationStrategyName) {
-    return QueryCatalog::instance().register_query(queryString,
-                                                   optimizationStrategyName);
+    return QueryCatalog::instance().registerQuery(queryString,
+                                                  optimizationStrategyName);
 }
 
-bool CoordinatorService::deregister_query(const string& queryId) {
-    QueryCatalog::instance().deregister_query(queryId);
+bool CoordinatorService::deleteQuery(const string& queryId) {
+    QueryCatalog::instance().deleteQuery(queryId);
 }
 
-map<NESTopologyEntryPtr, ExecutableTransferObject> CoordinatorService::make_deployment(
+map<NESTopologyEntryPtr, ExecutableTransferObject> CoordinatorService::prepareExecutableTransferObject(
     const string& queryId) {
     map<NESTopologyEntryPtr, ExecutableTransferObject> output;
-    if (QueryCatalog::instance().testIfQueryExists(queryId)
-        && !QueryCatalog::instance().testIfQueryStarted(queryId)) {
+    if (QueryCatalog::instance().isQueryExists(queryId)
+        && !QueryCatalog::instance().isQueryRunning(queryId)) {
         NES_INFO("CoordinatorService: Deploying query " << queryId);
 
         NESExecutionPlanPtr execPlan = QueryCatalog::instance().getQuery(queryId)
@@ -113,11 +113,10 @@ map<NESTopologyEntryPtr, ExecutableTransferObject> CoordinatorService::make_depl
                 output.insert({nesNode, eto});
             }
         }
-        //TODO: I am not totally sure what happens here
-        QueryCatalog::instance().startQuery(queryId);
 
-    } else if (QueryCatalog::instance().getRunningQueries().find(queryId)
-        != QueryCatalog::instance().getRunningQueries().end()) {
+        QueryCatalog::instance().markQueryAsScheduling(queryId);
+
+    } else if (QueryCatalog::instance().getQuery(queryId)->queryStatus == QueryStatus::Running) {
         NES_WARNING("CoordinatorService: Query is already running -> " << queryId);
     } else {
         NES_WARNING("CoordinatorService: Query is not registered -> " << queryId);
@@ -222,7 +221,7 @@ string CoordinatorService::getTopologyPlanString() {
 }
 
 NESExecutionPlanPtr CoordinatorService::getRegisteredQuery(string queryId) {
-    if (QueryCatalog::instance().testIfQueryExists(queryId)) {
+    if (QueryCatalog::instance().isQueryExists(queryId)) {
         NES_DEBUG("CoordinatorService: return existing query " << queryId)
         return QueryCatalog::instance().getQuery(queryId)->nesPlanPtr;
     }
@@ -245,5 +244,5 @@ const map<string, QueryCatalogEntryPtr> CoordinatorService::getRegisteredQueries
 }
 
 const map<string, QueryCatalogEntryPtr> CoordinatorService::getRunningQueries() {
-    return QueryCatalog::instance().getRunningQueries();
+    return QueryCatalog::instance().getQueries(QueryStatus::Running);
 }

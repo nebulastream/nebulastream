@@ -9,6 +9,7 @@
 #include <cpprest/http_listener.h>
 #include <cpprest/details/http_server.h>
 #include <pplx/pplxtasks.h>
+#include <REST/Controller/QueryCatalogController.hpp>
 #include "REST/Controller/BaseController.hpp"
 #include "REST/Controller/QueryController.hpp"
 #include "REST/Controller/StreamCatalogController.hpp"
@@ -23,6 +24,7 @@ class RestEngine : public BaseController {
     http_listener _listener; // main micro service network endpoint
     QueryController queryController;
     StreamCatalogController streamCatalogController;
+    QueryCatalogController queryCatalogController;
 
   public:
     RestEngine() {};

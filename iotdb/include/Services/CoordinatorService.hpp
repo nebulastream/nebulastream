@@ -69,20 +69,20 @@ class CoordinatorService {
    * @param queryString a queryString of the query
    * @param optimizationStrategyName the optimization strategy (buttomUp or topDown)
    */
-  string register_query(const string &queryString, const string &optimizationStrategyName);
+  string registerQuery(const string &queryString, const string &optimizationStrategyName);
 
   /**
    * @brief method which is called to unregister an already running query
    * @param queryId the queryId of the query
    * @return true if deleted from running queries, otherwise false
    */
-  bool deregister_query(const string &queryId);
+  bool deleteQuery(const string &queryId);
 
   /**
    * @brief deploys a CAF query into the NES topology to the corresponding devices defined by the optimizer
    * @param query a queryId of the query
    */
-  map<NESTopologyEntryPtr, ExecutableTransferObject> make_deployment(const string &queryId);
+  map<NESTopologyEntryPtr, ExecutableTransferObject> prepareExecutableTransferObject(const string &queryId);
 
   /**
    * @brief creates a string representation of the topology graph
