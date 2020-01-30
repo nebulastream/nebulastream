@@ -12,7 +12,7 @@ NESExecutionPlanPtr BottomUp::initializeExecutionPlan(InputQueryPtr inputQuery, 
     const OperatorPtr sinkOperator = inputQuery->getRoot();
 
     // FIXME: current implementation assumes that we have only one source stream and therefore only one source operator.
-    const string& streamName = inputQuery->source_stream->getName();
+    const string& streamName = inputQuery->getSourceStream()->getName();
     const OperatorPtr sourceOperatorPtr = getSourceOperator(sinkOperator);
 
     if (!sourceOperatorPtr) {
@@ -44,13 +44,13 @@ NESExecutionPlanPtr BottomUp::initializeExecutionPlan(InputQueryPtr inputQuery, 
     completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlan);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.
-    Schema& schema = inputQuery->source_stream->getSchema();
+    Schema& schema = inputQuery->getSourceStream()->getSchema();
     addSystemGeneratedSourceSinkOperators(schema, nesExecutionPlanPtr);
 
     return nesExecutionPlanPtr;
 }
 
-void BottomUp::placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr, const NESTopologyGraphPtr nesTopologyGraphPtr,
+void BottomUp::placeOperators(NESExecutionPlanPtr executionPlanPtr, const NESTopologyGraphPtr nesTopologyGraphPtr,
                               OperatorPtr sourceOperator, deque<NESTopologyEntryPtr> sourceNodes) {
 
     for (NESTopologyEntryPtr sourceNode: sourceNodes) {
@@ -86,11 +86,11 @@ void BottomUp::placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr, const NES
 
             // If the selected nes node was already used by another operator for placement then do not create a
             // new execution node rather add operator to existing node.
-            if (nesExecutionPlanPtr->hasVertex(node->getId())) {
+            if (executionPlanPtr->hasVertex(node->getId())) {
 
                 NES_DEBUG("BottomUp: node " << node->toString() << " was already used by other deployment")
 
-                const ExecutionNodePtr existingExecutionNode = nesExecutionPlanPtr
+                const ExecutionNodePtr existingExecutionNode = executionPlanPtr
                     ->getExecutionNode(node->getId());
 
                 size_t operatorId = targetOperator->getOperatorId();
@@ -125,10 +125,10 @@ void BottomUp::placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr, const NES
                              << std::to_string(targetOperator->getOperatorId()) << ")";
 
                 // Create a new execution node
-                const ExecutionNodePtr newExecutionNode = nesExecutionPlanPtr->createExecutionNode(operatorName.str(),
-                                                                                                   to_string(node->getId()),
-                                                                                                   node,
-                                                                                                   targetOperator->copy());
+                const ExecutionNodePtr newExecutionNode = executionPlanPtr->createExecutionNode(operatorName.str(),
+                                                                                                to_string(node->getId()),
+                                                                                                node,
+                                                                                                targetOperator->copy());
                 newExecutionNode->addChildOperatorId(targetOperator->getOperatorId());
 
                 if (targetOperator->getParent() != nullptr) {

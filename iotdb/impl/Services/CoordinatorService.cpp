@@ -95,7 +95,7 @@ map<NESTopologyEntryPtr, ExecutableTransferObject> CoordinatorService::make_depl
             ->nesPlanPtr;
 
         Schema schema = QueryCatalog::instance().getQuery(queryId)->inputQuery
-            ->source_stream->getSchema();
+            ->getSourceStream()->getSchema();
 
         //iterate through all vertices in the topology
         for (const ExecutionVertex& v : execPlan->getExecutionGraph()->getAllVertex()) {
@@ -131,7 +131,7 @@ vector<DataSourcePtr> CoordinatorService::getSources(const string& queryId,
     NESExecutionPlanPtr execPlan = QueryCatalog::instance().getQuery(queryId)
         ->nesPlanPtr;
     Schema schema = QueryCatalog::instance().getQuery(queryId)->inputQuery
-        ->source_stream->getSchema();
+        ->getSourceStream()->getSchema();
 
     DataSourcePtr source = findDataSourcePointer(v.ptr->getRootOperator());
 

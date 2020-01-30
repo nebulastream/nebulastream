@@ -21,20 +21,20 @@ class TopDown : public NESPlacementOptimizer {
 
     /**
      * @brief place query operators and prepare the nes execution plan
-     * @param nesExecutionPlanPtr : the execution plan that need to be prepared
+     * @param executionPlanPtr : the execution plan that need to be prepared
      * @param sinkOperator :  sink operator for the query
      * @param nesSourceNodes : list of physical source nodes
      * @param nesTopologyGraphPtr :  nes topology graph
      */
-    void placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr, const OperatorPtr sinkOperator,
-                        deque<NESTopologyEntryPtr> nesSourceNodes, const NESTopologyGraphPtr nesTopologyGraphPtr);
+    void placeOperators(NESExecutionPlanPtr executionPlanPtr, OperatorPtr sinkOperator,
+                        deque<NESTopologyEntryPtr> nesSourceNodes, NESTopologyGraphPtr nesTopologyGraphPtr);
 
     /**
      * @brief add query operator to existing execution node
      * @param operatorPtr : operator to add
      * @param executionNode : execution node to which operator need to be added
      */
-    void addOperatorToExistingNode(OperatorPtr operatorPtr, const ExecutionNodePtr executionNode) const;
+    void addOperatorToExistingNode(OperatorPtr operatorPtr, ExecutionNodePtr executionNode) const;
 
     /**
      * @brief create new execution nesNode for the query operator.
