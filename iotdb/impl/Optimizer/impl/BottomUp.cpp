@@ -50,7 +50,7 @@ NESExecutionPlanPtr BottomUp::initializeExecutionPlan(InputQueryPtr inputQuery, 
     return nesExecutionPlanPtr;
 }
 
-void BottomUp::placeOperators(NESExecutionPlanPtr executionPlanPtr, const NESTopologyGraphPtr nesTopologyGraphPtr,
+void BottomUp::placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr, const NESTopologyGraphPtr nesTopologyGraphPtr,
                               OperatorPtr sourceOperator, deque<NESTopologyEntryPtr> sourceNodes) {
 
     for (NESTopologyEntryPtr sourceNode: sourceNodes) {
@@ -63,9 +63,9 @@ void BottomUp::placeOperators(NESExecutionPlanPtr executionPlanPtr, const NESTop
             ProcessOperator operatorToProcess = operatorsToProcess.front();
             operatorsToProcess.pop_front();
 
-            OperatorPtr optr = operatorToProcess.operatorToProcess;
+            OperatorPtr targetOperator = operatorToProcess.operatorToProcess;
 
-            NES_DEBUG("BottomUp: try to place operator " << optr->toString())
+            NES_DEBUG("BottomUp: try to place operator " << targetOperator->toString())
 
             // find the node where the operator will be executed
             NESTopologyEntryPtr node = findSuitableNESNodeForOperatorPlacement(
@@ -82,20 +82,20 @@ void BottomUp::placeOperators(NESExecutionPlanPtr executionPlanPtr, const NESTop
                     "Can not schedule the operator. No free resource available.");
             }
 
-            NES_DEBUG("BottomUp: suitable placement for operator " << optr->toString() << " is " << node->toString())
+            NES_DEBUG("BottomUp: suitable placement for operator " << targetOperator->toString() << " is " << node->toString())
 
             // If the selected nes node was already used by another operator for placement then do not create a
             // new execution node rather add operator to existing node.
-            if (executionPlanPtr->hasVertex(node->getId())) {
+            if (nesExecutionPlanPtr->hasVertex(node->getId())) {
 
                 NES_DEBUG("BottomUp: node " << node->toString() << " was already used by other deployment")
 
-                const ExecutionNodePtr existingExecutionNode = executionPlanPtr
+                const ExecutionNodePtr existingExecutionNode = nesExecutionPlanPtr
                     ->getExecutionNode(node->getId());
 
-                size_t operatorId = optr->getOperatorId();
+                size_t operatorId = targetOperator->getOperatorId();
 
-                vector<size_t> &residentOperatorIds = existingExecutionNode->getChildOperatorIds();
+                vector<size_t>& residentOperatorIds = existingExecutionNode->getChildOperatorIds();
                 const auto exists = std::find(residentOperatorIds.begin(), residentOperatorIds.end(), operatorId);
 
                 if (exists != residentOperatorIds.end()) {
@@ -106,14 +106,14 @@ void BottomUp::placeOperators(NESExecutionPlanPtr executionPlanPtr, const NESTop
 
                     stringstream operatorName;
                     operatorName << existingExecutionNode->getOperatorName() << "=>"
-                                 << operatorTypeToString[optr->getOperatorType()]
-                                 << "(OP-" << std::to_string(optr->getOperatorId()) << ")";
+                                 << operatorTypeToString[targetOperator->getOperatorType()]
+                                 << "(OP-" << std::to_string(targetOperator->getOperatorId()) << ")";
                     existingExecutionNode->setOperatorName(operatorName.str());
-                    existingExecutionNode->addChildOperatorId(optr->getOperatorId());
+                    existingExecutionNode->addChildOperatorId(targetOperator->getOperatorId());
 
-                    if (optr->getParent() != nullptr) {
+                    if (targetOperator->getParent() != nullptr) {
                         operatorsToProcess.emplace_back(
-                            ProcessOperator(optr->getParent(), existingExecutionNode));
+                            ProcessOperator(targetOperator->getParent(), existingExecutionNode));
                     }
                 }
             } else {
@@ -121,19 +121,19 @@ void BottomUp::placeOperators(NESExecutionPlanPtr executionPlanPtr, const NESTop
                 NES_DEBUG("BottomUp: create new execution node " << node->toString())
 
                 stringstream operatorName;
-                operatorName << operatorTypeToString[optr->getOperatorType()] << "(OP-"
-                             << std::to_string(optr->getOperatorId()) << ")";
+                operatorName << operatorTypeToString[targetOperator->getOperatorType()] << "(OP-"
+                             << std::to_string(targetOperator->getOperatorId()) << ")";
 
                 // Create a new execution node
-                const ExecutionNodePtr newExecutionNode = executionPlanPtr->createExecutionNode(operatorName.str(),
-                                                                                                to_string(node->getId()),
-                                                                                                node,
-                                                                                                optr->copy());
-                newExecutionNode->addChildOperatorId(optr->getOperatorId());
+                const ExecutionNodePtr newExecutionNode = nesExecutionPlanPtr->createExecutionNode(operatorName.str(),
+                                                                                                   to_string(node->getId()),
+                                                                                                   node,
+                                                                                                   targetOperator->copy());
+                newExecutionNode->addChildOperatorId(targetOperator->getOperatorId());
 
-                if (optr->getParent() != nullptr) {
+                if (targetOperator->getParent() != nullptr) {
                     operatorsToProcess.emplace_back(
-                        ProcessOperator(optr->getParent(), newExecutionNode));
+                        ProcessOperator(targetOperator->getParent(), newExecutionNode));
                 }
             }
 
@@ -205,56 +205,26 @@ NESTopologyEntryPtr BottomUp::findSuitableNESNodeForOperatorPlacement(const Proc
 
 OperatorPtr BottomUp::getSourceOperator(OperatorPtr root) {
 
-    deque<OperatorPtr> bfsTraverse = {root};
+    deque<OperatorPtr> operatorTraversQueue = {root};
 
-    while (!bfsTraverse.empty()) {
+    while (!operatorTraversQueue.empty()) {
 
-        while (!bfsTraverse.empty()) {
-            auto optr = bfsTraverse.front();
-            bfsTraverse.pop_front();
+        while (!operatorTraversQueue.empty()) {
+            auto optr = operatorTraversQueue.front();
+            operatorTraversQueue.pop_front();
 
             if (optr->getOperatorType() == OperatorType::SOURCE_OP) {
                 return optr;
             }
 
+            if (optr->getChildren().empty()) {
+                return nullptr;
+            }
+
             vector<OperatorPtr> children = optr->getChildren();
-            copy(children.begin(), children.end(), back_inserter(bfsTraverse));
+            copy(children.begin(), children.end(), back_inserter(operatorTraversQueue));
         }
     }
     return nullptr;
 };
 
-// This method returns all sensor nodes that act as the source in the nes topology.
-deque<NESTopologyEntryPtr> BottomUp::getSourceNodes(NESTopologyPlanPtr nesTopologyPlan, std::string streamName) {
-
-    //  assert(0);
-    //TODO:should not be called anymore in the future
-    const NESTopologyEntryPtr rootNode = nesTopologyPlan->getRootNode();
-    deque<NESTopologyEntryPtr> listOfSourceNodes;
-    deque<NESTopologyEntryPtr> bfsTraverse;
-    bfsTraverse.push_back(rootNode);
-
-    while (!bfsTraverse.empty()) {
-        auto& node = bfsTraverse.front();
-        bfsTraverse.pop_front();
-
-        if (node->getEntryType() == NESNodeType::Sensor) {
-
-            NESTopologySensorNodePtr ptr = std::static_pointer_cast<
-                NESTopologySensorNode>(node);
-
-            if (ptr->getPhysicalStreamName() == streamName) {
-                listOfSourceNodes.push_back(node);
-            }
-        }
-
-        const vector<NESTopologyLinkPtr> edgesToNode =
-            nesTopologyPlan->getNESTopologyGraph()->getAllEdgesToNode(node);
-
-        for (NESTopologyLinkPtr edgeToNode : edgesToNode) {
-            bfsTraverse.push_back(edgeToNode->getSourceNode());
-        }
-    }
-
-    return listOfSourceNodes;
-}

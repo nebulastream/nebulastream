@@ -38,13 +38,13 @@ class BottomUp : public NESPlacementOptimizer {
 
     /**
      * This method is responsible for placing the operators to the nes nodes and generating ExecutionNodes.
-     * @param executionPlanPtr : graph containing the information about the execution nodes.
+     * @param nesExecutionPlanPtr : graph containing the information about the execution nodes.
      * @param nesTopologyGraphPtr : nes Topology graph used for extracting information about the nes topology.
      * @param sourceNodePtr : sensor nodes which can act as source.
      *
      * @throws exception if the operator can't be placed anywhere.
      */
-    void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
+    void placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
                         OperatorPtr sourceOperator, deque<NESTopologyEntryPtr> sourceNodes);
 
     // finds a suitable for node for the operator to be placed.
@@ -58,8 +58,6 @@ class BottomUp : public NESPlacementOptimizer {
      * @return source operator pointer
      */
     OperatorPtr getSourceOperator(OperatorPtr root);
-
-    deque<NESTopologyEntryPtr> getSourceNodes(NESTopologyPlanPtr nesTopologyPlan, string streamName);
 };
 }
 
