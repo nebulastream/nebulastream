@@ -114,7 +114,7 @@ TEST_F(QueryCatalogTest, add_query_and_start_stop) {
       .getQueries(QueryStatus::Running);
   EXPECT_TRUE(run.size() == 0);
 
-  QueryCatalog::instance().markQueryAsRunning(queryId);
+  QueryCatalog::instance().markQueryAs(queryId, QueryStatus::Running);
   map<string, QueryCatalogEntryPtr> run_new = QueryCatalog::instance()
       .getQueries(QueryStatus::Running);
   EXPECT_TRUE(run_new.size() == 1);
@@ -122,7 +122,7 @@ TEST_F(QueryCatalogTest, add_query_and_start_stop) {
   EXPECT_TRUE(QueryCatalog::instance().isQueryExists(queryId));
   EXPECT_TRUE(QueryCatalog::instance().isQueryRunning(queryId));
 
-  QueryCatalog::instance().markQueryAsStopped(queryId);
+  QueryCatalog::instance().markQueryAs(queryId, QueryStatus::Stopped);
   map<string, QueryCatalogEntryPtr> run_new_stop = QueryCatalog::instance()
       .getQueries(QueryStatus::Running);
   EXPECT_TRUE(run_new_stop.size() == 0);
