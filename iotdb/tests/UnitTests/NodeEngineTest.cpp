@@ -225,7 +225,7 @@ TEST_F(EngineTest, start_deploy_undeploy_stop_test) {
   ptr->start();
   ptr->deployQuery(qep);
   sleep(1);
-  ptr->undeployQuery(qep);
+  ptr->undeployQuery(qep->getQueryId());
   ptr->stop();
 
   testOutput();
