@@ -21,13 +21,16 @@ NESExecutionPlanPtr TopDown::initializeExecutionPlan(
 
     NESExecutionPlanPtr nesExecutionPlanPtr = std::make_shared<NESExecutionPlan>();
 
-    //Perform operator placement
+    NES_INFO("TopDown: Placing operators on the nes topology.");
     placeOperators(nesExecutionPlanPtr, sinkOperator, sourceNodes, nesTopologyGraphPtr);
 
+    NES_INFO("TopDown: Adding forward operators.");
     addForwardOperators(sourceNodes, nesTopologyGraphPtr, nesExecutionPlanPtr);
 
+    NES_INFO("TopDown: Removing non resident operators from the execution nodes.");
     removeNonResidentOperators(nesExecutionPlanPtr);
 
+    NES_INFO("TopDown: Generating complete execution Graph.");
     completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlanPtr);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.
@@ -65,10 +68,15 @@ void TopDown::placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr, const Oper
 
                     if (nesExecutionPlanPtr->hasVertex(node->getId())) {
 
-                        const ExecutionNodePtr executionNode = nesExecutionPlanPtr->getExecutionNode(node->getId());
+                        const ExecutionNodePtr existingExecutionNode = nesExecutionPlanPtr
+                            ->getExecutionNode(node->getId());
 
-                        //Check if the operator is already placed
-                        if (executionNode->getOperatorName().find(newOperatorName) != string::npos) {
+                        size_t operatorId = targetOperator->getOperatorId();
+
+                        vector<size_t>& residentOperatorIds = existingExecutionNode->getChildOperatorIds();
+                        const auto exists = std::find(residentOperatorIds.begin(), residentOperatorIds.end(), operatorId);
+
+                        if (exists != residentOperatorIds.end()) {
 
                             //Skip placement of the operator as already placed.
                             //Add child operators for placement
@@ -109,7 +117,8 @@ void TopDown::placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr, const Oper
 
                 if (nesExecutionPlanPtr->hasVertex(nesSourceNode->getId())) {
 
-                    const ExecutionNodePtr executionNode = nesExecutionPlanPtr->getExecutionNode(nesSourceNode->getId());
+                    const ExecutionNodePtr
+                        executionNode = nesExecutionPlanPtr->getExecutionNode(nesSourceNode->getId());
                     addOperatorToExistingNode(targetOperator, executionNode);
                 } else {
                     createNewExecutionNode(nesExecutionPlanPtr, targetOperator, nesSourceNode);
@@ -119,28 +128,25 @@ void TopDown::placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr, const Oper
     }
 }
 
-void TopDown::createNewExecutionNode(NESExecutionPlanPtr executionPlanPtr, OperatorPtr processOperator,
+void TopDown::createNewExecutionNode(NESExecutionPlanPtr executionPlanPtr, OperatorPtr operatorPtr,
                                      NESTopologyEntryPtr nesNode) const {
 
-    string operatorName = operatorTypeToString[processOperator->getOperatorType()];
-    operatorName.append("(OP-")
-        .append(to_string(processOperator->getOperatorId()))
-        .append(")");
+    stringstream operatorName;
+    operatorName << operatorTypeToString[operatorPtr->getOperatorType()]
+                 << "(OP-" << to_string(operatorPtr->getOperatorId()) << ")";
     const ExecutionNodePtr
-        & executionNode = executionPlanPtr->createExecutionNode(operatorName, to_string(nesNode->getId()),
-                                                               nesNode, processOperator->copy());
-    executionNode->addChildOperatorId(processOperator->getOperatorId());
+        executionNode = executionPlanPtr->createExecutionNode(operatorName.str(), to_string(nesNode->getId()),
+                                                              nesNode, operatorPtr->copy());
+    executionNode->addChildOperatorId(operatorPtr->getOperatorId());
     executionNode->getNESNode()->reduceCpuCapacity(1);
 }
 
 void TopDown::addOperatorToExistingNode(OperatorPtr operatorPtr, const ExecutionNodePtr executionNode) const {
 
-    string oldOperatorName = executionNode->getOperatorName();
-    string newName =
-        operatorTypeToString[operatorPtr->getOperatorType()] + "(OP-"
-            + to_string(operatorPtr->getOperatorId()) + ")" + "=>"
-            + oldOperatorName;
-    executionNode->setOperatorName(newName);
+    stringstream operatorName;
+    operatorName << operatorTypeToString[operatorPtr->getOperatorType()] << "(OP-"
+                 << to_string(operatorPtr->getOperatorId()) << ")" << "=>" << executionNode->getOperatorName();
+    executionNode->setOperatorName(operatorName.str());
     executionNode->addChildOperatorId(operatorPtr->getOperatorId());
     executionNode->getNESNode()->reduceCpuCapacity(1);
 }
