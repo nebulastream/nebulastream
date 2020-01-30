@@ -38,14 +38,14 @@ class NodeEngine {
    * @brief deploy a new query plan to via the dispatcher
    * @param new query plan
    */
-  void deployQuery(const std::string& queryId, QueryExecutionPlanPtr ptr);
+  void deployQuery(QueryExecutionPlanPtr ptr);
 
   /**
    * @brief deploy a new query plan to via the dispatcher
    * @caution this will not start the sources/sinks, this has to be done manually
    * @param new query plan
    */
-  void deployQueryWithoutStart(const std::string& queryId, QueryExecutionPlanPtr ptr);
+  void deployQueryWithoutStart(QueryExecutionPlanPtr ptr);
 
   /**
    * @brief undeploy an existing query plan to via the dispatcher

@@ -48,7 +48,7 @@ void WorkerService::delete_query(const string &query) {
           "WORKERSERVICE (" << this->_ip << ": Attempting deletion of " << query);
       QueryExecutionPlanPtr qep = std::get<0>(this->_runningQueries.at(query));
       this->_runningQueries.erase(query);
-      this->_enginePtr->undeployQuery(qep);
+      this->_enginePtr->undeployQuery(qep->getQueryId());
       NES_INFO(
           "WORKERSERVICE (" << this->_ip << ": Successfully deleted query " << query);
     } else {

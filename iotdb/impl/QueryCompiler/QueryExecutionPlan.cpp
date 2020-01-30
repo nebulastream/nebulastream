@@ -1,11 +1,18 @@
 #include <QueryCompiler/QueryExecutionPlan.hpp>
-BOOST_CLASS_EXPORT_IMPLEMENT(NES::QueryExecutionPlan);
 
 #include <assert.h>
 #include <iostream>
 #include <Util/Logger.hpp>
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 namespace NES {
+
+QueryExecutionPlan::QueryExecutionPlan() : sources(), stages() {
+  std::string qId = this->generateAndAssignQueryId();
+  NES_DEBUG("QueryExecutionPlan: QEP created with QueryId " << qId)
+}
 
 QueryExecutionPlan::QueryExecutionPlan(const std::string& _queryId) : queryId(_queryId), sources(), stages() {}
 
@@ -63,4 +70,12 @@ const std::string &QueryExecutionPlan::getQueryId() const {
   return this->queryId;
 }
 
+std::string QueryExecutionPlan::generateAndAssignQueryId() {
+  boost::uuids::basic_random_generator<boost::mt19937> gen;
+  boost::uuids::uuid u = gen();
+  this->queryId = boost::uuids::to_string(u);
+  return this->queryId;
+}
+
 } // namespace NES
+BOOST_CLASS_EXPORT(NES::QueryExecutionPlan);

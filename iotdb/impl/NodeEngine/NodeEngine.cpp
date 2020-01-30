@@ -28,18 +28,18 @@ NodeProperties* NodeEngine::getNodeProperties() {
   return props.get();
 }
 
-void NodeEngine::deployQuery(const std::string& queryId, QueryExecutionPlanPtr qep) {
+void NodeEngine::deployQuery(QueryExecutionPlanPtr qep) {
   NES_DEBUG("NODEENGINE: deploy query" << qep)
 
-  Dispatcher::instance().registerQueryWithStart(queryId, qep);
-  qeps.insert({queryId, qep});
+  Dispatcher::instance().registerQueryWithStart(qep);
+  qeps.insert({qep->getQueryId(), qep});
 }
 
-void NodeEngine::deployQueryWithoutStart(const std::string& queryId, QueryExecutionPlanPtr qep) {
+void NodeEngine::deployQueryWithoutStart(QueryExecutionPlanPtr qep) {
   NES_DEBUG("NODEENGINE: deploy query" << qep)
 
-  Dispatcher::instance().registerQueryWithoutStart(queryId, qep);
-  qeps.insert({queryId, qep});
+  Dispatcher::instance().registerQueryWithoutStart(qep);
+  qeps.insert({qep->getQueryId(), qep});
 }
 
 void NodeEngine::undeployQuery(const std::string& queryId) {
@@ -64,7 +64,7 @@ void NodeEngine::start() {
 void NodeEngine::startWithRedeploy() {
   for (std::pair<std::string, QueryExecutionPlanPtr> e : qeps) {
     NES_DEBUG("NODEENGINE: register query " << e.first)
-    Dispatcher::instance().registerQueryWithStart(e.first, e.second);
+    Dispatcher::instance().registerQueryWithStart(e.second);
   }
 
   NES_DEBUG("NODEENGINE: start thread pool")

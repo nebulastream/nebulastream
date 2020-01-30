@@ -103,7 +103,7 @@ void DataSource::running_routine() {
     NES_DEBUG("DataSource " << this << ": Data Source finished processing")
   } else {
     NES_FATAL_ERROR("DataSource " << this << ": No queryId assigned. Running_routine is not possible!")
-    throw std::logic_error("No queryId assigned. Running_routine is not possible!");
+    throw std::logic_error("DataSource: No queryId assigned. Running_routine is not possible!");
   }
 }
 

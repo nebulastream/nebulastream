@@ -38,14 +38,14 @@ class Dispatcher {
    * respective map + start them
    * @param QueryExecutionPlan to be deployed
    */
-  bool registerQueryWithStart(const std::string&, const QueryExecutionPlanPtr&);
+  bool registerQueryWithStart(QueryExecutionPlanPtr);
 
   /**
    * @brief register a query by extracting sources, windows and sink and add them to
    * respective map
    * @param QueryExecutionPlan to be deployed
    */
-  bool registerQueryWithoutStart(const std::string&, const QueryExecutionPlanPtr&);
+  bool registerQueryWithoutStart(QueryExecutionPlanPtr);
 
   /**
    * @brief deregister a query by extracting sources, windows and sink and remove them
