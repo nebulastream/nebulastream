@@ -25,12 +25,12 @@ MapOperator& MapOperator::operator=(const MapOperator& other)
 
 void MapOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out)
 {
-    childs[0]->produce(codegen, context, out);
+    getChildren()[0]->produce(codegen, context, out);
 }
 void MapOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out)
 {
     codegen->generateCode(field_, predicate_, context, out);
-    parent->consume(codegen, context, out);
+    getParent()->consume(codegen, context, out);
 }
 
 const OperatorPtr MapOperator::copy() const

@@ -15,35 +15,35 @@ class TopDown : public NESPlacementOptimizer {
     TopDown() = default;
     ~TopDown() = default;
 
-    NESExecutionPlan initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlanPtr) override;
+    NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlanPtr) override;
 
   private:
 
     /**
      * @brief place query operators and prepare nes execution plan
-     * @param nesExecutionPlan
+     * @param nesExecutionPlanPtr
      * @param sinkOperator
      * @param nesSourceNodes
      * @param nesTopologyGraphPtr
      */
-    void placeOperators(NESExecutionPlan nesExecutionPlan, const OperatorPtr& sinkOperator,
-                        deque<NESTopologyEntryPtr> nesSourceNodes, const NESTopologyGraphPtr& nesTopologyGraphPtr);
+    void placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr, const OperatorPtr sinkOperator,
+                        deque<NESTopologyEntryPtr> nesSourceNodes, const NESTopologyGraphPtr nesTopologyGraphPtr);
 
     /**
      * @brief add query operator to existing execution node
      * @param operatorPtr
      * @param executionNode
      */
-    void addOperatorToExistingNode(OperatorPtr& operatorPtr, const ExecutionNodePtr& executionNode) const;
+    void addOperatorToExistingNode(OperatorPtr operatorPtr, const ExecutionNodePtr executionNode) const;
 
     /**
      * @brief create new execution nesNode for the query operator.
-     * @param executionGraph
+     * @param executionPlanPtr
      * @param processOperator
      * @param nesNode
      */
-    void createNewExecutionNode(NESExecutionPlan& executionGraph, OperatorPtr& processOperator,
-                                NESTopologyEntryPtr& nesNode) const;
+    void createNewExecutionNode(NESExecutionPlanPtr executionPlanPtr, OperatorPtr processOperator,
+                                NESTopologyEntryPtr nesNode) const;
 };
 
 }

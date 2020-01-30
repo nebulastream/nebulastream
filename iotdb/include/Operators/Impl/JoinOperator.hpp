@@ -12,7 +12,7 @@ namespace NES {
 
 class JoinOperator : public Operator {
   public:
-    JoinOperator(const JoinPredicatePtr& join_spec);
+    JoinOperator(const JoinPredicatePtr join_spec);
     JoinOperator(const JoinOperator& other);
     JoinOperator& operator=(const JoinOperator& other);
     void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;

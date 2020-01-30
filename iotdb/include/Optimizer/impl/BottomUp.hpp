@@ -15,55 +15,51 @@ using namespace std;
  *          if the resources are not available they are placed on a node neighbouring to the node or one level up.
  */
 class BottomUp : public NESPlacementOptimizer {
- public:
-  BottomUp() {};
-  ~BottomUp() {};
+  public:
+    BottomUp() {};
+    ~BottomUp() {};
 
-  NESExecutionPlan initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
+    NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
- private:
+  private:
 
-  // This structure hold information about the current operator to place and previously placed parent operator.
-  // It helps in deciding if the operator is to be placed in the nes node where the parent operator was placed
-  // or on another suitable neighbouring node.
-  struct ProcessOperator {
-    ProcessOperator(OperatorPtr operatorPtr, ExecutionNodePtr executionNodePtr) {
-      this->operatorToProcess = operatorPtr;
-      this->parentExecutionNode = executionNodePtr;
-    }
+    // This structure hold information about the current operator to place and previously placed parent operator.
+    // It helps in deciding if the operator is to be placed in the nes node where the parent operator was placed
+    // or on another suitable neighbouring node.
+    struct ProcessOperator {
+        ProcessOperator(OperatorPtr operatorPtr, ExecutionNodePtr executionNodePtr) {
+            this->operatorToProcess = operatorPtr;
+            this->parentExecutionNode = executionNodePtr;
+        }
 
-    OperatorPtr operatorToProcess;
-    ExecutionNodePtr parentExecutionNode;
-  };
+        OperatorPtr operatorToProcess;
+        ExecutionNodePtr parentExecutionNode;
+    };
 
-  /**
-   * This method is responsible for placing the operators to the nes nodes and generating ExecutionNodes.
-   * @param executionGraph : graph containing the information about the execution nodes.
-   * @param nesTopologyGraphPtr : nes Topology graph used for extracting information about the nes topology.
-   * @param sourceOperator : source operator.
-   * @param sourceNodes : List of sensor nodes which can act as source.
-   *
-   * @throws exception if the operator can't be placed anywhere.
-   */
-  void placeOperators(NESExecutionPlan executionGraph, const NESTopologyGraphPtr& nesTopologyGraphPtr,
-                      OperatorPtr sourceOperator, deque<NESTopologyEntryPtr> sourceNodes);
+    /**
+     * This method is responsible for placing the operators to the nes nodes and generating ExecutionNodes.
+     * @param executionPlanPtr : graph containing the information about the execution nodes.
+     * @param nesTopologyGraphPtr : nes Topology graph used for extracting information about the nes topology.
+     * @param sourceNodePtr : sensor nodes which can act as source.
+     *
+     * @throws exception if the operator can't be placed anywhere.
+     */
+    void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
+                        OperatorPtr sourceOperator, deque<NESTopologyEntryPtr> sourceNodes);
 
-  // finds a suitable for node for the operator to be placed.
-  NESTopologyEntryPtr findSuitableNESNodeForOperatorPlacement(const ProcessOperator &operatorToProcess,
-                                                              const NESTopologyGraphPtr& nesTopologyGraph,
-                                                              deque<NESTopologyEntryPtr> &sourceNodes);
+    // finds a suitable for node for the operator to be placed.
+    NESTopologyEntryPtr findSuitableNESNodeForOperatorPlacement(const ProcessOperator& operatorToProcess,
+                                                                NESTopologyGraphPtr nesTopologyGraphPtr,
+                                                                NESTopologyEntryPtr sourceNodePtr);
 
-  /**
-   * @brief This method returns the source operator in the user input query
-   * @param root: the sink operator of the query
-   * @return source operator pointer
-   */
-  OperatorPtr getSourceOperator(OperatorPtr root);
+    /**
+     * @brief This method returns the source operator in the user input query
+     * @param root: the sink operator of the query
+     * @return source operator pointer
+     */
+    OperatorPtr getSourceOperator(OperatorPtr root);
 
-  // This method returns all sensor nodes that act as the source in the nes topology.
-  deque<NESTopologyEntryPtr> getSourceNodes(NESTopologyPlanPtr nesTopologyPlan,
-                                            std::string streamName);
-
+    deque<NESTopologyEntryPtr> getSourceNodes(NESTopologyPlanPtr nesTopologyPlan, string streamName);
 };
 }
 

@@ -26,9 +26,9 @@ std::set<OperatorType> Operator::flattenedTypes() {
 std::set<OperatorType> Operator::traverseOpTree(bool traverse_children) {
   std::set<OperatorType> result;
   if (traverse_children) {
-    if (!this->childs.empty()) {
+    if (!this->children.empty()) {
       result.insert(this->getOperatorType());
-      for (const OperatorPtr &_op: this->childs) {
+      for (const OperatorPtr &_op: this->children) {
         std::set<OperatorType> tmp = _op->traverseOpTree(traverse_children);
         result.insert(tmp.begin(), tmp.end());
       }
@@ -47,5 +47,17 @@ bool Operator::equals(const Operator &_rhs) {
   //TODO: change equals method to virtual bool equals(const Operator &_rhs) = 0;
   assert(0);
   return false;
+}
+const std::vector<OperatorPtr> Operator::getChildren() const {
+    return children;
+}
+void Operator::setChildren(const std::vector<OperatorPtr> children) {
+    Operator::children = children;
+}
+const OperatorPtr Operator::getParent() const {
+    return parent;
+}
+void Operator::setParent(const OperatorPtr parent) {
+    Operator::parent = parent;
 }
 } // namespace NES

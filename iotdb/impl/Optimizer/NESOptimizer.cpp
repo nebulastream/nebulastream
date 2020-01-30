@@ -6,16 +6,10 @@
 
 using namespace NES;
 
-NESExecutionPlanPtr NESOptimizer::prepareExecutionGraph(
-    const std::string strategy, const InputQueryPtr inputQuery,
-    const NESTopologyPlanPtr nesTopologyPlan) {
+NESExecutionPlanPtr NESOptimizer::prepareExecutionGraph(const std::string strategy, const InputQueryPtr inputQuery,
+                                                        const NESTopologyPlanPtr nesTopologyPlan) {
 
-  const shared_ptr<NESPlacementOptimizer> optimizerPtr =
-      NESPlacementOptimizer::getOptimizer(strategy);
-
-  const NESExecutionPlan executionGraph = optimizerPtr->initializeExecutionPlan(
-      inputQuery, nesTopologyPlan);
-
-  return make_shared<NESExecutionPlan>(executionGraph);
-}
-;
+    const shared_ptr<NESPlacementOptimizer> optimizerPtr = NESPlacementOptimizer::getOptimizer(strategy);
+    const NESExecutionPlanPtr nesExecutionPlanPtr = optimizerPtr->initializeExecutionPlan(inputQuery, nesTopologyPlan);
+    return nesExecutionPlanPtr;
+};

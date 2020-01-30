@@ -23,7 +23,7 @@ TupleBuffer::TupleBuffer(void* _buffer, const size_t _buffer_size_bytes,
       num_tuples(_num_tuples) {
 }
 
-void TupleBuffer::copyInto(const TupleBufferPtr& other) {
+void TupleBuffer::copyInto(const TupleBufferPtr other) {
   if (other && other.get() != this) {
     this->buffer_size_bytes = other->buffer_size_bytes;
     this->tuple_size_bytes = other->tuple_size_bytes;

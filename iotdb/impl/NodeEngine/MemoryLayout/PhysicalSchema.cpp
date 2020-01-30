@@ -5,7 +5,7 @@
 
 namespace NES {
 
-PhysicalSchema::PhysicalSchema(const SchemaPtr &schema) : schema(schema) {
+PhysicalSchema::PhysicalSchema(const SchemaPtr schema) : schema(schema) {
   for (auto field : schema->fields) {
     auto dataType = field->data_type;
     this->fields.push_back(this->createPhysicalField(dataType));

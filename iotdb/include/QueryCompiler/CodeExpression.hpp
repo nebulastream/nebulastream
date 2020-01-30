@@ -16,6 +16,6 @@ class CodeExpression {
     std::string code_;
 };
 
-const CodeExpressionPtr combine(const CodeExpressionPtr& lhs, const CodeExpressionPtr& rhs);
+const CodeExpressionPtr combine(const CodeExpressionPtr lhs, const CodeExpressionPtr rhs);
 
 } // namespace NES

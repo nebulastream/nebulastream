@@ -40,7 +40,7 @@ class TupleBuffer {
    * @brief Explicit copy method for tuple buffer using TupleBufferPtr
    * @param TupleBufferPtr of the buffer where we copy from into this buffer
    */
-  void copyInto(const TupleBufferPtr&);
+  void copyInto(const TupleBufferPtr);
 
   /**
    * @brief method to print the current statistics of the buffer
