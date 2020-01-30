@@ -78,10 +78,10 @@ behavior CoordinatorActor::running() {
       return registerQuery(description, strategy);
     },
     [=](deregister_query_atom, const string& queryId) {
-      this->deregisterQuery(queryId);
+      deregisterQuery(queryId);
     },
     [=](deploy_query_atom, const string& description) {
-      this->deployQuery(description);
+      deployQuery(description);
     },
 
     //worker specific methods
@@ -103,7 +103,9 @@ behavior CoordinatorActor::running() {
     },
     [=](show_registered_queries_atom) {
       aout(this) << "Printing Registered Queries" << endl;
-      aout(this) << queryCatalogService.getAllRegisteredQueries() << endl;
+      const map registeredQueries = queryCatalogService.getAllRegisteredQueries();
+      aout(this) << registeredQueries << endl;
+      return registeredQueries.size() ;
     },
     [=](show_running_queries_atom) {
       aout(this) << "Printing Running Queries" << endl;
