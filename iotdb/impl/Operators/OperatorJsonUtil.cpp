@@ -48,7 +48,7 @@ void OperatorJsonUtil::getChildren(const OperatorPtr &root, std::vector<json::va
 
   std::vector<json::value> childrenNode;
 
-  std::vector<OperatorPtr> &children = root->childs;
+  std::vector<OperatorPtr> children = root->getChildren();
   if (children.empty()) {
     return;
   }

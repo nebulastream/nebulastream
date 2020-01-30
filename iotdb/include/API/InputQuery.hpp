@@ -84,7 +84,7 @@ class InputQuery {
      * @param joinPred join predicate.
      * @return query.
      */
-    InputQuery& join(const InputQuery& sub_query, const JoinPredicatePtr& joinPred);
+    InputQuery& join(const InputQuery& sub_query, const JoinPredicatePtr joinPred);
 
     /**
      * @brief: Creates a window aggregation.

@@ -74,27 +74,27 @@ class Operator {
     virtual ~Operator();
     virtual const OperatorPtr copy() const = 0;
     size_t cost;
-    std::vector<OperatorPtr> childs{};
-    OperatorPtr parent;
     virtual void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) = 0;
     virtual void consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) = 0;
     virtual const std::string toString() const = 0;
     virtual OperatorType getOperatorType() const = 0;
     virtual bool equals(const Operator& _rhs);
 
-    int getOperatorId() { return this->operatorId; };
-    void setOperatorId(int operatorId) { this->operatorId = operatorId; };
-    bool isScheduled() { return this->scheduled; };
-    void markScheduled(bool scheduled) { this->scheduled = scheduled; };
-
+    size_t getOperatorId() { return this->operatorId; };
+    void setOperatorId(size_t operatorId) { this->operatorId = operatorId; };
+    const std::vector<OperatorPtr> getChildren() const;
+    void setChildren(const std::vector<OperatorPtr> children);
+    const OperatorPtr getParent() const;
+    void setParent(const OperatorPtr parent);
     /**
      * @brief traverses recursively through the operatory tree and returns the operators as a flattened set
      */
     std::set<OperatorType> flattenedTypes();
 
   private:
-    bool scheduled = false;
-    int operatorId;
+    size_t operatorId;
+    std::vector<OperatorPtr> children{};
+    OperatorPtr parent;
     std::set<OperatorType> traverseOpTree(bool traverse_children);
 
     friend class boost::serialization::access;
@@ -103,20 +103,20 @@ class Operator {
     void serialize(Archive& ar, unsigned) {
         ar & BOOST_SERIALIZATION_NVP(cost)
             & BOOST_SERIALIZATION_NVP(operatorId)
-            & BOOST_SERIALIZATION_NVP(childs)
+            & BOOST_SERIALIZATION_NVP(children)
             & BOOST_SERIALIZATION_NVP(parent);
     }
 };
 
 const OperatorPtr createAggregationOperator(const AggregationSpec& aggr_spec);
-const OperatorPtr createFilterOperator(const PredicatePtr& predicate);
-const OperatorPtr createJoinOperator(const JoinPredicatePtr& join_spec);
+const OperatorPtr createFilterOperator(const PredicatePtr predicate);
+const OperatorPtr createJoinOperator(const JoinPredicatePtr join_spec);
 const OperatorPtr createKeyByOperator(const Attributes& keyby_spec);
 const OperatorPtr createMapOperator(AttributeFieldPtr attr, PredicatePtr ptr);
-const OperatorPtr createSinkOperator(const DataSinkPtr& sink);
+const OperatorPtr createSinkOperator(const DataSinkPtr sink);
 const OperatorPtr createSortOperator(const Sort& sort_spec);
-const OperatorPtr createSourceOperator(const DataSourcePtr& source);
-const OperatorPtr createWindowOperator(const WindowDefinitionPtr& window_definition);
+const OperatorPtr createSourceOperator(const DataSourcePtr source);
+const OperatorPtr createWindowOperator(const WindowDefinitionPtr window_definition);
 
 } // namespace NES
 

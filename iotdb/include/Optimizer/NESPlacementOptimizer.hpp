@@ -25,17 +25,17 @@ class NESPlacementOptimizer {
      * @param nesTopologyPlan
      * @return
      */
-    virtual NESExecutionPlan initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan) = 0;
+    virtual NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan) = 0;
 
-    void invalidateUnscheduledOperators(OperatorPtr& rootOperator, vector<int>& childOperatorIds);
+    void invalidateUnscheduledOperators(OperatorPtr rootOperator, vector<size_t>& childOperatorIds);
 
     /**
      * @brief This method will traverse through all the nodes of the graphs and remove any reference to the operator not
      * located on the traversed node.
      *
-     * @param graph
+     * @param nesExecutionPlanPtr
      */
-    void removeNonResidentOperators(NESExecutionPlan graph);
+    void removeNonResidentOperators(NESExecutionPlanPtr nesExecutionPlanPtr);
 
     /**
      * @brief This method will add system generated zmq source and sinks for each execution node.
@@ -44,16 +44,16 @@ class NESPlacementOptimizer {
      * user defined source or sink operator respectively.
      *
      * @param schema
-     * @param graph
+     * @param nesExecutionPlanPtr
      */
-    void addSystemGeneratedSourceSinkOperators(const Schema& schema, NESExecutionPlan graph);
+    void addSystemGeneratedSourceSinkOperators(const Schema& schema, NESExecutionPlanPtr nesExecutionPlanPtr);
 
     /**
-     * @brief Fill the execution graph with forward operators in nes topology.
-     * @param graph
+     * @brief Fill the execution nesExecutionPlanPtr with forward operators in nes topology.
+     * @param nesExecutionPlanPtr
      * @param nesTopologyPtr
      */
-    void completeExecutionGraphWithNESTopology(NESExecutionPlan graph, NESTopologyPlanPtr nesTopologyPtr);
+    void completeExecutionGraphWithNESTopology(NESExecutionPlanPtr nesExecutionPlanPtr, NESTopologyPlanPtr nesTopologyPtr);
 
     /**
      * @brief Factory method returning different kind of optimizer.
@@ -68,19 +68,19 @@ class NESPlacementOptimizer {
      * @param targetSource
      * @return deque containing nes nodes with top element being sink node and bottom most being the targetSource node.
      */
-    deque<NESTopologyEntryPtr> getCandidateNESNodes(const NESTopologyGraphPtr& nesGraphPtr,
-                                                    const NESTopologyEntryPtr& targetSource) const;
+    deque<NESTopologyEntryPtr> getCandidateNESNodes(const NESTopologyGraphPtr nesGraphPtr,
+                                                    const NESTopologyEntryPtr targetSource) const;
 
-    void convertFwdOptr(const Schema& schema, ExecutionNodePtr& executionNodePtr) const;
+    void convertFwdOptr(const Schema& schema, ExecutionNodePtr executionNodePtr) const;
 
     /**
      * @brief Add forward operators between source and sink nodes.
      * @param sourceNodes : list of source nodes
      * @param nesTopologyGraphPtr : nes topology graph
-     * @param nesExecutionPlan : nes execution plan
+     * @param nesExecutionPlanPtr : nes execution plan
      */
-    void addForwardOperators(const deque<NESTopologyEntryPtr>& sourceNodes, const NESTopologyGraphPtr& nesTopologyGraphPtr,
-                             NESExecutionPlan& nesExecutionPlan) const;
+    void addForwardOperators(const deque<NESTopologyEntryPtr> sourceNodes, const NESTopologyGraphPtr nesTopologyGraphPtr,
+                             NESExecutionPlanPtr nesExecutionPlanPtr) const;
 };
 
 }

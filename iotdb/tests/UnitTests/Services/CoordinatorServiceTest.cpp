@@ -164,6 +164,7 @@ TEST_F(CoordinatorCafTest, test_deregistration_and_topology) {
       "}\n";
   EXPECT_EQ(coordinatorServicePtr->getTopologyPlanString(), expectedTopo2);
 }
+
 TEST_F(CoordinatorCafTest, test_register_query) {
   string queryId = coordinatorServicePtr->register_query(queryString,
                                                          "BottomUp");
@@ -302,7 +303,7 @@ TEST_F(CoordinatorCafTest, DISABLED_test_local_distributed_deployment) {
   EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
   EXPECT_TRUE(coordinatorServicePtr->getRunningQueries().size() == 1);
 
-  for (const QueryExecutionPlanPtr& qep : qeps) {
+  for (const QueryExecutionPlanPtr qep : qeps) {
     engine->undeployQuery(qep);
   }
   engine->stopWithUndeploy();
@@ -338,7 +339,7 @@ TEST_F(CoordinatorCafTest, DISABLED_test_sequential_local_distributed_deployment
     EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
     EXPECT_TRUE(coordinatorServicePtr->getRunningQueries().size() == 1);
 
-    for (const QueryExecutionPlanPtr& qep : qeps) {
+    for (const QueryExecutionPlanPtr qep : qeps) {
       engine->undeployQuery(qep);
     }
 

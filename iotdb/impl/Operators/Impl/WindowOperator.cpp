@@ -21,14 +21,14 @@ WindowOperator &WindowOperator::operator=(const WindowOperator &other) {
 }
 
 void WindowOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream &out) {
-  childs[0]->produce(codegen, context, out);
+  getChildren()[0]->produce(codegen, context, out);
 
 }
 
 void WindowOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream &out) {
   codegen->generateCode(this->window_definition, context, out);
-  if (parent != nullptr)
-    parent->consume(codegen, context, out);
+  if (getParent() != nullptr)
+      getParent()->consume(codegen, context, out);
 }
 
 const OperatorPtr WindowOperator::copy() const { return std::make_shared<WindowOperator>(*this); }
@@ -46,7 +46,7 @@ const WindowDefinitionPtr &WindowOperator::getWindowDefinition() const {
   return window_definition;
 }
 
-const OperatorPtr createWindowOperator(const NES::WindowDefinitionPtr& windowDefinitionPtr) {
+const OperatorPtr createWindowOperator(const NES::WindowDefinitionPtr windowDefinitionPtr) {
   return std::make_shared<WindowOperator>(windowDefinitionPtr);
 }
 
