@@ -6,6 +6,7 @@
 #include <Actors/AtomUtils.hpp>
 #include <Services/CoordinatorService.hpp>
 #include <Services/StreamCatalogService.hpp>
+#include <Services/QueryCatalogService.hpp>
 #include <Services/WorkerService.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Actors/Configurations/CoordinatorActorConfig.hpp>
@@ -155,6 +156,7 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
    */
   void initializeNESTopology();
 
+  QueryCatalogService queryCatalogService;
   StreamCatalogService streamCatalogService;
   CoordinatorActorConfig actorCoordinatorConfig;
   CoordinatorServicePtr coordinatorServicePtr;

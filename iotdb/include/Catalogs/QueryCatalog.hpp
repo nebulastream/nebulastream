@@ -85,32 +85,11 @@ class QueryCatalog {
     bool deleteQuery(const string& queryId);
 
     /**
-     * @brief method to mark a query running
-     * @param id of the query to start
-     * @note this will set the running bool to true in the QueryCatalogEntry
+     * @brief method to change status of a query
+     * @param id of the query
+     * @param status of the query
      */
-    void markQueryAsRunning(string queryId);
-
-    /**
-     * @brief method to mark a query stop
-     * @param id of the query to stop
-     * @note this will set the running bool to false in the QueryCatalogEntry
-     */
-    void markQueryAsStopped(string queryId);
-
-    /**
-     * @brief method to mark a query failed
-     * @param id of the query to stop
-     * @note this will set the running bool to false in the QueryCatalogEntry
-     */
-    void markQueryAsFailed(string queryId);
-
-    /**
-     * @brief method to mark a query as scheduling
-     * @param id of the query to stop
-     * @note this will set the running bool to false in the QueryCatalogEntry
-     */
-    void markQueryAsScheduling(string queryId);
+    void markQueryAs(string queryId, QueryStatus queryStatus);
 
     /**
      * @brief method to test if a query is started

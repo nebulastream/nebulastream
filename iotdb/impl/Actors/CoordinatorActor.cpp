@@ -103,10 +103,7 @@ behavior CoordinatorActor::running() {
     },
     [=](show_registered_queries_atom) {
       aout(this) << "Printing Registered Queries" << endl;
-      for (const auto& p : coordinatorServicePtr->getRegisteredQueries()) {
-        aout(this) << p.first << endl;
-      }
-      return coordinatorServicePtr->getRegisteredQueries().size();
+      aout(this) << queryCatalogService.getAllRegisteredQueries() << endl;
     },
     [=](show_running_queries_atom) {
       aout(this) << "Printing Running Queries" << endl;
@@ -116,7 +113,7 @@ behavior CoordinatorActor::running() {
     },
     [=](show_reg_log_stream_atom) {
       aout(this) << "Printing logical streams" << endl;
-      aout(this) << streamCatalogService.getAllLogicalStreamAsString();
+      aout(this) << streamCatalogService.getAllLogicalStreamAsString() << endl;
     },
     [=](show_reg_phy_stream_atom) {
       aout(this) << "Printing physical streams" << endl;
@@ -250,7 +247,7 @@ void CoordinatorActor::deployQuery(const string &queryId) {
     this->request(hdl, task_timeout, execute_operators_atom::value, queryId,
                   s_eto);
   }
-  QueryCatalog::instance().markQueryAsRunning(queryId);
+  QueryCatalog::instance().markQueryAs(queryId, QueryStatus::Running);
 }
 
 void CoordinatorActor::deregisterQuery(const string &queryId) {

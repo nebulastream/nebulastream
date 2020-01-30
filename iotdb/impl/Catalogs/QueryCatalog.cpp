@@ -69,7 +69,7 @@ bool QueryCatalog::deleteQuery(const string& queryId) {
         execPlan->freeResources();
         if (QueryCatalog::instance().getQuery(queryId)->queryStatus == QueryStatus::Running) {
             NES_DEBUG("QueryCatalog: query is running, stopping it");
-            QueryCatalog::instance().markQueryAsStopped(queryId);
+            QueryCatalog::instance().markQueryAs(queryId, QueryStatus::Stopped);
         }
         NES_DEBUG("QueryCatalog: erase query " << queryId);
         std::map<string, QueryCatalogEntryPtr>::iterator it;
@@ -79,24 +79,9 @@ bool QueryCatalog::deleteQuery(const string& queryId) {
     }
 }
 
-void QueryCatalog::markQueryAsRunning(string queryId) {
-    NES_DEBUG("QueryCatalog: mark query with id " << queryId<< " running.")
-    queries[queryId]->queryStatus = QueryStatus::Running;
-}
-
-void QueryCatalog::markQueryAsStopped(string queryId) {
-    NES_DEBUG("QueryCatalog: mark query with id " << queryId<< " stopped.")
-    queries[queryId]->queryStatus = QueryStatus::Stopped;
-}
-
-void QueryCatalog::markQueryAsFailed(string queryId) {
-    NES_DEBUG("QueryCatalog: mark query with id " << queryId << " failed.")
-    queries[queryId]->queryStatus = QueryStatus::Failed;
-}
-
-void QueryCatalog::markQueryAsScheduling(string queryId) {
-    NES_DEBUG("QueryCatalog: mark query with id " << queryId << " scheduling.")
-    queries[queryId]->queryStatus = QueryStatus::Scheduling;
+void QueryCatalog::markQueryAs(string queryId, QueryStatus queryStatus) {
+    NES_DEBUG("QueryCatalog: mark query with id " << queryId<< " as " << queryStatus)
+    queries[queryId]->queryStatus = queryStatus;
 }
 
 bool QueryCatalog::isQueryRunning(string queryId) {
