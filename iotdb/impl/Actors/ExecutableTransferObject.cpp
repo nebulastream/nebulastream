@@ -20,7 +20,7 @@ ExecutableTransferObject::ExecutableTransferObject(string description,
 }
 
 WindowDefinitionPtr assignWindowHandler(OperatorPtr operator_ptr){
-  for(OperatorPtr c: operator_ptr->childs) {
+  for(OperatorPtr c: operator_ptr->getChildren()) {
     if (auto *windowOpt = dynamic_cast<WindowOperator *>(operator_ptr.get())) {
       return windowOpt->getWindowDefinition();
     }

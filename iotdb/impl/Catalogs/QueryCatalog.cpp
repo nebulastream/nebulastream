@@ -33,7 +33,7 @@ string QueryCatalog::register_query(const string &queryString,
   try {
     InputQueryPtr inputQueryPtr = UtilityFunctions::createQueryFromCodeString(
         queryString);
-    Schema schema = inputQueryPtr->source_stream->getSchema();
+    Schema schema = inputQueryPtr->getSourceStream()->getSchema();
 
     NESExecutionPlanPtr nesExecutionPtr = OptimizerService::instance().getExecutionPlan(
         inputQueryPtr, optimizationStrategyName);

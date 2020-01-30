@@ -84,7 +84,7 @@ class InputQuery {
      * @param joinPred join predicate.
      * @return query.
      */
-    InputQuery& join(const InputQuery& sub_query, const JoinPredicatePtr& joinPred);
+    InputQuery& join(const InputQuery& sub_query, const JoinPredicatePtr joinPred);
 
     /**
      * @brief: Creates a window aggregation.
@@ -149,16 +149,19 @@ class InputQuery {
     // helper operators
     OperatorPtr getRoot() const { return root; };
 
-    StreamPtr source_stream;
-
     int getNextOperatorId() {
         operatorIdCounter++;
         return this->operatorIdCounter;
     }
+
+    const StreamPtr getSourceStream() const;
+    void setSourceStream(const StreamPtr sourceStream);
+
   private:
     InputQuery(StreamPtr source_stream);
     int operatorIdCounter = 0;
     OperatorPtr root;
+    StreamPtr sourceStream;
 };
 
 typedef std::shared_ptr<InputQuery> InputQueryPtr;

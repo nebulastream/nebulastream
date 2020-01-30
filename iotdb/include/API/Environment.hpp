@@ -38,7 +38,7 @@ namespace NES {
     private:
         Config config;
         Environment(const Config &config);
-        void printInputQueryPlan(const OperatorPtr& curr, int depth);
+        void printInputQueryPlan(const OperatorPtr curr, int depth);
     };
 
 } // namespace NES

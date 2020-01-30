@@ -166,7 +166,7 @@ class NESTopologyGraph {
   nesGraph_t graph;
 };
 
-typedef std::shared_ptr<NESTopologyGraph> NESGraphPtr;
+typedef std::shared_ptr<NESTopologyGraph> NESTopologyGraphPtr;
 
 }
 #endif /* INCLUDE_TOPOLOGY_NESTOPOLOGYGRAPH_HPP_ */

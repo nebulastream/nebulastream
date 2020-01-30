@@ -57,9 +57,9 @@ NESTopologyEntryPtr NESTopologyManager::getRootNode() {
 
 json::value NESTopologyManager::getNESTopologyGraphAsJson() {
 
-  const NESGraphPtr &nesGraphPtr = getNESTopologyPlan()->getNESGraph();
-  const std::vector<NESTopologyLinkPtr> &allEdges = nesGraphPtr->getAllEdges();
-  const std::vector<NESVertex> &allVertex = nesGraphPtr->getAllVertex();
+    const NESTopologyGraphPtr &nesGraphPtr = getNESTopologyPlan()->getNESTopologyGraph();
+    const std::vector<NESTopologyLinkPtr> &allEdges = nesGraphPtr->getAllEdges();
+    const std::vector<NESVertex> &allVertex = nesGraphPtr->getAllVertex();
 
   auto result = json::value::object();
   std::vector<json::value> edges { };
@@ -110,9 +110,9 @@ json::value NESTopologyManager::getNESTopologyGraphAsJson() {
 std::vector<json::value> NESTopologyManager::getChildrenNode(
     NESTopologyEntryPtr nesParentNode) {
 
-  const NESGraphPtr &nesGraphPtr = getNESTopologyPlan()->getNESGraph();
-  const std::vector<NESTopologyLinkPtr> &edgesToNode = nesGraphPtr
-      ->getAllEdgesToNode(nesParentNode);
+    const NESTopologyGraphPtr &nesGraphPtr = getNESTopologyPlan()->getNESTopologyGraph();
+    const std::vector<NESTopologyLinkPtr> &edgesToNode = nesGraphPtr
+        ->getAllEdgesToNode(nesParentNode);
 
   std::vector<json::value> children = { };
 

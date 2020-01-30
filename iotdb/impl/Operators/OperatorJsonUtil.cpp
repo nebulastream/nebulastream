@@ -23,10 +23,10 @@ json::value OperatorJsonUtil::getBasePlan(InputQueryPtr inputQuery) {
 
     auto node = json::value::object();
     node["id"] = json::value::string(
-        operatorTypeToString[root->getOperatorType()] + "(OP-" + std::to_string(root->operatorId) + ")");
+        operatorTypeToString[root->getOperatorType()] + "(OP-" + std::to_string(root->getOperatorId()) + ")");
     node["title"] =
         json::value::string(
-            operatorTypeToString[root->getOperatorType()] + +"(OP-" + std::to_string(root->operatorId) + ")");
+            operatorTypeToString[root->getOperatorType()] + +"(OP-" + std::to_string(root->getOperatorId()) + ")");
     if (root->getOperatorType() == OperatorType::SOURCE_OP ||
         root->getOperatorType() == OperatorType::SINK_OP) {
       node["nodeType"] = json::value::string("Source");
@@ -48,7 +48,7 @@ void OperatorJsonUtil::getChildren(const OperatorPtr &root, std::vector<json::va
 
   std::vector<json::value> childrenNode;
 
-  std::vector<OperatorPtr> &children = root->childs;
+  std::vector<OperatorPtr> children = root->getChildren();
   if (children.empty()) {
     return;
   }
@@ -57,10 +57,10 @@ void OperatorJsonUtil::getChildren(const OperatorPtr &root, std::vector<json::va
     auto node = json::value::object();
     node["id"] =
         json::value::string(
-            operatorTypeToString[child->getOperatorType()] + "(OP-" + std::to_string(child->operatorId) + ")");
+            operatorTypeToString[child->getOperatorType()] + "(OP-" + std::to_string(child->getOperatorId()) + ")");
     node["title"] =
         json::value::string(
-            operatorTypeToString[child->getOperatorType()] + "(OP-" + std::to_string(child->operatorId) + ")");
+            operatorTypeToString[child->getOperatorType()] + "(OP-" + std::to_string(child->getOperatorId()) + ")");
 
     if (child->getOperatorType() == OperatorType::SOURCE_OP ||
         child->getOperatorType() == OperatorType::SINK_OP) {
@@ -74,10 +74,10 @@ void OperatorJsonUtil::getChildren(const OperatorPtr &root, std::vector<json::va
     auto edge = json::value::object();
     edge["source"] =
         json::value::string(
-            operatorTypeToString[child->getOperatorType()] + "(OP-" + std::to_string(child->operatorId) + ")");
+            operatorTypeToString[child->getOperatorType()] + "(OP-" + std::to_string(child->getOperatorId()) + ")");
     edge["target"] =
         json::value::string(
-            operatorTypeToString[root->getOperatorType()] + "(OP-" + std::to_string(root->operatorId) + ")");
+            operatorTypeToString[root->getOperatorType()] + "(OP-" + std::to_string(root->getOperatorId()) + ")");
 
     edges.push_back(edge);
     getChildren(child, nodes, edges);

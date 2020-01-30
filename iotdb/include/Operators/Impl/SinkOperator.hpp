@@ -14,7 +14,7 @@ namespace NES {
     public:
       SinkOperator();
 
-      SinkOperator(const DataSinkPtr& sink);
+      SinkOperator(const DataSinkPtr sink);
       SinkOperator(const SinkOperator& other);
       SinkOperator& operator=(const SinkOperator& other);
       void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) override;

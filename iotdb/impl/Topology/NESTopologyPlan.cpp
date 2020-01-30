@@ -118,7 +118,7 @@ size_t NESTopologyPlan::getNextFreeLinkId() {
   return currentLinkId;
 }
 
-NESGraphPtr NESTopologyPlan::getNESGraph() const {
+NESTopologyGraphPtr NESTopologyPlan::getNESTopologyGraph() const {
   return fGraphPtr;
 }
 
