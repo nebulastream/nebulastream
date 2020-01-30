@@ -3,27 +3,18 @@
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
-
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
-
-BOOST_CLASS_EXPORT_IMPLEMENT(NES::GeneratedQueryExecutionPlan);
 
 namespace NES {
 
-GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan() : QueryExecutionPlan(""), pipeline_stage_ptr_() {
-  boost::uuids::basic_random_generator<boost::mt19937> gen;
-  boost::uuids::uuid u = gen();
-  this->queryId = boost::uuids::to_string(u);
+GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan() : QueryExecutionPlan(), pipeline_stage_ptr_() {
+}
+
+GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan(const std::string& queryId) : QueryExecutionPlan(queryId), pipeline_stage_ptr_() {
 }
 
 GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan(PipelineStagePtr ptr)
-    : QueryExecutionPlan(""), pipeline_stage_ptr_(ptr) {
-  boost::uuids::basic_random_generator<boost::mt19937> gen;
-  boost::uuids::uuid u = gen();
-  this->queryId = boost::uuids::to_string(u);
+    : QueryExecutionPlan(), pipeline_stage_ptr_(ptr) {
 }
 
 bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const NES::TupleBufferPtr buf) {
@@ -51,3 +42,4 @@ bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const
 }
 
 } // namespace NES
+BOOST_CLASS_EXPORT(NES::GeneratedQueryExecutionPlan);

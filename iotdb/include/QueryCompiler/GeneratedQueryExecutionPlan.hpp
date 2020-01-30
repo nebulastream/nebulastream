@@ -16,6 +16,8 @@ class GeneratedQueryExecutionPlan : public QueryExecutionPlan {
  public:
   GeneratedQueryExecutionPlan();
 
+  GeneratedQueryExecutionPlan(const std::string& queryId);
+
   GeneratedQueryExecutionPlan(PipelineStagePtr ptr);
 
   /**

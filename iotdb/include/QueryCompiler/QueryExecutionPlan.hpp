@@ -5,8 +5,8 @@
 #include <boost/serialization/vector.hpp>
 #include <map>
 #include <Windows/WindowHandler.hpp>
-#include "../SourceSink/DataSink.hpp"
-#include "../SourceSink/DataSource.hpp"
+#include <SourceSink/DataSink.hpp>
+#include <SourceSink/DataSource.hpp>
 
 namespace NES {
 class QueryExecutionPlan;
@@ -28,6 +28,7 @@ class QueryExecutionPlan {
   ;
 
   void addDataSource(DataSourcePtr source) {
+    source->setQueryId(this->queryId);
     sources.push_back(source);
   }
 
@@ -42,8 +43,11 @@ class QueryExecutionPlan {
 
   const std::string &getQueryId() const;
 
+  std::string generateAndAssignQueryId();
+
  protected:
   friend class boost::serialization::access;
+  QueryExecutionPlan();
 
   QueryExecutionPlan(const std::string &_queryId);
 
@@ -63,12 +67,11 @@ class QueryExecutionPlan {
   std::map<std::string, size_t> qResult;
 
  private:
-  QueryExecutionPlan();
-
   template<class Archive> void serialize(Archive& ar, const unsigned int version) {
     ar & sources;
     ar & sinks;
     ar & windows;
+    ar & queryId;
     //    	ar & stages;
     //    	ar & source_to_stage;
     //    	ar & stage_to_dest;

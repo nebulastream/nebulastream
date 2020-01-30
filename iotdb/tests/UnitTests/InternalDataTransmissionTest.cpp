@@ -70,7 +70,7 @@ TEST_F(InternalDataTransmissionTest, testInternalTransmission) {
   qep1->addDataSink(sink1);
 
   NodeEngine *ptr = new NodeEngine();
-  ptr->deployQueryWithoutStart("idbla",qep1);
+  ptr->deployQueryWithoutStart(qep1);
   ptr->start();
   source1->start();
 

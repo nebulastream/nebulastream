@@ -41,10 +41,10 @@ void Dispatcher::resetDispatcher() {
   processedBuffers = 0;
 }
 
-bool Dispatcher::registerQueryWithStart(const string& queryId, const QueryExecutionPlanPtr& qep) {
+bool Dispatcher::registerQueryWithStart(QueryExecutionPlanPtr qep) {
   std::unique_lock<std::mutex> lock(queryMutex);
 
-  registerQueryWithoutStart(queryId, qep);
+  registerQueryWithoutStart(qep);
   /**
    * start elements
    */
@@ -69,20 +69,20 @@ bool Dispatcher::registerQueryWithStart(const string& queryId, const QueryExecut
   return true;
 }
 
-bool Dispatcher::registerQueryWithoutStart(const string& queryId, const QueryExecutionPlanPtr& qep) {
+bool Dispatcher::registerQueryWithoutStart(QueryExecutionPlanPtr qep) {
   std::unique_lock<std::mutex> lock(queryMutex);
 
   /**
    * test if elements already exist
    */
-  NES_DEBUG("Dispatcher: search for query" << queryId)
+  NES_DEBUG("Dispatcher: search for query" << qep->getQueryId())
 
-  if (this->queryId_to_query_map.find(queryId) != this->queryId_to_query_map.end()) {
-    NES_ERROR("Dispatcher: qep already exists" << queryId)
+  if (this->queryId_to_query_map.find(qep->getQueryId()) != this->queryId_to_query_map.end()) {
+    NES_ERROR("Dispatcher: qep already exists" << qep->getQueryId())
     return false;
   }
   else {
-    this->queryId_to_query_map.insert({queryId, qep});
+    this->queryId_to_query_map.insert({qep->getQueryId(), qep});
 
     auto windows = qep->getWindows();
     for (const auto& window : windows) {
