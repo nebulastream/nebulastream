@@ -37,7 +37,7 @@ const OperatorPtr recursiveCopy(OperatorPtr ptr) {
  * independent of implementation of query graph */
 const std::vector<OperatorPtr> getChildNodes(const OperatorPtr op);
 
-void addChild(const OperatorPtr op_parent, const OperatorPtr op_child);
+void addChild(const OperatorPtr opParent, const OperatorPtr opChild);
 
 static inline void ltrim(std::string& s) {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
@@ -46,19 +46,19 @@ static inline void ltrim(std::string& s) {
 }
 
 InputQuery::InputQuery(StreamPtr source_stream)
-    : source_stream(source_stream),
+    : sourceStream(source_stream),
       root() {
 }
 
 /* TODO: perform deep copy of operator graph */
 InputQuery::InputQuery(const InputQuery& query)
-    : source_stream(query.source_stream),
+    : sourceStream(query.sourceStream),
       root(recursiveCopy(query.root)) {
 }
 
 InputQuery& InputQuery::operator=(const InputQuery& query) {
     if (&query != this) {
-        this->source_stream = query.source_stream;
+        this->sourceStream = query.sourceStream;
         this->root = recursiveCopy(query.root);
     }
     return *this;
@@ -68,7 +68,6 @@ InputQuery::~InputQuery() {
 }
 
 InputQuery InputQuery::from(Stream& stream) {
-    ;
     InputQuery q(std::make_shared<Stream>(stream));
     OperatorPtr op = createSourceOperator(
         createTestDataSourceWithSchema(stream.getSchema()));
@@ -159,7 +158,7 @@ InputQuery& InputQuery::window(const NES::WindowTypePtr windowType,
 // output operators
 InputQuery& InputQuery::writeToFile(const std::string& file_name) {
     OperatorPtr op = createSinkOperator(
-        createBinaryFileSinkWithSchema(this->source_stream->getSchema(),
+        createBinaryFileSinkWithSchema(this->sourceStream->getSchema(),
                                        file_name));
     int operatorId = this->getNextOperatorId();
     op->setOperatorId(operatorId);
@@ -183,7 +182,7 @@ InputQuery& InputQuery::writeToZmq(const std::string& logicalStreamName,
 
 InputQuery& InputQuery::print(std::ostream& out) {
     OperatorPtr op = createSinkOperator(
-        createPrintSinkWithSchema(this->source_stream->getSchema(), out));
+        createPrintSinkWithSchema(this->sourceStream->getSchema(), out));
     int operatorId = this->getNextOperatorId();
     op->setOperatorId(operatorId);
     addChild(op, root);
@@ -194,7 +193,7 @@ InputQuery& InputQuery::print(std::ostream& out) {
 InputQuery& InputQuery::writeToKafka(const std::string& topic,
                                      const cppkafka::Configuration& config) {
     OperatorPtr op = createSinkOperator(
-        createKafkaSinkWithSchema(this->source_stream->getSchema(), topic,
+        createKafkaSinkWithSchema(this->sourceStream->getSchema(), topic,
                                   config));
     int operatorId = this->getNextOperatorId();
     op->setOperatorId(operatorId);
@@ -207,20 +206,26 @@ InputQuery& InputQuery::writeToKafka(const std::string& brokers,
                                      const std::string& topic,
                                      const size_t kafkaProducerTimeout) {
     OperatorPtr op = createSinkOperator(
-        createKafkaSinkWithSchema(this->source_stream->getSchema(), brokers, topic, kafkaProducerTimeout));
+        createKafkaSinkWithSchema(this->sourceStream->getSchema(), brokers, topic, kafkaProducerTimeout));
     int operatorId = this->getNextOperatorId();
     op->setOperatorId(operatorId);
     addChild(op, root);
     root = op;
     return *this;
 }
+const StreamPtr InputQuery::getSourceStream() const {
+    return sourceStream;
+}
+void InputQuery::setSourceStream(const StreamPtr sourceStream) {
+    InputQuery::sourceStream = sourceStream;
+}
 
-void addChild(const OperatorPtr op_parent, const OperatorPtr op_child) {
-    if (op_parent && op_child) {
-        op_child->setParent(op_parent);
-        vector<OperatorPtr> children = op_parent->getChildren();
-        children.push_back(op_child);
-        op_parent->setChildren(children);
+void addChild(const OperatorPtr opParent, const OperatorPtr opChild) {
+    if (opParent && opChild) {
+        opChild->setParent(opParent);
+        vector<OperatorPtr> children = opParent->getChildren();
+        children.push_back(opChild);
+        opParent->setChildren(children);
     }
 }
 

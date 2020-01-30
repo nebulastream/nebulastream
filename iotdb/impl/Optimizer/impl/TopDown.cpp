@@ -8,7 +8,7 @@ NESExecutionPlanPtr TopDown::initializeExecutionPlan(
     const OperatorPtr sinkOperator = inputQuery->getRoot();
 
     //find the source Node
-    string streamName = inputQuery->source_stream->getName();
+    string streamName = inputQuery->getSourceStream()->getName();
     const deque<NESTopologyEntryPtr>& sourceNodes = StreamCatalog::instance()
         .getSourceNodesForLogicalStream(streamName);
 
@@ -34,14 +34,14 @@ NESExecutionPlanPtr TopDown::initializeExecutionPlan(
     completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlanPtr);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.
-    Schema& schema = inputQuery->source_stream->getSchema();
+    Schema schema= inputQuery->getSourceStream()->getSchema();
     addSystemGeneratedSourceSinkOperators(schema, nesExecutionPlanPtr);
 
     return nesExecutionPlanPtr;
 }
 
-void TopDown::placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr, const OperatorPtr sinkOperator,
-                             deque<NESTopologyEntryPtr> nesSourceNodes, const NESTopologyGraphPtr nesTopologyGraphPtr) {
+void TopDown::placeOperators(NESExecutionPlanPtr executionPlanPtr, OperatorPtr sinkOperator,
+                             deque<NESTopologyEntryPtr> nesSourceNodes, NESTopologyGraphPtr nesTopologyGraphPtr) {
 
     for (NESTopologyEntryPtr nesSourceNode : nesSourceNodes) {
 
@@ -66,9 +66,9 @@ void TopDown::placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr, const Oper
 
                 for (NESTopologyEntryPtr node : candidateNodes) {
 
-                    if (nesExecutionPlanPtr->hasVertex(node->getId())) {
+                    if (executionPlanPtr->hasVertex(node->getId())) {
 
-                        const ExecutionNodePtr existingExecutionNode = nesExecutionPlanPtr
+                        const ExecutionNodePtr existingExecutionNode = executionPlanPtr
                             ->getExecutionNode(node->getId());
 
                         size_t operatorId = targetOperator->getOperatorId();
@@ -89,12 +89,12 @@ void TopDown::placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr, const Oper
 
                     if (node->getRemainingCpuCapacity() > 0) {
 
-                        if (nesExecutionPlanPtr->hasVertex(node->getId())) {
+                        if (executionPlanPtr->hasVertex(node->getId())) {
 
-                            const ExecutionNodePtr executionNode = nesExecutionPlanPtr->getExecutionNode(node->getId());
+                            const ExecutionNodePtr executionNode = executionPlanPtr->getExecutionNode(node->getId());
                             addOperatorToExistingNode(targetOperator, executionNode);
                         } else {
-                            createNewExecutionNode(nesExecutionPlanPtr, targetOperator, node);
+                            createNewExecutionNode(executionPlanPtr, targetOperator, node);
                         }
 
                         // Add child operators for placement
@@ -115,13 +115,13 @@ void TopDown::placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr, const Oper
                     throw std::runtime_error("Unable to schedule source operator" + targetOperator->toString());
                 }
 
-                if (nesExecutionPlanPtr->hasVertex(nesSourceNode->getId())) {
+                if (executionPlanPtr->hasVertex(nesSourceNode->getId())) {
 
                     const ExecutionNodePtr
-                        executionNode = nesExecutionPlanPtr->getExecutionNode(nesSourceNode->getId());
+                        executionNode = executionPlanPtr->getExecutionNode(nesSourceNode->getId());
                     addOperatorToExistingNode(targetOperator, executionNode);
                 } else {
-                    createNewExecutionNode(nesExecutionPlanPtr, targetOperator, nesSourceNode);
+                    createNewExecutionNode(executionPlanPtr, targetOperator, nesSourceNode);
                 }
             }
         }
@@ -141,7 +141,7 @@ void TopDown::createNewExecutionNode(NESExecutionPlanPtr executionPlanPtr, Opera
     executionNode->getNESNode()->reduceCpuCapacity(1);
 }
 
-void TopDown::addOperatorToExistingNode(OperatorPtr operatorPtr, const ExecutionNodePtr executionNode) const {
+void TopDown::addOperatorToExistingNode(OperatorPtr operatorPtr, ExecutionNodePtr executionNode) const {
 
     stringstream operatorName;
     operatorName << operatorTypeToString[operatorPtr->getOperatorType()] << "(OP-"
