@@ -62,7 +62,6 @@ class StreamCatalogServiceTest : public testing::Test {
 
 TEST_F(StreamCatalogServiceTest, get_all_logical_stream) {
     StreamCatalogService streamCatalogService;
-    streamCatalogService.getAllLogicalStream();
     const map<std::string, std::string>& allLogicalStream = streamCatalogService.getAllLogicalStreamAsString();
     EXPECT_EQ(allLogicalStream.size(), 1);
     for (auto const[key, value] : allLogicalStream) {

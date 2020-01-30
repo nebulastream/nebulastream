@@ -114,7 +114,7 @@ map<NESTopologyEntryPtr, ExecutableTransferObject> CoordinatorService::prepareEx
             }
         }
 
-        QueryCatalog::instance().markQueryAsScheduling(queryId);
+        QueryCatalog::instance().markQueryAs(queryId, QueryStatus::Scheduling);
 
     } else if (QueryCatalog::instance().getQuery(queryId)->queryStatus == QueryStatus::Running) {
         NES_WARNING("CoordinatorService: Query is already running -> " << queryId);
