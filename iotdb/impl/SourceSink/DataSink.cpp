@@ -53,4 +53,13 @@ void DataSink::setSchema(const Schema& pSchema) {
 DataSink::~DataSink() {
   NES_DEBUG("Destroy Data Sink  " << this)
 }
+
+const std::string &DataSink::getQueryId() const {
+  return this->queryId;
+}
+
+void DataSink::setQueryId(std::string &_queryId) {
+  this->queryId = _queryId;
+};
+
 }  // namespace NES

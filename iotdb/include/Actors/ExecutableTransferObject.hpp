@@ -23,8 +23,7 @@ namespace NES {
 class ExecutableTransferObject {
  public:
   ExecutableTransferObject() = default;
-  ExecutableTransferObject(string queryId,
-                           string description,
+  ExecutableTransferObject(string description,
                            Schema schema,
                            vector<DataSourcePtr> sources,
                            vector<DataSinkPtr> destinations,
@@ -48,7 +47,6 @@ class ExecutableTransferObject {
   QueryExecutionPlanPtr toQueryExecutionPlan();
 
  private:
-  string _queryId;
   string _description;
   Schema _schema;
   vector<DataSourcePtr> _sources;
@@ -64,7 +62,6 @@ class ExecutableTransferObject {
   template<class Archive>
   void serialize(Archive &ar,
                  const unsigned int version) {
-    ar & _queryId;
     ar & _description;
     ar & _schema;
     ar & _sources;

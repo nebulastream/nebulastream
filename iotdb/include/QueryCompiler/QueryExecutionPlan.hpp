@@ -33,9 +33,11 @@ class QueryExecutionPlan {
   }
 
   void addDataSink(DataSinkPtr sink) {
+    sink->setQueryId(this->queryId);
     sinks.push_back(sink);
   }
   void addWindow(WindowPtr window) {
+    window->setQueryId(this->queryId);
     windows.push_back(window);
   }
 

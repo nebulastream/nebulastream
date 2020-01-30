@@ -131,13 +131,13 @@ class DataSource {
     size_t generatedTuples;
     size_t generatedBuffers;
     size_t num_buffers_to_process;
+    std::string queryId;
 
-  private:
+ private:
     friend class boost::serialization::access;
     //bool indicating if the source is currently running
     bool running;
     std::thread thread;
-    std::string queryId;
 
   template<class Archive>
     void serialize(Archive& ar, const unsigned int version) {
@@ -145,6 +145,7 @@ class DataSource {
         ar & schema;
         ar & generatedTuples;
         ar & generatedBuffers;
+        ar & queryId;
     }
 };
 
