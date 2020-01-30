@@ -6,6 +6,9 @@
 
 namespace NES {
 
+/**
+ * This class is responsible for accessing query catalog and servicing the requests from Actor or REST framework.
+ */
 class QueryCatalogService {
 
   public:

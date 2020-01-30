@@ -77,8 +77,8 @@ behavior CoordinatorActor::running() {
     [=](register_query_atom, const string& description, const string& strategy) {
       return registerQuery(description, strategy);
     },
-    [=](deregister_query_atom, const string& description) {
-      this->deregisterQuery(description);
+    [=](deregister_query_atom, const string& queryId) {
+      this->deregisterQuery(queryId);
     },
     [=](deploy_query_atom, const string& description) {
       this->deployQuery(description);
