@@ -103,9 +103,9 @@ class NESTopologyPlan {
 
   /**
    * @brief method to the get NES graph
-   * @return NESGraphPtr to the graph
+   * @return NESTopologyGraphPtr to the graph
    */
-  NESGraphPtr getNESGraph() const;
+  NESTopologyGraphPtr getNESTopologyGraph() const;
 
   /**
    * @brief get all nodes with an ip
@@ -118,7 +118,7 @@ class NESTopologyPlan {
   size_t getNextFreeLinkId();
   size_t currentNodeId;
   size_t currentLinkId;
-  NESGraphPtr fGraphPtr;
+  NESTopologyGraphPtr fGraphPtr;
 };
 typedef std::shared_ptr<NESTopologyPlan> NESTopologyPlanPtr;
 }  // namespace NES

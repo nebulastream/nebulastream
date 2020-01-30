@@ -14,7 +14,7 @@ class SourceOperator : public Operator {
  public:
   SourceOperator();
 
-  SourceOperator(const DataSourcePtr &source);
+  SourceOperator(const DataSourcePtr source);
   SourceOperator(const SourceOperator &other);
   SourceOperator &operator=(const SourceOperator &other);
   void produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream &out) override;

@@ -9,7 +9,7 @@
 
 namespace NES {
 
-SinkOperator::SinkOperator(const DataSinkPtr &sink) : Operator(), sink_(NES::copy(sink)) {}
+SinkOperator::SinkOperator(const DataSinkPtr sink) : Operator(), sink_(NES::copy(sink)) {}
 
 SinkOperator::SinkOperator(const SinkOperator &other) : sink_(NES::copy(other.sink_)) {}
 
@@ -21,8 +21,8 @@ SinkOperator &SinkOperator::operator=(const SinkOperator &other) {
 }
 
 void SinkOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream &out) {
-  assert(!childs.empty());
-  childs[0]->produce(codegen, context, out);
+  assert(!getChildren().empty());
+  getChildren()[0]->produce(codegen, context, out);
 }
 
 
@@ -49,7 +49,7 @@ SinkOperator::~SinkOperator() = default;
 
 SinkOperator::SinkOperator() = default;
 
-const OperatorPtr createSinkOperator(const DataSinkPtr &sink) { return std::make_shared<SinkOperator>(sink); }
+const OperatorPtr createSinkOperator(const DataSinkPtr sink) { return std::make_shared<SinkOperator>(sink); }
 
 } // namespace NES
 BOOST_CLASS_EXPORT(NES::SinkOperator);

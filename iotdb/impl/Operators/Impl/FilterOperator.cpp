@@ -1,5 +1,3 @@
-
-
 #include <iostream>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <Operators/Impl/FilterOperator.hpp>
@@ -18,12 +16,12 @@ FilterOperator &FilterOperator::operator=(const FilterOperator &other) {
 }
 
 void FilterOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream &out) {
-  childs[0]->produce(codegen, context, out);
+  getChildren()[0]->produce(codegen, context, out);
 }
 
 void FilterOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream &out) {
   codegen->generateCode(predicate_, context, out);
-  parent->consume(codegen, context, out);
+  getParent()->consume(codegen, context, out);
 }
 
 const OperatorPtr FilterOperator::copy() const { return std::make_shared<FilterOperator>(*this); }
@@ -48,7 +46,7 @@ bool FilterOperator::equals(const Operator &_rhs) {
   }
 }
 
-const OperatorPtr createFilterOperator(const PredicatePtr &predicate) {
+const OperatorPtr createFilterOperator(const PredicatePtr predicate) {
   return std::make_shared<FilterOperator>(predicate);
 }
 
