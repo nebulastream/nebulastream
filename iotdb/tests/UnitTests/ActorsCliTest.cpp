@@ -416,50 +416,65 @@ TEST_F(ActorsCliTest, DISABLED_testShowOperators) {
 
 //TODO: Fixme, remove Thread.Sleep
 TEST_F(ActorsCliTest, testSequentialMultiQueries) {
-  cout << "*** Running test testShowOperators" << endl;
-  CoordinatorActorConfig ccfg;
-  ccfg.load<io::middleman>();
-  actor_system system_coord { ccfg };
-  auto coordinator = system_coord.spawn<NES::CoordinatorActor>();
+    cout << "*** Running test testShowOperators" << endl;
+    CoordinatorActorConfig ccfg;
+    ccfg.load<io::middleman>();
+    actor_system system_coord{ccfg};
+    scoped_actor self{system_coord};
+    auto coordinator = system_coord.spawn<NES::CoordinatorActor>();
 
-  // try to publish actor at given port
-  cout << "*** try publish at port " << ccfg.publish_port << endl;
-  auto expected_port = io::publish(coordinator, ccfg.publish_port);
-  if (!expected_port) {
-    std::cerr << "*** publish failed: "
-        << system_coord.render(expected_port.error()) << endl;
-    return;
-  }
-  cout << "*** coordinator successfully published at port " << *expected_port
-      << endl;
-  std::this_thread::sleep_for(std::chrono::seconds(2));
+    // try to publish actor at given port
+    cout << "*** try publish at port " << ccfg.publish_port << endl;
+    auto expected_port = io::publish(coordinator, ccfg.publish_port);
+    if (!expected_port) {
+        std::cerr << "*** publish failed: "
+                  << system_coord.render(expected_port.error()) << endl;
+        return;
+    }
+    cout << "*** coordinator successfully published at port " << *expected_port
+         << endl;
+    std::this_thread::sleep_for(std::chrono::seconds(2));
 
-  WorkerActorConfig w_cfg;
-  w_cfg.load<io::middleman>();
-  actor_system sw { w_cfg };
-  PhysicalStreamConfig streamConf;
-  auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
+    WorkerActorConfig w_cfg;
+    w_cfg.load<io::middleman>();
+    actor_system sw{w_cfg};
+    PhysicalStreamConfig streamConf;
+    auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
                                              w_cfg.receive_port);
-  anon_send(worker, connect_atom::value, w_cfg.host, ccfg.publish_port);
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+    anon_send(worker, connect_atom::value, w_cfg.host, ccfg.publish_port);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
-  for (int i = 0; i < 1; i++) {
-    cout << "Sequence " << i << endl;
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    anon_send(coordinator, register_query_atom::value, queryString, "BottomUp");
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    anon_send(coordinator, deploy_query_atom::value, "FIXME_USE_UUID");
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    anon_send(coordinator, show_running_operators_atom::value);
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    anon_send(coordinator, deregister_query_atom::value, "FIXME_USE_UUID");
-    std::this_thread::sleep_for(std::chrono::seconds(3));
-    anon_send(coordinator, show_running_operators_atom::value);
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-  }
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+    for (int i = 0; i < 1; i++) {
+        cout << "Sequence " << i << endl;
+        std::this_thread::sleep_for(std::chrono::seconds(1));
 
-  anon_send_exit(worker, exit_reason::user_shutdown);
-  anon_send_exit(coordinator, exit_reason::user_shutdown);
+        string uuid;
+        self->request(coordinator, task_timeout, register_query_atom::value,
+                      queryString, "BottomUp").receive(
+            [&uuid](const string &_uuid) mutable {
+              uuid = _uuid;
+            }
+            ,
+            [=](const error &er) {
+              string error_msg = to_string(er);
+              NES_ERROR(
+                  "ACTORSCLITEST: Error during testShowRegistered " << "\n" << error_msg);
+            });
+        NES_INFO("ACTORSCLITEST: Registration completed with query ID " << uuid);
+        EXPECT_TRUE(!uuid.empty());
+
+        anon_send(coordinator, deploy_query_atom::value, uuid);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        anon_send(coordinator, show_running_operators_atom::value);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        anon_send(coordinator, deregister_query_atom::value, uuid);
+        std::this_thread::sleep_for(std::chrono::seconds(3));
+        anon_send(coordinator, show_running_operators_atom::value);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    anon_send_exit(worker, exit_reason::user_shutdown);
+    anon_send_exit(coordinator, exit_reason::user_shutdown);
 }
 }
