@@ -31,6 +31,7 @@ void RestEngine::setEndpoint(const std::string& value) {
 //NOTE: maybe someone can suggest a better way to do this.
 void RestEngine::setCoordinatorActorHandle(infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle) {
     this->queryController.setCoordinatorActorHandle(coordinatorActorHandle);
+    this->queryCatalogController.setCoordinatorActorHandle(coordinatorActorHandle);
 };
 
 void RestEngine::handleGet(http_request message) {
@@ -44,6 +45,9 @@ void RestEngine::handleGet(http_request message) {
             return;
         } else if (paths[0] == "streamCatalog") {
             streamCatalogController.handleGet(paths, message);
+            return;
+        } else if (paths[0] == "queryCatalog") {
+            queryCatalogController.handleGet(paths, message);
             return;
         }
     }
@@ -73,6 +77,9 @@ void RestEngine::handleDelete(http_request message) {
     if (!paths.empty()) {
         if (paths[0] == "streamCatalog") {
             streamCatalogController.handleDelete(paths, message);
+            return;
+        } else if (paths[0] == "queryCatalog") {
+            queryCatalogController.handleDelete(paths, message);
             return;
         }
     }

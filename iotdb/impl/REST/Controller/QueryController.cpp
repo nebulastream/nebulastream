@@ -15,7 +15,7 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
     if (path[1] == "nes-topology") {
 
         createExampleTopology();
-        const auto& nesTopology = nesTopologyService.getNESTopologyAsJson();
+        const auto& nesTopology = nesTopologyServicePtr->getNESTopologyAsJson();
 
         //Prepare the response
         successMessageImpl(message, nesTopology);
@@ -38,7 +38,7 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                             std::string userQuery(body.begin(), body.end());
 
                             //Call the service
-                            const auto& basePlan = queryService.generateBaseQueryPlanFromQueryString(
+                            const auto& basePlan = queryServicePtr->generateBaseQueryPlanFromQueryString(
                                 userQuery);
 
                             //Prepare the response
@@ -72,7 +72,7 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
 
                             //Call the service
                             const string
-                                queryId = coordinatorServicePtr->register_query(userQuery, optimizationStrategyName);
+                                queryId = coordinatorServicePtr->registerQuery(userQuery, optimizationStrategyName);
                             NESExecutionPlanPtr executionPlan = coordinatorServicePtr->getRegisteredQuery(queryId);
 
                             json::value executionGraphPlan = executionPlan->getExecutionGraphAsJson();

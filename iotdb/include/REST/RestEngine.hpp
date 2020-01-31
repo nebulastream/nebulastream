@@ -9,6 +9,7 @@
 #include <cpprest/http_listener.h>
 #include <cpprest/details/http_server.h>
 #include <pplx/pplxtasks.h>
+#include <REST/Controller/QueryCatalogController.hpp>
 #include "REST/Controller/BaseController.hpp"
 #include "REST/Controller/QueryController.hpp"
 #include "REST/Controller/StreamCatalogController.hpp"
@@ -21,8 +22,11 @@ namespace NES {
 class RestEngine : public BaseController {
   protected:
     http_listener _listener; // main micro service network endpoint
+
+  private:
     QueryController queryController;
     StreamCatalogController streamCatalogController;
+    QueryCatalogController queryCatalogController;
 
   public:
     RestEngine() {};

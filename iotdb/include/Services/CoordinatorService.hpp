@@ -35,121 +35,122 @@ class CoordinatorService;
 typedef std::shared_ptr<CoordinatorService> CoordinatorServicePtr;
 
 class CoordinatorService {
- public:
 
-  static CoordinatorServicePtr getInstance() {
-    static CoordinatorServicePtr instance{new CoordinatorService};
-    return instance;
-  }
+  public:
 
-  ~CoordinatorService() = default;
+    static CoordinatorServicePtr getInstance() {
+        static CoordinatorServicePtr instance{new CoordinatorService};
+        return instance;
+    }
 
-  /**
-   * @brief registers a CAF worker into the NES topology and creates a corresponding NESTopologyWorkerNode object
-   * @param ip the worker ip
-   * @param publish_port the publish port of the worker
-   * @param receive_port the receive port of the worker
-   * @param cpu the cpu capacity of the worker
-   * @param nodeProperties of the to be added sensor
-   * @param config of the node
-   * @param sap the strong_actor_pointer CAF object to the worker
-   */
-  NESTopologyEntryPtr register_sensor(size_t id, const string &ip, uint16_t publish_port, uint16_t receive_port, int cpu,
-                                      const string& nodeProperties, PhysicalStreamConfig streamConf);
+    ~CoordinatorService() = default;
 
-  /**
-   * @brief deregisters a CAF worker from the NES topology
-   * @param entry
-   * @return true, if it succeeded, otherwise false
-   */
-  bool deregister_sensor(const NESTopologyEntryPtr entry);
+    /**
+     * @brief registers a CAF worker into the NES topology and creates a corresponding NESTopologyWorkerNode object
+     * @param ip the worker ip
+     * @param publish_port the publish port of the worker
+     * @param receive_port the receive port of the worker
+     * @param cpu the cpu capacity of the worker
+     * @param nodeProperties of the to be added sensor
+     * @param config of the node
+     * @param sap the strong_actor_pointer CAF object to the worker
+     */
+    NESTopologyEntryPtr register_sensor(size_t id,
+                                        const string& ip,
+                                        uint16_t publish_port,
+                                        uint16_t receive_port,
+                                        int cpu,
+                                        const string& nodeProperties,
+                                        PhysicalStreamConfig streamConf);
 
-  /**
-   * @brief registers a CAF query into the NES topology to make it deployable
-   * @param queryString a queryString of the query
-   * @param optimizationStrategyName the optimization strategy (buttomUp or topDown)
-   */
-  string register_query(const string &queryString, const string &optimizationStrategyName);
+    /**
+     * @brief deregisters a CAF worker from the NES topology
+     * @param entry
+     * @return true, if it succeeded, otherwise false
+     */
+    bool deregister_sensor(const NESTopologyEntryPtr entry);
 
-  /**
-   * @brief method which is called to unregister an already running query
-   * @param queryId the queryId of the query
-   * @return true if deleted from running queries, otherwise false
-   */
-  bool deregister_query(const string &queryId);
+    /**
+     * @brief registers a CAF query into the NES topology to make it deployable
+     * @param queryString a queryString of the query
+     * @param optimizationStrategyName the optimization strategy (buttomUp or topDown)
+     */
+    string registerQuery(const string& queryString, const string& optimizationStrategyName);
 
-  /**
-   * @brief deploys a CAF query into the NES topology to the corresponding devices defined by the optimizer
-   * @param query a queryId of the query
-   */
-  map<NESTopologyEntryPtr, ExecutableTransferObject> make_deployment(const string &queryId);
+    /**
+     * @brief method which is called to unregister an already running query
+     * @param queryId the queryId of the query
+     * @return true if deleted from running queries, otherwise false
+     */
+    bool deleteQuery(const string& queryId);
 
-  /**
-   * @brief creates a string representation of the topology graph
-   * @return the topology as string representation
-   */
-  string getTopologyPlanString();
+    /**
+     * @brief deploys a CAF query into the NES topology to the corresponding devices defined by the optimizer
+     * @param query a queryId of the query
+     */
+    map<NESTopologyEntryPtr, ExecutableTransferObject> prepareExecutableTransferObject(const string& queryId);
 
-  string getNodePropertiesAsString(const NESTopologyEntryPtr entry);
+    /**
+     * @brief creates a string representation of the topology graph
+     * @return the topology as string representation
+     */
+    string getTopologyPlanString();
 
-  //FIXME: right now we do not register query but rather the nes plan
-  /**
-   * @brief: get the registered query
-   * @param queryId
-   * @return the nes execution plan for the query
-   */
-  NESExecutionPlanPtr getRegisteredQuery(string queryId);
+    string getNodePropertiesAsString(const NESTopologyEntryPtr entry);
 
-  /**
-   * @brief: clear query catalogs
-   * @return
-   */
+    //FIXME: right now we do not register query but rather the nes plan
+    /**
+     * @brief: get the registered query
+     * @param queryId
+     * @return the nes execution plan for the query
+     */
+    NESExecutionPlanPtr getRegisteredQuery(string queryId);
 
-  bool clearQueryCatalogs();
+    /**
+     * @brief: clear query catalogs
+     * @return
+     */
 
-  const map<string, QueryCatalogEntryPtr> getRegisteredQueries();
-  const map<string, QueryCatalogEntryPtr> getRunningQueries();
+    bool clearQueryCatalogs();
 
- private:
+    const map<string, QueryCatalogEntryPtr> getRegisteredQueries();
+    const map<string, QueryCatalogEntryPtr> getRunningQueries();
 
-  CoordinatorService() = default; //do not implement
+  private:
 
-  unordered_map<string, int> queryToPort;
-  shared_ptr<NESTopologyManager> topologyManagerPtr;
+    CoordinatorService() = default; //do not implement
 
+    unordered_map<string, int> queryToPort;
+    shared_ptr<NESTopologyManager> topologyManagerPtr;
 
-  OptimizerService optimizerService;
-  QueryService queryService;
+    /**
+     * @brief helper method to get all sources in a serialized format from a specific node in the topology
+     * @param schema the schema
+     * @param v the execution vertex
+     * @param execPlan the execution plan
+     */
+    vector<DataSourcePtr> getSources(const string& queryId, const ExecutionVertex& v);
 
-  /**
-   * @brief helper method to get all sources in a serialized format from a specific node in the topology
-   * @param schema the schema
-   * @param v the execution vertex
-   * @param execPlan the execution plan
-   */
-  vector<DataSourcePtr> getSources(const string &queryId, const ExecutionVertex &v);
+    /**
+     * @brief helper method to get all sinks in a serialized format from a specific node in the topology
+     * @param queryId
+     * @param v execution vertex
+     * @return DataSinkPtr
+     */
+    vector<DataSinkPtr> getSinks(const string& queryId, const ExecutionVertex& v);
 
-
-  /**
-   * @brief helper method to get all sinks in a serialized format from a specific node in the topology
-   * @param queryId
-   * @param v execution vertex
-   * @return DataSinkPtr
-   */
-  vector<DataSinkPtr> getSinks(const string &queryId, const ExecutionVertex &v);
-
-  /**
-   * @brief find the sink operator starting from the child operator.
-   *    IF the child operator has no parent AND the type is of SinkOperator THEN
-   *        return the child's DataSinkPtr
-   *    ELSE IF the child has a parent THEN
-   *        find the parent of child and call findDataSinkPointer method
-   *    ELSE
-   *        return nullptr and register a WARN message
-   * @param operatorPtr
-   * @return Data Sink pointer
-   */
-  DataSinkPtr findDataSinkPointer(OperatorPtr operatorPtr);
+    /**
+     * @brief find the sink operator starting from the child operator.
+     *    IF the child operator has no parent AND the type is of SinkOperator THEN
+     *        return the child's DataSinkPtr
+     *    ELSE IF the child has a parent THEN
+     *        find the parent of child and call findDataSinkPointer method
+     *    ELSE
+     *        return nullptr and register a WARN message
+     * @param operatorPtr
+     * @return Data Sink pointer
+     */
+    DataSinkPtr findDataSinkPointer(OperatorPtr operatorPtr);
 
     /**
    * @brief find the source operator starting from the child operator.
@@ -164,12 +165,12 @@ class CoordinatorService {
    */
     DataSourcePtr findDataSourcePointer(OperatorPtr operatorPtr);
 
-  /**
-   * @brief helper method to get an automatically assigned receive port where ZMQs are communicating.
-   * Currently only server/client architecture, i.e., only one layer, is supported
-   * @param query the descriptor of the query
-   */
-  int assign_port(const string &queryId);
+    /**
+     * @brief helper method to get an automatically assigned receive port where ZMQs are communicating.
+     * Currently only server/client architecture, i.e., only one layer, is supported
+     * @param query the descriptor of the query
+     */
+    int assign_port(const string& queryId);
 };
 
 }
