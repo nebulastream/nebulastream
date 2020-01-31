@@ -145,10 +145,10 @@ class QueryCatalog {
 
     /**
      * @brief method to get the queries in a specific state
-     * @param queryStatus : desired query status
+     * @param requestedStatus : desired query status
      * @return this will return a COPY of the queries in the catalog that are running
      */
-    map<string, QueryCatalogEntryPtr> getQueries(QueryStatus queryStatus);
+    map<string, QueryCatalogEntryPtr> getQueries(QueryStatus requestedStatus);
 
     /**
      * @brief method to reset the catalog
