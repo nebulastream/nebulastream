@@ -51,8 +51,9 @@ class WorkerActor : public stateful_actor<WorkerState> {
    * @param confi parameter for the source, e.g., file path or number of buffer
    * @param name of the new physical stream
    * @param name of the logical stream where this physical stream reports to
+   * @return bool indicating success
    */
-  void registerPhysicalStream(std::string sourceType, std::string sourceConf,
+  bool registerPhysicalStream(std::string sourceType, std::string sourceConf,
                               std::string physicalStreamName,
                               std::string logicalStreamName);
 
@@ -60,9 +61,10 @@ class WorkerActor : public stateful_actor<WorkerState> {
    * @brief this method registers logical streams via the coordinator
    * @param name of new logical stream
    * @param path to the file containing the schema
+   * @return bool indicating the success of the log stream
    * @note the logical stream is not saved in the worker as it is maintained on the coordinator and all logical streams can be retrieved from the physical stream map locally, if we later need the data we can add a map
    */
-  void registerLogicalStream(std::string streamName, std::string filePath);
+  bool registerLogicalStream(std::string streamName, std::string filePath);
 
   /**
    * @brief this method removes the logical stream in the coordinator
@@ -86,13 +88,13 @@ class WorkerActor : public stateful_actor<WorkerState> {
    * @brief the ongoing connection state in the TSM
    * if connection works go to running state, otherwise go to unconnected state
    */
-  void connecting(const std::string &host, uint16_t port);
+  bool connecting(const std::string &host, uint16_t port);
 
   /**
    * @brief this method disconnect the node
    * if connection works go to unconnected state
    */
-  void disconnecting();
+  bool disconnecting();
 
 };
 

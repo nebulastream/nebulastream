@@ -44,7 +44,7 @@ class WorkerService {
    */
   vector<string> getOperators();
 
-  const string &getIp() const;
+  string& getIp();
   void setIp(const string &ip);
   uint16_t getPublishPort() const;
   void setPublishPort(uint16_t publish_port);
