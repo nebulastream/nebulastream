@@ -87,8 +87,8 @@ class QueryCatalogServiceTest : public testing::Test {
 
 TEST_F(QueryCatalogServiceTest, get_all_registered_queries_without_query_registration) {
 
-    QueryCatalogService queryCatalogService;
-    std::map<std::string, std::string> allRegisteredQueries = queryCatalogService.getAllRegisteredQueries();
+    QueryCatalogServicePtr queryCatalogServicePtr = QueryCatalogService::getInstance();
+    std::map<std::string, std::string> allRegisteredQueries = queryCatalogServicePtr->getAllRegisteredQueries();
     EXPECT_TRUE(allRegisteredQueries.empty());
 }
 
@@ -99,8 +99,8 @@ TEST_F(QueryCatalogServiceTest, get_all_registered_queries_after_query_registrat
 
     const string queryId = QueryCatalog::instance().registerQuery(queryString, "BottomUp");
 
-    QueryCatalogService queryCatalogService;
-    std::map<std::string, std::string> allRegisteredQueries = queryCatalogService.getAllRegisteredQueries();
+    QueryCatalogServicePtr queryCatalogServicePtr = QueryCatalogService::getInstance();
+    std::map<std::string, std::string> allRegisteredQueries = queryCatalogServicePtr->getAllRegisteredQueries();
     EXPECT_EQ(allRegisteredQueries.size(), 1);
     EXPECT_TRUE(allRegisteredQueries.find(queryId) != allRegisteredQueries.end());
 }
@@ -114,8 +114,8 @@ TEST_F(QueryCatalogServiceTest, get_all_running_queries) {
 
     QueryCatalog::instance().markQueryAs(queryId, QueryStatus::Running);
 
-    QueryCatalogService queryCatalogService;
-    std::map<std::string, std::string> queries = queryCatalogService.getQueriesWithStatus("running");
+    QueryCatalogServicePtr queryCatalogServicePtr = QueryCatalogService::getInstance();
+    std::map<std::string, std::string> queries = queryCatalogServicePtr->getQueriesWithStatus("running");
     EXPECT_EQ(queries.size(), 1);
     EXPECT_TRUE(queries.find(queryId) != queries.end());
 }
@@ -123,8 +123,8 @@ TEST_F(QueryCatalogServiceTest, get_all_running_queries) {
 TEST_F(QueryCatalogServiceTest, throw_exception_when_query_status_is_unknown) {
 
     try {
-        QueryCatalogService queryCatalogService;
-        std::map<std::string, std::string> queries = queryCatalogService.getQueriesWithStatus("something_random");
+        QueryCatalogServicePtr queryCatalogServicePtr = QueryCatalogService::getInstance();
+        std::map<std::string, std::string> queries = queryCatalogServicePtr->getQueriesWithStatus("something_random");
         NES_DEBUG("Should have thrown invalid argument exception");
         FAIL();
     }catch(std::invalid_argument e ){

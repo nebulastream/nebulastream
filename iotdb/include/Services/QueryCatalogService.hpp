@@ -1,10 +1,13 @@
 #ifndef NES_IMPL_SERVICES_QUERYCATALOGSERVICE_HPP_
 #define NES_IMPL_SERVICES_QUERYCATALOGSERVICE_HPP_
 
-#include <iostream>
 #include <map>
+#include <memory>
 
 namespace NES {
+
+class QueryCatalogService;
+typedef std::shared_ptr<QueryCatalogService> QueryCatalogServicePtr;
 
 /**
  * This class is responsible for accessing query catalog and servicing the requests from Actor or REST framework.
@@ -12,6 +15,11 @@ namespace NES {
 class QueryCatalogService {
 
   public:
+
+    static QueryCatalogServicePtr getInstance() {
+        static QueryCatalogServicePtr instance{new QueryCatalogService};
+        return instance;
+    }
 
     /**
      * @brief Get the queries in the user defined status
@@ -27,6 +35,11 @@ class QueryCatalogService {
      */
     std::map<std::string, std::string> getAllRegisteredQueries();
 
+    ~QueryCatalogService() = default;
+
+  private:
+
+    QueryCatalogService()= default;
 };
 
 }

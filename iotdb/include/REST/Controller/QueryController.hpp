@@ -11,9 +11,13 @@ namespace NES {
 
 class QueryController: public BaseController {
   public:
+
     QueryController() {
         coordinatorServicePtr = CoordinatorService::getInstance();
+        queryServicePtr = QueryService::getInstance();
+        nesTopologyServicePtr = NESTopologyService::getInstance();
     }
+
     ~QueryController() {}
 
     void setCoordinatorActorHandle(infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle);
@@ -21,8 +25,8 @@ class QueryController: public BaseController {
     void handlePost(std::vector<utility::string_t> path, web::http::http_request message);
   private:
 
-    QueryService queryService;
-    NESTopologyService nesTopologyService;
+    QueryServicePtr queryServicePtr;
+    NESTopologyServicePtr nesTopologyServicePtr;
     CoordinatorServicePtr coordinatorServicePtr;
     infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
 };

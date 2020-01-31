@@ -81,20 +81,20 @@ string CoordinatorService::registerQuery(
 }
 
 bool CoordinatorService::deleteQuery(const string& queryId) {
-    QueryCatalog::instance().deleteQuery(queryId);
+    return QueryCatalog::instance().deleteQuery(queryId);
 }
 
 map<NESTopologyEntryPtr, ExecutableTransferObject> CoordinatorService::prepareExecutableTransferObject(
     const string& queryId) {
     map<NESTopologyEntryPtr, ExecutableTransferObject> output;
-    if (QueryCatalog::instance().isQueryExists(queryId)
+    if (QueryCatalog::instance().queryExists(queryId)
         && !QueryCatalog::instance().isQueryRunning(queryId)) {
         NES_INFO("CoordinatorService: Deploying query " << queryId);
 
         NESExecutionPlanPtr execPlan = QueryCatalog::instance().getQuery(queryId)
-            ->nesPlanPtr;
+            ->getNesPlanPtr();
 
-        Schema schema = QueryCatalog::instance().getQuery(queryId)->inputQueryPtr
+        Schema schema = QueryCatalog::instance().getQuery(queryId)->getInputQueryPtr()
             ->getSourceStream()->getSchema();
 
         //iterate through all vertices in the topology
@@ -116,7 +116,7 @@ map<NESTopologyEntryPtr, ExecutableTransferObject> CoordinatorService::prepareEx
 
         QueryCatalog::instance().markQueryAs(queryId, QueryStatus::Scheduling);
 
-    } else if (QueryCatalog::instance().getQuery(queryId)->queryStatus == QueryStatus::Running) {
+    } else if (QueryCatalog::instance().getQuery(queryId)->getQueryStatus() == QueryStatus::Running) {
         NES_WARNING("CoordinatorService: Query is already running -> " << queryId);
     } else {
         NES_WARNING("CoordinatorService: Query is not registered -> " << queryId);
@@ -128,8 +128,8 @@ vector<DataSourcePtr> CoordinatorService::getSources(const string& queryId,
                                                      const ExecutionVertex& v) {
     vector<DataSourcePtr> out = vector<DataSourcePtr>();
     NESExecutionPlanPtr execPlan = QueryCatalog::instance().getQuery(queryId)
-        ->nesPlanPtr;
-    Schema schema = QueryCatalog::instance().getQuery(queryId)->inputQueryPtr
+        ->getNesPlanPtr();
+    Schema schema = QueryCatalog::instance().getQuery(queryId)->getInputQueryPtr()
         ->getSourceStream()->getSchema();
 
     DataSourcePtr source = findDataSourcePointer(v.ptr->getRootOperator());
@@ -151,7 +151,7 @@ vector<DataSinkPtr> CoordinatorService::getSinks(const string& queryId,
     vector<DataSinkPtr> out = vector<DataSinkPtr>();
     //TODO: I am not sure what is happening here with the idx 0 and 1
     NESExecutionPlanPtr execPlan = QueryCatalog::instance().getQuery(queryId)
-        ->nesPlanPtr;
+        ->getNesPlanPtr();
     DataSinkPtr sink = findDataSinkPointer(v.ptr->getRootOperator());
 
     //FIXME: what about user defined a ZMQ sink?
@@ -221,9 +221,9 @@ string CoordinatorService::getTopologyPlanString() {
 }
 
 NESExecutionPlanPtr CoordinatorService::getRegisteredQuery(string queryId) {
-    if (QueryCatalog::instance().isQueryExists(queryId)) {
+    if (QueryCatalog::instance().queryExists(queryId)) {
         NES_DEBUG("CoordinatorService: return existing query " << queryId)
-        return QueryCatalog::instance().getQuery(queryId)->nesPlanPtr;
+        return QueryCatalog::instance().getQuery(queryId)->getNesPlanPtr();
     }
     NES_DEBUG("CoordinatorService: query with id does not exits" << queryId)
     return nullptr;

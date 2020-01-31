@@ -60,11 +60,11 @@ behavior CoordinatorActor::running() {
     },
     [=](register_log_stream_atom, const string& streamName, const string& streamSchema) {
       NES_DEBUG("CoordinatorActor: got request for register logical stream " << streamName << " and schema " << streamSchema)
-      return streamCatalogService.addNewLogicalStream(streamName, streamSchema);
+      return streamCatalogServicePtr->addNewLogicalStream(streamName, streamSchema);
     },
     [=](remove_log_stream_atom, const string& streamName) {
       NES_DEBUG("CoordinatorActor: got request for removel of logical stream " << streamName)
-      return streamCatalogService.removeLogicalStream(streamName);
+      return streamCatalogServicePtr->removeLogicalStream(streamName);
     },
     [=](remove_phy_stream_atom, std::string ip, const string& logicalStreamName, const string& physicalStreamName) {
       NES_DEBUG("CoordinatorActor: got request for removel of physical stream " << physicalStreamName << " from logical stream " << logicalStreamName)
@@ -103,7 +103,7 @@ behavior CoordinatorActor::running() {
     },
     [=](show_registered_queries_atom) {
       aout(this) << "Printing Registered Queries" << endl;
-      const map registeredQueries = queryCatalogService.getAllRegisteredQueries();
+      const map registeredQueries = queryCatalogServicePtr->getAllRegisteredQueries();
       aout(this) << registeredQueries << endl;
       return registeredQueries.size() ;
     },
@@ -115,7 +115,7 @@ behavior CoordinatorActor::running() {
     },
     [=](show_reg_log_stream_atom) {
       aout(this) << "Printing logical streams" << endl;
-      aout(this) << streamCatalogService.getAllLogicalStreamAsString() << endl;
+      aout(this) << streamCatalogServicePtr->getAllLogicalStreamAsString() << endl;
     },
     [=](show_reg_phy_stream_atom) {
       aout(this) << "Printing physical streams" << endl;
