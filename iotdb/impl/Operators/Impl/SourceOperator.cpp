@@ -9,7 +9,7 @@
 
 namespace NES {
 
-SourceOperator::SourceOperator(const DataSourcePtr& source) : Operator(), source_(source) {}
+SourceOperator::SourceOperator(const DataSourcePtr source) : Operator(), source_(source) {}
 
 SourceOperator::SourceOperator(const SourceOperator& other) : source_(other.source_) {}
 
@@ -29,7 +29,7 @@ void SourceOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr contex
 void SourceOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out)
 {
     codegen->generateCode(source_, context, out);
-    parent->consume(codegen,context,out);
+    getParent()->consume(codegen,context,out);
 }
 
 const OperatorPtr SourceOperator::copy() const { return std::make_shared<SourceOperator>(*this); }
@@ -52,7 +52,7 @@ SourceOperator::~SourceOperator() {}
 SourceOperator::SourceOperator() {
 }
 
-const OperatorPtr createSourceOperator(const DataSourcePtr& source) { return std::make_shared<SourceOperator>(source); }
+const OperatorPtr createSourceOperator(const DataSourcePtr source) { return std::make_shared<SourceOperator>(source); }
 
 } // namespace NES
 BOOST_CLASS_EXPORT(NES::SourceOperator);

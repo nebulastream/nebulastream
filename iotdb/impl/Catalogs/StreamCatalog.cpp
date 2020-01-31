@@ -83,7 +83,7 @@ bool StreamCatalog::addPhysicalStream(std::string logicalStreamName,
             logicalToPhysicalStreamMapping[logicalStreamName];
 
         //check if physical stream does not exist yet
-        for (StreamCatalogEntryPtr& entry : physicalStreams) {
+        for (StreamCatalogEntryPtr entry : physicalStreams) {
             NES_DEBUG(
                 "test node id=" << entry->getNode()->getId() << " phyStr=" << entry->getPhysicalName())
             NES_DEBUG(
@@ -229,7 +229,7 @@ deque<NESTopologyEntryPtr> StreamCatalog::getSourceNodesForLogicalStream(
         logicalToPhysicalStreamMapping[logicalStreamName];
 
     deque<NESTopologyEntryPtr> listOfSourceNodes;
-    for (StreamCatalogEntryPtr& entry : physicalStreams) {
+    for (StreamCatalogEntryPtr entry : physicalStreams) {
         listOfSourceNodes.push_back(entry->getNode());
     }
 
@@ -250,7 +250,7 @@ std::string StreamCatalog::getPhysicalStreamAndSchemaAsString() {
     for (auto entry : logicalToPhysicalStreamMapping) {
         ss << "stream name=" << entry.first << " with " << entry.second.size()
            << " elements:";
-        for (StreamCatalogEntryPtr& sce : entry.second) {
+        for (StreamCatalogEntryPtr sce : entry.second) {
             ss << sce->toString();
         }
         ss << std::endl;
