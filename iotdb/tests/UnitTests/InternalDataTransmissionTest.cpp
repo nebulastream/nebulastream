@@ -62,10 +62,10 @@ TEST_F(InternalDataTransmissionTest, testInternalTransmission) {
   PipelineStagePtr stage = code_gen->compile(CompilerArgs());
   QueryExecutionPlanPtr qep1(new GeneratedQueryExecutionPlan(stage));
 
-  DataSourcePtr source1 = createTestDataSourceWithSchema(query->source_stream->getSchema());
+  DataSourcePtr source1 = createTestDataSourceWithSchema(query->getSourceStream()->getSchema());
   Schema sch1 = Schema::create().addField("sum", BasicType::UINT32);
   //DataSinkPtr sink1 = std::make_shared<ForwardSink>(query->source_stream->getSchema(), host, port);
-  DataSinkPtr sink1 = createPrintSinkWithSchema(query->source_stream->getSchema(), cout);
+  DataSinkPtr sink1 = createPrintSinkWithSchema(query->getSourceStream()->getSchema(), cout);
   qep1->addDataSource(source1);
   qep1->addDataSink(sink1);
 
