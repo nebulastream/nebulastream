@@ -37,7 +37,7 @@ behavior WorkerActor::unconnected() {
   };
 }
 
-void WorkerActor::registerPhysicalStream(std::string sourceType,
+bool WorkerActor::registerPhysicalStream(std::string sourceType,
                                          std::string sourceConf,
                                          std::string physicalStreamName,
                                          std::string logicalStreamName) {
@@ -49,6 +49,9 @@ void WorkerActor::registerPhysicalStream(std::string sourceType,
 
   //send request to coordinator
   auto coordinator = actor_cast<actor>(this->state.current_server);
+
+  bool sucess = false;
+
   this->request(
       coordinator,
       task_timeout,
@@ -61,11 +64,32 @@ void WorkerActor::registerPhysicalStream(std::string sourceType,
       this->state.workerPtr->getPhysicalStreamConfig(physicalStreamName)
           .physicalStreamName,
       this->state.workerPtr->getPhysicalStreamConfig(physicalStreamName)
-          .logicalStreamName);
+          .logicalStreamName).await(
+      [&sucess, &physicalStreamName](const bool &dc) mutable {
+        if (dc == true) {
+          NES_DEBUG(
+              "WorkerActor: registerPhysicalStream" << physicalStreamName << " successfully added")
+          sucess = true;
+        } else {
+          NES_DEBUG(
+              "WorkerActor: registerPhysicalStream" << physicalStreamName << " could not be added")
+          sucess = false;
+        }
+      }
+      ,
+      [=, &sucess](const error &er) {
+        string error_msg = to_string(er);
+        NES_ERROR(
+            "WorkerActor: Error during registerLogicalStream for " << physicalStreamName << "\n" << error_msg);
+//        throw Exception("error while register stream");
+        sucess = false;
+      }
+      );
 
+  return sucess;
 }
 
-void WorkerActor::registerLogicalStream(std::string streamName,
+bool WorkerActor::registerLogicalStream(std::string streamName,
                                         std::string filePath) {
   //send request to coordinator
   auto coordinator = actor_cast<actor>(this->state.current_server);
@@ -86,15 +110,18 @@ void WorkerActor::registerLogicalStream(std::string streamName,
                           (std::istreambuf_iterator<char>()));
 
   NES_DEBUG("WorkerActor: file content:" << fileContent)
+  bool success = false;
   this->request(coordinator, task_timeout, register_log_stream_atom::value,
                 streamName, fileContent).await(
       [&](bool ret) {
         if (ret == true) {
           NES_DEBUG(
               "WorkerActor: logical stream " << streamName << " successfully added")
+          success = true;
         } else {
           NES_DEBUG(
               "WorkerActor: logical stream " << streamName << " could not be added")
+          success = false;
         }
       }
       ,
@@ -157,10 +184,11 @@ void WorkerActor::removeLogicalStream(std::string streamName) {
       });
 }
 
-void WorkerActor::disconnecting() {
+bool WorkerActor::disconnecting() {
   //TODO: add coorect behaviour if disconnect fails
   auto coordinator = actor_cast<actor>(this->state.current_server);
-  NES_DEBUG("WorkerActor: try to disconnect with ip " << this->state.workerPtr->getIp())
+  NES_DEBUG(
+      "WorkerActor: try to disconnect with ip " << this->state.workerPtr->getIp())
   bool disconnected = false;
   this->request(coordinator, task_timeout, deregister_sensor_atom::value,
                 this->state.workerPtr->getIp()).await(
@@ -176,12 +204,13 @@ void WorkerActor::disconnecting() {
       });
   this->monitor(coordinator);
   this->become(unconnected());
+  return disconnected;
 }
 /**
  * @brief the ongoing connection state in the TSM
  * if connection works go to running state, otherwise go to unconnected state
  */
-void WorkerActor::connecting(const std::string &host, uint16_t port) {
+bool WorkerActor::connecting(const std::string &host, uint16_t port) {
   // make sure we are not pointing to an old server
   this->state.current_server = nullptr;
   // use request().await() to suspend regular behavior until MM responded
@@ -245,18 +274,18 @@ behavior WorkerActor::running(const actor &coordinator) {
   return {
     // the connect RPC to connect with the coordinator
     [=](connect_atom, const std::string &host, uint16_t port) {
-      connecting(host, port);
+      return connecting(host, port);
     },
     [=](disconnect_atom) {
-      disconnecting();
+      return disconnecting();
     },
     // register physical stream
     [=](register_phy_stream_atom, std::string sourceType, std::string sourceConf, std::string physicalStreamName, std::string logicalStreamName) {
-      registerPhysicalStream(sourceType, sourceConf, physicalStreamName, logicalStreamName);
+      return registerPhysicalStream(sourceType, sourceConf, physicalStreamName, logicalStreamName);
     },
     // remove logical stream
     [=](register_log_stream_atom, std::string name, std::string path) {
-      registerLogicalStream(name, path);
+      return registerLogicalStream(name, path);
     },
     // register logical stream
     [=](remove_log_stream_atom, std::string name) {
