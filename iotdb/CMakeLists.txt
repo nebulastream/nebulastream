@@ -150,7 +150,7 @@ add_executable(nesCoordinator nesCoordinator.cpp)
 target_link_libraries(nesCoordinator ${LIBRARIES} iotdb)
 target_include_directories(nesCoordinator PUBLIC "include")
 
-add_executable(nesWorker nesWorker.cpp)
+add_executable(nesWorker nesWorker_starter.cpp)
 target_link_libraries(nesWorker ${LIBRARIES} iotdb)
 target_include_directories(nesWorker PUBLIC "include")
 
