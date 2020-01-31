@@ -97,7 +97,7 @@ TEST_F(QueryCatalogTest, add_query) {
       .getQueries(QueryStatus::Running);
   EXPECT_TRUE(run.size() == 0);
 
-  EXPECT_TRUE(QueryCatalog::instance().isQueryExists(queryId));
+  EXPECT_TRUE(QueryCatalog::instance().queryExists(queryId));
 }
 
 TEST_F(QueryCatalogTest, add_query_and_start_stop) {
@@ -119,7 +119,7 @@ TEST_F(QueryCatalogTest, add_query_and_start_stop) {
       .getQueries(QueryStatus::Running);
   EXPECT_TRUE(run_new.size() == 1);
 
-  EXPECT_TRUE(QueryCatalog::instance().isQueryExists(queryId));
+  EXPECT_TRUE(QueryCatalog::instance().queryExists(queryId));
   EXPECT_TRUE(QueryCatalog::instance().isQueryRunning(queryId));
 
   QueryCatalog::instance().markQueryAs(queryId, QueryStatus::Stopped);
@@ -145,7 +145,7 @@ TEST_F(QueryCatalogTest, add_remove_query) {
   EXPECT_TRUE(run.size() == 0);
 
   QueryCatalog::instance().deleteQuery(queryId);
-  EXPECT_FALSE(QueryCatalog::instance().isQueryExists(queryId));
+  EXPECT_FALSE(QueryCatalog::instance().queryExists(queryId));
 }
 
 TEST_F(QueryCatalogTest, print_query) {

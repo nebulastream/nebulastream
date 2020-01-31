@@ -31,7 +31,7 @@ string QueryCatalog::registerQuery(const string& queryString,
             queryString);
         Schema schema = inputQueryPtr->getSourceStream()->getSchema();
 
-        NESExecutionPlanPtr nesExecutionPtr = OptimizerService::instance().getExecutionPlan(
+        NESExecutionPlanPtr nesExecutionPtr = OptimizerService::getInstance()->getExecutionPlan(
             inputQueryPtr, optimizationStrategyName);
 
         NES_DEBUG(
@@ -58,16 +58,16 @@ string QueryCatalog::registerQuery(const string& queryString,
 }
 
 bool QueryCatalog::deleteQuery(const string& queryId) {
-    if (!isQueryExists(queryId)) {
+    if (!queryExists(queryId)) {
         NES_DEBUG(
             "QueryCatalog: No deletion required! Query has neither been registered or deployed->" << queryId);
         return false;
     } else {
         NES_DEBUG("QueryCatalog: De-registering query ...");
         NESExecutionPlanPtr execPlan = QueryCatalog::instance().getQuery(queryId)
-            ->nesPlanPtr;
+            ->getNesPlanPtr();
         execPlan->freeResources();
-        if (QueryCatalog::instance().getQuery(queryId)->queryStatus == QueryStatus::Running) {
+        if (QueryCatalog::instance().getQuery(queryId)->getQueryStatus() == QueryStatus::Running) {
             NES_DEBUG("QueryCatalog: query is running, stopping it");
             QueryCatalog::instance().markQueryAs(queryId, QueryStatus::Stopped);
         }
@@ -81,13 +81,13 @@ bool QueryCatalog::deleteQuery(const string& queryId) {
 
 void QueryCatalog::markQueryAs(string queryId, QueryStatus queryStatus) {
     NES_DEBUG("QueryCatalog: mark query with id " << queryId<< " as " << queryStatus)
-    queries[queryId]->queryStatus = queryStatus;
+    queries[queryId]->setQueryStatus(queryStatus);
 }
 
 bool QueryCatalog::isQueryRunning(string queryId) {
     NES_DEBUG(
-        "QueryCatalog: test if query started with id " << queryId << " running=" << queries[queryId]->queryStatus)
-    return queries[queryId]->queryStatus == QueryStatus::Running;
+        "QueryCatalog: test if query started with id " << queryId << " running=" << queries[queryId]->getQueryStatus())
+    return queries[queryId]->getQueryStatus() == QueryStatus::Running;
 }
 
 map<string, QueryCatalogEntryPtr> QueryCatalog::getRegisteredQueries() {
@@ -100,9 +100,9 @@ QueryCatalogEntryPtr QueryCatalog::getQuery(std::string queryId) {
     return queries[queryId];
 }
 
-bool QueryCatalog::isQueryExists(std::string queryId) {
+bool QueryCatalog::queryExists(std::string queryId) {
     NES_DEBUG(
-        "QueryCatalog: isQueryExists with id=" << queryId << " registered queries=" << printQueries())
+        "QueryCatalog: queryExists with id=" << queryId << " registered queries=" << printQueries())
     if (queries.count(queryId) > 0) {
         NES_DEBUG("QueryCatalog: query with id " << queryId << " exists")
         return true;
@@ -118,7 +118,7 @@ map<string, QueryCatalogEntryPtr> QueryCatalog::getQueries(QueryStatus queryStat
 
     map<string, QueryCatalogEntryPtr> runningQueries;
     for (auto q : queries) {
-        if (q.second->queryStatus == queryStatus) {
+        if (q.second->getQueryStatus() == queryStatus) {
             runningQueries.insert(q);
         }
     }
@@ -134,7 +134,7 @@ void QueryCatalog::clearQueries() {
 std::string QueryCatalog::printQueries() {
     stringstream ss;
     for (auto q : queries) {
-        ss << "queryID=" << q.first << " running=" << q.second->queryStatus << endl;
+        ss << "queryID=" << q.first << " running=" << q.second->getQueryStatus() << endl;
     }
     return ss.str();
 }

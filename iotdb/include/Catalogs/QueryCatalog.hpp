@@ -50,6 +50,30 @@ class QueryCatalogEntry {
         queryStatus(queryStatus) {
     }
 
+    const string& getQueryId() const {
+        return queryId;
+    }
+
+    const string& getQueryString() const {
+        return queryString;
+    }
+
+    const InputQueryPtr getInputQueryPtr() const {
+        return inputQueryPtr;
+    }
+
+    const NESExecutionPlanPtr getNesPlanPtr() const {
+        return nesPlanPtr;
+    }
+
+    QueryStatus getQueryStatus() const {
+        return queryStatus;
+    }
+    void setQueryStatus(QueryStatus queryStatus) {
+        QueryCatalogEntry::queryStatus = queryStatus;
+    }
+
+  private:
     string queryId;
     string queryString;
     InputQueryPtr inputQueryPtr;
@@ -117,7 +141,7 @@ class QueryCatalog {
      * @param query id
      * @return bool indicating if query exists (true) or not (false)
      */
-    bool isQueryExists(std::string queryId);
+    bool queryExists(std::string queryId);
 
     /**
      * @brief method to get the queries in a specific state

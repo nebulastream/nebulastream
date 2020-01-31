@@ -36,7 +36,7 @@ class CoordinatorServiceTest : public testing::Test {
             //FIXME: add node properties
             PhysicalStreamConfig streamConf;
             auto entry = coordinatorServicePtr->register_sensor(i, ip, publish_port,
-                                                                receive_port, 2, "", streamConf);
+                                                                receive_port, 2, /**nodeProperties**/"", streamConf);
         }
         NES_DEBUG("FINISHED ADDING 5 Nodes to topology")
     }
@@ -174,10 +174,10 @@ TEST_F(CoordinatorServiceTest, test_register_query) {
         "graph G {\n"
         "0[label=\"1 operatorName=SOURCE(OP-1)=>FILTER(OP-2)=>SINK(SYS) nodeName=1\"];\n"
         "1[label=\"0 operatorName=SOURCE(SYS)=>SINK(OP-3) nodeName=0\"];\n"
-        "2[label=\"2 operatorName=empty nodeName=2\"];\n"
-        "3[label=\"3 operatorName=empty nodeName=3\"];\n"
-        "4[label=\"4 operatorName=empty nodeName=4\"];\n"
-        "5[label=\"5 operatorName=empty nodeName=5\"];\n"
+        "2[label=\"2 operatorName=SOURCE(OP-1)=>FILTER(OP-2)=>SINK(SYS) nodeName=2\"];\n"
+        "3[label=\"3 operatorName=SOURCE(OP-1)=>FILTER(OP-2)=>SINK(SYS) nodeName=3\"];\n"
+        "4[label=\"4 operatorName=SOURCE(OP-1)=>FILTER(OP-2)=>SINK(SYS) nodeName=4\"];\n"
+        "5[label=\"5 operatorName=SOURCE(OP-1)=>FILTER(OP-2)=>SINK(SYS) nodeName=5\"];\n"
         "0--1 [label=\"1\"];\n"
         "2--1 [label=\"2\"];\n"
         "3--1 [label=\"3\"];\n"
@@ -204,7 +204,7 @@ TEST_F(CoordinatorServiceTest, test_make_deployment) {
     EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
     map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
         coordinatorServicePtr->prepareExecutableTransferObject(queryId);
-    EXPECT_TRUE(etos.size() == 2);
+    EXPECT_TRUE(etos.size() == 6);
 
     for (auto& x : etos) {
         EXPECT_TRUE(x.first);
@@ -222,7 +222,7 @@ TEST_F(CoordinatorServiceTest, test_run_deregister_query) {
     EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
     map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
         coordinatorServicePtr->prepareExecutableTransferObject(queryId);
-    EXPECT_TRUE(etos.size() == 2);
+    EXPECT_TRUE(etos.size() == 6);
 
     EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
 
@@ -237,7 +237,7 @@ TEST_F(CoordinatorServiceTest, test_compile_deployment) {
     EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
     map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
         coordinatorServicePtr->prepareExecutableTransferObject(queryId);
-    EXPECT_TRUE(etos.size() == 2);
+    EXPECT_TRUE(etos.size() == 6);
 
     for (auto& x : etos) {
         ExecutableTransferObject eto = x.second;
@@ -298,10 +298,10 @@ TEST_F(CoordinatorServiceTest, DISABLED_test_local_distributed_deployment) {
     EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
     EXPECT_TRUE(coordinatorServicePtr->getRunningQueries().size() == 1);
 
-  for (const QueryExecutionPlanPtr qep : qeps) {
-    engine->undeployQuery(qep);
-  }
-  engine->stopWithUndeploy();
+    for (const QueryExecutionPlanPtr qep : qeps) {
+        engine->undeployQuery(qep);
+    }
+    engine->stopWithUndeploy();
 
     coordinatorServicePtr->deleteQuery(queryId);
     EXPECT_TRUE(
@@ -334,9 +334,9 @@ TEST_F(CoordinatorServiceTest, DISABLED_test_sequential_local_distributed_deploy
         EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
         EXPECT_TRUE(coordinatorServicePtr->getRunningQueries().size() == 1);
 
-    for (const QueryExecutionPlanPtr qep : qeps) {
-      engine->undeployQuery(qep);
-    }
+        for (const QueryExecutionPlanPtr qep : qeps) {
+            engine->undeployQuery(qep);
+        }
 
         coordinatorServicePtr->deleteQuery(queryId);
         std::this_thread::sleep_for(std::chrono::seconds(1));

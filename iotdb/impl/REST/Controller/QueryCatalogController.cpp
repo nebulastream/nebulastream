@@ -10,14 +10,12 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                     try {
                         //Prepare Input query from user string
                         std::string payload(body.begin(), body.end());
-
                         json::value req = json::value::parse(payload);
-
                         std::string queryStatus = req.at("status").as_string();
 
                         //Prepare the response
                         json::value result{};
-                        map<string, string> queries = queryCatalogService.getQueriesWithStatus(queryStatus);
+                        map<string, string> queries = queryCatalogServicePtr->getQueriesWithStatus(queryStatus);
 
                         for (auto[key, value] :  queries) {
                             result[key] = json::value::string(value);
@@ -41,14 +39,12 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
                     try {
                         //Prepare Input query from user string
                         std::string payload(body.begin(), body.end());
-
                         json::value req = json::value::parse(payload);
-
                         std::string queryStatus = req.at("status").as_string();
 
                         //Prepare the response
                         json::value result{};
-                        map<string, string> queries = queryCatalogService.getAllRegisteredQueries();
+                        map<string, string> queries = queryCatalogServicePtr->getAllRegisteredQueries();
 
                         for (auto[key, value] :  queries) {
                             result[key] = json::value::string(value);
@@ -82,9 +78,7 @@ void QueryCatalogController::handleDelete(std::vector<utility::string_t> path, w
                     try {
                         //Prepare Input query from user string
                         std::string payload(body.begin(), body.end());
-
                         json::value req = json::value::parse(payload);
-
                         std::string queryId = req.at("queryId").as_string();
 
                         //Perform async call for deleting the query using actor

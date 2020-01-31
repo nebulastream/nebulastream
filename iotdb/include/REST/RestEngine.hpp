@@ -22,6 +22,8 @@ namespace NES {
 class RestEngine : public BaseController {
   protected:
     http_listener _listener; // main micro service network endpoint
+
+  private:
     QueryController queryController;
     StreamCatalogController streamCatalogController;
     QueryCatalogController queryCatalogController;
