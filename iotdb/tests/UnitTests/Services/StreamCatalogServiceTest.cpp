@@ -61,9 +61,8 @@ class StreamCatalogServiceTest : public testing::Test {
 };
 
 TEST_F(StreamCatalogServiceTest, get_all_logical_stream) {
-    StreamCatalogService streamCatalogService;
-    streamCatalogService.getAllLogicalStream();
-    const map<std::string, std::string>& allLogicalStream = streamCatalogService.getAllLogicalStreamAsString();
+    StreamCatalogServicePtr streamCatalogServicePtr = StreamCatalogService::getInstance();
+    const map<std::string, std::string>& allLogicalStream = streamCatalogServicePtr->getAllLogicalStreamAsString();
     EXPECT_EQ(allLogicalStream.size(), 1);
     for (auto const[key, value] : allLogicalStream) {
         EXPECT_EQ(key, defaultLogicalStreamName);
@@ -71,9 +70,9 @@ TEST_F(StreamCatalogServiceTest, get_all_logical_stream) {
 }
 
 TEST_F(StreamCatalogServiceTest, add_logical_stream) {
-    StreamCatalogService streamCatalogService;
-    streamCatalogService.addNewLogicalStream("test", testSchema);
-    const map<std::string, std::string>& allLogicalStream = streamCatalogService.getAllLogicalStreamAsString();
+    StreamCatalogServicePtr streamCatalogServicePtr = StreamCatalogService::getInstance();
+    streamCatalogServicePtr->addNewLogicalStream("test", testSchema);
+    const map<std::string, std::string>& allLogicalStream = streamCatalogServicePtr->getAllLogicalStreamAsString();
     EXPECT_EQ(allLogicalStream.size(), 2);
 }
 
@@ -81,8 +80,8 @@ TEST_F(StreamCatalogServiceTest, get_physicalStream_for_logical_stream) {
 
     std::string newLogicalStreamName = "test_stream";
 
-    StreamCatalogService streamCatalogService;
-    streamCatalogService.addNewLogicalStream(newLogicalStreamName, testSchema);
+    StreamCatalogServicePtr streamCatalogServicePtr = StreamCatalogService::getInstance();
+    streamCatalogServicePtr->addNewLogicalStream(newLogicalStreamName, testSchema);
 
     NESTopologyManager &topologyManager = NESTopologyManager::getInstance();
     NESTopologySensorNodePtr sensorNode = topologyManager.createNESSensorNode(1,
@@ -92,12 +91,12 @@ TEST_F(StreamCatalogServiceTest, get_physicalStream_for_logical_stream) {
         "sensor", "", sensorNode, "");
     StreamCatalog::instance().addPhysicalStream(newLogicalStreamName, catalogEntryPtr);
     const vector<StreamCatalogEntryPtr>
-        & allPhysicalStream = streamCatalogService.getAllPhysicalStream(newLogicalStreamName);
+        & allPhysicalStream = streamCatalogServicePtr->getAllPhysicalStream(newLogicalStreamName);
     EXPECT_EQ(allPhysicalStream.size(), 1);
 }
 
 TEST_F(StreamCatalogServiceTest, delete_logical_stream) {
-    StreamCatalogService streamCatalogService;
-    bool success = streamCatalogService.removeLogicalStream(defaultLogicalStreamName);
+    StreamCatalogServicePtr streamCatalogServicePtr = StreamCatalogService::getInstance();
+    bool success = streamCatalogServicePtr->removeLogicalStream(defaultLogicalStreamName);
     EXPECT_TRUE(success);
 }
