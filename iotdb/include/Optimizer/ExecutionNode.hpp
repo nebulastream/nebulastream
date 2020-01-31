@@ -49,11 +49,11 @@ class ExecutionNode {
     return rootOperator;
   }
 
-  vector<int> &getChildOperatorIds() {
+  vector<size_t> &getChildOperatorIds() {
     return childOperatorIds;
   }
 
-  void addChildOperatorId(int childOperatorId) {
+  void addChildOperatorId(size_t childOperatorId) {
     this->childOperatorIds.push_back(childOperatorId);
   }
 
@@ -63,7 +63,7 @@ class ExecutionNode {
   string nodeName;
   OperatorPtr rootOperator;
   NESTopologyEntryPtr nesNode;
-  vector<int> childOperatorIds{};
+  vector<size_t> childOperatorIds{};
 };
 
 typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;

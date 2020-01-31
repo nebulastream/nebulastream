@@ -62,7 +62,7 @@ class CoordinatorService {
    * @param entry
    * @return true, if it succeeded, otherwise false
    */
-  bool deregister_sensor(const NESTopologyEntryPtr &entry);
+  bool deregister_sensor(const NESTopologyEntryPtr entry);
 
   /**
    * @brief registers a CAF query into the NES topology to make it deployable
@@ -90,7 +90,7 @@ class CoordinatorService {
    */
   string getTopologyPlanString();
 
-  string getNodePropertiesAsString(const NESTopologyEntryPtr& entry);
+  string getNodePropertiesAsString(const NESTopologyEntryPtr entry);
 
   //FIXME: right now we do not register query but rather the nes plan
   /**

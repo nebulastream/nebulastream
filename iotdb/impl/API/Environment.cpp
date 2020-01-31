@@ -18,16 +18,16 @@ namespace NES {
       QueryExecutionPlanPtr qep = queryCompiler->compile(inputQuery.getRoot());
     }
 
-    const std::vector<OperatorPtr> getChildNodes(const OperatorPtr &op) {
+    const std::vector<OperatorPtr> getChildNodes(const OperatorPtr op) {
         std::vector<OperatorPtr> result;
         if (!op) {
             return result;
         } else {
-            return op->childs;
+            return op->getChildren();
         }
     }
 
-    void Environment::printInputQueryPlan(const OperatorPtr &p, int indent) {
+    void Environment::printInputQueryPlan(const OperatorPtr p, int indent) {
         if (p) {
             if (indent) {
                 std::cout << std::setw(indent) << ' ';

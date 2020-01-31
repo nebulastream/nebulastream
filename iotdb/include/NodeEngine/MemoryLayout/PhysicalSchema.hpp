@@ -22,7 +22,7 @@ typedef std::shared_ptr<PhysicalSchema> PhysicalSchemaPtr;
  */
 class PhysicalSchema {
  public:
-  PhysicalSchema(const SchemaPtr& schema);
+  PhysicalSchema(const SchemaPtr schema);
   static PhysicalSchemaPtr createPhysicalSchema(SchemaPtr schema);
 
   /**
