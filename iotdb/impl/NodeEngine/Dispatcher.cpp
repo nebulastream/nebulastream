@@ -42,9 +42,9 @@ void Dispatcher::resetDispatcher() {
 }
 
 bool Dispatcher::registerQueryWithStart(QueryExecutionPlanPtr qep) {
-  std::unique_lock<std::mutex> lock(queryMutex);
-
   registerQueryWithoutStart(qep);
+
+  std::unique_lock<std::mutex> lock(queryMutex);
   /**
    * start elements
    */
@@ -86,7 +86,7 @@ bool Dispatcher::registerQueryWithoutStart(QueryExecutionPlanPtr qep) {
 
     auto windows = qep->getWindows();
     for (const auto& window : windows) {
-      NES_DEBUG("Dispatcher: stop window" << window)
+      NES_DEBUG("Dispatcher: add window" << window)
       window_to_query_map.insert({window.get(), qep});
     }
 
