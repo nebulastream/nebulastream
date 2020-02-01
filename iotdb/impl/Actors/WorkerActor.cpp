@@ -52,19 +52,9 @@ bool WorkerActor::registerPhysicalStream(std::string sourceType,
 
   bool sucess = false;
 
-  this->request(
-      coordinator,
-      task_timeout,
-      register_phy_stream_atom::value,
-      this->state.workerPtr->getIp(),
-      this->state.workerPtr->getPhysicalStreamConfig(physicalStreamName)
-          .sourceType,
-      this->state.workerPtr->getPhysicalStreamConfig(physicalStreamName)
-          .sourceConfig,
-      this->state.workerPtr->getPhysicalStreamConfig(physicalStreamName)
-          .physicalStreamName,
-      this->state.workerPtr->getPhysicalStreamConfig(physicalStreamName)
-          .logicalStreamName).await(
+  this->request(coordinator, task_timeout, register_phy_stream_atom::value,
+                this->state.workerPtr->getIp(), sourceType, sourceConf,
+                physicalStreamName, logicalStreamName).await(
       [&sucess, &physicalStreamName](const bool &dc) mutable {
         if (dc == true) {
           NES_DEBUG(
@@ -84,7 +74,7 @@ bool WorkerActor::registerPhysicalStream(std::string sourceType,
 //        throw Exception("error while register stream");
         sucess = false;
       }
-      );
+  );
 
   return sucess;
 }
