@@ -16,25 +16,20 @@ class NesCoordinator {
    */
   NesCoordinator();
 
-  void startCoordinator();
+  bool startCoordinator();
   void stopCoordinator();
 
   void setRestConfiguration(std::string host, uint16_t port);
 
+  void startCLI();
+
  private:
-  bool startRestServer(
-      std::string host, u_int16_t port,
-      infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle);
-
-  bool startCAFServer(
-      infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle);
-
   CoordinatorActorConfig actorCoordinatorConfig;
   infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
-  RestServer restServer;
-  CAFServer cafServer;
+  RestServer* restServer;
+  CAFServer* cafServer;
   std::string restHost;
   uint16_t restPort;
-}
+};
 }
 #endif /* INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_ */
