@@ -18,9 +18,10 @@ class NesCoordinator {
 
   /**
    * @brief start actor: rest server, caf server, coordinator actor
+   * @param bool if the method should block
    * @note this is a blocking call
    */
-  bool startCoordinatorBlocking();
+  bool startCoordinator(bool blocking);
 
   /**
    * @brief method to stop coordinator
@@ -34,6 +35,8 @@ class NesCoordinator {
    */
   void setRestConfiguration(std::string host, uint16_t port);
 
+  infer_handle_from_class_t<CoordinatorActor> getActorHandle();
+
  private:
   CoordinatorActorConfig actorCoordinatorConfig;
   infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
@@ -41,6 +44,7 @@ class NesCoordinator {
   CAFServer* cafServer;
   std::string restHost;
   uint16_t restPort;
+  std::thread actorThread;
   std::thread restServerThread;
   std::thread cafServerThread;
 };
