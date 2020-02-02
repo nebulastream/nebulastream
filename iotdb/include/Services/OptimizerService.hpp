@@ -8,10 +8,16 @@
 
 namespace NES {
 
+class OptimizerService;
+typedef std::shared_ptr<OptimizerService> OptimizerServicePtr;
+
 class OptimizerService {
   public:
 
-    static OptimizerService& instance();
+    static OptimizerServicePtr getInstance() {
+        static OptimizerServicePtr instance{new OptimizerService};
+        return instance;
+    };
 
     /**
      * @brief: get execution plan as json.
@@ -31,6 +37,12 @@ class OptimizerService {
    */
     NESExecutionPlanPtr getExecutionPlan(InputQueryPtr inputQuery,
                                          std::string optimizationStrategyName);
+
+    ~OptimizerService() = default;
+
+  private:
+
+    OptimizerService() = default;
 };
 }
 

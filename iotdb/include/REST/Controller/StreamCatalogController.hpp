@@ -13,12 +13,17 @@ namespace NES {
 class StreamCatalogController : public BaseController {
 
   public:
+
+    StreamCatalogController(){
+        streamCatalogServicePtr = StreamCatalogService::getInstance();
+    }
+
     void handleGet(std::vector<utility::string_t> path, web::http::http_request message);
     void handlePost(std::vector<utility::string_t> path, web::http::http_request message);
     void handleDelete(std::vector<utility::string_t> path, web::http::http_request message);
 
   private:
-    StreamCatalogService streamCatalogService;
+    StreamCatalogServicePtr streamCatalogServicePtr;
 
 };
 }
