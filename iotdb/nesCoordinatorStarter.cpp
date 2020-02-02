@@ -38,10 +38,10 @@ static void setupLogging() {
   NES::NESLogger->addAppender(console);
 }
 
-#if 0
-void startCLI(NesCoordinatorPtr coordinatorActorHandle) {
-  bool done = false;
 
+void startCLI(NesCoordinatorPtr coord) {
+  bool done = false;
+  infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle = coord->getActorHandle();
   // keeps track of requests and tries to reconnect on server failures
   auto usage = [] {
     cout << "Usage:" << endl
@@ -58,7 +58,7 @@ void startCLI(NesCoordinatorPtr coordinatorActorHandle) {
     << endl;
   };
   usage();
-  coordinatorActorHandle->
+
   message_handler eval { [&](string &arg0) {
     if (arg0 == "quit") {
       done = true;
@@ -125,7 +125,7 @@ void startCLI(NesCoordinatorPtr coordinatorActorHandle) {
       usage();
   }
 }
-#endif
+
 int main(int argc, const char *argv[]) {
   setupLogging();
   // Initializing defaults
@@ -175,12 +175,12 @@ int main(int argc, const char *argv[]) {
     crd->setRestConfiguration(host, port);
   }
   cout << "start coordinator" << endl;
-  crd->startCoordinatorBlocking();
+  crd->startCoordinator(false);
 
   cout << "coordinator started" << endl;
 
-//  cout << "start CLI" << endl;
-//  startCLI(crd);
+  cout << "start CLI" << endl;
+  startCLI(crd);
 
 }
 
