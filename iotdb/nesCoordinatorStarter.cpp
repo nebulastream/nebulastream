@@ -175,12 +175,10 @@ int main(int argc, const char *argv[]) {
     crd->setRestConfiguration(host, port);
   }
   cout << "start coordinator" << endl;
-  crd->startCoordinator();
+  crd->startCoordinatorBlocking();
 
   cout << "coordinator started" << endl;
 
-
-//
 //  cout << "start CLI" << endl;
 //  startCLI(crd);
 

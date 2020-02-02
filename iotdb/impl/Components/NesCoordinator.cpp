@@ -27,6 +27,7 @@ void startCafServer(CAFServer* cafServer, infer_handle_from_class_t<CoordinatorA
 
 void NesCoordinator::stopCoordinator()
 {
+  //TODO: makes no sense currently as start coordinator is blocking
   NES_NOT_IMPLEMENTED
 }
 
