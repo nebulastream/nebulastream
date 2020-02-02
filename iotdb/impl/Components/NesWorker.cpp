@@ -18,7 +18,6 @@ bool NesWorker::connect(std::string host, uint16_t port)
   NES_NOT_IMPLEMENTED
 }
 
-
 bool NesWorker::connect() {
   WorkerActorConfig workerCfg;
   workerCfg.load<io::middleman>();

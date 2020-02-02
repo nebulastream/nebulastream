@@ -17,10 +17,9 @@ class CAFServer {
   bool start();
   bool stop();
  private:
-  CoordinatorActorConfig actorCoordinatorConfig;
   infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
 //  actor_system actorSystem;
-  void setupLogging();
+//  void setupLogging();
 
 };
 

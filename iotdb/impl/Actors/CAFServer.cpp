@@ -10,23 +10,27 @@ namespace NES {
 CAFServer::CAFServer(
     infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle) {
   this->coordinatorActorHandle = coordinatorActorHandle;
-  actorCoordinatorConfig.load<io::middleman>();
+//  actorCoordinatorConfig.load<io::middleman>();
 //  actorSystem{actorCoordinatorConfig};
 
-  setupLogging();
+//  setupLogging();
 }
 bool CAFServer::start() {
+  CoordinatorActorConfig actorCoordinatorConfig;
+  actorCoordinatorConfig.load<io::middleman>();
+
+  //Prepare Actor System
+  actor_system actorSystem { actorCoordinatorConfig };
+
   NES_DEBUG(
       "CAFServer: trying to publish at port " << actorCoordinatorConfig.publish_port)
-
 
   io::unpublish(coordinatorActorHandle, actorCoordinatorConfig.publish_port);
 
   auto expected_port = io::publish(coordinatorActorHandle,
                                    actorCoordinatorConfig.publish_port);
   if (!expected_port) {
-    NES_ERROR(
-        "CAFServer: publish failed: " << actorCoordinatorConfig.render(expected_port.error()))
+    NES_ERROR("CAFServer: publish failed: " << *expected_port)
     return false;
   }
   NES_DEBUG(
@@ -43,25 +47,4 @@ bool CAFServer::stop() {
   NES_NOT_IMPLEMENTED
 }
 
-void CAFServer::setupLogging() {
-
-  // create PatternLayout
-  log4cxx::LayoutPtr layoutPtr(
-      new log4cxx::PatternLayout(
-          "%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
-
-  // create FileAppender
-  LOG4CXX_DECODE_CHAR(fileName, "cafServer.log");
-  log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
-
-  // create ConsoleAppender
-  log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
-
-  NES::NESLogger->setLevel(log4cxx::Level::getDebug());
-  NES::NESLogger->addAppender(file);
-  NES::NESLogger->addAppender(console);
-
-  // set log level
-  log4cxx::Logger::getLogger("NES")->setLevel(log4cxx::Level::getDebug());
-}
 }
