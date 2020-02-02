@@ -17,56 +17,50 @@ namespace NES {
 
 class WorkerService {
 
-  public:
+ public:
 
-    ~WorkerService()=default;
+  ~WorkerService() = default;
 
-    /**
-     * @brief constructor for worker with a stream/sensor attached and create default physical stream
-     */
-    WorkerService(string ip, uint16_t publish_port, uint16_t receive_port);
+  /**
+   * @brief constructor for worker with a stream/sensor attached and create default physical stream
+   */
+  WorkerService(string ip, uint16_t publish_port, uint16_t receive_port);
 
+  /**
+   * @brief framework internal method which is called to execute a query or sub-query on a node
+   * @param queryId a queryId of the query
+   * @param executableTransferObject wrapper object with the schema, sources, destinations, operator
+   */
+  void execute_query(const string &queryId, string &executableTransferObject);
 
-    /**
-     * @brief framework internal method which is called to execute a query or sub-query on a node
-     * @param queryId a queryId of the query
-     * @param executableTransferObject wrapper object with the schema, sources, destinations, operator
-     */
-    void execute_query(const string& queryId, string& executableTransferObject);
+  void delete_query(const string &query);
 
-  const string &getIp() const;
+  string& getIp();
   void setIp(const string &ip);
   uint16_t getPublishPort() const;
   void setPublishPort(uint16_t publish_port);
   uint16_t getReceivePort() const;
   void setReceivePort(uint16_t receive_port);
 
-    /**
-     * @brief gets the currently locally running operators and returns them as flattened strings in a vector
-     * @return the flattend vector<string> object of operators
-     */
-    vector<string> getOperators();
+  /**
+   * @brief gets the currently locally running operators and returns them as flattened strings in a vector
+   * @return the flattend vector<string> object of operators
+   */
+  vector<string> getOperators();
 
-    const string& getIp() const;
-    void setIp(const string& ip);
-    uint16_t getPublishPort() const;
-    void setPublishPort(uint16_t publish_port);
-    uint16_t getReceivePort() const;
-    void setReceivePort(uint16_t receive_port);
+  string getNodeProperties();
+  PhysicalStreamConfig getPhysicalStreamConfig(std::string name);
+  void addPhysicalStreamConfig(PhysicalStreamConfig conf);
 
-    string getNodeProperties();
-    PhysicalStreamConfig getPhysicalStreamConfig(std::string name);
-    void addPhysicalStreamConfig(PhysicalStreamConfig conf);
+ private:
+  string _ip;
+  uint16_t _publish_port;
+  uint16_t _receive_port;
+  //TODO: this should be a ref or a pointer instead of an object
+  std::map<std::string, PhysicalStreamConfig> physicalStreams;
 
-  private:
-    string _ip;
-    uint16_t _publish_port;
-    uint16_t _receive_port;
-    //TODO: this should be a ref or a pointer instead of an object
-    std::map<std::string, PhysicalStreamConfig> physicalStreams;
-
-    NodeEngine* _enginePtr;
-    std::unordered_map<string, tuple<QueryExecutionPlanPtr, OperatorPtr>> _runningQueries;
+  NodeEngine *_enginePtr;
+  std::unordered_map<string, tuple<QueryExecutionPlanPtr, OperatorPtr>> _runningQueries;
 };
 
 }
