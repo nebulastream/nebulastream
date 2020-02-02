@@ -35,18 +35,22 @@ class NesCoordinator {
    */
   void setRestConfiguration(std::string host, uint16_t port);
 
+  /**
+   * @brief method to get handle
+   * @return handle to actor
+   */
   infer_handle_from_class_t<CoordinatorActor> getActorHandle();
 
  private:
   CoordinatorActorConfig actorCoordinatorConfig;
   infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
+  actor_system* actorSystem;
   RestServer* restServer;
   CAFServer* cafServer;
   std::string restHost;
   uint16_t restPort;
   std::thread actorThread;
   std::thread restServerThread;
-  std::thread cafServerThread;
 };
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
 

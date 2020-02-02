@@ -22,52 +22,50 @@ void startRestServer(
   restServer->start();
 }
 
-void startCafServer(
-    CAFServer *cafServer,
-    infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle) {
-  cafServer = new CAFServer(coordinatorActorHandle);
-  cafServer->start();
-}
-
-void startActor(infer_handle_from_class_t<CoordinatorActor> handle)
-{
+void startActor(infer_handle_from_class_t<CoordinatorActor> handle,
+                actor_system *actorSystem) {
   CoordinatorActorConfig actorCoordinatorConfig;
   actorCoordinatorConfig.load<io::middleman>();
-  actor_system actorSystem { actorCoordinatorConfig };
-  handle = actorSystem.spawn<CoordinatorActor>();
+  handle = actorSystem->spawn<CoordinatorActor>();
+  NES_DEBUG("NesCoordinator: actor handle created")
+
+  NES_DEBUG("NesCoordinator start caf server thread")
+  CAFServer *cafServer;
+
+  cafServer = new CAFServer(handle, actorSystem);
+  cafServer->start();
+
+  NES_DEBUG("NesCoordinator start caf actor and server successfully")
 }
 
 void NesCoordinator::stopCoordinator() {
-  //TODO: makes no sense currently as start coordinator is blocking
-  NES_NOT_IMPLEMENTED
+  restServer->stop();
+  cafServer->stop();
+  restServerThread.join();
+  actorThread.join();
 }
 
 bool NesCoordinator::startCoordinator(bool blocking) {
   NES_DEBUG("NesCoordinator: Start Rest Server")
 
   NES_DEBUG("NesCoordinator start actor ")
-  CoordinatorActorConfig actorCoordinatorConfig;
+//  CoordinatorActorConfig actorCoordinatorConfig;
   actorCoordinatorConfig.load<io::middleman>();
-  actor_system actorSystem { actorCoordinatorConfig };
 
-  coordinatorActorHandle = actorSystem.spawn<CoordinatorActor>();
-//  std::thread th0(startActor, coordinatorActorHandle);
-//  startActor(coordinatorActorHandle);
-//  actorThread = std::move(th0);
+  actorSystem = new actor_system { actorCoordinatorConfig };
+//  coordinatorActorHandle = actorSystem->spawn<CoordinatorActor>();
+
+  std::thread th0(startActor, coordinatorActorHandle, actorSystem);
+  actorThread = std::move(th0);
 
   NES_DEBUG("NesCoordinator start rest server thread")
   std::thread th1(startRestServer, restServer, restHost, restPort,
                   coordinatorActorHandle);
   restServerThread = std::move(th1);
 
-  NES_DEBUG("NesCoordinator start caf server thread")
-  std::thread th2(startCafServer, cafServer, coordinatorActorHandle);
-  cafServerThread = std::move(th2);
-
   if (blocking) {
     NES_DEBUG("NesCoordinator started, join now and waiting for work")
     restServerThread.join();
-    cafServerThread.join();
     actorThread.join();
   } else {
     NES_DEBUG("NesCoordinator started, return without blocking")

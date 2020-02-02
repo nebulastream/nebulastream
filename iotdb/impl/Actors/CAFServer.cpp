@@ -8,8 +8,9 @@ using namespace caf;
 
 namespace NES {
 CAFServer::CAFServer(
-    infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle) {
+    infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle, actor_system* acSys) {
   this->coordinatorActorHandle = coordinatorActorHandle;
+  this->acSys = acSys;
 //  actorCoordinatorConfig.load<io::middleman>();
 //  actorSystem{actorCoordinatorConfig};
 
@@ -31,6 +32,7 @@ bool CAFServer::start() {
                                    actorCoordinatorConfig.publish_port);
   if (!expected_port) {
     NES_ERROR("CAFServer: publish failed: " << *expected_port)
+        assert(0);
     return false;
   }
   NES_DEBUG(
