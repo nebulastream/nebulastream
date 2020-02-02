@@ -8,11 +8,6 @@ using namespace NES;
 using namespace web;
 using namespace std;
 
-OptimizerService& OptimizerService::instance() {
-  static OptimizerService instance;
-  return instance;
-}
-
 json::value OptimizerService::getExecutionPlanAsJson(InputQueryPtr inputQuery, string optimizationStrategyName) {
     return getExecutionPlan(inputQuery, optimizationStrategyName)->getExecutionGraphAsJson();
 }

@@ -15,8 +15,8 @@ class StreamCatalogRemoteTest : public testing::Test {
  public:
   std::string host = "localhost";
   std::string queryString =
-      "InputQuery inputQuery = InputQuery::from(default_logical).filter(default_logical[\"id\"] > 42).print(std::cout); "
-          "return inputQuery;";
+      "InputQuery inputQueryPtr = InputQuery::from(default_logical).filter(default_logical[\"id\"] > 42).print(std::cout); "
+          "return inputQueryPtr;";
 
   static void SetUpTestCase() {
     setupLogging();

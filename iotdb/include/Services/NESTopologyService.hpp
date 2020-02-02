@@ -2,30 +2,40 @@
 #define NESTOPOLOGYSERVICE_HPP
 
 #include <cpprest/json.h>
-//#include <Topology/TestTopology.hpp>
 
 namespace NES {
 
-    /**\brief:
-    *          This class is used for serving different requests related to nes topology.
-    *
-    * Note: Please extend the header if new topology related functionality needed to be added.
-    *
-    */
-    class NESTopologyService {
+class NESTopologyService;
+typedef std::shared_ptr<NESTopologyService> NESTopologyServicePtr;
 
-    private:
+/**\brief:
+*          This class is used for serving different requests related to nes topology.
+*
+* Note: Please extend the header if new topology related functionality needed to be added.
+*
+*/
+class NESTopologyService {
 
-    public:
+  private:
 
-        /**
-         * This method is used for getting the nes topology as json string.
-         *
-         * @return a json object representing the nes topology
-         */
-        web::json::value getNESTopologyAsJson();
-    };
+    NESTopologyService() = default;
+
+  public:
+
+    ~NESTopologyService() = default;
+
+    static NESTopologyServicePtr getInstance() {
+        static NESTopologyServicePtr instance{new NESTopologyService};
+        return instance;
+    }
+
+    /**
+     * This method is used for getting the nes topology as json string.
+     *
+     * @return a json object representing the nes topology
+     */
+    web::json::value getNESTopologyAsJson();
+};
 }
-
 
 #endif //NESTOPOLOGYSERVICE_HPP
