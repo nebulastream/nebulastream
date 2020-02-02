@@ -31,7 +31,7 @@ void NesCoordinator::stopCoordinator()
   NES_NOT_IMPLEMENTED
 }
 
-bool NesCoordinator::startCoordinator() {
+bool NesCoordinator::startCoordinatorBlocking() {
   NES_DEBUG("NesCoordinator: Start Rest Server")
 
   NES_DEBUG("NesCoordinator start actor ")
