@@ -113,9 +113,10 @@ behavior CoordinatorActor::running() {
 
         // external methods for users
         [=](topology_json_atom) {
+
           string topo = coordinatorServicePtr->getTopologyPlanString();
-          NES_INFO("CoordinatorActor: Printing Topology");
-          NES_INFO(topo);
+          NES_DEBUG("CoordinatorActor: Printing Topology");
+          NES_DEBUG(topo);
         },
         [=](show_registered_queries_atom) {
           NES_INFO("CoordinatorActor: Printing Registered Queries");

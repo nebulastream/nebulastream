@@ -76,6 +76,7 @@ void startCLI(NesCoordinatorPtr coord) {
     } else if (arg0 == "sro") {
       anon_send(coordinatorActorHandle, show_running_operators_atom::value);
     } else if (arg0 == "sls") {
+      cout << "sls" << endl;
       anon_send(coordinatorActorHandle, show_reg_log_stream_atom::value);
     } else if (arg0 == "sph") {
       anon_send(coordinatorActorHandle, show_reg_phy_stream_atom::value);
