@@ -236,6 +236,7 @@ TEST_F(EngineTest, startWithRedeploy_test) {
   sleep(1);
   ptr->stop();
   sleep(1);
+  std::cout << "Starting Query again: " << endl;
   ptr->startWithRedeploy();
 
   testOutput();

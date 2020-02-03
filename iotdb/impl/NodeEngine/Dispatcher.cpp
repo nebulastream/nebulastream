@@ -50,20 +50,20 @@ bool Dispatcher::registerQueryWithStart(QueryExecutionPlanPtr qep) {
    */
   auto sources = qep->getSources();
   for (const auto& source : sources) {
-    NES_DEBUG("Dispatcher: start source" << source)
+    NES_DEBUG("Dispatcher: start source " << source)
     source->start();
   }
 
   auto windows = qep->getWindows();
   for (const auto& window : windows) {
-    NES_DEBUG("Dispatcher: start window" << window)
+    NES_DEBUG("Dispatcher: start window " << window)
     window->setup();
     window->start();
   }
 
   auto sinks = qep->getSinks();
   for (const auto& sink : sinks) {
-    NES_DEBUG("Dispatcher: start sink" << sink)
+    NES_DEBUG("Dispatcher: start sink " << sink)
     sink->setup();
   }
   return true;
@@ -75,10 +75,10 @@ bool Dispatcher::registerQueryWithoutStart(QueryExecutionPlanPtr qep) {
   /**
    * test if elements already exist
    */
-  NES_DEBUG("Dispatcher: search for query" << qep->getQueryId())
+  NES_DEBUG("Dispatcher: search for query " << qep->getQueryId())
 
   if (this->queryId_to_query_map.find(qep->getQueryId()) != this->queryId_to_query_map.end()) {
-    NES_ERROR("Dispatcher: qep already exists" << qep->getQueryId())
+    NES_ERROR("Dispatcher: qep already exists " << qep->getQueryId())
     return false;
   }
   else {
@@ -86,7 +86,7 @@ bool Dispatcher::registerQueryWithoutStart(QueryExecutionPlanPtr qep) {
 
     auto windows = qep->getWindows();
     for (const auto& window : windows) {
-      NES_DEBUG("Dispatcher: add window" << window)
+      NES_DEBUG("Dispatcher: add window " << window)
       window_to_query_map.insert({window.get(), qep});
     }
 
@@ -98,27 +98,27 @@ void Dispatcher::deregisterQuery(const string& queryId) {
   std::unique_lock<std::mutex> lock(queryMutex);
 
   if (this->queryId_to_query_map.find(queryId) != this->queryId_to_query_map.end()) {
-    NES_ERROR("Dispatcher: qep does not exists for query " << queryId)
+    NES_ERROR("Dispatcher: qep does not exist for query " << queryId)
   }
   else {
     QueryExecutionPlanPtr qep = queryId_to_query_map.at(queryId);
 
     auto sources = qep->getSources();
     for (const auto& source : sources) {
-      NES_DEBUG("Dispatcher: stop source" << source)
+      NES_DEBUG("Dispatcher: stop source " << source)
       source->stop();
     }
 
     auto windows = qep->getWindows();
     for (const auto& window : windows) {
-        NES_DEBUG("Dispatcher: stop window" << window)
+        NES_DEBUG("Dispatcher: stop window " << window)
         window->stop();
         window_to_query_map.erase(window.get());
     }
 
     auto sinks = qep->getSinks();
     for (const auto& sink : sinks) {
-        NES_DEBUG("Dispatcher: stop sink" << sink)
+        NES_DEBUG("Dispatcher: stop sink " << sink)
         sink->shutdown();
     }
 
