@@ -1,21 +1,47 @@
-
 #ifndef IMPL_REST_RESTSERVER_H_
 #define IMPL_REST_RESTSERVER_H_
 
 #include "Actors/CoordinatorActor.hpp"
+#include <REST/RestEngine.hpp>
+
 
 namespace NES {
 
+/**
+ * @brief : This class is responsible for starting the REST server.
+ */
+class RestServer {
+
+ public:
+
   /**
-   * @brief : This class is responsible for starting the REST server.
+   * @brief constructor for rest server
+   * @param host as string
+   * @param port as uint
+   * @param handle to coordinator
+   * */
+  RestServer(
+      std::string host, u_int16_t port,
+      infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle);
+
+  /**
+   * @brief method to start the rest server
+   * @return bool indicating success
    */
+  bool start();
 
-  class RestServer {
+  /**
+   * @brief method to stop rest server
+   * @return bool indicating sucesss
+   */
+  bool stop();
+private:
+  RestEngine server;
+  std::string host;
+  u_int16_t port;
+  infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
 
-    public:
-      bool start(std::string host, u_int16_t port, infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle);
-  };
-
+};
 }
 
 #endif //IMPL_REST_RESTSERVER_H_
