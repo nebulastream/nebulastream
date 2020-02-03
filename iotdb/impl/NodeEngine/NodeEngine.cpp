@@ -31,15 +31,15 @@ NodeProperties* NodeEngine::getNodeProperties() {
 void NodeEngine::deployQuery(QueryExecutionPlanPtr qep) {
   NES_DEBUG("NODEENGINE: deploy query" << qep)
 
-  Dispatcher::instance().registerQueryWithStart(qep);
   qeps.insert({qep->getQueryId(), qep});
+  Dispatcher::instance().registerQueryWithStart(qep);
 }
 
 void NodeEngine::deployQueryWithoutStart(QueryExecutionPlanPtr qep) {
   NES_DEBUG("NODEENGINE: deploy query" << qep)
 
-  Dispatcher::instance().registerQueryWithoutStart(qep);
   qeps.insert({qep->getQueryId(), qep});
+  Dispatcher::instance().registerQueryWithoutStart(qep);
 }
 
 void NodeEngine::undeployQuery(const std::string& queryId) {
