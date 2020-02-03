@@ -176,7 +176,7 @@ int main(int argc, const char *argv[]) {
     crd->setRestConfiguration(host, port);
   }
   cout << "start coordinator" << endl;
-  crd->startCoordinator(false);
+  crd->startCoordinator(/**blocking**/ true);
 
   cout << "coordinator started" << endl;
 

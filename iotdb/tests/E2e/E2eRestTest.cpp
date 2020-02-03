@@ -74,9 +74,6 @@ class E2eRestTest : public testing::Test {
     NESLogger->addAppender(console);
   }
 
-  static void startProcess(string cmd) {
-
-  }
 };
 
 std::string GetCurrentWorkingDir(void) {
@@ -115,12 +112,13 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
       "http://localhost:8081/v1/nes/query/execute-query");
   client.request(web::http::methods::POST, U("/"), body).then(
       [](const web::http::http_response& response) {
-        cout << "get first then" << endl;
+        cout << "get first then with response" <<  endl;
         return response.extract_json();
       }).then([&json_return](const pplx::task<web::json::value>& task) {
     try {
       cout << "set return" << endl;
       json_return = task.get();
+      cout << "ret is=" << json_return << endl;
     }
     catch (const web::http::http_exception& e) {
       cout << "error while setting return" << endl;
@@ -143,6 +141,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
 
 }
 
+#if 0
 TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
   cout << " start coordinator" << endl;
   remove(outputFilePath.c_str());
@@ -233,4 +232,5 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
   coordinatorProc.terminate();
 
 }
+#endif
 }
