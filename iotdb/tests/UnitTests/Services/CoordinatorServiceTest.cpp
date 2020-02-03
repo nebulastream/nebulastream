@@ -299,7 +299,7 @@ TEST_F(CoordinatorServiceTest, DISABLED_test_local_distributed_deployment) {
     EXPECT_TRUE(coordinatorServicePtr->getRunningQueries().size() == 1);
 
     for (const QueryExecutionPlanPtr qep : qeps) {
-        engine->undeployQuery(qep);
+        engine->undeployQuery(qep->getQueryId());
     }
     engine->stopWithUndeploy();
 
@@ -335,7 +335,7 @@ TEST_F(CoordinatorServiceTest, DISABLED_test_sequential_local_distributed_deploy
         EXPECT_TRUE(coordinatorServicePtr->getRunningQueries().size() == 1);
 
         for (const QueryExecutionPlanPtr qep : qeps) {
-            engine->undeployQuery(qep);
+            engine->undeployQuery(qep->getQueryId());
         }
 
         coordinatorServicePtr->deleteQuery(queryId);
