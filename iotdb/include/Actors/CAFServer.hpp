@@ -13,10 +13,15 @@ namespace NES {
 class CAFServer {
 
  public:
-  bool start(const infer_handle_from_class_t<CoordinatorActor>&);
-
+  CAFServer(infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle, actor_system* acSys);
+  bool start();
+  bool stop();
  private:
-  void setupLogging();
+  infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
+  actor_system* acSys;
+//  actor_system actorSystem;
+//  void setupLogging();
+
 };
 
 }

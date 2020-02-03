@@ -78,7 +78,7 @@ vector<string> WorkerService::getOperators() {
   return result;
 }
 
-const string &WorkerService::getIp() const {
+string& WorkerService::getIp(){
   return _ip;
 }
 void WorkerService::setIp(const string &ip) {
