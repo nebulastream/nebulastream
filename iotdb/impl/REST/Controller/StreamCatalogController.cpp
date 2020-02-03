@@ -10,7 +10,7 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
     if (path[1] == "allLogicalStream") {
 
         const map<std::string, std::string>
-            & allLogicalStreamAsString = streamCatalogService.getAllLogicalStreamAsString();
+            & allLogicalStreamAsString = streamCatalogServicePtr->getAllLogicalStreamAsString();
 
         json::value result{};
         if (allLogicalStreamAsString.empty()) {
@@ -36,7 +36,7 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
                         string logicalStreamName = req.at("streamName").as_string();
 
                         const vector<StreamCatalogEntryPtr>
-                            & allPhysicalStream = streamCatalogService.getAllPhysicalStream(logicalStreamName);
+                            & allPhysicalStream = streamCatalogServicePtr->getAllPhysicalStream(logicalStreamName);
 
                         //Prepare the response
                         json::value result{};
@@ -78,7 +78,7 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                         string streamName = req.at("streamName").as_string();
                         string schema = req.at("schema").as_string();
 
-                        bool added = streamCatalogService.addNewLogicalStream(streamName, schema);
+                        bool added = streamCatalogServicePtr->addNewLogicalStream(streamName, schema);
 
                         //Prepare the response
                         json::value result{};
@@ -105,7 +105,7 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
                         string streamName = req.at("streamName").as_string();
                         string schema = req.at("schema").as_string();
 
-                        bool added = streamCatalogService.updatedLogicalStream(streamName, schema);
+                        bool added = streamCatalogServicePtr->updatedLogicalStream(streamName, schema);
 
                         //Prepare the response
                         json::value result{};
@@ -139,7 +139,7 @@ void StreamCatalogController::handleDelete(std::vector<utility::string_t> path, 
 
                         string streamName = req.at("streamName").as_string();
 
-                        bool added = streamCatalogService.removeLogicalStream(streamName);
+                        bool added = streamCatalogServicePtr->removeLogicalStream(streamName);
 
                         //Prepare the response
                         json::value result{};
