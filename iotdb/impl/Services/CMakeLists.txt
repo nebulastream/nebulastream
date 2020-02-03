@@ -5,4 +5,5 @@ add_source_iotdb(
         WorkerService.cpp
         OptimizerService.cpp
         StreamCatalogService.cpp
+        QueryCatalogService.cpp
 )
