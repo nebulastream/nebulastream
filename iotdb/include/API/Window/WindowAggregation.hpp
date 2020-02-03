@@ -33,6 +33,15 @@ class WindowAggregation {
                                   StructDeclaration inputStruct,
                                   BinaryOperatorStatement inputRef) = 0;
 
+  /**
+   * Returns the result field of the aggregation
+   * @return
+   */
+  AttributeFieldPtr asField(){
+    if(_asField==nullptr)
+      return _onField;
+    return _asField;
+  }
  protected:
   WindowAggregation(const AttributeFieldPtr onField);
   WindowAggregation() = default;

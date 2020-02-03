@@ -28,7 +28,7 @@ void SourceOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr contex
 
 void SourceOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out)
 {
-    codegen->generateCode(source_, context, out);
+    codegen->generateCode(source_->getSchema(), context, out);
     getParent()->consume(codegen,context,out);
 }
 

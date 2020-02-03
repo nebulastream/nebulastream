@@ -5,6 +5,7 @@
 #include <math.h>
 
 #include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/PipelineContext.hpp>
 #include <QueryCompiler/PipelineStage.hpp>
 #include <NodeEngine/BufferManager.hpp>
 
@@ -633,13 +634,13 @@ int CodeGeneratorTest() {
 
   std::cout << "Generate Code" << std::endl;
   /* generate code for scanning input buffer */
-  code_gen->generateCode(source, context, std::cout);
+  code_gen->generateCode(source->getSchema(), context, std::cout);
   /* generate code for writing result tuples to output buffer */
   code_gen->generateCode(createPrintSinkWithSchema(Schema::create().addField("campaign_id", UINT64), std::cout),
                          context,
                          std::cout);
   /* compile code to pipeline stage */
-  PipelineStagePtr stage = code_gen->compile(CompilerArgs());
+  PipelineStagePtr stage = code_gen->compile(CompilerArgs(), context->code);
   if (!stage)
     return -1;
   /* prepare input tuple buffer */
@@ -688,7 +689,7 @@ int CodeGeneratorFilterTest() {
 
   std::cout << "Generate Filter Code" << std::endl;
   /* generate code for scanning input buffer */
-  code_gen->generateCode(source, context, std::cout);
+  code_gen->generateCode(source->getSchema(), context, std::cout);
 
   std::cout << std::make_shared<Predicate>(
       (PredicateItem(input_schema[0]) < PredicateItem(createBasicTypeValue(NES::BasicType::INT64, "5")))
@@ -724,7 +725,7 @@ int CodeGeneratorFilterTest() {
                                                    std::cout), context, std::cout);
 
   /* compile code to pipeline stage */
-  PipelineStagePtr stage = code_gen->compile(CompilerArgs());
+  PipelineStagePtr stage = code_gen->compile(CompilerArgs(),context->code);
   if (!stage)
     return -1;
 
@@ -779,7 +780,7 @@ int WindowAssignerCodeGenTest() {
   Schema input_schema = source->getSchema();
 
   std::cout << "Generate Predicate Code" << std::endl;
-  code_gen->generateCode(source, context, std::cout);
+  code_gen->generateCode(source->getSchema(), context, std::cout);
 
   auto sum = Sum::on(Field(input_schema.get("value")));
   WindowDefinitionPtr
@@ -792,7 +793,7 @@ int WindowAssignerCodeGenTest() {
 
 
   /* compile code to pipeline stage */
-  PipelineStagePtr stage = code_gen->compile(CompilerArgs());
+  PipelineStagePtr stage = code_gen->compile(CompilerArgs(), context->code);
   if (!stage)
     return -1;
 
@@ -851,7 +852,7 @@ int CodePredicateTests() {
   Schema input_schema = source->getSchema();
 
   std::cout << "Generate Predicate Code" << std::endl;
-  code_gen->generateCode(source, context, std::cout);
+  code_gen->generateCode(input_schema, context, std::cout);
 
   //predicate definition
   code_gen->generateCode(createPredicate(
@@ -870,7 +871,7 @@ int CodePredicateTests() {
                                                    std::cout), context, std::cout);
 
   /* compile code to pipeline stage */
-  PipelineStagePtr stage = code_gen->compile(CompilerArgs());
+  PipelineStagePtr stage = code_gen->compile(CompilerArgs(),context->code);
   if (!stage)
     return -1;
 
@@ -921,7 +922,7 @@ int CodeMapPredicatePtrTests() {
   Schema input_schema = source->getSchema();
 
   std::cout << "Generate Predicate Code" << std::endl;
-  code_gen->generateCode(source, context, std::cout);
+  code_gen->generateCode(input_schema, context, std::cout);
 
   //predicate definition
   AttributeFieldPtr mapped_value = AttributeField("mapped_value", BasicType::FLOAT64).copy();
@@ -941,7 +942,7 @@ int CodeMapPredicatePtrTests() {
   unsigned int numberOfResultTuples = 132;
 
   /* compile code to pipeline stage */
-  PipelineStagePtr stage = code_gen->compile(CompilerArgs());
+  PipelineStagePtr stage = code_gen->compile(CompilerArgs(), context->code);
   if (!stage)
     return -1;
 

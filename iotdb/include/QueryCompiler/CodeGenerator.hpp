@@ -43,7 +43,7 @@ class CodeGenerator {
  public:
   CodeGenerator(const CodeGenArgs &args);
   // virtual bool addOperator(OperatorPtr) = 0;
-  virtual bool generateCode(const DataSourcePtr &source, const PipelineContextPtr &context, std::ostream &out) = 0;
+  virtual bool generateCode(const Schema &schema, const PipelineContextPtr &context, std::ostream &out) = 0;
   virtual bool generateCode(const PredicatePtr &pred, const PipelineContextPtr &context, std::ostream &out) = 0;
   virtual bool generateCode(const AttributeFieldPtr field,
                             const PredicatePtr &pred,
@@ -51,17 +51,13 @@ class CodeGenerator {
                             std::ostream &out) = 0;
   virtual bool generateCode(const DataSinkPtr &sink, const PipelineContextPtr &context, std::ostream &out) = 0;
   virtual bool generateCode(const WindowDefinitionPtr &window, const PipelineContextPtr &context, std::ostream &out) = 0;
-  virtual PipelineStagePtr compile(const CompilerArgs &) = 0;
+  virtual PipelineStagePtr compile(const CompilerArgs &, const GeneratedCodePtr &code) = 0;
   virtual ~CodeGenerator();
 
-  const Schema &getInputSchema() const { return input_schema_; };
-  const Schema &getResultSchema() const { return result_schema_; };
-
- protected:
   CodeGenArgs args_;
-  Schema input_schema_;
-  Schema result_schema_;
 };
+
+
 
 /** \brief factory method for creating a code generator */
 CodeGeneratorPtr createCodeGenerator();
@@ -71,7 +67,6 @@ const PipelineContextPtr createPipelineContext();
 class GeneratedCode {
  public:
   GeneratedCode();
-
   std::vector<VariableDeclaration> variable_decls;
   std::vector<StatementPtr> variable_init_stmts;
   std::shared_ptr<FOR> for_loop_stmt;
@@ -99,7 +94,6 @@ class GeneratedCode {
   VariableDeclaration var_num_for_loop;
   std::vector<StructDeclaration> type_decls;
   std::vector<DeclarationPtr> override_fields;
-
 };
 
 typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;

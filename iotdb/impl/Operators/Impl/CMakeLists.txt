@@ -1,11 +1,12 @@
 add_source_iotdb(
- SourceOperator.cpp
- SinkOperator.cpp
- FilterOperator.cpp
- SortOperator.cpp
- WindowOperator.cpp
- KeyByOperator.cpp
- MapOperator.cpp
- AggregationOperator.cpp
- JoinOperator.cpp
+        SourceOperator.cpp
+        SinkOperator.cpp
+        FilterOperator.cpp
+        SortOperator.cpp
+        WindowOperator.cpp
+        WindowScanOperator.cpp
+        KeyByOperator.cpp
+        MapOperator.cpp
+        AggregationOperator.cpp
+        JoinOperator.cpp
 )

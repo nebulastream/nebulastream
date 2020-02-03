@@ -22,13 +22,10 @@ WindowOperator &WindowOperator::operator=(const WindowOperator &other) {
 
 void WindowOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream &out) {
   getChildren()[0]->produce(codegen, context, out);
-
 }
 
 void WindowOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream &out) {
   codegen->generateCode(this->window_definition, context, out);
-  if (getParent() != nullptr)
-      getParent()->consume(codegen, context, out);
 }
 
 const OperatorPtr WindowOperator::copy() const {
