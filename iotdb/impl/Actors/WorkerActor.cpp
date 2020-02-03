@@ -85,7 +85,7 @@ bool WorkerActor::registerLogicalStream(std::string streamName,
   auto coordinator = actor_cast<actor>(this->state.current_server);
 
   NES_DEBUG(
-      "WorkerActor: registerLog stream" << streamName << " with path" << filePath)
+      "WorkerActor: registerLog stream " << streamName << " with path" << filePath)
   /* Check if file can be found on system and read. */
   boost::filesystem::path path { filePath.c_str() };
   if (!boost::filesystem::exists(path)
@@ -101,8 +101,10 @@ bool WorkerActor::registerLogicalStream(std::string streamName,
 
   NES_DEBUG("WorkerActor: file content:" << fileContent)
   bool success = false;
-  this->request(coordinator, task_timeout, register_log_stream_atom::value,
-                streamName, fileContent).await(
+  bool connected = false;
+  scoped_actor self { this->system() };
+  self->request(coordinator, task_timeout, register_log_stream_atom::value,
+                streamName, fileContent).receive(
       [&](bool ret) {
         if (ret == true) {
           NES_DEBUG(
@@ -121,7 +123,7 @@ bool WorkerActor::registerLogicalStream(std::string streamName,
             "WorkerActor: Error during registerLogicalStream for " << to_string(coordinator) << "\n" << error_msg);
         throw Exception("error while register stream");
       });
-    return success;
+  return success;
 }
 
 void WorkerActor::removePhysicalStream(std::string logicalStreamName,

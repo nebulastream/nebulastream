@@ -29,7 +29,9 @@ struct WorkerState {
  *  - TODO: this does not handle connection lost
  *  - TODO:
  */
+//class WorkerActor : public blocking_actor<WorkerState> {
 class WorkerActor : public stateful_actor<WorkerState> {
+
  public:
   /**
    * @brief the constructor to  of the worker to initialize the default objects
