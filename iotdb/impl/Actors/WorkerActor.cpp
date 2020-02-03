@@ -121,6 +121,7 @@ bool WorkerActor::registerLogicalStream(std::string streamName,
             "WorkerActor: Error during registerLogicalStream for " << to_string(coordinator) << "\n" << error_msg);
         throw Exception("error while register stream");
       });
+    return success;
 }
 
 void WorkerActor::removePhysicalStream(std::string logicalStreamName,

@@ -77,19 +77,16 @@ TEST_F(ActorsCliTest, testRegisterUnregisterSensor) {
     w_cfg.load<io::middleman>();
     actor_system sw{w_cfg};
     PhysicalStreamConfig streamConf;
-    auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
-                                             w_cfg.receive_port);
+    auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port);
 
     //Prepare Actor System
     scoped_actor self{system_coord};
     bool connected = false;
-    self->request(worker, task_timeout, connect_atom::value, w_cfg.host,
-                  c_cfg.publish_port).receive(
-        [&connected](const bool& c) mutable {
-          connected = c;
+    self->request(worker, task_timeout, connect_atom::value, w_cfg.host, c_cfg.publish_port)
+        .receive([&connected](const bool& c) mutable {
           std::this_thread::sleep_for(std::chrono::seconds(1));
-        },
-        [=](const error& er) {
+          connected = c;
+        }, [=](const error& er) {
           string error_msg = to_string(er);
           NES_ERROR(
               "ACTORSCLITEST: Error during testRegisterUnregisterSensor " << "\n" << error_msg);
@@ -128,24 +125,19 @@ TEST_F(ActorsCliTest, testSpawnDespawnCoordinatorWorkers) {
     w_cfg.load<io::middleman>();
     actor_system sw{w_cfg};
     PhysicalStreamConfig streamConf;
-    auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
-                                             w_cfg.receive_port);
+    auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port);
 
     //Prepare Actor System
     scoped_actor self{system_coord};
     bool connected = false;
-    self->request(worker, task_timeout, connect_atom::value, w_cfg.host,
-                  c_cfg.publish_port)
-        .receive(
-            [&connected](const bool& c) mutable {
-              connected = c;
-              std::this_thread::sleep_for(std::chrono::seconds(1));
-            },
-            [=](const error& er) {
-              string error_msg = to_string(er);
-              NES_ERROR(
-                  "ACTORSCLITEST: Error during testSpawnDespawnCoordinatorWorkers " << "\n" << error_msg);
-            });
+    self->request(worker, task_timeout, connect_atom::value, w_cfg.host, c_cfg.publish_port)
+        .receive([&connected](const bool& c) mutable {
+          connected = c;
+        }, [=](const error& er) {
+          string error_msg = to_string(er);
+          NES_ERROR(
+              "ACTORSCLITEST: Error during testSpawnDespawnCoordinatorWorkers " << "\n" << error_msg);
+        });
     EXPECT_TRUE(connected);
 
     self->request(worker, task_timeout, exit_reason::user_shutdown);
@@ -175,19 +167,16 @@ TEST_F(ActorsCliTest, testShowTopology) {
     w_cfg.load<io::middleman>();
     actor_system sw{w_cfg};
     PhysicalStreamConfig streamConf;
-    auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
-                                             w_cfg.receive_port);
+    auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port);
 
     //Prepare Actor System
     scoped_actor self{system_coord};
     bool connected = false;
-    self->request(worker, task_timeout, connect_atom::value, w_cfg.host,
-                  c_cfg.publish_port).receive(
-        [&connected](const bool& c) mutable {
-          connected = c;
+    self->request(worker, task_timeout, connect_atom::value, w_cfg.host, c_cfg.publish_port)
+        .receive([&connected](const bool& c) mutable {
           std::this_thread::sleep_for(std::chrono::seconds(1));
-        },
-        [=](const error& er) {
+          connected = c;
+        }, [=](const error& er) {
           string error_msg = to_string(er);
           NES_ERROR(
               "ACTORSCLITEST: Error during testShowTopology " << "\n" << error_msg);
@@ -222,19 +211,16 @@ TEST_F(ActorsCliTest, testShowRegistered) {
     w_cfg.load<io::middleman>();
     actor_system sw{w_cfg};
     PhysicalStreamConfig streamConf;
-    auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
-                                             w_cfg.receive_port);
+    auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port);
 
     //Prepare Actor System
     scoped_actor self{system_coord};
     bool connected = false;
-    self->request(worker, task_timeout, connect_atom::value, w_cfg.host,
-                  c_cfg.publish_port).receive(
+    self->request(worker, task_timeout, connect_atom::value, w_cfg.host, c_cfg.publish_port).receive(
         [&connected](const bool& c) mutable {
-          connected = c;
           std::this_thread::sleep_for(std::chrono::seconds(1));
-        },
-        [=](const error& er) {
+          connected = c;
+        }, [=](const error& er) {
           string error_msg = to_string(er);
           NES_ERROR(
               "ACTORSCLITEST: Error during testShowRegistered " << "\n" << error_msg);
@@ -258,16 +244,14 @@ TEST_F(ActorsCliTest, testShowRegistered) {
     // check length of registered queries
     size_t query_size = 0;
     self->request(coordinator, task_timeout, show_registered_queries_atom::value)
-        .receive(
-            [&query_size](const size_t length) mutable {
-              query_size = length;
-              NES_INFO("ACTORSCLITEST: Query length " << length);
-            },
-            [=](const error& er) {
-              string error_msg = to_string(er);
-              NES_ERROR(
-                  "ACTORSCLITEST: Error during testShowRegistered " << "\n" << error_msg);
-            });
+        .receive([&query_size](const size_t length) mutable {
+          query_size = length;
+          NES_INFO("ACTORSCLITEST: Query length " << length);
+        }, [=](const error& er) {
+          string error_msg = to_string(er);
+          NES_ERROR(
+              "ACTORSCLITEST: Error during testShowRegistered " << "\n" << error_msg);
+        });
     EXPECT_EQ(query_size, 1);
 
     self->request(worker, task_timeout, exit_reason::user_shutdown);
@@ -297,19 +281,16 @@ TEST_F(ActorsCliTest, testDeleteQuery) {
     w_cfg.load<io::middleman>();
     actor_system sw{w_cfg};
     PhysicalStreamConfig streamConf;
-    auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
-                                             w_cfg.receive_port);
+    auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port);
 
     //Prepare Actor System
     scoped_actor self{system_coord};
     bool connected = false;
-    self->request(worker, task_timeout, connect_atom::value, w_cfg.host,
-                  c_cfg.publish_port).receive(
+    self->request(worker, task_timeout, connect_atom::value, w_cfg.host, c_cfg.publish_port).receive(
         [&connected](const bool& c) mutable {
           connected = c;
           std::this_thread::sleep_for(std::chrono::seconds(1));
-        },
-        [=](const error& er) {
+        }, [=](const error& er) {
           string error_msg = to_string(er);
           NES_ERROR(
               "ACTORSCLITEST: Error during testDeleteQuery " << "\n" << error_msg);
@@ -318,12 +299,10 @@ TEST_F(ActorsCliTest, testDeleteQuery) {
 
     // check registration
     string uuid;
-    self->request(coordinator, task_timeout, register_query_atom::value,
-                  queryString, "BottomUp").receive(
-        [&uuid](const string& _uuid) mutable {
+    self->request(coordinator, task_timeout, register_query_atom::value, queryString, "BottomUp")
+        .receive([&uuid](const string& _uuid) mutable {
           uuid = _uuid;
-        },
-        [=](const error& er) {
+        }, [=](const error& er) {
           string error_msg = to_string(er);
           NES_ERROR(
               "ACTORSCLITEST: Error during testDeleteQuery " << "\n" << error_msg);
@@ -334,16 +313,14 @@ TEST_F(ActorsCliTest, testDeleteQuery) {
     // check length of registered queries
     size_t query_size = 0;
     self->request(coordinator, task_timeout, show_registered_queries_atom::value)
-        .receive(
-            [&query_size](const size_t length) mutable {
-              query_size = length;
-              NES_INFO("ACTORSCLITEST: Query length " << length);
-            },
-            [=](const error& er) {
-              string error_msg = to_string(er);
-              NES_ERROR(
-                  "ACTORSCLITEST: Error during testDeleteQuery " << "\n" << error_msg);
-            });
+        .receive([&query_size](const size_t length) mutable {
+          query_size = length;
+          NES_INFO("ACTORSCLITEST: Query length " << length);
+        }, [=](const error& er) {
+          string error_msg = to_string(er);
+          NES_ERROR(
+              "ACTORSCLITEST: Error during testDeleteQuery " << "\n" << error_msg);
+        });
     EXPECT_EQ(query_size, 1);
 
     self->request(coordinator, task_timeout, deploy_query_atom::value, uuid);
@@ -380,11 +357,10 @@ TEST_F(ActorsCliTest, testShowRunning) {
 
     bool connected = false;
     scoped_actor self{system_coord};
-    self->request(worker, task_timeout, connect_atom::value, w_cfg.host,
-                  c_cfg.publish_port).receive(
-        [&connected](const bool& c) mutable {
-          connected = c;
+    self->request(worker, task_timeout, connect_atom::value, w_cfg.host, c_cfg.publish_port)
+        .receive([&connected](const bool& c) mutable {
           std::this_thread::sleep_for(std::chrono::seconds(1));
+          connected = c;
         }, [=](const error& er) {
           string error_msg = to_string(er);
           NES_ERROR(
@@ -393,12 +369,10 @@ TEST_F(ActorsCliTest, testShowRunning) {
     EXPECT_TRUE(connected);
 
     string uuid;
-    self->request(coordinator, task_timeout, register_query_atom::value,
-                  queryString, "BottomUp").receive(
-        [&uuid](const string& _uuid) mutable {
+    self->request(coordinator, task_timeout, register_query_atom::value, queryString, "BottomUp")
+        .receive([&uuid](const string& _uuid) mutable {
           uuid = _uuid;
-        },
-        [=](const error& er) {
+        }, [=](const error& er) {
           string error_msg = to_string(er);
           NES_ERROR(
               "ACTORSCLITEST (testShowRunning): Error during testShowRunning " << "\n" << error_msg);
@@ -441,11 +415,10 @@ TEST_F(ActorsCliTest, testShowOperators) {
 
     bool connected = false;
     scoped_actor self{system_coord};
-    self->request(worker, task_timeout, connect_atom::value, w_cfg.host,
-                  c_cfg.publish_port).receive(
-        [&connected](const bool& c) mutable {
-          connected = c;
+    self->request(worker, task_timeout, connect_atom::value, w_cfg.host, c_cfg.publish_port)
+        .receive([&connected](const bool& c) mutable {
           std::this_thread::sleep_for(std::chrono::seconds(1));
+          connected = c;
         }, [=](const error& er) {
           string error_msg = to_string(er);
           NES_ERROR(
@@ -454,12 +427,10 @@ TEST_F(ActorsCliTest, testShowOperators) {
     EXPECT_TRUE(connected);
 
     string uuid;
-    self->request(coordinator, task_timeout, register_query_atom::value,
-                  queryString, "BottomUp").receive(
-        [&uuid](const string& _uuid) mutable {
+    self->request(coordinator, task_timeout, register_query_atom::value, queryString, "BottomUp")
+        .receive([&uuid](const string& _uuid) mutable {
           uuid = _uuid;
-        },
-        [=](const error& er) {
+        }, [=](const error& er) {
           string error_msg = to_string(er);
           NES_ERROR(
               "ACTORSCLITEST (testShowOperators): Error during testShowOperators " << "\n" << error_msg);
@@ -505,8 +476,8 @@ TEST_F(ActorsCliTest, testSequentialMultiQueries) {
     scoped_actor self{system_coord};
     self->request(workerHandler, task_timeout, connect_atom::value, w_cfg.host, c_cfg.publish_port)
         .receive([&connected](const bool& c) mutable {
-          connected = c;
           std::this_thread::sleep_for(std::chrono::seconds(1));
+          connected = c;
         }, [=](const error& er) {
           string error_msg = to_string(er);
           NES_ERROR(
@@ -518,15 +489,14 @@ TEST_F(ActorsCliTest, testSequentialMultiQueries) {
         NES_INFO("ACTORSCLITEST (testSequentialMultiQueries): Sequence " << i);
 
         string uuid;
-        self->request(coordHandler, task_timeout, register_query_atom::value,
-                      queryString, "BottomUp").receive(
-            [&uuid](const string& _uuid) mutable {
+        self->request(coordHandler, task_timeout, register_query_atom::value, queryString, "BottomUp")
+            .receive([&uuid](const string& _uuid) mutable {
               uuid = _uuid;
-            },
-            [=](const error& er) {
+            }, [=](const error& er) {
               string error_msg = to_string(er);
               NES_ERROR(
-                  "ACTORSCLITEST (testSequentialMultiQueries): Error during testShowRegistered " << "\n" << error_msg);
+                  "ACTORSCLITEST (testSequentialMultiQueries): Error during testShowRegistered " << "\n"
+                                                                                                 << error_msg);
             });
         NES_INFO("ACTORSCLITEST (testSequentialMultiQueries): Registration completed with query ID " << uuid);
         EXPECT_TRUE(!uuid.empty());
