@@ -42,31 +42,35 @@ void Dispatcher::resetDispatcher() {
 }
 
 bool Dispatcher::registerQueryWithStart(QueryExecutionPlanPtr qep) {
-  registerQueryWithoutStart(qep);
+  if (registerQueryWithoutStart(qep)) {
 
-  std::unique_lock<std::mutex> lock(queryMutex);
-  /**
-   * start elements
-   */
-  auto sources = qep->getSources();
-  for (const auto& source : sources) {
-    NES_DEBUG("Dispatcher: start source " << source)
-    source->start();
-  }
+    std::unique_lock<std::mutex> lock(queryMutex);
+    /**
+     * start elements
+     */
+    auto sources = qep->getSources();
+    for (const auto &source : sources) {
+      NES_DEBUG("Dispatcher: start source " << source)
+      source->start();
+    }
 
-  auto windows = qep->getWindows();
-  for (const auto& window : windows) {
-    NES_DEBUG("Dispatcher: start window " << window)
-    window->setup();
-    window->start();
-  }
+    auto windows = qep->getWindows();
+    for (const auto &window : windows) {
+      NES_DEBUG("Dispatcher: start window " << window)
+      window->setup();
+      window->start();
+    }
 
-  auto sinks = qep->getSinks();
-  for (const auto& sink : sinks) {
-    NES_DEBUG("Dispatcher: start sink " << sink)
-    sink->setup();
+    auto sinks = qep->getSinks();
+    for (const auto &sink : sinks) {
+      NES_DEBUG("Dispatcher: start sink " << sink)
+      sink->setup();
+    }
+    return true;
   }
-  return true;
+  else {
+    return false;
+  }
 }
 
 bool Dispatcher::registerQueryWithoutStart(QueryExecutionPlanPtr qep) {
@@ -82,6 +86,7 @@ bool Dispatcher::registerQueryWithoutStart(QueryExecutionPlanPtr qep) {
     return false;
   }
   else {
+    NES_DEBUG("Dispatcher: adding query " << qep->getQueryId())
     this->queryId_to_query_map.insert({qep->getQueryId(), qep});
 
     auto windows = qep->getWindows();
