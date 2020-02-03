@@ -146,11 +146,11 @@ add_subdirectory(docs)
 
 #file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/QueryLib)
 
-add_executable(nesCoordinator nesCoordinator.cpp)
+add_executable(nesCoordinator nesCoordinatorStarter.cpp)
 target_link_libraries(nesCoordinator ${LIBRARIES} iotdb)
 target_include_directories(nesCoordinator PUBLIC "include")
 
-add_executable(nesWorker nesWorker.cpp)
+add_executable(nesWorker nesWorkerStarter.cpp)
 target_link_libraries(nesWorker ${LIBRARIES} iotdb)
 target_include_directories(nesWorker PUBLIC "include")
 

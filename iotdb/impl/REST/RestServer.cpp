@@ -3,32 +3,34 @@
 #include <REST/runtime_utils.hpp>
 #include <REST/RestServer.hpp>
 #include <Util/Logger.hpp>
-#include <REST/RestEngine.hpp>
 
 namespace NES{
 
-bool RestServer::start(std::string host,
-                       u_int16_t port,
-                       infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle) {
+RestServer::RestServer(std::string host, u_int16_t port,
+           infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle)
+{
+  this->host = host;
+  this->port = port;
+  this->coordinatorActorHandle = coordinatorActorHandle;
+}
 
-    std::cout << "IoT-DB REST server port set to " << port << std::endl;
-    std::cout << "To adjust the value supply: --rest_host <value> --rest_port <value>, as command line argument"
-              << std::endl;
-    std::cout << "------------------------------------------------------------" << std::endl;
 
-    RestEngine server;
+bool RestServer::start() {
+
+    NES_DEBUG("RestServer: REST server set to host " << host << " port" << port)
+
     server.setCoordinatorActorHandle(coordinatorActorHandle);
     server.setEndpoint("http://" + host + ":" + std::to_string(port) + "/v1/nes/");
 
     try {
         // wait for server initialization...
         server.accept().wait();
-        std::cout << "REST Server started\n";
-        std::cout << "REST Server now listening for requests at: " << server.endpoint() << '\n';
+        NES_DEBUG("RestServer: Server started")
+        NES_DEBUG("RestServer: REST Server now listening for requests at: " << server.endpoint())
         InterruptHandler::waitForUserInterrupt();
         server.shutdown().wait();
     } catch (std::exception& e) {
-        NES_ERROR("Unable to start REST server");
+        NES_ERROR("RestServer: Unable to start REST server");
         return false;
     } catch (...) {
         RuntimeUtils::printStackTrace();
@@ -36,6 +38,14 @@ bool RestServer::start(std::string host,
     }
     return true;
 }
+
+bool RestServer::stop()
+{
+  server.shutdown();
+  //TODO: should return bool
+  return true;
+}
+
 
 
 }

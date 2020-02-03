@@ -35,11 +35,11 @@ behavior CoordinatorActor::init() {
 
 void CoordinatorActor::initializeNESTopology() {
 
-    NESTopologyManager::getInstance().resetNESTopologyPlan();
-    auto coordinatorNode = NESTopologyManager::getInstance()
-        .createNESCoordinatorNode(0, actorCoordinatorConfig.ip, CPUCapacity::HIGH);
-    coordinatorNode->setPublishPort(actorCoordinatorConfig.publish_port);
-    coordinatorNode->setReceivePort(actorCoordinatorConfig.receive_port);
+  NESTopologyManager::getInstance().resetNESTopologyPlan();
+  auto coordinatorNode = NESTopologyManager::getInstance()
+      .createNESCoordinatorNode(0, actorCoordinatorConfig.ip, CPUCapacity::HIGH);
+  coordinatorNode->setPublishPort(actorCoordinatorConfig.publish_port);
+  coordinatorNode->setReceivePort(actorCoordinatorConfig.receive_port);
 }
 
 behavior CoordinatorActor::running() {
@@ -113,9 +113,10 @@ behavior CoordinatorActor::running() {
 
         // external methods for users
         [=](topology_json_atom) {
+
           string topo = coordinatorServicePtr->getTopologyPlanString();
-          NES_INFO("CoordinatorActor: Printing Topology");
-          NES_INFO(topo);
+          NES_DEBUG("CoordinatorActor: Printing Topology");
+          NES_DEBUG(topo);
         },
         [=](show_registered_queries_atom) {
           NES_INFO("CoordinatorActor: Printing Registered Queries");
