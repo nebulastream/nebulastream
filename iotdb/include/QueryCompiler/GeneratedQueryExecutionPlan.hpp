@@ -16,9 +16,7 @@ class GeneratedQueryExecutionPlan : public QueryExecutionPlan {
  public:
   GeneratedQueryExecutionPlan();
 
-  GeneratedQueryExecutionPlan(const std::string& queryId);
-
-  GeneratedQueryExecutionPlan(PipelineStagePtr ptr);
+  GeneratedQueryExecutionPlan(const std::string& queryId, std::vector<PipelineStagePtr> ptr);
 
   /**
  * @brief Executes a pipeline state for a given input buffer.
@@ -28,7 +26,7 @@ class GeneratedQueryExecutionPlan : public QueryExecutionPlan {
  */
   bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf) override;
  protected:
-  PipelineStagePtr pipeline_stage_ptr_;
+  std::vector<PipelineStagePtr> pipelineStages;
 };
 
 typedef std::shared_ptr<GeneratedQueryExecutionPlan> GeneratedQueryExecutionPlanPtr;

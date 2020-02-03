@@ -36,7 +36,7 @@ UserAPIExpressionPtr Predicate::copy() const {
   return std::make_shared<Predicate>(*this);
 }
 
-const ExpressionStatmentPtr Predicate::generateCode(GeneratedCode &code) const {
+const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr &code) const {
   if (_functionCallOverload.empty()) {
     if (_bracket)
       return BinaryOperatorStatement(*(_left->generateCode(code)),
@@ -60,20 +60,20 @@ const ExpressionStatmentPtr Predicate::generateCode(GeneratedCode &code) const {
   }
 }
 
-const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCode &code) const {
+const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCodePtr &code) const {
   if (_attribute) {
     //toDo: Need an equals operator instead of true
-    if (code.struct_decl_input_tuple.getField(_attribute->name) &&
-        code.struct_decl_input_tuple.getField(_attribute->name)->getType() == _attribute->getDataType()) {
-      VariableDeclaration var_decl_attr = code.struct_decl_input_tuple.getVariableDeclaration(_attribute->name);
-      return ((VarRef(code.var_decl_input_tuple)[VarRef(*code.var_decl_id)]).accessRef(VarRef(var_decl_attr))).copy();
+    if (code->struct_decl_input_tuple.getField(_attribute->name) &&
+        code->struct_decl_input_tuple.getField(_attribute->name)->getType() == _attribute->getDataType()) {
+      VariableDeclaration var_decl_attr = code->struct_decl_input_tuple.getVariableDeclaration(_attribute->name);
+      return ((VarRef(code->var_decl_input_tuple)[VarRef(*code->var_decl_id)]).accessRef(VarRef(var_decl_attr))).copy();
     } else {
-      NES_ERROR("Could not Retrieve Attribute from StructDeclaration!");
+      NES_FATAL_ERROR("Could not Retrieve Attribute from StructDeclaration!");
     }
   } else if (_value) {
     return ConstantExprStatement(_value).copy();
   } else {
-    NES_ERROR("PredicateItem has only NULL Pointers!");
+    NES_FATAL_ERROR("PredicateItem has only NULL Pointers!");
   }
 }
 
