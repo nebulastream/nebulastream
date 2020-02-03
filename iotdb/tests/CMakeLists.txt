@@ -2,11 +2,11 @@
 include(ExternalProject)
 ExternalProject_Add(
         gtest
-        URL https://github.com/google/googletest/archive/release-1.8.1.zip
+        URL https://github.com/google/googletest/archive/release-1.10.0.zip
         PREFIX ${CMAKE_CURRENT_BINARY_DIR}/gtest
         # Disable install step
         INSTALL_COMMAND ""
-        URL_HASH SHA256=927827c183d01734cc5cfef85e0ff3f5a92ffe6188e0d18e909c5efebf28a0c7
+        URL_HASH SHA256=94c634d499558a76fa649edb13721dce6e98fb1e7018dfaeba3cd7a083945e91
 )
 
 # Get GTest source and binary directories from CMake project
