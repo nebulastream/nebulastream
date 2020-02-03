@@ -54,14 +54,14 @@ class StreamCatalogRemoteTest : public testing::Test {
 
 TEST_F(StreamCatalogRemoteTest, test_add_log_stream_remote_test) {
 
-    NES_INFO("ACTORSCLITEST: Running test test_add_log_stream_remote_test");
+    NES_INFO("StreamCatalogRemoteTest: Running test test_add_log_stream_remote_test");
     CoordinatorActorConfig c_cfg;
     c_cfg.load<io::middleman>();
     actor_system system_coord{c_cfg};
     auto coordHandler = system_coord.spawn<NES::CoordinatorActor>();
 
     // try to publish actor at given port
-    NES_INFO("ACTORSCLITEST (test_add_log_stream_remote_test):  try publish at port" << c_cfg.publish_port);
+    NES_INFO("StreamCatalogRemoteTest (test_add_log_stream_remote_test):  try publish at port" << c_cfg.publish_port);
     auto expected_port = io::publish(coordHandler, c_cfg.publish_port);
     if (!expected_port) {
         NES_ERROR("ACTORSCLITEST (test_add_log_stream_remote_test): publish failed: "
@@ -69,7 +69,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_log_stream_remote_test) {
         return;
     }
     NES_INFO(
-        "ACTORSCLITEST (test_add_log_stream_remote_test): coordinator successfully published at port " << *expected_port);
+        "StreamCatalogRemoteTest (test_add_log_stream_remote_test): coordinator successfully published at port " << *expected_port);
 
     WorkerActorConfig w_cfg;
     w_cfg.load<io::middleman>();
@@ -78,7 +78,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_log_stream_remote_test) {
     auto workerHandler = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port);
 
     bool connected = false;
-    scoped_actor self{system_coord};
+    scoped_actor self{sw};
     self->request(workerHandler, task_timeout, connect_atom::value, w_cfg.host, c_cfg.publish_port)
         .receive([&connected](const bool& c) mutable {
           std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -86,7 +86,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_log_stream_remote_test) {
         }, [=](const error& er) {
           string error_msg = to_string(er);
           NES_ERROR(
-              "ACTORSCLITEST: Error during test_add_log_stream_remote_test " << "\n" << error_msg);
+              "StreamCatalogRemoteTest: Error during test_add_log_stream_remote_test " << "\n" << error_msg);
         });
     EXPECT_TRUE(connected);
 
@@ -108,7 +108,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_log_stream_remote_test) {
         }, [=](const error& er) {
           string error_msg = to_string(er);
           NES_ERROR(
-              "ACTORSCLITEST: Error during testSequentialMultiQueries " << "\n" << error_msg);
+              "StreamCatalogRemoteTest: Error during testSequentialMultiQueries " << "\n" << error_msg);
         });
     EXPECT_TRUE(registered);
 
@@ -119,7 +119,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_log_stream_remote_test) {
     self->request(coordHandler, task_timeout, exit_reason::user_shutdown);
 }
 
-TEST_F(StreamCatalogRemoteTest, test_add_existing_log_stream_remote_test) {
+TEST_F(StreamCatalogRemoteTest, DISABLED_test_add_existing_log_stream_remote_test) {
     cout << "*** Running test test_add_existing_log_stream_remote_test" << endl;
     CoordinatorActorConfig c_cfg;
     c_cfg.load<io::middleman>();
@@ -182,7 +182,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_existing_log_stream_remote_test) {
     anon_send_exit(coordinator, exit_reason::user_shutdown);
 }
 
-TEST_F(StreamCatalogRemoteTest, test_add_remove_empty_log_stream_remote_test) {
+TEST_F(StreamCatalogRemoteTest, DISABLED_test_add_remove_empty_log_stream_remote_test) {
     cout << "*** Running test test_add_remove_empty_log_stream_remote_test"
          << endl;
     CoordinatorActorConfig c_cfg;
@@ -239,7 +239,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_remove_empty_log_stream_remote_test) {
     anon_send_exit(coordinator, exit_reason::user_shutdown);
 }
 
-TEST_F(StreamCatalogRemoteTest, test_add_remove_not_empty_log_stream_remote_test) {
+TEST_F(StreamCatalogRemoteTest, DISABLED_test_add_remove_not_empty_log_stream_remote_test) {
     cout << "*** Running test test_add_remove_not_empty_log_stream_remote_test"
          << endl;
     CoordinatorActorConfig c_cfg;
@@ -279,7 +279,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_remove_not_empty_log_stream_remote_test
     anon_send_exit(coordinator, exit_reason::user_shutdown);
 }
 
-TEST_F(StreamCatalogRemoteTest, add_physical_to_existing_logical_stream_remote_test) {
+TEST_F(StreamCatalogRemoteTest, DISABLED_add_physical_to_existing_logical_stream_remote_test) {
     cout << "*** Running test add_physical_to_existing_logical_stream_remote_test"
          << endl;
     CoordinatorActorConfig c_cfg;
@@ -332,7 +332,7 @@ TEST_F(StreamCatalogRemoteTest, add_physical_to_existing_logical_stream_remote_t
     anon_send_exit(coordinator, exit_reason::user_shutdown);
 }
 
-TEST_F(StreamCatalogRemoteTest, add_physical_to_new_logical_stream_remote_test) {
+TEST_F(StreamCatalogRemoteTest, DISABLED_add_physical_to_new_logical_stream_remote_test) {
     cout << "*** Running test add_physical_to_new_logical_stream_remote_test"
          << endl;
     CoordinatorActorConfig c_cfg;
@@ -397,7 +397,7 @@ TEST_F(StreamCatalogRemoteTest, add_physical_to_new_logical_stream_remote_test) 
     anon_send_exit(coordinator, exit_reason::user_shutdown);
 }
 
-TEST_F(StreamCatalogRemoteTest, remove_physical_from_new_logical_stream_remote_test) {
+TEST_F(StreamCatalogRemoteTest, DISABLED_remove_physical_from_new_logical_stream_remote_test) {
     cout << "*** Running test remove_physical_from_new_logical_stream_remote_test"
          << endl;
     CoordinatorActorConfig c_cfg;
@@ -443,7 +443,7 @@ TEST_F(StreamCatalogRemoteTest, remove_physical_from_new_logical_stream_remote_t
     anon_send_exit(coordinator, exit_reason::user_shutdown);
 }
 
-TEST_F(StreamCatalogRemoteTest, remove_not_existing_stream_remote_test) {
+TEST_F(StreamCatalogRemoteTest, DISABLED_remove_not_existing_stream_remote_test) {
     cout << "*** Running test remove_not_existing_physical_stream_remote_test"
          << endl;
     CoordinatorActorConfig c_cfg;
