@@ -51,10 +51,10 @@ bool WorkerActor::registerPhysicalStream(std::string sourceType,
   auto coordinator = actor_cast<actor>(this->state.current_server);
 
   bool sucess = false;
-
-  this->request(coordinator, task_timeout, register_phy_stream_atom::value,
+  scoped_actor self { this->system() };
+  self->request(coordinator, task_timeout, register_phy_stream_atom::value,
                 this->state.workerPtr->getIp(), sourceType, sourceConf,
-                physicalStreamName, logicalStreamName).await(
+                physicalStreamName, logicalStreamName).receive(
       [&sucess, &physicalStreamName](const bool &dc) mutable {
         if (dc == true) {
           NES_DEBUG(
@@ -133,10 +133,10 @@ void WorkerActor::removePhysicalStream(std::string logicalStreamName,
 
   NES_DEBUG(
       "WorkerActor: removePhysicalStream physical stream" << physicalStreamName << " from logical stream " << logicalStreamName)
-
-  this->request(coordinator, task_timeout, remove_phy_stream_atom::value,
+  scoped_actor self { this->system() };
+  self->request(coordinator, task_timeout, remove_phy_stream_atom::value,
                 state.workerPtr->getIp(), logicalStreamName, physicalStreamName)
-      .await(
+      .receive(
       [&](bool ret) {
         if (ret == true) {
           NES_DEBUG(
@@ -159,9 +159,9 @@ void WorkerActor::removeLogicalStream(std::string streamName) {
   auto coordinator = actor_cast<actor>(this->state.current_server);
 
   NES_DEBUG("WorkerActor: removeLogicalStream stream" << streamName)
-
-  this->request(coordinator, task_timeout, remove_log_stream_atom::value,
-                streamName).await(
+  scoped_actor self { this->system() };
+  self->request(coordinator, task_timeout, remove_log_stream_atom::value,
+                streamName).receive(
       [&](bool ret) {
         if (ret == true) {
           NES_DEBUG("WorkerActor: stream successfully removed")
@@ -183,8 +183,9 @@ bool WorkerActor::disconnecting() {
   NES_DEBUG(
       "WorkerActor: try to disconnect with ip " << this->state.workerPtr->getIp())
   bool disconnected = false;
-  this->request(coordinator, task_timeout, deregister_sensor_atom::value,
-                this->state.workerPtr->getIp()).await(
+  scoped_actor self { this->system() };
+  self->request(coordinator, task_timeout, deregister_sensor_atom::value,
+                this->state.workerPtr->getIp()).receive(
       [&disconnected](const bool &c) mutable {
         disconnected = c;
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -208,7 +209,8 @@ bool WorkerActor::connecting(const std::string &host, uint16_t port) {
   this->state.current_server = nullptr;
   // use request().await() to suspend regular behavior until MM responded
   auto mm = this->system().middleman().actor_handle();
-  this->request(mm, infinite, connect_atom::value, host, port).await(
+  scoped_actor self { this->system() };
+  self->request(mm, infinite, connect_atom::value, host, port).receive(
       [=](const node_id&, strong_actor_ptr &serv,
           const std::set<std::string> &ifs) {
         if (!serv) {

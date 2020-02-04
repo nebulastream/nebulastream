@@ -7,6 +7,7 @@
 #include <caf/all.hpp>
 #include <caf/io/all.hpp>
 #include <utility>
+#include <caf/blocking_actor.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 
 using namespace caf;
@@ -29,7 +30,7 @@ struct WorkerState {
  *  - TODO: this does not handle connection lost
  *  - TODO:
  */
-//class WorkerActor : public blocking_actor<WorkerState> {
+//class WorkerActor : public blocking_actor{
 class WorkerActor : public stateful_actor<WorkerState> {
 
  public:
