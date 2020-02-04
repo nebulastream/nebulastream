@@ -29,8 +29,10 @@ behavior WorkerActor::init() {
 }
 
 behavior WorkerActor::unconnected() {
+  NES_DEBUG("WorkerActor: become unconnected")
   return {
     [=](connect_atom, const std::string &host, uint16_t port) {
+      NES_DEBUG("WorkerActor: unconnected() try reconnect")
       connecting(host, port);
       return true;
     }
@@ -188,7 +190,8 @@ bool WorkerActor::disconnecting() {
                 this->state.workerPtr->getIp()).receive(
       [&disconnected](const bool &c) mutable {
         disconnected = c;
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        NES_DEBUG("WorkerActor: disconnecting() successfully")
+//        std::this_thread::sleep_for(std::chrono::seconds(1));
       }
       ,
       [=](const error &er) {
@@ -209,19 +212,18 @@ bool WorkerActor::connecting(const std::string &host, uint16_t port) {
   this->state.current_server = nullptr;
   // use request().await() to suspend regular behavior until MM responded
   auto mm = this->system().middleman().actor_handle();
+  bool connected = false;
   scoped_actor self { this->system() };
   self->request(mm, infinite, connect_atom::value, host, port).receive(
-      [=](const node_id&, strong_actor_ptr &serv,
+      [=,&connected](const node_id&, strong_actor_ptr &serv,
           const std::set<std::string> &ifs) {
         if (!serv) {
           aout(this) << R"(*** no server found at ")" << host << R"(":)" << port
                      << endl;
-          return;
         }
         if (!ifs.empty()) {
           aout(this) << R"(*** typed actor found at ")" << host << R"(":)"
                      << port << ", but expected an untyped actor " << endl;
-          return;
         }
         aout(this) << "*** successfully connected to server" << endl;
         this->state.current_server = serv;
@@ -250,6 +252,7 @@ bool WorkerActor::connecting(const std::string &host, uint16_t port) {
         cout << "properties set successful, now changing state" << endl;
         this->monitor(coordinator);
         this->become(running(coordinator));
+        connected = true;
       }
       ,
       [=](const error &err) {
@@ -257,6 +260,7 @@ bool WorkerActor::connecting(const std::string &host, uint16_t port) {
                    << " => " << this->system().render(err) << endl;
         this->become(unconnected());
       });
+  return connected;
 }
 
 /**

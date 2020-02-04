@@ -55,7 +55,7 @@ class ActorsCliTest : public testing::Test {
     }
 };
 
-TEST_F(ActorsCliTest, testRegisterUnregisterSensor) {
+TEST_F(ActorsCliTest, testConnectDisconnect) {
     NES_INFO("ACTORSCLITEST: Running test testRegisterUnregisterSensor");
     CoordinatorActorConfig c_cfg;
     c_cfg.load<io::middleman>();
@@ -80,13 +80,13 @@ TEST_F(ActorsCliTest, testRegisterUnregisterSensor) {
     auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port, w_cfg.receive_port);
 
     //Prepare Actor System
-    scoped_actor self{system_coord};
+    scoped_actor self{sw};
     bool connected = false;
     self->request(worker, task_timeout, connect_atom::value, w_cfg.host, c_cfg.publish_port)
         .receive([&connected](const bool& c) mutable {
           std::this_thread::sleep_for(std::chrono::seconds(1));
           connected = c;
-          NES_DEBUG("ACTORSCLITEST: Sucessfully connected")
+          NES_DEBUG("ACTORSCLITEST: Successfully connected")
         }, [=](const error& er) {
           string error_msg = to_string(er);
           NES_ERROR(
@@ -94,10 +94,17 @@ TEST_F(ActorsCliTest, testRegisterUnregisterSensor) {
         });
     EXPECT_TRUE(connected);
 
-    self->request(worker, task_timeout, disconnect_atom::value);
-    //TODO: this should also test the result
-    self->request(worker, task_timeout, connect_atom::value, w_cfg.host, c_cfg.publish_port);
-
+    bool bookKeep = false;
+    self->request(worker, task_timeout, disconnect_atom::value).receive([&bookKeep](const bool& c) mutable {
+      bookKeep = c;
+      NES_DEBUG("ACTORSCLITEST: Successfully disconnected")
+    }, [=](const error& er) {
+      string error_msg = to_string(er);
+      NES_ERROR(
+          "ACTORSCLITEST: Error during disconnect testRegisterUnregisterSensor " << "\n" << error_msg);
+    });
+    EXPECT_TRUE(bookKeep);
+    cout << "test finished successfully";
     self->request(worker, task_timeout, exit_reason::user_shutdown);
     self->request(coordinator, task_timeout, exit_reason::user_shutdown);
 }
