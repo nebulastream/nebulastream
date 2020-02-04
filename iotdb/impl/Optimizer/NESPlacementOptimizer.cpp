@@ -150,32 +150,46 @@ void NESPlacementOptimizer::completeExecutionGraphWithNESTopology(NESExecutionPl
 
         size_t srcId = nesLink->getSourceNode()->getId();
         size_t destId = nesLink->getDestNode()->getId();
+        size_t linkId = nesLink->getId();
+        size_t linkCapacity = nesLink->getLinkCapacity();
+        size_t linkLatency = nesLink->getLinkLatency();
+
         if (nesExecutionPlanPtr->hasVertex(srcId)) {
             const ExecutionNodePtr srcExecutionNode = nesExecutionPlanPtr->getExecutionNode(srcId);
             if (nesExecutionPlanPtr->hasVertex(destId)) {
                 const ExecutionNodePtr destExecutionNode = nesExecutionPlanPtr->getExecutionNode(destId);
-                nesExecutionPlanPtr->createExecutionNodeLink(srcExecutionNode, destExecutionNode);
+                nesExecutionPlanPtr->createExecutionNodeLink(linkId, srcExecutionNode,
+                                                             destExecutionNode,
+                                                             linkCapacity,
+                                                             linkLatency);
             } else {
                 const ExecutionNodePtr destExecutionNode = nesExecutionPlanPtr->createExecutionNode("empty",
-                                                                                                   to_string(destId),
-                                                                                                   nesLink->getDestNode(),
-                                                                                                   nullptr);
-                nesExecutionPlanPtr->createExecutionNodeLink(srcExecutionNode, destExecutionNode);
+                                                                                                    to_string(destId),
+                                                                                                    nesLink->getDestNode(),
+                                                                                                    nullptr);
+                nesExecutionPlanPtr->createExecutionNodeLink(linkId, srcExecutionNode, destExecutionNode,
+                                                             linkCapacity,
+                                                             linkLatency);
             }
         } else {
 
-            const ExecutionNodePtr srcExecutionNode = nesExecutionPlanPtr->createExecutionNode("empty", to_string(srcId),
-                                                                                              nesLink->getSourceNode(),
-                                                                                              nullptr);
+            const ExecutionNodePtr
+                srcExecutionNode = nesExecutionPlanPtr->createExecutionNode("empty", to_string(srcId),
+                                                                            nesLink->getSourceNode(),
+                                                                            nullptr);
             if (nesExecutionPlanPtr->hasVertex(destId)) {
                 const ExecutionNodePtr destExecutionNode = nesExecutionPlanPtr->getExecutionNode(destId);
-                nesExecutionPlanPtr->createExecutionNodeLink(srcExecutionNode, destExecutionNode);
+                nesExecutionPlanPtr->createExecutionNodeLink(linkId, srcExecutionNode, destExecutionNode,
+                                                             linkCapacity,
+                                                             linkLatency);
             } else {
                 const ExecutionNodePtr destExecutionNode = nesExecutionPlanPtr->createExecutionNode("empty",
-                                                                                                   to_string(destId),
-                                                                                                   nesLink->getDestNode(),
-                                                                                                   nullptr);
-                nesExecutionPlanPtr->createExecutionNodeLink(srcExecutionNode, destExecutionNode);
+                                                                                                    to_string(destId),
+                                                                                                    nesLink->getDestNode(),
+                                                                                                    nullptr);
+                nesExecutionPlanPtr->createExecutionNodeLink(linkId, srcExecutionNode, destExecutionNode,
+                                                             linkCapacity,
+                                                             linkLatency);
             }
         }
     }

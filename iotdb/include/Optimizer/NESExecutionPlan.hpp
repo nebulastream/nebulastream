@@ -14,12 +14,12 @@ namespace NES {
 using namespace web;
 
 struct ExecutionVertex {
-  int id;
-  ExecutionNodePtr ptr;
+    int id;
+    ExecutionNodePtr ptr;
 };
 struct ExecutionEdge {
-  int id;
-  ExecutionNodeLinkPtr ptr;
+    int id;
+    ExecutionNodeLinkPtr ptr;
 };
 using executionGraph_t = boost::adjacency_list<boost::listS,
                                                boost::vecS,
@@ -33,87 +33,108 @@ using executionEdge_iterator = boost::graph_traits<executionGraph_t>::edge_itera
 
 class ExecutionGraph {
 
- private:
-  executionGraph_t graph;
+  private:
+    executionGraph_t graph;
 
- public:
-  ExecutionGraph() {};
+  public:
+    ExecutionGraph() {};
 
-  ExecutionNodePtr getRoot();
+    ExecutionNodePtr getRoot();
 
-  const executionVertex_t getVertex(int search_id) const;
+    const executionVertex_t getVertex(int search_id) const;
 
-  bool hasVertex(int search_id) const;
+    bool hasVertex(int search_id) const;
 
-  bool addVertex(ExecutionNodePtr ptr);
+    bool addVertex(ExecutionNodePtr ptr);
 
-  vector<ExecutionVertex> getAllVertex() const;
+    vector<ExecutionVertex> getAllVertex() const;
 
-  bool removeVertex(int search_id);
+    bool removeVertex(int search_id);
 
-  const ExecutionNodePtr getNode(int search_id) const;
+    const ExecutionNodePtr getNode(int search_id) const;
 
-  ExecutionNodeLinkPtr getLink(ExecutionNodePtr sourceNode, ExecutionNodePtr destNode) const;
+    ExecutionNodeLinkPtr getLink(ExecutionNodePtr sourceNode, ExecutionNodePtr destNode) const;
 
-  bool hasLink(ExecutionNodePtr sourceNode, ExecutionNodePtr destNode) const;
+    bool hasLink(ExecutionNodePtr sourceNode, ExecutionNodePtr destNode) const;
 
-  const ExecutionEdge *getEdge(int search_id) const;
+    const ExecutionEdge* getEdge(int search_id) const;
 
-  vector<ExecutionEdge> getAllEdges() const;
+    vector<ExecutionEdge> getAllEdges() const;
 
-  bool hasEdge(int search_id) const;
+    bool hasEdge(int search_id) const;
 
-  bool addEdge(ExecutionNodeLinkPtr ptr);
+    bool addEdge(ExecutionNodeLinkPtr ptr);
 
-  std::string getGraphString();
+    std::string getGraphString();
 
-  /**
-   * @brief get all edges coming to the node
-   * @param destNode
-   * @return
-   */
-  const vector<ExecutionEdge> getAllEdgesToNode(ExecutionNodePtr destNode) const;
+    /**
+     * @brief get all edges coming to the node
+     * @param destNode
+     * @return
+     */
+    const vector<ExecutionEdge> getAllEdgesToNode(ExecutionNodePtr destNode) const;
 
-  /**
-   * @brief get all edges starting from the node.
-   * @param srcNode
-   * @return vector of edges
-   */
-  const vector<ExecutionEdge> getAllEdgesFromNode(ExecutionNodePtr srcNode) const;
+    /**
+     * @brief get all edges starting from the node.
+     * @param srcNode
+     * @return vector of edges
+     */
+    const vector<ExecutionEdge> getAllEdgesFromNode(ExecutionNodePtr srcNode) const;
 };
 
 typedef std::shared_ptr<ExecutionGraph> ExecutionGraphPtr;
 
 class NESExecutionPlan {
 
- public:
-  NESExecutionPlan();
+  public:
+    NESExecutionPlan();
 
-  void freeResources();
+    void freeResources();
 
-  ExecutionNodePtr getRootNode() const;
+    ExecutionNodePtr getRootNode() const;
 
-  ExecutionNodePtr createExecutionNode(std::string operatorName, std::string nodeName, NESTopologyEntryPtr nesNode,
-                                       OperatorPtr executableOperator);
+    /**
+     * @brief Create execution node containing information about the chain of operators to be executed
+     * @param operatorName: Name of the operator to be executed (contains "=>" separated actual operator names with their ids)
+     * @param nodeName : name of the node (usually a unique identifier)
+     * @param nesNode : information about actual nes node where the operators will be executed
+     * @param executableOperator : chain of operators to be executed
+     * @return pointer to the execution node
+     */
+    ExecutionNodePtr createExecutionNode(std::string operatorName, std::string nodeName, NESTopologyEntryPtr nesNode,
+                                         OperatorPtr executableOperator);
 
-  ExecutionNodeLinkPtr createExecutionNodeLink(ExecutionNodePtr src, ExecutionNodePtr dst);
+    /**
+     * @brief Create execution node link between sourceNode and destinationNode nodes
+     * @param id : link id
+     * @param sourceNode : node which generate the data
+     * @param destinationNode : node which consumes the data
+     * @param linkCapacity : capacity of the link
+     * @param linkLatency : latency of the link
+     * @return
+     */
+    ExecutionNodeLinkPtr createExecutionNodeLink(size_t id,
+                                                 ExecutionNodePtr sourceNode,
+                                                 ExecutionNodePtr destinationNode,
+                                                 size_t linkCapacity,
+                                                 size_t linkLatency);
 
-  std::string getTopologyPlanString() const;
+    std::string getTopologyPlanString() const;
 
-  ExecutionGraphPtr getExecutionGraph() const;
+    ExecutionGraphPtr getExecutionGraph() const;
 
-  bool hasVertex(int search_id);
+    bool hasVertex(int search_id);
 
-  ExecutionNodePtr getExecutionNode(int search_id);
+    ExecutionNodePtr getExecutionNode(int search_id);
 
-  json::value getExecutionGraphAsJson() const;
+    json::value getExecutionGraphAsJson() const;
 
- private:
-  ExecutionGraphPtr exeGraphPtr;
-  vector<json::value> getChildrenNode(ExecutionNodePtr nesParentNode) const;
+  private:
+    ExecutionGraphPtr exeGraphPtr;
+    vector<json::value> getChildrenNode(ExecutionNodePtr nesParentNode) const;
 };
 
-typedef std::shared_ptr <NESExecutionPlan> NESExecutionPlanPtr;
+typedef std::shared_ptr<NESExecutionPlan> NESExecutionPlanPtr;
 
 }
 
