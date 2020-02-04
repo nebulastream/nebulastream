@@ -86,6 +86,7 @@ TEST_F(ActorsCliTest, testRegisterUnregisterSensor) {
         .receive([&connected](const bool& c) mutable {
           std::this_thread::sleep_for(std::chrono::seconds(1));
           connected = c;
+          NES_DEBUG("ACTORSCLITEST: Sucessfully connected")
         }, [=](const error& er) {
           string error_msg = to_string(er);
           NES_ERROR(
