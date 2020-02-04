@@ -83,34 +83,34 @@ void createExampleTopology() {
     StreamCatalogEntryPtr e4 = std::make_shared<StreamCatalogEntry>("", "", sensorNode4, "humidity2");
     assert(StreamCatalog::instance().addPhysicalStream("humidity2", e4));
 
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode1, sinkNode);
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode2, sinkNode);
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode3, sinkNode);
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode4, workerNode1);
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode5, workerNode2);
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode6, workerNode3);
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode10, workerNode6);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode1, sinkNode, 3, 1);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode2, sinkNode, 3, 1);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode3, sinkNode, 3, 1);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode4, workerNode1, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode5, workerNode2, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode6, workerNode3, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode10, workerNode6, 2, 2);
 
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode7, workerNode4);
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode8, workerNode4);
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode8, workerNode5);
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode9, workerNode6);
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode10, workerNode5);
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode11, workerNode7);
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode12, workerNode8);
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode13, workerNode12);
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode13, workerNode11);
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode14, workerNode12);
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode15, workerNode10);
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode16, workerNode15);
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode17, workerNode15);
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode18, workerNode9);
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode12, workerNode7);
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode15, workerNode18);
-    NESTopologyManager::getInstance().createNESTopologyLink(sensorNode1, workerNode13);
-    NESTopologyManager::getInstance().createNESTopologyLink(sensorNode2, workerNode14);
-    NESTopologyManager::getInstance().createNESTopologyLink(sensorNode3, workerNode16);
-    NESTopologyManager::getInstance().createNESTopologyLink(sensorNode4, workerNode17);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode7, workerNode4, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode8, workerNode4, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode8, workerNode5, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode9, workerNode6, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode10, workerNode5, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode11, workerNode7, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode12, workerNode8, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode13, workerNode12, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode13, workerNode11, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode14, workerNode12, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode15, workerNode10, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode16, workerNode15, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode17, workerNode15, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode18, workerNode9, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode12, workerNode7, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode15, workerNode18, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(sensorNode1, workerNode13, 1, 3);
+    NESTopologyManager::getInstance().createNESTopologyLink(sensorNode2, workerNode14, 1, 3);
+    NESTopologyManager::getInstance().createNESTopologyLink(sensorNode3, workerNode16, 1, 3);
+    NESTopologyManager::getInstance().createNESTopologyLink(sensorNode4, workerNode17, 1, 3);
 
 }
 }
