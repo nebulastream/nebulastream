@@ -5,6 +5,7 @@
 #include <random>
 
 #include <NodeEngine/Dispatcher.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <Util/Logger.hpp>
 
 #include <boost/archive/text_iarchive.hpp>
@@ -22,7 +23,8 @@ DataSource::DataSource(const Schema &_schema)
       schema(_schema),
       generatedTuples(0),
       generatedBuffers(0),
-      num_buffers_to_process(UINT64_MAX) {
+      num_buffers_to_process(UINT64_MAX),
+      sourceId(UtilityFunctions::generateUuid()) {
   NES_DEBUG("DataSource " << this << ": Init Data Source with schema")
 }
 
@@ -31,7 +33,8 @@ DataSource::DataSource()
       thread(),
       generatedTuples(0),
       generatedBuffers(0),
-      num_buffers_to_process(UINT64_MAX) {
+      num_buffers_to_process(UINT64_MAX),
+      sourceId(UtilityFunctions::generateUuid()){
   NES_DEBUG("DataSource " << this << ": Init Data Source Default w/o schema")
 }
 
@@ -73,7 +76,7 @@ bool DataSource::isRunning() {
 }
 
 void DataSource::running_routine() {
-  if (!this->queryId.empty()) {
+  if (!this->sourceId.empty()) {
     NES_DEBUG("DataSource " << this << ": Running Data Source")
     size_t cnt = 0;
 
@@ -83,7 +86,7 @@ void DataSource::running_routine() {
         if (buf) {
           NES_DEBUG("DataSource " << this << ": Received Data: " << buf->getNumberOfTuples() << "tuples")
           if (buf->getBuffer()) {
-            Dispatcher::instance().addWork(this->queryId, buf);
+            Dispatcher::instance().addWork(this->sourceId, buf);
             cnt++;
           } else {
             NES_DEBUG("DataSource " << this << ": Received buffer is invalid")
@@ -102,8 +105,8 @@ void DataSource::running_routine() {
     }
     NES_DEBUG("DataSource " << this << ": Data Source finished processing")
   } else {
-    NES_FATAL_ERROR("DataSource " << this << ": No queryId assigned. Running_routine is not possible!")
-    throw std::logic_error("DataSource: No queryId assigned. Running_routine is not possible!");
+    NES_FATAL_ERROR("DataSource " << this << ": No ID assigned. Running_routine is not possible!")
+    throw std::logic_error("DataSource: No ID assigned. Running_routine is not possible!");
   }
 }
 
@@ -122,12 +125,8 @@ std::string DataSource::getSourceSchemaAsString() {
   return schema.toString();
 }
 
-const std::string &DataSource::getQueryId() const {
-  return this->queryId;
+const std::string &DataSource::getSourceId() const {
+  return this->sourceId;
 }
-
-void DataSource::setQueryId(std::string &_queryId) {
-  this->queryId = _queryId;
-};
 
 }  // namespace NES

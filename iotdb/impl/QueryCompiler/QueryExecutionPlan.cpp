@@ -3,25 +3,18 @@
 #include <assert.h>
 #include <iostream>
 #include <Util/Logger.hpp>
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
 
 namespace NES {
 
 QueryExecutionPlan::QueryExecutionPlan() : sources(), stages() {
-  std::string qId = this->generateAndAssignQueryId();
-  NES_DEBUG("QueryExecutionPlan: QEP created with QueryId " << qId)
+  NES_DEBUG("QueryExecutionPlan: QEP created")
 }
 
-QueryExecutionPlan::QueryExecutionPlan(const std::string& _queryId) : queryId(_queryId), sources(), stages() {}
-
-QueryExecutionPlan::QueryExecutionPlan(const std::string& _queryId,
-                                       const std::vector<DataSourcePtr>& _sources,
+QueryExecutionPlan::QueryExecutionPlan(const std::vector<DataSourcePtr>& _sources,
                                        const std::vector<PipelineStagePtr>& _stages,
                                        const std::map<DataSource*, uint32_t>& _source_to_stage,
                                        const std::map<uint32_t, uint32_t>& _stage_to_dest)
-    : queryId(_queryId), sources(_sources), stages(_stages), source_to_stage(_source_to_stage), stage_to_dest(_stage_to_dest)
+    : sources(_sources), stages(_stages), source_to_stage(_source_to_stage), stage_to_dest(_stage_to_dest)
 {
 }
 
@@ -65,17 +58,6 @@ const std::vector<DataSourcePtr> QueryExecutionPlan::getSources() const { return
 const std::vector<WindowPtr> QueryExecutionPlan::getWindows() const { return windows; }
 
 const std::vector<DataSinkPtr> QueryExecutionPlan::getSinks() const { return sinks; }
-
-const std::string &QueryExecutionPlan::getQueryId() const {
-  return this->queryId;
-}
-
-std::string QueryExecutionPlan::generateAndAssignQueryId() {
-  boost::uuids::basic_random_generator<boost::mt19937> gen;
-  boost::uuids::uuid u = gen();
-  this->queryId = boost::uuids::to_string(u);
-  return this->queryId;
-}
 
 } // namespace NES
 BOOST_CLASS_EXPORT(NES::QueryExecutionPlan);

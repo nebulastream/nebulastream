@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <vector>
 #include <zmq.hpp>
+#include <unordered_set>
 
 namespace NES {
 using JSON = nlohmann::json;
@@ -38,20 +39,20 @@ class NodeEngine {
    * @brief deploy a new query plan to via the dispatcher
    * @param new query plan
    */
-  void deployQuery(QueryExecutionPlanPtr ptr);
+  void deployQuery(QueryExecutionPlanPtr);
 
   /**
    * @brief deploy a new query plan to via the dispatcher
    * @caution this will not start the sources/sinks, this has to be done manually
    * @param new query plan
    */
-  void deployQueryWithoutStart(QueryExecutionPlanPtr ptr);
+  void deployQueryWithoutStart(QueryExecutionPlanPtr);
 
   /**
    * @brief undeploy an existing query plan to via the dispatcher
    * @param query plan to deploy
    */
-  void undeployQuery(const std::string& queryId);
+  void undeployQuery(QueryExecutionPlanPtr);
 
   /**
    * @brief change config of running node eninge
@@ -103,7 +104,7 @@ class NodeEngine {
   void init();
 
   NodePropertiesPtr props;
-  std::map<std::string, QueryExecutionPlanPtr> qeps;
+  std::unordered_set<QueryExecutionPlanPtr> qeps;
 };
 
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;

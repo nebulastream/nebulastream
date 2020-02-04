@@ -190,7 +190,7 @@ TEST_F(EngineTest, start_stop_engine_empty) {
 TEST_F(EngineTest, deploy_start_stop_test) {
   CompiledTestQueryExecutionPlanPtr qep = setupQEP();
 
-  std::cout << "Query ID " << qep->getQueryId() << endl;
+  std::cout << "Query " << qep << endl;
 
   NodeEngine* ptr = new NodeEngine();
   ptr->deployQuery(qep);
@@ -221,7 +221,7 @@ TEST_F(EngineTest, start_deploy_undeploy_stop_test) {
   ptr->start();
   ptr->deployQuery(qep);
   sleep(1);
-  ptr->undeployQuery(qep->getQueryId());
+  ptr->undeployQuery(qep);
   ptr->stop();
 
   testOutput();

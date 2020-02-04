@@ -66,9 +66,6 @@ class WindowHandler {
     return window_manager_ptr;
   };
 
-  const std::string &getQueryId() const;
-  void setQueryId(std::string &queryId);
-
   template<class Archive>
   void serialize(Archive &ar, const unsigned int version) {}
 
@@ -79,8 +76,6 @@ class WindowHandler {
   WindowManagerPtr window_manager_ptr;
   void *window_state;
   std::thread thread;
-  std::string queryId;
-
 };
 
 typedef std::shared_ptr<WindowHandler> WindowPtr;

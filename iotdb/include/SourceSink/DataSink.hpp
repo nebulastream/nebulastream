@@ -98,21 +98,16 @@ class DataSink {
 
   virtual SinkType getType() const=0;
 
-  const std::string &getQueryId() const;
-  void setQueryId(std::string &queryId);
-
  protected:
   Schema schema;
   size_t sentBuffer;
   size_t sentTuples;
-  std::string queryId;
 
  private:
   friend class boost::serialization::access;
 
   template<class Archive>
   void serialize(Archive &ar, const unsigned int version) {
-    ar & queryId;
     ar & schema;
     ar & sentBuffer;
     ar & sentTuples;

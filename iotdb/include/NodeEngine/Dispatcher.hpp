@@ -7,6 +7,7 @@
 #include <thread>
 #include <vector>
 #include <chrono>
+#include <unordered_set>
 
 #include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <NodeEngine/BufferManager.hpp>
@@ -53,7 +54,7 @@ class Dispatcher {
    * @param QueryExecutionPlan to be deployed
    * @return bool indicating if register was successful
    */
-  void deregisterQuery(const std::string&);
+  void deregisterQuery(QueryExecutionPlanPtr);
 
   /**
    * @brief get task from task queue
@@ -111,6 +112,10 @@ class Dispatcher {
   void resetDispatcher();
 
  private:
+  void addQep(QueryExecutionPlanPtr);
+
+  void removeQep(QueryExecutionPlanPtr);
+
   /* implement singleton semantics: no construction,
    * copying or destruction of Dispatcher objects
    * outside of the class */
@@ -121,7 +126,7 @@ class Dispatcher {
 
   std::vector<TaskPtr> task_queue;
 
-  std::map<std::string, QueryExecutionPlanPtr> queryId_to_query_map;
+  std::map<std::string, std::unordered_set<QueryExecutionPlanPtr>> sourceIdToQueryMap;
   std::map<WindowHandler*, QueryExecutionPlanPtr> window_to_query_map;
 
   std::mutex bufferMutex;

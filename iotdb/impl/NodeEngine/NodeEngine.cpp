@@ -29,23 +29,36 @@ NodeProperties* NodeEngine::getNodeProperties() {
 }
 
 void NodeEngine::deployQuery(QueryExecutionPlanPtr qep) {
-  NES_DEBUG("NODEENGINE: deploy query" << qep)
-
-  qeps.insert({qep->getQueryId(), qep});
-  Dispatcher::instance().registerQueryWithStart(qep);
+  NES_DEBUG("NODEENGINE: deploy query " << qep)
+  if (qeps.find(qep) == qeps.end()) {
+    qeps.insert(qep);
+    Dispatcher::instance().registerQueryWithStart(qep);
+  }
+  else {
+    NES_DEBUG("NODEENGINE: qep already exists. Deployment failed!" << qep)
+  }
 }
 
 void NodeEngine::deployQueryWithoutStart(QueryExecutionPlanPtr qep) {
-  NES_DEBUG("NODEENGINE: deploy query" << qep)
-
-  qeps.insert({qep->getQueryId(), qep});
-  Dispatcher::instance().registerQueryWithoutStart(qep);
+  NES_DEBUG("NODEENGINE: deploy query " << qep)
+  if (qeps.find(qep) == qeps.end()) {
+    qeps.insert(qep);
+    Dispatcher::instance().registerQueryWithoutStart(qep);
+  }
+  else {
+    NES_DEBUG("NODEENGINE: qep already exists. Deployment failed!" << qep)
+  }
 }
 
-void NodeEngine::undeployQuery(const std::string& queryId) {
-  NES_DEBUG("NODEENGINE: deregister query" << queryId)
-  Dispatcher::instance().deregisterQuery(queryId);
-  qeps.erase(queryId);
+void NodeEngine::undeployQuery(QueryExecutionPlanPtr qep) {
+  NES_DEBUG("NODEENGINE: deregister query" << qep)
+  if (qeps.find(qep) != qeps.end()) {
+    qeps.erase(qep);
+    Dispatcher::instance().deregisterQuery(qep);
+  }
+  else {
+    NES_DEBUG("NODEENGINE: qep already exists. Deregister failed!" << qep)
+  }
 }
 
 void NodeEngine::init() {
@@ -62,9 +75,9 @@ void NodeEngine::start() {
 }
 
 void NodeEngine::startWithRedeploy() {
-  for (std::pair<std::string, QueryExecutionPlanPtr> e : qeps) {
-    NES_DEBUG("NODEENGINE: register query " << e.first)
-    Dispatcher::instance().registerQueryWithStart(e.second);
+  for (QueryExecutionPlanPtr qep : qeps) {
+    NES_DEBUG("NODEENGINE: register query " << qep)
+    Dispatcher::instance().registerQueryWithStart(qep);
   }
 
   NES_DEBUG("NODEENGINE: start thread pool")
@@ -80,9 +93,9 @@ void NodeEngine::stopWithUndeploy() {
   NES_DEBUG("NODEENGINE: stop thread pool")
   ThreadPool::instance().stop();
 
-  for (std::pair<std::string, QueryExecutionPlanPtr> e : qeps) {
-    NES_DEBUG("NODEENGINE: deregister query " << e.first)
-    Dispatcher::instance().deregisterQuery(e.first);
+  for (QueryExecutionPlanPtr qep : qeps) {
+    NES_DEBUG("NODEENGINE: deregister query " << qep)
+    Dispatcher::instance().deregisterQuery(qep);
   }
 }
 
@@ -106,9 +119,9 @@ void NodeEngine::applyConfig(Config& conf) {
 }
 
 void NodeEngine::resetQEPs() {
-  for (std::pair<std::string, QueryExecutionPlanPtr> e : qeps) {
-    NES_DEBUG("NODEENGINE: deregister query " << e.first)
-    Dispatcher::instance().deregisterQuery(e.first);
+  for (QueryExecutionPlanPtr qep : qeps) {
+    NES_DEBUG("NODEENGINE: deregister query " << qep)
+    Dispatcher::instance().deregisterQuery(qep);
   }
   NES_DEBUG("NODEENGINE: clear qeps")
   qeps.clear();
