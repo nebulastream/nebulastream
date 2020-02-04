@@ -116,12 +116,4 @@ bool WindowHandler::stop() {
 
 WindowHandler::~WindowHandler() {NES_DEBUG("WINDOW: calling destructor")}
 
-const std::string &WindowHandler::getQueryId() const {
-  return this->queryId;
-}
-
-void WindowHandler::setQueryId(std::string &_queryId) {
-  this->queryId = _queryId;
-};
-
 } // namespace NES

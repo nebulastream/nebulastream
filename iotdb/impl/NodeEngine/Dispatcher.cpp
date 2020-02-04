@@ -13,7 +13,7 @@ using std::string;
 
 Dispatcher::Dispatcher()
     : task_queue(),
-      queryId_to_query_map(),
+      sourceIdToQueryMap(),
       bufferMutex(),
       queryMutex(),
       workMutex(),
@@ -33,7 +33,7 @@ void Dispatcher::resetDispatcher() {
   NES_DEBUG("Dispatcher: Destroy Task Queue")
   task_queue.clear();
   NES_DEBUG("Dispatcher: Destroy queryId_to_query_map")
-  queryId_to_query_map.clear();
+  sourceIdToQueryMap.clear();
 
   workerHitEmptyTaskQueue = 0;
   processedTasks = 0;
@@ -43,7 +43,6 @@ void Dispatcher::resetDispatcher() {
 
 bool Dispatcher::registerQueryWithStart(QueryExecutionPlanPtr qep) {
   if (registerQueryWithoutStart(qep)) {
-
     std::unique_lock<std::mutex> lock(queryMutex);
     /**
      * start elements
@@ -79,55 +78,73 @@ bool Dispatcher::registerQueryWithoutStart(QueryExecutionPlanPtr qep) {
   /**
    * test if elements already exist
    */
-  NES_DEBUG("Dispatcher: search for query " << qep->getQueryId())
-
-  if (this->queryId_to_query_map.find(qep->getQueryId()) != this->queryId_to_query_map.end()) {
-    NES_ERROR("Dispatcher: qep already exists " << qep->getQueryId())
-    return false;
-  }
-  else {
-    NES_DEBUG("Dispatcher: adding query " << qep->getQueryId())
-    this->queryId_to_query_map.insert({qep->getQueryId(), qep});
-
-    auto windows = qep->getWindows();
-    for (const auto& window : windows) {
-      NES_DEBUG("Dispatcher: add window " << window)
-      window_to_query_map.insert({window.get(), qep});
+  NES_DEBUG("Dispatcher: resolving sources for query " << qep)
+  for (const auto& source: qep->getSources()) {
+    if (sourceIdToQueryMap.find(source->getSourceId()) != sourceIdToQueryMap.end()) {
+      //source already exists, add qep to source set if not there
+      if (sourceIdToQueryMap[source->getSourceId()].find(qep) == sourceIdToQueryMap[source->getSourceId()].end()) {
+        //qep not found in list, add it
+        NES_DEBUG("Dispatcher: Inserting QEP " << qep << " to Source" << source->getSourceId())
+        sourceIdToQueryMap[source->getSourceId()].insert(qep);
+      }
+      else {
+        NES_DEBUG("Dispatcher: Source " << source->getSourceId() << " and QEP already exist.")
+        return false;
+      }
     }
-
-    return true;
+    else {
+      // source does not exist, add source and unordered_set containing the qep
+      NES_DEBUG("Dispatcher: Source " << source->getSourceId() << " not found. Creating new element with with qep " << qep)
+      std::unordered_set<QueryExecutionPlanPtr> qepSet = {qep};
+      sourceIdToQueryMap.insert({source->getSourceId(), qepSet});
+    }
   }
+
+  auto windows = qep->getWindows();
+  for (const auto &window : windows) {
+    NES_DEBUG("Dispatcher: add window " << window)
+    window_to_query_map.insert({window.get(), qep});
+  }
+  return true;
 }
 
-void Dispatcher::deregisterQuery(const string& queryId) {
+void Dispatcher::deregisterQuery(QueryExecutionPlanPtr qep) {
   std::unique_lock<std::mutex> lock(queryMutex);
 
-  if (this->queryId_to_query_map.find(queryId) != this->queryId_to_query_map.end()) {
-    NES_ERROR("Dispatcher: qep does not exist for query " << queryId)
+  auto sources = qep->getSources();
+  for (const auto& source : sources) {
+    NES_DEBUG("Dispatcher: stop source " << source)
+    source->stop();
   }
-  else {
-    QueryExecutionPlanPtr qep = queryId_to_query_map.at(queryId);
 
-    auto sources = qep->getSources();
-    for (const auto& source : sources) {
-      NES_DEBUG("Dispatcher: stop source " << source)
-      source->stop();
+  auto windows = qep->getWindows();
+  for (const auto& window : windows) {
+      NES_DEBUG("Dispatcher: stop window " << window)
+      window->stop();
+      window_to_query_map.erase(window.get());
+  }
+
+  auto sinks = qep->getSinks();
+  for (const auto& sink : sinks) {
+      NES_DEBUG("Dispatcher: stop sink " << sink)
+      sink->shutdown();
+  }
+
+  for (const auto& source : sources) {
+    NES_DEBUG("Dispatcher: stop source " << source)
+    if (sourceIdToQueryMap.find(source->getSourceId()) != sourceIdToQueryMap.end()) {
+      //source exists, remove qep from source if there
+      if (sourceIdToQueryMap[source->getSourceId()].find(qep) != sourceIdToQueryMap[source->getSourceId()].end()) {
+        //qep found, remove it
+        NES_DEBUG("Dispatcher: Removing QEP " << qep << " from Source" << source->getSourceId())
+        sourceIdToQueryMap[source->getSourceId()].erase(qep);
+
+        // if source has no qeps remove the source from map
+        if (sourceIdToQueryMap[source->getSourceId()].empty()){
+          sourceIdToQueryMap.erase(source->getSourceId());
+        }
+      }
     }
-
-    auto windows = qep->getWindows();
-    for (const auto& window : windows) {
-        NES_DEBUG("Dispatcher: stop window " << window)
-        window->stop();
-        window_to_query_map.erase(window.get());
-    }
-
-    auto sinks = qep->getSinks();
-    for (const auto& sink : sinks) {
-        NES_DEBUG("Dispatcher: stop sink " << sink)
-        sink->shutdown();
-    }
-
-    queryId_to_query_map.erase(queryId);
   }
 }
 
@@ -177,27 +194,21 @@ void Dispatcher::addWork(const NES::TupleBufferPtr window_aggregates, NES::Windo
   cv.notify_all();
 }
 
-void Dispatcher::addWork(const string& queryId, const TupleBufferPtr& buf) {
+void Dispatcher::addWork(const string& sourceId, const TupleBufferPtr& buf) {
   std::unique_lock<std::mutex> lock(workMutex);
-
-  //get the queries that fetches data from this source
-  QueryExecutionPlanPtr qep = queryId_to_query_map[queryId];
 
   //set the useCount of the buffer
   buf->setUseCnt(1);
 
-  auto sources = qep->getSources();
-  for (const auto& source : sources) {
+  for (const auto& qep : sourceIdToQueryMap[sourceId]) {
     // for each respective source, create new task and put it into queue
-    //TODO: is this handeled right? how do we get the stateID here?
     //TODO: change that in the future that stageId is used properly
-    TaskPtr task(new Task(qep, qep->stageIdFromSource(source.get()), buf));
+    TaskPtr task(new Task(qep, 0, buf));
     task_queue.push_back(task);
     NES_DEBUG(
-        "Dispatcher: added Task " << task.get() << " for query " << queryId << " for QEP " << qep
+        "Dispatcher: added Task " << task.get() << " for query " << sourceId << " for QEP " << qep
                                   << " inputBuffer " << buf)
   }
-
   cv.notify_all();
 }
 
@@ -246,6 +257,40 @@ void Dispatcher::printQEPStatistics(const QueryExecutionPlanPtr qep) {
     NES_INFO("Sink:" << sink)
     NES_INFO("\t Generated Buffers=" << sink->getNumberOfSentBuffers())
     NES_INFO("\t Generated Tuples=" << sink->getNumberOfSentTuples())
+  }
+}
+
+void Dispatcher::addQep(QueryExecutionPlanPtr qep) {
+  for (const auto& source: qep->getSources()) {
+    if (sourceIdToQueryMap.find(source->getSourceId()) != sourceIdToQueryMap.end()) {
+      //source already exists, add qep to source set if not there
+      NES_DEBUG("NODEENGINE: Source " << source->getSourceId() << " already exists.")
+      if (sourceIdToQueryMap[source->getSourceId()].find(qep) == sourceIdToQueryMap[source->getSourceId()].end()) {
+        //qep not found in list, add it
+        NES_DEBUG("NODEENGINE: Inserting QEP " << qep << " to source" << source->getSourceId())
+        sourceIdToQueryMap[source->getSourceId()].insert(qep);
+      }
+    }
+    else {
+      // source does not exist, add source and unordered_set containing the qep
+      NES_DEBUG("Source " << source->getSourceId() << " not found. Creating element with with qep " << qep)
+      std::unordered_set<QueryExecutionPlanPtr> qepSet = {qep};
+      sourceIdToQueryMap.insert({source->getSourceId(), qepSet});
+    }
+  }
+}
+
+void Dispatcher::removeQep(QueryExecutionPlanPtr qep) {
+  NES_DEBUG("NODEENGINE: Removing QEP " << qep)
+  for (const auto& source: qep->getSources()) {
+    if (sourceIdToQueryMap.find(source->getSourceId()) != sourceIdToQueryMap.end()) {
+      //source already exists, check if qep is there
+      if (sourceIdToQueryMap[source->getSourceId()].find(qep) != sourceIdToQueryMap[source->getSourceId()].end()) {
+        //qep found, remove it from list
+        NES_DEBUG("NODEENGINE: QEP " << qep << " removed for source" << source->getSourceId())
+        sourceIdToQueryMap[source->getSourceId()].erase(qep);
+      }
+    }
   }
 }
 

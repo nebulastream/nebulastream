@@ -28,38 +28,27 @@ class QueryExecutionPlan {
   ;
 
   void addDataSource(DataSourcePtr source) {
-    source->setQueryId(this->queryId);
     sources.push_back(source);
   }
 
   void addDataSink(DataSinkPtr sink) {
-    sink->setQueryId(this->queryId);
     sinks.push_back(sink);
   }
   void addWindow(WindowPtr window) {
-    window->setQueryId(this->queryId);
     windows.push_back(window);
   }
 
   void print();
 
-  const std::string &getQueryId() const;
-
-  std::string generateAndAssignQueryId();
-
  protected:
   friend class boost::serialization::access;
   QueryExecutionPlan();
 
-  QueryExecutionPlan(const std::string &_queryId);
-
-  QueryExecutionPlan(const std::string &_queryId,
-                     const std::vector<DataSourcePtr> &_sources,
+  QueryExecutionPlan(const std::vector<DataSourcePtr> &_sources,
                      const std::vector<PipelineStagePtr> &_stages,
                      const std::map<DataSource *, uint32_t> &_source_to_stage,
                      const std::map<uint32_t, uint32_t> &_stage_to_dest);
 
-  std::string queryId;
   std::vector<DataSourcePtr> sources;
   std::vector<DataSinkPtr> sinks;
   std::vector<WindowPtr> windows;
@@ -73,7 +62,6 @@ class QueryExecutionPlan {
     ar & sources;
     ar & sinks;
     ar & windows;
-    ar & queryId;
     //    	ar & stages;
     //    	ar & source_to_stage;
     //    	ar & stage_to_dest;

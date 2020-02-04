@@ -118,8 +118,7 @@ class DataSource {
      */
     virtual ~DataSource();
 
-    const std::string &getQueryId() const;
-    void setQueryId(std::string &queryId);
+    const std::string &getSourceId() const;
 
   protected:
     /**
@@ -131,7 +130,7 @@ class DataSource {
     size_t generatedTuples;
     size_t generatedBuffers;
     size_t num_buffers_to_process;
-    std::string queryId;
+    std::string sourceId;
 
  private:
     friend class boost::serialization::access;
@@ -145,7 +144,7 @@ class DataSource {
         ar & schema;
         ar & generatedTuples;
         ar & generatedBuffers;
-        ar & queryId;
+        ar & sourceId;
     }
 };
 

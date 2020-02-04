@@ -5,6 +5,10 @@
 #include <Util/Logger.hpp>
 #include <boost/algorithm/string/replace.hpp>
 
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+
 namespace NES {
 
 // removes leading and trailing whitespaces
@@ -133,4 +137,11 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(const std::string& query_code_s
       throw "Failed to create the query from input code string";
     }
   }
+
+std::string UtilityFunctions::generateUuid() {
+  boost::uuids::basic_random_generator<boost::mt19937> gen;
+  boost::uuids::uuid u = gen();
+  return boost::uuids::to_string(u);
+}
+
 } // namespace NES
