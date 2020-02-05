@@ -154,14 +154,6 @@ add_executable(nesWorker nesWorkerStarter.cpp)
 target_link_libraries(nesWorker ${LIBRARIES} iotdb)
 target_include_directories(nesWorker PUBLIC "include")
 
-add_executable(zmqSender zmqSender.cpp)
-target_link_libraries(zmqSender ${LIBRARIES} iotdb)
-target_include_directories(zmqSender PUBLIC "include")
-
-add_executable(zmqReceiver zmqReceiver.cpp)
-target_link_libraries(zmqReceiver ${LIBRARIES} iotdb)
-target_include_directories(zmqReceiver PUBLIC "include")
-
 # Add tests with command
 enable_testing()
 add_subdirectory(tests)
