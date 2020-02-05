@@ -163,7 +163,7 @@ void NESPlacementOptimizer::completeExecutionGraphWithNESTopology(NESExecutionPl
                                                              linkCapacity,
                                                              linkLatency);
             } else {
-                const ExecutionNodePtr destExecutionNode = nesExecutionPlanPtr->createExecutionNode("empty",
+                const ExecutionNodePtr destExecutionNode = nesExecutionPlanPtr->createExecutionNode("NO-OPERATOR",
                                                                                                     to_string(destId),
                                                                                                     nesLink->getDestNode(),
                                                                                                     nullptr);
@@ -174,7 +174,7 @@ void NESPlacementOptimizer::completeExecutionGraphWithNESTopology(NESExecutionPl
         } else {
 
             const ExecutionNodePtr
-                srcExecutionNode = nesExecutionPlanPtr->createExecutionNode("empty", to_string(srcId),
+                srcExecutionNode = nesExecutionPlanPtr->createExecutionNode("NO-OPERATOR", to_string(srcId),
                                                                             nesLink->getSourceNode(),
                                                                             nullptr);
             if (nesExecutionPlanPtr->hasVertex(destId)) {
@@ -183,7 +183,7 @@ void NESPlacementOptimizer::completeExecutionGraphWithNESTopology(NESExecutionPl
                                                              linkCapacity,
                                                              linkLatency);
             } else {
-                const ExecutionNodePtr destExecutionNode = nesExecutionPlanPtr->createExecutionNode("empty",
+                const ExecutionNodePtr destExecutionNode = nesExecutionPlanPtr->createExecutionNode("NO-OPERATOR",
                                                                                                     to_string(destId),
                                                                                                     nesLink->getDestNode(),
                                                                                                     nullptr);

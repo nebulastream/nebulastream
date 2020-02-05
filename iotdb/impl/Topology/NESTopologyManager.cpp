@@ -30,12 +30,12 @@ bool NESTopologyManager::removeNESNode(NESTopologyEntryPtr ptr) {
     return currentPlan->removeNESNode(std::move(ptr));
 }
 
-NESTopologyLinkPtr NESTopologyManager::createNESTopologyLink(NESTopologyEntryPtr pSourceNode,
-                                                             NESTopologyEntryPtr pDestNode,
-                                                             size_t pLinkCapacity,
-                                                             size_t pLinkLatency) {
+NESTopologyLinkPtr NESTopologyManager::createNESTopologyLink(NESTopologyEntryPtr sourceNode,
+                                                             NESTopologyEntryPtr destNode,
+                                                             size_t linkCapacity,
+                                                             size_t linkLatency) {
 
-    return currentPlan->createNESTopologyLink(pSourceNode, pDestNode, pLinkCapacity, pLinkLatency);
+    return currentPlan->createNESTopologyLink(sourceNode, destNode, linkCapacity, linkLatency);
 }
 
 bool NESTopologyManager::removeNESTopologyLink(NESTopologyLinkPtr linkPtr) {

@@ -73,14 +73,14 @@ class NESTopologyPlan {
 
   /**
    * @brief method to create a link between two nodes
-   * @param pSourceNode : NESTopologyEntryPtr to first node (source)
-   * @param pDestNode : NESTopologyEntryPtr to second node (destination)
+   * @param sourceNode : NESTopologyEntryPtr to first node (source)
+   * @param destNode : NESTopologyEntryPtr to second node (destination)
    * @param linkCapacity : link capacity
    * @param linkLatency : link latency
    * @return NESTopologyLinkPtr of the created link, a nullptr if it could not be created
    */
-  NESTopologyLinkPtr createNESTopologyLink(NESTopologyEntryPtr pSourceNode,
-                                           NESTopologyEntryPtr pDestNode,
+  NESTopologyLinkPtr createNESTopologyLink(NESTopologyEntryPtr sourceNode,
+                                           NESTopologyEntryPtr destNode,
                                            size_t linkCapacity,
                                            size_t linkLatency);
 
