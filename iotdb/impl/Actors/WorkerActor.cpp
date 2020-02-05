@@ -87,7 +87,7 @@ bool WorkerActor::registerLogicalStream(std::string streamName,
   auto coordinator = actor_cast<actor>(this->state.current_server);
 
   NES_DEBUG(
-      "WorkerActor: registerLog stream " << streamName << " with path" << filePath)
+      "WorkerActor: registerLogicalStream " << streamName << " with path" << filePath)
   /* Check if file can be found on system and read. */
   boost::filesystem::path path { filePath.c_str() };
   if (!boost::filesystem::exists(path)
@@ -103,7 +103,6 @@ bool WorkerActor::registerLogicalStream(std::string streamName,
 
   NES_DEBUG("WorkerActor: file content:" << fileContent)
   bool success = false;
-  bool connected = false;
   scoped_actor self { this->system() };
   self->request(coordinator, task_timeout, register_log_stream_atom::value,
                 streamName, fileContent).receive(
@@ -128,11 +127,12 @@ bool WorkerActor::registerLogicalStream(std::string streamName,
   return success;
 }
 
-void WorkerActor::removePhysicalStream(std::string logicalStreamName,
+bool WorkerActor::removePhysicalStream(std::string logicalStreamName,
                                        std::string physicalStreamName) {
   //send request to coordinator
   auto coordinator = actor_cast<actor>(this->state.current_server);
 
+  bool success = false;
   NES_DEBUG(
       "WorkerActor: removePhysicalStream physical stream" << physicalStreamName << " from logical stream " << logicalStreamName)
   scoped_actor self { this->system() };
@@ -143,9 +143,11 @@ void WorkerActor::removePhysicalStream(std::string logicalStreamName,
         if (ret == true) {
           NES_DEBUG(
               "WorkerActor: physical stream " << physicalStreamName << " successfully removed from " << logicalStreamName)
+          success = true;
         } else {
           NES_DEBUG(
               "WorkerActor: physical stream " << physicalStreamName << " could not be removed from " << logicalStreamName)
+          success = true;
         }
       }
       ,
@@ -154,21 +156,25 @@ void WorkerActor::removePhysicalStream(std::string logicalStreamName,
         NES_ERROR(
             "WorkerActor: Error during removeLogicalStream for " << to_string(coordinator) << "\n" << error_msg);
       });
+  return success;
 }
 
-void WorkerActor::removeLogicalStream(std::string streamName) {
+bool WorkerActor::removeLogicalStream(std::string streamName) {
   //send request to coordinator
   auto coordinator = actor_cast<actor>(this->state.current_server);
 
   NES_DEBUG("WorkerActor: removeLogicalStream stream" << streamName)
+  bool success = false;
   scoped_actor self { this->system() };
   self->request(coordinator, task_timeout, remove_log_stream_atom::value,
                 streamName).receive(
       [&](bool ret) {
         if (ret == true) {
           NES_DEBUG("WorkerActor: stream successfully removed")
+          success = true;
         } else {
           NES_DEBUG("WorkerActor: stream not removed")
+          success = false;
         }
       }
       ,
@@ -177,6 +183,7 @@ void WorkerActor::removeLogicalStream(std::string streamName) {
         NES_ERROR(
             "WorkerActor: Error during removeLogicalStream for " << to_string(coordinator) << "\n" << error_msg);
       });
+  return success;
 }
 
 bool WorkerActor::disconnecting() {
@@ -191,7 +198,6 @@ bool WorkerActor::disconnecting() {
       [&disconnected](const bool &c) mutable {
         disconnected = c;
         NES_DEBUG("WorkerActor: disconnecting() successfully")
-//        std::this_thread::sleep_for(std::chrono::seconds(1));
       }
       ,
       [=](const error &er) {
@@ -215,8 +221,8 @@ bool WorkerActor::connecting(const std::string &host, uint16_t port) {
   bool connected = false;
   scoped_actor self { this->system() };
   self->request(mm, infinite, connect_atom::value, host, port).receive(
-      [=,&connected](const node_id&, strong_actor_ptr &serv,
-          const std::set<std::string> &ifs) {
+      [=, &connected](const node_id&, strong_actor_ptr &serv,
+                      const std::set<std::string> &ifs) {
         if (!serv) {
           aout(this) << R"(*** no server found at ")" << host << R"(":)" << port
                      << endl;
@@ -288,7 +294,7 @@ behavior WorkerActor::running(const actor &coordinator) {
     },
     // register logical stream
     [=](remove_log_stream_atom, std::string name) {
-      removeLogicalStream(name);
+      return removeLogicalStream(name);
     },        //remove physical stream
     [=](remove_phy_stream_atom, std::string logicalName, std::string physicalName) {
       removePhysicalStream(logicalName, physicalName);
