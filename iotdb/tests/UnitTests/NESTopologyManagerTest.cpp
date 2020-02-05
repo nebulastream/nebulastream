@@ -72,22 +72,22 @@ class NesTopologyManagerTest : public testing::Test {
 TEST_F(NesTopologyManagerTest, create_node) {
     size_t invalid_id = INVALID_NODE_ID;
 
-    auto worker_node = NESTopologyManager::getInstance().createNESWorkerNode(1,
-                                                                             "localhost", CPUCapacity::MEDIUM);
-    EXPECT_NE(worker_node.get(), nullptr);
-    EXPECT_EQ(worker_node->getEntryType(), Worker);
-    EXPECT_EQ(worker_node->getEntryTypeString(), "Worker");
-    EXPECT_NE(worker_node->getId(), invalid_id);
+    auto workerNode = NESTopologyManager::getInstance().createNESWorkerNode(1,
+                                                                            "localhost", CPUCapacity::MEDIUM);
+    EXPECT_NE(workerNode.get(), nullptr);
+    EXPECT_EQ(workerNode->getEntryType(), Worker);
+    EXPECT_EQ(workerNode->getEntryTypeString(), "Worker");
+    EXPECT_NE(workerNode->getId(), invalid_id);
 
-    auto sensor_node = NESTopologyManager::getInstance().createNESSensorNode(
+    auto sensorNode = NESTopologyManager::getInstance().createNESSensorNode(
         2, "localhost", CPUCapacity::LOW);
-    EXPECT_NE(sensor_node.get(), nullptr);
-    EXPECT_EQ(sensor_node->getEntryType(), Sensor);
-    EXPECT_EQ(sensor_node->getEntryTypeString(),
-              "Sensor(" + sensor_node->getPhysicalStreamName() + ")");
-    EXPECT_NE(sensor_node->getId(), invalid_id);
+    EXPECT_NE(sensorNode.get(), nullptr);
+    EXPECT_EQ(sensorNode->getEntryType(), Sensor);
+    EXPECT_EQ(sensorNode->getEntryTypeString(),
+              "Sensor(" + sensorNode->getPhysicalStreamName() + ")");
+    EXPECT_NE(sensorNode->getId(), invalid_id);
 
-    EXPECT_EQ(worker_node->getId() + 1, sensor_node->getId());
+    EXPECT_EQ(workerNode->getId() + 1, sensorNode->getId());
 }
 
 /* Remove an existing node. */
@@ -107,76 +107,76 @@ TEST_F(NesTopologyManagerTest, remove_node) {
 
 /* Remove a non-existing node. */
 TEST_F(NesTopologyManagerTest, remove_non_existing_node) {
-    auto worker_node = NESTopologyManager::getInstance().createNESWorkerNode(1,
-                                                                             "localhost", CPUCapacity::MEDIUM);
+    auto workerNode = NESTopologyManager::getInstance().createNESWorkerNode(1,
+                                                                            "localhost", CPUCapacity::MEDIUM);
     EXPECT_TRUE(
-        NESTopologyManager::getInstance().removeNESWorkerNode(worker_node));
+        NESTopologyManager::getInstance().removeNESWorkerNode(workerNode));
     EXPECT_FALSE(
-        NESTopologyManager::getInstance().removeNESWorkerNode(worker_node));
+        NESTopologyManager::getInstance().removeNESWorkerNode(workerNode));
 
-    auto sensor_node = NESTopologyManager::getInstance().createNESSensorNode(
+    auto sensorNode = NESTopologyManager::getInstance().createNESSensorNode(
         1, "localhost", CPUCapacity::LOW);
     EXPECT_TRUE(
-        NESTopologyManager::getInstance().removeNESSensorNode(sensor_node));
+        NESTopologyManager::getInstance().removeNESSensorNode(sensorNode));
     EXPECT_FALSE(
-        NESTopologyManager::getInstance().removeNESSensorNode(sensor_node));
+        NESTopologyManager::getInstance().removeNESSensorNode(sensorNode));
 }
 
 /* - Links ----------------------------------------------------------------- */
 /* Create a new link. */
 TEST_F(NesTopologyManagerTest, create_link) {
-    auto worker_node_0 = NESTopologyManager::getInstance().createNESWorkerNode(1,
-                                                                               "localhost", CPUCapacity::MEDIUM);
-    auto worker_node_1 = NESTopologyManager::getInstance().createNESWorkerNode(2,
-                                                                               "localhost", CPUCapacity::MEDIUM);
+    auto workerNode0 = NESTopologyManager::getInstance().createNESWorkerNode(1,
+                                                                             "localhost", CPUCapacity::MEDIUM);
+    auto workerNode1 = NESTopologyManager::getInstance().createNESWorkerNode(2,
+                                                                             "localhost", CPUCapacity::MEDIUM);
     auto worker_node_2 = NESTopologyManager::getInstance().createNESWorkerNode(3,
                                                                                "localhost", CPUCapacity::MEDIUM);
-    auto worker_node_3 = NESTopologyManager::getInstance().createNESWorkerNode(4,
-                                                                               "localhost", CPUCapacity::MEDIUM);
+    auto workerNode3 = NESTopologyManager::getInstance().createNESWorkerNode(4,
+                                                                             "localhost", CPUCapacity::MEDIUM);
 
     auto sensor_node_0 = NESTopologyManager::getInstance().createNESSensorNode(
         5, "localhost", CPUCapacity::LOW);
-    auto sensor_node_1 = NESTopologyManager::getInstance().createNESSensorNode(
+    auto sensorNode1 = NESTopologyManager::getInstance().createNESSensorNode(
         6, "localhost", CPUCapacity::LOW);
 
     auto link_node_node = NESTopologyManager::getInstance().createNESTopologyLink(
-        worker_node_0, worker_node_1, 1, 1);
+        workerNode0, workerNode1, 1, 1);
 
-    size_t not_existing_link_id = NOT_EXISTING_LINK_ID;
+    size_t notExistingLinkId = NOT_EXISTING_LINK_ID;
 
     EXPECT_NE(link_node_node.get(), nullptr);
-    EXPECT_NE(link_node_node->getId(), not_existing_link_id);
-    EXPECT_EQ(link_node_node->getSourceNode().get(), worker_node_0.get());
-    EXPECT_EQ(link_node_node->getSourceNodeId(), worker_node_0->getId());
-    EXPECT_EQ(link_node_node->getDestNode().get(), worker_node_1.get());
-    EXPECT_EQ(link_node_node->getDestNodeId(), worker_node_1->getId());
+    EXPECT_NE(link_node_node->getId(), notExistingLinkId);
+    EXPECT_EQ(link_node_node->getSourceNode().get(), workerNode0.get());
+    EXPECT_EQ(link_node_node->getSourceNodeId(), workerNode0->getId());
+    EXPECT_EQ(link_node_node->getDestNode().get(), workerNode1.get());
+    EXPECT_EQ(link_node_node->getDestNodeId(), workerNode1->getId());
     EXPECT_EQ(link_node_node->getLinkType(), NodeToNode);
     EXPECT_EQ(link_node_node->getLinkTypeString(), "NodeToNode");
 
-    auto link_node_sensor = NESTopologyManager::getInstance()
+    auto linkNodeSensor = NESTopologyManager::getInstance()
         .createNESTopologyLink(worker_node_2, sensor_node_0, 1, 1);
-    EXPECT_NE(link_node_sensor.get(), nullptr);
-    EXPECT_NE(link_node_sensor->getId(), not_existing_link_id);
-    EXPECT_EQ(link_node_sensor->getSourceNode().get(), worker_node_2.get());
-    EXPECT_EQ(link_node_sensor->getSourceNodeId(), worker_node_2->getId());
-    EXPECT_EQ(link_node_sensor->getDestNode().get(), sensor_node_0.get());
-    EXPECT_EQ(link_node_sensor->getDestNodeId(), sensor_node_0->getId());
-    EXPECT_EQ(link_node_sensor->getLinkType(), NodeToSensor);
-    EXPECT_EQ(link_node_sensor->getLinkTypeString(), "NodeToSensor");
+    EXPECT_NE(linkNodeSensor.get(), nullptr);
+    EXPECT_NE(linkNodeSensor->getId(), notExistingLinkId);
+    EXPECT_EQ(linkNodeSensor->getSourceNode().get(), worker_node_2.get());
+    EXPECT_EQ(linkNodeSensor->getSourceNodeId(), worker_node_2->getId());
+    EXPECT_EQ(linkNodeSensor->getDestNode().get(), sensor_node_0.get());
+    EXPECT_EQ(linkNodeSensor->getDestNodeId(), sensor_node_0->getId());
+    EXPECT_EQ(linkNodeSensor->getLinkType(), NodeToSensor);
+    EXPECT_EQ(linkNodeSensor->getLinkTypeString(), "NodeToSensor");
 
-    auto link_sensor_node = NESTopologyManager::getInstance()
-        .createNESTopologyLink(sensor_node_1, worker_node_3, 1, 1);
-    EXPECT_NE(link_sensor_node.get(), nullptr);
-    EXPECT_NE(link_sensor_node->getId(), not_existing_link_id);
-    EXPECT_EQ(link_sensor_node->getSourceNode().get(), sensor_node_1.get());
-    EXPECT_EQ(link_sensor_node->getSourceNodeId(), sensor_node_1->getId());
-    EXPECT_EQ(link_sensor_node->getDestNode().get(), worker_node_3.get());
-    EXPECT_EQ(link_sensor_node->getDestNodeId(), worker_node_3->getId());
-    EXPECT_EQ(link_sensor_node->getLinkType(), SensorToNode);
-    EXPECT_EQ(link_sensor_node->getLinkTypeString(), "SensorToNode");
+    auto linkSensorNode = NESTopologyManager::getInstance()
+        .createNESTopologyLink(sensorNode1, workerNode3, 1, 1);
+    EXPECT_NE(linkSensorNode.get(), nullptr);
+    EXPECT_NE(linkSensorNode->getId(), notExistingLinkId);
+    EXPECT_EQ(linkSensorNode->getSourceNode().get(), sensorNode1.get());
+    EXPECT_EQ(linkSensorNode->getSourceNodeId(), sensorNode1->getId());
+    EXPECT_EQ(linkSensorNode->getDestNode().get(), workerNode3.get());
+    EXPECT_EQ(linkSensorNode->getDestNodeId(), workerNode3->getId());
+    EXPECT_EQ(linkSensorNode->getLinkType(), SensorToNode);
+    EXPECT_EQ(linkSensorNode->getLinkTypeString(), "SensorToNode");
 
-    EXPECT_EQ(link_node_node->getId() + 1, link_node_sensor->getId());
-    EXPECT_EQ(link_node_sensor->getId() + 1, link_sensor_node->getId());
+    EXPECT_EQ(link_node_node->getId() + 1, linkNodeSensor->getId());
+    EXPECT_EQ(linkNodeSensor->getId() + 1, linkSensorNode->getId());
 }
 
 /* Create link, where a link already exists. */
@@ -561,14 +561,14 @@ TEST_F(NesTopologyGraphTest, remove_non_existing_vertex) {
 
 /* - Edges ----------------------------------------------------------------- */
 TEST_F(NesTopologyGraphTest, add_edge) {
-    auto worker_node = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
-    EXPECT_TRUE(nes_graph->addVertex(worker_node));
+    auto workerNode = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
+    EXPECT_TRUE(nes_graph->addVertex(workerNode));
 
-    auto sensor_node = std::make_shared<NESTopologySensorNode>(1, "addr2");
-    EXPECT_TRUE(nes_graph->addVertex(sensor_node));
+    auto sensorNode = std::make_shared<NESTopologySensorNode>(1, "addr2");
+    EXPECT_TRUE(nes_graph->addVertex(sensorNode));
 
-    auto link_0 = std::make_shared<NESTopologyLink>(0, sensor_node, worker_node, 1, 1);
-    auto link_1 = std::make_shared<NESTopologyLink>(1, worker_node, sensor_node, 1, 1);
+    auto link_0 = std::make_shared<NESTopologyLink>(0, sensorNode, workerNode, 1, 1);
+    auto link_1 = std::make_shared<NESTopologyLink>(1, workerNode, sensorNode, 1, 1);
 
     EXPECT_TRUE(nes_graph->addEdge(link_0));
     EXPECT_TRUE(nes_graph->addEdge(link_1));
@@ -576,51 +576,51 @@ TEST_F(NesTopologyGraphTest, add_edge) {
 
 TEST_F(NesTopologyGraphTest, add_existing_edge) {
 
-    auto worker_node = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
-    EXPECT_TRUE(nes_graph->addVertex(worker_node));
+    auto workerNode = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
+    EXPECT_TRUE(nes_graph->addVertex(workerNode));
 
-    auto sensor_node = std::make_shared<NESTopologySensorNode>(1, "addr2");
-    EXPECT_TRUE(nes_graph->addVertex(sensor_node));
+    auto sensorNode = std::make_shared<NESTopologySensorNode>(1, "addr2");
+    EXPECT_TRUE(nes_graph->addVertex(sensorNode));
 
-    auto link_0 = std::make_shared<NESTopologyLink>(0, sensor_node, worker_node, 1, 1);
-    auto link_1 = std::make_shared<NESTopologyLink>(1, sensor_node, worker_node, 1, 1);
+    auto link_0 = std::make_shared<NESTopologyLink>(0, sensorNode, workerNode, 1, 1);
+    auto link_1 = std::make_shared<NESTopologyLink>(1, sensorNode, workerNode, 1, 1);
     EXPECT_TRUE(nes_graph->addEdge(link_0));
     EXPECT_FALSE(nes_graph->addEdge(link_0));
     EXPECT_FALSE(nes_graph->addEdge(link_1));
 }
 
 TEST_F(NesTopologyGraphTest, add_invalid_edge) {
-    auto worker_node = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
-    EXPECT_TRUE(nes_graph->addVertex(worker_node));
+    auto workerNode = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
+    EXPECT_TRUE(nes_graph->addVertex(workerNode));
 
-    auto sensor_node = std::make_shared<NESTopologySensorNode>(1, "addr2");
+    auto sensorNode = std::make_shared<NESTopologySensorNode>(1, "addr2");
     // node not added to graph
 
-    auto link_0 = std::make_shared<NESTopologyLink>(0, worker_node, sensor_node, 1, 1);
+    auto link_0 = std::make_shared<NESTopologyLink>(0, workerNode, sensorNode, 1, 1);
     EXPECT_FALSE(nes_graph->addEdge(link_0));
 }
 
 TEST_F(NesTopologyGraphTest, remove_edge) {
-    auto worker_node = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
-    EXPECT_TRUE(nes_graph->addVertex(worker_node));
+    auto workerNode = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
+    EXPECT_TRUE(nes_graph->addVertex(workerNode));
 
-    auto sensor_node = std::make_shared<NESTopologySensorNode>(1, "addr2");
-    EXPECT_TRUE(nes_graph->addVertex(sensor_node));
+    auto sensorNode = std::make_shared<NESTopologySensorNode>(1, "addr2");
+    EXPECT_TRUE(nes_graph->addVertex(sensorNode));
 
-    auto link_0 = std::make_shared<NESTopologyLink>(0, sensor_node, worker_node, 1, 1);
+    auto link_0 = std::make_shared<NESTopologyLink>(0, sensorNode, workerNode, 1, 1);
     nes_graph->addEdge(link_0);
 
     EXPECT_TRUE(nes_graph->removeEdge(link_0->getId()));
 }
 
 TEST_F(NesTopologyGraphTest, remove_non_existing_edge) {
-    auto worker_node = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
-    EXPECT_TRUE(nes_graph->addVertex(worker_node));
+    auto workerNode = std::make_shared<NESTopologyWorkerNode>(0, "addr1");
+    EXPECT_TRUE(nes_graph->addVertex(workerNode));
 
-    auto sensor_node = std::make_shared<NESTopologySensorNode>(1, "addr2");
-    EXPECT_TRUE(nes_graph->addVertex(sensor_node));
+    auto sensorNode = std::make_shared<NESTopologySensorNode>(1, "addr2");
+    EXPECT_TRUE(nes_graph->addVertex(sensorNode));
 
-    auto link_0 = std::make_shared<NESTopologyLink>(0, sensor_node, worker_node, 1, 1);
+    auto link_0 = std::make_shared<NESTopologyLink>(0, sensorNode, workerNode, 1, 1);
     EXPECT_TRUE(nes_graph->addEdge(link_0));
 
     EXPECT_TRUE(nes_graph->removeEdge(link_0->getId()));
