@@ -71,7 +71,7 @@ NESTopologyEntryPtr CoordinatorService::register_sensor(size_t id, const string&
         .getRootNode();
 
     // FIXME: decide how to send the link capacity and link latency values
-    topologyManager.createNESTopologyLink(sensorNode, kRootNode, 2, 2);
+    topologyManager.createNESTopologyLink(sensorNode, kRootNode, 1, 1);
     return sensorNode;
 }
 

@@ -33,10 +33,29 @@ class ExecutionNodeLink {
 
   private:
 
+    /**
+     * @brief unique link identifier.
+     */
     size_t linkId;
+
+    /**
+     * @brief source execution node pointer
+     */
     ExecutionNodePtr src;
+
+    /**
+     * @brief destination execution node pointer
+     */
     ExecutionNodePtr dest;
+
+    /**
+     * @brief latency of the link
+     */
     size_t linkLatency;
+
+    /**
+     * @brief capacity of the link
+     */
     size_t linkCapacity;
 };
 

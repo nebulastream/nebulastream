@@ -111,7 +111,7 @@ class NESExecutionPlan {
      * @param destinationNode : node which consumes the data
      * @param linkCapacity : capacity of the link
      * @param linkLatency : latency of the link
-     * @return
+     * @return return execution node link pointer
      */
     ExecutionNodeLinkPtr createExecutionNodeLink(size_t id,
                                                  ExecutionNodePtr sourceNode,
