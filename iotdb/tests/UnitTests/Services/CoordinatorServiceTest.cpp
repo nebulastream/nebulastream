@@ -178,11 +178,11 @@ TEST_F(CoordinatorServiceTest, test_register_query) {
         "3[label=\"3 operatorName=SOURCE(OP-1)=>FILTER(OP-2)=>SINK(SYS) nodeName=3\"];\n"
         "4[label=\"4 operatorName=SOURCE(OP-1)=>FILTER(OP-2)=>SINK(SYS) nodeName=4\"];\n"
         "5[label=\"5 operatorName=SOURCE(OP-1)=>FILTER(OP-2)=>SINK(SYS) nodeName=5\"];\n"
-        "0--1 [label=\"1\"];\n"
-        "2--1 [label=\"2\"];\n"
-        "3--1 [label=\"3\"];\n"
-        "4--1 [label=\"4\"];\n"
-        "5--1 [label=\"5\"];\n"
+        "0--1 [label=\"0\"];\n"
+        "2--1 [label=\"1\"];\n"
+        "3--1 [label=\"2\"];\n"
+        "4--1 [label=\"3\"];\n"
+        "5--1 [label=\"4\"];\n"
         "}\n";
     const NESExecutionPlanPtr kExecutionPlan = coordinatorServicePtr
         ->getRegisteredQuery(queryId);

@@ -14,13 +14,12 @@ string CoordinatorService::getNodePropertiesAsString(const NESTopologyEntryPtr e
     return entry->getNodeProperty();
 }
 
-NESTopologyEntryPtr CoordinatorService::register_sensor(
-    size_t id,
-    const string& ip, uint16_t publish_port, uint16_t receive_port, int cpu,
-    const string& nodeProperties, PhysicalStreamConfig streamConf) {
+NESTopologyEntryPtr CoordinatorService::register_sensor(size_t id, const string& ip, uint16_t publish_port,
+                                                        uint16_t receive_port, int cpu, const string& nodeProperties,
+                                                        PhysicalStreamConfig streamConf) {
+
     NESTopologyManager& topologyManager = this->topologyManagerPtr->getInstance();
-    NESTopologySensorNodePtr sensorNode = topologyManager.createNESSensorNode(id,
-                                                                              ip, CPUCapacity::Value(cpu));
+    NESTopologySensorNodePtr sensorNode = topologyManager.createNESSensorNode(id, ip, CPUCapacity::Value(cpu));
 
     sensorNode->setPhysicalStreamName(streamConf.physicalStreamName);
     sensorNode->setPublishPort(publish_port);
@@ -41,7 +40,7 @@ NESTopologyEntryPtr CoordinatorService::register_sensor(
         throw Exception(
             "logical stream does not exist " + streamConf.logicalStreamName);
     }
-    SchemaPtr schem = StreamCatalog::instance().getSchemaForLogicalStream(
+    SchemaPtr schema = StreamCatalog::instance().getSchemaForLogicalStream(
         streamConf.logicalStreamName);
 
     DataSourcePtr source;
@@ -70,7 +69,9 @@ NESTopologyEntryPtr CoordinatorService::register_sensor(
 
     const NESTopologyEntryPtr kRootNode = NESTopologyManager::getInstance()
         .getRootNode();
-    topologyManager.createNESTopologyLink(sensorNode, kRootNode);
+
+    // FIXME: decide how to send the link capacity and link latency values
+    topologyManager.createNESTopologyLink(sensorNode, kRootNode, 1, 1);
     return sensorNode;
 }
 
