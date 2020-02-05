@@ -75,12 +75,28 @@ class NESTopologyLink {
      */
     std::string getLinkTypeString();
 
+    /**
+     * @brief get link latency
+     * @return link latency as size_t
+     */
     size_t getLinkLatency() const;
 
+    /**
+     * @brief get link capacity
+     * @return link capacity as size_t
+     */
     size_t getLinkCapacity() const;
 
+    /**
+     * @brief update link latency
+     * @param new linkLatency
+     */
     void updateLinkLatency(size_t linkLatency);
 
+    /**
+     * @brief update link capacity
+     * @param new linkCapacity
+     */
     void updateLinkCapacity(size_t linkCapacity);
 
   private:
