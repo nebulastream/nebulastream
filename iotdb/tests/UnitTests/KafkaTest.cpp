@@ -19,12 +19,6 @@ namespace NES {
 
 class KafkaTest : public testing::Test {
 public:
-  static void SetUpTestSuite() {
-//    NES::setupLogger(nullptr, nullptr, log4cxx::Level::getDebug());
-//    // NES::setupLogger();
-//    NES::Dispatcher::instance();
-//    NES::BufferManager::instance();
-  }
 
   void SetUp() {
     setupLogging();
