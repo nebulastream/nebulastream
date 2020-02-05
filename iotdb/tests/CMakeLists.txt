@@ -2,11 +2,11 @@
 include(ExternalProject)
 ExternalProject_Add(
         gtest
-        URL https://github.com/google/googletest/archive/release-1.10.0.zip
+        URL https://github.com/google/googletest/archive/release-1.8.1.zip
         PREFIX ${CMAKE_CURRENT_BINARY_DIR}/gtest
         # Disable install step
         INSTALL_COMMAND ""
-        URL_HASH SHA256=94c634d499558a76fa649edb13721dce6e98fb1e7018dfaeba3cd7a083945e91
+        URL_HASH SHA256=927827c183d01734cc5cfef85e0ff3f5a92ffe6188e0d18e909c5efebf28a0c7
 )
 
 # Get GTest source and binary directories from CMake project
@@ -117,10 +117,10 @@ add_executable(file-source-tests "UnitTests/FileSourceTest.cpp")
 target_link_libraries(file-source-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME file-source-tests COMMAND file-source-tests)
 
-#add_executable(kafka-tests "UnitTests/KafkaTest.cpp")
-#message("libraies: ${LIBRARIES}")
-#target_link_libraries(kafka-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
-#add_test(NAME kafka-tests COMMAND kafka-tests)
+add_executable(kafka-tests "UnitTests/KafkaTest.cpp")
+message("libraies: ${LIBRARIES}")
+target_link_libraries(kafka-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
+add_test(NAME kafka-tests COMMAND kafka-tests)
 
 # Predicate Tree Tests
 add_executable(predicate-tree-tests "UnitTests/PredicateTest.cpp")
@@ -162,19 +162,19 @@ target_link_libraries(stream-catalog-remote-test iotdb ${GTEST_LIBRARIES})
 add_test(NAME stream-catalog-remote-test COMMAND stream-catalog-remote-test)
 
 # StreamCatalogService Tests
-#add_executable(stream-catalog-service-tests "UnitTests/Services/StreamCatalogServiceTest.cpp")
-#target_link_libraries(stream-catalog-service-tests iotdb ${GTEST_LIBRARIES})
-#add_test(NAME stream-catalog-service-tests COMMAND stream-catalog-service-tests)
+add_executable(stream-catalog-service-tests "UnitTests/Services/StreamCatalogServiceTest.cpp")
+target_link_libraries(stream-catalog-service-tests iotdb ${GTEST_LIBRARIES})
+add_test(NAME stream-catalog-service-tests COMMAND stream-catalog-service-tests)
 
 # QueryCatalog Tests
-#add_executable(query-catalog-tests "UnitTests/QueryCatalogTest.cpp")
-#target_link_libraries(query-catalog-tests iotdb ${GTEST_LIBRARIES})
-#add_test(NAME query-catalog-tests COMMAND query-catalog-tests)
+add_executable(query-catalog-tests "UnitTests/QueryCatalogTest.cpp")
+target_link_libraries(query-catalog-tests iotdb ${GTEST_LIBRARIES})
+add_test(NAME query-catalog-tests COMMAND query-catalog-tests)
 
 # QueryCatalogService Tests
-#add_executable(query-catalog-service-tests "UnitTests/Services/QueryCatalogServiceTest.cpp")
-#target_link_libraries(query-catalog-service-tests iotdb ${GTEST_LIBRARIES})
-#add_test(NAME query-catalog-service-tests COMMAND query-catalog-service-tests)
+add_executable(query-catalog-service-tests "UnitTests/Services/QueryCatalogServiceTest.cpp")
+target_link_libraries(query-catalog-service-tests iotdb ${GTEST_LIBRARIES})
+add_test(NAME query-catalog-service-tests COMMAND query-catalog-service-tests)
 
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
