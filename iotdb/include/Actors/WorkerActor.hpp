@@ -7,6 +7,7 @@
 #include <caf/all.hpp>
 #include <caf/io/all.hpp>
 #include <utility>
+#include <caf/blocking_actor.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 
 using namespace caf;
@@ -27,9 +28,9 @@ struct WorkerState {
  * class-based, statically typed, event-based API
  * Limitations:
  *  - TODO: this does not handle connection lost
- *  - TODO:
  */
 class WorkerActor : public stateful_actor<WorkerState> {
+
  public:
   /**
    * @brief the constructor to  of the worker to initialize the default objects
@@ -69,14 +70,16 @@ class WorkerActor : public stateful_actor<WorkerState> {
   /**
    * @brief this method removes the logical stream in the coordinator
    * @param logical stream to be deleted
+   * @return bool indicating success of the removal
    */
-  void removeLogicalStream(std::string streamName);
+  bool removeLogicalStream(std::string streamName);
 
   /**
    * @brief this method removes a physical stream from a logical stream in the coordinator
    * @param logical stream to be deleted
+   * @return bool indicating success of the removal
    */
-  void removePhysicalStream(std::string logicalStreamName,
+  bool removePhysicalStream(std::string logicalStreamName,
                             std::string physicalStreamName);
 
  private:

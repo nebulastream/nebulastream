@@ -19,14 +19,9 @@ namespace NES {
 
 class KafkaTest : public testing::Test {
 public:
-  static void SetUpTestSuite() {
-    NES::setupLogger(nullptr, nullptr, log4cxx::Level::getDebug());
-    // NES::setupLogger();
-    NES::Dispatcher::instance();
-    NES::BufferManager::instance();
-  }
 
   void SetUp() {
+    setupLogging();
     schema = Schema::create()
       .addField("user_id", 16)
       .addField("page_id", 16)
@@ -49,6 +44,7 @@ public:
   void TearDown() {
     NES_DEBUG("Tear down KafkaTest")
   }
+
 protected:
   const std::string brokers = std::string(KAFKA_BROKER);
   const std::string topic = std::string("nes");
@@ -58,6 +54,28 @@ protected:
   const uint64_t num_tuples_to_process = 100;
   size_t buffer_size;
   Schema schema;
+  static void setupLogging() {
+         // create PatternLayout
+         log4cxx::LayoutPtr layoutPtr(
+             new log4cxx::PatternLayout(
+                 "%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
+
+         // create FileAppender
+         LOG4CXX_DECODE_CHAR(fileName, "WindowManager.log");
+         log4cxx::FileAppenderPtr file(
+             new log4cxx::FileAppender(layoutPtr, fileName));
+
+         // create ConsoleAppender
+         log4cxx::ConsoleAppenderPtr console(
+             new log4cxx::ConsoleAppender(layoutPtr));
+
+         // set log level
+         NESLogger->setLevel(log4cxx::Level::getDebug());
+
+         // add appenders and other will inherit the settings
+         NESLogger->addAppender(file);
+         NESLogger->addAppender(console);
+     }
 };
 // NOTE: ALL DISABLED TESTS ONLY WITH KAFKA INSTANCE, PLEASE SETUP KAFKA FIRST
 // MAYBE YOU ALSO NEED TO UPDATE GLOBAL VARIABLE `KAFKA_BROKER`
@@ -335,6 +353,7 @@ TEST_F(KafkaTest, KafkaSinkInitWithInvalidBroker) {
   {
     const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, std::string("invalid-kafka-broker"), topic);
   }
+  SUCCEED();
 }
 
 TEST_F(KafkaTest, KafkaSinkInitWithEmptyTopic) {
@@ -347,6 +366,7 @@ TEST_F(KafkaTest, KafkaSinkInitWithEmptyTopic) {
     };
     const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, std::string(""), sinkConfig);
   }
+  SUCCEED();
 }
 
 }
