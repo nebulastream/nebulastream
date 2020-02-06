@@ -11,32 +11,55 @@
 
 #include "ExecutionNode.hpp"
 
-
 namespace NES {
-    static int currentLinkID = 1;
 
-    class ExecutionNodeLink {
+class ExecutionNodeLink {
 
-    public:
+  public:
 
-        ExecutionNodeLink(ExecutionNodePtr src, ExecutionNodePtr dest) {
-            linkId = currentLinkID++;
-            this->src = src;
-            this->dest = dest;
-        }
+    ExecutionNodeLink(size_t linkId, ExecutionNodePtr src, ExecutionNodePtr dest, size_t linkCapacity, size_t linkLatency) {
+        this->linkId = linkId;
+        this->src = src;
+        this->dest = dest;
+        this->linkCapacity = linkCapacity;
+        this->linkLatency = linkLatency;
+    }
 
-        int getLinkId() { return this->linkId;}
-        ExecutionNodePtr getSource() { return this->src;}
-        ExecutionNodePtr getDestination() { return this->dest;}
+    int getLinkId() { return this->linkId; }
+    ExecutionNodePtr getSource() { return this->src; }
+    ExecutionNodePtr getDestination() { return this->dest; }
+    size_t getLinkLatency() { return linkLatency; }
+    size_t getLinkCapacity() { return linkCapacity; }
 
-    private:
+  private:
 
-        int linkId;
-        ExecutionNodePtr src;
-        ExecutionNodePtr dest;
-    };
+    /**
+     * @brief unique link identifier.
+     */
+    size_t linkId;
 
-    typedef std::shared_ptr <ExecutionNodeLink> ExecutionNodeLinkPtr;
+    /**
+     * @brief source execution node pointer
+     */
+    ExecutionNodePtr src;
+
+    /**
+     * @brief destination execution node pointer
+     */
+    ExecutionNodePtr dest;
+
+    /**
+     * @brief latency of the link
+     */
+    size_t linkLatency;
+
+    /**
+     * @brief capacity of the link
+     */
+    size_t linkCapacity;
+};
+
+typedef std::shared_ptr<ExecutionNodeLink> ExecutionNodeLinkPtr;
 }
 
 #endif //EXECUTIONNODELINK_HPP

@@ -146,6 +146,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_existing_log_stream_remote_test) {
       << endl;
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
+
   WorkerActorConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw { w_cfg };

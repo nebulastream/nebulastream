@@ -1,7 +1,8 @@
-#include <Util/Logger.hpp>
-#include "Services/QueryCatalogService.hpp"
-#include "Catalogs/QueryCatalog.hpp"
 #include <boost/algorithm/string.hpp>
+#include <Util/Logger.hpp>
+#include <Services/QueryCatalogService.hpp>
+#include <Catalogs/QueryCatalog.hpp>
+
 
 namespace NES {
 
