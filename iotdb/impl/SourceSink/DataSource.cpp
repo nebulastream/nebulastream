@@ -1,7 +1,6 @@
 #include <cassert>
 #include <functional>
 #include <iostream>
-#include <memory>
 #include <random>
 
 #include <NodeEngine/Dispatcher.hpp>
@@ -17,15 +16,15 @@ BOOST_CLASS_EXPORT_IMPLEMENT(NES::DataSource);
 
 namespace NES {
 
-DataSource::DataSource(const Schema &_schema)
+DataSource::DataSource(const Schema& _schema)
     : running(false),
       thread(),
       schema(_schema),
       generatedTuples(0),
       generatedBuffers(0),
-      num_buffers_to_process(UINT64_MAX),
+      numBuffersToProcess(UINT64_MAX),
       sourceId(UtilityFunctions::generateUuid()) {
-  NES_DEBUG("DataSource " << this << ": Init Data Source with schema")
+    NES_DEBUG("DataSource " << this->getSourceId() << ": Init Data Source with schema")
 }
 
 DataSource::DataSource()
@@ -33,100 +32,101 @@ DataSource::DataSource()
       thread(),
       generatedTuples(0),
       generatedBuffers(0),
-      num_buffers_to_process(UINT64_MAX),
-      sourceId(UtilityFunctions::generateUuid()){
-  NES_DEBUG("DataSource " << this << ": Init Data Source Default w/o schema")
+      numBuffersToProcess(UINT64_MAX),
+      sourceId(UtilityFunctions::generateUuid()) {
+    NES_DEBUG("DataSource " << this->getSourceId() << ": Init Data Source Default w/o schema")
 }
 
-const Schema &DataSource::getSchema() const {
-  return schema;
+const Schema& DataSource::getSchema() const {
+    return schema;
 }
 
 DataSource::~DataSource() {
-  stop();
-  NES_DEBUG("DataSource " << this << ": Destroy Data Source.")
+    stop();
+    NES_DEBUG("DataSource " << this->getSourceId() << ": Destroy Data Source.")
 }
 
 bool DataSource::start() {
-  if (running)
-    return false;
-  running = true;
+    if (running)
+        return false;
+    running = true;
 
-  NES_DEBUG("DataSource " << this << ": Spawn thread")
-  thread = std::thread(std::bind(&DataSource::running_routine, this));
-  return true;
+    NES_DEBUG("DataSource " << this->getSourceId() << ": Spawn thread")
+    thread = std::thread(std::bind(&DataSource::running_routine, this));
+    return true;
 }
 
 bool DataSource::stop() {
-  NES_DEBUG("DataSource " << this << ": Stop called")
-  running = false;
+    NES_DEBUG("DataSource " << this->getSourceId() << ": Stop called")
+    running = false;
 
-  if (thread.joinable()) {
-    thread.detach();
-    NES_DEBUG("DataSource " << this << ": Thread joinded")
-    return true;
-  } else {
-    NES_DEBUG("DataSource " << this << ": Thread is not joinable")
-  }
-  return false;
+    if (thread.joinable()) {
+        thread.detach();
+        NES_DEBUG("DataSource " << this->getSourceId() << ": Thread joinded")
+        return true;
+    } else {
+        NES_DEBUG("DataSource " << this->getSourceId() << ": Thread is not joinable")
+    }
+    return false;
 }
 
 bool DataSource::isRunning() {
-  return running;
+    return running;
 }
 
 void DataSource::running_routine() {
-  if (!this->sourceId.empty()) {
-    NES_DEBUG("DataSource " << this << ": Running Data Source")
-    size_t cnt = 0;
+    if (!this->sourceId.empty()) {
+        NES_DEBUG("DataSource " << this->getSourceId() << ": Running Data Source")
+        size_t cnt = 0;
 
-    while (running) {
-      if (cnt < num_buffers_to_process) {
-        TupleBufferPtr buf = receiveData();
-        if (buf) {
-          NES_DEBUG("DataSource " << this << ": Received Data: " << buf->getNumberOfTuples() << "tuples")
-          if (buf->getBuffer()) {
-            Dispatcher::instance().addWork(this->sourceId, buf);
-            cnt++;
-          } else {
-            NES_DEBUG("DataSource " << this << ": Received buffer is invalid")
-            assert(0);
-          }
-        } else {
-          NES_DEBUG("DataSource " << this << ": Receiving thread terminated ... stopping")
-          running = false;
-          break;
+        while (running) {
+            if (cnt < numBuffersToProcess) {
+                TupleBufferPtr buf = receiveData();
+                if (buf) {
+                    NES_DEBUG("DataSource " << this->getSourceId() << ": Received Data: " << buf->getNumberOfTuples()
+                                            << "tuples")
+                    if (buf->getBuffer()) {
+                        Dispatcher::instance().addWork(this->sourceId, buf);
+                        cnt++;
+                    } else {
+                        NES_FATAL_ERROR("DataSource " << this->getSourceId() << ": Received buffer is invalid")
+                        throw std::logic_error("DataSource: Received buffer is invalid");
+                    }
+                } else {
+                    NES_DEBUG("DataSource " << this->getSourceId() << ": Receiving thread terminated ... stopping")
+                    running = false;
+                    break;
+                }
+            } else {
+                NES_DEBUG("DataSource " << this->getSourceId() << ": All buffers processed ... stopping")
+                running = false;
+                break;
+            }
         }
-      } else {
-        NES_DEBUG("DataSource " << this << ": All buffers processed ... stopping")
-        running = false;
-        break;
-      }
+        NES_DEBUG("DataSource " << this->getSourceId() << ": Data Source finished processing")
+    } else {
+        NES_FATAL_ERROR("DataSource " << this->getSourceId() << ": No ID assigned. Running_routine is not possible!")
+        throw std::logic_error("DataSource: No ID assigned. Running_routine is not possible!");
     }
-    NES_DEBUG("DataSource " << this << ": Data Source finished processing")
-  } else {
-    NES_FATAL_ERROR("DataSource " << this << ": No ID assigned. Running_routine is not possible!")
-    throw std::logic_error("DataSource: No ID assigned. Running_routine is not possible!");
-  }
 }
 
 // debugging
 void DataSource::setNumBuffersToProcess(size_t cnt) {
-  num_buffers_to_process = cnt;
+    numBuffersToProcess = cnt;
 };
 size_t DataSource::getNumberOfGeneratedTuples() {
-  return generatedTuples;
+    return generatedTuples;
 };
 size_t DataSource::getNumberOfGeneratedBuffers() {
-  return generatedBuffers;
+    return generatedBuffers;
 };
 
 std::string DataSource::getSourceSchemaAsString() {
-  return schema.toString();
+    return schema.toString();
 }
 
-const std::string &DataSource::getSourceId() const {
-  return this->sourceId;
+const std::string& DataSource::getSourceId() const {
+    return this->sourceId;
 }
 
 }  // namespace NES

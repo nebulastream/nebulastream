@@ -118,7 +118,7 @@ class DataSource {
      */
     virtual ~DataSource();
 
-    const std::string &getSourceId() const;
+    const std::string& getSourceId() const;
 
   protected:
     /**
@@ -129,18 +129,18 @@ class DataSource {
     Schema schema;
     size_t generatedTuples;
     size_t generatedBuffers;
-    size_t num_buffers_to_process;
+    size_t numBuffersToProcess;
     std::string sourceId;
 
- private:
+  private:
     friend class boost::serialization::access;
     //bool indicating if the source is currently running
     bool running;
     std::thread thread;
 
-  template<class Archive>
+    template<class Archive>
     void serialize(Archive& ar, const unsigned int version) {
-        ar & num_buffers_to_process;
+        ar & numBuffersToProcess;
         ar & schema;
         ar & generatedTuples;
         ar & generatedBuffers;

@@ -7,14 +7,13 @@
 namespace NES {
 
 QueryExecutionPlan::QueryExecutionPlan() : sources(), stages() {
-  NES_DEBUG("QueryExecutionPlan: QEP created")
 }
 
 QueryExecutionPlan::QueryExecutionPlan(const std::vector<DataSourcePtr>& _sources,
                                        const std::vector<PipelineStagePtr>& _stages,
                                        const std::map<DataSource*, uint32_t>& _source_to_stage,
                                        const std::map<uint32_t, uint32_t>& _stage_to_dest)
-    : sources(_sources), stages(_stages), source_to_stage(_source_to_stage), stage_to_dest(_stage_to_dest)
+    : sources(_sources), stages(_stages), sourceToStage(_source_to_stage), stageToDest(_stage_to_dest)
 {
 }
 
@@ -23,8 +22,8 @@ QueryExecutionPlan::~QueryExecutionPlan()
     NES_DEBUG("destroy qep")
     sources.clear();
     stages.clear();
-    source_to_stage.clear();
-    stage_to_dest.clear();
+    sourceToStage.clear();
+    stageToDest.clear();
 }
 
 void QueryExecutionPlan::print() {
@@ -51,7 +50,7 @@ bool QueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const NES::Tup
   return false;
 }
 
-uint32_t QueryExecutionPlan::stageIdFromSource(DataSource* source) { return source_to_stage[source]; };
+uint32_t QueryExecutionPlan::stageIdFromSource(DataSource* source) { return sourceToStage[source]; };
 
 const std::vector<DataSourcePtr> QueryExecutionPlan::getSources() const { return sources; }
 

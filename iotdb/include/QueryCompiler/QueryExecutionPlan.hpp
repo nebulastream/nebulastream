@@ -53,8 +53,8 @@ class QueryExecutionPlan {
   std::vector<DataSinkPtr> sinks;
   std::vector<WindowPtr> windows;
   std::vector<PipelineStagePtr> stages;
-  std::map<DataSource*, uint32_t> source_to_stage;
-  std::map<uint32_t, uint32_t> stage_to_dest;
+  std::map<DataSource*, uint32_t> sourceToStage;
+  std::map<uint32_t, uint32_t> stageToDest;
   std::map<std::string, size_t> qResult;
 
  private:
