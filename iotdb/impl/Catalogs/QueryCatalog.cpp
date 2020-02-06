@@ -52,7 +52,6 @@ string QueryCatalog::registerQuery(const string& queryString,
         NES_ERROR(
             "QueryCatalog: Unable to process input request with: queryString: " << queryString << "\n strategy: "
                                                                                 << optimizationStrategyName);
-        assert(0);
         return nullptr;
     }
 }

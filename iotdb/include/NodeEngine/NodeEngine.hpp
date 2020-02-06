@@ -68,21 +68,21 @@ class NodeEngine {
    * @brief start thread pool
    */
 
-  void start();
+  bool start();
   /**
    * @brief deploy all queries and start thread pool
    */
-  void startWithRedeploy();
+  bool startWithRedeploy();
 
   /**
    * @brief stop thread pool
    */
-  void stop();
+  bool stop();
 
   /**
    * @brief undeploy all queries and stop thread pool
    */
-  void stopWithUndeploy();
+  bool stopWithUndeploy();
 
   /**
    * @brief undeploy all queries and delete all qeps
