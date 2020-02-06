@@ -1,21 +1,44 @@
 #include <Components/NesWorker.hpp>
 #include <Util/Logger.hpp>
+#include "Actors/WorkerActor.hpp"
 
 namespace NES {
 
-NesWorker::NesWorker() {
+void starter(infer_handle_from_class_t<WorkerActor> handle,
+             actor_system *system) {
+  WorkerActorConfig workerCfg;
   workerCfg.load<io::middleman>();
-  actor_system system { workerCfg };
-  client = system.spawn<NES::WorkerActor>(workerCfg.ip, workerCfg.publish_port,
-                                          workerCfg.receive_port);
-  connected = false;
 
-  connect();
+  handle = system->spawn < NES::WorkerActor
+      > (workerCfg.ip, workerCfg.publish_port, workerCfg.receive_port);
 }
 
-bool NesWorker::connect(std::string host, uint16_t port)
-{
-  NES_NOT_IMPLEMENTED
+NesWorker::NesWorker() {
+  connected = false;
+  NES_DEBUG("NesWorker: constructed")
+}
+
+bool NesWorker::start(bool blocking) {
+  NES_DEBUG("NesWorker: start with blocking " << blocking)
+
+  workerCfg.load<io::middleman>();
+  actorSystem = new actor_system { workerCfg };
+
+  std::thread th0(starter, workerHandle, actorSystem);
+  actorThread = std::move(th0);
+
+  if (blocking) {
+    NES_DEBUG("NesWorker started, join now and waiting for work")
+    actorThread.join();
+  } else {
+    NES_DEBUG("NesWorker started, return without blocking")
+    return true;
+  }
+}
+
+bool NesWorker::stop() {
+  NES_DEBUG("NesWorker: stop")
+  actorThread.join();
 }
 
 bool NesWorker::connect() {
@@ -25,7 +48,7 @@ bool NesWorker::connect() {
   actor_system actorSystem { workerCfg };
   scoped_actor self { actorSystem };
   bool &con = this->connected;
-  self->request(client, task_timeout, connect_atom::value, workerCfg.host,
+  self->request(workerHandle, task_timeout, connect_atom::value, workerCfg.host,
                 workerCfg.publish_port).receive(
       [&con, &workerCfg](const bool &c) mutable {
         con = c;
@@ -47,7 +70,7 @@ bool NesWorker::disconnect() {
   scoped_actor self { actorSystem };
   bool &con = this->connected;
 
-  self->request(client, task_timeout, disconnect_atom::value).receive(
+  self->request(workerHandle, task_timeout, disconnect_atom::value).receive(
       [&con](const bool &dc) mutable {
         con = false;
         NES_DEBUG("NESWORKER: disconnected successfully")
@@ -68,8 +91,8 @@ bool NesWorker::registerLogicalStream(std::string name, std::string path) {
 
   bool success = false;
 
-  self->request(client, task_timeout, register_log_stream_atom::value, name,
-                path).receive(
+  self->request(workerHandle, task_timeout, register_log_stream_atom::value,
+                name, path).receive(
       [&success](const bool &dc) mutable {
         NES_DEBUG("NESWORKER: register log stream successful")
         success = true;
@@ -83,9 +106,10 @@ bool NesWorker::registerLogicalStream(std::string name, std::string path) {
   return success;
 }
 
-bool NesWorker::registerPhysicalStream(std::string sourceType, std::string sourceConf,
-                            std::string physicalStreamName,
-                            std::string logicalStreamName) {
+bool NesWorker::registerPhysicalStream(std::string sourceType,
+                                       std::string sourceConf,
+                                       std::string physicalStreamName,
+                                       std::string logicalStreamName) {
   WorkerActorConfig workerCfg;
   workerCfg.load<io::middleman>();
   actor_system actorSystem { workerCfg };
@@ -93,7 +117,7 @@ bool NesWorker::registerPhysicalStream(std::string sourceType, std::string sourc
 
   bool success = false;
 
-  self->request(client, task_timeout, register_phy_stream_atom::value,
+  self->request(workerHandle, task_timeout, register_phy_stream_atom::value,
                 sourceType, sourceConf, physicalStreamName, logicalStreamName)
       .receive(
       [&success](const bool &dc) mutable {

@@ -181,6 +181,12 @@ add_executable(internal-data-transmission-test "UnitTests/InternalDataTransmissi
 target_link_libraries(internal-data-transmission-test iotdb ${GTEST_LIBRARIES})
 add_test(NAME internal-data-transmission-test COMMAND internal-data-transmission-test)
 
+# QueryCatalogService Tests
+add_executable(multi-worker-test "UnitTests/MultiWorkerTest.cpp")
+target_link_libraries(multi-worker-test iotdb ${GTEST_LIBRARIES})
+add_test(NAME multi-worker-test COMMAND multi-worker-test)
+
+
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
         DEPENDS ${UNITTESTS})
