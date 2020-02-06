@@ -30,6 +30,12 @@ class UtilityFunctions {
    *  */
   static SchemaPtr createSchemaFromCode(const std::string& query_code_snippet);
 
+  /**
+   * @brief this function creates a UUID string
+   * @return the UUID string
+   */
+  static std::string generateUuid();
+
 };
 }
 

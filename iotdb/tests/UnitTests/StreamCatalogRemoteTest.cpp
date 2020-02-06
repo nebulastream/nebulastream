@@ -211,7 +211,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_existing_log_stream_remote_test) {
   anon_send_exit(coordinator, exit_reason::user_shutdown);
 }
 
-TEST_F(StreamCatalogRemoteTest, test_add_remove_empty_log_stream_remote_test) {
+TEST_F(StreamCatalogRemoteTest, DISABLED_test_add_remove_empty_log_stream_remote_test) {
   cout << "*** Running test test_add_remove_empty_log_stream_remote_test"
        << endl;
   CoordinatorActorConfig c_cfg;
@@ -432,7 +432,7 @@ TEST_F(StreamCatalogRemoteTest, add_physical_to_existing_logical_stream_remote_t
   anon_send_exit(coordinator, exit_reason::user_shutdown);
 }
 
-TEST_F(StreamCatalogRemoteTest, add_physical_to_new_logical_stream_remote_test) {
+TEST_F(StreamCatalogRemoteTest, DISABLED_add_physical_to_new_logical_stream_remote_test) {
   cout << "*** Running test add_physical_to_new_logical_stream_remote_test"
        << endl;
   CoordinatorActorConfig c_cfg;

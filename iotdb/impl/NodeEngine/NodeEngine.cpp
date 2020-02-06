@@ -28,92 +28,123 @@ NodeProperties* NodeEngine::getNodeProperties() {
   return props.get();
 }
 
-void NodeEngine::deployQuery(QueryExecutionPlanPtr qep) {
-  NES_DEBUG("NODEENGINE: deploy query" << qep)
-
-  Dispatcher::instance().registerQueryWithStart(qep);
-  qeps.push_back(qep);
+bool NodeEngine::deployQuery(QueryExecutionPlanPtr qep) {
+  NES_DEBUG("NodeEngine: deploy query " << qep)
+  if (qeps.find(qep) == qeps.end()) {
+      if (Dispatcher::instance().registerQueryWithStart(qep)) {
+          qeps.insert(qep);
+          NES_DEBUG("NodeEngine: deployment of QEP " << qep << " succeeded!")
+          return true;
+      }
+      else {
+          NES_DEBUG("NodeEngine: deployment of QEP " << qep << " failed!")
+          return false;
+      }
+  }
+  else {
+    NES_DEBUG("NodeEngine: qep already exists. Deployment failed!" << qep)
+    return false;
+  }
 }
 
-void NodeEngine::deployQueryWithoutStart(QueryExecutionPlanPtr qep) {
-  NES_DEBUG("NODEENGINE: deploy query" << qep)
-
-  Dispatcher::instance().registerQueryWithoutStart(qep);
-  qeps.push_back(qep);
+bool NodeEngine::deployQueryWithoutStart(QueryExecutionPlanPtr qep) {
+    NES_DEBUG("NodeEngine: deploy query " << qep)
+    if (qeps.find(qep) == qeps.end()) {
+        if (Dispatcher::instance().registerQueryWithoutStart(qep)) {
+            qeps.insert(qep);
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    else {
+        NES_DEBUG("NodeEngine: qep already exists. Deployment failed!" << qep)
+        return false;
+    }
 }
 
-void NodeEngine::undeployQuery(QueryExecutionPlanPtr qep) {
-  NES_DEBUG("NODEENGINE: deregister query" << qep)
-  Dispatcher::instance().deregisterQuery(qep);
-
-  qeps.erase(std::find(qeps.begin(), qeps.end(), qep));
+bool NodeEngine::undeployQuery(QueryExecutionPlanPtr qep) {
+  NES_DEBUG("NodeEngine: deregister query" << qep)
+  if (qeps.find(qep) != qeps.end()) {
+    qeps.erase(qep);
+    return Dispatcher::instance().deregisterQuery(qep);
+  }
+  else {
+    NES_DEBUG("NodeEngine: qep already exists. Deregister failed!" << qep)
+    return false;
+  }
 }
 
 void NodeEngine::init() {
-  NES_DEBUG("NODEENGINE: init node engine")
+  NES_DEBUG("NodeEngine: init node engine")
 
   NES::Dispatcher::instance();
   NES::BufferManager::instance();
   NES::ThreadPool::instance();
 }
 
-void NodeEngine::start() {
-  NES_DEBUG("NODEENGINE: start thread pool")
-  ThreadPool::instance().start();
+bool NodeEngine::start() {
+  NES_DEBUG("NodeEngine: start thread pool")
+  return ThreadPool::instance().start();
 }
 
-void NodeEngine::startWithRedeploy() {
-  for (auto& q : qeps) {
-    NES_DEBUG("NODEENGINE: register query " << q)
-    Dispatcher::instance().registerQueryWithStart(q);
+bool NodeEngine::startWithRedeploy() {
+  for (QueryExecutionPlanPtr qep : qeps) {
+    NES_DEBUG("NodeEngine: register query " << qep)
+    if (Dispatcher::instance().registerQueryWithStart(qep)){
+        NES_DEBUG("NodeEngine: registration of QEP " << qep << " succeeded!")
+    }
+    else {
+        NES_DEBUG("NodeEngine: registration of QEP " << qep << " failed!")
+    }
   }
-  NES_DEBUG("NODEENGINE: start thread pool")
-  ThreadPool::instance().start();
+
+  NES_DEBUG("NodeEngine: start thread pool")
+  return ThreadPool::instance().start();
 }
 
-void NodeEngine::stop() {
-  NES_DEBUG("NODEENGINE: stop thread pool")
-  ThreadPool::instance().stop();
+bool NodeEngine::stop() {
+  NES_DEBUG("NodeEngine: stop thread pool")
+  return ThreadPool::instance().stop();
 }
 
-void NodeEngine::stopWithUndeploy() {
-  NES_DEBUG("NODEENGINE: stop thread pool")
-  ThreadPool::instance().stop();
-  for (auto& q : qeps) {
-    NES_DEBUG("NODEENGINE: deregister query " << q)
-    Dispatcher::instance().deregisterQuery(q);
+bool NodeEngine::stopWithUndeploy() {
+  NES_DEBUG("NodeEngine: stop thread pool")
+  for (QueryExecutionPlanPtr qep : qeps) {
+    NES_DEBUG("NodeEngine: deregister query " << qep)
+    Dispatcher::instance().deregisterQuery(qep);
   }
+  return ThreadPool::instance().stop();
 }
 
 void NodeEngine::applyConfig(Config& conf) {
   if (conf.getNumberOfWorker() != ThreadPool::instance().getNumberOfThreads()) {
     NES_DEBUG(
-        "NODEENGINE: changing numberOfWorker from " << ThreadPool::instance().getNumberOfThreads() << " to " << conf.getNumberOfWorker())
+        "NodeEngine: changing numberOfWorker from " << ThreadPool::instance().getNumberOfThreads() << " to " << conf.getNumberOfWorker())
     ThreadPool::instance().setNumberOfThreadsWithRestart(conf.getNumberOfWorker());
   }
   if (conf.getBufferCount() != BufferManager::instance().getNumberOfBuffers()) {
     NES_DEBUG(
-        "NODEENGINE: changing bufferCount from " << BufferManager::instance().getNumberOfBuffers() << " to " << conf.getBufferCount())
+        "NodeEngine: changing bufferCount from " << BufferManager::instance().getNumberOfBuffers() << " to " << conf.getBufferCount())
     BufferManager::instance().setNumberOfBuffers(conf.getBufferCount());
   }
   if (conf.getBufferSizeInByte() != BufferManager::instance().getBufferSize()) {
     NES_DEBUG(
-        "NODEENGINE: changing buffer size from " << BufferManager::instance().getBufferSize() << " to " << conf.getBufferSizeInByte())
+        "NodeEngine: changing buffer size from " << BufferManager::instance().getBufferSize() << " to " << conf.getBufferSizeInByte())
     BufferManager::instance().setBufferSize(conf.getBufferSizeInByte());
   }
-  NES_DEBUG("NODEENGINE: config successuflly changed")
+  NES_DEBUG("NodeEngine: config successuflly changed")
 }
 
 void NodeEngine::resetQEPs() {
-  for (auto& q : qeps) {
-    NES_DEBUG("NODEENGINE: deregister query " << q)
-    Dispatcher::instance().deregisterQuery(q);
+  for (QueryExecutionPlanPtr qep : qeps) {
+    NES_DEBUG("NodeEngine: deregister query " << qep)
+    Dispatcher::instance().deregisterQuery(qep);
   }
-  NES_DEBUG("NODEENGINE: clear qeps")
-
+  NES_DEBUG("NodeEngine: clear qeps")
   qeps.clear();
 }
-
 
 void NodeEngine::setDOPWithRestart(size_t dop)
 {

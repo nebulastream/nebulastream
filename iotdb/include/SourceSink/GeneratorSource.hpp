@@ -26,7 +26,7 @@ class GeneratorSource : public DataSource {
    */
   GeneratorSource(const Schema &schema, const uint64_t pNum_buffers_to_process)
       : DataSource(schema) {
-    this->num_buffers_to_process = pNum_buffers_to_process;
+    this->numBuffersToProcess = pNum_buffers_to_process;
   }
   /**
    * @brief override function to create one buffer
