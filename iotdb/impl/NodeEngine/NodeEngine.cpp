@@ -84,16 +84,15 @@ void NodeEngine::init() {
   NES::ThreadPool::instance();
 }
 
-void NodeEngine::start() {
+bool NodeEngine::start() {
   NES_DEBUG("NodeEngine: start thread pool")
-  ThreadPool::instance().start();
+  return ThreadPool::instance().start();
 }
 
-void NodeEngine::startWithRedeploy() {
+bool NodeEngine::startWithRedeploy() {
   for (QueryExecutionPlanPtr qep : qeps) {
     NES_DEBUG("NodeEngine: register query " << qep)
-    bool succeed = Dispatcher::instance().registerQueryWithStart(qep);
-    if (succeed){
+    if (Dispatcher::instance().registerQueryWithStart(qep)){
         NES_DEBUG("NodeEngine: registration of QEP " << qep << " succeeded!")
     }
     else {
@@ -102,22 +101,21 @@ void NodeEngine::startWithRedeploy() {
   }
 
   NES_DEBUG("NodeEngine: start thread pool")
-  ThreadPool::instance().start();
+  return ThreadPool::instance().start();
 }
 
-void NodeEngine::stop() {
+bool NodeEngine::stop() {
   NES_DEBUG("NodeEngine: stop thread pool")
-  ThreadPool::instance().stop();
+  return ThreadPool::instance().stop();
 }
 
-void NodeEngine::stopWithUndeploy() {
+bool NodeEngine::stopWithUndeploy() {
   NES_DEBUG("NodeEngine: stop thread pool")
-  ThreadPool::instance().stop();
-
   for (QueryExecutionPlanPtr qep : qeps) {
     NES_DEBUG("NodeEngine: deregister query " << qep)
     Dispatcher::instance().deregisterQuery(qep);
   }
+  return ThreadPool::instance().stop();
 }
 
 void NodeEngine::applyConfig(Config& conf) {

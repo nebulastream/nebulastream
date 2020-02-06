@@ -137,6 +137,7 @@ class Dispatcher {
     std::atomic<size_t> processedTuple;
     std::atomic<size_t> processedBuffers;
 };
+typedef std::shared_ptr<Dispatcher> DispatcherPtr;
 }
 
 #endif /* INCLUDE_DISPATCHER_H_ */
