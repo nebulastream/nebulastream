@@ -114,6 +114,6 @@ bool WindowHandler::stop() {
 }
 
 
-WindowHandler::~WindowHandler() {NES_DEBUG("WINDOW: calling destructor")};
+WindowHandler::~WindowHandler() {NES_DEBUG("WINDOW: calling destructor")}
 
 } // namespace NES

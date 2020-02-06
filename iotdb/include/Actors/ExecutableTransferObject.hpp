@@ -33,6 +33,8 @@ class ExecutableTransferObject {
  public:
   string &getDescription();
   void setDescription(const string &description);
+  string &getQueryId();
+  void setQueryId(const string &queryId);
   Schema &getSchema();
   void setSchema(const Schema &schema);
   vector<DataSourcePtr> &getSources();

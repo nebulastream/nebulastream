@@ -7,7 +7,7 @@
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/vector.hpp>
 #include <thread>
-#include "../NodeEngine/TupleBuffer.hpp"
+#include <NodeEngine/TupleBuffer.hpp>
 
 namespace NES {
 
@@ -86,7 +86,7 @@ class DataSource {
      * @brief method to return the current schema of the source as string
      * @return schema description of the source as string
      */
-    const std::string getSourceSchemaAsString();
+    std::string getSourceSchemaAsString();
 
     /**
      * @brief debug function for testing to test if source is running
@@ -118,10 +118,7 @@ class DataSource {
      */
     virtual ~DataSource();
 
-  private:
-    //bool indicating if the source is currently running
-    bool running;
-    std::thread thread;
+    const std::string& getSourceId() const;
 
   protected:
     /**
@@ -132,17 +129,22 @@ class DataSource {
     Schema schema;
     size_t generatedTuples;
     size_t generatedBuffers;
-    size_t num_buffers_to_process;
+    size_t numBuffersToProcess;
+    std::string sourceId;
 
   private:
     friend class boost::serialization::access;
+    //bool indicating if the source is currently running
+    bool running;
+    std::thread thread;
 
     template<class Archive>
     void serialize(Archive& ar, const unsigned int version) {
-        ar & num_buffers_to_process;
+        ar & numBuffersToProcess;
         ar & schema;
         ar & generatedTuples;
         ar & generatedBuffers;
+        ar & sourceId;
     }
 };
 

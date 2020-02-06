@@ -5,8 +5,8 @@
 #include <boost/serialization/vector.hpp>
 #include <map>
 #include <Windows/WindowHandler.hpp>
-#include "../SourceSink/DataSink.hpp"
-#include "../SourceSink/DataSource.hpp"
+#include <SourceSink/DataSink.hpp>
+#include <SourceSink/DataSource.hpp>
 
 namespace NES {
 class QueryExecutionPlan;
@@ -14,8 +14,6 @@ typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 
 class QueryExecutionPlan {
  public:
-  QueryExecutionPlan();
-
   virtual bool executeStage(uint32_t pipeline_stage_id,
                             const TupleBufferPtr buf);
   const std::vector<DataSourcePtr> getSources() const;
@@ -40,8 +38,27 @@ class QueryExecutionPlan {
     windows.push_back(window);
   }
 
-  template<class Archive> void serialize(Archive& ar,
-                                         const unsigned int version) {
+  void print();
+
+ protected:
+  friend class boost::serialization::access;
+  QueryExecutionPlan();
+
+  QueryExecutionPlan(const std::vector<DataSourcePtr> &_sources,
+                     const std::vector<PipelineStagePtr> &_stages,
+                     const std::map<DataSource *, uint32_t> &_source_to_stage,
+                     const std::map<uint32_t, uint32_t> &_stage_to_dest);
+
+  std::vector<DataSourcePtr> sources;
+  std::vector<DataSinkPtr> sinks;
+  std::vector<WindowPtr> windows;
+  std::vector<PipelineStagePtr> stages;
+  std::map<DataSource*, uint32_t> sourceToStage;
+  std::map<uint32_t, uint32_t> stageToDest;
+  std::map<std::string, size_t> qResult;
+
+ private:
+  template<class Archive> void serialize(Archive& ar, const unsigned int version) {
     ar & sources;
     ar & sinks;
     ar & windows;
@@ -50,25 +67,6 @@ class QueryExecutionPlan {
     //    	ar & stage_to_dest;
     //    	ar & qResult;
   }
-
-  void print();
-
- protected:
-  friend class boost::serialization::access;
-
-  QueryExecutionPlan(const std::vector<DataSourcePtr> &_sources,
-                     const std::vector<PipelineStagePtr> &_stages,
-                     const std::map<DataSource *, uint32_t> &_source_to_stage,
-                     const std::map<uint32_t, uint32_t> &_stage_to_dest);
-
- protected:
-  std::vector<DataSourcePtr> sources;
-  std::vector<DataSinkPtr> sinks;
-  std::vector<WindowPtr> windows;
-  std::vector<PipelineStagePtr> stages;
-  std::map<DataSource*, uint32_t> source_to_stage;
-  std::map<uint32_t, uint32_t> stage_to_dest;
-  std::map<std::string, size_t> qResult;
 };
 const QueryExecutionPlanPtr createTestQEP();
 

@@ -76,7 +76,6 @@ class WindowHandler {
   WindowManagerPtr window_manager_ptr;
   void *window_state;
   std::thread thread;
-
 };
 
 typedef std::shared_ptr<WindowHandler> WindowPtr;

@@ -2,17 +2,19 @@
 #include <boost/serialization/export.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-#include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 
-BOOST_CLASS_EXPORT_IMPLEMENT(NES::GeneratedQueryExecutionPlan);
+#include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 
 namespace NES {
 
-GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan() : pipeline_stage_ptr_() {
-
+GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan() : QueryExecutionPlan(), pipeline_stage_ptr_() {
 }
+
+GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan(const std::string& queryId) : QueryExecutionPlan(), pipeline_stage_ptr_() {
+}
+
 GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan(PipelineStagePtr ptr)
-    : pipeline_stage_ptr_(ptr) {
+    : QueryExecutionPlan(), pipeline_stage_ptr_(ptr) {
 }
 
 bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const NES::TupleBufferPtr buf) {
@@ -40,3 +42,4 @@ bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const
 }
 
 } // namespace NES
+BOOST_CLASS_EXPORT(NES::GeneratedQueryExecutionPlan);
