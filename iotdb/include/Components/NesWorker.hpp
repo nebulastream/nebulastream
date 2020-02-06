@@ -18,13 +18,18 @@ class NesWorker {
    */
   NesWorker();
 
-  /**
-   * @brief method to connect the worker to the coordinator
-   * @param host ip as string
-   * @param port as uint
+  /*
+   * @brief start the worker using the default worker config
+   * @param bool indicating if the call is blocking
    * @return bool indicating success
    */
-  bool connect(std::string host, uint16_t port);
+  bool start(bool blocking);
+
+  /**
+   * @brief stop the worker
+   * @return bool indicating success
+   */
+  bool stop();
 
   /*
    * @brief connect to coordinator using the default worker config
@@ -58,9 +63,11 @@ class NesWorker {
 
  private:
   bool connected;
-  infer_handle_from_class_t<NES::WorkerActor> client;
+  infer_handle_from_class_t<NES::WorkerActor> workerHandle;
+  actor_system* actorSystem;
   WorkerActorConfig workerCfg;
   PhysicalStreamConfig defaultConf;
+  std::thread actorThread;
 };
 typedef std::shared_ptr<NesWorker> NesWorkerPtr;
 

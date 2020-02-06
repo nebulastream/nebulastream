@@ -23,7 +23,8 @@ void startRestServer(
 }
 
 void starter(infer_handle_from_class_t<CoordinatorActor> handle,
-                actor_system *actorSystem, CAFServer* cafServer, RestServer* restServer, std::string restHost, uint16_t restPort) {
+             actor_system *actorSystem, CAFServer *cafServer,
+             RestServer *restServer, std::string restHost, uint16_t restPort) {
   CoordinatorActorConfig actorCoordinatorConfig;
   actorCoordinatorConfig.load<io::middleman>();
   handle = actorSystem->spawn<CoordinatorActor>();
@@ -51,19 +52,13 @@ bool NesCoordinator::startCoordinator(bool blocking) {
   NES_DEBUG("NesCoordinator: Start Rest Server")
 
   NES_DEBUG("NesCoordinator start")
-//  CoordinatorActorConfig actorCoordinatorConfig;
   actorCoordinatorConfig.load<io::middleman>();
 
   actorSystem = new actor_system { actorCoordinatorConfig };
-//  coordinatorActorHandle = actorSystem->spawn<CoordinatorActor>();
 
-  std::thread th0(starter, coordinatorActorHandle, actorSystem, cafServer, restServer, restHost, restPort);
+  std::thread th0(starter, coordinatorActorHandle, actorSystem, cafServer,
+                  restServer, restHost, restPort);
   actorThread = std::move(th0);
-
-//  NES_DEBUG("NesCoordinator start rest server thread")
-//  std::thread th1(startRestServer, restServer, restHost, restPort,
-//                  coordinatorActorHandle);
-//  restServerThread = std::move(th1);
 
   if (blocking) {
     NES_DEBUG("NesCoordinator started, join now and waiting for work")
