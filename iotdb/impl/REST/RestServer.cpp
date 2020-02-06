@@ -28,7 +28,8 @@ bool RestServer::start() {
         NES_DEBUG("RestServer: Server started")
         NES_DEBUG("RestServer: REST Server now listening for requests at: " << server.endpoint())
         InterruptHandler::waitForUserInterrupt();
-        server.shutdown().wait();
+        NES_DEBUG("RestServer: after waitForUserInterrupt")
+//        server.shutdown().wait();
     } catch (std::exception& e) {
         NES_ERROR("RestServer: Unable to start REST server");
         return false;
@@ -41,7 +42,7 @@ bool RestServer::start() {
 
 bool RestServer::stop()
 {
-  server.shutdown();
+  InterruptHandler::handleUserInterrupt(SIGINT);
   //TODO: should return bool
   return true;
 }

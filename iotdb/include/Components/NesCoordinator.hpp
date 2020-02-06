@@ -50,7 +50,6 @@ class NesCoordinator {
   std::string restHost;
   uint16_t restPort;
   std::thread actorThread;
-  std::thread restServerThread;
 };
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
 
