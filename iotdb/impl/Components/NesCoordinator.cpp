@@ -42,10 +42,12 @@ void starter(infer_handle_from_class_t<CoordinatorActor> handle,
 }
 
 void NesCoordinator::stopCoordinator() {
+//  coordinatorActorHandle->unregister_from_system();
   restServer->stop();
-  cafServer->stop();
-  restServerThread.join();
+
   actorThread.join();
+  //
+  //  cafServer->stop();
 }
 
 bool NesCoordinator::startCoordinator(bool blocking) {

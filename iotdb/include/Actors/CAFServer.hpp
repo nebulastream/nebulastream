@@ -9,7 +9,6 @@ namespace NES {
 /**
  * @brief : This class is responsible for starting the CAF server with coordinator services.
  */
-
 class CAFServer {
 
  public:
@@ -19,9 +18,6 @@ class CAFServer {
  private:
   infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
   actor_system* acSys;
-//  actor_system actorSystem;
-//  void setupLogging();
-
 };
 
 }
