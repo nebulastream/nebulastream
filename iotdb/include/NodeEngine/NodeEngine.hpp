@@ -38,21 +38,24 @@ class NodeEngine {
   /**
    * @brief deploy a new query plan to via the dispatcher
    * @param new query plan
+   * @return true if succeeded, else false
    */
-  void deployQuery(QueryExecutionPlanPtr);
+  bool deployQuery(QueryExecutionPlanPtr);
 
   /**
    * @brief deploy a new query plan to via the dispatcher
    * @caution this will not start the sources/sinks, this has to be done manually
    * @param new query plan
+   * @return true if succeeded, else false
    */
-  void deployQueryWithoutStart(QueryExecutionPlanPtr);
+  bool deployQueryWithoutStart(QueryExecutionPlanPtr);
 
   /**
    * @brief undeploy an existing query plan to via the dispatcher
    * @param query plan to deploy
+   * @return true if succeeded, else false
    */
-  void undeployQuery(QueryExecutionPlanPtr);
+  bool undeployQuery(QueryExecutionPlanPtr);
 
   /**
    * @brief change config of running node eninge

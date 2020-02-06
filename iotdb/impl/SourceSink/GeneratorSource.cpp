@@ -9,7 +9,7 @@ namespace NES {
 const std::string GeneratorSource::toString() const {
   std::stringstream ss;
   ss << "GENERATOR_SOURCE(SCHEMA(" << schema.toString();
-  ss << "), NUM_BUFFERS=" << num_buffers_to_process << "))";
+  ss << "), NUM_BUFFERS=" << numBuffersToProcess << "))";
   return ss.str();
 }
 SourceType GeneratorSource::getType() const {
