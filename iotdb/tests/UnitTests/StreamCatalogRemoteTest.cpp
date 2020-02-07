@@ -204,6 +204,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_existing_log_stream_remote_test) {
   string exp = "id:UINT32value:UINT64\n";
   EXPECT_EQ(1, allLogicalStream.size());
 
+
   SchemaPtr defaultSchema = allLogicalStream["default_logical"];
   EXPECT_EQ(exp, defaultSchema->toString());
 
