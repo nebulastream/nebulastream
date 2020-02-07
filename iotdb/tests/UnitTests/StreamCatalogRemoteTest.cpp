@@ -85,8 +85,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_log_stream_remote_test) {
   self->request(workerHandler, task_timeout, connect_atom::value, w_cfg.host,
                 c_cfg.publish_port).receive(
       [&connected](const bool &c) mutable {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        connected = c;
+         connected = c;
       }
       , [=](const error &er) {
         string error_msg = to_string(er);
@@ -105,11 +104,9 @@ TEST_F(StreamCatalogRemoteTest, test_add_log_stream_remote_test) {
   out.close();
 
   bool registered = false;
-
   self->request(workerHandler, task_timeout, register_log_stream_atom::value,
                 "testStream1", testSchemaFileName).receive(
       [&registered](const bool &c) mutable {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
         registered = c;
       }
       , [=](const error &er) {
@@ -204,11 +201,12 @@ TEST_F(StreamCatalogRemoteTest, test_add_existing_log_stream_remote_test) {
   string exp = "id:UINT32value:UINT64\n";
   EXPECT_EQ(1, allLogicalStream.size());
 
+
   SchemaPtr defaultSchema = allLogicalStream["default_logical"];
   EXPECT_EQ(exp, defaultSchema->toString());
 
-  anon_send_exit(worker, exit_reason::user_shutdown);
-  anon_send_exit(coordinator, exit_reason::user_shutdown);
+  self->request(worker, task_timeout, exit_reason::user_shutdown);
+  self->request(coordinator, task_timeout, exit_reason::user_shutdown);
 }
 
 TEST_F(StreamCatalogRemoteTest, DISABLED_test_add_remove_empty_log_stream_remote_test) {
@@ -293,9 +291,8 @@ TEST_F(StreamCatalogRemoteTest, DISABLED_test_add_remove_empty_log_stream_remote
   SchemaPtr sPtr2 = StreamCatalog::instance().getSchemaForLogicalStream(
       "testStream");
   EXPECT_EQ(sPtr2, nullptr);
-
-  anon_send_exit(worker, exit_reason::user_shutdown);
-  anon_send_exit(coordinator, exit_reason::user_shutdown);
+  self->request(worker, task_timeout, exit_reason::user_shutdown);
+  self->request(coordinator, task_timeout, exit_reason::user_shutdown);
 }
 
 TEST_F(StreamCatalogRemoteTest, test_add_remove_not_empty_log_stream_remote_test) {
@@ -355,8 +352,8 @@ TEST_F(StreamCatalogRemoteTest, test_add_remove_not_empty_log_stream_remote_test
       "default_logical");
   EXPECT_NE(sPtr, nullptr);
 
-  anon_send_exit(worker, exit_reason::user_shutdown);
-  anon_send_exit(coordinator, exit_reason::user_shutdown);
+  self->request(worker, task_timeout, exit_reason::user_shutdown);
+  self->request(coordinator, task_timeout, exit_reason::user_shutdown);
 }
 
 TEST_F(StreamCatalogRemoteTest, add_physical_to_existing_logical_stream_remote_test) {
@@ -427,9 +424,8 @@ TEST_F(StreamCatalogRemoteTest, add_physical_to_existing_logical_stream_remote_t
   EXPECT_EQ(phys.size(), 2);
   EXPECT_EQ(phys[0]->getPhysicalName(), "default_physical");
   EXPECT_EQ(phys[1]->getPhysicalName(), "physical_test");
-
-  anon_send_exit(worker, exit_reason::user_shutdown);
-  anon_send_exit(coordinator, exit_reason::user_shutdown);
+  self->request(worker, task_timeout, exit_reason::user_shutdown);
+  self->request(coordinator, task_timeout,exit_reason::user_shutdown);
 }
 
 TEST_F(StreamCatalogRemoteTest, DISABLED_add_physical_to_new_logical_stream_remote_test) {
@@ -481,9 +477,18 @@ TEST_F(StreamCatalogRemoteTest, DISABLED_add_physical_to_new_logical_stream_remo
   out << testSchema;
   out.close();
 
-  anon_send(worker, register_log_stream_atom::value, "testStream",
-            testSchemaFileName);
-  std::this_thread::sleep_for(std::chrono::seconds(2));
+  bool registered = false;
+  self->request(worker, task_timeout, register_log_stream_atom::value, "testStream",
+                testSchemaFileName).receive(
+          [&registered](const bool &c) mutable {
+              registered = c;
+          }
+          , [=](const error &er) {
+              string error_msg = to_string(er);
+              NES_ERROR(
+                      "StreamCatalogRemoteTest: Error during add_physical_to_new_logical_stream_remote_test" << "\n" << error_msg);
+          });
+  EXPECT_TRUE(registered);
 
   PhysicalStreamConfig conf;
   conf.logicalStreamName = "testStream";
@@ -513,8 +518,8 @@ TEST_F(StreamCatalogRemoteTest, DISABLED_add_physical_to_new_logical_stream_remo
   EXPECT_EQ(phys.size(), 1);
   EXPECT_EQ(phys[0]->getPhysicalName(), "physical_test");
 
-  anon_send_exit(worker, exit_reason::user_shutdown);
-  anon_send_exit(coordinator, exit_reason::user_shutdown);
+   self->request(worker, task_timeout, exit_reason::user_shutdown);
+   self->request(coordinator, task_timeout, exit_reason::user_shutdown);
 }
 
 TEST_F(StreamCatalogRemoteTest, remove_physical_from_new_logical_stream_remote_test) {
@@ -579,8 +584,8 @@ TEST_F(StreamCatalogRemoteTest, remove_physical_from_new_logical_stream_remote_t
   EXPECT_EQ(phys.size(), 0);
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
-  anon_send_exit(worker, exit_reason::user_shutdown);
-  anon_send_exit(coordinator, exit_reason::user_shutdown);
+  self->request(worker, task_timeout, exit_reason::user_shutdown);
+  self->request(coordinator, task_timeout, exit_reason::user_shutdown);
 }
 
 TEST_F(StreamCatalogRemoteTest, remove_not_existing_stream_remote_test) {
@@ -648,9 +653,8 @@ TEST_F(StreamCatalogRemoteTest, remove_not_existing_stream_remote_test) {
 
   EXPECT_EQ(phys.size(), 1);
   std::this_thread::sleep_for(std::chrono::seconds(1));
-
-  anon_send_exit(worker, exit_reason::user_shutdown);
-  anon_send_exit(coordinator, exit_reason::user_shutdown);
+  self->request(worker, task_timeout, exit_reason::user_shutdown);
+  self->request(coordinator, task_timeout, exit_reason::user_shutdown);
 }
 
 }
