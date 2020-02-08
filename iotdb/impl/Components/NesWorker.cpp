@@ -5,12 +5,14 @@
 namespace NES {
 
 void starter(infer_handle_from_class_t<WorkerActor> handle,
-             actor_system *system) {
+             actor_system *system, size_t port) {
   WorkerActorConfig workerCfg;
+  workerCfg.publish_port = port;
+
   workerCfg.load<io::middleman>();
 
-  handle = system->spawn < NES::WorkerActor
-      > (workerCfg.ip, workerCfg.publish_port, workerCfg.receive_port);
+  handle = system->spawn<NES::WorkerActor>(workerCfg.ip, workerCfg.publish_port,
+                                           workerCfg.receive_port);
 }
 
 NesWorker::NesWorker() {
@@ -18,13 +20,13 @@ NesWorker::NesWorker() {
   NES_DEBUG("NesWorker: constructed")
 }
 
-bool NesWorker::start(bool blocking) {
-  NES_DEBUG("NesWorker: start with blocking " << blocking)
+bool NesWorker::start(bool blocking, size_t port) {
+  NES_DEBUG("NesWorker: start with blocking " << blocking << " port=" << port)
 
   workerCfg.load<io::middleman>();
   actorSystem = new actor_system { workerCfg };
 
-  std::thread th0(starter, workerHandle, actorSystem);
+  std::thread th0(starter, workerHandle, actorSystem, port);
   actorThread = std::move(th0);
 
   if (blocking) {
@@ -38,6 +40,9 @@ bool NesWorker::start(bool blocking) {
 
 bool NesWorker::stop() {
   NES_DEBUG("NesWorker: stop")
+  scoped_actor self { *actorSystem };
+  self->request(workerHandle, task_timeout,
+                exit_reason::user_shutdown);
   actorThread.join();
 }
 

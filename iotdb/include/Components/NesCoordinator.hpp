@@ -19,9 +19,10 @@ class NesCoordinator {
   /**
    * @brief start actor: rest server, caf server, coordinator actor
    * @param bool if the method should block
-   * @note this is a blocking call
+   * @param bool if the call is blocking
+   * @return port of where started
    */
-  bool startCoordinator(bool blocking);
+  size_t startCoordinator(bool blocking);
 
   /**
    * @brief method to stop coordinator
@@ -46,9 +47,10 @@ class NesCoordinator {
   infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
   actor_system* actorSystem;
   RestServer* restServer;
-  CAFServer* cafServer;
+//  CAFServer* cafServer;
   std::string restHost;
   uint16_t restPort;
+  size_t publishPort;
   std::thread actorThread;
 };
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
