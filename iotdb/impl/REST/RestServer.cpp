@@ -43,7 +43,6 @@ bool RestServer::start() {
 bool RestServer::stop()
 {
   InterruptHandler::handleUserInterrupt(SIGINT);
-  //TODO: should return bool
   return true;
 }
 

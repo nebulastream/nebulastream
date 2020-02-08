@@ -183,16 +183,42 @@ CompiledTestQueryExecutionPlanPtr setupQEP() {
 /**
  * Test methods
  */
-TEST_F(MultiWorkerTest, start_stop_workers) {
+TEST_F(MultiWorkerTest, start_stop_one_workers) {
   cout << "start coordinator" << endl;
   NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
-  crd->startCoordinator(/**blocking**/false);
+  size_t port = crd->startCoordinator(/**blocking**/false);
+  cout << "coordinator started successfully" << endl;
+  sleep(1);
+
+  cout << "start worker" << endl;
+  NesWorkerPtr wrk = std::make_shared<NesWorker>();
+  wrk->start(/**blocking**/false, port);
+  cout << "worker started successfully" << endl;
+
+  sleep(5);
+  cout << "wakeup" << endl;
+
+  cout << "stopping worker" << endl;
+  wrk->stop();
+
+  cout << "stopping coordinator" << endl;
+  crd->stopCoordinator();
+
+}
+
+TEST_F(MultiWorkerTest, start_stop_connect_workers) {
+  cout << "start coordinator" << endl;
+  NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
+  size_t port = crd->startCoordinator(/**blocking**/false);
   cout << "coordinator started successfully" << endl;
 
   cout << "start worker" << endl;
   NesWorkerPtr wrk = std::make_shared<NesWorker>();
-  wrk->start(/**blocking**/false);
+  wrk->start(/**blocking**/false, port);
   cout << "worker started successfully" << endl;
+
+  wrk->connect();
+  cout << "worker started connected " << endl;
 
   sleep(2);
   cout << "stopping coordinator" << endl;
@@ -200,7 +226,6 @@ TEST_F(MultiWorkerTest, start_stop_workers) {
 
   cout << "stopping worker" << endl;
   wrk->stop();
-
 }
 
 #if 0
