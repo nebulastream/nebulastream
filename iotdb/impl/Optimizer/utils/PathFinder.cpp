@@ -44,6 +44,44 @@ std::vector<NESTopologyEntryPtr> PathFinder::findPathWithMaxBandwidth(NESTopolog
     return result;
 }
 
+std::vector<NESTopologyEntryPtr> PathFinder::findPathWithMinLinkLatency(NESTopologyEntryPtr source, NESTopologyEntryPtr destination) {
+    std::vector<std::vector<NESTopologyLinkPtr>> pathsWithLinks = findAllPathLinksBetween(source, destination);
+
+    if (pathsWithLinks.empty()) {
+        throw std::runtime_error(
+            "Unable to find bath between " + source->toString() + " and " + destination->toString());
+    }
+
+    std::vector<NESTopologyLinkPtr> selectedPath = {};
+
+    //If the number of paths are more than 1
+    if (pathsWithLinks.size() > 1) {
+        // We select the path whose maximum link latency is minimum among the selected path
+        size_t minOfMaxLatency = 0;
+        for (std::vector<NESTopologyLinkPtr> pathWithLinks : pathsWithLinks) {
+            for (auto link : pathWithLinks) {
+                if (minOfMaxLatency < link->getLinkCapacity()) {
+                    minOfMaxLatency = link->getLinkLatency();
+                    selectedPath = pathWithLinks;
+                }
+            }
+        }
+    } else {
+        selectedPath = pathsWithLinks[0];
+    }
+
+
+    //adding the source node
+    std::vector<NESTopologyEntryPtr> result = {source};
+
+    //Build an array with nodes on the selected path
+    for(NESTopologyLinkPtr link : selectedPath){
+        result.push_back(link->getDestNode());
+    }
+
+    return result;
+}
+
 std::vector<std::vector<NESTopologyLinkPtr>> PathFinder::findAllPathLinksBetween(NESTopologyEntryPtr source,
                                                                                  NESTopologyEntryPtr destination) {
 
@@ -80,7 +118,6 @@ std::vector<std::vector<NESTopologyLinkPtr>> PathFinder::findAllPathLinksBetween
 
 std::vector<NESTopologyLinkPtr> PathFinder::backTrackTraversedPathTill(std::vector<NESTopologyLinkPtr> path,
                                                                        NES::NESTopologyEntryPtr nesNode) {
-
     auto itr = path.end();
     while (itr != path.begin()) {
         --itr;
@@ -90,7 +127,6 @@ std::vector<NESTopologyLinkPtr> PathFinder::backTrackTraversedPathTill(std::vect
             break;
         }
     }
-
     return path;
 }
 
