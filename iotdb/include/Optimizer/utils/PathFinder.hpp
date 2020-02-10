@@ -30,6 +30,15 @@ class PathFinder {
                                                               NESTopologyEntryPtr destination);
 
     /**
+     * @brief Find a path with minimum link latency between given source destination
+     * @param source : source node
+     * @param destination : destination node
+     * @return vector containing nodes
+     */
+    std::vector<NESTopologyEntryPtr> findPathWithMinLinkLatency(NESTopologyEntryPtr source,
+                                                              NESTopologyEntryPtr destination);
+
+    /**
      * @brief Find all paths between given source destination
      * @param source : source node
      * @param destination : destination node
