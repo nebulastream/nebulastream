@@ -4,4 +4,5 @@ add_source_iotdb(
         NESExecutionPlan.cpp
         impl/BottomUp.cpp
         impl/TopDown.cpp
+        utils/PathFinder.cpp
 )
