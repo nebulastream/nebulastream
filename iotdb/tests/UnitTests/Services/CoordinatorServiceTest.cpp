@@ -241,7 +241,7 @@ TEST_F(CoordinatorServiceTest, test_compile_deployment) {
 
     for (auto& x : etos) {
         ExecutableTransferObject eto = x.second;
-        QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan();
+        QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(createDefaultQueryCompiler());
         EXPECT_TRUE(qep);
     }
     EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
@@ -290,7 +290,7 @@ TEST_F(CoordinatorServiceTest, DISABLED_test_local_distributed_deployment) {
         NESTopologyEntryPtr v = x.first;
         cout << "Deploying QEP for " << v->getEntryTypeString() << endl;
         ExecutableTransferObject eto = x.second;
-        QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan();
+        QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(createDefaultQueryCompiler());
         EXPECT_TRUE(qep);
         engine->deployQuery(qep);
         qeps.push_back(qep);
@@ -326,7 +326,7 @@ TEST_F(CoordinatorServiceTest, DISABLED_test_sequential_local_distributed_deploy
             NESTopologyEntryPtr v = x.first;
             cout << "Deploying QEP for " << v->getEntryTypeString() << endl;
             ExecutableTransferObject eto = x.second;
-            QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan();
+            QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(createDefaultQueryCompiler());
             EXPECT_TRUE(qep);
             engine->deployQuery(qep);
             qeps.push_back(qep);
