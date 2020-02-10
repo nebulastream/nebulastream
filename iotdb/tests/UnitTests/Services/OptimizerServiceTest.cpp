@@ -9,7 +9,6 @@
 using namespace NES;
 using namespace web;
 
-//FIXME: Classes are disabled because of bad memory allocation in InputQuery creation
 class OptimizerServiceTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
@@ -47,7 +46,7 @@ class OptimizerServiceTest : public testing::Test {
                 "%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
 
         // create FileAppender
-        LOG4CXX_DECODE_CHAR(fileName, "EngineTest.log");
+        LOG4CXX_DECODE_CHAR(fileName, "OptimizerServiceTest.log");
         log4cxx::FileAppenderPtr file(
             new log4cxx::FileAppender(layoutPtr, fileName));
 

@@ -186,6 +186,11 @@ add_executable(internal-data-transmission-test "UnitTests/InternalDataTransmissi
 target_link_libraries(internal-data-transmission-test iotdb ${GTEST_LIBRARIES})
 add_test(NAME internal-data-transmission-test COMMAND internal-data-transmission-test)
 
+# Path Finder Tests
+add_executable(path-finder-test "UnitTests/Optimizer/Utils/PathfinderTest.cpp")
+target_link_libraries(path-finder-test iotdb ${GTEST_LIBRARIES})
+add_test(NAME path-finder-test COMMAND path-finder-test)
+
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
         DEPENDS ${UNITTESTS})

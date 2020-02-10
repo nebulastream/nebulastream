@@ -112,7 +112,7 @@ json::value NESTopologyManager::getNESTopologyGraphAsJson() {
     return result;
 }
 
-std::vector<json::value> NESTopologyManager::getChildrenNode(
+std::vector<json::value> NESTopologyManager::getChildrenNodes(
     NESTopologyEntryPtr nesParentNode) {
 
     const NESTopologyGraphPtr& nesGraphPtr = getNESTopologyPlan()->getNESTopologyGraph();
@@ -132,7 +132,7 @@ std::vector<json::value> NESTopologyManager::getChildrenNode(
             const auto label = std::to_string(sourceNode->getId()) + "-"
                 + sourceNode->getEntryTypeString();
             child["id"] = json::value::string(label);
-            const std::vector<json::value>& grandChildren = getChildrenNode(
+            const std::vector<json::value>& grandChildren = getChildrenNodes(
                 sourceNode);
             if (!grandChildren.empty()) {
                 child["children"] = json::value::array(grandChildren);

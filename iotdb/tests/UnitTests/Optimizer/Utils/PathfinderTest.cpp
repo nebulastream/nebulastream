@@ -1,0 +1,167 @@
+#include <gtest/gtest.h>
+#include <Optimizer/utils/PathFinder.hpp>
+#include <Catalogs/StreamCatalog.hpp>
+#include <Topology/NESTopologyManager.hpp>
+#include <Util/Logger.hpp>
+
+using namespace NES;
+
+class PathFinderTest : public testing::Test {
+  public:
+
+    PathFinder pathFinder;
+
+    /* Will be called before any test in this class are executed. */
+    static void SetUpTestCase() {
+        std::cout << "Setup PathFinderTest test class." << std::endl;
+    }
+
+    /* Will be called before a test is executed. */
+    void SetUp() {
+
+        setupLogging();
+        std::cout << "Setup PathFinderTest test case." << std::endl;
+    }
+
+    /* Will be called before a test is executed. */
+    void TearDown() {
+        std::cout << "Setup PathFinderTest test case." << std::endl;
+    }
+
+    /* Will be called after all tests in this class are finished. */
+    static void TearDownTestCase() {
+        std::cout << "Tear down PathFinderTest test class." << std::endl;
+    }
+
+  protected:
+    static void setupLogging() {
+        // create PatternLayout
+        log4cxx::LayoutPtr layoutPtr(
+            new log4cxx::PatternLayout(
+                "%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
+
+        // create FileAppender
+        LOG4CXX_DECODE_CHAR(fileName, "PathFinderTest.log");
+        log4cxx::FileAppenderPtr file(
+            new log4cxx::FileAppender(layoutPtr, fileName));
+
+        // create ConsoleAppender
+        log4cxx::ConsoleAppenderPtr console(
+            new log4cxx::ConsoleAppender(layoutPtr));
+
+        // set log level
+        NESLogger->setLevel(log4cxx::Level::getDebug());
+        //    logger->setLevel(log4cxx::Level::getInfo());
+
+        // add appenders and other will inherit the settings
+        NESLogger->addAppender(file);
+        NESLogger->addAppender(console);
+    }
+};
+
+TEST_F(PathFinderTest, find_path_with_max_bandwidth) {
+
+    NESTopologyManager::getInstance().resetNESTopologyPlan();
+
+    Schema schema = Schema::create().addField("id", BasicType::UINT32).addField(
+        "value", BasicType::UINT64);
+    const NESTopologyCoordinatorNodePtr
+        sinkNode = NESTopologyManager::getInstance().createNESCoordinatorNode(0, "localhost", CPUCapacity::HIGH);
+    const NESTopologyWorkerNodePtr
+        workerNode1 = NESTopologyManager::getInstance().createNESWorkerNode(1, "localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr
+        workerNode2 = NESTopologyManager::getInstance().createNESWorkerNode(2, "localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr
+        workerNode3 = NESTopologyManager::getInstance().createNESWorkerNode(3, "localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr
+        workerNode4 = NESTopologyManager::getInstance().createNESWorkerNode(4, "localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr
+        workerNode5 = NESTopologyManager::getInstance().createNESWorkerNode(5, "localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr
+        workerNode6 = NESTopologyManager::getInstance().createNESWorkerNode(6, "localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr
+        workerNode7 = NESTopologyManager::getInstance().createNESWorkerNode(7, "localhost", CPUCapacity::HIGH);
+    const NESTopologyWorkerNodePtr
+        workerNode8 = NESTopologyManager::getInstance().createNESWorkerNode(8, "localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr
+        workerNode9 = NESTopologyManager::getInstance().createNESWorkerNode(9, "localhost", CPUCapacity::LOW);
+    const NESTopologyWorkerNodePtr
+        workerNode10 = NESTopologyManager::getInstance().createNESWorkerNode(10, "localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr
+        workerNode11 = NESTopologyManager::getInstance().createNESWorkerNode(11, "localhost", CPUCapacity::HIGH);
+    const NESTopologyWorkerNodePtr
+        workerNode12 = NESTopologyManager::getInstance().createNESWorkerNode(12, "localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr
+        workerNode13 = NESTopologyManager::getInstance().createNESWorkerNode(13, "localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr
+        workerNode14 = NESTopologyManager::getInstance().createNESWorkerNode(14, "localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr
+        workerNode15 = NESTopologyManager::getInstance().createNESWorkerNode(15, "localhost", CPUCapacity::LOW);
+    const NESTopologyWorkerNodePtr
+        workerNode16 = NESTopologyManager::getInstance().createNESWorkerNode(16, "localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr
+        workerNode17 = NESTopologyManager::getInstance().createNESWorkerNode(17, "localhost", CPUCapacity::MEDIUM);
+    const NESTopologyWorkerNodePtr
+        workerNode18 = NESTopologyManager::getInstance().createNESWorkerNode(18, "localhost", CPUCapacity::MEDIUM);
+
+    const NESTopologySensorNodePtr
+        sensorNode1 = NESTopologyManager::getInstance().createNESSensorNode(19, "localhost", CPUCapacity::HIGH);
+    sensorNode1->setPhysicalStreamName("temperature1");
+    StreamCatalog::instance().addLogicalStream("temperature", std::make_shared<Schema>(schema));
+    StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>("", "", sensorNode1, "temperature1");
+    assert(StreamCatalog::instance().addPhysicalStream("temperature", e1));
+
+    const NESTopologySensorNodePtr
+        sensorNode2 = NESTopologyManager::getInstance().createNESSensorNode(20, "localhost", CPUCapacity::LOW);
+    sensorNode2->setPhysicalStreamName("humidity1");
+    StreamCatalog::instance().addLogicalStream("humidity1", std::make_shared<Schema>(schema));
+    StreamCatalogEntryPtr e2 = std::make_shared<StreamCatalogEntry>("", "", sensorNode2, "humidity1");
+    assert(StreamCatalog::instance().addPhysicalStream("humidity1", e2));
+
+    const NESTopologySensorNodePtr
+        sensorNode3 = NESTopologyManager::getInstance().createNESSensorNode(21, "localhost", CPUCapacity::LOW);
+    sensorNode3->setPhysicalStreamName("temperature2");
+    StreamCatalogEntryPtr e3 = std::make_shared<StreamCatalogEntry>("", "", sensorNode3, "temperature2");
+    assert(StreamCatalog::instance().addPhysicalStream("temperature", e3));
+
+    const NESTopologySensorNodePtr
+        sensorNode4 = NESTopologyManager::getInstance().createNESSensorNode(22, "localhost", CPUCapacity::MEDIUM);
+    sensorNode4->setPhysicalStreamName("humidity2");
+    StreamCatalog::instance().addLogicalStream("humidity2", std::make_shared<Schema>(schema));
+    StreamCatalogEntryPtr e4 = std::make_shared<StreamCatalogEntry>("", "", sensorNode4, "humidity2");
+    assert(StreamCatalog::instance().addPhysicalStream("humidity2", e4));
+
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode1, sinkNode, 3, 1);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode2, sinkNode, 3, 1);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode3, sinkNode, 3, 1);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode4, workerNode1, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode5, workerNode2, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode6, workerNode3, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode10, workerNode6, 2, 2);
+
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode7, workerNode4, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode8, workerNode4, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode8, workerNode5, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode9, workerNode6, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode10, workerNode5, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode11, workerNode7, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode12, workerNode8, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode13, workerNode12, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode13, workerNode11, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode14, workerNode12, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode15, workerNode10, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode16, workerNode15, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode17, workerNode15, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode18, workerNode9, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode12, workerNode7, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode15, workerNode18, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(sensorNode1, workerNode13, 1, 3);
+    NESTopologyManager::getInstance().createNESTopologyLink(sensorNode2, workerNode14, 1, 3);
+    NESTopologyManager::getInstance().createNESTopologyLink(sensorNode3, workerNode16, 1, 3);
+    NESTopologyManager::getInstance().createNESTopologyLink(sensorNode4, workerNode17, 1, 3);
+
+    const vector<NESTopologyEntryPtr>
+        & pathWithMaxBandwidth = pathFinder.findPathWithMaxBandwidth(sensorNode2, sinkNode);
+
+    EXPECT_FALSE(pathWithMaxBandwidth.empty());
+}
