@@ -10,6 +10,7 @@ WorkerService::WorkerService(string ip, uint16_t publish_port,
   this->_ip = std::move(ip);
   this->_publish_port = publish_port;
   this->_receive_port = receive_port;
+  this->queryCompiler = createDefaultQueryCompiler();
   physicalStreams.insert(std::make_pair("default_physical", PhysicalStreamConfig()));
   this->_enginePtr = new NodeEngine();
   this->_enginePtr->start();
@@ -34,7 +35,7 @@ void WorkerService::execute_query(const string &queryId,
       "WORKERSERVICE (" << this->_ip << ": Executing " << queryId);
   ExecutableTransferObject eto = SerializationTools::parse_eto(
       executableTransferObject);
-  QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan();
+  QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(this->queryCompiler);
   this->_runningQueries.insert(
       { queryId, std::make_tuple(qep, eto.getOperatorTree()) });
   this->_enginePtr->deployQuery(qep);
