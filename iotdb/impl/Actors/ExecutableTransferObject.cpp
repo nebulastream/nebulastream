@@ -7,16 +7,16 @@ using std::string;
 using std::vector;
 
 namespace NES {
-ExecutableTransferObject::ExecutableTransferObject(string description,
-                                                   Schema schema,
+ExecutableTransferObject::ExecutableTransferObject(string queryId,
+                                                   const Schema& schema,
                                                    vector<DataSourcePtr> sources,
                                                    vector<DataSinkPtr> destinations,
                                                    OperatorPtr operatorTree) {
-    this->_description = std::move(description);
-    this->_schema = std::move(schema);
-    this->_sources = std::move(sources);
-    this->_destinations = std::move(destinations);
-    this->_operatorTree = std::move(operatorTree);
+    this->queryId = std::move(queryId);
+    this->schema = schema;
+    this->sources = std::move(sources);
+    this->destinations = std::move(destinations);
+    this->operatorTree = std::move(operatorTree);
 }
 
 WindowDefinitionPtr assignWindowHandler(OperatorPtr operator_ptr) {
@@ -28,75 +28,73 @@ WindowDefinitionPtr assignWindowHandler(OperatorPtr operator_ptr) {
     return nullptr;
 };
 
-QueryExecutionPlanPtr ExecutableTransferObject::toQueryExecutionPlan() {
-    if (!_compiled) {
-        this->_compiled = true;
-        NES_INFO("*** Creating QueryExecutionPlan for " << this->_description);
-        //TODO the query compiler dont has to be initialised per query so we can factore it out.
-        auto queryCompiler = createDefaultQueryCompiler();
-        QueryExecutionPlanPtr qep = queryCompiler->compile(this->_operatorTree);
+QueryExecutionPlanPtr ExecutableTransferObject::toQueryExecutionPlan(QueryCompilerPtr queryCompiler) {
+    if (!compiled) {
+        this->compiled = true;
+        NES_INFO("*** Creating QueryExecutionPlan for " << this->queryId);
+        QueryExecutionPlanPtr qep = queryCompiler->compile(this->operatorTree);
 
-        auto window_def = assignWindowHandler(this->_operatorTree);
+        auto window_def = assignWindowHandler(this->operatorTree);
         if (window_def != nullptr) {
-            auto window_handler = std::make_shared<WindowHandler>(assignWindowHandler(this->_operatorTree));
+            auto window_handler = std::make_shared<WindowHandler>(assignWindowHandler(this->operatorTree));
             qep->addWindow(window_handler);
         }
         //TODO: currently only one input source is supported
-        if (!this->_sources.empty()) {
-            qep->addDataSource(this->_sources[0]);
+        if (!this->sources.empty()) {
+            qep->addDataSource(this->sources[0]);
         } else {
-            NES_ERROR("The query " << this->_description << " has no input sources!")
+            NES_ERROR("The query " << this->queryId << " has no input sources!")
         }
 
-        if (!this->_destinations.empty()) {
-            qep->addDataSink(this->_destinations[0]);
+        if (!this->destinations.empty()) {
+            qep->addDataSink(this->destinations[0]);
         } else {
-            NES_ERROR("The query " << this->_description << " has no destinations!")
+            NES_ERROR("The query " << this->queryId << " has no destinations!")
         }
 
         return qep;
     } else {
-        NES_ERROR(this->_description + " has already been compiled and cannot be recreated!")
+        NES_ERROR(this->queryId + " has already been compiled and cannot be recreated!")
     }
 }
 
-string& ExecutableTransferObject::getDescription() {
-    return this->_description;
+string& ExecutableTransferObject::getQueryId() {
+    return this->queryId;
 }
 
-void ExecutableTransferObject::setDescription(const string& description) {
-    this->_description = description;
+void ExecutableTransferObject::setQueryId(const string& queryId) {
+    this->queryId = queryId;
 }
 
 Schema& ExecutableTransferObject::getSchema() {
-    return this->_schema;
+    return this->schema;
 }
 
 void ExecutableTransferObject::setSchema(const Schema& schema) {
-    this->_schema = schema;
+    this->schema = schema;
 }
 
 vector<DataSourcePtr>& ExecutableTransferObject::getSources() {
-    return this->_sources;
+    return this->sources;
 }
 
 void ExecutableTransferObject::setSources(const vector<DataSourcePtr>& sources) {
-    this->_sources = sources;
+    this->sources = sources;
 }
 
 vector<DataSinkPtr>& ExecutableTransferObject::getDestinations() {
-    return this->_destinations;
+    return this->destinations;
 }
 
 void ExecutableTransferObject::setDestinations(const vector<DataSinkPtr>& destinations) {
-    this->_destinations = destinations;
+    this->destinations = destinations;
 }
 
 OperatorPtr& ExecutableTransferObject::getOperatorTree() {
-    return this->_operatorTree;
+    return this->operatorTree;
 }
 
 void ExecutableTransferObject::setOperatorTree(const OperatorPtr& operatorTree) {
-    this->_operatorTree = operatorTree;
+    this->operatorTree = operatorTree;
 }
 }
