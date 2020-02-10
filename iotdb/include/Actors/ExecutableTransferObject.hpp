@@ -14,6 +14,7 @@
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
 
 using std::string;
 using std::vector;
@@ -23,16 +24,14 @@ namespace NES {
 class ExecutableTransferObject {
  public:
   ExecutableTransferObject() = default;
-  ExecutableTransferObject(string description,
-                           Schema schema,
+  ExecutableTransferObject(string queryId,
+                           const Schema& schema,
                            vector<DataSourcePtr> sources,
                            vector<DataSinkPtr> destinations,
                            OperatorPtr operatorTree);
   ~ExecutableTransferObject() = default;
 
  public:
-  string &getDescription();
-  void setDescription(const string &description);
   string &getQueryId();
   void setQueryId(const string &queryId);
   Schema &getSchema();
@@ -44,15 +43,15 @@ class ExecutableTransferObject {
   OperatorPtr &getOperatorTree();
   void setOperatorTree(const OperatorPtr &operatorTree);
 
-  QueryExecutionPlanPtr toQueryExecutionPlan();
+  QueryExecutionPlanPtr toQueryExecutionPlan(QueryCompilerPtr queryCompiler);
 
  private:
-  string _description;
-  Schema _schema;
-  vector<DataSourcePtr> _sources;
-  vector<DataSinkPtr> _destinations;
-  OperatorPtr _operatorTree;
-  bool _compiled = false;
+  string queryId;
+  Schema schema;
+  vector<DataSourcePtr> sources;
+  vector<DataSinkPtr> destinations;
+  OperatorPtr operatorTree;
+  bool compiled = false;
 
   /**
    * @brief method for serialization, all listed variable below are added to the
@@ -62,12 +61,12 @@ class ExecutableTransferObject {
   template<class Archive>
   void serialize(Archive &ar,
                  const unsigned int version) {
-    ar & _description;
-    ar & _schema;
-    ar & _sources;
-    ar & _destinations;
-    ar & _operatorTree;
-    ar & _compiled;
+    ar & queryId;
+    ar & schema;
+    ar & sources;
+    ar & destinations;
+    ar & operatorTree;
+    ar & compiled;
   }
 };
 

@@ -7,6 +7,7 @@
 #include <vector>
 #include <tuple>
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
 
 using std::string;
 using std::vector;
@@ -56,6 +57,7 @@ class WorkerService {
   string _ip;
   uint16_t _publish_port;
   uint16_t _receive_port;
+  QueryCompilerPtr queryCompiler;
   //TODO: this should be a ref or a pointer instead of an object
   std::map<std::string, PhysicalStreamConfig> physicalStreams;
 
