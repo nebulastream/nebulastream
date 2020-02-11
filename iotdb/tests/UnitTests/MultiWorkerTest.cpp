@@ -187,45 +187,52 @@ TEST_F(MultiWorkerTest, start_stop_one_workers) {
   cout << "start coordinator" << endl;
   NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
   size_t port = crd->startCoordinator(/**blocking**/false);
+  EXPECT_NE(port, 0);
   cout << "coordinator started successfully" << endl;
   sleep(1);
 
   cout << "start worker" << endl;
   NesWorkerPtr wrk = std::make_shared<NesWorker>();
-  wrk->start(/**blocking**/false, port);
+  bool retStart = wrk->start(/**blocking**/false, port);
+  EXPECT_TRUE(retStart);
   cout << "worker started successfully" << endl;
 
-  sleep(5);
+  sleep(2);
   cout << "wakeup" << endl;
 
   cout << "stopping worker" << endl;
-  wrk->stop();
+  bool retStopWrk = wrk->stop();
+  EXPECT_TRUE(retStopWrk);
 
   cout << "stopping coordinator" << endl;
-  crd->stopCoordinator();
+  bool retStopCord = crd->stopCoordinator();
+  EXPECT_TRUE(retStopCord);
 
 }
 
-TEST_F(MultiWorkerTest, start_stop_connect_workers) {
+TEST_F(MultiWorkerTest, start_connect_stop_workers) {
   cout << "start coordinator" << endl;
   NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
   size_t port = crd->startCoordinator(/**blocking**/false);
+  EXPECT_NE(port, 0);
   cout << "coordinator started successfully" << endl;
 
   cout << "start worker" << endl;
   NesWorkerPtr wrk = std::make_shared<NesWorker>();
-  wrk->start(/**blocking**/false, port);
+  bool retStart = wrk->start(/**blocking**/false, port);
+  EXPECT_TRUE(retStart);
   cout << "worker started successfully" << endl;
 
   wrk->connect();
   cout << "worker started connected " << endl;
 
-  sleep(2);
-  cout << "stopping coordinator" << endl;
-  crd->stopCoordinator();
+  bool retStopWrk = wrk->stop();
+  EXPECT_TRUE(retStopWrk);
 
-  cout << "stopping worker" << endl;
-  wrk->stop();
+  sleep(2);
+  bool retStopCord = crd->stopCoordinator();
+  EXPECT_TRUE(retStopCord);
+
 }
 
 #if 0

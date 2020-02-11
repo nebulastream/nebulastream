@@ -41,9 +41,11 @@ bool NesWorker::start(bool blocking, size_t port) {
 bool NesWorker::stop() {
   NES_DEBUG("NesWorker: stop")
   scoped_actor self { *actorSystem };
+  //TODO: what is the return type here?
   self->request(workerHandle, task_timeout,
                 exit_reason::user_shutdown);
   actorThread.join();
+  return true;
 }
 
 bool NesWorker::connect() {
