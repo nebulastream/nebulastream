@@ -26,8 +26,9 @@ class NesCoordinator {
 
   /**
    * @brief method to stop coordinator
+   * @return bool indicating success
    */
-  void stopCoordinator();
+  bool stopCoordinator();
 
   /**
    * @method to overwrite the default config for the rest server
@@ -47,11 +48,10 @@ class NesCoordinator {
   infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
   actor_system* actorSystem;
   RestServer* restServer;
-//  CAFServer* cafServer;
   std::string restHost;
   uint16_t restPort;
-  size_t publishPort;
-  std::thread actorThread;
+  size_t actorPort;
+  std::thread restThread;
 };
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
 

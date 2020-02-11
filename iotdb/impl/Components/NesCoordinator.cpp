@@ -8,7 +8,7 @@ namespace NES {
 NesCoordinator::NesCoordinator() {
   restPort = 8081;
   restHost = "localhost";
-  publishPort = 0;
+  actorPort = 0;
 
 }
 
@@ -18,42 +18,24 @@ infer_handle_from_class_t<CoordinatorActor> NesCoordinator::getActorHandle() {
 
 void starter(infer_handle_from_class_t<CoordinatorActor> handle,
              actor_system *actorSystem, RestServer *restServer,
-             std::string restHost, uint16_t restPort, size_t* port) {
-  CoordinatorActorConfig actorCoordinatorConfig;
-  actorCoordinatorConfig.load<io::middleman>();
-  handle = actorSystem->spawn<CoordinatorActor>();
-  NES_DEBUG("NesCoordinator: actor handle created")
-
-  NES_DEBUG(
-      "NesCoordinator: trying to publish at port " << *port)
-
-  io::unpublish(handle, actorCoordinatorConfig.publish_port);
-
-  auto expected_port = io::publish(handle, 0,
-                                   nullptr, true);
-  if (!expected_port) {
-    NES_ERROR("NesCoordinator: publish failed: " << expected_port)
-    throw new Exception("NesCoordinator start failed");
-  }
-  NES_DEBUG(
-      "NesCoordinator: coordinator successfully published at port " << expected_port)
-
-  *port = *expected_port;
+             std::string restHost, uint16_t restPort, size_t *port) {
   restServer = new RestServer(restHost, restPort, handle);
+  //TODO: this call is blocking
   restServer->start();
   NES_DEBUG("NesCoordinator: starter thread terminates")
 }
 
-void NesCoordinator::stopCoordinator() {
+bool NesCoordinator::stopCoordinator() {
   scoped_actor self { *actorSystem };
   self->request(coordinatorActorHandle, task_timeout,
                 exit_reason::user_shutdown);
   NES_DEBUG("NesCoordinator: shutdown sended to coordinator")
-  restServer->stop();
+  bool retStopRest = restServer->stop();
   NES_DEBUG("NesCoordinator: rest server stopped")
 
-  actorThread.join();
+  restThread.join();
   NES_DEBUG("NesCoordinator: thread joined")
+  return retStopRest;
 }
 
 size_t NesCoordinator::startCoordinator(bool blocking) {
@@ -64,16 +46,32 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
 
   actorSystem = new actor_system { actorCoordinatorConfig };
 
+  coordinatorActorHandle = actorSystem->spawn<CoordinatorActor>();
+  NES_DEBUG("NesCoordinator: actor handle created")
+
+  io::unpublish(coordinatorActorHandle, actorPort);
+
+  auto expected_port = io::publish(coordinatorActorHandle, 0, nullptr, true);
+  if (!expected_port) {
+    NES_ERROR("NesCoordinator: publish failed: " << expected_port)
+    throw new Exception("NesCoordinator start failed");
+  }
+  NES_DEBUG(
+      "NesCoordinator: coordinator successfully published at port " << expected_port)
+
+  actorPort = *expected_port;
+
   std::thread th0(starter, coordinatorActorHandle, actorSystem, restServer,
-                  restHost, restPort, &publishPort);
-  actorThread = std::move(th0);
+                  restHost, restPort, &actorPort);
+  restThread = std::move(th0);
 
   if (blocking) {
     NES_DEBUG("NesCoordinator started, join now and waiting for work")
-    actorThread.join();
+    restThread.join();
   } else {
-    NES_DEBUG("NesCoordinator started, return without blocking on port " << publishPort)
-    return publishPort;
+    NES_DEBUG(
+        "NesCoordinator started, return without blocking on port " << actorPort)
+    return actorPort;
   }
 }
 
