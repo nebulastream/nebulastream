@@ -14,6 +14,7 @@
 #include <Util/Logger.hpp>
 #include <Components/NesWorker.hpp>
 
+
 using std::cout;
 using std::endl;
 using std::string;
@@ -21,6 +22,8 @@ namespace po = boost::program_options;
 
 using namespace caf;
 using namespace NES;
+
+
 
 static void setupLogging() {
 // create PatternLayout
@@ -45,10 +48,14 @@ static void setupLogging() {
 int main(int argc, char **argv) {
   setupLogging();
 
+
   namespace po = boost::program_options;
   po::options_description desc("Options");
+  uint16_t actorPort = 0;
 
-  desc.add_options()("help", "Print help messages");
+  desc.add_options()(
+      "actor_port", po::value<uint16_t>(&actorPort)->default_value(actorPort),
+      "Set NES actor server port (default: 0).");
 
   po::variables_map vm;
   po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
@@ -61,9 +68,7 @@ int main(int argc, char **argv) {
   }
 
   NesWorkerPtr wrk = std::make_shared<NesWorker>();
-  cout << "start with port=" << atoi(argv[1]) << endl;
-  wrk->start(/**blocking*/ true, atoi(argv[1]));
-  cout << "connect" << endl;
-  wrk->connect();
+  cout << "start with port=" << actorPort << endl;
+  wrk->start(/**blocking*/ true, /**withConnect*/ true, actorPort);
   cout << "worker started" << endl;
 }

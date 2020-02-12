@@ -1,27 +1,26 @@
 #include <Components/NesWorker.hpp>
 #include <Util/Logger.hpp>
 #include "Actors/WorkerActor.hpp"
+#include <stdlib.h>
+#include <signal.h> //  our new library
+
+volatile sig_atomic_t flag = 0;
+void termFunc(int sig) {
+  flag = 1;
+}
 
 namespace NES {
-
-void starter(infer_handle_from_class_t<WorkerActor> handle,
-             actor_system *system, size_t port) {
-  WorkerActorConfig workerCfg;
-  workerCfg.publish_port = port;
-
-  workerCfg.load<io::middleman>();
-
-  handle = system->spawn<NES::WorkerActor>(workerCfg.ip, workerCfg.publish_port,
-                                           workerCfg.receive_port);
-}
 
 NesWorker::NesWorker() {
   connected = false;
   coordinatorPort = 0;
   NES_DEBUG("NesWorker: constructed")
+
+  // Register signals
+  signal(SIGINT, termFunc);
 }
 
-bool NesWorker::start(bool blocking, uint16_t port) {
+bool NesWorker::start(bool blocking, bool withConnect, uint16_t port) {
   NES_DEBUG("NesWorker: start with blocking " << blocking << " port=" << port)
   WorkerActorConfig w_cfg;
   w_cfg.load<io::middleman>();
@@ -38,15 +37,26 @@ bool NesWorker::start(bool blocking, uint16_t port) {
   workerHandle = actorSystem->spawn<NES::WorkerActor>(workerCfg.ip,
                                                       workerCfg.publish_port,
                                                       workerCfg.receive_port);
-
-  std::thread th0(starter, workerHandle, actorSystem, port);
-  actorThread = std::move(th0);
-
+  if (withConnect) {
+    NES_DEBUG("NesWorker: start with connect")
+    connect();
+  }
   if (blocking) {
-    NES_DEBUG("NesWorker started, join now and waiting for work")
-    actorThread.join();
+    NES_DEBUG("NesWorker: started, join now and waiting for work")
+    while (true) {
+      if (flag) {
+        NES_DEBUG("NesWorker: caught signal terminating worker")
+        flag = 0;
+        break;
+      } else {
+        cout << "NesWorker wait" << endl;
+        sleep(5);
+      }
+    }
+    NES_DEBUG("NesWorker: joined, return")
+    return true;
   } else {
-    NES_DEBUG("NesWorker started, return without blocking")
+    NES_DEBUG("NesWorker: started, return without blocking")
     return true;
   }
 }
@@ -56,13 +66,10 @@ bool NesWorker::stop() {
   scoped_actor self { *actorSystem };
   //TODO: what is the return type here?
   self->request(workerHandle, task_timeout, exit_reason::user_shutdown);
-  actorThread.join();
   return true;
 }
 
 bool NesWorker::connect() {
-//  workerCfg.load<io::middleman>();
-//  actor_system actorSystem { workerCfg };
   scoped_actor self { *actorSystem };
   bool &con = this->connected;
   NES_DEBUG(
@@ -71,12 +78,12 @@ bool NesWorker::connect() {
                 coordinatorPort).receive(
       [&con](const bool &c) mutable {
         con = c;
-        NES_DEBUG("NESWORKER: connected successfully")
+        NES_DEBUG("NesWorker: connected successfully")
       }
       ,
       [=](const error &er) {
         string error_msg = to_string(er);
-        NES_ERROR("NESWORKER: ERROR while try to connect " << error_msg)
+        NES_ERROR("NesWorker: ERROR while try to connect " << error_msg)
       });
   return con;
 }
