@@ -18,7 +18,7 @@ infer_handle_from_class_t<CoordinatorActor> NesCoordinator::getActorHandle() {
 
 void starter(infer_handle_from_class_t<CoordinatorActor> handle,
              actor_system *actorSystem, RestServer *restServer,
-             std::string restHost, uint16_t restPort, size_t *port) {
+             std::string restHost, uint16_t restPort, uint16_t *port) {
   restServer = new RestServer(restHost, restPort, handle);
   //TODO: this call is blocking
   restServer->start();
@@ -38,7 +38,12 @@ bool NesCoordinator::stopCoordinator() {
   return retStopRest;
 }
 
-size_t NesCoordinator::startCoordinator(bool blocking) {
+void NesCoordinator::startCoordinator(bool blocking, uint16_t port) {
+  actorPort = port;
+  startCoordinator(blocking);
+}
+
+uint16_t NesCoordinator::startCoordinator(bool blocking) {
   NES_DEBUG("NesCoordinator: Start Rest Server")
 
   NES_DEBUG("NesCoordinator start")
@@ -51,7 +56,7 @@ size_t NesCoordinator::startCoordinator(bool blocking) {
 
   io::unpublish(coordinatorActorHandle, actorPort);
 
-  auto expected_port = io::publish(coordinatorActorHandle, 0, nullptr, true);
+  auto expected_port = io::publish(coordinatorActorHandle, actorPort, nullptr, true);
   if (!expected_port) {
     NES_ERROR("NesCoordinator: publish failed: " << expected_port)
     throw new Exception("NesCoordinator start failed");

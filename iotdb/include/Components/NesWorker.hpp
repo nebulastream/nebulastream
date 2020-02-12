@@ -21,10 +21,11 @@ class NesWorker {
   /*
    * @brief start the worker using the default worker config
    * @param bool indicating if the call is blocking
+   * @param bool indicating if connect
    * @param port where to publish
    * @return bool indicating success
    */
-  bool start(bool blocking, uint16_t port);
+  bool start(bool blocking, bool withConnect, uint16_t port);
 
   /**
    * @brief stop the worker
