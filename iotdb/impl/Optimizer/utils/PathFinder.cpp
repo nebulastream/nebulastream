@@ -32,19 +32,19 @@ std::vector<NESTopologyEntryPtr> PathFinder::findPathWithMaxBandwidth(NESTopolog
         selectedPath = pathsWithLinks[0];
     }
 
-
     //adding the source node
     std::vector<NESTopologyEntryPtr> result = {source};
 
     //Build an array with nodes on the selected path
-    for(NESTopologyLinkPtr link : selectedPath){
+    for (NESTopologyLinkPtr link : selectedPath) {
         result.push_back(link->getDestNode());
     }
 
     return result;
 }
 
-std::vector<NESTopologyEntryPtr> PathFinder::findPathWithMinLinkLatency(NESTopologyEntryPtr source, NESTopologyEntryPtr destination) {
+std::vector<NESTopologyEntryPtr> PathFinder::findPathWithMinLinkLatency(NESTopologyEntryPtr source,
+                                                                        NESTopologyEntryPtr destination) {
     std::vector<std::vector<NESTopologyLinkPtr>> pathsWithLinks = findAllPathLinksBetween(source, destination);
 
     if (pathsWithLinks.empty()) {
@@ -70,16 +70,67 @@ std::vector<NESTopologyEntryPtr> PathFinder::findPathWithMinLinkLatency(NESTopol
         selectedPath = pathsWithLinks[0];
     }
 
+    //adding the source node
+    std::vector<NESTopologyEntryPtr> result = {source};
+
+    //Build an array with nodes on the selected path
+    for (NESTopologyLinkPtr link : selectedPath) {
+        result.push_back(link->getDestNode());
+    }
+
+    return result;
+}
+
+std::vector<NESTopologyEntryPtr> PathFinder::findPathBetween(NES::NESTopologyEntryPtr source,
+                                                             NES::NESTopologyEntryPtr destination) {
+    NESTopologyManager& topologyManager = NESTopologyManager::getInstance();
+
+    const NESTopologyGraphPtr& nesGraphPtr = topologyManager.getNESTopologyPlan()->getNESTopologyGraph();
+    const vector<NESTopologyLinkPtr>& startLinks = nesGraphPtr->getAllEdgesFromNode(source);
+
+    NESTopologyLinkPtr candidateLink = startLinks[0];
+
+    vector<NESTopologyLinkPtr> traversedPath = {};
+
+    while (!candidateLink) {
+
+        traversedPath.push_back(candidateLink);
+        if (candidateLink->getDestNode()->getId() == destination->getId()) {
+            break;
+        } else {
+            const vector<NESTopologyLinkPtr>
+                & nextCandidatesLinks = nesGraphPtr->getAllEdgesFromNode(candidateLink->getDestNode());
+            candidateLink = nextCandidatesLinks[0];
+        }
+    }
 
     //adding the source node
     std::vector<NESTopologyEntryPtr> result = {source};
 
     //Build an array with nodes on the selected path
-    for(NESTopologyLinkPtr link : selectedPath){
+    for (NESTopologyLinkPtr link : traversedPath) {
         result.push_back(link->getDestNode());
     }
 
     return result;
+}
+
+std::vector<NESTopologyEntryPtr> PathFinder::findUniquePathBetween(std::vector<NESTopologyEntryPtr> sources,
+                                                                   NESTopologyEntryPtr destination) {
+
+    for (NESTopologyEntryPtr source : sources) {
+        vector<vector<NESTopologyLinkPtr>> allPathLinksBetween = findAllPathLinksBetween(source, destination);
+
+        for (vector<NESTopologyLinkPtr> path : allPathLinksBetween) {
+            std::string pathId = "";
+            for (NESTopologyLinkPtr link: path) {
+                pathId = pathId + "," + std::to_string(link->getId());
+            }
+
+        }
+
+    }
+
 }
 
 std::vector<std::vector<NESTopologyLinkPtr>> PathFinder::findAllPathLinksBetween(NESTopologyEntryPtr source,
@@ -108,8 +159,9 @@ std::vector<std::vector<NESTopologyLinkPtr>> PathFinder::findAllPathLinksBetween
                 traversedPath = backTrackTraversedPathTill(traversedPath, candidateLinks.front()->getSourceNode());
             }
         } else {
-            const vector<NESTopologyLinkPtr>& nextCandidate = nesGraphPtr->getAllEdgesFromNode(link->getDestNode());
-            copy(nextCandidate.begin(), nextCandidate.end(), front_inserter(candidateLinks));
+            const vector<NESTopologyLinkPtr>
+                & nextCandidateLinks = nesGraphPtr->getAllEdgesFromNode(link->getDestNode());
+            copy(nextCandidateLinks.begin(), nextCandidateLinks.end(), front_inserter(candidateLinks));
         }
     }
 

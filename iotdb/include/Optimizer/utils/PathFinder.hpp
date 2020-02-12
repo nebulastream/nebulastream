@@ -21,6 +21,24 @@ class PathFinder {
   public:
 
     /**
+     * @brief Find a set of paths between given set of sources and a common destination such that their are maximum intersection.
+     * @param sources : set of source nodes
+     * @param destination : destination node
+     * @return vector containing a vector of nodes in each of the identified path
+     */
+    std::vector<NESTopologyEntryPtr> findUniquePathBetween(std::vector<NESTopologyEntryPtr> sources,
+                                                     NESTopologyEntryPtr destination);
+
+    /**
+     * @brief Find a path between given source and destination
+     * @param source : source node
+     * @param destination : destination node
+     * @return vector containing nodes
+     */
+    std::vector<NESTopologyEntryPtr> findPathBetween(NESTopologyEntryPtr source,
+                                                              NESTopologyEntryPtr destination);
+
+    /**
      * @brief Find a path with maximum bandwidth between given source destination
      * @param source : source node
      * @param destination : destination node
