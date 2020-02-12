@@ -59,6 +59,11 @@ int main(int argc, char **argv) {
               << std::endl;
     return 0;
   }
+
   NesWorkerPtr wrk = std::make_shared<NesWorker>();
+  cout << "start with port=" << atoi(argv[1]) << endl;
+  wrk->start(/**blocking*/ true, atoi(argv[1]));
+  cout << "connect" << endl;
+  wrk->connect();
   cout << "worker started" << endl;
 }
