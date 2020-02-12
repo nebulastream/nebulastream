@@ -24,7 +24,7 @@ class NesWorker {
    * @param port where to publish
    * @return bool indicating success
    */
-  bool start(bool blocking, size_t port);
+  bool start(bool blocking, uint16_t port);
 
   /**
    * @brief stop the worker
@@ -69,6 +69,7 @@ class NesWorker {
   WorkerActorConfig workerCfg;
   PhysicalStreamConfig defaultConf;
   std::thread actorThread;
+  uint16_t coordinatorPort;
 };
 typedef std::shared_ptr<NesWorker> NesWorkerPtr;
 

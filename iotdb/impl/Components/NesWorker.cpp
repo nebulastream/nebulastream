@@ -17,14 +17,27 @@ void starter(infer_handle_from_class_t<WorkerActor> handle,
 
 NesWorker::NesWorker() {
   connected = false;
+  coordinatorPort = 0;
   NES_DEBUG("NesWorker: constructed")
 }
 
-bool NesWorker::start(bool blocking, size_t port) {
+bool NesWorker::start(bool blocking, uint16_t port) {
   NES_DEBUG("NesWorker: start with blocking " << blocking << " port=" << port)
+  WorkerActorConfig w_cfg;
+  w_cfg.load<io::middleman>();
+  w_cfg.printCfg();
+  actor_system sw { w_cfg };
+  PhysicalStreamConfig streamConf;
+  auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
+                                           w_cfg.receive_port);
 
   workerCfg.load<io::middleman>();
+  coordinatorPort = port;
   actorSystem = new actor_system { workerCfg };
+
+  workerHandle = actorSystem->spawn<NES::WorkerActor>(workerCfg.ip,
+                                                      workerCfg.publish_port,
+                                                      workerCfg.receive_port);
 
   std::thread th0(starter, workerHandle, actorSystem, port);
   actorThread = std::move(th0);
@@ -42,25 +55,23 @@ bool NesWorker::stop() {
   NES_DEBUG("NesWorker: stop")
   scoped_actor self { *actorSystem };
   //TODO: what is the return type here?
-  self->request(workerHandle, task_timeout,
-                exit_reason::user_shutdown);
+  self->request(workerHandle, task_timeout, exit_reason::user_shutdown);
   actorThread.join();
   return true;
 }
 
 bool NesWorker::connect() {
-  WorkerActorConfig workerCfg;
-  workerCfg.load<io::middleman>();
-
-  actor_system actorSystem { workerCfg };
-  scoped_actor self { actorSystem };
+//  workerCfg.load<io::middleman>();
+//  actor_system actorSystem { workerCfg };
+  scoped_actor self { *actorSystem };
   bool &con = this->connected;
+  NES_DEBUG(
+      "NesWorker: worker connect to host=" << workerCfg.host << " port=" << coordinatorPort)
   self->request(workerHandle, task_timeout, connect_atom::value, workerCfg.host,
-                workerCfg.publish_port).receive(
-      [&con, &workerCfg](const bool &c) mutable {
+                coordinatorPort).receive(
+      [&con](const bool &c) mutable {
         con = c;
-        NES_DEBUG(
-            "NESWORKER: connected successfully to host " << workerCfg.host << " port=" << workerCfg.publish_port)
+        NES_DEBUG("NESWORKER: connected successfully")
       }
       ,
       [=](const error &er) {

@@ -23,6 +23,11 @@ class WorkerActorConfig : public actor_system_config {
         .add(host, "host,H", "set host (ignored in server mode)");
 //        .add(sensor_type, "sensor_type", "set sensor_type");
   }
+  void printCfg()
+  {
+    std::cout << " ip=" << ip << " receive_port=" << receive_port
+        << " host=" << host << " publish_port=" << publish_port << std::endl;
+  }
 };
 
 }

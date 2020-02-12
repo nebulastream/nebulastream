@@ -176,15 +176,15 @@ add_executable(query-catalog-service-tests "UnitTests/Services/QueryCatalogServi
 target_link_libraries(query-catalog-service-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME query-catalog-service-tests COMMAND query-catalog-service-tests)
 
+# WorkerCoordinatorStarter Tests
+add_executable(worker-coordinator-starter-tests "UnitTests/WorkerCoordinatorStarterTest.cpp")
+target_link_libraries(worker-coordinator-starter-tests iotdb ${GTEST_LIBRARIES})
+add_test(NAME worker-coordinator-starter-tests COMMAND worker-coordinator-starter-tests)
 # Internal Networking Tests
 add_executable(internal-data-transmission-test "UnitTests/InternalDataTransmissionTest.cpp")
 target_link_libraries(internal-data-transmission-test iotdb ${GTEST_LIBRARIES})
 add_test(NAME internal-data-transmission-test COMMAND internal-data-transmission-test)
 
-# QueryCatalogService Tests
-add_executable(multi-worker-test "UnitTests/MultiWorkerTest.cpp")
-target_link_libraries(multi-worker-test iotdb ${GTEST_LIBRARIES})
-add_test(NAME multi-worker-test COMMAND multi-worker-test)
 
 
 # Custom test commands --------------------------------------------------------
