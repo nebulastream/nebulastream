@@ -1,7 +1,7 @@
 #ifndef INCLUDE_ACTORS_CONFIGURATIONS_ACTORWORKERCONFIG_H_
 #define INCLUDE_ACTORS_CONFIGURATIONS_ACTORWORKERCONFIG_H_
 
-//#include <caf/all.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 /**
@@ -25,8 +25,8 @@ class WorkerActorConfig : public actor_system_config {
   }
   void printCfg()
   {
-    std::cout << " ip=" << ip << " receive_port=" << receive_port
-        << " host=" << host << " publish_port=" << publish_port << std::endl;
+    NES_DEBUG(" ip=" << ip << " receive_port=" << receive_port
+        << " host=" << host << " publish_port=" << publish_port);
   }
 };
 

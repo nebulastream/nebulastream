@@ -14,7 +14,6 @@
 #include <Util/Logger.hpp>
 #include <Components/NesWorker.hpp>
 
-
 using std::cout;
 using std::endl;
 using std::string;
@@ -22,8 +21,6 @@ namespace po = boost::program_options;
 
 using namespace caf;
 using namespace NES;
-
-
 
 static void setupLogging() {
 // create PatternLayout

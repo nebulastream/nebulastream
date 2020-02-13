@@ -1,7 +1,6 @@
 #ifndef INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #include "REST/RestServer.hpp"
-#include "Actors/CAFServer.hpp"
 #include <string>
 
 namespace NES {
