@@ -1,13 +1,18 @@
 #ifndef INCLUDE_CATALOGS_QUERYCATALOG_HPP_
 #define INCLUDE_CATALOGS_QUERYCATALOG_HPP_
-
-#include <unordered_map>
 #include <string>
-#include <Optimizer/NESExecutionPlan.hpp>
-#include <Catalogs/QueryCatalog.hpp>
+#include <map>
+#include <memory>
 
 using namespace std;
+
 namespace NES {
+
+class NESExecutionPlan;
+typedef std::shared_ptr<NESExecutionPlan> NESExecutionPlanPtr;
+
+class InputQuery;
+typedef std::shared_ptr<InputQuery> InputQueryPtr;
 
 /**
  * @brief Represents various states the user query goes through.
