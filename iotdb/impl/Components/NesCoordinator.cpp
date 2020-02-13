@@ -20,8 +20,7 @@ void starter(infer_handle_from_class_t<CoordinatorActor> handle,
              actor_system *actorSystem, RestServer *restServer,
              std::string restHost, uint16_t restPort, uint16_t *port) {
   restServer = new RestServer(restHost, restPort, handle);
-  //TODO: this call is blocking
-  restServer->start();
+  restServer->start();//this call is blocking
   NES_DEBUG("NesCoordinator: starter thread terminates")
 }
 

@@ -38,10 +38,10 @@ static void setupLogging() {
   NES::NESLogger->addAppender(console);
 }
 
-
 void startCLI(NesCoordinatorPtr coord) {
   bool done = false;
-  infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle = coord->getActorHandle();
+  infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle = coord
+      ->getActorHandle();
   // keeps track of requests and tries to reconnect on server failures
   auto usage = [] {
     cout << "Usage:" << endl
@@ -139,11 +139,9 @@ int main(int argc, const char *argv[]) {
       "rest_host", po::value<std::string>(),
       "Set NES Coordinator server host address (default: localhost).")(
       "rest_port", po::value<uint16_t>(),
-      "Set NES REST server port (default: 8081).")
-      (
-      "actor_port",  po::value<uint16_t>(&actorPort)->default_value(actorPort),
-      "Set NES actor server port (default: 0).")
-      ;
+      "Set NES REST server port (default: 8081).")(
+      "actor_port", po::value<uint16_t>(&actorPort)->default_value(actorPort),
+      "Set NES actor server port (default: 0).");
 
   /* All program options for command line. */
   po::options_description commandlineOptions;
@@ -175,13 +173,12 @@ int main(int argc, const char *argv[]) {
 
   NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
 
-  if(changed)
-  {
+  if (changed) {
     cout << "config changed thus rest params" << endl;
     crd->setRestConfiguration(host, port);
   }
   cout << "start coordinator with port " << actorPort << endl;
-  crd->startCoordinator(/**blocking**/ true, actorPort);
+  crd->startCoordinator(/**blocking**/true, actorPort);
 
   cout << "coordinator started" << endl;
 

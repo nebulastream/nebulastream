@@ -144,13 +144,13 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
   cout << " start coordinator" << endl;
   remove(outputFilePath.c_str());
 
-  string path = "./nesCoordinator --actor_port=12345";
+  string path = "./nesCoordinator --actor_port=12346";
   bp::child coordinatorProc(path.c_str());
 
   cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
   sleep(2);
 
-  string path2 = "./nesWorker --actor_port=12345";
+  string path2 = "./nesWorker --actor_port=12346";
   bp::child workerProc(path2.c_str());
   cout << "started worker with pid = " << workerProc.id() << endl;
   coordinatorPid = workerProc.id();

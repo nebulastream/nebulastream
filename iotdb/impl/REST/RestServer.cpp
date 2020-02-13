@@ -29,7 +29,6 @@ bool RestServer::start() {
         NES_DEBUG("RestServer: REST Server now listening for requests at: " << server.endpoint())
         InterruptHandler::waitForUserInterrupt();
         NES_DEBUG("RestServer: after waitForUserInterrupt")
-//        server.shutdown().wait();
     } catch (std::exception& e) {
         NES_ERROR("RestServer: Unable to start REST server");
         return false;
