@@ -32,15 +32,7 @@ std::vector<NESTopologyEntryPtr> PathFinder::findPathWithMaxBandwidth(NESTopolog
         selectedPath = pathsWithLinks[0];
     }
 
-    //adding the source node
-    std::vector<NESTopologyEntryPtr> result = {source};
-
-    //Build an array with nodes on the selected path
-    for (NESTopologyLinkPtr link : selectedPath) {
-        result.push_back(link->getDestNode());
-    }
-
-    return result;
+    return convertLinkPathIntoNodePath(source, selectedPath);
 }
 
 std::vector<NESTopologyEntryPtr> PathFinder::findPathWithMinLinkLatency(NESTopologyEntryPtr source,
@@ -70,14 +62,19 @@ std::vector<NESTopologyEntryPtr> PathFinder::findPathWithMinLinkLatency(NESTopol
         selectedPath = pathsWithLinks[0];
     }
 
+    return convertLinkPathIntoNodePath(source, selectedPath);
+}
+
+vector<NESTopologyEntryPtr> PathFinder::convertLinkPathIntoNodePath(const NESTopologyEntryPtr source,
+                                                                    const vector<NESTopologyLinkPtr>& selectedPath) {
+
     //adding the source node
-    std::vector<NESTopologyEntryPtr> result = {source};
+    vector<NESTopologyEntryPtr> result = {source};
 
     //Build an array with nodes on the selected path
     for (NESTopologyLinkPtr link : selectedPath) {
         result.push_back(link->getDestNode());
     }
-
     return result;
 }
 
@@ -104,33 +101,74 @@ std::vector<NESTopologyEntryPtr> PathFinder::findPathBetween(NES::NESTopologyEnt
         }
     }
 
-    //adding the source node
-    std::vector<NESTopologyEntryPtr> result = {source};
+    return convertLinkPathIntoNodePath(source, traversedPath);
+}
 
-    //Build an array with nodes on the selected path
-    for (NESTopologyLinkPtr link : traversedPath) {
-        result.push_back(link->getDestNode());
+std::map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>> PathFinder::findUniquePathBetween(std::vector<
+    NESTopologyEntryPtr> sources, NESTopologyEntryPtr destination) {
+
+    std::map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>> result;
+
+    std::map<NESTopologyEntryPtr, std::vector<std::vector<NESTopologyLinkPtr>>> sourceToPathMap;
+    for (NESTopologyEntryPtr source : sources) {
+        std::vector<std::vector<NESTopologyLinkPtr>> allPathLinksBetween = findAllPathLinksBetween(source, destination);
+
+        if (allPathLinksBetween.empty()) {
+            throw std::runtime_error(
+                "PathFinder: found no path between " + source->toString() + " and " + destination->toString());
+        }
+
+        if (allPathLinksBetween.size() == 1) {
+            // if there is only one path between source and destination then select the path as the final path and store
+            // in the result
+            result[source] = convertLinkPathIntoNodePath(source, allPathLinksBetween[0]);
+        } else {
+            // store all paths between source and destination for later processing
+            sourceToPathMap[source] = allPathLinksBetween;
+        }
+    }
+
+    vector<NESTopologyEntryPtr> remainingSources;
+    for (const auto& pair : sourceToPathMap) {
+        remainingSources.push_back(pair.first);
+    }
+
+    for (size_t i = 0; i < remainingSources.size(); i++) {
+        std::vector<std::vector<NESTopologyLinkPtr>> allPathsForSourceAt_i = sourceToPathMap[remainingSources[i]];
+        std::vector<NESTopologyLinkPtr> pathWithMaxCommonEdgesFor_i;
+        for (const std::vector<NESTopologyLinkPtr>& pathForSourceAt_i : allPathsForSourceAt_i) {
+            size_t maxCommon = 0;
+            for (size_t j = 0; j < remainingSources.size(); j++) {
+                if (i == j) {
+                    continue;
+                }
+                size_t localCommon = 0;
+
+                std::vector<std::vector<NESTopologyLinkPtr>>
+                    allPathsForSourceAt_j = sourceToPathMap[remainingSources[j]];
+
+                for (std::vector<NESTopologyLinkPtr> pathForSourceAt_j : allPathsForSourceAt_j) {
+                    for (NESTopologyLinkPtr link_i : pathForSourceAt_i) {
+                        for (NESTopologyLinkPtr link_j : pathForSourceAt_j) {
+                            if (link_i->getId() == link_j->getId()) {
+                                localCommon++;
+                                if (localCommon > maxCommon) {
+                                    maxCommon = localCommon;
+                                    pathWithMaxCommonEdgesFor_i = pathForSourceAt_i;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        sourceToPathMap[remainingSources[i]] =
+            std::vector<std::vector<NESTopologyLinkPtr>>{pathWithMaxCommonEdgesFor_i};
+        result[remainingSources[i]] = convertLinkPathIntoNodePath(remainingSources[i], pathWithMaxCommonEdgesFor_i);
     }
 
     return result;
-}
-
-std::vector<NESTopologyEntryPtr> PathFinder::findUniquePathBetween(std::vector<NESTopologyEntryPtr> sources,
-                                                                   NESTopologyEntryPtr destination) {
-
-    for (NESTopologyEntryPtr source : sources) {
-        vector<vector<NESTopologyLinkPtr>> allPathLinksBetween = findAllPathLinksBetween(source, destination);
-
-        for (vector<NESTopologyLinkPtr> path : allPathLinksBetween) {
-            std::string pathId = "";
-            for (NESTopologyLinkPtr link: path) {
-                pathId = pathId + "," + std::to_string(link->getId());
-            }
-
-        }
-
-    }
-
 }
 
 std::vector<std::vector<NESTopologyLinkPtr>> PathFinder::findAllPathLinksBetween(NESTopologyEntryPtr source,

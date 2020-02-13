@@ -160,8 +160,8 @@ TEST_F(PathFinderTest, find_path_with_max_bandwidth) {
     NESTopologyManager::getInstance().createNESTopologyLink(sensorNode3, workerNode16, 1, 3);
     NESTopologyManager::getInstance().createNESTopologyLink(sensorNode4, workerNode17, 1, 3);
 
-    const vector<NESTopologyEntryPtr>
-        & pathWithMaxBandwidth = pathFinder.findPathWithMaxBandwidth(sensorNode2, sinkNode);
+    const auto& map = pathFinder.findUniquePathBetween(std::vector<NESTopologyEntryPtr>{sensorNode1, sensorNode2, sensorNode3,
+                                                                                  sensorNode4}, sinkNode);
 
-    EXPECT_FALSE(pathWithMaxBandwidth.empty());
+    EXPECT_FALSE(map.empty());
 }
