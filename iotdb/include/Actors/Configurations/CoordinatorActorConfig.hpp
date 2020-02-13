@@ -1,8 +1,6 @@
 #ifndef __ACTOR_COORDINATOR_CONFIG_HPP__
 #define __ACTOR_COORDINATOR_CONFIG_HPP__
 
-//#include <caf/all.hpp>
-
 namespace NES {
 /**
 * @brief The configuration file of the coordinator
@@ -28,8 +26,8 @@ namespace NES {
   }
 
   std::string ip = "127.0.0.1";
-  uint16_t publish_port = 4711;
-  uint16_t receive_port = 4815;
+  uint16_t publish_port = 4711;//ZMQ?
+  uint16_t receive_port = 4815;//Actors
 };
 }
 #endif //__ACTOR_COORDINATOR_CONFIG_HPP__

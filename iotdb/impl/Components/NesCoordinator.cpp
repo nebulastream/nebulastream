@@ -8,70 +8,74 @@ namespace NES {
 NesCoordinator::NesCoordinator() {
   restPort = 8081;
   restHost = "localhost";
+  actorPort = 0;
+
 }
 
 infer_handle_from_class_t<CoordinatorActor> NesCoordinator::getActorHandle() {
   return coordinatorActorHandle;
 }
 
-void startRestServer(
-    RestServer *restServer, std::string restHost, uint16_t restPort,
-    infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle) {
-
-  restServer = new RestServer(restHost, restPort, coordinatorActorHandle);
-  restServer->start();
-}
-
 void starter(infer_handle_from_class_t<CoordinatorActor> handle,
-                actor_system *actorSystem, CAFServer* cafServer, RestServer* restServer, std::string restHost, uint16_t restPort) {
-  CoordinatorActorConfig actorCoordinatorConfig;
-  actorCoordinatorConfig.load<io::middleman>();
-  handle = actorSystem->spawn<CoordinatorActor>();
-  NES_DEBUG("NesCoordinator: actor handle created")
-
-  NES_DEBUG("NesCoordinator start caf server thread")
-  cafServer = new CAFServer(handle, actorSystem);
-  cafServer->start();
-  NES_DEBUG("NesCoordinator start caf actor and server successfully")
-
+             actor_system *actorSystem, RestServer *restServer,
+             std::string restHost, uint16_t restPort, uint16_t *port) {
   restServer = new RestServer(restHost, restPort, handle);
-  restServer->start();
-  NES_DEBUG("NesCoordinator start rest actor and server successfully")
-
+  restServer->start();//this call is blocking
+  NES_DEBUG("NesCoordinator: starter thread terminates")
 }
 
-void NesCoordinator::stopCoordinator() {
-  restServer->stop();
-  cafServer->stop();
-  restServerThread.join();
-  actorThread.join();
+bool NesCoordinator::stopCoordinator() {
+  scoped_actor self { *actorSystem };
+  self->request(coordinatorActorHandle, task_timeout,
+                exit_reason::user_shutdown);
+  NES_DEBUG("NesCoordinator: shutdown sended to coordinator")
+  bool retStopRest = restServer->stop();
+  NES_DEBUG("NesCoordinator: rest server stopped")
+
+  restThread.join();
+  NES_DEBUG("NesCoordinator: thread joined")
+  return retStopRest;
 }
 
-bool NesCoordinator::startCoordinator(bool blocking) {
+void NesCoordinator::startCoordinator(bool blocking, uint16_t port) {
+  actorPort = port;
+  startCoordinator(blocking);
+}
+
+uint16_t NesCoordinator::startCoordinator(bool blocking) {
   NES_DEBUG("NesCoordinator: Start Rest Server")
 
   NES_DEBUG("NesCoordinator start")
-//  CoordinatorActorConfig actorCoordinatorConfig;
   actorCoordinatorConfig.load<io::middleman>();
 
   actorSystem = new actor_system { actorCoordinatorConfig };
-//  coordinatorActorHandle = actorSystem->spawn<CoordinatorActor>();
 
-  std::thread th0(starter, coordinatorActorHandle, actorSystem, cafServer, restServer, restHost, restPort);
-  actorThread = std::move(th0);
+  coordinatorActorHandle = actorSystem->spawn<CoordinatorActor>();
+  NES_DEBUG("NesCoordinator: actor handle created")
 
-//  NES_DEBUG("NesCoordinator start rest server thread")
-//  std::thread th1(startRestServer, restServer, restHost, restPort,
-//                  coordinatorActorHandle);
-//  restServerThread = std::move(th1);
+  io::unpublish(coordinatorActorHandle, actorPort);
+
+  auto expected_port = io::publish(coordinatorActorHandle, actorPort, nullptr, true);
+  if (!expected_port) {
+    NES_ERROR("NesCoordinator: publish failed: " << expected_port)
+    throw new Exception("NesCoordinator start failed");
+  }
+  NES_DEBUG(
+      "NesCoordinator: coordinator successfully published at port " << expected_port)
+
+  actorPort = *expected_port;
+
+  std::thread th0(starter, coordinatorActorHandle, actorSystem, restServer,
+                  restHost, restPort, &actorPort);
+  restThread = std::move(th0);
 
   if (blocking) {
     NES_DEBUG("NesCoordinator started, join now and waiting for work")
-//    restServerThread.join();
-    actorThread.join();
+    restThread.join();
   } else {
-    NES_DEBUG("NesCoordinator started, return without blocking")
-    return true;
+    NES_DEBUG(
+        "NesCoordinator started, return without blocking on port " << actorPort)
+    return actorPort;
   }
 }
 

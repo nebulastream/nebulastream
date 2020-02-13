@@ -13,6 +13,7 @@ using namespace caf;
 constexpr auto task_timeout = std::chrono::seconds(3);
 
 using disconnect_atom = atom_constant<atom("disconnect")>;
+using terminate_atom = atom_constant<atom("term")>;
 
 //coordinator stubs
 using register_worker_atom = atom_constant<atom("r_worker")>;

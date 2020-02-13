@@ -45,10 +45,14 @@ static void setupLogging() {
 int main(int argc, char **argv) {
   setupLogging();
 
+
   namespace po = boost::program_options;
   po::options_description desc("Options");
+  uint16_t actorPort = 0;
 
-  desc.add_options()("help", "Print help messages");
+  desc.add_options()(
+      "actor_port", po::value<uint16_t>(&actorPort)->default_value(actorPort),
+      "Set NES actor server port (default: 0).");
 
   po::variables_map vm;
   po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
@@ -59,6 +63,9 @@ int main(int argc, char **argv) {
               << std::endl;
     return 0;
   }
+
   NesWorkerPtr wrk = std::make_shared<NesWorker>();
+  cout << "start with port=" << actorPort << endl;
+  wrk->start(/**blocking*/ true, /**withConnect*/ true, actorPort);
   cout << "worker started" << endl;
 }

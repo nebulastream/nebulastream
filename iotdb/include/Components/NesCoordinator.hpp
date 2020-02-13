@@ -1,7 +1,6 @@
 #ifndef INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #include "REST/RestServer.hpp"
-#include "Actors/CAFServer.hpp"
 #include <string>
 
 namespace NES {
@@ -18,15 +17,24 @@ class NesCoordinator {
 
   /**
    * @brief start actor: rest server, caf server, coordinator actor
+   * @note this will start the server at a random port
    * @param bool if the method should block
-   * @note this is a blocking call
+   * @return port of where started
    */
-  bool startCoordinator(bool blocking);
+  uint16_t startCoordinator(bool blocking);
+
+  /**
+   * @brief start actor: rest server, caf server, coordinator actor
+   * @param bool if the method should block
+   * @param port where to start the serv er
+   */
+  void startCoordinator(bool blocking, uint16_t port);
 
   /**
    * @brief method to stop coordinator
+   * @return bool indicating success
    */
-  void stopCoordinator();
+  bool stopCoordinator();
 
   /**
    * @method to overwrite the default config for the rest server
@@ -44,13 +52,12 @@ class NesCoordinator {
  private:
   CoordinatorActorConfig actorCoordinatorConfig;
   infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
-  actor_system* actorSystem;
-  RestServer* restServer;
-  CAFServer* cafServer;
+  actor_system *actorSystem;
+  RestServer *restServer;
   std::string restHost;
   uint16_t restPort;
-  std::thread actorThread;
-  std::thread restServerThread;
+  uint16_t actorPort;
+  std::thread restThread;
 };
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
 

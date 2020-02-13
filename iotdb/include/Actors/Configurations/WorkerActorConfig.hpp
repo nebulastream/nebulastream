@@ -1,7 +1,7 @@
 #ifndef INCLUDE_ACTORS_CONFIGURATIONS_ACTORWORKERCONFIG_H_
 #define INCLUDE_ACTORS_CONFIGURATIONS_ACTORWORKERCONFIG_H_
 
-//#include <caf/all.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 /**
@@ -22,6 +22,11 @@ class WorkerActorConfig : public actor_system_config {
         .add(receive_port, "receive_port,prec", "set receive_port")
         .add(host, "host,H", "set host (ignored in server mode)");
 //        .add(sensor_type, "sensor_type", "set sensor_type");
+  }
+  void printCfg()
+  {
+    NES_DEBUG(" ip=" << ip << " receive_port=" << receive_port
+        << " host=" << host << " publish_port=" << publish_port);
   }
 };
 
