@@ -49,6 +49,8 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
                           actorCoordinatorConfig.receive_port));
     }
 
+    ~CoordinatorActor();
+
     behavior_type make_behavior() override {
         return init();
     }
