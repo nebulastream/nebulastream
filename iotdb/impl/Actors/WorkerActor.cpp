@@ -32,7 +32,7 @@ behavior WorkerActor::unconnected() {
   NES_DEBUG("WorkerActor: become unconnected")
   return {
     [=](connect_atom, const std::string &host, uint16_t port) {
-      NES_DEBUG("WorkerActor: unconnected() try reconnect")
+      NES_DEBUG("WorkerActor: unconnected() try reconnect to host=" << host << " port=" << port)
       connecting(host, port);
       return true;
     }
@@ -214,6 +214,7 @@ bool WorkerActor::disconnecting() {
  * if connection works go to running state, otherwise go to unconnected state
  */
 bool WorkerActor::connecting(const std::string &host, uint16_t port) {
+  NES_DEBUG("WorkerActor::connecting try to connect to host=" << host << " port=" << port)
   // make sure we are not pointing to an old server
   this->state.current_server = nullptr;
   // use request().await() to suspend regular behavior until MM responded
@@ -279,6 +280,7 @@ behavior WorkerActor::running(const actor &coordinator) {
   return {
     // the connect RPC to connect with the coordinator
     [=](connect_atom, const std::string &host, uint16_t port) {
+      NES_DEBUG("WorkerActor: connect to host=" << host << " port=" << port)
       return connecting(host, port);
     },
     [=](disconnect_atom) {
