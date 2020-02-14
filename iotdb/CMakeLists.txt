@@ -166,3 +166,13 @@ configure_file(include/QueryLib/WindowManagerLib.hpp  ${CMAKE_CURRENT_BINARY_DIR
 
 project_enable_clang_format()
 
+install(TARGETS nesCoordinator nesWorker iotdb
+        COMPONENT NES
+        RUNTIME DESTINATION "/opt/local/nebula-stream"
+        LIBRARY DESTINATION "/opt/local/nebula-stream"
+        DESTINATION "/opt/local/nebula-stream"
+        )
+
+SET(CPACK_GENERATOR "DEB")
+SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Ankit Chaudhary") #required
+INCLUDE(CPack)
