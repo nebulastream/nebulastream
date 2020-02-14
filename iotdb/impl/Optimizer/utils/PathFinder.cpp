@@ -24,10 +24,11 @@ std::vector<NESTopologyEntryPtr> PathFinder::findPathWithMaxBandwidth(NESTopolog
             size_t minLinkBandwidth = INT32_MAX;
             for (auto link : pathWithLinks) {
                 if (minLinkBandwidth > link->getLinkCapacity()) {
-                    minLinkBandwidth = link->getLinkLatency();
+                    minLinkBandwidth = link->getLinkCapacity();
                 }
             }
             if(maxOfMinBandwidth < minLinkBandwidth) {
+                maxOfMinBandwidth = minLinkBandwidth;
                 selectedPath = pathWithLinks;
             }
         }
@@ -62,6 +63,7 @@ std::vector<NESTopologyEntryPtr> PathFinder::findPathWithMinLinkLatency(NESTopol
             }
 
             if(minOfMaxLatency > maxLinkLatency) {
+                minOfMaxLatency = maxLinkLatency;
                 selectedPath = pathWithLinks;
             }
         }

@@ -187,7 +187,7 @@ target_link_libraries(internal-data-transmission-test iotdb ${GTEST_LIBRARIES})
 add_test(NAME internal-data-transmission-test COMMAND internal-data-transmission-test)
 
 # Path Finder Tests
-add_executable(path-finder-test "UnitTests/Optimizer/Utils/PathfinderTest.cpp")
+add_executable(path-finder-test "UnitTests/Optimizer/Utils/PathFinderTest.cpp")
 target_link_libraries(path-finder-test iotdb ${GTEST_LIBRARIES})
 add_test(NAME path-finder-test COMMAND path-finder-test)
 

@@ -174,17 +174,17 @@ TEST_F(PathFinderTest, find_path_with_min_latency) {
     StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>("", "", sensorNode1, "temperature1");
     assert(StreamCatalog::instance().addPhysicalStream("temperature", e1));
 
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode1, sinkNode, 3, 1);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode1, sinkNode, 3, 3);
     NESTopologyManager::getInstance().createNESTopologyLink(workerNode2, sinkNode, 3, 1);
 
     NESTopologyManager::getInstance().createNESTopologyLink(sensorNode1, workerNode1, 1, 1);
-    NESTopologyManager::getInstance().createNESTopologyLink(sensorNode1, workerNode2, 1, 3);
+    NESTopologyManager::getInstance().createNESTopologyLink(sensorNode1, workerNode2, 1, 1);
 
     auto path = pathFinder.findPathWithMinLinkLatency(sensorNode1, sinkNode);
 
     EXPECT_FALSE(path.empty());
 
-    std::vector<NESTopologyEntryPtr> expectedList = {sensorNode1, workerNode1, sinkNode};
+    std::vector<NESTopologyEntryPtr> expectedList = {sensorNode1, workerNode2, sinkNode};
 
     for (NESTopologyEntryPtr expectedNode : expectedList) {
         auto result = std::find_if(path.begin(), path.end(),
