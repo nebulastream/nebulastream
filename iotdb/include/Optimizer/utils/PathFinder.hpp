@@ -22,17 +22,27 @@ class PathFinder {
   public:
 
     /**
-     * @brief Find a set of paths between given set of sources and a common destination such that their are maximum intersection.
+     * @brief Find a set of paths between given set of sources and a common destination such that their are maximum
+     * intersection.
      *
      * Following is how the algorithm works:
      *
      * 1.) Find all paths for all source and destination pairs.
      * 2.) If the total returned paths for a source and destination pair is just one, then add the single path to the
-     * result map for the corresponding source
-     * 3.) For remaining list of source and destination pairs and corresponding paths we try to compute the most common path as follow:
-     *      a.) We start with the first entry of the list and compare each path with all other paths of the remaining source destination pairs and add a weight of 1 for each matching edge.
-     *      b.) For the pair under consideration, we select the path with maximum aggregated weight and add this path to the list.
-     *      c.) We repeat the step a and b for all remaining pairs.
+     * result map for the corresponding source.
+     * 3.) For remaining source and destination pair we prepare a sourceToPathsMap.
+     * 4.) For each source in the sourceToPathsMap we try to compute the most common path for its list of paths as
+     * follow:
+     *      a.) We start with the first entry in the list and compare it with all other paths of the remaining source
+     *      paths and add a weight of 1 for each matching edge.
+     *      b.) For the source under consideration, we select the path with maximum aggregated weight and add this path
+     *      to the new list of paths for the source.
+     *      c.) If the new list of path for the source contains only one path then this path is added to the result map
+     *      for corresponding source.
+     *      d.) Else, we add the new path list to the sourceToPathsMap.
+     * 5.) If the sourceToPathsMap has been changed but contains sources with path list with more than 1 path then we
+     * repeat step 4.
+     * 6.) We return pack the result map.
      *
      * @param sources : set of source nodes
      * @param destination : destination node
