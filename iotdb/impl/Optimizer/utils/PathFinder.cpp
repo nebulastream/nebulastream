@@ -57,7 +57,7 @@ std::vector<NESTopologyEntryPtr> PathFinder::findPathWithMinLinkLatency(NESTopol
         for (std::vector<NESTopologyLinkPtr> pathWithLinks : pathsWithLinks) {
             size_t maxLinkLatency = 0;
             for (auto link : pathWithLinks) {
-                if (link->getLinkCapacity() > maxLinkLatency) {
+                if (link->getLinkLatency() > maxLinkLatency) {
                     maxLinkLatency = link->getLinkLatency();
                 }
             }
