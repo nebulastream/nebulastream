@@ -280,5 +280,4 @@ std::vector<NESTopologyLinkPtr> PathFinder::backTrackTraversedPathTill(std::vect
     return path;
 }
 
-
 }
