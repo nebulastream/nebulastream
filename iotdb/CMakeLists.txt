@@ -30,7 +30,6 @@ endif()
 message(STATUS "CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}")
 message(STATUS "CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE}")
 
-
 set(LIBRARIES ${LIBRARIES} -lbfd -ldl)
 
 # LLVM
@@ -129,7 +128,10 @@ add_definitions( -D '__STDC_LIMIT_MACROS' )
 
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}")
+# $ORIGIN is to read the shared object from the installation directory
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath='$ORIGIN'")
+#https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_RPATH_USE_LINK_PATH.html
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH "true")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
 
 ###########################################################################################
@@ -174,5 +176,5 @@ install(TARGETS nesCoordinator nesWorker iotdb
         )
 
 SET(CPACK_GENERATOR "DEB")
-SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Ankit Chaudhary") #required
+SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Team NebulaStream") #required
 INCLUDE(CPack)
