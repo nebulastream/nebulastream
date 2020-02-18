@@ -119,28 +119,28 @@ add_executable(state-manager-tests "UnitTests/StateTest.cpp")
 target_link_libraries(state-manager-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME state-manager-tests COMMAND state-manager-tests)
 
-### Runtime Data Source Sink Tests ### 
+### Runtime Data Source Sink Tests ###
 add_executable(runtime-data-source-sink-tests "UnitTests/RuntimeDataSourceSinkTest.cpp")
 target_link_libraries(runtime-data-source-sink-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME runtime-data-source-sink-tests COMMAND runtime-data-source-sink-tests)
 
-### File Source Tests ### 
+### File Source Tests ###
 add_executable(file-source-tests "UnitTests/FileSourceTest.cpp")
 target_link_libraries(file-source-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME file-source-tests COMMAND file-source-tests)
 
-### Kafka Tests ### 
+### Kafka Tests ###
 add_executable(kafka-tests "UnitTests/KafkaTest.cpp")
 message("libraies: ${LIBRARIES}")
 target_link_libraries(kafka-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
 add_test(NAME kafka-tests COMMAND kafka-tests)
 
-### Predicate Tree Tests ### 
+### Predicate Tree Tests ###
 add_executable(predicate-tree-tests "UnitTests/PredicateTest.cpp")
 target_link_libraries(predicate-tree-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME predicate-tree-tests COMMAND predicate-tree-tests)
 
-###  Predicate Tree Tests ### 
+###  Predicate Tree Tests ###
 add_executable(optimizer-service-tests "UnitTests/Services/OptimizerServiceTest.cpp")
 target_link_libraries(optimizer-service-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME optimizer-service-tests COMMAND optimizer-service-tests)
@@ -205,10 +205,15 @@ add_executable(tuple-buffer-test "UnitTests/TupleBufferTest.cpp")
 target_link_libraries(tuple-buffer-test iotdb ${GTEST_LIBRARIES})
 add_test(NAME tuple-buffer-test COMMAND tuple-buffer-test)
 
+# LogicalOperatorPlanNodeTest
+add_executable(logical-operator-node-tests "UnitTests/LogicalOperatorNodeTest.cpp")
+target_link_libraries(logical-operator-node-tests iotdb ${GTEST_LIBRARIES})
+add_test(NAME logical-operator-node-tests COMMAND logical-operator-node-tests)
+
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure DEPENDS ${UNITTESTS})
-        
+
 add_custom_target(test_ext COMMAND ${CMAKE_CTEST_COMMAND} --gtest_filter=*XYZ*)
-#add_custom_target(test_e2e COMMAND ${CMAKE_CTEST_COMMAND} --gtest_filter=E2e*)      
- 
-        
+#add_custom_target(test_e2e COMMAND ${CMAKE_CTEST_COMMAND} --gtest_filter=E2e*)
+
+
