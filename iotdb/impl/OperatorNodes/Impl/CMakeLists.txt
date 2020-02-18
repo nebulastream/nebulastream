@@ -1,0 +1,10 @@
+add_source_iotdb(
+  AggregationLogicalOperatorNode.cpp
+  FilterLogicalOperatorNode.cpp
+  JoinLogicalOperatorNode.cpp
+  KeyByLogicalOperatorNode.cpp
+  MapLogicalOperatorNode.cpp
+  SinkLogicalOperatorNode.cpp
+  SourceLogicalOperatorNode.cpp
+  WindowLogicalOperatorNode.cpp
+  )
