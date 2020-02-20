@@ -42,6 +42,29 @@ const std::vector<NESTopologyEntryPtr> NESTopologyGraph::getVertexByIp(
   // should never happen
   return vec;
 }
+
+
+const std::vector<NESTopologyEntryPtr> NESTopologyGraph::getVertexById(
+    size_t id) const {
+  // build vertice iterator
+  nesVertex_iterator vertex, vertex_end, next_vertex;
+  boost::tie(vertex, vertex_end) = vertices(graph);
+  std::vector<NESTopologyEntryPtr> vec;
+
+  // iterator over vertices
+  for (next_vertex = vertex; vertex != vertex_end; vertex = next_vertex) {
+    ++next_vertex;
+
+    // check for matching vertex
+    if (graph[*vertex].ptr->getId() == id) {
+      vec.push_back(graph[*vertex].ptr);
+    }
+  }
+
+  // should never happen
+  return vec;
+}
+
 const NESTopologyGraph::nesVertex_t NESTopologyGraph::getVertex(
     size_t vertexId) const {
 

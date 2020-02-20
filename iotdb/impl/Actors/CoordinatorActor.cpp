@@ -3,8 +3,15 @@
 #include <Topology/NESTopologyManager.hpp>
 #include <Util/SerializationTools.hpp>
 #include <Util/Logger.hpp>
+#include <functional>
 namespace NES {
 
+size_t getIdFromHandle(caf::strong_actor_ptr sap) {
+  std::hash<std::string> hash_fn;
+  string idWithoutStart = to_string(sap).substr(to_string(sap).find("@") + 1);
+  return hash_fn(idWithoutStart);
+
+}
 behavior CoordinatorActor::init() {
   initializeNESTopology();
   StreamCatalog::instance();  //initialize catalog
@@ -46,7 +53,6 @@ void CoordinatorActor::initializeNESTopology() {
   coordinatorNode->setReceivePort(actorCoordinatorConfig.receive_port);
 }
 
-
 behavior CoordinatorActor::running() {
   return {
     // coordinator specific methods
@@ -82,11 +88,11 @@ behavior CoordinatorActor::running() {
       return streamCatalogServicePtr->addNewLogicalStream(streamName, streamSchema);
     },
     [=](remove_log_stream_atom, const string& streamName) {
-      NES_DEBUG("CoordinatorActor: got request for removel of logical stream " << streamName)
+      NES_DEBUG("CoordinatorActor: got request for removal of logical stream " << streamName)
       return streamCatalogServicePtr->removeLogicalStream(streamName);
     },
     [=](remove_phy_stream_atom, std::string ip, const string& logicalStreamName, const string& physicalStreamName) {
-      NES_DEBUG("CoordinatorActor: got request for removel of physical stream " << physicalStreamName
+      NES_DEBUG("CoordinatorActor: got request for removal of physical stream " << physicalStreamName
           << " from logical stream "
           << logicalStreamName)
       PhysicalStreamConfig conf("", "", physicalStreamName, logicalStreamName);
@@ -159,8 +165,16 @@ bool CoordinatorActor::removePhysicalStream(std::string ip,
                                             PhysicalStreamConfig streamConf) {
   NES_DEBUG(
       "CoordinatorActor: try to remove physical stream with ip " << ip << " physical name " << streamConf.physicalStreamName << " logical name " << streamConf.logicalStreamName)
+
+  auto sap = current_sender();
+  auto hdl = actor_cast<actor>(sap);
+  size_t hashId = getIdFromHandle(sap);
+  NES_DEBUG(
+      "CoordinatorActor: removePhysicalStream id=" << sap->id() << " handle=" << to_string(hdl) << " hashID=" << hashId)
+
   std::vector<NESTopologyEntryPtr> sensorNodes =
-      NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeByIp(ip);
+      NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(
+          hashId);
 
   //TODO: note that we remove on the first node with this id
   NESTopologyEntryPtr sensorNode;
@@ -187,9 +201,17 @@ bool CoordinatorActor::removePhysicalStream(std::string ip,
 
 bool CoordinatorActor::registerPhysicalStream(std::string ip,
                                               PhysicalStreamConfig streamConf) {
+  NES_DEBUG("CoordinatorActor: try to register physical stream with ip " << ip)
+
+  auto sap = current_sender();
+  auto hdl = actor_cast<actor>(sap);
+  size_t hashId = getIdFromHandle(sap);
+  NES_DEBUG(
+      "CoordinatorActor: deregister pyhsical stream id=" << sap->id() << " handle=" << to_string(hdl) << " hashID=" << hashId)
 
   std::vector<NESTopologyEntryPtr> sensorNodes =
-      NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeByIp(ip);
+      NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(
+          hashId);
 
   //TODO: note that we register on the first node with this id
   NESTopologyEntryPtr sensorNode;
@@ -213,9 +235,15 @@ bool CoordinatorActor::deregisterSensor(const string &ip) {
   auto sap = current_sender();
   auto hdl = actor_cast<actor>(sap);
 
+  size_t hashId = getIdFromHandle(sap);
+  NES_DEBUG(
+      "CoordinatorActor: deregister node id=" << sap->id() << " handle=" << to_string(hdl) << " hashID=" << hashId << " sap=" << to_string(sap))
+
   std::vector<NESTopologyEntryPtr> sensorNodes =
-      NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeByIp(ip);
+      NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(
+          hashId);
   size_t cnt = 0;
+
   NESTopologyEntryPtr sensorNode;
   for (auto e : sensorNodes) {
     if (e->getEntryType() != Coordinator) {
@@ -223,10 +251,13 @@ bool CoordinatorActor::deregisterSensor(const string &ip) {
       cnt++;
     }
   }
-  if (cnt != 1) {
+  if (cnt > 1) {
     NES_ERROR(
-        "CoordinatorActor: more than one worker node found with ip " << ip)
+        "CoordinatorActor: more than one worker node found with id " << hashId << " cnt=" << cnt)
     throw Exception("node is ambitious");
+  } else if (cnt == 0) {
+    NES_ERROR("CoordinatorActor: node with id not found " << hashId)
+    throw Exception("node not found");
   }
   NES_DEBUG("CoordinatorActor: found sensor, try to delete it in catalog")
   //remove from catalog
@@ -237,6 +268,10 @@ bool CoordinatorActor::deregisterSensor(const string &ip) {
   //remove from topology
   bool successTopology = coordinatorServicePtr->deregister_sensor(sensorNode);
   NES_DEBUG("CoordinatorActor: success in topologyy is " << successTopology)
+
+  this->state.actorTopologyMap.erase(sap);
+  this->state.topologyActorMap.erase(sensorNode);
+  this->state.idToActorMap.erase(hashId);
 
   if (successCatalog && successTopology) {
     NES_DEBUG("CoordinatorActor: sensor successfully removed")
@@ -253,15 +288,20 @@ void CoordinatorActor::registerSensor(const string &ip, uint16_t publish_port,
                                       PhysicalStreamConfig streamConf) {
   auto sap = current_sender();
   auto hdl = actor_cast<actor>(sap);
+  size_t hashId = getIdFromHandle(sap);
+  NES_DEBUG(
+      "CoordinatorActor: connect attempt with id=" << sap->id() << " handle=" << to_string(hdl) << " hashID=" << hashId)
+  //TODO: we should rewrite the topology to store actor handles instead of ids
   NESTopologyEntryPtr sensorNode = coordinatorServicePtr->register_sensor(
-      sap->id(), ip, publish_port, receive_port, cpu, nodeProperties,
-      streamConf);
+      hashId, ip, publish_port, receive_port, cpu, nodeProperties, streamConf);
 
-  this->state.actorTopologyMap.insert( { sap, sensorNode });
-  this->state.topologyActorMap.insert( { sensorNode, sap });
+  this->state.actorTopologyMap.insert(std::make_pair(sap, sensorNode));
+  this->state.topologyActorMap.insert(std::make_pair(sensorNode, sap));
+  this->state.idToActorMap.insert(std::make_pair(hashId, sap));
+
   this->monitor(hdl);
-  NES_INFO(
-      "ACTORCOORDINATOR: Successfully registered sensor (CPU=" << cpu << ", PhysicalStream: " << streamConf.physicalStreamName << ") " << to_string(hdl));
+  NES_DEBUG(
+      "CoordinatorActor: Successfully registered sensor (CPU=" << cpu << ", PhysicalStream: " << streamConf.physicalStreamName << ") " << to_string(hdl));
 }
 
 void CoordinatorActor::deployQuery(const string &queryId) {
