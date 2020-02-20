@@ -11,7 +11,7 @@ std::vector<NESTopologyEntryPtr> PathFinder::findPathWithMaxBandwidth(NESTopolog
     NES_INFO("PathFinder: finding path wih maximum bandwidth between" << source->toString() << " and "
                                                                       << destination->toString());
 
-    std::vector<std::Linkedvector<NESTopologyLinkPtr>> pathsWithLinks = findAllPathLinksBetween(source, destination);
+    std::vector<std::vector<NESTopologyLinkPtr>> pathsWithLinks = findAllPathLinksBetween(source, destination);
 
     if (pathsWithLinks.empty()) {
         throw std::runtime_error(
