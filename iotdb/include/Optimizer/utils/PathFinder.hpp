@@ -28,9 +28,7 @@ class PathFinder {
      * Following is how the algorithm works:
      *
      * 1.) Find all paths for all source and destination pairs.
-     * 2.) If the total returned paths for a source and destination pair is just one, then add the single path to the
-     * result map for the corresponding source.
-     * 3.) For remaining source and destination pair we prepare a sourceToPathsMap.
+     * 3.) Using the fetched information we prepare a sourceToPathsMap.
      * 4.) For each source in the sourceToPathsMap we try to compute the most common path for its list of paths as
      * follow:
      *      a.) We start with the first entry in the list and compare it with all other paths of the remaining source

@@ -432,3 +432,44 @@ TEST_F(PathFinderTest, find_path_between_non_linked_source_and_destination) {
     const auto& pathList = pathFinder.findPathBetween(sensorNode1, sinkNode);
     EXPECT_TRUE(pathList.empty());
 }
+
+TEST_F(PathFinderTest, find_path_between_linked_source_and_destination) {
+
+    StreamCatalog::instance().reset();
+    NESTopologyManager::getInstance().resetNESTopologyPlan();
+
+    Schema schema = Schema::create().addField("id", BasicType::UINT32).addField(
+        "value", BasicType::UINT64);
+    const NESTopologyCoordinatorNodePtr
+        sinkNode = NESTopologyManager::getInstance().createNESCoordinatorNode(0, "localhost", CPUCapacity::HIGH);
+    const NESTopologyWorkerNodePtr
+        workerNode1 = NESTopologyManager::getInstance().createNESWorkerNode(1, "localhost", CPUCapacity::HIGH);
+    const NESTopologyWorkerNodePtr
+        workerNode2 = NESTopologyManager::getInstance().createNESWorkerNode(2, "localhost", CPUCapacity::HIGH);
+
+    const NESTopologySensorNodePtr
+        sensorNode1 = NESTopologyManager::getInstance().createNESSensorNode(3, "localhost", CPUCapacity::HIGH);
+    sensorNode1->setPhysicalStreamName("temperature1");
+    StreamCatalog::instance().addLogicalStream("temperature", std::make_shared<Schema>(schema));
+    StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>("", "", sensorNode1, "temperature1");
+    assert(StreamCatalog::instance().addPhysicalStream("temperature", e1));
+
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode2, sinkNode, 1, 3);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode1, workerNode2, 1, 3);
+    NESTopologyManager::getInstance().createNESTopologyLink(sensorNode1, workerNode1, 1, 3);
+
+    const auto& actualPath = pathFinder.findPathBetween(sensorNode1, sinkNode);
+    EXPECT_TRUE(!actualPath.empty());
+
+    std::vector<NESTopologyEntryPtr> expectedPath = {sensorNode1, workerNode1, workerNode2, sinkNode};
+
+    for (NESTopologyEntryPtr expectedNode : expectedPath) {
+        auto result = std::find_if(actualPath.begin(), actualPath.end(),
+                                   [expectedNode](NESTopologyEntryPtr actualNode) {
+                                     return actualNode->getId() == expectedNode->getId();
+                                   });
+
+        EXPECT_TRUE(result != actualPath.end());
+    }
+
+}
