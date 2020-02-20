@@ -137,7 +137,7 @@ class NESTopologyManager {
      * @brief get children of nodes as a vector of json objects
      * @return vector of json objects of children
      */
-    std::vector<json::value> getChildrenNode(NESTopologyEntryPtr nesParentNode);
+    std::vector<json::value> getChildrenNodes(NESTopologyEntryPtr nesParentNode);
 
     /**
      * @brief method to reset the topology
