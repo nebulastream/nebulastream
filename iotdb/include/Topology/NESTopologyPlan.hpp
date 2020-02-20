@@ -118,6 +118,13 @@ class NESTopologyPlan {
    */
   std::vector<NESTopologyEntryPtr> getNodeByIp(std::string ip);
 
+  /**
+   * @brief get all nodes with an id
+   * @param id of the node
+   * @return vector containing NESTopologyEntryPtr to the nodes
+   */
+  std::vector<NESTopologyEntryPtr> getNodeById(size_t id);
+
   size_t getNextFreeLinkId();
   size_t currentLinkId;
   NESTopologyGraphPtr fGraphPtr;

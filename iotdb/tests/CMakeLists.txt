@@ -191,6 +191,12 @@ add_executable(path-finder-test "UnitTests/Optimizer/Utils/PathFinderTest.cpp")
 target_link_libraries(path-finder-test iotdb ${GTEST_LIBRARIES})
 add_test(NAME path-finder-test COMMAND path-finder-test)
 
+# MultiWorkerTest
+add_executable(multi-worker-test "UnitTests/MultiWorkerTest.cpp")
+target_link_libraries(multi-worker-test iotdb ${GTEST_LIBRARIES})
+add_test(NAME multi-worker-test COMMAND multi-worker-test)
+
+
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
         DEPENDS ${UNITTESTS})
