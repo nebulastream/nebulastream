@@ -53,9 +53,7 @@ class MultiWorkerTest : public testing::Test {
   }
 
 };
-
-
-TEST_F(MultiWorkerTest, DISABLED_start_stop_worker_coordinator) {
+TEST_F(MultiWorkerTest, start_stop_worker_coordinator) {
   cout << "start coordinator" << endl;
   NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
   size_t port = crd->startCoordinator(/**blocking**/false);
@@ -93,7 +91,7 @@ TEST_F(MultiWorkerTest, DISABLED_start_stop_worker_coordinator) {
   EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(MultiWorkerTest, DISABLED_start_stop_coordinator_worker) {
+TEST_F(MultiWorkerTest, start_stop_coordinator_worker) {
   cout << "start coordinator" << endl;
   NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
   size_t port = crd->startCoordinator(/**blocking**/false);
@@ -246,6 +244,49 @@ TEST_F(MultiWorkerTest, start_connect_stop_without_disconnect_worker_coordinator
 
   bool retStopWrk2 = wrk2->stop();
   EXPECT_TRUE(retStopWrk2);
+}
+TEST_F(MultiWorkerTest, test_ten_worker) {
+  cout << "start coordinator" << endl;
+  NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
+  size_t port = crd->startCoordinator(/**blocking**/false);
+  EXPECT_NE(port, 0);
+  cout << "coordinator started successfully" << endl;
+  sleep(1);
+  //start 10 worker
+  std::vector<NesWorkerPtr> wPtrs;
+  for (size_t i = 0; i < 10; i++) {
+    cout << "start worker" << i << endl;
+    wPtrs.push_back(std::make_shared<NesWorker>());
+    bool retStart = wPtrs[i]->start(/**blocking**/false, /**withConnect**/false,
+                                    port);
+    EXPECT_TRUE(retStart);
+
+  }
+
+  //connect 10 worker
+  for (size_t i = 0; i < 10; i++) {
+    cout << "connect worker" << i << endl;
+    bool retConWrk = wPtrs[i]->connect();
+    EXPECT_TRUE(retConWrk);
+  }
+
+  //disconnect 10 worker
+  for (size_t i = 0; i < 10; i++) {
+    cout << "disconnect worker" << i << endl;
+    bool retConWrk = wPtrs[i]->disconnect();
+    EXPECT_TRUE(retConWrk);
+  }
+
+  //stop 10 worker
+  for (size_t i = 0; i < 10; i++) {
+    cout << "stop worker" << i << endl;
+    bool retConWrk = wPtrs[i]->stop();
+    EXPECT_TRUE(retConWrk);
+  }
+
+  sleep(1);
+  bool retStopCord = crd->stopCoordinator();
+  EXPECT_TRUE(retStopCord);
 }
 
 }
