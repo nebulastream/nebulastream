@@ -81,7 +81,6 @@ std::string GetCurrentWorkingDir(void) {
   return current_working_dir;
 }
 
-#if 0
 TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
   cout << " start coordinator" << endl;
   string path = "./nesCoordinator --actor_port=12345";
@@ -92,8 +91,8 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
 
   string path2 = "./nesWorker --actor_port=12345";
   bp::child workerProc(path2.c_str());
-  coordinatorPid = coordinatorProc.id();
-  workerPid = workerProc.id();
+  size_t coordinatorPid = coordinatorProc.id();
+  size_t workerPid = workerProc.id();
   sleep(3);
 
   std::stringstream ss;
@@ -151,8 +150,8 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
   string path2 = "./nesWorker --actor_port=12346";
   bp::child workerProc(path2.c_str());
   cout << "started worker with pid = " << workerProc.id() << endl;
-  coordinatorPid = coordinatorProc.id();
-  workerPid = workerProc.id();
+  size_t coordinatorPid = coordinatorProc.id();
+  size_t workerPid = workerProc.id();
   sleep(3);
 
   std::stringstream ss;
@@ -228,19 +227,18 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
   coordinatorProc.terminate();
 
 }
-#endif
 
 TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputTwoWorker) {
   cout << " start coordinator" << endl;
   remove(outputFilePath.c_str());
 
-  string cmdCoord = "../nesCoordinator --actor_port=12346";
+  string cmdCoord = "./nesCoordinator --actor_port=12346";
   bp::child coordinatorProc(cmdCoord.c_str());
 
   cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
   sleep(2);
 
-  string cmdWrk = "../nesWorker --actor_port=12346";
+  string cmdWrk = "./nesWorker --actor_port=12346";
   bp::child workerProc1(cmdWrk.c_str());
   cout << "started worker 1 with pid = " << workerProc1.id() << endl;
 
@@ -296,6 +294,19 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputTwoWorker) {
 
   string expectedContent =
       "+----------------------------------------------------+\n"
+          "|id:UINT32|value:UINT64|\n"
+          "+----------------------------------------------------+\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "+----------------------------------------------------++----------------------------------------------------+\n"
           "|id:UINT32|value:UINT64|\n"
           "+----------------------------------------------------+\n"
           "|1|1|\n"
