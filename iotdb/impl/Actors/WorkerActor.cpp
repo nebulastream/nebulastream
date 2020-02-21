@@ -73,7 +73,6 @@ bool WorkerActor::registerPhysicalStream(std::string sourceType,
         string error_msg = to_string(er);
         NES_ERROR(
             "WorkerActor: Error during registerLogicalStream for " << physicalStreamName << "\n" << error_msg);
-//        throw Exception("error while register stream");
         sucess = false;
       }
   );

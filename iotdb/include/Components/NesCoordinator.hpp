@@ -37,11 +37,19 @@ class NesCoordinator {
   bool stopCoordinator();
 
   /**
-   * @method to overwrite the default config for the rest server
+   * @brief method to overwrite the default config for the rest server
    * @param host as string
    * @param port as uint
    */
   void setRestConfiguration(std::string host, uint16_t port);
+
+  /**
+   * @brief method to register and deploy a query
+   * @param queryString : user query, in string form, to be executed
+   * @param strategy : deployment strategy for the query operators
+   * @return UUID of the submitted user query.
+   */
+  string executeQuery(const string queryString, const string strategy);
 
   /**
    * @brief method to get handle

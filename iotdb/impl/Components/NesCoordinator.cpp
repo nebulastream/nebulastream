@@ -20,7 +20,7 @@ void starter(infer_handle_from_class_t<CoordinatorActor> handle,
              actor_system *actorSystem, RestServer *restServer,
              std::string restHost, uint16_t restPort, uint16_t *port) {
   restServer = new RestServer(restHost, restPort, handle);
-  restServer->start();//this call is blocking
+  restServer->start();  //this call is blocking
   NES_DEBUG("NesCoordinator: starter thread terminates")
 }
 
@@ -42,6 +42,28 @@ void NesCoordinator::startCoordinator(bool blocking, uint16_t port) {
   startCoordinator(blocking);
 }
 
+string NesCoordinator::executeQuery(const string queryString,
+                                    const string strategy) {
+  NES_DEBUG("NesCoordinator: execute query=" << queryString << " with strategy=" << strategy)
+
+  scoped_actor self { *actorSystem };
+  string queryId = "";
+
+  self->request(coordinatorActorHandle, task_timeout, execute_query_atom::value,
+                queryString, strategy).receive(
+      [&queryId](const string& uuid) mutable {
+        queryId = uuid;
+        NES_DEBUG("NesCoordinator: query successuflly executed id=" << uuid)
+      }
+      ,
+      [=](const error &er) {
+        NES_ERROR("NesCoordinator: query not executed")
+        string error_msg = to_string(er);
+      });
+
+  return queryId;
+}
+
 uint16_t NesCoordinator::startCoordinator(bool blocking) {
   NES_DEBUG("NesCoordinator: Start Rest Server")
 
@@ -55,7 +77,8 @@ uint16_t NesCoordinator::startCoordinator(bool blocking) {
 
   io::unpublish(coordinatorActorHandle, actorPort);
 
-  auto expected_port = io::publish(coordinatorActorHandle, actorPort, nullptr, true);
+  auto expected_port = io::publish(coordinatorActorHandle, actorPort, nullptr,
+                                   true);
   if (!expected_port) {
     NES_ERROR("NesCoordinator: publish failed: " << expected_port)
     throw new Exception("NesCoordinator start failed");
