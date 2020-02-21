@@ -25,10 +25,7 @@ bool NesWorker::start(bool blocking, bool withConnect, uint16_t port) {
   WorkerActorConfig w_cfg;
   w_cfg.load<io::middleman>();
   w_cfg.printCfg();
-//  actor_system sw { w_cfg };
   PhysicalStreamConfig streamConf;
-//  auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
-//                                           w_cfg.receive_port, sw);
 
   workerCfg.load<io::middleman>();
   coordinatorPort = port;

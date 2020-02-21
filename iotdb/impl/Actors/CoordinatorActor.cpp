@@ -7,9 +7,9 @@
 namespace NES {
 
 size_t getIdFromHandle(caf::strong_actor_ptr sap) {
-  std::hash<std::string> hash_fn;
+  std::hash<std::string> hashFn;
   string idWithoutStart = to_string(sap).substr(to_string(sap).find("@") + 1);
-  return hash_fn(idWithoutStart);
+  return hashFn(idWithoutStart);
 
 }
 behavior CoordinatorActor::init() {
@@ -167,10 +167,10 @@ bool CoordinatorActor::removePhysicalStream(std::string ip,
       "CoordinatorActor: try to remove physical stream with ip " << ip << " physical name " << streamConf.physicalStreamName << " logical name " << streamConf.logicalStreamName)
 
   auto sap = current_sender();
-  auto hdl = actor_cast<actor>(sap);
   size_t hashId = getIdFromHandle(sap);
   NES_DEBUG(
-      "CoordinatorActor: removePhysicalStream id=" << sap->id() << " handle=" << to_string(hdl) << " hashID=" << hashId)
+      "CoordinatorActor: removePhysicalStream id=" << sap->id()
+      << " sap=" << to_string(sap) << " hashID=" << hashId)
 
   std::vector<NESTopologyEntryPtr> sensorNodes =
       NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(
@@ -204,10 +204,10 @@ bool CoordinatorActor::registerPhysicalStream(std::string ip,
   NES_DEBUG("CoordinatorActor: try to register physical stream with ip " << ip)
 
   auto sap = current_sender();
-  auto hdl = actor_cast<actor>(sap);
   size_t hashId = getIdFromHandle(sap);
   NES_DEBUG(
-      "CoordinatorActor: deregister pyhsical stream id=" << sap->id() << " handle=" << to_string(hdl) << " hashID=" << hashId)
+      "CoordinatorActor: deregister pyhsical stream id=" << sap->id()
+      << " sap=" << to_string(sap) << " hashID=" << hashId)
 
   std::vector<NESTopologyEntryPtr> sensorNodes =
       NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(
@@ -233,11 +233,11 @@ bool CoordinatorActor::registerPhysicalStream(std::string ip,
 bool CoordinatorActor::deregisterSensor(const string &ip) {
   NES_DEBUG("CoordinatorActor: try to disconnect sensor with ip " << ip)
   auto sap = current_sender();
-  auto hdl = actor_cast<actor>(sap);
 
   size_t hashId = getIdFromHandle(sap);
   NES_DEBUG(
-      "CoordinatorActor: deregister node id=" << sap->id() << " handle=" << to_string(hdl) << " hashID=" << hashId << " sap=" << to_string(sap))
+      "CoordinatorActor: deregister node id=" << sap->id()
+      << " sap=" << to_string(sap) << " hashID=" << hashId << " sap=" << to_string(sap))
 
   std::vector<NESTopologyEntryPtr> sensorNodes =
       NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(
