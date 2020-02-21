@@ -62,24 +62,15 @@ class NESPlacementOptimizer {
      */
     static std::shared_ptr<NESPlacementOptimizer> getOptimizer(std::string optimizerName);
 
-    /**
-     * @brief Get all candidate node from sink to the target source node.
-     * @param nesGraphPtr
-     * @param targetSource
-     * @return deque containing nes nodes with top element being sink node and bottom most being the targetSource node.
-     */
-    deque<NESTopologyEntryPtr> getCandidateNESNodes(const NESTopologyGraphPtr nesGraphPtr,
-                                                    const NESTopologyEntryPtr targetSource) const;
-
     void convertFwdOptr(const Schema& schema, ExecutionNodePtr executionNodePtr) const;
 
     /**
      * @brief Add forward operators between source and sink nodes.
      * @param sourceNodes : list of source nodes
-     * @param nesTopologyGraphPtr : nes topology graph
+     * @param rootNode : sink node
      * @param nesExecutionPlanPtr : nes execution plan
      */
-    void addForwardOperators(const deque<NESTopologyEntryPtr> sourceNodes, const NESTopologyGraphPtr nesTopologyGraphPtr,
+    void addForwardOperators(const deque<NESTopologyEntryPtr> sourceNodes, const NESTopologyEntryPtr rootNode,
                              NESExecutionPlanPtr nesExecutionPlanPtr) const;
 };
 
