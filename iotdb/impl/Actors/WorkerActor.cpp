@@ -10,7 +10,7 @@ namespace NES {
 WorkerActor::WorkerActor(actor_config &cfg, string ip, uint16_t publish_port,
                          uint16_t receive_port)
     :
-    stateful_actor(cfg) {
+    stateful_actor(cfg){
   this->state.workerPtr = std::make_unique<WorkerService>(
       WorkerService(std::move(ip), publish_port, receive_port));
 }
@@ -221,8 +221,10 @@ bool WorkerActor::connecting(const std::string &host, uint16_t port) {
   auto mm = this->system().middleman().actor_handle();
   bool connected = false;
   scoped_actor self { this->system() };
+//  scoped_actor self { *actorSystem };
+
   self->request(mm, infinite, connect_atom::value, host, port).receive(
-      [=, &connected](const node_id&, strong_actor_ptr &serv,
+      [=, &connected](const node_id& nId, strong_actor_ptr &serv,
                       const std::set<std::string> &ifs) {
         if (!serv) {
           aout(this) << R"(*** no server found at ")" << host << R"(":)" << port
@@ -232,7 +234,7 @@ bool WorkerActor::connecting(const std::string &host, uint16_t port) {
           aout(this) << R"(*** typed actor found at ")" << host << R"(":)"
                      << port << ", but expected an untyped actor " << endl;
         }
-        aout(this) << "*** successfully connected to server" << endl;
+        aout(this) << "*** successfully connected to server with id=" << nId << endl;
         this->state.current_server = serv;
         auto coordinator = actor_cast<actor>(serv);
         //TODO: make getPhysicalStreamConfig serializable with the caf framework

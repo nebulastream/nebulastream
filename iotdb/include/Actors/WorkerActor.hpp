@@ -86,7 +86,6 @@ class WorkerActor : public stateful_actor<WorkerState> {
   behavior init();
   behavior unconnected();
   behavior running(const actor &coordinator);
-
   /**
    * @brief the ongoing connection state in the TSM
    * if connection works go to running state, otherwise go to unconnected state

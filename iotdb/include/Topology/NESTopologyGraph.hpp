@@ -162,6 +162,14 @@ class NESTopologyGraph {
    */
   const std::vector<NESTopologyEntryPtr> getVertexByIp(std::string ip) const;
 
+  /**
+   * @brief method to get all nodes with this id
+   * @param id as size_t
+   * @return vector containing the nodes as NESTopologyEntryPtr
+   */
+  const std::vector<NESTopologyEntryPtr> getVertexById(size_t id) const;
+
+
  private:
   nesGraph_t graph;
 };

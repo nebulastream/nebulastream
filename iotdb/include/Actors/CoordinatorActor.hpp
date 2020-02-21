@@ -27,6 +27,7 @@ namespace NES {
 struct CoordinatorState {
     unordered_map<caf::strong_actor_ptr, NESTopologyEntryPtr> actorTopologyMap;
     unordered_map<NESTopologyEntryPtr, caf::strong_actor_ptr> topologyActorMap;
+    unordered_map<size_t, caf::strong_actor_ptr> idToActorMap;
 };
 
 /**
