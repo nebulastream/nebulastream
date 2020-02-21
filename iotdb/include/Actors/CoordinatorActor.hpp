@@ -138,7 +138,6 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
 
     /**
      * @brief: deploy the user query
-     *
      * @param queryId
      */
     void deployQuery(const string& queryId);
