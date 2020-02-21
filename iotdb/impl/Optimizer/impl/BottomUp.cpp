@@ -4,9 +4,9 @@
 #include <Util/Logger.hpp>
 #include <utility>
 
-using namespace NES;
 using namespace std;
 
+namespace NES {
 NESExecutionPlanPtr BottomUp::initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan) {
 
     const OperatorPtr sinkOperator = inputQuery->getRoot();
@@ -79,7 +79,8 @@ void BottomUp::placeOperators(NESExecutionPlanPtr executionPlanPtr, const NESTop
                     "Can not schedule the operator. No free resource available.");
             }
 
-            NES_DEBUG("BottomUp: suitable placement for operator " << targetOperator->toString() << " is " << node->toString())
+            NES_DEBUG("BottomUp: suitable placement for operator " << targetOperator->toString() << " is "
+                                                                   << node->toString())
 
             // If the selected nes node was already used by another operator for placement then do not create a
             // new execution node rather add operator to existing node.
@@ -201,28 +202,6 @@ NESTopologyEntryPtr BottomUp::findSuitableNESNodeForOperatorPlacement(const Proc
     return node;
 };
 
-OperatorPtr BottomUp::getSourceOperator(OperatorPtr root) {
 
-    deque<OperatorPtr> operatorTraversQueue = {root};
 
-    while (!operatorTraversQueue.empty()) {
-
-        while (!operatorTraversQueue.empty()) {
-            auto optr = operatorTraversQueue.front();
-            operatorTraversQueue.pop_front();
-
-            if (optr->getOperatorType() == OperatorType::SOURCE_OP) {
-                return optr;
-            }
-
-            if (optr->getChildren().empty()) {
-                return nullptr;
-            }
-
-            vector<OperatorPtr> children = optr->getChildren();
-            copy(children.begin(), children.end(), back_inserter(operatorTraversQueue));
-        }
-    }
-    return nullptr;
-};
-
+}

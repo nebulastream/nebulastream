@@ -1,8 +1,9 @@
 add_source_iotdb(
+        impl/BottomUp.cpp
+        impl/TopDown.cpp
+        impl/LowLinkLatency.cpp
         NESPlacementOptimizer.cpp
         NESOptimizer.cpp
         NESExecutionPlan.cpp
-        impl/BottomUp.cpp
-        impl/TopDown.cpp
         utils/PathFinder.cpp
 )

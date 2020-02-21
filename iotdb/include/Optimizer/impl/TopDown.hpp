@@ -1,11 +1,14 @@
 #ifndef TOPDOWN_HPP
 #define TOPDOWN_HPP
 
-#include <Operators/Operator.hpp>
+
 #include <stack>
-#include "../NESPlacementOptimizer.hpp"
+#include <Optimizer/NESPlacementOptimizer.hpp>
 
 namespace NES {
+
+class Operator;
+typedef std::shared_ptr<Operator> OperatorPtr;
 
 using namespace std;
 

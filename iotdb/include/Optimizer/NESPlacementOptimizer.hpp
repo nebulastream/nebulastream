@@ -70,6 +70,13 @@ class NESPlacementOptimizer {
      */
     void addForwardOperators(const deque<NESTopologyEntryPtr> sourceNodes, const NESTopologyEntryPtr rootNode,
                              NESExecutionPlanPtr nesExecutionPlanPtr) const;
+
+    /**
+     * @brief This method returns the source operator in the user input query
+     * @param root: the sink operator of the query
+     * @return source operator pointer
+     */
+    OperatorPtr getSourceOperator(OperatorPtr root);
 };
 
 }
