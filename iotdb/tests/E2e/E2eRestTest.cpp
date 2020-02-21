@@ -234,13 +234,13 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputTwoWorker) {
   cout << " start coordinator" << endl;
   remove(outputFilePath.c_str());
 
-  string cmdCoord = "./nesCoordinator --actor_port=12346";
+  string cmdCoord = "../nesCoordinator --actor_port=12346";
   bp::child coordinatorProc(cmdCoord.c_str());
 
   cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
   sleep(2);
 
-  string cmdWrk = "./nesWorker --actor_port=12346";
+  string cmdWrk = "../nesWorker --actor_port=12346";
   bp::child workerProc1(cmdWrk.c_str());
   cout << "started worker 1 with pid = " << workerProc1.id() << endl;
 

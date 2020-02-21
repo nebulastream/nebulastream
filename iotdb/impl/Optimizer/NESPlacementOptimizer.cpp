@@ -5,6 +5,7 @@
 #include <Optimizer/impl/TopDown.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <SourceSink/SinkCreator.hpp>
+#include <Optimizer/utils/PathFinder.hpp>
 
 namespace NES {
 
@@ -195,66 +196,23 @@ void NESPlacementOptimizer::completeExecutionGraphWithNESTopology(NESExecutionPl
     }
 };
 
-deque<NESTopologyEntryPtr> NESPlacementOptimizer::getCandidateNESNodes(const NESTopologyGraphPtr nesGraphPtr,
-                                                                       const NESTopologyEntryPtr targetSource) const {
-
-    deque<NESTopologyEntryPtr> candidateNodes = {};
-
-    const NESTopologyEntryPtr rootNode = nesGraphPtr->getRoot();
-
-    deque<int> visitedNodes = {};
-    candidateNodes.push_back(rootNode);
-
-    while (!candidateNodes.empty()) {
-
-        NESTopologyEntryPtr back = candidateNodes.back();
-
-        if (back->getId() == targetSource->getId()) {
-            break;
-        }
-
-        const vector<NESTopologyLinkPtr> allEdgesToNode = nesGraphPtr->getAllEdgesToNode(back);
-
-        if (!allEdgesToNode.empty()) {
-            bool found = false;
-            for (NESTopologyLinkPtr nesLink: allEdgesToNode) {
-                const NESTopologyEntryPtr sourceNode = nesLink->getSourceNode();
-                if (!count(visitedNodes.begin(), visitedNodes.end(), sourceNode->getId())) {
-                    candidateNodes.push_back(sourceNode);
-                    found = true;
-                    break;
-                }
-            }
-            if (!found) {
-                candidateNodes.pop_back();
-            }
-        } else {
-            candidateNodes.pop_back();
-        }
-
-        if (!count(visitedNodes.begin(), visitedNodes.end(), back->getId())) {
-            visitedNodes.push_front(back->getId());
-        }
-    }
-    return candidateNodes;
-};
-
 void NESPlacementOptimizer::addForwardOperators(const deque<NESTopologyEntryPtr> sourceNodes,
-                                                const NESTopologyGraphPtr nesTopologyGraphPtr,
+                                                const NESTopologyEntryPtr rootNode,
                                                 NESExecutionPlanPtr nesExecutionPlanPtr) const {
+
+    PathFinder pathFinder;
 
     for (NESTopologyEntryPtr targetSource: sourceNodes) {
 
         //Find the list of nodes connecting the source and destination nodes
-        deque<NESTopologyEntryPtr> candidateNodes = getCandidateNESNodes(nesTopologyGraphPtr, targetSource);
+        std::vector<NESTopologyEntryPtr> candidateNodes = pathFinder.findPathBetween(targetSource, rootNode);
 
-        while (!candidateNodes.empty()) {
-            shared_ptr<NESTopologyEntry>& node = candidateNodes.front();
-            candidateNodes.pop_front();
-            if (node->getCpuCapacity() == node->getRemainingCpuCapacity()) {
-                nesExecutionPlanPtr->createExecutionNode("FWD", to_string(node->getId()), node,
+        for(NESTopologyEntryPtr candidateNode: candidateNodes) {
+
+            if (candidateNode->getCpuCapacity() == candidateNode->getRemainingCpuCapacity()) {
+                nesExecutionPlanPtr->createExecutionNode("FWD", to_string(candidateNode->getId()), candidateNode,
                     /**executableOperator**/nullptr);
-                node->reduceCpuCapacity(1);
+                candidateNode->reduceCpuCapacity(1);
             }
         }
     }
