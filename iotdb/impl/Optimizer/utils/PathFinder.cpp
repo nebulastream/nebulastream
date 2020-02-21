@@ -62,16 +62,22 @@ std::vector<NESTopologyEntryPtr> PathFinder::findPathWithMinLinkLatency(NESTopol
     if (pathsWithLinks.size() > 1) {
         // We select the path whose maximum link latency is minimum among the selected path
         size_t minOfMaxLatency = UINT32_MAX;
+        size_t minTotalLatency = UINT32_MAX;
         for (std::vector<NESTopologyLinkPtr> path : pathsWithLinks) {
             size_t maxLinkLatency = 0;
+            size_t totalLatency = 0;
             for (auto link : path) {
+                totalLatency = totalLatency + link->getLinkLatency();
                 if (link->getLinkLatency() > maxLinkLatency) {
                     maxLinkLatency = link->getLinkLatency();
                 }
             }
 
-            if (minOfMaxLatency > maxLinkLatency) {
+            if (minOfMaxLatency > maxLinkLatency
+                || (minOfMaxLatency == maxLinkLatency && minTotalLatency > totalLatency)) {
+
                 minOfMaxLatency = maxLinkLatency;
+                minTotalLatency = totalLatency;
                 selectedPath = path;
             }
         }
