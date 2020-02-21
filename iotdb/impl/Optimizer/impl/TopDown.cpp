@@ -1,7 +1,9 @@
 #include "Optimizer/impl/TopDown.hpp"
+#include <Operators/Operator.hpp>
 #include <Util/Logger.hpp>
 #include <Optimizer/utils/PathFinder.hpp>
-using namespace NES;
+
+namespace NES {
 
 NESExecutionPlanPtr TopDown::initializeExecutionPlan(
     InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlanPtr) {
@@ -35,7 +37,7 @@ NESExecutionPlanPtr TopDown::initializeExecutionPlan(
     completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlanPtr);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.
-    Schema schema= inputQuery->getSourceStream()->getSchema();
+    Schema schema = inputQuery->getSourceStream()->getSchema();
     addSystemGeneratedSourceSinkOperators(schema, nesExecutionPlanPtr);
 
     return nesExecutionPlanPtr;
@@ -154,3 +156,6 @@ void TopDown::addOperatorToExistingNode(OperatorPtr operatorPtr, ExecutionNodePt
     executionNode->addOperatorId(operatorPtr->getOperatorId());
     executionNode->getNESNode()->reduceCpuCapacity(1);
 }
+
+}
+

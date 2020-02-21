@@ -3,6 +3,8 @@
 #include <exception>
 #include <Optimizer/impl/BottomUp.hpp>
 #include <Optimizer/impl/TopDown.hpp>
+#include <Optimizer/impl/LowLinkLatency.hpp>
+#include <Operators/Operator.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <Optimizer/utils/PathFinder.hpp>
@@ -15,8 +17,10 @@ std::shared_ptr<NESPlacementOptimizer> NESPlacementOptimizer::getOptimizer(std::
         return std::make_unique<BottomUp>(BottomUp());
     } else if (optimizerName == "TopDown") {
         return std::make_unique<TopDown>(TopDown());
+    } else if (optimizerName == "Latency") {
+        return std::make_unique<LowLinkLatency>(LowLinkLatency());
     } else {
-      throw std::runtime_error(std::string("NESPlacementOptimizer: Unknown optimizer type: ") + optimizerName);
+      throw std::invalid_argument("NESPlacementOptimizer: Unknown optimizer type: " + optimizerName);
     }
 }
 
@@ -217,5 +221,30 @@ void NESPlacementOptimizer::addForwardOperators(const deque<NESTopologyEntryPtr>
         }
     }
 }
+
+OperatorPtr NESPlacementOptimizer::getSourceOperator(OperatorPtr root) {
+
+    deque<OperatorPtr> operatorTraversQueue = {root};
+
+    while (!operatorTraversQueue.empty()) {
+
+        while (!operatorTraversQueue.empty()) {
+            auto optr = operatorTraversQueue.front();
+            operatorTraversQueue.pop_front();
+
+            if (optr->getOperatorType() == OperatorType::SOURCE_OP) {
+                return optr;
+            }
+
+            if (optr->getChildren().empty()) {
+                return nullptr;
+            }
+
+            vector<OperatorPtr> children = optr->getChildren();
+            copy(children.begin(), children.end(), back_inserter(operatorTraversQueue));
+        }
+    }
+    return nullptr;
+};
 
 }

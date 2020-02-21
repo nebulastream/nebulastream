@@ -1,11 +1,14 @@
 #ifndef BOTTOMUP_HPP
 #define BOTTOMUP_HPP
 
-#include <Operators/Operator.hpp>
+
 #include <iostream>
-#include "../NESPlacementOptimizer.hpp"
+#include <Optimizer/NESPlacementOptimizer.hpp>
 
 namespace NES {
+
+class Operator;
+typedef std::shared_ptr<Operator> OperatorPtr;
 
 using namespace std;
 
@@ -51,13 +54,6 @@ class BottomUp : public NESPlacementOptimizer {
     NESTopologyEntryPtr findSuitableNESNodeForOperatorPlacement(const ProcessOperator& operatorToProcess,
                                                                 NESTopologyGraphPtr nesTopologyGraphPtr,
                                                                 NESTopologyEntryPtr sourceNodePtr);
-
-    /**
-     * @brief This method returns the source operator in the user input query
-     * @param root: the sink operator of the query
-     * @return source operator pointer
-     */
-    OperatorPtr getSourceOperator(OperatorPtr root);
 };
 }
 
