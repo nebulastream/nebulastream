@@ -1,5 +1,6 @@
 #include "Optimizer/impl/TopDown.hpp"
 #include <Util/Logger.hpp>
+#include <Optimizer/utils/PathFinder.hpp>
 using namespace NES;
 
 NESExecutionPlanPtr TopDown::initializeExecutionPlan(
@@ -25,7 +26,7 @@ NESExecutionPlanPtr TopDown::initializeExecutionPlan(
     placeOperators(nesExecutionPlanPtr, sinkOperator, sourceNodes, nesTopologyGraphPtr);
 
     NES_INFO("TopDown: Adding forward operators.");
-    addForwardOperators(sourceNodes, nesTopologyGraphPtr, nesExecutionPlanPtr);
+    addForwardOperators(sourceNodes, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
 
     NES_INFO("TopDown: Removing non resident operators from the execution nodes.");
     removeNonResidentOperators(nesExecutionPlanPtr);
@@ -43,13 +44,15 @@ NESExecutionPlanPtr TopDown::initializeExecutionPlan(
 void TopDown::placeOperators(NESExecutionPlanPtr executionPlanPtr, OperatorPtr sinkOperator,
                              deque<NESTopologyEntryPtr> nesSourceNodes, NESTopologyGraphPtr nesTopologyGraphPtr) {
 
+    PathFinder pathFinder;
+
     for (NESTopologyEntryPtr nesSourceNode : nesSourceNodes) {
 
         deque<OperatorPtr> operatorsToProcess = {sinkOperator};
 
         // Find the nodes where we can place the operators. First node will be sink and last one will be the target
         // source.
-        deque<NESTopologyEntryPtr> candidateNodes = getCandidateNESNodes(nesTopologyGraphPtr, nesSourceNode);
+        std::vector<NESTopologyEntryPtr> candidateNodes = pathFinder.findPathBetween(nesSourceNode, nesTopologyGraphPtr->getRoot());
 
         if (candidateNodes.empty()) {
             throw std::runtime_error("No path exists between sink and source");
@@ -64,12 +67,12 @@ void TopDown::placeOperators(NESExecutionPlanPtr executionPlanPtr, OperatorPtr s
 
                 string newOperatorName = "(OP-" + std::to_string(targetOperator->getOperatorId()) + ")";
 
-                for (NESTopologyEntryPtr node : candidateNodes) {
+                for (auto node = candidateNodes.rbegin(); node != candidateNodes.rend(); node++) {
 
-                    if (executionPlanPtr->hasVertex(node->getId())) {
+                    if (executionPlanPtr->hasVertex(node.operator*()->getId())) {
 
                         const ExecutionNodePtr existingExecutionNode = executionPlanPtr
-                            ->getExecutionNode(node->getId());
+                            ->getExecutionNode(node.operator*()->getId());
 
                         size_t operatorId = targetOperator->getOperatorId();
 
@@ -87,14 +90,14 @@ void TopDown::placeOperators(NESExecutionPlanPtr executionPlanPtr, OperatorPtr s
                         }
                     }
 
-                    if (node->getRemainingCpuCapacity() > 0) {
+                    if (node.operator*()->getRemainingCpuCapacity() > 0) {
 
-                        if (executionPlanPtr->hasVertex(node->getId())) {
+                        if (executionPlanPtr->hasVertex(node.operator*()->getId())) {
 
-                            const ExecutionNodePtr executionNode = executionPlanPtr->getExecutionNode(node->getId());
+                            const ExecutionNodePtr executionNode = executionPlanPtr->getExecutionNode(node.operator*()->getId());
                             addOperatorToExistingNode(targetOperator, executionNode);
                         } else {
-                            createNewExecutionNode(executionPlanPtr, targetOperator, node);
+                            createNewExecutionNode(executionPlanPtr, targetOperator, node.operator*());
                         }
 
                         // Add child operators for placement
