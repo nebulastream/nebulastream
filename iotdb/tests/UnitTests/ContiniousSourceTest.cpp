@@ -96,7 +96,7 @@ TEST_F(ContiniousSourceTest, startWithInputFile) {
   std::string id = crd->executeQuery(queryString, "BottomUp");
   EXPECT_NE(id, "");
 
-  sleep(10);
+  sleep(2);
   bool retStopWrk = wrk->stop();
   EXPECT_TRUE(retStopWrk);
 
