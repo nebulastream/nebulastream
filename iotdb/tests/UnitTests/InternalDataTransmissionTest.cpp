@@ -6,6 +6,7 @@
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <SourceSink/SinkCreator.hpp>
+#include <SourceSink/DefaultSource.hpp>
 #include <Util/UtilityFunctions.hpp>
 
 using namespace NES;
@@ -58,7 +59,7 @@ TEST_F(InternalDataTransmissionTest, testInternalTransmission) {
   PipelineStagePtr stage = code_gen->compile(CompilerArgs());
   QueryExecutionPlanPtr qep1(new GeneratedQueryExecutionPlan(stage));
 
-  DataSourcePtr source1 = createTestDataSourceWithSchema(query->getSourceStream()->getSchema());
+  DataSourcePtr source1 = createDefaultDataSourceWithSchemaForOneBuffer(query->getSourceStream()->getSchema());
   Schema sch1 = Schema::create().addField("sum", BasicType::UINT32);
   //DataSinkPtr sink1 = std::make_shared<ForwardSink>(query->source_stream->getSchema(), host, port);
   DataSinkPtr sink1 = createPrintSinkWithSchema(query->getSourceStream()->getSchema(), cout);

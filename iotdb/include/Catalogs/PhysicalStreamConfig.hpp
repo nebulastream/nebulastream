@@ -7,7 +7,7 @@ namespace NES {
 
 /**
  * @brief this struct covers the information about the attached sensor
- * @param sourceType: string of data source, e.g., OneGeneratorSource or CSVSource
+ * @param sourceType: string of data source, e.g., DefaultSource or CSVSource
  * @param sourceConf: parameter for the data source, e.g., numberOfProducedBuffer or file path
  * @param physicalStreamName: name of the stream created by this source
  * @param logicalStreamName: name of the logical steam where this physical stream contributes to
@@ -15,7 +15,7 @@ namespace NES {
 struct PhysicalStreamConfig {
 
   PhysicalStreamConfig() {
-    sourceType = "OneGeneratorSource";
+    sourceType = "DefaultSource";
     sourceConfig = "1";
     physicalStreamName = "default_physical";
     logicalStreamName = "default_logical";

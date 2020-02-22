@@ -24,9 +24,9 @@ class GeneratorSource : public DataSource {
    * @param number of buffer that should be processed
    * @param via template, the functor that determines what to do
    */
-  GeneratorSource(const Schema &schema, const uint64_t pNum_buffers_to_process)
+  GeneratorSource(const Schema &schema, const uint64_t numbersOfBufferToProduce)
       : DataSource(schema) {
-    this->numBuffersToProcess = pNum_buffers_to_process;
+    this->numBuffersToProcess = numbersOfBufferToProduce;
   }
   /**
    * @brief override function to create one buffer
@@ -49,23 +49,6 @@ class GeneratorSource : public DataSource {
     ar & boost::serialization::base_object<DataSource>(*this);
   }
 };
-/*template<typename F>
-const std::string GeneratorSource<F>::toString() const {
-  std::stringstream ss;
-  ss << "GENERATOR_SOURCE(SCHEMA(" << schema.toString();
-  ss << "), NUM_BUFFERS=" << num_buffers_to_process << "))";
-  return ss.str();
-}
-
-template<typename F>
-TupleBufferPtr GeneratorSource<F>::receiveData() {
-  // we wait until the buffer is filled
-  TupleBufferPtr buf = functor();
-  generatedTuples += buf->getNumberOfTuples();
-  generatedBuffers++;
-
-  return buf;
-}*/
 
 }
 #endif /* INCLUDE_GENERATORSOURCE_H_ */

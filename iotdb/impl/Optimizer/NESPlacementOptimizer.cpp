@@ -1,6 +1,7 @@
 #include "../../include/Optimizer/NESPlacementOptimizer.hpp"
 
 #include <iostream>
+#include <exception>
 #include <Optimizer/impl/BottomUp.hpp>
 #include <Optimizer/impl/TopDown.hpp>
 #include <SourceSink/SourceCreator.hpp>
@@ -16,7 +17,7 @@ std::shared_ptr<NESPlacementOptimizer> NESPlacementOptimizer::getOptimizer(std::
     } else if (optimizerName == "TopDown") {
         return std::make_unique<TopDown>(TopDown());
     } else {
-        throw "Unknown optimizer type : " + optimizerName;
+      throw std::runtime_error(std::string("NESPlacementOptimizer: Unknown optimizer type: ") + optimizerName);
     }
 }
 

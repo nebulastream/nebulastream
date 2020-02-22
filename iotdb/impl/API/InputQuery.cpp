@@ -70,7 +70,7 @@ InputQuery::~InputQuery() {
 InputQuery InputQuery::from(Stream& stream) {
     InputQuery q(std::make_shared<Stream>(stream));
     OperatorPtr op = createSourceOperator(
-        createTestDataSourceWithSchema(stream.getSchema()));
+        createDefaultDataSourceWithSchemaForOneBuffer(stream.getSchema()));
     int operatorId = q.getNextOperatorId();
     op->setOperatorId(operatorId);
     q.root = op;

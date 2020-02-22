@@ -399,7 +399,7 @@ TEST_F(StreamCatalogRemoteTest, add_physical_to_existing_logical_stream_remote_t
   PhysicalStreamConfig conf;
   conf.logicalStreamName = "default_logical";
   conf.physicalStreamName = "physical_test";
-  conf.sourceType = "OneGeneratorSource";
+  conf.sourceType = "DefaultSource";
   conf.sourceConfig = "2";
 
   success = false;
@@ -493,7 +493,7 @@ TEST_F(StreamCatalogRemoteTest, add_physical_to_new_logical_stream_remote_test) 
   PhysicalStreamConfig conf;
   conf.logicalStreamName = "testStream";
   conf.physicalStreamName = "physical_test";
-  conf.sourceType = "OneGeneratorSource";
+  conf.sourceType = "DefaultSource";
   conf.sourceConfig = "2";
 
   success = false;

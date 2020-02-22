@@ -47,7 +47,7 @@ bool Dispatcher::registerQueryWithStart(QueryExecutionPlanPtr qep) {
         //start elements
         auto sources = qep->getSources();
         for (const auto& source : sources) {
-            NES_DEBUG("Dispatcher: start source " << source)
+            NES_DEBUG("Dispatcher: start source " << source << " str=" << source->toString())
             source->start();
         }
 
