@@ -262,7 +262,7 @@ TEST_F(CoordinatorServiceTest, test_code_gen) {
     auto queryCompiler = createDefaultQueryCompiler();
     QueryExecutionPlanPtr qep = queryCompiler->compile(query.getRoot());
     // Create new Source and Sink
-    DataSourcePtr source = createTestDataSourceWithSchema(schema);
+    DataSourcePtr source = createDefaultDataSourceWithSchemaForOneBuffer(schema);
     source->setNumBuffersToProcess(10);
     qep->addDataSource(source);
 

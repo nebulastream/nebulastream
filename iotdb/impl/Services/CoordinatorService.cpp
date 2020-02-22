@@ -45,7 +45,7 @@ NESTopologyEntryPtr CoordinatorService::register_sensor(size_t id, const string&
 
     DataSourcePtr source;
     if (streamConf.sourceType != "CSVSource"
-        && streamConf.sourceType != "OneGeneratorSource") {
+        && streamConf.sourceType != "DefaultSource") {
         NES_ERROR(
             "Coordinator: error source type " << streamConf.sourceType << " is not supported")
         throw Exception(

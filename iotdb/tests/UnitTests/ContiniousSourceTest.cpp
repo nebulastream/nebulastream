@@ -73,8 +73,7 @@ TEST_F(ContiniousSourceTest, startWithInputFile) {
 
   //register logical stream
   std::string testSchema =
-      "Schema schema = Schema::create().addField(\"no\", BasicType::UINT32).addField("
-          "\"val\", BasicType::UINT64);";
+      "Schema schema = Schema::create().addField(createField(\"campaign_id\", UINT64));";
   std::string testSchemaFileName = "testSchema.hpp";
   std::ofstream out(testSchemaFileName);
   out << testSchema;
@@ -85,18 +84,19 @@ TEST_F(ContiniousSourceTest, startWithInputFile) {
   PhysicalStreamConfig conf;
   conf.logicalStreamName = "testStream";
   conf.physicalStreamName = "physical_test";
-  conf.sourceType = "OneGeneratorSource";
-  conf.sourceConfig = "2";
+  conf.sourceType = "DefaultSource";
+  conf.sourceConfig = "10";
   wrk->registerPhysicalStream(conf.sourceType, conf.sourceConfig, conf.physicalStreamName,
                 conf.logicalStreamName);
 
+
   //register query
   std::string queryString =
-        "InputQuery::from(testStream).filter(testStream[\"id\"] > 42).print(std::cout); ";
-  std::string id = crd->executeQuery(queryString, "bottomUp");
+        "InputQuery::from(testStream).filter(testStream[\"campaign_id\"] > 42).print(std::cout); ";
+  std::string id = crd->executeQuery(queryString, "BottomUp");
   EXPECT_NE(id, "");
 
-  sleep(1);
+  sleep(10);
   bool retStopWrk = wrk->stop();
   EXPECT_TRUE(retStopWrk);
 
@@ -105,78 +105,5 @@ TEST_F(ContiniousSourceTest, startWithInputFile) {
   EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(ContiniousSourceTest, start_with_connect_stop_worker_coordinator) {
-  cout << "start coordinator" << endl;
-  NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
-  size_t port = crd->startCoordinator(/**blocking**/false);
-  EXPECT_NE(port, 0);
-  cout << "coordinator started successfully" << endl;
-
-  cout << "start worker 1" << endl;
-  NesWorkerPtr wrk1 = std::make_shared<NesWorker>();
-  bool retStart1 = wrk1->start(/**blocking**/false, /**withConnect**/true,
-                               port);
-  EXPECT_TRUE(retStart1);
-  cout << "worker1 started successfully" << endl;
-
-  cout << "start worker 2" << endl;
-  NesWorkerPtr wrk2 = std::make_shared<NesWorker>();
-  bool retStart2 = wrk2->start(/**blocking**/false, /**withConnect**/true,
-                               port);
-  EXPECT_TRUE(retStart2);
-  cout << "worker2 started successfully" << endl;
-
-  sleep(1);
-  bool retStopWrk1 = wrk1->stop();
-  EXPECT_TRUE(retStopWrk1);
-
-  bool retStopWrk2 = wrk2->stop();
-  EXPECT_TRUE(retStopWrk2);
-
-  sleep(1);
-  bool retStopCord = crd->stopCoordinator();
-  EXPECT_TRUE(retStopCord);
-}
-
-TEST_F(ContiniousSourceTest, start_connect_stop_without_disconnect_worker_coordinator) {
-  cout << "start coordinator" << endl;
-  NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
-  size_t port = crd->startCoordinator(/**blocking**/false);
-  EXPECT_NE(port, 0);
-  cout << "coordinator started successfully" << endl;
-
-  cout << "start worker 1" << endl;
-  NesWorkerPtr wrk1 = std::make_shared<NesWorker>();
-  bool retStart1 = wrk1->start(/**blocking**/false, /**withConnect**/false,
-                               port);
-  EXPECT_TRUE(retStart1);
-  cout << "worker1 started successfully" << endl;
-
-  cout << "start worker 2" << endl;
-  NesWorkerPtr wrk2 = std::make_shared<NesWorker>();
-  bool retStart2 = wrk2->start(/**blocking**/false, /**withConnect**/false,
-                               port);
-  EXPECT_TRUE(retStart2);
-  cout << "worker2 started successfully" << endl;
-
-  sleep(1);
-  bool retConWrk1 = wrk1->connect();
-  EXPECT_TRUE(retConWrk1);
-  cout << "worker 1 started connected " << endl;
-
-  bool retConWrk2 = wrk2->connect();
-  EXPECT_TRUE(retConWrk2);
-  cout << "worker 2 started connected " << endl;
-
-  sleep(1);
-  bool retStopCord = crd->stopCoordinator();
-  EXPECT_TRUE(retStopCord);
-
-  bool retStopWrk1 = wrk1->stop();
-  EXPECT_TRUE(retStopWrk1);
-
-  bool retStopWrk2 = wrk2->stop();
-  EXPECT_TRUE(retStopWrk2);
-}
 
 }

@@ -89,7 +89,7 @@ InputQueryPtr UtilityFunctions::createQueryFromCodeString(
 
     } catch (...) {
       NES_ERROR(
-          "Failed to create the query from input code string: " << query_code_snippet);
+          "UtilityFunctions: Failed to create the query from input code string: " << query_code_snippet);
       throw "Failed to create the query from input code string";
     }
   }

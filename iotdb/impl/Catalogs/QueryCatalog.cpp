@@ -25,7 +25,6 @@ string QueryCatalog::registerQuery(const string& queryString,
         NES_ERROR("QueryCatalog: queries are not allowed to specify schemas anymore.")
         throw Exception("Queries are not allowed to define schemas anymore");
     }
-
     try {
         InputQueryPtr inputQueryPtr = UtilityFunctions::createQueryFromCodeString(
             queryString);
@@ -48,8 +47,9 @@ string QueryCatalog::registerQuery(const string& queryString,
         NES_DEBUG("number of queries after insert=" << queries.size())
 
         return queryId;
-    } catch (...) {
-        NES_ERROR(
+    } catch (const std::exception &exc) {
+      NES_ERROR("QueryCatalog:_exception:" << exc.what())
+      NES_ERROR(
             "QueryCatalog: Unable to process input request with: queryString: " << queryString << "\n strategy: "
                                                                                 << optimizationStrategyName);
         return nullptr;
