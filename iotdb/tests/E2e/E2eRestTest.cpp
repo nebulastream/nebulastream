@@ -285,10 +285,8 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputTwoWorker) {
 
   sleep(2);
 
-  ifstream my_file(outputFilePath);
-  EXPECT_TRUE(my_file.good());
-
   std::ifstream ifs(outputFilePath.c_str());
+  EXPECT_TRUE(ifs.good());
   std::string content((std::istreambuf_iterator<char>(ifs)),
                       (std::istreambuf_iterator<char>()));
 
