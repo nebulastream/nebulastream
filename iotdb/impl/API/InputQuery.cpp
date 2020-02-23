@@ -84,15 +84,25 @@ InputQuery InputQuery::from(Stream &stream) {
   OperatorPtr op;
   if (type == "DefaultSource") {
     if (conf == "1") {
+      NES_DEBUG("InputQuery::from create default source for one buffer")
       op = createSourceOperator(
           createDefaultDataSourceWithSchemaForOneBuffer(stream.getSchema()));
-    }
-    else
-    {
+    } else {
+      NES_DEBUG(
+          "InputQuery::from create default source for " << conf << " buffers")
+
       op = createSourceOperator(
-            createDefaultDataSourceWithSchemaForVarBuffers(stream.getSchema(), atoi(conf.c_str())));
+          createDefaultDataSourceWithSchemaForVarBuffers(stream.getSchema(),
+                                                         atoi(conf.c_str())));
     }
-    //TODO: add CSV operator here
+  } else if (type == "CSVSource") {
+    NES_DEBUG(
+        "InputQuery::from create default source for " << conf << " buffers")
+
+    op = createSourceOperator(createCSVFileSource(stream.getSchema(), conf));
+  } else {
+    NES_DEBUG("InputQuery::from source type " << type << " not supported")
+    NES_FATAL_ERROR("type not supported")
   }
 
   int operatorId = q.getNextOperatorId();

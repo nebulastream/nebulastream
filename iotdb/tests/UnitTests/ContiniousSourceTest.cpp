@@ -54,7 +54,7 @@ class ContiniousSourceTest : public testing::Test {
 
 };
 
-TEST_F(ContiniousSourceTest, startWithInputFile) {
+TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromDefaultSourcePrint) {
   cout << "start coordinator" << endl;
   NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
   size_t port = crd->startCoordinator(/**blocking**/false);
@@ -86,13 +86,12 @@ TEST_F(ContiniousSourceTest, startWithInputFile) {
   conf.physicalStreamName = "physical_test";
   conf.sourceType = "DefaultSource";
   conf.sourceConfig = "10";
-  wrk->registerPhysicalStream(conf.sourceType, conf.sourceConfig, conf.physicalStreamName,
-                conf.logicalStreamName);
-
+  wrk->registerPhysicalStream(conf.sourceType, conf.sourceConfig,
+                              conf.physicalStreamName, conf.logicalStreamName);
 
   //register query
   std::string queryString =
-        "InputQuery::from(testStream).filter(testStream[\"campaign_id\"] > 42).print(std::cout); ";
+      "InputQuery::from(testStream).filter(testStream[\"campaign_id\"] > 42).print(std::cout); ";
   std::string id = crd->executeQuery(queryString, "BottomUp");
   EXPECT_NE(id, "");
 
@@ -105,5 +104,189 @@ TEST_F(ContiniousSourceTest, startWithInputFile) {
   EXPECT_TRUE(retStopCord);
 }
 
+TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile) {
+  cout << "start coordinator" << endl;
+  NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
+  size_t port = crd->startCoordinator(/**blocking**/false);
+  EXPECT_NE(port, 0);
+  cout << "coordinator started successfully" << endl;
+
+  cout << "start worker" << endl;
+  NesWorkerPtr wrk = std::make_shared<NesWorker>();
+  bool retStart = wrk->start(/**blocking**/false, /**withConnect**/false, port);
+  EXPECT_TRUE(retStart);
+  cout << "worker started successfully" << endl;
+
+  bool retConWrk = wrk->connect();
+  EXPECT_TRUE(retConWrk);
+  cout << "worker connected " << endl;
+
+  //register logical stream
+  std::string testSchema =
+      "Schema schema = Schema::create().addField(createField(\"campaign_id\", UINT64));";
+  std::string testSchemaFileName = "testSchema.hpp";
+  std::ofstream out(testSchemaFileName);
+  out << testSchema;
+  out.close();
+  wrk->registerLogicalStream("testStream", testSchemaFileName);
+
+  //register physical stream
+  PhysicalStreamConfig conf;
+  conf.logicalStreamName = "testStream";
+  conf.physicalStreamName = "physical_test";
+  conf.sourceType = "DefaultSource";
+  conf.sourceConfig = "5";
+  wrk->registerPhysicalStream(conf.sourceType, conf.sourceConfig,
+                              conf.physicalStreamName, conf.logicalStreamName);
+
+  std::string outputFilePath = "blob.txt";
+  remove(outputFilePath.c_str());
+
+  //register query
+  std::string queryString =
+      "InputQuery::from(testStream).filter(testStream[\"campaign_id\"] > 42).writeToFile(\""
+          + outputFilePath + "\"); ";
+  std::string id = crd->executeQuery(queryString, "BottomUp");
+  EXPECT_NE(id, "");
+
+  sleep(2);
+  std::ifstream ifs(outputFilePath.c_str());
+  EXPECT_TRUE(ifs.good());
+  std::string content((std::istreambuf_iterator<char>(ifs)),
+                      (std::istreambuf_iterator<char>()));
+
+  string expectedContent =
+      "+----------------------------------------------------+\n"
+      "|campaign_id:UINT64|\n"
+      "+----------------------------------------------------+\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "+----------------------------------------------------++----------------------------------------------------+\n"
+      "|campaign_id:UINT64|\n"
+      "+----------------------------------------------------+\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "+----------------------------------------------------++----------------------------------------------------+\n"
+      "|campaign_id:UINT64|\n"
+      "+----------------------------------------------------+\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "+----------------------------------------------------++----------------------------------------------------+\n"
+      "|campaign_id:UINT64|\n"
+      "+----------------------------------------------------+\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "+----------------------------------------------------++----------------------------------------------------+\n"
+      "|campaign_id:UINT64|\n"
+      "+----------------------------------------------------+\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "|1|\n"
+      "+----------------------------------------------------+";
+  cout << "content=" << content << endl;
+  cout << "expContent=" << expectedContent << endl;
+  EXPECT_EQ(content, expectedContent);
+
+  int response = remove(outputFilePath.c_str());
+  EXPECT_TRUE(response == 0);
+
+  sleep(2);
+  bool retStopWrk = wrk->stop();
+  EXPECT_TRUE(retStopWrk);
+
+  sleep(1);
+  bool retStopCord = crd->stopCoordinator();
+  EXPECT_TRUE(retStopCord);
+}
+
+
+TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromCSVSourcePrint) {
+  cout << "start coordinator" << endl;
+  NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
+  size_t port = crd->startCoordinator(/**blocking**/false);
+  EXPECT_NE(port, 0);
+  cout << "coordinator started successfully" << endl;
+
+  cout << "start worker" << endl;
+  NesWorkerPtr wrk = std::make_shared<NesWorker>();
+  bool retStart = wrk->start(/**blocking**/false, /**withConnect**/false, port);
+  EXPECT_TRUE(retStart);
+  cout << "worker started successfully" << endl;
+
+  bool retConWrk = wrk->connect();
+  EXPECT_TRUE(retConWrk);
+  cout << "worker connected " << endl;
+
+  //register logical stream
+  std::string testSchema =
+      "Schema schema = Schema::create().addField(createField(\"campaign_id\", UINT64));";
+  std::string testSchemaFileName = "testSchema.hpp";
+  std::ofstream out(testSchemaFileName);
+  out << testSchema;
+  out.close();
+  wrk->registerLogicalStream("testStream", testSchemaFileName);
+
+  //register physical stream
+  PhysicalStreamConfig conf;
+  conf.logicalStreamName = "testStream";
+  conf.physicalStreamName = "physical_test";
+  conf.sourceType = "DefaultSource";
+  conf.sourceConfig = "10";
+  wrk->registerPhysicalStream(conf.sourceType, conf.sourceConfig,
+                              conf.physicalStreamName, conf.logicalStreamName);
+
+  //register query
+  std::string queryString =
+      "InputQuery::from(testStream).filter(testStream[\"campaign_id\"] > 42).print(std::cout); ";
+  std::string id = crd->executeQuery(queryString, "BottomUp");
+  EXPECT_NE(id, "");
+
+  sleep(2);
+  bool retStopWrk = wrk->stop();
+  EXPECT_TRUE(retStopWrk);
+
+  sleep(1);
+  bool retStopCord = crd->stopCoordinator();
+  EXPECT_TRUE(retStopCord);
+}
 
 }
