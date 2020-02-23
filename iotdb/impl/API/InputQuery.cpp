@@ -97,7 +97,7 @@ InputQuery InputQuery::from(Stream &stream) {
     }
   } else if (type == "CSVSource") {
     NES_DEBUG(
-        "InputQuery::from create default source for " << conf << " buffers")
+        "InputQuery::from create CSV source for " << conf << " buffers")
 
     op = createSourceOperator(createCSVFileSource(stream.getSchema(), conf));
   } else {

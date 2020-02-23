@@ -104,7 +104,7 @@ TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromDefaultSourceP
   EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile) {
+TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromDefaultSourceWriteFile) {
   cout << "start coordinator" << endl;
   NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
   size_t port = crd->startCoordinator(/**blocking**/false);
@@ -157,71 +157,71 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
 
   string expectedContent =
       "+----------------------------------------------------+\n"
-      "|campaign_id:UINT64|\n"
-      "+----------------------------------------------------+\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "+----------------------------------------------------++----------------------------------------------------+\n"
-      "|campaign_id:UINT64|\n"
-      "+----------------------------------------------------+\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "+----------------------------------------------------++----------------------------------------------------+\n"
-      "|campaign_id:UINT64|\n"
-      "+----------------------------------------------------+\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "+----------------------------------------------------++----------------------------------------------------+\n"
-      "|campaign_id:UINT64|\n"
-      "+----------------------------------------------------+\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "+----------------------------------------------------++----------------------------------------------------+\n"
-      "|campaign_id:UINT64|\n"
-      "+----------------------------------------------------+\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "|1|\n"
-      "+----------------------------------------------------+";
+          "|campaign_id:UINT64|\n"
+          "+----------------------------------------------------+\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "+----------------------------------------------------++----------------------------------------------------+\n"
+          "|campaign_id:UINT64|\n"
+          "+----------------------------------------------------+\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "+----------------------------------------------------++----------------------------------------------------+\n"
+          "|campaign_id:UINT64|\n"
+          "+----------------------------------------------------+\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "+----------------------------------------------------++----------------------------------------------------+\n"
+          "|campaign_id:UINT64|\n"
+          "+----------------------------------------------------+\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "+----------------------------------------------------++----------------------------------------------------+\n"
+          "|campaign_id:UINT64|\n"
+          "+----------------------------------------------------+\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "|1|\n"
+          "+----------------------------------------------------+";
   cout << "content=" << content << endl;
   cout << "expContent=" << expectedContent << endl;
   EXPECT_EQ(content, expectedContent);
@@ -238,8 +238,7 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
   EXPECT_TRUE(retStopCord);
 }
 
-
-TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromCSVSourcePrint) {
+TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
   cout << "start coordinator" << endl;
   NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
   size_t port = crd->startCoordinator(/**blocking**/false);
@@ -258,25 +257,35 @@ TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromCSVSourcePrint
 
   //register logical stream
   std::string testSchema =
-      "Schema schema = Schema::create().addField(createField(\"campaign_id\", UINT64));";
+      "Schema schema = Schema::create().addField(createField(\"val1\", UINT64))."
+          "addField(createField(\"val2\", UINT64))."
+          "addField(createField(\"val3\", UINT64));";
   std::string testSchemaFileName = "testSchema.hpp";
   std::ofstream out(testSchemaFileName);
   out << testSchema;
   out.close();
   wrk->registerLogicalStream("testStream", testSchemaFileName);
 
+  std::string testCSV = "1,2,3\n"
+      "1,2,4\n"
+      "4,3,6";
+  std::string testCSVFileName = "testCSV.csv";
+  std::ofstream outCsv(testCSVFileName);
+  outCsv << testCSV;
+  outCsv.close();
+
   //register physical stream
   PhysicalStreamConfig conf;
   conf.logicalStreamName = "testStream";
   conf.physicalStreamName = "physical_test";
-  conf.sourceType = "DefaultSource";
-  conf.sourceConfig = "10";
+  conf.sourceType = "CSVSource";
+  conf.sourceConfig = "testCSV.csv";
   wrk->registerPhysicalStream(conf.sourceType, conf.sourceConfig,
                               conf.physicalStreamName, conf.logicalStreamName);
 
   //register query
   std::string queryString =
-      "InputQuery::from(testStream).filter(testStream[\"campaign_id\"] > 42).print(std::cout); ";
+      "InputQuery::from(testStream).filter(testStream[\"val1\"] < 2).print(std::cout); ";
   std::string id = crd->executeQuery(queryString, "BottomUp");
   EXPECT_NE(id, "");
 
