@@ -6,9 +6,10 @@
 
 namespace NES {
 
-GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan() : QueryExecutionPlan(), pipelineStages() {}
+GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan() : QueryExecutionPlan() {}
 
-GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan(const std::string& queryId, std::vector<PipelineStagePtr> stages) : QueryExecutionPlan(), pipelineStages(stages) {
+GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan(const std::string& queryId, std::vector<PipelineStagePtr> stages) : QueryExecutionPlan(){
+  this->stages = stages;
 }
 
 bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const NES::TupleBufferPtr buf) {
@@ -22,9 +23,9 @@ bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const
     auto window = this->windows[pipeline_stage_id];
     void *state = window->getWindowState();
     auto window_manager = window->getWindowManager();
-    pipelineStages[pipeline_stage_id]->execute(input_buffers, state, window_manager.get(), outputBuffer.get());
+    stages[pipeline_stage_id]->execute(input_buffers, state, window_manager.get(), outputBuffer.get());
   }else {
-     ret = pipelineStages[pipeline_stage_id]->execute(input_buffers, nullptr, nullptr, outputBuffer.get());
+     ret = stages[pipeline_stage_id]->execute(input_buffers, nullptr, nullptr, outputBuffer.get());
   }
   // only write data to the sink if the pipeline produced some output
   if (outputBuffer->getNumberOfTuples() > 0) {

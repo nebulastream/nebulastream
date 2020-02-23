@@ -25,8 +25,6 @@ class GeneratedQueryExecutionPlan : public QueryExecutionPlan {
  * @param ptr
  */
   bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf) override;
- protected:
-  std::vector<PipelineStagePtr> pipelineStages;
 };
 
 typedef std::shared_ptr<GeneratedQueryExecutionPlan> GeneratedQueryExecutionPlanPtr;
