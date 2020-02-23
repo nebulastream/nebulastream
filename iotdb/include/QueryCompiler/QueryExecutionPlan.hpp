@@ -24,8 +24,7 @@ class QueryExecutionPlan {
   virtual ~QueryExecutionPlan();
   size_t getQueryResult(std::string name) {
     return qResult[name];
-  }
-  ;
+  };
 
   void addDataSource(DataSourcePtr source) {
     sources.push_back(source);

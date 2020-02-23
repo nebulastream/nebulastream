@@ -6,7 +6,7 @@
 
 namespace NES {
 
-bool PipelineStage::execute(const std::vector<TupleBuffer*> &input_buffers,
+bool PipelineStage::execute(const TupleBuffer *input_buffers,
                             void *state, WindowManager *window_manager,
                             TupleBuffer *result_buf) {
   std::cout << "Execute a Pipeline Stage!" << std::endl;
