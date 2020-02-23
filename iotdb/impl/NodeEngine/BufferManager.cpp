@@ -11,7 +11,8 @@ BufferManager::BufferManager()
     : mutex(),
       noFreeBuffer(0),
       providedBuffer(0),
-      releasedBuffer(0) {
+      releasedBuffer(0),
+      maxNumberOfRetry(10){
 
   size_t initalBufferCnt = 1000;
   bufferSizeInByte = 4 * 1024;
@@ -110,6 +111,7 @@ bool BufferManager::removeBuffer(TupleBufferPtr tuple_buffer) {
 
 TupleBufferPtr BufferManager::getBuffer() {
 
+  size_t tryCnt = 0;
   while (true) {
     //find a free buffer
     for (auto &entry : buffer_pool) {
@@ -124,7 +126,12 @@ TupleBufferPtr BufferManager::getBuffer() {
     //add wait
     noFreeBuffer++;
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    NES_DEBUG("BufferManager: no buffer free yet --- retry")
+    NES_DEBUG("BufferManager: no buffer free yet --- retry " << tryCnt++)
+    if(tryCnt >= maxNumberOfRetry)
+    {
+      NES_ERROR("BufferManager: break because no buffer could be found")
+          break;
+    }
   }
 }
 

@@ -43,14 +43,12 @@ class CSVSource : public DataSource {
    * @return returns string describing the binary source
    */
   const std::string toString() const;
-    SourceType getType() const override;
+  SourceType getType() const override;
   private:
   CSVSource();
 
-  std::string file_path;
-
-//  int file_size;
-  size_t tuple_size;
+  std::string filePath;
+  size_t tupleSize;
   std::string delimiter;
 
   /**
@@ -61,9 +59,9 @@ class CSVSource : public DataSource {
   template<class Archive> void serialize(Archive& ar,
                                          const unsigned int version) {
     ar & boost::serialization::base_object<DataSource>(*this);
-    ar & file_path;
+    ar & filePath;
 //    ar & file_size;
-    ar & tuple_size;
+    ar & tupleSize;
     ar & delimiter;
     ar & generatedTuples;
     ar & generatedBuffers;
