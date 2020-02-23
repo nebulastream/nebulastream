@@ -120,6 +120,7 @@ class BufferManager {
   size_t noFreeBuffer;
   size_t providedBuffer;
   size_t releasedBuffer;
+  size_t maxNumberOfRetry;
 };
 
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
