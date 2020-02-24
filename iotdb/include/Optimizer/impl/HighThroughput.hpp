@@ -5,6 +5,10 @@
 
 namespace NES {
 
+/**
+ * @brief This class is responsible for placing operators on high capacity links such that the overall query throughput
+ * will increase.
+ */
 class HighThroughput: public NESPlacementOptimizer {
 
   public:
@@ -12,6 +16,8 @@ class HighThroughput: public NESPlacementOptimizer {
     ~HighThroughput() = default;
 
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
+
+  private:
 
     void placeOperators(NESExecutionPlanPtr executionPlanPtr, const NESTopologyGraphPtr nesTopologyGraphPtr,
                         OperatorPtr operatorPtr, deque<NESTopologyEntryPtr> sourceNodes);

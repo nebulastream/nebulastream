@@ -3,6 +3,7 @@ add_source_iotdb(
         impl/TopDown.cpp
         impl/LowLatency.cpp
         impl/HighThroughput.cpp
+        impl/MinimumResourceConsumption.cpp
         NESPlacementOptimizer.cpp
         NESOptimizer.cpp
         NESExecutionPlan.cpp

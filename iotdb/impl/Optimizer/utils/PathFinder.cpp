@@ -35,7 +35,7 @@ std::vector<NESTopologyEntryPtr> PathFinder::findPathWithMaxBandwidth(NESTopolog
                 }
             }
             if ((maxOfMinBandwidth < minLinkBandwidth)
-                || (maxOfMinBandwidth == minLinkBandwidth && totalBandwidth > maxTotalBandwidth)) {
+                || (maxOfMinBandwidth == minLinkBandwidth && totalBandwidth >= maxTotalBandwidth)) {
 
                 maxTotalBandwidth = totalBandwidth;
                 maxOfMinBandwidth = minLinkBandwidth;

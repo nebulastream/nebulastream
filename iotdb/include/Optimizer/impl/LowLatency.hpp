@@ -27,7 +27,9 @@ class LowLatency : public NESPlacementOptimizer {
 
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
-    void placeOperators(NESExecutionPlanPtr executionPlanPtr, const NESTopologyGraphPtr nesTopologyGraphPtr,
+  private:
+
+    void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
                         OperatorPtr operatorPtr, deque<NESTopologyEntryPtr> sourceNodes);
 
     /**
