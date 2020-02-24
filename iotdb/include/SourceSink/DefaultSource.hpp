@@ -9,8 +9,9 @@ namespace NES{
 class DefaultSource : public GeneratorSource {
   public:
   DefaultSource() = default;
-  DefaultSource(const Schema& schema, const uint64_t numbersOfBufferToProduce) :
+  DefaultSource(const Schema& schema, const uint64_t numbersOfBufferToProduce, double frequency) :
         GeneratorSource(schema, numbersOfBufferToProduce) {
+    this->gatheringInterval = frequency;
     }
 
   TupleBufferPtr receiveData() override;

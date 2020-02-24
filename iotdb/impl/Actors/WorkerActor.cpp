@@ -39,15 +39,8 @@ behavior WorkerActor::unconnected() {
   };
 }
 
-bool WorkerActor::registerPhysicalStream(std::string sourceType,
-                                         std::string sourceConf,
-                                         double sourceFrequency,
-                                         size_t numberOfBuffersToProduce,
-                                         std::string physicalStreamName,
-                                         std::string logicalStreamName) {
-
-  PhysicalStreamConfig conf(sourceType, sourceConf, physicalStreamName,
-                            logicalStreamName);
+bool WorkerActor::registerPhysicalStream(PhysicalStreamConfig conf) {
+  NES_DEBUG("WorkerActor: got stream config=" << conf.toString())
   //register physical stream with worker
   this->state.workerPtr->addPhysicalStreamConfig(conf);
 
@@ -57,16 +50,16 @@ bool WorkerActor::registerPhysicalStream(std::string sourceType,
   bool sucess = false;
   scoped_actor self { this->system() };
   self->request(coordinator, task_timeout, register_phy_stream_atom::value,
-                this->state.workerPtr->getIp(), sourceType, sourceConf, sourceFrequency, numberOfBuffersToProduce,
-                physicalStreamName, logicalStreamName).receive(
-      [&sucess, &physicalStreamName](const bool &dc) mutable {
+                this->state.workerPtr->getIp(), conf.sourceType, conf.sourceConfig, conf.sourceFrequency, conf.numberOfBuffersToProduce,
+                conf.physicalStreamName, conf.logicalStreamName).receive(
+      [&sucess, &conf](const bool &dc) mutable {
         if (dc == true) {
           NES_DEBUG(
-              "WorkerActor: registerPhysicalStream" << physicalStreamName << " successfully added")
+              "WorkerActor: registerPhysicalStream" << conf.physicalStreamName << " successfully added")
           sucess = true;
         } else {
           NES_DEBUG(
-              "WorkerActor: registerPhysicalStream" << physicalStreamName << " could not be added")
+              "WorkerActor: registerPhysicalStream" << conf.physicalStreamName << " could not be added")
           sucess = false;
         }
       }
@@ -74,7 +67,7 @@ bool WorkerActor::registerPhysicalStream(std::string sourceType,
       [=, &sucess](const error &er) {
         string error_msg = to_string(er);
         NES_ERROR(
-            "WorkerActor: Error during registerLogicalStream for " << physicalStreamName << "\n" << error_msg);
+            "WorkerActor: Error during registerLogicalStream for " << conf.physicalStreamName << "\n" << error_msg);
         sucess = false;
       }
   );
@@ -251,16 +244,8 @@ bool WorkerActor::connecting(const std::string &host, uint16_t port) {
             this->state.workerPtr->getIp(),
             this->state.workerPtr->getPublishPort(),
             this->state.workerPtr->getReceivePort(),
-            2,
-            this->state.workerPtr->getNodeProperties(),
-            this->state.workerPtr->getPhysicalStreamConfig("default_physical")
-                .sourceType,
-            this->state.workerPtr->getPhysicalStreamConfig("default_physical")
-                .sourceConfig,
-            this->state.workerPtr->getPhysicalStreamConfig("default_physical")
-                .physicalStreamName,
-            this->state.workerPtr->getPhysicalStreamConfig("default_physical")
-                .logicalStreamName);
+            /**cpu*/ 2,
+            this->state.workerPtr->getNodeProperties());
         cout << "properties set successful, now changing state" << endl;
         this->monitor(coordinator);
         this->become(running(coordinator));
@@ -294,7 +279,8 @@ behavior WorkerActor::running(const actor &coordinator) {
     // register physical stream
     [=](register_phy_stream_atom, std::string sourceType, std::string sourceConf, double sourceFrequency,
         size_t numberOfBuffersToProduce, std::string physicalStreamName, std::string logicalStreamName) {
-      return registerPhysicalStream(sourceType, sourceConf, physicalStreamName, logicalStreamName);
+      PhysicalStreamConfig conf(sourceType, sourceConf, sourceFrequency, numberOfBuffersToProduce, physicalStreamName, logicalStreamName);
+      return registerPhysicalStream(conf);
     },
     // remove logical stream
     [=](register_log_stream_atom, std::string name, std::string path) {

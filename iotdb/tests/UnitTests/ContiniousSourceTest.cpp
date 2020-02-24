@@ -85,8 +85,8 @@ TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromDefaultSourceP
   conf.logicalStreamName = "testStream";
   conf.physicalStreamName = "physical_test";
   conf.sourceType = "DefaultSource";
-  conf.numberOfBuffersToProduce = "5";
-  conf.sourceFrequency = "1";
+  conf.numberOfBuffersToProduce = 5;
+  conf.sourceFrequency = 1;
   wrk->registerPhysicalStream(conf);
 
   //register query
@@ -135,8 +135,8 @@ TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromDefaultSourceW
   conf.logicalStreamName = "testStream";
   conf.physicalStreamName = "physical_test";
   conf.sourceType = "DefaultSource";
-  conf.numberOfBuffersToProduce = "5";
-  conf.sourceFrequency = "1";
+  conf.numberOfBuffersToProduce = 5;
+  conf.sourceFrequency = 1;
   wrk->registerPhysicalStream(conf);
 
   std::string outputFilePath = "blob.txt";
@@ -280,8 +280,8 @@ TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromCSVSourcePrint
   conf.physicalStreamName = "physical_test";
   conf.sourceType = "CSVSource";
   conf.sourceConfig = "testCSV.csv";
-  conf.numberOfBuffersToProduce = "3";
-  conf.sourceFrequency = "1";
+  conf.numberOfBuffersToProduce = 3;
+  conf.sourceFrequency = 1;
   wrk->registerPhysicalStream(conf);
 
   //register query
@@ -341,8 +341,7 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
   conf.physicalStreamName = "physical_test";
   conf.sourceType = "CSVSource";
   conf.sourceConfig = "testCSV.csv,3";
-  wrk->registerPhysicalStream(conf.sourceType, conf.sourceConfig,
-                              conf.physicalStreamName, conf.logicalStreamName);
+  wrk->registerPhysicalStream(conf);
 
   std::string outputFilePath =
       "testMultipleOutputBufferFromCSVSourceWriteTest.out";

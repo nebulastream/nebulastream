@@ -20,12 +20,14 @@ CSVSource::CSVSource()
 }
 
 CSVSource::CSVSource(const Schema &schema, const std::string &_file_path,
-                     const std::string &delimiter, size_t numBuffersToProcess)
+                     const std::string &delimiter, size_t numBuffersToProcess,
+                     double frequency)
     :
     DataSource(schema),
     filePath(_file_path),
     delimiter(delimiter) {
   this->numBuffersToProcess = numBuffersToProcess;
+  this->gatheringInterval = frequency;
   tupleSize = schema.getSchemaSize();
   NES_DEBUG("CSVSource: tupleSize=" << tupleSize)
 }
@@ -77,8 +79,8 @@ void CSVSource::fillBuffer(TupleBufferPtr buf) {
 
       if (field->getDataType()->toString() == "UINT64") {
         size_t val = atoi(tokens[j].c_str());
-        memcpy((char*) buf->getBuffer() + offset + i * tupleSize,
-                       &val, fieldSize);
+        memcpy((char*) buf->getBuffer() + offset + i * tupleSize, &val,
+               fieldSize);
       } else {
         memcpy((char*) buf->getBuffer() + offset + i * tupleSize,
                tokens[j].c_str(), fieldSize);

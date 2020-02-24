@@ -20,10 +20,11 @@ const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(
  * @brief function to create a test source which produces 10 tuples with value one in N buffers of based on a schema
  * @param schema of the data source
  * @param number of buffers that should be produced
+ * @param frequency when to gather the next buffer
  * @return a const data source pointer
  */
 const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(
-    const Schema &schema, size_t numbersOfBufferToProduce);
+    const Schema &schema, size_t numbersOfBufferToProduce, double frequency);
 
 /**
  * @brief function to create a test source which produces 10 tuples with value one without a schema
@@ -68,6 +69,7 @@ const DataSourcePtr createBinaryFileSource(const Schema &schema,
 const DataSourcePtr createCSVFileSource(const Schema &schema,
                                         const std::string &path_to_file,
                                         const std::string &delimiter,
-                                        size_t numBuffersToProcess);
+                                        size_t numBuffersToProcess,
+                                        double frequency);
 }
 #endif /* INCLUDE_SOURCESINK_SOURCECREATOR_HPP_ */
