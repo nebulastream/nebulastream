@@ -78,6 +78,9 @@ InputQuery InputQuery::from(Stream &stream) {
   std::string name = catalogEntry[0]->getPhysicalName();
   std::string type = catalogEntry[0]->getSourceType();
   std::string conf = catalogEntry[0]->getSourceConfig();
+  double frequency = catalogEntry[0]->getSourceFrequency()();
+  size_t numBuffers = catalogEntry[0]->getNumberOfBuffersToProduce();
+
   NES_DEBUG(
       "InputQuery::from logical stream name=" << stream.getName() << " pyhName=" << name << " srcType=" << type << " srcConf=" << conf)
 
@@ -90,17 +93,18 @@ InputQuery InputQuery::from(Stream &stream) {
     } else {
       NES_DEBUG(
           "InputQuery::from create default source for " << conf << " buffers")
+    op = createSourceOperator(
+        createDefaultDataSourceWithSchemaForVarBuffers(stream.getSchema(),
+            numBuffers);
+      }
+    } else if (type == "CSVSource") {
+      NES_DEBUG("InputQuery::from create CSV source for " << conf << " buffers")
+//      vector<string> result;
+//      boost::split(result, conf, boost::is_any_of(","));
+//      assert(result.size() == 2);
       op = createSourceOperator(
-          createDefaultDataSourceWithSchemaForVarBuffers(stream.getSchema(),
-                                                         atoi(conf.c_str())));
-    }
-  } else if (type == "CSVSource") {
-    NES_DEBUG("InputQuery::from create CSV source for " << conf << " buffers")
-    vector<string> result;
-    boost::split(result, conf, boost::is_any_of(","));
-    assert(result.size() == 2);
-    op = createSourceOperator(createCSVFileSource(stream.getSchema(), /**fileName*/result[0], ",",
-                                                /**numberOfBufferToProduce*/ atoi(result[1].c_str())));
+          createCSVFileSource(stream.getSchema(), /**fileName*/conf, ",",
+          /**numberOfBufferToProduce*/numBuffers));
     } else {
       NES_DEBUG("InputQuery::from source type " << type << " not supported")
       NES_FATAL_ERROR("type not supported")

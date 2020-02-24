@@ -49,12 +49,16 @@ class WorkerActor : public stateful_actor<WorkerState> {
   /**
    * @brief this methods registers a physical stream via the coordinator to a logical stream
    * @param source type, e.g., CSVSource or OneGenerator source
-   * @param confi parameter for the source, e.g., file path or number of buffer
+   * @param config parameter for the source, e.g., file path
+   * @param the frequency in which the node should produce data
+   * @param the number of buffers to produce
    * @param name of the new physical stream
    * @param name of the logical stream where this physical stream reports to
    * @return bool indicating success
    */
   bool registerPhysicalStream(std::string sourceType, std::string sourceConf,
+                              double sourceFrequency,
+                              size_t numberOfBuffersToProduce,
                               std::string physicalStreamName,
                               std::string logicalStreamName);
 

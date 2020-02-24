@@ -53,8 +53,7 @@ NESTopologyEntryPtr CoordinatorService::register_sensor(size_t id, const string&
                 + " is not supported");
     }
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
-        streamConf.sourceType, streamConf.sourceConfig, sensorNode,
-        streamConf.physicalStreamName);
+        streamConf, sensorNode);
 
     bool success = StreamCatalog::instance().addPhysicalStream(
         streamConf.logicalStreamName, sce);

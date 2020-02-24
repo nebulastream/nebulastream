@@ -10,7 +10,7 @@ namespace NES {
 WorkerActor::WorkerActor(actor_config &cfg, string ip, uint16_t publish_port,
                          uint16_t receive_port)
     :
-    stateful_actor(cfg){
+    stateful_actor(cfg) {
   this->state.workerPtr = std::make_unique<WorkerService>(
       WorkerService(std::move(ip), publish_port, receive_port));
 }
@@ -41,6 +41,8 @@ behavior WorkerActor::unconnected() {
 
 bool WorkerActor::registerPhysicalStream(std::string sourceType,
                                          std::string sourceConf,
+                                         double sourceFrequency,
+                                         size_t numberOfBuffersToProduce,
                                          std::string physicalStreamName,
                                          std::string logicalStreamName) {
 
@@ -55,7 +57,7 @@ bool WorkerActor::registerPhysicalStream(std::string sourceType,
   bool sucess = false;
   scoped_actor self { this->system() };
   self->request(coordinator, task_timeout, register_phy_stream_atom::value,
-                this->state.workerPtr->getIp(), sourceType, sourceConf,
+                this->state.workerPtr->getIp(), sourceType, sourceConf, sourceFrequency, numberOfBuffersToProduce,
                 physicalStreamName, logicalStreamName).receive(
       [&sucess, &physicalStreamName](const bool &dc) mutable {
         if (dc == true) {
@@ -213,7 +215,8 @@ bool WorkerActor::disconnecting() {
  * if connection works go to running state, otherwise go to unconnected state
  */
 bool WorkerActor::connecting(const std::string &host, uint16_t port) {
-  NES_DEBUG("WorkerActor::connecting try to connect to host=" << host << " port=" << port)
+  NES_DEBUG(
+      "WorkerActor::connecting try to connect to host=" << host << " port=" << port)
   // make sure we are not pointing to an old server
   this->state.current_server = nullptr;
   // use request().await() to suspend regular behavior until MM responded
@@ -223,7 +226,7 @@ bool WorkerActor::connecting(const std::string &host, uint16_t port) {
 //  scoped_actor self { *actorSystem };
 
   self->request(mm, infinite, connect_atom::value, host, port).receive(
-      [=, &connected](const node_id& nId, strong_actor_ptr &serv,
+      [=, &connected](const node_id &nId, strong_actor_ptr &serv,
                       const std::set<std::string> &ifs) {
         if (!serv) {
           aout(this) << R"(*** no server found at ")" << host << R"(":)" << port
@@ -233,7 +236,8 @@ bool WorkerActor::connecting(const std::string &host, uint16_t port) {
           aout(this) << R"(*** typed actor found at ")" << host << R"(":)"
                      << port << ", but expected an untyped actor " << endl;
         }
-        aout(this) << "*** successfully connected to server with id=" << nId << endl;
+        aout(this) << "*** successfully connected to server with id=" << nId
+                   << endl;
         this->state.current_server = serv;
         auto coordinator = actor_cast<actor>(serv);
         //TODO: make getPhysicalStreamConfig serializable with the caf framework
@@ -288,7 +292,8 @@ behavior WorkerActor::running(const actor &coordinator) {
       return disconnecting();
     },
     // register physical stream
-    [=](register_phy_stream_atom, std::string sourceType, std::string sourceConf, std::string physicalStreamName, std::string logicalStreamName) {
+    [=](register_phy_stream_atom, std::string sourceType, std::string sourceConf, double sourceFrequency,
+        size_t numberOfBuffersToProduce, std::string physicalStreamName, std::string logicalStreamName) {
       return registerPhysicalStream(sourceType, sourceConf, physicalStreamName, logicalStreamName);
     },
     // remove logical stream

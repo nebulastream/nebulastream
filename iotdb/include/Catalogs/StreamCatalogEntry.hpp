@@ -3,7 +3,8 @@
 
 #include <string>
 #include <Topology/NESTopologyEntry.hpp>
-
+#include <Catalogs/PhysicalStreamConfig.hpp>
+#include <sstream>
 namespace NES {
 /**
  * @brief one entry in the catalog contains
@@ -16,39 +17,28 @@ namespace NES {
  */
 class StreamCatalogEntry {
 
-  public:
-    StreamCatalogEntry(std::string dataSourceType, std::string dataSourceConfig,
-                       NESTopologyEntryPtr node, std::string physicalStreamName)
-        : dataSourceType(dataSourceType),
-          dataSourceConfig(dataSourceConfig),
-          node(node),
-          physicalStreamName(physicalStreamName) {
-    };
+ public:
+  StreamCatalogEntry(PhysicalStreamConfig streamConf, NESTopologyEntryPtr node);
 
-    std::string getSourceType() {
-        return dataSourceType;
-    }
+  std::string getSourceType();
 
-    std::string getSourceConfig() {
-        return dataSourceConfig;
-    }
+  std::string getSourceConfig();
 
-    NESTopologyEntryPtr getNode() {
-        return node;
-    }
+  NESTopologyEntryPtr getNode();
 
-    std::string getPhysicalName() {
-        return physicalStreamName;
-    }
+  std::string getPhysicalName();
 
-    std::string toString() {
-        return "physicalName=" + physicalStreamName + " on node=" + std::to_string(node->getId());
-    }
-  private:
-    std::string dataSourceType;
-    std::string dataSourceConfig;
-    NESTopologyEntryPtr node;
-    std::string physicalStreamName;
+  std::string getLogicalName();
+
+  double getSourceFrequency();
+
+  size_t getNumberOfBuffersToProduce();
+
+  std::string toString();
+
+ private:
+  PhysicalStreamConfig streamConf;
+  NESTopologyEntryPtr node;
 };
 typedef std::shared_ptr<StreamCatalogEntry> StreamCatalogEntryPtr;
 
