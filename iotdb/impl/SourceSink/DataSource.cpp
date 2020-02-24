@@ -83,15 +83,20 @@ bool DataSource::isRunning() {
   return running;
 }
 
+void DataSource::setGatheringInterval(double interval) {
+  this->gatheringInterval = interval;
+}
+
 void DataSource::running_routine() {
   if (!this->sourceId.empty()) {
     NES_DEBUG("DataSource " << this->getSourceId() << ": Running Data Source")
     size_t cnt = 0;
     while (running) {
       size_t currentTime = time(NULL);
-      if (currentTime % gatheringInterval == 0 && lastGatheringTimeStamp == currentTime) {
+//      if (fmod(currentTime, gatheringInterval) == 0 && lastGatheringTimeStamp == currentTime) {
+      if (lastGatheringTimeStamp == currentTime) {
 //        NES_DEBUG("DataSource::running_routine sleep")
-        sleep(0.5);
+        sleep(gatheringInterval);
         continue;
       } else {  //produce a new buffer
         lastGatheringTimeStamp = currentTime;

@@ -14,24 +14,24 @@ namespace NES {
 
 const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(
     const Schema &schema) {
-  return std::make_shared<DefaultSource>(schema, 1);
+  return std::make_shared<DefaultSource>(schema, /*bufferCnt*/ 1, /*frequency*/ 1);
 }
 
 const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(
-    const Schema &schema, size_t numbersOfBufferToProduce) {
-  return std::make_shared<DefaultSource>(schema, numbersOfBufferToProduce);
+    const Schema &schema, size_t numbersOfBufferToProduce, double frequency) {
+  return std::make_shared<DefaultSource>(schema, numbersOfBufferToProduce, frequency);
 }
 
 const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer() {
   return std::make_shared<DefaultSource>(
-      Schema::create().addField(createField("id", UINT64)), 1);
+      Schema::create().addField(createField("id", UINT64)), /**bufferCnt*/ 1, /*frequency*/ 1);
 }
 
 const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForVarBuffers(
-    size_t numbersOfBufferToProduce) {
+    size_t numbersOfBufferToProduce, double frequency) {
   return std::make_shared<DefaultSource>(
       Schema::create().addField(createField("id", UINT64)),
-      numbersOfBufferToProduce);
+      numbersOfBufferToProduce, frequency);
 }
 
 const DataSourcePtr createZmqSource(const Schema &schema,
@@ -48,9 +48,10 @@ const DataSourcePtr createBinaryFileSource(const Schema &schema,
 const DataSourcePtr createCSVFileSource(const Schema &schema,
                                         const std::string &path_to_file,
                                         const std::string &delimiter,
-                                        size_t numbersOfBufferToProduce) {
+                                        size_t numbersOfBufferToProduce,
+                                        double frequency) {
   return std::make_shared<CSVSource>(schema, path_to_file, delimiter,
-                                     numbersOfBufferToProduce);
+                                     numbersOfBufferToProduce, frequency);
 }
 
 }

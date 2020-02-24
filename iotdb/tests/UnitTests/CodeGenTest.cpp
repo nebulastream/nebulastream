@@ -27,7 +27,7 @@
 namespace NES {
 
 const DataSourcePtr createTestSourceCodeGen() {
-  return std::make_shared<DefaultSource>(Schema::create().addField(createField("campaign_id", UINT64)), 1);
+  return std::make_shared<DefaultSource>(Schema::create().addField(createField("campaign_id", UINT64)), 1, 1);
 }
 
 class SelectionDataGenSource : public GeneratorSource {

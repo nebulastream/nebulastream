@@ -61,12 +61,8 @@ behavior CoordinatorActor::running() {
         uint16_t publish_port,
         uint16_t receive_port,
         int cpu,
-        const string& nodeProperties,
-        std::string sourceType,
-        std::string sourceConf,
-        std::string physicalStreamName,
-        std::string logicalStreamName) {
-      PhysicalStreamConfig streamConf(sourceType, sourceConf, physicalStreamName, logicalStreamName);
+        const string& nodeProperties) {
+      PhysicalStreamConfig streamConf;
       this->registerSensor(ip, publish_port, receive_port, cpu, nodeProperties, streamConf);
     },
     [=](deregister_sensor_atom, string& ip) {
@@ -97,7 +93,9 @@ behavior CoordinatorActor::running() {
       NES_DEBUG("CoordinatorActor: got request for removal of physical stream " << physicalStreamName
           << " from logical stream "
           << logicalStreamName)
-      PhysicalStreamConfig conf("", "", physicalStreamName, logicalStreamName);
+      PhysicalStreamConfig conf;
+      conf.logicalStreamName = logicalStreamName;
+      conf.physicalStreamName = physicalStreamName;
       return removePhysicalStream(ip, conf);
     },
     [=](execute_query_atom, const string& description, const string& strategy) {
@@ -193,8 +191,7 @@ bool CoordinatorActor::removePhysicalStream(std::string ip,
 
   NES_DEBUG("node type=" << sensorNode->getEntryTypeString())
   StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
-      streamConf.sourceType, streamConf.sourceConfig, sensorNode,
-      streamConf.physicalStreamName);
+      streamConf, sensorNode);
 
   return StreamCatalog::instance().removePhysicalStream(
       streamConf.logicalStreamName, sce);
@@ -217,8 +214,7 @@ bool CoordinatorActor::registerPhysicalStream(std::string ip,
 
 
   StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
-      streamConf.sourceType, streamConf.sourceConfig, sensorNodes[0],
-      streamConf.physicalStreamName);
+      streamConf, sensorNodes[0]);
 
   return StreamCatalog::instance().addPhysicalStream(
       streamConf.logicalStreamName, sce);

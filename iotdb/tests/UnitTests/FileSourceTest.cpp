@@ -39,7 +39,7 @@ struct __attribute__((packed)) ysbRecord {
 }; // size 78 bytes
 
 typedef const DataSourcePtr (*createFileSourceFuncPtr)(const Schema &, const std::string &);
-typedef const DataSourcePtr (*createCSVSourceFuncPtr)(const Schema &, const std::string &, const std::string&, size_t);
+typedef const DataSourcePtr (*createCSVSourceFuncPtr)(const Schema &, const std::string &, const std::string&, size_t, double);
 
 int test(createFileSourceFuncPtr funcPtr, std::string& path_to_file) {
     Schema schema = Schema::create()
@@ -83,7 +83,7 @@ int test(createFileSourceFuncPtr funcPtr, std::string& path_to_file) {
 }
 
 
-int testCSV(createCSVSourceFuncPtr funcPtr, std::string& path_to_file, const std::string& del, size_t num) {
+int testCSV(createCSVSourceFuncPtr funcPtr, std::string& path_to_file, const std::string& del, size_t num, double frequency) {
     Schema schema = Schema::create()
         .addField("user_id", 16)
         .addField("page_id", 16)
@@ -102,7 +102,7 @@ int testCSV(createCSVSourceFuncPtr funcPtr, std::string& path_to_file, const std
     BufferManager::instance().setNumberOfBuffers(num_of_buffers);
     BufferManager::instance().setBufferSize(buffer_size);
 
-    const DataSourcePtr source = (*funcPtr)(schema, path_to_file, del, num);
+    const DataSourcePtr source = (*funcPtr)(schema, path_to_file, del, num, frequency);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         TupleBufferPtr buf = source->receiveData();
@@ -120,7 +120,7 @@ int testCSV(createCSVSourceFuncPtr funcPtr, std::string& path_to_file, const std
 
     EXPECT_EQ(source->getNumberOfGeneratedTuples(), num_tuples_to_process);
     EXPECT_EQ(source->getNumberOfGeneratedBuffers(), num_of_buffers);
-    std::cout << "Success" << std::endl;
+    std::cout << "dataSuccess" << std::endl;
     return 0;
 }
 
@@ -134,7 +134,7 @@ int testBinarySource() {
 int testCSVSource() {
     std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.csv";
     createCSVSourceFuncPtr funcPtr = &createCSVFileSource;
-    testCSV(funcPtr, path_to_file, ",", 1);
+    testCSV(funcPtr, path_to_file, ",", 1, 1);
     return 0;
 }
 }

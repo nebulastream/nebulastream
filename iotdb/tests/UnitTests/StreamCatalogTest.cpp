@@ -125,9 +125,9 @@ TEST_F(StreamCatalogTest, add_get_physical_stream_test) {
   PhysicalStreamConfig streamConf;
   streamConf.physicalStreamName = "test2";
   streamConf.logicalStreamName = "test_stream";
+
   StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
-      streamConf.sourceType, streamConf.sourceConfig, sensorNode,
-      streamConf.physicalStreamName);
+      streamConf, sensorNode);
 
   EXPECT_TRUE(
       StreamCatalog::instance().addPhysicalStream(streamConf.logicalStreamName,
@@ -156,8 +156,7 @@ TEST_F(StreamCatalogTest, add_remove_physical_stream_test) {
   PhysicalStreamConfig streamConf;
   streamConf.physicalStreamName = "test2";
   StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
-      streamConf.sourceType, streamConf.sourceConfig, sensorNode,
-      streamConf.physicalStreamName);
+      streamConf, sensorNode);
 
   EXPECT_TRUE(
       StreamCatalog::instance().addPhysicalStream(streamConf.logicalStreamName,
@@ -178,8 +177,7 @@ TEST_F(StreamCatalogTest, add_physical_for_not_existing_logical_stream_test) {
 
   PhysicalStreamConfig streamConf;
   StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
-      streamConf.sourceType, streamConf.sourceConfig, sensorNode,
-      streamConf.physicalStreamName);
+      streamConf, sensorNode);
 
   EXPECT_TRUE(
       StreamCatalog::instance().addPhysicalStream(streamConf.logicalStreamName,
