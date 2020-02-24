@@ -48,16 +48,21 @@ bool Operator::equals(const Operator &_rhs) {
   assert(0);
   return false;
 }
+
 const std::vector<OperatorPtr> Operator::getChildren() const {
     return children;
 }
+
 void Operator::setChildren(const std::vector<OperatorPtr> children) {
-    Operator::children = children;
+    this->children = children;
 }
+
 const OperatorPtr Operator::getParent() const {
     return parent;
 }
+
 void Operator::setParent(const OperatorPtr parent) {
-    Operator::parent = parent;
+    this->parent = parent;
 }
+
 } // namespace NES
