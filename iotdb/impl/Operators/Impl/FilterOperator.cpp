@@ -24,7 +24,11 @@ void FilterOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr contex
   getParent()->consume(codegen, context, out);
 }
 
-const OperatorPtr FilterOperator::copy() const { return std::make_shared<FilterOperator>(*this); }
+const OperatorPtr FilterOperator::copy() const {
+    const OperatorPtr copy = std::make_shared<FilterOperator>(*this);
+    copy->setOperatorId(this->getOperatorId());
+    return copy;
+}
 
 const std::string FilterOperator::toString() const {
   std::stringstream ss;

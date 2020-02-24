@@ -23,7 +23,11 @@ SortOperator& SortOperator::operator=(const SortOperator& other)
 void SortOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {}
 void SortOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {}
 
-const OperatorPtr SortOperator::copy() const { return std::make_shared<SortOperator>(*this); }
+const OperatorPtr SortOperator::copy() const {
+    const OperatorPtr copy = std::make_shared<SortOperator>(*this);
+    copy->setOperatorId(this->getOperatorId());
+    return copy;
+}
 
 const std::string SortOperator::toString() const
 {

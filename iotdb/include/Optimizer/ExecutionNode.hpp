@@ -5,11 +5,12 @@
 #ifndef EXECUTIONNODE_HPP
 #define EXECUTIONNODE_HPP
 
-#include "../Topology/NESTopologyEntry.hpp"
-
-namespace NES {
+#include <Topology/NESTopologyEntry.hpp>
+#include <Operators/Operator.hpp>
 
 using namespace std;
+
+namespace NES {
 
 class ExecutionNode {
 
@@ -50,11 +51,25 @@ class ExecutionNode {
   }
 
   vector<size_t> &getChildOperatorIds() {
-    return childOperatorIds;
+    return operatorIds;
   }
 
-  void addChildOperatorId(size_t childOperatorId) {
-    this->childOperatorIds.push_back(childOperatorId);
+  /**
+   * @brief Add the input operator as the parent of the last operator in the chain
+   * Note: root is always the child operator.
+   * @param operatorPtr  : operator to be added
+   */
+  void addOperator(OperatorPtr operatorPtr) {
+      OperatorPtr root = rootOperator;
+      while(root->getParent() != nullptr){
+          root = root->getParent();
+      }
+      operatorPtr->setChildren({root});
+      root->setParent(operatorPtr);
+  }
+
+  void addOperatorId(size_t childOperatorId) {
+    this->operatorIds.push_back(childOperatorId);
   }
 
  private:
@@ -63,7 +78,7 @@ class ExecutionNode {
   string nodeName;
   OperatorPtr rootOperator;
   NESTopologyEntryPtr nesNode;
-  vector<size_t> childOperatorIds{};
+  vector<size_t> operatorIds{};
 };
 
 typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
