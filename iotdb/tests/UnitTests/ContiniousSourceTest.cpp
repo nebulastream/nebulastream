@@ -279,7 +279,7 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
   conf.logicalStreamName = "testStream";
   conf.physicalStreamName = "physical_test";
   conf.sourceType = "CSVSource";
-  conf.sourceConfig = "testCSV.csv";
+  conf.sourceConfig = "testCSV.csv,3";
   wrk->registerPhysicalStream(conf.sourceType, conf.sourceConfig,
                               conf.physicalStreamName, conf.logicalStreamName);
 

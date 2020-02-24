@@ -22,9 +22,10 @@ class CSVSource : public DataSource {
    * @param schema of the source
    * @param path to the csv file
    * @param delimiter inside the file, default ","
+   * @param number of buffers to create
    */
   CSVSource(const Schema& schema, const std::string& file_path,
-            const std::string& delimiter = ",");
+            const std::string& delimiter, size_t numBuffersToProcess);
 
   /**
    * @brief override the receiveData method for the csv source

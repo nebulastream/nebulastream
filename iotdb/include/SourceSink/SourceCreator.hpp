@@ -66,6 +66,8 @@ const DataSourcePtr createBinaryFileSource(const Schema &schema,
  * @return a const data source pointer
  */
 const DataSourcePtr createCSVFileSource(const Schema &schema,
-                                        const std::string &path_to_file);
+                                        const std::string &path_to_file,
+                                        const std::string &delimiter,
+                                        size_t numBuffersToProcess);
 }
 #endif /* INCLUDE_SOURCESINK_SOURCECREATOR_HPP_ */

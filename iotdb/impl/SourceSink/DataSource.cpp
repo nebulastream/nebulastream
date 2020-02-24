@@ -90,7 +90,8 @@ void DataSource::running_routine() {
         if (buf) {
           NES_DEBUG(
               "DataSource " << this->getSourceId() << " type=" << getType()
-               << " string=" << toString() << ": Received Data: " << buf->getNumberOfTuples() << " tuples")
+               << " string=" << toString() << ": Received Data: " << buf->getNumberOfTuples() << " tuples"
+               << " iteration=" << cnt)
           if (buf->getBuffer()) {
             Dispatcher::instance().addWork(this->sourceId, buf);
             cnt++;

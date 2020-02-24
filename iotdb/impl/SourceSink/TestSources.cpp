@@ -27,9 +27,11 @@ const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer() {
       Schema::create().addField(createField("id", UINT64)), 1);
 }
 
-const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForVarBuffers(size_t numbersOfBufferToProduce) {
+const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForVarBuffers(
+    size_t numbersOfBufferToProduce) {
   return std::make_shared<DefaultSource>(
-      Schema::create().addField(createField("id", UINT64)), numbersOfBufferToProduce);
+      Schema::create().addField(createField("id", UINT64)),
+      numbersOfBufferToProduce);
 }
 
 const DataSourcePtr createZmqSource(const Schema &schema,
@@ -44,8 +46,11 @@ const DataSourcePtr createBinaryFileSource(const Schema &schema,
 }
 
 const DataSourcePtr createCSVFileSource(const Schema &schema,
-                                        const std::string &path_to_file) {
-  return std::make_shared<CSVSource>(schema, path_to_file);
+                                        const std::string &path_to_file,
+                                        const std::string &delimiter,
+                                        size_t numbersOfBufferToProduce) {
+  return std::make_shared<CSVSource>(schema, path_to_file, delimiter,
+                                     numbersOfBufferToProduce);
 }
 
 }
