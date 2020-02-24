@@ -75,41 +75,48 @@ InputQuery InputQuery::from(Stream &stream) {
   //TODO:here we assume that all sources are of the same type
   std::vector<StreamCatalogEntryPtr> catalogEntry = StreamCatalog::instance()
       .getPhysicalStreams(stream.getName());
-  std::string name = catalogEntry[0]->getPhysicalName();
-  std::string type = catalogEntry[0]->getSourceType();
-  std::string conf = catalogEntry[0]->getSourceConfig();
-  double frequency = catalogEntry[0]->getSourceFrequency();
-  size_t numBuffers = catalogEntry[0]->getNumberOfBuffersToProduce();
-
-  NES_DEBUG(
-      "InputQuery::from logical stream name=" << stream.getName() << " pyhName=" << name << " srcType=" << type << " srcConf=" << conf)
 
   OperatorPtr op;
-  if (type == "DefaultSource") {
-    if (conf == "1") {
-      NES_DEBUG("InputQuery::from create default source for one buffer")
-      op = createSourceOperator(
-          createDefaultDataSourceWithSchemaForOneBuffer(stream.getSchema()));
-    } else {
-      NES_DEBUG(
-          "InputQuery::from create default source for " << conf << " buffers")
-      op = createSourceOperator(
-          createDefaultDataSourceWithSchemaForVarBuffers(stream.getSchema(),
-                                                         numBuffers, frequency));
-    }
-  } else if (type == "CSVSource") {
-    NES_DEBUG("InputQuery::from create CSV source for " << conf << " buffers")
-//      vector<string> result;
-//      boost::split(result, conf, boost::is_any_of(","));
-//      assert(result.size() == 2);
-    op = createSourceOperator(
-        createCSVFileSource(stream.getSchema(), /**fileName*/conf, ",",
-        /**numberOfBufferToProduce*/numBuffers, frequency));
-  } else {
-    NES_DEBUG("InputQuery::from source type " << type << " not supported")
-    NES_FATAL_ERROR("type not supported")
-  }
 
+  if (catalogEntry.size() == 0) {
+    NES_WARNING("InputQuery::from stream does not exists this should only be used by tests " << stream.getName())
+    op = createSourceOperator(
+                createDefaultDataSourceWithSchemaForOneBuffer(stream.getSchema()));
+  } else {
+
+    std::string name = catalogEntry[0]->getPhysicalName();
+    std::string type = catalogEntry[0]->getSourceType();
+    std::string conf = catalogEntry[0]->getSourceConfig();
+    double frequency = catalogEntry[0]->getSourceFrequency();
+    size_t numBuffers = catalogEntry[0]->getNumberOfBuffersToProduce();
+
+    NES_DEBUG(
+        "InputQuery::from logical stream name=" << stream.getName() << " pyhName=" << name << " srcType=" << type << " srcConf=" << conf)
+
+    if (type == "DefaultSource") {
+      if (conf == "1") {
+        NES_DEBUG("InputQuery::from create default source for one buffer")
+        op = createSourceOperator(
+            createDefaultDataSourceWithSchemaForOneBuffer(stream.getSchema()));
+      } else {
+        NES_DEBUG(
+            "InputQuery::from create default source for " << conf << " buffers")
+        op = createSourceOperator(
+            createDefaultDataSourceWithSchemaForVarBuffers(stream.getSchema(),
+                                                           numBuffers,
+                                                           frequency));
+      }
+    } else if (type == "CSVSource") {
+      NES_DEBUG("InputQuery::from create CSV source for " << conf << " buffers")
+      op = createSourceOperator(
+          createCSVFileSource(stream.getSchema(), /**fileName*/conf, ",",
+          /**numberOfBufferToProduce*/numBuffers,
+                              frequency));
+    } else {
+      NES_DEBUG("InputQuery::from source type " << type << " not supported")
+      NES_FATAL_ERROR("type not supported")
+    }
+  }
   int operatorId = q.getNextOperatorId();
   op->setOperatorId(operatorId);
   q.root = op;
