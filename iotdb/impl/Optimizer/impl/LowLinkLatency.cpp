@@ -34,7 +34,7 @@ NESExecutionPlanPtr LowLinkLatency::initializeExecutionPlan(NES::InputQueryPtr i
     placeOperators(nesExecutionPlanPtr, nesTopologyGraphPtr, sourceOperatorPtr, sourceNodePtrs);
 
     NES_INFO("LowLinkLatency: Adding forward operators.");
-    addForwardOperators(sourceNodePtrs, nesTopologyGraphPtr, nesExecutionPlanPtr);
+    addForwardOperators(sourceNodePtrs, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
 
     NES_INFO("LowLinkLatency: Removing non resident operators from the execution nodes.");
     removeNonResidentOperators(nesExecutionPlanPtr);
@@ -106,6 +106,28 @@ void LowLinkLatency::placeOperators(NESExecutionPlanPtr executionPlanPtr, const 
 
             if (!targetOperator) {
                 break;
+            }
+        }
+    }
+}
+
+void LowLinkLatency::addForwardOperators(const deque<NESTopologyEntryPtr> sourceNodes,
+                                   const NESTopologyEntryPtr rootNode,
+                                   NESExecutionPlanPtr nesExecutionPlanPtr) const {
+
+    PathFinder pathFinder;
+
+    for (NESTopologyEntryPtr targetSource: sourceNodes) {
+
+        //Find the list of nodes connecting the source and destination nodes
+        std::vector<NESTopologyEntryPtr> candidateNodes = pathFinder.findPathWithMinLinkLatency(targetSource, rootNode);
+
+        for(NESTopologyEntryPtr candidateNode: candidateNodes) {
+
+            if (candidateNode->getCpuCapacity() == candidateNode->getRemainingCpuCapacity()) {
+                nesExecutionPlanPtr->createExecutionNode("FWD", to_string(candidateNode->getId()), candidateNode,
+                    /**executableOperator**/nullptr);
+                candidateNode->reduceCpuCapacity(1);
             }
         }
     }

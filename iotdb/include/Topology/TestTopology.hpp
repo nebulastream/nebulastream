@@ -94,15 +94,15 @@ void createExampleTopology() {
     NESTopologyManager::getInstance().createNESTopologyLink(workerNode2, sinkNode, 3, 1);
     NESTopologyManager::getInstance().createNESTopologyLink(workerNode3, sinkNode, 3, 1);
     NESTopologyManager::getInstance().createNESTopologyLink(workerNode4, workerNode1, 2, 2);
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode5, workerNode2, 2, 2);
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode6, workerNode3, 2, 1);
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode10, workerNode6, 2, 1);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode5, workerNode2, 2, 1);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode6, workerNode3, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode10, workerNode6, 2, 2);
 
     NESTopologyManager::getInstance().createNESTopologyLink(workerNode7, workerNode4, 2, 1);
     NESTopologyManager::getInstance().createNESTopologyLink(workerNode8, workerNode4, 2, 2);
     NESTopologyManager::getInstance().createNESTopologyLink(workerNode8, workerNode5, 2, 2);
     NESTopologyManager::getInstance().createNESTopologyLink(workerNode9, workerNode6, 2, 2);
-    NESTopologyManager::getInstance().createNESTopologyLink(workerNode10, workerNode5, 2, 2);
+    NESTopologyManager::getInstance().createNESTopologyLink(workerNode10, workerNode5, 2, 1);
     NESTopologyManager::getInstance().createNESTopologyLink(workerNode11, workerNode7, 2, 1);
     NESTopologyManager::getInstance().createNESTopologyLink(workerNode12, workerNode8, 2, 2);
     NESTopologyManager::getInstance().createNESTopologyLink(workerNode13, workerNode12, 2, 2);

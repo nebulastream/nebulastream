@@ -27,10 +27,17 @@ class LowLinkLatency : public NESPlacementOptimizer {
 
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
-    void placeOperators(NESExecutionPlanPtr executionPlanPtr,
-                        const NESTopologyGraphPtr nesTopologyGraphPtr,
-                        OperatorPtr operatorPtr,
-                        deque<NESTopologyEntryPtr> sourceNodes);
+    void placeOperators(NESExecutionPlanPtr executionPlanPtr, const NESTopologyGraphPtr nesTopologyGraphPtr,
+                        OperatorPtr operatorPtr, deque<NESTopologyEntryPtr> sourceNodes);
+
+    /**
+     * @brief Add forward operators between source and sink nodes.
+     * @param sourceNodes : list of source nodes
+     * @param rootNode : sink node
+     * @param nesExecutionPlanPtr : nes execution plan
+     */
+    void addForwardOperators(const deque<NESTopologyEntryPtr> sourceNodes, const NESTopologyEntryPtr rootNode,
+                             NESExecutionPlanPtr nesExecutionPlanPtr) const;
 };
 }
 
