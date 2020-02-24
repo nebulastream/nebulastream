@@ -99,11 +99,15 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                             //Prepare Input query from user string
                             string userRequest(body.begin(), body.end());
                             std::cout << "Request body: " << userRequest << std::endl;
-
+                            std::cout << "try to parse query" << std::endl;
                             json::value req = json::value::parse(userRequest);
-
+                            std::cout << "get user query" << std::endl;
                             string userQuery = req.at("userQuery").as_string();
+                            std::cout << "query=" << userQuery << std::endl;
+
+                            std::cout << "try to parse strategy name" << std::endl;
                             string optimizationStrategyName = req.at("strategyName").as_string();
+                            std::cout << "strategyName=" << optimizationStrategyName << std::endl;
 
                             std::cout << "Params: userQuery= " << userQuery << ", strategyName= "
                                       << optimizationStrategyName << std::endl;
