@@ -63,15 +63,6 @@ class NESPlacementOptimizer {
     void convertFwdOptr(const Schema& schema, ExecutionNodePtr executionNodePtr) const;
 
     /**
-     * @brief Add forward operators between source and sink nodes.
-     * @param sourceNodes : list of source nodes
-     * @param rootNode : sink node
-     * @param nesExecutionPlanPtr : nes execution plan
-     */
-    void addForwardOperators(const deque<NESTopologyEntryPtr> sourceNodes, const NESTopologyEntryPtr rootNode,
-                             NESExecutionPlanPtr nesExecutionPlanPtr) const;
-
-    /**
      * @brief This method returns the source operator in the user input query
      * @param root: the sink operator of the query
      * @return source operator pointer

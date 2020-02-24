@@ -50,6 +50,15 @@ class BottomUp : public NESPlacementOptimizer {
     void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
                         OperatorPtr sourceOperator, deque<NESTopologyEntryPtr> sourceNodes);
 
+    /**
+     * @brief Add forward operators between source and sink nodes.
+     * @param sourceNodes : list of source nodes
+     * @param rootNode : sink node
+     * @param nesExecutionPlanPtr : nes execution plan
+     */
+    void addForwardOperators(const deque<NESTopologyEntryPtr> sourceNodes, const NESTopologyEntryPtr rootNode,
+                             NESExecutionPlanPtr nesExecutionPlanPtr) const;
+
     // finds a suitable for node for the operator to be placed.
     NESTopologyEntryPtr findSuitableNESNodeForOperatorPlacement(const ProcessOperator& operatorToProcess,
                                                                 NESTopologyGraphPtr nesTopologyGraphPtr,

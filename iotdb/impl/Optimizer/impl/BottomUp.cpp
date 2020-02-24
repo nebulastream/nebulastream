@@ -3,6 +3,7 @@
 #include <iostream>
 #include <Util/Logger.hpp>
 #include <utility>
+#include <Optimizer/utils/PathFinder.hpp>
 
 using namespace std;
 
@@ -202,6 +203,26 @@ NESTopologyEntryPtr BottomUp::findSuitableNESNodeForOperatorPlacement(const Proc
     return node;
 };
 
+void BottomUp::addForwardOperators(const deque<NESTopologyEntryPtr> sourceNodes,
+                                                const NESTopologyEntryPtr rootNode,
+                                                NESExecutionPlanPtr nesExecutionPlanPtr) const {
 
+    PathFinder pathFinder;
+
+    for (NESTopologyEntryPtr targetSource: sourceNodes) {
+
+        //Find the list of nodes connecting the source and destination nodes
+        std::vector<NESTopologyEntryPtr> candidateNodes = pathFinder.findPathBetween(targetSource, rootNode);
+
+        for(NESTopologyEntryPtr candidateNode: candidateNodes) {
+
+            if (candidateNode->getCpuCapacity() == candidateNode->getRemainingCpuCapacity()) {
+                nesExecutionPlanPtr->createExecutionNode("FWD", to_string(candidateNode->getId()), candidateNode,
+                    /**executableOperator**/nullptr);
+                candidateNode->reduceCpuCapacity(1);
+            }
+        }
+    }
+}
 
 }
