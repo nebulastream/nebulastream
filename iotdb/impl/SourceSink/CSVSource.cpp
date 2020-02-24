@@ -47,10 +47,6 @@ const std::string CSVSource::toString() const {
 }
 
 void CSVSource::fillBuffer(TupleBufferPtr buf) {
-  /** while(generated_tuples < num_tuples_to_process)
-   read <buf.buffer_size> bytes data from file into buffer
-   advance internal file pointer, if we reach the file end, set to file begin
-   */
   std::ifstream input(filePath.c_str());
 
   input.seekg(0, input.end);
@@ -70,24 +66,26 @@ void CSVSource::fillBuffer(TupleBufferPtr buf) {
     if (input.tellg() >= file_size || input.tellg() == -1) {
       input.clear();
       input.seekg(0, input.beg);
-      std::cout << "reset" << std::endl;
-    }
-    else
-    {
-      std::cout << "tellg:" << input.tellg() << " size=" << file_size << std::endl;
+    } else {
     }
     std::getline(input, line);
     boost::algorithm::split(tokens, line, boost::is_any_of(this->delimiter));
     size_t offset = 0;
     for (size_t j = 0; j < schema.getSize(); j++) {
       auto field = schema[j];
-      std::cout << field->toString() << ": " << tokens[j] << ", ";
-      size_t field_size = field->getFieldSize();
-      memcpy((char*) buf->getBuffer() + offset + i * tupleSize,
-             tokens[j].c_str(), field_size);
-      offset += field_size;
+      size_t fieldSize = field->getFieldSize();
+
+      if (field->getDataType()->toString() == "UINT64") {
+        size_t val = atoi(tokens[j].c_str());
+        memcpy((char*) buf->getBuffer() + offset + i * tupleSize,
+                       &val, fieldSize);
+      } else {
+        memcpy((char*) buf->getBuffer() + offset + i * tupleSize,
+               tokens[j].c_str(), fieldSize);
+      }
+
+      offset += fieldSize;
     }
-    std::cout << std::endl;
     i++;
   }
   generatedTuples += generated_tuples_this_pass;
