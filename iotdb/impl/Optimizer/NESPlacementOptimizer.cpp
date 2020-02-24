@@ -3,11 +3,12 @@
 #include <exception>
 #include <Optimizer/impl/BottomUp.hpp>
 #include <Optimizer/impl/TopDown.hpp>
-#include <Optimizer/impl/LowLinkLatency.hpp>
+#include <Optimizer/impl/LowLatency.hpp>
 #include <Operators/Operator.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <Optimizer/utils/PathFinder.hpp>
+#include <Optimizer/impl/HighThroughput.hpp>
 
 namespace NES {
 
@@ -18,7 +19,9 @@ std::shared_ptr<NESPlacementOptimizer> NESPlacementOptimizer::getOptimizer(std::
     } else if (optimizerName == "TopDown") {
         return std::make_unique<TopDown>(TopDown());
     } else if (optimizerName == "Latency") {
-        return std::make_unique<LowLinkLatency>(LowLinkLatency());
+        return std::make_unique<LowLatency>(LowLatency());
+    } else if (optimizerName == "HighThroughput") {
+        return std::make_unique<HighThroughput>(HighThroughput());
     } else {
       throw std::invalid_argument("NESPlacementOptimizer: Unknown optimizer type: " + optimizerName);
     }
