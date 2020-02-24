@@ -19,11 +19,11 @@ namespace NES {
  * * Replicate operators when possible
  *
  */
-class LowLinkLatency : public NESPlacementOptimizer {
+class LowLatency : public NESPlacementOptimizer {
 
   public:
-    LowLinkLatency() {};
-    ~LowLinkLatency() {};
+    LowLatency() {};
+    ~LowLatency() {};
 
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 

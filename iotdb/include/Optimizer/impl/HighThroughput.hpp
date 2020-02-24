@@ -1,0 +1,32 @@
+#ifndef NES_IMPL_OPTIMIZER_IMPL_HIGHTHROUGHPUT_HPP_
+#define NES_IMPL_OPTIMIZER_IMPL_HIGHTHROUGHPUT_HPP_
+
+#include <Optimizer/NESPlacementOptimizer.hpp>
+
+namespace NES {
+
+class HighThroughput: public NESPlacementOptimizer {
+
+  public:
+    HighThroughput() = default;
+    ~HighThroughput() = default;
+
+    NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
+
+    void placeOperators(NESExecutionPlanPtr executionPlanPtr, const NESTopologyGraphPtr nesTopologyGraphPtr,
+                        OperatorPtr operatorPtr, deque<NESTopologyEntryPtr> sourceNodes);
+
+    /**
+     * @brief Add forward operators between source and sink nodes.
+     * @param sourceNodes : list of source nodes
+     * @param rootNode : sink node
+     * @param nesExecutionPlanPtr : nes execution plan
+     */
+    void addForwardOperators(const deque<NESTopologyEntryPtr> sourceNodes, const NESTopologyEntryPtr rootNode,
+                             NESExecutionPlanPtr nesExecutionPlanPtr) const;
+
+};
+
+}
+
+#endif //NES_IMPL_OPTIMIZER_IMPL_HIGHTHROUGHPUT_HPP_
