@@ -77,9 +77,11 @@ behavior CoordinatorActor::running() {
         std::string ip,
         std::string sourceType,
         std::string sourceConf,
+        double sourceFrequency,
+        size_t numberOfBuffersToProduce,
         std::string physicalStreamName,
         std::string logicalStreamName) {
-      PhysicalStreamConfig conf(sourceType, sourceConf, physicalStreamName, logicalStreamName);
+      PhysicalStreamConfig conf(sourceType, sourceConf, sourceFrequency, numberOfBuffersToProduce, physicalStreamName, logicalStreamName);
       return registerPhysicalStream(ip, conf);
     },
     [=](register_log_stream_atom, const string& streamName, const string& streamSchema) {
@@ -169,8 +171,7 @@ bool CoordinatorActor::removePhysicalStream(std::string ip,
   auto sap = current_sender();
   size_t hashId = getIdFromHandle(sap);
   NES_DEBUG(
-      "CoordinatorActor: removePhysicalStream id=" << sap->id()
-      << " sap=" << to_string(sap) << " hashID=" << hashId)
+      "CoordinatorActor: removePhysicalStream id=" << sap->id() << " sap=" << to_string(sap) << " hashID=" << hashId)
 
   std::vector<NESTopologyEntryPtr> sensorNodes =
       NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(
@@ -206,22 +207,14 @@ bool CoordinatorActor::registerPhysicalStream(std::string ip,
   auto sap = current_sender();
   size_t hashId = getIdFromHandle(sap);
   NES_DEBUG(
-      "CoordinatorActor: register pyhsical stream id=" << sap->id()
-      << " sap=" << to_string(sap) << " hashID=" << hashId)
+      "CoordinatorActor: register pyhsical stream id=" << sap->id() << " sap=" << to_string(sap) << " hashID=" << hashId)
 
   std::vector<NESTopologyEntryPtr> sensorNodes =
       NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(
           hashId);
 
   assert(sensorNodes.size() == 1);
-//  //TODO: note that we register on the first node with this id
-//  NESTopologyEntryPtr sensorNode;
-//  for (auto e : sensorNodes) {
-//    if (e->getEntryType() != Coordinator) {
-//      sensorNode = e;
-//      break;
-//    }
-//  }
+
 
   StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
       streamConf.sourceType, streamConf.sourceConfig, sensorNodes[0],
@@ -237,8 +230,7 @@ bool CoordinatorActor::deregisterSensor(const string &ip) {
 
   size_t hashId = getIdFromHandle(sap);
   NES_DEBUG(
-      "CoordinatorActor: deregister node id=" << sap->id()
-      << " sap=" << to_string(sap) << " hashID=" << hashId << " sap=" << to_string(sap))
+      "CoordinatorActor: deregister node id=" << sap->id() << " sap=" << to_string(sap) << " hashID=" << hashId << " sap=" << to_string(sap))
 
   std::vector<NESTopologyEntryPtr> sensorNodes =
       NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(

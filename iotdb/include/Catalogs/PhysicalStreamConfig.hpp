@@ -17,30 +17,35 @@ struct PhysicalStreamConfig {
   PhysicalStreamConfig() {
     sourceType = "DefaultSource";
     sourceConfig = "1";
+    sourceFrequency = 0.0;
+    numberOfBuffersToProduce = 1;
     physicalStreamName = "default_physical";
     logicalStreamName = "default_logical";
+
   }
   ;
 
-  PhysicalStreamConfig(std::string sourceType, std::string sourceConf,
+  PhysicalStreamConfig(std::string sourceType, std::string sourceConfig,
+                       double sourceFrequency, size_t numberOfBuffersToProduce,
                        std::string physicalStreamName,
                        std::string logicalStreamName)
-      : sourceType(sourceType),
-        sourceConfig(sourceConf),
-        physicalStreamName(physicalStreamName),
-        logicalStreamName(logicalStreamName) {
+      :
+      sourceType(sourceType),
+      sourceConfig(sourceConfig),
+      sourceFrequency(sourceFrequency),
+      numberOfBuffersToProduce(numberOfBuffersToProduce),
+      physicalStreamName(physicalStreamName),
+      logicalStreamName(logicalStreamName) {
   }
   ;
+
   std::string sourceType;
   std::string sourceConfig;
+  double sourceFrequency;
+  size_t numberOfBuffersToProduce;
   std::string physicalStreamName;
   std::string logicalStreamName;
 };
-
-//// PhysicalStreamConfig needs to be serializable
-//template <class Inspector>
-//typename Inspector::result_type inspect(Inspector& f, PhysicalStreamConfig& x) {
-//  return f(meta::type_name("PhysicalStreamConfig"), x.filePath, x.physicalStreamName, x.logicalStreamName);
 
 }
 #endif /* INCLUDE_CATALOGS_PHYSICALSTREAMCONFIG_HPP_ */

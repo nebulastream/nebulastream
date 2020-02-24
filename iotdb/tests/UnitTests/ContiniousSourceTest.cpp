@@ -85,9 +85,9 @@ TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromDefaultSourceP
   conf.logicalStreamName = "testStream";
   conf.physicalStreamName = "physical_test";
   conf.sourceType = "DefaultSource";
-  conf.sourceConfig = "10";
-  wrk->registerPhysicalStream(conf.sourceType, conf.sourceConfig,
-                              conf.physicalStreamName, conf.logicalStreamName);
+  conf.numberOfBuffersToProduce = "5";
+  conf.sourceFrequency = "1";
+  wrk->registerPhysicalStream(conf);
 
   //register query
   std::string queryString =
@@ -135,9 +135,9 @@ TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromDefaultSourceW
   conf.logicalStreamName = "testStream";
   conf.physicalStreamName = "physical_test";
   conf.sourceType = "DefaultSource";
-  conf.sourceConfig = "5";
-  wrk->registerPhysicalStream(conf.sourceType, conf.sourceConfig,
-                              conf.physicalStreamName, conf.logicalStreamName);
+  conf.numberOfBuffersToProduce = "5";
+  conf.sourceFrequency = "1";
+  wrk->registerPhysicalStream(conf);
 
   std::string outputFilePath = "blob.txt";
   remove(outputFilePath.c_str());
@@ -279,9 +279,10 @@ TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromCSVSourcePrint
   conf.logicalStreamName = "testStream";
   conf.physicalStreamName = "physical_test";
   conf.sourceType = "CSVSource";
-  conf.sourceConfig = "testCSV.csv,3";
-  wrk->registerPhysicalStream(conf.sourceType, conf.sourceConfig,
-                              conf.physicalStreamName, conf.logicalStreamName);
+  conf.sourceConfig = "testCSV.csv";
+  conf.numberOfBuffersToProduce = "3";
+  conf.sourceFrequency = "1";
+  wrk->registerPhysicalStream(conf);
 
   //register query
   std::string queryString =
@@ -349,12 +350,12 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
 
   //register query
   std::string queryString =
-      "InputQuery::from(testStream).filter(testStream[\"val1\"] < 2).writeToFile(\""
+      "InputQuery::from(testStream).filter(testStream[\"val1\"] < 10).writeToFile(\""
           + outputFilePath + "\"); ";
 
   std::string id = crd->executeQuery(queryString, "BottomUp");
   EXPECT_NE(id, "");
-  sleep(2);
+  sleep(6);
 
   std::ifstream ifs(outputFilePath.c_str());
   EXPECT_TRUE(ifs.good());
@@ -886,8 +887,8 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
   cout << "expContent=" << expectedContent << endl;
   EXPECT_EQ(content, expectedContent);
 
-  int response = remove(outputFilePath.c_str());
-  EXPECT_TRUE(response == 0);
+//  int response = remove(outputFilePath.c_str());
+//  EXPECT_TRUE(response == 0);
 
   bool retStopWrk = wrk->stop();
   EXPECT_TRUE(retStopWrk);

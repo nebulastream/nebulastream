@@ -130,6 +130,8 @@ class DataSource {
     size_t generatedTuples;
     size_t generatedBuffers;
     size_t numBuffersToProcess;
+    size_t gatheringInterval;
+    size_t lastGatheringTimeStamp;
     std::string sourceId;
 
   private:

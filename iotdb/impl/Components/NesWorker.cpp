@@ -127,10 +127,7 @@ bool NesWorker::registerLogicalStream(std::string name, std::string path) {
   return success;
 }
 
-bool NesWorker::registerPhysicalStream(std::string sourceType,
-                                       std::string sourceConf,
-                                       std::string physicalStreamName,
-                                       std::string logicalStreamName) {
+bool NesWorker::registerPhysicalStream(PhysicalStreamConfig conf) {
   WorkerActorConfig workerCfg;
   workerCfg.load<io::middleman>();
   actor_system actorSystem { workerCfg };
@@ -139,7 +136,7 @@ bool NesWorker::registerPhysicalStream(std::string sourceType,
   bool success = false;
 
   self->request(workerHandle, task_timeout, register_phy_stream_atom::value,
-                sourceType, sourceConf, physicalStreamName, logicalStreamName)
+                conf.sourceType, conf.sourceConfig, conf.sourceFrequency, conf.numberOfBuffersToProduce, conf.physicalStreamName, conf.logicalStreamName)
       .receive(
       [&success](const bool &dc) mutable {
         NES_DEBUG("NESWORKER: register log stream successful")
