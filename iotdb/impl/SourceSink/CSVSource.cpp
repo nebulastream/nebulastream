@@ -15,19 +15,19 @@ namespace NES {
 CSVSource::CSVSource()
     :
     filePath(""),
-//      file_size(0),
     tupleSize(0),
-    delimiter("") {
+    delimiter(",") {
 }
 
 CSVSource::CSVSource(const Schema &schema, const std::string &_file_path,
-                     const std::string &delimiter)
+                     const std::string &delimiter, size_t numBuffersToProcess)
     :
     DataSource(schema),
     filePath(_file_path),
     delimiter(delimiter) {
+  this->numBuffersToProcess = numBuffersToProcess;
   tupleSize = schema.getSchemaSize();
-  NES_DEBUG("CSVSource: tupleSize=" <<  tupleSize)
+  NES_DEBUG("CSVSource: tupleSize=" << tupleSize)
 }
 
 TupleBufferPtr CSVSource::receiveData() {
@@ -54,41 +54,47 @@ void CSVSource::fillBuffer(TupleBufferPtr buf) {
   std::ifstream input(filePath.c_str());
 
   input.seekg(0, input.end);
-  size_t file_size = input.tellg();
+  int file_size = input.tellg();
   if (file_size == -1) {
     NES_ERROR("ERROR: File " << filePath << " is corrupted")
     assert(0);
   }
   input.seekg(0, input.beg);
 
-  uint64_t generated_tuples_this_pass = buf->getBufferSizeInBytes()
-      / tupleSize;
+  uint64_t generated_tuples_this_pass = buf->getBufferSizeInBytes() / tupleSize;
 
   std::string line;
   std::vector<std::string> tokens;
   uint64_t i = 0;
   while (i < generated_tuples_this_pass) {
-    std::getline(input, line);
-
-    if (input.tellg() == file_size) {
+    if (input.tellg() >= file_size || input.tellg() == -1) {
+      input.clear();
       input.seekg(0, input.beg);
+      std::cout << "reset" << std::endl;
     }
+    else
+    {
+      std::cout << "tellg:" << input.tellg() << " size=" << file_size << std::endl;
+    }
+    std::getline(input, line);
     boost::algorithm::split(tokens, line, boost::is_any_of(this->delimiter));
     size_t offset = 0;
     for (size_t j = 0; j < schema.getSize(); j++) {
       auto field = schema[j];
-      // std::cout << field->toString() << ": " << tokens[j] << ", ";
+      std::cout << field->toString() << ": " << tokens[j] << ", ";
       size_t field_size = field->getFieldSize();
       memcpy((char*) buf->getBuffer() + offset + i * tupleSize,
              tokens[j].c_str(), field_size);
       offset += field_size;
     }
+    std::cout << std::endl;
     i++;
   }
   generatedTuples += generated_tuples_this_pass;
   buf->setNumberOfTuples(generated_tuples_this_pass);
   generatedBuffers++;
 }
+
 SourceType CSVSource::getType() const {
   return CSV_SOURCE;
 }
