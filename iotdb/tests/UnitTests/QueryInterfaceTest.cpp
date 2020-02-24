@@ -1,6 +1,6 @@
 #include <cassert>
 #include <iostream>
-
+#include <Util/Logger.hpp>
 #include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
 #include <NodeEngine/Dispatcher.hpp>
 
@@ -11,105 +11,99 @@
 #include <Util/UtilityFunctions.hpp>
 namespace NES {
 
-    class SelectionDataGenFunctor {
-    public:
-        SelectionDataGenFunctor() {}
+class SelectionDataGenFunctor {
+ public:
+  SelectionDataGenFunctor() {
+  }
 
-        struct __attribute__((packed)) InputTuple {
-            uint32_t id;
-            uint32_t value;
-        };
+  struct __attribute__((packed)) InputTuple {
+    uint32_t id;
+    uint32_t value;
+  };
 
+  TupleBufferPtr operator()() {
+    // 10 tuples of size one
+    TupleBufferPtr buf = BufferManager::instance().getBuffer();
+    uint64_t tupleCnt = buf->getNumberOfTuples();
 
-        TupleBufferPtr operator()() {
-            // 10 tuples of size one
-            TupleBufferPtr buf = BufferManager::instance().getBuffer();
-            uint64_t tupleCnt = buf->getNumberOfTuples();
+    assert(buf->getBuffer() != NULL);
 
-            assert(buf->getBuffer() != NULL);
+    InputTuple *tuples = (InputTuple*) buf->getBuffer();
+    for (uint32_t i = 0; i < tupleCnt; i++) {
+      tuples[i].id = i;
+      tuples[i].value = i * 2;
+    }
+    buf->setTupleSizeInBytes(sizeof(InputTuple));
+    buf->setNumberOfTuples(tupleCnt);
+    return buf;
+  }
+};
 
-            InputTuple *tuples = (InputTuple *) buf->getBuffer();
-            for (uint32_t i = 0; i < tupleCnt; i++) {
-                tuples[i].id = i;
-                tuples[i].value = i * 2;
-            }
-            buf->setTupleSizeInBytes(sizeof(InputTuple));
-            buf->setNumberOfTuples(tupleCnt);
-            return buf;
-        }
-    };
+void createQueryFilter() {
+  // define config
+  Config config = Config::create();
 
-    void createQueryFilter() {
-        // define config
-        Config config = Config::create();
-
-        Environment env = Environment::create(config);
+  Environment env = Environment::create(config);
 
 //    Config::create().withParallelism(1).withPreloading().withBufferSize(1000).withNumberOfPassesOverInput(1);
-        Schema schema = Schema::create()
-                .addField("id", BasicType::UINT32)
-                .addField("value", BasicType::UINT64);
+  Schema schema = Schema::create().addField("id", BasicType::UINT32).addField(
+      "value", BasicType::UINT64);
 
+  Stream def = Stream("default_logical", schema);
 
-        Stream def = Stream("default", schema);
+  InputQuery &query =
+      InputQuery::from(def).filter(def["value"] > 42).windowByKey(
+          def["value"].getAttributeField(), TumblingWindow::of(Seconds(10)),
+          Sum::on(def["value"])).print(std::cout);
 
-        InputQuery& query = InputQuery::from(def)
-                .filter(def["value"]  > 42)
-                .windowByKey(def["value"].getAttributeField(),TumblingWindow::of(Seconds(10)), Sum::on(def["value"]))
-                .print(std::cout);
+  env.printInputQueryPlan(query);
+  env.executeQuery(query);
 
-        env.printInputQueryPlan(query);
-        env.executeQuery(query);
+  // AttributeFieldPtr attr = schema[0];
+}
 
-        // AttributeFieldPtr attr = schema[0];
-    }
+void createQueryMap() {
+  // define config
+  Config config = Config::create();
 
-    void createQueryMap() {
-        // define config
-        Config config = Config::create();
-
-        Environment env = Environment::create(config);
+  Environment env = Environment::create(config);
 
 //    Config::create().withParallelism(1).withPreloading().withBufferSize(1000).withNumberOfPassesOverInput(1);
-        Schema schema = Schema::create()
-                .addField("id", BasicType::UINT32)
-                .addField("value", BasicType::UINT64);
+  Schema schema = Schema::create().addField("id", BasicType::UINT32).addField(
+      "value", BasicType::UINT64);
 
-        Stream def = Stream("default", schema);
+  Stream def = Stream("default", schema);
 
-        AttributeField mappedField("id", BasicType::UINT64);
+  AttributeField mappedField("id", BasicType::UINT64);
 
-        InputQuery& query = InputQuery::from(def)
-                .map(*schema[0], def["value"] + schema[1])
-                .print(std::cout);
-        env.printInputQueryPlan(query);
-        env.executeQuery(query);
+  InputQuery &query = InputQuery::from(def).map(*schema[0],
+                                                def["value"] + schema[1]).print(
+      std::cout);
+  env.printInputQueryPlan(query);
+  env.executeQuery(query);
+}
 
-        // AttributeFieldPtr attr = schema[0];
-    }
+void createQueryString() {
 
-    void createQueryString() {
+  std::stringstream code;
 
-        std::stringstream code;
+  code << "Schema schema = Schema::create().addField(\"test\",INT32);"
+       << std::endl;
+  code << "Stream testStream = Stream(\"test-stream\",schema);" << std::endl;
+  code << "return InputQuery::from(testStream).filter(testStream[\"test\"]==5)"
+       << std::endl << "" << std::endl << ";" << std::endl;
 
-        code << "Schema schema = Schema::create().addField(\"test\",INT32);" << std::endl;
-        code << "Stream testStream = Stream(\"test-stream\",schema);" << std::endl;
-        code << "return InputQuery::from(testStream).filter(testStream[\"test\"]==5)" << std::endl
-             << "" << std::endl
-             << ";" << std::endl;
-
-        InputQueryPtr inputQuery = UtilityFunctions::createQueryFromCodeString(code.str());
-    }
-
-} // namespace NES
+  InputQueryPtr inputQuery = UtilityFunctions::createQueryFromCodeString(
+      code.str());
+}
+}  // namespace NES
 
 int main(int argc, const char *argv[]) {
+  NES::Dispatcher::instance();
+  NES::createQueryFilter();
 
-    NES::Dispatcher::instance();
-    NES::createQueryFilter();
+  //NES::createQueryMap();
+  //NES::createQueryString();
 
-    //NES::createQueryMap();
-    //NES::createQueryString();
-
-    return 0;
+  return 0;
 }

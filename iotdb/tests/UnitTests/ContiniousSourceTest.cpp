@@ -51,7 +51,6 @@ class ContiniousSourceTest : public testing::Test {
     NESLogger->addAppender(file);
     NESLogger->addAppender(console);
   }
-
 };
 
 TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromDefaultSourcePrint) {

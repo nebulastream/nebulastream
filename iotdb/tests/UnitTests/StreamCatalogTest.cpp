@@ -134,7 +134,7 @@ TEST_F(StreamCatalogTest, add_get_physical_stream_test) {
                                                   sce));
 
   std::string expected =
-      "stream name=test_stream with 1 elements:physicalName=test2 on node=1\n";
+      "stream name=test_stream with 1 elements:physicalName=test2 logicalStreamName=test_stream sourceType=DefaultSource sourceConfig=1 sourceFrequency=0 numberOfBuffersToProduce=1 on node=1\n";
   cout << " string="
        << StreamCatalog::instance().getPhysicalStreamAndSchemaAsString()
        << endl;
@@ -183,8 +183,9 @@ TEST_F(StreamCatalogTest, add_physical_for_not_existing_logical_stream_test) {
       StreamCatalog::instance().addPhysicalStream(streamConf.logicalStreamName,
                                                   sce));
 
+
   std::string expected =
-      "stream name=default_logical with 1 elements:physicalName=default_physical on node=1\n";
+      "stream name=default_logical with 1 elements:physicalName=default_physical logicalStreamName=default_logical sourceType=DefaultSource sourceConfig=1 sourceFrequency=0 numberOfBuffersToProduce=1 on node=1\n";
   EXPECT_EQ(expected,
             StreamCatalog::instance().getPhysicalStreamAndSchemaAsString());
 }

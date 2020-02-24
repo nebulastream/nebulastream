@@ -400,11 +400,12 @@ TEST_F(StreamCatalogRemoteTest, add_physical_to_existing_logical_stream_remote_t
   conf.logicalStreamName = "default_logical";
   conf.physicalStreamName = "physical_test";
   conf.sourceType = "DefaultSource";
-  conf.sourceConfig = "2";
+  conf.numberOfBuffersToProduce = 2;
+
 
   success = false;
   self->request(worker, task_timeout, register_phy_stream_atom::value,
-                conf.sourceType, conf.sourceConfig, conf.physicalStreamName,
+                conf.sourceType, conf.sourceConfig, conf.sourceFrequency, conf.numberOfBuffersToProduce, conf.physicalStreamName,
                 conf.logicalStreamName).receive(
       [&success](const bool &c) mutable {
         success = c;
@@ -494,11 +495,11 @@ TEST_F(StreamCatalogRemoteTest, add_physical_to_new_logical_stream_remote_test) 
   conf.logicalStreamName = "testStream";
   conf.physicalStreamName = "physical_test";
   conf.sourceType = "DefaultSource";
-  conf.sourceConfig = "2";
+  conf.numberOfBuffersToProduce = 2;
 
   success = false;
   self->request(worker, task_timeout, register_phy_stream_atom::value,
-                conf.sourceType, conf.sourceConfig, conf.physicalStreamName,
+                conf.sourceType, conf.sourceConfig, conf.sourceFrequency, conf.numberOfBuffersToProduce, conf.physicalStreamName,
                 conf.logicalStreamName).receive(
       [&success](const bool &c) mutable {
         success = c;
