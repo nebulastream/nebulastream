@@ -24,14 +24,20 @@ std::vector<NESTopologyEntryPtr> PathFinder::findPathWithMaxBandwidth(NESTopolog
     if (pathsWithLinks.size() > 1) {
         // We select the path whose minimum link capacity is maximum among the selected path
         size_t maxOfMinBandwidth = 0;
+        size_t maxTotalBandwidth = 0;
         for (std::vector<NESTopologyLinkPtr> path : pathsWithLinks) {
             size_t minLinkBandwidth = UINT32_MAX;
+            size_t totalBandwidth = 0;
             for (auto link : path) {
                 if (minLinkBandwidth > link->getLinkCapacity()) {
+                    totalBandwidth = totalBandwidth + link->getLinkCapacity();
                     minLinkBandwidth = link->getLinkCapacity();
                 }
             }
-            if (maxOfMinBandwidth < minLinkBandwidth) {
+            if ((maxOfMinBandwidth < minLinkBandwidth)
+                || (maxOfMinBandwidth == minLinkBandwidth && totalBandwidth > maxTotalBandwidth)) {
+
+                maxTotalBandwidth = totalBandwidth;
                 maxOfMinBandwidth = minLinkBandwidth;
                 selectedPath = path;
             }
