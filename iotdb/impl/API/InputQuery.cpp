@@ -91,16 +91,17 @@ InputQuery InputQuery::from(Stream &stream) {
     size_t numBuffers = catalogEntry[0]->getNumberOfBuffersToProduce();
 
     NES_DEBUG(
-        "InputQuery::from logical stream name=" << stream.getName() << " pyhName=" << name << " srcType=" << type << " srcConf=" << conf)
+        "InputQuery::from logical stream name=" << stream.getName() << " pyhName=" << name << " srcType=" << type << " srcConf=" << conf
+        << " frequency=" << frequency << " numBuffers=" << numBuffers)
 
     if (type == "DefaultSource") {
-      if (conf == "1") {
+      if (numBuffers == 1) {
         NES_DEBUG("InputQuery::from create default source for one buffer")
         op = createSourceOperator(
             createDefaultDataSourceWithSchemaForOneBuffer(stream.getSchema()));
       } else {
         NES_DEBUG(
-            "InputQuery::from create default source for " << conf << " buffers")
+            "InputQuery::from create default source for " << numBuffers << " buffers")
         op = createSourceOperator(
             createDefaultDataSourceWithSchemaForVarBuffers(stream.getSchema(),
                                                            numBuffers,
