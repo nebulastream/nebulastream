@@ -102,7 +102,7 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
   EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile) {
+TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromDefaultSourceWriteFile) {
   cout << "start coordinator" << endl;
   NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
   size_t port = crd->startCoordinator(/**blocking**/false);
@@ -218,7 +218,7 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
   EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
+TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromCSVSourcePrint) {
   cout << "start coordinator" << endl;
   NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
   size_t port = crd->startCoordinator(/**blocking**/false);
@@ -279,7 +279,7 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
   EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
+TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromCSVSourceWrite) {
   cout << "start coordinator" << endl;
   NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
   size_t port = crd->startCoordinator(/**blocking**/false);
@@ -878,5 +878,4 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
   bool retStopCord = crd->stopCoordinator();
   EXPECT_TRUE(retStopCord);
 }
-
 }

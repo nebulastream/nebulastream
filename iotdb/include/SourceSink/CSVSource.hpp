@@ -25,7 +25,7 @@ class CSVSource : public DataSource {
    * @param number of buffers to create
    */
   CSVSource(const Schema& schema, const std::string& file_path,
-            const std::string& delimiter, size_t numBuffersToProcess, double frequency);
+            const std::string& delimiter, size_t numBuffersToProcess, size_t frequency);
 
   /**
    * @brief override the receiveData method for the csv source

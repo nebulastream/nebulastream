@@ -26,8 +26,21 @@ void starter(infer_handle_from_class_t<CoordinatorActor> handle,
 
 bool NesCoordinator::stopCoordinator() {
   scoped_actor self { *actorSystem };
+
+  self->request(coordinatorActorHandle, task_timeout, terminate_atom::value)
+      .receive(
+      []() mutable {
+        NES_DEBUG("NesCoordinator: terminated successfully")
+      }
+      ,
+      [=](const error &er) {
+        string error_msg = to_string(er);
+        NES_ERROR("NesCoordinator: ERROR while try to terminate " << error_msg)
+      });
+
   self->request(coordinatorActorHandle, task_timeout,
                 exit_reason::user_shutdown);
+
   NES_DEBUG("NesCoordinator: shutdown sended to coordinator")
   bool retStopRest = restServer->stop();
   NES_DEBUG("NesCoordinator: rest server stopped")
@@ -44,14 +57,15 @@ void NesCoordinator::startCoordinator(bool blocking, uint16_t port) {
 
 string NesCoordinator::executeQuery(const string queryString,
                                     const string strategy) {
-  NES_DEBUG("NesCoordinator: execute query=" << queryString << " with strategy=" << strategy)
+  NES_DEBUG(
+      "NesCoordinator: execute query=" << queryString << " with strategy=" << strategy)
 
   scoped_actor self { *actorSystem };
   string queryId = "";
 
   self->request(coordinatorActorHandle, task_timeout, execute_query_atom::value,
                 queryString, strategy).receive(
-      [&queryId](const string& uuid) mutable {
+      [&queryId](const string &uuid) mutable {
         queryId = uuid;
         NES_DEBUG("NesCoordinator: query successuflly executed id=" << uuid)
       }

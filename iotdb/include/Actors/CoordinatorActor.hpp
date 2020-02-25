@@ -159,6 +159,8 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
      */
     void initializeNESTopology();
 
+    void shutdown();
+
     QueryCatalogServicePtr queryCatalogServicePtr;
     StreamCatalogServicePtr streamCatalogServicePtr;
     CoordinatorActorConfig actorCoordinatorConfig;

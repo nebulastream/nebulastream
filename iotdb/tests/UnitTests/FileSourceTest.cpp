@@ -39,7 +39,7 @@ struct __attribute__((packed)) ysbRecord {
 }; // size 78 bytes
 
 typedef const DataSourcePtr (*createFileSourceFuncPtr)(const Schema &, const std::string &);
-typedef const DataSourcePtr (*createCSVSourceFuncPtr)(const Schema &, const std::string &, const std::string&, size_t, double);
+typedef const DataSourcePtr (*createCSVSourceFuncPtr)(const Schema &, const std::string &, const std::string&, size_t, size_t);
 
 int test(createFileSourceFuncPtr funcPtr, std::string& path_to_file) {
     Schema schema = Schema::create()
@@ -83,7 +83,7 @@ int test(createFileSourceFuncPtr funcPtr, std::string& path_to_file) {
 }
 
 
-int testCSV(createCSVSourceFuncPtr funcPtr, std::string& path_to_file, const std::string& del, size_t num, double frequency) {
+int testCSV(createCSVSourceFuncPtr funcPtr, std::string& path_to_file, const std::string& del, size_t num, size_t frequency) {
     Schema schema = Schema::create()
         .addField("user_id", 16)
         .addField("page_id", 16)

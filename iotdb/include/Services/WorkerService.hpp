@@ -53,16 +53,18 @@ class WorkerService {
   PhysicalStreamConfig getPhysicalStreamConfig(std::string name);
   void addPhysicalStreamConfig(PhysicalStreamConfig conf);
 
+  void shutDown();
+
  private:
   string _ip;
-  uint16_t _publish_port;
-  uint16_t _receive_port;
+  uint16_t publishPort;
+  uint16_t receivePort;
   QueryCompilerPtr queryCompiler;
   //TODO: this should be a ref or a pointer instead of an object
   std::map<std::string, PhysicalStreamConfig> physicalStreams;
 
   NodeEngine *_enginePtr;
-  std::unordered_map<string, tuple<QueryExecutionPlanPtr, OperatorPtr>> _runningQueries;
+  std::unordered_map<string, tuple<QueryExecutionPlanPtr, OperatorPtr>> runningQueries;
 };
 
 }

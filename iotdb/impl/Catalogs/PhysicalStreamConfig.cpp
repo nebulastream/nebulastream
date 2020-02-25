@@ -10,7 +10,6 @@ PhysicalStreamConfig::PhysicalStreamConfig() {
   numberOfBuffersToProduce = 1;
   physicalStreamName = "default_physical";
   logicalStreamName = "default_logical";
-
 }
 ;
 

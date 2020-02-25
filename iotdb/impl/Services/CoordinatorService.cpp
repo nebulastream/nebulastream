@@ -84,6 +84,13 @@ bool CoordinatorService::deleteQuery(const string& queryId) {
     return QueryCatalog::instance().deleteQuery(queryId);
 }
 
+
+void CoordinatorService::shutdown()
+{
+  queryToPort.clear();
+//  topologyManagerPtr->resetNESTopologyPlan();
+}
+
 map<NESTopologyEntryPtr, ExecutableTransferObject> CoordinatorService::prepareExecutableTransferObject(
     const string& queryId) {
     map<NESTopologyEntryPtr, ExecutableTransferObject> output;

@@ -18,7 +18,7 @@ const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(
 }
 
 const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(
-    const Schema &schema, size_t numbersOfBufferToProduce, double frequency) {
+    const Schema &schema, size_t numbersOfBufferToProduce, size_t frequency) {
   return std::make_shared<DefaultSource>(schema, numbersOfBufferToProduce, frequency);
 }
 
@@ -49,7 +49,7 @@ const DataSourcePtr createCSVFileSource(const Schema &schema,
                                         const std::string &path_to_file,
                                         const std::string &delimiter,
                                         size_t numbersOfBufferToProduce,
-                                        double frequency) {
+                                        size_t frequency) {
   return std::make_shared<CSVSource>(schema, path_to_file, delimiter,
                                      numbersOfBufferToProduce, frequency);
 }
