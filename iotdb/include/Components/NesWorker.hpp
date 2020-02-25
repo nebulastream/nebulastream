@@ -27,6 +27,16 @@ class NesWorker {
    */
   bool start(bool blocking, bool withConnect, uint16_t port);
 
+  /*
+   * @brief start the worker using the default worker config, and register a new stream
+   * @param bool indicating if the call is blocking
+   * @param bool indicating if connect
+   * @param port where to publish
+   * @param new stream of this system
+   * @return bool indicating success
+   */
+  bool startWithRegister(bool blocking, bool withConnect, uint16_t port, PhysicalStreamConfig conf);
+
   /**
    * @brief stop the worker
    * @return bool indicating success
@@ -60,6 +70,8 @@ class NesWorker {
 
  private:
   bool connected;
+  bool withRegisterStream;
+  PhysicalStreamConfig conf;
   infer_handle_from_class_t<NES::WorkerActor> workerHandle;
   actor_system *actorSystem;
   WorkerActorConfig workerCfg;
