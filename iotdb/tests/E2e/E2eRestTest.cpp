@@ -81,7 +81,6 @@ std::string GetCurrentWorkingDir(void) {
   std::string current_working_dir(buff);
   return current_working_dir;
 }
-
 TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
   cout << " start coordinator" << endl;
   string path = "./nesCoordinator --actor_port=12345";
@@ -180,6 +179,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
       std::cout << "error " << e.what() << std::endl;
     }
   }).wait();
+  sleep(2);
 
   std::cout << "try to acc return" << std::endl;
 
@@ -290,6 +290,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputWithFilter) {
   coordinatorProc.terminate();
 }
 
+
 TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputTwoWorker) {
   cout << " start coordinator" << endl;
   remove(outputFilePath.c_str());
@@ -338,7 +339,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputTwoWorker) {
       std::cout << "error " << e.what() << std::endl;
     }
   }).wait();
-
+  sleep(3);
   std::cout << "try to acc return" << std::endl;
 
   string queryId = json_return.at("queryId").as_string();

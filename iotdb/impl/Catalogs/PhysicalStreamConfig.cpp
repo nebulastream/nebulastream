@@ -6,7 +6,7 @@ namespace NES {
 PhysicalStreamConfig::PhysicalStreamConfig() {
   sourceType = "DefaultSource";
   sourceConfig = "1";
-  sourceFrequency = 0.0;
+  sourceFrequency = 0;
   numberOfBuffersToProduce = 1;
   physicalStreamName = "default_physical";
   logicalStreamName = "default_logical";
@@ -16,7 +16,7 @@ PhysicalStreamConfig::PhysicalStreamConfig() {
 
 PhysicalStreamConfig::PhysicalStreamConfig(std::string sourceType,
                                            std::string sourceConfig,
-                                           double sourceFrequency,
+                                           size_t sourceFrequency,
                                            size_t numberOfBuffersToProduce,
                                            std::string physicalStreamName,
                                            std::string logicalStreamName)

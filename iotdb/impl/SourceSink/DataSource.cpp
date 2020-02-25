@@ -24,7 +24,7 @@ DataSource::DataSource(const Schema &_schema)
     generatedTuples(0),
     generatedBuffers(0),
     numBuffersToProcess(UINT64_MAX),
-    gatheringInterval(1),
+    gatheringInterval(0),
     lastGatheringTimeStamp(0),
     sourceId(UtilityFunctions::generateUuid()) {
   NES_DEBUG(
@@ -38,7 +38,7 @@ DataSource::DataSource()
     generatedTuples(0),
     generatedBuffers(0),
     numBuffersToProcess(UINT64_MAX),
-    gatheringInterval(1),
+    gatheringInterval(0),
     lastGatheringTimeStamp(0),
     sourceId(UtilityFunctions::generateUuid()) {
   NES_DEBUG(
@@ -83,7 +83,7 @@ bool DataSource::isRunning() {
   return running;
 }
 
-void DataSource::setGatheringInterval(double interval) {
+void DataSource::setGatheringInterval(size_t interval) {
   this->gatheringInterval = interval;
 }
 
@@ -91,16 +91,11 @@ void DataSource::running_routine() {
   if (!this->sourceId.empty()) {
     NES_DEBUG("DataSource " << this->getSourceId() << ": Running Data Source")
     size_t cnt = 0;
+
     while (running) {
       size_t currentTime = time(NULL);
-      //TODO: currently this is limited to to seconds not microseconds
-      if (lastGatheringTimeStamp == currentTime) {
-//        NES_DEBUG("DataSource::running_routine sleep")
-        sleep(gatheringInterval);
-        continue;
-      } else {  //produce a new buffer
+      if (gatheringInterval == 0 || (lastGatheringTimeStamp != currentTime && currentTime % gatheringInterval == 0)) {  //produce a buffer
         lastGatheringTimeStamp = currentTime;
-
         if (cnt < numBuffersToProcess) {
           TupleBufferPtr buf = receiveData();
           if (buf) {
@@ -126,9 +121,13 @@ void DataSource::running_routine() {
           running = false;
           break;
         }
+      } else {
+        NES_DEBUG("DataSource::running_routine sleep")
+        sleep(gatheringInterval);
+        continue;
       }
       NES_DEBUG(
-          "DataSource " << this->getSourceId() << ": Data Source finished processing")
+          "DataSource " << this->getSourceId() << ": Data Source finished processing iteration " << cnt)
     }
   } else {
     NES_FATAL_ERROR(
