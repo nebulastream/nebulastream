@@ -1,7 +1,6 @@
 #ifndef TOPDOWN_HPP
 #define TOPDOWN_HPP
 
-
 #include <stack>
 #include <Optimizer/NESPlacementOptimizer.hpp>
 
@@ -18,7 +17,8 @@ class TopDown : public NESPlacementOptimizer {
     TopDown() = default;
     ~TopDown() = default;
 
-    NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlanPtr) override;
+    NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery,
+                                                NESTopologyPlanPtr nesTopologyPlanPtr) override;
 
   private:
 
@@ -30,7 +30,7 @@ class TopDown : public NESPlacementOptimizer {
      * @param nesTopologyGraphPtr :  nes topology graph
      */
     void placeOperators(NESExecutionPlanPtr executionPlanPtr, OperatorPtr sinkOperator,
-                        deque<NESTopologyEntryPtr> nesSourceNodes, NESTopologyGraphPtr nesTopologyGraphPtr);
+                        vector<NESTopologyEntryPtr> nesSourceNodes, NESTopologyGraphPtr nesTopologyGraphPtr);
 
     /**
      * @brief add query operator to existing execution node
@@ -54,7 +54,7 @@ class TopDown : public NESPlacementOptimizer {
      * @param rootNode : sink node
      * @param nesExecutionPlanPtr : nes execution plan
      */
-    void addForwardOperators(const deque<NESTopologyEntryPtr> sourceNodes, const NESTopologyEntryPtr rootNode,
+    void addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes, NESTopologyEntryPtr rootNode,
                              NESExecutionPlanPtr nesExecutionPlanPtr) const;
 };
 

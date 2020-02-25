@@ -19,8 +19,8 @@ class HighThroughput: public NESPlacementOptimizer {
 
   private:
 
-    void placeOperators(NESExecutionPlanPtr executionPlanPtr, const NESTopologyGraphPtr nesTopologyGraphPtr,
-                        OperatorPtr operatorPtr, deque<NESTopologyEntryPtr> sourceNodes);
+    void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
+                        OperatorPtr operatorPtr, vector<NESTopologyEntryPtr> sourceNodes);
 
     /**
      * @brief Add forward operators between source and sink nodes.
@@ -28,7 +28,7 @@ class HighThroughput: public NESPlacementOptimizer {
      * @param rootNode : sink node
      * @param nesExecutionPlanPtr : nes execution plan
      */
-    void addForwardOperators(const deque<NESTopologyEntryPtr> sourceNodes, const NESTopologyEntryPtr rootNode,
+    void addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes, NESTopologyEntryPtr rootNode,
                              NESExecutionPlanPtr nesExecutionPlanPtr) const;
 
 };

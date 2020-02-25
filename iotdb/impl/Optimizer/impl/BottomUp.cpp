@@ -21,7 +21,7 @@ NESExecutionPlanPtr BottomUp::initializeExecutionPlan(InputQueryPtr inputQuery, 
         throw std::runtime_error("No source operator found in the query plan");
     }
 
-    const deque<NESTopologyEntryPtr> sourceNodePtrs = StreamCatalog::instance()
+    const vector<NESTopologyEntryPtr> sourceNodePtrs = StreamCatalog::instance()
         .getSourceNodesForLogicalStream(streamName);
 
     if (sourceNodePtrs.empty()) {
@@ -49,7 +49,7 @@ NESExecutionPlanPtr BottomUp::initializeExecutionPlan(InputQueryPtr inputQuery, 
 }
 
 void BottomUp::placeOperators(NESExecutionPlanPtr executionPlanPtr, const NESTopologyGraphPtr nesTopologyGraphPtr,
-                              OperatorPtr sourceOperator, deque<NESTopologyEntryPtr> sourceNodes) {
+                              OperatorPtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes) {
 
     for (NESTopologyEntryPtr sourceNode: sourceNodes) {
 
@@ -203,7 +203,7 @@ NESTopologyEntryPtr BottomUp::findSuitableNESNodeForOperatorPlacement(const Proc
     return node;
 };
 
-void BottomUp::addForwardOperators(const deque<NESTopologyEntryPtr> sourceNodes,
+void BottomUp::addForwardOperators(const vector<NESTopologyEntryPtr> sourceNodes,
                                                 const NESTopologyEntryPtr rootNode,
                                                 NESExecutionPlanPtr nesExecutionPlanPtr) const {
 

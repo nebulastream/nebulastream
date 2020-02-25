@@ -9,6 +9,7 @@
 #include <SourceSink/SinkCreator.hpp>
 #include <Optimizer/utils/PathFinder.hpp>
 #include <Optimizer/impl/HighThroughput.hpp>
+#include <Optimizer/impl/MinimumResourceConsumption.hpp>
 
 namespace NES {
 
@@ -22,6 +23,8 @@ std::shared_ptr<NESPlacementOptimizer> NESPlacementOptimizer::getOptimizer(std::
         return std::make_unique<LowLatency>(LowLatency());
     } else if (optimizerName == "HighThroughput") {
         return std::make_unique<HighThroughput>(HighThroughput());
+    } else if (optimizerName == "MinimumResourceConsumption") {
+        return std::make_unique<MinimumResourceConsumption>(MinimumResourceConsumption());
     } else {
       throw std::invalid_argument("NESPlacementOptimizer: Unknown optimizer type: " + optimizerName);
     }
