@@ -237,17 +237,15 @@ bool StreamCatalog::testIfLogicalStreamExistsInLogicalToPhysicalMapping(
   != logicalToPhysicalStreamMapping.end();
 }
 
-deque<NESTopologyEntryPtr> StreamCatalog::getSourceNodesForLogicalStream(
-    std::string logicalStreamName) {
+vector<NESTopologyEntryPtr> StreamCatalog::getSourceNodesForLogicalStream(string logicalStreamName) {
 
-  //get current physical stream for this logical stream
-  std::vector<StreamCatalogEntryPtr> physicalStreams =
-      logicalToPhysicalStreamMapping[logicalStreamName];
+    //get current physical stream for this logical stream
+    vector<StreamCatalogEntryPtr> physicalStreams = logicalToPhysicalStreamMapping[logicalStreamName];
 
-  deque<NESTopologyEntryPtr> listOfSourceNodes;
-  for (StreamCatalogEntryPtr entry : physicalStreams) {
-    listOfSourceNodes.push_back(entry->getNode());
-  }
+    vector<NESTopologyEntryPtr> listOfSourceNodes;
+    for (StreamCatalogEntryPtr entry : physicalStreams) {
+        listOfSourceNodes.push_back(entry->getNode());
+    }
 
   return listOfSourceNodes;
 }

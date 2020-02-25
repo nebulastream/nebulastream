@@ -19,7 +19,7 @@ NESExecutionPlanPtr HighThroughput::initializeExecutionPlan(InputQueryPtr inputQ
         throw std::runtime_error("No source operator found in the query plan");
     }
 
-    const deque<NESTopologyEntryPtr> sourceNodePtrs = StreamCatalog::instance()
+    const vector<NESTopologyEntryPtr> sourceNodePtrs = StreamCatalog::instance()
         .getSourceNodesForLogicalStream(streamName);
 
     if (sourceNodePtrs.empty()) {
@@ -49,8 +49,8 @@ NESExecutionPlanPtr HighThroughput::initializeExecutionPlan(InputQueryPtr inputQ
     return nesExecutionPlanPtr;
 }
 
-void HighThroughput::placeOperators(NESExecutionPlanPtr executionPlanPtr, const NESTopologyGraphPtr nesTopologyGraphPtr,
-                                    OperatorPtr sourceOperator, deque<NESTopologyEntryPtr> sourceNodes) {
+void HighThroughput::placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
+                                    OperatorPtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes) {
 
     PathFinder pathFinder;
     const NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
@@ -110,8 +110,8 @@ void HighThroughput::placeOperators(NESExecutionPlanPtr executionPlanPtr, const 
     }
 }
 
-void HighThroughput::addForwardOperators(const deque<NESTopologyEntryPtr> sourceNodes,
-                                         const NESTopologyEntryPtr rootNode,
+void HighThroughput::addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes,
+                                         NESTopologyEntryPtr rootNode,
                                          NESExecutionPlanPtr nesExecutionPlanPtr) const {
 
     PathFinder pathFinder;
@@ -121,7 +121,7 @@ void HighThroughput::addForwardOperators(const deque<NESTopologyEntryPtr> source
         //Find the list of nodes connecting the source and destination nodes
         std::vector<NESTopologyEntryPtr> candidateNodes = pathFinder.findPathWithMaxBandwidth(targetSource, rootNode);
 
-        for(NESTopologyEntryPtr candidateNode: candidateNodes) {
+        for (NESTopologyEntryPtr candidateNode: candidateNodes) {
 
             if (candidateNode->getCpuCapacity() == candidateNode->getRemainingCpuCapacity()) {
                 nesExecutionPlanPtr->createExecutionNode("FWD", to_string(candidateNode->getId()), candidateNode,

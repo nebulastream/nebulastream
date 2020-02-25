@@ -12,7 +12,7 @@ NESExecutionPlanPtr TopDown::initializeExecutionPlan(
 
     //find the source Node
     string streamName = inputQuery->getSourceStream()->getName();
-    const deque<NESTopologyEntryPtr>& sourceNodes = StreamCatalog::instance()
+    const vector<NESTopologyEntryPtr>& sourceNodes = StreamCatalog::instance()
         .getSourceNodesForLogicalStream(streamName);
 
     if (sourceNodes.empty()) {
@@ -44,7 +44,7 @@ NESExecutionPlanPtr TopDown::initializeExecutionPlan(
 }
 
 void TopDown::placeOperators(NESExecutionPlanPtr executionPlanPtr, OperatorPtr sinkOperator,
-                             deque<NESTopologyEntryPtr> nesSourceNodes, NESTopologyGraphPtr nesTopologyGraphPtr) {
+                             vector<NESTopologyEntryPtr> nesSourceNodes, NESTopologyGraphPtr nesTopologyGraphPtr) {
 
     PathFinder pathFinder;
 
@@ -54,7 +54,8 @@ void TopDown::placeOperators(NESExecutionPlanPtr executionPlanPtr, OperatorPtr s
 
         // Find the nodes where we can place the operators. First node will be sink and last one will be the target
         // source.
-        std::vector<NESTopologyEntryPtr> candidateNodes = pathFinder.findPathBetween(nesSourceNode, nesTopologyGraphPtr->getRoot());
+        std::vector<NESTopologyEntryPtr>
+            candidateNodes = pathFinder.findPathBetween(nesSourceNode, nesTopologyGraphPtr->getRoot());
 
         if (candidateNodes.empty()) {
             throw std::runtime_error("No path exists between sink and source");
@@ -79,7 +80,8 @@ void TopDown::placeOperators(NESExecutionPlanPtr executionPlanPtr, OperatorPtr s
                         size_t operatorId = targetOperator->getOperatorId();
 
                         vector<size_t>& residentOperatorIds = existingExecutionNode->getChildOperatorIds();
-                        const auto exists = std::find(residentOperatorIds.begin(), residentOperatorIds.end(), operatorId);
+                        const auto
+                            exists = std::find(residentOperatorIds.begin(), residentOperatorIds.end(), operatorId);
 
                         if (exists != residentOperatorIds.end()) {
 
@@ -96,7 +98,8 @@ void TopDown::placeOperators(NESExecutionPlanPtr executionPlanPtr, OperatorPtr s
 
                         if (executionPlanPtr->hasVertex(node.operator*()->getId())) {
 
-                            const ExecutionNodePtr executionNode = executionPlanPtr->getExecutionNode(node.operator*()->getId());
+                            const ExecutionNodePtr
+                                executionNode = executionPlanPtr->getExecutionNode(node.operator*()->getId());
                             addOperatorToExistingNode(targetOperator, executionNode);
                         } else {
                             createNewExecutionNode(executionPlanPtr, targetOperator, node.operator*());
@@ -157,9 +160,8 @@ void TopDown::addOperatorToExistingNode(OperatorPtr operatorPtr, ExecutionNodePt
     executionNode->getNESNode()->reduceCpuCapacity(1);
 }
 
-void TopDown::addForwardOperators(const deque<NESTopologyEntryPtr> sourceNodes,
-                                   const NESTopologyEntryPtr rootNode,
-                                   NESExecutionPlanPtr nesExecutionPlanPtr) const {
+void TopDown::addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes, NESTopologyEntryPtr rootNode,
+                                  NESExecutionPlanPtr nesExecutionPlanPtr) const {
 
     PathFinder pathFinder;
 
@@ -168,7 +170,7 @@ void TopDown::addForwardOperators(const deque<NESTopologyEntryPtr> sourceNodes,
         //Find the list of nodes connecting the source and destination nodes
         std::vector<NESTopologyEntryPtr> candidateNodes = pathFinder.findPathBetween(targetSource, rootNode);
 
-        for(NESTopologyEntryPtr candidateNode: candidateNodes) {
+        for (NESTopologyEntryPtr candidateNode: candidateNodes) {
 
             if (candidateNode->getCpuCapacity() == candidateNode->getRemainingCpuCapacity()) {
                 nesExecutionPlanPtr->createExecutionNode("FWD", to_string(candidateNode->getId()), candidateNode,
