@@ -13,11 +13,19 @@ namespace NES {
 
 NesWorker::NesWorker() {
   connected = false;
+  withRegisterStream = false;
   coordinatorPort = 0;
   NES_DEBUG("NesWorker: constructed")
 
   // Register signals
   signal(SIGINT, termFunc);
+}
+
+bool NesWorker::startWithRegister(bool blocking, bool withConnect,
+                                  uint16_t port, PhysicalStreamConfig pConf) {
+  withRegisterStream = true;
+  conf = pConf;
+  start(blocking, withConnect, port);
 }
 
 bool NesWorker::start(bool blocking, bool withConnect, uint16_t port) {
@@ -37,6 +45,10 @@ bool NesWorker::start(bool blocking, bool withConnect, uint16_t port) {
   if (withConnect) {
     NES_DEBUG("NesWorker: start with connect")
     connect();
+  }
+  if (withRegisterStream) {
+    NES_DEBUG("NesWorker: start with register stream")
+    registerPhysicalStream(conf);
   }
   if (blocking) {
     NES_DEBUG("NesWorker: started, join now and waiting for work")
@@ -136,8 +148,9 @@ bool NesWorker::registerPhysicalStream(PhysicalStreamConfig conf) {
   bool success = false;
 
   self->request(workerHandle, task_timeout, register_phy_stream_atom::value,
-                conf.sourceType, conf.sourceConfig, conf.sourceFrequency, conf.numberOfBuffersToProduce, conf.physicalStreamName, conf.logicalStreamName)
-      .receive(
+                conf.sourceType, conf.sourceConfig, conf.sourceFrequency,
+                conf.numberOfBuffersToProduce, conf.physicalStreamName,
+                conf.logicalStreamName).receive(
       [&success](const bool &dc) mutable {
         NES_DEBUG("NESWORKER: register log stream successful")
         success = true;
