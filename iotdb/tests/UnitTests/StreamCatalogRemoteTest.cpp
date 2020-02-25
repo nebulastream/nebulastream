@@ -405,7 +405,8 @@ TEST_F(StreamCatalogRemoteTest, add_physical_to_existing_logical_stream_remote_t
 
   success = false;
   self->request(worker, task_timeout, register_phy_stream_atom::value,
-                conf.sourceType, conf.sourceConfig, conf.sourceFrequency, conf.numberOfBuffersToProduce, conf.physicalStreamName,
+                conf.sourceType, conf.sourceConfig, conf.sourceFrequency,
+                conf.numberOfBuffersToProduce, conf.physicalStreamName,
                 conf.logicalStreamName).receive(
       [&success](const bool &c) mutable {
         success = c;

@@ -277,7 +277,7 @@ behavior WorkerActor::running(const actor &coordinator) {
       return disconnecting();
     },
     // register physical stream
-    [=](register_phy_stream_atom, std::string sourceType, std::string sourceConf, double sourceFrequency,
+    [=](register_phy_stream_atom, std::string sourceType, std::string sourceConf, size_t sourceFrequency,
         size_t numberOfBuffersToProduce, std::string physicalStreamName, std::string logicalStreamName) {
       PhysicalStreamConfig conf(sourceType, sourceConf, sourceFrequency, numberOfBuffersToProduce, physicalStreamName, logicalStreamName);
       return registerPhysicalStream(conf);

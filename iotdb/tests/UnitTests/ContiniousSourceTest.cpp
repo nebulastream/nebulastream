@@ -134,7 +134,7 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile)
   conf.physicalStreamName = "physical_test";
   conf.sourceType = "DefaultSource";
   conf.numberOfBuffersToProduce = 3;
-  conf.sourceFrequency = 0.1;
+  conf.sourceFrequency = 1;
   wrk->registerPhysicalStream(conf);
 
   std::string outputFilePath =

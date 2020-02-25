@@ -73,7 +73,7 @@ behavior CoordinatorActor::running() {
         std::string ip,
         std::string sourceType,
         std::string sourceConf,
-        double sourceFrequency,
+        size_t sourceFrequency,
         size_t numberOfBuffersToProduce,
         std::string physicalStreamName,
         std::string logicalStreamName) {

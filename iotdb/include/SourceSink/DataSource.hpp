@@ -115,8 +115,9 @@ class DataSource {
     /**
      * @brief method to set the sampling interval
      * @note the source will sleep for interval seconds and then produce the next buffer
+     * @param interal to gather
      */
-    void setGatheringInterval(double interval);
+    void setGatheringInterval(size_t interval);
 
     /**
      * @brief Internal destructor to make sure that the data source is stopped before deconstrcuted
@@ -136,7 +137,7 @@ class DataSource {
     size_t generatedTuples;
     size_t generatedBuffers;
     size_t numBuffersToProcess;
-    double gatheringInterval;
+    size_t gatheringInterval;
     size_t lastGatheringTimeStamp;
     std::string sourceId;
 
