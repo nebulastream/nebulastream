@@ -39,7 +39,7 @@ class CoordinatorService {
   public:
 
     static CoordinatorServicePtr getInstance() {
-        static CoordinatorServicePtr instance{new CoordinatorService};
+        static CoordinatorServicePtr instance{new CoordinatorService};//TODO: I think this is wrong
         return instance;
     }
 
@@ -110,8 +110,9 @@ class CoordinatorService {
      * @brief: clear query catalogs
      * @return
      */
-
     bool clearQueryCatalogs();
+
+    void shutdown();
 
     const map<string, QueryCatalogEntryPtr> getRegisteredQueries();
     const map<string, QueryCatalogEntryPtr> getRunningQueries();

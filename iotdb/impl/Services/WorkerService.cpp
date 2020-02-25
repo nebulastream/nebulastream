@@ -5,13 +5,22 @@
 #include <Util/Logger.hpp>
 
 namespace NES {
+
+void WorkerService::shutDown()
+{
+  NES_DEBUG("WorkerService: shutdown WorkerService")
+  this->_enginePtr->stopWithUndeploy();
+  physicalStreams.clear();
+  runningQueries.clear();
+}
+
 WorkerService::WorkerService(string ip, uint16_t publish_port,
                              uint16_t receive_port) {
   this->_ip = std::move(ip);
-  this->_publish_port = publish_port;
-  this->_receive_port = receive_port;
+  this->publishPort = publish_port;
+  this->receivePort = receive_port;
   this->queryCompiler = createDefaultQueryCompiler();
-  NES_DEBUG("WorkerService: create WorkerService with ip=" <<  this->_ip << " publish_port=" << this->_publish_port  << " receive_port=" << this->_receive_port)
+  NES_DEBUG("WorkerService: create WorkerService with ip=" <<  this->_ip << " publish_port=" << this->publishPort  << " receive_port=" << this->receivePort)
   physicalStreams.insert(std::make_pair("default_physical", PhysicalStreamConfig()));
   this->_enginePtr = new NodeEngine();
   this->_enginePtr->start();
@@ -37,7 +46,7 @@ void WorkerService::execute_query(const string &queryId,
   ExecutableTransferObject eto = SerializationTools::parse_eto(
       executableTransferObject);
   QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(this->queryCompiler);
-  this->_runningQueries.insert(
+  this->runningQueries.insert(
       { queryId, std::make_tuple(qep, eto.getOperatorTree()) });
   this->_enginePtr->deployQuery(qep);
   std::this_thread::sleep_for(std::chrono::seconds(2));
@@ -45,11 +54,11 @@ void WorkerService::execute_query(const string &queryId,
 
 void WorkerService::delete_query(const string &query) {
   try {
-    if (this->_runningQueries.find(query) != this->_runningQueries.end()) {
+    if (this->runningQueries.find(query) != this->runningQueries.end()) {
       NES_DEBUG(
           "WORKERSERVICE (" << this->_ip << ": Attempting deletion of " << query);
-      QueryExecutionPlanPtr qep = std::get<0>(this->_runningQueries.at(query));
-      this->_runningQueries.erase(query);
+      QueryExecutionPlanPtr qep = std::get<0>(this->runningQueries.at(query));
+      this->runningQueries.erase(query);
       this->_enginePtr->undeployQuery(qep);
       NES_INFO(
           "WORKERSERVICE (" << this->_ip << ": Successfully deleted query " << query);
@@ -66,7 +75,7 @@ void WorkerService::delete_query(const string &query) {
 
 vector<string> WorkerService::getOperators() {
   vector<string> result;
-  for (auto const &x : this->_runningQueries) {
+  for (auto const &x : this->runningQueries) {
     string str_opts;
     const OperatorPtr op = std::get<1>(x.second);
     auto flattened = op->flattenedTypes();
@@ -87,16 +96,16 @@ void WorkerService::setIp(const string &ip) {
   _ip = ip;
 }
 uint16_t WorkerService::getPublishPort() const {
-  return _publish_port;
+  return publishPort;
 }
 void WorkerService::setPublishPort(uint16_t publish_port) {
-  _publish_port = publish_port;
+  publishPort = publish_port;
 }
 uint16_t WorkerService::getReceivePort() const {
-  return _receive_port;
+  return receivePort;
 }
 void WorkerService::setReceivePort(uint16_t receive_port) {
-  _receive_port = receive_port;
+  receivePort = receive_port;
 }
 
 }

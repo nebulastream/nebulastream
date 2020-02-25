@@ -93,6 +93,10 @@ class WorkerActor : public stateful_actor<WorkerState> {
    */
   bool disconnecting();
 
+  /**
+   * @brief method to shutdown the worker
+   */
+  void shutdown();
 };
 
 }

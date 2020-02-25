@@ -150,6 +150,7 @@ class DataSource {
     template<class Archive>
     void serialize(Archive& ar, const unsigned int version) {
         ar & numBuffersToProcess;
+        ar & gatheringInterval;
         ar & schema;
         ar & generatedTuples;
         ar & generatedBuffers;

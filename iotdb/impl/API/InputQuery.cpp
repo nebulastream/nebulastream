@@ -1,3 +1,5 @@
+#include <boost/algorithm/string.hpp>
+
 #include <cstddef>
 #include <iostream>
 #include <API/InputQuery.hpp>
@@ -8,7 +10,6 @@
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <Catalogs/StreamCatalog.hpp>
-#include <boost/algorithm/string.hpp>
 #include <API/Window/WindowDefinition.hpp>
 #include <Util/Logger.hpp>
 
@@ -87,7 +88,7 @@ InputQuery InputQuery::from(Stream &stream) {
     std::string name = catalogEntry[0]->getPhysicalName();
     std::string type = catalogEntry[0]->getSourceType();
     std::string conf = catalogEntry[0]->getSourceConfig();
-    double frequency = catalogEntry[0]->getSourceFrequency();
+    size_t frequency = catalogEntry[0]->getSourceFrequency();
     size_t numBuffers = catalogEntry[0]->getNumberOfBuffersToProduce();
 
     NES_DEBUG(

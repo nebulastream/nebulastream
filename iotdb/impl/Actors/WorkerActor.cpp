@@ -50,8 +50,10 @@ bool WorkerActor::registerPhysicalStream(PhysicalStreamConfig conf) {
   bool sucess = false;
   scoped_actor self { this->system() };
   self->request(coordinator, task_timeout, register_phy_stream_atom::value,
-                this->state.workerPtr->getIp(), conf.sourceType, conf.sourceConfig, conf.sourceFrequency, conf.numberOfBuffersToProduce,
-                conf.physicalStreamName, conf.logicalStreamName).receive(
+                this->state.workerPtr->getIp(), conf.sourceType,
+                conf.sourceConfig, conf.sourceFrequency,
+                conf.numberOfBuffersToProduce, conf.physicalStreamName,
+                conf.logicalStreamName).receive(
       [&sucess, &conf](const bool &dc) mutable {
         if (dc == true) {
           NES_DEBUG(
@@ -237,15 +239,12 @@ bool WorkerActor::connecting(const std::string &host, uint16_t port) {
         //TODO: add serializable shipping object
         cout << "send properties to server" << endl;
         //send default physical stream
-        this->request(
-            coordinator,
-            task_timeout,
-            register_sensor_atom::value,
-            this->state.workerPtr->getIp(),
-            this->state.workerPtr->getPublishPort(),
-            this->state.workerPtr->getReceivePort(),
-            /**cpu*/ 2,
-            this->state.workerPtr->getNodeProperties());
+        this->request(coordinator, task_timeout, register_sensor_atom::value,
+                      this->state.workerPtr->getIp(),
+                      this->state.workerPtr->getPublishPort(),
+                      this->state.workerPtr->getReceivePort(),
+                      /**cpu*/2,
+                      this->state.workerPtr->getNodeProperties());
         cout << "properties set successful, now changing state" << endl;
         this->monitor(coordinator);
         this->become(running(coordinator));
@@ -258,6 +257,12 @@ bool WorkerActor::connecting(const std::string &host, uint16_t port) {
         this->become(unconnected());
       });
   return connected;
+}
+
+void WorkerActor::WorkerActor::shutdown()
+{
+  NES_DEBUG("WorkerActor: shutdown");
+  this->state.workerPtr->shutDown();
 }
 
 /**
@@ -275,6 +280,9 @@ behavior WorkerActor::running(const actor &coordinator) {
     },
     [=](disconnect_atom) {
       return disconnecting();
+    },
+    [=](terminate_atom) {
+      return shutdown();
     },
     // register physical stream
     [=](register_phy_stream_atom, std::string sourceType, std::string sourceConf, size_t sourceFrequency,

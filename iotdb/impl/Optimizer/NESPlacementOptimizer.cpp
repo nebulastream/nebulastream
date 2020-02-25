@@ -1,5 +1,4 @@
-#include "../../include/Optimizer/NESPlacementOptimizer.hpp"
-
+#include <Optimizer/NESPlacementOptimizer.hpp>
 #include <iostream>
 #include <exception>
 #include <Optimizer/impl/BottomUp.hpp>

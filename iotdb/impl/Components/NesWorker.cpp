@@ -73,6 +73,15 @@ bool NesWorker::start(bool blocking, bool withConnect, uint16_t port) {
 bool NesWorker::stop() {
   NES_DEBUG("NesWorker: stop")
   scoped_actor self { *actorSystem };
+  self->request(workerHandle, task_timeout, terminate_atom::value).receive(
+      []() mutable {
+        NES_DEBUG("NesWorker: terminated successfully")
+      }
+      ,
+      [=](const error &er) {
+        string error_msg = to_string(er);
+        NES_ERROR("NesWorker: ERROR while try to terminate " << error_msg)
+      });
   self->request(workerHandle, task_timeout, exit_reason::user_shutdown);
   return true;
 }

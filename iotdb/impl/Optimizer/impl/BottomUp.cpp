@@ -37,9 +37,6 @@ NESExecutionPlanPtr BottomUp::initializeExecutionPlan(InputQueryPtr inputQuery, 
     NES_INFO("BottomUp: Adding forward operators.");
     addForwardOperators(sourceNodePtrs, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
 
-//    NES_INFO("BottomUp: Removing non resident operators from the execution nodes.");
-//    removeNonResidentOperators(nesExecutionPlanPtr);
-
     NES_INFO("BottomUp: Generating complete execution Graph.");
     completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlan);
 

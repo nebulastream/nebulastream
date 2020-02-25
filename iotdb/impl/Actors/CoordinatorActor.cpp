@@ -107,7 +107,7 @@ behavior CoordinatorActor::running() {
     [=](deregister_query_atom, const string& queryId) {
       deregisterQuery(queryId);
     },
-    [=](deploy_query_atom, const string& description) {
+    [=](deploy_query_atom, const string& description) {  //TODO:remove
       deployQuery(description);
     },
 
@@ -121,7 +121,9 @@ behavior CoordinatorActor::running() {
     [=](get_operators_atom) {
       return workerServicePtr->getOperators();
     },
-
+    [=](terminate_atom) {
+      return shutdown();
+    },
     // external methods for users
     [=](topology_json_atom) {
       string topo = coordinatorServicePtr->getTopologyPlanString();
@@ -190,8 +192,8 @@ bool CoordinatorActor::removePhysicalStream(std::string ip,
   }
 
   NES_DEBUG("node type=" << sensorNode->getEntryTypeString())
-  StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
-      streamConf, sensorNode);
+  StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf,
+                                                                   sensorNode);
 
   return StreamCatalog::instance().removePhysicalStream(
       streamConf.logicalStreamName, sce);
@@ -211,7 +213,6 @@ bool CoordinatorActor::registerPhysicalStream(std::string ip,
           hashId);
 
   assert(sensorNodes.size() == 1);
-
 
   StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
       streamConf, sensorNodes[0]);
@@ -293,6 +294,16 @@ void CoordinatorActor::registerSensor(const string &ip, uint16_t publish_port,
       "CoordinatorActor: Successfully registered sensor (CPU=" << cpu << ", PhysicalStream: " << streamConf.physicalStreamName << ") " << to_string(hdl));
 }
 
+void CoordinatorActor::shutdown() {
+  coordinatorServicePtr->shutdown();
+  workerServicePtr->shutDown();
+  StreamCatalog::instance().reset();
+  QueryCatalog::instance().clearQueries();
+  this->state.actorTopologyMap.clear();
+  this->state.idToActorMap.clear();
+  this->state.topologyActorMap.clear();
+}
+
 void CoordinatorActor::deployQuery(const string &queryId) {
   map<NESTopologyEntryPtr, ExecutableTransferObject> deployments =
       coordinatorServicePtr->prepareExecutableTransferObject(queryId);
@@ -301,7 +312,8 @@ void CoordinatorActor::deployQuery(const string &queryId) {
     strong_actor_ptr sap = this->state.topologyActorMap.at(x.first);
     auto hdl = actor_cast<actor>(sap);
     string s_eto = SerializationTools::ser_eto(x.second);
-    NES_INFO("Sending query " << queryId << " to " << to_string(hdl));
+    NES_INFO(
+        "CoordinatorActor:: Sending query " << queryId << " to " << to_string(hdl));
     this->request(hdl, task_timeout, execute_operators_atom::value, queryId,
                   s_eto);
   }

@@ -24,7 +24,7 @@ const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(
  * @return a const data source pointer
  */
 const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(
-    const Schema &schema, size_t numbersOfBufferToProduce, double frequency);
+    const Schema &schema, size_t numbersOfBufferToProduce, size_t frequency);
 
 /**
  * @brief function to create a test source which produces 10 tuples with value one without a schema
@@ -70,6 +70,6 @@ const DataSourcePtr createCSVFileSource(const Schema &schema,
                                         const std::string &path_to_file,
                                         const std::string &delimiter,
                                         size_t numBuffersToProcess,
-                                        double frequency);
+                                        size_t frequency);
 }
 #endif /* INCLUDE_SOURCESINK_SOURCECREATOR_HPP_ */
