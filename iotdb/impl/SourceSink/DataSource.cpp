@@ -93,7 +93,7 @@ void DataSource::running_routine() {
     size_t cnt = 0;
     while (running) {
       size_t currentTime = time(NULL);
-//      if (fmod(currentTime, gatheringInterval) == 0 && lastGatheringTimeStamp == currentTime) {
+      //TODO: currently this is limited to to seconds not microseconds
       if (lastGatheringTimeStamp == currentTime) {
 //        NES_DEBUG("DataSource::running_routine sleep")
         sleep(gatheringInterval);

@@ -52,8 +52,7 @@ class ContiniousSourceTest : public testing::Test {
     NESLogger->addAppender(console);
   }
 };
-
-TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromDefaultSourcePrint) {
+TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
   cout << "start coordinator" << endl;
   NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
   size_t port = crd->startCoordinator(/**blocking**/false);
@@ -103,7 +102,7 @@ TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromDefaultSourceP
   EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromDefaultSourceWriteFile) {
+TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteFile) {
   cout << "start coordinator" << endl;
   NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
   size_t port = crd->startCoordinator(/**blocking**/false);
@@ -134,54 +133,29 @@ TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromDefaultSourceW
   conf.logicalStreamName = "testStream";
   conf.physicalStreamName = "physical_test";
   conf.sourceType = "DefaultSource";
-  conf.numberOfBuffersToProduce = 5;
-  conf.sourceFrequency = 1;
+  conf.numberOfBuffersToProduce = 3;
+  conf.sourceFrequency = 0.1;
   wrk->registerPhysicalStream(conf);
 
-  std::string outputFilePath = "blob.txt";
+  std::string outputFilePath =
+      "testMultipleOutputBufferFromDefaultSourceWriteFileOutput.txt";
   remove(outputFilePath.c_str());
 
   //register query
   std::string queryString =
-      "InputQuery::from(testStream).filter(testStream[\"campaign_id\"] > 42).writeToFile(\""
+      "InputQuery::from(testStream).filter(testStream[\"campaign_id\"] < 42).writeToFile(\""
           + outputFilePath + "\"); ";
   std::string id = crd->executeQuery(queryString, "BottomUp");
   EXPECT_NE(id, "");
 
-  sleep(2);
+  sleep(5);
   std::ifstream ifs(outputFilePath.c_str());
   EXPECT_TRUE(ifs.good());
   std::string content((std::istreambuf_iterator<char>(ifs)),
                       (std::istreambuf_iterator<char>()));
 
   string expectedContent =
-      "+----------------------------------------------------+\n"
-          "|campaign_id:UINT64|\n"
-          "+----------------------------------------------------+\n"
-          "|1|\n"
-          "|1|\n"
-          "|1|\n"
-          "|1|\n"
-          "|1|\n"
-          "|1|\n"
-          "|1|\n"
-          "|1|\n"
-          "|1|\n"
-          "|1|\n"
-          "+----------------------------------------------------++----------------------------------------------------+\n"
-          "|campaign_id:UINT64|\n"
-          "+----------------------------------------------------+\n"
-          "|1|\n"
-          "|1|\n"
-          "|1|\n"
-          "|1|\n"
-          "|1|\n"
-          "|1|\n"
-          "|1|\n"
-          "|1|\n"
-          "|1|\n"
-          "|1|\n"
-          "+----------------------------------------------------++----------------------------------------------------+\n"
+         "+----------------------------------------------------+\n"
           "|campaign_id:UINT64|\n"
           "+----------------------------------------------------+\n"
           "|1|\n"
@@ -221,12 +195,19 @@ TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromDefaultSourceW
           "|1|\n"
           "|1|\n"
           "+----------------------------------------------------+";
+
   cout << "content=" << content << endl;
   cout << "expContent=" << expectedContent << endl;
+
+  std::string testOut = "expect.txt";
+  std::ofstream outT(testOut);
+  outT << expectedContent;
+  outT.close();
+
   EXPECT_EQ(content, expectedContent);
 
-  int response = remove(outputFilePath.c_str());
-  EXPECT_TRUE(response == 0);
+//  int response = remove(outputFilePath.c_str());
+//  EXPECT_TRUE(response == 0);
 
   sleep(2);
   bool retStopWrk = wrk->stop();
@@ -237,7 +218,7 @@ TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromDefaultSourceW
   EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromCSVSourcePrint) {
+TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromCSVSourcePrint) {
   cout << "start coordinator" << endl;
   NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
   size_t port = crd->startCoordinator(/**blocking**/false);
@@ -339,7 +320,9 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromCSVSourceWrite) {
   conf.logicalStreamName = "testStream";
   conf.physicalStreamName = "physical_test";
   conf.sourceType = "CSVSource";
-  conf.sourceConfig = "testCSV.csv,3";
+  conf.sourceConfig = "testCSV.csv";
+  conf.numberOfBuffersToProduce = 3;
+  conf.sourceFrequency = 1;
   wrk->registerPhysicalStream(conf);
 
   std::string outputFilePath =
