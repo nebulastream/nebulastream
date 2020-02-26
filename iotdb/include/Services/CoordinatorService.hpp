@@ -39,7 +39,7 @@ class CoordinatorService {
   public:
 
     static CoordinatorServicePtr getInstance() {
-        static CoordinatorServicePtr instance{new CoordinatorService};//TODO: I think this is wrong
+        static CoordinatorServicePtr instance{new CoordinatorService};
         return instance;
     }
 

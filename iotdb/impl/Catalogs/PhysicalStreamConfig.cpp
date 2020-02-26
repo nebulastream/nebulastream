@@ -29,12 +29,12 @@ PhysicalStreamConfig::PhysicalStreamConfig(std::string sourceType,
 }
 ;
 
-std::string PhysicalStreamConfig::toString()
-{
+std::string PhysicalStreamConfig::toString() {
   std::stringstream ss;
-  ss << "sourceType=" << sourceType << " sourceConfig=" << sourceConfig << " sourceFrequency=" << sourceFrequency
-      << " numberOfBuffersToProduce=" << numberOfBuffersToProduce << " physicalStreamName=" << physicalStreamName
-      << " logicalStreamName=" << logicalStreamName;
+  ss << "sourceType=" << sourceType << " sourceConfig=" << sourceConfig
+     << " sourceFrequency=" << sourceFrequency << " numberOfBuffersToProduce="
+     << numberOfBuffersToProduce << " physicalStreamName=" << physicalStreamName
+     << " logicalStreamName=" << logicalStreamName;
   return ss.str();
 }
 }
