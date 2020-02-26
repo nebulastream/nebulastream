@@ -44,8 +44,8 @@ class ContiniousSourceTest : public testing::Test {
         new log4cxx::ConsoleAppender(layoutPtr));
 
     // set log level
-//    NESLogger->setLevel(log4cxx::Level::getDebug());
-    NESLogger->setLevel(log4cxx::Level::getInfo());
+    NESLogger->setLevel(log4cxx::Level::getDebug());
+//    NESLogger->setLevel(log4cxx::Level::getInfo());
 
 // add appenders and other will inherit the settings
     NESLogger->addAppender(file);
@@ -82,10 +82,12 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintForEx
   wrk->registerPhysicalStream(conf);
 
   std::string filePath = "contTestOut.csv";
+  remove(filePath.c_str());
+
   //register query
   std::string queryString =
 //      "InputQuery::from(exdra).print(std::cout); ";
-  "InputQuery::from(exdra).writeToFile(\"" + filePath + "\");";
+  "InputQuery::from(exdra).writeToCSVFile(\"" + filePath + "\");";
 
   std::string id = crd->executeQuery(queryString, "BottomUp");
   EXPECT_NE(id, "");

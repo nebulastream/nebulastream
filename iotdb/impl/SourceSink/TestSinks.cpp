@@ -19,7 +19,12 @@ const DataSinkPtr createBinaryFileSinkWithoutSchema(const std::string& filePath)
 
 const DataSinkPtr createBinaryFileSinkWithSchema(const Schema& schema,
                                                  const std::string& filePath) {
-  return std::make_shared<FileOutputSink>(schema , filePath);
+  return std::make_shared<FileOutputSink>(schema , filePath, BINARY_TYPE);
+}
+
+const DataSinkPtr createCSVFileSinkWithSchema(const Schema& schema,
+                                                 const std::string& filePath) {
+  return std::make_shared<FileOutputSink>(schema , filePath, CSV_TYPE);
 }
 
 const DataSinkPtr createPrintSinkWithoutSchema(std::ostream& out) {
