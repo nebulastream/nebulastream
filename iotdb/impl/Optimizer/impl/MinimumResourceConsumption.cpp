@@ -107,7 +107,7 @@ void MinimumResourceConsumption::placeOperators(NESExecutionPlanPtr executionPla
         const ExecutionNodePtr newExecutionNode =
             executionPlanPtr->createExecutionNode(operatorName.str(), to_string(sourceNode->getId()), sourceNode,
                                                   sourceOperator->copy());
-        newExecutionNode->addChildOperatorId(sourceOperator->getOperatorId());
+        newExecutionNode->addOperatorId(sourceOperator->getOperatorId());
         sourceNode->reduceCpuCapacity(1);
     }
 
@@ -148,7 +148,7 @@ void MinimumResourceConsumption::placeOperators(NESExecutionPlanPtr executionPla
                          << operatorTypeToString[targetOperator->getOperatorType()]
                          << "(OP-" << std::to_string(targetOperator->getOperatorId()) << ")";
             existingExecutionNode->setOperatorName(operatorName.str());
-            existingExecutionNode->addChildOperatorId(targetOperator->getOperatorId());
+            existingExecutionNode->addOperatorId(targetOperator->getOperatorId());
         } else {
 
             NES_DEBUG("MinimumResourceConsumption: create new execution node " << node->toString())
@@ -162,7 +162,7 @@ void MinimumResourceConsumption::placeOperators(NESExecutionPlanPtr executionPla
                                                                                             to_string(node->getId()),
                                                                                             node,
                                                                                             targetOperator->copy());
-            newExecutionNode->addChildOperatorId(targetOperator->getOperatorId());
+            newExecutionNode->addOperatorId(targetOperator->getOperatorId());
         }
 
         // Reduce the processing capacity by 1
@@ -188,7 +188,7 @@ void MinimumResourceConsumption::placeOperators(NESExecutionPlanPtr executionPla
                          << operatorTypeToString[targetOperator->getOperatorType()]
                          << "(OP-" << std::to_string(targetOperator->getOperatorId()) << ")";
             existingExecutionNode->setOperatorName(operatorName.str());
-            existingExecutionNode->addChildOperatorId(targetOperator->getOperatorId());
+            existingExecutionNode->addOperatorId(targetOperator->getOperatorId());
         } else {
 
             NES_DEBUG(
@@ -204,7 +204,7 @@ void MinimumResourceConsumption::placeOperators(NESExecutionPlanPtr executionPla
                                                                                             to_string(sinkNode->getId()),
                                                                                             sinkNode,
                                                                                             targetOperator->copy());
-            newExecutionNode->addChildOperatorId(targetOperator->getOperatorId());
+            newExecutionNode->addOperatorId(targetOperator->getOperatorId());
         }
         sinkNode->reduceCpuCapacity(1);
     } else {
