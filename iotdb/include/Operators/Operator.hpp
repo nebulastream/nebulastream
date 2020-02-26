@@ -80,7 +80,7 @@ class Operator {
     virtual OperatorType getOperatorType() const = 0;
     virtual bool equals(const Operator& _rhs);
 
-    size_t getOperatorId() { return this->operatorId; };
+    size_t getOperatorId() const { return this->operatorId; };
     void setOperatorId(size_t operatorId) { this->operatorId = operatorId; };
     const std::vector<OperatorPtr> getChildren() const;
     void setChildren(const std::vector<OperatorPtr> children);
@@ -93,7 +93,7 @@ class Operator {
 
   private:
     size_t operatorId;
-    std::vector<OperatorPtr> children{};
+    std::vector<OperatorPtr> children;
     OperatorPtr parent;
     std::set<OperatorType> traverseOpTree(bool traverse_children);
 

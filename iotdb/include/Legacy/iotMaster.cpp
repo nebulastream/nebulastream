@@ -56,7 +56,7 @@ InputQueryPtr createTestQuery()
      * const DataSourcePtr createBinaryFileSource(const Schema& schema, const std::string& path_to_file);
      * const DataSourcePtr createRemoteTCPSource(const Schema& schema, const std::string& server_ip, int port);
      */
-    DataSourcePtr source = createTestSourceWithoutSchema();
+    DataSourcePtr source = createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
     Stream stream = Stream("test", schema);
     InputQueryPtr ptr =
         std::make_shared<InputQuery>(

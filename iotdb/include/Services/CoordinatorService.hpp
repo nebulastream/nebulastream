@@ -110,8 +110,9 @@ class CoordinatorService {
      * @brief: clear query catalogs
      * @return
      */
-
     bool clearQueryCatalogs();
+
+    void shutdown();
 
     const map<string, QueryCatalogEntryPtr> getRegisteredQueries();
     const map<string, QueryCatalogEntryPtr> getRunningQueries();

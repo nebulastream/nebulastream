@@ -8,34 +8,30 @@
 #include <NodeEngine/MemoryLayout/PhysicalSchema.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
 #include <SourceSink/SourceCreator.hpp>
+#include <SourceSink/DefaultSource.hpp>
 
 namespace NES {
 
-TupleBufferPtr OneGeneratorSource::receiveData(){
-    // 10 tuples of size one
-    TupleBufferPtr buf = BufferManager::instance().getBuffer();
-    size_t tupleCnt = 10;
-    auto layout = createRowLayout(std::make_shared<Schema>(schema));
-
-    assert(buf->getBuffer() != NULL);
-
-    for (uint64_t recordIndex = 0; recordIndex < tupleCnt; recordIndex++) {
-      for (uint64_t fieldIndex = 0; fieldIndex < this->schema.getSize(); fieldIndex++) {
-        layout->writeField<uint64_t>(buf, recordIndex, fieldIndex, 1);
-      }
-    }
-    buf->setTupleSizeInBytes(sizeof(uint64_t));
-    buf->setNumberOfTuples(tupleCnt);
-    return buf;
-  }
-
-
-const DataSourcePtr createTestDataSourceWithSchema(const Schema &schema) {
-  return std::make_shared<OneGeneratorSource>(schema, 1);
+const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(
+    const Schema &schema) {
+  return std::make_shared<DefaultSource>(schema, /*bufferCnt*/ 1, /*frequency*/ 1);
 }
 
-const DataSourcePtr createTestSourceWithoutSchema() {
-  return std::make_shared<OneGeneratorSource>(Schema::create().addField(createField("id", UINT64)), 1);
+const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(
+    const Schema &schema, size_t numbersOfBufferToProduce, size_t frequency) {
+  return std::make_shared<DefaultSource>(schema, numbersOfBufferToProduce, frequency);
+}
+
+const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer() {
+  return std::make_shared<DefaultSource>(
+      Schema::create().addField(createField("id", UINT64)), /**bufferCnt*/ 1, /*frequency*/ 1);
+}
+
+const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForVarBuffers(
+    size_t numbersOfBufferToProduce, double frequency) {
+  return std::make_shared<DefaultSource>(
+      Schema::create().addField(createField("id", UINT64)),
+      numbersOfBufferToProduce, frequency);
 }
 
 const DataSourcePtr createZmqSource(const Schema &schema,
@@ -50,10 +46,13 @@ const DataSourcePtr createBinaryFileSource(const Schema &schema,
 }
 
 const DataSourcePtr createCSVFileSource(const Schema &schema,
-                                        const std::string &path_to_file) {
-  return std::make_shared<CSVSource>(schema, path_to_file);
+                                        const std::string &path_to_file,
+                                        const std::string &delimiter,
+                                        size_t numbersOfBufferToProduce,
+                                        size_t frequency) {
+  return std::make_shared<CSVSource>(schema, path_to_file, delimiter,
+                                     numbersOfBufferToProduce, frequency);
 }
 
 }
 
-BOOST_CLASS_EXPORT(NES::OneGeneratorSource);

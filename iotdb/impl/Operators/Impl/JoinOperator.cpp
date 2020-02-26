@@ -23,7 +23,11 @@ JoinOperator& JoinOperator::operator=(const JoinOperator& other)
 void JoinOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {}
 void JoinOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {}
 
-const OperatorPtr JoinOperator::copy() const { return std::make_shared<JoinOperator>(*this); }
+const OperatorPtr JoinOperator::copy() const {
+    const OperatorPtr copy = std::make_shared<JoinOperator>(*this);
+    copy->setOperatorId(this->getOperatorId());
+    return copy;
+}
 
 const std::string JoinOperator::toString() const
 {

@@ -11,8 +11,6 @@
 #include <NodeEngine/BufferManager.hpp>
 #include <random>
 
-//#define DEBUG_OUTPUT
-
 namespace NES {
 class BufferManagerTest : public testing::Test {
  public:
@@ -47,7 +45,7 @@ class BufferManagerTest : public testing::Test {
 
     // set log level
     NESLogger->setLevel(log4cxx::Level::getDebug());
-//            logger->setLevel(log4cxx::Level::getInfo());
+//    logger->setLevel(log4cxx::Level::getInfo());
 
 // add appenders and other will inherit the settings
     NESLogger->addAppender(file);

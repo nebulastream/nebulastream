@@ -209,7 +209,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_existing_log_stream_remote_test) {
   self->request(coordinator, task_timeout, exit_reason::user_shutdown);
 }
 
-TEST_F(StreamCatalogRemoteTest, DISABLED_test_add_remove_empty_log_stream_remote_test) {
+TEST_F(StreamCatalogRemoteTest, test_add_remove_empty_log_stream_remote_test) {
   cout << "*** Running test test_add_remove_empty_log_stream_remote_test"
        << endl;
   CoordinatorActorConfig c_cfg;
@@ -399,12 +399,14 @@ TEST_F(StreamCatalogRemoteTest, add_physical_to_existing_logical_stream_remote_t
   PhysicalStreamConfig conf;
   conf.logicalStreamName = "default_logical";
   conf.physicalStreamName = "physical_test";
-  conf.sourceType = "OneGeneratorSource";
-  conf.sourceConfig = "2";
+  conf.sourceType = "DefaultSource";
+  conf.numberOfBuffersToProduce = 2;
+
 
   success = false;
   self->request(worker, task_timeout, register_phy_stream_atom::value,
-                conf.sourceType, conf.sourceConfig, conf.physicalStreamName,
+                conf.sourceType, conf.sourceConfig, conf.sourceFrequency,
+                conf.numberOfBuffersToProduce, conf.physicalStreamName,
                 conf.logicalStreamName).receive(
       [&success](const bool &c) mutable {
         success = c;
@@ -428,7 +430,7 @@ TEST_F(StreamCatalogRemoteTest, add_physical_to_existing_logical_stream_remote_t
   self->request(coordinator, task_timeout,exit_reason::user_shutdown);
 }
 
-TEST_F(StreamCatalogRemoteTest, DISABLED_add_physical_to_new_logical_stream_remote_test) {
+TEST_F(StreamCatalogRemoteTest, add_physical_to_new_logical_stream_remote_test) {
   cout << "*** Running test add_physical_to_new_logical_stream_remote_test"
        << endl;
   CoordinatorActorConfig c_cfg;
@@ -451,7 +453,7 @@ TEST_F(StreamCatalogRemoteTest, DISABLED_add_physical_to_new_logical_stream_remo
   WorkerActorConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw { w_cfg };
-  PhysicalStreamConfig streamConf;  //streamConf.physicalStreamName
+  PhysicalStreamConfig streamConf;
   auto worker = sw.spawn<NES::WorkerActor>(w_cfg.ip, w_cfg.publish_port,
                                            w_cfg.receive_port);
 
@@ -493,12 +495,12 @@ TEST_F(StreamCatalogRemoteTest, DISABLED_add_physical_to_new_logical_stream_remo
   PhysicalStreamConfig conf;
   conf.logicalStreamName = "testStream";
   conf.physicalStreamName = "physical_test";
-  conf.sourceType = "OneGeneratorSource";
-  conf.sourceConfig = "2";
+  conf.sourceType = "DefaultSource";
+  conf.numberOfBuffersToProduce = 2;
 
   success = false;
   self->request(worker, task_timeout, register_phy_stream_atom::value,
-                conf.sourceType, conf.sourceConfig, conf.physicalStreamName,
+                conf.sourceType, conf.sourceConfig, conf.sourceFrequency, conf.numberOfBuffersToProduce, conf.physicalStreamName,
                 conf.logicalStreamName).receive(
       [&success](const bool &c) mutable {
         success = c;

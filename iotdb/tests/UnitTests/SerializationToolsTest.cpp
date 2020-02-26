@@ -55,7 +55,7 @@ TEST_F(SerializationToolsTest, serialize_deserialize_filter_op) {
 
 TEST_F(SerializationToolsTest, serialize_deserialize_source_op) {
   //TODO: implement equals method for SourceOperator
-  OperatorPtr op = createSourceOperator(createTestDataSourceWithSchema(stream.getSchema()));
+  OperatorPtr op = createSourceOperator(createDefaultDataSourceWithSchemaForOneBuffer(stream.getSchema()));
   string serOp = SerializationTools::ser_operator(op);
   OperatorPtr deserOp = SerializationTools::parse_operator(serOp);
   EXPECT_TRUE(!serOp.empty());

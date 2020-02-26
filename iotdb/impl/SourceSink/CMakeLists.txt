@@ -12,4 +12,5 @@ add_source_iotdb(
         TestSinks.cpp
         KafkaSink.cpp
         KafkaSource.cpp
+        DefaultSource.cpp
                 )

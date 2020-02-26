@@ -7,40 +7,31 @@ namespace NES {
 
 /**
  * @brief this struct covers the information about the attached sensor
- * @param sourceType: string of data source, e.g., OneGeneratorSource or CSVSource
+ * @param sourceType: string of data source, e.g., DefaultSource or CSVSource
  * @param sourceConf: parameter for the data source, e.g., numberOfProducedBuffer or file path
+ * @param the sampling frequency in which the stream should sample a result
+ * @param the number of buffers to produce
  * @param physicalStreamName: name of the stream created by this source
  * @param logicalStreamName: name of the logical steam where this physical stream contributes to
  */
 struct PhysicalStreamConfig {
 
-  PhysicalStreamConfig() {
-    sourceType = "OneGeneratorSource";
-    sourceConfig = "1";
-    physicalStreamName = "default_physical";
-    logicalStreamName = "default_logical";
-  }
-  ;
+  PhysicalStreamConfig();
 
-  PhysicalStreamConfig(std::string sourceType, std::string sourceConf,
+  PhysicalStreamConfig(std::string sourceType, std::string sourceConfig,
+                       size_t sourceFrequency, size_t numberOfBuffersToProduce,
                        std::string physicalStreamName,
-                       std::string logicalStreamName)
-      : sourceType(sourceType),
-        sourceConfig(sourceConf),
-        physicalStreamName(physicalStreamName),
-        logicalStreamName(logicalStreamName) {
-  }
-  ;
+                       std::string logicalStreamName);
+
+  std::string toString();
+
   std::string sourceType;
   std::string sourceConfig;
+  size_t sourceFrequency;
+  size_t numberOfBuffersToProduce;
   std::string physicalStreamName;
   std::string logicalStreamName;
 };
-
-//// PhysicalStreamConfig needs to be serializable
-//template <class Inspector>
-//typename Inspector::result_type inspect(Inspector& f, PhysicalStreamConfig& x) {
-//  return f(meta::type_name("PhysicalStreamConfig"), x.filePath, x.physicalStreamName, x.logicalStreamName);
 
 }
 #endif /* INCLUDE_CATALOGS_PHYSICALSTREAMCONFIG_HPP_ */

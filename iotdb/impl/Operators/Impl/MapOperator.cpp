@@ -33,9 +33,10 @@ void MapOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, 
     getParent()->consume(codegen, context, out);
 }
 
-const OperatorPtr MapOperator::copy() const
-{
-    return std::make_shared<MapOperator>(*this);
+const OperatorPtr MapOperator::copy() const {
+    const OperatorPtr copy = std::make_shared<MapOperator>(*this);
+    copy->setOperatorId(this->getOperatorId());
+    return copy;
 }
 
 const std::string MapOperator::toString() const

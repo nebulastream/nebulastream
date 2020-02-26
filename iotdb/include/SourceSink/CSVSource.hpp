@@ -22,9 +22,10 @@ class CSVSource : public DataSource {
    * @param schema of the source
    * @param path to the csv file
    * @param delimiter inside the file, default ","
+   * @param number of buffers to create
    */
   CSVSource(const Schema& schema, const std::string& file_path,
-            const std::string& delimiter = ",");
+            const std::string& delimiter, size_t numBuffersToProcess, size_t frequency);
 
   /**
    * @brief override the receiveData method for the csv source
@@ -43,14 +44,12 @@ class CSVSource : public DataSource {
    * @return returns string describing the binary source
    */
   const std::string toString() const;
-    SourceType getType() const override;
+  SourceType getType() const override;
   private:
   CSVSource();
 
-  std::string file_path;
-
-//  int file_size;
-  size_t tuple_size;
+  std::string filePath;
+  size_t tupleSize;
   std::string delimiter;
 
   /**
@@ -61,9 +60,9 @@ class CSVSource : public DataSource {
   template<class Archive> void serialize(Archive& ar,
                                          const unsigned int version) {
     ar & boost::serialization::base_object<DataSource>(*this);
-    ar & file_path;
+    ar & filePath;
 //    ar & file_size;
-    ar & tuple_size;
+    ar & tupleSize;
     ar & delimiter;
     ar & generatedTuples;
     ar & generatedBuffers;
