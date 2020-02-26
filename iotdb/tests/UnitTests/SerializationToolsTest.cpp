@@ -181,23 +181,3 @@ TEST_F(SerializationToolsTest, serialize_deserialize_executabletransferobject_EX
   ExecutableTransferObject deserEto = SerializationTools::parse_eto(serEto);
   EXPECT_TRUE(!serEto.empty());
 }
-
-//Schema schemaExdra = Schema::create().addField(
-//        "type", createArrayDataType(BasicType::CHAR, 30)).addField(
-//        "metadata.generated", BasicType::UINT64).addField(
-//        "metadata.title", createArrayDataType(BasicType::CHAR, 50)).addField(
-//        "metadata.id", createArrayDataType(BasicType::CHAR, 50)).addField(
-//        "features.type", createArrayDataType(BasicType::CHAR, 50)).addField(
-//        "features.properties.capacity", BasicType::UINT64).addField(
-//        "features.properties.efficiency", BasicType::FLOAT32).addField(
-//        "features.properties.mag", BasicType::FLOAT32).addField(
-//        "features.properties.time", BasicType::FLOAT32).addField(
-//        "features.properties.updated", BasicType::UINT64).addField(
-//        "features.properties.type", createArrayDataType(BasicType::CHAR, 50))
-//        .addField("features.geometry.type",
-//                  createArrayDataType(BasicType::CHAR, 50)).addField(
-//        "features.geometry.coordinates.longitude", BasicType::FLOAT32).addField(
-//        "features.geometry.coordinates.latitude", BasicType::FLOAT32).addField(
-//        "features.eventId ", createArrayDataType(BasicType::CHAR, 50))
-//        ;
-

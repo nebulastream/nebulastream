@@ -76,8 +76,8 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintForEx
   conf.logicalStreamName = "exdra";
   conf.physicalStreamName = "test_stream";
   conf.sourceType = "CSVSource";
-  conf.sourceConfig = "../test_data/exdra.csv";
-  conf.numberOfBuffersToProduce = 5;
+  conf.sourceConfig = "/home/zeuchste/git/IoTDB/iotdb/tests/test_data/exdra.csv";
+  conf.numberOfBuffersToProduce = 1;
   conf.sourceFrequency = 1;
   wrk->registerPhysicalStream(conf);
 

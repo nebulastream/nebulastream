@@ -4,6 +4,9 @@
 #pragma once
 
 #include <API/Types/DataTypes.hpp>
+#include <QueryCompiler/DataTypes/BasicDataType.hpp>
+
+#include <boost/serialization/shared_ptr.hpp>
 
 namespace NES {
 
@@ -46,8 +49,12 @@ class ArrayDataType : public DataType {
 
   template<class Archive>
   void serialize(Archive &ar, unsigned) {
-    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataType)
-        & BOOST_SERIALIZATION_NVP(_dimensions);
+    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataType);
+//    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(BasicDataType);
+
+//    ar & boost::serialization::base_object<DataType>(*_dataType);
+    ar & _dataType;
+    ar & BOOST_SERIALIZATION_NVP(_dimensions);
   }
 };
 }
