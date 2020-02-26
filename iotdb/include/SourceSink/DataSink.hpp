@@ -108,6 +108,7 @@ class DataSink {
 
   template<class Archive>
   void serialize(Archive &ar, const unsigned int version) {
+    std::cout << " Serialize DataSink" << std::endl;
     ar & schema;
     ar & sentBuffer;
     ar & sentTuples;

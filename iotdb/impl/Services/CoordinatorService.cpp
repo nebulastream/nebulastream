@@ -96,7 +96,7 @@ map<NESTopologyEntryPtr, ExecutableTransferObject> CoordinatorService::prepareEx
     map<NESTopologyEntryPtr, ExecutableTransferObject> output;
     if (QueryCatalog::instance().queryExists(queryId)
         && !QueryCatalog::instance().isQueryRunning(queryId)) {
-        NES_INFO("CoordinatorService: Deploying query " << queryId);
+        NES_INFO("CoordinatorService: prepareExecutableTransferObject for query " << queryId);
 
         NESExecutionPlanPtr execPlan = QueryCatalog::instance().getQuery(queryId)
             ->getNesPlanPtr();
@@ -128,6 +128,9 @@ map<NESTopologyEntryPtr, ExecutableTransferObject> CoordinatorService::prepareEx
     } else {
         NES_WARNING("CoordinatorService: Query is not registered -> " << queryId);
     }
+
+    NES_INFO("CoordinatorService: prepareExecutableTransferObject successfully " << queryId);
+
     return output;
 }
 

@@ -51,4 +51,5 @@ class ArrayDataType : public DataType {
   }
 };
 }
+
 #endif //INCLUDE_ARRAYDATATYPE_HPP_

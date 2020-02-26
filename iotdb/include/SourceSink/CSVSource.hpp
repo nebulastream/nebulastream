@@ -59,6 +59,8 @@ class CSVSource : public DataSource {
   friend class boost::serialization::access;
   template<class Archive> void serialize(Archive& ar,
                                          const unsigned int version) {
+    std::cout << " Serialize CSVSource" << std::endl;
+
     ar & boost::serialization::base_object<DataSource>(*this);
     ar & filePath;
 //    ar & file_size;
