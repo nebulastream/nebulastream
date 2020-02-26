@@ -74,7 +74,7 @@ void LowLatency::placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopolog
                     const ExecutionNodePtr newExecutionNode =
                         executionPlanPtr->createExecutionNode(operatorName.str(), to_string(node->getId()), node,
                                                               targetOperator->copy());
-                    newExecutionNode->addChildOperatorId(targetOperator->getOperatorId());
+                    newExecutionNode->addOperatorId(targetOperator->getOperatorId());
                 } else {
 
                     const ExecutionNodePtr existingExecutionNode = executionPlanPtr
@@ -95,7 +95,7 @@ void LowLatency::placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopolog
                                      << operatorTypeToString[targetOperator->getOperatorType()]
                                      << "(OP-" << std::to_string(targetOperator->getOperatorId()) << ")";
                         existingExecutionNode->setOperatorName(operatorName.str());
-                        existingExecutionNode->addChildOperatorId(targetOperator->getOperatorId());
+                        existingExecutionNode->addOperatorId(targetOperator->getOperatorId());
                     }
                 }
 
