@@ -76,14 +76,17 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintForEx
   conf.logicalStreamName = "exdra";
   conf.physicalStreamName = "test_stream";
   conf.sourceType = "CSVSource";
-  conf.sourceConfig = "/home/zeuchste/git/IoTDB/iotdb/tests/test_data/exdra.csv";
+  conf.sourceConfig = "../tests/test_data/exdra.csv";
   conf.numberOfBuffersToProduce = 1;
   conf.sourceFrequency = 1;
   wrk->registerPhysicalStream(conf);
 
+  std::string filePath = "contTestOut.csv";
   //register query
   std::string queryString =
-      "InputQuery::from(exdra).print(std::cout); ";
+//      "InputQuery::from(exdra).print(std::cout); ";
+  "InputQuery::from(exdra).writeToFile(\"" + filePath + "\");";
+
   std::string id = crd->executeQuery(queryString, "BottomUp");
   EXPECT_NE(id, "");
 
