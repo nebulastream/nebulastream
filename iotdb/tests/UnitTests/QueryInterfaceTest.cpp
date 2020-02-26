@@ -45,7 +45,6 @@ void createQueryFilter() {
 
   Environment env = Environment::create(config);
 
-//    Config::create().withParallelism(1).withPreloading().withBufferSize(1000).withNumberOfPassesOverInput(1);
   Schema schema = Schema::create().addField("id", BasicType::UINT32).addField(
       "value", BasicType::UINT64);
 
@@ -58,8 +57,6 @@ void createQueryFilter() {
 
   env.printInputQueryPlan(query);
   env.executeQuery(query);
-
-  // AttributeFieldPtr attr = schema[0];
 }
 
 void createQueryMap() {

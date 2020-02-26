@@ -30,7 +30,6 @@ namespace bp = boost::process;
 
 namespace NES {
 
-//TODO:add test case with filter
 class E2eRestTest : public testing::Test {
  public:
   string host = "localhost";
