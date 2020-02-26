@@ -107,10 +107,9 @@ behavior CoordinatorActor::running() {
     [=](deregister_query_atom, const string& queryId) {
       deregisterQuery(queryId);
     },
-    [=](deploy_query_atom, const string& description) {  //TODO:remove
+    [=](deploy_query_atom, const string& description) {//TODO:chef if we really need this except for testing
       deployQuery(description);
     },
-
     //worker specific methods
     [=](execute_operators_atom, const string& description, string& executableTransferObject) {
       workerServicePtr->execute_query(description, executableTransferObject);

@@ -80,7 +80,6 @@ TEST_F(PathFinderTest, find_path_with_max_bandwidth) {
     StreamCatalog::instance().addLogicalStream("temperature", std::make_shared<Schema>(schema));
     PhysicalStreamConfig conf;
     conf.physicalStreamName = "temperature1";
-//    StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>("", "", sensorNode1, "temperature1");
     StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(conf, sensorNode1);
     assert(StreamCatalog::instance().addPhysicalStream("temperature", e1));
 
@@ -181,7 +180,6 @@ TEST_F(PathFinderTest, find_path_with_min_latency) {
     PhysicalStreamConfig conf;
     conf.physicalStreamName = "temperature1";
     StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(conf, sensorNode1);
-//    StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>("", "", sensorNode1, "temperature1");
     assert(StreamCatalog::instance().addPhysicalStream("temperature", e1));
 
     NESTopologyManager::getInstance().createNESTopologyLink(workerNode1, sinkNode, 3, 3);
@@ -232,7 +230,6 @@ TEST_F(PathFinderTest, find_path_with_min_of_max_latency) {
     PhysicalStreamConfig conf;
     conf.physicalStreamName = "temperature1";
     StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(conf, sensorNode1);
-//    StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>("", "", sensorNode1, "temperature1");
     assert(StreamCatalog::instance().addPhysicalStream("temperature", e1));
 
     NESTopologyManager::getInstance().createNESTopologyLink(workerNode1, sinkNode, 3, 1);
@@ -283,7 +280,6 @@ TEST_F(PathFinderTest, find_all_paths_between_source_destination) {
     PhysicalStreamConfig conf;
     conf.physicalStreamName = "temperature1";
     StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(conf, sensorNode1);
-//    StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>("", "", sensorNode1, "temperature1");
     assert(StreamCatalog::instance().addPhysicalStream("temperature", e1));
 
     NESTopologyManager::getInstance().createNESTopologyLink(workerNode1, sinkNode, 3, 1);
@@ -334,7 +330,6 @@ TEST_F(PathFinderTest, find_common_path_between_source_destination) {
     PhysicalStreamConfig conf;
     conf.physicalStreamName = "temperature1";
     StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(conf, sensorNode1);
-//    StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>("", "", sensorNode1, "temperature1");
     assert(StreamCatalog::instance().addPhysicalStream("temperature", e1));
 
     const NESTopologySensorNodePtr
@@ -343,7 +338,6 @@ TEST_F(PathFinderTest, find_common_path_between_source_destination) {
     StreamCatalog::instance().addLogicalStream("humidity1", std::make_shared<Schema>(schema));
     conf.physicalStreamName = "humidity1";
     StreamCatalogEntryPtr e2 = std::make_shared<StreamCatalogEntry>(conf, sensorNode2);
-//  StreamCatalogEntryPtr e2 = std::make_shared<StreamCatalogEntry>("", "", sensorNode2, "humidity1");
     assert(StreamCatalog::instance().addPhysicalStream("humidity1", e2));
 
     const NESTopologySensorNodePtr
@@ -352,7 +346,6 @@ TEST_F(PathFinderTest, find_common_path_between_source_destination) {
 
     conf.physicalStreamName = "temperature2";
     StreamCatalogEntryPtr e3 = std::make_shared<StreamCatalogEntry>(conf, sensorNode3);
-//    StreamCatalogEntryPtr e3 = std::make_shared<StreamCatalogEntry>("", "", sensorNode3, "temperature2");
     assert(StreamCatalog::instance().addPhysicalStream("temperature", e3));
 
     const NESTopologySensorNodePtr
@@ -362,7 +355,6 @@ TEST_F(PathFinderTest, find_common_path_between_source_destination) {
 
     conf.physicalStreamName = "humidity2";
     StreamCatalogEntryPtr e4 = std::make_shared<StreamCatalogEntry>(conf, sensorNode4);
-//    StreamCatalogEntryPtr e4 = std::make_shared<StreamCatalogEntry>("", "", sensorNode4, "humidity2");
     assert(StreamCatalog::instance().addPhysicalStream("humidity2", e4));
 
     NESTopologyManager::getInstance().createNESTopologyLink(workerNode1, sinkNode, 3, 1);
@@ -427,7 +419,6 @@ TEST_F(PathFinderTest, find_path_from_non_linked_source) {
         PhysicalStreamConfig conf;
         conf.physicalStreamName = "temperature1";
         StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(conf, sensorNode1);
-//        StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>("", "", sensorNode1, "temperature1");
         assert(StreamCatalog::instance().addPhysicalStream("temperature", e1));
 
         const auto& pathList = pathFinder.findPathBetween(sensorNode1, sinkNode);
@@ -459,7 +450,6 @@ TEST_F(PathFinderTest, find_path_between_non_linked_source_and_destination) {
     PhysicalStreamConfig conf;
     conf.physicalStreamName = "temperature1";
     StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(conf, sensorNode1);
-//    StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>("", "", sensorNode1, "temperature1");
     assert(StreamCatalog::instance().addPhysicalStream("temperature", e1));
 
     NESTopologyManager::getInstance().createNESTopologyLink(sensorNode1, workerNode1, 1, 3);
@@ -489,7 +479,6 @@ TEST_F(PathFinderTest, find_path_between_linked_source_and_destination) {
     PhysicalStreamConfig conf;
     conf.physicalStreamName = "temperature1";
     StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(conf, sensorNode1);
-//    StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>("", "", sensorNode1, "temperature1");
     assert(StreamCatalog::instance().addPhysicalStream("temperature", e1));
 
     NESTopologyManager::getInstance().createNESTopologyLink(workerNode2, sinkNode, 1, 3);
