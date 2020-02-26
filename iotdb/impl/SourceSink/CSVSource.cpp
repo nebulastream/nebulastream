@@ -79,7 +79,7 @@ void CSVSource::fillBuffer(TupleBufferPtr buf) {
       size_t fieldSize = field->getFieldSize();
 
       if (field->getDataType()->toString() == "UINT64") {
-        size_t val = atoi(tokens[j].c_str());
+        size_t val = strtoul_l(tokens[j].c_str());
         memcpy((char*) buf->getBuffer() + offset + i * tupleSize, &val,
                fieldSize);
       } else {
@@ -91,6 +91,7 @@ void CSVSource::fillBuffer(TupleBufferPtr buf) {
     }
     i++;
   }
+
   NES_DEBUG("CSVSource::fillBuffer: readin finished read " << generated_tuples_this_pass << " tuples")
   generatedTuples += generated_tuples_this_pass;
   buf->setNumberOfTuples(generated_tuples_this_pass);
