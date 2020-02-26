@@ -86,7 +86,6 @@ InputQueryPtr UtilityFunctions::createQueryFromCodeString(
       /* call loaded function to create query object */
       InputQuery query((*func)());
       return std::make_shared<InputQuery>(query);
-
     } catch (...) {
       NES_ERROR(
           "UtilityFunctions: Failed to create the query from input code string: " << query_code_snippet);

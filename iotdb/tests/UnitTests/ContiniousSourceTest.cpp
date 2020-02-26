@@ -52,6 +52,51 @@ class ContiniousSourceTest : public testing::Test {
     NESLogger->addAppender(console);
   }
 };
+
+TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintForExdra) {
+  cout << "start coordinator" << endl;
+  NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
+  size_t port = crd->startCoordinator(/**blocking**/false);
+  EXPECT_NE(port, 0);
+  cout << "coordinator started successfully" << endl;
+  sleep(2);
+
+  cout << "start worker" << endl;
+  NesWorkerPtr wrk = std::make_shared<NesWorker>();
+  bool retStart = wrk->start(/**blocking**/false, /**withConnect**/false, port);
+  EXPECT_TRUE(retStart);
+  cout << "worker started successfully" << endl;
+
+  bool retConWrk = wrk->connect();
+  EXPECT_TRUE(retConWrk);
+  cout << "worker connected " << endl;
+
+  //register physical stream
+  PhysicalStreamConfig conf;
+  conf.logicalStreamName = "exdra";
+  conf.physicalStreamName = "test_stream";
+  conf.sourceType = "CSVSource";
+  conf.sourceConfig = "../test_data/exdra.csv";
+  conf.numberOfBuffersToProduce = 5;
+  conf.sourceFrequency = 1;
+  wrk->registerPhysicalStream(conf);
+
+  //register query
+  std::string queryString =
+      "InputQuery::from(exdra).print(std::cout); ";
+  std::string id = crd->executeQuery(queryString, "BottomUp");
+  EXPECT_NE(id, "");
+
+  sleep(2);
+  bool retStopWrk = wrk->stop();
+  EXPECT_TRUE(retStopWrk);
+
+  sleep(1);
+  bool retStopCord = crd->stopCoordinator();
+  EXPECT_TRUE(retStopCord);
+}
+#if 0
+
 TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
   cout << "start coordinator" << endl;
   NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
@@ -878,4 +923,5 @@ TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromCSVSourceWrite
   bool retStopCord = crd->stopCoordinator();
   EXPECT_TRUE(retStopCord);
 }
+#endif
 }
