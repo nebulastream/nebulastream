@@ -82,7 +82,7 @@ std::string GetCurrentWorkingDir(void) {
   return current_working_dir;
 }
 
-#if 0
+
 TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
   cout << " start coordinator" << endl;
   string path = "./nesCoordinator --actor_port=12345";
@@ -490,7 +490,6 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputAndRegisterPhyStrea
   cout << "Killing coordinator process->PID: " << coordinatorPid << endl;
   coordinatorProc.terminate();
 }
-#endif
 
 TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputAndRegisterLogPhyStream) {
   cout << " start coordinator" << endl;
