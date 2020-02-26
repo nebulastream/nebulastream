@@ -10,6 +10,7 @@
 #include <Optimizer/utils/PathFinder.hpp>
 #include <Optimizer/impl/HighThroughput.hpp>
 #include <Optimizer/impl/MinimumResourceConsumption.hpp>
+#include <Optimizer/impl/MinimumEnergyConsumption.hpp>
 
 namespace NES {
 
@@ -25,6 +26,8 @@ std::shared_ptr<NESPlacementOptimizer> NESPlacementOptimizer::getOptimizer(std::
         return std::make_unique<HighThroughput>(HighThroughput());
     } else if (optimizerName == "MinimumResourceConsumption") {
         return std::make_unique<MinimumResourceConsumption>(MinimumResourceConsumption());
+    } else if (optimizerName == "MinimumEnergyConsumption") {
+        return std::make_unique<MinimumEnergyConsumption>(MinimumEnergyConsumption());
     } else {
       throw std::invalid_argument("NESPlacementOptimizer: Unknown optimizer type: " + optimizerName);
     }
