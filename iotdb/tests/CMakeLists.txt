@@ -196,6 +196,10 @@ add_executable(multi-worker-test "UnitTests/MultiWorkerTest.cpp")
 target_link_libraries(multi-worker-test iotdb ${GTEST_LIBRARIES})
 add_test(NAME multi-worker-test COMMAND multi-worker-test)
 
+# ContiniousSourceTest
+add_executable(continious-source-test "UnitTests/ContiniousSourceTest.cpp")
+target_link_libraries(continious-source-test iotdb ${GTEST_LIBRARIES})
+add_test(NAME continious-source-test COMMAND continious-source-test)
 
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure

@@ -9,6 +9,7 @@
 #include <API/Types/DataTypes.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <SourceSink/SinkCreator.hpp>
+#include <SourceSink/DefaultSource.hpp>
 #include <sstream>
 using namespace std;
 
@@ -170,7 +171,7 @@ void testOutput(std::string path, std::string expectedOutput) {
 
 CompiledTestQueryExecutionPlanPtr setupQEP() {
   CompiledTestQueryExecutionPlanPtr qep(new CompiledTestQueryExecutionPlan());
-  DataSourcePtr source = createTestSourceWithoutSchema();
+  DataSourcePtr source = createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
   Schema sch = Schema::create().addField("sum", BasicType::UINT32);
   DataSinkPtr sink = createBinaryFileSinkWithSchema(sch, filePath);
   qep->addDataSource(source);
@@ -296,14 +297,14 @@ TEST_F(EngineTest, change_dop_without_restart_test) {
 
 TEST_F(EngineTest, parallel_different_source_test) {
   CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
-  DataSourcePtr source1 = createTestSourceWithoutSchema();
+  DataSourcePtr source1 = createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
   Schema sch1 = Schema::create().addField("sum", BasicType::UINT32);
   DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep1.txt");
   qep1->addDataSource(source1);
   qep1->addDataSink(sink1);
 
   CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
-  DataSourcePtr source2 = createTestSourceWithoutSchema();
+  DataSourcePtr source2 = createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
   Schema sch2 = Schema::create().addField("sum", BasicType::UINT32);
   DataSinkPtr sink2 = createBinaryFileSinkWithSchema(sch2, "qep2.txt");
   qep2->addDataSource(source2);
@@ -325,7 +326,7 @@ TEST_F(EngineTest, parallel_different_source_test) {
 
 TEST_F(EngineTest, parallel_same_source_test) {
   CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
-  DataSourcePtr source1 = createTestSourceWithoutSchema();
+  DataSourcePtr source1 = createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
   Schema sch1 = Schema::create().addField("sum", BasicType::UINT32);
   DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep1.txt");
   qep1->addDataSource(source1);
@@ -352,14 +353,14 @@ TEST_F(EngineTest, parallel_same_source_test) {
 
 TEST_F(EngineTest, parallel_same_sink_test) {
   CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
-  DataSourcePtr source1 = createTestSourceWithoutSchema();
+  DataSourcePtr source1 = createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
   Schema sch1 = Schema::create().addField("sum", BasicType::UINT32);
   DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep12.txt");
   qep1->addDataSource(source1);
   qep1->addDataSink(sink1);
 
   CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
-  DataSourcePtr source2 = createTestSourceWithoutSchema();
+  DataSourcePtr source2 = createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
   Schema sch2 = Schema::create().addField("sum", BasicType::UINT32);
   qep2->addDataSource(source1);
   qep2->addDataSink(sink1);
@@ -377,7 +378,7 @@ TEST_F(EngineTest, parallel_same_sink_test) {
 }
 TEST_F(EngineTest, parallel_same_source_and_sink_test) {
   CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
-  DataSourcePtr source1 = createTestSourceWithoutSchema();
+  DataSourcePtr source1 = createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
   Schema sch1 = Schema::create().addField("sum", BasicType::UINT32);
   DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep3.txt");
   qep1->addDataSource(source1);

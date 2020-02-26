@@ -48,15 +48,10 @@ class WorkerActor : public stateful_actor<WorkerState> {
 
   /**
    * @brief this methods registers a physical stream via the coordinator to a logical stream
-   * @param source type, e.g., CSVSource or OneGenerator source
-   * @param confi parameter for the source, e.g., file path or number of buffer
-   * @param name of the new physical stream
-   * @param name of the logical stream where this physical stream reports to
+   * @param configuration of the stream
    * @return bool indicating success
    */
-  bool registerPhysicalStream(std::string sourceType, std::string sourceConf,
-                              std::string physicalStreamName,
-                              std::string logicalStreamName);
+  bool registerPhysicalStream(PhysicalStreamConfig conf);
 
   /**
    * @brief this method registers logical streams via the coordinator
@@ -98,6 +93,10 @@ class WorkerActor : public stateful_actor<WorkerState> {
    */
   bool disconnecting();
 
+  /**
+   * @brief method to shutdown the worker
+   */
+  void shutdown();
 };
 
 }

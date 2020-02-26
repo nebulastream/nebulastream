@@ -37,9 +37,6 @@ NESExecutionPlanPtr BottomUp::initializeExecutionPlan(InputQueryPtr inputQuery, 
     NES_INFO("BottomUp: Adding forward operators.");
     addForwardOperators(sourceNodePtrs, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
 
-    NES_INFO("BottomUp: Removing non resident operators from the execution nodes.");
-    removeNonResidentOperators(nesExecutionPlanPtr);
-
     NES_INFO("BottomUp: Generating complete execution Graph.");
     completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlan);
 
@@ -109,7 +106,8 @@ void BottomUp::placeOperators(NESExecutionPlanPtr executionPlanPtr, const NESTop
                                  << operatorTypeToString[targetOperator->getOperatorType()]
                                  << "(OP-" << std::to_string(targetOperator->getOperatorId()) << ")";
                     existingExecutionNode->setOperatorName(operatorName.str());
-                    existingExecutionNode->addChildOperatorId(targetOperator->getOperatorId());
+                    existingExecutionNode->addOperator(targetOperator->copy());
+                    existingExecutionNode->addOperatorId(targetOperator->getOperatorId());
 
                     if (targetOperator->getParent() != nullptr) {
                         operatorsToProcess.emplace_back(
@@ -129,7 +127,7 @@ void BottomUp::placeOperators(NESExecutionPlanPtr executionPlanPtr, const NESTop
                                                                                                 to_string(node->getId()),
                                                                                                 node,
                                                                                                 targetOperator->copy());
-                newExecutionNode->addChildOperatorId(targetOperator->getOperatorId());
+                newExecutionNode->addOperatorId(targetOperator->getOperatorId());
 
                 if (targetOperator->getParent() != nullptr) {
                     operatorsToProcess.emplace_back(

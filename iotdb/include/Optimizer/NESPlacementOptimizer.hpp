@@ -1,18 +1,16 @@
-/**\brief:
- *         This is the interface for base optimizer that needed to be implemented by any new query optimizer.
- *
- */
-
 #ifndef NESPLACEMENTOPTIMIZER_HPP
 #define NESPLACEMENTOPTIMIZER_HPP
 
 #include <iostream>
-#include "../Topology/NESTopologyManager.hpp"
-#include "../Topology/NESTopologyPlan.hpp"
+#include <Topology/NESTopologyManager.hpp>
+#include <Topology/NESTopologyPlan.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include "NESExecutionPlan.hpp"
 
 namespace NES {
+/**\brief:
+ *         This is the interface for base optimizer that needed to be implemented by any new query optimizer.
+ */
 class NESPlacementOptimizer {
   private:
 

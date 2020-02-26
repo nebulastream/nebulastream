@@ -113,6 +113,13 @@ class DataSource {
     size_t getNumberOfGeneratedBuffers();
 
     /**
+     * @brief method to set the sampling interval
+     * @note the source will sleep for interval seconds and then produce the next buffer
+     * @param interal to gather
+     */
+    void setGatheringInterval(size_t interval);
+
+    /**
      * @brief Internal destructor to make sure that the data source is stopped before deconstrcuted
      * @Note must be public because of boost serialize
      */
@@ -130,6 +137,8 @@ class DataSource {
     size_t generatedTuples;
     size_t generatedBuffers;
     size_t numBuffersToProcess;
+    size_t gatheringInterval;
+    size_t lastGatheringTimeStamp;
     std::string sourceId;
 
   private:
@@ -141,6 +150,7 @@ class DataSource {
     template<class Archive>
     void serialize(Archive& ar, const unsigned int version) {
         ar & numBuffersToProcess;
+        ar & gatheringInterval;
         ar & schema;
         ar & generatedTuples;
         ar & generatedBuffers;

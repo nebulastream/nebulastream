@@ -32,7 +32,11 @@ void SourceOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr contex
     getParent()->consume(codegen,context,out);
 }
 
-const OperatorPtr SourceOperator::copy() const { return std::make_shared<SourceOperator>(*this); }
+const OperatorPtr SourceOperator::copy() const {
+    const OperatorPtr copy = std::make_shared<SourceOperator>(*this);
+    copy->setOperatorId(this->getOperatorId());
+    return copy;
+}
 
 const std::string SourceOperator::toString() const
 {

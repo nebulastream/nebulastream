@@ -138,7 +138,6 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
 
     /**
      * @brief: deploy the user query
-     *
      * @param queryId
      */
     void deployQuery(const string& queryId);
@@ -159,6 +158,8 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
      * @brief initialize the NES topology and add coordinator node
      */
     void initializeNESTopology();
+
+    void shutdown();
 
     QueryCatalogServicePtr queryCatalogServicePtr;
     StreamCatalogServicePtr streamCatalogServicePtr;

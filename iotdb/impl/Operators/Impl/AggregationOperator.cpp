@@ -28,7 +28,11 @@ AggregationOperator& AggregationOperator::operator=(const AggregationOperator& o
 void AggregationOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {}
 void AggregationOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {}
 
-const OperatorPtr AggregationOperator::copy() const { return std::make_shared<AggregationOperator>(*this); }
+const OperatorPtr AggregationOperator::copy() const {
+    const OperatorPtr copy = std::make_shared<AggregationOperator>(*this);
+    copy->setOperatorId(this->getOperatorId());
+    return copy;
+}
 
 const std::string AggregationOperator::toString() const
 {

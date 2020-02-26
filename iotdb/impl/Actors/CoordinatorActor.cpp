@@ -61,12 +61,8 @@ behavior CoordinatorActor::running() {
         uint16_t publish_port,
         uint16_t receive_port,
         int cpu,
-        const string& nodeProperties,
-        std::string sourceType,
-        std::string sourceConf,
-        std::string physicalStreamName,
-        std::string logicalStreamName) {
-      PhysicalStreamConfig streamConf(sourceType, sourceConf, physicalStreamName, logicalStreamName);
+        const string& nodeProperties) {
+      PhysicalStreamConfig streamConf;
       this->registerSensor(ip, publish_port, receive_port, cpu, nodeProperties, streamConf);
     },
     [=](deregister_sensor_atom, string& ip) {
@@ -77,9 +73,11 @@ behavior CoordinatorActor::running() {
         std::string ip,
         std::string sourceType,
         std::string sourceConf,
+        size_t sourceFrequency,
+        size_t numberOfBuffersToProduce,
         std::string physicalStreamName,
         std::string logicalStreamName) {
-      PhysicalStreamConfig conf(sourceType, sourceConf, physicalStreamName, logicalStreamName);
+      PhysicalStreamConfig conf(sourceType, sourceConf, sourceFrequency, numberOfBuffersToProduce, physicalStreamName, logicalStreamName);
       return registerPhysicalStream(ip, conf);
     },
     [=](register_log_stream_atom, const string& streamName, const string& streamSchema) {
@@ -95,7 +93,9 @@ behavior CoordinatorActor::running() {
       NES_DEBUG("CoordinatorActor: got request for removal of physical stream " << physicalStreamName
           << " from logical stream "
           << logicalStreamName)
-      PhysicalStreamConfig conf("", "", physicalStreamName, logicalStreamName);
+      PhysicalStreamConfig conf;
+      conf.logicalStreamName = logicalStreamName;
+      conf.physicalStreamName = physicalStreamName;
       return removePhysicalStream(ip, conf);
     },
     [=](execute_query_atom, const string& description, const string& strategy) {
@@ -107,10 +107,9 @@ behavior CoordinatorActor::running() {
     [=](deregister_query_atom, const string& queryId) {
       deregisterQuery(queryId);
     },
-    [=](deploy_query_atom, const string& description) {
+    [=](deploy_query_atom, const string& description) {//TODO:chef if we really need this except for testing
       deployQuery(description);
     },
-
     //worker specific methods
     [=](execute_operators_atom, const string& description, string& executableTransferObject) {
       workerServicePtr->execute_query(description, executableTransferObject);
@@ -121,7 +120,9 @@ behavior CoordinatorActor::running() {
     [=](get_operators_atom) {
       return workerServicePtr->getOperators();
     },
-
+    [=](terminate_atom) {
+      return shutdown();
+    },
     // external methods for users
     [=](topology_json_atom) {
       string topo = coordinatorServicePtr->getTopologyPlanString();
@@ -169,8 +170,7 @@ bool CoordinatorActor::removePhysicalStream(std::string ip,
   auto sap = current_sender();
   size_t hashId = getIdFromHandle(sap);
   NES_DEBUG(
-      "CoordinatorActor: removePhysicalStream id=" << sap->id()
-      << " sap=" << to_string(sap) << " hashID=" << hashId)
+      "CoordinatorActor: removePhysicalStream id=" << sap->id() << " sap=" << to_string(sap) << " hashID=" << hashId)
 
   std::vector<NESTopologyEntryPtr> sensorNodes =
       NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(
@@ -191,9 +191,8 @@ bool CoordinatorActor::removePhysicalStream(std::string ip,
   }
 
   NES_DEBUG("node type=" << sensorNode->getEntryTypeString())
-  StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
-      streamConf.sourceType, streamConf.sourceConfig, sensorNode,
-      streamConf.physicalStreamName);
+  StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf,
+                                                                   sensorNode);
 
   return StreamCatalog::instance().removePhysicalStream(
       streamConf.logicalStreamName, sce);
@@ -206,25 +205,16 @@ bool CoordinatorActor::registerPhysicalStream(std::string ip,
   auto sap = current_sender();
   size_t hashId = getIdFromHandle(sap);
   NES_DEBUG(
-      "CoordinatorActor: deregister pyhsical stream id=" << sap->id()
-      << " sap=" << to_string(sap) << " hashID=" << hashId)
+      "CoordinatorActor: register pyhsical stream id=" << sap->id() << " sap=" << to_string(sap) << " hashID=" << hashId)
 
   std::vector<NESTopologyEntryPtr> sensorNodes =
       NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(
           hashId);
 
-  //TODO: note that we register on the first node with this id
-  NESTopologyEntryPtr sensorNode;
-  for (auto e : sensorNodes) {
-    if (e->getEntryType() != Coordinator) {
-      sensorNode = e;
-      break;
-    }
-  }
+  assert(sensorNodes.size() == 1);
 
   StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
-      streamConf.sourceType, streamConf.sourceConfig, sensorNode,
-      streamConf.physicalStreamName);
+      streamConf, sensorNodes[0]);
 
   return StreamCatalog::instance().addPhysicalStream(
       streamConf.logicalStreamName, sce);
@@ -236,8 +226,7 @@ bool CoordinatorActor::deregisterSensor(const string &ip) {
 
   size_t hashId = getIdFromHandle(sap);
   NES_DEBUG(
-      "CoordinatorActor: deregister node id=" << sap->id()
-      << " sap=" << to_string(sap) << " hashID=" << hashId << " sap=" << to_string(sap))
+      "CoordinatorActor: deregister node id=" << sap->id() << " sap=" << to_string(sap) << " hashID=" << hashId << " sap=" << to_string(sap))
 
   std::vector<NESTopologyEntryPtr> sensorNodes =
       NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(
@@ -304,6 +293,16 @@ void CoordinatorActor::registerSensor(const string &ip, uint16_t publish_port,
       "CoordinatorActor: Successfully registered sensor (CPU=" << cpu << ", PhysicalStream: " << streamConf.physicalStreamName << ") " << to_string(hdl));
 }
 
+void CoordinatorActor::shutdown() {
+  coordinatorServicePtr->shutdown();
+  workerServicePtr->shutDown();
+  StreamCatalog::instance().reset();
+  QueryCatalog::instance().clearQueries();
+  this->state.actorTopologyMap.clear();
+  this->state.idToActorMap.clear();
+  this->state.topologyActorMap.clear();
+}
+
 void CoordinatorActor::deployQuery(const string &queryId) {
   map<NESTopologyEntryPtr, ExecutableTransferObject> deployments =
       coordinatorServicePtr->prepareExecutableTransferObject(queryId);
@@ -312,7 +311,8 @@ void CoordinatorActor::deployQuery(const string &queryId) {
     strong_actor_ptr sap = this->state.topologyActorMap.at(x.first);
     auto hdl = actor_cast<actor>(sap);
     string s_eto = SerializationTools::ser_eto(x.second);
-    NES_INFO("Sending query " << queryId << " to " << to_string(hdl));
+    NES_INFO(
+        "CoordinatorActor:: Sending query " << queryId << " to " << to_string(hdl));
     this->request(hdl, task_timeout, execute_operators_atom::value, queryId,
                   s_eto);
   }

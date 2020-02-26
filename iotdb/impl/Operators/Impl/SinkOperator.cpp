@@ -33,7 +33,11 @@ void SinkOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context,
     /* no call to compileLiftCombine of parent, ends code generation */
 }
 
-const OperatorPtr SinkOperator::copy() const { return std::make_shared<SinkOperator>(*this); }
+const OperatorPtr SinkOperator::copy() const {
+    const OperatorPtr copy = std::make_shared<SinkOperator>(*this);
+    copy->setOperatorId(this->getOperatorId());
+    return copy;
+}
 
 const std::string SinkOperator::toString() const {
   std::stringstream ss;

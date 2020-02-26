@@ -31,7 +31,11 @@ void WindowOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr contex
       getParent()->consume(codegen, context, out);
 }
 
-const OperatorPtr WindowOperator::copy() const { return std::make_shared<WindowOperator>(*this); }
+const OperatorPtr WindowOperator::copy() const {
+    const OperatorPtr copy = std::make_shared<WindowOperator>(*this);
+    copy->setOperatorId(this->getOperatorId());
+    return copy;
+}
 
 const std::string WindowOperator::toString() const {
   std::stringstream ss;

@@ -7,6 +7,7 @@
 #include <string>
 
 namespace NES {
+
 typedef std::shared_ptr<InputQuery> InputQueryPtr;
 
 enum NESNodeType {

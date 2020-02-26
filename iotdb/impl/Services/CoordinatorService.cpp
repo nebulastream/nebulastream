@@ -45,7 +45,7 @@ NESTopologyEntryPtr CoordinatorService::register_sensor(size_t id, const string&
 
     DataSourcePtr source;
     if (streamConf.sourceType != "CSVSource"
-        && streamConf.sourceType != "OneGeneratorSource") {
+        && streamConf.sourceType != "DefaultSource") {
         NES_ERROR(
             "Coordinator: error source type " << streamConf.sourceType << " is not supported")
         throw Exception(
@@ -53,8 +53,7 @@ NESTopologyEntryPtr CoordinatorService::register_sensor(size_t id, const string&
                 + " is not supported");
     }
     StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
-        streamConf.sourceType, streamConf.sourceConfig, sensorNode,
-        streamConf.physicalStreamName);
+        streamConf, sensorNode);
 
     bool success = StreamCatalog::instance().addPhysicalStream(
         streamConf.logicalStreamName, sce);
@@ -83,6 +82,13 @@ string CoordinatorService::registerQuery(
 
 bool CoordinatorService::deleteQuery(const string& queryId) {
     return QueryCatalog::instance().deleteQuery(queryId);
+}
+
+
+void CoordinatorService::shutdown()
+{
+  queryToPort.clear();
+//  topologyManagerPtr->resetNESTopologyPlan();
 }
 
 map<NESTopologyEntryPtr, ExecutableTransferObject> CoordinatorService::prepareExecutableTransferObject(

@@ -28,8 +28,8 @@ NESExecutionPlanPtr TopDown::initializeExecutionPlan(
     NES_INFO("TopDown: Adding forward operators.");
     addForwardOperators(sourceNodes, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
 
-    NES_INFO("TopDown: Removing non resident operators from the execution nodes.");
-    removeNonResidentOperators(nesExecutionPlanPtr);
+//    NES_INFO("TopDown: Removing non resident operators from the execution nodes.");
+//    removeNonResidentOperators(nesExecutionPlanPtr);
 
     NES_INFO("TopDown: Generating complete execution Graph.");
     completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlanPtr);
@@ -140,7 +140,7 @@ void TopDown::createNewExecutionNode(NESExecutionPlanPtr executionPlanPtr, Opera
     const ExecutionNodePtr
         executionNode = executionPlanPtr->createExecutionNode(operatorName.str(), to_string(nesNode->getId()),
                                                               nesNode, operatorPtr->copy());
-    executionNode->addChildOperatorId(operatorPtr->getOperatorId());
+    executionNode->addOperatorId(operatorPtr->getOperatorId());
     executionNode->getNESNode()->reduceCpuCapacity(1);
 }
 
@@ -150,6 +150,7 @@ void TopDown::addOperatorToExistingNode(OperatorPtr operatorPtr, ExecutionNodePt
     operatorName << operatorTypeToString[operatorPtr->getOperatorType()] << "(OP-"
                  << to_string(operatorPtr->getOperatorId()) << ")" << "=>" << executionNode->getOperatorName();
     executionNode->setOperatorName(operatorName.str());
-    executionNode->addChildOperatorId(operatorPtr->getOperatorId());
+    executionNode->addOperator(operatorPtr->copy());
+    executionNode->addOperatorId(operatorPtr->getOperatorId());
     executionNode->getNESNode()->reduceCpuCapacity(1);
 }

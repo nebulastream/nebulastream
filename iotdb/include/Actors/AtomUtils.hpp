@@ -10,7 +10,7 @@ using std::string;
 
 namespace NES {
 using namespace caf;
-constexpr auto task_timeout = std::chrono::seconds(3);
+constexpr auto task_timeout = std::chrono::seconds(10);
 
 using disconnect_atom = atom_constant<atom("disconnect")>;
 using terminate_atom = atom_constant<atom("term")>;
