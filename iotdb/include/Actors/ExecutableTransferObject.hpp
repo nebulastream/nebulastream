@@ -64,7 +64,7 @@ class ExecutableTransferObject {
     ar & queryId;
     ar & schema;
     ar & sources;
-    ar & destinations;
+//    ar & destinations;
     ar & operatorTree;
     ar & compiled;
   }

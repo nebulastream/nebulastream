@@ -51,11 +51,11 @@ const std::string CSVSource::toString() const {
 
 void CSVSource::fillBuffer(TupleBufferPtr buf) {
   std::ifstream input(filePath.c_str());
-
+  NES_DEBUG("CSVSource::fillBuffer: read buffer")
   input.seekg(0, input.end);
   int file_size = input.tellg();
   if (file_size == -1) {
-    NES_ERROR("ERROR: File " << filePath << " is corrupted")
+    NES_ERROR("CSVSource::fillBuffer File " << filePath << " is corrupted")
     assert(0);
   }
   input.seekg(0, input.beg);
@@ -91,6 +91,7 @@ void CSVSource::fillBuffer(TupleBufferPtr buf) {
     }
     i++;
   }
+  NES_DEBUG("CSVSource::fillBuffer: readin finished read " << generated_tuples_this_pass << " tuples")
   generatedTuples += generated_tuples_this_pass;
   buf->setNumberOfTuples(generated_tuples_this_pass);
   generatedBuffers++;

@@ -44,8 +44,8 @@ class ContiniousSourceTest : public testing::Test {
         new log4cxx::ConsoleAppender(layoutPtr));
 
     // set log level
-    NESLogger->setLevel(log4cxx::Level::getDebug());
-//    logger->setLevel(log4cxx::Level::getInfo());
+//    NESLogger->setLevel(log4cxx::Level::getDebug());
+    NESLogger->setLevel(log4cxx::Level::getInfo());
 
 // add appenders and other will inherit the settings
     NESLogger->addAppender(file);
@@ -59,7 +59,7 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintForEx
   size_t port = crd->startCoordinator(/**blocking**/false);
   EXPECT_NE(port, 0);
   cout << "coordinator started successfully" << endl;
-  sleep(2);
+  sleep(1);
 
   cout << "start worker" << endl;
   NesWorkerPtr wrk = std::make_shared<NesWorker>();

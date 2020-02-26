@@ -32,7 +32,8 @@ StreamCatalog::StreamCatalog() {
                 createArrayDataType(BasicType::CHAR, 50)).addField(
       "features.geometry.coordinates.longitude", BasicType::FLOAT32).addField(
       "features.geometry.coordinates.latitude", BasicType::FLOAT32).addField(
-      "features.eventId ", createArrayDataType(BasicType::CHAR, 50));
+      "features.eventId ", createArrayDataType(BasicType::CHAR, 50))
+      ;
 
   NES_DEBUG("StreamCatalog: schema for exdra is =" << schemaExdra.toString())
   addLogicalStream("exdra", std::make_shared<Schema>(schemaExdra));
