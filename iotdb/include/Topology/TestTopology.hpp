@@ -62,7 +62,6 @@ void createExampleTopology() {
     StreamCatalog::instance().addLogicalStream("temperature", std::make_shared<Schema>(schema));
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "temperature1";
-//    StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>("", "", sensorNode1, "temperature1");
     StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode1);
     assert(StreamCatalog::instance().addPhysicalStream("temperature", e1));
 
@@ -71,7 +70,6 @@ void createExampleTopology() {
     sensorNode2->setPhysicalStreamName("humidity1");
     StreamCatalog::instance().addLogicalStream("humidity1", std::make_shared<Schema>(schema));
     streamConf.physicalStreamName = "humidity1";
-//    StreamCatalogEntryPtr e2 = std::make_shared<StreamCatalogEntry>("", "", sensorNode2, "humidity1");
     StreamCatalogEntryPtr e2 = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode2);
 
     assert(StreamCatalog::instance().addPhysicalStream("humidity1", e2));
@@ -80,7 +78,6 @@ void createExampleTopology() {
         & sensorNode3 = NESTopologyManager::getInstance().createNESSensorNode(21, "localhost", CPUCapacity::LOW);
     sensorNode3->setPhysicalStreamName("temperature2");
     streamConf.physicalStreamName = "temperature2";
-//    StreamCatalogEntryPtr e3 = std::make_shared<StreamCatalogEntry>("", "", sensorNode3, "temperature2");
     StreamCatalogEntryPtr e3 = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode3);
 
     assert(StreamCatalog::instance().addPhysicalStream("temperature", e3));
@@ -90,7 +87,6 @@ void createExampleTopology() {
     sensorNode4->setPhysicalStreamName("humidity2");
     StreamCatalog::instance().addLogicalStream("humidity2", std::make_shared<Schema>(schema));
     streamConf.physicalStreamName = "humidity2";
-//    StreamCatalogEntryPtr e4 = std::make_shared<StreamCatalogEntry>("", "", sensorNode4, "humidity2");
     StreamCatalogEntryPtr e4 = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode4);
     assert(StreamCatalog::instance().addPhysicalStream("humidity2", e4));
 

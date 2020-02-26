@@ -89,8 +89,6 @@ TEST_F(StreamCatalogServiceTest, get_physicalStream_for_logical_stream) {
 
     PhysicalStreamConfig conf;
     conf.sourceType = "sensor";
-//    StreamCatalogEntryPtr catalogEntryPtr = std::make_shared<StreamCatalogEntry>(
-//        "sensor", "", sensorNode, "");
     StreamCatalogEntryPtr catalogEntryPtr = std::make_shared<StreamCatalogEntry>(
         conf, sensorNode);
     StreamCatalog::instance().addPhysicalStream(newLogicalStreamName, catalogEntryPtr);

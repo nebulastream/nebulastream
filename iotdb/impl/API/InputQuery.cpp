@@ -80,9 +80,10 @@ InputQuery InputQuery::from(Stream &stream) {
   OperatorPtr op;
 
   if (catalogEntry.size() == 0) {
-    NES_WARNING("InputQuery::from stream does not exists this should only be used by tests " << stream.getName())
+    NES_WARNING(
+        "InputQuery::from stream does not exists this should only be used by tests " << stream.getName())
     op = createSourceOperator(
-                createDefaultDataSourceWithSchemaForOneBuffer(stream.getSchema()));
+        createDefaultDataSourceWithSchemaForOneBuffer(stream.getSchema()));
   } else {
 
     std::string name = catalogEntry[0]->getPhysicalName();
@@ -92,8 +93,7 @@ InputQuery InputQuery::from(Stream &stream) {
     size_t numBuffers = catalogEntry[0]->getNumberOfBuffersToProduce();
 
     NES_DEBUG(
-        "InputQuery::from logical stream name=" << stream.getName() << " pyhName=" << name << " srcType=" << type << " srcConf=" << conf
-        << " frequency=" << frequency << " numBuffers=" << numBuffers)
+        "InputQuery::from logical stream name=" << stream.getName() << " pyhName=" << name << " srcType=" << type << " srcConf=" << conf << " frequency=" << frequency << " numBuffers=" << numBuffers)
 
     if (type == "DefaultSource") {
       if (numBuffers == 1) {
