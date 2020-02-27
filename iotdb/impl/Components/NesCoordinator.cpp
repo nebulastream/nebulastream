@@ -67,7 +67,7 @@ string NesCoordinator::executeQuery(const string queryString,
                 queryString, strategy).receive(
       [&queryId](const string &uuid) mutable {
         queryId = uuid;
-        NES_DEBUG("NesCoordinator: query successuflly executed id=" << uuid)
+        NES_DEBUG("NesCoordinator: query successful executed id=" << uuid)
       }
       ,
       [=](const error &er) {
@@ -117,7 +117,7 @@ uint16_t NesCoordinator::startCoordinator(bool blocking) {
 }
 
 void NesCoordinator::setRestConfiguration(std::string host, uint16_t port) {
-  this->restHost = restHost;
+  this->restHost = host;
   this->restPort = port;
 }
 
