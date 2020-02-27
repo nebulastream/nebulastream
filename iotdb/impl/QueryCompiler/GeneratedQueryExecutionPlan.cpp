@@ -1,8 +1,6 @@
-
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 
 namespace NES {
-
 
 GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan() : QueryExecutionPlan() {}
 
@@ -10,8 +8,6 @@ GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan(const std::string& quer
 }
 
 bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr inputBuffer) {
-
-
   TupleBufferPtr outputBuffer = BufferManager::instance().getBuffer();
   outputBuffer->setTupleSizeInBytes(inputBuffer->getTupleSizeInBytes());
   bool ret = stages[pipeline_stage_id]->execute(inputBuffer, outputBuffer);
