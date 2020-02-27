@@ -11,7 +11,7 @@ then
     cd /iotdb/build/tests
     ln -s ../nesCoordinator .
    	ln -s ../nesWorker .
-    cpack
+    make test_debug
 else
     exec $@
 fi
