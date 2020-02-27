@@ -1,5 +1,4 @@
 #include <QueryCompiler/QueryExecutionPlan.hpp>
-
 #include <assert.h>
 #include <iostream>
 #include <Util/Logger.hpp>
@@ -26,6 +25,24 @@ QueryExecutionPlan::~QueryExecutionPlan()
     stageToDest.clear();
 }
 
+void QueryExecutionPlan::stop(){
+  for(auto &stage: stages){
+    stage->stop();
+  }
+}
+
+void QueryExecutionPlan::setup(){
+  for(auto &stage: stages){
+    stage->setup();
+  }
+}
+
+void QueryExecutionPlan::start() {
+  for(auto &stage: stages){
+    stage->start();
+  }
+}
+
 void QueryExecutionPlan::print() {
    for (auto source : sources) {
      NES_INFO("Source:" << source)
@@ -34,10 +51,11 @@ void QueryExecutionPlan::print() {
      NES_INFO("\t Generated Tuples=" << source->getNumberOfGeneratedTuples())
      NES_INFO("\t Schema=" << source->getSourceSchemaAsString())
    }
+   /*
    for (auto window : windows) {
      NES_INFO("WindowHandler:" << window)
      NES_INFO("WindowHandler Result:")
-   }
+   }*/
    for (auto sink : sinks) {
      NES_INFO("Sink:" << sink)
      NES_INFO("\t Generated Buffers=" << sink->getNumberOfSentBuffers())
@@ -54,9 +72,8 @@ uint32_t QueryExecutionPlan::stageIdFromSource(DataSource* source) { return sour
 
 const std::vector<DataSourcePtr> QueryExecutionPlan::getSources() const { return sources; }
 
-const std::vector<WindowPtr> QueryExecutionPlan::getWindows() const { return windows; }
+//const std::vector<WindowPtr> QueryExecutionPlan::getWindows() const { return windows; }
 
 const std::vector<DataSinkPtr> QueryExecutionPlan::getSinks() const { return sinks; }
 
 } // namespace NES
-BOOST_CLASS_EXPORT(NES::QueryExecutionPlan);

@@ -2,7 +2,7 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/CCodeGenerator/Declaration.hpp>
 #include <memory>
-#include <memory>
+#include <utility>
 
 namespace NES {
 
@@ -11,6 +11,18 @@ PipelineContext::PipelineContext() {
 }
 void PipelineContext::addTypeDeclaration(const Declaration &decl) { type_declarations.push_back(decl.copy()); }
 void PipelineContext::addVariableDeclaration(const Declaration &decl) { variable_declarations.push_back(decl.copy()); }
+
+void PipelineContext::setWindow(WindowDefinitionPtr window) {
+  this->windowDefinition = std::move(window);
+}
+
+WindowDefinitionPtr PipelineContext::getWindow() {
+  return this->windowDefinition;
+}
+
+bool PipelineContext::hasWindow() const {
+  return this->windowDefinition != nullptr;
+}
 
 bool PipelineContext::hasNextPipeline() const {
   return this->nextPipeline != nullptr;

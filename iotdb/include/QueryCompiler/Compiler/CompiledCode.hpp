@@ -1,15 +1,16 @@
-#ifndef NES_INCLUDE_QUERYCOMPILER_EXECUTABLE_HPP_
-#define NES_INCLUDE_QUERYCOMPILER_EXECUTABLE_HPP_
-
-
+#ifndef INCLUDE_COMPILED_CODE_HPP_
+#define INCLUDE_COMPILED_CODE_HPP_
+#include <string>
+#include <memory>
 namespace NES{
 
-class Executable {
+class CompiledCode;
+typedef std::shared_ptr<CompiledCode> CompiledCodePtr;
+
+class CompiledCode {
  public:
-  virtual ~Executable();
-  void execute(const TupleBuffer *input_buffers,
-          void *state, WindowManager *window_manager,
-          TupleBuffer *result_buf);
+  virtual ~CompiledCode() = default;
+
   template <typename Function> Function getFunctionPointer(const std::string& name)
   {
     // INFO
@@ -29,17 +30,10 @@ class Executable {
     return conv.f_ptr;
   }
 
-  double getCompileTimeInSeconds() const { return compile_time_in_ns_ / double(1e9); }
-
  protected:
-  CompiledCCode(Timestamp compile_time) : compile_time_in_ns_(compile_time) {}
-
   virtual void* getFunctionPointerImpl(const std::string& name) = 0;
 
- private:
-  Timestamp compile_time_in_ns_;
 };
-
-
 }
-#endif //NES_INCLUDE_QUERYCOMPILER_EXECUTABLE_HPP_
+
+#endif //INCLUDE_COMPILED_CODE_HPP_

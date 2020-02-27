@@ -36,11 +36,6 @@ QueryExecutionPlanPtr ExecutableTransferObject::toQueryExecutionPlan(QueryCompil
         NES_INFO("*** Creating QueryExecutionPlan for " << this->queryId);
         QueryExecutionPlanPtr qep = queryCompiler->compile(this->operatorTree);
 
-        auto window_def = assignWindowHandler(this->operatorTree);
-        if (window_def != nullptr) {
-            auto window_handler = std::make_shared<WindowHandler>(assignWindowHandler(this->operatorTree));
-            qep->addWindow(window_handler);
-        }
         //TODO: currently only one input source is supported
         if (!this->sources.empty()) {
             qep->addDataSource(this->sources[0]);

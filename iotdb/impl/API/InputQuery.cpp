@@ -4,7 +4,7 @@
 #include <iostream>
 #include <API/InputQuery.hpp>
 #include <Operators/Operator.hpp>
-#include <QueryCompiler/CCodeGenerator/CodeCompiler.hpp>
+#include <QueryCompiler/Compiler/Compiler.hpp>
 #include <API/UserAPIExpression.hpp>
 #include <SourceSink/DataSink.hpp>
 #include <SourceSink/SinkCreator.hpp>

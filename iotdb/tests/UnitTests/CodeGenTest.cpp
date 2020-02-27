@@ -22,6 +22,9 @@
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
+#include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
+#include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
+#include <QueryCompiler/PipelineContext.hpp>
 #include <SourceSink/DefaultSource.hpp>
 
 
@@ -466,7 +469,7 @@ int CodeGenTest() {
 
 
   VariableDeclaration var_decl_tuple_buffers = VariableDeclaration::create(
-      createPointerDataType(createPointerDataType(createUserDefinedType(struct_decl_tuple_buffer))),
+      createPointerDataType(createUserDefinedType(struct_decl_tuple_buffer)),
       "input_buffer");
   VariableDeclaration var_decl_tuple_buffer_output = VariableDeclaration::create(
       createPointerDataType(createUserDefinedType(struct_decl_tuple_buffer)), "output_tuple_buffer");
@@ -514,7 +517,7 @@ int CodeGenTest() {
   /* tuple_buffer_1 = window_buffer[0]; */
   BinaryOperatorStatement init_tuple_buffer_ptr(
       VarRefStatement(var_decl_tuple_buffer_1)
-          .assign(VarRefStatement(var_decl_tuple_buffers)[ConstantExprStatement(INT32, "0")]));
+          .assign(VarRefStatement(var_decl_tuple_buffers)));
   /*  tuples = (Tuple *)tuple_buffer_1->data;*/
   BinaryOperatorStatement init_tuple_ptr(
       VarRef(var_decl_tuple)
@@ -578,7 +581,8 @@ int CodeGenTest() {
       .addDeclaration(main_function)
       .build();
 
-  PipelineStagePtr stage = compile(file);
+  Compiler compiler;
+  ExecutablePipelinePtr stage = createCompiledExecutablePipeline(compiler.compile(file.code));
 
   /* setup minimal runtime to execute generated code */
 
@@ -587,21 +591,18 @@ int CodeGenTest() {
     my_array[i] = i;
   }
 
-  TupleBuffer buf{my_array, 100 * sizeof(uint64_t), sizeof(uint64_t), 100};
+
+  TupleBufferPtr buf = std::make_shared<TupleBuffer>(my_array, 100 * sizeof(uint64_t), sizeof(uint64_t), 100);
 
   uint64_t *result_array = (uint64_t *) malloc(1 * sizeof(uint64_t));
 
-  std::vector<TupleBuffer *> bufs;
-  bufs.push_back(&buf);
-
-  TupleBuffer result_buf{result_array, sizeof(uint64_t), sizeof(uint64_t), 1};
-
+  TupleBufferPtr result_buf = std::make_shared<TupleBuffer>(result_array, sizeof(uint64_t), sizeof(uint64_t), 1);
   /* execute code */
-  if (!stage->execute(bufs, nullptr, NULL, &result_buf)) {
+  if (!stage->execute(buf, nullptr, nullptr, result_buf)) {
     std::cout << "Error!" << std::endl;
   }
 
-  std::cout << toString(&result_buf, Schema::create().addField("sum", UINT64)) << std::endl;
+  std::cout << toString(result_buf.get(), Schema::create().addField("sum", UINT64)) << std::endl;
 
   /* check result for correctness */
   uint64_t sum_generated_code = result_array[0];
@@ -640,31 +641,29 @@ int CodeGeneratorTest() {
                          context,
                          std::cout);
   /* compile code to pipeline stage */
-  PipelineStagePtr stage = code_gen->compile(CompilerArgs(), context->code);
+  Compiler compiler;
+  ExecutablePipelinePtr stage = code_gen->compile(CompilerArgs(), context->code);
   if (!stage)
     return -1;
   /* prepare input tuple buffer */
   Schema s = Schema::create()
       .addField("i64", UINT64);
   TupleBufferPtr buf = source->receiveData();
-  std::vector<TupleBuffer *> input_buffers;
-  input_buffers.push_back(buf.get());
   //std::cout << NES::toString(buf.get(),source->getSchema()) << std::endl;
   std::cout << "Processing " << buf->getNumberOfTuples() << " tuples: " << std::endl;
   size_t buffer_size = buf->getNumberOfTuples() * sizeof(uint64_t);
-  TupleBuffer result_buffer(malloc(buffer_size), buffer_size, sizeof(uint64_t), 0);
-
+  TupleBufferPtr result_buffer = std::make_shared<TupleBuffer>(malloc(buffer_size), buffer_size, sizeof(uint64_t), 0);
   /* execute Stage */
-  stage->execute(input_buffers, NULL, NULL, &result_buffer);
+  stage->execute(buf, NULL, NULL, result_buffer);
 
   /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
   //std::cout << "Result Buffer: #tuples: " << result_buffer.getNumberOfTuples() << std::endl;
-  if (buf->getNumberOfTuples() != result_buffer.getNumberOfTuples()) {
-    std::cout << "Wrong number of tuples in output: " << result_buffer.getNumberOfTuples()
+  if (buf->getNumberOfTuples() != result_buffer->getNumberOfTuples()) {
+    std::cout << "Wrong number of tuples in output: " << result_buffer->getNumberOfTuples()
               << " (should have been: " << buf->getNumberOfTuples() << ")" << std::endl;
     return -1;
   }
-  uint64_t *result_data = (uint64_t *) result_buffer.getBuffer();
+  uint64_t *result_data = (uint64_t *) result_buffer->getBuffer();
   for (uint64_t i = 0; i < buf->getNumberOfTuples(); ++i) {
     if (result_data[i] != 1) {
       std::cout << "Error in Result! Mismatch position: " << i << std::endl;
@@ -725,39 +724,36 @@ int CodeGeneratorFilterTest() {
                                                    std::cout), context, std::cout);
 
   /* compile code to pipeline stage */
-  PipelineStagePtr stage = code_gen->compile(CompilerArgs(),context->code);
+  auto stage = code_gen->compile(CompilerArgs(),context->code);
   if (!stage)
     return -1;
 
   /* prepare input tuple buffer */
   TupleBufferPtr buf = source->receiveData();
-  std::vector<TupleBuffer *> input_buffers;
-  input_buffers.push_back(buf.get());
-  //std::cout << NES::toString(buf.get(),source->getSchema()) << std::endl;
+   //std::cout << NES::toString(buf.get(),source->getSchema()) << std::endl;
   std::cout << "Processing " << buf->getNumberOfTuples() << " tuples: " << std::endl;
   uint32_t sizeoftuples = (sizeof(uint32_t) + sizeof(uint32_t) + sizeof(char) * 12);
   size_t buffer_size = buf->getNumberOfTuples() * sizeoftuples;
   std::cout << "This is my NUMBER....: " << buffer_size << std::endl;
-  TupleBuffer result_buffer(malloc(buffer_size), buffer_size, sizeoftuples, 0);
-
+  TupleBufferPtr result_buffer = std::make_shared<TupleBuffer>(malloc(buffer_size), buffer_size, sizeoftuples, 0);
   /* execute Stage */
-  stage->execute(input_buffers, NULL, NULL, &result_buffer);
+  stage->execute(buf, NULL, NULL, result_buffer);
 
   /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
-  std::cout << "---------- My Number of tuples...." << result_buffer.getNumberOfTuples() << std::endl;
-  if (result_buffer.getNumberOfTuples() != 5) {
-    std::cout << "Wrong number of tuples in output: " << result_buffer.getNumberOfTuples()
+  std::cout << "---------- My Number of tuples...." << result_buffer->getNumberOfTuples() << std::endl;
+  if (result_buffer->getNumberOfTuples() != 5) {
+    std::cout << "Wrong number of tuples in output: " << result_buffer->getNumberOfTuples()
               << " (should have been: " << buf->getNumberOfTuples() << ")" << std::endl;
     return -1;
   }
-  SelectionDataGenSource::InputTuple *result_data = (SelectionDataGenSource::InputTuple *) result_buffer.getBuffer();
+  SelectionDataGenSource::InputTuple *result_data = (SelectionDataGenSource::InputTuple *) result_buffer->getBuffer();
   for (uint64_t i = 0; i < 5; ++i) {
     if (result_data[i].id != i || result_data[i].value != i * 2) {
       std::cout << "Error in Result! Mismatch position: " << i << std::endl;
       return -1;
     }
   }
-  std::cout << NES::toString(result_buffer, Schema::create()
+  std::cout << NES::toString(result_buffer.get(), Schema::create()
       .addField("id", BasicType::UINT32)
       .addField("value", BasicType::UINT32)
       .addField("text", createArrayDataType(BasicType(CHAR), 12))) << std::endl;
@@ -793,34 +789,33 @@ int WindowAssignerCodeGenTest() {
 
 
   /* compile code to pipeline stage */
-  PipelineStagePtr stage = code_gen->compile(CompilerArgs(), context->code);
+  auto stage = code_gen->compile(CompilerArgs(), context->code);
   if (!stage)
     return -1;
 
   // init window handler
   auto window_handler = new WindowHandler(window_definition_ptr);
-  window_handler->setup();
+  window_handler->setup(nullptr, 0);
 
   /* prepare input tuple buffer */
   TupleBufferPtr buf = source->receiveData();
-  std::vector<TupleBuffer *> input_buffers;
-  input_buffers.push_back(buf.get());
+
   //std::cout << NES::toString(buf.get(),source->getSchema()) << std::endl;
   std::cout << "Processing " << buf->getNumberOfTuples() << " tuples: " << std::endl;
 
-  TupleBuffer result_buffer(malloc(0), 0, 0, 0);
+  TupleBufferPtr result_buffer = std::make_shared<TupleBuffer>(malloc(0), 0, 0, 0);
 
   /* execute Stage */
   stage->execute(
-      input_buffers,
+      buf,
       window_handler->getWindowState(),
-      window_handler->getWindowManager().get(),
-      &result_buffer);
+      window_handler->getWindowManager(),
+      result_buffer);
 
   /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
-  std::cout << "---------- My Number of tuples...." << result_buffer.getNumberOfTuples() << std::endl;
-  if (result_buffer.getNumberOfTuples() != 0) {
-    std::cout << "Wrong number of tuples in output: " << result_buffer.getNumberOfTuples()
+  std::cout << "---------- My Number of tuples...." << result_buffer->getNumberOfTuples() << std::endl;
+  if (result_buffer->getNumberOfTuples() != 0) {
+    std::cout << "Wrong number of tuples in output: " << result_buffer->getNumberOfTuples()
               << " (should have been: " << buf->getNumberOfTuples() << ")" << std::endl;
     return -1;
   }
@@ -871,33 +866,32 @@ int CodePredicateTests() {
                                                    std::cout), context, std::cout);
 
   /* compile code to pipeline stage */
-  PipelineStagePtr stage = code_gen->compile(CompilerArgs(),context->code);
+  auto stage = code_gen->compile(CompilerArgs(),context->code);
   if (!stage)
     return -1;
 
   /* prepare input tuple buffer */
   TupleBufferPtr buf = source->receiveData();
-  std::vector<TupleBuffer *> input_buffers;
-  input_buffers.push_back(buf.get());
   //std::cout << NES::toString(buf.get(),source->getSchema()) << std::endl;
   std::cout << "Processing " << buf->getNumberOfTuples() << " tuples: " << std::endl;
   uint32_t sizeoftuples =
       (sizeof(uint32_t) + sizeof(int16_t) + sizeof(float) + sizeof(double) + sizeof(char) + sizeof(char) * 12);
   size_t buffer_size = buf->getNumberOfTuples() * sizeoftuples;
-  TupleBuffer result_buffer(malloc(buffer_size), buffer_size, sizeoftuples, 0);
+    TupleBufferPtr result_buffer = std::make_shared<TupleBuffer>(malloc(buffer_size), buffer_size, sizeoftuples, 0);
+
 
   /* execute Stage */
-  stage->execute(input_buffers, NULL, NULL, &result_buffer);
+  stage->execute(buf, NULL, NULL, result_buffer);
 
   /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
-  std::cout << "---------- My Number of tuples...." << result_buffer.getNumberOfTuples() << std::endl;
-  if (result_buffer.getNumberOfTuples() != numberOfResultTuples) {
-    std::cout << "Wrong number of tuples in output: " << result_buffer.getNumberOfTuples()
+  std::cout << "---------- My Number of tuples...." << result_buffer->getNumberOfTuples() << std::endl;
+  if (result_buffer->getNumberOfTuples() != numberOfResultTuples) {
+    std::cout << "Wrong number of tuples in output: " << result_buffer->getNumberOfTuples()
               << " (should have been: " << buf->getNumberOfTuples() << ")" << std::endl;
     return -1;
   }
 
-  std::cout << NES::toString(result_buffer, Schema::create()
+  std::cout << NES::toString(result_buffer.get(), Schema::create()
       .addField("id", BasicType::UINT32)
       .addField("valueSmall", BasicType::INT16)
       .addField("valueFloat", BasicType::FLOAT32)
@@ -942,34 +936,33 @@ int CodeMapPredicatePtrTests() {
   unsigned int numberOfResultTuples = 132;
 
   /* compile code to pipeline stage */
-  PipelineStagePtr stage = code_gen->compile(CompilerArgs(), context->code);
+  auto stage = code_gen->compile(CompilerArgs(), context->code);
   if (!stage)
     return -1;
 
   /* prepare input tuple buffer */
   TupleBufferPtr buf = source->receiveData();
-  std::vector<TupleBuffer *> input_buffers;
-  input_buffers.push_back(buf.get());
   //std::cout << NES::toString(buf.get(),source->getSchema()) << std::endl;
   std::cout << "Processing " << buf->getNumberOfTuples() << " tuples: " << std::endl;
   uint32_t sizeoftuples =
       (sizeof(uint32_t) + sizeof(int16_t) + sizeof(float) + sizeof(double) + sizeof(double) + sizeof(char)
           + sizeof(char) * 12);
   size_t buffer_size = buf->getNumberOfTuples() * sizeoftuples;
-  TupleBuffer result_buffer(malloc(buffer_size), buffer_size, sizeoftuples, 0);
+
+  TupleBufferPtr result_buffer = std::make_shared<TupleBuffer>(malloc(buffer_size), buffer_size, sizeoftuples, 0);
 
   /* execute Stage */
-  stage->execute(input_buffers, NULL, NULL, &result_buffer);
+  stage->execute(buf, NULL, NULL, result_buffer);
 
   /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
-  std::cout << "---------- My Number of tuples...." << result_buffer.getNumberOfTuples() << std::endl;
-  if (result_buffer.getNumberOfTuples() != numberOfResultTuples) {
-    std::cout << "Wrong number of tuples in output: " << result_buffer.getNumberOfTuples()
+  std::cout << "---------- My Number of tuples...." << result_buffer->getNumberOfTuples() << std::endl;
+  if (result_buffer->getNumberOfTuples() != numberOfResultTuples) {
+    std::cout << "Wrong number of tuples in output: " << result_buffer->getNumberOfTuples()
               << " (should have been: " << buf->getNumberOfTuples() << ")" << std::endl;
     return -1;
   }
 
-  std::cout << NES::toString(result_buffer, Schema::create()
+  std::cout << NES::toString(result_buffer.get(), Schema::create()
       .addField("id", BasicType::UINT32)
       .addField("valueSmall", BasicType::INT16)
       .addField("valueFloat", BasicType::FLOAT32)

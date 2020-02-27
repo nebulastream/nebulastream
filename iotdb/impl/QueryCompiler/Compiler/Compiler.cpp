@@ -1,4 +1,6 @@
-#include <QueryCompiler/CCodeGenerator/CodeCompiler.hpp>
+#include <QueryCompiler/Compiler/Compiler.hpp>
+#include <QueryCompiler/Compiler/CompiledCode.hpp>
+#include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
 
 #include <Util/SharedLibrary.hpp>
 
@@ -18,9 +20,9 @@
 
 namespace NES {
 
-const std::string CCodeCompiler::IncludePath = PATH_TO_NES_SOURCE_CODE "/include/";
+const std::string Compiler::IncludePath = PATH_TO_NES_SOURCE_CODE "/include/";
 
-const std::string CCodeCompiler::MinimalApiHeaderPath = PATH_TO_NES_SOURCE_CODE "/include/QueryCompiler/"
+const std::string Compiler::MinimalApiHeaderPath = PATH_TO_NES_SOURCE_CODE "/include/QueryCompiler/"
 "MinimalApi.hpp";
 
 class CompilerFlags {
@@ -40,24 +42,24 @@ class CompilerFlags {
   inline static const std::string AVX2 = "-mavx2";
 };
 
-CCodeCompiler::CCodeCompiler() {
+Compiler::Compiler() {
   init();
 }
 
-CompiledCCodePtr CCodeCompiler::compile(const std::string &source) {
+CompiledCodePtr Compiler::compile(const std::string &source) {
   handleDebugging(source);
   //auto pch_time = createPrecompiledHeader();
   return compileWithSystemCompiler(source, 0);
 }
 
-void CCodeCompiler::init() {
+void Compiler::init() {
   show_generated_code_ = true;
   debug_code_generator_ = true;
   keep_last_generated_query_code_ = false;
   initCompilerArgs();
 }
 
-void CCodeCompiler::initCompilerArgs() {
+void Compiler::initCompilerArgs() {
   compiler_args_ = { CompilerFlags::CXX_VERSION, CompilerFlags::NO_TRIGRAPHS,
       CompilerFlags::FPIC, CompilerFlags::WERROR,
       CompilerFlags::WPARENTHESES_EQUALITY,
@@ -83,7 +85,7 @@ void CCodeCompiler::initCompilerArgs() {
 #endif
 }
 
-Timestamp CCodeCompiler::createPrecompiledHeader() {
+Timestamp Compiler::createPrecompiledHeader() {
   if (!rebuildPrecompiledHeader()) {
     return 0;
   }
@@ -93,7 +95,7 @@ Timestamp CCodeCompiler::createPrecompiledHeader() {
   return getTimestamp() - start;
 }
 
-bool CCodeCompiler::rebuildPrecompiledHeader() {
+bool Compiler::rebuildPrecompiledHeader() {
   if (!boost::filesystem::exists(PrecompiledHeaderName)) {
     return true;
   } else {
@@ -107,7 +109,7 @@ bool CCodeCompiler::rebuildPrecompiledHeader() {
   }
 }
 
-std::vector<std::string> CCodeCompiler::getPrecompiledHeaderCompilerArgs() {
+std::vector<std::string> Compiler::getPrecompiledHeaderCompilerArgs() {
   auto args = compiler_args_;
 
   std::stringstream pch_option;
@@ -119,7 +121,7 @@ std::vector<std::string> CCodeCompiler::getPrecompiledHeaderCompilerArgs() {
   return args;
 }
 
-std::vector<std::string> CCodeCompiler::getCompilerArgs() {
+std::vector<std::string> Compiler::getCompilerArgs() {
   auto args = compiler_args_;
 
   args.push_back("-xc++");
@@ -137,7 +139,7 @@ std::vector<std::string> CCodeCompiler::getCompilerArgs() {
   return args;
 }
 
-void CCodeCompiler::callSystemCompiler(const std::vector<std::string> &args) {
+void Compiler::callSystemCompiler(const std::vector<std::string> &args) {
   std::stringstream compiler_call;
   compiler_call << CLANG_EXECUTABLE << " ";
 
@@ -178,7 +180,7 @@ void pretty_print_code(const std::string &source) {
   ret = system(cleanup_command.c_str());
 }
 
-void CCodeCompiler::handleDebugging(const std::string &source) {
+void Compiler::handleDebugging(const std::string &source) {
   if (!show_generated_code_ && !debug_code_generator_
       && !keep_last_generated_query_code_) {
     return;
@@ -203,50 +205,9 @@ void exportSourceToFile(const std::string &filename,
   result_file << source;
 }
 
-class SystemCompilerCompiledCCode : public CompiledCCode {
- public:
-  SystemCompilerCompiledCCode(Timestamp compile_time, SharedLibraryPtr library,
-                              const std::string &base_name)
-      :
-      CompiledCCode(compile_time),
-      library_(library),
-      base_file_name_(base_name) {
-  }
 
-  ~SystemCompilerCompiledCCode() {
-    cleanUp();
-  }
 
- protected:
-  void* getFunctionPointerImpl(const std::string &name) override
-  final {
-    return library_->getSymbol(name);
-  }
-
- private:
-  void cleanUp() {
-    if (boost::filesystem::exists(base_file_name_ + ".c")) {
-      boost::filesystem::remove(base_file_name_ + ".c");
-    }
-
-    if (boost::filesystem::exists(base_file_name_ + ".o")) {
-      boost::filesystem::remove(base_file_name_ + ".o");
-    }
-
-    if (boost::filesystem::exists(base_file_name_ + ".so")) {
-      boost::filesystem::remove(base_file_name_ + ".so");
-    }
-
-    if (boost::filesystem::exists(base_file_name_ + ".c.orig")) {
-      boost::filesystem::remove(base_file_name_ + ".c.orig");
-    }
-  }
-
-  SharedLibraryPtr library_;
-  std::string base_file_name_;
-};
-
-CompiledCCodePtr CCodeCompiler::compileWithSystemCompiler(
+CompiledCodePtr Compiler::compileWithSystemCompiler(
     const std::string &source, const Timestamp pch_time) {
   auto start = getTimestamp();
 
@@ -266,10 +227,9 @@ CompiledCCodePtr CCodeCompiler::compileWithSystemCompiler(
   auto shared_library = SharedLibrary::load("./" + library_name);
 
   auto end = getTimestamp();
-
   auto compile_time = end - start + pch_time;
-  return std::make_shared<SystemCompilerCompiledCCode>(compile_time,
-                                                       shared_library, basename);
+  NES_DEBUG("Compile Time with system compiler: " + std::to_string(compile_time))
+  return createSystemCompilerCompiledCode(shared_library, basename);
 }
 
 }  // namespace NES

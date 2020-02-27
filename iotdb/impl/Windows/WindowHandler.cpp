@@ -14,7 +14,9 @@ namespace NES {
 WindowHandler::WindowHandler(NES::WindowDefinitionPtr window_definition_ptr) : window_definition_ptr(window_definition_ptr) {
 }
 
-void WindowHandler::setup() {
+void WindowHandler::setup(     QueryExecutionPlanPtr queryExecutionPlanPtr,uint32_t pipelineStageId) {
+  this->pipelineStageId = pipelineStageId;
+  this->queryExecutionPlanPtr = queryExecutionPlanPtr;
   // Initialize WindowHandler Manager
   this->window_manager_ptr = std::make_shared<WindowManager>(this->window_definition_ptr);
   // Initialize StateVariable
@@ -83,7 +85,7 @@ void WindowHandler::trigger() {
     this->aggregateWindows<int64_t, int64_t>(it.second, this->window_definition_ptr, tuple_buffer);
   }
   // send the tuple buffer to the next pipeline stage or sink
-  Dispatcher::instance().addWork(tuple_buffer, this);
+  Dispatcher::instance().addWorkForNextPipeline(tuple_buffer, this->queryExecutionPlanPtr, this->pipelineStageId);
 }
 
 void *WindowHandler::getWindowState() {
@@ -115,5 +117,9 @@ bool WindowHandler::stop() {
 
 
 WindowHandler::~WindowHandler() {NES_DEBUG("WINDOW: calling destructor")}
+
+const WindowHandlerPtr createWindowHandler(WindowDefinitionPtr windowDefinition){
+  return std::make_shared<WindowHandler>(windowDefinition);
+}
 
 } // namespace NES

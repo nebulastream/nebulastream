@@ -1,5 +1,4 @@
 add_source_iotdb(
-        CodeCompiler.cpp
         Declaration.cpp
         FileBuilder.cpp
         FunctionBuilder.cpp

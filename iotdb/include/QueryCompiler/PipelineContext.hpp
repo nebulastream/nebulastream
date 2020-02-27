@@ -14,6 +14,9 @@ typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
 
 class Schema;
 
+class WindowDefinition;
+typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
+
 class PipelineContext {
  public:
   PipelineContext();
@@ -24,6 +27,9 @@ class PipelineContext {
 
   const Schema &getInputSchema() const;
   const Schema &getResultSchema() const;
+  WindowDefinitionPtr getWindow();
+  void setWindow(WindowDefinitionPtr window);
+  bool hasWindow() const;
 
   Schema inputSchema;
   Schema resultSchema;
@@ -35,6 +41,7 @@ class PipelineContext {
 
  private:
   PipelineContextPtr nextPipeline;
+  WindowDefinitionPtr windowDefinition;
 };
 }
 #endif //NES_INCLUDE_QUERYCOMPILER_PIPELINECONTEXT_HPP_
