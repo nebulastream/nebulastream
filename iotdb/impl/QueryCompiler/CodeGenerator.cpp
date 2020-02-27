@@ -45,36 +45,33 @@ GeneratedCode::GeneratedCode()
       type_decls() {
 }
 
-
-
-
 const PipelineContextPtr createPipelineContext() { return std::make_shared<PipelineContext>(); }
 
 typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
 
-CodeGenerator::CodeGenerator(const CodeGenArgs &args) : args_(args) {}
+CodeGenerator::CodeGenerator(const CodeGenArgs& args) : args_(args) {}
 
 CodeGenerator::~CodeGenerator() {}
 
 class CCodeGenerator : public CodeGenerator {
- public:
-  CCodeGenerator(const CodeGenArgs &args);
-  virtual bool generateCode(const Schema &schema, const PipelineContextPtr &context,
-                            std::ostream &out) override;
-  virtual bool generateCode(const PredicatePtr &pred, const PipelineContextPtr &context, std::ostream &out) override;
-  virtual bool generateCode(const AttributeFieldPtr field,
-                            const PredicatePtr &pred,
-                            const NES::PipelineContextPtr &context,
-                            std::ostream &out) override;
-  virtual bool generateCode(const DataSinkPtr &sink, const PipelineContextPtr &context, std::ostream &out) override;
-  virtual bool generateCode(const WindowDefinitionPtr &window,
-                            const PipelineContextPtr &context,
-                            std::ostream &out) override;
-  ExecutablePipelinePtr compile(const CompilerArgs &, const GeneratedCodePtr &code) override;
-  ~CCodeGenerator() override;
+  public:
+    CCodeGenerator(const CodeGenArgs& args);
+    virtual bool generateCode(const Schema& schema, const PipelineContextPtr& context,
+                              std::ostream& out) override;
+    virtual bool generateCode(const PredicatePtr& pred, const PipelineContextPtr& context, std::ostream& out) override;
+    virtual bool generateCode(const AttributeFieldPtr field,
+                              const PredicatePtr& pred,
+                              const NES::PipelineContextPtr& context,
+                              std::ostream& out) override;
+    virtual bool generateCode(const DataSinkPtr& sink, const PipelineContextPtr& context, std::ostream& out) override;
+    virtual bool generateCode(const WindowDefinitionPtr& window,
+                              const PipelineContextPtr& context,
+                              std::ostream& out) override;
+    ExecutablePipelinePtr compile(const CompilerArgs&, const GeneratedCodePtr& code) override;
+    ~CCodeGenerator() override;
 };
 
-CCodeGenerator::CCodeGenerator(const CodeGenArgs &args) : CodeGenerator(args) {}
+CCodeGenerator::CCodeGenerator(const CodeGenArgs& args) : CodeGenerator(args) {}
 
 const StructDeclaration getStructDeclarationTupleBuffer() {
   /** define structure of TupleBuffer
@@ -109,7 +106,7 @@ const StructDeclaration getStructDeclarationWindowState() {
   return struct_decl_state;
 }*/
 
-const StructDeclaration getStructDeclarationFromSchema(const std::string struct_name, const Schema &schema) {
+const StructDeclaration getStructDeclarationFromSchema(const std::string struct_name, const Schema& schema) {
   /* struct definition for tuples */
   StructDeclaration struct_decl_tuple = StructDeclaration::create(struct_name, "");
   /* disable padding of bytes to generate compact structs, required for input and output tuple formats */
@@ -127,15 +124,15 @@ const StructDeclaration getStructDeclarationFromSchema(const std::string struct_
   return struct_decl_tuple;
 }
 
-const StructDeclaration getStructDeclarationInputTuple(const Schema &schema) {
+const StructDeclaration getStructDeclarationInputTuple(const Schema& schema) {
   return getStructDeclarationFromSchema("InputTuple", schema);
 }
 
-const StructDeclaration getStructDeclarationResultTuple(const Schema &schema) {
+const StructDeclaration getStructDeclarationResultTuple(const Schema& schema) {
   return getStructDeclarationFromSchema("ResultTuple", schema);
 }
 
-const VariableDeclarationPtr getVariableDeclarationForField(const StructDeclaration &struct_decl,
+const VariableDeclarationPtr getVariableDeclarationForField(const StructDeclaration& struct_decl,
                                                             const AttributeFieldPtr field) {
   if (struct_decl.getField(field->name))
     return std::make_shared<VariableDeclaration>(struct_decl.getVariableDeclaration(field->name));
@@ -144,14 +141,14 @@ const VariableDeclarationPtr getVariableDeclarationForField(const StructDeclarat
   }
 }
 
-const std::string toString(void *value, DataTypePtr type) {
+const std::string toString(void* value, DataTypePtr type) {
   //     if(type->)
   return "";
 }
 
-std::string toString(TupleBuffer &buffer, const Schema &schema) { return toString(&buffer, schema); }
+std::string toString(TupleBuffer& buffer, const Schema& schema) { return toString(&buffer, schema); }
 
-std::string toString(TupleBuffer *buffer, const Schema &schema) {
+std::string toString(TupleBuffer* buffer, const Schema& schema) {
   if (!buffer)
     return "INVALID_BUFFER_PTR";
   std::stringstream str;
@@ -181,13 +178,13 @@ std::string toString(TupleBuffer *buffer, const Schema &schema) {
   str << std::endl;
   str << "+----------------------------------------------------+" << std::endl;
 
-  char *buf = (char *) buffer->getBuffer();
+  char* buf = (char*) buffer->getBuffer();
   for (uint32_t i = 0;
-       i < buffer->getNumberOfTuples() * buffer->getTupleSizeInBytes(); i +=
-                                                                            buffer->getTupleSizeInBytes()) {
+       i < buffer->getNumberOfTuples()*buffer->getTupleSizeInBytes(); i +=
+                                                                          buffer->getTupleSizeInBytes()) {
     str << "|";
     for (uint32_t s = 0; s < offsets.size(); ++s) {
-      void *value = &buf[i + offsets[s]];
+      void* value = &buf[i + offsets[s]];
       std::string tmp = types[s]->convertRawToString(value);
       str << tmp << "|";
     }
@@ -197,7 +194,7 @@ std::string toString(TupleBuffer *buffer, const Schema &schema) {
   return str.str();
 }
 
-bool CCodeGenerator::generateCode(const Schema &schema, const PipelineContextPtr &context, std::ostream &out) {
+bool CCodeGenerator::generateCode(const Schema& schema, const PipelineContextPtr& context, std::ostream& out) {
 
   context->inputSchema = schema;
 
@@ -307,7 +304,7 @@ bool CCodeGenerator::generateCode(const Schema &schema, const PipelineContextPtr
  * @param out - sending some other information if wanted
  * @return modified query-code
  */
-bool CCodeGenerator::generateCode(const PredicatePtr &pred, const PipelineContextPtr &context, std::ostream &out) {
+bool CCodeGenerator::generateCode(const PredicatePtr& pred, const PipelineContextPtr& context, std::ostream& out) {
 
   ExpressionStatmentPtr expr = pred->generateCode(context->code);
 
@@ -329,9 +326,9 @@ bool CCodeGenerator::generateCode(const PredicatePtr &pred, const PipelineContex
  * @return modified query-code
  */
 bool CCodeGenerator::generateCode(const AttributeFieldPtr field,
-                                   const PredicatePtr &pred,
-                                   const NES::PipelineContextPtr &context,
-                                   std::ostream &out) {
+                                  const PredicatePtr& pred,
+                                  const NES::PipelineContextPtr& context,
+                                  std::ostream& out) {
 
   StructDeclaration struct_decl_result_tuple = (getStructDeclarationFromSchema("result_tuples", context->resultSchema));
   VariableDeclaration var_decl_result_tuple = VariableDeclaration::create(
@@ -355,7 +352,7 @@ bool CCodeGenerator::generateCode(const AttributeFieldPtr field,
   return true;
 }
 
-bool CCodeGenerator::generateCode(const DataSinkPtr &sink, const PipelineContextPtr &context, std::ostream &out) {
+bool CCodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContextPtr& context, std::ostream& out) {
   context->resultSchema = sink->getSchema();
 
   StructDeclaration struct_decl_result_tuple = getStructDeclarationResultTuple(context->resultSchema);
@@ -381,7 +378,8 @@ bool CCodeGenerator::generateCode(const DataSinkPtr &sink, const PipelineContext
   std::vector<VariableDeclaration> var_decls;
   std::vector<StatementPtr> write_result_tuples;
   for (size_t i = 0; i < context->resultSchema.getSize(); ++i) {
-    VariableDeclarationPtr var_decl = getVariableDeclarationForField(struct_decl_result_tuple, context->resultSchema[i]);
+    VariableDeclarationPtr
+        var_decl = getVariableDeclarationForField(struct_decl_result_tuple, context->resultSchema[i]);
     if (!var_decl) {
       NES_ERROR("Could not extract field " << context->resultSchema[i]->toString() << " from struct "
                                            << struct_decl_result_tuple.getTypeName());
@@ -389,11 +387,13 @@ bool CCodeGenerator::generateCode(const DataSinkPtr &sink, const PipelineContext
     }
     context->code->variable_decls.push_back(*var_decl);
 
-    DeclarationPtr var_decl_input = getVariableDeclarationForField(context->code->struct_decl_input_tuple, context->resultSchema[i]);
+    DeclarationPtr var_decl_input =
+        getVariableDeclarationForField(context->code->struct_decl_input_tuple, context->resultSchema[i]);
     if (var_decl_input) {
       bool override = false;
       for (size_t j = 0; j < context->code->override_fields.size(); j++) {
-        if (context->code->override_fields.at(j)->getIdentifierName().compare(var_decl_input->getIdentifierName()) == 0) {
+        if (context->code->override_fields.at(j)->getIdentifierName().compare(var_decl_input->getIdentifierName())
+            == 0) {
           override = true;
           break;
         }
@@ -432,9 +432,9 @@ bool CCodeGenerator::generateCode(const DataSinkPtr &sink, const PipelineContext
  * @param out
  * @return
  */
-bool CCodeGenerator::generateCode(const WindowDefinitionPtr &window,
-                                   const PipelineContextPtr &context,
-                                   std::ostream &out) {
+bool CCodeGenerator::generateCode(const WindowDefinitionPtr& window,
+                                  const PipelineContextPtr& context,
+                                  std::ostream& out) {
 
   auto constStatement = ConstantExprStatement((createBasicTypeValue(BasicType::UINT64, "0")));
 
@@ -449,9 +449,11 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr &window,
   // Read key value from record
   auto key_var = VariableDeclaration::create(
       createDataType(BasicType::INT64), "key");
-  VariableDeclaration key_var_decl_attr = context->code->struct_decl_input_tuple.getVariableDeclaration(window->onKey->name);
+  VariableDeclaration
+      key_var_decl_attr = context->code->struct_decl_input_tuple.getVariableDeclaration(window->onKey->name);
   auto key_var_decl = VarDeclStatement(key_var)
-      .assign(VarRef(context->code->var_decl_input_tuple)[VarRef(*context->code->var_decl_id)].accessRef(VarRef(key_var_decl_attr)));
+      .assign(VarRef(context->code->var_decl_input_tuple)[VarRef(*context->code->var_decl_id)].accessRef(VarRef(
+          key_var_decl_attr)));
   context->code->current_code_insertion_point->addStatement(std::make_shared<BinaryOperatorStatement>(key_var_decl));
 
   // get key handle for current key
@@ -482,13 +484,15 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr &window,
   auto getCurrentTs = FunctionCallStatement("NES::getTsFromClock");
   auto getCurrentTsStatement = VarDeclStatement(current_time_var)
       .assign(getCurrentTs);
-  context->code->current_code_insertion_point->addStatement(std::make_shared<BinaryOperatorStatement>(getCurrentTsStatement));
+  context->code->current_code_insertion_point->addStatement(std::make_shared<BinaryOperatorStatement>(
+      getCurrentTsStatement));
 
   // update slices
   auto sliceStream = FunctionCallStatement("sliceStream");
   sliceStream.addParameter(VarRef(current_time_var));
   sliceStream.addParameter(VarRef(window_state_var));
-  auto call = std::make_shared<BinaryOperatorStatement>(VarRef(context->code->var_declare_window).accessPtr(sliceStream));
+  auto call =
+      std::make_shared<BinaryOperatorStatement>(VarRef(context->code->var_declare_window).accessPtr(sliceStream));
   context->code->current_code_insertion_point->addStatement(call);
 
   // find the slices for a time stamp
@@ -500,7 +504,8 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr &window,
   auto current_slice_ref = VarRef(var_decl_current_slice);
   auto var_decl_current_slice_stm = VarDeclStatement(var_decl_current_slice)
       .assign(getSliceIndexByTsCall);
-  context->code->current_code_insertion_point->addStatement(std::make_shared<BinaryOperatorStatement>(var_decl_current_slice_stm));
+  context->code->current_code_insertion_point->addStatement(std::make_shared<BinaryOperatorStatement>(
+      var_decl_current_slice_stm));
 
   // get the partial aggregates
   auto getPartialAggregates = FunctionCallStatement("getPartialAggregates");
@@ -512,7 +517,7 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr &window,
   context->code->current_code_insertion_point->addStatement(std::make_shared<BinaryOperatorStatement>(assignment));
 
   // update partial aggregate
-  const BinaryOperatorStatement &partialRef = VarRef(var_decl_partial_aggregates)[current_slice_ref];
+  const BinaryOperatorStatement& partialRef = VarRef(var_decl_partial_aggregates)[current_slice_ref];
   window->windowAggregation->compileLiftCombine(
       context->code->current_code_insertion_point,
       partialRef,
@@ -523,7 +528,7 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr &window,
   return true;
 }
 
-ExecutablePipelinePtr CCodeGenerator::compile(const CompilerArgs &, const GeneratedCodePtr &code) {
+ExecutablePipelinePtr CCodeGenerator::compile(const CompilerArgs&, const GeneratedCodePtr& code) {
 
   /* function signature:
    * typedef uint32_t (*SharedCLibPipelineQueryPtr)(TupleBuffer**, WindowState*, TupleBuffer*);
@@ -537,10 +542,10 @@ ExecutablePipelinePtr CCodeGenerator::compile(const CompilerArgs &, const Genera
       .addParameter(code->var_declare_window)
       .addParameter(code->var_decl_tuple_buffer_output);
 
-  for (auto &var_decl : code->variable_decls) {
+  for (auto& var_decl : code->variable_decls) {
     func_builder.addVariableDeclaration(var_decl);
   }
-  for (auto &var_init : code->variable_init_stmts) {
+  for (auto& var_init : code->variable_init_stmts) {
     func_builder.addStatement(var_init);
   }
 
@@ -548,7 +553,7 @@ ExecutablePipelinePtr CCodeGenerator::compile(const CompilerArgs &, const Genera
   func_builder.addStatement(code->for_loop_stmt);
 
   /* add statements executed after the for loop, for example cleanup code */
-  for (auto &stmt : code->cleanup_stmts) {
+  for (auto& stmt : code->cleanup_stmts) {
     func_builder.addStatement(stmt);
   }
 
@@ -561,7 +566,7 @@ ExecutablePipelinePtr CCodeGenerator::compile(const CompilerArgs &, const Genera
   file_builder.addDeclaration(code->struct_decl_state);
   file_builder.addDeclaration(code->struct_decl_input_tuple);
   /* add generic declarations by operators*/
-  for (auto &type_decl : code->type_decls) {
+  for (auto& type_decl : code->type_decls) {
     file_builder.addDeclaration(type_decl);
   }
 
