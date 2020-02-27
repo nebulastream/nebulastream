@@ -48,7 +48,7 @@ InputQueryPtr UtilityFunctions::createQueryFromCodeString(
       code
           << "StreamPtr sPtr = StreamCatalog::instance().getStreamForLogicalStreamOrThrowException(\""
           << streamName << "\");";
-  //    code << "Stream& stream = *sPtr.get();" << std::endl;
+      //code << "Stream& stream = *sPtr.get();" << std::endl;
       std::string newQuery = query_code_snippet;
 
       //replace the stream "xyz" provided by the user with the reference to the generated stream for the from clause
