@@ -4,11 +4,19 @@
 #include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/DataTypes/ArrayDataType.hpp>
 #include <QueryCompiler/DataTypes/BasicDataType.hpp>
+#include <Util/Logger.hpp>
+
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/export.hpp>
+BOOST_CLASS_EXPORT(NES::ArrayDataType);
 
 namespace NES {
 
 ArrayDataType::ArrayDataType(DataTypePtr ptr, u_int32_t dimension)
-    : DataType(), _dataType(ptr), _dimensions(dimension) {}
+    : DataType(), _dataType(ptr), _dimensions(dimension)
+{
+}
 
 ArrayDataType::~ArrayDataType() {}
 

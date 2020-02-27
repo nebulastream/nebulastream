@@ -49,6 +49,4 @@ class ArrayValueType : public ValueType {
 
 }
 
-
-
 #endif //INCLUDE_ARRAYVALUETYPE_HPP_

@@ -22,6 +22,10 @@ DataType::~DataType() {}
 
 } // namespace NES
 
-//BOOST_CLASS_EXPORT(NES::PointerDataType);
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/export.hpp>
+#include <boost/serialization/access.hpp>
+BOOST_CLASS_EXPORT(NES::DataType);
 //BOOST_CLASS_EXPORT(NES::ArrayDataType);
 //BOOST_CLASS_EXPORT(NES::ArrayValueType);

@@ -87,7 +87,7 @@ void createQueryString() {
   code << "Schema schema = Schema::create().addField(\"test\",INT32);"
        << std::endl;
   code << "Stream testStream = Stream(\"test-stream\",schema);" << std::endl;
-  code << "return InputQuery::from(testStream).filter(testStream[\"test\"]==5)"
+  code << "InputQuery::from(default_stream).map(default_stream[\"value\"],2).filter(default_stream[\"test\"]==5)"
        << std::endl << "" << std::endl << ";" << std::endl;
 
   InputQueryPtr inputQuery = UtilityFunctions::createQueryFromCodeString(
