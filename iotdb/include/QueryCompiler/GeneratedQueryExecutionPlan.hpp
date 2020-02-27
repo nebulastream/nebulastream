@@ -1,15 +1,11 @@
 #ifndef INCLUDE_GENERATEDQUERYEXECUTIONPLAN_H_
 #define INCLUDE_GENERATEDQUERYEXECUTIONPLAN_H_
 
+#include <API/InputQuery.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <QueryCompiler/PipelineStage.hpp>
-#include <API/InputQuery.hpp>
-
 #include <NodeEngine/BufferManager.hpp>
-#include <boost/serialization/export.hpp>
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <stdint.h>
+
 namespace NES {
 
 class GeneratedQueryExecutionPlan : public QueryExecutionPlan {
@@ -24,7 +20,7 @@ class GeneratedQueryExecutionPlan : public QueryExecutionPlan {
  * @param query
  * @param ptr
  */
-  bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr inputBuffer) override;
+  bool executeStage(uint32_t pipelineStageId, const TupleBufferPtr inputBuffer) override;
 };
 
 typedef std::shared_ptr<GeneratedQueryExecutionPlan> GeneratedQueryExecutionPlanPtr;
