@@ -25,7 +25,7 @@ StreamCatalog::StreamCatalog() {
         "features_properties_capacity", BasicType::UINT64).addField(
         "features_properties_efficiency", BasicType::FLOAT32).addField(
         "features_properties_mag", BasicType::FLOAT32).addField(
-        "features_properties_time", BasicType::FLOAT32).addField(
+        "features_properties_time", BasicType::UINT64).addField(
         "features_properties_updated", BasicType::UINT64).addField(
         "features_properties_type", createArrayDataType(BasicType::CHAR, 50))
         .addField("features_geometry_type",
@@ -270,7 +270,7 @@ void StreamCatalog::reset() {
         "features_properties_capacity", BasicType::UINT64).addField(
         "features_properties_efficiency", BasicType::FLOAT32).addField(
         "features_properties_mag", BasicType::FLOAT32).addField(
-        "features_properties_time", BasicType::FLOAT32).addField(
+        "features_properties_time", BasicType::UINT64).addField(
         "features_properties_updated", BasicType::UINT64).addField(
         "features_properties_type", createArrayDataType(BasicType::CHAR, 50))
         .addField("features_geometry_type",

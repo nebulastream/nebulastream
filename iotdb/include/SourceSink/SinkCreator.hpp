@@ -42,6 +42,17 @@ const DataSinkPtr createBinaryFileSinkWithoutSchema(const std::string& filePath)
 const DataSinkPtr createBinaryFileSinkWithSchema(const Schema& schema,
                                                  const std::string& filePath);
 
+
+/**
+ * @brief create a csv test sink with a schema
+ * @param schema of sink
+ * @param path to file
+ * @return a data sink pointer
+ */
+const DataSinkPtr createCSVFileSinkWithSchema(const Schema& schema,
+                                                 const std::string& filePath);
+
+
 /**
  * @brief create a ZMQ test sink with a schema
  * @param schema of sink
