@@ -13,6 +13,8 @@
 
 namespace NES {
 
+enum FileOutPutType { BINARY_TYPE, CSV_TYPE };
+
 /**
  * @brief this class implements the File output sink
  */
@@ -41,7 +43,7 @@ class FileOutputSink : public DataSink {
      * @param schema of the print sink
      * @param filePath location of file on sink server
      */
-    FileOutputSink(const Schema& schema, std::string filePath);
+    FileOutputSink(const Schema& schema, std::string filePath, FileOutPutType type);
 
     /**
      * @brief method to override virtual setup function
@@ -73,10 +75,12 @@ class FileOutputSink : public DataSink {
   private:
     std::string filePath;
     friend class boost::serialization::access;
+    FileOutPutType outputType;
 
     template<class Archive>
     void serialize(Archive& ar, unsigned) {
         ar & filePath;
+        ar & outputType;
         ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataSink);
     }
 };
