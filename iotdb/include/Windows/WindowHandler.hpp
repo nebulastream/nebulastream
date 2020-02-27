@@ -1,18 +1,17 @@
 #ifndef INCLUDE_WINDOWS_WINDOW_HPP_
 #define INCLUDE_WINDOWS_WINDOW_HPP_
 
-
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/shared_ptr.hpp>
-#include <boost/serialization/vector.hpp>
-#include <API/Window/WindowDefinition.hpp>
-
-
 #include <thread>
 #include <QueryLib/WindowManagerLib.hpp>
+#include <API/Window/WindowDefinition.hpp>
 #include <NodeEngine/BufferManager.hpp>
 
 namespace NES {
+class WindowHandler;
+typedef std::shared_ptr<WindowHandler> WindowHandlerPtr;
+
+class QueryExecutionPlan;
+typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 
 /**
  * @brief This represents a window during query execution.
@@ -26,7 +25,7 @@ class WindowHandler {
   /**
    * @brief Initialises the state of this window depending on the window definition.
    */
-  void setup();
+  void setup(QueryExecutionPlanPtr queryExecutionPlanPtr, uint32_t pipelineStageId);
 
   /**
    * @brief Starts thread to check if the window should be triggered.
@@ -70,22 +69,18 @@ class WindowHandler {
   void serialize(Archive &ar, const unsigned int version) {}
 
  private:
-  friend class boost::serialization::access;
   bool running;
   WindowDefinitionPtr window_definition_ptr;
   WindowManagerPtr window_manager_ptr;
   void *window_state;
   std::thread thread;
+  uint32_t pipelineStageId;
+  QueryExecutionPlanPtr queryExecutionPlanPtr;
 };
 
-typedef std::shared_ptr<WindowHandler> WindowPtr;
-
 //just for test compability
-const WindowPtr createTestWindow(size_t campainCnt, size_t windowSizeInSec);
+const WindowHandlerPtr createTestWindow(size_t campainCnt, size_t windowSizeInSec);
+const WindowHandlerPtr createWindowHandler(WindowDefinitionPtr windowDefinition);
 
 } // namespace NES
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/export.hpp>
-BOOST_CLASS_EXPORT_KEY(NES::WindowHandler)
 #endif /* INCLUDE_WINDOWS_WINDOW_HPP_ */

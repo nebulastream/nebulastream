@@ -15,21 +15,26 @@ QueryCompilerPtr QueryCompiler::create() {
 }
 
 QueryExecutionPlanPtr QueryCompiler::compile(OperatorPtr queryPlan) {
+
   auto codeGenerator = createCodeGenerator();
   auto context = createPipelineContext();
   // Parse operators
   queryPlan->produce(codeGenerator, context, std::cout);
-  auto pipelineStages = std::vector<PipelineStagePtr>();
-  compilePipelineStages(pipelineStages, codeGenerator, context);
-
-  QueryExecutionPlanPtr qep(new GeneratedQueryExecutionPlan(pipelineStages));
+  QueryExecutionPlanPtr qep = std::make_shared<QueryExecutionPlan>();
+  compilePipelineStages(qep, codeGenerator, context);
   return qep;
 }
 
-void QueryCompiler::compilePipelineStages(std::vector<PipelineStagePtr> pipelineStages, CodeGeneratorPtr codeGenerator, PipelineContextPtr context) {
-  pipelineStages.push_back(codeGenerator->compile(CompilerArgs(), context->code));
+void QueryCompiler::compilePipelineStages(QueryExecutionPlanPtr queryExecutionPlan, CodeGeneratorPtr codeGenerator, PipelineContextPtr context) {
+  auto executablePipeline = codeGenerator->compile(CompilerArgs(), context->code);
+  if(context->hasWindow()){
+    auto windowHandler = createWindowHandler(context->getWindow());
+    queryExecutionPlan->addPipelineStage(createPipelineStage(queryExecutionPlan->numberOfPipelineStages(), queryExecutionPlan, executablePipeline, windowHandler));
+  }else{
+    queryExecutionPlan->addPipelineStage(createPipelineStage(queryExecutionPlan->numberOfPipelineStages(), queryExecutionPlan, executablePipeline));
+  }
   if(context->hasNextPipeline()){
-    this->compilePipelineStages(pipelineStages, codeGenerator, context->getNextPipeline());
+    this->compilePipelineStages(queryExecutionPlan, codeGenerator, context->getNextPipeline());
   }
 }
 

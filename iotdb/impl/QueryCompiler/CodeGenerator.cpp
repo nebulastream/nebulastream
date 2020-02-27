@@ -4,7 +4,7 @@
 
 #include <API/Schema.hpp>
 #include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/CodeCompiler.hpp>
+#include <QueryCompiler/Compiler/Compiler.hpp>
 #include <QueryCompiler/CCodeGenerator/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
@@ -15,6 +15,7 @@
 #include <API/Types/DataTypes.hpp>
 #include <SourceSink/DataSink.hpp>
 #include <Util/Logger.hpp>
+#include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
 
 namespace NES {
 
@@ -69,7 +70,7 @@ class CCodeGenerator : public CodeGenerator {
   virtual bool generateCode(const WindowDefinitionPtr &window,
                             const PipelineContextPtr &context,
                             std::ostream &out) override;
-  PipelineStagePtr compile(const CompilerArgs &, const GeneratedCodePtr &code) override;
+  ExecutablePipelinePtr compile(const CompilerArgs &, const GeneratedCodePtr &code) override;
   ~CCodeGenerator() override;
 };
 
@@ -222,7 +223,7 @@ bool CCodeGenerator::generateCode(const Schema &schema, const PipelineContextPtr
   /* === declarations === */
 
   VariableDeclaration var_decl_tuple_buffers = VariableDeclaration::create(
-      createPointerDataType(createPointerDataType(createUserDefinedType(struct_decl_tuple_buffer))),
+      createPointerDataType(createUserDefinedType(struct_decl_tuple_buffer)),
       "input_buffer");
   VariableDeclaration var_decl_tuple_buffer_output = VariableDeclaration::create(
       createPointerDataType(createUserDefinedType(struct_decl_tuple_buffer)), "output_tuple_buffer");
@@ -276,7 +277,7 @@ bool CCodeGenerator::generateCode(const Schema &schema, const PipelineContextPtr
   /* tuple_buffer_1 = window_buffer[0]; */
   context->code->variable_init_stmts.push_back(
       VarRefStatement(var_decl_tuple_buffer_1)
-          .assign(VarRefStatement(var_decl_tuple_buffers)[ConstantExprStatement(INT32, "0")])
+          .assign(VarRefStatement(var_decl_tuple_buffers))
           .copy());
   /*  tuples = (Tuple *)tuple_buffer_1->data;*/
   context->code->variable_init_stmts.push_back(
@@ -522,7 +523,7 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr &window,
   return true;
 }
 
-PipelineStagePtr CCodeGenerator::compile(const CompilerArgs &, const GeneratedCodePtr &code) {
+ExecutablePipelinePtr CCodeGenerator::compile(const CompilerArgs &, const GeneratedCodePtr &code) {
 
   /* function signature:
    * typedef uint32_t (*SharedCLibPipelineQueryPtr)(TupleBuffer**, WindowState*, TupleBuffer*);
@@ -565,10 +566,9 @@ PipelineStagePtr CCodeGenerator::compile(const CompilerArgs &, const GeneratedCo
   }
 
   CodeFile file = file_builder.addDeclaration(func_builder.build()).build();
-
-  PipelineStagePtr stage;
-  stage = NES::compile(file);
-  return stage;
+  Compiler compiler;
+  CompiledCodePtr compiled_code = compiler.compile(file.code);
+  return createCompiledExecutablePipeline(compiled_code);
 }
 
 CCodeGenerator::~CCodeGenerator() {}

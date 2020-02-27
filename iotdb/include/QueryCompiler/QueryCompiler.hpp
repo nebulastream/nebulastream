@@ -44,7 +44,7 @@ class QueryCompiler {
   QueryExecutionPlanPtr compile(OperatorPtr queryPlan);
 
  private:
-  void compilePipelineStages(std::vector<PipelineStagePtr> pipelineStages, CodeGeneratorPtr codeGenerator, PipelineContextPtr context);
+  void compilePipelineStages(QueryExecutionPlanPtr queryExecutionPlan, CodeGeneratorPtr codeGenerator, PipelineContextPtr context);
   QueryCompiler();
 };
 

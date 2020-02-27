@@ -6,7 +6,7 @@
 #include <API/Schema.hpp>
 #include <API/Window/WindowDefinition.hpp>
 #include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
-#include <QueryCompiler/CCodeGenerator/CodeCompiler.hpp>
+#include <QueryCompiler/Compiler/Compiler.hpp>
 #include <QueryCompiler/CCodeGenerator/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
@@ -26,6 +26,9 @@ typedef std::shared_ptr<CodeGenerator> CodeGeneratorPtr;
 
 class PipelineStage;
 typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
+
+class ExecutablePipeline;
+typedef std::shared_ptr<ExecutablePipeline> ExecutablePipelinePtr;
 
 // class Operator;
 typedef std::shared_ptr<Operator> OperatorPtr;
@@ -51,7 +54,7 @@ class CodeGenerator {
                             std::ostream &out) = 0;
   virtual bool generateCode(const DataSinkPtr &sink, const PipelineContextPtr &context, std::ostream &out) = 0;
   virtual bool generateCode(const WindowDefinitionPtr &window, const PipelineContextPtr &context, std::ostream &out) = 0;
-  virtual PipelineStagePtr compile(const CompilerArgs &, const GeneratedCodePtr &code) = 0;
+  virtual ExecutablePipelinePtr compile(const CompilerArgs &, const GeneratedCodePtr &code) = 0;
   virtual ~CodeGenerator();
 
   CodeGenArgs args_;

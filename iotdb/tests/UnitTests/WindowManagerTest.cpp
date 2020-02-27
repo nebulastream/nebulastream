@@ -110,7 +110,7 @@ TEST_F(WindowManagerTest, window_trigger) {
   auto windowDef = std::make_shared<WindowDefinition>(WindowDefinition(aggregation, TumblingWindow::of(Milliseconds(10))));
 
   auto w = WindowHandler(windowDef);
-  w.setup();
+  w.setup(nullptr, 0);
 
   auto windowState = (StateVariable<int64_t, WindowSliceStore<int64_t>*>*) w.getWindowState();
   auto  keyRef = windowState->get(10);
