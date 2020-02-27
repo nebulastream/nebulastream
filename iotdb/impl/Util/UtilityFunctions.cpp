@@ -62,6 +62,10 @@ InputQueryPtr UtilityFunctions::createQueryFromCodeString(
       boost::replace_all(newQuery, "filter(" + streamName,
                          "filter((*sPtr.get())");
 
+        //replace the stream "xyz" provided by the user with the variable name of the generated stream for the access inside the filter predicate
+        boost::replace_all(newQuery, "map(" + streamName,
+                           "map((*sPtr.get())");
+
       // add return statement in front of input query
       // NOTE: This will not work if you have created object of Input query and do further manipulation
       boost::replace_all(newQuery, "InputQuery::from", "return InputQuery::from");
