@@ -28,7 +28,6 @@ class ZmqSink : public DataSink {
   friend class boost::serialization::access;
   template <class Archive> void serialize(Archive& ar, const unsigned int version)
   {
-    std::cout << " Serialize ZmqSink" << std::endl;
     ar& boost::serialization::base_object<DataSink>(*this);
     ar& host;
     ar& port;

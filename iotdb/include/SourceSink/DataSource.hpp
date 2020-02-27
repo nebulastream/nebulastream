@@ -149,7 +149,6 @@ class DataSource {
 
     template<class Archive>
     void serialize(Archive& ar, const unsigned int version) {
-      std::cout << " Serialize DataSource" << std::endl;
         ar & numBuffersToProcess;
         ar & gatheringInterval;
         ar & schema;
