@@ -48,7 +48,7 @@ bool FileOutputSink::writeData(const TupleBufferPtr input_buffer) {
     outputFile.close();
   } else if (outputType == CSV_TYPE) {
     std::ofstream outputFile;
-    outputFile.open(filePath);
+    outputFile.open(filePath, std::ofstream::out | std::ofstream::app);
     for (size_t i = 0; i < input_buffer->getNumberOfTuples(); i++) {
 
       size_t offset = 0;
