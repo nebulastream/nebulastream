@@ -1,7 +1,5 @@
 #!/bin/bash
 
-sleep 1h
-
 [[ ! -f /iotdb/CMakeLists.txt ]] && echo "Please mount source code at /iotdb point. Run [docker run -v <path-to-iotdb>:/iotdb -d <iotdb-image>]" && exit 1
 
 if [ $# -eq 0 ]
