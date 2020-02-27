@@ -146,9 +146,9 @@ TEST_F(InternalDataTransmissionTest, testInputGate) {
         memcpy(headerMessage1.data(), serPH1.data(), serPH1.size());
         socket.send(headerMessage1, ZMQ_SNDMORE);
 
-        zmq::message_t message_data1(testDataSize1);
-        memcpy(message_data1.data(), testData1.data(), testDataSize1);
-        socket.send(message_data1);
+        zmq::message_t messageData1(testDataSize1);
+        memcpy(messageData1.data(), testData1.data(), testDataSize1);
+        socket.send(messageData1);
 
         // Send data from here with a different PacketHeader
         PacketHeader pH2(testData2.size(), testDataSize2, "testId2");
@@ -158,9 +158,9 @@ TEST_F(InternalDataTransmissionTest, testInputGate) {
         memcpy(headerMessage2.data(), serPH2.data(), serPH2.size());
         socket.send(headerMessage2, ZMQ_SNDMORE);
 
-        zmq::message_t message_data2(testDataSize2);
-        memcpy(message_data2.data(), testData2.data(), testDataSize2);
-        socket.send(message_data2);
+        zmq::message_t messageData2(testDataSize2);
+        memcpy(messageData2.data(), testData2.data(), testDataSize2);
+        socket.send(messageData2);
     }
     inputGateThread.join();
 }
