@@ -22,6 +22,9 @@ class BasicDataType : public DataType {
   const bool isArrayDataType() const override;
 
   const bool isCharDataType() const override;
+
+  BasicType getType();
+
   uint32_t getSizeBytes() const override;
 
   uint32_t getFixSizeBytes() const;

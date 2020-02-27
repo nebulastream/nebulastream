@@ -133,6 +133,11 @@ const CodeExpressionPtr BasicDataType::getCode() const {
   return nullptr;
 }
 
+BasicType BasicDataType::getType()
+{
+  return type;
+}
+
 const CodeExpressionPtr BasicDataType::getTypeDefinitionCode() const {
   return std::make_shared<CodeExpression>("");
 }

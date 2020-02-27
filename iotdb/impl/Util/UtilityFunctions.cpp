@@ -48,7 +48,7 @@ InputQueryPtr UtilityFunctions::createQueryFromCodeString(
       code
           << "StreamPtr sPtr = StreamCatalog::instance().getStreamForLogicalStreamOrThrowException(\""
           << streamName << "\");";
-  //    code << "Stream& stream = *sPtr.get();" << std::endl;
+      //code << "Stream& stream = *sPtr.get();" << std::endl;
       std::string newQuery = query_code_snippet;
 
       //replace the stream "xyz" provided by the user with the reference to the generated stream for the from clause
@@ -61,6 +61,10 @@ InputQueryPtr UtilityFunctions::createQueryFromCodeString(
       //replace the stream "xyz" provided by the user with the variable name of the generated stream for the access inside the filter predicate
       boost::replace_all(newQuery, "filter(" + streamName,
                          "filter((*sPtr.get())");
+
+        //replace the stream "xyz" provided by the user with the variable name of the generated stream for the access inside the filter predicate
+        boost::replace_all(newQuery, "map(" + streamName,
+                           "map((*sPtr.get())");
 
       // add return statement in front of input query
       // NOTE: This will not work if you have created object of Input query and do further manipulation
@@ -86,7 +90,6 @@ InputQueryPtr UtilityFunctions::createQueryFromCodeString(
       /* call loaded function to create query object */
       InputQuery query((*func)());
       return std::make_shared<InputQuery>(query);
-
     } catch (...) {
       NES_ERROR(
           "UtilityFunctions: Failed to create the query from input code string: " << query_code_snippet);

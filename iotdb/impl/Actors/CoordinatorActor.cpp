@@ -307,7 +307,10 @@ void CoordinatorActor::deployQuery(const string &queryId) {
   map<NESTopologyEntryPtr, ExecutableTransferObject> deployments =
       coordinatorServicePtr->prepareExecutableTransferObject(queryId);
 
+  NES_DEBUG("CoordinatorActor::deployQuery deploy " << deployments.size() << " objects")
+
   for (auto const &x : deployments) {
+    NES_DEBUG("CoordinatorActor::deployQuery serialize " << x.first)
     strong_actor_ptr sap = this->state.topologyActorMap.at(x.first);
     auto hdl = actor_cast<actor>(sap);
     string s_eto = SerializationTools::ser_eto(x.second);
