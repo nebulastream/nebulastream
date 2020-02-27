@@ -9,6 +9,8 @@
 #include <SourceSink/DefaultSource.hpp>
 #include <Util/UtilityFunctions.hpp>
 #include <Network/InputGate.hpp>
+#include <Network/PacketHeader.hpp>
+#include <Util/SerializationTools.hpp>
 
 using namespace NES;
 using namespace std;
@@ -77,51 +79,88 @@ TEST_F(InternalDataTransmissionTest, testInternalTransmission) {
 }
 
 TEST_F(InternalDataTransmissionTest, testInputGate) {
-    // the thread for the InputGate to receive data
+    // create InputGate to receive data
     InputGate inputGate("*", 0);
     inputGate.setup();
-
     NES_INFO( "InputGate published with host:" << inputGate.getHost() << " port:" << inputGate.getPort())
 
-    /**
-    // Start thread for receiving the data.
-    bool receivingFinished = false;
-    auto inputGateThread = std::thread([&]() {
-      // Receive data.
-      tuple<std::string, TupleBufferPtr> rec = inputGate.receiveData();
-      std::string sourceId = std::get<0>(rec);
-      TupleBufferPtr buffer = std::get<1>(rec);
-
-      // Test received data.
-      size_t sum = 0;
-      uint32_t* tuple = (uint32_t*)buffer->getBuffer();
-      for (size_t i = 0; i != 8; ++i) {
-          sum += *(tuple++);
-      }
-      size_t expected = 400;
-      EXPECT_EQ(sum, expected);
-
-      BufferManager::instance().releaseBuffer(buffer);
-      receivingFinished = true;
-    });
-    size_t tupCnt = 8;
-
     // Open Publisher
-    auto address = std::string("tcp://") + host + std::string(":") + std::to_string(port);
+    auto address = std::string("tcp://") + inputGate.getHost() + std::string(":") + std::to_string(inputGate.getPort());
     zmq::context_t context(1);
     zmq::socket_t socket(context, ZMQ_PUSH);
     socket.connect(address);
 
-    while (!receivingFinished) {
-        // Send data from here.
-        zmq::message_t message_tupleCnt(8);
-        memcpy(message_tupleCnt.data(), &tupCnt, 8);
-        socket.send(message_tupleCnt, ZMQ_SNDMORE);
 
-        zmq::message_t message_data(test_data_size);
-        memcpy(message_data.data(), test_data.data(), test_data_size);
-        socket.send(message_data);
+    // thread for receiving the data.
+    bool receivingFinished = false;
+    auto inputGateThread = std::thread([&]() {
+      // Receive data1
+      tuple<std::string, TupleBufferPtr> rec1 = inputGate.receiveData();
+      std::string sourceId1 = std::get<0>(rec1);
+      TupleBufferPtr buffer1 = std::get<1>(rec1);
+
+      // Test received data.
+      size_t sum1 = 0;
+      uint32_t* tuple1 = (uint32_t*)buffer1->getBuffer();
+      for (size_t i = 0; i != 8; ++i) {
+          sum1 += *(tuple1++);
+      }
+      size_t expected1 = 400;
+      EXPECT_EQ(sourceId1, "testId1");
+      EXPECT_EQ(sum1, expected1);
+
+      BufferManager::instance().releaseBuffer(buffer1);
+
+      // Receive data2
+      tuple<std::string, TupleBufferPtr> rec2 = inputGate.receiveData();
+      std::string sourceId2 = std::get<0>(rec2);
+      TupleBufferPtr buffer2 = std::get<1>(rec2);
+
+      // Test received data.
+      size_t sum2 = 0;
+      uint32_t* tuple2 = (uint32_t*)buffer2->getBuffer();
+      for (size_t i = 0; i != 8; ++i) {
+          sum2 += *(tuple2++);
+      }
+      size_t expected2 = 300;
+      EXPECT_EQ(sourceId2, "testId2");
+      EXPECT_EQ(sum2, expected2);
+
+      BufferManager::instance().releaseBuffer(buffer2);
+
+      receivingFinished = true;
+    });
+
+    std::array<uint32_t, 8> testData1 = {{0, 100, 1, 99, 2, 98, 3, 97}};
+    size_t testDataSize1 = testData1.size() * sizeof(uint32_t);
+
+    std::array<uint32_t, 8> testData2 = {{0, 100, 1, 99, 2, 98}};
+    size_t testDataSize2 = testData2.size() * sizeof(uint32_t);
+
+    while (!receivingFinished) {
+        // Send data from here with one version of a packet header
+        PacketHeader pH1(testData1.size(), testDataSize1, "testId1");
+        std::string serPH1 = SerializationTools::serPacketHeader(pH1);
+
+        zmq::message_t headerMessage1(serPH1.size());
+        memcpy(headerMessage1.data(), serPH1.data(), serPH1.size());
+        socket.send(headerMessage1, ZMQ_SNDMORE);
+
+        zmq::message_t message_data1(testDataSize1);
+        memcpy(message_data1.data(), testData1.data(), testDataSize1);
+        socket.send(message_data1);
+
+        // Send data from here with a different PacketHeader
+        PacketHeader pH2(testData2.size(), testDataSize2, "testId2");
+        std::string serPH2 = SerializationTools::serPacketHeader(pH2);
+
+        zmq::message_t headerMessage2(serPH2.size());
+        memcpy(headerMessage2.data(), serPH2.data(), serPH2.size());
+        socket.send(headerMessage2, ZMQ_SNDMORE);
+
+        zmq::message_t message_data2(testDataSize2);
+        memcpy(message_data2.data(), testData2.data(), testDataSize2);
+        socket.send(message_data2);
     }
-    receiving_thread.join();
-     **/
+    inputGateThread.join();
 }

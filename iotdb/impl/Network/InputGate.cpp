@@ -20,13 +20,15 @@ InputGate::InputGate(std::string host, const uint16_t port) : host(std::move(hos
 std::tuple<std::string, TupleBufferPtr> InputGate::receiveData() {
     try {
         // Receive new chunk of data
+        NES_DEBUG("InputGate: Waiting to receive packet..")
+
         zmq::message_t envelope;
         socket.recv(&envelope);
 
-        std::string serPacketHeader = *((std::string*) envelope.data());
+        std::string serPacketHeader = std::string(static_cast<char*>(envelope.data()), envelope.size());
         PacketHeader pH = SerializationTools::parsePacketHeader(serPacketHeader);
 
-        NES_DEBUG("ZMQSource received packet for source " << pH.getSourceId())
+        NES_DEBUG("InputGate: Received packet from source " << pH.getSourceId())
         zmq::message_t tupleData;
         socket.recv(&tupleData);
         TupleBufferPtr buffer = BufferManager::instance().getBuffer();
