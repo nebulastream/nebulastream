@@ -1,9 +1,14 @@
 #include <iostream>
 #include <stdexcept>
 #include <sstream>
-#include "API/Schema.hpp"
 
-using namespace NES;
+
+#include <boost/archive/text_iarchive.hpp>
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/serialization/export.hpp>
+#include <API/Schema.hpp>
+
+namespace NES {
 
 Schema::Schema() {
 }
@@ -88,3 +93,5 @@ const std::string Schema::toString() const {
   ss << std::endl;
   return ss.str();
 }
+}
+

@@ -215,6 +215,18 @@ InputQuery& InputQuery::writeToFile(const std::string &file_name) {
   return *this;
 }
 
+// output operators
+InputQuery& InputQuery::writeToCSVFile(const std::string &file_name) {
+  OperatorPtr op = createSinkOperator(
+      createCSVFileSinkWithSchema(this->sourceStream->getSchema(),
+                                     file_name));
+  int operatorId = this->getNextOperatorId();
+  op->setOperatorId(operatorId);
+  addChild(op, root);
+  root = op;
+  return *this;
+}
+
 InputQuery& InputQuery::writeToZmq(const std::string &logicalStreamName,
                                    const std::string &host,
                                    const uint16_t &port) {

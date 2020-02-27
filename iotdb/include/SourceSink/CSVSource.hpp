@@ -51,7 +51,7 @@ class CSVSource : public DataSource {
   std::string filePath;
   size_t tupleSize;
   std::string delimiter;
-
+  size_t currentPosInFile;
   /**
    * @brief method for serialization, all listed variable below are added to the
    * serialization/deserialization process
@@ -61,7 +61,6 @@ class CSVSource : public DataSource {
                                          const unsigned int version) {
     ar & boost::serialization::base_object<DataSource>(*this);
     ar & filePath;
-//    ar & file_size;
     ar & tupleSize;
     ar & delimiter;
     ar & generatedTuples;

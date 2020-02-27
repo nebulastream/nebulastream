@@ -76,7 +76,7 @@ TEST_F(StreamCatalogTest, add_get_log_stream_test) {
   map<std::string, SchemaPtr> allLogicalStream = StreamCatalog::instance().getAllLogicalStream();
   string exp =
       "id:UINT32value:UINT64\n";
-  EXPECT_EQ(allLogicalStream.size(), 2);
+  EXPECT_EQ(allLogicalStream.size(), 3);
 
   SchemaPtr testSchema = allLogicalStream["test_stream"];
   EXPECT_EQ("\n", testSchema->toString());
