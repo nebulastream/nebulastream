@@ -199,7 +199,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_existing_log_stream_remote_test) {
   map<std::string, SchemaPtr> allLogicalStream = StreamCatalog::instance()
       .getAllLogicalStream();
   string exp = "id:UINT32value:UINT64\n";
-  EXPECT_EQ(1, allLogicalStream.size());
+  EXPECT_EQ(allLogicalStream.size(), 2);
 
 
   SchemaPtr defaultSchema = allLogicalStream["default_logical"];
