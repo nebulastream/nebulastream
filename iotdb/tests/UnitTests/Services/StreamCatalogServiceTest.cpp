@@ -63,9 +63,10 @@ class StreamCatalogServiceTest : public testing::Test {
 TEST_F(StreamCatalogServiceTest, get_all_logical_stream) {
     StreamCatalogServicePtr streamCatalogServicePtr = StreamCatalogService::getInstance();
     const map<std::string, std::string>& allLogicalStream = streamCatalogServicePtr->getAllLogicalStreamAsString();
-    EXPECT_EQ(allLogicalStream.size(), 1);
+    EXPECT_EQ(allLogicalStream.size(), 2);
     for (auto const[key, value] : allLogicalStream) {
-        EXPECT_EQ(key, defaultLogicalStreamName);
+      bool cmp = key != defaultLogicalStreamName && key != "exdra";
+      EXPECT_EQ(cmp, false);
     }
 }
 
@@ -73,7 +74,7 @@ TEST_F(StreamCatalogServiceTest, add_logical_stream) {
     StreamCatalogServicePtr streamCatalogServicePtr = StreamCatalogService::getInstance();
     streamCatalogServicePtr->addNewLogicalStream("test", testSchema);
     const map<std::string, std::string>& allLogicalStream = streamCatalogServicePtr->getAllLogicalStreamAsString();
-    EXPECT_EQ(allLogicalStream.size(), 2);
+    EXPECT_EQ(allLogicalStream.size(), 3);
 }
 
 TEST_F(StreamCatalogServiceTest, get_physicalStream_for_logical_stream) {
