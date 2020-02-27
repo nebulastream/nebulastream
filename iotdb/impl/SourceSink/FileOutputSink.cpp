@@ -38,7 +38,8 @@ FileOutputSink::FileOutputSink(const Schema &schema, const std::string filePath,
 
 bool FileOutputSink::writeData(const TupleBufferPtr input_buffer) {
 
-  NES_DEBUG("FileOutputSink::writeData: write bufffer tuples " << input_buffer->getNumberOfTuples())
+  NES_DEBUG(
+      "FileOutputSink::writeData: write bufffer tuples " << input_buffer->getNumberOfTuples())
 
   if (outputType == BINARY_TYPE) {
     std::fstream outputFile(
@@ -47,7 +48,7 @@ bool FileOutputSink::writeData(const TupleBufferPtr input_buffer) {
     outputFile.close();
   } else if (outputType == CSV_TYPE) {
     std::ofstream outputFile;
-    outputFile.open (filePath);
+    outputFile.open(filePath);
     for (size_t i = 0; i < input_buffer->getNumberOfTuples(); i++) {
 
       size_t offset = 0;
@@ -56,14 +57,18 @@ bool FileOutputSink::writeData(const TupleBufferPtr input_buffer) {
         auto field = schema[j];
         size_t fieldSize = field->getFieldSize();
         DataTypePtr ptr = field->getDataType();
-        std::string str = ptr->convertRawToString(input_buffer->getBuffer() + offset + i * schema.getSchemaSize());
-        NES_DEBUG("FileOutputSink::writeData: str=" << str << " i=" << i << " j=" << j << " fieldSize=" << fieldSize << " offset=" << offset);
-        outputFile << str.c_str() << ",";
+        std::string str = ptr->convertRawToString(
+            input_buffer->getBuffer() + offset + i * schema.getSchemaSize());
+//        NES_DEBUG(
+//            "FileOutputSink::writeData: str=" << str << " i=" << i << " j=" << j << " fieldSize=" << fieldSize << " offset=" << offset);
+        outputFile << str.c_str();
+        if (j < schema.getSize() - 1) {
+          outputFile << ",";
+        }
         offset += fieldSize;
       }
-      outputFile << "\n";
+      outputFile << std::endl;
     }
-
   }
 
   return true;

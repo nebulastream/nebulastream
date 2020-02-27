@@ -29,7 +29,8 @@ CSVSource::CSVSource(const Schema &schema, const std::string &_file_path,
   this->numBuffersToProcess = numBuffersToProcess;
   this->gatheringInterval = frequency;
   tupleSize = schema.getSchemaSize();
-  NES_DEBUG("CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval << " numBuff=" << this->numBuffersToProcess)
+  NES_DEBUG(
+      "CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval << " numBuff=" << this->numBuffersToProcess)
 }
 
 TupleBufferPtr CSVSource::receiveData() {
@@ -44,8 +45,8 @@ TupleBufferPtr CSVSource::receiveData() {
 const std::string CSVSource::toString() const {
   std::stringstream ss;
   ss << "CSV_SOURCE(SCHEMA(" << schema.toString() << "), FILE=" << filePath
-      << " freq=" << this->gatheringInterval << " numBuff=" << this->numBuffersToProcess
-     << ")";
+     << " freq=" << this->gatheringInterval << " numBuff="
+     << this->numBuffersToProcess << ")";
   return ss.str();
 }
 
@@ -78,8 +79,13 @@ void CSVSource::fillBuffer(TupleBufferPtr buf) {
       auto field = schema[j];
       size_t fieldSize = field->getFieldSize();
 
+      //TODO: add all other data types here
       if (field->getDataType()->toString() == "UINT64") {
-        size_t val = strtoul_l(tokens[j].c_str());
+        size_t val = std::stoull(tokens[j].c_str());
+        memcpy((char*) buf->getBuffer() + offset + i * tupleSize, &val,
+               fieldSize);
+      } else if (field->getDataType()->toString() == "FLOAT32") {
+        float val = std::stof(tokens[j].c_str());
         memcpy((char*) buf->getBuffer() + offset + i * tupleSize, &val,
                fieldSize);
       } else {
@@ -92,7 +98,8 @@ void CSVSource::fillBuffer(TupleBufferPtr buf) {
     i++;
   }
 
-  NES_DEBUG("CSVSource::fillBuffer: readin finished read " << generated_tuples_this_pass << " tuples")
+  NES_DEBUG(
+      "CSVSource::fillBuffer: readin finished read " << generated_tuples_this_pass << " tuples")
   generatedTuples += generated_tuples_this_pass;
   buf->setNumberOfTuples(generated_tuples_this_pass);
   generatedBuffers++;
