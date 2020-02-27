@@ -1,4 +1,4 @@
-#include "../../include/SourceSink/ZmqSink.hpp"
+#include <SourceSink/ZmqSink.hpp>
 
 #include <cassert>
 #include <cstdint>
