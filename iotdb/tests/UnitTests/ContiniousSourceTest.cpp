@@ -98,7 +98,6 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintForEx
   bool retStopCord = crd->stopCoordinator();
   EXPECT_TRUE(retStopCord);
 }
-#if 0
 
 TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
   cout << "start coordinator" << endl;
@@ -926,5 +925,4 @@ TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromCSVSourceWrite
   bool retStopCord = crd->stopCoordinator();
   EXPECT_TRUE(retStopCord);
 }
-#endif
 }
