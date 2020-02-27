@@ -1,79 +1,87 @@
 #include <QueryCompiler/QueryExecutionPlan.hpp>
-#include <assert.h>
 #include <iostream>
 #include <Util/Logger.hpp>
+#include <utility>
 
 namespace NES {
 
 QueryExecutionPlan::QueryExecutionPlan() : sources(), stages() {
 }
 
-QueryExecutionPlan::QueryExecutionPlan(const std::vector<DataSourcePtr>& _sources,
-                                       const std::vector<PipelineStagePtr>& _stages,
-                                       const std::map<DataSource*, uint32_t>& _source_to_stage,
-                                       const std::map<uint32_t, uint32_t>& _stage_to_dest)
-    : sources(_sources), stages(_stages), sourceToStage(_source_to_stage), stageToDest(_stage_to_dest)
-{
+QueryExecutionPlan::QueryExecutionPlan(std::vector<DataSourcePtr> sources,
+                                       std::vector<PipelineStagePtr> stages,
+                                       std::map<DataSource *, uint32_t> sourceToStage,
+                                       std::map<uint32_t, uint32_t> stageToDest)
+    : sources(std::move(sources)), stages(std::move(stages)), sourceToStage(std::move(sourceToStage)), stageToDest(std::move(stageToDest)) {
 }
 
-QueryExecutionPlan::~QueryExecutionPlan()
-{
-    NES_DEBUG("destroy qep")
-    sources.clear();
-    stages.clear();
-    sourceToStage.clear();
-    stageToDest.clear();
+QueryExecutionPlan::~QueryExecutionPlan() {
+  NES_DEBUG("destroy qep")
+  sources.clear();
+  stages.clear();
+  sourceToStage.clear();
+  stageToDest.clear();
 }
 
-void QueryExecutionPlan::stop(){
-  for(auto &stage: stages){
+void QueryExecutionPlan::stop() {
+  for (auto &stage: stages) {
     stage->stop();
   }
 }
 
-void QueryExecutionPlan::setup(){
-  for(auto &stage: stages){
+void QueryExecutionPlan::setup() {
+  for (auto &stage: stages) {
     stage->setup();
   }
 }
 
 void QueryExecutionPlan::start() {
-  for(auto &stage: stages){
+  for (auto &stage: stages) {
     stage->start();
   }
 }
 
-void QueryExecutionPlan::print() {
-   for (auto source : sources) {
-     NES_INFO("Source:" << source)
-     NES_INFO(
-         "\t Generated Buffers=" << source->getNumberOfGeneratedBuffers())
-     NES_INFO("\t Generated Tuples=" << source->getNumberOfGeneratedTuples())
-     NES_INFO("\t Schema=" << source->getSourceSchemaAsString())
-   }
-   /*
-   for (auto window : windows) {
-     NES_INFO("WindowHandler:" << window)
-     NES_INFO("WindowHandler Result:")
-   }*/
-   for (auto sink : sinks) {
-     NES_INFO("Sink:" << sink)
-     NES_INFO("\t Generated Buffers=" << sink->getNumberOfSentBuffers())
-     NES_INFO("\t Generated Tuples=" << sink->getNumberOfSentTuples())
-   }
- }
+void QueryExecutionPlan::addDataSource(DataSourcePtr source) {
+  sources.push_back(source);
+}
 
+const std::vector<DataSourcePtr> QueryExecutionPlan::getSources() const { return sources; }
+
+void QueryExecutionPlan::addDataSink(DataSinkPtr sink) {
+  sinks.push_back(sink);
+}
+
+const std::vector<DataSinkPtr> QueryExecutionPlan::getSinks() const { return sinks; }
+
+
+
+
+
+void QueryExecutionPlan::addPipelineStage(PipelineStagePtr pipelineStage) {
+  stages.push_back(pipelineStage);
+}
+
+void QueryExecutionPlan::print() {
+  for (auto source : sources) {
+    NES_INFO("Source:" << source)
+    NES_INFO(
+        "\t Generated Buffers=" << source->getNumberOfGeneratedBuffers())
+    NES_INFO("\t Generated Tuples=" << source->getNumberOfGeneratedTuples())
+    NES_INFO("\t Schema=" << source->getSourceSchemaAsString())
+  }
+  for (auto sink : sinks) {
+    NES_INFO("Sink:" << sink)
+    NES_INFO("\t Generated Buffers=" << sink->getNumberOfSentBuffers())
+    NES_INFO("\t Generated Tuples=" << sink->getNumberOfSentTuples())
+  }
+}
 
 bool QueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const NES::TupleBufferPtr buf) {
   return false;
 }
 
-uint32_t QueryExecutionPlan::stageIdFromSource(DataSource* source) { return sourceToStage[source]; };
+uint32_t QueryExecutionPlan::stageIdFromSource(DataSource *source) { return sourceToStage[source]; };
 
-const std::vector<DataSourcePtr> QueryExecutionPlan::getSources() const { return sources; }
 
-//const std::vector<WindowPtr> QueryExecutionPlan::getWindows() const { return windows; }
-
-const std::vector<DataSinkPtr> QueryExecutionPlan::getSinks() const { return sinks; }
 
 } // namespace NES
