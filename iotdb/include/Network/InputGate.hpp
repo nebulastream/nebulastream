@@ -14,13 +14,14 @@ class InputGate {
   public:
     /**
      * @brief constructor for the zmq source
-     * @param host name of the source queue
-     * @param port of the source queue
+     * @param zmqHost name of the source queue
+     * @param zmqPort of the source queue
      */
-    InputGate(std::string  host, uint16_t port);
+    InputGate(std::string  zmqHost, uint16_t zmqPort);
 
     /**
      * @brief blocking method to receive a buffer from the zmq source
+     * @return a tuple with the sourceId and a buffer
      */
     std::tuple<std::string, TupleBufferPtr> receiveData();
 
@@ -42,13 +43,13 @@ class InputGate {
      * @brief returns the status of the InputGate
      * @return True, if ready to receive tuples. False otherwise.
      */
-    bool isReady();
+    bool isConnected();
     std::string getHost() const;
     uint16_t getPort() const;
 
   private:
-    std::string host;
-    uint16_t port;
+    std::string zmqHost;
+    uint16_t zmqPort;
     bool connected;
     zmq::context_t context;
     zmq::socket_t socket;

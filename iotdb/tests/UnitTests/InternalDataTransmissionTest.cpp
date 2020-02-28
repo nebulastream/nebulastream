@@ -137,7 +137,10 @@ TEST_F(InternalDataTransmissionTest, testInputGate) {
     std::array<uint32_t, 8> testData2 = {{0, 100, 1, 99, 2, 98}};
     size_t testDataSize2 = testData2.size() * sizeof(uint32_t);
 
-    while (!receivingFinished) {
+    int timeoutCounter = 0;
+    int timeoutMax = 10000000;
+    while (!receivingFinished && timeoutCounter<=timeoutMax) {
+        timeoutCounter++;
         // Send data from here with one version of a packet header
         PacketHeader pH1(testData1.size(), testDataSize1, "testId1");
         std::string serPH1 = SerializationTools::serPacketHeader(pH1);
@@ -163,4 +166,9 @@ TEST_F(InternalDataTransmissionTest, testInputGate) {
         socket.send(messageData2);
     }
     inputGateThread.join();
+
+    if (timeoutCounter>=timeoutMax) {
+        NES_ERROR("TestInputGate: Error timeout reached!")
+    }
+    EXPECT_TRUE(timeoutCounter<timeoutMax);
 }
