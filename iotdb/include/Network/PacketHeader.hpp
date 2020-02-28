@@ -13,16 +13,17 @@ class PacketHeader {
     bool operator==(const PacketHeader& rhs) const;
     bool operator!=(const PacketHeader& rhs) const;
 
-  private:
-    size_t tupleCount{};
-  public:
     size_t getTupleCount() const;
     void setTupleCount(size_t tupleCount);
     size_t getTupleSize() const;
     void setTupleSize(size_t tupleSize);
     const std::string& getSourceId() const;
     void setSourceId(const std::string& sourceId);
+
+    std::string toString();
+
   private:
+    size_t tupleCount{};
     size_t tupleSize{};
     std::string sourceId;
 

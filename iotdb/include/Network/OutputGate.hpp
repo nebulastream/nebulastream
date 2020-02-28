@@ -4,6 +4,9 @@
 
 namespace NES {
 
+/**
+ * @brief Method stubs for OutputGate. WIP
+ */
 class OutputGate {
   public:
     OutputGate() = default;
