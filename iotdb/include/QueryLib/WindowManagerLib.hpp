@@ -1,6 +1,6 @@
 #include <utility>
 #include <memory>
-#include "vector"
+#include <vector>
 #include <API/AbstractWindowDefinition.hpp>
 #include <State/StateVariable.hpp>
 

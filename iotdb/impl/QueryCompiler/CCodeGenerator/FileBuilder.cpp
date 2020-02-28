@@ -18,7 +18,7 @@ FileBuilder FileBuilder::create(const std::string &file_name) {
   FileBuilder builder;
   builder.declations << "#include <cstdint>" << std::endl;
   builder.declations << "#include <string.h>" << std::endl;
-  builder.declations << "#include \"WindowManagerLib.hpp\"" << std::endl;
+  builder.declations << "#include <QueryLib/WindowManagerLib.hpp>" << std::endl;
   return builder;
 }
 FileBuilder &FileBuilder::addDeclaration(const Declaration &decl) {
