@@ -79,7 +79,7 @@ TEST_F(InternalDataTransmissionTest, testInternalTransmission) {
 }
 
 TEST_F(InternalDataTransmissionTest, testInputGate) {
-    // create InputGate to receive data
+    // create InputGate on localhost with ephemeral port to receive data
     InputGate inputGate("*", 0);
     inputGate.setup();
     NES_INFO( "InputGate published with host:" << inputGate.getHost() << " port:" << inputGate.getPort())
