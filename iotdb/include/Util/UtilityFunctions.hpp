@@ -36,6 +36,14 @@ class UtilityFunctions {
    */
   static std::string generateUuid();
 
+  /**
+   * @brief get the first substring between a unique first delimiter and a non-unique second delimiter
+   * @param input
+   * @param delimiter1
+   * @param delimiter2
+   * @return the substring
+   */
+  static std::string getFirstStringBetweenTwoDelimiters(const std::string& input, std::string s1, std::string s2);
 };
 }
 
