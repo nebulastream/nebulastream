@@ -18,9 +18,8 @@ QueryExecutionPlanPtr QueryCompiler::compile(OperatorPtr queryPlan) {
 
   auto codeGenerator = createCodeGenerator();
   auto context = createPipelineContext();
-  // Parse operators
   queryPlan->produce(codeGenerator, context, std::cout);
-  QueryExecutionPlanPtr qep = std::make_shared<QueryExecutionPlan>();
+  QueryExecutionPlanPtr qep = std::make_shared<GeneratedQueryExecutionPlan>();
   compilePipelineStages(qep, codeGenerator, context);
   return qep;
 }

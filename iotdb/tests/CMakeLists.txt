@@ -201,6 +201,12 @@ add_executable(continious-source-test "UnitTests/ContiniousSourceTest.cpp")
 target_link_libraries(continious-source-test iotdb ${GTEST_LIBRARIES})
 add_test(NAME continious-source-test COMMAND continious-source-test)
 
+
+# QueryCompilerTest
+add_executable(query-execution-test "UnitTests/QueryExecutionTest.cpp")
+target_link_libraries(query-execution-test iotdb ${GTEST_LIBRARIES})
+add_test(NAME query-execution-test COMMAND query-execution-test)
+
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
         DEPENDS ${UNITTESTS})

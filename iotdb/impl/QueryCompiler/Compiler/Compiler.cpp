@@ -146,19 +146,19 @@ void Compiler::callSystemCompiler(const std::vector<std::string> &args) {
   for (const auto &arg : args) {
     compiler_call << arg << " ";
   }
-  std::cout << "system '" << compiler_call.str() << "'" << std::endl;
+  NES_DEBUG("Compiler: compile with: '" << compiler_call.str() << "'");
   auto ret = system(compiler_call.str().c_str());
 
   if (ret != 0) {
-    std::cout << "PrecompiledHeader compilation failed!";
-    throw "PrecompiledHeader compilation failed!";
+    NES_ERROR("Compiler: compilation failed!");
+    throw "Compilation failed!";
   }
 }
 
 void pretty_print_code(const std::string &source) {
   int ret = system("which clang-format > /dev/null");
   if (ret != 0) {
-    NES_ERROR("Did not find external tool 'clang-format'. "
+    NES_ERROR("Compiler: Did not find external tool 'clang-format'. "
               "Please install 'clang-format' and try again."
               "If 'clang-format-X' is installed, try to create a "
               "symbolic link.");
@@ -228,7 +228,7 @@ CompiledCodePtr Compiler::compileWithSystemCompiler(
 
   auto end = getTimestamp();
   auto compile_time = end - start + pch_time;
-  NES_DEBUG("Compile Time with system compiler: " + std::to_string(compile_time))
+  NES_DEBUG("Compiler: compile Time with system compiler: " + std::to_string(compile_time) + "ms")
   return createSystemCompilerCompiledCode(shared_library, basename);
 }
 
