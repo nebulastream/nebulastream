@@ -59,12 +59,11 @@ class StreamCatalog {
    * @param structure describing the entry in the catalog
    * @return bool indicating success of remove stream
    */
-  bool removePhysicalStream(std::string logicalStreamName,
-                            StreamCatalogEntryPtr entry);
+  bool removePhysicalStream(string logicalStreamName, std::string ip);
 
   /**
    * @brief method to remove a physical stream from all logical streams
-   * @param physical stream to be deleted
+   * @param physical stream name and id to be deleted
    * @return bool indicating success of remove stream
    */
   bool removeAllPhysicalStreams(std::string physicalStreamName);
@@ -82,6 +81,7 @@ class StreamCatalog {
    * @return smart pointer to the schema
    * @caution there is only one schema per logical stream allowed
    */
+
   SchemaPtr getSchemaForLogicalStream(std::string logicalStreamName);
 
   /**
@@ -157,6 +157,7 @@ class StreamCatalog {
 
   //map logical stream to physical source
   std::map<std::string, std::vector<StreamCatalogEntryPtr>> logicalToPhysicalStreamMapping;
+
 
 };
 }

@@ -98,7 +98,7 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
      * @param config of the physical stream
      * @return bool indicating if removal was successful
      */
-    bool removePhysicalStream(std::string ip, PhysicalStreamConfig streamConf);
+    bool removePhysicalStream(std::string ip, std::string logicalStreamName);
 
     /**
      * @brief : registering a new sensor node
