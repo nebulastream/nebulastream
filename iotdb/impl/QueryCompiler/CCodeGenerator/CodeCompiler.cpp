@@ -46,8 +46,8 @@ CCodeCompiler::CCodeCompiler() {
 
 CompiledCCodePtr CCodeCompiler::compile(const std::string &source) {
   handleDebugging(source);
-  auto pch_time = createPrecompiledHeader();
-  return compileWithSystemCompiler(source, pch_time);
+  //auto pch_time = createPrecompiledHeader();
+  return compileWithSystemCompiler(source, 0);
 }
 
 void CCodeCompiler::init() {

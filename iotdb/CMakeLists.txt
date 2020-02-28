@@ -169,11 +169,13 @@ configure_file(include/QueryLib/WindowManagerLib.hpp  ${CMAKE_CURRENT_BINARY_DIR
 project_enable_clang_format()
 
 install(TARGETS nesCoordinator nesWorker iotdb
-        COMPONENT NES
+        COMPONENT NebulaStream
         RUNTIME DESTINATION "/opt/local/nebula-stream"
         LIBRARY DESTINATION "/opt/local/nebula-stream"
         DESTINATION "/opt/local/nebula-stream"
         )
+
+install(DIRECTORY "include" DESTINATION "/iotdb/" COMPONENT NebulaStream)
 
 SET(CPACK_GENERATOR "DEB")
 set(VERSION "0.0.1")
@@ -181,7 +183,7 @@ set(CPACK_PACKAGE_VERSION ${VERSION})
 set(CPACK_PACKAGE_NAME "NebulaStream")
 set(CPACK_PACKAGE_RELEASE 1)
 set(CPACK_PACKAGE_CONTACT "Team NebulaStream")
-SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Team NebulaStream") #required
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Team NebulaStream") #required
 set(CPACK_PACKAGE_VENDOR "Team NebulaStream")
 set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_PACKAGE_RELEASE}.${CMAKE_SYSTEM_PROCESSOR}")
