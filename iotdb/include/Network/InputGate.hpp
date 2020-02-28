@@ -44,7 +44,17 @@ class InputGate {
      * @return True, if ready to receive tuples. False otherwise.
      */
     bool isConnected();
+
+    /**
+     * @brief returns the host of the underlying zmq connection
+     * @return the host
+     */
     std::string getHost() const;
+
+    /**
+     * @brief returns the port of the underlying zmq connection
+     * @return the port
+     */
     uint16_t getPort() const;
 
   private:
