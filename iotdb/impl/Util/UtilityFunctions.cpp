@@ -147,4 +147,13 @@ std::string UtilityFunctions::generateUuid() {
   return boost::uuids::to_string(u);
 }
 
+std::string UtilityFunctions::getFirstStringBetweenTwoDelimiters(const std::string& input, std::string s1, std::string s2) {
+    unsigned firstDelimPos = input.find(s1);
+    unsigned endPosOfFirstDelim = firstDelimPos + s1.length();
+
+    unsigned lastDelimPos = input.find_first_of(s2, endPosOfFirstDelim);
+
+    return input.substr(endPosOfFirstDelim,lastDelimPos - endPosOfFirstDelim);
+}
+
 } // namespace NES
