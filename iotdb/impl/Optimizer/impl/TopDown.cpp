@@ -128,6 +128,7 @@ void TopDown::placeOperators(NESExecutionPlanPtr executionPlanPtr, OperatorPtr s
                 } else {
                     createNewExecutionNode(executionPlanPtr, targetOperator, nesSourceNode);
                 }
+                nesSourceNode->reduceCpuCapacity(1);
             }
         }
     }
@@ -143,7 +144,6 @@ void TopDown::createNewExecutionNode(NESExecutionPlanPtr executionPlanPtr, Opera
         executionNode = executionPlanPtr->createExecutionNode(operatorName.str(), to_string(nesNode->getId()),
                                                               nesNode, operatorPtr->copy());
     executionNode->addOperatorId(operatorPtr->getOperatorId());
-    executionNode->getNESNode()->reduceCpuCapacity(1);
 }
 
 void TopDown::addOperatorToExistingNode(OperatorPtr operatorPtr, ExecutionNodePtr executionNode) const {
@@ -154,7 +154,6 @@ void TopDown::addOperatorToExistingNode(OperatorPtr operatorPtr, ExecutionNodePt
     executionNode->setOperatorName(operatorName.str());
     executionNode->addOperator(operatorPtr->copy());
     executionNode->addOperatorId(operatorPtr->getOperatorId());
-    executionNode->getNESNode()->reduceCpuCapacity(1);
 }
 
 void TopDown::addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes, NESTopologyEntryPtr rootNode,
