@@ -25,6 +25,15 @@ const std::string SinkLogicalOperatorNode::toString() const {
   return ss.str();
 }
 
+bool SinkLogicalOperatorNode::equals(const BaseOperatorNode& rhs) const {
+    try {
+        auto& rhs_ = dynamic_cast<const SinkLogicalOperatorNode&>(rhs);
+        return true;
+    } catch (const std::bad_cast& e) {
+        return false;
+    }
+}
+
 const BaseOperatorNodePtr createSinkLogicalOperatorNode(const DataSinkPtr& sink) {
     return std::make_shared<SinkLogicalOperatorNode>(sink);
 }

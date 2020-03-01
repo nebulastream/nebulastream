@@ -9,10 +9,20 @@ OperatorType MapLogicalOperatorNode::getOperatorType() const {
     return OperatorType::MAP_OP;
 }
 
+
 const std::string MapLogicalOperatorNode::toString() const {
     std::stringstream ss;
     ss << "MAP_UDF(" << field_->toString() << " = " << NES::toString(predicate_) << ")";
     return ss.str();
+}
+
+bool MapLogicalOperatorNode::equals(const BaseOperatorNode& rhs) const {
+    try {
+        auto& rhs_ = dynamic_cast<const MapLogicalOperatorNode&>(rhs);
+        return true;
+    } catch (const std::bad_cast& e) {
+        return false;
+    }
 }
 
 const BaseOperatorNodePtr createMapLogicalOperatorNode(const AttributeFieldPtr& field, const PredicatePtr& predicate) {

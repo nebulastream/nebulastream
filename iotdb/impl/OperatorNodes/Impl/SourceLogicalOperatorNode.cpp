@@ -14,13 +14,22 @@ SourceLogicalOperatorNode::SourceLogicalOperatorNode(const OperatorPtr op) {
     std::cout << "op: " << op->toString() << std::endl;
 }
 
-// const BaseOperatorNodePtr SourceLogicalOperatorNode::copy() {
-//     return std::make_shared<SourceLogicalOperatorNode>();
-// }
+bool SourceLogicalOperatorNode::equals(const BaseOperatorNode& rhs) const {
+    // try {
+    //     auto& rhs_ = dynamic_cast<const SourceLogicalOperatorNode&>(rhs);
+    //     return true;
+    // } catch (const std::bad_cast& e) {
+    //     return false;
+    // }
+    if (&rhs == this)
+        return true;
+    return false;
+}
 
 OperatorType SourceLogicalOperatorNode::getOperatorType() const {
     return OperatorType::SOURCE_OP;
 }
+
 const std::string SourceLogicalOperatorNode::toString() const {
     std::stringstream ss;
     ss << "SOURCE(" << NES::toString(source_) << ")";

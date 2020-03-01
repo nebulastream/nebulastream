@@ -13,6 +13,7 @@ class WindowLogicalOperatorNode : public BaseOperatorNode {
     OperatorType getOperatorType() const override;
     const WindowDefinitionPtr& getWindowDefinition() const;
 
+    virtual bool equals(const BaseOperatorNode& rhs) const override;
   private:
     WindowDefinitionPtr window_definition;
 };

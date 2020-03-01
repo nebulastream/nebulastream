@@ -14,6 +14,9 @@ public:
     const BaseOperatorNodePtr copy();
     OperatorType getOperatorType() const override;
     const std::string toString() const override;
+
+    virtual bool equals(const BaseOperatorNode& rhs) const override;
+
 private:
     DataSourcePtr source_;
 };
