@@ -189,6 +189,7 @@ void MinimumEnergyConsumption::placeOperators(NESExecutionPlanPtr executionPlanP
                 operatorName << existingExecutionNode->getOperatorName() << "=>"
                              << operatorTypeToString[targetOperator->getOperatorType()]
                              << "(OP-" << std::to_string(targetOperator->getOperatorId()) << ")";
+                existingExecutionNode->addOperator(targetOperator->copy());
                 existingExecutionNode->setOperatorName(operatorName.str());
                 existingExecutionNode->addOperatorId(targetOperator->getOperatorId());
             } else {
@@ -258,6 +259,7 @@ void MinimumEnergyConsumption::placeOperators(NESExecutionPlanPtr executionPlanP
             operatorName << existingExecutionNode->getOperatorName() << "=>"
                          << operatorTypeToString[nextSrcOptr->getOperatorType()]
                          << "(OP-" << std::to_string(nextSrcOptr->getOperatorId()) << ")";
+            existingExecutionNode->addOperator(nextSrcOptr->copy());
             existingExecutionNode->setOperatorName(operatorName.str());
             existingExecutionNode->addOperatorId(nextSrcOptr->getOperatorId());
         } else {

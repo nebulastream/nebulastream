@@ -39,9 +39,6 @@ NESExecutionPlanPtr MinimumResourceConsumption::initializeExecutionPlan(InputQue
     NES_INFO("MinimumResourceConsumption: Adding forward operators.");
     addForwardOperators(sourceNodePtrs, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
 
-    NES_INFO("MinimumResourceConsumption: Removing non resident operators from the execution nodes.");
-    removeNonResidentOperators(nesExecutionPlanPtr);
-
     NES_INFO("MinimumResourceConsumption: Generating complete execution Graph.");
     completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlan);
 
@@ -147,6 +144,7 @@ void MinimumResourceConsumption::placeOperators(NESExecutionPlanPtr executionPla
             operatorName << existingExecutionNode->getOperatorName() << "=>"
                          << operatorTypeToString[targetOperator->getOperatorType()]
                          << "(OP-" << std::to_string(targetOperator->getOperatorId()) << ")";
+            existingExecutionNode->addOperator(targetOperator->copy());
             existingExecutionNode->setOperatorName(operatorName.str());
             existingExecutionNode->addOperatorId(targetOperator->getOperatorId());
         } else {
@@ -187,6 +185,7 @@ void MinimumResourceConsumption::placeOperators(NESExecutionPlanPtr executionPla
             operatorName << existingExecutionNode->getOperatorName() << "=>"
                          << operatorTypeToString[targetOperator->getOperatorType()]
                          << "(OP-" << std::to_string(targetOperator->getOperatorId()) << ")";
+            existingExecutionNode->addOperator(targetOperator->copy());
             existingExecutionNode->setOperatorName(operatorName.str());
             existingExecutionNode->addOperatorId(targetOperator->getOperatorId());
         } else {

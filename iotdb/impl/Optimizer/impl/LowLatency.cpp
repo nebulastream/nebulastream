@@ -36,9 +36,6 @@ NESExecutionPlanPtr LowLatency::initializeExecutionPlan(NES::InputQueryPtr input
     NES_INFO("LowLatency: Adding forward operators.");
     addForwardOperators(sourceNodePtrs, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
 
-    NES_INFO("LowLatency: Removing non resident operators from the execution nodes.");
-    removeNonResidentOperators(nesExecutionPlanPtr);
-
     NES_INFO("LowLatency: Generating complete execution Graph.");
     completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlan);
 
@@ -94,6 +91,7 @@ void LowLatency::placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopolog
                         operatorName << existingExecutionNode->getOperatorName() << "=>"
                                      << operatorTypeToString[targetOperator->getOperatorType()]
                                      << "(OP-" << std::to_string(targetOperator->getOperatorId()) << ")";
+                        existingExecutionNode->addOperator(targetOperator->copy());
                         existingExecutionNode->setOperatorName(operatorName.str());
                         existingExecutionNode->addOperatorId(targetOperator->getOperatorId());
                     }
