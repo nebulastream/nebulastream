@@ -36,9 +36,6 @@ NESExecutionPlanPtr HighThroughput::initializeExecutionPlan(InputQueryPtr inputQ
     NES_INFO("HighThroughput: Adding forward operators.");
     addForwardOperators(sourceNodePtrs, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
 
-    NES_INFO("HighThroughput: Removing non resident operators from the execution nodes.");
-    removeNonResidentOperators(nesExecutionPlanPtr);
-
     NES_INFO("HighThroughput: Generating complete execution Graph.");
     completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlan);
 
@@ -94,6 +91,7 @@ void HighThroughput::placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTop
                         operatorName << existingExecutionNode->getOperatorName() << "=>"
                                      << operatorTypeToString[targetOperator->getOperatorType()]
                                      << "(OP-" << std::to_string(targetOperator->getOperatorId()) << ")";
+                        existingExecutionNode->addOperator(targetOperator->copy());
                         existingExecutionNode->setOperatorName(operatorName.str());
                         existingExecutionNode->addOperatorId(targetOperator->getOperatorId());
                     }
