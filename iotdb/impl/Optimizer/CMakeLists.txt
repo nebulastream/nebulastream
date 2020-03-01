@@ -2,6 +2,7 @@ add_source_iotdb(
         impl/BottomUp.cpp
         impl/TopDown.cpp
         impl/LowLatency.cpp
+        impl/HighAvailability.cpp
         impl/HighThroughput.cpp
         impl/MinimumResourceConsumption.cpp
         impl/MinimumEnergyConsumption.cpp
