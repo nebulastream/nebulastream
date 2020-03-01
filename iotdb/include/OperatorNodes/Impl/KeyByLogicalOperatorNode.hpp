@@ -11,6 +11,7 @@ class KeyByLogicalOperatorNode : public BaseOperatorNode {
     const std::string toString() const override;
     OperatorType getOperatorType() const override;
 
+    virtual bool equals(const BaseOperatorNode& rhs) const override;
   private:
     Attributes keyby_spec_;
 };

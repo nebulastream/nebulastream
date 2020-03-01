@@ -20,6 +20,15 @@ const WindowDefinitionPtr& WindowLogicalOperatorNode::getWindowDefinition() cons
     return window_definition;
 }
 
+bool WindowLogicalOperatorNode::equals(const BaseOperatorNode& rhs) const {
+    try {
+        auto& rhs_ = dynamic_cast<const WindowLogicalOperatorNode&>(rhs);
+        return true;
+    } catch (const std::bad_cast& e) {
+        return false;
+    }
+}
+
 const BaseOperatorNodePtr createWindowLogicalOperatorNode(const WindowDefinitionPtr& windowDefinitionPtr) {
   return std::make_shared<WindowLogicalOperatorNode>(windowDefinitionPtr);
 }

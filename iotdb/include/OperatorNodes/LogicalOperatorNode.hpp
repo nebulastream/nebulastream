@@ -8,10 +8,11 @@ namespace NES {
 
 class LogicalOperatorNode : public BaseOperatorNode {
 public:
-    LogicalOperatorNode() = default;
+    LogicalOperatorNode();
 
 
-
+    virtual bool equals(const BaseOperatorNode& ) {};
+    virtual bool operator==(const BaseOperatorNode& ) {};
 private:
     Schema inputSchema;
     Schema outputSchema;

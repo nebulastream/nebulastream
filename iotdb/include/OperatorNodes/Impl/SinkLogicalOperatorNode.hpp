@@ -12,6 +12,7 @@ public:
     OperatorType getOperatorType() const override;
     DataSinkPtr getDataSinkPtr();
 
+    virtual bool equals(const BaseOperatorNode& rhs) const override;
 private:
     DataSinkPtr sink_;
 };

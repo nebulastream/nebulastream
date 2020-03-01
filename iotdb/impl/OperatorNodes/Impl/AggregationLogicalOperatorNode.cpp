@@ -7,20 +7,6 @@ AggregationLogicalOperatorNode::AggregationLogicalOperatorNode(const Aggregation
 {
 }
 
-// AggregationLogicalOperatorNode::AggregationLogicalOperatorNode(const AggregationLogicalOperatorNode& other) : aggr_spec_(NES::copy(other.aggr_spec_))
-// {
-// }
-
-// AggregationLogicalOperatorNode& AggregationLogicalOperatorNode::operator=(const AggregationLogicalOperatorNode& other)
-// {
-//     if (this != &other) {
-//         aggr_spec_ = NES::copy(other.aggr_spec_);
-//     }
-//     return *this;
-// }
-
-// const BaseOperatorNodePtr AggregationLogicalOperatorNode::copy() const { return std::make_shared<AggregationLogicalOperatorNode>(*this); }
-
 const std::string AggregationLogicalOperatorNode::toString() const
 {
     std::stringstream ss;
@@ -33,6 +19,16 @@ OperatorType AggregationLogicalOperatorNode::getOperatorType() const {
 }
 
 AggregationLogicalOperatorNode::~AggregationLogicalOperatorNode() {}
+
+bool AggregationLogicalOperatorNode::equals(const BaseOperatorNode& rhs) const {
+    try {
+        auto& rhs_ = dynamic_cast<const AggregationLogicalOperatorNode&>(rhs);
+        return true;
+    } catch (const std::bad_cast& e) {
+        return false;
+    }
+
+}
 
 const BaseOperatorNodePtr createAggregationLogicalOperatorNode(const AggregationSpec& aggrSpec) {
     return std::make_shared<AggregationLogicalOperatorNode>(aggrSpec);

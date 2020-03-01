@@ -12,6 +12,7 @@ class SortLogicalOperatorNode : public BaseOperatorNode {
     const std::string toString() const override;
     OperatorType getOperatorType() const override;
 
+    virtual bool equals(const BaseOperatorNode& rhs) const override;
   private:
     Sort sort_spec_;
 };

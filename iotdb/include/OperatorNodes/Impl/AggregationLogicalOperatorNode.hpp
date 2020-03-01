@@ -8,9 +8,10 @@ class AggregationLogicalOperatorNode : public LogicalOperatorNode {
 public:
     AggregationLogicalOperatorNode(const AggregationSpec& aggrSpec);
     ~AggregationLogicalOperatorNode();
-    // AggregationLogicalOperatorNode& operator=(const AggregationLogicalOperatorNode& other);
     const std::string toString() const override;
     OperatorType getOperatorType() const override;
+
+    virtual bool equals(const BaseOperatorNode& rhs) const override;
 
 private:
     AggregationSpec aggrSpec_;

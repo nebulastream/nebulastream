@@ -37,6 +37,15 @@ OperatorType SortLogicalOperatorNode::getOperatorType() const {
 
 // SortLogicalOperatorNode::~SortLogicalOperatorNode() {}
 
+bool SortLogicalOperatorNode::equals(const BaseOperatorNode& rhs) const {
+    try {
+        auto& rhs_ = dynamic_cast<const SortLogicalOperatorNode&>(rhs);
+        return true;
+    } catch (const std::bad_cast& e) {
+        return false;
+    }
+}
+
 const BaseOperatorNodePtr createSortLogicalOperatorNode(const Sort& sortSpec) {
     return std::make_shared<SortLogicalOperatorNode>(sortSpec);
 }
