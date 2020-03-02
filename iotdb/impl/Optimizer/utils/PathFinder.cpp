@@ -135,9 +135,16 @@ std::vector<NESTopologyEntryPtr> PathFinder::findPathBetween(NES::NESTopologyEnt
 std::map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>> PathFinder::findUniquePathBetween(std::vector<
     NESTopologyEntryPtr> sources, NESTopologyEntryPtr destination) {
 
+    std::map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>> result;
+
     NES_INFO("PathFinder: finding unique path between set of sources and destination");
 
-    std::map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>> result;
+    if (sources.size() == 1) {
+        NES_INFO("PathFinder: Only one source provided. Finding a path between source and destination.");
+        result[sources[0]] = findPathBetween(sources[0], destination);
+        return result;
+    }
+
     std::map<NESTopologyEntryPtr, std::vector<std::vector<NESTopologyLinkPtr>>> sourceToPathsMap;
 
     NES_DEBUG("PathFinder: find all paths between set of sources and destination");
@@ -278,8 +285,12 @@ std::vector<std::vector<NESTopologyLinkPtr>> PathFinder::findAllPathLinksBetween
         NESTopologyLinkPtr link = candidateLinks.front();
         candidateLinks.pop_front();
         traversedPath.push_back(link);
-        if (link->getDestNode()->getId() == destination->getId()) {
+        if (link->getDestNodeId() == destination->getId()) {
             setOfVisitedPaths.push_back(traversedPath);
+            if (!candidateLinks.empty()) {
+                traversedPath = backTrackTraversedPathTill(traversedPath, candidateLinks.front()->getSourceNode());
+            }
+        } else if (link->getDestNodeId() == topologyManager.getRootNode()->getId()) {
             if (!candidateLinks.empty()) {
                 traversedPath = backTrackTraversedPathTill(traversedPath, candidateLinks.front()->getSourceNode());
             }

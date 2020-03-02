@@ -39,9 +39,6 @@ NESExecutionPlanPtr MinimumEnergyConsumption::initializeExecutionPlan(InputQuery
     NES_INFO("MinimumEnergyConsumption: Adding forward operators.");
     addForwardOperators(sourceNodePtrs, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
 
-    NES_INFO("MinimumEnergyConsumption: Removing non resident operators from the execution nodes.");
-    removeNonResidentOperators(nesExecutionPlanPtr);
-
     NES_INFO("MinimumEnergyConsumption: Generating complete execution Graph.");
     completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlan);
 
@@ -105,7 +102,7 @@ void MinimumEnergyConsumption::placeOperators(NESExecutionPlanPtr executionPlanP
     vector<std::pair<size_t, int>> computeCostList;
 
     //Calculate total compute cost for each path
-    for (int i = 0; i < listOfPaths.size(); i++) {
+    for (size_t i = 0; i < listOfPaths.size(); i++) {
         vector<NESTopologyEntryPtr> path = listOfPaths[i];
         size_t totalComputeForPath = 0;
         for (NESTopologyEntryPtr node: path) {

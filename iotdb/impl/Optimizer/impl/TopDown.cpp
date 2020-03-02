@@ -152,7 +152,7 @@ void TopDown::addOperatorToExistingNode(OperatorPtr operatorPtr, ExecutionNodePt
     operatorName << operatorTypeToString[operatorPtr->getOperatorType()] << "(OP-"
                  << to_string(operatorPtr->getOperatorId()) << ")" << "=>" << executionNode->getOperatorName();
     executionNode->setOperatorName(operatorName.str());
-    executionNode->addOperator(operatorPtr->copy());
+    executionNode->addChild(operatorPtr->copy());
     executionNode->addOperatorId(operatorPtr->getOperatorId());
 }
 
