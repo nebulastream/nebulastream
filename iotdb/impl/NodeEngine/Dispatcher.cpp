@@ -170,17 +170,17 @@ TaskPtr Dispatcher::getWork(bool& threadPool_running) {
 void Dispatcher::addWorkForNextPipeline(const TupleBufferPtr buffer,
                                         QueryExecutionPlanPtr queryExecutionPlan,
                                         uint32_t pipelineId) {
-    //std::unique_lock<std::mutex> lock(workMutex);
+    std::unique_lock<std::mutex> lock(workMutex);
 
-    //get the queries that contains this window
-    queryExecutionPlan->executeStage(pipelineId+1, buffer);
-    //TaskPtr task(new Task(queryExecutionPlan, pipelineId + 1, buffer));
-    //task_queue.push_back(task);
-   // NES_DEBUG(
-     //   "Dispatcher: added Task " << task.get() << " for QEP " << queryExecutionPlan
-       //                           << " inputBuffer " << buffer)
+    //dispatch buffer as task
+    buffer->setUseCnt(1);
+    TaskPtr task(new Task(queryExecutionPlan, pipelineId + 1, buffer));
+    task_queue.push_back(task);
+    NES_DEBUG(
+        "Dispatcher: added Task " << task.get() << " for QEP " << queryExecutionPlan
+                                << " inputBuffer " << buffer)
 
-    //cv.notify_all();
+    cv.notify_all();
 }
 
 void Dispatcher::addWork(const string& sourceId, const TupleBufferPtr& buf) {

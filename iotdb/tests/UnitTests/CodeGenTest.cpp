@@ -780,12 +780,10 @@ int WindowAssignerCodeGenTest() {
 
   auto sum = Sum::on(Field(input_schema.get("value")));
   WindowDefinitionPtr
-      window_definition_ptr(new WindowDefinition(input_schema.get("key"), sum, TumblingWindow::of(Seconds(10))));
+      window_definition_ptr(new WindowDefinition(input_schema.get("key"), sum, TumblingWindow::of(TimeCharacteristic::ProcessingTime, Seconds(10))));
   // auto window_operator = createWindowOperator(window_definition_ptr);
   //predicate definition
   code_gen->generateCode(window_definition_ptr, context, std::cout);
-
-
 
 
   /* compile code to pipeline stage */
