@@ -25,13 +25,23 @@ class QueryExecutionTest : public testing::Test {
     void SetUp() {
         setupLogging();
         std::cout << "Setup QueryCatalogTest test case." << std::endl;
+        NES::Dispatcher::instance();
+        NES::BufferManager::instance();
+        NES::ThreadPool::instance();
+        ThreadPool::instance().setNumberOfThreadsWithRestart(1);
+        ThreadPool::instance().start();
 
         // create test input buffer
-        testSchema = Schema().create().addField(createField("id", BasicType::UINT8));
+        testSchema = Schema().create()
+            .addField(createField("id", BasicType::INT64))
+            .addField(createField("one", BasicType::INT64))
+            .addField(createField("value", BasicType::INT64));
         testInputBuffer = BufferManager::instance().getBuffer();
         memoryLayout = createRowLayout(std::make_shared<Schema>(testSchema));
         for (int i = 0; i < 10; i++) {
-            memoryLayout->writeField<uint8_t>(testInputBuffer, i, 0, i);
+            memoryLayout->writeField<int64_t>(testInputBuffer, i, 0, i);
+            memoryLayout->writeField<int64_t>(testInputBuffer, i, 1, 1);
+            memoryLayout->writeField<int64_t>(testInputBuffer, i, 2, i%2);
         }
         testInputBuffer->setNumberOfTuples(10);
 
@@ -79,6 +89,9 @@ class TestSink : public DataSink {
   public:
 
     bool writeData(const TupleBufferPtr input_buffer) override {
+        NES_DEBUG("TestSink: got buffer " << input_buffer);
+        NES_DEBUG(NES::toString(input_buffer.get(), this->getSchema()));
+        input_buffer->print();
         resultBuffers.push_back(input_buffer);
         return true;
     }
@@ -104,7 +117,8 @@ class TestSink : public DataSink {
 TEST_F(QueryExecutionTest, filterQuery) {
 
     // creating query plan
-    auto source = createSourceOperator(createDefaultDataSourceWithSchemaForOneBuffer(testSchema));
+    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema);
+    auto source = createSourceOperator(testSource);
     auto filter = createFilterOperator(createPredicate(Field(testSchema.get("id")) < 5));
     auto testSink = std::make_shared<TestSink>();
     auto sink = createSinkOperator(testSink);
@@ -117,6 +131,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
     auto compiler = createDefaultQueryCompiler();
     auto plan = compiler->compile(sink);
     plan->addDataSink(testSink);
+    plan->addDataSource(testSource);
 
     // The plan should have one pipeline
     EXPECT_EQ(plan->numberOfPipelineStages(), 1);
@@ -131,7 +146,62 @@ TEST_F(QueryExecutionTest, filterQuery) {
     EXPECT_EQ(resultBuffer->getNumberOfTuples(), 5);
 
     for (int i = 0; i < 5; i++) {
-        EXPECT_EQ(memoryLayout->readField<uint8_t>(resultBuffer, i, 0), i);
+        EXPECT_EQ(memoryLayout->readField<int64_t>(resultBuffer, i, 0), i);
+    }
+}
+
+
+TEST_F(QueryExecutionTest, windowQuery) {
+
+    // creating query plan
+    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema);
+    auto source = createSourceOperator(testSource);
+    auto aggregation = Sum::on(testSchema.get("one"));
+    auto windowType = TumblingWindow::of(Milliseconds(2));
+    auto windowOperator = createWindowOperator(createWindowDefinition(testSchema.get("value"), aggregation, windowType));
+    Schema resultSchema = Schema().create().addField(createField("sum", BasicType::INT64));
+    SchemaPtr ptr = std::make_shared<Schema>(resultSchema);
+    auto windowScan = createWindowScanOperator(ptr);
+    auto testSink = std::make_shared<TestSink>();
+    auto sink = createSinkOperator(testSink);
+
+    windowOperator->addChild(source);
+    source->setParent(windowOperator);
+    windowScan->addChild(windowOperator);
+    windowOperator->setParent(windowScan);
+    sink->addChild(windowScan);
+    windowScan->setParent(sink);
+
+    auto compiler = createDefaultQueryCompiler();
+    auto plan = compiler->compile(sink);
+    plan->addDataSink(testSink);
+    plan->addDataSource(testSource);
+    Dispatcher::instance().registerQueryWithoutStart(plan);
+    plan->setup();
+    plan->start();
+
+
+    // The plan should have one pipeline
+    EXPECT_EQ(plan->numberOfPipelineStages(), 2);
+    // TODO switch to event time if that is ready to remove sleep
+    // ingest test data
+    for(int i = 0 ; i <10;i++) {
+        plan->executeStage(0, testInputBuffer);
+        sleep(1);
+    }
+    plan->stop();
+    sleep(5);
+
+    // This plan should produce one output buffer
+    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 5);
+
+    auto resultBuffer = testSink->resultBuffers[1];
+
+    // The output buffer should contain 5 tuple;
+    EXPECT_EQ(resultBuffer->getNumberOfTuples(), 2);
+    auto resultLayout = createRowLayout(ptr);
+    for (int i = 0; i < 2; i++) {
+        EXPECT_EQ(resultLayout->readField<int64_t>(resultBuffer, i, 0), 10);
     }
 }
 

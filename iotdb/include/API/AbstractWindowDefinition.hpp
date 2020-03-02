@@ -58,6 +58,9 @@ class WindowDefinition {
 };
 
 typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
+
+WindowDefinitionPtr createWindowDefinition(const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType);
+WindowDefinitionPtr createWindowDefinition(const AttributeFieldPtr onKey, const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType);
 }
 
 #endif //INCLUDE_QUERYLIB_ABSTRACTWINDOWDEFINITION_HPP_
