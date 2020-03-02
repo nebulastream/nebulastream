@@ -204,10 +204,6 @@ bool CCodeGenerator::generateCode(const Schema& schema, const PipelineContextPtr
     context->addTypeDeclaration(struct_decl_tuple_buffer);
     context->addTypeDeclaration(struct_decl_tuple);
 
-    //    context->code->type_decls.push_back(struct_decl_tuple_buffer);
-    //    context->code->type_decls.push_back(struct_decl_state);
-    //    context->code->type_decls.push_back(struct_decl_tuple);
-
     context->code->struct_decl_tuple_buffer = struct_decl_tuple_buffer;
     context->code->struct_decl_input_tuple = struct_decl_tuple;
 

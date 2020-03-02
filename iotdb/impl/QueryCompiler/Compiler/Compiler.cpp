@@ -209,27 +209,7 @@ void exportSourceToFile(const std::string &filename,
 
 CompiledCodePtr Compiler::compileWithSystemCompiler(
     const std::string &source, const Timestamp pch_time) {
-  auto start = getTimestamp();
 
-  boost::uuids::uuid uuid = boost::uuids::random_generator()();
-  std::string basename = "gen_query_" + boost::uuids::to_string(uuid);
-  std::string filename = basename + ".c";
-  std::string library_name = basename + ".so";
-  exportSourceToFile(filename, source);
-
-  auto args = getCompilerArgs();
-  args.push_back("--shared");
-  args.push_back("-o" + library_name);
-  args.push_back(filename);
-
-  callSystemCompiler(args);
-
-  auto shared_library = SharedLibrary::load("./" + library_name);
-
-  auto end = getTimestamp();
-  auto compile_time = end - start + pch_time;
-  NES_DEBUG("Compiler: compile Time with system compiler: " + std::to_string(compile_time) + "ms")
-  return createSystemCompilerCompiledCode(shared_library, basename);
 }
 
 }  // namespace NES
