@@ -116,7 +116,109 @@ To get the NebulaStream topology graph as JSON.
 
 ## Query Catalog
 
-### /queryCatalog
+Here we describe the APIs used for interacting with query catalog.
+
+### Getting All Queries
+
+To get all queries registered at NebulaStream.
+
+#### API: /queryCatalog/allRegisteredQueries
+#### Verb: GET
+#### Response Code: 200 OK
+
+#### Example: 
+
+##### Request:
+{}
+
+##### Response:
+{[
+"system_generated_query_id": "query_string" 
+]}
+
+### Getting Queries With Status
+
+To get all queries with a specific status form NebulaStream.
+
+#### API: /queryCatalog/queries
+#### Verb: GET
+#### Response Code: 200 OK
+
+#### Example: 
+
+##### Request:
+{"status":"Running"}
+
+##### Response:
+{[
+"system_generated_query_id": "query_string" 
+]}
+
+### Delete User Query
+
+To delete a user submitted query.
+
+#### API: /queryCatalog/query
+#### Verb: DELETE
+#### Response Code: 200 OK
+
+#### Example: 
+
+##### Request:
+{"QueryId": "system_generate_uuid"}
+
+##### Response:
+{}
+
 
 ## Stream Catalog
 ### /streamCatalog
+
+### Add Logical Stream
+
+To add a logical stream.
+
+#### API: /streamCatalog/addLogicalStream
+#### Verb: POST
+#### Response Code: 200 OK
+
+#### Example: 
+
+##### Request:
+{"streamName": "logical_stream_name",
+"schema": "Schema::create().addField(\"test\",INT32);"}
+
+##### Response:
+{"success", "true"}
+
+### Update Logical Stream
+To Update a logical stream.
+
+#### API: /streamCatalog/updateLogicalStream
+#### Verb: POST
+#### Response Code: 200 OK
+
+#### Example: 
+
+##### Request:
+{"streamName": "logical_stream_name",
+"schema": "Schema::create().addField(\"test\",INT32);"}
+
+##### Response:
+{"success", "true"}
+
+### Delete Logical Stream
+
+To delete a logical stream.
+
+#### API: /streamCatalog/deleteLogicalStream
+#### Verb: DELETE
+#### Response Code: 200 OK
+
+#### Example: 
+
+##### Request:
+{"streamName": "logical_stream_name"}
+
+##### Response:
+{"success", "true"}
