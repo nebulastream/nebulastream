@@ -48,6 +48,9 @@ void HighAvailability::placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr, N
     NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
     PathFinder pathFinder;
     size_t linkRedundency = 2;
+
+    vector<vector<NESTopologyEntryPtr>> placementPaths;
+
     for (NESTopologyEntryPtr sourceNode: sourceNodes) {
         const auto listOfPaths = pathFinder.findAllPathsBetween(sourceNode, sinkNode);
 
@@ -113,10 +116,35 @@ void HighAvailability::placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr, N
                 pathForPlacement = commonPath;
             }
         }
+        placementPaths.push_back(pathForPlacement);
+    }
+
+    //Sort all the paths with increased aggregated compute capacity
+    vector<std::pair<size_t, int>> computeCostList;
+
+    //Calculate total compute cost for each path
+    for (size_t i = 0; i < placementPaths.size(); i++) {
+        vector<NESTopologyEntryPtr> path = placementPaths[i];
+        size_t totalComputeForPath = 0;
+        for (NESTopologyEntryPtr node: path) {
+            totalComputeForPath = totalComputeForPath + node->getCpuCapacity();
+        }
+        computeCostList.push_back(make_pair(totalComputeForPath, i));
+    }
+
+    sort(computeCostList.begin(), computeCostList.end());
+
+    vector<vector<NESTopologyEntryPtr>> sortedListOfPaths;
+    for (auto pair :  computeCostList) {
+        sortedListOfPaths.push_back(placementPaths[pair.second]);
+    }
+
+    for (vector<NESTopologyEntryPtr> pathForPlacement: sortedListOfPaths) {
 
         OperatorPtr targetOperator = sourceOperator;
         //Perform Bottom-Up placement
-        for (NESTopologyEntryPtr node : pathForPlacement) {
+        for (size_t i = 0; i < pathForPlacement.size(); i++) {
+            NESTopologyEntryPtr node = pathForPlacement[i];
             while (node->getRemainingCpuCapacity() > 0 && targetOperator) {
 
                 if (targetOperator->getOperatorType() == SINK_OP) {
@@ -164,13 +192,34 @@ void HighAvailability::placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr, N
             if (!targetOperator) {
                 break;
             }
+
+            //find if the next target operator already placed
+            bool isAlreadyPlaced = false;
+            for (size_t j = i + 1; j < pathForPlacement.size(); j++) {
+                if (nesExecutionPlanPtr->hasVertex(pathForPlacement[j]->getId())) {
+                    vector<size_t> placedOperators =
+                        nesExecutionPlanPtr->getExecutionNode(pathForPlacement[j]->getId())->getChildOperatorIds();
+                    size_t operatorId = targetOperator->getOperatorId();
+                    auto found = find_if(placedOperators.begin(), placedOperators.end(), [operatorId](size_t opId) {
+                      return operatorId == opId;
+                    });
+
+                    if (found != placedOperators.end()) {
+                        isAlreadyPlaced = true;
+                    }
+                }
+            }
+
+            if(isAlreadyPlaced) {
+                break;
+            }
         }
-        addForwardOperators(sourceNode, pathForPlacement, nesExecutionPlanPtr);
+
+        addForwardOperators(pathForPlacement, nesExecutionPlanPtr);
     }
 }
 
-void HighAvailability::addForwardOperators(NESTopologyEntryPtr sourceNodes,
-                                           vector<NESTopologyEntryPtr> pathForPlacement,
+void HighAvailability::addForwardOperators(vector<NESTopologyEntryPtr> pathForPlacement,
                                            NES::NESExecutionPlanPtr nesExecutionPlanPtr) const {
 
     PathFinder pathFinder;

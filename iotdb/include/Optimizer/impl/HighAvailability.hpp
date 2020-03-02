@@ -31,11 +31,10 @@ class HighAvailability : public NESPlacementOptimizer {
 
     /**
      * @brief Add forward operators between source and sink nodes.
-     * @param sourceNodes : list of source nodes
      * @param rootNode : sink node
      * @param nesExecutionPlanPtr : nes execution plan
      */
-    void addForwardOperators(NESTopologyEntryPtr sourceNodes, vector<NESTopologyEntryPtr> pathForPlacement,
+    void addForwardOperators(vector<NESTopologyEntryPtr> pathForPlacement,
                              NESExecutionPlanPtr nesExecutionPlanPtr) const;
 };
 
