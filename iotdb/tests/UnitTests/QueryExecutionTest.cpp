@@ -156,7 +156,7 @@ TEST_F(QueryExecutionTest, windowQuery) {
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema);
     auto source = createSourceOperator(testSource);
     auto aggregation = Sum::on(testSchema.get("one"));
-    auto windowType = TumblingWindow::of(Milliseconds(TimeType::ProcessingTime, 2));
+    auto windowType = TumblingWindow::of(TimeType::ProcessingTime,Milliseconds( 2));
     auto
         windowOperator = createWindowOperator(createWindowDefinition(testSchema.get("value"), aggregation, windowType));
     Schema resultSchema = Schema().create().addField(createField("sum", BasicType::INT64));
