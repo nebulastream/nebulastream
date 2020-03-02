@@ -20,13 +20,13 @@ class HighAvailability : public NESPlacementOptimizer {
 
     /**
      * This method is responsible for placing the operators to the nes nodes and generating ExecutionNodes.
-     * @param executionPlanPtr : graph containing the information about the execution nodes.
+     * @param nesExecutionPlanPtr : graph containing the information about the execution nodes.
      * @param nesTopologyGraphPtr : nes Topology graph used for extracting information about the nes topology.
      * @param sourceNodePtr : sensor nodes which can act as source.
      *
      * @throws exception if the operator can't be placed anywhere.
      */
-    void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
+    void placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
                         OperatorPtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes);
 
     /**
@@ -35,7 +35,7 @@ class HighAvailability : public NESPlacementOptimizer {
      * @param rootNode : sink node
      * @param nesExecutionPlanPtr : nes execution plan
      */
-    void addForwardOperators(const vector<NESTopologyEntryPtr> sourceNodes, const NESTopologyEntryPtr rootNode,
+    void addForwardOperators(NESTopologyEntryPtr sourceNodes, vector<NESTopologyEntryPtr> pathForPlacement,
                              NESExecutionPlanPtr nesExecutionPlanPtr) const;
 };
 

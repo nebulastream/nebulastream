@@ -8,6 +8,7 @@
 #include <SourceSink/SourceCreator.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <Optimizer/utils/PathFinder.hpp>
+#include <Optimizer/impl/HighAvailability.hpp>
 #include <Optimizer/impl/HighThroughput.hpp>
 #include <Optimizer/impl/MinimumResourceConsumption.hpp>
 #include <Optimizer/impl/MinimumEnergyConsumption.hpp>
@@ -28,8 +29,10 @@ std::shared_ptr<NESPlacementOptimizer> NESPlacementOptimizer::getOptimizer(std::
         return std::make_unique<MinimumResourceConsumption>(MinimumResourceConsumption());
     } else if (optimizerName == "MinimumEnergyConsumption") {
         return std::make_unique<MinimumEnergyConsumption>(MinimumEnergyConsumption());
+    } else if (optimizerName == "HighAvailability") {
+        return std::make_unique<HighAvailability>(HighAvailability());
     } else {
-      throw std::invalid_argument("NESPlacementOptimizer: Unknown optimizer type: " + optimizerName);
+        throw std::invalid_argument("NESPlacementOptimizer: Unknown optimizer type: " + optimizerName);
     }
 }
 
