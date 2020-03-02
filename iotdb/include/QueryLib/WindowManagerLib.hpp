@@ -142,7 +142,7 @@ class WindowManager {
         // check if the slice store is empty
         if (store->empty()) {
             // set last watermark to current ts for processing time
-            if (windowDefinition->windowType->getWindowTimeType() == TimeType::ProcessingTime) {
+            if (windowDefinition->windowType->getTimeCharacteristic() == TimeCharacteristic::ProcessingTime) {
                 store->setLastWatermark(ts - allowedLateness);
             }
             // we create the first slice for all windows between 0 and record ts - allowedLateness.

@@ -19,14 +19,14 @@ class WindowState {
 
 typedef std::shared_ptr<std::vector<WindowState>> WindowListPtr;
 
-enum class TimeType {
+enum class TimeCharacteristic {
     EventTime = 1,
     ProcessingTime = 2
 };
 
 class WindowType {
   public:
-    WindowType(TimeType timeType);
+    WindowType(TimeCharacteristic timeCharacteristic);
     /**
       * Calculates the next window end based on a given timestamp
       * @param currentTs
@@ -43,13 +43,13 @@ class WindowType {
     virtual void triggerWindows(WindowListPtr windows, uint64_t lastWatermark, uint64_t currentWatermark) const = 0;
 
     /**
-     * @brief Get the time type of the window.
+     * @brief Get the time characteristic of the window.
      * @return
      */
-    TimeType getWindowTimeType() const;
+    TimeCharacteristic getTimeCharacteristic() const;
 
   private:
-    TimeType timeType;
+    TimeCharacteristic timeCharacteristic;
 };
 
 typedef std::shared_ptr<WindowType> WindowTypePtr;

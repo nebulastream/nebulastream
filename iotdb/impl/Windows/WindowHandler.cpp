@@ -2,6 +2,7 @@
 #include <atomic>
 #include <iostream>
 #include <memory>
+#include <pthread.h>
 #include <Util/Logger.hpp>
 #include <boost/serialization/export.hpp>
 #include <State/StateManager.hpp>
@@ -33,8 +34,8 @@ void WindowHandler::aggregateWindows(
     // For event time we use the maximal records ts as watermark.
     // For processing time we use the current wall clock as watermark.
     // TODO we should add a allowed lateness to support out of order events
-    auto windowTimeType = window_definition_ptr->windowType->getWindowTimeType();
-    auto watermark = windowTimeType == TimeType::ProcessingTime ? getTsFromClock() : store->getMaxTs();
+    auto windowTimeType = window_definition_ptr->windowType->getTimeCharacteristic();
+    auto watermark = windowTimeType == TimeCharacteristic::ProcessingTime ? getTsFromClock() : store->getMaxTs();
 
     // create result vector of windows
     auto windows = std::make_shared<std::vector<WindowState>>();
@@ -118,6 +119,7 @@ bool WindowHandler::start() {
 
     NES_DEBUG("WindowHandler " << this << ": Spawn thread")
     thread = std::thread(std::bind(&WindowHandler::trigger, this));
+    pthread_setname_np(thread.native_handle(), "WindowHandlerThread");
     return true;
 }
 
