@@ -81,7 +81,7 @@ TEST_F(WindowManagerTest, check_slice) {
   auto store = new WindowSliceStore<int64_t>(0L);
   auto aggregation = std::make_shared<TestAggregation>(TestAggregation());
 
-  auto windowDef = std::make_shared<WindowDefinition>(WindowDefinition(aggregation, TumblingWindow::of(Seconds(60))));
+  auto windowDef = std::make_shared<WindowDefinition>(WindowDefinition(aggregation, TumblingWindow::of(TimeType::EventTime,Seconds(60))));
 
   auto windowManager = new WindowManager(windowDef);
   uint64_t ts = 10;
@@ -107,7 +107,7 @@ TEST_F(WindowManagerTest, window_trigger) {
 
   auto aggregation = Sum::on(schema.get("id"));
 
-  auto windowDef = std::make_shared<WindowDefinition>(WindowDefinition(aggregation, TumblingWindow::of(Milliseconds(10))));
+  auto windowDef = std::make_shared<WindowDefinition>(WindowDefinition(aggregation, TumblingWindow::of(TimeType::EventTime,Milliseconds(10))));
 
   auto w = WindowHandler(windowDef);
   w.setup(nullptr, 0);

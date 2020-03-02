@@ -150,15 +150,15 @@ TEST_F(QueryExecutionTest, filterQuery) {
     }
 }
 
-
 TEST_F(QueryExecutionTest, windowQuery) {
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema);
     auto source = createSourceOperator(testSource);
     auto aggregation = Sum::on(testSchema.get("one"));
-    auto windowType = TumblingWindow::of(Milliseconds(2));
-    auto windowOperator = createWindowOperator(createWindowDefinition(testSchema.get("value"), aggregation, windowType));
+    auto windowType = TumblingWindow::of(Milliseconds(TimeType::ProcessingTime, 2));
+    auto
+        windowOperator = createWindowOperator(createWindowDefinition(testSchema.get("value"), aggregation, windowType));
     Schema resultSchema = Schema().create().addField(createField("sum", BasicType::INT64));
     SchemaPtr ptr = std::make_shared<Schema>(resultSchema);
     auto windowScan = createWindowScanOperator(ptr);
@@ -185,18 +185,14 @@ TEST_F(QueryExecutionTest, windowQuery) {
     EXPECT_EQ(plan->numberOfPipelineStages(), 2);
     // TODO switch to event time if that is ready to remove sleep
     // ingest test data
-    for(int i = 0 ; i <10;i++) {
+    for (int i = 0; i < 10; i++) {
         plan->executeStage(0, testInputBuffer);
         sleep(1);
     }
     plan->stop();
-    sleep(5);
+    sleep(1);
 
-    // This plan should produce one output buffer
-    EXPECT_EQ(testSink->getNumberOfResultBuffers(), 5);
-
-    auto resultBuffer = testSink->resultBuffers[1];
-
+    auto resultBuffer = testSink->resultBuffers[2];
     // The output buffer should contain 5 tuple;
     EXPECT_EQ(resultBuffer->getNumberOfTuples(), 2);
     auto resultLayout = createRowLayout(ptr);

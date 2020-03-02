@@ -30,10 +30,11 @@ void WindowHandler::aggregateWindows(
     WindowDefinitionPtr window_definition_ptr,
     TupleBufferPtr tuple_buffer) {
 
-    // we use the maximal records ts as watermark.
+    // For event time we use the maximal records ts as watermark.
+    // For processing time we use the current wall clock as watermark.
     // TODO we should add a allowed lateness to support out of order events
-    //auto watermark = store->getMaxTs();
-    auto watermark = getTsFromClock();
+    auto windowTimeType = window_definition_ptr->windowType->getWindowTimeType();
+    auto watermark = windowTimeType == ProcessingTime ? getTsFromClock() : store->getMaxTs();
 
     // create result vector of windows
     auto windows = std::make_shared<std::vector<WindowState>>();
@@ -95,7 +96,7 @@ void WindowHandler::trigger() {
         this->aggregateWindows<int64_t, int64_t>(it.second, this->windowDefinitionPtr, tuple_buffer);
     }
     // if produced tuple then send the tuple buffer to the next pipeline stage or sink
-    if(tuple_buffer->getNumberOfTuples()>0) {
+    if (tuple_buffer->getNumberOfTuples() > 0) {
         NES_DEBUG("WindowHandler: Dispatch output buffer with " << tuple_buffer->getNumberOfTuples() << " records");
         Dispatcher::instance().addWorkForNextPipeline(
             tuple_buffer,
