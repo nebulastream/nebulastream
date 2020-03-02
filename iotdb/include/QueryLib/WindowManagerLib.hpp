@@ -142,6 +142,7 @@ class WindowManager {
     // check if the slice store is empty
     if (store->empty()) {
       // we create the first slice for all windows between 0 and record ts - allowedLateness.
+      store->setLastWatermark(ts- allowedLateness);
       store->nextEdge = windowDefinition->windowType->calculateNextWindowEnd(ts - allowedLateness);
       store->appendSlice(SliceMetaData(0, store->nextEdge));
     }

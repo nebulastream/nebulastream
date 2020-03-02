@@ -6,39 +6,47 @@
 
 namespace NES {
 
-QueryCompiler::QueryCompiler()  {};
+QueryCompiler::QueryCompiler() {};
 
-QueryCompiler::QueryCompiler(QueryCompiler *queryCompiler)  {};
+QueryCompiler::QueryCompiler(QueryCompiler* queryCompiler) {};
 
 QueryCompilerPtr QueryCompiler::create() {
-  return std::make_shared<QueryCompiler>(new QueryCompiler());
+    return std::make_shared<QueryCompiler>(new QueryCompiler());
 }
 
 QueryExecutionPlanPtr QueryCompiler::compile(OperatorPtr queryPlan) {
 
-  auto codeGenerator = createCodeGenerator();
-  auto context = createPipelineContext();
-  queryPlan->produce(codeGenerator, context, std::cout);
-  QueryExecutionPlanPtr qep = std::make_shared<GeneratedQueryExecutionPlan>();
-  compilePipelineStages(qep, codeGenerator, context);
-  return qep;
+    auto codeGenerator = createCodeGenerator();
+    auto context = createPipelineContext();
+    queryPlan->produce(codeGenerator, context, std::cout);
+    QueryExecutionPlanPtr qep = std::make_shared<GeneratedQueryExecutionPlan>();
+    compilePipelineStages(qep, codeGenerator, context);
+    return qep;
 }
 
-void QueryCompiler::compilePipelineStages(QueryExecutionPlanPtr queryExecutionPlan, CodeGeneratorPtr codeGenerator, PipelineContextPtr context) {
-  auto executablePipeline = codeGenerator->compile(CompilerArgs(), context->code);
-  if(context->hasWindow()){
-    auto windowHandler = createWindowHandler(context->getWindow());
-    queryExecutionPlan->addPipelineStage(createPipelineStage(queryExecutionPlan->numberOfPipelineStages(), queryExecutionPlan, executablePipeline, windowHandler));
-  }else{
-    queryExecutionPlan->addPipelineStage(createPipelineStage(queryExecutionPlan->numberOfPipelineStages(), queryExecutionPlan, executablePipeline));
-  }
-  if(context->hasNextPipeline()){
-    this->compilePipelineStages(queryExecutionPlan, codeGenerator, context->getNextPipeline());
-  }
+void QueryCompiler::compilePipelineStages(QueryExecutionPlanPtr queryExecutionPlan,
+                                          CodeGeneratorPtr codeGenerator,
+                                          PipelineContextPtr context) {
+    if (context->hasNextPipeline()) {
+        this->compilePipelineStages(queryExecutionPlan, codeGenerator, context->getNextPipeline());
+    }
+    auto executablePipeline = codeGenerator->compile(CompilerArgs(), context->code);
+    if (context->hasWindow()) {
+        auto windowHandler = createWindowHandler(context->getWindow());
+        queryExecutionPlan->addPipelineStage(createPipelineStage(queryExecutionPlan->numberOfPipelineStages(),
+                                                                 queryExecutionPlan,
+                                                                 executablePipeline,
+                                                                 windowHandler));
+    } else {
+        queryExecutionPlan->addPipelineStage(createPipelineStage(queryExecutionPlan->numberOfPipelineStages(),
+                                                                 queryExecutionPlan,
+                                                                 executablePipeline));
+    }
+
 }
 
-QueryCompilerPtr createDefaultQueryCompiler(){
-  return QueryCompiler::create();
+QueryCompilerPtr createDefaultQueryCompiler() {
+    return QueryCompiler::create();
 }
 
 }

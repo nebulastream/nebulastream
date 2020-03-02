@@ -19,7 +19,7 @@ typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 class WindowHandler {
  public:
   WindowHandler() = default;
-  WindowHandler(WindowDefinitionPtr window_definition_ptr);
+  WindowHandler(WindowDefinitionPtr windowDefinitionPtr);
   ~WindowHandler();
 
   /**
@@ -69,8 +69,8 @@ class WindowHandler {
   void serialize(Archive &ar, const unsigned int version) {}
 
  private:
-  bool running;
-  WindowDefinitionPtr window_definition_ptr;
+  bool running = false;
+  WindowDefinitionPtr windowDefinitionPtr;
   WindowManagerPtr window_manager_ptr;
   void *window_state;
   std::thread thread;
