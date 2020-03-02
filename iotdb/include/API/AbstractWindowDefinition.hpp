@@ -19,13 +19,14 @@ class WindowState {
 
 typedef std::shared_ptr<std::vector<WindowState>> WindowListPtr;
 
-enum TimeType {
-    EventTime,
-    ProcessingTime
+enum class TimeType {
+    EventTime = 1,
+    ProcessingTime = 2
 };
 
 class WindowType {
   public:
+    WindowType(TimeType timeType);
     /**
       * Calculates the next window end based on a given timestamp
       * @param currentTs
