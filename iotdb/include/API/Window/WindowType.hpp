@@ -21,7 +21,7 @@ class TumblingWindow : public WindowType {
    * @param size
    * @return WindowTypePtr
    */
-  static WindowTypePtr of(TimeMeasure size);
+  static WindowTypePtr of(TimeType timeType, TimeMeasure size);
 
   /**
    * Calculates the next window end based on a given timestamp.
@@ -29,15 +29,15 @@ class TumblingWindow : public WindowType {
    * @return the next window end
    */
   uint64_t calculateNextWindowEnd(uint64_t currentTs) const override {
-    return currentTs + _size.getTime() - (currentTs) % _size.getTime();
+    return currentTs + size.getTime() - (currentTs) % size.getTime();
   }
 
   void triggerWindows(WindowListPtr windows, uint64_t lastWatermark, uint64_t currentWatermark) const;
 
 
  private:
-  TumblingWindow(TimeMeasure size);
-  const TimeMeasure _size;
+  TumblingWindow(TimeType timeType, TimeMeasure size);
+  const TimeMeasure size;
 };
 
 /**
@@ -46,7 +46,7 @@ class TumblingWindow : public WindowType {
  */
 class SlidingWindow : public WindowType {
  public:
-  static WindowTypePtr of(TimeMeasure size, TimeMeasure slide);
+  static WindowTypePtr of(TimeType timeType, TimeMeasure size, TimeMeasure slide);
   /**
   * Calculates the next window end based on a given timestamp.
   * @param currentTs
@@ -56,10 +56,10 @@ class SlidingWindow : public WindowType {
     return 0;
   }
  private:
-  SlidingWindow(TimeMeasure size, TimeMeasure slide);
+  SlidingWindow(TimeType timeType, TimeMeasure size, TimeMeasure slide);
 
-  const TimeMeasure _size;
-  const TimeMeasure _slide;
+  const TimeMeasure size;
+  const TimeMeasure slide;
   void triggerWindows(WindowListPtr windows, uint64_t lastWatermark, uint64_t currentWatermark) const;
 };
 
@@ -75,7 +75,7 @@ class SessionWindow : public WindowType {
   * elements to sessions based on the element timestamp.
   * @param size The session timeout, i.e. the time gap between sessions
   */
-  static WindowTypePtr withGap(TimeMeasure gap);
+  static WindowTypePtr withGap(TimeType timeType, TimeMeasure gap);
   /**
   * Calculates the next window end based on a given timestamp.
   * @param currentTs
@@ -87,8 +87,8 @@ class SessionWindow : public WindowType {
 
   void triggerWindows(WindowListPtr windows, uint64_t lastWatermark, uint64_t currentWatermark) const;
  private:
-  SessionWindow(TimeMeasure gap);
-  const TimeMeasure _gap;
+  SessionWindow(TimeType timeType, TimeMeasure gap);
+  const TimeMeasure gap;
 };
 }
 
