@@ -1,0 +1,122 @@
+# REST APIs
+
+Below we describe the REST APIs available for user to interact with system.
+The NebulaStream REST API is versioned, with specific versions being queryable by prefixing the url with the version prefix. 
+Prefixes are always of the form v[version_number]. For example, to access version 1 of /foo/bar one would query /v1/foo/bar.
+
+Querying unsupported/non-existing versions will return a 404 error.
+
+There exist several async operations among these APIs, e.g. submit a job. These async calls will return a triggerid to 
+identify the operation you just POST and then you need to use that triggerid to query for the status of the operation.
+
+## Query 
+Here we describe the available endpoints used for submitting and interacting with a user query.
+ 
+### Submitting User Query
+
+Submitting user query for execution.
+ 
+#### API: /query/execute-query
+#### Verb: POST
+#### Response Code: 200 OK
+
+#### Example: 
+
+##### Request:
+{"userQuery":"InputQuery::from(temperature).print(std::cout);", "strategyName": "BottomUp"}
+
+##### Response:
+{"QueryId": "system_generate_uuid"}
+
+### Getting Execution Plan
+
+Getting the execution plan for the user query.
+ 
+#### API: /query/execution-plan
+#### Verb: POST
+#### Response Code: 200 OK
+
+#### Example: 
+
+##### Request:
+{"userQuery":"InputQuery::from(temperature).print(std::cout);", "strategyName": "BottomUp"}
+
+##### Response:
+{"nodes": [{
+        "id": "node_id",
+        "title": "node_title",
+        "nodeType": "node_type",
+        "capacity": "node_capacity",
+        "remainingCapacity": "remaining_capacity",
+        "physicalStreamName": "physical_stream_name"
+    }],
+"edges": [{
+        "source":"source_node",    
+        "target":"target_node",    
+        "linkCapacity":"link_capacity",    
+        "linkLatency":"link_latency",    
+    }]
+}
+
+### Get Query plan
+
+Get query plan for the user query.
+ 
+#### API: /query/query-plan
+#### Verb: GET
+#### Response Code: 200 OK
+
+#### Example: 
+
+##### Request:
+{"userQuery":"InputQuery::from(temperature).print(std::cout);"}
+
+##### Response:
+{"nodes": [{
+        "id": "node_id",
+        "title": "node_title",
+        "nodeType": "node_type"
+    }],
+"edges": [{
+        "source":"source_operator",    
+        "target":"target_operator"
+    }]
+}
+
+### Getting NebulaStream Topology graph
+
+To get the NebulaStream topology graph as JSON.
+
+#### API: /query/nes-topology
+#### Verb: GET
+#### Response Code: 200 OK
+
+#### Example: 
+
+##### Request:
+{}
+
+##### Response:
+{"nodes": [{
+        "id": "node_id",
+        "title": "node_title",
+        "nodeType": "node_type",
+        "capacity": "node_capacity",
+        "remainingCapacity": "remaining_capacity",
+        "physicalStreamName": "physical_stream_name"
+    }],
+"edges": [{
+        "source":"source_node",    
+        "target":"target_node",    
+        "linkCapacity":"link_capacity",    
+        "linkLatency":"link_latency",    
+    }]
+}
+
+
+## Query Catalog
+
+### /queryCatalog
+
+## Stream Catalog
+### /streamCatalog
