@@ -184,6 +184,7 @@ InputQuery &InputQuery::windowByKey(const AttributeFieldPtr onKey,
   op->setOperatorId(this->getNextOperatorId());
   addChild(op, root);
   root = op;
+  // add a window scan operator with the window result schema.
   auto outputSchema = Schema::create().addField(aggregation->asField());
   SchemaPtr ptr = std::make_shared<Schema>(outputSchema);
   OperatorPtr windowScan = createWindowScanOperator(ptr);
@@ -198,10 +199,10 @@ InputQuery &InputQuery::window(const NES::WindowTypePtr windowType,
   auto window_def_ptr = std::make_shared<WindowDefinition>(aggregation,
                                                            windowType);
   OperatorPtr op = createWindowOperator(window_def_ptr);
-  //OperatorPtr op = createWindowOperator(windowType);
   op->setOperatorId(this->getNextOperatorId());
   addChild(op, root);
   root = op;
+  // add a window scan operator with the window result schema.
   auto outputSchema = Schema::create().addField(aggregation->asField()).create();
   SchemaPtr ptr = std::make_shared<Schema>(outputSchema);
   OperatorPtr windowScan = createWindowScanOperator(ptr);

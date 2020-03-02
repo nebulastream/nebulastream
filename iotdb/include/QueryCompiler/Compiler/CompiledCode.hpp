@@ -11,6 +11,10 @@ class CompiledCode {
  public:
   virtual ~CompiledCode() = default;
 
+  /**
+   * @brief Finds the function by its mangled name and returns the typed function pointer.
+   * @param mangled name
+   */
   template <typename Function> Function getFunctionPointer(const std::string& name)
   {
     // INFO

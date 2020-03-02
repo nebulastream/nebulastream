@@ -18,6 +18,11 @@ class ExecutablePipeline {
  public:
   virtual ~ExecutablePipeline() = default;
   virtual ExecutablePipelinePtr copy() const = 0;
+
+  /**
+   * @brief Executes the pipeline given the input
+   * @return error code: 1 for valid execution, 0 for error
+   */
   virtual uint32_t execute(const TupleBufferPtr input_buffers,
           void *state, WindowManagerPtr window_manager,
                TupleBufferPtr result_buf) = 0;

@@ -15,18 +15,28 @@ class CompiledCode;
 typedef std::shared_ptr<CompiledCode> CompiledCodePtr;
 
 
+/**
+ * @brief The Compiler compiles a source code fragment to a dynamic library.
+ */
 class Compiler {
   public:
     Compiler();
+    /**
+     * @brief Compiles the source string.
+     * @param source
+     * @return CompiledCode
+     */
     CompiledCodePtr compile(const std::string& source);
   private:
     void init();
     void initCompilerArgs();
+    /**
+     * @brief Creates a precompiled header for the runtime lib.
+     * TODO this is currently not used and need a rework see issue #392.
+     * @return
+     */
     Timestamp createPrecompiledHeader();
     bool rebuildPrecompiledHeader();
-
-    std::vector<std::string> getPrecompiledHeaderCompilerArgs();
-    std::vector<std::string> getCompilerArgs();
 
     CompiledCodePtr compileWithSystemCompiler(const std::string& source, const Timestamp pch_time);
 
@@ -34,6 +44,8 @@ class Compiler {
 
     void handleDebugging(const std::string& source);
 
+    std::vector<std::string> getPrecompiledHeaderCompilerArgs();
+    std::vector<std::string> getCompilerArgs();
     bool show_generated_code_ = false;
     bool debug_code_generator_ = false;
     bool keep_last_generated_query_code_ = false;

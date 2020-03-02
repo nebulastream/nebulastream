@@ -17,6 +17,10 @@ class Schema;
 class WindowDefinition;
 typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 
+/**
+ * @brief The Pipeline Context represents the context of one pipeline during code generation.
+ * todo it requires a refactoring if we redesign the compiler.
+ */
 class PipelineContext {
  public:
   PipelineContext();
