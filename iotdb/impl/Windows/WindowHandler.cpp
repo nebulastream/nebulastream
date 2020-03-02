@@ -34,7 +34,7 @@ void WindowHandler::aggregateWindows(
     // For processing time we use the current wall clock as watermark.
     // TODO we should add a allowed lateness to support out of order events
     auto windowTimeType = window_definition_ptr->windowType->getWindowTimeType();
-    auto watermark = windowTimeType == ProcessingTime ? getTsFromClock() : store->getMaxTs();
+    auto watermark = windowTimeType == TimeType::ProcessingTime ? getTsFromClock() : store->getMaxTs();
 
     // create result vector of windows
     auto windows = std::make_shared<std::vector<WindowState>>();
