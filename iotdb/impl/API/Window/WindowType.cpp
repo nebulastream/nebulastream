@@ -13,7 +13,8 @@ TimeCharacteristic WindowType::getTimeCharacteristic() const {
     return this->timeCharacteristic;
 }
 
-TumblingWindow::TumblingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size) : size(size), WindowType(timeCharacteristic) {}
+TumblingWindow::TumblingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size)
+    : size(size), WindowType(timeCharacteristic) {}
 
 WindowTypePtr TumblingWindow::of(TimeCharacteristic timeCharacteristic, TimeMeasure size) {
     return std::make_shared<TumblingWindow>(TumblingWindow(timeCharacteristic, size));
@@ -25,12 +26,14 @@ void TumblingWindow::triggerWindows(WindowListPtr windows,
     long lastStart = lastWatermark - ((lastWatermark + size.getTime())%size.getTime());
     for (long windowStart = lastStart; windowStart + size.getTime() <= currentWatermark;
          windowStart += size.getTime()) {
-        windows->push_back(WindowState(windowStart, windowStart + size.getTime()));
+        windows->emplace_back(windowStart, windowStart + size.getTime());
     }
 }
 
 SlidingWindow::SlidingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide)
-    : size(size), slide(slide), WindowType(timeCharacteristic) {}
+    : size(size), slide(slide), WindowType(timeCharacteristic) {
+    NES_NOT_IMPLEMENTED
+}
 
 WindowTypePtr SlidingWindow::of(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide) {
     return std::make_shared<SlidingWindow>(SlidingWindow(timeCharacteristic, size, slide));
@@ -42,7 +45,10 @@ void SlidingWindow::triggerWindows(WindowListPtr windows,
     NES_NOT_IMPLEMENTED
 }
 
-SessionWindow::SessionWindow(TimeCharacteristic timeCharacteristic, TimeMeasure gap) : gap(gap), WindowType(timeCharacteristic) {}
+SessionWindow::SessionWindow(TimeCharacteristic timeCharacteristic, TimeMeasure gap)
+    : gap(gap), WindowType(timeCharacteristic) {
+    NES_NOT_IMPLEMENTED
+}
 
 WindowTypePtr SessionWindow::withGap(TimeCharacteristic timeCharacteristic, TimeMeasure gap) {
     return std::make_shared<SessionWindow>(SessionWindow(timeCharacteristic, gap));
