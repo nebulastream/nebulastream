@@ -1,11 +1,11 @@
-#include <Optimizer/impl/HighAvailability.hpp>
+#include <Optimizer/placement/HighAvailabilityStrategy.hpp>
 #include <Operators/Operator.hpp>
 #include <Util/Logger.hpp>
 #include <Optimizer/utils/PathFinder.hpp>
 
 namespace NES {
 
-NESExecutionPlanPtr HighAvailability::initializeExecutionPlan(InputQueryPtr inputQuery,
+NESExecutionPlanPtr HighAvailabilityStrategy::initializeExecutionPlan(InputQueryPtr inputQuery,
                                                               NESTopologyPlanPtr nesTopologyPlan) {
     const OperatorPtr sinkOperator = inputQuery->getRoot();
 
@@ -42,7 +42,7 @@ NESExecutionPlanPtr HighAvailability::initializeExecutionPlan(InputQueryPtr inpu
     return nesExecutionPlanPtr;
 }
 
-void HighAvailability::placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
+void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
                                       OperatorPtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes) {
 
     NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
@@ -219,7 +219,7 @@ void HighAvailability::placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr, N
     }
 }
 
-void HighAvailability::addForwardOperators(vector<NESTopologyEntryPtr> pathForPlacement,
+void HighAvailabilityStrategy::addForwardOperators(vector<NESTopologyEntryPtr> pathForPlacement,
                                            NES::NESExecutionPlanPtr nesExecutionPlanPtr) const {
 
     PathFinder pathFinder;

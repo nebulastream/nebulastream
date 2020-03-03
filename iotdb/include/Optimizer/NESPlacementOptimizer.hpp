@@ -25,16 +25,6 @@ class NESPlacementOptimizer {
      */
     virtual NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan) = 0;
 
-    void invalidateUnscheduledOperators(OperatorPtr rootOperator, vector<size_t>& childOperatorIds);
-
-    /**
-     * @brief This method will traverse through all the nodes of the graphs and remove any reference to the operator not
-     * located on the traversed node.
-     *
-     * @param nesExecutionPlanPtr
-     */
-    void removeNonResidentOperators(NESExecutionPlanPtr nesExecutionPlanPtr);
-
     /**
      * @brief This method will add system generated zmq source and sinks for each execution node.
      * @note We use zmq for internal message transfer therefore the source and sink will be zmq based.

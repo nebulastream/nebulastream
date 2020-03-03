@@ -1,12 +1,12 @@
+#include <Optimizer/placement/LowLatencyStrategy.hpp>
 #include <Util/Logger.hpp>
 #include <Optimizer/utils/PathFinder.hpp>
 #include <Operators/Operator.hpp>
-#include "Optimizer/impl/HighThroughput.hpp"
 
 namespace NES {
 
-NESExecutionPlanPtr HighThroughput::initializeExecutionPlan(InputQueryPtr inputQuery,
-                                                            NESTopologyPlanPtr nesTopologyPlan) {
+NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(NES::InputQueryPtr inputQuery,
+                                                        NES::NESTopologyPlanPtr nesTopologyPlan) {
 
     const OperatorPtr sinkOperator = inputQuery->getRoot();
 
@@ -15,7 +15,7 @@ NESExecutionPlanPtr HighThroughput::initializeExecutionPlan(InputQueryPtr inputQ
     const OperatorPtr sourceOperatorPtr = getSourceOperator(sinkOperator);
 
     if (!sourceOperatorPtr) {
-        NES_ERROR("HighThroughput: Unable to find the source operator.");
+        NES_ERROR("LowLatency: Unable to find the source operator.");
         throw std::runtime_error("No source operator found in the query plan");
     }
 
@@ -23,20 +23,20 @@ NESExecutionPlanPtr HighThroughput::initializeExecutionPlan(InputQueryPtr inputQ
         .getSourceNodesForLogicalStream(streamName);
 
     if (sourceNodePtrs.empty()) {
-        NES_ERROR("HighThroughput: Unable to find the target source: " << streamName);
+        NES_ERROR("LowLatency: Unable to find the target source: " << streamName);
         throw std::runtime_error("No source found in the topology for stream " + streamName);
     }
 
     NESExecutionPlanPtr nesExecutionPlanPtr = std::make_shared<NESExecutionPlan>();
     const NESTopologyGraphPtr nesTopologyGraphPtr = nesTopologyPlan->getNESTopologyGraph();
 
-    NES_INFO("HighThroughput: Placing operators on the nes topology.");
+    NES_INFO("LowLatency: Placing operators on the nes topology.");
     placeOperators(nesExecutionPlanPtr, nesTopologyGraphPtr, sourceOperatorPtr, sourceNodePtrs);
 
-    NES_INFO("HighThroughput: Adding forward operators.");
+    NES_INFO("LowLatency: Adding forward operators.");
     addForwardOperators(sourceNodePtrs, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
 
-    NES_INFO("HighThroughput: Generating complete execution Graph.");
+    NES_INFO("LowLatency: Generating complete execution Graph.");
     completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlan);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.
@@ -46,15 +46,15 @@ NESExecutionPlanPtr HighThroughput::initializeExecutionPlan(InputQueryPtr inputQ
     return nesExecutionPlanPtr;
 }
 
-void HighThroughput::placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
-                                    OperatorPtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes) {
+void LowLatencyStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
+                                OperatorPtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes) {
 
     PathFinder pathFinder;
     const NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
     for (NESTopologyEntryPtr sourceNode: sourceNodes) {
 
         OperatorPtr targetOperator = sourceOperator;
-        const vector<NESTopologyEntryPtr> targetPath = pathFinder.findPathWithMaxBandwidth(sourceNode, sinkNode);
+        const vector<NESTopologyEntryPtr> targetPath = pathFinder.findPathWithMinLinkLatency(sourceNode, sinkNode);
 
         for (NESTopologyEntryPtr node : targetPath) {
             while (node->getRemainingCpuCapacity() > 0 && targetOperator) {
@@ -64,7 +64,7 @@ void HighThroughput::placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTop
                 }
 
                 if (!executionPlanPtr->hasVertex(node->getId())) {
-                    NES_DEBUG("HighThroughput: Create new execution node.")
+                    NES_DEBUG("LowLatency: Create new execution node.")
                     stringstream operatorName;
                     operatorName << operatorTypeToString[targetOperator->getOperatorType()] << "(OP-"
                                  << std::to_string(targetOperator->getOperatorId()) << ")";
@@ -81,12 +81,12 @@ void HighThroughput::placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTop
                     const auto exists = std::find(residentOperatorIds.begin(), residentOperatorIds.end(), operatorId);
                     if (exists != residentOperatorIds.end()) {
                         //skip adding rest of the operator chains as they already exists.
-                        NES_DEBUG("HighThroughput: skip adding rest of the operator chains as they already exists.");
+                        NES_DEBUG("LowLatency: skip adding rest of the operator chains as they already exists.");
                         targetOperator = nullptr;
                         break;
                     } else {
 
-                        NES_DEBUG("HighThroughput: adding target operator to already existing operator chain.");
+                        NES_DEBUG("LowLatency: adding target operator to already existing operator chain.");
                         stringstream operatorName;
                         operatorName << existingExecutionNode->getOperatorName() << "=>"
                                      << operatorTypeToString[targetOperator->getOperatorType()]
@@ -108,16 +108,15 @@ void HighThroughput::placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTop
     }
 }
 
-void HighThroughput::addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes,
-                                         NESTopologyEntryPtr rootNode,
-                                         NESExecutionPlanPtr nesExecutionPlanPtr) const {
+void LowLatencyStrategy::addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes, NESTopologyEntryPtr rootNode,
+                                     NESExecutionPlanPtr nesExecutionPlanPtr) const {
 
     PathFinder pathFinder;
 
     for (NESTopologyEntryPtr targetSource: sourceNodes) {
 
         //Find the list of nodes connecting the source and destination nodes
-        std::vector<NESTopologyEntryPtr> candidateNodes = pathFinder.findPathWithMaxBandwidth(targetSource, rootNode);
+        std::vector<NESTopologyEntryPtr> candidateNodes = pathFinder.findPathWithMinLinkLatency(targetSource, rootNode);
 
         for (NESTopologyEntryPtr candidateNode: candidateNodes) {
 

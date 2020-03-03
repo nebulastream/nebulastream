@@ -11,11 +11,11 @@ typedef std::shared_ptr<Operator> OperatorPtr;
 
 using namespace std;
 
-class TopDown : public NESPlacementOptimizer {
+class TopDownStrategy : public NESPlacementOptimizer {
 
   public:
-    TopDown() = default;
-    ~TopDown() = default;
+    TopDownStrategy() = default;
+    ~TopDownStrategy() = default;
 
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery,
                                                 NESTopologyPlanPtr nesTopologyPlanPtr) override;

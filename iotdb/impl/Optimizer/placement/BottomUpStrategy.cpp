@@ -1,4 +1,4 @@
-#include "Optimizer/impl/BottomUp.hpp"
+#include <Optimizer/placement/BottomUpStrategy.hpp>
 #include <Operators/Operator.hpp>
 #include <iostream>
 #include <Util/Logger.hpp>
@@ -8,7 +8,7 @@
 using namespace std;
 
 namespace NES {
-NESExecutionPlanPtr BottomUp::initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan) {
+NESExecutionPlanPtr BottomUpStrategy::initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan) {
 
     const OperatorPtr sinkOperator = inputQuery->getRoot();
 
@@ -48,7 +48,7 @@ NESExecutionPlanPtr BottomUp::initializeExecutionPlan(InputQueryPtr inputQuery, 
     return nesExecutionPlanPtr;
 }
 
-void BottomUp::placeOperators(NESExecutionPlanPtr executionPlanPtr, const NESTopologyGraphPtr nesTopologyGraphPtr,
+void BottomUpStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, const NESTopologyGraphPtr nesTopologyGraphPtr,
                               OperatorPtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes) {
 
     for (NESTopologyEntryPtr sourceNode: sourceNodes) {
@@ -144,7 +144,7 @@ void BottomUp::placeOperators(NESExecutionPlanPtr executionPlanPtr, const NESTop
     }
 }
 
-NESTopologyEntryPtr BottomUp::findSuitableNESNodeForOperatorPlacement(const ProcessOperator& operatorToProcess,
+NESTopologyEntryPtr BottomUpStrategy::findSuitableNESNodeForOperatorPlacement(const ProcessOperator& operatorToProcess,
                                                                       NESTopologyGraphPtr nesTopologyGraphPtr,
                                                                       NESTopologyEntryPtr sourceNodePtr) {
 
@@ -203,7 +203,7 @@ NESTopologyEntryPtr BottomUp::findSuitableNESNodeForOperatorPlacement(const Proc
     return node;
 };
 
-void BottomUp::addForwardOperators(const vector<NESTopologyEntryPtr> sourceNodes,
+void BottomUpStrategy::addForwardOperators(const vector<NESTopologyEntryPtr> sourceNodes,
                                                 const NESTopologyEntryPtr rootNode,
                                                 NESExecutionPlanPtr nesExecutionPlanPtr) const {
 
