@@ -669,8 +669,8 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     /* check result for correctness */
     auto sumGeneratedCode = layout->readField<int64_t>(outputBuffer, 0, 0);
     auto sum = 0;
-    for (uint64_t i = 0; i < 100; ++i) {
-        sum += layout->readField<int64_t>(inputBuffer, i, 0);;
+    for (uint64_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
+        sum += layout->readField<int64_t>(inputBuffer, recordIndex, 0);;
     }
     EXPECT_EQ(sum, sumGeneratedCode);
 }
@@ -695,21 +695,23 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
     Compiler compiler;
     ExecutablePipelinePtr stage = codeGenerator->compile(CompilerArgs(), context->code);
 
-    /* prepare input tuple buffer */
+    /* prepare input and output tuple buffer */
     Schema schema = Schema::create().addField("i64", UINT64);
     TupleBufferPtr buffer = source->receiveData();
-    NES_INFO("Processing " << buffer->getNumberOfTuples() << " tuples: ");
+
     TupleBufferPtr resultBuffer = BufferManager::instance().getBuffer();
     resultBuffer->setTupleSizeInBytes(sizeof(uint64_t));
+
+
     /* execute Stage */
+    NES_INFO("Processing " << buffer->getNumberOfTuples() << " tuples: ");
     stage->execute(buffer, NULL, NULL, resultBuffer);
 
     /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
     EXPECT_EQ(buffer->getNumberOfTuples(), resultBuffer->getNumberOfTuples());
-
-    uint64_t* result_data = (uint64_t*) resultBuffer->getBuffer();
-    for (uint64_t i = 0; i < buffer->getNumberOfTuples(); ++i) {
-        EXPECT_EQ(result_data[i], 1);
+    auto layout = createRowLayout(schema.copy());
+    for (uint64_t recordIndex = 0; recordIndex < buffer->getNumberOfTuples(); ++recordIndex) {
+        EXPECT_EQ(1, layout->readField<uint64_t>(resultBuffer, recordIndex, 0));
     }
 }
 
