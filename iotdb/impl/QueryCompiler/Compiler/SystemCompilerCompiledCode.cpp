@@ -7,14 +7,14 @@ namespace NES {
 SystemCompilerCompiledCode::SystemCompilerCompiledCode(SharedLibraryPtr library,
                                                        const std::string &base_name) :
     CompiledCode(),
-    library_(library),
+    library(library),
     base_file_name_(base_name) {};
 SystemCompilerCompiledCode::~SystemCompilerCompiledCode() {
   cleanUp();
 }
 
 void *SystemCompilerCompiledCode::getFunctionPointerImpl(const std::string &name) {
-  return library_->getSymbol(name);
+  return library->getSymbol(name);
 }
 
 void SystemCompilerCompiledCode::cleanUp() {
