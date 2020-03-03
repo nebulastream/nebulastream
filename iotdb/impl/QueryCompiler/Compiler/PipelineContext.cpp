@@ -7,36 +7,36 @@
 namespace NES {
 
 PipelineContext::PipelineContext() {
-  this->code = std::make_shared<GeneratedCode>();
+    this->code = std::make_shared<GeneratedCode>();
 }
-void PipelineContext::addTypeDeclaration(const Declaration &decl) { type_declarations.push_back(decl.copy()); }
-void PipelineContext::addVariableDeclaration(const Declaration &decl) { variable_declarations.push_back(decl.copy()); }
+void PipelineContext::addTypeDeclaration(const Declaration& decl) { type_declarations.push_back(decl.copy()); }
+void PipelineContext::addVariableDeclaration(const Declaration& decl) { variable_declarations.push_back(decl.copy()); }
 
 void PipelineContext::setWindow(WindowDefinitionPtr window) {
-  this->windowDefinition = std::move(window);
+    this->windowDefinition = std::move(window);
 }
 
 WindowDefinitionPtr PipelineContext::getWindow() {
-  return this->windowDefinition;
+    return this->windowDefinition;
 }
 
 bool PipelineContext::hasWindow() const {
-  return this->windowDefinition != nullptr;
+    return this->windowDefinition != nullptr;
 }
 
 bool PipelineContext::hasNextPipeline() const {
-  return this->nextPipeline != nullptr;
+    return this->nextPipeline != nullptr;
 }
 
 PipelineContextPtr PipelineContext::getNextPipeline() const {
-  return this->nextPipeline;
+    return this->nextPipeline;
 }
 
 void PipelineContext::setNextPipeline(PipelineContextPtr nextPipeline) {
-  this->nextPipeline = nextPipeline;
+    this->nextPipeline = nextPipeline;
 }
 
-const Schema &PipelineContext::getInputSchema() const { return inputSchema; }
+const Schema& PipelineContext::getInputSchema() const { return inputSchema; }
 
-const Schema &PipelineContext::getResultSchema() const { return resultSchema; }
+const Schema& PipelineContext::getResultSchema() const { return resultSchema; }
 }
