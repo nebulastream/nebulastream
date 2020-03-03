@@ -33,14 +33,14 @@ void QueryCompiler::compilePipelineStages(QueryExecutionPlanPtr queryExecutionPl
     auto executablePipeline = codeGenerator->compile(CompilerArgs(), context->code);
     if (context->hasWindow()) {
         auto windowHandler = createWindowHandler(context->getWindow());
-        queryExecutionPlan->addPipelineStage(createPipelineStage(queryExecutionPlan->numberOfPipelineStages(),
-                                                                 queryExecutionPlan,
-                                                                 executablePipeline,
-                                                                 windowHandler));
+        queryExecutionPlan->appendsPipelineStage(createPipelineStage(queryExecutionPlan->numberOfPipelineStages(),
+                                                                     queryExecutionPlan,
+                                                                     executablePipeline,
+                                                                     windowHandler));
     } else {
-        queryExecutionPlan->addPipelineStage(createPipelineStage(queryExecutionPlan->numberOfPipelineStages(),
-                                                                 queryExecutionPlan,
-                                                                 executablePipeline));
+        queryExecutionPlan->appendsPipelineStage(createPipelineStage(queryExecutionPlan->numberOfPipelineStages(),
+                                                                     queryExecutionPlan,
+                                                                     executablePipeline));
     }
 
 }

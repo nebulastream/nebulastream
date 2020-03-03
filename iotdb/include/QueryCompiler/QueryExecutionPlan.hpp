@@ -69,13 +69,13 @@ class QueryExecutionPlan {
   const std::vector<DataSinkPtr> getSinks() const;
 
   /**
-   * Add a pipeline stage to the query plan.
+   * Appends a pipeline stage to the query plan.
    * @param pipelineStage
    */
-  void addPipelineStage(PipelineStagePtr pipelineStage);
+  void appendsPipelineStage(PipelineStagePtr pipelineStage);
 
   /**
-   * @brief get number of pipeline stages.
+   * @brief Gets number of pipeline stages.
    */
   uint32_t numberOfPipelineStages() {
     return stages.size();
