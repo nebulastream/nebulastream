@@ -26,25 +26,39 @@ QueryExecutionPlan::~QueryExecutionPlan() {
     stageToDest.clear();
 }
 
-void QueryExecutionPlan::stop() {
+bool QueryExecutionPlan::stop() {
     NES_DEBUG("QueryExecutionPlan: stop");
     for (auto& stage: stages) {
-        stage->stop();
+        if (!stage->stop()) {
+            NES_ERROR("QueryExecutionPlan: stop failed!");
+            return false;
+        }
     }
+    return true;
 }
 
-void QueryExecutionPlan::setup() {
+bool QueryExecutionPlan::setup() {
     NES_DEBUG("QueryExecutionPlan: setup");
     for (auto& stage: stages) {
-        stage->setup();
+        if (!stage->setup()) {
+            NES_ERROR("QueryExecutionPlan: setup failed!");
+            this->stop();
+            return false;
+        }
     }
+    return true;
 }
 
-void QueryExecutionPlan::start() {
+bool QueryExecutionPlan::start() {
     NES_DEBUG("QueryExecutionPlan: start");
     for (auto& stage: stages) {
-        stage->start();
+        if (!stage->start()) {
+            NES_ERROR("QueryExecutionPlan: start failed!");
+            this->stop();
+            return false;
+        }
     }
+    return true;
 }
 
 void QueryExecutionPlan::addDataSource(DataSourcePtr source) {

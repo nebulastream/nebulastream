@@ -447,13 +447,13 @@ int CodeGenTest() {
   /**
      define the WindowState struct
    struct WindowState {
-    void *window_state;
+    void *windowState;
     };
   */
   StructDeclaration struct_decl_state =
       StructDeclaration::create("WindowState", "")
           .addField(VariableDeclaration::create(createPointerDataType(createDataType(BasicType(VOID_TYPE))),
-                                                "window_state"));
+                                                "windowState"));
 
   /* struct definition for input tuples */
   StructDeclaration struct_decl_tuple =

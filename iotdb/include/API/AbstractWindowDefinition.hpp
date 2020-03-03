@@ -76,8 +76,21 @@ class WindowDefinition {
 
 typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 
+/**
+ * @brief Create a new window definition for a global window
+ * @param windowAggregation
+ * @param windowType
+ * @return Window Definition
+ */
 WindowDefinitionPtr createWindowDefinition(const WindowAggregationPtr windowAggregation,
                                            const WindowTypePtr windowType);
+
+/**
+ * @brief Create a new window definition for a keyed window
+ * @param windowAggregation
+ * @param windowType
+ * @return Window Definition
+ */
 WindowDefinitionPtr createWindowDefinition(const AttributeFieldPtr onKey,
                                            const WindowAggregationPtr windowAggregation,
                                            const WindowTypePtr windowType);

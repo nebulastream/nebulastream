@@ -2,7 +2,6 @@
 #include <atomic>
 #include <iostream>
 #include <memory>
-#include <pthread.h>
 #include <Util/Logger.hpp>
 #include <boost/serialization/export.hpp>
 #include <State/StateManager.hpp>
@@ -13,103 +12,104 @@ BOOST_CLASS_EXPORT_IMPLEMENT(NES::WindowHandler)
 namespace NES {
 
 WindowHandler::WindowHandler(NES::WindowDefinitionPtr windowDefinitionPtr)
-    : windowDefinitionPtr(windowDefinitionPtr) {
+    : windowDefinition(windowDefinitionPtr) {
 }
 
-void WindowHandler::setup(QueryExecutionPlanPtr queryExecutionPlanPtr, uint32_t pipelineStageId) {
+bool WindowHandler::setup(QueryExecutionPlanPtr queryExecutionPlan, uint32_t pipelineStageId) {
     this->pipelineStageId = pipelineStageId;
-    this->queryExecutionPlanPtr = queryExecutionPlanPtr;
+    this->queryExecutionPlan = queryExecutionPlan;
     // Initialize WindowHandler Manager
-    this->window_manager_ptr = std::make_shared<WindowManager>(this->windowDefinitionPtr);
+    this->windowManager = std::make_shared<WindowManager>(this->windowDefinition);
     // Initialize StateVariable
-    this->window_state = &StateManager::instance().registerState<int64_t, WindowSliceStore<int64_t>*>("window");
+    this->windowState = &StateManager::instance().registerState<int64_t, WindowSliceStore<int64_t>*>("window");
+    return true;
 }
 
 template<class FinalAggregateType, class PartialAggregateType>
 void WindowHandler::aggregateWindows(
     WindowSliceStore<PartialAggregateType>* store,
-    WindowDefinitionPtr window_definition_ptr,
-    TupleBufferPtr tuple_buffer) {
+    WindowDefinitionPtr windowDefinition,
+    TupleBufferPtr tupleBuffer) {
 
     // For event time we use the maximal records ts as watermark.
     // For processing time we use the current wall clock as watermark.
     // TODO we should add a allowed lateness to support out of order events
-    auto windowTimeType = window_definition_ptr->windowType->getTimeCharacteristic();
+    auto windowTimeType = windowDefinition->windowType->getTimeCharacteristic();
     auto watermark = windowTimeType == TimeCharacteristic::ProcessingTime ? getTsFromClock() : store->getMaxTs();
 
     // create result vector of windows
     auto windows = std::make_shared<std::vector<WindowState>>();
     // the window type addes result windows to the windows vectors
-    window_definition_ptr->windowType->triggerWindows(windows, store->getLastWatermark(), watermark);
+    windowDefinition->windowType->triggerWindows(windows, store->getLastWatermark(), watermark);
     // allocate partial final aggregates for each window
-    auto partial_final_aggregates = std::vector<PartialAggregateType>(windows->size());
+    auto partialFinalAggregates = std::vector<PartialAggregateType>(windows->size());
     // iterate over all slices and update the partial final aggregates
     auto slices = store->getSliceMetadata();
-    auto partial_aggregates = store->getPartialAggregates();
+    auto partialAggregates = store->getPartialAggregates();
     NES_DEBUG("WindowHandler: trigger " << windows->size() << " windows, on " << slices.size() << " slices");
-    for (uint64_t s_id = 0; s_id < slices.size(); s_id++) {
-        for (uint64_t w_id = 0; w_id < windows->size(); w_id++) {
-            auto window = (*windows)[w_id];
+    for (uint64_t sliceId = 0; sliceId < slices.size(); sliceId++) {
+        for (uint64_t windowId = 0; windowId < windows->size(); windowId++) {
+            auto window = (*windows)[windowId];
             // A slice is contained in a window if the window starts before the slice and ends after the slice
-            if (window.getStartTs() <= slices[s_id].getStartTs() &&
-                window.getEndTs() >= slices[s_id].getEndTs()) {
+            if (window.getStartTs() <= slices[sliceId].getStartTs() &&
+                window.getEndTs() >= slices[sliceId].getEndTs()) {
                 //TODO Because of this condition we currently only support SUM aggregations
-                if (Sum* sum_agregation = dynamic_cast<Sum*>(window_definition_ptr->windowAggregation.get())) {
-                    if (partial_final_aggregates.size() <= w_id) {
+                if (Sum* sumAggregation = dynamic_cast<Sum*>(windowDefinition->windowAggregation.get())) {
+                    if (partialFinalAggregates.size() <= windowId) {
                         // initial the partial aggregate
-                        partial_final_aggregates[w_id] = partial_aggregates[s_id];
+                        partialFinalAggregates[windowId] = partialAggregates[sliceId];
                     } else {
                         // update the partial aggregate
-                        partial_final_aggregates[w_id] =
-                            sum_agregation->combine<PartialAggregateType>(partial_final_aggregates[w_id],
-                                                                          partial_aggregates[s_id]);
+                        partialFinalAggregates[windowId] =
+                            sumAggregation->combine<PartialAggregateType>(partialFinalAggregates[windowId],
+                                                                          partialAggregates[sliceId]);
                     }
                 }
             }
         }
     }
     // calculate the final aggregate
-    auto intBuffer = static_cast<FinalAggregateType*> (tuple_buffer->getBuffer());
-    for (uint64_t i = 0; i < partial_final_aggregates.size(); i++) {
+    auto intBuffer = static_cast<FinalAggregateType*> (tupleBuffer->getBuffer());
+    for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
         //TODO Because of this condition we currently only support SUM aggregations
-        if (Sum* sum_aggregation = dynamic_cast<Sum*>(window_definition_ptr->windowAggregation.get())) {
-            intBuffer[tuple_buffer->getNumberOfTuples()] =
-                sum_aggregation->lower<FinalAggregateType, PartialAggregateType>(partial_final_aggregates[i]);
+        if (Sum* sumAggregation = dynamic_cast<Sum*>(windowDefinition->windowAggregation.get())) {
+            intBuffer[tupleBuffer->getNumberOfTuples()] =
+                sumAggregation->lower<FinalAggregateType, PartialAggregateType>(partialFinalAggregates[i]);
         }
-        tuple_buffer->setNumberOfTuples(tuple_buffer->getNumberOfTuples() + 1);
+        tupleBuffer->setNumberOfTuples(tupleBuffer->getNumberOfTuples() + 1);
     }
     store->setLastWatermark(watermark);
 };
 
 void WindowHandler::trigger() {
-    // assume processing time
-    sleep(1);
-    NES_DEBUG("WindowHandler: check widow trigger");
-    auto window_state_variable = static_cast<StateVariable<int64_t, WindowSliceStore<int64_t>*>*>(this->window_state);
-    // create the output tuple buffer
-    auto tuple_buffer = BufferManager::instance().getBuffer();
-    tuple_buffer->setNumberOfTuples(0);
-    tuple_buffer->setTupleSizeInBytes(8);
-    // iterate over all keys in the window state
-    for (auto& it : window_state_variable->rangeAll()) {
-        // write all window aggregates to the tuple buffer
-        // TODO we currently have no handling in the case the tuple buffer is full
-        this->aggregateWindows<int64_t, int64_t>(it.second, this->windowDefinitionPtr, tuple_buffer);
+    while(running) {
+        // we currently assume processing time and only want to check for new window results every 1 second
+        // todo change this when we support event time.
+        sleep(1);
+        NES_DEBUG("WindowHandler: check widow trigger");
+        auto windowStateVariable = static_cast<StateVariable<int64_t, WindowSliceStore<int64_t>*>*>(this->windowState);
+        // create the output tuple buffer
+        auto tupleBuffer = BufferManager::instance().getBuffer();
+        tupleBuffer->setTupleSizeInBytes(8);
+        // iterate over all keys in the window state
+        for (auto& it : windowStateVariable->rangeAll()) {
+            // write all window aggregates to the tuple buffer
+            // TODO we currently have no handling in the case the tuple buffer is full
+            this->aggregateWindows<int64_t, int64_t>(it.second, this->windowDefinition, tupleBuffer);
+        }
+        // if produced tuple then send the tuple buffer to the next pipeline stage or sink
+        if (tupleBuffer->getNumberOfTuples() > 0) {
+            NES_DEBUG("WindowHandler: Dispatch output buffer with " << tupleBuffer->getNumberOfTuples() << " records");
+            Dispatcher::instance().addWorkForNextPipeline(
+                tupleBuffer,
+                this->queryExecutionPlan,
+                this->pipelineStageId);
+        }
     }
-    // if produced tuple then send the tuple buffer to the next pipeline stage or sink
-    if (tuple_buffer->getNumberOfTuples() > 0) {
-        NES_DEBUG("WindowHandler: Dispatch output buffer with " << tuple_buffer->getNumberOfTuples() << " records");
-        Dispatcher::instance().addWorkForNextPipeline(
-            tuple_buffer,
-            this->queryExecutionPlanPtr,
-            this->pipelineStageId);
-    }
-    if (this->running)
-        this->trigger();
 }
 
 void* WindowHandler::getWindowState() {
-    return window_state;
+    return windowState;
 }
 
 bool WindowHandler::start() {
@@ -119,13 +119,11 @@ bool WindowHandler::start() {
 
     NES_DEBUG("WindowHandler " << this << ": Spawn thread")
     thread = std::thread(std::bind(&WindowHandler::trigger, this));
-    pthread_setname_np(thread.native_handle(), "WindowHandlerThread");
     return true;
 }
 
 bool WindowHandler::stop() {
     NES_DEBUG("WindowHandler " << this << ": Stop called")
-
     if (!running)
         return false;
     running = false;

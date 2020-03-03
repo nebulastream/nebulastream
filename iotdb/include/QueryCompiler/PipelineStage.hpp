@@ -24,43 +24,43 @@ typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 class WindowManager;
 
 class PipelineStage {
- public:
-  PipelineStage(
-      uint32_t pipelineStageId,
-      QueryExecutionPlanPtr queryExecutionPlanPtr,
-      ExecutablePipelinePtr executablePipeline,
-      WindowHandlerPtr windowHandler);
-  explicit PipelineStage(uint32_t pipelineStageId,
-                         QueryExecutionPlanPtr queryExecutionPlanPtr, ExecutablePipelinePtr executablePipeline);
-  bool execute(TupleBufferPtr inputBuffer,
-               TupleBufferPtr outputBuffer);
+  public:
+    PipelineStage(
+        uint32_t pipelineStageId,
+        QueryExecutionPlanPtr queryExecutionPlan,
+        ExecutablePipelinePtr executablePipeline,
+        WindowHandlerPtr windowHandler);
+    explicit PipelineStage(uint32_t pipelineStageId,
+                           QueryExecutionPlanPtr queryExecutionPlan, ExecutablePipelinePtr executablePipeline);
+    bool execute(TupleBufferPtr inputBuffer,
+                 TupleBufferPtr outputBuffer);
 
-  /**
- * @brief Initialises a pipeline stage
- */
-  void setup();
-
-  /**
-   * @brief Starts a pipeline stage
+    /**
+   * @brief Initialises a pipeline stage
    * @return boolean if successful
    */
-  bool start();
+    bool setup();
 
-  /**
-   * @brief Stops pipeline stage
-   * @return
-   */
-  bool stop();
+    /**
+     * @brief Starts a pipeline stage
+     * @return boolean if successful
+     */
+    bool start();
 
+    /**
+     * @brief Stops pipeline stage
+     * @return
+     */
+    bool stop();
 
-  ~PipelineStage();
- private:
-  uint32_t pipelineStageId;
-  QueryExecutionPlanPtr queryExecutionPlanPtr;
-  ExecutablePipelinePtr executablePipeline;
-  WindowHandlerPtr windowHandler;
+    ~PipelineStage();
+  private:
+    uint32_t pipelineStageId;
+    QueryExecutionPlanPtr queryExecutionPlan;
+    ExecutablePipelinePtr executablePipeline;
+    WindowHandlerPtr windowHandler;
 
-  bool hasWindowHandler();
+    bool hasWindowHandler();
 };
 typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
 
@@ -68,10 +68,12 @@ class CompiledCode;
 typedef std::shared_ptr<CompiledCode> CompiledCodePtr;
 
 PipelineStagePtr createPipelineStage(uint32_t pipelineStageId,
-                                     const QueryExecutionPlanPtr &queryExecutionPlanPtr,const ExecutablePipelinePtr &compiled_code,
-                                     const WindowHandlerPtr &window_handler);
+                                     const QueryExecutionPlanPtr& queryExecutionPlanPtr,
+                                     const ExecutablePipelinePtr& compiled_code,
+                                     const WindowHandlerPtr& window_handler);
 PipelineStagePtr createPipelineStage(uint32_t pipelineStageId,
-                                     const QueryExecutionPlanPtr &queryExecutionPlanPtr,const ExecutablePipelinePtr &compiled_code);
+                                     const QueryExecutionPlanPtr& queryExecutionPlanPtr,
+                                     const ExecutablePipelinePtr& compiled_code);
 
 } // namespace NES
 

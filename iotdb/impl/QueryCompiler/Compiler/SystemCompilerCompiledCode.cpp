@@ -5,38 +5,38 @@
 namespace NES {
 
 SystemCompilerCompiledCode::SystemCompilerCompiledCode(SharedLibraryPtr library,
-                                                       const std::string &base_name) :
+                                                       const std::string& baseName) :
     CompiledCode(),
     library(library),
-    base_file_name_(base_name) {};
+    baseFileName(baseName) {};
 SystemCompilerCompiledCode::~SystemCompilerCompiledCode() {
-  cleanUp();
+    cleanUp();
 }
 
-void *SystemCompilerCompiledCode::getFunctionPointerImpl(const std::string &name) {
-  return library->getSymbol(name);
+void* SystemCompilerCompiledCode::getFunctionPointerImpl(const std::string& name) {
+    return library->getSymbol(name);
 }
 
 void SystemCompilerCompiledCode::cleanUp() {
-  if (boost::filesystem::exists(base_file_name_ + ".c")) {
-    boost::filesystem::remove(base_file_name_ + ".c");
-  }
+    if (boost::filesystem::exists(baseFileName + ".c")) {
+        boost::filesystem::remove(baseFileName + ".c");
+    }
 
-  if (boost::filesystem::exists(base_file_name_ + ".o")) {
-    boost::filesystem::remove(base_file_name_ + ".o");
-  }
+    if (boost::filesystem::exists(baseFileName + ".o")) {
+        boost::filesystem::remove(baseFileName + ".o");
+    }
 
-  if (boost::filesystem::exists(base_file_name_ + ".so")) {
-    boost::filesystem::remove(base_file_name_ + ".so");
-  }
+    if (boost::filesystem::exists(baseFileName + ".so")) {
+        boost::filesystem::remove(baseFileName + ".so");
+    }
 
-  if (boost::filesystem::exists(base_file_name_ + ".c.orig")) {
-    boost::filesystem::remove(base_file_name_ + ".c.orig");
-  }
+    if (boost::filesystem::exists(baseFileName + ".c.orig")) {
+        boost::filesystem::remove(baseFileName + ".c.orig");
+    }
 }
 
 CompiledCodePtr createSystemCompilerCompiledCode(SharedLibraryPtr library,
-                                                 const std::string &base_name) {
-  return std::make_shared<SystemCompilerCompiledCode>(library, base_name);
+                                                 const std::string& baseName) {
+    return std::make_shared<SystemCompilerCompiledCode>(library, baseName);
 }
 }
