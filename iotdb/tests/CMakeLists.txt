@@ -68,7 +68,7 @@ target_link_libraries(node-engine-test  iotdb ${GTEST_LIBRARIES})
 add_test(NAME node-engine-test COMMAND node-engine-test)
 
 # Code Generation Tests
-add_executable(code-generation-tests "UnitTests/CodeGenTest.cpp")
+add_executable(code-generation-tests "UnitTests/CodeGenerationTest.cpp")
 target_link_libraries(code-generation-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME code-generation-tests COMMAND code-generation-tests)
 
