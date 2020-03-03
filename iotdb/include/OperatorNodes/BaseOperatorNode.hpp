@@ -15,7 +15,9 @@ class BaseOperatorNode;
 
 typedef std::shared_ptr<BaseOperatorNode> BaseOperatorNodePtr;
 
-
+/**
+todo rename to Node.
+*/
 class BaseOperatorNode {
 public:
     BaseOperatorNode();
