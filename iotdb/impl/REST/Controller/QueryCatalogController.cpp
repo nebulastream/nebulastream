@@ -37,11 +37,6 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
         message.extract_string(true)
             .then([this, message](utility::string_t body) {
                     try {
-                        //Prepare Input query from user string
-                        std::string payload(body.begin(), body.end());
-                        json::value req = json::value::parse(payload);
-                        std::string queryStatus = req.at("status").as_string();
-
                         //Prepare the response
                         json::value result{};
                         map<string, string> queries = queryCatalogServicePtr->getAllRegisteredQueries();

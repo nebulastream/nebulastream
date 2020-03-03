@@ -99,7 +99,6 @@ json::value NESTopologyManager::getNESTopologyGraphAsJson() {
         if (nodeType == "Sensor") {
             NESTopologySensorNodePtr ptr = std::static_pointer_cast<
                 NESTopologySensorNode>(vertex.ptr);
-            //TODO: ankit please check if this ok for you
             vertexInfo["physicalStreamName"] = json::value::string(
                 ptr->getPhysicalStreamName());
         }
