@@ -21,6 +21,10 @@ size_t Schema::getSize() const {
   return fields.size();
 }
 
+const SchemaPtr Schema::copy() {
+    return std::make_shared<Schema>(*this);
+}
+
 Schema::Schema(const Schema& query) {
   copyFields(query);
 }
