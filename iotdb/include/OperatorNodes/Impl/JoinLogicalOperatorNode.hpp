@@ -1,16 +1,17 @@
 #ifndef JOIN_LOGICAL_OPERATOR_NODE_HPP
 #define JOIN_LOGICAL_OPERATOR_NODE_HPP
-
+#include <memory>
 #include <OperatorNodes/LogicalOperatorNode.hpp>
 
 namespace NES {
 
-class JoinLogicalOperatorNode : public LogicalOperatorNode {
+class JoinLogicalOperatorNode : public LogicalOperatorNode,
+                                public std::enable_shared_from_this<JoinLogicalOperatorNode> {
   public:
     JoinLogicalOperatorNode(const JoinPredicatePtr join_spec);
     const std::string toString() const override;
     OperatorType getOperatorType() const override;
-
+    virtual BaseOperatorNodePtr makeShared() override { return shared_from_this(); };
     virtual bool equals(const BaseOperatorNode& rhs) const override;
   private:
     JoinPredicatePtr join_spec_;

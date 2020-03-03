@@ -1,13 +1,15 @@
 #ifndef FILTER_LOGICAL_OPERATOR_NODE_HPP
 #define FILTER_LOGICAL_OPERATOR_NODE_HPP
 
+#include <memory>
 #include <API/UserAPIExpression.hpp>
 #include <OperatorNodes/LogicalOperatorNode.hpp>
 
 
 namespace NES {
 
-class FilterLogicalOperatorNode : public LogicalOperatorNode {
+class FilterLogicalOperatorNode : public LogicalOperatorNode,
+                                  public std::enable_shared_from_this<FilterLogicalOperatorNode> {
 public:
     FilterLogicalOperatorNode() = default;
     FilterLogicalOperatorNode(const PredicatePtr&);
@@ -22,7 +24,7 @@ public:
      * @return bool true if they are the same otherwise false
      */
     virtual bool equals(const BaseOperatorNode& rhs) const override;
-
+    virtual BaseOperatorNodePtr makeShared() override;
     OperatorType getOperatorType() const override;
     const std::string toString() const override;
 private:
