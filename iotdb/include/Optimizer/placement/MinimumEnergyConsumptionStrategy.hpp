@@ -6,7 +6,7 @@ namespace NES {
 
 /**
  * @brief This class is responsible for placing the operators on common path among the sources such that overall
- * resource consumption will reduce.
+ * energy consumption will reduce.
  */
 class MinimumEnergyConsumptionStrategy : public NESPlacementOptimizer {
 
