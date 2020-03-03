@@ -178,23 +178,17 @@ OperatorPtr NESPlacementOptimizer::getSourceOperator(OperatorPtr root) {
     deque<OperatorPtr> operatorTraversQueue = {root};
 
     while (!operatorTraversQueue.empty()) {
+        auto optr = operatorTraversQueue.front();
+        operatorTraversQueue.pop_front();
 
-        while (!operatorTraversQueue.empty()) {
-            auto optr = operatorTraversQueue.front();
-            operatorTraversQueue.pop_front();
-
-            if (optr->getOperatorType() == OperatorType::SOURCE_OP) {
-                return optr;
-            }
-
-            if (optr->getChildren().empty()) {
-                return nullptr;
-            }
-
-            vector<OperatorPtr> children = optr->getChildren();
-            copy(children.begin(), children.end(), back_inserter(operatorTraversQueue));
+        if (optr->getOperatorType() == OperatorType::SOURCE_OP) {
+            return optr;
         }
+
+        vector<OperatorPtr> children = optr->getChildren();
+        copy(children.begin(), children.end(), back_inserter(operatorTraversQueue));
     }
+
     return nullptr;
 };
 
