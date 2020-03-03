@@ -203,7 +203,7 @@ InputQuery &InputQuery::window(const NES::WindowTypePtr windowType,
   addChild(op, root);
   root = op;
   // add a window scan operator with the window result schema.
-  auto outputSchema = Schema::create().addField(aggregation->asField()).create();
+  auto outputSchema = Schema::create().addField(aggregation->asField());
   SchemaPtr ptr = std::make_shared<Schema>(outputSchema);
   OperatorPtr windowScan = createWindowScanOperator(ptr);
   windowScan->setOperatorId(this->getNextOperatorId());
