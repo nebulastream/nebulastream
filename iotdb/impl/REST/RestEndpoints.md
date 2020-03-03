@@ -8,6 +8,7 @@ Querying unsupported/non-existing versions will return a 404 error.
 
 There exist several async operations among these APIs, e.g. submit a job. These async calls will return a triggerid to 
 identify the operation you just POST and then you need to use that triggerid to query for the status of the operation.
+___
 
 ## Query 
 Here we describe the available endpoints used for submitting and interacting with a user query.
@@ -16,32 +17,32 @@ Here we describe the available endpoints used for submitting and interacting wit
 
 Submitting user query for execution.
  
-#### API: /query/execute-query
-#### Verb: POST
-#### Response Code: 200 OK
+**API**: /query/execute-query \
+**Verb**: POST \
+**Response Code**: 200 OK
 
-#### Example: 
+**_Example_**: 
 
-##### Request:
+**Request**:
 {"userQuery":"InputQuery::from(temperature).print(std::cout);", "strategyName": "BottomUp"}
 
-##### Response:
+**Response**:
 {"QueryId": "system_generate_uuid"}
 
 ### Getting Execution Plan
 
 Getting the execution plan for the user query.
  
-#### API: /query/execution-plan
-#### Verb: POST
-#### Response Code: 200 OK
+**API**: /query/execution-plan
+**Verb**: POST
+**Response Code**: 200 OK
 
-#### Example: 
+**_Example_**: 
 
-##### Request:
+**Request**:
 {"userQuery":"InputQuery::from(temperature).print(std::cout);", "strategyName": "BottomUp"}
 
-##### Response:
+**Response**:
 {"nodes": [{
         "id": "node_id",
         "title": "node_title",
@@ -62,16 +63,16 @@ Getting the execution plan for the user query.
 
 Get query plan for the user query.
  
-#### API: /query/query-plan
-#### Verb: GET
-#### Response Code: 200 OK
+**API**: /query/query-plan
+**Verb**: GET
+**Response Code**: 200 OK
 
-#### Example: 
+**_Example_**: 
 
-##### Request:
+**Request**:
 {"userQuery":"InputQuery::from(temperature).print(std::cout);"}
 
-##### Response:
+**Response**:
 {"nodes": [{
         "id": "node_id",
         "title": "node_title",
@@ -87,16 +88,16 @@ Get query plan for the user query.
 
 To get the NebulaStream topology graph as JSON.
 
-#### API: /query/nes-topology
-#### Verb: GET
-#### Response Code: 200 OK
+**API**: /query/nes-topology
+**Verb**: GET
+**Response Code**: 200 OK
 
-#### Example: 
+**_Example_**: 
 
-##### Request:
+**Request**:
 {}
 
-##### Response:
+**Response**:
 {"nodes": [{
         "id": "node_id",
         "title": "node_title",
@@ -113,11 +114,7 @@ To get the NebulaStream topology graph as JSON.
     }]
 }
 
-
-
-
-
-
+___
 
 ## Query Catalog
 
@@ -127,16 +124,16 @@ Here we describe the APIs used for interacting with query catalog.
 
 To get all queries registered at NebulaStream.
 
-#### API: /queryCatalog/allRegisteredQueries
-#### Verb: GET
-#### Response Code: 200 OK
+**API**: /queryCatalog/allRegisteredQueries
+**Verb**: GET
+**Response Code**: 200 OK
 
-#### Example: 
+**_Example_**: 
 
-##### Request:
+**Request**:
 {}
 
-##### Response:
+**Response**:
 {[
 "system_generated_query_id": "query_string" 
 ]}
@@ -145,16 +142,16 @@ To get all queries registered at NebulaStream.
 
 To get all queries with a specific status form NebulaStream.
 
-#### API: /queryCatalog/queries
-#### Verb: GET
-#### Response Code: 200 OK
+API: /queryCatalog/queries
+Verb: GET
+Response Code: 200 OK
 
-#### Example: 
+**_Example_**: 
 
-##### Request:
+**Request**:
 {"status":"Running"}
 
-##### Response:
+**Response**:
 {[
 "system_generated_query_id": "query_string" 
 ]}
@@ -163,23 +160,18 @@ To get all queries with a specific status form NebulaStream.
 
 To delete a user submitted query.
 
-#### API: /queryCatalog/query
-#### Verb: DELETE
-#### Response Code: 200 OK
+**API**: /queryCatalog/query
+**Verb**: DELETE
+**Response Code**: 200 OK
 
-#### Example: 
+**_Example_**: 
 
-##### Request:
+**Request**:
 {"QueryId": "system_generate_uuid"}
 
-##### Response:
+**Response**:
 {}
-
-
-
-
-
-
+___
 
 ## Stream Catalog
 
@@ -187,16 +179,16 @@ To delete a user submitted query.
 
 To get all queries registered at NebulaStream.
 
-#### API: /streamCatalog/allLogicalStream
-#### Verb: GET
-#### Response Code: 200 OK
+**API**: /streamCatalog/allLogicalStream
+**Verb**: GET
+**Response Code**: 200 OK
 
-#### Example: 
+**_Example_**: 
 
-##### Request:
+**Request**:
 {}
 
-##### Response:
+**Response**:
 {[
 "logical_stream_name": "logical_stream_schema" 
 ]}
@@ -205,46 +197,46 @@ To get all queries registered at NebulaStream.
 
 To get all physical streams for a given logical stream.
 
-#### API: /streamCatalog/allPhysicalStream
-#### Verb: GET
-#### Response Code: 200 OK
+**API**: /streamCatalog/allPhysicalStream
+**Verb**: GET
+**Response Code**: 200 OK
 
-#### Example: 
+**_Example_**: 
 
-##### Request:
+**Request**:
 {"streamName": "logical_stream_name"}
 
-##### Response:
+**Response**:
 {"Physical Streams":  [physicl_stream_string]}
 
 ### Update Logical Stream
 To Update a logical stream.
 
-#### API: /streamCatalog/updateLogicalStream
-#### Verb: POST
-#### Response Code: 200 OK
+**API**: /streamCatalog/updateLogicalStream
+**Verb**: POST
+**Response Code**: 200 OK
 
-#### Example: 
+**_Example_**: 
 
-##### Request:
+**Request**:
 {"streamName": "logical_stream_name",
 "schema": "Schema::create().addField(\"test\",INT32);"}
 
-##### Response:
+**Response**:
 {"success": "true"}
 
 ### Delete Logical Stream
 
 To delete a logical stream.
 
-#### API: /streamCatalog/deleteLogicalStream
-#### Verb: DELETE
-#### Response Code: 200 OK
+**API**: /streamCatalog/deleteLogicalStream
+**Verb**: DELETE
+**Response Code**: 200 OK
 
-#### Example: 
+**_Example_**: 
 
-##### Request:
+**Request**:
 {"streamName": "logical_stream_name"}
 
-##### Response:
+**Response**:
 {"success": "true"}
