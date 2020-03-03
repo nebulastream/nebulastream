@@ -35,7 +35,11 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                 .then([this, message](utility::string_t body) {
                         try {
                             //Prepare Input query from user string
-                            std::string userQuery(body.begin(), body.end());
+                            string userRequest(body.begin(), body.end());
+
+                            json::value req = json::value::parse(userRequest);
+
+                            string userQuery = req.at("userQuery").as_string();
 
                             //Call the service
                             const auto& basePlan = queryServicePtr->generateBaseQueryPlanFromQueryString(
@@ -52,7 +56,6 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                       }
                 )
                 .wait();
-
         } else if (path[1] == "execution-plan") {
 
             message.extract_string(true)
