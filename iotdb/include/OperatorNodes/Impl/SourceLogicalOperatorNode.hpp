@@ -1,12 +1,13 @@
 #ifndef SOURCE_LOGICAL_OPERATOR_NODE_HPP
 #define SOURCE_LOGICAL_OPERATOR_NODE_HPP
 
-
+#include <memory>
 #include <OperatorNodes/LogicalOperatorNode.hpp>
 
 
 namespace NES {
-class SourceLogicalOperatorNode : public LogicalOperatorNode {
+class SourceLogicalOperatorNode : public LogicalOperatorNode,
+                                  public std::enable_shared_from_this<SourceLogicalOperatorNode> {
 public:
     SourceLogicalOperatorNode() = delete;
     SourceLogicalOperatorNode(const DataSourcePtr);
@@ -15,6 +16,7 @@ public:
     OperatorType getOperatorType() const override;
     const std::string toString() const override;
 
+    virtual BaseOperatorNodePtr makeShared() override { return shared_from_this(); };
     virtual bool equals(const BaseOperatorNode& rhs) const override;
 
 private:

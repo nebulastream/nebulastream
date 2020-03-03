@@ -8,11 +8,13 @@ FilterLogicalOperatorNode::FilterLogicalOperatorNode(const PredicatePtr& predica
 }
 
 FilterLogicalOperatorNode::FilterLogicalOperatorNode(const FilterLogicalOperatorNode& other) {
+    std::cout << "other: " << &other
+              << ", this: " << this
+              << std::endl;
     if (this != &other) {
-        // do some update
+        // not the same object, do some update
         std::cout << "not equal" << std::endl;
     }
-    // return *this;
 }
 
 bool FilterLogicalOperatorNode::equals(const BaseOperatorNode& rhs) const {
@@ -22,6 +24,11 @@ bool FilterLogicalOperatorNode::equals(const BaseOperatorNode& rhs) const {
     } catch (const std::bad_cast& e) {
         return false;
     }
+}
+
+BaseOperatorNodePtr FilterLogicalOperatorNode::makeShared() {
+    // std::cout << "call filter-logical-operator-node's make shared" << std::endl;
+    return shared_from_this();
 }
 
 OperatorType FilterLogicalOperatorNode::getOperatorType() const {
@@ -37,5 +44,7 @@ const BaseOperatorNodePtr createFilterLogicalOperatorNode(const PredicatePtr& pr
     return std::make_shared<FilterLogicalOperatorNode>(predicate);
 }
 
+template
+FilterLogicalOperatorNode& BaseOperatorNode::as<FilterLogicalOperatorNode>();
 
 }
