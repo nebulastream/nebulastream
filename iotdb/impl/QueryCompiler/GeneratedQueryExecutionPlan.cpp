@@ -14,10 +14,12 @@ bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const
     // only write data to the sink if the pipeline produced some output
     if (outputBuffer->getNumberOfTuples() > 0) {
         if (stages.size() <= pipeline_stage_id) {
+            NES_DEBUG("QueryExecutionPlan: send output buffer to next pipeline");
+            // todo schedule dispatching as a new task
             this->executeStage(pipeline_stage_id + 1, outputBuffer);
         } else {
             for (const DataSinkPtr& s: this->getSinks()) {
-                NES_DEBUG("Qep: send to sink");
+                NES_DEBUG("QueryExecutionPlan: end output buffer to sink");
                 s->writeData(outputBuffer);
             }
         }

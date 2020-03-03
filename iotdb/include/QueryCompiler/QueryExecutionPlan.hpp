@@ -18,17 +18,17 @@ class QueryExecutionPlan {
   /**
    * @brief Setup the query plan, e.g., instantiate state variables.
    */
-  void setup();
+  bool setup();
 
   /**
    * @brief Start the query plan, e.g., start window thread.
    */
-  void start();
+  bool start();
 
   /**
    * @brief Stop the query plan and free all associated resources.
    */
-  void stop();
+  bool stop();
 
   /**
    * @brief Execute a particular pipeline stage with the given input buffer.

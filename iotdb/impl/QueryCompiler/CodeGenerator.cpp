@@ -95,14 +95,14 @@ const StructDeclaration getStructDeclarationWindowState() {
 
    define the WindowState struct
  struct WindowState {
-  void *window_state;
+  void *windowState;
   };
 
 
   StructDeclaration struct_decl_state =
       StructDeclaration::create("WindowSliceStore", "")
           .addField(VariableDeclaration::create(createPointerDataType(createDataType(BasicType(VOID_TYPE))),
-                                                "window_state"));
+                                                "windowState"));
   return struct_decl_state;
 }*/
 
@@ -466,7 +466,7 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr& window,
 
     // access window slice state from state variable via key
     auto window_state_var = VariableDeclaration::create(
-        createAnnonymUserDefinedType("auto"), "window_state");
+        createAnnonymUserDefinedType("auto"), "windowState");
     auto getValueFromKeyHandle = FunctionCallStatement("valueOrDefault");
     getValueFromKeyHandle.addParameter(ConstantExprStatement(INT64, "0"));
     auto window_state_decl = VarDeclStatement(window_state_var)

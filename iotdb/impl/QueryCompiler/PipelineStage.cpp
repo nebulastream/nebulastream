@@ -7,18 +7,18 @@
 namespace NES {
 
 PipelineStage::PipelineStage(uint32_t pipelineStageId,
-                             QueryExecutionPlanPtr queryExecutionPlanPtr,
+                             QueryExecutionPlanPtr queryExecutionPlan,
                              ExecutablePipelinePtr executablePipeline)
     : pipelineStageId(pipelineStageId),
-      queryExecutionPlanPtr(std::move(queryExecutionPlanPtr)),
+      queryExecutionPlan(std::move(queryExecutionPlan)),
       executablePipeline(std::move(executablePipeline)) {}
 
 PipelineStage::PipelineStage(uint32_t pipelineStageId,
-                             QueryExecutionPlanPtr queryExecutionPlanPtr,
+                             QueryExecutionPlanPtr queryExecutionPlan,
                              ExecutablePipelinePtr executablePipeline,
                              WindowHandlerPtr windowHandler) :
     pipelineStageId(pipelineStageId),
-    queryExecutionPlanPtr(std::move(queryExecutionPlanPtr)),
+    queryExecutionPlan(std::move(queryExecutionPlan)),
     executablePipeline(std::move(executablePipeline)),
     windowHandler(std::move(windowHandler)) {
 }
@@ -26,6 +26,7 @@ PipelineStage::PipelineStage(uint32_t pipelineStageId,
 bool PipelineStage::execute(TupleBufferPtr inputBuffer,
                             TupleBufferPtr outputBuffer) {
     NES_DEBUG("Execute Pipeline Stage!");
+    // only get the window manager and state if the pipeline has a window handler.
     auto windowStage = hasWindowHandler()? windowHandler->getWindowState(): nullptr;
     auto windowManager = hasWindowHandler()? windowHandler->getWindowManager(): WindowManagerPtr();
     auto result = executablePipeline->execute(std::move(inputBuffer), windowStage, windowManager, std::move(outputBuffer));
@@ -37,22 +38,23 @@ bool PipelineStage::execute(TupleBufferPtr inputBuffer,
 
 PipelineStage::~PipelineStage() = default;
 
-void PipelineStage::setup() {
+bool PipelineStage::setup() {
     if (hasWindowHandler()) {
-        windowHandler->setup(queryExecutionPlanPtr, pipelineStageId);
+        return windowHandler->setup(queryExecutionPlan, pipelineStageId);
     }
+    return true;
 }
 
 bool PipelineStage::start() {
     if (hasWindowHandler()) {
-        windowHandler->start();
+        return windowHandler->start();
     }
     return true;
 }
 
 bool PipelineStage::stop() {
     if (hasWindowHandler()) {
-        windowHandler->stop();
+        return windowHandler->stop();
     }
     return true;
 }

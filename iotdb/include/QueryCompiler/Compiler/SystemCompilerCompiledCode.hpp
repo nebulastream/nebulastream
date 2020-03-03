@@ -3,30 +3,30 @@
 #include <Util/TimeMeasurement.hpp>
 #include <QueryCompiler/Compiler/CompiledCode.hpp>
 
-namespace NES{
+namespace NES {
 
 class SharedLibrary;
 typedef std::shared_ptr<SharedLibrary> SharedLibraryPtr;
 
 class SystemCompilerCompiledCode : public CompiledCode {
- public:
-  SystemCompilerCompiledCode(SharedLibraryPtr library,
-                              const std::string &base_name);
+  public:
+    SystemCompilerCompiledCode(SharedLibraryPtr library,
+                               const std::string& baseName);
 
-  ~SystemCompilerCompiledCode() override;
+    ~SystemCompilerCompiledCode() override;
 
- protected:
-  void* getFunctionPointerImpl(const std::string &name) final;
+  protected:
+    void* getFunctionPointerImpl(const std::string& name) final;
 
- private:
-  void cleanUp();
+  private:
+    void cleanUp();
 
-  SharedLibraryPtr library_;
-  std::string base_file_name_;
+    SharedLibraryPtr library;
+    std::string baseFileName;
 };
 
 CompiledCodePtr createSystemCompilerCompiledCode(SharedLibraryPtr library,
-                                                 const std::string &base_name);
+                                                 const std::string& baseName);
 
 }
 
