@@ -6,7 +6,7 @@
 namespace NES {
 
 NESExecutionPlanPtr HighAvailabilityStrategy::initializeExecutionPlan(InputQueryPtr inputQuery,
-                                                              NESTopologyPlanPtr nesTopologyPlan) {
+                                                                      NESTopologyPlanPtr nesTopologyPlan) {
     const OperatorPtr sinkOperator = inputQuery->getRoot();
 
     // FIXME: current implementation assumes that we have only one source stream and therefore only one source operator.
@@ -42,33 +42,40 @@ NESExecutionPlanPtr HighAvailabilityStrategy::initializeExecutionPlan(InputQuery
     return nesExecutionPlanPtr;
 }
 
-void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
-                                      OperatorPtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes) {
+void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr,
+                                              NESTopologyGraphPtr nesTopologyGraphPtr,
+                                              OperatorPtr sourceOperator,
+                                              vector<NESTopologyEntryPtr> sourceNodes) {
 
     NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
     PathFinder pathFinder;
     size_t linkRedundency = 2;
 
+    NES_INFO("HighAvailability: Find paths between source nodes and sink node such that the nodes on the paths are"
+             "connected with " << linkRedundency << " number of redundant links.");
     vector<vector<NESTopologyEntryPtr>> placementPaths;
 
     for (NESTopologyEntryPtr sourceNode: sourceNodes) {
+
+        NES_DEBUG("HighAvailability: For each source find all paths between source and sink nodes.");
         const auto listOfPaths = pathFinder.findAllPathsBetween(sourceNode, sinkNode);
 
         //Find the most common path among the list of paths
         vector<NESTopologyEntryPtr> pathForPlacement;
         size_t maxPathWeight = 0;
-
+        NES_DEBUG("HighAvailability: Find a path such that the path nodes are shared with most of the remaining paths.");
         for (size_t i = 0; i < listOfPaths.size(); i++) {
 
             vector<NESTopologyEntryPtr> path_i = listOfPaths[i];
             map<NESTopologyEntryPtr, size_t> nodeCountMap;
             for (size_t j = 0; j < listOfPaths.size(); j++) {
-                //Skip comparing same path
+
+                NES_DEBUG("HighAvailability: Skip comparision with itself.");
                 if (i == j) {
                     continue;
                 }
                 vector<NESTopologyEntryPtr> path_j = listOfPaths[j];
-                //Fast Forward the path_i to first non common node
+                NES_DEBUG("HighAvailability: Fast Forward the path to find first non common node.");
                 size_t pathINodeIndex = 0;
                 while (path_i[pathINodeIndex]->getId() == path_j[pathINodeIndex]->getId()
                     && pathINodeIndex <= path_i.size()
@@ -80,7 +87,8 @@ void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPl
                     pathINodeIndex++;
                 }
 
-                //If no non-common node exists then skip to compare with next path
+                NES_DEBUG(
+                    "HighAvailability: If no non-common node exists with current path then skip to compare with next path.");
                 if (pathINodeIndex > path_i.size() || pathINodeIndex > path_j.size()) {
                     continue;
                 }
@@ -106,6 +114,8 @@ void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPl
             size_t totalWeight = 0;
             vector<NESTopologyEntryPtr> commonPath = {sourceNode};
             for (auto itr = nodeCountMap.rbegin(); itr != nodeCountMap.rend(); itr++) {
+                NES_DEBUG("HighAvailability: Check if the node on the path is shared by atleast " << linkRedundency
+                                                                                                  << " paths.");
                 if (itr->second >= linkRedundency - 1) {
                     commonPath.push_back(itr->first);
                     totalWeight++;
@@ -116,8 +126,11 @@ void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPl
                 pathForPlacement = commonPath;
             }
         }
+        NES_DEBUG("HighAvailability: Place the path with nodes that are shared with most of the remaining paths.");
         placementPaths.push_back(pathForPlacement);
     }
+
+    NES_INFO("HighAvailability: Sort the paths based on available compute resources.");
 
     //Sort all the paths with increased aggregated compute capacity
     vector<std::pair<size_t, int>> computeCostList;
@@ -138,6 +151,8 @@ void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPl
     for (auto pair :  computeCostList) {
         sortedListOfPaths.push_back(placementPaths[pair.second]);
     }
+
+    NES_INFO("HighAvailability: Perform placement of operators on each path.");
 
     for (vector<NESTopologyEntryPtr> pathForPlacement: sortedListOfPaths) {
 
@@ -193,6 +208,8 @@ void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPl
                 break;
             }
 
+            NES_INFO("HighAvailability: Find if next target operator already placed on one of the nodes of current path");
+
             //find if the next target operator already placed
             bool isAlreadyPlaced = false;
             for (size_t j = i + 1; j < pathForPlacement.size(); j++) {
@@ -210,17 +227,18 @@ void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPl
                 }
             }
 
-            if(isAlreadyPlaced) {
+            if (isAlreadyPlaced) {
                 break;
             }
         }
 
+        NES_INFO("HighAvailability: Add forward operators to the remaining nodes on current path");
         addForwardOperators(pathForPlacement, nesExecutionPlanPtr);
     }
 }
 
 void HighAvailabilityStrategy::addForwardOperators(vector<NESTopologyEntryPtr> pathForPlacement,
-                                           NES::NESExecutionPlanPtr nesExecutionPlanPtr) const {
+                                                   NES::NESExecutionPlanPtr nesExecutionPlanPtr) const {
 
     PathFinder pathFinder;
 
@@ -236,8 +254,7 @@ void HighAvailabilityStrategy::addForwardOperators(vector<NESTopologyEntryPtr> p
                     nesExecutionPlanPtr->createExecutionNode("FWD",
                                                              to_string(node->getId()),
                                                              node,
-                        /**executableOperator**/
-                                                             nullptr);
+                        /**executableOperator**/nullptr);
                     node->reduceCpuCapacity(1);
                 }
             }

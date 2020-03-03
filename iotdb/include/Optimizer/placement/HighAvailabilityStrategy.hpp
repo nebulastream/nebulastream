@@ -8,6 +8,10 @@ namespace NES {
 class Operator;
 typedef std::shared_ptr<Operator> OperatorPtr;
 
+/**
+ * @brief This Class is responsible for placing operators on the nodes such that there exists R number of redundant
+ * paths between the operator and the source node.
+ */
 class HighAvailabilityStrategy : public NESPlacementOptimizer {
 
   public:
