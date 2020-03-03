@@ -1,11 +1,11 @@
-#include <Optimizer/impl/TopDown.hpp>
+#include <Optimizer/placement/TopDownStrategy.hpp>
 #include <Operators/Operator.hpp>
 #include <Util/Logger.hpp>
 #include <Optimizer/utils/PathFinder.hpp>
 
 namespace NES {
 
-NESExecutionPlanPtr TopDown::initializeExecutionPlan(
+NESExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(
     InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlanPtr) {
 
     const OperatorPtr sinkOperator = inputQuery->getRoot();
@@ -40,7 +40,7 @@ NESExecutionPlanPtr TopDown::initializeExecutionPlan(
     return nesExecutionPlanPtr;
 }
 
-void TopDown::placeOperators(NESExecutionPlanPtr executionPlanPtr, OperatorPtr sinkOperator,
+void TopDownStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, OperatorPtr sinkOperator,
                              vector<NESTopologyEntryPtr> nesSourceNodes, NESTopologyGraphPtr nesTopologyGraphPtr) {
 
     PathFinder pathFinder;
@@ -134,7 +134,7 @@ void TopDown::placeOperators(NESExecutionPlanPtr executionPlanPtr, OperatorPtr s
     }
 }
 
-void TopDown::createNewExecutionNode(NESExecutionPlanPtr executionPlanPtr, OperatorPtr operatorPtr,
+void TopDownStrategy::createNewExecutionNode(NESExecutionPlanPtr executionPlanPtr, OperatorPtr operatorPtr,
                                      NESTopologyEntryPtr nesNode) const {
 
     stringstream operatorName;
@@ -146,7 +146,7 @@ void TopDown::createNewExecutionNode(NESExecutionPlanPtr executionPlanPtr, Opera
     executionNode->addOperatorId(operatorPtr->getOperatorId());
 }
 
-void TopDown::addOperatorToExistingNode(OperatorPtr operatorPtr, ExecutionNodePtr executionNode) const {
+void TopDownStrategy::addOperatorToExistingNode(OperatorPtr operatorPtr, ExecutionNodePtr executionNode) const {
 
     stringstream operatorName;
     operatorName << operatorTypeToString[operatorPtr->getOperatorType()] << "(OP-"
@@ -156,7 +156,7 @@ void TopDown::addOperatorToExistingNode(OperatorPtr operatorPtr, ExecutionNodePt
     executionNode->addOperatorId(operatorPtr->getOperatorId());
 }
 
-void TopDown::addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes, NESTopologyEntryPtr rootNode,
+void TopDownStrategy::addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes, NESTopologyEntryPtr rootNode,
                                   NESExecutionPlanPtr nesExecutionPlanPtr) const {
 
     PathFinder pathFinder;

@@ -8,11 +8,11 @@ namespace NES {
 class Operator;
 typedef std::shared_ptr<Operator> OperatorPtr;
 
-class HighAvailability : public NESPlacementOptimizer {
+class HighAvailabilityStrategy : public NESPlacementOptimizer {
 
   public:
-    HighAvailability() = default;
-    ~HighAvailability() = default;
+    HighAvailabilityStrategy() = default;
+    ~HighAvailabilityStrategy() = default;
 
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 

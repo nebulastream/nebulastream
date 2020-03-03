@@ -1,77 +1,38 @@
 #include <Optimizer/NESPlacementOptimizer.hpp>
 #include <iostream>
 #include <exception>
-#include <Optimizer/impl/BottomUp.hpp>
-#include <Optimizer/impl/TopDown.hpp>
-#include <Optimizer/impl/LowLatency.hpp>
+#include <Optimizer/placement/BottomUpStrategy.hpp>
+#include <Optimizer/placement/TopDownStrategy.hpp>
+#include <Optimizer/placement/LowLatencyStrategy.hpp>
 #include <Operators/Operator.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <Optimizer/utils/PathFinder.hpp>
-#include <Optimizer/impl/HighAvailability.hpp>
-#include <Optimizer/impl/HighThroughput.hpp>
-#include <Optimizer/impl/MinimumResourceConsumption.hpp>
-#include <Optimizer/impl/MinimumEnergyConsumption.hpp>
+#include <Optimizer/placement/HighAvailabilityStrategy.hpp>
+#include <Optimizer/placement/HighThroughputStrategy.hpp>
+#include <Optimizer/placement/MinimumResourceConsumptionStrategy.hpp>
+#include <Optimizer/placement/MinimumEnergyConsumptionStrategy.hpp>
 
 namespace NES {
 
 std::shared_ptr<NESPlacementOptimizer> NESPlacementOptimizer::getOptimizer(std::string optimizerName) {
 
     if (optimizerName == "BottomUp") {
-        return std::make_unique<BottomUp>(BottomUp());
+        return std::make_unique<BottomUpStrategy>(BottomUpStrategy());
     } else if (optimizerName == "TopDown") {
-        return std::make_unique<TopDown>(TopDown());
+        return std::make_unique<TopDownStrategy>(TopDownStrategy());
     } else if (optimizerName == "Latency") {
-        return std::make_unique<LowLatency>(LowLatency());
+        return std::make_unique<LowLatencyStrategy>(LowLatencyStrategy());
     } else if (optimizerName == "HighThroughput") {
-        return std::make_unique<HighThroughput>(HighThroughput());
+        return std::make_unique<HighThroughputStrategy>(HighThroughputStrategy());
     } else if (optimizerName == "MinimumResourceConsumption") {
-        return std::make_unique<MinimumResourceConsumption>(MinimumResourceConsumption());
+        return std::make_unique<MinimumResourceConsumptionStrategy>(MinimumResourceConsumptionStrategy());
     } else if (optimizerName == "MinimumEnergyConsumption") {
-        return std::make_unique<MinimumEnergyConsumption>(MinimumEnergyConsumption());
+        return std::make_unique<MinimumEnergyConsumptionStrategy>(MinimumEnergyConsumptionStrategy());
     } else if (optimizerName == "HighAvailability") {
-        return std::make_unique<HighAvailability>(HighAvailability());
+        return std::make_unique<HighAvailabilityStrategy>(HighAvailabilityStrategy());
     } else {
         throw std::invalid_argument("NESPlacementOptimizer: Unknown optimizer type: " + optimizerName);
-    }
-}
-
-void NESPlacementOptimizer::removeNonResidentOperators(NESExecutionPlanPtr nesExecutionPlanPtr) {
-
-    const vector<ExecutionVertex>& executionNodes = nesExecutionPlanPtr->getExecutionGraph()->getAllVertex();
-    for (ExecutionVertex executionNode: executionNodes) {
-        OperatorPtr rootOperator = executionNode.ptr->getRootOperator();
-        vector<size_t> childOperatorIds = executionNode.ptr->getChildOperatorIds();
-        invalidateUnscheduledOperators(rootOperator, childOperatorIds);
-    }
-}
-
-void NESPlacementOptimizer::invalidateUnscheduledOperators(OperatorPtr rootOperator, vector<size_t>& childOperatorIds) {
-
-    if (rootOperator == nullptr) {
-        return;
-    }
-
-    vector<OperatorPtr> children = rootOperator->getChildren();
-    OperatorPtr parent = rootOperator->getParent();
-
-    if (parent != nullptr) {
-        if (std::find(childOperatorIds.begin(), childOperatorIds.end(), parent->getOperatorId())
-            != childOperatorIds.end()) {
-            invalidateUnscheduledOperators(parent, childOperatorIds);
-        } else {
-            rootOperator->setParent(nullptr);
-        }
-    }
-
-    for (size_t i = 0; i < children.size(); i++) {
-        OperatorPtr child = children[i];
-        if (std::find(childOperatorIds.begin(), childOperatorIds.end(), child->getOperatorId())
-            != childOperatorIds.end()) {
-            invalidateUnscheduledOperators(child, childOperatorIds);
-        } else {
-            children.erase(children.begin() + i);
-        }
     }
 }
 

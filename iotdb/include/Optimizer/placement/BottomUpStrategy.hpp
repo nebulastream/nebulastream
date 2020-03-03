@@ -17,10 +17,10 @@ using namespace std;
  *          placed at respective nes nodes but rest of the operators are placed starting near to the source and then
  *          if the resources are not available they are placed on a node neighbouring to the node or one level up.
  */
-class BottomUp : public NESPlacementOptimizer {
+class BottomUpStrategy : public NESPlacementOptimizer {
   public:
-    BottomUp() {};
-    ~BottomUp() {};
+    BottomUpStrategy() {};
+    ~BottomUpStrategy() {};
 
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 

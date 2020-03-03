@@ -1,5 +1,5 @@
-#ifndef NES_IMPL_OPTIMIZER_IMPL_MINIMUMRESOURCECONSUMPTION_HPP_
-#define NES_IMPL_OPTIMIZER_IMPL_MINIMUMRESOURCECONSUMPTION_HPP_
+#ifndef NES_IMPL_OPTIMIZER_IMPL_MINIMUMENERGYCONSUMPTION_HPP_
+#define NES_IMPL_OPTIMIZER_IMPL_MINIMUMENERGYCONSUMPTION_HPP_
 
 #include <Optimizer/NESPlacementOptimizer.hpp>
 namespace NES {
@@ -8,11 +8,11 @@ namespace NES {
  * @brief This class is responsible for placing the operators on common path among the sources such that overall
  * resource consumption will reduce.
  */
-class MinimumResourceConsumption : public NESPlacementOptimizer {
+class MinimumEnergyConsumptionStrategy : public NESPlacementOptimizer {
 
   public:
-    MinimumResourceConsumption() = default;
-    ~MinimumResourceConsumption() = default;
+    MinimumEnergyConsumptionStrategy() = default;
+    ~MinimumEnergyConsumptionStrategy() = default;
 
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
@@ -32,4 +32,4 @@ class MinimumResourceConsumption : public NESPlacementOptimizer {
 };
 }
 
-#endif //NES_IMPL_OPTIMIZER_IMPL_MINIMUMRESOURCECONSUMPTION_HPP_
+#endif //NES_IMPL_OPTIMIZER_IMPL_MINIMUMENERGYCONSUMPTION_HPP_

@@ -4,11 +4,11 @@
 #include <Util/Logger.hpp>
 #include <Optimizer/utils/PathFinder.hpp>
 #include <Operators/Operator.hpp>
-#include "Optimizer/impl/MinimumEnergyConsumption.hpp"
+#include "Optimizer/placement/MinimumEnergyConsumptionStrategy.hpp"
 
 namespace NES {
 
-NESExecutionPlanPtr MinimumEnergyConsumption::initializeExecutionPlan(InputQueryPtr inputQuery,
+NESExecutionPlanPtr MinimumEnergyConsumptionStrategy::initializeExecutionPlan(InputQueryPtr inputQuery,
                                                                       NESTopologyPlanPtr nesTopologyPlan) {
 
     const OperatorPtr sinkOperator = inputQuery->getRoot();
@@ -49,7 +49,7 @@ NESExecutionPlanPtr MinimumEnergyConsumption::initializeExecutionPlan(InputQuery
     return nesExecutionPlanPtr;
 }
 
-void MinimumEnergyConsumption::placeOperators(NESExecutionPlanPtr executionPlanPtr,
+void MinimumEnergyConsumptionStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr,
                                               NESTopologyGraphPtr nesTopologyGraphPtr,
                                               OperatorPtr sourceOperator,
                                               vector<NESTopologyEntryPtr> sourceNodes) {
@@ -279,7 +279,7 @@ void MinimumEnergyConsumption::placeOperators(NESExecutionPlanPtr executionPlanP
     }
 }
 
-void MinimumEnergyConsumption::addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes,
+void MinimumEnergyConsumptionStrategy::addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes,
                                                    NESTopologyEntryPtr rootNode,
                                                    NESExecutionPlanPtr nesExecutionPlanPtr) {
     PathFinder pathFinder;
