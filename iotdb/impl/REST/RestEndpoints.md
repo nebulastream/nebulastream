@@ -33,8 +33,8 @@ Submitting user query for execution.
 
 Getting the execution plan for the user query.
  
-**API**: /query/execution-plan
-**Verb**: POST
+**API**: /query/execution-plan\
+**Verb**: POST\
 **Response Code**: 200 OK
 
 **_Example_**: 
@@ -63,8 +63,8 @@ Getting the execution plan for the user query.
 
 Get query plan for the user query.
  
-**API**: /query/query-plan
-**Verb**: GET
+**API**: /query/query-plan\
+**Verb**: GET\
 **Response Code**: 200 OK
 
 **_Example_**: 
@@ -88,8 +88,8 @@ Get query plan for the user query.
 
 To get the NebulaStream topology graph as JSON.
 
-**API**: /query/nes-topology
-**Verb**: GET
+**API**: /query/nes-topology\
+**Verb**: GET\
 **Response Code**: 200 OK
 
 **_Example_**: 
@@ -124,8 +124,8 @@ Here we describe the APIs used for interacting with query catalog.
 
 To get all queries registered at NebulaStream.
 
-**API**: /queryCatalog/allRegisteredQueries
-**Verb**: GET
+**API**: /queryCatalog/allRegisteredQueries\
+**Verb**: GET\
 **Response Code**: 200 OK
 
 **_Example_**: 
@@ -142,8 +142,8 @@ To get all queries registered at NebulaStream.
 
 To get all queries with a specific status form NebulaStream.
 
-API: /queryCatalog/queries
-Verb: GET
+API: /queryCatalog/queries\
+Verb: GET\
 Response Code: 200 OK
 
 **_Example_**: 
@@ -160,8 +160,8 @@ Response Code: 200 OK
 
 To delete a user submitted query.
 
-**API**: /queryCatalog/query
-**Verb**: DELETE
+**API**: /queryCatalog/query\
+**Verb**: DELETE\
 **Response Code**: 200 OK
 
 **_Example_**: 
@@ -179,8 +179,8 @@ ___
 
 To get all queries registered at NebulaStream.
 
-**API**: /streamCatalog/allLogicalStream
-**Verb**: GET
+**API**: /streamCatalog/allLogicalStream\
+**Verb**: GET\
 **Response Code**: 200 OK
 
 **_Example_**: 
@@ -197,8 +197,8 @@ To get all queries registered at NebulaStream.
 
 To get all physical streams for a given logical stream.
 
-**API**: /streamCatalog/allPhysicalStream
-**Verb**: GET
+**API**: /streamCatalog/allPhysicalStream\
+**Verb**: GET\
 **Response Code**: 200 OK
 
 **_Example_**: 
@@ -212,8 +212,8 @@ To get all physical streams for a given logical stream.
 ### Update Logical Stream
 To Update a logical stream.
 
-**API**: /streamCatalog/updateLogicalStream
-**Verb**: POST
+**API**: /streamCatalog/updateLogicalStream\
+**Verb**: POST\
 **Response Code**: 200 OK
 
 **_Example_**: 
@@ -229,8 +229,8 @@ To Update a logical stream.
 
 To delete a logical stream.
 
-**API**: /streamCatalog/deleteLogicalStream
-**Verb**: DELETE
+**API**: /streamCatalog/deleteLogicalStream\
+**Verb**: DELETE\
 **Response Code**: 200 OK
 
 **_Example_**: 
