@@ -705,7 +705,7 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
 
     /* execute Stage */
     NES_INFO("Processing " << buffer->getNumberOfTuples() << " tuples: ");
-    stage->execute(buffer, NULL, NULL, resultBuffer);
+    stage->execute(buffer, nullptr, NULL, resultBuffer);
 
     /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
     EXPECT_EQ(buffer->getNumberOfTuples(), resultBuffer->getNumberOfTuples());
@@ -714,307 +714,200 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
         EXPECT_EQ(1, layout->readField<uint64_t>(resultBuffer, recordIndex, 0));
     }
 }
-
-const PredicatePtr createPredicate();
-
-int CodeGeneratorFilterTest() {
+/**
+ * @brief This test generates a predicate, which filters elements in the input buffer
+ */
+TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
     /* prepare objects for test */
-    DataSourcePtr source = createTestSourceCodeGenFilter();
-    CodeGeneratorPtr code_gen = createCodeGenerator();
-    PipelineContextPtr context = createPipelineContext();
+    auto source = createTestSourceCodeGenFilter();
+    auto codeGenerator = createCodeGenerator();
+    auto context = createPipelineContext();
 
-    Schema input_schema = source->getSchema();
+    auto inputSchema = source->getSchema();
 
-    std::cout << "Generate Filter Code" << std::endl;
     /* generate code for scanning input buffer */
-    code_gen->generateCode(source->getSchema(), context, std::cout);
+    codeGenerator->generateCode(source->getSchema(), context, std::cout);
 
-    std::cout << std::make_shared<Predicate>(
-        (PredicateItem(input_schema[0]) < PredicateItem(createBasicTypeValue(NES::BasicType::INT64, "5")))
-    )->toString() << std::endl;
-
-    PredicatePtr pred = std::dynamic_pointer_cast<Predicate>(
-        (PredicateItem(input_schema[0]) < PredicateItem(createBasicTypeValue(NES::BasicType::INT64, "5"))).copy()
-    );
-    /*
-    PredicatePtr pred=std::dynamic_pointer_cast<Predicate>(
-        (PredicateItem(input_schema[0]) == 5).copy()
+    auto pred = std::dynamic_pointer_cast<Predicate>(
+        (PredicateItem(inputSchema[0]) < PredicateItem(createBasicTypeValue(BasicType::INT64, "5"))).copy()
     );
 
-    PredicatePtr pred=std::dynamic_pointer_cast<Predicate>(
-        (5 == input_schema[0]).copy()
-    );
-
-
-    std::cout << std::make_shared<Predicate>(
-            (PredicateItem(createStringTypeValue("abc"))==PredicateItem(createStringTypeValue("def"))))->toString() << std::endl;
-
-    PredicatePtr pred=std::dynamic_pointer_cast<Predicate>(
-            (PredicateItem(createStringTypeValue("abc"))==PredicateItem(createStringTypeValue("abc"))).copy()
-            );
-    */
-    code_gen->generateCode(pred, context, std::cout);
+    codeGenerator->generateCode(pred, context, std::cout);
 
     /* generate code for writing result tuples to output buffer */
-    code_gen->generateCode(createPrintSinkWithSchema(Schema::create()
-                                                         .addField("id", BasicType::UINT32)
-                                                         .addField("value", BasicType::UINT32)
-                                                         .addField("text", createArrayDataType(BasicType::CHAR, 12)),
-                                                     std::cout), context, std::cout);
+    codeGenerator->generateCode(createPrintSinkWithSchema(source->getSchema(), std::cout), context, std::cout);
 
     /* compile code to pipeline stage */
-    auto stage = code_gen->compile(CompilerArgs(), context->code);
-    if (!stage)
-        return -1;
+    auto stage = codeGenerator->compile(CompilerArgs(), context->code);
 
     /* prepare input tuple buffer */
-    TupleBufferPtr buf = source->receiveData();
-    //std::cout << NES::toString(buf.get(),source->getSchema()) << std::endl;
-    std::cout << "Processing " << buf->getNumberOfTuples() << " tuples: " << std::endl;
-    uint32_t sizeoftuples = (sizeof(uint32_t) + sizeof(uint32_t) + sizeof(char)*12);
-    size_t buffer_size = buf->getNumberOfTuples()*sizeoftuples;
-    std::cout << "This is my NUMBER....: " << buffer_size << std::endl;
-    TupleBufferPtr result_buffer = std::make_shared<TupleBuffer>(malloc(buffer_size), buffer_size, sizeoftuples, 0);
+    auto inputBuffer = source->receiveData();
+    NES_INFO("Processing " << inputBuffer->getNumberOfTuples() << " tuples: ");
+
+    auto sizeOfTuple = (sizeof(uint32_t) + sizeof(uint32_t) + sizeof(char)*12);
+    auto resultBuffer = BufferManager::instance().getBuffer();
+    resultBuffer->setTupleSizeInBytes(sizeOfTuple);
+
     /* execute Stage */
-    stage->execute(buf, NULL, NULL, result_buffer);
+    stage->execute(inputBuffer, nullptr, NULL, resultBuffer);
 
     /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
-    std::cout << "---------- My Number of tuples...." << result_buffer->getNumberOfTuples() << std::endl;
-    if (result_buffer->getNumberOfTuples() != 5) {
-        std::cout << "Wrong number of tuples in output: " << result_buffer->getNumberOfTuples()
-                  << " (should have been: " << buf->getNumberOfTuples() << ")" << std::endl;
-        return -1;
-    }
-    SelectionDataGenSource::InputTuple* result_data = (SelectionDataGenSource::InputTuple*) result_buffer->getBuffer();
+    NES_INFO("Number of generated output tuples: " << resultBuffer->getNumberOfTuples())
+    EXPECT_EQ(resultBuffer->getNumberOfTuples(), 5);
+
+    auto resultData = (SelectionDataGenSource::InputTuple*) resultBuffer->getBuffer();
     for (uint64_t i = 0; i < 5; ++i) {
-        if (result_data[i].id != i || result_data[i].value != i*2) {
-            std::cout << "Error in Result! Mismatch position: " << i << std::endl;
-            return -1;
-        }
+        EXPECT_EQ(resultData[i].id, i);
+        EXPECT_EQ(resultData[i].value, i*2);
     }
-    std::cout << NES::toString(result_buffer.get(), Schema::create()
-        .addField("id", BasicType::UINT32)
-        .addField("value", BasicType::UINT32)
-        .addField("text", createArrayDataType(BasicType(CHAR), 12))) << std::endl;
-
-    std::cout << "Result of SelectionCodeGenTest is Correct!" << std::endl;
-
-    return 0;
 }
 
 /**
- * Window assigner codegen test
- * @return
+ * @brief This test generates a window assigner
  */
-int WindowAssignerCodeGenTest() {
+TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
     /* prepare objects for test */
-    DataSourcePtr source = createWindowTestDataSource();
-    CodeGeneratorPtr code_gen = createCodeGenerator();
-    PipelineContextPtr context = createPipelineContext();
+    auto source = createWindowTestDataSource();
+    auto codeGenerator = createCodeGenerator();
+    auto context = createPipelineContext();
 
-    Schema input_schema = source->getSchema();
+    auto input_schema = source->getSchema();
 
-    std::cout << "Generate Predicate Code" << std::endl;
-    code_gen->generateCode(source->getSchema(), context, std::cout);
+    codeGenerator->generateCode(source->getSchema(), context, std::cout);
 
     auto sum = Sum::on(Field(input_schema.get("value")));
-    WindowDefinitionPtr
-        window_definition_ptr(new WindowDefinition(input_schema.get("key"),
-                                                   sum,
-                                                   TumblingWindow::of(TimeCharacteristic::ProcessingTime,
-                                                                      Seconds(10))));
-    // auto window_operator = createWindowOperator(window_definition_ptr);
-    //predicate definition
-    code_gen->generateCode(window_definition_ptr, context, std::cout);
+    auto windowDefinition = createWindowDefinition(
+        input_schema.get("key"),
+        sum,
+        TumblingWindow::of(TimeCharacteristic::ProcessingTime, Seconds(10)));
 
+    codeGenerator->generateCode(windowDefinition, context, std::cout);
 
     /* compile code to pipeline stage */
-    auto stage = code_gen->compile(CompilerArgs(), context->code);
-    if (!stage)
-        return -1;
+    auto stage = codeGenerator->compile(CompilerArgs(), context->code);
 
     // init window handler
-    auto window_handler = new WindowHandler(window_definition_ptr);
+    auto window_handler = new WindowHandler(windowDefinition);
     window_handler->setup(nullptr, 0);
 
     /* prepare input tuple buffer */
-    TupleBufferPtr buf = source->receiveData();
+    auto inputBuffer = source->receiveData();
 
-    //std::cout << NES::toString(buf.get(),source->getSchema()) << std::endl;
-    std::cout << "Processing " << buf->getNumberOfTuples() << " tuples: " << std::endl;
-
-    TupleBufferPtr result_buffer = std::make_shared<TupleBuffer>(malloc(0), 0, 0, 0);
+    TupleBufferPtr resultBuffer = BufferManager::instance().getBuffer();
 
     /* execute Stage */
     stage->execute(
-        buf,
+        inputBuffer,
         window_handler->getWindowState(),
         window_handler->getWindowManager(),
-        result_buffer);
+        resultBuffer);
 
-    /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
-    std::cout << "---------- My Number of tuples...." << result_buffer->getNumberOfTuples() << std::endl;
-    if (result_buffer->getNumberOfTuples() != 0) {
-        std::cout << "Wrong number of tuples in output: " << result_buffer->getNumberOfTuples()
-                  << " (should have been: " << buf->getNumberOfTuples() << ")" << std::endl;
-        return -1;
-    }
+    /* check for correctness, after a window assigner no tuple should be produced*/
+    EXPECT_EQ(resultBuffer->getNumberOfTuples(), 0);
+
+    //check partial aggregates in window state
     auto stateVar = (StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>*) window_handler->getWindowState();
-
-    if (stateVar->get(0).value()->getPartialAggregates()[0] != 5) {
-        std::cerr << "Result of SelectionCodeGenTest is False!" << std::endl;
-    } else {
-        std::cout << "Result of SelectionCodeGenTest is Correct!" << std::endl;
-    }
-    if (stateVar->get(1).value()->getPartialAggregates()[0] != 5) {
-        std::cerr << "Result of SelectionCodeGenTest is False!" << std::endl;
-    } else {
-        std::cout << "Result of SelectionCodeGenTest is Correct!" << std::endl;
-    }
-    return 0;
+    EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5);
+    EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
 }
 
 /**
- * New Predicatetests for showing stuff
- * @return
+ * @brief This test generates a predicate with string comparision
  */
-int CodePredicateTests() {
+TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
     /* prepare objects for test */
-    DataSourcePtr source = createTestSourceCodeGenPredicate();
-    CodeGeneratorPtr code_gen = createCodeGenerator();
-    PipelineContextPtr context = createPipelineContext();
+    auto source = createTestSourceCodeGenPredicate();
+    auto codeGenerator = createCodeGenerator();
+    auto context = createPipelineContext();
 
-    Schema input_schema = source->getSchema();
-
-    std::cout << "Generate Predicate Code" << std::endl;
-    code_gen->generateCode(input_schema, context, std::cout);
+    auto inputSchema = source->getSchema();
+    codeGenerator->generateCode(inputSchema, context, std::cout);
 
     //predicate definition
-    code_gen->generateCode(createPredicate(
-        (input_schema[2] > 30.4) && (input_schema[4] == 'F' || (input_schema[5] == "HHHHHHHHHHH"))),
-                           context,
-                           std::cout);
-
-    unsigned int numberOfResultTuples = 3;
+    codeGenerator->generateCode(createPredicate(
+        (inputSchema[2] > 30.4) && (inputSchema[4] == 'F' || (inputSchema[5] == "HHHHHHHHHHH"))),
+                                context, std::cout);
 
     /* generate code for writing result tuples to output buffer */
-    code_gen->generateCode(createPrintSinkWithSchema(Schema::create()
-                                                         .addField("id", BasicType::UINT32)
-                                                         .addField("valueSmall", BasicType::INT16)
-                                                         .addField("valueFloat", BasicType::FLOAT32)
-                                                         .addField("valueDouble", BasicType::FLOAT64)
-                                                         .addField("valueChar", BasicType::CHAR)
-                                                         .addField("text", createArrayDataType(BasicType::CHAR, 12)),
-                                                     std::cout), context, std::cout);
+    codeGenerator->generateCode(createPrintSinkWithSchema(inputSchema, std::cout), context, std::cout);
 
     /* compile code to pipeline stage */
-    auto stage = code_gen->compile(CompilerArgs(), context->code);
-    if (!stage)
-        return -1;
+    auto stage = codeGenerator->compile(CompilerArgs(), context->code);
 
     /* prepare input tuple buffer */
-    TupleBufferPtr buf = source->receiveData();
-    //std::cout << NES::toString(buf.get(),source->getSchema()) << std::endl;
-    std::cout << "Processing " << buf->getNumberOfTuples() << " tuples: " << std::endl;
-    uint32_t sizeoftuples =
-        (sizeof(uint32_t) + sizeof(int16_t) + sizeof(float) + sizeof(double) + sizeof(char) + sizeof(char)*12);
-    size_t buffer_size = buf->getNumberOfTuples()*sizeoftuples;
-    TupleBufferPtr result_buffer = std::make_shared<TupleBuffer>(malloc(buffer_size), buffer_size, sizeoftuples, 0);
+    auto inputBuffer = source->receiveData();
 
+    TupleBufferPtr resultBuffer = BufferManager::instance().getBuffer();
+    resultBuffer->setTupleSizeInBytes(inputSchema.getSchemaSize());
 
     /* execute Stage */
-    stage->execute(buf, NULL, NULL, result_buffer);
+    stage->execute(inputBuffer, nullptr, nullptr, resultBuffer);
 
-    /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
-    std::cout << "---------- My Number of tuples...." << result_buffer->getNumberOfTuples() << std::endl;
-    if (result_buffer->getNumberOfTuples() != numberOfResultTuples) {
-        std::cout << "Wrong number of tuples in output: " << result_buffer->getNumberOfTuples()
-                  << " (should have been: " << buf->getNumberOfTuples() << ")" << std::endl;
-        return -1;
-    }
+    /* check for correctness, input source produces tuples consisting of two uint32_t values, 3 values will match the predicate */
+    EXPECT_EQ(resultBuffer->getNumberOfTuples(), 3);
 
-    std::cout << NES::toString(result_buffer.get(), Schema::create()
+    NES_INFO(NES::toString(resultBuffer.get(), inputSchema));
+}
+
+/**
+ * @brief This test generates a map predicate, which manipulates the input buffer content
+ */
+TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
+
+    /* prepare objects for test */
+    auto source = createTestSourceCodeGenPredicate();
+    auto codeGenerator = createCodeGenerator();
+    auto context = createPipelineContext();
+
+    auto inputSchema = source->getSchema();
+
+    codeGenerator->generateCode(inputSchema, context, std::cout);
+
+    //predicate definition
+    auto mapped_value = AttributeField("mapped_value", BasicType::FLOAT64).copy();
+    codeGenerator->generateCode(mapped_value, createPredicate((inputSchema[2]*inputSchema[3]) + 2), context, std::cout);
+
+    /* generate code for writing result tuples to output buffer */
+    auto outputSchema = Schema::create()
         .addField("id", BasicType::UINT32)
         .addField("valueSmall", BasicType::INT16)
         .addField("valueFloat", BasicType::FLOAT32)
         .addField("valueDouble", BasicType::FLOAT64)
+        .addField(mapped_value)
         .addField("valueChar", BasicType::CHAR)
-        .addField("text", createArrayDataType(BasicType::CHAR, 12))) << std::endl;
-    std::cout << "Result of SelectionCodeGenTest is Correct!" << std::endl;
-
-    return 0;
-}
-
-/**
- * New Predicatetests for showing stuff
- * @return
- */
-int CodeMapPredicatePtrTests() {
-    /* prepare objects for test */
-    DataSourcePtr source = createTestSourceCodeGenPredicate();
-    CodeGeneratorPtr code_gen = createCodeGenerator();
-    PipelineContextPtr context = createPipelineContext();
-
-    Schema input_schema = source->getSchema();
-
-    std::cout << "Generate Predicate Code" << std::endl;
-    code_gen->generateCode(input_schema, context, std::cout);
-
-    //predicate definition
-    AttributeFieldPtr mapped_value = AttributeField("mapped_value", BasicType::FLOAT64).copy();
-    code_gen->generateCode(mapped_value, createPredicate((input_schema[2]*input_schema[3]) + 2), context, std::cout);
-
-    /* generate code for writing result tuples to output buffer */
-    code_gen->generateCode(createPrintSinkWithSchema(Schema::create()
-                                                         .addField("id", BasicType::UINT32)
-                                                         .addField("valueSmall", BasicType::INT16)
-                                                         .addField("valueFloat", BasicType::FLOAT32)
-                                                         .addField("valueDouble", BasicType::FLOAT64)
-                                                         .addField(mapped_value)
-                                                         .addField("valueChar", BasicType::CHAR)
-                                                         .addField("text", createArrayDataType(BasicType::CHAR, 12)),
-                                                     std::cout), context, std::cout);
-
-    unsigned int numberOfResultTuples = 132;
+        .addField("text",
+                  createArrayDataType(BasicType::CHAR, 12));
+    codeGenerator->generateCode(createPrintSinkWithSchema(outputSchema, std::cout), context, std::cout);
 
     /* compile code to pipeline stage */
-    auto stage = code_gen->compile(CompilerArgs(), context->code);
-    if (!stage)
-        return -1;
+    auto stage = codeGenerator->compile(CompilerArgs(), context->code);
 
     /* prepare input tuple buffer */
-    TupleBufferPtr buf = source->receiveData();
-    //std::cout << NES::toString(buf.get(),source->getSchema()) << std::endl;
-    std::cout << "Processing " << buf->getNumberOfTuples() << " tuples: " << std::endl;
+    auto inputBuffer = source->receiveData();
     uint32_t sizeoftuples =
         (sizeof(uint32_t) + sizeof(int16_t) + sizeof(float) + sizeof(double) + sizeof(double) + sizeof(char)
             + sizeof(char)*12);
-    size_t buffer_size = buf->getNumberOfTuples()*sizeoftuples;
+    size_t buffer_size = inputBuffer->getNumberOfTuples()*sizeoftuples;
 
-    TupleBufferPtr result_buffer = std::make_shared<TupleBuffer>(malloc(buffer_size), buffer_size, sizeoftuples, 0);
+    TupleBufferPtr resultBuffer = std::make_shared<TupleBuffer>(malloc(buffer_size), buffer_size, sizeoftuples, 0);
 
     /* execute Stage */
-    stage->execute(buf, NULL, NULL, result_buffer);
+    stage->execute(inputBuffer, nullptr, nullptr, resultBuffer);
 
-    /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
-    std::cout << "---------- My Number of tuples...." << result_buffer->getNumberOfTuples() << std::endl;
-    if (result_buffer->getNumberOfTuples() != numberOfResultTuples) {
-        std::cout << "Wrong number of tuples in output: " << result_buffer->getNumberOfTuples()
-                  << " (should have been: " << buf->getNumberOfTuples() << ")" << std::endl;
-        return -1;
+    /* check for correctness, the number of produced tuple should be equal between input and output buffer */
+    EXPECT_EQ(resultBuffer->getNumberOfTuples(), inputBuffer->getNumberOfTuples());
+
+    std::cout << NES::toString(resultBuffer.get(), outputSchema) << std::endl;
+    auto inputLayout = createRowLayout(inputSchema.copy());
+    auto ouputLayout = createRowLayout(outputSchema.copy());
+    for (int i = 0; i < inputBuffer->getNumberOfTuples(); i++) {
+        auto floatValue = inputLayout->readField<float>(inputBuffer, i, 2);
+        auto doubleValue  = inputLayout->readField<double>(inputBuffer, i, 3);
+        auto reference = (floatValue * doubleValue) + 2;
+        auto mapedValue = ouputLayout->readField<double>(resultBuffer, i, 4);
+        EXPECT_EQ(reference, mapedValue);
     }
 
-    std::cout << NES::toString(result_buffer.get(), Schema::create()
-        .addField("id", BasicType::UINT32)
-        .addField("valueSmall", BasicType::INT16)
-        .addField("valueFloat", BasicType::FLOAT32)
-        .addField("valueDouble", BasicType::FLOAT64)
-        .addField("mapped_value", BasicType::FLOAT64)
-        .addField("valueChar", BasicType::CHAR)
-        .addField("text", createArrayDataType(BasicType::CHAR, 12))) << std::endl;
-    std::cout << "Result of MapPredPtrCodeGenTest is Correct!" << std::endl;
-
-    return 0;
 }
 
 int testTupleBufferPrinting() {
