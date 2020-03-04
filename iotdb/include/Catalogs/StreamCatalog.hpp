@@ -59,27 +59,30 @@ class StreamCatalog {
    * @param structure describing the entry in the catalog
    * @return bool indicating success of remove stream
    */
-  bool removePhysicalStream(string logicalStreamName, std::string ip);
+  bool removePhysicalStream(string logicalStreamName, string physicalStreamName, std::size_t hashId);
 
   /**
-   * @brief method to remove a physical stream from all logical streams
-   * @param physical stream name and id to be deleted
+   * @brief method to remove a physical stream from its logical streams
+   * @param name of the logical stream
+   * @param name of the physical stream
+   * @param hashId of the actor
    * @return bool indicating success of remove stream
    */
+
+  bool removePhysicalStreamByHashId(size_t hashId);
+
+    /**
+     * @brief method to remove a physical stream from its logical streams
+     * @param hasId of the leaving node
+     * @return bool indicating success of remove of physical stream
+     */
+
   bool removeAllPhysicalStreams(std::string physicalStreamName);
 
   /**
    * @brief method to remove a physical stream from all logical streams
    * @param param of the node to be deleted
    * @return bool indicating success of remove stream
-   */
-  bool removePhysicalStreamsByIp(std::string ip);
-
-  /**
-   * @brief method to return the schema for an existing logical stream
-   * @param name of logical stream
-   * @return smart pointer to the schema
-   * @caution there is only one schema per logical stream allowed
    */
 
   SchemaPtr getSchemaForLogicalStream(std::string logicalStreamName);

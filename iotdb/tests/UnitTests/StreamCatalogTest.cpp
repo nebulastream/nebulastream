@@ -163,7 +163,7 @@ TEST_F(StreamCatalogTest, add_remove_physical_stream_test) {
                                                   sce));
 
   EXPECT_TRUE(
-      StreamCatalog::instance().removePhysicalStream(streamConf.logicalStreamName, sensorNode->getIp()));
+      StreamCatalog::instance().removePhysicalStream(streamConf.logicalStreamName, streamConf.physicalStreamName, sensorNode->getId()));
 
   cout << StreamCatalog::instance().getPhysicalStreamAndSchemaAsString()
        << endl;
