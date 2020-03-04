@@ -74,9 +74,8 @@ NESTopologyEntryPtr CoordinatorService::register_sensor(size_t id, const string&
     return sensorNode;
 }
 
-pair<string, long> CoordinatorService::registerQuery(const string& queryString, const string& optimizationStrategyName) {
-    return QueryCatalog::instance().registerQuery(queryString,
-                                                  optimizationStrategyName);
+string CoordinatorService::registerQuery(const string& queryString, const string& optimizationStrategyName) {
+    return QueryCatalog::instance().registerQuery(queryString, optimizationStrategyName);
 }
 
 bool CoordinatorService::deleteQuery(const string& queryId) {

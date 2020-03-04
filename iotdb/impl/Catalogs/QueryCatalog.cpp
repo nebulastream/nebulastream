@@ -14,7 +14,7 @@ QueryCatalog& QueryCatalog::instance() {
     return instance;
 }
 
-pair<string, long> QueryCatalog::registerQuery(const string& queryString,
+string QueryCatalog::registerQuery(const string& queryString,
                                    const string& optimizationStrategyName) {
     NES_DEBUG(
         "QueryCatalog: Registering query " << queryString << " with strategy " << optimizationStrategyName);
@@ -30,28 +30,34 @@ pair<string, long> QueryCatalog::registerQuery(const string& queryString,
             queryString);
         Schema schema = inputQueryPtr->getSourceStream()->getSchema();
 
-        auto epDetails = OptimizerService::getInstance()->getExecutionPlan(inputQueryPtr, optimizationStrategyName);
+        NESExecutionPlanPtr nesExecutionPtr = OptimizerService::getInstance()->getExecutionPlan(
+            inputQueryPtr, optimizationStrategyName);
 
         NES_DEBUG(
-            "QueryCatalog: Final Execution Plan =" << epDetails.first->getTopologyPlanString())
+            "QueryCatalog: Final Execution Plan =" << nesExecutionPtr->getTopologyPlanString())
 
         boost::uuids::basic_random_generator<boost::mt19937> gen;
         boost::uuids::uuid u = gen();
         std::string queryId = boost::uuids::to_string(u);  //TODO: I am not sure this will not create a unique one
 
         QueryCatalogEntryPtr entry = std::make_shared<QueryCatalogEntry>(
-            queryId, queryString, inputQueryPtr, epDetails.first, QueryStatus::Registered);
+            queryId, queryString, inputQueryPtr, nesExecutionPtr, QueryStatus::Registered);
 
         queries[queryId] = entry;
         NES_DEBUG("number of queries after insert=" << queries.size())
 
-        return std::make_pair(queryId, epDetails.second);
+        return queryId;
     } catch (const std::exception& exc) {
         NES_ERROR("QueryCatalog:_exception:" << exc.what())
         NES_ERROR(
             "QueryCatalog: Unable to process input request with: queryString: " << queryString << "\n strategy: "
                                                                                 << optimizationStrategyName);
         throw exc;
+    } catch (...) {
+        NES_ERROR(
+            "QueryCatalog: Unable to process input request with: queryString: " << queryString << "\n strategy: "
+                                                                                << optimizationStrategyName);
+        return nullptr;
     }
 }
 

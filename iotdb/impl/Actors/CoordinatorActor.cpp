@@ -365,16 +365,12 @@ void CoordinatorActor::showOperators() {
     }
 }
 
-string CoordinatorActor::registerQuery(const string& queryString,
-                                       const string& strategy) {
-    auto queryDetails = coordinatorServicePtr->registerQuery(queryString, strategy);
-    return queryDetails.first;
+string CoordinatorActor::registerQuery(const string& queryString, const string& strategy) {
+    return coordinatorServicePtr->registerQuery(queryString, strategy);
 }
 
-string CoordinatorActor::executeQuery(const string& queryString,
-                                      const string& strategy) {
-    auto queryDetails = coordinatorServicePtr->registerQuery(queryString, strategy);
-    string queryId = queryDetails.first;
+string CoordinatorActor::executeQuery(const string& queryString, const string& strategy) {
+    string queryId = coordinatorServicePtr->registerQuery(queryString, strategy);
     deployQuery(queryId);
     return queryId;
 }

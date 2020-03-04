@@ -87,7 +87,7 @@ TEST_F(QueryCatalogTest, add_query) {
     std::string queryString =
         "InputQuery::from(default_logical).filter(default_logical[\"value\"] > 42).print(std::cout); ";
 
-    string queryId = QueryCatalog::instance().registerQuery(queryString, "BottomUp").first;
+    string queryId = QueryCatalog::instance().registerQuery(queryString, "BottomUp");
     map<string, QueryCatalogEntryPtr> reg = QueryCatalog::instance()
         .getRegisteredQueries();
     EXPECT_TRUE(reg.size() == 1);
@@ -103,7 +103,7 @@ TEST_F(QueryCatalogTest, add_query_and_start_stop) {
     std::string queryString =
         "InputQuery::from(default_logical).filter(default_logical[\"value\"] > 42).print(std::cout); ";
 
-    string queryId = QueryCatalog::instance().registerQuery(queryString, "BottomUp").first;
+    string queryId = QueryCatalog::instance().registerQuery(queryString, "BottomUp");
     map<string, QueryCatalogEntryPtr> reg = QueryCatalog::instance()
         .getRegisteredQueries();
     EXPECT_TRUE(reg.size() == 1);
@@ -132,7 +132,7 @@ TEST_F(QueryCatalogTest, add_remove_query) {
     std::string queryString =
         "InputQuery::from(default_logical).filter(default_logical[\"value\"] > 42).print(std::cout); ";
 
-    string queryId = QueryCatalog::instance().registerQuery(queryString, "BottomUp").first;
+    string queryId = QueryCatalog::instance().registerQuery(queryString, "BottomUp");
     map<string, QueryCatalogEntryPtr> reg = QueryCatalog::instance()
         .getRegisteredQueries();
     EXPECT_TRUE(reg.size() == 1);
@@ -149,7 +149,7 @@ TEST_F(QueryCatalogTest, print_query) {
     std::string queryString =
         "InputQuery::from(default_logical).filter(default_logical[\"value\"] > 42).print(std::cout); ";
 
-    string queryId = QueryCatalog::instance().registerQuery(queryString, "BottomUp").first;
+    string queryId = QueryCatalog::instance().registerQuery(queryString, "BottomUp");
     map<string, QueryCatalogEntryPtr> reg = QueryCatalog::instance()
         .getRegisteredQueries();
     EXPECT_TRUE(reg.size() == 1);
