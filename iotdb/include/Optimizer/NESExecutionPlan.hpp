@@ -129,8 +129,12 @@ class NESExecutionPlan {
 
     json::value getExecutionGraphAsJson() const;
 
+    long getTotalComputeTimeInMillis() const;
+    void setTotalComputeTimeInMillis(long totalComputeTime);
+
   private:
     ExecutionGraphPtr exeGraphPtr;
+    long totalComputeTimeInMillis;
     vector<json::value> getChildrenNode(ExecutionNodePtr nesParentNode) const;
 };
 

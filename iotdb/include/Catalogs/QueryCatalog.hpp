@@ -102,9 +102,9 @@ class QueryCatalog {
      * @brief registers a CAF query into the NES topology to make it deployable
      * @param queryString a queryString of the query
      * @param optimizationStrategyName the optimization strategy (buttomUp or topDown)
-     * @return pair of query id and total plan preparation time
+     * @return query id
      */
-    pair<string, long> registerQuery(const string& queryString,
+    string registerQuery(const string& queryString,
                          const string& optimizationStrategyName);
 
     /**
