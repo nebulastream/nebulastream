@@ -49,22 +49,8 @@ bool FileOutputSink::writeData(const TupleBufferPtr input_buffer) {
   } else if (outputType == CSV_TYPE) {
     std::ofstream outputFile;
     outputFile.open(filePath, std::ofstream::out | std::ofstream::app);
-    for (size_t i = 0; i < input_buffer->getNumberOfTuples(); i++) {
-      size_t offset = 0;
-      for (size_t j = 0; j < schema.getSize(); j++) {
-        auto field = schema[j];
-        size_t fieldSize = field->getFieldSize();
-        DataTypePtr ptr = field->getDataType();
-        std::string str = ptr->convertRawToString(
-            input_buffer->getBuffer() + offset + i * schema.getSchemaSize());
-        outputFile << str.c_str();
-        if (j < schema.getSize() - 1) {
-          outputFile << ",";
-        }
-        offset += fieldSize;
-      }
-      outputFile << std::endl;
-    }
+    outputFile << input_buffer->printTupleBuffer(schema);
+    outputFile.close();
   }
   return true;
 }

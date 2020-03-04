@@ -2,6 +2,8 @@
 #define INCLUDE_TUPLEBUFFER_H_
 #include <cstdint>
 #include <memory>
+#include <API/Schema.hpp>
+
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 
@@ -102,15 +104,21 @@ class TupleBuffer {
    */
   bool decrementUseCntAndTestForZero();
 
+  /**
+   * @brief this method creates a string from the content of a tuple buffer
+   * @return string of the buffer content
+   */
+  std::string printTupleBuffer(Schema schema);
+
  private:
   /**
    * @brief default constructor for serialization with boost
    */
   TupleBuffer()
       : buffer(nullptr),
-        buffer_size_bytes(0),
-        tuple_size_bytes(0),
-        num_tuples(0),
+        bufferSizeInBytes(0),
+        tupleSizeInBytes(0),
+        numberOfTuples(0),
         useCnt(0) {
   }
 
@@ -122,15 +130,15 @@ class TupleBuffer {
   template<class Archive>
   void serialize(Archive & ar, const unsigned int version) {
 //    ar & buffer; TODO: serialize content also
-    ar & buffer_size_bytes;
-    ar & tuple_size_bytes;
-    ar & num_tuples;
+    ar & bufferSizeInBytes;
+    ar & tupleSizeInBytes;
+    ar & numberOfTuples;
   }
 
   void* buffer;
-  size_t buffer_size_bytes;
-  size_t tuple_size_bytes;
-  size_t num_tuples;
+  size_t bufferSizeInBytes;
+  size_t tupleSizeInBytes;
+  size_t numberOfTuples;
   size_t useCnt;
 };
 
