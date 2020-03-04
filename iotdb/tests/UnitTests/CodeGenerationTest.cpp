@@ -1,8 +1,7 @@
 
 #include <cassert>
 #include <iostream>
-#include <math.h>
-#include "gtest/gtest.h"
+#include <gtest/gtest.h>
 #include <Services/CoordinatorService.hpp>
 #include <Util/Logger.hpp>
 #include <API/Schema.hpp>

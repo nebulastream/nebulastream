@@ -1,29 +1,11 @@
-#include <cassert>
 #include <iostream>
-#include <math.h>
-#include "gtest/gtest.h"
-#include <Services/CoordinatorService.hpp>
+#include <gtest/gtest.h>
 #include <Util/Logger.hpp>
 #include <API/Schema.hpp>
-#include <API/UserAPIExpression.hpp>
 #include <API/Types/DataTypes.hpp>
-#include <QueryCompiler/CodeGenerator.hpp>
-#include <QueryCompiler/PipelineContext.hpp>
-#include <QueryCompiler/PipelineStage.hpp>
-#include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Declaration.hpp>
-#include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
-#include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
-#include <QueryCompiler/CCodeGenerator/UnaryOperatorStatement.hpp>
-#include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
-#include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
-#include <Windows/WindowHandler.hpp>
-#include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/GeneratorSource.hpp>
-#include <SourceSink/DefaultSource.hpp>
-#include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
-#include <NodeEngine/BufferManager.hpp>
 
 namespace NES {
 
