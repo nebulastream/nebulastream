@@ -17,6 +17,11 @@ typedef std::shared_ptr<ExecutablePipeline> ExecutablePipelinePtr;
 class ExecutablePipeline {
  public:
   virtual ~ExecutablePipeline() = default;
+
+  /**
+   * @brief Creates a copy of the executable pipeline.
+   * @return ExecutablePipelinePtr
+   */
   virtual ExecutablePipelinePtr copy() const = 0;
 
   /**

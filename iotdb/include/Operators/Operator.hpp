@@ -84,7 +84,7 @@ class Operator {
     void setOperatorId(size_t operatorId) { this->operatorId = operatorId; };
     const std::vector<OperatorPtr> getChildren() const;
     void setChildren(const std::vector<OperatorPtr> children);
-    void addChild(const OperatorPtr& child);
+    void addChild(const OperatorPtr child);
     const OperatorPtr getParent() const;
     void setParent(const OperatorPtr parent);
     /**

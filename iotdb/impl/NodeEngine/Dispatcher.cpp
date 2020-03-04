@@ -48,7 +48,10 @@ bool Dispatcher::registerQueryWithStart(QueryExecutionPlanPtr qep) {
         auto sources = qep->getSources();
         for (const auto& source : sources) {
             NES_DEBUG("Dispatcher: start source " << source << " str=" << source->toString())
-            source->start();
+            if (!source->start()) {
+                NES_FATAL_ERROR("Dispatcher: source " << source << " could not started");
+                return false;
+            }
         }
 
         auto sinks = qep->getSinks();
@@ -56,8 +59,11 @@ bool Dispatcher::registerQueryWithStart(QueryExecutionPlanPtr qep) {
             NES_DEBUG("Dispatcher: start sink " << sink)
             sink->setup();
         }
-        qep->setup();
-        qep->start();
+
+        if (!qep->setup() || !qep->start()) {
+            NES_FATAL_ERROR("Dispatcher: query execution plan could not started");
+            return false;
+        }
         return true;
     } else {
         //registration failed, return false
@@ -104,7 +110,11 @@ bool Dispatcher::deregisterQuery(QueryExecutionPlanPtr qep) {
         source->stop();
     }
 
-    qep->stop();
+    if (!qep->stop()) {
+        NES_FATAL_ERROR(
+            "Dispatcher: QEP could not be stopped");
+        return false;
+    };
 
     auto sinks = qep->getSinks();
     for (const auto& sink : sinks) {
@@ -178,7 +188,7 @@ void Dispatcher::addWorkForNextPipeline(const TupleBufferPtr buffer,
     task_queue.push_back(task);
     NES_DEBUG(
         "Dispatcher: added Task " << task.get() << " for QEP " << queryExecutionPlan
-                                << " inputBuffer " << buffer)
+                                  << " inputBuffer " << buffer)
 
     cv.notify_all();
 }

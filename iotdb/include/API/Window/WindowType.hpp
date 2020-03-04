@@ -25,11 +25,12 @@ class TumblingWindow : public WindowType {
 
   /**
    * Calculates the next window end based on a given timestamp.
+   * The next window end is equal to the current timestamp plus the window size minus the fraction of the current window
    * @param currentTs
    * @return the next window end
    */
   uint64_t calculateNextWindowEnd(uint64_t currentTs) const override {
-    return currentTs + size.getTime() - (currentTs) % size.getTime();
+    return currentTs + size.getTime() - (currentTs % size.getTime());
   }
 
   void triggerWindows(WindowListPtr windows, uint64_t lastWatermark, uint64_t currentWatermark) const;
