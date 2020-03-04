@@ -814,8 +814,8 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
     codeGenerator->generateCode(inputSchema, context, std::cout);
 
     //predicate definition
-    auto mapped_value = AttributeField("mapped_value", BasicType::FLOAT64).copy();
-    codeGenerator->generateCode(mapped_value, createPredicate((inputSchema[2]*inputSchema[3]) + 2), context, std::cout);
+    auto mappedValue = AttributeField("mappedValue", BasicType::FLOAT64).copy();
+    codeGenerator->generateCode(mappedValue, createPredicate((inputSchema[2]*inputSchema[3]) + 2), context, std::cout);
 
     /* generate code for writing result tuples to output buffer */
     auto outputSchema = Schema::create()
@@ -823,7 +823,7 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
         .addField("valueSmall", BasicType::INT16)
         .addField("valueFloat", BasicType::FLOAT32)
         .addField("valueDouble", BasicType::FLOAT64)
-        .addField(mapped_value)
+        .addField(mappedValue)
         .addField("valueChar", BasicType::CHAR)
         .addField("text",
                   createArrayDataType(BasicType::CHAR, 12));
