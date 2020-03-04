@@ -108,11 +108,9 @@ TEST_F(CoordinatorServiceTest, test_node_properties) {
         "{\"cpus\":[{\"guest\":0,\"guest_nice\":0,\"idle\":1777049,\"iowait\":3074,\"irq\":0,\"name\":\"cpu\",\"nice\":186,\"softirq\":1276,\"steal\":0,\"system\":15308,\"user\":122112},{\"guest\":0,\"guest_nice\":0,\"idle\":226210,\"iowait\":284,\"irq\":0,\"name\":\"cpu0\",\"nice\":11,\"softirq\":392,\"steal\":0,\"system\":1588,\"user\":11438},{\"guest\":0,\"guest_nice\":0,\"idle\":220835,\"iowait\":307,\"irq\":0,\"name\":\"cpu1\",\"nice\":15,\"softirq\":255,\"steal\":0,\"system\":1902,\"user\":16182},{\"guest\":0,\"guest_nice\":0,\"idle\":220454,\"iowait\":324,\"irq\":0,\"name\":\"cpu2\",\"nice\":14,\"softirq\":126,\"steal\":0,\"system\":1974,\"user\":17030},{\"guest\":0,\"guest_nice\":0,\"idle\":221382,\"iowait\":332,\"irq\":0,\"name\":\"cpu3\",\"nice\":21,\"softirq\":130,\"steal\":0,\"system\":2240,\"user\":15955},{\"guest\":0,\"guest_nice\":0,\"idle\":218898,\"iowait\":564,\"irq\":0,\"name\":\"cpu4\",\"nice\":7,\"softirq\":88,\"steal\":0,\"system\":1957,\"user\":18461},{\"guest\":0,\"guest_nice\":0,\"idle\":222420,\"iowait\":442,\"irq\":0,\"name\":\"cpu5\",\"nice\":103,\"softirq\":90,\"steal\":0,\"system\":1931,\"user\":15007},{\"guest\":0,\"guest_nice\":0,\"idle\":223872,\"iowait\":402,\"irq\":0,\"name\":\"cpu6\",\"nice\":6,\"softirq\":84,\"steal\":0,\"system\":1811,\"user\":13855},{\"guest\":0,\"guest_nice\":0,\"idle\":222973,\"iowait\":415,\"irq\":0,\"name\":\"cpu7\",\"nice\":7,\"softirq\":108,\"steal\":0,\"system\":1901,\"user\":14182}],\"fs\":{\"f_bavail\":8782124,\"f_bfree\":12246175,\"f_blocks\":68080498,\"f_bsize\":4096,\"f_frsize\":4096},\"mem\":{\"bufferram\":457990144,\"freehigh\":0,\"freeram\":6954029056,\"freeswap\":16893603840,\"loads_15min\":46432,\"loads_1min\":87456,\"loads_5min\":69536,\"mem_unit\":1,\"procs\":1512,\"sharedram\":820908032,\"totalhigh\":0,\"totalram\":16534970368,\"totalswap\":16893603840},\"nets\":[{\"hostname\":\"\",\"port\":\"\"},{\"enp0s31f6\":{\"rx_bytes\":0,\"rx_dropped\":0,\"rx_packets\":0,\"tx_bytes\":0,\"tx_dropped\":0,\"tx_packets\":0},\"wlp3s0\":{\"host\":\"192.168.178.37\",\"host6\":\"fe80::52ca:ec35:fc8d:2954%wlp3s0\"}},{\"vmnet1\":{\"host\":\"172.16.158.1\",\"host6\":\"fe80::250:56ff:fec0:1%vmnet1\"},\"wlp3s0\":{\"rx_bytes\":28886252,\"rx_dropped\":0,\"rx_packets\":27532,\"tx_bytes\":3055394,\"tx_dropped\":0,\"tx_packets\":15798}},{\"vmnet1\":{\"rx_bytes\":0,\"rx_dropped\":0,\"rx_packets\":0,\"tx_bytes\":0,\"tx_dropped\":0,\"tx_packets\":95},\"vmnet8\":{\"host\":\"192.168.74.1\",\"host6\":\"fe80::250:56ff:fec0:8%vmnet8\"}},{\"virbr0\":{\"host\":\"192.168.122.1\"},\"vmnet8\":{\"rx_bytes\":0,\"rx_dropped\":0,\"rx_packets\":0,\"tx_bytes\":0,\"tx_dropped\":0,\"tx_packets\":95}},{\"docker0\":{\"host\":\"172.17.0.1\"},\"virbr0\":{\"rx_bytes\":0,\"rx_dropped\":0,\"rx_packets\":0,\"tx_bytes\":0,\"tx_dropped\":0,\"tx_packets\":0}},{\"docker0\":{\"rx_bytes\":0,\"rx_dropped\":0,\"rx_packets\":0,\"tx_bytes\":0,\"tx_dropped\":0,\"tx_packets\":0}}]}";
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "default_test_node_props";
-    auto entry = coordinatorServicePtr->register_sensor(6,
-                                                        ip, publish_port, receive_port, 2, nodeProps, streamConf);
+    auto entry = coordinatorServicePtr->register_sensor(6, ip, publish_port, receive_port, 2, nodeProps, streamConf);
 
-    string expectedProperties = coordinatorServicePtr->getNodePropertiesAsString(
-        entry);
+    string expectedProperties = coordinatorServicePtr->getNodePropertiesAsString(entry);
     EXPECT_EQ(nodeProps, expectedProperties);
 
 }
@@ -124,8 +122,7 @@ TEST_F(CoordinatorServiceTest, test_deregistration_and_topology) {
     streamConf.logicalStreamName = "default_delete_me";
 
     StreamCatalog::instance().addLogicalStream("default_delete_me", std::make_shared<Schema>(Schema()));
-    auto entry = coordinatorServicePtr->register_sensor(6,
-                                                        ip, publish_port, receive_port, 2, "", streamConf);
+    auto entry = coordinatorServicePtr->register_sensor(6, ip, publish_port, receive_port, 2, "", streamConf);
 
     EXPECT_NE(entry, nullptr);
 
@@ -164,8 +161,7 @@ TEST_F(CoordinatorServiceTest, test_deregistration_and_topology) {
 }
 
 TEST_F(CoordinatorServiceTest, test_register_query) {
-    string queryId = coordinatorServicePtr->registerQuery(queryString,
-                                                          "BottomUp");
+    string queryId = coordinatorServicePtr->registerQuery(queryString, "BottomUp").first;
     const map<string, QueryCatalogEntryPtr> mq = coordinatorServicePtr->getRegisteredQueries();
     cout << "size=" << mq.size() << endl;
     EXPECT_TRUE(mq.size() == 1);
@@ -191,16 +187,14 @@ TEST_F(CoordinatorServiceTest, test_register_query) {
 }
 
 TEST_F(CoordinatorServiceTest, test_register_deregister_query) {
-    string queryId = coordinatorServicePtr->registerQuery(queryString,
-                                                          "BottomUp");
+    string queryId = coordinatorServicePtr->registerQuery(queryString, "BottomUp").first;
     EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
     coordinatorServicePtr->deleteQuery(queryId);
     EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().empty());
 }
 
 TEST_F(CoordinatorServiceTest, test_make_deployment) {
-    string queryId = coordinatorServicePtr->registerQuery(queryString,
-                                                          "BottomUp");
+    string queryId = coordinatorServicePtr->registerQuery(queryString, "BottomUp").first;
     EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
     map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
         coordinatorServicePtr->prepareExecutableTransferObject(queryId);
@@ -217,8 +211,7 @@ TEST_F(CoordinatorServiceTest, test_make_deployment) {
 }
 
 TEST_F(CoordinatorServiceTest, test_run_deregister_query) {
-    string queryId = coordinatorServicePtr->registerQuery(queryString,
-                                                          "BottomUp");
+    string queryId = coordinatorServicePtr->registerQuery(queryString, "BottomUp").first;
     EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
     map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
         coordinatorServicePtr->prepareExecutableTransferObject(queryId);
@@ -232,8 +225,7 @@ TEST_F(CoordinatorServiceTest, test_run_deregister_query) {
 }
 
 TEST_F(CoordinatorServiceTest, test_compile_deployment) {
-    string queryId = coordinatorServicePtr->registerQuery(queryString,
-                                                          "BottomUp");
+    string queryId = coordinatorServicePtr->registerQuery(queryString, "BottomUp").first;
     EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
     map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
         coordinatorServicePtr->prepareExecutableTransferObject(queryId);
@@ -251,8 +243,7 @@ TEST_F(CoordinatorServiceTest, test_code_gen) {
     auto* engine = new NodeEngine();
     engine->start();
 
-    Schema schema = Schema::create().addField("id", BasicType::UINT32).addField(
-        "value", BasicType::UINT64);
+    Schema schema = Schema::create().addField("id", BasicType::UINT32).addField("value", BasicType::UINT64);
 
     Stream def = Stream("default", schema);
 
@@ -278,8 +269,7 @@ TEST_F(CoordinatorServiceTest, test_code_gen) {
 TEST_F(CoordinatorServiceTest, DISABLED_test_local_distributed_deployment) {
     auto* engine = new NodeEngine();
     engine->start();
-    string queryId = coordinatorServicePtr->registerQuery(queryString,
-                                                          "BottomUp");
+    string queryId = coordinatorServicePtr->registerQuery(queryString, "BottomUp").first;
     EXPECT_EQ(coordinatorServicePtr->getRegisteredQueries().size(), 1);
     map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
         coordinatorServicePtr->prepareExecutableTransferObject(queryId);
@@ -314,8 +304,7 @@ TEST_F(CoordinatorServiceTest, DISABLED_test_sequential_local_distributed_deploy
     auto* engine = new NodeEngine();
     engine->start();
     for (int i = 0; i < 15; i++) {
-        string queryId = coordinatorServicePtr->registerQuery(queryString,
-                                                              "BottomUp");
+        string queryId = coordinatorServicePtr->registerQuery(queryString, "BottomUp").first;
         EXPECT_EQ(coordinatorServicePtr->getRegisteredQueries().size(), 1);
         map<NESTopologyEntryPtr, ExecutableTransferObject> etos =
             coordinatorServicePtr->prepareExecutableTransferObject(queryId);
@@ -342,7 +331,6 @@ TEST_F(CoordinatorServiceTest, DISABLED_test_sequential_local_distributed_deploy
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
     engine->stopWithUndeploy();
-    EXPECT_TRUE(
-        coordinatorServicePtr->getRegisteredQueries().empty()
-            && coordinatorServicePtr->getRunningQueries().empty());
+    EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().empty()
+                    && coordinatorServicePtr->getRunningQueries().empty());
 }
