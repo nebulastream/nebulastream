@@ -14,7 +14,7 @@ QueryCatalog& QueryCatalog::instance() {
     return instance;
 }
 
-string QueryCatalog::registerQuery(const string& queryString,
+pair<string, long> QueryCatalog::registerQuery(const string& queryString,
                                    const string& optimizationStrategyName) {
     NES_DEBUG(
         "QueryCatalog: Registering query " << queryString << " with strategy " << optimizationStrategyName);
@@ -30,29 +30,28 @@ string QueryCatalog::registerQuery(const string& queryString,
             queryString);
         Schema schema = inputQueryPtr->getSourceStream()->getSchema();
 
-        NESExecutionPlanPtr nesExecutionPtr = OptimizerService::getInstance()->getExecutionPlan(
-            inputQueryPtr, optimizationStrategyName);
+        auto epDetails = OptimizerService::getInstance()->getExecutionPlan(inputQueryPtr, optimizationStrategyName);
 
         NES_DEBUG(
-            "QueryCatalog: Final Execution Plan =" << nesExecutionPtr->getTopologyPlanString())
+            "QueryCatalog: Final Execution Plan =" << epDetails.first->getTopologyPlanString())
 
         boost::uuids::basic_random_generator<boost::mt19937> gen;
         boost::uuids::uuid u = gen();
         std::string queryId = boost::uuids::to_string(u);  //TODO: I am not sure this will not create a unique one
 
         QueryCatalogEntryPtr entry = std::make_shared<QueryCatalogEntry>(
-            queryId, queryString, inputQueryPtr, nesExecutionPtr, QueryStatus::Registered);
+            queryId, queryString, inputQueryPtr, epDetails.first, QueryStatus::Registered);
 
         queries[queryId] = entry;
         NES_DEBUG("number of queries after insert=" << queries.size())
 
-        return queryId;
-    } catch (const std::exception &exc) {
-      NES_ERROR("QueryCatalog:_exception:" << exc.what())
-      NES_ERROR(
+        return std::make_pair(queryId, epDetails.second);
+    } catch (const std::exception& exc) {
+        NES_ERROR("QueryCatalog:_exception:" << exc.what())
+        NES_ERROR(
             "QueryCatalog: Unable to process input request with: queryString: " << queryString << "\n strategy: "
                                                                                 << optimizationStrategyName);
-        return nullptr;
+        throw exc;
     }
 }
 
@@ -79,7 +78,7 @@ bool QueryCatalog::deleteQuery(const string& queryId) {
 }
 
 void QueryCatalog::markQueryAs(string queryId, QueryStatus queryStatus) {
-    NES_DEBUG("QueryCatalog: mark query with id " << queryId<< " as " << queryStatus)
+    NES_DEBUG("QueryCatalog: mark query with id " << queryId << " as " << queryStatus)
     queries[queryId]->setQueryStatus(queryStatus);
 }
 

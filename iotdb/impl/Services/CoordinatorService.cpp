@@ -74,8 +74,7 @@ NESTopologyEntryPtr CoordinatorService::register_sensor(size_t id, const string&
     return sensorNode;
 }
 
-string CoordinatorService::registerQuery(
-    const string& queryString, const string& optimizationStrategyName) {
+pair<string, long> CoordinatorService::registerQuery(const string& queryString, const string& optimizationStrategyName) {
     return QueryCatalog::instance().registerQuery(queryString,
                                                   optimizationStrategyName);
 }
@@ -84,11 +83,9 @@ bool CoordinatorService::deleteQuery(const string& queryId) {
     return QueryCatalog::instance().deleteQuery(queryId);
 }
 
-
-void CoordinatorService::shutdown()
-{
-  queryToPort.clear();
-//  topologyManagerPtr->resetNESTopologyPlan();
+void CoordinatorService::shutdown() {
+    queryToPort.clear();
+    //  topologyManagerPtr->resetNESTopologyPlan();
 }
 
 map<NESTopologyEntryPtr, ExecutableTransferObject> CoordinatorService::prepareExecutableTransferObject(

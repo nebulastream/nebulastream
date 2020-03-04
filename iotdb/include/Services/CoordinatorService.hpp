@@ -75,7 +75,7 @@ class CoordinatorService {
      * @param queryString a queryString of the query
      * @param optimizationStrategyName the optimization strategy (buttomUp or topDown)
      */
-    string registerQuery(const string& queryString, const string& optimizationStrategyName);
+    pair<string, long> registerQuery(const string& queryString, const string& optimizationStrategyName);
 
     /**
      * @brief method which is called to unregister an already running query
