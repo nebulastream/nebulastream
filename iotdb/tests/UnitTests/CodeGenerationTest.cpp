@@ -1,43 +1,30 @@
 
 #include <cassert>
 #include <iostream>
-
 #include <math.h>
-
 #include "gtest/gtest.h"
-
-#include <iostream>
-
-#include <Catalogs/QueryCatalog.hpp>
-#include <API/InputQuery.hpp>
 #include <Services/CoordinatorService.hpp>
-#include <Topology/NESTopologyManager.hpp>
-#include <API/Schema.hpp>
 #include <Util/Logger.hpp>
+#include <API/Schema.hpp>
+#include <API/UserAPIExpression.hpp>
+#include <API/Types/DataTypes.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
 #include <QueryCompiler/PipelineStage.hpp>
-#include <NodeEngine/BufferManager.hpp>
-
 #include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
 #include <QueryCompiler/CCodeGenerator/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
 #include <QueryCompiler/CCodeGenerator/UnaryOperatorStatement.hpp>
-#include <API/UserAPIExpression.hpp>
-#include <SourceSink/GeneratorSource.hpp>
-#include <Windows/WindowHandler.hpp>
-#include <API/Types/DataTypes.hpp>
-#include <SourceSink/SinkCreator.hpp>
-#include <SourceSink/SourceCreator.hpp>
-#include <SourceSink/SourceCreator.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
 #include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
-#include <QueryCompiler/PipelineContext.hpp>
+#include <Windows/WindowHandler.hpp>
+#include <SourceSink/SinkCreator.hpp>
+#include <SourceSink/GeneratorSource.hpp>
 #include <SourceSink/DefaultSource.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
-#include <gtest/gtest.h>
+#include <NodeEngine/BufferManager.hpp>
 
 namespace NES {
 
@@ -45,23 +32,23 @@ class CodeGenerationTest : public testing::Test {
   public:
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
-        std::cout << "Setup QueryCatalogTest test class." << std::endl;
+        std::cout << "Setup CodeGenerationTest test class." << std::endl;
     }
 
     /* Will be called before a test is executed. */
     void SetUp() {
         setupLogging();
-        std::cout << "Setup QueryCatalogTest test case." << std::endl;
+        std::cout << "Setup CodeGenerationTest test case." << std::endl;
     }
 
     /* Will be called before a test is executed. */
     void TearDown() {
-        std::cout << "Tear down QueryCatalogTest test case." << std::endl;
+        std::cout << "Tear down CodeGenerationTest test case." << std::endl;
     }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() {
-        std::cout << "Tear down QueryCatalogTest test class." << std::endl;
+        std::cout << "Tear down CodeGenerationTest test class." << std::endl;
     }
   protected:
     static void setupLogging() {
@@ -71,7 +58,7 @@ class CodeGenerationTest : public testing::Test {
                 "%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
 
         // create FileAppender
-        LOG4CXX_DECODE_CHAR(fileName, "QueryCatalogTest.log");
+        LOG4CXX_DECODE_CHAR(fileName, "CodeGenerationTest.log");
         log4cxx::FileAppenderPtr file(
             new log4cxx::FileAppender(layoutPtr, fileName));
 
@@ -238,252 +225,217 @@ const DataSourcePtr createWindowTestDataSource() {
     return source;
 }
 
-/* TODO: make proper test suite out of these */
-int CodeGenTestCases() {
+/**
+ * @brief This test checks the behavior of the code generation API
+ */
+TEST_F(CodeGenerationTest, codeGenerationApiTest) {
 
-    VariableDeclaration var_decl_i =
+    auto varDeclI =
         VariableDeclaration::create(createDataType(BasicType(INT32)), "i", createBasicTypeValue(BasicType(INT32), "0"));
-    VariableDeclaration var_decl_j =
+    auto varDeclJ =
         VariableDeclaration::create(createDataType(BasicType(INT32)), "j", createBasicTypeValue(BasicType(INT32), "5"));
-    VariableDeclaration var_decl_k =
+    auto varDeclK =
         VariableDeclaration::create(createDataType(BasicType(INT32)), "k", createBasicTypeValue(BasicType(INT32), "7"));
-    VariableDeclaration var_decl_l =
+    auto varDeclL =
         VariableDeclaration::create(createDataType(BasicType(INT32)), "l", createBasicTypeValue(BasicType(INT32), "2"));
 
     {
-        BinaryOperatorStatement bin_op(VarRefStatement(var_decl_i), PLUS_OP, VarRefStatement(var_decl_j));
-        std::cout << bin_op.getCode()->code_ << std::endl;
-        CodeExpressionPtr code = bin_op.addRight(PLUS_OP, VarRefStatement(var_decl_k)).getCode();
-
-        std::cout << code->code_ << std::endl;
+        // Generate Arithmetic Operation
+        BinaryOperatorStatement binOp(VarRefStatement(varDeclI), PLUS_OP, VarRefStatement(varDeclJ));
+        EXPECT_EQ(binOp.getCode()->code_, "i+j");
+        BinaryOperatorStatement binOp2 = binOp.addRight(MINUS_OP, VarRefStatement(varDeclK));
+        EXPECT_EQ(binOp2.getCode()->code_, "i+j-k");
     }
     {
-        std::cout << "=========================" << std::endl;
-
+        // Generate Array Operation
         std::vector<std::string> vals = {"a", "b", "c"};
-        VariableDeclaration var_decl_m =
+        auto varDeclM =
             VariableDeclaration::create(createArrayDataType(BasicType(CHAR), 12),
                                         "m",
                                         createArrayValueType(BasicType(CHAR), vals));
-        std::cout << (VarRefStatement(var_decl_m).getCode()->code_) << std::endl;
+        // declaration of m
+        EXPECT_EQ(VarRefStatement(varDeclM).getCode()->code_, "m");
 
-        VariableDeclaration var_decl_n = VariableDeclaration::create(createArrayDataType(BasicType(CHAR), 12), "n",
-                                                                     createArrayValueType(BasicType(CHAR), vals));
-        std::cout << var_decl_n.getCode() << std::endl;
+        // Char Array initialization
+        auto varDeclN = VariableDeclaration::create(createArrayDataType(BasicType(CHAR), 12), "n",
+                                                    createArrayValueType(BasicType(CHAR), vals));
+        EXPECT_EQ(varDeclN.getCode(), "char n[12] = {'a', 'b', 'c'}");
 
-        VariableDeclaration var_decl_o = VariableDeclaration::create(createArrayDataType(BasicType(UINT8), 4), "o",
-                                                                     createArrayValueType(BasicType(UINT8),
-                                                                                          {"2", "3", "4"}));
-        std::cout << var_decl_o.getCode() << std::endl;
+        // Int Array initialization
+        auto varDeclO = VariableDeclaration::create(createArrayDataType(BasicType(UINT8), 4), "o",
+                                                    createArrayValueType(BasicType(UINT8),
+                                                                         {"2", "3", "4"}));
+        EXPECT_EQ(varDeclO.getCode(), "uint8_t o[4] = {2, 3, 4}");
 
-        VariableDeclaration var_decl_p = VariableDeclaration::create(createArrayDataType(BasicType(CHAR), 20), "p",
-                                                                     createStringValueType("diesisteinTest", 20));
-        std::cout << var_decl_p.getCode() << std::endl;
+        // String Array initialization
+        auto stringValueType = createStringValueType("DiesIstEinZweiterTest\0dwqdwq")->getCodeExpression()->code_;
+        EXPECT_EQ(stringValueType, "\"DiesIstEinZweiterTest\"");
 
-        std::cout << createStringValueType("DiesIstEinZweiterTest\0dwqdwq")->getCodeExpression()->code_ << std::endl;
-
-        std::cout << createBasicTypeValue(BasicType::CHAR, "DiesIstEinDritterTest")->getCodeExpression()->code_
-                  << std::endl;
-
-        std::cout << "=========================" << std::endl;
+        auto charValueType = createBasicTypeValue(BasicType::CHAR, "DiesIstEinDritterTest")->getCodeExpression()->code_;
+        EXPECT_EQ(charValueType, "DiesIstEinDritterTest");
     }
 
     {
-        CodeExpressionPtr code =
-            BinaryOperatorStatement(VarRefStatement(var_decl_i), PLUS_OP, VarRefStatement(var_decl_j))
-                .addRight(PLUS_OP, VarRefStatement(var_decl_k))
-                .addRight(MULTIPLY_OP, VarRefStatement(var_decl_i), BRACKETS)
-                .addRight(GREATER_THEN_OP, VarRefStatement(var_decl_l))
+        auto code =
+            BinaryOperatorStatement(VarRefStatement(varDeclI), PLUS_OP, VarRefStatement(varDeclJ))
+                .addRight(PLUS_OP, VarRefStatement(varDeclK))
+                .addRight(MULTIPLY_OP, VarRefStatement(varDeclI), BRACKETS)
+                .addRight(GREATER_THEN_OP, VarRefStatement(varDeclL))
                 .getCode();
 
-        std::cout << code->code_ << std::endl;
+        EXPECT_EQ(code->code_, "(i+j+k*i)>l");
 
-        std::cout << "=========================" << std::endl;
+        // We have two ways to generate code for arithmetical operations, we check here if they result in the same code
+        auto plusOperatorCode = BinaryOperatorStatement(VarRefStatement(varDeclI), PLUS_OP, VarRefStatement(varDeclJ))
+            .getCode()->code_;
+        auto plusOperatorCodeOp = (VarRefStatement(varDeclI) + VarRefStatement(varDeclJ)).getCode()->code_;
+        EXPECT_EQ(plusOperatorCode, plusOperatorCodeOp);
 
-        std::cout << BinaryOperatorStatement(VarRefStatement(var_decl_i), PLUS_OP, VarRefStatement(var_decl_j))
-            .getCode()
-            ->code_
-                  << std::endl;
-        std::cout << (VarRefStatement(var_decl_i) + VarRefStatement(var_decl_j)).getCode()->code_ << std::endl;
+        // Prefix and postfix increment
+        auto postfixIncrement = UnaryOperatorStatement(VarRefStatement(varDeclI), POSTFIX_INCREMENT_OP);
+        EXPECT_EQ(postfixIncrement.getCode()->code_, "i++");
+        auto prefixIncrement = (++VarRefStatement(varDeclI));
+        EXPECT_EQ(prefixIncrement.getCode()->code_, "++i");
 
-        std::cout << "=========================" << std::endl;
+        // Comparision
+        auto comparision = (VarRefStatement(varDeclI) >= VarRefStatement(varDeclJ))[VarRefStatement(varDeclJ)];
+        EXPECT_EQ(comparision.getCode()->code_, "i>=j[j]");
 
-        std::cout << UnaryOperatorStatement(VarRefStatement(var_decl_i), POSTFIX_INCREMENT_OP).getCode()->code_
-                  << std::endl;
-        std::cout << (++VarRefStatement(var_decl_i)).getCode()->code_ << std::endl;
-        std::cout << (VarRefStatement(var_decl_i) >= VarRefStatement(var_decl_j))[VarRefStatement(var_decl_j)]
-            .getCode()
-            ->code_
-                  << std::endl;
+        // Negation
+        auto negate = ((~VarRefStatement(varDeclI) >= VarRefStatement(varDeclJ)
+            << ConstantExprStatement(createBasicTypeValue(INT32, "0"))))[VarRefStatement(varDeclJ)];
+        EXPECT_EQ(negate.getCode()->code_, "~i>=j<<0[j]");
 
-        std::cout << ((~VarRefStatement(var_decl_i) >=
-            VarRefStatement(var_decl_j)
-                << ConstantExprStatement(createBasicTypeValue(INT32, "0"))))[VarRefStatement(var_decl_j)]
-            .getCode()
-            ->code_
-                  << std::endl;
+        auto addition = VarRefStatement(varDeclI).assign(VarRefStatement(varDeclI) + VarRefStatement(varDeclJ));
+        EXPECT_EQ(addition.getCode()->code_, "i=i+j");
 
-        std::cout << VarRefStatement(var_decl_i)
-            .assign(VarRefStatement(var_decl_i) + VarRefStatement(var_decl_j))
-            .getCode()
-            ->code_
-                  << std::endl;
+        auto sizeOfStatement = (sizeOf(VarRefStatement(varDeclI)));
+        EXPECT_EQ(sizeOfStatement.getCode()->code_, "sizeof(i)");
 
-        std::cout << (sizeOf(VarRefStatement(var_decl_i))).getCode()->code_ << std::endl;
+        auto assignStatement = assign(VarRef(varDeclI), VarRef(varDeclI));
+        EXPECT_EQ(assignStatement.getCode()->code_, "i=i");
 
-        std::cout << assign(VarRef(var_decl_i), VarRef(var_decl_i)).getCode()->code_ << std::endl;
+        // if statements
+        auto ifStatement = IF(VarRef(varDeclI) < VarRef(varDeclJ),
+                              assign(VarRef(varDeclI), VarRef(varDeclI)*VarRef(varDeclK)));
+        EXPECT_EQ(ifStatement.getCode()->code_, "if(i<j){\ni=i*k;\n\n}\n");
 
-        std::cout << IF(VarRef(var_decl_i) < VarRef(var_decl_j),
-                        assign(VarRef(var_decl_i), VarRef(var_decl_i)*VarRef(var_decl_k)))
-            .getCode()
-            ->code_
-                  << std::endl;
+        auto ifStatementReturn = IfStatement(BinaryOperatorStatement(VarRefStatement(varDeclI), GREATER_THEN_OP,
+                                                                     VarRefStatement(varDeclJ)),
+                                             ReturnStatement(VarRefStatement(varDeclI)));
+        EXPECT_EQ(ifStatementReturn.getCode()->code_, "if(i>j){\nreturn i;;\n\n}\n");
 
-        std::cout << "=========================" << std::endl;
-
-        std::cout << IfStatement(BinaryOperatorStatement(VarRefStatement(var_decl_i), GREATER_THEN_OP,
-                                                         VarRefStatement(var_decl_j)),
-                                 ReturnStatement(VarRefStatement(var_decl_i)))
-            .getCode()
-            ->code_
-                  << std::endl;
-
-        std::cout << IfStatement(VarRefStatement(var_decl_j), VarRefStatement(var_decl_i)).getCode()->code_
-                  << std::endl;
+        auto compareWithOne = IfStatement(VarRefStatement(varDeclJ), VarRefStatement(varDeclI));
+        EXPECT_EQ(compareWithOne.getCode()->code_, "if(j){\ni;\n\n}\n");
     }
 
     {
-        std::cout << BinaryOperatorStatement(VarRefStatement(var_decl_k), ASSIGNMENT_OP,
-                                             BinaryOperatorStatement(VarRefStatement(var_decl_j), GREATER_THEN_OP,
-                                                                     VarRefStatement(var_decl_i)))
-            .getCode()
-            ->code_
-                  << std::endl;
+        auto compareAssign = BinaryOperatorStatement(VarRefStatement(varDeclK), ASSIGNMENT_OP,
+                                                     BinaryOperatorStatement(VarRefStatement(varDeclJ), GREATER_THEN_OP,
+                                                                             VarRefStatement(varDeclI)));
+        EXPECT_EQ(compareAssign.getCode()->code_, "k=j>i");
     }
 
     {
-        VariableDeclaration var_decl_num_tup = VariableDeclaration::create(
+        // check declaration types
+        auto variableDeclaration = VariableDeclaration::create(
             createDataType(BasicType(INT32)), "num_tuples", createBasicTypeValue(BasicType(INT32), "0"));
 
-        std::cout << toString(ADDRESS_OF_OP) << ": "
-                  << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup), ADDRESS_OF_OP).getCode()->code_
-                  << std::endl;
-        std::cout << toString(DEREFERENCE_POINTER_OP) << ": "
-                  << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup), DEREFERENCE_POINTER_OP).getCode()->code_
-                  << std::endl;
-        std::cout << toString(PREFIX_INCREMENT_OP) << ": "
-                  << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup), PREFIX_INCREMENT_OP).getCode()->code_
-                  << std::endl;
-        std::cout << toString(PREFIX_DECREMENT_OP) << ": "
-                  << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup), PREFIX_DECREMENT_OP).getCode()->code_
-                  << std::endl;
-        std::cout << toString(POSTFIX_INCREMENT_OP) << ": "
-                  << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup), POSTFIX_INCREMENT_OP).getCode()->code_
-                  << std::endl;
-        std::cout << toString(POSTFIX_DECREMENT_OP) << ": "
-                  << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup), POSTFIX_DECREMENT_OP).getCode()->code_
-                  << std::endl;
-        std::cout << toString(BITWISE_COMPLEMENT_OP) << ": "
-                  << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup), BITWISE_COMPLEMENT_OP).getCode()->code_
-                  << std::endl;
-        std::cout << toString(LOGICAL_NOT_OP) << ": "
-                  << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup), LOGICAL_NOT_OP).getCode()->code_
-                  << std::endl;
-        std::cout << toString(SIZE_OF_TYPE_OP) << ": "
-                  << UnaryOperatorStatement(VarRefStatement(var_decl_num_tup), SIZE_OF_TYPE_OP).getCode()->code_
-                  << std::endl;
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), ADDRESS_OF_OP).getCode()->code_,
+                  "&num_tuples");
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), DEREFERENCE_POINTER_OP).getCode()->code_,
+                  "*num_tuples");
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), PREFIX_INCREMENT_OP).getCode()->code_,
+                  "++num_tuples");
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), PREFIX_DECREMENT_OP).getCode()->code_,
+                  "--num_tuples");
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), POSTFIX_INCREMENT_OP).getCode()->code_,
+                  "num_tuples++");
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), POSTFIX_DECREMENT_OP).getCode()->code_,
+                  "num_tuples--");
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), BITWISE_COMPLEMENT_OP).getCode()->code_,
+                  "~num_tuples");
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), LOGICAL_NOT_OP).getCode()->code_,
+                  "!num_tuples");
+        EXPECT_EQ(UnaryOperatorStatement(VarRefStatement(variableDeclaration), SIZE_OF_TYPE_OP).getCode()->code_,
+                  "sizeof(num_tuples)");
     }
 
     {
-
-        VariableDeclaration var_decl_q = VariableDeclaration::create(createDataType(BasicType(INT32)), "q",
-                                                                     createBasicTypeValue(BasicType(INT32), "0"));
-        VariableDeclaration var_decl_num_tup = VariableDeclaration::create(
+        // check code generation for loops
+        auto varDeclQ = VariableDeclaration::create(createDataType(BasicType(INT32)), "q",
+                                                    createBasicTypeValue(BasicType(INT32), "0"));
+        auto varDeclNumTuple = VariableDeclaration::create(
             createDataType(BasicType(INT32)), "num_tuples", createBasicTypeValue(BasicType(INT32), "0"));
 
-        VariableDeclaration var_decl_sum = VariableDeclaration::create(createDataType(BasicType(INT32)), "sum",
-                                                                       createBasicTypeValue(BasicType(INT32), "0"));
+        auto varDeclSum = VariableDeclaration::create(createDataType(BasicType(INT32)), "sum",
+                                                      createBasicTypeValue(BasicType(INT32), "0"));
 
-        ForLoopStatement loop_stmt(
-            var_decl_q,
-            BinaryOperatorStatement(VarRefStatement(var_decl_q), LESS_THEN_OP, VarRefStatement(var_decl_num_tup)),
-            UnaryOperatorStatement(VarRefStatement(var_decl_q), PREFIX_INCREMENT_OP));
+        ForLoopStatement loopStmt(
+            varDeclQ,
+            BinaryOperatorStatement(VarRefStatement(varDeclQ), LESS_THEN_OP, VarRefStatement(varDeclNumTuple)),
+            UnaryOperatorStatement(VarRefStatement(varDeclQ), PREFIX_INCREMENT_OP));
 
-        loop_stmt.addStatement(BinaryOperatorStatement(VarRefStatement(var_decl_sum), ASSIGNMENT_OP,
-                                                       BinaryOperatorStatement(VarRefStatement(var_decl_sum), PLUS_OP,
-                                                                               VarRefStatement(var_decl_q)))
-                                   .copy());
+        loopStmt.addStatement(BinaryOperatorStatement(VarRefStatement(varDeclSum), ASSIGNMENT_OP,
+                                                      BinaryOperatorStatement(VarRefStatement(varDeclSum), PLUS_OP,
+                                                                              VarRefStatement(varDeclQ)))
+                                  .copy());
 
-        std::cout << loop_stmt.getCode()->code_ << std::endl;
+        EXPECT_EQ(loopStmt.getCode()->code_, "for(int32_t q = 0;q<num_tuples;++q){\nsum=sum+q;\n\n}\n");
 
-        std::cout << ForLoopStatement(var_decl_q,
-                                      BinaryOperatorStatement(VarRefStatement(var_decl_q), LESS_THEN_OP,
-                                                              VarRefStatement(var_decl_num_tup)),
-                                      UnaryOperatorStatement(VarRefStatement(var_decl_q), PREFIX_INCREMENT_OP))
-            .getCode()
-            ->code_
-                  << std::endl;
+        auto forLoop = ForLoopStatement(varDeclQ,
+                                        BinaryOperatorStatement(VarRefStatement(varDeclQ), LESS_THEN_OP,
+                                                                VarRefStatement(varDeclNumTuple)),
+                                        UnaryOperatorStatement(VarRefStatement(varDeclQ), PREFIX_INCREMENT_OP));
 
-        std::cout << BinaryOperatorStatement(VarRefStatement(var_decl_k), ASSIGNMENT_OP,
-                                             BinaryOperatorStatement(VarRefStatement(var_decl_j), GREATER_THEN_OP,
-                                                                     ConstantExprStatement(INT32, "5")))
-            .getCode()
-            ->code_
-                  << std::endl;
+        EXPECT_EQ(forLoop.getCode()->code_, "for(int32_t q = 0;q<num_tuples;++q){\n\n}\n");
+
+        auto compareAssignment = BinaryOperatorStatement(VarRefStatement(varDeclK), ASSIGNMENT_OP,
+                                                         BinaryOperatorStatement(VarRefStatement(varDeclJ),
+                                                                                 GREATER_THEN_OP,
+                                                                                 ConstantExprStatement(INT32, "5")));
+
+        EXPECT_EQ(compareAssignment.getCode()->code_, "k=j>5");
     }
-    /* pointers */
-    {
 
-        DataTypePtr val = createPointerDataType(BasicType(INT32));
+    {
+        /* check code generation of pointers */
+        auto val = createPointerDataType(BasicType(INT32));
         assert(val != nullptr);
-        VariableDeclaration var_decl_i = VariableDeclaration::create(createDataType(BasicType(INT32)), "i",
-                                                                     createBasicTypeValue(BasicType(INT32), "0"));
-        VariableDeclaration var_decl_p = VariableDeclaration::create(val, "array");
+        auto variableDeclarationI = VariableDeclaration::create(createDataType(BasicType(INT32)), "i",
+                                                                createBasicTypeValue(BasicType(INT32), "0"));
+        auto variableDeclarationP = VariableDeclaration::create(val, "array");
+        EXPECT_EQ(variableDeclarationP.getCode(), "int32_t* array");
 
         /* new String Type */
-        DataTypePtr charptr = createPointerDataType(BasicType(CHAR));
-        VariableDeclaration
-            var_decl_temp = VariableDeclaration::create(charptr, "i", createStringValueType("Hello World"));
-        std::cout << var_decl_p.getCode() << std::endl;
+        auto charPointerDataType = createPointerDataType(BasicType(CHAR));
+        auto
+            var_decl_temp = VariableDeclaration::create(charPointerDataType, "i", createStringValueType("Hello World"));
+        EXPECT_EQ(var_decl_temp.getCode(), "char* i = \"Hello World\"");
 
-        std::cout << var_decl_temp.getCode() << std::endl;
-
-        StructDeclaration struct_decl =
+        auto tupleBufferStructDecl =
             StructDeclaration::create("TupleBuffer", "buffer")
                 .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)), "num_tuples",
                                                       createBasicTypeValue(BasicType(UINT64), "0")))
-                .addField(var_decl_p);
+                .addField(variableDeclarationP);
 
-        std::cout << VariableDeclaration::create(createUserDefinedType(struct_decl), "buffer").getCode() << std::endl;
-        std::cout << VariableDeclaration::create(createPointerDataType(createUserDefinedType(struct_decl)), "buffer")
-            .getCode()
-                  << std::endl;
-        std::cout << createPointerDataType(createUserDefinedType(struct_decl))->getCode()->code_ << std::endl;
+        // check code generation for different assignment type
+        auto varDeclTupleBuffer = VariableDeclaration::create(createUserDefinedType(tupleBufferStructDecl), "buffer");
+        EXPECT_EQ(varDeclTupleBuffer.getCode(), "TupleBuffer");
 
-        std::cout << VariableDeclaration::create(createPointerDataType(createUserDefinedType(struct_decl)), "buffer")
-            .getTypeDefinitionCode()
-                  << std::endl;
+        auto varDeclTupleBufferPointer =
+            VariableDeclaration::create(createPointerDataType(createUserDefinedType(tupleBufferStructDecl)), "buffer");
+        EXPECT_EQ(varDeclTupleBufferPointer.getCode(), "TupleBuffer* buffer");
+
+        auto pointerDataType = createPointerDataType(createUserDefinedType(tupleBufferStructDecl));
+        EXPECT_EQ(pointerDataType->getCode()->code_, "TupleBuffer*");
+
+        auto typeDefinition =
+            VariableDeclaration::create(createPointerDataType(createUserDefinedType(tupleBufferStructDecl)),
+                                        "buffer").getTypeDefinitionCode();
+        EXPECT_EQ(typeDefinition, "struct TupleBuffer{\nuint64_t num_tuples = 0;\nint32_t* array;\n}buffer");
+
     }
-    /* TODO: Write Test Cases for this code */
-
-    /*
-    std::cout << (VarRefStatement(var_decl_tuple))[ConstantExprStatement(INT32, "0")]
-                     .getCode()
-                     ->code_
-              << std::endl;
-    std::cout << BinaryOperatorStatement(VarRefStatement(var_decl_tuple), ARRAY_REFERENCE_OP,
-    VarRefStatement(var_decl_i)) .getCode()
-                     ->code_
-              << std::endl;
-    std::cout << BinaryOperatorStatement(BinaryOperatorStatement(VarRefStatement(var_decl_tuple), ARRAY_REFERENCE_OP,
-                                                                 VarRefStatement(var_decl_i)),
-                                         MEMBER_SELECT_REFERENCE_OP, VarRefStatement(decl_field_campaign_id))
-                     .getCode()
-                     ->code_
-              << std::endl;
-  */
-
-    return 0;
 }
 
 /**
@@ -500,7 +452,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
         uint64_t num_tuples;
       };
     */
-    StructDeclaration structDeclTupleBuffer =
+    auto structDeclTupleBuffer =
         StructDeclaration::create("TupleBuffer", "")
             .addField(VariableDeclaration::create(createPointerDataType(createDataType(BasicType(VOID_TYPE))), "data"))
             .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)), "buffer_size"))
@@ -513,28 +465,28 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
       void *windowState;
       };
     */
-    StructDeclaration structDeclState =
+    auto structDeclState =
         StructDeclaration::create("WindowState", "")
             .addField(VariableDeclaration::create(createPointerDataType(createDataType(BasicType(VOID_TYPE))),
                                                   "windowState"));
 
     /* struct definition for input tuples */
-    StructDeclaration structDeclTuple =
+    auto structDeclTuple =
         StructDeclaration::create("Tuple", "")
             .addField(VariableDeclaration::create(createDataType(BasicType(INT64)), "campaign_id"));
 
     /* struct definition for result tuples */
-    StructDeclaration structDeclResultTuple =
+    auto structDeclResultTuple =
         StructDeclaration::create("ResultTuple", "")
             .addField(VariableDeclaration::create(createDataType(BasicType(INT64)), "sum"));
 
     /* === declarations === */
-    VariableDeclaration varDeclTupleBuffers = VariableDeclaration::create(
+    auto varDeclTupleBuffers = VariableDeclaration::create(
         createPointerDataType(createUserDefinedType(structDeclTupleBuffer)),
         "input_buffer");
-    VariableDeclaration varDeclTupleBufferOutput = VariableDeclaration::create(
+    auto varDeclTupleBufferOutput = VariableDeclaration::create(
         createPointerDataType(createUserDefinedType(structDeclTupleBuffer)), "output_tuple_buffer");
-    VariableDeclaration varDeclWindow =
+    auto varDeclWindow =
         VariableDeclaration::create(createPointerDataType(createAnnonymUserDefinedType("void")),
                                     "state_var");
     VariableDeclaration varDeclWindowManager =
@@ -542,35 +494,34 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
                                     "window_manager");
 
     /* Tuple *tuples; */
-    VariableDeclaration varDeclTuple =
+    auto varDeclTuple =
         VariableDeclaration::create(createPointerDataType(createUserDefinedType(structDeclTuple)), "tuples");
 
-    VariableDeclaration varDeclResultTuple = VariableDeclaration::create(
+    auto varDeclResultTuple = VariableDeclaration::create(
         createPointerDataType(createUserDefinedType(structDeclResultTuple)), "result_tuples");
 
     /* variable declarations for fields inside structs */
-    VariableDeclaration declFieldCampaignId = structDeclTuple.getVariableDeclaration("campaign_id");
-    VariableDeclaration declFieldNumTuplesStructTupleBuffer =
-        structDeclTupleBuffer.getVariableDeclaration("num_tuples");
-    VariableDeclaration declFieldDataPtrStructTupleBuf = structDeclTupleBuffer.getVariableDeclaration("data");
-    VariableDeclaration varDeclFieldResultTupleSum = structDeclResultTuple.getVariableDeclaration("sum");
+    auto declFieldCampaignId = structDeclTuple.getVariableDeclaration("campaign_id");
+    auto declFieldNumTuplesStructTupleBuffer = structDeclTupleBuffer.getVariableDeclaration("num_tuples");
+    auto declFieldDataPtrStructTupleBuf = structDeclTupleBuffer.getVariableDeclaration("data");
+    auto varDeclFieldResultTupleSum = structDeclResultTuple.getVariableDeclaration("sum");
 
     /* === generating the query function === */
 
     /* variable declarations */
 
     /* TupleBuffer *tuple_buffer_1; */
-    VariableDeclaration varDeclTupleBuffer1 = VariableDeclaration::create(
+    auto varDeclTupleBuffer1 = VariableDeclaration::create(
         createPointerDataType(createUserDefinedType(structDeclTupleBuffer)), "tuple_buffer_1");
     /* uint64_t id = 0; */
-    VariableDeclaration varDeclId = VariableDeclaration::create(createDataType(BasicType(UINT64)), "id",
-                                                                createBasicTypeValue(BasicType(INT32), "0"));
+    auto varDeclId = VariableDeclaration::create(createDataType(BasicType(UINT64)), "id",
+                                                 createBasicTypeValue(BasicType(INT32), "0"));
     /* int32_t ret = 0; */
-    VariableDeclaration varDeclReturn = VariableDeclaration::create(createDataType(BasicType(INT32)), "ret",
-                                                                    createBasicTypeValue(BasicType(INT32), "0"));
+    auto varDeclReturn = VariableDeclaration::create(createDataType(BasicType(INT32)), "ret",
+                                                     createBasicTypeValue(BasicType(INT32), "0"));
     /* int32_t sum = 0;*/
-    VariableDeclaration varDeclSum = VariableDeclaration::create(createDataType(BasicType(INT64)), "sum",
-                                                                 createBasicTypeValue(BasicType(INT64), "0"));
+    auto varDeclSum = VariableDeclaration::create(createDataType(BasicType(INT64)), "sum",
+                                                  createBasicTypeValue(BasicType(INT64), "0"));
 
     /* init statements before for loop */
 
@@ -608,7 +559,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
      * typedef uint32_t (*SharedCLibPipelineQueryPtr)(TupleBuffer**, WindowState*, TupleBuffer*);
      */
 
-    FunctionDeclaration mainFunction =
+    auto mainFunction =
         FunctionBuilder::create("compiled_query")
             .returns(createDataType(BasicType(UINT32)))
             .addParameter(varDeclTupleBuffers)
@@ -633,7 +584,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
             .addStatement(StatementPtr(new ReturnStatement(VarRefStatement(varDeclReturn))))
             .build();
 
-    CodeFile file = FileBuilder::create("query.cpp")
+    auto file = FileBuilder::create("query.cpp")
         .addDeclaration(structDeclTupleBuffer)
         .addDeclaration(structDeclState)
         .addDeclaration(structDeclTuple)
@@ -642,7 +593,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
         .build();
 
     Compiler compiler;
-    ExecutablePipelinePtr stage = createCompiledExecutablePipeline(compiler.compile(file.code));
+    auto stage = createCompiledExecutablePipeline(compiler.compile(file.code));
 
 
     /* setup input and output for test */
@@ -680,9 +631,9 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
  */
 TEST_F(CodeGenerationTest, codeGenerationCopy) {
     /* prepare objects for test */
-    DataSourcePtr source = createTestSourceCodeGen();
-    CodeGeneratorPtr codeGenerator = createCodeGenerator();
-    PipelineContextPtr context = createPipelineContext();
+    auto source = createTestSourceCodeGen();
+    auto codeGenerator = createCodeGenerator();
+    auto context = createPipelineContext();
 
     NES_INFO("Generate Code");
     /* generate code for scanning input buffer */
@@ -693,13 +644,13 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
                                 std::cout);
     /* compile code to pipeline stage */
     Compiler compiler;
-    ExecutablePipelinePtr stage = codeGenerator->compile(CompilerArgs(), context->code);
+    auto stage = codeGenerator->compile(CompilerArgs(), context->code);
 
     /* prepare input and output tuple buffer */
-    Schema schema = Schema::create().addField("i64", UINT64);
-    TupleBufferPtr buffer = source->receiveData();
+    auto schema = Schema::create().addField("i64", UINT64);
+    auto buffer = source->receiveData();
 
-    TupleBufferPtr resultBuffer = BufferManager::instance().getBuffer();
+    auto resultBuffer = BufferManager::instance().getBuffer();
     resultBuffer->setTupleSizeInBytes(sizeof(uint64_t));
 
 
@@ -787,26 +738,26 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
     auto stage = codeGenerator->compile(CompilerArgs(), context->code);
 
     // init window handler
-    auto window_handler = new WindowHandler(windowDefinition);
-    window_handler->setup(nullptr, 0);
+    auto windowHandler = new WindowHandler(windowDefinition);
+    windowHandler->setup(nullptr, 0);
 
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData();
 
-    TupleBufferPtr resultBuffer = BufferManager::instance().getBuffer();
+    auto resultBuffer = BufferManager::instance().getBuffer();
 
     /* execute Stage */
     stage->execute(
         inputBuffer,
-        window_handler->getWindowState(),
-        window_handler->getWindowManager(),
+        windowHandler->getWindowState(),
+        windowHandler->getWindowManager(),
         resultBuffer);
 
     /* check for correctness, after a window assigner no tuple should be produced*/
     EXPECT_EQ(resultBuffer->getNumberOfTuples(), 0);
 
     //check partial aggregates in window state
-    auto stateVar = (StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>*) window_handler->getWindowState();
+    auto stateVar = (StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>*) windowHandler->getWindowState();
     EXPECT_EQ(stateVar->get(0).value()->getPartialAggregates()[0], 5);
     EXPECT_EQ(stateVar->get(1).value()->getPartialAggregates()[0], 5);
 }
@@ -837,7 +788,7 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData();
 
-    TupleBufferPtr resultBuffer = BufferManager::instance().getBuffer();
+    auto resultBuffer = BufferManager::instance().getBuffer();
     resultBuffer->setTupleSizeInBytes(inputSchema.getSchemaSize());
 
     /* execute Stage */
@@ -884,133 +835,26 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
 
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData();
-    uint32_t sizeoftuples =
+    auto sizeoftuples =
         (sizeof(uint32_t) + sizeof(int16_t) + sizeof(float) + sizeof(double) + sizeof(double) + sizeof(char)
             + sizeof(char)*12);
-    size_t buffer_size = inputBuffer->getNumberOfTuples()*sizeoftuples;
-
-    TupleBufferPtr resultBuffer = std::make_shared<TupleBuffer>(malloc(buffer_size), buffer_size, sizeoftuples, 0);
+    auto bufferSize = inputBuffer->getNumberOfTuples()*sizeoftuples;
+    auto resultBuffer = std::make_shared<TupleBuffer>(malloc(bufferSize), bufferSize, sizeoftuples, 0);
 
     /* execute Stage */
     stage->execute(inputBuffer, nullptr, nullptr, resultBuffer);
 
     /* check for correctness, the number of produced tuple should be equal between input and output buffer */
     EXPECT_EQ(resultBuffer->getNumberOfTuples(), inputBuffer->getNumberOfTuples());
-
-    std::cout << NES::toString(resultBuffer.get(), outputSchema) << std::endl;
     auto inputLayout = createRowLayout(inputSchema.copy());
-    auto ouputLayout = createRowLayout(outputSchema.copy());
+    auto outputLayout = createRowLayout(outputSchema.copy());
     for (int i = 0; i < inputBuffer->getNumberOfTuples(); i++) {
         auto floatValue = inputLayout->readField<float>(inputBuffer, i, 2);
-        auto doubleValue  = inputLayout->readField<double>(inputBuffer, i, 3);
-        auto reference = (floatValue * doubleValue) + 2;
-        auto mapedValue = ouputLayout->readField<double>(resultBuffer, i, 4);
+        auto doubleValue = inputLayout->readField<double>(inputBuffer, i, 3);
+        auto reference = (floatValue*doubleValue) + 2;
+        auto mapedValue = outputLayout->readField<double>(resultBuffer, i, 4);
         EXPECT_EQ(reference, mapedValue);
     }
 
 }
-
-int testTupleBufferPrinting() {
-
-    struct __attribute__((packed)) MyTuple {
-        uint64_t i64;
-        float f;
-        double d;
-        uint32_t i32;
-        char s[12];
-    };
-
-    MyTuple* my_array = (MyTuple*) malloc(5*sizeof(MyTuple));
-    for (unsigned int i = 0; i < 5; ++i) {
-        my_array[i] = MyTuple{i, float(0.5f*i), double(i*0.2), i*2, "1234"};
-        std::cout << my_array[i].i64 << "|" << my_array[i].f << "|" << my_array[i].d << "|" << my_array[i].i32 << "|"
-                  << std::string(my_array[i].s, 12) << std::endl;
-    }
-
-    TupleBuffer buf{my_array, 5*sizeof(MyTuple), sizeof(MyTuple), 5};
-    Schema s = Schema::create()
-        .addField("i64", UINT64)
-        .addField("f", FLOAT32)
-        .addField("d", FLOAT64)
-        .addField("i32", UINT32)
-        .addField("s", 12);
-
-    std::string reference = "+----------------------------------------------------+\n"
-                            "|i64:UINT64|f:FLOAT32|d:FLOAT64|i32:UINT32|s:CHAR|\n"
-                            "+----------------------------------------------------+\n"
-                            "|0|0.000000|0.000000|0|1234|\n"
-                            "|1|0.500000|0.200000|2|1234|\n"
-                            "|2|1.000000|0.400000|4|1234|\n"
-                            "|3|1.500000|0.600000|6|1234|\n"
-                            "|4|2.000000|0.800000|8|1234|\n"
-                            "+----------------------------------------------------+";
-
-    std::string result = NES::toString(buf, s);
-    std::cout << "'" << reference << "'" << reference.size() << std::endl;
-    std::cout << "'" << result << "'" << result.size() << std::endl;
-
-    assert(reference.size() == result.size());
-    if (reference == result) {
-        std::cout << "Print Test Successful!" << std::endl;
-    } else {
-        std::cout << "Print Test Failed!" << std::endl;
-    }
-
-    free(my_array);
-    return 0;
-}
-
 } // namespace NES
-
-/*
-
-int main() {
-
-
-
-  if (!NES::WindowAssignerCodeGenTest()) {
-    std::cout << "Test CodeGenTest Passed!" << std::endl << std::endl;
-  } else {
-    std::cerr << "Test CodeGenTest Failed!" << std::endl << std::endl;
-    return -1;
-  }
-
-  if (!NES::CodeGeneratorTest()) {
-    std::cerr << "Test CodeGeneratorTest Passed!" << std::endl << std::endl;
-  } else {
-    std::cerr << "Test CodeGeneratorTest Failed!" << std::endl << std::endl;
-    return -1;
-  }
-
-  if (!NES::CodeGeneratorFilterTest()) {
-    std::cerr << "Test CodeGeneratorFilterTest Passed!" << std::endl << std::endl;
-  } else {
-    std::cerr << "Test CodeGeneratorFilterTest Failed!" << std::endl << std::endl;
-    return -1;
-  }
-
-  if (!NES::testTupleBufferPrinting()) {
-    std::cout << "Test Print Tuple Buffer Passed!" << std::endl << std::endl;
-  } else {
-    std::cerr << "Test Print Tuple Buffer Failed!" << std::endl << std::endl;
-    return -1;
-  }
-
-  if (!NES::CodePredicateTests()) {
-    std::cout << "Test Predicate Passed!" << std::endl << std::endl;
-  } else {
-    std::cerr << "Test Predicate Failed!" << std::endl << std::endl;
-    return -1;
-  }
-
-  if (!NES::CodeMapPredicatePtrTests()) {
-    std::cout << "Test Map for Predicate Pointers Passed!" << std::endl << std::endl;
-  } else {
-    std::cerr << "Test Map for Predicate Pointers Failed!" << std::endl << std::endl;
-    return -1;
-  }
-
-  std::cout << " all tests are passed" << std::endl;
-  return 0;
-}
-*/
