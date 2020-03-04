@@ -9,6 +9,9 @@ namespace NES {
 class CompiledCode;
 typedef std::shared_ptr<CompiledCode> CompiledCodePtr;
 
+/**
+ * @brief A executable pipeline that executes compiled code if invoked.
+ */
 class CompiledExecutablePipeline : public ExecutablePipeline {
  public:
   CompiledExecutablePipeline(CompiledCodePtr compiled_code);

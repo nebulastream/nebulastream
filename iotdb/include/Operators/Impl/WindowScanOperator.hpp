@@ -10,6 +10,9 @@
 
 namespace NES {
 
+/**
+ * @brief The window scan operator receives the window aggregation results as an input for the next pipeline.
+ */
 class WindowScanOperator : public Operator {
  public:
   WindowScanOperator(SchemaPtr sch);

@@ -57,7 +57,7 @@ void Operator::setChildren(const std::vector<OperatorPtr> children) {
     this->children = children;
 }
 
-void Operator::addChild(const OperatorPtr& child){
+void Operator::addChild(const OperatorPtr child){
     this->children.push_back(child);
 }
 
