@@ -93,6 +93,8 @@ void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPl
                     continue;
                 }
 
+                NES_DEBUG(
+                    "HighAvailability: Construct a map with key as the nodes of the current path and value as the number of times the node occurred in other paths");
                 for (size_t idx = pathINodeIndex; idx < path_i.size(); idx++) {
                     auto node_i = path_i[idx];
                     const auto itr = find_if(path_j.begin(), path_j.end(), [node_i](NESTopologyEntryPtr node_j) {
@@ -113,6 +115,9 @@ void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPl
 
             size_t totalWeight = 0;
             vector<NESTopologyEntryPtr> commonPath = {sourceNode};
+            NES_DEBUG(
+                "HighAvailability: Iterate over the computed map and identify the nodes with sufficient number of"
+                " occurance in other paths");
             for (auto itr = nodeCountMap.rbegin(); itr != nodeCountMap.rend(); itr++) {
                 NES_DEBUG("HighAvailability: Check if the node on the path is shared by atleast " << linkRedundency
                                                                                                   << " paths.");
@@ -241,7 +246,7 @@ void HighAvailabilityStrategy::addForwardOperators(vector<NESTopologyEntryPtr> p
                                                    NES::NESExecutionPlanPtr nesExecutionPlanPtr) const {
 
     PathFinder pathFinder;
-
+    //because we find paths between two successive nodes and wanted to stop before the last node, the loop stops before last node
     for (size_t i = 0; i < pathForPlacement.size() - 1; i++) {
 
         //Find the list of nodes connecting the source and destination nodes
