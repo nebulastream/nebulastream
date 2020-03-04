@@ -74,14 +74,19 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                             createExampleTopology();
 
                             //Call the service
-                            const string
-                                queryId = coordinatorServicePtr->registerQuery(userQuery, optimizationStrategyName);
+                            const auto
+                                queryDetails = coordinatorServicePtr->registerQuery(userQuery, optimizationStrategyName);
+                            string queryId = queryDetails.first;
                             NESExecutionPlanPtr executionPlan = coordinatorServicePtr->getRegisteredQuery(queryId);
-
                             json::value executionGraphPlan = executionPlan->getExecutionGraphAsJson();
 
+                            json::value result{};
+                            result["queryId"] = json::value::string(queryId);
+                            result["executionGraph"] = executionGraphPlan;
+                            result["planComputeTime"] = json::value::string(std::to_string(queryDetails.second));
+
                             //Prepare the response
-                            successMessageImpl(message, executionGraphPlan);
+                            successMessageImpl(message, result);
                             return;
                         } catch (...) {
                             std::cout << "Exception occurred while building the query plan for user request.";

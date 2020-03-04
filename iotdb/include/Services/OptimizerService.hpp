@@ -30,13 +30,12 @@ class OptimizerService {
                                             std::string optimizationStrategyName);
 
     /**
-   * @brief: get execution plan for the input query using the specified strategy.
-   * @param userQuery
-   * @param optimizationStrategyName
-   * @return nes execution plan
-   */
-    NESExecutionPlanPtr getExecutionPlan(InputQueryPtr inputQuery,
-                                         std::string optimizationStrategyName);
+     * @brief: get execution plan for the input query using the specified strategy.
+     * @param userQuery
+     * @param optimizationStrategyName
+     * @return pair of nes execution plan and time taken to compute the plan
+     */
+    pair<NESExecutionPlanPtr, long> getExecutionPlan(InputQueryPtr inputQuery, std::string optimizationStrategyName);
 
     ~OptimizerService() = default;
 
