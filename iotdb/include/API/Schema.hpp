@@ -15,7 +15,7 @@ class Schema {
   static Schema create();
 
   Schema(const Schema& query);
-  const SchemaPtr copy();
+  const SchemaPtr copy() const;
 
   Schema &copyFields(Schema const &schema);
   Schema &addField(AttributeFieldPtr field);

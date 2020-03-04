@@ -21,7 +21,7 @@ size_t Schema::getSize() const {
   return fields.size();
 }
 
-const SchemaPtr Schema::copy() {
+const SchemaPtr Schema::copy() const {
     return std::make_shared<Schema>(*this);
 }
 
