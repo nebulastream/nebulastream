@@ -93,9 +93,8 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
      * @brief method to remove a physical stream from the catalog AND from the topology
      * @caution every external register call can only remove streams from himself
      * @caution we will remove only on the first node that we find for this logical stream
-     * //TODO is this a problem?
-     * @param ip of physical stream as string
      * @param logicalStreamName as string
+     * @param physicalStreamName as string
      * @return bool indicating if removal was successful
      */
     bool removePhysicalStream(string logicalStreamName, string physicalStreamName);
