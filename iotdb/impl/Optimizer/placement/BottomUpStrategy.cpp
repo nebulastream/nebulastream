@@ -1,13 +1,14 @@
-#include "Optimizer/impl/BottomUp.hpp"
+#include <Optimizer/placement/BottomUpStrategy.hpp>
 #include <Operators/Operator.hpp>
 #include <iostream>
 #include <Util/Logger.hpp>
 #include <utility>
+#include <Optimizer/utils/PathFinder.hpp>
 
-using namespace NES;
 using namespace std;
 
-NESExecutionPlanPtr BottomUp::initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan) {
+namespace NES {
+NESExecutionPlanPtr BottomUpStrategy::initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan) {
 
     const OperatorPtr sinkOperator = inputQuery->getRoot();
 
@@ -20,7 +21,7 @@ NESExecutionPlanPtr BottomUp::initializeExecutionPlan(InputQueryPtr inputQuery, 
         throw std::runtime_error("No source operator found in the query plan");
     }
 
-    const deque<NESTopologyEntryPtr> sourceNodePtrs = StreamCatalog::instance()
+    const vector<NESTopologyEntryPtr> sourceNodePtrs = StreamCatalog::instance()
         .getSourceNodesForLogicalStream(streamName);
 
     if (sourceNodePtrs.empty()) {
@@ -47,8 +48,8 @@ NESExecutionPlanPtr BottomUp::initializeExecutionPlan(InputQueryPtr inputQuery, 
     return nesExecutionPlanPtr;
 }
 
-void BottomUp::placeOperators(NESExecutionPlanPtr executionPlanPtr, const NESTopologyGraphPtr nesTopologyGraphPtr,
-                              OperatorPtr sourceOperator, deque<NESTopologyEntryPtr> sourceNodes) {
+void BottomUpStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, const NESTopologyGraphPtr nesTopologyGraphPtr,
+                              OperatorPtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes) {
 
     for (NESTopologyEntryPtr sourceNode: sourceNodes) {
 
@@ -79,7 +80,8 @@ void BottomUp::placeOperators(NESExecutionPlanPtr executionPlanPtr, const NESTop
                     "Can not schedule the operator. No free resource available.");
             }
 
-            NES_DEBUG("BottomUp: suitable placement for operator " << targetOperator->toString() << " is " << node->toString())
+            NES_DEBUG("BottomUp: suitable placement for operator " << targetOperator->toString() << " is "
+                                                                   << node->toString())
 
             // If the selected nes node was already used by another operator for placement then do not create a
             // new execution node rather add operator to existing node.
@@ -142,7 +144,7 @@ void BottomUp::placeOperators(NESExecutionPlanPtr executionPlanPtr, const NESTop
     }
 }
 
-NESTopologyEntryPtr BottomUp::findSuitableNESNodeForOperatorPlacement(const ProcessOperator& operatorToProcess,
+NESTopologyEntryPtr BottomUpStrategy::findSuitableNESNodeForOperatorPlacement(const ProcessOperator& operatorToProcess,
                                                                       NESTopologyGraphPtr nesTopologyGraphPtr,
                                                                       NESTopologyEntryPtr sourceNodePtr) {
 
@@ -201,28 +203,26 @@ NESTopologyEntryPtr BottomUp::findSuitableNESNodeForOperatorPlacement(const Proc
     return node;
 };
 
-OperatorPtr BottomUp::getSourceOperator(OperatorPtr root) {
+void BottomUpStrategy::addForwardOperators(const vector<NESTopologyEntryPtr> sourceNodes,
+                                                const NESTopologyEntryPtr rootNode,
+                                                NESExecutionPlanPtr nesExecutionPlanPtr) const {
 
-    deque<OperatorPtr> operatorTraversQueue = {root};
+    PathFinder pathFinder;
 
-    while (!operatorTraversQueue.empty()) {
+    for (NESTopologyEntryPtr targetSource: sourceNodes) {
 
-        while (!operatorTraversQueue.empty()) {
-            auto optr = operatorTraversQueue.front();
-            operatorTraversQueue.pop_front();
+        //Find the list of nodes connecting the source and destination nodes
+        std::vector<NESTopologyEntryPtr> candidateNodes = pathFinder.findPathBetween(targetSource, rootNode);
 
-            if (optr->getOperatorType() == OperatorType::SOURCE_OP) {
-                return optr;
+        for(NESTopologyEntryPtr candidateNode: candidateNodes) {
+
+            if (candidateNode->getCpuCapacity() == candidateNode->getRemainingCpuCapacity()) {
+                nesExecutionPlanPtr->createExecutionNode("FWD", to_string(candidateNode->getId()), candidateNode,
+                    /**executableOperator**/nullptr);
+                candidateNode->reduceCpuCapacity(1);
             }
-
-            if (optr->getChildren().empty()) {
-                return nullptr;
-            }
-
-            vector<OperatorPtr> children = optr->getChildren();
-            copy(children.begin(), children.end(), back_inserter(operatorTraversQueue));
         }
     }
-    return nullptr;
-};
+}
 
+}
