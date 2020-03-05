@@ -166,42 +166,35 @@ behavior CoordinatorActor::running() {
     };
 }
 
-bool CoordinatorActor::removePhysicalStream(std::string ip,
-                                            PhysicalStreamConfig streamConf) {
+bool CoordinatorActor::removePhysicalStream(string logicalStreamName, string physicalStreamName) {
     NES_DEBUG(
-        "CoordinatorActor: try to remove physical stream with ip " << ip << " physical name "
-                                                                   << streamConf.physicalStreamName << " logical name "
-                                                                   << streamConf.logicalStreamName)
+            "CoordinatorActor: try to remove physical stream with name " << physicalStreamName << " logical name " << logicalStreamName)
 
     auto sap = current_sender();
     size_t hashId = getIdFromHandle(sap);
     NES_DEBUG(
-        "CoordinatorActor: removePhysicalStream id=" << sap->id() << " sap=" << to_string(sap) << " hashID=" << hashId)
+            "CoordinatorActor: removePhysicalStream id=" << sap->id() << " sap=" << to_string(sap)
+            << " hashID=" << hashId)
 
-    std::vector<NESTopologyEntryPtr> sensorNodes =
-        NESTopologyManager::getInstance().getNESTopologyPlan()->getNodeById(
-            hashId);
+    std::vector<NESTopologyEntryPtr> sensorNodes = NESTopologyManager::getInstance()
+             .getNESTopologyPlan()->getNodeById(hashId);
 
     //TODO: note that we remove on the first node with this id
     NESTopologyEntryPtr sensorNode;
     for (auto e : sensorNodes) {
         if (e->getEntryType() != Coordinator) {
-            sensorNode = e;
-            break;
+        sensorNode = e;
+        break;
         }
     }
 
     if (sensorNode == nullptr) {
-        NES_DEBUG("CoordinatorActor: sensor not found with ip " << ip)
+        NES_DEBUG("CoordinatorActor: sensor not found with hashId" << hashId)
         return false;
     }
+        NES_DEBUG("node type=" << sensorNode->getEntryTypeString())
 
-    NES_DEBUG("node type=" << sensorNode->getEntryTypeString())
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf,
-                                                                     sensorNode);
-
-    return StreamCatalog::instance().removePhysicalStream(
-        streamConf.logicalStreamName, sce);
+    return StreamCatalog::instance().removePhysicalStream(logicalStreamName, physicalStreamName, hashId);
 }
 
 bool CoordinatorActor::registerPhysicalStream(std::string ip,
