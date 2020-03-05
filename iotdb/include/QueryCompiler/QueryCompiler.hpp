@@ -1,6 +1,7 @@
 #ifndef INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_
 #define INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_
 #include <memory>
+#include <vector>
 namespace NES {
 
 class QueryExecutionPlan;
@@ -11,6 +12,16 @@ typedef std::shared_ptr<Operator> OperatorPtr;
 
 class QueryCompiler;
 typedef std::shared_ptr<QueryCompiler> QueryCompilerPtr;
+
+class CodeGenerator;
+typedef std::shared_ptr<CodeGenerator> CodeGeneratorPtr;
+
+class PipelineStage;
+typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
+
+class PipelineContext;
+typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
+
 
 /**
  * @brief The query compiler compiles physical query plans to an executable query plan
@@ -33,6 +44,7 @@ class QueryCompiler {
   QueryExecutionPlanPtr compile(OperatorPtr queryPlan);
 
  private:
+  void compilePipelineStages(QueryExecutionPlanPtr queryExecutionPlan, CodeGeneratorPtr codeGenerator, PipelineContextPtr context);
   QueryCompiler();
 };
 

@@ -1,7 +1,7 @@
 #include <iostream>
 #include <API/Window/WindowAggregation.hpp>
 #include <Operators/Operator.hpp>
-#include <QueryCompiler/CCodeGenerator/CodeCompiler.hpp>
+#include <QueryCompiler/Compiler/Compiler.hpp>
 #include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
 
 namespace NES {

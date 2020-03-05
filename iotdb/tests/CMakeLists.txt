@@ -68,7 +68,7 @@ target_link_libraries(node-engine-test  iotdb ${GTEST_LIBRARIES})
 add_test(NAME node-engine-test COMMAND node-engine-test)
 
 # Code Generation Tests
-add_executable(code-generation-tests "UnitTests/CodeGenTest.cpp")
+add_executable(code-generation-tests "UnitTests/CodeGenerationTest.cpp")
 target_link_libraries(code-generation-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME code-generation-tests COMMAND code-generation-tests)
 
@@ -200,6 +200,15 @@ add_test(NAME multi-worker-test COMMAND multi-worker-test)
 add_executable(continious-source-test "UnitTests/ContiniousSourceTest.cpp")
 target_link_libraries(continious-source-test iotdb ${GTEST_LIBRARIES})
 add_test(NAME continious-source-test COMMAND continious-source-test)
+
+# QueryCompilerTest
+add_executable(query-execution-test "UnitTests/QueryExecutionTest.cpp")
+target_link_libraries(query-execution-test iotdb ${GTEST_LIBRARIES})
+add_test(NAME query-execution-test COMMAND query-execution-test)
+
+add_executable(tuple-buffer-test "UnitTests/TupleBufferTest.cpp")
+target_link_libraries(tuple-buffer-test iotdb ${GTEST_LIBRARIES})
+add_test(NAME tuple-buffer-test COMMAND tuple-buffer-test)
 
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure

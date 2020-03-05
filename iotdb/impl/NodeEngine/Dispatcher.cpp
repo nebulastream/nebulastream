@@ -48,20 +48,21 @@ bool Dispatcher::registerQueryWithStart(QueryExecutionPlanPtr qep) {
         auto sources = qep->getSources();
         for (const auto& source : sources) {
             NES_DEBUG("Dispatcher: start source " << source << " str=" << source->toString())
-            source->start();
-        }
-
-        auto windows = qep->getWindows();
-        for (const auto& window : windows) {
-            NES_DEBUG("Dispatcher: start window " << window)
-            window->setup();
-            window->start();
+            if (!source->start()) {
+                NES_FATAL_ERROR("Dispatcher: source " << source << " could not started");
+                return false;
+            }
         }
 
         auto sinks = qep->getSinks();
         for (const auto& sink : sinks) {
             NES_DEBUG("Dispatcher: start sink " << sink)
             sink->setup();
+        }
+
+        if (!qep->setup() || !qep->start()) {
+            NES_FATAL_ERROR("Dispatcher: query execution plan could not started");
+            return false;
         }
         return true;
     } else {
@@ -96,12 +97,6 @@ bool Dispatcher::registerQueryWithoutStart(QueryExecutionPlanPtr qep) {
             sourceIdToQueryMap.insert({source->getSourceId(), qepSet});
         }
     }
-
-    auto windows = qep->getWindows();
-    for (const auto& window : windows) {
-        NES_DEBUG("Dispatcher: add window " << window)
-        windowToQueryMap.insert({window.get(), qep});
-    }
     return true;
 }
 
@@ -115,12 +110,11 @@ bool Dispatcher::deregisterQuery(QueryExecutionPlanPtr qep) {
         source->stop();
     }
 
-    auto windows = qep->getWindows();
-    for (const auto& window : windows) {
-        NES_DEBUG("Dispatcher: stop window " << window)
-        window->stop();
-        windowToQueryMap.erase(window.get());
-    }
+    if (!qep->stop()) {
+        NES_FATAL_ERROR(
+            "Dispatcher: QEP could not be stopped");
+        return false;
+    };
 
     auto sinks = qep->getSinks();
     for (const auto& sink : sinks) {
@@ -183,21 +177,19 @@ TaskPtr Dispatcher::getWork(bool& threadPool_running) {
     return task;
 }
 
-void Dispatcher::addWork(const NES::TupleBufferPtr window_aggregates, NES::WindowHandler* window) {
+void Dispatcher::addWorkForNextPipeline(const TupleBufferPtr buffer,
+                                        QueryExecutionPlanPtr queryExecutionPlan,
+                                        uint32_t pipelineId) {
     std::unique_lock<std::mutex> lock(workMutex);
 
-    //get the queries that contains this window
-    QueryExecutionPlanPtr qep = windowToQueryMap[window];
+    //dispatch buffer as task
+    buffer->setUseCnt(1);
+    TaskPtr task(new Task(queryExecutionPlan, pipelineId + 1, buffer));
+    task_queue.push_back(task);
+    NES_DEBUG(
+        "Dispatcher: added Task " << task.get() << " for QEP " << queryExecutionPlan
+                                  << " inputBuffer " << buffer)
 
-    // TODO We currently assume that a window ends a query execution plan
-    // for each respective sink, create output the window aggregates
-    auto sinks = qep->getSinks();
-    for (auto& sink : sinks) {
-        sink->writeData(window_aggregates);
-        NES_DEBUG(
-            "Dispatcher: write window aggregates to sink " << sink << " for QEP " << qep << " tupleBuffer "
-                                                           << window_aggregates)
-    }
     cv.notify_all();
 }
 
@@ -253,11 +245,6 @@ void Dispatcher::printQEPStatistics(const QueryExecutionPlanPtr qep) {
         NES_INFO("Source:" << source)
         NES_INFO("\t Generated Buffers=" << source->getNumberOfGeneratedBuffers())
         NES_INFO("\t Generated Tuples=" << source->getNumberOfGeneratedTuples())
-    }
-    auto windows = qep->getWindows();
-    for (auto window : windows) {
-        NES_INFO("WindowHandler:" << window)
-        NES_INFO("WindowHandler Result:")
     }
     auto sinks = qep->getSinks();
     for (auto sink : sinks) {

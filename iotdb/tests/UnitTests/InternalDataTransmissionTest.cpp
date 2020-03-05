@@ -11,6 +11,7 @@
 #include <Network/InputGate.hpp>
 #include <Network/PacketHeader.hpp>
 #include <Util/SerializationTools.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
 
 using namespace NES;
 using namespace std;
@@ -54,13 +55,9 @@ TEST_F(InternalDataTransmissionTest, testInternalTransmission) {
     InputQueryPtr query = UtilityFunctions::createQueryFromCodeString(queryString);
     OperatorPtr operatorTree = query->getRoot();
 
-    CodeGeneratorPtr code_gen = createCodeGenerator();
-    PipelineContextPtr context = createPipelineContext();
+    QueryCompilerPtr compiler = createDefaultQueryCompiler();
 
-    // Parse operators
-    operatorTree->produce(code_gen, context, std::cout);
-    PipelineStagePtr stage = code_gen->compile(CompilerArgs());
-    QueryExecutionPlanPtr qep1(new GeneratedQueryExecutionPlan(stage));
+    QueryExecutionPlanPtr qep1 = compiler->compile(operatorTree);
 
     DataSourcePtr source1 = createDefaultDataSourceWithSchemaForOneBuffer(query->getSourceStream()->getSchema());
     Schema sch1 = Schema::create().addField("sum", BasicType::UINT32);
@@ -82,7 +79,7 @@ TEST_F(InternalDataTransmissionTest, testInputGate) {
     // create InputGate on localhost with ephemeral port to receive data
     InputGate inputGate("*", 0);
     inputGate.setup();
-    NES_INFO( "InputGate published with host:" << inputGate.getHost() << " port:" << inputGate.getPort())
+    NES_INFO("InputGate published with host:" << inputGate.getHost() << " port:" << inputGate.getPort())
 
     // Open Publisher
     auto address = std::string("tcp://") + inputGate.getHost() + std::string(":") + std::to_string(inputGate.getPort());
@@ -101,7 +98,7 @@ TEST_F(InternalDataTransmissionTest, testInputGate) {
 
       // Test received data.
       size_t sum1 = 0;
-      uint32_t* tuple1 = (uint32_t*)buffer1->getBuffer();
+      uint32_t* tuple1 = (uint32_t*) buffer1->getBuffer();
       for (size_t i = 0; i != 8; ++i) {
           sum1 += *(tuple1++);
       }
@@ -118,7 +115,7 @@ TEST_F(InternalDataTransmissionTest, testInputGate) {
 
       // Test received data.
       size_t sum2 = 0;
-      uint32_t* tuple2 = (uint32_t*)buffer2->getBuffer();
+      uint32_t* tuple2 = (uint32_t*) buffer2->getBuffer();
       for (size_t i = 0; i != 8; ++i) {
           sum2 += *(tuple2++);
       }
@@ -132,14 +129,14 @@ TEST_F(InternalDataTransmissionTest, testInputGate) {
     });
 
     std::array<uint32_t, 8> testData1 = {{0, 100, 1, 99, 2, 98, 3, 97}};
-    size_t testDataSize1 = testData1.size() * sizeof(uint32_t);
+    size_t testDataSize1 = testData1.size()*sizeof(uint32_t);
 
     std::array<uint32_t, 8> testData2 = {{0, 100, 1, 99, 2, 98}};
-    size_t testDataSize2 = testData2.size() * sizeof(uint32_t);
+    size_t testDataSize2 = testData2.size()*sizeof(uint32_t);
 
     int timeoutCounter = 0;
     int timeoutMax = 10000000;
-    while (!receivingFinished && timeoutCounter<=timeoutMax) {
+    while (!receivingFinished && timeoutCounter <= timeoutMax) {
         timeoutCounter++;
         // Send data from here with one version of a packet header
         PacketHeader pH1(testData1.size(), testDataSize1, "testId1");
@@ -167,8 +164,8 @@ TEST_F(InternalDataTransmissionTest, testInputGate) {
     }
     inputGateThread.join();
 
-    if (timeoutCounter>=timeoutMax) {
+    if (timeoutCounter >= timeoutMax) {
         NES_ERROR("TestInputGate: Error timeout reached!")
     }
-    EXPECT_TRUE(timeoutCounter<timeoutMax);
+    EXPECT_TRUE(timeoutCounter < timeoutMax);
 }

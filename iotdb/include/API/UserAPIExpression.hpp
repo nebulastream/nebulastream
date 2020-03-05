@@ -50,7 +50,7 @@ typedef std::shared_ptr<Field> FieldPtr;
 class UserAPIExpression {
  public:
   virtual ~UserAPIExpression() {};
-  virtual const ExpressionStatmentPtr generateCode(GeneratedCode &code) const = 0;
+  virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr &code) const = 0;
   virtual const std::string toString() const = 0;
   virtual UserAPIExpressionPtr copy() const = 0;
   virtual bool equals(const UserAPIExpression &rhs) const = 0;
@@ -74,7 +74,7 @@ class Predicate : public UserAPIExpression {
             const UserAPIExpressionPtr right,
             bool bracket = true);
 
-  virtual const ExpressionStatmentPtr generateCode(GeneratedCode &code) const override;
+  virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr &code) const override;
   virtual const std::string toString() const override;
   virtual UserAPIExpressionPtr copy() const override;
   bool equals(const UserAPIExpression &rhs) const override;
@@ -118,7 +118,7 @@ class PredicateItem : public UserAPIExpression {
   PredicateItem(char val);
   PredicateItem(const char *val);
 
-  virtual const ExpressionStatmentPtr generateCode(GeneratedCode &code) const override;
+  virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr &code) const override;
   virtual const std::string toString() const override;
   virtual UserAPIExpressionPtr copy() const override;
 
