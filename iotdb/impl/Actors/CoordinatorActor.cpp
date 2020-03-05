@@ -97,10 +97,7 @@ behavior CoordinatorActor::running() {
         [=](remove_phy_stream_atom, std::string ip, const string& logicalStreamName, const string& physicalStreamName) {
           NES_DEBUG("CoordinatorActor: got request for removal of physical stream " << physicalStreamName
                                                                                     << " from logical stream "
-                                                                                    << logicalStreamName)
-          PhysicalStreamConfig conf;
-          conf.logicalStreamName = logicalStreamName;
-          conf.physicalStreamName = physicalStreamName;
+                                                                                   << logicalStreamName)
           return removePhysicalStream(logicalStreamName, physicalStreamName);
         },
         [=](execute_query_atom, const string& description, const string& strategy) {

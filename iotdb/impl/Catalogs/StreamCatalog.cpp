@@ -147,7 +147,6 @@ bool StreamCatalog::removeAllPhysicalStreams(std::string physicalStreamName) {
 }
 
 bool StreamCatalog::removePhysicalStream(string logicalStreamName, string physicalStreamName, std::size_t hashId) {
-
     NES_DEBUG(
             "StreamCatalog: search for logical stream in removePhysicalStream() " << logicalStreamName)
 
