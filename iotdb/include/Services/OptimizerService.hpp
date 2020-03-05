@@ -26,17 +26,15 @@ class OptimizerService {
      * @param optimizationStrategyName
      * @return
      */
-    web::json::value getExecutionPlanAsJson(InputQueryPtr inputQuery,
-                                            std::string optimizationStrategyName);
+    web::json::value getExecutionPlanAsJson(InputQueryPtr inputQuery, std::string optimizationStrategyName);
 
     /**
-   * @brief: get execution plan for the input query using the specified strategy.
-   * @param userQuery
-   * @param optimizationStrategyName
-   * @return nes execution plan
-   */
-    NESExecutionPlanPtr getExecutionPlan(InputQueryPtr inputQuery,
-                                         std::string optimizationStrategyName);
+     * @brief: get execution plan for the input query using the specified strategy.
+     * @param userQuery
+     * @param optimizationStrategyName
+     * @return pointer to nes execution plan
+     */
+    NESExecutionPlanPtr getExecutionPlan(InputQueryPtr inputQuery, std::string optimizationStrategyName);
 
     ~OptimizerService() = default;
 
