@@ -4,6 +4,7 @@
 #include <vector>
 
 #include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/PipelineContext.hpp>
 #include <Operators/Impl/SinkOperator.hpp>
 #include <SourceSink/DataSink.hpp>
 
@@ -28,7 +29,7 @@ void SinkOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context,
 
 void SinkOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out)
 {
-    sink_->setSchema(codegen->getResultSchema());
+    sink_->setSchema(context->getResultSchema());
     codegen->generateCode(sink_, context, out);
     /* no call to compileLiftCombine of parent, ends code generation */
 }

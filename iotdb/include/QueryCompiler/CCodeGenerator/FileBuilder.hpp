@@ -17,11 +17,6 @@ class CodeFile {
     std::string code;
 };
 
-class PipelineStage;
-typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
-
-PipelineStagePtr compile(const CodeFile& file);
-
 class FileBuilder {
   private:
     std::stringstream declations;

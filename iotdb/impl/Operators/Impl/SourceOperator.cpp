@@ -9,14 +9,14 @@
 
 namespace NES {
 
-SourceOperator::SourceOperator(const DataSourcePtr source) : Operator(), source_(source) {}
+SourceOperator::SourceOperator(const DataSourcePtr source) : Operator(), source(source) {}
 
-SourceOperator::SourceOperator(const SourceOperator& other) : source_(other.source_) {}
+SourceOperator::SourceOperator(const SourceOperator& other) : source(other.source) {}
 
 SourceOperator& SourceOperator::operator=(const SourceOperator& other)
 {
     if (this != &other) {
-        source_ = other.source_;
+        source = other.source;
     }
     return *this;
 }
@@ -28,7 +28,7 @@ void SourceOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr contex
 
 void SourceOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out)
 {
-    codegen->generateCode(source_, context, out);
+    codegen->generateCode(source->getSchema(), context, out);
     getParent()->consume(codegen,context,out);
 }
 
@@ -41,14 +41,14 @@ const OperatorPtr SourceOperator::copy() const {
 const std::string SourceOperator::toString() const
 {
     std::stringstream ss;
-    ss << "SOURCE(" << NES::toString(source_) << ")";
+    ss << "SOURCE(" << NES::toString(source) << ")";
     return ss.str();
 }
 
 OperatorType SourceOperator::getOperatorType() const { return SOURCE_OP; }
 
 NES::DataSourcePtr SourceOperator::getDataSourcePtr() {
-    return source_;
+    return source;
 }
 
 SourceOperator::~SourceOperator() {}
