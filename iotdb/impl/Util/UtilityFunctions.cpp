@@ -1,9 +1,11 @@
-#include <Util/UtilityFunctions.hpp>
 #include <algorithm>
-#include <Operators/Operator.hpp>
-#include <QueryCompiler/CCodeGenerator/CodeCompiler.hpp>
-#include <Util/Logger.hpp>
 #include <boost/algorithm/string/replace.hpp>
+#include <Util/UtilityFunctions.hpp>
+#include <Util/Logger.hpp>
+#include <Operators/Operator.hpp>
+#include <QueryCompiler/Compiler/Compiler.hpp>
+#include <QueryCompiler/Compiler/CompiledCode.hpp>
+
 
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
@@ -73,8 +75,8 @@ InputQueryPtr UtilityFunctions::createQueryFromCodeString(
       code << newQuery << std::endl;
       code << "}" << std::endl;
       code << "}" << std::endl;
-      CCodeCompiler compiler;
-      CompiledCCodePtr compiled_code = compiler.compile(code.str());
+      Compiler compiler;
+      CompiledCodePtr compiled_code = compiler.compile(code.str());
       if (!code) {
         NES_ERROR(
             "Compilation of query code failed! Code: " << code.str());
@@ -117,8 +119,8 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(const std::string& query_code_s
       code << "return schema;";
       code << "}" << std::endl;
       code << "}" << std::endl;
-      CCodeCompiler compiler;
-      CompiledCCodePtr compiled_code = compiler.compile(code.str());
+      Compiler compiler;
+      CompiledCodePtr compiled_code = compiler.compile(code.str());
       if (!code) {
         NES_ERROR("Compilation of schema code failed! Code: " << code.str());
       }

@@ -10,10 +10,8 @@ namespace NES {
 
 class NESExecutionPlan;
 typedef std::shared_ptr<NESExecutionPlan> NESExecutionPlanPtr;
-
 class InputQuery;
 typedef std::shared_ptr<InputQuery> InputQueryPtr;
-
 /**
  * @brief Represents various states the user query goes through.
  *

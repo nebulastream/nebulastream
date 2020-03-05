@@ -1,18 +1,10 @@
 
 #include <string>
 
-#include <QueryCompiler/CCodeGenerator/CodeCompiler.hpp>
 #include <QueryCompiler/CCodeGenerator/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
-#include <QueryCompiler/PipelineStage.hpp>
 
 namespace NES {
-
-PipelineStagePtr compile(const CodeFile &file) {
-  CCodeCompiler compiler;
-  CompiledCCodePtr compiled_code = compiler.compile(file.code);
-  return createPipelineStage(compiled_code);
-}
 
 FileBuilder FileBuilder::create(const std::string &file_name) {
   FileBuilder builder;

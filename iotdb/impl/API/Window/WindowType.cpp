@@ -1,58 +1,71 @@
 #include <memory>
 #include <API/Window/WindowType.hpp>
 #include <API/Window/WindowMeasure.hpp>
-#include <vector>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
-TumblingWindow::TumblingWindow(NES::TimeMeasure size) : _size(size) {}
+WindowType::WindowType(TimeCharacteristic timeCharacteristic) : timeCharacteristic(timeCharacteristic) {
 
-WindowTypePtr TumblingWindow::of(NES::TimeMeasure size) {
-  return std::make_shared<TumblingWindow>(TumblingWindow(size));
 }
 
-void TumblingWindow::triggerWindows(NES::WindowListPtr windows,
+TimeCharacteristic WindowType::getTimeCharacteristic() const {
+    return this->timeCharacteristic;
+}
+
+TumblingWindow::TumblingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size)
+    : size(size), WindowType(timeCharacteristic) {}
+
+WindowTypePtr TumblingWindow::of(TimeCharacteristic timeCharacteristic, TimeMeasure size) {
+    return std::make_shared<TumblingWindow>(TumblingWindow(timeCharacteristic, size));
+}
+
+void TumblingWindow::triggerWindows(WindowListPtr windows,
                                     uint64_t lastWatermark,
                                     uint64_t currentWatermark) const {
-  long lastStart = lastWatermark - ((lastWatermark + _size.getTime()) % _size.getTime());
-  for (long windowStart = lastStart; windowStart + _size.getTime() <= currentWatermark; windowStart += _size.getTime()) {
-    windows->push_back(WindowState(windowStart, windowStart + _size.getTime()));
-  }
+    long lastStart = lastWatermark - ((lastWatermark + size.getTime())%size.getTime());
+    for (long windowStart = lastStart; windowStart + size.getTime() <= currentWatermark;
+         windowStart += size.getTime()) {
+        windows->emplace_back(windowStart, windowStart + size.getTime());
+    }
 }
 
-
-SlidingWindow::SlidingWindow(NES::TimeMeasure size, NES::TimeMeasure slide) : _size(size), _slide(slide) {}
-
-WindowTypePtr SlidingWindow::of(NES::TimeMeasure size, TimeMeasure slide) {
-  return std::make_shared<SlidingWindow>(SlidingWindow(size, slide));
+SlidingWindow::SlidingWindow(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide)
+    : size(size), slide(slide), WindowType(timeCharacteristic) {
+    NES_NOT_IMPLEMENTED
 }
 
-void SlidingWindow::triggerWindows(NES::WindowListPtr windows,
-                                    uint64_t lastWatermark,
-                                    uint64_t currentWatermark) const {
-  NES_NOT_IMPLEMENTED
+WindowTypePtr SlidingWindow::of(TimeCharacteristic timeCharacteristic, TimeMeasure size, TimeMeasure slide) {
+    return std::make_shared<SlidingWindow>(SlidingWindow(timeCharacteristic, size, slide));
 }
 
-
-SessionWindow::SessionWindow(NES::TimeMeasure gap) : _gap(gap) {}
-
-WindowTypePtr SessionWindow::withGap(NES::TimeMeasure gap) {
-  return std::make_shared<SessionWindow>(SessionWindow(gap));
-}
-
-void SessionWindow::triggerWindows(NES::WindowListPtr windows,
+void SlidingWindow::triggerWindows(WindowListPtr windows,
                                    uint64_t lastWatermark,
                                    uint64_t currentWatermark) const {
-  NES_NOT_IMPLEMENTED
+    NES_NOT_IMPLEMENTED
+}
+
+SessionWindow::SessionWindow(TimeCharacteristic timeCharacteristic, TimeMeasure gap)
+    : gap(gap), WindowType(timeCharacteristic) {
+    NES_NOT_IMPLEMENTED
+}
+
+WindowTypePtr SessionWindow::withGap(TimeCharacteristic timeCharacteristic, TimeMeasure gap) {
+    return std::make_shared<SessionWindow>(SessionWindow(timeCharacteristic, gap));
+}
+
+void SessionWindow::triggerWindows(WindowListPtr windows,
+                                   uint64_t lastWatermark,
+                                   uint64_t currentWatermark) const {
+    NES_NOT_IMPLEMENTED
 }
 
 WindowState::WindowState(uint64_t start, uint64_t an_end) : start(start), end(an_end) {}
 
 uint64_t WindowState::getStartTs() const {
-  return start;
+    return start;
 }
 uint64_t WindowState::getEndTs() const {
-  return end;
+    return end;
 }
 }

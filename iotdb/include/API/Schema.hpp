@@ -7,13 +7,15 @@
 #include <API/Types/AttributeField.hpp>
 
 namespace NES {
-
+class Schema;
+typedef std::shared_ptr<Schema> SchemaPtr;
 class Schema {
  public:
   Schema();
   static Schema create();
 
   Schema(const Schema& query);
+  const SchemaPtr copy() const;
 
   Schema &copyFields(Schema const &schema);
   Schema &addField(AttributeFieldPtr field);
@@ -51,8 +53,6 @@ class Schema {
     ar & fields;
   }
 };
-
-typedef std::shared_ptr<Schema> SchemaPtr;
 
 }  // namespace NES
 #endif // API_SCHEMA_H

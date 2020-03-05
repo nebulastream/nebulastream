@@ -44,7 +44,7 @@ class BasicPhysicalField : public PhysicalField {
   ValueType read(const TupleBufferPtr &tupleBuffer, uint64_t offset) {
     auto byteBuffer = (int8_t *) tupleBuffer->getBuffer();
     // interpret the target address as value type and read value from tuple buffer
-    return ((ValueType) byteBuffer[offset]);
+    return ((ValueType *) (&byteBuffer[offset]))[0];
   }
 };
 }
