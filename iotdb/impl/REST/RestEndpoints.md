@@ -209,6 +209,22 @@ To get all physical streams for a given logical stream.
 **Response**:
 {"Physical Streams":  [physicl_stream_string]}
 
+### Add Logical Stream
+To add a logical stream.
+
+**API**: /streamCatalog/addLogicalStream\
+**Verb**: POST\
+**Response Code**: 200 OK
+
+**_Example_**: 
+
+**Request**:
+{"streamName": "logical_stream_name",
+"schema": "Schema::create().addField(\"test\",INT32);"}
+
+**Response**:
+{"success": "true"}
+
 ### Update Logical Stream
 To Update a logical stream.
 
