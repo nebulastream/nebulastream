@@ -84,6 +84,7 @@ class Operator {
     void setOperatorId(size_t operatorId) { this->operatorId = operatorId; };
     const std::vector<OperatorPtr> getChildren() const;
     void setChildren(const std::vector<OperatorPtr> children);
+    void addChild(const OperatorPtr child);
     const OperatorPtr getParent() const;
     void setParent(const OperatorPtr parent);
     /**
@@ -117,6 +118,7 @@ const OperatorPtr createSinkOperator(const DataSinkPtr sink);
 const OperatorPtr createSortOperator(const Sort& sort_spec);
 const OperatorPtr createSourceOperator(const DataSourcePtr source);
 const OperatorPtr createWindowOperator(const WindowDefinitionPtr window_definition);
+const OperatorPtr createWindowScanOperator(const SchemaPtr schema);
 
 } // namespace NES
 

@@ -1,15 +1,8 @@
-/*
- * PipelineStage.h
- *
- *  Created on: Dec 19, 2018
- *      Author: zeuchste
- */
-
 #ifndef INCLUDE_PIPELINESTAGE_H_
 #define INCLUDE_PIPELINESTAGE_H_
 #include <memory>
 #include <vector>
-#include "../NodeEngine/TupleBuffer.hpp"
+#include <NodeEngine/TupleBuffer.hpp>
 
 namespace NES {
 
@@ -19,30 +12,68 @@ typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
 template<class PartialAggregateType>
 class WindowSliceStore;
 
+class WindowHandler;
+typedef std::shared_ptr<WindowHandler> WindowHandlerPtr;
+
+class ExecutablePipeline;
+typedef std::shared_ptr<ExecutablePipeline> ExecutablePipelinePtr;
+
+class QueryExecutionPlan;
+typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
+
 class WindowManager;
 
 class PipelineStage {
- public:
-  /** \brief process input tuple buffer */
-  bool execute(const std::vector<TupleBuffer *> &input_buffers,
-               void *state,
-               WindowManager *window_manager,
-               TupleBuffer *result_buf);
-  virtual const PipelineStagePtr copy() const = 0;
-  virtual ~PipelineStage();
+  public:
+    PipelineStage(
+        uint32_t pipelineStageId,
+        QueryExecutionPlanPtr queryExecutionPlan,
+        ExecutablePipelinePtr executablePipeline,
+        WindowHandlerPtr windowHandler);
+    explicit PipelineStage(uint32_t pipelineStageId,
+                           QueryExecutionPlanPtr queryExecutionPlan, ExecutablePipelinePtr executablePipeline);
+    bool execute(TupleBufferPtr inputBuffer,
+                 TupleBufferPtr outputBuffer);
 
- protected:
-  virtual uint32_t execute_impl(const std::vector<TupleBuffer *> &input_buffers,
-                                void *state,
-                                WindowManager *window_manager,
-                                TupleBuffer *result_buf) = 0;
+    /**
+   * @brief Initialises a pipeline stage
+   * @return boolean if successful
+   */
+    bool setup();
+
+    /**
+     * @brief Starts a pipeline stage
+     * @return boolean if successful
+     */
+    bool start();
+
+    /**
+     * @brief Stops pipeline stage
+     * @return
+     */
+    bool stop();
+
+    ~PipelineStage();
+  private:
+    uint32_t pipelineStageId;
+    QueryExecutionPlanPtr queryExecutionPlan;
+    ExecutablePipelinePtr executablePipeline;
+    WindowHandlerPtr windowHandler;
+
+    bool hasWindowHandler();
 };
 typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
 
-class CompiledCCode;
-typedef std::shared_ptr<CompiledCCode> CompiledCCodePtr;
+class CompiledCode;
+typedef std::shared_ptr<CompiledCode> CompiledCodePtr;
 
-PipelineStagePtr createPipelineStage(const CompiledCCodePtr compiled_code);
+PipelineStagePtr createPipelineStage(uint32_t pipelineStageId,
+                                     const QueryExecutionPlanPtr& queryExecutionPlanPtr,
+                                     const ExecutablePipelinePtr& compiled_code,
+                                     const WindowHandlerPtr& window_handler);
+PipelineStagePtr createPipelineStage(uint32_t pipelineStageId,
+                                     const QueryExecutionPlanPtr& queryExecutionPlanPtr,
+                                     const ExecutablePipelinePtr& compiled_code);
 
 } // namespace NES
 

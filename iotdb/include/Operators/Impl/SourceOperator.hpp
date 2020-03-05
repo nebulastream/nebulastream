@@ -26,14 +26,14 @@ class SourceOperator : public Operator {
   ~SourceOperator() override;
 
  private:
-  DataSourcePtr source_;
+  DataSourcePtr source;
 
   friend class boost::serialization::access;
 
   template<class Archive>
   void serialize(Archive &ar, unsigned) {
     ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Operator)
-        & BOOST_SERIALIZATION_NVP(source_);
+        & BOOST_SERIALIZATION_NVP(source);
   }
 };
 

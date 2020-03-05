@@ -6,6 +6,8 @@ add_source_iotdb(
         HandCodedQueryExecutionPlan.cpp
 		GeneratedQueryExecutionPlan.cpp
 		QueryCompiler.cpp
+		Compiler/PipelineContext.cpp
 	)
 add_subdirectory(CCodeGenerator)
+add_subdirectory(Compiler)
 add_subdirectory(DataTypes)

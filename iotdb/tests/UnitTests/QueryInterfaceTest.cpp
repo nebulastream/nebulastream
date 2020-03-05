@@ -52,7 +52,7 @@ void createQueryFilter() {
 
   InputQuery &query =
       InputQuery::from(def).filter(def["value"] > 42).windowByKey(
-          def["value"].getAttributeField(), TumblingWindow::of(Seconds(10)),
+          def["value"].getAttributeField(), TumblingWindow::of(TimeCharacteristic::ProcessingTime, Seconds(10)),
           Sum::on(def["value"])).print(std::cout);
 
   env.printInputQueryPlan(query);

@@ -6,7 +6,7 @@
 #include <API/InputQuery.hpp>
 #include <Operators/Operator.hpp>
 
-#include <QueryCompiler/CCodeGenerator/CodeCompiler.hpp>
+#include <QueryCompiler/Compiler/Compiler.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
 

@@ -12,4 +12,11 @@ WindowDefinition::WindowDefinition(const AttributeFieldPtr onKey,
 
 }
 
+WindowDefinitionPtr createWindowDefinition(const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType){
+    return std::make_shared<WindowDefinition>(windowAggregation, windowType);
+}
+WindowDefinitionPtr createWindowDefinition(const AttributeFieldPtr onKey, const WindowAggregationPtr windowAggregation, const WindowTypePtr windowType){
+    return std::make_shared<WindowDefinition>(onKey, windowAggregation, windowType);
+}
+
 }

@@ -65,6 +65,15 @@ DeclarationPtr StructDeclaration::getField(const std::string& field_name) const
     return DeclarationPtr();
 }
 
+const bool StructDeclaration::containsField(const std::string &field_name, const DataTypePtr dataType) const {
+    for (auto& decl : decls_) {
+        if (decl->getIdentifierName() == field_name && decl->getType()->isEqual(dataType)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 StructDeclaration& StructDeclaration::addField(const Declaration& decl)
 {
     DeclarationPtr decl_p = decl.copy();

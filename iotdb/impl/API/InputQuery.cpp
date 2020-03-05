@@ -4,7 +4,7 @@
 #include <iostream>
 #include <API/InputQuery.hpp>
 #include <Operators/Operator.hpp>
-#include <QueryCompiler/CCodeGenerator/CodeCompiler.hpp>
+#include <QueryCompiler/Compiler/Compiler.hpp>
 #include <API/UserAPIExpression.hpp>
 #include <SourceSink/DataSink.hpp>
 #include <SourceSink/SinkCreator.hpp>
@@ -175,30 +175,40 @@ InputQuery& InputQuery::join(const InputQuery &sub_query,
   return *this;
 }
 
-InputQuery& InputQuery::windowByKey(const AttributeFieldPtr onKey,
+InputQuery &InputQuery::windowByKey(const AttributeFieldPtr onKey,
                                     const WindowTypePtr windowType,
                                     const WindowAggregationPtr aggregation) {
   auto window_def_ptr = std::make_shared<WindowDefinition>(onKey, aggregation,
                                                            windowType);
   OperatorPtr op = createWindowOperator(window_def_ptr);
-  int operatorId = this->getNextOperatorId();
-  op->setOperatorId(operatorId);
+  op->setOperatorId(this->getNextOperatorId());
   addChild(op, root);
   root = op;
-
+  // add a window scan operator with the window result schema.
+  auto outputSchema = Schema::create().addField(aggregation->asField());
+  SchemaPtr ptr = std::make_shared<Schema>(outputSchema);
+  OperatorPtr windowScan = createWindowScanOperator(ptr);
+  windowScan->setOperatorId(this->getNextOperatorId());
+  addChild(windowScan, root);
+  root = windowScan;
   return *this;
 }
 
-InputQuery& InputQuery::window(const NES::WindowTypePtr windowType,
+InputQuery &InputQuery::window(const NES::WindowTypePtr windowType,
                                const WindowAggregationPtr aggregation) {
   auto window_def_ptr = std::make_shared<WindowDefinition>(aggregation,
                                                            windowType);
   OperatorPtr op = createWindowOperator(window_def_ptr);
-  //OperatorPtr op = createWindowOperator(windowType);
-  int operatorId = this->getNextOperatorId();
-  op->setOperatorId(operatorId);
+  op->setOperatorId(this->getNextOperatorId());
   addChild(op, root);
   root = op;
+  // add a window scan operator with the window result schema.
+  auto outputSchema = Schema::create().addField(aggregation->asField());
+  SchemaPtr ptr = std::make_shared<Schema>(outputSchema);
+  OperatorPtr windowScan = createWindowScanOperator(ptr);
+  windowScan->setOperatorId(this->getNextOperatorId());
+  addChild(windowScan, root);
+  root = windowScan;
 
   return *this;
 }
