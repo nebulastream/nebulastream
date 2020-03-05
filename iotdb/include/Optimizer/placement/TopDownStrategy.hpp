@@ -1,21 +1,24 @@
 #ifndef TOPDOWN_HPP
 #define TOPDOWN_HPP
 
-#include <Operators/Operator.hpp>
 #include <stack>
-#include "../NESPlacementOptimizer.hpp"
+#include <Optimizer/NESPlacementOptimizer.hpp>
 
 namespace NES {
 
+class Operator;
+typedef std::shared_ptr<Operator> OperatorPtr;
+
 using namespace std;
 
-class TopDown : public NESPlacementOptimizer {
+class TopDownStrategy : public NESPlacementOptimizer {
 
   public:
-    TopDown() = default;
-    ~TopDown() = default;
+    TopDownStrategy() = default;
+    ~TopDownStrategy() = default;
 
-    NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlanPtr) override;
+    NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery,
+                                                NESTopologyPlanPtr nesTopologyPlanPtr) override;
 
   private:
 
@@ -27,7 +30,7 @@ class TopDown : public NESPlacementOptimizer {
      * @param nesTopologyGraphPtr :  nes topology graph
      */
     void placeOperators(NESExecutionPlanPtr executionPlanPtr, OperatorPtr sinkOperator,
-                        deque<NESTopologyEntryPtr> nesSourceNodes, NESTopologyGraphPtr nesTopologyGraphPtr);
+                        vector<NESTopologyEntryPtr> nesSourceNodes, NESTopologyGraphPtr nesTopologyGraphPtr);
 
     /**
      * @brief add query operator to existing execution node
@@ -44,6 +47,15 @@ class TopDown : public NESPlacementOptimizer {
      */
     void createNewExecutionNode(NESExecutionPlanPtr executionPlanPtr, OperatorPtr operatorPtr,
                                 NESTopologyEntryPtr nesNode) const;
+
+    /**
+     * @brief Add forward operators between source and sink nodes.
+     * @param sourceNodes : list of source nodes
+     * @param rootNode : sink node
+     * @param nesExecutionPlanPtr : nes execution plan
+     */
+    void addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes, NESTopologyEntryPtr rootNode,
+                             NESExecutionPlanPtr nesExecutionPlanPtr) const;
 };
 
 }
