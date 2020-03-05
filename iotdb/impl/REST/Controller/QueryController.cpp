@@ -74,14 +74,19 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                             createExampleTopology();
 
                             //Call the service
-                            const string
-                                queryId = coordinatorServicePtr->registerQuery(userQuery, optimizationStrategyName);
-                            NESExecutionPlanPtr executionPlan = coordinatorServicePtr->getRegisteredQuery(queryId);
+                            string queryId = coordinatorServicePtr->registerQuery(userQuery, optimizationStrategyName);
 
+                            NESExecutionPlanPtr executionPlan = coordinatorServicePtr->getRegisteredQuery(queryId);
                             json::value executionGraphPlan = executionPlan->getExecutionGraphAsJson();
 
+                            json::value restResponse{};
+                            restResponse["queryId"] = json::value::string(queryId);
+                            restResponse["executionGraph"] = executionGraphPlan;
+                            restResponse["planComputeTime"] =
+                                json::value::string(std::to_string(executionPlan->getTotalComputeTimeInMillis()));
+
                             //Prepare the response
-                            successMessageImpl(message, executionGraphPlan);
+                            successMessageImpl(message, restResponse);
                             return;
                         } catch (...) {
                             std::cout << "Exception occurred while building the query plan for user request.";
@@ -136,11 +141,11 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                                   string error_msg = to_string(er);
                                 });
 
-                            json::value result{};
-                            result["queryId"] = json::value::string(queryId);
+                            json::value restResponse{};
+                            restResponse["queryId"] = json::value::string(queryId);
 
                             //Prepare the response
-                            successMessageImpl(message, result);
+                            successMessageImpl(message, restResponse);
                             return;
 
                         } catch (...) {
