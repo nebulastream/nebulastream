@@ -311,8 +311,8 @@ class YahooStreamingBenchmarkTest : public testing::Test {
                             outputBufferPtr[campaign].campaign_count = hashTable[old_window][campaign];
                             outputBufferPtr[campaign].last_timestamp = timestamp;
                         }
-                        outputBuffer->num_tuples = campaign_count;
-                        outputBuffer->tuple_size_bytes = sizeof(ysbRecordResult);
+                        outputBuffer->numberOfTuples = campaign_count;
+                        outputBuffer->tupleSizeInBytes = sizeof(ysbRecordResult);
                         sink->writeData(outputBuffer);
 
                         // reset hash table for next window
@@ -425,7 +425,7 @@ TEST_F(YahooStreamingBenchmarkTest, nodeToNode)
 
             // Add to checksums.
             ysbRecordResult* tuple = (ysbRecordResult*)newData->buffer;
-            for (size_t i = 0; i != newData->num_tuples; ++i) {
+            for (size_t i = 0; i != newData->numberOfTuples; ++i) {
                 aggregationChecksum += tuple[i].campaign_count;
             }
             windowsChecksum++;
@@ -452,8 +452,8 @@ TEST_F(YahooStreamingBenchmarkTest, nodeToNode)
     // send something to get out the receiving loop
     finished = true;
     TupleBufferPtr tmpBuffer = BufferManager::instance().getBuffer();
-    tmpBuffer->num_tuples = 0;
-    tmpBuffer->tuple_size_bytes = sizeof(ysbRecordResult);
+    tmpBuffer->numberOfTuples = 0;
+    tmpBuffer->tupleSizeInBytes = sizeof(ysbRecordResult);
     zmqSink->writeData(tmpBuffer);
     receivingThread.join();
 
