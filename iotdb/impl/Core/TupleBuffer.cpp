@@ -1,10 +1,4 @@
-/*
- * TupleBuffer.cpp
- *
- *  Created on: Dec 19, 2018
- *      Author: zeuchste
- */
-#include "../../include/NodeEngine/TupleBuffer.hpp"
+#include <NodeEngine/TupleBuffer.hpp>
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
@@ -12,49 +6,51 @@
 BOOST_CLASS_EXPORT_IMPLEMENT(NES::TupleBuffer);
 #include <cstring>
 #include <iostream>
+#include <sstream>
 namespace NES {
 
-TupleBuffer::TupleBuffer(void* _buffer, const size_t _buffer_size_bytes,
+TupleBuffer::TupleBuffer(void *_buffer, const size_t _buffer_size_bytes,
                          const uint32_t _tuple_size_bytes,
                          const uint32_t _num_tuples)
-    : buffer(_buffer),
-      buffer_size_bytes(_buffer_size_bytes),
-      tuple_size_bytes(_tuple_size_bytes),
-      num_tuples(_num_tuples) {
+    :
+    buffer(_buffer),
+    bufferSizeInBytes(_buffer_size_bytes),
+    tupleSizeInBytes(_tuple_size_bytes),
+    numberOfTuples(_num_tuples) {
 }
 
 void TupleBuffer::copyInto(const TupleBufferPtr other) {
   if (other && other.get() != this) {
-    this->buffer_size_bytes = other->buffer_size_bytes;
-    this->tuple_size_bytes = other->tuple_size_bytes;
-    this->num_tuples = other->num_tuples;
-    std::memcpy(this->buffer, other->buffer, other->buffer_size_bytes);
+    this->bufferSizeInBytes = other->bufferSizeInBytes;
+    this->tupleSizeInBytes = other->tupleSizeInBytes;
+    this->numberOfTuples = other->numberOfTuples;
+    std::memcpy(this->buffer, other->buffer, other->bufferSizeInBytes);
   }
 }
 
-TupleBuffer& TupleBuffer::operator=(const TupleBuffer& other) {
+TupleBuffer& TupleBuffer::operator=(const TupleBuffer &other) {
   if (this != &other) {
-    this->buffer_size_bytes = other.buffer_size_bytes;
-    this->tuple_size_bytes = other.tuple_size_bytes;
-    this->num_tuples = other.num_tuples;
-    std::memcpy(this->buffer, other.buffer, other.buffer_size_bytes);
+    this->bufferSizeInBytes = other.bufferSizeInBytes;
+    this->tupleSizeInBytes = other.tupleSizeInBytes;
+    this->numberOfTuples = other.numberOfTuples;
+    std::memcpy(this->buffer, other.buffer, other.bufferSizeInBytes);
   }
   return *this;
 }
 
 void TupleBuffer::print() {
   std::cout << "buffer address=" << buffer << std::endl;
-  std::cout << "buffer size=" << buffer_size_bytes << std::endl;
-  std::cout << "buffer tuple_size_bytes=" << tuple_size_bytes << std::endl;
-  std::cout << "buffer num_tuples=" << num_tuples << std::endl;
+  std::cout << "buffer size=" << bufferSizeInBytes << std::endl;
+  std::cout << "buffer tuple_size_bytes=" << tupleSizeInBytes << std::endl;
+  std::cout << "buffer num_tuples=" << numberOfTuples << std::endl;
 }
 
 size_t TupleBuffer::getNumberOfTuples() {
-  return num_tuples;
+  return numberOfTuples;
 }
 
 void TupleBuffer::setNumberOfTuples(size_t number) {
-  num_tuples = number;
+  numberOfTuples = number;
 }
 
 void* TupleBuffer::getBuffer() {
@@ -62,19 +58,19 @@ void* TupleBuffer::getBuffer() {
 }
 
 size_t TupleBuffer::getBufferSizeInBytes() {
-  return buffer_size_bytes;
+  return bufferSizeInBytes;
 }
 
 void TupleBuffer::setBufferSizeInBytes(size_t size) {
-  buffer_size_bytes = size;
+  bufferSizeInBytes = size;
 }
 
 size_t TupleBuffer::getTupleSizeInBytes() {
-  return tuple_size_bytes;
+  return tupleSizeInBytes;
 }
 
 void TupleBuffer::setTupleSizeInBytes(size_t size) {
-  tuple_size_bytes = size;
+  tupleSizeInBytes = size;
 }
 
 void TupleBuffer::setUseCnt(size_t size) {
@@ -85,12 +81,31 @@ size_t TupleBuffer::getUseCnt() {
   return useCnt;
 }
 
-bool TupleBuffer::decrementUseCntAndTestForZero()
-{
+bool TupleBuffer::decrementUseCntAndTestForZero() {
   useCnt--;
   return useCnt == 0;
 }
 
+std::string TupleBuffer::printTupleBuffer(Schema schema) {
+  std::stringstream ss;
+  for (size_t i = 0; i < numberOfTuples; i++) {
+    size_t offset = 0;
+    for (size_t j = 0; j < schema.getSize(); j++) {
+      auto field = schema[j];
+      size_t fieldSize = field->getFieldSize();
+      DataTypePtr ptr = field->getDataType();
+      std::string str = ptr->convertRawToString(
+          buffer + offset + i * schema.getSchemaSize());
+      ss << str.c_str();
+      if (j < schema.getSize() - 1) {
+        ss << ",";
+      }
+      offset += fieldSize;
+    }
+    ss << std::endl;
+  }
+  return ss.str();
+}
 }
 
 // namespace NES
