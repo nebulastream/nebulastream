@@ -115,8 +115,7 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(const std::string& query_code_s
       code << "namespace NES{" << std::endl;
 
       code << "Schema createSchema(){" << std::endl;
-      code << query_code_snippet;
-      code << "return schema;";
+      code << "return " << query_code_snippet <<";";
       code << "}" << std::endl;
       code << "}" << std::endl;
       Compiler compiler;
