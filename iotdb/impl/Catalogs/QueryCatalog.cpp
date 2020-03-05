@@ -47,9 +47,14 @@ string QueryCatalog::registerQuery(const string& queryString,
         NES_DEBUG("number of queries after insert=" << queries.size())
 
         return queryId;
-    } catch (const std::exception &exc) {
-      NES_ERROR("QueryCatalog:_exception:" << exc.what())
-      NES_ERROR(
+    } catch (const std::exception& exc) {
+        NES_ERROR("QueryCatalog:_exception:" << exc.what())
+        NES_ERROR(
+            "QueryCatalog: Unable to process input request with: queryString: " << queryString << "\n strategy: "
+                                                                                << optimizationStrategyName);
+        throw exc;
+    } catch (...) {
+        NES_ERROR(
             "QueryCatalog: Unable to process input request with: queryString: " << queryString << "\n strategy: "
                                                                                 << optimizationStrategyName);
         return nullptr;
@@ -79,7 +84,7 @@ bool QueryCatalog::deleteQuery(const string& queryId) {
 }
 
 void QueryCatalog::markQueryAs(string queryId, QueryStatus queryStatus) {
-    NES_DEBUG("QueryCatalog: mark query with id " << queryId<< " as " << queryStatus)
+    NES_DEBUG("QueryCatalog: mark query with id " << queryId << " as " << queryStatus)
     queries[queryId]->setQueryStatus(queryStatus);
 }
 

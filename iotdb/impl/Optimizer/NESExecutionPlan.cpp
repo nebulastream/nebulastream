@@ -414,3 +414,11 @@ void NESExecutionPlan::freeResources() {
 std::string NESExecutionPlan::getTopologyPlanString() const {
     return exeGraphPtr->getGraphString();
 }
+
+long NESExecutionPlan::getTotalComputeTimeInMillis() const {
+    return totalComputeTimeInMillis;
+}
+
+void NESExecutionPlan::setTotalComputeTimeInMillis(long totalComputeTime) {
+    NESExecutionPlan::totalComputeTimeInMillis = totalComputeTime;
+}

@@ -100,6 +100,7 @@ class QueryCatalog {
      * @brief registers a CAF query into the NES topology to make it deployable
      * @param queryString a queryString of the query
      * @param optimizationStrategyName the optimization strategy (buttomUp or topDown)
+     * @return query id
      */
     string registerQuery(const string& queryString,
                          const string& optimizationStrategyName);
