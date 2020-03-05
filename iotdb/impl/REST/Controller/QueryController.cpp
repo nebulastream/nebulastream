@@ -174,5 +174,3 @@ void QueryController::setCoordinatorActorHandle(infer_handle_from_class_t<Coordi
 }
 
 }
-
-

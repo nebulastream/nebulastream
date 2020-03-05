@@ -69,6 +69,23 @@ static std::map<OperatorType, std::string> operatorTypeToString{
     {SINK_OP, "SINK"},
 };
 
+/**
+ * @brief Keeping information if an operator is blocking or not.
+ * This information is used during the placement operation.
+ */
+static std::map<OperatorType, bool> operatorIsBlocking{
+    {SOURCE_OP, false},
+    {FILTER_OP, false},
+    {AGGREGATION_OP, true},
+    {SORT_OP, true},
+    {JOIN_OP, true},
+    {SET_OP, true},
+    {WINDOW_OP, true},
+    {KEYBY_OP, false},
+    {MAP_OP, false},
+    {SINK_OP, false},
+};
+
 class Operator {
   public:
     virtual ~Operator();

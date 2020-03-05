@@ -121,7 +121,7 @@ class StreamCatalog {
    * @param name of logical stream
    * @return list of physical nodes as pointers into the topology
    */
-  deque<NESTopologyEntryPtr> getSourceNodesForLogicalStream(
+  vector<NESTopologyEntryPtr> getSourceNodesForLogicalStream(
       std::string logicalStreamName);
 
   /**

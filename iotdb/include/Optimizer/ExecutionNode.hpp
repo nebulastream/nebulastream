@@ -68,6 +68,18 @@ class ExecutionNode {
       root->setParent(operatorPtr);
   }
 
+    /**
+     * @brief Add the input operator as the child of the last operator in the chain
+     * Note: root is always the child operator.
+     * @param operatorPtr  : operator to be added
+     */
+    void addChild(OperatorPtr operatorPtr) {
+        OperatorPtr root = rootOperator;
+        root->setChildren({operatorPtr});
+        operatorPtr->setParent(root);
+        rootOperator = operatorPtr;
+    }
+
   void addOperatorId(size_t childOperatorId) {
     this->operatorIds.push_back(childOperatorId);
   }

@@ -1,11 +1,14 @@
 #ifndef BOTTOMUP_HPP
 #define BOTTOMUP_HPP
 
-#include <Operators/Operator.hpp>
+
 #include <iostream>
-#include "../NESPlacementOptimizer.hpp"
+#include <Optimizer/NESPlacementOptimizer.hpp>
 
 namespace NES {
+
+class Operator;
+typedef std::shared_ptr<Operator> OperatorPtr;
 
 using namespace std;
 
@@ -14,10 +17,10 @@ using namespace std;
  *          placed at respective nes nodes but rest of the operators are placed starting near to the source and then
  *          if the resources are not available they are placed on a node neighbouring to the node or one level up.
  */
-class BottomUp : public NESPlacementOptimizer {
+class BottomUpStrategy : public NESPlacementOptimizer {
   public:
-    BottomUp() {};
-    ~BottomUp() {};
+    BottomUpStrategy() {};
+    ~BottomUpStrategy() {};
 
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
@@ -45,19 +48,21 @@ class BottomUp : public NESPlacementOptimizer {
      * @throws exception if the operator can't be placed anywhere.
      */
     void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
-                        OperatorPtr sourceOperator, deque<NESTopologyEntryPtr> sourceNodes);
+                        OperatorPtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes);
+
+    /**
+     * @brief Add forward operators between source and sink nodes.
+     * @param sourceNodes : list of source nodes
+     * @param rootNode : sink node
+     * @param nesExecutionPlanPtr : nes execution plan
+     */
+    void addForwardOperators(const vector<NESTopologyEntryPtr> sourceNodes, const NESTopologyEntryPtr rootNode,
+                             NESExecutionPlanPtr nesExecutionPlanPtr) const;
 
     // finds a suitable for node for the operator to be placed.
     NESTopologyEntryPtr findSuitableNESNodeForOperatorPlacement(const ProcessOperator& operatorToProcess,
                                                                 NESTopologyGraphPtr nesTopologyGraphPtr,
                                                                 NESTopologyEntryPtr sourceNodePtr);
-
-    /**
-     * @brief This method returns the source operator in the user input query
-     * @param root: the sink operator of the query
-     * @return source operator pointer
-     */
-    OperatorPtr getSourceOperator(OperatorPtr root);
 };
 }
 
