@@ -223,7 +223,7 @@ To add a logical stream.
 "schema": "Schema::create().addField(\"test\",INT32);"}
 
 **Response**:
-{"success": "true"}
+{"Success": "true"}
 
 ### Update Logical Stream
 To Update a logical stream.
@@ -239,7 +239,7 @@ To Update a logical stream.
 "schema": "Schema::create().addField(\"test\",INT32);"}
 
 **Response**:
-{"success": "true"}
+{"Success": "true"}
 
 ### Delete Logical Stream
 
@@ -255,4 +255,4 @@ To delete a logical stream.
 {"streamName": "logical_stream_name"}
 
 **Response**:
-{"success": "true"}
+{"Success": "true"}
