@@ -24,14 +24,20 @@ std::vector<NESTopologyEntryPtr> PathFinder::findPathWithMaxBandwidth(NESTopolog
     if (pathsWithLinks.size() > 1) {
         // We select the path whose minimum link capacity is maximum among the selected path
         size_t maxOfMinBandwidth = 0;
+        size_t maxTotalBandwidth = 0;
         for (std::vector<NESTopologyLinkPtr> path : pathsWithLinks) {
             size_t minLinkBandwidth = UINT32_MAX;
+            size_t totalBandwidth = 0;
             for (auto link : path) {
                 if (minLinkBandwidth > link->getLinkCapacity()) {
+                    totalBandwidth = totalBandwidth + link->getLinkCapacity();
                     minLinkBandwidth = link->getLinkCapacity();
                 }
             }
-            if (maxOfMinBandwidth < minLinkBandwidth) {
+            if ((maxOfMinBandwidth < minLinkBandwidth)
+                || (maxOfMinBandwidth == minLinkBandwidth && totalBandwidth >= maxTotalBandwidth)) {
+
+                maxTotalBandwidth = totalBandwidth;
                 maxOfMinBandwidth = minLinkBandwidth;
                 selectedPath = path;
             }
@@ -62,16 +68,22 @@ std::vector<NESTopologyEntryPtr> PathFinder::findPathWithMinLinkLatency(NESTopol
     if (pathsWithLinks.size() > 1) {
         // We select the path whose maximum link latency is minimum among the selected path
         size_t minOfMaxLatency = UINT32_MAX;
+        size_t minTotalLatency = UINT32_MAX;
         for (std::vector<NESTopologyLinkPtr> path : pathsWithLinks) {
             size_t maxLinkLatency = 0;
+            size_t totalLatency = 0;
             for (auto link : path) {
+                totalLatency = totalLatency + link->getLinkLatency();
                 if (link->getLinkLatency() > maxLinkLatency) {
                     maxLinkLatency = link->getLinkLatency();
                 }
             }
 
-            if (minOfMaxLatency > maxLinkLatency) {
+            if (minOfMaxLatency > maxLinkLatency
+                || (minOfMaxLatency == maxLinkLatency && minTotalLatency > totalLatency)) {
+
                 minOfMaxLatency = maxLinkLatency;
+                minTotalLatency = totalLatency;
                 selectedPath = path;
             }
         }
@@ -123,9 +135,16 @@ std::vector<NESTopologyEntryPtr> PathFinder::findPathBetween(NES::NESTopologyEnt
 std::map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>> PathFinder::findUniquePathBetween(std::vector<
     NESTopologyEntryPtr> sources, NESTopologyEntryPtr destination) {
 
+    std::map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>> result;
+
     NES_INFO("PathFinder: finding unique path between set of sources and destination");
 
-    std::map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>> result;
+    if (sources.size() == 1) {
+        NES_INFO("PathFinder: Only one source provided. Finding a path between source and destination.");
+        result[sources[0]] = findPathBetween(sources[0], destination);
+        return result;
+    }
+
     std::map<NESTopologyEntryPtr, std::vector<std::vector<NESTopologyLinkPtr>>> sourceToPathsMap;
 
     NES_DEBUG("PathFinder: find all paths between set of sources and destination");
@@ -266,8 +285,12 @@ std::vector<std::vector<NESTopologyLinkPtr>> PathFinder::findAllPathLinksBetween
         NESTopologyLinkPtr link = candidateLinks.front();
         candidateLinks.pop_front();
         traversedPath.push_back(link);
-        if (link->getDestNode()->getId() == destination->getId()) {
+        if (link->getDestNodeId() == destination->getId()) {
             setOfVisitedPaths.push_back(traversedPath);
+            if (!candidateLinks.empty()) {
+                traversedPath = backTrackTraversedPathTill(traversedPath, candidateLinks.front()->getSourceNode());
+            }
+        } else if (link->getDestNodeId() == topologyManager.getRootNode()->getId()) {
             if (!candidateLinks.empty()) {
                 traversedPath = backTrackTraversedPathTill(traversedPath, candidateLinks.front()->getSourceNode());
             }

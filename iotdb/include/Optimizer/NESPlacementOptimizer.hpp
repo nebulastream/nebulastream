@@ -25,16 +25,6 @@ class NESPlacementOptimizer {
      */
     virtual NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan) = 0;
 
-    void invalidateUnscheduledOperators(OperatorPtr rootOperator, vector<size_t>& childOperatorIds);
-
-    /**
-     * @brief This method will traverse through all the nodes of the graphs and remove any reference to the operator not
-     * located on the traversed node.
-     *
-     * @param nesExecutionPlanPtr
-     */
-    void removeNonResidentOperators(NESExecutionPlanPtr nesExecutionPlanPtr);
-
     /**
      * @brief This method will add system generated zmq source and sinks for each execution node.
      * @note We use zmq for internal message transfer therefore the source and sink will be zmq based.
@@ -63,13 +53,11 @@ class NESPlacementOptimizer {
     void convertFwdOptr(const Schema& schema, ExecutionNodePtr executionNodePtr) const;
 
     /**
-     * @brief Add forward operators between source and sink nodes.
-     * @param sourceNodes : list of source nodes
-     * @param rootNode : sink node
-     * @param nesExecutionPlanPtr : nes execution plan
+     * @brief This method returns the source operator in the user input query
+     * @param root: the sink operator of the query
+     * @return source operator pointer
      */
-    void addForwardOperators(const deque<NESTopologyEntryPtr> sourceNodes, const NESTopologyEntryPtr rootNode,
-                             NESExecutionPlanPtr nesExecutionPlanPtr) const;
+    OperatorPtr getSourceOperator(OperatorPtr root);
 };
 
 }

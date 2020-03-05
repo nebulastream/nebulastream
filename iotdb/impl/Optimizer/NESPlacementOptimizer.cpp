@@ -1,61 +1,38 @@
 #include <Optimizer/NESPlacementOptimizer.hpp>
 #include <iostream>
 #include <exception>
-#include <Optimizer/impl/BottomUp.hpp>
-#include <Optimizer/impl/TopDown.hpp>
+#include <Optimizer/placement/BottomUpStrategy.hpp>
+#include <Optimizer/placement/TopDownStrategy.hpp>
+#include <Optimizer/placement/LowLatencyStrategy.hpp>
+#include <Operators/Operator.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <Optimizer/utils/PathFinder.hpp>
+#include <Optimizer/placement/HighAvailabilityStrategy.hpp>
+#include <Optimizer/placement/HighThroughputStrategy.hpp>
+#include <Optimizer/placement/MinimumResourceConsumptionStrategy.hpp>
+#include <Optimizer/placement/MinimumEnergyConsumptionStrategy.hpp>
 
 namespace NES {
 
 std::shared_ptr<NESPlacementOptimizer> NESPlacementOptimizer::getOptimizer(std::string optimizerName) {
 
     if (optimizerName == "BottomUp") {
-        return std::make_unique<BottomUp>(BottomUp());
+        return std::make_unique<BottomUpStrategy>(BottomUpStrategy());
     } else if (optimizerName == "TopDown") {
-        return std::make_unique<TopDown>(TopDown());
+        return std::make_unique<TopDownStrategy>(TopDownStrategy());
+    } else if (optimizerName == "Latency") {
+        return std::make_unique<LowLatencyStrategy>(LowLatencyStrategy());
+    } else if (optimizerName == "HighThroughput") {
+        return std::make_unique<HighThroughputStrategy>(HighThroughputStrategy());
+    } else if (optimizerName == "MinimumResourceConsumption") {
+        return std::make_unique<MinimumResourceConsumptionStrategy>(MinimumResourceConsumptionStrategy());
+    } else if (optimizerName == "MinimumEnergyConsumption") {
+        return std::make_unique<MinimumEnergyConsumptionStrategy>(MinimumEnergyConsumptionStrategy());
+    } else if (optimizerName == "HighAvailability") {
+        return std::make_unique<HighAvailabilityStrategy>(HighAvailabilityStrategy());
     } else {
-      throw std::runtime_error(std::string("NESPlacementOptimizer: Unknown optimizer type: ") + optimizerName);
-    }
-}
-
-void NESPlacementOptimizer::removeNonResidentOperators(NESExecutionPlanPtr nesExecutionPlanPtr) {
-
-    const vector<ExecutionVertex>& executionNodes = nesExecutionPlanPtr->getExecutionGraph()->getAllVertex();
-    for (ExecutionVertex executionNode: executionNodes) {
-        OperatorPtr rootOperator = executionNode.ptr->getRootOperator();
-        vector<size_t> childOperatorIds = executionNode.ptr->getChildOperatorIds();
-        invalidateUnscheduledOperators(rootOperator, childOperatorIds);
-    }
-}
-
-void NESPlacementOptimizer::invalidateUnscheduledOperators(OperatorPtr rootOperator, vector<size_t>& childOperatorIds) {
-
-    if (rootOperator == nullptr) {
-        return;
-    }
-
-    vector<OperatorPtr> children = rootOperator->getChildren();
-    OperatorPtr parent = rootOperator->getParent();
-
-    if (parent != nullptr) {
-        if (std::find(childOperatorIds.begin(), childOperatorIds.end(), parent->getOperatorId())
-            != childOperatorIds.end()) {
-            invalidateUnscheduledOperators(parent, childOperatorIds);
-        } else {
-            rootOperator->setParent(nullptr);
-        }
-    }
-
-    for (size_t i = 0; i < children.size(); i++) {
-        OperatorPtr child = children[i];
-        if (std::find(childOperatorIds.begin(), childOperatorIds.end(), child->getOperatorId())
-            != childOperatorIds.end()) {
-            invalidateUnscheduledOperators(child, childOperatorIds);
-        } else {
-            children.erase(children.begin() + i);
-        }
+        throw std::invalid_argument("NESPlacementOptimizer: Unknown optimizer type: " + optimizerName);
     }
 }
 
@@ -196,26 +173,23 @@ void NESPlacementOptimizer::completeExecutionGraphWithNESTopology(NESExecutionPl
     }
 };
 
-void NESPlacementOptimizer::addForwardOperators(const deque<NESTopologyEntryPtr> sourceNodes,
-                                                const NESTopologyEntryPtr rootNode,
-                                                NESExecutionPlanPtr nesExecutionPlanPtr) const {
+OperatorPtr NESPlacementOptimizer::getSourceOperator(OperatorPtr root) {
 
-    PathFinder pathFinder;
+    deque<OperatorPtr> operatorTraversQueue = {root};
 
-    for (NESTopologyEntryPtr targetSource: sourceNodes) {
+    while (!operatorTraversQueue.empty()) {
+        auto optr = operatorTraversQueue.front();
+        operatorTraversQueue.pop_front();
 
-        //Find the list of nodes connecting the source and destination nodes
-        std::vector<NESTopologyEntryPtr> candidateNodes = pathFinder.findPathBetween(targetSource, rootNode);
-
-        for(NESTopologyEntryPtr candidateNode: candidateNodes) {
-
-            if (candidateNode->getCpuCapacity() == candidateNode->getRemainingCpuCapacity()) {
-                nesExecutionPlanPtr->createExecutionNode("FWD", to_string(candidateNode->getId()), candidateNode,
-                    /**executableOperator**/nullptr);
-                candidateNode->reduceCpuCapacity(1);
-            }
+        if (optr->getOperatorType() == OperatorType::SOURCE_OP) {
+            return optr;
         }
+
+        vector<OperatorPtr> children = optr->getChildren();
+        copy(children.begin(), children.end(), back_inserter(operatorTraversQueue));
     }
-}
+
+    return nullptr;
+};
 
 }
