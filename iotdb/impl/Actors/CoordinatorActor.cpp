@@ -101,7 +101,7 @@ behavior CoordinatorActor::running() {
           PhysicalStreamConfig conf;
           conf.logicalStreamName = logicalStreamName;
           conf.physicalStreamName = physicalStreamName;
-          return removePhysicalStream(ip, conf);
+          return removePhysicalStream(logicalStreamName, physicalStreamName);
         },
         [=](execute_query_atom, const string& description, const string& strategy) {
           return executeQuery(description, strategy);
@@ -258,7 +258,7 @@ bool CoordinatorActor::deregisterSensor(const string& ip) {
     }
     NES_DEBUG("CoordinatorActor: found sensor, try to delete it in catalog")
     //remove from catalog
-    bool successCatalog = StreamCatalog::instance().removePhysicalStreamsByIp(ip);
+    bool successCatalog = StreamCatalog::instance().removePhysicalStreamByHashId(hashId);
     NES_DEBUG("CoordinatorActor: success in catalog is " << successCatalog)
 
     NES_DEBUG("CoordinatorActor: found sensor, try to delete it in toplogy")
