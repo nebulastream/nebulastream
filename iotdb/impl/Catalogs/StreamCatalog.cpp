@@ -142,71 +142,78 @@ bool StreamCatalog::addPhysicalStream(std::string logicalStreamName, StreamCatal
     return true;
 }
 
-bool StreamCatalog::removePhysicalStreamsByIp(std::string ip) {
-    for (auto logStream : logicalToPhysicalStreamMapping) {
-        NES_DEBUG("StreamCatalog: check log stream " << logStream.first)
-        for (vector<StreamCatalogEntryPtr>::const_iterator entry =
-            logicalToPhysicalStreamMapping[logStream.first].cbegin();
-             entry != logicalToPhysicalStreamMapping[logStream.first].cend();
-             entry++) {
-            if (entry->get()->getNode()->getIp() == ip) {
-                NES_DEBUG(
-                    "StreamCatalog: found entry with ip " << ip << " nodeid=" << entry->get()->getNode()->getId()
-                                                          << " physicalStream=" << entry->get()->getPhysicalName()
-                                                          << " logicalStream=" << logStream.first)
-                logicalToPhysicalStreamMapping[logStream.first].erase(entry);
-                NES_DEBUG("StreamCatalog: deleted successfully")
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
 bool StreamCatalog::removeAllPhysicalStreams(std::string physicalStreamName) {
     NES_NOT_IMPLEMENTED
 }
 
-bool StreamCatalog::removePhysicalStream(std::string logicalStreamName, StreamCatalogEntryPtr newEntry) {
+bool StreamCatalog::removePhysicalStream(string logicalStreamName, string physicalStreamName, std::size_t hashId) {
     NES_DEBUG(
-        "StreamCatalog: search for logical stream in removePhysicalStream() " << logicalStreamName)
+            "StreamCatalog: search for logical stream in removePhysicalStream() " << logicalStreamName)
 
     // check if logical stream exists
     if (logicalStreamToSchemaMapping.find(logicalStreamName)  //log stream does not exists
         == logicalStreamToSchemaMapping.end()) {
-        NES_ERROR(
-            "StreamCatalog: logical stream " << logicalStreamName << " does not exists when removing physical stream "
-                                             << newEntry->getPhysicalName())
-        return false;
+    NES_ERROR(
+    "StreamCatalog: logical stream " << logicalStreamName
+         << " does not exists when trying to remove physical stream with hashId" << hashId)
+         return false;
     } else {
         NES_DEBUG(
-            "StreamCatalog: logical stream " << logicalStreamName << " exists try to remove physical stream "
-                                             << newEntry->getPhysicalName())
-
+        "StreamCatalog: logical stream " << logicalStreamName << " exists try to remove physical stream"
+                                                     << physicalStreamName << " from node " << hashId )
         for (vector<StreamCatalogEntryPtr>::const_iterator entry =
-            logicalToPhysicalStreamMapping[logicalStreamName].cbegin();
-             entry != logicalToPhysicalStreamMapping[logicalStreamName].cend();
-             entry++) {
+                    logicalToPhysicalStreamMapping[logicalStreamName].cbegin();
+            entry != logicalToPhysicalStreamMapping[logicalStreamName].cend();
+            entry++) {
             NES_DEBUG(
-                "test node id=" << entry->get()->getNode()->getId() << " phyStr=" << entry->get()->getPhysicalName())
+                "test node id=" << entry->get()->getNode()->getId() << " phyStr="
+                                        << entry->get()->getPhysicalName())
             NES_DEBUG(
-                "test to be deleted id=" << newEntry->getNode()->getId() << " phyStr=" << newEntry->getPhysicalName())
-            if (entry->get()->getPhysicalName() == newEntry->getPhysicalName()) {
-                if (entry->get()->getNode()->getId() == newEntry->getNode()->getId()) {
+                        "test to be deleted id=" << hashId << " phyStr=" << physicalStreamName)
+            if (entry->get()->getPhysicalName() == physicalStreamName) {
+                NES_DEBUG(
+                        "StreamCatalog: node with name=" << physicalStreamName << " exists try match hashId"
+                        << hashId)
+
+                if (entry->get()->getNode()->getId() == hashId) {
                     NES_DEBUG(
-                        "StreamCatalog: node with id=" << newEntry->getNode()->getId() << " name="
-                                                       << newEntry->getPhysicalName() << " exists try to erase")
+                     "StreamCatalog: node with id=" << hashId << " name="
+                                                               << physicalStreamName << " exists try to erase")
                     logicalToPhysicalStreamMapping[logicalStreamName].erase(entry);
                     NES_DEBUG(
-                        "StreamCatalog: number of entries afterwards "
-                            << logicalToPhysicalStreamMapping[logicalStreamName].size())
+                  "StreamCatalog: number of entries afterwards "
+                                        << logicalToPhysicalStreamMapping[logicalStreamName].size())
                     return true;
                 }
             }
         }
+    NES_DEBUG("StreamCatalog: physical stream " << physicalStreamName << " does not exist on node with id"
+                                                      << hashId << " and with logicalStreamName " << logicalStreamName)
     }
-    NES_DEBUG(
-        "StreamCatalog: physical stream " << newEntry->getPhysicalName() << " does not exist")
+    NES_DEBUG("StreamCatalog: physical stream " << physicalStreamName << " does not exist on node with id"
+                                                      << hashId)
+    return false;
+}
+
+bool StreamCatalog::removePhysicalStreamByHashId(size_t hashId) {
+
+    for (auto logStream : logicalToPhysicalStreamMapping) {
+        NES_DEBUG("StreamCatalog: check log stream " << logStream.first)
+        for (vector<StreamCatalogEntryPtr>::const_iterator entry =
+                logicalToPhysicalStreamMapping[logStream.first].cbegin();
+                entry != logicalToPhysicalStreamMapping[logStream.first].cend();
+                entry++) {
+            if (entry->get()->getNode()->getId() == hashId) {
+                NES_DEBUG(
+                        "StreamCatalog: found entry with nodeid=" << entry->get()->getNode()->getId()
+                        << " physicalStream=" << entry->get()->getPhysicalName() << " logicalStream="
+                        << logStream.first)
+                 logicalToPhysicalStreamMapping[logStream.first].erase(entry);
+                 NES_DEBUG("StreamCatalog: deleted physical stream with hashID" << hashId << "and name " << entry->get()->getPhysicalName() << " successfully")
+                 return true;
+            }
+        }
+    }
     return false;
 }
 
