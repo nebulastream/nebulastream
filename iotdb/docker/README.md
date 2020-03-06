@@ -24,6 +24,10 @@ Please execute following command for building the build image locally:
 
 ## Building execution image
 
+For build image, we install NebulaStream using deb package inside the [resources](\resources) folder.
+If you want to update the NebulaStream, please create a new deb package by compiling the code inside the docker image and running `cpack` command.
+Afterwards, please replace the deb package inside the resources folder and follow the instruction below.
+
 Please execute following command for building the executable image locally:
 
 `docker build . -f Dockerfile-NES-Executable -t nebulastream/nes-executable-image:latest`
