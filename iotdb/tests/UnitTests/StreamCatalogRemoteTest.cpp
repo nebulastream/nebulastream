@@ -96,7 +96,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_log_stream_remote_test) {
 
   //create test schema
   std::string testSchema =
-      "Schema schema = Schema::create().addField(\"id\", BasicType::UINT32).addField("
+      "Schema::create().addField(\"id\", BasicType::UINT32).addField("
           "\"value\", BasicType::UINT64);";
   std::string testSchemaFileName = "testSchema.hpp";
   std::ofstream out(testSchemaFileName);
@@ -153,7 +153,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_existing_log_stream_remote_test) {
 
   //create test schema
   std::string testSchema =
-      "Schema schema = Schema::create().addField(\"no\", BasicType::UINT32).addField("
+      "Schema::create().addField(\"no\", BasicType::UINT32).addField("
           "\"val\", BasicType::UINT64);";
   std::string testSchemaFileName = "testSchema.hpp";
   std::ofstream out(testSchemaFileName);
@@ -237,7 +237,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_remove_empty_log_stream_remote_test) {
 
   //create test schema
   std::string testSchema =
-      "Schema schema = Schema::create().addField(\"id\", BasicType::UINT32).addField("
+      "Schema::create().addField(\"id\", BasicType::UINT32).addField("
           "\"value\", BasicType::UINT64);";
   std::string testSchemaFileName = "testSchema.hpp";
   std::ofstream out(testSchemaFileName);
@@ -472,7 +472,7 @@ TEST_F(StreamCatalogRemoteTest, add_physical_to_new_logical_stream_remote_test) 
   EXPECT_TRUE(success);
   //create test schema
   std::string testSchema =
-      "Schema schema = Schema::create().addField(\"id\", BasicType::UINT32).addField("
+      "Schema::create().addField(\"id\", BasicType::UINT32).addField("
           "\"value\", BasicType::UINT64);";
   std::string testSchemaFileName = "testSchema.hpp";
   std::ofstream out(testSchemaFileName);
