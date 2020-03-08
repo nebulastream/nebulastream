@@ -1,18 +1,18 @@
 #ifndef LOGICAL_OPERATOR_NODE_HPP
 #define LOGICAL_OPERATOR_NODE_HPP
 
-#include <OperatorNodes/BaseOperatorNode.hpp>
+#include <OperatorNodes/Node.hpp>
 
 
 namespace NES {
 
-class LogicalOperatorNode : public BaseOperatorNode {
+class LogicalOperatorNode : public Node {
 public:
     LogicalOperatorNode();
 
 
-    virtual bool equals(const BaseOperatorNode& ) {};
-    virtual bool operator==(const BaseOperatorNode& ) {};
+    virtual bool equals(const Node& ) {};
+    virtual bool operator==(const Node& ) {};
 private:
     Schema inputSchema;
     Schema outputSchema;

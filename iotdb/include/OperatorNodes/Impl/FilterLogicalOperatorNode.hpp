@@ -23,8 +23,8 @@ public:
      * @param rhs the operator to compare
      * @return bool true if they are the same otherwise false
      */
-    virtual bool equals(const BaseOperatorNode& rhs) const override;
-    virtual BaseOperatorNodePtr makeShared() override;
+    virtual bool equals(const Node& rhs) const override;
+    virtual NodePtr makeShared() override;
     OperatorType getOperatorType() const override;
     const std::string toString() const override;
 private:

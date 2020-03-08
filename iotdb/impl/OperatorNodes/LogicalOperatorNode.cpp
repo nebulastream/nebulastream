@@ -2,7 +2,7 @@
 
 namespace NES {
 
-LogicalOperatorNode::LogicalOperatorNode() : BaseOperatorNode() {}
+LogicalOperatorNode::LogicalOperatorNode() : Node() {}
 // LogicalOperatorNode::LogicalOperatorNode(OperatorPtr op) {
 //     std::cout << "op: " << op->toString() << std::endl;
 // }
@@ -15,7 +15,7 @@ LogicalOperatorNode::LogicalOperatorNode() : BaseOperatorNode() {}
 //     return std::string("LOGICAL_OP");
 // }
 
-// BaseOperatorNodePtr createPlaceholderLogicalOperatorNode() {
+// NodePtr createPlaceholderLogicalOperatorNode() {
 //     return std::make_shared<LogicalOperatorNode>();
 // }
 

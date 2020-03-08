@@ -79,13 +79,13 @@ protected:
     DataSourcePtr source;
 
     PredicatePtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;
-    BaseOperatorNodePtr sourceOp;
+    NodePtr sourceOp;
 
-    BaseOperatorNodePtr filterOp1, filterOp2, filterOp3, filterOp4, filterOp5, filterOp6, filterOp7;
-    BaseOperatorNodePtr filterOp1Copy, filterOp2Copy, filterOp3Copy, filterOp4Copy, filterOp5Copy, filterOp6Copy, filterOp7Copy;
+    NodePtr filterOp1, filterOp2, filterOp3, filterOp4, filterOp5, filterOp6, filterOp7;
+    NodePtr filterOp1Copy, filterOp2Copy, filterOp3Copy, filterOp4Copy, filterOp5Copy, filterOp6Copy, filterOp7Copy;
 
-    std::vector<BaseOperatorNodePtr> children {};
-    std::vector<BaseOperatorNodePtr> parents {};
+    std::vector<NodePtr> children {};
+    std::vector<NodePtr> parents {};
 
     static void setupLogging() {
         // create PatternLayout
@@ -867,12 +867,12 @@ TEST_F(LogicalOperatorNodeTest, equalWithAllPredecessors3) {
 
 // TODO: add more operator casting
 TEST_F(LogicalOperatorNodeTest, as) {
-    BaseOperatorNodePtr base2 = filterOp1;
+    NodePtr base2 = filterOp1;
     FilterLogicalOperatorNode& _filterOp1 = base2->as<FilterLogicalOperatorNode>();
 }
 
 TEST_F(LogicalOperatorNodeTest, asBadCast) {
-    BaseOperatorNodePtr base2 = sourceOp;
+    NodePtr base2 = sourceOp;
     try {
         FilterLogicalOperatorNode& _filterOp1 = base2->as<FilterLogicalOperatorNode>();
         FAIL();
@@ -895,7 +895,7 @@ TEST_F(LogicalOperatorNodeTest, asBadCast) {
 //     filterOp1->addSuccessor(filterOp4);
 //     filterOp3->addSuccessor(filterOp5);
 
-//     BaseOperatorNodePtr x = nullptr;
+//     NodePtr x = nullptr;
 
 //     x = filterOp6->findRecursively(filterOp6, filterOp1);
 //     EXPECT_TRUE(x != nullptr);
@@ -956,7 +956,7 @@ TEST_F(LogicalOperatorNodeTest, asBadCast) {
 //     filterOp1->addSuccessor(filterOp4);
 //     filterOp3->addSuccessor(filterOp5);
 
-//     BaseOperatorNodePtr x = nullptr;
+//     NodePtr x = nullptr;
 //     // case 1: filterOp7 not in this graph
 //     x = filterOp6->findRecursively(filterOp6, filterOp7);
 //     EXPECT_TRUE(x == nullptr);
@@ -1015,7 +1015,7 @@ TEST_F(LogicalOperatorNodeTest, getAndFlattenAllSuccessorsNoCycle) {
     filterOp1->addSuccessor(filterOp2);
     filterOp1->addSuccessor(filterOp4);
 
-    std::vector<BaseOperatorNodePtr> expected {};
+    std::vector<NodePtr> expected {};
     expected.push_back(filterOp3);
     expected.push_back(filterOp1);
     expected.push_back(filterOp2);
@@ -1054,7 +1054,7 @@ TEST_F(LogicalOperatorNodeTest, getAndFlattenAllSuccessorsForCycle) {
     filterOp1->addSuccessor(filterOp4);
     filterOp3->addSuccessor(filterOp6);
 
-    std::vector<BaseOperatorNodePtr> expected {};
+    std::vector<NodePtr> expected {};
     expected.push_back(filterOp3);
     expected.push_back(filterOp1);
     expected.push_back(filterOp2);
@@ -1103,7 +1103,7 @@ TEST_F(LogicalOperatorNodeTest, getOperatorByType) {
     filterOp1->addSuccessor(filterOp2);
     filterOp1->addSuccessor(filterOp4);
     filterOp3->addSuccessor(filterOp6);
-    std::vector<BaseOperatorNodePtr> expected {};
+    std::vector<NodePtr> expected {};
     expected.push_back(filterOp6);
     expected.push_back(filterOp3);
     expected.push_back(filterOp1);
@@ -1320,7 +1320,7 @@ TEST_F(LogicalOperatorNodeTest, splitWithSinglePredecessor) {
     filterOp6->addSuccessor(filterOp1);
     filterOp1->addSuccessor(filterOp2);
     filterOp2->addSuccessor(filterOp3);
-    std::vector<BaseOperatorNodePtr> expected {};
+    std::vector<NodePtr> expected {};
     expected.push_back(filterOp1);
     expected.push_back(filterOp2);
 
@@ -1344,7 +1344,7 @@ TEST_F(LogicalOperatorNodeTest, splitWithAtLastSuccessor) {
     filterOp6->addSuccessor(filterOp1);
     filterOp1->addSuccessor(filterOp2);
     filterOp2->addSuccessor(filterOp3);
-    std::vector<BaseOperatorNodePtr> expected {};
+    std::vector<NodePtr> expected {};
     expected.push_back(filterOp2);
     expected.push_back(filterOp3);
 
@@ -1366,7 +1366,7 @@ TEST_F(LogicalOperatorNodeTest, splitWithAtRoot) {
     filterOp6->addSuccessor(filterOp1);
     filterOp1->addSuccessor(filterOp2);
     filterOp2->addSuccessor(filterOp3);
-    std::vector<BaseOperatorNodePtr> expected {};
+    std::vector<NodePtr> expected {};
     expected.push_back(filterOp6);
 
     auto vec = filterOp6->split(filterOp6);
@@ -1388,7 +1388,7 @@ TEST_F(LogicalOperatorNodeTest, splitWithMultiplePredecessors) {
     filterOp6->addSuccessor(filterOp1);
     filterOp1->addSuccessor(filterOp2);
     filterOp2->addSuccessor(filterOp3);
-    std::vector<BaseOperatorNodePtr> expected {};
+    std::vector<NodePtr> expected {};
     expected.push_back(filterOp7);
     expected.push_back(filterOp6);
     expected.push_back(filterOp1);

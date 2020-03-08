@@ -2,11 +2,11 @@
 #define SORT_LOGICAL_OPERATOR_NODE_HPP
 
 #include <memory>
-#include <OperatorNodes/BaseOperatorNode.hpp>
+#include <OperatorNodes/Node.hpp>
 
 namespace NES {
 
-class SortLogicalOperatorNode : public BaseOperatorNode,
+class SortLogicalOperatorNode : public Node,
                                 public std::enable_shared_from_this<SortLogicalOperatorNode> {
   public:
 
@@ -14,8 +14,8 @@ class SortLogicalOperatorNode : public BaseOperatorNode,
     const std::string toString() const override;
     OperatorType getOperatorType() const override;
 
-    virtual BaseOperatorNodePtr makeShared() override { return shared_from_this(); };
-    virtual bool equals(const BaseOperatorNode& rhs) const override;
+    virtual NodePtr makeShared() override { return shared_from_this(); };
+    virtual bool equals(const Node& rhs) const override;
   private:
     Sort sort_spec_;
 };

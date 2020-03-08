@@ -11,8 +11,8 @@ class JoinLogicalOperatorNode : public LogicalOperatorNode,
     JoinLogicalOperatorNode(const JoinPredicatePtr join_spec);
     const std::string toString() const override;
     OperatorType getOperatorType() const override;
-    virtual BaseOperatorNodePtr makeShared() override { return shared_from_this(); };
-    virtual bool equals(const BaseOperatorNode& rhs) const override;
+    virtual NodePtr makeShared() override { return shared_from_this(); };
+    virtual bool equals(const Node& rhs) const override;
   private:
     JoinPredicatePtr join_spec_;
 };

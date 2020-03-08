@@ -39,19 +39,19 @@ public:
     bool mountAsPredecessor(const LogicalOperatorPlanPtr& plan, const std::string& opId);
     // LogicalOperatorPlan& to(const std::string& name);
     // LogicalOperatorPlan& join(const )
-    BaseOperatorNodePtr getOperatorNodeById(const std::string& id) const;
-    BaseOperatorNodePtr getRoot() const;
+    NodePtr getOperatorNodeById(const std::string& id) const;
+    NodePtr getRoot() const;
 private:
-    void printHelper(BaseOperatorNodePtr op, size_t depth, size_t indent) const;
+    void printHelper(NodePtr op, size_t depth, size_t indent) const;
     void fromQueryHelper(const OperatorPtr op, const OperatorPtr parentOp);
     size_t getNextOperatorId() { return ++ operatorId; };
-    // BaseOperatorNodePtr getOperatorNodeByIdHelper(const BaseOperatorNodePtr& op);
+    // NodePtr getOperatorNodeByIdHelper(const NodePtr& op);
 private:
     /**
      * @brief the operator id in the same logical plan tree must be unique
      */
     size_t operatorId = -1;
-    BaseOperatorNodePtr root;
+    NodePtr root;
 };
 
 }

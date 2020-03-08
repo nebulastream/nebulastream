@@ -12,12 +12,12 @@ public:
     SourceLogicalOperatorNode() = delete;
     SourceLogicalOperatorNode(const DataSourcePtr);
     SourceLogicalOperatorNode(const OperatorPtr op);
-    const BaseOperatorNodePtr copy();
+    const NodePtr copy();
     OperatorType getOperatorType() const override;
     const std::string toString() const override;
 
-    virtual BaseOperatorNodePtr makeShared() override { return shared_from_this(); };
-    virtual bool equals(const BaseOperatorNode& rhs) const override;
+    virtual NodePtr makeShared() override { return shared_from_this(); };
+    virtual bool equals(const Node& rhs) const override;
 
 private:
     DataSourcePtr source_;

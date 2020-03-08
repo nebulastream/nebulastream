@@ -1,7 +1,7 @@
 add_source_iotdb(
   LogicalOperatorNode.cpp
   LogicalOperatorPlan.cpp
-  BaseOperatorNode.cpp
+        Node.cpp
   )
 
 add_subdirectory(Impl)
