@@ -19,36 +19,12 @@ class StreamCatalogRemoteTest : public testing::Test {
           "return inputQueryPtr;";
 
   static void SetUpTestCase() {
-    setupLogging();
+    NES::setupLogging("StreamCatalogRemoteTest.log", NES::LOG_DEBUG);
     NES_INFO("Setup StreamCatalogRemoteTest test class.");
   }
 
   static void TearDownTestCase() {
     std::cout << "Tear down StreamCatalogRemoteTest test class." << std::endl;
-  }
-
- protected:
-  static void setupLogging() {
-    // create PatternLayout
-    log4cxx::LayoutPtr layoutPtr(
-        new log4cxx::PatternLayout(
-            "%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
-
-    // create FileAppender
-    LOG4CXX_DECODE_CHAR(fileName, "WindowManager.log");
-    log4cxx::FileAppenderPtr file(
-        new log4cxx::FileAppender(layoutPtr, fileName));
-
-    // create ConsoleAppender
-    log4cxx::ConsoleAppenderPtr console(
-        new log4cxx::ConsoleAppender(layoutPtr));
-
-    // set log level
-    NESLogger->setLevel(log4cxx::Level::getDebug());
-
-    // add appenders and other will inherit the settings
-    NESLogger->addAppender(file);
-    NESLogger->addAppender(console);
   }
 };
 
@@ -85,7 +61,7 @@ TEST_F(StreamCatalogRemoteTest, test_add_log_stream_remote_test) {
   self->request(workerHandler, task_timeout, connect_atom::value, w_cfg.host,
                 c_cfg.publish_port).receive(
       [&connected](const bool &c) mutable {
-         connected = c;
+        connected = c;
       }
       , [=](const error &er) {
         string error_msg = to_string(er);
@@ -143,7 +119,6 @@ TEST_F(StreamCatalogRemoteTest, test_add_existing_log_stream_remote_test) {
       << endl;
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
-
   WorkerActorConfig w_cfg;
   w_cfg.load<io::middleman>();
   actor_system sw { w_cfg };
@@ -200,7 +175,6 @@ TEST_F(StreamCatalogRemoteTest, test_add_existing_log_stream_remote_test) {
       .getAllLogicalStream();
   string exp = "id:UINT32value:UINT64\n";
   EXPECT_EQ(allLogicalStream.size(), 2);
-
 
   SchemaPtr defaultSchema = allLogicalStream["default_logical"];
   EXPECT_EQ(exp, defaultSchema->toString());
@@ -402,7 +376,6 @@ TEST_F(StreamCatalogRemoteTest, add_physical_to_existing_logical_stream_remote_t
   conf.sourceType = "DefaultSource";
   conf.numberOfBuffersToProduce = 2;
 
-
   success = false;
   self->request(worker, task_timeout, register_phy_stream_atom::value,
                 conf.sourceType, conf.sourceConfig, conf.sourceFrequency,
@@ -427,7 +400,7 @@ TEST_F(StreamCatalogRemoteTest, add_physical_to_existing_logical_stream_remote_t
   EXPECT_EQ(phys[0]->getPhysicalName(), "default_physical");
   EXPECT_EQ(phys[1]->getPhysicalName(), "physical_test");
   self->request(worker, task_timeout, exit_reason::user_shutdown);
-  self->request(coordinator, task_timeout,exit_reason::user_shutdown);
+  self->request(coordinator, task_timeout, exit_reason::user_shutdown);
 }
 
 TEST_F(StreamCatalogRemoteTest, add_physical_to_new_logical_stream_remote_test) {
@@ -480,16 +453,16 @@ TEST_F(StreamCatalogRemoteTest, add_physical_to_new_logical_stream_remote_test) 
   out.close();
 
   bool registered = false;
-  self->request(worker, task_timeout, register_log_stream_atom::value, "testStream",
-                testSchemaFileName).receive(
-          [&registered](const bool &c) mutable {
-              registered = c;
-          }
-          , [=](const error &er) {
-              string error_msg = to_string(er);
-              NES_ERROR(
-                      "StreamCatalogRemoteTest: Error during add_physical_to_new_logical_stream_remote_test" << "\n" << error_msg);
-          });
+  self->request(worker, task_timeout, register_log_stream_atom::value,
+                "testStream", testSchemaFileName).receive(
+      [&registered](const bool &c) mutable {
+        registered = c;
+      }
+      , [=](const error &er) {
+        string error_msg = to_string(er);
+        NES_ERROR(
+            "StreamCatalogRemoteTest: Error during add_physical_to_new_logical_stream_remote_test" << "\n" << error_msg);
+      });
   EXPECT_TRUE(registered);
 
   PhysicalStreamConfig conf;
@@ -500,7 +473,8 @@ TEST_F(StreamCatalogRemoteTest, add_physical_to_new_logical_stream_remote_test) 
 
   success = false;
   self->request(worker, task_timeout, register_phy_stream_atom::value,
-                conf.sourceType, conf.sourceConfig, conf.sourceFrequency, conf.numberOfBuffersToProduce, conf.physicalStreamName,
+                conf.sourceType, conf.sourceConfig, conf.sourceFrequency,
+                conf.numberOfBuffersToProduce, conf.physicalStreamName,
                 conf.logicalStreamName).receive(
       [&success](const bool &c) mutable {
         success = c;
@@ -520,8 +494,8 @@ TEST_F(StreamCatalogRemoteTest, add_physical_to_new_logical_stream_remote_test) 
   EXPECT_EQ(phys.size(), 1);
   EXPECT_EQ(phys[0]->getPhysicalName(), "physical_test");
 
-   self->request(worker, task_timeout, exit_reason::user_shutdown);
-   self->request(coordinator, task_timeout, exit_reason::user_shutdown);
+  self->request(worker, task_timeout, exit_reason::user_shutdown);
+  self->request(coordinator, task_timeout, exit_reason::user_shutdown);
 }
 
 TEST_F(StreamCatalogRemoteTest, remove_physical_from_new_logical_stream_remote_test) {

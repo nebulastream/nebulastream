@@ -23,32 +23,6 @@ using namespace NES;
 #define LOCAL_PORT 38938
 #endif
 
-void setupLogging() {
-  // create PatternLayout
-  log4cxx::LayoutPtr layoutPtr(
-      new log4cxx::PatternLayout(
-          "%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
-
-  // create FileAppender
-  LOG4CXX_DECODE_CHAR(fileName, "nes.log");
-  log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
-
-  // create ConsoleAppender
-  log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
-
-  // set log level
-  // logger->setLevel(log4cxx::Level::getTrace());
-  NESLogger->setLevel(log4cxx::Level::getDebug());
-  //	logger->setLevel(log4cxx::Level::getInfo());
-  //	logger->setLevel(log4cxx::Level::getWarn());
-  // logger->setLevel(log4cxx::Level::getError());
-  //	logger->setLevel(log4cxx::Level::getFatal());
-
-  // add appenders and other will inherit the settings
-  NESLogger->addAppender(file);
-  NESLogger->addAppender(console);
-}
-
 class RuntimeDataSourceSinkTest : public testing::Test {
  public:
   /* Will be called before any test in this class are executed. */
@@ -59,11 +33,12 @@ class RuntimeDataSourceSinkTest : public testing::Test {
   /* Will be called before a test is executed. */
   void SetUp() {
     std::cout << "Setup RuntimeDataSourceSinkTest test case." << std::endl;
-    setupLogging();
+    NES::setupLogging("RuntimeDataSourceSinkTest.log", NES::LOG_DEBUG);
+
     address = std::string("tcp://") + std::string(LOCAL_HOST) + std::string(":")
         + std::to_string(LOCAL_PORT);
 
-    test_data = { {0, 100, 1, 99, 2, 98, 3, 97}};
+    test_data = { { 0, 100, 1, 99, 2, 98, 3, 97 } };
     test_data_size = test_data.size() * sizeof(uint32_t);
     tupleCnt = 8;
     //    test_data_size = 4096;
@@ -105,20 +80,20 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSourceReceiveData) {
   bool receiving_finished = false;
   auto receiving_thread = std::thread([&]() {
     // Receive data.
-      auto tuple_buffer = zmq_source->receiveData();
+    auto tuple_buffer = zmq_source->receiveData();
 
-      // Test received data.
-      size_t sum = 0;
-      uint32_t* tuple = (uint32_t*)tuple_buffer->getBuffer();
-      for (size_t i = 0; i != 8; ++i) {
-        sum += *(tuple++);
-      }
-      size_t expected = 400;
-      EXPECT_EQ(sum, expected);
+    // Test received data.
+    size_t sum = 0;
+    uint32_t *tuple = (uint32_t*) tuple_buffer->getBuffer();
+    for (size_t i = 0; i != 8; ++i) {
+      sum += *(tuple++);
+    }
+    size_t expected = 400;
+    EXPECT_EQ(sum, expected);
 
-      BufferManager::instance().releaseBuffer(tuple_buffer);
-      receiving_finished = true;
-    });
+    BufferManager::instance().releaseBuffer(tuple_buffer);
+    receiving_finished = true;
+  });
   size_t tupCnt = 8;
   // Wait until receiving is complete.
 
@@ -153,7 +128,7 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSinkSendData) {
   std::cout << zmq_sink->toString() << std::endl;
 
   // Put test data into a TupleBuffer vector.
-  void* buffer = new char[test_data_size];
+  void *buffer = new char[test_data_size];
   //  auto tuple_buffer = TupleBuffer(buffer, test_data_size, sizeof(uint32_t) * 2, test_data.size() / 2);
   auto tuple_buffer = BufferManager::instance().getBuffer();
 
@@ -163,32 +138,31 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSinkSendData) {
 
   // Start thread for receiving the data.
   bool receiving_finished = false;
-  auto receiving_thread =
-      std::thread([&]() {
-        // Starting receiving enviroment.
-          int linger = 0;
-          auto context = zmq::context_t(1);
-          auto socket = zmq::socket_t(context, ZMQ_SUB);
-          socket.connect(address.c_str());
-          socket.setsockopt(ZMQ_SUBSCRIBE, "", 0);
-          socket.setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
+  auto receiving_thread = std::thread([&]() {
+    // Starting receiving enviroment.
+    int linger = 0;
+    auto context = zmq::context_t(1);
+    auto socket = zmq::socket_t(context, ZMQ_SUB);
+    socket.connect(address.c_str());
+    socket.setsockopt(ZMQ_SUBSCRIBE, "", 0);
+    socket.setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
 
-          // Receive message.
-          zmq::message_t new_data;
-          socket.recv(&new_data);// envelope - not needed at the moment
-          socket.recv(&new_data);// actual data
+    // Receive message.
+    zmq::message_t new_data;
+    socket.recv(&new_data);  // envelope - not needed at the moment
+    socket.recv(&new_data);  // actual data
 
-          // Test received data.
-          uint32_t* tuple = (uint32_t*)new_data.data();
-          for (size_t i = 0; i != new_data.size() / test_schema.getSchemaSize(); ++i) {
-            EXPECT_EQ(*(tuple++), i);
-            size_t expected = 100 - i;
-            EXPECT_EQ(*(tuple++), expected);
-          }
+    // Test received data.
+    uint32_t *tuple = (uint32_t*) new_data.data();
+    for (size_t i = 0; i != new_data.size() / test_schema.getSchemaSize(); ++i) {
+  EXPECT_EQ(*(tuple++), i);
+  size_t expected = 100 - i;
+  EXPECT_EQ(*(tuple++), expected);
+}
 
-          socket.close();
-          receiving_finished = true;
-        });
+    socket.close();
+    receiving_finished = true;
+  });
 
   // Wait until receiving is complete.
   while (!receiving_finished) {
@@ -206,7 +180,7 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSinkToSource) {
   return;
   //FIXME: this test makes no sense, redo it
   // Put test data into a TupleBuffer vector.
-  void* buffer = new char[test_data_size];
+  void *buffer = new char[test_data_size];
   //  auto tuple_buffer = TupleBuffer(buffer, test_data_size, sizeof(uint32_t) * 2, test_data.size() / 2);
   auto tuple_buffer = BufferManager::instance().getBuffer();
 
@@ -226,18 +200,18 @@ TEST_F(RuntimeDataSourceSinkTest, ZmqSinkToSource) {
   bool receiving_finished = false;
   auto receiving_thread = std::thread([&]() {
     // Receive data.
-      auto new_data = zmq_source->receiveData();
+    auto new_data = zmq_source->receiveData();
 
-      // Test received data.
-      uint32_t* tuple = (uint32_t*)new_data->getBuffer();
-      for (size_t i = 0; i != new_data->getNumberOfTuples(); ++i) {
-        EXPECT_EQ(*(tuple++), i);
-        size_t expected = 100 - i;
-        EXPECT_EQ(*(tuple++), expected);
-      }
-      BufferManager::instance().releaseBuffer(new_data);
-      receiving_finished = true;
-    });
+    // Test received data.
+    uint32_t *tuple = (uint32_t*) new_data->getBuffer();
+    for (size_t i = 0; i != new_data->getNumberOfTuples(); ++i) {
+      EXPECT_EQ(*(tuple++), i);
+      size_t expected = 100 - i;
+      EXPECT_EQ(*(tuple++), expected);
+    }
+    BufferManager::instance().releaseBuffer(new_data);
+    receiving_finished = true;
+  });
 
   // Wait until receiving is complete.
   while (!receiving_finished) {

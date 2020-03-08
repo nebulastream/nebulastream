@@ -9,43 +9,18 @@ namespace NES {
 class StateTest : public testing::Test {
  public:
   static void SetUpTestCase() {
-    setupLogging();
+    NES::setupLogging("StateTest.log", NES::LOG_DEBUG);
 
     NES_INFO("Setup StateTest test class.");
   }
   static void TearDownTestCase() {
     std::cout << "Tear down StateTest test class." << std::endl;
   }
-
- private:
-  static void setupLogging() {
-    // create PatternLayout
-    log4cxx::LayoutPtr layoutPtr(
-        new log4cxx::PatternLayout(
-            "%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
-
-    // create FileAppender
-    LOG4CXX_DECODE_CHAR(fileName, "StateTest.log");
-    log4cxx::FileAppenderPtr file(
-        new log4cxx::FileAppender(layoutPtr, fileName));
-
-    // create ConsoleAppender
-    log4cxx::ConsoleAppenderPtr console(
-        new log4cxx::ConsoleAppender(layoutPtr));
-
-    // set log level
-    // logger->setLevel(log4cxx::Level::getDebug());
-    NESLogger->setLevel(log4cxx::Level::getInfo());
-
-    // add appenders and other will inherit the settings
-    NESLogger->addAppender(file);
-    NESLogger->addAppender(console);
-  }
 };
 
 TEST_F(StateTest, test_add_clear) {
-  StateManager& stateManager = StateManager::instance();
-  StateVariable<uint32_t, uint32_t>& var = stateManager
+  StateManager &stateManager = StateManager::instance();
+  StateVariable<uint32_t, uint32_t> &var = stateManager
       .registerState<uint32_t, uint32_t>("window-content-0");
   auto kv = var[23];
 
@@ -60,15 +35,15 @@ TEST_F(StateTest, test_add_clear) {
   bool catched = false;
   try {
     EXPECT_NE(kv.value(), 43);
-  } catch (std::out_of_range& e) {
+  } catch (std::out_of_range &e) {
     catched = true;
   }
   EXPECT_EQ(catched, true);
 }
 
 TEST_F(StateTest, test_emplace_clear) {
-  StateManager& stateManager = StateManager::instance();
-  StateVariable<uint32_t, uint32_t>& var = stateManager
+  StateManager &stateManager = StateManager::instance();
+  StateVariable<uint32_t, uint32_t> &var = stateManager
       .registerState<uint32_t, uint32_t>("window-content-1");
   auto kv = var[23];
 
@@ -83,15 +58,15 @@ TEST_F(StateTest, test_emplace_clear) {
   bool catched = false;
   try {
     EXPECT_NE(kv.value(), 43);
-  } catch (std::out_of_range& e) {
+  } catch (std::out_of_range &e) {
     catched = true;
   }
   EXPECT_EQ(catched, true);
 }
 
 TEST_F(StateTest, test_multiple_add_lookup) {
-  StateManager& stateManager = StateManager::instance();
-  StateVariable<uint32_t, uint32_t>& var = stateManager
+  StateManager &stateManager = StateManager::instance();
+  StateVariable<uint32_t, uint32_t> &var = stateManager
       .registerState<uint32_t, uint32_t>("window-content-2");
 
   std::unordered_map<uint32_t, uint32_t> map;
@@ -105,7 +80,7 @@ TEST_F(StateTest, test_multiple_add_lookup) {
     map[key] = val;
   }
 
-  for (auto& it : map) {
+  for (auto &it : map) {
     auto key = it.first;
     auto val = it.second;
     EXPECT_EQ(var[key].value(), val);
@@ -113,8 +88,8 @@ TEST_F(StateTest, test_multiple_add_lookup) {
 }
 
 TEST_F(StateTest, test_multiple_add_lookup_mt) {
-  StateManager& stateManager = StateManager::instance();
-  StateVariable<uint32_t, uint32_t>& var = stateManager
+  StateManager &stateManager = StateManager::instance();
+  StateVariable<uint32_t, uint32_t> &var = stateManager
       .registerState<uint32_t, uint32_t>("window-content-3");
 
   std::vector<std::thread> t;
@@ -141,13 +116,13 @@ TEST_F(StateTest, test_multiple_add_lookup_mt) {
     });
   }
 
-  for (auto& worker : t) {
+  for (auto &worker : t) {
     worker.join();
   }
 
   std::atomic_thread_fence(std::memory_order_seq_cst);
 
-  for (auto& it : map) {
+  for (auto &it : map) {
     auto key = it.first;
     auto val = it.second;
     EXPECT_EQ(var[key].value(), val);
@@ -156,8 +131,8 @@ TEST_F(StateTest, test_multiple_add_lookup_mt) {
 }
 
 TEST_F(StateTest, test_add_range_mt) {
-  StateManager& stateManager = StateManager::instance();
-  StateVariable<uint32_t, uint32_t>& var = stateManager
+  StateManager &stateManager = StateManager::instance();
+  StateVariable<uint32_t, uint32_t> &var = stateManager
       .registerState<uint32_t, uint32_t>("window-content-4");
 
   std::vector<std::thread> t;
@@ -184,7 +159,7 @@ TEST_F(StateTest, test_add_range_mt) {
     });
   }
 
-  for (auto& worker : t) {
+  for (auto &worker : t) {
     worker.join();
   }
 
@@ -193,7 +168,7 @@ TEST_F(StateTest, test_add_range_mt) {
   {
     std::unique_lock<std::mutex> lock(mutex);
     auto rangeAll = var.rangeAll();
-    for (auto& it : rangeAll) {
+    for (auto &it : rangeAll) {
       auto key = it.first;
       auto val = it.second;
 
@@ -208,14 +183,15 @@ struct window_metadata {
   uint64_t end;
 
   explicit window_metadata(uint64_t s, uint64_t e)
-      : start(s),
-        end(e) {
+      :
+      start(s),
+      end(e) {
   }
 };
 
 TEST_F(StateTest, test_struct) {
-  StateManager& stateManager = StateManager::instance();
-  StateVariable<uint32_t, window_metadata*>& var = stateManager
+  StateManager &stateManager = StateManager::instance();
+  StateVariable<uint32_t, window_metadata*> &var = stateManager
       .registerState<uint32_t, window_metadata*>("window-content-5");
 
   for (size_t i = 0; i < 8192; i++) {

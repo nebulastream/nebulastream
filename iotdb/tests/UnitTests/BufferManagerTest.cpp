@@ -15,7 +15,7 @@ namespace NES {
 class BufferManagerTest : public testing::Test {
  public:
   static void SetUpTestCase() {
-    NES::setupLogging("FileSourceTest.log", NES::LOG_DEBUG);
+    NES::setupLogging("BufferManagerTest.log", NES::LOG_DEBUG);
     NES_INFO("Setup BufferMangerTest test class.");
     BufferManager::instance().setNumberOfBuffers(10);
   }
@@ -25,31 +25,6 @@ class BufferManagerTest : public testing::Test {
 
   const size_t buffers_managed = 10;
   const size_t buffer_size = 4 * 1024;
- protected:
-  static void setupLogging() {
-    // create PatternLayout
-    log4cxx::LayoutPtr layoutPtr(
-        new log4cxx::PatternLayout(
-            "%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
-
-    // create FileAppender
-    LOG4CXX_DECODE_CHAR(fileName, "BufferManagerTest.log");
-    log4cxx::FileAppenderPtr file(
-        new log4cxx::FileAppender(layoutPtr, fileName));
-
-    // create ConsoleAppender
-    log4cxx::ConsoleAppenderPtr console(
-        new log4cxx::ConsoleAppender(layoutPtr));
-
-    // set log level
-    NESLogger->setLevel(log4cxx::Level::getDebug());
-//    logger->setLevel(log4cxx::Level::getInfo());
-
-// add appenders and other will inherit the settings
-    NESLogger->addAppender(file);
-    NESLogger->addAppender(console);
-  }
-
 };
 
 TEST_F(BufferManagerTest, add_and_remove_Buffer_simple) {
