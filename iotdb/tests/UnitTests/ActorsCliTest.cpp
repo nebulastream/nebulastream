@@ -18,7 +18,7 @@ class ActorsCliTest : public testing::Test {
       "InputQuery::from(default_logical).filter(default_logical[\"id\"] > 42).print(std::cout); ";
 
   static void SetUpTestCase() {
-    setupLogging();
+    NES::setupLogging("ActorsCliTest.log", NES::LOG_DEBUG);
     NES_INFO("Setup ActorCoordinatorWorkerTest test class.");
   }
 
@@ -28,30 +28,6 @@ class ActorsCliTest : public testing::Test {
 
   void TearDown() {
     QueryCatalog::instance().clearQueries();
-  }
-
- protected:
-  static void setupLogging() {
-    // create PatternLayout
-    log4cxx::LayoutPtr layoutPtr(
-        new log4cxx::PatternLayout(
-            "%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
-
-    // create FileAppender
-    LOG4CXX_DECODE_CHAR(fileName, "WindowManager.log");
-    log4cxx::FileAppenderPtr file(
-        new log4cxx::FileAppender(layoutPtr, fileName));
-
-    // create ConsoleAppender
-    log4cxx::ConsoleAppenderPtr console(
-        new log4cxx::ConsoleAppender(layoutPtr));
-
-    // set log level
-    NESLogger->setLevel(log4cxx::Level::getDebug());
-
-    // add appenders and other will inherit the settings
-    NESLogger->addAppender(file);
-    NESLogger->addAppender(console);
   }
 };
 
