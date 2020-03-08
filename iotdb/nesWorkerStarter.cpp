@@ -22,28 +22,8 @@ namespace po = boost::program_options;
 using namespace caf;
 using namespace NES;
 
-static void setupLogging() {
-// create PatternLayout
-  log4cxx::LayoutPtr layoutPtr(
-      new log4cxx::PatternLayout(
-          "%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
-
-// create FileAppender
-  LOG4CXX_DECODE_CHAR(fileName, "iotdb.log");
-  log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
-
-// create ConsoleAppender
-  log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
-
-// set log level
-  NES::NESLogger->setLevel(log4cxx::Level::getDebug());
-// add appenders and other will inherit the settings
-  NES::NESLogger->addAppender(file);
-  NES::NESLogger->addAppender(console);
-}
-
 int main(int argc, char **argv) {
-  setupLogging();
+  NES::setupLogging("nesWorkerStarter.log", NES::LOG_DEBUG);
 
   namespace po = boost::program_options;
   po::options_description desc("Options");
@@ -103,7 +83,8 @@ int main(int argc, char **argv) {
     wrk->registerPhysicalStream(conf);
 
     cout << "start with port=" << actorPort << endl;
-    wrk->startWithRegister(/**blocking*/true, /**withConnect*/true, actorPort, conf);
+    wrk->startWithRegister(/**blocking*/true, /**withConnect*/true, actorPort,
+                           conf);
     cout << "worker started" << endl;
 
   } else {

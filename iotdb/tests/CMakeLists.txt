@@ -104,11 +104,6 @@ add_executable(nes-topology-manager-tests "UnitTests/NESTopologyManagerTest.cpp"
 target_link_libraries(nes-topology-manager-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME nes-topology-manager-tests COMMAND nes-topology-manager-tests)
 
-### Client Server Communication Tests ###
-#add_executable(client-server-communication-tests "UnitTests/ClientServerCommunicationTest.cpp")
-#target_link_libraries(client-server-communication-tests ${GTEST_LIBRARIES})
-#add_test(NAME client-server-communication-tests COMMAND client-server-communication-tests)
-
 ### Buffer Manager Test ###
 add_executable(buffer-manager-tests "UnitTests/BufferManagerTest.cpp")
 target_link_libraries(buffer-manager-tests iotdb ${GTEST_LIBRARIES})
