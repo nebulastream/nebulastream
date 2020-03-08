@@ -50,10 +50,11 @@ void createQueryFilter() {
 
   Stream def = Stream("default_logical", schema);
 
-  InputQuery &query =
-      InputQuery::from(def).filter(def["value"] > 42).windowByKey(
-          def["value"].getAttributeField(), TumblingWindow::of(TimeCharacteristic::ProcessingTime, Seconds(10)),
-          Sum::on(def["value"])).print(std::cout);
+  InputQuery &query = InputQuery::from(def).filter(def["value"] > 42)
+      .windowByKey(
+      def["value"].getAttributeField(),
+      TumblingWindow::of(TimeCharacteristic::ProcessingTime, Seconds(10)),
+      Sum::on(def["value"])).print(std::cout);
 
   env.printInputQueryPlan(query);
   env.executeQuery(query);
@@ -87,8 +88,9 @@ void createQueryString() {
   code << "Schema schema = Schema::create().addField(\"test\",INT32);"
        << std::endl;
   code << "Stream testStream = Stream(\"test-stream\",schema);" << std::endl;
-  code << "InputQuery::from(default_stream).map(default_stream[\"value\"],2).filter(default_stream[\"test\"]==5)"
-       << std::endl << "" << std::endl << ";" << std::endl;
+  code
+      << "InputQuery::from(default_stream).map(default_stream[\"value\"],2).filter(default_stream[\"test\"]==5)"
+      << std::endl << "" << std::endl << ";" << std::endl;
 
   InputQueryPtr inputQuery = UtilityFunctions::createQueryFromCodeString(
       code.str());
@@ -96,6 +98,8 @@ void createQueryString() {
 }  // namespace NES
 
 int main(int argc, const char *argv[]) {
+  NES::setupLogging("QueryInterfaceTest.log", NES::LOG_DEBUG);
+
   NES::Dispatcher::instance();
   NES::createQueryFilter();
 

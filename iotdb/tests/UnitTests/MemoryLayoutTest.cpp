@@ -13,43 +13,32 @@
 #include <API/Schema.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 
-
 //#define DEBUG_OUTPUT
 
 namespace NES {
 class MemoryLayoutTest : public testing::Test {
  public:
   static void SetUpTestCase() {
-#ifdef DEBUG_OUTPUT
-    setupLogging();
-#endif
+    NES::setupLogging("MemoryLayoutTest.log", NES::LOG_DEBUG);
     NES_INFO("Setup MemoryLayout test class.");
   }
-  static void TearDownTestCase() { std::cout << "Tear down MemoryLayout test class." << std::endl; }
-
- protected:
-  static void setupLogging() {
-    // create PatternLayout
-    log4cxx::LayoutPtr layoutPtr(new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
+  static void TearDownTestCase() {
+    std::cout << "Tear down MemoryLayout test class." << std::endl;
   }
-
 };
 
 TEST_F(MemoryLayoutTest, row_layout_test) {
-  Schema schema = Schema()
-      .addField("t1", BasicType::UINT8)
-      .addField("t2", BasicType::UINT8)
-      .addField("t3", BasicType::UINT8);
+  Schema schema = Schema().addField("t1", BasicType::UINT8).addField(
+      "t2", BasicType::UINT8).addField("t3", BasicType::UINT8);
   TupleBufferPtr buf = BufferManager::instance().getBuffer();
   auto layout = createRowLayout(std::make_shared<Schema>(schema));
-  for(int i = 0 ; i< 10; i++){
-    layout->writeField<uint8_t>(buf, i, 0,i);
-    layout->writeField<uint8_t>(buf, i, 1,i);
-    layout->writeField<uint8_t>(buf, i, 2,i);
+  for (int i = 0; i < 10; i++) {
+    layout->writeField<uint8_t>(buf, i, 0, i);
+    layout->writeField<uint8_t>(buf, i, 1, i);
+    layout->writeField<uint8_t>(buf, i, 2, i);
   }
 
-
-  for(int i = 0 ; i< 10; i++){
+  for (int i = 0; i < 10; i++) {
     auto value = layout->readField<uint8_t>(buf, i, 0);
     ASSERT_EQ(value, i);
 
@@ -60,11 +49,6 @@ TEST_F(MemoryLayoutTest, row_layout_test) {
     ASSERT_EQ(value, i);
   }
 
-
-
-
 }
-
-
 
 }

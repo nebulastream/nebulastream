@@ -38,7 +38,7 @@ class E2eRestTest : public testing::Test {
   std::string outputFilePath = "blob.txt";
 
   static void SetUpTestCase() {
-    setupLogging();
+    NES::setupLogging("E2eRestTest.log", NES::LOG_DEBUG);
     NES_INFO("Setup E2e test class.");
   }
 
@@ -46,32 +46,6 @@ class E2eRestTest : public testing::Test {
     std::cout << "Tear down ActorCoordinatorWorkerTest test class."
               << std::endl;
   }
-
- protected:
-  static void setupLogging() {
-    // create PatternLayout
-    log4cxx::LayoutPtr layoutPtr(
-        new log4cxx::PatternLayout(
-            "%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
-
-    // create FileAppender
-    LOG4CXX_DECODE_CHAR(fileName, "WindowManager.log");
-    log4cxx::FileAppenderPtr file(
-        new log4cxx::FileAppender(layoutPtr, fileName));
-
-    // create ConsoleAppender
-    log4cxx::ConsoleAppenderPtr console(
-        new log4cxx::ConsoleAppender(layoutPtr));
-
-    // set log level
-    // logger->setLevel(log4cxx::Level::getDebug());
-    NESLogger->setLevel(log4cxx::Level::getInfo());
-
-    // add appenders and other will inherit the settings
-    NESLogger->addAppender(file);
-    NESLogger->addAppender(console);
-  }
-
 };
 
 std::string GetCurrentWorkingDir(void) {
@@ -112,15 +86,15 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
         cout << "get first then with response" << endl;
         return response.extract_json();
       }).then([&json_return](const pplx::task<web::json::value> &task) {
-        try {
-          cout << "set return" << endl;
-          json_return = task.get();
-          cout << "ret is=" << json_return << endl;
-        } catch (const web::http::http_exception &e) {
-          cout << "error while setting return" << endl;
-          std::cout << "error " << e.what() << std::endl;
-        }
-      }).wait();
+    try {
+      cout << "set return" << endl;
+      json_return = task.get();
+      cout << "ret is=" << json_return << endl;
+    } catch (const web::http::http_exception &e) {
+      cout << "error while setting return" << endl;
+      std::cout << "error " << e.what() << std::endl;
+    }
+  }).wait();
 
   std::cout << "try to acc return" << std::endl;
 
@@ -171,14 +145,14 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
         cout << "get first then" << endl;
         return response.extract_json();
       }).then([&json_return](const pplx::task<web::json::value> &task) {
-        try {
-          cout << "set return" << endl;
-          json_return = task.get();
-        } catch (const web::http::http_exception &e) {
-          cout << "error while setting return" << endl;
-          std::cout << "error " << e.what() << std::endl;
-        }
-      }).wait();
+    try {
+      cout << "set return" << endl;
+      json_return = task.get();
+    } catch (const web::http::http_exception &e) {
+      cout << "error while setting return" << endl;
+      std::cout << "error " << e.what() << std::endl;
+    }
+  }).wait();
   sleep(2);
 
   std::cout << "try to acc return" << std::endl;
@@ -194,23 +168,23 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
 
   std::ifstream ifs(outputFilePath.c_str());
   std::string content((std::istreambuf_iterator<char>(ifs)),
-      (std::istreambuf_iterator<char>()));
+                      (std::istreambuf_iterator<char>()));
 
   string expectedContent =
-  "+----------------------------------------------------+\n"
-  "|id:UINT32|value:UINT64|\n"
-  "+----------------------------------------------------+\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "+----------------------------------------------------+";
+      "+----------------------------------------------------+\n"
+          "|id:UINT32|value:UINT64|\n"
+          "+----------------------------------------------------+\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "+----------------------------------------------------+";
   cout << "content=" << content << endl;
   cout << "expContent=" << expectedContent << endl;
   EXPECT_EQ(content, expectedContent);
@@ -262,14 +236,14 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputWithFilter) {
         cout << "get first then" << endl;
         return response.extract_json();
       }).then([&json_return](const pplx::task<web::json::value> &task) {
-        try {
-          cout << "set return" << endl;
-          json_return = task.get();
-        } catch (const web::http::http_exception &e) {
-          cout << "error while setting return" << endl;
-          std::cout << "error " << e.what() << std::endl;
-        }
-      }).wait();
+    try {
+      cout << "set return" << endl;
+      json_return = task.get();
+    } catch (const web::http::http_exception &e) {
+      cout << "error while setting return" << endl;
+      std::cout << "error " << e.what() << std::endl;
+    }
+  }).wait();
 
   std::cout << "try to acc return" << std::endl;
   string queryId = json_return.at("queryId").as_string();
@@ -330,14 +304,14 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputTwoWorker) {
         cout << "get first then" << endl;
         return response.extract_json();
       }).then([&json_return](const pplx::task<web::json::value> &task) {
-        try {
-          cout << "set return" << endl;
-          json_return = task.get();
-        } catch (const web::http::http_exception &e) {
-          cout << "error while setting return" << endl;
-          std::cout << "error " << e.what() << std::endl;
-        }
-      }).wait();
+    try {
+      cout << "set return" << endl;
+      json_return = task.get();
+    } catch (const web::http::http_exception &e) {
+      cout << "error while setting return" << endl;
+      std::cout << "error " << e.what() << std::endl;
+    }
+  }).wait();
   sleep(3);
   std::cout << "try to acc return" << std::endl;
 
@@ -350,36 +324,36 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputTwoWorker) {
   std::ifstream ifs(outputFilePath.c_str());
   EXPECT_TRUE(ifs.good());
   std::string content((std::istreambuf_iterator<char>(ifs)),
-      (std::istreambuf_iterator<char>()));
+                      (std::istreambuf_iterator<char>()));
 
   string expectedContent =
-  "+----------------------------------------------------+\n"
-  "|id:UINT32|value:UINT64|\n"
-  "+----------------------------------------------------+\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "+----------------------------------------------------++----------------------------------------------------+\n"
-  "|id:UINT32|value:UINT64|\n"
-  "+----------------------------------------------------+\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "+----------------------------------------------------+";
+      "+----------------------------------------------------+\n"
+          "|id:UINT32|value:UINT64|\n"
+          "+----------------------------------------------------+\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "+----------------------------------------------------++----------------------------------------------------+\n"
+          "|id:UINT32|value:UINT64|\n"
+          "+----------------------------------------------------+\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "+----------------------------------------------------+";
   cout << "content=" << content << endl;
   cout << "expContent=" << expectedContent << endl;
   EXPECT_EQ(content, expectedContent);
@@ -408,7 +382,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputAndRegisterPhyStrea
   sleep(2);
 
   string path2 =
-  "./nesWorker --actor_port=12346 --sourceType=DefaultSource --numberOfBuffersToProduce=2 --physicalStreamName=test_stream --logicalStreamName=default_logical";
+      "./nesWorker --actor_port=12346 --sourceType=DefaultSource --numberOfBuffersToProduce=2 --physicalStreamName=test_stream --logicalStreamName=default_logical";
   bp::child workerProc(path2.c_str());
   cout << "started worker with pid = " << workerProc.id() << endl;
   size_t coordinatorPid = coordinatorProc.id();
@@ -433,14 +407,14 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputAndRegisterPhyStrea
         cout << "get first then" << endl;
         return response.extract_json();
       }).then([&json_return](const pplx::task<web::json::value> &task) {
-        try {
-          cout << "set return" << endl;
-          json_return = task.get();
-        } catch (const web::http::http_exception &e) {
-          cout << "error while setting return" << endl;
-          std::cout << "error " << e.what() << std::endl;
-        }
-      }).wait();
+    try {
+      cout << "set return" << endl;
+      json_return = task.get();
+    } catch (const web::http::http_exception &e) {
+      cout << "error while setting return" << endl;
+      std::cout << "error " << e.what() << std::endl;
+    }
+  }).wait();
   sleep(2);
 
   std::cout << "try to acc return" << std::endl;
@@ -456,23 +430,23 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputAndRegisterPhyStrea
 
   std::ifstream ifs(outputFilePath.c_str());
   std::string content((std::istreambuf_iterator<char>(ifs)),
-      (std::istreambuf_iterator<char>()));
+                      (std::istreambuf_iterator<char>()));
 
   string expectedContent =
-  "+----------------------------------------------------+\n"
-  "|id:UINT32|value:UINT64|\n"
-  "+----------------------------------------------------+\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "|1|1|\n"
-  "+----------------------------------------------------+";
+      "+----------------------------------------------------+\n"
+          "|id:UINT32|value:UINT64|\n"
+          "+----------------------------------------------------+\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "|1|1|\n"
+          "+----------------------------------------------------+";
   cout << "content=" << content << endl;
   cout << "expContent=" << expectedContent << endl;
   EXPECT_EQ(content, expectedContent);
@@ -487,7 +461,6 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputAndRegisterPhyStrea
   cout << "Killing coordinator process->PID: " << coordinatorPid << endl;
   coordinatorProc.terminate();
 }
-
 
 TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputExdraUseCase) {
   cout << " start coordinator" << endl;
