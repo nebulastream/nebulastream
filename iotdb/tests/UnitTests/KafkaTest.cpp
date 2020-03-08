@@ -12,24 +12,19 @@
 #include <SourceSink/KafkaSource.hpp>
 #include <SourceSink/SourceCreator.hpp>
 
-
-constexpr char* KAFKA_BROKER = "localhost:9092";
+constexpr char *KAFKA_BROKER = "localhost:9092";
 
 namespace NES {
 
 class KafkaTest : public testing::Test {
-public:
+ public:
 
   void SetUp() {
-    setupLogging();
-    schema = Schema::create()
-      .addField("user_id", 16)
-      .addField("page_id", 16)
-      .addField("campaign_id", 16)
-      .addField("ad_type", 9)
-      .addField("event_type", 9)
-      .addField("current_ms", UINT64)
-      .addField("ip", INT32);
+    NES::setupLogging("KafkaTest.log", NES::LOG_DEBUG);
+
+    schema = Schema::create().addField("user_id", 16).addField("page_id", 16)
+        .addField("campaign_id", 16).addField("ad_type", 9).addField(
+        "event_type", 9).addField("current_ms", UINT64).addField("ip", INT32);
 
     uint64_t tuple_size = schema.getSchemaSize();
     buffer_size = num_tuples_to_process * tuple_size / num_of_buffers;
@@ -39,13 +34,14 @@ public:
     BufferManager::instance().setNumberOfBuffers(num_of_buffers);
     BufferManager::instance().setBufferSize(buffer_size);
 
+
     NES_DEBUG("Setup KafkaTest")
   }
   void TearDown() {
     NES_DEBUG("Tear down KafkaTest")
   }
 
-protected:
+ protected:
   const std::string brokers = std::string(KAFKA_BROKER);
   const std::string topic = std::string("nes");
   const std::string groupId = std::string("nes");
@@ -54,44 +50,24 @@ protected:
   const uint64_t num_tuples_to_process = 100;
   size_t buffer_size;
   Schema schema;
-  static void setupLogging() {
-         // create PatternLayout
-         log4cxx::LayoutPtr layoutPtr(
-             new log4cxx::PatternLayout(
-                 "%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
 
-         // create FileAppender
-         LOG4CXX_DECODE_CHAR(fileName, "WindowManager.log");
-         log4cxx::FileAppenderPtr file(
-             new log4cxx::FileAppender(layoutPtr, fileName));
-
-         // create ConsoleAppender
-         log4cxx::ConsoleAppenderPtr console(
-             new log4cxx::ConsoleAppender(layoutPtr));
-
-         // set log level
-         NESLogger->setLevel(log4cxx::Level::getDebug());
-
-         // add appenders and other will inherit the settings
-         NESLogger->addAppender(file);
-         NESLogger->addAppender(console);
-     }
 };
 // NOTE: ALL DISABLED TESTS ONLY WITH KAFKA INSTANCE, PLEASE SETUP KAFKA FIRST
 // MAYBE YOU ALSO NEED TO UPDATE GLOBAL VARIABLE `KAFKA_BROKER`
 TEST_F(KafkaTest, DISABLED_KafkaSinkSendDataInitByKafkaConfig) {
-  const cppkafka::Configuration sinkConfig = {
-    { "metadata.broker.list", KAFKA_BROKER }
-  };
+  const cppkafka::Configuration sinkConfig = { { "metadata.broker.list",
+      KAFKA_BROKER } };
 
-  const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, topic, sinkConfig);
+  const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, topic,
+                                                            sinkConfig);
   TupleBufferPtr buf = BufferManager::instance().getBuffer();
   EXPECT_TRUE(kafkaSink->writeData(buf));
   BufferManager::instance().releaseBuffer(buf);
 }
 
 TEST_F(KafkaTest, DISABLED_KafkaSinkSendDataInitByBroker) {
-  const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers, topic);
+  const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers,
+                                                            topic);
 
   TupleBufferPtr buf = BufferManager::instance().getBuffer();
   EXPECT_TRUE(kafkaSink->writeData(buf));
@@ -99,13 +75,15 @@ TEST_F(KafkaTest, DISABLED_KafkaSinkSendDataInitByBroker) {
 }
 
 TEST_F(KafkaTest, DISABLED_KafkaSinkSendNullPointer) {
-  const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers, topic);
+  const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers,
+                                                            topic);
   EXPECT_FALSE(kafkaSink->writeData(nullptr));
 }
 
 TEST_F(KafkaTest, DISABLED_KafkaSinkSendNullData) {
   // NullData: tuple buffer's content is all zeros. we didn't check tuple buffer's content.
-  const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers, topic);
+  const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers,
+                                                            topic);
   TupleBufferPtr buf = BufferManager::instance().getBuffer();
   EXPECT_TRUE(kafkaSink->writeData(buf));
   BufferManager::instance().releaseBuffer(buf);
@@ -113,7 +91,9 @@ TEST_F(KafkaTest, DISABLED_KafkaSinkSendNullData) {
 
 TEST_F(KafkaTest, DISABLED_KafkaSinkWithInvalidBroker) {
   const std::string invalid_broker = "invalid-kafka-broker";
-  const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, invalid_broker, topic, 5);
+  const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema,
+                                                            invalid_broker,
+                                                            topic, 5);
 
   TupleBufferPtr buf = BufferManager::instance().getBuffer();
   try {
@@ -128,7 +108,9 @@ TEST_F(KafkaTest, DISABLED_KafkaSinkWithInvalidBroker) {
 
 TEST_F(KafkaTest, DISABLED_KafkaSinkTimeout) {
   const std::string invalid_broker = "invalid-kafka-broker";
-  const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, invalid_broker, topic, 0);
+  const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema,
+                                                            invalid_broker,
+                                                            topic, 0);
 
   TupleBufferPtr buf = BufferManager::instance().getBuffer();
   try {
@@ -141,87 +123,92 @@ TEST_F(KafkaTest, DISABLED_KafkaSinkTimeout) {
 }
 
 TEST_F(KafkaTest, DISABLED_KafkaSourceInitByKafkaConfig1) {
-  const cppkafka::Configuration sourceConfig = {
-    { "metadata.broker.list", brokers.c_str() },
-    { "group.id", groupId },
-    { "enable.auto.commit", false }
-  };
+  const cppkafka::Configuration sourceConfig = { { "metadata.broker.list",
+      brokers.c_str() }, { "group.id", groupId },
+      { "enable.auto.commit", false } };
 
-  const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers, topic);
+  const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers,
+                                                            topic);
   TupleBufferPtr buf1 = BufferManager::instance().getBuffer();
   EXPECT_TRUE(kafkaSink->writeData(buf1));
 
-  const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema, topic, sourceConfig);
+  const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema, topic,
+                                                                  sourceConfig);
   TupleBufferPtr buf2 = nullptr;
-  while (! buf2)
+  while (!buf2)
     buf2 = kafkaSource->receiveData();
 
   size_t sz1 = buf1->getBufferSizeInBytes();
   size_t sz2 = buf2->getBufferSizeInBytes();
 
   EXPECT_EQ(sz1, sz2) << "sz1 is " << sz1 << ", whereas sz2 is " << sz2;
-  void* _buf1 = buf2->getBuffer();
-  void* _buf2 = buf2->getBuffer();
-  EXPECT_TRUE(! memcmp(_buf1, _buf2, sz1));
+  void *_buf1 = buf2->getBuffer();
+  void *_buf2 = buf2->getBuffer();
+  EXPECT_TRUE(!memcmp(_buf1, _buf2, sz1));
 }
 
 TEST_F(KafkaTest, DISABLED_KafkaSourceInitByKafkaConfig2) {
-  const cppkafka::Configuration sourceConfig = {
-    { "metadata.broker.list", brokers.c_str() },
-    { "group.id", groupId }
-  };
+  const cppkafka::Configuration sourceConfig = { { "metadata.broker.list",
+      brokers.c_str() }, { "group.id", groupId } };
 
-  const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers, topic);
+  const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers,
+                                                            topic);
   TupleBufferPtr buf1 = BufferManager::instance().getBuffer();
   EXPECT_TRUE(kafkaSink->writeData(buf1));
 
-  const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema, topic, sourceConfig);
+  const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema, topic,
+                                                                  sourceConfig);
   TupleBufferPtr buf2 = nullptr;
-  while (! buf2)
+  while (!buf2)
     buf2 = kafkaSource->receiveData();
 
   size_t sz1 = buf1->getBufferSizeInBytes();
   size_t sz2 = buf2->getBufferSizeInBytes();
 
   EXPECT_EQ(sz1, sz2) << "sz1 is " << sz1 << ", whereas sz2 is " << sz2;
-  void* _buf1 = buf2->getBuffer();
-  void* _buf2 = buf2->getBuffer();
-  EXPECT_TRUE(! memcmp(_buf1, _buf2, sz1));
+  void *_buf1 = buf2->getBuffer();
+  void *_buf2 = buf2->getBuffer();
+  EXPECT_TRUE(!memcmp(_buf1, _buf2, sz1));
 }
 
 TEST_F(KafkaTest, DISABLED_KafkaSourceInitByBroker) {
-  const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema, brokers, topic);
-  const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers, topic);
+  const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema,
+                                                                  brokers,
+                                                                  topic);
+  const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers,
+                                                            topic);
 
   TupleBufferPtr buf1 = BufferManager::instance().getBuffer();
   EXPECT_TRUE(kafkaSink->writeData(buf1));
 
   TupleBufferPtr buf2 = nullptr;
-  while (! buf2)
+  while (!buf2)
     buf2 = kafkaSource->receiveData();
 
   size_t sz1 = buf1->getBufferSizeInBytes();
   size_t sz2 = buf2->getBufferSizeInBytes();
 
   EXPECT_EQ(sz1, sz2) << "sz1 is " << sz1 << ", whereas sz2 is " << sz2;
-  void* _buf1 = buf2->getBuffer();
-  void* _buf2 = buf2->getBuffer();
-  EXPECT_TRUE(! memcmp(_buf1, _buf2, sz1));
+  void *_buf1 = buf2->getBuffer();
+  void *_buf2 = buf2->getBuffer();
+  EXPECT_TRUE(!memcmp(_buf1, _buf2, sz1));
 }
 
 TEST_F(KafkaTest, DISABLED_KafkaSourceWithInvalidBroker) {
   TupleBufferPtr buf = BufferManager::instance().getBuffer();
 
-  const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers, topic);
+  const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers,
+                                                            topic);
 
   EXPECT_TRUE(kafkaSink->writeData(buf));
 
   const std::string invalid_brokers = "invalid-kafka-broker";
-  const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema, invalid_brokers, topic, groupId, 5);
+  const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(
+      schema, invalid_brokers, topic, groupId, 5);
 
   Timestamp startTick = getTimestamp();
   Timestamp endTick = getTimestamp();
-  while ((endTick - startTick)/(float(1e9)) < 5) {
+  while ((endTick - startTick) / (float(1e9)) < 5) {
     TupleBufferPtr buf2 = kafkaSource->receiveData();
     if (buf2) {
       FAIL();
@@ -236,20 +223,24 @@ TEST_F(KafkaTest, DISABLED_KafkaSinkToSource) {
   BufferManager::instance().setNumberOfBuffers(num_of_buffers);
   BufferManager::instance().setBufferSize(buffer_size);
 
-  std::string path_to_file = "../tests/test_data/ysb-tuples-100-campaign-100.bin";
+  std::string path_to_file =
+      "../tests/test_data/ysb-tuples-100-campaign-100.bin";
   const DataSourcePtr fileSource = createBinaryFileSource(schema, path_to_file);
 
-  const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema, brokers, topic);
-  const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers, topic);
+  const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema,
+                                                                  brokers,
+                                                                  topic);
+  const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers,
+                                                            topic);
 
   while (fileSource->getNumberOfGeneratedBuffers() < num_of_buffers) {
     TupleBufferPtr buf1 = fileSource->receiveData();
     kafkaSink->writeData(buf1);
     TupleBufferPtr buf2 = nullptr;
-    while (! buf2)
+    while (!buf2)
       buf2 = kafkaSource->receiveData();
-    void* _buf1 = buf1->getBuffer();
-    void* _buf2 = buf2->getBuffer();
+    void *_buf1 = buf1->getBuffer();
+    void *_buf2 = buf2->getBuffer();
     size_t sz1 = buf1->getBufferSizeInBytes();
     size_t sz2 = buf2->getBufferSizeInBytes();
 
@@ -259,26 +250,27 @@ TEST_F(KafkaTest, DISABLED_KafkaSinkToSource) {
 }
 
 TEST_F(KafkaTest, KafkaSourceInit) {
-  const cppkafka::Configuration sourceConfig = {
-    { "metadata.broker.list", brokers.c_str() },
-    { "group.id", groupId }
-  };
+  const cppkafka::Configuration sourceConfig = { { "metadata.broker.list",
+      brokers.c_str() }, { "group.id", groupId } };
   {
-    const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema, topic,  sourceConfig);
+    const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(
+        schema, topic, sourceConfig);
   }
   {
-    const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema, brokers, topic);
+    const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema,
+                                                                    brokers,
+                                                                    topic);
   }
   SUCCEED();
 }
 
 TEST_F(KafkaTest, KafkaSourceInitWithoutGroupId) {
-  const cppkafka::Configuration sourceConfig = {
-    { "metadata.broker.list", brokers.c_str() }
-  };
+  const cppkafka::Configuration sourceConfig = { { "metadata.broker.list",
+      brokers.c_str() } };
 
   try {
-    const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema, topic, sourceConfig);
+    const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(
+        schema, topic, sourceConfig);
     FAIL();
   } catch (...) {
     SUCCEED();
@@ -287,84 +279,87 @@ TEST_F(KafkaTest, KafkaSourceInitWithoutGroupId) {
 }
 
 TEST_F(KafkaTest, KafkaSourceInitWithEmptyConfig) {
-  const cppkafka::Configuration sourceConfig = {
-  };
+  const cppkafka::Configuration sourceConfig = { };
 
   try {
-    const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema, topic, sourceConfig);
+    const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(
+        schema, topic, sourceConfig);
     FAIL();
-  } catch (...){
+  } catch (...) {
     SUCCEED();
   }
 }
 
 TEST_F(KafkaTest, KafkaSourceInitWithEmptyTopic) {
-  const cppkafka::Configuration sourceConfig = {
-    { "metadata.broker.list", brokers.c_str() },
-    { "group.id", groupId }
-  };
+  const cppkafka::Configuration sourceConfig = { { "metadata.broker.list",
+      brokers.c_str() }, { "group.id", groupId } };
   try {
-    const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema, std::string(""), sourceConfig);
+    const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(
+        schema, std::string(""), sourceConfig);
     FAIL();
   } catch (...) {
     SUCCEED();
   }
   try {
-    const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema, brokers, std::string(""));
+    const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(
+        schema, brokers, std::string(""));
     FAIL();
-  } catch(...) {
+  } catch (...) {
     SUCCEED();
   }
 }
 
 TEST_F(KafkaTest, KafkaSinkInit) {
-  const cppkafka::Configuration sinkConfig = {
-    { "metadata.broker.list", KAFKA_BROKER },
-    { "request.timeout.ms", 30000 }
-  };
+  const cppkafka::Configuration sinkConfig = { { "metadata.broker.list",
+      KAFKA_BROKER }, { "request.timeout.ms", 30000 } };
   {
-    const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, topic, sinkConfig);
+    const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, topic,
+                                                              sinkConfig);
   }
   {
-    const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers, topic);
+    const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers,
+                                                              topic);
   }
   SUCCEED();
 }
 
 TEST_F(KafkaTest, KafkaSinkInitWithEmptyConfig) {
-  const cppkafka::Configuration sinkConfig = {
-  };
+  const cppkafka::Configuration sinkConfig = { };
   try {
-    const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, topic, sinkConfig);
+    const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, topic,
+                                                              sinkConfig);
     FAIL();
-  } catch(...) {
+  } catch (...) {
     SUCCEED();
   }
 }
 // FIXME: c++ cannot capture error inside librdkafka or C error
 TEST_F(KafkaTest, KafkaSinkInitWithInvalidBroker) {
   {
-    const cppkafka::Configuration sinkConfig = {
-      { "metadata.broker.list", "invalid-kafka-broker" }
-    };
-    const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, topic, sinkConfig);
+    const cppkafka::Configuration sinkConfig = { { "metadata.broker.list",
+        "invalid-kafka-broker" } };
+    const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, topic,
+                                                              sinkConfig);
   }
 
   {
-    const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, std::string("invalid-kafka-broker"), topic);
+    const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(
+        schema, std::string("invalid-kafka-broker"), topic);
   }
   SUCCEED();
 }
 
 TEST_F(KafkaTest, KafkaSinkInitWithEmptyTopic) {
   {
-    const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers, std::string(""));
+    const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers,
+                                                              std::string(""));
   }
   {
-    const cppkafka::Configuration sinkConfig = {
-      { "metadata.broker.list", "invalid-kafka-broker" }
-    };
-    const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, std::string(""), sinkConfig);
+    const cppkafka::Configuration sinkConfig = { { "metadata.broker.list",
+        "invalid-kafka-broker" } };
+    const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema,
+                                                              std::string(""),
+                                                              sinkConfig);
   }
   SUCCEED();
 }

@@ -23,51 +23,37 @@ namespace NES {
 class WindowManagerTest : public testing::Test {
  public:
   static void SetUpTestCase() {
-    setupLogging();
+    NES::setupLogging("WindowManagerTest.log", NES::LOG_DEBUG);
     NES_INFO("Setup WindowMangerTest test class.");
   }
 
-  static void TearDownTestCase() { std::cout << "Tear down WindowManager test class." << std::endl; }
+  static void TearDownTestCase() {
+    std::cout << "Tear down WindowManager test class." << std::endl;
+  }
 
   const size_t buffers_managed = 10;
   const size_t buffer_size = 4 * 1024;
- protected:
-  static void setupLogging() {
-    // create PatternLayout
-    log4cxx::LayoutPtr layoutPtr(
-        new log4cxx::PatternLayout("%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
-
-    // create FileAppender
-    LOG4CXX_DECODE_CHAR(fileName, "WindowManager.log");
-    log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
-
-    // create ConsoleAppender
-    log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
-
-    // set log level
-    // logger->setLevel(log4cxx::Level::getDebug());
-    NESLogger->setLevel(log4cxx::Level::getInfo());
-
-    // add appenders and other will inherit the settings
-    NESLogger->addAppender(file);
-    NESLogger->addAppender(console);
-  }
-
 };
 
 class TestAggregation : public WindowAggregation {
  public:
-  TestAggregation() : WindowAggregation() {};
+  TestAggregation()
+      :
+      WindowAggregation() {
+  }
+  ;
   void compileLiftCombine(CompoundStatementPtr currentCode,
                           BinaryOperatorStatement partialRef,
                           StructDeclaration inputStruct,
-                          BinaryOperatorStatement inputRef) {};
+                          BinaryOperatorStatement inputRef) {
+  }
+  ;
 };
 
 TEST_F(WindowManagerTest, sum_aggregation_test) {
   auto field = createField("test", 4);
   const WindowAggregationPtr aggregation = Sum::on(Field(field));
-  if (Sum *store = dynamic_cast<Sum *>(aggregation.get())) {
+  if (Sum *store = dynamic_cast<Sum*>(aggregation.get())) {
     auto partial = store->lift<int64_t, int64_t>(1L);
     auto partial2 = store->lift<int64_t, int64_t>(2L);
     auto combined = store->combine<int64_t>(partial, partial2);
@@ -81,7 +67,10 @@ TEST_F(WindowManagerTest, check_slice) {
   auto store = new WindowSliceStore<int64_t>(0L);
   auto aggregation = std::make_shared<TestAggregation>(TestAggregation());
 
-  auto windowDef = std::make_shared<WindowDefinition>(WindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::EventTime, Seconds(60))));
+  auto windowDef = std::make_shared<WindowDefinition>(
+      WindowDefinition(
+          aggregation,
+          TumblingWindow::of(TimeCharacteristic::EventTime, Seconds(60))));
 
   auto windowManager = new WindowManager(windowDef);
   uint64_t ts = 10;
@@ -101,19 +90,22 @@ TEST_F(WindowManagerTest, check_slice) {
 
 TEST_F(WindowManagerTest, window_trigger) {
 
-  Schema schema = Schema::create()
-      .addField("id", BasicType::UINT32)
-      .addField("value", BasicType::UINT64);
+  Schema schema = Schema::create().addField("id", BasicType::UINT32).addField(
+      "value", BasicType::UINT64);
 
   auto aggregation = Sum::on(schema.get("id"));
 
-  auto windowDef = std::make_shared<WindowDefinition>(WindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::EventTime, Milliseconds(10))));
+  auto windowDef = std::make_shared<WindowDefinition>(
+      WindowDefinition(
+          aggregation,
+          TumblingWindow::of(TimeCharacteristic::EventTime, Milliseconds(10))));
 
   auto w = WindowHandler(windowDef);
   w.setup(nullptr, 0);
 
-  auto windowState = (StateVariable<int64_t, WindowSliceStore<int64_t>*>*) w.getWindowState();
-  auto  keyRef = windowState->get(10);
+  auto windowState = (StateVariable<int64_t, WindowSliceStore<int64_t>*>*) w
+      .getWindowState();
+  auto keyRef = windowState->get(10);
   keyRef.valueOrDefault(0);
   auto store = keyRef.value();
 
@@ -131,18 +123,18 @@ TEST_F(WindowManagerTest, window_trigger) {
   // std::cout << aggregates[sliceIndex] << std::endl;
   //ASSERT_EQ(buffers_count, buffers_managed);
 
-  ASSERT_EQ(aggregates[sliceIndex],1);
+  ASSERT_EQ(aggregates[sliceIndex], 1);
 
   TupleBufferPtr buf = BufferManager::instance().getBuffer();
-  w.aggregateWindows<int64_t , int64_t >(store, windowDef, buf);
+  w.aggregateWindows<int64_t, int64_t>(store, windowDef, buf);
 
   size_t tupleCnt = buf->getNumberOfTuples();
 
   assert(buf->getBuffer() != NULL);
   assert(tupleCnt == 1);
 
-  uint64_t *tuples = (uint64_t *) buf->getBuffer();
-  ASSERT_EQ(tuples[0],1);
+  uint64_t *tuples = (uint64_t*) buf->getBuffer();
+  ASSERT_EQ(tuples[0], 1);
 }
 
 }

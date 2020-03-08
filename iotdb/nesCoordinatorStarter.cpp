@@ -18,26 +18,6 @@
 namespace po = boost::program_options;
 using namespace NES;
 
-static void setupLogging() {
-// create PatternLayout
-  log4cxx::LayoutPtr layoutPtr(
-      new log4cxx::PatternLayout(
-          "%d{MMM dd yyyy HH:mm:ss} %c:%L [%-5t] [%p] : %m%n"));
-
-// create FileAppender
-  LOG4CXX_DECODE_CHAR(fileName, "nesCoordinator.log");
-  log4cxx::FileAppenderPtr file(new log4cxx::FileAppender(layoutPtr, fileName));
-
-// create ConsoleAppender
-  log4cxx::ConsoleAppenderPtr console(new log4cxx::ConsoleAppender(layoutPtr));
-
-// set log level
-  NES::NESLogger->setLevel(log4cxx::Level::getDebug());
-// add appenders and other will inherit the settings
-  NES::NESLogger->addAppender(file);
-  NES::NESLogger->addAppender(console);
-}
-
 void startCLI(NesCoordinatorPtr coord) {
   bool done = false;
   infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle = coord
@@ -128,7 +108,8 @@ void startCLI(NesCoordinatorPtr coord) {
 }
 
 int main(int argc, const char *argv[]) {
-  setupLogging();
+  NES::setupLogging("nesCoordinatorStarter.log", NES::LOG_DEBUG);
+
   // Initializing defaults
   uint16_t port = 8081;
   uint16_t actorPort = 0;
