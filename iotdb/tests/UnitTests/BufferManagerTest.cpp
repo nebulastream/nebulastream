@@ -15,9 +15,7 @@ namespace NES {
 class BufferManagerTest : public testing::Test {
  public:
   static void SetUpTestCase() {
-#ifdef DEBUG_OUTPUT
-    setupLogging();
-#endif
+    NES::setupLogging("FileSourceTest.log", NES::LOG_DEBUG);
     NES_INFO("Setup BufferMangerTest test class.");
     BufferManager::instance().setNumberOfBuffers(10);
   }

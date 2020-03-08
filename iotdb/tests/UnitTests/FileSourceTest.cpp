@@ -140,7 +140,7 @@ int testCSVSource() {
 }
 
 int main(int argc, const char* argv[]) {
-    NES::setupLogger();
+    NES::setupLogging("FileSourceTest.log", NES::LOG_DEBUG);
     NES::Dispatcher::instance();
     NES::BufferManager::instance();
     NES::testBinarySource();
