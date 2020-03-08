@@ -20,7 +20,7 @@ OperatorType AggregationLogicalOperatorNode::getOperatorType() const {
 
 AggregationLogicalOperatorNode::~AggregationLogicalOperatorNode() {}
 
-bool AggregationLogicalOperatorNode::equals(const BaseOperatorNode& rhs) const {
+bool AggregationLogicalOperatorNode::equals(const Node& rhs) const {
     try {
         auto& rhs_ = dynamic_cast<const AggregationLogicalOperatorNode&>(rhs);
         return true;
@@ -30,7 +30,7 @@ bool AggregationLogicalOperatorNode::equals(const BaseOperatorNode& rhs) const {
 
 }
 
-const BaseOperatorNodePtr createAggregationLogicalOperatorNode(const AggregationSpec& aggrSpec) {
+const NodePtr createAggregationLogicalOperatorNode(const AggregationSpec& aggrSpec) {
     return std::make_shared<AggregationLogicalOperatorNode>(aggrSpec);
 }
 

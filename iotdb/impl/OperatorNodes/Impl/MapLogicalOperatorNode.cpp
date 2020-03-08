@@ -16,7 +16,7 @@ const std::string MapLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-bool MapLogicalOperatorNode::equals(const BaseOperatorNode& rhs) const {
+bool MapLogicalOperatorNode::equals(const Node& rhs) const {
     try {
         auto& rhs_ = dynamic_cast<const MapLogicalOperatorNode&>(rhs);
         return true;
@@ -25,7 +25,7 @@ bool MapLogicalOperatorNode::equals(const BaseOperatorNode& rhs) const {
     }
 }
 
-const BaseOperatorNodePtr createMapLogicalOperatorNode(const AttributeFieldPtr& field, const PredicatePtr& predicate) {
+const NodePtr createMapLogicalOperatorNode(const AttributeFieldPtr& field, const PredicatePtr& predicate) {
     return std::make_shared<MapLogicalOperatorNode>(field, predicate);
 }
 }

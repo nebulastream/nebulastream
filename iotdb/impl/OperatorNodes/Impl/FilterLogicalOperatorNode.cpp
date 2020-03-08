@@ -17,7 +17,7 @@ FilterLogicalOperatorNode::FilterLogicalOperatorNode(const FilterLogicalOperator
     }
 }
 
-bool FilterLogicalOperatorNode::equals(const BaseOperatorNode& rhs) const {
+bool FilterLogicalOperatorNode::equals(const Node& rhs) const {
     try {
         auto& rhs_ = dynamic_cast<const FilterLogicalOperatorNode &>(rhs);
         return predicate_->equals(*rhs_.predicate_.get());
@@ -26,7 +26,7 @@ bool FilterLogicalOperatorNode::equals(const BaseOperatorNode& rhs) const {
     }
 }
 
-BaseOperatorNodePtr FilterLogicalOperatorNode::makeShared() {
+NodePtr FilterLogicalOperatorNode::makeShared() {
     // std::cout << "call filter-logical-operator-node's make shared" << std::endl;
     return shared_from_this();
 }
@@ -40,11 +40,11 @@ const std::string FilterLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-const BaseOperatorNodePtr createFilterLogicalOperatorNode(const PredicatePtr& predicate) {
+const NodePtr createFilterLogicalOperatorNode(const PredicatePtr& predicate) {
     return std::make_shared<FilterLogicalOperatorNode>(predicate);
 }
 
 template
-FilterLogicalOperatorNode& BaseOperatorNode::as<FilterLogicalOperatorNode>();
+FilterLogicalOperatorNode& Node::as<FilterLogicalOperatorNode>();
 
 }

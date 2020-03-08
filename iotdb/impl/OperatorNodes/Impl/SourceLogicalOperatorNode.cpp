@@ -14,7 +14,7 @@ SourceLogicalOperatorNode::SourceLogicalOperatorNode(const OperatorPtr op) {
     std::cout << "op: " << op->toString() << std::endl;
 }
 
-bool SourceLogicalOperatorNode::equals(const BaseOperatorNode& rhs) const {
+bool SourceLogicalOperatorNode::equals(const Node& rhs) const {
     // try {
     //     auto& rhs_ = dynamic_cast<const SourceLogicalOperatorNode&>(rhs);
     //     return true;
@@ -36,7 +36,7 @@ const std::string SourceLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-const BaseOperatorNodePtr createSourceLogicalOperatorNode(const DataSourcePtr& source) {
+const NodePtr createSourceLogicalOperatorNode(const DataSourcePtr& source) {
     return std::make_shared<SourceLogicalOperatorNode>(source);
 }
 

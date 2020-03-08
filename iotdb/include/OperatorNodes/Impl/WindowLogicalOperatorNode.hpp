@@ -2,11 +2,11 @@
 #define WINDOW_LOGICAL_OPERATOR_NODE_HPP
 
 #include <memory>
-#include <OperatorNodes/BaseOperatorNode.hpp>
+#include <OperatorNodes/Node.hpp>
 
 namespace NES {
 
-class WindowLogicalOperatorNode : public BaseOperatorNode,
+class WindowLogicalOperatorNode : public Node,
                                   public std::enable_shared_from_this<WindowLogicalOperatorNode> {
   public:
 
@@ -15,8 +15,8 @@ class WindowLogicalOperatorNode : public BaseOperatorNode,
     OperatorType getOperatorType() const override;
     const WindowDefinitionPtr& getWindowDefinition() const;
 
-    virtual BaseOperatorNodePtr makeShared() override { return shared_from_this(); };
-    virtual bool equals(const BaseOperatorNode& rhs) const override;
+    virtual NodePtr makeShared() override { return shared_from_this(); };
+    virtual bool equals(const Node& rhs) const override;
   private:
     WindowDefinitionPtr window_definition;
 };

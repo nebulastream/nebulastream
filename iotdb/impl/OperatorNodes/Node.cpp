@@ -1,18 +1,18 @@
 #include <queue>
 #include <unordered_set>
 #include <Util/UtilityFunctions.hpp>
-#include <OperatorNodes/BaseOperatorNode.hpp>
+#include <OperatorNodes/Node.hpp>
 
 namespace NES {
 
-BaseOperatorNode::BaseOperatorNode() : operatorId(UtilityFunctions::generateUuid()), visited(false), recStack(false) {
+Node::Node() : operatorId(UtilityFunctions::generateUuid()), visited(false), recStack(false) {
 }
 
-BaseOperatorNode::~BaseOperatorNode() {
+Node::~Node() {
 
 }
 
-void BaseOperatorNode::addSuccessor(const BaseOperatorNodePtr& op) {
+void Node::addSuccessor(const NodePtr& op) {
     assert(op);
     if (op.get() == this)
         return;
@@ -25,7 +25,7 @@ void BaseOperatorNode::addSuccessor(const BaseOperatorNodePtr& op) {
     }
 }
 
-void BaseOperatorNode::addPredecessor(const BaseOperatorNodePtr& op) {
+void Node::addPredecessor(const NodePtr& op) {
     assert(op);
     if (op.get() == this)
         return;
@@ -38,7 +38,7 @@ void BaseOperatorNode::addPredecessor(const BaseOperatorNodePtr& op) {
     }
 }
 
-bool BaseOperatorNode::removeSuccessor(const BaseOperatorNodePtr& op) {
+bool Node::removeSuccessor(const NodePtr& op) {
     assert(op);
 
     for (auto opIt = this->successors.begin(); opIt != this->successors.end(); ++ opIt) {
@@ -62,7 +62,7 @@ bool BaseOperatorNode::removeSuccessor(const BaseOperatorNodePtr& op) {
     return false;
 }
 
-bool BaseOperatorNode::removePredecessor(const BaseOperatorNodePtr& op) {
+bool Node::removePredecessor(const NodePtr& op) {
     assert(op);
 
     for (auto opIt = this->predecessors.begin(); opIt != this->predecessors.end(); ++ opIt) {
@@ -85,7 +85,7 @@ bool BaseOperatorNode::removePredecessor(const BaseOperatorNodePtr& op) {
     return false;
 }
 
-bool BaseOperatorNode::replace(BaseOperatorNodePtr newOp, BaseOperatorNodePtr oldOp) {
+bool Node::replace(NodePtr newOp, NodePtr oldOp) {
     assert(oldOp);
     assert(newOp);
 
@@ -122,12 +122,12 @@ bool BaseOperatorNode::replace(BaseOperatorNodePtr newOp, BaseOperatorNodePtr ol
     return false;
 }
 
-bool BaseOperatorNode::remove(const BaseOperatorNodePtr& op) {
+bool Node::remove(const NodePtr& op) {
     // NOTE: if there is a ring inside the operator topology, it won't behave correctly.
     return this->removeSuccessor(op) || this->removePredecessor(op);
 }
 
-bool BaseOperatorNode::removeAndLevelUpSuccessors(const BaseOperatorNodePtr& op) {
+bool Node::removeAndLevelUpSuccessors(const NodePtr& op) {
     assert(op);
 
     // if a successor of op is equal to this->successors,
@@ -150,34 +150,34 @@ bool BaseOperatorNode::removeAndLevelUpSuccessors(const BaseOperatorNodePtr& op)
     return false;
 }
 
-void BaseOperatorNode::clear() {
+void Node::clear() {
     this->successors.clear();
     this->predecessors.clear();
 }
 
-const std::vector<BaseOperatorNodePtr>& BaseOperatorNode::getSuccessors() const {
+const std::vector<NodePtr>& Node::getSuccessors() const {
     return this->successors;
 }
 
-const std::vector<BaseOperatorNodePtr>& BaseOperatorNode::getPredecessors() const {
+const std::vector<NodePtr>& Node::getPredecessors() const {
     return this->predecessors;
 }
 
-// size_t BaseOperatorNode::getOperatorId() const {
+// size_t Node::getOperatorId() const {
 //     return this->operatorId;
 // }
-// void BaseOperatorNode::setOperatorId(const size_t id) {
+// void Node::setOperatorId(const size_t id) {
 //     this->operatorId = id;
 // }
-const std::string BaseOperatorNode::getOperatorId() const {
+const std::string Node::getOperatorId() const {
     return this->operatorId;
 }
 
-void BaseOperatorNode::setOperatorId(const std::string& id) {
+void Node::setOperatorId(const std::string& id) {
     // this->operatorId = id;
 }
 
-BaseOperatorNodePtr BaseOperatorNode::find(const std::vector<BaseOperatorNodePtr>& operatorNodes, const BaseOperatorNodePtr& op) {
+NodePtr Node::find(const std::vector<NodePtr>& operatorNodes, const NodePtr& op) {
     for (auto&& op_ : operatorNodes) {
         if (op->equals(*op_.get())) {
             return op_;
@@ -186,9 +186,9 @@ BaseOperatorNodePtr BaseOperatorNode::find(const std::vector<BaseOperatorNodePtr
     return nullptr;
 }
 
-BaseOperatorNodePtr BaseOperatorNode::findRecursively(BaseOperatorNode& root, BaseOperatorNode& op) {
+NodePtr Node::findRecursively(Node& root, Node& op) {
     // DFS
-    BaseOperatorNodePtr x = nullptr;
+    NodePtr x = nullptr;
     // two operator are equal, may not the same object
     if (root == op)
         return root.makeShared();
@@ -203,7 +203,7 @@ BaseOperatorNodePtr BaseOperatorNode::findRecursively(BaseOperatorNode& root, Ba
     return x;
 }
 
-bool BaseOperatorNode::equalWithAllSuccessorsHelper(const BaseOperatorNode& op1, const BaseOperatorNode& op2) {
+bool Node::equalWithAllSuccessorsHelper(const Node& op1, const Node& op2) {
     if (op1.successors.size() != op2.successors.size())
         return false;
 
@@ -228,7 +228,7 @@ bool BaseOperatorNode::equalWithAllSuccessorsHelper(const BaseOperatorNode& op1,
     return true;
 }
 
-bool BaseOperatorNode::equalWithAllSuccessors(const BaseOperatorNodePtr& op) {
+bool Node::equalWithAllSuccessors(const NodePtr& op) {
     // the root is equal
     if (! this->equals(*op.get()))
         return false;
@@ -236,7 +236,7 @@ bool BaseOperatorNode::equalWithAllSuccessors(const BaseOperatorNodePtr& op) {
     return equalWithAllSuccessorsHelper(*this, *op.get());
 }
 
-bool BaseOperatorNode::equalWithAllPredecessorsHelper(const BaseOperatorNode& op1, const BaseOperatorNode& op2) {
+bool Node::equalWithAllPredecessorsHelper(const Node& op1, const Node& op2) {
     if (op1.predecessors.size() != op2.predecessors.size())
         return false;
 
@@ -263,7 +263,7 @@ bool BaseOperatorNode::equalWithAllPredecessorsHelper(const BaseOperatorNode& op
 
 }
 
-bool BaseOperatorNode::equalWithAllPredecessors(const BaseOperatorNodePtr& op) {
+bool Node::equalWithAllPredecessors(const NodePtr& op) {
     // the root is equal
     if (! this->equals(*op.get()))
         return false;
@@ -271,8 +271,8 @@ bool BaseOperatorNode::equalWithAllPredecessors(const BaseOperatorNodePtr& op) {
     return equalWithAllPredecessorsHelper(*this, *op.get());
 }
 
-std::vector<BaseOperatorNodePtr> BaseOperatorNode::getOperatorsByType(const OperatorType& type) {
-        std::vector<BaseOperatorNodePtr> vec {};
+std::vector<NodePtr> Node::getOperatorsByType(const OperatorType& type) {
+        std::vector<NodePtr> vec {};
     if (this->getOperatorType() == type) {
         vec.push_back(this->makeShared());
     }
@@ -280,9 +280,9 @@ std::vector<BaseOperatorNodePtr> BaseOperatorNode::getOperatorsByType(const Oper
     return std::move(vec);
 }
 
-void BaseOperatorNode::getOperatorsByTypeHelper(BaseOperatorNode& op,
-                                                std::vector<BaseOperatorNodePtr>& allChildren,
-                                                BaseOperatorNode& excludedOp,
+void Node::getOperatorsByTypeHelper(Node& op,
+                                                std::vector<NodePtr>& allChildren,
+                                                Node& excludedOp,
                                                 const OperatorType& type) {
     // NOTE: poor performance
     for (auto && op_ : op.successors) {
@@ -297,12 +297,12 @@ void BaseOperatorNode::getOperatorsByTypeHelper(BaseOperatorNode& op,
 }
 
 
-std::vector<BaseOperatorNodePtr> BaseOperatorNode::split(const BaseOperatorNodePtr& op) {
+std::vector<NodePtr> Node::split(const NodePtr& op) {
     auto op_ = findRecursively(*this, *op.get());
     if (! op_) {
         throw std::invalid_argument("received operator not in graph.");
     }
-    std::vector<BaseOperatorNodePtr> vec {};
+    std::vector<NodePtr> vec {};
 
     while (op_->predecessors.size() > 0) {
         auto p = op_->predecessors[0];
@@ -314,7 +314,7 @@ std::vector<BaseOperatorNodePtr> BaseOperatorNode::split(const BaseOperatorNodeP
     return vec;
 }
 
-bool BaseOperatorNode::swap(const BaseOperatorNodePtr& newOp, const BaseOperatorNodePtr& oldOp) {
+bool Node::swap(const NodePtr& newOp, const NodePtr& oldOp) {
     auto op = findRecursively(*this, *oldOp.get());
     // oldOp is not in current graph
     if (! op) {
@@ -350,27 +350,27 @@ bool BaseOperatorNode::swap(const BaseOperatorNodePtr& newOp, const BaseOperator
     return true;
 }
 
-bool BaseOperatorNode::instanceOf(const OperatorType& type) {
+bool Node::instanceOf(const OperatorType& type) {
     if (this->getOperatorType() == type)
         return true;
     return false;
 }
 
-bool BaseOperatorNode::isValid() {
+bool Node::isValid() {
     return ! isCyclic();
 }
 
-std::vector<BaseOperatorNodePtr>BaseOperatorNode::getAndFlattenAllSuccessors() {
-    std::vector<BaseOperatorNodePtr> allChildren {};
+std::vector<NodePtr>Node::getAndFlattenAllSuccessors() {
+    std::vector<NodePtr> allChildren {};
     getAndFlattenAllSuccessorsHelper(*this, allChildren, *this);
     return allChildren;
 }
 
-void BaseOperatorNode::getAndFlattenAllSuccessorsHelper(BaseOperatorNode& op,
-                                                        std::vector<BaseOperatorNodePtr>& allChildren, BaseOperatorNode& excludedOp) {
-                                                        // bool predicateFunc(std::vector<BaseOperatorNodePtr>&,
-                                                                           // BaseOperatorNodePtr& op,
-                                                                           // BaseOperatorNode& excludedOp,
+void Node::getAndFlattenAllSuccessorsHelper(Node& op,
+                                            std::vector<NodePtr>& allChildren, Node& excludedOp) {
+                                                        // bool predicateFunc(std::vector<NodePtr>&,
+                                                                           // NodePtr& op,
+                                                                           // Node& excludedOp,
                                                                            // OperatorType& type)) {
     // NOTE: poor performance
     for (auto && op_ : op.successors) {
@@ -382,7 +382,7 @@ void BaseOperatorNode::getAndFlattenAllSuccessorsHelper(BaseOperatorNode& op,
     }
 }
 
-bool BaseOperatorNode::isCyclic() {
+bool Node::isCyclic() {
     auto allChildren = getAndFlattenAllSuccessors();
     for (auto && op : allChildren) {
         op->visited = false;
@@ -412,7 +412,7 @@ bool BaseOperatorNode::isCyclic() {
     return false;
 }
 
-bool BaseOperatorNode::isCyclicHelper(BaseOperatorNode& op) {
+bool Node::isCyclicHelper(Node& op) {
     // DFS
     op.visited = true;
     op.recStack = true;
@@ -425,11 +425,11 @@ bool BaseOperatorNode::isCyclicHelper(BaseOperatorNode& op) {
     op.recStack = false;
     return false;
 }
-void BaseOperatorNode::prettyPrint(std::ostream& out) const {
+void Node::prettyPrint(std::ostream& out) const {
     this->printHelper(*this, 0, 2, out);
 }
 
-void BaseOperatorNode::printHelper(const BaseOperatorNode& op, size_t depth, size_t indent, std::ostream& out) const {
+void Node::printHelper(const Node& op, size_t depth, size_t indent, std::ostream& out) const {
 
     out << std::string(indent*depth, ' ') << op.toString()
         // << ", <#id: " << op.getOperatorId() << ">"

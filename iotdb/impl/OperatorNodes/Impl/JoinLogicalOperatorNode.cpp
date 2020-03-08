@@ -14,7 +14,7 @@ OperatorType JoinLogicalOperatorNode::getOperatorType() const {
     return OperatorType::JOIN_OP;
 }
 
-bool JoinLogicalOperatorNode::equals(const BaseOperatorNode& rhs) const {
+bool JoinLogicalOperatorNode::equals(const Node& rhs) const {
     try {
         auto& rhs_ = dynamic_cast<const JoinLogicalOperatorNode&>(rhs);
         return true;
@@ -23,7 +23,7 @@ bool JoinLogicalOperatorNode::equals(const BaseOperatorNode& rhs) const {
     }
 }
 
-const BaseOperatorNodePtr createJoinLogicalOperatorNode(const JoinPredicatePtr& joinSpec) {
+const NodePtr createJoinLogicalOperatorNode(const JoinPredicatePtr& joinSpec) {
     return std::make_shared<JoinLogicalOperatorNode>(joinSpec);
 }
 

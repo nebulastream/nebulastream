@@ -12,8 +12,8 @@
 
 namespace NES {
 
-BaseOperatorNodePtr createLogicalOperatorNodeFromOperator(const OperatorPtr op) {
-    BaseOperatorNodePtr logicalOp = nullptr;
+NodePtr createLogicalOperatorNodeFromOperator(const OperatorPtr op) {
+    NodePtr logicalOp = nullptr;
     switch (op->getOperatorType()) {
     case SOURCE_OP:
         logicalOp = createSourceLogicalOperatorNode(nullptr);
@@ -51,7 +51,7 @@ LogicalOperatorPlan::LogicalOperatorPlan(const Stream& stream)
 
 
 void LogicalOperatorPlan::fromSubOperator(const OperatorPtr op) {
-    BaseOperatorNodePtr logicalOp = createLogicalOperatorNodeFromOperator(op);
+    NodePtr logicalOp = createLogicalOperatorNodeFromOperator(op);
 
     if (root == nullptr) {
         root = logicalOp;
@@ -60,7 +60,7 @@ void LogicalOperatorPlan::fromSubOperator(const OperatorPtr op) {
         logicalOp->addPredecessor(root);
     }
 
-    BaseOperatorNodePtr tmpRoot = root;
+    NodePtr tmpRoot = root;
     root = logicalOp;
 
     auto children = op->getChildren();
@@ -79,8 +79,8 @@ void LogicalOperatorPlan::fromQueryHelper(const OperatorPtr op, const OperatorPt
     if (! op) {
         return;
     }
-    BaseOperatorNodePtr _parentOp = nullptr;
-    BaseOperatorNodePtr _op = createLogicalOperatorNodeFromOperator(op);
+    NodePtr _parentOp = nullptr;
+    NodePtr _op = createLogicalOperatorNodeFromOperator(op);
     if (parentOp == nullptr) {
         std::cout << "only once" << std::endl;
         root = _op;
@@ -97,7 +97,7 @@ void LogicalOperatorPlan::fromQueryHelper(const OperatorPtr op, const OperatorPt
     }
 }
 
-void LogicalOperatorPlan::printHelper(BaseOperatorNodePtr op, size_t depth, size_t indent) const {
+void LogicalOperatorPlan::printHelper(NodePtr op, size_t depth, size_t indent) const {
     if (! op) {
         return;
     }
@@ -118,7 +118,7 @@ void LogicalOperatorPlan::prettyPrint() const {
 
 LogicalOperatorPlan LogicalOperatorPlan::from(Stream& stream) {
     LogicalOperatorPlan q(stream);
-    BaseOperatorNodePtr op = createSourceLogicalOperatorNode(
+    NodePtr op = createSourceLogicalOperatorNode(
         createTestDataSourceWithSchema(stream.getSchema()));
     // size_t operatorId = q.getNextOperatorId();
     std::string operatorId = UtilityFunctions::generateUuid();
@@ -129,7 +129,7 @@ LogicalOperatorPlan LogicalOperatorPlan::from(Stream& stream) {
 
 LogicalOperatorPlan& LogicalOperatorPlan::filter(const UserAPIExpression& predicate) {
     PredicatePtr pred = createPredicate(predicate);
-    const BaseOperatorNodePtr op = createFilterLogicalOperatorNode(pred);
+    const NodePtr op = createFilterLogicalOperatorNode(pred);
     // int operatorId = this->getNextOperatorId();
     std::string operatorId = UtilityFunctions::generateUuid();
     op->setOperatorId(operatorId);
@@ -143,7 +143,7 @@ LogicalOperatorPlan& LogicalOperatorPlan::filter(const UserAPIExpression& predic
 LogicalOperatorPlan& LogicalOperatorPlan::map(const AttributeField& field, const Predicate& predicate) {
     AttributeFieldPtr attr = field.copy();
     PredicatePtr pred = createPredicate(predicate);
-    const BaseOperatorNodePtr op = createMapLogicalOperatorNode(attr, pred);
+    const NodePtr op = createMapLogicalOperatorNode(attr, pred);
     // size_t operatorId = this->getNextOperatorId();
     std::string operatorId = UtilityFunctions::generateUuid();
 
@@ -157,7 +157,7 @@ LogicalOperatorPlan& LogicalOperatorPlan::map(const AttributeField& field, const
 
 LogicalOperatorPlan& LogicalOperatorPlan::join(const LogicalOperatorPlan& subQuery,
                                                const JoinPredicatePtr joinPred) {
-    BaseOperatorNodePtr op = createJoinLogicalOperatorNode(joinPred);
+    NodePtr op = createJoinLogicalOperatorNode(joinPred);
     std::string operatorId = UtilityFunctions::generateUuid();
     op->setOperatorId(operatorId);
     root->addPredecessor(op);
@@ -173,7 +173,7 @@ LogicalOperatorPlan& LogicalOperatorPlan::windowByKey(const AttributeFieldPtr& o
                                                       const WindowAggregationPtr& aggregation) {
     auto windowDefPtr = std::make_shared<WindowDefinition>(onKey, aggregation,
                                                              windowType);
-    const BaseOperatorNodePtr op = createWindowLogicalOperatorNode(windowDefPtr);
+    const NodePtr op = createWindowLogicalOperatorNode(windowDefPtr);
     // size_t operatorId = this->getNextOperatorId();
     std::string operatorId = UtilityFunctions::generateUuid();
 
@@ -190,7 +190,7 @@ LogicalOperatorPlan& LogicalOperatorPlan::window(const WindowTypePtr& windowType
                                                  const WindowAggregationPtr& aggregation) {
     auto windowDefPtr = std::make_shared<WindowDefinition>(aggregation,
                                                            windowType);
-    const BaseOperatorNodePtr op = createWindowLogicalOperatorNode(windowDefPtr);
+    const NodePtr op = createWindowLogicalOperatorNode(windowDefPtr);
     // size_t operatorId = this->getNextOperatorId();
     std::string operatorId = UtilityFunctions::generateUuid();
 
@@ -204,7 +204,7 @@ LogicalOperatorPlan& LogicalOperatorPlan::window(const WindowTypePtr& windowType
 }
 
 LogicalOperatorPlan& LogicalOperatorPlan::print(std::ostream& out) {
-    const BaseOperatorNodePtr op = createSinkLogicalOperatorNode(
+    const NodePtr op = createSinkLogicalOperatorNode(
         createPrintSinkWithoutSchema(out));
     // size_t operatorId = this->getNextOperatorId();
     std::string operatorId = UtilityFunctions::generateUuid();
@@ -218,8 +218,8 @@ LogicalOperatorPlan& LogicalOperatorPlan::print(std::ostream& out) {
     return *this;
 }
 
-BaseOperatorNodePtr LogicalOperatorPlan::getOperatorNodeById(const std::string& id) const {
-    std::queue<BaseOperatorNodePtr> opList;
+NodePtr LogicalOperatorPlan::getOperatorNodeById(const std::string& id) const {
+    std::queue<NodePtr> opList;
     opList.push(root);
 
     while (! opList.empty()) {
@@ -238,7 +238,7 @@ BaseOperatorNodePtr LogicalOperatorPlan::getOperatorNodeById(const std::string& 
     std::cout << "Not found operator " << id << std::endl;
     return nullptr;
 }
-BaseOperatorNodePtr LogicalOperatorPlan::getRoot() const {
+NodePtr LogicalOperatorPlan::getRoot() const {
     return root;
 }
 

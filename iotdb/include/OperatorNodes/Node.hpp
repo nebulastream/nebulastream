@@ -12,41 +12,38 @@
 namespace NES {
 
 class FilterLogicalOperatorNode;
-class BaseOperatorNode;
+class Node;
 
-typedef std::shared_ptr<BaseOperatorNode> BaseOperatorNodePtr;
+typedef std::shared_ptr<Node> NodePtr;
 
-/**
-todo rename to Node.
-*/
-class BaseOperatorNode {
-public:
-    BaseOperatorNode();
-    ~BaseOperatorNode();
+class Node {
+  public:
+    Node();
+    ~Node();
     /**
      * @brief add a successor to vector of successors
      *        no duplicated operator inside successors.
      *        one cannot add current operator into its successors
      * @param op
      */
-    void addSuccessor(const BaseOperatorNodePtr& op);
+    void addSuccessor(const NodePtr& op);
     /**
      * @brief remove a successor from vector of successors.
      * @param op
      */
-    bool removeSuccessor(const BaseOperatorNodePtr& op);
+    bool removeSuccessor(const NodePtr& op);
     /**
      * @brief add a predecessor to vector of predecessors
      *        no duplicated operator inside predecessors.
      *        one cannot add current operator into its predecessors.
      * @param op
      */
-    void addPredecessor(const BaseOperatorNodePtr& op);
+    void addPredecessor(const NodePtr& op);
     /**
      * @brief remove a predecessor from vector of predecessors
      * @param op
      */
-    bool removePredecessor(const BaseOperatorNodePtr& op);
+    bool removePredecessor(const NodePtr& op);
     /**
      * @brief replace an old opertoar with new operator
      * 1) oldOperator is the successor of current operator, remove oldOperator
@@ -59,7 +56,7 @@ public:
      * @param newOperator
      * @param oldOperator
      */
-    bool replace(BaseOperatorNodePtr newOperator, BaseOperatorNodePtr oldOperator);
+    bool replace(NodePtr newOperator, NodePtr oldOperator);
 
     /**
      * @brief swap given old operator by new operator
@@ -67,21 +64,21 @@ public:
      * @param oldOp the operator to remove from graph
      * @return true if swapping successfully otherwise false
      */
-    bool swap(const BaseOperatorNodePtr& newOp, const BaseOperatorNodePtr& oldOp);
+    bool swap(const NodePtr& newOp, const NodePtr& oldOp);
 
     /**
      * @brief remove the given operator together with its successors
      * @param op the given operator to remove
      * @return bool true if
      */
-    bool remove(const BaseOperatorNodePtr& op);
+    bool remove(const NodePtr& op);
     /**
      * @brief remove the given operator and level up its successors
      * @param op
 
      * @return bool true if
      */
-    bool removeAndLevelUpSuccessors(const BaseOperatorNodePtr& op);
+    bool removeAndLevelUpSuccessors(const NodePtr& op);
     /**
      * @brief clear all predecessors and successors
      */
@@ -97,11 +94,11 @@ public:
     const std::string getOperatorId() const;
     void setOperatorId(const std::string& id);
 
-    const std::vector<BaseOperatorNodePtr>& getSuccessors() const;
-    const std::vector<BaseOperatorNodePtr>& getPredecessors() const;
+    const std::vector<NodePtr>& getSuccessors() const;
+    const std::vector<NodePtr>& getPredecessors() const;
 
-    bool equalWithAllSuccessors(const BaseOperatorNodePtr& rhs);
-    bool equalWithAllPredecessors(const BaseOperatorNodePtr& rhs);
+    bool equalWithAllSuccessors(const NodePtr& rhs);
+    bool equalWithAllPredecessors(const NodePtr& rhs);
 
     /**
      * @brief check two operators are equal or not. Noting they could be
@@ -110,35 +107,35 @@ public:
      * @return bool true if they are the same otherwise false
      * @TODO should be a pure virtual function
      */
-    virtual bool equals(const BaseOperatorNode& rhs) const { return true; };
+    virtual bool equals(const Node& rhs) const { return true; };
     /**
      * @brief overload operator==, same as equals() function
      */
-    virtual bool operator==(const BaseOperatorNode& rhs) const { return this->equals(rhs); };
+    virtual bool operator==(const Node& rhs) const { return this->equals(rhs); };
     /**
      * @brief overload operator!=
      */
-    virtual bool operator!=(const BaseOperatorNode& rhs) const { return ! this->equals(rhs); };
+    virtual bool operator!=(const Node& rhs) const { return !this->equals(rhs); };
     /**
      * @brief check two operators whether are exactly the same object or not
      * @param rhs the operator to check
      * @return bool true if they are the same object otherwise false
      */
-    virtual bool isIdentical(const BaseOperatorNode& rhs) const { return &rhs == this; };
+    virtual bool isIdentical(const Node& rhs) const { return &rhs == this; };
     /**
      * @see isIdentical() function
      */
-    virtual bool isNotIdentical(const BaseOperatorNode& rhs) const { return &rhs != this; };
+    virtual bool isNotIdentical(const Node& rhs) const { return &rhs != this; };
 
-//    void getOperatorsByType(const OperatorType& type, std::vector<BaseOperatorNodePtr>& vec);
-    std::vector<BaseOperatorNodePtr> getOperatorsByType(const OperatorType& type);
+    //    void getOperatorsByType(const OperatorType& type, std::vector<NodePtr>& vec);
+    std::vector<NodePtr> getOperatorsByType(const OperatorType& type);
     /**
      * @brief split graph into multiple sub-graphs. The graph starts at current operator
      *        if the given operator is not in the graph, throw exception
      * @params op the given operator to split at.
      * @return vector of multiple sub-graphs.
      */
-    std::vector<BaseOperatorNodePtr> split(const BaseOperatorNodePtr& op);
+    std::vector<NodePtr> split(const NodePtr& op);
 
     /**
      * @brief validation of this operator
@@ -155,7 +152,7 @@ public:
     /**
      * @brief obtain the shared_ptr of this instance
      */
-    virtual BaseOperatorNodePtr makeShared() = 0;
+    virtual NodePtr makeShared() = 0;
 
     bool isCyclic();
 
@@ -164,10 +161,10 @@ public:
      *        Always excluding current operator, no matter a cycle exists
      * @params allChildren a vector to store all successors of current operator
      */
-    std::vector<BaseOperatorNodePtr> getAndFlattenAllSuccessors();
+    std::vector<NodePtr> getAndFlattenAllSuccessors();
 
-    void prettyPrint(std::ostream& out=std::cout) const;
-protected:
+    void prettyPrint(std::ostream& out = std::cout) const;
+  protected:
     /**
      * @brief the operator id would be set as uuid to ensure uniqueness
      *        the main reason is that we'd like make sure all operators in
@@ -178,27 +175,27 @@ protected:
      * @brief the predecessors of this operator. There is no equal operators
      *        in this vector
      */
-    std::vector<BaseOperatorNodePtr> predecessors {};
+    std::vector<NodePtr> predecessors{};
     /**
      * @brief the successors of this operator. There is no equal operators
      *        in this vector
      */
-    std::vector<BaseOperatorNodePtr> successors {};
-private:
+    std::vector<NodePtr> successors{};
+  private:
     /**
      * @brief check if an operator is in given vector or not
      * @param operatorNodes
      * @param op
      * @return return true if the given operator is found, otherwise false
      */
-    BaseOperatorNodePtr find(const std::vector<BaseOperatorNodePtr>& operatorNodes, const BaseOperatorNodePtr& op);
+    NodePtr find(const std::vector<NodePtr>& operatorNodes, const NodePtr& op);
     /**
      * @brief check if an operator is in given graph
      * @param root
      * @param op
      * @return return true if the given operator is found in the graph of root, otherwise false
      */
-    BaseOperatorNodePtr findRecursively(BaseOperatorNode& root, BaseOperatorNode& op);
+    NodePtr findRecursively(Node& root, Node& op);
 
 
     /********************************************************************************
@@ -207,42 +204,42 @@ private:
     /**
      * @brief helper function of equalWithAllPredecessors() function
      */
-    bool equalWithAllPredecessorsHelper(const BaseOperatorNode& op1, const BaseOperatorNode& op2);
+    bool equalWithAllPredecessorsHelper(const Node& op1, const Node& op2);
     /**
      * @brief helper function of equalWithAllSuccessors() function
      */
-    bool equalWithAllSuccessorsHelper(const BaseOperatorNode& op1, const BaseOperatorNode& op2);
+    bool equalWithAllSuccessorsHelper(const Node& op1, const Node& op2);
     /**
      * @brief helper function of prettyPrint() function
      */
-    void printHelper(const BaseOperatorNode& op, size_t depth, size_t indent, std::ostream& out) const;
+    void printHelper(const Node& op, size_t depth, size_t indent, std::ostream& out) const;
     /**
      * @brief helper function of getAndFlattenAllSuccessors() function
      */
-    void getAndFlattenAllSuccessorsHelper(BaseOperatorNode& op,
-                                          std::vector<BaseOperatorNodePtr>& allChildren,
-                                          BaseOperatorNode& excludedOp);
+    void getAndFlattenAllSuccessorsHelper(Node& op,
+                                          std::vector<NodePtr>& allChildren,
+                                          Node& excludedOp);
 
     /**
      *
      */
-    void getOperatorsByTypeHelper(BaseOperatorNode& op,
-                                  std::vector<BaseOperatorNodePtr>& allChildren,
-                                  BaseOperatorNode& excludedOp,
+    void getOperatorsByTypeHelper(Node& op,
+                                  std::vector<NodePtr>& allChildren,
+                                  Node& excludedOp,
                                   const OperatorType& type);
 
-                                          // bool predicateFunc(std::vector<BaseOperatorNodePtr>&,
-                                          //                    BaseOperatorNodePtr& op,
-                                          //                    BaseOperatorNode& excludedOp,
-                                          //                    OperatorType& type));
-    // bool predicateFunc(std::vector<BaseOperatorNodePtr>& allChildren, BaseOperatorNodePtr& op, BaseOperatorNode& excludedOp, OperatorType& type) {
+    // bool predicateFunc(std::vector<NodePtr>&,
+    //                    NodePtr& op,
+    //                    Node& excludedOp,
+    //                    OperatorType& type));
+    // bool predicateFunc(std::vector<NodePtr>& allChildren, NodePtr& op, Node& excludedOp, OperatorType& type) {
     //     return (!find(allChildren, op) && (op.get() != &excludedOp));
     // }
 
     /**
      * @brief helper function of cycle detector
      */
-    bool isCyclicHelper(BaseOperatorNode& op);
+    bool isCyclicHelper(Node& op);
 
     /********************************************************************************
      *                   Helper parameters                                           *
@@ -250,20 +247,20 @@ private:
     /**
      * Helper parameters for cycle detection
      */
-public:
+  public:
     bool visited;
     bool recStack;
 };
 
-const BaseOperatorNodePtr createAggregationLogicalOperatorNode(const AggregationSpec& aggrSpec);
-const BaseOperatorNodePtr createFilterLogicalOperatorNode(const PredicatePtr& predicate);
-const BaseOperatorNodePtr createJoinLogicalOperatorNode(const JoinPredicatePtr& joinSpec);
-const BaseOperatorNodePtr createKeyByLogicalOperatorNode(const Attributes& keybySpec);
-const BaseOperatorNodePtr createMapLogicalOperatorNode(const AttributeFieldPtr&, const PredicatePtr&);
-const BaseOperatorNodePtr createSinkLogicalOperatorNode(const DataSinkPtr& sink);
-const BaseOperatorNodePtr createSourceLogicalOperatorNode(const DataSourcePtr& source);
-const BaseOperatorNodePtr createSortLogicalOperatorNode(const Sort& sortSpec);
-const BaseOperatorNodePtr createWindowLogicalOperatorNode(const WindowDefinitionPtr& windowDefinition);
+const NodePtr createAggregationLogicalOperatorNode(const AggregationSpec& aggrSpec);
+const NodePtr createFilterLogicalOperatorNode(const PredicatePtr& predicate);
+const NodePtr createJoinLogicalOperatorNode(const JoinPredicatePtr& joinSpec);
+const NodePtr createKeyByLogicalOperatorNode(const Attributes& keybySpec);
+const NodePtr createMapLogicalOperatorNode(const AttributeFieldPtr&, const PredicatePtr&);
+const NodePtr createSinkLogicalOperatorNode(const DataSinkPtr& sink);
+const NodePtr createSourceLogicalOperatorNode(const DataSourcePtr& source);
+const NodePtr createSortLogicalOperatorNode(const Sort& sortSpec);
+const NodePtr createWindowLogicalOperatorNode(const WindowDefinitionPtr& windowDefinition);
 
 }      // namespace NES
 

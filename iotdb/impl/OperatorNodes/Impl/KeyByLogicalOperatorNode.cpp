@@ -14,7 +14,7 @@ OperatorType KeyByLogicalOperatorNode::getOperatorType() const {
     return OperatorType::KEYBY_OP;
 }
 
-bool KeyByLogicalOperatorNode::equals(const BaseOperatorNode& rhs) const {
+bool KeyByLogicalOperatorNode::equals(const Node& rhs) const {
     try {
         auto& rhs_ = dynamic_cast<const KeyByLogicalOperatorNode&>(rhs);
         return true;
@@ -23,7 +23,7 @@ bool KeyByLogicalOperatorNode::equals(const BaseOperatorNode& rhs) const {
     }
 }
 
-const BaseOperatorNodePtr createKeyByLogicalOperatorNode(const Attributes& keybySpec) {
+const NodePtr createKeyByLogicalOperatorNode(const Attributes& keybySpec) {
     return std::make_shared<KeyByLogicalOperatorNode>(keybySpec);
 }
 
