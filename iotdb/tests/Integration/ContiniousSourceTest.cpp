@@ -27,7 +27,7 @@ class ContiniousSourceTest : public testing::Test {
 
 };
 
-TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourcePrintForExdra) {
+TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSVFileForExdra) {
   cout << "start coordinator" << endl;
   NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
   size_t port = crd->startCoordinator(/**blocking**/false);
