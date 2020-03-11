@@ -4,20 +4,9 @@ on: [push]
 
 jobs:
   build:
-
-    runs-on: ubuntu-18.04
-    
+    runs-on: ubuntu-18.04    
     steps:
-    - uses: actions/checkout@v1
-    - name: Install xmllint
-      run: sudo apt-get install -y llvm clang libzmq3-dev libboost1.65-all-dev liblog4cxx-dev libcpprest-dev libssl-dev
-    - name: script
-      run: clang --version
-    - name: configure
-      run: ./configure
-    - name: make
-      run: make
-    - name: make check
-      run: make check
-    - name: make distcheck
-      run: make distcheck
+    - uses: actions/checkout@v2
+    - name: Run tests
+    - run: docker run -v $GITHUB_WORKSPACE/iotdb:/iotdb --entrypoint /iotdb/docker/scripts/entrypoint-nes-build.sh nebulastream/nes-build-image
+
