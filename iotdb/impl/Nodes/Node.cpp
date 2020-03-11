@@ -1,7 +1,7 @@
 #include <queue>
 #include <unordered_set>
 #include <Util/UtilityFunctions.hpp>
-#include <OperatorNodes/Node.hpp>
+#include <Nodes/Node.hpp>
 
 namespace NES {
 

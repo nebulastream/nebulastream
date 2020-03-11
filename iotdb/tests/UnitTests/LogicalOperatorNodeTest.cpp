@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <iostream>
-#include <OperatorNodes/LogicalOperatorNode.hpp>
-#include <OperatorNodes/Impl/FilterLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/SourceLogicalOperatorNode.hpp>
 #include <Util/Logger.hpp>
 
 #include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
@@ -9,7 +9,6 @@
 #include <API/UserAPIExpression.hpp>
 #include <Operators/Operator.hpp>
 #include <Catalogs/StreamCatalog.hpp>
-#include <OperatorNodes/Impl/SourceLogicalOperatorNode.hpp>
 #include <SourceSink/DefaultSource.hpp>
 #include <memory>
 
