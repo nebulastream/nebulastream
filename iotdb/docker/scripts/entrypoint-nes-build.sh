@@ -12,6 +12,7 @@ then
     ln -s ../nesCoordinator .
    	ln -s ../nesWorker .
     make test_debug
+    rm -rf /iotdb/build
 else
     exec $@
 fi
