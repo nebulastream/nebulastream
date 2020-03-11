@@ -14,13 +14,10 @@ const std::string AggregationLogicalOperatorNode::toString() const
     return ss.str();
 }
 
-OperatorType AggregationLogicalOperatorNode::getOperatorType() const {
-    return OperatorType::AGGREGATION_OP;
-}
-
 AggregationLogicalOperatorNode::~AggregationLogicalOperatorNode() {}
 
-bool AggregationLogicalOperatorNode::equals(const Node& rhs) const {
+/*
+bool AggregationLogicalOperatorNode::equal(const Node& rhs) const {
     try {
         auto& rhs_ = dynamic_cast<const AggregationLogicalOperatorNode&>(rhs);
         return true;
@@ -29,6 +26,7 @@ bool AggregationLogicalOperatorNode::equals(const Node& rhs) const {
     }
 
 }
+ */
 
 const NodePtr createAggregationLogicalOperatorNode(const AggregationSpec& aggrSpec) {
     return std::make_shared<AggregationLogicalOperatorNode>(aggrSpec);

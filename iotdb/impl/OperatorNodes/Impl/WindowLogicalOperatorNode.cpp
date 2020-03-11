@@ -1,4 +1,6 @@
 #include <OperatorNodes/Impl/WindowLogicalOperatorNode.hpp>
+#include <sstream>
+#include <Operators/Operator.hpp>
 
 namespace NES {
 
@@ -12,15 +14,12 @@ const std::string WindowLogicalOperatorNode::toString() const {
   return ss.str();
 }
 
-OperatorType WindowLogicalOperatorNode::getOperatorType() const {
-    return OperatorType::WINDOW_OP;
-}
-
 const WindowDefinitionPtr& WindowLogicalOperatorNode::getWindowDefinition() const {
     return window_definition;
 }
 
-bool WindowLogicalOperatorNode::equals(const Node& rhs) const {
+/*
+ * bool WindowLogicalOperatorNode::equal(const Node& rhs) const {
     try {
         auto& rhs_ = dynamic_cast<const WindowLogicalOperatorNode&>(rhs);
         return true;
@@ -28,6 +27,7 @@ bool WindowLogicalOperatorNode::equals(const Node& rhs) const {
         return false;
     }
 }
+ */
 
 const NodePtr createWindowLogicalOperatorNode(const WindowDefinitionPtr& windowDefinitionPtr) {
   return std::make_shared<WindowLogicalOperatorNode>(windowDefinitionPtr);

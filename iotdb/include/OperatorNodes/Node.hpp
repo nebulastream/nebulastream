@@ -1,98 +1,99 @@
-#ifndef BASE_OPERATOR_NODE_HPP
-#define BASE_OPERATOR_NODE_HPP
+#ifndef BASE_nodeERATOR_NODE_HPP
+#define BASE_nodeERATOR_NODE_HPP
 
 #include <iostream>
 #include <vector>
 #include <memory>
-#include <Operators/Operator.hpp>
-#include <API/Schema.hpp>
-#include <API/ParameterTypes.hpp>
-#include <API/AbstractWindowDefinition.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 
-class FilterLogicalOperatorNode;
 class Node;
-
 typedef std::shared_ptr<Node> NodePtr;
 
-class Node {
+class Node : public std::enable_shared_from_this<Node> {
   public:
     Node();
     ~Node();
+
     /**
-     * @brief add a successor to vector of successors
-     *        no duplicated operator inside successors.
-     *        one cannot add current operator into its successors
-     * @param op
+     * @brief adds a newNode as a successor to the current newNode.
+     * Duplicates inside the successor are ignored.
+     * A newNode cannot be in its own successor.
+     * @param newNode
      */
-    void addSuccessor(const NodePtr& op);
+    void addSuccessor(const NodePtr& newNode);
+
     /**
-     * @brief remove a successor from vector of successors.
-     * @param op
+     * @brief remove a node from current successors.
+     * @param node
      */
-    bool removeSuccessor(const NodePtr& op);
+    bool removeSuccessor(const NodePtr& node);
+
     /**
      * @brief add a predecessor to vector of predecessors
-     *        no duplicated operator inside predecessors.
-     *        one cannot add current operator into its predecessors.
-     * @param op
+     *        no duplicated nodeerator inside predecessors.
+     *        one cannot add current nodeerator into its predecessors.
+     * @param newNode
      */
-    void addPredecessor(const NodePtr& op);
+    void addPredecessor(const NodePtr& newNode);
+
     /**
      * @brief remove a predecessor from vector of predecessors
-     * @param op
+     * @param node
      */
-    bool removePredecessor(const NodePtr& op);
-    /**
-     * @brief replace an old opertoar with new operator
-     * 1) oldOperator is the successor of current operator, remove oldOperator
-     *    from current operator's successors and add newOperator to current operator's
-     *    successors. If oldOperator has successors, merge the successors of oldOperator
-     *    and newOperator's. If there's duplicated successors among oldOperator and
-     *    newOperator's successors, the successors in newOperator will overwrite that
-     *    inside oldOperator's.
-     * 2)
-     * @param newOperator
-     * @param oldOperator
-     */
-    bool replace(NodePtr newOperator, NodePtr oldOperator);
+    bool removePredecessor(const NodePtr& node);
 
     /**
-     * @brief swap given old operator by new operator
-     * @param newOp the operator to mount at oldOp predecessors instead of oldOp
-     * @param oldOp the operator to remove from graph
+     * @brief replace an old node with new now
+     * 1) old node is the successor of current node, remove old node
+     *    from current nodes's successors and add new node to current noed's
+     *    successors. If old node has successors, merge the successors of old nodes
+     *    and new nodes's successors. If there's duplicated successors among old nodes and
+     *    new nodes's successors, the successors in new noeds will overwrite that
+     *    inside old noeds's.
+     * 2)
+     * @param newNode
+     * @param oldNode
+     */
+    bool replace(NodePtr newNode, NodePtr oldNode);
+
+    /**
+     * @brief swap given old node by new node
+     * @param newNode the node to mount at oldNode predecessors instead of oldNode
+     * @param oldNode the node to remove from graph
      * @return true if swapping successfully otherwise false
      */
-    bool swap(const NodePtr& newOp, const NodePtr& oldOp);
+    bool swap(const NodePtr& newNode, const NodePtr& oldNode);
 
     /**
-     * @brief remove the given operator together with its successors
-     * @param op the given operator to remove
+     * @brief remove the given nodeerator together with its successors
+     * @param node the given nodeerator to remove
      * @return bool true if
      */
-    bool remove(const NodePtr& op);
+    bool remove(const NodePtr& node);
+
     /**
-     * @brief remove the given operator and level up its successors
-     * @param op
+     * @brief remove the given nodeerator and level up its successors
+     * @param node
 
      * @return bool true if
      */
-    bool removeAndLevelUpSuccessors(const NodePtr& op);
+    bool removeAndLevelUpSuccessors(const NodePtr& node);
+
     /**
      * @brief clear all predecessors and successors
      */
     void clear();
 
-    virtual OperatorType getOperatorType() const = 0;
     virtual const std::string toString() const = 0;
 
     /**
-     * @brief get the id of an operator
+     * @brief get the id of an nodeerator
      * @return string
      */
-    const std::string getOperatorId() const;
-    void setOperatorId(const std::string& id);
+    const std::string getnodeeratorId() const;
+    void setnodeeratorId(const std::string& id);
 
     const std::vector<NodePtr>& getSuccessors() const;
     const std::vector<NodePtr>& getPredecessors() const;
@@ -101,101 +102,123 @@ class Node {
     bool equalWithAllPredecessors(const NodePtr& rhs);
 
     /**
-     * @brief check two operators are equal or not. Noting they could be
-     *        two different objects with the same predicates.
-     * @param rhs the operator to compare
+     * @brief check two node are equal or not. Noting they could be
+     *        two different objects with the same value.
+     * @param rhs the node to compare
      * @return bool true if they are the same otherwise false
      * @TODO should be a pure virtual function
      */
-    virtual bool equals(const Node& rhs) const { return true; };
+    virtual bool equal(const NodePtr& rhs) const {
+        return false;
+    };
+
     /**
-     * @brief overload operator==, same as equals() function
-     */
-    virtual bool operator==(const Node& rhs) const { return this->equals(rhs); };
-    /**
-     * @brief overload operator!=
-     */
-    virtual bool operator!=(const Node& rhs) const { return !this->equals(rhs); };
-    /**
-     * @brief check two operators whether are exactly the same object or not
-     * @param rhs the operator to check
+     * @brief check two nodeerators whether are exactly the same object or not
+     * @param rhs the nodeerator to check
      * @return bool true if they are the same object otherwise false
      */
-    virtual bool isIdentical(const Node& rhs) const { return &rhs == this; };
+    virtual bool isIdentical(const NodePtr& rhs) const {
+        return rhs.get() == this;
+    };
+
     /**
      * @see isIdentical() function
      */
-    virtual bool isNotIdentical(const Node& rhs) const { return &rhs != this; };
+    virtual bool isNotIdentical(const NodePtr& rhs) const {
+        return rhs.get() != this;
+    };
 
-    //    void getOperatorsByType(const OperatorType& type, std::vector<NodePtr>& vec);
-    std::vector<NodePtr> getOperatorsByType(const OperatorType& type);
     /**
-     * @brief split graph into multiple sub-graphs. The graph starts at current operator
-     *        if the given operator is not in the graph, throw exception
-     * @params op the given operator to split at.
+     * @brief split graph into multiple sub-graphs. The graph starts at current nodeerator
+     *        if the given nodeerator is not in the graph, throw exception
+     * @params node the given nodeerator to split at.
      * @return vector of multiple sub-graphs.
      */
-    std::vector<NodePtr> split(const NodePtr& op);
+    std::vector<NodePtr> split(const NodePtr& node);
 
     /**
-     * @brief validation of this operator
-     * @return true if there is no ring/loop inside this operator's successors, otherwise false
+     * @brief validation of this nodeerator
+     * @return true if there is no ring/lonode inside this nodeerator's successors, otherwise false
      */
     bool isValid();
-    bool instanceOf(const OperatorType& type);
 
-    template<class T>
-    T& as() {
-        T& rhs = dynamic_cast<T&>(*this);
-        return rhs;
+    template<class NodeType>
+    const bool instanceOf() {
+        if (dynamic_cast<NodeType*>(this)) {
+            return true;
+        };
+        return false;
+    };
+
+    template<class NodeType>
+    std::shared_ptr<NodeType> as() {
+        if (instanceOf<NodeType>()) {
+            return std::dynamic_pointer_cast<NodeType>(this->shared_from_this());
+        } else {
+            NES_FATAL_ERROR("We performed an invalid cast");
+            throw std::bad_cast();
+        }
     }
-    /**
-     * @brief obtain the shared_ptr of this instance
-     */
-    virtual NodePtr makeShared() = 0;
+
+    template<class NodeType>
+    std::vector<std::shared_ptr<NodeType>> getNodesByType() {
+        std::vector<std::shared_ptr<NodeType>> vector;
+        getNodesByTypeHelper<NodeType>(vector);
+        return vector;
+    }
+
+    template<class NodeType>
+    void getNodesByTypeHelper(std::vector<std::shared_ptr<NodeType>>& foundNodes) {
+        if (this->instanceOf<NodeType>()) {
+            foundNodes.push_back(this->as<NodeType>());
+        }
+        for (auto& successor:this->successors) {
+            successor->getNodesByTypeHelper(foundNodes);
+        }
+    };
 
     bool isCyclic();
 
     /**
-     * @brief return all successors of current operator
-     *        Always excluding current operator, no matter a cycle exists
-     * @params allChildren a vector to store all successors of current operator
+     * @brief return all successors of current nodeerator
+     *        Always excluding current nodeerator, no matter a cycle exists
+     * @params allChildren a vector to store all successors of current nodeerator
      */
     std::vector<NodePtr> getAndFlattenAllSuccessors();
 
-    void prettyPrint(std::ostream& out = std::cout) const;
+    void prettyPrint(std::ostream& out = std::cout);
   protected:
     /**
-     * @brief the operator id would be set as uuid to ensure uniqueness
-     *        the main reason is that we'd like make sure all operators in
+     * @brief the nodeerator id would be set as uuid to ensure uniqueness
+     *        the main reason is that we'd like make sure all nodeerators in
      *        the given graph (tree) should be unique.
      */
-    const std::string operatorId;
+    const std::string nodeId;
     /**
-     * @brief the predecessors of this operator. There is no equal operators
+     * @brief the predecessors of this nodeerator. There is no equal nodeerators
      *        in this vector
      */
     std::vector<NodePtr> predecessors{};
     /**
-     * @brief the successors of this operator. There is no equal operators
+     * @brief the successors of this nodeerator. There is no equal nodeerators
      *        in this vector
      */
     std::vector<NodePtr> successors{};
   private:
     /**
-     * @brief check if an operator is in given vector or not
-     * @param operatorNodes
-     * @param op
-     * @return return true if the given operator is found, otherwise false
+     * @brief check if an nodeerator is in given vector or not
+     * @param nodeeratorNodes
+     * @param node
+     * @return return true if the given nodeerator is found, otherwise false
      */
-    NodePtr find(const std::vector<NodePtr>& operatorNodes, const NodePtr& op);
+    NodePtr find(const std::vector<NodePtr>& nodeeratorNodes, const NodePtr& node);
     /**
-     * @brief check if an operator is in given graph
+     * @brief check if an nodeerator is in given graph
      * @param root
-     * @param op
-     * @return return true if the given operator is found in the graph of root, otherwise false
+     * @param node
+     * @return return true if the given nodeerator is found in the graph of root, otherwise false
      */
-    NodePtr findRecursively(Node& root, Node& op);
+    NodePtr findRecursively(const NodePtr& root, const NodePtr& node);
 
 
     /********************************************************************************
@@ -204,42 +227,39 @@ class Node {
     /**
      * @brief helper function of equalWithAllPredecessors() function
      */
-    bool equalWithAllPredecessorsHelper(const Node& op1, const Node& op2);
+    bool equalWithAllPredecessorsHelper(const NodePtr& node1, const NodePtr& node2);
     /**
      * @brief helper function of equalWithAllSuccessors() function
      */
-    bool equalWithAllSuccessorsHelper(const Node& op1, const Node& op2);
+    bool equalWithAllSuccessorsHelper(const NodePtr& node1, const NodePtr& node2);
     /**
      * @brief helper function of prettyPrint() function
      */
-    void printHelper(const Node& op, size_t depth, size_t indent, std::ostream& out) const;
+    void printHelper(const NodePtr& node, size_t depth, size_t indent, std::ostream& out) const;
     /**
      * @brief helper function of getAndFlattenAllSuccessors() function
      */
-    void getAndFlattenAllSuccessorsHelper(Node& op,
+    void getAndFlattenAllSuccessorsHelper(const NodePtr& node,
                                           std::vector<NodePtr>& allChildren,
-                                          Node& excludedOp);
+                                          const NodePtr& excludednode);
+
 
     /**
      *
      */
-    void getOperatorsByTypeHelper(Node& op,
-                                  std::vector<NodePtr>& allChildren,
-                                  Node& excludedOp,
-                                  const OperatorType& type);
 
     // bool predicateFunc(std::vector<NodePtr>&,
-    //                    NodePtr& op,
-    //                    Node& excludedOp,
-    //                    OperatorType& type));
-    // bool predicateFunc(std::vector<NodePtr>& allChildren, NodePtr& op, Node& excludedOp, OperatorType& type) {
-    //     return (!find(allChildren, op) && (op.get() != &excludedOp));
+    //                    NodePtr& node,
+    //                    Node& excludednode,
+    //                    nodeeratorType& type));
+    // bool predicateFunc(std::vector<NodePtr>& allChildren, NodePtr& node, Node& excludednode, nodeeratorType& type) {
+    //     return (!find(allChildren, node) && (node.get() != &excludednode));
     // }
 
     /**
      * @brief helper function of cycle detector
      */
-    bool isCyclicHelper(Node& op);
+    bool isCyclicHelper(Node& node);
 
     /********************************************************************************
      *                   Helper parameters                                           *
@@ -251,17 +271,6 @@ class Node {
     bool visited;
     bool recStack;
 };
-
-const NodePtr createAggregationLogicalOperatorNode(const AggregationSpec& aggrSpec);
-const NodePtr createFilterLogicalOperatorNode(const PredicatePtr& predicate);
-const NodePtr createJoinLogicalOperatorNode(const JoinPredicatePtr& joinSpec);
-const NodePtr createKeyByLogicalOperatorNode(const Attributes& keybySpec);
-const NodePtr createMapLogicalOperatorNode(const AttributeFieldPtr&, const PredicatePtr&);
-const NodePtr createSinkLogicalOperatorNode(const DataSinkPtr& sink);
-const NodePtr createSourceLogicalOperatorNode(const DataSourcePtr& source);
-const NodePtr createSortLogicalOperatorNode(const Sort& sortSpec);
-const NodePtr createWindowLogicalOperatorNode(const WindowDefinitionPtr& windowDefinition);
-
 }      // namespace NES
 
-#endif  // BASE_OPERATOR_NODE_HPP
+#endif  // BASE_nodeERATOR_NODE_HPP

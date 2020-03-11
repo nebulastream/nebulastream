@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <OperatorNodes/Node.hpp>
+#include <API/ParameterTypes.hpp>
 
 namespace NES {
 
@@ -12,10 +13,9 @@ class SortLogicalOperatorNode : public Node,
 
     SortLogicalOperatorNode(const Sort& sort_spec);
     const std::string toString() const override;
-    OperatorType getOperatorType() const override;
 
     virtual NodePtr makeShared() override { return shared_from_this(); };
-    virtual bool equals(const Node& rhs) const override;
+    virtual bool equal(const Node& rhs) const override;
   private:
     Sort sort_spec_;
 };

@@ -1,4 +1,5 @@
 #include <OperatorNodes/Impl/KeyByLogicalOperatorNode.hpp>
+#include <sstream>
 
 namespace NES {
 
@@ -10,11 +11,7 @@ const std::string KeyByLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-OperatorType KeyByLogicalOperatorNode::getOperatorType() const {
-    return OperatorType::KEYBY_OP;
-}
-
-bool KeyByLogicalOperatorNode::equals(const Node& rhs) const {
+/*bool KeyByLogicalOperatorNode::equal(const Node& rhs) const {
     try {
         auto& rhs_ = dynamic_cast<const KeyByLogicalOperatorNode&>(rhs);
         return true;
@@ -22,9 +19,7 @@ bool KeyByLogicalOperatorNode::equals(const Node& rhs) const {
         return false;
     }
 }
+*/
 
-const NodePtr createKeyByLogicalOperatorNode(const Attributes& keybySpec) {
-    return std::make_shared<KeyByLogicalOperatorNode>(keybySpec);
-}
 
 } // namespace NES

@@ -3,18 +3,15 @@
 #include <memory>
 #include <OperatorNodes/LogicalOperatorNode.hpp>
 namespace NES {
-class SinkLogicalOperatorNode : public LogicalOperatorNode,
-                                public std::enable_shared_from_this<SinkLogicalOperatorNode> {
+class SinkLogicalOperatorNode : public LogicalOperatorNode
+                                 {
 public:
     SinkLogicalOperatorNode();
     SinkLogicalOperatorNode(const DataSinkPtr sink);
     SinkLogicalOperatorNode& operator=(const SinkLogicalOperatorNode& other);
     const std::string toString() const override;
-    OperatorType getOperatorType() const override;
     DataSinkPtr getDataSinkPtr();
 
-    virtual NodePtr makeShared() override { return shared_from_this(); };
-    virtual bool equals(const Node& rhs) const override;
 private:
     DataSinkPtr sink_;
 };

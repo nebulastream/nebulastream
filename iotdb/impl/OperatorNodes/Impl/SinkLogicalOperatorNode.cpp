@@ -15,17 +15,13 @@ DataSinkPtr SinkLogicalOperatorNode::getDataSinkPtr() {
     return sink_;
 }
 
-OperatorType SinkLogicalOperatorNode::getOperatorType() const {
-    return OperatorType::SINK_OP;
-}
-
 const std::string SinkLogicalOperatorNode::toString() const {
   std::stringstream ss;
   ss << "SINK(" << NES::toString(sink_) << ")";
   return ss.str();
 }
-
-bool SinkLogicalOperatorNode::equals(const Node& rhs) const {
+/*
+bool SinkLogicalOperatorNode::equal(const Node& rhs) const {
     try {
         auto& rhs_ = dynamic_cast<const SinkLogicalOperatorNode&>(rhs);
         return true;
@@ -33,7 +29,7 @@ bool SinkLogicalOperatorNode::equals(const Node& rhs) const {
         return false;
     }
 }
-
+*/
 const NodePtr createSinkLogicalOperatorNode(const DataSinkPtr& sink) {
     return std::make_shared<SinkLogicalOperatorNode>(sink);
 }

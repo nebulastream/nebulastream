@@ -16,7 +16,7 @@ public:
     LogicalOperatorPlan(const Stream& stream);
     LogicalOperatorPlan(const StreamPtr& stream);
     LogicalOperatorPlan(const InputQueryPtr inputQuery);
-    void fromSubOperator(const OperatorPtr subOp);
+    void fromSubOperator(const NodePtr subOp);
 
     void prettyPrint() const;
     void fromQuery(const InputQueryPtr inputQuery);
@@ -43,7 +43,7 @@ public:
     NodePtr getRoot() const;
 private:
     void printHelper(NodePtr op, size_t depth, size_t indent) const;
-    void fromQueryHelper(const OperatorPtr op, const OperatorPtr parentOp);
+    void fromQueryHelper(const NodePtr op, const NodePtr parentOp);
     size_t getNextOperatorId() { return ++ operatorId; };
     // NodePtr getOperatorNodeByIdHelper(const NodePtr& op);
 private:

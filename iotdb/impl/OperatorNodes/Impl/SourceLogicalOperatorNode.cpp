@@ -1,33 +1,29 @@
 #include <OperatorNodes/Impl/SourceLogicalOperatorNode.hpp>
+#include <API/InputQuery.hpp>
 
 namespace NES {
 
-// SourceLogicalOperatorNode::SourceLogicalOperatorNode() {
-//     std::cout << "Call default SourceLogicalOperatorNode constructor" << std::endl;
-// }
-
-SourceLogicalOperatorNode::SourceLogicalOperatorNode(const DataSourcePtr source) : source_(source) {
-
+SourceLogicalOperatorNode::SourceLogicalOperatorNode(const DataSourcePtr source)
+    : LogicalOperatorNode(), source_(source) {
 }
 
-SourceLogicalOperatorNode::SourceLogicalOperatorNode(const OperatorPtr op) {
+SourceLogicalOperatorNode::SourceLogicalOperatorNode(const SourceLogicalOperatorNode* source)
+    : LogicalOperatorNode(), source_(source->source_) {
+}
+
+SourceLogicalOperatorNode::SourceLogicalOperatorNode(const NodePtr op) {
     std::cout << "op: " << op->toString() << std::endl;
 }
-
-bool SourceLogicalOperatorNode::equals(const Node& rhs) const {
+bool SourceLogicalOperatorNode::equal(const NodePtr& rhs) const {
     // try {
     //     auto& rhs_ = dynamic_cast<const SourceLogicalOperatorNode&>(rhs);
     //     return true;
     // } catch (const std::bad_cast& e) {
     //     return false;
     // }
-    if (&rhs == this)
+    if (isIdentical(rhs))
         return true;
     return false;
-}
-
-OperatorType SourceLogicalOperatorNode::getOperatorType() const {
-    return OperatorType::SOURCE_OP;
 }
 
 const std::string SourceLogicalOperatorNode::toString() const {

@@ -31,13 +31,7 @@ const std::string SortLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-OperatorType SortLogicalOperatorNode::getOperatorType() const {
-    return OperatorType::SORT_OP;
-}
-
-// SortLogicalOperatorNode::~SortLogicalOperatorNode() {}
-
-bool SortLogicalOperatorNode::equals(const BaseOperatorNode& rhs) const {
+bool SortLogicalOperatorNode::equal(const BaseOperatorNode& rhs) const {
     try {
         auto& rhs_ = dynamic_cast<const SortLogicalOperatorNode&>(rhs);
         return true;
