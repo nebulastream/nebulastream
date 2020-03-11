@@ -1,0 +1,12 @@
+name: NES CI
+
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: self-hosted    
+    steps:
+    - uses: actions/checkout@v2
+    - name: Run tests
+      run: |
+          docker run -v $GITHUB_WORKSPACE/iotdb:/iotdb --entrypoint /iotdb/docker/scripts/entrypoint-nes-build.sh nebulastream/nes-build-image
+
