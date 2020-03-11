@@ -10,4 +10,5 @@ add_source_iotdb(
         NESOptimizer.cpp
         NESExecutionPlan.cpp
         utils/PathFinder.cpp
+        ExecutionGraph.cpp
 )
