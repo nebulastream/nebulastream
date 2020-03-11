@@ -1,3 +1,5 @@
+#include "gtest/gtest.h"
+
 #include <cassert>
 #include <iostream>
 #include <Util/Logger.hpp>
@@ -39,7 +41,23 @@ class SelectionDataGenFunctor {
   }
 };
 
-void createQueryFilter() {
+class QueryInterfaceTest : public testing::Test {
+ public:
+
+  static void SetUpTestCase() {
+    NES::setupLogging("QueryInterfaceTest.log", NES::LOG_DEBUG);
+    NES_INFO("Setup QueryInterfaceTest test class.");
+  }
+
+  static void TearDownTestCase() {
+    std::cout << "Tear down QueryInterfaceTest test class." << std::endl;
+  }
+
+  void TearDown() {
+  }
+};
+
+TEST_F(QueryInterfaceTest, testQueryFilter) {
   // define config
   Config config = Config::create();
 
@@ -60,7 +78,7 @@ void createQueryFilter() {
   env.executeQuery(query);
 }
 
-void createQueryMap() {
+TEST_F(QueryInterfaceTest, testQueryMap) {
   // define config
   Config config = Config::create();
 
@@ -81,7 +99,7 @@ void createQueryMap() {
   env.executeQuery(query);
 }
 
-void createQueryString() {
+TEST_F(QueryInterfaceTest, testQueryString) {
 
   std::stringstream code;
 
@@ -92,19 +110,16 @@ void createQueryString() {
       << "InputQuery::from(default_stream).map(default_stream[\"value\"],2).filter(default_stream[\"test\"]==5)"
       << std::endl << "" << std::endl << ";" << std::endl;
 
-  InputQueryPtr inputQuery = UtilityFunctions::createQueryFromCodeString(
-      code.str());
+  try{
+    InputQueryPtr inputQuery = UtilityFunctions::createQueryFromCodeString(
+          code.str());
+  }
+  catch(...)
+  {
+    SUCCEED();
+  }
+
 }
+
 }  // namespace NES
 
-int main(int argc, const char *argv[]) {
-  NES::setupLogging("QueryInterfaceTest.log", NES::LOG_DEBUG);
-
-  NES::Dispatcher::instance();
-  NES::createQueryFilter();
-
-  //NES::createQueryMap();
-  //NES::createQueryString();
-
-  return 0;
-}
