@@ -8,4 +8,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Run tests
-      run: echo $GITHUB_WORKSPACE
+      run: |
+          docker run -v $GITHUB_WORKSPACE/iotdb:/iotdb --entrypoint $GITHUB_WORKSPACE/iotdb/docker/scripts/entrypoint-nes-build.sh nebulastream/nes-build-image
+
