@@ -151,7 +151,7 @@ bool Node::swap(const NodePtr& newNode, const NodePtr& oldNode) {
 
     // reset all predecessors belongs to newNode
     newNode->predecessors.clear();
-    int criteria = 0;
+    uint64_t criteria = 0;
     while (node->predecessors.size() > criteria) {
         auto p = node->predecessors[criteria];
         if (p.get() == newNode.get()) {
