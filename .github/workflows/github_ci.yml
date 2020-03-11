@@ -1,7 +1,7 @@
 name: NES CI
 
 on: [push, pull_request]
-
+runs-on: self-hosted
 jobs:
   build:
     runs-on: ubuntu-18.04    
