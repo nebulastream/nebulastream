@@ -1,4 +1,4 @@
-#include <OperatorNodes/Impl/SinkLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/SinkLogicalOperatorNode.hpp>
 
 namespace NES {
 SinkLogicalOperatorNode::SinkLogicalOperatorNode(const DataSinkPtr sink) : sink_(sink) {

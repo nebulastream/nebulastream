@@ -1,5 +1,5 @@
 add_source_iotdb(
-        Operator.cpp
+        OperatorNode.cpp
 		OperatorJsonUtil.cpp
 	)
 add_subdirectory(Impl)

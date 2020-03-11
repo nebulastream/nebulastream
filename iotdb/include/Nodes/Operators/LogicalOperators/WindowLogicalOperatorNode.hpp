@@ -2,7 +2,7 @@
 #define WINDOW_LOGICAL_OPERATOR_NODE_HPP
 
 #include <memory>
-#include <OperatorNodes/Node.hpp>
+#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <API/AbstractWindowDefinition.hpp>
 
 namespace NES {

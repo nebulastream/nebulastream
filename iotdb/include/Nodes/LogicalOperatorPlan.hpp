@@ -2,7 +2,7 @@
 #define LOGICAL_OPERATOR_PLAN_HPP
 
 #include <API/InputQuery.hpp>
-#include <OperatorNodes/LogicalOperatorNode.hpp>
+#include <Nodes/Operators//LogicalOperators/LogicalOperatorNode.hpp>
 
 
 namespace NES {
@@ -32,7 +32,7 @@ public:
     LogicalOperatorPlan& print(std::ostream& out=std::cout);
     /**
      * @brief merge another logical plan tree into current plan tree
-     * @param plan logical plan tree to merge
+     * @param platn logical plan tree to merge
      * @param opId the operator to be mount at
      */
     bool mountAsSuccessor(const LogicalOperatorPlanPtr& plan, const std::string& opId);

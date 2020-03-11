@@ -2,7 +2,7 @@
 #define KEYBY_LOGICAL_OPERATOR_NODE_HPP
 
 #include <memory>
-#include <OperatorNodes/Node.hpp>
+#include <Nodes/Node.hpp>
 #include <API/ParameterTypes.hpp>
 
 namespace NES {

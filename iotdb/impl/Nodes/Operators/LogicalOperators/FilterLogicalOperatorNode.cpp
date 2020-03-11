@@ -1,4 +1,4 @@
-#include <OperatorNodes/Impl/FilterLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 
 namespace NES {
 

@@ -2,15 +2,15 @@
 #define AGG_LOGICAL_OPERATOR_NODE_HPP
 
 #include <memory>
-#include <OperatorNodes/LogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 
 namespace NES {
-class AggregationLogicalOperatorNode : public LogicalOperatorNode                                    {
-public:
+class AggregationLogicalOperatorNode : public LogicalOperatorNode {
+  public:
     AggregationLogicalOperatorNode(const AggregationSpec& aggrSpec);
     ~AggregationLogicalOperatorNode();
     const std::string toString() const override;
-private:
+  private:
     AggregationSpec aggrSpec_;
 };
 }
