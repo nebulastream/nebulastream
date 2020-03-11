@@ -3,9 +3,9 @@
 #include <API/UserAPIExpression.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <SourceSink/SinkCreator.hpp>
-#include <OperatorNodes/LogicalOperatorPlan.hpp>
-#include <OperatorNodes/Impl/FilterLogicalOperatorNode.hpp>
-#include <OperatorNodes/Impl/SourceLogicalOperatorNode.hpp>
+#include <Nodes/LogicalOperatorPlan.hpp>
+#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/SourceLogicalOperatorNode.hpp>
 
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
