@@ -4,7 +4,7 @@
 #include <sstream>
 #include <vector>
 
-#include <OperatorNodes/Impl/SortLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/SortLogicalOperatorNode.hpp>
 
 namespace NES {
 

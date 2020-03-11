@@ -1,4 +1,4 @@
-#include <OperatorNodes/Impl/WindowLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/WindowLogicalOperatorNode.hpp>
 #include <sstream>
 #include <Operators/Operator.hpp>
 
@@ -9,9 +9,9 @@ WindowLogicalOperatorNode::WindowLogicalOperatorNode(const WindowDefinitionPtr& 
 }
 
 const std::string WindowLogicalOperatorNode::toString() const {
-  std::stringstream ss;
-  ss << "WINDOW()";
-  return ss.str();
+    std::stringstream ss;
+    ss << "WINDOW()";
+    return ss.str();
 }
 
 const WindowDefinitionPtr& WindowLogicalOperatorNode::getWindowDefinition() const {
@@ -30,7 +30,7 @@ const WindowDefinitionPtr& WindowLogicalOperatorNode::getWindowDefinition() cons
  */
 
 const NodePtr createWindowLogicalOperatorNode(const WindowDefinitionPtr& windowDefinitionPtr) {
-  return std::make_shared<WindowLogicalOperatorNode>(windowDefinitionPtr);
+    return std::make_shared<WindowLogicalOperatorNode>(windowDefinitionPtr);
 }
 
 } // namespace NES

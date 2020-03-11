@@ -2,7 +2,7 @@
 #define SORT_LOGICAL_OPERATOR_NODE_HPP
 
 #include <memory>
-#include <OperatorNodes/Node.hpp>
+#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <API/ParameterTypes.hpp>
 
 namespace NES {

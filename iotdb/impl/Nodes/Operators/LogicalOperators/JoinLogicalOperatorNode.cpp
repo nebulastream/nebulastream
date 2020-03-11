@@ -1,4 +1,4 @@
-#include <OperatorNodes/Impl/JoinLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/JoinLogicalOperatorNode.hpp>
 
 namespace NES {
 

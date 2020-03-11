@@ -1,4 +1,4 @@
-#include <OperatorNodes/Impl/MapLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 
 namespace NES {
 MapLogicalOperatorNode::MapLogicalOperatorNode(const AttributeFieldPtr field, const PredicatePtr predicate) : field_(field), predicate_(predicate) {

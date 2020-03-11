@@ -3,7 +3,7 @@
 
 #include <memory>
 #include <API/UserAPIExpression.hpp>
-#include <OperatorNodes/LogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 
 namespace NES {
 

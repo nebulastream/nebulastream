@@ -1,4 +1,4 @@
-#include <OperatorNodes/Impl/AggregationLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/AggregationLogicalOperatorNode.hpp>
 
 namespace NES {
 

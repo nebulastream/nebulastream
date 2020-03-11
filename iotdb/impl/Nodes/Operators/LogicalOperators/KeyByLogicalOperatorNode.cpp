@@ -1,4 +1,4 @@
-#include <OperatorNodes/Impl/KeyByLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/KeyByLogicalOperatorNode.hpp>
 #include <sstream>
 
 namespace NES {
