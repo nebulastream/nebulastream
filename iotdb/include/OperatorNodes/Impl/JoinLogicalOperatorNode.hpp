@@ -5,14 +5,10 @@
 
 namespace NES {
 
-class JoinLogicalOperatorNode : public LogicalOperatorNode,
-                                public std::enable_shared_from_this<JoinLogicalOperatorNode> {
+class JoinLogicalOperatorNode : public LogicalOperatorNode {
   public:
     JoinLogicalOperatorNode(const JoinPredicatePtr join_spec);
     const std::string toString() const override;
-    OperatorType getOperatorType() const override;
-    virtual NodePtr makeShared() override { return shared_from_this(); };
-    virtual bool equals(const Node& rhs) const override;
   private:
     JoinPredicatePtr join_spec_;
 };

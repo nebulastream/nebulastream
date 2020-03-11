@@ -6,18 +6,16 @@
 
 
 namespace NES {
-class SourceLogicalOperatorNode : public LogicalOperatorNode,
-                                  public std::enable_shared_from_this<SourceLogicalOperatorNode> {
+class SourceLogicalOperatorNode : public LogicalOperatorNode {
 public:
     SourceLogicalOperatorNode() = delete;
     SourceLogicalOperatorNode(const DataSourcePtr);
-    SourceLogicalOperatorNode(const OperatorPtr op);
+    SourceLogicalOperatorNode(const NodePtr op);
+    SourceLogicalOperatorNode(const SourceLogicalOperatorNode* source);
     const NodePtr copy();
-    OperatorType getOperatorType() const override;
     const std::string toString() const override;
 
-    virtual NodePtr makeShared() override { return shared_from_this(); };
-    virtual bool equals(const Node& rhs) const override;
+    bool equal(const NodePtr& rhs) const override ;
 
 private:
     DataSourcePtr source_;

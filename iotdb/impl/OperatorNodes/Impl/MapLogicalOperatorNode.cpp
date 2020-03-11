@@ -5,10 +5,6 @@ MapLogicalOperatorNode::MapLogicalOperatorNode(const AttributeFieldPtr field, co
 }
 
 
-OperatorType MapLogicalOperatorNode::getOperatorType() const {
-    return OperatorType::MAP_OP;
-}
-
 
 const std::string MapLogicalOperatorNode::toString() const {
     std::stringstream ss;
@@ -16,7 +12,8 @@ const std::string MapLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-bool MapLogicalOperatorNode::equals(const Node& rhs) const {
+/*
+ * bool MapLogicalOperatorNode::equal(const Node& rhs) const {
     try {
         auto& rhs_ = dynamic_cast<const MapLogicalOperatorNode&>(rhs);
         return true;
@@ -24,6 +21,7 @@ bool MapLogicalOperatorNode::equals(const Node& rhs) const {
         return false;
     }
 }
+ */
 
 const NodePtr createMapLogicalOperatorNode(const AttributeFieldPtr& field, const PredicatePtr& predicate) {
     return std::make_shared<MapLogicalOperatorNode>(field, predicate);

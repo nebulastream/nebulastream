@@ -5,17 +5,11 @@
 #include <OperatorNodes/LogicalOperatorNode.hpp>
 
 namespace NES {
-class AggregationLogicalOperatorNode : public LogicalOperatorNode,
-                                       public std::enable_shared_from_this<AggregationLogicalOperatorNode> {
+class AggregationLogicalOperatorNode : public LogicalOperatorNode                                    {
 public:
     AggregationLogicalOperatorNode(const AggregationSpec& aggrSpec);
     ~AggregationLogicalOperatorNode();
     const std::string toString() const override;
-    OperatorType getOperatorType() const override;
-
-    virtual NodePtr makeShared() override { return shared_from_this(); };
-    virtual bool equals(const Node& rhs) const override;
-
 private:
     AggregationSpec aggrSpec_;
 };

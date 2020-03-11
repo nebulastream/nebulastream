@@ -12,8 +12,9 @@
 
 namespace NES {
 
-NodePtr createLogicalOperatorNodeFromOperator(const OperatorPtr op) {
+NodePtr createLogicalOperatorNodeFromOperator(const NodePtr op) {
     NodePtr logicalOp = nullptr;
+    /*
     switch (op->getOperatorType()) {
     case SOURCE_OP:
         logicalOp = createSourceLogicalOperatorNode(nullptr);
@@ -32,12 +33,14 @@ NodePtr createLogicalOperatorNodeFromOperator(const OperatorPtr op) {
     }
     }
     return logicalOp;
+     */
+    return logicalOp;
 }
 
 LogicalOperatorPlan::LogicalOperatorPlan(const InputQueryPtr inputQuery) {
     std::cout << "LogicalOperatorPlan inputQuery" << std::endl;
     root = nullptr;
-    this->fromSubOperator(inputQuery->getRoot());
+   // this->fromSubOperator(inputQuery));
     // this->fromQuery(inputQuery);
 }
 
@@ -50,7 +53,7 @@ LogicalOperatorPlan::LogicalOperatorPlan(const Stream& stream)
 }
 
 
-void LogicalOperatorPlan::fromSubOperator(const OperatorPtr op) {
+void LogicalOperatorPlan::fromSubOperator(const NodePtr op) {
     NodePtr logicalOp = createLogicalOperatorNodeFromOperator(op);
 
     if (root == nullptr) {
@@ -63,7 +66,7 @@ void LogicalOperatorPlan::fromSubOperator(const OperatorPtr op) {
     NodePtr tmpRoot = root;
     root = logicalOp;
 
-    auto children = op->getChildren();
+    auto children = op->getSuccessors();
     for (auto&& child : children) {
         this->fromSubOperator(child);
     }
@@ -72,10 +75,10 @@ void LogicalOperatorPlan::fromSubOperator(const OperatorPtr op) {
 }
 
 void LogicalOperatorPlan::fromQuery(const InputQueryPtr inputQuery) {
-    fromQueryHelper(inputQuery->getRoot(), nullptr);
+   // fromQueryHelper(inputQuery->getRoot(), nullptr);
 }
 
-void LogicalOperatorPlan::fromQueryHelper(const OperatorPtr op, const OperatorPtr parentOp) {
+void LogicalOperatorPlan::fromQueryHelper(const NodePtr op, const NodePtr parentOp) {
     if (! op) {
         return;
     }
@@ -90,7 +93,7 @@ void LogicalOperatorPlan::fromQueryHelper(const OperatorPtr op, const OperatorPt
         _op->addPredecessor(_parentOp);
     }
     std::cout << _op->toString() << std::endl;
-    auto children = op->getChildren();
+    auto children = op->getSuccessors();
     for (auto&& child : children) {
         // ERROR: need to create a new pointer, leading to bugs
         fromQueryHelper(child, op);
@@ -103,7 +106,7 @@ void LogicalOperatorPlan::printHelper(NodePtr op, size_t depth, size_t indent) c
     }
     std::cout << std::string(indent*depth, ' ') << op->toString()
               // << ", indent depth: " << indent*depth
-              << "[" << op->getOperatorId() << "]"
+              << "[" << 0<< "]"
               << std::endl;
     ++ depth;
     auto children = op->getSuccessors();
@@ -118,11 +121,10 @@ void LogicalOperatorPlan::prettyPrint() const {
 
 LogicalOperatorPlan LogicalOperatorPlan::from(Stream& stream) {
     LogicalOperatorPlan q(stream);
-    NodePtr op = createSourceLogicalOperatorNode(
-        createTestDataSourceWithSchema(stream.getSchema()));
+    NodePtr op;
     // size_t operatorId = q.getNextOperatorId();
     std::string operatorId = UtilityFunctions::generateUuid();
-    op->setOperatorId(operatorId);
+    //op->setOperatorId(operatorId);
     q.root = op;
     return q;
 }
@@ -132,7 +134,7 @@ LogicalOperatorPlan& LogicalOperatorPlan::filter(const UserAPIExpression& predic
     const NodePtr op = createFilterLogicalOperatorNode(pred);
     // int operatorId = this->getNextOperatorId();
     std::string operatorId = UtilityFunctions::generateUuid();
-    op->setOperatorId(operatorId);
+    //op->setOperatorId(operatorId);
 
     root->addPredecessor(op);
     op->addSuccessor(root);
@@ -147,7 +149,7 @@ LogicalOperatorPlan& LogicalOperatorPlan::map(const AttributeField& field, const
     // size_t operatorId = this->getNextOperatorId();
     std::string operatorId = UtilityFunctions::generateUuid();
 
-    op->setOperatorId(operatorId);
+    //op->setOperatorId(operatorId);
 
     root->addPredecessor(op);
     op->addSuccessor(root);
@@ -159,7 +161,7 @@ LogicalOperatorPlan& LogicalOperatorPlan::join(const LogicalOperatorPlan& subQue
                                                const JoinPredicatePtr joinPred) {
     NodePtr op = createJoinLogicalOperatorNode(joinPred);
     std::string operatorId = UtilityFunctions::generateUuid();
-    op->setOperatorId(operatorId);
+    //op->setOperatorId(operatorId);
     root->addPredecessor(op);
     subQuery.root->addPredecessor(op);
     op->addSuccessor(root);
@@ -178,7 +180,7 @@ LogicalOperatorPlan& LogicalOperatorPlan::windowByKey(const AttributeFieldPtr& o
     std::string operatorId = UtilityFunctions::generateUuid();
 
 
-    op->setOperatorId(operatorId);
+    //op->setOperatorId(operatorId);
 
     root->addPredecessor(op);
     op->addSuccessor(root);
@@ -195,7 +197,7 @@ LogicalOperatorPlan& LogicalOperatorPlan::window(const WindowTypePtr& windowType
     std::string operatorId = UtilityFunctions::generateUuid();
 
 
-    op->setOperatorId(operatorId);
+   // op->setOperatorId(operatorId);
 
     root->addPredecessor(op);
     op->addSuccessor(root);
@@ -210,7 +212,7 @@ LogicalOperatorPlan& LogicalOperatorPlan::print(std::ostream& out) {
     std::string operatorId = UtilityFunctions::generateUuid();
 
 
-    op->setOperatorId(operatorId);
+    //op->setOperatorId(operatorId);
 
     root->addPredecessor(op);
     op->addSuccessor(root);
@@ -226,13 +228,9 @@ NodePtr LogicalOperatorPlan::getOperatorNodeById(const std::string& id) const {
         auto front = opList.front();
         opList.pop();
 
-        if (front->getOperatorId() == id) {
-            return front;
-        } else {
-            auto children = front->getSuccessors();
-            for (auto&& child : children) {
-                opList.push(child);
-            }
+        auto children = front->getSuccessors();
+        for (auto&& child : children) {
+            opList.push(child);
         }
     }
     std::cout << "Not found operator " << id << std::endl;
