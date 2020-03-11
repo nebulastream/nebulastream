@@ -46,7 +46,28 @@ typedef const DataSourcePtr (*createCSVSourceFuncPtr)(const Schema&,
                                                       const std::string&,
                                                       size_t, size_t);
 
-int test(createFileSourceFuncPtr funcPtr, std::string &path_to_file) {
+class FileSourceTest : public testing::Test {
+ public:
+
+  static void SetUpTestCase() {
+    NES::setupLogging("FileSourceTest.log", NES::LOG_DEBUG);
+    NES_INFO("Setup FileSourceTest test class.");
+  }
+
+  static void TearDownTestCase() {
+    std::cout << "Tear down FileSourceTest test class." << std::endl;
+  }
+
+  void TearDown() {
+  }
+};
+
+
+TEST_F(FileSourceTest, testBinarySource) {
+  std::string path_to_file =
+      "../tests/test_data/ysb-tuples-100-campaign-100.bin";
+  createFileSourceFuncPtr funcPtr = &createBinaryFileSource;
+
   Schema schema =
       Schema::create().addField("user_id", 16).addField("page_id", 16).addField(
           "campaign_id", 16).addField("ad_type", 9).addField("event_type", 9)
@@ -82,72 +103,53 @@ int test(createFileSourceFuncPtr funcPtr, std::string &path_to_file) {
   EXPECT_EQ(source->getNumberOfGeneratedTuples(), num_tuples_to_process);
   EXPECT_EQ(source->getNumberOfGeneratedBuffers(), num_of_buffers);
   std::cout << "Success" << std::endl;
-  return 0;
 }
 
-int testCSV(createCSVSourceFuncPtr funcPtr, std::string &path_to_file,
-            const std::string &del, size_t num, size_t frequency) {
-  Schema schema =
-      Schema::create().addField("user_id", 16).addField("page_id", 16).addField(
-          "campaign_id", 16).addField("ad_type", 9).addField("event_type", 9)
-          .addField("current_ms", UINT64).addField("ip", INT32);
 
-  uint64_t num_tuples_to_process = 1000;
-  size_t num_of_buffers = 1000;
-  uint64_t tuple_size = schema.getSchemaSize();
-  uint64_t buffer_size = num_tuples_to_process * tuple_size / num_of_buffers;
-  assert(buffer_size > 0);
-  BufferManager::instance().setNumberOfBuffers(0);
-  BufferManager::instance().setNumberOfBuffers(num_of_buffers);
-  BufferManager::instance().setBufferSize(buffer_size);
-
-  const DataSourcePtr source = (*funcPtr)(schema, path_to_file, del, num,
-                                          frequency);
-
-  while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
-    TupleBufferPtr buf = source->receiveData();
-    size_t i = 0;
-    while (i * tuple_size < buffer_size) {
-      ysbRecord record(
-          *((ysbRecord*) ((char*) buf->getBuffer() + i * tuple_size)));
-      // std::cout << "record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type << std::endl;
-      EXPECT_STREQ(record.ad_type, "banner78");
-      EXPECT_TRUE(
-          (!strcmp(record.event_type, "view")
-              || !strcmp(record.event_type, "click")
-              || !strcmp(record.event_type, "purchase")));
-      i++;
-    }
-  }
-
-  EXPECT_EQ(source->getNumberOfGeneratedTuples(), num_tuples_to_process);
-  EXPECT_EQ(source->getNumberOfGeneratedBuffers(), num_of_buffers);
-  std::cout << "dataSuccess" << std::endl;
-  return 0;
-}
-
-int testBinarySource() {
+TEST_F(FileSourceTest, testCSVSource) {
   std::string path_to_file =
-      "../tests/test_data/ysb-tuples-100-campaign-100.bin";
-  createFileSourceFuncPtr funcPtr = &createBinaryFileSource;
-  test(funcPtr, path_to_file);
-  return 0;
+        "../tests/test_data/ysb-tuples-100-campaign-100.csv";
+    createCSVSourceFuncPtr funcPtr = &createCSVFileSource;
+
+    const std::string &del = ",";
+    size_t num = 1;
+    size_t frequency = 1;
+    Schema schema =
+          Schema::create().addField("user_id", 16).addField("page_id", 16).addField(
+              "campaign_id", 16).addField("ad_type", 9).addField("event_type", 9)
+              .addField("current_ms", UINT64).addField("ip", INT32);
+
+      uint64_t num_tuples_to_process = 1000;
+      size_t num_of_buffers = 1000;
+      uint64_t tuple_size = schema.getSchemaSize();
+      uint64_t buffer_size = num_tuples_to_process * tuple_size / num_of_buffers;
+      assert(buffer_size > 0);
+      BufferManager::instance().setNumberOfBuffers(0);
+      BufferManager::instance().setNumberOfBuffers(num_of_buffers);
+      BufferManager::instance().setBufferSize(buffer_size);
+
+      const DataSourcePtr source = (*funcPtr)(schema, path_to_file, del, num,
+                                              frequency);
+
+      while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
+        TupleBufferPtr buf = source->receiveData();
+        size_t i = 0;
+        while (i * tuple_size < buffer_size) {
+          ysbRecord record(
+              *((ysbRecord*) ((char*) buf->getBuffer() + i * tuple_size)));
+          // std::cout << "record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type << std::endl;
+          EXPECT_STREQ(record.ad_type, "banner78");
+          EXPECT_TRUE(
+              (!strcmp(record.event_type, "view")
+                  || !strcmp(record.event_type, "click")
+                  || !strcmp(record.event_type, "purchase")));
+          i++;
+        }
+      }
+
+      EXPECT_EQ(source->getNumberOfGeneratedTuples(), num_tuples_to_process);
+      EXPECT_EQ(source->getNumberOfGeneratedBuffers(), num_of_buffers);
+      std::cout << "dataSuccess" << std::endl;
 }
 
-int testCSVSource() {
-  std::string path_to_file =
-      "../tests/test_data/ysb-tuples-100-campaign-100.csv";
-  createCSVSourceFuncPtr funcPtr = &createCSVFileSource;
-  testCSV(funcPtr, path_to_file, ",", 1, 1);
-  return 0;
-}
-}
-
-int main(int argc, const char *argv[]) {
-  NES::setupLogging("FileSourceTest.log", NES::LOG_DEBUG);
-  NES::Dispatcher::instance();
-  NES::BufferManager::instance();
-  NES::testBinarySource();
-  NES::testCSVSource();
-  return 0;
-}
+}  //end of NES
