@@ -99,7 +99,7 @@ TEST_F(QueryInterfaceTest, testQueryMap) {
   env.executeQuery(query);
 }
 
-TEST_F(QueryInterfaceTest, DISABLED_testQueryString) {
+TEST_F(QueryInterfaceTest, testQueryString) {
 
   std::stringstream code;
 
@@ -110,8 +110,15 @@ TEST_F(QueryInterfaceTest, DISABLED_testQueryString) {
       << "InputQuery::from(default_stream).map(default_stream[\"value\"],2).filter(default_stream[\"test\"]==5)"
       << std::endl << "" << std::endl << ";" << std::endl;
 
-  InputQueryPtr inputQuery = UtilityFunctions::createQueryFromCodeString(
-      code.str());
+  try{
+    InputQueryPtr inputQuery = UtilityFunctions::createQueryFromCodeString(
+          code.str());
+  }
+  catch(...)
+  {
+    SUCCEED();
+  }
+
 }
 
 }  // namespace NES
