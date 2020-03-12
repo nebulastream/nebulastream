@@ -11,23 +11,15 @@ namespace NES {
 class LogicalOperatorNode : public OperatorNode {
   public:
     LogicalOperatorNode();
-
-    virtual bool equals(const Node&) {};
-    virtual bool equal(const NodePtr& rhs) const { return false; };
-    virtual bool operator==(const Node&) {};
 };
 
 typedef std::shared_ptr<LogicalOperatorNode> LogicalOperatorNodePtr;
 
-const NodePtr createAggregationLogicalOperatorNode(const AggregationSpec& aggrSpec);
 NodePtr createFilterLogicalOperatorNode(const PredicatePtr& predicate);
-const NodePtr createJoinLogicalOperatorNode(const JoinPredicatePtr& joinSpec);
-const NodePtr createKeyByLogicalOperatorNode(const Attributes& keybySpec);
-const NodePtr createMapLogicalOperatorNode(const AttributeFieldPtr&, const PredicatePtr&);
-const NodePtr createSinkLogicalOperatorNode(const DataSinkPtr& sink);
-const NodePtr createSourceLogicalOperatorNode(const DataSourcePtr& source);
-const NodePtr createSortLogicalOperatorNode(const Sort& sortSpec);
-const NodePtr createWindowLogicalOperatorNode(const WindowDefinitionPtr& windowDefinition);
+NodePtr createMapLogicalOperatorNode(const AttributeFieldPtr&, const PredicatePtr&);
+NodePtr createSinkLogicalOperatorNode(const DataSinkPtr& sink);
+NodePtr createSourceLogicalOperatorNode(const DataSourcePtr& source);
+NodePtr createWindowLogicalOperatorNode(const WindowDefinitionPtr& windowDefinition);
 
 
 // #include <Nodes/Impl/FilterLogicalOperatorNode.hpp>
