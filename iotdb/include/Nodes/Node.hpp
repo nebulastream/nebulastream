@@ -87,17 +87,17 @@ class Node : public std::enable_shared_from_this<Node> {
 
     /**
      * @brief checks if the current node and its successors are equal a other node and its successors
-     * @param rhs the node to compare
+     * @param node the node to compare
      * @return bool
      */
-    bool equalWithAllSuccessors(const NodePtr& rhs);
+    bool equalWithAllSuccessors(const NodePtr& node);
 
     /**
      * @brief checks if the current node and its predecessors are equal a other node and its predecessors
-     * @param rhs the node to compare
+     * @param node the node to compare
      * @return bool
      */
-    bool equalWithAllPredecessors(const NodePtr& rhs);
+    bool equalWithAllPredecessors(const NodePtr& node);
 
     /**
      * @brief check two node are equal.
@@ -118,12 +118,12 @@ class Node : public std::enable_shared_from_this<Node> {
     };
 
     /**
-     * @brief split graph into multiple sub-graphs. The graph starts at current node.
-     * If the given node is not in the graph, throw exception
-     * @params node the given node to split at.
+     * @brief split graph into multiple sub-graphs. The graph starts at current splitNode.
+     * If the given splitNode is not in the graph, throw exception
+     * @params splitNode the given splitNode to split at.
      * @return vector of multiple sub-graphs.
      */
-    std::vector<NodePtr> split(const NodePtr& node);
+    std::vector<NodePtr> split(const NodePtr& splitNode);
 
     /**
      * @brief validation of this node
@@ -213,19 +213,19 @@ class Node : public std::enable_shared_from_this<Node> {
     std::vector<NodePtr> successors{};
   private:
     /**
-     * @brief check if an node is in given vector or not
-     * @param nodeNodes
-     * @param node
-     * @return return true if the given node is found, otherwise false
+     * @brief check if an nodeToFind is in given vector or not
+     * @param nodes
+     * @param nodeToFind
+     * @return return true if the given nodeToFind is found, otherwise false
      */
-    NodePtr find(const std::vector<NodePtr>& nodeNodes, const NodePtr& node);
+    NodePtr find(const std::vector<NodePtr>& nodes, const NodePtr& nodeToFind);
     /**
-     * @brief check if an node is in given graph
+     * @brief check if an nodeToFind is in given graph
      * @param root
-     * @param node
-     * @return return true if the given node is found in the graph of root, otherwise false
+     * @param nodeToFind
+     * @return return true if the given nodeToFind is found in the graph of root, otherwise false
      */
-    NodePtr findRecursively(const NodePtr& root, const NodePtr& node);
+    NodePtr findRecursively(const NodePtr& root, const NodePtr& nodeToFind);
 
 
     /********************************************************************************

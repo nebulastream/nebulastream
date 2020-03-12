@@ -166,27 +166,27 @@ bool Node::swap(const NodePtr& newNode, const NodePtr& oldNode) {
     return true;
 }
 
-bool Node::remove(const NodePtr& op) {
+bool Node::remove(const NodePtr& node) {
     // NOTE: if there is a cycle inside the operator topology, it won't behave correctly.
-    return this->removeSuccessor(op) || this->removePredecessor(op);
+    return this->removeSuccessor(node) || this->removePredecessor(node);
 }
 
-bool Node::removeAndLevelUpSuccessors(const NodePtr& op) {
-    assert(op);
+bool Node::removeAndLevelUpSuccessors(const NodePtr& node) {
+    assert(node);
 
-    // if a successor of op is equal to this->successors,
+    // if a successor of node is equal to this->successors,
     // it's confused to merge two equal operators,
     // HERE we don't deal with this case
-    for (auto&& op_ : op->successors) {
+    for (auto&& op_ : node->successors) {
         if (find(this->successors, op_)) {
             return false;
         }
     }
 
     bool succ = false;
-    succ = removeSuccessor(op);
+    succ = removeSuccessor(node);
     if (succ) {
-        for (auto&& op_ : op->successors) {
+        for (auto&& op_ : node->successors) {
             this->successors.push_back(op_);
         }
         return true;
@@ -207,25 +207,25 @@ const std::vector<NodePtr>& Node::getPredecessors() const {
     return this->predecessors;
 }
 
-NodePtr Node::find(const std::vector<NodePtr>& operatorNodes, const NodePtr& op) {
-    for (auto&& op_ : operatorNodes) {
-        if (op->equal(op_)) {
-            return op_;
+NodePtr Node::find(const std::vector<NodePtr>& nodes, const NodePtr& nodeToFind) {
+    for (auto&& currentNode : nodes) {
+        if (nodeToFind->equal(currentNode)) {
+            return currentNode;
         }
     }
     return nullptr;
 }
 
-NodePtr Node::findRecursively(const NodePtr& root, const NodePtr& op) {
+NodePtr Node::findRecursively(const NodePtr& root, const NodePtr& nodeToFind) {
     // DFS
     NodePtr x = nullptr;
     // two operator are equal, may not the same object
-    if (root->isIdentical(op))
+    if (root->isIdentical(nodeToFind))
         return root;
 
     // not equal
-    for (auto& op_ : root->successors) {
-        x = findRecursively(op_, op);
+    for (auto& currentNode : root->successors) {
+        x = findRecursively(currentNode, nodeToFind);
         if (x) {
             break;
         }
@@ -233,15 +233,14 @@ NodePtr Node::findRecursively(const NodePtr& root, const NodePtr& op) {
     return x;
 }
 
-bool Node::equalWithAllSuccessorsHelper(const NodePtr& op1, const NodePtr& op2) {
-    if (op1->successors.size() != op2->successors.size())
+bool Node::equalWithAllSuccessorsHelper(const NodePtr& node1, const NodePtr& node2) {
+    if (node1->successors.size() != node2->successors.size())
         return false;
 
-    auto x = op1->successors.begin();
-
-    while (x != op1->successors.end()) {
-        auto y = op2->successors.begin();
-        while (y != op2->successors.end()) {
+    auto x = node1->successors.begin();
+    while (x != node1->successors.end()) {
+        auto y = node2->successors.begin();
+        while (y != node2->successors.end()) {
             if (x[0]->equal(y[0])) {
                 if (!equalWithAllSuccessorsHelper(x[0], y[0])) {
                     return false;
@@ -250,7 +249,7 @@ bool Node::equalWithAllSuccessorsHelper(const NodePtr& op1, const NodePtr& op2) 
             }
             ++y;
         }
-        if (y == op2->successors.end()) {
+        if (y == node2->successors.end()) {
             return false;
         }
         ++x;
@@ -258,23 +257,23 @@ bool Node::equalWithAllSuccessorsHelper(const NodePtr& op1, const NodePtr& op2) 
     return true;
 }
 
-bool Node::equalWithAllSuccessors(const NodePtr& op) {
+bool Node::equalWithAllSuccessors(const NodePtr& node) {
     // the root is equal
-    if (!this->equal(op))
+    if (!this->equal(node))
         return false;
 
-    return equalWithAllSuccessorsHelper(shared_from_this(), op);
+    return equalWithAllSuccessorsHelper(shared_from_this(), node);
 }
 
-bool Node::equalWithAllPredecessorsHelper(const NodePtr& op1, const NodePtr& op2) {
-    if (op1->predecessors.size() != op2->predecessors.size())
+bool Node::equalWithAllPredecessorsHelper(const NodePtr& node1, const NodePtr& node2) {
+    if (node1->predecessors.size() != node2->predecessors.size())
         return false;
 
-    auto x = op1->predecessors.begin();
+    auto x = node1->predecessors.begin();
 
-    while (x != op1->predecessors.end()) {
-        auto y = op2->predecessors.begin();
-        while (y != op2->predecessors.end()) {
+    while (x != node1->predecessors.end()) {
+        auto y = node2->predecessors.begin();
+        while (y != node2->predecessors.end()) {
             if ((*x)->equal(*y)) {
                 if (!equalWithAllPredecessorsHelper(*x, *y)) {
                     return false;
@@ -283,7 +282,7 @@ bool Node::equalWithAllPredecessorsHelper(const NodePtr& op1, const NodePtr& op2
             }
             ++y;
         }
-        if (y == op2->predecessors.end()) {
+        if (y == node2->predecessors.end()) {
             return false;
         }
         ++x;
@@ -291,31 +290,31 @@ bool Node::equalWithAllPredecessorsHelper(const NodePtr& op1, const NodePtr& op2
     return true;
 }
 
-bool Node::equalWithAllPredecessors(const NodePtr& op) {
+bool Node::equalWithAllPredecessors(const NodePtr& node) {
     // the root is equal
-    if (!this->equal(op))
+    if (!this->equal(node))
         return false;
 
-    return equalWithAllPredecessorsHelper(shared_from_this(), op);
+    return equalWithAllPredecessorsHelper(shared_from_this(), node);
 }
 
-std::vector<NodePtr> Node::split(const NodePtr& op) {
-    auto op_ = findRecursively(shared_from_this(), op);
-    if (!op_) {
-        throw std::invalid_argument("received operator not in graph.");
+std::vector<NodePtr> Node::split(const NodePtr& splitNode) {
+    std::vector<NodePtr> result{};
+    auto node = findRecursively(shared_from_this(), splitNode);
+    if (!node) {
+        NES_FATAL_ERROR("operator is not in graph so we dont split.")
+        result.push_back(shared_from_this());
+        return result;
     }
-    std::vector<NodePtr> vec{};
 
-    while (op_->predecessors.size() > 0) {
-        auto p = op_->predecessors[0];
-        vec.push_back(p);
-        op_->removePredecessor(p);
+    while (!node->predecessors.empty()) {
+        auto p = node->predecessors[0];
+        result.push_back(p);
+        node->removePredecessor(p);
     }
-    vec.push_back(op_);
-    return vec;
+    result.push_back(node);
+    return result;
 }
-
-
 
 bool Node::isValid() {
     return !isCyclic();
@@ -330,7 +329,7 @@ std::vector<NodePtr> Node::getAndFlattenAllSuccessors() {
 void Node::getAndFlattenAllSuccessorsHelper(const NodePtr& op,
                                             std::vector<NodePtr>& allChildren, const NodePtr& excludedOp) {
 
-    // NOTE: poor performance
+    // todo this implementation may be slow
     for (auto&& op_ : op->successors) {
         if (!find(allChildren, op_) &&
             (op_ != excludedOp)) {
@@ -389,9 +388,7 @@ void Node::prettyPrint(std::ostream& out) {
 
 void Node::printHelper(const NodePtr& op, size_t depth, size_t indent, std::ostream& out) const {
 
-    out << std::string(indent*depth, ' ') << op->toString()
-        // << ", <#id: " << op.getOperatorId() << ">"
-        << std::endl;
+    out << std::string(indent*depth, ' ') << op->toString() << std::endl;
     ++depth;
     auto children = op->getSuccessors();
     for (auto&& child: children) {
