@@ -3,21 +3,24 @@
 namespace NES {
 
 FilterLogicalOperatorNode::FilterLogicalOperatorNode(const PredicatePtr& predicate)
-    : LogicalOperatorNode(), predicate_(NES::copy(predicate)) {
+    : LogicalOperatorNode(), predicate(NES::copy(predicate)) {
+}
 
+PredicatePtr FilterLogicalOperatorNode::getPredicate() {
+    return predicate;
 }
 
 bool FilterLogicalOperatorNode::equal(const NodePtr& rhs) const {
     if (rhs->instanceOf<FilterLogicalOperatorNode>()) {
         auto rhs_ = rhs->as<FilterLogicalOperatorNode>();
-        return predicate_->equals(*rhs_->predicate_.get());
+        return predicate->equals(*rhs_->predicate.get());
     }
     return false;
 };
 
 const std::string FilterLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "FILTER(" << predicate_->toString() << ")";
+    ss << "FILTER(" << predicate->toString() << ")";
     return ss.str();
 }
 

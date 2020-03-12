@@ -9,23 +9,26 @@ namespace NES {
 
 class FilterLogicalOperatorNode : public LogicalOperatorNode {
   public:
-    FilterLogicalOperatorNode() = default;
+    explicit FilterLogicalOperatorNode(const PredicatePtr&);
     ~FilterLogicalOperatorNode() = default;
-    FilterLogicalOperatorNode(const PredicatePtr&);
 
     /**
-     * @brief check two filter operators are equal or not. Noting they could be
-     *        two different objects with the same intra params.
+     * @brief get the filter predicate.
+     * @return PredicatePtr
+     */
+    PredicatePtr getPredicate();
+
+    /**
+     * @brief check if two operators have the same filter predicate.
      * @param rhs the operator to compare
      * @return bool true if they are the same otherwise false
      */
     bool equal(const NodePtr& rhs) const override;
     const std::string toString() const override;
   private:
-    PredicatePtr predicate_;
+    PredicatePtr predicate;
 
 };
-
 typedef std::shared_ptr<FilterLogicalOperatorNode> FilterLogicalOperatorNodePtr;
 
 }      // namespace NES
