@@ -4,8 +4,8 @@
 
 namespace NES {
 
-WindowLogicalOperatorNode::WindowLogicalOperatorNode(const WindowDefinitionPtr& window_definition)
-    : windowDefinition(window_definition) {
+WindowLogicalOperatorNode::WindowLogicalOperatorNode(const WindowDefinitionPtr& windowDefinition)
+    : windowDefinition(windowDefinition) {
 }
 
 const std::string WindowLogicalOperatorNode::toString() const {
@@ -18,16 +18,16 @@ const WindowDefinitionPtr& WindowLogicalOperatorNode::getWindowDefinition() cons
     return windowDefinition;
 }
 
-/*
- * bool WindowLogicalOperatorNode::equal(const Node& rhs) const {
-    try {
-        auto& rhs_ = dynamic_cast<const WindowLogicalOperatorNode&>(rhs);
+bool WindowLogicalOperatorNode::equal(const NodePtr& rhs) const {
+    if(this->isIdentical(rhs))
         return true;
-    } catch (const std::bad_cast& e) {
-        return false;
+    if (rhs->instanceOf<WindowLogicalOperatorNode>()) {
+        auto windowOperator = rhs->as<WindowLogicalOperatorNode>();
+        // todo check if the window definition is the same
+        return true;
     }
+    return false;
 }
- */
 
 NodePtr createWindowLogicalOperatorNode(const WindowDefinitionPtr& windowDefinitionPtr) {
     return std::make_shared<WindowLogicalOperatorNode>(windowDefinitionPtr);

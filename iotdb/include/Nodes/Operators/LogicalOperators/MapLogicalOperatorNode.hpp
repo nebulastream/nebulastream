@@ -4,16 +4,16 @@
 #include <memory>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 
-
 namespace NES {
-class MapLogicalOperatorNode : public LogicalOperatorNode{
-public:
+class MapLogicalOperatorNode : public LogicalOperatorNode {
+  public:
     MapLogicalOperatorNode(const AttributeFieldPtr, const PredicatePtr);
-   const std::string toString() const override;
+    bool equal(const NodePtr& rhs) const override;
+    const std::string toString() const override;
 
-private:
-    PredicatePtr predicate_;
-    AttributeFieldPtr field_;
+  private:
+    PredicatePtr predicate;
+    AttributeFieldPtr field;
 };
 }
 

@@ -8,14 +8,13 @@ SourceLogicalOperatorNode::SourceLogicalOperatorNode(const DataSourcePtr source)
 }
 
 bool SourceLogicalOperatorNode::equal(const NodePtr& rhs) const {
-    // try {
-    //     auto& rhs_ = dynamic_cast<const SourceLogicalOperatorNode&>(rhs);
-    //     return true;
-    // } catch (const std::bad_cast& e) {
-    //     return false;
-    // }
-    if (isIdentical(rhs))
+    if(this->isIdentical(rhs))
         return true;
+    if (rhs->instanceOf<SourceLogicalOperatorNode>()) {
+        auto sourceOperator = rhs->as<SourceLogicalOperatorNode>();
+        // todo check if the sink is the same
+        return true;
+    }
     return false;
 }
 

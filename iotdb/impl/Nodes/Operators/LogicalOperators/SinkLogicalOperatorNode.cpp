@@ -1,35 +1,30 @@
 #include <Nodes/Operators/LogicalOperators/SinkLogicalOperatorNode.hpp>
 
 namespace NES {
-SinkLogicalOperatorNode::SinkLogicalOperatorNode(const DataSinkPtr sink) : sink_(sink) {
+SinkLogicalOperatorNode::SinkLogicalOperatorNode(const DataSinkPtr sink) : sink(sink) {
 }
-
-// SinkLogicalOperatorNode& SinkLogicalOperatorNode::operator=(const SinkLogicalOperatorNode& other) {
-//     if (this != &other) {
-//         sink_ = other.sink_;
-//     }
-//     return *this;
-// }
 
 DataSinkPtr SinkLogicalOperatorNode::getDataSinkPtr() {
-    return sink_;
+    return sink;
 }
+
+bool SinkLogicalOperatorNode::equal(const NodePtr& rhs) const {
+    if(this->isIdentical(rhs))
+        return true;
+    if (rhs->instanceOf<SinkLogicalOperatorNode>()) {
+        auto sinkOperator = rhs->as<SinkLogicalOperatorNode>();
+        // todo check if the source is the same
+        return true;
+    }
+    return false;
+};
 
 const std::string SinkLogicalOperatorNode::toString() const {
   std::stringstream ss;
-  ss << "SINK(" << NES::toString(sink_) << ")";
+  ss << "SINK(" << NES::toString(sink) << ")";
   return ss.str();
 }
-/*
-bool SinkLogicalOperatorNode::equal(const Node& rhs) const {
-    try {
-        auto& rhs_ = dynamic_cast<const SinkLogicalOperatorNode&>(rhs);
-        return true;
-    } catch (const std::bad_cast& e) {
-        return false;
-    }
-}
-*/
+
 NodePtr createSinkLogicalOperatorNode(const DataSinkPtr& sink) {
     return std::make_shared<SinkLogicalOperatorNode>(sink);
 }

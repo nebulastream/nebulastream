@@ -1,5 +1,5 @@
-#ifndef BASE_nodeERATOR_NODE_HPP
-#define BASE_nodeERATOR_NODE_HPP
+#ifndef NODES_NODE_HPP
+#define NODES_NODE_HPP
 
 #include <iostream>
 #include <vector>
@@ -32,8 +32,8 @@ class Node : public std::enable_shared_from_this<Node> {
 
     /**
      * @brief add a predecessor to vector of predecessors
-     *        no duplicated nodeerator inside predecessors.
-     *        one cannot add current nodeerator into its predecessors.
+     *        no duplicated node inside predecessors.
+     *        one cannot add current node into its predecessors.
      * @param newNode
      */
     void addPredecessor(const NodePtr& newNode);
@@ -67,17 +67,16 @@ class Node : public std::enable_shared_from_this<Node> {
     bool swap(const NodePtr& newNode, const NodePtr& oldNode);
 
     /**
-     * @brief remove the given nodeerator together with its successors
-     * @param node the given nodeerator to remove
-     * @return bool true if
+     * @brief remove the given node together with its successors
+     * @param node the given node to remove
+     * @return bool true if successful
      */
     bool remove(const NodePtr& node);
 
     /**
-     * @brief remove the given nodeerator and level up its successors
+     * @brief remove the given node and add its successors as to the successors of the current node
      * @param node
-
-     * @return bool true if
+     * @return bool true if successful
      */
     bool removeAndLevelUpSuccessors(const NodePtr& node);
 
@@ -86,35 +85,32 @@ class Node : public std::enable_shared_from_this<Node> {
      */
     void clear();
 
-    virtual const std::string toString() const = 0;
+    /**
+     * @brief checks if the current node and its successors are equal a other node and its successors
+     * @param rhs the node to compare
+     * @return bool
+     */
+    bool equalWithAllSuccessors(const NodePtr& rhs);
 
     /**
-     * @brief get the id of an nodeerator
-     * @return string
+     * @brief checks if the current node and its predecessors are equal a other node and its predecessors
+     * @param rhs the node to compare
+     * @return bool
      */
-    const std::string getnodeeratorId() const;
-    void setnodeeratorId(const std::string& id);
-
-    const std::vector<NodePtr>& getSuccessors() const;
-    const std::vector<NodePtr>& getPredecessors() const;
-
-    bool equalWithAllSuccessors(const NodePtr& rhs);
     bool equalWithAllPredecessors(const NodePtr& rhs);
 
     /**
-     * @brief check two node are equal or not. Noting they could be
-     *        two different objects with the same value.
+     * @brief check two node are equal.
      * @param rhs the node to compare
      * @return bool true if they are the same otherwise false
-     * @TODO should be a pure virtual function
      */
     virtual bool equal(const NodePtr& rhs) const {
-        return false;
+        return this->isIdentical(rhs);
     };
 
     /**
-     * @brief check two nodeerators whether are exactly the same object or not
-     * @param rhs the nodeerator to check
+     * @brief check two nodes whether are exactly the same object or not
+     * @param rhs the node to check
      * @return bool true if they are the same object otherwise false
      */
     virtual bool isIdentical(const NodePtr& rhs) const {
@@ -122,26 +118,24 @@ class Node : public std::enable_shared_from_this<Node> {
     };
 
     /**
-     * @see isIdentical() function
-     */
-    virtual bool isNotIdentical(const NodePtr& rhs) const {
-        return rhs.get() != this;
-    };
-
-    /**
-     * @brief split graph into multiple sub-graphs. The graph starts at current nodeerator
-     *        if the given nodeerator is not in the graph, throw exception
-     * @params node the given nodeerator to split at.
+     * @brief split graph into multiple sub-graphs. The graph starts at current node.
+     * If the given node is not in the graph, throw exception
+     * @params node the given node to split at.
      * @return vector of multiple sub-graphs.
      */
     std::vector<NodePtr> split(const NodePtr& node);
 
     /**
-     * @brief validation of this nodeerator
-     * @return true if there is no ring/lonode inside this nodeerator's successors, otherwise false
+     * @brief validation of this node
+     * @return true if there is no ring/node inside this node's successors, otherwise false
      */
     bool isValid();
 
+    /**
+     * @brief Checks if the current node is of type NodeType
+     * @tparam NodeType
+     * @return bool true if node is of NodeType
+     */
     template<class NodeType>
     const bool instanceOf() {
         if (dynamic_cast<NodeType*>(this)) {
@@ -150,6 +144,11 @@ class Node : public std::enable_shared_from_this<Node> {
         return false;
     };
 
+    /**
+    * @brief Dynamically casts the node to a NodeType
+    * @tparam NodeType
+    * @return returns a shared pointer of the NodeType
+    */
     template<class NodeType>
     std::shared_ptr<NodeType> as() {
         if (instanceOf<NodeType>()) {
@@ -160,6 +159,11 @@ class Node : public std::enable_shared_from_this<Node> {
         }
     }
 
+    /**
+     * @brief Collects all nodes that are of a specific node type, e.g. all FilterOperatorNodes.
+     * @tparam NodeType
+     * @return vector of nodes
+     */
     template<class NodeType>
     std::vector<std::shared_ptr<NodeType>> getNodesByType() {
         std::vector<std::shared_ptr<NodeType>> vector;
@@ -167,56 +171,59 @@ class Node : public std::enable_shared_from_this<Node> {
         return vector;
     }
 
-    template<class NodeType>
-    void getNodesByTypeHelper(std::vector<std::shared_ptr<NodeType>>& foundNodes) {
-        if (this->instanceOf<NodeType>()) {
-            foundNodes.push_back(this->as<NodeType>());
-        }
-        for (auto& successor:this->successors) {
-            successor->getNodesByTypeHelper(foundNodes);
-        }
-    };
-
+    /**
+     * @brief checks if the node and its successors contain cycles.
+     * @return true if cyclic
+     */
     bool isCyclic();
 
     /**
-     * @brief return all successors of current nodeerator
-     *        Always excluding current nodeerator, no matter a cycle exists
-     * @params allChildren a vector to store all successors of current nodeerator
+     * @brief return all successors of current node
+     *        Always excluding current node, no matter a cycle exists
+     * @params allChildren a vector to store all successors of current node
      */
     std::vector<NodePtr> getAndFlattenAllSuccessors();
 
+    /**
+     * @brief get direct successors.
+     * @return vector of successors.
+     */
+    const std::vector<NodePtr>& getSuccessors() const;
+
+    /**
+     * @brief get direct predecessors.
+     * @return vector of predecessors.
+     */
+    const std::vector<NodePtr>& getPredecessors() const;
+
+    virtual const std::string toString() const = 0;
+
     void prettyPrint(std::ostream& out = std::cout);
+
   protected:
     /**
-     * @brief the nodeerator id would be set as uuid to ensure uniqueness
-     *        the main reason is that we'd like make sure all nodeerators in
-     *        the given graph (tree) should be unique.
-     */
-    const std::string nodeId;
-    /**
-     * @brief the predecessors of this nodeerator. There is no equal nodeerators
+     * @brief the predecessors of this node. There is no equal nodes
      *        in this vector
      */
     std::vector<NodePtr> predecessors{};
     /**
-     * @brief the successors of this nodeerator. There is no equal nodeerators
+     * @brief the successors of this node. There is no equal nodes
      *        in this vector
      */
     std::vector<NodePtr> successors{};
   private:
     /**
-     * @brief check if an nodeerator is in given vector or not
-     * @param nodeeratorNodes
+     * @brief check if an node is in given vector or not
+     * @param nodeNodes
      * @param node
-     * @return return true if the given nodeerator is found, otherwise false
+     * @return return true if the given node is found, otherwise false
      */
-    NodePtr find(const std::vector<NodePtr>& nodeeratorNodes, const NodePtr& node);
+    NodePtr find(const std::vector<NodePtr>& nodeNodes, const NodePtr& node);
     /**
-     * @brief check if an nodeerator is in given graph
+     * @brief check if an node is in given graph
      * @param root
      * @param node
-     * @return return true if the given nodeerator is found in the graph of root, otherwise false
+     * @return return true if the given node is found in the graph of root, otherwise false
      */
     NodePtr findRecursively(const NodePtr& root, const NodePtr& node);
 
@@ -243,18 +250,18 @@ class Node : public std::enable_shared_from_this<Node> {
                                           std::vector<NodePtr>& allChildren,
                                           const NodePtr& excludednode);
 
-
     /**
-     *
+     * @brief helper function of getNodeType() function
      */
-
-    // bool predicateFunc(std::vector<NodePtr>&,
-    //                    NodePtr& node,
-    //                    Node& excludednode,
-    //                    nodeeratorType& type));
-    // bool predicateFunc(std::vector<NodePtr>& allChildren, NodePtr& node, Node& excludednode, nodeeratorType& type) {
-    //     return (!find(allChildren, node) && (node.get() != &excludednode));
-    // }
+    template<class NodeType>
+    void getNodesByTypeHelper(std::vector<std::shared_ptr<NodeType>>& foundNodes) {
+        if (this->instanceOf<NodeType>()) {
+            foundNodes.push_back(this->as<NodeType>());
+        }
+        for (auto& successor:this->successors) {
+            successor->getNodesByTypeHelper(foundNodes);
+        }
+    };
 
     /**
      * @brief helper function of cycle detector
@@ -267,10 +274,9 @@ class Node : public std::enable_shared_from_this<Node> {
     /**
      * Helper parameters for cycle detection
      */
-  public:
     bool visited;
     bool recStack;
 };
-}      // namespace NES
+}// namespace NES
 
-#endif  // BASE_nodeERATOR_NODE_HPP
+#endif  // NODES_NODE_HPP
