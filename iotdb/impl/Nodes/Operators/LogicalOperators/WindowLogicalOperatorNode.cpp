@@ -5,7 +5,7 @@
 namespace NES {
 
 WindowLogicalOperatorNode::WindowLogicalOperatorNode(const WindowDefinitionPtr& window_definition)
-    : window_definition(window_definition) {
+    : windowDefinition(window_definition) {
 }
 
 const std::string WindowLogicalOperatorNode::toString() const {
@@ -15,7 +15,7 @@ const std::string WindowLogicalOperatorNode::toString() const {
 }
 
 const WindowDefinitionPtr& WindowLogicalOperatorNode::getWindowDefinition() const {
-    return window_definition;
+    return windowDefinition;
 }
 
 /*
@@ -29,7 +29,7 @@ const WindowDefinitionPtr& WindowLogicalOperatorNode::getWindowDefinition() cons
 }
  */
 
-const NodePtr createWindowLogicalOperatorNode(const WindowDefinitionPtr& windowDefinitionPtr) {
+NodePtr createWindowLogicalOperatorNode(const WindowDefinitionPtr& windowDefinitionPtr) {
     return std::make_shared<WindowLogicalOperatorNode>(windowDefinitionPtr);
 }
 

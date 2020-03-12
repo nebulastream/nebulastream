@@ -10,14 +10,8 @@ namespace NES {
 class FilterLogicalOperatorNode : public LogicalOperatorNode {
   public:
     FilterLogicalOperatorNode() = default;
-    ~FilterLogicalOperatorNode() {
-        std::cout << "puu" << std::endl;
-    };
+    ~FilterLogicalOperatorNode() = default;
     FilterLogicalOperatorNode(const PredicatePtr&);
-
-    FilterLogicalOperatorNode(const FilterLogicalOperatorNode& other);
-    FilterLogicalOperatorNode(const FilterLogicalOperatorNode* other);
-    // FilterLogicalOperatorNode& operator=(FilterLogicalOperatorNode& other);
 
     /**
      * @brief check two filter operators are equal or not. Noting they could be
