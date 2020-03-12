@@ -11,9 +11,11 @@ PredicatePtr FilterLogicalOperatorNode::getPredicate() {
 }
 
 bool FilterLogicalOperatorNode::equal(const NodePtr& rhs) const {
+    if(this->isIdentical(rhs))
+        return true;
     if (rhs->instanceOf<FilterLogicalOperatorNode>()) {
-        auto rhs_ = rhs->as<FilterLogicalOperatorNode>();
-        return predicate->equals(*rhs_->predicate.get());
+        auto filterOperator = rhs->as<FilterLogicalOperatorNode>();
+        return predicate->equals(*filterOperator->predicate.get());
     }
     return false;
 };

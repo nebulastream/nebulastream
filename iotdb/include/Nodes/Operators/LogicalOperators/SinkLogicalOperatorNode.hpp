@@ -9,11 +9,12 @@ public:
     SinkLogicalOperatorNode();
     SinkLogicalOperatorNode(const DataSinkPtr sink);
     SinkLogicalOperatorNode& operator=(const SinkLogicalOperatorNode& other);
+    bool equal(const NodePtr& rhs) const override;
     const std::string toString() const override;
     DataSinkPtr getDataSinkPtr();
 
 private:
-    DataSinkPtr sink_;
+    DataSinkPtr sink;
 };
 }
 #endif  // SINK_LOGICAL_OPERATOR_NODE_HPP
