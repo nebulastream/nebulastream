@@ -1,5 +1,4 @@
 add_source_iotdb(
-        LogicalOperatorPlan.cpp
         Node.cpp
 )
 
