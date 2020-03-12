@@ -1,4 +1,4 @@
-# NebulaStream [![Build Status](https://travis-ci.com/nebulastream/IoTDB.svg?token=ucXZaks2p5zNzXrQWU11&branch=master)](https://travis-ci.com/nebulastream/IoTDB)
+# NebulaStream [![Travis CI](https://travis-ci.com/nebulastream/IoTDB.svg?token=ucXZaks2p5zNzXrQWU11&branch=master)](https://travis-ci.com/nebulastream/IoTDB) ![Github CI](https://github.com/nebulastream/IoTDB/workflows/NES%20CI/badge.svg?branch=master&event=check_suite)
 
 Our awesome new IoT data stream management system :-)
 
