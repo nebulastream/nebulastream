@@ -2,26 +2,24 @@
 #define NES_INCLUDE_NODES_OPERATORS_OPERATORNODE_HPP_
 
 #include <Nodes/Node.hpp>
-#include <API/Window/WindowDefinition.hpp>
-#include <API/ParameterTypes.hpp>
-#include <API/Schema.hpp>
 
 namespace NES {
+
+class Schema;
+typedef std::shared_ptr<Schema> SchemaPtr;
 
 class OperatorNode : public Node {
   public:
     OperatorNode();
 
-    virtual bool equals(const Node&) {};
-    virtual bool equal(const NodePtr& rhs) const { return false; };
-    virtual bool operator==(const Node&) {};
-  private:
-    Schema inputSchema;
-    Schema outputSchema;
+    /**
+    * @brief get the result schema of this operator
+    * @return SchemaPtr
+    */
+    virtual SchemaPtr getResultSchema() const;
 };
 
 typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
-
 
 }
 

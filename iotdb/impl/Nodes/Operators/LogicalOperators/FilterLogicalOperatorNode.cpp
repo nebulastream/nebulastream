@@ -7,14 +7,6 @@ FilterLogicalOperatorNode::FilterLogicalOperatorNode(const PredicatePtr& predica
 
 }
 
-FilterLogicalOperatorNode::FilterLogicalOperatorNode(const FilterLogicalOperatorNode* other)
-    : LogicalOperatorNode(), predicate_(NES::copy(other->predicate_)) {
-}
-
-FilterLogicalOperatorNode::FilterLogicalOperatorNode(const FilterLogicalOperatorNode& other)
-    : LogicalOperatorNode(), predicate_(NES::copy(other.predicate_)) {
-}
-
 bool FilterLogicalOperatorNode::equal(const NodePtr& rhs) const {
     if (rhs->instanceOf<FilterLogicalOperatorNode>()) {
         auto rhs_ = rhs->as<FilterLogicalOperatorNode>();

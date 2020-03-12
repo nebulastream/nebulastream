@@ -4,21 +4,18 @@
 #include <memory>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 
-
 namespace NES {
 class SourceLogicalOperatorNode : public LogicalOperatorNode {
 public:
     SourceLogicalOperatorNode() = delete;
     SourceLogicalOperatorNode(const DataSourcePtr);
-    SourceLogicalOperatorNode(const NodePtr op);
-    SourceLogicalOperatorNode(const SourceLogicalOperatorNode* source);
     const NodePtr copy();
     const std::string toString() const override;
 
     bool equal(const NodePtr& rhs) const override ;
 
 private:
-    DataSourcePtr source_;
+    DataSourcePtr source;
 };
 
 typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;

@@ -1,20 +1,20 @@
 #ifndef WINDOW_LOGICAL_OPERATOR_NODE_HPP
 #define WINDOW_LOGICAL_OPERATOR_NODE_HPP
 
-#include <memory>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
-#include <API/AbstractWindowDefinition.hpp>
 
 namespace NES {
 
+class WindowDefinition;
+typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
+
 class WindowLogicalOperatorNode : public Node {
   public:
-
-    WindowLogicalOperatorNode(const WindowDefinitionPtr& window_defintion);
+    WindowLogicalOperatorNode(const WindowDefinitionPtr& windowDefinition);
     const std::string toString() const override;
     const WindowDefinitionPtr& getWindowDefinition() const;
   private:
-    WindowDefinitionPtr window_definition;
+    WindowDefinitionPtr windowDefinition;
 };
 
 } // namespace NES

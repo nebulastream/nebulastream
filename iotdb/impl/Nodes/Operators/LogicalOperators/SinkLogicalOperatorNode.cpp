@@ -30,7 +30,7 @@ bool SinkLogicalOperatorNode::equal(const Node& rhs) const {
     }
 }
 */
-const NodePtr createSinkLogicalOperatorNode(const DataSinkPtr& sink) {
+NodePtr createSinkLogicalOperatorNode(const DataSinkPtr& sink) {
     return std::make_shared<SinkLogicalOperatorNode>(sink);
 }
 }

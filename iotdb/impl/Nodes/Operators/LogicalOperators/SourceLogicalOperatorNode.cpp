@@ -4,16 +4,9 @@
 namespace NES {
 
 SourceLogicalOperatorNode::SourceLogicalOperatorNode(const DataSourcePtr source)
-    : LogicalOperatorNode(), source_(source) {
+    : LogicalOperatorNode(), source(source) {
 }
 
-SourceLogicalOperatorNode::SourceLogicalOperatorNode(const SourceLogicalOperatorNode* source)
-    : LogicalOperatorNode(), source_(source->source_) {
-}
-
-SourceLogicalOperatorNode::SourceLogicalOperatorNode(const NodePtr op) {
-    std::cout << "op: " << op->toString() << std::endl;
-}
 bool SourceLogicalOperatorNode::equal(const NodePtr& rhs) const {
     // try {
     //     auto& rhs_ = dynamic_cast<const SourceLogicalOperatorNode&>(rhs);
@@ -28,11 +21,11 @@ bool SourceLogicalOperatorNode::equal(const NodePtr& rhs) const {
 
 const std::string SourceLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "SOURCE(" << NES::toString(source_) << ")";
+    ss << "SOURCE(" << NES::toString(source) << ")";
     return ss.str();
 }
 
-const NodePtr createSourceLogicalOperatorNode(const DataSourcePtr& source) {
+NodePtr createSourceLogicalOperatorNode(const DataSourcePtr& source) {
     return std::make_shared<SourceLogicalOperatorNode>(source);
 }
 
