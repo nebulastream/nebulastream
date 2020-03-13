@@ -9,8 +9,9 @@ DataSinkPtr SinkLogicalOperatorNode::getDataSinkPtr() {
 }
 
 bool SinkLogicalOperatorNode::equal(const NodePtr& rhs) const {
-    if(this->isIdentical(rhs))
+    if (this->isIdentical(rhs)) {
         return true;
+    }
     if (rhs->instanceOf<SinkLogicalOperatorNode>()) {
         auto sinkOperator = rhs->as<SinkLogicalOperatorNode>();
         // todo check if the source is the same
@@ -20,9 +21,9 @@ bool SinkLogicalOperatorNode::equal(const NodePtr& rhs) const {
 };
 
 const std::string SinkLogicalOperatorNode::toString() const {
-  std::stringstream ss;
-  ss << "SINK(" << NES::toString(sink) << ")";
-  return ss.str();
+    std::stringstream ss;
+    ss << "SINK(" << NES::toString(sink) << ")";
+    return ss.str();
 }
 
 NodePtr createSinkLogicalOperatorNode(const DataSinkPtr& sink) {

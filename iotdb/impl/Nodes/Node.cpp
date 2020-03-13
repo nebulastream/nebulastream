@@ -18,23 +18,23 @@ bool Node::addSuccessor(const NodePtr& newNode) {
         return false;
     }
     // checks if current new node is not part of successors
-    if (contains(this->successors, newNode)) {
+    if (contains(successors, newNode)) {
         NES_DEBUG("Node: the node is already part of its successors so ignore it.");
         return false;
     }
     // add the node to the successors
-    this->successors.push_back(newNode);
+    successors.push_back(newNode);
 
     // add the current node as a predecessors to the newNode
-    if (!contains(newNode->predecessors, this->shared_from_this())) {
-        newNode->predecessors.push_back(this->shared_from_this());
+    if (!contains(newNode->predecessors, shared_from_this())) {
+        newNode->predecessors.push_back(shared_from_this());
     }
     return true;
 }
 
 bool Node::removeSuccessor(const NodePtr& node) {
     // check all successors.
-    for (auto nodeItr = this->successors.begin(); nodeItr != this->successors.end(); ++nodeItr) {
+    for (auto nodeItr = successors.begin(); nodeItr != successors.end(); ++nodeItr) {
         if ((*nodeItr)->equal(node)) {
             // remove this from nodeItr's predecessors
             for (auto it = (*nodeItr)->predecessors.begin(); it != (*nodeItr)->predecessors.end(); it++) {
@@ -44,7 +44,7 @@ bool Node::removeSuccessor(const NodePtr& node) {
                 }
             }
             // remove nodeItr from successors
-            this->successors.erase(nodeItr);
+            successors.erase(nodeItr);
             return true;
         }
     }
@@ -59,21 +59,21 @@ bool Node::addPredecessor(const NodePtr& newNode) {
     }
 
     // checks if current new node is not part of predecessors
-    if (contains(this->predecessors, newNode)) {
+    if (contains(predecessors, newNode)) {
         NES_DEBUG("Node: the node is already part of its predecessors so ignore it.");
         return false;
     }
     // add the node to the predecessors
-    this->predecessors.push_back(newNode);
-    if (!contains(newNode->successors, this->shared_from_this())) {
-        newNode->successors.push_back(this->shared_from_this());
+    predecessors.push_back(newNode);
+    if (!contains(newNode->successors, shared_from_this())) {
+        newNode->successors.push_back(shared_from_this());
     }
     return true;
 }
 
 bool Node::removePredecessor(const NodePtr& node) {
     // check all predecessors.
-    for (auto nodeItr = this->predecessors.begin(); nodeItr != this->predecessors.end(); ++nodeItr) {
+    for (auto nodeItr = predecessors.begin(); nodeItr != predecessors.end(); ++nodeItr) {
         if ((*nodeItr)->equal(node)) {
             for (auto it = (*nodeItr)->successors.begin(); it != (*nodeItr)->successors.end(); it++) {
                 if ((*it).get() == this) {
@@ -81,7 +81,7 @@ bool Node::removePredecessor(const NodePtr& node) {
                     break;
                 }
             }
-            this->predecessors.erase(nodeItr);
+            predecessors.erase(nodeItr);
             return true;
         }
     }
@@ -97,28 +97,27 @@ bool Node::replace(NodePtr newNode, NodePtr oldNode) {
 
     if (!oldNode->equal(newNode)) {
         // newNode is already inside successors or predecessors and it's not oldNode
-        // raise exception ?
-        if (find(this->successors, newNode) ||
-            find(this->predecessors, newNode)) {
+        if (find(successors, newNode) ||
+            find(predecessors, newNode)) {
             NES_DEBUG("Node: the new node is already part of the successors or predessessors of the current node.");
             return false;
         }
     }
     // update successors and predecessors of new nodes.
-    bool succ = false;
-    succ = removeSuccessor(oldNode);
-    if (succ) {
-        this->successors.push_back(newNode);
-        for (auto&& op_ : oldNode->successors) {
-            newNode->addSuccessor(op_);
+    bool success = false;
+    success = removeSuccessor(oldNode);
+    if (success) {
+        successors.push_back(newNode);
+        for (auto&& currentNode : oldNode->successors) {
+            newNode->addSuccessor(currentNode);
         }
         return true;
     }
-    succ = removePredecessor(oldNode);
-    if (succ) {
-        this->predecessors.push_back(newNode);
-        for (auto&& op_ : oldNode->predecessors) {
-            newNode->addPredecessor(op_);
+    success = removePredecessor(oldNode);
+    if (success) {
+        predecessors.push_back(newNode);
+        for (auto&& currentNode : oldNode->predecessors) {
+            newNode->addPredecessor(currentNode);
         }
         return true;
     }
@@ -132,9 +131,9 @@ bool Node::swap(const NodePtr& newNode, const NodePtr& oldNode) {
         return false;
     }
     // detecting if newNode is one of oldNode's sblings
-    for (auto&& op_ : node->predecessors) {
-        for (auto&& op__ : op_->successors) {
-            if (op__ == newNode) {
+    for (auto&& predecessor : node->predecessors) {
+        for (auto&& successor : predecessor->successors) {
+            if (successor == newNode) {
                 // we don't want to handle this case
                 return false;
             }
@@ -160,25 +159,25 @@ bool Node::swap(const NodePtr& newNode, const NodePtr& oldNode) {
 
 bool Node::remove(const NodePtr& node) {
     // NOTE: if there is a cycle inside the operator topology, it won't behave correctly.
-    return this->removeSuccessor(node) || this->removePredecessor(node);
+    return removeSuccessor(node) || removePredecessor(node);
 }
 
 bool Node::removeAndLevelUpSuccessors(const NodePtr& node) {
 
-    // if a successor of node is equal to this->successors,
+    // if a successor of node is equal to successors,
     // it's confused to merge two equal operators,
     // HERE we don't deal with this case
-    for (auto&& op_ : node->successors) {
-        if (find(this->successors, op_)) {
+    for (auto&& n : node->successors) {
+        if (find(successors, n)) {
             return false;
         }
     }
 
-    bool succ = false;
-    succ = removeSuccessor(node);
-    if (succ) {
-        for (auto&& op_ : node->successors) {
-            this->successors.push_back(op_);
+    bool success = false;
+    success = removeSuccessor(node);
+    if (success) {
+        for (auto&& n : node->successors) {
+            successors.push_back(n);
         }
         return true;
     }
@@ -186,16 +185,16 @@ bool Node::removeAndLevelUpSuccessors(const NodePtr& node) {
 }
 
 void Node::clear() {
-    this->successors.clear();
-    this->predecessors.clear();
+    successors.clear();
+    predecessors.clear();
 }
 
 const std::vector<NodePtr>& Node::getSuccessors() const {
-    return this->successors;
+    return successors;
 }
 
 const std::vector<NodePtr>& Node::getPredecessors() const {
-    return this->predecessors;
+    return predecessors;
 }
 
 bool Node::contains(const std::vector<NodePtr>& nodes, const NES::NodePtr& nodeToFind) {
@@ -213,19 +212,20 @@ NodePtr Node::find(const std::vector<NodePtr>& nodes, const NodePtr& nodeToFind)
 
 NodePtr Node::findRecursively(const NodePtr& root, const NodePtr& nodeToFind) {
     // DFS
-    NodePtr x = nullptr;
+    NodePtr resultNode = nullptr;
     // two operator are equal, may not the same object
-    if (root->isIdentical(nodeToFind))
+    if (root->isIdentical(nodeToFind)) {
         return root;
+    }
 
     // not equal
     for (auto& currentNode : root->successors) {
-        x = findRecursively(currentNode, nodeToFind);
-        if (x) {
+        resultNode = findRecursively(currentNode, nodeToFind);
+        if (resultNode) {
             break;
         }
     }
-    return x;
+    return resultNode;
 }
 
 bool Node::equalWithAllSuccessorsHelper(const NodePtr& node1, const NodePtr& node2) {
@@ -254,9 +254,9 @@ bool Node::equalWithAllSuccessorsHelper(const NodePtr& node1, const NodePtr& nod
 
 bool Node::equalWithAllSuccessors(const NodePtr& node) {
     // the root is equal
-    if (!this->equal(node))
+    if (!equal(node)) {
         return false;
-
+    }
     return equalWithAllSuccessorsHelper(shared_from_this(), node);
 }
 
@@ -287,9 +287,9 @@ bool Node::equalWithAllPredecessorsHelper(const NodePtr& node1, const NodePtr& n
 
 bool Node::equalWithAllPredecessors(const NodePtr& node) {
     // the root is equal
-    if (!this->equal(node))
+    if (!equal(node)) {
         return false;
-
+    }
     return equalWithAllPredecessorsHelper(shared_from_this(), node);
 }
 
@@ -297,7 +297,7 @@ std::vector<NodePtr> Node::split(const NodePtr& splitNode) {
     std::vector<NodePtr> result{};
     auto node = findRecursively(shared_from_this(), splitNode);
     if (!node) {
-        NES_FATAL_ERROR("Node: operator is not in graph so dont split.")
+        NES_DEBUG("Node: operator is not in graph so dont split.")
         result.push_back(shared_from_this());
         return result;
     }
@@ -321,15 +321,15 @@ std::vector<NodePtr> Node::getAndFlattenAllSuccessors() {
     return allChildren;
 }
 
-void Node::getAndFlattenAllSuccessorsHelper(const NodePtr& op,
+void Node::getAndFlattenAllSuccessorsHelper(const NodePtr& node,
                                             std::vector<NodePtr>& allChildren, const NodePtr& excludedOp) {
 
     // todo this implementation may be slow
-    for (auto&& op_ : op->successors) {
-        if (!find(allChildren, op_) &&
-            (op_ != excludedOp)) {
-            allChildren.push_back(op_);
-            getAndFlattenAllSuccessorsHelper(op_, allChildren, excludedOp);
+    for (auto&& currentNode : node->successors) {
+        if (!find(allChildren, currentNode) &&
+            (currentNode != excludedOp)) {
+            allChildren.push_back(currentNode);
+            getAndFlattenAllSuccessorsHelper(currentNode, allChildren, excludedOp);
         }
     }
 }
@@ -343,8 +343,9 @@ bool Node::isCyclic() {
 
     // since *this is not in allChildren vector
     // we test it individually
-    if (isCyclicHelper(*this))
+    if (isCyclicHelper(*this)) {
         return true;
+    }
 
     // test all sub-node in the DAG
     for (auto&& node : allChildren) {
@@ -369,16 +370,17 @@ bool Node::isCyclicHelper(Node& node) {
     node.visited = true;
     node.recStack = true;
     for (auto&& n : node.successors) {
-        if (!n->visited && this->isCyclicHelper(*n.get()))
+        if (!n->visited && isCyclicHelper(*n.get())) {
             return true;
-        else if (n->recStack)
+        } else if (n->recStack) {
             return true;
+        }
     }
     node.recStack = false;
     return false;
 }
 void Node::prettyPrint(std::ostream& out) {
-    this->printHelper(shared_from_this(), 0, 2, out);
+    printHelper(shared_from_this(), /*depth*/0, /*indent*/2, out);
 }
 
 void Node::printHelper(const NodePtr& op, size_t depth, size_t indent, std::ostream& out) const {

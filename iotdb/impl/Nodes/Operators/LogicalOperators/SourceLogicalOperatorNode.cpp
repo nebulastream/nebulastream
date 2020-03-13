@@ -8,8 +8,9 @@ SourceLogicalOperatorNode::SourceLogicalOperatorNode(const DataSourcePtr source)
 }
 
 bool SourceLogicalOperatorNode::equal(const NodePtr& rhs) const {
-    if(this->isIdentical(rhs))
+    if(this->isIdentical(rhs)) {
         return true;
+    }
     if (rhs->instanceOf<SourceLogicalOperatorNode>()) {
         auto sourceOperator = rhs->as<SourceLogicalOperatorNode>();
         // todo check if the sink is the same

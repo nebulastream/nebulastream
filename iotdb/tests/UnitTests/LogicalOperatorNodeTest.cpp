@@ -866,65 +866,6 @@ TEST_F(LogicalOperatorNodeTest, asBadCast) {
     }
 }
 
-
-/**
- *                                  /-> filterOp4
- * topology1: filterOp6 -> filterOp1 -> filterOp2
- *                     \-> filterOp3 -> filterOp5
- */
-// TEST_F(LogicalOperatorNodeTest, DISABLED_findRecurisivelyOperatorExists) {
-//     // topology1
-//     filterOp6->addSuccessor(filterOp3);
-//     filterOp6->addSuccessor(filterOp1);
-//     filterOp1->addSuccessor(filterOp2);
-//     filterOp1->addSuccessor(filterOp4);
-//     filterOp3->addSuccessor(filterOp5);
-
-//     NodePtr x = nullptr;
-
-//     x = filterOp6->findRecursively(filterOp6, filterOp1);
-//     EXPECT_TRUE(x != nullptr);
-//     EXPECT_TRUE(*x.get() == *filterOp1.get());
-//     EXPECT_TRUE(*x.get() == *filterOp1Copy.get());
-
-//     x = filterOp6->findRecursively(filterOp6, filterOp2);
-//     std::cout << "x: " << x->toString() << std::endl;
-//     std::cout << "filterOp2: " << filterOp2->toString() << std::endl;
-//     EXPECT_TRUE(x != nullptr);
-//     EXPECT_TRUE(*x.get() == *filterOp2.get());
-//     EXPECT_TRUE(*x.get() == *filterOp2Copy.get());
-
-//     x = filterOp6->findRecursively(filterOp6, filterOp3);
-//     EXPECT_TRUE(x != nullptr);
-//     EXPECT_TRUE(*x.get() == *filterOp3.get());
-//     EXPECT_TRUE(*x.get() == *filterOp3Copy.get());
-
-//     x = filterOp6->findRecursively(filterOp6, filterOp4);
-//     EXPECT_TRUE(x != nullptr);
-//     EXPECT_TRUE(*x.get() == *filterOp4.get());
-//     EXPECT_TRUE(*x.get() == *filterOp4Copy.get());
-
-//     x = filterOp6->findRecursively(filterOp6, filterOp5);
-//     EXPECT_TRUE(x != nullptr);
-//     EXPECT_TRUE(*x.get() == *filterOp5.get());
-//     EXPECT_TRUE(*x.get() == *filterOp5Copy.get());
-
-//     x = filterOp6->findRecursively(filterOp6, filterOp6);
-//     EXPECT_TRUE(x != nullptr);
-//     EXPECT_TRUE(*x.get() == *filterOp6.get());
-//     EXPECT_TRUE(*x.get() == *filterOp6Copy.get());
-
-//     x = filterOp6->findRecursively(filterOp1, filterOp2);
-//     EXPECT_TRUE(x != nullptr);
-//     EXPECT_TRUE(*x.get() == *filterOp2.get());
-//     EXPECT_TRUE(*x.get() == *filterOp2Copy.get());
-
-//     x = filterOp1->findRecursively(filterOp1, filterOp2);
-//     EXPECT_TRUE(x != nullptr);
-//     EXPECT_TRUE(*x.get() == *filterOp2.get());
-//     EXPECT_TRUE(*x.get() == *filterOp2Copy.get());
-// }
-
 /**
  *
  *                                  /-> filterOp4
@@ -1008,22 +949,10 @@ TEST_F(LogicalOperatorNodeTest, getAndFlattenAllSuccessorsNoCycle) {
 
     children = filterOp6->getAndFlattenAllSuccessors();
     EXPECT_EQ(children.size(), expected.size());
-    // for (auto && op_ : children) {
-    //     std::cout << op_->toString() << std::endl;
-    // }
+
     for (int i = 0; i < children.size(); i ++) {
         EXPECT_TRUE(children[i]->equal(expected[i]));
     }
-
-    // expected.push_back();
-    // expected.push_back();
-    // expected.push_back();
-    // expected.push_back();
-
-    // children = filterOp6->getAndFlattenAllSuccessors();
-    // for (auto && op_ : children) {
-    //     std::cout << op_->toString() << std::endl;
-    // }
 }
 
 /**
@@ -1047,9 +976,6 @@ TEST_F(LogicalOperatorNodeTest, getAndFlattenAllSuccessorsForCycle) {
 
     children = filterOp6->getAndFlattenAllSuccessors();
     EXPECT_EQ(children.size(), expected.size());
-    // for (auto && op_ : children) {
-    //     std::cout << op_->toString() << std::endl;
-    // }
     for (int i = 0; i < children.size(); i ++) {
         EXPECT_TRUE(children[i]->equal(expected[i]));
     }
@@ -1105,10 +1031,6 @@ TEST_F(LogicalOperatorNodeTest, getOperatorByType) {
         // both have same values
        EXPECT_TRUE(children[i]->equal(expected[i]));
     }
-
-    //auto nodeType = filterOp6->getNodesByType<SourceLogicalOperatorNode>();
-    //EXPECT_EQ(nodeType.size(), 0);
-
 }
 
 /**
@@ -1315,9 +1237,6 @@ TEST_F(LogicalOperatorNodeTest, splitWithSinglePredecessor) {
     expected.push_back(filterOp2);
 
     auto vec = filterOp6->split(filterOp2);
-    // for (auto&& op : vec) {
-    //     std::cout << op->toString() << std::endl;
-    // }
     EXPECT_EQ(vec.size(), expected.size());
     for (int i = 0; i < vec.size(); i ++) {
         EXPECT_TRUE(vec[i]->equal(expected[i]));
@@ -1339,9 +1258,6 @@ TEST_F(LogicalOperatorNodeTest, splitWithAtLastSuccessor) {
     expected.push_back(filterOp3);
 
     auto vec = filterOp6->split(filterOp3);
-    // for (auto&& op : vec) {
-    //     std::cout << op->toString() << std::endl;
-    // }
     EXPECT_EQ(vec.size(), expected.size());
     for (int i = 0; i < vec.size(); i ++) {
         EXPECT_TRUE(vec[i]->equal(expected[i]));
@@ -1360,9 +1276,6 @@ TEST_F(LogicalOperatorNodeTest, splitWithAtRoot) {
     expected.push_back(filterOp6);
 
     auto vec = filterOp6->split(filterOp6);
-    // for (auto&& op : vec) {
-    //     std::cout << op->toString() << std::endl;
-    // }
     EXPECT_EQ(vec.size(), expected.size());
     for (int i = 0; i < vec.size(); i ++) {
         EXPECT_TRUE(vec[i]->equal(expected[i]));
@@ -1384,9 +1297,6 @@ TEST_F(LogicalOperatorNodeTest, splitWithMultiplePredecessors) {
     expected.push_back(filterOp1);
 
     auto vec = filterOp6->split(filterOp1);
-    // for (auto&& op : vec) {
-    //     std::cout << op->toString() << std::endl;
-    // }
     EXPECT_EQ(vec.size(), expected.size());
     for (int i = 0; i < vec.size(); i ++) {
         EXPECT_TRUE(vec[i]->equal(expected[i]));
