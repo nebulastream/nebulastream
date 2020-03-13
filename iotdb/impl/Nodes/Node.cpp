@@ -53,13 +53,13 @@ bool Node::removeSuccessor(const NodePtr& node) {
 
 void Node::addPredecessor(const NodePtr& newNode) {
     if (newNode.get() == this) {
-        NES_DEBUG("Node: Added note to its self, so we ignore this operation.");
+        NES_DEBUG("Node: Added node to its self, so ignore this operation.");
         return;
     }
 
     // checks if current new node is not part of predecessors
     if (contains(this->predecessors, newNode)) {
-        NES_DEBUG("Node: the node is already part of its successors so we ignore it.");
+        NES_DEBUG("Node: the node is already part of its successors so ignore it.");
         return;
     }
     // add the node to the predecessors
@@ -89,7 +89,7 @@ bool Node::removePredecessor(const NodePtr& op) {
 
 bool Node::replace(NodePtr newNode, NodePtr oldNode) {
     if (oldNode->isIdentical(newNode)) {
-        NES_DEBUG("Node: the new node was the same so we ignored the operation.");
+        NES_DEBUG("Node: the new node was the same so ignored the operation.");
         return true;
     }
 
@@ -295,7 +295,7 @@ std::vector<NodePtr> Node::split(const NodePtr& splitNode) {
     std::vector<NodePtr> result{};
     auto node = findRecursively(shared_from_this(), splitNode);
     if (!node) {
-        NES_FATAL_ERROR("Node: operator is not in graph so we dont split.")
+        NES_FATAL_ERROR("Node: operator is not in graph so dont split.")
         result.push_back(shared_from_this());
         return result;
     }
