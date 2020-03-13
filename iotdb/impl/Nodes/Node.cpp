@@ -14,13 +14,13 @@ Node::~Node() {
 
 void Node::addSuccessor(const NodePtr& newNode) {
     if (newNode.get() == this) {
-        NES_DEBUG("Node: Added note to its self, so we ignore this operation.");
+        NES_DEBUG("Node: Added node to its self, ignore this operation.");
         return;
     }
     // checks if current new node is not part of successors
     bool found = (this->find(this->successors, newNode) != nullptr);
     if (found) {
-        NES_DEBUG("Node: the node is already part of its successors so we ignore it.");
+        NES_DEBUG("Node: the node is already part of its successors so ignore it.");
         return;
     }
     // add the node to the successors
@@ -293,7 +293,7 @@ std::vector<NodePtr> Node::split(const NodePtr& splitNode) {
     std::vector<NodePtr> result{};
     auto node = findRecursively(shared_from_this(), splitNode);
     if (!node) {
-        NES_FATAL_ERROR("operator is not in graph so we dont split.")
+        NES_FATAL_ERROR("Node: operator is not in graph so we dont split.")
         result.push_back(shared_from_this());
         return result;
     }
