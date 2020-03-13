@@ -18,7 +18,7 @@ void Node::addSuccessor(const NodePtr& newNode) {
         return;
     }
     // checks if current new node is not part of successors
-    bool found = (this->find(this->successors, newNode) != nullptr);
+    bool found = this->find(this->successors, newNode) != nullptr;
     if (found) {
         NES_DEBUG("Node: the node is already part of its successors so ignore it.");
         return;
@@ -59,7 +59,7 @@ void Node::addPredecessor(const NodePtr& newNode) {
     }
 
     // checks if current new node is not part of predecessors
-    bool found = (this->find(this->predecessors, newNode) != nullptr);
+    bool found = this->find(this->predecessors, newNode) != nullptr;
     if (found) {
         NES_DEBUG("Node: the node is already part of its successors so we ignore it.");
         return;
