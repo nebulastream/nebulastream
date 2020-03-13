@@ -60,7 +60,7 @@ bool Node::addPredecessor(const NodePtr& newNode) {
 
     // checks if current new node is not part of predecessors
     if (contains(this->predecessors, newNode)) {
-        NES_DEBUG("Node: the node is already part of its successors so ignore it.");
+        NES_DEBUG("Node: the node is already part of its predecessors so ignore it.");
         return false;
     }
     // add the node to the predecessors
@@ -71,17 +71,17 @@ bool Node::addPredecessor(const NodePtr& newNode) {
     return true;
 }
 
-bool Node::removePredecessor(const NodePtr& op) {
+bool Node::removePredecessor(const NodePtr& node) {
     // check all predecessors.
-    for (auto opIt = this->predecessors.begin(); opIt != this->predecessors.end(); ++opIt) {
-        if ((*opIt)->equal(op)) {
-            for (auto it = (*opIt)->successors.begin(); it != (*opIt)->successors.end(); it++) {
+    for (auto nodeItr = this->predecessors.begin(); nodeItr != this->predecessors.end(); ++nodeItr) {
+        if ((*nodeItr)->equal(node)) {
+            for (auto it = (*nodeItr)->successors.begin(); it != (*nodeItr)->successors.end(); it++) {
                 if ((*it).get() == this) {
-                    (*opIt)->successors.erase(it);
+                    (*nodeItr)->successors.erase(it);
                     break;
                 }
             }
-            this->predecessors.erase(opIt);
+            this->predecessors.erase(nodeItr);
             return true;
         }
     }
@@ -336,9 +336,9 @@ void Node::getAndFlattenAllSuccessorsHelper(const NodePtr& op,
 
 bool Node::isCyclic() {
     auto allChildren = getAndFlattenAllSuccessors();
-    for (auto&& op : allChildren) {
-        op->visited = false;
-        op->recStack = false;
+    for (auto&& node : allChildren) {
+        node->visited = false;
+        node->recStack = false;
     }
 
     // since *this is not in allChildren vector
@@ -347,34 +347,34 @@ bool Node::isCyclic() {
         return true;
 
     // test all sub-node in the DAG
-    for (auto&& op : allChildren) {
-        if (isCyclicHelper(*op.get())) {
-            for (auto&& op : allChildren) {
-                op->visited = false;
-                op->recStack = false;
+    for (auto&& node : allChildren) {
+        if (isCyclicHelper(*node)) {
+            for (auto&& node : allChildren) {
+                node->visited = false;
+                node->recStack = false;
             }
             return true;
         }
 
     }
-    for (auto&& op : allChildren) {
-        op->visited = false;
-        op->recStack = false;
+    for (auto&& node : allChildren) {
+        node->visited = false;
+        node->recStack = false;
     }
     return false;
 }
 
-bool Node::isCyclicHelper(Node& op) {
+bool Node::isCyclicHelper(Node& node) {
     // DFS
-    op.visited = true;
-    op.recStack = true;
-    for (auto&& op_ : op.successors) {
-        if (!op_->visited && this->isCyclicHelper(*op_.get()))
+    node.visited = true;
+    node.recStack = true;
+    for (auto&& n : node.successors) {
+        if (!n->visited && this->isCyclicHelper(*n.get()))
             return true;
-        else if (op_->recStack)
+        else if (n->recStack)
             return true;
     }
-    op.recStack = false;
+    node.recStack = false;
     return false;
 }
 void Node::prettyPrint(std::ostream& out) {
