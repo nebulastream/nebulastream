@@ -100,9 +100,16 @@ class TupleBuffer {
 
   /**
    * @brief decrement the counter by one and test if now zero
-   * @param tuple size in bytes
+   * @return bool indicating success
    */
   bool decrementUseCntAndTestForZero();
+
+
+  /**
+   * @brief increment the counter by one
+   * @return bool indicating succeess
+   */
+  bool incrementUseCnt();
 
   /**
    * @brief this method creates a string from the content of a tuple buffer
