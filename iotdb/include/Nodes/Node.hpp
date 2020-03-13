@@ -213,10 +213,18 @@ class Node : public std::enable_shared_from_this<Node> {
     std::vector<NodePtr> successors{};
   private:
     /**
-     * @brief check if an nodeToFind is in given vector or not
+     * @brief check if an node is in given vector or not
      * @param nodes
      * @param nodeToFind
-     * @return return true if the given nodeToFind is found, otherwise false
+     * @return return true if the given node is found, otherwise false
+     */
+    bool contains(const std::vector<NodePtr>& nodes, const NodePtr& nodeToFind);
+
+    /**
+     * @brief check if an node is in given vector and returns it
+     * @param nodes
+     * @param nodeToFind
+     * @return return node if the given node is found, otherwise nullpointer
      */
     NodePtr find(const std::vector<NodePtr>& nodes, const NodePtr& nodeToFind);
     /**

@@ -18,8 +18,7 @@ void Node::addSuccessor(const NodePtr& newNode) {
         return;
     }
     // checks if current new node is not part of successors
-    bool found = this->find(this->successors, newNode) != nullptr;
-    if (found) {
+    if (contains(this->successors, newNode)) {
         NES_DEBUG("Node: the node is already part of its successors so ignore it.");
         return;
     }
@@ -27,7 +26,7 @@ void Node::addSuccessor(const NodePtr& newNode) {
     this->successors.push_back(newNode);
 
     // add the current node as a predecessors to other node
-    if (!find(newNode->predecessors, this->shared_from_this())) {
+    if (!contains(newNode->predecessors, this->shared_from_this())) {
         newNode->predecessors.push_back(this->shared_from_this());
     }
 }
@@ -59,14 +58,13 @@ void Node::addPredecessor(const NodePtr& newNode) {
     }
 
     // checks if current new node is not part of predecessors
-    bool found = this->find(this->predecessors, newNode) != nullptr;
-    if (found) {
+    if (contains(this->predecessors, newNode)) {
         NES_DEBUG("Node: the node is already part of its successors so we ignore it.");
         return;
     }
     // add the node to the predecessors
     this->predecessors.push_back(newNode);
-    if (!find(newNode->successors, this->shared_from_this())) {
+    if (!contains(newNode->successors, this->shared_from_this())) {
         newNode->successors.push_back(this->shared_from_this());
     }
 }
@@ -196,6 +194,10 @@ const std::vector<NodePtr>& Node::getSuccessors() const {
 
 const std::vector<NodePtr>& Node::getPredecessors() const {
     return this->predecessors;
+}
+
+bool Node::contains(const std::vector<NodePtr>& nodes, const NES::NodePtr& nodeToFind) {
+    return find(nodes, nodeToFind) != nullptr;
 }
 
 NodePtr Node::find(const std::vector<NodePtr>& nodes, const NodePtr& nodeToFind) {
