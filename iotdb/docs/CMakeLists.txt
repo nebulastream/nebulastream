@@ -1,7 +1,7 @@
 
 find_package(Doxygen)
 if (NOT ${DOXYGEN_FOUND})
-        message(WARNING "Doxygen not found. Will not generate cogadb-doc target!")
+        message(WARNING "Doxygen not found.")
         return ()
 endif ()
 

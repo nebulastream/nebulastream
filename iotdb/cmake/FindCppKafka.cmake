@@ -1,6 +1,6 @@
 if(NOT CppKafka_FOUND)
   find_library(CppKafka_LIBRARIES
-    NAMES libcppkafka.so
+    NAMES libcppkafka.so libcppkafka.dylib
     HINTS /usr/local/lib)
 
   find_path(CppKafka_INCLUDE_DIRS cppkafka/cppkafka.h /usr/local/include)
