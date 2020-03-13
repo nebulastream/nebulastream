@@ -3,9 +3,8 @@
 #include <memory>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 namespace NES {
-class SinkLogicalOperatorNode : public LogicalOperatorNode
-                                 {
-public:
+class SinkLogicalOperatorNode : public LogicalOperatorNode {
+  public:
     SinkLogicalOperatorNode();
     SinkLogicalOperatorNode(const DataSinkPtr sink);
     SinkLogicalOperatorNode& operator=(const SinkLogicalOperatorNode& other);
@@ -13,7 +12,7 @@ public:
     const std::string toString() const override;
     DataSinkPtr getDataSinkPtr();
 
-private:
+  private:
     DataSinkPtr sink;
 };
 }

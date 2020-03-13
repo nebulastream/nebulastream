@@ -9,8 +9,9 @@ MapLogicalOperatorNode::MapLogicalOperatorNode(const AttributeFieldPtr field, co
 }
 
 bool MapLogicalOperatorNode::equal(const NodePtr& rhs) const {
-    if(this->isIdentical(rhs))
+    if(this->isIdentical(rhs)) {
         return true;
+    }
     if (rhs->instanceOf<MapLogicalOperatorNode>()) {
         auto mapOperator = rhs->as<MapLogicalOperatorNode>();
         return this->predicate->equals(*mapOperator->predicate.get()) && this->field->isEqual(mapOperator->field);
@@ -20,7 +21,7 @@ bool MapLogicalOperatorNode::equal(const NodePtr& rhs) const {
 
 const std::string MapLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "MAP_UDF(" << field->toString() << " = " << NES::toString(predicate) << ")";
+    ss << "MAP(" << field->toString() << " = " << NES::toString(predicate) << ")";
     return ss.str();
 }
 
