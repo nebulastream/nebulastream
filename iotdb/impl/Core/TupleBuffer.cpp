@@ -16,7 +16,8 @@ TupleBuffer::TupleBuffer(void *_buffer, const size_t _buffer_size_bytes,
     buffer(_buffer),
     bufferSizeInBytes(_buffer_size_bytes),
     tupleSizeInBytes(_tuple_size_bytes),
-    numberOfTuples(_num_tuples) {
+    numberOfTuples(_num_tuples),
+    useCnt(0){
 }
 
 void TupleBuffer::copyInto(const TupleBufferPtr other) {
@@ -82,9 +83,22 @@ size_t TupleBuffer::getUseCnt() {
 }
 
 bool TupleBuffer::decrementUseCntAndTestForZero() {
-  useCnt--;
+  if(useCnt >= 1)
+  {
+    useCnt--;
+  }
+  else
+    assert(0);
+
   return useCnt == 0;
 }
+
+bool TupleBuffer::incrementUseCnt() {
+  //TODO: should this be thread save?
+  useCnt++;
+}
+
+
 
 std::string TupleBuffer::printTupleBuffer(Schema schema) {
   std::stringstream ss;
