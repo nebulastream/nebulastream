@@ -13,7 +13,6 @@ Node::~Node() {
 }
 
 void Node::addSuccessor(const NodePtr& newNode) {
-    assert(newNode);
     if (newNode.get() == this) {
         NES_DEBUG("Node: Added note to its self, so we ignore this operation.");
         return;
@@ -34,8 +33,6 @@ void Node::addSuccessor(const NodePtr& newNode) {
 }
 
 bool Node::removeSuccessor(const NodePtr& node) {
-    assert(node);
-
     // check all successors.
     for (auto nodeItr = this->successors.begin(); nodeItr != this->successors.end(); ++nodeItr) {
         if ((*nodeItr)->equal(node)) {
@@ -56,7 +53,6 @@ bool Node::removeSuccessor(const NodePtr& node) {
 }
 
 void Node::addPredecessor(const NodePtr& newNode) {
-    assert(newNode);
     if (newNode.get() == this) {
         NES_DEBUG("Node: Added note to its self, so we ignore this operation.");
         return;
@@ -76,7 +72,6 @@ void Node::addPredecessor(const NodePtr& newNode) {
 }
 
 bool Node::removePredecessor(const NodePtr& op) {
-    assert(op);
     // check all predecessors.
     for (auto opIt = this->predecessors.begin(); opIt != this->predecessors.end(); ++opIt) {
         if ((*opIt)->equal(op)) {
@@ -95,9 +90,6 @@ bool Node::removePredecessor(const NodePtr& op) {
 }
 
 bool Node::replace(NodePtr newNode, NodePtr oldNode) {
-    assert(oldNode);
-    assert(newNode);
-
     if (oldNode->isIdentical(newNode)) {
         NES_DEBUG("Node: the new node was the same so we ignored the operation.");
         return true;
@@ -172,7 +164,6 @@ bool Node::remove(const NodePtr& node) {
 }
 
 bool Node::removeAndLevelUpSuccessors(const NodePtr& node) {
-    assert(node);
 
     // if a successor of node is equal to this->successors,
     // it's confused to merge two equal operators,
