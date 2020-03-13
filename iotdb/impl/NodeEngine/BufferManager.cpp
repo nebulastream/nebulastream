@@ -120,6 +120,7 @@ TupleBufferPtr BufferManager::getBuffer() {
         providedBuffer++;
         NES_DEBUG(
             "BufferManager: getBuffer() provide free buffer" << entry.first)
+        entry.first->incrementUseCnt();
         return entry.first;
       }
     }
