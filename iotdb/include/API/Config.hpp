@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#undef U
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/vector.hpp>

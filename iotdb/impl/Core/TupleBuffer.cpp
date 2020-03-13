@@ -113,7 +113,7 @@ std::string TupleBuffer::printTupleBuffer(Schema schema) {
       size_t fieldSize = field->getFieldSize();
       DataTypePtr ptr = field->getDataType();
       std::string str = ptr->convertRawToString(
-          buffer + offset + i * schema.getSchemaSize());
+              reinterpret_cast<uint8_t*>(buffer) + offset + i * schema.getSchemaSize());
       ss << str.c_str();
       if (j < schema.getSize() - 1) {
         ss << ",";
