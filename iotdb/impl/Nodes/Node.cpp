@@ -12,23 +12,24 @@ Node::~Node() {
 
 }
 
-void Node::addSuccessor(const NodePtr& newNode) {
+bool Node::addSuccessor(const NodePtr& newNode) {
     if (newNode.get() == this) {
         NES_DEBUG("Node: Added node to its self, ignore this operation.");
-        return;
+        return false;
     }
     // checks if current new node is not part of successors
     if (contains(this->successors, newNode)) {
         NES_DEBUG("Node: the node is already part of its successors so ignore it.");
-        return;
+        return false;
     }
     // add the node to the successors
     this->successors.push_back(newNode);
 
-    // add the current node as a predecessors to other node
+    // add the current node as a predecessors to the newNode
     if (!contains(newNode->predecessors, this->shared_from_this())) {
         newNode->predecessors.push_back(this->shared_from_this());
     }
+    return true;
 }
 
 bool Node::removeSuccessor(const NodePtr& node) {
@@ -51,22 +52,23 @@ bool Node::removeSuccessor(const NodePtr& node) {
     return false;
 }
 
-void Node::addPredecessor(const NodePtr& newNode) {
+bool Node::addPredecessor(const NodePtr& newNode) {
     if (newNode.get() == this) {
         NES_DEBUG("Node: Added node to its self, so ignore this operation.");
-        return;
+        return false;
     }
 
     // checks if current new node is not part of predecessors
     if (contains(this->predecessors, newNode)) {
         NES_DEBUG("Node: the node is already part of its successors so ignore it.");
-        return;
+        return false;
     }
     // add the node to the predecessors
     this->predecessors.push_back(newNode);
     if (!contains(newNode->successors, this->shared_from_this())) {
         newNode->successors.push_back(this->shared_from_this());
     }
+    return true;
 }
 
 bool Node::removePredecessor(const NodePtr& op) {

@@ -22,7 +22,7 @@ class Node : public std::enable_shared_from_this<Node> {
      * A newNode cannot be in its own successor.
      * @param newNode
      */
-    void addSuccessor(const NodePtr& newNode);
+    bool addSuccessor(const NodePtr& newNode);
 
     /**
      * @brief remove a node from current successors.
@@ -36,7 +36,7 @@ class Node : public std::enable_shared_from_this<Node> {
      *        one cannot add current node into its predecessors.
      * @param newNode
      */
-    void addPredecessor(const NodePtr& newNode);
+    bool addPredecessor(const NodePtr& newNode);
 
     /**
      * @brief remove a predecessor from vector of predecessors
