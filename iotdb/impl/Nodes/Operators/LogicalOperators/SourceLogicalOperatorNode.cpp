@@ -7,7 +7,7 @@ SourceLogicalOperatorNode::SourceLogicalOperatorNode(const DataSourcePtr source)
     : LogicalOperatorNode(), source(source) {
 }
 
-bool SourceLogicalOperatorNode::equal(const NodePtr& rhs) const {
+bool SourceLogicalOperatorNode::equal(const NodePtr rhs) const {
     if(this->isIdentical(rhs)) {
         return true;
     }

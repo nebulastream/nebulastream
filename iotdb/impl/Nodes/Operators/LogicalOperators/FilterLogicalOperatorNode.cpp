@@ -10,7 +10,7 @@ PredicatePtr FilterLogicalOperatorNode::getPredicate() {
     return predicate;
 }
 
-bool FilterLogicalOperatorNode::equal(const NodePtr& rhs) const {
+bool FilterLogicalOperatorNode::equal(const NodePtr rhs) const {
     if (this->isIdentical(rhs)) {
         return true;
     }

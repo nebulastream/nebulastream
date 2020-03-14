@@ -8,7 +8,7 @@ DataSinkPtr SinkLogicalOperatorNode::getDataSinkPtr() {
     return sink;
 }
 
-bool SinkLogicalOperatorNode::equal(const NodePtr& rhs) const {
+bool SinkLogicalOperatorNode::equal(const NodePtr rhs) const {
     if (this->isIdentical(rhs)) {
         return true;
     }

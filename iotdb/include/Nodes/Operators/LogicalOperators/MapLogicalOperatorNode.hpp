@@ -8,7 +8,7 @@ namespace NES {
 class MapLogicalOperatorNode : public LogicalOperatorNode {
   public:
     MapLogicalOperatorNode(const AttributeFieldPtr, const PredicatePtr);
-    bool equal(const NodePtr& rhs) const override;
+    bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
 
   private:

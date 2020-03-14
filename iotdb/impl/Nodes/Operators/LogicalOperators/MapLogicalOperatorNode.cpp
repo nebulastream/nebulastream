@@ -8,7 +8,7 @@ MapLogicalOperatorNode::MapLogicalOperatorNode(const AttributeFieldPtr field, co
     field), predicate(predicate) {
 }
 
-bool MapLogicalOperatorNode::equal(const NodePtr& rhs) const {
+bool MapLogicalOperatorNode::equal(const NodePtr rhs) const {
     if(this->isIdentical(rhs)) {
         return true;
     }
