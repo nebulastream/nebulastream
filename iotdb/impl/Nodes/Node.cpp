@@ -12,7 +12,7 @@ Node::~Node() {
 
 }
 
-bool Node::addChild(const NodePtr& newNode) {
+bool Node::addChild(const NodePtr newNode) {
     if (newNode.get() == this) {
         NES_DEBUG("Node: Added node to its self, ignore this operation.");
         return false;
@@ -32,7 +32,7 @@ bool Node::addChild(const NodePtr& newNode) {
     return true;
 }
 
-bool Node::removeChild(const NodePtr& node) {
+bool Node::removeChild(const NodePtr node) {
     // check all children.
     for (auto nodeItr = children.begin(); nodeItr != children.end(); ++nodeItr) {
         if ((*nodeItr)->equal(node)) {
@@ -52,7 +52,7 @@ bool Node::removeChild(const NodePtr& node) {
     return false;
 }
 
-bool Node::addParent(const NodePtr& newNode) {
+bool Node::addParent(const NodePtr newNode) {
     if (newNode.get() == this) {
         NES_DEBUG("Node: Added node to its self, so ignore this operation.");
         return false;
@@ -71,7 +71,7 @@ bool Node::addParent(const NodePtr& newNode) {
     return true;
 }
 
-bool Node::removeParent(const NodePtr& node) {
+bool Node::removeParent(const NodePtr node) {
     // check all parents.
     for (auto nodeItr = parents.begin(); nodeItr != parents.end(); ++nodeItr) {
         if ((*nodeItr)->equal(node)) {
@@ -124,7 +124,7 @@ bool Node::replace(NodePtr newNode, NodePtr oldNode) {
     return false;
 }
 
-bool Node::swap(const NodePtr& newNode, const NodePtr& oldNode) {
+bool Node::swap(const NodePtr newNode, const NodePtr oldNode) {
     auto node = findRecursively(shared_from_this(), oldNode);
     // oldNode is not in current graph
     if (!node) {
@@ -157,12 +157,12 @@ bool Node::swap(const NodePtr& newNode, const NodePtr& oldNode) {
     return true;
 }
 
-bool Node::remove(const NodePtr& node) {
+bool Node::remove(const NodePtr node) {
     // NOTE: if there is a cycle inside the operator topology, it won't behave correctly.
     return removeChild(node) || removeParent(node);
 }
 
-bool Node::removeAndLevelUpChildren(const NodePtr& node) {
+bool Node::removeAndLevelUpChildren(const NodePtr node) {
 
     // if a successor of node is equal to children,
     // it's confused to merge two equal operators,
@@ -197,11 +197,11 @@ const std::vector<NodePtr>& Node::getParents() const {
     return parents;
 }
 
-bool Node::contains(const std::vector<NodePtr>& nodes, const NES::NodePtr& nodeToFind) {
+bool Node::contains(const std::vector<NodePtr>& nodes, const NES::NodePtr nodeToFind) {
     return find(nodes, nodeToFind) != nullptr;
 }
 
-NodePtr Node::find(const std::vector<NodePtr>& nodes, const NodePtr& nodeToFind) {
+NodePtr Node::find(const std::vector<NodePtr>& nodes, const NodePtr nodeToFind) {
     for (auto&& currentNode : nodes) {
         if (nodeToFind->equal(currentNode)) {
             return currentNode;
@@ -210,7 +210,7 @@ NodePtr Node::find(const std::vector<NodePtr>& nodes, const NodePtr& nodeToFind)
     return nullptr;
 }
 
-NodePtr Node::findRecursively(const NodePtr& root, const NodePtr& nodeToFind) {
+NodePtr Node::findRecursively(const NodePtr root, const NodePtr nodeToFind) {
     // DFS
     NodePtr resultNode = nullptr;
     // two operator are equal, may not the same object
@@ -228,7 +228,7 @@ NodePtr Node::findRecursively(const NodePtr& root, const NodePtr& nodeToFind) {
     return resultNode;
 }
 
-bool Node::equalWithAllChildrenHelper(const NodePtr& node1, const NodePtr& node2) {
+bool Node::equalWithAllChildrenHelper(const NodePtr node1, const NodePtr node2) {
     if (node1->children.size() != node2->children.size())
         return false;
 
@@ -252,7 +252,7 @@ bool Node::equalWithAllChildrenHelper(const NodePtr& node1, const NodePtr& node2
     return true;
 }
 
-bool Node::equalWithAllChildren(const NodePtr& node) {
+bool Node::equalWithAllChildren(const NodePtr node) {
     // the root is equal
     if (!equal(node)) {
         return false;
@@ -260,7 +260,7 @@ bool Node::equalWithAllChildren(const NodePtr& node) {
     return equalWithAllChildrenHelper(shared_from_this(), node);
 }
 
-bool Node::equalWithAllParentsHelper(const NodePtr& node1, const NodePtr& node2) {
+bool Node::equalWithAllParentsHelper(const NodePtr node1, const NodePtr node2) {
     if (node1->parents.size() != node2->parents.size())
         return false;
 
@@ -285,7 +285,7 @@ bool Node::equalWithAllParentsHelper(const NodePtr& node1, const NodePtr& node2)
     return true;
 }
 
-bool Node::equalWithAllParents(const NodePtr& node) {
+bool Node::equalWithAllParents(const NodePtr node) {
     // the root is equal
     if (!equal(node)) {
         return false;
@@ -293,7 +293,7 @@ bool Node::equalWithAllParents(const NodePtr& node) {
     return equalWithAllParentsHelper(shared_from_this(), node);
 }
 
-std::vector<NodePtr> Node::split(const NodePtr& splitNode) {
+std::vector<NodePtr> Node::split(const NodePtr splitNode) {
     std::vector<NodePtr> result{};
     auto node = findRecursively(shared_from_this(), splitNode);
     if (!node) {
@@ -321,8 +321,8 @@ std::vector<NodePtr> Node::getAndFlattenAllChildren() {
     return allChildren;
 }
 
-void Node::getAndFlattenAllChildrenHelper(const NodePtr& node,
-                                          std::vector<NodePtr>& allChildren, const NodePtr& excludednode) {
+void Node::getAndFlattenAllChildrenHelper(const NodePtr node,
+                                          std::vector<NodePtr>& allChildren, const NodePtr excludednode) {
 
     // todo this implementation may be slow
     for (auto&& currentNode : node->children) {
@@ -383,7 +383,7 @@ void Node::prettyPrint(std::ostream& out) {
     printHelper(shared_from_this(), /*depth*/0, /*indent*/2, out);
 }
 
-void Node::printHelper(const NodePtr& op, size_t depth, size_t indent, std::ostream& out) const {
+void Node::printHelper(const NodePtr op, size_t depth, size_t indent, std::ostream& out) const {
 
     out << std::string(indent*depth, ' ') << op->toString() << std::endl;
     ++depth;

@@ -12,7 +12,7 @@ public:
     const NodePtr copy();
     const std::string toString() const override;
 
-    bool equal(const NodePtr& rhs) const override ;
+    bool equal(const NodePtr rhs) const override ;
 
 private:
     DataSourcePtr source;

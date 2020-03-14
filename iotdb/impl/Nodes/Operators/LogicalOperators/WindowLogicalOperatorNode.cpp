@@ -18,7 +18,7 @@ const WindowDefinitionPtr& WindowLogicalOperatorNode::getWindowDefinition() cons
     return windowDefinition;
 }
 
-bool WindowLogicalOperatorNode::equal(const NodePtr& rhs) const {
+bool WindowLogicalOperatorNode::equal(const NodePtr rhs) const {
     if(this->isIdentical(rhs)) {
         return true;
     }

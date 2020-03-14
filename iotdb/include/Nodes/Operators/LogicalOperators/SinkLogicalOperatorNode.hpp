@@ -8,7 +8,7 @@ class SinkLogicalOperatorNode : public LogicalOperatorNode {
     SinkLogicalOperatorNode();
     SinkLogicalOperatorNode(const DataSinkPtr sink);
     SinkLogicalOperatorNode& operator=(const SinkLogicalOperatorNode& other);
-    bool equal(const NodePtr& rhs) const override;
+    bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
     DataSinkPtr getDataSinkPtr();
 
