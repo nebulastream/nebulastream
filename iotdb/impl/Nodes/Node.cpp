@@ -12,80 +12,80 @@ Node::~Node() {
 
 }
 
-bool Node::addSuccessor(const NodePtr& newNode) {
+bool Node::addChild(const NodePtr& newNode) {
     if (newNode.get() == this) {
         NES_DEBUG("Node: Added node to its self, ignore this operation.");
         return false;
     }
-    // checks if current new node is not part of successors
-    if (contains(successors, newNode)) {
-        NES_DEBUG("Node: the node is already part of its successors so ignore it.");
+    // checks if current new node is not part of children
+    if (contains(children, newNode)) {
+        NES_DEBUG("Node: the node is already part of its children so ignore it.");
         return false;
     }
-    // add the node to the successors
-    successors.push_back(newNode);
+    // add the node to the children
+    children.push_back(newNode);
 
-    // add the current node as a predecessors to the newNode
-    if (!contains(newNode->predecessors, shared_from_this())) {
-        newNode->predecessors.push_back(shared_from_this());
+    // add the current node as a parents to the newNode
+    if (!contains(newNode->parents, shared_from_this())) {
+        newNode->parents.push_back(shared_from_this());
     }
     return true;
 }
 
-bool Node::removeSuccessor(const NodePtr& node) {
-    // check all successors.
-    for (auto nodeItr = successors.begin(); nodeItr != successors.end(); ++nodeItr) {
+bool Node::removeChild(const NodePtr& node) {
+    // check all children.
+    for (auto nodeItr = children.begin(); nodeItr != children.end(); ++nodeItr) {
         if ((*nodeItr)->equal(node)) {
-            // remove this from nodeItr's predecessors
-            for (auto it = (*nodeItr)->predecessors.begin(); it != (*nodeItr)->predecessors.end(); it++) {
+            // remove this from nodeItr's parents
+            for (auto it = (*nodeItr)->parents.begin(); it != (*nodeItr)->parents.end(); it++) {
                 if ((*it).get() == this) {
-                    (*nodeItr)->predecessors.erase(it);
+                    (*nodeItr)->parents.erase(it);
                     break;
                 }
             }
-            // remove nodeItr from successors
-            successors.erase(nodeItr);
+            // remove nodeItr from children
+            children.erase(nodeItr);
             return true;
         }
     }
-    NES_DEBUG("Node: node was not found and could not be removed from successors.");
+    NES_DEBUG("Node: node was not found and could not be removed from children.");
     return false;
 }
 
-bool Node::addPredecessor(const NodePtr& newNode) {
+bool Node::addParent(const NodePtr& newNode) {
     if (newNode.get() == this) {
         NES_DEBUG("Node: Added node to its self, so ignore this operation.");
         return false;
     }
 
-    // checks if current new node is not part of predecessors
-    if (contains(predecessors, newNode)) {
-        NES_DEBUG("Node: the node is already part of its predecessors so ignore it.");
+    // checks if current new node is not part of parents
+    if (contains(parents, newNode)) {
+        NES_DEBUG("Node: the node is already part of its parents so ignore it.");
         return false;
     }
-    // add the node to the predecessors
-    predecessors.push_back(newNode);
-    if (!contains(newNode->successors, shared_from_this())) {
-        newNode->successors.push_back(shared_from_this());
+    // add the node to the parents
+    parents.push_back(newNode);
+    if (!contains(newNode->children, shared_from_this())) {
+        newNode->children.push_back(shared_from_this());
     }
     return true;
 }
 
-bool Node::removePredecessor(const NodePtr& node) {
-    // check all predecessors.
-    for (auto nodeItr = predecessors.begin(); nodeItr != predecessors.end(); ++nodeItr) {
+bool Node::removeParent(const NodePtr& node) {
+    // check all parents.
+    for (auto nodeItr = parents.begin(); nodeItr != parents.end(); ++nodeItr) {
         if ((*nodeItr)->equal(node)) {
-            for (auto it = (*nodeItr)->successors.begin(); it != (*nodeItr)->successors.end(); it++) {
+            for (auto it = (*nodeItr)->children.begin(); it != (*nodeItr)->children.end(); it++) {
                 if ((*it).get() == this) {
-                    (*nodeItr)->successors.erase(it);
+                    (*nodeItr)->children.erase(it);
                     break;
                 }
             }
-            predecessors.erase(nodeItr);
+            parents.erase(nodeItr);
             return true;
         }
     }
-    NES_DEBUG("Node: node was not found and could not be removed from predecessors.");
+    NES_DEBUG("Node: node was not found and could not be removed from parents.");
     return false;
 }
 
@@ -96,28 +96,28 @@ bool Node::replace(NodePtr newNode, NodePtr oldNode) {
     }
 
     if (!oldNode->equal(newNode)) {
-        // newNode is already inside successors or predecessors and it's not oldNode
-        if (find(successors, newNode) ||
-            find(predecessors, newNode)) {
-            NES_DEBUG("Node: the new node is already part of the successors or predessessors of the current node.");
+        // newNode is already inside children or parents and it's not oldNode
+        if (find(children, newNode) ||
+            find(parents, newNode)) {
+            NES_DEBUG("Node: the new node is already part of the children or predessessors of the current node.");
             return false;
         }
     }
-    // update successors and predecessors of new nodes.
+    // update children and parents of new nodes.
     bool success = false;
-    success = removeSuccessor(oldNode);
+    success = removeChild(oldNode);
     if (success) {
-        successors.push_back(newNode);
-        for (auto&& currentNode : oldNode->successors) {
-            newNode->addSuccessor(currentNode);
+        children.push_back(newNode);
+        for (auto&& currentNode : oldNode->children) {
+            newNode->addChild(currentNode);
         }
         return true;
     }
-    success = removePredecessor(oldNode);
+    success = removeParent(oldNode);
     if (success) {
-        predecessors.push_back(newNode);
-        for (auto&& currentNode : oldNode->predecessors) {
-            newNode->addPredecessor(currentNode);
+        parents.push_back(newNode);
+        for (auto&& currentNode : oldNode->parents) {
+            newNode->addParent(currentNode);
         }
         return true;
     }
@@ -131,27 +131,27 @@ bool Node::swap(const NodePtr& newNode, const NodePtr& oldNode) {
         return false;
     }
     // detecting if newNode is one of oldNode's sblings
-    for (auto&& predecessor : node->predecessors) {
-        for (auto&& successor : predecessor->successors) {
-            if (successor == newNode) {
+    for (auto&& parent : node->parents) {
+        for (auto&& child : parent->children) {
+            if (child == newNode) {
                 // we don't want to handle this case
                 return false;
             }
         }
     }
 
-    // reset all predecessors belongs to newNode
-    newNode->predecessors.clear();
+    // reset all parents belongs to newNode
+    newNode->parents.clear();
     uint64_t criteria = 0;
-    while (node->predecessors.size() > criteria) {
-        auto p = node->predecessors[criteria];
-        if (p.get() == newNode.get()) {
+    while (node->parents.size() > criteria) {
+        auto parent = node->parents[criteria];
+        if (parent.get() == newNode.get()) {
             criteria = 1;
             continue;
         }
 
-        newNode->addPredecessor(p);
-        node->removePredecessor(p);
+        newNode->addParent(parent);
+        node->removeParent(parent);
     }
 
     return true;
@@ -159,25 +159,25 @@ bool Node::swap(const NodePtr& newNode, const NodePtr& oldNode) {
 
 bool Node::remove(const NodePtr& node) {
     // NOTE: if there is a cycle inside the operator topology, it won't behave correctly.
-    return removeSuccessor(node) || removePredecessor(node);
+    return removeChild(node) || removeParent(node);
 }
 
-bool Node::removeAndLevelUpSuccessors(const NodePtr& node) {
+bool Node::removeAndLevelUpChildren(const NodePtr& node) {
 
-    // if a successor of node is equal to successors,
+    // if a successor of node is equal to children,
     // it's confused to merge two equal operators,
     // HERE we don't deal with this case
-    for (auto&& n : node->successors) {
-        if (find(successors, n)) {
+    for (auto&& n : node->children) {
+        if (find(children, n)) {
             return false;
         }
     }
 
     bool success = false;
-    success = removeSuccessor(node);
+    success = removeChild(node);
     if (success) {
-        for (auto&& n : node->successors) {
-            successors.push_back(n);
+        for (auto&& n : node->children) {
+            children.push_back(n);
         }
         return true;
     }
@@ -185,16 +185,16 @@ bool Node::removeAndLevelUpSuccessors(const NodePtr& node) {
 }
 
 void Node::clear() {
-    successors.clear();
-    predecessors.clear();
+    children.clear();
+    parents.clear();
 }
 
-const std::vector<NodePtr>& Node::getSuccessors() const {
-    return successors;
+const std::vector<NodePtr>& Node::getChildren() const {
+    return children;
 }
 
-const std::vector<NodePtr>& Node::getPredecessors() const {
-    return predecessors;
+const std::vector<NodePtr>& Node::getParents() const {
+    return parents;
 }
 
 bool Node::contains(const std::vector<NodePtr>& nodes, const NES::NodePtr& nodeToFind) {
@@ -219,7 +219,7 @@ NodePtr Node::findRecursively(const NodePtr& root, const NodePtr& nodeToFind) {
     }
 
     // not equal
-    for (auto& currentNode : root->successors) {
+    for (auto& currentNode : root->children) {
         resultNode = findRecursively(currentNode, nodeToFind);
         if (resultNode) {
             break;
@@ -228,23 +228,23 @@ NodePtr Node::findRecursively(const NodePtr& root, const NodePtr& nodeToFind) {
     return resultNode;
 }
 
-bool Node::equalWithAllSuccessorsHelper(const NodePtr& node1, const NodePtr& node2) {
-    if (node1->successors.size() != node2->successors.size())
+bool Node::equalWithAllChildrenHelper(const NodePtr& node1, const NodePtr& node2) {
+    if (node1->children.size() != node2->children.size())
         return false;
 
-    auto x = node1->successors.begin();
-    while (x != node1->successors.end()) {
-        auto y = node2->successors.begin();
-        while (y != node2->successors.end()) {
+    auto x = node1->children.begin();
+    while (x != node1->children.end()) {
+        auto y = node2->children.begin();
+        while (y != node2->children.end()) {
             if (x[0]->equal(y[0])) {
-                if (!equalWithAllSuccessorsHelper(x[0], y[0])) {
+                if (!equalWithAllChildrenHelper(x[0], y[0])) {
                     return false;
                 }
                 break;
             }
             ++y;
         }
-        if (y == node2->successors.end()) {
+        if (y == node2->children.end()) {
             return false;
         }
         ++x;
@@ -252,32 +252,32 @@ bool Node::equalWithAllSuccessorsHelper(const NodePtr& node1, const NodePtr& nod
     return true;
 }
 
-bool Node::equalWithAllSuccessors(const NodePtr& node) {
+bool Node::equalWithAllChildren(const NodePtr& node) {
     // the root is equal
     if (!equal(node)) {
         return false;
     }
-    return equalWithAllSuccessorsHelper(shared_from_this(), node);
+    return equalWithAllChildrenHelper(shared_from_this(), node);
 }
 
-bool Node::equalWithAllPredecessorsHelper(const NodePtr& node1, const NodePtr& node2) {
-    if (node1->predecessors.size() != node2->predecessors.size())
+bool Node::equalWithAllParentsHelper(const NodePtr& node1, const NodePtr& node2) {
+    if (node1->parents.size() != node2->parents.size())
         return false;
 
-    auto x = node1->predecessors.begin();
+    auto x = node1->parents.begin();
 
-    while (x != node1->predecessors.end()) {
-        auto y = node2->predecessors.begin();
-        while (y != node2->predecessors.end()) {
+    while (x != node1->parents.end()) {
+        auto y = node2->parents.begin();
+        while (y != node2->parents.end()) {
             if ((*x)->equal(*y)) {
-                if (!equalWithAllPredecessorsHelper(*x, *y)) {
+                if (!equalWithAllParentsHelper(*x, *y)) {
                     return false;
                 }
                 break;
             }
             ++y;
         }
-        if (y == node2->predecessors.end()) {
+        if (y == node2->parents.end()) {
             return false;
         }
         ++x;
@@ -285,12 +285,12 @@ bool Node::equalWithAllPredecessorsHelper(const NodePtr& node1, const NodePtr& n
     return true;
 }
 
-bool Node::equalWithAllPredecessors(const NodePtr& node) {
+bool Node::equalWithAllParents(const NodePtr& node) {
     // the root is equal
     if (!equal(node)) {
         return false;
     }
-    return equalWithAllPredecessorsHelper(shared_from_this(), node);
+    return equalWithAllParentsHelper(shared_from_this(), node);
 }
 
 std::vector<NodePtr> Node::split(const NodePtr& splitNode) {
@@ -302,10 +302,10 @@ std::vector<NodePtr> Node::split(const NodePtr& splitNode) {
         return result;
     }
 
-    while (!node->predecessors.empty()) {
-        auto p = node->predecessors[0];
+    while (!node->parents.empty()) {
+        auto p = node->parents[0];
         result.push_back(p);
-        node->removePredecessor(p);
+        node->removeParent(p);
     }
     result.push_back(node);
     return result;
@@ -315,27 +315,27 @@ bool Node::isValid() {
     return !isCyclic();
 }
 
-std::vector<NodePtr> Node::getAndFlattenAllSuccessors() {
+std::vector<NodePtr> Node::getAndFlattenAllChildren() {
     std::vector<NodePtr> allChildren{};
-    getAndFlattenAllSuccessorsHelper(shared_from_this(), allChildren, shared_from_this());
+    getAndFlattenAllChildrenHelper(shared_from_this(), allChildren, shared_from_this());
     return allChildren;
 }
 
-void Node::getAndFlattenAllSuccessorsHelper(const NodePtr& node,
-                                            std::vector<NodePtr>& allChildren, const NodePtr& excludedOp) {
+void Node::getAndFlattenAllChildrenHelper(const NodePtr& node,
+                                          std::vector<NodePtr>& allChildren, const NodePtr& excludednode) {
 
     // todo this implementation may be slow
-    for (auto&& currentNode : node->successors) {
+    for (auto&& currentNode : node->children) {
         if (!find(allChildren, currentNode) &&
-            (currentNode != excludedOp)) {
+            (currentNode != excludednode)) {
             allChildren.push_back(currentNode);
-            getAndFlattenAllSuccessorsHelper(currentNode, allChildren, excludedOp);
+            getAndFlattenAllChildrenHelper(currentNode, allChildren, excludednode);
         }
     }
 }
 
 bool Node::isCyclic() {
-    auto allChildren = getAndFlattenAllSuccessors();
+    auto allChildren = getAndFlattenAllChildren();
     for (auto&& node : allChildren) {
         node->visited = false;
         node->recStack = false;
@@ -369,7 +369,7 @@ bool Node::isCyclicHelper(Node& node) {
     // DFS
     node.visited = true;
     node.recStack = true;
-    for (auto&& n : node.successors) {
+    for (auto&& n : node.children) {
         if (!n->visited && isCyclicHelper(*n.get())) {
             return true;
         } else if (n->recStack) {
@@ -387,7 +387,7 @@ void Node::printHelper(const NodePtr& op, size_t depth, size_t indent, std::ostr
 
     out << std::string(indent*depth, ' ') << op->toString() << std::endl;
     ++depth;
-    auto children = op->getSuccessors();
+    auto children = op->getChildren();
     for (auto&& child: children) {
         printHelper(child, depth, indent, out);
     }
