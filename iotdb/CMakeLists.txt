@@ -30,12 +30,14 @@ endif()
 message(STATUS "CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}")
 message(STATUS "CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE}")
 
-#lcryto is required for asio to communicate
+# lcryto is required for asio to communicate
 set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl)
 
 # LLVM
 find_package(LLVM 3 REQUIRED)
 find_package(clang REQUIRED)
+
+
 message("-- LLVM version ${LLVM_VERSION_STRING}")
 
 # ZMQ
