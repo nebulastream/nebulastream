@@ -117,6 +117,14 @@ class TupleBuffer {
    */
   std::string printTupleBuffer(Schema schema);
 
+
+  /**
+    * @brief revert the endianess of the tuple buffer
+    * @schema of the buffer
+    */
+   void revertEndianness(Schema schema);
+
+
  private:
   /**
    * @brief default constructor for serialization with boost
