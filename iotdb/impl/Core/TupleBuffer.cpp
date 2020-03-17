@@ -2,10 +2,6 @@
 #include <NodeEngine/TupleBuffer.hpp>
 #include <exception>
 #include <boost/endian/buffers.hpp>  // see Synopsis below
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/export.hpp>
-BOOST_CLASS_EXPORT_IMPLEMENT (NES::TupleBuffer);
 #include <cstring>
 #include <iostream>
 #include <sstream>
@@ -142,7 +138,7 @@ void TupleBuffer::revertEndianness(Schema schema) {
     for (size_t j = 0; j < schema.getSize(); j++) {
       auto field = schema[j];
       size_t fieldSize = field->getFieldSize();
-
+      //TODO: add enum with switch for performance reasons
       if (field->getDataType()->toString() == "UINT8") {
         u_int8_t* orgVal = (u_int8_t*) buffer + offset + i * tupleSize;
         memcpy((char*) buffer + offset + i * tupleSize, orgVal, fieldSize);
@@ -176,10 +172,12 @@ void TupleBuffer::revertEndianness(Schema schema) {
         int64_t val = boost::endian::endian_reverse(*orgVal);
         memcpy((char*) buffer + offset + i * tupleSize, &val, fieldSize);
       } else if (field->getDataType()->toString() == "FLOAT32") {
+        NES_WARNING("TupleBuffer::revertEndianness: float conversation is not totally supported, please check results")
         uint32_t* orgVal = (uint32_t*) ((char*) buffer + offset + i * tupleSize);
         uint32_t val = boost::endian::endian_reverse(*orgVal);
         memcpy((char*) buffer + offset + i * tupleSize, &val, fieldSize);
       } else if (field->getDataType()->toString() == "FLOAT64") {
+        NES_WARNING("TupleBuffer::revertEndianness: double conversation is not totally supported, please check results")
         uint64_t* orgVal = (uint64_t*) ((char*) buffer + offset + i * tupleSize);
         uint64_t val = boost::endian::endian_reverse(*orgVal);
         memcpy((char*) buffer + offset + i * tupleSize, &val, fieldSize);

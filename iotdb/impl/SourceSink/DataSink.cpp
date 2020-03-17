@@ -1,12 +1,11 @@
-#include <SourceSink/DataSink.hpp>
-
 #include <cassert>
 #include <iostream>
 #include <memory>
 
 #include <API/Schema.hpp>
+#include <boost/serialization/export.hpp>
+#include <SourceSink/DataSink.hpp>
 BOOST_CLASS_EXPORT_IMPLEMENT(NES::DataSink)
-
 
 #include <Util/Logger.hpp>
 
