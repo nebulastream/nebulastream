@@ -100,8 +100,8 @@ TEST_F(TupleBufferTest, testEndianessOneItem) {
   ts.v4 = 1;
   ts.v5 = 1;
   ts.v6 = 1;
-  ts.v7 = 1;
-  ts.v8 = 1;
+  ts.v7 = -2;
+  ts.v8 = -1;
   ts.v9 = 1.1;
   ts.v10 = 1.2;
 
@@ -122,7 +122,7 @@ TEST_F(TupleBufferTest, testEndianessOneItem) {
   testBuf.revertEndianness(s);
   cout << "after reverse2=" << testBuf.printTupleBuffer(s) << endl;
 
-  string expected = "1,1,1,1,1,1,1,1,1.100000,1.200000\n";
+  string expected = "1,1,1,1,1,1,-2,-1,1.100000,1.200000\n";
   EXPECT_EQ(expected, testBuf.printTupleBuffer(s));
 }
 
