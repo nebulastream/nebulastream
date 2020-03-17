@@ -3,10 +3,6 @@
 #include <cstdint>
 #include <memory>
 #include <API/Schema.hpp>
-
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-
 namespace NES {
 
 //forward declaration
@@ -117,6 +113,14 @@ class TupleBuffer {
    */
   std::string printTupleBuffer(Schema schema);
 
+
+  /**
+    * @brief revert the endianess of the tuple buffer
+    * @schema of the buffer
+    */
+   void revertEndianness(Schema schema);
+
+
  private:
   /**
    * @brief default constructor for serialization with boost
@@ -127,19 +131,6 @@ class TupleBuffer {
         tupleSizeInBytes(0),
         numberOfTuples(0),
         useCnt(0) {
-  }
-
-  /**
-   * @brief method for serialization, all listed variable below are added to the
-   * serialization/deserialization process
-   */
-  friend class boost::serialization::access;
-  template<class Archive>
-  void serialize(Archive & ar, const unsigned int version) {
-//    ar & buffer; TODO: serialize content also
-    ar & bufferSizeInBytes;
-    ar & tupleSizeInBytes;
-    ar & numberOfTuples;
   }
 
   void* buffer;
@@ -154,8 +145,4 @@ std::string toString(TupleBuffer& buffer, const Schema& schema);
 std::string toString(TupleBuffer* buffer, const Schema& schema);
 
 }  // namespace NES
-#include <boost/archive/text_iarchive.hpp>
-#include <boost/archive/text_oarchive.hpp>
-#include <boost/serialization/export.hpp>
-BOOST_CLASS_EXPORT_KEY(NES::TupleBuffer)
 #endif /* INCLUDE_TUPLEBUFFER_H_ */

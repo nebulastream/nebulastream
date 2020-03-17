@@ -1,11 +1,11 @@
 #ifndef INCLUDE_UTIL_LOGGER_HPP_
 #define INCLUDE_UTIL_LOGGER_HPP_
 // TRACE < DEBUG < INFO < WARN < ERROR < FATAL
-#include <log4cxx/consoleappender.h>
-#include <log4cxx/fileappender.h>
+
 #include <log4cxx/logger.h>
 #include <log4cxx/patternlayout.h>
-
+#include <log4cxx/consoleappender.h>
+#include <log4cxx/fileappender.h>
 #include <iostream>
 
 using namespace log4cxx;
