@@ -38,9 +38,9 @@ const OperatorPtr recursiveCopy(OperatorPtr ptr) {
  * independent of implementation of query graph */
 const std::vector<OperatorPtr> getChildNodes(const OperatorPtr op);
 
-void addChild(const OperatorPtr opParent, const OperatorPtr opChild);
+void addChild(const OperatorPtr opParent , const OperatorPtr opChild);
 
-static inline void ltrim(std::string &s) {
+static inline void ltrim(std::string& s) {
   s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) {
     return !std::isspace(ch);
   }));
@@ -53,13 +53,13 @@ InputQuery::InputQuery(StreamPtr source_stream)
 }
 
 /* TODO: perform deep copy of operator graph */
-InputQuery::InputQuery(const InputQuery &query)
+InputQuery::InputQuery(const InputQuery& query)
     :
     sourceStream(query.sourceStream),
     root(recursiveCopy(query.root)) {
 }
 
-InputQuery& InputQuery::operator=(const InputQuery &query) {
+InputQuery& InputQuery::operator=(const InputQuery& query) {
   if (&query != this) {
     this->sourceStream = query.sourceStream;
     this->root = recursiveCopy(query.root);
@@ -70,7 +70,7 @@ InputQuery& InputQuery::operator=(const InputQuery &query) {
 InputQuery::~InputQuery() {
 }
 
-InputQuery InputQuery::from(Stream &stream) {
+InputQuery InputQuery::from(Stream& stream) {
   InputQuery q(std::make_shared<Stream>(stream));
 
   //TODO:here we assume that all sources are of the same type
@@ -129,15 +129,24 @@ InputQuery InputQuery::from(Stream &stream) {
  * Relational Operators
  */
 
-InputQuery& InputQuery::select(const Field &field) {
+InputQuery& InputQuery::select(const Field& field) {
   NES_NOT_IMPLEMENTED
 }
 
-InputQuery& InputQuery::select(const Field &field1, const Field &field2) {
+InputQuery& InputQuery::select(const Field& field1 , const Field& field2) {
   NES_NOT_IMPLEMENTED
 }
 
-InputQuery& InputQuery::filter(const UserAPIExpression &predicate) {
+InputQuery& InputQuery::sample(const std::string& udfs) {
+  OperatorPtr op = createSampleOperator(udfs);
+  int operatorId = this->getNextOperatorId();
+  op->setOperatorId(operatorId);
+  addChild(op, root);
+  root = op;
+  return *this;
+}
+
+InputQuery& InputQuery::filter(const UserAPIExpression& predicate) {
   PredicatePtr pred = createPredicate(predicate);
   OperatorPtr op = createFilterOperator(pred);
   int operatorId = this->getNextOperatorId();
@@ -147,7 +156,7 @@ InputQuery& InputQuery::filter(const UserAPIExpression &predicate) {
   return *this;
 }
 
-InputQuery& InputQuery::map(const AttributeField &field,
+InputQuery& InputQuery::map(const AttributeField& field ,
                             const Predicate predicate) {
   PredicatePtr pred = createPredicate(predicate);
   AttributeFieldPtr attr = field.copy();
@@ -159,11 +168,11 @@ InputQuery& InputQuery::map(const AttributeField &field,
   return *this;
 }
 
-InputQuery& InputQuery::combine(const NES::InputQuery &sub_query) {
+InputQuery& InputQuery::combine(const NES::InputQuery& sub_query) {
   NES_NOT_IMPLEMENTED
 }
 
-InputQuery& InputQuery::join(const InputQuery &sub_query,
+InputQuery& InputQuery::join(const InputQuery& sub_query ,
                              const JoinPredicatePtr joinPred) {
   OperatorPtr op = createJoinOperator(joinPred);
   int operatorId = this->getNextOperatorId();
@@ -175,8 +184,8 @@ InputQuery& InputQuery::join(const InputQuery &sub_query,
   return *this;
 }
 
-InputQuery &InputQuery::windowByKey(const AttributeFieldPtr onKey,
-                                    const WindowTypePtr windowType,
+InputQuery& InputQuery::windowByKey(const AttributeFieldPtr onKey ,
+                                    const WindowTypePtr windowType ,
                                     const WindowAggregationPtr aggregation) {
   auto window_def_ptr = std::make_shared<WindowDefinition>(onKey, aggregation,
                                                            windowType);
@@ -194,7 +203,7 @@ InputQuery &InputQuery::windowByKey(const AttributeFieldPtr onKey,
   return *this;
 }
 
-InputQuery &InputQuery::window(const NES::WindowTypePtr windowType,
+InputQuery& InputQuery::window(const NES::WindowTypePtr windowType ,
                                const WindowAggregationPtr aggregation) {
   auto window_def_ptr = std::make_shared<WindowDefinition>(aggregation,
                                                            windowType);
@@ -214,7 +223,7 @@ InputQuery &InputQuery::window(const NES::WindowTypePtr windowType,
 }
 
 // output operators
-InputQuery& InputQuery::writeToFile(const std::string &file_name) {
+InputQuery& InputQuery::writeToFile(const std::string& file_name) {
   OperatorPtr op = createSinkOperator(
       createBinaryFileSinkWithSchema(this->sourceStream->getSchema(),
                                      file_name));
@@ -226,10 +235,9 @@ InputQuery& InputQuery::writeToFile(const std::string &file_name) {
 }
 
 // output operators
-InputQuery& InputQuery::writeToCSVFile(const std::string &file_name) {
+InputQuery& InputQuery::writeToCSVFile(const std::string& file_name) {
   OperatorPtr op = createSinkOperator(
-      createCSVFileSinkWithSchema(this->sourceStream->getSchema(),
-                                     file_name));
+      createCSVFileSinkWithSchema(this->sourceStream->getSchema(), file_name));
   int operatorId = this->getNextOperatorId();
   op->setOperatorId(operatorId);
   addChild(op, root);
@@ -237,9 +245,9 @@ InputQuery& InputQuery::writeToCSVFile(const std::string &file_name) {
   return *this;
 }
 
-InputQuery& InputQuery::writeToZmq(const std::string &logicalStreamName,
-                                   const std::string &host,
-                                   const uint16_t &port) {
+InputQuery& InputQuery::writeToZmq(const std::string& logicalStreamName ,
+                                   const std::string& host ,
+                                   const uint16_t& port) {
   SchemaPtr ptr = StreamCatalog::instance().getSchemaForLogicalStream(
       logicalStreamName);
   OperatorPtr op = createSinkOperator(createZmqSink(*ptr.get(), host, port));
@@ -250,7 +258,7 @@ InputQuery& InputQuery::writeToZmq(const std::string &logicalStreamName,
   return *this;
 }
 
-InputQuery& InputQuery::print(std::ostream &out) {
+InputQuery& InputQuery::print(std::ostream& out) {
   OperatorPtr op = createSinkOperator(
       createPrintSinkWithSchema(this->sourceStream->getSchema(), out));
   int operatorId = this->getNextOperatorId();
@@ -260,8 +268,8 @@ InputQuery& InputQuery::print(std::ostream &out) {
   return *this;
 }
 
-InputQuery& InputQuery::writeToKafka(const std::string &topic,
-                                     const cppkafka::Configuration &config) {
+InputQuery& InputQuery::writeToKafka(const std::string& topic ,
+                                     const cppkafka::Configuration& config) {
   OperatorPtr op = createSinkOperator(
       createKafkaSinkWithSchema(this->sourceStream->getSchema(), topic,
                                 config));
@@ -272,8 +280,8 @@ InputQuery& InputQuery::writeToKafka(const std::string &topic,
   return *this;
 }
 
-InputQuery& InputQuery::writeToKafka(const std::string &brokers,
-                                     const std::string &topic,
+InputQuery& InputQuery::writeToKafka(const std::string& brokers ,
+                                     const std::string& topic ,
                                      const size_t kafkaProducerTimeout) {
   OperatorPtr op = createSinkOperator(
       createKafkaSinkWithSchema(this->sourceStream->getSchema(), brokers, topic,
@@ -291,7 +299,7 @@ void InputQuery::setSourceStream(const StreamPtr sourceStream) {
   InputQuery::sourceStream = sourceStream;
 }
 
-void addChild(const OperatorPtr opParent, const OperatorPtr opChild) {
+void addChild(const OperatorPtr opParent , const OperatorPtr opChild) {
   if (opParent && opChild) {
     opChild->setParent(opParent);
     vector<OperatorPtr> children = opParent->getChildren();

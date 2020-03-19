@@ -157,6 +157,12 @@ class InputQuery {
    */
   InputQuery& print(std::ostream& = std::cout);
 
+  /**
+   * @brief: provide a sample operator for sense
+   * @param udfs to setup sense
+   */
+  InputQuery& sample(const std::string &udfs);
+
   // helper operators
   OperatorPtr getRoot() const {
     return root;
