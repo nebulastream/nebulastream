@@ -177,11 +177,15 @@ class InputQuery {
   const StreamPtr getSourceStream() const;
   void setSourceStream(const StreamPtr sourceStream);
 
+  std::string getUdsf();
+  void setUdsf(std::string udsf);
  private:
   InputQuery(StreamPtr source_stream);
   int operatorIdCounter = 0;
   OperatorPtr root;
   StreamPtr sourceStream;
+  std::string udfs;
+
 };
 
 typedef std::shared_ptr<InputQuery> InputQueryPtr;
