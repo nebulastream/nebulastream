@@ -9,6 +9,7 @@
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <SourceSink/DefaultSource.hpp>
+#include <SourceSink/SenseSource.hpp>
 
 namespace NES {
 
@@ -45,12 +46,17 @@ const DataSourcePtr createBinaryFileSource(const Schema &schema,
   return std::make_shared<BinarySource>(schema, path_to_file);
 }
 
+const DataSourcePtr createSenseSource(const Schema &schema,
+                                      const std::string& udfs) {
+  return std::make_shared<SenseSource>(schema, udfs);
+}
+
 const DataSourcePtr createCSVFileSource(const Schema &schema,
-                                        const std::string &path_to_file,
+                                        const std::string &pathToFile,
                                         const std::string &delimiter,
                                         size_t numbersOfBufferToProduce,
                                         size_t frequency) {
-  return std::make_shared<CSVSource>(schema, path_to_file, delimiter,
+  return std::make_shared<CSVSource>(schema, pathToFile, delimiter,
                                      numbersOfBufferToProduce, frequency);
 }
 
