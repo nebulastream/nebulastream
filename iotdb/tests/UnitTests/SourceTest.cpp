@@ -179,6 +179,7 @@ TEST_F(SourceTest, testSenseSource) {
 
   const DataSourcePtr source = (*funcPtr)(schema, testUDFS);
 
+  //TODO: please add here to code to test the setup
   std::cout << "Success" << std::endl;
 }
 

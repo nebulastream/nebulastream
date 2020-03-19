@@ -114,6 +114,10 @@ InputQuery InputQuery::from(Stream& stream) {
           createCSVFileSource(stream.getSchema(), /**fileName*/conf, ",",
           /**numberOfBufferToProduce*/numBuffers,
                               frequency));
+    } else if (type == "SenseSource") {
+          NES_DEBUG("InputQuery::from create Sense source for udfs " << conf)
+          op = createSourceOperator(
+              createSenseSource(stream.getSchema(), /**udfs*/conf));
     } else {
       NES_DEBUG("InputQuery::from source type " << type << " not supported")
       NES_FATAL_ERROR("type not supported")
