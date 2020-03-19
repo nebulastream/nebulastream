@@ -13,15 +13,20 @@ using namespace std;
 
 namespace NES {
 
-SenseSource::SenseSource()
-    :
-    udfs("") {
+void SenseSource::setUdsf(std::string udsf)
+{
+  this->udsf = udsf;
 }
 
-SenseSource::SenseSource(const Schema& schema , const std::string& udfs)
+SenseSource::SenseSource()
+    :
+    udsf("") {
+}
+
+SenseSource::SenseSource(const Schema& schema , const std::string& udsf)
     :
     DataSource(schema),
-    udfs(udfs) {
+    udsf(udsf) {
 
 }
 
@@ -36,7 +41,7 @@ TupleBufferPtr SenseSource::receiveData() {
 
 const std::string SenseSource::toString() const {
   std::stringstream ss;
-  ss << "SenseSource(SCHEMA(" << schema.toString() << "), UDFS=" << udfs
+  ss << "SenseSource(SCHEMA(" << schema.toString() << "), UDSF=" << udsf
      << endl;
   return ss.str();
 }

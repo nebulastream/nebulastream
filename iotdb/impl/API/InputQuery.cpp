@@ -46,9 +46,20 @@ static inline void ltrim(std::string& s) {
   }));
 }
 
+std::string InputQuery::getUdsf()
+{
+  return udfs;
+}
+
+void InputQuery::setUdsf(std::string udsf)
+{
+  this->udfs = udfs;
+}
+
 InputQuery::InputQuery(StreamPtr source_stream)
     :
     sourceStream(source_stream),
+    udfs(""),
     root() {
 }
 
@@ -147,6 +158,8 @@ InputQuery& InputQuery::sample(const std::string& udfs) {
   op->setOperatorId(operatorId);
   addChild(op, root);
   root = op;
+  //TODO: this currently set it globally, in the future it should be connected to a source
+  this->udfs = udfs;
   return *this;
 }
 

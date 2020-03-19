@@ -41,10 +41,13 @@ class SenseSource : public DataSource {
    */
   const std::string toString() const;
   SourceType getType() const override;
+
+  void setUdsf(std::string udsf);
+
   private:
   SenseSource();
 
-  std::string udfs;
+  std::string udsf;
   /**
    * @brief method for serialization, all listed variable below are added to the
    * serialization/deserialization process
@@ -53,7 +56,7 @@ class SenseSource : public DataSource {
   template<class Archive> void serialize(Archive& ar,
                                          const unsigned int version) {
     ar & boost::serialization::base_object<DataSource>(*this);
-    ar & udfs;
+    ar & udsf;
   }
 };
 }  // namespace NES
