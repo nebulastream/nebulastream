@@ -138,6 +138,7 @@ const OperatorPtr createSortOperator(const Sort& sort_spec);
 const OperatorPtr createSourceOperator(const DataSourcePtr source);
 const OperatorPtr createWindowOperator(const WindowDefinitionPtr window_definition);
 const OperatorPtr createWindowScanOperator(const SchemaPtr schema);
+const OperatorPtr createSampleOperator(const std::string& udfs);
 
 } // namespace NES
 
