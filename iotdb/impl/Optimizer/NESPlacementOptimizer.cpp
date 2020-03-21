@@ -101,6 +101,7 @@ void NESPlacementOptimizer::addSystemGeneratedSourceSinkOperators(
       // fix the source code
       const string& destHostName = edges[0].ptr->getDestination()->getNESNode()
           ->getIp();
+      destHostName = "130.149.21.103";
       NES_DEBUG("destHostName=" << destHostName << " size=" << edges.size() << " id=" << edges[0].id)
       NES_DEBUG("NESPlacementOptimizer::addSystemGeneratedSourceSinkOperators: Code for SINK_OP << ")
 
