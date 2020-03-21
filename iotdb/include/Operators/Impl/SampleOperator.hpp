@@ -8,6 +8,10 @@
 
 namespace NES {
 
+/**
+ * @brief this operator sets the UDSF function for all sense nodes in the system
+ *
+ */
 class SampleOperator : public Operator {
  public:
   SampleOperator() = default;
