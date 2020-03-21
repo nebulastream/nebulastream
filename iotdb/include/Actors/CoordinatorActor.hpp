@@ -26,9 +26,9 @@ namespace NES {
 
 // class-based, statically typed, event-based API for the state management in CAF
 struct CoordinatorState {
-    unordered_map<caf::strong_actor_ptr, NESTopologyEntryPtr> actorTopologyMap;
-    unordered_map<NESTopologyEntryPtr, caf::strong_actor_ptr> topologyActorMap;
-    unordered_map<size_t, caf::strong_actor_ptr> idToActorMap;
+  unordered_map<caf::strong_actor_ptr, NESTopologyEntryPtr> actorTopologyMap;
+  unordered_map<NESTopologyEntryPtr, caf::strong_actor_ptr> topologyActorMap;
+  unordered_map<size_t, caf::strong_actor_ptr> idToActorMap;
 };
 
 /**
@@ -36,136 +36,151 @@ struct CoordinatorState {
  */
 class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
 
-  public:
-    /**
-     * @brief the constructor of the coordinator to initialize the default objects
-     */
-    explicit CoordinatorActor(caf::actor_config& cfg, std::string ip) : stateful_actor(cfg) {
+ public:
+  /**
+   * @brief the constructor of the coordinator to initialize the default objects
+   */
 
-        queryCatalogServicePtr = QueryCatalogService::getInstance();
-        streamCatalogServicePtr = StreamCatalogService::getInstance();
-        coordinatorServicePtr = CoordinatorService::getInstance();
-        workerServicePtr = std::make_unique<WorkerService>(
-            WorkerService(ip,
-                          actorCoordinatorConfig.publish_port,
-                          actorCoordinatorConfig.receive_port));
-    }
+  explicit CoordinatorActor(caf::actor_config& cfg)
+      :
+      stateful_actor(cfg) {
 
-    ~CoordinatorActor();
+    queryCatalogServicePtr = QueryCatalogService::getInstance();
+    streamCatalogServicePtr = StreamCatalogService::getInstance();
+    coordinatorServicePtr = CoordinatorService::getInstance();
+    workerServicePtr = std::make_unique<WorkerService>(
+        WorkerService(actorCoordinatorConfig.ip, actorCoordinatorConfig.publish_port,
+                      actorCoordinatorConfig.receive_port));
+  }
 
-    behavior_type make_behavior() override {
-        return init();
-    }
+  explicit CoordinatorActor(caf::actor_config& cfg , std::string ip)
+      :
+      stateful_actor(cfg) {
 
-  private:
-    caf::behavior init();
-    caf::behavior running();
+    queryCatalogServicePtr = QueryCatalogService::getInstance();
+    streamCatalogServicePtr = StreamCatalogService::getInstance();
+    coordinatorServicePtr = CoordinatorService::getInstance();
+    workerServicePtr = std::make_unique<WorkerService>(
+        WorkerService(ip, actorCoordinatorConfig.publish_port,
+                      actorCoordinatorConfig.receive_port));
+  }
 
-    /**
-     * @brief method to add a logical stream
-     * @param logical stream name
-     * @param schema of logical stream
-     * @return bool indicating if insert was successful
-     */
-    bool registerLogicalStream(std::string logicalStreamName,
-                               SchemaPtr schemaPtr);
+  ~CoordinatorActor();
 
-    /**
-     * @brief method to remove a logical stream
-     * @caution this does not remove the corresponding physical streams
-     * @caution will fail if there are pyhsical streams for this logical entry, delete them first
-     * @param logical stream name
-     * @return bool indicating if removal was successful
-     */
-    bool removeLogicalStream(std::string logicalStreamName);
+  behavior_type make_behavior() override {
+    return init();
+  }
 
-    /**
-     * @brief method to add a physical stream to the catalog AND to the topology
-     * @caution every external register call can only register streams for himself
-     * @caution we will deploy on the first worker with that ip NOT on all
-     * * TODO: maybe add the actor id to make it more specific
-     * @param ip as string
-     * @param config of the physical stream
-     * @return bool indicating if removal was successful
-     */
-    bool registerPhysicalStream(std::string ip, PhysicalStreamConfig streamConf);
+ private:
+  caf::behavior init();
+  caf::behavior running();
 
-    /**
-     * @brief method to remove a physical stream from the catalog AND from the topology
-     * @caution every external register call can only remove streams from himself
-     * @caution we will remove only on the first node that we find for this logical stream
-     * @param logicalStreamName as string
-     * @param physicalStreamName as string
-     * @return bool indicating if removal was successful
-     */
-    bool removePhysicalStream(string logicalStreamName, string physicalStreamName);
+  /**
+   * @brief method to add a logical stream
+   * @param logical stream name
+   * @param schema of logical stream
+   * @return bool indicating if insert was successful
+   */
+  bool registerLogicalStream(std::string logicalStreamName ,
+                             SchemaPtr schemaPtr);
 
-    /**
-     * @brief : registering a new sensor node
-     * @param ip
-     * @param publish_port
-     * @param receive_port
-     * @param cpu
-     * @param properties of this worker
-     * @param configuration of the sensor
-     */
-    void registerSensor(const string& ip, uint16_t publish_port,
-                        uint16_t receive_port, int cpu,
-                        const string& nodeProperties,
-                        PhysicalStreamConfig streamConf);
+  /**
+   * @brief method to remove a logical stream
+   * @caution this does not remove the corresponding physical streams
+   * @caution will fail if there are pyhsical streams for this logical entry, delete them first
+   * @param logical stream name
+   * @return bool indicating if removal was successful
+   */
+  bool removeLogicalStream(std::string logicalStreamName);
 
-    /**
-     * @brief: remove a sensor node from topology and catalog
-     * @caution: if there is more than one, potential node to delete, an exception is thrown
-     * @param ip
-     */
-    bool deregisterSensor(const string& ip);
+  /**
+   * @brief method to add a physical stream to the catalog AND to the topology
+   * @caution every external register call can only register streams for himself
+   * @caution we will deploy on the first worker with that ip NOT on all
+   * * TODO: maybe add the actor id to make it more specific
+   * @param ip as string
+   * @param config of the physical stream
+   * @return bool indicating if removal was successful
+   */
+  bool registerPhysicalStream(std::string ip , PhysicalStreamConfig streamConf);
 
-    /**
-     * @brief execute user query will first register the query and then deploy it.
-     * @param queryString : user query, in string form, to be executed
-     * @param strategy : deployment strategy for the query operators
-     * @return UUID of the submitted user query.
-     */
-    string executeQuery(const string& queryString, const string& strategy);
+  /**
+   * @brief method to remove a physical stream from the catalog AND from the topology
+   * @caution every external register call can only remove streams from himself
+   * @caution we will remove only on the first node that we find for this logical stream
+   * @param logicalStreamName as string
+   * @param physicalStreamName as string
+   * @return bool indicating if removal was successful
+   */
+  bool removePhysicalStream(string logicalStreamName ,
+                            string physicalStreamName);
 
-    /**
-     * @brief register the user query
-     * @param queryString string representation of the query
-     * @return uuid of the registered query
-     */
-    string registerQuery(const string& queryString, const string& strategy);
+  /**
+   * @brief : registering a new sensor node
+   * @param ip
+   * @param publish_port
+   * @param receive_port
+   * @param cpu
+   * @param properties of this worker
+   * @param configuration of the sensor
+   */
+  void registerSensor(const string& ip , uint16_t publish_port ,
+                      uint16_t receive_port , int cpu ,
+                      const string& nodeProperties ,
+                      PhysicalStreamConfig streamConf);
 
-    /**
-     * @brief: deploy the user query
-     * @param queryId
-     */
-    void deployQuery(const string& queryId);
+  /**
+   * @brief: remove a sensor node from topology and catalog
+   * @caution: if there is more than one, potential node to delete, an exception is thrown
+   * @param ip
+   */
+  bool deregisterSensor(const string& ip);
 
-    /**
-     * @brief method which is called to unregister an already running query
-     * @param queryId of the query to be de-registered
-     * @bool indicating the success of the disconnect
-     */
-    void deregisterQuery(const string& queryId);
+  /**
+   * @brief execute user query will first register the query and then deploy it.
+   * @param queryString : user query, in string form, to be executed
+   * @param strategy : deployment strategy for the query operators
+   * @return UUID of the submitted user query.
+   */
+  string executeQuery(const string& queryString , const string& strategy);
 
-    /**
-     * @brief send messages to all connected devices and get their operators
-     */
-    void showOperators();
+  /**
+   * @brief register the user query
+   * @param queryString string representation of the query
+   * @return uuid of the registered query
+   */
+  string registerQuery(const string& queryString , const string& strategy);
 
-    /**
-     * @brief initialize the NES topology and add coordinator node
-     */
-    void initializeNESTopology();
+  /**
+   * @brief: deploy the user query
+   * @param queryId
+   */
+  void deployQuery(const string& queryId);
 
-    void shutdown();
+  /**
+   * @brief method which is called to unregister an already running query
+   * @param queryId of the query to be de-registered
+   * @bool indicating the success of the disconnect
+   */
+  void deregisterQuery(const string& queryId);
 
-    QueryCatalogServicePtr queryCatalogServicePtr;
-    StreamCatalogServicePtr streamCatalogServicePtr;
-    CoordinatorActorConfig actorCoordinatorConfig;
-    CoordinatorServicePtr coordinatorServicePtr;
-    std::unique_ptr<WorkerService> workerServicePtr;
+  /**
+   * @brief send messages to all connected devices and get their operators
+   */
+  void showOperators();
+
+  /**
+   * @brief initialize the NES topology and add coordinator node
+   */
+  void initializeNESTopology();
+
+  void shutdown();
+
+  QueryCatalogServicePtr queryCatalogServicePtr;
+  StreamCatalogServicePtr streamCatalogServicePtr;
+  CoordinatorActorConfig actorCoordinatorConfig;
+  CoordinatorServicePtr coordinatorServicePtr;
+  std::unique_ptr<WorkerService> workerServicePtr;
 };
 }
 
