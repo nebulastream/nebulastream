@@ -28,6 +28,7 @@ int main(int argc, char **argv) {
   namespace po = boost::program_options;
   po::options_description desc("Options");
   uint16_t actorPort = 0;
+  std::string serverIp = "localhost";
 
   std::string sourceType = "";
   std::string sourceConfig = "";
@@ -36,9 +37,11 @@ int main(int argc, char **argv) {
   std::string physicalStreamName;
   std::string logicalStreamName;
 
-  desc.add_options()("actor_port",
-                     po::value<uint16_t>(&actorPort)->default_value(actorPort),
-                     "Set NES actor server port (default: 0).")(
+  desc.add_options()("actor_port", po::value<uint16_t>(&actorPort)->default_value(actorPort),
+      "Set NES actor server port (default: 0).")
+      ("server_ip", po::value<string>(&serverIp)->default_value(serverIp),
+                           "Set NES server ip (default: localhost).")
+      (
       "sourceType", po::value<string>(&sourceType)->default_value(sourceType),
       "Set the type of the Source either CSVSource or DefaultSource")(
       "sourceConfig",
@@ -84,12 +87,12 @@ int main(int argc, char **argv) {
 
     cout << "start with port=" << actorPort << endl;
     wrk->startWithRegister(/**blocking*/true, /**withConnect*/true, actorPort,
-                           conf);
+                           conf, serverIp);
     cout << "worker started" << endl;
 
   } else {
     cout << "start with port=" << actorPort << endl;
-    wrk->start(/**blocking*/true, /**withConnect*/true, actorPort);
+    wrk->start(/**blocking*/true, /**withConnect*/true, actorPort, serverIp);
     cout << "worker started" << endl;
   }
 
