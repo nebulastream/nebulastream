@@ -38,11 +38,14 @@ class QueryExecutionTest : public testing::Test {
         createField("value", BasicType::INT64));
     testInputBuffer = BufferManager::instance().getBuffer();
     memoryLayout = createRowLayout(std::make_shared<Schema>(testSchema));
-    for (int i = 0; i < 10; i++) {
-      memoryLayout->writeField<int64_t>(testInputBuffer, i, 0, i);
-      memoryLayout->writeField<int64_t>(testInputBuffer, i, 1, 1);
-      memoryLayout->writeField<int64_t>(testInputBuffer, i, 2, i % 2);
-    }
+    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+        memoryLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/0)
+            ->write(testInputBuffer, recordIndex);
+        memoryLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/1)
+            ->write(testInputBuffer, 1);
+        memoryLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/2)
+            ->write(testInputBuffer, recordIndex%2);
+      }
     testInputBuffer->setNumberOfTuples(10);
 
   }
@@ -128,8 +131,9 @@ TEST_F(QueryExecutionTest, filterQuery) {
   // The output buffer should contain 5 tuple;
   EXPECT_EQ(resultBuffer->getNumberOfTuples(), 5);
 
-  for (int i = 0; i < 5; i++) {
-    EXPECT_EQ(memoryLayout->readField<int64_t>(resultBuffer, i, 0), i);
+  for (int recordIndex = 0; recordIndex < 5; recordIndex++) {
+    EXPECT_EQ(memoryLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/0)
+                     ->read(testInputBuffer), recordIndex);
   }
 }
 
@@ -180,8 +184,9 @@ TEST_F(QueryExecutionTest, windowQuery) {
   // The output buffer should contain 5 tuple;
   EXPECT_EQ(resultBuffer->getNumberOfTuples(), 2);
   auto resultLayout = createRowLayout(ptr);
-  for (int i = 0; i < 2; i++) {
-    EXPECT_EQ(resultLayout->readField<int64_t>(resultBuffer, i, 0), 10);
+  for (int recordIndex = 0; recordIndex < 2; recordIndex++) {
+    EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/0)
+                  ->read(resultBuffer), 10);
   }
 }
 

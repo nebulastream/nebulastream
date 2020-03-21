@@ -19,12 +19,12 @@ TupleBufferPtr DefaultSource::receiveData() {
   size_t tupleCnt = 10;
   auto layout = createRowLayout(std::make_shared<Schema>(schema));
 
-  assert(buf->getBuffer() != NULL);
+  assert(buf->getBuffer() != nullptr);
 
   for (uint64_t recordIndex = 0; recordIndex < tupleCnt; recordIndex++) {
     for (uint64_t fieldIndex = 0; fieldIndex < this->schema.getSize();
         fieldIndex++) {
-      layout->writeField<uint64_t>(buf, recordIndex, fieldIndex, 1);
+        layout->getValueField<uint64_t>(recordIndex, fieldIndex)->write(buf, 1);
     }
   }
   buf->setTupleSizeInBytes(sizeof(uint64_t));

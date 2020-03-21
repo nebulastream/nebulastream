@@ -1,0 +1,48 @@
+#ifndef NES_INCLUDE_NODEENGINE_MEMORYLAYOUT_BASICPHYSICALFIELD_HPP_
+#define NES_INCLUDE_NODEENGINE_MEMORYLAYOUT_BASICPHYSICALFIELD_HPP_
+#include <NodeEngine/MemoryLayout/PhysicalField.hpp>
+namespace NES {
+template<class ValueType>
+class BasicPhysicalField : public PhysicalField {
+  public:
+    BasicPhysicalField(uint64_t bufferOffset) : bufferOffset(bufferOffset) {};
+    ~BasicPhysicalField() {};
+    BasicPhysicalField(PhysicalField* physicalField);
+    const PhysicalFieldPtr copy() const override {
+        return std::static_pointer_cast<PhysicalField>(std::make_shared<BasicPhysicalField>(*this));
+    }
+
+    /**
+     * @brief writes a value of type ValueType to a particular position in the buffer.
+     * @param tupleBuffer target tuple buffer
+     * @param offset offset in bytes
+     * @param value the value we want to write
+     */
+    void write(const TupleBufferPtr& tupleBuffer, ValueType value) {
+        auto byteBuffer = (int8_t*) tupleBuffer->getBuffer();
+        // interpret the target address as value type and write value to tuple buffer(ValueType *) byteBuffer[offset]) = value;
+        ((ValueType*) (&byteBuffer[bufferOffset]))[0] = value;
+    };
+
+    /**
+     * Reads a value of type value type from the tuple buffer.
+     * @param tupleBuffer
+     * @param offset
+     * @return ValueType
+     */
+    ValueType read(const TupleBufferPtr& tupleBuffer) {
+        auto byteBuffer = (int8_t*) tupleBuffer->getBuffer();
+        // interpret the target address as value type and read value from tuple buffer
+        return ((ValueType*) (&byteBuffer[bufferOffset]))[0];
+    }
+  private:
+    uint64_t bufferOffset;
+};
+
+template<class ValueType>
+PhysicalFieldPtr createBasicPhysicalField(uint64_t bufferOffset) {
+    return std::make_shared<BasicPhysicalField<ValueType>>(bufferOffset);
+}
+}
+
+#endif //NES_INCLUDE_NODEENGINE_MEMORYLAYOUT_BASICPHYSICALFIELD_HPP_
