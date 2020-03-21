@@ -19,7 +19,7 @@
 namespace NES {
 
 ZmqSink::ZmqSink()
-    : host(""),
+    : host("130.149.21.103"),
       port(0),
       tupleCnt(0),
       connected(false),
