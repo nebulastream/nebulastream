@@ -83,7 +83,11 @@ uint16_t NesCoordinator::startCoordinator(bool blocking) {
 
   NES_DEBUG("NesCoordinator start")
   actorCoordinatorConfig.load<io::middleman>();
-
+  if(serverIp != "localhost")
+  {
+    NES_DEBUG("NesCoordinator: set server ip=" << serverIp)
+    actorCoordinatorConfig.ip = serverIp;
+  }
   actorSystem = new actor_system { actorCoordinatorConfig };
 
   coordinatorActorHandle = actorSystem->spawn<CoordinatorActor>();
@@ -119,6 +123,10 @@ uint16_t NesCoordinator::startCoordinator(bool blocking) {
 void NesCoordinator::setRestConfiguration(std::string host, uint16_t port) {
   this->restHost = host;
   this->restPort = port;
+}
+
+void NesCoordinator::setServerIp(std::string serverIp) {
+  this->serverIp = serverIp;
 }
 
 }
