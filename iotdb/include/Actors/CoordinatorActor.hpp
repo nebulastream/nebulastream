@@ -14,6 +14,7 @@
 #include <Topology/NESTopologyManager.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <API/Schema.hpp>
+#include <Util/Logger.hpp>
 
 using std::cout;
 using std::cerr;
@@ -44,6 +45,8 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
         queryCatalogServicePtr = QueryCatalogService::getInstance();
         streamCatalogServicePtr = StreamCatalogService::getInstance();
         coordinatorServicePtr = CoordinatorService::getInstance();
+        actorCoordinatorConfig.load<io::middleman>();
+        NES_DEBUG("explicit CoordinatorActor ip=" << actorCoordinatorConfig.ip)
         workerServicePtr = std::make_unique<WorkerService>(
             WorkerService(actorCoordinatorConfig.ip,
                           actorCoordinatorConfig.publish_port,
