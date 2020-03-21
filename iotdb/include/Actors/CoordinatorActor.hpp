@@ -40,15 +40,13 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
     /**
      * @brief the constructor of the coordinator to initialize the default objects
      */
-    explicit CoordinatorActor(caf::actor_config& cfg) : stateful_actor(cfg) {
+    explicit CoordinatorActor(caf::actor_config& cfg, std::string ip) : stateful_actor(cfg) {
 
         queryCatalogServicePtr = QueryCatalogService::getInstance();
         streamCatalogServicePtr = StreamCatalogService::getInstance();
         coordinatorServicePtr = CoordinatorService::getInstance();
-        actorCoordinatorConfig.load<io::middleman>();
-        NES_DEBUG("explicit CoordinatorActor ip=" << actorCoordinatorConfig.ip)
         workerServicePtr = std::make_unique<WorkerService>(
-            WorkerService(actorCoordinatorConfig.ip,
+            WorkerService(ip,
                           actorCoordinatorConfig.publish_port,
                           actorCoordinatorConfig.receive_port));
     }
