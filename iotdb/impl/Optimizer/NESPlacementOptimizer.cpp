@@ -101,8 +101,8 @@ void NESPlacementOptimizer::addSystemGeneratedSourceSinkOperators(
       // fix the source code
       const string& destHostName = edges[0].ptr->getDestination()->getNESNode()
           ->getIp();
-
-      NES_DEBUG("NESPlacementOptimizer::addSystemGeneratedSourceSinkOperators: Code for SINK_OP")
+      NES_DEBUG("destHostName=" << destHostName << " size=" << edges.size() << " id=" << edges[0].id)
+      NES_DEBUG("NESPlacementOptimizer::addSystemGeneratedSourceSinkOperators: Code for SINK_OP << ")
 
       const OperatorPtr sysSinkOptr = createSinkOperator(
           createZmqSink(schema, destHostName, zmqDefaultPort));
