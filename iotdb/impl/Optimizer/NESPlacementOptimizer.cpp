@@ -99,9 +99,9 @@ void NESPlacementOptimizer::addSystemGeneratedSourceSinkOperators(
           executionNodePtr);
       //FIXME: More than two sources are not supported feature at this moment. Once the feature is available please
       // fix the source code
-//      const string& destHostName = edges[0].ptr->getDestination()->getNESNode()
-//          ->getIp();
-      string destHostName = "130.149.21.103";
+      const string& destHostName = edges[0].ptr->getDestination()->getNESNode()
+          ->getIp();
+//      string destHostName = "130.149.21.103";
       NES_DEBUG("destHostName=" << destHostName << " size=" << edges.size() << " id=" << edges[0].id)
       NES_DEBUG("NESPlacementOptimizer::addSystemGeneratedSourceSinkOperators: Code for SINK_OP << ")
 
