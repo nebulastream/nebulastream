@@ -90,7 +90,7 @@ uint16_t NesCoordinator::startCoordinator(bool blocking) {
   }
   actorSystem = new actor_system { actorCoordinatorConfig };
 
-  coordinatorActorHandle = actorSystem->spawn<CoordinatorActor>();
+  coordinatorActorHandle = actorSystem->spawn<CoordinatorActor>(serverIp);
   NES_DEBUG("NesCoordinator: actor handle created")
 
   io::unpublish(coordinatorActorHandle, actorPort);
