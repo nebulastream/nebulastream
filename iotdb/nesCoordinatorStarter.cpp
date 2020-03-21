@@ -114,11 +114,15 @@ int main(int argc, const char *argv[]) {
   uint16_t port = 8081;
   uint16_t actorPort = 0;
   std::string host = "localhost";
+  std::string serverIp = "localhost";
 
   po::options_description serverOptions("Coordinator Server Options");
   serverOptions.add_options()(
       "rest_host", po::value<std::string>(),
-      "Set NES Coordinator server host address (default: localhost).")(
+      "Set NES Coordinator server host address (default: localhost).")
+      ("server_ip", po::value<string>(&serverIp)->default_value(serverIp),
+                                 "Set NES server ip (default: localhost).")
+      (
       "rest_port", po::value<uint16_t>(),
       "Set NES REST server port (default: 8081).")(
       "actor_port", po::value<uint16_t>(&actorPort)->default_value(actorPort),
@@ -158,6 +162,12 @@ int main(int argc, const char *argv[]) {
     cout << "config changed thus rest params" << endl;
     crd->setRestConfiguration(host, port);
   }
+  if(serverIp != "localhost")
+  {
+    cout << "set server ip to " << serverIp << endl;
+    crd->setServerIp(serverIp);
+  }
+
   cout << "start coordinator with port " << actorPort << endl;
   crd->startCoordinator(/**blocking**/true, actorPort);
 

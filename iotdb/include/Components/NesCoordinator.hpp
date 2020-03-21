@@ -57,12 +57,15 @@ class NesCoordinator {
    */
   infer_handle_from_class_t<CoordinatorActor> getActorHandle();
 
+  void setServerIp(std::string serverIp);
+
  private:
   CoordinatorActorConfig actorCoordinatorConfig;
   infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
   actor_system *actorSystem;
   RestServer *restServer;
   std::string restHost;
+  std::string serverIp;
   uint16_t restPort;
   uint16_t actorPort;
   std::thread restThread;

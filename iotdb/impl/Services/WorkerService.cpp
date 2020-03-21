@@ -16,6 +16,7 @@ void WorkerService::shutDown()
 
 WorkerService::WorkerService(string ip, uint16_t publish_port,
                              uint16_t receive_port) {
+  NES_DEBUG("WorkerService::WorkerService: ip = " << ip)
   this->_ip = std::move(ip);
   this->publishPort = publish_port;
   this->receivePort = receive_port;
