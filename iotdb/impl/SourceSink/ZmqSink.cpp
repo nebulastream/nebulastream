@@ -123,9 +123,10 @@ bool ZmqSink::connect() {
     }
   }
   if (connected) {
-    NES_DEBUG("ZMQSINK  " << this << ": connected")
+
+    NES_DEBUG("ZMQSINK  " << this << ": connected host=" << host << " port= " << port)
   } else {
-    NES_DEBUG("ZMQSINK  " << this << ": NOT connected")
+    NES_DEBUG("ZMQSINK  " << this << ": NOT connected=" << host << " port= " << port)
   }
   return connected;
 }
