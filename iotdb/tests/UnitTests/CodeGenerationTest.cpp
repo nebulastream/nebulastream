@@ -658,8 +658,8 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
   auto recordSchema = Schema::create().addField("id", BasicType::INT64);
   auto layout = createRowLayout(recordSchema.copy());
 
-  for (uint32_t i = 0; i < 100; ++i) {
-    layout->writeField<int64_t>(inputBuffer, i, 0, i);
+  for (uint32_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
+      layout->getValueField<int64_t>(recordIndex, /*fieldIndex*/0)->write(inputBuffer, recordIndex);
   }
   inputBuffer->setNumberOfTuples(100);
 
@@ -674,11 +674,10 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
   NES_INFO(toString(outputBuffer.get(), recordSchema));
 
   /* check result for correctness */
-  auto sumGeneratedCode = layout->readField<int64_t>(outputBuffer, 0, 0);
+  auto sumGeneratedCode = layout->getValueField<int64_t>(/*recordIndex*/0, /*fieldIndex*/0)->read(outputBuffer);
   auto sum = 0;
   for (uint64_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
-    sum += layout->readField<int64_t>(inputBuffer, recordIndex, 0);
-    ;
+    sum += layout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 0)->read(inputBuffer);
   }
   EXPECT_EQ(sum, sumGeneratedCode);
 }
@@ -720,7 +719,7 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
   auto layout = createRowLayout(schema.copy());
   for (uint64_t recordIndex = 0; recordIndex < buffer->getNumberOfTuples();
       ++recordIndex) {
-    EXPECT_EQ(1, layout->readField<uint64_t>(resultBuffer, recordIndex, 0));
+    EXPECT_EQ(1,  layout->getValueField<uint64_t>(recordIndex, /*fieldIndex*/0)->read(buffer));
   }
 }
 /**
@@ -884,16 +883,17 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
       context, std::cout);
 
   /* generate code for writing result tuples to output buffer */
-  auto outputSchema = Schema::create().addField("id", BasicType::UINT32)
-      .addField("valueSmall", BasicType::INT16).addField("valueFloat",
-                                                         BasicType::FLOAT32)
+  auto outputSchema = Schema::create()
+      .addField("id", BasicType::UINT32)
+      .addField("valueSmall", BasicType::INT16)
+      .addField("valueFloat", BasicType::FLOAT32)
       .addField("valueDouble", BasicType::FLOAT64).addField(mappedValue)
       .addField("valueChar", BasicType::CHAR).addField(
       "text", createArrayDataType(BasicType::CHAR, 12));
   codeGenerator->generateCode(
       createPrintSinkWithSchema(outputSchema, std::cout), context, std::cout);
 
-  /* compile code to pipeline stage */
+    /* compile code to pipeline stage */
   auto stage = codeGenerator->compile(CompilerArgs(), context->code);
 
   /* prepare input tuple buffer */
@@ -913,11 +913,11 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
             inputBuffer->getNumberOfTuples());
   auto inputLayout = createRowLayout(inputSchema.copy());
   auto outputLayout = createRowLayout(outputSchema.copy());
-  for (int i = 0; i < inputBuffer->getNumberOfTuples(); i++) {
-    auto floatValue = inputLayout->readField<float>(inputBuffer, i, 2);
-    auto doubleValue = inputLayout->readField<double>(inputBuffer, i, 3);
+  for (int recordIndex = 0; recordIndex < inputBuffer->getNumberOfTuples(); recordIndex++) {
+    auto floatValue = inputLayout->getValueField<float>(recordIndex, /*fieldIndex*/2)->read(inputBuffer);
+    auto doubleValue = inputLayout->getValueField<double>(recordIndex, /*fieldIndex*/3)->read(inputBuffer);
     auto reference = (floatValue * doubleValue) + 2;
-    auto mapedValue = outputLayout->readField<double>(resultBuffer, i, 4);
+    auto mapedValue = outputLayout->getValueField<double>(recordIndex, /*fieldIndex*/4)->read(resultBuffer);
     EXPECT_EQ(reference, mapedValue);
   }
 

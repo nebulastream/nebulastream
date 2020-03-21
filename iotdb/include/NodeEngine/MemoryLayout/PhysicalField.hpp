@@ -3,50 +3,49 @@
 
 #include <memory>
 #include <NodeEngine/TupleBuffer.hpp>
+#include <API/Types/DataTypes.hpp>
+#include <Util/Logger.hpp>
 namespace NES {
 class PhysicalField;
 typedef std::shared_ptr<PhysicalField> PhysicalFieldPtr;
 
-class PhysicalField {
- public:
-  PhysicalField() {};
-  ~PhysicalField() {};
-  const virtual PhysicalFieldPtr copy() const = 0;
-};
-
 template<class ValueType>
-class BasicPhysicalField : public PhysicalField {
- public:
-  BasicPhysicalField() {};
-  ~BasicPhysicalField() {};
-  BasicPhysicalField(BasicPhysicalField<ValueType> *physicalField) {};
-  const PhysicalFieldPtr copy() const override {
-    return std::static_pointer_cast<PhysicalField>(std::make_shared<BasicPhysicalField>(*this));
-  }
-  /**
-   * @brief writes a value of type ValueType to a particular position in the buffer.
-   * @param tupleBuffer target tuple buffer
-   * @param offset offset in bytes
-   * @param value the value we want to write
-   */
-  void write(const TupleBufferPtr &tupleBuffer, uint64_t offset, ValueType value) {
-    auto byteBuffer = (int8_t *) tupleBuffer->getBuffer();
-    // interpret the target address as value type and write value to tuple buffer(ValueType *) byteBuffer[offset]) = value;
-    ((ValueType *) (&byteBuffer[offset]))[0] = value;
-  };
+class BasicPhysicalField;
 
-  /**
-   * Reads a value of type value type from the tuple buffer.
-   * @param tupleBuffer
-   * @param offset
-   * @return ValueType
-   */
-  ValueType read(const TupleBufferPtr &tupleBuffer, uint64_t offset) {
-    auto byteBuffer = (int8_t *) tupleBuffer->getBuffer();
-    // interpret the target address as value type and read value from tuple buffer
-    return ((ValueType *) (&byteBuffer[offset]))[0];
-  }
+class ArrayPhysicalField;
+
+class PhysicalField : public std::enable_shared_from_this<PhysicalField> {
+  public:
+    PhysicalField() {};
+    ~PhysicalField() {};
+    const virtual PhysicalFieldPtr copy() const = 0;
+
+    template<class ValueType>
+    std::shared_ptr<BasicPhysicalField<ValueType>> asValueField() {
+        if(!isFieldOfType<ValueType>()){
+            NES_FATAL_ERROR("This field is not of that type");
+            throw IllegalArgumentException("This field is not of that type");
+        }
+        return std::dynamic_pointer_cast<BasicPhysicalField<ValueType>>(this->shared_from_this());
+    }
+
+    virtual std::shared_ptr<ArrayPhysicalField> asArrayField() {
+        NES_FATAL_ERROR("This field is not an array field");
+        throw IllegalArgumentException("This field is not an array field");
+    }
+
+    template<class ValueType>
+    bool isFieldOfType(){
+        if(std::dynamic_pointer_cast<BasicPhysicalField<ValueType>>(this->shared_from_this())){
+            return true;
+        };
+        return false;
+    }
+
 };
-}
 
+
+PhysicalFieldPtr createArrayPhysicalField(DataTypePtr componentField, uint64_t bufferOffset);
+
+}
 #endif //INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELD_HPP_

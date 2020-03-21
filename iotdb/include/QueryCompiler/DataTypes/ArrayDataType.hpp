@@ -35,6 +35,8 @@ class ArrayDataType : public DataType {
   const bool isArrayDataType() const override ;
 
   const CodeExpressionPtr getTypeDefinitionCode() const override;
+  const u_int32_t getDimensions() const;
+  DataTypePtr getComponentDataType();
 
   const DataTypePtr copy() const override ;
   virtual ~ArrayDataType() override;
@@ -42,16 +44,16 @@ class ArrayDataType : public DataType {
   bool operator==(const DataType &_rhs) const override ;
 
  private:
-  DataTypePtr _dataType;
-  u_int32_t _dimensions;
+  DataTypePtr componentDataType;
+  u_int32_t dimensions;
 
   friend class boost::serialization::access;
 
   template<class Archive>
   void serialize(Archive &ar, unsigned) {
     ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataType);
-    ar & _dataType;
-    ar & BOOST_SERIALIZATION_NVP(_dimensions);
+    ar & componentDataType;
+    ar & BOOST_SERIALIZATION_NVP(dimensions);
   }
 };
 }
