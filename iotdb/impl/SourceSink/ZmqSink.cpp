@@ -109,6 +109,7 @@ const std::string ZmqSink::toString() const {
 bool ZmqSink::connect() {
   if (!connected) {
     try {
+      NES_DEBUG("ZmqSink: connect to host=" << host << " port=" << port)
       auto address = std::string("tcp://") + host + std::string(":") + std::to_string(port);
       socket.connect(address.c_str());
       connected = true;
