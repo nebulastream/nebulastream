@@ -56,7 +56,6 @@ void NESPlacementOptimizer::addSystemGeneratedSourceSinkOperators(
 
     //Convert fwd operator
     if (executionNodePtr->getOperatorName() == "FWD") {
-      NES_DEBUG("NESPlacementOptimizer::addSystemGeneratedSourceSinkOperators: Code for FWD OP")
       convertFwdOptr(schema, executionNodePtr);
       continue;
     }
@@ -69,7 +68,6 @@ void NESPlacementOptimizer::addSystemGeneratedSourceSinkOperators(
     if (rootOperator->getOperatorType() != SOURCE_OP) {
       //create sys introduced src operator
       //Note: the source zmq is always located at localhost
-      NES_DEBUG("NESPlacementOptimizer::addSystemGeneratedSourceSinkOperators: Code for SOURCE_OP")
       OperatorPtr sysSrcOptr = createSourceOperator(
           createZmqSource(schema, "localhost", zmqDefaultPort));
 
@@ -101,9 +99,6 @@ void NESPlacementOptimizer::addSystemGeneratedSourceSinkOperators(
       // fix the source code
       const string& destHostName = edges[0].ptr->getDestination()->getNESNode()
           ->getIp();
-//      string destHostName = "130.149.21.103";
-      NES_DEBUG("destHostName=" << destHostName << " size=" << edges.size() << " id=" << edges[0].id)
-      NES_DEBUG("NESPlacementOptimizer::addSystemGeneratedSourceSinkOperators: Code for SINK_OP << ")
 
       const OperatorPtr sysSinkOptr = createSinkOperator(
           createZmqSink(schema, destHostName, zmqDefaultPort));
@@ -126,10 +121,8 @@ void NESPlacementOptimizer::convertFwdOptr(
 
   //create sys introduced src and sink operators
   //Note: src operator is using localhost because src zmq will run locally
-  NES_DEBUG("NESPlacementOptimizer::convertFwdOptr create sysSrcOptr")
   const OperatorPtr sysSrcOptr = createSourceOperator(
       createZmqSource(schema, "localhost", zmqDefaultPort));
-  NES_DEBUG("NESPlacementOptimizer::convertFwdOptr create sysSinkOptr")
   const OperatorPtr sysSinkOptr = createSinkOperator(
       createZmqSink(schema, "localhost", zmqDefaultPort));
 
