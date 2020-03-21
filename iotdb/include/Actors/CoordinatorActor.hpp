@@ -55,7 +55,7 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
 
   explicit CoordinatorActor(caf::actor_config& cfg , std::string ip)
       :
-      stateful_actor(cfg) {
+      stateful_actor(cfg), serverIp(ip) {
 
     queryCatalogServicePtr = QueryCatalogService::getInstance();
     streamCatalogServicePtr = StreamCatalogService::getInstance();
@@ -176,6 +176,7 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
 
   void shutdown();
 
+  std::string serverIp;
   QueryCatalogServicePtr queryCatalogServicePtr;
   StreamCatalogServicePtr streamCatalogServicePtr;
   CoordinatorActorConfig actorCoordinatorConfig;

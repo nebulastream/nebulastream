@@ -46,8 +46,9 @@ CoordinatorActor::~CoordinatorActor() {
 void CoordinatorActor::initializeNESTopology() {
 
   NESTopologyManager::getInstance().resetNESTopologyPlan();
+  NES_DEBUG("CoordinatorActor::initializeNESTopology: set server ip = " << serverIp)
   auto coordinatorNode = NESTopologyManager::getInstance()
-      .createNESCoordinatorNode(0, actorCoordinatorConfig.ip,
+      .createNESCoordinatorNode(0, serverIp,
                                 CPUCapacity::HIGH);
   coordinatorNode->setPublishPort(actorCoordinatorConfig.publish_port);
   coordinatorNode->setReceivePort(actorCoordinatorConfig.receive_port);
