@@ -102,11 +102,14 @@ const std::string ZmqSource::toString() const {
 
 bool ZmqSource::connect() {
   if (!connected) {
+    NES_DEBUG("ZMQSOURCE was !conncect now connect " << this << ": connected")
+
     auto address = std::string("tcp://") + host + std::string(":") + std::to_string(port);
 
     try {
       socket.setsockopt(ZMQ_LINGER, 0);
       socket.bind(address.c_str());
+      NES_DEBUG("ZMQSOURCE  " << this << ": set connected true")
       connected = true;
     }
     catch (const zmq::error_t &ex) {
@@ -114,10 +117,12 @@ bool ZmqSource::connect() {
       //  as when AsyncZmqListener::Stop() is called
       if (ex.num() != ETERM) {
         NES_ERROR("ZMQSOURCE: " << ex.what())
+      NES_DEBUG("ZMQSOURCE  " << this << ": set connected false")
       }
       connected = false;
     }
   }
+
   if (connected) {
     NES_DEBUG("ZMQSOURCE  " << this << ": connected")
   } else {
