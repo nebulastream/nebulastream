@@ -90,7 +90,7 @@ bool ZmqSink::writeData(const TupleBufferPtr input_buffer) {
     // recv() throws ETERM when the zmq context is destroyed,
     //  as when AsyncZmqListener::Stop() is called
     if (ex.num() != ETERM) {
-      NES_ERROR("ZMQSOURCE: " << ex.what())
+      NES_ERROR("ZmqSink: " << ex.what())
     }
   }
   return false;
@@ -109,6 +109,7 @@ const std::string ZmqSink::toString() const {
 bool ZmqSink::connect() {
   if (!connected) {
     try {
+      NES_DEBUG("ZmqSink: connect to host=" << host << " port=" << port)
       auto address = std::string("tcp://") + host + std::string(":") + std::to_string(port);
       socket.connect(address.c_str());
       connected = true;
@@ -117,14 +118,15 @@ bool ZmqSink::connect() {
       // recv() throws ETERM when the zmq context is destroyed,
       //  as when AsyncZmqListener::Stop() is called
       if (ex.num() != ETERM) {
-        NES_ERROR("ZMQSOURCE: " << ex.what())
+        NES_ERROR("ZmqSink: " << ex.what())
       }
     }
   }
   if (connected) {
-    NES_DEBUG("ZMQSINK  " << this << ": connected")
+
+    NES_DEBUG("ZMQSINK  " << this << ": connected host=" << host << " port= " << port)
   } else {
-    NES_DEBUG("ZMQSINK  " << this << ": NOT connected")
+    NES_DEBUG("ZMQSINK  " << this << ": NOT connected=" << host << " port= " << port)
   }
   return connected;
 }

@@ -102,22 +102,30 @@ const std::string ZmqSource::toString() const {
 
 bool ZmqSource::connect() {
   if (!connected) {
+    NES_DEBUG("ZMQSOURCE was !conncect now connect " << this << ": connected")
+    if(host == "localhost")
+    {
+      host = "*";
+    }
     auto address = std::string("tcp://") + host + std::string(":") + std::to_string(port);
-
+    NES_DEBUG("ZMQSOURCE use address " << address )
     try {
       socket.setsockopt(ZMQ_LINGER, 0);
       socket.bind(address.c_str());
+      NES_DEBUG("ZMQSOURCE  " << this << ": set connected true")
       connected = true;
     }
     catch (const zmq::error_t &ex) {
       // recv() throws ETERM when the zmq context is destroyed,
       //  as when AsyncZmqListener::Stop() is called
       if (ex.num() != ETERM) {
-        NES_ERROR("ZMQSOURCE: " << ex.what())
+        NES_ERROR("ZMQSOURCE ERROR: " << ex.what())
+      NES_DEBUG("ZMQSOURCE  " << this << ": set connected false")
       }
       connected = false;
     }
   }
+
   if (connected) {
     NES_DEBUG("ZMQSOURCE  " << this << ": connected")
   } else {

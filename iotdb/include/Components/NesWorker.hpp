@@ -23,9 +23,11 @@ class NesWorker {
    * @param bool indicating if the call is blocking
    * @param bool indicating if connect
    * @param port where to publish
+   * @param ip of the server
    * @return bool indicating success
    */
-  bool start(bool blocking, bool withConnect, uint16_t port);
+  bool start(bool blocking , bool withConnect , uint16_t port ,
+             std::string serverIp);
 
   /*
    * @brief start the worker using the default worker config, and register a new stream
@@ -33,9 +35,11 @@ class NesWorker {
    * @param bool indicating if connect
    * @param port where to publish
    * @param new stream of this system
+   * @param ip of the server
    * @return bool indicating success
    */
-  bool startWithRegister(bool blocking, bool withConnect, uint16_t port, PhysicalStreamConfig conf);
+  bool startWithRegister(bool blocking , bool withConnect , uint16_t port ,
+                         PhysicalStreamConfig conf , std::string serverIp);
 
   /**
    * @brief stop the worker
@@ -60,7 +64,7 @@ class NesWorker {
    * @param name of the logical stream
    * @param path tot the file containing the schema
    */
-  bool registerLogicalStream(std::string name, std::string path);
+  bool registerLogicalStream(std::string name , std::string path);
 
   /**
    * @brief method to register physical stream with the coordinator
@@ -73,7 +77,7 @@ class NesWorker {
   bool withRegisterStream;
   PhysicalStreamConfig conf;
   infer_handle_from_class_t<NES::WorkerActor> workerHandle;
-  actor_system *actorSystem;
+  actor_system* actorSystem;
   WorkerActorConfig workerCfg;
   PhysicalStreamConfig defaultConf;
   std::thread actorThread;

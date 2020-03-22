@@ -169,6 +169,7 @@ vector<DataSinkPtr> CoordinatorService::getSinks(const string& queryId,
 
         sink = createZmqSink(sink->getSchema(), kRootNode->getIp(),
                              assign_port(queryId));
+        NES_DEBUG("CoordinatorService::getSinks: " << sink->toString() << " iP=" << kRootNode->getIp())
     }
     out.emplace_back(sink);
     return out;
