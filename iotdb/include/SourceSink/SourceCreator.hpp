@@ -49,6 +49,7 @@ const DataSourcePtr createYSBSource(size_t bufferCnt, size_t campaingCnt,
 
 /**
  * @brief function to create an empty zmq source
+ * @param schema of data source
  * @return a const data source pointer
  */
 const DataSourcePtr createZmqSource(const Schema &schema,
@@ -57,13 +58,26 @@ const DataSourcePtr createZmqSource(const Schema &schema,
 
 /**
  * @brief function to create a binary file source
+ * @param schema of data source
+ * @param path to the file to readin
  * @return a const data source pointer
  */
 const DataSourcePtr createBinaryFileSource(const Schema &schema,
                                            const std::string &path_to_file);
 
+
+/**
+ * @brief function to create a sense source
+ * @param schema of data source
+ * @param udfs of the file
+ * @return a const data source pointer
+ */
+const DataSourcePtr createSenseSource(const Schema &schema,
+                                           const std::string& udfs);
+
 /**
  * @brief function to create a csvfile source
+ * @param schema of data source
  * @return a const data source pointer
  */
 const DataSourcePtr createCSVFileSource(const Schema &schema,
