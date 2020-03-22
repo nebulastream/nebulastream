@@ -4,11 +4,15 @@
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 namespace NES {
 
+/**
+ * @brief Rowlayout every field of a tuple is stores sequentially.
+ */
 class RowLayout : public MemoryLayout {
  public:
   RowLayout(PhysicalSchemaPtr physicalSchema);
 
   uint64_t getFieldOffset(uint64_t recordIndex, uint64_t fieldIndex) override;
+
   MemoryLayoutPtr copy() const override;
 };
 
