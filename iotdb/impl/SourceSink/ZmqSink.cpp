@@ -90,7 +90,7 @@ bool ZmqSink::writeData(const TupleBufferPtr input_buffer) {
     // recv() throws ETERM when the zmq context is destroyed,
     //  as when AsyncZmqListener::Stop() is called
     if (ex.num() != ETERM) {
-      NES_ERROR("ZMQSOURCE: " << ex.what())
+      NES_ERROR("ZmqSink: " << ex.what())
     }
   }
   return false;
@@ -118,7 +118,7 @@ bool ZmqSink::connect() {
       // recv() throws ETERM when the zmq context is destroyed,
       //  as when AsyncZmqListener::Stop() is called
       if (ex.num() != ETERM) {
-        NES_ERROR("ZMQSOURCE: " << ex.what())
+        NES_ERROR("ZmqSink: " << ex.what())
       }
     }
   }
