@@ -157,6 +157,12 @@ class InputQuery {
    */
   InputQuery& print(std::ostream& = std::cout);
 
+  /**
+   * @brief: provide a sample operator for sense
+   * @param udfs to setup sense
+   */
+  InputQuery& sample(const std::string &udfs);
+
   // helper operators
   OperatorPtr getRoot() const {
     return root;
@@ -171,11 +177,15 @@ class InputQuery {
   const StreamPtr getSourceStream() const;
   void setSourceStream(const StreamPtr sourceStream);
 
+  std::string getUdsf();
+  void setUdsf(std::string udsf);
  private:
   InputQuery(StreamPtr source_stream);
   int operatorIdCounter = 0;
   OperatorPtr root;
   StreamPtr sourceStream;
+  std::string udfs;
+
 };
 
 typedef std::shared_ptr<InputQuery> InputQueryPtr;
