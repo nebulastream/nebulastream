@@ -54,7 +54,7 @@ std::string GetCurrentWorkingDir(void) {
   return current_working_dir;
 }
 
-TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
+TEST_F(E2eRestTest, DISABLED_testExecutingValidUserQueryWithPrintOutput) {
   cout << " start coordinator" << endl;
   string path = "./nesCoordinator --actor_port=12345";
   bp::child coordinatorProc(path.c_str());
@@ -109,7 +109,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithPrintOutput) {
   coordinatorProc.terminate();
 }
 
-TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
+TEST_F(E2eRestTest, DISABLED_testExecutingValidUserQueryWithFileOutput) {
   cout << " start coordinator" << endl;
   std::string outputFilePath = "ValidUserQueryWithFileOutputTestResult.txt";
   remove(outputFilePath.c_str());
@@ -200,7 +200,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
   coordinatorProc.terminate();
 }
 
-TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputWithFilter) {
+TEST_F(E2eRestTest, DISABLED_testExecutingValidUserQueryWithFileOutputWithFilter) {
   cout << " start coordinator" << endl;
   std::string outputFilePath = "UserQueryWithFileOutputWithFilterTestResult.txt";
   remove(outputFilePath.c_str());
@@ -265,7 +265,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputWithFilter) {
   coordinatorProc.terminate();
 }
 
-TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputTwoWorker) {
+TEST_F(E2eRestTest, DISABLED_testExecutingValidUserQueryWithFileOutputTwoWorker) {
   cout << " start coordinator" << endl;
   std::string outputFilePath =
       "ValidUserQueryWithFileOutputTwoWorkerTestResult.txt";
@@ -374,7 +374,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputTwoWorker) {
   coordinatorProc.terminate();
 }
 
-TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputAndRegisterPhyStream) {
+TEST_F(E2eRestTest, DISABLED_testExecutingValidUserQueryWithFileOutputAndRegisterPhyStream) {
   cout << " start coordinator" << endl;
   std::string outputFilePath =
       "ValidUserQueryWithFileOutputAndRegisterPhyStreamTestResult.txt";
@@ -466,7 +466,7 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputAndRegisterPhyStrea
   cout << "Killing coordinator process->PID: " << coordinatorPid << endl;
   coordinatorProc.terminate();
 }
-
+#if 0
 TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputExdraUseCase) {
   cout << " start coordinator" << endl;
   std::string testFile = "exdra.csv";
@@ -669,5 +669,5 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputTwoQueries) {
   cout << "Killing coordinator process->PID: " << coordinatorPid << endl;
   coordinatorProc.terminate();
 }
-
+#endif
 }

@@ -48,6 +48,7 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
     queryCatalogServicePtr = QueryCatalogService::getInstance();
     streamCatalogServicePtr = StreamCatalogService::getInstance();
     coordinatorServicePtr = CoordinatorService::getInstance();
+    serverIp = "localhost";
     workerServicePtr = std::make_unique<WorkerService>(
         WorkerService(actorCoordinatorConfig.ip, actorCoordinatorConfig.publish_port,
                       actorCoordinatorConfig.receive_port));

@@ -9,7 +9,7 @@ NesCoordinator::NesCoordinator() {
   restPort = 8081;
   restHost = "localhost";
   actorPort = 0;
-
+  serverIp = "localhost";
 }
 
 infer_handle_from_class_t<CoordinatorActor> NesCoordinator::getActorHandle() {
