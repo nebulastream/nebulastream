@@ -41,21 +41,26 @@ struct __attribute__((packed)) ysbRecord {
 
 typedef const DataSourcePtr (*createFileSourceFuncPtr)(const Schema&,
                                                        const std::string&);
+
+
+typedef const DataSourcePtr (*createSenseSourceFuncPtr)(const Schema&,
+                                                       const std::string&);
+
 typedef const DataSourcePtr (*createCSVSourceFuncPtr)(const Schema&,
                                                       const std::string&,
                                                       const std::string&,
                                                       size_t, size_t);
 
-class FileSourceTest : public testing::Test {
+class SourceTest : public testing::Test {
  public:
 
   static void SetUpTestCase() {
-    NES::setupLogging("FileSourceTest.log", NES::LOG_DEBUG);
-    NES_INFO("Setup FileSourceTest test class.");
+    NES::setupLogging("SourceTest.log", NES::LOG_DEBUG);
+    NES_INFO("Setup SourceTest test class.");
   }
 
   static void TearDownTestCase() {
-    std::cout << "Tear down FileSourceTest test class." << std::endl;
+    std::cout << "Tear down SourceTest test class." << std::endl;
   }
 
   void TearDown() {
@@ -63,7 +68,7 @@ class FileSourceTest : public testing::Test {
 };
 
 
-TEST_F(FileSourceTest, testBinarySource) {
+TEST_F(SourceTest, testBinarySource) {
   std::string path_to_file =
       "../tests/test_data/ysb-tuples-100-campaign-100.bin";
   createFileSourceFuncPtr funcPtr = &createBinaryFileSource;
@@ -106,7 +111,7 @@ TEST_F(FileSourceTest, testBinarySource) {
 }
 
 
-TEST_F(FileSourceTest, testCSVSource) {
+TEST_F(SourceTest, testCSVSource) {
   std::string path_to_file =
         "../tests/test_data/ysb-tuples-100-campaign-100.csv";
     createCSVSourceFuncPtr funcPtr = &createCSVFileSource;
@@ -151,5 +156,33 @@ TEST_F(FileSourceTest, testCSVSource) {
       EXPECT_EQ(source->getNumberOfGeneratedBuffers(), num_of_buffers);
       std::cout << "dataSuccess" << std::endl;
 }
+
+
+TEST_F(SourceTest, testSenseSource) {
+
+  std::string testUDFS("...");
+  createSenseSourceFuncPtr funcPtr = &createSenseSource;
+
+  Schema schema =
+      Schema::create().addField("user_id", 16).addField("page_id", 16).addField(
+          "campaign_id", 16).addField("ad_type", 9).addField("event_type", 9)
+          .addField("current_ms", UINT64).addField("ip", INT32);
+
+  uint64_t num_tuples_to_process = 1000;
+  size_t num_of_buffers = 1000;
+  uint64_t tuple_size = schema.getSchemaSize();
+  uint64_t buffer_size = num_tuples_to_process * tuple_size / num_of_buffers;
+  assert(buffer_size > 0);
+  BufferManager::instance().setNumberOfBuffers(0);
+  BufferManager::instance().setNumberOfBuffers(num_of_buffers);
+  BufferManager::instance().setBufferSize(buffer_size);
+
+  const DataSourcePtr source = (*funcPtr)(schema, testUDFS);
+
+  //TODO: please add here to code to test the setup
+  std::cout << "Success" << std::endl;
+}
+
+
 
 }  //end of NES

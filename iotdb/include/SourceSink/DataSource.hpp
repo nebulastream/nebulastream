@@ -17,7 +17,8 @@ enum SourceType {
     KAFKA_SOURCE,
     YSB_SOURCE,
     TEST_SOURCE,
-    BINARY_SOURCE
+    BINARY_SOURCE,
+    SENSE_SOURCE
 };
 
 /**

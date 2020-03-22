@@ -9,4 +9,5 @@ add_source_iotdb(
         MapOperator.cpp
         AggregationOperator.cpp
         JoinOperator.cpp
+        SampleOperator.cpp
 )

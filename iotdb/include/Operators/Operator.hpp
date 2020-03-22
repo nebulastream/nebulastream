@@ -53,7 +53,8 @@ enum OperatorType {
     WINDOW_OP,
     KEYBY_OP,
     MAP_OP,
-    SINK_OP
+    SINK_OP,
+    SAMPLE_OP
 };
 
 static std::map<OperatorType, std::string> operatorTypeToString{
@@ -67,6 +68,7 @@ static std::map<OperatorType, std::string> operatorTypeToString{
     {KEYBY_OP, "KEYBY"},
     {MAP_OP, "MAP"},
     {SINK_OP, "SINK"},
+    {SAMPLE_OP, "SAMPLE"},
 };
 
 /**
@@ -136,6 +138,7 @@ const OperatorPtr createSortOperator(const Sort& sort_spec);
 const OperatorPtr createSourceOperator(const DataSourcePtr source);
 const OperatorPtr createWindowOperator(const WindowDefinitionPtr window_definition);
 const OperatorPtr createWindowScanOperator(const SchemaPtr schema);
+const OperatorPtr createSampleOperator(const std::string& udfs);
 
 } // namespace NES
 
