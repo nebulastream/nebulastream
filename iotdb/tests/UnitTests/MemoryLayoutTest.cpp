@@ -28,21 +28,21 @@ TEST_F(MemoryLayoutTest, rowLayoutTestInt) {
         "t2", BasicType::UINT8).addField("t3", BasicType::UINT8);
     TupleBufferPtr buf = BufferManager::instance().getBuffer();
     auto layout = createRowLayout(std::make_shared<Schema>(schema));
-    for (int i = 0; i < 10; i++) {
-        layout->getValueField<uint8_t>(i, 0)->write(buf, i);
-        layout->getValueField<uint8_t>(i, 1)->write(buf, i);
-        layout->getValueField<uint8_t>(i, 2)->write(buf, i);
+    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+        layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/0)->write(buf, recordIndex);
+        layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/1)->write(buf, recordIndex);
+        layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/2)->write(buf, recordIndex);
     }
 
-    for (int i = 0; i < 10; i++) {
-        auto value = layout->getValueField<uint8_t>(i, 0)->read(buf);
-        ASSERT_EQ(value, i);
+    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+        auto value = layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/0)->read(buf);
+        ASSERT_EQ(value, recordIndex);
 
-        value = layout->getValueField<uint8_t>(i, 1)->read(buf);
-        ASSERT_EQ(value, i);
+        value = layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/1)->read(buf);
+        ASSERT_EQ(value, recordIndex);
 
-        value = layout->getValueField<uint8_t>(i, 2)->read(buf);
-        ASSERT_EQ(value, i);
+        value = layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/2)->read(buf);
+        ASSERT_EQ(value, recordIndex);
     }
 }
 
@@ -54,23 +54,23 @@ TEST_F(MemoryLayoutTest, rowLayoutTestArray) {
 
     TupleBufferPtr buf = BufferManager::instance().getBuffer();
     auto layout = createRowLayout(std::make_shared<Schema>(schema));
-    for (int i = 0; i < 10; i++) {
-        auto arrayField = layout->getArrayField(i, 0);
+    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+        auto arrayField = layout->getArrayField(recordIndex,  /*fieldIndex*/0);
         arrayField[0]->asValueField<int64_t>()->write(buf, 10);
-        layout->getValueField<uint8_t>(i, 1)->write(buf, i);
-        layout->getValueField<uint8_t>(i, 2)->write(buf, i);
+        layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/ 1)->write(buf, recordIndex);
+        layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/ 2)->write(buf, recordIndex);
     }
 
-    for (int i = 0; i < 10; i++) {
-        auto arrayField = layout->getArrayField(i, 0);
+    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+        auto arrayField = layout->getArrayField(recordIndex, /*fieldIndex*/0);
         auto value = arrayField[0]->asValueField<int64_t>()->read(buf);
         ASSERT_EQ(value, 10);
 
-        value = layout->getValueField<uint8_t>(i, 1)->read(buf);
-        ASSERT_EQ(value, i);
+        value = layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/1)->read(buf);
+        ASSERT_EQ(value, recordIndex);
 
-        value = layout->getValueField<uint8_t>(i, 2)->read(buf);
-        ASSERT_EQ(value, i);
+        value = layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/2)->read(buf);
+        ASSERT_EQ(value, recordIndex);
     }
 }
 
@@ -81,14 +81,14 @@ TEST_F(MemoryLayoutTest, rowLayoutTestArrayAsPointerField) {
     TupleBufferPtr buf = BufferManager::instance().getBuffer();
     auto layout = createRowLayout(std::make_shared<Schema>(schema));
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
-        auto arrayField = layout->getArrayField(recordIndex, 0);
+        auto arrayField = layout->getArrayField(recordIndex,  /*fieldIndex*/0);
         for (uint64_t arrayIndex = 0; arrayIndex < 10; arrayIndex++) {
             arrayField[arrayIndex]->asValueField<int64_t>()->write(buf, arrayIndex);
         }
     }
 
-    for (int i = 0; i < 10; i++) {
-        auto array = layout->getFieldPointer<int64_t>(buf, i, 0);
+    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+        auto array = layout->getFieldPointer<int64_t>(buf, recordIndex, /*fieldIndex*/0);
         for (uint64_t arrayIndex = 0; arrayIndex < 10; arrayIndex++) {
             ASSERT_EQ(array[arrayIndex], arrayIndex);
         }

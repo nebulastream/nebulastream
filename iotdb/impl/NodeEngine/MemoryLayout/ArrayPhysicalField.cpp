@@ -10,7 +10,7 @@ ArrayPhysicalField::ArrayPhysicalField(ArrayPhysicalField* physicalField): Physi
 };
 
 const PhysicalFieldPtr ArrayPhysicalField::copy() const {
-    return std::static_pointer_cast<PhysicalField>(std::make_shared<ArrayPhysicalField>(*this));
+    return std::make_shared<ArrayPhysicalField>(*this);
 }
 
 std::shared_ptr<ArrayPhysicalField> ArrayPhysicalField::asArrayField() {
