@@ -38,9 +38,9 @@ std::shared_ptr<PhysicalField> PhysicalFieldUtil::createPhysicalField(const Data
     } else if (dataType->isArrayDataType()) {
         auto arrayType = std::dynamic_pointer_cast<ArrayDataType>(dataType);
         return createArrayPhysicalField(arrayType->getComponentDataType(), bufferOffset);
+    } else {
+        NES_FATAL_ERROR("No physical field mapping for " << dataType->toString() << " available");
+        NES_NOT_IMPLEMENTED;
     }
-    NES_FATAL_ERROR("No physical field mapping for " << dataType->toString() << " available");
-    NES_NOT_IMPLEMENTED;
 }
-
 }

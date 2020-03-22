@@ -15,9 +15,9 @@ PhysicalSchemaPtr PhysicalSchema::createPhysicalSchema(SchemaPtr schema) {
 
 PhysicalFieldPtr PhysicalSchema::createPhysicalField(uint64_t fieldIndex, uint64_t bufferOffset) {
     assert(validFieldIndex(fieldIndex));
-    auto fields = schema->fields;
-    auto field = fields[fieldIndex];
-    return PhysicalFieldUtil::createPhysicalField(field->getDataType(), bufferOffset);
+    auto logicalFieldsInSchema = schema->fields;
+    auto logicalField = logicalFieldsInSchema[fieldIndex];
+    return PhysicalFieldUtil::createPhysicalField(logicalField->getDataType(), bufferOffset);
 }
 
 uint64_t PhysicalSchema::getFieldOffset(uint64_t fieldIndex) {
