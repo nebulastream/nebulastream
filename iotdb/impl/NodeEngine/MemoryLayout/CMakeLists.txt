@@ -1,4 +1,5 @@
 add_source_iotdb(
+        PhysicalField.cpp
         BasicPhysicalField.cpp
         ArrayPhysicalField.cpp
         RowLayout.cpp

@@ -4,7 +4,10 @@
 #include <memory>
 namespace NES {
 ArrayPhysicalField::ArrayPhysicalField(DataTypePtr componentField, uint64_t bufferOffset)
-    : componentField(componentField), bufferOffset(bufferOffset) {}
+    : PhysicalField(bufferOffset), componentField(componentField){}
+
+ArrayPhysicalField::ArrayPhysicalField(ArrayPhysicalField* physicalField): PhysicalField(physicalField), componentField(physicalField->componentField)  {
+};
 
 const PhysicalFieldPtr ArrayPhysicalField::copy() const {
     return std::static_pointer_cast<PhysicalField>(std::make_shared<ArrayPhysicalField>(*this));
@@ -13,10 +16,6 @@ const PhysicalFieldPtr ArrayPhysicalField::copy() const {
 std::shared_ptr<ArrayPhysicalField> ArrayPhysicalField::asArrayField() {
     return std::static_pointer_cast<ArrayPhysicalField>(this->shared_from_this());
 }
-ArrayPhysicalField::ArrayPhysicalField(ArrayPhysicalField* physicalField) {
-    this->componentField = physicalField->componentField;
-    this->bufferOffset = physicalField->bufferOffset;
-};
 
 std::shared_ptr<PhysicalField> ArrayPhysicalField::operator[](uint64_t arrayIndex) {
     auto offsetInArray = componentField->getSizeBytes()*arrayIndex;

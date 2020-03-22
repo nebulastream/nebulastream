@@ -18,10 +18,11 @@ typedef std::shared_ptr<PhysicalSchema> PhysicalSchemaPtr;
 
 /**
  * @brief the physical schema which maps a logical schema do physical fields, which can be accessed dynamically.
+
  */
 class PhysicalSchema {
   public:
-    PhysicalSchema(const SchemaPtr schema);
+    explicit PhysicalSchema(const SchemaPtr schema);
     static PhysicalSchemaPtr createPhysicalSchema(SchemaPtr schema);
 
     /**
@@ -33,19 +34,26 @@ class PhysicalSchema {
     /**
      * @brief Calculated the offset of a particular field in a record.
      * @param fieldIndex index of the field we want to access.
+     * @throws IllegalArgumentException if fieldIndex is not valid
      * @return offset in byte
      */
     uint64_t getFieldOffset(uint64_t fieldIndex);
 
     /**
      * Get the physical field representation at a field index
+     * @throws IllegalArgumentException if fieldIndex is not valid
      * @param fieldIndex
      */
-    PhysicalFieldPtr createField(uint64_t fieldIndex, uint64_t bufferOffset);
+    PhysicalFieldPtr createPhysicalField(uint64_t fieldIndex, uint64_t bufferOffset);
 
 
   private:
     SchemaPtr schema;
+    /**
+     * @brief Checks if the fieldIndex is in contained in the schema
+     * @param fieldIndex
+     * @return true if fieldIndex is valid
+     */
     bool validFieldIndex(uint64_t fieldIndex);
 };
 

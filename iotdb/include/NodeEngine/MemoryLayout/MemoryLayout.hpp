@@ -38,12 +38,28 @@ class MemoryLayout {
      */
     virtual uint64_t getFieldOffset(uint64_t recordIndex, uint64_t fieldIndex) = 0;
 
+    /**
+     * @brief Returns the BasicPhysicalField of a specific value field
+     * @throws IllegalArgumentException if field is not an value field
+     * @tparam ValueType template type of this value field
+     * @param recordIndex index of the record
+     * @param fieldIndex index of the field
+     * @return std::shared_ptr<BasicPhysicalField<ValueType>>
+     */
     template<class ValueType>
     std::shared_ptr<BasicPhysicalField<ValueType>> getValueField(uint64_t recordIndex, uint64_t fieldIndex) {
         auto fieldOffset = getFieldOffset(recordIndex, fieldIndex);
-        return physicalSchema->createField(fieldIndex, fieldOffset)->asValueField<ValueType>();
+        return physicalSchema->createPhysicalField(fieldIndex, fieldOffset)->asValueField<ValueType>();
     }
 
+    /**
+     * @brief Returns a typed pointer to the location of this field.
+     * @tparam ValueType template type of this field
+     * @param buffer memory buffer
+     * @param recordIndex index of the specific record
+     * @param fieldIndex index of the specific field
+     * @return ValueType* typed pointer
+     */
     template<class ValueType>
     ValueType* getFieldPointer(TupleBufferPtr buffer, uint64_t recordIndex, uint64_t fieldIndex){
         auto fieldOffset = getFieldOffset(recordIndex, fieldIndex);
@@ -53,16 +69,16 @@ class MemoryLayout {
     }
 
     /**
-     * @brief Reads a value of type ValueType from a particular field in the tuple buffer.
-     * @tparam ValueType type of value we want to read
-     * @param buffer tuple buffer in which we want to write
-     * @param recordIndex the index of the record we want to access
-     * @param fieldIndex the index of the field we want to access
-     * @return return value we read
+     * @brief Returns the ArrayPhysicalField of a specific array field
+     * @throws IllegalArgumentException if field is not an array field
+     * @param recordIndex index of the record
+     * @param fieldIndex index of the field
+     * @note in this special case we return an reference to the array field as we want to access the array via the [] operator.
+     * @return ArrayPhysicalField&
      */
     ArrayPhysicalField& getArrayField(uint64_t recordIndex, uint64_t fieldIndex) {
         auto fieldOffset = getFieldOffset(recordIndex, fieldIndex);
-        auto field = this->physicalSchema->createField(fieldIndex, fieldOffset);
+        auto field = this->physicalSchema->createPhysicalField(fieldIndex, fieldOffset);
         return *field->asArrayField();
     }
 
