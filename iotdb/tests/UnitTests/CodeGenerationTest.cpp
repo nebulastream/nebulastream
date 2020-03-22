@@ -676,7 +676,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
   /* check result for correctness */
   auto sumGeneratedCode = layout->getValueField<int64_t>(/*recordIndex*/0, /*fieldIndex*/0)->read(outputBuffer);
   auto sum = 0;
-  for (uint64_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
+    for (uint64_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
     sum += layout->getValueField<int64_t>(recordIndex, /*fieldIndex*/ 0)->read(inputBuffer);
   }
   EXPECT_EQ(sum, sumGeneratedCode);

@@ -2,8 +2,8 @@
 
 namespace NES {
 
-PhysicalField::PhysicalField(uint64_t bufferOffset):bufferOffset(bufferOffset) {};
-PhysicalField::PhysicalField(PhysicalField* physicalField):bufferOffset(physicalField->bufferOffset){}
+PhysicalField::PhysicalField(uint64_t bufferOffset) : bufferOffset(bufferOffset) {};
+PhysicalField::PhysicalField(PhysicalField* physicalField) : bufferOffset(physicalField->bufferOffset) {};
 PhysicalField::~PhysicalField() {};
 
 /**
