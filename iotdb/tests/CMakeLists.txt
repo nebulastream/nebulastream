@@ -119,15 +119,15 @@ add_executable(state-manager-tests "UnitTests/StateTest.cpp")
 target_link_libraries(state-manager-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME state-manager-tests COMMAND state-manager-tests)
 
-### Runtime Data Source Sink Tests ###
-add_executable(runtime-data-source-sink-tests "UnitTests/RuntimeDataSourceSinkTest.cpp")
-target_link_libraries(runtime-data-source-sink-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
-add_test(NAME runtime-data-source-sink-tests COMMAND runtime-data-source-sink-tests)
+### ZMQ Data Source Sink Tests ###
+add_executable(zmq-tests "UnitTests/ZMQTest.cpp")
+target_link_libraries(zmq-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
+add_test(NAME zmq-tests COMMAND zmq-tests)
 
-### File Source Tests ###
-add_executable(file-source-tests "UnitTests/FileSourceTest.cpp")
-target_link_libraries(file-source-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
-add_test(NAME file-source-tests COMMAND file-source-tests)
+### Source Tests ###
+add_executable(source-tests "UnitTests/SourceTest.cpp")
+target_link_libraries(source-tests iotdb ${LIBRARIES} ${GTEST_LIBRARIES})
+add_test(NAME source-tests COMMAND source-tests)
 
 ### Kafka Tests ###
 add_executable(kafka-tests "UnitTests/KafkaTest.cpp")
