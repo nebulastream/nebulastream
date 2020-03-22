@@ -46,10 +46,10 @@ CoordinatorActor::~CoordinatorActor() {
 void CoordinatorActor::initializeNESTopology() {
 
   NESTopologyManager::getInstance().resetNESTopologyPlan();
-  NES_DEBUG("CoordinatorActor::initializeNESTopology: set server ip = " << serverIp)
+  NES_DEBUG(
+      "CoordinatorActor::initializeNESTopology: set coordinatorIp = " << coordinatorIp)
   auto coordinatorNode = NESTopologyManager::getInstance()
-      .createNESCoordinatorNode(0, serverIp,
-                                CPUCapacity::HIGH);
+      .createNESCoordinatorNode(0, coordinatorIp, CPUCapacity::HIGH);
   coordinatorNode->setPublishPort(actorCoordinatorConfig.publish_port);
   coordinatorNode->setReceivePort(actorCoordinatorConfig.receive_port);
 }
@@ -164,7 +164,7 @@ behavior CoordinatorActor::running() {
   };
 }
 
-bool CoordinatorActor::removePhysicalStream(string logicalStreamName ,
+bool CoordinatorActor::removePhysicalStream(string logicalStreamName,
                                             string physicalStreamName) {
   NES_DEBUG(
       "CoordinatorActor: try to remove physical stream with name " << physicalStreamName << " logical name " << logicalStreamName)
@@ -198,7 +198,7 @@ bool CoordinatorActor::removePhysicalStream(string logicalStreamName ,
                                                         hashId);
 }
 
-bool CoordinatorActor::registerPhysicalStream(std::string ip ,
+bool CoordinatorActor::registerPhysicalStream(std::string ip,
                                               PhysicalStreamConfig streamConf) {
   NES_DEBUG("CoordinatorActor: try to register physical stream with ip " << ip)
 
@@ -272,9 +272,9 @@ bool CoordinatorActor::deregisterSensor(const string& ip) {
   }
 }
 
-void CoordinatorActor::registerSensor(const string& ip , uint16_t publish_port ,
-                                      uint16_t receive_port , int cpu ,
-                                      const string& nodeProperties ,
+void CoordinatorActor::registerSensor(const string& ip, uint16_t publish_port,
+                                      uint16_t receive_port, int cpu,
+                                      const string& nodeProperties,
                                       PhysicalStreamConfig streamConf) {
   auto sap = current_sender();
   auto hdl = actor_cast<actor>(sap);
@@ -357,12 +357,12 @@ void CoordinatorActor::showOperators() {
   }
 }
 
-string CoordinatorActor::registerQuery(const string& queryString ,
+string CoordinatorActor::registerQuery(const string& queryString,
                                        const string& strategy) {
   return coordinatorServicePtr->registerQuery(queryString, strategy);
 }
 
-string CoordinatorActor::executeQuery(const string& queryString ,
+string CoordinatorActor::executeQuery(const string& queryString,
                                       const string& strategy) {
   string queryId = coordinatorServicePtr->registerQuery(queryString, strategy);
   deployQuery(queryId);
