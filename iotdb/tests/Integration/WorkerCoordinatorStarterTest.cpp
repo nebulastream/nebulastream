@@ -37,7 +37,7 @@ TEST_F(WorkerCoordinatorStarterTest, start_stop_worker_coordinator) {
 
   cout << "start worker" << endl;
   NesWorkerPtr wrk = std::make_shared<NesWorker>();
-  bool retStart = wrk->start(/**blocking**/false, /**withConnect**/false, port);
+  bool retStart = wrk->start(/**blocking**/false, /**withConnect**/false, port, "localhost");
   EXPECT_TRUE(retStart);
   cout << "worker started successfully" << endl;
 
@@ -63,7 +63,7 @@ TEST_F(WorkerCoordinatorStarterTest, start_stop_coordinator_worker) {
 
   cout << "start worker" << endl;
   NesWorkerPtr wrk = std::make_shared<NesWorker>();
-  bool retStart = wrk->start(/**blocking**/false, /**withConnect**/false, port);
+  bool retStart = wrk->start(/**blocking**/false, /**withConnect**/false, port, "localhost");
   EXPECT_TRUE(retStart);
   cout << "worker started successfully" << endl;
 
@@ -88,7 +88,7 @@ TEST_F(WorkerCoordinatorStarterTest, start_connect_stop_worker_coordinator) {
 
   cout << "start worker" << endl;
   NesWorkerPtr wrk = std::make_shared<NesWorker>();
-  bool retStart = wrk->start(/**blocking**/false, /**withConnect**/false, port);
+  bool retStart = wrk->start(/**blocking**/false, /**withConnect**/false, port, "localhost");
   EXPECT_TRUE(retStart);
   cout << "worker started successfully" << endl;
 
@@ -114,7 +114,7 @@ TEST_F(WorkerCoordinatorStarterTest, start_connect_stop_without_disconnect_worke
 
   cout << "start worker" << endl;
   NesWorkerPtr wrk = std::make_shared<NesWorker>();
-  bool retStart = wrk->start(/**blocking**/false, /**withConnect**/false, port);
+  bool retStart = wrk->start(/**blocking**/false, /**withConnect**/false, port, "localhost");
   EXPECT_TRUE(retStart);
   cout << "worker started successfully" << endl;
 
@@ -140,7 +140,7 @@ TEST_F(WorkerCoordinatorStarterTest, start_connect_disconnect_stop_worker_coordi
 
   cout << "start worker" << endl;
   NesWorkerPtr wrk = std::make_shared<NesWorker>();
-  bool retStart = wrk->start(/**blocking**/false, /**withConnect**/false, port);
+  bool retStart = wrk->start(/**blocking**/false, /**withConnect**/false, port, "localhost");
   EXPECT_TRUE(retStart);
   cout << "worker started successfully" << endl;
 
@@ -171,7 +171,7 @@ TEST_F(WorkerCoordinatorStarterTest, start_reconnect_stop_worker_coordinator) {
 
   cout << "start worker" << endl;
   NesWorkerPtr wrk = std::make_shared<NesWorker>();
-  bool retStart = wrk->start(/**blocking**/false, /**withConnect**/false, port);
+bool retStart = wrk->start(/**blocking**/false, /**withConnect**/false, port, "localhost");
   EXPECT_TRUE(retStart);
   cout << "worker started successfully" << endl;
 

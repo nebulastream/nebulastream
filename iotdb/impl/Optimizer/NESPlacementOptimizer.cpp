@@ -62,6 +62,7 @@ void NESPlacementOptimizer::addSystemGeneratedSourceSinkOperators(
       continue;
     }
 
+
     OperatorPtr rootOperator = executionNodePtr->getRootOperator();
     if (rootOperator == nullptr) {
       continue;
@@ -101,6 +102,7 @@ void NESPlacementOptimizer::addSystemGeneratedSourceSinkOperators(
       // fix the source code
       const string& destHostName = edges[0].ptr->getDestination()->getNESNode()
           ->getIp();
+
       const OperatorPtr sysSinkOptr = createSinkOperator(
           createZmqSink(schema, destHostName, zmqDefaultPort));
 
@@ -113,6 +115,7 @@ void NESPlacementOptimizer::addSystemGeneratedSourceSinkOperators(
       sysSinkOptr->setChildren( { traverse });
       traverse->setParent(sysSinkOptr);
     }
+
 
   }
 }
@@ -132,31 +135,6 @@ void NESPlacementOptimizer::convertFwdOptr(
 
   executionNodePtr->setRootOperator(sysSrcOptr);
   executionNodePtr->setOperatorName("SOURCE(SYS)=>SINK(SYS)");
-}
-
-void NESPlacementOptimizer::setUDFSFromSampleOperatorToSenseSources(
-    InputQueryPtr inputQuery) {
-
-  //TODO: this is only the first try, it should be replaced by the new functions offered by the nbew log query plan
-  const OperatorPtr sinkOperator = inputQuery->getRoot();
-
-  // FIXME: current implementation assumes that we have only one source stream and therefore only one source operator.
-  const string& streamName = inputQuery->getSourceStream()->getName();
-  const OperatorPtr sourceOperatorPtr = getSourceOperator(sinkOperator);
-
-  string udfs = inputQuery->getUdsf();
-  if (udfs != "") {
-    NES_DEBUG(
-        "NESPlacementOptimizer::setUDFSFromSampleOperatorToSenseSources: a sample operator is provided")
-    if (dynamic_cast<SenseSource*>(sourceOperatorPtr.get())) {
-      SenseSource* node = dynamic_cast<SenseSource*>(sourceOperatorPtr.get());
-      node->setUdsf(udfs);
-    } else {
-      NES_ERROR("NESPlacementOptimizer: cast to sample node failed")
-      throw new Exception("NESPlacementOptimizer cast to sample op failed");
-    }
-  }
-
 }
 
 void NESPlacementOptimizer::completeExecutionGraphWithNESTopology(
@@ -214,6 +192,30 @@ void NESPlacementOptimizer::completeExecutionGraphWithNESTopology(
   }
 }
 ;
+void NESPlacementOptimizer::setUDFSFromSampleOperatorToSenseSources(
+    InputQueryPtr inputQuery) {
+
+  //TODO: this is only the first try, it should be replaced by the new functions offered by the nbew log query plan
+  const OperatorPtr sinkOperator = inputQuery->getRoot();
+
+  // FIXME: current implementation assumes that we have only one source stream and therefore only one source operator.
+  const string& streamName = inputQuery->getSourceStream()->getName();
+  const OperatorPtr sourceOperatorPtr = getSourceOperator(sinkOperator);
+
+  string udfs = inputQuery->getUdsf();
+  if (udfs != "") {
+    NES_DEBUG(
+        "NESPlacementOptimizer::setUDFSFromSampleOperatorToSenseSources: a sample operator is provided")
+    if (dynamic_cast<SenseSource*>(sourceOperatorPtr.get())) {
+      SenseSource* node = dynamic_cast<SenseSource*>(sourceOperatorPtr.get());
+      node->setUdsf(udfs);
+    } else {
+      NES_ERROR("NESPlacementOptimizer: cast to sample node failed")
+      throw new Exception("NESPlacementOptimizer cast to sample op failed");
+    }
+  }
+}
+
 
 OperatorPtr NESPlacementOptimizer::getSourceOperator(OperatorPtr root) {
 

@@ -22,16 +22,18 @@ NesWorker::NesWorker() {
 }
 
 bool NesWorker::startWithRegister(bool blocking, bool withConnect,
-                                  uint16_t port, PhysicalStreamConfig pConf) {
+                                  uint16_t port, PhysicalStreamConfig pConf, std::string serverIp) {
   withRegisterStream = true;
   conf = pConf;
-  start(blocking, withConnect, port);
+  start(blocking, withConnect, port, serverIp);
 }
 
-bool NesWorker::start(bool blocking, bool withConnect, uint16_t port) {
-  NES_DEBUG("NesWorker: start with blocking " << blocking << " port=" << port)
+bool NesWorker::start(bool blocking, bool withConnect, uint16_t port, std::string serverIp) {
+  NES_DEBUG("NesWorker: start with blocking " << blocking << " serverIp=" << serverIp << " port=" << port)
   WorkerActorConfig w_cfg;
   w_cfg.load<io::middleman>();
+  workerCfg.host = serverIp;
+
   w_cfg.printCfg();
   PhysicalStreamConfig streamConf;
 

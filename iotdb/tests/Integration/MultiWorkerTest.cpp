@@ -36,14 +36,14 @@ TEST_F(MultiWorkerTest, start_stop_worker_coordinator) {
   cout << "start worker 1" << endl;
   NesWorkerPtr wrk1 = std::make_shared<NesWorker>();
   bool retStart1 = wrk1->start(/**blocking**/false, /**withConnect**/false,
-                               port);
+                               port, "localhost");
   EXPECT_TRUE(retStart1);
   cout << "worker1 started successfully" << endl;
 
   cout << "start worker 2" << endl;
   NesWorkerPtr wrk2 = std::make_shared<NesWorker>();
   bool retStart2 = wrk2->start(/**blocking**/false, /**withConnect**/false,
-                               port);
+                               port, "localhost");
   EXPECT_TRUE(retStart2);
   cout << "worker2 started successfully" << endl;
 
@@ -74,14 +74,14 @@ TEST_F(MultiWorkerTest, start_stop_coordinator_worker) {
   cout << "start worker 1" << endl;
   NesWorkerPtr wrk1 = std::make_shared<NesWorker>();
   bool retStart1 = wrk1->start(/**blocking**/false, /**withConnect**/false,
-                               port);
+                               port, "localhost");
   EXPECT_TRUE(retStart1);
   cout << "worker1 started successfully" << endl;
 
   cout << "start worker 2" << endl;
   NesWorkerPtr wrk2 = std::make_shared<NesWorker>();
   bool retStart2 = wrk2->start(/**blocking**/false, /**withConnect**/false,
-                               port);
+                               port, "localhost");
   EXPECT_TRUE(retStart2);
   cout << "worker2 started successfully" << endl;
 
@@ -111,14 +111,14 @@ TEST_F(MultiWorkerTest, start_connect_stop_worker_coordinator) {
   cout << "start worker 1" << endl;
   NesWorkerPtr wrk1 = std::make_shared<NesWorker>();
   bool retStart1 = wrk1->start(/**blocking**/false, /**withConnect**/false,
-                               port);
+                               port, "localhost");
   EXPECT_TRUE(retStart1);
   cout << "worker1 started successfully" << endl;
 
   cout << "start worker 2" << endl;
   NesWorkerPtr wrk2 = std::make_shared<NesWorker>();
   bool retStart2 = wrk2->start(/**blocking**/false, /**withConnect**/false,
-                               port);
+                               port, "localhost");
   EXPECT_TRUE(retStart2);
   cout << "worker2 started successfully" << endl;
 
@@ -154,14 +154,14 @@ TEST_F(MultiWorkerTest, start_with_connect_stop_worker_coordinator) {
   cout << "start worker 1" << endl;
   NesWorkerPtr wrk1 = std::make_shared<NesWorker>();
   bool retStart1 = wrk1->start(/**blocking**/false, /**withConnect**/true,
-                               port);
+                               port, "localhost");
   EXPECT_TRUE(retStart1);
   cout << "worker1 started successfully" << endl;
 
   cout << "start worker 2" << endl;
   NesWorkerPtr wrk2 = std::make_shared<NesWorker>();
   bool retStart2 = wrk2->start(/**blocking**/false, /**withConnect**/true,
-                               port);
+                               port, "localhost");
   EXPECT_TRUE(retStart2);
   cout << "worker2 started successfully" << endl;
 
@@ -187,14 +187,14 @@ TEST_F(MultiWorkerTest, start_connect_stop_without_disconnect_worker_coordinator
   cout << "start worker 1" << endl;
   NesWorkerPtr wrk1 = std::make_shared<NesWorker>();
   bool retStart1 = wrk1->start(/**blocking**/false, /**withConnect**/false,
-                               port);
+                               port, "localhost");
   EXPECT_TRUE(retStart1);
   cout << "worker1 started successfully" << endl;
 
   cout << "start worker 2" << endl;
   NesWorkerPtr wrk2 = std::make_shared<NesWorker>();
   bool retStart2 = wrk2->start(/**blocking**/false, /**withConnect**/false,
-                               port);
+                               port, "localhost");
   EXPECT_TRUE(retStart2);
   cout << "worker2 started successfully" << endl;
 
@@ -230,7 +230,7 @@ TEST_F(MultiWorkerTest, test_ten_worker) {
     cout << "start worker" << i << endl;
     wPtrs.push_back(std::make_shared<NesWorker>());
     bool retStart = wPtrs[i]->start(/**blocking**/false, /**withConnect**/false,
-                                    port);
+                                    port, "localhost");
     EXPECT_TRUE(retStart);
 
   }
@@ -238,6 +238,7 @@ TEST_F(MultiWorkerTest, test_ten_worker) {
   //connect 10 worker
   for (size_t i = 0; i < 10; i++) {
     cout << "connect worker" << i << endl;
+
     bool retConWrk = wPtrs[i]->connect();
     EXPECT_TRUE(retConWrk);
   }
