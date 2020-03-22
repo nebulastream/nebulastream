@@ -48,7 +48,7 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
     queryCatalogServicePtr = QueryCatalogService::getInstance();
     streamCatalogServicePtr = StreamCatalogService::getInstance();
     coordinatorServicePtr = CoordinatorService::getInstance();
-    serverIp = "localhost";
+    coordinatorIp = "localhost";
     workerServicePtr = std::make_unique<WorkerService>(
         WorkerService(actorCoordinatorConfig.ip, actorCoordinatorConfig.publish_port,
                       actorCoordinatorConfig.receive_port));
@@ -56,7 +56,7 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
 
   explicit CoordinatorActor(caf::actor_config& cfg , std::string ip)
       :
-      stateful_actor(cfg), serverIp(ip) {
+      stateful_actor(cfg), coordinatorIp(ip) {
 
     queryCatalogServicePtr = QueryCatalogService::getInstance();
     streamCatalogServicePtr = StreamCatalogService::getInstance();
@@ -177,7 +177,7 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
 
   void shutdown();
 
-  std::string serverIp;
+  std::string coordinatorIp;
   QueryCatalogServicePtr queryCatalogServicePtr;
   StreamCatalogServicePtr streamCatalogServicePtr;
   CoordinatorActorConfig actorCoordinatorConfig;
