@@ -9,4 +9,11 @@ jobs:
     - name: Run tests
       run: |
           docker run -v $GITHUB_WORKSPACE/iotdb:/iotdb --entrypoint /iotdb/docker/scripts/entrypoint-nes-build.sh nebulastream/nes-build-image
-
+    - uses: 8398a7/action-slack@v2
+      with:
+    	status: ${{ job.status }}
+    	author_name: Integration Test # default: 8398a7@action-slack
+     env:
+    	GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # required
+    	SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }} # required
+     if: always() # Pick up events even if the job fails or is canceled.
