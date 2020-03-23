@@ -3,7 +3,6 @@
 
 #include <string>
 #include <Actors/ExecutableTransferObject.hpp>
-#include <Network/PacketHeader.hpp>
 
 #include <boost/iostreams/device/array.hpp>
 #include <boost/iostreams/device/back_inserter.hpp>
@@ -125,23 +124,6 @@ class SerializationTools {
     return s;
   }
 
-    /**
-     * @brief converts a PacketHeader into a serialized Boost string
-     * @param PacketHeader to be serialized
-     * @return the string serialized object
-     */
-    static string serPacketHeader(const PacketHeader &ph) {
-        std::string s;
-        {
-            namespace io = boost::iostreams;
-            io::stream<io::back_insert_device<std::string>> os(s);
-
-            boost::archive::text_oarchive archive(os);
-            archive << ph;
-        }
-        return s;
-    }
-
   /**
    * @brief parses Boost string serialized Predicate into an PredicatePtr object
    * @param string boost serialized string object
@@ -238,21 +220,6 @@ class SerializationTools {
     return eto;
   }
 
-    /**
-     * @brief parses Boost string serialized PacketHeader
-     * @param string boost serialized string object
-     * @return the deserialized object
-     */
-    static PacketHeader parsePacketHeader(const string &s) {
-        PacketHeader ph;
-        {
-            namespace io = boost::iostreams;
-            io::stream<io::array_source> is(io::array_source{s.data(), s.size()});
-            boost::archive::text_iarchive archive(is);
-            archive >> ph;
-        }
-        return ph;
-    }
 };
 
 } // namespace NES
