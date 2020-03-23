@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <iostream>
-#include <Nodes/Expressions/PredicateNode.hpp>
+#include <Nodes/Expressions/ConditionExpressionNode.hpp>
 #include <Util/Logger.hpp>
 #include <memory>
 #include <Nodes/Expressions/BinaryOperationType.hpp>
@@ -44,7 +44,7 @@ class PredicateNodeTest : public testing::Test {
 };
 
 TEST_F(PredicateNodeTest, printPredicateOperatorTree) {
-    createPredicateNode(BinaryOperationType::EQUAL_OP, createCon)
+
 }
 
 } // namespace NES
