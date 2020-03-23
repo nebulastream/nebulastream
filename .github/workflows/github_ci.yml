@@ -13,7 +13,6 @@ jobs:
       uses: 8398a7/action-slack@v2
       with:
           status: ${{ job.status }}
-          text: "Custom Field Check"
           author_name: ${{ github.actor }}
       env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
