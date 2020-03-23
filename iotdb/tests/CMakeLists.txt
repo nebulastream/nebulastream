@@ -82,6 +82,12 @@ add_executable(worker-coordinator-starter-tests "Integration/WorkerCoordinatorSt
 target_link_libraries(worker-coordinator-starter-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME worker-coordinator-starter-tests COMMAND worker-coordinator-starter-tests)
 
+# NetworkStackTest
+
+add_executable(network-stack-test "Integration/NetworkStackTest.cpp")
+target_link_libraries(network-stack-test iotdb ${GTEST_LIBRARIES})
+add_test(NAME network-stack-test COMMAND network-stack-test)
+
 #------------------------------- # Unit Test Suite --------------------------------
 
 ### Node Engine Tests ###
@@ -184,11 +190,6 @@ add_test(NAME query-catalog-tests COMMAND query-catalog-tests)
 add_executable(query-catalog-service-tests "UnitTests/Services/QueryCatalogServiceTest.cpp")
 target_link_libraries(query-catalog-service-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME query-catalog-service-tests COMMAND query-catalog-service-tests)
-
-### Internal Networking Tests ###
-add_executable(internal-data-transmission-test "UnitTests/InternalDataTransmissionTest.cpp")
-target_link_libraries(internal-data-transmission-test iotdb ${GTEST_LIBRARIES})
-add_test(NAME internal-data-transmission-test COMMAND internal-data-transmission-test)
 
 ### Path Finder Tests ###
 add_executable(path-finder-test "UnitTests/Optimizer/Utils/PathFinderTest.cpp")
