@@ -1,4 +1,4 @@
 add_source_iotdb(
-        ZmqSource.cpp
+        ZmqServer.cpp
         NetworkDispatcher.cpp
 )
