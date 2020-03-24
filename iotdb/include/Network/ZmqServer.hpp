@@ -18,7 +18,7 @@ class ZmqServer : public boost::noncopyable {
 private:
     static constexpr const char* dispatcherPipe = "inproc://dispatcher";
 public:
-    explicit ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNetworkThreads);
+    explicit ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNetworkThreads, ExchangeProtocol& exchangeProtocol);
 
     ~ZmqServer();
 
@@ -50,7 +50,7 @@ private:
     std::atomic_bool _isRunning;
     std::atomic_bool keepRunning;
 
-    ExchangeProtocol protocol;
+    ExchangeProtocol& exchangeProtocol;
 
     // error management
     std::promise<bool> errorPromise;
