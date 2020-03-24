@@ -7,7 +7,7 @@ namespace NES {
 namespace Network {
 class PartitionManager {
 public:
-    void registerSubpartition(SubpartitionId subpartitionId);
+    void registerSubpartition();
     void unregisterSubpartition();
 private:
 

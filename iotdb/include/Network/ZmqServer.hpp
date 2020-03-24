@@ -44,9 +44,6 @@ private:
     std::atomic_bool _isRunning;
     std::atomic_bool keepRunning;
 
-    // bootstrap
-    std::promise<bool> bootstrapPromise;
-
     // error management
     std::promise<bool> errorPromise;
 };
