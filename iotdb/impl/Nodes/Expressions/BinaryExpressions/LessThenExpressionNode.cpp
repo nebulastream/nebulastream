@@ -1,16 +1,20 @@
 
 #include <Nodes/Expressions/BinaryExpressions/LessThenExpressionNode.hpp>
 namespace NES {
-LessThenExpressionNode::LessThenExpressionNode(const NES::ExpressionNodePtr left,
-                                           const NES::ExpressionNodePtr right) :
-    LogicalBinaryExpressionNode(
-        left,
-        right) {}
+LessThenExpressionNode::LessThenExpressionNode() :
+    LogicalBinaryExpressionNode() {};
+ExpressionNodePtr LessThenExpressionNode::create(const ExpressionNodePtr left,
+                                                 const ExpressionNodePtr right) {
+    auto lessThen = std::make_shared<LessThenExpressionNode>();
+    lessThen->setChildren(left, right);
+    return lessThen;
+}
+
 bool LessThenExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 const std::string LessThenExpressionNode::toString() const {
-    return std::__cxx11::string();
+    return "LessThenNode()";
 }
 
 }

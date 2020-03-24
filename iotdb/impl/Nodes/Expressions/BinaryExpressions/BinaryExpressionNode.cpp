@@ -1,9 +1,9 @@
-#include <Nodes/Expressions/BinaryExpressions/BinaryExpressionNode.hpp>
+#include <Nodes/Expressions/BinaryExpressions/UnaryExpressionNode.hpp>
 
 namespace NES {
-BinaryExpressionNode::BinaryExpressionNode(DataTypePtr stamp,
-                                           const ExpressionNodePtr left,
-                                           const ExpressionNodePtr right) : ExpressionNode(stamp) {
+BinaryExpressionNode::BinaryExpressionNode(DataTypePtr stamp) : ExpressionNode(stamp) {}
+
+void BinaryExpressionNode::setChildren(const ExpressionNodePtr left, const ExpressionNodePtr right) {
     addChild(left);
     addChild(right);
 }

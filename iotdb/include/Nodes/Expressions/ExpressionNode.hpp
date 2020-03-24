@@ -10,9 +10,11 @@ namespace NES {
  * A stamp can be of a concrete type or invalid if the data type was not yet inferred.
  */
 class ExpressionNode : public Node {
-  protected:
+  public:
     ExpressionNode(DataTypePtr stamp);
-  private:
+    ~ExpressionNode() = default;
+    bool isPredicate();
+  protected:
     /**
      * @brief declares the type of this expression.
      */

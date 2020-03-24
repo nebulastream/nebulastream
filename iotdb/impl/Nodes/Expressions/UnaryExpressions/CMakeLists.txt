@@ -1,5 +1,5 @@
 add_source_iotdb(
-        BinaryExpressionNode.cpp
+        UnaryExpressionNode.cpp
         LogicalUnaryExpressionNode.cpp
         NegateExpressionNode.cpp
 )

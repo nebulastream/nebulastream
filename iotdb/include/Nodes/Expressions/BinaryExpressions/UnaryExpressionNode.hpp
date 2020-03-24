@@ -5,10 +5,12 @@ namespace NES {
 
 class BinaryExpressionNode : public ExpressionNode {
   public:
-    BinaryExpressionNode(DataTypePtr stamp, const ExpressionNodePtr left, const ExpressionNodePtr right);
+    BinaryExpressionNode(DataTypePtr stamp);
+    ~BinaryExpressionNode() = default;
+
+    void setChildren(const ExpressionNodePtr left, const ExpressionNodePtr right);
 
     ExpressionNodePtr getLeft() const;
-
     ExpressionNodePtr getRight() const;
 };
 

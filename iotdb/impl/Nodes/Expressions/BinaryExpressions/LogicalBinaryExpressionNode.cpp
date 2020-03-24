@@ -1,11 +1,8 @@
 
 #include <Nodes/Expressions/BinaryExpressions/LogicalBinaryExpressionNode.hpp>
 namespace NES {
-LogicalBinaryExpressionNode::LogicalBinaryExpressionNode(const NES::ExpressionNodePtr left,
-                                                         const NES::ExpressionNodePtr right) :
+LogicalBinaryExpressionNode::LogicalBinaryExpressionNode() :
     BinaryExpressionNode(
-        createDataType(BasicType::BOOLEAN),
-        left,
-        right) {}
+        createDataType(BasicType::BOOLEAN)) {}
 
 }

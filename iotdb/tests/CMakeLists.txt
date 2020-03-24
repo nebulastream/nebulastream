@@ -210,8 +210,8 @@ add_executable(logical-operator-node-tests "UnitTests/LogicalOperatorNodeTest.cp
 target_link_libraries(logical-operator-node-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME logical-operator-node-tests COMMAND logical-operator-node-tests)
 
-# PredicateNodeTest
-add_executable(predicate-node-tests "UnitTests/PredicateNodeTest.cpp")
+# ExpressionNodeTest
+add_executable(predicate-node-tests "UnitTests/ExpressionNodeTest.cpp")
 target_link_libraries(predicate-node-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME predicate-node-tests COMMAND predicate-node-tests)
 

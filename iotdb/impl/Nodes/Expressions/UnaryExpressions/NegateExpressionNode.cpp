@@ -3,17 +3,20 @@
 
 namespace NES {
 
-NegateExpressionNode::NegateExpressionNode(ExpressionNodePtr child) :
-    LogicalUnaryExpressionNode(child) {
+NegateExpressionNode::NegateExpressionNode() :
+    LogicalUnaryExpressionNode() {
 }
 bool NegateExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 const std::string NegateExpressionNode::toString() const {
-    return std::__cxx11::string();
+    return "NegateNode()";
 }
 
-std::shared_ptr<NegateExpressionNode> createNegateNode(const ExpressionNodePtr child) {
-    return std::make_shared<NegateExpressionNode>(child);
-};
+ExpressionNodePtr NegateExpressionNode::create(const ExpressionNodePtr child) {
+    auto equals = std::make_shared<NegateExpressionNode>();
+    equals->setChild(child);
+    return equals;
+}
+
 }

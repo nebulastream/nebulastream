@@ -4,7 +4,12 @@
 namespace NES {
 class UnaryExpressionNode : public ExpressionNode {
   protected:
-    UnaryExpressionNode(DataTypePtr stamp, const ExpressionNodePtr child);
+    UnaryExpressionNode(DataTypePtr stamp);
+
+    void setChild(ExpressionNodePtr child){
+        this->addChild(child);
+    }
+
     ExpressionNodePtr child() const {
         return children[0]->as<ExpressionNode>();
     }
