@@ -7,18 +7,25 @@
 namespace NES {
 namespace Network {
 
-ZmqServer::ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNetworkThreads)
-        : hostname(hostname), port(port), numNetworkThreads(numNetworkThreads), _isRunning(false), keepRunning(true) {
+ZmqServer::ZmqServer(const std::string& hostname,
+                     uint16_t port,
+                     uint16_t numNetworkThreads,
+                     ExchangeProtocol& exchangeProtocol) : hostname(hostname),
+                                                           port(port),
+                                                           numNetworkThreads(numNetworkThreads),
+                                                           _isRunning(false),
+                                                           keepRunning(true),
+                                                           exchangeProtocol(exchangeProtocol) {
     assert(numNetworkThreads >= DEFAULT_NUM_SERVER_THREADS);
 }
 
 void ZmqServer::start() {
     std::promise<bool> start_promise;
-    uint16_t numZmqThreads = (numNetworkThreads - 1) / 2;
-    uint16_t numHandlerThreads = numNetworkThreads / 2;
+    uint16_t numZmqThreads = (numNetworkThreads - 1)/2;
+    uint16_t numHandlerThreads = numNetworkThreads/2;
     zmqContext = std::make_shared<zmq::context_t>(numZmqThreads);
     frontendThread = std::make_unique<std::thread>([this, numHandlerThreads, &start_promise]() {
-        frontend_loop(numHandlerThreads, start_promise);
+      frontend_loop(numHandlerThreads, start_promise);
     });
     start_promise.get_future().get();
 }
@@ -54,7 +61,7 @@ void ZmqServer::frontend_loop(uint16_t numHandlerThreads, std::promise<bool>& st
 
         for (uint16_t i = 0; i < numHandlerThreads; ++i) {
             handlerThreads.emplace_back(std::make_unique<std::thread>([this]() {
-                handler_event_loop();
+              handler_event_loop();
             }));
         }
     } catch (...) {
@@ -118,7 +125,8 @@ void ZmqServer::handler_event_loop() {
                     zmq::message_t outIdentityEnvelope;
                     zmq::message_t clientAnnouncementEnvelope;
                     dispatcher_socket.recv(clientAnnouncementEnvelope);
-                    auto serverReadyMsg = protocol.onClientAnnoucement(clientAnnouncementEnvelope.data<Messages::ClientAnnounceMessage>());
+                    auto serverReadyMsg =
+                        exchangeProtocol.onClientAnnoucement(clientAnnouncementEnvelope.data<Messages::ClientAnnounceMessage>());
                     Messages::MessageHeader sendHeader(Messages::kServerReady, sizeof(Messages::ServerReadyMessage));
                     zmq::message_t msgHeaderEnvelope(&sendHeader, sizeof(Messages::MessageHeader));
                     zmq::message_t msgServerReadyEnvelope(&serverReadyMsg, sizeof(Messages::ServerReadyMessage));
@@ -129,12 +137,14 @@ void ZmqServer::handler_event_loop() {
                     break;
                 }
                 case Messages::kDataBuffer : {
+                    exchangeProtocol.onBuffer();
                     break;
                 }
                 case Messages::kErrorMessage: {
                     break;
                 }
                 case Messages::kEndOfStream: {
+                    exchangeProtocol.onEndOfStream();
                     break;
                 }
                 default: {

@@ -17,21 +17,25 @@ using OperatorId = uint32_t;
 using QueryId = uint32_t;
 
 class NodeLocation {
-private:
+  private:
     const NodeId nodeId;
     const std::string hostname;
     const uint16_t port;
-public:
-    explicit NodeLocation(NodeId nodeId, const std::string &hostname, uint16_t port)
-            : nodeId(nodeId), hostname(hostname), port(port) {
+  public:
+    explicit NodeLocation(NodeId nodeId, const std::string& hostname, uint16_t port)
+        : nodeId(nodeId), hostname(hostname), port(port) {
 
+    }
+
+    std::string createZmqURI() const {
+        return "tcp://" + hostname + ":" + std::to_string(port);
     }
 
     NodeId getNodeId() const {
         return nodeId;
     }
 
-    const std::string &getHostname() const {
+    const std::string& getHostname() const {
         return hostname;
     }
 

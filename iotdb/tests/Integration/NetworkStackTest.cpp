@@ -24,7 +24,8 @@ public:
 
 TEST_F(NetworkStackTest, serverMustStartAndStop) {
     try {
-        ZmqServer server("127.0.0.1", 31337, 4);
+        ExchangeProtocol exchangeProtocol([](){}, [](){}, [](std::exception_ptr ex){});
+        ZmqServer server("127.0.0.1", 31337, 4, exchangeProtocol);
         server.start();
         ASSERT_EQ(server.isRunning(), true);
     } catch (...) {
@@ -36,7 +37,7 @@ TEST_F(NetworkStackTest, serverMustStartAndStop) {
 
 TEST_F(NetworkStackTest, dispatcherMustStartAndStop) {
     try {
-        NetworkDispatcher netDispatcher("127.0.0.1", 31337);
+        NetworkDispatcher netDispatcher("127.0.0.1", 31337, [](){}, [](){}, [](std::exception_ptr ex){});
     } catch (...) {
         ASSERT_EQ(true, false);
     }
@@ -45,24 +46,27 @@ TEST_F(NetworkStackTest, dispatcherMustStartAndStop) {
 
 TEST_F(NetworkStackTest, startCloseChannel) {
     try {
-        NetworkDispatcher netDispatcher("127.0.0.1", 31337);
+        // start zmqServer
+        std::promise<bool> completed;
+        auto onBuffer = [](){};
+        auto onError = [&completed](std::exception_ptr ex){
+           completed.set_exception(ex);
+        };
+        auto onEndOfStream = [&completed](){
+          completed.set_value(true);
+        };
 
-        std::thread t ([&netDispatcher] {
-            std::promise<bool> completed;
-            netDispatcher.registerSubpartitionConsumer(0, 0, 0, 0, [&completed]() {
-                // check that buffer content is correct
-                try {
+        NetworkDispatcher netDispatcher("127.0.0.1", 31337, onBuffer, onEndOfStream, onError);
 
-                } catch (...) {
-                    completed.set_exception(std::current_exception());
-                }
-                completed.set_value(true);
-            });
+        std::thread t ([&netDispatcher, &completed] {
+            // register the incoming channel
+            netDispatcher.registerSubpartitionConsumer(0, 0, 0, 0);
             auto v = completed.get_future().get();
             ASSERT_EQ(v, true);
         });
 
-        auto senderChannel = netDispatcher.registerSubpartitionProducer(0, 0, 0, 0);
+        NodeLocation nodeLocation(0, "127.0.0.1", 31337);
+        auto senderChannel = netDispatcher.registerSubpartitionProducer(nodeLocation, 0, 0, 0, 0);
 
         senderChannel.close();
 

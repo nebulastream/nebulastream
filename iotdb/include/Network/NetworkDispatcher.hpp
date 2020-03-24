@@ -7,6 +7,7 @@
 #include <Network/NetworkCommon.hpp>
 #include <boost/core/noncopyable.hpp>
 #include <functional>
+#include "ExchangeProtocol.hpp"
 
 namespace NES {
 
@@ -18,18 +19,29 @@ class ZmqServer;
 class OutputChannel;
 
 class NetworkDispatcher : public boost::noncopyable {
-public:
+  public:
 
-    explicit NetworkDispatcher(const std::string& hostname, uint16_t port, uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
+    explicit NetworkDispatcher(const std::string& hostname,
+                               uint16_t port,
+                               std::function<void()>&& onDataBuffer,
+                               std::function<void()>&& onEndOfStream,
+                               std::function<void(std::exception_ptr)>&& onError,
+                               uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
 
-    void registerSubpartitionConsumer(QueryId queryId, OperatorId operatorId, PartitionId partitionId, SubpartitionId subpartitionId, std::function<void(void)> consumerCallback);
+    void registerSubpartitionConsumer(QueryId queryId,
+                                      OperatorId operatorId,
+                                      PartitionId partitionId,
+                                      SubpartitionId subpartitionId);
 
-    OutputChannel registerSubpartitionProducer(QueryId queryId, OperatorId operatorId, PartitionId partitionId, SubpartitionId subpartitionId);
+    OutputChannel registerSubpartitionProducer(const NodeLocation& nodeLocation, QueryId queryId,
+                                               OperatorId operatorId,
+                                               PartitionId partitionId,
+                                               SubpartitionId subpartitionId);
 
-private:
+  private:
     // TODO decide whethere unique_ptr is better here
     std::shared_ptr<ZmqServer> server;
-
+    ExchangeProtocol exchangeProtocol;
 };
 }
 }
