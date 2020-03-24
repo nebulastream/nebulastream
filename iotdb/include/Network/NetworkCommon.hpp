@@ -16,9 +16,6 @@ using PartitionId = uint32_t;
 using OperatorId = uint32_t;
 using QueryId = uint32_t;
 
-using InputChannel = zmq::socket_t;
-using OutputChannel = zmq::socket_t;
-
 class NodeLocation {
 private:
     const NodeId nodeId;

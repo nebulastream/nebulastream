@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 #include <Network/ZmqServer.hpp>
 #include <Network/NetworkDispatcher.hpp>
+#include <Network/OutputChannel.hpp>
 
 using namespace std;
 
@@ -45,9 +46,16 @@ TEST_F(NetworkStackTest, dispatcherMustStartAndStop) {
 TEST_F(NetworkStackTest, singleDispatcherTest) {
     try {
         NetworkDispatcher netDispatcher("127.0.0.1", 31337);
-        auto in = netDispatcher.getInputChannel(0, 0, 0, 0);
-        auto out = netDispatcher.getOutputChannel(0, 0, 0, 0);
 
+        std::thread t ([&netDispatcher] {
+            netDispatcher.registerConsumer(0, 0, 0, 0, []() {
+
+            });
+        });
+
+        auto senderChannel = netDispatcher.registerProducer(0, 0, 0, 0);
+
+        senderChannel.sendBuffer();
 
     } catch (...) {
         ASSERT_EQ(true, false);
