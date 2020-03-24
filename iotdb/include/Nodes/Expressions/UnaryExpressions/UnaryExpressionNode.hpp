@@ -7,7 +7,7 @@ class UnaryExpressionNode : public ExpressionNode {
     UnaryExpressionNode(DataTypePtr stamp);
 
     void setChild(ExpressionNodePtr child){
-        this->addChild(child);
+        this->addChildWithEqual(child);
     }
 
     ExpressionNodePtr child() const {
