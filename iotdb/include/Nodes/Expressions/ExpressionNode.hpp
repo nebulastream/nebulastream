@@ -13,10 +13,15 @@ class ExpressionNode : public Node {
   public:
     ExpressionNode(DataTypePtr stamp);
     ~ExpressionNode() = default;
+    /**
+     * @brief Indicates if this expression is a predicate -> if its result stamp is a boolean
+     * @return
+     */
     bool isPredicate();
   protected:
     /**
      * @brief declares the type of this expression.
+     * todo replace the direct usage of data types with a stamp abstraction.
      */
     DataTypePtr stamp;
 };

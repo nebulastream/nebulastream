@@ -6,9 +6,8 @@ ConstantValueExpressionNode::ConstantValueExpressionNode(const ValueTypePtr cons
     ExpressionNode(constantValue->getType()),
     constantValue(constantValue) {};
 
-
 bool ConstantValueExpressionNode::equal(const NodePtr rhs) const {
-    if(rhs->instanceOf<ConstantValueExpressionNode>()){
+    if (rhs->instanceOf<ConstantValueExpressionNode>()) {
         auto otherConstantValueNode = rhs->as<ConstantValueExpressionNode>();
         return otherConstantValueNode->constantValue.get() == constantValue.get();
     };
@@ -19,8 +18,12 @@ const std::string ConstantValueExpressionNode::toString() const {
     return "ConstantValueNode()";
 }
 
-ExpressionNodePtr ConstantValueExpressionNode::create(const ValueTypePtr constantValue){
+ExpressionNodePtr ConstantValueExpressionNode::create(const ValueTypePtr constantValue) {
     return std::make_shared<ConstantValueExpressionNode>(constantValue);
+}
+
+ValueTypePtr ConstantValueExpressionNode::getConstantValue() const {
+    return constantValue;
 }
 
 }

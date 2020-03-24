@@ -3,11 +3,17 @@
 #include <Nodes/Expressions/BinaryExpressions/LogicalBinaryExpressionNode.hpp>
 namespace NES {
 
+/**
+ * @brief This node represents an equals comparision between the two children.
+ */
 class EqualsExpressionNode : public LogicalBinaryExpressionNode {
   public:
-    static ExpressionNodePtr create(const ExpressionNodePtr left, const ExpressionNodePtr right);
     EqualsExpressionNode();
     ~EqualsExpressionNode() = default;
+    /**
+    * @brief Create a new equals expression
+    */
+    static ExpressionNodePtr create(const ExpressionNodePtr left, const ExpressionNodePtr right);
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
 

@@ -8,12 +8,16 @@ FieldReadExpressionNode::FieldReadExpressionNode(DataTypePtr stamp, std::string 
 FieldReadExpressionNode::FieldReadExpressionNode(std::string fieldName)
     : FieldReadExpressionNode(nullptr, std::move(fieldName)) {};
 
-ExpressionNodePtr FieldReadExpressionNode::create(DataTypePtr stamp, std::string fieldName){
+ExpressionNodePtr FieldReadExpressionNode::create(DataTypePtr stamp, std::string fieldName) {
     return std::make_shared<FieldReadExpressionNode>(stamp, fieldName);
 }
 
+ExpressionNodePtr FieldReadExpressionNode::create(std::string fieldName) {
+    return create(nullptr, fieldName);
+}
+
 bool FieldReadExpressionNode::equal(const NodePtr rhs) const {
-    if(rhs->instanceOf<FieldReadExpressionNode>()){
+    if (rhs->instanceOf<FieldReadExpressionNode>()) {
         auto otherFieldRead = rhs->as<FieldReadExpressionNode>();
         return otherFieldRead->fieldName == fieldName && otherFieldRead->stamp == stamp;
     }
@@ -21,8 +25,7 @@ bool FieldReadExpressionNode::equal(const NodePtr rhs) const {
 }
 
 const std::string FieldReadExpressionNode::toString() const {
-    return "FieldReadNode("+fieldName+")";
+    return "FieldReadNode(" + fieldName + ")";
 }
-
 
 }
