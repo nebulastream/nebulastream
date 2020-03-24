@@ -3,17 +3,26 @@
 
 #include <Nodes/Expressions/ExpressionNode.hpp>
 namespace NES {
+/**
+ * @brief This expression node represents a constant value
+ */
 class ConstantValueExpressionNode : public ExpressionNode {
   public:
+    explicit ConstantValueExpressionNode(const ValueTypePtr constantValue);
+    /**
+     * @brief Factory method to create a ConstantValueExpressionNode.
+     */
     static ExpressionNodePtr create(const ValueTypePtr constantValue);
-    ConstantValueExpressionNode(const ValueTypePtr constantValue);
+
+    /**
+     * @brief Returns the constant value.
+     */
     ValueTypePtr getConstantValue() const;
+
     const std::string toString() const override;
     bool equal(const NodePtr rhs) const override;
   private:
     ValueTypePtr constantValue;
-
-
 };
 
 }

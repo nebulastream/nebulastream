@@ -1,4 +1,4 @@
-#include <Nodes/Expressions/BinaryExpressions/UnaryExpressionNode.hpp>
+#include <Nodes/Expressions/BinaryExpressions/BinaryExpressionNode.hpp>
 
 namespace NES {
 BinaryExpressionNode::BinaryExpressionNode(DataTypePtr stamp) : ExpressionNode(stamp) {}

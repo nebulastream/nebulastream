@@ -6,8 +6,9 @@ ExpressionNodePtr EqualsExpressionNode::create(const ExpressionNodePtr left, con
     equals->setChildren(left, right);
     return equals;
 }
-EqualsExpressionNode::EqualsExpressionNode() :
-    LogicalBinaryExpressionNode() {}
+
+EqualsExpressionNode::EqualsExpressionNode() : LogicalBinaryExpressionNode() {}
+
 bool EqualsExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }

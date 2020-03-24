@@ -2,6 +2,9 @@
 #define NES_INCLUDE_NODES_EXPRESSIONS_BINARYEXPRESSIONS_LOGICALBINARYEXPRESSIONNODE_HPP_
 #include <Nodes/Expressions/UnaryExpressions/UnaryExpressionNode.hpp>
 namespace NES {
+/**
+ * @brief This node represents a logical unary expression.
+ */
 class LogicalUnaryExpressionNode : public UnaryExpressionNode {
   protected:
     LogicalUnaryExpressionNode();
