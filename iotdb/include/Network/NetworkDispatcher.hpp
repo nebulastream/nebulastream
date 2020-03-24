@@ -4,8 +4,9 @@
 #include <cstdint>
 #include <string>
 #include <memory>
-#include "NetworkCommon.hpp"
+#include <Network/NetworkCommon.hpp>
 #include <boost/core/noncopyable.hpp>
+#include <functional>
 
 namespace NES {
 
@@ -21,9 +22,9 @@ public:
 
     explicit NetworkDispatcher(const std::string& hostname, uint16_t port, uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
 
-    void registerConsumer(QueryId queryId, OperatorId operatorId, PartitionId partitionId, SubpartitionId subpartitionId, std::function<void(void)> consumerCallback);
+    void registerSubpartitionConsumer(QueryId queryId, OperatorId operatorId, PartitionId partitionId, SubpartitionId subpartitionId, std::function<void(void)> consumerCallback);
 
-    OutputChannel registerProducer(QueryId queryId, OperatorId operatorId, PartitionId partitionId, SubpartitionId subpartitionId);
+    OutputChannel registerSubpartitionProducer(QueryId queryId, OperatorId operatorId, PartitionId partitionId, SubpartitionId subpartitionId);
 
 private:
     // TODO decide whethere unique_ptr is better here
