@@ -1,4 +1,6 @@
 #include <Network/ZmqServer.hpp>
+#include <Network/NetworkMessage.hpp>
+#include <Util/Logger.hpp>
 
 #define TO_RAW_ZMQ_SOCKET static_cast<void*>
 
@@ -102,12 +104,52 @@ void ZmqServer::handler_event_loop() {
     try {
         dispatcher_socket.connect(dispatcherPipe);
         while (keepRunning) {
-
+            zmq::message_t identityEnvelope;
+            zmq::message_t headerEnvelope;
+            dispatcher_socket.recv(identityEnvelope);
+            dispatcher_socket.recv(headerEnvelope);
+            auto msgHeader = headerEnvelope.data<Messages::MessageHeader>();
+            if (msgHeader->getMagicNumber() != Messages::NES_NETWORK_MAGIC_NUMBER) {
+                // TODO handle error -- need to discuss how we handle errors on the node engine
+                NES_ERROR("[ZmqServer] stream is corrupted");
+            }
+            switch (msgHeader->getMsgType()) {
+                case Messages::kClientAnnouncement: {
+                    zmq::message_t outIdentityEnvelope;
+                    zmq::message_t clientAnnouncementEnvelope;
+                    dispatcher_socket.recv(clientAnnouncementEnvelope);
+                    auto serverReadyMsg = protocol.onClientAnnoucement(clientAnnouncementEnvelope.data<Messages::ClientAnnounceMessage>());
+                    Messages::MessageHeader sendHeader(Messages::kServerReady, sizeof(Messages::ServerReadyMessage));
+                    zmq::message_t msgHeaderEnvelope(&sendHeader, sizeof(Messages::MessageHeader));
+                    zmq::message_t msgServerReadyEnvelope(&serverReadyMsg, sizeof(Messages::ServerReadyMessage));
+                    outIdentityEnvelope.copy(identityEnvelope);
+                    dispatcher_socket.send(outIdentityEnvelope, zmq::send_flags::sndmore);
+                    dispatcher_socket.send(msgHeaderEnvelope, zmq::send_flags::sndmore);
+                    dispatcher_socket.send(msgServerReadyEnvelope);
+                    break;
+                }
+                case Messages::kDataBuffer : {
+                    break;
+                }
+                case Messages::kErrorMessage: {
+                    break;
+                }
+                case Messages::kEndOfStream: {
+                    break;
+                }
+                default: {
+                    NES_ERROR("[ZmqServer] received unknown message type");
+                    // TODO propagate error maybe?
+                }
+            }
         }
-    } catch (...) {
-        // TODO do something here?
-        auto eptr = std::current_exception();
-        errorPromise.set_exception(eptr);
+    } catch (zmq::error_t& err) {
+        if (err.num() == ETERM) {
+            NES_DEBUG("Context closed");
+        } else {
+            NES_ERROR("[ZmqServer] event loop got " << err.what());
+            errorPromise.set_exception(std::current_exception());
+        }
     }
 }
 

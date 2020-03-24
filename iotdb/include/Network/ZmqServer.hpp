@@ -2,6 +2,7 @@
 #define NES_ZMQSERVER_HPP
 
 #include "NetworkCommon.hpp"
+#include "ExchangeProtocol.hpp"
 #include <zmq.hpp>
 #include <thread>
 #include <memory>
@@ -12,6 +13,7 @@
 namespace NES {
 namespace Network {
 
+
 class ZmqServer : public boost::noncopyable {
 private:
     static constexpr const char* dispatcherPipe = "inproc://dispatcher";
@@ -21,6 +23,10 @@ public:
     ~ZmqServer();
 
     void start();
+
+    std::shared_ptr<zmq::context_t> getContext() {
+        return zmqContext;
+    }
 
     bool isRunning() const {
         return _isRunning;
@@ -43,6 +49,8 @@ private:
 
     std::atomic_bool _isRunning;
     std::atomic_bool keepRunning;
+
+    ExchangeProtocol protocol;
 
     // error management
     std::promise<bool> errorPromise;

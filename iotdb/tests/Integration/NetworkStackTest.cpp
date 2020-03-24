@@ -43,19 +43,30 @@ TEST_F(NetworkStackTest, dispatcherMustStartAndStop) {
     ASSERT_EQ(true, true);
 }
 
-TEST_F(NetworkStackTest, singleDispatcherTest) {
+TEST_F(NetworkStackTest, startCloseChannel) {
     try {
         NetworkDispatcher netDispatcher("127.0.0.1", 31337);
 
         std::thread t ([&netDispatcher] {
-            netDispatcher.registerConsumer(0, 0, 0, 0, []() {
+            std::promise<bool> completed;
+            netDispatcher.registerSubpartitionConsumer(0, 0, 0, 0, [&completed]() {
+                // check that buffer content is correct
+                try {
 
+                } catch (...) {
+                    completed.set_exception(std::current_exception());
+                }
+                completed.set_value(true);
             });
+            auto v = completed.get_future().get();
+            ASSERT_EQ(v, true);
         });
 
-        auto senderChannel = netDispatcher.registerProducer(0, 0, 0, 0);
+        auto senderChannel = netDispatcher.registerSubpartitionProducer(0, 0, 0, 0);
 
-        senderChannel.sendBuffer();
+        senderChannel.close();
+
+        t.join();
 
     } catch (...) {
         ASSERT_EQ(true, false);

@@ -1,5 +1,6 @@
 #include <Network/NetworkDispatcher.hpp>
 #include <Network/ZmqServer.hpp>
+#include <Network/OutputChannel.hpp>
 
 namespace NES {
 
@@ -10,16 +11,12 @@ NetworkDispatcher::NetworkDispatcher(const std::string& hostname, uint16_t port,
     server->start();
 }
 
-void NetworkDispatcher::registerPartition(QueryId queryId, OperatorId operatorId, PartitionId partitionId, SubpartitionId subpartitionId) {
-    
-}
-
-InputChannel NetworkDispatcher::getInputChannel(QueryId queryId, OperatorId operatorId, PartitionId partitionId, SubpartitionId subpartitionId) {
+void NetworkDispatcher::registerSubpartitionConsumer(QueryId queryId, OperatorId operatorId, PartitionId partitionId, SubpartitionId subpartitionId, std::function<void ()> consumerCallback) {
 
 }
 
-OutputChannel NetworkDispatcher::getOutputChannel(QueryId queryId, OperatorId operatorId, PartitionId partitionId, SubpartitionId subpartitionId) {}
-
+OutputChannel NetworkDispatcher::registerSubpartitionProducer(QueryId queryId, OperatorId operatorId, PartitionId partitionId, SubpartitionId subpartitionId) {
+    return OutputChannel{server->getContext(), queryId, operatorId, partitionId, subpartitionId, "tcp://127.0.0.1:31337"};
 }
-
+}
 }
