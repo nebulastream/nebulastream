@@ -7,10 +7,16 @@ ConstantValueExpressionNode::ConstantValueExpressionNode(const ValueTypePtr cons
     constantValue(constantValue) {};
 
 
-bool ConstantValueExpressionNode::equal(const NodePtr rhs) const {}
+bool ConstantValueExpressionNode::equal(const NodePtr rhs) const {
+    return false;
+}
 
 const std::string ConstantValueExpressionNode::toString() const {
     return "ConstantValueNode()";
+}
+
+ExpressionNodePtr ConstantValueExpressionNode::create(const ValueTypePtr constantValue){
+    return std::make_shared<ConstantValueExpressionNode>(constantValue);
 }
 
 }

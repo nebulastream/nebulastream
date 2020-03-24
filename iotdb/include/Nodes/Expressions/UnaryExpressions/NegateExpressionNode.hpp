@@ -2,15 +2,16 @@
 #define NES_INCLUDE_NODES_EXPRESSIONS_BINARYEXPRESSIONS_EQUALSEXPRESSIONNODE_HPP_
 #include <Nodes/Expressions/UnaryExpressions/LogicalUnaryExpressionNode.hpp>
 namespace NES {
-class NegateExpressionNode : LogicalUnaryExpressionNode {
+class NegateExpressionNode : public LogicalUnaryExpressionNode {
   public:
-    NegateExpressionNode(const ExpressionNodePtr child);
+    NegateExpressionNode();
     ~NegateExpressionNode() = default;
+
+    static ExpressionNodePtr create(const ExpressionNodePtr child);
 
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
 };
-std::shared_ptr<NegateExpressionNode> createNegateNode(ExpressionNodePtr child);
 }
 
 #endif //NES_INCLUDE_NODES_EXPRESSIONS_BINARYEXPRESSIONS_EQUALSEXPRESSIONNODE_HPP_

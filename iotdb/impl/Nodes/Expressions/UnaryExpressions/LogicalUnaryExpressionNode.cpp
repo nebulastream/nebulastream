@@ -3,8 +3,8 @@
 
 namespace NES {
 
-LogicalUnaryExpressionNode::LogicalUnaryExpressionNode(const ExpressionNodePtr child) :
-    UnaryExpressionNode(createDataType(BasicType::BOOLEAN), child) {
+LogicalUnaryExpressionNode::LogicalUnaryExpressionNode() :
+    UnaryExpressionNode(createDataType(BasicType::BOOLEAN)) {
 }
 
 }
