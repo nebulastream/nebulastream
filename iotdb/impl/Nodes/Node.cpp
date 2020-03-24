@@ -12,6 +12,22 @@ Node::~Node() {
 
 }
 
+bool Node::addChildWithEqual(const NodePtr newNode) {
+    if (newNode.get() == this) {
+        NES_DEBUG("Node: Added node to its self, ignore this operation.");
+        return false;
+    }
+    // add the node to the children
+    children.push_back(newNode);
+
+    // add the current node as a parents to the newNode
+    if (!contains(newNode->parents, shared_from_this())) {
+        newNode->parents.push_back(shared_from_this());
+    }
+    return true;
+}
+
+
 bool Node::addChild(const NodePtr newNode) {
     if (newNode.get() == this) {
         NES_DEBUG("Node: Added node to its self, ignore this operation.");

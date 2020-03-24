@@ -7,16 +7,19 @@
 
 namespace NES {
 
+class ExpressionNode;
+typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
+
 class FilterLogicalOperatorNode : public LogicalOperatorNode {
   public:
-    explicit FilterLogicalOperatorNode(const PredicatePtr&);
+    explicit FilterLogicalOperatorNode(const ExpressionNodePtr);
     ~FilterLogicalOperatorNode() = default;
 
     /**
      * @brief get the filter predicate.
      * @return PredicatePtr
      */
-    PredicatePtr getPredicate();
+    ExpressionNodePtr getPredicate();
 
     /**
      * @brief check if two operators have the same filter predicate.
@@ -26,7 +29,7 @@ class FilterLogicalOperatorNode : public LogicalOperatorNode {
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
   private:
-    PredicatePtr predicate;
+    ExpressionNodePtr predicate;
 
 };
 typedef std::shared_ptr<FilterLogicalOperatorNode> FilterLogicalOperatorNodePtr;

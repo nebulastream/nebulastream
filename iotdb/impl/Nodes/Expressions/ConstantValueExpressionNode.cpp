@@ -8,6 +8,10 @@ ConstantValueExpressionNode::ConstantValueExpressionNode(const ValueTypePtr cons
 
 
 bool ConstantValueExpressionNode::equal(const NodePtr rhs) const {
+    if(rhs->instanceOf<ConstantValueExpressionNode>()){
+        auto otherConstantValueNode = rhs->as<ConstantValueExpressionNode>();
+        return otherConstantValueNode->constantValue.get() == constantValue.get();
+    };
     return false;
 }
 

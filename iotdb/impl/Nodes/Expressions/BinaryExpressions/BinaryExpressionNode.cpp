@@ -4,8 +4,8 @@ namespace NES {
 BinaryExpressionNode::BinaryExpressionNode(DataTypePtr stamp) : ExpressionNode(stamp) {}
 
 void BinaryExpressionNode::setChildren(const ExpressionNodePtr left, const ExpressionNodePtr right) {
-    addChild(left);
-    addChild(right);
+    addChildWithEqual(left);
+    addChildWithEqual(right);
 }
 
 ExpressionNodePtr BinaryExpressionNode::getLeft() const {

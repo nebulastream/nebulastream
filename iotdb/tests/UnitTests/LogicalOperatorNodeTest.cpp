@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <iostream>
+#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/SourceLogicalOperatorNode.hpp>
 #include <Util/Logger.hpp>
@@ -20,13 +21,14 @@ public:
         sPtr = StreamCatalog::instance().getStreamForLogicalStreamOrThrowException("default_logical");
         source = std::make_shared<DefaultSource>(sPtr->getSchema(),0,0);
 
-        pred1 = createPredicate((*sPtr.get())["value"]!=1);
-        pred2 = createPredicate((*sPtr.get())["value"]!=2);
-        pred3 = createPredicate((*sPtr.get())["value"]!=3);
-        pred4 = createPredicate((*sPtr.get())["value"]!=4);
-        pred5 = createPredicate((*sPtr.get())["value"]!=5);
-        pred6 = createPredicate((*sPtr.get())["value"]!=6);
-        pred7 = createPredicate((*sPtr.get())["value"]!=7);
+        pred1 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "1"));
+        pred2 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "2"));
+        pred3 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "3"));
+        pred4 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "4"));
+        pred5 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "5"));
+        pred6 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "6"));
+        pred7 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "7"));
+
 
         sourceOp = createSourceLogicalOperatorNode(source);
         filterOp1 = createFilterLogicalOperatorNode(pred1);
@@ -62,7 +64,7 @@ protected:
     StreamPtr sPtr;
     DataSourcePtr source;
 
-    PredicatePtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;
+    ExpressionNodePtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;
     NodePtr sourceOp;
 
     NodePtr filterOp1, filterOp2, filterOp3, filterOp4, filterOp5, filterOp6, filterOp7;
