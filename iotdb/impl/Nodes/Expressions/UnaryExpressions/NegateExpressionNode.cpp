@@ -3,12 +3,12 @@
 
 namespace NES {
 
-NegateExpressionNode::NegateExpressionNode() :
-    LogicalUnaryExpressionNode() {
-}
+NegateExpressionNode::NegateExpressionNode() : LogicalUnaryExpressionNode() {}
+
 bool NegateExpressionNode::equal(const NodePtr rhs) const {
-    return false;
+    return true;
 }
+
 const std::string NegateExpressionNode::toString() const {
     return "NegateNode()";
 }
