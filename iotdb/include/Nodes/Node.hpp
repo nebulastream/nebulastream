@@ -18,16 +18,16 @@ class Node : public std::enable_shared_from_this<Node> {
 
     /**
      * @brief adds a newNode as a child to the current newNode.
-     * Duplicates inside the children are not ignored.
-     * A newNode cannot be in its own child.
+     * @note Duplicates inside the children are not ignored.
+     * @note A newNode cannot be in its own child.
      * @param newNode
      */
     bool addChildWithEqual(const NodePtr newNode);
 
     /**
      * @brief adds a newNode as a child to the current newNode.
-     * Duplicates inside the children are ignored.
-     * A newNode cannot be in its own child.
+     * @note Duplicates inside the children are ignored.
+     * @note  A newNode cannot be in its own child.
      * @param newNode
      */
     bool addChild(const NodePtr newNode);

@@ -21,9 +21,7 @@ bool Node::addChildWithEqual(const NodePtr newNode) {
     children.push_back(newNode);
 
     // add the current node as a parents to the newNode
-    if (!contains(newNode->parents, shared_from_this())) {
-        newNode->parents.push_back(shared_from_this());
-    }
+    newNode->parents.push_back(shared_from_this());
     return true;
 }
 

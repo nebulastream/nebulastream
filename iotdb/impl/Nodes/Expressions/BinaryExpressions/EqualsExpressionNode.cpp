@@ -15,6 +15,5 @@ bool EqualsExpressionNode::equal(const NodePtr rhs) const {
 const std::string EqualsExpressionNode::toString() const {
     return "EqualsNode()";
 }
-
 }
 

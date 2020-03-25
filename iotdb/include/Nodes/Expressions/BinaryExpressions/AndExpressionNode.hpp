@@ -4,14 +4,14 @@
 namespace NES {
 
 /**
- * @brief This node represents an and combination between the two children.
+ * @brief This node represents an AND combination between the two children.
  */
 class AndExpressionNode : public LogicalBinaryExpressionNode {
   public:
     AndExpressionNode();
     ~AndExpressionNode() = default;
     /**
-    * @brief Create a new and expression
+    * @brief Create a new AND expression
     */
     static ExpressionNodePtr create(const ExpressionNodePtr left, const ExpressionNodePtr right);
     bool equal(const NodePtr rhs) const override;
