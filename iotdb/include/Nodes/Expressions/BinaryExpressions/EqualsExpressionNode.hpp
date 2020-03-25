@@ -16,9 +16,7 @@ class EqualsExpressionNode : public LogicalBinaryExpressionNode {
     static ExpressionNodePtr create(const ExpressionNodePtr left, const ExpressionNodePtr right);
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
-
 };
-
 }
 
 #endif //NES_INCLUDE_NODES_EXPRESSIONS_BINARYEXPRESSIONS_EQUALSEXPRESSIONNODE_HPP_
