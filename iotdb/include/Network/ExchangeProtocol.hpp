@@ -1,6 +1,7 @@
 #ifndef NES_EXCHANGEPROTOCOL_HPP
 #define NES_EXCHANGEPROTOCOL_HPP
 
+#include <functional>
 #include <Network/NetworkMessage.hpp>
 
 namespace NES {

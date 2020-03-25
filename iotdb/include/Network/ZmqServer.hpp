@@ -11,6 +11,7 @@
 #include <boost/core/noncopyable.hpp>
 
 namespace NES {
+class ThreadBarrier;
 namespace Network {
 
 
@@ -34,8 +35,8 @@ public:
 
 private:
 
-    void frontend_loop(uint16_t numHandlerThreads, std::promise<bool>& promise);
-    void handler_event_loop();
+    void frontendLoop(uint16_t numHandlerThreads, std::promise<bool>& promise);
+    void handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier);
 
 private:
 
