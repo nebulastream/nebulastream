@@ -45,6 +45,8 @@ namespace Messages {
 
     class ClientAnnounceMessage {
     public:
+        static constexpr MessageType MESSAGE_TYPE = kClientAnnouncement;
+
         explicit ClientAnnounceMessage(QueryId queryId,
                                        OperatorId operatorId,
                                        PartitionId partitionId,
@@ -78,6 +80,8 @@ namespace Messages {
 
     class ServerReadyMessage {
     public:
+        static constexpr MessageType MESSAGE_TYPE = kServerReady;
+
         explicit ServerReadyMessage(
                 QueryId queryId,
                 OperatorId operatorId,
@@ -114,6 +118,7 @@ namespace Messages {
 
     class DataBufferMessage {
     public:
+        static constexpr MessageType MESSAGE_TYPE = kDataBuffer;
     private:
         const QueryId queryId;
         const OperatorId operatorId;
@@ -125,6 +130,7 @@ namespace Messages {
 
     class EndOfStreamMessage {
     public:
+        static constexpr MessageType MESSAGE_TYPE = kEndOfStream;
         explicit EndOfStreamMessage(
             QueryId queryId,
             OperatorId operatorId,
@@ -143,6 +149,7 @@ namespace Messages {
 
     class ErroMessage {
     public:
+        static constexpr MessageType MESSAGE_TYPE = kErrorMessage;
     private:
     };
 

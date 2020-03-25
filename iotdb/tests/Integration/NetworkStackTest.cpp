@@ -21,7 +21,6 @@ public:
     }
 };
 
-
 TEST_F(NetworkStackTest, serverMustStartAndStop) {
     try {
         ExchangeProtocol exchangeProtocol([](){}, [](){}, [](std::exception_ptr ex){});
