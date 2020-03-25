@@ -8,6 +8,13 @@
 namespace NES {
 namespace Network {
 
+    /**
+     * Send a message MessageType(args) via zmqSocket
+     * @tparam MessageType
+     * @tparam Arguments
+     * @param zmqSocket
+     * @param args
+     */
     template <typename MessageType, typename... Arguments>
     void sendMessage(zmq::socket_t& zmqSocket, Arguments&&... args) {
         Messages::MessageHeader header(MessageType::MESSAGE_TYPE, sizeof(MessageType));
@@ -18,6 +25,13 @@ namespace Network {
         zmqSocket.send(sendMsg);
     }
 
+    /**
+     * Send a zmqIdentity followed by the message MessageType(args) via zmqSocket
+     * @tparam MessageType
+     * @tparam Arguments
+     * @param zmqSocket
+     * @param args
+     */
     template <typename MessageType, typename... Arguments>
     void sendMessageWithIdentity(zmq::socket_t& zmqSocket, zmq::message_t& zmqIdentity, Arguments&&... args) {
         Messages::MessageHeader header(MessageType::MESSAGE_TYPE, sizeof(MessageType));

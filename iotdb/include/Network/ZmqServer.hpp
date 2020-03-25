@@ -19,16 +19,34 @@ class ZmqServer : public boost::noncopyable {
 private:
     static constexpr const char* dispatcherPipe = "inproc://dispatcher";
 public:
+    /**
+     * Create a ZMQ server on hostname:port with numNetworkThreads i/o threads and a set of callbacks in exchangeProtocol
+     * @param hostname
+     * @param port
+     * @param numNetworkThreads
+     * @param exchangeProtocol
+     */
     explicit ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNetworkThreads, ExchangeProtocol& exchangeProtocol);
 
     ~ZmqServer();
 
+    /**
+     * Start the server. It throws exceptions if the starting fails.
+     */
     void start();
 
+    /**
+     * Get the global zmq context
+     * @return
+     */
     std::shared_ptr<zmq::context_t> getContext() {
         return zmqContext;
     }
 
+    /**
+     * Checks if the server is running
+     * @return
+     */
     bool isRunning() const {
         return _isRunning;
     }

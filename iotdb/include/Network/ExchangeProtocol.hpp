@@ -16,12 +16,27 @@ class ExchangeProtocol {
         onExceptionCb(std::move(onException)) {
     }
 
+    /**
+     *
+     * @param clientAnnounceMessage
+     * @return
+     */
     Messages::ServerReadyMessage onClientAnnoucement(Messages::ClientAnnounceMessage* clientAnnounceMessage);
 
+    /**
+     *
+     */
     void onBuffer();
 
+    /**
+     *
+     * @param ex
+     */
     void onError(std::exception_ptr ex);
 
+    /**
+     *
+     */
     void onEndOfStream();
 
   private:
