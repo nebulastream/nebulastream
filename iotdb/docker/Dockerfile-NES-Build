@@ -1,11 +1,32 @@
-FROM ubuntu:18.04
+FROM ubuntu:19.10
 
-RUN apt-get update -y && apt-get install -y cmake clang llvm-dev git binutils-dev libdw-dev libzmq3-dev libboost-all-dev liblog4cxx-dev libcpprest-dev libssl-dev clang-format librdkafka1 librdkafka++1 librdkafka-dev wget
-RUN git clone https://github.com/actor-framework/actor-framework.git
-RUN cd actor-framework && git checkout 0.17.3 && bash configure && cd build && make && make install
-RUN wget https://github.com/mfontanini/cppkafka/archive/v0.3.1.tar.gz -O cppkafka-0.3.1.tar.gz && tar -xzf cppkafka-0.3.1.tar.gz && mkdir -p cppkafka-0.3.1/build && cd cppkafka-0.3.1/build && cmake -DCPPKAFKA_BUILD_SHARED=ON -DCPPKAFKA_DISABLE_TESTS=ON -DCPPKAFKA_DISABLE_EXAMPLES=ON -DCPPKAFKA_RDKAFKA_STATIC_LIB=OFF .. && make -j -w && make install
-RUN apt-get remove -y git && apt-get remove -y wget
-RUN rm -rf actor-framework cppkafka-0.3.1.tar.gz cppkafka-0.3.1
+RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
+  binutils-dev \
+  build-essential \
+  cmake \
+  clang \
+  clang-format \
+  git \
+  libboost-all-dev \
+  libcpprest-dev \
+  libdw-dev \
+  liblog4cxx-dev \
+  librdkafka1 \
+  librdkafka++1 \
+  librdkafka-dev \
+  libssl-dev \
+  libzmq3-dev \
+  llvm-dev \
+  wget
+
+RUN git clone --single-branch --branch 0.17.3 https://github.com/actor-framework/actor-framework.git && \
+    cd actor-framework && git checkout  && bash configure && cd build && make && make install && \
+    cd ${HOME} && git clone --single-branch --branch v0.3.1 https://github.com/mfontanini/cppkafka.git && \
+    cd cppkafka && mkdir -p build && cd build && \
+    cmake -DCPPKAFKA_BUILD_SHARED=ON -DCPPKAFKA_DISABLE_TESTS=ON -DCPPKAFKA_DISABLE_EXAMPLES=ON -DCPPKAFKA_RDKAFKA_STATIC_LIB=OFF .. && \
+    make -j -w && make install && \
+    apt-get remove -qq git wget && \
+    cd ${HOME} && rm -rf actor-framework cppkafka*
 
 ADD ./scripts/entrypoint-nes-build.sh /entrypoint.sh
 
