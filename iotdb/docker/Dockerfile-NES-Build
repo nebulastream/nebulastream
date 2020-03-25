@@ -16,16 +16,15 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   librdkafka-dev \
   libssl-dev \
   libzmq3-dev \
-  llvm-dev \
-  wget
+  llvm-dev
 
 RUN git clone --single-branch --branch 0.17.3 https://github.com/actor-framework/actor-framework.git && \
-    cd actor-framework && git checkout  && bash configure && cd build && make && make install && \
+    cd actor-framework && bash configure && cd build && make && make install && \
     cd ${HOME} && git clone --single-branch --branch v0.3.1 https://github.com/mfontanini/cppkafka.git && \
     cd cppkafka && mkdir -p build && cd build && \
     cmake -DCPPKAFKA_BUILD_SHARED=ON -DCPPKAFKA_DISABLE_TESTS=ON -DCPPKAFKA_DISABLE_EXAMPLES=ON -DCPPKAFKA_RDKAFKA_STATIC_LIB=OFF .. && \
     make -j -w && make install && \
-    apt-get remove -qq git wget && \
+    apt-get remove -qq git && \
     cd ${HOME} && rm -rf actor-framework cppkafka*
 
 ADD ./scripts/entrypoint-nes-build.sh /entrypoint.sh
