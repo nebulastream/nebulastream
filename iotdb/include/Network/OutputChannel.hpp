@@ -43,6 +43,9 @@ class OutputChannel : public boost::noncopyable {
 
     void onError(/** error info **/);
 
+    /**
+     * Close the outchannel and send EndOfStream message to consumer
+     */
     void close();
 
   private:
