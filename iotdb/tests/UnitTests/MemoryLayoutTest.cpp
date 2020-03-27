@@ -4,7 +4,7 @@
 #include <iostream>
 #include <thread>
 #include <gtest/gtest.h>
-#include <Util/Logger.hpp>
+//#include <Util/Logger.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <API/Schema.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
@@ -44,6 +44,7 @@ TEST_F(MemoryLayoutTest, rowLayoutTestInt) {
         value = layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/2)->read(buf);
         ASSERT_EQ(value, recordIndex);
     }
+    BufferManager::instance().releaseBuffer(buf);
 }
 
 TEST_F(MemoryLayoutTest, rowLayoutTestArray) {
