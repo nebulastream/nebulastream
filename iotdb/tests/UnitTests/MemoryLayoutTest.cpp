@@ -44,7 +44,6 @@ TEST_F(MemoryLayoutTest, rowLayoutTestInt) {
         value = layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/2)->read(buf);
         ASSERT_EQ(value, recordIndex);
     }
-    BufferManager::instance().releaseBuffer(buf);
 }
 
 TEST_F(MemoryLayoutTest, rowLayoutTestArray) {
