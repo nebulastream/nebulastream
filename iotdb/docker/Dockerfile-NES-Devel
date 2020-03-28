@@ -1,7 +1,6 @@
 FROM ubuntu:19.04
 
 RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
-    binutils-dev \
     build-essential \
     cmake \
     clang \
@@ -11,6 +10,7 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
     gcc \
     libboost-all-dev \
     libglib2.0-0 \
+    libglib2.0-dev \
     libcpprest-dev \
     libdw-dev \
     liblog4cxx-dev \

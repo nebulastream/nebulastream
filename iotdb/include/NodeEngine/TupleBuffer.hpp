@@ -39,6 +39,13 @@ class TupleBuffer {
    */
   TupleBuffer& operator=(const TupleBuffer&);
 
+  TupleBuffer(const TupleBuffer& other) {
+      *this = other;
+  }
+
+  TupleBuffer(TupleBuffer&&) = delete;
+  TupleBuffer& operator=(TupleBuffer&&) = delete;
+
   /**
    * @brief Explicit copy method for tuple buffer using TupleBufferPtr
    * @param TupleBufferPtr of the buffer where we copy from into this buffer
