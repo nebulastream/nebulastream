@@ -17,7 +17,7 @@ class BufferManagerTest : public testing::Test {
   static void SetUpTestCase() {
     NES::setupLogging("BufferManagerTest.log", NES::LOG_DEBUG);
     NES_INFO("Setup BufferMangerTest test class.");
-    BufferManager::instance().setNumberOfBuffers(10);
+    BufferManager::instance().resizeFixBufferCnt(10);
   }
   static void TearDownTestCase() {
     std::cout << "Tear down BufferManager test class." << std::endl;
@@ -33,8 +33,8 @@ TEST_F(BufferManagerTest, add_and_remove_Buffer_simple) {
   ASSERT_EQ(buffers_count, buffers_managed);
   ASSERT_EQ(buffers_free, buffers_managed);
 
-  BufferManager::instance().addOneBufferWithDefaultSize();
-  TupleBufferPtr buffer = BufferManager::instance().getBuffer();
+  BufferManager::instance().addOneBufferWithFixSize();
+  TupleBufferPtr buffer = BufferManager::instance().getFixSizeBuffer();
 
   buffers_count = BufferManager::instance().getNumberOfBuffers();
   buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
@@ -60,7 +60,7 @@ TEST_F(BufferManagerTest, get_and_release_Buffer_simple) {
   ASSERT_EQ(buffers_free, buffers_managed);
 
   for (size_t i = 1; i <= BufferManager::instance().getNumberOfBuffers(); ++i) {
-    TupleBufferPtr buf = BufferManager::instance().getBuffer();
+    TupleBufferPtr buf = BufferManager::instance().getFixSizeBuffer();
     size_t expected = 0;
     ASSERT_TRUE(buf->getBuffer() != nullptr);
     ASSERT_EQ(buf->getBufferSizeInBytes(), buffer_size);
@@ -100,14 +100,14 @@ TEST_F(BufferManagerTest, resize_buffer_pool) {
   ASSERT_EQ(buffers_count, buffers_managed);
   ASSERT_EQ(buffers_free, buffers_managed);
 
-  BufferManager::instance().setNumberOfBuffers(5);
+  BufferManager::instance().resizeFixBufferCnt(5);
   buffers_count = BufferManager::instance().getNumberOfBuffers();
   buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
   size_t expected = 5;
   ASSERT_EQ(buffers_count, expected);
   ASSERT_EQ(buffers_free, expected);
 
-  BufferManager::instance().setNumberOfBuffers(buffers_managed);
+  BufferManager::instance().resizeFixBufferCnt(buffers_managed);
   buffers_count = BufferManager::instance().getNumberOfBuffers();
   buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
   ASSERT_EQ(buffers_count, buffers_managed);
@@ -120,13 +120,13 @@ TEST_F(BufferManagerTest, resize_buffer_size) {
   ASSERT_EQ(buffers_count, buffers_managed);
   ASSERT_EQ(buffers_free, buffers_managed);
 
-  BufferManager::instance().setBufferSize(buffer_size * 2);
-  TupleBufferPtr buf = BufferManager::instance().getBuffer();
+  BufferManager::instance().resizeFixBufferSize(buffer_size * 2);
+  TupleBufferPtr buf = BufferManager::instance().getFixSizeBuffer();
   ASSERT_EQ(buf->getBufferSizeInBytes(), 2 * buffer_size);
   BufferManager::instance().releaseBuffer(buf);
 
-  BufferManager::instance().setBufferSize(buffer_size);
-  buf = BufferManager::instance().getBuffer();
+  BufferManager::instance().resizeFixBufferSize(buffer_size);
+  buf = BufferManager::instance().getFixSizeBuffer();
   ASSERT_EQ(buf->getBufferSizeInBytes(), buffer_size);
   BufferManager::instance().releaseBuffer(buf);
 
@@ -138,11 +138,11 @@ TEST_F(BufferManagerTest, resize_buffer_size) {
 }
 
 void run(TupleBufferPtr *ptr) {
-  *ptr = BufferManager::instance().getBuffer();
+  *ptr = BufferManager::instance().getFixSizeBuffer();
 }
 
 void run_and_release(size_t id, size_t sleeptime) {
-  TupleBufferPtr ptr = BufferManager::instance().getBuffer();
+  TupleBufferPtr ptr = BufferManager::instance().getFixSizeBuffer();
   std::this_thread::sleep_for(std::chrono::milliseconds(sleeptime));
   BufferManager::instance().releaseBuffer(ptr);
 }
@@ -156,7 +156,7 @@ TEST_F(BufferManagerTest, getBuffer_afterRelease) {
   ASSERT_EQ(buffers_free, buffers_managed);
 
   for (size_t i = 0; i < buffers_count; ++i) {
-    buffers.push_back(BufferManager::instance().getBuffer());
+    buffers.push_back(BufferManager::instance().getFixSizeBuffer());
   }
 
   TupleBufferPtr t;
@@ -220,7 +220,7 @@ TEST_F(BufferManagerTest, getBuffer_race) {
     ASSERT_EQ(buffers_free, buffers_managed);
 
     for (size_t j = 0; j < buffers_count; ++j) {
-      buffers.push_back(BufferManager::instance().getBuffer());
+      buffers.push_back(BufferManager::instance().getFixSizeBuffer());
     }
 
     TupleBufferPtr buffer_threads[buffers_managed];

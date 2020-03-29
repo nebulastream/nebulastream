@@ -11,13 +11,15 @@ using namespace std;
 namespace NES {
 
 TupleBuffer::TupleBuffer(void *_buffer, const size_t _buffer_size_bytes,
-                         const uint32_t _tuple_size_bytes,
-                         const uint32_t _num_tuples)
+                         const uint32_t _tupleSizeBytes,
+                         const uint32_t _numTuples,
+                         bool fixSizeBuffer)
     :
     buffer(_buffer),
     bufferSizeInBytes(_buffer_size_bytes),
-    tupleSizeInBytes(_tuple_size_bytes),
-    numberOfTuples(_num_tuples),
+    tupleSizeInBytes(_tupleSizeBytes),
+    numberOfTuples(_numTuples),
+    fixSizeBuffer(fixSizeBuffer),
     useCnt(0) {
 }
 

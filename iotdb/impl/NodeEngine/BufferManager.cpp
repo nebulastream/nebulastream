@@ -16,13 +16,13 @@ BufferManager::BufferManager()
     maxNumberOfRetry(10000) {
 
   size_t initalBufferCnt = 1000;
-  bufferSizeInByte = 4 * 1024;
+  currentBufferSize = 4 * 1024;
   NES_DEBUG(
-      "BufferManager: Set maximum number of buffer to " << initalBufferCnt << " and a bufferSize of KB:" << bufferSizeInByte / 1024)
+      "BufferManager: Set maximum number of buffer to " << initalBufferCnt << " and a bufferSize of KB:" << currentBufferSize / 1024)
 
   NES_DEBUG("BufferManager: initialize buffers")
   for (size_t i = 0; i < initalBufferCnt; i++) {
-    addOneBufferWithDefaultSize();
+    addOneBufferWithFixSize();
   }
 }
 
@@ -30,10 +30,10 @@ BufferManager::~BufferManager() {
   NES_DEBUG("BufferManager: Enter Destructor of BufferManager.")
 
   // Release memory.
-  for (auto const &buffer_pool_entry : buffer_pool) {
+  for (auto const& buffer_pool_entry : fixSizeBufferPool) {
     delete[] (char*) buffer_pool_entry.first->getBuffer();
   }
-  buffer_pool.clear();
+  fixSizeBufferPool.clear();
 }
 
 BufferManager& BufferManager::instance() {
@@ -41,80 +41,102 @@ BufferManager& BufferManager::instance() {
   return instance;
 }
 
-void BufferManager::setNumberOfBuffers(size_t n) {
-//TODO: this should be somehow be protected
-
-//delete all existing buffers
-  for (auto &entry : buffer_pool) {
-    delete[] (char*) entry.first->getBuffer();
-  }
-  buffer_pool.clear();
-
-  //add n new buffer
-  for (size_t i = 0; i < n; i++) {
-    addOneBufferWithDefaultSize();
-  }
-}
-
-void BufferManager::setBufferSize(size_t size) {
-  //TODO: this should be somehow be protected
-  size_t tmpBufferCnt = buffer_pool.size();
+void BufferManager::clearFixBufferPool() {
   //delete all existing buffers
-  for (auto &entry : buffer_pool) {
+  for (auto& entry : fixSizeBufferPool) {
+    //TODO: we have to make sure that no buffer is currently used
+    assert(entry.second == false);
     delete[] (char*) entry.first->getBuffer();
   }
-  buffer_pool.clear();
+  fixSizeBufferPool.clear();
+}
 
-  //recreate buffer with new size
-  bufferSizeInByte = size;
-  for (size_t i = 0; i < tmpBufferCnt; i++) {
-    addOneBufferWithDefaultSize();
+void BufferManager::resizeFixBufferSize(size_t newBufferSizeInByte) {
+  std::unique_lock<std::mutex> lock(mutex);
+  size_t bufferCnt = fixSizeBufferPool.size();
+  clearFixBufferPool();
+
+  currentBufferSize = newBufferSizeInByte;
+  for (size_t i = 0; i < bufferCnt; i++) {
+    addOneBufferWithFixSize();
   }
 }
 
-size_t BufferManager::getBufferSize() {
-  return bufferSizeInByte;
+void BufferManager::resizeFixBufferCnt(size_t newBufferCnt) {
+  std::unique_lock<std::mutex> lock(mutex);
+  clearFixBufferPool();
+
+  for (size_t i = 0; i < newBufferCnt; i++) {
+    addOneBufferWithFixSize();
+  }
 }
 
-void BufferManager::addOneBufferWithDefaultSize() {
+size_t BufferManager::getFixBufferSize() {
+  return currentBufferSize;
+}
+
+void BufferManager::addOneBufferWithFixSize() {
   std::unique_lock<std::mutex> lock(mutex);
 
-  char *buffer = new char[bufferSizeInByte];
+  char* buffer = new char[currentBufferSize];
+  TupleBufferPtr buff = std::make_shared<TupleBuffer>(buffer, currentBufferSize,
+  /**tupleSizeBytes*/0, /**numTuples*/
+                                                      0, /**fixSizeBuffer*/
+                                                      true);
+  fixSizeBufferPool.emplace(std::piecewise_construct,
+                            std::forward_as_tuple(buff),
+                            std::forward_as_tuple(false));
+
+}
+
+void BufferManager::addOneBufferWithVarSize(size_t bufferSizeInByte) {
+  std::unique_lock<std::mutex> lock(mutex);
+
+  char* buffer = new char[bufferSizeInByte];
   TupleBufferPtr buff = std::make_shared<TupleBuffer>(buffer, bufferSizeInByte,
-                                                      0, 0);
-  buffer_pool.emplace(std::piecewise_construct, std::forward_as_tuple(buff),
-                      std::forward_as_tuple(false));
-
+  /**tupleSizeBytes*/0, /**numTuples*/
+                                                      0, /**fixSizeBuffer*/
+                                                      false);
+  varSizeBufferPool.emplace(std::piecewise_construct,
+                            std::forward_as_tuple(buff),
+                            std::forward_as_tuple(false));
 }
 
-bool BufferManager::removeBuffer(TupleBufferPtr tuple_buffer) {
+bool BufferManager::removeBuffer(TupleBufferPtr tupleBuffer) {
   std::unique_lock<std::mutex> lock(mutex);
 
-  for (auto &entry : buffer_pool) {
-    if (entry.first.get() == tuple_buffer.get()) {
+  std::map<TupleBufferPtr, /**used*/std::atomic<bool>>* buffer;
+  if (tupleBuffer->fixSizeBuffer == true) {
+    buffer = fixSizeBufferPool;
+  } else {
+    buffer = varSizeBufferPool;
+  }
+
+  for (auto& entry : buffer) {
+    if (entry.first.get() == tupleBuffer.get()) {
       if (entry.second == true) {
         NES_DEBUG(
-            "BufferManager: could not remove Buffer buffer because it is in use" << tuple_buffer)
+            "BufferManager: could not remove Buffer buffer because it is in use" << tupleBuffer)
         return false;
       }
 
       delete (char*) entry.first->getBuffer();
-      buffer_pool.erase(tuple_buffer);
-      NES_DEBUG("BufferManager: found and remove Buffer buffer" << tuple_buffer)
+      fixSizeBufferPool.erase(tupleBuffer);
+      NES_DEBUG("BufferManager: found and remove Buffer buffer" << tupleBuffer)
       return true;
     }
   }
   NES_DEBUG(
-      "BufferManager: could not remove buffer, buffer not found" << tuple_buffer)
+      "BufferManager: could not remove buffer, buffer not found" << tupleBuffer)
   return false;
 }
 
-TupleBufferPtr BufferManager::getBuffer() {
+TupleBufferPtr BufferManager::getFixSizeBuffer() {
 
   size_t tryCnt = 0;
   while (true) {
     //find a free buffer
-    for (auto &entry : buffer_pool) {
+    for (auto& entry : fixSizeBufferPool) {
       bool used = false;
       if (entry.second.compare_exchange_weak(used, true)) {
         providedBuffer++;
@@ -136,25 +158,29 @@ TupleBufferPtr BufferManager::getBuffer() {
   return nullptr;
 }
 
+TupleBufferPtr BufferManager::createVarSizeBuffer(size_t bufferSizeInByte) {
+  addOneBufferWithVarSize(bufferSizeInByte);
+}
+
 size_t BufferManager::getNumberOfBuffers() {
-  return buffer_pool.size();
+  return fixSizeBufferPool.size();
 }
 
 size_t BufferManager::getNumberOfFreeBuffers() {
   size_t result = 0;
-  for (auto &entry : buffer_pool) {
+  for (auto& entry : fixSizeBufferPool) {
     if (!entry.second)
       result++;
   }
   return result;
 }
 
-bool BufferManager::releaseBuffer(const TupleBufferPtr tuple_buffer) {
+bool BufferManager::releaseBuffer(const TupleBufferPtr tupleBuffer) {
   std::unique_lock<std::mutex> lock(mutex);
   //TODO: do we really need this or can we solve it by a cas?
 
-  for (auto &entry : buffer_pool) {
-    if (entry.first.get() == tuple_buffer.get()) {  //found entry
+  for (auto& entry : fixSizeBufferPool) {
+    if (entry.first.get() == tupleBuffer.get()) {  //found entry
       entry.second = false;
       NES_DEBUG(
           "BufferManager: found buffer with useCnt " << entry.first->getUseCnt())

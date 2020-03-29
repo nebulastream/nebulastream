@@ -25,7 +25,7 @@ class SelectionDataGenFunctor {
 
   TupleBufferPtr operator()() {
     // 10 tuples of size one
-    TupleBufferPtr buf = BufferManager::instance().getBuffer();
+    TupleBufferPtr buf = BufferManager::instance().getFixSizeBuffer();
     uint64_t tupleCnt = buf->getNumberOfTuples();
 
     assert(buf->getBuffer() != NULL);

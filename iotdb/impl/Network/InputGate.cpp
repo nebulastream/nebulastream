@@ -39,7 +39,7 @@ std::tuple<std::string, TupleBufferPtr> InputGate::receiveData() {
         NES_DEBUG("InputGate: Parsed packet " << packetHeader.toString())
         zmq::message_t tupleData;
         socket.recv(&tupleData);
-        TupleBufferPtr buffer = BufferManager::instance().getBuffer();
+        TupleBufferPtr buffer = BufferManager::instance().getFixSizeBuffer();
 
         if (!buffer || buffer->getBufferSizeInBytes() <= tupleData.size()) {
             NES_ERROR("InputGate:  " << " invalid buffer size received " << buffer->getBufferSizeInBytes()

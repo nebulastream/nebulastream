@@ -30,9 +30,8 @@ class KafkaTest : public testing::Test {
     buffer_size = num_tuples_to_process * tuple_size / num_of_buffers;
 
     ASSERT_GT(buffer_size, 0);
-    BufferManager::instance().setNumberOfBuffers(0);
-    BufferManager::instance().setNumberOfBuffers(num_of_buffers);
-    BufferManager::instance().setBufferSize(buffer_size);
+    BufferManager::instance().resizeFixBufferCnt(num_of_buffers);
+    BufferManager::instance().resizeFixBufferSize(buffer_size);
 
 
     NES_DEBUG("Setup KafkaTest")
@@ -60,7 +59,7 @@ TEST_F(KafkaTest, DISABLED_KafkaSinkSendDataInitByKafkaConfig) {
 
   const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, topic,
                                                             sinkConfig);
-  TupleBufferPtr buf = BufferManager::instance().getBuffer();
+  TupleBufferPtr buf = BufferManager::instance().getFixSizeBuffer();
   EXPECT_TRUE(kafkaSink->writeData(buf));
   BufferManager::instance().releaseBuffer(buf);
 }
@@ -69,7 +68,7 @@ TEST_F(KafkaTest, DISABLED_KafkaSinkSendDataInitByBroker) {
   const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers,
                                                             topic);
 
-  TupleBufferPtr buf = BufferManager::instance().getBuffer();
+  TupleBufferPtr buf = BufferManager::instance().getFixSizeBuffer();
   EXPECT_TRUE(kafkaSink->writeData(buf));
   BufferManager::instance().releaseBuffer(buf);
 }
@@ -84,7 +83,7 @@ TEST_F(KafkaTest, DISABLED_KafkaSinkSendNullData) {
   // NullData: tuple buffer's content is all zeros. we didn't check tuple buffer's content.
   const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers,
                                                             topic);
-  TupleBufferPtr buf = BufferManager::instance().getBuffer();
+  TupleBufferPtr buf = BufferManager::instance().getFixSizeBuffer();
   EXPECT_TRUE(kafkaSink->writeData(buf));
   BufferManager::instance().releaseBuffer(buf);
 }
@@ -95,7 +94,7 @@ TEST_F(KafkaTest, DISABLED_KafkaSinkWithInvalidBroker) {
                                                             invalid_broker,
                                                             topic, 5);
 
-  TupleBufferPtr buf = BufferManager::instance().getBuffer();
+  TupleBufferPtr buf = BufferManager::instance().getFixSizeBuffer();
   try {
     kafkaSink->writeData(buf);
     FAIL();
@@ -112,7 +111,7 @@ TEST_F(KafkaTest, DISABLED_KafkaSinkTimeout) {
                                                             invalid_broker,
                                                             topic, 0);
 
-  TupleBufferPtr buf = BufferManager::instance().getBuffer();
+  TupleBufferPtr buf = BufferManager::instance().getFixSizeBuffer();
   try {
     kafkaSink->writeData(buf);
     FAIL();
@@ -129,7 +128,7 @@ TEST_F(KafkaTest, DISABLED_KafkaSourceInitByKafkaConfig1) {
 
   const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers,
                                                             topic);
-  TupleBufferPtr buf1 = BufferManager::instance().getBuffer();
+  TupleBufferPtr buf1 = BufferManager::instance().getFixSizeBuffer();
   EXPECT_TRUE(kafkaSink->writeData(buf1));
 
   const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema, topic,
@@ -153,7 +152,7 @@ TEST_F(KafkaTest, DISABLED_KafkaSourceInitByKafkaConfig2) {
 
   const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers,
                                                             topic);
-  TupleBufferPtr buf1 = BufferManager::instance().getBuffer();
+  TupleBufferPtr buf1 = BufferManager::instance().getFixSizeBuffer();
   EXPECT_TRUE(kafkaSink->writeData(buf1));
 
   const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema, topic,
@@ -178,7 +177,7 @@ TEST_F(KafkaTest, DISABLED_KafkaSourceInitByBroker) {
   const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers,
                                                             topic);
 
-  TupleBufferPtr buf1 = BufferManager::instance().getBuffer();
+  TupleBufferPtr buf1 = BufferManager::instance().getFixSizeBuffer();
   EXPECT_TRUE(kafkaSink->writeData(buf1));
 
   TupleBufferPtr buf2 = nullptr;
@@ -195,7 +194,7 @@ TEST_F(KafkaTest, DISABLED_KafkaSourceInitByBroker) {
 }
 
 TEST_F(KafkaTest, DISABLED_KafkaSourceWithInvalidBroker) {
-  TupleBufferPtr buf = BufferManager::instance().getBuffer();
+  TupleBufferPtr buf = BufferManager::instance().getFixSizeBuffer();
 
   const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, brokers,
                                                             topic);
@@ -219,9 +218,9 @@ TEST_F(KafkaTest, DISABLED_KafkaSourceWithInvalidBroker) {
 }
 
 TEST_F(KafkaTest, DISABLED_KafkaSinkToSource) {
-  BufferManager::instance().setNumberOfBuffers(0);
-  BufferManager::instance().setNumberOfBuffers(num_of_buffers);
-  BufferManager::instance().setBufferSize(buffer_size);
+  BufferManager::instance().resizeFixBufferCnt(0);
+  BufferManager::instance().resizeFixBufferCnt(num_of_buffers);
+  BufferManager::instance().resizeFixBufferSize(buffer_size);
 
   std::string path_to_file =
       "../tests/test_data/ysb-tuples-100-campaign-100.bin";
