@@ -37,7 +37,7 @@ CSVSource::CSVSource(const Schema &schema, const std::string &_file_path,
 
 TupleBufferPtr CSVSource::receiveData() {
   NES_DEBUG("CSVSource::receiveData called")
-  TupleBufferPtr buf = BufferManager::instance().getBuffer();
+  TupleBufferPtr buf = BufferManager::instance().getFixSizeBuffer();
   fillBuffer(buf);
   NES_DEBUG(
       "CSVSource::receiveData filled buffer with tuples=" << buf->getNumberOfTuples())

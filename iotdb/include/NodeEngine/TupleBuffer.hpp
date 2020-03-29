@@ -26,7 +26,7 @@ class TupleBuffer {
    * @param number of tuples inside the buffer
    */
   TupleBuffer(void* buffer, const size_t buffer_size_bytes,
-              const uint32_t tuple_size_bytes, const uint32_t num_tuples);
+              const uint32_t tupleSizeBytes, const uint32_t numTuples, bool fixSizeBuffer);
 
   /**
    * @brief Overload of the = operator to copy a tuple buffer
@@ -130,10 +130,12 @@ class TupleBuffer {
         bufferSizeInBytes(0),
         tupleSizeInBytes(0),
         numberOfTuples(0),
-        useCnt(0) {
+        useCnt(0),
+        fixSizeBuffer(true){
   }
 
   void* buffer;
+  bool fixSizeBuffer;
   size_t bufferSizeInBytes;
   size_t tupleSizeInBytes;
   size_t numberOfTuples;

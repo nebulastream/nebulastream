@@ -127,12 +127,12 @@ void NodeEngine::applyConfig(Config& conf) {
   if (conf.getBufferCount() != BufferManager::instance().getNumberOfBuffers()) {
     NES_DEBUG(
         "NodeEngine: changing bufferCount from " << BufferManager::instance().getNumberOfBuffers() << " to " << conf.getBufferCount())
-    BufferManager::instance().setNumberOfBuffers(conf.getBufferCount());
+    BufferManager::instance().resizeFixBufferCnt(conf.getBufferCount());
   }
-  if (conf.getBufferSizeInByte() != BufferManager::instance().getBufferSize()) {
+  if (conf.getBufferSizeInByte() != BufferManager::instance().getFixBufferSize()) {
     NES_DEBUG(
-        "NodeEngine: changing buffer size from " << BufferManager::instance().getBufferSize() << " to " << conf.getBufferSizeInByte())
-    BufferManager::instance().setBufferSize(conf.getBufferSizeInByte());
+        "NodeEngine: changing buffer size from " << BufferManager::instance().getFixBufferSize() << " to " << conf.getBufferSizeInByte())
+    BufferManager::instance().resizeFixBufferSize(conf.getBufferSizeInByte());
   }
   NES_DEBUG("NodeEngine: config successuflly changed")
 }

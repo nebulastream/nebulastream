@@ -83,9 +83,9 @@ TEST_F(SourceTest, testBinarySource) {
   uint64_t tuple_size = schema.getSchemaSize();
   uint64_t buffer_size = num_tuples_to_process * tuple_size / num_of_buffers;
   assert(buffer_size > 0);
-  BufferManager::instance().setNumberOfBuffers(0);
-  BufferManager::instance().setNumberOfBuffers(num_of_buffers);
-  BufferManager::instance().setBufferSize(buffer_size);
+  BufferManager::instance().resizeFixBufferCnt(0);
+  BufferManager::instance().resizeFixBufferCnt(num_of_buffers);
+  BufferManager::instance().resizeFixBufferSize(buffer_size);
 
   const DataSourcePtr source = (*funcPtr)(schema, path_to_file);
 
@@ -129,9 +129,9 @@ TEST_F(SourceTest, testCSVSource) {
       uint64_t tuple_size = schema.getSchemaSize();
       uint64_t buffer_size = num_tuples_to_process * tuple_size / num_of_buffers;
       assert(buffer_size > 0);
-      BufferManager::instance().setNumberOfBuffers(0);
-      BufferManager::instance().setNumberOfBuffers(num_of_buffers);
-      BufferManager::instance().setBufferSize(buffer_size);
+      BufferManager::instance().resizeFixBufferCnt(0);
+      BufferManager::instance().resizeFixBufferCnt(num_of_buffers);
+      BufferManager::instance().resizeFixBufferSize(buffer_size);
 
       const DataSourcePtr source = (*funcPtr)(schema, path_to_file, del, num,
                                               frequency);
@@ -173,9 +173,9 @@ TEST_F(SourceTest, testSenseSource) {
   uint64_t tuple_size = schema.getSchemaSize();
   uint64_t buffer_size = num_tuples_to_process * tuple_size / num_of_buffers;
   assert(buffer_size > 0);
-  BufferManager::instance().setNumberOfBuffers(0);
-  BufferManager::instance().setNumberOfBuffers(num_of_buffers);
-  BufferManager::instance().setBufferSize(buffer_size);
+  BufferManager::instance().resizeFixBufferCnt(0);
+  BufferManager::instance().resizeFixBufferCnt(num_of_buffers);
+  BufferManager::instance().resizeFixBufferSize(buffer_size);
 
   const DataSourcePtr source = (*funcPtr)(schema, testUDFS);
 

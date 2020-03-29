@@ -31,32 +31,33 @@ class BufferManager {
   /**
    * @brief Singleton implementation of Buffer Manager
    */
-  static BufferManager &instance();
-
-  /**
-   * @brief add buffer with default size
-   */
-  void addOneBufferWithDefaultSize();
+  static BufferManager& instance();
 
   /**
    * @brief remove a particular buffer from the buffer pool
    * @param Pointer to buffer to be deleted
    * @return true if buffer was deleted, false if buffer was not present
    */
-  bool removeBuffer(TupleBufferPtr tuple_buffer);
+  bool removeBuffer(TupleBufferPtr tupleBuffer);
 
   /**
    * @brief get a free buffer of default size
    * @return Pointer to free buffer
    */
-  TupleBufferPtr getBuffer();
+  TupleBufferPtr getFixSizeBuffer();
+
+  /**
+   * @brief create a new buffer of size varible size
+   * @return Pointer to free buffer
+   */
+  TupleBufferPtr createVarSizeBuffer(size_t bufferSizeInByte);
 
   /**
    * @brief release a given buffer such that it can be reused
    * @param Pointer to the buffer to be released
    * @return bool indicating if buffer was released, if false buffer was not present
    */
-  bool releaseBuffer(const TupleBufferPtr tuple_buffer);
+  bool releaseBuffer(const TupleBufferPtr tupleBuffer);
 
   /**
    * @brief return the total number of buffer used in the buffer manager
@@ -74,7 +75,7 @@ class BufferManager {
    * @brief return the size of one buffer in bytes
    * @return size of a buffer in bytes
    */
-  size_t getBufferSize();
+  size_t getFixBufferSize();
 
   /**
    * @brief print statistics about the buffer manager interaction to the info log
@@ -82,19 +83,18 @@ class BufferManager {
   void printStatistics();
 
   /**
-   * @brief delete and create n new buffers
+   * @brief delete and create n new buffers of currentBufferSize
    * CAUTION: this deletes all existing buffers
    * @param number of new buffers
    */
-  void setNumberOfBuffers(size_t n);
+  void resizeFixBufferCnt(size_t newBufferCnt);
 
   /**
-     * @brief delete and recreate all buffers with the new buffer size,
-     * buffer count remains the same
-     * CAUTION: this deletes all existing buffers
-     * @param size of new buffers
-     */
-  void setBufferSize(size_t size);
+   * @brief delete and re-create all buffers of new size (same buffer cnt as before)
+   * CAUTION: this deletes all existing buffers
+   * @param new size of buffer new buffers
+   */
+  void resizeFixBufferSize(size_t newBufferSizeInByte);
 
  private:
   /* implement singleton semantics: no construction,
@@ -105,14 +105,31 @@ class BufferManager {
    *  - bufferSizeInByte = 4KB
    * */
   BufferManager();
-  BufferManager(const BufferManager &);
-  BufferManager &operator=(const BufferManager &);
+  BufferManager(const BufferManager&);
+  BufferManager& operator=(const BufferManager&);
   ~BufferManager();
 
-  //Map containing Tuple Pointer and if it is currently used
-  std::map<TupleBufferPtr, std::atomic<bool>> buffer_pool;
+  /**
+   * @brief removes all buffers from the pool
+   */
+  void clearFixBufferPool();
 
-  size_t bufferSizeInByte;
+  /**
+   * @brief add buffer with default size
+   */
+  void addOneBufferWithFixSize();
+
+  /**
+   * @brief add buffer with default size
+   */
+  void addOneBufferWithVarSize(size_t bufferSizeInByte);
+
+  //Map containing Tuple Pointer and if it is currently used
+  std::map<TupleBufferPtr, /**used*/ std::atomic<bool>> fixSizeBufferPool;
+
+  std::map<TupleBufferPtr, /**used*/ std::atomic<bool>> varSizeBufferPool;
+
+  size_t currentBufferSize;
 
   std::mutex mutex;
 

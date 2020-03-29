@@ -125,7 +125,7 @@ TEST_F(WindowManagerTest, window_trigger) {
 
   ASSERT_EQ(aggregates[sliceIndex], 1);
 
-  TupleBufferPtr buf = BufferManager::instance().getBuffer();
+  TupleBufferPtr buf = BufferManager::instance().getFixSizeBuffer();
   w.aggregateWindows<int64_t, int64_t>(store, windowDef, buf);
 
   size_t tupleCnt = buf->getNumberOfTuples();
