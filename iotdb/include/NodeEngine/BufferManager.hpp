@@ -122,7 +122,7 @@ class BufferManager {
   /**
    * @brief add buffer with default size
    */
-  void addOneBufferWithVarSize(size_t bufferSizeInByte);
+  TupleBufferPtr addOneBufferWithVarSize(size_t bufferSizeInByte);
 
   //Map containing Tuple Pointer and if it is currently used
   std::map<TupleBufferPtr, /**used*/ std::atomic<bool>> fixSizeBufferPool;
@@ -131,7 +131,8 @@ class BufferManager {
 
   size_t currentBufferSize;
 
-  std::mutex mutex;
+  std::mutex changeBufferMutex;
+  std::mutex resizeMutex;
 
   //statistics
   size_t noFreeBuffer;

@@ -197,6 +197,12 @@ void TupleBuffer::revertEndianness(Schema schema) {
   }
 }
 
+bool TupleBuffer::getFixSizeBuffer()
+{
+  return fixSizeBuffer;
+}
+
+
 }
 
 // namespace NES

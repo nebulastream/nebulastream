@@ -33,7 +33,7 @@ TEST_F(BufferManagerTest, add_and_remove_Buffer_simple) {
   ASSERT_EQ(buffers_count, buffers_managed);
   ASSERT_EQ(buffers_free, buffers_managed);
 
-  BufferManager::instance().addOneBufferWithFixSize();
+  BufferManager::instance().resizeFixBufferCnt(11);
   TupleBufferPtr buffer = BufferManager::instance().getFixSizeBuffer();
 
   buffers_count = BufferManager::instance().getNumberOfBuffers();

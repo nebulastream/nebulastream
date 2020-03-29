@@ -26,7 +26,8 @@ class TupleBuffer {
    * @param number of tuples inside the buffer
    */
   TupleBuffer(void* buffer, const size_t buffer_size_bytes,
-              const uint32_t tupleSizeBytes, const uint32_t numTuples, bool fixSizeBuffer);
+              const uint32_t tupleSizeBytes, const uint32_t numTuples,
+              bool fixSizeBuffer);
 
   /**
    * @brief Overload of the = operator to copy a tuple buffer
@@ -100,7 +101,6 @@ class TupleBuffer {
    */
   bool decrementUseCntAndTestForZero();
 
-
   /**
    * @brief increment the counter by one
    * @return bool indicating succeess
@@ -113,32 +113,33 @@ class TupleBuffer {
    */
   std::string printTupleBuffer(Schema schema);
 
-
   /**
-    * @brief revert the endianess of the tuple buffer
-    * @schema of the buffer
-    */
-   void revertEndianness(Schema schema);
+   * @brief revert the endianess of the tuple buffer
+   * @schema of the buffer
+   */
+  void revertEndianness(Schema schema);
 
+  bool getFixSizeBuffer();
 
  private:
   /**
    * @brief default constructor for serialization with boost
    */
   TupleBuffer()
-      : buffer(nullptr),
-        bufferSizeInBytes(0),
-        tupleSizeInBytes(0),
-        numberOfTuples(0),
-        useCnt(0),
-        fixSizeBuffer(true){
+      :
+      buffer(nullptr),
+      bufferSizeInBytes(0),
+      tupleSizeInBytes(0),
+      numberOfTuples(0),
+      fixSizeBuffer(true),
+      useCnt(0) {
   }
 
   void* buffer;
-  bool fixSizeBuffer;
   size_t bufferSizeInBytes;
   size_t tupleSizeInBytes;
   size_t numberOfTuples;
+  bool fixSizeBuffer;
   size_t useCnt;
 };
 
