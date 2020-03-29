@@ -9,7 +9,8 @@ namespace NES {
 
 BufferManager::BufferManager()
     :
-    mutex(),
+    changeBufferMutex(),
+    resizeMutex(),
     noFreeBuffer(0),
     providedBuffer(0),
     releasedBuffer(0),
@@ -52,7 +53,7 @@ void BufferManager::clearFixBufferPool() {
 }
 
 void BufferManager::resizeFixBufferSize(size_t newBufferSizeInByte) {
-  std::unique_lock<std::mutex> lock(mutex);
+  std::unique_lock<std::mutex> lock(resizeMutex);
   size_t bufferCnt = fixSizeBufferPool.size();
   clearFixBufferPool();
 
@@ -63,7 +64,7 @@ void BufferManager::resizeFixBufferSize(size_t newBufferSizeInByte) {
 }
 
 void BufferManager::resizeFixBufferCnt(size_t newBufferCnt) {
-  std::unique_lock<std::mutex> lock(mutex);
+  std::unique_lock<std::mutex> lock(resizeMutex);
   clearFixBufferPool();
 
   for (size_t i = 0; i < newBufferCnt; i++) {
@@ -76,7 +77,7 @@ size_t BufferManager::getFixBufferSize() {
 }
 
 void BufferManager::addOneBufferWithFixSize() {
-  std::unique_lock<std::mutex> lock(mutex);
+  std::unique_lock<std::mutex> lock(changeBufferMutex);
 
   char* buffer = new char[currentBufferSize];
   TupleBufferPtr buff = std::make_shared<TupleBuffer>(buffer, currentBufferSize,
@@ -89,8 +90,8 @@ void BufferManager::addOneBufferWithFixSize() {
 
 }
 
-void BufferManager::addOneBufferWithVarSize(size_t bufferSizeInByte) {
-  std::unique_lock<std::mutex> lock(mutex);
+TupleBufferPtr BufferManager::addOneBufferWithVarSize(size_t bufferSizeInByte) {
+  std::unique_lock<std::mutex> lock(changeBufferMutex);
 
   char* buffer = new char[bufferSizeInByte];
   TupleBufferPtr buff = std::make_shared<TupleBuffer>(buffer, bufferSizeInByte,
@@ -100,27 +101,33 @@ void BufferManager::addOneBufferWithVarSize(size_t bufferSizeInByte) {
   varSizeBufferPool.emplace(std::piecewise_construct,
                             std::forward_as_tuple(buff),
                             std::forward_as_tuple(false));
+
+  return buff;
 }
 
 bool BufferManager::removeBuffer(TupleBufferPtr tupleBuffer) {
-  std::unique_lock<std::mutex> lock(mutex);
+  std::unique_lock<std::mutex> lock(changeBufferMutex);
 
-  std::map<TupleBufferPtr, /**used*/std::atomic<bool>>* buffer;
-  if (tupleBuffer->fixSizeBuffer == true) {
-    buffer = fixSizeBufferPool;
+  std::map<TupleBufferPtr, /**used*/std::atomic<bool>>::iterator it;
+  std::map<TupleBufferPtr, /**used*/std::atomic<bool>>::iterator end;
+
+  if (tupleBuffer->getFixSizeBuffer()) {
+    it = fixSizeBufferPool.begin();
+    end = fixSizeBufferPool.end();
   } else {
-    buffer = varSizeBufferPool;
+    it = varSizeBufferPool.begin();
+    end = varSizeBufferPool.end();
   }
 
-  for (auto& entry : buffer) {
-    if (entry.first.get() == tupleBuffer.get()) {
-      if (entry.second == true) {
+  for (; it != end; it++) {
+    if (it->first.get() == tupleBuffer.get()) {
+      if (it->second == true) {
         NES_DEBUG(
             "BufferManager: could not remove Buffer buffer because it is in use" << tupleBuffer)
         return false;
       }
 
-      delete (char*) entry.first->getBuffer();
+      delete (char*) it->first->getBuffer();
       fixSizeBufferPool.erase(tupleBuffer);
       NES_DEBUG("BufferManager: found and remove Buffer buffer" << tupleBuffer)
       return true;
@@ -132,7 +139,6 @@ bool BufferManager::removeBuffer(TupleBufferPtr tupleBuffer) {
 }
 
 TupleBufferPtr BufferManager::getFixSizeBuffer() {
-
   size_t tryCnt = 0;
   while (true) {
     //find a free buffer
@@ -159,7 +165,7 @@ TupleBufferPtr BufferManager::getFixSizeBuffer() {
 }
 
 TupleBufferPtr BufferManager::createVarSizeBuffer(size_t bufferSizeInByte) {
-  addOneBufferWithVarSize(bufferSizeInByte);
+  return addOneBufferWithVarSize(bufferSizeInByte);
 }
 
 size_t BufferManager::getNumberOfBuffers() {
@@ -176,26 +182,36 @@ size_t BufferManager::getNumberOfFreeBuffers() {
 }
 
 bool BufferManager::releaseBuffer(const TupleBufferPtr tupleBuffer) {
-  std::unique_lock<std::mutex> lock(mutex);
+  std::unique_lock<std::mutex> lock(changeBufferMutex);
   //TODO: do we really need this or can we solve it by a cas?
 
-  for (auto& entry : fixSizeBufferPool) {
-    if (entry.first.get() == tupleBuffer.get()) {  //found entry
-      entry.second = false;
-      NES_DEBUG(
-          "BufferManager: found buffer with useCnt " << entry.first->getUseCnt())
+  std::map<TupleBufferPtr, /**used*/std::atomic<bool>>::iterator it;
+  std::map<TupleBufferPtr, /**used*/std::atomic<bool>>::iterator end;
 
-      if (entry.first->decrementUseCntAndTestForZero()) {
+  if (tupleBuffer->getFixSizeBuffer()) {
+    it = fixSizeBufferPool.begin();
+    end = fixSizeBufferPool.end();
+  } else {
+    it = varSizeBufferPool.begin();
+    end = varSizeBufferPool.end();
+  }
+
+  for (; it != end; it++) {
+    if (it->first.get() == tupleBuffer.get()) {  //found entry
+      it->second = false;
+      NES_DEBUG(
+          "BufferManager: found buffer with useCnt " << it->first->getUseCnt())
+      if (it->first->decrementUseCntAndTestForZero()) {
 
         NES_DEBUG("BufferManager: release buffer as useCnt gets zero")
         //reset buffer for next use
-        entry.first->setNumberOfTuples(0);
-        entry.first->setTupleSizeInBytes(0);
+        it->first->setNumberOfTuples(0);
+        it->first->setTupleSizeInBytes(0);
         //update statistics
         releasedBuffer++;
       } else {
         NES_DEBUG(
-            "BufferManager: Dont release buffer as useCnt gets " << entry.first->getUseCnt())
+            "BufferManager: Dont release buffer as useCnt gets " << it->first->getUseCnt())
       }
 
       return true;

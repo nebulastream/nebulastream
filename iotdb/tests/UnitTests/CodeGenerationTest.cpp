@@ -903,7 +903,7 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
   auto bufferSize = inputBuffer->getNumberOfTuples() * sizeoftuples;
   auto resultBuffer = std::make_shared<TupleBuffer>(malloc(bufferSize),
                                                     bufferSize, sizeoftuples,
-                                                    0);
+                                                    0, true);
 
   /* execute Stage */
   stage->execute(inputBuffer, nullptr, nullptr, resultBuffer);
