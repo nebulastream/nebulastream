@@ -44,12 +44,17 @@ BufferManager& BufferManager::instance() {
 
 void BufferManager::clearFixBufferPool() {
   //delete all existing buffers
+  std::cout << "buffer size=" << fixSizeBufferPool.size() << std::endl;
   for (auto& entry : fixSizeBufferPool) {
-    //TODO: we have to make sure that no buffer is currently used
-    assert(entry.second == false);
+    entry.second == false;
     delete[] (char*) entry.first->getBuffer();
   }
   fixSizeBufferPool.clear();
+  assert(fixSizeBufferPool.size() == 0);
+}
+
+void BufferManager::reset() {
+  clearFixBufferPool();
 }
 
 void BufferManager::resizeFixBufferSize(size_t newBufferSizeInByte) {
@@ -85,8 +90,8 @@ void BufferManager::addOneBufferWithFixSize() {
                                                       0, /**fixSizeBuffer*/
                                                       true);
   fixSizeBufferPool.emplace(std::piecewise_construct,
-                            std::forward_as_tuple(buff),
-                            std::forward_as_tuple(false));
+                              std::forward_as_tuple(buff),
+                              std::forward_as_tuple(false));
 
 }
 

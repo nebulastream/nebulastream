@@ -73,7 +73,12 @@ class BufferManager {
 
   /**
    * @brief return the size of one buffer in bytes
-   * @return size of a buffer in bytes
+   * @return size of a buffer in bytesfor (auto& entry : fixSizeBufferPool) {
+    //TODO: we have to make sure that no buffer is currently used
+    assert(entry.second == false);
+    delete[] (char*) entry.first->getBuffer();
+  }
+  fixSizeBufferPool.clear();
    */
   size_t getFixBufferSize();
 
@@ -96,6 +101,7 @@ class BufferManager {
    */
   void resizeFixBufferSize(size_t newBufferSizeInByte);
 
+  void reset();
  private:
   /* implement singleton semantics: no construction,
    * copying or destruction of Buffer Manager objects
