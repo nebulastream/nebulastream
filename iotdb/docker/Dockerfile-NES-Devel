@@ -1,39 +1,38 @@
-FROM ubuntu:19.04
+FROM ubuntu:19.10
 
 RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
-    build-essential \
-    cmake \
-    clang \
-    clang-format \
-    git \
-    g++ \
-    gcc \
-    libboost-all-dev \
-    libglib2.0-0 \
-    libglib2.0-dev \
-    libcpprest-dev \
-    libdw-dev \
-    liblog4cxx-dev \
-    librdkafka1 \
-    librdkafka++1 \
-    librdkafka-dev \
-    libssl-dev \
-    libzmq3-dev \
-    llvm-dev \
-    wget \
-    ssh \
-    build-essential \
-    gcc \
-    g++ \
-    gdb \
-    clang \
-    cmake \
-    rsync \
-    tar \
-    python \
-&& apt-get clean 
+  libdwarf-dev \
+  libdwarf1 \
+  build-essential \
+  cmake \
+  clang \
+  clang-format \
+  git \
+  g++ \
+  gcc \
+  gdb \
+  htop \
+  libboost-all-dev \
+  libglib2.0-0 \
+  libcpprest-dev \
+  libdw-dev \
+  liblog4cxx-dev \
+  librdkafka1 \
+  librdkafka++1 \
+  librdkafka-dev \
+  libssl-dev \
+  libzmq3-dev \
+  llvm-dev \
+  python \
+  rsync \
+  tar \
+  tmux \
+  ssh \
+  vim \
+  wget \
+&& apt-get clean -qq
 
-RUN useradd -m nes && yes password | passwd nes
+RUN systemctl enable ssh && useradd -m nes && yes password | passwd nes
 
 RUN git clone --single-branch --branch 0.17.3 https://github.com/actor-framework/actor-framework.git && \
     cd actor-framework && git checkout  && bash configure --libs-only && cd build && make -j3 && make install && \
@@ -44,5 +43,6 @@ RUN git clone --single-branch --branch 0.17.3 https://github.com/actor-framework
     apt-get remove -qq git wget && \
     cd ${HOME} && rm -rf actor-framework cppkafka*
 
-EXPOSE 8081
-EXPOSE 38938
+ADD ./scripts/entrypoint-nes-build.sh /entrypoint-build.sh
+
+EXPOSE 8081 38938
