@@ -1,3 +1,8 @@
 FROM nebulastream/nes-devel-image:testing
 
+RUN apt-get purge -qq ssh wget tmux vim rsync && \
+  apt-get clean -qq
+
+ADD ./scripts/entrypoint-nes-build.sh /entrypoint-build.sh
+
 ENTRYPOINT ["/entrypoint-build.sh"]

@@ -32,7 +32,7 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   wget \
 && apt-get clean -qq
 
-RUN systemctl enable ssh && useradd -m nes && yes password | passwd nes
+RUN service ssh start && useradd -m nes && yes password | passwd nes
 
 RUN git clone --single-branch --branch 0.17.3 https://github.com/actor-framework/actor-framework.git && \
     cd actor-framework && git checkout  && bash configure --libs-only && cd build && make -j3 && make install && \
@@ -43,6 +43,6 @@ RUN git clone --single-branch --branch 0.17.3 https://github.com/actor-framework
     apt-get remove -qq git wget && \
     cd ${HOME} && rm -rf actor-framework cppkafka*
 
-ADD ./scripts/entrypoint-nes-build.sh /entrypoint-build.sh
+EXPOSE 22 8081 38938
 
-EXPOSE 8081 38938
+CMD ["/usr/sbin/sshd", "-D"]
