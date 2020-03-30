@@ -124,9 +124,9 @@ void NodeEngine::applyConfig(Config& conf) {
         "NodeEngine: changing numberOfWorker from " << ThreadPool::instance().getNumberOfThreads() << " to " << conf.getNumberOfWorker())
     ThreadPool::instance().setNumberOfThreadsWithRestart(conf.getNumberOfWorker());
   }
-  if (conf.getBufferCount() != BufferManager::instance().getNumberOfBuffers()) {
+  if (conf.getBufferCount() != BufferManager::instance().getNumberOfFixBuffers()) {
     NES_DEBUG(
-        "NodeEngine: changing bufferCount from " << BufferManager::instance().getNumberOfBuffers() << " to " << conf.getBufferCount())
+        "NodeEngine: changing bufferCount from " << BufferManager::instance().getNumberOfFixBuffers() << " to " << conf.getBufferCount())
     BufferManager::instance().resizeFixBufferCnt(conf.getBufferCount());
   }
   if (conf.getBufferSizeInByte() != BufferManager::instance().getFixBufferSize()) {

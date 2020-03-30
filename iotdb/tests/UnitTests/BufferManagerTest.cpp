@@ -28,16 +28,16 @@ class BufferManagerTest : public testing::Test {
 };
 
 TEST_F(BufferManagerTest, add_and_remove_Buffer_simple) {
-  size_t buffers_count = BufferManager::instance().getNumberOfBuffers();
-  size_t buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+  size_t buffers_count = BufferManager::instance().getNumberOfFixBuffers();
+  size_t buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
   ASSERT_EQ(buffers_count, buffers_managed);
   ASSERT_EQ(buffers_free, buffers_managed);
 
   BufferManager::instance().resizeFixBufferCnt(11);
   TupleBufferPtr buffer = BufferManager::instance().getFixSizeBuffer();
 
-  buffers_count = BufferManager::instance().getNumberOfBuffers();
-  buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+  buffers_count = BufferManager::instance().getNumberOfFixBuffers();
+  buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
   size_t expected = buffers_managed + 1;
   ASSERT_EQ(buffers_count, expected);
   ASSERT_EQ(buffers_free, buffers_managed);
@@ -45,8 +45,8 @@ TEST_F(BufferManagerTest, add_and_remove_Buffer_simple) {
   BufferManager::instance().releaseBuffer(buffer);
   BufferManager::instance().removeBuffer(buffer);
 
-  buffers_count = BufferManager::instance().getNumberOfBuffers();
-  buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+  buffers_count = BufferManager::instance().getNumberOfFixBuffers();
+  buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
   ASSERT_EQ(buffers_count, buffers_managed);
   ASSERT_EQ(buffers_free, buffers_managed);
 }
@@ -54,12 +54,12 @@ TEST_F(BufferManagerTest, add_and_remove_Buffer_simple) {
 TEST_F(BufferManagerTest, get_and_release_Buffer_simple) {
   std::vector<TupleBufferPtr> buffers;
 
-  size_t buffers_count = BufferManager::instance().getNumberOfBuffers();
-  size_t buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+  size_t buffers_count = BufferManager::instance().getNumberOfFixBuffers();
+  size_t buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
   ASSERT_EQ(buffers_count, buffers_managed);
   ASSERT_EQ(buffers_free, buffers_managed);
 
-  for (size_t i = 1; i <= BufferManager::instance().getNumberOfBuffers(); ++i) {
+  for (size_t i = 1; i <= BufferManager::instance().getNumberOfFixBuffers(); ++i) {
     TupleBufferPtr buf = BufferManager::instance().getFixSizeBuffer();
     size_t expected = 0;
     ASSERT_TRUE(buf->getBuffer() != nullptr);
@@ -67,8 +67,8 @@ TEST_F(BufferManagerTest, get_and_release_Buffer_simple) {
     ASSERT_EQ(buf->getNumberOfTuples(), expected);
     ASSERT_EQ(buf->getTupleSizeInBytes(), expected);
 
-    buffers_count = BufferManager::instance().getNumberOfBuffers();
-    buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+    buffers_count = BufferManager::instance().getNumberOfFixBuffers();
+    buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
     ASSERT_EQ(buffers_count, buffers_managed);
     expected = buffers_managed - i;
     ASSERT_EQ(buffers_free, expected);
@@ -81,42 +81,42 @@ TEST_F(BufferManagerTest, get_and_release_Buffer_simple) {
 
     BufferManager::instance().releaseBuffer(buf);
 
-    buffers_count = BufferManager::instance().getNumberOfBuffers();
-    buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+    buffers_count = BufferManager::instance().getNumberOfFixBuffers();
+    buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
     ASSERT_EQ(buffers_count, buffers_managed);
     ASSERT_EQ(buffers_free, i);
     i++;
   }
 
-  buffers_count = BufferManager::instance().getNumberOfBuffers();
-  buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+  buffers_count = BufferManager::instance().getNumberOfFixBuffers();
+  buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
   ASSERT_EQ(buffers_count, buffers_managed);
   ASSERT_EQ(buffers_free, buffers_managed);
 }
 
 TEST_F(BufferManagerTest, resize_buffer_pool) {
-  size_t buffers_count = BufferManager::instance().getNumberOfBuffers();
-  size_t buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+  size_t buffers_count = BufferManager::instance().getNumberOfFixBuffers();
+  size_t buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
   ASSERT_EQ(buffers_count, buffers_managed);
   ASSERT_EQ(buffers_free, buffers_managed);
 
   BufferManager::instance().resizeFixBufferCnt(5);
-  buffers_count = BufferManager::instance().getNumberOfBuffers();
-  buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+  buffers_count = BufferManager::instance().getNumberOfFixBuffers();
+  buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
   size_t expected = 5;
   ASSERT_EQ(buffers_count, expected);
   ASSERT_EQ(buffers_free, expected);
 
   BufferManager::instance().resizeFixBufferCnt(buffers_managed);
-  buffers_count = BufferManager::instance().getNumberOfBuffers();
-  buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+  buffers_count = BufferManager::instance().getNumberOfFixBuffers();
+  buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
   ASSERT_EQ(buffers_count, buffers_managed);
   ASSERT_EQ(buffers_free, buffers_managed);
 }
 
 TEST_F(BufferManagerTest, resize_buffer_size) {
-  size_t buffers_count = BufferManager::instance().getNumberOfBuffers();
-  size_t buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+  size_t buffers_count = BufferManager::instance().getNumberOfFixBuffers();
+  size_t buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
   ASSERT_EQ(buffers_count, buffers_managed);
   ASSERT_EQ(buffers_free, buffers_managed);
 
@@ -130,8 +130,8 @@ TEST_F(BufferManagerTest, resize_buffer_size) {
   ASSERT_EQ(buf->getBufferSizeInBytes(), buffer_size);
   BufferManager::instance().releaseBuffer(buf);
 
-  buffers_count = BufferManager::instance().getNumberOfBuffers();
-  buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+  buffers_count = BufferManager::instance().getNumberOfFixBuffers();
+  buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
   ASSERT_EQ(buffers_count, buffers_managed);
   ASSERT_EQ(buffers_free, buffers_managed);
 
@@ -150,8 +150,8 @@ void run_and_release(size_t id, size_t sleeptime) {
 TEST_F(BufferManagerTest, getBuffer_afterRelease) {
   std::vector<TupleBufferPtr> buffers;
 
-  size_t buffers_count = BufferManager::instance().getNumberOfBuffers();
-  size_t buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+  size_t buffers_count = BufferManager::instance().getNumberOfFixBuffers();
+  size_t buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
   ASSERT_EQ(buffers_count, buffers_managed);
   ASSERT_EQ(buffers_free, buffers_managed);
 
@@ -174,15 +174,15 @@ TEST_F(BufferManagerTest, getBuffer_afterRelease) {
     BufferManager::instance().releaseBuffer(buf);
   }
 
-  buffers_count = BufferManager::instance().getNumberOfBuffers();
-  buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+  buffers_count = BufferManager::instance().getNumberOfFixBuffers();
+  buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
   ASSERT_EQ(buffers_count, buffers_managed);
   ASSERT_EQ(buffers_free, buffers_managed);
 }
 
 TEST_F(BufferManagerTest, get_and_release) {
-  size_t buffers_count = BufferManager::instance().getNumberOfBuffers();
-  size_t buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+  size_t buffers_count = BufferManager::instance().getNumberOfFixBuffers();
+  size_t buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
   ASSERT_EQ(buffers_count, buffers_managed);
   ASSERT_EQ(buffers_free, buffers_managed);
 
@@ -200,8 +200,8 @@ TEST_F(BufferManagerTest, get_and_release) {
     thread.join();
   }
 
-  buffers_count = BufferManager::instance().getNumberOfBuffers();
-  buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+  buffers_count = BufferManager::instance().getNumberOfFixBuffers();
+  buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
   ASSERT_EQ(buffers_count, buffers_managed);
   ASSERT_EQ(buffers_free, buffers_managed);
   BufferManager::instance().printStatistics();
@@ -214,8 +214,8 @@ TEST_F(BufferManagerTest, getBuffer_race) {
 
     std::vector<TupleBufferPtr> buffers;
 
-    size_t buffers_count = BufferManager::instance().getNumberOfBuffers();
-    size_t buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+    size_t buffers_count = BufferManager::instance().getNumberOfFixBuffers();
+    size_t buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
     ASSERT_EQ(buffers_count, buffers_managed);
     ASSERT_EQ(buffers_free, buffers_managed);
 
@@ -249,11 +249,37 @@ TEST_F(BufferManagerTest, getBuffer_race) {
     for (auto &b : buffer_threads) {
       BufferManager::instance().releaseBuffer(b);
     }
-    buffers_count = BufferManager::instance().getNumberOfBuffers();
-    buffers_free = BufferManager::instance().getNumberOfFreeBuffers();
+    buffers_count = BufferManager::instance().getNumberOfFixBuffers();
+    buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
     ASSERT_EQ(buffers_count, buffers_managed);
     ASSERT_EQ(buffers_free, buffers_managed);
   }
 }
+
+TEST_F(BufferManagerTest, add_and_remove_Var_Buffer_simple) {
+  size_t buffers_count = BufferManager::instance().getNumberOfFixBuffers();
+  size_t buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
+  ASSERT_EQ(buffers_count, buffers_managed);
+  ASSERT_EQ(buffers_free, buffers_managed);
+
+  TupleBufferPtr buffer = BufferManager::instance().createVarSizeBuffer(100);
+  ASSERT_EQ(buffer->getBufferSizeInBytes(), 100);
+
+  buffers_count = BufferManager::instance().getNumberOfFixBuffers();
+  buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
+  size_t expected = buffers_managed + 1;
+  ASSERT_EQ(buffers_count, expected);
+  ASSERT_EQ(buffers_free, buffers_managed);
+
+  BufferManager::instance().releaseBuffer(buffer);
+  BufferManager::instance().removeBuffer(buffer);
+
+  buffers_count = BufferManager::instance().getNumberOfFixBuffers();
+  buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
+  ASSERT_EQ(buffers_count, buffers_managed);
+  ASSERT_EQ(buffers_free, buffers_managed);
+}
+
+
 #endif
 }
