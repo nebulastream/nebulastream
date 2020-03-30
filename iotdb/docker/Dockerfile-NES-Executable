@@ -1,4 +1,4 @@
-FROM nebulastream/nes-devel-image:testing
+FROM nebulastream/nes-build-image:testing
 
 ADD ./resources/NebulaStream-0.0.1-1.x86_64.deb NebulaStream-0.0.1-1.x86_64.deb
 RUN dpkg -i NebulaStream-0.0.1-1.x86_64.deb

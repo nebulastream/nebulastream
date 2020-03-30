@@ -5,38 +5,70 @@ Currently, we have two images on our repository: a build image used by travis an
 
 (Note: Please make sure you have rights to publish images on [nebulastream](https://hub.docker.com/u/nebulastream) organization. Please ask one of the core developers to grant you access if you do not have one.)
 
-# Build
-
-This section describes how to build a docker image locally. We have currently two docker files one for each docker image,
-describing how to build the docker images. In case, you want to add or modify any dependencies in the docker image please 
+## Images and Dockerfiles
+We have three docker files, one for each docker image, describing how 
+to build the docker images. In case you want to add or modify any dependencies in the docker image please 
 edit the corresponding docker file. Also, the startup script for each build image is present inside the [scripts](\scripts) 
 folder. 
 
-The [entrypoint-nes-build.sh](\scripts\entrypoint-nes-build.sh) defines how the NebulaStream build image will 
-run when started and the [entrypoint-nes-executable.sh](\scripts\entrypoint-nes-executable.sh) will define how the executable 
-image will start. If you want to change the startup behavior of the docker images, please change the corresponding entrypoint script.   
+#### Dockerfile-NES-Devel
+This is our base image. It has everything installed that we need for
+development, including `ssh` connectivity. Its purpose is to start
+in the background while our IDEs connect to it for remote 
+debugging purposes. It can be found in [Devel](Dockerfile-NES-Devel).
 
-## Building build image
+Currently, there is no need for an `ENTRYPOINT` for this image. 
+It stars `sshd` and can be kept in the background. For more info, check
+Docker's official docs [here](https://docs.docker.com/engine/examples/running_ssh_service/).
+
+#### Dockerfile-NES-Build
+This is our CI image. It extends the Devel image
+but connectivity and any interactivity tools are removed. There is
+no way to connect to a running container of this image, aside from `docker attach`.
+Its purpose is to build and exit. It can be found in [Build](Dockerfile-NES-Build).
+
+The `ENTRYPOINT` is located in [entrypoint-nes-build.sh](\scripts\entrypoint-nes-build.sh). The entrypoint
+checks if source code is indeed mounted in the correct location inside the
+container and starts a `make_debug` test build.
+
+#### Dockerfile-NES-Executable
+This is our executable image. It extends the Build image.
+Connectivity and any interactivity tools are removed. There is
+no way to connect to a running container of this image, aside from `docker attach`.
+Its purpose is to offer a host operating system for an executable of NES.
+
+For this image, we install NebulaStream using a `deb` package inside the [resources](\resources) folder.
+If you want to update the NebulaStream binary, please create a new `deb` package by compiling the code inside the docker image and running `cpack` command.
+Afterwards, replace the `deb` package inside the resources folder. The image can be found in [Executable](Dockerfile-NES-Executable).
+
+Currently, the image is tasked with only running a `.deb` version of NebulaStream. This may change
+in the future. Its `ENTRYPOINT` is located in [entrypoint-nes-executable.sh](\scripts\entrypoint-nes-executable.sh).
+
+#### Changing running behavior of images
+If you want to change the startup behavior of the docker images, please change the corresponding entrypoint script.   
+
+## Build images
 
 Please execute following command for building the build image locally:
 
-`docker build . -f Dockerfile-NES-Build -t nebulastream/nes-build-image:latest`
+`docker build . -f Dockerfile-NES-XXX -t nebulastream/nes-XXX-image:YYY`
 
-## Building execution image
+Where `XXX` represents one image type out of:
+- `devel`
+- `build`
+- `executable`
 
-For build image, we install NebulaStream using deb package inside the [resources](\resources) folder.
-If you want to update the NebulaStream, please create a new deb package by compiling the code inside the docker image and running `cpack` command.
-Afterwards, please replace the deb package inside the resources folder and follow the instruction below.
+and `YYY` as one `tag` out of:
+- `latest`
+- `testing`
 
-Please execute following command for building the executable image locally:
+The image types have been explained.
+For `tag`, we use `latest` for latest stable and `testing` for 
+development purposes. If no `tag` is specified at build time,
+then `latest` is the default.
 
-`docker build . -f Dockerfile-NES-Executable -t nebulastream/nes-executable-image:latest`
 
-***
-_(Note: Please replace **_latest_** with any other value if you do not want to replace the original image and wanted to create your own version of the docker image)_
-***
-
-# Publish
+## Publish images
 
 This section describes, how to publish the image to docker repository. Fist, please login into your docker account locally by executing :
 
@@ -44,18 +76,20 @@ This section describes, how to publish the image to docker repository. Fist, ple
 
 (Note: it is important for you to have access to nebulastream docker hub organization for further steps)
 
-## Building build image
+Afterwards, one can execute
 
-Please execute following command for publishing the build image on docker hub:
+`docker push nebulastream/nes-XXX-image:YYY`
 
-`docker push nebulastream/nes-build-image:latest`
+Where `XXX` represents one image type out of:
+- `devel`
+- `build`
+- `executable`
 
-## Building execution image
+and `YYY` as one `tag` out of:
+- `latest`
+- `testing`
 
-Please execute following command for building the executable image locally:
-
-`docker push nebulastream/nes-executable-image:latest`
-
-***
-_(Note: Please replace **_latest_** with any other value if you do not want to replace the original image and wanted to publish your own version of the docker image)_
-***
+The image types have been explained.
+For `tag`, we use `latest` for latest stable and `testing` for 
+development purposes. If no `tag` is specified at build time,
+then `latest` is the default.
