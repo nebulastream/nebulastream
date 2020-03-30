@@ -58,7 +58,7 @@ void BufferManager::reset() {
 }
 
 void BufferManager::resizeFixBufferSize(size_t newBufferSizeInByte) {
-  std::unique_lock<std::mutex> lock(resizeMutex);
+  std::unique_lock < std::mutex > lock(resizeMutex);
   size_t bufferCnt = fixSizeBufferPool.size();
   clearFixBufferPool();
 
@@ -69,7 +69,7 @@ void BufferManager::resizeFixBufferSize(size_t newBufferSizeInByte) {
 }
 
 void BufferManager::resizeFixBufferCnt(size_t newBufferCnt) {
-  std::unique_lock<std::mutex> lock(resizeMutex);
+  std::unique_lock < std::mutex > lock(resizeMutex);
   clearFixBufferPool();
 
   for (size_t i = 0; i < newBufferCnt; i++) {
@@ -82,7 +82,7 @@ size_t BufferManager::getFixBufferSize() {
 }
 
 void BufferManager::addOneBufferWithFixSize() {
-  std::unique_lock<std::mutex> lock(changeBufferMutex);
+  std::unique_lock < std::mutex > lock(changeBufferMutex);
 
   char* buffer = new char[currentBufferSize];
   TupleBufferPtr buff = std::make_shared<TupleBuffer>(buffer, currentBufferSize,
@@ -90,13 +90,13 @@ void BufferManager::addOneBufferWithFixSize() {
                                                       0, /**fixSizeBuffer*/
                                                       true);
   fixSizeBufferPool.emplace(std::piecewise_construct,
-                              std::forward_as_tuple(buff),
-                              std::forward_as_tuple(false));
+                            std::forward_as_tuple(buff),
+                            std::forward_as_tuple(false));
 
 }
 
 TupleBufferPtr BufferManager::addOneBufferWithVarSize(size_t bufferSizeInByte) {
-  std::unique_lock<std::mutex> lock(changeBufferMutex);
+  std::unique_lock < std::mutex > lock(changeBufferMutex);
 
   char* buffer = new char[bufferSizeInByte];
   TupleBufferPtr buff = std::make_shared<TupleBuffer>(buffer, bufferSizeInByte,
@@ -111,7 +111,7 @@ TupleBufferPtr BufferManager::addOneBufferWithVarSize(size_t bufferSizeInByte) {
 }
 
 bool BufferManager::removeBuffer(TupleBufferPtr tupleBuffer) {
-  std::unique_lock<std::mutex> lock(changeBufferMutex);
+  std::unique_lock < std::mutex > lock(changeBufferMutex);
 
   std::map<TupleBufferPtr, /**used*/std::atomic<bool>>::iterator it;
   std::map<TupleBufferPtr, /**used*/std::atomic<bool>>::iterator end;
@@ -169,15 +169,38 @@ TupleBufferPtr BufferManager::getFixSizeBuffer() {
   return nullptr;
 }
 
+TupleBufferPtr BufferManager::getVarSizeBufferLargerThan(
+    size_t bufferSizeInByte) {
+  size_t tryCnt = 0;
+  //find a free buffer
+  for (auto& entry : varSizeBufferPool) {
+    bool used = false;
+    if (entry.second == false
+        && entry.first->getBufferSizeInBytes() > bufferSizeInByte) {
+      NES_ERROR("BufferManager: found fitting var size buffer try to reserve")
+      if (entry.second.compare_exchange_weak(used, true)) {
+        providedBuffer++;
+        NES_DEBUG(
+            "BufferManager: getBuffer() provide free buffer" << entry.first)
+        entry.first->incrementUseCnt();
+        return entry.first;
+      }
+    }
+  }  //end of for
+
+  //no fitting buffer found
+  return nullptr;
+}
+
 TupleBufferPtr BufferManager::createVarSizeBuffer(size_t bufferSizeInByte) {
   return addOneBufferWithVarSize(bufferSizeInByte);
 }
 
-size_t BufferManager::getNumberOfBuffers() {
+size_t BufferManager::getNumberOfFixBuffers() {
   return fixSizeBufferPool.size();
 }
 
-size_t BufferManager::getNumberOfFreeBuffers() {
+size_t BufferManager::getNumberOfFreeFixBuffers() {
   size_t result = 0;
   for (auto& entry : fixSizeBufferPool) {
     if (!entry.second)
@@ -186,8 +209,21 @@ size_t BufferManager::getNumberOfFreeBuffers() {
   return result;
 }
 
+size_t BufferManager::getNumberOfVarBuffers() {
+  return varSizeBufferPool.size();
+}
+
+size_t BufferManager::getNumberOfFreeVarBuffers() {
+  size_t result = 0;
+  for (auto& entry : varSizeBufferPool) {
+    if (!entry.second)
+      result++;
+  }
+  return result;
+}
+
 bool BufferManager::releaseBuffer(const TupleBufferPtr tupleBuffer) {
-  std::unique_lock<std::mutex> lock(changeBufferMutex);
+  std::unique_lock < std::mutex > lock(changeBufferMutex);
   //TODO: do we really need this or can we solve it by a cas?
 
   std::map<TupleBufferPtr, /**used*/std::atomic<bool>>::iterator it;

@@ -47,12 +47,6 @@ class BufferManager {
   TupleBufferPtr getFixSizeBuffer();
 
   /**
-   * @brief create a new buffer of size varible size
-   * @return Pointer to free buffer
-   */
-  TupleBufferPtr createVarSizeBuffer(size_t bufferSizeInByte);
-
-  /**
    * @brief release a given buffer such that it can be reused
    * @param Pointer to the buffer to be released
    * @return bool indicating if buffer was released, if false buffer was not present
@@ -63,22 +57,18 @@ class BufferManager {
    * @brief return the total number of buffer used in the buffer manager
    * @return number of buffer
    */
-  size_t getNumberOfBuffers();
+  size_t getNumberOfFixBuffers();
 
   /**
    * @brief return the number of buffer free in the buffer manager
    * @return number free of buffer
    */
-  size_t getNumberOfFreeBuffers();
+  size_t getNumberOfFreeFixBuffers();
 
   /**
    * @brief return the size of one buffer in bytes
    * @return size of a buffer in bytesfor (auto& entry : fixSizeBufferPool) {
-    //TODO: we have to make sure that no buffer is currently used
-    assert(entry.second == false);
-    delete[] (char*) entry.first->getBuffer();
-  }
-  fixSizeBufferPool.clear();
+   //TODO: we have to make sure that no buffer is currently used
    */
   size_t getFixBufferSize();
 
@@ -102,6 +92,36 @@ class BufferManager {
   void resizeFixBufferSize(size_t newBufferSizeInByte);
 
   void reset();
+
+  /**
+   * VAR SIZE BUFFER METHODS
+   */
+
+  /**
+   * @brief return the total number of var buffer used in the buffer manager
+   * @return number of buffer
+   */
+  size_t getNumberOfVarBuffers();
+
+  /**
+   * @brief return the number of var buffer free in the buffer manager
+   * @return number free of buffer
+   */
+  size_t getNumberOfFreeVarBuffers();
+
+  /**
+   * @brief create a new buffer of size variable size
+   * @return Pointer to free buffer
+   */
+  TupleBufferPtr createVarSizeBuffer(size_t bufferSizeInByte);
+
+  /**
+   * @brief get a variable buffer with size larger than bufferSizeInByte
+   * @note if no such buffer exists, a nullptr is returned
+   * @return Pointer to free buffer
+   */
+  TupleBufferPtr getVarSizeBufferLargerThan(size_t bufferSizeInByte);
+
  private:
   /* implement singleton semantics: no construction,
    * copying or destruction of Buffer Manager objects
@@ -131,9 +151,9 @@ class BufferManager {
   TupleBufferPtr addOneBufferWithVarSize(size_t bufferSizeInByte);
 
   //Map containing Tuple Pointer and if it is currently used
-  std::map<TupleBufferPtr, /**used*/ std::atomic<bool>> fixSizeBufferPool;
+  std::map<TupleBufferPtr, /**used*/std::atomic<bool>> fixSizeBufferPool;
 
-  std::map<TupleBufferPtr, /**used*/ std::atomic<bool>> varSizeBufferPool;
+  std::map<TupleBufferPtr, /**used*/std::atomic<bool>> varSizeBufferPool;
 
   size_t currentBufferSize;
 
