@@ -1,9 +1,8 @@
-FROM nebulastream/nes-build-image:latest
+FROM nebulastream/nes-devel-image:testing
 
 ADD ./resources/NebulaStream-0.0.1-1.x86_64.deb NebulaStream-0.0.1-1.x86_64.deb
 RUN dpkg -i NebulaStream-0.0.1-1.x86_64.deb
 ADD ./resources/exdra.csv /opt/local/nebula-stream/exdra.csv
-ADD ./scripts/entrypoint-nes-executable.sh /entrypoint.sh
+ADD ./scripts/entrypoint-nes-executable.sh /entrypoint-executable.sh
 
-EXPOSE 8081
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint-executable.sh"]
