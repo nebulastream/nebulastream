@@ -27,6 +27,7 @@ class BufferManagerTest : public testing::Test {
   const size_t buffer_size = 4 * 1024;
 };
 
+#if 0
 TEST_F(BufferManagerTest, add_and_remove_Buffer_simple) {
   size_t buffers_count = BufferManager::instance().getNumberOfFixBuffers();
   size_t buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
@@ -59,7 +60,8 @@ TEST_F(BufferManagerTest, get_and_release_Buffer_simple) {
   ASSERT_EQ(buffers_count, buffers_managed);
   ASSERT_EQ(buffers_free, buffers_managed);
 
-  for (size_t i = 1; i <= BufferManager::instance().getNumberOfFixBuffers(); ++i) {
+  for (size_t i = 1; i <= BufferManager::instance().getNumberOfFixBuffers();
+      ++i) {
     TupleBufferPtr buf = BufferManager::instance().getFixSizeBuffer();
     size_t expected = 0;
     ASSERT_TRUE(buf->getBuffer() != nullptr);
@@ -137,7 +139,7 @@ TEST_F(BufferManagerTest, resize_buffer_size) {
 
 }
 
-void run(TupleBufferPtr *ptr) {
+void run(TupleBufferPtr* ptr) {
   *ptr = BufferManager::instance().getFixSizeBuffer();
 }
 
@@ -236,17 +238,17 @@ TEST_F(BufferManagerTest, getBuffer_race) {
       buffers.pop_back();
     }
 
-    for (auto &thread : threads) {
+    for (auto& thread : threads) {
       thread.join();
     }
 
     std::set<TupleBufferPtr> setOfTupleBufferPtr;
-    for (auto &b : buffer_threads) {
+    for (auto& b : buffer_threads) {
       setOfTupleBufferPtr.insert(b);
     }
     ASSERT_EQ(10, setOfTupleBufferPtr.size());
 
-    for (auto &b : buffer_threads) {
+    for (auto& b : buffer_threads) {
       BufferManager::instance().releaseBuffer(b);
     }
     buffers_count = BufferManager::instance().getNumberOfFixBuffers();
@@ -255,31 +257,73 @@ TEST_F(BufferManagerTest, getBuffer_race) {
     ASSERT_EQ(buffers_free, buffers_managed);
   }
 }
-
+#endif
+#endif
+/**
+ * Var Size Buffer tests
+ */
 TEST_F(BufferManagerTest, add_and_remove_Var_Buffer_simple) {
-  size_t buffers_count = BufferManager::instance().getNumberOfFixBuffers();
-  size_t buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
-  ASSERT_EQ(buffers_count, buffers_managed);
-  ASSERT_EQ(buffers_free, buffers_managed);
+  size_t buffers_count = BufferManager::instance().getNumberOfVarBuffers();
+  size_t buffers_free = BufferManager::instance().getNumberOfFreeVarBuffers();
+  ASSERT_EQ(buffers_count, 0);
+  ASSERT_EQ(buffers_free, 0);
 
   TupleBufferPtr buffer = BufferManager::instance().createVarSizeBuffer(100);
   ASSERT_EQ(buffer->getBufferSizeInBytes(), 100);
 
-  buffers_count = BufferManager::instance().getNumberOfFixBuffers();
-  buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
-  size_t expected = buffers_managed + 1;
+  buffers_count = BufferManager::instance().getNumberOfVarBuffers();
+  buffers_free = BufferManager::instance().getNumberOfFreeVarBuffers();
+  size_t expected = 1;
   ASSERT_EQ(buffers_count, expected);
-  ASSERT_EQ(buffers_free, buffers_managed);
+  ASSERT_EQ(buffers_free, 0);
 
   BufferManager::instance().releaseBuffer(buffer);
   BufferManager::instance().removeBuffer(buffer);
 
-  buffers_count = BufferManager::instance().getNumberOfFixBuffers();
-  buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
-  ASSERT_EQ(buffers_count, buffers_managed);
-  ASSERT_EQ(buffers_free, buffers_managed);
+  buffers_count = BufferManager::instance().getNumberOfVarBuffers();
+  buffers_free = BufferManager::instance().getNumberOfFreeVarBuffers();
+  ASSERT_EQ(buffers_count, 0);
+  ASSERT_EQ(buffers_free, 0);
+}
+
+TEST_F(BufferManagerTest, get_Existing_Var_Buffer) {
+  size_t buffers_count = BufferManager::instance().getNumberOfVarBuffers();
+  size_t buffers_free = BufferManager::instance().getNumberOfFreeVarBuffers();
+  ASSERT_EQ(buffers_count, 0);
+  ASSERT_EQ(buffers_free, 0);
+
+  TupleBufferPtr buffer = BufferManager::instance().getVarSizeBufferLargerThan(
+      100);
+  ASSERT_EQ(buffer, nullptr);
+
+  TupleBufferPtr buffer1 = BufferManager::instance().createVarSizeBuffer(80);
+  ASSERT_EQ(buffer1->getBufferSizeInBytes(), 80);
+
+  TupleBufferPtr buffer2 = BufferManager::instance().getVarSizeBufferLargerThan(
+      100);
+  ASSERT_EQ(buffer2, nullptr);
+
+  TupleBufferPtr buffer3 = BufferManager::instance().createVarSizeBuffer(110);
+  ASSERT_EQ(buffer3->getBufferSizeInBytes(), 110);
+
+  TupleBufferPtr buffer4 = BufferManager::instance().getVarSizeBufferLargerThan(
+      100);
+  ASSERT_NE(buffer4, nullptr);
+
+  buffers_count = BufferManager::instance().getNumberOfVarBuffers();
+  buffers_free = BufferManager::instance().getNumberOfFreeVarBuffers();
+  size_t expected = 2;
+  ASSERT_EQ(buffers_count, expected);
+  ASSERT_EQ(buffers_free, 0);
+
+  BufferManager::instance().releaseBuffer(buffer);
+  BufferManager::instance().removeBuffer(buffer);
+
+  buffers_count = BufferManager::instance().getNumberOfVarBuffers();
+  buffers_free = BufferManager::instance().getNumberOfFreeVarBuffers();
+  ASSERT_EQ(buffers_count, 1);
+  ASSERT_EQ(buffers_free, 1);
 }
 
 
-#endif
 }
