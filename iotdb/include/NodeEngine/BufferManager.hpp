@@ -39,7 +39,7 @@ class BufferManager {
    * @param Pointer to buffer to be deleted
    * @return true if buffer was deleted, false if buffer was not present
    */
-  bool removeBuffer(TupleBufferPtr tupleBuffer);
+//  bool removeBuffer(TupleBufferPtr tupleBuffer);
 
   /**
    * @brief get a free buffer of default size
@@ -140,6 +140,9 @@ class BufferManager {
    * @brief removes all buffers from the pool
    */
   void clearFixBufferPool();
+
+
+  void clearVarBufferPool();
 
   /**
    * @brief add buffer with default size

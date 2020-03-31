@@ -22,7 +22,10 @@ TupleBuffer::TupleBuffer(void *_buffer, const size_t _buffer_size_bytes,
     fixSizeBuffer(fixSizeBuffer),
     useCnt(0) {
 }
-
+TupleBuffer::~TupleBuffer()
+{
+  NES_DEBUG("TupleBuffer deconstruct " << this);
+}
 void TupleBuffer::copyInto(const TupleBufferPtr other) {
   if (other && other.get() != this) {
     bufferSizeInBytes = other->bufferSizeInBytes.load();
