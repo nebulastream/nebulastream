@@ -1,4 +1,4 @@
-FROM nebulastream/nes-devel-image:testing
+FROM nebulastream/nes-devel-image
 
 RUN apt-get purge -qq ssh wget tmux vim rsync && \
   apt-get clean -qq
