@@ -57,6 +57,8 @@ class BlockingQueue {
 
     //TODO: I am not sure if this is the right way to go
     while (!bufferQueue.empty()) {
+//      delete (char*) bufferQueue.front()->getBuffer();
+      NES_DEBUG("reset pop=" << bufferQueue.front())
       bufferQueue.pop();
     }
     bufferQueue = std::queue<T>();

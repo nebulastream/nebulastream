@@ -72,7 +72,7 @@ void BufferManager::resizeFixBufferSize(size_t newBufferSizeInByte) {
 }
 
 void BufferManager::resizeFixBufferCnt(size_t newBufferCnt) {
-  NES_DEBUG("BufferManager: resizeFixBufferCnt to size size" << newBufferCnt)
+  NES_DEBUG("BufferManager: resizeFixBufferCnt to size " << newBufferCnt)
   std::unique_lock<std::mutex> lock(resizeMutex);
   clearFixBufferPool();
   fixSizeBufferPool->setCapacity(newBufferCnt);
