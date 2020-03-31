@@ -22,6 +22,10 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   librdkafka-dev \
   libssl-dev \
   libzmq3-dev \
+  libzmq5 \
+  libczmq-dev \
+  libzmqpp-dev \
+  libzmqpp4 \
   llvm-dev \
   python \
   rsync \
