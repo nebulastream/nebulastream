@@ -30,6 +30,7 @@ class BufferManagerTest : public testing::Test {
 
   static void TearDownTestCase() {
     std::cout << "Tear down BufferManager test class." << std::endl;
+    BufferManager::instance().reset();
   }
 
 };
@@ -57,10 +58,9 @@ TEST_F(BufferManagerTest, add_and_remove_Buffer_simple) {
   buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
   ASSERT_EQ(buffers_count, buffers_managed + 1);
   ASSERT_EQ(buffers_free, buffers_managed + 1);
-  BufferManager::instance().reset();
 }
 
-TEST_F(BufferManagerTest, DISABLED_get_and_release_Buffer_simple) {
+TEST_F(BufferManagerTest, get_and_release_Buffer_simple) {
   std::vector<TupleBufferPtr> buffers;
 
   size_t buffers_count = BufferManager::instance().getNumberOfFixBuffers();
