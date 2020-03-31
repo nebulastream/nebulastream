@@ -38,8 +38,7 @@ class BlockingQueue {
     this->capacity = capacity;
   }
 
-  inline size_t getCapacity()
-  {
+  inline size_t getCapacity() {
     return capacity;
   }
 
@@ -48,16 +47,18 @@ class BlockingQueue {
     return bufferQueue.size();
   }
 
-  inline bool empty() const {
+  inline bool empty() {
     std::unique_lock<std::mutex> lock(queueMutex);
     return bufferQueue.empty();
   }
 
-  inline bool reset() {
+  inline void reset() {
     std::unique_lock<std::mutex> lock(queueMutex);
 
-    while (!bufferQueue.empty())
+    //TODO: I am not sure if this is the right way to go
+    while (!bufferQueue.empty()) {
       bufferQueue.pop();
+    }
     bufferQueue = std::queue<T>();
   }
 
@@ -69,14 +70,13 @@ class BlockingQueue {
       while (bufferQueue.size() >= capacity) {
         notFull.wait(lock);
       }
-      NES_DEBUG("BlockingQueue: pushing element ")
+      NES_DEBUG("BlockingQueue: pushing element " << elem)
       bufferQueue.push(elem);
     }
     notEmpty.notify_all();
   }
 
   inline const T& pop() {
-    T& retVal = bufferQueue.front();
     {
       std::unique_lock<std::mutex> lock(queueMutex);
 
@@ -84,12 +84,13 @@ class BlockingQueue {
       while (bufferQueue.size() == 0) {
         notEmpty.wait(lock);
       }
-      retVal = bufferQueue.front();
+      T& retVal = bufferQueue.front();
       NES_DEBUG("BlockingQueue: popping element " << bufferQueue.front())
       bufferQueue.pop();
+
+      notFull.notify_one();
+      return retVal;
     }
-    notFull.notify_one();
-    return retVal;
   }
 
 //  inline const T& front() {

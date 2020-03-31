@@ -29,6 +29,7 @@ class TupleBuffer {
               const uint32_t tupleSizeBytes, const uint32_t numTuples,
               bool fixSizeBuffer);
 
+  ~TupleBuffer();
   /**
    * @brief Overload of the = operator to copy a tuple buffer
    * @param other tuple buffer
