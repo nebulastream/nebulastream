@@ -3,12 +3,12 @@
 
 namespace NES {
 class ThreadBarrier {
-public:
+  public:
     explicit ThreadBarrier(uint32_t size) : size(size), count(0), mutex(), cvar() {}
 
-    ThreadBarrier(const ThreadBarrier &) = delete;
+    ThreadBarrier(const ThreadBarrier&) = delete;
 
-    ThreadBarrier &operator=(const ThreadBarrier &) = delete;
+    ThreadBarrier& operator=(const ThreadBarrier&) = delete;
 
     void wait() {
         std::unique_lock<std::mutex> lock(mutex);
@@ -21,7 +21,7 @@ public:
         }
     }
 
-private:
+  private:
     const uint32_t size;
     std::mutex mutex;
     uint32_t count;
