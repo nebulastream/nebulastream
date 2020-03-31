@@ -252,7 +252,6 @@ bool BufferManager::releaseBuffer(const TupleBufferPtr tupleBuffer) {
 
   for (; it != end; it++) {
     if (it->first.get() == tupleBuffer.get()) {  //found entry
-      it->second = false;
       NES_DEBUG(
           "BufferManager: found buffer with useCnt " << it->first->getUseCnt())
       if (it->first->decrementUseCntAndTestForZero()) {
@@ -263,6 +262,7 @@ bool BufferManager::releaseBuffer(const TupleBufferPtr tupleBuffer) {
         it->first->setTupleSizeInBytes(0);
         //update statistics
         releasedBuffer++;
+        it->second = false;
       } else {
         NES_DEBUG(
             "BufferManager: Dont release buffer as useCnt gets " << it->first->getUseCnt())

@@ -10,7 +10,7 @@
 
 #include "API/Types/DataTypes.hpp"
 #include "TupleBuffer.hpp"
-
+#include <Util/BlockingQueue.hpp>
 namespace NES {
 
 class TupleBuffer;

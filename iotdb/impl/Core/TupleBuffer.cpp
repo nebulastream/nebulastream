@@ -25,18 +25,18 @@ TupleBuffer::TupleBuffer(void *_buffer, const size_t _buffer_size_bytes,
 
 void TupleBuffer::copyInto(const TupleBufferPtr other) {
   if (other && other.get() != this) {
-    this->bufferSizeInBytes = other->bufferSizeInBytes;
-    this->tupleSizeInBytes = other->tupleSizeInBytes;
-    this->numberOfTuples = other->numberOfTuples;
+    bufferSizeInBytes = other->bufferSizeInBytes.load();
+    tupleSizeInBytes = other->tupleSizeInBytes.load();
+    numberOfTuples = other->numberOfTuples.load();
     std::memcpy(this->buffer, other->buffer, other->bufferSizeInBytes);
   }
 }
 
 TupleBuffer& TupleBuffer::operator=(const TupleBuffer &other) {
   if (this != &other) {
-    this->bufferSizeInBytes = other.bufferSizeInBytes;
-    this->tupleSizeInBytes = other.tupleSizeInBytes;
-    this->numberOfTuples = other.numberOfTuples;
+    bufferSizeInBytes = other.bufferSizeInBytes.load();
+    tupleSizeInBytes = other.tupleSizeInBytes.load();
+    numberOfTuples = other.numberOfTuples.load();
     std::memcpy(this->buffer, other.buffer, other.bufferSizeInBytes);
   }
   return *this;
