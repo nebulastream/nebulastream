@@ -6,6 +6,7 @@
 #include <Nodes/Expressions/BinaryExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Expressions/BinaryExpressions/LessThenExpressionNode.hpp>
 #include <Nodes/Expressions/FieldReadExpressionNode.hpp>
+#include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Expressions/BinaryExpressions/AndExpressionNode.hpp>
 
 namespace NES {
@@ -43,7 +44,7 @@ TEST_F(ExpressionNodeTest, predicateConstruction) {
     ASSERT_TRUE(lessThen->isPredicate());
 
     auto andExpression = AndExpressionNode::create(expression, lessThen);
-    andExpression->prettyPrint(std::cout);
+    ConsoleDumpHandler::create()->dump(andExpression, std::cout);
     ASSERT_TRUE(andExpression->isPredicate());
 }
 
