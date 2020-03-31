@@ -1,9 +1,9 @@
 #ifndef NES_ZMQUTILS_HPP
 #define NES_ZMQUTILS_HPP
 
+#include <zmq.hpp>
 #include <Network/NetworkMessage.hpp>
 #include <Network/NetworkCommon.hpp>
-#include <zmq.hpp>
 
 namespace NES {
 namespace Network {

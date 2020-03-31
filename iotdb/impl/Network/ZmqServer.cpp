@@ -64,7 +64,7 @@ void ZmqServer::frontendLoop(uint16_t numHandlerThreads, std::promise<bool>& sta
 
         for (uint16_t i = 0; i < numHandlerThreads; ++i) {
             handlerThreads.emplace_back(std::make_unique<std::thread>([this, &barrier]() {
-                handlerEventLoop(barrier);
+              handlerEventLoop(barrier);
             }));
         }
     } catch (...) {
@@ -133,7 +133,9 @@ void ZmqServer::handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier) {
                     auto serverReadyMsg =
                         exchangeProtocol.onClientAnnoucement(clientAnnouncementEnvelope.data<Messages::ClientAnnounceMessage>());
                     outIdentityEnvelope.copy(identityEnvelope);
-                    sendMessageWithIdentity<Messages::ServerReadyMessage>(dispatcherSocket, outIdentityEnvelope, serverReadyMsg);
+                    sendMessageWithIdentity<Messages::ServerReadyMessage>(dispatcherSocket,
+                                                                          outIdentityEnvelope,
+                                                                          serverReadyMsg);
                     break;
                 }
                 case Messages::kDataBuffer : {
