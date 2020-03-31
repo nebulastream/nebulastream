@@ -2,6 +2,7 @@
 #include <Operators/Impl/WindowOperator.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
 #include <Util/Logger.hpp>
+#include <boost/algorithm/string/join.hpp>
 
 using std::string;
 using std::vector;
@@ -94,4 +95,23 @@ OperatorPtr& ExecutableTransferObject::getOperatorTree() {
 void ExecutableTransferObject::setOperatorTree(const OperatorPtr& operatorTree) {
     this->operatorTree = operatorTree;
 }
+
+std::string ExecutableTransferObject::toString() const {
+    std::vector<std::string> sourcesStringVec;
+    if (!sources.empty()) {
+        std::transform(std::begin(sources), std::end(sources), std::back_inserter(sourcesStringVec),
+                       [](DataSourcePtr d) { return d->toString(); });
+    }
+    std::vector<std::string> destinationsStringVec;
+    if (!sources.empty()) {
+        std::transform(std::begin(destinations), std::end(destinations), std::back_inserter(destinationsStringVec),
+                       [](DataSinkPtr d) { return d->toString(); });
+    }
+
+    return "ExecutableTransferObject(queryId=(" + queryId + "); schema=(" + schema.toString() + "); sources=("
+        + boost::algorithm::join(sourcesStringVec, ";") + "); destinations=("
+        + boost::algorithm::join(destinationsStringVec, ",") + "); operatorTree:(" + operatorTree->toString()
+        + "); compiled=" + std::to_string(compiled) + ")";
+}
+
 }
