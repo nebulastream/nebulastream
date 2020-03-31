@@ -11,6 +11,7 @@
 #include "API/Types/DataTypes.hpp"
 #include "TupleBuffer.hpp"
 #include <Util/BlockingQueue.hpp>
+
 namespace NES {
 
 class TupleBuffer;
@@ -151,7 +152,8 @@ class BufferManager {
   TupleBufferPtr addOneBufferWithVarSize(size_t bufferSizeInByte);
 
   //Map containing Tuple Pointer and if it is currently used
-  std::map<TupleBufferPtr, /**used*/std::atomic<bool>> fixSizeBufferPool;
+  BlockingQueue<TupleBufferPtr>* fixSizeBufferPool;
+//  std::map<TupleBufferPtr, /**used*/std::atomic<bool>> fixSizeBufferPool;
 
   std::map<TupleBufferPtr, /**used*/std::atomic<bool>> varSizeBufferPool;
 
@@ -164,7 +166,6 @@ class BufferManager {
   size_t noFreeBuffer;
   size_t providedBuffer;
   size_t releasedBuffer;
-  size_t maxNumberOfRetry;
 };
 
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
