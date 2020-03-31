@@ -27,7 +27,6 @@ class BufferManagerTest : public testing::Test {
   const size_t buffer_size = 4 * 1024;
 };
 
-#if 0
 TEST_F(BufferManagerTest, add_and_remove_Buffer_simple) {
   size_t buffers_count = BufferManager::instance().getNumberOfFixBuffers();
   size_t buffers_free = BufferManager::instance().getNumberOfFreeFixBuffers();
@@ -258,7 +257,6 @@ TEST_F(BufferManagerTest, getBuffer_race) {
   }
 }
 #endif
-#endif
 /**
  * Var Size Buffer tests
  */
@@ -275,10 +273,12 @@ TEST_F(BufferManagerTest, add_and_remove_Var_Buffer_simple) {
   buffers_free = BufferManager::instance().getNumberOfFreeVarBuffers();
   size_t expected = 1;
   ASSERT_EQ(buffers_count, expected);
-  ASSERT_EQ(buffers_free, 0);
+  ASSERT_EQ(buffers_free, expected);
 
-  BufferManager::instance().releaseBuffer(buffer);
-  BufferManager::instance().removeBuffer(buffer);
+  bool retRelease = BufferManager::instance().releaseBuffer(buffer);
+  ASSERT_TRUE(retRelease);
+  bool retRemove = BufferManager::instance().removeBuffer(buffer);
+  ASSERT_TRUE(retRemove);
 
   buffers_count = BufferManager::instance().getNumberOfVarBuffers();
   buffers_free = BufferManager::instance().getNumberOfFreeVarBuffers();
@@ -303,26 +303,23 @@ TEST_F(BufferManagerTest, get_Existing_Var_Buffer) {
       100);
   ASSERT_EQ(buffer2, nullptr);
 
-  TupleBufferPtr buffer3 = BufferManager::instance().createVarSizeBuffer(110);
-  ASSERT_EQ(buffer3->getBufferSizeInBytes(), 110);
-
-  TupleBufferPtr buffer4 = BufferManager::instance().getVarSizeBufferLargerThan(
-      100);
-  ASSERT_NE(buffer4, nullptr);
+  TupleBufferPtr buffer3 = BufferManager::instance().getVarSizeBufferLargerThan(
+      60);
+  ASSERT_NE(buffer3->getBufferSizeInBytes(), 60);
 
   buffers_count = BufferManager::instance().getNumberOfVarBuffers();
   buffers_free = BufferManager::instance().getNumberOfFreeVarBuffers();
-  size_t expected = 2;
+  size_t expected = 1;
   ASSERT_EQ(buffers_count, expected);
   ASSERT_EQ(buffers_free, 0);
 
-  BufferManager::instance().releaseBuffer(buffer);
-  BufferManager::instance().removeBuffer(buffer);
+  BufferManager::instance().releaseBuffer(buffer3);
+  BufferManager::instance().removeBuffer(buffer3);
 
   buffers_count = BufferManager::instance().getNumberOfVarBuffers();
   buffers_free = BufferManager::instance().getNumberOfFreeVarBuffers();
-  ASSERT_EQ(buffers_count, 1);
-  ASSERT_EQ(buffers_free, 1);
+  ASSERT_EQ(buffers_count, 0);
+  ASSERT_EQ(buffers_free, 0);
 }
 
 

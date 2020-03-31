@@ -89,7 +89,11 @@ bool TupleBuffer::decrementUseCntAndTestForZero() {
   if (useCnt >= 1) {
     useCnt--;
   } else
-    assert(0);
+  {
+//    assert(0);
+    NES_WARNING("TupleBuffer::decrementUseCntAndTestForZero: decrease a buffer which has already 0 count")
+  }
+
 
   return useCnt == 0;
 }
