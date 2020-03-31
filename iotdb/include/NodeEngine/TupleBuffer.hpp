@@ -136,11 +136,11 @@ class TupleBuffer {
   }
 
   void* buffer;
-  size_t bufferSizeInBytes;
-  size_t tupleSizeInBytes;
-  size_t numberOfTuples;
-  bool fixSizeBuffer;
-  size_t useCnt;
+  std::atomic<size_t> bufferSizeInBytes;
+  std::atomic<size_t> tupleSizeInBytes;
+  std::atomic<size_t>numberOfTuples;
+  std::atomic<bool> fixSizeBuffer;
+  std::atomic<size_t> useCnt;
 };
 
 class Schema;
