@@ -113,6 +113,10 @@ TupleBufferPtr BufferManager::addOneBufferWithVarSize(size_t bufferSizeInByte) {
 bool BufferManager::removeBuffer(TupleBufferPtr tupleBuffer) {
   std::unique_lock < std::mutex > lock(changeBufferMutex);
 
+  if (!tupleBuffer) {
+    NES_ERROR("BufferManager::releaseBuffer: error remove of nullptr buffer")
+    throw new Exception("BufferManager failed");
+  }
   std::map<TupleBufferPtr, /**used*/std::atomic<bool>>::iterator it;
   std::map<TupleBufferPtr, /**used*/std::atomic<bool>>::iterator end;
 
@@ -133,7 +137,12 @@ bool BufferManager::removeBuffer(TupleBufferPtr tupleBuffer) {
       }
 
       delete (char*) it->first->getBuffer();
-      fixSizeBufferPool.erase(tupleBuffer);
+      if (tupleBuffer->getFixSizeBuffer()) {
+        fixSizeBufferPool.erase(tupleBuffer);
+      } else {
+        varSizeBufferPool.erase(tupleBuffer);
+      }
+
       NES_DEBUG("BufferManager: found and remove Buffer buffer" << tupleBuffer)
       return true;
     }
@@ -226,6 +235,10 @@ bool BufferManager::releaseBuffer(const TupleBufferPtr tupleBuffer) {
   std::unique_lock < std::mutex > lock(changeBufferMutex);
   //TODO: do we really need this or can we solve it by a cas?
 
+  if (!tupleBuffer) {
+    NES_ERROR("BufferManager::releaseBuffer: error release of nullptr buffer")
+    throw new Exception("BufferManager failed");
+  }
   std::map<TupleBufferPtr, /**used*/std::atomic<bool>>::iterator it;
   std::map<TupleBufferPtr, /**used*/std::atomic<bool>>::iterator end;
 
