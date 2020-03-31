@@ -45,6 +45,8 @@ class ExecutableTransferObject {
 
   QueryExecutionPlanPtr toQueryExecutionPlan(QueryCompilerPtr queryCompiler);
 
+  std::string toString() const;
+
  private:
   string queryId;
   Schema schema;
