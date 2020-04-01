@@ -9,6 +9,7 @@ namespace NES {
 
 BufferManager::BufferManager()
     :
+    numberOfFreeVarSizeBuffers(0),
     changeBufferMutex(),
     resizeMutex(),
     noFreeBuffer(0),
@@ -19,16 +20,17 @@ BufferManager::BufferManager()
   NES_DEBUG(
       "BufferManager: Set maximum number of buffer to " << initalBufferCnt << " and a bufferSize of KB:" << currentBufferSize / 1024)
 
-  fixSizeBufferPool = new BlockingQueue<TupleBufferPtr>(initalBufferCnt);
+  fixedSizeBufferPool = new BlockingQueue<TupleBufferPtr>(initalBufferCnt);
   NES_DEBUG("BufferManager: initialize buffers")
   for (size_t i = 0; i < initalBufferCnt; i++) {
-    addOneBufferWithFixSize();
+    addOneBufferWithFixedSize();
   }
 }
 
 BufferManager::~BufferManager() {
   NES_DEBUG("BufferManager: Enter Destructor of BufferManager.")
-//  fixSizeBufferPool->reset();
+  //Buffer themseleves are deallocated when shared pointer decrement to zero usage
+  fixedSizeBufferPool->reset();
 }
 
 BufferManager& BufferManager::instance() {
@@ -39,10 +41,10 @@ BufferManager& BufferManager::instance() {
 void BufferManager::clearFixBufferPool() {
 //delete all existing buffers
   NES_DEBUG(
-      "BufferManager: clearFixBufferPool of size" << fixSizeBufferPool->size())
-  fixSizeBufferPool->reset();
-  assert(fixSizeBufferPool->size() == 0);
-  assert(fixSizeBufferPool->empty());
+      "BufferManager: clearFixBufferPool of size" << fixedSizeBufferPool->size())
+  fixedSizeBufferPool->reset();
+  assert(fixedSizeBufferPool->size() == 0);
+  assert(fixedSizeBufferPool->empty());
 }
 
 void BufferManager::clearVarBufferPool() {
@@ -60,32 +62,32 @@ void BufferManager::reset() {
   clearVarBufferPool();
 }
 
-void BufferManager::resizeFixBufferSize(size_t newBufferSizeInByte) {
+void BufferManager::resizeFixedBufferSize(size_t newBufferSizeInByte) {
   std::unique_lock<std::mutex> lock(resizeMutex);
-  size_t bufferCnt = fixSizeBufferPool->size();
+  size_t bufferCnt = fixedSizeBufferPool->size();
   clearFixBufferPool();
 
   currentBufferSize = newBufferSizeInByte;
   for (size_t i = 0; i < bufferCnt; i++) {
-    addOneBufferWithFixSize();
+    addOneBufferWithFixedSize();
   }
 }
 
-void BufferManager::resizeFixBufferCnt(size_t newBufferCnt) {
+void BufferManager::resizeFixedBufferCnt(size_t newBufferCnt) {
   NES_DEBUG("BufferManager: resizeFixBufferCnt to size " << newBufferCnt)
   std::unique_lock<std::mutex> lock(resizeMutex);
   clearFixBufferPool();
-  fixSizeBufferPool->setCapacity(newBufferCnt);
+  fixedSizeBufferPool->setCapacity(newBufferCnt);
   for (size_t i = 0; i < newBufferCnt; i++) {
-    addOneBufferWithFixSize();
+    addOneBufferWithFixedSize();
   }
 }
 
-size_t BufferManager::getFixBufferSize() {
+size_t BufferManager::getFixedBufferSize() {
   return currentBufferSize;
 }
 
-void BufferManager::addOneBufferWithFixSize() {
+void BufferManager::addOneBufferWithFixedSize() {
   std::unique_lock<std::mutex> lock(changeBufferMutex);
 
   char* buffer = new char[currentBufferSize];
@@ -93,7 +95,7 @@ void BufferManager::addOneBufferWithFixSize() {
   /**tupleSizeBytes*/0, /**numTuples*/
                                                       0, /**fixSizeBuffer*/
                                                       true);
-  fixSizeBufferPool->push(buff);
+  fixedSizeBufferPool->push(buff);
 //  fixSizeBufferPool.emplace(std::piecewise_construct,
 //                            std::forward_as_tuple(buff),
 //                            std::forward_as_tuple(false));
@@ -129,7 +131,7 @@ bool BufferManager::releaseBuffer(const TupleBufferPtr tupleBuffer) {
   if (tupleBuffer->getFixSizeBuffer()) {
     //enqueue buffer back to queue
     NES_DEBUG("BufferManager::releaseBuffer: release buffer " << tupleBuffer)
-    fixSizeBufferPool->push(tupleBuffer);
+    fixedSizeBufferPool->push(tupleBuffer);
     return true;
   } else {
     it = varSizeBufferPool.begin();
@@ -199,9 +201,9 @@ bool BufferManager::releaseBuffer(const TupleBufferPtr tupleBuffer) {
 //  return false;
 //}
 
-TupleBufferPtr BufferManager::getFixSizeBuffer() {
+TupleBufferPtr BufferManager::getFixedSizeBuffer() {
   //this call is blocking
-  return fixSizeBufferPool->pop();
+  return fixedSizeBufferPool->pop();
 }
 
 TupleBufferPtr BufferManager::getVarSizeBufferLargerThan(
@@ -211,12 +213,13 @@ TupleBufferPtr BufferManager::getVarSizeBufferLargerThan(
     bool used = false;
     if (entry.second == false
         && entry.first->getBufferSizeInBytes() > bufferSizeInByte) {
-      NES_ERROR("BufferManager: found fitting var size buffer try to reserve")
+      NES_DEBUG("BufferManager: found fitting var size buffer try to reserve")
       if (entry.second.compare_exchange_weak(used, true)) {
         providedBuffer++;
         NES_DEBUG(
             "BufferManager: getBuffer() provide free buffer" << entry.first)
         entry.first->incrementUseCnt();
+        numberOfFreeVarSizeBuffers--;
         return entry.first;
       }
     }
@@ -226,15 +229,16 @@ TupleBufferPtr BufferManager::getVarSizeBufferLargerThan(
 }
 
 TupleBufferPtr BufferManager::createVarSizeBuffer(size_t bufferSizeInByte) {
+  numberOfFreeVarSizeBuffers++;
   return addOneBufferWithVarSize(bufferSizeInByte);
 }
 
-size_t BufferManager::getNumberOfFixBuffers() {
-  return fixSizeBufferPool->getCapacity();
+size_t BufferManager::getNumberOfFixedBuffers() {
+  return fixedSizeBufferPool->getCapacity();
 }
 
-size_t BufferManager::getNumberOfFreeFixBuffers() {
-  return fixSizeBufferPool->size();
+size_t BufferManager::getNumberOfFreeFixedBuffers() {
+  return fixedSizeBufferPool->size();
 }
 
 size_t BufferManager::getNumberOfVarBuffers() {
@@ -242,12 +246,7 @@ size_t BufferManager::getNumberOfVarBuffers() {
 }
 
 size_t BufferManager::getNumberOfFreeVarBuffers() {
-  size_t result = 0;
-  for (auto& entry : varSizeBufferPool) {
-    if (!entry.second)
-      result++;
-  }
-  return result;
+  return numberOfFreeVarSizeBuffers;
 }
 
 void BufferManager::printStatistics() {

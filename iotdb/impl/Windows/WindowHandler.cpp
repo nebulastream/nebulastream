@@ -89,7 +89,7 @@ void WindowHandler::trigger() {
         NES_DEBUG("WindowHandler: check widow trigger");
         auto windowStateVariable = static_cast<StateVariable<int64_t, WindowSliceStore<int64_t>*>*>(this->windowState);
         // create the output tuple buffer
-        auto tupleBuffer = BufferManager::instance().getFixSizeBuffer();
+        auto tupleBuffer = BufferManager::instance().getFixedSizeBuffer();
         tupleBuffer->setTupleSizeInBytes(8);
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {

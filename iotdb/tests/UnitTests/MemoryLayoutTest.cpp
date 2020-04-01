@@ -26,7 +26,7 @@ class MemoryLayoutTest : public testing::Test {
 TEST_F(MemoryLayoutTest, rowLayoutTestInt) {
     Schema schema = Schema().addField("t1", BasicType::UINT8).addField(
         "t2", BasicType::UINT8).addField("t3", BasicType::UINT8);
-    TupleBufferPtr buf = BufferManager::instance().getFixSizeBuffer();
+    TupleBufferPtr buf = BufferManager::instance().getFixedSizeBuffer();
     auto layout = createRowLayout(std::make_shared<Schema>(schema));
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/0)->write(buf, recordIndex);
@@ -52,7 +52,7 @@ TEST_F(MemoryLayoutTest, rowLayoutTestArray) {
         .addField("t2", BasicType::UINT8)
         .addField("t3", BasicType::UINT8);
 
-    TupleBufferPtr buf = BufferManager::instance().getFixSizeBuffer();
+    TupleBufferPtr buf = BufferManager::instance().getFixedSizeBuffer();
     auto layout = createRowLayout(std::make_shared<Schema>(schema));
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         auto arrayField = layout->getArrayField(recordIndex,  /*fieldIndex*/0);
@@ -78,7 +78,7 @@ TEST_F(MemoryLayoutTest, rowLayoutTestArrayAsPointerField) {
     Schema schema = Schema()
         .addField("t1", createArrayDataType(BasicType::INT64, 10));
 
-    TupleBufferPtr buf = BufferManager::instance().getFixSizeBuffer();
+    TupleBufferPtr buf = BufferManager::instance().getFixedSizeBuffer();
     auto layout = createRowLayout(std::make_shared<Schema>(schema));
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         auto arrayField = layout->getArrayField(recordIndex,  /*fieldIndex*/0);

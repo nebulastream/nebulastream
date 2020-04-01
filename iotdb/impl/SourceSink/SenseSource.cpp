@@ -32,7 +32,7 @@ SenseSource::SenseSource(const Schema& schema , const std::string& udsf)
 
 TupleBufferPtr SenseSource::receiveData() {
   NES_DEBUG("SenseSource::receiveData called")
-  TupleBufferPtr buf = BufferManager::instance().getFixSizeBuffer();
+  TupleBufferPtr buf = BufferManager::instance().getFixedSizeBuffer();
   fillBuffer(buf);
   NES_DEBUG(
       "SenseSource::receiveData filled buffer with tuples=" << buf->getNumberOfTuples())
