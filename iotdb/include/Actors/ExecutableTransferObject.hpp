@@ -25,7 +25,7 @@ class ExecutableTransferObject {
  public:
   ExecutableTransferObject() = default;
   ExecutableTransferObject(string queryId,
-                           const Schema& schema,
+                           SchemaPtr schema,
                            vector<DataSourcePtr> sources,
                            vector<DataSinkPtr> destinations,
                            OperatorPtr operatorTree);
@@ -34,8 +34,8 @@ class ExecutableTransferObject {
  public:
   string &getQueryId();
   void setQueryId(const string &queryId);
-  Schema &getSchema();
-  void setSchema(const Schema &schema);
+  SchemaPtr getSchema();
+  void setSchema(SchemaPtr schema);
   vector<DataSourcePtr> &getSources();
   void setSources(const vector<DataSourcePtr> &sources);
   vector<DataSinkPtr> &getDestinations();
@@ -49,7 +49,7 @@ class ExecutableTransferObject {
 
  private:
   string queryId;
-  Schema schema;
+  SchemaPtr schema;
   vector<DataSourcePtr> sources;
   vector<DataSinkPtr> destinations;
   OperatorPtr operatorTree;

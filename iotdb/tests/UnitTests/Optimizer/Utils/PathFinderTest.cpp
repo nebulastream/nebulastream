@@ -39,7 +39,7 @@ TEST_F(PathFinderTest, find_path_with_max_bandwidth) {
   StreamCatalog::instance().reset();
   NESTopologyManager::getInstance().resetNESTopologyPlan();
 
-  Schema schema = Schema::create().addField("id", BasicType::UINT32).addField(
+  SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
   const NESTopologyCoordinatorNodePtr sinkNode =
       NESTopologyManager::getInstance().createNESCoordinatorNode(
@@ -53,7 +53,7 @@ TEST_F(PathFinderTest, find_path_with_max_bandwidth) {
       .createNESSensorNode(3, "localhost", CPUCapacity::HIGH);
   sensorNode1->setPhysicalStreamName("temperature1");
   StreamCatalog::instance().addLogicalStream("temperature",
-                                             std::make_shared<Schema>(schema));
+                                             schema);
   PhysicalStreamConfig conf;
   conf.physicalStreamName = "temperature1";
   StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(conf,
@@ -94,7 +94,7 @@ TEST_F(PathFinderTest, find_path_with_max_of_min_bandwidth) {
   StreamCatalog::instance().reset();
   NESTopologyManager::getInstance().resetNESTopologyPlan();
 
-  Schema schema = Schema::create().addField("id", BasicType::UINT32).addField(
+  SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
   const NESTopologyCoordinatorNodePtr sinkNode =
       NESTopologyManager::getInstance().createNESCoordinatorNode(
@@ -112,7 +112,7 @@ TEST_F(PathFinderTest, find_path_with_max_of_min_bandwidth) {
       .createNESSensorNode(5, "localhost", CPUCapacity::HIGH);
   sensorNode1->setPhysicalStreamName("temperature1");
   StreamCatalog::instance().addLogicalStream("temperature",
-                                             std::make_shared<Schema>(schema));
+                                             schema);
   PhysicalStreamConfig conf;
   conf.physicalStreamName = "temperature1";
   StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(conf,
@@ -156,7 +156,7 @@ TEST_F(PathFinderTest, find_path_with_min_latency) {
   StreamCatalog::instance().reset();
   NESTopologyManager::getInstance().resetNESTopologyPlan();
 
-  Schema schema = Schema::create().addField("id", BasicType::UINT32).addField(
+  SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
   const NESTopologyCoordinatorNodePtr sinkNode =
       NESTopologyManager::getInstance().createNESCoordinatorNode(
@@ -170,7 +170,7 @@ TEST_F(PathFinderTest, find_path_with_min_latency) {
       .createNESSensorNode(3, "localhost", CPUCapacity::HIGH);
   sensorNode1->setPhysicalStreamName("temperature1");
   StreamCatalog::instance().addLogicalStream("temperature",
-                                             std::make_shared<Schema>(schema));
+                                             schema);
 
   PhysicalStreamConfig conf;
   conf.physicalStreamName = "temperature1";
@@ -212,7 +212,7 @@ TEST_F(PathFinderTest, find_path_with_min_of_max_latency) {
   StreamCatalog::instance().reset();
   NESTopologyManager::getInstance().resetNESTopologyPlan();
 
-  Schema schema = Schema::create().addField("id", BasicType::UINT32).addField(
+  SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
   const NESTopologyCoordinatorNodePtr sinkNode =
       NESTopologyManager::getInstance().createNESCoordinatorNode(
@@ -229,8 +229,7 @@ TEST_F(PathFinderTest, find_path_with_min_of_max_latency) {
   const NESTopologySensorNodePtr sensorNode1 = NESTopologyManager::getInstance()
       .createNESSensorNode(5, "localhost", CPUCapacity::HIGH);
   sensorNode1->setPhysicalStreamName("temperature1");
-  StreamCatalog::instance().addLogicalStream("temperature",
-                                             std::make_shared<Schema>(schema));
+  StreamCatalog::instance().addLogicalStream("temperature", schema);
   PhysicalStreamConfig conf;
   conf.physicalStreamName = "temperature1";
   StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(conf,
@@ -276,7 +275,7 @@ TEST_F(PathFinderTest, find_all_paths_between_source_destination) {
   NESTopologyManager::getInstance().resetNESTopologyPlan();
 
   //prepare
-  Schema schema = Schema::create().addField("id", BasicType::UINT32).addField(
+  SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
   const NESTopologyCoordinatorNodePtr sinkNode =
       NESTopologyManager::getInstance().createNESCoordinatorNode(
@@ -289,8 +288,7 @@ TEST_F(PathFinderTest, find_all_paths_between_source_destination) {
   const NESTopologySensorNodePtr sensorNode1 = NESTopologyManager::getInstance()
       .createNESSensorNode(3, "localhost", CPUCapacity::HIGH);
   sensorNode1->setPhysicalStreamName("temperature1");
-  StreamCatalog::instance().addLogicalStream("temperature",
-                                             std::make_shared<Schema>(schema));
+  StreamCatalog::instance().addLogicalStream("temperature", schema);
   PhysicalStreamConfig conf;
   conf.physicalStreamName = "temperature1";
   StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(conf,
@@ -321,7 +319,7 @@ TEST_F(PathFinderTest, find_common_path_between_source_destination) {
   NESTopologyManager::getInstance().resetNESTopologyPlan();
 
   //prepare
-  Schema schema = Schema::create().addField("id", BasicType::UINT32).addField(
+  SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
   const NESTopologyCoordinatorNodePtr sinkNode =
       NESTopologyManager::getInstance().createNESCoordinatorNode(
@@ -346,8 +344,7 @@ TEST_F(PathFinderTest, find_common_path_between_source_destination) {
   const NESTopologySensorNodePtr sensorNode1 = NESTopologyManager::getInstance()
       .createNESSensorNode(9, "localhost", CPUCapacity::HIGH);
   sensorNode1->setPhysicalStreamName("temperature1");
-  StreamCatalog::instance().addLogicalStream("temperature",
-                                             std::make_shared<Schema>(schema));
+  StreamCatalog::instance().addLogicalStream("temperature", schema);
   PhysicalStreamConfig conf;
   conf.physicalStreamName = "temperature1";
   StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(conf,
@@ -357,8 +354,7 @@ TEST_F(PathFinderTest, find_common_path_between_source_destination) {
   const NESTopologySensorNodePtr sensorNode2 = NESTopologyManager::getInstance()
       .createNESSensorNode(10, "localhost", CPUCapacity::LOW);
   sensorNode2->setPhysicalStreamName("humidity1");
-  StreamCatalog::instance().addLogicalStream("humidity1",
-                                             std::make_shared<Schema>(schema));
+  StreamCatalog::instance().addLogicalStream("humidity1", schema);
   conf.physicalStreamName = "humidity1";
   StreamCatalogEntryPtr e2 = std::make_shared<StreamCatalogEntry>(conf,
                                                                   sensorNode2);
@@ -376,8 +372,7 @@ TEST_F(PathFinderTest, find_common_path_between_source_destination) {
   const NESTopologySensorNodePtr sensorNode4 = NESTopologyManager::getInstance()
       .createNESSensorNode(12, "localhost", CPUCapacity::MEDIUM);
   sensorNode4->setPhysicalStreamName("humidity2");
-  StreamCatalog::instance().addLogicalStream("humidity2",
-                                             std::make_shared<Schema>(schema));
+  StreamCatalog::instance().addLogicalStream("humidity2", schema);
 
   conf.physicalStreamName = "humidity2";
   StreamCatalogEntryPtr e4 = std::make_shared<StreamCatalogEntry>(conf,
@@ -450,7 +445,7 @@ TEST_F(PathFinderTest, find_path_from_non_linked_source) {
     StreamCatalog::instance().reset();
     NESTopologyManager::getInstance().resetNESTopologyPlan();
 
-    Schema schema = Schema::create().addField("id", BasicType::UINT32).addField(
+    SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
         "value", BasicType::UINT64);
     const NESTopologyCoordinatorNodePtr sinkNode =
         NESTopologyManager::getInstance().createNESCoordinatorNode(
@@ -461,7 +456,7 @@ TEST_F(PathFinderTest, find_path_from_non_linked_source) {
             1, "localhost", CPUCapacity::HIGH);
     sensorNode1->setPhysicalStreamName("temperature1");
     StreamCatalog::instance().addLogicalStream(
-        "temperature", std::make_shared<Schema>(schema));
+        "temperature", schema);
 
     PhysicalStreamConfig conf;
     conf.physicalStreamName = "temperature1";
@@ -483,7 +478,7 @@ TEST_F(PathFinderTest, find_path_between_non_linked_source_and_destination) {
   StreamCatalog::instance().reset();
   NESTopologyManager::getInstance().resetNESTopologyPlan();
 
-  Schema schema = Schema::create().addField("id", BasicType::UINT32).addField(
+  SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
   const NESTopologyCoordinatorNodePtr sinkNode =
       NESTopologyManager::getInstance().createNESCoordinatorNode(
@@ -494,8 +489,7 @@ TEST_F(PathFinderTest, find_path_between_non_linked_source_and_destination) {
   const NESTopologySensorNodePtr sensorNode1 = NESTopologyManager::getInstance()
       .createNESSensorNode(2, "localhost", CPUCapacity::HIGH);
   sensorNode1->setPhysicalStreamName("temperature1");
-  StreamCatalog::instance().addLogicalStream("temperature",
-                                             std::make_shared<Schema>(schema));
+  StreamCatalog::instance().addLogicalStream("temperature", schema);
 
   PhysicalStreamConfig conf;
   conf.physicalStreamName = "temperature1";
@@ -515,7 +509,7 @@ TEST_F(PathFinderTest, find_path_between_linked_source_and_destination) {
   StreamCatalog::instance().reset();
   NESTopologyManager::getInstance().resetNESTopologyPlan();
 
-  Schema schema = Schema::create().addField("id", BasicType::UINT32).addField(
+  SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
   const NESTopologyCoordinatorNodePtr sinkNode =
       NESTopologyManager::getInstance().createNESCoordinatorNode(
@@ -528,8 +522,7 @@ TEST_F(PathFinderTest, find_path_between_linked_source_and_destination) {
   const NESTopologySensorNodePtr sensorNode1 = NESTopologyManager::getInstance()
       .createNESSensorNode(3, "localhost", CPUCapacity::HIGH);
   sensorNode1->setPhysicalStreamName("temperature1");
-  StreamCatalog::instance().addLogicalStream("temperature",
-                                             std::make_shared<Schema>(schema));
+  StreamCatalog::instance().addLogicalStream("temperature", schema);
   PhysicalStreamConfig conf;
   conf.physicalStreamName = "temperature1";
   StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(conf,

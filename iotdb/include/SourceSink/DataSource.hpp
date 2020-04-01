@@ -32,7 +32,7 @@ class DataSource {
      * by some test to produce a deterministic behavior
      * @param schema of the data that this source produces
      */
-    DataSource(const Schema& schema);
+    DataSource(SchemaPtr schema);
 
     /**
      * @brief method to start the source.
@@ -81,7 +81,7 @@ class DataSource {
      * @brief method to return the current schema of the source
      * @return schema description of the source
      */
-    const Schema& getSchema() const;
+    SchemaPtr getSchema() const;
 
     /**
      * @brief method to return the current schema of the source as string
@@ -134,7 +134,7 @@ class DataSource {
      */
     DataSource();
 
-    Schema schema;
+    SchemaPtr schema;
     size_t generatedTuples;
     size_t generatedBuffers;
     size_t numBuffersToProcess;

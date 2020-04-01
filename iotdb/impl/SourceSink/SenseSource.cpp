@@ -23,7 +23,7 @@ SenseSource::SenseSource()
     udsf("") {
 }
 
-SenseSource::SenseSource(const Schema& schema , const std::string& udsf)
+SenseSource::SenseSource(SchemaPtr schema , const std::string& udsf)
     :
     DataSource(schema),
     udsf(udsf) {
@@ -41,7 +41,7 @@ TupleBufferPtr SenseSource::receiveData() {
 
 const std::string SenseSource::toString() const {
   std::stringstream ss;
-  ss << "SenseSource(SCHEMA(" << schema.toString() << "), UDSF=" << udsf
+  ss << "SenseSource(SCHEMA(" << schema->toString() << "), UDSF=" << udsf
      << endl;
   return ss.str();
 }

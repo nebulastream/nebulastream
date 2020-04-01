@@ -6,7 +6,6 @@
 #include <Services/CoordinatorService.hpp>
 
 #include <Topology/NESTopologyManager.hpp>
-#include <API/Schema.hpp>
 
 #include <Util/Logger.hpp>
 

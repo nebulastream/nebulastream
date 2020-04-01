@@ -31,7 +31,7 @@ class DataSink {
   /**
    * @brief public constructor for data sink with schema provisioning
    */
-  DataSink(const Schema &schema);
+  DataSink(SchemaPtr schema);
 
   /**
    * @brief Internal destructor to make sure that the data source is stopped before deconstrcuted
@@ -88,18 +88,18 @@ class DataSink {
    * @brief method to return the current schema of the sink
    * @return schema description of the sink
    */
-  const Schema &getSchema() const;
+  SchemaPtr getSchema() const;
 
   /**
    * @brief method to set the current schema of the sink
    * @param schema description of the sink
    */
-  void setSchema(const Schema &pSchema);
+  void setSchema(SchemaPtr pSchema);
 
   virtual SinkType getType() const=0;
 
  protected:
-  Schema schema;
+  SchemaPtr schema;
   size_t sentBuffer;
   size_t sentTuples;
 

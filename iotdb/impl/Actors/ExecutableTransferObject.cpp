@@ -11,7 +11,7 @@ BOOST_CLASS_EXPORT(NES::ExecutableTransferObject);
 
 namespace NES {
 ExecutableTransferObject::ExecutableTransferObject(string queryId,
-                                                   const Schema& schema,
+                                                   SchemaPtr schema,
                                                    vector<DataSourcePtr> sources,
                                                    vector<DataSinkPtr> destinations,
                                                    OperatorPtr operatorTree) {
@@ -64,11 +64,11 @@ void ExecutableTransferObject::setQueryId(const string& queryId) {
     this->queryId = queryId;
 }
 
-Schema& ExecutableTransferObject::getSchema() {
+SchemaPtr ExecutableTransferObject::getSchema() {
     return this->schema;
 }
 
-void ExecutableTransferObject::setSchema(const Schema& schema) {
+void ExecutableTransferObject::setSchema(SchemaPtr schema) {
     this->schema = schema;
 }
 

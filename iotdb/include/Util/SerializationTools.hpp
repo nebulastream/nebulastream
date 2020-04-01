@@ -44,7 +44,7 @@ class SerializationTools {
    * @param Schema schema to be serialized
    * @return the string serialized object
    */
-  static string ser_schema(const Schema &schema) {
+  static string ser_schema(SchemaPtr schema) {
     std::string s;
     {
       namespace io = boost::iostreams;
@@ -145,8 +145,8 @@ class SerializationTools {
    * @param string boost serialized string object
    * @return the deserialized object
    */
-  static Schema parse_schema(const string &s) {
-    Schema schema;
+  static SchemaPtr parse_schema(const string &s) {
+    SchemaPtr schema;
     {
       namespace io = boost::iostreams;
       io::stream<io::array_source> is(io::array_source{s.data(), s.size()});

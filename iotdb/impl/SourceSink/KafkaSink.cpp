@@ -12,7 +12,7 @@ namespace NES {
 
 KafkaSink::KafkaSink() {}
 
-KafkaSink::KafkaSink(const Schema& schema,
+KafkaSink::KafkaSink(SchemaPtr schema,
                      const std::string& brokers,
                      const std::string& topic,
                      const size_t kafkaProducerTimeout)
@@ -30,7 +30,7 @@ KafkaSink::KafkaSink(const Schema& schema,
               << ", topic " << topic << ", partition " <<  partition)
 }
 
-KafkaSink::KafkaSink(const Schema& schema,
+KafkaSink::KafkaSink(SchemaPtr schema,
                      const std::string& topic,
                      const cppkafka::Configuration& config)
   : DataSink(schema),
@@ -84,7 +84,7 @@ bool KafkaSink::writeData(const TupleBufferPtr input_buffer) {
 const std::string KafkaSink::toString() const {
   std::stringstream ss;
   ss << "KAFKA_SINK(";
-  ss << "SCHEMA(" << schema.toString() << "), ";
+  ss << "SCHEMA(" << schema->toString() << "), ";
   ss << "BROKER(" << brokers << "), ";
   ss << "TOPIC(" << topic << "), ";
   ss << "PARTITION(" << partition << ").";

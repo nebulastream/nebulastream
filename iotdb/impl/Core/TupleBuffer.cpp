@@ -104,18 +104,18 @@ void TupleBuffer::incrementUseCnt() {
   useCnt++;
 }
 
-std::string TupleBuffer::printTupleBuffer(Schema schema) {
+std::string TupleBuffer::printTupleBuffer(SchemaPtr schema) {
   std::stringstream ss;
   for (size_t i = 0; i < numberOfTuples; i++) {
     size_t offset = 0;
-    for (size_t j = 0; j < schema.getSize(); j++) {
-      auto field = schema[j];
+    for (size_t j = 0; j < schema->getSize(); j++) {
+      auto field = (*schema)[j];
       size_t fieldSize = field->getFieldSize();
       DataTypePtr ptr = field->getDataType();
       std::string str = ptr->convertRawToString(
-              reinterpret_cast<uint8_t*>(buffer) + offset + i * schema.getSchemaSize());
+          reinterpret_cast<uint8_t*>(buffer) + offset + i * schema->getSchemaSize());
       ss << str.c_str();
-      if (j < schema.getSize() - 1) {
+      if (j < schema->getSize() - 1) {
         ss << ",";
       }
       offset += fieldSize;
@@ -138,12 +138,12 @@ std::string TupleBuffer::printTupleBuffer(Schema schema) {
  *            << " tupleSize=" << tupleSize << " fieldSize=" << fieldSize
  *            << " res=" << (char*)buffer + offset + i * tupleSize << endl;
  */
-void TupleBuffer::revertEndianness(Schema schema) {
-  size_t tupleSize = schema.getSchemaSize();
+void TupleBuffer::revertEndianness(SchemaPtr schema) {
+  size_t tupleSize = schema->getSchemaSize();
   for (size_t i = 0; i < numberOfTuples; i++) {
     size_t offset = 0;
-    for (size_t j = 0; j < schema.getSize(); j++) {
-      auto field = schema[j];
+    for (size_t j = 0; j < schema->getSize(); j++) {
+      auto field = (*schema)[j];
       size_t fieldSize = field->getFieldSize();
       //TODO: add enum with switch for performance reasons
       if (field->getDataType()->toString() == "UINT8") {

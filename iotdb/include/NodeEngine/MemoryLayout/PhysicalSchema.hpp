@@ -4,8 +4,10 @@
 #include <vector>
 #include <API/Types/DataTypes.hpp>
 namespace NES {
-class Schema;
-typedef std::shared_ptr<Schema> SchemaPtr;
+
+//todo: change SchemaTemp to Schema
+class SchemaTemp;
+typedef std::shared_ptr<SchemaTemp> SchemaPtr;
 
 template<class ValueType>
 class BasicPhysicalField;

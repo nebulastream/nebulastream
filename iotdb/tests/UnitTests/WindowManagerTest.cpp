@@ -90,10 +90,10 @@ TEST_F(WindowManagerTest, check_slice) {
 
 TEST_F(WindowManagerTest, window_trigger) {
 
-  Schema schema = Schema::create().addField("id", BasicType::UINT32).addField(
+  SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
 
-  auto aggregation = Sum::on(schema.get("id"));
+  auto aggregation = Sum::on(schema->get("id"));
 
   auto windowDef = std::make_shared<WindowDefinition>(
       WindowDefinition(

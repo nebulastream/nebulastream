@@ -36,7 +36,7 @@ void PipelineContext::setNextPipeline(PipelineContextPtr nextPipeline) {
     this->nextPipeline = nextPipeline;
 }
 
-const Schema& PipelineContext::getInputSchema() const { return inputSchema; }
+SchemaPtr PipelineContext::getInputSchema() const { return inputSchema; }
 
-const Schema& PipelineContext::getResultSchema() const { return resultSchema; }
+SchemaPtr PipelineContext::getResultSchema() const { return resultSchema; }
 }

@@ -16,7 +16,7 @@ BOOST_CLASS_EXPORT_IMPLEMENT(NES::DataSource);
 
 namespace NES {
 
-DataSource::DataSource(const Schema &_schema)
+DataSource::DataSource(SchemaPtr _schema)
     :
     running(false),
     thread(),
@@ -45,7 +45,7 @@ DataSource::DataSource()
       "DataSource " << this->getSourceId() << ": Init Data Source Default w/o schema")
 }
 
-const Schema& DataSource::getSchema() const {
+SchemaPtr DataSource::getSchema() const {
   return schema;
 }
 
@@ -152,7 +152,7 @@ size_t DataSource::getNumberOfGeneratedBuffers() {
 ;
 
 std::string DataSource::getSourceSchemaAsString() {
-  return schema.toString();
+  return schema->toString();
 }
 
 const std::string& DataSource::getSourceId() const {

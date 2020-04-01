@@ -16,7 +16,7 @@ namespace NES {
 
 KafkaSource::KafkaSource() {}
 
-KafkaSource::KafkaSource(const Schema &schema,
+KafkaSource::KafkaSource(SchemaPtr schema,
                          const std::string& brokers,
                          const std::string& topic,
                          const std::string& groupId,
@@ -39,7 +39,7 @@ KafkaSource::KafkaSource(const Schema &schema,
              << ", topic " << topic)
 }
 
-KafkaSource::KafkaSource(const Schema& schema,
+KafkaSource::KafkaSource(SchemaPtr schema,
                          const std::string& topic,
                          const cppkafka::Configuration& config,
                          const size_t kafkaConsumerTimeout) :
@@ -73,7 +73,7 @@ TupleBufferPtr KafkaSource::receiveData() {
       } else {
       TupleBufferPtr buffer = BufferManager::instance().getFixedSizeBuffer();
 
-      const size_t tupleSize = schema.getSchemaSize();
+      const size_t tupleSize = schema->getSchemaSize();
       const size_t tupleCnt = msg.get_payload().get_size() / tupleSize;
 
       NES_DEBUG("KAFKASOURCE recv #tups: " << tupleCnt << ", tupleSize: " << tupleSize << ", msg: " << msg.get_payload())
@@ -95,7 +95,7 @@ TupleBufferPtr KafkaSource::receiveData() {
 const std::string KafkaSource::toString() const {
   std::stringstream ss;
   ss << "KAFKA_SOURCE(";
-  ss << "SCHEMA(" << schema.toString() << "), ";
+  ss << "SCHEMA(" << schema->toString() << "), ";
   ss << "BROKER(" << brokers << "), ";
   ss << "TOPIC(" << topic << "). ";
   return ss.str();

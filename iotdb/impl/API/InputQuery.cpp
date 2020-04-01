@@ -209,8 +209,7 @@ InputQuery& InputQuery::windowByKey(const AttributeFieldPtr onKey,
   addChild(op, root);
   root = op;
   // add a window scan operator with the window result schema.
-  auto outputSchema = Schema::create().addField(aggregation->asField());
-  SchemaPtr ptr = std::make_shared<Schema>(outputSchema);
+  SchemaPtr ptr = SchemaTemp::create()->addField(aggregation->asField());
   OperatorPtr windowScan = createWindowScanOperator(ptr);
   windowScan->setOperatorId(this->getNextOperatorId());
   addChild(windowScan, root);
@@ -227,8 +226,7 @@ InputQuery& InputQuery::window(const NES::WindowTypePtr windowType,
   addChild(op, root);
   root = op;
   // add a window scan operator with the window result schema.
-  auto outputSchema = Schema::create().addField(aggregation->asField());
-  SchemaPtr ptr = std::make_shared<Schema>(outputSchema);
+  SchemaPtr ptr = SchemaTemp::create()->addField(aggregation->asField());
   OperatorPtr windowScan = createWindowScanOperator(ptr);
   windowScan->setOperatorId(this->getNextOperatorId());
   addChild(windowScan, root);
@@ -265,7 +263,7 @@ InputQuery& InputQuery::writeToZmq(const std::string& logicalStreamName,
                                    const uint16_t& port) {
   SchemaPtr ptr = StreamCatalog::instance().getSchemaForLogicalStream(
       logicalStreamName);
-  OperatorPtr op = createSinkOperator(createZmqSink(*ptr.get(), host, port));
+  OperatorPtr op = createSinkOperator(createZmqSink(ptr, host, port));
   int operatorId = this->getNextOperatorId();
   op->setOperatorId(operatorId);
   addChild(op, root);

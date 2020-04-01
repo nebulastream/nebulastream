@@ -28,7 +28,7 @@ class PrintSink : public DataSink {
        * @Note the default output will be written to cout
        * @param schema of the written buffer tuples
        */
-    PrintSink(const Schema& pSchema, std::ostream& pOutputStream = std::cout);
+    PrintSink(SchemaPtr pSchema, std::ostream& pOutputStream = std::cout);
 
     /**
      * @brief destructor

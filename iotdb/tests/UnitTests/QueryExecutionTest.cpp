@@ -33,11 +33,11 @@ class QueryExecutionTest : public testing::Test {
     ThreadPool::instance().start();
 
     // create test input buffer
-    testSchema = Schema().create().addField(createField("id", BasicType::INT64))
-        .addField(createField("one", BasicType::INT64)).addField(
+    testSchema = SchemaTemp::create()->addField(createField("id", BasicType::INT64))->addField(
+        createField("one", BasicType::INT64))->addField(
         createField("value", BasicType::INT64));
     testInputBuffer = BufferManager::instance().getFixedSizeBuffer();
-    memoryLayout = createRowLayout(std::make_shared<Schema>(testSchema));
+    memoryLayout = createRowLayout(testSchema);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
       memoryLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/0)->write(
           testInputBuffer, recordIndex);
@@ -60,7 +60,7 @@ class QueryExecutionTest : public testing::Test {
     std::cout << "Tear down QueryCatalogTest test class." << std::endl;
   }
   TupleBufferPtr testInputBuffer;
-  Schema testSchema;
+  SchemaPtr testSchema;
   MemoryLayoutPtr memoryLayout;
 };
 
@@ -111,7 +111,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
   auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema);
   auto source = createSourceOperator(testSource);
   auto filter = createFilterOperator(
-      createPredicate(Field(testSchema.get("id")) < 5));
+      createPredicate(Field(testSchema->get("id")) < 5));
   auto testSink = std::make_shared<TestSink>();
   auto sink = createSinkOperator(testSink);
 
@@ -149,15 +149,14 @@ TEST_F(QueryExecutionTest, windowQuery) {
   // creating query plan
   auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema);
   auto source = createSourceOperator(testSource);
-  auto aggregation = Sum::on(testSchema.get("one"));
+  auto aggregation = Sum::on(testSchema->get("one"));
   auto windowType = TumblingWindow::of(TimeCharacteristic::ProcessingTime,
                                        Milliseconds(2));
   auto windowOperator = createWindowOperator(
-      createWindowDefinition(testSchema.get("value"), aggregation, windowType));
-  Schema resultSchema = Schema().create().addField(
+      createWindowDefinition(testSchema->get("value"), aggregation, windowType));
+  SchemaPtr resultSchema = SchemaTemp::create()->addField(
       createField("sum", BasicType::INT64));
-  SchemaPtr ptr = std::make_shared<Schema>(resultSchema);
-  auto windowScan = createWindowScanOperator(ptr);
+  auto windowScan = createWindowScanOperator(resultSchema);
   auto testSink = std::make_shared<TestSink>();
   auto sink = createSinkOperator(testSink);
 
@@ -190,7 +189,7 @@ TEST_F(QueryExecutionTest, windowQuery) {
   auto resultBuffer = testSink->resultBuffers[2];
   // The output buffer should contain 5 tuple;
   EXPECT_EQ(resultBuffer->getNumberOfTuples(), 2);
-  auto resultLayout = createRowLayout(ptr);
+  auto resultLayout = createRowLayout(resultSchema);
   for (int recordIndex = 0; recordIndex < 2; recordIndex++) {
     EXPECT_EQ(
         resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/0)->read(

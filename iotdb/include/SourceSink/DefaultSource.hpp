@@ -9,7 +9,7 @@ namespace NES{
 class DefaultSource : public GeneratorSource {
   public:
   DefaultSource() = default;
-  DefaultSource(const Schema& schema, const uint64_t numbersOfBufferToProduce, size_t frequency);
+  DefaultSource(SchemaPtr schema, const uint64_t numbersOfBufferToProduce, size_t frequency);
 
   TupleBufferPtr receiveData() override;
 

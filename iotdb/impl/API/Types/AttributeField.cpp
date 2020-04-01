@@ -42,7 +42,7 @@ bool AttributeField::isEqual(const AttributeField &attr) {
   return attr.name == name && attr.data_type == data_type;
 }
 
-bool AttributeField::isEqual(const AttributeFieldPtr &attr) {
+bool AttributeField::isEqual(AttributeFieldPtr attr) {
   if (!attr) return false;
   return this->isEqual(attr);
 }

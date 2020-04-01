@@ -63,7 +63,7 @@ TEST_F(QueryInterfaceTest, testQueryFilter) {
 
   Environment env = Environment::create(config);
 
-  Schema schema = Schema::create().addField("id", BasicType::UINT32).addField(
+  SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
 
   Stream def = Stream("default_logical", schema);
@@ -85,15 +85,15 @@ TEST_F(QueryInterfaceTest, testQueryMap) {
   Environment env = Environment::create(config);
 
 //    Config::create().withParallelism(1).withPreloading().withBufferSize(1000).withNumberOfPassesOverInput(1);
-  Schema schema = Schema::create().addField("id", BasicType::UINT32).addField(
+  SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
 
   Stream def = Stream("default", schema);
 
   AttributeField mappedField("id", BasicType::UINT64);
 
-  InputQuery &query = InputQuery::from(def).map(*schema[0],
-                                                def["value"] + schema[1]).print(
+  InputQuery &query = InputQuery::from(def).map(*schema->get(0),
+                                                def["value"] + schema->get(1)).print(
       std::cout);
   env.printInputQueryPlan(query);
   env.executeQuery(query);

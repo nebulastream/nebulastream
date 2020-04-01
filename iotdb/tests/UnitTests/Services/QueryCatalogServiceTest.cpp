@@ -11,9 +11,10 @@ using namespace NES;
 class QueryCatalogServiceTest : public testing::Test {
  public:
 
+  // \todo: change back to Schema
   std::string testSchema =
-      "Schema schema = Schema::create().addField(\"id\", BasicType::UINT32)"
-          ".addField(\"value\", BasicType::UINT64);";
+      "SchemaPtr schema = SchemaTemp::create()->addField(\"id\", BasicType::UINT32)"
+          "->addField(\"value\", BasicType::UINT64);";
   const std::string defaultLogicalStreamName = "default_logical";
 
   /* Will be called before any test in this class are executed. */
