@@ -7,9 +7,9 @@
 #include <API/Types/AttributeField.hpp>
 
 namespace NES {
-class SchemaTemp;
-typedef std::shared_ptr<SchemaTemp> SchemaPtr;
-class SchemaTemp {
+class Schema;
+typedef std::shared_ptr<Schema> SchemaPtr;
+class Schema {
  public:
   Schema();
   static SchemaPtr create();

@@ -11,15 +11,19 @@
 
 namespace NES {
 
-SchemaTemp::SchemaTemp() {
+Schema::Schema() {
 }
 
 SchemaPtr Schema::create() {
   return std::make_shared<Schema>();
 }
 
-size_t SchemaTemp::getSize() const {
+size_t Schema::getSize() const {
   return fields.size();
+}
+
+const Schema& Schema::copy() const {
+    return *this;
 }
 
 Schema::Schema(const SchemaPtr query) {
@@ -31,7 +35,7 @@ SchemaPtr Schema::copy() const {
 }
 
 /* Return size of one row of schema in bytes. */
-size_t SchemaTemp::getSchemaSize() const {
+size_t Schema::getSchemaSize() const {
   size_t size = 0;
   for (auto const& field : fields) {
     size += field->getFieldSize();
@@ -39,11 +43,9 @@ size_t SchemaTemp::getSchemaSize() const {
   return size;
 }
 
-SchemaPtr Schema::copyFields(SchemaPtr schema) {
- for(AttributeFieldPtr attr : schema->fields){
-    this->fields.push_back(attr->copy());
-  }
-  return std::make_shared<Schema>(*this);
+SchemaPtr Schema::copyFields(SchemaPtr const schema) {
+  fields.insert(fields.end(), schema->fields.begin(), schema->fields.end());
+  return std::make_shared<Schema>(this->copy());
 }
 
 SchemaPtr Schema::addField(AttributeFieldPtr field) {
@@ -74,7 +76,7 @@ SchemaPtr Schema::addField(const std::string& name, DataTypePtr data) {
 //  return *this;
 //}
 
-AttributeFieldPtr SchemaTemp::get(const std::string pName) {
+AttributeFieldPtr Schema::get(const std::string pName) {
   for (auto& f : fields) {
     if (f->name == pName)
       return f;
@@ -84,13 +86,13 @@ AttributeFieldPtr SchemaTemp::get(const std::string pName) {
 }
 
 AttributeFieldPtr Schema::get(uint32_t index) {
-  if (index < (uint32_t) fields.size()) {
-    return fields[index];
-  } else {
+  if((uint32_t) fields.size() >= index){
     return AttributeFieldPtr();
   }
+  return fields[index];
 }
 
+const AttributeFieldPtr Schema::operator[](uint32_t index) const {
 bool Schema::equals(SchemaPtr schema, bool in_order) {
   if(schema->fields.size() != fields.size()) return false;
   if(in_order){
@@ -116,7 +118,7 @@ const AttributeFieldPtr Schema::operator[](uint32_t index) const {
   }
 }
 
-const std::string SchemaTemp::toString() const {
+const std::string Schema::toString() const {
   std::stringstream ss;
   for (auto& f : fields) {
     ss << f->toString();
