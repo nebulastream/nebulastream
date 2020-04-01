@@ -151,7 +151,7 @@ class TupleBuffer {
   std::atomic<size_t> useCnt;
 };
 
-class Schema;
+class SchemaTemp;
 std::string toString(TupleBuffer& buffer, SchemaPtr schema);
 std::string toString(TupleBuffer* buffer, SchemaPtr schema);
 
