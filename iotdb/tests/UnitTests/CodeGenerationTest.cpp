@@ -52,7 +52,7 @@ class CodeGenerationTest : public testing::Test {
 
 const DataSourcePtr createTestSourceCodeGen() {
   return std::make_shared<DefaultSource>(
-      Schema::create()->addField(createField("campaign_id", UINT64)), 1, 1);
+      SchemaTemp::create()->addField(createField("campaign_id", UINT64)), 1, 1);
 }
 
 class SelectionDataGenSource : public GeneratorSource {
@@ -98,9 +98,9 @@ const DataSourcePtr createTestSourceCodeGenFilter() {
   DataSourcePtr source(
       std::make_shared<SelectionDataGenSource>(
           Schema::create()
-          ->addField("id", BasicType::UINT32)
-          ->addField("value", BasicType::UINT32)
-          ->addField("text", createArrayDataType(BasicType::CHAR, 12)),
+            ->addField("id", BasicType::UINT32)
+            ->addField("value", BasicType::UINT32)
+            ->addField("text", createArrayDataType(BasicType::CHAR, 12)),
           1));
 
   return source;
@@ -205,7 +205,7 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
 const DataSourcePtr createWindowTestDataSource() {
   DataSourcePtr source(
       std::make_shared<WindowTestingDataGeneratorSource>(
-          Schema::create()
+          SchemaTemp::create()
             ->addField("key", BasicType::UINT64)
             ->addField("value", BasicType::UINT64),
           10));
@@ -707,7 +707,7 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
   auto stage = codeGenerator->compile(CompilerArgs(), context->code);
 
   /* prepare input and output tuple buffer */
-  auto schema = Schema::create()->addField("i64", UINT64);
+  auto schema = SchemaTemp::create()->addField("i64", UINT64);
   auto buffer = source->receiveData();
 
   auto resultBuffer = BufferManager::instance().getFixedSizeBuffer();
@@ -886,7 +886,7 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
       context, std::cout);
 
   /* generate code for writing result tuples to output buffer */
-  auto outputSchema = Schema::create()
+  auto outputSchema = SchemaTemp::create()
       ->addField("id", BasicType::UINT32)
       ->addField("valueSmall", BasicType::INT16)
       ->addField("valueFloat", BasicType::FLOAT32)

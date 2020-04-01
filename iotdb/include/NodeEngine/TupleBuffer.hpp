@@ -129,7 +129,7 @@ class TupleBuffer {
    * @brief revert the endianess of the tuple buffer
    * @schema of the buffer
    */
-  void revertEndianness(SchemaPtr schema);
+   void revertEndianness(SchemaPtr schema);
 
  private:
   /**
@@ -151,7 +151,7 @@ class TupleBuffer {
   std::atomic<size_t> useCnt;
 };
 
-class Schema;
+class SchemaTemp;
 std::string toString(TupleBuffer& buffer, SchemaPtr schema);
 std::string toString(TupleBuffer* buffer, SchemaPtr schema);
 

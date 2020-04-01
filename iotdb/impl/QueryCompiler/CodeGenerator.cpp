@@ -116,8 +116,8 @@ const StructDeclaration getStructDeclarationFromSchema(const std::string struct_
     std::cout << "Define Struct : " << struct_name << std::endl;
 
     for (size_t i = 0; i < schema->getSize(); ++i) {
-        struct_decl_tuple.addField(VariableDeclaration::create(schema->get(i)->getDataType(), schema->get(i)->name));
-        std::cout << "Field " << i << ": " << schema->get(i)->getDataType()->toString() << " " << schema->get(i)->name
+        struct_decl_tuple.addField(VariableDeclaration::create((*schema)[i]->getDataType(), (*schema)[i]->name));
+        std::cout << "Field " << i << ": " << (*schema)[i]->getDataType()->toString() << " " << (*schema)[i]->name
                   << std::endl;
     }
     return struct_decl_tuple;
