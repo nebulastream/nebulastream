@@ -23,7 +23,7 @@ class MemoryLayoutTest : public testing::Test {
 };
 
 TEST_F(MemoryLayoutTest, rowLayoutTestInt) {
-    SchemaPtr schema = Schema::create()
+    SchemaPtr schema = SchemaTemp::create()
         ->addField("t1", BasicType::UINT8)
         ->addField("t2", BasicType::UINT8)
         ->addField("t3", BasicType::UINT8);
@@ -48,7 +48,7 @@ TEST_F(MemoryLayoutTest, rowLayoutTestInt) {
 }
 
 TEST_F(MemoryLayoutTest, rowLayoutTestArray) {
-    SchemaPtr schema = Schema::create()
+    SchemaPtr schema = SchemaTemp::create()
         ->addField("t1", createArrayDataType(BasicType::INT64, 10))
         ->addField("t2", BasicType::UINT8)
         ->addField("t3", BasicType::UINT8);
@@ -76,7 +76,7 @@ TEST_F(MemoryLayoutTest, rowLayoutTestArray) {
 }
 
 TEST_F(MemoryLayoutTest, rowLayoutTestArrayAsPointerField) {
-    SchemaPtr schema = Schema::create()
+    SchemaPtr schema = SchemaTemp::create()
         ->addField("t1", createArrayDataType(BasicType::INT64, 10));
 
     TupleBufferPtr buf = BufferManager::instance().getFixedSizeBuffer();

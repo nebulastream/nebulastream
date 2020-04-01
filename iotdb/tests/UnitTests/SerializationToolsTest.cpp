@@ -171,7 +171,7 @@ TEST_F(SerializationToolsTest, serialize_deserialize_executabletransferobject_EX
   vector<DataSourcePtr> sources { zmqSource };
   vector<DataSinkPtr> destinations { sink };
 
-  SchemaPtr schemaExdra = Schema::create()
+  SchemaPtr schemaExdra = SchemaTemp::create()
       ->addField("type", createArrayDataType(BasicType::CHAR, 30))
       ->addField("metadata.generated", BasicType::UINT64)
       ->addField("metadata.title", createArrayDataType(BasicType::CHAR, 50))

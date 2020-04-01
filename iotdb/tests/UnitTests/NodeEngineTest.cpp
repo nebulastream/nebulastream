@@ -195,7 +195,7 @@ CompiledTestQueryExecutionPlanPtr setupQEP() {
   CompiledTestQueryExecutionPlanPtr qep(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source =
       createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
-  SchemaPtr sch = Schema::create()
+  SchemaPtr sch = SchemaTemp::create()
       ->addField("sum", BasicType::UINT32);
   DataSinkPtr sink = createBinaryFileSinkWithSchema(sch, filePath);
   qep->addDataSource(source);
@@ -322,7 +322,7 @@ TEST_F(EngineTest, DISABLED_parallel_different_source_test) {
   CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source1 =
   createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
-  SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
+  SchemaTemp sch1 = SchemaTemp::create()->addField("sum", BasicType::UINT32);
   DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep1.txt");
   qep1->addDataSource(source1);
   qep1->addDataSink(sink1);
@@ -330,7 +330,7 @@ TEST_F(EngineTest, DISABLED_parallel_different_source_test) {
   CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source2 =
   createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
-  SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
+  SchemaTemp sch2 = SchemaTemp::create()->addField("sum", BasicType::UINT32);
   DataSinkPtr sink2 = createBinaryFileSinkWithSchema(sch2, "qep2.txt");
   qep2->addDataSource(source2);
   qep2->addDataSink(sink2);
@@ -351,7 +351,7 @@ TEST_F(EngineTest, DISABLED_parallel_same_source_test) {
   CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source1 =
   createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
-  SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
+  SchemaPtr sch1 = SchemaTemp::create()->addField("sum", BasicType::UINT32);
   DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep1.txt");
   qep1->addDataSource(source1);
   qep1->addDataSink(sink1);
@@ -378,7 +378,7 @@ TEST_F(EngineTest, DISABLED_parallel_same_sink_test) {
   CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source1 =
   createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
-  SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
+  SchemaPtr sch1 = SchemaTemp::create()->addField("sum", BasicType::UINT32);
   DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep12.txt");
   qep1->addDataSource(source1);
   qep1->addDataSink(sink1);
@@ -386,7 +386,7 @@ TEST_F(EngineTest, DISABLED_parallel_same_sink_test) {
   CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source2 =
   createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
-  SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
+  SchemaPtr sch2 = SchemaTemp::create()->addField("sum", BasicType::UINT32);
   qep2->addDataSource(source1);
   qep2->addDataSink(sink1);
 
@@ -405,7 +405,7 @@ TEST_F(EngineTest, DISABLED_parallel_same_source_and_sink_test) {
   CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source1 =
   createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
-  SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
+  SchemaPtr sch1 = SchemaTemp::create()->addField("sum", BasicType::UINT32);
   DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep3.txt");
   qep1->addDataSource(source1);
   qep1->addDataSink(sink1);
@@ -430,8 +430,7 @@ TEST_F(EngineTest, DISABLED_blocking_test) {
   CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source1 =
       createDefaultSourceWithoutSchemaForOneBufferForVarBuffers(10, 0);
-  SchemaPtr sch1 = Schema::create()
-      ->addField("sum", BasicType::UINT32);
+  SchemaPtr sch1 = SchemaTemp::create()->addField("sum", BasicType::UINT32);
   DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep12.txt");
   qep1->addDataSource(source1);
   qep1->addDataSink(sink1);
