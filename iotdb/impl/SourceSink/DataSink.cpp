@@ -19,7 +19,7 @@ DataSink::DataSink(SchemaPtr _schema)
 }
 
 DataSink::DataSink()
-    : schema(SchemaTemp::create()),
+    : schema(Schema::create()),
       sentBuffer(0),
       sentTuples(0) {
   NES_DEBUG("DataSink:Init Default Data Sink!")
