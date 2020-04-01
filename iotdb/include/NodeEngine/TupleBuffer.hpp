@@ -106,7 +106,7 @@ class TupleBuffer {
    * @brief increment the counter by one
    * @return bool indicating succeess
    */
-  bool incrementUseCnt();
+  void incrementUseCnt();
 
   /**
    * @brief this method creates a string from the content of a tuple buffer
