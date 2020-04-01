@@ -120,7 +120,7 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(
       NES_ERROR("Compilation of schema code failed! Code: " << code.str());
     }
 
-    typedef Schema (*CreateSchemaFunctionPtr)();
+    typedef SchemaTemp (*CreateSchemaFunctionPtr)();
     CreateSchemaFunctionPtr func = compiled_code
         ->getFunctionPointer<CreateSchemaFunctionPtr>(
         "_ZN3NES12createSchemaEv");      // was   _ZN5iotdb12createSchemaEv
@@ -128,8 +128,8 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(
       NES_ERROR("Error retrieving function! Symbol not found!");
     }
     /* call loaded function to create query object */
-    Schema query((*func)());
-    return std::make_shared<Schema>(query);
+    SchemaTemp query((*func)());
+    return std::make_shared<SchemaTemp>(query);
 
   } catch (...) {
     NES_ERROR(
