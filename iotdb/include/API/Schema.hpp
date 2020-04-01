@@ -7,17 +7,17 @@
 #include <API/Types/AttributeField.hpp>
 
 namespace NES {
-class Schema;
-typedef std::shared_ptr<Schema> SchemaPtr;
-class Schema {
+class SchemaTemp;
+typedef std::shared_ptr<SchemaTemp> SchemaPtr;
+class SchemaTemp {
  public:
-  Schema();
+  SchemaTemp();
   static SchemaPtr create();
 
-  Schema(SchemaPtr query);
-  SchemaPtr copy() const;
+  SchemaTemp(SchemaPtr query);
+  const SchemaTemp& copy() const;
 
-  SchemaPtr copyFields(SchemaPtr schema);
+  SchemaTemp copyFields(SchemaPtr const schema);
   SchemaPtr addField(AttributeFieldPtr field);
   SchemaPtr addField(const std::string &name, const BasicType &);
   SchemaPtr addField(const std::string &name, DataTypePtr data);
@@ -32,15 +32,17 @@ class Schema {
   size_t getSchemaSize() const;
   const std::string toString() const;
 
-  bool equals(SchemaPtr schema, bool in_order = true);
-
   std::vector<AttributeFieldPtr> fields;
 
-  bool operator==(const Schema &rhs) const {
-    if (fields.size() == rhs.fields.size()) {
+  bool operator==(const SchemaPtr rhs) const {
+    if (fields.size() == rhs->fields.size()) {
       for (std::vector<int>::size_type i = 0; i != fields.size(); i++) {
         fields[i];
-        if (!(*fields[i].get() == *rhs.fields[i].get())) {
+        // schemas are equal, if their attributes are equal, right? So lets check this:
+        if(!(fields[i]->isEqual(rhs->fields[i]))){
+            return false;
+        }
+        if (!(fields[i].get() == rhs->fields[i].get())) {
           return false;
         }
       }
