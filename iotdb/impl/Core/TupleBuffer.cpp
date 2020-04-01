@@ -101,7 +101,7 @@ bool TupleBuffer::decrementUseCntAndTestForZero() {
   return useCnt == 0;
 }
 
-bool TupleBuffer::incrementUseCnt() {
+void TupleBuffer::incrementUseCnt() {
   //TODO: should this be thread save?
   useCnt++;
 }

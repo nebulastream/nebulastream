@@ -82,6 +82,7 @@ TEST_F(BufferManagerTest, add_and_remove_Buffer_simple) {
   buffers_free = BufferManager::instance().getNumberOfFreeFixedBuffers();
   ASSERT_EQ(buffers_count, buffers_managed + 1);
   ASSERT_EQ(buffers_free, buffers_managed + 1);
+  BufferManager::instance().reset();
 }
 
 TEST_F(BufferManagerTest, get_and_release_Buffer_simple) {
