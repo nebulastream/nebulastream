@@ -45,12 +45,19 @@ void BufferManager::clearFixBufferPool() {
   fixedSizeBufferPool->reset();
   assert(fixedSizeBufferPool->size() == 0);
   assert(fixedSizeBufferPool->empty());
+
 }
 
 void BufferManager::clearVarBufferPool() {
 //delete all existing buffers
   NES_DEBUG(
       "BufferManager: clearVarBufferPool of size" << varSizeBufferPool.size())
+
+//  for (auto it = varSizeBufferPool.begin();
+//      it != varSizeBufferPool.end(); it++) {
+//    varSizeBufferPool.erase(it);7
+//  }
+  numberOfFreeVarSizeBuffers = 0;
   varSizeBufferPool.clear();
   assert(varSizeBufferPool.size() == 0);
   assert(varSizeBufferPool.empty());
@@ -96,10 +103,6 @@ void BufferManager::addOneBufferWithFixedSize() {
                                                       0, /**fixSizeBuffer*/
                                                       true);
   fixedSizeBufferPool->push(buff);
-//  fixSizeBufferPool.emplace(std::piecewise_construct,
-//                            std::forward_as_tuple(buff),
-//                            std::forward_as_tuple(false));
-
 }
 
 TupleBufferPtr BufferManager::addOneBufferWithVarSize(size_t bufferSizeInByte) {
@@ -110,6 +113,7 @@ TupleBufferPtr BufferManager::addOneBufferWithVarSize(size_t bufferSizeInByte) {
   /**tupleSizeBytes*/0, /**numTuples*/
                                                       0, /**fixSizeBuffer*/
                                                       false);
+  buff->incrementUseCnt();
   varSizeBufferPool.emplace(std::piecewise_construct,
                             std::forward_as_tuple(buff),
                             std::forward_as_tuple(false));
@@ -154,6 +158,8 @@ bool BufferManager::releaseBuffer(const TupleBufferPtr tupleBuffer) {
           NES_DEBUG(
               "BufferManager: Dont release buffer as useCnt gets " << it->first->getUseCnt())
         }
+        numberOfFreeVarSizeBuffers++;
+
 
         return true;
       }
@@ -163,43 +169,42 @@ bool BufferManager::releaseBuffer(const TupleBufferPtr tupleBuffer) {
   return false;
 }
 
-//bool BufferManager::removeBuffer(TupleBufferPtr tupleBuffer) {
-//  std::unique_lock<std::mutex> lock(changeBufferMutex);
-//
-//  if (!tupleBuffer) {
-//    NES_ERROR("BufferManager::releaseBuffer: error remove of nullptr buffer")
-//    throw new Exception("BufferManager failed");
-//  }
-//  std::map<TupleBufferPtr, /**used*/std::atomic<bool>>::iterator it;
-//  std::map<TupleBufferPtr, /**used*/std::atomic<bool>>::iterator end;
-//
-//  if (tupleBuffer->getFixSizeBuffer()) {
-//    delete (char*) tupleBuffer->getBuffer();
-//  } else {
-//    it = varSizeBufferPool.begin();
-//    end = varSizeBufferPool.end();
-//
-//    for (; it != end; it++) {
-//      if (it->first.get() == tupleBuffer.get()) {
-//        if (it->second == true) {
-//          NES_DEBUG(
-//              "BufferManager: could not remove Buffer buffer because it is in use" << tupleBuffer)
-//          return false;
-//        }
-//
-//        delete (char*) it->first->getBuffer();
-//        varSizeBufferPool.erase(tupleBuffer);
-//
-//        NES_DEBUG(
-//            "BufferManager: found and remove Buffer buffer" << tupleBuffer)
-//        return true;
-//      }
-//    }
-//  }
-//  NES_DEBUG(
-//      "BufferManager: could not remove buffer, buffer not found" << tupleBuffer)
-//  return false;
-//}
+bool BufferManager::removeVaSizeBuffer(TupleBufferPtr tupleBuffer) {
+  std::unique_lock<std::mutex> lock(changeBufferMutex);
+
+  if (!tupleBuffer) {
+    NES_ERROR("BufferManager::releaseBuffer: error remove of nullptr buffer")
+    throw new Exception("BufferManager failed");
+  }
+  std::map<TupleBufferPtr, /**used*/std::atomic<bool>>::iterator it;
+  std::map<TupleBufferPtr, /**used*/std::atomic<bool>>::iterator end;
+
+  if (tupleBuffer->getFixSizeBuffer()) {
+    delete (char*) tupleBuffer->getBuffer();
+  } else {
+    it = varSizeBufferPool.begin();
+    end = varSizeBufferPool.end();
+    for (; it != end; it++) {
+      if (it->first.get() == tupleBuffer.get()) {
+        if (it->second == true) {
+          NES_DEBUG(
+              "BufferManager: could not remove Buffer buffer because it is in use" << tupleBuffer)
+          return false;
+        }
+
+        delete (char*) it->first->getBuffer();
+        varSizeBufferPool.erase(tupleBuffer);
+
+        NES_DEBUG(
+            "BufferManager: found and remove Buffer buffer" << tupleBuffer)
+        return true;
+      }
+    }
+  }
+  NES_DEBUG(
+      "BufferManager: could not remove buffer, buffer not found" << tupleBuffer)
+  return false;
+}
 
 TupleBufferPtr BufferManager::getFixedSizeBuffer() {
   //this call is blocking

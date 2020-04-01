@@ -36,6 +36,7 @@ void TupleBuffer::copyInto(const TupleBufferPtr other) {
 }
 
 TupleBuffer& TupleBuffer::operator=(const TupleBuffer &other) {
+  NES_WARNING("TupleBuffer::operator=: " << this)
   if (this != &other) {
     bufferSizeInBytes = other.bufferSizeInBytes.load();
     tupleSizeInBytes = other.tupleSizeInBytes.load();
