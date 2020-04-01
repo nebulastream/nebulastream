@@ -5,8 +5,15 @@
 #include <Network/NetworkMessage.hpp>
 #include <Network/NetworkCommon.hpp>
 
+
 namespace NES {
 namespace Network {
+
+#if ZMQ_VERSION_MAJOR >= 4 && ZMQ_VERSION_MINOR >= 3 && ZMQ_VERSION_PATCH >= 3
+    static constexpr zmq::send_flags kSendMore = zmq::send_flags::sndmore;
+#else
+    static constexpr int kSendMore = ZMQ_SNDMORE;
+#endif
 
     /**
      * Send a message MessageType(args) via zmqSocket
@@ -21,7 +28,7 @@ namespace Network {
         MessageType message(std::forward<Arguments>(args)...);
         zmq::message_t sendHeader(&header, sizeof(Messages::MessageHeader));
         zmq::message_t sendMsg(&message, sizeof(MessageType));
-        zmqSocket.send(sendHeader, zmq::send_flags::sndmore);
+        zmqSocket.send(sendHeader, kSendMore);
         zmqSocket.send(sendMsg);
     }
 
@@ -38,8 +45,8 @@ namespace Network {
         MessageType message(std::forward<Arguments>(args)...);
         zmq::message_t sendHeader(&header, sizeof(Messages::MessageHeader));
         zmq::message_t sendMsg(&message, sizeof(MessageType));
-        zmqSocket.send(zmqIdentity, zmq::send_flags::sndmore);
-        zmqSocket.send(sendHeader, zmq::send_flags::sndmore);
+        zmqSocket.send(zmqIdentity, kSendMore);
+        zmqSocket.send(sendHeader, kSendMore);
         zmqSocket.send(sendMsg);
     }
 

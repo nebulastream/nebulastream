@@ -3,11 +3,19 @@
 #include <Util/Logger.hpp>
 #include <Network/ZmqUtils.hpp>
 #include <Util/ThreadBarrier.hpp>
+#include <NodeEngine/BufferManager.hpp>
 
 #define TO_RAW_ZMQ_SOCKET static_cast<void*>
 
 namespace NES {
 namespace Network {
+
+namespace detail {
+
+void release_buffer_callback(void* buffer, void* pool) {
+
+}
+}
 
 ZmqServer::ZmqServer(const std::string& hostname,
                      uint16_t port,
@@ -118,8 +126,8 @@ void ZmqServer::handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier) {
         while (keepRunning) {
             zmq::message_t identityEnvelope;
             zmq::message_t headerEnvelope;
-            dispatcherSocket.recv(identityEnvelope);
-            dispatcherSocket.recv(headerEnvelope);
+            dispatcherSocket.recv(&identityEnvelope);
+            dispatcherSocket.recv(&headerEnvelope);
             auto msgHeader = headerEnvelope.data<Messages::MessageHeader>();
             if (msgHeader->getMagicNumber() != Messages::NES_NETWORK_MAGIC_NUMBER) {
                 // TODO handle error -- need to discuss how we handle errors on the node engine
@@ -129,17 +137,16 @@ void ZmqServer::handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier) {
                 case Messages::kClientAnnouncement: {
                     zmq::message_t outIdentityEnvelope;
                     zmq::message_t clientAnnouncementEnvelope;
-                    dispatcherSocket.recv(clientAnnouncementEnvelope);
+                    dispatcherSocket.recv(&clientAnnouncementEnvelope);
                     auto serverReadyMsg =
                         exchangeProtocol.onClientAnnoucement(clientAnnouncementEnvelope.data<Messages::ClientAnnounceMessage>());
-                    outIdentityEnvelope.copy(identityEnvelope);
+                    outIdentityEnvelope.copy(&identityEnvelope);
                     sendMessageWithIdentity<Messages::ServerReadyMessage>(dispatcherSocket,
                                                                           outIdentityEnvelope,
                                                                           serverReadyMsg);
                     break;
                 }
                 case Messages::kDataBuffer : {
-                    exchangeProtocol.onBuffer();
                     NES_ERROR("[ZmqServer] not supported yet");
                     assert(false);
                     break;

@@ -184,5 +184,6 @@ class BufferManager {
 };
 
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
+
 }
 #endif
