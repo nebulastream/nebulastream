@@ -5,8 +5,9 @@
 
 namespace NES {
 
-class Schema;
-typedef std::shared_ptr<Schema> SchemaPtr;
+//todo: change name back to Schema here...:
+class SchemaTemp;
+typedef std::shared_ptr<SchemaTemp> SchemaPtr;
 
 class OperatorNode : public Node {
   public:

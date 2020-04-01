@@ -11,14 +11,14 @@
 
 namespace NES {
 
-Schema::Schema() {
+SchemaTemp::SchemaTemp() {
 }
 
 SchemaPtr Schema::create() {
   return std::make_shared<Schema>();
 }
 
-size_t Schema::getSize() const {
+size_t SchemaTemp::getSize() const {
   return fields.size();
 }
 
@@ -31,7 +31,7 @@ SchemaPtr Schema::copy() const {
 }
 
 /* Return size of one row of schema in bytes. */
-size_t Schema::getSchemaSize() const {
+size_t SchemaTemp::getSchemaSize() const {
   size_t size = 0;
   for (auto const& field : fields) {
     size += field->getFieldSize();
@@ -74,7 +74,7 @@ SchemaPtr Schema::addField(const std::string& name, DataTypePtr data) {
 //  return *this;
 //}
 
-AttributeFieldPtr Schema::get(const std::string pName) {
+AttributeFieldPtr SchemaTemp::get(const std::string pName) {
   for (auto& f : fields) {
     if (f->name == pName)
       return f;
@@ -116,7 +116,7 @@ const AttributeFieldPtr Schema::operator[](uint32_t index) const {
   }
 }
 
-const std::string Schema::toString() const {
+const std::string SchemaTemp::toString() const {
   std::stringstream ss;
   for (auto& f : fields) {
     ss << f->toString();

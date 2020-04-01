@@ -11,7 +11,6 @@ using namespace NES;
 class QueryCatalogServiceTest : public testing::Test {
  public:
 
-  // \todo: change back to Schema
   std::string testSchema =
       "SchemaPtr schema = Schema::create()->addField(\"id\", BasicType::UINT32)"
           "->addField(\"value\", BasicType::UINT64);";
