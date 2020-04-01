@@ -10,27 +10,27 @@
 
 namespace NES {
 
-SchemaTemp::SchemaTemp() {
+Schema::Schema() {
 }
 
-SchemaPtr SchemaTemp::create() {
-  return std::make_shared<SchemaTemp>();
+SchemaPtr Schema::create() {
+  return std::make_shared<Schema>();
 }
 
-size_t SchemaTemp::getSize() const {
+size_t Schema::getSize() const {
   return fields.size();
 }
 
-const SchemaTemp& SchemaTemp::copy() const {
+const Schema& Schema::copy() const {
     return *this;
 }
 
-SchemaTemp::SchemaTemp(const SchemaPtr query) {
+Schema::Schema(const SchemaPtr query) {
   copyFields(query);
 }
 
 /* Return size of one row of schema in bytes. */
-size_t SchemaTemp::getSchemaSize() const {
+size_t Schema::getSchemaSize() const {
   size_t size = 0;
   for (auto const& field : fields) {
     size += field->getFieldSize();
@@ -38,26 +38,26 @@ size_t SchemaTemp::getSchemaSize() const {
   return size;
 }
 
-SchemaTemp SchemaTemp::copyFields(SchemaPtr const schema) {
+SchemaPtr Schema::copyFields(SchemaPtr const schema) {
   fields.insert(fields.end(), schema->fields.begin(), schema->fields.end());
-  return *this;
+  return std::make_shared<Schema>(this->copy());
 }
 
-SchemaPtr SchemaTemp::addField(AttributeFieldPtr field) {
+SchemaPtr Schema::addField(AttributeFieldPtr field) {
   if (field)
     fields.push_back(field);
-  return std::make_shared<SchemaTemp>(*this);
+  return std::make_shared<Schema>(*this);
 }
 
-SchemaPtr SchemaTemp::addField(const std::string& name, const BasicType& type) {
+SchemaPtr Schema::addField(const std::string& name, const BasicType& type) {
   return addField(createField(name, type));
 }
 
-SchemaPtr SchemaTemp::addField(const std::string& name, uint32_t size) {
+SchemaPtr Schema::addField(const std::string& name, uint32_t size) {
   return addField(createField(name, size));
 }
 
-SchemaPtr SchemaTemp::addField(const std::string& name, DataTypePtr data) {
+SchemaPtr Schema::addField(const std::string& name, DataTypePtr data) {
   return addField(createField(name, data));
 }
 
@@ -71,7 +71,7 @@ SchemaPtr SchemaTemp::addField(const std::string& name, DataTypePtr data) {
 //  return *this;
 //}
 
-AttributeFieldPtr SchemaTemp::get(const std::string pName) {
+AttributeFieldPtr Schema::get(const std::string pName) {
   for (auto& f : fields) {
     if (f->name == pName)
       return f;
@@ -80,14 +80,14 @@ AttributeFieldPtr SchemaTemp::get(const std::string pName) {
   throw std::invalid_argument("field " + pName + " does not exist");
 }
 
-AttributeFieldPtr SchemaTemp::get(uint32_t index) {
+AttributeFieldPtr Schema::get(uint32_t index) {
   if((uint32_t) fields.size() >= index){
     return AttributeFieldPtr();
   }
   return fields[index];
 }
 
-const AttributeFieldPtr SchemaTemp::operator[](uint32_t index) const {
+const AttributeFieldPtr Schema::operator[](uint32_t index) const {
   if (index < (uint32_t) fields.size()) {
     return fields[index];
   } else {
@@ -96,7 +96,7 @@ const AttributeFieldPtr SchemaTemp::operator[](uint32_t index) const {
   }
 }
 
-const std::string SchemaTemp::toString() const {
+const std::string Schema::toString() const {
   std::stringstream ss;
   for (auto& f : fields) {
     ss << f->toString();

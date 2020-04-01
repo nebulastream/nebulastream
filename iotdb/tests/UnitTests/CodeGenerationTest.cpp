@@ -52,7 +52,7 @@ class CodeGenerationTest : public testing::Test {
 
 const DataSourcePtr createTestSourceCodeGen() {
   return std::make_shared<DefaultSource>(
-      SchemaTemp::create()->addField(createField("campaign_id", UINT64)), 1, 1);
+      Schema::create()->addField(createField("campaign_id", UINT64)), 1, 1);
 }
 
 class SelectionDataGenSource : public GeneratorSource {
@@ -97,7 +97,7 @@ class SelectionDataGenSource : public GeneratorSource {
 const DataSourcePtr createTestSourceCodeGenFilter() {
   DataSourcePtr source(
       std::make_shared<SelectionDataGenSource>(
-          SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
+          Schema::create()->addField("id", BasicType::UINT32)->addField(
               "value", BasicType::UINT32)->addField(
               "text", createArrayDataType(BasicType::CHAR, 12)),
           1));
@@ -154,7 +154,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
 const DataSourcePtr createTestSourceCodeGenPredicate() {
   DataSourcePtr source(
       std::make_shared<PredicateTestingDataGeneratorSource>(
-          SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
+          Schema::create()->addField("id", BasicType::UINT32)->addField(
               "valueSmall", BasicType::INT16)->addField("valueFloat",
                                                        BasicType::FLOAT32)
               ->addField("valueDouble", BasicType::FLOAT64)->addField(
@@ -203,7 +203,7 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
 const DataSourcePtr createWindowTestDataSource() {
   DataSourcePtr source(
       std::make_shared<WindowTestingDataGeneratorSource>(
-          SchemaTemp::create()->addField("key", BasicType::UINT64)->addField(
+          Schema::create()->addField("key", BasicType::UINT64)->addField(
               "value", BasicType::UINT64),
           10));
   return source;
@@ -655,8 +655,8 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
   /* setup input and output for test */
   auto inputBuffer = BufferManager::instance().getFixedSizeBuffer();
   inputBuffer->setTupleSizeInBytes(8);
-  auto recordSchema = SchemaTemp::create()->addField("id", BasicType::INT64);
-  auto layout = createRowLayout(std::make_shared<SchemaTemp>(recordSchema->copy()));
+  auto recordSchema = Schema::create()->addField("id", BasicType::INT64);
+  auto layout = createRowLayout(std::make_shared<Schema>(recordSchema->copy()));
 
   for (uint32_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
       layout->getValueField<int64_t>(recordIndex, /*fieldIndex*/0)->write(inputBuffer, recordIndex);
@@ -697,14 +697,14 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
   /* generate code for writing result tuples to output buffer */
   codeGenerator->generateCode(
       createPrintSinkWithSchema(
-          SchemaTemp::create()->addField("campaign_id", UINT64), std::cout),
+          Schema::create()->addField("campaign_id", UINT64), std::cout),
       context, std::cout);
   /* compile code to pipeline stage */
   Compiler compiler;
   auto stage = codeGenerator->compile(CompilerArgs(), context->code);
 
   /* prepare input and output tuple buffer */
-  auto schema = SchemaTemp::create()->addField("i64", UINT64);
+  auto schema = Schema::create()->addField("i64", UINT64);
   auto buffer = source->receiveData();
 
   auto resultBuffer = BufferManager::instance().getFixedSizeBuffer();
@@ -716,7 +716,7 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
 
   /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
   EXPECT_EQ(buffer->getNumberOfTuples(), resultBuffer->getNumberOfTuples());
-  auto layout = createRowLayout(std::make_shared<SchemaTemp>(schema->copy()));
+  auto layout = createRowLayout(std::make_shared<Schema>(schema->copy()));
   for (uint64_t recordIndex = 0; recordIndex < buffer->getNumberOfTuples();
       ++recordIndex) {
     EXPECT_EQ(1,  layout->getValueField<uint64_t>(recordIndex, /*fieldIndex*/0)->read(buffer));
@@ -883,7 +883,7 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
       context, std::cout);
 
   /* generate code for writing result tuples to output buffer */
-  auto outputSchema = SchemaTemp::create()
+  auto outputSchema = Schema::create()
       ->addField("id", BasicType::UINT32)
       ->addField("valueSmall", BasicType::INT16)
       ->addField("valueFloat", BasicType::FLOAT32)
@@ -911,8 +911,8 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
   /* check for correctness, the number of produced tuple should be equal between input and output buffer */
   EXPECT_EQ(resultBuffer->getNumberOfTuples(),
             inputBuffer->getNumberOfTuples());
-  auto inputLayout = createRowLayout(std::make_shared<SchemaTemp>(inputSchema->copy()));
-  auto outputLayout = createRowLayout(std::make_shared<SchemaTemp>(outputSchema->copy()));
+  auto inputLayout = createRowLayout(std::make_shared<Schema>(inputSchema->copy()));
+  auto outputLayout = createRowLayout(std::make_shared<Schema>(outputSchema->copy()));
   for (int recordIndex = 0; recordIndex < inputBuffer->getNumberOfTuples(); recordIndex++) {
     auto floatValue = inputLayout->getValueField<float>(recordIndex, /*fieldIndex*/2)->read(inputBuffer);
     auto doubleValue = inputLayout->getValueField<double>(recordIndex, /*fieldIndex*/3)->read(inputBuffer);

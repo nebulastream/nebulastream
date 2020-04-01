@@ -22,7 +22,7 @@ class KafkaTest : public testing::Test {
   void SetUp() {
     NES::setupLogging("KafkaTest.log", NES::LOG_DEBUG);
 
-    schema = SchemaTemp::create()->addField("user_id", 16)->addField("page_id", 16)
+    schema = Schema::create()->addField("user_id", 16)->addField("page_id", 16)
         ->addField("campaign_id", 16)->addField("ad_type", 9)->addField(
         "event_type", 9)->addField("current_ms", UINT64)->addField("ip", INT32);
 

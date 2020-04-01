@@ -4,9 +4,9 @@
 
 namespace NES {
 
-Stream::Stream(std::string name, const NES::SchemaTemp schema)
+Stream::Stream(std::string name, const NES::Schema& schema)
     : name(name),
-      schema(std::make_shared<SchemaTemp>(schema)) {
+      schema(std::make_shared<Schema>(schema)) {
 }
 
 Stream::Stream(std::string name, NES::SchemaPtr schemaPtr)

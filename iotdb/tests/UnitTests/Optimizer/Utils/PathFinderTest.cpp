@@ -39,7 +39,7 @@ TEST_F(PathFinderTest, find_path_with_max_bandwidth) {
   StreamCatalog::instance().reset();
   NESTopologyManager::getInstance().resetNESTopologyPlan();
 
-  SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
+  SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
   const NESTopologyCoordinatorNodePtr sinkNode =
       NESTopologyManager::getInstance().createNESCoordinatorNode(
@@ -94,7 +94,7 @@ TEST_F(PathFinderTest, find_path_with_max_of_min_bandwidth) {
   StreamCatalog::instance().reset();
   NESTopologyManager::getInstance().resetNESTopologyPlan();
 
-  SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
+  SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
   const NESTopologyCoordinatorNodePtr sinkNode =
       NESTopologyManager::getInstance().createNESCoordinatorNode(
@@ -156,7 +156,7 @@ TEST_F(PathFinderTest, find_path_with_min_latency) {
   StreamCatalog::instance().reset();
   NESTopologyManager::getInstance().resetNESTopologyPlan();
 
-  SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
+  SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
   const NESTopologyCoordinatorNodePtr sinkNode =
       NESTopologyManager::getInstance().createNESCoordinatorNode(
@@ -212,7 +212,7 @@ TEST_F(PathFinderTest, find_path_with_min_of_max_latency) {
   StreamCatalog::instance().reset();
   NESTopologyManager::getInstance().resetNESTopologyPlan();
 
-  SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
+  SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
   const NESTopologyCoordinatorNodePtr sinkNode =
       NESTopologyManager::getInstance().createNESCoordinatorNode(
@@ -275,7 +275,7 @@ TEST_F(PathFinderTest, find_all_paths_between_source_destination) {
   NESTopologyManager::getInstance().resetNESTopologyPlan();
 
   //prepare
-  SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
+  SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
   const NESTopologyCoordinatorNodePtr sinkNode =
       NESTopologyManager::getInstance().createNESCoordinatorNode(
@@ -319,7 +319,7 @@ TEST_F(PathFinderTest, find_common_path_between_source_destination) {
   NESTopologyManager::getInstance().resetNESTopologyPlan();
 
   //prepare
-  SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
+  SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
   const NESTopologyCoordinatorNodePtr sinkNode =
       NESTopologyManager::getInstance().createNESCoordinatorNode(
@@ -445,7 +445,7 @@ TEST_F(PathFinderTest, find_path_from_non_linked_source) {
     StreamCatalog::instance().reset();
     NESTopologyManager::getInstance().resetNESTopologyPlan();
 
-    SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
+    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
         "value", BasicType::UINT64);
     const NESTopologyCoordinatorNodePtr sinkNode =
         NESTopologyManager::getInstance().createNESCoordinatorNode(
@@ -478,7 +478,7 @@ TEST_F(PathFinderTest, find_path_between_non_linked_source_and_destination) {
   StreamCatalog::instance().reset();
   NESTopologyManager::getInstance().resetNESTopologyPlan();
 
-  SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
+  SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
   const NESTopologyCoordinatorNodePtr sinkNode =
       NESTopologyManager::getInstance().createNESCoordinatorNode(
@@ -509,7 +509,7 @@ TEST_F(PathFinderTest, find_path_between_linked_source_and_destination) {
   StreamCatalog::instance().reset();
   NESTopologyManager::getInstance().resetNESTopologyPlan();
 
-  SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
+  SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
   const NESTopologyCoordinatorNodePtr sinkNode =
       NESTopologyManager::getInstance().createNESCoordinatorNode(

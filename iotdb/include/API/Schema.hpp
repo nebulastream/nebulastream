@@ -7,17 +7,17 @@
 #include <API/Types/AttributeField.hpp>
 
 namespace NES {
-class SchemaTemp;
-typedef std::shared_ptr<SchemaTemp> SchemaPtr;
-class SchemaTemp {
+class Schema;
+typedef std::shared_ptr<Schema> SchemaPtr;
+class Schema {
  public:
-  SchemaTemp();
+  Schema();
   static SchemaPtr create();
 
-  SchemaTemp(SchemaPtr query);
-  const SchemaTemp& copy() const;
+  Schema(SchemaPtr query);
+  const Schema& copy() const;
 
-  SchemaTemp copyFields(SchemaPtr const schema);
+  SchemaPtr copyFields(SchemaPtr const schema);
   SchemaPtr addField(AttributeFieldPtr field);
   SchemaPtr addField(const std::string &name, const BasicType &);
   SchemaPtr addField(const std::string &name, DataTypePtr data);
