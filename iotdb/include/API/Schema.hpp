@@ -7,9 +7,9 @@
 #include <API/Types/AttributeField.hpp>
 
 namespace NES {
-class Schema;
-typedef std::shared_ptr<Schema> SchemaPtr;
-class Schema {
+class SchemaTemp;
+typedef std::shared_ptr<SchemaTemp> SchemaPtr;
+class SchemaTemp {
  public:
   Schema();
   static SchemaPtr create();
@@ -37,11 +37,15 @@ class Schema {
 
   std::vector<AttributeFieldPtr> fields;
 
-  bool operator==(const Schema &rhs) const {
-    if (fields.size() == rhs.fields.size()) {
+  bool operator==(const SchemaPtr rhs) const {
+    if (fields.size() == rhs->fields.size()) {
       for (std::vector<int>::size_type i = 0; i != fields.size(); i++) {
         fields[i];
-        if (!(*fields[i].get() == *rhs.fields[i].get())) {
+        // schemas are equal, if their attributes are equal, right? So lets check this:
+        if(!(fields[i]->isEqual(rhs->fields[i]))){
+            return false;
+        }
+        if (!(fields[i].get() == rhs->fields[i].get())) {
           return false;
         }
       }
