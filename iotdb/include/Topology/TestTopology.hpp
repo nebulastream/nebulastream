@@ -13,7 +13,7 @@ void createExampleTopology() {
 
     NESTopologyManager::getInstance().resetNESTopologyPlan();
 
-    SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
+    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
         "value", BasicType::UINT64);
     const NESTopologyCoordinatorNodePtr
         & sinkNode =
@@ -77,7 +77,7 @@ void createExampleTopology() {
         & sensorNode1 =
         NESTopologyManager::getInstance().createNESSensorNode(/**Node Id**/19, "localhost", CPUCapacity::HIGH);
     sensorNode1->setPhysicalStreamName("temperature1");
-    StreamCatalog::instance().addLogicalStream("temperature", std::make_shared<SchemaTemp>(schema));
+    StreamCatalog::instance().addLogicalStream("temperature", schema);
     PhysicalStreamConfig streamConf;
     streamConf.physicalStreamName = "temperature1";
     StreamCatalogEntryPtr e1 = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode1);
@@ -87,7 +87,7 @@ void createExampleTopology() {
         & sensorNode2 =
         NESTopologyManager::getInstance().createNESSensorNode(/**Node Id**/20, "localhost", CPUCapacity::LOW);
     sensorNode2->setPhysicalStreamName("humidity1");
-    StreamCatalog::instance().addLogicalStream("humidity", std::make_shared<SchemaTemp>(schema));
+    StreamCatalog::instance().addLogicalStream("humidity", schema);
     streamConf.physicalStreamName = "humidity1";
     StreamCatalogEntryPtr e2 = std::make_shared<StreamCatalogEntry>(streamConf, sensorNode2);
     assert(StreamCatalog::instance().addPhysicalStream("humidity", e2));

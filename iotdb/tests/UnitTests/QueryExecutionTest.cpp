@@ -33,7 +33,7 @@ class QueryExecutionTest : public testing::Test {
     ThreadPool::instance().start();
 
     // create test input buffer
-    testSchema = SchemaTemp::create()->addField(createField("id", BasicType::INT64))->addField(
+    testSchema = Schema::create()->addField(createField("id", BasicType::INT64))->addField(
         createField("one", BasicType::INT64))->addField(
         createField("value", BasicType::INT64));
     testInputBuffer = BufferManager::instance().getFixedSizeBuffer();
@@ -154,7 +154,7 @@ TEST_F(QueryExecutionTest, windowQuery) {
                                        Milliseconds(2));
   auto windowOperator = createWindowOperator(
       createWindowDefinition(testSchema->get("value"), aggregation, windowType));
-  SchemaPtr resultSchema = SchemaTemp::create()->addField(
+  SchemaPtr resultSchema = Schema::create()->addField(
       createField("sum", BasicType::INT64));
   auto windowScan = createWindowScanOperator(resultSchema);
   auto testSink = std::make_shared<TestSink>();

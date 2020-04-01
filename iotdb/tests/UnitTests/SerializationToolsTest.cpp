@@ -31,7 +31,7 @@ class SerializationToolsTest : public testing::Test {
     std::cout << "Tear down SerializationToolsTest test class." << std::endl;
   }
 
-  SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
+  SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
 
   Stream stream = Stream("default", schema);
@@ -162,7 +162,7 @@ TEST_F(SerializationToolsTest, serialize_deserialize_executabletransferobject_EX
   vector<DataSourcePtr> sources { zmqSource };
   vector<DataSinkPtr> destinations { sink };
 
-  SchemaPtr schemaExdra = SchemaTemp::create()->addField(
+  SchemaPtr schemaExdra = Schema::create()->addField(
       "type", createArrayDataType(BasicType::CHAR, 30))->addField(
       "metadata.generated", BasicType::UINT64)->addField(
       "metadata.title", createArrayDataType(BasicType::CHAR, 50))->addField(

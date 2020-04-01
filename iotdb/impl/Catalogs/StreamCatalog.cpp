@@ -11,12 +11,12 @@ StreamCatalog& StreamCatalog::instance() {
 StreamCatalog::StreamCatalog() {
     NES_DEBUG("StreamCatalog: construct stream catalog")
 
-    SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
+    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
         "value", BasicType::UINT64);
     addLogicalStream("default_logical", schema);
     NES_DEBUG("StreamCatalog: constructed default_logical")
 
-    SchemaPtr schemaExdra = SchemaTemp::create()->addField(
+    SchemaPtr schemaExdra = Schema::create()->addField(
             "type", createArrayDataType(BasicType::CHAR, 30))->addField(
             "metadata_generated", BasicType::UINT64)->addField(
             "metadata_title", createArrayDataType(BasicType::CHAR, 50))->addField(
@@ -270,11 +270,11 @@ void StreamCatalog::reset() {
     logicalStreamToSchemaMapping.clear();
     logicalToPhysicalStreamMapping.clear();
 
-    SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
+    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
         "value", BasicType::UINT64);
     addLogicalStream("default_logical", schema);
 
-    SchemaPtr schemaExdra = SchemaTemp::create()->addField(
+    SchemaPtr schemaExdra = Schema::create()->addField(
             "type", createArrayDataType(BasicType::CHAR, 30))->addField(
             "metadata_generated", BasicType::UINT64)->addField(
             "metadata_title", createArrayDataType(BasicType::CHAR, 50))->addField(
