@@ -11,7 +11,7 @@ BOOST_CLASS_EXPORT_IMPLEMENT(NES::DataSink)
 
 namespace NES {
 
-DataSink::DataSink(const Schema& _schema)
+DataSink::DataSink(SchemaPtr _schema)
     : schema(_schema),
       sentBuffer(0),
       sentTuples(0) {
@@ -19,13 +19,13 @@ DataSink::DataSink(const Schema& _schema)
 }
 
 DataSink::DataSink()
-    : schema(Schema::create()),
+    : schema(SchemaTemp::create()),
       sentBuffer(0),
       sentTuples(0) {
   NES_DEBUG("DataSink:Init Default Data Sink!")
 }
 
-const Schema& DataSink::getSchema() const {
+SchemaPtr DataSink::getSchema() const {
   return schema;
 }
 
@@ -46,7 +46,7 @@ size_t DataSink::getNumberOfSentTuples() {
   return sentTuples;
 }
 
-void DataSink::setSchema(const Schema& pSchema) {
+void DataSink::setSchema(SchemaPtr pSchema) {
   schema = pSchema;
 }
 

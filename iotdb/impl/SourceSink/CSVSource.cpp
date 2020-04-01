@@ -20,7 +20,7 @@ CSVSource::CSVSource()
     currentPosInFile(0) {
 }
 
-CSVSource::CSVSource(const Schema &schema, const std::string &_file_path,
+CSVSource::CSVSource(SchemaPtr schema, const std::string &_file_path,
                      const std::string &delimiter, size_t numBuffersToProcess,
                      size_t frequency)
     :
@@ -30,7 +30,7 @@ CSVSource::CSVSource(const Schema &schema, const std::string &_file_path,
     currentPosInFile(0) {
   this->numBuffersToProcess = numBuffersToProcess;
   this->gatheringInterval = frequency;
-  tupleSize = schema.getSchemaSize();
+  tupleSize = schema->getSchemaSize();
   NES_DEBUG(
       "CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval << " numBuff=" << this->numBuffersToProcess)
 }
@@ -46,7 +46,7 @@ TupleBufferPtr CSVSource::receiveData() {
 
 const std::string CSVSource::toString() const {
   std::stringstream ss;
-  ss << "CSV_SOURCE(SCHEMA(" << schema.toString() << "), FILE=" << filePath
+  ss << "CSV_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << filePath
      << " freq=" << this->gatheringInterval << " numBuff="
      << this->numBuffersToProcess << ")";
   return ss.str();
@@ -80,8 +80,8 @@ void CSVSource::fillBuffer(TupleBufferPtr buf) {
     std::vector<std::string> tokens;
     boost::algorithm::split(tokens, line, boost::is_any_of(this->delimiter));
     size_t offset = 0;
-    for (size_t j = 0; j < schema.getSize(); j++) {
-      auto field = schema[j];
+    for (size_t j = 0; j < schema->getSize(); j++) {
+      auto field = (*schema)[j];
       size_t fieldSize = field->getFieldSize();
 
       //TODO: add all other data types here

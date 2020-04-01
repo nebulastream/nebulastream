@@ -11,7 +11,8 @@ namespace NES {
 
 class Stream {
  public:
-  Stream(std::string name, const Schema schema);
+  //todo: what about this?
+  Stream(std::string name, const SchemaTemp schema);
 
   Stream(std::string name, SchemaPtr schema);
 
@@ -20,11 +21,11 @@ class Stream {
   Field getField(const std::string fieldName);
   std::string getName() { return name; }
 
-  Schema &getSchema();
+  SchemaPtr getSchema();
 
  private:
   std::string name;
-  Schema schema;
+  SchemaPtr schema;
 };
 
 typedef std::shared_ptr<Stream> StreamPtr;

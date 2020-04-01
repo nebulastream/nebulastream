@@ -14,13 +14,13 @@ class KafkaSource : public DataSource {
 
  public:
   KafkaSource();
-  KafkaSource(const Schema& schema,
+  KafkaSource(SchemaPtr schema,
               const std::string& brokers,
               const std::string& topic,
               const std::string& groupId="nes",
               const size_t kafkaConsumerTimeout=100);
 
-  KafkaSource(const Schema& schema,
+  KafkaSource(SchemaPtr schema,
               const std::string& topic,
               const cppkafka::Configuration& config,
               const size_t kafkaConsumerTimeout=100);

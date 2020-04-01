@@ -12,7 +12,8 @@ typedef std::shared_ptr<Declaration> DeclarationPtr;
 class GeneratedCode;
 typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
 
-class Schema;
+//todo: remove this forwad decl
+//class SchemaTemp;
 
 class WindowDefinition;
 typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
@@ -29,14 +30,14 @@ class PipelineContext {
   std::vector<DeclarationPtr> type_declarations;
   std::vector<DeclarationPtr> variable_declarations;
 
-  const Schema &getInputSchema() const;
-  const Schema &getResultSchema() const;
+  SchemaPtr getInputSchema() const;
+  SchemaPtr getResultSchema() const;
   WindowDefinitionPtr getWindow();
   void setWindow(WindowDefinitionPtr window);
   bool hasWindow() const;
 
-  Schema inputSchema;
-  Schema resultSchema;
+  SchemaPtr inputSchema;
+  SchemaPtr resultSchema;
   GeneratedCodePtr code;
 
   PipelineContextPtr getNextPipeline() const;

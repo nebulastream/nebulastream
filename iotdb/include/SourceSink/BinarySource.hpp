@@ -23,7 +23,7 @@ class BinarySource : public DataSource {
    * @param schema of the data source
    * @param file path
    */
-  BinarySource(const Schema& schema, const std::string& file_path);
+  BinarySource(SchemaPtr schema, const std::string& file_path);
 
 /**
  * @brief override the receiveData method for the binary source

@@ -25,7 +25,7 @@ class AttributeField {
   const AttributeFieldPtr copy() const;
 
   bool isEqual(const AttributeField &attr);
-  bool isEqual(const AttributeFieldPtr &attr);
+  bool isEqual(AttributeFieldPtr attr);
 
   AttributeField(const AttributeField &);
   AttributeField &operator=(const AttributeField &);

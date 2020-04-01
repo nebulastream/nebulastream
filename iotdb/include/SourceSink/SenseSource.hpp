@@ -21,7 +21,7 @@ class SenseSource : public DataSource {
    * @param schema of the source
    * @param udfs to apply
    */
-  SenseSource(const Schema& schema, const std::string& udfs);
+  SenseSource(SchemaPtr schema, const std::string& udfs);
 
   /**
    * @brief override the receiveData method for the source

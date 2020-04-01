@@ -46,7 +46,7 @@ static const int zmqDefaultPort = 5555;
 // that there could be more than one child. Once the code generator able to deal with it this logic need to be
 // fixed.
 void BasePlacementStrategy::addSystemGeneratedSourceSinkOperators(
-    const Schema& schema, NESExecutionPlanPtr nesExecutionPlanPtr) {
+    SchemaPtr schema , NESExecutionPlanPtr nesExecutionPlanPtr) {
 
   const std::shared_ptr<ExecutionGraph>& exeGraph = nesExecutionPlanPtr
       ->getExecutionGraph();
@@ -113,11 +113,12 @@ void BasePlacementStrategy::addSystemGeneratedSourceSinkOperators(
       traverse->setParent(sysSinkOptr);
     }
 
+
   }
 }
 
 void BasePlacementStrategy::convertFwdOptr(
-    const Schema& schema, ExecutionNodePtr executionNodePtr) const {
+    SchemaPtr schema , ExecutionNodePtr executionNodePtr) const {
 
   //create sys introduced src and sink operators
   //Note: src operator is using localhost because src zmq will run locally

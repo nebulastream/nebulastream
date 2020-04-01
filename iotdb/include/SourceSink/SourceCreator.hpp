@@ -14,7 +14,7 @@ namespace NES {
  * @return a const data source pointer
  */
 const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(
-    const Schema &schema);
+    SchemaPtr schema);
 
 /**
  * @brief function to create a test source which produces 10 tuples with value one in N buffers of based on a schema
@@ -24,7 +24,7 @@ const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(
  * @return a const data source pointer
  */
 const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(
-    const Schema &schema, size_t numbersOfBufferToProduce, size_t frequency);
+    SchemaPtr schema, size_t numbersOfBufferToProduce, size_t frequency);
 
 /**
  * @brief function to create a test source which produces 10 tuples with value one without a schema
@@ -52,7 +52,7 @@ const DataSourcePtr createYSBSource(size_t bufferCnt, size_t campaingCnt,
  * @param schema of data source
  * @return a const data source pointer
  */
-const DataSourcePtr createZmqSource(const Schema &schema,
+const DataSourcePtr createZmqSource(SchemaPtr schema,
                                     const std::string &host,
                                     const uint16_t port);
 
@@ -62,7 +62,7 @@ const DataSourcePtr createZmqSource(const Schema &schema,
  * @param path to the file to readin
  * @return a const data source pointer
  */
-const DataSourcePtr createBinaryFileSource(const Schema &schema,
+const DataSourcePtr createBinaryFileSource(SchemaPtr schema,
                                            const std::string &path_to_file);
 
 
@@ -72,15 +72,15 @@ const DataSourcePtr createBinaryFileSource(const Schema &schema,
  * @param udfs of the file
  * @return a const data source pointer
  */
-const DataSourcePtr createSenseSource(const Schema &schema,
-                                           const std::string& udfs);
+const DataSourcePtr createSenseSource(SchemaPtr schema,
+                                      const std::string& udfs);
 
 /**
  * @brief function to create a csvfile source
  * @param schema of data source
  * @return a const data source pointer
  */
-const DataSourcePtr createCSVFileSource(const Schema &schema,
+const DataSourcePtr createCSVFileSource(SchemaPtr schema,
                                         const std::string &path_to_file,
                                         const std::string &delimiter,
                                         size_t numBuffersToProcess,

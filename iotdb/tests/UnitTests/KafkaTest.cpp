@@ -22,11 +22,11 @@ class KafkaTest : public testing::Test {
   void SetUp() {
     NES::setupLogging("KafkaTest.log", NES::LOG_DEBUG);
 
-    schema = Schema::create().addField("user_id", 16).addField("page_id", 16)
-        .addField("campaign_id", 16).addField("ad_type", 9).addField(
-        "event_type", 9).addField("current_ms", UINT64).addField("ip", INT32);
+    schema = SchemaTemp::create()->addField("user_id", 16)->addField("page_id", 16)
+        ->addField("campaign_id", 16)->addField("ad_type", 9)->addField(
+        "event_type", 9)->addField("current_ms", UINT64)->addField("ip", INT32);
 
-    uint64_t tuple_size = schema.getSchemaSize();
+    uint64_t tuple_size = schema->getSchemaSize();
     buffer_size = num_tuples_to_process * tuple_size / num_of_buffers;
 
     ASSERT_GT(buffer_size, 0);
@@ -48,7 +48,7 @@ class KafkaTest : public testing::Test {
   const size_t num_of_buffers = 5;
   const uint64_t num_tuples_to_process = 100;
   size_t buffer_size;
-  Schema schema;
+  SchemaPtr schema;
 
 };
 // NOTE: ALL DISABLED TESTS ONLY WITH KAFKA INSTANCE, PLEASE SETUP KAFKA FIRST

@@ -46,7 +46,7 @@ class CodeGenerator {
  public:
   CodeGenerator(const CodeGenArgs &args);
   // virtual bool addOperator(OperatorPtr) = 0;
-  virtual bool generateCode(const Schema &schema, const PipelineContextPtr &context, std::ostream &out) = 0;
+  virtual bool generateCode(SchemaPtr schema, const PipelineContextPtr &context, std::ostream &out) = 0;
   virtual bool generateCode(const PredicatePtr &pred, const PipelineContextPtr &context, std::ostream &out) = 0;
   virtual bool generateCode(const AttributeFieldPtr field,
                             const PredicatePtr &pred,
@@ -105,6 +105,6 @@ const StructDeclaration getStructDeclarationTupleBuffer();
 //const StructDeclaration getStructDeclarationWindowState();
 const StructDeclaration getStructDeclarationTupleBuffer();
 //const StructDeclaration getStructDeclarationWindowState();
-const StructDeclaration getStructDeclarationFromSchema(const std::string struct_name, const Schema &schema);
+const StructDeclaration getStructDeclarationFromSchema(const std::string struct_name, SchemaPtr schema);
 } // namespace NES
 

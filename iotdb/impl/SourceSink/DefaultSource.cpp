@@ -5,7 +5,7 @@
 
 namespace NES {
 
-DefaultSource::DefaultSource(const Schema& schema,
+DefaultSource::DefaultSource(SchemaPtr schema,
                              const uint64_t numbersOfBufferToProduce,
                              size_t frequency)
     :
@@ -23,10 +23,10 @@ TupleBufferPtr DefaultSource::receiveData() {
   }
   NES_DEBUG("Source:" << this << " got buffer")
   size_t tupleCnt = 10;
-  auto layout = createRowLayout(std::make_shared<Schema>(schema));
+  auto layout = createRowLayout(SchemaTemp::create());
 
   assert(buf->getBuffer() != nullptr);
-  auto fields = schema.fields;
+  auto fields = schema->fields;
   for (uint64_t recordIndex = 0; recordIndex < tupleCnt; recordIndex++) {
     for (uint64_t fieldIndex = 0; fieldIndex < fields.size(); fieldIndex++) {
       auto value = 1;
@@ -65,11 +65,11 @@ TupleBufferPtr DefaultSource::receiveData() {
         NES_DEBUG("This data source only generates data for numeric fields")
       }
 
+        }
     }
-  }
-  buf->setTupleSizeInBytes(schema.getSchemaSize());
-  buf->setNumberOfTuples(tupleCnt);
-  return buf;
+    buf->setTupleSizeInBytes(schema->getSchemaSize());
+    buf->setNumberOfTuples(tupleCnt);
+    return buf;
 }
 }
 BOOST_CLASS_EXPORT(NES::DefaultSource);

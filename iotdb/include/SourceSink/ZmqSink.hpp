@@ -13,7 +13,7 @@ namespace NES {
 class ZmqSink : public DataSink {
 
  public:
-  ZmqSink(const Schema& schema, const std::string& host, uint16_t port);
+  ZmqSink(SchemaPtr schema, const std::string& host, uint16_t port);
   ~ZmqSink() override;
 
   bool writeData(TupleBufferPtr input_buffer);

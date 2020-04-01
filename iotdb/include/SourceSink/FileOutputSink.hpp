@@ -30,7 +30,7 @@ class FileOutputSink : public DataSink {
      * @brief constructor that creates an empty file sink using a schema
      * @param schema of the print sink
      */
-    FileOutputSink(const Schema& schema);
+    FileOutputSink(SchemaPtr schema);
 
     /**
     * @brief constructor that creates an empty file sink using a schema
@@ -43,7 +43,7 @@ class FileOutputSink : public DataSink {
      * @param schema of the print sink
      * @param filePath location of file on sink server
      */
-    FileOutputSink(const Schema& schema, std::string filePath, FileOutPutType type);
+    FileOutputSink(SchemaPtr schema, std::string filePath, FileOutPutType type);
 
     /**
      * @brief method to override virtual setup function

@@ -11,7 +11,7 @@ PrintSink::PrintSink(std::ostream& pOutputStream)
       outputStream(pOutputStream) {
 }
 
-PrintSink::PrintSink(const Schema& pSchema, std::ostream& pOutputStream)
+PrintSink::PrintSink(SchemaPtr pSchema, std::ostream& pOutputStream)
     : DataSink(pSchema),
       outputStream(pOutputStream) {
 }
@@ -28,7 +28,7 @@ bool PrintSink::writeData(const TupleBufferPtr input_buffer) {
 const std::string PrintSink::toString() const {
     std::stringstream ss;
     ss << "PRINT_SINK(";
-    ss << "SCHEMA(" << schema.toString() << "), ";
+    ss << "SCHEMA(" << schema->toString() << "), ";
     return ss.str();
 }
 

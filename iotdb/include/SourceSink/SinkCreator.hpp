@@ -24,7 +24,7 @@ const DataSinkPtr createPrintSinkWithoutSchema(std::ostream& out);
  * @param output stream
  * @return a data sink pointer
  */
-const DataSinkPtr createPrintSinkWithSchema(const Schema& schema, std::ostream& out);
+const DataSinkPtr createPrintSinkWithSchema(SchemaPtr schema, std::ostream& out);
 
 /**
  * @brief create a binary test sink without a schema
@@ -39,7 +39,7 @@ const DataSinkPtr createBinaryFileSinkWithoutSchema(const std::string& filePath)
  * @param path to file
  * @return a data sink pointer
  */
-const DataSinkPtr createBinaryFileSinkWithSchema(const Schema& schema,
+const DataSinkPtr createBinaryFileSinkWithSchema(SchemaPtr schema,
                                                  const std::string& filePath);
 
 
@@ -49,8 +49,8 @@ const DataSinkPtr createBinaryFileSinkWithSchema(const Schema& schema,
  * @param path to file
  * @return a data sink pointer
  */
-const DataSinkPtr createCSVFileSinkWithSchema(const Schema& schema,
-                                                 const std::string& filePath);
+const DataSinkPtr createCSVFileSinkWithSchema(SchemaPtr schema,
+                                              const std::string& filePath);
 
 
 /**
@@ -60,7 +60,7 @@ const DataSinkPtr createCSVFileSinkWithSchema(const Schema& schema,
  * @param port at uint16
  * @return a data sink pointer
  */
-const DataSinkPtr createZmqSink(const Schema& schema, const std::string& host,
+const DataSinkPtr createZmqSink(SchemaPtr schema, const std::string& host,
                                 const uint16_t port);
 
 /**
@@ -76,7 +76,7 @@ const DataSinkPtr createYSBPrintSink();
  * @param kafkaProducerTimeout: kafka producer timeout
  * @return a data sink pointer
  */
-const DataSinkPtr createKafkaSinkWithSchema(const Schema& schema, const std::string& brokers, const std::string& topic,
+const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string& brokers, const std::string& topic,
                                             const size_t kafkaProducerTimeout);
 
 /**
@@ -86,7 +86,7 @@ const DataSinkPtr createKafkaSinkWithSchema(const Schema& schema, const std::str
  * @param config: kafka producer configuration
  * @return a data sink pointer
  */
-const DataSinkPtr createKafkaSinkWithSchema(const Schema& schema, const std::string& topic,
+const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string& topic,
                                             const cppkafka::Configuration& config);
 
 }

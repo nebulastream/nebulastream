@@ -17,7 +17,7 @@ FileOutputSink::FileOutputSink()
     DataSink() {
   outputType = BINARY_TYPE;
 }
-FileOutputSink::FileOutputSink(const Schema &schema)
+FileOutputSink::FileOutputSink(SchemaPtr schema)
     :
     DataSink(schema) {
   outputType = BINARY_TYPE;
@@ -28,7 +28,7 @@ FileOutputSink::FileOutputSink(const std::string filePath)
   this->filePath = filePath;
   outputType = BINARY_TYPE;
 }
-FileOutputSink::FileOutputSink(const Schema &schema, const std::string filePath,
+FileOutputSink::FileOutputSink(SchemaPtr schema, const std::string filePath,
                                FileOutPutType pType)
     :
     DataSink(schema) {
@@ -58,7 +58,7 @@ bool FileOutputSink::writeData(const TupleBufferPtr input_buffer) {
 const std::string FileOutputSink::toString() const {
   std::stringstream ss;
   ss << "PRINT_SINK(";
-  ss << "SCHEMA(" << schema.toString() << "), ";
+  ss << "SCHEMA(" << schema->toString() << "), ";
   return ss.str();
 }
 

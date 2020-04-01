@@ -14,44 +14,44 @@
 namespace NES {
 
 const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(
-    const Schema &schema) {
+    SchemaPtr schema) {
   return std::make_shared<DefaultSource>(schema, /*bufferCnt*/ 1, /*frequency*/ 1);
 }
 
 const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(
-    const Schema &schema, size_t numbersOfBufferToProduce, size_t frequency) {
+    SchemaPtr schema, size_t numbersOfBufferToProduce, size_t frequency) {
   return std::make_shared<DefaultSource>(schema, numbersOfBufferToProduce, frequency);
 }
 
 const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer() {
   return std::make_shared<DefaultSource>(
-      Schema::create().addField(createField("id", UINT64)), /**bufferCnt*/ 1, /*frequency*/ 1);
+      SchemaTemp::create()->addField(createField("id", UINT64)), /**bufferCnt*/ 1, /*frequency*/ 1);
 }
 
 const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForVarBuffers(
     size_t numbersOfBufferToProduce, double frequency) {
   return std::make_shared<DefaultSource>(
-      Schema::create().addField(createField("id", UINT64)),
+      SchemaTemp::create()->addField(createField("id", UINT64)),
       numbersOfBufferToProduce, frequency);
 }
 
-const DataSourcePtr createZmqSource(const Schema &schema,
+const DataSourcePtr createZmqSource(SchemaPtr schema,
                                     const std::string &host,
                                     const uint16_t port) {
   return std::make_shared<ZmqSource>(schema, host, port);
 }
 
-const DataSourcePtr createBinaryFileSource(const Schema &schema,
+const DataSourcePtr createBinaryFileSource(SchemaPtr schema,
                                            const std::string &path_to_file) {
   return std::make_shared<BinarySource>(schema, path_to_file);
 }
 
-const DataSourcePtr createSenseSource(const Schema &schema,
+const DataSourcePtr createSenseSource(SchemaPtr schema,
                                       const std::string& udfs) {
   return std::make_shared<SenseSource>(schema, udfs);
 }
 
-const DataSourcePtr createCSVFileSource(const Schema &schema,
+const DataSourcePtr createCSVFileSource(SchemaPtr schema,
                                         const std::string &pathToFile,
                                         const std::string &delimiter,
                                         size_t numbersOfBufferToProduce,

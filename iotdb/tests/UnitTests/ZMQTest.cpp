@@ -42,7 +42,7 @@ class ZMQTest : public testing::Test {
     test_data_size = test_data.size() * sizeof(uint32_t);
     tupleCnt = 8;
     //    test_data_size = 4096;
-    test_schema = Schema::create().addField("KEY", UINT32).addField("VALUE",
+    test_schema = SchemaTemp::create()->addField("KEY", UINT32)->addField("VALUE",
                                                                     UINT32);
     BufferManager::instance();
     //    BufferManager::instance().setBufferSize(test_data_size);
@@ -61,7 +61,7 @@ class ZMQTest : public testing::Test {
   size_t tupleCnt;
   std::string address;
 
-  Schema test_schema;
+  SchemaPtr test_schema;
   size_t test_data_size;
   std::array<uint32_t, 8> test_data;
 };
@@ -70,7 +70,7 @@ class ZMQTest : public testing::Test {
 TEST_F(ZMQTest, ZmqSourceReceiveData) {
 
   // Create ZeroMQ Data Source.
-  auto test_schema = Schema::create().addField("KEY", UINT32).addField("VALUE",
+  auto test_schema = SchemaTemp::create()->addField("KEY", UINT32)->addField("VALUE",
                                                                        UINT32);
   auto zmq_source = createZmqSource(test_schema, LOCAL_HOST, LOCAL_PORT);
   std::cout << zmq_source->toString() << std::endl;
@@ -122,7 +122,7 @@ TEST_F(ZMQTest, ZmqSinkSendData) {
   //FIXME: this test makes no sense, redo it
 
   // Create ZeroMQ Data Sink.
-  auto test_schema = Schema::create().addField("KEY", UINT32).addField("VALUE",
+  auto test_schema = SchemaTemp::create()->addField("KEY", UINT32)->addField("VALUE",
                                                                        UINT32);
   auto zmq_sink = createZmqSink(test_schema, LOCAL_HOST, LOCAL_PORT);
   std::cout << zmq_sink->toString() << std::endl;
@@ -154,7 +154,7 @@ TEST_F(ZMQTest, ZmqSinkSendData) {
 
     // Test received data.
     uint32_t *tuple = (uint32_t*) new_data.data();
-    for (size_t i = 0; i != new_data.size() / test_schema.getSchemaSize(); ++i) {
+    for (size_t i = 0; i != new_data.size() / test_schema->getSchemaSize(); ++i) {
   EXPECT_EQ(*(tuple++), i);
   size_t expected = 100 - i;
   EXPECT_EQ(*(tuple++), expected);

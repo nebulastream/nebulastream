@@ -29,7 +29,7 @@ ZmqSink::ZmqSink()
       "DEFAULT ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port)
 }
 
-ZmqSink::ZmqSink(const Schema &schema, const std::string &host,
+ZmqSink::ZmqSink(SchemaPtr schema, const std::string &host,
                  const uint16_t port)
     : DataSink(schema),
       host(host),
@@ -99,7 +99,7 @@ bool ZmqSink::writeData(const TupleBufferPtr input_buffer) {
 const std::string ZmqSink::toString() const {
   std::stringstream ss;
   ss << "ZMQ_SINK(";
-  ss << "SCHEMA(" << schema.toString() << "), ";
+  ss << "SCHEMA(" << schema->toString() << "), ";
   ss << "HOST=" << host << ", ";
   ss << "PORT=" << port << ", ";
   ss << "TupleCnt=\"" << tupleCnt << "\")";

@@ -24,7 +24,7 @@ class CSVSource : public DataSource {
    * @param delimiter inside the file, default ","
    * @param number of buffers to create
    */
-  CSVSource(const Schema& schema, const std::string& file_path,
+  CSVSource(SchemaPtr schema, const std::string& file_path,
             const std::string& delimiter, size_t numBuffersToProcess, size_t frequency);
 
   /**

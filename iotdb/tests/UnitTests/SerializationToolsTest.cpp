@@ -31,7 +31,7 @@ class SerializationToolsTest : public testing::Test {
     std::cout << "Tear down SerializationToolsTest test class." << std::endl;
   }
 
-  Schema schema = Schema::create().addField("id", BasicType::UINT32).addField(
+  SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
 
   Stream stream = Stream("default", schema);
@@ -40,7 +40,7 @@ class SerializationToolsTest : public testing::Test {
 /* Test serialization for Schema  */
 TEST_F(SerializationToolsTest, serialize_deserialize_schema) {
   string sschema = SerializationTools::ser_schema(schema);
-  Schema dschema = SerializationTools::parse_schema(sschema);
+  SchemaPtr dschema = SerializationTools::parse_schema(sschema);
   EXPECT_EQ(schema, dschema);
 }
 
@@ -162,22 +162,22 @@ TEST_F(SerializationToolsTest, serialize_deserialize_executabletransferobject_EX
   vector<DataSourcePtr> sources { zmqSource };
   vector<DataSinkPtr> destinations { sink };
 
-  Schema schemaExdra = Schema::create().addField(
-      "type", createArrayDataType(BasicType::CHAR, 30)).addField(
-      "metadata.generated", BasicType::UINT64).addField(
-      "metadata.title", createArrayDataType(BasicType::CHAR, 50)).addField(
-      "metadata.id", createArrayDataType(BasicType::CHAR, 50)).addField(
-      "features.type", createArrayDataType(BasicType::CHAR, 50)).addField(
-      "features.properties.capacity", BasicType::UINT64).addField(
-      "features.properties.efficiency", BasicType::FLOAT32).addField(
-      "features.properties.mag", BasicType::FLOAT32).addField(
-      "features.properties.time", BasicType::FLOAT32).addField(
-      "features.properties.updated", BasicType::UINT64).addField(
+  SchemaPtr schemaExdra = SchemaTemp::create()->addField(
+      "type", createArrayDataType(BasicType::CHAR, 30))->addField(
+      "metadata.generated", BasicType::UINT64)->addField(
+      "metadata.title", createArrayDataType(BasicType::CHAR, 50))->addField(
+      "metadata.id", createArrayDataType(BasicType::CHAR, 50))->addField(
+      "features.type", createArrayDataType(BasicType::CHAR, 50))->addField(
+      "features.properties.capacity", BasicType::UINT64)->addField(
+      "features.properties.efficiency", BasicType::FLOAT32)->addField(
+      "features.properties.mag", BasicType::FLOAT32)->addField(
+      "features.properties.time", BasicType::FLOAT32)->addField(
+      "features.properties.updated", BasicType::UINT64)->addField(
       "features.properties.type", createArrayDataType(BasicType::CHAR, 50))
-      .addField("features.geometry.type",
-                createArrayDataType(BasicType::CHAR, 50)).addField(
-      "features.geometry.coordinates.longitude", BasicType::FLOAT32).addField(
-      "features.geometry.coordinates.latitude", BasicType::FLOAT32).addField(
+      ->addField("features.geometry.type",
+                createArrayDataType(BasicType::CHAR, 50))->addField(
+      "features.geometry.coordinates.longitude", BasicType::FLOAT32)->addField(
+      "features.geometry.coordinates.latitude", BasicType::FLOAT32)->addField(
       "features.eventId ", createArrayDataType(BasicType::CHAR, 50));
 
   ExecutableTransferObject eto = ExecutableTransferObject("example-desc",

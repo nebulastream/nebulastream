@@ -15,11 +15,11 @@ class KafkaSink : public DataSink {
  constexpr static size_t INVALID_PARTITION_NUMBER = -1;
  public:
   KafkaSink();
-  KafkaSink(const Schema& schema,
+  KafkaSink(SchemaPtr schema,
             const std::string& brokers,
             const std::string& topic,
             const size_t kafkaProducerTimeout=10*1000);
-  KafkaSink(const Schema& schema,
+  KafkaSink(SchemaPtr schema,
             const std::string& topic,
             const cppkafka::Configuration& config);
   ~KafkaSink() override;

@@ -122,13 +122,13 @@ class TupleBuffer {
    * @brief this method creates a string from the content of a tuple buffer
    * @return string of the buffer content
    */
-  std::string printTupleBuffer(Schema schema);
+  std::string printTupleBuffer(SchemaPtr schema);
 
   /**
    * @brief revert the endianess of the tuple buffer
    * @schema of the buffer
    */
-  void revertEndianness(Schema schema);
+  void revertEndianness(SchemaPtr schema);
 
  private:
   /**
@@ -150,9 +150,9 @@ class TupleBuffer {
   std::atomic<size_t> useCnt;
 };
 
-class Schema;
-std::string toString(TupleBuffer& buffer, const Schema& schema);
-std::string toString(TupleBuffer* buffer, const Schema& schema);
+class SchemaTemp;
+std::string toString(TupleBuffer& buffer, SchemaPtr schema);
+std::string toString(TupleBuffer* buffer, SchemaPtr schema);
 
 }  // namespace NES
 #endif /* INCLUDE_TUPLEBUFFER_H_ */
