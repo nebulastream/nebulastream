@@ -78,7 +78,7 @@ class BlockingQueue {
     notEmpty.notify_all();
   }
 
-  inline const T& pop() {
+  inline const T pop() {
     {
       std::unique_lock<std::mutex> lock(queueMutex);
 
@@ -86,7 +86,7 @@ class BlockingQueue {
       while (bufferQueue.size() == 0) {
         notEmpty.wait(lock);
       }
-      T& retVal = bufferQueue.front();
+      T retVal = bufferQueue.front();
       NES_DEBUG("BlockingQueue: popping element " << bufferQueue.front())
       bufferQueue.pop();
 

@@ -39,7 +39,7 @@ class BufferManager {
    * @param Pointer to buffer to be deleted
    * @return true if buffer was deleted, false if buffer was not present
    */
-//  bool removeBuffer(TupleBufferPtr tupleBuffer);
+  bool removeVaSizeBuffer(TupleBufferPtr tupleBuffer);
 
   /**
    * @brief get a free buffer of default size
@@ -133,7 +133,8 @@ class BufferManager {
    * */
   BufferManager();
 //  BufferManager(const BufferManager&);
-//  BufferManager& operator=(const BufferManager&);
+//  BufferManager& operator=(const BufferManager&)
+
   ~BufferManager();
 
   /**
