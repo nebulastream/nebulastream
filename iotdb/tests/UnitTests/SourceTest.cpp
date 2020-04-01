@@ -75,7 +75,7 @@ TEST_F(SourceTest, testBinarySource) {
   createFileSourceFuncPtr funcPtr = &createBinaryFileSource;
 
   SchemaPtr schema =
-      SchemaTemp::create()->addField("user_id", 16)->addField("page_id", 16)->addField(
+      Schema::create()->addField("user_id", 16)->addField("page_id", 16)->addField(
           "campaign_id", 16)->addField("ad_type", 9)->addField("event_type", 9)
           ->addField("current_ms", UINT64)->addField("ip", INT32);
 
@@ -121,7 +121,7 @@ TEST_F(SourceTest, testCSVSource) {
     size_t num = 1;
     size_t frequency = 1;
     SchemaPtr schema =
-          SchemaTemp::create()->addField("user_id", 16)->addField("page_id", 16)->addField(
+          Schema::create()->addField("user_id", 16)->addField("page_id", 16)->addField(
               "campaign_id", 16)->addField("ad_type", 9)->addField("event_type", 9)
               ->addField("current_ms", UINT64)->addField("ip", INT32);
 
@@ -164,7 +164,7 @@ TEST_F(SourceTest, testSenseSource) {
   createSenseSourceFuncPtr funcPtr = &createSenseSource;
 
   SchemaPtr schema =
-      SchemaTemp::create()->addField("user_id", 16)->addField("page_id", 16)->addField(
+      Schema::create()->addField("user_id", 16)->addField("page_id", 16)->addField(
           "campaign_id", 16)->addField("ad_type", 9)->addField("event_type", 9)
           ->addField("current_ms", UINT64)->addField("ip", INT32);
 
