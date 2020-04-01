@@ -16,7 +16,7 @@ void OutputChannel::init(const std::string& socketAddr) {
         sendMessage<Messages::ClientAnnounceMessage>(zmqSocket, queryId, operatorId, partitionId, subpartitionId);
 
         zmq::message_t recvHeaderMsg;
-        zmqSocket.recv(recvHeaderMsg);
+        zmqSocket.recv(&recvHeaderMsg);
 
         auto recvHeader = recvHeaderMsg.data<Messages::MessageHeader>();
 

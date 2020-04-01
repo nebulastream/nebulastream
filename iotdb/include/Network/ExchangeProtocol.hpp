@@ -21,29 +21,44 @@ class ExchangeProtocol {
      * @param clientAnnounceMessage
      * @return
      */
-    Messages::ServerReadyMessage onClientAnnoucement(Messages::ClientAnnounceMessage* clientAnnounceMessage);
+    Messages::ServerReadyMessage onClientAnnoucement(Messages::ClientAnnounceMessage* clientAnnounceMessage) {
+        // check if the partition is registered via the partition manager or wait until this is not done
+
+        // if all good, send message back
+
+        return Messages::ServerReadyMessage{clientAnnounceMessage->getQueryId(), clientAnnounceMessage->getOperatorId(),
+                                            clientAnnounceMessage->getPartitionId(),
+                                            clientAnnounceMessage->getSubpartitionId()};
+    }
 
     /**
      *
      */
-    void onBuffer();
+    void onBuffer() {
+        onDataBufferCb();
+    }
 
     /**
      *
      * @param ex
      */
-    void onError(std::exception_ptr ex);
+    void onError(std::exception_ptr ex) {
+        onExceptionCb(ex);
+    }
 
     /**
      *
      */
-    void onEndOfStream();
+    void onEndOfStream() {
+        onEndOfStreamCb();
+    }
 
   private:
     std::function<void()> onDataBufferCb;
     std::function<void()> onEndOfStreamCb;
     std::function<void(std::exception_ptr)> onExceptionCb;
 };
+
 }
 }
 

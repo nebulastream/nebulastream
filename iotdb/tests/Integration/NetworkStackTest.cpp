@@ -6,7 +6,6 @@
 
 using namespace std;
 
-#define DEBUG_OUTPUT
 namespace NES {
 namespace Network {
 class NetworkStackTest : public testing::Test {

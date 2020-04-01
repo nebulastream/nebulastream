@@ -119,13 +119,26 @@ namespace Messages {
     class DataBufferMessage {
     public:
         static constexpr MessageType MESSAGE_TYPE = kDataBuffer;
-    private:
-        const QueryId queryId;
-        const OperatorId operatorId;
-        const PartitionId partitionId;
-        const SubpartitionId subpartitionId;
+
+        explicit DataBufferMessage(uint32_t payloadSize, uint32_t numOfRecords)
+            : payloadSize(payloadSize), numOfRecords(numOfRecords) {
+
+        }
+
+        const uint32_t getPayloadSize() const {
+            return payloadSize;
+        }
+
+        const uint32_t getNumOfRecords() const {
+            return numOfRecords;
+        }
+
+      private:
+        const uint32_t payloadSize;
         const uint32_t numOfRecords;
-        const void* payload;
+
+
+
     };
 
     class EndOfStreamMessage {
