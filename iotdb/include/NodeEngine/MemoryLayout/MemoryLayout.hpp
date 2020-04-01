@@ -11,8 +11,8 @@ class TupleBuffer;
 typedef std::shared_ptr<TupleBuffer> TupleBufferPtr;
 
 //todo:change SchemaTemp to Schema
-class SchemaTemp;
-typedef std::shared_ptr<SchemaTemp> SchemaPtr;
+class Schema;
+typedef std::shared_ptr<Schema> SchemaPtr;
 
 class PhysicalSchema;
 typedef std::shared_ptr<PhysicalSchema> PhysicalSchemaPtr;
