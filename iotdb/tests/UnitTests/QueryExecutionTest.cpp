@@ -36,7 +36,7 @@ class QueryExecutionTest : public testing::Test {
     testSchema = Schema().create().addField(createField("id", BasicType::INT64))
         .addField(createField("one", BasicType::INT64)).addField(
         createField("value", BasicType::INT64));
-    testInputBuffer = BufferManager::instance().getFixSizeBuffer();
+    testInputBuffer = BufferManager::instance().getFixedSizeBuffer();
     memoryLayout = createRowLayout(std::make_shared<Schema>(testSchema));
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         memoryLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/0)

@@ -8,7 +8,7 @@ GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan(const std::string& quer
 }
 
 bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr inputBuffer) {
-    TupleBufferPtr outputBuffer = BufferManager::instance().getFixSizeBuffer();
+    TupleBufferPtr outputBuffer = BufferManager::instance().getFixedSizeBuffer();
     outputBuffer->setTupleSizeInBytes(inputBuffer->getTupleSizeInBytes());
     bool ret = stages[pipeline_stage_id]->execute(inputBuffer, outputBuffer);
     // only write data to the sink if the pipeline produced some output

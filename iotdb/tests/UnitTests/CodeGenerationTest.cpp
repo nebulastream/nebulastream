@@ -67,7 +67,7 @@ class SelectionDataGenSource : public GeneratorSource {
 
   TupleBufferPtr receiveData() override {
     // 10 tuples of size one
-    TupleBufferPtr buf = BufferManager::instance().getFixSizeBuffer();
+    TupleBufferPtr buf = BufferManager::instance().getFixedSizeBuffer();
     uint64_t tupleCnt = buf->getBufferSizeInBytes() / sizeof(InputTuple);
 
     assert(buf->getBuffer() != NULL);
@@ -126,7 +126,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
 
   TupleBufferPtr receiveData() override {
     // 10 tuples of size one
-    TupleBufferPtr buf = BufferManager::instance().getFixSizeBuffer();
+    TupleBufferPtr buf = BufferManager::instance().getFixedSizeBuffer();
     uint64_t tupleCnt = buf->getBufferSizeInBytes() / sizeof(InputTuple);
 
     assert(buf->getBuffer() != NULL);
@@ -182,7 +182,7 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
 
   TupleBufferPtr receiveData() override {
     // 10 tuples of size one
-    TupleBufferPtr buf = BufferManager::instance().getFixSizeBuffer();
+    TupleBufferPtr buf = BufferManager::instance().getFixedSizeBuffer();
     uint64_t tupleCnt = 10;
 
     assert(buf->getBuffer() != NULL);
@@ -653,7 +653,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
   auto stage = createCompiledExecutablePipeline(compiler.compile(file.code));
 
   /* setup input and output for test */
-  auto inputBuffer = BufferManager::instance().getFixSizeBuffer();
+  auto inputBuffer = BufferManager::instance().getFixedSizeBuffer();
   inputBuffer->setTupleSizeInBytes(8);
   auto recordSchema = Schema::create().addField("id", BasicType::INT64);
   auto layout = createRowLayout(recordSchema.copy());
@@ -663,7 +663,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
   }
   inputBuffer->setNumberOfTuples(100);
 
-  auto outputBuffer = BufferManager::instance().getFixSizeBuffer();
+  auto outputBuffer = BufferManager::instance().getFixedSizeBuffer();
   outputBuffer->setTupleSizeInBytes(8);
   outputBuffer->setNumberOfTuples(1);
   /* execute code */
@@ -707,7 +707,7 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
   auto schema = Schema::create().addField("i64", UINT64);
   auto buffer = source->receiveData();
 
-  auto resultBuffer = BufferManager::instance().getFixSizeBuffer();
+  auto resultBuffer = BufferManager::instance().getFixedSizeBuffer();
   resultBuffer->setTupleSizeInBytes(sizeof(uint64_t));
 
   /* execute Stage */
@@ -755,7 +755,7 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
   NES_INFO("Processing " << inputBuffer->getNumberOfTuples() << " tuples: ");
 
   auto sizeOfTuple = (sizeof(uint32_t) + sizeof(uint32_t) + sizeof(char) * 12);
-  auto resultBuffer = BufferManager::instance().getFixSizeBuffer();
+  auto resultBuffer = BufferManager::instance().getFixedSizeBuffer();
   resultBuffer->setTupleSizeInBytes(sizeOfTuple);
 
   /* execute Stage */
@@ -804,7 +804,7 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
   /* prepare input tuple buffer */
   auto inputBuffer = source->receiveData();
 
-  auto resultBuffer = BufferManager::instance().getFixSizeBuffer();
+  auto resultBuffer = BufferManager::instance().getFixedSizeBuffer();
 
   /* execute Stage */
   stage->execute(inputBuffer, windowHandler->getWindowState(),
@@ -850,7 +850,7 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
   /* prepare input tuple buffer */
   auto inputBuffer = source->receiveData();
 
-  auto resultBuffer = BufferManager::instance().getFixSizeBuffer();
+  auto resultBuffer = BufferManager::instance().getFixedSizeBuffer();
   resultBuffer->setTupleSizeInBytes(inputSchema.getSchemaSize());
 
   /* execute Stage */

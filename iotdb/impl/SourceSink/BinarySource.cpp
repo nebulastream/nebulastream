@@ -34,7 +34,7 @@ BinarySource::BinarySource(const Schema& schema, const std::string& _file_path)
 }
 
 TupleBufferPtr BinarySource::receiveData() {
-  TupleBufferPtr buf = BufferManager::instance().getFixSizeBuffer();
+  TupleBufferPtr buf = BufferManager::instance().getFixedSizeBuffer();
   fillBuffer(*buf);
   return buf;
 }

@@ -45,7 +45,7 @@ class BufferManager {
    * @brief get a free buffer of default size
    * @return Pointer to free buffer
    */
-  TupleBufferPtr getFixSizeBuffer();
+  TupleBufferPtr getFixedSizeBuffer();
 
   /**
    * @brief release a given buffer such that it can be reused
@@ -58,20 +58,20 @@ class BufferManager {
    * @brief return the total number of buffer used in the buffer manager
    * @return number of buffer
    */
-  size_t getNumberOfFixBuffers();
+  size_t getNumberOfFixedBuffers();
 
   /**
    * @brief return the number of buffer free in the buffer manager
    * @return number free of buffer
    */
-  size_t getNumberOfFreeFixBuffers();
+  size_t getNumberOfFreeFixedBuffers();
 
   /**
    * @brief return the size of one buffer in bytes
    * @return size of a buffer in bytesfor (auto& entry : fixSizeBufferPool) {
    //TODO: we have to make sure that no buffer is currently used
    */
-  size_t getFixBufferSize();
+  size_t getFixedBufferSize();
 
   /**
    * @brief print statistics about the buffer manager interaction to the info log
@@ -83,14 +83,14 @@ class BufferManager {
    * CAUTION: this deletes all existing buffers
    * @param number of new buffers
    */
-  void resizeFixBufferCnt(size_t newBufferCnt);
+  void resizeFixedBufferCnt(size_t newBufferCnt);
 
   /**
    * @brief delete and re-create all buffers of new size (same buffer cnt as before)
    * CAUTION: this deletes all existing buffers
    * @param new size of buffer new buffers
    */
-  void resizeFixBufferSize(size_t newBufferSizeInByte);
+  void resizeFixedBufferSize(size_t newBufferSizeInByte);
 
   void reset();
 
@@ -132,8 +132,8 @@ class BufferManager {
    *  - bufferSizeInByte = 4KB
    * */
   BufferManager();
-  BufferManager(const BufferManager&);
-  BufferManager& operator=(const BufferManager&);
+//  BufferManager(const BufferManager&);
+//  BufferManager& operator=(const BufferManager&);
   ~BufferManager();
 
   /**
@@ -147,7 +147,7 @@ class BufferManager {
   /**
    * @brief add buffer with default size
    */
-  void addOneBufferWithFixSize();
+  void addOneBufferWithFixedSize();
 
   /**
    * @brief add buffer with default size
@@ -155,15 +155,15 @@ class BufferManager {
   TupleBufferPtr addOneBufferWithVarSize(size_t bufferSizeInByte);
 
   //Map containing Tuple Pointer and if it is currently used
-  BlockingQueue<TupleBufferPtr>* fixSizeBufferPool;
-//  std::map<TupleBufferPtr, /**used*/std::atomic<bool>> fixSizeBufferPool;
-
+  BlockingQueue<TupleBufferPtr>* fixedSizeBufferPool;
   std::map<TupleBufferPtr, /**used*/std::atomic<bool>> varSizeBufferPool;
 
   size_t currentBufferSize;
+  size_t numberOfFreeVarSizeBuffers;
 
   std::mutex changeBufferMutex;
   std::mutex resizeMutex;
+
 
   //statistics
   size_t noFreeBuffer;

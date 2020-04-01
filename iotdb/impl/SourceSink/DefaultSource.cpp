@@ -15,7 +15,7 @@ DefaultSource::DefaultSource(const Schema& schema,
 
 TupleBufferPtr DefaultSource::receiveData() {
     // 10 tuples of size one
-    TupleBufferPtr buf = BufferManager::instance().getFixSizeBuffer();
+    TupleBufferPtr buf = BufferManager::instance().getFixedSizeBuffer();
     size_t tupleCnt = 10;
     auto layout = createRowLayout(std::make_shared<Schema>(schema));
 

@@ -66,7 +66,7 @@ class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
 
     DataSinkPtr sink = this->getSinks()[0];
 //  sink->getSchema().getSchemaSize();
-    TupleBufferPtr outputBuffer = BufferManager::instance().getFixSizeBuffer();
+    TupleBufferPtr outputBuffer = BufferManager::instance().getFixedSizeBuffer();
     u_int32_t *arr = (u_int32_t*) outputBuffer->getBuffer();
     arr[0] = sum;
     outputBuffer->setNumberOfTuples(1);
