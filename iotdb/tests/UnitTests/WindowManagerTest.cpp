@@ -90,7 +90,7 @@ TEST_F(WindowManagerTest, check_slice) {
 
 TEST_F(WindowManagerTest, window_trigger) {
 
-  SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
+  SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
 
   auto aggregation = Sum::on(schema->get("id"));

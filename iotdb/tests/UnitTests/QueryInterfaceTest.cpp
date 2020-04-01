@@ -63,7 +63,7 @@ TEST_F(QueryInterfaceTest, testQueryFilter) {
 
   Environment env = Environment::create(config);
 
-  SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
+  SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
 
   Stream def = Stream("default_logical", schema);
@@ -85,7 +85,7 @@ TEST_F(QueryInterfaceTest, testQueryMap) {
   Environment env = Environment::create(config);
 
 //    Config::create().withParallelism(1).withPreloading().withBufferSize(1000).withNumberOfPassesOverInput(1);
-  SchemaPtr schema = SchemaTemp::create()->addField("id", BasicType::UINT32)->addField(
+  SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
 
   Stream def = Stream("default", schema);
