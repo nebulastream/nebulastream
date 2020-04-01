@@ -102,7 +102,7 @@ TEST_F(CoordinatorServiceTest, test_deregistration_and_topology) {
   streamConf.logicalStreamName = "default_delete_me";
 
   StreamCatalog::instance().addLogicalStream(
-      "default_delete_me", SchemaTemp::create());
+      "default_delete_me", Schema::create());
   auto entry = coordinatorServicePtr->register_sensor(6, ip, publish_port,
                                                       receive_port, 2, "",
                                                       streamConf);
@@ -233,7 +233,7 @@ TEST_F(CoordinatorServiceTest, test_code_gen) {
   auto *engine = new NodeEngine();
   engine->start();
 
-  SchemaPtr schema = SchemaTemp::create()
+  SchemaPtr schema = Schema::create()
       ->addField("id", BasicType::UINT32)
       ->addField("value", BasicType::UINT64);
 

@@ -43,7 +43,7 @@ class StreamCatalogTest : public testing::Test {
 
 TEST_F(StreamCatalogTest, add_get_log_stream_test) {
   StreamCatalog::instance().addLogicalStream(
-      "test_stream", SchemaTemp::create());
+      "test_stream", Schema::create());
   SchemaPtr sPtr = StreamCatalog::instance().getSchemaForLogicalStream(
       "test_stream");
   EXPECT_NE(sPtr, nullptr);
@@ -62,7 +62,7 @@ TEST_F(StreamCatalogTest, add_get_log_stream_test) {
 
 TEST_F(StreamCatalogTest, add_remove_log_stream_test) {
   StreamCatalog::instance().addLogicalStream(
-      "test_stream", SchemaTemp::create());
+      "test_stream", Schema::create());
 
   EXPECT_TRUE(StreamCatalog::instance().removeLogicalStream("test_stream"));
 
@@ -93,7 +93,7 @@ TEST_F(StreamCatalogTest, get_not_existing_key_test) {
 TEST_F(StreamCatalogTest, add_get_physical_stream_test) {
 //  NESTopologyManager::getInstance().resetNESTopologyPlan();
   StreamCatalog::instance().addLogicalStream(
-      "test_stream", SchemaTemp::create());
+      "test_stream", Schema::create());
 
   NESTopologySensorNodePtr sensorNode = NESTopologyManager::getInstance()
       .createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
@@ -124,7 +124,7 @@ TEST_F(StreamCatalogTest, add_get_physical_stream_test) {
 TEST_F(StreamCatalogTest, add_remove_physical_stream_test) {
   NESTopologyManager::getInstance().resetNESTopologyPlan();
   StreamCatalog::instance().addLogicalStream(
-      "test_stream", SchemaTemp::create());
+      "test_stream", Schema::create());
 
   NESTopologySensorNodePtr sensorNode = NESTopologyManager::getInstance()
       .createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
