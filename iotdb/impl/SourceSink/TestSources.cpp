@@ -25,13 +25,13 @@ const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(
 
 const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer() {
   return std::make_shared<DefaultSource>(
-      Schema::create()->addField(createField("id", UINT64)), /**bufferCnt*/ 1, /*frequency*/ 1);
+      SchemaTemp::create()->addField(createField("id", UINT64)), /**bufferCnt*/ 1, /*frequency*/ 1);
 }
 
 const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForVarBuffers(
     size_t numbersOfBufferToProduce, double frequency) {
   return std::make_shared<DefaultSource>(
-      Schema::create()->addField(createField("id", UINT64)),
+      SchemaTemp::create()->addField(createField("id", UINT64)),
       numbersOfBufferToProduce, frequency);
 }
 
