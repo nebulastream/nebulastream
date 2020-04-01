@@ -54,7 +54,7 @@ TEST_F(TupleBufferTest, testPrintingOfTupleBuffer) {
   }
 
   TupleBuffer buf {my_array, 5 * sizeof(MyTuple), sizeof(MyTuple), 5};
-  SchemaPtr s = Schema::create()
+  SchemaPtr s = SchemaTemp::create()
       ->addField("i64", UINT64)
       ->addField("f", FLOAT32)
       ->addField("d", FLOAT64)
@@ -110,7 +110,7 @@ TEST_F(TupleBufferTest, testEndianessOneItem) {
   ts.v10 = 1.2;
 
   TupleBuffer testBuf { &ts, sizeof(TestStruct), sizeof(TestStruct), 1};
-  SchemaPtr s = Schema::create()
+  SchemaPtr s = SchemaTemp::create()
       ->addField("v1", UINT8)
       ->addField("v2", UINT16)
       ->addField("v3", UINT32)
@@ -170,7 +170,7 @@ TEST_F(TupleBufferTest, testEndianessTwoItems) {
   }
 
   TupleBuffer testBuf { ts, sizeof(TestStruct)*5, sizeof(TestStruct), 5};
-  SchemaPtr s = Schema::create()
+  SchemaPtr s = SchemaTemp::create()
       ->addField("v1", UINT8)
       ->addField("v2", UINT16)
       ->addField("v3", UINT32)

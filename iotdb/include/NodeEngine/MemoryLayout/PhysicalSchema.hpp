@@ -6,8 +6,8 @@
 namespace NES {
 
 //todo: change SchemaTemp to Schema
-class Schema;
-typedef std::shared_ptr<Schema> SchemaPtr;
+class SchemaTemp;
+typedef std::shared_ptr<SchemaTemp> SchemaPtr;
 
 template<class ValueType>
 class BasicPhysicalField;

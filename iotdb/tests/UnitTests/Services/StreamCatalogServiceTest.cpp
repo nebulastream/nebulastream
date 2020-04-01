@@ -9,8 +9,9 @@ using namespace NES;
 class StreamCatalogServiceTest : public testing::Test {
  public:
 
+  // \todo change back to Schema
   std::string testSchema =
-      "Schema::create()->addField(\"id\", BasicType::UINT32)"
+      "SchemaTemp::create()->addField(\"id\", BasicType::UINT32)"
           "->addField(\"value\", BasicType::UINT64);";
   const std::string defaultLogicalStreamName = "default_logical";
 
