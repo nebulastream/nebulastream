@@ -35,11 +35,18 @@ class BufferManager {
   static BufferManager& instance();
 
   /**
-   * @brief remove a particular buffer from the buffer pool
-   * @param Pointer to buffer to be deleted
-   * @return true if buffer was deleted, false if buffer was not present
+   * @brief print statistics about the buffer manager interaction to the info log
    */
-  bool removeVaSizeBuffer(TupleBufferPtr tupleBuffer);
+  void printStatistics();
+
+  /**
+   * @brief reset all buffer pools
+   */
+  void reset();
+
+  /**
+   * FIXED SIZE BUFFER METHODS
+   */
 
   /**
    * @brief get a free buffer of default size
@@ -47,6 +54,11 @@ class BufferManager {
    */
   TupleBufferPtr getFixedSizeBuffer();
 
+  /**
+   * @brief get a free buffer of default size with timeout
+   * @param timeout in ms
+   * @return Pointer to free buffer
+   */
   TupleBufferPtr getFixedSizeBufferWithTimeout(size_t timeout_ms);
 
   /**
@@ -54,31 +66,7 @@ class BufferManager {
    * @param Pointer to the buffer to be released
    * @return bool indicating if buffer was released, if false buffer was not present
    */
-  bool releaseBuffer(const TupleBufferPtr tupleBuffer);
-
-  /**
-   * @brief return the total number of buffer used in the buffer manager
-   * @return number of buffer
-   */
-  size_t getNumberOfFixedBuffers();
-
-  /**
-   * @brief return the number of buffer free in the buffer manager
-   * @return number free of buffer
-   */
-  size_t getNumberOfFreeFixedBuffers();
-
-  /**
-   * @brief return the size of one buffer in bytes
-   * @return size of a buffer in bytesfor (auto& entry : fixSizeBufferPool) {
-   //TODO: we have to make sure that no buffer is currently used
-   */
-  size_t getFixedBufferSize();
-
-  /**
-   * @brief print statistics about the buffer manager interaction to the info log
-   */
-  void printStatistics();
+  bool releaseFixedSizeBuffer(const TupleBufferPtr tupleBuffer);
 
   /**
    * @brief delete and create n new buffers of currentBufferSize
@@ -94,11 +82,37 @@ class BufferManager {
    */
   void resizeFixedBufferSize(size_t newBufferSizeInByte);
 
-  void reset();
+  /**
+   * @brief return the size of one buffer in bytes
+   * @return size of a buffer in bytesfor (auto& entry : fixSizeBufferPool) {
+   //TODO: we have to make sure that no buffer is currently used
+   */
+  size_t getFixedBufferSize();
 
   /**
+   --------------------
    * VAR SIZE BUFFER METHODS
+   * ----------------------
    */
+
+  /**
+   * @brief return the total number of buffer used in the buffer manager
+   * @return number of buffer
+   */
+  size_t getNumberOfFixedBuffers();
+
+  /**
+   * @brief return the number of buffer free in the buffer manager
+   * @return number free of buffer
+   */
+  size_t getNumberOfFreeFixedBuffers();
+
+  /**
+   * @brief release a given buffer such that it can be reused
+   * @param Pointer to the buffer to be released
+   * @return bool indicating if buffer was released, if false buffer was not present
+   */
+  bool releaseVarSizedBuffer(const TupleBufferPtr tupleBuffer);
 
   /**
    * @brief return the total number of var buffer used in the buffer manager
@@ -144,7 +158,6 @@ class BufferManager {
    */
   void clearFixBufferPool();
 
-
   void clearVarBufferPool();
 
   /**
@@ -166,7 +179,6 @@ class BufferManager {
 
   std::mutex changeBufferMutex;
   std::mutex resizeMutex;
-
 
   //statistics
   size_t noFreeBuffer;

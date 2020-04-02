@@ -24,6 +24,7 @@ bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const
             }
         }
     }
+    BufferManager::instance().releaseFixedSizeBuffer(outputBuffer);
     return ret;
 }
 

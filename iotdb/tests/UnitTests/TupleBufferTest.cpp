@@ -53,7 +53,7 @@ TEST_F(TupleBufferTest, testPrintingOfTupleBuffer) {
     << std::endl;
   }
 
-  TupleBuffer buf {my_array, 5 * sizeof(MyTuple), sizeof(MyTuple), 5, true};
+  TupleBuffer buf {my_array, 5 * sizeof(MyTuple), sizeof(MyTuple), 5};
   Schema s = Schema::create().addField("i64", UINT64).addField("f", FLOAT32)
   .addField("d", FLOAT64).addField("i32", UINT32).addField("s", 12);
 
@@ -105,7 +105,7 @@ TEST_F(TupleBufferTest, testEndianessOneItem) {
   ts.v9 = 1.1;
   ts.v10 = 1.2;
 
-  TupleBuffer testBuf { &ts, sizeof(TestStruct), sizeof(TestStruct), 1, true };
+  TupleBuffer testBuf { &ts, sizeof(TestStruct), sizeof(TestStruct), 1};
   Schema s = Schema::create().addField("v1", UINT8).addField("v2", UINT16)
       .addField("v3", UINT32).addField("v4", UINT64).addField("v5", INT8)
       .addField("v6", INT16).addField("v7", INT32).addField("v8", INT64)
@@ -158,7 +158,7 @@ TEST_F(TupleBufferTest, testEndianessTwoItems) {
     ts[i].v10 = 1.2*i;
   }
 
-  TupleBuffer testBuf { ts, sizeof(TestStruct)*5, sizeof(TestStruct), 5, true };
+  TupleBuffer testBuf { ts, sizeof(TestStruct)*5, sizeof(TestStruct), 5};
   Schema s = Schema::create().addField("v1", UINT8).addField("v2", UINT16)
       .addField("v3", UINT32).addField("v4", UINT64).addField("v5", INT8)
       .addField("v6", INT16).addField("v7", INT32).addField("v8", INT64)
