@@ -181,9 +181,6 @@ class BufferManager {
   std::mutex resizeMutex;
 
   //statistics
-  size_t noFreeBuffer;
-  size_t providedBuffer;
-  size_t releasedBuffer;
 };
 
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;

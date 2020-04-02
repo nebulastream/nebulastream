@@ -187,8 +187,8 @@ void testOutput(std::string path, std::string expectedOutput) {
 
   EXPECT_EQ(content, expectedOutput);
   ifs.close();
-//  int response = remove(path.c_str());
-//  EXPECT_TRUE(response == 0);
+  int response = remove(path.c_str());
+  EXPECT_TRUE(response == 0);
 }
 
 CompiledTestQueryExecutionPlanPtr setupQEP() {
@@ -366,7 +366,7 @@ TEST_F(EngineTest, parallel_same_source_test) {
   ptr->start();
   source1->start();
 
-  sleep(1);
+  sleep(2);
   ptr->stop();
 
   testOutput("qep1.txt");
@@ -435,7 +435,7 @@ TEST_F(EngineTest, blocking_test) {
   qep1->addDataSink(sink1);
 
   NodeEngine* ptr = new NodeEngine();
-  BufferManager::instance().resizeFixedBufferCnt(5);
+  BufferManager::instance().resizeFixedBufferCnt(10);
   ptr->deployQueryWithoutStart(qep1);
   ptr->start();
   source1->start();

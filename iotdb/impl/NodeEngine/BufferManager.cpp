@@ -11,10 +11,7 @@ BufferManager::BufferManager()
     :
     numberOfFreeVarSizeBuffers(0),
     changeBufferMutex(),
-    resizeMutex(),
-    noFreeBuffer(0),
-    providedBuffer(0),
-    releasedBuffer(0) {
+    resizeMutex(){
   size_t initalBufferCnt = 100;
   currentBufferSize = 4 * 1024;
   NES_DEBUG(
@@ -124,13 +121,23 @@ bool BufferManager::releaseFixedSizeBuffer(const TupleBufferPtr tupleBuffer) {
         "BufferManager::releaseFixedSizeBuffer: error release of nullptr buffer")
     throw new Exception("BufferManager failed");
   }
-  std::map<TupleBufferPtr, /**used*/std::atomic<bool>>::iterator it;
-  std::map<TupleBufferPtr, /**used*/std::atomic<bool>>::iterator end;
 
   //enqueue buffer back to queue
   NES_DEBUG("BufferManager::releaseBuffer: release buffer " << tupleBuffer)
-  fixedSizeBufferPool->push(tupleBuffer);
-  return true;
+  if (tupleBuffer->decrementUseCntAndTestForZero()) {
+    NES_DEBUG("BufferManager: release buffer as useCnt gets zero")
+    //reset buffer for next use
+    tupleBuffer->setNumberOfTuples(0);
+    tupleBuffer->setTupleSizeInBytes(0);
+    //update statistics
+    fixedSizeBufferPool->push(tupleBuffer);
+
+    return true;
+  } else {
+    NES_DEBUG(
+        "BufferManager: Dont release buffer as useCnt gets " << tupleBuffer->getUseCnt())
+  }
+
 }
 
 bool BufferManager::releaseVarSizedBuffer(const TupleBufferPtr tupleBuffer) {
@@ -157,8 +164,6 @@ bool BufferManager::releaseVarSizedBuffer(const TupleBufferPtr tupleBuffer) {
         //reset buffer for next use
         it->first->setNumberOfTuples(0);
         it->first->setTupleSizeInBytes(0);
-        //update statistics
-        releasedBuffer++;
         it->second = false;
       } else {
         NES_DEBUG(
@@ -193,7 +198,6 @@ TupleBufferPtr BufferManager::getVarSizeBufferLargerThan(
         && entry.first->getBufferSizeInBytes() > bufferSizeInByte) {
       NES_DEBUG("BufferManager: found fitting var size buffer try to reserve")
       if (entry.second.compare_exchange_weak(used, true)) {
-        providedBuffer++;
         NES_DEBUG(
             "BufferManager: getBuffer() provide free buffer" << entry.first)
         entry.first->incrementUseCnt();
@@ -227,9 +231,6 @@ size_t BufferManager::getNumberOfFreeVarBuffers() {
 
 void BufferManager::printStatistics() {
   NES_INFO("BufferManager Statistics:")
-  NES_INFO("\t noFreeBuffer=" << noFreeBuffer)
-  NES_INFO("\t providedBuffer=" << providedBuffer)
-  NES_INFO("\t releasedBuffer=" << releasedBuffer)
 }
 
 }  // namespace NES
