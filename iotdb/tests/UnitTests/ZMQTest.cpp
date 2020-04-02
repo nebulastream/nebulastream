@@ -74,7 +74,7 @@ TEST_F(ZMQTest, ZmqSourceReceiveData) {
                                                                        UINT32);
   auto zmq_source = createZmqSource(test_schema, LOCAL_HOST, LOCAL_PORT);
   std::cout << zmq_source->toString() << std::endl;
-  BufferManager::instance().setBufferSize(test_data_size);
+  BufferManager::instance().resizeFixedBufferSize(test_data_size);
 
   // Start thread for receiving the data.
   bool receiving_finished = false;
@@ -91,7 +91,7 @@ TEST_F(ZMQTest, ZmqSourceReceiveData) {
     size_t expected = 400;
     EXPECT_EQ(sum, expected);
 
-    BufferManager::instance().releaseBuffer(tuple_buffer);
+    BufferManager::instance().releaseFixedSizeBuffer(tuple_buffer);
     receiving_finished = true;
   });
   size_t tupCnt = 8;
@@ -130,7 +130,7 @@ TEST_F(ZMQTest, ZmqSinkSendData) {
   // Put test data into a TupleBuffer vector.
   void *buffer = new char[test_data_size];
   //  auto tuple_buffer = TupleBuffer(buffer, test_data_size, sizeof(uint32_t) * 2, test_data.size() / 2);
-  auto tuple_buffer = BufferManager::instance().getBuffer();
+  auto tuple_buffer = BufferManager::instance().getFixedSizeBuffer();
 
   std::memcpy(tuple_buffer->getBuffer(), &test_data, test_data_size);
   auto tuple_buffer_vec = std::vector<TupleBufferPtr>();
@@ -182,7 +182,7 @@ TEST_F(ZMQTest, ZmqSinkToSource) {
   // Put test data into a TupleBuffer vector.
   void *buffer = new char[test_data_size];
   //  auto tuple_buffer = TupleBuffer(buffer, test_data_size, sizeof(uint32_t) * 2, test_data.size() / 2);
-  auto tuple_buffer = BufferManager::instance().getBuffer();
+  auto tuple_buffer = BufferManager::instance().getFixedSizeBuffer();
 
   std::memcpy(tuple_buffer->getBuffer(), &test_data, test_data_size);
   auto tuple_buffer_vec = std::vector<TupleBufferPtr>();
@@ -209,7 +209,7 @@ TEST_F(ZMQTest, ZmqSinkToSource) {
       size_t expected = 100 - i;
       EXPECT_EQ(*(tuple++), expected);
     }
-    BufferManager::instance().releaseBuffer(new_data);
+    BufferManager::instance().releaseFixedSizeBuffer(new_data);
     receiving_finished = true;
   });
 

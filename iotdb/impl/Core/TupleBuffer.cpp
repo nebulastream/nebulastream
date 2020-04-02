@@ -11,30 +11,34 @@ using namespace std;
 namespace NES {
 
 TupleBuffer::TupleBuffer(void *_buffer, const size_t _buffer_size_bytes,
-                         const uint32_t _tuple_size_bytes,
-                         const uint32_t _num_tuples)
+                         const uint32_t _tupleSizeBytes,
+                         const uint32_t _numTuples)
     :
     buffer(_buffer),
     bufferSizeInBytes(_buffer_size_bytes),
-    tupleSizeInBytes(_tuple_size_bytes),
-    numberOfTuples(_num_tuples),
+    tupleSizeInBytes(_tupleSizeBytes),
+    numberOfTuples(_numTuples),
     useCnt(0) {
 }
-
+TupleBuffer::~TupleBuffer()
+{
+  NES_DEBUG("TupleBuffer deconstruct " << this);
+}
 void TupleBuffer::copyInto(const TupleBufferPtr other) {
   if (other && other.get() != this) {
-    this->bufferSizeInBytes = other->bufferSizeInBytes;
-    this->tupleSizeInBytes = other->tupleSizeInBytes;
-    this->numberOfTuples = other->numberOfTuples;
+    bufferSizeInBytes = other->bufferSizeInBytes.load();
+    tupleSizeInBytes = other->tupleSizeInBytes.load();
+    numberOfTuples = other->numberOfTuples.load();
     std::memcpy(this->buffer, other->buffer, other->bufferSizeInBytes);
   }
 }
 
 TupleBuffer& TupleBuffer::operator=(const TupleBuffer &other) {
+  NES_WARNING("TupleBuffer::operator=: " << this)
   if (this != &other) {
-    this->bufferSizeInBytes = other.bufferSizeInBytes;
-    this->tupleSizeInBytes = other.tupleSizeInBytes;
-    this->numberOfTuples = other.numberOfTuples;
+    bufferSizeInBytes = other.bufferSizeInBytes.load();
+    tupleSizeInBytes = other.tupleSizeInBytes.load();
+    numberOfTuples = other.numberOfTuples.load();
     std::memcpy(this->buffer, other.buffer, other.bufferSizeInBytes);
   }
   return *this;
@@ -87,13 +91,16 @@ bool TupleBuffer::decrementUseCntAndTestForZero() {
   if (useCnt >= 1) {
     useCnt--;
   } else
-    assert(0);
+  {
+    //TODO: I am not sure if we should break here, however we will fix this when we remove shared_ptr from this
+    NES_WARNING("TupleBuffer::decrementUseCntAndTestForZero: decrease a buffer which has already 0 count")
+  }
+
 
   return useCnt == 0;
 }
 
-bool TupleBuffer::incrementUseCnt() {
-  //TODO: should this be thread save?
+void TupleBuffer::incrementUseCnt() {
   useCnt++;
 }
 

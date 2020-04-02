@@ -19,7 +19,8 @@ bool Task::execute() {
 }
 
 void Task::releaseInputBuffer() {
-  BufferManager::instance().releaseBuffer(buf);
+  NES_DEBUG("Task::releaseInputBuffer buf=" << buf)
+  BufferManager::instance().releaseFixedSizeBuffer(buf);
 }
 
 size_t Task::getNumberOfTuples() {
