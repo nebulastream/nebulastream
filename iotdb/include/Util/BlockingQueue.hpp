@@ -40,6 +40,7 @@ class BlockingQueue {
   }
 
   inline size_t getCapacity() {
+    std::unique_lock<std::mutex> lock(queueMutex);
     return capacity;
   }
 

@@ -39,15 +39,15 @@ class QueryExecutionTest : public testing::Test {
     testInputBuffer = BufferManager::instance().getFixedSizeBuffer();
     memoryLayout = createRowLayout(std::make_shared<Schema>(testSchema));
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
-        memoryLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/0)
-            ->write(testInputBuffer, recordIndex);
-        memoryLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/1)
-            ->write(testInputBuffer, 1);
-        memoryLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/2)
-            ->write(testInputBuffer, recordIndex%2);
-      }
+      memoryLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/0)->write(
+          testInputBuffer, recordIndex);
+      memoryLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/1)->write(
+          testInputBuffer, 1);
+      memoryLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/2)->write(
+          testInputBuffer, recordIndex % 2);
+    }
     testInputBuffer->setNumberOfTuples(10);
-
+    testInputBuffer->setTupleSizeInBytes(testSchema.getSchemaSize());
   }
 
   /* Will be called before a test is executed. */
@@ -71,7 +71,13 @@ class TestSink : public DataSink {
     NES_DEBUG("TestSink: got buffer " << input_buffer);
     NES_DEBUG(NES::toString(input_buffer.get(), this->getSchema()));
     input_buffer->print();
-    resultBuffers.push_back(input_buffer);
+    char* buffer = new char[input_buffer->getBufferSizeInBytes()];
+    TupleBufferPtr storePtr = std::make_shared<TupleBuffer>(buffer,
+                                                            input_buffer->getBufferSizeInBytes(),
+                                                        /**tupleSizeBytes*/0, /**numTuples*/
+                                                        0);
+    storePtr->copyInto(input_buffer);
+    resultBuffers.push_back(storePtr);
     return true;
   }
 
@@ -132,11 +138,12 @@ TEST_F(QueryExecutionTest, filterQuery) {
   EXPECT_EQ(resultBuffer->getNumberOfTuples(), 5);
 
   for (int recordIndex = 0; recordIndex < 5; recordIndex++) {
-    EXPECT_EQ(memoryLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/0)
-                     ->read(testInputBuffer), recordIndex);
+    EXPECT_EQ(
+        memoryLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/0)->read(
+            testInputBuffer),
+        recordIndex);
   }
 }
-
 TEST_F(QueryExecutionTest, windowQuery) {
 
   // creating query plan
@@ -185,8 +192,10 @@ TEST_F(QueryExecutionTest, windowQuery) {
   EXPECT_EQ(resultBuffer->getNumberOfTuples(), 2);
   auto resultLayout = createRowLayout(ptr);
   for (int recordIndex = 0; recordIndex < 2; recordIndex++) {
-    EXPECT_EQ(resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/0)
-                  ->read(resultBuffer), 10);
+    EXPECT_EQ(
+        resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/0)->read(
+            resultBuffer),
+        10);
   }
 }
 
