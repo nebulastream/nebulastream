@@ -17,7 +17,10 @@ TupleBufferPtr DefaultSource::receiveData() {
   // 10 tuples of size one
   NES_DEBUG("Source:" << this << " requesting buffer")
 
-  TupleBufferPtr buf = BufferManager::instance().getFixedSizeBuffer();
+  TupleBufferPtr buf = BufferManager::instance().getFixedSizeBufferWithTimeout(2000);
+  if (!buf) {
+      return nullptr;
+  }
   NES_DEBUG("Source:" << this << " got buffer")
   size_t tupleCnt = 10;
   auto layout = createRowLayout(std::make_shared<Schema>(schema));

@@ -7,6 +7,7 @@
 #include <thread>
 #include <condition_variable>
 #include <Util/Logger.hpp>
+#include <optional>
 namespace NES {
 
 template<typename T>
@@ -94,6 +95,24 @@ class BlockingQueue {
       return retVal;
     }
   }
+
+    inline const std::optional<T> popTimeout(size_t timeout_ms) {
+    {
+        auto timeout = std::chrono::milliseconds(timeout_ms);
+        std::unique_lock<std::mutex> lock(queueMutex);
+
+        // wait while the queue is empty
+        if (notEmpty.wait_for(lock, timeout, [=](){return bufferQueue.size() > 0;})) {
+            return std::nullopt;
+        }
+        T retVal = bufferQueue.front();
+        NES_DEBUG("BlockingQueue: popping element timeout " << bufferQueue.front())
+        bufferQueue.pop();
+
+        notFull.notify_one();
+        return retVal;
+    }
+}
 
 //  inline const T& front() {
 //    std::unique_lock<std::mutex> lock(queueMutex);

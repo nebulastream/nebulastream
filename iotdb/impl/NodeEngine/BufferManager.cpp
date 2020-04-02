@@ -206,6 +206,11 @@ TupleBufferPtr BufferManager::getFixedSizeBuffer() {
   return fixedSizeBufferPool->pop();
 }
 
+TupleBufferPtr BufferManager::getFixedSizeBufferWithTimeout(size_t timeout_ms) {
+    auto buff = fixedSizeBufferPool->popTimeout(timeout_ms);
+    return buff.value_or(nullptr);
+}
+
 TupleBufferPtr BufferManager::getVarSizeBufferLargerThan(
     size_t bufferSizeInByte) {
   //find a free buffer

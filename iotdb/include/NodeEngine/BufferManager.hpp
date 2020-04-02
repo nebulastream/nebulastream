@@ -47,6 +47,8 @@ class BufferManager {
    */
   TupleBufferPtr getFixedSizeBuffer();
 
+  TupleBufferPtr getFixedSizeBufferWithTimeout(size_t timeout_ms);
+
   /**
    * @brief release a given buffer such that it can be reused
    * @param Pointer to the buffer to be released
