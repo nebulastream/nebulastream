@@ -393,17 +393,5 @@ bool Node::isCyclicHelper(Node& node) {
     node.recStack = false;
     return false;
 }
-void Node::prettyPrint(std::ostream& out) {
-    printHelper(shared_from_this(), /*depth*/0, /*indent*/2, out);
-}
 
-void Node::printHelper(const NodePtr op, size_t depth, size_t indent, std::ostream& out) const {
-
-    out << std::string(indent*depth, ' ') << op->toString() << std::endl;
-    ++depth;
-    auto children = op->getChildren();
-    for (auto&& child: children) {
-        printHelper(child, depth, indent, out);
-    }
-}
 }

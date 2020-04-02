@@ -3,4 +3,5 @@ add_source_iotdb(
 )
 
 add_subdirectory(Operators)
+add_subdirectory(Util)
 add_subdirectory(Expressions)

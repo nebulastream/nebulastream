@@ -206,8 +206,6 @@ class Node : public std::enable_shared_from_this<Node> {
 
     virtual const std::string toString() const = 0;
 
-    void prettyPrint(std::ostream& out = std::cout);
-
   protected:
     /**
      * @brief the parents of this node. There is no equal nodes
@@ -255,10 +253,7 @@ class Node : public std::enable_shared_from_this<Node> {
      * @brief helper function of equalWithAllChildren() function
      */
     bool equalWithAllChildrenHelper(const NodePtr node1, const NodePtr node2);
-    /**
-     * @brief helper function of prettyPrint() function
-     */
-    void printHelper(const NodePtr node, size_t depth, size_t indent, std::ostream& out) const;
+
     /**
      * @brief helper function of getAndFlattenAllChildren() function
      */
