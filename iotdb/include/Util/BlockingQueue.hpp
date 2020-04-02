@@ -102,7 +102,8 @@ class BlockingQueue {
         std::unique_lock<std::mutex> lock(queueMutex);
 
         // wait while the queue is empty
-        if (notEmpty.wait_for(lock, timeout, [=](){return bufferQueue.size() > 0;})) {
+        auto ret = notEmpty.wait_for(lock, timeout, [=](){return bufferQueue.size() > 0;});
+        if (!ret) {
             return std::nullopt;
         }
         T retVal = bufferQueue.front();

@@ -38,6 +38,7 @@ void ThreadPool::runningRoutine() {
       running = false;
     }
   }
+  dispatcher.cleanup();
 }
 
 bool ThreadPool::start() {
