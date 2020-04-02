@@ -19,6 +19,7 @@ bool Task::execute() {
 }
 
 void Task::releaseInputBuffer() {
+  NES_DEBUG("Task::releaseInputBuffer buf=" << buf)
   BufferManager::instance().releaseBuffer(buf);
 }
 
