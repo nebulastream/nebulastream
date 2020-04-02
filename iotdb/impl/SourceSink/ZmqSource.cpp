@@ -64,7 +64,7 @@ TupleBufferPtr ZmqSource::receiveData() {
       // Get some information about received data
       size_t tuple_size = schema.getSchemaSize();
       // Create new TupleBuffer and copy data
-      TupleBufferPtr buffer = BufferManager::instance().getBuffer();
+      TupleBufferPtr buffer = BufferManager::instance().getFixedSizeBuffer();
       NES_DEBUG("ZMQSource  " << this << ": got buffer ")
 
       // TODO: If possible only copy the content not the empty part

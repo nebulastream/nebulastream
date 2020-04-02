@@ -26,7 +26,12 @@ class TupleBuffer {
    * @param number of tuples inside the buffer
    */
   TupleBuffer(void* buffer, const size_t buffer_size_bytes,
-              const uint32_t tuple_size_bytes, const uint32_t num_tuples);
+              const uint32_t tupleSizeBytes, const uint32_t numTuples);
+
+  /**
+   * @brief destructor for tuple buffer
+   */
+  ~TupleBuffer();
 
   /**
    * @brief Overload of the = operator to copy a tuple buffer
@@ -100,12 +105,11 @@ class TupleBuffer {
    */
   bool decrementUseCntAndTestForZero();
 
-
   /**
    * @brief increment the counter by one
    * @return bool indicating succeess
    */
-  bool incrementUseCnt();
+  void incrementUseCnt();
 
   /**
    * @brief this method creates a string from the content of a tuple buffer
@@ -113,31 +117,30 @@ class TupleBuffer {
    */
   std::string printTupleBuffer(Schema schema);
 
-
   /**
-    * @brief revert the endianess of the tuple buffer
-    * @schema of the buffer
-    */
-   void revertEndianness(Schema schema);
-
+   * @brief revert the endianess of the tuple buffer
+   * @schema of the buffer
+   */
+  void revertEndianness(Schema schema);
 
  private:
   /**
    * @brief default constructor for serialization with boost
    */
   TupleBuffer()
-      : buffer(nullptr),
-        bufferSizeInBytes(0),
-        tupleSizeInBytes(0),
-        numberOfTuples(0),
-        useCnt(0) {
+      :
+      buffer(nullptr),
+      bufferSizeInBytes(0),
+      tupleSizeInBytes(0),
+      numberOfTuples(0),
+      useCnt(0) {
   }
 
   void* buffer;
-  size_t bufferSizeInBytes;
-  size_t tupleSizeInBytes;
-  size_t numberOfTuples;
-  size_t useCnt;
+  std::atomic<size_t> bufferSizeInBytes;
+  std::atomic<size_t> tupleSizeInBytes;
+  std::atomic<size_t>numberOfTuples;
+  std::atomic<size_t> useCnt;
 };
 
 class Schema;
