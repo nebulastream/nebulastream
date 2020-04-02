@@ -17,7 +17,7 @@ TupleBufferPtr DefaultSource::receiveData() {
   // 10 tuples of size one
   NES_DEBUG("Source:" << this << " requesting buffer")
 
-  TupleBufferPtr buf = BufferManager::instance().getFixedSizeBufferWithTimeout(2000);
+  TupleBufferPtr buf = BufferManager::instance().getFixedSizeBuffer(); //BufferManager::instance().getFixedSizeBufferWithTimeout(2000);
   if (!buf) {
       return nullptr;
   }

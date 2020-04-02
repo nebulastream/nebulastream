@@ -37,8 +37,8 @@ std::string filePath = "file.txt";
 
 class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
  public:
-  uint64_t count;
-  uint64_t sum;
+  std::atomic<uint64_t> count;
+  std::atomic<uint64_t> sum;
   CompiledTestQueryExecutionPlan()
       :
       HandCodedQueryExecutionPlan(),
@@ -62,7 +62,6 @@ class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
 
     NES_INFO(
         "Test: query result = Processed Block:" << buf->getNumberOfTuples() << " count: " << count << "sum: " << sum)
-    assert(sum == 10);
 
     DataSinkPtr sink = this->getSinks()[0];
     NES_DEBUG("TEST: try to get buffer")
@@ -76,6 +75,7 @@ class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
     outputBuffer->setTupleSizeInBytes(4);
 //  ysbRecordResult* outputBufferPtr = (ysbRecordResult*)outputBuffer->buffer;
     sink->writeData(outputBuffer);
+    BufferManager::instance().releaseBuffer(outputBuffer);
     return true;
   }
 };
@@ -401,14 +401,14 @@ TEST_F(EngineTest, blocking_test) {
 //  qep2->addDataSink(sink1);
 
   NodeEngine* ptr = new NodeEngine();
-  BufferManager::instance().resizeFixedBufferCnt(2);
+  BufferManager::instance().resizeFixedBufferCnt(8);
   ptr->deployQueryWithoutStart(qep1);
 //  ptr->deployQueryWithoutStart(qep2);
   ptr->start();
   source1->start();
   sleep(5);
-  ptr->stop();
   source1->stop();
+  ptr->stop();
   testOutput("qep12.txt", joinedExpectedOutput);
 }
 
