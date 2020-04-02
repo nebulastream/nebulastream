@@ -14,6 +14,7 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <SourceSink/DefaultSource.hpp>
 #include <memory>
+#include <Nodes/Util/DfsIterator.hpp>
 
 namespace NES {
 
@@ -119,6 +120,13 @@ TEST_F(LogicalOperatorNodeTest, getSuccessors) {
 
     children = sourceOp->getChildren();
     EXPECT_EQ(children.size(), 2);
+
+    DSFIterator iter = DSFIterator(sourceOp);
+
+    for (NodePtr sa:iter) {
+        std::cout << "t" << std::endl;
+    }
+
 }
 
 TEST_F(LogicalOperatorNodeTest, getPredecessors) {
