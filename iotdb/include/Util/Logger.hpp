@@ -44,6 +44,7 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
 #define NES_FATAL_ERROR(TEXT) LOG4CXX_ERROR(NESLogger, TEXT)
 
 static void setupLogging(std::string logFileName, DebugLevel level) {
+  std::cout << "SETUP_LOGGING" << std::endl;
   // create PatternLayout
   log4cxx::LayoutPtr layoutPtr(
       new log4cxx::PatternLayout(

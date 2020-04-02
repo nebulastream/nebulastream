@@ -89,7 +89,7 @@ class ThreadPool {
   ~ThreadPool();
 
   //indicating if the thread pool is running, used for multi-thread execution
-  bool running;
+  std::atomic<bool> running;
 
   size_t numThreads;
 

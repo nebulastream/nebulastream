@@ -33,12 +33,57 @@ std::string joinedExpectedOutput =
         "+----------------------------------------------------+\n"
         "|10|\n"
         "+----------------------------------------------------+";
+
+std::string joinedExpectedOutput10 =
+    "+----------------------------------------------------+\n"
+    "|sum:UINT32|\n"
+    "+----------------------------------------------------+\n"
+    "|10|\n"
+    "+----------------------------------------------------++----------------------------------------------------+\n"
+    "|sum:UINT32|\n"
+    "+----------------------------------------------------+\n"
+    "|20|\n"
+    "+----------------------------------------------------++----------------------------------------------------+\n"
+    "|sum:UINT32|\n"
+    "+----------------------------------------------------+\n"
+    "|30|\n"
+    "+----------------------------------------------------++----------------------------------------------------+\n"
+    "|sum:UINT32|\n"
+    "+----------------------------------------------------+\n"
+    "|40|\n"
+    "+----------------------------------------------------++----------------------------------------------------+\n"
+    "|sum:UINT32|\n"
+    "+----------------------------------------------------+\n"
+    "|50|\n"
+    "+----------------------------------------------------++----------------------------------------------------+\n"
+    "|sum:UINT32|\n"
+    "+----------------------------------------------------+\n"
+    "|60|\n"
+    "+----------------------------------------------------++----------------------------------------------------+\n"
+    "|sum:UINT32|\n"
+    "+----------------------------------------------------+\n"
+    "|70|\n"
+    "+----------------------------------------------------++----------------------------------------------------+\n"
+    "|sum:UINT32|\n"
+    "+----------------------------------------------------+\n"
+    "|80|\n"
+    "+----------------------------------------------------++----------------------------------------------------+\n"
+    "|sum:UINT32|\n"
+    "+----------------------------------------------------+\n"
+    "|90|\n"
+    "+----------------------------------------------------++----------------------------------------------------+\n"
+    "|sum:UINT32|\n"
+    "+----------------------------------------------------+\n"
+    "|100|\n"
+    "+----------------------------------------------------+";
+
+
 std::string filePath = "file.txt";
 
 class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
  public:
-  uint64_t count;
-  uint64_t sum;
+  std::atomic<uint64_t> count;
+  std::atomic<uint64_t> sum;
   CompiledTestQueryExecutionPlan()
       :
       HandCodedQueryExecutionPlan(),
@@ -51,7 +96,7 @@ class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
   }
 
   bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf) {
-    uint64_t *tuples = (uint64_t*) buf->getBuffer();
+    uint64_t* tuples = (uint64_t*) buf->getBuffer();
 
     NES_INFO("Test: Start execution");
 
@@ -62,17 +107,20 @@ class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
 
     NES_INFO(
         "Test: query result = Processed Block:" << buf->getNumberOfTuples() << " count: " << count << "sum: " << sum)
-    assert(sum == 10);
 
     DataSinkPtr sink = this->getSinks()[0];
+    NES_DEBUG("TEST: try to get buffer")
 //  sink->getSchema().getSchemaSize();
-    TupleBufferPtr outputBuffer = BufferManager::instance().getBuffer();
-    u_int32_t *arr = (u_int32_t*) outputBuffer->getBuffer();
+    TupleBufferPtr outputBuffer =
+        BufferManager::instance().getFixedSizeBuffer();
+    NES_DEBUG("TEST: got buffer")
+    u_int32_t* arr = (u_int32_t*) outputBuffer->getBuffer();
     arr[0] = sum;
     outputBuffer->setNumberOfTuples(1);
     outputBuffer->setTupleSizeInBytes(4);
 //  ysbRecordResult* outputBufferPtr = (ysbRecordResult*)outputBuffer->buffer;
     sink->writeData(outputBuffer);
+    BufferManager::instance().releaseFixedSizeBuffer(outputBuffer);
     return true;
   }
 };
@@ -272,7 +320,7 @@ TEST_F(EngineTest, change_dop_without_restart_test) {
 TEST_F(EngineTest, parallel_different_source_test) {
   CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source1 =
-      createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
+  createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
   Schema sch1 = Schema::create().addField("sum", BasicType::UINT32);
   DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep1.txt");
   qep1->addDataSource(source1);
@@ -280,7 +328,7 @@ TEST_F(EngineTest, parallel_different_source_test) {
 
   CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source2 =
-      createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
+  createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
   Schema sch2 = Schema::create().addField("sum", BasicType::UINT32);
   DataSinkPtr sink2 = createBinaryFileSinkWithSchema(sch2, "qep2.txt");
   qep2->addDataSource(source2);
@@ -301,7 +349,7 @@ TEST_F(EngineTest, parallel_different_source_test) {
 TEST_F(EngineTest, parallel_same_source_test) {
   CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source1 =
-      createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
+  createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
   Schema sch1 = Schema::create().addField("sum", BasicType::UINT32);
   DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep1.txt");
   qep1->addDataSource(source1);
@@ -318,7 +366,7 @@ TEST_F(EngineTest, parallel_same_source_test) {
   ptr->start();
   source1->start();
 
-  sleep(1);
+  sleep(2);
   ptr->stop();
 
   testOutput("qep1.txt");
@@ -328,7 +376,7 @@ TEST_F(EngineTest, parallel_same_source_test) {
 TEST_F(EngineTest, parallel_same_sink_test) {
   CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source1 =
-      createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
+  createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
   Schema sch1 = Schema::create().addField("sum", BasicType::UINT32);
   DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep12.txt");
   qep1->addDataSource(source1);
@@ -336,7 +384,7 @@ TEST_F(EngineTest, parallel_same_sink_test) {
 
   CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source2 =
-      createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
+  createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
   Schema sch2 = Schema::create().addField("sum", BasicType::UINT32);
   qep2->addDataSource(source1);
   qep2->addDataSink(sink1);
@@ -351,10 +399,11 @@ TEST_F(EngineTest, parallel_same_sink_test) {
   ptr->stop();
   testOutput("qep12.txt", joinedExpectedOutput);
 }
+
 TEST_F(EngineTest, parallel_same_source_and_sink_test) {
   CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source1 =
-      createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
+  createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
   Schema sch1 = Schema::create().addField("sum", BasicType::UINT32);
   DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep3.txt");
   qep1->addDataSource(source1);
@@ -375,4 +424,25 @@ TEST_F(EngineTest, parallel_same_source_and_sink_test) {
 
   testOutput("qep3.txt", joinedExpectedOutput);
 }
+//TODO: enable after buffer redesign
+TEST_F(EngineTest, DISABLED_blocking_test) {
+  CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
+  DataSourcePtr source1 =
+      createDefaultSourceWithoutSchemaForOneBufferForVarBuffers(10, 0);
+  Schema sch1 = Schema::create().addField("sum", BasicType::UINT32);
+  DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep12.txt");
+  qep1->addDataSource(source1);
+  qep1->addDataSink(sink1);
+
+  NodeEngine* ptr = new NodeEngine();
+  BufferManager::instance().resizeFixedBufferCnt(10);
+  ptr->deployQueryWithoutStart(qep1);
+  ptr->start();
+  source1->start();
+  sleep(3);
+  source1->stop();
+  ptr->stop();
+  testOutput("qep12.txt", joinedExpectedOutput10);
+}
+
 }
