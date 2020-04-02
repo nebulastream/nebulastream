@@ -11,7 +11,7 @@ BufferManager::BufferManager()
     :
     numberOfFreeVarSizeBuffers(0),
     changeBufferMutex(),
-    resizeMutex(){
+    resizeMutex() {
   size_t initalBufferCnt = 100;
   currentBufferSize = 4 * 1024;
   NES_DEBUG(
@@ -40,8 +40,17 @@ void BufferManager::clearFixBufferPool() {
   NES_DEBUG(
       "BufferManager: clearFixBufferPool of size" << fixedSizeBufferPool->size())
   fixedSizeBufferPool->reset();
-  assert(fixedSizeBufferPool->size() == 0);
-  assert(fixedSizeBufferPool->empty());
+  if (fixedSizeBufferPool->size() != 0) {
+    NES_ERROR(
+        "BufferManager::clearFixBufferPool: fixedSizeBufferPool still has elements after reset")
+    throw new Exception("Error during clearFixBufferPool");
+  }
+
+  if (!fixedSizeBufferPool->empty()) {
+    NES_ERROR(
+        "BufferManager::clearFixBufferPool: fixedSizeBufferPool not empty after reset")
+    throw new Exception("Error during clearFixBufferPool");
+  }
 
 }
 
@@ -52,8 +61,17 @@ void BufferManager::clearVarBufferPool() {
 
   numberOfFreeVarSizeBuffers = 0;
   varSizeBufferPool.clear();
-  assert(varSizeBufferPool.size() == 0);
-  assert(varSizeBufferPool.empty());
+  if (varSizeBufferPool.size() != 0) {
+    NES_ERROR(
+        "BufferManager::clearVarBufferPool: fixedSizeBufferPool still has elements after reset")
+    throw new Exception("Error during clearVarBufferPool");
+  }
+
+  if (!varSizeBufferPool.empty()) {
+    NES_ERROR(
+        "BufferManager::clearFixBufferPool: clearVarBufferPool not empty after reset")
+    throw new Exception("Error during clearFixBclearVarBufferPoolufferPool");
+  }
 }
 
 void BufferManager::reset() {
@@ -177,7 +195,6 @@ bool BufferManager::releaseVarSizedBuffer(const TupleBufferPtr tupleBuffer) {
   NES_ERROR("BufferManager: buffer not found")
   return false;
 }
-
 
 TupleBufferPtr BufferManager::getFixedSizeBuffer() {
   //this call is blocking
