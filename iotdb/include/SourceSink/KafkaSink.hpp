@@ -24,33 +24,33 @@ class KafkaSink : public DataSink {
             const cppkafka::Configuration& config);
   ~KafkaSink() override;
     SinkType getType() const override;
-    bool writeData(TupleBufferPtr input_buffer);
-  void setup() override;
-  void shutdown() override;
+    bool writeData(TupleBuffer& input_buffer);
+    void setup() override;
+    void shutdown() override;
 
-  const std::string toString() const override;
+    const std::string toString() const override;
 
- private:
-  void _connect();
-  friend class boost::serialization::access;
-  template <class Archive> void serialize(Archive& ar, const unsigned int version)
-  {
-    ar& boost::serialization::base_object<DataSink>(*this);
-    ar& brokers;
-    ar& topic;
-    ar& partition;
-  }
+  private:
+    void _connect();
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive& ar, const unsigned int version) {
+        ar & boost::serialization::base_object<DataSink>(*this);
+        ar & brokers;
+        ar & topic;
+        ar & partition;
+    }
 
-  std::string brokers;
-  std::string topic;
-  int partition;
+    std::string brokers;
+    std::string topic;
+    int partition;
 
-  cppkafka::Configuration config;
+    cppkafka::Configuration config;
 
-  std::unique_ptr<cppkafka::Producer> producer;
-  std::unique_ptr<cppkafka::MessageBuilder> msgBuilder;
+    std::unique_ptr<cppkafka::Producer> producer;
+    std::unique_ptr<cppkafka::MessageBuilder> msgBuilder;
 
-  std::chrono::milliseconds kafkaProducerTimeout;
+    std::chrono::milliseconds kafkaProducerTimeout;
 };
 } // namespace NES
 

@@ -20,7 +20,7 @@ class GeneratedQueryExecutionPlan : public QueryExecutionPlan {
  * @param query
  * @param ptr
  */
-  bool executeStage(uint32_t pipelineStageId, const TupleBufferPtr inputBuffer) override;
+  bool executeStage(uint32_t pipelineStageId, TupleBuffer& inputBuffer) override;
 };
 
 typedef std::shared_ptr<GeneratedQueryExecutionPlan> GeneratedQueryExecutionPlanPtr;

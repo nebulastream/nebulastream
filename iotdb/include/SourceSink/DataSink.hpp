@@ -22,67 +22,67 @@ enum SinkType {
  */
 class DataSink {
 
- public:
-  /**
-   * @brief public constructor for data sink
-   */
-  DataSink();
+  public:
+    /**
+     * @brief public constructor for data sink
+     */
+    DataSink();
 
   /**
    * @brief public constructor for data sink with schema provisioning
    */
   DataSink(SchemaPtr schema);
 
-  /**
-   * @brief Internal destructor to make sure that the data source is stopped before deconstrcuted
-   * @Note must be public because of boost serialize
-   */
-  virtual ~DataSink();
+    /**
+     * @brief Internal destructor to make sure that the data source is stopped before deconstrcuted
+     * @Note must be public because of boost serialize
+     */
+    virtual ~DataSink();
 
-  /**
-   * @brief virtual method to setup sink
-   * @Note this method will be overwritten by derived classes
-   */
-  virtual void setup() = 0;
+    /**
+     * @brief virtual method to setup sink
+     * @Note this method will be overwritten by derived classes
+     */
+    virtual void setup() = 0;
 
-  /**
-   * @brief virtual method to shutdown sink
-   * @Note this method will be overwritten by derived classes
-   */
-  virtual void shutdown() = 0;
+    /**
+     * @brief virtual method to shutdown sink
+     * @Note this method will be overwritten by derived classes
+     */
+    virtual void shutdown() = 0;
 
-  /**
-   * @brief method to write a vector of TupleBuffers
-   * @param vector of tuple buffers pointer
-   * @return bool indicating if the write was complete
-   */
-  bool writeDataInBatch(const std::vector<TupleBufferPtr> &input_buffers);
+    /**
+     * @brief method to write a vector of TupleBuffers
+     * @param vector of tuple buffers pointer
+     * @return bool indicating if the write was complete
+     */
+    bool writeDataInBatch(std::vector<TupleBuffer>& input_buffers);
 
-  /**
-   * @brief method to write a TupleBuffer
-   * @param a tuple buffers pointer
-   * @return bool indicating if the write was complete
-   */
-  virtual bool writeData(const TupleBufferPtr input_buffer) = 0;
+    /**
+     * @brief method to write a TupleBuffer
+     * @param a tuple buffers pointer
+     * @return bool indicating if the write was complete
+     */
+    virtual bool writeData(TupleBuffer& input_buffer) = 0;
 
-  /**
-   * @brief debug function for testing to get number of sent buffers
-   * @return number of sent buffer
-   */
-  size_t getNumberOfSentBuffers();
+    /**
+     * @brief debug function for testing to get number of sent buffers
+     * @return number of sent buffer
+     */
+    size_t getNumberOfSentBuffers();
 
-  /**
-   * @brief debug function for testing to get number of sent tuples
-   * @return number of sent buffer
-   */
-  size_t getNumberOfSentTuples();
+    /**
+     * @brief debug function for testing to get number of sent tuples
+     * @return number of sent buffer
+     */
+    size_t getNumberOfSentTuples();
 
-  /**
-   * @brief virtual function to get a string describing the particular sink
-   * @Note this function is overwritten by the particular data sink
-   * @return string with name and additional information about the sink
-   */
-  virtual const std::string toString() const = 0;
+    /**
+     * @brief virtual function to get a string describing the particular sink
+     * @Note this function is overwritten by the particular data sink
+     * @return string with name and additional information about the sink
+     */
+    virtual const std::string toString() const = 0;
 
   /**
    * @brief method to return the current schema of the sink
@@ -96,22 +96,22 @@ class DataSink {
    */
   void setSchema(SchemaPtr pSchema);
 
-  virtual SinkType getType() const=0;
+    virtual SinkType getType() const = 0;
 
  protected:
   SchemaPtr schema;
   size_t sentBuffer;
   size_t sentTuples;
 
- private:
-  friend class boost::serialization::access;
+  private:
+    friend class boost::serialization::access;
 
-  template<class Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar & schema;
-    ar & sentBuffer;
-    ar & sentTuples;
-  }
+    template<class Archive>
+    void serialize(Archive& ar, const unsigned int version) {
+        ar & schema;
+        ar & sentBuffer;
+        ar & sentTuples;
+    }
 };
 
 typedef std::shared_ptr<DataSink> DataSinkPtr;

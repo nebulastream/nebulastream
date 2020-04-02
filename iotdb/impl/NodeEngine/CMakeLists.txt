@@ -5,5 +5,6 @@ add_source_iotdb(
         BufferManager.cpp
         ThreadPool.cpp
         Task.cpp
+		detail/TupleBufferImpl.cpp
     	)
 add_subdirectory(MemoryLayout)

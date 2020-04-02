@@ -3,22 +3,21 @@
 #include <SourceSink/DataSource.hpp>
 #include <SourceSink/GeneratorSource.hpp>
 
-
-namespace NES{
+namespace NES {
 
 class DefaultSource : public GeneratorSource {
   public:
   DefaultSource() = default;
   DefaultSource(SchemaPtr schema, const uint64_t numbersOfBufferToProduce, size_t frequency);
 
-  TupleBufferPtr receiveData() override;
+    std::optional<TupleBuffer> receiveData() override;
 
- private:
-  friend class boost::serialization::access;
-  template<class Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar & boost::serialization::base_object<GeneratorSource>(*this);
-  }
+  private:
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive& ar, const unsigned int version) {
+        ar & boost::serialization::base_object<GeneratorSource>(*this);
+    }
 };
 
 }

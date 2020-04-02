@@ -45,17 +45,17 @@ FileOutputSink::FileOutputSink(SchemaPtr schema, const std::string filePath,
     outputMode = mode;
 }
 
-bool FileOutputSink::writeData(const TupleBufferPtr inputBuffer) {
+bool FileOutputSink::writeData(TupleBuffer& input_buffer)
+{
 
-    NES_DEBUG(
-            "FileOutputSink::writeData: write buffer tuples " << inputBuffer->getNumberOfTuples())
+    NES_DEBUG("FileOutputSink::writeData: write bufffer tuples " << input_buffer.getNumberOfTuples())
 
     if (outputType == BINARY_TYPE) {
-        std::fstream outputFile(
-                filePath, std::fstream::in | std::fstream::out | std::fstream::app);
-        outputFile << NES::toString(inputBuffer.get(), this->getSchema());
+        std::fstream outputFile(filePath, std::fstream::in | std::fstream::out | std::fstream::app);
+        outputFile << NES::toString(input_buffer, this->getSchema());
         outputFile.close();
-    } else if (outputType == CSV_TYPE) {
+    }
+    else if (outputType == CSV_TYPE) {
         std::ofstream outputFile;
         if (outputMode == FILE_APPEND) {
             outputFile.open(filePath, std::ofstream::out | std::ofstream::app);
@@ -64,7 +64,7 @@ bool FileOutputSink::writeData(const TupleBufferPtr inputBuffer) {
         } else {
             NES_ERROR("FileOutputSink::writeData: write mode not supported=" << outputMode)
         }
-        outputFile << inputBuffer->printTupleBuffer(schema);
+        outputFile << input_buffer.printTupleBuffer(schema);
         outputFile.close();
     }
     return true;

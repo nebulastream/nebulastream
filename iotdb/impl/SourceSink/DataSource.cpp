@@ -94,40 +94,26 @@ void DataSource::running_routine() {
 
         while (running) {
             size_t currentTime = time(NULL);
-            NES_DEBUG("DataSource enter running")
-            if (gatheringInterval == 0
-                || (lastGatheringTimeStamp != currentTime && currentTime%gatheringInterval == 0)) {  //produce a buffer
+            if (gatheringInterval == 0 || (lastGatheringTimeStamp != currentTime && currentTime%gatheringInterval == 0)) {  //produce a buffer
                 lastGatheringTimeStamp = currentTime;
-                NES_DEBUG("DataSource gathering")
                 if (cnt < numBuffersToProcess) {
-                    NES_DEBUG("DataSource receiveData")
-                    TupleBufferPtr buf = receiveData();
-                    NES_DEBUG("DataSource got buffer")
-                    if (buf) {
+                    auto optBuf = receiveData();
+                    if (!!optBuf) {
+                        auto buf = optBuf.value();
                         NES_DEBUG(
                             "DataSource " << this->getSourceId() << " type=" << getType() << " string=" << toString()
-                                          << ": Received Data: " << buf->getNumberOfTuples() << " tuples"
-                                          << " iteration=" << cnt)
-                        if (buf->getBuffer()) {
-                            Dispatcher::instance().addWork(this->sourceId, buf);
-                            cnt++;
-                        } else {
-                            NES_FATAL_ERROR(
-                                "DataSource " << this->getSourceId() << ": Received buffer is invalid")
-                            throw std::logic_error("DataSource: Received buffer is invalid");
-                        }
-                    } else {
-                        NES_DEBUG(
-                            "DataSource " << this->getSourceId() << ": Receiving thread terminated ... stopping")
-                        running = false;
-                        break;
+                                          << ": Received Data: " << buf.getNumberOfTuples() << " tuples" << " iteration="
+                                          << cnt)
+                        Dispatcher::instance().addWork(this->sourceId, buf);
+                        cnt++;
                     }
                 } else {
                     NES_DEBUG(
-                        "DataSource " << this->getSourceId() << ": All buffers processed ... stopping")
+                        "DataSource " << this->getSourceId() << ": Receiving thread terminated ... stopping")
                     running = false;
                     break;
                 }
+
             } else {
                 NES_DEBUG("DataSource::running_routine sleep")
                 sleep(gatheringInterval);
@@ -156,7 +142,7 @@ size_t DataSource::getNumberOfGeneratedBuffers() {
 };
 
 std::string DataSource::getSourceSchemaAsString() {
-    return schema->toString();
+    return schema.toString();
 }
 
 const std::string& DataSource::getSourceId() const {

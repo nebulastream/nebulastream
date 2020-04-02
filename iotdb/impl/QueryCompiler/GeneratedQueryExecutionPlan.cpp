@@ -7,13 +7,13 @@ GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan() : QueryExecutionPlan(
 GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan(const std::string& queryId) : QueryExecutionPlan() {
 }
 
-bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr inputBuffer) {
-    TupleBufferPtr outputBuffer = BufferManager::instance().getFixedSizeBuffer();
-    outputBuffer->setTupleSizeInBytes(inputBuffer->getTupleSizeInBytes());
-    std::cout << "inputBuffer->getTupleSizeInBytes()=" << inputBuffer->getTupleSizeInBytes() << std::endl;
+bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, TupleBuffer& inputBuffer) {
+    auto outputBuffer = BufferManager::instance().getBufferBlocking();
+    outputBuffer.setTupleSizeInBytes(inputBuffer.getTupleSizeInBytes());
+    NES_DEBUG("inputBuffer->getTupleSizeInBytes()=" << inputBuffer.getTupleSizeInBytes());
     bool ret = stages[pipeline_stage_id]->execute(inputBuffer, outputBuffer);
     // only write data to the sink if the pipeline produced some output
-    if (outputBuffer->getNumberOfTuples() > 0) {
+    if (outputBuffer.getNumberOfTuples() > 0) {
         if (stages.size() <= pipeline_stage_id) {
             NES_DEBUG("QueryExecutionPlan: send output buffer to next pipeline");
             // todo schedule dispatching as a new task
@@ -25,7 +25,6 @@ bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const
             }
         }
     }
-    BufferManager::instance().releaseFixedSizeBuffer(outputBuffer);
     return ret;
 }
 

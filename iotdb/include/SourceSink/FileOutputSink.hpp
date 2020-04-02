@@ -73,13 +73,13 @@ namespace NES{
          */
         void shutdown() override;
 
-        /**
-         * @brief method to override virtual write data function
-         * @Note currently not implemented
-         * @param tuple buffer pointer to be filled
-         * @return bool indicating write success
-         */
-        bool writeData(const TupleBufferPtr inputBuffer);
+    /**
+     * @brief method to override virtual write data function
+     * @Note currently not implemented
+     * @param tuple buffer pointer to be filled
+     * @return bool indicating write success
+     */
+    bool writeData(TupleBuffer& input_buffer);
 
         /**
          * @brief override the toString method for the file output sink

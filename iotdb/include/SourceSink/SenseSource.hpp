@@ -27,13 +27,13 @@ class SenseSource : public DataSource {
    * @brief override the receiveData method for the source
    * @return returns a buffer if available
    */
-  TupleBufferPtr receiveData();
+  std::optional<TupleBuffer> receiveData();
 
   /**
    *  @brief method to fill the buffer with tuples
    *  @param buffer to be filled
    */
-  void fillBuffer(TupleBufferPtr);
+  void fillBuffer(TupleBuffer&);
 
   /**
    * @brief override the toString method for the csv source

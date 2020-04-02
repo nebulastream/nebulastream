@@ -2,157 +2,277 @@
 #define INCLUDE_TUPLEBUFFER_H_
 #include <cstdint>
 #include <memory>
+#include <functional>
+#include <atomic>
 #include <API/Schema.hpp>
 namespace NES {
 
-//forward declaration
+
 class TupleBuffer;
-typedef std::shared_ptr<TupleBuffer> TupleBufferPtr;
 
-/**
- * @brief this class handles the abstraction of tuples in byte buffer
- * @limitations
- *    - Tuple buffer can only store fixed sized tuples
- *    - Tuple buffer can only same size tuples
- *    - The buffer itself will currently not be serialized/deserialized
- */
-class TupleBuffer {
- public:
-  /**
-   * @brief constructor for the tuple buffer
-   * @param pointer to allocated memory for this buffer
-   * @param size of buffer in bytes
-   * @param size of one tuple in the buffer
-   * @param number of tuples inside the buffer
-   */
-  TupleBuffer(void* buffer, const size_t buffer_size_bytes,
-              const uint32_t tupleSizeBytes, const uint32_t numTuples);
+namespace detail {
+std::string printTupleBuffer(TupleBuffer& buffer, SchemaPtr schema);
+void revertEndianness(TupleBuffer& buffer, SchemaPtr schema);
+}
 
-  /**
-   * @brief destructor for tuple buffer
-   */
-  ~TupleBuffer();
+class MemorySegment;
 
-  /**
-   * @brief Overload of the = operator to copy a tuple buffer
-   * @param other tuple buffer
-   */
-  TupleBuffer& operator=(const TupleBuffer&);
+namespace detail {
+class BufferControlBlock {
+  public:
+    explicit BufferControlBlock(MemorySegment* owner, std::function<void(MemorySegment*)> recycleCallback) :
+        referenceCounter(0), tupleSizeInBytes(0), numberOfTuples(0), owner(owner), recycleCallback(recycleCallback) {
+    }
 
-  TupleBuffer(const TupleBuffer& other) {
-      *this = other;
-  }
+    BufferControlBlock(const BufferControlBlock& that) {
+        referenceCounter.store(that.referenceCounter.load());
+        tupleSizeInBytes.store(that.tupleSizeInBytes.load());
+        numberOfTuples.store(that.numberOfTuples.load());
+        recycleCallback = that.recycleCallback;
+        owner = that.owner;
+    }
 
-  TupleBuffer(TupleBuffer&&) = delete;
-  TupleBuffer& operator=(TupleBuffer&&) = delete;
+    BufferControlBlock& operator=(const BufferControlBlock& that) {
+        referenceCounter.store(that.referenceCounter.load());
+        tupleSizeInBytes.store(that.tupleSizeInBytes.load());
+        numberOfTuples.store(that.numberOfTuples.load());
+        recycleCallback = that.recycleCallback;
+        owner = that.owner;
+        return *this;
+    }
 
-  /**
-   * @brief Explicit copy method for tuple buffer using TupleBufferPtr
-   * @param TupleBufferPtr of the buffer where we copy from into this buffer
-   */
-  void copyInto(const TupleBufferPtr);
+    MemorySegment* getOwner() {
+        return owner;
+    }
 
-  /**
-   * @brief method to print the current statistics of the buffer
-   */
-  void print();
+    void prepare() {
+        uint32_t expected = 0;
+        assert(referenceCounter.compare_exchange_strong(expected, 1));
+    }
 
-  /**
-   * @brief getter for the number of tuples
-   * @return number of tuples
-   */
-  size_t getNumberOfTuples();
+    BufferControlBlock* retain() {
+        referenceCounter++;
+        return this;
+    }
 
-  /**
-   * @brief getter for the buffer size in bytes
-   * @return buffer size in bytes
-   */
-  size_t getBufferSizeInBytes();
+    uint32_t getReferenceCount() {
+        return referenceCounter.load();
+    }
 
-  /**
-   * @brief getter for the size of one tuple
-   * @return size of one tuple in bytes
-   */
-  size_t getTupleSizeInBytes();
+    bool release() {
+        if (referenceCounter.fetch_sub(1) == 1) {
+            tupleSizeInBytes.store(0);
+            numberOfTuples.store(0);
+            recycleCallback(owner);
+            return true;
+        }
+        return false;
+    }
 
-  /**
-   * @brief getter for the pointer to the buffer
-   * @return void pointer to the buffer
-   */
-  void* getBuffer();
+    size_t getTupleSizeInBytes() const {
+        return tupleSizeInBytes;
+    }
 
-  /**
-   * @brief setter for the number of tuples
-   * @param number of tuples
-   */
-  void setNumberOfTuples(size_t number);
+    size_t getNumberOfTuples() const {
+        return numberOfTuples;
+    }
 
-  /**
-   * @brief setter for the buffer size in bytes
-   * @param buffer size in bytes
-   */
-  void setBufferSizeInBytes(size_t size);
+    void setNumberOfTuples(size_t numberOfTuples) {
+        this->numberOfTuples = numberOfTuples;
+    }
 
-  /**
-   * @brief setter for the tuple size in bytes
-   * @param tuple size in bytes
-   */
-  void setTupleSizeInBytes(size_t size);
+    void setTupleSizeInBytes(size_t tupleSizeInBytes) {
+        this->tupleSizeInBytes = tupleSizeInBytes;
+    }
 
-  /**
-   * @brief setter/getter for the counter how often this buffer is use (to prevent early release)
-   * @param tuple size in bytes
-   */
-  void setUseCnt(size_t size);
-  size_t getUseCnt();
-
-  /**
-   * @brief decrement the counter by one and test if now zero
-   * @return bool indicating success
-   */
-  bool decrementUseCntAndTestForZero();
-
-  /**
-   * @brief increment the counter by one
-   * @return bool indicating succeess
-   */
-  void incrementUseCnt();
-
-  /**
-   * @brief this method creates a string from the content of a tuple buffer
-   * @return string of the buffer content
-   */
-  std::string printTupleBuffer(SchemaPtr schema);
-
-  /**
-   * @brief revert the endianess of the tuple buffer
-   * @schema of the buffer
-   */
-   void revertEndianness(SchemaPtr schema);
-
- private:
-  /**
-   * @brief default constructor for serialization with boost
-   */
-  TupleBuffer()
-      :
-      buffer(nullptr),
-      bufferSizeInBytes(0),
-      tupleSizeInBytes(0),
-      numberOfTuples(0),
-      useCnt(0) {
-  }
-
-  void* buffer;
-  std::atomic<size_t> bufferSizeInBytes;
-  std::atomic<size_t> tupleSizeInBytes;
-  std::atomic<size_t>numberOfTuples;
-  std::atomic<size_t> useCnt;
+  private:
+    std::atomic<uint32_t> referenceCounter;
+    // TODO check whether to remove them
+    std::atomic<uint32_t> tupleSizeInBytes;
+    std::atomic<uint32_t> numberOfTuples;
+    MemorySegment* owner;
+    std::function<void(MemorySegment*)> recycleCallback;
 };
+}
+
+class TupleBuffer {
+  public:
+
+    TupleBuffer() : ptr(nullptr), size(0), controlBlock(nullptr) {}
+
+    TupleBuffer(const TupleBuffer& other) {
+        controlBlock = other.controlBlock->retain();
+        ptr = other.ptr;
+        size = other.size;
+    }
+
+    TupleBuffer(TupleBuffer&& other) {
+        controlBlock = other.controlBlock;
+        ptr = other.ptr;
+        size = other.size;
+        other.controlBlock = nullptr;
+        other.ptr = nullptr;
+        other.size = 0;
+    }
+
+    TupleBuffer& operator=(const TupleBuffer& other) {
+        if (this == &other) {
+            return *this;
+        }
+        controlBlock = other.controlBlock->retain();
+        ptr = other.ptr;
+        size = other.size;
+        return *this;
+    }
+
+    TupleBuffer& operator=(TupleBuffer&& other) {
+        if (this == std::addressof(other)) {
+            return *this;
+        }
+        controlBlock = other.controlBlock;
+        ptr = other.ptr;
+        size = other.size;
+        other.controlBlock = nullptr;
+        other.ptr = nullptr;
+        other.size = 0;
+        return *this;
+    }
+
+    explicit TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr, uint32_t size) :
+        controlBlock(controlBlock), ptr(ptr), size(size) {
+    }
+
+    ~TupleBuffer() {
+        release();
+    }
+
+    uint8_t* getBuffer() {
+        return ptr;
+    }
+
+    bool isValid() const {
+        return ptr != nullptr;
+    }
+
+    TupleBuffer* operator&() = delete;
+
+    template<typename T>
+    T* getBufferAs() {
+        return reinterpret_cast<T*>(ptr);
+    }
+
+    TupleBuffer& retain() {
+        controlBlock->retain();
+        return *this;
+    }
+
+    void release() {
+        if (controlBlock && controlBlock->release()) {
+            controlBlock = nullptr;
+            ptr = nullptr;
+            size = 0;
+        }
+    }
+
+    size_t getBufferSize() const {
+        return size;
+    }
+
+    size_t getTupleSizeInBytes() const {
+        return controlBlock->getTupleSizeInBytes();
+    }
+
+    size_t getNumberOfTuples() const {
+        return controlBlock->getNumberOfTuples();
+    }
+
+    void setNumberOfTuples(size_t numberOfTuples) {
+        controlBlock->setNumberOfTuples(numberOfTuples);
+    }
+
+    void setTupleSizeInBytes(size_t tupleSizeInBytes) {
+        controlBlock->setTupleSizeInBytes(tupleSizeInBytes);
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) {
+        return os << buff.ptr;
+    }
+
+    /**
+     * @brief this method creates a string from the content of a tuple buffer
+     * @return string of the buffer content
+     */
+    std::string printTupleBuffer(Schema schema) {
+        return detail::printTupleBuffer(*this, schema);
+    }
+
+    /**
+      * @brief revert the endianess of the tuple buffer
+      * @schema of the buffer
+      */
+    void revertEndianness(Schema schema) {
+        detail::revertEndianness(*this, schema);
+    }
+
+  private:
+    detail::BufferControlBlock* controlBlock;
+    uint8_t* ptr;
+    uint32_t size;
+};
+
+class MemorySegment {
+  public:
+    MemorySegment(const MemorySegment& other) : ptr(other.ptr), size(other.size), controlBlock(other.controlBlock) {
+    }
+
+    MemorySegment& operator=(const MemorySegment& other) {
+        ptr = other.ptr;
+        size = other.size;
+        controlBlock = other.controlBlock;
+        return *this;
+    }
+
+    MemorySegment(MemorySegment&& other) = delete;
+
+    MemorySegment& operator=(MemorySegment&& other) = delete;
+
+    MemorySegment() : ptr(nullptr), size(0), controlBlock(nullptr, [](MemorySegment*){}) {}
+
+    explicit MemorySegment(uint8_t* ptr, uint32_t size, std::function<void(MemorySegment*)> recycleFunction) : ptr(ptr), size(size), controlBlock(this, recycleFunction) {
+        assert(this->ptr != nullptr);
+        assert(this->size > 0);
+    }
+
+    ~MemorySegment() {
+        if (ptr) {
+            assert(controlBlock.getReferenceCount() == 0);
+            free(ptr);
+            ptr = nullptr;
+        }
+    }
+
+    TupleBuffer toTupleBuffer() {
+        controlBlock.prepare();
+        return TupleBuffer(&controlBlock, ptr, size);
+    }
+
+    bool isAvailable() {
+        return controlBlock.getReferenceCount() == 0;
+    }
+
+    uint32_t getSize() const {
+        return size;
+    }
+
+  private:
+    uint8_t* ptr;
+    uint32_t size;
+    detail::BufferControlBlock controlBlock;
+};
+
 
 class Schema;
 std::string toString(TupleBuffer& buffer, SchemaPtr schema);
-std::string toString(TupleBuffer* buffer, SchemaPtr schema);
 
 }  // namespace NES
 #endif /* INCLUDE_TUPLEBUFFER_H_ */

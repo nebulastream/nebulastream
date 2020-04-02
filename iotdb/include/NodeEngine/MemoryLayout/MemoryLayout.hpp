@@ -8,7 +8,6 @@
 namespace NES {
 
 class TupleBuffer;
-typedef std::shared_ptr<TupleBuffer> TupleBufferPtr;
 
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
@@ -61,9 +60,9 @@ class MemoryLayout {
      * @return ValueType* typed pointer
      */
     template<class ValueType>
-    ValueType* getFieldPointer(TupleBufferPtr buffer, uint64_t recordIndex, uint64_t fieldIndex){
+    ValueType* getFieldPointer(TupleBuffer& buffer, uint64_t recordIndex, uint64_t fieldIndex){
         auto fieldOffset = getFieldOffset(recordIndex, fieldIndex);
-        auto byteBuffer = (int8_t*) buffer->getBuffer();
+        auto byteBuffer = buffer.getBufferAs<int8_t>();
         // interpret the target address as value type and read value from tuple buffer
         return (ValueType*) (&byteBuffer[fieldOffset]);
     }

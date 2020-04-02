@@ -9,6 +9,8 @@
 #include <QueryLib/WindowManagerLib.hpp>
 #include <API/Window/WindowDefinition.hpp>
 #include <NodeEngine/BufferManager.hpp>
+#include <Util/Logger.hpp>
+#include <boost/serialization/export.hpp>
 
 namespace NES {
 class WindowHandler;
@@ -60,10 +62,9 @@ class WindowHandler {
      * @param tupleBuffer
      */
     template<class FinalAggregateType, class PartialAggregateType>
-    void aggregateWindows(
-            WindowSliceStore<PartialAggregateType>* store,
-            WindowDefinitionPtr windowDefinition,
-            TupleBufferPtr tupleBuffer) {
+    void aggregateWindows(WindowSliceStore<PartialAggregateType>* store,
+                          WindowDefinitionPtr windowDefinition,
+                          TupleBuffer& tupleBuffer) {
 
         // For event time we use the maximal records ts as watermark.
         // For processing time we use the current wall clock as watermark.
@@ -95,22 +96,22 @@ class WindowHandler {
                         } else {
                             // update the partial aggregate
                             partialFinalAggregates[windowId] =
-                                    sumAggregation->combine<PartialAggregateType>(partialFinalAggregates[windowId],
-                                                                                  partialAggregates[sliceId]);
+                                sumAggregation->combine<PartialAggregateType>(partialFinalAggregates[windowId],
+                                                                              partialAggregates[sliceId]);
                         }
                     }
                 }
             }
         }
         // calculate the final aggregate
-        auto intBuffer = static_cast<FinalAggregateType*> (tupleBuffer->getBuffer());
+        auto intBuffer = tupleBuffer.getBufferAs<FinalAggregateType>();
         for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
             //TODO Because of this condition we currently only support SUM aggregations
             if (Sum* sumAggregation = dynamic_cast<Sum*>(windowDefinition->windowAggregation.get())) {
-                intBuffer[tupleBuffer->getNumberOfTuples()] =
-                        sumAggregation->lower<FinalAggregateType, PartialAggregateType>(partialFinalAggregates[i]);
+                intBuffer[tupleBuffer.getNumberOfTuples()] =
+                    sumAggregation->lower<FinalAggregateType, PartialAggregateType>(partialFinalAggregates[i]);
             }
-            tupleBuffer->setNumberOfTuples(tupleBuffer->getNumberOfTuples() + 1);
+            tupleBuffer.setNumberOfTuples(tupleBuffer.getNumberOfTuples() + 1);
         }
         store->setLastWatermark(watermark);
     }

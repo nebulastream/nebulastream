@@ -10,6 +10,8 @@ using namespace std;
 
 namespace NES {
 
+#ifndef USE_NEW_BUFFER_MANAGEMENT
+
 TupleBuffer::TupleBuffer(void *_buffer, const size_t _buffer_size_bytes,
                          const uint32_t _tupleSizeBytes,
                          const uint32_t _numTuples)
@@ -201,6 +203,10 @@ void TupleBuffer::revertEndianness(SchemaPtr schema) {
     }
   }
 }
+
+#else
+
+#endif
 
 }
 

@@ -16,7 +16,7 @@ namespace NES {
  * @brief this class provides a binary file as source
  */
 class BinarySource : public DataSource {
- public:
+  public:
 
   /**
    * @brief constructor for binary source
@@ -25,46 +25,47 @@ class BinarySource : public DataSource {
    */
   BinarySource(SchemaPtr schema, const std::string& file_path);
 
-/**
- * @brief override the receiveData method for the binary source
- * @return returns a buffer if available
- */
-  TupleBufferPtr receiveData() override;
+    /**
+     * @brief override the receiveData method for the binary source
+     * @return returns a buffer if available
+     */
+    std::optional<TupleBuffer> receiveData() override;
 
-  /**
-   * @brief override the toString method for the binary source
-   * @return returns string describing the binary source
-   */
-  const std::string toString() const override;
+    /**
+     * @brief override the toString method for the binary source
+     * @return returns string describing the binary source
+     */
+    const std::string toString() const override;
 
-  /**
-   *  @brief method to fill the buffer with tuples
-   *  @param buffer to be filled
-   */
-  void fillBuffer(TupleBuffer&);
+    /**
+     *  @brief method to fill the buffer with tuples
+     *  @param buffer to be filled
+     */
+    void fillBuffer(TupleBuffer&);
     SourceType getType() const override;
   private:
-  //this one only required for serialization
-  BinarySource();
-  std::ifstream input;
-  std::string file_path;
+    //this one only required for serialization
+    BinarySource();
+    std::ifstream input;
+    std::string file_path;
 
-  int file_size;
-  size_t tuple_size;
+    int file_size;
+    size_t tuple_size;
 
-  /**
-     * @brief method for serialization, all listed variable below are added to the
-     * serialization/deserialization process
-     */
+    /**
+       * @brief method for serialization, all listed variable below are added to the
+       * serialization/deserialization process
+       */
     friend class boost::serialization::access;
-    template<class Archive> void serialize(Archive& ar,
-                                           const unsigned int version) {
-      ar& boost::serialization::base_object<DataSource>(*this);
-      ar & file_path;
-      ar & file_size;
-      ar & tuple_size;
-      ar & generatedTuples;
-      ar & generatedBuffers;
+    template<class Archive>
+    void serialize(Archive& ar,
+                   const unsigned int version) {
+        ar & boost::serialization::base_object<DataSource>(*this);
+        ar & file_path;
+        ar & file_size;
+        ar & tuple_size;
+        ar & generatedTuples;
+        ar & generatedBuffers;
     }
 };
 }  // namespace NES

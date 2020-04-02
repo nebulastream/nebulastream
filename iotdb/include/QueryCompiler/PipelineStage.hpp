@@ -32,8 +32,8 @@ class PipelineStage {
         WindowHandlerPtr windowHandler);
     explicit PipelineStage(uint32_t pipelineStageId,
                            QueryExecutionPlanPtr queryExecutionPlan, ExecutablePipelinePtr executablePipeline);
-    bool execute(TupleBufferPtr inputBuffer,
-                 TupleBufferPtr outputBuffer);
+    bool execute(TupleBuffer& inputBuffer,
+                 TupleBuffer& outputBuffer);
 
     /**
    * @brief Initialises a pipeline stage

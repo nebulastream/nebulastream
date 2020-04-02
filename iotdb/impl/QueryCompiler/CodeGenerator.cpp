@@ -145,9 +145,8 @@ const std::string toString(void* value, DataTypePtr type) {
     return "";
 }
 
-std::string toString(TupleBuffer& buffer, SchemaPtr schema) { return toString(&buffer, schema); }
 
-std::string toString(TupleBuffer* buffer, SchemaPtr schema) {
+std::string toString(TupleBuffer& buffer, SchemaPtr schema) {
     if (!buffer)
         return "INVALID_BUFFER_PTR";
     std::stringstream str;
@@ -177,10 +176,9 @@ std::string toString(TupleBuffer* buffer, SchemaPtr schema) {
     str << std::endl;
     str << "+----------------------------------------------------+" << std::endl;
 
-    char* buf = (char*) buffer->getBuffer();
-    for (uint32_t i = 0;
-         i < buffer->getNumberOfTuples()*buffer->getTupleSizeInBytes(); i +=
-                                                                            buffer->getTupleSizeInBytes()) {
+    auto buf = buffer.getBufferAs<char>();
+    for (uint32_t i = 0; i < buffer.getNumberOfTuples()*buffer.getTupleSizeInBytes();
+         i += buffer.getTupleSizeInBytes()) {
         str << "|";
         for (uint32_t s = 0; s < offsets.size(); ++s) {
             void* value = &buf[i + offsets[s]];

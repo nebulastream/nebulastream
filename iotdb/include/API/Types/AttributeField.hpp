@@ -18,8 +18,8 @@ class AttributeField {
   std::string name;
   DataTypePtr data_type;
   uint32_t getFieldSize() const;
-  const DataTypePtr getDataType() const;
-  const bool hasType() const;
+  DataTypePtr getDataType() const;
+  bool hasType() const;
   const std::string toString() const;
 
   const AttributeFieldPtr copy() const;

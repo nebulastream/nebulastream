@@ -14,37 +14,33 @@ typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
  *    -
  */
 class Task {
- public:
+  public:
 
-  /**
-   * @brief Task constructor
-   * @param pointer to query execution plan that should be applied on the incoming buffer
-   * @param id of the pipeline stage inside the QEP that should be applied
-   * @param pointer to the tuple buffer that has to be process
-   */
-  Task(QueryExecutionPlanPtr _qep, uint32_t _pipeline_stage_id,
-       const TupleBufferPtr buf);
+    /**
+     * @brief Task constructor
+     * @param pointer to query execution plan that should be applied on the incoming buffer
+     * @param id of the pipeline stage inside the QEP that should be applied
+     * @param pointer to the tuple buffer that has to be process
+     */
+    explicit Task(QueryExecutionPlanPtr _qep, uint32_t _pipeline_stage_id, TupleBuffer buf);
 
-  /**
-   * @brief release the input buffer of this task, i.e., return it to buffer manager
-   */
-  void releaseInputBuffer();
+    ~Task();
 
-  /**
-   * @brief execute the task by calling executeStage of QEP and providing the stageId and the buffer
-   */
-  bool execute();
+    /**
+     * @brief execute the task by calling executeStage of QEP and providing the stageId and the buffer
+     */
+    bool execute();
 
-  /**
-   * @brief return the number of tuples in the input buffer (for statistics)
-   * @return number of input tuples in buffer
-   */
-  size_t getNumberOfTuples();
+    /**
+     * @brief return the number of tuples in the input buffer (for statistics)
+     * @return number of input tuples in buffer
+     */
+    size_t getNumberOfTuples();
 
- private:
-  QueryExecutionPlanPtr qep;
-  uint32_t pipeline_stage_id;
-  const TupleBufferPtr buf;
+  private:
+    QueryExecutionPlanPtr qep;
+    uint32_t pipeline_stage_id;
+    TupleBuffer buf;
 };
 
 typedef std::shared_ptr<Task> TaskPtr;

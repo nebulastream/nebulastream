@@ -13,9 +13,8 @@ using namespace std;
 
 namespace NES {
 
-void SenseSource::setUdsf(std::string udsf)
-{
-  this->udsf = udsf;
+void SenseSource::setUdsf(std::string udsf) {
+    this->udsf = udsf;
 }
 
 SenseSource::SenseSource()
@@ -30,13 +29,13 @@ SenseSource::SenseSource(SchemaPtr schema , const std::string& udsf)
 
 }
 
-TupleBufferPtr SenseSource::receiveData() {
-  NES_DEBUG("SenseSource::receiveData called")
-  TupleBufferPtr buf = BufferManager::instance().getFixedSizeBuffer();
-  fillBuffer(buf);
-  NES_DEBUG(
-      "SenseSource::receiveData filled buffer with tuples=" << buf->getNumberOfTuples())
-  return buf;
+std::optional<TupleBuffer> SenseSource::receiveData() {
+    NES_DEBUG("SenseSource::receiveData called")
+    auto buf = BufferManager::instance().getBufferBlocking();
+    fillBuffer(buf);
+    NES_DEBUG(
+        "SenseSource::receiveData filled buffer with tuples=" << buf.getNumberOfTuples())
+    return buf;
 }
 
 const std::string SenseSource::toString() const {
@@ -46,11 +45,11 @@ const std::string SenseSource::toString() const {
   return ss.str();
 }
 
-void SenseSource::fillBuffer(TupleBufferPtr buf) {
+void SenseSource::fillBuffer(TupleBuffer& buf) {
 
 }
 
 SourceType SenseSource::getType() const {
-  return SENSE_SOURCE;
+    return SENSE_SOURCE;
 }
 }  // namespace NES

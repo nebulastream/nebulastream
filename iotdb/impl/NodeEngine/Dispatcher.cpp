@@ -183,20 +183,18 @@ void Dispatcher::cleanup() {
         NES_DEBUG("Dispatcher: Thread pool was shut down while waiting but data is queued.");
         while (task_queue.size()) {
             auto task = task_queue.front();
-            task->releaseInputBuffer();
             task_queue.erase(task_queue.begin());
         }
     }
 }
 
-void Dispatcher::addWorkForNextPipeline(const TupleBufferPtr buffer,
+void Dispatcher::addWorkForNextPipeline(TupleBuffer& buffer,
                                         QueryExecutionPlanPtr queryExecutionPlan,
                                         uint32_t pipelineId) {
     std::unique_lock<std::mutex> lock(workMutex);
 
     //dispatch buffer as task
-    buffer->setUseCnt(1);
-    TaskPtr task(new Task(queryExecutionPlan, pipelineId + 1, buffer));
+    TaskPtr task(new Task(queryExecutionPlan, pipelineId + 1, buffer.retain()));
     task_queue.push_back(task);
     NES_DEBUG(
         "Dispatcher: added Task " << task.get() << " for QEP " << queryExecutionPlan
@@ -205,16 +203,11 @@ void Dispatcher::addWorkForNextPipeline(const TupleBufferPtr buffer,
     cv.notify_all();
 }
 
-void Dispatcher::addWork(const string& sourceId, const TupleBufferPtr& buf) {
-    std::unique_lock<std::mutex> lock(workMutex);
-
-    //set the useCount of the buffer
-    buf->setUseCnt(sourceIdToQueryMap[sourceId].size());
-
+void Dispatcher::addWork(const string& sourceId, TupleBuffer& buf) {
     for (const auto& qep : sourceIdToQueryMap[sourceId]) {
         // for each respective source, create new task and put it into queue
         //TODO: change that in the future that stageId is used properly
-        TaskPtr task(new Task(qep, 0, buf));
+        TaskPtr task(new Task(qep, 0, buf.retain()));
         task_queue.push_back(task);
         NES_DEBUG(
             "Dispatcher: added Task " << task.get() << " for query " << sourceId << " for QEP " << qep
@@ -231,7 +224,7 @@ void Dispatcher::completedWork(TaskPtr task) {
     processedBuffers++;
     processedTuple += task->getNumberOfTuples();
 
-    task->releaseInputBuffer();
+    task.reset();
 }
 
 Dispatcher& Dispatcher::instance() {

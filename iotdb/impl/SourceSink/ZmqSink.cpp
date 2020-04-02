@@ -19,15 +19,14 @@
 namespace NES {
 
 ZmqSink::ZmqSink()
-    : host(""),
-      port(0),
-      tupleCnt(0),
-      connected(false),
-      context(zmq::context_t(1)),
-      socket(zmq::socket_t(context, ZMQ_PUSH)) {
-  NES_DEBUG(
-      "DEFAULT ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port)
-      sleep(1);
+        : host(""),
+          port(0),
+          tupleCnt(0),
+          connected(false),
+          context(zmq::context_t(1)),
+          socket(zmq::socket_t(context, ZMQ_PUSH)) {
+    NES_DEBUG(
+            "DEFAULT ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port)
 }
 
 ZmqSink::ZmqSink(SchemaPtr schema, const std::string &host,
@@ -39,63 +38,60 @@ ZmqSink::ZmqSink(SchemaPtr schema, const std::string &host,
       connected(false),
       context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_PUSH)) {
-  NES_DEBUG(
-      "ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port)
-    sleep(1);
+    NES_DEBUG(
+        "ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port)
 
 }
 ZmqSink::~ZmqSink() {
-  bool success = disconnect();
-  if (success) {
+    bool success = disconnect();
+    if (success) {
+        NES_DEBUG("ZMQSINK  " << this << ": Destroy ZMQ Sink")
+    } else {
+        NES_ERROR(
+            "ZMQSINK  " << this << ": Destroy ZMQ Sink failed cause it could not be disconnected")
+        assert(0);
+    }
     NES_DEBUG("ZMQSINK  " << this << ": Destroy ZMQ Sink")
-  } else {
-    NES_ERROR(
-        "ZMQSINK  " << this << ": Destroy ZMQ Sink failed cause it could not be disconnected")
-    assert(0);
-  }
-  NES_DEBUG("ZMQSINK  " << this << ": Destroy ZMQ Sink")
 
 }
 
-bool ZmqSink::writeData(const TupleBufferPtr input_buffer) {
-  bool connected = connect();
-  if (!connected) {
-    NES_DEBUG(
-        "ZMQSINK  " << this << ": cannot write buffer " << input_buffer << " because queue is not connected")
-    assert(0);
-  }
-
-  NES_DEBUG("ZMQSINK  " << this << ": writes buffer " << input_buffer)
-  try {
-    //	size_t usedBufferSize = input_buffer->num_tuples * input_buffer->tuple_size_bytes;
-    zmq::message_t msg(input_buffer->getBufferSizeInBytes());
-    // TODO: If possible only copy the content not the empty part
-    std::memcpy(msg.data(), input_buffer->getBuffer(), input_buffer->getBufferSizeInBytes());
-    tupleCnt = input_buffer->getNumberOfTuples();
-    zmq::message_t envelope(sizeof(tupleCnt));
-    memcpy(envelope.data(), &tupleCnt, sizeof(tupleCnt));
-
-    bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
-    bool rc_msg = socket.send(msg);
-    sentBuffer++;
-    if (!rc_env || !rc_msg) {
-      NES_DEBUG("ZMQSINK  " << this << ": send NOT successful")
-      BufferManager::instance().releaseFixedSizeBuffer(input_buffer);
-      return false;
-    } else {
-      NES_DEBUG("ZMQSINK  " << this << ": send successful")
-      BufferManager::instance().releaseFixedSizeBuffer(input_buffer);
-      return true;
+bool ZmqSink::writeData(TupleBuffer& input_buffer) {
+    bool connected = connect();
+    if (!connected) {
+        NES_DEBUG(
+            "ZMQSINK  " << this << ": cannot write buffer " << input_buffer << " because queue is not connected")
+        assert(0);
     }
-  }
-  catch (const zmq::error_t &ex) {
-    // recv() throws ETERM when the zmq context is destroyed,
-    //  as when AsyncZmqListener::Stop() is called
-    if (ex.num() != ETERM) {
-      NES_ERROR("ZmqSink: " << ex.what())
+
+    NES_DEBUG("ZMQSINK  " << this << ": writes buffer " << input_buffer)
+    try {
+        //	size_t usedBufferSize = input_buffer->num_tuples * input_buffer->tuple_size_bytes;
+        zmq::message_t msg(input_buffer.getBufferSize());
+        // TODO: If possible only copy the content not the empty part
+        std::memcpy(msg.data(), input_buffer.getBuffer(), input_buffer.getBufferSize());
+        tupleCnt = input_buffer.getNumberOfTuples();
+        zmq::message_t envelope(sizeof(tupleCnt));
+        memcpy(envelope.data(), &tupleCnt, sizeof(tupleCnt));
+
+        bool rc_env = socket.send(envelope, ZMQ_SNDMORE);
+        bool rc_msg = socket.send(msg);
+        sentBuffer++;
+        if (!rc_env || !rc_msg) {
+            NES_DEBUG("ZMQSINK  " << this << ": send NOT successful")
+            return false;
+        } else {
+            NES_DEBUG("ZMQSINK  " << this << ": send successful")
+            return true;
+        }
     }
-  }
-  return false;
+    catch (const zmq::error_t& ex) {
+        // recv() throws ETERM when the zmq context is destroyed,
+        //  as when AsyncZmqListener::Stop() is called
+        if (ex.num() != ETERM) {
+            NES_ERROR("ZmqSink: " << ex.what())
+        }
+    }
+    return false;
 }
 
 const std::string ZmqSink::toString() const {
@@ -109,45 +105,45 @@ const std::string ZmqSink::toString() const {
 }
 
 bool ZmqSink::connect() {
-  if (!connected) {
-    try {
-      NES_DEBUG("ZmqSink: connect to host=" << host << " port=" << port)
-      auto address = std::string("tcp://") + host + std::string(":") + std::to_string(port);
-      socket.connect(address.c_str());
-      connected = true;
+    if (!connected) {
+        try {
+            NES_DEBUG("ZmqSink: connect to host=" << host << " port=" << port)
+            auto address = std::string("tcp://") + host + std::string(":") + std::to_string(port);
+            socket.connect(address.c_str());
+            connected = true;
+        }
+        catch (const zmq::error_t& ex) {
+            // recv() throws ETERM when the zmq context is destroyed,
+            //  as when AsyncZmqListener::Stop() is called
+            if (ex.num() != ETERM) {
+                NES_ERROR("ZmqSink: " << ex.what())
+            }
+        }
     }
-    catch (const zmq::error_t &ex) {
-      // recv() throws ETERM when the zmq context is destroyed,
-      //  as when AsyncZmqListener::Stop() is called
-      if (ex.num() != ETERM) {
-        NES_ERROR("ZmqSink: " << ex.what())
-      }
-    }
-  }
-  if (connected) {
+    if (connected) {
 
-    NES_DEBUG("ZMQSINK  " << this << ": connected host=" << host << " port= " << port)
-  } else {
-    NES_DEBUG("ZMQSINK  " << this << ": NOT connected=" << host << " port= " << port)
-  }
-  return connected;
+        NES_DEBUG("ZMQSINK  " << this << ": connected host=" << host << " port= " << port)
+    } else {
+        NES_DEBUG("ZMQSINK  " << this << ": NOT connected=" << host << " port= " << port)
+    }
+    return connected;
 }
 
 bool ZmqSink::disconnect() {
-  if (connected) {
-    socket.close();
-    connected = false;
-  }
-  if (!connected) {
-    NES_DEBUG("ZMQSINK  " << this << ": disconnected")
-  } else {
-    NES_DEBUG("ZMQSINK  " << this << ": NOT disconnected")
-  }
-  return !connected;
+    if (connected) {
+        socket.close();
+        connected = false;
+    }
+    if (!connected) {
+        NES_DEBUG("ZMQSINK  " << this << ": disconnected")
+    } else {
+        NES_DEBUG("ZMQSINK  " << this << ": NOT disconnected")
+    }
+    return !connected;
 }
 
 int ZmqSink::getPort() {
-  return this->port;
+    return this->port;
 }
 SinkType ZmqSink::getType() const {
     return ZMQ_SINK;
