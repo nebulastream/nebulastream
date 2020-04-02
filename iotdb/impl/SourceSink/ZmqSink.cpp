@@ -78,11 +78,11 @@ bool ZmqSink::writeData(const TupleBufferPtr input_buffer) {
     sentBuffer++;
     if (!rc_env || !rc_msg) {
       NES_DEBUG("ZMQSINK  " << this << ": send NOT successful")
-      BufferManager::instance().releaseBuffer(input_buffer);
+      BufferManager::instance().releaseFixedSizeBuffer(input_buffer);
       return false;
     } else {
       NES_DEBUG("ZMQSINK  " << this << ": send successful")
-      BufferManager::instance().releaseBuffer(input_buffer);
+      BufferManager::instance().releaseFixedSizeBuffer(input_buffer);
       return true;
     }
   }

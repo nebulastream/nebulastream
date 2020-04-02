@@ -58,7 +58,6 @@ class BlockingQueue {
 
     //TODO: I am not sure if this is the right way to go
     while (!bufferQueue.empty()) {
-//      delete (char*) bufferQueue.front()->getBuffer();
       NES_DEBUG("reset pop=" << bufferQueue.front())
       bufferQueue.pop();
     }
@@ -114,16 +113,6 @@ class BlockingQueue {
         return retVal;
     }
 }
-
-//  inline const T& front() {
-//    std::unique_lock<std::mutex> lock(queueMutex);
-//
-//    // wait while the queue is empty
-//    while (bufferQueue.size() == 0) {
-//      notEmpty.wait(lock);
-//    }
-//    return bufferQueue.front();
-//  }
 
 };
 }

@@ -26,8 +26,7 @@ class TupleBuffer {
    * @param number of tuples inside the buffer
    */
   TupleBuffer(void* buffer, const size_t buffer_size_bytes,
-              const uint32_t tupleSizeBytes, const uint32_t numTuples,
-              bool fixSizeBuffer);
+              const uint32_t tupleSizeBytes, const uint32_t numTuples);
 
   /**
    * @brief destructor for tuple buffer
@@ -124,8 +123,6 @@ class TupleBuffer {
    */
   void revertEndianness(Schema schema);
 
-  bool getIsaFixdSizeBuffer();
-
  private:
   /**
    * @brief default constructor for serialization with boost
@@ -136,7 +133,6 @@ class TupleBuffer {
       bufferSizeInBytes(0),
       tupleSizeInBytes(0),
       numberOfTuples(0),
-      fixSizeBuffer(true),
       useCnt(0) {
   }
 
@@ -144,7 +140,6 @@ class TupleBuffer {
   std::atomic<size_t> bufferSizeInBytes;
   std::atomic<size_t> tupleSizeInBytes;
   std::atomic<size_t>numberOfTuples;
-  std::atomic<bool> fixSizeBuffer;
   std::atomic<size_t> useCnt;
 };
 

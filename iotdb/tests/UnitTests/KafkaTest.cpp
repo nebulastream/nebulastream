@@ -61,7 +61,7 @@ TEST_F(KafkaTest, DISABLED_KafkaSinkSendDataInitByKafkaConfig) {
                                                             sinkConfig);
   TupleBufferPtr buf = BufferManager::instance().getFixedSizeBuffer();
   EXPECT_TRUE(kafkaSink->writeData(buf));
-  BufferManager::instance().releaseBuffer(buf);
+  BufferManager::instance().releaseFixedSizeBuffer(buf);
 }
 
 TEST_F(KafkaTest, DISABLED_KafkaSinkSendDataInitByBroker) {
@@ -70,7 +70,7 @@ TEST_F(KafkaTest, DISABLED_KafkaSinkSendDataInitByBroker) {
 
   TupleBufferPtr buf = BufferManager::instance().getFixedSizeBuffer();
   EXPECT_TRUE(kafkaSink->writeData(buf));
-  BufferManager::instance().releaseBuffer(buf);
+  BufferManager::instance().releaseFixedSizeBuffer(buf);
 }
 
 TEST_F(KafkaTest, DISABLED_KafkaSinkSendNullPointer) {
@@ -85,7 +85,7 @@ TEST_F(KafkaTest, DISABLED_KafkaSinkSendNullData) {
                                                             topic);
   TupleBufferPtr buf = BufferManager::instance().getFixedSizeBuffer();
   EXPECT_TRUE(kafkaSink->writeData(buf));
-  BufferManager::instance().releaseBuffer(buf);
+  BufferManager::instance().releaseFixedSizeBuffer(buf);
 }
 
 TEST_F(KafkaTest, DISABLED_KafkaSinkWithInvalidBroker) {
@@ -102,7 +102,7 @@ TEST_F(KafkaTest, DISABLED_KafkaSinkWithInvalidBroker) {
     SUCCEED();
   }
 
-  BufferManager::instance().releaseBuffer(buf);
+  BufferManager::instance().releaseFixedSizeBuffer(buf);
 }
 
 TEST_F(KafkaTest, DISABLED_KafkaSinkTimeout) {
@@ -118,7 +118,7 @@ TEST_F(KafkaTest, DISABLED_KafkaSinkTimeout) {
   } catch (...) {
     SUCCEED();
   }
-  BufferManager::instance().releaseBuffer(buf);
+  BufferManager::instance().releaseFixedSizeBuffer(buf);
 }
 
 TEST_F(KafkaTest, DISABLED_KafkaSourceInitByKafkaConfig1) {

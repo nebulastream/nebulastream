@@ -58,7 +58,7 @@ TEST_F(BufferManagerTest, add_and_remove_Buffer_simple) {
   ASSERT_EQ(buffers_count, expected);
   ASSERT_EQ(buffers_free, buffers_managed);
 
-  bool retRel = BufferManager::instance().releaseBuffer(buffer);
+  bool retRel = BufferManager::instance().releaseFixedSizeBuffer(buffer);
   ASSERT_TRUE(retRel);
 
   buffers_count = BufferManager::instance().getNumberOfFixedBuffers();
@@ -93,15 +93,12 @@ TEST_F(BufferManagerTest, get_and_release_Buffer_simple) {
     ASSERT_EQ(buffers_free, expected);
 
     buffers.push_back(buf);
-//    std::cout << "useCnt after push_back=" << buf.use_count() << " addr=" << buf.get( )<< std::endl;
   }
 
   size_t i = 1;
   for (auto& buf : buffers) {
-//    std::cout << "useCnt after beforeRel=" << buf.use_count() << " addr=" << buf.get( )<< std::endl;
-    bool retRel = BufferManager::instance().releaseBuffer(buf);
+    bool retRel = BufferManager::instance().releaseFixedSizeBuffer(buf);
     ASSERT_TRUE(retRel);
-//    std::cout << "useCnt after afterRel=" << buf.use_count() << " addr=" << buf.get( )<< std::endl;
 
     buffers_count = BufferManager::instance().getNumberOfFixedBuffers();
     buffers_free = BufferManager::instance().getNumberOfFreeFixedBuffers();
@@ -147,13 +144,13 @@ TEST_F(BufferManagerTest, resize_buffer_size) {
   BufferManager::instance().resizeFixedBufferSize(buffer_size * 2);
   TupleBufferPtr buf = BufferManager::instance().getFixedSizeBuffer();
   ASSERT_EQ(buf->getBufferSizeInBytes(), 2 * buffer_size);
-  bool retRel = BufferManager::instance().releaseBuffer(buf);
+  bool retRel = BufferManager::instance().releaseFixedSizeBuffer(buf);
   ASSERT_TRUE(retRel);
 
   BufferManager::instance().resizeFixedBufferSize(buffer_size);
   buf = BufferManager::instance().getFixedSizeBuffer();
   ASSERT_EQ(buf->getBufferSizeInBytes(), buffer_size);
-  bool retRel2 = BufferManager::instance().releaseBuffer(buf);
+  bool retRel2 = BufferManager::instance().releaseFixedSizeBuffer(buf);
   ASSERT_TRUE(retRel2);
 
   buffers_count = BufferManager::instance().getNumberOfFixedBuffers();
@@ -172,7 +169,7 @@ void run(TupleBufferPtr* ptr) {
 void run_and_release(size_t id, size_t sleeptime) {
   TupleBufferPtr ptr = BufferManager::instance().getFixedSizeBuffer();
   std::this_thread::sleep_for(std::chrono::milliseconds(sleeptime));
-  bool retRel = BufferManager::instance().releaseBuffer(ptr);
+  bool retRel = BufferManager::instance().releaseFixedSizeBuffer(ptr);
   ASSERT_TRUE(retRel);
 }
 
@@ -195,7 +192,7 @@ TEST_F(BufferManagerTest, getBuffer_afterRelease) {
 
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
-  bool retRel = BufferManager::instance().releaseBuffer(buffers.back());
+  bool retRel = BufferManager::instance().releaseFixedSizeBuffer(buffers.back());
   ASSERT_TRUE(retRel);
 
   buffers.pop_back();
@@ -205,7 +202,7 @@ TEST_F(BufferManagerTest, getBuffer_afterRelease) {
   size_t i = 0;
   for (auto& buf : buffers) {
     std::cout << "iteration =" << i++ << std::endl;
-    bool retRel = BufferManager::instance().releaseBuffer(buf);
+    bool retRel = BufferManager::instance().releaseFixedSizeBuffer(buf);
      ASSERT_TRUE(retRel);
 
   }
@@ -268,7 +265,7 @@ TEST_F(BufferManagerTest, getBuffer_race) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
     for (size_t j = 0; j < buffers_managed; ++j) {
-      bool retRel = BufferManager::instance().releaseBuffer(buffers.back());
+      bool retRel = BufferManager::instance().releaseFixedSizeBuffer(buffers.back());
            ASSERT_TRUE(retRel);
       buffers.pop_back();
     }
@@ -284,7 +281,7 @@ TEST_F(BufferManagerTest, getBuffer_race) {
     ASSERT_EQ(10, setOfTupleBufferPtr.size());
 
     for (auto& b : buffer_threads) {
-      bool retRel = BufferManager::instance().releaseBuffer(b);
+      bool retRel = BufferManager::instance().releaseFixedSizeBuffer(b);
            ASSERT_TRUE(retRel);
     }
     buffers_count = BufferManager::instance().getNumberOfFixedBuffers();
@@ -312,7 +309,7 @@ TEST_F(BufferManagerTest, add_and_remove_Var_Buffer_simple) {
   ASSERT_EQ(buffers_count, expected);
   ASSERT_EQ(buffers_free, expected - 1);
 
-  bool retRelease = BufferManager::instance().releaseBuffer(buffer);
+  bool retRelease = BufferManager::instance().releaseVarSizedBuffer(buffer);
   ASSERT_TRUE(retRelease);
 //  bool retRemove = BufferManager::instance().removeBuffer(buffer);
 //  ASSERT_TRUE(retRemove);
@@ -351,7 +348,7 @@ TEST_F(BufferManagerTest, get_Existing_Var_Buffer) {
   ASSERT_EQ(buffers_count, expected);
   ASSERT_EQ(buffers_free, 0);
 
-  bool retRel = BufferManager::instance().releaseBuffer(buffer3);
+  bool retRel = BufferManager::instance().releaseVarSizedBuffer(buffer3);
        ASSERT_TRUE(retRel);
 
   buffers_count = BufferManager::instance().getNumberOfVarBuffers();

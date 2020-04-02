@@ -94,7 +94,7 @@ TEST_F(InternalDataTransmissionTest, testInputGate) {
     EXPECT_EQ(sourceId1, "testId1");
     EXPECT_EQ(sum1, expected1);
 
-    BufferManager::instance().releaseBuffer(buffer1);
+    BufferManager::instance().releaseFixedSizeBuffer(buffer1);
 
     // Receive data2
     tuple<std::string, TupleBufferPtr> rec2 = inputGate.receiveData();
@@ -111,7 +111,7 @@ TEST_F(InternalDataTransmissionTest, testInputGate) {
     EXPECT_EQ(sourceId2, "testId2");
     EXPECT_EQ(sum2, expected2);
 
-    BufferManager::instance().releaseBuffer(buffer2);
+    BufferManager::instance().releaseFixedSizeBuffer(buffer2);
 
     receivingFinished = true;
   });

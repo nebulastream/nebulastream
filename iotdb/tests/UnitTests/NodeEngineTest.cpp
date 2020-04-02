@@ -33,6 +33,51 @@ std::string joinedExpectedOutput =
         "+----------------------------------------------------+\n"
         "|10|\n"
         "+----------------------------------------------------+";
+
+std::string joinedExpectedOutput10 =
+    "+----------------------------------------------------+\n"
+    "|sum:UINT32|\n"
+    "+----------------------------------------------------+\n"
+    "|10|\n"
+    "+----------------------------------------------------++----------------------------------------------------+\n"
+    "|sum:UINT32|\n"
+    "+----------------------------------------------------+\n"
+    "|20|\n"
+    "+----------------------------------------------------++----------------------------------------------------+\n"
+    "|sum:UINT32|\n"
+    "+----------------------------------------------------+\n"
+    "|30|\n"
+    "+----------------------------------------------------++----------------------------------------------------+\n"
+    "|sum:UINT32|\n"
+    "+----------------------------------------------------+\n"
+    "|40|\n"
+    "+----------------------------------------------------++----------------------------------------------------+\n"
+    "|sum:UINT32|\n"
+    "+----------------------------------------------------+\n"
+    "|50|\n"
+    "+----------------------------------------------------++----------------------------------------------------+\n"
+    "|sum:UINT32|\n"
+    "+----------------------------------------------------+\n"
+    "|60|\n"
+    "+----------------------------------------------------++----------------------------------------------------+\n"
+    "|sum:UINT32|\n"
+    "+----------------------------------------------------+\n"
+    "|70|\n"
+    "+----------------------------------------------------++----------------------------------------------------+\n"
+    "|sum:UINT32|\n"
+    "+----------------------------------------------------+\n"
+    "|80|\n"
+    "+----------------------------------------------------++----------------------------------------------------+\n"
+    "|sum:UINT32|\n"
+    "+----------------------------------------------------+\n"
+    "|90|\n"
+    "+----------------------------------------------------++----------------------------------------------------+\n"
+    "|sum:UINT32|\n"
+    "+----------------------------------------------------+\n"
+    "|100|\n"
+    "+----------------------------------------------------+";
+
+
 std::string filePath = "file.txt";
 
 class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
@@ -75,7 +120,7 @@ class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
     outputBuffer->setTupleSizeInBytes(4);
 //  ysbRecordResult* outputBufferPtr = (ysbRecordResult*)outputBuffer->buffer;
     sink->writeData(outputBuffer);
-    BufferManager::instance().releaseBuffer(outputBuffer);
+    BufferManager::instance().releaseFixedSizeBuffer(outputBuffer);
     return true;
   }
 };
@@ -142,8 +187,8 @@ void testOutput(std::string path, std::string expectedOutput) {
 
   EXPECT_EQ(content, expectedOutput);
   ifs.close();
-  int response = remove(path.c_str());
-  EXPECT_TRUE(response == 0);
+//  int response = remove(path.c_str());
+//  EXPECT_TRUE(response == 0);
 }
 
 CompiledTestQueryExecutionPlanPtr setupQEP() {
@@ -157,7 +202,6 @@ CompiledTestQueryExecutionPlanPtr setupQEP() {
   return qep;
 }
 
-#if 0
 /**
  * Test methods
  */
@@ -381,10 +425,7 @@ TEST_F(EngineTest, parallel_same_source_and_sink_test) {
   testOutput("qep3.txt", joinedExpectedOutput);
 }
 
-#endif
-
 TEST_F(EngineTest, blocking_test) {
-
   CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source1 =
       createDefaultSourceWithoutSchemaForOneBufferForVarBuffers(10, 0);
@@ -393,23 +434,15 @@ TEST_F(EngineTest, blocking_test) {
   qep1->addDataSource(source1);
   qep1->addDataSink(sink1);
 
-//  CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
-//  DataSourcePtr source2 =
-//      createDefaultSourceWithoutSchemaForOneBufferForVarBuffers(10, 0);
-//  Schema sch2 = Schema::create().addField("sum", BasicType::UINT32);
-//  qep2->addDataSource(source1);
-//  qep2->addDataSink(sink1);
-
   NodeEngine* ptr = new NodeEngine();
-  BufferManager::instance().resizeFixedBufferCnt(8);
+  BufferManager::instance().resizeFixedBufferCnt(5);
   ptr->deployQueryWithoutStart(qep1);
-//  ptr->deployQueryWithoutStart(qep2);
   ptr->start();
   source1->start();
-  sleep(5);
+  sleep(3);
   source1->stop();
   ptr->stop();
-  testOutput("qep12.txt", joinedExpectedOutput);
+  testOutput("qep12.txt", joinedExpectedOutput10);
 }
 
 }

@@ -12,14 +12,12 @@ namespace NES {
 
 TupleBuffer::TupleBuffer(void *_buffer, const size_t _buffer_size_bytes,
                          const uint32_t _tupleSizeBytes,
-                         const uint32_t _numTuples,
-                         bool fixSizeBuffer)
+                         const uint32_t _numTuples)
     :
     buffer(_buffer),
     bufferSizeInBytes(_buffer_size_bytes),
     tupleSizeInBytes(_tupleSizeBytes),
     numberOfTuples(_numTuples),
-    fixSizeBuffer(fixSizeBuffer),
     useCnt(0) {
 }
 TupleBuffer::~TupleBuffer()
@@ -203,12 +201,6 @@ void TupleBuffer::revertEndianness(Schema schema) {
     }
   }
 }
-
-bool TupleBuffer::getIsaFixdSizeBuffer()
-{
-  return fixSizeBuffer;
-}
-
 
 }
 

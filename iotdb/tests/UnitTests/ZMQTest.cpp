@@ -91,7 +91,7 @@ TEST_F(ZMQTest, ZmqSourceReceiveData) {
     size_t expected = 400;
     EXPECT_EQ(sum, expected);
 
-    BufferManager::instance().releaseBuffer(tuple_buffer);
+    BufferManager::instance().releaseFixedSizeBuffer(tuple_buffer);
     receiving_finished = true;
   });
   size_t tupCnt = 8;
@@ -209,7 +209,7 @@ TEST_F(ZMQTest, ZmqSinkToSource) {
       size_t expected = 100 - i;
       EXPECT_EQ(*(tuple++), expected);
     }
-    BufferManager::instance().releaseBuffer(new_data);
+    BufferManager::instance().releaseFixedSizeBuffer(new_data);
     receiving_finished = true;
   });
 
