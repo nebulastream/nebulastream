@@ -408,6 +408,7 @@ TEST_F(EngineTest, blocking_test) {
   source1->start();
   sleep(5);
   ptr->stop();
+  source1->stop();
   testOutput("qep12.txt", joinedExpectedOutput);
 }
 
