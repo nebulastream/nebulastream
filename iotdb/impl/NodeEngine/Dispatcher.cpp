@@ -149,7 +149,7 @@ bool Dispatcher::deregisterQuery(QueryExecutionPlanPtr qep) {
     return succeed;
 }
 
-TaskPtr Dispatcher::getWork(bool& threadPool_running) {
+TaskPtr Dispatcher::getWork(std::atomic<bool>& threadPool_running) {
     std::unique_lock<std::mutex> lock(workMutex);
 
     //wait while queue is empty but thread pool is running
@@ -171,10 +171,22 @@ TaskPtr Dispatcher::getWork(bool& threadPool_running) {
             "Dispatcher: provide task" << task.get() << " to thread (getWork())")
         task_queue.erase(task_queue.begin());
     } else {
-        NES_DEBUG("Dispatcher: Thread pool was shut down while waiting")
+        NES_DEBUG("Dispatcher: Thread pool was shut down while waiting");
+        cleanup();
         task = TaskPtr();
     }
     return task;
+}
+
+void Dispatcher::cleanup() {
+    if (task_queue.size()) {
+        NES_DEBUG("Dispatcher: Thread pool was shut down while waiting but data is queued.");
+        while (task_queue.size()) {
+            auto task = task_queue.front();
+            task->releaseInputBuffer();
+            task_queue.erase(task_queue.begin());
+        }
+    }
 }
 
 void Dispatcher::addWorkForNextPipeline(const TupleBufferPtr buffer,

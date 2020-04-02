@@ -28,6 +28,7 @@ namespace NES {
  *    - statistics do not cover intermediate buffers
  */
 class Dispatcher {
+    friend class ThreadPool;
   public:
     /**
      * @brief Singleton implementation of dispatcher
@@ -63,7 +64,7 @@ class Dispatcher {
      * if thread pool was shut down while waiting, pointer points to empty task
      * TODO: how is an empty task defined?
      */
-    TaskPtr getWork(bool& threadPool_running);
+    TaskPtr getWork(std::atomic<bool>& threadPool_running);
 
     /**
      * @brief add work to the dispatcher, this methods is source-driven and is called
@@ -121,6 +122,7 @@ class Dispatcher {
     Dispatcher(const Dispatcher&);
     Dispatcher& operator=(const Dispatcher&);
     ~Dispatcher();
+    void cleanup();
 
     std::vector<TaskPtr> task_queue;
 

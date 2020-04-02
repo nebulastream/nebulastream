@@ -38,7 +38,7 @@ const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
  * @return a const data source pointer
  */
 const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForVarBuffers(
-    size_t numbersOfBufferToProduce);
+    size_t numbersOfBufferToProduce, double frequency);
 
 /**
  * @brief function to create a test source which produces tuples of the YSB benchmark
