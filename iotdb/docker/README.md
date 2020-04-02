@@ -11,31 +11,26 @@ to build the docker images. In case you want to add or modify any dependencies i
 edit the corresponding docker file. Also, the startup script for each build image is present inside the [scripts](\scripts) 
 folder. 
 
-#### Dockerfile-NES-Devel
-This is our base image. It has everything installed that we need for
-development, including `ssh` connectivity. Its purpose is to start
-in the background while our IDEs connect to it for remote 
-debugging purposes. It can be found in [Devel](Dockerfile-NES-Devel).
-
-Currently, there is no need for an `ENTRYPOINT` for this image. 
-It stars `sshd` and can be kept in the background. For more info, check
-Docker's official docs [here](https://docs.docker.com/engine/examples/running_ssh_service/).
-
 #### Dockerfile-NES-Build
-This is our CI image. It extends the Devel image
-but connectivity and any interactivity tools are removed. There is
-no way to connect to a running container of this image, aside from `docker attach`.
-Its purpose is to build and exit. It can be found in [Build](Dockerfile-NES-Build).
+This is the docker image for our CI builds. There is no way to connect to a running container of this image, 
+aside from `docker attach`. Its purpose is to build and exit. It can be found in [Build](Dockerfile-NES-Build).
 
 The `ENTRYPOINT` is located in [entrypoint-nes-build.sh](\scripts\entrypoint-nes-build.sh). The entrypoint
 checks if source code is indeed mounted in the correct location inside the
 container and starts a `make_debug` test build.
 
+#### Dockerfile-NES-Dev
+This image is based on NES-Build-image. Additionally, we add connectivity and any interactivity tools to this image.
+It has everything installed that we need for development, including `ssh` connectivity. Its purpose is to start
+in the background while our IDEs connect to it for remote debugging purposes. It can be found in [Dev](Dockerfile-NES-Dev).
+
+Currently, there is no need for an `ENTRYPOINT` for this image. 
+It stars `sshd` and can be kept in the background. For more info, check
+Docker's official docs [here](https://docs.docker.com/engine/examples/running_ssh_service/).
+
 #### Dockerfile-NES-Executable
-This is our executable image. It extends the Build image.
-Connectivity and any interactivity tools are removed. There is
-no way to connect to a running container of this image, aside from `docker attach`.
-Its purpose is to offer a host operating system for an executable of NES.
+This is our executable image. It extends the Build image. There is no way to connect to a running container of this 
+image, aside from `docker attach`. Its purpose is to offer a host operating system for an executable of NES.
 
 For this image, we install NebulaStream using a `deb` package inside the [resources](\resources) folder.
 If you want to update the NebulaStream binary, please create a new `deb` package by compiling the code inside the docker image and running `cpack` command.

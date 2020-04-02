@@ -1,8 +1,42 @@
-FROM nebulastream/nes-devel-image
+FROM ubuntu:18.04
 
-RUN apt-get purge -qq ssh wget tmux vim rsync && \
-  apt-get clean -qq
+RUN apt-get update && apt-get install -y \
+  clang \
+  libdwarf-dev \
+  libdwarf1 \
+  llvm-dev \
+  binutils-dev \
+  libdw-dev \
+  libzmq3-dev \
+  libzmq5 \
+  libczmq-dev \
+  libzmqpp-dev \
+  libzmqpp4 \
+  libboost-all-dev \
+  liblog4cxx-dev \
+  libcpprest-dev \
+  libssl-dev \
+  clang-format \
+  librdkafka1 \
+  librdkafka++1 \
+  librdkafka-dev \
+  git \
+  wget \
+  tar \
+  && apt-get clean -qq
 
-ADD ./scripts/entrypoint-nes-build.sh /entrypoint-build.sh
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.13.4/cmake-3.13.4.tar.gz && \
+  tar -zxvf cmake-3.13.4.tar.gz && \
+  cd cmake-3.13.4 && ./bootstrap && make -j3 && make install && \
+  cd ${HOME} && rm -rf cmake-3.13.4 cmake-3.13.4.tar.gz && \
+  git clone --single-branch --branch 0.17.3 https://github.com/actor-framework/actor-framework.git && \
+  cd actor-framework && git checkout 0.17.3 && bash configure --libs-only && cd build && make -j3 && make install && \
+  cd ${HOME} && git clone --single-branch --branch v0.3.1 https://github.com/mfontanini/cppkafka.git && \
+  cd cppkafka && mkdir -p build && cd build && \
+  cmake -DCPPKAFKA_BUILD_SHARED=ON -DCPPKAFKA_DISABLE_TESTS=ON -DCPPKAFKA_DISABLE_EXAMPLES=ON -DCPPKAFKA_RDKAFKA_STATIC_LIB=OFF .. && \
+  make -j -w && make install && cd ${HOME} && rm -rf actor-framework cppkafka* && \
+  apt-get purge -y git wget && apt autoremove -y
 
-ENTRYPOINT ["/entrypoint-build.sh"]
+ADD ./scripts/entrypoint-nes-build.sh /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
