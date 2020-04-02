@@ -351,6 +351,7 @@ TEST_F(EngineTest, parallel_same_sink_test) {
   ptr->stop();
   testOutput("qep12.txt", joinedExpectedOutput);
 }
+
 TEST_F(EngineTest, parallel_same_source_and_sink_test) {
   CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source1 =

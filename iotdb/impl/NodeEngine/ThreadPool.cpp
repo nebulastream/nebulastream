@@ -35,7 +35,7 @@ void ThreadPool::runningRoutine() {
       NES_DEBUG("Threadpool: finished task " << task)
     } else {
       NES_DEBUG("Threadpool: task invalid " << task)
-
+      running = false;
     }
   }
 }

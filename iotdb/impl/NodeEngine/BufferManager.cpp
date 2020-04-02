@@ -15,7 +15,7 @@ BufferManager::BufferManager()
     noFreeBuffer(0),
     providedBuffer(0),
     releasedBuffer(0) {
-  size_t initalBufferCnt = 10;
+  size_t initalBufferCnt = 100;
   currentBufferSize = 4 * 1024;
   NES_DEBUG(
       "BufferManager: Set maximum number of buffer to " << initalBufferCnt << " and a bufferSize of KB:" << currentBufferSize / 1024)
@@ -53,10 +53,6 @@ void BufferManager::clearVarBufferPool() {
   NES_DEBUG(
       "BufferManager: clearVarBufferPool of size" << varSizeBufferPool.size())
 
-//  for (auto it = varSizeBufferPool.begin();
-//      it != varSizeBufferPool.end(); it++) {
-//    varSizeBufferPool.erase(it);7
-//  }
   numberOfFreeVarSizeBuffers = 0;
   varSizeBufferPool.clear();
   assert(varSizeBufferPool.size() == 0);
@@ -132,7 +128,7 @@ bool BufferManager::releaseBuffer(const TupleBufferPtr tupleBuffer) {
   std::map<TupleBufferPtr, /**used*/std::atomic<bool>>::iterator it;
   std::map<TupleBufferPtr, /**used*/std::atomic<bool>>::iterator end;
 
-  if (tupleBuffer->getFixSizeBuffer()) {
+  if (tupleBuffer->getIsaFixdSizeBuffer()) {
     //enqueue buffer back to queue
     NES_DEBUG("BufferManager::releaseBuffer: release buffer " << tupleBuffer)
     fixedSizeBufferPool->push(tupleBuffer);
@@ -160,7 +156,6 @@ bool BufferManager::releaseBuffer(const TupleBufferPtr tupleBuffer) {
         }
         numberOfFreeVarSizeBuffers++;
 
-
         return true;
       }
     }
@@ -179,7 +174,7 @@ bool BufferManager::removeVaSizeBuffer(TupleBufferPtr tupleBuffer) {
   std::map<TupleBufferPtr, /**used*/std::atomic<bool>>::iterator it;
   std::map<TupleBufferPtr, /**used*/std::atomic<bool>>::iterator end;
 
-  if (tupleBuffer->getFixSizeBuffer()) {
+  if (tupleBuffer->getIsaFixdSizeBuffer()) {
     delete (char*) tupleBuffer->getBuffer();
   } else {
     it = varSizeBufferPool.begin();
@@ -224,7 +219,6 @@ TupleBufferPtr BufferManager::getVarSizeBufferLargerThan(
         NES_DEBUG(
             "BufferManager: getBuffer() provide free buffer" << entry.first)
         entry.first->incrementUseCnt();
-        numberOfFreeVarSizeBuffers--;
         return entry.first;
       }
     }
@@ -234,7 +228,6 @@ TupleBufferPtr BufferManager::getVarSizeBufferLargerThan(
 }
 
 TupleBufferPtr BufferManager::createVarSizeBuffer(size_t bufferSizeInByte) {
-  numberOfFreeVarSizeBuffers++;
   return addOneBufferWithVarSize(bufferSizeInByte);
 }
 
