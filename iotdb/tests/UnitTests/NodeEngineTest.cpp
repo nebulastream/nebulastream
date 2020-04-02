@@ -65,9 +65,11 @@ class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
     assert(sum == 10);
 
     DataSinkPtr sink = this->getSinks()[0];
+    NES_DEBUG("TEST: try to get buffer")
 //  sink->getSchema().getSchemaSize();
     TupleBufferPtr outputBuffer =
         BufferManager::instance().getFixedSizeBuffer();
+    NES_DEBUG("TEST: got buffer")
     u_int32_t* arr = (u_int32_t*) outputBuffer->getBuffer();
     arr[0] = sum;
     outputBuffer->setNumberOfTuples(1);
@@ -391,17 +393,17 @@ TEST_F(EngineTest, blocking_test) {
   qep1->addDataSource(source1);
   qep1->addDataSink(sink1);
 
-  CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
-  DataSourcePtr source2 =
-      createDefaultSourceWithoutSchemaForOneBufferForVarBuffers(10, 0);
-  Schema sch2 = Schema::create().addField("sum", BasicType::UINT32);
-  qep2->addDataSource(source1);
-  qep2->addDataSink(sink1);
+//  CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
+//  DataSourcePtr source2 =
+//      createDefaultSourceWithoutSchemaForOneBufferForVarBuffers(10, 0);
+//  Schema sch2 = Schema::create().addField("sum", BasicType::UINT32);
+//  qep2->addDataSource(source1);
+//  qep2->addDataSink(sink1);
 
   NodeEngine* ptr = new NodeEngine();
   BufferManager::instance().resizeFixedBufferCnt(2);
   ptr->deployQueryWithoutStart(qep1);
-  ptr->deployQueryWithoutStart(qep2);
+//  ptr->deployQueryWithoutStart(qep2);
   ptr->start();
   source1->start();
   sleep(5);
