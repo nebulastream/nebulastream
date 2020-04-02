@@ -31,7 +31,7 @@ message(STATUS "CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}")
 message(STATUS "CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE}")
 
 #lcryto is required for asio to communicate
-set(LIBRARIES ${LIBRARIES} -lbfd -ldl -lcrypto -lssl)
+set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl)
 
 # LLVM
 find_package(LLVM 3 REQUIRED)
