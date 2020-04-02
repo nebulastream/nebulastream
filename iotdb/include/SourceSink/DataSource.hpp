@@ -145,7 +145,7 @@ class DataSource {
   private:
     friend class boost::serialization::access;
     //bool indicating if the source is currently running
-    bool running;
+    std::atomic<bool> running;
     std::thread thread;
 
     template<class Archive>

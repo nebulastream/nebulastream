@@ -69,7 +69,7 @@ bool KafkaSink::writeData(const TupleBufferPtr input_buffer) {
     producer->produce(*msgBuilder);
     producer->flush(kafkaProducerTimeout);
     NES_DEBUG("KAFKASINK " << this << ": send successfully")
-    BufferManager::instance().releaseBuffer(input_buffer);
+    BufferManager::instance().releaseFixedSizeBuffer(input_buffer);
   }
   catch (const cppkafka::HandleException &ex) {
     throw ex;
