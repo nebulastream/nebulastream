@@ -94,7 +94,7 @@ bool TupleBuffer::decrementUseCntAndTestForZero() {
     useCnt--;
   } else
   {
-//    assert(0);
+    //TODO: I am not sure if we should break here, however we will fix this when we remove shared_ptr from this
     NES_WARNING("TupleBuffer::decrementUseCntAndTestForZero: decrease a buffer which has already 0 count")
   }
 
@@ -103,7 +103,6 @@ bool TupleBuffer::decrementUseCntAndTestForZero() {
 }
 
 void TupleBuffer::incrementUseCnt() {
-  //TODO: should this be thread save?
   useCnt++;
 }
 
@@ -205,7 +204,7 @@ void TupleBuffer::revertEndianness(Schema schema) {
   }
 }
 
-bool TupleBuffer::getFixSizeBuffer()
+bool TupleBuffer::getIsaFixdSizeBuffer()
 {
   return fixSizeBuffer;
 }

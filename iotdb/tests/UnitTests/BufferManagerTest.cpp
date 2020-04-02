@@ -43,7 +43,6 @@ class BufferManagerTest : public testing::Test {
   }
 };
 
-#if 0
 TEST_F(BufferManagerTest, add_and_remove_Buffer_simple) {
   size_t buffers_count = BufferManager::instance().getNumberOfFixedBuffers();
   size_t buffers_free = BufferManager::instance().getNumberOfFreeFixedBuffers();
@@ -295,7 +294,6 @@ TEST_F(BufferManagerTest, getBuffer_race) {
   }
 }
 #endif
-#endif
 /**
  * Var Size Buffer tests
  */
@@ -312,7 +310,7 @@ TEST_F(BufferManagerTest, add_and_remove_Var_Buffer_simple) {
   buffers_free = BufferManager::instance().getNumberOfFreeVarBuffers();
   size_t expected = 1;
   ASSERT_EQ(buffers_count, expected);
-  ASSERT_EQ(buffers_free, expected);
+  ASSERT_EQ(buffers_free, expected - 1);
 
   bool retRelease = BufferManager::instance().releaseBuffer(buffer);
   ASSERT_TRUE(retRelease);

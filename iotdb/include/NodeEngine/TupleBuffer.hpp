@@ -29,7 +29,11 @@ class TupleBuffer {
               const uint32_t tupleSizeBytes, const uint32_t numTuples,
               bool fixSizeBuffer);
 
+  /**
+   * @brief destructor for tuple buffer
+   */
   ~TupleBuffer();
+
   /**
    * @brief Overload of the = operator to copy a tuple buffer
    * @param other tuple buffer
@@ -120,7 +124,7 @@ class TupleBuffer {
    */
   void revertEndianness(Schema schema);
 
-  bool getFixSizeBuffer();
+  bool getIsaFixdSizeBuffer();
 
  private:
   /**
