@@ -54,7 +54,7 @@ class PrintSink : public DataSink {
      * @param tuple buffer to write
      * @return bool indicating success of the write
      */
-    bool writeData(const TupleBufferPtr input_buffer) override;
+    bool writeData(TupleBuffer& input_buffer) override;
 
     /**
      * @brief override the toString method for the print sink

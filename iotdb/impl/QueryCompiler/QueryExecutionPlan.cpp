@@ -92,7 +92,7 @@ void QueryExecutionPlan::print() {
     }
 }
 
-bool QueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, const NES::TupleBufferPtr buf) {
+bool QueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, TupleBuffer& buf) {
     return false;
 }
 

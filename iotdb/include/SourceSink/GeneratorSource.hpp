@@ -32,22 +32,22 @@ class GeneratorSource : public DataSource {
    * @brief override function to create one buffer
    * @return pointer to a buffer containing the created tuples
    */
-  TupleBufferPtr receiveData() override = 0;
+  std::optional<TupleBuffer> receiveData() override = 0;
 
-  /**
-   * @brief override the toString method for the generator source
-   * @return returns string describing the generator source
-   */
-  const std::string toString() const override;
+    /**
+     * @brief override the toString method for the generator source
+     * @return returns string describing the generator source
+     */
+    const std::string toString() const override;
     SourceType getType() const override;
   protected:
-  GeneratorSource() = default;
- private:
-  friend class boost::serialization::access;
-  template<class Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar & boost::serialization::base_object<DataSource>(*this);
-  }
+    GeneratorSource() = default;
+  private:
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive& ar, const unsigned int version) {
+        ar & boost::serialization::base_object<DataSource>(*this);
+    }
 };
 
 }

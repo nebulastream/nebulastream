@@ -16,6 +16,7 @@ class MemoryLayoutTest : public testing::Test {
     static void SetUpTestCase() {
         NES::setupLogging("MemoryLayoutTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup MemoryLayout test class.");
+        BufferManager::instance().configure(4096, 10);
     }
     static void TearDownTestCase() {
         std::cout << "Tear down MemoryLayout test class." << std::endl;
@@ -23,12 +24,12 @@ class MemoryLayoutTest : public testing::Test {
 };
 
 TEST_F(MemoryLayoutTest, rowLayoutTestInt) {
-    SchemaPtr schema = Schema::create()
+    SSchemaPtr schema = Schema::create()
         ->addField("t1", BasicType::UINT8)
         ->addField("t2", BasicType::UINT8)
         ->addField("t3", BasicType::UINT8);
-    TupleBufferPtr buf = BufferManager::instance().getFixedSizeBuffer();
-    auto layout = createRowLayout(schema);
+    TupleBuffer buf = BufferManager::instance().getBufferBlocking();
+   auto layout = createRowLayout(schema);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/0)->write(buf, recordIndex);
         layout->getValueField<uint8_t>(recordIndex, /*fieldIndex*/1)->write(buf, recordIndex);
@@ -53,7 +54,7 @@ TEST_F(MemoryLayoutTest, rowLayoutTestArray) {
         ->addField("t2", BasicType::UINT8)
         ->addField("t3", BasicType::UINT8);
 
-    TupleBufferPtr buf = BufferManager::instance().getFixedSizeBuffer();
+    TupleBuffer buf = BufferManager::instance().getBufferBlocking();
     auto layout = createRowLayout(schema);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         auto arrayField = layout->getArrayField(recordIndex,  /*fieldIndex*/0);
@@ -79,7 +80,7 @@ TEST_F(MemoryLayoutTest, rowLayoutTestArrayAsPointerField) {
     SchemaPtr schema = Schema::create()
         ->addField("t1", createArrayDataType(BasicType::INT64, 10));
 
-    TupleBufferPtr buf = BufferManager::instance().getFixedSizeBuffer();
+    TupleBuffer buf = BufferManager::instance().getBufferBlocking();
     auto layout = createRowLayout(schema);
     for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
         auto arrayField = layout->getArrayField(recordIndex,  /*fieldIndex*/0);

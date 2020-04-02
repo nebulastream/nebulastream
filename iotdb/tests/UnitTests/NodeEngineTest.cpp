@@ -94,33 +94,31 @@ class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
         return false;
     }
 
-    bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf) {
-        uint64_t* tuples = (uint64_t*) buf->getBuffer();
+    bool executeStage(uint32_t pipeline_stage_id, TupleBuffer& inBuf) {
+        auto tuples = inBuf.getBufferAs<uint64_t>();
 
         NES_INFO("Test: Start execution");
 
-        for (size_t i = 0; i < buf->getNumberOfTuples(); ++i) {
+        for (size_t i = 0; i < inBuf.getNumberOfTuples(); ++i) {
             count++;
             sum += tuples[i];
         }
 
         NES_INFO(
-            "Test: query result = Processed Block:" << buf->getNumberOfTuples() << " count: " << count << "sum: "
+            "Test: query result = Processed Block:" << inBuf.getNumberOfTuples() << " count: " << count << "sum: "
                                                     << sum)
 
         DataSinkPtr sink = this->getSinks()[0];
         NES_DEBUG("TEST: try to get buffer")
-        //  sink->getSchema().getSchemaSizeInBytes();
-        TupleBufferPtr outputBuffer =
-            BufferManager::instance().getFixedSizeBuffer();
+        //  sink->getSchema().getSchemaSize();
+        auto outputBuffer = BufferManager::instance().getBufferBlocking();
         NES_DEBUG("TEST: got buffer")
-        u_int32_t* arr = (u_int32_t*) outputBuffer->getBuffer();
+        u_int32_t* arr = (u_int32_t*) outputBuffer.getBuffer();
         arr[0] = sum;
-        outputBuffer->setNumberOfTuples(1);
-        outputBuffer->setTupleSizeInBytes(4);
+        outputBuffer.setNumberOfTuples(1);
+        outputBuffer.setTupleSizeInBytes(4);
         //  ysbRecordResult* outputBufferPtr = (ysbRecordResult*)outputBuffer->buffer;
         sink->writeData(outputBuffer);
-        BufferManager::instance().releaseFixedSizeBuffer(outputBuffer);
         return true;
     }
 };
@@ -210,20 +208,22 @@ TEST_F(EngineTest, start_stop_engine_empty) {
     NodeEngine* ptr = new NodeEngine();
     ptr->start();
     ptr->stop();
+    delete ptr;
 }
 
 TEST_F(EngineTest, deploy_start_stop_test) {
     CompiledTestQueryExecutionPlanPtr qep = setupQEP();
 
-    std::cout << "Query " << qep << endl;
+    std::cout << "Query " << qep <<
+    endl;
 
-    NodeEngine* ptr = new NodeEngine();
+    auto ptr = new NodeEngine();
     ptr->deployQuery(qep);
     ptr->start();
     sleep(1);
     ptr->stop();
-
     testOutput();
+    delete ptr;
 }
 
 TEST_F(EngineTest, start_deploy_stop_test) {
@@ -236,6 +236,7 @@ TEST_F(EngineTest, start_deploy_stop_test) {
     ptr->stop();
 
     testOutput();
+    delete ptr;
 }
 
 TEST_F(EngineTest, start_deploy_undeploy_stop_test) {
@@ -249,6 +250,7 @@ TEST_F(EngineTest, start_deploy_undeploy_stop_test) {
     ptr->stop();
 
     testOutput();
+    delete ptr;
 }
 
 TEST_F(EngineTest, startWithRedeploy_test) {
@@ -264,6 +266,7 @@ TEST_F(EngineTest, startWithRedeploy_test) {
     ptr->startWithRedeploy();
 
     testOutput();
+    delete ptr;
 }
 
 TEST_F(EngineTest, stopWithRedeploy_test) {
@@ -276,6 +279,7 @@ TEST_F(EngineTest, stopWithRedeploy_test) {
     ptr->stopWithUndeploy();
 
     testOutput();
+    delete ptr;
 }
 
 TEST_F(EngineTest, resetQEP_test) {
@@ -288,6 +292,7 @@ TEST_F(EngineTest, resetQEP_test) {
     ptr->resetQEPs();
 
     testOutput();
+    delete ptr;
 }
 
 TEST_F(EngineTest, change_dop_with_restart_test) {
@@ -301,6 +306,7 @@ TEST_F(EngineTest, change_dop_with_restart_test) {
     ptr->stop();
 
     testOutput();
+    delete ptr;
 }
 
 TEST_F(EngineTest, change_dop_without_restart_test) {
@@ -316,24 +322,25 @@ TEST_F(EngineTest, change_dop_without_restart_test) {
     EXPECT_EQ(ptr->getDOP(), size_t(2));
 
     testOutput();
+    delete ptr;
 }
 
 TEST_F(EngineTest, DISABLED_parallel_different_source_test) {
-    CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
-    DataSourcePtr source1 =
-        createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
-    SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep1.txt");
-    qep1->addDataSource(source1);
-    qep1->addDataSink(sink1);
+  CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
+  DataSourcePtr source1 =
+  createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
+  SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
+  DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep1.txt");
+  qep1->addDataSource(source1);
+  qep1->addDataSink(sink1);
 
-    CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
-    DataSourcePtr source2 =
-        createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
-    SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink2 = createBinaryFileSinkWithSchema(sch2, "qep2.txt");
-    qep2->addDataSource(source2);
-    qep2->addDataSink(sink2);
+  CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
+  DataSourcePtr source2 =
+  createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
+  SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
+  DataSinkPtr sink2 = createBinaryFileSinkWithSchema(sch2, "qep2.txt");
+  qep2->addDataSource(source2);
+  qep2->addDataSink(sink2);
 
     NodeEngine* ptr = new NodeEngine();
     ptr->start();
@@ -345,16 +352,17 @@ TEST_F(EngineTest, DISABLED_parallel_different_source_test) {
 
     testOutput("qep1.txt");
     testOutput("qep2.txt");
+    delete ptr;
 }
 
 TEST_F(EngineTest, DISABLED_parallel_same_source_test) {
-    CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
-    DataSourcePtr source1 =
-        createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
-    SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep1.txt");
-    qep1->addDataSource(source1);
-    qep1->addDataSink(sink1);
+  CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
+  DataSourcePtr source1 =
+  createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
+  SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
+  DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep1.txt");
+  qep1->addDataSource(source1);
+  qep1->addDataSink(sink1);
 
     CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
     DataSinkPtr sink2 = createBinaryFileSinkWithSchema(sch1, "qep2.txt");
@@ -372,23 +380,25 @@ TEST_F(EngineTest, DISABLED_parallel_same_source_test) {
 
     testOutput("qep1.txt");
     testOutput("qep2.txt");
+
+    delete ptr;
 }
 
 TEST_F(EngineTest, DISABLED_parallel_same_sink_test) {
-    CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
-    DataSourcePtr source1 =
-        createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
-    SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep12.txt");
-    qep1->addDataSource(source1);
-    qep1->addDataSink(sink1);
+  CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
+  DataSourcePtr source1 =
+  createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
+  SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
+  DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep12.txt");
+  qep1->addDataSource(source1);
+  qep1->addDataSink(sink1);
 
-    CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
-    DataSourcePtr source2 =
-        createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
-    SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
-    qep2->addDataSource(source1);
-    qep2->addDataSink(sink1);
+  CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
+  DataSourcePtr source2 =
+  createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
+  SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
+  qep2->addDataSource(source1);
+  qep2->addDataSink(sink1);
 
     NodeEngine* ptr = new NodeEngine();
     ptr->deployQueryWithoutStart(qep1);
@@ -399,16 +409,17 @@ TEST_F(EngineTest, DISABLED_parallel_same_sink_test) {
     sleep(1);
     ptr->stop();
     testOutput("qep12.txt", joinedExpectedOutput);
+    delete ptr;
 }
 
 TEST_F(EngineTest, DISABLED_parallel_same_source_and_sink_test) {
-    CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
-    DataSourcePtr source1 =
-        createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
-    SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep3.txt");
-    qep1->addDataSource(source1);
-    qep1->addDataSink(sink1);
+  CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
+  DataSourcePtr source1 =
+  createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
+  SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
+  DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep3.txt");
+  qep1->addDataSource(source1);
+  qep1->addDataSink(sink1);
 
     CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
     qep2->addDataSource(source1);
@@ -424,19 +435,19 @@ TEST_F(EngineTest, DISABLED_parallel_same_source_and_sink_test) {
     ptr->stop();
 
     testOutput("qep3.txt", joinedExpectedOutput);
+    delete ptr;
 }
 //TODO: enable after buffer redesign
 TEST_F(EngineTest, DISABLED_blocking_test) {
-    CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
-    DataSourcePtr source1 =
-        createDefaultSourceWithoutSchemaForOneBufferForVarBuffers(10, 0);
-    SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep12.txt");
-    qep1->addDataSource(source1);
-    qep1->addDataSink(sink1);
+  CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
+  DataSourcePtr source1 =
+      createDefaultSourceWithoutSchemaForOneBufferForVarBuffers(10, 0);
+  SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
+  DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep12.txt");
+  qep1->addDataSource(source1);
+  qep1->addDataSink(sink1);
 
     NodeEngine* ptr = new NodeEngine();
-    BufferManager::instance().resizeFixedBufferCnt(10);
     ptr->deployQueryWithoutStart(qep1);
     ptr->start();
     source1->start();
@@ -444,6 +455,7 @@ TEST_F(EngineTest, DISABLED_blocking_test) {
     source1->stop();
     ptr->stop();
     testOutput("qep12.txt", joinedExpectedOutput10);
+    delete ptr;
 }
 
 }

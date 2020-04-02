@@ -21,11 +21,11 @@ AttributeField::AttributeField(const std::string &_name, uint32_t _size)
 }
 uint32_t AttributeField::getFieldSize() const { return data_type->getSizeBytes(); }
 
-const bool AttributeField::hasType() const {
+bool AttributeField::hasType() const {
   return data_type != nullptr;
 }
 
-const DataTypePtr AttributeField::getDataType() const { return data_type; }
+DataTypePtr AttributeField::getDataType() const { return data_type; }
 
 const std::string AttributeField::toString() const {
 

@@ -7,16 +7,18 @@
 #include <memory>
 #include <mutex>
 #include <vector>
-
-#include "API/Types/DataTypes.hpp"
-#include "TupleBuffer.hpp"
-#include <Util/BlockingQueue.hpp>
+#include <optional>
+//#include "API/Types/DataTypes.hpp"
 
 namespace NES {
 
 class TupleBuffer;
-typedef std::shared_ptr<TupleBuffer> TupleBufferPtr;
 
+#ifndef USE_NEW_BUFFER_MANAGEMENT
+typedef std::shared_ptr<TupleBuffer> TupleBufferPtr;
+#else
+#endif
+#ifndef USE_NEW_BUFFER_MANAGEMENT
 /**
  * @brief the buffer manager serves as the general maintainer of
  * Resource allocation inside the engine.
@@ -26,13 +28,57 @@ typedef std::shared_ptr<TupleBuffer> TupleBufferPtr;
  *    - Each buffer can only be provided once, no buffer sharing (unclear what happens when pointer is passed around)
  *    - Current Locking scheme is too restrictive
  */
+
 class BufferManager {
 
  public:
   /**
    * @brief Singleton implementation of Buffer Manager
    */
-  static BufferManager& instance();
+  static BufferManager &instance();
+
+  /**
+   * @brief add buffer with default size
+   */
+  void addOneBufferWithDefaultSize();
+
+  /**
+   * @brief remove a particular buffer from the buffer pool
+   * @param Pointer to buffer to be deleted
+   * @return true if buffer was deleted, false if buffer was not present
+   */
+  bool removeBuffer(TupleBufferPtr tuple_buffer);
+
+  /**
+   * @brief get a free buffer of default size
+   * @return Pointer to free buffer
+   */
+  TupleBufferPtr getBuffer();
+
+  /**
+   * @brief release a given buffer such that it can be reused
+   * @param Pointer to the buffer to be released
+   * @return bool indicating if buffer was released, if false buffer was not present
+   */
+  bool releaseBuffer(const TupleBufferPtr tuple_buffer);
+
+  /**
+   * @brief return the total number of buffer used in the buffer manager
+   * @return number of buffer
+   */
+  size_t getNumberOfBuffers();
+
+  /**
+   * @brief return the number of buffer free in the buffer manager
+   * @return number free of buffer
+   */
+  size_t getNumberOfFreeBuffers();
+
+  /**
+   * @brief return the size of one buffer in bytes
+   * @return size of a buffer in bytes
+   */
+  size_t getBufferSize();
 
   /**
    * @brief print statistics about the buffer manager interaction to the info log
@@ -40,104 +86,19 @@ class BufferManager {
   void printStatistics();
 
   /**
-   * @brief reset all buffer pools
-   */
-  void reset();
-
-  /**
-   * FIXED SIZE BUFFER METHODS
-   */
-
-  /**
-   * @brief get a free buffer of default size
-   * @return Pointer to free buffer
-   */
-  TupleBufferPtr getFixedSizeBuffer();
-
-  /**
-   * @brief get a free buffer of default size with timeout
-   * @param timeout in ms
-   * @return Pointer to free buffer
-   */
-  TupleBufferPtr getFixedSizeBufferWithTimeout(size_t timeout_ms);
-
-  /**
-   * @brief release a given buffer such that it can be reused
-   * @param Pointer to the buffer to be released
-   * @return bool indicating if buffer was released, if false buffer was not present
-   */
-  bool releaseFixedSizeBuffer(const TupleBufferPtr tupleBuffer);
-
-  /**
-   * @brief delete and create n new buffers of currentBufferSize
+   * @brief delete and create n new buffers
    * CAUTION: this deletes all existing buffers
    * @param number of new buffers
    */
-  void resizeFixedBufferCnt(size_t newBufferCnt);
+  void setNumberOfBuffers(size_t n);
 
   /**
-   * @brief delete and re-create all buffers of new size (same buffer cnt as before)
-   * CAUTION: this deletes all existing buffers
-   * @param new size of buffer new buffers
-   */
-  void resizeFixedBufferSize(size_t newBufferSizeInByte);
-
-  /**
-   * @brief return the size of one buffer in bytes
-   * @return size of a buffer in bytesfor (auto& entry : fixSizeBufferPool) {
-   //TODO: we have to make sure that no buffer is currently used
-   */
-  size_t getFixedBufferSize();
-
-  /**
-   --------------------
-   * VAR SIZE BUFFER METHODS
-   * ----------------------
-   */
-
-  /**
-   * @brief return the total number of buffer used in the buffer manager
-   * @return number of buffer
-   */
-  size_t getNumberOfFixedBuffers();
-
-  /**
-   * @brief return the number of buffer free in the buffer manager
-   * @return number free of buffer
-   */
-  size_t getNumberOfFreeFixedBuffers();
-
-  /**
-   * @brief release a given buffer such that it can be reused
-   * @param Pointer to the buffer to be released
-   * @return bool indicating if buffer was released, if false buffer was not present
-   */
-  bool releaseVarSizedBuffer(const TupleBufferPtr tupleBuffer);
-
-  /**
-   * @brief return the total number of var buffer used in the buffer manager
-   * @return number of buffer
-   */
-  size_t getNumberOfVarBuffers();
-
-  /**
-   * @brief return the number of var buffer free in the buffer manager
-   * @return number free of buffer
-   */
-  size_t getNumberOfFreeVarBuffers();
-
-  /**
-   * @brief create a new buffer of size variable size
-   * @return Pointer to free buffer
-   */
-  TupleBufferPtr createVarSizeBuffer(size_t bufferSizeInByte);
-
-  /**
-   * @brief get a variable buffer with size larger than bufferSizeInByte
-   * @note if no such buffer exists, a nullptr is returned
-   * @return Pointer to free buffer
-   */
-  TupleBufferPtr getVarSizeBufferLargerThan(size_t bufferSizeInByte);
+     * @brief delete and recreate all buffers with the new buffer size,
+     * buffer count remains the same
+     * CAUTION: this deletes all existing buffers
+     * @param size of new buffers
+     */
+  void setBufferSize(size_t size);
 
  private:
   /* implement singleton semantics: no construction,
@@ -148,42 +109,91 @@ class BufferManager {
    *  - bufferSizeInByte = 4KB
    * */
   BufferManager();
-//  BufferManager(const BufferManager&);
-//  BufferManager& operator=(const BufferManager&)
-
+  BufferManager(const BufferManager &);
+  BufferManager &operator=(const BufferManager &);
   ~BufferManager();
 
-  /**
-   * @brief removes all buffers from the pool
-   */
-  void clearFixBufferPool();
-
-  void clearVarBufferPool();
-
-  /**
-   * @brief add buffer with default size
-   */
-  void addOneBufferWithFixedSize();
-
-  /**
-   * @brief add buffer with default size
-   */
-  TupleBufferPtr addOneBufferWithVarSize(size_t bufferSizeInByte);
-
   //Map containing Tuple Pointer and if it is currently used
-  BlockingQueue<TupleBufferPtr>* fixedSizeBufferPool;
-  std::map<TupleBufferPtr, /**used*/std::atomic<bool>> varSizeBufferPool;
+  std::map<TupleBufferPtr, std::atomic<bool>> buffer_pool;
 
-  size_t currentBufferSize;
-  size_t numberOfFreeVarSizeBuffers;
+  size_t bufferSizeInByte;
 
-  std::mutex changeBufferMutex;
-  std::mutex resizeMutex;
+  std::mutex mutex;
 
   //statistics
+  size_t noFreeBuffer;
+  size_t providedBuffer;
+  size_t releasedBuffer;
+  size_t maxNumberOfRetry;
 };
 
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
+#else
+
+class MemorySegment;
+class TupleBuffer;
+
+class BufferManager {
+    friend class TupleBuffer;
+  private:
+    struct UnpooledBufferHolder {
+        uint32_t size;
+        MemorySegment* segment;
+
+        friend bool operator<(const UnpooledBufferHolder& lhs, const UnpooledBufferHolder& rhs) {
+            return lhs.size < rhs.size;
+        }
+    };
+  public:
+    BufferManager();
+
+    BufferManager(const BufferManager&) = delete;
+    BufferManager& operator=(const BufferManager&) = delete;
+    ~BufferManager();
+
+    void configure(size_t bufferSize, size_t numOfBuffers);
+
+    TupleBuffer getBufferBlocking();
+    std::optional<TupleBuffer> getBufferNoBlocking();
+    std::optional<TupleBuffer> getBufferTimeout(std::chrono::milliseconds timeout_ms);
+    std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize);
+
+
+    size_t getBufferSize() const;
+    size_t getNumOfPooledBuffers() const;
+    size_t getNumOfUnpooledBuffers();
+    size_t getAvailableBuffers();
+
+    static BufferManager& instance();
+
+    void printStatistics();
+
+    void requestShutdown();
+
+  private:
+    void recyclePooledBuffer(MemorySegment* buffer);
+    void recycleUnpooledBuffer(MemorySegment* buffer);
+
+  private:
+    std::vector<MemorySegment> allBuffers;
+    std::vector<MemorySegment*> availableBuffers;
+    std::vector<UnpooledBufferHolder> unpooledBuffers;
+
+    std::mutex availableBuffersMutex;
+    std::condition_variable availableBuffersCvar;
+
+    std::mutex unpooledBuffersMutex;
+
+    uint32_t bufferSize;
+    uint32_t numOfBuffers;
+
+    std::atomic<bool> isConfigured;
+
+    bool shutdownRequested;
+
+};
+
+#endif
 
 }
 #endif

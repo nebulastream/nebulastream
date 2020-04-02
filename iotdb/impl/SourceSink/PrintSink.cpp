@@ -19,8 +19,8 @@ PrintSink::PrintSink(SchemaPtr pSchema, std::ostream& pOutputStream)
 PrintSink::~PrintSink() {
 }
 
-bool PrintSink::writeData(const TupleBufferPtr input_buffer) {
-    outputStream << NES::toString(input_buffer.get(), this->getSchema())
+bool PrintSink::writeData(TupleBuffer& input_buffer) {
+    outputStream << NES::toString(input_buffer, this->getSchema())
                  << std::endl;
     return true;
 }

@@ -33,10 +33,10 @@ BinarySource::BinarySource(SchemaPtr schema, const std::string& _file_path)
   tuple_size = schema->getSchemaSizeInBytes();
 }
 
-TupleBufferPtr BinarySource::receiveData() {
-  TupleBufferPtr buf = BufferManager::instance().getFixedSizeBuffer();
-  fillBuffer(*buf);
-  return buf;
+std::optional<TupleBuffer> BinarySource::receiveData() {
+    auto buf = BufferManager::instance().getBufferBlocking();
+    fillBuffer(buf);
+    return buf;
 }
 
 const std::string BinarySource::toString() const {
@@ -47,23 +47,23 @@ const std::string BinarySource::toString() const {
 }
 
 void BinarySource::fillBuffer(TupleBuffer& buf) {
-  /** while(generated_tuples < num_tuples_to_process)
-   * read <buf.buffer_size> bytes data from file into buffer
-   * advance internal file pointer, if we reach the file end, set to file begin
-   */
+    /** while(generated_tuples < num_tuples_to_process)
+     * read <buf.buffer_size> bytes data from file into buffer
+     * advance internal file pointer, if we reach the file end, set to file begin
+     */
 
-  if (input.tellg() == file_size) {
-    input.seekg(0, input.beg);
-  }
-  size_t size_to_read =
-      buf.getBufferSizeInBytes() < (uint64_t) file_size ? buf.getBufferSizeInBytes() : file_size;
-  input.read((char *) buf.getBuffer(), size_to_read);
-  uint64_t generated_tuples_this_pass = size_to_read / tuple_size;
-  buf.setTupleSizeInBytes(tuple_size);
-  buf.setNumberOfTuples(generated_tuples_this_pass);
+    if (input.tellg() == file_size) {
+        input.seekg(0, input.beg);
+    }
+    size_t size_to_read =
+        buf.getBufferSize() < (uint64_t) file_size ? buf.getBufferSize() : file_size;
+    input.read(buf.getBufferAs<char>(), size_to_read);
+    uint64_t generated_tuples_this_pass = size_to_read/tuple_size;
+    buf.setTupleSizeInBytes(tuple_size);
+    buf.setNumberOfTuples(generated_tuples_this_pass);
 
-  generatedTuples += generated_tuples_this_pass;
-  generatedBuffers++;
+    generatedTuples += generated_tuples_this_pass;
+    generatedBuffers++;
 }
 SourceType BinarySource::getType() const {
     return BINARY_SOURCE;

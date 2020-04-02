@@ -30,8 +30,8 @@ SchemaPtr DataSink::getSchema() const {
 }
 
 bool DataSink::writeDataInBatch(
-    const std::vector<TupleBufferPtr>& input_buffers) {
-  for (const auto& buf : input_buffers) {
+    std::vector<TupleBuffer>& input_buffers) {
+  for (auto& buf : input_buffers) {
     if (!writeData(buf)) {
       return false;
     }

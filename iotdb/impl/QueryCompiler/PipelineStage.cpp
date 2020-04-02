@@ -23,13 +23,13 @@ PipelineStage::PipelineStage(uint32_t pipelineStageId,
     windowHandler(std::move(windowHandler)) {
 }
 
-bool PipelineStage::execute(TupleBufferPtr inputBuffer,
-                            TupleBufferPtr outputBuffer) {
+bool PipelineStage::execute(TupleBuffer& inputBuffer,
+                            TupleBuffer& outputBuffer) {
     NES_DEBUG("Execute Pipeline Stage!");
     // only get the window manager and state if the pipeline has a window handler.
     auto windowStage = hasWindowHandler()? windowHandler->getWindowState(): nullptr;
     auto windowManager = hasWindowHandler()? windowHandler->getWindowManager(): WindowManagerPtr();
-    auto result = executablePipeline->execute(std::move(inputBuffer), windowStage, windowManager, std::move(outputBuffer));
+    auto result = executablePipeline->execute(inputBuffer, windowStage, windowManager, outputBuffer);
     if (result) {
         NES_ERROR("Execution of PipelineStage Failed!");
     }

@@ -11,89 +11,88 @@ class QueryExecutionPlan;
 typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 
 class QueryExecutionPlan {
- public:
-  QueryExecutionPlan();
-  virtual ~QueryExecutionPlan();
+  public:
+    QueryExecutionPlan();
+    virtual ~QueryExecutionPlan();
 
-  /**
-   * @brief Setup the query plan, e.g., instantiate state variables.
-   */
-  bool setup();
+    /**
+     * @brief Setup the query plan, e.g., instantiate state variables.
+     */
+    bool setup();
 
-  /**
-   * @brief Start the query plan, e.g., start window thread.
-   */
-  bool start();
+    /**
+     * @brief Start the query plan, e.g., start window thread.
+     */
+    bool start();
 
-  /**
-   * @brief Stop the query plan and free all associated resources.
-   */
-  bool stop();
+    /**
+     * @brief Stop the query plan and free all associated resources.
+     */
+    bool stop();
 
-  /**
-   * @brief Execute a particular pipeline stage with the given input buffer.
-   * @param pipeline_stage_id
-   * @param buf
-   * @return true if pipeline stage was executed successfully.
-   */
-  virtual bool executeStage(uint32_t pipeline_stage_id,
-                            const TupleBufferPtr buf);
+    /**
+     * @brief Execute a particular pipeline stage with the given input buffer.
+     * @param pipeline_stage_id
+     * @param buf
+     * @return true if pipeline stage was executed successfully.
+     */
+    virtual bool executeStage(uint32_t pipeline_stage_id, TupleBuffer& buf);
 
-  /**
-   * @brief Get pipeline stage id for a data source.
-   * @param source
-   * @return pipline stage id
-   */
-  uint32_t stageIdFromSource(DataSource *source);
+    /**
+     * @brief Get pipeline stage id for a data source.
+     * @param source
+     * @return pipline stage id
+     */
+    uint32_t stageIdFromSource(DataSource* source);
 
-  /**
-   * @brief Add a data source to the query plan.
-   * @param source
-   */
-  void addDataSource(DataSourcePtr source);
+    /**
+     * @brief Add a data source to the query plan.
+     * @param source
+     */
+    void addDataSource(DataSourcePtr source);
 
-  /**
-   * @brief Get data sources.
-   */
-  const std::vector<DataSourcePtr> getSources() const;
+    /**
+     * @brief Get data sources.
+     */
+    const std::vector<DataSourcePtr> getSources() const;
 
-  /**
-   * @brief Add a data sing to the query plan.
-   * @param sink
-   */
-  void addDataSink(DataSinkPtr sink);
+    /**
+     * @brief Add a data sing to the query plan.
+     * @param sink
+     */
+    void addDataSink(DataSinkPtr sink);
 
-  /**
-   * @brief Get data sinks.
-   */
-  const std::vector<DataSinkPtr> getSinks() const;
+    /**
+     * @brief Get data sinks.
+     */
+    const std::vector<DataSinkPtr> getSinks() const;
 
-  /**
-   * Appends a pipeline stage to the query plan.
-   * @param pipelineStage
-   */
-  void appendsPipelineStage(PipelineStagePtr pipelineStage);
+    /**
+     * Appends a pipeline stage to the query plan.
+     * @param pipelineStage
+     */
+    void appendsPipelineStage(PipelineStagePtr pipelineStage);
 
-  /**
-   * @brief Gets number of pipeline stages.
-   */
-  uint32_t numberOfPipelineStages() {
-    return stages.size();
-  }
+    /**
+     * @brief Gets number of pipeline stages.
+     */
+    uint32_t numberOfPipelineStages() {
+        return stages.size();
+    }
 
-  void print();
+    void print();
 
- protected:
-  QueryExecutionPlan(std::vector<DataSourcePtr> sources,
-                     std::vector<PipelineStagePtr> stages,
-                     std::map<DataSource *, uint32_t> sourceToStage,
-                     std::map<uint32_t, uint32_t> stageToDest);
+  protected:
+    QueryExecutionPlan(std::vector<DataSourcePtr> sources,
+                       std::vector<PipelineStagePtr> stages,
+                       std::map<DataSource*, uint32_t> sourceToStage,
+                       std::map<uint32_t, uint32_t> stageToDest);
 
-  std::vector<DataSourcePtr> sources;
-  std::vector<DataSinkPtr> sinks;
-  std::vector<PipelineStagePtr> stages;
-  std::map<DataSource *, uint32_t> sourceToStage;
-  std::map<uint32_t, uint32_t> stageToDest;
+    std::vector<DataSourcePtr> sources;
+    std::vector<DataSinkPtr> sinks;
+    std::vector<PipelineStagePtr> stages;
+    std::map<DataSource*, uint32_t> sourceToStage;
+    std::map<uint32_t, uint32_t> stageToDest;
 };
 
 }  // namespace NES

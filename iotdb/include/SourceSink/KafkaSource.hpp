@@ -27,36 +27,36 @@ class KafkaSource : public DataSource {
     SourceType getType() const override;
     ~KafkaSource() override;
 
-  TupleBufferPtr receiveData() override;
+    std::optional<TupleBuffer> receiveData() override;
 
-  /**
-   * @brief override the toString method for the kafka source
-   * @return returns string describing the kafka source
-   */
-  const std::string toString() const override;
+    /**
+     * @brief override the toString method for the kafka source
+     * @return returns string describing the kafka source
+     */
+    const std::string toString() const override;
 
- private:
-  void _connect();
-  friend class boost::serialization::access;
-  template <class Archive> void serialize(Archive& ar,
-                                          const unsigned int)
-  {
-    ar& boost::serialization::base_object<DataSource>(*this);
-    ar& brokers;
-    ar& topic;
-    ar& groupId;
-  }
+  private:
+    void _connect();
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive& ar,
+                   const unsigned int) {
+        ar & boost::serialization::base_object<DataSource>(*this);
+        ar & brokers;
+        ar & topic;
+        ar & groupId;
+    }
 
-  std::string brokers;
-  std::string topic;
-  std::string groupId;
-  bool autoCommit;
+    std::string brokers;
+    std::string topic;
+    std::string groupId;
+    bool autoCommit;
 
-  cppkafka::Configuration config;
+    cppkafka::Configuration config;
 
-  std::unique_ptr<cppkafka::Consumer> consumer;
+    std::unique_ptr<cppkafka::Consumer> consumer;
 
-  std::chrono::milliseconds kafkaConsumerTimeout;
+    std::chrono::milliseconds kafkaConsumerTimeout;
 };
 } // namespace NES
 

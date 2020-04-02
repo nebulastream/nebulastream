@@ -17,9 +17,9 @@ class CompiledExecutablePipeline : public ExecutablePipeline {
   CompiledExecutablePipeline(CompiledCodePtr compiled_code);
   CompiledExecutablePipeline(const CompiledExecutablePipeline &);
   ExecutablePipelinePtr copy() const override;
-  uint32_t execute(const TupleBufferPtr input_buffers,
+  uint32_t execute(TupleBuffer& input_buffers,
                void *state, WindowManagerPtr window_manager,
-               TupleBufferPtr result_buf) override;
+               TupleBuffer& result_buf) override;
  private:
   CompiledCodePtr compiled_code_;
 };

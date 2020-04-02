@@ -62,7 +62,7 @@ class DataSource {
      * @Note this function is overwritten by the particular data source
      * @return returns a tuple buffer
      */
-    virtual TupleBufferPtr receiveData() = 0;
+    virtual std::optional<TupleBuffer> receiveData() = 0;
 
     /**
      * @brief virtual function to get a string describing the particular source

@@ -33,8 +33,8 @@ void WindowHandler::trigger() {
         NES_DEBUG("WindowHandler: check widow trigger");
         auto windowStateVariable = static_cast<StateVariable<int64_t, WindowSliceStore<int64_t>*>*>(this->windowState);
         // create the output tuple buffer
-        auto tupleBuffer = BufferManager::instance().getFixedSizeBuffer();
-        tupleBuffer->setTupleSizeInBytes(8);
+        auto tupleBuffer = BufferManager::instance().getBufferBlocking();
+        tupleBuffer.setTupleSizeInBytes(8);
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {
             // write all window aggregates to the tuple buffer
@@ -42,8 +42,8 @@ void WindowHandler::trigger() {
             this->aggregateWindows<int64_t, int64_t>(it.second, this->windowDefinition, tupleBuffer);
         }
         // if produced tuple then send the tuple buffer to the next pipeline stage or sink
-        if (tupleBuffer->getNumberOfTuples() > 0) {
-            NES_DEBUG("WindowHandler: Dispatch output buffer with " << tupleBuffer->getNumberOfTuples() << " records");
+        if (tupleBuffer.getNumberOfTuples() > 0) {
+            NES_DEBUG("WindowHandler: Dispatch output buffer with " << tupleBuffer.getNumberOfTuples() << " records");
             Dispatcher::instance().addWorkForNextPipeline(
                 tupleBuffer,
                 this->queryExecutionPlan,

@@ -98,12 +98,12 @@ bool NodeEngine::startWithRedeploy() {
 }
 
 bool NodeEngine::stop() {
-    NES_DEBUG("NodeEngine:stop stop thread pool")
+    NES_DEBUG("NodeEngine: stop thread pool")
     return ThreadPool::instance().stop();
 }
 
 bool NodeEngine::stopWithUndeploy() {
-    NES_DEBUG("NodeEngine:stopWithUndeploy stop thread pool")
+    NES_DEBUG("NodeEngine: stop thread pool")
     for (QueryExecutionPlanPtr qep : qeps) {
         NES_DEBUG("NodeEngine: deregister query " << qep)
         Dispatcher::instance().deregisterQuery(qep);
@@ -111,25 +111,14 @@ bool NodeEngine::stopWithUndeploy() {
     return ThreadPool::instance().stop();
 }
 
-void NodeEngine::applyConfig(Config& conf) {
+void NodeEngine::applyConfig(Config &conf) {
     if (conf.getNumberOfWorker() != ThreadPool::instance().getNumberOfThreads()) {
         NES_DEBUG(
-            "NodeEngine: changing numberOfWorker from " << ThreadPool::instance().getNumberOfThreads() << " to "
-                                                        << conf.getNumberOfWorker())
+                "NodeEngine: changing numberOfWorker from " << ThreadPool::instance().getNumberOfThreads() << " to "
+                                                            << conf.getNumberOfWorker())
         ThreadPool::instance().setNumberOfThreadsWithRestart(conf.getNumberOfWorker());
     }
-    if (conf.getBufferCount() != BufferManager::instance().getNumberOfFixedBuffers()) {
-        NES_DEBUG(
-            "NodeEngine: changing bufferCount from " << BufferManager::instance().getNumberOfFixedBuffers() << " to "
-                                                     << conf.getBufferCount())
-        BufferManager::instance().resizeFixedBufferCnt(conf.getBufferCount());
-    }
-    if (conf.getBufferSizeInByte() != BufferManager::instance().getFixedBufferSize()) {
-        NES_DEBUG(
-            "NodeEngine: changing buffer size from " << BufferManager::instance().getFixedBufferSize() << " to "
-                                                     << conf.getBufferSizeInByte())
-        BufferManager::instance().resizeFixedBufferSize(conf.getBufferSizeInByte());
-    }
+    BufferManager::instance().configure(conf.getBufferSizeInByte(), conf.getBufferCount());
     NES_DEBUG("NodeEngine: config successuflly changed")
 }
 
