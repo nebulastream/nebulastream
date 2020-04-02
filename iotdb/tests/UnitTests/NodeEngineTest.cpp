@@ -424,8 +424,8 @@ TEST_F(EngineTest, parallel_same_source_and_sink_test) {
 
   testOutput("qep3.txt", joinedExpectedOutput);
 }
-
-TEST_F(EngineTest, blocking_test) {
+//TODO: enable after buffer redesign
+TEST_F(EngineTest, DISABLED_blocking_test) {
   CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source1 =
       createDefaultSourceWithoutSchemaForOneBufferForVarBuffers(10, 0);
