@@ -317,7 +317,7 @@ TEST_F(EngineTest, change_dop_without_restart_test) {
   testOutput();
 }
 
-TEST_F(EngineTest, parallel_different_source_test) {
+TEST_F(EngineTest, DISABLED_parallel_different_source_test) {
   CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source1 =
   createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
@@ -346,7 +346,7 @@ TEST_F(EngineTest, parallel_different_source_test) {
   testOutput("qep2.txt");
 }
 
-TEST_F(EngineTest, parallel_same_source_test) {
+TEST_F(EngineTest, DISABLED_parallel_same_source_test) {
   CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source1 =
   createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
@@ -373,7 +373,7 @@ TEST_F(EngineTest, parallel_same_source_test) {
   testOutput("qep2.txt");
 }
 
-TEST_F(EngineTest, parallel_same_sink_test) {
+TEST_F(EngineTest, DISABLED_parallel_same_sink_test) {
   CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source1 =
   createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
@@ -400,7 +400,7 @@ TEST_F(EngineTest, parallel_same_sink_test) {
   testOutput("qep12.txt", joinedExpectedOutput);
 }
 
-TEST_F(EngineTest, parallel_same_source_and_sink_test) {
+TEST_F(EngineTest, DISABLED_parallel_same_source_and_sink_test) {
   CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
   DataSourcePtr source1 =
   createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
