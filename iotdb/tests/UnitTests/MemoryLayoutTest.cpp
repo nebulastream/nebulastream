@@ -4,7 +4,6 @@
 #include <iostream>
 #include <thread>
 #include <gtest/gtest.h>
-#include <Util/Logger.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <API/Schema.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>

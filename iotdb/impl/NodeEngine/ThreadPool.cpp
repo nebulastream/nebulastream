@@ -3,7 +3,7 @@
 #include <NodeEngine/ThreadPool.hpp>
 #include <Util/Logger.hpp>
 #include <functional>
-
+#include <string.h>
 namespace NES {
 
 ThreadPool& ThreadPool::instance() {

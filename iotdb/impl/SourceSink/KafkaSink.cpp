@@ -61,7 +61,7 @@ bool KafkaSink::writeData(const TupleBufferPtr input_buffer) {
   }
 
   try {
-    cppkafka::Buffer buffer(input_buffer->getBuffer(),
+    cppkafka::Buffer buffer(reinterpret_cast<uint8_t*>(input_buffer->getBuffer()),
                             input_buffer->getBufferSizeInBytes());
     msgBuilder->payload(buffer);
 
