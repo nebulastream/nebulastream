@@ -34,7 +34,7 @@ NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(InputQueryPt
     placeOperators(nesExecutionPlanPtr, nesTopologyGraphPtr, sourceOperatorPtr, sourceNodePtrs);
 
     NES_INFO("HighThroughput: Adding forward operators.");
-    addForwardOperators(sourceNodePtrs, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
+    addForwardOperators(getType(), sourceNodePtrs, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
 
     NES_INFO("HighThroughput: Generating complete execution Graph.");
     completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlan);
@@ -103,28 +103,6 @@ void HighThroughputStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr
 
             if (!targetOperator) {
                 break;
-            }
-        }
-    }
-}
-
-void HighThroughputStrategy::addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes,
-                                         NESTopologyEntryPtr rootNode,
-                                         NESExecutionPlanPtr nesExecutionPlanPtr) const {
-
-    PathFinder pathFinder;
-
-    for (NESTopologyEntryPtr targetSource: sourceNodes) {
-
-        //Find the list of nodes connecting the source and destination nodes
-        std::vector<NESTopologyEntryPtr> candidateNodes = pathFinder.findPathWithMaxBandwidth(targetSource, rootNode);
-
-        for (NESTopologyEntryPtr candidateNode: candidateNodes) {
-
-            if (candidateNode->getCpuCapacity() == candidateNode->getRemainingCpuCapacity()) {
-                nesExecutionPlanPtr->createExecutionNode("FWD", to_string(candidateNode->getId()), candidateNode,
-                    /**executableOperator**/nullptr);
-                candidateNode->reduceCpuCapacity(1);
             }
         }
     }

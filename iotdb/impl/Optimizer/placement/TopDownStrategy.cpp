@@ -28,7 +28,7 @@ NESExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(
     placeOperators(nesExecutionPlanPtr, sinkOperator, sourceNodes, nesTopologyGraphPtr);
 
     NES_INFO("TopDown: Adding forward operators.");
-    addForwardOperators(sourceNodes, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
+    addForwardOperators(getType(), sourceNodes, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
 
     NES_INFO("TopDown: Generating complete execution Graph.");
     completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlanPtr);
@@ -154,27 +154,6 @@ void TopDownStrategy::addOperatorToExistingNode(OperatorPtr operatorPtr, Executi
     executionNode->setOperatorName(operatorName.str());
     executionNode->addChild(operatorPtr->copy());
     executionNode->addOperatorId(operatorPtr->getOperatorId());
-}
-
-void TopDownStrategy::addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes, NESTopologyEntryPtr rootNode,
-                                  NESExecutionPlanPtr nesExecutionPlanPtr) const {
-
-    PathFinder pathFinder;
-
-    for (NESTopologyEntryPtr targetSource: sourceNodes) {
-
-        //Find the list of nodes connecting the source and destination nodes
-        std::vector<NESTopologyEntryPtr> candidateNodes = pathFinder.findPathBetween(targetSource, rootNode);
-
-        for (NESTopologyEntryPtr candidateNode: candidateNodes) {
-
-            if (candidateNode->getCpuCapacity() == candidateNode->getRemainingCpuCapacity()) {
-                nesExecutionPlanPtr->createExecutionNode("FWD", to_string(candidateNode->getId()), candidateNode,
-                    /**executableOperator**/nullptr);
-                candidateNode->reduceCpuCapacity(1);
-            }
-        }
-    }
 }
 
 }

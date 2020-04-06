@@ -8,16 +8,35 @@
 #include "NESExecutionPlan.hpp"
 
 namespace NES {
-/**\brief:
- *         This is the interface for base optimizer that needed to be implemented by any new query optimizer.
+
+enum NESPlacementStrategyType {
+  TopDown,
+  BottomUp,
+  LowLatency,
+  HighThroughput,
+  MinimumResourceConsumption,
+  MinimumEnergyConsumption,
+  HighAvailability
+};
+
+static std::map<std::string, NESPlacementStrategyType> stringToPlacementStrategyType{
+    {"BottomUp", BottomUp},
+    {"TopDown", TopDown},
+    {"Latency", LowLatency},
+    {"HighThroughput", HighThroughput},
+    {"MinimumResourceConsumption", MinimumResourceConsumption},
+    {"MinimumEnergyConsumption", MinimumEnergyConsumption},
+    {"HighAvailability", HighAvailability},
+};
+
+/**
+ * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
  */
 class NESPlacementOptimizer {
  private:
 
  public:
-  NESPlacementOptimizer() {
-  }
-  ;
+  NESPlacementOptimizer() {};
 
   /**
    * @brief Returns an execution graph based on the input query and nes topology.
@@ -25,8 +44,7 @@ class NESPlacementOptimizer {
    * @param nesTopologyPlan
    * @return
    */
-  virtual NESExecutionPlanPtr initializeExecutionPlan(
-      InputQueryPtr inputQuery , NESTopologyPlanPtr nesTopologyPlan) = 0;
+  virtual NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan) = 0;
 
   /**
    * @brief This method will add system generated zmq source and sinks for each execution node.
@@ -37,35 +55,35 @@ class NESPlacementOptimizer {
    * @param schema
    * @param nesExecutionPlanPtr
    */
-  void addSystemGeneratedSourceSinkOperators(
-      const Schema& schema , NESExecutionPlanPtr nesExecutionPlanPtr);
+  void addSystemGeneratedSourceSinkOperators(const Schema &schema, NESExecutionPlanPtr nesExecutionPlanPtr);
 
   /**
    * @brief Fill the execution nesExecutionPlanPtr with forward operators in nes topology.
    * @param nesExecutionPlanPtr
    * @param nesTopologyPtr
    */
-  void completeExecutionGraphWithNESTopology(
-      NESExecutionPlanPtr nesExecutionPlanPtr ,
-      NESTopologyPlanPtr nesTopologyPtr);
+  void completeExecutionGraphWithNESTopology(NESExecutionPlanPtr nesExecutionPlanPtr,
+                                             NESTopologyPlanPtr nesTopologyPtr);
 
   /**
    * @brief this methods takes the user specified UDFS from the sample operator and add it to all Sense Operators
    * @param inputQuery
    */
-  void setUDFSFromSampleOperatorToSenseSources(
-      InputQueryPtr inputQuery);
+  void setUDFSFromSampleOperatorToSenseSources(InputQueryPtr inputQuery);
 
   /**
    * @brief Factory method returning different kind of optimizer.
-   * @param optimizerName
+   * @param placementStrategyName
    * @return instance of type BaseOptimizer
    */
-  static std::shared_ptr<NESPlacementOptimizer> getOptimizer(
-      std::string optimizerName);
+  static std::shared_ptr<NESPlacementOptimizer> getOptimizer(std::string placementStrategyName);
 
-  void convertFwdOptr(const Schema& schema ,
-                      ExecutionNodePtr executionNodePtr) const;
+  /**
+   * @brief replace forward operator with system generated source and sink operator.
+   * @param schema schema of the incoming or outgoing data for source and sink operator.
+   * @param executionNodePtr information about the execution node
+   */
+  void convertFwdOptr(const Schema &schema, ExecutionNodePtr executionNodePtr) const;
 
   /**
    * @brief This method returns the source operator in the user input query
@@ -73,8 +91,18 @@ class NESPlacementOptimizer {
    * @return source operator pointer
    */
   OperatorPtr getSourceOperator(OperatorPtr root);
+
+  /**
+   * @brief This method will add the forward operator where ever necessary along the selected path.
+   *
+   * @param nesPlacementStrategyType type of placement strategy to find the path
+   * @param sourceNodes vector of source nodes
+   * @param rootNode root node
+   * @param nesExecutionPlanPtr Pointer to the execution plan
+   */
+  void addForwardOperators(NESPlacementStrategyType nesPlacementStrategyType, vector<NESTopologyEntryPtr> sourceNodes,
+                           NESTopologyEntryPtr rootNode, NESExecutionPlanPtr nesExecutionPlanPtr);
+
 };
-
 }
-
 #endif //NESPLACEMENTOPTIMIZER_HPP
