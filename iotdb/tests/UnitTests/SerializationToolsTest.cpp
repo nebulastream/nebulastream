@@ -189,11 +189,3 @@ TEST_F(SerializationToolsTest, serialize_deserialize_executabletransferobject_EX
   EXPECT_TRUE(!serEto.empty());
 }
 
-/* Test serialization for printSink  */
-TEST_F(SerializationToolsTest, serialize_deserialize_packetHeader) {
-  PacketHeader pH(5, 5, "testId");
-  string serPh = SerializationTools::serPacketHeader(pH);
-  PacketHeader deserPh = SerializationTools::parsePacketHeader(serPh);
-  EXPECT_EQ(pH, deserPh);
-}
-

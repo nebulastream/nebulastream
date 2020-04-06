@@ -1,0 +1,80 @@
+#ifndef NES_ZMQSERVER_HPP
+#define NES_ZMQSERVER_HPP
+
+#include "NetworkCommon.hpp"
+#include "ExchangeProtocol.hpp"
+#include <zmq.hpp>
+#include <thread>
+#include <memory>
+#include <atomic>
+#include <future>
+#include <boost/core/noncopyable.hpp>
+
+namespace NES {
+class ThreadBarrier;
+namespace Network {
+
+
+class ZmqServer : public boost::noncopyable {
+private:
+    static constexpr const char* dispatcherPipe = "inproc://dispatcher";
+public:
+    /**
+     * Create a ZMQ server on hostname:port with numNetworkThreads i/o threads and a set of callbacks in exchangeProtocol
+     * @param hostname
+     * @param port
+     * @param numNetworkThreads
+     * @param exchangeProtocol
+     */
+    explicit ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNetworkThreads, ExchangeProtocol& exchangeProtocol);
+
+    ~ZmqServer();
+
+    /**
+     * Start the server. It throws exceptions if the starting fails.
+     */
+    void start();
+
+    /**
+     * Get the global zmq context
+     * @return
+     */
+    std::shared_ptr<zmq::context_t> getContext() {
+        return zmqContext;
+    }
+
+    /**
+     * Checks if the server is running
+     * @return
+     */
+    bool isRunning() const {
+        return _isRunning;
+    }
+
+private:
+
+    void frontendLoop(uint16_t numHandlerThreads, std::promise<bool>& promise);
+    void handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier);
+
+private:
+
+    const std::string hostname;
+    const uint16_t port;
+    const uint16_t numNetworkThreads;
+
+    std::shared_ptr<zmq::context_t> zmqContext;
+    std::unique_ptr<std::thread> frontendThread;
+    std::vector<std::unique_ptr<std::thread>> handlerThreads;
+
+    std::atomic_bool _isRunning;
+    std::atomic_bool keepRunning;
+
+    ExchangeProtocol& exchangeProtocol;
+
+    // error management
+    std::promise<bool> errorPromise;
+};
+
+}
+}
+#endif //NES_ZMQSERVER_HPP
