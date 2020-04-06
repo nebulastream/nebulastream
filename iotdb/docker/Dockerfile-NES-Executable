@@ -5,5 +5,4 @@ RUN dpkg -i NebulaStream-0.0.1-1.x86_64.deb
 ADD ./resources/exdra.csv /opt/local/nebula-stream/exdra.csv
 ADD ./scripts/entrypoint-nes-executable.sh /entrypoint.sh
 
-EXPOSE 8081
 ENTRYPOINT ["/entrypoint.sh"]
