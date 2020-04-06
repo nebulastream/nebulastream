@@ -16,7 +16,7 @@ namespace Network {
 #endif
 
     /**
-     * Send a message MessageType(args) via zmqSocket
+     * Send a message MessageType(args) through an open zmqSocket
      * @tparam MessageType
      * @tparam Arguments
      * @param zmqSocket
@@ -24,16 +24,20 @@ namespace Network {
      */
     template <typename MessageType, typename... Arguments>
     void sendMessage(zmq::socket_t& zmqSocket, Arguments&&... args) {
+        // create a header message for MessageType
         Messages::MessageHeader header(MessageType::MESSAGE_TYPE, sizeof(MessageType));
-        MessageType message(std::forward<Arguments>(args)...);
+        // create a payload MessageType object to send via zmq
+        MessageType message(std::forward<Arguments>(args)...); // perfect forwarding
+        // create zmq envelopes
         zmq::message_t sendHeader(&header, sizeof(Messages::MessageHeader));
         zmq::message_t sendMsg(&message, sizeof(MessageType));
+        // send both messages in one shot
         zmqSocket.send(sendHeader, kSendMore);
         zmqSocket.send(sendMsg);
     }
 
     /**
-     * Send a zmqIdentity followed by the message MessageType(args) via zmqSocket
+     * Send a zmqIdentity followed by a message MessageType(args) via zmqSocket
      * @tparam MessageType
      * @tparam Arguments
      * @param zmqSocket
@@ -41,10 +45,14 @@ namespace Network {
      */
     template <typename MessageType, typename... Arguments>
     void sendMessageWithIdentity(zmq::socket_t& zmqSocket, zmq::message_t& zmqIdentity, Arguments&&... args) {
+        // create a header message for MessageType
         Messages::MessageHeader header(MessageType::MESSAGE_TYPE, sizeof(MessageType));
-        MessageType message(std::forward<Arguments>(args)...);
+        // create a payload MessageType object using args
+        MessageType message(std::forward<Arguments>(args)...); // perfect forwarding
+        // create zmq envelopes
         zmq::message_t sendHeader(&header, sizeof(Messages::MessageHeader));
         zmq::message_t sendMsg(&message, sizeof(MessageType));
+        // send all messages in one shot
         zmqSocket.send(zmqIdentity, kSendMore);
         zmqSocket.send(sendHeader, kSendMore);
         zmqSocket.send(sendMsg);
