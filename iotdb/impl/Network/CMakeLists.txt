@@ -1,5 +1,5 @@
 add_source_iotdb(
-        InputGate.cpp
-        OutputGate.cpp
-        PacketHeader.cpp
+        ZmqServer.cpp
+        NetworkDispatcher.cpp
+        OutputChannel.cpp
 )
