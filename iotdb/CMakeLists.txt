@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.13.4)
 project (NES CXX)
 
 if(POLICY CMP0004)
@@ -30,12 +30,14 @@ endif()
 message(STATUS "CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}")
 message(STATUS "CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE}")
 
-#lcryto is required for asio to communicate
+# lcryto is required for asio to communicate
 set(LIBRARIES ${LIBRARIES} -ldl -lcrypto -lssl)
 
 # LLVM
 find_package(LLVM 3 REQUIRED)
 find_package(clang REQUIRED)
+
+
 message("-- LLVM version ${LLVM_VERSION_STRING}")
 
 # ZMQ
@@ -69,10 +71,20 @@ if(TRAVIS_INCLUDE_DIR)
 endif()
 
 # Boost Libraries
-find_package(Boost 1.60 REQUIRED system thread program_options filesystem serialization chrono) # Only check if lib is available on system for generated code.
+set(Boost_USE_MULTITHREADED TRUE)
+find_package(Boost 1.65.1 REQUIRED system thread program_options filesystem serialization chrono) # Only check if lib is available on system for generated code.
 link_directories(${Boost_LIBRARY_DIRS})
 include_directories(${Boost_INCLUDE_DIRS})
 set(LIBRARIES ${LIBRARIES} ${Boost_LIBRARIES})
+
+# Backward
+
+include(./cmake/BackwardConfig.cmake)
+include_directories(${BACKWARD_INCLUDE_DIRS})
+add_compile_definitions(${BACKWARD_DEFINITIONS})
+link_directories(${BACKWARD_LIBRARIES})
+set(LIBRARIES ${LIBRARIES} ${BACKWARD_LIBRARIES})
+
 
 # Library containing dlopen and dlcose.
 set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})

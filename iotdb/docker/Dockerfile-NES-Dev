@@ -1,0 +1,14 @@
+FROM nebulastream/nes-build-image:latest
+
+RUN DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
+  rsync \
+  tmux \
+  ssh \
+  vim \
+&& apt-get clean -qq
+
+RUN service ssh start && useradd -m nes && yes password | passwd nes
+
+EXPOSE 22
+
+CMD ["/usr/sbin/sshd", "-D"]
