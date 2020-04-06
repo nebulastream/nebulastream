@@ -37,7 +37,7 @@ NESExecutionPlanPtr MinimumEnergyConsumptionStrategy::initializeExecutionPlan(In
     placeOperators(nesExecutionPlanPtr, nesTopologyGraphPtr, sourceOperatorPtr, sourceNodePtrs);
 
     NES_INFO("MinimumEnergyConsumption: Adding forward operators.");
-    addForwardOperators(sourceNodePtrs, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
+    addForwardOperators(getType(), sourceNodePtrs, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
 
     NES_INFO("MinimumEnergyConsumption: Generating complete execution Graph.");
     completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlan);
@@ -276,29 +276,6 @@ void MinimumEnergyConsumptionStrategy::placeOperators(NESExecutionPlanPtr execut
         }
         node->reduceCpuCapacity(1);
         nextSrcOptr = nextSrcOptr->getParent();
-    }
-}
-
-void MinimumEnergyConsumptionStrategy::addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes,
-                                                   NESTopologyEntryPtr rootNode,
-                                                   NESExecutionPlanPtr nesExecutionPlanPtr) {
-    PathFinder pathFinder;
-    map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>>
-        pathMap = pathFinder.findUniquePathBetween(sourceNodes, rootNode);
-
-    for (NESTopologyEntryPtr targetSource: sourceNodes) {
-
-        //Find the list of nodes connecting the source and destination nodes
-        std::vector<NESTopologyEntryPtr> candidateNodes = pathMap[targetSource];
-
-        for (NESTopologyEntryPtr candidateNode: candidateNodes) {
-
-            if (candidateNode->getCpuCapacity() == candidateNode->getRemainingCpuCapacity()) {
-                nesExecutionPlanPtr->createExecutionNode("FWD", to_string(candidateNode->getId()), candidateNode,
-                    /**executableOperator**/nullptr);
-                candidateNode->reduceCpuCapacity(1);
-            }
-        }
     }
 }
 

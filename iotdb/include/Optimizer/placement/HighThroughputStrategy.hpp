@@ -9,27 +9,22 @@ namespace NES {
  * @brief This class is responsible for placing operators on high capacity links such that the overall query throughput
  * will increase.
  */
-class HighThroughputStrategy: public NESPlacementOptimizer {
+class HighThroughputStrategy : public NESPlacementOptimizer {
 
-  public:
-    HighThroughputStrategy() = default;
-    ~HighThroughputStrategy() = default;
+ public:
+  HighThroughputStrategy() = default;
+  ~HighThroughputStrategy() = default;
 
-    NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
+  NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
-  private:
+ private:
 
-    void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
-                        OperatorPtr operatorPtr, vector<NESTopologyEntryPtr> sourceNodes);
+  void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
+                      OperatorPtr operatorPtr, vector<NESTopologyEntryPtr> sourceNodes);
 
-    /**
-     * @brief Add forward operators between source and sink nodes.
-     * @param sourceNodes : list of source nodes
-     * @param rootNode : sink node
-     * @param nesExecutionPlanPtr : nes execution plan
-     */
-    void addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes, NESTopologyEntryPtr rootNode,
-                             NESExecutionPlanPtr nesExecutionPlanPtr) const;
+  NESPlacementStrategyType getType() {
+    return HighThroughput;
+  }
 
 };
 

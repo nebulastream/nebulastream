@@ -21,25 +21,20 @@ namespace NES {
  */
 class LowLatencyStrategy : public NESPlacementOptimizer {
 
-  public:
-    LowLatencyStrategy() {};
-    ~LowLatencyStrategy() {};
+ public:
+  LowLatencyStrategy() {};
+  ~LowLatencyStrategy() {};
 
-    NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
+  NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
-  private:
+ private:
 
-    void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
-                        OperatorPtr operatorPtr, vector<NESTopologyEntryPtr> sourceNodes);
+  void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
+                      OperatorPtr operatorPtr, vector<NESTopologyEntryPtr> sourceNodes);
 
-    /**
-     * @brief Add forward operators between source and sink nodes.
-     * @param sourceNodes : list of source nodes
-     * @param rootNode : sink node
-     * @param nesExecutionPlanPtr : nes execution plan
-     */
-    void addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes, NESTopologyEntryPtr rootNode,
-                             NESExecutionPlanPtr nesExecutionPlanPtr) const;
+  NESPlacementStrategyType getType() {
+    return LowLatency;
+  }
 };
 }
 
