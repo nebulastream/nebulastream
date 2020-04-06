@@ -5,7 +5,7 @@
 #include <map>
 #include <mutex>
 #include <thread>
-#include <vector>
+#include <deque>
 #include <chrono>
 #include <unordered_set>
 
@@ -124,7 +124,7 @@ class Dispatcher {
     ~Dispatcher();
     void cleanup();
 
-    std::vector<TaskPtr> task_queue;
+    std::deque<TaskPtr> task_queue;
 
     std::map<std::string, std::unordered_set<QueryExecutionPlanPtr>> sourceIdToQueryMap;
 
