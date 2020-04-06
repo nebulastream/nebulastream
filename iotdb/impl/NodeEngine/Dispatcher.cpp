@@ -169,7 +169,7 @@ TaskPtr Dispatcher::getWork(std::atomic<bool>& threadPool_running) {
         task = task_queue.front();
         NES_DEBUG(
             "Dispatcher: provide task" << task.get() << " to thread (getWork())")
-        task_queue.erase(task_queue.begin());
+        task_queue.pop_front();
     } else {
         NES_DEBUG("Dispatcher: Thread pool was shut down while waiting");
         cleanup();
@@ -182,8 +182,7 @@ void Dispatcher::cleanup() {
     if (task_queue.size()) {
         NES_DEBUG("Dispatcher: Thread pool was shut down while waiting but data is queued.");
         while (task_queue.size()) {
-            auto task = task_queue.front();
-            task_queue.erase(task_queue.begin());
+            task_queue.pop_front();
         }
     }
 }
