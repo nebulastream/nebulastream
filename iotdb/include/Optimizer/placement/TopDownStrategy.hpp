@@ -19,9 +19,6 @@ class TopDownStrategy : public BasePlacementStrategy {
 
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery,
                                                 NESTopologyPlanPtr nesTopologyPlanPtr) override;
-
-    NESPlacementStrategyType getType() override;
-
   private:
 
     /**
@@ -49,6 +46,15 @@ class TopDownStrategy : public BasePlacementStrategy {
      */
     void createNewExecutionNode(NESExecutionPlanPtr executionPlanPtr, OperatorPtr operatorPtr,
                                 NESTopologyEntryPtr nesNode) const;
+
+    /**
+     * @brief Finds all the nodes that can be used for performing FWD operator
+     * @param sourceNodes
+     * @param rootNode
+     * @return
+     */
+    vector<NESTopologyEntryPtr> getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
+                                                                         const NESTopologyEntryPtr rootNode) const;
 };
 
 }
