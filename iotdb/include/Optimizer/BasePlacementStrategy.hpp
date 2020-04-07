@@ -64,12 +64,16 @@ class BasePlacementStrategy {
     void addSystemGeneratedSourceSinkOperators(const Schema& schema, NESExecutionPlanPtr nesExecutionPlanPtr);
 
     /**
-     * @brief Fill the execution nesExecutionPlanPtr with forward operators in nes topology.
+     * @brief Fill the execution graph with complete topology information and assign No-Operators to the node which were
+     * not selected for operator placement by the placement strategy.
+     *
+     * Note: This method is necessary for displaying the execution graph on NES-UI
+     *
      * @param nesExecutionPlanPtr
      * @param nesTopologyPtr
      */
-    void completeExecutionGraphWithNESTopology(NESExecutionPlanPtr nesExecutionPlanPtr,
-                                               NESTopologyPlanPtr nesTopologyPtr);
+    void fillExecutionGraphWithTopologyInformation(NESExecutionPlanPtr nesExecutionPlanPtr,
+                                                   NESTopologyPlanPtr nesTopologyPtr);
 
     /**
      * @brief this methods takes the user specified UDFS from the sample operator and add it to all Sense Operators

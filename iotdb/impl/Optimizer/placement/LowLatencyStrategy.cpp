@@ -37,7 +37,7 @@ NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(NES::InputQueryP
   addForwardOperators(sourceNodePtrs, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
 
   NES_INFO("LowLatency: Generating complete execution Graph.");
-  completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlan);
+    fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr, nesTopologyPlan);
 
   //FIXME: We are assuming that throughout the pipeline the schema would not change.
   Schema& schema = inputQuery->getSourceStream()->getSchema();

@@ -128,10 +128,15 @@ void BasePlacementStrategy::convertFwdOptr(
     executionNodePtr->setOperatorName("SOURCE(SYS)=>SINK(SYS)");
 }
 
-void BasePlacementStrategy::completeExecutionGraphWithNESTopology(NESExecutionPlanPtr nesExecutionPlanPtr,
-                                                                  NESTopologyPlanPtr nesTopologyPtr) {
+static const char* const NO_OPERATOR = "NO-OPERATOR";
 
+void BasePlacementStrategy::fillExecutionGraphWithTopologyInformation(NESExecutionPlanPtr nesExecutionPlanPtr,
+                                                                      NESTopologyPlanPtr nesTopologyPtr) {
+
+    NES_DEBUG("BasePlacementStrategy: Filling the execution graph with topology information.")
     const vector<NESTopologyLinkPtr>& allEdges = nesTopologyPtr->getNESTopologyGraph()->getAllEdges();
+    NES_DEBUG("BasePlacementStrategy: Get all edges in the Topology and iterate over all edges to identify the nodes"
+              " that are not part of the execution graph.")
 
     for (NESTopologyLinkPtr nesLink : allEdges) {
 
@@ -141,40 +146,31 @@ void BasePlacementStrategy::completeExecutionGraphWithNESTopology(NESExecutionPl
         size_t linkCapacity = nesLink->getLinkCapacity();
         size_t linkLatency = nesLink->getLinkLatency();
 
-        if (nesExecutionPlanPtr->hasVertex(srcId)) {
-            const ExecutionNodePtr srcExecutionNode = nesExecutionPlanPtr->getExecutionNode(srcId);
-            if (nesExecutionPlanPtr->hasVertex(destId)) {
-                const ExecutionNodePtr destExecutionNode = nesExecutionPlanPtr->getExecutionNode(destId);
-                nesExecutionPlanPtr->createExecutionNodeLink(linkId, srcExecutionNode, destExecutionNode, linkCapacity,
-                                                             linkLatency);
-            } else {
-                const ExecutionNodePtr destExecutionNode = nesExecutionPlanPtr
-                    ->createExecutionNode("NO-OPERATOR", to_string(destId),
-                                          nesLink->getDestNode(), nullptr);
-                nesExecutionPlanPtr->createExecutionNodeLink(linkId, srcExecutionNode, destExecutionNode, linkCapacity,
-                                                             linkLatency);
-            }
-        } else {
+        ExecutionNodePtr srcExecutionNode, destExecutionNode;
 
-            const ExecutionNodePtr srcExecutionNode = nesExecutionPlanPtr->createExecutionNode("NO-OPERATOR",
-                                                                                               to_string(srcId),
-                                                                                               nesLink->getSourceNode(),
-                                                                                               nullptr);
-            if (nesExecutionPlanPtr->hasVertex(destId)) {
-                const ExecutionNodePtr destExecutionNode = nesExecutionPlanPtr->getExecutionNode(destId);
-                nesExecutionPlanPtr->createExecutionNodeLink(linkId, srcExecutionNode, destExecutionNode, linkCapacity,
-                                                             linkLatency);
-            } else {
-                const ExecutionNodePtr destExecutionNode = nesExecutionPlanPtr->createExecutionNode("NO-OPERATOR",
-                                                                                                    to_string(destId),
-                                                                                                    nesLink->getDestNode(),
-                                                                                                    nullptr);
-                nesExecutionPlanPtr->createExecutionNodeLink(linkId, srcExecutionNode, destExecutionNode, linkCapacity,
-                                                             linkLatency);
-            }
+        NES_DEBUG("BasePlacementStrategy: If sourceNode present in the execution graph then use it, else create "
+                  "an empty execution node with no operator.")
+        if (nesExecutionPlanPtr->hasVertex(srcId)) {
+            srcExecutionNode = nesExecutionPlanPtr->getExecutionNode(srcId);
+        } else {
+            srcExecutionNode = nesExecutionPlanPtr->createExecutionNode(NO_OPERATOR, to_string(srcId),
+                                                                        nesLink->getSourceNode(), nullptr);
         }
+
+        NES_DEBUG("BasePlacementStrategy: If destinationNode present in the execution graph then use it, else create "
+                  "an empty execution node with no operator.")
+        if (nesExecutionPlanPtr->hasVertex(destId)) {
+            destExecutionNode = nesExecutionPlanPtr->getExecutionNode(destId);
+        } else {
+            destExecutionNode = nesExecutionPlanPtr->createExecutionNode(NO_OPERATOR, to_string(destId),
+                                                                         nesLink->getDestNode(), nullptr);
+        }
+
+        NES_DEBUG("BasePlacementStrategy: create the execution node link.")
+        nesExecutionPlanPtr->createExecutionNodeLink(linkId, srcExecutionNode, destExecutionNode, linkCapacity,
+                                                     linkLatency);
     }
-};
+}
 
 void BasePlacementStrategy::setUDFSFromSampleOperatorToSenseSources(InputQueryPtr inputQuery) {
 
@@ -218,8 +214,7 @@ OperatorPtr BasePlacementStrategy::getSourceOperator(OperatorPtr root) {
     return nullptr;
 };
 
-void BasePlacementStrategy::addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes,
-                                                NESTopologyEntryPtr rootNode,
+void BasePlacementStrategy::addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes, NESTopologyEntryPtr rootNode,
                                                 NESExecutionPlanPtr nesExecutionPlanPtr) {
 
     PathFinder pathFinder;
