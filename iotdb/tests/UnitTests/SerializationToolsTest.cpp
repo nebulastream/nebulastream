@@ -19,8 +19,9 @@ class SerializationToolsTest : public testing::Test {
   void SetUp() {
     NES::setupLogging("SerializationToolsTest.log", NES::LOG_DEBUG);
     std::cout << "Setup SerializationToolsTest test case." << std::endl;
-    schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
-        "value", BasicType::UINT64);
+    schema = Schema::create()
+        ->addField("id", BasicType::UINT32)
+        ->addField("value", BasicType::UINT64);
     stream = std::make_shared<Stream>("default", schema);
   }
 
