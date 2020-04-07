@@ -23,7 +23,7 @@ TupleBufferPtr DefaultSource::receiveData() {
   }
   NES_DEBUG("Source:" << this << " got buffer")
   size_t tupleCnt = 10;
-  auto layout = createRowLayout(Schema::create());
+  auto layout = createRowLayout(schema);
 
   assert(buf->getBuffer() != nullptr);
   auto fields = schema->fields;

@@ -115,7 +115,7 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
 
   //register logical stream
   std::string testSchema =
-      "Schema::create().addField(createField(\"campaign_id\", UINT64));";
+      "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
   std::string testSchemaFileName = "testSchema.hpp";
   std::ofstream out(testSchemaFileName);
   out << testSchema;
@@ -165,7 +165,7 @@ TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromDefaultSourceW
 
   //register logical stream
   std::string testSchema =
-      "Schema::create().addField(createField(\"campaign_id\", UINT64));";
+      "Schema::create()->addField(createField(\"campaign_id\", UINT64));";
   std::string testSchemaFileName = "testSchema.hpp";
   std::ofstream out(testSchemaFileName);
   out << testSchema;
@@ -281,7 +281,7 @@ TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromCSVSourcePrint
 
   //register logical stream
   std::string testSchema =
-      "Schema::create().addField(createField(\"val1\", UINT64))."
+      "Schema::create()->addField(createField(\"val1\", UINT64))."
           "addField(createField(\"val2\", UINT64))."
           "addField(createField(\"val3\", UINT64));";
   std::string testSchemaFileName = "testSchema.hpp";
@@ -342,7 +342,7 @@ TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromCSVSourceWrite
 
   //register logical stream
   std::string testSchema =
-      "Schema::create().addField(createField(\"val1\", UINT64))."
+      "Schema::create()->addField(createField(\"val1\", UINT64))."
           "addField(createField(\"val2\", UINT64))."
           "addField(createField(\"val3\", UINT64));";
   std::string testSchemaFileName = "testSchema.hpp";

@@ -15,9 +15,9 @@ class Schema {
   static SchemaPtr create();
 
   Schema(SchemaPtr query);
-  const Schema& copy() const;
+  SchemaPtr copy() const;
 
-  SchemaPtr copyFields(SchemaPtr const schema);
+  SchemaPtr copyFields(SchemaPtr schema);
   SchemaPtr addField(AttributeFieldPtr field);
   SchemaPtr addField(const std::string &name, const BasicType &);
   SchemaPtr addField(const std::string &name, DataTypePtr data);
@@ -33,17 +33,15 @@ class Schema {
   size_t getSchemaSize() const;
   const std::string toString() const;
 
+  bool equals(SchemaPtr schema, bool in_order = true);
+
   std::vector<AttributeFieldPtr> fields;
 
-  bool operator==(const SchemaPtr rhs) const {
-    if (fields.size() == rhs->fields.size()) {
+  bool operator==(const Schema &rhs) const {
+    if (fields.size() == rhs.fields.size()) {
       for (std::vector<int>::size_type i = 0; i != fields.size(); i++) {
         fields[i];
-        // schemas are equal, if their attributes are equal, right? So lets check this:
-        if(!(fields[i]->isEqual(rhs->fields[i]))){
-            return false;
-        }
-        if (!(fields[i].get() == rhs->fields[i].get())) {
+        if (!(*fields[i].get() == *rhs.fields[i].get())) {
           return false;
         }
       }

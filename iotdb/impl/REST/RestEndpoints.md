@@ -220,7 +220,7 @@ To add a logical stream.
 
 **Request**:
 {"streamName": "logical_stream_name",
-"schema": "Schema::create().addField(\"test\",INT32);"}
+"schema": "Schema::create()->addField(\"test\",INT32);"}
 
 **Response**:
 {"Success": "true"}
@@ -236,7 +236,7 @@ To Update a logical stream.
 
 **Request**:
 {"streamName": "logical_stream_name",
-"schema": "Schema::create().addField(\"test\",INT32);"}
+"schema": "Schema::create()->addField(\"test\",INT32);"}
 
 **Response**:
 {"Success": "true"}

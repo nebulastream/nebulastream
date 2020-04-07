@@ -6,7 +6,9 @@
 
 namespace NES {
 
-PhysicalSchema::PhysicalSchema(const SchemaPtr schema) : schema(schema) {
+PhysicalSchema::PhysicalSchema(SchemaPtr _schema) {
+  schema = std::make_shared<Schema>();
+  schema->copyFields(_schema);
 };
 
 PhysicalSchemaPtr PhysicalSchema::createPhysicalSchema(SchemaPtr schema) {
