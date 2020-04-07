@@ -31,29 +31,30 @@ class SerializationToolsTest : public testing::Test {
     std::cout << "Tear down SerializationToolsTest test class." << std::endl;
   }
 
-  SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
-      "value", BasicType::UINT64);
-
-  Stream stream = Stream("default", schema);
+  SchemaPtr schema;
+  StreamPtr stream;
 };
 
 /* Test serialization for Schema  */
 TEST_F(SerializationToolsTest, serialize_deserialize_schema) {
+  schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
+      "value", BasicType::UINT64);
+  stream = std::make_shared<Stream>("default", schema);
   string sschema = SerializationTools::ser_schema(schema);
   SchemaPtr dschema = SerializationTools::parse_schema(sschema);
-  EXPECT_EQ(schema, dschema);
+  EXPECT_TRUE(dschema->equals(schema));
 }
 
 /* Test serialization for predicate  */
 TEST_F(SerializationToolsTest, serialize_deserialize_predicate) {
-  PredicatePtr pred = createPredicate(stream["value"] > 42);
+  PredicatePtr pred = createPredicate((*stream)["value"] > 42);
   string serPred = SerializationTools::ser_predicate(pred);
   PredicatePtr deserPred = SerializationTools::parse_predicate(serPred);
   EXPECT_TRUE(pred->equals(*deserPred.get()));
 }
 
 TEST_F(SerializationToolsTest, serialize_deserialize_filter_op) {
-  PredicatePtr pred = createPredicate(stream["value"] > 42);
+  PredicatePtr pred = createPredicate((*stream)["value"] > 42);
   OperatorPtr op = createFilterOperator(pred);
   string serOp = SerializationTools::ser_operator(op);
   OperatorPtr deserOp = SerializationTools::parse_operator(serOp);
@@ -63,7 +64,7 @@ TEST_F(SerializationToolsTest, serialize_deserialize_filter_op) {
 TEST_F(SerializationToolsTest, serialize_deserialize_source_op) {
   //TODO: implement equals method for SourceOperator
   OperatorPtr op = createSourceOperator(
-      createDefaultDataSourceWithSchemaForOneBuffer(stream.getSchema()));
+      createDefaultDataSourceWithSchemaForOneBuffer(stream->getSchema()));
   string serOp = SerializationTools::ser_operator(op);
   OperatorPtr deserOp = SerializationTools::parse_operator(serOp);
   EXPECT_TRUE(!serOp.empty());
@@ -79,7 +80,7 @@ TEST_F(SerializationToolsTest, serialize_deserialize_sink_op) {
 /* Test serialization for operators  */
 TEST_F(SerializationToolsTest, serialize_deserialize_query_operators) {
   //TODO: implement equals method for all operators
-  InputQuery &query = InputQuery::from(stream).filter(stream["value"] > 42)
+  InputQuery &query = InputQuery::from((*stream)).filter((*stream)["value"] > 42)
       .print(std::cout);
 
   OperatorPtr queryOp = query.getRoot();
@@ -134,7 +135,7 @@ TEST_F(SerializationToolsTest, serialize_deserialize_printSink) {
 
 /* Test serialization for printSink  */
 TEST_F(SerializationToolsTest, serialize_deserialize_executabletransferobject) {
-  InputQuery &query = InputQuery::from(stream).filter(stream["value"] > 42)
+  InputQuery &query = InputQuery::from((*stream)).filter((*stream)["value"] > 42)
       .print(std::cout);
   OperatorPtr op = query.getRoot();
 
@@ -153,7 +154,7 @@ TEST_F(SerializationToolsTest, serialize_deserialize_executabletransferobject) {
 }
 
 TEST_F(SerializationToolsTest, serialize_deserialize_executabletransferobject_EXDRA_SCHEMA) {
-  InputQuery &query = InputQuery::from(stream).filter(stream["value"] > 42)
+  InputQuery &query = InputQuery::from((*stream)).filter((*stream)["value"] > 42)
       .print(std::cout);
   OperatorPtr op = query.getRoot();
 

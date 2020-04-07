@@ -39,12 +39,12 @@ const AttributeFieldPtr AttributeField::copy() const {
 }
 
 bool AttributeField::isEqual(const AttributeField &attr) {
-  return attr.name == name && attr.data_type == data_type;
+  return (attr.name == name) && (attr.data_type->isEqual(attr.getDataType()));
 }
 
 bool AttributeField::isEqual(AttributeFieldPtr attr) {
   if (!attr) return false;
-  return this->isEqual(attr);
+  return (attr->name == name) && (attr->data_type->isEqual(attr->getDataType()));
 }
 
 AttributeField::AttributeField(const AttributeField &other)

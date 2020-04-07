@@ -14,7 +14,7 @@ MemoryLayoutPtr RowLayout::copy() const {
     return std::make_shared<RowLayout>(*this);
 }
 
-MemoryLayoutPtr createRowLayout(const SchemaPtr& schema) {
+MemoryLayoutPtr createRowLayout(SchemaPtr schema) {
     auto physicalSchema = PhysicalSchema::createPhysicalSchema(schema);
     return std::make_shared<RowLayout>(physicalSchema);
 };

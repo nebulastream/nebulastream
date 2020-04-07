@@ -95,7 +95,7 @@ class MemoryLayout {
  * @param schema
  * @return
  */
-MemoryLayoutPtr createRowLayout(const SchemaPtr& schema);
+MemoryLayoutPtr createRowLayout(SchemaPtr schema);
 
 }
 

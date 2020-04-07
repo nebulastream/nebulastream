@@ -7,6 +7,7 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
 #include <API/Schema.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 
@@ -21,12 +22,12 @@ size_t Schema::getSize() const {
   return fields.size();
 }
 
-const Schema& Schema::copy() const {
-    return *this;
-}
-
 Schema::Schema(const SchemaPtr query) {
   copyFields(query);
+}
+
+SchemaPtr Schema::copy() const {
+  return std::make_shared<Schema>(*this);
 }
 
 /* Return size of one row of schema in bytes. */
@@ -38,9 +39,11 @@ size_t Schema::getSchemaSize() const {
   return size;
 }
 
-SchemaPtr Schema::copyFields(SchemaPtr const schema) {
-  fields.insert(fields.end(), schema->fields.begin(), schema->fields.end());
-  return std::make_shared<Schema>(this->copy());
+SchemaPtr Schema::copyFields(SchemaPtr schema) {
+ for(AttributeFieldPtr attr : schema->fields){
+    this->fields.push_back(attr->copy());
+  }
+  return std::make_shared<Schema>(*this);
 }
 
 SchemaPtr Schema::addField(AttributeFieldPtr field) {
@@ -81,17 +84,34 @@ AttributeFieldPtr Schema::get(const std::string pName) {
 }
 
 AttributeFieldPtr Schema::get(uint32_t index) {
-  if((uint32_t) fields.size() >= index){
+  if (index < (uint32_t) fields.size()) {
+    return fields[index];
+  } else {
     return AttributeFieldPtr();
   }
-  return fields[index];
+}
+
+bool Schema::equals(SchemaPtr schema, bool in_order) {
+  if(schema->fields.size() != fields.size()) return false;
+  if(in_order){
+    for (int i = 0; i < fields.size(); i++){
+      if(!((fields.at(i))->isEqual((schema->fields).at(i)))){
+        return false;
+      }
+    }
+    return true;
+  }
+  for(AttributeFieldPtr attr : fields){
+    if(!(schema->get(attr->name))) return false;
+    if(!(schema->get(attr->name)->getDataType()->isEqual(attr->getDataType()))) return false;
+  }
+  return true;
 }
 
 const AttributeFieldPtr Schema::operator[](uint32_t index) const {
   if (index < (uint32_t) fields.size()) {
     return fields[index];
   } else {
-
     return AttributeFieldPtr();
   }
 }

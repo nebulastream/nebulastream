@@ -103,7 +103,7 @@ TEST_F(QueryInterfaceTest, testQueryString) {
 
   std::stringstream code;
 
-  code << "Schema schema = Schema::create().addField(\"test\",INT32);"
+  code << "Schema schema = Schema::create()->addField(\"test\",INT32);"
        << std::endl;
   code << "Stream testStream = Stream(\"test-stream\",schema);" << std::endl;
   code

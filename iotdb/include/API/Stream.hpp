@@ -11,7 +11,6 @@ namespace NES {
 
 class Stream {
  public:
-  //todo: what about this?
   Stream(std::string name, const Schema& schema);
 
   Stream(std::string name, SchemaPtr schema);
