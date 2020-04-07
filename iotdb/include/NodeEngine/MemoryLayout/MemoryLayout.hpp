@@ -10,7 +10,6 @@ namespace NES {
 class TupleBuffer;
 typedef std::shared_ptr<TupleBuffer> TupleBufferPtr;
 
-//todo:change SchemaTemp to Schema
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
 
