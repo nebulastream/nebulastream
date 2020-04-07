@@ -43,13 +43,13 @@ SchemaPtr Schema::copyFields(SchemaPtr schema) {
  for(AttributeFieldPtr attr : schema->fields){
     this->fields.push_back(attr->copy());
   }
-  return std::make_shared<Schema>(*this);
+  return copy();
 }
 
 SchemaPtr Schema::addField(AttributeFieldPtr field) {
   if (field)
     fields.push_back(field);
-  return std::make_shared<Schema>(*this);
+  return copy();
 }
 
 SchemaPtr Schema::addField(const std::string& name, const BasicType& type) {
@@ -79,20 +79,22 @@ AttributeFieldPtr Schema::get(const std::string pName) {
     if (f->name == pName)
       return f;
   }
-//    return AttributeFieldPtr();
+  NES_ERROR("No field in the schema with the identifier " << pName)
   throw std::invalid_argument("field " + pName + " does not exist");
 }
 
 AttributeFieldPtr Schema::get(uint32_t index) {
   if (index < (uint32_t) fields.size()) {
     return fields[index];
-  } else {
-    return AttributeFieldPtr();
   }
+  NES_ERROR("No field in the schema with the id " << index)
+  throw std::invalid_argument("field id " + std::to_string(index) + " does not exist");
 }
 
 bool Schema::equals(SchemaPtr schema, bool in_order) {
-  if(schema->fields.size() != fields.size()) return false;
+  if(schema->fields.size() != fields.size()){
+    return false;
+  }
   if(in_order){
     for (int i = 0; i < fields.size(); i++){
       if(!((fields.at(i))->isEqual((schema->fields).at(i)))){
@@ -102,36 +104,15 @@ bool Schema::equals(SchemaPtr schema, bool in_order) {
     return true;
   }
   for(AttributeFieldPtr attr : fields){
-    if(!(schema->get(attr->name))) return false;
-    if(!(schema->get(attr->name)->getDataType()->isEqual(attr->getDataType()))) return false;
-  }
-  return true;
-}
-
-const AttributeFieldPtr Schema::operator[](uint32_t index) const {
-bool Schema::equals(SchemaPtr schema, bool in_order) {
-  if(schema->fields.size() != fields.size()) return false;
-  if(in_order){
-    for (int i = 0; i < fields.size(); i++){
-      if(!((fields.at(i))->isEqual((schema->fields).at(i)))){
+    if(!(schema->get(attr->name))){
+      return false;
+    } else {
+      if(!(schema->get(attr->name)->getDataType()->isEqual(attr->getDataType()))){
         return false;
       }
     }
-    return true;
-  }
-  for(AttributeFieldPtr attr : fields){
-    if(!(schema->get(attr->name))) return false;
-    if(!(schema->get(attr->name)->getDataType()->isEqual(attr->getDataType()))) return false;
   }
   return true;
-}
-
-const AttributeFieldPtr Schema::operator[](uint32_t index) const {
-  if (index < (uint32_t) fields.size()) {
-    return fields[index];
-  } else {
-    return AttributeFieldPtr();
-  }
 }
 
 const std::string Schema::toString() const {

@@ -12,9 +12,6 @@ typedef std::shared_ptr<Declaration> DeclarationPtr;
 class GeneratedCode;
 typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
 
-//todo: remove this forwad decl
-//class SchemaTemp;
-
 class WindowDefinition;
 typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 

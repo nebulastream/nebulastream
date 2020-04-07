@@ -47,14 +47,14 @@ TEST_F(SerializationToolsTest, serialize_deserialize_schema) {
 
 /* Test serialization for predicate  */
 TEST_F(SerializationToolsTest, serialize_deserialize_predicate) {
-  PredicatePtr pred = createPredicate((*stream)["value"] > 42);
+  PredicatePtr pred = createPredicate(stream->getField("value") > 42);
   string serPred = SerializationTools::ser_predicate(pred);
   PredicatePtr deserPred = SerializationTools::parse_predicate(serPred);
   EXPECT_TRUE(pred->equals(*deserPred.get()));
 }
 
 TEST_F(SerializationToolsTest, serialize_deserialize_filter_op) {
-  PredicatePtr pred = createPredicate((*stream)["value"] > 42);
+  PredicatePtr pred = createPredicate(stream->getField("value") > 42);
   OperatorPtr op = createFilterOperator(pred);
   string serOp = SerializationTools::ser_operator(op);
   OperatorPtr deserOp = SerializationTools::parse_operator(serOp);
@@ -81,7 +81,7 @@ TEST_F(SerializationToolsTest, serialize_deserialize_sink_op) {
 
 TEST_F(SerializationToolsTest, serialize_deserialize_query_operators) {
   //TODO: implement equals method for all operators
-  InputQuery &query = InputQuery::from(*stream).filter((*stream)["value"] > 42)
+  InputQuery &query = InputQuery::from(*stream).filter(stream->getField("value") > 42)
       .print(std::cout);
 
   OperatorPtr queryOp = query.getRoot();
@@ -142,7 +142,7 @@ TEST_F(SerializationToolsTest, serialize_deserialize_printSink) {
 /* Test serialization for printSink  */
 
 TEST_F(SerializationToolsTest, serialize_deserialize_executabletransferobject) {
-  InputQuery &query = InputQuery::from(*stream).filter((*stream)["value"] > 42)
+  InputQuery &query = InputQuery::from(*stream).filter(stream->getField("value") > 42)
       .print(std::cout);
   OperatorPtr op = query.getRoot();
 
@@ -161,7 +161,7 @@ TEST_F(SerializationToolsTest, serialize_deserialize_executabletransferobject) {
 }
 
 TEST_F(SerializationToolsTest, serialize_deserialize_executabletransferobject_EXDRA_SCHEMA) {
-  InputQuery &query = InputQuery::from(*stream).filter((*stream)["value"] > 42)
+  InputQuery &query = InputQuery::from(*stream).filter(stream->getField("value") > 42)
       .print(std::cout);
   OperatorPtr op = query.getRoot();
 
@@ -170,23 +170,22 @@ TEST_F(SerializationToolsTest, serialize_deserialize_executabletransferobject_EX
   vector<DataSourcePtr> sources { zmqSource };
   vector<DataSinkPtr> destinations { sink };
 
-  SchemaPtr schemaExdra = Schema::create()->addField(
-      "type", createArrayDataType(BasicType::CHAR, 30))->addField(
-      "metadata.generated", BasicType::UINT64)->addField(
-      "metadata.title", createArrayDataType(BasicType::CHAR, 50))->addField(
-      "metadata.id", createArrayDataType(BasicType::CHAR, 50))->addField(
-      "features.type", createArrayDataType(BasicType::CHAR, 50))->addField(
-      "features.properties.capacity", BasicType::UINT64)->addField(
-      "features.properties.efficiency", BasicType::FLOAT32)->addField(
-      "features.properties.mag", BasicType::FLOAT32)->addField(
-      "features.properties.time", BasicType::FLOAT32)->addField(
-      "features.properties.updated", BasicType::UINT64)->addField(
-      "features.properties.type", createArrayDataType(BasicType::CHAR, 50))
-      ->addField("features.geometry.type",
-                createArrayDataType(BasicType::CHAR, 50))->addField(
-      "features.geometry.coordinates.longitude", BasicType::FLOAT32)->addField(
-      "features.geometry.coordinates.latitude", BasicType::FLOAT32)->addField(
-      "features.eventId ", createArrayDataType(BasicType::CHAR, 50));
+  SchemaPtr schemaExdra = Schema::create()
+      ->addField("type", createArrayDataType(BasicType::CHAR, 30))
+      ->addField("metadata.generated", BasicType::UINT64)
+      ->addField("metadata.title", createArrayDataType(BasicType::CHAR, 50))
+      ->addField("metadata.id", createArrayDataType(BasicType::CHAR, 50))
+      ->addField("features.type", createArrayDataType(BasicType::CHAR, 50))
+      ->addField("features.properties.capacity", BasicType::UINT64)
+      ->addField("features.properties.efficiency", BasicType::FLOAT32)
+      ->addField("features.properties.mag", BasicType::FLOAT32)
+      ->addField("features.properties.time", BasicType::FLOAT32)
+      ->addField("features.properties.updated", BasicType::UINT64)
+      ->addField("features.properties.type", createArrayDataType(BasicType::CHAR, 50))
+      ->addField("features.geometry.type",createArrayDataType(BasicType::CHAR, 50))
+      ->addField("features.geometry.coordinates.longitude", BasicType::FLOAT32)
+      ->addField("features.geometry.coordinates.latitude", BasicType::FLOAT32)
+      ->addField("features.eventId ", createArrayDataType(BasicType::CHAR, 50));
 
   ExecutableTransferObject eto = ExecutableTransferObject("example-desc",
                                                           schemaExdra, sources,

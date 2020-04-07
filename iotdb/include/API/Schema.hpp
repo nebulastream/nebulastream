@@ -27,7 +27,6 @@ class Schema {
   // Schema &addVarSizeField(const std::string name, const APIDataType data_type, const size_t data_size);
   AttributeFieldPtr get(const std::string name);
   AttributeFieldPtr get(uint32_t index);
-  const AttributeFieldPtr operator[](uint32_t index) const;
 
   size_t getSize() const;
   size_t getSchemaSize() const;

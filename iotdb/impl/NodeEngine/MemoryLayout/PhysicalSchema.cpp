@@ -6,10 +6,10 @@
 
 namespace NES {
 
-PhysicalSchema::PhysicalSchema(SchemaPtr _schema) : schema(_schema) {};
+PhysicalSchema::PhysicalSchema(SchemaPtr schema) : schema(schema) {};
 
-PhysicalSchemaPtr PhysicalSchema::createPhysicalSchema(SchemaPtr schema) {
-    return std::make_shared<PhysicalSchema>(schema);
+PhysicalSchemaPtr PhysicalSchema::createPhysicalSchema(SchemaPtr schemaPtr) {
+    return std::make_shared<PhysicalSchema>(schemaPtr);
 }
 
 PhysicalFieldPtr PhysicalSchema::createPhysicalField(uint64_t fieldIndex, uint64_t bufferOffset) {
