@@ -108,7 +108,7 @@ std::string ExecutableTransferObject::toString() const {
                        [](DataSinkPtr d) { return d->toString(); });
     }
 
-    return "ExecutableTransferObject(queryId=(" + queryId + "); schema=(" + schema.toString() + "); sources=("
+    return "ExecutableTransferObject(queryId=(" + queryId + "); schema=(" + schema->toString() + "); sources=("
         + boost::algorithm::join(sourcesStringVec, ";") + "); destinations=("
         + boost::algorithm::join(destinationsStringVec, ",") + "); operatorTree:(" + operatorTree->toString()
         + "); compiled=" + std::to_string(compiled) + ")";
