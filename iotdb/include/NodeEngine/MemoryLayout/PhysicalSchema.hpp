@@ -5,7 +5,6 @@
 #include <API/Types/DataTypes.hpp>
 namespace NES {
 
-//todo: change SchemaTemp to Schema
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
 
