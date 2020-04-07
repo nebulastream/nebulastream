@@ -1,7 +1,7 @@
 #ifndef NES_IMPL_OPTIMIZER_IMPL_HIGHAVAILABILITY_HPP_
 #define NES_IMPL_OPTIMIZER_IMPL_HIGHAVAILABILITY_HPP_
 
-#include <Optimizer/NESPlacementOptimizer.hpp>
+#include <Optimizer/BasePlacementStrategy.hpp>
 
 namespace NES {
 
@@ -12,13 +12,15 @@ typedef std::shared_ptr<Operator> OperatorPtr;
  * @brief This Class is responsible for placing operators on the nodes such that there exists R number of redundant
  * paths between the operator and the source node.
  */
-class HighAvailabilityStrategy : public NESPlacementOptimizer {
+class HighAvailabilityStrategy : public BasePlacementStrategy {
 
   public:
     HighAvailabilityStrategy() = default;
     ~HighAvailabilityStrategy() = default;
 
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
+
+    NESPlacementStrategyType getType() override;
 
   private:
 
@@ -40,10 +42,6 @@ class HighAvailabilityStrategy : public NESPlacementOptimizer {
      */
     void addForwardOperators(vector<NESTopologyEntryPtr> pathForPlacement,
                              NESExecutionPlanPtr nesExecutionPlanPtr) const;
-
-    NESPlacementStrategyType getType() {
-        return HighAvailability;
-    }
 };
 
 }

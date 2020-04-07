@@ -34,7 +34,7 @@ NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(InputQueryPt
   placeOperators(nesExecutionPlanPtr, nesTopologyGraphPtr, sourceOperatorPtr, sourceNodePtrs);
 
   NES_INFO("HighThroughput: Adding forward operators.");
-  addForwardOperators(getType(), sourceNodePtrs, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
+  addForwardOperators(sourceNodePtrs, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
 
   NES_INFO("HighThroughput: Generating complete execution Graph.");
   completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlan);
@@ -108,6 +108,10 @@ void HighThroughputStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr
       }
     }
   }
+}
+
+NESPlacementStrategyType HighThroughputStrategy::getType() {
+    return HighThroughput;
 }
 
 }

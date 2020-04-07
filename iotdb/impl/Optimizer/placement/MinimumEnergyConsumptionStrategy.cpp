@@ -37,7 +37,7 @@ NESExecutionPlanPtr MinimumEnergyConsumptionStrategy::initializeExecutionPlan(In
   placeOperators(nesExecutionPlanPtr, nesTopologyGraphPtr, sourceOperatorPtr, sourceNodePtrs);
 
   NES_INFO("MinimumEnergyConsumption: Adding forward operators.");
-  addForwardOperators(getType(), sourceNodePtrs, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
+  addForwardOperators(sourceNodePtrs, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
 
   NES_INFO("MinimumEnergyConsumption: Generating complete execution Graph.");
   completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlan);
@@ -276,6 +276,10 @@ void MinimumEnergyConsumptionStrategy::placeOperators(NESExecutionPlanPtr execut
     node->reduceCpuCapacity(1);
     nextSrcOptr = nextSrcOptr->getParent();
   }
+}
+
+NESPlacementStrategyType MinimumEnergyConsumptionStrategy::getType() {
+    return MinimumEnergyConsumption;
 }
 
 }

@@ -32,11 +32,16 @@ static std::map<std::string, NESPlacementStrategyType> stringToPlacementStrategy
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
  */
-class NESPlacementOptimizer {
+class BasePlacementStrategy {
   private:
 
   public:
-    NESPlacementOptimizer() {};
+    BasePlacementStrategy() {};
+
+    /**
+     * @brief: Get the type of placement strategy
+     */
+    virtual NESPlacementStrategyType getType() = 0;
 
     /**
      * @brief Returns an execution graph based on the input query and nes topology.
@@ -77,7 +82,7 @@ class NESPlacementOptimizer {
      * @param placementStrategyName
      * @return instance of type BaseOptimizer
      */
-    static std::shared_ptr<NESPlacementOptimizer> getOptimizer(std::string placementStrategyName);
+    static std::shared_ptr<BasePlacementStrategy> getStrategy(std::string placementStrategyName);
 
     /**
      * @brief replace forward operator with system generated source and sink operator.
@@ -96,13 +101,12 @@ class NESPlacementOptimizer {
     /**
      * @brief This method will add the forward operator where ever necessary along the selected path.
      *
-     * @param nesPlacementStrategyType type of placement strategy to find the path
      * @param sourceNodes vector of source nodes
      * @param rootNode root node
      * @param nesExecutionPlanPtr Pointer to the execution plan
      */
-    void addForwardOperators(NESPlacementStrategyType nesPlacementStrategyType, vector<NESTopologyEntryPtr> sourceNodes,
-                             NESTopologyEntryPtr rootNode, NESExecutionPlanPtr nesExecutionPlanPtr);
+    void addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes, NESTopologyEntryPtr rootNode,
+                             NESExecutionPlanPtr nesExecutionPlanPtr);
 
 };
 }

@@ -276,4 +276,8 @@ void HighAvailabilityStrategy::addForwardOperators(vector<NESTopologyEntryPtr> p
   }
 }
 
+NESPlacementStrategyType HighAvailabilityStrategy::getType() {
+        return HighAvailability;
+}
+
 }

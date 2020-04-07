@@ -2,7 +2,7 @@
 #define BOTTOMUP_HPP
 
 #include <iostream>
-#include <Optimizer/NESPlacementOptimizer.hpp>
+#include <Optimizer/BasePlacementStrategy.hpp>
 
 namespace NES {
 
@@ -16,12 +16,14 @@ using namespace std;
  *          placed at respective nes nodes but rest of the operators are placed starting near to the source and then
  *          if the resources are not available they are placed on a node neighbouring to the node or one level up.
  */
-class BottomUpStrategy : public NESPlacementOptimizer {
+class BottomUpStrategy : public BasePlacementStrategy {
   public:
     BottomUpStrategy() {};
     ~BottomUpStrategy() {};
 
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
+
+    NESPlacementStrategyType getType() override;
 
   private:
 
@@ -53,10 +55,6 @@ class BottomUpStrategy : public NESPlacementOptimizer {
     NESTopologyEntryPtr findSuitableNESNodeForOperatorPlacement(const ProcessOperator& operatorToProcess,
                                                                 NESTopologyGraphPtr nesTopologyGraphPtr,
                                                                 NESTopologyEntryPtr sourceNodePtr);
-
-    NESPlacementStrategyType getType() {
-        return BottomUp;
-    }
 };
 }
 
