@@ -34,7 +34,7 @@ NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(NES::InputQueryP
   placeOperators(nesExecutionPlanPtr, nesTopologyGraphPtr, sourceOperatorPtr, sourceNodePtrs);
 
   NES_INFO("LowLatency: Adding forward operators.");
-  addForwardOperators(getType(), sourceNodePtrs, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
+  addForwardOperators(sourceNodePtrs, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
 
   NES_INFO("LowLatency: Generating complete execution Graph.");
   completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlan);
@@ -106,6 +106,10 @@ void LowLatencyStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NE
       }
     }
   }
+}
+
+NESPlacementStrategyType LowLatencyStrategy::getType() {
+    return LowLatency;
 }
 
 }

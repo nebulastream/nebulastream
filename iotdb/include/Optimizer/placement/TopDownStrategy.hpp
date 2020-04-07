@@ -2,7 +2,7 @@
 #define TOPDOWN_HPP
 
 #include <stack>
-#include <Optimizer/NESPlacementOptimizer.hpp>
+#include <Optimizer/BasePlacementStrategy.hpp>
 
 namespace NES {
 
@@ -11,7 +11,7 @@ typedef std::shared_ptr<Operator> OperatorPtr;
 
 using namespace std;
 
-class TopDownStrategy : public NESPlacementOptimizer {
+class TopDownStrategy : public BasePlacementStrategy {
 
   public:
     TopDownStrategy() = default;
@@ -19,6 +19,8 @@ class TopDownStrategy : public NESPlacementOptimizer {
 
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery,
                                                 NESTopologyPlanPtr nesTopologyPlanPtr) override;
+
+    NESPlacementStrategyType getType() override;
 
   private:
 
@@ -47,10 +49,6 @@ class TopDownStrategy : public NESPlacementOptimizer {
      */
     void createNewExecutionNode(NESExecutionPlanPtr executionPlanPtr, OperatorPtr operatorPtr,
                                 NESTopologyEntryPtr nesNode) const;
-
-    NESPlacementStrategyType getType() {
-        return TopDown;
-    }
 };
 
 }

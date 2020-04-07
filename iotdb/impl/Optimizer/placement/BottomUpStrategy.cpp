@@ -38,7 +38,7 @@ NESExecutionPlanPtr BottomUpStrategy::initializeExecutionPlan(InputQueryPtr inpu
   placeOperators(nesExecutionPlanPtr, nesTopologyGraphPtr, sourceOperatorPtr, sourceNodePtrs);
 
   NES_INFO("BottomUp: Adding forward operators.");
-  addForwardOperators(getType(), sourceNodePtrs, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
+  addForwardOperators(sourceNodePtrs, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
 
   NES_INFO("BottomUp: Generating complete execution Graph.");
   completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlan);
@@ -206,5 +206,9 @@ NESTopologyEntryPtr BottomUpStrategy::findSuitableNESNodeForOperatorPlacement(co
 
   return node;
 };
+
+NESPlacementStrategyType BottomUpStrategy::getType() {
+    return BottomUp;
+}
 
 }

@@ -1,7 +1,7 @@
 #ifndef NES_IMPL_OPTIMIZER_IMPL_LOWLINKLATENCY_HPP_
 #define NES_IMPL_OPTIMIZER_IMPL_LOWLINKLATENCY_HPP_
 
-#include <Optimizer/NESPlacementOptimizer.hpp>
+#include <Optimizer/BasePlacementStrategy.hpp>
 
 namespace NES {
 
@@ -19,7 +19,7 @@ namespace NES {
  * * Replicate operators when possible
  *
  */
-class LowLatencyStrategy : public NESPlacementOptimizer {
+class LowLatencyStrategy : public BasePlacementStrategy {
 
   public:
     LowLatencyStrategy() {};
@@ -27,14 +27,12 @@ class LowLatencyStrategy : public NESPlacementOptimizer {
 
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
+    NESPlacementStrategyType getType() override;
+
   private:
 
     void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
                         OperatorPtr operatorPtr, vector<NESTopologyEntryPtr> sourceNodes);
-
-    NESPlacementStrategyType getType() {
-        return LowLatency;
-    }
 };
 }
 

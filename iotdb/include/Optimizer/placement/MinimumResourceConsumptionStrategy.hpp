@@ -1,14 +1,14 @@
 #ifndef NES_IMPL_OPTIMIZER_IMPL_MINIMUMRESOURCECONSUMPTION_HPP_
 #define NES_IMPL_OPTIMIZER_IMPL_MINIMUMRESOURCECONSUMPTION_HPP_
 
-#include <Optimizer/NESPlacementOptimizer.hpp>
+#include <Optimizer/BasePlacementStrategy.hpp>
 namespace NES {
 
 /**
  * @brief This class is responsible for placing the operators on common path among the sources such that overall
  * resource consumption will reduce.
  */
-class MinimumResourceConsumptionStrategy : public NESPlacementOptimizer {
+class MinimumResourceConsumptionStrategy : public BasePlacementStrategy {
 
   public:
     MinimumResourceConsumptionStrategy() = default;

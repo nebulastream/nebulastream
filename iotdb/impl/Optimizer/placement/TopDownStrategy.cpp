@@ -28,7 +28,7 @@ NESExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(
   placeOperators(nesExecutionPlanPtr, sinkOperator, sourceNodes, nesTopologyGraphPtr);
 
   NES_INFO("TopDown: Adding forward operators.");
-  addForwardOperators(getType(), sourceNodes, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
+  addForwardOperators(sourceNodes, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
 
   NES_INFO("TopDown: Generating complete execution Graph.");
   completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlanPtr);
@@ -156,6 +156,10 @@ void TopDownStrategy::addOperatorToExistingNode(OperatorPtr operatorPtr, Executi
   executionNode->setOperatorName(operatorName.str());
   executionNode->addChild(operatorPtr->copy());
   executionNode->addOperatorId(operatorPtr->getOperatorId());
+}
+
+NESPlacementStrategyType TopDownStrategy::getType() {
+    return TopDown;
 }
 
 }
