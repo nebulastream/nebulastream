@@ -31,6 +31,7 @@ class CodeGenerationTest : public testing::Test {
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         std::cout << "Setup CodeGenerationTest test class." << std::endl;
+        BufferManager::instance().configure(4096, 1024);
     }
 
     /* Will be called before a test is executed. */
