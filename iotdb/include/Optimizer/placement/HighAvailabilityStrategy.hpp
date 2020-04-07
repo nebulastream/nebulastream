@@ -41,9 +41,9 @@ class HighAvailabilityStrategy : public NESPlacementOptimizer {
     void addForwardOperators(vector<NESTopologyEntryPtr> pathForPlacement,
                              NESExecutionPlanPtr nesExecutionPlanPtr) const;
 
-  NESPlacementStrategyType getType() {
-    return HighAvailability;
-  }
+    NESPlacementStrategyType getType() {
+        return HighAvailability;
+    }
 };
 
 }
