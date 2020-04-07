@@ -16,23 +16,22 @@ StreamCatalog::StreamCatalog() {
     addLogicalStream("default_logical", schema);
     NES_DEBUG("StreamCatalog: constructed default_logical")
 
-    SchemaPtr schemaExdra = Schema::create()->addField(
-            "type", createArrayDataType(BasicType::CHAR, 30))->addField(
-            "metadata_generated", BasicType::UINT64)->addField(
-            "metadata_title", createArrayDataType(BasicType::CHAR, 50))->addField(
-            "metadata_id", createArrayDataType(BasicType::CHAR, 50))->addField(
-            "features_type", createArrayDataType(BasicType::CHAR, 50))->addField(
-            "features_properties_capacity", BasicType::UINT64)->addField(
-            "features_properties_efficiency", BasicType::FLOAT32)->addField(
-            "features_properties_mag", BasicType::FLOAT32)->addField(
-            "features_properties_time", BasicType::UINT64)->addField(
-            "features_properties_updated", BasicType::UINT64)->addField(
-            "features_properties_type", createArrayDataType(BasicType::CHAR, 50))
-        ->addField("features_geometry_type",
-                  createArrayDataType(BasicType::CHAR, 50))->addField(
-            "features_geometry_coordinates_longitude", BasicType::FLOAT32)->addField(
-            "features_geometry_coordinates_latitude", BasicType::FLOAT32)->addField(
-            "features_eventId ", createArrayDataType(BasicType::CHAR, 50));
+    SchemaPtr schemaExdra = Schema::create()
+        ->addField("type", createArrayDataType(BasicType::CHAR, 30))
+        ->addField("metadata_generated", BasicType::UINT64)
+        ->addField("metadata_title", createArrayDataType(BasicType::CHAR, 50))
+        ->addField("metadata_id", createArrayDataType(BasicType::CHAR, 50))
+        ->addField("features_type", createArrayDataType(BasicType::CHAR, 50))
+        ->addField("features_properties_capacity", BasicType::UINT64)
+        ->addField("features_properties_efficiency", BasicType::FLOAT32)
+        ->addField("features_properties_mag", BasicType::FLOAT32)
+        ->addField("features_properties_time", BasicType::UINT64)
+        ->addField("features_properties_updated", BasicType::UINT64)
+        ->addField("features_properties_type", createArrayDataType(BasicType::CHAR, 50))
+        ->addField("features_geometry_type",createArrayDataType(BasicType::CHAR, 50))
+        ->addField("features_geometry_coordinates_longitude", BasicType::FLOAT32)
+        ->addField("features_geometry_coordinates_latitude", BasicType::FLOAT32)
+        ->addField("features_eventId ", createArrayDataType(BasicType::CHAR, 50));
     NES_DEBUG("StreamCatalog: schema for exdra is =" << schemaExdra->toString())
     addLogicalStream("exdra", schemaExdra);
     NES_DEBUG("StreamCatalog: constructed exdra")
@@ -274,23 +273,22 @@ void StreamCatalog::reset() {
         "value", BasicType::UINT64);
     addLogicalStream("default_logical", schema);
 
-    SchemaPtr schemaExdra = Schema::create()->addField(
-            "type", createArrayDataType(BasicType::CHAR, 30))->addField(
-            "metadata_generated", BasicType::UINT64)->addField(
-            "metadata_title", createArrayDataType(BasicType::CHAR, 50))->addField(
-            "metadata_id", createArrayDataType(BasicType::CHAR, 50))->addField(
-            "features_type", createArrayDataType(BasicType::CHAR, 50))->addField(
-            "features_properties_capacity", BasicType::UINT64)->addField(
-            "features_properties_efficiency", BasicType::FLOAT32)->addField(
-            "features_properties_mag", BasicType::FLOAT32)->addField(
-            "features_properties_time", BasicType::UINT64)->addField(
-            "features_properties_updated", BasicType::UINT64)->addField(
-            "features_properties_type", createArrayDataType(BasicType::CHAR, 50))
-        ->addField("features_geometry_type",
-                  createArrayDataType(BasicType::CHAR, 50))->addField(
-            "features_geometry_coordinates_longitude", BasicType::FLOAT32)->addField(
-            "features_geometry_coordinates_latitude", BasicType::FLOAT32)->addField(
-            "features_eventId ", createArrayDataType(BasicType::CHAR, 50));
+    SchemaPtr schemaExdra = Schema::create()
+        ->addField("type", createArrayDataType(BasicType::CHAR, 30))
+        ->addField("metadata_generated", BasicType::UINT64)
+        ->addField("metadata_title", createArrayDataType(BasicType::CHAR, 50))
+        ->addField("metadata_id", createArrayDataType(BasicType::CHAR, 50))
+        ->addField("features_type", createArrayDataType(BasicType::CHAR, 50))
+        ->addField("features_properties_capacity", BasicType::UINT64)
+        ->addField("features_properties_efficiency", BasicType::FLOAT32)
+        ->addField("features_properties_mag", BasicType::FLOAT32)
+        ->addField("features_properties_time", BasicType::UINT64)
+        ->addField("features_properties_updated", BasicType::UINT64)
+        ->addField("features_properties_type", createArrayDataType(BasicType::CHAR, 50))
+        ->addField("features_geometry_type",createArrayDataType(BasicType::CHAR, 50))
+        ->addField("features_geometry_coordinates_longitude", BasicType::FLOAT32)
+        ->addField("features_geometry_coordinates_latitude", BasicType::FLOAT32)
+        ->addField("features_eventId ", createArrayDataType(BasicType::CHAR, 50));
     addLogicalStream("exdra", schemaExdra);
     NES_DEBUG("StreamCatalog: reset completed exdra")
 }

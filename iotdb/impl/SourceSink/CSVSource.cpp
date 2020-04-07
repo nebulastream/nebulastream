@@ -81,7 +81,7 @@ void CSVSource::fillBuffer(TupleBufferPtr buf) {
     boost::algorithm::split(tokens, line, boost::is_any_of(this->delimiter));
     size_t offset = 0;
     for (size_t j = 0; j < schema->getSize(); j++) {
-      auto field = (*schema)[j];
+      auto field = schema->get(j);
       size_t fieldSize = field->getFieldSize();
 
       //TODO: add all other data types here

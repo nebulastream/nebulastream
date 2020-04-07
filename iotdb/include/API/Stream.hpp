@@ -11,8 +11,6 @@ namespace NES {
 
 class Stream {
  public:
-  Stream(std::string name, const Schema& schema);
-
   Stream(std::string name, SchemaPtr schema);
 
   Field operator[](const std::string fieldName);

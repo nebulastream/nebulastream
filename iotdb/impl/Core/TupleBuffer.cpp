@@ -109,7 +109,7 @@ std::string TupleBuffer::printTupleBuffer(SchemaPtr schema) {
   for (size_t i = 0; i < numberOfTuples; i++) {
     size_t offset = 0;
     for (size_t j = 0; j < schema->getSize(); j++) {
-      auto field = (*schema)[j];
+      auto field = schema->get(j);
       size_t fieldSize = field->getFieldSize();
       DataTypePtr ptr = field->getDataType();
       std::string str = ptr->convertRawToString(
@@ -143,7 +143,7 @@ void TupleBuffer::revertEndianness(SchemaPtr schema) {
   for (size_t i = 0; i < numberOfTuples; i++) {
     size_t offset = 0;
     for (size_t j = 0; j < schema->getSize(); j++) {
-      auto field = (*schema)[j];
+      auto field = schema->get(j);
       size_t fieldSize = field->getFieldSize();
       //TODO: add enum with switch for performance reasons
       if (field->getDataType()->toString() == "UINT8") {

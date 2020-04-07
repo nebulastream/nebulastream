@@ -5,7 +5,6 @@
 #include <API/Types/DataTypes.hpp>
 namespace NES {
 
-//todo: change SchemaTemp to Schema
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
 
@@ -24,7 +23,7 @@ typedef std::shared_ptr<PhysicalSchema> PhysicalSchemaPtr;
  */
 class PhysicalSchema {
   public:
-    explicit PhysicalSchema(SchemaPtr _schema);
+    explicit PhysicalSchema(SchemaPtr schemaPtr);
     static PhysicalSchemaPtr createPhysicalSchema(SchemaPtr schema);
 
     /**

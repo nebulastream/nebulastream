@@ -154,10 +154,10 @@ std::string toString(TupleBuffer* buffer, SchemaPtr schema) {
     std::vector<uint32_t> offsets;
     std::vector<DataTypePtr> types;
     for (uint32_t i = 0; i < schema->getSize(); ++i) {
-        offsets.push_back((*schema)[i]->getFieldSize());
-        NES_DEBUG(std::string("Field Size ") + (*schema)[i]->toString() + std::string(": ") +
-            std::to_string((*schema)[i]->getFieldSize()));
-        types.push_back((*schema)[i]->getDataType());
+        offsets.push_back(schema->get(i)->getFieldSize());
+        NES_DEBUG(std::string("Field Size ") + schema->get(i)->toString() + std::string(": ") +
+            std::to_string(schema->get(i)->getFieldSize()));
+        types.push_back(schema->get(i)->getDataType());
     }
 
     uint32_t prefix_sum = 0;
@@ -165,14 +165,14 @@ std::string toString(TupleBuffer* buffer, SchemaPtr schema) {
         uint32_t val = offsets[i];
         offsets[i] = prefix_sum;
         prefix_sum += val;
-        NES_DEBUG(std::string("Prefix Sum: ") + (*schema)[i]->toString() + std::string(": ") +
+        NES_DEBUG(std::string("Prefix Sum: ") + schema->get(i)->toString() + std::string(": ") +
             std::to_string(offsets[i]));
     }
 
     str << "+----------------------------------------------------+" << std::endl;
     str << "|";
     for (uint32_t i = 0; i < schema->getSize(); ++i) {
-        str << (*schema)[i]->toString() << "|";
+        str << schema->get(i)->toString() << "|";
     }
     str << std::endl;
     str << "+----------------------------------------------------+" << std::endl;

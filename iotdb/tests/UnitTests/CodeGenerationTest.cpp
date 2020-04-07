@@ -657,7 +657,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
   auto inputBuffer = BufferManager::instance().getFixedSizeBuffer();
   inputBuffer->setTupleSizeInBytes(8);
   auto recordSchema = Schema::create()->addField("id", BasicType::INT64);
-  auto layout = createRowLayout(std::make_shared<Schema>(recordSchema->copy()));
+  auto layout = createRowLayout(recordSchema);
 
   for (uint32_t recordIndex = 0; recordIndex < 100; ++recordIndex) {
       layout->getValueField<int64_t>(recordIndex, /*fieldIndex*/0)->write(inputBuffer, recordIndex);
@@ -717,7 +717,7 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
 
   /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
   EXPECT_EQ(buffer->getNumberOfTuples(), resultBuffer->getNumberOfTuples());
-  auto layout = createRowLayout(std::make_shared<Schema>(schema->copy()));
+  auto layout = createRowLayout(schema);
   for (uint64_t recordIndex = 0; recordIndex < buffer->getNumberOfTuples();
       ++recordIndex) {
     EXPECT_EQ(1,  layout->getValueField<uint64_t>(recordIndex, /*fieldIndex*/0)->read(buffer));
