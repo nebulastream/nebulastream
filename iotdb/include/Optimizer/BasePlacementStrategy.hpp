@@ -39,11 +39,6 @@ class BasePlacementStrategy {
     BasePlacementStrategy() {};
 
     /**
-     * @brief: Get the type of placement strategy
-     */
-    virtual NESPlacementStrategyType getType() = 0;
-
-    /**
      * @brief Returns an execution graph based on the input query and nes topology.
      * @param inputQuery
      * @param nesTopologyPlan
@@ -105,12 +100,10 @@ class BasePlacementStrategy {
     /**
      * @brief This method will add the forward operator where ever necessary along the selected path.
      *
-     * @param sourceNodes vector of source nodes
-     * @param rootNode root node
+     * @param candidateNodes vector of nodes where operators could be placed
      * @param nesExecutionPlanPtr Pointer to the execution plan
      */
-    void addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes, NESTopologyEntryPtr rootNode,
-                             NESExecutionPlanPtr nesExecutionPlanPtr);
+    void addForwardOperators(vector<NESTopologyEntryPtr> candidateNodes, NESExecutionPlanPtr nesExecutionPlanPtr);
 
 };
 }

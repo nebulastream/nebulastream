@@ -20,8 +20,6 @@ class HighAvailabilityStrategy : public BasePlacementStrategy {
 
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
-    NESPlacementStrategyType getType() override;
-
   private:
 
     /**
@@ -42,6 +40,15 @@ class HighAvailabilityStrategy : public BasePlacementStrategy {
      */
     void addForwardOperators(vector<NESTopologyEntryPtr> pathForPlacement,
                              NESExecutionPlanPtr nesExecutionPlanPtr) const;
+
+    /**
+     * @brief Finds all the nodes that can be used for performing FWD operator
+     * @param sourceNodes
+     * @param rootNode
+     * @return
+     */
+    vector<NESTopologyEntryPtr> getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
+                                                                         const NESTopologyEntryPtr rootNode) const;
 };
 
 }

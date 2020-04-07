@@ -23,8 +23,6 @@ class BottomUpStrategy : public BasePlacementStrategy {
 
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
-    NESPlacementStrategyType getType() override;
-
   private:
 
     // This structure hold information about the current operator to place and previously placed parent operator.
@@ -51,10 +49,25 @@ class BottomUpStrategy : public BasePlacementStrategy {
     void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
                         OperatorPtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes);
 
-    // finds a suitable for node for the operator to be placed.
+    /**
+     * @brief Finds a suitable for node for the operator to be placed.
+     * @param operatorToProcess
+     * @param nesTopologyGraphPtr
+     * @param sourceNodePtr
+     * @return
+     */
     NESTopologyEntryPtr findSuitableNESNodeForOperatorPlacement(const ProcessOperator& operatorToProcess,
                                                                 NESTopologyGraphPtr nesTopologyGraphPtr,
                                                                 NESTopologyEntryPtr sourceNodePtr);
+
+    /**
+     * @brief Finds all the nodes that can be used for performing FWD operator
+     * @param sourceNodes
+     * @param rootNode
+     * @return
+     */
+    vector<NESTopologyEntryPtr> getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
+                                                                         const NESTopologyEntryPtr rootNode) const;
 };
 }
 
