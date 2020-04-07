@@ -4,7 +4,7 @@
 
 namespace NES {
 
-static constexpr char mangledEntryPoint[] = "_Z14compiled_queryP11TupleBufferPvPN3NES13WindowManagerES0_";
+static std::string mangledEntryPoint = "_Z14compiled_queryRN3NES11TupleBufferEPvPNS_13WindowManagerES1_";
 
 CompiledExecutablePipeline::CompiledExecutablePipeline(CompiledCodePtr compiled_code) :
     compiled_code_(std::move(compiled_code)) {
