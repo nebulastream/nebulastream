@@ -33,7 +33,7 @@ NESExecutionPlanPtr HighAvailabilityStrategy::initializeExecutionPlan(InputQuery
   placeOperators(nesExecutionPlanPtr, nesTopologyGraphPtr, sourceOperatorPtr, sourceNodePtrs);
 
   NES_INFO("HighAvailabilityStrategy: Generating complete execution Graph.");
-  completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlan);
+    fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr, nesTopologyPlan);
 
   //FIXME: We are assuming that throughout the pipeline the schema would not change.
   Schema& schema = inputQuery->getSourceStream()->getSchema();

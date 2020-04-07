@@ -31,7 +31,7 @@ NESExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(
   addForwardOperators(sourceNodes, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
 
   NES_INFO("TopDown: Generating complete execution Graph.");
-  completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlanPtr);
+    fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr, nesTopologyPlanPtr);
 
   //FIXME: We are assuming that throughout the pipeline the schema would not change.
   Schema schema = inputQuery->getSourceStream()->getSchema();
