@@ -876,15 +876,19 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
   auto context = createPipelineContext();
 
   auto inputSchema = source->getSchema();
+  NES_DEBUG("Input-schema is 1 " << inputSchema->toString())
 
   codeGenerator->generateCode(inputSchema, context, std::cout);
 
+  NES_DEBUG("Input-schema is 2 " << inputSchema->toString())
   //predicate definition
   auto mappedValue = AttributeField("mappedValue", BasicType::FLOAT64).copy();
+  NES_DEBUG("Input-schema is 2b " << inputSchema->toString())
   codeGenerator->generateCode(
       mappedValue, createPredicate((inputSchema->get(2) * inputSchema->get(3)) + 2),
       context, std::cout);
 
+  NES_DEBUG("Input-schema is 3 " << inputSchema->toString())
   /* generate code for writing result tuples to output buffer */
   auto outputSchema = Schema::create()
       ->addField("id", BasicType::UINT32)
@@ -915,14 +919,28 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
   /* check for correctness, the number of produced tuple should be equal between input and output buffer */
   EXPECT_EQ(resultBuffer->getNumberOfTuples(),
             inputBuffer->getNumberOfTuples());
+  NES_DEBUG("Input-schema is " << inputSchema->toString())
+  auto inputLayout = createRowLayout(inputSchema);
+  NES_DEBUG("Input-schema is " << inputSchema->toString())
+  auto outputLayout = createRowLayout(outputSchema);
   auto inputLayout = createRowLayout(inputSchema);
   auto outputLayout = createRowLayout(outputSchema);
   for (int recordIndex = 0; recordIndex < inputBuffer->getNumberOfTuples(); recordIndex++) {
     auto floatValue = inputLayout->getValueField<float>(recordIndex, /*fieldIndex*/2)->read(inputBuffer);
     auto doubleValue = inputLayout->getValueField<double>(recordIndex, /*fieldIndex*/3)->read(inputBuffer);
+    NES_DEBUG("MY VALUE ONE IS: " << floatValue << " - MY VALUE TWO IS: " << doubleValue)
     auto reference = (floatValue * doubleValue) + 2;
     auto mapedValue = outputLayout->getValueField<double>(recordIndex, /*fieldIndex*/4)->read(resultBuffer);
     EXPECT_EQ(reference, mapedValue);
   }
+}
+
+TEST_F (CodeGenerationTest, codeGenerationSchemaPtrTest) {
+  SchemaPtr test = Schema::create()->addField("Name", BasicType::BOOLEAN);
+  SchemaPtr cp = test->copy();
+  cp->addField("Value", BasicType::INT8);
+  NES_DEBUG(test->toString() << " in relation to " << cp->toString());
+  test->addField("Rockefella", BasicType::INT64);
+  NES_DEBUG(test->toString() << " in relation to " << cp->toString());
 }
 }  // namespace NES
