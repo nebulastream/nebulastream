@@ -10,20 +10,20 @@ namespace NES {
  */
 class MinimumResourceConsumptionStrategy : public NESPlacementOptimizer {
 
- public:
-  MinimumResourceConsumptionStrategy() = default;
-  ~MinimumResourceConsumptionStrategy() = default;
+  public:
+    MinimumResourceConsumptionStrategy() = default;
+    ~MinimumResourceConsumptionStrategy() = default;
 
-  NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
+    NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
- private:
+  private:
 
-  void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
-                      OperatorPtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes);
+    void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
+                        OperatorPtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes);
 
-  NESPlacementStrategyType getType() {
-    return MinimumResourceConsumption;
-  }
+    NESPlacementStrategyType getType() {
+        return MinimumResourceConsumption;
+    }
 };
 }
 

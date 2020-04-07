@@ -11,20 +11,20 @@ namespace NES {
  */
 class HighThroughputStrategy : public NESPlacementOptimizer {
 
- public:
-  HighThroughputStrategy() = default;
-  ~HighThroughputStrategy() = default;
+  public:
+    HighThroughputStrategy() = default;
+    ~HighThroughputStrategy() = default;
 
-  NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
+    NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
- private:
+  private:
 
-  void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
-                      OperatorPtr operatorPtr, vector<NESTopologyEntryPtr> sourceNodes);
+    void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
+                        OperatorPtr operatorPtr, vector<NESTopologyEntryPtr> sourceNodes);
 
-  NESPlacementStrategyType getType() {
-    return HighThroughput;
-  }
+    NESPlacementStrategyType getType() {
+        return HighThroughput;
+    }
 
 };
 

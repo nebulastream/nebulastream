@@ -14,7 +14,7 @@ NESExecutionPlanPtr BottomUpStrategy::initializeExecutionPlan(InputQueryPtr inpu
   const OperatorPtr sinkOperator = inputQuery->getRoot();
 
   // FIXME: current implementation assumes that we have only one source stream and therefore only one source operator.
-  const string &streamName = inputQuery->getSourceStream()->getName();
+  const string& streamName = inputQuery->getSourceStream()->getName();
   const OperatorPtr sourceOperatorPtr = getSourceOperator(sinkOperator);
 
   if (!sourceOperatorPtr) {
@@ -44,7 +44,7 @@ NESExecutionPlanPtr BottomUpStrategy::initializeExecutionPlan(InputQueryPtr inpu
   completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlan);
 
   //FIXME: We are assuming that throughout the pipeline the schema would not change.
-  Schema &schema = inputQuery->getSourceStream()->getSchema();
+  Schema& schema = inputQuery->getSourceStream()->getSchema();
   addSystemGeneratedSourceSinkOperators(schema, nesExecutionPlanPtr);
 
   return nesExecutionPlanPtr;
@@ -98,7 +98,7 @@ void BottomUpStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr,
 
         size_t operatorId = targetOperator->getOperatorId();
 
-        vector<size_t> &residentOperatorIds = existingExecutionNode->getChildOperatorIds();
+        vector<size_t>& residentOperatorIds = existingExecutionNode->getChildOperatorIds();
         const auto exists = std::find(residentOperatorIds.begin(), residentOperatorIds.end(), operatorId);
 
         if (exists != residentOperatorIds.end()) {
@@ -148,7 +148,7 @@ void BottomUpStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr,
   }
 }
 
-NESTopologyEntryPtr BottomUpStrategy::findSuitableNESNodeForOperatorPlacement(const ProcessOperator &operatorToProcess,
+NESTopologyEntryPtr BottomUpStrategy::findSuitableNESNodeForOperatorPlacement(const ProcessOperator& operatorToProcess,
                                                                               NESTopologyGraphPtr nesTopologyGraphPtr,
                                                                               NESTopologyEntryPtr sourceNodePtr) {
 
