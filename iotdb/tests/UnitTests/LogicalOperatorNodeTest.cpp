@@ -124,7 +124,7 @@ TEST_F(LogicalOperatorNodeTest, getSuccessors) {
     DSFIterator iter = DSFIterator(sourceOp);
 
     for (NodePtr sa:iter) {
-        std::cout << "t" << std::endl;
+        std::cout << sa->toString() << std::endl;
     }
 
 }

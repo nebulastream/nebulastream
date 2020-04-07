@@ -1,12 +1,12 @@
 #ifndef NES_INCLUDE_NODES_UTIL_DFSITERATOR_HPP_
 #define NES_INCLUDE_NODES_UTIL_DFSITERATOR_HPP_
 #include <Nodes/Node.hpp>
-#include <stack>
+#include <queue>
 namespace NES {
-class DSFIterator {
+class BSFIterator {
   public:
     NodePtr root;
-    DSFIterator(NodePtr root) : root(root) {
+    BSFIterator(NodePtr root) : root(root) {
 
     }
     // member typedefs provided through inheriting from std::iterator
@@ -16,7 +16,7 @@ class DSFIterator {
         NodePtr,                      // difference_type
         const NodePtr,               // pointer
         NodePtr> {
-        std::stack<NodePtr> currentStack;
+        std::queue<NodePtr> currentStack;
       public:
         explicit iterator(NodePtr current) {
             currentStack.push(current);
