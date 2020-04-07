@@ -19,6 +19,9 @@ class SerializationToolsTest : public testing::Test {
   void SetUp() {
     NES::setupLogging("SerializationToolsTest.log", NES::LOG_DEBUG);
     std::cout << "Setup SerializationToolsTest test case." << std::endl;
+    schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
+        "value", BasicType::UINT64);
+    stream = std::make_shared<Stream>("default", schema);
   }
 
   /* Will be called before a test is executed. */
@@ -37,9 +40,6 @@ class SerializationToolsTest : public testing::Test {
 
 /* Test serialization for Schema  */
 TEST_F(SerializationToolsTest, serialize_deserialize_schema) {
-  schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
-      "value", BasicType::UINT64);
-  stream = std::make_shared<Stream>("default", schema);
   string sschema = SerializationTools::ser_schema(schema);
   SchemaPtr dschema = SerializationTools::parse_schema(sschema);
   EXPECT_TRUE(dschema->equals(schema));

@@ -120,7 +120,6 @@ const StructDeclaration getStructDeclarationFromSchema(const std::string struct_
         std::cout << "Field " << i << ": " << schema->get(i)->getDataType()->toString() << " " << schema->get(i)->name
                   << std::endl;
     }
-
     return struct_decl_tuple;
 }
 
@@ -196,7 +195,7 @@ std::string toString(TupleBuffer* buffer, SchemaPtr schema) {
 
 bool CCodeGenerator::generateCode(SchemaPtr schema, const PipelineContextPtr& context, std::ostream& out) {
 
-    context->inputSchema = schema;
+    context->inputSchema = schema->copy();
 
     StructDeclaration struct_decl_tuple_buffer = getStructDeclarationTupleBuffer();
     StructDeclaration struct_decl_tuple = getStructDeclarationInputTuple(context->inputSchema);
