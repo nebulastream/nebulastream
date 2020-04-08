@@ -23,7 +23,7 @@ IfStatement::~IfStatement() {}
 
 ForLoopStatement::~ForLoopStatement() {}
 UserDefinedDataType::~UserDefinedDataType() {}
-AnnonymUserDefinedDataType::~AnnonymUserDefinedDataType() {}
+AnonymUserDefinedDataType::~AnonymUserDefinedDataType() {}
 
 FunctionCallStatement::~FunctionCallStatement() {}
 
@@ -31,8 +31,8 @@ const DataTypePtr createUserDefinedType(const StructDeclaration &decl) {
   return std::make_shared<UserDefinedDataType>(decl);
 }
 
-const DataTypePtr createAnnonymUserDefinedType(const std::string name) {
-  return std::make_shared<AnnonymUserDefinedDataType>(name);
+const DataTypePtr createAnonymUserDefinedType(const std::string name) {
+  return std::make_shared<AnonymUserDefinedDataType>(name);
 }
 
 } // namespace NES

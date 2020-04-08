@@ -6,6 +6,7 @@
 #include <QueryCompiler/CCodeGenerator/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
 #include <SourceSink/GeneratorSource.hpp>
+#include <NodeEngine/BufferManager.hpp>
 
 using namespace std;
 namespace NES {
@@ -53,7 +54,7 @@ TEST_F(TupleBufferTest, testPrintingOfTupleBuffer) {
     << std::endl;
   }
 
-  TupleBuffer buf {my_array, 5 * sizeof(MyTuple), sizeof(MyTuple), 5};
+  TupleBuffer buf = BufferManager::instance().getBufferNoBlocking().value();
   SchemaPtr s = Schema::create()
       ->addField("i64", UINT64)
       ->addField("f", FLOAT32)
@@ -109,7 +110,7 @@ TEST_F(TupleBufferTest, testEndianessOneItem) {
   ts.v9 = 1.1;
   ts.v10 = 1.2;
 
-  TupleBuffer testBuf { &ts, sizeof(TestStruct), sizeof(TestStruct), 1};
+  TupleBuffer testBuf = BufferManager::instance().getBufferNoBlocking().value();
   SchemaPtr s = Schema::create()
       ->addField("v1", UINT8)
       ->addField("v2", UINT16)
@@ -169,7 +170,7 @@ TEST_F(TupleBufferTest, testEndianessTwoItems) {
     ts[i].v10 = 1.2*i;
   }
 
-  TupleBuffer testBuf { ts, sizeof(TestStruct)*5, sizeof(TestStruct), 5};
+  TupleBuffer testBuf = BufferManager::instance().getBufferNoBlocking().value();
   SchemaPtr s = Schema::create()
       ->addField("v1", UINT8)
       ->addField("v2", UINT16)

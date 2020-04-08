@@ -14,6 +14,7 @@ BinaryOperatorStatement ExpressionStatment::accessPtr(const ExpressionStatment& 
     return BinaryOperatorStatement(*this, MEMBER_SELECT_POINTER_OP, ref);
 }
 
+
 BinaryOperatorStatement ExpressionStatment::accessRef(const ExpressionStatment& ref)
 {
     return BinaryOperatorStatement(*this, MEMBER_SELECT_REFERENCE_OP, ref);

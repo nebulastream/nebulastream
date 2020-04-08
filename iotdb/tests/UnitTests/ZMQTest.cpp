@@ -74,7 +74,7 @@ TEST_F(ZMQTest, ZmqSourceReceiveData) {
                                                                        UINT32);
   auto zmq_source = createZmqSource(test_schema, LOCAL_HOST, LOCAL_PORT);
   std::cout << zmq_source->toString() << std::endl;
-  BufferManager::instance().resizeFixedBufferSize(test_data_size);
+ // BufferManager::instance().resizeFixedBufferSize(test_data_size);
 
   // Start thread for receiving the data.
   bool receiving_finished = false;
@@ -91,7 +91,7 @@ TEST_F(ZMQTest, ZmqSourceReceiveData) {
     size_t expected = 400;
     EXPECT_EQ(sum, expected);
 
-    BufferManager::instance().releaseFixedSizeBuffer(tuple_buffer);
+   // BufferManager::instance().releaseFixedSizeBuffer(tuple_buffer);
     receiving_finished = true;
   });
   size_t tupCnt = 8;
@@ -120,7 +120,7 @@ TEST_F(ZMQTest, ZmqSinkSendData) {
 
   return;
   //FIXME: this test makes no sense, redo it
-
+/**
   // Create ZeroMQ Data Sink.
   auto test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE",
                                                                        UINT32);
@@ -172,12 +172,13 @@ TEST_F(ZMQTest, ZmqSinkSendData) {
 
   // Release buffer memory.
   delete[] (char*) buffer;
+  **/
 }
 
 /* - ZeroMQ Data Sink to ZeroMQ Data Source  ------------------------------- */
 TEST_F(ZMQTest, ZmqSinkToSource) {
 
-  return;
+/**
   //FIXME: this test makes no sense, redo it
   // Put test data into a TupleBuffer vector.
   void *buffer = new char[test_data_size];
@@ -209,7 +210,7 @@ TEST_F(ZMQTest, ZmqSinkToSource) {
       size_t expected = 100 - i;
       EXPECT_EQ(*(tuple++), expected);
     }
-    BufferManager::instance().releaseFixedSizeBuffer(new_data);
+   // BufferManager::instance().releaseFixedSizeBuffer(new_data);
     receiving_finished = true;
   });
 
@@ -221,4 +222,6 @@ TEST_F(ZMQTest, ZmqSinkToSource) {
 
   // Release buffer memory.
   delete[] (char*) buffer;
+  */
+
 }

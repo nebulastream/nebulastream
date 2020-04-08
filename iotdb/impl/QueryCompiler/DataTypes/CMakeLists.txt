@@ -4,5 +4,6 @@ add_source_iotdb(
         BasicDataType.cpp
         BasicValueType.cpp
         PointerDataType.cpp
+        ReferenceDataType.cpp
         ValueType.cpp
 )
