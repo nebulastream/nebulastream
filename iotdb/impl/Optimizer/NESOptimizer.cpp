@@ -1,8 +1,6 @@
-#include "../../include/Optimizer/NESOptimizer.hpp"
-
+#include "Optimizer/NESOptimizer.hpp"
 #include "Optimizer/BasePlacementStrategy.hpp"
-#include "../../include/Topology/NESTopologyManager.hpp"
-#include "../../include/Topology/NESTopologyPlan.hpp"
+#include "Topology/NESTopologyPlan.hpp"
 
 using namespace NES;
 
