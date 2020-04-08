@@ -4,3 +4,4 @@ add_source_iotdb(
         DumpContext.cpp
 )
 
+add_subdirectory(Iterators)
