@@ -57,7 +57,7 @@ class BasePlacementStrategy {
      * @param schema
      * @param nesExecutionPlanPtr
      */
-    void addSystemGeneratedSourceSinkOperators(const Schema& schema, NESExecutionPlanPtr nesExecutionPlanPtr);
+    void addSystemGeneratedSourceSinkOperators(SchemaPtr schema, NESExecutionPlanPtr nesExecutionPlanPtr);
 
     /**
      * @brief Fill the execution graph with complete topology information and assign No-Operators to the node which were
@@ -89,7 +89,7 @@ class BasePlacementStrategy {
      * @param schema schema of the incoming or outgoing data for source and sink operator.
      * @param executionNodePtr information about the execution node
      */
-    void convertFwdOptr(const Schema& schema, ExecutionNodePtr executionNodePtr) const;
+    void convertFwdOptr(SchemaPtr schema, ExecutionNodePtr executionNodePtr) const;
 
     /**
      * @brief This method returns the source operator in the user input query
