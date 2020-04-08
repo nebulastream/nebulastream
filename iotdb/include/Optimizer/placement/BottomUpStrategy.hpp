@@ -1,9 +1,8 @@
 #ifndef BOTTOMUP_HPP
 #define BOTTOMUP_HPP
 
-
 #include <iostream>
-#include <Optimizer/NESPlacementOptimizer.hpp>
+#include <Optimizer/BasePlacementStrategy.hpp>
 
 namespace NES {
 
@@ -17,14 +16,19 @@ using namespace std;
  *          placed at respective nes nodes but rest of the operators are placed starting near to the source and then
  *          if the resources are not available they are placed on a node neighbouring to the node or one level up.
  */
-class BottomUpStrategy : public NESPlacementOptimizer {
+class BottomUpStrategy : public BasePlacementStrategy {
   public:
-    BottomUpStrategy() {};
     ~BottomUpStrategy() {};
 
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
+    static std::unique_ptr<BottomUpStrategy> create(){
+        return std::make_unique<BottomUpStrategy>(BottomUpStrategy());
+    }
+
   private:
+
+    BottomUpStrategy() = default;
 
     // This structure hold information about the current operator to place and previously placed parent operator.
     // It helps in deciding if the operator is to be placed in the nes node where the parent operator was placed
@@ -51,18 +55,24 @@ class BottomUpStrategy : public NESPlacementOptimizer {
                         OperatorPtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes);
 
     /**
-     * @brief Add forward operators between source and sink nodes.
-     * @param sourceNodes : list of source nodes
-     * @param rootNode : sink node
-     * @param nesExecutionPlanPtr : nes execution plan
+     * @brief Finds a suitable for node for the operator to be placed.
+     * @param operatorToProcess
+     * @param nesTopologyGraphPtr
+     * @param sourceNodePtr
+     * @return
      */
-    void addForwardOperators(const vector<NESTopologyEntryPtr> sourceNodes, const NESTopologyEntryPtr rootNode,
-                             NESExecutionPlanPtr nesExecutionPlanPtr) const;
-
-    // finds a suitable for node for the operator to be placed.
     NESTopologyEntryPtr findSuitableNESNodeForOperatorPlacement(const ProcessOperator& operatorToProcess,
                                                                 NESTopologyGraphPtr nesTopologyGraphPtr,
                                                                 NESTopologyEntryPtr sourceNodePtr);
+
+    /**
+     * @brief Finds all the nodes that can be used for performing FWD operator
+     * @param sourceNodes
+     * @param rootNode
+     * @return
+     */
+    vector<NESTopologyEntryPtr> getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
+                                                                         const NESTopologyEntryPtr rootNode) const;
 };
 }
 

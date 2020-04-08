@@ -9,7 +9,7 @@
 namespace NES {
 
 NESExecutionPlanPtr MinimumEnergyConsumptionStrategy::initializeExecutionPlan(InputQueryPtr inputQuery,
-                                                                      NESTopologyPlanPtr nesTopologyPlan) {
+                                                                              NESTopologyPlanPtr nesTopologyPlan) {
 
     const OperatorPtr sinkOperator = inputQuery->getRoot();
 
@@ -22,10 +22,10 @@ NESExecutionPlanPtr MinimumEnergyConsumptionStrategy::initializeExecutionPlan(In
         throw std::runtime_error("No source operator found in the query plan");
     }
 
-    const vector<NESTopologyEntryPtr> sourceNodePtrs = StreamCatalog::instance()
+    const vector<NESTopologyEntryPtr> sourceNodes = StreamCatalog::instance()
         .getSourceNodesForLogicalStream(streamName);
 
-    if (sourceNodePtrs.empty()) {
+    if (sourceNodes.empty()) {
         NES_ERROR("MinimumEnergyConsumption: Unable to find the target source: " << streamName);
         throw std::runtime_error("No source found in the topology for stream " + streamName);
     }
@@ -34,13 +34,18 @@ NESExecutionPlanPtr MinimumEnergyConsumptionStrategy::initializeExecutionPlan(In
     const NESTopologyGraphPtr nesTopologyGraphPtr = nesTopologyPlan->getNESTopologyGraph();
 
     NES_INFO("MinimumEnergyConsumption: Placing operators on the nes topology.");
-    placeOperators(nesExecutionPlanPtr, nesTopologyGraphPtr, sourceOperatorPtr, sourceNodePtrs);
+    placeOperators(nesExecutionPlanPtr, nesTopologyGraphPtr, sourceOperatorPtr, sourceNodes);
+
+    NESTopologyEntryPtr rootNode = nesTopologyGraphPtr->getRoot();
+
+    NES_DEBUG("MinimumEnergyConsumption: Find the path used for performing the placement based on the strategy type");
+    vector<NESTopologyEntryPtr> candidateNodes = getCandidateNodesForFwdOperatorPlacement(sourceNodes, rootNode);
 
     NES_INFO("MinimumEnergyConsumption: Adding forward operators.");
-    addForwardOperators(sourceNodePtrs, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
+    addForwardOperators(candidateNodes, nesExecutionPlanPtr);
 
     NES_INFO("MinimumEnergyConsumption: Generating complete execution Graph.");
-    completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlan);
+    fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr, nesTopologyPlan);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.
     Schema& schema = inputQuery->getSourceStream()->getSchema();
@@ -49,10 +54,26 @@ NESExecutionPlanPtr MinimumEnergyConsumptionStrategy::initializeExecutionPlan(In
     return nesExecutionPlanPtr;
 }
 
+vector<NESTopologyEntryPtr> MinimumEnergyConsumptionStrategy::getCandidateNodesForFwdOperatorPlacement(const vector<
+    NESTopologyEntryPtr>& sourceNodes, const NES::NESTopologyEntryPtr rootNode) const {
+
+    PathFinder pathFinder;
+    vector<NESTopologyEntryPtr> candidateNodes;
+
+    map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>>
+        pathMap = pathFinder.findUniquePathBetween(sourceNodes, rootNode);
+
+    for (auto[key, value] : pathMap) {
+        candidateNodes.insert(candidateNodes.end(), value.begin(), value.end());
+    }
+
+    return candidateNodes;
+}
+
 void MinimumEnergyConsumptionStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr,
-                                              NESTopologyGraphPtr nesTopologyGraphPtr,
-                                              OperatorPtr sourceOperator,
-                                              vector<NESTopologyEntryPtr> sourceNodes) {
+                                                      NESTopologyGraphPtr nesTopologyGraphPtr,
+                                                      OperatorPtr sourceOperator,
+                                                      vector<NESTopologyEntryPtr> sourceNodes) {
 
     const NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
 
@@ -223,7 +244,7 @@ void MinimumEnergyConsumptionStrategy::placeOperators(NESExecutionPlanPtr execut
     while (nextSrcOptr) {
         NESTopologyEntryPtr node = nullptr;
 
-        if(nextSrcOptr->getOperatorType() == SINK_OP) {
+        if (nextSrcOptr->getOperatorType() == SINK_OP) {
             node = commonPath.back();
         } else {
             for (NESTopologyEntryPtr pathNode : commonPath) {
@@ -233,7 +254,6 @@ void MinimumEnergyConsumptionStrategy::placeOperators(NESExecutionPlanPtr execut
                 }
             }
         }
-
 
         if (!node) {
             NES_ERROR(
@@ -276,29 +296,6 @@ void MinimumEnergyConsumptionStrategy::placeOperators(NESExecutionPlanPtr execut
         }
         node->reduceCpuCapacity(1);
         nextSrcOptr = nextSrcOptr->getParent();
-    }
-}
-
-void MinimumEnergyConsumptionStrategy::addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes,
-                                                   NESTopologyEntryPtr rootNode,
-                                                   NESExecutionPlanPtr nesExecutionPlanPtr) {
-    PathFinder pathFinder;
-    map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>>
-        pathMap = pathFinder.findUniquePathBetween(sourceNodes, rootNode);
-
-    for (NESTopologyEntryPtr targetSource: sourceNodes) {
-
-        //Find the list of nodes connecting the source and destination nodes
-        std::vector<NESTopologyEntryPtr> candidateNodes = pathMap[targetSource];
-
-        for (NESTopologyEntryPtr candidateNode: candidateNodes) {
-
-            if (candidateNode->getCpuCapacity() == candidateNode->getRemainingCpuCapacity()) {
-                nesExecutionPlanPtr->createExecutionNode("FWD", to_string(candidateNode->getId()), candidateNode,
-                    /**executableOperator**/nullptr);
-                candidateNode->reduceCpuCapacity(1);
-            }
-        }
     }
 }
 
