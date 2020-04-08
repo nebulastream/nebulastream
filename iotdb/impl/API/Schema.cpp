@@ -2,7 +2,6 @@
 #include <stdexcept>
 #include <sstream>
 
-
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
@@ -15,113 +14,110 @@ Schema::Schema() {
 }
 
 SchemaPtr Schema::create() {
-  return std::make_shared<Schema>();
+    return std::make_shared<Schema>();
 }
 
 size_t Schema::getSize() const {
-  return fields.size();
+    return fields.size();
 }
 
 Schema::Schema(const SchemaPtr query) {
-  copyFields(query);
+    copyFields(query);
 }
 
-SchemaPtr Schema::makeDeepCopy() const {
-  return std::make_shared<Schema>(*this);
+SchemaPtr Schema::copy() const {
+    return std::make_shared<Schema>(*this);
 }
 
 /* Return size of one row of schema in bytes. */
-size_t Schema::getSchemaSize() const {
-  size_t size = 0;
-  for (auto const& field : fields) {
-    size += field->getFieldSize();
-  }
-  return size;
+size_t Schema::getSchemaSizeInBytes() const {
+    size_t size = 0;
+    for (auto const& field : fields) {
+        size += field->getFieldSize();
+    }
+    return size;
 }
 
-SchemaPtr Schema::copyFields(SchemaPtr schema) {
- for(AttributeFieldPtr attr : schema->fields){
-    this->fields.push_back(attr->copy());
-  }
-  return this->makeDeepCopy();
+SchemaPtr Schema::copyFields(SchemaPtr otherSchema) {
+    for (AttributeFieldPtr attr : otherSchema->fields) {
+        this->fields.push_back(attr->copy());
+    }
+    return copy();
 }
 
 SchemaPtr Schema::addField(AttributeFieldPtr field) {
-  if (field)
-    fields.push_back(field);
-  return this->makeDeepCopy();
+    if (field)
+        fields.push_back(field);
+    return copy();
 }
 
 SchemaPtr Schema::addField(const std::string& name, const BasicType& type) {
-  return addField(createField(name, type));
+    return addField(createField(name, type));
 }
 
 SchemaPtr Schema::addField(const std::string& name, uint32_t size) {
-  return addField(createField(name, size));
+    return addField(createField(name, size));
 }
 
 SchemaPtr Schema::addField(const std::string& name, DataTypePtr data) {
-  return addField(createField(name, data));
+    return addField(createField(name, data));
 }
 
-// Schema &Schema::addFixSizeField(const std::string name, const APIDataType data_type) {
-//  fields.emplace_back(name, data_type, data_type.defaultSize());
-//  return *this;
-//}
+bool Schema::has(const std::string& fieldName) {
+    for (auto& field : fields) {
+        if (field->name == fieldName) {
+            return true;
+        }
+    }
+    return false;
+}
 
-// Schema &Schema::addVarSizeField(const std::string name, const APIDataType data_type, const size_t data_size) {
-//  fields.emplace_back(name, data_type, data_size);
-//  return *this;
-//}
-
-AttributeFieldPtr Schema::get(const std::string pName) {
-  for (auto& f : fields) {
-    if (f->name == pName)
-      return f;
-  }
-  NES_ERROR("No field in the schema with the identifier " << pName)
-  throw std::invalid_argument("field " + pName + " does not exist");
+AttributeFieldPtr Schema::get(const std::string& fieldName) {
+    for (auto& field : fields) {
+        if (field->name == fieldName) {
+            return field;
+        }
+    }
+    NES_FATAL_ERROR("Schema: No field in the schema with the identifier " << fieldName)
+    throw std::invalid_argument("field " + fieldName + " does not exist");
 }
 
 AttributeFieldPtr Schema::get(uint32_t index) {
-  if (index < (uint32_t) fields.size()) {
-    return fields[index];
-  }
-  NES_ERROR("No field in the schema with the id " << index)
-  throw std::invalid_argument("field id " + std::to_string(index) + " does not exist");
+    if (index < (uint32_t) fields.size()) {
+        return fields[index];
+    }
+    NES_FATAL_ERROR("Schema: No field in the schema with the id " << index)
+    throw std::invalid_argument("field id " + std::to_string(index) + " does not exist");
 }
 
 bool Schema::equals(SchemaPtr schema, bool considerOrder) {
-  if(schema->fields.size() != fields.size()){
-    return false;
-  }
-  if(considerOrder){
-    for (int i = 0; i < fields.size(); i++){
-      if(!(fields.at(i)->isEqual((schema->fields).at(i)))){
+    if (schema->fields.size() != fields.size()) {
         return false;
-      }
     }
-    return true;
-  }
-  for(AttributeFieldPtr attr : fields){
-    if(!(schema->get(attr->name))){
-      return false;
+    if (considerOrder) {
+        for (int i = 0; i < fields.size(); i++) {
+            if (!(fields.at(i)->isEqual((schema->fields).at(i)))) {
+                return false;
+            }
+        }
+        return true;
     } else {
-      if(!(schema->get(attr->name)->isEqual(attr))){
-        return false;
-      }
+        for (AttributeFieldPtr attr : fields) {
+            if (!(schema->has(attr->name) && schema->get(attr->name)->isEqual(attr))) {
+                return false;
+            }
+        }
+        return true;
     }
-  }
-  return true;
 }
 
 const std::string Schema::toString() const {
-  std::stringstream ss;
-  for (auto& f : fields) {
-    ss << f->toString();
-  }
-  ss << std::endl;
-  return ss.str();
+    std::stringstream ss;
+    for (auto& f : fields) {
+        ss << f->toString();
+    }
+    ss << std::endl;
+    return ss.str();
 }
 }
 

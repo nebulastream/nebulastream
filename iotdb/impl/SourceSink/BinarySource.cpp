@@ -30,7 +30,7 @@ BinarySource::BinarySource(SchemaPtr schema, const std::string& _file_path)
     assert(0);
   }
   input.seekg(0, input.beg);
-  tuple_size = schema->getSchemaSize();
+  tuple_size = schema->getSchemaSizeInBytes();
 }
 
 TupleBufferPtr BinarySource::receiveData() {

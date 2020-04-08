@@ -110,7 +110,7 @@ class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
 
         DataSinkPtr sink = this->getSinks()[0];
         NES_DEBUG("TEST: try to get buffer")
-        //  sink->getSchema().getSchemaSize();
+        //  sink->getSchema().getSchemaSizeInBytes();
         TupleBufferPtr outputBuffer =
             BufferManager::instance().getFixedSizeBuffer();
         NES_DEBUG("TEST: got buffer")

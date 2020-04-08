@@ -48,7 +48,7 @@ class QueryExecutionTest : public testing::Test {
           testInputBuffer, recordIndex % 2);
     }
     testInputBuffer->setNumberOfTuples(10);
-    testInputBuffer->setTupleSizeInBytes(testSchema->getSchemaSize());
+    testInputBuffer->setTupleSizeInBytes(testSchema->getSchemaSizeInBytes());
   }
 
   /* Will be called before a test is executed. */

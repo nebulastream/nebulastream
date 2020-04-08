@@ -854,7 +854,7 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
   auto inputBuffer = source->receiveData();
 
   auto resultBuffer = BufferManager::instance().getFixedSizeBuffer();
-  resultBuffer->setTupleSizeInBytes(inputSchema->getSchemaSize());
+  resultBuffer->setTupleSizeInBytes(inputSchema->getSchemaSizeInBytes());
 
   /* execute Stage */
   stage->execute(inputBuffer, nullptr, nullptr, resultBuffer);

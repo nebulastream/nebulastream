@@ -154,7 +154,7 @@ TEST_F(ZMQTest, ZmqSinkSendData) {
 
     // Test received data.
     uint32_t *tuple = (uint32_t*) new_data.data();
-    for (size_t i = 0; i != new_data.size() / test_schema->getSchemaSize(); ++i) {
+    for (size_t i = 0; i != new_data.size() / test_schema->getSchemaSizeInBytes(); ++i) {
   EXPECT_EQ(*(tuple++), i);
   size_t expected = 100 - i;
   EXPECT_EQ(*(tuple++), expected);

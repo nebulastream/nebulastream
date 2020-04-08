@@ -62,7 +62,7 @@ TupleBufferPtr ZmqSource::receiveData() {
       socket.recv(&new_data2); // actual data
 
       // Get some information about received data
-      size_t tuple_size = schema->getSchemaSize();
+      size_t tuple_size = schema->getSchemaSizeInBytes();
       // Create new TupleBuffer and copy data
       TupleBufferPtr buffer = BufferManager::instance().getFixedSizeBuffer();
       NES_DEBUG("ZMQSource  " << this << ": got buffer ")

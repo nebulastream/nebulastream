@@ -81,7 +81,7 @@ TEST_F(SourceTest, testBinarySource) {
 
   uint64_t num_tuples_to_process = 1000;
   size_t num_of_buffers = 1000;
-  uint64_t tuple_size = schema->getSchemaSize();
+  uint64_t tuple_size = schema->getSchemaSizeInBytes();
   uint64_t buffer_size = num_tuples_to_process * tuple_size / num_of_buffers;
   assert(buffer_size > 0);
   BufferManager::instance().resizeFixedBufferCnt(0);
@@ -127,7 +127,7 @@ TEST_F(SourceTest, testCSVSource) {
 
       uint64_t num_tuples_to_process = 1000;
       size_t num_of_buffers = 1000;
-      uint64_t tuple_size = schema->getSchemaSize();
+      uint64_t tuple_size = schema->getSchemaSizeInBytes();
       uint64_t buffer_size = num_tuples_to_process * tuple_size / num_of_buffers;
       assert(buffer_size > 0);
       BufferManager::instance().resizeFixedBufferCnt(num_of_buffers);
@@ -170,7 +170,7 @@ TEST_F(SourceTest, testSenseSource) {
 
   uint64_t num_tuples_to_process = 1000;
   size_t num_of_buffers = 1000;
-  uint64_t tuple_size = schema->getSchemaSize();
+  uint64_t tuple_size = schema->getSchemaSizeInBytes();
   uint64_t buffer_size = num_tuples_to_process * tuple_size / num_of_buffers;
   assert(buffer_size > 0);
   BufferManager::instance().resizeFixedBufferCnt(0);

@@ -30,7 +30,7 @@ CSVSource::CSVSource(SchemaPtr schema, const std::string &_file_path,
     currentPosInFile(0) {
   this->numBuffersToProcess = numBuffersToProcess;
   this->gatheringInterval = frequency;
-  tupleSize = schema->getSchemaSize();
+  tupleSize = schema->getSchemaSizeInBytes();
   NES_DEBUG(
       "CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval << " numBuff=" << this->numBuffersToProcess)
 }

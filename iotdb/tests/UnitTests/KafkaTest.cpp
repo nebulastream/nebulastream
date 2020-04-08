@@ -31,7 +31,7 @@ class KafkaTest : public testing::Test {
         ->addField("current_ms", UINT64)
         ->addField("ip", INT32);
 
-    uint64_t tuple_size = schema->getSchemaSize();
+    uint64_t tuple_size = schema->getSchemaSizeInBytes();
     buffer_size = num_tuples_to_process * tuple_size / num_of_buffers;
 
     ASSERT_GT(buffer_size, 0);

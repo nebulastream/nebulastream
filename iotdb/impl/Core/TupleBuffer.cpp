@@ -113,7 +113,7 @@ std::string TupleBuffer::printTupleBuffer(SchemaPtr schema) {
       size_t fieldSize = field->getFieldSize();
       DataTypePtr ptr = field->getDataType();
       std::string str = ptr->convertRawToString(
-          reinterpret_cast<uint8_t*>(buffer) + offset + i * schema->getSchemaSize());
+          reinterpret_cast<uint8_t*>(buffer) + offset + i *schema->getSchemaSizeInBytes());
       ss << str.c_str();
       if (j < schema->getSize() - 1) {
         ss << ",";
@@ -139,7 +139,7 @@ std::string TupleBuffer::printTupleBuffer(SchemaPtr schema) {
  *            << " res=" << (char*)buffer + offset + i * tupleSize << endl;
  */
 void TupleBuffer::revertEndianness(SchemaPtr schema) {
-  size_t tupleSize = schema->getSchemaSize();
+  size_t tupleSize = schema->getSchemaSizeInBytes();
   for (size_t i = 0; i < numberOfTuples; i++) {
     size_t offset = 0;
     for (size_t j = 0; j < schema->getSize(); j++) {
