@@ -14,7 +14,8 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <SourceSink/DefaultSource.hpp>
 #include <memory>
-#include <Nodes/Util/DfsIterator.hpp>
+#include <Nodes/Util/Iterators/BFNodeIterator.hpp>
+#include <Nodes/Util/Iterators/DFNodeIterator.hpp>
 
 namespace NES {
 
@@ -121,7 +122,7 @@ TEST_F(LogicalOperatorNodeTest, getSuccessors) {
     children = sourceOp->getChildren();
     EXPECT_EQ(children.size(), 2);
 
-    DSFIterator iter = DSFIterator(sourceOp);
+    BFNodeIterator iter = BFNodeIterator(sourceOp);
 
     for (NodePtr sa:iter) {
         std::cout << sa->toString() << std::endl;
