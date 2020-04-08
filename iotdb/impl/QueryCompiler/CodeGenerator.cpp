@@ -20,36 +20,33 @@
 namespace NES {
 
 GeneratedCode::GeneratedCode()
-    : variable_decls(),
-      variable_init_stmts(),
-      for_loop_stmt(),
-      current_code_insertion_point(),
-      cleanup_stmts(),
-      return_stmt(),
-      var_decl_id(),
-      var_decl_return(),
-      struct_decl_tuple_buffer(getStructDeclarationTupleBuffer()),
-      struct_decl_state(StructDeclaration::create("InputTuple2", "")),
-      struct_decl_input_tuple(StructDeclaration::create("InputTuple", "")),
-      struct_decl_result_tuple(StructDeclaration::create("ResultTuple", "")),
-      var_decl_tuple_buffers(VariableDeclaration::create(createDataType(INT32), "input_buffers")),
-      var_declare_window(VariableDeclaration::create(createDataType(INT32), "window")),
-      var_decl_tuple_buffer_output(VariableDeclaration::create(createDataType(INT32), "output_buffer")),
-      var_decl_state(VariableDeclaration::create(createDataType(INT32), "state")),
-      decl_field_num_tuples_struct_tuple_buf(
-          VariableDeclaration::create(createDataType(INT32), "decl_field_num_tuples_NOT_DEFINED")),
-      decl_field_data_ptr_struct_tuple_buf(
-          VariableDeclaration::create(createDataType(INT32), "decl_field_data_ptr_NOT_DEFINED")),
-      var_decl_input_tuple(VariableDeclaration::create(createDataType(INT32), "input_tuple_NOT_DEFINED")),
-      var_num_for_loop(VariableDeclaration::create(createDataType(UINT64), "num_result_tuples")),
-      type_decls() {
+    : variableDeclarations(),
+      variableInitStmts(),
+      forLoopStmt(),
+      currentCodeInsertionPoint(),
+      cleanupStmts(),
+      returnStmt(),
+      varDeclarationRecordIndex(),
+      varDeclarationReturnValue(),
+      structDeclaratonInputTuple(StructDeclaration::create("InputTuple", "")),
+      structDeclarationResultTuple(StructDeclaration::create("ResultTuple", "")),
+      varDeclarationInputBuffer(VariableDeclaration::create(createDataType(INT32), "input_buffers")),
+      varDeclarationWindowManager(VariableDeclaration::create(createDataType(INT32), "window")),
+      varDeclarationResultBuffer(VariableDeclaration::create(createDataType(INT32), "output_buffer")),
+      varDeclarationState(VariableDeclaration::create(createDataType(INT32), "state")),
+      tupleBufferGetNumberOfTupleCall(FunctionCallStatement("getNumberOfTuples")),
+      tupleBufferGetBufferCall(FunctionCallStatement("getBuffer")),
+      varDeclarationInputTuples(VariableDeclaration::create(createDataType(INT32), "inputTuples")),
+      varDeclarationNumberOfResultTuples(VariableDeclaration::create(
+          createDataType(BasicType(UINT64)), "numberOfResultTuples", createBasicTypeValue(BasicType(INT64), "0"))),
+      typeDeclarations() {
 }
 
 const PipelineContextPtr createPipelineContext() { return std::make_shared<PipelineContext>(); }
 
 typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
 
-CodeGenerator::CodeGenerator(const CodeGenArgs& args) : args_(args) {}
+CodeGenerator::CodeGenerator(const CodeGenArgs& args) : args(args) {}
 
 CodeGenerator::~CodeGenerator() {}
 
@@ -72,7 +69,7 @@ class CCodeGenerator : public CodeGenerator {
 };
 
 CCodeGenerator::CCodeGenerator(const CodeGenArgs& args) : CodeGenerator(args) {}
-
+/**
 const StructDeclaration getStructDeclarationTupleBuffer() {
     /** define structure of TupleBuffer
       struct TupleBuffer {
@@ -90,7 +87,7 @@ const StructDeclaration getStructDeclarationTupleBuffer() {
             .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)), "num_tuples"));
     return struct_decl_tuple_buffer;
 }
-/**
+
 const StructDeclaration getStructDeclarationWindowState() {
 
    define the WindowState struct
@@ -104,13 +101,14 @@ const StructDeclaration getStructDeclarationWindowState() {
           .addField(VariableDeclaration::create(createPointerDataType(createDataType(BasicType(VOID_TYPE))),
                                                 "windowState"));
   return struct_decl_state;
-}*/
+}
+**/
 
-const StructDeclaration getStructDeclarationFromSchema(const std::string struct_name, SchemaPtr schema) {
+const StructDeclaration getStructDeclarationFromSchema(const std::string struct_name, const Schema& schema) {
     /* struct definition for tuples */
-    StructDeclaration struct_decl_tuple = StructDeclaration::create(struct_name, "");
+    StructDeclaration structDeclarationTuple = StructDeclaration::create(structName, "");
     /* disable padding of bytes to generate compact structs, required for input and output tuple formats */
-    struct_decl_tuple.makeStructCompact();
+    structDeclarationTuple.makeStructCompact();
 
     std::cout << "Converting Schema: " << schema->toString() << std::endl;
     std::cout << "Define Struct : " << struct_name << std::endl;
@@ -131,10 +129,10 @@ const StructDeclaration getStructDeclarationResultTuple(SchemaPtr schema) {
     return getStructDeclarationFromSchema("ResultTuple", schema);
 }
 
-const VariableDeclarationPtr getVariableDeclarationForField(const StructDeclaration& struct_decl,
+const VariableDeclarationPtr getVariableDeclarationForField(const StructDeclaration& structDeclaration,
                                                             const AttributeFieldPtr field) {
-    if (struct_decl.getField(field->name))
-        return std::make_shared<VariableDeclaration>(struct_decl.getVariableDeclaration(field->name));
+    if (structDeclaration.getField(field->name))
+        return std::make_shared<VariableDeclaration>(structDeclaration.getVariableDeclaration(field->name));
     else {
         return VariableDeclarationPtr();
     }
@@ -145,9 +143,8 @@ const std::string toString(void* value, DataTypePtr type) {
     return "";
 }
 
-
-std::string toString(TupleBuffer& buffer, SchemaPtr schema) {
-    if (!buffer)
+std::string toString(TupleBuffer& buffer, const Schema& schema) {
+    if (!buffer.isValid())
         return "INVALID_BUFFER_PTR";
     std::stringstream str;
     std::vector<uint32_t> offsets;
@@ -198,94 +195,72 @@ bool CCodeGenerator::generateCode(SchemaPtr schema, const PipelineContextPtr& co
     StructDeclaration struct_decl_tuple_buffer = getStructDeclarationTupleBuffer();
     StructDeclaration struct_decl_tuple = getStructDeclarationInputTuple(context->inputSchema);
 
-    context->addTypeDeclaration(struct_decl_tuple_buffer);
-    context->addTypeDeclaration(struct_decl_tuple);
-
-    context->code->struct_decl_tuple_buffer = struct_decl_tuple_buffer;
-    context->code->struct_decl_input_tuple = struct_decl_tuple;
 
     /** === set the result tuple depending on the input tuple===*/
     context->resultSchema = context->inputSchema;
-    StructDeclaration struct_result_tuple = getStructDeclarationResultTuple(context->resultSchema);
-    context->code->struct_decl_result_tuple = struct_result_tuple;
-    context->addTypeDeclaration(struct_result_tuple);
+    context->code->structDeclarationResultTuple = getStructDeclarationResultTuple(context->resultSchema);
+    context->addTypeDeclaration(context->code->structDeclarationResultTuple);
+
 
     /* === declarations === */
+    auto tupleBufferType = createAnonymUserDefinedType("NES::TupleBuffer");
+    VariableDeclaration varDeclarationInputBuffer = VariableDeclaration::create(
+        createReferenceDataType(tupleBufferType), "inputTupleBuffer");
+    VariableDeclaration varDeclarationResultBuffer = VariableDeclaration::create(
+        createReferenceDataType(tupleBufferType), "outputTupleBuffer");
+    VariableDeclaration varDeclarationState =
+        VariableDeclaration::create(createPointerDataType(createAnonymUserDefinedType("void")), "state_var");
+    VariableDeclaration varDeclarationWindowManager =
+        VariableDeclaration::create(createPointerDataType(createAnonymUserDefinedType("NES::WindowManager")),
+                                    "windowManager");
 
-    VariableDeclaration var_decl_tuple_buffers = VariableDeclaration::create(
-        createPointerDataType(createUserDefinedType(struct_decl_tuple_buffer)),
-        "input_buffer");
-    VariableDeclaration var_decl_tuple_buffer_output = VariableDeclaration::create(
-        createPointerDataType(createUserDefinedType(struct_decl_tuple_buffer)), "output_tuple_buffer");
-    VariableDeclaration var_decl_window =
-        VariableDeclaration::create(createPointerDataType(createAnnonymUserDefinedType("void")), "state_var");
-    VariableDeclaration var_decl_window_manager =
-        VariableDeclaration::create(createPointerDataType(createAnnonymUserDefinedType("NES::WindowManager")),
-                                    "window_manager");
+    context->code->varDeclarationInputBuffer = varDeclarationInputBuffer;
+    context->code->varDeclarationResultBuffer = varDeclarationResultBuffer;
+    context->code->varDeclarationState = varDeclarationState;
+    context->code->varDeclarationWindowManager = varDeclarationWindowManager;
 
-    context->code->var_decl_tuple_buffers = var_decl_tuple_buffers;
-    context->code->var_decl_tuple_buffer_output = var_decl_tuple_buffer_output;
-    context->code->var_decl_state = var_decl_window;
-    context->code->var_declare_window = var_decl_window_manager;
-
-    /* Tuple *tuples; */
-
-    VariableDeclaration var_decl_tuple =
-        VariableDeclaration::create(createPointerDataType(createUserDefinedType(struct_decl_tuple)), "tuples");
-
-    /* TupleBuffer *tuple_buffer_1; */
-    VariableDeclaration var_decl_tuple_buffer_1 = VariableDeclaration::create(
-        createPointerDataType(createUserDefinedType(getStructDeclarationTupleBuffer())), "tuple_buffer_1");
-
-    /* uint64_t id = 0; */
-    context->code->var_decl_id = std::dynamic_pointer_cast<VariableDeclaration>(
-        VariableDeclaration::create(createDataType(BasicType(UINT64)), "id",
+    VariableDeclaration varDeclarationInputTuples =
+        VariableDeclaration::create(createPointerDataType(createUserDefinedType(context->code->structDeclaratonInputTuple)),
+                                    "inputTuples");
+    /* declaration of record index; */
+    context->code->varDeclarationRecordIndex = std::dynamic_pointer_cast<VariableDeclaration>(
+        VariableDeclaration::create(createDataType(BasicType(UINT64)), "recordIndex",
                                     createBasicTypeValue(BasicType(INT32), "0"))
             .copy());
     /* int32_t ret = 0; */
-    context->code->var_decl_return = std::dynamic_pointer_cast<VariableDeclaration>(
+    context->code->varDeclarationReturnValue = std::dynamic_pointer_cast<VariableDeclaration>(
         VariableDeclaration::create(createDataType(BasicType(INT32)), "ret",
                                     createBasicTypeValue(BasicType(INT32), "0"))
             .copy());
 
-    context->code->var_decl_input_tuple = var_decl_tuple;
-    context->code->variable_decls.push_back(var_decl_tuple);
-    context->code->variable_decls.push_back(var_decl_tuple_buffer_1);
-    context->code->variable_decls.push_back(*(context->code->var_decl_return.get()));
+    context->code->varDeclarationInputTuples = varDeclarationInputTuples;
+    context->code->variableDeclarations.push_back(varDeclarationInputTuples);
+    context->code->variableDeclarations.push_back(*(context->code->varDeclarationReturnValue.get()));
 
-    /* variable declarations for fields inside structs */
-    // VariableDeclaration decl_field_campaign_id = struct_decl_tuple.getVariableDeclaration("campaign_id");
-    VariableDeclaration decl_field_num_tuples_struct_tuple_buf =
-        struct_decl_tuple_buffer.getVariableDeclaration("num_tuples");
-    VariableDeclaration decl_field_data_ptr_struct_tuple_buf = struct_decl_tuple_buffer.getVariableDeclaration("data");
-
-    context->code->decl_field_num_tuples_struct_tuple_buf = decl_field_num_tuples_struct_tuple_buf;
-    context->code->decl_field_data_ptr_struct_tuple_buf = decl_field_data_ptr_struct_tuple_buf;
 
     /** init statements before for loop */
 
-    /* tuple_buffer_1 = window_buffer[0]; */
-    context->code->variable_init_stmts.push_back(
-        VarRefStatement(var_decl_tuple_buffer_1)
-            .assign(VarRefStatement(var_decl_tuple_buffers))
-            .copy());
-    /*  tuples = (Tuple *)tuple_buffer_1->data;*/
-    context->code->variable_init_stmts.push_back(
-        VarRef(var_decl_tuple)
+    /*  tuples = (InputTuple *)input_buffer.getBuffer()*/
+    context->code->variableInitStmts.push_back(
+        VarRef(varDeclarationInputTuples)
             .assign(TypeCast(
-                VarRefStatement(var_decl_tuple_buffer_1).accessPtr(VarRef(decl_field_data_ptr_struct_tuple_buf)),
-                createPointerDataType(createUserDefinedType(struct_decl_tuple))))
+                VarRefStatement(varDeclarationInputBuffer).accessRef(context->code->tupleBufferGetBufferCall),
+                createPointerDataType(createUserDefinedType(context->code->structDeclaratonInputTuple))))
             .copy());
 
-    /* for (uint64_t id = 0; id < tuple_buffer_1->num_tuples; ++id) */
-    context->code->for_loop_stmt = std::make_shared<FOR>(
-        *(context->code->var_decl_id.get()),
-        (VarRef(*(context->code->var_decl_id.get())) <
-            (VarRef(var_decl_tuple_buffer_1).accessPtr(VarRef(decl_field_num_tuples_struct_tuple_buf)))),
-        ++VarRef(*(context->code->var_decl_id.get())));
-    context->code->current_code_insertion_point = context->code->for_loop_stmt->getCompoundStatement();
+    /* for (uint64_t recordIndex = 0; recordIndex < tuple_buffer_1->num_tuples; ++id) */
+    // input_buffer.getNumberOfTuples()
+    auto numberOfRecords = VarRef(varDeclarationInputBuffer).accessRef(context->code->tupleBufferGetNumberOfTupleCall);
+    context->code->forLoopStmt = std::make_shared<FOR>(
+        context->code->varDeclarationRecordIndex,
+        (VarRef(context->code->varDeclarationRecordIndex) <
+            (numberOfRecords)).copy(),
+        (++VarRef(context->code->varDeclarationRecordIndex)).copy());
 
-    context->code->return_stmt = std::make_shared<ReturnStatement>(VarRefStatement(*context->code->var_decl_return));
+    context->code->currentCodeInsertionPoint = context->code->forLoopStmt->getCompoundStatement();
+
+    context->code->returnStmt =
+        std::make_shared<ReturnStatement>(VarRefStatement(*context->code->varDeclarationReturnValue));
 
     return true;
 }
@@ -301,11 +276,11 @@ bool CCodeGenerator::generateCode(const PredicatePtr& pred, const PipelineContex
 
     ExpressionStatmentPtr expr = pred->generateCode(context->code);
 
-    std::shared_ptr<IF> if_stmt = std::make_shared<IF>(*expr);
-    CompoundStatementPtr compound_stmt = if_stmt->getCompoundStatement();
+    std::shared_ptr<IF> ifStmt = std::make_shared<IF>(*expr);
+    CompoundStatementPtr compoundStmt = ifStmt->getCompoundStatement();
     /* update current compound_stmt*/
-    context->code->current_code_insertion_point->addStatement(if_stmt);
-    context->code->current_code_insertion_point = compound_stmt;
+    context->code->currentCodeInsertionPoint->addStatement(ifStmt);
+    context->code->currentCodeInsertionPoint = compoundStmt;
 
     return true;
 }
@@ -323,25 +298,25 @@ bool CCodeGenerator::generateCode(const AttributeFieldPtr field,
                                   const NES::PipelineContextPtr& context,
                                   std::ostream& out) {
 
-    StructDeclaration
-        struct_decl_result_tuple = (getStructDeclarationFromSchema("result_tuples", context->resultSchema));
-    VariableDeclaration var_decl_result_tuple = VariableDeclaration::create(
-        createPointerDataType(createUserDefinedType(struct_decl_result_tuple)), "result_tuples");
+    VariableDeclaration varDeclarationResultTuples = VariableDeclaration::create(
+        createPointerDataType(createUserDefinedType(context->code->structDeclarationResultTuple)), "resultTuples");
 
-    DeclarationPtr declaredMapVar = getVariableDeclarationForField(context->code->struct_decl_result_tuple, field);
+    DeclarationPtr declaredMapVar = getVariableDeclarationForField(context->code->structDeclarationResultTuple, field);
     if (!declaredMapVar) {
         context->resultSchema->addField(field);
         context->code->struct_decl_result_tuple.addField(VariableDeclaration::create(field->data_type, field->name));
         declaredMapVar = getVariableDeclarationForField(context->code->struct_decl_result_tuple, field);
     }
     context->code->override_fields.push_back(declaredMapVar);
-    VariableDeclaration var_map_i = context->code->struct_decl_result_tuple.getVariableDeclaration(field->name);
+    VariableDeclaration var_map_i = context->code->structDeclarationResultTuple.getVariableDeclaration(field->name);
 
     BinaryOperatorStatement
-        callVar = VarRef(var_decl_result_tuple)[VarRef(context->code->var_num_for_loop)].accessRef(VarRef(var_map_i));
+        callVar =
+        VarRef(varDeclarationResultTuples)[VarRef(context->code->varDeclarationNumberOfResultTuples)].accessRef(VarRef(
+            var_map_i));
     ExpressionStatmentPtr expr = pred->generateCode(context->code);
     BinaryOperatorStatement assignedMap = (callVar).assign(*expr);
-    context->code->current_code_insertion_point->addStatement(assignedMap.copy());
+    context->code->currentCodeInsertionPoint->addStatement(assignedMap.copy());
 
     return true;
 }
@@ -349,24 +324,22 @@ bool CCodeGenerator::generateCode(const AttributeFieldPtr field,
 bool CCodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContextPtr& context, std::ostream& out) {
     context->resultSchema = sink->getSchema();
 
-    StructDeclaration struct_decl_result_tuple = getStructDeclarationResultTuple(context->resultSchema);
-    context->addTypeDeclaration(struct_decl_result_tuple);
-    context->code->type_decls.push_back(struct_decl_result_tuple);
-    VariableDeclaration var_decl_result_tuple = VariableDeclaration::create(
-        createPointerDataType(createUserDefinedType(struct_decl_result_tuple)), "result_tuples");
-    context->code->variable_decls.push_back(var_decl_result_tuple);
+    StructDeclaration structDeclarationResultTuple = getStructDeclarationResultTuple(context->resultSchema);
+    context->addTypeDeclaration(structDeclarationResultTuple);
+    context->code->typeDeclarations.push_back(structDeclarationResultTuple);
+    VariableDeclaration varDeclResultTuple = VariableDeclaration::create(
+        createPointerDataType(createUserDefinedType(structDeclarationResultTuple)), "resultTuples");
+    context->code->variableDeclarations.push_back(varDeclResultTuple);
 
-    VariableDeclaration var_decl_num_result_tuples = VariableDeclaration::create(
-        createDataType(BasicType(UINT64)), "num_result_tuples", createBasicTypeValue(BasicType(INT64), "0"));
-    context->code->var_num_for_loop = var_decl_num_result_tuples;
-    context->code->variable_decls.push_back(var_decl_num_result_tuples);
+    context->code->variableDeclarations.push_back(context->code->varDeclarationNumberOfResultTuples);
 
     /* result_tuples = (ResultTuple *)output_tuple_buffer->data;*/
-    context->code->variable_init_stmts.push_back(
-        VarRef(var_decl_result_tuple)
-            .assign(TypeCast(VarRef(context->code->var_decl_tuple_buffer_output)
-                                 .accessPtr(VarRef(context->code->decl_field_data_ptr_struct_tuple_buf)),
-                             createPointerDataType(createUserDefinedType(struct_decl_result_tuple))))
+
+    context->code->variableInitStmts.push_back(
+        VarRef(varDeclResultTuple)
+            .assign(TypeCast(
+                VarRefStatement(context->code->varDeclarationResultBuffer).accessRef(context->code->tupleBufferGetBufferCall),
+                createPointerDataType(createUserDefinedType(structDeclarationResultTuple))))
             .copy());
 
     std::vector<VariableDeclaration> var_decls;
@@ -386,21 +359,30 @@ bool CCodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContext
         if (var_decl_input) {
             bool override = false;
             for (size_t j = 0; j < context->code->override_fields.size(); j++) {
-                if (context->code->override_fields.at(j)->getIdentifierName().compare(var_decl_input->getIdentifierName())
+                if (context->code->override_fields.at(j)->getIdentifierName().compare(varDeclarationInput->getIdentifierName())
                     == 0) {
                     override = true;
                     break;
                 }
             }
             if (!override) {
-                AssignmentStatment as = {var_decl_result_tuple,
-                                         *(var_decl),
-                                         var_decl_num_result_tuples,
-                                         context->code->var_decl_input_tuple,
-                                         *(var_decl),
-                                         *(context->code->var_decl_id)};
-                StatementPtr stmt = var_decl->getDataType()->getStmtCopyAssignment(as);
-                context->code->current_code_insertion_point->addStatement(stmt);
+                VariableDeclarationPtr
+                    varDeclarationField =
+                    getVariableDeclarationForField(structDeclarationResultTuple, context->resultSchema[i]);
+                if (!varDeclarationField) {
+                    NES_ERROR("Could not extract field " << context->resultSchema[i]->toString() << " from struct "
+                                                         << structDeclarationResultTuple.getTypeName());
+                    NES_DEBUG("W>");
+                }
+                context->code->variableDeclarations.push_back(*varDeclarationField);
+                AssignmentStatment as = {varDeclResultTuple,
+                                         *(varDeclarationField),
+                                         context->code->varDeclarationNumberOfResultTuples,
+                                         context->code->varDeclarationInputTuples,
+                                         *(varDeclarationField),
+                                         *(context->code->varDeclarationRecordIndex)};
+                StatementPtr stmt = varDeclarationField->getDataType()->getStmtCopyAssignment(as);
+                context->code->currentCodeInsertionPoint->addStatement(stmt);
             }
         }
         /* */
@@ -408,14 +390,15 @@ bool CCodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContext
         // var_decls.push_back(*var_decl);
         // write_result_tuples.push_back(VarRef(var_decl_result_tuple)[VarRef(*(context->code->var_decl_id))].assign(VarRef(var_decl_result_tuple)[VarRef(*(context->code->var_decl_id))]).copy());
     }
-    context->code->current_code_insertion_point->addStatement((++VarRef(var_decl_num_result_tuples)).copy());
+    // increase number of result tuples in loop body.
+    context->code->currentCodeInsertionPoint->addStatement((++VarRef(context->code->varDeclarationNumberOfResultTuples)).copy());
+    auto setNumberOfTupleFunctionCall = FunctionCallStatement("setNumberOfTuples");
+    setNumberOfTupleFunctionCall.addParameter(VarRef(context->code->varDeclarationNumberOfResultTuples));
 
+    /* set number of output tuples to result buffer */
+    context->code->cleanupStmts.push_back(
+        VarRef(context->code->varDeclarationResultBuffer).accessRef(setNumberOfTupleFunctionCall).copy());
 
-    /*  TODO: set number of output tuples to result buffer */
-    context->code->cleanup_stmts.push_back(
-        VarRef(context->code->var_decl_tuple_buffer_output).accessPtr(VarRef(context->code->decl_field_num_tuples_struct_tuple_buf))
-            .assign(VarRef(var_decl_num_result_tuples)).copy()
-    );
     return true;
 }
 
@@ -432,92 +415,93 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr& window,
     context->setWindow(window);
     auto constStatement = ConstantExprStatement((createBasicTypeValue(BasicType::UINT64, "0")));
 
-    auto state_var = VariableDeclaration::create(
-        createPointerDataType(createAnnonymUserDefinedType(
+    auto stateVariableDeclaration = VariableDeclaration::create(
+        createPointerDataType(createAnonymUserDefinedType(
             "NES::StateVariable<int64_t, NES::WindowSliceStore<int64_t>*>")), "state_variable");
 
-    auto state_var_decl = VarDeclStatement(state_var)
-        .assign(TypeCast(VarRef(context->code->var_decl_state), state_var.getDataType()));
-    context->code->current_code_insertion_point->addStatement(std::make_shared<BinaryOperatorStatement>(state_var_decl));
+    auto stateVarDeclarationStatement = VarDeclStatement(stateVariableDeclaration)
+        .assign(TypeCast(VarRef(context->code->varDeclarationState), stateVariableDeclaration.getDataType()));
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
+        stateVarDeclarationStatement));
 
     // Read key value from record
-    auto key_var = VariableDeclaration::create(
-        createDataType(BasicType::INT64), "key");
-    VariableDeclaration
-        key_var_decl_attr = context->code->struct_decl_input_tuple.getVariableDeclaration(window->onKey->name);
-    auto key_var_decl = VarDeclStatement(key_var)
-        .assign(VarRef(context->code->var_decl_input_tuple)[VarRef(*context->code->var_decl_id)].accessRef(VarRef(
-            key_var_decl_attr)));
-    context->code->current_code_insertion_point->addStatement(std::make_shared<BinaryOperatorStatement>(key_var_decl));
+    auto keyVariableDeclaration = VariableDeclaration::create(createDataType(BasicType::INT64), "key");
+    auto keyVariableAttributeDeclaration = context->code->structDeclaratonInputTuple.getVariableDeclaration(window->onKey->name);
+    auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration)
+        .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+            VarRef(
+                keyVariableAttributeDeclaration)));
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(keyVariableAttributeStatement));
 
     // get key handle for current key
-    auto key_handle_var = VariableDeclaration::create(
-        createAnnonymUserDefinedType("auto"), "key_value_handle");
+    auto keyHandlerVariableDeclaration = VariableDeclaration::create(
+        createAnonymUserDefinedType("auto"), "key_value_handle");
     auto getKeyStateVariable = FunctionCallStatement("get");
-    getKeyStateVariable.addParameter(VarRef(key_var));
-    auto key_handle_dec = VarDeclStatement(key_handle_var)
-        .assign(VarRef(state_var).accessPtr(getKeyStateVariable));
-    context->code->current_code_insertion_point->addStatement(std::make_shared<BinaryOperatorStatement>(key_handle_dec));
+    getKeyStateVariable.addParameter(VarRef(keyVariableDeclaration));
+    auto keyHandlerVariableStatement = VarDeclStatement(keyHandlerVariableDeclaration)
+        .assign(VarRef(stateVariableDeclaration).accessPtr(getKeyStateVariable));
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(keyHandlerVariableStatement));
 
 
 
     // access window slice state from state variable via key
-    auto window_state_var = VariableDeclaration::create(
-        createAnnonymUserDefinedType("auto"), "windowState");
+    auto windowStateVariableDeclaration = VariableDeclaration::create(
+        createAnonymUserDefinedType("auto"), "windowState");
     auto getValueFromKeyHandle = FunctionCallStatement("valueOrDefault");
     getValueFromKeyHandle.addParameter(ConstantExprStatement(INT64, "0"));
-    auto window_state_decl = VarDeclStatement(window_state_var)
-        .assign(VarRef(key_handle_var).accessRef(getValueFromKeyHandle));
-    context->code->current_code_insertion_point->addStatement(std::make_shared<BinaryOperatorStatement>(
-        window_state_decl));
+    auto windowStateVariableStatement = VarDeclStatement(windowStateVariableDeclaration)
+        .assign(VarRef(keyHandlerVariableDeclaration).accessRef(getValueFromKeyHandle));
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
+        windowStateVariableStatement));
 
 
     // get current timestamp
     // TODO add support for event time
-    auto current_time_var = VariableDeclaration::create(
-        createAnnonymUserDefinedType("auto"), "current_ts");
+    auto currentTimeVariableDeclaration = VariableDeclaration::create(
+        createAnonymUserDefinedType("auto"), "current_ts");
     auto getCurrentTs = FunctionCallStatement("NES::getTsFromClock");
-    auto getCurrentTsStatement = VarDeclStatement(current_time_var)
+    auto getCurrentTsStatement = VarDeclStatement(currentTimeVariableDeclaration)
         .assign(getCurrentTs);
-    context->code->current_code_insertion_point->addStatement(std::make_shared<BinaryOperatorStatement>(
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
         getCurrentTsStatement));
 
     // update slices
     auto sliceStream = FunctionCallStatement("sliceStream");
-    sliceStream.addParameter(VarRef(current_time_var));
-    sliceStream.addParameter(VarRef(window_state_var));
+    sliceStream.addParameter(VarRef(currentTimeVariableDeclaration));
+    sliceStream.addParameter(VarRef(windowStateVariableDeclaration));
     auto call =
-        std::make_shared<BinaryOperatorStatement>(VarRef(context->code->var_declare_window).accessPtr(sliceStream));
-    context->code->current_code_insertion_point->addStatement(call);
+        std::make_shared<BinaryOperatorStatement>(VarRef(context->code->varDeclarationWindowManager).accessPtr(
+            sliceStream));
+    context->code->currentCodeInsertionPoint->addStatement(call);
 
     // find the slices for a time stamp
     auto getSliceIndexByTs = FunctionCallStatement("getSliceIndexByTs");
-    getSliceIndexByTs.addParameter(VarRef(current_time_var));
-    auto getSliceIndexByTsCall = VarRef(window_state_var).accessPtr(getSliceIndexByTs);
-    auto var_decl_current_slice = VariableDeclaration::create(
+    getSliceIndexByTs.addParameter(VarRef(currentTimeVariableDeclaration));
+    auto getSliceIndexByTsCall = VarRef(windowStateVariableDeclaration).accessPtr(getSliceIndexByTs);
+    auto currentSliceIndexVariableDeclaration = VariableDeclaration::create(
         createDataType(BasicType(UINT64)), "current_slice_index");
-    auto current_slice_ref = VarRef(var_decl_current_slice);
-    auto var_decl_current_slice_stm = VarDeclStatement(var_decl_current_slice)
+    auto current_slice_ref = VarRef(currentSliceIndexVariableDeclaration);
+    auto currentSliceIndexVariableStatement = VarDeclStatement(currentSliceIndexVariableDeclaration)
         .assign(getSliceIndexByTsCall);
-    context->code->current_code_insertion_point->addStatement(std::make_shared<BinaryOperatorStatement>(
-        var_decl_current_slice_stm));
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
+        currentSliceIndexVariableStatement));
 
     // get the partial aggregates
     auto getPartialAggregates = FunctionCallStatement("getPartialAggregates");
-    auto getPartialAggregatesCall = VarRef(window_state_var).accessPtr(getPartialAggregates);
-    VariableDeclaration var_decl_partial_aggregates = VariableDeclaration::create(
-        createAnnonymUserDefinedType("std::vector<int64_t>&"), "partialAggregates");
-    auto assignment = VarDeclStatement(var_decl_partial_aggregates)
+    auto getPartialAggregatesCall = VarRef(windowStateVariableDeclaration).accessPtr(getPartialAggregates);
+    VariableDeclaration partialAggregatesVarDeclaration = VariableDeclaration::create(
+        createAnonymUserDefinedType("std::vector<int64_t>&"), "partialAggregates");
+    auto assignment = VarDeclStatement(partialAggregatesVarDeclaration)
         .assign(getPartialAggregatesCall);
-    context->code->current_code_insertion_point->addStatement(std::make_shared<BinaryOperatorStatement>(assignment));
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(assignment));
 
     // update partial aggregate
-    const BinaryOperatorStatement& partialRef = VarRef(var_decl_partial_aggregates)[current_slice_ref];
+    const BinaryOperatorStatement& partialRef = VarRef(partialAggregatesVarDeclaration)[current_slice_ref];
     window->windowAggregation->compileLiftCombine(
-        context->code->current_code_insertion_point,
+        context->code->currentCodeInsertionPoint,
         partialRef,
-        context->code->struct_decl_input_tuple,
-        VarRef(context->code->var_decl_input_tuple)[VarRefStatement(VarRef(*(context->code->var_decl_id)))]
+        context->code->structDeclaratonInputTuple,
+        VarRef(context->code->varDeclarationInputTuples)[VarRefStatement(VarRef(*(context->code->varDeclarationRecordIndex)))]
     );
 
     return true;
@@ -530,45 +514,43 @@ ExecutablePipelinePtr CCodeGenerator::compile(const CompilerArgs&, const Generat
      */
 
     // FunctionDeclaration main_function =
-    FunctionBuilder func_builder = FunctionBuilder::create("compiled_query")
+    FunctionBuilder functionBuilder = FunctionBuilder::create("compiled_query")
         .returns(createDataType(BasicType(UINT32)))
-        .addParameter(code->var_decl_tuple_buffers)
-        .addParameter(code->var_decl_state)
-        .addParameter(code->var_declare_window)
-        .addParameter(code->var_decl_tuple_buffer_output);
+        .addParameter(code->varDeclarationInputBuffer)
+        .addParameter(code->varDeclarationState)
+        .addParameter(code->varDeclarationWindowManager)
+        .addParameter(code->varDeclarationResultBuffer);
 
-    for (auto& var_decl : code->variable_decls) {
-        func_builder.addVariableDeclaration(var_decl);
+    for (auto& variableDeclaration : code->variableDeclarations) {
+        functionBuilder.addVariableDeclaration(variableDeclaration);
     }
-    for (auto& var_init : code->variable_init_stmts) {
-        func_builder.addStatement(var_init);
+    for (auto& variableStatement : code->variableInitStmts) {
+        functionBuilder.addStatement(variableStatement);
     }
 
     /* here comes the code for the processing loop */
-    func_builder.addStatement(code->for_loop_stmt);
+    functionBuilder.addStatement(code->forLoopStmt);
 
     /* add statements executed after the for loop, for example cleanup code */
-    for (auto& stmt : code->cleanup_stmts) {
-        func_builder.addStatement(stmt);
+    for (auto& stmt : code->cleanupStmts) {
+        functionBuilder.addStatement(stmt);
     }
 
     /* add return statement */
-    func_builder.addStatement(code->return_stmt);
+    functionBuilder.addStatement(code->returnStmt);
 
-    FileBuilder file_builder = FileBuilder::create("query.cpp");
+    FileBuilder fileBuilder = FileBuilder::create("query.cpp");
     /* add core declarations */
-    file_builder.addDeclaration(code->struct_decl_tuple_buffer);
-    file_builder.addDeclaration(code->struct_decl_state);
-    file_builder.addDeclaration(code->struct_decl_input_tuple);
+    fileBuilder.addDeclaration(code->structDeclaratonInputTuple);
     /* add generic declarations by operators*/
-    for (auto& type_decl : code->type_decls) {
-        file_builder.addDeclaration(type_decl);
+    for (auto& typeDeclaration : code->typeDeclarations) {
+        fileBuilder.addDeclaration(typeDeclaration);
     }
 
-    CodeFile file = file_builder.addDeclaration(func_builder.build()).build();
+    CodeFile file = fileBuilder.addDeclaration(functionBuilder.build()).build();
     Compiler compiler;
-    CompiledCodePtr compiled_code = compiler.compile(file.code);
-    return createCompiledExecutablePipeline(compiled_code);
+    CompiledCodePtr compiledCode = compiler.compile(file.code);
+    return createCompiledExecutablePipeline(compiledCode);
 }
 
 CCodeGenerator::~CCodeGenerator() {}

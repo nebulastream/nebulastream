@@ -85,6 +85,11 @@ const DataTypePtr createDataType(const BasicType&);
 const DataTypePtr createDataTypeVarChar(const uint32_t& max_length);
 const DataTypePtr createPointerDataType(const DataTypePtr& type);
 const DataTypePtr createPointerDataType(const BasicType& type);
+
+const DataTypePtr createReferenceDataType(const DataTypePtr& type);
+const DataTypePtr createReferenceDataType(const BasicType& type);
+
+
 const ValueTypePtr createBasicTypeValue(const BasicType& type, const std::string& value);
 const DataTypePtr createArrayDataType(const BasicType& type, uint32_t dimension);
 const ValueTypePtr createStringValueType(const std::string& value);

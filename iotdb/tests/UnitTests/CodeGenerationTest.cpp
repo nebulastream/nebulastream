@@ -407,10 +407,10 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
             createBasicTypeValue(BasicType(INT32), "0"));
 
         ForLoopStatement loopStmt(
-            varDeclQ,
+            varDeclQ.copy(),
             BinaryOperatorStatement(VarRefStatement(varDeclQ), LESS_THEN_OP,
-                                    VarRefStatement(varDeclNumTuple)),
-            UnaryOperatorStatement(VarRefStatement(varDeclQ), PREFIX_INCREMENT_OP));
+                                    VarRefStatement(varDeclNumTuple)).copy(),
+            UnaryOperatorStatement(VarRefStatement(varDeclQ), PREFIX_INCREMENT_OP).copy());
 
         loopStmt.addStatement(
             BinaryOperatorStatement(
@@ -423,10 +423,11 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
                   "for(int32_t q = 0;q<num_tuples;++q){\nsum=sum+q;\n\n}\n");
 
         auto forLoop = ForLoopStatement(
-            varDeclQ,
+            varDeclQ.copy(),
             BinaryOperatorStatement(VarRefStatement(varDeclQ), LESS_THEN_OP,
-                                    VarRefStatement(varDeclNumTuple)),
-            UnaryOperatorStatement(VarRefStatement(varDeclQ), PREFIX_INCREMENT_OP));
+                                    VarRefStatement(varDeclNumTuple)).copy(),
+            UnaryOperatorStatement(VarRefStatement(varDeclQ), PREFIX_INCREMENT_OP).copy()
+        );
 
         EXPECT_EQ(forLoop.getCode()->code_,
                   "for(int32_t q = 0;q<num_tuples;++q){\n\n}\n");
@@ -492,7 +493,7 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
  */
 TEST_F(CodeGenerationTest, codeGenRunningSum) {
 
-    auto tupleBufferType = createAnnonymUserDefinedType("NES::TupleBuffer&");
+    auto tupleBufferType = createAnonymUserDefinedType("NES::TupleBuffer");
     auto getNumberOfTupleBuffer = FunctionCallStatement("getNumberOfTuples");
     auto getBufferOfTupleBuffer = FunctionCallStatement("getBuffer");
 
@@ -508,14 +509,14 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
             VariableDeclaration::create(createDataType(BasicType(INT64)), "sum"));
 
     /* === declarations === */
-    auto varDeclTupleBuffers = VariableDeclaration::create(tupleBufferType,
+    auto varDeclTupleBuffers = VariableDeclaration::create(createReferenceDataType(tupleBufferType),
                                                            "input_buffer");
-    auto varDeclTupleBufferOutput = VariableDeclaration::create(tupleBufferType,
+    auto varDeclTupleBufferOutput = VariableDeclaration::create(createReferenceDataType(tupleBufferType),
                                                                 "output_tuple_buffer");
     auto varDeclWindow = VariableDeclaration::create(
-        createPointerDataType(createAnnonymUserDefinedType("void")), "state_var");
+        createPointerDataType(createAnonymUserDefinedType("void")), "stateVar");
     VariableDeclaration varDeclWindowManager = VariableDeclaration::create(
-        createPointerDataType(createAnnonymUserDefinedType("NES::WindowManager")),
+        createPointerDataType(createAnonymUserDefinedType("NES::WindowManager")),
         "window_manager");
 
     /* Tuple *tuples; */
@@ -524,7 +525,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
 
     auto varDeclResultTuple = VariableDeclaration::create(
         createPointerDataType(createUserDefinedType(structDeclResultTuple)),
-        "result_tuples");
+        "resultTuples");
 
     /* variable declarations for fields inside structs */
     auto declFieldCampaignId = structDeclTuple.getVariableDeclaration(
@@ -551,7 +552,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
 
     /* init statements before for loop */
 
-    /*  tuples = (Tuple *)tuple_buffer_1->data;*/
+    /*  tuples = (Tuple *)tuple_buffer.getBuffer();*/
     BinaryOperatorStatement initTuplePtr(
         VarRef(varDeclTuple).assign(
             TypeCast(
@@ -568,10 +569,10 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
 
     /* for (uint64_t id = 0; id < tuple_buffer_1->num_tuples; ++id) */
     FOR loopStmt(
-        varDeclId,
+        varDeclId.copy(),
         (VarRef(varDeclId)
-            < (VarRef(varDeclTupleBuffers).accessRef(getNumberOfTupleBuffer))),
-        ++VarRef(varDeclId));
+            < (VarRef(varDeclTupleBuffers).accessRef(getNumberOfTupleBuffer))).copy(),
+        (++VarRef(varDeclId)).copy());
 
     /* sum = sum + tuples[id].campaign_id; */
     loopStmt.addStatement(
@@ -817,7 +818,7 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
     stage->execute(inputBuffer, nullptr, nullptr, resultBuffer);
 
     /* check for correctness, input source produces tuples consisting of two uint32_t values, 3 values will match the predicate */
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 3);
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2);
 
     NES_INFO(NES::toString(resultBuffer, inputSchema));
 }
@@ -874,10 +875,9 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
 
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData().value();
-    auto sizeoftuples = (sizeof(uint32_t) + sizeof(int16_t) + sizeof(float)
-        + sizeof(double) + sizeof(double) + sizeof(char) + sizeof(char)*12);
-    auto bufferSize = inputBuffer.getNumberOfTuples()*sizeoftuples;
-    auto resultBuffer = BufferManager::instance().getBufferBlocking();
+
+    auto resultBuffer = BufferManager::instance().getUnpooledBuffer(
+        inputBuffer.getNumberOfTuples()*outputSchema.getSchemaSize()).value();
 
     /* execute Stage */
     stage->execute(inputBuffer, nullptr, nullptr, resultBuffer);

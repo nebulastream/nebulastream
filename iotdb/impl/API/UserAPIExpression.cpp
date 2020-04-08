@@ -63,10 +63,10 @@ const ExpressionStatmentPtr Predicate::generateCode(GeneratedCodePtr& code) cons
 const ExpressionStatmentPtr PredicateItem::generateCode(GeneratedCodePtr& code) const {
     if (_attribute) {
         //checks if the predicate field is contained in the struct declaration.
-        if (code->struct_decl_input_tuple.containsField(_attribute->name, _attribute->getDataType())) {
+        if (code->structDeclaratonInputTuple.containsField(_attribute->name, _attribute->getDataType())) {
             // creates a new variable declaration for the predicate field.
-            VariableDeclaration var_decl_attr = code->struct_decl_input_tuple.getVariableDeclaration(_attribute->name);
-            return ((VarRef(code->var_decl_input_tuple)[VarRef(*code->var_decl_id)]).accessRef(VarRef(var_decl_attr))).copy();
+            VariableDeclaration var_decl_attr = code->structDeclaratonInputTuple.getVariableDeclaration(_attribute->name);
+            return ((VarRef(code->varDeclarationInputTuples)[VarRef(*code->varDeclarationRecordIndex)]).accessRef(VarRef(var_decl_attr))).copy();
         } else {
             NES_FATAL_ERROR("UserAPIExpression: Could not Retrieve Attribute from StructDeclaration!");
         }
