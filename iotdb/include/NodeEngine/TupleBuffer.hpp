@@ -125,7 +125,6 @@ class TupleBuffer {
   std::string printTupleBuffer(SchemaPtr schema);
 
   /**
-<<<<<<< HEAD
    * @brief revert the endianess of the tuple buffer
    * @schema of the buffer
    */
