@@ -12,7 +12,7 @@ StreamCatalog::StreamCatalog() {
     NES_DEBUG("StreamCatalog: construct stream catalog")
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
-        "value", BasicType::UINT64);
+        "value", BasicType::UINT64);schema
     addLogicalStream("default_logical", schema);
     NES_DEBUG("StreamCatalog: constructed default_logical")
 
