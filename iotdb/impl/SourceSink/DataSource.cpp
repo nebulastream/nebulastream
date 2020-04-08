@@ -16,11 +16,11 @@ BOOST_CLASS_EXPORT_IMPLEMENT(NES::DataSource);
 
 namespace NES {
 
-DataSource::DataSource(SchemaPtr pSchema)
+DataSource::DataSource(SchemaPtr schema)
     :
     running(false),
     thread(),
-    schema(pSchema),
+    schema(schema),
     generatedTuples(0),
     generatedBuffers(0),
     numBuffersToProcess(UINT64_MAX),

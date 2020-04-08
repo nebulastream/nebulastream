@@ -32,7 +32,7 @@ class DataSource {
      * by some test to produce a deterministic behavior
      * @param schema of the data that this source produces
      */
-    DataSource(SchemaPtr pSchema);
+    DataSource(SchemaPtr schema);
 
     /**
      * @brief method to start the source.
