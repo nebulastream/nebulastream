@@ -1,34 +1,38 @@
 #ifndef NES_IMPL_OPTIMIZER_IMPL_MINIMUMRESOURCECONSUMPTION_HPP_
 #define NES_IMPL_OPTIMIZER_IMPL_MINIMUMRESOURCECONSUMPTION_HPP_
 
-#include <Optimizer/NESPlacementOptimizer.hpp>
+#include <Optimizer/BasePlacementStrategy.hpp>
 namespace NES {
 
 /**
  * @brief This class is responsible for placing the operators on common path among the sources such that overall
  * resource consumption will reduce.
  */
-class MinimumResourceConsumptionStrategy : public NESPlacementOptimizer {
+class MinimumResourceConsumptionStrategy : public BasePlacementStrategy {
 
   public:
-    MinimumResourceConsumptionStrategy() = default;
     ~MinimumResourceConsumptionStrategy() = default;
-
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
+    static std::unique_ptr<MinimumResourceConsumptionStrategy> create(){
+        return std::make_unique<MinimumResourceConsumptionStrategy>(MinimumResourceConsumptionStrategy());
+    }
+
   private:
+
+    MinimumResourceConsumptionStrategy() = default;
 
     void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
                         OperatorPtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes);
 
     /**
-     * @brief Add forward operators between source and sink nodes.
-     * @param sourceNodes : list of source nodes
-     * @param rootNode : sink node
-     * @param nesExecutionPlanPtr : nes execution plan
+     * @brief Finds all the nodes that can be used for performing FWD operator
+     * @param sourceNodes
+     * @param rootNode
+     * @return
      */
-    void addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes, NESTopologyEntryPtr rootNode,
-                             NESExecutionPlanPtr nesExecutionPlanPtr);
+    vector<NESTopologyEntryPtr> getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
+                                                                         const NESTopologyEntryPtr rootNode) const;
 };
 }
 

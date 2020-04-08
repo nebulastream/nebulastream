@@ -2,7 +2,7 @@
 #define TOPDOWN_HPP
 
 #include <stack>
-#include <Optimizer/NESPlacementOptimizer.hpp>
+#include <Optimizer/BasePlacementStrategy.hpp>
 
 namespace NES {
 
@@ -11,16 +11,21 @@ typedef std::shared_ptr<Operator> OperatorPtr;
 
 using namespace std;
 
-class TopDownStrategy : public NESPlacementOptimizer {
+class TopDownStrategy : public BasePlacementStrategy {
 
   public:
-    TopDownStrategy() = default;
     ~TopDownStrategy() = default;
 
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery,
                                                 NESTopologyPlanPtr nesTopologyPlanPtr) override;
 
+    static std::unique_ptr<TopDownStrategy> create(){
+        return std::make_unique<TopDownStrategy>(TopDownStrategy());
+    }
+
   private:
+
+    TopDownStrategy() = default;
 
     /**
      * @brief place query operators and prepare the nes execution plan
@@ -49,13 +54,13 @@ class TopDownStrategy : public NESPlacementOptimizer {
                                 NESTopologyEntryPtr nesNode) const;
 
     /**
-     * @brief Add forward operators between source and sink nodes.
-     * @param sourceNodes : list of source nodes
-     * @param rootNode : sink node
-     * @param nesExecutionPlanPtr : nes execution plan
+     * @brief Finds all the nodes that can be used for performing FWD operator
+     * @param sourceNodes
+     * @param rootNode
+     * @return
      */
-    void addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes, NESTopologyEntryPtr rootNode,
-                             NESExecutionPlanPtr nesExecutionPlanPtr) const;
+    vector<NESTopologyEntryPtr> getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
+                                                                         const NESTopologyEntryPtr rootNode) const;
 };
 
 }

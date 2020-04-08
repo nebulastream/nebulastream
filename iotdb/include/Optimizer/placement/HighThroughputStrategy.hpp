@@ -1,7 +1,7 @@
 #ifndef NES_IMPL_OPTIMIZER_IMPL_HIGHTHROUGHPUT_HPP_
 #define NES_IMPL_OPTIMIZER_IMPL_HIGHTHROUGHPUT_HPP_
 
-#include <Optimizer/NESPlacementOptimizer.hpp>
+#include <Optimizer/BasePlacementStrategy.hpp>
 
 namespace NES {
 
@@ -9,28 +9,31 @@ namespace NES {
  * @brief This class is responsible for placing operators on high capacity links such that the overall query throughput
  * will increase.
  */
-class HighThroughputStrategy: public NESPlacementOptimizer {
+class HighThroughputStrategy : public BasePlacementStrategy {
 
   public:
-    HighThroughputStrategy() = default;
     ~HighThroughputStrategy() = default;
-
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
+    static std::unique_ptr<HighThroughputStrategy> create(){
+        return std::make_unique<HighThroughputStrategy>(HighThroughputStrategy());
+    }
+
   private:
+
+    HighThroughputStrategy() = default;
 
     void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
                         OperatorPtr operatorPtr, vector<NESTopologyEntryPtr> sourceNodes);
 
     /**
-     * @brief Add forward operators between source and sink nodes.
-     * @param sourceNodes : list of source nodes
-     * @param rootNode : sink node
-     * @param nesExecutionPlanPtr : nes execution plan
+     * @brief Finds all the nodes that can be used for performing FWD operator
+     * @param sourceNodes
+     * @param rootNode
+     * @return
      */
-    void addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes, NESTopologyEntryPtr rootNode,
-                             NESExecutionPlanPtr nesExecutionPlanPtr) const;
-
+    vector<NESTopologyEntryPtr> getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
+                                                                         const NESTopologyEntryPtr rootNode) const;
 };
 
 }

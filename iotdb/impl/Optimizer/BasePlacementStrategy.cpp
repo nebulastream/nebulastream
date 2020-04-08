@@ -1,4 +1,4 @@
-#include <Optimizer/NESPlacementOptimizer.hpp>
+#include <Optimizer/BasePlacementStrategy.hpp>
 #include <iostream>
 #include <exception>
 #include <Optimizer/placement/BottomUpStrategy.hpp>
@@ -17,29 +17,27 @@
 
 namespace NES {
 
-std::shared_ptr<NESPlacementOptimizer> NESPlacementOptimizer::getOptimizer(
-    std::string optimizerName) {
+std::unique_ptr<BasePlacementStrategy> BasePlacementStrategy::getStrategy(std::string placementStrategyName) {
 
-  if (optimizerName == "BottomUp") {
-    return std::make_unique<BottomUpStrategy>(BottomUpStrategy());
-  } else if (optimizerName == "TopDown") {
-    return std::make_unique<TopDownStrategy>(TopDownStrategy());
-  } else if (optimizerName == "Latency") {
-    return std::make_unique<LowLatencyStrategy>(LowLatencyStrategy());
-  } else if (optimizerName == "HighThroughput") {
-    return std::make_unique<HighThroughputStrategy>(HighThroughputStrategy());
-  } else if (optimizerName == "MinimumResourceConsumption") {
-    return std::make_unique<MinimumResourceConsumptionStrategy>(
-        MinimumResourceConsumptionStrategy());
-  } else if (optimizerName == "MinimumEnergyConsumption") {
-    return std::make_unique<MinimumEnergyConsumptionStrategy>(
-        MinimumEnergyConsumptionStrategy());
-  } else if (optimizerName == "HighAvailability") {
-    return std::make_unique<HighAvailabilityStrategy>(
-        HighAvailabilityStrategy());
-  } else {
-    throw std::invalid_argument(
-        "NESPlacementOptimizer: Unknown optimizer type: " + optimizerName);
+  if (stringToPlacementStrategyType.find(placementStrategyName) == stringToPlacementStrategyType.end()) {
+    throw std::invalid_argument("BasePlacementStrategy: Unknown placement strategy name " + placementStrategyName);
+  }
+
+  switch (stringToPlacementStrategyType[placementStrategyName]) {
+    case TopDown:
+        return TopDownStrategy::create();
+    case BottomUp:
+        return BottomUpStrategy::create();
+    case LowLatency:
+        return LowLatencyStrategy::create();
+    case HighThroughput:
+        return HighThroughputStrategy::create();
+    case MinimumResourceConsumption:
+      return MinimumResourceConsumptionStrategy::create();
+    case MinimumEnergyConsumption:
+      return MinimumEnergyConsumptionStrategy::create();
+    case HighAvailability:
+        return HighAvailabilityStrategy::create();
   }
 }
 
@@ -47,8 +45,8 @@ static const int zmqDefaultPort = 5555;
 //FIXME: Currently the system is not designed for multiple children. Therefore, the logic is ignoring the fact
 // that there could be more than one child. Once the code generator able to deal with it this logic need to be
 // fixed.
-void NESPlacementOptimizer::addSystemGeneratedSourceSinkOperators(
-    const Schema& schema , NESExecutionPlanPtr nesExecutionPlanPtr) {
+void BasePlacementStrategy::addSystemGeneratedSourceSinkOperators(
+    const Schema& schema, NESExecutionPlanPtr nesExecutionPlanPtr) {
 
   const std::shared_ptr<ExecutionGraph>& exeGraph = nesExecutionPlanPtr
       ->getExecutionGraph();
@@ -62,7 +60,6 @@ void NESPlacementOptimizer::addSystemGeneratedSourceSinkOperators(
       continue;
     }
 
-
     OperatorPtr rootOperator = executionNodePtr->getRootOperator();
     if (rootOperator == nullptr) {
       continue;
@@ -75,7 +72,7 @@ void NESPlacementOptimizer::addSystemGeneratedSourceSinkOperators(
           createZmqSource(schema, "localhost", zmqDefaultPort));
 
       //bind sys introduced operators to each other
-      rootOperator->setChildren( { sysSrcOptr });
+      rootOperator->setChildren({sysSrcOptr});
       sysSrcOptr->setParent(rootOperator);
 
       //Update the operator name
@@ -112,16 +109,15 @@ void NESPlacementOptimizer::addSystemGeneratedSourceSinkOperators(
       executionNodePtr->setOperatorName(optrName);
 
       //bind sys introduced operators to each other
-      sysSinkOptr->setChildren( { traverse });
+      sysSinkOptr->setChildren({traverse});
       traverse->setParent(sysSinkOptr);
     }
-
 
   }
 }
 
-void NESPlacementOptimizer::convertFwdOptr(
-    const Schema& schema , ExecutionNodePtr executionNodePtr) const {
+void BasePlacementStrategy::convertFwdOptr(
+    const Schema& schema, ExecutionNodePtr executionNodePtr) const {
 
   //create sys introduced src and sink operators
   //Note: src operator is using localhost because src zmq will run locally
@@ -131,18 +127,21 @@ void NESPlacementOptimizer::convertFwdOptr(
       createZmqSink(schema, "localhost", zmqDefaultPort));
 
   sysSrcOptr->setParent(sysSinkOptr);
-  sysSinkOptr->setChildren( { sysSrcOptr });
+  sysSinkOptr->setChildren({sysSrcOptr});
 
   executionNodePtr->setRootOperator(sysSrcOptr);
   executionNodePtr->setOperatorName("SOURCE(SYS)=>SINK(SYS)");
 }
 
-void NESPlacementOptimizer::completeExecutionGraphWithNESTopology(
-    NESExecutionPlanPtr nesExecutionPlanPtr ,
-    NESTopologyPlanPtr nesTopologyPtr) {
+static const char* const NO_OPERATOR = "NO-OPERATOR";
 
-  const vector<NESTopologyLinkPtr>& allEdges = nesTopologyPtr
-      ->getNESTopologyGraph()->getAllEdges();
+void BasePlacementStrategy::fillExecutionGraphWithTopologyInformation(NESExecutionPlanPtr nesExecutionPlanPtr,
+                                                                      NESTopologyPlanPtr nesTopologyPtr) {
+
+  NES_DEBUG("BasePlacementStrategy: Filling the execution graph with topology information.")
+  const vector<NESTopologyLinkPtr>& allEdges = nesTopologyPtr->getNESTopologyGraph()->getAllEdges();
+  NES_DEBUG("BasePlacementStrategy: Get all edges in the Topology and iterate over all edges to identify the nodes"
+            " that are not part of the execution graph.")
 
   for (NESTopologyLinkPtr nesLink : allEdges) {
 
@@ -152,48 +151,33 @@ void NESPlacementOptimizer::completeExecutionGraphWithNESTopology(
     size_t linkCapacity = nesLink->getLinkCapacity();
     size_t linkLatency = nesLink->getLinkLatency();
 
-    if (nesExecutionPlanPtr->hasVertex(srcId)) {
-      const ExecutionNodePtr srcExecutionNode = nesExecutionPlanPtr
-          ->getExecutionNode(srcId);
-      if (nesExecutionPlanPtr->hasVertex(destId)) {
-        const ExecutionNodePtr destExecutionNode = nesExecutionPlanPtr
-            ->getExecutionNode(destId);
-        nesExecutionPlanPtr->createExecutionNodeLink(linkId, srcExecutionNode,
-                                                     destExecutionNode,
-                                                     linkCapacity, linkLatency);
-      } else {
-        const ExecutionNodePtr destExecutionNode = nesExecutionPlanPtr
-            ->createExecutionNode("NO-OPERATOR", to_string(destId),
-                                  nesLink->getDestNode(), nullptr);
-        nesExecutionPlanPtr->createExecutionNodeLink(linkId, srcExecutionNode,
-                                                     destExecutionNode,
-                                                     linkCapacity, linkLatency);
-      }
-    } else {
+    ExecutionNodePtr srcExecutionNode, destExecutionNode;
 
-      const ExecutionNodePtr srcExecutionNode = nesExecutionPlanPtr
-          ->createExecutionNode("NO-OPERATOR", to_string(srcId),
-                                nesLink->getSourceNode(), nullptr);
-      if (nesExecutionPlanPtr->hasVertex(destId)) {
-        const ExecutionNodePtr destExecutionNode = nesExecutionPlanPtr
-            ->getExecutionNode(destId);
-        nesExecutionPlanPtr->createExecutionNodeLink(linkId, srcExecutionNode,
-                                                     destExecutionNode,
-                                                     linkCapacity, linkLatency);
-      } else {
-        const ExecutionNodePtr destExecutionNode = nesExecutionPlanPtr
-            ->createExecutionNode("NO-OPERATOR", to_string(destId),
-                                  nesLink->getDestNode(), nullptr);
-        nesExecutionPlanPtr->createExecutionNodeLink(linkId, srcExecutionNode,
-                                                     destExecutionNode,
-                                                     linkCapacity, linkLatency);
-      }
+    NES_DEBUG("BasePlacementStrategy: If sourceNode present in the execution graph then use it, else create "
+              "an empty execution node with no operator.")
+    if (nesExecutionPlanPtr->hasVertex(srcId)) {
+      srcExecutionNode = nesExecutionPlanPtr->getExecutionNode(srcId);
+    } else {
+      srcExecutionNode = nesExecutionPlanPtr->createExecutionNode(NO_OPERATOR, to_string(srcId),
+                                                                  nesLink->getSourceNode(), nullptr);
     }
+
+    NES_DEBUG("BasePlacementStrategy: If destinationNode present in the execution graph then use it, else create "
+              "an empty execution node with no operator.")
+    if (nesExecutionPlanPtr->hasVertex(destId)) {
+      destExecutionNode = nesExecutionPlanPtr->getExecutionNode(destId);
+    } else {
+      destExecutionNode = nesExecutionPlanPtr->createExecutionNode(NO_OPERATOR, to_string(destId),
+                                                                   nesLink->getDestNode(), nullptr);
+    }
+
+    NES_DEBUG("BasePlacementStrategy: create the execution node link.")
+    nesExecutionPlanPtr->createExecutionNodeLink(linkId, srcExecutionNode, destExecutionNode, linkCapacity,
+                                                 linkLatency);
   }
 }
-;
-void NESPlacementOptimizer::setUDFSFromSampleOperatorToSenseSources(
-    InputQueryPtr inputQuery) {
+
+void BasePlacementStrategy::setUDFSFromSampleOperatorToSenseSources(InputQueryPtr inputQuery) {
 
   //TODO: this is only the first try, it should be replaced by the new functions offered by the nbew log query plan
   const OperatorPtr sinkOperator = inputQuery->getRoot();
@@ -205,21 +189,20 @@ void NESPlacementOptimizer::setUDFSFromSampleOperatorToSenseSources(
   string udfs = inputQuery->getUdsf();
   if (udfs != "") {
     NES_DEBUG(
-        "NESPlacementOptimizer::setUDFSFromSampleOperatorToSenseSources: a sample operator is provided")
+        "BasePlacementStrategy::setUDFSFromSampleOperatorToSenseSources: a sample operator is provided")
     if (dynamic_cast<SenseSource*>(sourceOperatorPtr.get())) {
       SenseSource* node = dynamic_cast<SenseSource*>(sourceOperatorPtr.get());
       node->setUdsf(udfs);
     } else {
-      NES_ERROR("NESPlacementOptimizer: cast to sample node failed")
-      throw new Exception("NESPlacementOptimizer cast to sample op failed");
+      NES_ERROR("BasePlacementStrategy: cast to sample node failed")
+      throw new Exception("BasePlacementStrategy cast to sample op failed");
     }
   }
 }
 
+OperatorPtr BasePlacementStrategy::getSourceOperator(OperatorPtr root) {
 
-OperatorPtr NESPlacementOptimizer::getSourceOperator(OperatorPtr root) {
-
-  deque<OperatorPtr> operatorTraversQueue = { root };
+  deque<OperatorPtr> operatorTraversQueue = {root};
 
   while (!operatorTraversQueue.empty()) {
     auto optr = operatorTraversQueue.front();
@@ -234,7 +217,21 @@ OperatorPtr NESPlacementOptimizer::getSourceOperator(OperatorPtr root) {
   }
 
   return nullptr;
+};
+
+void BasePlacementStrategy::addForwardOperators(vector<NESTopologyEntryPtr> candidateNodes,
+                                                NESExecutionPlanPtr nesExecutionPlanPtr) {
+
+  //FIXME: This may not work when we have two different queries deployed on the same path.
+  NES_DEBUG(
+      "BasePlacementStrategy: Add FWD operator on the node where no operator from the query has been placed");
+  for (NESTopologyEntryPtr candidateNode: candidateNodes) {
+    if (candidateNode->getCpuCapacity() == candidateNode->getRemainingCpuCapacity()) {
+      nesExecutionPlanPtr->createExecutionNode("FWD", to_string(candidateNode->getId()), candidateNode,
+          /**executableOperator**/nullptr);
+      candidateNode->reduceCpuCapacity(1);
+    }
+  }
 }
-;
 
 }

@@ -1,7 +1,7 @@
 #ifndef NES_IMPL_OPTIMIZER_IMPL_HIGHAVAILABILITY_HPP_
 #define NES_IMPL_OPTIMIZER_IMPL_HIGHAVAILABILITY_HPP_
 
-#include <Optimizer/NESPlacementOptimizer.hpp>
+#include <Optimizer/BasePlacementStrategy.hpp>
 
 namespace NES {
 
@@ -12,15 +12,19 @@ typedef std::shared_ptr<Operator> OperatorPtr;
  * @brief This Class is responsible for placing operators on the nodes such that there exists R number of redundant
  * paths between the operator and the source node.
  */
-class HighAvailabilityStrategy : public NESPlacementOptimizer {
+class HighAvailabilityStrategy : public BasePlacementStrategy {
 
   public:
-    HighAvailabilityStrategy() = default;
     ~HighAvailabilityStrategy() = default;
-
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
+    static std::unique_ptr<HighAvailabilityStrategy> create(){
+        return std::make_unique<HighAvailabilityStrategy>(HighAvailabilityStrategy());
+    }
+
   private:
+
+    HighAvailabilityStrategy() = default;
 
     /**
      * This method is responsible for placing the operators to the nes nodes and generating ExecutionNodes.
@@ -40,6 +44,15 @@ class HighAvailabilityStrategy : public NESPlacementOptimizer {
      */
     void addForwardOperators(vector<NESTopologyEntryPtr> pathForPlacement,
                              NESExecutionPlanPtr nesExecutionPlanPtr) const;
+
+    /**
+     * @brief Finds all the nodes that can be used for performing FWD operator
+     * @param sourceNodes
+     * @param rootNode
+     * @return
+     */
+    vector<NESTopologyEntryPtr> getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
+                                                                         const NESTopologyEntryPtr rootNode) const;
 };
 
 }

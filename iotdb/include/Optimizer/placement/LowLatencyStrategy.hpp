@@ -1,7 +1,7 @@
 #ifndef NES_IMPL_OPTIMIZER_IMPL_LOWLINKLATENCY_HPP_
 #define NES_IMPL_OPTIMIZER_IMPL_LOWLINKLATENCY_HPP_
 
-#include <Optimizer/NESPlacementOptimizer.hpp>
+#include <Optimizer/BasePlacementStrategy.hpp>
 
 namespace NES {
 
@@ -19,27 +19,31 @@ namespace NES {
  * * Replicate operators when possible
  *
  */
-class LowLatencyStrategy : public NESPlacementOptimizer {
+class LowLatencyStrategy : public BasePlacementStrategy {
 
   public:
-    LowLatencyStrategy() {};
     ~LowLatencyStrategy() {};
 
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
+    static std::unique_ptr<LowLatencyStrategy> create(){
+        return std::make_unique<LowLatencyStrategy>(LowLatencyStrategy());
+    }
+
   private:
+
+    LowLatencyStrategy() {};
 
     void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
                         OperatorPtr operatorPtr, vector<NESTopologyEntryPtr> sourceNodes);
-
     /**
-     * @brief Add forward operators between source and sink nodes.
-     * @param sourceNodes : list of source nodes
-     * @param rootNode : sink node
-     * @param nesExecutionPlanPtr : nes execution plan
+     * @brief Finds all the nodes that can be used for performing FWD operator
+     * @param sourceNodes
+     * @param rootNode
+     * @return
      */
-    void addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes, NESTopologyEntryPtr rootNode,
-                             NESExecutionPlanPtr nesExecutionPlanPtr) const;
+    vector<NESTopologyEntryPtr> getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
+                                                                         const NESTopologyEntryPtr rootNode) const;
 };
 }
 

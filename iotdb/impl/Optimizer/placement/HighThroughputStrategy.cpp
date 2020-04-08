@@ -6,7 +6,7 @@
 namespace NES {
 
 NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(InputQueryPtr inputQuery,
-                                                            NESTopologyPlanPtr nesTopologyPlan) {
+                                                                    NESTopologyPlanPtr nesTopologyPlan) {
 
     const OperatorPtr sinkOperator = inputQuery->getRoot();
 
@@ -19,10 +19,10 @@ NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(InputQueryPt
         throw std::runtime_error("No source operator found in the query plan");
     }
 
-    const vector<NESTopologyEntryPtr> sourceNodePtrs = StreamCatalog::instance()
+    const vector<NESTopologyEntryPtr> sourceNodes = StreamCatalog::instance()
         .getSourceNodesForLogicalStream(streamName);
 
-    if (sourceNodePtrs.empty()) {
+    if (sourceNodes.empty()) {
         NES_ERROR("HighThroughput: Unable to find the target source: " << streamName);
         throw std::runtime_error("No source found in the topology for stream " + streamName);
     }
@@ -31,13 +31,18 @@ NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(InputQueryPt
     const NESTopologyGraphPtr nesTopologyGraphPtr = nesTopologyPlan->getNESTopologyGraph();
 
     NES_INFO("HighThroughput: Placing operators on the nes topology.");
-    placeOperators(nesExecutionPlanPtr, nesTopologyGraphPtr, sourceOperatorPtr, sourceNodePtrs);
+    placeOperators(nesExecutionPlanPtr, nesTopologyGraphPtr, sourceOperatorPtr, sourceNodes);
+
+    NESTopologyEntryPtr rootNode = nesTopologyGraphPtr->getRoot();
+
+    NES_DEBUG("HighThroughput: Find the path used for performing the placement based on the strategy type");
+    vector<NESTopologyEntryPtr> candidateNodes = getCandidateNodesForFwdOperatorPlacement(sourceNodes, rootNode);
 
     NES_INFO("HighThroughput: Adding forward operators.");
-    addForwardOperators(sourceNodePtrs, nesTopologyGraphPtr->getRoot(), nesExecutionPlanPtr);
+    addForwardOperators(candidateNodes, nesExecutionPlanPtr);
 
     NES_INFO("HighThroughput: Generating complete execution Graph.");
-    completeExecutionGraphWithNESTopology(nesExecutionPlanPtr, nesTopologyPlan);
+    fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr, nesTopologyPlan);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.
     Schema& schema = inputQuery->getSourceStream()->getSchema();
@@ -46,8 +51,25 @@ NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(InputQueryPt
     return nesExecutionPlanPtr;
 }
 
-void HighThroughputStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
-                                    OperatorPtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes) {
+vector<NESTopologyEntryPtr> HighThroughputStrategy::getCandidateNodesForFwdOperatorPlacement(const vector<
+    NESTopologyEntryPtr>& sourceNodes, const NES::NESTopologyEntryPtr rootNode) const {
+
+    PathFinder pathFinder;
+    vector<NESTopologyEntryPtr> candidateNodes;
+    for (NESTopologyEntryPtr targetSource: sourceNodes) {
+        //Find the list of nodes connecting the source and destination nodes
+        std::vector<NESTopologyEntryPtr>
+            nodesOnPath = pathFinder.findPathWithMaxBandwidth(targetSource, rootNode);
+        candidateNodes.insert(candidateNodes.end(), nodesOnPath.begin(), nodesOnPath.end());
+    }
+
+    return candidateNodes;
+}
+
+void HighThroughputStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr,
+                                            NESTopologyGraphPtr nesTopologyGraphPtr,
+                                            OperatorPtr sourceOperator,
+                                            vector<NESTopologyEntryPtr> sourceNodes) {
 
     PathFinder pathFinder;
     const NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
@@ -103,28 +125,6 @@ void HighThroughputStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr
 
             if (!targetOperator) {
                 break;
-            }
-        }
-    }
-}
-
-void HighThroughputStrategy::addForwardOperators(vector<NESTopologyEntryPtr> sourceNodes,
-                                         NESTopologyEntryPtr rootNode,
-                                         NESExecutionPlanPtr nesExecutionPlanPtr) const {
-
-    PathFinder pathFinder;
-
-    for (NESTopologyEntryPtr targetSource: sourceNodes) {
-
-        //Find the list of nodes connecting the source and destination nodes
-        std::vector<NESTopologyEntryPtr> candidateNodes = pathFinder.findPathWithMaxBandwidth(targetSource, rootNode);
-
-        for (NESTopologyEntryPtr candidateNode: candidateNodes) {
-
-            if (candidateNode->getCpuCapacity() == candidateNode->getRemainingCpuCapacity()) {
-                nesExecutionPlanPtr->createExecutionNode("FWD", to_string(candidateNode->getId()), candidateNode,
-                    /**executableOperator**/nullptr);
-                candidateNode->reduceCpuCapacity(1);
             }
         }
     }
