@@ -15,11 +15,11 @@ class Schema {
   static SchemaPtr create();
 
   Schema(SchemaPtr query);
-  SchemaPtr copy() const;
+  SchemaPtr makeDeepCopy() const;
 
   SchemaPtr copyFields(SchemaPtr schema);
   SchemaPtr addField(AttributeFieldPtr field);
-  SchemaPtr addField(const std::string &name, const BasicType &);
+  SchemaPtr addField(const std::string &name, const BasicType& type);
   SchemaPtr addField(const std::string &name, DataTypePtr data);
   SchemaPtr addField(const std::string &name, uint32_t size);
 
@@ -32,7 +32,7 @@ class Schema {
   size_t getSchemaSize() const;
   const std::string toString() const;
 
-  bool equals(SchemaPtr schema, bool in_order = true);
+  bool equals(SchemaPtr schema, bool considerOrder = true);
 
   std::vector<AttributeFieldPtr> fields;
 

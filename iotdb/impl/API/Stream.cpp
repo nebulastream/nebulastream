@@ -6,7 +6,7 @@ namespace NES {
 
 Stream::Stream(std::string name, NES::SchemaPtr schemaPtr)
     : name(name) {
-  schema = schemaPtr->copy();
+  schema = schemaPtr->makeDeepCopy();
 }
 
 SchemaPtr Stream::getSchema() {

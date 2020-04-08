@@ -155,7 +155,7 @@ std::string toString(TupleBuffer* buffer, SchemaPtr schema) {
     std::vector<DataTypePtr> types;
     for (uint32_t i = 0; i < schema->getSize(); ++i) {
         offsets.push_back(schema->get(i)->getFieldSize());
-        NES_DEBUG(std::string("Field Size ") + schema->get(i)->toString() + std::string(": ") +
+        NES_DEBUG("CodeGenerator: " + std::string("Field Size ") + schema->get(i)->toString() + std::string(": ") +
             std::to_string(schema->get(i)->getFieldSize()));
         types.push_back(schema->get(i)->getDataType());
     }
@@ -165,7 +165,7 @@ std::string toString(TupleBuffer* buffer, SchemaPtr schema) {
         uint32_t val = offsets[i];
         offsets[i] = prefix_sum;
         prefix_sum += val;
-        NES_DEBUG(std::string("Prefix Sum: ") + schema->get(i)->toString() + std::string(": ") +
+        NES_DEBUG("CodeGenerator: " + std::string("Prefix Sum: ") + schema->get(i)->toString() + std::string(": ") +
             std::to_string(offsets[i]));
     }
 
@@ -195,7 +195,7 @@ std::string toString(TupleBuffer* buffer, SchemaPtr schema) {
 
 bool CCodeGenerator::generateCode(SchemaPtr schema, const PipelineContextPtr& context, std::ostream& out) {
 
-    context->inputSchema = schema->copy();
+    context->inputSchema = schema->makeDeepCopy();
 
     StructDeclaration struct_decl_tuple_buffer = getStructDeclarationTupleBuffer();
     StructDeclaration struct_decl_tuple = getStructDeclarationInputTuple(context->inputSchema);
@@ -377,9 +377,9 @@ bool CCodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContext
         VariableDeclarationPtr
             var_decl = getVariableDeclarationForField(struct_decl_result_tuple, context->resultSchema->get(i));
         if (!var_decl) {
-            NES_ERROR("Could not extract field " << context->resultSchema->get(i)->toString() << " from struct "
+            NES_ERROR("CodeGenerator: Could not extract field " << context->resultSchema->get(i)->toString() << " from struct "
                                                  << struct_decl_result_tuple.getTypeName());
-            NES_DEBUG("W>");
+            NES_DEBUG("CodeGenerator: W>");
         }
         context->code->variable_decls.push_back(*var_decl);
 

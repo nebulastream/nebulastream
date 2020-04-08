@@ -26,7 +26,7 @@ Schema::Schema(const SchemaPtr query) {
   copyFields(query);
 }
 
-SchemaPtr Schema::copy() const {
+SchemaPtr Schema::makeDeepCopy() const {
   return std::make_shared<Schema>(*this);
 }
 
@@ -43,13 +43,13 @@ SchemaPtr Schema::copyFields(SchemaPtr schema) {
  for(AttributeFieldPtr attr : schema->fields){
     this->fields.push_back(attr->copy());
   }
-  return copy();
+  return this->makeDeepCopy();
 }
 
 SchemaPtr Schema::addField(AttributeFieldPtr field) {
   if (field)
     fields.push_back(field);
-  return copy();
+  return this->makeDeepCopy();
 }
 
 SchemaPtr Schema::addField(const std::string& name, const BasicType& type) {
@@ -91,13 +91,13 @@ AttributeFieldPtr Schema::get(uint32_t index) {
   throw std::invalid_argument("field id " + std::to_string(index) + " does not exist");
 }
 
-bool Schema::equals(SchemaPtr schema, bool in_order) {
+bool Schema::equals(SchemaPtr schema, bool considerOrder) {
   if(schema->fields.size() != fields.size()){
     return false;
   }
-  if(in_order){
+  if(considerOrder){
     for (int i = 0; i < fields.size(); i++){
-      if(!((fields.at(i))->isEqual((schema->fields).at(i)))){
+      if(!(fields.at(i)->isEqual((schema->fields).at(i)))){
         return false;
       }
     }
@@ -107,7 +107,7 @@ bool Schema::equals(SchemaPtr schema, bool in_order) {
     if(!(schema->get(attr->name))){
       return false;
     } else {
-      if(!(schema->get(attr->name)->getDataType()->isEqual(attr->getDataType()))){
+      if(!(schema->get(attr->name)->isEqual(attr))){
         return false;
       }
     }
