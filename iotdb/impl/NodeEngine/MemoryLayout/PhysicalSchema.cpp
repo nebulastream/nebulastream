@@ -40,6 +40,6 @@ bool PhysicalSchema::validFieldIndex(uint64_t fieldIndex) {
 }
 
 uint64_t PhysicalSchema::getRecordSize() {
-    return this->schema->getSchemaSize();
+    return this->schema->getSchemaSizeInBytes();
 }
 }

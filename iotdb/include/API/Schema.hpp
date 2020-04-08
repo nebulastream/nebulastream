@@ -9,51 +9,109 @@
 namespace NES {
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
+
 class Schema {
- public:
-  Schema();
-  static SchemaPtr create();
+  public:
+    Schema();
+    Schema(SchemaPtr query);
 
-  Schema(SchemaPtr query);
-  SchemaPtr makeDeepCopy() const;
+    /**
+     * @brief Factory method to create a new SchemaPtr.
+     * @return SchemaPtr
+     */
+    static SchemaPtr create();
 
-  SchemaPtr copyFields(SchemaPtr schema);
-  SchemaPtr addField(AttributeFieldPtr field);
-  SchemaPtr addField(const std::string &name, const BasicType& type);
-  SchemaPtr addField(const std::string &name, DataTypePtr data);
-  SchemaPtr addField(const std::string &name, uint32_t size);
+    /**
+     * @brief Creates a copy of this schema.
+     * @note The containing AttributeFields may still reference the same objects.
+     * @return A copy of the Schema
+     */
+    SchemaPtr copy() const;
 
-  // Schema &addFixSizeField(const std::string name, const APIDataType data_type);
-  // Schema &addVarSizeField(const std::string name, const APIDataType data_type, const size_t data_size);
-  AttributeFieldPtr get(const std::string name);
-  AttributeFieldPtr get(uint32_t index);
+    /**
+     * @brief Copy all fields of otherSchema into this schema.
+     * @param otherSchema
+     * @return a copy of this schema.
+     */
+    SchemaPtr copyFields(SchemaPtr otherSchema);
 
-  size_t getSize() const;
-  size_t getSchemaSize() const;
-  const std::string toString() const;
+    /**
+     * @brief appends a AttributeField to the schema and returns a copy of this schema.
+     * @param field
+     * @return a copy of this schema.
+     */
+    SchemaPtr addField(AttributeFieldPtr field);
 
-  bool equals(SchemaPtr schema, bool considerOrder = true);
+    /**
+    * @brief appends a field with a basic type to the schema and returns a copy of this schema.
+    * @param field
+    * @return a copy of this schema.
+    */
+    SchemaPtr addField(const std::string& name, const BasicType& type);
 
-  std::vector<AttributeFieldPtr> fields;
+    /**
+    * @brief appends a field with a data type to the schema and returns a copy of this schema.
+    * @param field
+    * @return a copy of this schema.
+    */
+    SchemaPtr addField(const std::string& name, DataTypePtr data);
 
-  bool operator==(const Schema &rhs) const {
-    if (fields.size() == rhs.fields.size()) {
-      for (std::vector<int>::size_type i = 0; i != fields.size(); i++) {
-        fields[i];
-        if (!(*fields[i].get() == *rhs.fields[i].get())) {
-          return false;
-        }
-      }
-      return true;
+    /**
+    * @brief appends a field with a field size to the schema and returns a copy of this schema.
+    * @param field
+    * @return a copy of this schema.
+    */
+    SchemaPtr addField(const std::string& name, uint32_t size);
+
+    /**
+     * @brief Checks if attribute field name is defined in the schema
+     * @param fieldName
+     * @return bool
+     */
+    bool has(const std::string& fieldName);
+
+    /**
+     * @brief Finds a attribute field by name in the schema
+     * @param fieldName
+     * @return AttributeField
+     */
+    AttributeFieldPtr get(const std::string& fieldName);
+
+    /**
+     * @brief Finds a attribute field by index in the schema
+     * @param index
+     * @return AttributeField
+     */
+    AttributeFieldPtr get(uint32_t index);
+
+    /**
+     * @brief Returns the number of fields in the schema.
+     * @return size_t
+     */
+    size_t getSize() const;
+    /**
+     * @brief Returns the number of bytes all fields in this schema occupy.
+     * @return size_t
+     */
+    size_t getSchemaSizeInBytes() const;
+
+    /**
+     * @brief Checks if two Schemas are equal to each other.
+     * @param schema
+     * @param considerOrder takes into account if the order of fields in a schema matter.
+     * @return boolean
+     */
+    bool equals(SchemaPtr schema, bool considerOrder = true);
+
+    const std::string toString() const;
+
+    std::vector<AttributeFieldPtr> fields;
+
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive& ar, const unsigned int version) {
+        ar & fields;
     }
-    return false;
-  }
-
-  friend class boost::serialization::access;
-  template<class Archive>
-  void serialize(Archive &ar, const unsigned int version) {
-    ar & fields;
-  }
 };
 
 }  // namespace NES

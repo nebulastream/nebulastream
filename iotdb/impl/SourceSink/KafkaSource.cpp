@@ -73,7 +73,7 @@ TupleBufferPtr KafkaSource::receiveData() {
       } else {
       TupleBufferPtr buffer = BufferManager::instance().getFixedSizeBuffer();
 
-      const size_t tupleSize = schema->getSchemaSize();
+      const size_t tupleSize = schema->getSchemaSizeInBytes();
       const size_t tupleCnt = msg.get_payload().get_size() / tupleSize;
 
       NES_DEBUG("KAFKASOURCE recv #tups: " << tupleCnt << ", tupleSize: " << tupleSize << ", msg: " << msg.get_payload())

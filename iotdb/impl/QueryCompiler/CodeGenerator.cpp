@@ -195,7 +195,7 @@ std::string toString(TupleBuffer* buffer, SchemaPtr schema) {
 
 bool CCodeGenerator::generateCode(SchemaPtr schema, const PipelineContextPtr& context, std::ostream& out) {
 
-    context->inputSchema = schema->makeDeepCopy();
+    context->inputSchema = schema->copy();
 
     StructDeclaration struct_decl_tuple_buffer = getStructDeclarationTupleBuffer();
     StructDeclaration struct_decl_tuple = getStructDeclarationInputTuple(context->inputSchema);
