@@ -11,12 +11,16 @@ namespace NES {
 class MinimumResourceConsumptionStrategy : public BasePlacementStrategy {
 
   public:
-    MinimumResourceConsumptionStrategy() = default;
     ~MinimumResourceConsumptionStrategy() = default;
-
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
+    static std::unique_ptr<MinimumResourceConsumptionStrategy> create(){
+        return std::make_unique<MinimumResourceConsumptionStrategy>(MinimumResourceConsumptionStrategy());
+    }
+
   private:
+
+    MinimumResourceConsumptionStrategy() = default;
 
     void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
                         OperatorPtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes);

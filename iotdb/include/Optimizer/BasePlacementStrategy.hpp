@@ -36,6 +36,7 @@ class BasePlacementStrategy {
   private:
 
   public:
+
     BasePlacementStrategy() {};
 
     /**
@@ -81,7 +82,7 @@ class BasePlacementStrategy {
      * @param placementStrategyName
      * @return instance of type BaseOptimizer
      */
-    static std::shared_ptr<BasePlacementStrategy> getStrategy(std::string placementStrategyName);
+    static std::unique_ptr<BasePlacementStrategy> getStrategy(std::string placementStrategyName);
 
     /**
      * @brief replace forward operator with system generated source and sink operator.

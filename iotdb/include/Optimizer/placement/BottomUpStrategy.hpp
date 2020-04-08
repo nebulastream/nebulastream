@@ -18,12 +18,17 @@ using namespace std;
  */
 class BottomUpStrategy : public BasePlacementStrategy {
   public:
-    BottomUpStrategy() {};
     ~BottomUpStrategy() {};
 
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
+    static std::unique_ptr<BottomUpStrategy> create(){
+        return std::make_unique<BottomUpStrategy>(BottomUpStrategy());
+    }
+
   private:
+
+    BottomUpStrategy() = default;
 
     // This structure hold information about the current operator to place and previously placed parent operator.
     // It helps in deciding if the operator is to be placed in the nes node where the parent operator was placed

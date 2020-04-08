@@ -15,12 +15,16 @@ typedef std::shared_ptr<Operator> OperatorPtr;
 class HighAvailabilityStrategy : public BasePlacementStrategy {
 
   public:
-    HighAvailabilityStrategy() = default;
     ~HighAvailabilityStrategy() = default;
-
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
+    static std::unique_ptr<HighAvailabilityStrategy> create(){
+        return std::make_unique<HighAvailabilityStrategy>(HighAvailabilityStrategy());
+    }
+
   private:
+
+    HighAvailabilityStrategy() = default;
 
     /**
      * This method is responsible for placing the operators to the nes nodes and generating ExecutionNodes.
