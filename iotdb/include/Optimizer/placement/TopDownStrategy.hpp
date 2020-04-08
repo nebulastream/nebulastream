@@ -14,12 +14,18 @@ using namespace std;
 class TopDownStrategy : public BasePlacementStrategy {
 
   public:
-    TopDownStrategy() = default;
     ~TopDownStrategy() = default;
 
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery,
                                                 NESTopologyPlanPtr nesTopologyPlanPtr) override;
+
+    static std::unique_ptr<TopDownStrategy> create(){
+        return std::make_unique<TopDownStrategy>(TopDownStrategy());
+    }
+
   private:
+
+    TopDownStrategy() = default;
 
     /**
      * @brief place query operators and prepare the nes execution plan

@@ -17,22 +17,27 @@
 
 namespace NES {
 
-std::shared_ptr<BasePlacementStrategy> BasePlacementStrategy::getStrategy(std::string placementStrategyName) {
+std::unique_ptr<BasePlacementStrategy> BasePlacementStrategy::getStrategy(std::string placementStrategyName) {
 
   if (stringToPlacementStrategyType.find(placementStrategyName) == stringToPlacementStrategyType.end()) {
     throw std::invalid_argument("BasePlacementStrategy: Unknown placement strategy name " + placementStrategyName);
   }
 
   switch (stringToPlacementStrategyType[placementStrategyName]) {
-    case TopDown:return std::make_unique<TopDownStrategy>(TopDownStrategy());
-    case BottomUp:return std::make_unique<BottomUpStrategy>(BottomUpStrategy());
-    case LowLatency:return std::make_unique<LowLatencyStrategy>(LowLatencyStrategy());
-    case HighThroughput:return std::make_unique<HighThroughputStrategy>(HighThroughputStrategy());
+    case TopDown:
+        return TopDownStrategy::create();
+    case BottomUp:
+        return BottomUpStrategy::create();
+    case LowLatency:
+        return LowLatencyStrategy::create();
+    case HighThroughput:
+        return HighThroughputStrategy::create();
     case MinimumResourceConsumption:
-      return std::make_unique<MinimumResourceConsumptionStrategy>(MinimumResourceConsumptionStrategy());
+      return MinimumResourceConsumptionStrategy::create();
     case MinimumEnergyConsumption:
-      return std::make_unique<MinimumEnergyConsumptionStrategy>(MinimumEnergyConsumptionStrategy());
-    case HighAvailability:return std::make_unique<HighAvailabilityStrategy>(HighAvailabilityStrategy());
+      return MinimumEnergyConsumptionStrategy::create();
+    case HighAvailability:
+        return HighAvailabilityStrategy::create();
   }
 }
 

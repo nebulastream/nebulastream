@@ -22,12 +22,17 @@ namespace NES {
 class LowLatencyStrategy : public BasePlacementStrategy {
 
   public:
-    LowLatencyStrategy() {};
     ~LowLatencyStrategy() {};
 
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
+    static std::unique_ptr<LowLatencyStrategy> create(){
+        return std::make_unique<LowLatencyStrategy>(LowLatencyStrategy());
+    }
+
   private:
+
+    LowLatencyStrategy() {};
 
     void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
                         OperatorPtr operatorPtr, vector<NESTopologyEntryPtr> sourceNodes);
