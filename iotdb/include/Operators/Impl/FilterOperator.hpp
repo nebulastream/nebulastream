@@ -22,16 +22,17 @@ class FilterOperator : public Operator {
   OperatorType getOperatorType() const override;
   virtual bool equals(const Operator &_rhs) override;
   ~FilterOperator() override;
+  PredicatePtr getPredicate();
 
  private:
-  PredicatePtr predicate_;
+  PredicatePtr predicate;
 
   friend class boost::serialization::access;
 
   template<class Archive>
   void serialize(Archive &ar, unsigned) {
     ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Operator)
-        & BOOST_SERIALIZATION_NVP(predicate_);
+        & BOOST_SERIALIZATION_NVP(predicate);
   }
 };
 
