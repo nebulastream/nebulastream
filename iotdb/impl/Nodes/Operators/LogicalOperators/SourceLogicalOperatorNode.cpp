@@ -29,4 +29,8 @@ NodePtr createSourceLogicalOperatorNode(const DataSourcePtr& source) {
     return std::make_shared<SourceLogicalOperatorNode>(source);
 }
 
+DataSourcePtr SourceLogicalOperatorNode::getDataSource() {
+    return source;
+}
+
 }

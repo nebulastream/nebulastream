@@ -25,6 +25,8 @@ class FieldReadExpressionNode : public ExpressionNode {
     const std::string toString() const override;
     bool equal(const NodePtr rhs) const override;
 
+    const std::string getFieldName();
+
   private:
     /**
      * @brief Name of the field want to access.

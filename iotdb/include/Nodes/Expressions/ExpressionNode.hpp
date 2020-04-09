@@ -18,6 +18,8 @@ class ExpressionNode : public Node {
      * @return
      */
     bool isPredicate();
+
+    DataTypePtr getStamp();
   protected:
     /**
      * @brief declares the type of this expression.

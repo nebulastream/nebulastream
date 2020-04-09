@@ -9,8 +9,14 @@ namespace NES {
 class TranslateToLegacyPlanPhase;
 typedef std::shared_ptr<TranslateToLegacyPlanPhase> TranslateToLegacyPlanPhasePtr;
 
-class Node;
-typedef std::shared_ptr<Node> NodePtr;
+class OperatorNode;
+typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+
+class ExpressionNode;
+typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
+
+class UserAPIExpression;
+typedef std::shared_ptr<UserAPIExpression> UserAPIExpressionPtr;
 
 class Operator;
 typedef std::shared_ptr<Operator> OperatorPtr;
@@ -19,7 +25,10 @@ typedef std::shared_ptr<Operator> OperatorPtr;
 class TranslateToLegacyPlanPhase {
   public:
     static TranslateToLegacyPlanPhasePtr create();
-    OperatorPtr transform(NodePtr node);
+    OperatorPtr transform(OperatorNodePtr operatorNode);
+  private:
+    OperatorPtr transformIndividualOperator(OperatorNodePtr operatorNode);
+    UserAPIExpressionPtr transformExpression(ExpressionNodePtr node);
 };
 
 }

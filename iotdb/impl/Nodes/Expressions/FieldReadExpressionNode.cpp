@@ -24,6 +24,10 @@ bool FieldReadExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 
+const std::string FieldReadExpressionNode::getFieldName() {
+    return fieldName;
+}
+
 const std::string FieldReadExpressionNode::toString() const {
     return "FieldReadNode(" + fieldName + ")";
 }
