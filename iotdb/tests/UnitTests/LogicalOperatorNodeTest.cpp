@@ -1317,4 +1317,76 @@ TEST_F(LogicalOperatorNodeTest, splitWithMultiplePredecessors) {
     }
 }
 
+
+TEST_F(LogicalOperatorNodeTest, bfIterator) {
+    /**
+     * 1 -> 2 -> 5
+     * 1 -> 2 -> 6
+     * 1 -> 3
+     * 1 -> 4 -> 7
+     *
+     */
+    filterOp1->addChild(filterOp2);
+    filterOp1->addChild(filterOp3);
+    filterOp1->addChild(filterOp4);
+    filterOp2->addChild(filterOp5);
+    filterOp2->addChild(filterOp6);
+    filterOp4->addChild(filterOp7);
+
+    ConsoleDumpHandler::create()->dump(filterOp1, std::cout);
+
+    auto bfNodeIterator = BFNodeIterator(filterOp1);
+    auto iterator = bfNodeIterator.begin();
+
+    ASSERT_EQ(*iterator, filterOp1);
+    ++iterator;
+    ASSERT_EQ(*iterator, filterOp2);
+    ++iterator;
+    ASSERT_EQ(*iterator, filterOp3);
+    ++iterator;
+    ASSERT_EQ(*iterator, filterOp4);
+    ++iterator;
+    ASSERT_EQ(*iterator, filterOp5);
+    ++iterator;
+    ASSERT_EQ(*iterator, filterOp6);
+    ++iterator;
+    ASSERT_EQ(*iterator, filterOp7);
+}
+
+TEST_F(LogicalOperatorNodeTest, dfIterator) {
+    /**
+     * 1 -> 2 -> 5
+     * 1 -> 2 -> 6
+     * 1 -> 3
+     * 1 -> 4 -> 7
+     *
+     */
+    filterOp1->addChild(filterOp2);
+    filterOp1->addChild(filterOp3);
+    filterOp1->addChild(filterOp4);
+    filterOp2->addChild(filterOp5);
+    filterOp2->addChild(filterOp6);
+    filterOp4->addChild(filterOp7);
+
+    ConsoleDumpHandler::create()->dump(filterOp1, std::cout);
+
+    auto dfNodeIterator = DFNodeIterator(filterOp1);
+    auto iterator = dfNodeIterator.begin();
+
+    ASSERT_EQ(*iterator, filterOp1);
+    ++iterator;
+    ASSERT_EQ(*iterator, filterOp4);
+    ++iterator;
+    ASSERT_EQ(*iterator, filterOp7);
+    ++iterator;
+    ASSERT_EQ(*iterator, filterOp3);
+    ++iterator;
+    ASSERT_EQ(*iterator, filterOp2);
+    ++iterator;
+    ASSERT_EQ(*iterator, filterOp6);
+    ++iterator;
+    ASSERT_EQ(*iterator, filterOp5);
+
+}
+
 } // namespace NES
