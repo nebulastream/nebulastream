@@ -1,6 +1,7 @@
 name: NES CI
 
 on: [push, pull_request]
+
 jobs:
   build-job:
     runs-on: self-hosted
