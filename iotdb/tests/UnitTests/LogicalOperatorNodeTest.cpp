@@ -15,9 +15,11 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <SourceSink/DefaultSource.hpp>
 #include <memory>
+
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <SourceSink/SinkCreator.hpp>
+#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Nodes/Expressions/FieldReadExpressionNode.hpp>
 #include <Nodes/Expressions/BinaryExpressions/EqualsExpressionNode.hpp>
 
@@ -1385,4 +1387,34 @@ TEST_F(LogicalOperatorNodeTest, dfIterator) {
     ASSERT_EQ(*iterator, filterOp5);
 
 }
+
+TEST_F(LogicalOperatorNodeTest, translateToLagacyOperatorTree) {
+    /**
+     * Sink -> Filter -> Source
+     */
+    auto schema = Schema::create();
+    auto printSink = createPrintSinkWithSchema(schema, std::cout);
+    auto sinkOperator = createSinkLogicalOperatorNode(printSink);
+    auto constValue = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "1"));
+    auto fieldRead = FieldReadExpressionNode::create(createDataType(BasicType::INT8), "FieldName");
+    auto andNode = EqualsExpressionNode::create(constValue, fieldRead);
+    auto filter = createFilterLogicalOperatorNode(andNode);
+    sinkOperator->addChild(filter);
+    filter->addChild(sourceOp);
+
+    ConsoleDumpHandler::create()->dump(sinkOperator, std::cout);
+    auto translatePhase = TranslateToLegacyPlanPhase::create();
+    auto legacySink = translatePhase->transform(sinkOperator->as<OperatorNode>());
+    std::cout << legacySink->toString() << std::endl;
+    ASSERT_EQ(legacySink->getOperatorType(), SINK_OP);
+    auto legacyFilter = legacySink->getChildren()[0];
+    ASSERT_EQ(legacyFilter->getOperatorType(), FILTER_OP);
+    auto legacyPredicate = std::dynamic_pointer_cast<FilterOperator>(legacyFilter)->getPredicate();
+    std::cout << legacyPredicate->toString() << std::endl;
+    ASSERT_EQ(legacyPredicate->toString(), "(1 == FieldName:INT8 )");
+    auto legacySource = legacyFilter->getChildren()[0];
+    ASSERT_EQ(legacySource->getOperatorType(), SOURCE_OP);
+
+}
+
 } // namespace NES

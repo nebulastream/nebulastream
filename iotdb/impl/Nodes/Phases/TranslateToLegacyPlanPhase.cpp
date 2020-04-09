@@ -26,7 +26,7 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
         auto filterNodeOperator = operatorNode->as<FilterLogicalOperatorNode>();
         auto legacyExpression = transformExpression(filterNodeOperator->getPredicate());
         // we can assume that the legacy expression is always a predicate.
-        auto legacyPredicate = std::const_pointer_cast<Predicate>(legacyExpression);
+        auto legacyPredicate = std::dynamic_pointer_cast<Predicate>(legacyExpression);
         if (legacyPredicate == nullptr) {
             NES_FATAL_ERROR("TranslateToLegacyPhase: Error during translating expression");
         }
