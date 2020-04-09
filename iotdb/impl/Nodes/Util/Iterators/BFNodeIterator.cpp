@@ -17,6 +17,7 @@ BFNodeIterator::iterator::iterator(NodePtr current) {
 BFNodeIterator::iterator::iterator() = default;
 
 bool BFNodeIterator::iterator::operator!=(const iterator& other) const {
+    // todo currently we only check if we reached the end of the iterator.
     if(workQueue.empty() && other.workQueue.empty()){
         return false;
     };
@@ -26,10 +27,14 @@ bool BFNodeIterator::iterator::operator!=(const iterator& other) const {
 NodePtr BFNodeIterator::iterator::operator*() { return workQueue.front(); }
 
 BFNodeIterator::iterator& BFNodeIterator::iterator::operator++() {
-    auto current = workQueue.front();
-    workQueue.pop();
-    for (auto child : current->getChildren()) {
-        workQueue.push(child);
+    if (workQueue.empty()) {
+        NES_DEBUG("BF Iterator: we reached the end of this iterator and will not do anything.");
+    } else {
+        auto current = workQueue.front();
+        workQueue.pop();
+        for (auto child : current->getChildren()) {
+            workQueue.push(child);
+        }
     }
     return *this;
 }

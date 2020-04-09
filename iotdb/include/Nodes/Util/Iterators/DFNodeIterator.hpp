@@ -23,6 +23,7 @@ class DFNodeIterator {
 
         /**
          * @brief Moves the iterator to the next node.
+         * If we reach the end of the iterator we will ignore this operation.
          * @return iterator
          */
         iterator& operator++();

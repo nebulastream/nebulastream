@@ -17,6 +17,7 @@ DFNodeIterator::iterator::iterator(NodePtr current) {
 DFNodeIterator::iterator::iterator() = default;
 
 bool DFNodeIterator::iterator::operator!=(const iterator& other) const {
+    // todo currently we only check if we reached the end of the iterator.
     if (workStack.empty() && other.workStack.empty()) {
         return false;
     };
@@ -26,10 +27,14 @@ bool DFNodeIterator::iterator::operator!=(const iterator& other) const {
 NodePtr DFNodeIterator::iterator::operator*() { return workStack.top(); }
 
 DFNodeIterator::iterator& DFNodeIterator::iterator::operator++() {
-    auto current = workStack.top();
-    workStack.pop();
-    for (auto child : current->getChildren()) {
-        workStack.push(child);
+    if (workStack.empty()) {
+        NES_DEBUG("DF Iterator: we reached the end of this iterator and will not do anything.");
+    } else {
+        auto current = workStack.top();
+        workStack.pop();
+        for (auto child : current->getChildren()) {
+            workStack.push(child);
+        }
     }
     return *this;
 }
