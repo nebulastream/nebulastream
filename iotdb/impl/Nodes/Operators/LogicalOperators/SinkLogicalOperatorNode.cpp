@@ -4,7 +4,7 @@ namespace NES {
 SinkLogicalOperatorNode::SinkLogicalOperatorNode(const DataSinkPtr sink) : sink(sink) {
 }
 
-DataSinkPtr SinkLogicalOperatorNode::getDataSinkPtr() {
+DataSinkPtr SinkLogicalOperatorNode::getDataSink() {
     return sink;
 }
 

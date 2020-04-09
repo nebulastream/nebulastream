@@ -11,8 +11,9 @@ public:
     SourceLogicalOperatorNode(const DataSourcePtr);
     const NodePtr copy();
     const std::string toString() const override;
+    bool equal(const NodePtr rhs) const override;
 
-    bool equal(const NodePtr rhs) const override ;
+    DataSourcePtr getDataSource();
 
 private:
     DataSourcePtr source;
