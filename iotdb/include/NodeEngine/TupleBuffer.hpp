@@ -96,10 +96,11 @@ class BufferControlBlock {
 }
 
 class TupleBuffer {
-  public:
-
+    friend class BufferManager;
+    friend class MemorySegment;
+  private:
     TupleBuffer() : ptr(nullptr), size(0), controlBlock(nullptr) {}
-
+  public:
     TupleBuffer(const TupleBuffer& other) {
         controlBlock = other.controlBlock->retain();
         ptr = other.ptr;
@@ -137,11 +138,11 @@ class TupleBuffer {
         other.size = 0;
         return *this;
     }
-
+  private:
     explicit TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr, uint32_t size) :
         controlBlock(controlBlock), ptr(ptr), size(size) {
     }
-
+  public:
     ~TupleBuffer() {
         release();
     }
@@ -221,6 +222,8 @@ class TupleBuffer {
 };
 
 class MemorySegment {
+    friend class TupleBuffer;
+    friend class BufferManager;
   public:
     MemorySegment(const MemorySegment& other) : ptr(other.ptr), size(other.size), controlBlock(other.controlBlock) {
     }
@@ -236,9 +239,10 @@ class MemorySegment {
 
     MemorySegment& operator=(MemorySegment&& other) = delete;
 
-    MemorySegment() : ptr(nullptr), size(0), controlBlock(nullptr, [](MemorySegment*){}) {}
+    MemorySegment() : ptr(nullptr), size(0), controlBlock(nullptr, [](MemorySegment*) {}) {}
 
-    explicit MemorySegment(uint8_t* ptr, uint32_t size, std::function<void(MemorySegment*)> recycleFunction) : ptr(ptr), size(size), controlBlock(this, recycleFunction) {
+    explicit MemorySegment(uint8_t* ptr, uint32_t size, std::function<void(MemorySegment*)> recycleFunction)
+        : ptr(ptr), size(size), controlBlock(this, recycleFunction) {
         assert(this->ptr != nullptr);
         assert(this->size > 0);
     }
@@ -250,7 +254,7 @@ class MemorySegment {
             ptr = nullptr;
         }
     }
-
+  private:
     TupleBuffer toTupleBuffer() {
         controlBlock.prepare();
         return TupleBuffer(&controlBlock, ptr, size);

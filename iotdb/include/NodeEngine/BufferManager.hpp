@@ -135,6 +135,7 @@ class TupleBuffer;
 
 class BufferManager {
     friend class TupleBuffer;
+    friend class MemorySegment;
   private:
     struct UnpooledBufferHolder {
         uint32_t size;
