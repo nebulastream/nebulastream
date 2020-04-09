@@ -193,7 +193,7 @@ void Dispatcher::addWorkForNextPipeline(TupleBuffer& buffer,
     std::unique_lock<std::mutex> lock(workMutex);
 
     //dispatch buffer as task
-    TaskPtr task(new Task(queryExecutionPlan, pipelineId + 1, buffer.retain()));
+    TaskPtr task = std::make_shared<Task>(queryExecutionPlan, pipelineId + 1, buffer);
     task_queue.push_back(task);
     NES_DEBUG(
         "Dispatcher: added Task " << task.get() << " for QEP " << queryExecutionPlan
@@ -206,7 +206,7 @@ void Dispatcher::addWork(const string& sourceId, TupleBuffer& buf) {
     for (const auto& qep : sourceIdToQueryMap[sourceId]) {
         // for each respective source, create new task and put it into queue
         //TODO: change that in the future that stageId is used properly
-        TaskPtr task(new Task(qep, 0, buf.retain()));
+        TaskPtr task = std::make_shared<Task>(qep, 0, buf);
         task_queue.push_back(task);
         NES_DEBUG(
             "Dispatcher: added Task " << task.get() << " for query " << sourceId << " for QEP " << qep
