@@ -2,6 +2,8 @@
 #include <Nodes/Node.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldReadExpressionNode.hpp>
+
+#include <Nodes/Expressions/UnaryExpressions/NegateExpressionNode.hpp>
 #include <Nodes/Expressions/BinaryExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/BinaryExpressions/LessThenExpressionNode.hpp>
 #include <Nodes/Expressions/BinaryExpressions/EqualsExpressionNode.hpp>
