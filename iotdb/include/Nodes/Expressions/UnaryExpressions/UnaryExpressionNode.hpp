@@ -6,7 +6,7 @@ namespace NES {
  * @brief A unary expression is used to represent expressions with one child.
  */
 class UnaryExpressionNode : public ExpressionNode {
-  protected:
+  public:
     UnaryExpressionNode(DataTypePtr stamp);
 
     /**
