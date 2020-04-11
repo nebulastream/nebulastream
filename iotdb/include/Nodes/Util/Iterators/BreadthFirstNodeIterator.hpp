@@ -11,16 +11,13 @@ typedef std::shared_ptr<Node> NodePtr;
  * @brief Breadth-First iterator for node trees.
  * We first iterate over all records at the same level and then go to the next level.
  */
-class BFNodeIterator {
+class BreadthFirstNodeIterator {
   public:
-    explicit BFNodeIterator(NodePtr start);
-    BFNodeIterator() = default;
+    explicit BreadthFirstNodeIterator(NodePtr start);
 
     class iterator : public std::iterator<std::forward_iterator_tag, NodePtr, NodePtr, NodePtr*, NodePtr&> {
+        friend class BreadthFirstNodeIterator;
       public:
-        explicit iterator(NodePtr current);
-        explicit iterator();
-
         /**
          * @brief Moves the iterator to the next node.
          * If we reach the end of the iterator we will ignore this operation.
@@ -38,8 +35,12 @@ class BFNodeIterator {
          * @return
          */
         NodePtr operator*();
+
       private:
+        explicit iterator(NodePtr current);
+        explicit iterator();
         std::queue<NodePtr> workQueue;
+
     };
 
     /**

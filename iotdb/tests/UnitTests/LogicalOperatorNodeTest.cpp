@@ -11,11 +11,15 @@
 #include <API/InputQuery.hpp>
 #include <API/UserAPIExpression.hpp>
 #include <Operators/Operator.hpp>
+#include <Operators/Impl/FilterOperator.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <SourceSink/DefaultSource.hpp>
 #include <memory>
-#include <Nodes/Util/Iterators/BFNodeIterator.hpp>
-#include <Nodes/Util/Iterators/DFNodeIterator.hpp>
+#include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
+#include <SourceSink/SinkCreator.hpp>
+#include <Nodes/Expressions/FieldReadExpressionNode.hpp>
+#include <Nodes/Expressions/BinaryExpressions/EqualsExpressionNode.hpp>
 
 namespace NES {
 
@@ -121,13 +125,6 @@ TEST_F(LogicalOperatorNodeTest, getSuccessors) {
 
     children = sourceOp->getChildren();
     EXPECT_EQ(children.size(), 2);
-
-    BFNodeIterator iter = BFNodeIterator(sourceOp);
-
-    for (NodePtr sa:iter) {
-        std::cout << sa->toString() << std::endl;
-    }
-
 }
 
 TEST_F(LogicalOperatorNodeTest, getPredecessors) {
@@ -1335,7 +1332,7 @@ TEST_F(LogicalOperatorNodeTest, bfIterator) {
 
     ConsoleDumpHandler::create()->dump(filterOp1, std::cout);
 
-    auto bfNodeIterator = BFNodeIterator(filterOp1);
+    auto bfNodeIterator = BreadthFirstNodeIterator(filterOp1);
     auto iterator = bfNodeIterator.begin();
 
     ASSERT_EQ(*iterator, filterOp1);
@@ -1370,7 +1367,7 @@ TEST_F(LogicalOperatorNodeTest, dfIterator) {
 
     ConsoleDumpHandler::create()->dump(filterOp1, std::cout);
 
-    auto dfNodeIterator = DFNodeIterator(filterOp1);
+    auto dfNodeIterator = DepthFirstNodeIterator(filterOp1);
     auto iterator = dfNodeIterator.begin();
 
     ASSERT_EQ(*iterator, filterOp1);
@@ -1388,5 +1385,4 @@ TEST_F(LogicalOperatorNodeTest, dfIterator) {
     ASSERT_EQ(*iterator, filterOp5);
 
 }
-
 } // namespace NES

@@ -1,5 +1,5 @@
 add_source_iotdb(
-        BFNodeIterator.cpp
-        DFNodeIterator.cpp
+        BreadthFirstNodeIterator.cpp
+        DepthFirstNodeIterator.cpp
 )
 
