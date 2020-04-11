@@ -1,5 +1,5 @@
-#ifndef NES_INCLUDE_NODES_UTIL_ITERATORS_DFNODEITERATOR_HPP_
-#define NES_INCLUDE_NODES_UTIL_ITERATORS_DFNODEITERATOR_HPP_
+#ifndef NES_INCLUDE_NODES_UTIL_ITERATORS_DEPTHFIRSTNODEITERATOR_HPP_
+#define NES_INCLUDE_NODES_UTIL_ITERATORS_DEPTHFIRSTNODEITERATOR_HPP_
 #include <stack>
 #include <memory>
 namespace NES {
@@ -11,16 +11,14 @@ typedef std::shared_ptr<Node> NodePtr;
  * @brief Depth-First iterator for node trees.
  * We first iterate over all children and then process nodes at the same level.
  */
-class DFNodeIterator {
+class DepthFirstNodeIterator {
   public:
-    explicit DFNodeIterator(NodePtr start);
-    DFNodeIterator() = default;
+    explicit DepthFirstNodeIterator(NodePtr start);
+    DepthFirstNodeIterator() = default;
 
     class iterator : public std::iterator<std::forward_iterator_tag, NodePtr, NodePtr, NodePtr*, NodePtr&> {
+        friend class DepthFirstNodeIterator;
       public:
-        explicit iterator(NodePtr current);
-        explicit iterator();
-
         /**
          * @brief Moves the iterator to the next node.
          * If we reach the end of the iterator we will ignore this operation.
@@ -39,6 +37,8 @@ class DFNodeIterator {
          */
         NodePtr operator*();
       private:
+        explicit iterator(NodePtr current);
+        explicit iterator();
         std::stack<NodePtr> workStack;
     };
 
@@ -57,4 +57,4 @@ class DFNodeIterator {
 };
 }
 
-#endif //NES_INCLUDE_NODES_UTIL_ITERATORS_DFNODEITERATOR_HPP_
+#endif //NES_INCLUDE_NODES_UTIL_ITERATORS_DEPTHFIRSTNODEITERATOR_HPP_
