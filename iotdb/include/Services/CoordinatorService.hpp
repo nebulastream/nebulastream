@@ -63,6 +63,23 @@ class CoordinatorService {
                                         const string& nodeProperties,
                                         PhysicalStreamConfig streamConf);
 
+
+    /**
+     * @brief @brief add a new parent to an existing node
+     * @param childId
+     * @param newParrentId
+     * @return bool indicating success
+     */
+    bool addNewParentToSensorNode(size_t childId, size_t newParentId);
+
+    /**
+     * @brief remove a parrent from a node
+     * @param childId
+     * @param newParrentId
+     * @return bool indicating succesws
+     */
+    bool removeParentFromSensorNode(size_t childId, size_t newParentId);
+
     /**
      * @brief deregisters a CAF worker from the NES topology
      * @param entry

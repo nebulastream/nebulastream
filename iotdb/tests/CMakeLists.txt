@@ -58,14 +58,13 @@ message( STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}" )
 add_executable(e2e-rest-test "E2e/E2eRestTest.cpp")
 target_link_libraries(e2e-rest-test iotdb ${GTEST_LIBRARIES})
 add_test(NAME e2e-rest-test COMMAND e2e-rest-test)
-set_tests_properties(e2e-rest-test PROPERTIES
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+set_tests_properties(e2e-rest-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")
 target_link_libraries(multi-worker-test iotdb ${GTEST_LIBRARIES})
-add_test(NAME multi-worker-test-XYZ COMMAND multi-worker-test)
+add_test(NAME multi-worker-test COMMAND multi-worker-test)
 
 ### ContiniousSourceTest ###
 #add_executable(continious-source-test "Integration/ContiniousSourceTest.cpp")
@@ -82,8 +81,12 @@ add_executable(worker-coordinator-starter-tests "Integration/WorkerCoordinatorSt
 target_link_libraries(worker-coordinator-starter-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME worker-coordinator-starter-tests COMMAND worker-coordinator-starter-tests)
 
-# NetworkStackTest
+### WorkerCoordinatorStarter Tests ###
+add_executable(update-topology-remote-test "Integration/UpdateTopologyRemoteTest.cpp")
+target_link_libraries(update-topology-remote-test iotdb ${GTEST_LIBRARIES})
+add_test(NAME update-topology-remote-test COMMAND update-topology-remote-test)
 
+# NetworkStackTest
 add_executable(network-stack-test "Integration/NetworkStackTest.cpp")
 target_link_libraries(network-stack-test iotdb ${GTEST_LIBRARIES})
 add_test(NAME network-stack-test COMMAND network-stack-test)
@@ -215,6 +218,9 @@ add_test(NAME logical-operator-node-tests COMMAND logical-operator-node-tests)
 add_executable(predicate-node-tests "UnitTests/ExpressionNodeTest.cpp")
 target_link_libraries(predicate-node-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME predicate-node-tests COMMAND predicate-node-tests)
+
+
+
 
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure DEPENDS ${UNITTESTS})

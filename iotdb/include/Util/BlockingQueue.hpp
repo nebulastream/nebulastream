@@ -31,7 +31,6 @@ class BlockingQueue {
   inline BlockingQueue(size_t capacity)
       :
       capacity(capacity) {
-    // empty
   }
 
   inline void setCapacity(size_t capacity) {
@@ -59,7 +58,7 @@ class BlockingQueue {
 
     //TODO: I am not sure if this is the right way to go
     while (!bufferQueue.empty()) {
-      NES_DEBUG("reset pop=" << bufferQueue.front())
+      NES_TRACE("reset pop=" << bufferQueue.front())
       bufferQueue.pop();
     }
     bufferQueue = std::queue<T>();
@@ -73,7 +72,7 @@ class BlockingQueue {
       while (bufferQueue.size() >= capacity) {
         notFull.wait(lock);
       }
-      NES_DEBUG("BlockingQueue: pushing element " << elem)
+      NES_TRACE("BlockingQueue: pushing element " << elem)
       bufferQueue.push(elem);
     }
     notEmpty.notify_all();
@@ -88,7 +87,7 @@ class BlockingQueue {
         notEmpty.wait(lock);
       }
       T retVal = bufferQueue.front();
-      NES_DEBUG("BlockingQueue: popping element " << bufferQueue.front())
+//      NES_DEBUG("BlockingQueue: popping element " << bufferQueue.front())
       bufferQueue.pop();
 
       notFull.notify_one();
@@ -107,7 +106,7 @@ class BlockingQueue {
             return std::nullopt;
         }
         T retVal = bufferQueue.front();
-        NES_DEBUG("BlockingQueue: popping element timeout " << bufferQueue.front())
+//        NES_DEBUG("BlockingQueue: popping element timeout " << bufferQueue.front())
         bufferQueue.pop();
 
         notFull.notify_one();

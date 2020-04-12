@@ -16,19 +16,19 @@ BOOST_CLASS_EXPORT_IMPLEMENT(NES::DataSource);
 
 namespace NES {
 
-DataSource::DataSource(SchemaPtr schema)
+DataSource::DataSource(const SchemaPtr pSchema)
     :
     running(false),
     thread(),
-    schema(schema),
+    schema(pSchema),
     generatedTuples(0),
     generatedBuffers(0),
     numBuffersToProcess(UINT64_MAX),
     gatheringInterval(0),
     lastGatheringTimeStamp(0),
     sourceId(UtilityFunctions::generateUuid()) {
-  NES_DEBUG(
-      "DataSource " << this->getSourceId() << ": Init Data Source with schema")
+    NES_DEBUG(
+        "DataSource " << this->getSourceId() << ": Init Data Source with schema")
 }
 
 DataSource::DataSource()
@@ -41,122 +41,126 @@ DataSource::DataSource()
     gatheringInterval(0),
     lastGatheringTimeStamp(0),
     sourceId(UtilityFunctions::generateUuid()) {
-  NES_DEBUG(
-      "DataSource " << this->getSourceId() << ": Init Data Source Default w/o schema")
+    NES_DEBUG(
+        "DataSource " << this->getSourceId() << ": Init Data Source Default w/o schema")
 }
 
 SchemaPtr DataSource::getSchema() const {
-  return schema;
+    return schema;
 }
 
 DataSource::~DataSource() {
-  stop();
-  NES_DEBUG("DataSource " << this->getSourceId() << ": Destroy Data Source.")
+    stop();
+    NES_DEBUG("DataSource " << this->getSourceId() << ": Destroy Data Source.")
 }
 
 bool DataSource::start() {
-  if (running)
-    return false;
-  running = true;
+    if (running)
+        return false;
+    running = true;
 
-  NES_DEBUG("DataSource " << this->getSourceId() << ": Spawn thread")
-  thread = std::thread(std::bind(&DataSource::running_routine, this));
-  return true;
+    NES_DEBUG("DataSource " << this->getSourceId() << ": Spawn thread")
+    thread = std::thread(std::bind(&DataSource::running_routine, this));
+    return true;
 }
 
 bool DataSource::stop() {
-  NES_DEBUG("DataSource " << this->getSourceId() << ": Stop called")
-  running = false;
+    NES_DEBUG("DataSource " << this->getSourceId() << ": Stop called")
+    running = false;
 
-  if (thread.joinable()) {
-    thread.detach();
-    NES_DEBUG("DataSource " << this->getSourceId() << ": Thread joinded")
-    return true;
-  } else {
-    NES_DEBUG(
-        "DataSource " << this->getSourceId() << ": Thread is not joinable")
-  }
-  return false;
+    if (thread.joinable()) {
+        thread.detach();
+        NES_DEBUG("DataSource " << this->getSourceId() << ": Thread joinded")
+        return true;
+    } else {
+        NES_DEBUG(
+            "DataSource " << this->getSourceId() << ": Thread is not joinable")
+    }
+    return false;
 }
 
 bool DataSource::isRunning() {
-  return running;
+    return running;
 }
 
 void DataSource::setGatheringInterval(size_t interval) {
-  this->gatheringInterval = interval;
+    this->gatheringInterval = interval;
 }
 
 void DataSource::running_routine() {
-  if (!this->sourceId.empty()) {
-    NES_DEBUG("DataSource " << this->getSourceId() << ": Running Data Source")
-    size_t cnt = 0;
+    if (!this->sourceId.empty()) {
+        NES_DEBUG("DataSource " << this->getSourceId() << ": Running Data Source")
+        size_t cnt = 0;
 
-    while (running) {
-      size_t currentTime = time(NULL);
-      if (gatheringInterval == 0 || (lastGatheringTimeStamp != currentTime && currentTime % gatheringInterval == 0)) {  //produce a buffer
-        lastGatheringTimeStamp = currentTime;
-        if (cnt < numBuffersToProcess) {
-          TupleBufferPtr buf = receiveData();
-          if (buf) {
-            NES_DEBUG(
-                "DataSource " << this->getSourceId() << " type=" << getType() << " string=" << toString() << ": Received Data: " << buf->getNumberOfTuples() << " tuples" << " iteration=" << cnt)
-            if (buf->getBuffer()) {
-              Dispatcher::instance().addWork(this->sourceId, buf);
-              cnt++;
+        while (running) {
+            size_t currentTime = time(NULL);
+            NES_DEBUG("DataSource enter running")
+            if (gatheringInterval == 0
+                || (lastGatheringTimeStamp != currentTime && currentTime%gatheringInterval == 0)) {  //produce a buffer
+                lastGatheringTimeStamp = currentTime;
+                NES_DEBUG("DataSource gathering")
+                if (cnt < numBuffersToProcess) {
+                    NES_DEBUG("DataSource receiveData")
+                    TupleBufferPtr buf = receiveData();
+                    NES_DEBUG("DataSource got buffer")
+                    if (buf) {
+                        NES_DEBUG(
+                            "DataSource " << this->getSourceId() << " type=" << getType() << " string=" << toString()
+                                          << ": Received Data: " << buf->getNumberOfTuples() << " tuples"
+                                          << " iteration=" << cnt)
+                        if (buf->getBuffer()) {
+                            Dispatcher::instance().addWork(this->sourceId, buf);
+                            cnt++;
+                        } else {
+                            NES_FATAL_ERROR(
+                                "DataSource " << this->getSourceId() << ": Received buffer is invalid")
+                            throw std::logic_error("DataSource: Received buffer is invalid");
+                        }
+                    } else {
+                        NES_DEBUG(
+                            "DataSource " << this->getSourceId() << ": Receiving thread terminated ... stopping")
+                        running = false;
+                        break;
+                    }
+                } else {
+                    NES_DEBUG(
+                        "DataSource " << this->getSourceId() << ": All buffers processed ... stopping")
+                    running = false;
+                    break;
+                }
             } else {
-              NES_FATAL_ERROR(
-                  "DataSource " << this->getSourceId() << ": Received buffer is invalid")
-              throw std::logic_error("DataSource: Received buffer is invalid");
+                NES_DEBUG("DataSource::running_routine sleep")
+                sleep(gatheringInterval);
+                continue;
             }
-          } else {
             NES_DEBUG(
-                "DataSource " << this->getSourceId() << ": Receiving thread terminated ... stopping")
-            running = false;
-            break;
-          }
-        } else {
-          NES_DEBUG(
-              "DataSource " << this->getSourceId() << ": All buffers processed ... stopping")
-          running = false;
-          break;
+                "DataSource " << this->getSourceId() << ": Data Source finished processing iteration " << cnt)
         }
-      } else {
-        NES_DEBUG("DataSource::running_routine sleep")
-        sleep(gatheringInterval);
-        continue;
-      }
-      NES_DEBUG(
-          "DataSource " << this->getSourceId() << ": Data Source finished processing iteration " << cnt)
+    } else {
+        NES_FATAL_ERROR(
+            "DataSource " << this->getSourceId() << ": No ID assigned. Running_routine is not possible!")
+        throw std::logic_error(
+            "DataSource: No ID assigned. Running_routine is not possible!");
     }
-  } else {
-    NES_FATAL_ERROR(
-        "DataSource " << this->getSourceId() << ": No ID assigned. Running_routine is not possible!")
-    throw std::logic_error(
-        "DataSource: No ID assigned. Running_routine is not possible!");
-  }
 }
 
 // debugging
 void DataSource::setNumBuffersToProcess(size_t cnt) {
-  numBuffersToProcess = cnt;
-}
-;
+    numBuffersToProcess = cnt;
+};
 size_t DataSource::getNumberOfGeneratedTuples() {
-  return generatedTuples;
-}
-;
+    return generatedTuples;
+};
 size_t DataSource::getNumberOfGeneratedBuffers() {
-  return generatedBuffers;
-}
-;
+    return generatedBuffers;
+};
 
 std::string DataSource::getSourceSchemaAsString() {
-  return schema->toString();
+    return schema->toString();
 }
 
 const std::string& DataSource::getSourceId() const {
-  return this->sourceId;
+    return this->sourceId;
 }
 
 }  // namespace NES

@@ -38,10 +38,7 @@ bool NesCoordinator::stopCoordinator() {
         NES_ERROR("NesCoordinator: ERROR while try to terminate " << error_msg)
       });
 
-  self->request(coordinatorActorHandle, task_timeout,
-                exit_reason::user_shutdown);
-
-  NES_DEBUG("NesCoordinator: shutdown sended to coordinator")
+  NES_DEBUG("NesCoordinator: stopping rest server")
   bool retStopRest = restServer->stop();
   NES_DEBUG("NesCoordinator: rest server stopped")
 

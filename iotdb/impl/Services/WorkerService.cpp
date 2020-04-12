@@ -40,37 +40,41 @@ void WorkerService::addPhysicalStreamConfig(PhysicalStreamConfig conf)
   physicalStreams.insert(std::make_pair(conf.physicalStreamName, conf));
 }
 
-void WorkerService::execute_query(const string &queryId,
-                                  string &executableTransferObject) {
+bool WorkerService::executeQuery(const string &queryId,
+                                 string &executableTransferObject) {
   NES_DEBUG(
-      "WORKERSERVICE (" << this->_ip << ": Executing " << queryId);
+      "WorkerService (" << this->_ip << ": Executing " << queryId)
   ExecutableTransferObject eto = SerializationTools::parse_eto(
       executableTransferObject);
+    NES_DEBUG(
+            "WorkerService eto after parse=" << eto.toString())
   QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(this->queryCompiler);
   this->runningQueries.insert(
       { queryId, std::make_tuple(qep, eto.getOperatorTree()) });
   this->_enginePtr->deployQuery(qep);
-  std::this_thread::sleep_for(std::chrono::seconds(2));
+  //TODO: sleeps should be omitted
+//  std::this_thread::sleep_for(std::chrono::seconds(1));
+  return true;
 }
 
-void WorkerService::delete_query(const string &query) {
+void WorkerService::deleteQuery(const string &query) {
   try {
     if (this->runningQueries.find(query) != this->runningQueries.end()) {
       NES_DEBUG(
-          "WORKERSERVICE (" << this->_ip << ": Attempting deletion of " << query);
+          "WorkerService (" << this->_ip << ": Attempting deletion of " << query);
       QueryExecutionPlanPtr qep = std::get<0>(this->runningQueries.at(query));
       this->runningQueries.erase(query);
       this->_enginePtr->undeployQuery(qep);
       NES_INFO(
-          "WORKERSERVICE (" << this->_ip << ": Successfully deleted query " << query);
+          "WorkerService (" << this->_ip << ": Successfully deleted query " << query);
     } else {
       NES_INFO(
-          "WORKERSERVICE (" << this->_ip << ": *** Not found for deletion -> " << query);
+          "WorkerService (" << this->_ip << ": *** Not found for deletion -> " << query);
     }
   } catch (...) {
     // TODO: catch ZMQ termination errors properly
     NES_ERROR(
-        "WORKERSERVICE (" << this->_ip << "): Undefined error during deletion!")
+        "WorkerService (" << this->_ip << "): Undefined error during deletion!")
   }
 }
 

@@ -34,7 +34,6 @@ NESTopologyLinkPtr NESTopologyManager::createNESTopologyLink(NESTopologyEntryPtr
                                                              NESTopologyEntryPtr destNode,
                                                              size_t linkCapacity,
                                                              size_t linkLatency) {
-
     return currentPlan->createNESTopologyLink(sourceNode, destNode, linkCapacity, linkLatency);
 }
 
