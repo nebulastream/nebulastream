@@ -71,7 +71,7 @@ TEST_F(E2eRestTest, _testExecutingValidUserQueryWithPrintOutput) {
   std::stringstream ss;
   ss << "{\"userQuery\" : ";
   ss << "\"InputQuery::from(default_logical).print(std::cout);\"";
-  ss << ",\"strategyName\" : \"BottomUp\"}";
+  ss << R"(,"strategyName" : "BottomUp"})";
   ss << endl;
   cout << "string submit=" << ss.str();
   string body = ss.str();

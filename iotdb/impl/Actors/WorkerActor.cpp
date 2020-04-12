@@ -1,319 +1,397 @@
 #include <Actors/WorkerActor.hpp>
 #include <Actors/ExecutableTransferObject.hpp>
 #include <Actors/AtomUtils.hpp>
-#include <Util/SerializationTools.hpp>
-#include <fstream>
 #include <boost/filesystem.hpp>
 #include <Util/Logger.hpp>
-namespace NES {
+#include <sstream>
 
-WorkerActor::WorkerActor(actor_config &cfg, string ip, uint16_t publish_port,
+namespace NES {
+WorkerActor::WorkerActor(actor_config& cfg, string ip, uint16_t publish_port,
                          uint16_t receive_port)
     :
     stateful_actor(cfg) {
-  this->state.workerPtr = std::make_unique<WorkerService>(
-      WorkerService(std::move(ip), publish_port, receive_port));
+    this->state.workerPtr = std::make_unique<WorkerService>(
+        WorkerService(std::move(ip), publish_port, receive_port));
 }
 
 // starting point of our FSM
 behavior WorkerActor::init() {
-  // transition to `unconnected` on server failure
-  this->set_down_handler([=](const down_msg &dm) {
-    if (dm.source == this->state.current_server) {
-      aout(this) << "*** lost connection to server" << endl;
-      this->state.current_server = nullptr;
-      this->become(unconnected());
-    }
-  });
-  return unconnected();
+    // transition to `unconnected` on server failure
+    this->set_down_handler([=](const down_msg& dm) {
+      if (dm.source == this->state.current_server) {
+          aout(this) << "WorkerActor => lost connection to server" << endl;
+          this->state.current_server = nullptr;
+          this->become(unconnected());
+      } else {
+          aout(this) << "WorkerActor => got message from another server" << endl;
+      }
+    });
+    this->set_exit_handler([=](const caf::exit_msg& em) {
+      aout(this) << "WorkerActor => set_exit_handler" << em << endl;
+    });
+    this->set_error_handler([=](const caf::error& err) {
+      aout(this) << "WorkerActor => set_error_handler:" << err << endl;
+    });
+    return unconnected();
 }
 
 behavior WorkerActor::unconnected() {
-  NES_DEBUG("WorkerActor: become unconnected")
-  return {
-    [=](connect_atom, const std::string &host, uint16_t port) {
-      NES_DEBUG("WorkerActor: unconnected() try reconnect to host=" << host << " port=" << port)
-      connecting(host, port);
-      return true;
-    }
-  };
+    NES_DEBUG("WorkerActor: become unconnected")
+    return {
+        [=](connect_atom, const std::string& host, uint16_t port) {
+          NES_DEBUG("WorkerActor: unconnected() try reconnect to host=" << host << " port=" << port)
+          connecting(host, port);
+        },
+        [=](terminate_atom) {
+          NES_DEBUG("WorkerActor::running() shutdown")
+          return shutdown();
+        }
+    };
 }
 
 bool WorkerActor::registerPhysicalStream(PhysicalStreamConfig conf) {
-  NES_DEBUG("WorkerActor: got stream config=" << conf.toString())
-  //register physical stream with worker
-  this->state.workerPtr->addPhysicalStreamConfig(conf);
+    NES_DEBUG("WorkerActor::registerPhysicalStream: got stream config=" << conf.toString())
+    this->state.workerPtr->addPhysicalStreamConfig(conf);
 
-  //send request to coordinator
-  auto coordinator = actor_cast<actor>(this->state.current_server);
+    //send request to coordinator
+    auto coordinator = actor_cast<actor>(this->state.current_server);
 
-  bool sucess = false;
-  scoped_actor self { this->system() };
-  self->request(coordinator, task_timeout, register_phy_stream_atom::value,
-                this->state.workerPtr->getIp(), conf.sourceType,
-                conf.sourceConfig, conf.sourceFrequency,
-                conf.numberOfBuffersToProduce, conf.physicalStreamName,
-                conf.logicalStreamName).receive(
-      [&sucess, &conf](const bool &dc) mutable {
-        if (dc == true) {
-          NES_DEBUG(
-              "WorkerActor: registerPhysicalStream" << conf.physicalStreamName << " successfully added")
-          sucess = true;
-        } else {
-          NES_DEBUG(
-              "WorkerActor: registerPhysicalStream" << conf.physicalStreamName << " could not be added")
-          sucess = false;
+    std::promise<bool> prom;
+    this->request(coordinator, task_timeout, register_phy_stream_atom::value,
+                  conf.sourceType,
+                  conf.sourceConfig, conf.sourceFrequency,
+                  conf.numberOfBuffersToProduce, conf.physicalStreamName,
+                  conf.logicalStreamName).await(
+        [&prom, &conf](const bool& ret) mutable {
+          if (ret == true) {
+              NES_DEBUG(
+                  "WorkerActor: registerPhysicalStream" << conf.physicalStreamName
+                                                        << " successfully added")
+          } else {
+              NES_DEBUG(
+                  "WorkerActor: registerPhysicalStream" << conf.physicalStreamName
+                                                        << " could not be added")
+          }
+          prom.set_value(ret);
+        },
+        [=](const error& er) {
+          string error_msg = to_string(er);
+          NES_ERROR(
+              "WorkerActor: Error during registerLogicalStream for " << conf.physicalStreamName << "\n"
+                                                                     << error_msg);
+          throw new Exception("Error while registerPhysicalStream");
         }
-      }
-      ,
-      [=, &sucess](const error &er) {
-        string error_msg = to_string(er);
-        NES_ERROR(
-            "WorkerActor: Error during registerLogicalStream for " << conf.physicalStreamName << "\n" << error_msg);
-        sucess = false;
-      }
-  );
-
-  return sucess;
+    );
+    bool success = prom.get_future().get();
+    NES_DEBUG("WorkerActor::registerPhysicalStream: success=" << success)
+    return success;
 }
 
 bool WorkerActor::registerLogicalStream(std::string streamName,
                                         std::string filePath) {
-  //send request to coordinator
-  auto coordinator = actor_cast<actor>(this->state.current_server);
+    NES_DEBUG(
+        "WorkerActor: registerLogicalStream " << streamName << " with path" << filePath)
 
-  NES_DEBUG(
-      "WorkerActor: registerLogicalStream " << streamName << " with path" << filePath)
-  /* Check if file can be found on system and read. */
-  boost::filesystem::path path { filePath.c_str() };
-  if (!boost::filesystem::exists(path)
-      || !boost::filesystem::is_regular_file(path)) {
-    NES_ERROR("WorkerActor: file does not exits")
-    throw Exception("files does not exist");
-  }
+    auto coordinator = actor_cast<actor>(this->state.current_server);
 
-  /* Read file from file system. */
-  std::ifstream ifs(path.string().c_str());
-  std::string fileContent((std::istreambuf_iterator<char>(ifs)),
-                          (std::istreambuf_iterator<char>()));
+    // Check if file can be found on system and read.
+    boost::filesystem::path path{filePath.c_str()};
+    if (!boost::filesystem::exists(path)
+        || !boost::filesystem::is_regular_file(path)) {
+        NES_ERROR("WorkerActor: file does not exits")
+        throw Exception("files does not exist");
+    }
 
-  NES_DEBUG("WorkerActor: file content:" << fileContent)
-  bool success = false;
-  scoped_actor self { this->system() };
-  self->request(coordinator, task_timeout, register_log_stream_atom::value,
-                streamName, fileContent).receive(
-      [&](bool ret) {
-        if (ret == true) {
-          NES_DEBUG(
-              "WorkerActor: logical stream " << streamName << " successfully added")
-          success = true;
-        } else {
-          NES_DEBUG(
-              "WorkerActor: logical stream " << streamName << " could not be added")
-          success = false;
-        }
-      }
-      ,
-      [=](const error &er) {
-        string error_msg = to_string(er);
-        NES_ERROR(
-            "WorkerActor: Error during registerLogicalStream for " << to_string(coordinator) << "\n" << error_msg);
-        throw Exception("error while register stream");
-      });
-  return success;
+    /* Read file from file system. */
+    std::ifstream ifs(path.string().c_str());
+    std::string fileContent((std::istreambuf_iterator<char>(ifs)),
+                            (std::istreambuf_iterator<char>()));
+
+    NES_DEBUG("WorkerActor: file content:" << fileContent)
+    std::promise<bool> prom;
+    this->request(coordinator, task_timeout, register_log_stream_atom::value,
+                  streamName, fileContent).await(
+        [=, &prom](bool ret) {
+          if (ret == true) {
+              NES_DEBUG(
+                  "WorkerActor: logical stream " << streamName << " successfully added")
+          } else {
+              NES_DEBUG(
+                  "WorkerActor: logical stream " << streamName << " could not be added")
+          }
+          prom.set_value(ret);
+        },
+        [=](const error& er) {
+          string error_msg = to_string(er);
+          NES_ERROR(
+              "WorkerActor: Error during registerLogicalStream for " << to_string(coordinator) << "\n"
+                                                                     << error_msg);
+          throw new Exception("Error while registerLogicalStream");
+        });
+
+    bool success = prom.get_future().get();
+    NES_DEBUG("WorkerActor::registerLogicalStream: success=" << success)
+    return success;
 }
 
 bool WorkerActor::removePhysicalStream(std::string logicalStreamName,
                                        std::string physicalStreamName) {
-  //send request to coordinator
-  auto coordinator = actor_cast<actor>(this->state.current_server);
+    NES_DEBUG(
+        "WorkerActor: removePhysicalStream physical stream" << physicalStreamName << " from logical stream "
+                                                            << logicalStreamName)
+    auto coordinator = actor_cast<actor>(this->state.current_server);
 
-  bool success = false;
-  NES_DEBUG(
-      "WorkerActor: removePhysicalStream physical stream" << physicalStreamName << " from logical stream " << logicalStreamName)
-  scoped_actor self { this->system() };
-  self->request(coordinator, task_timeout, remove_phy_stream_atom::value,
-                state.workerPtr->getIp(), logicalStreamName, physicalStreamName)
-      .receive(
-      [&](bool ret) {
-        if (ret == true) {
-          NES_DEBUG(
-              "WorkerActor: physical stream " << physicalStreamName << " successfully removed from " << logicalStreamName)
-          success = true;
-        } else {
-          NES_DEBUG(
-              "WorkerActor: physical stream " << physicalStreamName << " could not be removed from " << logicalStreamName)
-          success = true;
-        }
-      }
-      ,
-      [=](const error &er) {
-        string error_msg = to_string(er);
-        NES_ERROR(
-            "WorkerActor: Error during removeLogicalStream for " << to_string(coordinator) << "\n" << error_msg);
-      });
-  return success;
+    std::promise<bool> prom;
+    this->request(coordinator, task_timeout, remove_phy_stream_atom::value,
+                  state.workerPtr->getIp(), logicalStreamName, physicalStreamName)
+        .await(
+            [=, &prom](bool ret) {
+              if (ret == true) {
+                  NES_DEBUG(
+                      "WorkerActor: physical stream " << physicalStreamName
+                                                      << " successfully removed from "
+                                                      << logicalStreamName)
+              } else {
+                  NES_DEBUG(
+                      "WorkerActor: physical stream " << physicalStreamName
+                                                      << " could not be removed from "
+                                                      << logicalStreamName)
+              }
+              prom.set_value(ret);
+            },
+            [=](const error& er) {
+              string error_msg = to_string(er);
+              NES_ERROR(
+                  "WorkerActor: Error during removeLogicalStream for " << to_string(coordinator)
+                                                                       << "\n" << error_msg);
+              throw new Exception("Error while removePhysicalStream");
+            });
+    bool success = prom.get_future().get();
+    NES_DEBUG("WorkerActor::removePhysicalStream: success=" << success)
+    return success;
 }
 
 bool WorkerActor::removeLogicalStream(std::string streamName) {
-  //send request to coordinator
-  auto coordinator = actor_cast<actor>(this->state.current_server);
+    NES_DEBUG("WorkerActor: removeLogicalStream stream" << streamName)
 
-  NES_DEBUG("WorkerActor: removeLogicalStream stream" << streamName)
-  bool success = false;
-  scoped_actor self { this->system() };
-  self->request(coordinator, task_timeout, remove_log_stream_atom::value,
-                streamName).receive(
-      [&](bool ret) {
-        if (ret == true) {
-          NES_DEBUG("WorkerActor: stream successfully removed")
-          success = true;
-        } else {
-          NES_DEBUG("WorkerActor: stream not removed")
-          success = false;
-        }
-      }
-      ,
-      [=](const error &er) {
-        string error_msg = to_string(er);
-        NES_ERROR(
-            "WorkerActor: Error during removeLogicalStream for " << to_string(coordinator) << "\n" << error_msg);
-      });
-  return success;
+    auto coordinator = actor_cast<actor>(this->state.current_server);
+
+    std::promise<bool> prom;
+    this->request(coordinator, task_timeout, remove_log_stream_atom::value,
+                  streamName).await(
+        [=, &prom](bool ret) {
+          if (ret == true) {
+              NES_DEBUG("WorkerActor: stream successfully removed")
+          } else {
+              NES_DEBUG("WorkerActor: stream not removed")
+          }
+          prom.set_value(ret);
+        },
+        [=](const error& er) {
+          string error_msg = to_string(er);
+          NES_ERROR(
+              "WorkerActor: Error during removeLogicalStream for " << to_string(coordinator) << "\n"
+                                                                   << error_msg);
+          throw new Exception("Error while removeLogicalStream");
+        });
+    bool success = prom.get_future().get();
+    NES_DEBUG("WorkerActor::removeLogicalStream: success=" << success)
+    return success;
+}
+
+bool WorkerActor::addNewParentToSensorNode(std::string childId, std::string parentId) {
+    NES_DEBUG("WorkerActor: addNewParentToSensorNode parentId" << parentId << " childId=" << childId)
+    auto coordinator = actor_cast<actor>(this->state.current_server);
+
+    std::promise<bool> prom;
+    this->request(coordinator, task_timeout, add_parent_atom::value,
+                  childId, parentId).await(
+        [=, &prom](bool ret) {
+          if (ret == true) {
+              NES_DEBUG("WorkerActor: parent successfully added")
+          } else {
+              NES_DEBUG("WorkerActor: parent not added")
+          }
+          prom.set_value(ret);
+        },
+        [=](const error& er) {
+          string error_msg = to_string(er);
+          NES_ERROR(
+              "WorkerActor: Error during addNewParentToSensorNode for " << to_string(coordinator) << "\n"
+                                                                        << error_msg);
+          throw new Exception("Error while addNewParentToSensorNode");
+        });
+    bool success = prom.get_future().get();
+    NES_DEBUG("WorkerActor::addNewParentToSensorNode: success=" << success)
+    return success;
+}
+
+std::string WorkerActor::getIdFromServer() {
+    NES_DEBUG("WorkerActor: getIdFromServer")
+
+    auto coordinator = actor_cast<actor>(this->state.current_server);
+
+    std::promise<string> prom;
+    this->request(coordinator, task_timeout, get_own_id::value).await(
+        [=, &prom](const std::string& id) {
+          NES_DEBUG("WorkerActor: get id successfully=" << id)
+          prom.set_value(id);
+        },
+        [=](const error& er) {
+          string error_msg = to_string(er);
+          NES_ERROR(
+              "WorkerActor: Error during removeParentFromSensorNode for " << to_string(coordinator)
+                                                                          << "\n"
+                                                                          << error_msg);
+          throw new Exception("Error while getIdFromServer");
+        });
+    string id = prom.get_future().get();
+    NES_DEBUG("WorkerActor::getIdFromServer: id=" << id)
+    return id;
+}
+
+bool WorkerActor::removeParentFromSensorNode(std::string childId, std::string parentId) {
+    NES_DEBUG("WorkerActor: removeParentFromSensorNode parentId" << parentId << " childId=" << childId)
+
+    auto coordinator = actor_cast<actor>(this->state.current_server);
+
+    std::promise<bool> prom;
+    this->request(coordinator, task_timeout, remove_parent_atom::value,
+                  childId, parentId).await(
+        [=, &prom](bool ret) {
+          if (ret == true) {
+              NES_DEBUG("WorkerActor: parent successfully removed")
+          } else {
+              NES_DEBUG("WorkerActor: parent not removed")
+          }
+          prom.set_value(ret);
+        },
+        [=](const error& er) {
+          string error_msg = to_string(er);
+          NES_ERROR(
+              "WorkerActor: Error during removeParentFromSensorNode for " << to_string(coordinator)
+                                                                          << "\n"
+                                                                          << error_msg);
+          throw new Exception("Error while removeParentFromSensorNode");
+        });
+    bool success = prom.get_future().get();
+    NES_DEBUG("WorkerActor::removeParentFromSensorNode: success=" << success)
+    return success;
 }
 
 bool WorkerActor::disconnecting() {
-  //TODO: add coorect behaviour if disconnect fails
-  auto coordinator = actor_cast<actor>(this->state.current_server);
-  NES_DEBUG(
-      "WorkerActor: try to disconnect with ip " << this->state.workerPtr->getIp())
-  bool disconnected = false;
-  scoped_actor self { this->system() };
-  self->request(coordinator, task_timeout, deregister_sensor_atom::value,
-                this->state.workerPtr->getIp()).receive(
-      [&disconnected](const bool &c) mutable {
-        disconnected = c;
-        NES_DEBUG("WorkerActor: disconnecting() successfully")
-      }
-      ,
-      [=](const error &er) {
-        string error_msg = to_string(er);
-        NES_ERROR(
-            "WorkerActor: Error during disconnecting " << "\n" << error_msg);
-      });
-  this->monitor(coordinator);
-  this->become(unconnected());
-  return disconnected;
-}
-/**
- * @brief the ongoing connection state in the TSM
- * if connection works go to running state, otherwise go to unconnected state
- */
-bool WorkerActor::connecting(const std::string &host, uint16_t port) {
-  NES_DEBUG(
-      "WorkerActor::connecting try to connect to host=" << host << " port=" << port)
-  // make sure we are not pointing to an old server
-  this->state.current_server = nullptr;
-  // use request().await() to suspend regular behavior until MM responded
-  auto mm = this->system().middleman().actor_handle();
-  bool connected = false;
-  scoped_actor self { this->system() };
-//  scoped_actor self { *actorSystem };
-
-  self->request(mm, infinite, connect_atom::value, host, port).receive(
-      [=, &connected](const node_id &nId, strong_actor_ptr &serv,
-                      const std::set<std::string> &ifs) {
-        if (!serv) {
-          aout(this) << R"(*** no server found at ")" << host << R"(":)" << port
-                     << endl;
-        }
-        if (!ifs.empty()) {
-          aout(this) << R"(*** typed actor found at ")" << host << R"(":)"
-                     << port << ", but expected an untyped actor " << endl;
-        }
-        aout(this) << "*** successfully connected to server with id=" << nId
-                   << endl;
-        this->state.current_server = serv;
-        auto coordinator = actor_cast<actor>(serv);
-        //TODO: make getPhysicalStreamConfig serializable with the caf framework
-        //TODO: add serializable shipping object
-        cout << "send properties to server" << endl;
-        //send default physical stream
-        this->request(coordinator, task_timeout, register_sensor_atom::value,
-                      this->state.workerPtr->getIp(),
-                      this->state.workerPtr->getPublishPort(),
-                      this->state.workerPtr->getReceivePort(),
-                      /**cpu*/2,
-                      this->state.workerPtr->getNodeProperties());
-        cout << "properties set successful, now changing state" << endl;
-        this->monitor(coordinator);
-        this->become(running(coordinator));
-        connected = true;
-      }
-      ,
-      [=](const error &err) {
-        aout(this) << R"(*** cannot connect to ")" << host << R"(":)" << port
-                   << " => " << this->system().render(err) << endl;
-        this->become(unconnected());
-      });
-  return connected;
+    NES_DEBUG(
+        "WorkerActor: try to disconnect with ip " << this->state.workerPtr->getIp())
+    auto coordinator = actor_cast<actor>(this->state.current_server);
+    std::promise<bool> prom;
+    this->request(coordinator, task_timeout, deregister_sensor_atom::value,
+                  this->state.workerPtr->getIp()).await(
+        [&prom](const bool& c) mutable {
+          NES_DEBUG("WorkerActor: disconnecting() successfully")
+          prom.set_value(c);
+        },
+        [=, &prom](const error& er) {
+          string error_msg = to_string(er);
+          NES_ERROR(
+              "WorkerActor: Error during disconnecting " << "\n" << error_msg);
+          throw new Exception("Error while disconnecting");
+        });
+    bool success = prom.get_future().get();
+    NES_DEBUG("WorkerActor::disconnecting: success=" << success)
+    return success;
 }
 
-void WorkerActor::WorkerActor::shutdown()
-{
-  NES_DEBUG("WorkerActor: shutdown");
-  this->state.workerPtr->shutDown();
+bool WorkerActor::registerSensor() {
+    NES_DEBUG("WorkerActor::registerSensor: try to register")
+    std::promise<bool> prom;
+    auto coordinator = actor_cast<actor>(this->state.current_server);
+    this->request(coordinator, task_timeout_small, register_sensor_atom::value,
+                  this->state.workerPtr->getIp(),
+                  this->state.workerPtr->getPublishPort(),
+                  this->state.workerPtr->getReceivePort(),
+                  2,
+                  this->state.workerPtr->getNodeProperties())
+        .await(
+            [=, &prom](const bool& c) mutable {
+              NES_DEBUG("WorkerActor::registerSensor: sensor registered successfully")
+              prom.set_value(c);
+            }, [=, &prom](const error& er) {
+              string error_msg = to_string(er);
+              NES_ERROR(
+                  "WorkerActor::registerSensor:sensor registered not successfully created " << "\n"
+                                                                                            << error_msg);
+              throw new Exception("Error while registerSensor");
+            });;
+
+    bool success = prom.get_future().get();
+    NES_DEBUG("WorkerActor::registerSensor: success=" << success)
+    return success;
 }
 
-/**
- * @brief the running of the worker
- */
-behavior WorkerActor::running(const actor &coordinator) {
-  auto this_actor_ptr = actor_cast<strong_actor_ptr>(this);
+bool WorkerActor::connecting(const std::string& host, uint16_t port) {
+    NES_DEBUG(
+        "WorkerActor::connecting try to connect to host=" << host << " port=" << port)
+    this->state.current_server = nullptr;
 
-  //waiting for incoming messages
-  return {
-    // the connect RPC to connect with the coordinator
-    [=](connect_atom, const std::string &host, uint16_t port) {
-      NES_DEBUG("WorkerActor: connect to host=" << host << " port=" << port)
-      return connecting(host, port);
-    },
-    [=](disconnect_atom) {
-      return disconnecting();
-    },
-    [=](terminate_atom) {
-      return shutdown();
-    },
-    // register physical stream
-    [=](register_phy_stream_atom, std::string sourceType, std::string sourceConf, size_t sourceFrequency,
-        size_t numberOfBuffersToProduce, std::string physicalStreamName, std::string logicalStreamName) {
-      PhysicalStreamConfig conf(sourceType, sourceConf, sourceFrequency, numberOfBuffersToProduce, physicalStreamName, logicalStreamName);
-      return registerPhysicalStream(conf);
-    },
-    // remove logical stream
-    [=](register_log_stream_atom, std::string name, std::string path) {
-      return registerLogicalStream(name, path);
-    },
-    // register logical stream
-    [=](remove_log_stream_atom, std::string name) {
-      return removeLogicalStream(name);
-    },        //remove physical stream
-    [=](remove_phy_stream_atom, std::string logicalName, std::string physicalName) {
-      removePhysicalStream(logicalName, physicalName);
-    },
-    // internal rpc to execute a query
-    [=](execute_operators_atom, const string &queryId, string &executableTransferObject) {
-      // internal rpc to execute a query
-      this->state.workerPtr->execute_query(queryId, executableTransferObject);
-    },
-    // internal rpc to unregister a query
-    [=](delete_query_atom, const string &query) {
-      this->state.workerPtr->delete_query(query);
-    },
-    // internal rpc to execute a query
-    [=](get_operators_atom) {
-      return this->state.workerPtr->getOperators();
+    auto exp_remote_actor = system().middleman().remote_actor(host, port);
+    if (!!exp_remote_actor) {
+        NES_DEBUG("WorkerActor::connecting: got coordinator handle successfully")
+        this->state.current_server = caf::actor_cast<caf::strong_actor_ptr>(exp_remote_actor.value());
+    } else {
+        // remote actor not ready (not published) --> retry at some point
+        NES_ERROR("WorkerActor::connecting handle error for host=" << host << " port=" << port << " error="
+                                                                   << caf::to_string(exp_remote_actor.error()));
+        throw new Exception("Error while casting coordinator handle");
     }
-  };
+
+    NES_DEBUG("WorkerActor::connecting: register sensor now")
+    bool success = registerSensor();
+    if(!success)
+    {
+        throw new Exception("Error while register sensor");
+    } else
+    {
+        NES_DEBUG("WorkerActor::connecting: register successful")
+    }
+
+    NES_DEBUG("WorkerActor::connecting: monitor handle")
+    this->monitor(this->state.current_server);
+
+    NES_DEBUG("WorkerActor::connecting: become running")
+    this->become(running());
+
+    NES_DEBUG("WorkerActor::connecting: return")
+    return true;
+}
+
+bool WorkerActor::WorkerActor::shutdown() {
+    NES_DEBUG("WorkerActor: shutdown");
+    this->state.workerPtr->shutDown();
+    return true;
+}
+
+/**
+ * @brief method to execute the running state of a worker actor
+ */
+behavior WorkerActor::running() {
+    NES_DEBUG("WorkerActor::running enter running")
+    //Note this methods are send from the coordinator
+    return {
+        // internal rpc to execute a query
+        [=](execute_operators_atom, const string& queryId, string& executableTransferObject) {
+          NES_DEBUG("WorkerActor: got request for execute_operators_atom queryId=" << queryId << " eto=" << executableTransferObject)
+          return this->state.workerPtr->executeQuery(queryId, executableTransferObject);
+        },
+        // internal rpc to unregister a query
+        [=](delete_query_atom, const string& queryId) {
+          NES_DEBUG("WorkerActor: got request for delete_query_atom queryId=" << queryId)
+            this->state.workerPtr->deleteQuery(queryId);
+        },
+        // internal rpc to execute a query
+        [=](get_operators_atom) {
+          return this->state.workerPtr->getOperators();
+        }
+    };
+    NES_DEBUG("WorkerActor::running end running")
 }
 }

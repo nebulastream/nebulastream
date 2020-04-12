@@ -17,7 +17,8 @@ enum DebugLevel {
   LOG_NONE,
   LOG_WARNING,
   LOG_DEBUG,
-  LOG_INFO
+  LOG_INFO,
+  LOG_TRACE
 };
 
 static std::string getDebugLevelAsString(DebugLevel level) {
@@ -29,6 +30,8 @@ static std::string getDebugLevelAsString(DebugLevel level) {
     return "LOG_DEBUG";
   } else if (level == LOG_INFO) {
     return "LOG_INFO";
+  } else if (level == LOG_TRACE) {
+      return "LOG_TRACE";
   } else {
     return "UNKNOWN";
   }
@@ -37,6 +40,8 @@ static std::string getDebugLevelAsString(DebugLevel level) {
 static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
 
 // LoggerPtr logger(Logger::getLogger("NES"));
+
+#define NES_TRACE(TEXT) LOG4CXX_TRACE(NESLogger, TEXT)
 #define NES_DEBUG(TEXT) LOG4CXX_DEBUG(NESLogger, TEXT)
 #define NES_INFO(TEXT) LOG4CXX_INFO(NESLogger, TEXT)
 #define NES_WARNING(TEXT) LOG4CXX_WARN(NESLogger, TEXT)
@@ -66,6 +71,8 @@ static void setupLogging(std::string logFileName, DebugLevel level) {
     NESLogger->setLevel(log4cxx::Level::getDebug());
   } else if (level == LOG_INFO) {
     NESLogger->setLevel(log4cxx::Level::getInfo());
+  } else if (level == LOG_TRACE) {
+      NESLogger->setLevel(log4cxx::Level::getTrace());
   } else {
     NES_ERROR(
         "setupLogging: log level not supported " << getDebugLevelAsString(level))

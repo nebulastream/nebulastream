@@ -25,7 +25,6 @@ std::vector<NESTopologyEntryPtr> NESTopologyPlan::getNodeByIp(std::string ip) {
 
 std::vector<NESTopologyEntryPtr> NESTopologyPlan::getNodeById(size_t id) {
   return fGraphPtr->getVertexById(id);
-
 }
 
 NESTopologyPlan::NESTopologyPlan() {
@@ -84,11 +83,13 @@ NESTopologyLinkPtr NESTopologyPlan::createNESTopologyLink(
   // check if link already exists
   if (fGraphPtr->hasLink(pSourceNode, pDestNode)) {
     // return already existing link
+    NES_DEBUG("NESTopologyPlan::createNESTopologyLink: link between " << pSourceNode << " and " << pDestNode << " already exists")
     return fGraphPtr->getLink(pSourceNode, pDestNode);
   }
 
   // create new link
   size_t linkId = getNextFreeLinkId();
+  NES_DEBUG("NESTopologyPlan::createNESTopologyLink: create a new link with id=" << linkId)
   auto linkPtr = std::make_shared<NESTopologyLink>(linkId, pSourceNode,
                                                    pDestNode, pLinkCapacity,
                                                    pLinkLatency);

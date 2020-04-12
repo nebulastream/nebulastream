@@ -39,9 +39,10 @@ QueryExecutionPlanPtr ExecutableTransferObject::toQueryExecutionPlan(QueryCompil
 
         //TODO: currently only one input source is supported
         if (!this->sources.empty()) {
+            NES_DEBUG("ExecutableTransferObject::toQueryExecutionPlan: add source" << this->sources[0] << " type=" << this->sources[0]->toString())
             qep->addDataSource(this->sources[0]);
         } else {
-            NES_ERROR("The query " << this->queryId << " has no input sources!")
+            NES_ERROR("ExecutableTransferObject::toQueryExecutionPlan The query " << this->queryId << " has no input sources!")
         }
 
         if (!this->destinations.empty()) {

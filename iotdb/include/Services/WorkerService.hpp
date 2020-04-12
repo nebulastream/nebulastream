@@ -32,9 +32,9 @@ class WorkerService {
    * @param queryId a queryId of the query
    * @param executableTransferObject wrapper object with the schema, sources, destinations, operator
    */
-  void execute_query(const string &queryId, string &executableTransferObject);
+  bool executeQuery(const string &queryId, string &executableTransferObject);
 
-  void delete_query(const string &query);
+  void deleteQuery(const string &query);
 
   string& getIp();
   void setIp(const string &ip);
@@ -53,6 +53,9 @@ class WorkerService {
   PhysicalStreamConfig getPhysicalStreamConfig(std::string name);
   void addPhysicalStreamConfig(PhysicalStreamConfig conf);
 
+  /**
+   * @brief method to shut down the worker service, including stop engine and empty all queues
+   */
   void shutDown();
 
  private:

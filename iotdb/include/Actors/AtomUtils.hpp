@@ -11,6 +11,7 @@ using std::string;
 namespace NES {
 using namespace caf;
 constexpr auto task_timeout = std::chrono::seconds(10);
+constexpr auto task_timeout_small = std::chrono::seconds(2);
 
 using disconnect_atom = atom_constant<atom("disconnect")>;
 using terminate_atom = atom_constant<atom("term")>;
@@ -23,6 +24,10 @@ using register_phy_stream_atom = atom_constant<atom("r_phy_str")>;
 using register_log_stream_atom = atom_constant<atom("re_log_str")>;
 using remove_log_stream_atom = atom_constant<atom("rm_log_str")>;
 using remove_phy_stream_atom = atom_constant<atom("rm_phy_str")>;
+
+using add_parent_atom = atom_constant<atom("ad_par_str")>;
+using remove_parent_atom = atom_constant<atom("rm_par_str")>;
+using get_own_id = atom_constant<atom("get_id")>;
 
 using execute_query_atom = atom_constant<atom("exe_query")>;
 using register_query_atom = atom_constant<atom("register")>;

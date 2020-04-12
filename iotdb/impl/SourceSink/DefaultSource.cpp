@@ -10,12 +10,13 @@ DefaultSource::DefaultSource(SchemaPtr schema,
                              size_t frequency)
     :
     GeneratorSource(schema, numbersOfBufferToProduce) {
-  this->gatheringInterval = frequency;
+    NES_DEBUG("DefaultSource:" << this << " creating")
+    this->gatheringInterval = frequency;
 }
 
 TupleBufferPtr DefaultSource::receiveData() {
-  // 10 tuples of size one
-  NES_DEBUG("Source:" << this << " requesting buffer")
+    // 10 tuples of size one
+    NES_DEBUG("DefaultSource:" << this << " requesting buffer")
 
   TupleBufferPtr buf = BufferManager::instance().getFixedSizeBuffer(); //BufferManager::instance().getFixedSizeBufferWithTimeout(2000);
   if (!buf) {

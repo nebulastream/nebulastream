@@ -19,8 +19,8 @@ namespace NES {
 
 // the client queues pending tasks
 struct WorkerState {
-  strong_actor_ptr current_server;
-  std::unique_ptr<WorkerService> workerPtr;
+    strong_actor_ptr current_server;
+    std::unique_ptr<WorkerService> workerPtr;
 };
 
 /**
@@ -30,73 +30,106 @@ struct WorkerState {
  *  - TODO: this does not handle connection lost
  */
 class WorkerActor : public stateful_actor<WorkerState> {
+  public:
 
- public:
-  /**
-   * @brief the constructor to  of the worker to initialize the default objects
-   * @param actor config
-   * @param ip of this worker
-   * @param publish port of this worker
-   * @param receive port of thsi worker
-   */
-  explicit WorkerActor(actor_config &cfg, string ip, uint16_t publish_port,
-                       uint16_t receive_port);
+    /**
+     * @brief the constructor to  of the worker to initialize the default objects
+     * @param actor config
+     * @param ip of this worker
+     * @param publish port of this worker
+     * @param receive port of thsi worker
+     */
+    explicit WorkerActor(actor_config& cfg, string ip, uint16_t publish_port,
+                         uint16_t receive_port);
 
-  behavior_type make_behavior() override {
-    return init();
-  }
+    behavior_type make_behavior() override {
+        return init();
+    }
 
-  /**
-   * @brief this methods registers a physical stream via the coordinator to a logical stream
-   * @param configuration of the stream
-   * @return bool indicating success
-   */
-  bool registerPhysicalStream(PhysicalStreamConfig conf);
+    /**
+     * @brief this methods registers a physical stream via the coordinator to a logical stream
+     * @param configuration of the stream
+     * @return bool indicating success
+     */
+    bool registerPhysicalStream(PhysicalStreamConfig conf);
 
-  /**
-   * @brief this method registers logical streams via the coordinator
-   * @param name of new logical stream
-   * @param path to the file containing the schema
-   * @return bool indicating the success of the log stream
-   * @note the logical stream is not saved in the worker as it is maintained on the coordinator and all logical streams can be retrieved from the physical stream map locally, if we later need the data we can add a map
-   */
-  bool registerLogicalStream(std::string streamName, std::string filePath);
+    /**
+     * @brief this method registers logical streams via the coordinator
+     * @param name of new logical stream
+     * @param path to the file containing the schema
+     * @return bool indicating the success of the log stream
+     * @note the logical stream is not saved in the worker as it is maintained on the coordinator and all logical streams can be retrieved from the physical stream map locally, if we later need the data we can add a map
+     */
+    bool registerLogicalStream(std::string streamName, std::string filePath);
 
-  /**
-   * @brief this method removes the logical stream in the coordinator
-   * @param logical stream to be deleted
-   * @return bool indicating success of the removal
-   */
-  bool removeLogicalStream(std::string streamName);
+    /**
+     * @brief this method removes the logical stream in the coordinator
+     * @param logical stream to be deleted
+     * @return bool indicating success of the removal
+     */
+    bool removeLogicalStream(std::string streamName);
 
-  /**
-   * @brief this method removes a physical stream from a logical stream in the coordinator
-   * @param logical stream to be deleted
-   * @return bool indicating success of the removal
-   */
-  bool removePhysicalStream(std::string logicalStreamName,
-                            std::string physicalStreamName);
+    /**
+     * @brief this method removes a physical stream from a logical stream in the coordinator
+     * @param logical stream to be deleted
+     * @return bool indicating success of the removal
+     */
+    bool removePhysicalStream(std::string logicalStreamName,
+                              std::string physicalStreamName);
 
- private:
-  behavior init();
-  behavior unconnected();
-  behavior running(const actor &coordinator);
-  /**
-   * @brief the ongoing connection state in the TSM
-   * if connection works go to running state, otherwise go to unconnected state
-   */
-  bool connecting(const std::string &host, uint16_t port);
+    /**
+     * @brief @brief method to add a new parent to an existing node
+     * @param own_id
+     * @param newParentId
+     * @return bool indicating success
+     */
+    bool addNewParentToSensorNode(std::string childId, std::string parentId);
 
-  /**
-   * @brief this method disconnect the node
-   * if connection works go to unconnected state
-   */
-  bool disconnecting();
+    /**
+     * @brief method to remove a parrent from a node
+     * @param own_id
+     * @param newParentId
+     * @return bool indicating success
+     */
+    bool removeParentFromSensorNode(std::string childId, std::string parentId);
 
-  /**
-   * @brief method to shutdown the worker
-   */
-  void shutdown();
+    /**
+     * @brief method to register a sensor after the connection is established
+     * @return bool indicating success
+     */
+    bool registerSensor();
+
+    /**
+     * @brief method to get own id form server
+     * @return own id as listed in the graph
+     */
+    std::string getIdFromServer();
+
+    /**
+     * @brief method to connect to the coordinator via caf
+     * @param host as address of coordinator
+     * @param port as the open port on the coordinaotor
+     * @return bool indicating success
+     */
+    bool connecting(const std::string& host, uint16_t port);
+
+    /**
+     * @brief this method disconnect the worker from the coordinator
+     * @return bool indicating success
+     */
+    bool disconnecting();
+
+    /**
+     * @brief method to shutdown the worker actor
+     * @return bool indicating success
+     */
+    bool shutdown();
+
+  private:
+    //states of the actor
+    behavior init();
+    behavior unconnected();
+    behavior running();
 };
 
 }
