@@ -19,10 +19,11 @@ TranslateToLegacyPlanPhasePtr TranslateToLegacyPlanPhase::create() {
 
 OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNodePtr operatorNode) {
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
+        // Translate Source operator node.
         auto sourceNodeOperator = operatorNode->as<SourceLogicalOperatorNode>();
         return createSourceOperator(sourceNodeOperator->getDataSource());
-
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
+        // Translate filter operator node.
         auto filterNodeOperator = operatorNode->as<FilterLogicalOperatorNode>();
         auto legacyExpression = transformExpression(filterNodeOperator->getPredicate());
         // we can assume that the legacy expression is always a predicate.
@@ -33,13 +34,16 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
         return createFilterOperator(legacyPredicate);
 
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
+        // Translate sink operator node.
         auto sinkNodeOperator = operatorNode->as<SinkLogicalOperatorNode>();
         return createSinkOperator(sinkNodeOperator->getDataSink());
     }
     NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this operator node: " << operatorNode);
     NES_NOT_IMPLEMENTED;
 }
-
+/**
+ * Translade operator node and all its children to the legacy representation.
+ */
 OperatorPtr TranslateToLegacyPlanPhase::transform(OperatorNodePtr operatorNode) {
     auto legacyOperator = transformIndividualOperator(operatorNode);
     for (const NodePtr& child: operatorNode->getChildren()) {
@@ -49,33 +53,42 @@ OperatorPtr TranslateToLegacyPlanPhase::transform(OperatorNodePtr operatorNode) 
     return legacyOperator;
 }
 
+/**
+ * Translate the expression node into the corresponding user api expression of the legacy api.
+ * To this end we first cast the expression node in the right subtype and then translate it.
+ */
 UserAPIExpressionPtr TranslateToLegacyPlanPhase::transformExpression(ExpressionNodePtr expression) {
     if (expression->instanceOf<ConstantValueExpressionNode>()) {
+        // Translate constant value expression node.
         auto constantValueExpression = expression->as<ConstantValueExpressionNode>();
         auto value = constantValueExpression->getConstantValue();
         return PredicateItem(value).copy();
     } else if (expression->instanceOf<FieldReadExpressionNode>()) {
+        // Translate field read expression node.
         auto fieldReadExpression = expression->as<FieldReadExpressionNode>();
         auto fieldName = fieldReadExpression->getFieldName();
         auto value = fieldReadExpression->getStamp();
         return Field(AttributeField(fieldName, value).copy()).copy();
     } else if (expression->instanceOf<AndExpressionNode>()) {
+        // Translate and expression node.
         auto andExpressionNode = expression->as<AndExpressionNode>();
         auto legacyLeft = transformExpression(andExpressionNode->getLeft());
         auto legacyRight = transformExpression(andExpressionNode->getRight());
         return Predicate(BinaryOperatorType::LOGICAL_AND_OP, legacyLeft, legacyRight).copy();
     } else if (expression->instanceOf<LessThenExpressionNode>()) {
+        // Translate less then expression node.
         auto andExpressionNode = expression->as<LessThenExpressionNode>();
         auto legacyLeft = transformExpression(andExpressionNode->getLeft());
         auto legacyRight = transformExpression(andExpressionNode->getRight());
         return Predicate(BinaryOperatorType::LESS_THEN_OP, legacyLeft, legacyRight).copy();
     } else if (expression->instanceOf<EqualsExpressionNode>()) {
+        // Translate equals expression node.
         auto andExpressionNode = expression->as<EqualsExpressionNode>();
         auto legacyLeft = transformExpression(andExpressionNode->getLeft());
         auto legacyRight = transformExpression(andExpressionNode->getRight());
         return Predicate(BinaryOperatorType::EQUAL_OP, legacyLeft, legacyRight).copy();
     }
-    NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this expression: " << expression);
+    NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this expression node: " << expression);
     NES_NOT_IMPLEMENTED;
 }
 
