@@ -45,11 +45,13 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
  * Translade operator node and all its children to the legacy representation.
  */
 OperatorPtr TranslateToLegacyPlanPhase::transform(OperatorNodePtr operatorNode) {
+    NES_DEBUG("TranslateToLegacyPhase: translate " << operatorNode)
     auto legacyOperator = transformIndividualOperator(operatorNode);
     for (const NodePtr& child: operatorNode->getChildren()) {
         auto legacyChildOperator = transform(child->as<OperatorNode>());
         legacyOperator->addChild(legacyChildOperator);
     }
+    NES_DEBUG("TranslateToLegacyPhase: got " << legacyOperator)
     return legacyOperator;
 }
 
