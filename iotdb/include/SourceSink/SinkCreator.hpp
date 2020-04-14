@@ -1,5 +1,6 @@
 #ifndef INCLUDE_SOURCESINK_SINKCREATOR_HPP_
 #define INCLUDE_SOURCESINK_SINKCREATOR_HPP_
+
 #include <SourceSink/DataSink.hpp>
 #include <cppkafka/configuration.h>
 
@@ -27,11 +28,20 @@ const DataSinkPtr createPrintSinkWithoutSchema(std::ostream& out);
 const DataSinkPtr createPrintSinkWithSchema(SchemaPtr schema, std::ostream& out);
 
 /**
- * @brief create a binary test sink without a schema
+ * @brief create a csv test sink without a schema and append to existing file
+ * @param schema of sink
  * @param path to file
  * @return a data sink pointer
  */
-const DataSinkPtr createBinaryFileSinkWithoutSchema(const std::string& filePath);
+const DataSinkPtr createCSVFileSinkWithSchemaAppend(SchemaPtr schema, const std::string& filePath);
+
+/**
+ * @brief create a csv test sink without a schema and overwrite existing file
+ * @param schema of sink
+ * @param path to file
+ * @return a data sink pointer
+ */
+const DataSinkPtr createCSVFileSinkWithSchemaOverwrite(SchemaPtr schema, const std::string& filePath);
 
 /**
  * @brief create a binary test sink with a schema
@@ -42,7 +52,6 @@ const DataSinkPtr createBinaryFileSinkWithoutSchema(const std::string& filePath)
 const DataSinkPtr createBinaryFileSinkWithSchema(SchemaPtr schema,
                                                  const std::string& filePath);
 
-
 /**
  * @brief create a csv test sink with a schema
  * @param schema of sink
@@ -51,7 +60,6 @@ const DataSinkPtr createBinaryFileSinkWithSchema(SchemaPtr schema,
  */
 const DataSinkPtr createCSVFileSinkWithSchema(SchemaPtr schema,
                                               const std::string& filePath);
-
 
 /**
  * @brief create a ZMQ test sink with a schema
