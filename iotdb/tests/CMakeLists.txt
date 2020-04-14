@@ -219,8 +219,10 @@ add_executable(predicate-node-tests "UnitTests/ExpressionNodeTest.cpp")
 target_link_libraries(predicate-node-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME predicate-node-tests COMMAND predicate-node-tests)
 
-
-
+# QueryTest
+add_executable(query-tests "UnitTests/QueryTest.cpp")
+target_link_libraries(query-tests iotdb ${GTEST_LIBRARIES})
+add_test(NAME query-tests COMMAND query-tests)
 
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure DEPENDS ${UNITTESTS})

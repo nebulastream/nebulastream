@@ -3,16 +3,13 @@
 #include <cstddef>
 #include <iostream>
 #include <API/Query.hpp>
-#include <Operators/Operator.hpp>
-#include <QueryCompiler/Compiler/Compiler.hpp>
-#include <API/UserAPIExpression.hpp>
 #include <SourceSink/DataSink.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <Catalogs/StreamCatalog.hpp>
-#include <API/Window/WindowDefinition.hpp>
 #include <Util/Logger.hpp>
 #include <Nodes/Operators/LogicalOperators/SourceLogicalOperatorNode.hpp>
+#include <API/UserAPIExpression.hpp>
 
 namespace NES {
 
@@ -205,8 +202,12 @@ const StreamPtr Query::getSourceStream() const {
     return sourceStream;
 }
 
-void Query::setSourceStream(const StreamPtr sourceStream) {
-    Query::sourceStream = sourceStream;
+vector<SourceLogicalOperatorNodePtr> Query::getSourceOperators() {
+    return root->getNodesByType<SourceLogicalOperatorNode>();
+}
+
+std::vector<SinkLogicalOperatorNodePtr> Query::getSinkOperators() {
+    return root->getNodesByType<SinkLogicalOperatorNode>();
 }
 
 }  // namespace NES

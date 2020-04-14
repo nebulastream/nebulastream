@@ -18,6 +18,12 @@ typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 class ExpressionNode;
 typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
 
+class SourceLogicalOperatorNode;
+typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
+
+class SinkLogicalOperatorNode;
+typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
+
 /**
  * Interface to create new query.
  */
@@ -146,11 +152,22 @@ class Query {
     }
 
     /**
+     * @brief Get all source operators
+     * @return vector of logical source operators
+     */
+    std::vector<SourceLogicalOperatorNodePtr> getSourceOperators();
+
+    /**
+     * @brief Get all sink operators
+     * @return vector of logical sink operators
+     */
+    std::vector<SinkLogicalOperatorNodePtr> getSinkOperators();
+
+    /**
      * @brief get source stream
      * @return
      */
     const StreamPtr getSourceStream() const;
-    void setSourceStream(const StreamPtr sourceStream);
 
     // Copy constructors
     Query(const Query&);
