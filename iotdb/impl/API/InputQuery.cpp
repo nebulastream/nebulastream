@@ -253,9 +253,11 @@ InputQuery& InputQuery::writeToFile(const std::string& file_name) {
 InputQuery& InputQuery::writeToCSVFile(const std::string& file_name, const std::string& outputMode) {
     OperatorPtr op;
     if (outputMode == "append") {
+        NES_DEBUG("InputQuery::writeToCSVFile: with modus append")
         op = createSinkOperator(
                 createCSVFileSinkWithSchemaAppend(this->sourceStream->getSchema(), file_name));
     } else if (outputMode == "truncate") {
+        NES_DEBUG("InputQuery::writeToCSVFile: with modus truncate")
         op = createSinkOperator(
                 createCSVFileSinkWithSchemaOverwrite(this->sourceStream->getSchema(), file_name));
     } else {
