@@ -15,7 +15,7 @@ const DataSinkPtr createTestSink() {
 
 const DataSinkPtr createBinaryFileSinkWithSchema(SchemaPtr schema,
                                                  const std::string& filePath) {
-    return std::make_shared<FileOutputSink>(filePath);
+    return std::make_shared<FileOutputSink>(schema, filePath);
 }
 
 const DataSinkPtr createBinaryFileSinkWithoutSchema(const std::string& filePath) {
