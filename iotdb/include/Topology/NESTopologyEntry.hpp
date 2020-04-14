@@ -1,13 +1,13 @@
 #ifndef INCLUDE_TOPOLOGY_NESTOPOLOGYENTRY_HPP_
 #define INCLUDE_TOPOLOGY_NESTOPOLOGYENTRY_HPP_
 
-#include <API/InputQuery.hpp>
 #include <NodeEngine/NodeProperties.hpp>
 #include <Util/CPUCapacity.hpp>
 #include <string>
 
 namespace NES {
 
+class InputQuery;
 typedef std::shared_ptr<InputQuery> InputQueryPtr;
 
 enum NESNodeType {
