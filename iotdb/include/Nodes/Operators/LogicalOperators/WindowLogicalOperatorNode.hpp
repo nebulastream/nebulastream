@@ -8,7 +8,7 @@ namespace NES {
 class WindowDefinition;
 typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 
-class WindowLogicalOperatorNode : public Node {
+class WindowLogicalOperatorNode : public LogicalOperatorNode {
   public:
     WindowLogicalOperatorNode(const WindowDefinitionPtr& windowDefinition);
     bool equal(const NodePtr rhs) const override;

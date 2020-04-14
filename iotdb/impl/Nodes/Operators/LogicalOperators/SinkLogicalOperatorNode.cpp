@@ -26,7 +26,7 @@ const std::string SinkLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-NodePtr createSinkLogicalOperatorNode(const DataSinkPtr& sink) {
+LogicalOperatorNodePtr createSinkLogicalOperatorNode(const DataSinkPtr sink) {
     return std::make_shared<SinkLogicalOperatorNode>(sink);
 }
 }

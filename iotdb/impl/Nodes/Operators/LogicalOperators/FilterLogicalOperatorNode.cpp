@@ -27,7 +27,8 @@ const std::string FilterLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-NodePtr createFilterLogicalOperatorNode(const ExpressionNodePtr& predicate) {
+LogicalOperatorNodePtr createFilterLogicalOperatorNode(const ExpressionNodePtr predicate) {
     return std::make_shared<FilterLogicalOperatorNode>(predicate);
 }
+
 }

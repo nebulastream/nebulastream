@@ -25,7 +25,7 @@ const std::string MapLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-NodePtr createMapLogicalOperatorNode(const AttributeFieldPtr& field, const PredicatePtr& predicate) {
+LogicalOperatorNodePtr createMapLogicalOperatorNode(const AttributeFieldPtr field, const PredicatePtr predicate) {
     return std::make_shared<MapLogicalOperatorNode>(field, predicate);
 }
 }
