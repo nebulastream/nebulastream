@@ -17,11 +17,6 @@ FileOutputSink::FileOutputSink()
         :
         DataSink() {
     outputType = BINARY_TYPE;
-}
-
-        :
-        DataSink(schema) {
-    outputType = BINARY_TYPE;
     outputMode = FILE_APPEND;
 }
 
