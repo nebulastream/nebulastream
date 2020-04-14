@@ -165,7 +165,7 @@ class Query {
 
     /**
      * @brief get source stream
-     * @return
+     * @return pointer to source stream
      */
     const StreamPtr getSourceStream() const;
 

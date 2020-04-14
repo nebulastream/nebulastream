@@ -8,6 +8,7 @@
 #include <SourceSink/SourceCreator.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Util/Logger.hpp>
+#include <Nodes/Operators/LogicalOperators/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/SourceLogicalOperatorNode.hpp>
 #include <API/UserAPIExpression.hpp>
 
