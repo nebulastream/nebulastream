@@ -30,7 +30,7 @@ bool WindowLogicalOperatorNode::equal(const NodePtr rhs) const {
     return false;
 }
 
-NodePtr createWindowLogicalOperatorNode(const WindowDefinitionPtr& windowDefinitionPtr) {
+LogicalOperatorNodePtr createWindowLogicalOperatorNode(const WindowDefinitionPtr windowDefinitionPtr) {
     return std::make_shared<WindowLogicalOperatorNode>(windowDefinitionPtr);
 }
 

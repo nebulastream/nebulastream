@@ -25,7 +25,7 @@ const std::string SourceLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-NodePtr createSourceLogicalOperatorNode(const DataSourcePtr& source) {
+LogicalOperatorNodePtr createSourceLogicalOperatorNode(const DataSourcePtr source) {
     return std::make_shared<SourceLogicalOperatorNode>(source);
 }
 

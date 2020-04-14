@@ -6,6 +6,7 @@ add_source_iotdb(
 	UserAPIExpression.cpp
 	Environment.cpp
 	Stream.cpp
+		Query.cpp
 )
 add_subdirectory(Window)
 add_subdirectory(Types)

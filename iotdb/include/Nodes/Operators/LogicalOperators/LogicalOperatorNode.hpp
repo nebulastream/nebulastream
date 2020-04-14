@@ -4,6 +4,7 @@
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
 #include <API/ParameterTypes.hpp>
+
 namespace NES {
 
 class LogicalOperatorNode : public OperatorNode {
@@ -16,11 +17,11 @@ typedef std::shared_ptr<LogicalOperatorNode> LogicalOperatorNodePtr;
 class WindowDefinition;
 typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 
-NodePtr createFilterLogicalOperatorNode(const ExpressionNodePtr& predicate);
-NodePtr createMapLogicalOperatorNode(const AttributeFieldPtr&, const PredicatePtr&);
-NodePtr createSinkLogicalOperatorNode(const DataSinkPtr& sink);
-NodePtr createSourceLogicalOperatorNode(const DataSourcePtr& source);
-NodePtr createWindowLogicalOperatorNode(const WindowDefinitionPtr& windowDefinition);
+LogicalOperatorNodePtr createFilterLogicalOperatorNode(const ExpressionNodePtr predicate);
+LogicalOperatorNodePtr createMapLogicalOperatorNode(const AttributeFieldPtr field, const PredicatePtr predicate);
+LogicalOperatorNodePtr createSinkLogicalOperatorNode(const DataSinkPtr sink);
+LogicalOperatorNodePtr createSourceLogicalOperatorNode(const DataSourcePtr source);
+LogicalOperatorNodePtr createWindowLogicalOperatorNode(const WindowDefinitionPtr windowDefinition);
 }
 
 #endif  // LOGICAL_OPERATOR_NODE_HPP
