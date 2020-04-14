@@ -69,22 +69,18 @@ Query Query::from(Stream& stream) {
             }
         } else if (type == "CSVSource") {
             NES_DEBUG("InputQuery::from create CSV source for " << conf << " buffers")
-            op = createSourceLogicalOperatorNode(
-                createCSVFileSource(stream.getSchema(), /**fileName*/conf, ",",
-                    /**numberOfBufferToProduce*/numBuffers,
-                                    frequency));
+            op = createSourceLogicalOperatorNode(createCSVFileSource(stream.getSchema(), /**fileName*/ conf, /**delimiter**/ ",",
+                numBuffers, frequency));
         } else if (type == "SenseSource") {
             NES_DEBUG("InputQuery::from create Sense source for udfs " << conf)
-            op = createSourceLogicalOperatorNode(
-                createSenseSource(stream.getSchema(), /**udfs*/conf));
+            op = createSourceLogicalOperatorNode(createSenseSource(stream.getSchema(), /**udfs*/conf));
         } else {
             NES_DEBUG("InputQuery::from source type " << type << " not supported")
             NES_FATAL_ERROR("type not supported")
         }
     }
     int operatorId = q.getNextOperatorId();
-    //    op->setOperatorId(operatorId);
-    //    q.root = op;
+    op->setId(operatorId);
     return q;
 }
 

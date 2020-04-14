@@ -7,5 +7,13 @@ SchemaPtr OperatorNode::getResultSchema() const {
     return this->parents[0]->as<OperatorNode>()->getResultSchema();
 }
 
+size_t OperatorNode::getId() const {
+    return id;
+}
+
+void OperatorNode::setId(size_t id) {
+    OperatorNode::id = id;
+}
+
 }
 

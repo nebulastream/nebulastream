@@ -17,6 +17,10 @@ class OperatorNode : public Node {
     * @return SchemaPtr
     */
     virtual SchemaPtr getResultSchema() const;
+    size_t getId() const;
+    void setId(size_t id);
+  private:
+    size_t id;
 };
 
 typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
