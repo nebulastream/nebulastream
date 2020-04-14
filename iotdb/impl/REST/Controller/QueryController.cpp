@@ -13,15 +13,11 @@ namespace NES {
 void QueryController::handleGet(vector<utility::string_t> path, http_request message) {
 
     if (path[1] == "nes-topology") {
-
-        createExampleTopology();
         const auto& nesTopology = nesTopologyServicePtr->getNESTopologyAsJson();
-
         //Prepare the response
         successMessageImpl(message, nesTopology);
         return;
     }
-
     resourceNotFoundImpl(message);
 }
 

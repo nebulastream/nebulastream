@@ -12,15 +12,11 @@
 
 namespace NES {
 
-class Operator;
+class OperatorNode;
+typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 
-typedef std::shared_ptr<Operator> OperatorPtr;
-
-class WindowType;
-typedef std::shared_ptr<WindowType> WindowTypePtr;
-
-class WindowAggregation;
-typedef std::shared_ptr<WindowAggregation> WindowAggregationPtr;
+class ExpressionNode;
+typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
 
 /**
  * Interface to create new query.
@@ -57,7 +53,7 @@ class Query {
      * @param predicate
      * @return query
      */
-    Query& filter(const UserAPIExpression& predicate);
+    Query& filter(const ExpressionNodePtr expressionNodePtr);
 
     /**
      * @brief: Map records to the resultField by the predicate.
@@ -84,23 +80,14 @@ class Query {
                 const JoinPredicatePtr joinPred);
 
     /**
-     * @brief: Creates a window aggregation.
-     * @param windowType Window definition.
-     * @param aggregation Window aggregation function.
-     * @return query.
+     * @brief: Creates a window by a key.
      */
-    Query& windowByKey(const AttributeFieldPtr onKey,
-                       const WindowTypePtr windowType,
-                       const WindowAggregationPtr aggregation);
+    Query& windowByKey();
 
     /**
      * @brief: Creates a window aggregation.
-     * @param windowType Window definition.
-     * @param aggregation Window aggregation function.
-     * @return query.
      */
-    Query& window(const WindowTypePtr windowType,
-                  const WindowAggregationPtr aggregation);
+    Query& window();
 
     /**
      * @brief: Registers the query as a source in the catalog.
@@ -153,17 +140,15 @@ class Query {
      */
     Query& print(std::ostream& = std::cout);
 
-    /**
-     * @brief: provide a sample operator for sense
-     * @param udfs to setup sense
-     */
-    Query& sample(const std::string& udfs);
-
     int getNextOperatorId() {
         operatorIdCounter++;
         return this->operatorIdCounter;
     }
 
+    /**
+     * @brief get source stream
+     * @return
+     */
     const StreamPtr getSourceStream() const;
     void setSourceStream(const StreamPtr sourceStream);
 
@@ -173,10 +158,11 @@ class Query {
     Query& operator=(const Query& query);
 
   private:
+
     Query(StreamPtr source_stream);
     int operatorIdCounter = 0;
     StreamPtr sourceStream;
-
+    OperatorNodePtr root;
 };
 
 typedef std::shared_ptr<Query> QueryPtr;

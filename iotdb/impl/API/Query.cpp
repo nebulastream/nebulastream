@@ -69,8 +69,11 @@ Query Query::from(Stream& stream) {
             }
         } else if (type == "CSVSource") {
             NES_DEBUG("InputQuery::from create CSV source for " << conf << " buffers")
-            op = createSourceLogicalOperatorNode(createCSVFileSource(stream.getSchema(), /**fileName*/ conf, /**delimiter**/ ",",
-                numBuffers, frequency));
+            op = createSourceLogicalOperatorNode(createCSVFileSource(stream.getSchema(), /**fileName*/
+                                                                     conf, /**delimiter**/
+                                                                     ",",
+                                                                     numBuffers,
+                                                                     frequency));
         } else if (type == "SenseSource") {
             NES_DEBUG("InputQuery::from create Sense source for udfs " << conf)
             op = createSourceLogicalOperatorNode(createSenseSource(stream.getSchema(), /**udfs*/conf));
@@ -81,6 +84,7 @@ Query Query::from(Stream& stream) {
     }
     int operatorId = q.getNextOperatorId();
     op->setId(operatorId);
+    q.root = op;
     return q;
 }
 
@@ -96,22 +100,19 @@ Query& Query::select(const Field& field1, const Field& field2) {
     NES_NOT_IMPLEMENTED
 }
 
-Query& Query::filter(const UserAPIExpression& predicate) {
-    PredicatePtr pred = createPredicate(predicate);
-    OperatorPtr op = createFilterOperator(pred);
+Query& Query::filter(const ExpressionNodePtr expressionNodePtr) {
+
+    OperatorNodePtr op = createFilterLogicalOperatorNode(expressionNodePtr);
     int operatorId = this->getNextOperatorId();
-    op->setOperatorId(operatorId);
+    op->setId(operatorId);
+    root->addParent(op);
+    root = op;
     return *this;
 }
 
 Query& Query::map(const AttributeField& field,
                   const Predicate predicate) {
-    PredicatePtr pred = createPredicate(predicate);
-    AttributeFieldPtr attr = field.copy();
-    OperatorPtr op = createMapOperator(attr, pred);
-    int operatorId = this->getNextOperatorId();
-    op->setOperatorId(operatorId);
-    return *this;
+    NES_NOT_IMPLEMENTED
 }
 
 Query& Query::combine(const Query& sub_query) {
@@ -120,113 +121,90 @@ Query& Query::combine(const Query& sub_query) {
 
 Query& Query::join(const Query& sub_query,
                    const JoinPredicatePtr joinPred) {
-    OperatorPtr op = createJoinOperator(joinPred);
-    int operatorId = this->getNextOperatorId();
-    op->setOperatorId(operatorId);
-    addChild(op, root);
-    // addChild(op, copyRecursive(sub_query,sub_query.root));
-    addChild(op, sub_query.root);
-    root = op;
-    return *this;
+    NES_NOT_IMPLEMENTED
 }
 
-Query& Query::windowByKey(const AttributeFieldPtr onKey,
-                          const WindowTypePtr windowType,
-                          const WindowAggregationPtr aggregation) {
-    auto window_def_ptr = std::make_shared<WindowDefinition>(onKey, aggregation,
-                                                             windowType);
-    OperatorPtr op = createWindowOperator(window_def_ptr);
-    op->setOperatorId(this->getNextOperatorId());
-    addChild(op, root);
-    root = op;
-    // add a window scan operator with the window result schema.
-    SchemaPtr schemaPtr = Schema::create()->addField(aggregation->asField());
-    OperatorPtr windowScan = createWindowScanOperator(schemaPtr);
-    windowScan->setOperatorId(this->getNextOperatorId());
-    addChild(windowScan, root);
-    root = windowScan;
-    return *this;
+Query& Query::windowByKey() {
+    NES_NOT_IMPLEMENTED
 }
 
-Query& Query::window(const NES::WindowTypePtr windowType,
-                     const WindowAggregationPtr aggregation) {
-    auto window_def_ptr = std::make_shared<WindowDefinition>(aggregation,
-                                                             windowType);
-    OperatorPtr op = createWindowOperator(window_def_ptr);
-    op->setOperatorId(this->getNextOperatorId());
-    addChild(op, root);
-    root = op;
-    // add a window scan operator with the window result schema.
-    SchemaPtr schemaPtr = Schema::create()->addField(aggregation->asField());
-    OperatorPtr windowScan = createWindowScanOperator(schemaPtr);
-    windowScan->setOperatorId(this->getNextOperatorId());
-    addChild(windowScan, root);
-    root = windowScan;
-
-    return *this;
+Query& Query::window() {
+    NES_NOT_IMPLEMENTED
 }
 
 // output operators
 Query& Query::writeToFile(const std::string& file_name) {
-    OperatorPtr op = createSinkOperator(
-        createBinaryFileSinkWithSchema(this->sourceStream->getSchema(),
-                                       file_name));
+
+    OperatorNodePtr op = createSinkLogicalOperatorNode(createBinaryFileSinkWithSchema(this->sourceStream->getSchema(),
+                                                                                      file_name));
     int operatorId = this->getNextOperatorId();
-    op->setOperatorId(operatorId);
+    op->setId(operatorId);
+    root->addParent(op);
+    root = op;
     return *this;
 }
 
 // output operators
 Query& Query::writeToCSVFile(const std::string& file_name) {
-    OperatorPtr op = createSinkOperator(
-        createCSVFileSinkWithSchema(this->sourceStream->getSchema(), file_name));
+
+    OperatorNodePtr op = createSinkLogicalOperatorNode(createCSVFileSinkWithSchema(this->sourceStream->getSchema(),
+                                                                                   file_name));
     int operatorId = this->getNextOperatorId();
-    op->setOperatorId(operatorId);
+    op->setId(operatorId);
+    root->addParent(op);
+    root = op;
     return *this;
 }
 
 Query& Query::writeToZmq(const std::string& logicalStreamName,
                          const std::string& host,
                          const uint16_t& port) {
-    SchemaPtr ptr = StreamCatalog::instance().getSchemaForLogicalStream(
-        logicalStreamName);
-    OperatorPtr op = createSinkOperator(createZmqSink(ptr, host, port));
+
+    SchemaPtr schemaPtr = StreamCatalog::instance().getSchemaForLogicalStream(logicalStreamName);
+    OperatorNodePtr op = createSinkLogicalOperatorNode(createZmqSink(schemaPtr, host, port));
     int operatorId = this->getNextOperatorId();
-    op->setOperatorId(operatorId);
+    op->setId(operatorId);
+    root->addParent(op);
+    root = op;
     return *this;
 }
 
 Query& Query::print(std::ostream& out) {
-    OperatorPtr op = createSinkOperator(
-        createPrintSinkWithSchema(this->sourceStream->getSchema(), out));
+
+    OperatorNodePtr op = createSinkLogicalOperatorNode(createPrintSinkWithSchema(this->sourceStream->getSchema(), out));
     int operatorId = this->getNextOperatorId();
-    op->setOperatorId(operatorId);
+    op->setId(operatorId);
+    root->addParent(op);
+    root = op;
     return *this;
 }
 
-Query& Query::writeToKafka(const std::string& topic,
-                           const cppkafka::Configuration& config) {
-    OperatorPtr op = createSinkOperator(
-        createKafkaSinkWithSchema(this->sourceStream->getSchema(), topic,
-                                  config));
+Query& Query::writeToKafka(const std::string& topic, const cppkafka::Configuration& config) {
+
+    OperatorNodePtr op = createSinkLogicalOperatorNode(createKafkaSinkWithSchema(this->sourceStream->getSchema(), topic,
+                                                                                 config));
     int operatorId = this->getNextOperatorId();
-    op->setOperatorId(operatorId);
+    op->setId(operatorId);
+    root->addParent(op);
+    root = op;
     return *this;
 }
 
-Query& Query::writeToKafka(const std::string& brokers,
-                           const std::string& topic,
-                           const size_t kafkaProducerTimeout) {
-    OperatorPtr op = createSinkOperator(
-        createKafkaSinkWithSchema(this->sourceStream->getSchema(), brokers, topic,
-                                  kafkaProducerTimeout));
+Query& Query::writeToKafka(const std::string& brokers, const std::string& topic, const size_t kafkaProducerTimeout) {
+
+    OperatorNodePtr op = createSinkLogicalOperatorNode(createKafkaSinkWithSchema(this->sourceStream->getSchema(),
+                                                                                 brokers, topic, kafkaProducerTimeout));
     int operatorId = this->getNextOperatorId();
-    op->setOperatorId(operatorId);
+    op->setId(operatorId);
+    root->addParent(op);
+    root = op;
     return *this;
 }
+
 const StreamPtr Query::getSourceStream() const {
     return sourceStream;
 }
+
 void Query::setSourceStream(const StreamPtr sourceStream) {
     Query::sourceStream = sourceStream;
 }
