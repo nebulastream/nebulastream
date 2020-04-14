@@ -1,6 +1,5 @@
 #include "gtest/gtest.h"
 
-#include <cassert>
 #include <iostream>
 #include <Util/Logger.hpp>
 #include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
@@ -11,35 +10,11 @@
 #include <Nodes/Expressions/BinaryExpressions/LessThenExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/SinkLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+
 namespace NES {
-
-class SelectionDataGenFunctor {
-  public:
-    SelectionDataGenFunctor() {
-    }
-
-    struct __attribute__((packed)) InputTuple {
-        uint32_t id;
-        uint32_t value;
-    };
-
-    TupleBufferPtr operator()() {
-        // 10 tuples of size one
-        TupleBufferPtr buf = BufferManager::instance().getFixedSizeBuffer();
-        uint64_t tupleCnt = buf->getNumberOfTuples();
-
-        assert(buf->getBuffer() != NULL);
-
-        InputTuple* tuples = (InputTuple*) buf->getBuffer();
-        for (uint32_t i = 0; i < tupleCnt; i++) {
-            tuples[i].id = i;
-            tuples[i].value = i*2;
-        }
-        buf->setTupleSizeInBytes(sizeof(InputTuple));
-        buf->setNumberOfTuples(tupleCnt);
-        return buf;
-    }
-};
 
 class QueryTest : public testing::Test {
   public:
@@ -72,7 +47,15 @@ TEST_F(QueryTest, testQueryFilter) {
     const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators = query.getSourceOperators();
     EXPECT_EQ(sourceOperators.size(), 1);
 
+    SourceLogicalOperatorNodePtr srcOptr = sourceOperators[0];
+    EXPECT_TRUE(srcOptr->getDataSource()->getSchema()->equals(schema));
+
     const std::vector<SinkLogicalOperatorNodePtr>& sinkOperators = query.getSinkOperators();
+    EXPECT_EQ(sinkOperators.size(), 1);
+    
+    SinkLogicalOperatorNodePtr sinkOptr = sinkOperators[0];
+
+    const std::vector<NodePtr>& children = sinkOptr->getChildren();
     EXPECT_EQ(sinkOperators.size(), 1);
 }
 
