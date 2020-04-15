@@ -13,6 +13,9 @@
 #include <Nodes/Operators/LogicalOperators/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Catalogs/StreamCatalog.hpp>
+#include <Topology/NESTopologySensorNode.hpp>
+#include <Topology/NESTopologyManager.hpp>
 
 namespace NES {
 
@@ -33,6 +36,18 @@ class QueryTest : public testing::Test {
 };
 
 TEST_F(QueryTest, testQueryFilter) {
+
+    NESTopologySensorNodePtr sensorNode = NESTopologyManager::getInstance()
+        .createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+
+    PhysicalStreamConfig streamConf;
+    streamConf.physicalStreamName = "test2";
+    streamConf.logicalStreamName = "test_stream";
+
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf,
+                                                                     sensorNode);
+
+    StreamCatalog::instance().addPhysicalStream("default_logical", sce);
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
         "value", BasicType::UINT64);
