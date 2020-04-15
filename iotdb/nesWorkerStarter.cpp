@@ -22,6 +22,12 @@ namespace po = boost::program_options;
 using namespace caf;
 using namespace NES;
 
+inline void printUsage(const boost::program_options::options_description desc) {
+    std::cout << "Usage: " << "nesWorker" << " [options]" << std::endl;
+    std::cout << "    App description" << std::endl;
+    std::cout << desc << std::endl;
+}
+
 int main(int argc, char** argv) {
     NES::setupLogging("nesWorkerStarter.log", NES::LOG_DEBUG);
 
@@ -63,17 +69,20 @@ int main(int argc, char** argv) {
         "Set the logical stream name where this stream is added to")
         ("parentId",
          po::value<string>(&parentId)->default_value(parentId),
-         "Set the parentId of this node");
+         "Set the parentId of this node")
+        ("help", "Display help message");
 
     po::variables_map vm;
     po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
     po::notify(vm);
 
     if (vm.count("help")) {
+        printUsage(desc);
         std::cout << "Basic Command Line Parameter " << std::endl << desc
                   << std::endl;
         return 0;
     }
+
     NesWorkerPtr wrk = std::make_shared<NesWorker>();
 
     //register phy stream if nessesary
@@ -89,7 +98,7 @@ int main(int argc, char** argv) {
 
         wrk->setWitRegister(conf);
 
-    } else if(parentId != "-1") {
+    } else if (parentId != "-1") {
         cout << "start with dedicated parent=" << parentId << endl;
         wrk->setWithParent(parentId);
     }
