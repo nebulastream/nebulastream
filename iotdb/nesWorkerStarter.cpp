@@ -22,6 +22,16 @@ namespace po = boost::program_options;
 using namespace caf;
 using namespace NES;
 
+const string logo = "/********************************************************\n"
+                    " *     _   _   ______    _____\n"
+                    " *    | \\ | | |  ____|  / ____|\n"
+                    " *    |  \\| | | |__    | (___\n"
+                    " *    | . ` | |  __|    \\___ \\     Worker\n"
+                    " *    | |\\  | | |____   ____) |\n"
+                    " *    |_| \\_| |______| |_____/\n"
+                    " *\n"
+                    " ********************************************************/";
+
 inline void printUsage(const boost::program_options::options_description desc) {
     std::cout << "Usage: " << "nesWorker" << " [options]" << std::endl;
     std::cout << "    App description" << std::endl;
@@ -30,7 +40,7 @@ inline void printUsage(const boost::program_options::options_description desc) {
 
 int main(int argc, char** argv) {
     NES::setupLogging("nesWorkerStarter.log", NES::LOG_DEBUG);
-
+    cout << logo << endl;
     namespace po = boost::program_options;
     po::options_description desc("Options");
     uint16_t actorPort = 0;
@@ -80,6 +90,12 @@ int main(int argc, char** argv) {
         printUsage(desc);
         std::cout << "Basic Command Line Parameter " << std::endl << desc
                   << std::endl;
+        return 0;
+    }
+    if(argc == 1)
+    {
+        printUsage(desc);
+        cout << "Please specify at least the port you want to connect to" << endl;
         return 0;
     }
 
