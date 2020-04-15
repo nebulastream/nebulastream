@@ -5,6 +5,7 @@ RUN DEBIAN_FRONTEND="noninteractive" apt-get install -qq \
   tmux \
   ssh \
   vim \
+  gdb \
 && apt-get clean -qq
 
 RUN service ssh start && useradd -m nes && yes password | passwd nes
