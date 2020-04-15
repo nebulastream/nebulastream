@@ -97,7 +97,8 @@ string CoordinatorActor::getOwnId() {
     size_t hashId = getIdFromHandle(curSender);
 
     NES_DEBUG(
-        "CoordinatorActor: register physical stream id=" << curSender->id() << " curSender=" << to_string(curSender) << " hashID="
+        "CoordinatorActor: register physical stream id=" << curSender->id() << " curSender=" << to_string(curSender)
+                                                         << " hashID="
                                                          << hashId)
 
     return ::to_string(hashId);
@@ -112,7 +113,8 @@ bool CoordinatorActor::removePhysicalStream(string logicalStreamName,
     auto curSender = current_sender();
     size_t hashId = getIdFromHandle(curSender);
     NES_DEBUG(
-        "CoordinatorActor: removePhysicalStream id=" << curSender->id() << " curSender=" << to_string(curSender) << " hashID="
+        "CoordinatorActor: removePhysicalStream id=" << curSender->id() << " curSender=" << to_string(curSender)
+                                                     << " hashID="
                                                      << hashId)
 
     std::vector<NESTopologyEntryPtr> sensorNodes =
@@ -145,7 +147,8 @@ bool CoordinatorActor::registerPhysicalStream(PhysicalStreamConfig streamConf) {
     auto curSender = current_sender();
     size_t hashId = getIdFromHandle(curSender);
     NES_DEBUG(
-        "CoordinatorActor: register physical stream id=" << curSender->id() << " curSender=" << to_string(curSender) << " hashID="
+        "CoordinatorActor: register physical stream id=" << curSender->id() << " curSender=" << to_string(curSender)
+                                                         << " hashID="
                                                          << hashId)
 
     std::vector<NESTopologyEntryPtr> sensorNodes =
@@ -174,7 +177,8 @@ bool CoordinatorActor::deregisterSensor(const string& ip) {
 
     size_t hashId = getIdFromHandle(curSender);
     NES_DEBUG(
-        "CoordinatorActor: deregister node id=" << curSender->id() << " curSender=" << to_string(curSender) << " hashID="
+        "CoordinatorActor: deregister node id=" << curSender->id() << " curSender=" << to_string(curSender)
+                                                << " hashID="
                                                 << hashId
                                                 << " curSender=" << to_string(curSender))
 
@@ -420,7 +424,7 @@ behavior CoordinatorActor::running() {
           return workerServicePtr->executeQuery(description, executableTransferObject);
         },
         [=](delete_query_atom, const string& query) {
-            workerServicePtr->deleteQuery(query);
+          workerServicePtr->deleteQuery(query);
         },
         [=](get_operators_atom) {
           return workerServicePtr->getOperators();
