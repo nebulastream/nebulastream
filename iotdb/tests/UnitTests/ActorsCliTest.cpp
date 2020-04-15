@@ -33,90 +33,6 @@ class ActorsCliTest : public testing::Test {
     }
 };
 
-TEST_F(ActorsCliTest, testShowTopology) {
-    cout << "start coordinator" << endl;
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
-    size_t port = crd->startCoordinator(/**blocking**/false);
-    EXPECT_NE(port, 0);
-    cout << "coordinator started successfully" << endl;
-    sleep(1);
-
-    cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>();
-    bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true, port, "localhost");
-    EXPECT_TRUE(retStart);
-    cout << "worker started successfully" << endl;
-
-    CoordinatorActorConfig c_cfg;
-    c_cfg.load<io::middleman>();
-    actor_system system_coord{c_cfg};
-    scoped_actor self{system_coord};
-    self->request(crd->getActorHandle(), task_timeout, topology_json_atom::value);
-
-    cout << "stopping worker" << endl;
-    bool retStopWrk = wrk->stop();
-    EXPECT_TRUE(retStopWrk);
-
-    cout << "stopping coordinator" << endl;
-    bool retStopCord = crd->stopCoordinator();
-    EXPECT_TRUE(retStopCord);
-}
-
-TEST_F(ActorsCliTest, testShowRegistered) {
-    cout << "start coordinator" << endl;
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
-    size_t port = crd->startCoordinator(/**blocking**/false);
-    EXPECT_NE(port, 0);
-    cout << "coordinator started successfully" << endl;
-    sleep(1);
-
-    cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>();
-    bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true, port, "localhost");
-    EXPECT_TRUE(retStart);
-    cout << "worker started successfully" << endl;
-
-    // check registration
-    string uuid;
-    CoordinatorActorConfig c_cfg;
-    c_cfg.load<io::middleman>();
-    actor_system system_coord{c_cfg};
-    scoped_actor self{system_coord};
-    self->request(crd->getActorHandle(), task_timeout, register_query_atom::value,
-                  queryString, "BottomUp").receive(
-        [&uuid](const string& _uuid) mutable {
-          uuid = _uuid;
-        }, [=](const error& er) {
-          string error_msg = to_string(er);
-          NES_ERROR(
-              "ACTORSCLITEST: Error during testShowRegistered " << "\n" << error_msg);
-        });
-
-    NES_INFO("ACTORSCLITEST: Registration completed with query ID " << uuid);
-    EXPECT_TRUE(!uuid.empty());
-
-    // check length of registered queries
-    size_t query_size = 0;
-    self->request(crd->getActorHandle(), task_timeout, show_registered_queries_atom::value)
-        .receive(
-            [&query_size](const size_t length) mutable {
-              query_size = length;
-              NES_INFO("ACTORSCLITEST: Query length " << length);
-            }, [=](const error& er) {
-              string error_msg = to_string(er);
-              NES_ERROR(
-                  "ACTORSCLITEST: Error during testShowRegistered " << "\n" << error_msg);
-            });
-    EXPECT_EQ(query_size, 1);
-    cout << "stopping worker" << endl;
-    bool retStopWrk = wrk->stop();
-    EXPECT_TRUE(retStopWrk);
-
-    cout << "stopping coordinator" << endl;
-    bool retStopCord = crd->stopCoordinator();
-    EXPECT_TRUE(retStopCord);
-}
-
 TEST_F(ActorsCliTest, testDeleteQuery) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
@@ -151,20 +67,6 @@ TEST_F(ActorsCliTest, testDeleteQuery) {
     NES_INFO("ACTORSCLITEST: Registration completed with query ID " << uuid);
     EXPECT_TRUE(!uuid.empty());
 
-    // check length of registered queries
-    size_t query_size = 0;
-    self->request(crd->getActorHandle(), task_timeout, show_registered_queries_atom::value)
-        .receive(
-            [&query_size](const size_t length) mutable {
-              query_size = length;
-              NES_INFO("ACTORSCLITEST: Query length " << length);
-            }, [=](const error& er) {
-              string error_msg = to_string(er);
-              NES_ERROR(
-                  "ACTORSCLITEST: Error during testDeleteQuery " << "\n" << error_msg);
-            });
-    EXPECT_EQ(query_size, 1);
-
     cout << "deploy_query_atom" << endl;
     bool success = false;
     self->request(crd->getActorHandle(), task_timeout, deploy_query_atom::value, uuid).receive(
@@ -188,19 +90,6 @@ TEST_F(ActorsCliTest, testDeleteQuery) {
               "ACTORSCLITEST: Error during deregister_query_atom " << "\n" << error_msg);
         });
     EXPECT_TRUE(success2);
-
-
-    cout << "show_running_queries_atom" << endl;
-    bool success3 = false;
-    self->request(crd->getActorHandle(), task_timeout, show_running_queries_atom::value).receive(
-        [&success3](const bool& c) mutable {
-          success3 = c;
-        }, [=](const error& er) {
-          string error_msg = to_string(er);
-          NES_ERROR(
-              "ACTORSCLITEST: Error during show_running_queries_atom " << "\n" << error_msg);
-        });
-    EXPECT_TRUE(success3);
 
     cout << "stopping worker" << endl;
     bool retStopWrk = wrk->stop();
