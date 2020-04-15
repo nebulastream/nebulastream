@@ -5,8 +5,8 @@
 #include <functional>
 #include <atomic>
 #include <API/Schema.hpp>
-namespace NES {
 
+namespace NES {
 
 class TupleBuffer;
 
@@ -282,7 +282,6 @@ class MemorySegment {
 };
 
 
-class Schema;
 std::string toString(TupleBuffer& buffer, SchemaPtr schema);
 
 }  // namespace NES

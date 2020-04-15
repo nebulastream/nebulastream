@@ -8,7 +8,6 @@ namespace NES {
 
 FileBuilder FileBuilder::create(const std::string &file_name) {
   FileBuilder builder;
-  builder.declations << "#define USE_NEW_BUFFER_MANAGEMENT 1" << std::endl;
   builder.declations << "#include <cstdint>" << std::endl;
   builder.declations << "#include <string.h>" << std::endl;
   builder.declations << "#include <QueryLib/WindowManagerLib.hpp>" << std::endl;
