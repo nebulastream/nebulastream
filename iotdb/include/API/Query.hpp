@@ -44,6 +44,8 @@ class Query {
      * @brief: Selects a field from the input schema and place it in the output schema.
      * @param field
      * @return query
+     *
+     * @Caution : The method is not implemented yet.
      */
     Query& select(const Field& field);
 
@@ -51,6 +53,8 @@ class Query {
      * @brief: Selects two fields from the input schema and place them in the output schema.
      * @param field
      * @return query
+     *
+     * @Caution : The method is not implemented yet.
      */
     Query& select(const Field& field1, const Field& field2);
 
@@ -66,6 +70,8 @@ class Query {
      * @param resultField
      * @param predicate
      * @return query
+     *
+     * @Caution : The method is not implemented yet.
      */
     Query& map(const AttributeField& resultField, const Predicate predicate);
 
@@ -73,6 +79,8 @@ class Query {
      * @brief: Unify two queries.
      * All records are contained in the result stream
      * @return query
+     *
+     * @Caution : The method is not implemented yet.
      */
     Query& combine(const Query& subQuery);
 
@@ -81,23 +89,31 @@ class Query {
      * @param subQuery right query.
      * @param joinPred join predicate.
      * @return query.
+     *
+     * @Caution : The method is not implemented yet.
      */
     Query& join(const Query& subQuery,
                 const JoinPredicatePtr joinPred);
 
     /**
      * @brief: Creates a window by a key.
+     *
+     * @Caution : The method is not implemented yet.
      */
     Query& windowByKey();
 
     /**
      * @brief: Creates a window aggregation.
+     *
+     * @Caution : The method is not implemented yet.
      */
     Query& window();
 
     /**
      * @brief: Registers the query as a source in the catalog.
      * @param name the name for the result stream.
+     *
+     * @Caution : The method is not implemented yet.
      */
     Query& to(const std::string& name);
 

@@ -101,6 +101,8 @@ Query& Query::windowByKey() {NES_NOT_IMPLEMENTED }
 
 Query& Query::window() {NES_NOT_IMPLEMENTED }
 
+Query& Query::to(const std::string& name) {NES_NOT_IMPLEMENTED }
+
 // output operators
 Query& Query::writeToFile(const std::string& fileName) {
     OperatorNodePtr op =
