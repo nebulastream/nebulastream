@@ -487,11 +487,6 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutputExdraUseCase) {
     sleep(3);
 
     std::stringstream ss;
-    //  ss << "{\"userQuery\" : ";
-    //  ss << "\"InputQuery::from(exdra).writeToCSVFile(\"";
-    //  ss << testFile << "\", \"append";
-    //  ss << "\");\",\"strategyName\" : \"BottomUp\"}";
-    //  ss << endl;
     ss << "{\"userQuery\" : ";
     ss << "\"InputQuery::from(exdra).writeToCSVFile(\\\"";
     ss << testFile;
