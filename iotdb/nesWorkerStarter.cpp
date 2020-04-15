@@ -32,17 +32,11 @@ const string logo = "/********************************************************\n
                     " *\n"
                     " ********************************************************/";
 
-inline void printUsage(const boost::program_options::options_description desc) {
-    std::cout << "Usage: " << "nesWorker" << " [options]" << std::endl;
-    std::cout << "    App description" << std::endl;
-    std::cout << desc << std::endl;
-}
-
 int main(int argc, char** argv) {
     NES::setupLogging("nesWorkerStarter.log", NES::LOG_DEBUG);
     cout << logo << endl;
     namespace po = boost::program_options;
-    po::options_description desc("Options");
+    po::options_description desc("Nes Worker Options");
     uint16_t actorPort = 0;
     std::string serverIp = "localhost";
 
@@ -83,19 +77,27 @@ int main(int argc, char** argv) {
         ("help", "Display help message");
 
     po::variables_map vm;
-    po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
-    po::notify(vm);
+
+    try {
+        po::store(po::command_line_parser(argc, argv).options(desc).run(), vm);
+        po::notify(vm);
+    } catch (const std::exception& e) {
+        std::cerr << "Failure while parsing connection parameters!" << std::endl;
+        std::cerr << e.what() << std::endl;
+        return EXIT_FAILURE;
+    }
 
     if (vm.count("help")) {
-        printUsage(desc);
         std::cout << "Basic Command Line Parameter " << std::endl << desc
                   << std::endl;
         return 0;
     }
-    if(argc == 1)
-    {
-        printUsage(desc);
-        cout << "Please specify at least the port you want to connect to" << endl;
+
+    if (argc == 1) {
+        cout << "Please specify at least the port you want to connect to" <<
+             endl;
+        std::cout << "Basic Command Line Parameter " << std::endl << desc
+                  << std::endl;
         return 0;
     }
 
@@ -103,24 +105,36 @@ int main(int argc, char** argv) {
 
     //register phy stream if nessesary
     if (sourceType != "") {
-        cout << "start with dedicated source=" << sourceType << endl;
+        cout << "start with dedicated source=" << sourceType <<
+             endl;
         PhysicalStreamConfig conf;
-        conf.sourceType = sourceType;
-        conf.sourceConfig = sourceConfig;
-        conf.sourceFrequency = sourceFrequency;
-        conf.numberOfBuffersToProduce = numberOfBuffersToProduce;
-        conf.physicalStreamName = physicalStreamName;
-        conf.logicalStreamName = logicalStreamName;
+        conf.
+            sourceType = sourceType;
+        conf.
+            sourceConfig = sourceConfig;
+        conf.
+            sourceFrequency = sourceFrequency;
+        conf.
+            numberOfBuffersToProduce = numberOfBuffersToProduce;
+        conf.
+            physicalStreamName = physicalStreamName;
+        conf.
+            logicalStreamName = logicalStreamName;
 
-        wrk->setWitRegister(conf);
+        wrk->
+            setWitRegister(conf);
 
     } else if (parentId != "-1") {
-        cout << "start with dedicated parent=" << parentId << endl;
-        wrk->setWithParent(parentId);
+        cout << "start with dedicated parent=" << parentId <<
+             endl;
+        wrk->
+            setWithParent(parentId);
     }
 
-    cout << "start with port=" << actorPort << endl;
+    cout << "start with port=" << actorPort <<
+         endl;
     wrk->start(/**blocking*/true, /**withConnect*/true, actorPort, serverIp);
-    cout << "worker started" << endl;
+    cout << "worker started" <<
+         endl;
 
 }
