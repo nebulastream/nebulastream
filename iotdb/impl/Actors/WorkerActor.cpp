@@ -19,19 +19,34 @@ behavior WorkerActor::init() {
     // transition to `unconnected` on server failure
     this->set_down_handler([=](const down_msg& dm) {
       if (dm.source == this->state.current_server) {
-          aout(this) << "WorkerActor => lost connection to server" << endl;
+          NES_WARNING("WorkerActor => lost connection to coordinator:" << to_string(dm))
           this->state.current_server = nullptr;
           this->become(unconnected());
       } else {
-          aout(this) << "WorkerActor => got message from another server" << endl;
+          NES_WARNING("WorkerActor => got message from another server:" << to_string(dm))
       }
     });
+
     this->set_exit_handler([=](const caf::exit_msg& em) {
-      aout(this) << "WorkerActor => set_exit_handler" << em << endl;
+      NES_DEBUG("WorkerActor => exit via handler:" << to_string(em))
     });
+
     this->set_error_handler([=](const caf::error& err) {
-      aout(this) << "WorkerActor => set_error_handler:" << err << endl;
+      NES_ERROR("WorkerActor => error thrown in error handler:" << to_string(err))
+      assert(0);
     });
+
+    this->set_exception_handler([](std::exception_ptr& err) -> error {
+      try {
+          std::rethrow_exception(err);
+      }
+      catch (const std::exception& e) {
+          NES_ERROR("WorkerActor => error thrown in error handler:" << e.what())
+          assert(0);
+      }
+      assert(0);
+    });
+
     return unconnected();
 }
 
@@ -346,11 +361,9 @@ bool WorkerActor::connecting(const std::string& host, uint16_t port) {
 
     NES_DEBUG("WorkerActor::connecting: register sensor now")
     bool success = registerSensor();
-    if(!success)
-    {
+    if (!success) {
         throw new Exception("Error while register sensor");
-    } else
-    {
+    } else {
         NES_DEBUG("WorkerActor::connecting: register successful")
     }
 
@@ -379,13 +392,14 @@ behavior WorkerActor::running() {
     return {
         // internal rpc to execute a query
         [=](execute_operators_atom, const string& queryId, string& executableTransferObject) {
-          NES_DEBUG("WorkerActor: got request for execute_operators_atom queryId=" << queryId << " eto=" << executableTransferObject)
+          NES_DEBUG("WorkerActor: got request for execute_operators_atom queryId=" << queryId << " eto="
+                                                                                   << executableTransferObject)
           return this->state.workerPtr->executeQuery(queryId, executableTransferObject);
         },
         // internal rpc to unregister a query
         [=](delete_query_atom, const string& queryId) {
           NES_DEBUG("WorkerActor: got request for delete_query_atom queryId=" << queryId)
-            this->state.workerPtr->deleteQuery(queryId);
+          this->state.workerPtr->deleteQuery(queryId);
         },
         // internal rpc to execute a query
         [=](get_operators_atom) {

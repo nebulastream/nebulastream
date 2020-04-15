@@ -34,10 +34,34 @@ behavior CoordinatorActor::init() {
               this->state.topologyActorMap.erase(
                   this->state.actorTopologyMap.at(key));
               this->state.actorTopologyMap.erase(key);
-              NES_DEBUG("CoordinatorActor: Lost connection to worker " << key->id())
+              NES_DEBUG("CoordinatorActor => Lost connection to worker " << key->id())
               key->get()->unregister_from_system();
           }
         });
+
+    this->set_exit_handler([=](const caf::exit_msg& em) {
+      NES_DEBUG("CoordinatorActor => exit via handler:" << to_string(em))
+    });
+
+    this->set_error_handler([=](const caf::error& err) {
+      NES_ERROR("CoordinatorActor => error thrown in error handler:" << to_string(err))
+      assert(0);
+    });
+
+    this->set_exception_handler([](std::exception_ptr& err) -> error {
+      try {
+          std::rethrow_exception(err);
+      }
+      catch (const std::exception& e) {
+          NES_ERROR("CoordinatorActor => error thrown in error handler:" << e.what())
+          assert(0);
+      }
+      assert(0);
+    });
+
+
+
+
     return running();
 }
 
