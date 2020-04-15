@@ -44,13 +44,10 @@ behavior CoordinatorActor::init() {
 
     this->set_error_handler([=](const caf::error& err) {
       NES_WARNING("CoordinatorActor => error thrown in error handler:" << to_string(err))
-      if(err != exit_reason::user_shutdown)
-      {
+      if (err != exit_reason::user_shutdown) {
           NES_ERROR("CoordinatorActor error handle")
-//          throw new Exception("Error while shutdown actor");
-      }
-      else
-      {
+          //          throw new Exception("Error while shutdown actor");
+      } else {
           NES_DEBUG("CoordinatorActor error comes from stopping")
       }
     });
@@ -290,22 +287,19 @@ bool CoordinatorActor::registerSensor(const string& ip, uint16_t publish_port,
 
 bool CoordinatorActor::shutdown() {
     bool success = coordinatorServicePtr->shutdown();
-    if(!success)
-    {
+    if (!success) {
         NES_ERROR("CoordinatorActor::shutdown: error while shutdown coordinatorService")
         throw new Exception("Error while stopping CoordinatorActor::shutdown");
     }
 
     bool success2 = workerServicePtr->shutDown();
-    if(!success2)
-    {
+    if (!success2) {
         NES_ERROR("CoordinatorActor::shutdown: error while shutDown workerService")
         throw new Exception("Error while stopping CoordinatorActor::shutdown");
     }
 
     bool success3 = StreamCatalog::instance().reset();
-    if(!success3)
-    {
+    if (!success3) {
         NES_ERROR("CoordinatorActor::shutdown: error while reset StreamCatalog")
         throw new Exception("Error while stopping CoordinatorActor::shutdown");
     }
@@ -457,38 +451,6 @@ behavior CoordinatorActor::running() {
         [=](terminate_atom) {
           NES_DEBUG("CoordinatorActor::running(): terminate_atom")
           return shutdown();
-        },
-        // external methods for users
-        [=](topology_json_atom) {
-          string topo = coordinatorServicePtr->getTopologyPlanString();
-          NES_DEBUG("CoordinatorActor: Printing Topology");
-          NES_DEBUG(topo);
-        },
-        [=](show_registered_queries_atom) {
-          NES_INFO("CoordinatorActor: Printing Registered Queries");
-          const map registeredQueries = queryCatalogServicePtr->getAllRegisteredQueries();
-          for (auto[key, value] : registeredQueries) {
-              NES_INFO(key << ":" << value);
-          }
-          return registeredQueries.size();
-        },
-        [=](show_running_queries_atom) {
-          NES_INFO("CoordinatorActor: Printing Running Queries");
-          for (const auto& p : coordinatorServicePtr->getRunningQueries()) {
-              NES_INFO(p.first);
-          }
-          return true;
-        },
-        [=](show_reg_log_stream_atom) {
-          NES_INFO("CoordinatorActor: Printing logical streams");
-          auto allLogicalStreams = streamCatalogServicePtr->getAllLogicalStreamAsString();
-          for (auto[key, value] : allLogicalStreams) {
-              NES_INFO(key << ":" << value);
-          }
-        },
-        [=](show_reg_phy_stream_atom) {
-          NES_INFO("CoordinatorActor: Printing physical streams");
-          NES_INFO(StreamCatalog::instance().getPhysicalStreamAndSchemaAsString());
         }
     };
     NES_DEBUG("CoordinatorActor::running end running")
