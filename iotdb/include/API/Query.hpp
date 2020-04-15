@@ -187,7 +187,6 @@ class Query {
 
     // Copy constructors
     Query(const Query&);
-    Query& operator=(const Query& query);
 
     /**
      * @brief Returns string representation of the query.
