@@ -74,15 +74,15 @@ class Query {
      * All records are contained in the result stream
      * @return query
      */
-    Query& combine(const Query& sub_query);
+    Query& combine(const Query& subQuery);
 
     /**
      * @brief: Joins two streams according to the join predicate.
-     * @param sub_query right query.
+     * @param subQuery right query.
      * @param joinPred join predicate.
      * @return query.
      */
-    Query& join(const Query& sub_query,
+    Query& join(const Query& subQuery,
                 const JoinPredicatePtr joinPred);
 
     /**
@@ -103,15 +103,15 @@ class Query {
 
     /**
      * @brief: Adds a file sink, which writes all stream records to the destination file.
-     * @param file_name
+     * @param fileName
      */
-    Query& writeToFile(const std::string& file_name);
+    Query& writeToFile(const std::string& fileName);
 
     /**
      * @brief: Adds a file sink, which writes all stream records to the destination file.
-     * @param file_name
+     * @param fileName
      */
-    Query& writeToCSVFile(const std::string& file_name);
+    Query& writeToCSVFile(const std::string& fileName);
 
     /**
      * @brief: Adds a zmq sink, which writes all stream records with a schema to a destination zmq.
@@ -146,10 +146,10 @@ class Query {
      */
     Query& print(std::ostream& = std::cout);
 
-    int getNextOperatorId() {
-        operatorIdCounter++;
-        return this->operatorIdCounter;
-    }
+    /**
+     * @brief Get next free operator id
+     */
+    size_t getNextOperatorId();
 
     /**
      * @brief Get all source operators
@@ -171,15 +171,20 @@ class Query {
 
     // Copy constructors
     Query(const Query&);
-
     Query& operator=(const Query& query);
+
+    /**
+     * @brief Returns string representation of the query.
+     */
+    std::string toString();
 
   private:
 
-    Query(StreamPtr source_stream);
-    int operatorIdCounter = 0;
+    Query(StreamPtr sourceStreamPtr);
+    size_t operatorIdCounter;
     StreamPtr sourceStream;
-    OperatorNodePtr root;
+    OperatorNodePtr rootNode;
+    void assignOperatorIdAndSwitchTheRoot(OperatorNodePtr op);
 };
 
 typedef std::shared_ptr<Query> QueryPtr;
