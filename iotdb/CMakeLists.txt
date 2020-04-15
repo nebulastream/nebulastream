@@ -113,10 +113,6 @@ endforeach()
 
 message(STATUS " Libraries: ${LIBRARIES}")
 
-
-add_compile_definitions(USE_NEW_BUFFER_MANAGEMENT=1)
-
-
 # Definition of runtime variables ######################################################################################
 
 # Set definition values.
