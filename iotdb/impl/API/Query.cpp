@@ -20,24 +20,22 @@ Query::Query(StreamPtr sourceStreamPtr) : sourceStream(sourceStreamPtr), operato
 Query::Query(const Query& query)
     : sourceStream(query.sourceStream), operatorIdCounter(query.operatorIdCounter), rootNode(query.rootNode) {}
 
-Query& Query::operator=(const Query& query) {
-    this->sourceStream = query.sourceStream;
-    this->operatorIdCounter = query.operatorIdCounter;
-    this->rootNode = query.rootNode;
-    return *this;
-}
-
 Query Query::from(Stream& stream) {
-    Query query(std::make_shared<Stream>(stream));
 
     // TODO:here we assume that all sources are of the same type
     std::vector<StreamCatalogEntryPtr> catalogEntry = StreamCatalog::instance().getPhysicalStreams(stream.getName());
 
-    OperatorNodePtr op;
+    if (catalogEntry.empty()) {
+        NES_ERROR("InputQuery::from stream does not exists this should only be used by tests " << stream.getName())
+        throw std::invalid_argument("Non existing logical stream : " + stream.getName() + " provided");
+    }
+
+    OperatorNodePtr rootNode;
+    Query query(std::make_shared<Stream>(stream));
 
     if (catalogEntry.size() == 0) {
-        NES_WARNING("InputQuery::from stream does not exists this should only be used by tests " << stream.getName())
-        op = createSourceLogicalOperatorNode(createDefaultDataSourceWithSchemaForOneBuffer(stream.getSchema()));
+
+        rootNode = createSourceLogicalOperatorNode(createDefaultDataSourceWithSchemaForOneBuffer(stream.getSchema()));
     } else {
         std::string name = catalogEntry[0]->getPhysicalName();
         std::string type = catalogEntry[0]->getSourceType();
@@ -52,28 +50,29 @@ Query Query::from(Stream& stream) {
         if (type == "DefaultSource") {
             if (numBuffers == 1) {
                 NES_DEBUG("InputQuery::from create default source for one buffer")
-                op = createSourceLogicalOperatorNode(createDefaultDataSourceWithSchemaForOneBuffer(stream.getSchema()));
+                rootNode =
+                    createSourceLogicalOperatorNode(createDefaultDataSourceWithSchemaForOneBuffer(stream.getSchema()));
             } else {
                 NES_DEBUG("InputQuery::from create default source for " << numBuffers << " buffers")
-                op = createSourceLogicalOperatorNode(
+                rootNode = createSourceLogicalOperatorNode(
                     createDefaultDataSourceWithSchemaForVarBuffers(stream.getSchema(), numBuffers, frequency));
             }
         } else if (type == "CSVSource") {
             NES_DEBUG("InputQuery::from create CSV source for " << conf << " buffers")
-            op = createSourceLogicalOperatorNode(createCSVFileSource(stream.getSchema(), /**fileName*/
-                                                                     conf,               /**delimiter**/
-                                                                     ",", numBuffers, frequency));
+            rootNode = createSourceLogicalOperatorNode(createCSVFileSource(stream.getSchema(), /**fileName*/
+                                                                           conf,               /**delimiter**/
+                                                                           ",", numBuffers, frequency));
         } else if (type == "SenseSource") {
             NES_DEBUG("InputQuery::from create Sense source for udfs " << conf)
-            op = createSourceLogicalOperatorNode(createSenseSource(stream.getSchema(), /**udfs*/ conf));
+            rootNode = createSourceLogicalOperatorNode(createSenseSource(stream.getSchema(), /**udfs*/ conf));
         } else {
             NES_ERROR("InputQuery::from source type " << type << " not supported")
             NES_FATAL_ERROR("type not supported")
         }
     }
     int operatorId = query.getNextOperatorId();
-    op->setId(operatorId);
-    query.rootNode = op;
+    rootNode->setId(operatorId);
+    query.rootNode = rootNode;
     return query;
 }
 
