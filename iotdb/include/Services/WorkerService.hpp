@@ -56,10 +56,10 @@ class WorkerService {
   /**
    * @brief method to shut down the worker service, including stop engine and empty all queues
    */
-  void shutDown();
+  bool shutDown();
 
  private:
-  string _ip;
+  string ip;
   uint16_t publishPort;
   uint16_t receivePort;
   QueryCompilerPtr queryCompiler;

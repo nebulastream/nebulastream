@@ -32,8 +32,16 @@ behavior WorkerActor::init() {
     });
 
     this->set_error_handler([=](const caf::error& err) {
-      NES_ERROR("WorkerActor => error thrown in error handler:" << to_string(err))
-      assert(0);
+      NES_WARNING("WorkerActor => error thrown in error handler:" << to_string(err))
+      if(err != exit_reason::user_shutdown)
+      {
+          NES_ERROR("WorkerActor error handle")
+//          throw new Exception("Error while shutdown actor");
+      }
+      else
+      {
+          NES_DEBUG("WorkerActor error comes from stopping")
+      }
     });
 
     this->set_exception_handler([](std::exception_ptr& err) -> error {
