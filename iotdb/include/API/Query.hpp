@@ -126,8 +126,9 @@ class Query {
     /**
      * @brief: Adds a file sink, which writes all stream records to the destination file.
      * @param fileName
+     * @param outputMode
      */
-    Query& writeToCSVFile(const std::string& fileName);
+    Query& writeToCSVFile(const std::string& fileName, const std::string& outputMode);
 
     /**
      * @brief: Adds a zmq sink, which writes all stream records with a schema to a destination zmq.
@@ -135,8 +136,7 @@ class Query {
      * @param host : host where zmq server is running
      * @param port : port zmq server is listening on
      */
-    Query& writeToZmq(const std::string& logicalStreamName,
-                      const std::string& host, const uint16_t& port);
+    Query& writeToZmq(const std::string& logicalStreamName, const std::string& host, const uint16_t& port);
 
     /**
      * @brief write to a kafka sink

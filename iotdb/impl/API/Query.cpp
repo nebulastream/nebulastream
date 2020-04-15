@@ -110,11 +110,20 @@ Query& Query::writeToFile(const std::string& fileName) {
     return *this;
 }
 
-// output operators
-Query& Query::writeToCSVFile(const std::string& fileName) {
+Query& Query::writeToCSVFile(const std::string& file_name, const std::string& outputMode) {
+    OperatorNodePtr op;
+    if (outputMode == "append") {
+        NES_DEBUG("Query::writeToCSVFile: with modus append")
+        op = createSinkLogicalOperatorNode(createCSVFileSinkWithSchemaAppend(this->sourceStream->getSchema(),
+                                                                             file_name));
+    } else if (outputMode == "truncate") {
+        NES_DEBUG("Query::writeToCSVFile: with modus truncate")
+        op = createSinkLogicalOperatorNode(createCSVFileSinkWithSchemaOverwrite(this->sourceStream->getSchema(),
+                                                                                file_name));
+    } else {
+        NES_ERROR("writeToCSVFile mode not supported " << outputMode)
+    }
 
-    OperatorNodePtr op =
-        createSinkLogicalOperatorNode(createCSVFileSinkWithSchema(sourceStream->getSchema(), fileName));
     assignOperatorIdAndSwitchTheRoot(op);
     return *this;
 }
