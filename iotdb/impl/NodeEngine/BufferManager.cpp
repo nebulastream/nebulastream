@@ -294,6 +294,11 @@ void BufferManager::requestShutdown() {
         NES_ERROR("[BufferManager] Requested buffer manager shutdown but it was already blocked");
     }
     shutdownRequested = true;
+    assert(allBuffers.size() == availableBuffers.size());
+    lock.unlock();
+    for (size_t i = 0; i < numOfBuffers; ++i) {
+        assert(allBuffers[i].isAvailable());
+    }
 }
 
 TupleBuffer BufferManager::getBufferBlocking() {

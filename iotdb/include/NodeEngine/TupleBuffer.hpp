@@ -20,7 +20,7 @@ class MemorySegment;
 namespace detail {
 class BufferControlBlock {
   public:
-    explicit BufferControlBlock(MemorySegment* owner, std::function<void(MemorySegment*)> recycleCallback) :
+    explicit BufferControlBlock(MemorySegment* owner, std::function<void(MemorySegment*)>&& recycleCallback) :
         referenceCounter(0), tupleSizeInBytes(0), numberOfTuples(0), owner(owner), recycleCallback(recycleCallback) {
     }
 
@@ -45,9 +45,9 @@ class BufferControlBlock {
         return owner;
     }
 
-    void prepare() {
+    bool prepare() {
         uint32_t expected = 0;
-        assert(referenceCounter.compare_exchange_strong(expected, 1));
+        return referenceCounter.compare_exchange_strong(expected, 1);
     }
 
     BufferControlBlock* retain() {
@@ -60,7 +60,8 @@ class BufferControlBlock {
     }
 
     bool release() {
-        if (referenceCounter.fetch_sub(1) == 1) {
+        uint32_t expected = 1;
+        if (referenceCounter.compare_exchange_strong(expected, 0)) {
             tupleSizeInBytes.store(0);
             numberOfTuples.store(0);
             recycleCallback(owner);
@@ -241,23 +242,29 @@ class MemorySegment {
 
     MemorySegment() : ptr(nullptr), size(0), controlBlock(nullptr, [](MemorySegment*) {}) {}
 
-    explicit MemorySegment(uint8_t* ptr, uint32_t size, std::function<void(MemorySegment*)> recycleFunction)
-        : ptr(ptr), size(size), controlBlock(this, recycleFunction) {
+    explicit MemorySegment(uint8_t* ptr, uint32_t size, std::function<void(MemorySegment*)>&& recycleFunction)
+        : ptr(ptr), size(size), controlBlock(this, std::move(recycleFunction)) {
         assert(this->ptr != nullptr);
         assert(this->size > 0);
     }
 
     ~MemorySegment() {
         if (ptr) {
-            assert(controlBlock.getReferenceCount() == 0);
+            auto refCnt = controlBlock.getReferenceCount();
+            if (refCnt != 0) {
+                assert(false);
+            }
             free(ptr);
             ptr = nullptr;
         }
     }
   private:
     TupleBuffer toTupleBuffer() {
-        controlBlock.prepare();
-        return TupleBuffer(&controlBlock, ptr, size);
+        if (controlBlock.prepare()) {
+            return TupleBuffer(&controlBlock, ptr, size);
+        } else {
+            assert(false);
+        }
     }
 
     bool isAvailable() {
