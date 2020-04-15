@@ -18,163 +18,83 @@
 namespace po = boost::program_options;
 using namespace NES;
 
-void startCLI(NesCoordinatorPtr coord) {
-  bool done = false;
-  infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle = coord
-      ->getActorHandle();
-  // keeps track of requests and tries to reconnect on server failures
-  auto usage = [] {
-    cout << "Usage:" << endl
-    << "  quit                                 : terminates the program" << endl
-    << "  show topology (st)                   : prints the topology" << endl
-    << "  show registered queries (sregq)      : prints the registered queries" << endl
-    << "  show running queries (srunq)         : prints the running queries" << endl
-    << "  show logical streams (sls)           : prints the available logical streams" << endl
-    << "  show physical streams (sph)          : prints the available physical streams" << endl
-    << "  show running operators (sro)         : prints the deployed operators for all connected devices" << endl
-    << "  register <description>               : registers an example query (only 'example' string can be supplied)" << endl
-    << "  deploy <description>                 : executes the example query with BottomUp strategy" << endl
-    << "  delete <description>                 : deletes the example query" << endl
-    << endl;
-  };
-  usage();
+const string logo = "/********************************************************\n"
+                    " *     _   _   ______    _____\n"
+                    " *    | \\ | | |  ____|  / ____|\n"
+                    " *    |  \\| | | |__    | (___\n"
+                    " *    | . ` | |  __|    \\___ \\     Coordinator\n"
+                    " *    | |\\  | | |____   ____) |\n"
+                    " *    |_| \\_| |______| |_____/\n"
+                    " *\n"
+                    " ********************************************************/";
 
-  message_handler eval { [&](string &arg0) {
-    if (arg0 == "quit") {
-      done = true;
-      CoordinatorActorConfig actorCoordinatorConfig;
-      anon_send_exit(coordinatorActorHandle, exit_reason::user_shutdown);
-      io::unpublish(coordinatorActorHandle,
-                    actorCoordinatorConfig.publish_port);
-      return true;
-    } else if (arg0 == "st") {
-      anon_send(coordinatorActorHandle, topology_json_atom::value);
-    } else if (arg0 == "sregq") {
-      anon_send(coordinatorActorHandle, show_registered_queries_atom::value);
-    } else if (arg0 == "srunq") {
-      anon_send(coordinatorActorHandle, show_running_queries_atom::value);
-    } else if (arg0 == "sro") {
-      anon_send(coordinatorActorHandle, show_running_operators_atom::value);
-    } else if (arg0 == "sls") {
-      cout << "sls" << endl;
-      anon_send(coordinatorActorHandle, show_reg_log_stream_atom::value);
-    } else if (arg0 == "sph") {
-      anon_send(coordinatorActorHandle, show_reg_phy_stream_atom::value);
-    } else {
-      cout << "Unknown command " << arg0 << endl;
+int main(int argc, const char* argv[]) {
+    NES::setupLogging("nesCoordinatorStarter.log", NES::LOG_DEBUG);
+    cout << logo << endl;
+
+    // Initializing defaults
+    uint16_t port = 8081;
+    uint16_t actorPort = 0;
+    std::string host = "localhost";
+    std::string serverIp = "localhost";
+
+    po::options_description serverOptions("Nes Coordinator Server Options");
+    serverOptions.add_options()(
+        "rest_host", po::value<std::string>(),
+        "Set NES Coordinator server host address (default: localhost).")
+        ("server_ip", po::value<string>(&serverIp)->default_value(serverIp),
+         "Set NES server ip (default: localhost).")
+        (
+            "rest_port", po::value<uint16_t>(),
+            "Set NES REST server port (default: 8081).")(
+        "actor_port", po::value<uint16_t>(&actorPort)->default_value(actorPort),
+        "Set NES actor server port (default: 0).")
+        ("help", "Display help message");
+
+
+    /* Parse parameters. */
+    po::variables_map vm;
+    try {
+        po::store(po::command_line_parser(argc, argv).options(serverOptions).run(), vm);
+        po::notify(vm);
+    } catch (const std::exception& e) {
+        std::cerr << "Failure while parsing connection parameters!" << std::endl;
+        std::cerr << e.what() << std::endl;
+        return EXIT_FAILURE;
     }
-  },
-  [&](string &arg0, string &arg1) {
-    if ((arg0 == "show" && arg1 == "topology")) {
-      anon_send(coordinatorActorHandle, topology_json_atom::value);
-    } else if (arg0 == "deploy" && !arg1.empty()) {
-      anon_send(coordinatorActorHandle, deploy_query_atom::value, arg1);
-    } else if (arg0 == "delete" && !arg1.empty()) {
-      anon_send(coordinatorActorHandle, deregister_query_atom::value, arg1);
-    } else if (arg0 == "register") {
-      anon_send(coordinatorActorHandle, register_query_atom::value, arg1,
-                "BottomUp");
-    } else {
-      cout << "Unknown command " << arg0 << "," << arg1 << endl;
+
+    if (vm.count("help")) {
+        std::cout << "Basic Command Line Parameter " << std::endl << serverOptions
+                  << std::endl;
+        return 0;
     }
-  },
-  [&](string &arg0, string &arg1, string &arg2) {
-    if (arg0 == "register") {
-      anon_send(coordinatorActorHandle, register_query_atom::value, arg1, arg2);
-    } else if ((arg0 == "show" && arg1 == "registered" && arg2 == "queries")) {
-      anon_send(coordinatorActorHandle, show_registered_queries_atom::value);
-    } else if ((arg0 == "show" && arg1 == "running" && arg2 == "queries")) {
-      anon_send(coordinatorActorHandle, show_running_queries_atom::value);
-    } else if ((arg0 == "show" && arg1 == "running" && arg2 == "operators")) {
-      anon_send(coordinatorActorHandle, show_running_operators_atom::value);
-    } else if ((arg0 == "show" && arg1 == "logical" && arg2 == "streams")) {
-      anon_send(coordinatorActorHandle, show_reg_log_stream_atom::value);
-    } else if ((arg0 == "show" && arg1 == "physical" && arg2 == "streams")) {
-      anon_send(coordinatorActorHandle, show_reg_phy_stream_atom::value);
-    } else {
-      cout << "Unknown command " << arg0 << "," << arg1 << "," << arg2 << endl;
+
+    bool changed = false;
+    if (vm.count("rest_host")) {
+        host = vm["rest_host"].as<std::string>();
+        changed = true;
     }
-  } };
-  // read next line, split it, and feed to the eval handler
-  string line;
-  while (!done && std::getline(std::cin, line)) {
-    cout << "line=" << line << " done=" << done << endl;
-    line = NES::UtilityFunctions::trim(std::move(line));  // ignore leading and trailing whitespaces
-    std::vector<string> words;
-    split(words, line, is_any_of(" "), token_compress_on);
-    if (!message_builder(words.begin(), words.end()).apply(eval))
-      usage();
-  }
-}
 
-int main(int argc, const char *argv[]) {
-  NES::setupLogging("nesCoordinatorStarter.log", NES::LOG_DEBUG);
+    if (vm.count("rest_port")) {
+        port = vm["rest_port"].as<uint16_t>();
+        changed = true;
+    }
 
-  // Initializing defaults
-  uint16_t port = 8081;
-  uint16_t actorPort = 0;
-  std::string host = "localhost";
-  std::string serverIp = "localhost";
+    cout << "creating coordinator" << endl;
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
 
-  po::options_description serverOptions("Coordinator Server Options");
-  serverOptions.add_options()(
-      "rest_host", po::value<std::string>(),
-      "Set NES Coordinator server host address (default: localhost).")
-      ("server_ip", po::value<string>(&serverIp)->default_value(serverIp),
-                                 "Set NES server ip (default: localhost).")
-      (
-      "rest_port", po::value<uint16_t>(),
-      "Set NES REST server port (default: 8081).")(
-      "actor_port", po::value<uint16_t>(&actorPort)->default_value(actorPort),
-      "Set NES actor server port (default: 0).");
+    if (changed) {
+        cout << "config changed thus rest params" << endl;
+        crd->setRestConfiguration(host, port);
+    }
+    if (serverIp != "localhost") {
+        cout << "set server ip to " << serverIp << endl;
+        crd->setServerIp(serverIp);
+    }
 
-  /* All program options for command line. */
-  po::options_description commandlineOptions;
-  commandlineOptions.add(serverOptions);
+    cout << "start coordinator with port " << actorPort << endl;
+    crd->startCoordinator(/**blocking**/true, actorPort);
 
-  /* Parse parameters. */
-  po::variables_map vm;
-  try {
-    po::store(po::parse_command_line(argc, argv, commandlineOptions), vm);
-    po::notify(vm);
-  } catch (const std::exception &e) {
-    std::cerr << "Failure while parsing connection parameters!" << std::endl;
-    std::cerr << e.what() << std::endl;
-    return EXIT_FAILURE;
-  }
-
-  bool changed = false;
-  if (vm.count("rest_host")) {
-    host = vm["rest_host"].as<std::string>();
-    changed = true;
-  }
-
-  if (vm.count("rest_port")) {
-    port = vm["rest_port"].as<uint16_t>();
-    changed = true;
-  }
-
-  cout << "creating coordinator" << endl;
-
-  NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
-
-  if (changed) {
-    cout << "config changed thus rest params" << endl;
-    crd->setRestConfiguration(host, port);
-  }
-  if(serverIp != "localhost")
-  {
-    cout << "set server ip to " << serverIp << endl;
-    crd->setServerIp(serverIp);
-  }
-
-  cout << "start coordinator with port " << actorPort << endl;
-  crd->startCoordinator(/**blocking**/true, actorPort);
-
-  cout << "coordinator started" << endl;
-
-  cout << "start CLI" << endl;
-  startCLI(crd);
-
+    cout << "coordinator started" << endl;
 }
 
