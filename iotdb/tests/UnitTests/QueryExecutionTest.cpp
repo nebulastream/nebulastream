@@ -20,7 +20,7 @@ class QueryExecutionTest : public testing::Test {
     static void SetUpTestCase() {
         std::cout << "Setup QueryCatalogTest test class." << std::endl;
         NES::Dispatcher::instance();
-        NES::BufferManager::instance().configure(4096,1024);
+        NES::BufferManager::instance().configure(4096, 1024);
         NES::ThreadPool::instance();
     }
 
@@ -57,13 +57,13 @@ class QueryExecutionTest : public testing::Test {
         std::cout << "Tear down QueryCatalogTest test case." << std::endl;
     }
 
-  /* Will be called after all tests in this class are finished. */
-  static void TearDownTestCase() {
-    std::cout << "Tear down QueryCatalogTest test class." << std::endl;
-  }
-  TupleBufferPtr testInputBuffer;
-  Schema testSchema;
-  MemoryLayoutPtr memoryLayout;
+    /* Will be called after all tests in this class are finished. */
+    static void TearDownTestCase() {
+        std::cout << "Tear down QueryCatalogTest test class." << std::endl;
+    }
+    TupleBuffer testInputBuffer;
+    Schema testSchema;
+    MemoryLayoutPtr memoryLayout;
 };
 
 class TestSink : public DataSink {
@@ -85,7 +85,7 @@ class TestSink : public DataSink {
     void setup() override {
     };
     void shutdown() override {
-        for(auto b: resultBuffers){
+        for (auto b: resultBuffers) {
             b.release();
         }
     };
@@ -101,6 +101,18 @@ class TestSink : public DataSink {
 
     std::vector<TupleBuffer> resultBuffers;
 };
+
+void fillBuffer(TupleBuffer& buf, MemoryLayoutPtr memoryLayout) {
+    for (int recordIndex = 0; recordIndex < 10; recordIndex++) {
+        memoryLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/0)->write(
+            buf, recordIndex);
+        memoryLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/1)->write(
+            buf, 1);
+        memoryLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/2)->write(
+            buf, recordIndex%2);
+    }
+    buf.setNumberOfTuples(10);
+}
 
 TEST_F(QueryExecutionTest, filterQuery) {
 
@@ -124,8 +136,9 @@ TEST_F(QueryExecutionTest, filterQuery) {
 
     // The plan should have one pipeline
     EXPECT_EQ(plan->numberOfPipelineStages(), 1);
-
-    plan->executeStage(0, testInputBuffer);
+    auto buffer = BufferManager::instance().getBufferBlocking();
+    fillBuffer(buffer, memoryLayout);
+    plan->executeStage(0, buffer);
 
     // This plan should produce one output buffer
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 1);
@@ -137,7 +150,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
     for (int recordIndex = 0; recordIndex < 5; recordIndex++) {
         EXPECT_EQ(
             memoryLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/0)->read(
-                testInputBuffer),
+                buffer),
             recordIndex);
     }
 }
@@ -176,9 +189,11 @@ TEST_F(QueryExecutionTest, windowQuery) {
     // The plan should have one pipeline
     EXPECT_EQ(plan->numberOfPipelineStages(), 2);
     // TODO switch to event time if that is ready to remove sleep
+    auto buffer = BufferManager::instance().getBufferBlocking();
+    fillBuffer(buffer, memoryLayout);
     // ingest test data
     for (int i = 0; i < 10; i++) {
-        plan->executeStage(0, testInputBuffer);
+        plan->executeStage(0, buffer);
         sleep(1);
     }
     plan->stop();

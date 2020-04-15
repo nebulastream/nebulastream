@@ -57,11 +57,12 @@ class SourceTest : public testing::Test {
   static void SetUpTestCase() {
     NES::setupLogging("SourceTest.log", NES::LOG_DEBUG);
     NES_INFO("Setup SourceTest test class.");
-    BufferManager::instance().reset();
+    BufferManager::instance().configure(78, 4096);
   }
 
   static void TearDownTestCase() {
     std::cout << "Tear down SourceTest test class." << std::endl;
+    BufferManager::instance().requestShutdown();
   }
 
   void TearDown() {
@@ -84,24 +85,21 @@ TEST_F(SourceTest, testBinarySource) {
   uint64_t tuple_size = schema->getSchemaSizeInBytes();
   uint64_t buffer_size = num_tuples_to_process * tuple_size / num_of_buffers;
   assert(buffer_size > 0);
-  BufferManager::instance().resizeFixedBufferCnt(0);
-  BufferManager::instance().resizeFixedBufferCnt(num_of_buffers);
-  BufferManager::instance().resizeFixedBufferSize(buffer_size);
 
   const DataSourcePtr source = (*funcPtr)(schema, path_to_file);
 
   while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
-    TupleBufferPtr buf = source->receiveData();
+    auto optBuf = source->receiveData();
+    auto buf = *optBuf;
     size_t i = 0;
     while (i * tuple_size < buffer_size) {
-      ysbRecord record(
-          *((ysbRecord*) ((char*) buf->getBuffer() + i * tuple_size)));
+      auto record = buf.getBufferAs<ysbRecord>() + i;
       // std::cout << "record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type << std::endl;
-      EXPECT_STREQ(record.ad_type, "banner78");
+      EXPECT_STREQ(record->ad_type, "banner78");
       EXPECT_TRUE(
-          (!strcmp(record.event_type, "view")
-              || !strcmp(record.event_type, "click")
-              || !strcmp(record.event_type, "purchase")));
+          (!strcmp(record->event_type, "view")
+              || !strcmp(record->event_type, "click")
+              || !strcmp(record->event_type, "purchase")));
       i++;
     }
   }
@@ -128,20 +126,20 @@ TEST_F(SourceTest, testCSVSource) {
       uint64_t num_tuples_to_process = 1000;
       size_t num_of_buffers = 1000;
       uint64_t tuple_size = schema->getSchemaSizeInBytes();
-      uint64_t buffer_size = num_tuples_to_process * tuple_size / num_of_buffers;
+      uint64_t buffer_size =  num_tuples_to_process * tuple_size / num_of_buffers;
       assert(buffer_size > 0);
-      BufferManager::instance().resizeFixedBufferCnt(num_of_buffers);
-      BufferManager::instance().resizeFixedBufferSize(buffer_size);
+//      BufferManager::instance().resizeFixedBufferCnt(num_of_buffers);
+//      BufferManager::instance().resizeFixedBufferSize(buffer_size);
 
       const DataSourcePtr source = (*funcPtr)(schema, path_to_file, del, num,
                                               frequency);
 
       while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
-        TupleBufferPtr buf = source->receiveData();
+        auto optBuf = source->receiveData();
         size_t i = 0;
-        while (i * tuple_size < buffer_size) {
+        while (i * tuple_size < buffer_size && !!optBuf) {
           ysbRecord record(
-              *((ysbRecord*) ((char*) buf->getBuffer() + i * tuple_size)));
+              *((ysbRecord*) (optBuf->getBufferAs<char>() + i * tuple_size)));
           // std::cout << "record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type << std::endl;
           EXPECT_STREQ(record.ad_type, "banner78");
           EXPECT_TRUE(
@@ -173,9 +171,9 @@ TEST_F(SourceTest, testSenseSource) {
   uint64_t tuple_size = schema->getSchemaSizeInBytes();
   uint64_t buffer_size = num_tuples_to_process * tuple_size / num_of_buffers;
   assert(buffer_size > 0);
-  BufferManager::instance().resizeFixedBufferCnt(0);
-  BufferManager::instance().resizeFixedBufferCnt(num_of_buffers);
-  BufferManager::instance().resizeFixedBufferSize(buffer_size);
+//  BufferManager::instance().resizeFixedBufferCnt(0);
+//  BufferManager::instance().resizeFixedBufferCnt(num_of_buffers);
+//  BufferManager::instance().resizeFixedBufferSize(buffer_size);
 
   const DataSourcePtr source = (*funcPtr)(schema, testUDFS);
 

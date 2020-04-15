@@ -144,8 +144,9 @@ const std::string toString(void* value, DataTypePtr type) {
 }
 
 std::string toString(TupleBuffer& buffer, const Schema& schema) {
-    if (!buffer.isValid())
+    if (!buffer.isValid()) {
         return "INVALID_BUFFER_PTR";
+    }
     std::stringstream str;
     std::vector<uint32_t> offsets;
     std::vector<DataTypePtr> types;
