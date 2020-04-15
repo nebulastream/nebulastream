@@ -67,12 +67,15 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
     }
 
     ~CoordinatorActor();
-
+  private:
     behavior_type make_behavior() override {
         return init();
     }
 
-  private:
+    friend class NesCoordinator;
+    friend class QueryController;
+    friend class QueryCatalogController;
+
     caf::behavior init();
     caf::behavior running();
 
@@ -151,27 +154,23 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
     /**
      * @brief: deploy the user query
      * @param queryId
+     * @return bool indicating success
      */
-    void deployQuery(const string& queryId);
+    bool deployQuery(const string& queryId);
 
     /**
      * @brief method which is called to unregister an already running query
      * @param queryId of the query to be de-registered
      * @bool indicating the success of the disconnect
      */
-    void deregisterQuery(const string& queryId);
-
-    /**
-     * @brief send messages to all connected devices and get their operators
-     */
-    void showOperators();
+    bool deregisterQuery(const string& queryId);
 
     /**
      * @brief initialize the NES topology and add coordinator node
      */
     void initializeNESTopology();
 
-    void shutdown();
+    bool shutdown();
 
     /**
      * @brief method to get own id

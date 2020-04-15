@@ -11,7 +11,6 @@ size_t getIdFromHandle(caf::strong_actor_ptr curSender) {
     std::hash<std::string> hashFn;
     string idWithoutStart = to_string(curSender).substr(to_string(curSender).find("@") + 1);
     return hashFn(idWithoutStart);
-
 }
 
 behavior CoordinatorActor::init() {
@@ -44,8 +43,16 @@ behavior CoordinatorActor::init() {
     });
 
     this->set_error_handler([=](const caf::error& err) {
-      NES_ERROR("CoordinatorActor => error thrown in error handler:" << to_string(err))
-      assert(0);
+      NES_WARNING("CoordinatorActor => error thrown in error handler:" << to_string(err))
+      if(err != exit_reason::user_shutdown)
+      {
+          NES_ERROR("CoordinatorActor error handle")
+//          throw new Exception("Error while shutdown actor");
+      }
+      else
+      {
+          NES_DEBUG("CoordinatorActor error comes from stopping")
+      }
     });
 
     this->set_exception_handler([](std::exception_ptr& err) -> error {
@@ -58,9 +65,6 @@ behavior CoordinatorActor::init() {
       }
       assert(0);
     });
-
-
-
 
     return running();
 }
@@ -284,24 +288,42 @@ bool CoordinatorActor::registerSensor(const string& ip, uint16_t publish_port,
     return true;
 }
 
-void CoordinatorActor::shutdown() {
-    coordinatorServicePtr->shutdown();
-    workerServicePtr->shutDown();
-    StreamCatalog::instance().reset();
+bool CoordinatorActor::shutdown() {
+    bool success = coordinatorServicePtr->shutdown();
+    if(!success)
+    {
+        NES_ERROR("CoordinatorActor::shutdown: error while shutdown coordinatorService")
+        throw new Exception("Error while stopping CoordinatorActor::shutdown");
+    }
+
+    bool success2 = workerServicePtr->shutDown();
+    if(!success2)
+    {
+        NES_ERROR("CoordinatorActor::shutdown: error while shutDown workerService")
+        throw new Exception("Error while stopping CoordinatorActor::shutdown");
+    }
+
+    bool success3 = StreamCatalog::instance().reset();
+    if(!success3)
+    {
+        NES_ERROR("CoordinatorActor::shutdown: error while reset StreamCatalog")
+        throw new Exception("Error while stopping CoordinatorActor::shutdown");
+    }
+
     QueryCatalog::instance().clearQueries();
     this->state.actorTopologyMap.clear();
     this->state.idToActorMap.clear();
     this->state.topologyActorMap.clear();
+
+    return true;
 }
 
-void CoordinatorActor::deployQuery(const string& queryId) {
+bool CoordinatorActor::deployQuery(const string& queryId) {
     map<NESTopologyEntryPtr, ExecutableTransferObject> deployments =
         coordinatorServicePtr->prepareExecutableTransferObject(queryId);
 
     NES_DEBUG(
         "CoordinatorActor::deployQuery deploy " << deployments.size() << " objects")
-
-    std::promise<bool> prom;
 
     for (auto const& x : deployments) {
         NES_DEBUG("CoordinatorActor::deployQuery serialize " << x.first << " id=" << x.first->getId() << " eto="
@@ -318,9 +340,10 @@ void CoordinatorActor::deployQuery(const string& queryId) {
         //TODO: currently deploy and execute are one phase such that we cannot wait
     }
     QueryCatalog::instance().markQueryAs(queryId, QueryStatus::Running);
+    return true;
 }
 
-void CoordinatorActor::deregisterQuery(const string& queryId) {
+bool CoordinatorActor::deregisterQuery(const string& queryId) {
     // send command to all corresponding nodes to stop the running query as well
     for (auto const& x : this->state.actorTopologyMap) {
         auto handle = actor_cast<actor>(x.first);
@@ -328,29 +351,7 @@ void CoordinatorActor::deregisterQuery(const string& queryId) {
             "CoordinatorActor: Sending deletion request " << queryId << " to " << to_string(handle));
         this->request(handle, task_timeout, delete_query_atom::value, queryId);
     }
-    coordinatorServicePtr->deleteQuery(queryId);
-}
-
-void CoordinatorActor::showOperators() {
-    for (auto const& x : this->state.actorTopologyMap) {
-        strong_actor_ptr curSender = x.first;
-        auto handle = actor_cast<actor>(curSender);
-
-        this->request(handle, task_timeout, get_operators_atom::value).then(
-            [=](const vector<string>& vec) {
-              std::ostringstream ss;
-              ss << x.second->getEntryTypeString() << "::" << to_string(handle) << ":"
-                 << endl;
-
-              aout(this) << ss.str() << vec << endl;
-            },
-            [=](const error& er) {
-              string error_msg = to_string(er);
-              NES_ERROR(
-                  "CoordinatorActor: Error during showOperators for " << to_string(handle) << "\n"
-                                                                      << error_msg);
-            });
-    }
+    return coordinatorServicePtr->deleteQuery(queryId);
 }
 
 string CoordinatorActor::registerQuery(const string& queryString,
@@ -436,11 +437,11 @@ behavior CoordinatorActor::running() {
           return registerQuery(description, strategy);
         },
         [=](deregister_query_atom, const string& queryId) {
-          deregisterQuery(queryId);
+          return deregisterQuery(queryId);
         },
         [=](deploy_query_atom,
             const string& description) {  //TODO:chef if we really need this except for testing
-          deployQuery(description);
+          return deployQuery(description);
         },
         //worker specific methods
         [=](execute_operators_atom, const string& description, string& executableTransferObject) {
@@ -455,14 +456,13 @@ behavior CoordinatorActor::running() {
         },
         [=](terminate_atom) {
           NES_DEBUG("CoordinatorActor::running(): terminate_atom")
-          shutdown();
+          return shutdown();
         },
         // external methods for users
         [=](topology_json_atom) {
           string topo = coordinatorServicePtr->getTopologyPlanString();
           NES_DEBUG("CoordinatorActor: Printing Topology");
           NES_DEBUG(topo);
-
         },
         [=](show_registered_queries_atom) {
           NES_INFO("CoordinatorActor: Printing Registered Queries");
@@ -477,6 +477,7 @@ behavior CoordinatorActor::running() {
           for (const auto& p : coordinatorServicePtr->getRunningQueries()) {
               NES_INFO(p.first);
           }
+          return true;
         },
         [=](show_reg_log_stream_atom) {
           NES_INFO("CoordinatorActor: Printing logical streams");
@@ -488,10 +489,6 @@ behavior CoordinatorActor::running() {
         [=](show_reg_phy_stream_atom) {
           NES_INFO("CoordinatorActor: Printing physical streams");
           NES_INFO(StreamCatalog::instance().getPhysicalStreamAndSchemaAsString());
-        },
-        [=](show_running_operators_atom) {
-          NES_INFO("CoordinatorActor: Requesting deployed operators from connected devices..");
-          this->showOperators();
         }
     };
     NES_DEBUG("CoordinatorActor::running end running")

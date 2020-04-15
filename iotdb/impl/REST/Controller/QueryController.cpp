@@ -53,7 +53,6 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                 )
                 .wait();
         } else if (path[1] == "execution-plan") {
-
             message.extract_string(true)
                 .then([this, message](utility::string_t body) {
                         try {
@@ -116,26 +115,10 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                             std::cout << "Params: userQuery= " << userQuery << ", strategyName= "
                                       << optimizationStrategyName << std::endl;
 
-                            //Perform async call for deploying the query using actor
-                            //Note: This is an async call and would not know if the deployment has failed
-                            CoordinatorActorConfig actorCoordinatorConfig;
-                            actorCoordinatorConfig.load<io::middleman>();
-                            //Prepare Actor System
-                            actor_system actorSystem{actorCoordinatorConfig};
-                            scoped_actor self{actorSystem};
-
-                            string queryId;
-                            self->request(coordinatorActorHandle,
-                                          task_timeout,
-                                          execute_query_atom::value,
-                                          userQuery,
-                                          optimizationStrategyName).receive(
-                                [&queryId](const string& _uuid) mutable {
-                                  queryId = _uuid;
-                                },
-                                [=](const error& er) {
-                                  string error_msg = to_string(er);
-                                });
+                            abstract_actor* abstractActor = caf::actor_cast<abstract_actor*>(coordinatorActorHandle);
+                            CoordinatorActor* crd = dynamic_cast<CoordinatorActor*>(abstractActor);
+                            string queryId = crd->executeQuery(userQuery,
+                                                               optimizationStrategyName);
 
                             json::value restResponse{};
                             restResponse["queryId"] = json::value::string(queryId);

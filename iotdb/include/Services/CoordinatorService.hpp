@@ -129,7 +129,7 @@ class CoordinatorService {
      */
     bool clearQueryCatalogs();
 
-    void shutdown();
+    bool shutdown();
 
     const map<string, QueryCatalogEntryPtr> getRegisteredQueries();
     const map<string, QueryCatalogEntryPtr> getRunningQueries();

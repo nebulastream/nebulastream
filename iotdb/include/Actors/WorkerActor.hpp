@@ -37,10 +37,13 @@ class WorkerActor : public stateful_actor<WorkerState> {
      * @param actor config
      * @param ip of this worker
      * @param publish port of this worker
-     * @param receive port of thsi worker
+     * @param receive port of this worker
      */
     explicit WorkerActor(actor_config& cfg, string ip, uint16_t publish_port,
                          uint16_t receive_port);
+
+  private:
+    friend class NesWorker;
 
     behavior_type make_behavior() override {
         return init();

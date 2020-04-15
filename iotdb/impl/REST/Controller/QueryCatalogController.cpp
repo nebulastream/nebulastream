@@ -78,19 +78,14 @@ void QueryCatalogController::handleDelete(std::vector<utility::string_t> path, w
 
                         //Perform async call for deleting the query using actor
                         //Note: This is an async call and would not know if the deletion has failed
-                        CoordinatorActorConfig actorCoordinatorConfig;
-                        actorCoordinatorConfig.load<io::middleman>();
-                        //Prepare Actor System
-                        actor_system actorSystem{actorCoordinatorConfig};
-                        scoped_actor self{actorSystem};
-
-                        self->request(coordinatorActorHandle,
-                                      task_timeout,
-                                      deregister_query_atom::value,
-                                      queryId);
+                        abstract_actor* abstractActor = caf::actor_cast<abstract_actor*>(coordinatorActorHandle);
+                        CoordinatorActor* crd = dynamic_cast<CoordinatorActor*>(abstractActor);
+                        bool success = crd->deregisterQuery(queryId);
 
                         //Prepare the response
                         json::value result{};
+                        result["success"] = json::value::boolean(success);
+
                         successMessageImpl(message, result);
                         return;
                     } catch (...) {

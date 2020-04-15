@@ -38,10 +38,10 @@ bool NesWorker::setWithParent(std::string parentId) {
 
 bool NesWorker::start(bool blocking, bool withConnect, uint16_t port, std::string serverIp) {
     NES_DEBUG("NesWorker: start with blocking " << blocking << " serverIp=" << serverIp << " port=" << port)
-
     workerCfg.load<io::middleman>();
-    workerCfg.printCfg();
     workerCfg.host = serverIp;
+    workerCfg.printCfg();
+
     coordinatorPort = port;
     actorSystem = new actor_system{workerCfg};
 
@@ -94,7 +94,7 @@ bool NesWorker::stop() {
     NES_DEBUG("NesWorker: stop")
     bool success = wrk->shutdown();
     anon_send(workerHandle, exit_reason::user_shutdown);
-    NES_DEBUG("NesWorker::connect success=" << success)
+    NES_DEBUG("NesWorker::stop success=" << success)
     return success;
 }
 

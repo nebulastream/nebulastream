@@ -129,8 +129,9 @@ class StreamCatalog {
 
   /**
    * @brief reset the catalog and recreate the default_logical stream
+   * @return bool indicating success
    */
-  void reset();
+  bool reset();
 
   /**
    * @brief Return a list of logical stream names registered at catalog

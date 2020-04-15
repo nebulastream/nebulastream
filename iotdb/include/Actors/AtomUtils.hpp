@@ -37,7 +37,6 @@ using deploy_query_atom = atom_constant<atom("deploy")>;
 using topology_json_atom = atom_constant<atom("topology")>;
 using show_registered_queries_atom = atom_constant<atom("s_reg")>;
 using show_running_queries_atom = atom_constant<atom("s_run")>;
-using show_running_operators_atom = atom_constant<atom("s_ops")>;
 using show_reg_log_stream_atom = atom_constant<atom("s_log_str")>;
 using show_reg_phy_stream_atom = atom_constant<atom("s_phy_str")>;
 
