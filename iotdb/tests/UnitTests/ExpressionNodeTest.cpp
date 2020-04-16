@@ -1,5 +1,5 @@
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
-#include <Nodes/Expressions/FieldReadExpressionNode.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
@@ -38,7 +38,7 @@ TEST_F(ExpressionNodeTest, predicateConstruction) {
 
     // check if expression is a predicate
     ASSERT_TRUE(expression->isPredicate());
-    auto fieldRead = FieldReadExpressionNode::create(createDataType(INT64), "field_1");
+    auto fieldRead = FieldAccessExpressionNode::create(createDataType(INT64), "field_1");
     auto constant = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT64, "10"));
     auto lessThen = LessEqualsExpressionNode::create(fieldRead, constant);
     ASSERT_TRUE(lessThen->isPredicate());

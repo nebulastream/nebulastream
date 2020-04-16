@@ -1,7 +1,7 @@
-#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
-#include <Nodes/Node.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
-#include <Nodes/Expressions/FieldReadExpressionNode.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Nodes/Node.hpp>
+#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
 
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
@@ -65,9 +65,9 @@ UserAPIExpressionPtr TranslateToLegacyPlanPhase::transformExpression(ExpressionN
         auto constantValueExpression = expression->as<ConstantValueExpressionNode>();
         auto value = constantValueExpression->getConstantValue();
         return PredicateItem(value).copy();
-    } else if (expression->instanceOf<FieldReadExpressionNode>()) {
+    } else if (expression->instanceOf<FieldAccessExpressionNode>()) {
         // Translate field read expression node.
-        auto fieldReadExpression = expression->as<FieldReadExpressionNode>();
+        auto fieldReadExpression = expression->as<FieldAccessExpressionNode>();
         auto fieldName = fieldReadExpression->getFieldName();
         auto value = fieldReadExpression->getStamp();
         return Field(AttributeField(fieldName, value).copy()).copy();

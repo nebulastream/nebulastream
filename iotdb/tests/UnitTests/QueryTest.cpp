@@ -8,7 +8,7 @@
 #include <API/Types/DataTypes.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
-#include <Nodes/Expressions/FieldReadExpressionNode.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
@@ -61,7 +61,7 @@ TEST_F(QueryTest, testQueryFilter) {
 
     Stream def = Stream("default_logical", schema);
 
-    auto fieldRead = FieldReadExpressionNode::create(createDataType(INT64), "field_1");
+    auto fieldRead = FieldAccessExpressionNode::create(createDataType(INT64), "field_1");
     auto constant = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT64, "10"));
     auto filterPredicate = LessEqualsExpressionNode::create(fieldRead, constant);
     Query& query = Query::from(def).filter(filterPredicate).print(std::cout);

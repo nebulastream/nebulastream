@@ -16,12 +16,12 @@
 #include <SourceSink/DefaultSource.hpp>
 #include <memory>
 
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <SourceSink/SinkCreator.hpp>
-#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
-#include <Nodes/Expressions/FieldReadExpressionNode.hpp>
-#include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 
 namespace NES {
 
@@ -1396,7 +1396,7 @@ TEST_F(LogicalOperatorNodeTest, translateToLagacyOperatorTree) {
     auto printSink = createPrintSinkWithSchema(schema, std::cout);
     auto sinkOperator = createSinkLogicalOperatorNode(printSink);
     auto constValue = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "1"));
-    auto fieldRead = FieldReadExpressionNode::create(createDataType(BasicType::INT8), "FieldName");
+    auto fieldRead = FieldAccessExpressionNode::create(createDataType(BasicType::INT8), "FieldName");
     auto andNode = EqualsExpressionNode::create(constValue, fieldRead);
     auto filter = createFilterLogicalOperatorNode(andNode);
     sinkOperator->addChild(filter);
