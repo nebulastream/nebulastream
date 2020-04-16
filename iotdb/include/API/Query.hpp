@@ -11,6 +11,7 @@
 #include <string>
 #include <SourceSink/DataSource.hpp>
 #include <cppkafka/configuration.h>
+#include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 
 namespace NES {
 
@@ -102,49 +103,11 @@ class Query {
     Query& to(const std::string& name);
 
     /**
-     * @brief: Adds a file sink, which writes all stream records to the destination file.
-     * @param fileName
+     * @brief Add sink operator for the query
+     * @param sinkDescriptor : pointer to the descriptor of the sink
+     *
      */
-    Query& writeToFile(const std::string& fileName);
-
-    /**
-     * @brief: Adds a file sink, which writes all stream records to the destination file.
-     * @param fileName
-     * @param outputMode
-     */
-    Query& writeToCSVFile(const std::string& fileName, const std::string& outputMode);
-
-    /**
-     * @brief: Adds a zmq sink, which writes all stream records with a schema to a destination zmq.
-     * @param stream from where to get the schema
-     * @param host : host where zmq server is running
-     * @param port : port zmq server is listening on
-     */
-    Query& writeToZmq(const std::string& logicalStreamName, const std::string& host, const uint16_t& port);
-
-    /**
-     * @brief write to a kafka sink
-     * @param brokers: broker list
-     * @param topic: kafka topic to write to
-     * @param kafkaProducerTimeout: kafka producer timeout
-     * @return this object
-     */
-    Query& writeToKafka(const std::string& brokers, const std::string& topic,
-                        const size_t kafkaProducerTimeout);
-
-    /**
-     * @brief write to a kafka sink
-     * @param topic: kafka topic to write to
-     * @param config: kafka producer configuration
-     * @return this object
-     */
-    Query& writeToKafka(const std::string& topic,
-                        const cppkafka::Configuration& config);
-
-    /**
-     * Adds a print sink, which prints all query results to the output stream.
-     */
-    Query& print(std::ostream& = std::cout);
+    Query& sink(const SinkDescriptorPtr sinkDescriptor);
 
     /**
      * @brief Get next free operator id
