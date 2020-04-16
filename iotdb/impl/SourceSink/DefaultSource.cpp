@@ -64,7 +64,7 @@ std::optional<TupleBuffer> DefaultSource::receiveData() {
 
         }
     }
-    buf.setTupleSizeInBytes(schema.getSchemaSize());
+    buf.setTupleSizeInBytes(schema->getSchemaSizeInBytes());
     buf.setNumberOfTuples(tupleCnt);
     return buf;
 }

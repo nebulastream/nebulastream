@@ -31,9 +31,9 @@ class WorkerService {
      * @param queryId a queryId of the query
      * @param executableTransferObject wrapper object with the schema, sources, destinations, operator
      */
-    void execute_query(const string& queryId, string& executableTransferObject);
+    void executeQuery(const std::string& queryId, std::string& executableTransferObject);
 
-    void delete_query(const string& query);
+    void deleteQuery(const string& query);
 
     string& getIp();
     void setIp(const string& ip);

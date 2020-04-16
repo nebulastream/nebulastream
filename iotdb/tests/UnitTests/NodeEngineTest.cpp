@@ -348,7 +348,7 @@ TEST_F(EngineTest, change_dop_without_restart_test) {
     delete ptr;
 }
 
-TEST_F(EngineTest, DISABLED_parallel_different_source_test) {
+TEST_F(EngineTest, parallel_different_source_test) {
     CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
     DataSourcePtr source1 =
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
@@ -380,7 +380,7 @@ TEST_F(EngineTest, DISABLED_parallel_different_source_test) {
 TEST_F(EngineTest, DISABLED_parallel_same_source_test) {
     CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
     DataSourcePtr source1 = createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
-    SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
+    Schema sch1 = Schema::create().addField("sum", BasicType::UINT32);
     DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep1.txt");
     qep1->addDataSource(source1);
     qep1->addDataSink(sink1);
@@ -435,7 +435,7 @@ TEST_F(EngineTest, parallel_same_sink_test) {
     delete ptr;
 }
 
-TEST_F(EngineTest, DISABLED_parallel_same_source_and_sink_test) {
+TEST_F(EngineTest, parallel_same_source_and_sink_test) {
     CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
     DataSourcePtr source1 =
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
@@ -460,9 +460,11 @@ TEST_F(EngineTest, DISABLED_parallel_same_source_and_sink_test) {
     testOutput("qep3.txt", joinedExpectedOutput);
     delete ptr;
 }
-//TODO: enable after buffer redesign
+
+
 TEST_F(EngineTest, blocking_test) {
-    CompiledTestQueryExecutionPlanPtr qep1(std::make_shared<CompiledTestQueryExecutionPlan>(true));
+    remove("qep12.txt");
+    CompiledTestQueryExecutionPlanPtr qep1(std::make_shared<CompiledTestQueryExecutionPlan>(2));
     DataSourcePtr source1 =
         createDefaultSourceWithoutSchemaForOneBufferForVarBuffers(10, 0);
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
