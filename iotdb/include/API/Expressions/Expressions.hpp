@@ -70,7 +70,5 @@ ExpressionItem Attribute(std::string name);
  */
 ExpressionItem Attribute(std::string name, BasicType type);
 
-
-
 } //end of namespace NES
 #endif 
