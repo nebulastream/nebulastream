@@ -41,8 +41,8 @@ TEST_F(PathFinderTest, find_path_with_max_bandwidth) {
 
   SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
-  const NESTopologyCoordinatorNodePtr sinkNode =
-      NESTopologyManager::getInstance().createNESCoordinatorNode(
+  const NESTopologyWorkerNodePtr sinkNode =
+      NESTopologyManager::getInstance().createNESWorkerNode(
           0, "localhost", CPUCapacity::HIGH);
   const NESTopologyWorkerNodePtr workerNode1 = NESTopologyManager::getInstance()
       .createNESWorkerNode(1, "localhost", CPUCapacity::MEDIUM);
@@ -96,8 +96,8 @@ TEST_F(PathFinderTest, find_path_with_max_of_min_bandwidth) {
 
   SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
-  const NESTopologyCoordinatorNodePtr sinkNode =
-      NESTopologyManager::getInstance().createNESCoordinatorNode(
+  const NESTopologyWorkerNodePtr sinkNode =
+      NESTopologyManager::getInstance().createNESWorkerNode(
           0, "localhost", CPUCapacity::HIGH);
   const NESTopologyWorkerNodePtr workerNode1 = NESTopologyManager::getInstance()
       .createNESWorkerNode(1, "localhost", CPUCapacity::MEDIUM);
@@ -158,8 +158,8 @@ TEST_F(PathFinderTest, find_path_with_min_latency) {
 
   SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
-  const NESTopologyCoordinatorNodePtr sinkNode =
-      NESTopologyManager::getInstance().createNESCoordinatorNode(
+  const NESTopologyWorkerNodePtr sinkNode =
+      NESTopologyManager::getInstance().createNESWorkerNode(
           0, "localhost", CPUCapacity::HIGH);
   const NESTopologyWorkerNodePtr workerNode1 = NESTopologyManager::getInstance()
       .createNESWorkerNode(1, "localhost", CPUCapacity::MEDIUM);
@@ -215,8 +215,8 @@ TEST_F(PathFinderTest, find_path_with_min_of_max_latency) {
   SchemaPtr schema = Schema::create()
       ->addField("id", BasicType::UINT32)
       ->addField("value", BasicType::UINT64);
-  const NESTopologyCoordinatorNodePtr sinkNode =
-      NESTopologyManager::getInstance().createNESCoordinatorNode(
+  const NESTopologyWorkerNodePtr sinkNode =
+      NESTopologyManager::getInstance().createNESWorkerNode(
           0, "localhost", CPUCapacity::HIGH);
   const NESTopologyWorkerNodePtr workerNode1 = NESTopologyManager::getInstance()
       .createNESWorkerNode(1, "localhost", CPUCapacity::MEDIUM);
@@ -278,8 +278,8 @@ TEST_F(PathFinderTest, find_all_paths_between_source_destination) {
   //prepare
   SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
-  const NESTopologyCoordinatorNodePtr sinkNode =
-      NESTopologyManager::getInstance().createNESCoordinatorNode(
+  const NESTopologyWorkerNodePtr sinkNode =
+      NESTopologyManager::getInstance().createNESWorkerNode(
           0, "localhost", CPUCapacity::HIGH);
   const NESTopologyWorkerNodePtr workerNode1 = NESTopologyManager::getInstance()
       .createNESWorkerNode(1, "localhost", CPUCapacity::MEDIUM);
@@ -322,8 +322,8 @@ TEST_F(PathFinderTest, find_common_path_between_source_destination) {
   //prepare
   SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
-  const NESTopologyCoordinatorNodePtr sinkNode =
-      NESTopologyManager::getInstance().createNESCoordinatorNode(
+  const NESTopologyWorkerNodePtr sinkNode =
+      NESTopologyManager::getInstance().createNESWorkerNode(
           0, "localhost", CPUCapacity::HIGH);
   const NESTopologyWorkerNodePtr workerNode1 = NESTopologyManager::getInstance()
       .createNESWorkerNode(1, "localhost", CPUCapacity::MEDIUM);
@@ -448,8 +448,8 @@ TEST_F(PathFinderTest, find_path_from_non_linked_source) {
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
         "value", BasicType::UINT64);
-    const NESTopologyCoordinatorNodePtr sinkNode =
-        NESTopologyManager::getInstance().createNESCoordinatorNode(
+    const NESTopologyWorkerNodePtr sinkNode =
+        NESTopologyManager::getInstance().createNESWorkerNode(
             0, "localhost", CPUCapacity::HIGH);
 
     const NESTopologySensorNodePtr sensorNode1 =
@@ -481,8 +481,8 @@ TEST_F(PathFinderTest, find_path_between_non_linked_source_and_destination) {
 
   SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
-  const NESTopologyCoordinatorNodePtr sinkNode =
-      NESTopologyManager::getInstance().createNESCoordinatorNode(
+  const NESTopologyWorkerNodePtr sinkNode =
+      NESTopologyManager::getInstance().createNESWorkerNode(
           0, "localhost", CPUCapacity::HIGH);
   const NESTopologyWorkerNodePtr workerNode1 = NESTopologyManager::getInstance()
       .createNESWorkerNode(1, "localhost", CPUCapacity::HIGH);
@@ -512,8 +512,8 @@ TEST_F(PathFinderTest, find_path_between_linked_source_and_destination) {
 
   SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
       "value", BasicType::UINT64);
-  const NESTopologyCoordinatorNodePtr sinkNode =
-      NESTopologyManager::getInstance().createNESCoordinatorNode(
+  const NESTopologyWorkerNodePtr sinkNode =
+      NESTopologyManager::getInstance().createNESWorkerNode(
           0, "localhost", CPUCapacity::HIGH);
   const NESTopologyWorkerNodePtr workerNode1 = NESTopologyManager::getInstance()
       .createNESWorkerNode(1, "localhost", CPUCapacity::HIGH);

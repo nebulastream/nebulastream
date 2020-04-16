@@ -10,7 +10,7 @@ namespace NES {
 class WorkerActorConfig : public actor_system_config {
   public:
     std::string ip = "127.0.0.1";
-    uint16_t receive_port = 0;
+    uint16_t receive_port = 4000;
     std::string host = "localhost";
     uint16_t publish_port = 4711;
 

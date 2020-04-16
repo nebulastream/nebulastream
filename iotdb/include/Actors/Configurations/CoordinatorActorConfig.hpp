@@ -31,7 +31,7 @@ class CoordinatorActorConfig : public caf::actor_system_config {
     }
 
     std::string ip = "127.0.0.1";
-    uint16_t publish_port = 4711;//ZMQ?
+    uint16_t publish_port = 4715;//ZMQ?
     uint16_t receive_port = 4815;//Actors
 };
 }

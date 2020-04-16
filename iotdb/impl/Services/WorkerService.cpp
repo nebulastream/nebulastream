@@ -59,7 +59,7 @@ bool WorkerService::executeQuery(const string& queryId,
         {queryId, std::make_tuple(qep, eto.getOperatorTree())});
     this->_enginePtr->deployQuery(qep);
     //TODO: sleeps should be omitted
-    //  std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::this_thread::sleep_for(std::chrono::seconds(1));
     return true;
 }
 

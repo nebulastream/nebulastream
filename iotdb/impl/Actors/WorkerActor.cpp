@@ -11,6 +11,7 @@ WorkerActor::WorkerActor(actor_config& cfg, string ip, uint16_t publish_port,
                          uint16_t receive_port, NESNodeType type)
     :
     stateful_actor(cfg) {
+    NES_DEBUG("")
     this->state.workerPtr = std::make_unique<WorkerService>(
         WorkerService(std::move(ip), publish_port, receive_port));
     this->type = type;
@@ -35,6 +36,7 @@ behavior WorkerActor::init() {
 
     this->set_error_handler([=](const caf::error& err) {
       NES_WARNING("WorkerActor => error thrown in error handler:" << to_string(err))
+      NES_WARNING(" from " << this)
       if(err != exit_reason::user_shutdown)
       {
           NES_ERROR("WorkerActor error handle")

@@ -54,7 +54,7 @@ namespace NES {
         //NOTE: we cannot check full output as ids change each run
         std::string retString3 = NESTopologyManager::getInstance().getNESTopologyPlanString();
         cout << "retString3=" << retString3;
-        ASSERT_TRUE(retString3.find("0[label=\"0 type=Coordinator\"];") != std::string::npos);
+        ASSERT_TRUE(retString3.find("type=Worker\"];") != std::string::npos);
         ASSERT_TRUE(retString3.find("type=Sensor(default_physical)") != std::string::npos);
         ASSERT_TRUE(retString3.find("1--0 [label=\"0\"]") != std::string::npos);
 
@@ -65,7 +65,7 @@ namespace NES {
 
         std::string retStringTNE = NESTopologyManager::getInstance().getNESTopologyPlanString();
         cout << "retStringTNE=" << retStringTNE;
-        ASSERT_TRUE(retStringTNE.find("0[label=\"0 type=Coordinator\"];") != std::string::npos);
+        ASSERT_TRUE(retStringTNE.find("type=Worker\"];") != std::string::npos);
         ASSERT_TRUE(retStringTNE.find("type=Sensor(default_physical)") != std::string::npos);
         ASSERT_TRUE(retStringTNE.find("1--0 [label=\"0\"]") != std::string::npos);
 
@@ -77,7 +77,7 @@ namespace NES {
         //NOTE: we cannot check full output as ids change each run
         std::string retStringSN = NESTopologyManager::getInstance().getNESTopologyPlanString();
         cout << "retStringSN=" << retStringSN;
-        ASSERT_TRUE(retStringSN.find("0[label=\"0 type=Coordinator\"];") != std::string::npos);
+        ASSERT_TRUE(retStringSN.find("type=Worker\"];") != std::string::npos);
         ASSERT_TRUE(retStringSN.find("type=Sensor(default_physical)") != std::string::npos);
         ASSERT_TRUE(retStringSN.find("1--0 [label=\"0\"]") != std::string::npos);
 
@@ -112,7 +112,7 @@ namespace NES {
         //NOTE: we cannot check full output as ids change each run
         std::string retString = NESTopologyManager::getInstance().getNESTopologyPlanString();
         cout << "returned=" << retString;
-        ASSERT_TRUE(retString.find("0[label=\"0 type=Coordinator\"];") != std::string::npos);
+        ASSERT_TRUE(retString.find("type=Worker\"];") != std::string::npos);
         ASSERT_TRUE(retString.find("type=Sensor(default_physical)") != std::string::npos);
         ASSERT_TRUE(retString.find("1--0 [label=\"0\"]") != std::string::npos);
         ASSERT_TRUE(retString.find("2--0 [label=\"1\"]") != std::string::npos);
@@ -136,7 +136,7 @@ namespace NES {
         //NOTE: we cannot check full output as ids change each run
         std::string retString2 = NESTopologyManager::getInstance().getNESTopologyPlanString();
         cout << "retString2=" << retString2;
-        ASSERT_TRUE(retString2.find("0[label=\"0 type=Coordinator\"];") != std::string::npos);
+        ASSERT_TRUE(retString2.find("type=Worker\"];") != std::string::npos);
         ASSERT_TRUE(retString2.find("type=Sensor(default_physical)") != std::string::npos);
         ASSERT_TRUE(retString2.find("1--0 [label=\"0\"]") != std::string::npos);
         ASSERT_TRUE(retString2.find("2--0 [label=\"1\"]") != std::string::npos);
@@ -149,7 +149,7 @@ namespace NES {
         //NOTE: we cannot check full output as ids change each run
         std::string retString3 = NESTopologyManager::getInstance().getNESTopologyPlanString();
         cout << "retString3=" << retString3;
-        ASSERT_TRUE(retString3.find("0[label=\"0 type=Coordinator\"];") != std::string::npos);
+        ASSERT_TRUE(retString3.find("type=Worker\"];") != std::string::npos);
         ASSERT_TRUE(retString3.find("type=Sensor(default_physical)") != std::string::npos);
         ASSERT_TRUE(retString3.find("1--0 [label=\"0\"]") != std::string::npos);
         ASSERT_TRUE(retString3.find("2--0 [label=\"1\"]") != std::string::npos);
@@ -190,7 +190,7 @@ namespace NES {
         //NOTE: we cannot check full output as ids change each run
         std::string retString = NESTopologyManager::getInstance().getNESTopologyPlanString();
         cout << "returned=" << retString;
-        ASSERT_TRUE(retString.find("0[label=\"0 type=Coordinator\"];") != std::string::npos);
+        ASSERT_TRUE(retString.find("type=Worker\"];") != std::string::npos);
         ASSERT_TRUE(retString.find("type=Sensor(default_physical)") != std::string::npos);
         ASSERT_TRUE(retString.find("1--0 [label=\"0\"]") != std::string::npos);
         ASSERT_TRUE(retString.find("2--0 [label=\"1\"]") != std::string::npos);
@@ -214,7 +214,7 @@ namespace NES {
         //NOTE: we cannot check full output as ids change each run
         std::string retString2 = NESTopologyManager::getInstance().getNESTopologyPlanString();
         cout << "retString2=" << retString2;
-        ASSERT_TRUE(retString2.find("0[label=\"0 type=Coordinator\"];") != std::string::npos);
+        ASSERT_TRUE(retString2.find("type=Worker\"];") != std::string::npos);
         ASSERT_TRUE(retString2.find("type=Sensor(default_physical)") != std::string::npos);
         ASSERT_TRUE(retString2.find("1--0 [label=\"0\"]") != std::string::npos);
         ASSERT_TRUE(retString2.find("2--0 [label=\"1\"]") != std::string::npos);
@@ -227,7 +227,7 @@ namespace NES {
         //NOTE: we cannot check full output as ids change each run
         std::string retString3 = NESTopologyManager::getInstance().getNESTopologyPlanString();
         cout << "retString3=" << retString3;
-        ASSERT_TRUE(retString3.find("0[label=\"0 type=Coordinator\"];") != std::string::npos);
+        ASSERT_TRUE(retString3.find("type=Worker\"];") != std::string::npos);
         ASSERT_TRUE(retString3.find("type=Sensor(default_physical)") != std::string::npos);
         ASSERT_TRUE(retString3.find("1--0 [label=\"0\"]") != std::string::npos);
         ASSERT_TRUE(retString3.find("2--0 [label=\"1\"]") != std::string::npos);
@@ -268,7 +268,7 @@ namespace NES {
         //NOTE: we cannot check full output as ids change each run
         std::string retString = NESTopologyManager::getInstance().getNESTopologyPlanString();
         cout << "returned=" << retString;
-        ASSERT_TRUE(retString.find("0[label=\"0 type=Coordinator\"];") != std::string::npos);
+        ASSERT_TRUE(retString.find("type=Worker\"];") != std::string::npos);
         ASSERT_TRUE(retString.find("type=Sensor(default_physical)") != std::string::npos);
         ASSERT_TRUE(retString.find("1--0 [label=\"0\"]") != std::string::npos);
         ASSERT_TRUE(retString.find("2--0 [label=\"1\"]") != std::string::npos);
@@ -296,7 +296,7 @@ namespace NES {
         //NOTE: we cannot check full output as ids change each run
         std::string retString3 = NESTopologyManager::getInstance().getNESTopologyPlanString();
         cout << "retString3=" << retString3;
-        ASSERT_TRUE(retString3.find("0[label=\"0 type=Coordinator\"];") != std::string::npos);
+        ASSERT_TRUE(retString3.find("type=Worker\"];") != std::string::npos);
         ASSERT_TRUE(retString3.find("type=Sensor(default_physical)") != std::string::npos);
         ASSERT_TRUE(retString3.find("1--0 [label=\"0\"]") != std::string::npos);
         ASSERT_TRUE(retString3.find("2--0 [label=\"1\"]") != std::string::npos);
