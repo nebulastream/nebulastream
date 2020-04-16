@@ -1,8 +1,8 @@
 #ifndef API_INPUT_QUERY_H
 #define API_INPUT_QUERY_H
 
+#include <API/ExpressionAPI.hpp>
 #include <API/Config.hpp>
-#include <API/ParameterTypes.hpp>
 #include <API/Schema.hpp>
 #include <API/Stream.hpp>
 
@@ -41,24 +41,6 @@ class Query {
     static Query from(Stream& stream);
 
     /**
-     * @brief: Selects a field from the input schema and place it in the output schema.
-     * @param field
-     * @return query
-     *
-     * @Caution : The method is not implemented yet.
-     */
-    Query& select(const Field& field);
-
-    /**
-     * @brief: Selects two fields from the input schema and place them in the output schema.
-     * @param field
-     * @return query
-     *
-     * @Caution : The method is not implemented yet.
-     */
-    Query& select(const Field& field1, const Field& field2);
-
-    /**
      * @brief: Filter records according to the predicate.
      * @param predicate
      * @return query
@@ -73,7 +55,7 @@ class Query {
      *
      * @Caution : The method is not implemented yet.
      */
-    Query& map(const AttributeField& resultField, const Predicate predicate);
+    Query& map(const AttributeField& resultField, const ExpressionNodePtr predicate);
 
     /**
      * @brief: Unify two queries.

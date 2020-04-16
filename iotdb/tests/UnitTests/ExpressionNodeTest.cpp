@@ -1,13 +1,13 @@
-#include <gtest/gtest.h>
-#include <iostream>
-#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
-#include <Util/Logger.hpp>
-#include <memory>
+#include <Nodes/Expressions/BinaryExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/BinaryExpressions/EqualsExpressionNode.hpp>
-#include <Nodes/Expressions/BinaryExpressions/LessThenExpressionNode.hpp>
+#include <Nodes/Expressions/BinaryExpressions/LessEqualsExpressionNode.hpp>
+#include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldReadExpressionNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
-#include <Nodes/Expressions/BinaryExpressions/AndExpressionNode.hpp>
+#include <Util/Logger.hpp>
+#include <gtest/gtest.h>
+#include <iostream>
+#include <memory>
 
 namespace NES {
 
@@ -40,7 +40,7 @@ TEST_F(ExpressionNodeTest, predicateConstruction) {
     ASSERT_TRUE(expression->isPredicate());
     auto fieldRead = FieldReadExpressionNode::create(createDataType(INT64), "field_1");
     auto constant = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT64, "10"));
-    auto lessThen = LessThenExpressionNode::create(fieldRead, constant);
+    auto lessThen = LessEqualsExpressionNode::create(fieldRead, constant);
     ASSERT_TRUE(lessThen->isPredicate());
 
     auto andExpression = AndExpressionNode::create(expression, lessThen);

@@ -1,10 +1,10 @@
 add_source_iotdb(
         BinaryExpressionNode.cpp
         LogicalBinaryExpressionNode.cpp
-        LessThenExpressionNode.cpp
+        LessEqualsExpressionNode.cpp
         LessExpressionNode.cpp
         GreaterExpressionNode.cpp
-        GreaterThenExpressionNode.cpp
+        GreaterEqualsExpressionNode.cpp
         EqualsExpressionNode.cpp
         AndExpressionNode.cpp
         OrExpressionNode.cpp

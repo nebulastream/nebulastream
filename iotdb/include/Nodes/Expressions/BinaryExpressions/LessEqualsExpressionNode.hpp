@@ -1,15 +1,15 @@
-#ifndef NES_INCLUDE_NODES_EXPRESSIONS_BINARYEXPRESSIONS_LESSTHENEXPRESSIONNODE_HPP_
-#define NES_INCLUDE_NODES_EXPRESSIONS_BINARYEXPRESSIONS_LESSTHENEXPRESSIONNODE_HPP_
+#ifndef NES_INCLUDE_NODES_EXPRESSIONS_BINARYEXPRESSIONS_LESSEQUALSEXPRESSIONNODE_HPP_
+#define NES_INCLUDE_NODES_EXPRESSIONS_BINARYEXPRESSIONS_LESSEQUALSEXPRESSIONNODE_HPP_
 #include <Nodes/Expressions/BinaryExpressions/LogicalBinaryExpressionNode.hpp>
 namespace NES {
 
 /**
  * @brief This node represents a less then comparision between the two children.
  */
-class LessThenExpressionNode : public LogicalBinaryExpressionNode {
+class LessEqualsExpressionNode : public LogicalBinaryExpressionNode {
   public:
-    LessThenExpressionNode();
-    ~LessThenExpressionNode() = default;
+    LessEqualsExpressionNode();
+    ~LessEqualsExpressionNode() = default;
     /**
     * @brief Create a new less then expression
     */
@@ -19,4 +19,4 @@ class LessThenExpressionNode : public LogicalBinaryExpressionNode {
 };
 }
 
-#endif //NES_INCLUDE_NODES_EXPRESSIONS_BINARYEXPRESSIONS_LESSTHENEXPRESSIONNODE_HPP_
+#endif // NES_INCLUDE_NODES_EXPRESSIONS_BINARYEXPRESSIONS_LESSEQUALSEXPRESSIONNODE_HPP_

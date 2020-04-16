@@ -1,15 +1,15 @@
-#ifndef NES_INCLUDE_NODES_EXPRESSIONS_BINARYEXPRESSIONS_GREATERTHENEXPRESSIONNODE_HPP_
-#define NES_INCLUDE_NODES_EXPRESSIONS_BINARYEXPRESSIONS_GREATERTHENEXPRESSIONNODE_HPP_
+#ifndef NES_INCLUDE_NODES_EXPRESSIONS_BINARYEXPRESSIONS_GREATEREQUALSEXPRESSIONNODE_HPP_
+#define NES_INCLUDE_NODES_EXPRESSIONS_BINARYEXPRESSIONS_GREATEREQUALSEXPRESSIONNODE_HPP_
 #include <Nodes/Expressions/BinaryExpressions/LogicalBinaryExpressionNode.hpp>
 namespace NES {
 
 /**
  * @brief This node represents a greater comparision between the two children.
  */
-class GreaterThenExpressionNode : public LogicalBinaryExpressionNode {
+class GreaterEqualsExpressionNode : public LogicalBinaryExpressionNode {
   public:
-    GreaterThenExpressionNode();
-    ~GreaterThenExpressionNode() = default;
+    GreaterEqualsExpressionNode();
+    ~GreaterEqualsExpressionNode() = default;
     /**
     * @brief Create a new greater then expression
     */
@@ -19,4 +19,4 @@ class GreaterThenExpressionNode : public LogicalBinaryExpressionNode {
 };
 }
 
-#endif //NES_INCLUDE_NODES_EXPRESSIONS_BINARYEXPRESSIONS_GREATERTHENEXPRESSIONNODE_HPP_
+#endif // NES_INCLUDE_NODES_EXPRESSIONS_BINARYEXPRESSIONS_GREATEREQUALSEXPRESSIONNODE_HPP_

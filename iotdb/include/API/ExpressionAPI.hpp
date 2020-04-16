@@ -16,6 +16,10 @@ typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
 class ValueType;
 typedef std::shared_ptr<ValueType> ValueTypePtr;
 
+/**
+ * @brief A expression item represents the leaf in an expression tree.
+ * It is converted to an constant value expression or a field access expression.
+ */
 class ExpressionItem{
   public:
     ExpressionItem(int8_t value);
@@ -33,53 +37,31 @@ class ExpressionItem{
     ExpressionItem(ValueTypePtr value);
     ExpressionItem(ExpressionNodePtr ref);
 
-    ExpressionItem& operator=(ExpressionNodePtr c);
-    ExpressionItem& operator=(ExpressionItem c);
     /**
-     * @brief Creates a constant expression node for this constant value.
+     * @brief Gets the expression node of this expression item.
      */
-    ExpressionNodePtr createExpressionNode();
+    ExpressionNodePtr getExpressionNode();
 
   private:
     ExpressionNodePtr expression;
 };
 
-
-ExpressionItem Field(std::string name);
-ExpressionItem Field(std::string name, BasicType type);
-
 /**
- * @brief A wrapper to allow the use of simple constants in the query api, e.g, field < 10
- */
-class Constant : public ExpressionItem {
-  public:
-
-    /**
-     * @brief Creates a constant expression node for this constant value.
-     */
-    ExpressionNodePtr createExpressionNode() override;
-  private:
-    /**
-     * @brief the constant value.
-     */
-    const ValueTypePtr value;
-};
-
-/**
- * @brief Field(name) allows the user to reference a field in his expression.
- * Field("f1") < 10
+ * @brief Attribute(name) allows the user to reference a field in his expression.
+ * Attribute("f1") < 10
+ * todo rename to field if conflict with legacy code is resolved.
  * @param fieldName
  */
-//ExpressionNodePtr Field(std::string fieldName);
-
+ExpressionItem Attribute(std::string name);
 
 /**
- * @brief Field(name, type) allows the user to reference a field, with a specific type in his expression.
+ * @brief Attribute(name, type) allows the user to reference a field, with a specific type in his expression.
  * Field("f1", Int) < 10.
- * todo if we can infer the type at runtime from the operator tree.
+ * todo remove this case if we added type inference at runtime from the operator tree.
+ * todo rename to field if conflict with legacy code is resolved.
  * @param fieldName, type
  */
-//ExpressionNodePtr Field(std::string fieldName, BasicType type);
+ExpressionItem Attribute(std::string name, BasicType type);
 
 /**
  * @brief Defines common operations between expression nodes.
