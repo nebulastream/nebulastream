@@ -2,19 +2,12 @@
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/Task.hpp>
 
-#include "../../include/NodeEngine/TupleBuffer.hpp"
-#include "../../include/SourceSink/DataSource.hpp"
-
 namespace NES {
 
-Task::Task(QueryExecutionPlanPtr _qep, uint32_t _pipeline_stage_id, TupleBuffer buffer)
+Task::Task(QueryExecutionPlanPtr _qep, uint32_t _pipeline_stage_id, TupleBuffer& buffer)
     : qep(_qep),
       pipeline_stage_id(_pipeline_stage_id),
       buf(buffer) {
-}
-
-Task::~Task() {
-    buf.release();
 }
 
 bool Task::execute() {

@@ -7,9 +7,10 @@
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/vector.hpp>
 #include <thread>
-#include <NodeEngine/TupleBuffer.hpp>
 
 namespace NES {
+
+class TupleBuffer;
 
 enum SourceType {
     ZMQ_SOURCE,

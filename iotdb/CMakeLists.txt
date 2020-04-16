@@ -16,7 +16,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Set Optimization Flags
 set(CMAKE_CXX_FLAGS "-Wall -g")
-set(CMAKE_CXX_FLAGS_DEBUG "-O0 -DNO_RACE_CHECK ")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNO_RACE_CHECK -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-Wextra -O3")
 #-Wno-unused-parameter -Wno-ignored-qualifiers -Wno-sign-compare -Wno-extra -Wno-reorder
 

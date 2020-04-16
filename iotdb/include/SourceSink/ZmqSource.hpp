@@ -8,12 +8,10 @@
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
-
 #include <SourceSink/DataSource.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
 
 namespace NES {
-
+class TupleBuffer;
 /**
  * @brief this class provide a zmq as data source
  */

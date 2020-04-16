@@ -78,7 +78,10 @@ bool WindowHandler::stop() {
     return true;
 }
 
-WindowHandler::~WindowHandler() {NES_DEBUG("WindowHandler: calling destructor")}
+WindowHandler::~WindowHandler() {
+    NES_DEBUG("WindowHandler: calling destructor");
+    stop();
+}
 
 const WindowHandlerPtr createWindowHandler(WindowDefinitionPtr windowDefinition) {
     return std::make_shared<WindowHandler>(windowDefinition);

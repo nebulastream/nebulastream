@@ -11,10 +11,10 @@
 #include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
 #include <NodeEngine/Dispatcher.hpp>
 #include <memory>
-#include "../SourceSink/GeneratorSource.hpp"
+#include <SourceSink/GeneratorSource.hpp>
 
 namespace NES {
-
+class TupleBuffer;
 class CompiledDummyPlan : public HandCodedQueryExecutionPlan {
   public:
     uint64_t count;
@@ -23,7 +23,7 @@ class CompiledDummyPlan : public HandCodedQueryExecutionPlan {
 
     bool firstPipelineStage(const TupleBuffer&) { return false; }
 
-    bool executeStage(uint32_t pipeline_stage_id, const TupleBufferPtr buf) { return true; }
+    bool executeStage(uint32_t pipeline_stage_id, TupleBuffer& buf) { return true; }
 };
 typedef std::shared_ptr<CompiledDummyPlan> CompiledDummyPlanPtr;
 

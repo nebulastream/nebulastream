@@ -149,6 +149,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
 
         //buf->setBufferSizeInBytes(sizeof(InputTuple));
         buf.setNumberOfTuples(tupleCnt);
+        buf.setTupleSizeInBytes(sizeof(InputTuple));
         return buf;
     }
 };
@@ -809,7 +810,9 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
     auto stage = codeGenerator->compile(CompilerArgs(), context->code);
 
     /* prepare input tuple buffer */
-    auto inputBuffer = source->receiveData().value();
+    auto optVal = source->receiveData();
+    assert(!!optVal);
+    auto inputBuffer = *optVal;
 
     auto resultBuffer = BufferManager::instance().getBufferBlocking();
     resultBuffer.setTupleSizeInBytes(inputSchema->getSchemaSize());
@@ -818,7 +821,7 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
     stage->execute(inputBuffer, nullptr, nullptr, resultBuffer);
 
     /* check for correctness, input source produces tuples consisting of two uint32_t values, 3 values will match the predicate */
-    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2);
+    EXPECT_EQ(resultBuffer.getNumberOfTuples(), 3);
 
     NES_INFO(NES::toString(resultBuffer, inputSchema));
 }

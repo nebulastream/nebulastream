@@ -1,7 +1,7 @@
 #include <cassert>
 #include <iostream>
 #include <memory>
-
+#include <NodeEngine/TupleBuffer.hpp>
 #include <API/Schema.hpp>
 #include <boost/serialization/export.hpp>
 #include <SourceSink/DataSink.hpp>

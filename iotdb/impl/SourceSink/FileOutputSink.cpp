@@ -4,7 +4,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-
+#include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <SourceSink/FileOutputSink.hpp>
 #include <SourceSink/DataSink.hpp>

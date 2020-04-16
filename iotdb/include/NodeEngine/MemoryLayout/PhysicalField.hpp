@@ -2,10 +2,10 @@
 #define INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELD_HPP_
 
 #include <memory>
-#include <NodeEngine/TupleBuffer.hpp>
 #include <API/Types/DataTypes.hpp>
 #include <Util/Logger.hpp>
 namespace NES {
+class TupleBuffer;
 class PhysicalField;
 typedef std::shared_ptr<PhysicalField> PhysicalFieldPtr;
 template<class ValueType>

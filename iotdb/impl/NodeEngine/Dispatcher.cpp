@@ -30,6 +30,8 @@ Dispatcher::~Dispatcher() {
 }
 
 void Dispatcher::resetDispatcher() {
+    std::unique_lock<std::mutex> lock(queryMutex);
+    std::unique_lock<std::mutex> lock2(workMutex);
     NES_DEBUG("Dispatcher: Destroy Task Queue")
     task_queue.clear();
     NES_DEBUG("Dispatcher: Destroy queryId_to_query_map")
@@ -179,11 +181,10 @@ TaskPtr Dispatcher::getWork(std::atomic<bool>& threadPool_running) {
 }
 
 void Dispatcher::cleanup() {
+    std::unique_lock<std::mutex> lock(workMutex);
     if (task_queue.size()) {
         NES_DEBUG("Dispatcher: Thread pool was shut down while waiting but data is queued.");
-        while (task_queue.size()) {
-            task_queue.pop_front();
-        }
+        task_queue.clear();
     }
 }
 
@@ -203,6 +204,7 @@ void Dispatcher::addWorkForNextPipeline(TupleBuffer& buffer,
 }
 
 void Dispatcher::addWork(const string& sourceId, TupleBuffer& buf) {
+    std::unique_lock<std::mutex> lock(workMutex);
     for (const auto& qep : sourceIdToQueryMap[sourceId]) {
         // for each respective source, create new task and put it into queue
         //TODO: change that in the future that stageId is used properly

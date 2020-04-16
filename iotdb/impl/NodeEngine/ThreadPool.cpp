@@ -12,7 +12,7 @@ ThreadPool& ThreadPool::instance() {
 }
 
 ThreadPool::ThreadPool()
-    : running(),
+    : running(false),
       numThreads(1),
       threads() {
 }
@@ -42,37 +42,37 @@ void ThreadPool::runningRoutine() {
 }
 
 bool ThreadPool::start() {
-    NES_DEBUG("Threadpool:start")
-
-    if (running) {
+    std::unique_lock<std::mutex> lock(reconfigLock);
+    if (running)
         return false;
-    }
 
     running = true;
     /* spawn threads */
     NES_DEBUG("Threadpool: Spawning " << numThreads << " threads")
     for (uint64_t i = 0; i < numThreads; ++i) {
-        threads.push_back(
-            std::thread(std::bind(&ThreadPool::runningRoutine, this)));
+        threads.emplace_back([this]() {
+          runningRoutine();
+        });
     }
     return true;
 }
 
 bool ThreadPool::stop() {
-    NES_DEBUG("Threadpool:stop")
+    std::unique_lock<std::mutex> lock(reconfigLock);
     if (!running) {
         return false;
     }
-
     running = false;
     /* wake up all threads in the dispatcher,
      * so they notice the change in the run variable */
     Dispatcher::instance().unblockThreads();
     /* join all threads if possible */
     for (auto& thread : threads) {
-        if (thread.joinable())
+        if (thread.joinable()) {
             thread.join();
+        }
     }
+    threads.clear();
     return true;
 }
 

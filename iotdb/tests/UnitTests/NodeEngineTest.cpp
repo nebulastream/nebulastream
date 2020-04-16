@@ -84,14 +84,16 @@ class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
   public:
     std::atomic<uint64_t> count;
     std::atomic<uint64_t> sum;
-    bool longRunning;
+    const uint32_t mode;
+    std::atomic<bool> done;
     std::promise<bool> completedPromise;
-    CompiledTestQueryExecutionPlan(bool longRunning = false)
+    CompiledTestQueryExecutionPlan(uint32_t mode = 0)
         :
         HandCodedQueryExecutionPlan(),
         count(0),
         sum(0),
-        longRunning(longRunning) {
+        mode(mode),
+        done(false) {
     }
 
     bool firstPipelineStage(const TupleBuffer&) {
@@ -103,32 +105,41 @@ class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
 
         NES_INFO("Test: Start execution");
 
+        uint64_t psum = 0;
         for (size_t i = 0; i < inBuf.getNumberOfTuples(); ++i) {
-            count++;
-            sum += tuples[i];
+            psum += tuples[i];
         }
+        count += inBuf.getNumberOfTuples();
+        sum += psum;
 
         NES_INFO(
-            "Test: query result = Processed Block:" << inBuf.getNumberOfTuples() << " count: " << count << "sum: "
-                                                    << sum)
+            "Test: query result = Processed Block:" << inBuf.getNumberOfTuples() << " count: " << count << " psum: " << psum << " sum: " << sum)
 
-        DataSinkPtr sink = this->getSinks()[0];
+        auto sink = getSinks()[0];
         NES_DEBUG("TEST: try to get buffer")
         //  sink->getSchema().getSchemaSize();
         auto outputBuffer = BufferManager::instance().getBufferBlocking();
         NES_DEBUG("TEST: got buffer")
-        u_int32_t* arr = (u_int32_t*) outputBuffer.getBuffer();
-        arr[0] = sum;
+        auto arr = outputBuffer.getBufferAs<uint32_t>();
+        arr[0] = static_cast<uint32_t>(sum.load());
         outputBuffer.setNumberOfTuples(1);
         outputBuffer.setTupleSizeInBytes(4);
-        //  ysbRecordResult* outputBufferPtr = (ysbRecordResult*)outputBuffer->buffer;
+        NES_DEBUG("TEST: written " << arr[0]);
         sink->writeData(outputBuffer);
-        if (!longRunning) {
-            completedPromise.set_value(true);
-        } else {
+        switch (mode) {
+        case 2: {
             if (sum == 100) {
-                completedPromise.set_value(true);
+                if (!done) {
+                    completedPromise.set_value(true);
+                    done = true;
+                }
             }
+            break;
+        }
+        default: {
+            completedPromise.set_value(true);
+            break;
+        }
         }
         return true;
     }
@@ -230,8 +241,8 @@ TEST_F(EngineTest, deploy_start_stop_test) {
     endl;
 
     auto ptr = new NodeEngine();
-    ptr->deployQuery(qep);
     ptr->start();
+    ptr->deployQuery(qep);
     qep->completedPromise.get_future().get();
     ptr->stop();
     testOutput();
@@ -287,7 +298,7 @@ TEST_F(EngineTest, stopWithRedeploy_test) {
     NodeEngine* ptr = new NodeEngine();
     ptr->start();
     ptr->deployQuery(qep);
-    sleep(1);
+    qep->completedPromise.get_future().get();
     ptr->stopWithUndeploy();
 
     testOutput();
@@ -300,7 +311,7 @@ TEST_F(EngineTest, resetQEP_test) {
     NodeEngine* ptr = new NodeEngine();
     ptr->start();
     ptr->deployQuery(qep);
-    sleep(1);
+    qep->completedPromise.get_future().get();
     ptr->resetQEPs();
 
     testOutput();
@@ -314,7 +325,7 @@ TEST_F(EngineTest, change_dop_with_restart_test) {
     ptr->setDOPWithRestart(2);
     ptr->start();
     ptr->deployQuery(qep);
-    sleep(1);
+    qep->completedPromise.get_future().get();
     ptr->stop();
 
     testOutput();
@@ -346,20 +357,19 @@ TEST_F(EngineTest, DISABLED_parallel_different_source_test) {
     qep1->addDataSource(source1);
     qep1->addDataSink(sink1);
 
-  CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
-  DataSourcePtr source2 =
-  createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
-  SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
-  DataSinkPtr sink2 = createBinaryFileSinkWithSchema(sch2, "qep2.txt");
-  qep2->addDataSource(source2);
-  qep2->addDataSink(sink2);
+    CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
+    DataSourcePtr source2 = createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
+    Schema sch2 = Schema::create().addField("sum", BasicType::UINT32);
+    DataSinkPtr sink2 = createBinaryFileSinkWithSchema(sch2, "qep2.txt");
+    qep2->addDataSource(source2);
+    qep2->addDataSink(sink2);
 
     NodeEngine* ptr = new NodeEngine();
     ptr->start();
     ptr->deployQuery(qep1);
-    sleep(1);
     ptr->deployQuery(qep2);
-    sleep(2);
+    qep1->completedPromise.get_future().get();
+    qep2->completedPromise.get_future().get();
     ptr->stop();
 
     testOutput("qep1.txt");
@@ -383,10 +393,11 @@ TEST_F(EngineTest, DISABLED_parallel_same_source_test) {
     NodeEngine* ptr = new NodeEngine();
     ptr->deployQueryWithoutStart(qep1);
     ptr->deployQueryWithoutStart(qep2);
-    ptr->start();
     source1->start();
 
-    sleep(2);
+    ptr->start();
+    qep1->completedPromise.get_future().get();
+    qep2->completedPromise.get_future().get();
     ptr->stop();
 
     testOutput("qep1.txt");
@@ -404,12 +415,12 @@ TEST_F(EngineTest, DISABLED_parallel_same_sink_test) {
     qep1->addDataSource(source1);
     qep1->addDataSink(sink1);
 
-  CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
-  DataSourcePtr source2 =
-  createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
-  SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
-  qep2->addDataSource(source1);
-  qep2->addDataSink(sink1);
+    CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
+    DataSourcePtr source2 =
+        createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
+    Schema sch2 = Schema::create().addField("sum", BasicType::UINT32);
+    qep2->addDataSource(source1);
+    qep2->addDataSink(sink1);
 
     NodeEngine* ptr = new NodeEngine();
     ptr->deployQueryWithoutStart(qep1);
@@ -417,7 +428,8 @@ TEST_F(EngineTest, DISABLED_parallel_same_sink_test) {
     ptr->start();
     source1->start();
 
-    sleep(1);
+    qep1->completedPromise.get_future().get();
+    qep2->completedPromise.get_future().get();
     ptr->stop();
     testOutput("qep12.txt", joinedExpectedOutput);
     delete ptr;
@@ -437,12 +449,12 @@ TEST_F(EngineTest, DISABLED_parallel_same_source_and_sink_test) {
     qep2->addDataSink(sink1);
 
     NodeEngine* ptr = new NodeEngine();
+    ptr->start();
     ptr->deployQueryWithoutStart(qep1);
     ptr->deployQueryWithoutStart(qep2);
-    ptr->start();
     source1->start();
 
-    sleep(1);
+    qep1->completedPromise.get_future().get();
     ptr->stop();
 
     testOutput("qep3.txt", joinedExpectedOutput);
@@ -450,7 +462,7 @@ TEST_F(EngineTest, DISABLED_parallel_same_source_and_sink_test) {
 }
 //TODO: enable after buffer redesign
 TEST_F(EngineTest, blocking_test) {
-    CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
+    CompiledTestQueryExecutionPlanPtr qep1(std::make_shared<CompiledTestQueryExecutionPlan>(true));
     DataSourcePtr source1 =
         createDefaultSourceWithoutSchemaForOneBufferForVarBuffers(10, 0);
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
@@ -459,8 +471,9 @@ TEST_F(EngineTest, blocking_test) {
     qep1->addDataSink(sink1);
 
     NodeEngine* ptr = new NodeEngine();
-    ptr->deployQueryWithoutStart(qep1);
+    ptr->setDOPWithRestart(1);
     ptr->start();
+    ptr->deployQueryWithoutStart(qep1);
     source1->start();
     qep1->completedPromise.get_future().get();
     source1->stop();

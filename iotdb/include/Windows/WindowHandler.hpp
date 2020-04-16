@@ -11,6 +11,7 @@
 #include <NodeEngine/BufferManager.hpp>
 #include <Util/Logger.hpp>
 #include <boost/serialization/export.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
 
 namespace NES {
 class WindowHandler;
@@ -125,7 +126,7 @@ class WindowHandler {
     void serialize(Archive& ar, const unsigned int version) {}
 
   private:
-    bool running = false;
+    std::atomic_bool running{false};
     WindowDefinitionPtr windowDefinition;
     WindowManagerPtr windowManager;
     void* windowState;

@@ -31,11 +31,10 @@ void BufferManager::configure(size_t bufferSize, size_t numOfBuffers) {
     this->bufferSize = bufferSize;
     this->numOfBuffers = numOfBuffers;
     allBuffers.reserve(numOfBuffers);
-    availableBuffers.reserve(numOfBuffers);
     for (size_t i = 0; i < numOfBuffers; ++i) {
         auto ptr = static_cast<uint8_t*>(malloc(bufferSize));
         assert(ptr != nullptr);
-        allBuffers.emplace_back(ptr, bufferSize, [this](MemorySegment* segment) {
+        allBuffers.emplace_back(ptr, bufferSize, [this](detail::MemorySegment* segment) {
             recyclePooledBuffer(segment);
         });
         availableBuffers.emplace_back(&allBuffers.back());
@@ -62,8 +61,8 @@ TupleBuffer BufferManager::getBufferBlocking() {
     while (availableBuffers.empty()) {
         availableBuffersCvar.wait(lock);
     }
-    auto memSegment = availableBuffers.back();
-    availableBuffers.pop_back();
+    auto memSegment = availableBuffers.front();
+    availableBuffers.pop_front();
     return memSegment->toTupleBuffer();
 }
 
@@ -73,8 +72,8 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking() {
     if (availableBuffers.empty()) {
         return std::nullopt;
     }
-    auto memSegment = availableBuffers.back();
-    availableBuffers.pop_back();
+    auto memSegment = availableBuffers.front();
+    availableBuffers.pop_front();
     return memSegment->toTupleBuffer();
 }
 
@@ -87,8 +86,8 @@ std::optional<TupleBuffer> BufferManager::getBufferTimeout(std::chrono::millisec
     if (!res) {
         return std::nullopt;
     }
-    auto memSegment = availableBuffers.back();
-    availableBuffers.pop_back();
+    auto memSegment = availableBuffers.front();
+    availableBuffers.pop_front();
     return memSegment->toTupleBuffer();
 }
 
@@ -114,14 +113,14 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
     }
     // we could not find a buffer, allocate it
     auto ptr = static_cast<uint8_t*>(malloc(bufferSize));
-    auto segment = new MemorySegment(ptr, bufferSize, [this](MemorySegment* segment) {
+    auto segment = new detail::MemorySegment(ptr, bufferSize, [this](detail::MemorySegment* segment) {
       recycleUnpooledBuffer(segment);
     });
     unpooledBuffers.push_back(probe);
     return segment->toTupleBuffer();
 }
 
-void BufferManager::recyclePooledBuffer(MemorySegment* segment) {
+void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment) {
     std::unique_lock<std::mutex> lock(availableBuffersMutex);
     assert(!shutdownRequested);
     assert(segment->isAvailable());
@@ -129,7 +128,7 @@ void BufferManager::recyclePooledBuffer(MemorySegment* segment) {
     availableBuffersCvar.notify_all();
 }
 
-void BufferManager::recycleUnpooledBuffer(MemorySegment* segment) {
+void BufferManager::recycleUnpooledBuffer(detail::MemorySegment* segment) {
     std::unique_lock<std::mutex> lock(unpooledBuffersMutex);
     assert(!shutdownRequested);
     assert(segment->isAvailable());

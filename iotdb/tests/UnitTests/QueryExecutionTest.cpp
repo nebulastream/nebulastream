@@ -72,8 +72,6 @@ class TestSink : public DataSink {
     bool writeData(TupleBuffer& input_buffer) override {
         NES_DEBUG("TestSink: got buffer " << input_buffer);
         NES_DEBUG(NES::toString(input_buffer, this->getSchema()));
-        input_buffer.retain();
-
         resultBuffers.push_back(input_buffer);
         return true;
     }

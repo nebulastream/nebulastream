@@ -5,6 +5,10 @@
 
 using namespace std;
 namespace NES {
+
+static constexpr size_t DEFAULT_BUFFER_SIZE = 4096;
+static constexpr size_t DEFAULT_NUM_BUFFERS = 1024;
+
 JSON NodeEngine::getNodePropertiesAsJSON() {
     props->readMemStats();
     props->readCpuStats();
@@ -72,14 +76,17 @@ bool NodeEngine::undeployQuery(QueryExecutionPlanPtr qep) {
 
 void NodeEngine::init() {
     NES_DEBUG("NodeEngine: init node engine")
-
+    // TODO remove singleton and reconfigure
     NES::Dispatcher::instance();
-    NES::BufferManager::instance();
+    if (!NES::BufferManager::instance().isReady()) {
+        NES::BufferManager::instance().configure(DEFAULT_BUFFER_SIZE, DEFAULT_NUM_BUFFERS);
+    }
     NES::ThreadPool::instance();
 }
 
 bool NodeEngine::start() {
     NES_DEBUG("NodeEngine: start thread pool")
+    NES::Dispatcher::instance().resetDispatcher();
     return ThreadPool::instance().start();
 }
 

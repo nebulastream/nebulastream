@@ -1,11 +1,11 @@
 #ifndef INCLUDE_TASK_H_
 #define INCLUDE_TASK_H_
 #include <memory>
-#include "TupleBuffer.hpp"
 
 namespace NES {
 class DataSource;
 class QueryExecutionPlan;
+class TupleBuffer;
 typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 
 /**
@@ -22,9 +22,9 @@ class Task {
      * @param id of the pipeline stage inside the QEP that should be applied
      * @param pointer to the tuple buffer that has to be process
      */
-    explicit Task(QueryExecutionPlanPtr _qep, uint32_t _pipeline_stage_id, TupleBuffer buf);
+    explicit Task(QueryExecutionPlanPtr _qep, uint32_t _pipeline_stage_id, TupleBuffer& buf);
 
-    ~Task();
+    ~Task() = default;
 
     /**
      * @brief execute the task by calling executeStage of QEP and providing the stageId and the buffer
