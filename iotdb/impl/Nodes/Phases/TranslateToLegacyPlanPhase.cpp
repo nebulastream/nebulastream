@@ -62,7 +62,7 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         // Translate sink operator node.
         auto sinkNodeOperator = operatorNode->as<SinkLogicalOperatorNode>();
-        return createSinkOperator(sinkNodeOperator->getDataSink());
+        return createSinkOperator(sinkNodeOperator->getSinkDescriptor());
     }
     NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this operator node: " << operatorNode);
     NES_NOT_IMPLEMENTED;
