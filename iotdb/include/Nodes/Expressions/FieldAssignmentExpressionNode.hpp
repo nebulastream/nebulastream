@@ -3,6 +3,9 @@
 #include <Nodes/Expressions/BinaryExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 namespace NES {
+
+class FieldAssignmentExpressionNode;
+typedef std::shared_ptr<FieldAssignmentExpressionNode> FieldAssignmentExpressionNodePtr;
 /**
  * @brief A FieldAssignmentExpression represents the assignment of an expression result to a specific field.
  */
@@ -13,18 +16,11 @@ class FieldAssignmentExpressionNode : public BinaryExpressionNode {
     /**
      * @brief Create untyped field read.
      */
-    static ExpressionNodePtr create(FieldAccessExpressionNodePtr fieldAccess, ExpressionNodePtr expressionNodePtr);
+    static FieldAssignmentExpressionNodePtr create(FieldAccessExpressionNodePtr fieldAccess, ExpressionNodePtr expressionNodePtr);
 
     const std::string toString() const override;
     bool equal(const NodePtr rhs) const override;
 
-    const std::string getFieldName();
-
-  private:
-    /**
-     * @brief Name of the field want to access.
-     */
-    std::string fieldName;
 };
 }
 

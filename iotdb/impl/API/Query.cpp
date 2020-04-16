@@ -2,6 +2,7 @@
 
 #include <API/Query.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/SourceLogicalOperatorNode.hpp>
 #include <SourceSink/DataSink.hpp>
@@ -85,8 +86,8 @@ Query& Query::filter(const ExpressionNodePtr filterExpression) {
     return *this;
 }
 
-Query& Query::map(const ExpressionNodePtr mapExpression) {
-    OperatorNodePtr op = createMapLogicalOperatorNode(mapExpression);
+Query& Query::map(const FieldAssignmentExpressionNodePtr mapExpression) {
+    OperatorNodePtr op = createMapLogicalOperatorNode(dynamic_pointer_cast<ExpressionNode>(mapExpression));
     assignOperatorIdAndSwitchTheRoot(op);
     return *this;
 }

@@ -5,7 +5,7 @@ namespace NES {
 FieldAssignmentExpressionNode::FieldAssignmentExpressionNode(DataTypePtr stamp)
     : BinaryExpressionNode(std::move(stamp)) {};
 
-ExpressionNodePtr FieldAssignmentExpressionNode::create(FieldAccessExpressionNodePtr fieldAccess, ExpressionNodePtr expressionNodePtr) {
+FieldAssignmentExpressionNodePtr FieldAssignmentExpressionNode::create(FieldAccessExpressionNodePtr fieldAccess, ExpressionNodePtr expressionNodePtr) {
     auto fieldAssignment = std::make_shared<FieldAssignmentExpressionNode>(expressionNodePtr->getStamp());
     fieldAssignment->setChildren(fieldAccess, expressionNodePtr);
     return fieldAssignment;

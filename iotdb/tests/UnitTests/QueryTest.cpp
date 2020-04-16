@@ -4,11 +4,14 @@
 #include <Util/Logger.hpp>
 #include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
 
+
 #include <API/Query.hpp>
 #include <API/Types/DataTypes.hpp>
 #include <Catalogs/StreamCatalog.hpp>
+#include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
@@ -108,6 +111,47 @@ TEST_F(QueryTest, testQueryExpression) {
     ASSERT_TRUE(notEqualExpression->instanceOf<NegateExpressionNode>());
     auto equals = notEqualExpression->as<NegateExpressionNode>()->child();
     ASSERT_TRUE(equals->instanceOf<EqualsExpressionNode>());
+
+    auto assignmentExpression = Attribute("f1") = --Attribute("f1")+++10;
+    ConsoleDumpHandler::create()->dump(assignmentExpression, std::cout);
+    ASSERT_TRUE(assignmentExpression->instanceOf<FieldAssignmentExpressionNode>());
+
+}
+
+TEST_F(QueryTest, testMapQuery) {
+    NESTopologySensorNodePtr sensorNode = NESTopologyManager::getInstance()
+        .createNESSensorNode(1, "localhost", CPUCapacity::HIGH);
+
+    PhysicalStreamConfig streamConf;
+    streamConf.physicalStreamName = "test2";
+    streamConf.logicalStreamName = "test_stream";
+
+    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(streamConf,
+                                                                     sensorNode);
+
+    StreamCatalog::instance().addPhysicalStream("default_logical", sce);
+
+    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
+        "value", BasicType::UINT64);
+
+    Stream def = Stream("default_logical", schema);
+
+
+    Query& query = Query::from(def).map(Attribute("f1") = Attribute("f1")++).print(std::cout);
+
+    const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators = query.getSourceOperators();
+    EXPECT_EQ(sourceOperators.size(), 1);
+
+    SourceLogicalOperatorNodePtr srcOptr = sourceOperators[0];
+    EXPECT_TRUE(srcOptr->getDataSource()->getSchema()->equals(schema));
+
+    const std::vector<SinkLogicalOperatorNodePtr>& sinkOperators = query.getSinkOperators();
+    EXPECT_EQ(sinkOperators.size(), 1);
+
+    SinkLogicalOperatorNodePtr sinkOptr = sinkOperators[0];
+
+    const std::vector<NodePtr>& children = sinkOptr->getChildren();
+    EXPECT_EQ(sinkOperators.size(), 1);
 }
 
 }  // namespace NES
