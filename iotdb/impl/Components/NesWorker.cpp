@@ -1,6 +1,8 @@
 #include <Components/NesWorker.hpp>
 #include <Util/Logger.hpp>
 #include "Actors/WorkerActor.hpp"
+#include <Topology/NESTopologyEntry.hpp>
+
 
 #include <signal.h> //  our new library
 #include <caf/actor_cast.hpp>
@@ -13,11 +15,25 @@ void termFunc(int sig) {
 
 namespace NES {
 
+
 NesWorker::NesWorker() {
     connected = false;
     withRegisterStream = false;
     withParent = false;
     coordinatorPort = 0;
+    this->type = NESNodeType::Sensor;
+    NES_DEBUG("NesWorker: constructed")
+
+    // Register signals
+    signal(SIGINT, termFunc);
+}
+
+NesWorker::NesWorker(NESNodeType type) {
+    connected = false;
+    withRegisterStream = false;
+    withParent = false;
+    coordinatorPort = 0;
+    this->type = type;
     NES_DEBUG("NesWorker: constructed")
 
     // Register signals
@@ -47,14 +63,15 @@ bool NesWorker::start(bool blocking, bool withConnect, uint16_t port, std::strin
 
     workerHandle = actorSystem->spawn<NES::WorkerActor>(workerCfg.ip,
                                                         workerCfg.publish_port,
-                                                        workerCfg.receive_port);
+                                                        workerCfg.receive_port,
+                                                        type);
 
     abstract_actor* abstractActor = caf::actor_cast<abstract_actor*>(workerHandle);
     wrk = dynamic_cast<WorkerActor*>(abstractActor);
 
     auto expectedPort = io::publish(workerHandle, workerCfg.receive_port, nullptr,
                                     true);
-    cout << "spawn handle with id=" << workerHandle.id() << " port=" << expectedPort << endl;
+    NES_DEBUG("spawn handle with id=" << workerHandle.id() << " port=" << expectedPort)
 
     sleep(1);
     if (withConnect) {

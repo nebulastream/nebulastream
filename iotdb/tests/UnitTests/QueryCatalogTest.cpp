@@ -39,9 +39,9 @@ class QueryCatalogTest : public testing::Test {
     for (int i = 1; i < 5; i++) {
       //FIXME: add node properties
       PhysicalStreamConfig streamConf;
-      auto entry = coordinatorServicePtr->register_sensor(i, ip, publish_port,
-                                                          receive_port, 2, "",
-                                                          streamConf);
+      auto entry = coordinatorServicePtr->registerNode(i, ip, publish_port,
+                                                       receive_port, 2, "",
+                                                       streamConf, NESNodeType::Sensor);
     }
     NES_DEBUG("FINISHED ADDING 5 Nodes to topology")
     std::cout << "Setup QueryCatalogTest test case." << std::endl;

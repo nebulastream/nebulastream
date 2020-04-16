@@ -1,6 +1,6 @@
 #ifndef INCLUDE_ACTORS_WORKERACTOR_HPP_
 #define INCLUDE_ACTORS_WORKERACTOR_HPP_
-
+#include <Topology/NESTopologyEntry.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Operators/Operator.hpp>
 #include <Services/WorkerService.hpp>
@@ -40,10 +40,11 @@ class WorkerActor : public stateful_actor<WorkerState> {
      * @param receive port of this worker
      */
     explicit WorkerActor(actor_config& cfg, string ip, uint16_t publish_port,
-                         uint16_t receive_port);
+                         uint16_t receive_port, NESNodeType type);
 
   private:
     friend class NesWorker;
+    friend class NesCoordinator;
 
     behavior_type make_behavior() override {
         return init();
@@ -97,10 +98,11 @@ class WorkerActor : public stateful_actor<WorkerState> {
     bool removeParentFromSensorNode(std::string childId, std::string parentId);
 
     /**
-     * @brief method to register a sensor after the connection is established
+     * @brief method to register a node after the connection is established
+     * @param type of the node
      * @return bool indicating success
      */
-    bool registerSensor();
+    bool registerNode(NESNodeType type);
 
     /**
      * @brief method to get own id form server
@@ -133,6 +135,8 @@ class WorkerActor : public stateful_actor<WorkerState> {
     behavior init();
     behavior unconnected();
     behavior running();
+
+    NESNodeType type;
 };
 
 }

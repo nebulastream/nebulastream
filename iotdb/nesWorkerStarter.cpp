@@ -108,21 +108,14 @@ int main(int argc, char** argv) {
         cout << "start with dedicated source=" << sourceType <<
              endl;
         PhysicalStreamConfig conf;
-        conf.
-            sourceType = sourceType;
-        conf.
-            sourceConfig = sourceConfig;
-        conf.
-            sourceFrequency = sourceFrequency;
-        conf.
-            numberOfBuffersToProduce = numberOfBuffersToProduce;
-        conf.
-            physicalStreamName = physicalStreamName;
-        conf.
-            logicalStreamName = logicalStreamName;
+        conf.sourceType = sourceType;
+        conf.sourceConfig = sourceConfig;
+        conf.sourceFrequency = sourceFrequency;
+        conf.numberOfBuffersToProduce = numberOfBuffersToProduce;
+        conf.physicalStreamName = physicalStreamName;
+        conf.logicalStreamName = logicalStreamName;
 
-        wrk->
-            setWitRegister(conf);
+        wrk->setWitRegister(conf);
 
     } else if (parentId != "-1") {
         cout << "start with dedicated parent=" << parentId <<

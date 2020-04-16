@@ -129,7 +129,7 @@ NESTopologyEntryPtr NESTopologyGraph::getRoot() const {
     for (next = vi; vi != vi_end; vi = next) {
         ++next;
         // first worker node is root TODO:change this
-        if (graph[*vi].ptr->getEntryType() == Coordinator) {
+        if (graph[*vi].ptr->getEntryType() == Worker) {
             return graph[*vi].ptr;
         }
     }
