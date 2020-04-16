@@ -87,7 +87,7 @@ Query& Query::filter(const ExpressionNodePtr filterExpression) {
 }
 
 Query& Query::map(const FieldAssignmentExpressionNodePtr mapExpression) {
-    OperatorNodePtr op = createMapLogicalOperatorNode(dynamic_pointer_cast<ExpressionNode>(mapExpression));
+    OperatorNodePtr op = createMapLogicalOperatorNode(mapExpression);
     assignOperatorIdAndSwitchTheRoot(op);
     return *this;
 }
