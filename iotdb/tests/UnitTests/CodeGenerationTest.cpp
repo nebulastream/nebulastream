@@ -52,17 +52,17 @@ class CodeGenerationTest : public testing::Test {
 };
 
 const DataSourcePtr createTestSourceCodeGen() {
-  return std::make_shared<DefaultSource>(
-      Schema::create()->addField(createField("campaign_id", UINT64)), 1, 1);
+    return std::make_shared<DefaultSource>(
+        Schema::create()->addField(createField("campaign_id", UINT64)), 1, 1);
 }
 
 class SelectionDataGenSource : public GeneratorSource {
- public:
-  SelectionDataGenSource(SchemaPtr schema,
-                         const uint64_t pNum_buffers_to_process)
-      :
-      GeneratorSource(schema, pNum_buffers_to_process) {
-  }
+  public:
+    SelectionDataGenSource(SchemaPtr schema,
+                           const uint64_t pNum_buffers_to_process)
+        :
+        GeneratorSource(schema, pNum_buffers_to_process) {
+    }
 
     ~SelectionDataGenSource() = default;
 
@@ -96,24 +96,24 @@ class SelectionDataGenSource : public GeneratorSource {
 };
 
 const DataSourcePtr createTestSourceCodeGenFilter() {
-  DataSourcePtr source(
-      std::make_shared<SelectionDataGenSource>(
-          Schema::create()
-            ->addField("id", BasicType::UINT32)
-            ->addField("value", BasicType::UINT32)
-            ->addField("text", createArrayDataType(BasicType::CHAR, 12)),
-          1));
+    DataSourcePtr source(
+        std::make_shared<SelectionDataGenSource>(
+            Schema::create()
+                ->addField("id", BasicType::UINT32)
+                ->addField("value", BasicType::UINT32)
+                ->addField("text", createArrayDataType(BasicType::CHAR, 12)),
+            1));
 
     return source;
 }
 
 class PredicateTestingDataGeneratorSource : public GeneratorSource {
- public:
-  PredicateTestingDataGeneratorSource(SchemaPtr schema,
-                                      const uint64_t pNum_buffers_to_process)
-      :
-      GeneratorSource(schema, pNum_buffers_to_process) {
-  }
+  public:
+    PredicateTestingDataGeneratorSource(SchemaPtr schema,
+                                        const uint64_t pNum_buffers_to_process)
+        :
+        GeneratorSource(schema, pNum_buffers_to_process) {
+    }
 
     ~PredicateTestingDataGeneratorSource() = default;
 
@@ -155,27 +155,27 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
 };
 
 const DataSourcePtr createTestSourceCodeGenPredicate() {
-  DataSourcePtr source(
-      std::make_shared<PredicateTestingDataGeneratorSource>(
-          Schema::create()
-            ->addField("id", BasicType::UINT32)
-            ->addField("valueSmall", BasicType::INT16)
-            ->addField("valueFloat", BasicType::FLOAT32)
-            ->addField("valueDouble", BasicType::FLOAT64)
-            ->addField("valueChar", BasicType::CHAR)
-            ->addField("text", createArrayDataType(BasicType::CHAR, 12)),
-          1));
+    DataSourcePtr source(
+        std::make_shared<PredicateTestingDataGeneratorSource>(
+            Schema::create()
+                ->addField("id", BasicType::UINT32)
+                ->addField("valueSmall", BasicType::INT16)
+                ->addField("valueFloat", BasicType::FLOAT32)
+                ->addField("valueDouble", BasicType::FLOAT64)
+                ->addField("valueChar", BasicType::CHAR)
+                ->addField("text", createArrayDataType(BasicType::CHAR, 12)),
+            1));
 
     return source;
 }
 
 class WindowTestingDataGeneratorSource : public GeneratorSource {
- public:
-  WindowTestingDataGeneratorSource(SchemaPtr schema,
-                                   const uint64_t pNum_buffers_to_process)
-      :
-      GeneratorSource(schema, pNum_buffers_to_process) {
-  }
+  public:
+    WindowTestingDataGeneratorSource(SchemaPtr schema,
+                                     const uint64_t pNum_buffers_to_process)
+        :
+        GeneratorSource(schema, pNum_buffers_to_process) {
+    }
 
     ~WindowTestingDataGeneratorSource() = default;
 
@@ -205,13 +205,13 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
 };
 
 const DataSourcePtr createWindowTestDataSource() {
-  DataSourcePtr source(
-      std::make_shared<WindowTestingDataGeneratorSource>(
-          Schema::create()
-            ->addField("key", BasicType::UINT64)
-            ->addField("value", BasicType::UINT64),
-          10));
-  return source;
+    DataSourcePtr source(
+        std::make_shared<WindowTestingDataGeneratorSource>(
+            Schema::create()
+                ->addField("key", BasicType::UINT64)
+                ->addField("value", BasicType::UINT64),
+            10));
+    return source;
 }
 
 /**
@@ -675,15 +675,15 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
 
     /* execute Stage */
     NES_INFO("Processing " << buffer.getNumberOfTuples() << " tuples: ");
-    stage->execute(buffer, nullptr, NULL, resultBuffer);
+    stage->execute(buffer, nullptr, nullptr, resultBuffer);
 
-  /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
-  EXPECT_EQ(buffer.getNumberOfTuples(), resultBuffer.getNumberOfTuples());
-  auto layout = createRowLayout(schema);
-  for (uint64_t recordIndex = 0; recordIndex < buffer->getNumberOfTuples();
-      ++recordIndex) {
-    EXPECT_EQ(1,  layout->getValueField<uint64_t>(recordIndex, /*fieldIndex*/0)->read(buffer));
-  }
+    /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
+    EXPECT_EQ(buffer.getNumberOfTuples(), resultBuffer.getNumberOfTuples());
+    auto layout = createRowLayout(schema);
+    for (uint64_t recordIndex = 0; recordIndex < buffer.getNumberOfTuples();
+         ++recordIndex) {
+        EXPECT_EQ(1, layout->getValueField<uint64_t>(recordIndex, /*fieldIndex*/0)->read(buffer));
+    }
 }
 /**
  * @brief This test generates a predicate, which filters elements in the input buffer
@@ -699,9 +699,9 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
     /* generate code for scanning input buffer */
     codeGenerator->generateCode(source->getSchema(), context, std::cout);
 
-  auto pred = std::dynamic_pointer_cast<Predicate>(
-      (PredicateItem(inputSchema->get(0))
-          < PredicateItem(createBasicTypeValue(BasicType::INT64, "5"))).copy());
+    auto pred = std::dynamic_pointer_cast<Predicate>(
+        (PredicateItem(inputSchema->get(0))
+            < PredicateItem(createBasicTypeValue(BasicType::INT64, "5"))).copy());
 
     codeGenerator->generateCode(pred, context, std::cout);
 
@@ -749,10 +749,10 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
 
     codeGenerator->generateCode(source->getSchema(), context, std::cout);
 
-  auto sum = Sum::on(Field(input_schema->get("value")));
-  auto windowDefinition = createWindowDefinition(
-      input_schema->get("key"), sum,
-      TumblingWindow::of(TimeCharacteristic::ProcessingTime, Seconds(10)));
+    auto sum = Sum::on(Field(input_schema->get("value")));
+    auto windowDefinition = createWindowDefinition(
+        input_schema->get("key"), sum,
+        TumblingWindow::of(TimeCharacteristic::ProcessingTime, Seconds(10)));
 
     codeGenerator->generateCode(windowDefinition, context, std::cout);
 
@@ -795,12 +795,12 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
     auto inputSchema = source->getSchema();
     codeGenerator->generateCode(inputSchema, context, std::cout);
 
-  //predicate definition
-  codeGenerator->generateCode(
-      createPredicate(
-          (inputSchema->get(2) > 30.4)
-              && (inputSchema->get(4) == 'F' || (inputSchema->get(5) == "HHHHHHHHHHH"))),
-      context, std::cout);
+    //predicate definition
+    codeGenerator->generateCode(
+        createPredicate(
+            (inputSchema->get(2) > 30.4)
+                && (inputSchema->get(4) == 'F' || (inputSchema->get(5) == "HHHHHHHHHHH"))),
+        context, std::cout);
 
     /* generate code for writing result tuples to output buffer */
     codeGenerator->generateCode(createPrintSinkWithSchema(inputSchema, std::cout),
@@ -815,7 +815,7 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
     auto inputBuffer = *optVal;
 
     auto resultBuffer = BufferManager::instance().getBufferBlocking();
-    resultBuffer.setTupleSizeInBytes(inputSchema->getSchemaSize());
+    resultBuffer.setTupleSizeInBytes(inputSchema->getSchemaSizeInBytes());
 
     /* execute Stage */
     stage->execute(inputBuffer, nullptr, nullptr, resultBuffer);
@@ -843,35 +843,24 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
     //predicate definition
     auto mappedValue = AttributeField("mappedValue", BasicType::FLOAT64).copy();
     codeGenerator->generateCode(
-        mappedValue, createPredicate((inputSchema[2]*inputSchema[3]) + 2),
+        mappedValue, createPredicate((inputSchema->get(2)*inputSchema->get(3)) + 2),
         context, std::cout);
-  //predicate definition
-  auto mappedValue = AttributeField("mappedValue", BasicType::FLOAT64).copy();
-  codeGenerator->generateCode(
-      mappedValue, createPredicate((inputSchema->get(2) * inputSchema->get(3)) + 2),
-      context, std::cout);
 
     /* generate code for writing result tuples to output buffer */
     auto outputSchema = Schema::create()
-        .addField("id", BasicType::UINT32)
-        .addField("valueSmall", BasicType::INT16)
-        .addField("valueFloat", BasicType::FLOAT32)
-        .addField("valueDouble", BasicType::FLOAT64).addField(mappedValue)
-        .addField("valueChar", BasicType::CHAR).addField(
+        ->addField("id", BasicType::UINT32)
+        ->addField("valueSmall", BasicType::INT16)
+        ->addField("valueFloat", BasicType::FLOAT32)
+        ->addField("valueDouble", BasicType::FLOAT64)
+        ->addField(mappedValue)
+        ->addField("valueChar", BasicType::CHAR)->addField(
             "text", createArrayDataType(BasicType::CHAR, 12));
     codeGenerator->generateCode(
         createPrintSinkWithSchema(outputSchema, std::cout), context, std::cout);
-  /* generate code for writing result tuples to output buffer */
-  auto outputSchema = Schema::create()
-      ->addField("id", BasicType::UINT32)
-      ->addField("valueSmall", BasicType::INT16)
-      ->addField("valueFloat", BasicType::FLOAT32)
-      ->addField("valueDouble", BasicType::FLOAT64)
-      ->addField(mappedValue)
-      ->addField("valueChar", BasicType::CHAR)->addField(
-      "text", createArrayDataType(BasicType::CHAR, 12));
-  codeGenerator->generateCode(
-      createPrintSinkWithSchema(outputSchema, std::cout), context, std::cout);
+    /* generate code for writing result tuples to output buffer */
+
+    codeGenerator->generateCode(
+        createPrintSinkWithSchema(outputSchema, std::cout), context, std::cout);
 
     /* compile code to pipeline stage */
     auto stage = codeGenerator->compile(CompilerArgs(), context->code);
@@ -880,7 +869,7 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
     auto inputBuffer = source->receiveData().value();
 
     auto resultBuffer = BufferManager::instance().getUnpooledBuffer(
-        inputBuffer.getNumberOfTuples()*outputSchema.getSchemaSize()).value();
+        inputBuffer.getNumberOfTuples()*outputSchema->getSchemaSizeInBytes()).value();
 
     /* execute Stage */
     stage->execute(inputBuffer, nullptr, nullptr, resultBuffer);

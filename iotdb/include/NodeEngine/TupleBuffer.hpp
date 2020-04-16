@@ -236,7 +236,7 @@ class TupleBuffer {
      * @brief this method creates a string from the content of a tuple buffer
      * @return string of the buffer content
      */
-    std::string printTupleBuffer(Schema schema) {
+    std::string printTupleBuffer(SchemaPtr schema) {
         return detail::printTupleBuffer(*this, schema);
     }
 
@@ -244,7 +244,7 @@ class TupleBuffer {
       * @brief revert the endianess of the tuple buffer
       * @schema of the buffer
       */
-    void revertEndianness(Schema schema) {
+    void revertEndianness(SchemaPtr schema) {
         detail::revertEndianness(*this, schema);
     }
 
@@ -258,11 +258,12 @@ namespace detail {
 class MemorySegment {
     friend class NES::TupleBuffer;
     friend class NES::BufferManager;
-  public:
-    MemorySegment(const MemorySegment& other) : ptr(other.ptr), size(other.size), controlBlock(other.controlBlock) {
-    }
 
-    MemorySegment& operator=(const MemorySegment& other) {
+  public:
+    MemorySegment(const MemorySegment& other) : ptr(other.ptr), size(other.size), controlBlock(other.controlBlock) {}
+
+    MemorySegment& operator=(const MemorySegment& other)
+    {
         ptr = other.ptr;
         size = other.size;
         controlBlock = other.controlBlock;
@@ -276,12 +277,14 @@ class MemorySegment {
     MemorySegment() : ptr(nullptr), size(0), controlBlock(nullptr, [](MemorySegment*) {}) {}
 
     explicit MemorySegment(uint8_t* ptr, uint32_t size, std::function<void(MemorySegment*)>&& recycleFunction)
-        : ptr(ptr), size(size), controlBlock(this, std::move(recycleFunction)) {
+        : ptr(ptr), size(size), controlBlock(this, std::move(recycleFunction))
+    {
         assert(this->ptr != nullptr);
         assert(this->size > 0);
     }
 
-    ~MemorySegment() {
+    ~MemorySegment()
+    {
         if (ptr) {
             auto refCnt = controlBlock.getReferenceCount();
             if (refCnt != 0) {
@@ -291,30 +294,28 @@ class MemorySegment {
             ptr = nullptr;
         }
     }
+
   private:
-    TupleBuffer toTupleBuffer() {
+    TupleBuffer toTupleBuffer()
+    {
         if (controlBlock.prepare()) {
             return TupleBuffer(&controlBlock, ptr, size);
-        } else {
+        }
+        else {
             assert(false);
         }
     }
 
-    bool isAvailable() {
-        return controlBlock.getReferenceCount() == 0;
-    }
+    bool isAvailable() { return controlBlock.getReferenceCount() == 0; }
 
-    uint32_t getSize() const {
-        return size;
-    }
+    uint32_t getSize() const { return size; }
 
   private:
     uint8_t* ptr;
     uint32_t size;
     detail::BufferControlBlock controlBlock;
 };
-
-
+}
 std::string toString(TupleBuffer& buffer, SchemaPtr schema);
 
 }  // namespace NES

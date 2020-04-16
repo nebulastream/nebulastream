@@ -11,20 +11,20 @@ namespace NES {
 
 namespace detail {
 
-std::string printTupleBuffer(TupleBuffer& tbuffer, Schema schema) {
+std::string printTupleBuffer(TupleBuffer& tbuffer, SchemaPtr schema) {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();
     auto buffer = tbuffer.getBufferAs<char>();
     for (size_t i = 0; i < numberOfTuples; i++) {
         size_t offset = 0;
-        for (size_t j = 0; j < schema.getSize(); j++) {
-            auto field = schema[j];
+        for (size_t j = 0; j < schema->getSize(); j++) {
+            auto field = schema->get(j);
             size_t fieldSize = field->getFieldSize();
             DataTypePtr ptr = field->getDataType();
             std::string str = ptr->convertRawToString(
-                buffer + offset + i*schema.getSchemaSize());
+                buffer + offset + i*schema->getSchemaSizeInBytes());
             ss << str.c_str();
-            if (j < schema.getSize() - 1) {
+            if (j < schema->getSize() - 1) {
                 ss << ",";
             }
             offset += fieldSize;
@@ -47,14 +47,14 @@ std::string printTupleBuffer(TupleBuffer& tbuffer, Schema schema) {
  *            << " tupleSize=" << tupleSize << " fieldSize=" << fieldSize
  *            << " res=" << (char*)buffer + offset + i * tupleSize << endl;
  */
-void revertEndianness(TupleBuffer& tbuffer, Schema schema) {
-    auto tupleSize = schema.getSchemaSize();
+void revertEndianness(TupleBuffer& tbuffer, SchemaPtr schema) {
+    auto tupleSize = schema->getSchemaSizeInBytes();
     auto numberOfTuples = tbuffer.getNumberOfTuples();
     auto buffer = tbuffer.getBufferAs<char>();
     for (size_t i = 0; i < numberOfTuples; i++) {
         size_t offset = 0;
-        for (size_t j = 0; j < schema.getSize(); j++) {
-            auto field = schema[j];
+        for (size_t j = 0; j < schema->getSize(); j++) {
+            auto field = schema->get(j);
             size_t fieldSize = field->getFieldSize();
             //TODO: add enum with switch for performance reasons
             if (field->getDataType()->toString() == "UINT8") {

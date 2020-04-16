@@ -180,7 +180,7 @@ TEST_F(TupleBufferTest, testEndianessTwoItems)
     testBuf.setNumberOfTuples(5);
     testBuf.setTupleSizeInBytes(sizeof(TestStruct));
 
-    Schema s = Schema::create()
+    SchemaPtr s = Schema::create()
                    ->addField("v1", UINT8)
                    ->addField("v2", UINT16)
                    ->addField("v3", UINT32)

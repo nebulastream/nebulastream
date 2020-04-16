@@ -1,44 +1,38 @@
-#include <Services/WorkerService.hpp>
 #include <Actors/ExecutableTransferObject.hpp>
+#include <Services/WorkerService.hpp>
+#include <Util/Logger.hpp>
 #include <Util/SerializationTools.hpp>
 #include <utility>
-#include <Util/Logger.hpp>
 
 namespace NES {
 
-bool WorkerService::shutDown() {
-    NES_DEBUG("WorkerService: shutdown WorkerService " << this)
-    bool success = this->_enginePtr->stopWithUndeploy();
-    if (!success) {
-        NES_ERROR("WorkerService::shutDown: error while stopping WorkerService")
-        //TODO: we cannot check for this here becuase of the singleton this could already be stopped
-        //TODO: after remove singleton we can check this
-//        throw new Exception("Error while stopping WorkerService");
-    }
-    physicalStreams.clear();
-    runningQueries.clear();
-    return true;
+void WorkerService::shutDown()
+{
+  NES_DEBUG("WorkerService: shutdown WorkerService")
+  this->_enginePtr->stopWithUndeploy();
+  physicalStreams.clear();
+  runningQueries.clear();
 }
 
-WorkerService::WorkerService(string ip, uint16_t publish_port,
-                             uint16_t receive_port) {
-  NES_DEBUG("WorkerService::WorkerService: ip = " << ip)
-  this->_ip = std::move(ip);
-  this->publishPort = publish_port;
-  this->receivePort = receive_port;
-  this->queryCompiler = createDefaultQueryCompiler();
-  NES_DEBUG("WorkerService: create WorkerService with ip=" <<  this->_ip << " publish_port=" << this->publishPort  << " receive_port=" << this->receivePort)
-  physicalStreams.insert(std::make_pair("default_physical", PhysicalStreamConfig()));
-  this->_enginePtr = std::make_shared<NodeEngine>();
-  this->_enginePtr->start();
+WorkerService::WorkerService(string ip, uint16_t publish_port, uint16_t receive_port) {
+    NES_DEBUG("WorkerService::WorkerService: ip = " << ip)
+    this->_ip = std::move(ip);
+    this->publishPort = publish_port;
+    this->receivePort = receive_port;
+    this->queryCompiler = createDefaultQueryCompiler();
+    NES_DEBUG("WorkerService: create WorkerService with ip=" << this->_ip << " publish_port=" << this->publishPort
+                                                             << " receive_port=" << this->receivePort)
+    physicalStreams.insert(std::make_pair("default_physical", PhysicalStreamConfig()));
+    this->_enginePtr = std::make_shared<NodeEngine>();
+    this->_enginePtr->start();
 }
 
 string WorkerService::getNodeProperties() {
-    return this->_enginePtr->getNodePropertiesAsString();
+  return this->_enginePtr->getNodePropertiesAsString();
 }
 
 PhysicalStreamConfig WorkerService::getPhysicalStreamConfig(std::string name) {
-    return physicalStreams[name];
+  return physicalStreams[name];
 }
 
 void WorkerService::addPhysicalStreamConfig(PhysicalStreamConfig conf) {
@@ -99,24 +93,23 @@ vector<string> WorkerService::getOperators() {
     return result;
 }
 
-string& WorkerService::getIp() {
-    return ip;
+string& WorkerService::getIp(){
+  return _ip;
 }
-void WorkerService::setIp(const string& ip) {
-    this->ip = ip;
+void WorkerService::setIp(const string &ip) {
+  _ip = ip;
 }
 uint16_t WorkerService::getPublishPort() const {
-    return publishPort;
+  return publishPort;
 }
 void WorkerService::setPublishPort(uint16_t publish_port) {
-    publishPort = publish_port;
+  publishPort = publish_port;
 }
 uint16_t WorkerService::getReceivePort() const {
-    return receivePort;
+  return receivePort;
 }
 void WorkerService::setReceivePort(uint16_t receive_port) {
-    receivePort = receive_port;
+  receivePort = receive_port;
 }
 
-}
-
+} // namespace NES

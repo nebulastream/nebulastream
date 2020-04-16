@@ -70,56 +70,42 @@ class CCodeGenerator : public CodeGenerator {
 };
 
 CCodeGenerator::CCodeGenerator(const CodeGenArgs& args) : CodeGenerator(args) {}
-/**
+
 const StructDeclaration getStructDeclarationTupleBuffer() {
-    /** define structure of TupleBuffer
-      struct TupleBuffer {
-        void *data;
-        uint64_t buffer_size;
-        uint64_t tuple_size_bytes;
-        uint64_t num_tuples;
-      };
-    */
-    StructDeclaration struct_decl_tuple_buffer =
-        StructDeclaration::create("TupleBuffer", "")
-            .addField(VariableDeclaration::create(createPointerDataType(createDataType(BasicType(VOID_TYPE))), "data"))
-            .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)), "buffer_size"))
-            .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)), "tuple_size_bytes"))
-            .addField(VariableDeclaration::create(createDataType(BasicType(UINT64)), "num_tuples"));
-    return struct_decl_tuple_buffer;
+    assert(false);
 }
+//
+//const StructDeclaration getStructDeclarationWindowState() {
+//
+//   define the WindowState struct
+// struct WindowState {
+//  void *windowState;
+//  };
+//
+//
+//  StructDeclaration struct_decl_state =
+//      StructDeclaration::create("WindowSliceStore", "")
+//          .addField(VariableDeclaration::create(createPointerDataType(createDataType(BasicType(VOID_TYPE))),
+//                                                "windowState"));
+//  return struct_decl_state;
+//}
 
-const StructDeclaration getStructDeclarationWindowState() {
 
-   define the WindowState struct
- struct WindowState {
-  void *windowState;
-  };
-
-
-  StructDeclaration struct_decl_state =
-      StructDeclaration::create("WindowSliceStore", "")
-          .addField(VariableDeclaration::create(createPointerDataType(createDataType(BasicType(VOID_TYPE))),
-                                                "windowState"));
-  return struct_decl_state;
-}
-**/
-
-const StructDeclaration getStructDeclarationFromSchema(const std::string struct_name, const Schema& schema) {
+const StructDeclaration getStructDeclarationFromSchema(const std::string structName, SchemaPtr schema) {
     /* struct definition for tuples */
     StructDeclaration structDeclarationTuple = StructDeclaration::create(structName, "");
     /* disable padding of bytes to generate compact structs, required for input and output tuple formats */
     structDeclarationTuple.makeStructCompact();
 
     std::cout << "Converting Schema: " << schema->toString() << std::endl;
-    std::cout << "Define Struct : " << struct_name << std::endl;
+    std::cout << "Define Struct : " << structName << std::endl;
 
     for (size_t i = 0; i < schema->getSize(); ++i) {
-        struct_decl_tuple.addField(VariableDeclaration::create(schema->get(i)->getDataType(), schema->get(i)->name));
+        structDeclarationTuple.addField(VariableDeclaration::create(schema->get(i)->getDataType(), schema->get(i)->name));
         std::cout << "Field " << i << ": " << schema->get(i)->getDataType()->toString() << " " << schema->get(i)->name
                   << std::endl;
     }
-    return struct_decl_tuple;
+    return structDeclarationTuple;
 }
 
 const StructDeclaration getStructDeclarationInputTuple(SchemaPtr schema) {
@@ -144,7 +130,7 @@ const std::string toString(void* value, DataTypePtr type) {
     return "";
 }
 
-std::string toString(TupleBuffer& buffer, const Schema& schema) {
+std::string toString(TupleBuffer& buffer, SchemaPtr schema) {
     if (!buffer.isValid()) {
         return "INVALID_BUFFER_PTR";
     }
@@ -306,8 +292,8 @@ bool CCodeGenerator::generateCode(const AttributeFieldPtr field,
     DeclarationPtr declaredMapVar = getVariableDeclarationForField(context->code->structDeclarationResultTuple, field);
     if (!declaredMapVar) {
         context->resultSchema->addField(field);
-        context->code->struct_decl_result_tuple.addField(VariableDeclaration::create(field->data_type, field->name));
-        declaredMapVar = getVariableDeclarationForField(context->code->struct_decl_result_tuple, field);
+        context->code->structDeclarationResultTuple.addField(VariableDeclaration::create(field->data_type, field->name));
+        declaredMapVar = getVariableDeclarationForField(context->code->structDeclarationResultTuple, field);
     }
     context->code->override_fields.push_back(declaredMapVar);
     VariableDeclaration var_map_i = context->code->structDeclarationResultTuple.getVariableDeclaration(field->name);
@@ -348,17 +334,17 @@ bool CCodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContext
     std::vector<StatementPtr> write_result_tuples;
     for (size_t i = 0; i < context->resultSchema->getSize(); ++i) {
         VariableDeclarationPtr
-            var_decl = getVariableDeclarationForField(struct_decl_result_tuple, context->resultSchema->get(i));
+            var_decl = getVariableDeclarationForField(structDeclarationResultTuple, context->resultSchema->get(i));
         if (!var_decl) {
             NES_ERROR("CodeGenerator: Could not extract field " << context->resultSchema->get(i)->toString() << " from struct "
-                                                 << struct_decl_result_tuple.getTypeName());
+                                                 << structDeclarationResultTuple.getTypeName());
             NES_DEBUG("CodeGenerator: W>");
         }
-        context->code->variable_decls.push_back(*var_decl);
+        context->code->variableDeclarations.push_back(*var_decl);
 
-        DeclarationPtr var_decl_input =
-            getVariableDeclarationForField(context->code->struct_decl_input_tuple, context->resultSchema->get(i));
-        if (var_decl_input) {
+        DeclarationPtr varDeclarationInput =
+            getVariableDeclarationForField(context->code->structDeclarationResultTuple, context->resultSchema->get(i));
+        if (varDeclarationInput) {
             bool override = false;
             for (size_t j = 0; j < context->code->override_fields.size(); j++) {
                 if (context->code->override_fields.at(j)->getIdentifierName().compare(varDeclarationInput->getIdentifierName())
@@ -370,9 +356,9 @@ bool CCodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContext
             if (!override) {
                 VariableDeclarationPtr
                     varDeclarationField =
-                    getVariableDeclarationForField(structDeclarationResultTuple, context->resultSchema[i]);
+                    getVariableDeclarationForField(structDeclarationResultTuple, context->resultSchema->get(i));
                 if (!varDeclarationField) {
-                    NES_ERROR("Could not extract field " << context->resultSchema[i]->toString() << " from struct "
+                    NES_ERROR("Could not extract field " << context->resultSchema->get(i)->toString() << " from struct "
                                                          << structDeclarationResultTuple.getTypeName());
                     NES_DEBUG("W>");
                 }

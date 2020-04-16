@@ -142,7 +142,7 @@ size_t DataSource::getNumberOfGeneratedBuffers() {
 };
 
 std::string DataSource::getSourceSchemaAsString() {
-    return schema.toString();
+    return schema->toString();
 }
 
 const std::string& DataSource::getSourceId() const {
