@@ -3,13 +3,13 @@
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldReadExpressionNode.hpp>
 
-#include <Nodes/Expressions/UnaryExpressions/NegateExpressionNode.hpp>
 #include <Nodes/Expressions/BinaryExpressions/AndExpressionNode.hpp>
-#include <Nodes/Expressions/BinaryExpressions/LessThenExpressionNode.hpp>
 #include <Nodes/Expressions/BinaryExpressions/EqualsExpressionNode.hpp>
-#include <Nodes/Operators/LogicalOperators/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/SinkLogicalOperatorNode.hpp>
+#include <Nodes/Expressions/BinaryExpressions/LessEqualsExpressionNode.hpp>
+#include <Nodes/Expressions/UnaryExpressions/NegateExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/SinkLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/SourceLogicalOperatorNode.hpp>
 #include <Operators/Operator.hpp>
 namespace NES {
 
@@ -77,9 +77,9 @@ UserAPIExpressionPtr TranslateToLegacyPlanPhase::transformExpression(ExpressionN
         auto legacyLeft = transformExpression(andExpressionNode->getLeft());
         auto legacyRight = transformExpression(andExpressionNode->getRight());
         return Predicate(BinaryOperatorType::LOGICAL_AND_OP, legacyLeft, legacyRight).copy();
-    } else if (expression->instanceOf<LessThenExpressionNode>()) {
+    } else if (expression->instanceOf<LessEqualsExpressionNode>()) {
         // Translate less then expression node.
-        auto andExpressionNode = expression->as<LessThenExpressionNode>();
+        auto andExpressionNode = expression->as<LessEqualsExpressionNode>();
         auto legacyLeft = transformExpression(andExpressionNode->getLeft());
         auto legacyRight = transformExpression(andExpressionNode->getRight());
         return Predicate(BinaryOperatorType::LESS_THEN_OP, legacyLeft, legacyRight).copy();

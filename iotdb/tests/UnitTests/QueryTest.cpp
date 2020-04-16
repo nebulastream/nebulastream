@@ -6,16 +6,23 @@
 
 #include <API/Query.hpp>
 #include <API/Types/DataTypes.hpp>
-#include <Nodes/Expressions/FieldReadExpressionNode.hpp>
-#include <Nodes/Expressions/BinaryExpressions/LessThenExpressionNode.hpp>
+#include <Catalogs/StreamCatalog.hpp>
+#include <Nodes/Expressions/BinaryExpressions/AndExpressionNode.hpp>
+#include <Nodes/Expressions/BinaryExpressions/EqualsExpressionNode.hpp>
+#include <Nodes/Expressions/BinaryExpressions/GreaterEqualsExpressionNode.hpp>
+#include <Nodes/Expressions/BinaryExpressions/GreaterExpressionNode.hpp>
+#include <Nodes/Expressions/BinaryExpressions/LessEqualsExpressionNode.hpp>
+#include <Nodes/Expressions/BinaryExpressions/LessExpressionNode.hpp>
+#include <Nodes/Expressions/BinaryExpressions/OrExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
+#include <Nodes/Expressions/FieldReadExpressionNode.hpp>
+#include <Nodes/Expressions/UnaryExpressions/NegateExpressionNode.hpp>
+#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Catalogs/StreamCatalog.hpp>
-#include <Topology/NESTopologySensorNode.hpp>
 #include <Topology/NESTopologyManager.hpp>
+#include <Topology/NESTopologySensorNode.hpp>
 
 namespace NES {
 
@@ -56,7 +63,7 @@ TEST_F(QueryTest, testQueryFilter) {
 
     auto fieldRead = FieldReadExpressionNode::create(createDataType(INT64), "field_1");
     auto constant = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT64, "10"));
-    auto filterPredicate = LessThenExpressionNode::create(fieldRead, constant);
+    auto filterPredicate = LessEqualsExpressionNode::create(fieldRead, constant);
     Query& query = Query::from(def).filter(filterPredicate).print(std::cout);
 
     const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators = query.getSourceOperators();
@@ -72,6 +79,35 @@ TEST_F(QueryTest, testQueryFilter) {
 
     const std::vector<NodePtr>& children = sinkOptr->getChildren();
     EXPECT_EQ(sinkOperators.size(), 1);
+}
+
+
+TEST_F(QueryTest, testQueryExpression) {
+    auto andExpression = Attribute("f1") && 10;
+    ASSERT_TRUE(andExpression->instanceOf<AndExpressionNode>());
+
+    auto orExpression = Attribute("f1") || 45;
+    ASSERT_TRUE(orExpression->instanceOf<OrExpressionNode>());
+
+    auto lessExpression = Attribute("f1") < 45;
+    ASSERT_TRUE(lessExpression->instanceOf<LessExpressionNode>());
+
+    auto lessThenExpression = Attribute("f1") <= 45;
+    ASSERT_TRUE(lessThenExpression->instanceOf<LessEqualsExpressionNode>());
+
+    auto equalsExpression = Attribute("f1") == 45;
+    ASSERT_TRUE(equalsExpression->instanceOf<EqualsExpressionNode>());
+
+    auto greaterExpression = Attribute("f1") > 45;
+    ASSERT_TRUE(greaterExpression->instanceOf<GreaterExpressionNode>());
+
+    auto greaterThenExpression = Attribute("f1") >= 45;
+    ASSERT_TRUE(greaterThenExpression->instanceOf<GreaterEqualsExpressionNode>());
+
+    auto notEqualExpression = Attribute("f1") != 45;
+    ASSERT_TRUE(notEqualExpression->instanceOf<NegateExpressionNode>());
+    auto equals = notEqualExpression->as<NegateExpressionNode>()->child();
+    ASSERT_TRUE(equals->instanceOf<EqualsExpressionNode>());
 }
 
 }  // namespace NES

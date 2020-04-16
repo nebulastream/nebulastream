@@ -1,7 +1,6 @@
 #include <boost/algorithm/string.hpp>
 
 #include <API/Query.hpp>
-#include <API/UserAPIExpression.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Nodes/Operators/LogicalOperators/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/SourceLogicalOperatorNode.hpp>
@@ -80,17 +79,13 @@ Query Query::from(Stream& stream) {
  * Relational Operators
  */
 
-Query& Query::select(const Field& field) {NES_NOT_IMPLEMENTED }
-
-Query& Query::select(const Field& field1, const Field& field2) {NES_NOT_IMPLEMENTED }
-
 Query& Query::filter(const ExpressionNodePtr expressionNodePtr) {
     OperatorNodePtr op = createFilterLogicalOperatorNode(expressionNodePtr);
     assignOperatorIdAndSwitchTheRoot(op);
     return *this;
 }
 
-Query& Query::map(const AttributeField& field, const Predicate predicate) {NES_NOT_IMPLEMENTED }
+Query& Query::map(const AttributeField& field, const ExpressionNodePtr predicate) {NES_NOT_IMPLEMENTED }
 
 Query& Query::combine(const Query& subQuery) {NES_NOT_IMPLEMENTED }
 

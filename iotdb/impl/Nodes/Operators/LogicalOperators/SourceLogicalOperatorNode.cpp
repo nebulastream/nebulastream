@@ -1,5 +1,4 @@
 #include <Nodes/Operators/LogicalOperators/SourceLogicalOperatorNode.hpp>
-#include <API/InputQuery.hpp>
 
 namespace NES {
 
