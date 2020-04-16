@@ -1,19 +1,21 @@
 #ifndef SINK_LOGICAL_OPERATOR_NODE_HPP
 #define SINK_LOGICAL_OPERATOR_NODE_HPP
-#include <memory>
+
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+
 namespace NES {
 class SinkLogicalOperatorNode : public LogicalOperatorNode {
   public:
     SinkLogicalOperatorNode();
-    SinkLogicalOperatorNode(const DataSinkPtr sink);
+    SinkLogicalOperatorNode(const SinkDescriptorPtr sinkDescriptor);
     SinkLogicalOperatorNode& operator=(const SinkLogicalOperatorNode& other);
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
     DataSinkPtr getDataSink();
 
   private:
-    DataSinkPtr sink;
+    SinkDescriptorPtr sinkDescriptor;
 };
 }
 #endif  // SINK_LOGICAL_OPERATOR_NODE_HPP
