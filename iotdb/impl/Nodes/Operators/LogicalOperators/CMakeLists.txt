@@ -6,6 +6,9 @@ add_source_iotdb(
         Sinks/SinkLogicalOperatorNode.cpp
         Sinks/KafkaSinkDescriptor.cpp
         Sinks/ZmqSinkDescriptor.cpp
-        SourceLogicalOperatorNode.cpp
+        Sources/SourceLogicalOperatorNode.cpp
+        Sources/SenseSourceDescriptor.cpp
+        Sources/KafkaSourceDescriptor.cpp
+        Sources/ZmqSourceDescriptor.cpp
         WindowLogicalOperatorNode.cpp
 )

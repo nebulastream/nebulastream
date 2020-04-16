@@ -2,7 +2,7 @@
 #include <iostream>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Util/DumpContext.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Util/Logger.hpp>

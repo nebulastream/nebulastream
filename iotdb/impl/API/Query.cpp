@@ -4,6 +4,7 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <SourceSink/DataSink.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
