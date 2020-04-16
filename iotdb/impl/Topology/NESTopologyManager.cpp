@@ -5,6 +5,7 @@ namespace NES {
 NESTopologyCoordinatorNodePtr NESTopologyManager::createNESCoordinatorNode(size_t id,
                                                                            const std::string ipAddr,
                                                                            CPUCapacity cpuCapacity) {
+    assert(0);
     return currentPlan->createNESCoordinatorNode(id, ipAddr, cpuCapacity);
 }
 

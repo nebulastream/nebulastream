@@ -40,31 +40,7 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
     /**
      * @brief the constructor of the coordinator to initialize the default objects
      */
-
-    explicit CoordinatorActor(caf::actor_config& cfg)
-        :
-        stateful_actor(cfg) {
-
-        queryCatalogServicePtr = QueryCatalogService::getInstance();
-        streamCatalogServicePtr = StreamCatalogService::getInstance();
-        coordinatorServicePtr = CoordinatorService::getInstance();
-        coordinatorIp = "localhost";
-        workerServicePtr = std::make_unique<WorkerService>(
-            WorkerService(actorCoordinatorConfig.ip, actorCoordinatorConfig.publish_port,
-                          actorCoordinatorConfig.receive_port));
-    }
-
-    explicit CoordinatorActor(caf::actor_config& cfg, std::string ip)
-        :
-        stateful_actor(cfg), coordinatorIp(ip) {
-
-        queryCatalogServicePtr = QueryCatalogService::getInstance();
-        streamCatalogServicePtr = StreamCatalogService::getInstance();
-        coordinatorServicePtr = CoordinatorService::getInstance();
-        workerServicePtr = std::make_unique<WorkerService>(
-            WorkerService(ip, actorCoordinatorConfig.publish_port,
-                          actorCoordinatorConfig.receive_port));
-    }
+    explicit CoordinatorActor(caf::actor_config& cfg, std::string ip);
 
     ~CoordinatorActor();
   private:
@@ -116,25 +92,27 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
     bool removeParentFromSensorNode(std::string childId, std::string parentId);
 
     /**
-   * @brief : registering a new sensor node
+   * @brief : registering a new node
    * @param ip
    * @param publish_port
    * @param receive_port
    * @param cpu
    * @param properties of this worker
    * @param configuration of the sensor
+   * @param node type
    */
-    bool registerSensor(const string& ip, uint16_t publish_port,
-                        uint16_t receive_port, int cpu,
-                        const string& nodeProperties,
-                        PhysicalStreamConfig streamConf);
+    bool registerNode(const string& ip, uint16_t publish_port,
+                      uint16_t receive_port, int cpu,
+                      const string& nodeProperties,
+                      PhysicalStreamConfig streamConf,
+                      NESNodeType type);
 
     /**
      * @brief: remove a sensor node from topology and catalog
      * @caution: if there is more than one, potential node to delete, an exception is thrown
      * @param ip
      */
-    bool deregisterSensor(const string& ip);
+    bool deregisterNode(const string& ip);
 
     /**
      * @brief execute user query will first register the query and then deploy it.
@@ -165,10 +143,10 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
      */
     bool deregisterQuery(const string& queryId);
 
-    /**
-     * @brief initialize the NES topology and add coordinator node
-     */
-    void initializeNESTopology();
+    //    /**
+    //     * @brief initialize the NES topology and add coordinator node
+    //     */
+    //    void initializeNESTopology();
 
     bool shutdown();
 
@@ -183,7 +161,7 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
     StreamCatalogServicePtr streamCatalogServicePtr;
     CoordinatorActorConfig actorCoordinatorConfig;
     CoordinatorServicePtr coordinatorServicePtr;
-    std::unique_ptr<WorkerService> workerServicePtr;
+    //    std::unique_ptr<WorkerService> workerServicePtr;
 };
 }
 

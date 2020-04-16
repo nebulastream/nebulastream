@@ -6,6 +6,21 @@
 #include <functional>
 
 namespace NES {
+/**
+     * @brief the constructor of the coordinator to initialize the default objects
+     */
+CoordinatorActor::CoordinatorActor(caf::actor_config& cfg, std::string ip)
+    :
+    stateful_actor(cfg), coordinatorIp(ip) {
+
+    queryCatalogServicePtr = QueryCatalogService::getInstance();
+    streamCatalogServicePtr = StreamCatalogService::getInstance();
+    coordinatorServicePtr = CoordinatorService::getInstance();
+    //    workerServicePtr = std::make_unique<WorkerService>(
+    //        WorkerService(ip, actorCoordinatorConfig.publish_port,
+    //                      actorCoordinatorConfig.receive_port));
+
+}
 
 size_t getIdFromHandle(caf::strong_actor_ptr curSender) {
     std::hash<std::string> hashFn;
@@ -14,7 +29,15 @@ size_t getIdFromHandle(caf::strong_actor_ptr curSender) {
 }
 
 behavior CoordinatorActor::init() {
-    initializeNESTopology();
+    NESTopologyManager::getInstance().resetNESTopologyPlan();
+    NES_DEBUG(
+        "CoordinatorActor::initializeNESTopology: set coordinatorIp = " << coordinatorIp)
+
+//    auto coordinatorNode = NESTopologyManager::getInstance()
+//        .createNESCoordinatorNode(0, coordinatorIp, CPUCapacity::HIGH);
+//    coordinatorNode->setPublishPort(actorCoordinatorConfig.publish_port);
+//    coordinatorNode->setReceivePort(actorCoordinatorConfig.receive_port);
+
     StreamCatalog::instance();  //initialize catalog
     auto kRootNode = NESTopologyManager::getInstance().getRootNode();
     this->state.actorTopologyMap.insert({this->address().get(), kRootNode});
@@ -28,7 +51,7 @@ behavior CoordinatorActor::init() {
           if (this->state.actorTopologyMap.find(key)
               != this->state.actorTopologyMap.end()) {
               // remove disconnected worker from topology
-              coordinatorServicePtr->deregister_sensor(
+              coordinatorServicePtr->deregisterSensor(
                   this->state.actorTopologyMap.at(key));
               this->state.topologyActorMap.erase(
                   this->state.actorTopologyMap.at(key));
@@ -70,16 +93,13 @@ CoordinatorActor::~CoordinatorActor() {
     NES_DEBUG("CoordinatorActor: destructed")
 }
 
-void CoordinatorActor::initializeNESTopology() {
-
-    NESTopologyManager::getInstance().resetNESTopologyPlan();
-    NES_DEBUG(
-        "CoordinatorActor::initializeNESTopology: set coordinatorIp = " << coordinatorIp)
-    auto coordinatorNode = NESTopologyManager::getInstance()
-        .createNESCoordinatorNode(0, coordinatorIp, CPUCapacity::HIGH);
-    coordinatorNode->setPublishPort(actorCoordinatorConfig.publish_port);
-    coordinatorNode->setReceivePort(actorCoordinatorConfig.receive_port);
-}
+//void CoordinatorActor::initializeNESTopology() {
+//
+//    auto coordinatorNode = NESTopologyManager::getInstance()
+//        .createNESCoordinatorNode(0, coordinatorIp, CPUCapacity::HIGH);
+//    coordinatorNode->setPublishPort(actorCoordinatorConfig.publish_port);
+//    coordinatorNode->setReceivePort(actorCoordinatorConfig.receive_port);
+//}
 
 bool CoordinatorActor::addNewParentToSensorNode(std::string childId, std::string parentId) {
     NES_DEBUG(
@@ -196,7 +216,7 @@ bool CoordinatorActor::registerPhysicalStream(PhysicalStreamConfig streamConf) {
         streamConf.logicalStreamName, sce);
 }
 
-bool CoordinatorActor::deregisterSensor(const string& ip) {
+bool CoordinatorActor::deregisterNode(const string& ip) {
     NES_DEBUG("CoordinatorActor: try to disconnect sensor with ip " << ip)
     auto curSender = current_sender();
 
@@ -236,7 +256,7 @@ bool CoordinatorActor::deregisterSensor(const string& ip) {
 
     NES_DEBUG("CoordinatorActor: found sensor, try to delete it in toplogy")
     //remove from topology
-    bool successTopology = coordinatorServicePtr->deregister_sensor(sensorNode);
+    bool successTopology = coordinatorServicePtr->deregisterSensor(sensorNode);
     NES_DEBUG("CoordinatorActor: success in topologyy is " << successTopology)
 
     this->state.actorTopologyMap.erase(curSender);
@@ -252,26 +272,30 @@ bool CoordinatorActor::deregisterSensor(const string& ip) {
     }
 }
 
-bool CoordinatorActor::registerSensor(const string& ip, uint16_t publish_port,
-                                      uint16_t receive_port, int cpu,
-                                      const string& nodeProperties,
-                                      PhysicalStreamConfig streamConf) {
+bool CoordinatorActor::registerNode(const string& ip, uint16_t publish_port,
+                                    uint16_t receive_port, int cpu,
+                                    const string& nodeProperties,
+                                    PhysicalStreamConfig streamConf,
+                                    NESNodeType type) {
+
     auto curSender = current_sender();
     auto handle = actor_cast<actor>(curSender);
     size_t hashId = getIdFromHandle(curSender);
     NES_DEBUG(
         "CoordinatorActor: connect attempt with id=" << curSender->id() << " handle=" << to_string(handle) << " hashID="
-                                                     << hashId)
+                                                     << hashId << " type=" << type)
 
-    NESTopologyEntryPtr sensorNode = coordinatorServicePtr->register_sensor(
-        hashId, ip, publish_port, receive_port, cpu, nodeProperties, streamConf);
 
-    if (!sensorNode) {
-        NES_ERROR("CoordinatorActor::registerSensor sensor not not created")
+    NESTopologyEntryPtr node = coordinatorServicePtr->registerNode(
+        hashId, ip, publish_port, receive_port, cpu, nodeProperties, streamConf, type);
+
+    if (!node) {
+        NES_ERROR("CoordinatorActor::registerNode : node not not created")
         return false;
     }
-    this->state.actorTopologyMap.insert(std::make_pair(curSender, sensorNode));
-    this->state.topologyActorMap.insert(std::make_pair(sensorNode, curSender));
+
+    this->state.actorTopologyMap.insert(std::make_pair(curSender, node));
+    this->state.topologyActorMap.insert(std::make_pair(node, curSender));
     this->state.idToActorMap.insert(std::make_pair(hashId, curSender));
 
     this->monitor(handle);
@@ -279,7 +303,7 @@ bool CoordinatorActor::registerSensor(const string& ip, uint16_t publish_port,
     NES_DEBUG(
         "CoordinatorActor: Successfully registered sensor (CPU=" << cpu << ", PhysicalStream: "
                                                                  << streamConf.physicalStreamName << ") "
-                                                                 << to_string(handle));
+                                                                 << to_string(handle) << " type=" << type);
 
     NESTopologyManager::getInstance().printNESTopologyPlan();
     return true;
@@ -291,13 +315,6 @@ bool CoordinatorActor::shutdown() {
         NES_ERROR("CoordinatorActor::shutdown: error while shutdown coordinatorService")
         throw new Exception("Error while stopping CoordinatorActor::shutdown");
     }
-
-    bool success2 = workerServicePtr->shutDown();
-    if (!success2) {
-        NES_ERROR("CoordinatorActor::shutdown: error while shutDown workerService")
-        throw new Exception("Error while stopping CoordinatorActor::shutdown");
-    }
-
     bool success3 = StreamCatalog::instance().reset();
     if (!success3) {
         NES_ERROR("CoordinatorActor::shutdown: error while reset StreamCatalog")
@@ -364,20 +381,21 @@ behavior CoordinatorActor::running() {
     NES_DEBUG("CoordinatorActor::running enter running")
     return {
         // coordinator specific methods
-        [=](register_sensor_atom,
+        [=](register_node_atom,
             string& ip,
             uint16_t publish_port,
             uint16_t receive_port,
             int cpu,
-            const string& nodeProperties) {
+            const string& nodeProperties,
+            int type) {
           PhysicalStreamConfig streamConf;
-          bool success = registerSensor(ip, publish_port, receive_port, cpu, nodeProperties, streamConf);
-          NES_DEBUG("CoordinatorActor::register_sensor_atom return success= " << success)
+          bool success = registerNode(ip, publish_port, receive_port, cpu, nodeProperties, streamConf, (NESNodeType) type);
+          NES_DEBUG("CoordinatorActor::register_node_atom return success= " << success)
           return success;
         },
-        [=](deregister_sensor_atom, string& ip) {
+        [=](deregister_node_atom, string& ip) {
           NES_DEBUG("CoordinatorActor: got request to remove node with ip " << ip)
-          return this->deregisterSensor(ip);
+          return this->deregisterNode(ip);
         },
         [=](get_own_id) {
           NES_DEBUG("CoordinatorActor: got request to get own Id ")
@@ -437,17 +455,17 @@ behavior CoordinatorActor::running() {
             const string& description) {  //TODO:chef if we really need this except for testing
           return deployQuery(description);
         },
-        //worker specific methods
-        [=](execute_operators_atom, const string& description, string& executableTransferObject) {
-          NES_DEBUG("CoordinatorActor::running(): execute_operators_atom, coordinator got query to execute")
-          return workerServicePtr->executeQuery(description, executableTransferObject);
-        },
-        [=](delete_query_atom, const string& query) {
-          workerServicePtr->deleteQuery(query);
-        },
-        [=](get_operators_atom) {
-          return workerServicePtr->getOperators();
-        },
+        //        //worker specific methods
+        //        [=](execute_operators_atom, const string& description, string& executableTransferObject) {
+        //          NES_DEBUG("CoordinatorActor::running(): execute_operators_atom, coordinator got query to execute")
+        //          return workerServicePtr->executeQuery(description, executableTransferObject);
+        //        },
+        //        [=](delete_query_atom, const string& query) {
+        //          workerServicePtr->deleteQuery(query);
+        //        },
+        //        [=](get_operators_atom) {
+        //          return workerServicePtr->getOperators();
+        //        },
         [=](terminate_atom) {
           NES_DEBUG("CoordinatorActor::running(): terminate_atom")
           return shutdown();

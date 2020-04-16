@@ -11,15 +11,19 @@ using std::string;
 namespace NES {
 using namespace caf;
 constexpr auto task_timeout = std::chrono::seconds(10);
-constexpr auto task_timeout_small = std::chrono::seconds(2);
 
 using disconnect_atom = atom_constant<atom("disconnect")>;
 using terminate_atom = atom_constant<atom("term")>;
 
 //coordinator stubs
-using register_worker_atom = atom_constant<atom("r_worker")>;
-using register_sensor_atom = atom_constant<atom("r_sensor")>;
-using deregister_sensor_atom = atom_constant<atom("dr_sensor")>;
+//using register_worker_atom = atom_constant<atom("r_worker")>;
+//using register_sensor_atom = atom_constant<atom("r_sensor")>;
+using register_node_atom = atom_constant<atom("r_node")>;
+
+//using deregister_sensor_atom = atom_constant<atom("dr_sensor")>;
+using deregister_node_atom = atom_constant<atom("dr_sensor")>;
+
+
 using register_phy_stream_atom = atom_constant<atom("r_phy_str")>;
 using register_log_stream_atom = atom_constant<atom("re_log_str")>;
 using remove_log_stream_atom = atom_constant<atom("rm_log_str")>;

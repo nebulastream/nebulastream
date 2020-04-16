@@ -47,22 +47,24 @@ class CoordinatorService {
 
     /**
      * @brief registers a CAF worker into the NES topology and creates a corresponding NESTopologyWorkerNode object
+     * @param id of the node
      * @param ip the worker ip
      * @param publish_port the publish port of the worker
      * @param receive_port the receive port of the worker
      * @param cpu the cpu capacity of the worker
      * @param nodeProperties of the to be added sensor
      * @param config of the node
-     * @param sap the strong_actor_pointer CAF object to the worker
+     * @param node type
+     * @return handle to the node
      */
-    NESTopologyEntryPtr register_sensor(size_t id,
-                                        const string& ip,
-                                        uint16_t publish_port,
-                                        uint16_t receive_port,
-                                        int cpu,
-                                        const string& nodeProperties,
-                                        PhysicalStreamConfig streamConf);
-
+    NESTopologyEntryPtr registerNode(size_t id,
+                                     const string& ip,
+                                     uint16_t publish_port,
+                                     uint16_t receive_port,
+                                     int cpu,
+                                     const string& nodeProperties,
+                                     PhysicalStreamConfig streamConf,
+                                     NESNodeType type);
 
     /**
      * @brief @brief add a new parent to an existing node
@@ -85,7 +87,7 @@ class CoordinatorService {
      * @param entry
      * @return true, if it succeeded, otherwise false
      */
-    bool deregister_sensor(const NESTopologyEntryPtr entry);
+    bool deregisterSensor(const NESTopologyEntryPtr entry);
 
     /**
      * @brief registers a CAF query into the NES topology to make it deployable
@@ -113,6 +115,11 @@ class CoordinatorService {
      */
     string getTopologyPlanString();
 
+    /**
+     * @brief return the properties of a particular node
+     * @param entry in the topology
+     * @return string containing the properties
+     */
     string getNodePropertiesAsString(const NESTopologyEntryPtr entry);
 
     //FIXME: right now we do not register query but rather the nes plan
@@ -129,9 +136,22 @@ class CoordinatorService {
      */
     bool clearQueryCatalogs();
 
+    /**
+     * @brief method to shut down the coordinator service
+     * @return bool indicating success
+     */
     bool shutdown();
 
+    /**
+     * @brief method to return currently registered queries
+     * @return map containing the query id and the link to the entry in the query catalog
+     */
     const map<string, QueryCatalogEntryPtr> getRegisteredQueries();
+
+    /**
+     * @brief method to return currently running queries
+     * @return map containing the query id and the link to the entry in the query catalog
+     */
     const map<string, QueryCatalogEntryPtr> getRunningQueries();
 
   private:

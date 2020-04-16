@@ -13,10 +13,16 @@ namespace NES {
 class NesWorker {
   public:
     /**
-     * @brief default constructor
+     * @brief default constructor which creates a sensor node
      * @note this will create the worker actor using the default worker config
      */
     NesWorker();
+
+    /**
+     * @brief default constructor with option for sensor or worker node
+     * @note this will create the worker actor using the default worker config
+     */
+    NesWorker(NESNodeType type);
 
     /**
      * @brief start the worker using the default worker config
@@ -138,6 +144,8 @@ class NesWorker {
     actor_system* actorSystem;
     WorkerActorConfig workerCfg;
     uint16_t coordinatorPort;
+
+    NESNodeType type;
 };
 typedef std::shared_ptr<NesWorker> NesWorkerPtr;
 

@@ -2,6 +2,8 @@
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #include "REST/RestServer.hpp"
 #include <string>
+#include <Actors/WorkerActor.hpp>
+#include <Actors/Configurations/WorkerActorConfig.hpp>
 
 namespace NES {
 
@@ -52,10 +54,16 @@ class NesCoordinator {
     void setServerIp(std::string serverIp);
 
   private:
-    CoordinatorActor* crd;
-    CoordinatorActorConfig actorCoordinatorConfig;
+    CoordinatorActor* crdPtr;
+    CoordinatorActorConfig coordinatorCfg;
     infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
-    actor_system* actorSystem;
+    actor_system* actorSystemCoordinator;
+
+    WorkerActor* wrkPtr;
+    WorkerActorConfig workerCfg;
+    infer_handle_from_class_t<NES::WorkerActor> workerActorHandle;
+    actor_system* actorSystemWorker;
+
     RestServer* restServer;
     std::string restHost;
     std::string serverIp;

@@ -5,13 +5,15 @@
 #include <Util/Logger.hpp>
 #include <sstream>
 
+
 namespace NES {
 WorkerActor::WorkerActor(actor_config& cfg, string ip, uint16_t publish_port,
-                         uint16_t receive_port)
+                         uint16_t receive_port, NESNodeType type)
     :
     stateful_actor(cfg) {
     this->state.workerPtr = std::make_unique<WorkerService>(
         WorkerService(std::move(ip), publish_port, receive_port));
+    this->type = type;
 }
 
 // starting point of our FSM
@@ -307,7 +309,7 @@ bool WorkerActor::disconnecting() {
         "WorkerActor: try to disconnect with ip " << this->state.workerPtr->getIp())
     auto coordinator = actor_cast<actor>(this->state.current_server);
     std::promise<bool> prom;
-    this->request(coordinator, task_timeout, deregister_sensor_atom::value,
+    this->request(coordinator, task_timeout, deregister_node_atom::value,
                   this->state.workerPtr->getIp()).await(
         [&prom](const bool& c) mutable {
           NES_DEBUG("WorkerActor: disconnecting() successfully")
@@ -324,30 +326,44 @@ bool WorkerActor::disconnecting() {
     return success;
 }
 
-bool WorkerActor::registerSensor() {
-    NES_DEBUG("WorkerActor::registerSensor: try to register")
+bool WorkerActor::registerNode(NESNodeType type) {
+    if(type ==  NESNodeType::Sensor)
+    {
+        NES_DEBUG("WorkerActor::registerNode: try to register a sensor")
+    }
+    else if(type ==  NESNodeType::Worker)
+    {
+        NES_DEBUG("WorkerActor::registerNode: try to register a worker")
+    }
+    else
+    {
+        NES_ERROR("WorkerActor::registerNode node type not supported " << type)
+        throw new Exception("WorkerActor::registerNode wrong node type");
+    }
+
     std::promise<bool> prom;
     auto coordinator = actor_cast<actor>(this->state.current_server);
-    this->request(coordinator, task_timeout_small, register_sensor_atom::value,
+    this->request(coordinator, task_timeout, register_node_atom::value,
                   this->state.workerPtr->getIp(),
                   this->state.workerPtr->getPublishPort(),
                   this->state.workerPtr->getReceivePort(),
                   2,
-                  this->state.workerPtr->getNodeProperties())
+                  this->state.workerPtr->getNodeProperties(),
+                  (int)type)
         .await(
             [=, &prom](const bool& c) mutable {
-              NES_DEBUG("WorkerActor::registerSensor: sensor registered successfully")
+              NES_DEBUG("WorkerActor::registerNode: node registered successfully")
               prom.set_value(c);
             }, [=, &prom](const error& er) {
               string error_msg = to_string(er);
               NES_ERROR(
-                  "WorkerActor::registerSensor:sensor registered not successfully created " << "\n"
+                  "WorkerActor::registerNode:node registered not successfully created " << "\n"
                                                                                             << error_msg);
-              throw new Exception("Error while registerSensor");
+              throw new Exception("Error while registerNode");
             });;
 
     bool success = prom.get_future().get();
-    NES_DEBUG("WorkerActor::registerSensor: success=" << success)
+    NES_DEBUG("WorkerActor::registerNode: success=" << success)
     return success;
 }
 
@@ -367,8 +383,8 @@ bool WorkerActor::connecting(const std::string& host, uint16_t port) {
         throw new Exception("Error while casting coordinator handle");
     }
 
-    NES_DEBUG("WorkerActor::connecting: register sensor now")
-    bool success = registerSensor();
+    NES_DEBUG("WorkerActor::connecting: register node of type=" << type)
+    bool success = registerNode(type);
     if (!success) {
         throw new Exception("Error while register sensor");
     } else {
