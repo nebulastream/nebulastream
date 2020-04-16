@@ -1,7 +1,7 @@
 #ifndef API_INPUT_QUERY_H
 #define API_INPUT_QUERY_H
 
-#include <API/ExpressionAPI.hpp>
+#include <API/Expressions/Expressions.hpp>
 #include <API/Config.hpp>
 #include <API/Schema.hpp>
 #include <API/Stream.hpp>
