@@ -99,7 +99,7 @@ void DataSource::running_routine() {
                 if (cnt < numBuffersToProcess) {
                     auto optBuf = receiveData();
                     if (!!optBuf) {
-                        auto buf = optBuf.value();
+                        auto& buf = optBuf.value();
                         NES_DEBUG(
                             "DataSource " << this->getSourceId() << " type=" << getType() << " string=" << toString()
                                           << ": Received Data: " << buf.getNumberOfTuples() << " tuples" << " iteration="

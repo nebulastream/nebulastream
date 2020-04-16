@@ -13,10 +13,10 @@
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/Task.hpp>
 #include <SourceSink/DataSource.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
+
 #include <Windows/WindowHandler.hpp>
 namespace NES {
-
+class TupleBuffer;
 /**
  * @brief the dispatcher is the central class to process queries.
  * It is source-driven. Each incoming buffer will add a task to the queue.

@@ -1,6 +1,7 @@
 #ifndef NES_INCLUDE_NODEENGINE_MEMORYLAYOUT_BASICPHYSICALFIELD_HPP_
 #define NES_INCLUDE_NODEENGINE_MEMORYLAYOUT_BASICPHYSICALFIELD_HPP_
 #include <NodeEngine/MemoryLayout/PhysicalField.hpp>
+#include <NodeEngine/TupleBuffer.hpp> // TODO(Philipp) can we remove this from here?
 namespace NES {
 /**
  * @brief Represents an value field at a specific position in a memory buffer.

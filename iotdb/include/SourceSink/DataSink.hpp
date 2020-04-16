@@ -5,9 +5,9 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/vector.hpp>
-#include "../NodeEngine/TupleBuffer.hpp"
 
 namespace NES {
+class TupleBuffer;
 
 enum SinkType {
     ZMQ_SINK,

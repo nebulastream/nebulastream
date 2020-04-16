@@ -22,16 +22,15 @@ bool WorkerService::shutDown() {
 
 WorkerService::WorkerService(string ip, uint16_t publish_port,
                              uint16_t receive_port) {
-    NES_DEBUG("WorkerService::WorkerService: ip = " << ip)
-    this->ip = std::move(ip);
-    this->publishPort = publish_port;
-    this->receivePort = receive_port;
-    this->queryCompiler = createDefaultQueryCompiler();
-    NES_DEBUG("WorkerService: create WorkerService with ip=" << this->ip << " publish_port=" << this->publishPort
-                                                             << " receive_port=" << this->receivePort)
-    physicalStreams.insert(std::make_pair("default_physical", PhysicalStreamConfig()));
-    this->_enginePtr = new NodeEngine();
-    this->_enginePtr->start();
+  NES_DEBUG("WorkerService::WorkerService: ip = " << ip)
+  this->_ip = std::move(ip);
+  this->publishPort = publish_port;
+  this->receivePort = receive_port;
+  this->queryCompiler = createDefaultQueryCompiler();
+  NES_DEBUG("WorkerService: create WorkerService with ip=" <<  this->_ip << " publish_port=" << this->publishPort  << " receive_port=" << this->receivePort)
+  physicalStreams.insert(std::make_pair("default_physical", PhysicalStreamConfig()));
+  this->_enginePtr = std::make_shared<NodeEngine>();
+  this->_enginePtr->start();
 }
 
 string WorkerService::getNodeProperties() {

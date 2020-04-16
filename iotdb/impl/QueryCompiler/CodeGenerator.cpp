@@ -16,6 +16,7 @@
 #include <SourceSink/DataSink.hpp>
 #include <Util/Logger.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
 
 namespace NES {
 

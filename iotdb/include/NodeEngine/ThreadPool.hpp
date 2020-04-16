@@ -91,9 +91,11 @@ class ThreadPool {
   //indicating if the thread pool is running, used for multi-thread execution
   std::atomic<bool> running;
 
-  size_t numThreads;
+  std::atomic<size_t> numThreads;
 
   std::vector<std::thread> threads;
+
+  std::mutex reconfigLock;
 };
 }  // namespace NES
 

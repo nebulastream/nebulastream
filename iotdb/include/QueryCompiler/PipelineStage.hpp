@@ -2,10 +2,9 @@
 #define INCLUDE_PIPELINESTAGE_H_
 #include <memory>
 #include <vector>
-#include <NodeEngine/TupleBuffer.hpp>
 
 namespace NES {
-
+class TupleBuffer;
 class PipelineStage;
 typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
 

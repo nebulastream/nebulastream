@@ -7,7 +7,7 @@
 #include <API/Schema.hpp>
 
 namespace NES {
-
+class BufferManager;
 class TupleBuffer;
 
 namespace detail {
@@ -15,9 +15,8 @@ std::string printTupleBuffer(TupleBuffer& buffer, SchemaPtr schema);
 void revertEndianness(TupleBuffer& buffer, SchemaPtr schema);
 }
 
-class MemorySegment;
-
 namespace detail {
+class MemorySegment;
 class BufferControlBlock {
   public:
     explicit BufferControlBlock(MemorySegment* owner, std::function<void(MemorySegment*)>&& recycleCallback) :
@@ -60,12 +59,15 @@ class BufferControlBlock {
     }
 
     bool release() {
-        uint32_t expected = 1;
-        if (referenceCounter.compare_exchange_strong(expected, 0)) {
+        uint32_t prev;
+        if ((prev = referenceCounter.fetch_sub(1)) == 1) {
             tupleSizeInBytes.store(0);
             numberOfTuples.store(0);
             recycleCallback(owner);
             return true;
+        }
+        if (prev == 0) {
+            assert(false);
         }
         return false;
     }
@@ -97,21 +99,20 @@ class BufferControlBlock {
 }
 
 class TupleBuffer {
-    friend class BufferManager;
-    friend class MemorySegment;
+    friend class NES::BufferManager;
+    friend class detail::MemorySegment;
   private:
-    TupleBuffer() : ptr(nullptr), size(0), controlBlock(nullptr) {}
+    TupleBuffer() noexcept : ptr(nullptr), size(0), controlBlock(nullptr) {
+        // nop
+    }
   public:
-    TupleBuffer(const TupleBuffer& other) {
-        controlBlock = other.controlBlock->retain();
-        ptr = other.ptr;
-        size = other.size;
+    TupleBuffer(const TupleBuffer& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size) {
+        if (controlBlock) {
+            controlBlock->retain();
+        }
     }
 
-    TupleBuffer(TupleBuffer&& other) {
-        controlBlock = other.controlBlock;
-        ptr = other.ptr;
-        size = other.size;
+    TupleBuffer(TupleBuffer&& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size) {
         other.controlBlock = nullptr;
         other.ptr = nullptr;
         other.size = 0;
@@ -121,9 +122,12 @@ class TupleBuffer {
         if (this == &other) {
             return *this;
         }
-        controlBlock = other.controlBlock->retain();
+        controlBlock = other.controlBlock;
         ptr = other.ptr;
         size = other.size;
+        if (controlBlock) {
+            controlBlock->retain();
+        }
         return *this;
     }
 
@@ -148,26 +152,54 @@ class TupleBuffer {
         release();
     }
 
+    /**
+     * @return the content of the buffer as pointer to unsigned char
+     */
     uint8_t* getBuffer() {
         return ptr;
     }
 
+    /**
+     * @return true if the interal pointer is not null
+     */
     bool isValid() const {
         return ptr != nullptr;
     }
 
     TupleBuffer* operator&() = delete;
 
+    /**
+     * @tparam T
+     * @return the content of the buffer as pointer to T
+     */
     template<typename T>
     T* getBufferAs() {
         return reinterpret_cast<T*>(ptr);
     }
 
+    /**
+     * @brief Increases the internal reference counter by one
+     * @return the same TupleBuffer object
+     */
     TupleBuffer& retain() {
         controlBlock->retain();
         return *this;
     }
 
+    /**
+     * @brief Swaps this TupleBuffers with the content of other
+     * @param other
+     */
+    void swap(TupleBuffer& other) noexcept {
+        std::swap(ptr, other.ptr);
+        std::swap(size, other.size);
+        std::swap(controlBlock, other.controlBlock);
+    }
+
+    /**
+    * @brief Decreases the internal reference counter by one. Note that if the buffer's counter reaches 0
+    * then the TupleBuffer is not usable any longer.
+    */
     void release() {
         if (controlBlock && controlBlock->release()) {
             controlBlock = nullptr;
@@ -222,9 +254,10 @@ class TupleBuffer {
     uint32_t size;
 };
 
+namespace detail {
 class MemorySegment {
-    friend class TupleBuffer;
-    friend class BufferManager;
+    friend class NES::TupleBuffer;
+    friend class NES::BufferManager;
   public:
     MemorySegment(const MemorySegment& other) : ptr(other.ptr), size(other.size), controlBlock(other.controlBlock) {
     }
