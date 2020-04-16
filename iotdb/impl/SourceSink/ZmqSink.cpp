@@ -27,6 +27,7 @@ ZmqSink::ZmqSink()
       socket(zmq::socket_t(context, ZMQ_PUSH)) {
   NES_DEBUG(
       "DEFAULT ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port)
+      sleep(1);
 }
 
 ZmqSink::ZmqSink(SchemaPtr schema, const std::string &host,
@@ -40,6 +41,7 @@ ZmqSink::ZmqSink(SchemaPtr schema, const std::string &host,
       socket(zmq::socket_t(context, ZMQ_PUSH)) {
   NES_DEBUG(
       "ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port)
+    sleep(1);
 
 }
 ZmqSink::~ZmqSink() {

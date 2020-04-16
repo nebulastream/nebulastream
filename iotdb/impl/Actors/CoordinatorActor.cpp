@@ -16,6 +16,7 @@ CoordinatorActor::CoordinatorActor(caf::actor_config& cfg, std::string ip)
     queryCatalogServicePtr = QueryCatalogService::getInstance();
     streamCatalogServicePtr = StreamCatalogService::getInstance();
     coordinatorServicePtr = CoordinatorService::getInstance();
+
     //    workerServicePtr = std::make_unique<WorkerService>(
     //        WorkerService(ip, actorCoordinatorConfig.publish_port,
     //                      actorCoordinatorConfig.receive_port));

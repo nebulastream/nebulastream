@@ -24,7 +24,7 @@ class QueryCatalogTest : public testing::Test {
     QueryCatalog::instance().clearQueries();
     NESTopologyManager::getInstance().resetNESTopologyPlan();
     const auto &kCoordinatorNode = NESTopologyManager::getInstance()
-        .createNESCoordinatorNode(0, "127.0.0.1", CPUCapacity::HIGH);
+        .createNESWorkerNode(0, "127.0.0.1", CPUCapacity::HIGH);
     kCoordinatorNode->setPublishPort(4711);
     kCoordinatorNode->setReceivePort(4815);
 

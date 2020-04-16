@@ -61,6 +61,9 @@ bool NesWorker::start(bool blocking, bool withConnect, uint16_t port, std::strin
     coordinatorPort = port;
     actorSystem = new actor_system{workerCfg};
 
+    size_t ts = time(0);
+    workerCfg.publish_port = workerCfg.publish_port + ts % 10000;
+    workerCfg.receive_port = workerCfg.receive_port + ts % 10000;
     workerHandle = actorSystem->spawn<NES::WorkerActor>(workerCfg.ip,
                                                         workerCfg.publish_port,
                                                         workerCfg.receive_port,

@@ -122,6 +122,48 @@ NESTopologyEntryPtr CoordinatorService::registerNode(size_t id, const string& ip
         nodePtr = topologyManager.createNESSensorNode(id, ip, CPUCapacity::Value(cpu));
         NESTopologySensorNode* sensor = dynamic_cast<NESTopologySensorNode*>(nodePtr.get());
         sensor->setPhysicalStreamName(streamConf.physicalStreamName);
+
+        NES_DEBUG(
+            "try to register sensor phyName=" << streamConf.physicalStreamName << " logName="
+                                              << streamConf.logicalStreamName << " nodeID=" << nodePtr->getId())
+
+        //check if logical stream exists
+        if (!StreamCatalog::instance().testIfLogicalStreamExistsInSchemaMapping(
+            streamConf.logicalStreamName)) {
+            NES_ERROR(
+                "Coordinator: error logical stream" << streamConf.logicalStreamName
+                                                    << " does not exist when adding physical stream "
+                                                    << streamConf.physicalStreamName)
+            throw Exception(
+                "logical stream does not exist " + streamConf.logicalStreamName);
+        }
+
+        SchemaPtr schema = StreamCatalog::instance().getSchemaForLogicalStream(
+            streamConf.logicalStreamName);
+
+        DataSourcePtr source;
+        if (streamConf.sourceType != "CSVSource"
+            && streamConf.sourceType != "DefaultSource") {
+            NES_ERROR(
+                "Coordinator: error source type " << streamConf.sourceType << " is not supported")
+            throw Exception(
+                "Coordinator: error source type " + streamConf.sourceType
+                    + " is not supported");
+        }
+
+        StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
+            streamConf, nodePtr);
+
+        bool success = StreamCatalog::instance().addPhysicalStream(
+            streamConf.logicalStreamName, sce);
+        if (!success) {
+            NES_ERROR(
+                "Coordinator: physical stream " << streamConf.physicalStreamName << " could not be added to catalog")
+            throw Exception(
+                "Coordinator: physical stream " + streamConf.physicalStreamName
+                    + " could not be added to catalog");
+        }
+
     }
     else if(type == NESNodeType::Worker)
     {
@@ -140,48 +182,6 @@ NESTopologyEntryPtr CoordinatorService::registerNode(size_t id, const string& ip
     if (nodeProperties != "defaultProperties")
     {
         nodePtr->setNodeProperty(nodeProperties);
-    }
-
-    NES_DEBUG(
-        "try to register sensor phyName=" << streamConf.physicalStreamName << " logName="
-                                          << streamConf.logicalStreamName << " nodeID=" << nodePtr->getId())
-
-    //check if logical stream exists
-    if (!StreamCatalog::instance().testIfLogicalStreamExistsInSchemaMapping(
-        streamConf.logicalStreamName)) {
-        NES_ERROR(
-            "Coordinator: error logical stream" << streamConf.logicalStreamName
-                                                << " does not exist when adding physical stream "
-                                                << streamConf.physicalStreamName)
-        throw Exception(
-            "logical stream does not exist " + streamConf.logicalStreamName);
-    }
-
-    SchemaPtr schema = StreamCatalog::instance().getSchemaForLogicalStream(
-        streamConf.logicalStreamName);
-
-    DataSourcePtr source;
-    if (streamConf.sourceType != "CSVSource"
-        && streamConf.sourceType != "DefaultSource") {
-        NES_ERROR(
-            "Coordinator: error source type " << streamConf.sourceType << " is not supported")
-        throw Exception(
-            "Coordinator: error source type " + streamConf.sourceType
-                + " is not supported");
-    }
-
-    StreamCatalogEntryPtr sce = std::make_shared<StreamCatalogEntry>(
-        streamConf, nodePtr);
-
-    bool success = StreamCatalog::instance().addPhysicalStream(
-        streamConf.logicalStreamName, sce);
-    if (!success) {
-        NES_ERROR(
-            "Coordinator: physical stream " << streamConf.physicalStreamName << " could not be added to catalog")
-        throw Exception(
-            "Coordinator: physical stream " + streamConf.physicalStreamName
-                + " could not be added to catalog");
-
     }
 
     const NESTopologyEntryPtr kRootNode = NESTopologyManager::getInstance()
@@ -333,6 +333,7 @@ DataSourcePtr CoordinatorService::findDataSourcePointer(
 
 int CoordinatorService::assign_port(const string& queryId) {
     if (this->queryToPort.find(queryId) != this->queryToPort.end()) {
+        NES_DEBUG("CoordinatorService::assign_port query found with id=" << queryId << " return port=" << this->queryToPort.at(queryId))
         return this->queryToPort.at(queryId);
     } else {
         // increase max port in map by 1
@@ -340,6 +341,7 @@ int CoordinatorService::assign_port(const string& queryId) {
             .getRootNode();
         uint16_t kFreeZmqPort = kRootNode->getNextFreeReceivePort();
         this->queryToPort.insert({queryId, kFreeZmqPort});
+        NES_DEBUG("CoordinatorService::assign_port create a new port for query id=" << queryId << " port=" << kFreeZmqPort)
         return kFreeZmqPort;
     }
 }

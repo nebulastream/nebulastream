@@ -26,7 +26,7 @@ class CoordinatorServiceTest : public testing::Test {
 
     NESTopologyManager::getInstance().resetNESTopologyPlan();
     const auto &kCoordinatorNode = NESTopologyManager::getInstance()
-        .createNESCoordinatorNode(0, "127.0.0.1", CPUCapacity::HIGH);
+        .createNESWorkerNode(0, "127.0.0.1", CPUCapacity::HIGH);
     kCoordinatorNode->setPublishPort(4711);
     kCoordinatorNode->setReceivePort(4815);
 
@@ -64,7 +64,7 @@ TEST_F(CoordinatorServiceTest, test_registration_and_topology) {
   string topo = coordinatorServicePtr->getTopologyPlanString();
   std::cout << "current topo=" << topo << std::endl;
   string expectedTopo = "graph G {\n"
-      "0[label=\"0 type=Coordinator\"];\n"
+      "0[label=\"0 type=Worker\"];\n"
       "1[label=\"1 type=Sensor(default_physical)\"];\n"
       "2[label=\"2 type=Sensor(default_physical)\"];\n"
       "3[label=\"3 type=Sensor(default_physical)\"];\n"
@@ -110,7 +110,7 @@ TEST_F(CoordinatorServiceTest, test_deregistration_and_topology) {
   EXPECT_NE(entry, nullptr);
 
   string expectedTopo1 = "graph G {\n"
-      "0[label=\"0 type=Coordinator\"];\n"
+      "0[label=\"0 type=Worker\"];\n"
       "1[label=\"1 type=Sensor(default_physical)\"];\n"
       "2[label=\"2 type=Sensor(default_physical)\"];\n"
       "3[label=\"3 type=Sensor(default_physical)\"];\n"
@@ -128,7 +128,7 @@ TEST_F(CoordinatorServiceTest, test_deregistration_and_topology) {
 
     coordinatorServicePtr->deregisterSensor(entry);
   string expectedTopo2 = "graph G {\n"
-      "0[label=\"0 type=Coordinator\"];\n"
+      "0[label=\"0 type=Worker\"];\n"
       "1[label=\"1 type=Sensor(default_physical)\"];\n"
       "2[label=\"2 type=Sensor(default_physical)\"];\n"
       "3[label=\"3 type=Sensor(default_physical)\"];\n"

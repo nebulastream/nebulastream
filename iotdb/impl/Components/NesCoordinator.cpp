@@ -96,6 +96,8 @@ uint16_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator starting worker actor")
     workerCfg.load<io::middleman>();
     workerCfg.host = "localhost";
+    workerCfg.publish_port = workerCfg.publish_port -1;
+    workerCfg.receive_port = workerCfg.receive_port -1;
     workerCfg.printCfg();
 
     actorSystemWorker = new actor_system{workerCfg};
