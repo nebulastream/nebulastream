@@ -1,10 +1,10 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 
 namespace NES {
-SinkLogicalOperatorNode::SinkLogicalOperatorNode(const DataSinkPtr sink) : sinkDescriptor(sink) {
+SinkLogicalOperatorNode::SinkLogicalOperatorNode(const SinkDescriptorPtr sinkDescriptor) : sinkDescriptor(sinkDescriptor) {
 }
 
-DataSinkPtr SinkLogicalOperatorNode::getDataSink() {
+SinkDescriptorPtr SinkLogicalOperatorNode::getSinkDescriptor() {
     return sinkDescriptor;
 }
 
@@ -22,11 +22,11 @@ bool SinkLogicalOperatorNode::equal(const NodePtr rhs) const {
 
 const std::string SinkLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "SINK(" << NES::toString(sinkDescriptor) << ")";
+    ss << "SINK(" << sinkDescriptor->getType() << ")";
     return ss.str();
 }
 
-LogicalOperatorNodePtr createSinkLogicalOperatorNode(const DataSinkPtr sink) {
-    return std::make_shared<SinkLogicalOperatorNode>(sink);
+LogicalOperatorNodePtr createSinkLogicalOperatorNode(const SinkDescriptorPtr sinkDescriptor) {
+    return std::make_shared<SinkLogicalOperatorNode>(sinkDescriptor);
 }
 }

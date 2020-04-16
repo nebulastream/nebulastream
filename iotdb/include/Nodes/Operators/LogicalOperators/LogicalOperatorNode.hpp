@@ -3,11 +3,10 @@
 
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <API/ParameterTypes.hpp>
 
 namespace NES {
-
-
 
 class LogicalOperatorNode : public OperatorNode {
   public:
@@ -23,8 +22,8 @@ class WindowDefinition;
 typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 
 LogicalOperatorNodePtr createFilterLogicalOperatorNode(const ExpressionNodePtr predicate);
+LogicalOperatorNodePtr createSinkLogicalOperatorNode(const SinkDescriptorPtr sinkDescriptor);
 LogicalOperatorNodePtr createMapLogicalOperatorNode(const FieldAssignmentExpressionNodePtr mapExpression);
-LogicalOperatorNodePtr createSinkLogicalOperatorNode(const DataSinkPtr sink);
 LogicalOperatorNodePtr createSourceLogicalOperatorNode(const DataSourcePtr source);
 LogicalOperatorNodePtr createWindowLogicalOperatorNode(const WindowDefinitionPtr windowDefinition);
 }
