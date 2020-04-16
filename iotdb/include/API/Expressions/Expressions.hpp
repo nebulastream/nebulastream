@@ -4,8 +4,6 @@
 #include <string>
 #include <memory>
 #include <API/Types/DataTypes.hpp>
-#include <API/Expressions/ArithmeticalExpressions.hpp>
-#include <API/Expressions/LogicalExpressions.hpp>
 
 namespace NES {
 /**
@@ -18,6 +16,9 @@ typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
 
 class ValueType;
 typedef std::shared_ptr<ValueType> ValueTypePtr;
+
+class FieldAssignmentExpressionNode;
+typedef std::shared_ptr<FieldAssignmentExpressionNode> FieldAssignmentExpressionNodePtr;
 
 /**
  * @brief A expression item represents the leaf in an expression tree.
@@ -39,6 +40,9 @@ class ExpressionItem{
     ExpressionItem(const char* value);
     ExpressionItem(ValueTypePtr value);
     ExpressionItem(ExpressionNodePtr ref);
+
+    FieldAssignmentExpressionNodePtr operator=(ExpressionItem);
+    FieldAssignmentExpressionNodePtr operator=(ExpressionNodePtr);
 
     /**
      * @brief Gets the expression node of this expression item.

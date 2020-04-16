@@ -1,6 +1,8 @@
 #ifndef API_INPUT_QUERY_H
 #define API_INPUT_QUERY_H
 
+#include <API/Expressions/ArithmeticalExpressions.hpp>
+#include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Config.hpp>
 #include <API/Schema.hpp>
@@ -55,7 +57,7 @@ class Query {
      *
      * @Caution : The method is not implemented yet.
      */
-    Query& map(const ExpressionNodePtr mapExpression);
+    Query& map(const FieldAssignmentExpressionNodePtr mapExpression);
 
     /**
      * @brief: Unify two queries.

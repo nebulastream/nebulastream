@@ -2,6 +2,8 @@
 #include <API/Expressions/Expressions.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <API/Expressions/ArithmeticalExpressions.hpp>
 
 #include <utility>
 namespace NES {
@@ -46,6 +48,18 @@ ExpressionItem::ExpressionItem(ValueTypePtr value):
     ExpressionItem(ConstantValueExpressionNode::create(std::move(value))){}
 
 ExpressionItem::ExpressionItem(ExpressionNodePtr exp):expression(std::move(exp)) {}
+
+FieldAssignmentExpressionNodePtr ExpressionItem::operator=(ExpressionItem assignItem) {
+    return operator=(assignItem.getExpressionNode());
+}
+
+FieldAssignmentExpressionNodePtr ExpressionItem::operator=(ExpressionNodePtr assignExpression) {
+    if(expression->instanceOf<FieldAccessExpressionNode>()){
+        return FieldAssignmentExpressionNode::create(expression->as<FieldAccessExpressionNode>(), assignExpression);
+    }
+    NES_FATAL_ERROR("Expression API: we can only assign something to a field access expression");
+    throw IllegalArgumentException("Expression API: we can only assign something to a field access expression");
+}
 
 ExpressionItem Attribute(std::string fieldName) {
     return ExpressionItem(FieldAccessExpressionNode::create(std::move(fieldName)));

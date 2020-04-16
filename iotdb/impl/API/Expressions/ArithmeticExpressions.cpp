@@ -1,3 +1,5 @@
+
+#include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Nodes/Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
@@ -33,6 +35,16 @@ ExpressionNodePtr operator++(ExpressionNodePtr leftExp)
 }
 
 ExpressionNodePtr operator--(ExpressionNodePtr leftExp)
+{
+    return leftExp - ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT64, "1"));
+}
+
+ExpressionNodePtr operator++(ExpressionNodePtr leftExp, int)
+{
+    return leftExp + ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT64, "1"));
+}
+
+ExpressionNodePtr operator--(ExpressionNodePtr leftExp, int)
 {
     return leftExp - ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT64, "1"));
 }
@@ -98,7 +110,9 @@ ExpressionNodePtr operator*(ExpressionItem leftExp, ExpressionItem rightExp)
 }
 
 ExpressionNodePtr operator++(ExpressionItem exp) { return ++exp.getExpressionNode(); }
+ExpressionNodePtr operator++(ExpressionItem exp, int) { return exp.getExpressionNode()++;}
 
 ExpressionNodePtr operator--(ExpressionItem exp) { return --exp.getExpressionNode(); }
+ExpressionNodePtr operator--(ExpressionItem exp, int) { return exp.getExpressionNode()--; }
 
 } // namespace NES

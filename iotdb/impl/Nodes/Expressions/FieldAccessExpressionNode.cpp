@@ -29,7 +29,7 @@ const std::string FieldAccessExpressionNode::getFieldName() {
 }
 
 const std::string FieldAccessExpressionNode::toString() const {
-    return "FieldReadNode(" + fieldName + ")";
+    return "FieldAccessNode(" + fieldName + ")";
 }
 
 }
