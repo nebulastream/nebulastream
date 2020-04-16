@@ -1,7 +1,7 @@
 
 #include <API/ExpressionAPI.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
-#include <Nodes/Expressions/FieldReadExpressionNode.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
@@ -55,11 +55,11 @@ ExpressionItem::ExpressionItem(ValueTypePtr value):
 ExpressionItem::ExpressionItem(ExpressionNodePtr exp):expression(std::move(exp)) {}
 
 ExpressionItem Attribute(std::string fieldName) {
-    return ExpressionItem(FieldReadExpressionNode::create(std::move(fieldName)));
+    return ExpressionItem(FieldAccessExpressionNode::create(std::move(fieldName)));
 }
 
 ExpressionItem Attribute(std::string fieldName, BasicType type) {
-    return ExpressionItem(FieldReadExpressionNode::create(createDataType(type), std::move(fieldName)));
+    return ExpressionItem(FieldAccessExpressionNode::create(createDataType(type), std::move(fieldName)));
 }
 
 ExpressionNodePtr ExpressionItem::getExpressionNode() {

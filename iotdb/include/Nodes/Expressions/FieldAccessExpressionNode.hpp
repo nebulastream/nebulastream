@@ -1,16 +1,16 @@
-#ifndef NES_INCLUDE_NODES_EXPRESSIONS_FIELDREADEXPRESSIONNODE_HPP_
-#define NES_INCLUDE_NODES_EXPRESSIONS_FIELDREADEXPRESSIONNODE_HPP_
+#ifndef NES_INCLUDE_NODES_EXPRESSIONS_FIELDACCESSEXPRESSIONNODE_HPP_
+#define NES_INCLUDE_NODES_EXPRESSIONS_FIELDACCESSEXPRESSIONNODE_HPP_
 #include <Nodes/Expressions/ExpressionNode.hpp>
 namespace NES {
 /**
- * @brief A FieldReadExpression reads a specific field of the current record.
+ * @brief A FieldAccessExpression reads a specific field of the current record.
  * It can be created typed or untyped.
  * todo for untyped field accesses we have to infer the type later.
  */
-class FieldReadExpressionNode : public ExpressionNode {
+class FieldAccessExpressionNode : public ExpressionNode {
   public:
-    FieldReadExpressionNode(DataTypePtr stamp, std::string fieldName);
-    FieldReadExpressionNode(std::string fieldName);
+    FieldAccessExpressionNode(DataTypePtr stamp, std::string fieldName);
+    FieldAccessExpressionNode(std::string fieldName);
 
     /**
     * @brief Create typed field read.
@@ -34,6 +34,8 @@ class FieldReadExpressionNode : public ExpressionNode {
     std::string fieldName;
 };
 
+typedef std::shared_ptr<FieldAccessExpressionNode> FieldAccessExpressionNodePtr;
+
 }
 
-#endif //NES_INCLUDE_NODES_EXPRESSIONS_FIELDREADEXPRESSIONNODE_HPP_
+#endif // NES_INCLUDE_NODES_EXPRESSIONS_FIELDACCESSEXPRESSIONNODE_HPP_
