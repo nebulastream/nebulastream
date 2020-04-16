@@ -2,6 +2,8 @@ add_source_iotdb(
         ExpressionNode.cpp
         ConstantValueExpressionNode.cpp
         FieldReadExpressionNode.cpp
+        BinaryExpressionNode.cpp
+        UnaryExpressionNode.cpp
 )
-add_subdirectory(UnaryExpressions)
-add_subdirectory(BinaryExpressions)
+add_subdirectory(LogicalExpressions)
+add_subdirectory(ArithmeticalExpressions)

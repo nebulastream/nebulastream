@@ -1,15 +1,15 @@
 
 #include <API/ExpressionAPI.hpp>
-#include <Nodes/Expressions/BinaryExpressions/AndExpressionNode.hpp>
-#include <Nodes/Expressions/BinaryExpressions/EqualsExpressionNode.hpp>
-#include <Nodes/Expressions/BinaryExpressions/GreaterEqualsExpressionNode.hpp>
-#include <Nodes/Expressions/BinaryExpressions/GreaterExpressionNode.hpp>
-#include <Nodes/Expressions/BinaryExpressions/LessEqualsExpressionNode.hpp>
-#include <Nodes/Expressions/BinaryExpressions/LessExpressionNode.hpp>
-#include <Nodes/Expressions/BinaryExpressions/OrExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldReadExpressionNode.hpp>
-#include <Nodes/Expressions/UnaryExpressions/NegateExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/LessExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <utility>
 namespace NES {
 

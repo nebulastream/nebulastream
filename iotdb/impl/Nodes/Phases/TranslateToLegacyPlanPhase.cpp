@@ -3,10 +3,10 @@
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldReadExpressionNode.hpp>
 
-#include <Nodes/Expressions/BinaryExpressions/AndExpressionNode.hpp>
-#include <Nodes/Expressions/BinaryExpressions/EqualsExpressionNode.hpp>
-#include <Nodes/Expressions/BinaryExpressions/LessEqualsExpressionNode.hpp>
-#include <Nodes/Expressions/UnaryExpressions/NegateExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/SourceLogicalOperatorNode.hpp>

@@ -77,6 +77,13 @@ ExpressionNodePtr operator>(ExpressionNodePtr leftExp, ExpressionNodePtr rightEx
 ExpressionNodePtr operator!(ExpressionNodePtr exp);
 
 
+ExpressionNodePtr operator-(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
+ExpressionNodePtr operator--(ExpressionNodePtr exp);
+ExpressionNodePtr operator+(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
+ExpressionNodePtr operator++(ExpressionNodePtr exp);
+ExpressionNodePtr operator*(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
+ExpressionNodePtr operator/(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp);
+
 /**
  * @brief Defines common operations between a constant and an expression node.
  */
@@ -88,6 +95,11 @@ ExpressionNodePtr operator<=(ExpressionItem leftExp, ExpressionNodePtr rightExp)
 ExpressionNodePtr operator>=(ExpressionItem leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr operator<(ExpressionItem leftExp, ExpressionNodePtr rightExp);
 ExpressionNodePtr operator>(ExpressionItem leftExp, ExpressionNodePtr rightExp);
+
+ExpressionNodePtr operator-(ExpressionItem leftExp, ExpressionNodePtr rightExp);
+ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionNodePtr rightExp);
+ExpressionNodePtr operator*(ExpressionItem leftExp, ExpressionNodePtr rightExp);
+ExpressionNodePtr operator/(ExpressionItem leftExp, ExpressionNodePtr rightExp);
 
 /**
  * @brief Defines common operations between an expression node and a constant.
@@ -101,6 +113,11 @@ ExpressionNodePtr operator>=(ExpressionNodePtr leftExp, ExpressionItem rightExp)
 ExpressionNodePtr operator<(ExpressionNodePtr leftExp, ExpressionItem rightExp);
 ExpressionNodePtr operator>(ExpressionNodePtr leftExp, ExpressionItem rightExp);
 
+ExpressionNodePtr operator-(ExpressionNodePtr leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator+(ExpressionNodePtr leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator*(ExpressionNodePtr leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator/(ExpressionNodePtr leftExp, ExpressionItem rightExp);
+
 /**
  * @brief Defines common operations between two constants.
  */
@@ -113,6 +130,13 @@ ExpressionNodePtr operator>=(ExpressionItem leftExp, ExpressionItem rightExp);
 ExpressionNodePtr operator<(ExpressionItem leftExp, ExpressionItem rightExp);
 ExpressionNodePtr operator>(ExpressionItem leftExp, ExpressionItem rightExp);
 ExpressionNodePtr operator!(ExpressionItem exp);
+
+ExpressionNodePtr operator-(ExpressionItem leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator*(ExpressionItem leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator/(ExpressionItem leftExp, ExpressionItem rightExp);
+ExpressionNodePtr operator++(ExpressionItem exp);
+ExpressionNodePtr operator--(ExpressionItem exp);
 
 } //end of namespace NES
 #endif 

@@ -21,7 +21,7 @@
 #include <SourceSink/SinkCreator.hpp>
 #include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Nodes/Expressions/FieldReadExpressionNode.hpp>
-#include <Nodes/Expressions/BinaryExpressions/EqualsExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 
 namespace NES {
 
