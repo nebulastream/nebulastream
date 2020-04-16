@@ -96,8 +96,10 @@ uint16_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator starting worker actor")
     workerCfg.load<io::middleman>();
     workerCfg.host = "localhost";
-    workerCfg.publish_port = workerCfg.publish_port -1;
-    workerCfg.receive_port = workerCfg.receive_port -1;
+    size_t ts = time(0);
+
+    workerCfg.publish_port = workerCfg.publish_port - 10 + ts * 123  % 10000;;
+    workerCfg.receive_port = workerCfg.receive_port - 12 + ts * 321  % 10000;;
     workerCfg.printCfg();
 
     actorSystemWorker = new actor_system{workerCfg};
@@ -110,6 +112,7 @@ uint16_t NesCoordinator::startCoordinator(bool blocking) {
     abstract_actor* abstractActorWorker = caf::actor_cast<abstract_actor*>(workerActorHandle);
     wrkPtr = dynamic_cast<WorkerActor*>(abstractActorWorker);
 
+    io::unpublish(workerActorHandle, workerCfg.receive_port);
     auto expectedPortWorker = io::publish(workerActorHandle, workerCfg.receive_port, nullptr,
                                           true);
     if (!expectedPortWorker) {
