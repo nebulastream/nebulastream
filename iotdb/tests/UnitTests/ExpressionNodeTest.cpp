@@ -1,8 +1,8 @@
-#include <Nodes/Expressions/BinaryExpressions/AndExpressionNode.hpp>
-#include <Nodes/Expressions/BinaryExpressions/EqualsExpressionNode.hpp>
-#include <Nodes/Expressions/BinaryExpressions/LessEqualsExpressionNode.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Expressions/FieldReadExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
+#include <Nodes/Expressions/LogicalExpressions/LessEqualsExpressionNode.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
