@@ -7,13 +7,12 @@
 namespace NES {
 class MapLogicalOperatorNode : public LogicalOperatorNode {
   public:
-    MapLogicalOperatorNode(const AttributeFieldPtr, const PredicatePtr);
+    MapLogicalOperatorNode(const ExpressionNodePtr mapExpression);
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
 
   private:
-    PredicatePtr predicate;
-    AttributeFieldPtr field;
+    ExpressionNodePtr mapExpression;
 };
 }
 

@@ -79,13 +79,17 @@ Query Query::from(Stream& stream) {
  * Relational Operators
  */
 
-Query& Query::filter(const ExpressionNodePtr expressionNodePtr) {
-    OperatorNodePtr op = createFilterLogicalOperatorNode(expressionNodePtr);
+Query& Query::filter(const ExpressionNodePtr filterExpression) {
+    OperatorNodePtr op = createFilterLogicalOperatorNode(filterExpression);
     assignOperatorIdAndSwitchTheRoot(op);
     return *this;
 }
 
-Query& Query::map(const AttributeField& field, const ExpressionNodePtr predicate) {NES_NOT_IMPLEMENTED }
+Query& Query::map(const ExpressionNodePtr mapExpression) {
+    OperatorNodePtr op = createMapLogicalOperatorNode(mapExpression);
+    assignOperatorIdAndSwitchTheRoot(op);
+    return *this;
+}
 
 Query& Query::combine(const Query& subQuery) {NES_NOT_IMPLEMENTED }
 

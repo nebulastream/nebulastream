@@ -4,8 +4,7 @@
 
 
 namespace NES {
-MapLogicalOperatorNode::MapLogicalOperatorNode(const AttributeFieldPtr field, const PredicatePtr predicate) : field(
-    field), predicate(predicate) {
+MapLogicalOperatorNode::MapLogicalOperatorNode(const ExpressionNodePtr mapExpression) : mapExpression(mapExpression) {
 }
 
 bool MapLogicalOperatorNode::equal(const NodePtr rhs) const {
@@ -14,18 +13,18 @@ bool MapLogicalOperatorNode::equal(const NodePtr rhs) const {
     }
     if (rhs->instanceOf<MapLogicalOperatorNode>()) {
         auto mapOperator = rhs->as<MapLogicalOperatorNode>();
-        return this->predicate->equals(*mapOperator->predicate.get()) && this->field->isEqual(mapOperator->field);
+        return mapExpression->equal(mapOperator->mapExpression);
     }
     return false;
 };
 
 const std::string MapLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "MAP(" << field->toString() << " = " << NES::toString(predicate) << ")";
+    ss << "MAP()";
     return ss.str();
 }
 
-LogicalOperatorNodePtr createMapLogicalOperatorNode(const AttributeFieldPtr field, const PredicatePtr predicate) {
-    return std::make_shared<MapLogicalOperatorNode>(field, predicate);
+LogicalOperatorNodePtr createMapLogicalOperatorNode(const ExpressionNodePtr mapExpression) {
+    return std::make_shared<MapLogicalOperatorNode>(mapExpression);
 }
 }

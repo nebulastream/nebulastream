@@ -45,7 +45,7 @@ class Query {
      * @param predicate
      * @return query
      */
-    Query& filter(const ExpressionNodePtr expressionNodePtr);
+    Query& filter(const ExpressionNodePtr filterExpression);
 
     /**
      * @brief: Map records to the resultField by the predicate.
@@ -55,7 +55,7 @@ class Query {
      *
      * @Caution : The method is not implemented yet.
      */
-    Query& map(const AttributeField& resultField, const ExpressionNodePtr predicate);
+    Query& map(const ExpressionNodePtr mapExpression);
 
     /**
      * @brief: Unify two queries.
