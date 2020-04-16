@@ -406,7 +406,7 @@ TEST_F(EngineTest, DISABLED_parallel_same_source_test) {
     delete ptr;
 }
 
-TEST_F(EngineTest, DISABLED_parallel_same_sink_test) {
+TEST_F(EngineTest, parallel_same_sink_test) {
     CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
     DataSourcePtr source1 =
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
@@ -423,9 +423,9 @@ TEST_F(EngineTest, DISABLED_parallel_same_sink_test) {
     qep2->addDataSink(sink1);
 
     NodeEngine* ptr = new NodeEngine();
+    ptr->start();
     ptr->deployQueryWithoutStart(qep1);
     ptr->deployQueryWithoutStart(qep2);
-    ptr->start();
     source1->start();
 
     qep1->completedPromise.get_future().get();
