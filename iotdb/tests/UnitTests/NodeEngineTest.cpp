@@ -325,7 +325,7 @@ TEST_F(EngineTest, change_dop_with_restart_test) {
 
     NodeEngine* ptr = new NodeEngine();
     ptr->setDOPWithRestart(2);
-    ptr->start();
+//    ptr->start();
     ptr->deployQuery(qep);
     qep->completedPromise.get_future().get();
     ptr->stop();
@@ -341,17 +341,17 @@ TEST_F(EngineTest, change_dop_without_restart_test) {
     ptr->setDOPWithoutRestart(2);
     ptr->start();
     ptr->deployQuery(qep);
-    sleep(1);
+    qep->completedPromise.get_future().get();
     ptr->stop();
     ptr->start();
     EXPECT_EQ(ptr->getDOP(), size_t(2));
-
+    ptr->stop();
     testOutput();
     delete ptr;
 }
 
 TEST_F(EngineTest, parallel_different_source_test) {
-    CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
+    CompiledTestQueryExecutionPlanPtr qep1 = std::make_shared<CompiledTestQueryExecutionPlan>();
     DataSourcePtr source1 =
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
@@ -359,9 +359,9 @@ TEST_F(EngineTest, parallel_different_source_test) {
     qep1->addDataSource(source1);
     qep1->addDataSink(sink1);
 
-    CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
+    CompiledTestQueryExecutionPlanPtr qep2 = std::make_shared<CompiledTestQueryExecutionPlan>();
     DataSourcePtr source2 = createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
-    Schema sch2 = Schema::create().addField("sum", BasicType::UINT32);
+    SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
     DataSinkPtr sink2 = createBinaryFileSinkWithSchema(sch2, "qep2.txt");
     qep2->addDataSource(source2);
     qep2->addDataSink(sink2);
@@ -379,10 +379,10 @@ TEST_F(EngineTest, parallel_different_source_test) {
     delete ptr;
 }
 
-TEST_F(EngineTest, DISABLED_parallel_same_source_test) {
+TEST_F(EngineTest, parallel_same_source_test) {
     CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
     DataSourcePtr source1 = createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
-    Schema sch1 = Schema::create().addField("sum", BasicType::UINT32);
+    SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
     DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep1.txt");
     qep1->addDataSource(source1);
     qep1->addDataSink(sink1);
@@ -393,11 +393,10 @@ TEST_F(EngineTest, DISABLED_parallel_same_source_test) {
     qep2->addDataSink(sink2);
 
     NodeEngine* ptr = new NodeEngine();
+    ptr->start();
     ptr->deployQueryWithoutStart(qep1);
     ptr->deployQueryWithoutStart(qep2);
     source1->start();
-
-    ptr->start();
     qep1->completedPromise.get_future().get();
     qep2->completedPromise.get_future().get();
     ptr->stop();
@@ -420,7 +419,7 @@ TEST_F(EngineTest, parallel_same_sink_test) {
     CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
     DataSourcePtr source2 =
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
-    Schema sch2 = Schema::create().addField("sum", BasicType::UINT32);
+    SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
     qep2->addDataSource(source1);
     qep2->addDataSink(sink1);
 
@@ -429,6 +428,7 @@ TEST_F(EngineTest, parallel_same_sink_test) {
     ptr->deployQueryWithoutStart(qep1);
     ptr->deployQueryWithoutStart(qep2);
     source1->start();
+    source2->start();
 
     qep1->completedPromise.get_future().get();
     qep2->completedPromise.get_future().get();
@@ -457,6 +457,7 @@ TEST_F(EngineTest, parallel_same_source_and_sink_test) {
     source1->start();
 
     qep1->completedPromise.get_future().get();
+    qep2->completedPromise.get_future().get();
     ptr->stop();
 
     testOutput("qep3.txt", joinedExpectedOutput);

@@ -19,7 +19,7 @@ namespace NES {
 DataSource::DataSource(const SchemaPtr pSchema)
     :
     running(false),
-    thread(),
+    thread(nullptr),
     schema(pSchema),
     generatedTuples(0),
     generatedBuffers(0),
@@ -32,15 +32,7 @@ DataSource::DataSource(const SchemaPtr pSchema)
 }
 
 DataSource::DataSource()
-    :
-    running(false),
-    thread(),
-    generatedTuples(0),
-    generatedBuffers(0),
-    numBuffersToProcess(UINT64_MAX),
-    gatheringInterval(0),
-    lastGatheringTimeStamp(0),
-    sourceId(UtilityFunctions::generateUuid()) {
+    : DataSource(nullptr) {
     NES_DEBUG(
         "DataSource " << this->getSourceId() << ": Init Data Source Default w/o schema")
 }
@@ -67,19 +59,22 @@ bool DataSource::start() {
 }
 
 bool DataSource::stop() {
-    NES_DEBUG("DataSource " << this->getSourceId() << ": Stop called")
+    NES_DEBUG("DataSource " << this->getSourceId() << ": Stop called and source is " << (running ? "running" : "not running"));
+    if (!running) {
+        return false;
+    }
     running = false;
-
+    bool ret = false;
     if (thread && thread->joinable()) {
         thread->join();
         NES_DEBUG("DataSource " << this->getSourceId() << ": Thread joinded")
-        return true;
+        ret = true;
     } else {
         NES_DEBUG(
             "DataSource " << this->getSourceId() << ": Thread is not joinable")
     }
     thread.reset();
-    return false;
+    return ret;
 }
 
 bool DataSource::isRunning() {
@@ -113,8 +108,7 @@ void DataSource::running_routine() {
                 } else {
                     NES_DEBUG(
                         "DataSource " << this->getSourceId() << ": Receiving thread terminated ... stopping")
-                    running = false;
-                    break;
+                    return;
                 }
 
             } else {
