@@ -9,7 +9,7 @@ class ZmqSourceDescriptor : public SourceDescriptor {
 
   public:
 
-    ZmqSourceDescriptor(std::string host, uint16_t port);
+    ZmqSourceDescriptor(SchemaPtr schema, std::string host, uint16_t port);
 
     SourceDescriptorType getType() override;
 
@@ -21,6 +21,8 @@ class ZmqSourceDescriptor : public SourceDescriptor {
     uint16_t port;
 
 };
+
+typedef std::shared_ptr<ZmqSourceDescriptor> ZmqSourceDescriptorPtr;
 
 }
 
