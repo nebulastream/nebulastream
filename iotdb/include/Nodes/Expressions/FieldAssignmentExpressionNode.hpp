@@ -21,6 +21,17 @@ class FieldAssignmentExpressionNode : public BinaryExpressionNode {
     const std::string toString() const override;
     bool equal(const NodePtr rhs) const override;
 
+    /**
+     * @brief return the field to which a new value is assigned.
+     * @return FieldAccessExpressionNodePtr
+     */
+    FieldAccessExpressionNodePtr getField() const;
+    /**
+     * @brief returns the expressions, which calculates the new value.
+     * @return ExpressionNodePtr
+     */
+    ExpressionNodePtr getAssignment() const;
+
 };
 }
 
