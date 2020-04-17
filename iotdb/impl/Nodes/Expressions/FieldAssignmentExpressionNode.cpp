@@ -16,13 +16,21 @@ bool FieldAssignmentExpressionNode::equal(const NodePtr rhs) const {
     if (rhs->instanceOf<FieldAssignmentExpressionNode>()) {
         auto otherFieldAssignment = rhs->as<FieldAssignmentExpressionNode>();
         // a field assignment expression has always two children.
-        return children[0]->equal(otherFieldAssignment->children[0]) && children[1]->equal(otherFieldAssignment->children[1]);
+        return getField()->equal(otherFieldAssignment->getField()) && getAssignment()->equal(otherFieldAssignment->getAssignment());
     }
     return false;
 }
 
 const std::string FieldAssignmentExpressionNode::toString() const {
     return "FieldAssignment()";
+}
+
+FieldAccessExpressionNodePtr FieldAssignmentExpressionNode::getField() const {
+    return getLeft()->as<FieldAccessExpressionNode>();
+}
+
+ExpressionNodePtr FieldAssignmentExpressionNode::getAssignment() const {
+    return getRight();
 }
 
 }
