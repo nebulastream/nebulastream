@@ -9,7 +9,7 @@ class DefaultSourceDescriptor : public SourceDescriptor {
 
   public:
 
-    DefaultSourceDescriptor(uint64_t numbersOfBufferToProduce, uint32_t frequency);
+    DefaultSourceDescriptor(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint32_t frequency);
 
     SourceDescriptorType getType() override;
 

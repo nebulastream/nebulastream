@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <memory>
+#include <API/Schema.hpp>
 
 namespace NES {
 
@@ -14,9 +15,16 @@ class SourceDescriptor {
 
   public:
 
-    SourceDescriptor() = default;
+    SourceDescriptor(SchemaPtr schema) : schema(schema) {};
 
     virtual SourceDescriptorType getType() = 0;
+
+    const SchemaPtr getSchema() const {
+        return schema;
+    }
+
+  private:
+    SchemaPtr schema;
 };
 
 typedef std::shared_ptr<SourceDescriptor> SourceDescriptorPtr;

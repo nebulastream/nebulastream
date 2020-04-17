@@ -2,7 +2,7 @@
 
 namespace NES {
 
-BinarySourceDescriptor::BinarySourceDescriptor(std::string filePath) : SourceDescriptor(), filePath(filePath){}
+BinarySourceDescriptor::BinarySourceDescriptor(SchemaPtr schema, std::string filePath) : SourceDescriptor(schema), filePath(filePath){}
 
 SourceDescriptorType BinarySourceDescriptor::getType() {
     return BinaryDescriptor;

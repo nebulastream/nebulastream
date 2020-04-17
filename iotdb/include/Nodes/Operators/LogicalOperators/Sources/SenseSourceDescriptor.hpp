@@ -9,7 +9,7 @@ class SenseSourceDescriptor : public SourceDescriptor {
 
   public:
 
-    SenseSourceDescriptor(std::string udfs);
+    SenseSourceDescriptor(SchemaPtr schema, std::string udfs);
 
     SourceDescriptorType getType() override;
 
@@ -21,6 +21,8 @@ class SenseSourceDescriptor : public SourceDescriptor {
 
     std::string udfs;
 };
+
+typedef std::shared_ptr<SenseSourceDescriptor> SenseSourceDescriptorPtr;
 
 }
 

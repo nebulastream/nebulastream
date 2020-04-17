@@ -2,12 +2,18 @@
 
 namespace NES {
 
-KafkaSourceDescriptor::KafkaSourceDescriptor(std::string brokers,
+KafkaSourceDescriptor::KafkaSourceDescriptor(SchemaPtr schema,
+                                             std::string brokers,
                                              std::string topic,
                                              std::string groupId,
                                              bool autoCommit,
                                              cppkafka::Configuration config)
-    : brokers(brokers), topic(topic), groupId(groupId), autoCommit(autoCommit), config(config) {}
+    : SourceDescriptor(schema),
+      brokers(brokers),
+      topic(topic),
+      groupId(groupId),
+      autoCommit(autoCommit),
+      config(config) {}
 
 SourceDescriptorType KafkaSourceDescriptor::getType() {
     return KafkaSinkDescriptor;

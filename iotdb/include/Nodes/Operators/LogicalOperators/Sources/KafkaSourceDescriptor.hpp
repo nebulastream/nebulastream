@@ -10,7 +10,8 @@ class KafkaSourceDescriptor : public SourceDescriptor {
 
   public:
 
-    KafkaSourceDescriptor(std::string brokers,
+    KafkaSourceDescriptor(SchemaPtr schema,
+                          std::string brokers,
                           std::string topic,
                           std::string groupId,
                           bool autoCommit,
@@ -33,6 +34,8 @@ class KafkaSourceDescriptor : public SourceDescriptor {
     cppkafka::Configuration config;
 
 };
+
+typedef std::shared_ptr<KafkaSourceDescriptor> KafkaSourceDescriptorPtr;
 
 }
 

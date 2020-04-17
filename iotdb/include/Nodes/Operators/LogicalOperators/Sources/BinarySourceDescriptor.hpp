@@ -8,15 +8,16 @@ namespace NES {
 class BinarySourceDescriptor : public SourceDescriptor {
 
   public:
-    BinarySourceDescriptor(std::string filePath);
+    BinarySourceDescriptor(SchemaPtr schema, std::string filePath);
 
     SourceDescriptorType getType() override;
     const std::string& getFilePath() const;
 
   private:
     std::string filePath;
-
 };
+
+typedef std::shared_ptr<BinarySourceDescriptor> BinarySourceDescriptorPtr;
 
 }
 

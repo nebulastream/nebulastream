@@ -2,7 +2,8 @@
 
 namespace NES {
 
-SenseSourceDescriptor::SenseSourceDescriptor(std::string udfs) : udfs(udfs) {}
+SenseSourceDescriptor::SenseSourceDescriptor(SchemaPtr schema, std::string udfs)
+    : SourceDescriptor(schema), udfs(udfs) {}
 
 const std::string& SenseSourceDescriptor::getUdfs() const {
     return udfs;

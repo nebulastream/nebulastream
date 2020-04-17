@@ -2,8 +2,10 @@
 
 namespace NES {
 
-DefaultSourceDescriptor::DefaultSourceDescriptor(uint64_t numbersOfBufferToProduce, uint32_t frequency)
-    : numbersOfBufferToProduce(numbersOfBufferToProduce), frequency(frequency) {}
+DefaultSourceDescriptor::DefaultSourceDescriptor(SchemaPtr schema,
+                                                 uint64_t numbersOfBufferToProduce,
+                                                 uint32_t frequency)
+    : SourceDescriptor(schema), numbersOfBufferToProduce(numbersOfBufferToProduce), frequency(frequency) {}
 
 SourceDescriptorType DefaultSourceDescriptor::getType() {
     return DefaultDescriptor;
