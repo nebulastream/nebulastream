@@ -6,7 +6,7 @@ ZmqSinkDescriptor::ZmqSinkDescriptor(std::string host, uint16_t port, size_t tup
     : host(host), port(port), tupleCnt(tupleCnt) {}
 
 SinkDescriptorType ZmqSinkDescriptor::getType() {
-    return ZmqDescriptor;
+    return SinkDescriptorType::ZmqDescriptor;
 }
 
 const std::string& ZmqSinkDescriptor::getHost() const {

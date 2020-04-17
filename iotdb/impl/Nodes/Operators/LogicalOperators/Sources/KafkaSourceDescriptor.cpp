@@ -10,7 +10,7 @@ KafkaSourceDescriptor::KafkaSourceDescriptor(std::string brokers,
     : brokers(brokers), topic(topic), groupId(groupId), autoCommit(autoCommit), config(config) {}
 
 SourceDescriptorType KafkaSourceDescriptor::getType() {
-    return KafkaDescriptor;
+    return KafkaSinkDescriptor;
 }
 
 const std::string& KafkaSourceDescriptor::getBrokers() const {

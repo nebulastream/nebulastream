@@ -17,6 +17,9 @@ enum SinkDescriptorType {
 class SinkDescriptor {
 
   public:
+
+    SinkDescriptor() = default;
+
     virtual SinkDescriptorType getType() = 0;
 };
 

@@ -155,7 +155,7 @@ add_subdirectory(impl)
 # Add Library
 get_source_iotdb(iotdb_SOURCE_FILES)
 get_header_iotdb(iotdb_HEADER_FILES)
-add_library(iotdb SHARED ${iotdb_SOURCE_FILES} ${iotdb_HEADER_FILES} impl/Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.cpp include/Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp impl/Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.cpp include/Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp impl/Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.cpp include/Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp impl/Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.cpp include/Nodes/Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp impl/Nodes/Operators/LogicalOperators/Sources/KafkaSourceDescriptor.cpp include/Nodes/Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp impl/Nodes/Operators/LogicalOperators/Sources/SenseSourceDescriptor.cpp include/Nodes/Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp impl/Nodes/Operators/LogicalOperators/Sources/CsvSourceDescriptor.cpp include/Nodes/Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp impl/Nodes/Operators/LogicalOperators/Sources/BinarySourceDescriptor.cpp include/Nodes/Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp impl/Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.cpp include/Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp)
+add_library(iotdb SHARED ${iotdb_SOURCE_FILES} ${iotdb_HEADER_FILES})
 target_include_directories(iotdb PUBLIC "include")
 target_link_libraries(iotdb ${LIBRARIES})
 

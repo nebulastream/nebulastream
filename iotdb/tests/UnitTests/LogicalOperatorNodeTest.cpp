@@ -2,7 +2,9 @@
 #include <iostream>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Nodes/Util/DumpContext.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Util/Logger.hpp>
@@ -32,7 +34,7 @@ class LogicalOperatorNodeTest : public testing::Test {
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create());
 
         sPtr = StreamCatalog::instance().getStreamForLogicalStreamOrThrowException("default_logical");
-        source = std::make_shared<DefaultSource>(sPtr->getSchema(), 0, 0);
+        DefaultSourceDescriptorPtr sourceDescriptor = std::make_shared<DefaultSourceDescriptor>(0, 0);
 
         pred1 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "1"));
         pred2 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "2"));
@@ -42,7 +44,7 @@ class LogicalOperatorNodeTest : public testing::Test {
         pred6 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "6"));
         pred7 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "7"));
 
-        sourceOp = createSourceLogicalOperatorNode(source);
+        sourceOp = createSourceLogicalOperatorNode(sourceDescriptor);
         filterOp1 = createFilterLogicalOperatorNode(pred1);
         filterOp3 = createFilterLogicalOperatorNode(pred3);
         filterOp2 = createFilterLogicalOperatorNode(pred2);
@@ -74,7 +76,6 @@ class LogicalOperatorNodeTest : public testing::Test {
     bool removed;
     bool replaced;
     StreamPtr sPtr;
-    DataSourcePtr source;
     DumpContextPtr dumpContext;
 
     ExpressionNodePtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;
@@ -1393,8 +1394,8 @@ TEST_F(LogicalOperatorNodeTest, translateToLagacyOperatorTree) {
      * Sink -> Filter -> Source
      */
     auto schema = Schema::create();
-    auto printSink = createPrintSinkWithSchema(schema, std::cout);
-    auto sinkOperator = createSinkLogicalOperatorNode(printSink);
+    auto printSinkDescriptorPtr = std::make_shared<PrintSinkDescriptor>();
+    auto sinkOperator = createSinkLogicalOperatorNode(printSinkDescriptorPtr);
     auto constValue = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "1"));
     auto fieldRead = FieldAccessExpressionNode::create(createDataType(BasicType::INT8), "FieldName");
     auto andNode = EqualsExpressionNode::create(constValue, fieldRead);

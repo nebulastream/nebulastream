@@ -22,6 +22,8 @@ class DefaultSourceDescriptor : public SourceDescriptor {
     const uint32_t frequency;
 };
 
+typedef std::shared_ptr<DefaultSourceDescriptor> DefaultSourceDescriptorPtr;
+
 }
 
 #endif //NES_IMPL_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_DEFAULTSOURCEDESCRIPTOR_HPP_

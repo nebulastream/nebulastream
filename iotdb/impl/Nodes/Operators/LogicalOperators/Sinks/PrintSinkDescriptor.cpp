@@ -2,9 +2,10 @@
 
 namespace NES {
 
+PrintSinkDescriptor::PrintSinkDescriptor(): SinkDescriptor() {}
+
 SinkDescriptorType PrintSinkDescriptor::getType() {
-    return PrintDescriptor;
+    return SinkDescriptorType::PrintDescriptor;
 }
 
 }
-

@@ -5,7 +5,9 @@
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <SourceSink/DataSink.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <Util/Logger.hpp>
@@ -35,7 +37,9 @@ Query Query::from(Stream& stream) {
 
     if (catalogEntry.size() == 0) {
 
-        rootNode = createSourceLogicalOperatorNode(createDefaultDataSourceWithSchemaForOneBuffer(stream.getSchema()));
+        const shared_ptr<DefaultSourceDescriptor>
+            defaultSourceDescriptor = std::make_shared<DefaultSourceDescriptor>(/*bufferCnt*/ 1, /*frequency*/ 1);
+        rootNode = createSourceLogicalOperatorNode(defaultSourceDescriptor);
     } else {
         std::string name = catalogEntry[0]->getPhysicalName();
         std::string type = catalogEntry[0]->getSourceType();
@@ -50,21 +54,29 @@ Query Query::from(Stream& stream) {
         if (type == "DefaultSource") {
             if (numBuffers == 1) {
                 NES_DEBUG("InputQuery::from create default source for one buffer")
-                rootNode =
-                    createSourceLogicalOperatorNode(createDefaultDataSourceWithSchemaForOneBuffer(stream.getSchema()));
+                const shared_ptr<DefaultSourceDescriptor>
+                    defaultSourceDescriptor =
+                    std::make_shared<DefaultSourceDescriptor>(/*bufferCnt*/ 1, /*frequency*/ 1);
+
+                rootNode = createSourceLogicalOperatorNode(defaultSourceDescriptor);
             } else {
                 NES_DEBUG("InputQuery::from create default source for " << numBuffers << " buffers")
-                rootNode = createSourceLogicalOperatorNode(
-                    createDefaultDataSourceWithSchemaForVarBuffers(stream.getSchema(), numBuffers, frequency));
+                const shared_ptr<DefaultSourceDescriptor>
+                    defaultSourceDescriptor = std::make_shared<DefaultSourceDescriptor>(numBuffers, frequency);
+
+                rootNode = createSourceLogicalOperatorNode(defaultSourceDescriptor);
             }
         } else if (type == "CSVSource") {
             NES_DEBUG("InputQuery::from create CSV source for " << conf << " buffers")
-            rootNode = createSourceLogicalOperatorNode(createCSVFileSource(stream.getSchema(), /**fileName*/
-                                                                           conf,               /**delimiter**/
-                                                                           ",", numBuffers, frequency));
+            const shared_ptr<CsvSourceDescriptor>
+                csvSourceDescriptor =
+                std::make_shared<CsvSourceDescriptor>(/**filePath*/ conf, /**delimiter*/ ",", numBuffers, frequency);
+            rootNode = createSourceLogicalOperatorNode(csvSourceDescriptor);
         } else if (type == "SenseSource") {
             NES_DEBUG("InputQuery::from create Sense source for udfs " << conf)
-            rootNode = createSourceLogicalOperatorNode(createSenseSource(stream.getSchema(), /**udfs*/ conf));
+            const shared_ptr<SenseSourceDescriptor>
+                csvSourceDescriptor = std::make_shared<SenseSourceDescriptor>(/**udfs*/ conf);
+            rootNode = createSourceLogicalOperatorNode(csvSourceDescriptor);
         } else {
             NES_ERROR("InputQuery::from source type " << type << " not supported")
             NES_FATAL_ERROR("type not supported")
@@ -102,59 +114,8 @@ Query& Query::window() {NES_NOT_IMPLEMENTED }
 
 Query& Query::to(const std::string& name) {NES_NOT_IMPLEMENTED }
 
-// output operators
-Query& Query::writeToFile(const std::string& fileName) {
-    OperatorNodePtr op =
-        createSinkLogicalOperatorNode(createBinaryFileSinkWithSchema(this->sourceStream->getSchema(), fileName));
-    assignOperatorIdAndSwitchTheRoot(op);
-    return *this;
-}
-
-Query& Query::writeToCSVFile(const std::string& file_name, const std::string& outputMode) {
-    OperatorNodePtr op;
-    if (outputMode == "append") {
-        NES_DEBUG("Query::writeToCSVFile: with modus append")
-        op = createSinkLogicalOperatorNode(createCSVFileSinkWithSchemaAppend(this->sourceStream->getSchema(),
-                                                                             file_name));
-    } else if (outputMode == "truncate") {
-        NES_DEBUG("Query::writeToCSVFile: with modus truncate")
-        op = createSinkLogicalOperatorNode(createCSVFileSinkWithSchemaOverwrite(this->sourceStream->getSchema(),
-                                                                                file_name));
-    } else {
-        NES_ERROR("writeToCSVFile mode not supported " << outputMode)
-    }
-
-    assignOperatorIdAndSwitchTheRoot(op);
-    return *this;
-}
-
-Query& Query::writeToZmq(const std::string& logicalStreamName, const std::string& host, const uint16_t& port) {
-
-    SchemaPtr schemaPtr = StreamCatalog::instance().getSchemaForLogicalStream(logicalStreamName);
-    OperatorNodePtr op = createSinkLogicalOperatorNode(createZmqSink(schemaPtr, host, port));
-    assignOperatorIdAndSwitchTheRoot(op);
-    return *this;
-}
-
-Query& Query::print(std::ostream& out) {
-
-    OperatorNodePtr op = createSinkLogicalOperatorNode(createPrintSinkWithSchema(sourceStream->getSchema(), out));
-    assignOperatorIdAndSwitchTheRoot(op);
-    return *this;
-}
-
-Query& Query::writeToKafka(const std::string& topic, const cppkafka::Configuration& config) {
-
-    OperatorNodePtr op =
-        createSinkLogicalOperatorNode(createKafkaSinkWithSchema(sourceStream->getSchema(), topic, config));
-    assignOperatorIdAndSwitchTheRoot(op);
-    return *this;
-}
-
-Query& Query::writeToKafka(const std::string& brokers, const std::string& topic, const size_t kafkaProducerTimeout) {
-
-    OperatorNodePtr op = createSinkLogicalOperatorNode(
-        createKafkaSinkWithSchema(sourceStream->getSchema(), brokers, topic, kafkaProducerTimeout));
+Query& Query::sink(const SinkDescriptorPtr sinkDescriptor) {
+    OperatorNodePtr op = createSinkLogicalOperatorNode(sinkDescriptor);
     assignOperatorIdAndSwitchTheRoot(op);
     return *this;
 }

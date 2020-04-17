@@ -4,6 +4,7 @@
 #include <Nodes/Expressions/ExpressionNode.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <API/ParameterTypes.hpp>
 
 namespace NES {
@@ -24,7 +25,7 @@ typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 LogicalOperatorNodePtr createFilterLogicalOperatorNode(const ExpressionNodePtr predicate);
 LogicalOperatorNodePtr createSinkLogicalOperatorNode(const SinkDescriptorPtr sinkDescriptor);
 LogicalOperatorNodePtr createMapLogicalOperatorNode(const FieldAssignmentExpressionNodePtr mapExpression);
-LogicalOperatorNodePtr createSourceLogicalOperatorNode(const DataSourcePtr source);
+LogicalOperatorNodePtr createSourceLogicalOperatorNode(const SourceDescriptorPtr sourceDescriptor);
 LogicalOperatorNodePtr createWindowLogicalOperatorNode(const WindowDefinitionPtr windowDefinition);
 }
 

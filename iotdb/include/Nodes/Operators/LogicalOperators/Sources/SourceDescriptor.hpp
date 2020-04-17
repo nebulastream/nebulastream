@@ -7,13 +7,16 @@
 namespace NES {
 
 enum SourceDescriptorType {
-    ZmqDescriptor, KafkaDescriptor, SenseDescriptor, CsvDescriptor,  BinaryDescriptor, DefaultDescriptor
+    ZmqSinkDescriptor, KafkaSinkDescriptor, SenseDescriptor, CsvDescriptor,  BinaryDescriptor, DefaultDescriptor
 };
 
 class SourceDescriptor {
 
   public:
-    virtual SourceDescriptorType getType();
+
+    SourceDescriptor() = default;
+
+    virtual SourceDescriptorType getType() = 0;
 };
 
 typedef std::shared_ptr<SourceDescriptor> SourceDescriptorPtr;

@@ -3,10 +3,14 @@
 #include <Nodes/Node.hpp>
 #include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
 
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Nodes/Operators/PhysicalOperator/Sources/ConvertLogicalToPhysicalSource.hpp>
+#include <Nodes/Operators/PhysicalOperator/Sinks/ConvertLogicalToPhysicalSink.hpp>
 #include <Operators/Operator.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
@@ -32,7 +36,9 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
     if (operatorNode->instanceOf<SourceLogicalOperatorNode>()) {
         // Translate Source operator node.
         auto sourceNodeOperator = operatorNode->as<SourceLogicalOperatorNode>();
-        return createSourceOperator(sourceNodeOperator->getDataSource());
+        const SourceDescriptorPtr sourceDescriptor = sourceNodeOperator->getSourceDescriptor();
+        const DataSourcePtr dataSource = ConvertLogicalToPhysicalSource::getDataSource(sourceDescriptor);
+        return createSourceOperator(dataSource);
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
         // Translate filter operator node.
         auto filterNodeOperator = operatorNode->as<FilterLogicalOperatorNode>();
@@ -62,7 +68,9 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
     } else if (operatorNode->instanceOf<SinkLogicalOperatorNode>()) {
         // Translate sink operator node.
         auto sinkNodeOperator = operatorNode->as<SinkLogicalOperatorNode>();
-        return createSinkOperator(sinkNodeOperator->getSinkDescriptor());
+        const SinkDescriptorPtr sinkDescriptor = sinkNodeOperator->getSinkDescriptor();
+        const DataSinkPtr dataSink = ConvertLogicalToPhysicalSink::createDataSink(sinkDescriptor);
+        return createSinkOperator(dataSink);
     }
     NES_FATAL_ERROR("TranslateToLegacyPhase: No transformation implemented for this operator node: " << operatorNode);
     NES_NOT_IMPLEMENTED;

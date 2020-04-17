@@ -9,7 +9,7 @@ class CsvSourceDescriptor : public SourceDescriptor {
 
   public:
 
-    CsvSourceDescriptor(std::string filePath, std::string& delimiter, size_t numBuffersToProcess,
+    CsvSourceDescriptor(std::string filePath, std::string delimiter, size_t numBuffersToProcess,
                         size_t frequency);
 
     SourceDescriptorType getType() override;
