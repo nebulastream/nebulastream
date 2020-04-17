@@ -5,14 +5,16 @@
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 
 namespace NES {
+
 class MapLogicalOperatorNode : public LogicalOperatorNode {
   public:
-    MapLogicalOperatorNode(const ExpressionNodePtr mapExpression);
+    MapLogicalOperatorNode(const FieldAssignmentExpressionNodePtr mapExpression);
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
+    FieldAssignmentExpressionNodePtr getMapExpression();
 
   private:
-    ExpressionNodePtr mapExpression;
+    FieldAssignmentExpressionNodePtr mapExpression;
 };
 }
 

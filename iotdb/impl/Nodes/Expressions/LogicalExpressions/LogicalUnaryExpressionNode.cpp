@@ -4,7 +4,7 @@
 namespace NES {
 
 LogicalUnaryExpressionNode::LogicalUnaryExpressionNode() :
-    UnaryExpressionNode(createDataType(BasicType::BOOLEAN)) {
+    UnaryExpressionNode(createDataType(BasicType::BOOLEAN)), LogicalExpressionNode() {
 }
 
 }

@@ -7,6 +7,8 @@
 
 namespace NES {
 
+
+
 class LogicalOperatorNode : public OperatorNode {
   public:
     LogicalOperatorNode();
@@ -14,11 +16,14 @@ class LogicalOperatorNode : public OperatorNode {
 
 typedef std::shared_ptr<LogicalOperatorNode> LogicalOperatorNodePtr;
 
+class FieldAssignmentExpressionNode;
+typedef std::shared_ptr<FieldAssignmentExpressionNode> FieldAssignmentExpressionNodePtr;
+
 class WindowDefinition;
 typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
 
 LogicalOperatorNodePtr createFilterLogicalOperatorNode(const ExpressionNodePtr predicate);
-LogicalOperatorNodePtr createMapLogicalOperatorNode(const ExpressionNodePtr mapExpression);
+LogicalOperatorNodePtr createMapLogicalOperatorNode(const FieldAssignmentExpressionNodePtr mapExpression);
 LogicalOperatorNodePtr createSinkLogicalOperatorNode(const DataSinkPtr sink);
 LogicalOperatorNodePtr createSourceLogicalOperatorNode(const DataSourcePtr source);
 LogicalOperatorNodePtr createWindowLogicalOperatorNode(const WindowDefinitionPtr windowDefinition);
