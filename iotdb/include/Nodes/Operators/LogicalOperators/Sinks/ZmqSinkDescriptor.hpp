@@ -9,22 +9,20 @@ class ZmqSinkDescriptor : public SinkDescriptor {
 
   public:
 
-    ZmqSinkDescriptor(std::string host, uint16_t port, size_t tupleCnt);
+    ZmqSinkDescriptor(SchemaPtr schema, std::string host, uint16_t port);
 
     SinkDescriptorType getType() override;
-
     const std::string& getHost() const;
     uint16_t getPort() const;
-    size_t getTupleCnt() const;
-
   private:
 
     ZmqSinkDescriptor() = default;
 
     std::string host;
     uint16_t port;
-    size_t tupleCnt;
 };
+
+typedef std::shared_ptr<ZmqSinkDescriptor> ZmqSinkDescriptorPtr;
 
 }
 

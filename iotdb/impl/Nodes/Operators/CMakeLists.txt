@@ -3,4 +3,3 @@ add_source_iotdb(
 )
 
 add_subdirectory(LogicalOperators)
-add_subdirectory(PhysicalOperators)

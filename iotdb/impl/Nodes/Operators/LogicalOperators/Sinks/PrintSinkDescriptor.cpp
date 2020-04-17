@@ -2,10 +2,14 @@
 
 namespace NES {
 
-PrintSinkDescriptor::PrintSinkDescriptor(): SinkDescriptor() {}
+PrintSinkDescriptor::PrintSinkDescriptor(SchemaPtr schema, std::ostream& outputStream): SinkDescriptor(schema), outputStream(outputStream) {}
 
 SinkDescriptorType PrintSinkDescriptor::getType() {
     return SinkDescriptorType::PrintDescriptor;
+}
+
+std::ostream& PrintSinkDescriptor::getOutputStream() const {
+    return outputStream;
 }
 
 }

@@ -1,16 +1,16 @@
-#include "Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp"
+#include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
 
 namespace NES {
+
+KafkaSinkDescriptor::KafkaSinkDescriptor(SchemaPtr schema, std::string brokers,
+                                         std::string topic,
+                                         uint64_t kafkaProducerTimeout,
+                                         cppkafka::Configuration config)
+    : SinkDescriptor(schema), brokers(brokers), topic(topic), kafkaProducerTimeout(kafkaProducerTimeout), config(config) {}
 
 SinkDescriptorType KafkaSinkDescriptor::getType() {
     return SinkDescriptorType::KafkaDescriptor;
 }
-
-KafkaSinkDescriptor::KafkaSinkDescriptor(std::string brokers,
-                                         std::string topic,
-                                         int partition,
-                                         cppkafka::Configuration config)
-    : brokers(brokers), topic(topic), partition(partition), config(config) {}
 
 const std::string& KafkaSinkDescriptor::getBrokers() const {
     return brokers;
@@ -20,12 +20,12 @@ const std::string& KafkaSinkDescriptor::getTopic() const {
     return topic;
 }
 
-int KafkaSinkDescriptor::getPartition() const {
-    return partition;
-}
-
 const cppkafka::Configuration& KafkaSinkDescriptor::getConfig() const {
     return config;
+}
+
+const uint64_t KafkaSinkDescriptor::getKafkaProducerTimeout() const {
+    return kafkaProducerTimeout;
 }
 
 }

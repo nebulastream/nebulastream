@@ -17,7 +17,7 @@ class FileSinkDescriptor : public SinkDescriptor {
 
   public:
 
-    FileSinkDescriptor(std::string fileName, FileOutPutMode fileOutputMode, FileOutPutType fileOutputType);
+    FileSinkDescriptor(SchemaPtr schema, std::string fileName, FileOutPutMode fileOutputMode, FileOutPutType fileOutputType);
 
     SinkDescriptorType getType() override;
 
