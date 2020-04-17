@@ -1,0 +1,9 @@
+add_source_iotdb(
+        SourceLogicalOperatorNode.cpp
+        SenseSourceDescriptor.cpp
+        KafkaSourceDescriptor.cpp
+        ZmqSourceDescriptor.cpp
+        BinarySourceDescriptor.cpp
+        CsvSourceDescriptor.cpp
+        DefaultSourceDescriptor.cpp
+)

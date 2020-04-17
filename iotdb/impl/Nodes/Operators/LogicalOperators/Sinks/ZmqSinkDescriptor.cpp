@@ -2,8 +2,8 @@
 
 namespace NES {
 
-ZmqSinkDescriptor::ZmqSinkDescriptor(std::string host, uint16_t port, size_t tupleCnt)
-    : host(host), port(port), tupleCnt(tupleCnt) {}
+ZmqSinkDescriptor::ZmqSinkDescriptor(SchemaPtr schema, std::string host, uint16_t port)
+    : SinkDescriptor(schema), host(host), port(port) {}
 
 SinkDescriptorType ZmqSinkDescriptor::getType() {
     return SinkDescriptorType::ZmqDescriptor;
@@ -15,10 +15,6 @@ const std::string& ZmqSinkDescriptor::getHost() const {
 
 uint16_t ZmqSinkDescriptor::getPort() const {
     return port;
-}
-
-size_t ZmqSinkDescriptor::getTupleCnt() const {
-    return tupleCnt;
 }
 
 }

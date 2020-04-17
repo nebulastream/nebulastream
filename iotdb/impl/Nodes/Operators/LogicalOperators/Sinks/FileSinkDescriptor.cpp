@@ -1,11 +1,13 @@
+#include <Nodes/Operators/OperatorNode.hpp>
 #include "Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp"
 
 namespace NES {
 
-FileSinkDescriptor::FileSinkDescriptor(std::string fileName,
+FileSinkDescriptor::FileSinkDescriptor(SchemaPtr schema,
+                                       std::string fileName,
                                        FileOutPutMode fileOutputMode,
                                        FileOutPutType fileOutputType)
-    : fileName(fileName), fileOutPutMode(fileOutputMode), fileOutPutType(fileOutPutType) {}
+    : SinkDescriptor(schema), fileName(fileName), fileOutPutMode(fileOutputMode), fileOutPutType(fileOutPutType) {}
 
 SinkDescriptorType FileSinkDescriptor::getType() {
     return SinkDescriptorType::FileDescriptor;

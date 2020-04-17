@@ -2,17 +2,8 @@ add_source_iotdb(
         LogicalOperatorNode.cpp
         FilterLogicalOperatorNode.cpp
         MapLogicalOperatorNode.cpp
-        Sinks/FileSinkDescriptor.cpp
-        Sinks/SinkLogicalOperatorNode.cpp
-        Sinks/KafkaSinkDescriptor.cpp
-        Sinks/ZmqSinkDescriptor.cpp
-        Sinks/PrintSinkDescriptor.cpp
-        Sources/SourceLogicalOperatorNode.cpp
-        Sources/SenseSourceDescriptor.cpp
-        Sources/KafkaSourceDescriptor.cpp
-        Sources/ZmqSourceDescriptor.cpp
-        Sources/BinarySourceDescriptor.cpp
-        Sources/CsvSourceDescriptor.cpp
-        Sources/DefaultSourceDescriptor.cpp
         WindowLogicalOperatorNode.cpp
 )
+
+add_subdirectory(Sinks)
+add_subdirectory(Sources)

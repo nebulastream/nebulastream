@@ -10,13 +10,13 @@ class KafkaSinkDescriptor: public SinkDescriptor {
 
   public:
 
-    KafkaSinkDescriptor(std::string brokers, std::string topic, int partition, cppkafka::Configuration config);
+    KafkaSinkDescriptor(SchemaPtr schema, std::string brokers, std::string topic, uint64_t  kafkaProducerTimeout, cppkafka::Configuration config);
 
     SinkDescriptorType getType() override;
 
     const std::string& getBrokers() const;
     const std::string& getTopic() const;
-    int getPartition() const;
+    const uint64_t getKafkaProducerTimeout() const;
     const cppkafka::Configuration& getConfig() const;
 
   private:
@@ -25,7 +25,7 @@ class KafkaSinkDescriptor: public SinkDescriptor {
 
     std::string brokers;
     std::string topic;
-    int partition;
+    uint64_t kafkaProducerTimeout;
     cppkafka::Configuration config;
 
 
