@@ -60,7 +60,9 @@ bool DataSource::start() {
     running = true;
 
     NES_DEBUG("DataSource " << this->getSourceId() << ": Spawn thread")
-    thread = std::thread(std::bind(&DataSource::running_routine, this));
+    thread = std::make_shared<std::thread>([this]() {
+        running_routine();
+    });
     return true;
 }
 
@@ -68,14 +70,15 @@ bool DataSource::stop() {
     NES_DEBUG("DataSource " << this->getSourceId() << ": Stop called")
     running = false;
 
-    if (thread.joinable()) {
-        thread.detach();
+    if (thread && thread->joinable()) {
+        thread->join();
         NES_DEBUG("DataSource " << this->getSourceId() << ": Thread joinded")
         return true;
     } else {
         NES_DEBUG(
             "DataSource " << this->getSourceId() << ": Thread is not joinable")
     }
+    thread.reset();
     return false;
 }
 

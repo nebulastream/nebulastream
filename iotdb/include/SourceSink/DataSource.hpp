@@ -147,7 +147,7 @@ class DataSource {
     friend class boost::serialization::access;
     //bool indicating if the source is currently running
     std::atomic<bool> running;
-    std::thread thread;
+    std::shared_ptr<std::thread> thread;
 
     template<class Archive>
     void serialize(Archive& ar, const unsigned int version) {
