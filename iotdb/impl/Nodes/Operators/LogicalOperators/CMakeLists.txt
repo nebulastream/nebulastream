@@ -10,5 +10,7 @@ add_source_iotdb(
         Sources/SenseSourceDescriptor.cpp
         Sources/KafkaSourceDescriptor.cpp
         Sources/ZmqSourceDescriptor.cpp
+        Sources/BinarySourceDescriptor.cpp
+        Sources/CsvSourceDescriptor.cpp
         WindowLogicalOperatorNode.cpp
 )
