@@ -12,5 +12,6 @@ add_source_iotdb(
         Sources/ZmqSourceDescriptor.cpp
         Sources/BinarySourceDescriptor.cpp
         Sources/CsvSourceDescriptor.cpp
+        Sources/DefaultSourceDescriptor.cpp
         WindowLogicalOperatorNode.cpp
 )
