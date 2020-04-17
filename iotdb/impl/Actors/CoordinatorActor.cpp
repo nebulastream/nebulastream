@@ -16,11 +16,6 @@ CoordinatorActor::CoordinatorActor(caf::actor_config& cfg, std::string ip)
     queryCatalogServicePtr = QueryCatalogService::getInstance();
     streamCatalogServicePtr = StreamCatalogService::getInstance();
     coordinatorServicePtr = CoordinatorService::getInstance();
-
-    //    workerServicePtr = std::make_unique<WorkerService>(
-    //        WorkerService(ip, actorCoordinatorConfig.publish_port,
-    //                      actorCoordinatorConfig.receive_port));
-
 }
 
 size_t getIdFromHandle(caf::strong_actor_ptr curSender) {
@@ -33,11 +28,6 @@ behavior CoordinatorActor::init() {
     NESTopologyManager::getInstance().resetNESTopologyPlan();
     NES_DEBUG(
         "CoordinatorActor::initializeNESTopology: set coordinatorIp = " << coordinatorIp)
-
-//    auto coordinatorNode = NESTopologyManager::getInstance()
-//        .createNESCoordinatorNode(0, coordinatorIp, CPUCapacity::HIGH);
-//    coordinatorNode->setPublishPort(actorCoordinatorConfig.publish_port);
-//    coordinatorNode->setReceivePort(actorCoordinatorConfig.receive_port);
 
     StreamCatalog::instance();  //initialize catalog
     auto kRootNode = NESTopologyManager::getInstance().getRootNode();
@@ -70,7 +60,6 @@ behavior CoordinatorActor::init() {
       NES_WARNING("CoordinatorActor => error thrown in error handler:" << to_string(err))
       if (err != exit_reason::user_shutdown) {
           NES_ERROR("CoordinatorActor error handle")
-          //          throw new Exception("Error while shutdown actor");
       } else {
           NES_DEBUG("CoordinatorActor error comes from stopping")
       }
@@ -93,14 +82,6 @@ behavior CoordinatorActor::init() {
 CoordinatorActor::~CoordinatorActor() {
     NES_DEBUG("CoordinatorActor: destructed")
 }
-
-//void CoordinatorActor::initializeNESTopology() {
-//
-//    auto coordinatorNode = NESTopologyManager::getInstance()
-//        .createNESCoordinatorNode(0, coordinatorIp, CPUCapacity::HIGH);
-//    coordinatorNode->setPublishPort(actorCoordinatorConfig.publish_port);
-//    coordinatorNode->setReceivePort(actorCoordinatorConfig.receive_port);
-//}
 
 bool CoordinatorActor::addNewParentToSensorNode(std::string childId, std::string parentId) {
     NES_DEBUG(
@@ -316,8 +297,8 @@ bool CoordinatorActor::shutdown() {
         NES_ERROR("CoordinatorActor::shutdown: error while shutdown coordinatorService")
         throw new Exception("Error while stopping CoordinatorActor::shutdown");
     }
-    bool success3 = StreamCatalog::instance().reset();
-    if (!success3) {
+    bool success2 = StreamCatalog::instance().reset();
+    if (!success2) {
         NES_ERROR("CoordinatorActor::shutdown: error while reset StreamCatalog")
         throw new Exception("Error while stopping CoordinatorActor::shutdown");
     }
@@ -456,17 +437,6 @@ behavior CoordinatorActor::running() {
             const string& description) {  //TODO:chef if we really need this except for testing
           return deployQuery(description);
         },
-        //        //worker specific methods
-        //        [=](execute_operators_atom, const string& description, string& executableTransferObject) {
-        //          NES_DEBUG("CoordinatorActor::running(): execute_operators_atom, coordinator got query to execute")
-        //          return workerServicePtr->executeQuery(description, executableTransferObject);
-        //        },
-        //        [=](delete_query_atom, const string& query) {
-        //          workerServicePtr->deleteQuery(query);
-        //        },
-        //        [=](get_operators_atom) {
-        //          return workerServicePtr->getOperators();
-        //        },
         [=](terminate_atom) {
           NES_DEBUG("CoordinatorActor::running(): terminate_atom")
           return shutdown();
