@@ -109,10 +109,20 @@ ExpressionNodePtr operator*(ExpressionItem leftExp, ExpressionItem rightExp)
     return leftExp.getExpressionNode() * rightExp.getExpressionNode();
 }
 
-ExpressionNodePtr operator++(ExpressionItem exp) { return ++exp.getExpressionNode(); }
-ExpressionNodePtr operator++(ExpressionItem exp, int) { return exp.getExpressionNode()++;}
+ExpressionNodePtr operator++(ExpressionItem exp) {
+    return ++exp.getExpressionNode();
+}
 
-ExpressionNodePtr operator--(ExpressionItem exp) { return --exp.getExpressionNode(); }
-ExpressionNodePtr operator--(ExpressionItem exp, int) { return exp.getExpressionNode()--; }
+ExpressionNodePtr operator++(ExpressionItem exp, int) {
+    return exp.getExpressionNode()++;
+}
+
+ExpressionNodePtr operator--(ExpressionItem exp) {
+    return --exp.getExpressionNode();
+}
+
+ExpressionNodePtr operator--(ExpressionItem exp, int) {
+    return exp.getExpressionNode()--;
+}
 
 } // namespace NES
