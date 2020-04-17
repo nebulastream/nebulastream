@@ -1,0 +1,30 @@
+#include "Nodes/Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp"
+
+namespace NES {
+
+CsvSourceDescriptor::CsvSourceDescriptor(std::string filePath, std::string& delimiter, size_t numBuffersToProcess,
+                                         size_t frequency)
+    : filePath(filePath), delimiter(delimiter), numBuffersToProcess(numBuffersToProcess), frequency(frequency) {}
+
+SourceDescriptorType CsvSourceDescriptor::getType() {
+    return CsvDescriptor;
+}
+
+const std::string& CsvSourceDescriptor::getFilePath() const {
+    return filePath;
+}
+
+const std::string& CsvSourceDescriptor::getDelimiter() const {
+    return delimiter;
+}
+
+size_t CsvSourceDescriptor::getNumBuffersToProcess() const {
+    return numBuffersToProcess;
+}
+
+size_t CsvSourceDescriptor::getFrequency() const {
+    return frequency;
+}
+
+}
+
