@@ -45,8 +45,7 @@ FileOutputSink::FileOutputSink(SchemaPtr schema, const std::string filePath,
     outputMode = mode;
 }
 
-bool FileOutputSink::writeData(TupleBuffer& input_buffer)
-{
+bool FileOutputSink::writeData(TupleBuffer& input_buffer) {
 
     NES_DEBUG("FileOutputSink::writeData: write bufffer tuples " << input_buffer.getNumberOfTuples())
 

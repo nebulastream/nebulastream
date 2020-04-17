@@ -31,9 +31,9 @@ class WorkerService {
      * @param queryId a queryId of the query
      * @param executableTransferObject wrapper object with the schema, sources, destinations, operator
      */
-    void executeQuery(const std::string& queryId, std::string& executableTransferObject);
+    bool executeQuery(const std::string& queryId, std::string& executableTransferObject);
 
-    void deleteQuery(const string& query);
+    bool deleteQuery(const string& query);
 
     string& getIp();
     void setIp(const string& ip);
@@ -59,7 +59,7 @@ class WorkerService {
     void shutDown();
 
   private:
-    string _ip;
+    string ip;
     uint16_t publishPort;
     uint16_t receivePort;
     QueryCompilerPtr queryCompiler;

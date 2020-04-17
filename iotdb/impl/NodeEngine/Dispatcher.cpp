@@ -32,9 +32,14 @@ Dispatcher::~Dispatcher() {
 void Dispatcher::resetDispatcher() {
     std::unique_lock<std::mutex> lock(queryMutex);
     std::unique_lock<std::mutex> lock2(workMutex);
-    NES_DEBUG("Dispatcher: Destroy Task Queue")
+    NES_DEBUG("Dispatcher: Destroy Task Queue " << task_queue.size());
     task_queue.clear();
-    NES_DEBUG("Dispatcher: Destroy queryId_to_query_map")
+    NES_DEBUG("Dispatcher: Destroy queryId_to_query_map " << sourceIdToQueryMap.size());
+    for (auto& entry : sourceIdToQueryMap) {
+        for (auto& source: entry.second) {
+            source->stop();
+        }
+    }
     sourceIdToQueryMap.clear();
 
     workerHitEmptyTaskQueue = 0;
@@ -218,7 +223,7 @@ void Dispatcher::addWork(const string& sourceId, TupleBuffer& buf) {
 }
 
 void Dispatcher::completedWork(TaskPtr task) {
-    std::unique_lock<std::mutex> lock(workMutex);
+    std::unique_lock<std::mutex> lock(workMutex); // TODO is necessary?
     NES_INFO("Complete Work for task" << task)
 
     processedTasks++;

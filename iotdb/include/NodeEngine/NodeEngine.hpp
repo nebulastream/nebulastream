@@ -35,6 +35,11 @@ class NodeEngine {
     init();
   }
 
+  ~NodeEngine() {
+      stop();
+  }
+
+
   /**
    * @brief deploy a new query plan to via the dispatcher
    * @param new query plan

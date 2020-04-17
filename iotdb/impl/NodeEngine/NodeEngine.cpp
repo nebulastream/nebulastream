@@ -105,7 +105,12 @@ bool NodeEngine::startWithRedeploy() {
 }
 
 bool NodeEngine::stop() {
-    NES_DEBUG("NodeEngine: stop thread pool")
+    NES_DEBUG("NodeEngine: stop thread pool");
+    for (QueryExecutionPlanPtr qep : qeps) {
+        NES_DEBUG("NodeEngine: deregister query " << qep)
+        Dispatcher::instance().deregisterQuery(qep);
+    }
+    NES::Dispatcher::instance().resetDispatcher();
     return ThreadPool::instance().stop();
 }
 

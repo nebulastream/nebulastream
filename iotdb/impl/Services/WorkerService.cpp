@@ -16,11 +16,11 @@ void WorkerService::shutDown()
 
 WorkerService::WorkerService(string ip, uint16_t publish_port, uint16_t receive_port) {
     NES_DEBUG("WorkerService::WorkerService: ip = " << ip)
-    this->_ip = std::move(ip);
+    this->ip = std::move(ip);
     this->publishPort = publish_port;
     this->receivePort = receive_port;
     this->queryCompiler = createDefaultQueryCompiler();
-    NES_DEBUG("WorkerService: create WorkerService with ip=" << this->_ip << " publish_port=" << this->publishPort
+    NES_DEBUG("WorkerService: create WorkerService with ip=" << this->ip << " publish_port=" << this->publishPort
                                                              << " receive_port=" << this->receivePort)
     physicalStreams.insert(std::make_pair("default_physical", PhysicalStreamConfig()));
     this->_enginePtr = std::make_shared<NodeEngine>();
@@ -56,7 +56,7 @@ bool WorkerService::executeQuery(const string& queryId,
     return true;
 }
 
-void WorkerService::deleteQuery(const string& query) {
+bool WorkerService::deleteQuery(const string& query) {
     try {
         if (this->runningQueries.find(query) != this->runningQueries.end()) {
             NES_DEBUG(
@@ -66,12 +66,15 @@ void WorkerService::deleteQuery(const string& query) {
             this->_enginePtr->undeployQuery(qep);
             NES_INFO(
                 "WorkerService (" << this->ip << ": Successfully deleted query " << query);
+            return true;
         } else {
             NES_INFO(
                 "WorkerService (" << this->ip << ": *** Not found for deletion -> " << query);
+            return false;
         }
     } catch (...) {
         // TODO: catch ZMQ termination errors properly
+        // TODO: catch them but not here please! the WorkerService should not know that ZMQ is running under the hood
         NES_ERROR(
             "WorkerService (" << this->ip << "): Undefined error during deletion!")
     }
@@ -94,11 +97,13 @@ vector<string> WorkerService::getOperators() {
 }
 
 string& WorkerService::getIp(){
-  return _ip;
+  return ip;
 }
-void WorkerService::setIp(const string &ip) {
-  _ip = ip;
+
+void WorkerService::setIp(const string& ip) {
+    this->ip = ip;
 }
+
 uint16_t WorkerService::getPublishPort() const {
   return publishPort;
 }
