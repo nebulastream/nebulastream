@@ -855,10 +855,8 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
         ->addField(mappedValue)
         ->addField("valueChar", BasicType::CHAR)->addField(
             "text", createArrayDataType(BasicType::CHAR, 12));
-    codeGenerator->generateCode(
-        createPrintSinkWithSchema(outputSchema, std::cout), context, std::cout);
-    /* generate code for writing result tuples to output buffer */
 
+    /* generate code for writing result tuples to output buffer */
     codeGenerator->generateCode(
         createPrintSinkWithSchema(outputSchema, std::cout), context, std::cout);
 
