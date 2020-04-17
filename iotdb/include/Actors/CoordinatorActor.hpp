@@ -143,11 +143,10 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
      */
     bool deregisterQuery(const string& queryId);
 
-    //    /**
-    //     * @brief initialize the NES topology and add coordinator node
-    //     */
-    //    void initializeNESTopology();
-
+    /**
+     * @brief method to shutdown the actor
+     * @return bool indicating success
+     */
     bool shutdown();
 
     /**
@@ -161,7 +160,6 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
     StreamCatalogServicePtr streamCatalogServicePtr;
     CoordinatorActorConfig actorCoordinatorConfig;
     CoordinatorServicePtr coordinatorServicePtr;
-    //    std::unique_ptr<WorkerService> workerServicePtr;
 };
 }
 

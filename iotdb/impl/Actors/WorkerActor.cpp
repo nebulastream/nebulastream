@@ -17,7 +17,6 @@ WorkerActor::WorkerActor(actor_config& cfg, string ip, uint16_t publish_port,
     this->type = type;
 }
 
-// starting point of our FSM
 behavior WorkerActor::init() {
     // transition to `unconnected` on server failure
     this->set_down_handler([=](const down_msg& dm) {
@@ -40,7 +39,6 @@ behavior WorkerActor::init() {
       if(err != exit_reason::user_shutdown)
       {
           NES_ERROR("WorkerActor error handle")
-//          throw new Exception("Error while shutdown actor");
       }
       else
       {

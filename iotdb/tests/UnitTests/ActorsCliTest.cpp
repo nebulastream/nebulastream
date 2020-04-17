@@ -68,28 +68,28 @@ TEST_F(ActorsCliTest, testDeleteQuery) {
     EXPECT_TRUE(!uuid.empty());
 
     cout << "deploy_query_atom" << endl;
-    bool success = false;
+    bool successDeploy = false;
     self->request(crd->getActorHandle(), task_timeout, deploy_query_atom::value, uuid).receive(
-        [&success](const bool& c) mutable {
-          success = c;
+        [&successDeploy](const bool& c) mutable {
+          successDeploy = c;
         }, [=](const error& er) {
           string error_msg = to_string(er);
           NES_ERROR(
               "ACTORSCLITEST: Error during deploy_query_atom " << "\n" << error_msg);
         });
-    EXPECT_TRUE(success);
+    EXPECT_TRUE(successDeploy);
 
-    bool success2 = false;
+    bool successDeregister = false;
     cout << "deregister_query_atom" << endl;
     self->request(crd->getActorHandle(), task_timeout, deregister_query_atom::value, uuid).receive(
-        [&success2](const bool& c) mutable {
-          success2 = c;
+        [&successDeregister](const bool& c) mutable {
+          successDeregister = c;
         }, [=](const error& er) {
           string error_msg = to_string(er);
           NES_ERROR(
               "ACTORSCLITEST: Error during deregister_query_atom " << "\n" << error_msg);
         });
-    EXPECT_TRUE(success2);
+    EXPECT_TRUE(successDeregister);
 
     cout << "stopping worker" << endl;
     bool retStopWrk = wrk->stop();
@@ -139,28 +139,28 @@ TEST_F(ActorsCliTest, testSequentialMultiQueries) {
             "ACTORSCLITEST (testSequentialMultiQueries): Registration completed with query ID " << uuid);
         EXPECT_TRUE(!uuid.empty());
 
-        bool success = false;
+        bool successDeploy = false;
         self->request(crd->getActorHandle(), task_timeout, deploy_query_atom::value, uuid).receive(
-            [&success](const bool& c) mutable {
-              success = c;
+            [&successDeploy](const bool& c) mutable {
+              successDeploy = c;
             }, [=](const error& er) {
               string error_msg = to_string(er);
               NES_ERROR(
                   "ACTORSCLITEST: Error during deploy_query_atom " << "\n" << error_msg);
             });
-        EXPECT_TRUE(success);
+        EXPECT_TRUE(successDeploy);
 
-        bool success2 = false;
+        bool successDeregister = false;
         cout << "deregister_query_atom" << endl;
         self->request(crd->getActorHandle(), task_timeout, deregister_query_atom::value, uuid).receive(
-            [&success2](const bool& c) mutable {
-              success2 = c;
+            [&successDeregister](const bool& c) mutable {
+              successDeregister = c;
             }, [=](const error& er) {
               string error_msg = to_string(er);
               NES_ERROR(
                   "ACTORSCLITEST: Error during deregister_query_atom " << "\n" << error_msg);
             });
-        EXPECT_TRUE(success2);
+        EXPECT_TRUE(successDeregister);
     }
 
     cout << "stopping worker" << endl;
