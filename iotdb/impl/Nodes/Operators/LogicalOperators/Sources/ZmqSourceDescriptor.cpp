@@ -5,7 +5,7 @@ namespace NES {
 ZmqSourceDescriptor::ZmqSourceDescriptor(std::string host, uint16_t port) : host(host), port(port) {}
 
 SourceDescriptorType ZmqSourceDescriptor::getType() {
-    return ZmqDescriptor;
+    return ZmqSinkDescriptor;
 }
 
 const std::string& ZmqSourceDescriptor::getHost() const {

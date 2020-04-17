@@ -3,7 +3,7 @@
 namespace NES {
 
 SinkDescriptorType KafkaSinkDescriptor::getType() {
-    return KafkaDescriptor;
+    return SinkDescriptorType::KafkaDescriptor;
 }
 
 KafkaSinkDescriptor::KafkaSinkDescriptor(std::string brokers,

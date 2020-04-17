@@ -8,7 +8,7 @@ FileSinkDescriptor::FileSinkDescriptor(std::string fileName,
     : fileName(fileName), fileOutPutMode(fileOutputMode), fileOutPutType(fileOutPutType) {}
 
 SinkDescriptorType FileSinkDescriptor::getType() {
-    return FileDescriptor;
+    return SinkDescriptorType::FileDescriptor;
 }
 
 const std::string& FileSinkDescriptor::getFileName() const {

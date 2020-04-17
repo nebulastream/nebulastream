@@ -2,7 +2,7 @@
 
 namespace NES {
 
-CsvSourceDescriptor::CsvSourceDescriptor(std::string filePath, std::string& delimiter, size_t numBuffersToProcess,
+CsvSourceDescriptor::CsvSourceDescriptor(std::string filePath, std::string delimiter, size_t numBuffersToProcess,
                                          size_t frequency)
     : filePath(filePath), delimiter(delimiter), numBuffersToProcess(numBuffersToProcess), frequency(frequency) {}
 

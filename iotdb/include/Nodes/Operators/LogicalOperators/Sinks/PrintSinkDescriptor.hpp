@@ -9,10 +9,12 @@ class PrintSinkDescriptor : public SinkDescriptor {
 
   public:
 
-    PrintSinkDescriptor() = default;
+    PrintSinkDescriptor();
 
     SinkDescriptorType getType() override;
 };
+
+typedef std::shared_ptr<PrintSinkDescriptor> PrintSinkDescriptorPtr;
 
 }
 

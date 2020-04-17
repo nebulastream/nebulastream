@@ -3,12 +3,11 @@
 
 namespace NES {
 
-SourceLogicalOperatorNode::SourceLogicalOperatorNode(const DataSourcePtr source)
-    : LogicalOperatorNode(), source(source) {
-}
+SourceLogicalOperatorNode::SourceLogicalOperatorNode(const SourceDescriptorPtr sourceDescriptor)
+    : sourceDescriptor(sourceDescriptor) {}
 
 bool SourceLogicalOperatorNode::equal(const NodePtr rhs) const {
-    if(this->isIdentical(rhs)) {
+    if (this->isIdentical(rhs)) {
         return true;
     }
     if (rhs->instanceOf<SourceLogicalOperatorNode>()) {
@@ -21,16 +20,16 @@ bool SourceLogicalOperatorNode::equal(const NodePtr rhs) const {
 
 const std::string SourceLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "SOURCE(" << NES::toString(source) << ")";
+    ss << "SOURCE(" << sourceDescriptor->getType() << ")";
     return ss.str();
 }
 
-LogicalOperatorNodePtr createSourceLogicalOperatorNode(const DataSourcePtr source) {
-    return std::make_shared<SourceLogicalOperatorNode>(source);
+LogicalOperatorNodePtr createSourceLogicalOperatorNode(const SourceDescriptorPtr sourceDescriptor) {
+    return std::make_shared<SourceLogicalOperatorNode>(sourceDescriptor);
 }
 
-DataSourcePtr SourceLogicalOperatorNode::getDataSource() {
-    return source;
+SourceDescriptorPtr SourceLogicalOperatorNode::getSourceDescriptor() {
+    return sourceDescriptor;
 }
 
 }

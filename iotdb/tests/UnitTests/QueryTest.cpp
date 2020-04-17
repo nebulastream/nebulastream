@@ -23,7 +23,7 @@
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Topology/NESTopologyManager.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
@@ -70,13 +70,15 @@ TEST_F(QueryTest, testQueryFilter) {
     auto fieldRead = FieldAccessExpressionNode::create(createDataType(INT64), "field_1");
     auto constant = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT64, "10"));
     auto filterPredicate = LessEqualsExpressionNode::create(fieldRead, constant);
-    Query& query = Query::from(def).filter(filterPredicate).print(std::cout);
+
+    std::shared_ptr<PrintSinkDescriptor> printSinkDescriptor = std::make_shared<PrintSinkDescriptor>();
+    Query& query = Query::from(def).filter(filterPredicate).sink(printSinkDescriptor);
 
     const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators = query.getSourceOperators();
     EXPECT_EQ(sourceOperators.size(), 1);
 
     SourceLogicalOperatorNodePtr srcOptr = sourceOperators[0];
-    EXPECT_TRUE(srcOptr->getDataSource()->getSchema()->equals(schema));
+    EXPECT_EQ(srcOptr->getSourceDescriptor()->getType(), DefaultDescriptor);
 
     const std::vector<SinkLogicalOperatorNodePtr>& sinkOperators = query.getSinkOperators();
     EXPECT_EQ(sinkOperators.size(), 1);
