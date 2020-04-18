@@ -34,11 +34,12 @@ Query Query::from(Stream& stream) {
 
     OperatorNodePtr rootNode;
     Query query(std::make_shared<Stream>(stream));
+    SchemaPtr schema = stream.getSchema();
 
     if (catalogEntry.size() == 0) {
 
         const shared_ptr<DefaultSourceDescriptor>
-            defaultSourceDescriptor = std::make_shared<DefaultSourceDescriptor>(/*bufferCnt*/ 1, /*frequency*/ 1);
+            defaultSourceDescriptor = std::make_shared<DefaultSourceDescriptor>(schema, /*bufferCnt*/ 1, /*frequency*/ 1);
         rootNode = createSourceLogicalOperatorNode(defaultSourceDescriptor);
     } else {
         std::string name = catalogEntry[0]->getPhysicalName();
@@ -56,13 +57,13 @@ Query Query::from(Stream& stream) {
                 NES_DEBUG("InputQuery::from create default source for one buffer")
                 const shared_ptr<DefaultSourceDescriptor>
                     defaultSourceDescriptor =
-                    std::make_shared<DefaultSourceDescriptor>(/*bufferCnt*/ 1, /*frequency*/ 1);
+                    std::make_shared<DefaultSourceDescriptor>(schema, /*bufferCnt*/ 1, /*frequency*/ 1);
 
                 rootNode = createSourceLogicalOperatorNode(defaultSourceDescriptor);
             } else {
                 NES_DEBUG("InputQuery::from create default source for " << numBuffers << " buffers")
                 const shared_ptr<DefaultSourceDescriptor>
-                    defaultSourceDescriptor = std::make_shared<DefaultSourceDescriptor>(numBuffers, frequency);
+                    defaultSourceDescriptor = std::make_shared<DefaultSourceDescriptor>(schema, numBuffers, frequency);
 
                 rootNode = createSourceLogicalOperatorNode(defaultSourceDescriptor);
             }
@@ -70,12 +71,12 @@ Query Query::from(Stream& stream) {
             NES_DEBUG("InputQuery::from create CSV source for " << conf << " buffers")
             const shared_ptr<CsvSourceDescriptor>
                 csvSourceDescriptor =
-                std::make_shared<CsvSourceDescriptor>(/**filePath*/ conf, /**delimiter*/ ",", numBuffers, frequency);
+                std::make_shared<CsvSourceDescriptor>(schema, /**filePath*/ conf, /**delimiter*/ ",", numBuffers, frequency);
             rootNode = createSourceLogicalOperatorNode(csvSourceDescriptor);
         } else if (type == "SenseSource") {
             NES_DEBUG("InputQuery::from create Sense source for udfs " << conf)
             const shared_ptr<SenseSourceDescriptor>
-                csvSourceDescriptor = std::make_shared<SenseSourceDescriptor>(/**udfs*/ conf);
+                csvSourceDescriptor = std::make_shared<SenseSourceDescriptor>(schema, /**udfs*/ conf);
             rootNode = createSourceLogicalOperatorNode(csvSourceDescriptor);
         } else {
             NES_ERROR("InputQuery::from source type " << type << " not supported")

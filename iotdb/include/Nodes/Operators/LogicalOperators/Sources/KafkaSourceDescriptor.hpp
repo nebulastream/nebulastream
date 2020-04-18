@@ -13,25 +13,25 @@ class KafkaSourceDescriptor : public SourceDescriptor {
     KafkaSourceDescriptor(SchemaPtr schema,
                           std::string brokers,
                           std::string topic,
-                          std::string groupId,
                           bool autoCommit,
-                          cppkafka::Configuration config);
+                          cppkafka::Configuration config,
+                          uint64_t kafkaConnectTimeout);
 
     SourceDescriptorType getType() override;
 
     const std::string& getBrokers() const;
     const std::string& getTopic() const;
-    const std::string& getGroupId() const;
     bool isAutoCommit() const;
     const cppkafka::Configuration& getConfig() const;
+    uint64_t getKafkaConnectTimeout() const;
 
   private:
 
     std::string brokers;
     std::string topic;
-    std::string groupId;
     bool autoCommit;
     cppkafka::Configuration config;
+    uint64_t kafkaConnectTimeout;
 
 };
 

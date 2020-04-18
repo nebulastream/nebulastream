@@ -10,7 +10,7 @@ FileSinkDescriptor::FileSinkDescriptor(SchemaPtr schema,
     : SinkDescriptor(schema), fileName(fileName), fileOutPutMode(fileOutputMode), fileOutPutType(fileOutPutType) {}
 
 SinkDescriptorType FileSinkDescriptor::getType() {
-    return SinkDescriptorType::FileDescriptor;
+    return FileSink;
 }
 
 const std::string& FileSinkDescriptor::getFileName() const {

@@ -1,4 +1,4 @@
-#include "Nodes/Operators/PhysicalOperator/Sinks/ConvertLogicalToPhysicalSink.hpp"
+#include "Nodes/Phases/ConvertLogicalToPhysicalSink.hpp"
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
@@ -14,25 +14,25 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SinkDescriptorPtr sinkD
 
     switch (sinkDescriptorType) {
 
-        case PrintDescriptor: {
+        case PrintSink: {
             const PrintSinkDescriptorPtr
                 printSinkDescriptor = std::dynamic_pointer_cast<PrintSinkDescriptor>(sinkDescriptor);
             return createPrintSinkWithSchema(printSinkDescriptor->getSchema(), printSinkDescriptor->getOutputStream());
         }
-        case ZmqDescriptor: {
+        case ZmqSink: {
             const ZmqSinkDescriptorPtr zmqSinkDescriptor = std::dynamic_pointer_cast<ZmqSinkDescriptor>(sinkDescriptor);
             return createZmqSink(zmqSinkDescriptor->getSchema(),
                                  zmqSinkDescriptor->getHost(),
                                  zmqSinkDescriptor->getPort());
         }
-        case KafkaDescriptor: {
+        case KafkaSink: {
             const KafkaSinkDescriptorPtr
                 kafkaSinkDescriptor = std::dynamic_pointer_cast<KafkaSinkDescriptor>(sinkDescriptor);
             return createKafkaSinkWithSchema(kafkaSinkDescriptor->getSchema(),
                                              kafkaSinkDescriptor->getTopic(),
                                              kafkaSinkDescriptor->getConfig());
         }
-        case FileDescriptor: {
+        case FileSink: {
             const FileSinkDescriptorPtr
                 fileSinkDescriptor = std::dynamic_pointer_cast<FileSinkDescriptor>(sinkDescriptor);
             FileOutPutType fileOutPutType = fileSinkDescriptor->getFileOutPutType();

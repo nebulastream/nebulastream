@@ -6,7 +6,7 @@ ZmqSinkDescriptor::ZmqSinkDescriptor(SchemaPtr schema, std::string host, uint16_
     : SinkDescriptor(schema), host(host), port(port) {}
 
 SinkDescriptorType ZmqSinkDescriptor::getType() {
-    return SinkDescriptorType::ZmqDescriptor;
+    return ZmqSink;
 }
 
 const std::string& ZmqSinkDescriptor::getHost() const {

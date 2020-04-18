@@ -12,18 +12,15 @@ namespace NES {
 
 class KafkaSource : public DataSource {
 
- public:
-  KafkaSource();
-  KafkaSource(SchemaPtr schema,
-              const std::string& brokers,
-              const std::string& topic,
-              const std::string& groupId="nes",
-              const size_t kafkaConsumerTimeout=100);
+  public:
+    KafkaSource();
+    KafkaSource(SchemaPtr schema,
+                std::string brokers,
+                std::string topic,
+                bool autoCommit,
+                cppkafka::Configuration config,
+                uint64_t kafkaConsumerTimeout);
 
-  KafkaSource(SchemaPtr schema,
-              const std::string& topic,
-              const cppkafka::Configuration& config,
-              const size_t kafkaConsumerTimeout=100);
     SourceType getType() const override;
     ~KafkaSource() override;
 
@@ -41,22 +38,18 @@ class KafkaSource : public DataSource {
     template<class Archive>
     void serialize(Archive& ar,
                    const unsigned int) {
-        ar & boost::serialization::base_object<DataSource>(*this);
-        ar & brokers;
-        ar & topic;
-        ar & groupId;
+        ar& boost::serialization::base_object<DataSource>(*this);
+        ar& brokers;
+        ar& topic;
+        ar& autoCommit;
     }
 
     std::string brokers;
     std::string topic;
-    std::string groupId;
     bool autoCommit;
-
     cppkafka::Configuration config;
-
-    std::unique_ptr<cppkafka::Consumer> consumer;
-
     std::chrono::milliseconds kafkaConsumerTimeout;
+    std::unique_ptr<cppkafka::Consumer> consumer;
 };
 } // namespace NES
 

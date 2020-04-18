@@ -16,36 +16,21 @@ namespace NES {
 
 KafkaSource::KafkaSource() {}
 
-KafkaSource::KafkaSource(SchemaPtr schema, const std::string& brokers, const std::string& topic,
-                         const std::string& groupId, const size_t kafkaConsumerTimeout)
-    : DataSource(schema), topic(topic),
-      kafkaConsumerTimeout(std::move(std::chrono::milliseconds(kafkaConsumerTimeout))), autoCommit(true)
-{
-
-    config = {{"metadata.broker.list", brokers.c_str()},
-              {"group.id", groupId},
-              {"enable.auto.commit", true},
-              {"auto.offset.reset", "latest"}};
+KafkaSource::KafkaSource(SchemaPtr schema,
+                         const std::string brokers,
+                         const std::string topic,
+                         bool autoCommit,
+                         cppkafka::Configuration config,
+                         uint64_t kafkaConsumerTimeout) :
+    DataSource(schema),
+    topic(topic),
+    autoCommit(true),
+    config(config),
+    kafkaConsumerTimeout(std::move(std::chrono::milliseconds(kafkaConsumerTimeout))) {
 
     _connect();
 
     NES_INFO("KAFKASOURCE " << this << ": Init KAFKA SOURCE to brokers " << brokers << ", topic " << topic)
-}
-
-KafkaSource::KafkaSource(SchemaPtr schema, const std::string& topic, const cppkafka::Configuration& config,
-                         const size_t kafkaConsumerTimeout)
-    :
-
-      DataSource(schema), topic(topic), config(config),
-      kafkaConsumerTimeout(std::move(std::chrono::milliseconds(kafkaConsumerTimeout)))
-{
-
-    brokers = config.get("metadata.broker.list");
-    groupId = config.get("group.id");
-    std::istringstream(config.get("enable.auto.commit")) >> std::boolalpha >> autoCommit;
-
-    _connect();
-    NES_INFO("KAFKASOURCE " << this << ": Init KAFKA SOURCE with config")
 }
 
 KafkaSource::~KafkaSource() {}
@@ -118,7 +103,7 @@ void KafkaSource::_connect()
         NES_DEBUG(topicPartitions.size() << " partitions revoked")
     });
 
-    consumer->subscribe({topic});
+  consumer->subscribe({ topic });
 }
 
 SourceType KafkaSource::getType() const { return KAFKA_SOURCE; }

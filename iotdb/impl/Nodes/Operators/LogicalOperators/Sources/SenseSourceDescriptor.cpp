@@ -10,7 +10,7 @@ const std::string& SenseSourceDescriptor::getUdfs() const {
 }
 
 SourceDescriptorType SenseSourceDescriptor::getType() {
-    return SenseDescriptor;
+    return SenseSource;
 }
 
 }

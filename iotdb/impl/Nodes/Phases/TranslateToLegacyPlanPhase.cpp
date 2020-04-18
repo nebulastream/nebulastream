@@ -9,8 +9,8 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Nodes/Operators/PhysicalOperator/Sources/ConvertLogicalToPhysicalSource.hpp>
-#include <Nodes/Operators/PhysicalOperator/Sinks/ConvertLogicalToPhysicalSink.hpp>
+#include <Nodes/Phases/ConvertLogicalToPhysicalSource.hpp>
+#include <Nodes/Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Operators/Operator.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>

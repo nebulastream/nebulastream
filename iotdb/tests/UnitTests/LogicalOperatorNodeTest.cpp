@@ -34,7 +34,8 @@ class LogicalOperatorNodeTest : public testing::Test {
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create());
 
         sPtr = StreamCatalog::instance().getStreamForLogicalStreamOrThrowException("default_logical");
-        DefaultSourceDescriptorPtr sourceDescriptor = std::make_shared<DefaultSourceDescriptor>(0, 0);
+        SchemaPtr schema = sPtr->getSchema();
+        DefaultSourceDescriptorPtr sourceDescriptor = std::make_shared<DefaultSourceDescriptor>(schema, 0, 0);
 
         pred1 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "1"));
         pred2 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "2"));
@@ -1394,7 +1395,8 @@ TEST_F(LogicalOperatorNodeTest, translateToLagacyOperatorTree) {
      * Sink -> Filter -> Source
      */
     auto schema = Schema::create();
-    auto printSinkDescriptorPtr = std::make_shared<PrintSinkDescriptor>();
+
+    auto printSinkDescriptorPtr = std::make_shared<PrintSinkDescriptor>(schema, std::cout);
     auto sinkOperator = createSinkLogicalOperatorNode(printSinkDescriptorPtr);
     auto constValue = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "1"));
     auto fieldRead = FieldAccessExpressionNode::create(createDataType(BasicType::INT8), "FieldName");
