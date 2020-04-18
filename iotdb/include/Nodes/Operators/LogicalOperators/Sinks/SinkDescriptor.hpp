@@ -8,7 +8,7 @@
 namespace NES {
 
 enum SinkDescriptorType {
-    FileDescriptor, KafkaDescriptor, ZmqDescriptor, PrintDescriptor
+    FileSink, KafkaSink, ZmqSink, PrintSink
 };
 
 /**

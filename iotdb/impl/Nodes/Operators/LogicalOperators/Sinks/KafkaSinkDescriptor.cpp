@@ -9,7 +9,7 @@ KafkaSinkDescriptor::KafkaSinkDescriptor(SchemaPtr schema, std::string brokers,
     : SinkDescriptor(schema), brokers(brokers), topic(topic), kafkaProducerTimeout(kafkaProducerTimeout), config(config) {}
 
 SinkDescriptorType KafkaSinkDescriptor::getType() {
-    return SinkDescriptorType::KafkaDescriptor;
+    return KafkaSink;
 }
 
 const std::string& KafkaSinkDescriptor::getBrokers() const {
