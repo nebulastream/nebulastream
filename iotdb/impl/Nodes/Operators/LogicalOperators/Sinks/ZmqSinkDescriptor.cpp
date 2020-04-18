@@ -1,4 +1,4 @@
-#include "Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp"
+#include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 
 namespace NES {
 
@@ -6,7 +6,7 @@ ZmqSinkDescriptor::ZmqSinkDescriptor(SchemaPtr schema, std::string host, uint16_
     : SinkDescriptor(schema), host(host), port(port) {}
 
 SinkDescriptorType ZmqSinkDescriptor::getType() {
-    return ZmqSink;
+    return ZmqSinkDescriptorType;
 }
 
 const std::string& ZmqSinkDescriptor::getHost() const {

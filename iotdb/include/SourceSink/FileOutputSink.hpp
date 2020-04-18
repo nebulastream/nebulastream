@@ -10,68 +10,61 @@
 #include <boost/serialization/vector.hpp>
 
 #include <SourceSink/DataSink.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 
-namespace NES{
-
-    enum FileOutPutType{
-        BINARY_TYPE, CSV_TYPE
-    };
-    enum FileOutPutMode{
-        FILE_OVERWRITE, FILE_APPEND
-    };
+namespace NES {
 
 /**
  * @brief this class implements the File output sink
  * @default default type is Binary and default mode is append
  */
-    class FileOutputSink : public DataSink{
+class FileOutputSink : public DataSink {
 
-    public:
-        /**
-         * @brief default constructor that creates an empty file sink
-         */
-        FileOutputSink();
+  public:
+    /**
+     * @brief default constructor that creates an empty file sink
+     */
+    FileOutputSink();
 
-        /**
-         * @brief constructor that creates an empty file sink using a schema
-         * @param schema of the print sink
-         */
-        FileOutputSink(SchemaPtr schema);
+    /**
+     * @brief constructor that creates an empty file sink using a schema
+     * @param schema of the print sink
+     */
+    FileOutputSink(SchemaPtr schema);
 
-        /**
-        * @brief constructor that creates an empty file sink using a schema
-        * @param filePath location of file on sink server
-        */
-        FileOutputSink(std::string filePath);
+    /**
+    * @brief constructor that creates an empty file sink using a schema
+    * @param filePath location of file on sink server
+    */
+    FileOutputSink(std::string filePath);
 
-        /**
-         * @brief constructor that creates an empty file sink using a schema
-         * @param schema of the print sink
-         * @param filePath location of file on sink server
-         */
-        FileOutputSink(SchemaPtr schema, std::string filePath);
+    /**
+     * @brief constructor that creates an empty file sink using a schema
+     * @param schema of the print sink
+     * @param filePath location of file on sink server
+     */
+    FileOutputSink(SchemaPtr schema, std::string filePath);
 
+    /**
+     * @brief constructor that creates an empty file sink using a schema
+     * @param schema of the print sink
+     * @param filePath location of file on sink server
+     * @param type of file to write
+     * @param mode to write
+     */
+    FileOutputSink(SchemaPtr schema, std::string filePath, FileOutPutType type, FileOutPutMode mode);
 
-        /**
-         * @brief constructor that creates an empty file sink using a schema
-         * @param schema of the print sink
-         * @param filePath location of file on sink server
-         * @param type of file to write
-         * @param mode to write
-         */
-        FileOutputSink(SchemaPtr schema, std::string filePath, FileOutPutType type, FileOutPutMode mode);
+    /**
+     * @brief method to override virtual setup function
+     * @Note currently the method does nothing
+     */
+    void setup() override;
 
-        /**
-         * @brief method to override virtual setup function
-         * @Note currently the method does nothing
-         */
-        void setup() override;
-
-        /**
-         * @brief method to override virtual shutdown function
-         * @Note currently the method does nothing
-         */
-        void shutdown() override;
+    /**
+     * @brief method to override virtual shutdown function
+     * @Note currently the method does nothing
+     */
+    void shutdown() override;
 
     /**
      * @brief method to override virtual write data function
@@ -81,30 +74,30 @@ namespace NES{
      */
     bool writeData(TupleBuffer& input_buffer);
 
-        /**
-         * @brief override the toString method for the file output sink
-         * @return returns string describing the file output sink
-         */
-        const std::string toString() const override;
+    /**
+     * @brief override the toString method for the file output sink
+     * @return returns string describing the file output sink
+     */
+    const std::string toString() const override;
 
-        SinkType getType() const override;
+    SinkType getType() const override;
 
-    private:
-        std::string filePath;
+  private:
+    std::string filePath;
 
-        friend class boost::serialization::access;
+    friend class boost::serialization::access;
 
-        FileOutPutType outputType;
-        FileOutPutMode outputMode;
+    FileOutPutType outputType;
+    FileOutPutMode outputMode;
 
-        template<class Archive>
-        void serialize(Archive &ar, unsigned){
-            ar & filePath;
-            ar & outputType;
-            ar & outputMode;
-            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataSink);
-        }
-    };
+    template<class Archive>
+    void serialize(Archive& ar, unsigned) {
+        ar & filePath;
+        ar & outputType;
+        ar & outputMode;
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataSink);
+    }
+};
 }  // namespace NES
 
 #include <boost/archive/text_iarchive.hpp>

@@ -4,7 +4,6 @@
 #include <Util/Logger.hpp>
 #include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
 
-
 #include <API/Query.hpp>
 #include <API/Types/DataTypes.hpp>
 #include <Catalogs/StreamCatalog.hpp>
@@ -26,8 +25,6 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Topology/NESTopologyManager.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
-#include <Catalogs/StreamCatalog.hpp>
 #include <Topology/NESTopologySensorNode.hpp>
 
 namespace NES {

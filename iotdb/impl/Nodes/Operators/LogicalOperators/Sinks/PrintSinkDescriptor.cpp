@@ -1,11 +1,11 @@
-#include "Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp"
+#include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 
 namespace NES {
 
 PrintSinkDescriptor::PrintSinkDescriptor(SchemaPtr schema, std::ostream& outputStream): SinkDescriptor(schema), outputStream(outputStream) {}
 
 SinkDescriptorType PrintSinkDescriptor::getType() {
-    return PrintSink;
+    return PrintSinkDescriptorType;
 }
 
 std::ostream& PrintSinkDescriptor::getOutputStream() const {

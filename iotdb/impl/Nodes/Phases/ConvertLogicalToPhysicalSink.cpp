@@ -1,4 +1,4 @@
-#include "Nodes/Phases/ConvertLogicalToPhysicalSink.hpp"
+#include <Nodes/Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
@@ -14,27 +14,24 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SinkDescriptorPtr sinkD
 
     switch (sinkDescriptorType) {
 
-        case PrintSink: {
-            const PrintSinkDescriptorPtr
-                printSinkDescriptor = std::dynamic_pointer_cast<PrintSinkDescriptor>(sinkDescriptor);
+        case PrintSinkDescriptorType: {
+            const PrintSinkDescriptorPtr printSinkDescriptor = sinkDescriptor->as<PrintSinkDescriptor>();
             return createPrintSinkWithSchema(printSinkDescriptor->getSchema(), printSinkDescriptor->getOutputStream());
         }
-        case ZmqSink: {
-            const ZmqSinkDescriptorPtr zmqSinkDescriptor = std::dynamic_pointer_cast<ZmqSinkDescriptor>(sinkDescriptor);
+        case ZmqSinkDescriptorType: {
+            const ZmqSinkDescriptorPtr zmqSinkDescriptor = sinkDescriptor->as<ZmqSinkDescriptor>();
             return createZmqSink(zmqSinkDescriptor->getSchema(),
                                  zmqSinkDescriptor->getHost(),
                                  zmqSinkDescriptor->getPort());
         }
-        case KafkaSink: {
-            const KafkaSinkDescriptorPtr
-                kafkaSinkDescriptor = std::dynamic_pointer_cast<KafkaSinkDescriptor>(sinkDescriptor);
+        case KafkaSinkDescriptorType: {
+            const KafkaSinkDescriptorPtr kafkaSinkDescriptor = sinkDescriptor->as<KafkaSinkDescriptor>();
             return createKafkaSinkWithSchema(kafkaSinkDescriptor->getSchema(),
                                              kafkaSinkDescriptor->getTopic(),
                                              kafkaSinkDescriptor->getConfig());
         }
-        case FileSink: {
-            const FileSinkDescriptorPtr
-                fileSinkDescriptor = std::dynamic_pointer_cast<FileSinkDescriptor>(sinkDescriptor);
+        case FileSinkDescriptorType: {
+            const FileSinkDescriptorPtr fileSinkDescriptor = sinkDescriptor->as<FileSinkDescriptor>();
             FileOutPutType fileOutPutType = fileSinkDescriptor->getFileOutPutType();
             switch (fileOutPutType) {
                 case BINARY_TYPE:
@@ -47,6 +44,9 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SinkDescriptorPtr sinkD
                     } else if (fileSinkDescriptor->getFileOutPutMode() == FILE_OVERWRITE) {
                         return createCSVFileSinkWithSchemaOverwrite(fileSinkDescriptor->getSchema(),
                                                                     fileSinkDescriptor->getFileName());
+                    } else {
+                        NES_ERROR("Unknown File Mode")
+                        throw std::invalid_argument("Unknown File Mode");
                     }
             }
         }

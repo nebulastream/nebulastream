@@ -4,17 +4,22 @@
 #include <iostream>
 #include <memory>
 #include <API/Schema.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 
 enum SinkDescriptorType {
-    FileSink, KafkaSink, ZmqSink, PrintSink
+    FileSinkDescriptorType, KafkaSinkDescriptorType, ZmqSinkDescriptorType, PrintSinkDescriptorType
 };
+
+
+class SinkDescriptor;
+typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;
 
 /**
  * @brief This class is used for representing the description of a sink operator
  */
-class SinkDescriptor {
+class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
 
   public:
 
@@ -26,12 +31,38 @@ class SinkDescriptor {
         return schema;
     }
 
+    /**
+    * @brief Checks if the current node is of type SinkType
+    * @tparam SinkType
+    * @return bool true if node is of SinkType
+    */
+    template<class SinkType>
+    const bool instanceOf() {
+        if (dynamic_cast<SinkType*>(this)) {
+            return true;
+        };
+        return false;
+    };
+
+    /**
+    * @brief Dynamically casts the node to a NodeType
+    * @tparam NodeType
+    * @return returns a shared pointer of the NodeType
+    */
+    template<class SinkType>
+    std::shared_ptr<SinkType> as() {
+        if (instanceOf<SinkType>()) {
+            return std::dynamic_pointer_cast<SinkType>(this->shared_from_this());
+        } else {
+            NES_FATAL_ERROR("We performed an invalid cast");
+            throw std::bad_cast();
+        }
+    }
+
   private :
 
     SchemaPtr schema;
 };
-
-typedef std::shared_ptr<SinkDescriptor> SinkDescriptorPtr;
 
 }
 

@@ -1,5 +1,5 @@
 #include <Nodes/Operators/OperatorNode.hpp>
-#include "Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp"
+#include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 
 namespace NES {
 
@@ -10,7 +10,7 @@ FileSinkDescriptor::FileSinkDescriptor(SchemaPtr schema,
     : SinkDescriptor(schema), fileName(fileName), fileOutPutMode(fileOutputMode), fileOutPutType(fileOutPutType) {}
 
 SinkDescriptorType FileSinkDescriptor::getType() {
-    return FileSink;
+    return FileSinkDescriptorType;
 }
 
 const std::string& FileSinkDescriptor::getFileName() const {
