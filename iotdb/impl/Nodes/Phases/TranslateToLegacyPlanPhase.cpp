@@ -37,7 +37,7 @@ OperatorPtr TranslateToLegacyPlanPhase::transformIndividualOperator(OperatorNode
         // Translate Source operator node.
         auto sourceNodeOperator = operatorNode->as<SourceLogicalOperatorNode>();
         const SourceDescriptorPtr sourceDescriptor = sourceNodeOperator->getSourceDescriptor();
-        const DataSourcePtr dataSource = ConvertLogicalToPhysicalSource::getDataSource(sourceDescriptor);
+        const DataSourcePtr dataSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor);
         return createSourceOperator(dataSource);
     } else if (operatorNode->instanceOf<FilterLogicalOperatorNode>()) {
         // Translate filter operator node.

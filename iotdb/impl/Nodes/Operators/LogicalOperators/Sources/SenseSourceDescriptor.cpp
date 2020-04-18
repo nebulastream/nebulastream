@@ -1,4 +1,4 @@
-#include "Nodes/Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp"
+#include <Nodes/Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 
 namespace NES {
 

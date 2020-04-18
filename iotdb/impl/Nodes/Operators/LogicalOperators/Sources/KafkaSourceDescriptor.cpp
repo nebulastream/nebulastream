@@ -1,4 +1,4 @@
-#include "Nodes/Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp"
+#include <Nodes/Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
 
 namespace NES {
 

@@ -9,7 +9,7 @@ namespace NES {
 class ConvertLogicalToPhysicalSource {
 
   public:
-    static DataSourcePtr getDataSource(SourceDescriptorPtr sourceDescriptor);
+    static DataSourcePtr createDataSource(SourceDescriptorPtr sourceDescriptor);
 
   private:
     ConvertLogicalToPhysicalSource() = default;

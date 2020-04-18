@@ -224,6 +224,16 @@ add_executable(query-tests "UnitTests/QueryTest.cpp")
 target_link_libraries(query-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME query-tests COMMAND query-tests)
 
+# ConvertLogicalToPhysicalSinkTest
+add_executable(convert-logical-to-physical-sink-tests "UnitTests/ConvertLogicalToPhysicalSinkTest.cpp")
+target_link_libraries(convert-logical-to-physical-sink-tests iotdb ${GTEST_LIBRARIES})
+add_test(NAME convert-logical-to-physical-sink-tests COMMAND convert-logical-to-physical-sink-tests)
+
+# ConvertLogicalToPhysicalSourceTest
+add_executable(convert-logical-to-physical-source-tests "UnitTests/ConvertLogicalToPhysicalSourceTest.cpp")
+target_link_libraries(convert-logical-to-physical-source-tests iotdb ${GTEST_LIBRARIES})
+add_test(NAME convert-logical-to-physical-source-tests COMMAND convert-logical-to-physical-source-tests)
+
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure DEPENDS ${UNITTESTS})
 

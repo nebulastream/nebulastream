@@ -1,7 +1,7 @@
 #ifndef NODE_ENGINE_H
 #define NODE_ENGINE_H
 
-#include "NodeProperties.hpp"
+#include <NodeEngine/NodeProperties.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <API/Config.hpp>
 #include <NodeEngine/ThreadPool.hpp>
