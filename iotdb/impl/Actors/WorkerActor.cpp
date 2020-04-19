@@ -333,9 +333,9 @@ bool WorkerActor::registerNode(NESNodeType type) {
                   this->state.workerPtr->getNodeProperties(),
                   (int)type)
         .await(
-            [=, &prom](const size_t& c) mutable {
+            [=, &prom](const size_t& id) mutable {
               NES_DEBUG("WorkerActor::registerNode: node registered successfully")
-              prom.set_value(c);
+              prom.set_value(id);
             }, [=, &prom](const error& er) {
               string error_msg = to_string(er);
               NES_ERROR(
