@@ -83,19 +83,17 @@ class WorkerActor : public stateful_actor<WorkerState> {
 
     /**
      * @brief @brief method to add a new parent to an existing node
-     * @param own_id
      * @param newParentId
      * @return bool indicating success
      */
-    bool addNewParentToSensorNode(std::string childId, std::string parentId);
+    bool addNewParentToSensorNode(std::string parentId);
 
     /**
      * @brief method to remove a parrent from a node
-     * @param own_id
      * @param newParentId
      * @return bool indicating success
      */
-    bool removeParentFromSensorNode(std::string childId, std::string parentId);
+    bool removeParentFromSensorNode(std::string parentId);
 
     /**
      * @brief method to register a node after the connection is established
@@ -108,7 +106,7 @@ class WorkerActor : public stateful_actor<WorkerState> {
      * @brief method to get own id form server
      * @return own id as listed in the graph
      */
-    std::string getIdFromServer();
+    size_t getId();
 
     /**
      * @brief method to connect to the coordinator via caf
@@ -137,6 +135,7 @@ class WorkerActor : public stateful_actor<WorkerState> {
     behavior running();
 
     NESNodeType type;
+    size_t workerId;
 };
 
 }

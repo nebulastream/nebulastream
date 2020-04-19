@@ -104,33 +104,11 @@ class NesWorker {
     bool addParent(std::string parentId);
 
     /**
-    * @brief method add new link between child and parent
-    * @param childId
-    * @param parentId
-    * @return bool indicating success
-    */
-    bool addNewLink(std::string childId, std::string parentId);
-
-    /**
     * @brief method remove parent from this node
     * @param parentId
     * @return bool indicating success
     */
     bool removeParent(std::string parentId);
-
-    /**
-    * @brief method add new parent to this node
-    * @param childId
-    * @param parentId
-    * @return bool indicating success
-    */
-    bool removeLink(std::string childId, std::string parentId);
-
-    /**
-     * @brief get the id under which this node is listed in the coordinator
-     * @return node id
-     */
-    std::string getIdFromServer();
 
   private:
     WorkerActor* wrk;

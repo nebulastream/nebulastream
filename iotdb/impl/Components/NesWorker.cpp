@@ -154,34 +154,17 @@ bool NesWorker::registerPhysicalStream(PhysicalStreamConfig conf) {
     return success;
 }
 
-std::string NesWorker::getIdFromServer() {
-    string id = wrk->getIdFromServer();
-    NES_DEBUG("NesWorker::getIdFromServer id=" << id)
-    return id;
-}
-
-bool NesWorker::addNewLink(std::string childId, std::string parentId) {
-    bool success = wrk->addNewParentToSensorNode(childId, parentId);
-    NES_DEBUG("NesWorker::addNewLink(child and parent) success=" << success)
-    return success;
-}
-
 bool NesWorker::addParent(std::string parentId) {
-    bool success = wrk->addNewParentToSensorNode(getIdFromServer(), parentId);
+    bool success = wrk->addNewParentToSensorNode(parentId);
     NES_DEBUG("NesWorker::addNewLink(parent only) success=" << success)
     return success;
 }
 
 bool NesWorker::removeParent(std::string parentId) {
-    bool success = wrk->removeParentFromSensorNode(getIdFromServer(), parentId);
+    bool success = wrk->removeParentFromSensorNode(parentId);
     NES_DEBUG("NesWorker::removeLink(parent only) success=" << success)
     return success;
 }
 
-bool NesWorker::removeLink(std::string childId, std::string parentId) {
-    bool success = wrk->removeParentFromSensorNode(childId, parentId);
-    NES_DEBUG("NesWorker::removeLink(child and parent) success=" << success)
-    return success;
-}
 
 }

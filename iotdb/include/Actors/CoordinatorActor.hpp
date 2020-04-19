@@ -59,20 +59,22 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
      * @brief method to add a physical stream to the catalog AND to the topology
      * @caution every external register call can only register streams for himself
      * @caution we will deploy on the first worker with that ip NOT on all
+     * @param id of the worker
      * @param config of the physical stream
      * @return bool indicating if removal was successful
      */
-    bool registerPhysicalStream(PhysicalStreamConfig streamConf);
+    bool registerPhysicalStream(size_t workerId, PhysicalStreamConfig streamConf);
 
     /**
      * @brief method to remove a physical stream from the catalog AND from the topology
      * @caution every external register call can only remove streams from himself
      * @caution we will remove only on the first node that we find for this logical stream
+     * @param id of the worker
      * @param logicalStreamName as string
      * @param physicalStreamName as string
      * @return bool indicating if removal was successful
      */
-    bool removePhysicalStream(string logicalStreamName,
+    bool removePhysicalStream(size_t workerId, string logicalStreamName,
                               string physicalStreamName);
 
     /**
@@ -100,8 +102,9 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
    * @param properties of this worker
    * @param configuration of the sensor
    * @param node type
+   * @return id of the node, 0 if a failure occurs
    */
-    bool registerNode(const string& ip, uint16_t publish_port,
+    size_t registerNode(const string& ip, uint16_t publish_port,
                       uint16_t receive_port, int cpu,
                       const string& nodeProperties,
                       PhysicalStreamConfig streamConf,
@@ -110,50 +113,47 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
     /**
      * @brief: remove a sensor node from topology and catalog
      * @caution: if there is more than one, potential node to delete, an exception is thrown
-     * @param ip
+     * @param id of the worker
+     * @return bool indicating success
      */
-    bool deregisterNode(const string& ip);
+    bool deregisterNode(size_t workerId);
 
     /**
      * @brief execute user query will first register the query and then deploy it.
+     * @param id of the worker
      * @param queryString : user query, in string form, to be executed
      * @param strategy : deployment strategy for the query operators
      * @return UUID of the submitted user query.
      */
-    string executeQuery(const string& queryString, const string& strategy);
+    string executeQuery(size_t workerId, const string& queryString, const string& strategy);
 
     /**
      * @brief register the user query
+     * @param id of the worker
      * @param queryString string representation of the query
      * @return uuid of the registered query
      */
-    string registerQuery(const string& queryString, const string& strategy);
+    string registerQuery(size_t workerId, const string& queryString, const string& strategy);
 
     /**
      * @brief: deploy the user query
      * @param queryId
      * @return bool indicating success
      */
-    bool deployQuery(const string& queryId);
+    bool deployQuery(size_t workerId, const string& queryId);
 
     /**
      * @brief method which is called to unregister an already running query
      * @param queryId of the query to be de-registered
      * @bool indicating the success of the disconnect
      */
-    bool deregisterQuery(const string& queryId);
+    bool deregisterQuery(size_t workerId, const string& queryId);
 
     /**
      * @brief method to shutdown the actor
      * @return bool indicating success
      */
     bool shutdown();
-
-    /**
-     * @brief method to get own id
-     * @return id that is listed in graph
-     */
-    string getOwnId();
 
     std::string coordinatorIp;
     QueryCatalogServicePtr queryCatalogServicePtr;

@@ -80,7 +80,7 @@ void QueryCatalogController::handleDelete(std::vector<utility::string_t> path, w
                         //Note: This is an async call and would not know if the deletion has failed
                         abstract_actor* abstractActor = caf::actor_cast<abstract_actor*>(coordinatorActorHandle);
                         CoordinatorActor* crd = dynamic_cast<CoordinatorActor*>(abstractActor);
-                        bool success = crd->deregisterQuery(queryId);
+                        bool success = crd->deregisterQuery(0, queryId);
 
                         //Prepare the response
                         json::value result{};
