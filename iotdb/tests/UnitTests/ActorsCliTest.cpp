@@ -47,7 +47,7 @@ TEST_F(ActorsCliTest, testDeleteQuery) {
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
-    // check registration
+    //TODO: we have to redesign the entire test
     string uuid;
     CoordinatorActorConfig c_cfg;
     c_cfg.load<io::middleman>();
@@ -59,6 +59,7 @@ TEST_F(ActorsCliTest, testDeleteQuery) {
                   queryString, "BottomUp").receive(
         [&uuid](const string& _uuid) mutable {
           uuid = _uuid;
+          cout << "testDeleteQuery: got id=" << uuid << endl;
         }, [=](const error& er) {
           string error_msg = to_string(er);
           NES_ERROR(
@@ -72,6 +73,7 @@ TEST_F(ActorsCliTest, testDeleteQuery) {
     self->request(crd->getActorHandle(), task_timeout, deploy_query_atom::value, uuid).receive(
         [&successDeploy](const bool& c) mutable {
           successDeploy = c;
+          cout << "testDeleteQuery: deploy_query_atom success=" << c << endl;
         }, [=](const error& er) {
           string error_msg = to_string(er);
           NES_ERROR(
@@ -84,6 +86,7 @@ TEST_F(ActorsCliTest, testDeleteQuery) {
     self->request(crd->getActorHandle(), task_timeout, deregister_query_atom::value, uuid).receive(
         [&successDeregister](const bool& c) mutable {
           successDeregister = c;
+          cout << "testDeleteQuery: deregister_query_atom success=" << c << endl;
         }, [=](const error& er) {
           string error_msg = to_string(er);
           NES_ERROR(
@@ -100,75 +103,4 @@ TEST_F(ActorsCliTest, testDeleteQuery) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(ActorsCliTest, testSequentialMultiQueries) {
-    cout << "start coordinator" << endl;
-    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
-    size_t port = crd->startCoordinator(/**blocking**/false);
-    EXPECT_NE(port, 0);
-    cout << "coordinator started successfully" << endl;
-    sleep(1);
-
-    cout << "start worker" << endl;
-    NesWorkerPtr wrk = std::make_shared<NesWorker>();
-    bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true, port, "localhost");
-    EXPECT_TRUE(retStart);
-    cout << "worker started successfully" << endl;
-
-    // check registration
-    string uuid;
-    CoordinatorActorConfig c_cfg;
-    c_cfg.load<io::middleman>();
-    actor_system system_coord{c_cfg};
-    scoped_actor self{system_coord};
-
-    for (int i = 0; i < 1; i++) {
-        NES_INFO("ACTORSCLITEST (testSequentialMultiQueries): Sequence " << i);
-
-        string uuid;
-        self->request(crd->getActorHandle(), task_timeout, register_query_atom::value,
-                      queryString, "BottomUp").receive(
-            [&uuid](const string& _uuid) mutable {
-              uuid = _uuid;
-            }, [=](const error& er) {
-              string error_msg = to_string(er);
-              NES_ERROR(
-                  "ACTORSCLITEST (testSequentialMultiQueries): Error during testShowRegistered " << "\n"
-                                                                                                 << error_msg);
-            });
-        NES_INFO(
-            "ACTORSCLITEST (testSequentialMultiQueries): Registration completed with query ID " << uuid);
-        EXPECT_TRUE(!uuid.empty());
-
-        bool successDeploy = false;
-        self->request(crd->getActorHandle(), task_timeout, deploy_query_atom::value, uuid).receive(
-            [&successDeploy](const bool& c) mutable {
-              successDeploy = c;
-            }, [=](const error& er) {
-              string error_msg = to_string(er);
-              NES_ERROR(
-                  "ACTORSCLITEST: Error during deploy_query_atom " << "\n" << error_msg);
-            });
-        EXPECT_TRUE(successDeploy);
-
-        bool successDeregister = false;
-        cout << "deregister_query_atom" << endl;
-        self->request(crd->getActorHandle(), task_timeout, deregister_query_atom::value, uuid).receive(
-            [&successDeregister](const bool& c) mutable {
-              successDeregister = c;
-            }, [=](const error& er) {
-              string error_msg = to_string(er);
-              NES_ERROR(
-                  "ACTORSCLITEST: Error during deregister_query_atom " << "\n" << error_msg);
-            });
-        EXPECT_TRUE(successDeregister);
-    }
-
-    cout << "stopping worker" << endl;
-    bool retStopWrk = wrk->stop();
-    EXPECT_TRUE(retStopWrk);
-
-    cout << "stopping coordinator" << endl;
-    bool retStopCord = crd->stopCoordinator();
-    EXPECT_TRUE(retStopCord);
-}
 }

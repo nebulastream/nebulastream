@@ -339,7 +339,7 @@ string CoordinatorActor::executeQuery(size_t workerId, const string& queryString
 behavior CoordinatorActor::running() {
     NES_DEBUG("CoordinatorActor::running enter running")
     return {
-        // coordinator specific methods
+        // coordinator specific methods coming from the workers
         [=](register_node_atom,
             string& ip,
             uint16_t publish_port,
@@ -398,18 +398,21 @@ behavior CoordinatorActor::running() {
                                                                                     << logicalStreamName)
           return removePhysicalStream(id, logicalStreamName, physicalStreamName);
         },
-        [=](execute_query_atom, size_t id, const string& description, const string& strategy) {
-          return executeQuery(id, description, strategy);
-        },
-        [=](register_query_atom, size_t id, const string& description, const string& strategy) {
-          return registerQuery(id, description, strategy);
-        },
-        [=](deregister_query_atom, size_t id, const string& queryId) {
-          return deregisterQuery(id, queryId);
-        },
-        [=](deploy_query_atom, size_t id, const string& description) {  //TODO:chef if we really need this except for testing
-          return deployQuery(id, description);
-        },
+
+////        TODO These functions should not be used anymore
+//        [=](execute_query_atom, const string& description, const string& strategy) {
+//          return executeQuery(description, strategy);
+//        },
+//        [=](register_query_atom, const string& description, const string& strategy) {
+//          return registerQuery(description, strategy);
+//        },
+//        [=](deregister_query_atom, const string& queryId) {
+//          return deregisterQuery(queryId);
+//        },
+//        [=](deploy_query_atom,
+//            const string& description) {  //TODO:chef if we really need this except for testing
+//          return deployQuery(description);
+//        },
         [=](terminate_atom) {
           NES_DEBUG("CoordinatorActor::running(): terminate_atom")
           return shutdown();
