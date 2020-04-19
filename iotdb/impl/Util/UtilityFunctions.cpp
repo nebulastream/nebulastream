@@ -144,6 +144,7 @@ std::string UtilityFunctions::generateUuid() {
   return boost::uuids::to_string(u);
 }
 
+
 std::string UtilityFunctions::getFirstStringBetweenTwoDelimiters(
     const std::string &input, std::string s1, std::string s2) {
   unsigned firstDelimPos = input.find(s1);

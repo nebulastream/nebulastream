@@ -10,7 +10,8 @@ namespace NES {
 WorkerActor::WorkerActor(actor_config& cfg, string ip, uint16_t publish_port,
                          uint16_t receive_port, NESNodeType type)
     :
-    stateful_actor(cfg) {
+    stateful_actor(cfg),
+    workerId(0) {
     NES_DEBUG("")
     this->state.workerPtr = std::make_unique<WorkerService>(
         WorkerService(std::move(ip), publish_port, receive_port));
@@ -224,13 +225,13 @@ bool WorkerActor::removeLogicalStream(std::string streamName) {
     return success;
 }
 
-bool WorkerActor::addNewParentToSensorNode(std::string childId, std::string parentId) {
-    NES_DEBUG("WorkerActor: addNewParentToSensorNode parentId" << parentId << " childId=" << childId)
+bool WorkerActor::addNewParentToSensorNode(std::string parentId) {
+    NES_DEBUG("WorkerActor: addNewParentToSensorNode parentId" << parentId << " workerId=" << workerId)
     auto coordinator = actor_cast<actor>(this->state.current_server);
 
     std::promise<bool> prom;
     this->request(coordinator, task_timeout, add_parent_atom::value,
-                  childId, parentId).await(
+                  workerId, parentId).await(
         [=, &prom](bool ret) {
           if (ret == true) {
               NES_DEBUG("WorkerActor: parent successfully added")
@@ -251,38 +252,18 @@ bool WorkerActor::addNewParentToSensorNode(std::string childId, std::string pare
     return success;
 }
 
-std::string WorkerActor::getIdFromServer() {
-    NES_DEBUG("WorkerActor: getIdFromServer")
-
-    auto coordinator = actor_cast<actor>(this->state.current_server);
-
-    std::promise<string> prom;
-    this->request(coordinator, task_timeout, get_own_id::value).await(
-        [=, &prom](const std::string& id) {
-          NES_DEBUG("WorkerActor: get id successfully=" << id)
-          prom.set_value(id);
-        },
-        [=](const error& er) {
-          string error_msg = to_string(er);
-          NES_ERROR(
-              "WorkerActor: Error during removeParentFromSensorNode for " << to_string(coordinator)
-                                                                          << "\n"
-                                                                          << error_msg);
-          throw new Exception("Error while getIdFromServer");
-        });
-    string id = prom.get_future().get();
-    NES_DEBUG("WorkerActor::getIdFromServer: id=" << id)
-    return id;
+size_t WorkerActor::getId() {
+    return workerId;
 }
 
-bool WorkerActor::removeParentFromSensorNode(std::string childId, std::string parentId) {
-    NES_DEBUG("WorkerActor: removeParentFromSensorNode parentId" << parentId << " childId=" << childId)
+bool WorkerActor::removeParentFromSensorNode(std::string parentId) {
+    NES_DEBUG("WorkerActor: removeParentFromSensorNode parentId" << parentId << " workerId=" << workerId)
 
     auto coordinator = actor_cast<actor>(this->state.current_server);
 
     std::promise<bool> prom;
     this->request(coordinator, task_timeout, remove_parent_atom::value,
-                  childId, parentId).await(
+                  workerId, parentId).await(
         [=, &prom](bool ret) {
           if (ret == true) {
               NES_DEBUG("WorkerActor: parent successfully removed")
@@ -310,7 +291,7 @@ bool WorkerActor::disconnecting() {
     auto coordinator = actor_cast<actor>(this->state.current_server);
     std::promise<bool> prom;
     this->request(coordinator, task_timeout, deregister_node_atom::value,
-                  this->state.workerPtr->getIp()).await(
+                  workerId).await(
         [&prom](const bool& c) mutable {
           NES_DEBUG("WorkerActor: disconnecting() successfully")
           prom.set_value(c);
@@ -341,7 +322,7 @@ bool WorkerActor::registerNode(NESNodeType type) {
         throw new Exception("WorkerActor::registerNode wrong node type");
     }
 
-    std::promise<bool> prom;
+    std::promise<size_t> prom;
     auto coordinator = actor_cast<actor>(this->state.current_server);
     this->request(coordinator, task_timeout, register_node_atom::value,
                   this->state.workerPtr->getIp(),
@@ -351,7 +332,7 @@ bool WorkerActor::registerNode(NESNodeType type) {
                   this->state.workerPtr->getNodeProperties(),
                   (int)type)
         .await(
-            [=, &prom](const bool& c) mutable {
+            [=, &prom](const size_t& c) mutable {
               NES_DEBUG("WorkerActor::registerNode: node registered successfully")
               prom.set_value(c);
             }, [=, &prom](const error& er) {
@@ -362,9 +343,17 @@ bool WorkerActor::registerNode(NESNodeType type) {
               throw new Exception("Error while registerNode");
             });;
 
-    bool success = prom.get_future().get();
-    NES_DEBUG("WorkerActor::registerNode: success=" << success)
-    return success;
+    size_t id = prom.get_future().get();
+    if(id == 0)
+    {
+        NES_ERROR("WorkerActor::registerNode failed")
+        return false;
+    }
+    else
+    {
+        NES_DEBUG("WorkerActor::registerNode: with id=" << id)
+        return true;
+    }
 }
 
 bool WorkerActor::connecting(const std::string& host, uint16_t port) {
