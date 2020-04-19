@@ -30,8 +30,7 @@ Dispatcher::~Dispatcher() {
 }
 
 void Dispatcher::resetDispatcher() {
-    std::unique_lock<std::mutex> lock(queryMutex);
-    std::unique_lock<std::mutex> lock2(workMutex);
+    std::scoped_lock locks(queryMutex, workMutex);
     NES_DEBUG("Dispatcher: Destroy Task Queue " << task_queue.size());
     task_queue.clear();
     NES_DEBUG("Dispatcher: Destroy queryId_to_query_map " << sourceIdToQueryMap.size());

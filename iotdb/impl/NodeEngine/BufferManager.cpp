@@ -9,7 +9,7 @@
 namespace NES {
 
 BufferManager::BufferManager() : bufferSize(0), numOfBuffers(0), isConfigured(false), shutdownRequested(false) {
-
+    // nop
 }
 
 BufferManager::~BufferManager() {

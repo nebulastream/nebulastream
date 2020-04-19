@@ -120,6 +120,7 @@ bool NodeEngine::stopWithUndeploy() {
         NES_DEBUG("NodeEngine: deregister query " << qep)
         Dispatcher::instance().deregisterQuery(qep);
     }
+    NES::Dispatcher::instance().resetDispatcher();
     return ThreadPool::instance().stop();
 }
 
