@@ -84,6 +84,7 @@ bool WorkerActor::registerPhysicalStream(PhysicalStreamConfig conf) {
 
     std::promise<bool> prom;
     this->request(coordinator, task_timeout, register_phy_stream_atom::value,
+                  workerId,
                   conf.sourceType,
                   conf.sourceConfig, conf.sourceFrequency,
                   conf.numberOfBuffersToProduce, conf.physicalStreamName,
@@ -135,7 +136,7 @@ bool WorkerActor::registerLogicalStream(std::string streamName,
 
     NES_DEBUG("WorkerActor: file content:" << fileContent)
     std::promise<bool> prom;
-    this->request(coordinator, task_timeout, register_log_stream_atom::value,
+    this->request(coordinator, task_timeout, register_log_stream_atom::value, workerId,
                   streamName, fileContent).await(
         [=, &prom](bool ret) {
           if (ret == true) {
@@ -168,8 +169,8 @@ bool WorkerActor::removePhysicalStream(std::string logicalStreamName,
     auto coordinator = actor_cast<actor>(this->state.current_server);
 
     std::promise<bool> prom;
-    this->request(coordinator, task_timeout, remove_phy_stream_atom::value,
-                  state.workerPtr->getIp(), logicalStreamName, physicalStreamName)
+    this->request(coordinator, task_timeout, remove_phy_stream_atom::value, workerId,
+                  logicalStreamName, physicalStreamName)
         .await(
             [=, &prom](bool ret) {
               if (ret == true) {
@@ -203,7 +204,7 @@ bool WorkerActor::removeLogicalStream(std::string streamName) {
     auto coordinator = actor_cast<actor>(this->state.current_server);
 
     std::promise<bool> prom;
-    this->request(coordinator, task_timeout, remove_log_stream_atom::value,
+    this->request(coordinator, task_timeout, remove_log_stream_atom::value, workerId,
                   streamName).await(
         [=, &prom](bool ret) {
           if (ret == true) {
@@ -226,12 +227,12 @@ bool WorkerActor::removeLogicalStream(std::string streamName) {
 }
 
 bool WorkerActor::addNewParentToSensorNode(std::string parentId) {
-    NES_DEBUG("WorkerActor: addNewParentToSensorNode parentId" << parentId << " workerId=" << workerId)
+    NES_DEBUG("WorkerActor: addNewParentToSensorNode parentId=" << parentId << " workerId=" << workerId)
     auto coordinator = actor_cast<actor>(this->state.current_server);
 
     std::promise<bool> prom;
     this->request(coordinator, task_timeout, add_parent_atom::value,
-                  workerId, parentId).await(
+                  std::to_string(workerId), parentId).await(
         [=, &prom](bool ret) {
           if (ret == true) {
               NES_DEBUG("WorkerActor: parent successfully added")
@@ -263,7 +264,7 @@ bool WorkerActor::removeParentFromSensorNode(std::string parentId) {
 
     std::promise<bool> prom;
     this->request(coordinator, task_timeout, remove_parent_atom::value,
-                  workerId, parentId).await(
+                  std::to_string(workerId), parentId).await(
         [=, &prom](bool ret) {
           if (ret == true) {
               NES_DEBUG("WorkerActor: parent successfully removed")
@@ -287,7 +288,7 @@ bool WorkerActor::removeParentFromSensorNode(std::string parentId) {
 
 bool WorkerActor::disconnecting() {
     NES_DEBUG(
-        "WorkerActor: try to disconnect with ip " << this->state.workerPtr->getIp())
+        "WorkerActor: try to disconnect with id " << workerId)
     auto coordinator = actor_cast<actor>(this->state.current_server);
     std::promise<bool> prom;
     this->request(coordinator, task_timeout, deregister_node_atom::value,
@@ -343,15 +344,15 @@ bool WorkerActor::registerNode(NESNodeType type) {
               throw new Exception("Error while registerNode");
             });;
 
-    size_t id = prom.get_future().get();
-    if(id == 0)
+    workerId = prom.get_future().get();
+    if(workerId == 0)
     {
         NES_ERROR("WorkerActor::registerNode failed")
         return false;
     }
     else
     {
-        NES_DEBUG("WorkerActor::registerNode: with id=" << id)
+        NES_DEBUG("WorkerActor::registerNode: with id=" << workerId)
         return true;
     }
 }

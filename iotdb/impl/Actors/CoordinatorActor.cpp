@@ -352,7 +352,7 @@ behavior CoordinatorActor::running() {
           NES_DEBUG("CoordinatorActor::register_node_atom return id= " << id)
           return id;
         },
-        [=](deregister_node_atom, size_t& id) {
+        [=](deregister_node_atom, size_t id) {
           NES_DEBUG("CoordinatorActor: got request to remove node with ip " << id)
           return this->deregisterNode(id);
         },
@@ -372,14 +372,14 @@ behavior CoordinatorActor::running() {
                                     logicalStreamName);
           return registerPhysicalStream(id, conf);
         },
-        [=](register_log_stream_atom, const string& streamName, const string& streamSchema) {
+        [=](register_log_stream_atom, size_t id,  const string& streamName, const string& streamSchema) {
           NES_DEBUG(
               "CoordinatorActor: got request for register logical stream " << streamName << " and schema "
-                                                                           << streamSchema)
+                                                                           << streamSchema << " from id=" << id)
           return streamCatalogServicePtr->addNewLogicalStream(streamName, streamSchema);
         },
-        [=](remove_log_stream_atom, const string& streamName) {
-          NES_DEBUG("CoordinatorActor: got request for removal of logical stream " << streamName)
+        [=](remove_log_stream_atom, size_t id, const string& streamName) {
+          NES_DEBUG("CoordinatorActor: got request for removal of logical stream " << streamName << " from id=" << id)
           return streamCatalogServicePtr->removeLogicalStream(streamName);
         },
         [=](add_parent_atom, const std::string& childId, const std::string& parentId) {
