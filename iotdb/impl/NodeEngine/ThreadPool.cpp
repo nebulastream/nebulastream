@@ -63,7 +63,7 @@ bool ThreadPool::start() {
 
 bool ThreadPool::stop() {
     std::unique_lock<std::mutex> lock(reconfigLock);
-    NES_DEBUG("ThreadPool: stop thread pool while running " << running.load() << " with " << numThreads << " threads");
+    NES_DEBUG("ThreadPool: stop thread pool while " << (running.load() ? "running" : "not running") << " with " << numThreads << " threads");
     running = false;
     /* wake up all threads in the dispatcher,
      * so they notice the change in the run variable */

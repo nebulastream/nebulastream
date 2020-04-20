@@ -13,11 +13,13 @@ namespace NES {
 
 WindowHandler::WindowHandler(NES::WindowDefinitionPtr windowDefinitionPtr)
     : windowDefinition(windowDefinitionPtr) {
+    this->thread.reset();
 }
 
 bool WindowHandler::setup(QueryExecutionPlanPtr queryExecutionPlan, uint32_t pipelineStageId) {
     this->pipelineStageId = pipelineStageId;
     this->queryExecutionPlan = queryExecutionPlan;
+    this->thread.reset();
     // Initialize WindowHandler Manager
     this->windowManager = std::make_shared<WindowManager>(this->windowDefinition);
     // Initialize StateVariable
@@ -26,13 +28,14 @@ bool WindowHandler::setup(QueryExecutionPlanPtr queryExecutionPlan, uint32_t pip
 }
 
 void WindowHandler::trigger() {
-    while(running) {
+    while (running) {
         // we currently assume processing time and only want to check for new window results every 1 second
         // todo change this when we support event time.
         sleep(1);
         NES_DEBUG("WindowHandler: check widow trigger");
         auto windowStateVariable = static_cast<StateVariable<int64_t, WindowSliceStore<int64_t>*>*>(this->windowState);
         // create the output tuple buffer
+        // TODO can we make it get the buffer only once?
         auto tupleBuffer = BufferManager::instance().getBufferBlocking();
         tupleBuffer.setTupleSizeInBytes(8);
         // iterate over all keys in the window state
@@ -57,24 +60,33 @@ void* WindowHandler::getWindowState() {
 }
 
 bool WindowHandler::start() {
-    if (running)
+    std::unique_lock lock(runningTriggerMutex);
+    if (running) {
         return false;
+    }
     running = true;
-
     NES_DEBUG("WindowHandler " << this << ": Spawn thread")
-    thread = std::thread(std::bind(&WindowHandler::trigger, this));
+    thread = std::make_shared<std::thread>([this]() {
+        trigger();
+    });
     return true;
 }
 
 bool WindowHandler::stop() {
-    NES_DEBUG("WindowHandler " << this << ": Stop called")
-    if (!running)
+    std::unique_lock lock(runningTriggerMutex);
+    NES_DEBUG("WindowHandler " << this << ": Stop called");
+    if (!running) {
+        NES_DEBUG("WindowHandler " << this << ": Stop called but was already not running");
         return false;
+    }
     running = false;
 
-    if (thread.joinable())
-        thread.join();
-    NES_DEBUG("WindowHandler " << this << ": Thread joinded")
+    if (thread && thread->joinable()) {
+        thread->join();
+    }
+    thread.reset();
+    NES_DEBUG("WindowHandler " << this << ": Thread joinded");
+    // TODO what happens to the content of the window that it is still in the state?
     return true;
 }
 

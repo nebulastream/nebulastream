@@ -166,7 +166,6 @@ class EngineTest : public testing::Test {
         remove(filePath.c_str());
         remove("qep1.txt");
         remove("qep2.txt");
-        BufferManager::instance().requestShutdown();
         std::cout << "Tear down EngineTest class." << std::endl;
     }
 };

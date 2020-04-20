@@ -62,7 +62,6 @@ class SourceTest : public testing::Test {
 
   static void TearDownTestCase() {
     std::cout << "Tear down SourceTest test class." << std::endl;
-    BufferManager::instance().requestShutdown();
   }
 
   void TearDown() {
