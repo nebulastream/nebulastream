@@ -47,6 +47,7 @@ DataSource::~DataSource() {
 }
 
 bool DataSource::start() {
+    std::unique_lock lock(startStopMutex);
     if (running)
         return false;
     running = true;
@@ -59,6 +60,7 @@ bool DataSource::start() {
 }
 
 bool DataSource::stop() {
+    std::unique_lock lock(startStopMutex);
     NES_DEBUG("DataSource " << this->getSourceId() << ": Stop called and source is " << (running ? "running" : "not running"));
     if (!running) {
         return false;

@@ -1,6 +1,7 @@
 #include "gtest/gtest.h"
 
 #include <iostream>
+#include <future>
 
 #include <Catalogs/QueryCatalog.hpp>
 #include <API/InputQuery.hpp>
@@ -54,13 +55,14 @@ public:
 
     /* Will be called before a test is executed. */
     void TearDown() {
-        std::cout << "Tear down QueryCatalogTest test case." << std::endl;
+        NES_DEBUG("Tear down QueryCatalogTest test case.");
     }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() {
-        std::cout << "Tear down QueryCatalogTest test class." << std::endl;
-//        BufferManager().instance().requestShutdown();
+        NES_DEBUG("Tear down QueryCatalogTest test class.");
+        ThreadPool::instance().stop();
+        Dispatcher::instance().resetDispatcher();
     }
 
 //    TupleBuffer testInputBuffer;
@@ -73,8 +75,11 @@ public:
 
     bool writeData(TupleBuffer &input_buffer) override {
         NES_DEBUG("TestSink: got buffer " << input_buffer);
-        NES_DEBUG(NES::toString(input_buffer, this->getSchema()));
+        NES_DEBUG(NES::toString(input_buffer, getSchema()));
         resultBuffers.push_back(input_buffer);
+        if (resultBuffers.size() == 2) {
+            completed.set_value(true);
+        }
         return true;
     }
 
@@ -86,10 +91,11 @@ public:
     };
 
     void shutdown() override {
-        // nop
+        resultBuffers.clear();
     };
 
     ~TestSink() override {
+        resultBuffers.clear();
     };
 
     SinkType getType() const override {
@@ -101,6 +107,7 @@ public:
     }
 
     std::vector<TupleBuffer> resultBuffers;
+    std::promise<bool> completed;
 };
 
 void fillBuffer(TupleBuffer &buf, MemoryLayoutPtr memoryLayout) {
@@ -155,10 +162,14 @@ TEST_F(QueryExecutionTest, filterQuery) {
                         buffer),
                 recordIndex);
     }
+    plan->stop();
+    testSink->resultBuffers.clear();
 }
 
 TEST_F(QueryExecutionTest, windowQuery) {
-
+    // TODO in this test, it is not clear what we are testing
+    // TODO 10 windows are fired -> 10 output buffers in the sink
+    // TODO however, we check the 2nd buffer only
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema);
     auto source = createSourceOperator(testSource);
@@ -201,17 +212,20 @@ TEST_F(QueryExecutionTest, windowQuery) {
         plan->executeStage(0, buffer);
         sleep(1);
     }
+    testSink->completed.get_future().get();
     plan->stop();
-    sleep(1);
+//    sleep(1);
 
-    auto resultBuffer = testSink->resultBuffers[2];
+    auto resultBuffer = testSink->resultBuffers[2]; // TODO why the 2nd buffer?
     // The output buffer should contain 5 tuple;
-    // TODO why is it 2 now?
+    // TODO why do we check for 2 tuple?
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2);
     auto resultLayout = createRowLayout(ptr);
     for (int recordIndex = 0; recordIndex < 2; recordIndex++) {
         auto v = resultLayout->getValueField<int64_t>(recordIndex, /*fieldIndex*/0)->read(resultBuffer);
         EXPECT_EQ(v,10);
     }
+    testSink->resultBuffers.clear();
+    testSource->stop();
 }
 

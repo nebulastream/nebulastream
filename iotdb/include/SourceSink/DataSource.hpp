@@ -7,6 +7,7 @@
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/vector.hpp>
 #include <thread>
+#include <mutex>
 
 namespace NES {
 
@@ -145,8 +146,9 @@ class DataSource {
 
   private:
     friend class boost::serialization::access;
-    //bool indicating if the source is currently running
-    std::atomic<bool> running;
+    //bool indicating if the source is currently running'
+    std::mutex startStopMutex;
+    std::atomic_bool running;
     std::shared_ptr<std::thread> thread;
 
     template<class Archive>

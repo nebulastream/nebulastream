@@ -11,6 +11,118 @@ namespace NES {
 
 namespace detail {
 
+// -----------------------------------------------------------------------------
+// ------------------ Core Mechanism for Buffer recycling ----------------------
+// -----------------------------------------------------------------------------
+
+MemorySegment::MemorySegment(const MemorySegment& other) : ptr(other.ptr), size(other.size),
+                                            controlBlock(other.controlBlock) {}
+
+MemorySegment& MemorySegment::operator=(const MemorySegment& other) {
+    ptr = other.ptr;
+    size = other.size;
+    controlBlock = other.controlBlock;
+    return *this;
+}
+
+MemorySegment::MemorySegment() : ptr(nullptr), size(0), controlBlock(nullptr, [](MemorySegment*) {}) {}
+
+MemorySegment::MemorySegment(uint8_t* ptr, uint32_t size, std::function<void(MemorySegment*)>&& recycleFunction)
+: ptr(ptr), size(size), controlBlock(this, std::move(recycleFunction)) {
+    if (!this->ptr) {
+        NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid pointer");
+    }
+    if (!this->size) {
+        NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid size");
+    }
+}
+
+MemorySegment::~MemorySegment() {
+    if (ptr) {
+        auto refCnt = controlBlock.getReferenceCount();
+        if (refCnt != 0) {
+            NES_ERROR("Expected 0 as ref cnt but got " << refCnt);
+            NES_THROW_RUNTIME_ERROR("[MemorySegment] invalid reference counter on mem segment dtor");
+        }
+        free(ptr);
+        ptr = nullptr;
+    }
+}
+
+BufferControlBlock::BufferControlBlock(MemorySegment* owner, std::function<void(MemorySegment*)>&& recycleCallback) :
+referenceCounter(0), tupleSizeInBytes(0), numberOfTuples(0), owner(owner),
+recycleCallback(recycleCallback) {
+}
+
+BufferControlBlock::BufferControlBlock(const BufferControlBlock& that) {
+    referenceCounter.store(that.referenceCounter.load());
+    tupleSizeInBytes.store(that.tupleSizeInBytes.load());
+    numberOfTuples.store(that.numberOfTuples.load());
+    recycleCallback = that.recycleCallback;
+    owner = that.owner;
+}
+
+BufferControlBlock& BufferControlBlock::operator=(const BufferControlBlock& that) {
+    referenceCounter.store(that.referenceCounter.load());
+    tupleSizeInBytes.store(that.tupleSizeInBytes.load());
+    numberOfTuples.store(that.numberOfTuples.load());
+    recycleCallback = that.recycleCallback;
+    owner = that.owner;
+    return *this;
+}
+
+MemorySegment* BufferControlBlock::getOwner() {
+    return owner;
+}
+
+bool BufferControlBlock::prepare() {
+    uint32_t expected = 0;
+    return referenceCounter.compare_exchange_strong(expected, 1);
+}
+
+BufferControlBlock* BufferControlBlock::retain() {
+    referenceCounter++;
+    return this;
+}
+
+uint32_t BufferControlBlock::getReferenceCount() {
+    return referenceCounter.load();
+}
+
+bool BufferControlBlock::release() {
+    uint32_t prevRefCnt;
+    if ((prevRefCnt = referenceCounter.fetch_sub(1)) == 1) {
+        tupleSizeInBytes.store(0);
+        numberOfTuples.store(0);
+        recycleCallback(owner);
+        return true;
+    } else if (prevRefCnt == 0) {
+        NES_THROW_RUNTIME_ERROR("BufferControlBlock: releasing an already released buffer");
+    }
+    return false;
+}
+
+size_t BufferControlBlock::getTupleSizeInBytes() const {
+    return tupleSizeInBytes;
+}
+
+size_t BufferControlBlock::getNumberOfTuples() const {
+    return numberOfTuples;
+}
+
+void BufferControlBlock::setNumberOfTuples(size_t numberOfTuples) {
+    this->numberOfTuples = numberOfTuples;
+}
+
+void BufferControlBlock::setTupleSizeInBytes(size_t tupleSizeInBytes) {
+    this->tupleSizeInBytes = tupleSizeInBytes;
+}
+
+
+// -----------------------------------------------------------------------------
+// ------------------ Utility functions for TupleBuffer ------------------------
+// -----------------------------------------------------------------------------
+
 std::string printTupleBuffer(TupleBuffer& tbuffer, SchemaPtr schema) {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();

@@ -27,14 +27,15 @@ QueryExecutionPlan::~QueryExecutionPlan() {
 }
 
 bool QueryExecutionPlan::stop() {
+    bool ret = true;
     NES_DEBUG("QueryExecutionPlan: stop");
     for (auto& stage: stages) {
         if (!stage->stop()) {
-            NES_ERROR("QueryExecutionPlan: stop failed!");
-            return false;
+            NES_ERROR("QueryExecutionPlan: stop failed for stage " << stage);
+            ret = false;
         }
     }
-    return true;
+    return ret;
 }
 
 bool QueryExecutionPlan::setup() {

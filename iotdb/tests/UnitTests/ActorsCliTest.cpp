@@ -33,7 +33,7 @@ class ActorsCliTest : public testing::Test {
     }
 };
 
-TEST_F(ActorsCliTest, testDeleteQuery) {
+TEST_F(ActorsCliTest, DISABLED_testDeleteQuery) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);

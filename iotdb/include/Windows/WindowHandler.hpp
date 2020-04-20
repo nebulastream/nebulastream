@@ -130,7 +130,8 @@ class WindowHandler {
     WindowDefinitionPtr windowDefinition;
     WindowManagerPtr windowManager;
     void* windowState;
-    std::thread thread;
+    std::shared_ptr<std::thread> thread;
+    std::mutex runningTriggerMutex;
     uint32_t pipelineStageId;
     QueryExecutionPlanPtr queryExecutionPlan;
 };

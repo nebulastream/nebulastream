@@ -48,6 +48,12 @@ static log4cxx::LoggerPtr NESLogger(log4cxx::Logger::getLogger("NES"));
 #define NES_ERROR(TEXT) LOG4CXX_ERROR(NESLogger, TEXT)
 #define NES_FATAL_ERROR(TEXT) LOG4CXX_ERROR(NESLogger, TEXT)
 
+#define NES_THROW_RUNTIME_ERROR(TEXT) \
+    do { \
+        NES_FATAL_ERROR(TEXT); \
+        throw std::runtime_error(TEXT); \
+    } while (0)
+
 static void setupLogging(std::string logFileName, DebugLevel level) {
   std::cout << "SETUP_LOGGING" << std::endl;
   // create PatternLayout
