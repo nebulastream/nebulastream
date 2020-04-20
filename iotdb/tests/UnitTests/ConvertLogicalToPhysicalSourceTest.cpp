@@ -29,7 +29,7 @@ class ConvertLogicalToPhysicalSinkTest : public testing::Test {
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingCsvFileLogiclaToPhysicalSource) {
 
     SchemaPtr schema = Schema::create();
-    SourceDescriptorPtr sourceDescriptor = std::make_shared<CsvSourceDescriptor>(schema, "file.log", ",", 10, 10);
+    SourceDescriptorPtr sourceDescriptor = std::make_shared<CsvSourceDescriptor>(schema, "csv.log", ",", 10, 10);
     DataSourcePtr csvFileSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor);
     EXPECT_EQ(csvFileSource->getType(), CSV_SOURCE);
 }
@@ -37,7 +37,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingCsvFileLogiclaToPhysicalS
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingBinaryFileLogiclaToPhysicalSource) {
 
     SchemaPtr schema = Schema::create();
-    SourceDescriptorPtr sourceDescriptor = std::make_shared<BinarySourceDescriptor>(schema, "file.log");
+    SourceDescriptorPtr sourceDescriptor = std::make_shared<BinarySourceDescriptor>(schema, "binary.log");
     DataSourcePtr binaryFileSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor);
     EXPECT_EQ(binaryFileSource->getType(), BINARY_SOURCE);
 }
