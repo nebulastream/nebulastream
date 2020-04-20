@@ -72,12 +72,14 @@ public:
 
 class TestSink : public DataSink {
 public:
-
-    bool writeData(TupleBuffer &input_buffer) override {
+    // TODO the above code assume that only thread will invoke it
+    // TODO if we use more than one thread for the thread pool
+    // TODO then we have to use a mutex
+    bool writeData(TupleBuffer& input_buffer) override {
         NES_DEBUG("TestSink: got buffer " << input_buffer);
         NES_DEBUG(NES::toString(input_buffer, getSchema()));
         resultBuffers.push_back(input_buffer);
-        if (resultBuffers.size() == 2) {
+        if (resultBuffers.size() == 10) { // because we ideally have 10 windows
             completed.set_value(true);
         }
         return true;
