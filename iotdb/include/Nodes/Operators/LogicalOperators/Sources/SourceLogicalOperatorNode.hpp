@@ -5,6 +5,10 @@
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 
 namespace NES {
+
+/**
+ * @brief Node representing logical source operator
+ */
 class SourceLogicalOperatorNode : public LogicalOperatorNode {
 public:
     SourceLogicalOperatorNode(const SourceDescriptorPtr sourceDescriptor);

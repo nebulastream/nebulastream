@@ -5,12 +5,20 @@
 
 namespace NES {
 
+/**
+ * @brief Descriptor defining properties used for creating physical binary source
+ */
 class BinarySourceDescriptor : public SourceDescriptor {
 
   public:
     BinarySourceDescriptor(SchemaPtr schema, std::string filePath);
 
     SourceDescriptorType getType() override;
+
+    /**
+     * @brief Get the path of binary file
+     * @return
+     */
     const std::string& getFilePath() const;
 
   private:

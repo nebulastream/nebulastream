@@ -5,6 +5,9 @@
 
 namespace NES {
 
+/**
+ * @brief Descriptor defining properties used for creating physical CSV source
+ */
 class CsvSourceDescriptor : public SourceDescriptor {
 
   public:
@@ -17,9 +20,24 @@ class CsvSourceDescriptor : public SourceDescriptor {
 
     SourceDescriptorType getType() override;
 
+    /**
+     * @brief get file path for reading the csv file
+     */
     const std::string& getFilePath() const;
+
+    /**
+     * @brief get delimiter for the csv file
+     */
     const std::string& getDelimiter() const;
+
+    /**
+     * @brief Get number of buffers to process
+     */
     size_t getNumBuffersToProcess() const;
+
+    /**
+     * @brief get the frequency of reading the csv file
+     */
     size_t getFrequency() const;
 
   private:
