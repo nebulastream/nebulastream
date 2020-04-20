@@ -1,8 +1,10 @@
 #include "gtest/gtest.h"
 #include <API/Schema.hpp>
-#include <SourceSink/FileOutputSink.hpp>
 #include <Nodes/Phases/ConvertLogicalToPhysicalSink.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/KafkaSinkDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
@@ -22,7 +24,7 @@ class ConvertLogicalToPhysicalSinkTest : public testing::Test {
     }
 };
 
-TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingFileLogiclaToPhysicalSink) {
+TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingFileLogicalToPhysicalSink) {
 
     SchemaPtr schema = Schema::create();
     SinkDescriptorPtr sinkDescriptor = std::make_shared<FileSinkDescriptor>(schema,
@@ -31,6 +33,31 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingFileLogiclaToPhysicalSink
                                                                             FileOutPutType::CSV_TYPE);
     DataSinkPtr fileOutputSink = ConvertLogicalToPhysicalSink::createDataSink(sinkDescriptor);
     EXPECT_EQ(fileOutputSink->getType(), FILE_SINK);
+}
+
+TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingZMQLogicalToPhysicalSink) {
+
+    SchemaPtr schema = Schema::create();
+    SinkDescriptorPtr sinkDescriptor = std::make_shared<ZmqSinkDescriptor>(schema, "loclahost", 2000);
+    DataSinkPtr zmqSink = ConvertLogicalToPhysicalSink::createDataSink(sinkDescriptor);
+    EXPECT_EQ(zmqSink->getType(), ZMQ_SINK);
+}
+
+TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingKafkaLogicalToPhysicalSink) {
+
+    SchemaPtr schema = Schema::create();
+    const cppkafka::Configuration kafkaConfig = {{"metadata.broker.list", "localhost:9092"}};
+    SinkDescriptorPtr sinkDescriptor = std::make_shared<KafkaSinkDescriptor>(schema, "test", kafkaConfig);
+    DataSinkPtr kafkaSink = ConvertLogicalToPhysicalSink::createDataSink(sinkDescriptor);
+    EXPECT_EQ(kafkaSink->getType(), KAFKA_SINK);
+}
+
+TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingPrintLogicalToPhysicalSink) {
+
+    SchemaPtr schema = Schema::create();
+    SinkDescriptorPtr sinkDescriptor = std::make_shared<PrintSinkDescriptor>(schema, std::cout);
+    DataSinkPtr printSink = ConvertLogicalToPhysicalSink::createDataSink(sinkDescriptor);
+    EXPECT_EQ(printSink->getType(), PRINT_SINK);
 }
 
 }
