@@ -17,7 +17,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SinkDescriptorPtr sinkD
         case PrintSinkDescriptorType: {
             NES_INFO("ConvertLogicalToPhysicalSink: Creating print sink")
             const PrintSinkDescriptorPtr printSinkDescriptor = sinkDescriptor->as<PrintSinkDescriptor>();
-            return createPrintSinkWithSchema(printSinkDescriptor->getSchema(), printSinkDescriptor->getOutputStream());
+            return createPrintSinkWithSchema(printSinkDescriptor->getSchema(), std::cout);
         }
         case ZmqSinkDescriptorType: {
             NES_INFO("ConvertLogicalToPhysicalSink: Creating ZMQ sink")
@@ -30,8 +30,9 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SinkDescriptorPtr sinkD
             NES_INFO("ConvertLogicalToPhysicalSink: Creating Kafka sink")
             const KafkaSinkDescriptorPtr kafkaSinkDescriptor = sinkDescriptor->as<KafkaSinkDescriptor>();
             return createKafkaSinkWithSchema(kafkaSinkDescriptor->getSchema(),
+                                             kafkaSinkDescriptor->getBrokers(),
                                              kafkaSinkDescriptor->getTopic(),
-                                             kafkaSinkDescriptor->getConfig());
+                                             kafkaSinkDescriptor->getTimeout());
         }
         case FileSinkDescriptorType: {
             NES_INFO("ConvertLogicalToPhysicalSink: Creating File sink")

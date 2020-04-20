@@ -13,7 +13,7 @@ class KafkaSinkDescriptor: public SinkDescriptor {
 
   public:
 
-    KafkaSinkDescriptor(SchemaPtr schema, std::string topic, cppkafka::Configuration config);
+    KafkaSinkDescriptor(SchemaPtr schema, std::string topic, std::string brokers, uint64_t timeout);
 
     SinkDescriptorType getType() override;
 
@@ -23,17 +23,21 @@ class KafkaSinkDescriptor: public SinkDescriptor {
     const std::string& getTopic() const;
 
     /**
-     * @brief Get the kafka configuration used by kafka producer
+     * @brief List of comma separated kafka brokers
      */
-    const cppkafka::Configuration& getConfig() const;
+    const std::string& getBrokers() const;
+
+    /**
+     * @brief Kafka connection Timeout
+     */
+    uint64_t getTimeout() const;
 
   private:
 
     KafkaSinkDescriptor() = default;
     std::string topic;
-    cppkafka::Configuration config;
-
-
+    std::string brokers;
+    uint64_t timeout;
 };
 
 typedef std::shared_ptr<KafkaSinkDescriptor> KafkaSinkDescriptorPtr ;

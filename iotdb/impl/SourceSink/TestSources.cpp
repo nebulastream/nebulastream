@@ -61,9 +61,9 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema,
                                        numbersOfBufferToProduce, frequency);
 }
 
-const DataSourcePtr createKafkaSource(SchemaPtr schema, std::string brokers, std::string topic, bool autoCommit,
-                                      cppkafka::Configuration config, uint64_t kafkaConsumerTimeout) {
-    return std::make_shared<KafkaSource>(schema, brokers, topic, autoCommit, config, kafkaConsumerTimeout);
+const DataSourcePtr createKafkaSource(SchemaPtr schema, std::string brokers, std::string topic, std::string groupId,
+                                      bool autoCommit, uint64_t kafkaConsumerTimeout) {
+    return std::make_shared<KafkaSource>(schema, brokers, topic, groupId, autoCommit, kafkaConsumerTimeout);
 }
 
 }

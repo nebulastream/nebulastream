@@ -50,8 +50,8 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorP
             return createKafkaSource(kafkaSourceDescriptor->getSchema(),
                                      kafkaSourceDescriptor->getBrokers(),
                                      kafkaSourceDescriptor->getTopic(),
+                                     kafkaSourceDescriptor->getGroupId(),
                                      kafkaSourceDescriptor->isAutoCommit(),
-                                     kafkaSourceDescriptor->getConfig(),
                                      kafkaSourceDescriptor->getKafkaConnectTimeout());
         }
         case SenseSource: {

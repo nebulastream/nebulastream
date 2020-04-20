@@ -11,16 +11,8 @@ namespace NES {
 class PrintSinkDescriptor : public SinkDescriptor {
 
   public:
-    PrintSinkDescriptor(SchemaPtr schema, std::ostream& outputStream);
+    PrintSinkDescriptor(SchemaPtr schema);
     SinkDescriptorType getType() override;
-
-    /**
-     * @brief get the output stream which is used for writing the output
-     */
-    std::ostream& getOutputStream() const;
-
-  private:
-    std::ostream& outputStream;
 };
 
 typedef std::shared_ptr<PrintSinkDescriptor> PrintSinkDescriptorPtr;

@@ -2,8 +2,8 @@
 
 namespace NES {
 
-KafkaSinkDescriptor::KafkaSinkDescriptor(SchemaPtr schema, std::string topic, cppkafka::Configuration config)
-    : SinkDescriptor(schema), topic(topic), config(config) {}
+KafkaSinkDescriptor::KafkaSinkDescriptor(SchemaPtr schema, std::string topic, std::string brokers, uint64_t timeout)
+    : SinkDescriptor(schema), topic(topic), brokers(brokers), timeout(timeout) {}
 
 SinkDescriptorType KafkaSinkDescriptor::getType() {
     return KafkaSinkDescriptorType;
@@ -13,8 +13,12 @@ const std::string& KafkaSinkDescriptor::getTopic() const {
     return topic;
 }
 
-const cppkafka::Configuration& KafkaSinkDescriptor::getConfig() const {
-    return config;
+const std::string& KafkaSinkDescriptor::getBrokers() const {
+    return brokers;
+}
+
+uint64_t KafkaSinkDescriptor::getTimeout() const {
+    return timeout;
 }
 
 }
