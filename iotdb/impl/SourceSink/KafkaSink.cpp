@@ -29,26 +29,6 @@ KafkaSink::KafkaSink(SchemaPtr schema,
                             << ", topic " << topic << ", partition " << partition)
 }
 
-KafkaSink::KafkaSink(SchemaPtr schema,
-                     const std::string& topic,
-                     const cppkafka::Configuration& config)
-    : DataSink(schema),
-      topic(topic),
-      config(std::move(config)) {
-
-    brokers = config.get("metadata.broker.list");
-
-    try {
-        auto timeout = std::stol(config.get("request.timeout.ms"));
-        kafkaProducerTimeout = std::move(std::chrono::milliseconds(timeout));
-    } catch (...) {
-        kafkaProducerTimeout = std::move(std::chrono::milliseconds(30*1000));
-    }
-
-    _connect();
-    NES_DEBUG("KAFKASINK  " << this << ": Init KAFKA SINK with config")
-}
-
 KafkaSink::~KafkaSink() {}
 
 bool KafkaSink::writeData(TupleBuffer& input_buffer) {

@@ -50,9 +50,4 @@ const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string&
     return std::make_shared<KafkaSink>(schema, brokers, topic, kafkaProducerTimeout);
 }
 
-const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string& topic,
-                                            const cppkafka::Configuration& config) {
-    return std::make_shared<KafkaSink>(schema, topic, config);
-}
-
 }

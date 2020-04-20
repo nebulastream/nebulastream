@@ -1396,7 +1396,7 @@ TEST_F(LogicalOperatorNodeTest, translateToLagacyOperatorTree) {
      */
     auto schema = Schema::create();
 
-    auto printSinkDescriptorPtr = std::make_shared<PrintSinkDescriptor>(schema, std::cout);
+    auto printSinkDescriptorPtr = std::make_shared<PrintSinkDescriptor>(schema);
     auto sinkOperator = createSinkLogicalOperatorNode(printSinkDescriptorPtr);
     auto constValue = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "1"));
     auto fieldRead = FieldAccessExpressionNode::create(createDataType(BasicType::INT8), "FieldName");

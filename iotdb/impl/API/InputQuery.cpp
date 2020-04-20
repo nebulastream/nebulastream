@@ -294,18 +294,6 @@ InputQuery& InputQuery::print(std::ostream& out) {
     return *this;
 }
 
-InputQuery& InputQuery::writeToKafka(const std::string& topic,
-                                     const cppkafka::Configuration& config) {
-    OperatorPtr op = createSinkOperator(
-            createKafkaSinkWithSchema(this->sourceStream->getSchema(), topic,
-                                      config));
-    int operatorId = this->getNextOperatorId();
-    op->setOperatorId(operatorId);
-    addChild(op, root);
-    root = op;
-    return *this;
-}
-
 InputQuery& InputQuery::writeToKafka(const std::string& brokers,
                                      const std::string& topic,
                                      const size_t kafkaProducerTimeout) {

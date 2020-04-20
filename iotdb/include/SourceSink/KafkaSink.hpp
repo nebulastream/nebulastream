@@ -19,9 +19,7 @@ class KafkaSink : public DataSink {
             const std::string& brokers,
             const std::string& topic,
             const size_t kafkaProducerTimeout=10*1000);
-  KafkaSink(SchemaPtr schema,
-            const std::string& topic,
-            const cppkafka::Configuration& config);
+
   ~KafkaSink() override;
     SinkType getType() const override;
     bool writeData(TupleBuffer& input_buffer);

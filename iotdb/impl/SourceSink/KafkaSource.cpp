@@ -12,21 +12,25 @@
 
 namespace NES {
 
-KafkaSource::KafkaSource() {}
-
 KafkaSource::KafkaSource(SchemaPtr schema,
                          const std::string brokers,
                          const std::string topic,
+                         const std::string groupId,
                          bool autoCommit,
-                         cppkafka::Configuration config,
                          uint64_t kafkaConsumerTimeout) :
     DataSource(schema),
     brokers(brokers),
     topic(topic),
+    groupId(groupId),
     autoCommit(autoCommit),
-    config(config),
     kafkaConsumerTimeout(std::move(std::chrono::milliseconds(kafkaConsumerTimeout))) {
 
+    config = {
+        {"metadata.broker.list", brokers.c_str()},
+        {"group.id", groupId},
+        {"enable.auto.commit", autoCommit},
+        {"auto.offset.reset", "latest"}
+    };
     _connect();
     NES_INFO("KAFKASOURCE " << this << ": Init KAFKA SOURCE to brokers " << brokers << ", topic " << topic)
 }

@@ -147,15 +147,6 @@ class InputQuery {
                              const size_t kafkaProducerTimeout);
 
     /**
-     * @brief write to a kafka sink
-     * @param topic: kafka topic to write to
-     * @param config: kafka producer configuration
-     * @return this object
-     */
-    InputQuery& writeToKafka(const std::string& topic,
-                             const cppkafka::Configuration& config);
-
-    /**
      * Adds a print sink, which prints all query results to the output stream.
      */
     InputQuery& print(std::ostream& = std::cout);

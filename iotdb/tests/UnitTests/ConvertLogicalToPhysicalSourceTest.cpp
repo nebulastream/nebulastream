@@ -53,8 +53,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingZMQLogiclaToPhysicalSourc
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingKafkaLogiclaToPhysicalSource) {
 
     SchemaPtr schema = Schema::create();
-    const cppkafka::Configuration kafkaConfig = {};
-    SourceDescriptorPtr sourceDescriptor = std::make_shared<KafkaSourceDescriptor>(schema, "localhost:9092", "topic", /**auto commit*/ true, kafkaConfig, /**timeout*/ 1000);
+    SourceDescriptorPtr sourceDescriptor = std::make_shared<KafkaSourceDescriptor>(schema, "localhost:9092", "topic", /**group Id**/ "groupId", /**auto commit*/ true, /**timeout*/ 1000);
     DataSourcePtr csvFileSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor);
     EXPECT_EQ(csvFileSource->getType(), KAFKA_SOURCE);
 }
