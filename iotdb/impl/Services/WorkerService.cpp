@@ -6,12 +6,12 @@
 
 namespace NES {
 
-void WorkerService::shutDown()
-{
-  NES_DEBUG("WorkerService: shutdown WorkerService")
-  this->_enginePtr->stopWithUndeploy();
-  physicalStreams.clear();
-  runningQueries.clear();
+void WorkerService::shutDown() {
+    NES_DEBUG("WorkerService: shutdown WorkerService")
+    this->nodeEngine->stopWithUndeploy();
+    physicalStreams.clear();
+    queryIdToQEPMap.clear();
+    queryIdToStatusMap.clear();
 }
 
 WorkerService::WorkerService(string ip, uint16_t publish_port, uint16_t receive_port) {
@@ -23,81 +23,105 @@ WorkerService::WorkerService(string ip, uint16_t publish_port, uint16_t receive_
     NES_DEBUG("WorkerService: create WorkerService with ip=" << this->ip << " publish_port=" << this->publishPort
                                                              << " receive_port=" << this->receivePort)
     physicalStreams.insert(std::make_pair("default_physical", PhysicalStreamConfig()));
-    this->_enginePtr = std::make_shared<NodeEngine>();
-    this->_enginePtr->start();
+    this->nodeEngine = std::make_shared<NodeEngine>();
+    this->nodeEngine->start();
 }
 
 string WorkerService::getNodeProperties() {
-  return this->_enginePtr->getNodePropertiesAsString();
-}
-
-PhysicalStreamConfig WorkerService::getPhysicalStreamConfig(std::string name) {
-  return physicalStreams[name];
+    return this->nodeEngine->getNodePropertiesAsString();
 }
 
 void WorkerService::addPhysicalStreamConfig(PhysicalStreamConfig conf) {
     physicalStreams.insert(std::make_pair(conf.physicalStreamName, conf));
 }
 
-bool WorkerService::executeQuery(const string& queryId,
-                                 string& executableTransferObject) {
+bool WorkerService::deployQuery(const std::string& queryId, std::string& executableTransferObject) {
     NES_DEBUG(
-        "WorkerService (" << this->ip << ": Executing " << queryId)
+        "WorkerService (" << this->ip << ": deployQuery " << queryId)
     ExecutableTransferObject eto = SerializationTools::parse_eto(
         executableTransferObject);
     NES_DEBUG(
         "WorkerService eto after parse=" << eto.toString())
     QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(this->queryCompiler);
-    this->runningQueries.insert(
-        {queryId, std::make_tuple(qep, eto.getOperatorTree())});
-    this->_enginePtr->deployQuery(qep);
-    //TODO: sleeps should be omitted
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    return true;
+    NES_DEBUG("WorkerService add query to queries map")
+    queryIdToQEPMap.insert({queryId, qep});
+    queryIdToStatusMap.insert({queryId, NodeQueryStatus::deployed});
+
+    bool success = nodeEngine->deployQuery(qep);
+    NES_DEBUG("WorkerService deploy query success=" << success)
+    return success;
 }
 
-bool WorkerService::deleteQuery(const string& query) {
-    try {
-        if (this->runningQueries.find(query) != this->runningQueries.end()) {
-            NES_DEBUG(
-                "WorkerService (" << this->ip << ": Attempting deletion of " << query);
-            QueryExecutionPlanPtr qep = std::get<0>(this->runningQueries.at(query));
-            this->runningQueries.erase(query);
-            this->_enginePtr->undeployQuery(qep);
-            NES_INFO(
-                "WorkerService (" << this->ip << ": Successfully deleted query " << query);
-            return true;
-        } else {
-            NES_INFO(
-                "WorkerService (" << this->ip << ": *** Not found for deletion -> " << query);
-            return false;
-        }
-    } catch (...) {
-        // TODO: catch ZMQ termination errors properly
-        // TODO: catch them but not here please! the WorkerService should not know that ZMQ is running under the hood
+bool WorkerService::undeployQuery(const std::string& queryId) {
+    NES_DEBUG(
+        "WorkerService (" << this->ip << ": undeployQuery " << queryId)
+
+    if (queryIdToStatusMap[queryId] != NodeQueryStatus::stopped) {
         NES_ERROR(
-            "WorkerService (" << this->ip << "): Undefined error during deletion!")
+            "WorkerService::undeployQuery: cannot undeploy because not stopped status=" << queryIdToStatusMap[queryId])
+        return false;
+    } else {
+        NES_DEBUG("WorkerService::undeployQuery: query found and status stopped")
+    }
+
+    if (queryIdToQEPMap.count(queryId) == 0) {
+        NES_ERROR(
+            "WorkerService::undeployQuery: cannot find QEP for qep=" << queryId)
+        return false;
+    }
+
+    bool success = nodeEngine->undeployQuery(queryIdToQEPMap[queryId]);
+    NES_DEBUG("WorkerService::undeployQuery: undeploy success=" << success)
+
+    size_t delIdQepMap = queryIdToQEPMap.erase(queryId);
+    size_t delIdStatusMap = queryIdToStatusMap.erase(queryId);
+
+    if (delIdQepMap == 1 && delIdStatusMap == 1) {
+        NES_DEBUG("WorkerService::undeployQuery: query successfully erased")
+        return true;
+    } else if (delIdQepMap != 1) {
+        NES_ERROR("WorkerService::undeployQuery: erase in delIdQepMap failed as return is " << delIdQepMap)
+        return false;
+    } else {
+        NES_ERROR("WorkerService::undeployQuery: erase in delIdStatusMap failed as return is " << delIdStatusMap)
+        return false;
     }
 }
 
-vector<string> WorkerService::getOperators() {
-    vector<string> result;
-    for (auto const& x : this->runningQueries) {
-        string str_opts;
-        const OperatorPtr op = std::get<1>(x.second);
-        auto flattened = op->flattenedTypes();
-        for (const OperatorType& _o : flattened) {
-            if (!str_opts.empty())
-                str_opts.append(", ");
-            str_opts.append(operatorTypeToString.at(_o));
-        }
-        result.emplace_back(x.first + "->" + str_opts);
+bool WorkerService::startQuery(const std::string& queryId) {
+    NES_DEBUG(
+        "WorkerService:startQuery " << queryId)
+
+    if (queryIdToStatusMap[queryId] == NodeQueryStatus::started) {
+        NES_ERROR("WorkerService::startQuery: query already started")
+        return false;
+    } else {
+        NES_DEBUG("WorkerService::startQuery: of status=" << queryIdToStatusMap[queryId])
+        bool success = nodeEngine->startQuery(queryIdToQEPMap[queryId]);
+        NES_ERROR("WorkerService::startQuery: start with success =" << success)
+        queryIdToStatusMap[queryId] = NodeQueryStatus::started;
+        return success;
     }
-    return result;
 }
 
-string& WorkerService::getIp(){
-  return ip;
+bool WorkerService::stopQuery(const std::string& queryId) {
+    NES_DEBUG(
+        "WorkerService:stopQuery " << queryId)
+
+    if (queryIdToStatusMap[queryId] != NodeQueryStatus::started) {
+        NES_ERROR("WorkerService::stopQuery: query start fail because in status " << queryIdToStatusMap[queryId])
+        return false;
+    } else {
+        NES_DEBUG("WorkerService::stopQuery =" << queryIdToStatusMap[queryId])
+        bool success = nodeEngine->stopQuery(queryIdToQEPMap[queryId]);
+        NES_ERROR("WorkerService::stopQuery: start with success =" << success)
+        queryIdToStatusMap[queryId] = NodeQueryStatus::stopped;
+        return success;
+    }
+}
+
+string& WorkerService::getIp() {
+    return ip;
 }
 
 void WorkerService::setIp(const string& ip) {
@@ -105,16 +129,16 @@ void WorkerService::setIp(const string& ip) {
 }
 
 uint16_t WorkerService::getPublishPort() const {
-  return publishPort;
+    return publishPort;
 }
 void WorkerService::setPublishPort(uint16_t publish_port) {
-  publishPort = publish_port;
+    publishPort = publish_port;
 }
 uint16_t WorkerService::getReceivePort() const {
-  return receivePort;
+    return receivePort;
 }
 void WorkerService::setReceivePort(uint16_t receive_port) {
-  receivePort = receive_port;
+    receivePort = receive_port;
 }
 
 } // namespace NES

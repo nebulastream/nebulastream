@@ -198,7 +198,7 @@ TEST_F(QueryExecutionTest, DISABLED_windowQuery) {
     auto plan = compiler->compile(sink);
     plan->addDataSink(testSink);
     plan->addDataSource(testSource);
-    Dispatcher::instance().registerQueryWithoutStart(plan);
+    Dispatcher::instance().registerQuery(plan);
     plan->setup();
     plan->start();
 

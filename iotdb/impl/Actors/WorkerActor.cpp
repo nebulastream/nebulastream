@@ -405,19 +405,22 @@ behavior WorkerActor::running() {
     //Note this methods are send from the coordinator
     return {
         // internal rpc to execute a query
-        [=](execute_operators_atom, const string& queryId, string& executableTransferObject) {
-          NES_DEBUG("WorkerActor: got request for execute_operators_atom queryId=" << queryId << " eto="
+        [=](deploy_query_atom, const string& queryId, string& executableTransferObject) {
+          NES_DEBUG("WorkerActor: got request for deploy_query_atom queryId=" << queryId << " eto="
                                                                                    << executableTransferObject)
-          return this->state.workerPtr->executeQuery(queryId, executableTransferObject);
+          return this->state.workerPtr->deployQuery(queryId, executableTransferObject);
         },
-        // internal rpc to unregister a query
-        [=](delete_query_atom, const string& queryId) {
-          NES_DEBUG("WorkerActor: got request for delete_query_atom queryId=" << queryId)
-          this->state.workerPtr->deleteQuery(queryId);
+        [=](undeploy_query_atom, const string& queryId) {
+          NES_DEBUG("WorkerActor: got request for undeploy_query_atom queryId=" << queryId)
+          this->state.workerPtr->undeployQuery(queryId);
         },
-        // internal rpc to execute a query
-        [=](get_operators_atom) {
-          return this->state.workerPtr->getOperators();
+        [=](start_query_atom, const string& queryId) {
+          NES_DEBUG("WorkerActor: got request for start_query_atom queryId=" << queryId)
+          this->state.workerPtr->startQuery(queryId);
+        },
+        [=](stop_query_atom, const string& queryId) {
+            NES_DEBUG("WorkerActor: got request for stop_query_atom queryId=" << queryId)
+            this->state.workerPtr->stopQuery(queryId);
         }
     };
     NES_DEBUG("WorkerActor::running end running")

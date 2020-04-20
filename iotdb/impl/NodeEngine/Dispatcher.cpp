@@ -47,37 +47,8 @@ void Dispatcher::resetDispatcher() {
     processedBuffers = 0;
 }
 
-bool Dispatcher::registerQueryWithStart(QueryExecutionPlanPtr qep) {
-    if (registerQueryWithoutStart(qep)) {
-        std::unique_lock<std::mutex> lock(queryMutex);
-        //start elements
-        auto sources = qep->getSources();
-        for (const auto& source : sources) {
-            NES_DEBUG("Dispatcher: start source " << source << " str=" << source->toString())
-            if (!source->start()) {
-                NES_FATAL_ERROR("Dispatcher: source " << source << " could not started");
-                return false;
-            }
-        }
-
-        auto sinks = qep->getSinks();
-        for (const auto& sink : sinks) {
-            NES_DEBUG("Dispatcher: start sink " << sink)
-            sink->setup();
-        }
-
-        if (!qep->setup() || !qep->start()) {
-            NES_FATAL_ERROR("Dispatcher: query execution plan could not started");
-            return false;
-        }
-        return true;
-    } else {
-        //registration failed, return false
-        return false;
-    }
-}
-
-bool Dispatcher::registerQueryWithoutStart(QueryExecutionPlanPtr qep) {
+bool Dispatcher::registerQuery(QueryExecutionPlanPtr qep) {
+    NES_DEBUG("Dispatcher::registerQuery: query" << qep)
     std::unique_lock<std::mutex> lock(queryMutex);
 
     //test if elements already exist
@@ -106,27 +77,39 @@ bool Dispatcher::registerQueryWithoutStart(QueryExecutionPlanPtr qep) {
     return true;
 }
 
-bool Dispatcher::deregisterQuery(QueryExecutionPlanPtr qep) {
+bool Dispatcher::startQuery(QueryExecutionPlanPtr qep) {
+    NES_DEBUG("Dispatcher::startQuery: query" << qep)
     std::unique_lock<std::mutex> lock(queryMutex);
-    bool succeed = true;
 
+    //start elements
     auto sources = qep->getSources();
     for (const auto& source : sources) {
-        NES_DEBUG("Dispatcher: stop source " << source)
-        source->stop();
+        NES_DEBUG("Dispatcher: start source " << source << " str=" << source->toString())
+        if (!source->start()) {
+            NES_FATAL_ERROR("Dispatcher: source " << source << " could not started");
+            return false;
+        }
     }
-
-    if (!qep->stop()) {
-        NES_FATAL_ERROR(
-            "Dispatcher: QEP could not be stopped");
-        return false;
-    };
 
     auto sinks = qep->getSinks();
     for (const auto& sink : sinks) {
-        NES_DEBUG("Dispatcher: stop sink " << sink)
-        sink->shutdown();
+        NES_DEBUG("Dispatcher: start sink " << sink)
+        sink->setup();
     }
+
+    if (!qep->setup() || !qep->start()) {
+        NES_FATAL_ERROR("Dispatcher: query execution plan could not started");
+        return false;
+    }
+    return true;
+}
+
+bool Dispatcher::deregisterQuery(QueryExecutionPlanPtr qep) {
+    NES_DEBUG("Dispatcher::deregisterQuery: query" << qep)
+
+    std::unique_lock<std::mutex> lock(queryMutex);
+    bool succeed = true;
+    auto sources = qep->getSources();
 
     for (const auto& source : sources) {
         NES_DEBUG("Dispatcher: stop source " << source)
@@ -153,6 +136,29 @@ bool Dispatcher::deregisterQuery(QueryExecutionPlanPtr qep) {
         }
     }
     return succeed;
+}
+
+bool Dispatcher::stopQuery(QueryExecutionPlanPtr qep) {
+    NES_DEBUG("Dispatcher::stopQuery: query" << qep)
+    std::unique_lock<std::mutex> lock(queryMutex);
+
+    auto sources = qep->getSources();
+    for (const auto& source : sources) {
+        NES_DEBUG("Dispatcher: stop source " << source)
+        source->stop();
+    }
+
+    if (!qep->stop()) {
+        NES_FATAL_ERROR(
+            "Dispatcher: QEP could not be stopped");
+        return false;
+    };
+
+    auto sinks = qep->getSinks();
+    for (const auto& sink : sinks) {
+        NES_DEBUG("Dispatcher: stop sink " << sink)
+        sink->shutdown();
+    }
 }
 
 TaskPtr Dispatcher::getWork(std::atomic<bool>& threadPool_running) {
