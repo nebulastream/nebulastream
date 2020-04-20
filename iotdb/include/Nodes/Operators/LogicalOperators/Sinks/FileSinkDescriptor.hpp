@@ -13,6 +13,9 @@ enum FileOutPutMode {
     FILE_OVERWRITE, FILE_APPEND
 };
 
+/**
+ * @brief Descriptor defining properties used for creating physical file sink
+ */
 class FileSinkDescriptor : public SinkDescriptor {
 
   public:
@@ -21,9 +24,21 @@ class FileSinkDescriptor : public SinkDescriptor {
 
     SinkDescriptorType getType() override;
 
+    /**
+     * @brief Get the file name where the data is to be written
+     */
     const std::string& getFileName() const;
+
+    /**
+     * @brief get the file output mode (Overwritten or Append)
+     */
     FileOutPutMode getFileOutPutMode() const;
+
+    /**
+     * @brief get the file output type (CSV or Binary)
+     */
     FileOutPutType getFileOutPutType() const;
+
   private:
 
     FileSinkDescriptor() = default;

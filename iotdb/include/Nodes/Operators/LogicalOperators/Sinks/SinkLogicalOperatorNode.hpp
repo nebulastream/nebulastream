@@ -5,6 +5,10 @@
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 
 namespace NES {
+
+/**
+ * @brief Node representing logical sink operator
+ */
 class SinkLogicalOperatorNode : public LogicalOperatorNode {
   public:
     SinkLogicalOperatorNode();

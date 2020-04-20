@@ -12,7 +12,6 @@ bool SourceLogicalOperatorNode::equal(const NodePtr rhs) const {
     }
     if (rhs->instanceOf<SourceLogicalOperatorNode>()) {
         auto sourceOperator = rhs->as<SourceLogicalOperatorNode>();
-        // todo check if the sink is the same
         return true;
     }
     return false;

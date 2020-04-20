@@ -14,7 +14,6 @@ bool SinkLogicalOperatorNode::equal(const NodePtr rhs) const {
     }
     if (rhs->instanceOf<SinkLogicalOperatorNode>()) {
         auto sinkOperator = rhs->as<SinkLogicalOperatorNode>();
-        // todo check if the source is the same
         return true;
     }
     return false;

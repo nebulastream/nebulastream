@@ -5,11 +5,18 @@
 
 namespace NES {
 
+/**
+ * @brief Descriptor defining properties used for creating physical print sink
+ */
 class PrintSinkDescriptor : public SinkDescriptor {
 
   public:
     PrintSinkDescriptor(SchemaPtr schema, std::ostream& outputStream);
     SinkDescriptorType getType() override;
+
+    /**
+     * @brief get the output stream which is used for writing the output
+     */
     std::ostream& getOutputStream() const;
 
   private:
