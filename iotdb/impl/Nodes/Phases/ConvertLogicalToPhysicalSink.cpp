@@ -45,13 +45,13 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SinkDescriptorPtr sinkD
                         return createCSVFileSinkWithSchemaOverwrite(fileSinkDescriptor->getSchema(),
                                                                     fileSinkDescriptor->getFileName());
                     } else {
-                        NES_ERROR("Unknown File Mode")
+                        NES_ERROR("ConvertLogicalToPhysicalSink: Unknown File Mode")
                         throw std::invalid_argument("Unknown File Mode");
                     }
             }
         }
         default: {
-            NES_ERROR("Unknown Sink Descriptor Type")
+            NES_ERROR("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type")
             throw std::invalid_argument("Unknown Sink Descriptor Type");
         }
     }

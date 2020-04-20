@@ -54,7 +54,7 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(SourceDescriptorP
             return createSenseSource(senseSourceDescriptor->getSchema(), senseSourceDescriptor->getUdfs());
         }
         default: {
-            NES_ERROR("Unknown Source Descriptor Type")
+            NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type")
             throw std::invalid_argument("Unknown Source Descriptor Type");
         }
     }
