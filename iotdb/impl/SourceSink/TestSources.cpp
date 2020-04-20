@@ -43,8 +43,8 @@ const DataSourcePtr createZmqSource(SchemaPtr schema,
 }
 
 const DataSourcePtr createBinaryFileSource(SchemaPtr schema,
-                                           const std::string& path_to_file) {
-    return std::make_shared<BinarySource>(schema, path_to_file);
+                                           const std::string& pathToFile) {
+    return std::make_shared<BinarySource>(schema, pathToFile);
 }
 
 const DataSourcePtr createSenseSource(SchemaPtr schema,

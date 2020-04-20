@@ -51,10 +51,10 @@ const DataSourcePtr createZmqSource(SchemaPtr schema, const std::string& host, c
 /**
  * @brief function to create a binary file source
  * @param schema of data source
- * @param path to the file to readin
+ * @param path to the file to reading
  * @return a const data source pointer
  */
-const DataSourcePtr createBinaryFileSource(SchemaPtr schema, const std::string& path_to_file);
+const DataSourcePtr createBinaryFileSource(SchemaPtr schema, const std::string& pathToFile);
 
 /**
  * @brief function to create a sense source
