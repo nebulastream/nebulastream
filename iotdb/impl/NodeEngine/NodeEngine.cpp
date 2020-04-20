@@ -34,45 +34,73 @@ NodeProperties* NodeEngine::getNodeProperties() {
 bool NodeEngine::deployQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("NodeEngine: deploy query " << qep)
     if (qeps.find(qep) == qeps.end()) {
-        if (Dispatcher::instance().registerQueryWithStart(qep)) {
+        if (Dispatcher::instance().registerQuery(qep)) {
             qeps.insert(qep);
-            NES_DEBUG("NodeEngine: deployment of QEP " << qep << " succeeded!")
+            NES_DEBUG("NodeEngine: deployment of QEP " << qep << " succeeded")
             return true;
         } else {
-            NES_DEBUG("NodeEngine: deployment of QEP " << qep << " failed!")
+            NES_DEBUG("NodeEngine: deployment of QEP " << qep << " failed")
             return false;
         }
     } else {
-        NES_DEBUG("NodeEngine: qep already exists. Deployment failed!" << qep)
+        NES_DEBUG("NodeEngine: qep already exists. Deployment failed" << qep)
         return false;
     }
 }
 
-bool NodeEngine::deployQueryWithoutStart(QueryExecutionPlanPtr qep) {
-    NES_DEBUG("NodeEngine: deploy query " << qep)
-    if (qeps.find(qep) == qeps.end()) {
-        if (Dispatcher::instance().registerQueryWithoutStart(qep)) {
-            qeps.insert(qep);
+bool NodeEngine::startQuery(QueryExecutionPlanPtr qep)
+{
+    NES_DEBUG("NodeEngine: startQuery " << qep)
+    if (qeps.find(qep) != qeps.end()) {
+        if (Dispatcher::instance().startQuery(qep)) {
+            NES_DEBUG("NodeEngine: start of QEP " << qep << " succeeded")
             return true;
         } else {
+            NES_DEBUG("NodeEngine: start of QEP " << qep << " failed")
             return false;
         }
     } else {
-        NES_DEBUG("NodeEngine: qep already exists. Deployment failed!" << qep)
+        NES_DEBUG("NodeEngine: qep does not exists. start failed" << qep)
         return false;
     }
 }
+
 
 bool NodeEngine::undeployQuery(QueryExecutionPlanPtr qep) {
-    NES_DEBUG("NodeEngine: deregister query" << qep)
+    NES_DEBUG("NodeEngine: undeployQuery query" << qep)
     if (qeps.find(qep) != qeps.end()) {
-        qeps.erase(qep);
-        return Dispatcher::instance().deregisterQuery(qep);
+        if(Dispatcher::instance().deregisterQuery(qep))
+        {
+            qeps.erase(qep);
+            NES_DEBUG("NodeEngine: undeploy of QEP " << qep << " succeeded")
+        } else {
+            NES_ERROR("NodeEngine: undeploy of QEP " << qep << " failed")
+            return false;
+        }
     } else {
-        NES_DEBUG("NodeEngine: qep already exists. Deregister failed!" << qep)
+        NES_DEBUG("NodeEngine: qep does not exists. undeployQuery failed" << qep)
         return false;
     }
 }
+
+
+bool NodeEngine::stopQuery(QueryExecutionPlanPtr qep)
+{
+    NES_DEBUG("NodeEngine: stopQuery " << qep)
+    if (qeps.find(qep) != qeps.end()) {
+        if (Dispatcher::instance().stopQuery(qep)) {
+            NES_DEBUG("NodeEngine: stop of QEP " << qep << " succeeded")
+            return true;
+        } else {
+            NES_DEBUG("NodeEngine: stop of QEP " << qep << " failed")
+            return false;
+        }
+    } else {
+        NES_DEBUG("NodeEngine: qep does not exists. stop failed" << qep)
+        return false;
+    }
+}
+
 
 void NodeEngine::init() {
     NES_DEBUG("NodeEngine: init node engine")
@@ -93,10 +121,10 @@ bool NodeEngine::start() {
 bool NodeEngine::startWithRedeploy() {
     for (QueryExecutionPlanPtr qep : qeps) {
         NES_DEBUG("NodeEngine: register query " << qep)
-        if (Dispatcher::instance().registerQueryWithStart(qep)) {
-            NES_DEBUG("NodeEngine: registration of QEP " << qep << " succeeded!")
+        if (Dispatcher::instance().registerQuery(qep)) {
+            NES_DEBUG("NodeEngine: registration of QEP " << qep << " succeeded")
         } else {
-            NES_DEBUG("NodeEngine: registration of QEP " << qep << " failed!")
+            NES_DEBUG("NodeEngine: registration of QEP " << qep << " failed")
         }
     }
 

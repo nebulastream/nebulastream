@@ -393,8 +393,8 @@ TEST_F(EngineTest, parallel_same_source_test) {
 
     NodeEngine* ptr = new NodeEngine();
     ptr->start();
-    ptr->deployQueryWithoutStart(qep1);
-    ptr->deployQueryWithoutStart(qep2);
+    ptr->deployQuery(qep1);
+    ptr->deployQuery(qep2);
     source1->start();
     qep1->completedPromise.get_future().get();
     qep2->completedPromise.get_future().get();
@@ -424,8 +424,8 @@ TEST_F(EngineTest, parallel_same_sink_test) {
 
     NodeEngine* ptr = new NodeEngine();
     ptr->start();
-    ptr->deployQueryWithoutStart(qep1);
-    ptr->deployQueryWithoutStart(qep2);
+    ptr->deployQuery(qep1);
+    ptr->deployQuery(qep2);
     source1->start();
     source2->start();
 
@@ -451,8 +451,8 @@ TEST_F(EngineTest, parallel_same_source_and_sink_test) {
 
     NodeEngine* ptr = new NodeEngine();
     ptr->start();
-    ptr->deployQueryWithoutStart(qep1);
-    ptr->deployQueryWithoutStart(qep2);
+    ptr->deployQuery(qep1);
+    ptr->deployQuery(qep2);
     source1->start();
 
     qep1->completedPromise.get_future().get();
@@ -477,7 +477,7 @@ TEST_F(EngineTest, blocking_test) {
     NodeEngine* ptr = new NodeEngine();
     ptr->setDOPWithRestart(1);
     ptr->start();
-    ptr->deployQueryWithoutStart(qep1);
+    ptr->deployQuery(qep1);
     source1->start();
     qep1->completedPromise.get_future().get();
     source1->stop();

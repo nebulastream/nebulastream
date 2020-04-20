@@ -37,17 +37,10 @@ class Dispatcher {
 
     /**
      * @brief register a query by extracting sources, windows and sink and add them to
-     * respective map + start them
-     * @param QueryExecutionPlan to be deployed
-     */
-    bool registerQueryWithStart(QueryExecutionPlanPtr qep);
-
-    /**
-     * @brief register a query by extracting sources, windows and sink and add them to
      * respective map
      * @param QueryExecutionPlan to be deployed
      */
-    bool registerQueryWithoutStart(QueryExecutionPlanPtr qep);
+    bool registerQuery(QueryExecutionPlanPtr qep);
 
     /**
      * @brief deregister a query by extracting sources, windows and sink and remove them
@@ -101,6 +94,20 @@ class Dispatcher {
      * @brief print QEP statistics of Dispatcher and buffer Manager
      */
     void printQEPStatistics(QueryExecutionPlanPtr qep);
+
+    /**
+     * @brief method to start a query
+     * @param qep of the query to start
+     * @return bool indicating success
+     */
+    bool startQuery(QueryExecutionPlanPtr qep);
+
+    /**
+    * @brief method to start a query
+    * @param qep of the query to start
+    * @return bool indicating success
+    */
+    bool stopQuery(QueryExecutionPlanPtr qep);
 
     /**
      * @brief notify all waiting threads in getWork() to wake up and try again
