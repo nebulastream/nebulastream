@@ -5,6 +5,9 @@
 
 namespace NES {
 
+/**
+ * @brief Descriptor defining properties used for creating physical zmq source
+ */
 class ZmqSourceDescriptor : public SourceDescriptor {
 
   public:
@@ -13,7 +16,14 @@ class ZmqSourceDescriptor : public SourceDescriptor {
 
     SourceDescriptorType getType() override;
 
+    /**
+     * @brief Get zmq host name
+     */
     const std::string& getHost() const;
+
+    /**
+     * @brief Get zmq port number
+     */
     uint16_t getPort() const;
 
   private:

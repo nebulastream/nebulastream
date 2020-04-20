@@ -273,18 +273,13 @@ TEST_F(KafkaTest, DISABLED_KafkaSinkToSource) {
 }
 
 TEST_F(KafkaTest, KafkaSourceInit) {
-   const cppkafka::Configuration sourceConfig = {{"metadata.broker.list",
-                                                  brokers.c_str()}, {"group.id", groupId}};
-   {
-       const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(
-           schema, topic, sourceConfig);
-   }
-   {
-       const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema,
-                                                                       brokers,
-                                                                       topic);
-   }
-   SUCCEED();
+    const cppkafka::Configuration sourceConfig = {{"metadata.broker.list",
+                                                   brokers.c_str()}, {"group.id", groupId}};
+
+    const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(
+        schema, brokers, topic, true, sourceConfig, 100);
+
+    SUCCEED();
 }
 
 TEST_F(KafkaTest, KafkaSourceInitWithoutGroupId) {

@@ -5,6 +5,9 @@
 
 namespace NES {
 
+/**
+ * @brief Descriptor defining properties used for creating physical sense source
+ */
 class SenseSourceDescriptor : public SourceDescriptor {
 
   public:
@@ -13,6 +16,9 @@ class SenseSourceDescriptor : public SourceDescriptor {
 
     SourceDescriptorType getType() override;
 
+    /**
+     * @brief Get the udf for the sense node
+     */
     const std::string& getUdfs() const;
 
   private:
