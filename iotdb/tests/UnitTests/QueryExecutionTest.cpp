@@ -167,8 +167,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
     plan->stop();
 }
 
-// TODO This test is disabled because the windowing logic can randomly break
-TEST_F(QueryExecutionTest, DISABLED_windowQuery) {
+TEST_F(QueryExecutionTest, windowQuery) {
     // TODO in this test, it is not clear what we are testing
     // TODO 10 windows are fired -> 10 output buffers in the sink
     // TODO however, we check the 2nd buffer only
@@ -199,6 +198,7 @@ TEST_F(QueryExecutionTest, DISABLED_windowQuery) {
     plan->addDataSink(testSink);
     plan->addDataSource(testSource);
     Dispatcher::instance().registerQuery(plan);
+
     plan->setup();
     plan->start();
 

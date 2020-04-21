@@ -144,6 +144,7 @@ class DataSource {
     size_t gatheringInterval;
     size_t lastGatheringTimeStamp;
     std::string sourceId;
+    SourceType type;
 
   private:
     friend class boost::serialization::access;

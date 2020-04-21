@@ -70,6 +70,7 @@ TEST_F(QueryDeploymentTest, test_deploy_two_worker_print) {
     string query = "InputQuery::from(default_logical).print(std::cout);";
 
     crd->deployQuery(query, "BottomUp");
+    sleep(2);
 
     bool retStopWrk1 = wrk1->stop();
     EXPECT_TRUE(retStopWrk1);
@@ -197,10 +198,10 @@ TEST_F(QueryDeploymentTest, DISABLED_test_deploy_two_worker_file_output) {
     cout << "worker2 started successfully" << endl;
 
     string query = "InputQuery::from(default_logical).writeToFile(\"test.out\");";
-
     string id = crd->deployQuery(query, "BottomUp");
     ASSERT_NE(id, "");
     sleep(2);
+    cout << "Test read content now" << endl;
     ifstream my_file("test.out");
     EXPECT_TRUE(my_file.good());
 
@@ -240,6 +241,7 @@ TEST_F(QueryDeploymentTest, DISABLED_test_deploy_two_worker_file_output) {
     cout << "expContent=" << expectedContent << endl;
     EXPECT_EQ(content, expectedContent);
 
+    cout << "Test stop now" << endl;
     bool retStopWrk1 = wrk1->stop();
     EXPECT_TRUE(retStopWrk1);
 
@@ -254,7 +256,7 @@ TEST_F(QueryDeploymentTest, DISABLED_test_deploy_two_worker_file_output) {
 }
 
 
-TEST_F(QueryDeploymentTest, test_deploy_and_undeploy_two_worker_file_output) {
+TEST_F(QueryDeploymentTest, DISABLED_test_deploy_and_undeploy_two_worker_file_output) {
     remove("test.out");
 
     cout << "start coordinator" << endl;
