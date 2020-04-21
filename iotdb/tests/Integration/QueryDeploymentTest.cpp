@@ -22,7 +22,7 @@ class QueryDeploymentTest : public testing::Test {
     }
 };
 
-TEST_F(QueryDeploymentTest, DISABLED_test_deploy_one_worker_print) {
+TEST_F(QueryDeploymentTest, test_deploy_one_worker_print) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);
@@ -46,7 +46,7 @@ TEST_F(QueryDeploymentTest, DISABLED_test_deploy_one_worker_print) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(QueryDeploymentTest, DISABLED_test_deploy_two_worker_print) {
+TEST_F(QueryDeploymentTest, test_deploy_two_worker_print) {
     cout << "start coordinator" << endl;
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
     size_t port = crd->startCoordinator(/**blocking**/false);
@@ -81,7 +81,7 @@ TEST_F(QueryDeploymentTest, DISABLED_test_deploy_two_worker_print) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(QueryDeploymentTest, DISABLED_test_deploy_one_worker_file_output) {
+TEST_F(QueryDeploymentTest, test_deploy_one_worker_file_output) {
     remove("test.out");
 
     cout << "start coordinator" << endl;
@@ -100,7 +100,7 @@ TEST_F(QueryDeploymentTest, DISABLED_test_deploy_one_worker_file_output) {
     string query = "InputQuery::from(default_logical).writeToFile(\"test.out\");";
 
     crd->deployQuery(query, "BottomUp");
-
+    sleep(2);
     ifstream my_file("test.out");
     EXPECT_TRUE(my_file.good());
 
@@ -200,7 +200,7 @@ TEST_F(QueryDeploymentTest, DISABLED_test_deploy_two_worker_file_output) {
 
     string id = crd->deployQuery(query, "BottomUp");
     ASSERT_NE(id, "");
-
+    sleep(2);
     ifstream my_file("test.out");
     EXPECT_TRUE(my_file.good());
 
@@ -254,7 +254,7 @@ TEST_F(QueryDeploymentTest, DISABLED_test_deploy_two_worker_file_output) {
 }
 
 
-TEST_F(QueryDeploymentTest, DISABLED_test_deploy_and_undeploy_two_worker_file_output) {
+TEST_F(QueryDeploymentTest, test_deploy_and_undeploy_two_worker_file_output) {
     remove("test.out");
 
     cout << "start coordinator" << endl;
@@ -281,7 +281,7 @@ TEST_F(QueryDeploymentTest, DISABLED_test_deploy_and_undeploy_two_worker_file_ou
 
     string id = crd->deployQuery(query, "BottomUp");
     ASSERT_NE(id, "");
-
+    sleep(2);
     bool successUndeploy = crd->undeployQuery(id);
     ASSERT_TRUE(successUndeploy);
 

@@ -17,38 +17,37 @@
 namespace NES {
 
 ZmqSource::ZmqSource()
-    : host(""), port(0), connected(false), context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PULL))
-{
+    : host(""), port(0), connected(false), context(zmq::context_t(1)), socket(zmq::socket_t(context, ZMQ_PULL)) {
     // This constructor is needed for Serialization
+    NES_DEBUG("ZMQSOURCE  " << this << ": Init DEFAULT for serializazionZMQ ZMQSOURCE to " << host << ":" << port << "/")
+
 }
 
 ZmqSource::ZmqSource(SchemaPtr schema, const std::string& host, const uint16_t port)
     : DataSource(schema), host(host), port(port), connected(false), context(zmq::context_t(1)),
-      socket(zmq::socket_t(context, ZMQ_PULL)){
-          NES_DEBUG("ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/")}
+      socket(zmq::socket_t(context, ZMQ_PULL)) {
+    NES_DEBUG("ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/")
+}
 
-ZmqSource::~ZmqSource()
-{
+ZmqSource::~ZmqSource() {
     bool success = disconnect();
     if (success) {
         NES_DEBUG("ZMQSOURCE  " << this << ": Destroy ZMQ Source")
-    }
-    else {
+    } else {
         NES_ERROR("ZMQSOURCE  " << this << ": Destroy ZMQ Source failed cause it could not be disconnected")
         assert(0);
     }
     NES_DEBUG("ZMQSOURCE  " << this << ": Destroy ZMQ Source")
 }
 
-std::optional<TupleBuffer> ZmqSource::receiveData()
-{
+std::optional<TupleBuffer> ZmqSource::receiveData() {
     NES_DEBUG("ZMQSource  " << this << ": receiveData ")
-    if (connect()) {
+    if (connect()) { // was if (connect()) {
         try {
             // Receive new chunk of data
             zmq::message_t new_data;
             socket.recv(&new_data); // envelope - not needed at the moment
-            size_t tupleCnt = *((size_t*)new_data.data());
+            size_t tupleCnt = *((size_t*) new_data.data());
             NES_DEBUG("ZMQSource received #tups " << tupleCnt)
 
             zmq::message_t new_data2;
@@ -78,15 +77,13 @@ std::optional<TupleBuffer> ZmqSource::receiveData()
                 NES_ERROR("ZMQSOURCE: " << ex.what())
             }
         }
-    }
-    else {
+    } else {
         NES_ERROR("ZMQSOURCE: Not connected!");
         throw new std::runtime_error("ZMQSOURCE: Not connected!");
     }
 }
 
-const std::string ZmqSource::toString() const
-{
+const std::string ZmqSource::toString() const {
     std::stringstream ss;
     ss << "ZMQ_SOURCE(";
     ss << "SCHEMA(" << schema->toString() << "), ";
@@ -95,8 +92,7 @@ const std::string ZmqSource::toString() const
     return ss.str();
 }
 
-bool ZmqSource::connect()
-{
+bool ZmqSource::connect() {
     if (!connected) {
         NES_DEBUG("ZMQSOURCE was !conncect now connect " << this << ": connected")
         if (host == "localhost") {
@@ -123,23 +119,20 @@ bool ZmqSource::connect()
 
     if (connected) {
         NES_DEBUG("ZMQSOURCE  " << this << ": connected")
-    }
-    else {
+    } else {
         NES_DEBUG("Exception: ZMQSOURCE  " << this << ": NOT connected")
     }
     return connected;
 }
 
-bool ZmqSource::disconnect()
-{
+bool ZmqSource::disconnect() {
     if (connected) {
         socket.close();
         connected = false;
     }
     if (!connected) {
         NES_DEBUG("ZMQSOURCE  " << this << ": disconnected")
-    }
-    else {
+    } else {
         NES_DEBUG("ZMQSOURCE  " << this << ": NOT disconnected")
     }
     return !connected;
