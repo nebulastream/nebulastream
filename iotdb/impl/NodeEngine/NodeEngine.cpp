@@ -31,7 +31,29 @@ NodeProperties* NodeEngine::getNodeProperties() {
     return props.get();
 }
 
+
 bool NodeEngine::deployQuery(QueryExecutionPlanPtr qep) {
+    bool successRegister = registerQuery(qep);
+    if(!successRegister)
+    {
+        NES_ERROR("NodeEngine::deployQuery: failed to register query")
+        return false;
+    } else{
+        NES_DEBUG("NodeEngine::deployQuery: successfully register query")
+    }
+    bool successStart = startQuery(qep);
+    if(!successStart)
+    {
+        NES_ERROR("NodeEngine::deployQuery: failed to start query")
+        return false;
+    } else{
+        NES_DEBUG("NodeEngine::deployQuery: successfully start query")
+    }
+    return true;
+}
+
+
+bool NodeEngine::registerQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("NodeEngine: deploy query " << qep)
     if (qeps.find(qep) == qeps.end()) {
         if (Dispatcher::instance().registerQuery(qep)) {
@@ -65,14 +87,36 @@ bool NodeEngine::startQuery(QueryExecutionPlanPtr qep)
     }
 }
 
+bool NodeEngine::undeployQuery(QueryExecutionPlanPtr qep)
+{
+    bool successStop = stopQuery(qep);
+    if(!successStop)
+    {
+        NES_ERROR("NodeEngine::undeployQuery: failed to stop query")
+        return false;
+    } else{
+        NES_DEBUG("NodeEngine::undeployQuery: successfully stop query")
+    }
 
-bool NodeEngine::undeployQuery(QueryExecutionPlanPtr qep) {
+    bool successUnregister = unregisterQuery(qep);
+    if(!successUnregister)
+    {
+        NES_ERROR("NodeEngine::undeployQuery: failed to unregister query")
+        return false;
+    } else{
+        NES_DEBUG("NodeEngine::undeployQuery: successfully unregister query")
+        return true;
+    }
+}
+
+bool NodeEngine::unregisterQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("NodeEngine: undeployQuery query" << qep)
     if (qeps.find(qep) != qeps.end()) {
         if(Dispatcher::instance().deregisterQuery(qep))
         {
             qeps.erase(qep);
             NES_DEBUG("NodeEngine: undeploy of QEP " << qep << " succeeded")
+            return true;
         } else {
             NES_ERROR("NodeEngine: undeploy of QEP " << qep << " failed")
             return false;
@@ -86,7 +130,7 @@ bool NodeEngine::undeployQuery(QueryExecutionPlanPtr qep) {
 
 bool NodeEngine::stopQuery(QueryExecutionPlanPtr qep)
 {
-    NES_DEBUG("NodeEngine: stopQuery " << qep)
+    NES_DEBUG("NodeEngine:stopQuery for qep" << qep)
     if (qeps.find(qep) != qeps.end()) {
         if (Dispatcher::instance().stopQuery(qep)) {
             NES_DEBUG("NodeEngine: stop of QEP " << qep << " succeeded")

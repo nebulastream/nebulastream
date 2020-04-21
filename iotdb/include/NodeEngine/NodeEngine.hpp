@@ -40,18 +40,32 @@ class NodeEngine {
     }
 
     /**
-     * @brief deploy a new query plan to via the dispatcher
+     * @brief deploy registers and starts a query
      * @param new query plan
      * @return true if succeeded, else false
      */
     bool deployQuery (QueryExecutionPlanPtr qep);
 
     /**
-   * @brief undeploy an existing query plan to via the dispatcher
+   * @brief undeploy stops and undeploy a query
    * @param query plan to deploy
    * @return true if succeeded, else false
    */
     bool undeployQuery(QueryExecutionPlanPtr qep);
+
+    /**
+    * @brief gregisters a query
+    * @param query plan to register
+    * @return true if succeeded, else false
+    */
+    bool registerQuery(QueryExecutionPlanPtr qep);
+
+    /**
+   * @brief ungregisters a query
+   * @param query plan to unregisterundeployQuery
+   * @return true if succeeded, else false
+   */
+    bool unregisterQuery(QueryExecutionPlanPtr qep);
 
     /**
     * @brief method to start a already deployed query

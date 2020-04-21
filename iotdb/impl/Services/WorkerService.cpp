@@ -35,6 +35,62 @@ void WorkerService::addPhysicalStreamConfig(PhysicalStreamConfig conf) {
     physicalStreams.insert(std::make_pair(conf.physicalStreamName, conf));
 }
 
+
+bool WorkerService::registerQuery(const std::string& queryId, std::string& executableTransferObject)
+{
+    NES_DEBUG(
+        "WorkerService (" << this->ip << ": registerQuery " << queryId)
+    ExecutableTransferObject eto = SerializationTools::parse_eto(
+        executableTransferObject);
+    NES_DEBUG(
+        "WorkerService eto after parse=" << eto.toString())
+    QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(this->queryCompiler);
+    NES_DEBUG("WorkerService add query to queries map")
+    queryIdToQEPMap.insert({queryId, qep});
+    queryIdToStatusMap.insert({queryId, NodeQueryStatus::deployed});
+
+    bool success = nodeEngine->registerQuery(qep);
+    NES_DEBUG("WorkerService deploy query success=" << success)
+    return success;
+}
+
+bool WorkerService::unregisterQuery(const std::string& queryId)
+{
+    NES_DEBUG(
+        "WorkerService (" << this->ip << ": unregisterQuery " << queryId)
+
+    if (queryIdToStatusMap[queryId] != NodeQueryStatus::stopped) {
+        NES_ERROR(
+            "WorkerService::undeployQuery: cannot unregisterQuery because not stopped status=" << queryIdToStatusMap[queryId])
+        return false;
+    } else {
+        NES_DEBUG("WorkerService::unregisterQuery: query found and status stopped")
+    }
+
+    if (queryIdToQEPMap.count(queryId) == 0) {
+        NES_ERROR(
+            "WorkerService::unregisterQuery: cannot find QEP for qep=" << queryId)
+        return false;
+    }
+
+    bool success = nodeEngine->unregisterQuery(queryIdToQEPMap[queryId]);
+    NES_DEBUG("WorkerService::unregisterQuery: undeploy success=" << success)
+
+    size_t delIdQepMap = queryIdToQEPMap.erase(queryId);
+    size_t delIdStatusMap = queryIdToStatusMap.erase(queryId);
+
+    if (delIdQepMap == 1 && delIdStatusMap == 1) {
+        NES_DEBUG("WorkerService::unregisterQuery: query successfully erased")
+        return true;
+    } else if (delIdQepMap != 1) {
+        NES_ERROR("WorkerService::unregisterQuery: erase in delIdQepMap failed as return is " << delIdQepMap)
+        return false;
+    } else {
+        NES_ERROR("WorkerService::unregisterQuery: erase in delIdStatusMap failed as return is " << delIdStatusMap)
+        return false;
+    }
+}
+
 bool WorkerService::deployQuery(const std::string& queryId, std::string& executableTransferObject) {
     NES_DEBUG(
         "WorkerService (" << this->ip << ": deployQuery " << queryId)
@@ -98,7 +154,7 @@ bool WorkerService::startQuery(const std::string& queryId) {
     } else {
         NES_DEBUG("WorkerService::startQuery: of status=" << queryIdToStatusMap[queryId])
         bool success = nodeEngine->startQuery(queryIdToQEPMap[queryId]);
-        NES_ERROR("WorkerService::startQuery: start with success =" << success)
+        NES_DEBUG("WorkerService::startQuery: start with success =" << success)
         queryIdToStatusMap[queryId] = NodeQueryStatus::started;
         return success;
     }
@@ -106,15 +162,15 @@ bool WorkerService::startQuery(const std::string& queryId) {
 
 bool WorkerService::stopQuery(const std::string& queryId) {
     NES_DEBUG(
-        "WorkerService:stopQuery " << queryId)
+        "WorkerService:stopQuery id=" << queryId)
 
     if (queryIdToStatusMap[queryId] != NodeQueryStatus::started) {
-        NES_ERROR("WorkerService::stopQuery: query start fail because in status " << queryIdToStatusMap[queryId])
+        NES_ERROR("WorkerService::stopQuery: query stop fail because in status " << queryIdToStatusMap[queryId])
         return false;
     } else {
-        NES_DEBUG("WorkerService::stopQuery =" << queryIdToStatusMap[queryId])
+        NES_DEBUG("WorkerService::stopQuery of status=" << queryIdToStatusMap[queryId])
         bool success = nodeEngine->stopQuery(queryIdToQEPMap[queryId]);
-        NES_ERROR("WorkerService::stopQuery: start with success =" << success)
+        NES_ERROR("WorkerService::stopQuery: stop with success =" << success)
         queryIdToStatusMap[queryId] = NodeQueryStatus::stopped;
         return success;
     }

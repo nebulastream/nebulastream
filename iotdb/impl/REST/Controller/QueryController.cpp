@@ -117,8 +117,8 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
 
                             abstract_actor* abstractActor = caf::actor_cast<abstract_actor*>(coordinatorActorHandle);
                             CoordinatorActor* crd = dynamic_cast<CoordinatorActor*>(abstractActor);
-                            string queryId = crd->executeQuery(0, userQuery,
-                                                               optimizationStrategyName);
+                            string queryId = crd->registerAndDeployQuery(0, userQuery,
+                                                                         optimizationStrategyName);
 
                             json::value restResponse{};
                             restResponse["queryId"] = json::value::string(queryId);

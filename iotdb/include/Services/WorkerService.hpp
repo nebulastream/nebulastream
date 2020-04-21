@@ -34,7 +34,7 @@ class WorkerService {
     WorkerService(string ip, uint16_t publish_port, uint16_t receive_port);
 
     /**
-     * @brief method to just deploy a query without starting it
+     * @brief method to register and start
      * @param queryId a queryId of the query
      * @param executableTransferObject wrapper object with the schema, sources, destinations, operator
      * @return bool indicating success
@@ -48,6 +48,22 @@ class WorkerService {
      * @return bool indicating success
      */
     bool undeployQuery(const std::string& queryId);
+
+    /**
+     * @brief method to just register a query without starting it
+     * @param queryId a queryId of the query
+     * @param executableTransferObject wrapper object with the schema, sources, destinations, operator
+     * @return bool indicating success
+     */
+    bool registerQuery(const std::string& queryId, std::string& executableTransferObject);
+
+    /**
+     * @brief method to unregister a query
+     * @note if query is still running, false is returned
+     * @param queryId
+     * @return bool indicating success
+     */
+    bool unregisterQuery(const std::string& queryId);
 
     /**
      * @brief method to start a already deployed query

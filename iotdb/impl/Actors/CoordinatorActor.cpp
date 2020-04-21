@@ -71,9 +71,9 @@ behavior CoordinatorActor::init() {
       }
     });
 
-    this->set_exception_handler([](std::exception_ptr& err) -> error {
+    this->set_exception_handler([](std::exception_ptr err) -> error {
       try {
-          std::rethrow_exception(err);
+          if (err) { std::rethrow_exception(err); }
       }
       catch (const std::exception& e) {
           NES_ERROR("CoordinatorActor => error thrown in error handler:" << e.what())
@@ -291,20 +291,20 @@ bool CoordinatorActor::deployQuery(size_t workerId, const string& queryId) {
         coordinatorServicePtr->prepareExecutableTransferObject(queryId);
 
     NES_DEBUG(
-        "CoordinatorActor::deployQuery first phase of deploy " << deployments.size() << " objects")
+        "CoordinatorActor::register first phase of deploy " << deployments.size() << " objects topology before"
+                                                            << NESTopologyManager::getInstance().getNESTopologyPlanString())
+
     for (auto const& x : deployments) {
-        NES_DEBUG("CoordinatorActor::deployQuery serialize " << x.first << " id=" << x.first->getId() << " eto="
-                                                             << x.second.toString())
+        NES_DEBUG("CoordinatorActor::registerQuery serialize " << x.first << " id=" << x.first->getId() << " eto="
+                                                               << x.second.toString())
         strong_actor_ptr curSender = this->state.topologyActorMap.at(x.first);
         auto handle = actor_cast<actor>(curSender);
         string s_eto = SerializationTools::ser_eto(x.second);
-        NES_DEBUG("CoordinatorActor::deployQuery first phase topology before send "
-                      << NESTopologyManager::getInstance().getNESTopologyPlanString())
         NES_INFO(
-            "CoordinatorActor:: Sending deploy query " << queryId << " to " << to_string(handle))
+            "CoordinatorActor:: Sending query " << queryId << " to " << to_string(handle) << " to register")
 
         std::promise<bool> prom;
-        this->request(handle, task_timeout, deploy_query_atom::value, queryId,
+        this->request(handle, task_timeout, register_query_atom::value, queryId,
                       s_eto).await(
             [=, &prom](bool ret) {
               if (ret == true) {
@@ -319,9 +319,9 @@ bool CoordinatorActor::deployQuery(size_t workerId, const string& queryId) {
             [=](const error& er) {
               string error_msg = to_string(er);
               NES_ERROR(
-                  "WorkerActor: Error during deploy_query_atom for " << to_string(handle) << "\n"
-                                                                         << error_msg);
-              throw new Exception("Error while deployQuery deploy ");
+                  "WorkerActor: Error during register_query_atom for " << to_string(handle) << "\n"
+                                                                       << error_msg);
+              throw new Exception("Error while register_query_atom deploy ");
             });
         bool success = prom.get_future().get();
         NES_DEBUG("WorkerActor::deployQuery: success=" << success)
@@ -356,62 +356,68 @@ bool CoordinatorActor::deployQuery(size_t workerId, const string& queryId) {
               string error_msg = to_string(er);
               NES_ERROR(
                   "WorkerActor: Error during start_query_atom for " << to_string(handle) << "\n"
-                                                                         << error_msg);
+                                                                    << error_msg);
               throw new Exception("Error while deployQuery start");
             });
         bool success = prom.get_future().get();
         NES_DEBUG("WorkerActor::deployQuery: success=" << success)
     }
 
+    NES_DEBUG("WorkerActor::deployQuery: mark query as read")
     QueryCatalog::instance().markQueryAs(queryId, QueryStatus::Running);
+
+    NES_DEBUG("WorkerActor::deployQuery: add execution nodes to query")
+    std::vector<NESTopologyEntryPtr> execNodes;
+    std::transform( deployments.begin(), deployments.end(), std::back_inserter( execNodes ),
+        [] (std::pair<NESTopologyEntryPtr, ExecutableTransferObject> const & dev)
+    {
+      return dev.first;
+    });
+
+    stringstream ss;
+    ss << "deployed on execution nodes=";
+    for(auto e : execNodes)
+    {
+        ss << e->getId() << ",";
+    }
+    NES_DEBUG(ss.str())
+    QueryCatalog::instance().addExecutionNodesToQuery(queryId, execNodes);
+
     return true;
 }
 
-bool CoordinatorActor::deregisterQuery(size_t workerId, const string& queryId) {
-    NES_DEBUG("CoordinatorActor::deregisterQuery: workerId=" << workerId << " queryId=" << queryId)
+bool CoordinatorActor::deregisterAndUndeployQuery(size_t workerId, const string& queryId) {
+    NES_DEBUG("CoordinatorActor::deregisterAndUndeployQuery: workerId=" << workerId << " queryId=" << queryId)
 
-    for (auto const& x : this->state.actorTopologyMap) {
-        auto handle = actor_cast<actor>(x.first);
+    std::vector<NESTopologyEntryPtr> execNodes = QueryCatalog::instance().getExecutionNodesToQuery(queryId);
+    stringstream ss;
+    ss << "undeploy on execution nodes=";
+    for(auto e : execNodes)
+    {
+        ss << e->getId() << ",";
+    }
+    NES_DEBUG(ss.str())
+
+    for (auto const& en : execNodes) {
+        auto handle = actor_cast<actor>(this->state.topologyActorMap[en]);
+        if(!handle)
+        {
+            NES_ERROR("CoordinatorActor::deregisterAndUndeployQuery: handle for node " << en->getId() << " not found")
+            return false;
+        }
         NES_DEBUG(
-            "CoordinatorActor: Sending stop_query_atom request " << queryId << " to " << to_string(handle));
+            "CoordinatorActor: Sending stop_query_atom request " << queryId << " to " << to_string(handle)
+            << " id=" << en->getId());
 
         std::promise<bool> prom;
         this->request(handle, task_timeout, stop_query_atom::value, queryId).await(
             [=, &prom](bool ret) {
               if (ret == true) {
                   NES_DEBUG(
-                      "WorkerActor: deregisterQuery stop " << to_string(handle) << " successfully")
+                      "WorkerActor: deregisterAndUndeployQuery stop " << to_string(handle) << " successfully")
               } else {
                   NES_DEBUG(
-                      "WorkerActor: deregisterQuery stop " << to_string(handle) << " failed")
-              }
-              prom.set_value(ret);
-            },
-            [=](const error& er) {
-              string error_msg = to_string(er);
-              NES_ERROR(
-                  "WorkerActor: Error during stop_query_atom for " << to_string(handle) << "\n"
-                                                                     << error_msg);
-              throw new Exception("Error while deployQuery stop");
-            });
-        bool success = prom.get_future().get();
-        NES_DEBUG("WorkerActor::deregisterQuery: stop success=" << success)
-    }
-
-    for (auto const& x : this->state.actorTopologyMap) {
-        auto handle = actor_cast<actor>(x.first);
-        NES_DEBUG(
-            "CoordinatorActor: Sending undeploy_query_atom request " << queryId << " to " << to_string(handle));
-
-        std::promise<bool> prom;
-        this->request(handle, task_timeout, undeploy_query_atom::value, queryId).await(
-            [=, &prom](bool ret) {
-              if (ret == true) {
-                  NES_DEBUG(
-                      "WorkerActor: deregisterQuery undeploy " << to_string(handle) << " successfully")
-              } else {
-                  NES_DEBUG(
-                      "WorkerActor: deregisterQuery undeploy " << to_string(handle) << " failed")
+                      "WorkerActor: deregisterAndUndeployQuery stop " << to_string(handle) << " failed")
               }
               prom.set_value(ret);
             },
@@ -420,12 +426,47 @@ bool CoordinatorActor::deregisterQuery(size_t workerId, const string& queryId) {
               NES_ERROR(
                   "WorkerActor: Error during stop_query_atom for " << to_string(handle) << "\n"
                                                                    << error_msg);
-              throw new Exception("Error while deregisterQuery undeploy");
+              throw new Exception("Error while deployQuery stop");
             });
         bool success = prom.get_future().get();
-        NES_DEBUG("WorkerActor::deregisterQuery: undeploy success=" << success)
+        NES_DEBUG("WorkerActor::deregisterAndUndeployQuery: stop success=" << success)
     }
 
+    for (auto const& en : execNodes) {
+        auto handle = actor_cast<actor>(this->state.topologyActorMap[en]);
+        if(!handle)
+        {
+            NES_ERROR("CoordinatorActor::deregisterAndUndeployQuery: handle for node " << en->getId() << " not found")
+            return false;
+        }
+        NES_DEBUG(
+            "CoordinatorActor: Sending unregister_query_atom request " << queryId << " to " << to_string(handle) << " id=" << en->getId());
+
+        std::promise<bool> prom;
+        this->request(handle, task_timeout, unregister_query_atom::value, queryId).await(
+            [=, &prom](bool ret) {
+              if (ret == true) {
+                  NES_DEBUG(
+                      "WorkerActor: deregisterAndUndeployQuery undeploy " << to_string(handle) << " successfully")
+              } else {
+                  NES_DEBUG(
+                      "WorkerActor: deregisterAndUndeployQuery undeploy " << to_string(handle) << " failed")
+              }
+              prom.set_value(ret);
+            },
+            [=](const error& er) {
+              string error_msg = to_string(er);
+              NES_ERROR(
+                  "WorkerActor: Error during unregister_query_atom for " << to_string(handle) << "\n"
+                                                                         << error_msg);
+              throw new Exception("Error while deregisterAndUndeployQuery undeploy");
+            });
+        bool success = prom.get_future().get();
+        NES_DEBUG("WorkerActor::deregisterAndUndeployQuery: unregister_query_atom success=" << success)
+    }
+    NES_DEBUG("WorkerActor::deregisterAndUndeployQuery: deleting query from the coordinator service")
+
+    //TODO: recheck that all exec nodes are deleted from the query catalog
     return coordinatorServicePtr->deleteQuery(queryId);
 }
 
@@ -436,12 +477,21 @@ string CoordinatorActor::registerQuery(size_t workerId, const string& queryStrin
     return coordinatorServicePtr->registerQuery(queryString, strategy);
 }
 
-string CoordinatorActor::executeQuery(size_t workerId, const string& queryString,
-                                      const string& strategy) {
-    NES_DEBUG("CoordinatorActor::executeQuery workerId=" << workerId << " queryString=" << queryString << " strategy="
-                                                         << strategy)
+string CoordinatorActor::registerAndDeployQuery(size_t workerId, const string& queryString,
+                                                const string& strategy) {
+    NES_DEBUG("CoordinatorActor::registerAndDeployQuery workerId=" << workerId << " queryString=" << queryString
+                                                                   << " strategy="
+                                                                   << strategy)
     string queryId = coordinatorServicePtr->registerQuery(queryString, strategy);
-    deployQuery(workerId, queryId);
+
+    bool successDeploy = deployQuery(workerId, queryId);
+    if (!successDeploy) {
+        NES_ERROR("CoordinatorActor::registerAndDeployQuery: failed to deploy")
+        return "";
+    } else {
+        NES_DEBUG("CoordinatorActor::registerAndDeployQuery successfull")
+    }
+
     return queryId;
 }
 

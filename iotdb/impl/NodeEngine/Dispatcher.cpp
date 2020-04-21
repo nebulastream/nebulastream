@@ -85,9 +85,11 @@ bool Dispatcher::startQuery(QueryExecutionPlanPtr qep) {
     auto sources = qep->getSources();
     for (const auto& source : sources) {
         NES_DEBUG("Dispatcher: start source " << source << " str=" << source->toString())
+        //TODO: in the current setup we cannot distingush between a failure in starting the source and a already runing source
         if (!source->start()) {
-            NES_FATAL_ERROR("Dispatcher: source " << source << " could not started");
-            return false;
+            NES_WARNING("Dispatcher: source " << source << " could not started as it is already running");
+        } else{
+            NES_DEBUG("Dispatcher: source " << source << " started successfully");
         }
     }
 
@@ -105,7 +107,7 @@ bool Dispatcher::startQuery(QueryExecutionPlanPtr qep) {
 }
 
 bool Dispatcher::deregisterQuery(QueryExecutionPlanPtr qep) {
-    NES_DEBUG("Dispatcher::deregisterQuery: query" << qep)
+    NES_DEBUG("Dispatcher::deregisterAndUndeployQuery: query" << qep)
 
     std::unique_lock<std::mutex> lock(queryMutex);
     bool succeed = true;
@@ -145,7 +147,23 @@ bool Dispatcher::stopQuery(QueryExecutionPlanPtr qep) {
     auto sources = qep->getSources();
     for (const auto& source : sources) {
         NES_DEBUG("Dispatcher: stop source " << source)
-        source->stop();
+        //TODO what if two qeps use the same source
+
+        if(sourceIdToQueryMap[source->getSourceId()].size() != 1)
+        {
+            NES_WARNING("Dispatcher: could not stop source " << source << " because other qeps are using it n=" << sourceIdToQueryMap[source->getSourceId()].size())
+        } else
+        {
+            NES_DEBUG("Dispatcher: stop source " << source << " because only " << qep << " is using it")
+            bool success = source->stop();
+            if(!success)
+            {
+                NES_ERROR("Dispatcher: could not stop source " << source)
+                return false;
+            } else{
+                NES_DEBUG("Dispatcher: source " << source << " successfully stopped")
+            }
+        }
     }
 
     if (!qep->stop()) {
@@ -157,6 +175,7 @@ bool Dispatcher::stopQuery(QueryExecutionPlanPtr qep) {
     auto sinks = qep->getSinks();
     for (const auto& sink : sinks) {
         NES_DEBUG("Dispatcher: stop sink " << sink)
+        //TODO: do we also have to prevent to shutdown sink that is still used by another qep
         sink->shutdown();
     }
 }

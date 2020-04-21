@@ -3,6 +3,8 @@
 #include <string>
 #include <map>
 #include <memory>
+#include <vector>
+#include <Topology/NESTopologyEntry.hpp>
 
 using namespace std;
 
@@ -120,6 +122,28 @@ class QueryCatalog {
     void markQueryAs(string queryId, QueryStatus queryStatus);
 
     /**
+     * @brief method to add which nodes participate in the query
+     * @param queryId
+     * @param nodes
+     */
+    void addExecutionNodesToQuery(string queryId, std::vector<NESTopologyEntryPtr> nodes);
+
+    /**
+     * @brief method to remove nodes which are no longer participate in the query
+     * @param queryId
+     * @param nodes
+    */
+    void removeExecutionNodesToQuery(string queryId, std::vector<NESTopologyEntryPtr> nodes);
+
+    /**
+    * @brief method to get nodes which participate in a query
+    * @param queryId
+    * @return  nodes
+   */
+    std::vector<NESTopologyEntryPtr> getExecutionNodesToQuery(string queryId);
+
+
+    /**
      * @brief method to test if a query is started
      * @param id of the query to stop
      * @note this will set the running bool to false in the QueryCatalogEntry
@@ -168,6 +192,7 @@ class QueryCatalog {
   private:
 
     map<string, QueryCatalogEntryPtr> queries;
+    map<string, std::vector<NESTopologyEntryPtr>> queriesToExecNodeMap;
 };
 }
 

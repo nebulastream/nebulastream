@@ -8,7 +8,7 @@
 #include <SourceSink/DataSource.hpp>
 #include <API/Schema.hpp>
 #include <API/Stream.hpp>
-#include <Topology/NESTopologyEntry.hpp>
+//#include <Topology/NESTopologyEntry.hpp>
 #include <Catalogs/StreamCatalogEntry.hpp>
 using namespace std;
 namespace NES {

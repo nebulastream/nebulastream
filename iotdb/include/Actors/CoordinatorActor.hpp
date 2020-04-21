@@ -125,7 +125,7 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
      * @param strategy : deployment strategy for the query operators
      * @return UUID of the submitted user query.
      */
-    string executeQuery(size_t workerId, const string& queryString, const string& strategy);
+    string registerAndDeployQuery(size_t workerId, const string& queryString, const string& strategy);
 
     /**
      * @brief register the user query
@@ -136,7 +136,7 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
     string registerQuery(size_t workerId, const string& queryString, const string& strategy);
 
     /**
-     * @brief: deploy the user query
+     * @brief: deploy the user query, which includes sending and starting
      * @param queryId
      * @return bool indicating success
      */
@@ -147,7 +147,7 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
      * @param queryId of the query to be de-registered
      * @bool indicating the success of the disconnect
      */
-    bool deregisterQuery(size_t workerId, const string& queryId);
+    bool deregisterAndUndeployQuery(size_t workerId, const string& queryId);
 
     /**
      * @brief method to shutdown the actor

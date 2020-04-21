@@ -3491,7 +3491,7 @@ class Colorize {
         __attribute__((noreturn))
 #endif
         static void
-        sig_handler(int signo, siginfo_t* info, void* _ctx) {
+    sig_handler(int signo, siginfo_t* info, void* _ctx) {
             handleSignal(signo, info, _ctx);
 
             // try to forward the signal.

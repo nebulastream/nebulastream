@@ -57,7 +57,7 @@ string QueryCatalog::registerQuery(const string& queryString,
         NES_ERROR(
             "QueryCatalog: Unable to process input request with: queryString: " << queryString << "\n strategy: "
                                                                                 << optimizationStrategyName);
-        return nullptr;
+        return "";
     }
 }
 
@@ -82,6 +82,30 @@ bool QueryCatalog::deleteQuery(const string& queryId) {
         return true;
     }
 }
+
+std::vector<NESTopologyEntryPtr> QueryCatalog::getExecutionNodesToQuery(string queryId)
+{
+    return queriesToExecNodeMap[queryId];
+}
+
+void QueryCatalog::addExecutionNodesToQuery(string queryId, std::vector<NESTopologyEntryPtr> nodes)
+{
+    std::vector<NESTopologyEntryPtr>& vec = queriesToExecNodeMap[queryId];
+    std::copy(nodes.begin(), nodes.end(), std::back_inserter(vec));
+}
+
+void QueryCatalog::removeExecutionNodesToQuery(string queryId, std::vector<NESTopologyEntryPtr> nodes)
+{
+    std::vector<NESTopologyEntryPtr>& vec = queriesToExecNodeMap[queryId];
+
+    std::unordered_multiset<NESTopologyEntryPtr> st;
+    st.insert(vec.begin(), vec.end());
+    st.insert(nodes.begin(), nodes.end());
+    auto predicate = [&st](const NESTopologyEntryPtr& k){ return st.count(k) > 1; };
+    vec.erase(std::remove_if(vec.begin(), vec.end(), predicate), vec.end());
+}
+
+
 
 void QueryCatalog::markQueryAs(string queryId, QueryStatus queryStatus) {
     NES_DEBUG("QueryCatalog: mark query with id " << queryId << " as " << queryStatus)
