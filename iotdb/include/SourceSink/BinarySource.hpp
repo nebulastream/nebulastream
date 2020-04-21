@@ -17,12 +17,12 @@ namespace NES {
 class BinarySource : public DataSource {
   public:
 
-  /**
-   * @brief constructor for binary source
-   * @param schema of the data source
-   * @param file path
-   */
-  BinarySource(SchemaPtr schema, const std::string& file_path);
+    /**
+     * @brief constructor for binary source
+     * @param schema of the data source
+     * @param file path
+     */
+    BinarySource(SchemaPtr schema, const std::string& file_path);
 
     /**
      * @brief override the receiveData method for the binary source
