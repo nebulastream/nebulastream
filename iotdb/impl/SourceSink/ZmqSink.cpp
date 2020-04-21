@@ -40,9 +40,10 @@ ZmqSink::ZmqSink(SchemaPtr schema, const std::string &host,
       socket(zmq::socket_t(context, ZMQ_PUSH)) {
     NES_DEBUG(
         "ZMQSINK  " << this << ": Init ZMQ Sink to " << host << ":" << port)
-
 }
+
 ZmqSink::~ZmqSink() {
+    NES_DEBUG("ZmqSink::~ZmqSink: destructor called")
     bool success = disconnect();
     if (success) {
         NES_DEBUG("ZMQSINK  " << this << ": Destroy ZMQ Sink")
@@ -56,7 +57,8 @@ ZmqSink::~ZmqSink() {
 }
 
 bool ZmqSink::writeData(TupleBuffer& input_buffer) {
-    bool connected = connect();
+//    bool connected =
+        connect();
     if (!connected) {
         NES_DEBUG(
             "ZMQSINK  " << this << ": cannot write buffer " << input_buffer << " because queue is not connected")

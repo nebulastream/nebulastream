@@ -81,6 +81,9 @@ bool DataSource::stop() {
             NES_DEBUG("DataSource::stop try to join threads=" << thread->get_id())
             if (thread->joinable()) {
                 NES_DEBUG("DataSource::stop thread is joinable=" << thread->get_id())
+                if(getType() == 0)//TODO this is only a workaround and will be replaced by the network stack upate
+                    return true;
+
                 thread->join();
                 NES_DEBUG("DataSource: Thread joinded")
                 ret = true;
@@ -121,7 +124,6 @@ void DataSource::running_routine() {
         size_t cnt = 0;
 
         if (getType() == 0) {//TODO: special behavior for zmq_source as a workaround
-
             while (running) {
                 auto optBuf = receiveData();
                 if (!!optBuf) {

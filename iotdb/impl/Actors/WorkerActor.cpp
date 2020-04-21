@@ -403,7 +403,7 @@ behavior WorkerActor::running() {
           return this->state.workerPtr->undeployQuery(queryId);
         },
         [=](register_query_atom, const string& queryId, string& executableTransferObject) {
-            NES_DEBUG("WorkerActor: got request for start_query_atom queryId=" << queryId)
+            NES_DEBUG("WorkerActor: got request for register_query_atom queryId=" << queryId)
             return this->state.workerPtr->registerQuery(queryId, executableTransferObject);
         },
         [=](unregister_query_atom, const string& queryId) {
