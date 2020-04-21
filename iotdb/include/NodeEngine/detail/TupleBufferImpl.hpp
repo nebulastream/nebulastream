@@ -3,6 +3,13 @@
 
 #include <Util/Logger.hpp>
 
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+#include <unordered_map>
+#include <thread>
+#include <mutex>
+#include <deque>
+#endif
+
 namespace NES {
 class BufferManager;
 class TupleBuffer;
@@ -80,6 +87,10 @@ class BufferControlBlock {
      */
     void setTupleSizeInBytes(size_t);
 
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+    void dumpOwningThreadInfo();
+#endif
+
   private:
     std::atomic<uint32_t> referenceCounter;
     // TODO check whether to remove them
@@ -87,6 +98,30 @@ class BufferControlBlock {
     std::atomic<uint32_t> numberOfTuples;
     MemorySegment* owner;
     std::function<void(MemorySegment*)> recycleCallback;
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+  private:
+    class ThreadOwnershipInfo {
+        friend class BufferControlBlock;
+      private:
+        std::string threadName;
+        std::string callstack;
+      public:
+        ThreadOwnershipInfo();
+
+        ThreadOwnershipInfo(std::string&& threadName, std::string&& callstack);
+
+        ThreadOwnershipInfo(const ThreadOwnershipInfo&) = default;
+
+        ThreadOwnershipInfo& operator=(const ThreadOwnershipInfo&) = default;
+
+        friend std::ostream& operator<<(std::ostream& os, const ThreadOwnershipInfo& info) {
+            os << info.threadName << " buffer is used in " << info.callstack;
+            return os;
+        }
+    };
+    std::mutex owningThreadsMutex;
+    std::unordered_map<std::thread::id, std::deque<ThreadOwnershipInfo>> owningThreads;
+#endif
 };
 
 /**

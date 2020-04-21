@@ -11,6 +11,8 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
 
+#include <Util/ThreadBarrier.hpp>
+
 #include <SourceSink/DataSource.hpp>
 BOOST_CLASS_EXPORT_IMPLEMENT(NES::DataSource);
 
@@ -47,15 +49,18 @@ DataSource::~DataSource() {
 }
 
 bool DataSource::start() {
+    auto barrier = std::make_shared<ThreadBarrier>(2);
     std::unique_lock lock(startStopMutex);
     if (running)
         return false;
     running = true;
 
     NES_DEBUG("DataSource " << this->getSourceId() << ": Spawn thread")
-    thread = std::make_shared<std::thread>([this]() {
+    thread = std::make_shared<std::thread>([this, barrier]() {
+        barrier->wait();
         running_routine();
     });
+    barrier->wait();
     return true;
 }
 

@@ -1,11 +1,12 @@
 add_source_iotdb(
-        NodeEngine.cpp
-        NodeProperties.cpp
-        Dispatcher.cpp
-        BufferManager.cpp
-        ThreadPool.cpp
-        Task.cpp
-		TupleBuffer.cpp
-        detail/TupleBufferImpl.cpp
+	NodeEngine.cpp
+	NodeProperties.cpp
+	Dispatcher.cpp
+	BufferManager.cpp
+	ThreadPool.cpp
+	Task.cpp
+	TupleBuffer.cpp
+	detail/TupleBufferImpl.cpp
+	SignalHandling.cpp
 )
 add_subdirectory(MemoryLayout)
