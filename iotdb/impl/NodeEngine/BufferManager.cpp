@@ -13,15 +13,22 @@ BufferManager::BufferManager() : bufferSize(0), numOfBuffers(0), isConfigured(fa
 
 BufferManager::~BufferManager() {
     std::scoped_lock lock(availableBuffersMutex, unpooledBuffersMutex);
+    auto success = true;
     if (allBuffers.size() != availableBuffers.size()) {
         NES_ERROR("[BufferManager] total buffers " << allBuffers.size() << " :: available buffers "
-                                                   << availableBuffers.size())
-        NES_THROW_RUNTIME_ERROR("[BufferManager] Requested buffer manager shutdown but buffers are still used");
+                                                   << availableBuffers.size());
+        success = false;
     }
     for (auto& buffer : allBuffers) {
         if (!buffer.isAvailable()) {
-            NES_THROW_RUNTIME_ERROR("[BufferManager] Requested buffer manager shutdown but a buffer is still used");
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+            buffer.controlBlock.dumpOwningThreadInfo();
+#endif
+            success = false;
         }
+    }
+    if (!success) {
+        NES_THROW_RUNTIME_ERROR("[BufferManager] Requested buffer manager shutdown but a buffer is still used");
     }
     // RAII takes care of deallocating memory here
     allBuffers.clear();
