@@ -53,44 +53,6 @@ message( STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}" )
 
 
 #-------------------------------##############----------------------------------
-#------------------------------- # E2E Test Suite --------------------------------
-### E2E Tests ###
-add_executable(e2e-rest-test "E2e/E2eRestTest.cpp")
-target_link_libraries(e2e-rest-test iotdb ${GTEST_LIBRARIES})
-add_test(NAME e2e-rest-test COMMAND e2e-rest-test)
-set_tests_properties(e2e-rest-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-
-#------------------------------- # Integration Test Suite --------------------------------
-### MultiWorkerTest ###
-add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")
-target_link_libraries(multi-worker-test iotdb ${GTEST_LIBRARIES})
-add_test(NAME multi-worker-test COMMAND multi-worker-test)
-
-### ContiniousSourceTest ###
-#add_executable(continious-source-test "Integration/ContiniousSourceTest.cpp")
-#target_link_libraries(continious-source-test iotdb ${GTEST_LIBRARIES})
-#add_test(NAME continious-source-test COMMAND continious-source-test)
-
-### Catalog Remote Tests ###
-add_executable(stream-catalog-remote-test "Integration/StreamCatalogRemoteTest.cpp")
-target_link_libraries(stream-catalog-remote-test iotdb ${GTEST_LIBRARIES})
-add_test(NAME stream-catalog-remote-test COMMAND stream-catalog-remote-test)
-
-### WorkerCoordinatorStarter Tests ###
-add_executable(worker-coordinator-starter-tests "Integration/WorkerCoordinatorStarterTest.cpp")
-target_link_libraries(worker-coordinator-starter-tests iotdb ${GTEST_LIBRARIES})
-add_test(NAME worker-coordinator-starter-tests COMMAND worker-coordinator-starter-tests)
-
-### WorkerCoordinatorStarter Tests ###
-add_executable(update-topology-remote-test "Integration/UpdateTopologyRemoteTest.cpp")
-target_link_libraries(update-topology-remote-test iotdb ${GTEST_LIBRARIES})
-add_test(NAME update-topology-remote-test COMMAND update-topology-remote-test)
-
-# NetworkStackTest
-add_executable(network-stack-test "Integration/NetworkStackTest.cpp")
-target_link_libraries(network-stack-test iotdb ${GTEST_LIBRARIES})
-add_test(NAME network-stack-test COMMAND network-stack-test)
-
 #------------------------------- # Unit Test Suite --------------------------------
 
 ### Node Engine Tests ###
@@ -233,6 +195,49 @@ add_test(NAME convert-logical-to-physical-sink-tests COMMAND convert-logical-to-
 add_executable(convert-logical-to-physical-source-tests "UnitTests/ConvertLogicalToPhysicalSourceTest.cpp")
 target_link_libraries(convert-logical-to-physical-source-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME convert-logical-to-physical-source-tests COMMAND convert-logical-to-physical-source-tests)
+
+#------------------------------- # Integration Test Suite --------------------------------
+### MultiWorkerTest ###
+add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")
+target_link_libraries(multi-worker-test iotdb ${GTEST_LIBRARIES})
+add_test(NAME multi-worker-test COMMAND multi-worker-test)
+
+### QueryDeploymentTest ###
+add_executable(query-deployment-test "Integration/QueryDeploymentTest.cpp")
+target_link_libraries(query-deployment-test iotdb ${GTEST_LIBRARIES})
+add_test(NAME query-deployment-test COMMAND query-deployment-test)
+
+### ContiniousSourceTest ###
+#add_executable(continious-source-test "Integration/ContiniousSourceTest.cpp")
+#target_link_libraries(continious-source-test iotdb ${GTEST_LIBRARIES})
+#add_test(NAME continious-source-test COMMAND continious-source-test)
+
+### Catalog Remote Tests ###
+add_executable(stream-catalog-remote-test "Integration/StreamCatalogRemoteTest.cpp")
+target_link_libraries(stream-catalog-remote-test iotdb ${GTEST_LIBRARIES})
+add_test(NAME stream-catalog-remote-test COMMAND stream-catalog-remote-test)
+
+### WorkerCoordinatorStarter Tests ###
+add_executable(worker-coordinator-starter-tests "Integration/WorkerCoordinatorStarterTest.cpp")
+target_link_libraries(worker-coordinator-starter-tests iotdb ${GTEST_LIBRARIES})
+add_test(NAME worker-coordinator-starter-tests COMMAND worker-coordinator-starter-tests)
+
+### WorkerCoordinatorStarter Tests ###
+add_executable(update-topology-remote-test "Integration/UpdateTopologyRemoteTest.cpp")
+target_link_libraries(update-topology-remote-test iotdb ${GTEST_LIBRARIES})
+add_test(NAME update-topology-remote-test COMMAND update-topology-remote-test)
+
+# NetworkStackTest
+add_executable(network-stack-test "Integration/NetworkStackTest.cpp")
+target_link_libraries(network-stack-test iotdb ${GTEST_LIBRARIES})
+add_test(NAME network-stack-test COMMAND network-stack-test)
+
+#------------------------------- # E2E Test Suite --------------------------------
+### E2E Tests ###
+add_executable(e2e-rest-test "E2e/E2eRestTest.cpp")
+target_link_libraries(e2e-rest-test iotdb ${GTEST_LIBRARIES})
+add_test(NAME e2e-rest-test COMMAND e2e-rest-test)
+set_tests_properties(e2e-rest-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure DEPENDS ${UNITTESTS})

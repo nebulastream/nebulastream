@@ -5,7 +5,6 @@
 #include <Util/Logger.hpp>
 #include <sstream>
 
-
 namespace NES {
 WorkerActor::WorkerActor(actor_config& cfg, string ip, uint16_t publish_port,
                          uint16_t receive_port, NESNodeType type)
@@ -37,12 +36,9 @@ behavior WorkerActor::init() {
     this->set_error_handler([=](const caf::error& err) {
       NES_WARNING("WorkerActor => error thrown in error handler:" << to_string(err))
       NES_WARNING(" from " << this)
-      if(err != exit_reason::user_shutdown)
-      {
+      if (err != exit_reason::user_shutdown) {
           NES_ERROR("WorkerActor error handle")
-      }
-      else
-      {
+      } else {
           NES_DEBUG("WorkerActor error comes from stopping")
       }
     });
@@ -309,16 +305,11 @@ bool WorkerActor::disconnecting() {
 }
 
 bool WorkerActor::registerNode(NESNodeType type) {
-    if(type ==  NESNodeType::Sensor)
-    {
+    if (type == NESNodeType::Sensor) {
         NES_DEBUG("WorkerActor::registerNode: try to register a sensor")
-    }
-    else if(type ==  NESNodeType::Worker)
-    {
+    } else if (type == NESNodeType::Worker) {
         NES_DEBUG("WorkerActor::registerNode: try to register a worker")
-    }
-    else
-    {
+    } else {
         NES_ERROR("WorkerActor::registerNode node type not supported " << type)
         throw new Exception("WorkerActor::registerNode wrong node type");
     }
@@ -331,7 +322,7 @@ bool WorkerActor::registerNode(NESNodeType type) {
                   this->state.workerPtr->getReceivePort(),
                   2,
                   this->state.workerPtr->getNodeProperties(),
-                  (int)type)
+                  (int) type)
         .await(
             [=, &prom](const size_t& id) mutable {
               NES_DEBUG("WorkerActor::registerNode: node registered successfully")
@@ -340,18 +331,15 @@ bool WorkerActor::registerNode(NESNodeType type) {
               string error_msg = to_string(er);
               NES_ERROR(
                   "WorkerActor::registerNode:node registered not successfully created " << "\n"
-                                                                                            << error_msg);
+                                                                                        << error_msg);
               throw new Exception("Error while registerNode");
             });;
 
     workerId = prom.get_future().get();
-    if(workerId == 0)
-    {
+    if (workerId == 0) {
         NES_ERROR("WorkerActor::registerNode failed")
         return false;
-    }
-    else
-    {
+    } else {
         NES_DEBUG("WorkerActor::registerNode: with id=" << workerId)
         return true;
     }
@@ -407,20 +395,28 @@ behavior WorkerActor::running() {
         // internal rpc to execute a query
         [=](deploy_query_atom, const string& queryId, string& executableTransferObject) {
           NES_DEBUG("WorkerActor: got request for deploy_query_atom queryId=" << queryId << " eto="
-                                                                                   << executableTransferObject)
+                                                                              << executableTransferObject)
           return this->state.workerPtr->deployQuery(queryId, executableTransferObject);
         },
         [=](undeploy_query_atom, const string& queryId) {
           NES_DEBUG("WorkerActor: got request for undeploy_query_atom queryId=" << queryId)
-          this->state.workerPtr->undeployQuery(queryId);
+          return this->state.workerPtr->undeployQuery(queryId);
+        },
+        [=](register_query_atom, const string& queryId, string& executableTransferObject) {
+            NES_DEBUG("WorkerActor: got request for start_query_atom queryId=" << queryId)
+            return this->state.workerPtr->registerQuery(queryId, executableTransferObject);
+        },
+        [=](unregister_query_atom, const string& queryId) {
+            NES_DEBUG("WorkerActor: got request for unregister_query_atom queryId=" << queryId)
+            return this->state.workerPtr->unregisterQuery(queryId);
         },
         [=](start_query_atom, const string& queryId) {
           NES_DEBUG("WorkerActor: got request for start_query_atom queryId=" << queryId)
-          this->state.workerPtr->startQuery(queryId);
+          return this->state.workerPtr->startQuery(queryId);
         },
         [=](stop_query_atom, const string& queryId) {
-            NES_DEBUG("WorkerActor: got request for stop_query_atom queryId=" << queryId)
-            this->state.workerPtr->stopQuery(queryId);
+          NES_DEBUG("WorkerActor: got request for stop_query_atom queryId=" << queryId)
+          return this->state.workerPtr->stopQuery(queryId);
         }
     };
     NES_DEBUG("WorkerActor::running end running")

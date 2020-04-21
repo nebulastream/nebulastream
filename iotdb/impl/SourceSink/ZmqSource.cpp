@@ -27,7 +27,7 @@ ZmqSource::ZmqSource(SchemaPtr schema, const std::string& host, const uint16_t p
       socket(zmq::socket_t(context, ZMQ_PULL)){
           NES_DEBUG("ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/")}
 
-      ZmqSource::~ZmqSource()
+ZmqSource::~ZmqSource()
 {
     bool success = disconnect();
     if (success) {

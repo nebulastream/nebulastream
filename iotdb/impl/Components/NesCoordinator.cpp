@@ -26,6 +26,18 @@ void startRestServer(infer_handle_from_class_t<CoordinatorActor> handle,
     NES_DEBUG("NesCoordinator: startRestServer thread terminates")
 }
 
+string NesCoordinator::deployQuery(const string& queryString, const string& strategy)
+{
+    NES_DEBUG("NesCoordinator:registerAndDeployQuery queryString=" << queryString << " strategy=" << strategy)
+    return crdPtr->registerAndDeployQuery(0, queryString, strategy);
+}
+
+bool NesCoordinator::undeployQuery(const string& queryId)
+{
+    NES_DEBUG("NesCoordinator:unddeployQuery queryId=" << queryId)
+    return crdPtr->deregisterAndUndeployQuery(0, queryId);
+}
+
 bool NesCoordinator::stopCoordinator() {
     NES_DEBUG("NesCoordinator: stop")
 

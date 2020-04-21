@@ -5,6 +5,7 @@
 #include <Topology/NESTopologyEntry.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <sstream>
+
 namespace NES {
 /**
  * @brief one entry in the catalog contains

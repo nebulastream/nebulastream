@@ -108,7 +108,6 @@ TEST_F(E2eRestTest, _testExecutingValidUserQueryWithPrintOutput) {
     cout << "Killing coordinator process->PID: " << coordinatorPid << endl;
     coordinatorProc.terminate();
 }
-
 TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
     cout << " start coordinator" << endl;
     std::string outputFilePath = "ValidUserQueryWithFileOutputTestResult.txt";

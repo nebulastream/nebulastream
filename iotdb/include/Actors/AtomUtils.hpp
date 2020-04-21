@@ -36,6 +36,9 @@ using undeploy_query_atom = atom_constant<atom("undeploy_q")>;
 using start_query_atom = atom_constant<atom("start_q")>;
 using stop_query_atom = atom_constant<atom("stop_q")>;
 
+using register_query_atom = atom_constant<atom("req_q")>;
+using unregister_query_atom = atom_constant<atom("unreq_q")>;
+
 }
 
 #endif //INCLUDE_ACTORS_ATOMUTILS_HPP_

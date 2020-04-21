@@ -51,14 +51,16 @@ DataSource::~DataSource() {
 bool DataSource::start() {
     auto barrier = std::make_shared<ThreadBarrier>(2);
     std::unique_lock lock(startStopMutex);
-    if (running)
+    if (running) {
         return false;
+    }
     running = true;
 
     NES_DEBUG("DataSource " << this->getSourceId() << ": Spawn thread")
     thread = std::make_shared<std::thread>([this, barrier]() {
         barrier->wait();
         running_routine();
+
     });
     barrier->wait();
     return true;
@@ -66,21 +68,42 @@ bool DataSource::start() {
 
 bool DataSource::stop() {
     std::unique_lock lock(startStopMutex);
-    NES_DEBUG("DataSource " << this->getSourceId() << ": Stop called and source is " << (running ? "running" : "not running"));
+    NES_DEBUG("DataSource " << this->getSourceId() << ": Stop called and source is "
+                            << (running ? "running" : "not running"));
     if (!running) {
+        NES_DEBUG("DataSource " << this->getSourceId() << " is not running")
         return false;
     }
     running = false;
     bool ret = false;
-    if (thread && thread->joinable()) {
-        thread->join();
-        NES_DEBUG("DataSource " << this->getSourceId() << ": Thread joinded")
-        ret = true;
-    } else {
-        NES_DEBUG(
-            "DataSource " << this->getSourceId() << ": Thread is not joinable")
+    try {
+        if (thread) {
+            NES_DEBUG("DataSource::stop try to join threads=" << thread->get_id())
+            if (thread->joinable()) {
+                NES_DEBUG("DataSource::stop thread is joinable=" << thread->get_id())
+                thread->join();
+                NES_DEBUG("DataSource: Thread joinded")
+                ret = true;
+                thread.reset();
+            } else {
+                NES_DEBUG(
+                    "DataSource " << this->getSourceId() << ": Thread is not joinable")
+                return false;
+            }
+        }
     }
-    thread.reset();
+    catch (...) {
+        NES_ERROR("DataSource::stop error IN CATCH")
+        auto expPtr = std::current_exception();
+        try {
+            if (expPtr) std::rethrow_exception(expPtr);
+        }
+        catch (const std::exception& e) //it would not work if you pass by value
+        {
+            NES_ERROR("DataSource::stop error while stopping data source " << this << " error=" << e.what())
+        }
+    }
+
     return ret;
 }
 
@@ -99,7 +122,8 @@ void DataSource::running_routine() {
 
         while (running) {
             size_t currentTime = time(NULL);
-            if (gatheringInterval == 0 || (lastGatheringTimeStamp != currentTime && currentTime%gatheringInterval == 0)) {  //produce a buffer
+            if (gatheringInterval == 0
+                || (lastGatheringTimeStamp != currentTime && currentTime%gatheringInterval == 0)) {  //produce a buffer
                 lastGatheringTimeStamp = currentTime;
                 if (cnt < numBuffersToProcess) {
                     auto optBuf = receiveData();
@@ -107,7 +131,8 @@ void DataSource::running_routine() {
                         auto& buf = optBuf.value();
                         NES_DEBUG(
                             "DataSource " << this->getSourceId() << " type=" << getType() << " string=" << toString()
-                                          << ": Received Data: " << buf.getNumberOfTuples() << " tuples" << " iteration="
+                                          << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
+                                          << " iteration="
                                           << cnt)
                         Dispatcher::instance().addWork(this->sourceId, buf);
                         cnt++;
@@ -115,23 +140,23 @@ void DataSource::running_routine() {
                 } else {
                     NES_DEBUG(
                         "DataSource " << this->getSourceId() << ": Receiving thread terminated ... stopping")
-                    return;
+                    //                    return;//TODO: check if this really has to be done of if we just continue looping
                 }
-
             } else {
-                NES_DEBUG("DataSource::running_routine sleep")
+                NES_DEBUG("DataSource::running_routine sleep " << this)
                 sleep(gatheringInterval);
-                continue;
+//                continue;
             }
             NES_DEBUG(
                 "DataSource " << this->getSourceId() << ": Data Source finished processing iteration " << cnt)
-        }
+        }//end of while running
     } else {
         NES_FATAL_ERROR(
             "DataSource " << this->getSourceId() << ": No ID assigned. Running_routine is not possible!")
         throw std::logic_error(
             "DataSource: No ID assigned. Running_routine is not possible!");
     }
+    NES_DEBUG("DataSource::running_routine: exist routine " << this)
 }
 
 // debugging
