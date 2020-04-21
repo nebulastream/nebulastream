@@ -68,5 +68,10 @@ std::optional<TupleBuffer> DefaultSource::receiveData() {
     buf.setNumberOfTuples(tupleCnt);
     return buf;
 }
+
+SourceType DefaultSource::getType() const {
+    return DEFAULT_SOURCE;
+}
+
 }
 BOOST_CLASS_EXPORT(NES::DefaultSource);

@@ -10,7 +10,7 @@
 #include <Util/Logger.hpp>
 
 namespace NES {
-class ConvertLogicalToPhysicalSinkTest : public testing::Test {
+class ConvertLogicalToPhysicalSourceTest : public testing::Test {
   public:
 
     static void SetUpTestCase() {
@@ -26,23 +26,25 @@ class ConvertLogicalToPhysicalSinkTest : public testing::Test {
     }
 };
 
-TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingCsvFileLogiclaToPhysicalSource) {
+TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingCsvFileLogiclaToPhysicalSource) {
 
     SchemaPtr schema = Schema::create();
     SourceDescriptorPtr sourceDescriptor = std::make_shared<CsvSourceDescriptor>(schema, "csv.log", ",", 10, 10);
     DataSourcePtr csvFileSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor);
-    EXPECT_EQ(csvFileSource->getType(), CSV_SOURCE);
+    EXPECT_EQ(csvFileSource->getType(),  CSV_SOURCE);
 }
 
-TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingBinaryFileLogiclaToPhysicalSource) {
+TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingBinaryFileLogiclaToPhysicalSource) {
 
+    std::string filePath =
+        "../tests/test_data/ysb-tuples-100-campaign-100.bin";
     SchemaPtr schema = Schema::create();
-    SourceDescriptorPtr sourceDescriptor = std::make_shared<BinarySourceDescriptor>(schema, "binary.log");
+    SourceDescriptorPtr sourceDescriptor = std::make_shared<BinarySourceDescriptor>(schema, filePath);
     DataSourcePtr binaryFileSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor);
     EXPECT_EQ(binaryFileSource->getType(), BINARY_SOURCE);
 }
 
-TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingZMQLogiclaToPhysicalSource) {
+TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingZMQLogiclaToPhysicalSource) {
 
     SchemaPtr schema = Schema::create();
     SourceDescriptorPtr sourceDescriptor = std::make_shared<ZmqSourceDescriptor>(schema, "localhost", 10000);
@@ -50,7 +52,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingZMQLogiclaToPhysicalSourc
     EXPECT_EQ(zqmSource->getType(), ZMQ_SOURCE);
 }
 
-TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingKafkaLogiclaToPhysicalSource) {
+TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingKafkaLogiclaToPhysicalSource) {
 
     SchemaPtr schema = Schema::create();
     SourceDescriptorPtr sourceDescriptor = std::make_shared<KafkaSourceDescriptor>(schema, "localhost:9092", "topic", /**group Id**/ "groupId", /**auto commit*/ true, /**timeout*/ 1000);
@@ -58,7 +60,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingKafkaLogiclaToPhysicalSou
     EXPECT_EQ(csvFileSource->getType(), KAFKA_SOURCE);
 }
 
-TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingSenseLogiclaToPhysicalSource) {
+TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingSenseLogiclaToPhysicalSource) {
 
     SchemaPtr schema = Schema::create();
     SourceDescriptorPtr sourceDescriptor = std::make_shared<SenseSourceDescriptor>(schema, "some_udf");
@@ -66,12 +68,12 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingSenseLogiclaToPhysicalSou
     EXPECT_EQ(senseSource->getType(), SENSE_SOURCE);
 }
 
-TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingDefaultLogiclaToPhysicalSource) {
+TEST_F(ConvertLogicalToPhysicalSourceTest, testConvertingDefaultLogiclaToPhysicalSource) {
 
     SchemaPtr schema = Schema::create();
     SourceDescriptorPtr sourceDescriptor = std::make_shared<DefaultSourceDescriptor>(schema, /**Number Of Buffers*/ 1, /**Frequency*/1);
     DataSourcePtr senseSource = ConvertLogicalToPhysicalSource::createDataSource(sourceDescriptor);
-    EXPECT_EQ(senseSource->getType(), SENSE_SOURCE);
+    EXPECT_EQ(senseSource->getType(), DEFAULT_SOURCE);
 }
 }
 

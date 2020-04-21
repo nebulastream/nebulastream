@@ -20,7 +20,8 @@ enum SourceType {
     YSB_SOURCE,
     TEST_SOURCE,
     BINARY_SOURCE,
-    SENSE_SOURCE
+    SENSE_SOURCE,
+    DEFAULT_SOURCE
 };
 
 /**
