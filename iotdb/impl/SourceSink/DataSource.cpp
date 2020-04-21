@@ -117,39 +117,66 @@ void DataSource::setGatheringInterval(size_t interval) {
 
 void DataSource::running_routine() {
     if (!this->sourceId.empty()) {
-        NES_DEBUG("DataSource " << this->getSourceId() << ": Running Data Source")
+        NES_DEBUG("DataSource " << this->getSourceId() << ": Running Data Source of type=" << getType())
         size_t cnt = 0;
 
-        while (running) {
-            size_t currentTime = time(NULL);
-            if (gatheringInterval == 0
-                || (lastGatheringTimeStamp != currentTime && currentTime%gatheringInterval == 0)) {  //produce a buffer
-                lastGatheringTimeStamp = currentTime;
-                if (cnt < numBuffersToProcess) {
-                    auto optBuf = receiveData();
-                    if (!!optBuf) {
-                        auto& buf = optBuf.value();
-                        NES_DEBUG(
-                            "DataSource " << this->getSourceId() << " type=" << getType() << " string=" << toString()
-                                          << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
-                                          << " iteration="
-                                          << cnt)
-                        Dispatcher::instance().addWork(this->sourceId, buf);
-                        cnt++;
-                    }
+        if (getType() == 0) {//TODO: special behavior for zmq_source as a workaround
+
+            while (running) {
+                auto optBuf = receiveData();
+                if (!!optBuf) {
+                    auto& buf = optBuf.value();
+                    NES_DEBUG(
+                        "DataSource " << this->getSourceId() << " type=" << getType() << " string="
+                                      << toString()
+                                      << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
+                                      << " iteration="
+                                      << cnt)
+                    Dispatcher::instance().addWork(this->sourceId, buf);
+                    cnt++;
                 } else {
                     NES_DEBUG(
                         "DataSource " << this->getSourceId() << ": Receiving thread terminated ... stopping")
-                    //                    return;//TODO: check if this really has to be done of if we just continue looping
+//                    running = false;
+                    return;//TODO: check if this really has to be done of if we just continue looping
                 }
-            } else {
-                NES_DEBUG("DataSource::running_routine sleep " << this)
-                sleep(gatheringInterval);
-//                continue;
             }
-            NES_DEBUG(
-                "DataSource " << this->getSourceId() << ": Data Source finished processing iteration " << cnt)
-        }//end of while running
+        } else {
+            while (running) {
+                size_t currentTime = time(NULL);
+                if (gatheringInterval == 0
+                    || (lastGatheringTimeStamp != currentTime
+                        && currentTime%gatheringInterval == 0)) {  //produce a buffer
+                    lastGatheringTimeStamp = currentTime;
+                    if (cnt < numBuffersToProcess) {
+                        auto optBuf = receiveData();
+                        if (!!optBuf) {
+                            auto& buf = optBuf.value();
+                            NES_DEBUG(
+                                "DataSource " << this->getSourceId() << " type=" << getType() << " string="
+                                              << toString()
+                                              << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
+                                              << " iteration="
+                                              << cnt)
+                            Dispatcher::instance().addWork(this->sourceId, buf);
+                            cnt++;
+                        }
+                    } else {
+                        NES_DEBUG(
+                            "DataSource " << this->getSourceId() << ": Receiving thread terminated ... stopping")
+//                        running = false;
+                        //                        return;//TODO: check if this really has to be done of if we just continue looping
+                    }
+                } else {
+                    NES_DEBUG("DataSource::running_routine sleep " << this)
+                    sleep(gatheringInterval);
+                    //                continue;
+                }
+                NES_DEBUG(
+                    "DataSource " << this->getSourceId() << ": Data Source finished processing iteration " << cnt)
+            }//end of while running
+        }
+        NES_DEBUG("DataSource " << this->getSourceId() << ": end running")
     } else {
         NES_FATAL_ERROR(
             "DataSource " << this->getSourceId() << ": No ID assigned. Running_routine is not possible!")
