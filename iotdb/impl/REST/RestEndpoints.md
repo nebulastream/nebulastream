@@ -27,7 +27,7 @@ Submitting user query for execution.
 {"userQuery":"InputQuery::from(temperature).print(std::cout);", "strategyName": "BottomUp"}
 
 **Response**:
-{"QueryId": "system_generate_uuid"}
+{"queryId": "system_generate_uuid"}
 
 ### Getting Execution Plan
 
@@ -167,7 +167,7 @@ To delete a user submitted query.
 **_Example_**: 
 
 **Request**:
-{"QueryId": "system_generate_uuid"}
+{"queryId": "system_generate_uuid"}
 
 **Response**:
 {}
