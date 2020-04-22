@@ -390,30 +390,35 @@ bool WorkerActor::WorkerActor::shutdown() {
  */
 behavior WorkerActor::running() {
     NES_DEBUG("WorkerActor::running enter running")
-    //Note this methods are send from the coordinator
+    //Note this methods are send from the coordinator to this worker
     return {
-        // internal rpc to execute a query
+        // internal rpc to deploy a query, deploy combines register and start
         [=](deploy_query_atom, const string& queryId, string& executableTransferObject) {
           NES_DEBUG("WorkerActor: got request for deploy_query_atom queryId=" << queryId << " eto="
                                                                               << executableTransferObject)
           return this->state.workerPtr->deployQuery(queryId, executableTransferObject);
         },
+        // internal rpc to undeploy a query, undeploy combines unregister and stop
         [=](undeploy_query_atom, const string& queryId) {
           NES_DEBUG("WorkerActor: got request for undeploy_query_atom queryId=" << queryId)
           return this->state.workerPtr->undeployQuery(queryId);
         },
+        // internal rpc to register a query on a worker
         [=](register_query_atom, const string& queryId, string& executableTransferObject) {
             NES_DEBUG("WorkerActor: got request for register_query_atom queryId=" << queryId)
             return this->state.workerPtr->registerQuery(queryId, executableTransferObject);
         },
+        // internal rpc to unregister a query on a worker
         [=](unregister_query_atom, const string& queryId) {
             NES_DEBUG("WorkerActor: got request for unregister_query_atom queryId=" << queryId)
             return this->state.workerPtr->unregisterQuery(queryId);
         },
+        // internal rpc to start a query on a worker
         [=](start_query_atom, const string& queryId) {
           NES_DEBUG("WorkerActor: got request for start_query_atom queryId=" << queryId)
           return this->state.workerPtr->startQuery(queryId);
         },
+        // internal rpc to stop a query on a worker
         [=](stop_query_atom, const string& queryId) {
           NES_DEBUG("WorkerActor: got request for stop_query_atom queryId=" << queryId)
           return this->state.workerPtr->stopQuery(queryId);
