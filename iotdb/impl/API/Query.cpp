@@ -1,26 +1,22 @@
-#include <boost/algorithm/string.hpp>
-
 #include <API/Query.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
+#include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
-#include <SourceSink/SinkCreator.hpp>
-#include <SourceSink/SourceCreator.hpp>
 #include <Util/Logger.hpp>
 #include <cstddef>
 #include <iostream>
-#include <Nodes/Util/DumpContext.hpp>
 
 namespace NES {
 
-Query::Query(StreamPtr sourceStreamPtr) : sourceStream(sourceStreamPtr), operatorIdCounter(0) {}
+Query::Query(QueryPlanPtr queryPlan) : queryPlan(queryPlan) {}
 
 Query::Query(const Query& query)
-    : sourceStream(query.sourceStream), operatorIdCounter(query.operatorIdCounter), rootNode(query.rootNode) {}
+    : queryPlan(query.queryPlan) {}
 
 Query Query::from(Stream& stream) {
 
@@ -33,7 +29,6 @@ Query Query::from(Stream& stream) {
     }
 
     OperatorNodePtr rootNode;
-    Query query(std::make_shared<Stream>(stream));
     SchemaPtr schema = stream.getSchema();
 
     if (catalogEntry.size() == 0) {
@@ -89,9 +84,9 @@ Query Query::from(Stream& stream) {
             NES_FATAL_ERROR("type not supported")
         }
     }
-    int operatorId = query.getNextOperatorId();
-    rootNode->setId(operatorId);
-    query.rootNode = rootNode;
+    auto streamPtr = std::make_shared<Stream>(stream);
+    QueryPlanPtr queryPlan = QueryPlan::create(rootNode, streamPtr);
+    Query query(queryPlan);
     return query;
 }
 
@@ -101,13 +96,13 @@ Query Query::from(Stream& stream) {
 
 Query& Query::filter(const ExpressionNodePtr filterExpression) {
     OperatorNodePtr op = createFilterLogicalOperatorNode(filterExpression);
-    assignOperatorIdAndSwitchTheRoot(op);
+    queryPlan->appendOperator(op);
     return *this;
 }
 
 Query& Query::map(const FieldAssignmentExpressionNodePtr mapExpression) {
     OperatorNodePtr op = createMapLogicalOperatorNode(mapExpression);
-    assignOperatorIdAndSwitchTheRoot(op);
+    queryPlan->appendOperator(op);
     return *this;
 }
 
@@ -123,37 +118,18 @@ Query& Query::to(const std::string& name) {NES_NOT_IMPLEMENTED }
 
 Query& Query::sink(const SinkDescriptorPtr sinkDescriptor) {
     OperatorNodePtr op = createSinkLogicalOperatorNode(sinkDescriptor);
-    assignOperatorIdAndSwitchTheRoot(op);
+    queryPlan->appendOperator(op);
     return *this;
 }
 
-const StreamPtr Query::getSourceStream() const { return sourceStream; }
-
-vector<SourceLogicalOperatorNodePtr> Query::getSourceOperators() {
-    return rootNode->getNodesByType<SourceLogicalOperatorNode>();
-}
-
-std::vector<SinkLogicalOperatorNodePtr> Query::getSinkOperators() {
-    return rootNode->getNodesByType<SinkLogicalOperatorNode>();
+QueryPlanPtr Query::getQueryPlan() {
+    return queryPlan;
 }
 
 std::string Query::toString() {
     stringstream ss;
-    DumpContextPtr dumpContext;
-    dumpContext->dump(rootNode, ss);
+    ss << queryPlan->toString();
     return ss.str();
-}
-
-size_t Query::getNextOperatorId() {
-    operatorIdCounter++;
-    return operatorIdCounter;
-}
-
-void Query::assignOperatorIdAndSwitchTheRoot(OperatorNodePtr op) {
-    int operatorId = getNextOperatorId();
-    op->setId(operatorId);
-    rootNode->addParent(op);
-    rootNode = op;
 }
 
 } // namespace NES

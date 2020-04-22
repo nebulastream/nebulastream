@@ -20,6 +20,7 @@
 #include <Nodes/Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/OrExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -70,14 +71,14 @@ TEST_F(QueryTest, testQueryFilter) {
 
     std::shared_ptr<PrintSinkDescriptor> printSinkDescriptor = std::make_shared<PrintSinkDescriptor>(schema);
     Query& query = Query::from(def).filter(filterPredicate).sink(printSinkDescriptor);
-
-    const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators = query.getSourceOperators();
+    auto plan = query.getQueryPlan();
+    const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators = plan->getSourceOperators();
     EXPECT_EQ(sourceOperators.size(), 1);
 
     SourceLogicalOperatorNodePtr srcOptr = sourceOperators[0];
     EXPECT_EQ(srcOptr->getSourceDescriptor()->getType(), DefaultSource);
 
-    const std::vector<SinkLogicalOperatorNodePtr>& sinkOperators = query.getSinkOperators();
+    const std::vector<SinkLogicalOperatorNodePtr>& sinkOperators = plan->getSinkOperators();
     EXPECT_EQ(sinkOperators.size(), 1);
     
     SinkLogicalOperatorNodePtr sinkOptr = sinkOperators[0];
