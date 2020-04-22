@@ -58,8 +58,8 @@ bool DataSource::start() {
     type = getType();
     NES_DEBUG("DataSource " << this->getSourceId() << ": Spawn thread")
     thread = std::make_shared<std::thread>([this, barrier]() {
-        barrier->wait();
-        running_routine();
+      barrier->wait();
+      running_routine();
 
     });
     barrier->wait();
@@ -81,7 +81,8 @@ bool DataSource::stop() {
             NES_DEBUG("DataSource::stop try to join threads=" << thread->get_id())
             if (thread->joinable()) {
                 NES_DEBUG("DataSource::stop thread is joinable=" << thread->get_id())
-                if (type == 0)//TODO this is only a workaround and will be replaced by the network stack upate
+                //TODO this is only a workaround and will be replaced by the network stack upate
+                if (type == 0)
                 {
                     NES_WARNING("DataSource::stop source hard cause of zmq_source")
                     return true;
@@ -147,8 +148,9 @@ void DataSource::running_routine() {
                     }
                 } else {
                     NES_DEBUG(
-                        "DataSource " << this->getSourceId() << ": Receiving thread terminated ... stopping because cnt=" << cnt
-                        << " smaller than numBuffersToProcess=" << numBuffersToProcess << " now return")
+                        "DataSource " << this->getSourceId()
+                                      << ": Receiving thread terminated ... stopping because cnt=" << cnt
+                                      << " smaller than numBuffersToProcess=" << numBuffersToProcess << " now return")
                     return;//TODO: check if this really has to be done of if we just continue looping
                     //TODO: maybe set running false
                 }

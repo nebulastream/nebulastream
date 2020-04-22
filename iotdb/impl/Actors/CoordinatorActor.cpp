@@ -342,7 +342,6 @@ bool CoordinatorActor::deployQuery(size_t workerId, const string& queryId) {
             "CoordinatorActor:: Sending start query " << queryId << " to " << to_string(handle))
 
         std::promise<bool> prom;
-
         this->request(handle, task_timeout, start_query_atom::value, queryId).await(
             [=, &prom](bool ret) {
               if (ret == true) {

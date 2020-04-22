@@ -756,7 +756,7 @@ typedef backtrace_symbol current;
         }
 
     private:
-        struct callback {
+        struct  callback {
             StackTraceImpl& self;
             callback(StackTraceImpl& _self) : self(_self) {}
 
