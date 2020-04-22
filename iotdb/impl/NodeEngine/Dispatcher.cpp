@@ -181,8 +181,9 @@ bool Dispatcher::stopQuery(QueryExecutionPlanPtr qep) {
 }
 
 TaskPtr Dispatcher::getWork(std::atomic<bool>& threadPool_running) {
+    NES_DEBUG("Dispatcher: Dispatcher::getWork wait get lock")
     std::unique_lock<std::mutex> lock(workMutex);
-
+    NES_DEBUG("Dispatcher: Dispatcher::getWork wait got lock")
     //wait while queue is empty but thread pool is running
     while (task_queue.empty() && threadPool_running) {
         workerHitEmptyTaskQueue++;
@@ -210,11 +211,15 @@ TaskPtr Dispatcher::getWork(std::atomic<bool>& threadPool_running) {
 }
 
 void Dispatcher::cleanup() {
+    NES_DEBUG("Dispatcher::cleanup: get lock");
     std::unique_lock<std::mutex> lock(workMutex);
+    NES_DEBUG("Dispatcher::cleanup: got lock");
+
     if (task_queue.size()) {
         NES_DEBUG("Dispatcher: Thread pool was shut down while waiting but data is queued.");
         task_queue.clear();
     }
+    NES_DEBUG("Dispatcher::cleanup: finished");
 }
 
 void Dispatcher::addWorkForNextPipeline(TupleBuffer& buffer,

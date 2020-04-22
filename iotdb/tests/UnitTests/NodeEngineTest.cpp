@@ -332,16 +332,24 @@ TEST_F(EngineTest, parallel_same_source_test) {
     ASSERT_TRUE(ptr->registerQuery(qep1));
     ASSERT_TRUE(ptr->registerQuery(qep2));
 
+    cout << "start qep1" << endl;
     ASSERT_TRUE(ptr->startQuery(qep1));
+    cout << "start qep2" << endl;
     ASSERT_TRUE(ptr->startQuery(qep2));
 
+    cout << "wait prom q1" << endl;
     qep1->completedPromise.get_future().get();
+
+    cout << "wait prom q2" << endl;
     qep2->completedPromise.get_future().get();
 
     sleep(2);
+    cout << "undeploy qep1" << endl;
     ASSERT_TRUE(ptr->undeployQuery(qep1));
+    cout << "undeploy qep2" << endl;
     ASSERT_TRUE(ptr->undeployQuery(qep2));
 
+    cout << "stop" << endl;
     ASSERT_TRUE(ptr->stop());
 
     testOutput("qep1.txt");

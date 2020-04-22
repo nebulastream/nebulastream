@@ -39,7 +39,9 @@ void ThreadPool::runningRoutine() {
             running = false;
         }
     }
+    NES_DEBUG("Threadpool: end running now cleanup")
     dispatcher.cleanup();
+    NES_DEBUG("Threadpool: end running end cleanup")
 }
 
 bool ThreadPool::start() {
@@ -61,6 +63,7 @@ bool ThreadPool::start() {
         });
     }
     barrier->wait();
+    NES_DEBUG("Threadpool:start return from start")
     return true;
 }
 
