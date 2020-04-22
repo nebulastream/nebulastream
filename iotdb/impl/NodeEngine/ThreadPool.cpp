@@ -46,7 +46,10 @@ bool ThreadPool::start() {
     auto barrier = std::make_shared<ThreadBarrier>(numThreads + 1);
     std::unique_lock<std::mutex> lock(reconfigLock);
     if (running)
+    {
+        NES_DEBUG("Threadpool:start already running, return false")
         return false;
+    }
 
     running = true;
     /* spawn threads */
@@ -76,6 +79,7 @@ bool ThreadPool::stop() {
         }
     }
     threads.clear();
+    NES_DEBUG("Threadpool: stop finished")
     return true;
 }
 

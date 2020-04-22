@@ -25,26 +25,25 @@ using JSON = nlohmann::json;
  */
 class NodeEngine {
   public:
-
+    enum NodeEngineQueryStatus {
+        started,
+        stopped,
+        registered
+    };
     /**
      * @brief Create a node engine and gather node information
      * and initialize Dispatcher, BufferManager and ThreadPool
      */
-    NodeEngine() {
-        props = std::make_shared<NodeProperties>();
-        init();
-    }
+    NodeEngine();
 
-    ~NodeEngine() {
-        stop();
-    }
+    ~NodeEngine();
 
     /**
      * @brief deploy registers and starts a query
      * @param new query plan
      * @return true if succeeded, else false
      */
-    bool deployQuery (QueryExecutionPlanPtr qep);
+    bool deployQuery(QueryExecutionPlanPtr qep);
 
     /**
    * @brief undeploy stops and undeploy a query
@@ -95,24 +94,9 @@ class NodeEngine {
     bool start();
 
     /**
-     * @brief deploy all queries and start thread pool
-     */
-    bool startWithRedeploy();
-
-    /**
      * @brief stop thread pool
      */
     bool stop();
-
-    /**
-     * @brief undeploy all queries and stop thread pool
-     */
-    bool stopWithUndeploy();
-
-    /**
-     * @brief undeploy all queries and delete all qeps
-     */
-    void resetQEPs();
 
     JSON getNodePropertiesAsJSON();
 
@@ -120,10 +104,6 @@ class NodeEngine {
 
     NodeProperties* getNodeProperties();
 
-    void setDOPWithRestart(size_t dop);
-    void setDOPWithoutRestart(size_t dop);
-
-    size_t getDOP();
 
   private:
     /**
@@ -132,7 +112,9 @@ class NodeEngine {
     void init();
 
     NodePropertiesPtr props;
-    std::unordered_set<QueryExecutionPlanPtr> qeps;
+    std::map<QueryExecutionPlanPtr, NodeEngineQueryStatus> queryStatusMap;
+    bool stoppedEngine;
+    bool forceStop;
 };
 
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;

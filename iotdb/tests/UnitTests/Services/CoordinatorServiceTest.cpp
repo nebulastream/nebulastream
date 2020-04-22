@@ -254,7 +254,7 @@ TEST_F(CoordinatorServiceTest, test_code_gen) {
 
   engine->deployQuery(qep);
   sleep(2);
-  engine->stopWithUndeploy();
+  engine->stop();
 }
 
 //FIXME: this test times out
@@ -285,7 +285,7 @@ TEST_F(CoordinatorServiceTest, DISABLED_test_local_distributed_deployment) {
   for (const QueryExecutionPlanPtr qep : qeps) {
     engine->undeployQuery(qep);
   }
-  engine->stopWithUndeploy();
+  engine->stop();
 
   coordinatorServicePtr->deleteQuery(queryId);
   EXPECT_TRUE(
@@ -326,7 +326,7 @@ TEST_F(CoordinatorServiceTest, DISABLED_test_sequential_local_distributed_deploy
     coordinatorServicePtr->deleteQuery(queryId);
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
-  engine->stopWithUndeploy();
+  engine->stop();
   EXPECT_TRUE(
       coordinatorServicePtr->getRegisteredQueries().empty()
           && coordinatorServicePtr->getRunningQueries().empty());
