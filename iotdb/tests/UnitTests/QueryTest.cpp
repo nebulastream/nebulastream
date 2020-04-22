@@ -70,7 +70,7 @@ TEST_F(QueryTest, testQueryFilter) {
     auto filterPredicate = LessEqualsExpressionNode::create(fieldRead, constant);
 
     std::shared_ptr<PrintSinkDescriptor> printSinkDescriptor = std::make_shared<PrintSinkDescriptor>(schema);
-    Query& query = Query::from(def).filter(filterPredicate).sink(printSinkDescriptor);
+    Query query = Query::from(def).filter(filterPredicate).sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators = plan->getSourceOperators();
     EXPECT_EQ(sourceOperators.size(), 1);
