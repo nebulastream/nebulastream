@@ -21,7 +21,7 @@ class SinkLogicalOperatorNode;
 typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
 
 /**
- * @brief The query plan encapsulates a set of nodes and provides a set of utility functions.
+ * @brief The query plan encapsulates a set of operators and provides a set of utility functions.
  */
 class QueryPlan {
   public:
