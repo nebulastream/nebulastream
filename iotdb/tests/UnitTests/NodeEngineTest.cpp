@@ -84,16 +84,12 @@ class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
   public:
     std::atomic<uint64_t> count;
     std::atomic<uint64_t> sum;
-    const uint32_t mode;
-    std::atomic<bool> done;
     std::promise<bool> completedPromise;
-    CompiledTestQueryExecutionPlan(uint32_t mode = 0)
+    CompiledTestQueryExecutionPlan()
         :
         HandCodedQueryExecutionPlan(),
         count(0),
-        sum(0),
-        mode(mode),
-        done(false) {
+        sum(0) {
     }
 
     bool firstPipelineStage(const TupleBuffer&) {
@@ -113,7 +109,8 @@ class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
         sum += psum;
 
         NES_INFO(
-            "Test: query result = Processed Block:" << inBuf.getNumberOfTuples() << " count: " << count << " psum: " << psum << " sum: " << sum)
+            "Test: query result = Processed Block:" << inBuf.getNumberOfTuples() << " count: " << count << " psum: "
+                                                    << psum << " sum: " << sum)
 
         auto sink = getSinks()[0];
         NES_DEBUG("TEST: try to get buffer")
@@ -126,21 +123,16 @@ class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
         outputBuffer.setTupleSizeInBytes(4);
         NES_DEBUG("TEST: written " << arr[0]);
         sink->writeData(outputBuffer);
-        switch (mode) {
-        case 2: {
-            if (sum == 100) {
-                if (!done) {
-                    completedPromise.set_value(true);
-                    done = true;
-                }
-            }
-            break;
-        }
-        default: {
+
+        if (sum == 10) {
+            NES_DEBUG("TEST: result correct");
             completedPromise.set_value(true);
-            break;
+        } else {
+            NES_DEBUG("TEST: result wrong ");
+            completedPromise.set_value(false);
         }
-        }
+
+
         return true;
     }
 };
@@ -388,7 +380,6 @@ TEST_F(EngineTest, parallel_same_sink_test) {
     ASSERT_TRUE(ptr->undeployQuery(qep1));
     ASSERT_TRUE(ptr->undeployQuery(qep2));
 
-
     ASSERT_TRUE(ptr->stop());
     testOutput("qep12.txt", joinedExpectedOutput);
     delete ptr;
@@ -425,7 +416,6 @@ TEST_F(EngineTest, parallel_same_source_and_sink_regstart_test) {
     testOutput("qep3.txt", joinedExpectedOutput);
     delete ptr;
 }
-
 
 TEST_F(EngineTest, start_stop_start_stop_test) {
     CompiledTestQueryExecutionPlanPtr qep = setupQEP();
