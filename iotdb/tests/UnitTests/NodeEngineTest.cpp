@@ -296,8 +296,12 @@ TEST_F(EngineTest, parallel_different_source_test) {
 
     NodeEngine* ptr = new NodeEngine();
     ASSERT_TRUE(ptr->start());
-    ASSERT_TRUE(ptr->deployQuery(qep1));
-    ASSERT_TRUE(ptr->deployQuery(qep2));
+    ASSERT_TRUE(ptr->registerQuery(qep1));
+    ASSERT_TRUE(ptr->registerQuery(qep2));
+
+    ASSERT_TRUE(ptr->startQuery(qep1));
+    ASSERT_TRUE(ptr->startQuery(qep2));
+
     qep1->completedPromise.get_future().get();
     qep2->completedPromise.get_future().get();
     ASSERT_TRUE(ptr->undeployQuery(qep1));
@@ -325,12 +329,16 @@ TEST_F(EngineTest, parallel_same_source_test) {
 
     NodeEngine* ptr = new NodeEngine();
     ASSERT_TRUE(ptr->start());
-    ASSERT_TRUE(ptr->deployQuery(qep1));
-    ASSERT_TRUE(ptr->deployQuery(qep2));
+    ASSERT_TRUE(ptr->registerQuery(qep1));
+    ASSERT_TRUE(ptr->registerQuery(qep2));
+
+    ASSERT_TRUE(ptr->startQuery(qep1));
+    ASSERT_TRUE(ptr->startQuery(qep2));
 
     qep1->completedPromise.get_future().get();
     qep2->completedPromise.get_future().get();
-    sleep(1);
+
+    sleep(2);
     ASSERT_TRUE(ptr->undeployQuery(qep1));
     ASSERT_TRUE(ptr->undeployQuery(qep2));
 
@@ -360,8 +368,11 @@ TEST_F(EngineTest, parallel_same_sink_test) {
 
     NodeEngine* ptr = new NodeEngine();
     ASSERT_TRUE(ptr->start());
-    ASSERT_TRUE(ptr->deployQuery(qep1));
-    ASSERT_TRUE(ptr->deployQuery(qep2));
+    ASSERT_TRUE(ptr->registerQuery(qep1));
+    ASSERT_TRUE(ptr->registerQuery(qep2));
+
+    ASSERT_TRUE(ptr->startQuery(qep1));
+    ASSERT_TRUE(ptr->startQuery(qep2));
 
     qep1->completedPromise.get_future().get();
     qep2->completedPromise.get_future().get();
