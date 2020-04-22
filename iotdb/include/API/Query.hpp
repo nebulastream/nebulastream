@@ -27,6 +27,9 @@ typedef std::shared_ptr<SourceLogicalOperatorNode> SourceLogicalOperatorNodePtr;
 class SinkLogicalOperatorNode;
 typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
 
+class QueryPlan;
+typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
+
 /**
  * Interface to create new query.
  */
@@ -110,23 +113,6 @@ class Query {
     Query& sink(const SinkDescriptorPtr sinkDescriptor);
 
     /**
-     * @brief Get next free operator id
-     */
-    size_t getNextOperatorId();
-
-    /**
-     * @brief Get all source operators
-     * @return vector of logical source operators
-     */
-    std::vector<SourceLogicalOperatorNodePtr> getSourceOperators();
-
-    /**
-     * @brief Get all sink operators
-     * @return vector of logical sink operators
-     */
-    std::vector<SinkLogicalOperatorNodePtr> getSinkOperators();
-
-    /**
      * @brief get source stream
      * @return pointer to source stream
      */
@@ -140,13 +126,15 @@ class Query {
      */
     std::string toString();
 
-  private:
+    /**
+     * @brief Gets the query plan from the input query.
+     */
+    QueryPlanPtr getQueryPlan();
 
-    Query(StreamPtr sourceStreamPtr);
-    size_t operatorIdCounter;
-    StreamPtr sourceStream;
-    OperatorNodePtr rootNode;
-    void assignOperatorIdAndSwitchTheRoot(OperatorNodePtr op);
+  private:
+    Query(QueryPlanPtr queryPlan);
+    // query plan containing the operators.
+    QueryPlanPtr queryPlan;
 };
 
 typedef std::shared_ptr<Query> QueryPtr;
