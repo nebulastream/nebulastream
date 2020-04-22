@@ -58,7 +58,7 @@ std::string joinedExpectedOutput10 =
     "|50|\n"
     "+----------------------------------------------------++----------------------------------------------------+\n"
     "|sum:UINT32|\n"
-    "+----------------------------------------------------+\n"
+    "+----------------------------https://app.diagrams.net/#G1uTDrT32L0Aep6CnvBZHbJJ1LsHDyZSZr------------------------+\n"
     "|60|\n"
     "+----------------------------------------------------++----------------------------------------------------+\n"
     "|sum:UINT32|\n"
@@ -235,21 +235,6 @@ TEST_F(EngineTest, start_stop_engine_empty) {
     delete ptr;
 }
 
-TEST_F(EngineTest, deploy_start_stop_test) {
-    CompiledTestQueryExecutionPlanPtr qep = setupQEP();
-
-    std::cout << "Query " << qep <<
-    endl;
-
-    auto ptr = new NodeEngine();
-    ASSERT_TRUE(ptr->start());
-    ASSERT_TRUE(ptr->deployQuery(qep));
-    qep->completedPromise.get_future().get();
-    ASSERT_TRUE(ptr->stop());
-    testOutput();
-    delete ptr;
-}
-
 TEST_F(EngineTest, start_deploy_stop_test) {
     CompiledTestQueryExecutionPlanPtr qep = setupQEP();
 
@@ -257,7 +242,7 @@ TEST_F(EngineTest, start_deploy_stop_test) {
     ASSERT_TRUE(ptr->start());
     ASSERT_TRUE(ptr->deployQuery(qep));
     qep->completedPromise.get_future().get();
-    ASSERT_TRUE(ptr->stop());
+    ASSERT_TRUE(!ptr->stop());
 
     testOutput();
     delete ptr;
@@ -293,80 +278,6 @@ TEST_F(EngineTest, start_register_start_stop_deregister_stop_test) {
     delete ptr;
 }
 
-TEST_F(EngineTest, DISABLED_startWithRedeploy_test) {
-    // this test is disabled because when redeploying the query the source is not started again
-    CompiledTestQueryExecutionPlanPtr qep = setupQEP();
-
-    NodeEngine* ptr = new NodeEngine();
-    ASSERT_TRUE(ptr->start());
-    ASSERT_TRUE(ptr->deployQuery(qep));
-    qep->completedPromise.get_future().get();
-    testOutput();
-    std::promise<bool>().swap(qep->completedPromise);
-    qep->done = false;
-    NES_DEBUG("Starting Query again");
-    ASSERT_TRUE(ptr->startWithRedeploy());
-    qep->completedPromise.get_future().get();
-    testOutput();
-    delete ptr;
-}
-
-TEST_F(EngineTest, stopWithRedeploy_test) {
-    CompiledTestQueryExecutionPlanPtr qep = setupQEP();
-
-    NodeEngine* ptr = new NodeEngine();
-    ASSERT_TRUE(ptr->start());
-    ASSERT_TRUE(ptr->deployQuery(qep));
-    qep->completedPromise.get_future().get();
-    ASSERT_TRUE(ptr->stopWithUndeploy());
-
-    testOutput();
-    delete ptr;
-}
-
-TEST_F(EngineTest, resetQEP_test) {
-    CompiledTestQueryExecutionPlanPtr qep = setupQEP();
-
-    NodeEngine* ptr = new NodeEngine();
-    ASSERT_TRUE(ptr->start());
-    ASSERT_TRUE(ptr->deployQuery(qep));
-    qep->completedPromise.get_future().get();
-    ptr->resetQEPs();
-
-    testOutput();
-    delete ptr;
-}
-
-TEST_F(EngineTest, change_dop_with_restart_test) {
-    CompiledTestQueryExecutionPlanPtr qep = setupQEP();
-
-    NodeEngine* ptr = new NodeEngine();
-    ptr->setDOPWithRestart(2);
-//    ASSERT_TRUE(ptr->start());
-    ASSERT_TRUE(ptr->deployQuery(qep));
-    qep->completedPromise.get_future().get();
-    ASSERT_TRUE(ptr->stop());
-
-    testOutput();
-    delete ptr;
-}
-
-TEST_F(EngineTest, change_dop_without_restart_test) {
-    CompiledTestQueryExecutionPlanPtr qep = setupQEP();
-
-    NodeEngine* ptr = new NodeEngine();
-    ptr->setDOPWithoutRestart(2);
-    ASSERT_TRUE(ptr->start());
-    ASSERT_TRUE(ptr->deployQuery(qep));
-    qep->completedPromise.get_future().get();
-    ASSERT_TRUE(ptr->stop());
-    ASSERT_TRUE(ptr->start());
-    EXPECT_EQ(ptr->getDOP(), size_t(2));
-    ASSERT_TRUE(ptr->stop());
-    testOutput();
-    delete ptr;
-}
-
 TEST_F(EngineTest, parallel_different_source_test) {
     CompiledTestQueryExecutionPlanPtr qep1 = std::make_shared<CompiledTestQueryExecutionPlan>();
     DataSourcePtr source1 =
@@ -389,6 +300,9 @@ TEST_F(EngineTest, parallel_different_source_test) {
     ASSERT_TRUE(ptr->deployQuery(qep2));
     qep1->completedPromise.get_future().get();
     qep2->completedPromise.get_future().get();
+    ASSERT_TRUE(ptr->undeployQuery(qep1));
+    ASSERT_TRUE(ptr->undeployQuery(qep2));
+
     ASSERT_TRUE(ptr->stop());
 
     testOutput("qep1.txt");
@@ -413,9 +327,13 @@ TEST_F(EngineTest, parallel_same_source_test) {
     ASSERT_TRUE(ptr->start());
     ASSERT_TRUE(ptr->deployQuery(qep1));
     ASSERT_TRUE(ptr->deployQuery(qep2));
-    source1->start();
+
     qep1->completedPromise.get_future().get();
     qep2->completedPromise.get_future().get();
+    sleep(1);
+    ASSERT_TRUE(ptr->undeployQuery(qep1));
+    ASSERT_TRUE(ptr->undeployQuery(qep2));
+
     ASSERT_TRUE(ptr->stop());
 
     testOutput("qep1.txt");
@@ -437,18 +355,21 @@ TEST_F(EngineTest, parallel_same_sink_test) {
     DataSourcePtr source2 =
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
     SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
-    qep2->addDataSource(source1);
+    qep2->addDataSource(source2);
     qep2->addDataSink(sink1);
 
     NodeEngine* ptr = new NodeEngine();
     ASSERT_TRUE(ptr->start());
     ASSERT_TRUE(ptr->deployQuery(qep1));
     ASSERT_TRUE(ptr->deployQuery(qep2));
-    source1->start();
-    source2->start();
 
     qep1->completedPromise.get_future().get();
     qep2->completedPromise.get_future().get();
+    sleep(1);
+    ASSERT_TRUE(ptr->undeployQuery(qep1));
+    ASSERT_TRUE(ptr->undeployQuery(qep2));
+
+
     ASSERT_TRUE(ptr->stop());
     testOutput("qep12.txt", joinedExpectedOutput);
     delete ptr;
@@ -474,9 +395,10 @@ TEST_F(EngineTest, parallel_same_source_and_sink_regstart_test) {
 
     ASSERT_TRUE(ptr->startQuery(qep1));
     ASSERT_TRUE(ptr->startQuery(qep2));
-
+    sleep(1);
     ASSERT_TRUE(ptr->undeployQuery(qep1));
     ASSERT_TRUE(ptr->undeployQuery(qep2));
+
     qep1->completedPromise.get_future().get();
     qep2->completedPromise.get_future().get();
     ASSERT_TRUE(ptr->stop());
@@ -485,27 +407,20 @@ TEST_F(EngineTest, parallel_same_source_and_sink_regstart_test) {
     delete ptr;
 }
 
-TEST_F(EngineTest, test_setDOPWithoutRestart) {
-    remove("qep12.txt");
-    CompiledTestQueryExecutionPlanPtr qep1(std::make_shared<CompiledTestQueryExecutionPlan>(2));
-    DataSourcePtr source1 =
-        createDefaultSourceWithoutSchemaForOneBufferForVarBuffers(10, 0);
-    SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
-    DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep12.txt");
-    qep1->addDataSource(source1);
-    qep1->addDataSink(sink1);
+
+TEST_F(EngineTest, start_stop_start_stop_test) {
+    CompiledTestQueryExecutionPlanPtr qep = setupQEP();
 
     NodeEngine* ptr = new NodeEngine();
-    ptr->setDOPWithoutRestart(1);
     ASSERT_TRUE(ptr->start());
-    ASSERT_TRUE(ptr->deployQuery(qep1));
-    source1->start();
-    qep1->completedPromise.get_future().get();
-    source1->stop();
+    ASSERT_TRUE(ptr->deployQuery(qep));
+    qep->completedPromise.get_future().get();
+    ASSERT_TRUE(ptr->undeployQuery(qep));
     ASSERT_TRUE(ptr->stop());
-    testOutput("qep12.txt", joinedExpectedOutput10);
+    ASSERT_TRUE(ptr->start());
+    ASSERT_TRUE(ptr->stop());
+    testOutput();
     delete ptr;
 }
-
 }
 

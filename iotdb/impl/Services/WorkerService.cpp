@@ -8,7 +8,7 @@ namespace NES {
 
 void WorkerService::shutDown() {
     NES_DEBUG("WorkerService: shutdown WorkerService")
-    this->nodeEngine->stopWithUndeploy();
+    this->nodeEngine->stop();
     physicalStreams.clear();
     queryIdToQEPMap.clear();
     queryIdToStatusMap.clear();

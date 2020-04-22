@@ -34,17 +34,15 @@ void Dispatcher::resetDispatcher() {
     NES_DEBUG("Dispatcher: Destroy Task Queue " << task_queue.size());
     task_queue.clear();
     NES_DEBUG("Dispatcher: Destroy queryId_to_query_map " << sourceIdToQueryMap.size());
-    for (auto& entry : sourceIdToQueryMap) {
-        for (auto& source: entry.second) {
-            source->stop();
-        }
-    }
+
     sourceIdToQueryMap.clear();
 
     workerHitEmptyTaskQueue = 0;
     processedTasks = 0;
     processedTuple = 0;
     processedBuffers = 0;
+    NES_DEBUG("Dispatcher::resetDispatcher finished");
+
 }
 
 bool Dispatcher::registerQuery(QueryExecutionPlanPtr qep) {
@@ -178,6 +176,8 @@ bool Dispatcher::stopQuery(QueryExecutionPlanPtr qep) {
         //TODO: do we also have to prevent to shutdown sink that is still used by another qep
         sink->shutdown();
     }
+    NES_DEBUG("Dispatcher::stopQuery: query finished")
+    return true;
 }
 
 TaskPtr Dispatcher::getWork(std::atomic<bool>& threadPool_running) {

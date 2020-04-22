@@ -31,51 +31,62 @@ NodeProperties* NodeEngine::getNodeProperties() {
     return props.get();
 }
 
+NodeEngine::NodeEngine() {
+    props = std::make_shared<NodeProperties>();
+    init();
+    stoppedEngine = false;
+    forceStop = false;
+}
+
+NodeEngine::~NodeEngine() {
+    forceStop = true;
+    stop();
+}
 
 bool NodeEngine::deployQuery(QueryExecutionPlanPtr qep) {
+    NES_DEBUG("NodeEngine: deployQuery query " << qep)
+
     bool successRegister = registerQuery(qep);
-    if(!successRegister)
-    {
+    if (!successRegister) {
         NES_ERROR("NodeEngine::deployQuery: failed to register query")
         return false;
-    } else{
+    } else {
         NES_DEBUG("NodeEngine::deployQuery: successfully register query")
     }
     bool successStart = startQuery(qep);
-    if(!successStart)
-    {
+    if (!successStart) {
         NES_ERROR("NodeEngine::deployQuery: failed to start query")
         return false;
-    } else{
+    } else {
         NES_DEBUG("NodeEngine::deployQuery: successfully start query")
     }
     return true;
 }
 
-
 bool NodeEngine::registerQuery(QueryExecutionPlanPtr qep) {
-    NES_DEBUG("NodeEngine: deploy query " << qep)
-    if (qeps.find(qep) == qeps.end()) {
+    NES_DEBUG("NodeEngine: registerQuery query " << qep)
+
+    if (queryStatusMap.find(qep) == queryStatusMap.end()) {
         if (Dispatcher::instance().registerQuery(qep)) {
-            qeps.insert(qep);
-            NES_DEBUG("NodeEngine: deployment of QEP " << qep << " succeeded")
+            queryStatusMap.insert({qep, NodeEngineQueryStatus::registered});
+            NES_DEBUG("NodeEngine: register of QEP " << qep << " succeeded")
             return true;
         } else {
-            NES_DEBUG("NodeEngine: deployment of QEP " << qep << " failed")
+            NES_DEBUG("NodeEngine: register of QEP " << qep << " failed")
             return false;
         }
     } else {
-        NES_DEBUG("NodeEngine: qep already exists. Deployment failed" << qep)
+        NES_DEBUG("NodeEngine: qep already exists. register failed" << qep)
         return false;
     }
 }
 
-bool NodeEngine::startQuery(QueryExecutionPlanPtr qep)
-{
-    NES_DEBUG("NodeEngine: startQuery " << qep)
-    if (qeps.find(qep) != qeps.end()) {
+bool NodeEngine::startQuery(QueryExecutionPlanPtr qep) {
+    NES_DEBUG("NodeEngine: startQuery=" << qep)
+    if (queryStatusMap.find(qep) != queryStatusMap.end()) {
         if (Dispatcher::instance().startQuery(qep)) {
             NES_DEBUG("NodeEngine: start of QEP " << qep << " succeeded")
+            queryStatusMap[qep] = NodeEngineQueryStatus::started;
             return true;
         } else {
             NES_DEBUG("NodeEngine: start of QEP " << qep << " failed")
@@ -87,53 +98,49 @@ bool NodeEngine::startQuery(QueryExecutionPlanPtr qep)
     }
 }
 
-bool NodeEngine::undeployQuery(QueryExecutionPlanPtr qep)
-{
+bool NodeEngine::undeployQuery(QueryExecutionPlanPtr qep) {
+    NES_DEBUG("NodeEngine: undeployQuery query=" << qep)
     bool successStop = stopQuery(qep);
-    if(!successStop)
-    {
+    if (!successStop) {
         NES_ERROR("NodeEngine::undeployQuery: failed to stop query")
         return false;
-    } else{
+    } else {
         NES_DEBUG("NodeEngine::undeployQuery: successfully stop query")
     }
 
     bool successUnregister = unregisterQuery(qep);
-    if(!successUnregister)
-    {
+    if (!successUnregister) {
         NES_ERROR("NodeEngine::undeployQuery: failed to unregister query")
         return false;
-    } else{
+    } else {
         NES_DEBUG("NodeEngine::undeployQuery: successfully unregister query")
         return true;
     }
 }
 
 bool NodeEngine::unregisterQuery(QueryExecutionPlanPtr qep) {
-    NES_DEBUG("NodeEngine: undeployQuery query" << qep)
-    if (qeps.find(qep) != qeps.end()) {
-        if(Dispatcher::instance().deregisterQuery(qep))
-        {
-            qeps.erase(qep);
-            NES_DEBUG("NodeEngine: undeploy of QEP " << qep << " succeeded")
+    NES_DEBUG("NodeEngine: unregisterQuery query=" << qep)
+    if (queryStatusMap.find(qep) != queryStatusMap.end()) {
+        if (Dispatcher::instance().deregisterQuery(qep)) {
+            size_t delCnt = queryStatusMap.erase(qep);
+            NES_DEBUG("NodeEngine: unregister of QEP " << qep << " succeeded with cnt=" << delCnt)
             return true;
         } else {
-            NES_ERROR("NodeEngine: undeploy of QEP " << qep << " failed")
+            NES_ERROR("NodeEngine: unregister of QEP " << qep << " failed")
             return false;
         }
     } else {
-        NES_DEBUG("NodeEngine: qep does not exists. undeployQuery failed" << qep)
+        NES_DEBUG("NodeEngine: qep does not exists. unregister failed" << qep)
         return false;
     }
 }
 
-
-bool NodeEngine::stopQuery(QueryExecutionPlanPtr qep)
-{
+bool NodeEngine::stopQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("NodeEngine:stopQuery for qep" << qep)
-    if (qeps.find(qep) != qeps.end()) {
+    if (queryStatusMap.find(qep) != queryStatusMap.end()) {
         if (Dispatcher::instance().stopQuery(qep)) {
             NES_DEBUG("NodeEngine: stop of QEP " << qep << " succeeded")
+            queryStatusMap[qep] = NodeEngineQueryStatus::stopped;
             return true;
         } else {
             NES_DEBUG("NodeEngine: stop of QEP " << qep << " failed")
@@ -144,7 +151,6 @@ bool NodeEngine::stopQuery(QueryExecutionPlanPtr qep)
         return false;
     }
 }
-
 
 void NodeEngine::init() {
     NES_DEBUG("NodeEngine: init node engine")
@@ -157,74 +163,72 @@ void NodeEngine::init() {
 }
 
 bool NodeEngine::start() {
-    NES_DEBUG("NodeEngine: start thread pool")
+    NES_DEBUG("NodeEngine:start reset dispatcher")
     NES::Dispatcher::instance().resetDispatcher();
-    return ThreadPool::instance().start();
-}
-
-bool NodeEngine::startWithRedeploy() {
-    for (QueryExecutionPlanPtr qep : qeps) {
-        NES_DEBUG("NodeEngine: register query " << qep)
-        if (Dispatcher::instance().registerQuery(qep)) {
-            NES_DEBUG("NodeEngine: registration of QEP " << qep << " succeeded")
-        } else {
-            NES_DEBUG("NodeEngine: registration of QEP " << qep << " failed")
-        }
-    }
 
     NES_DEBUG("NodeEngine: start thread pool")
-    return ThreadPool::instance().start();
+    bool success = ThreadPool::instance().start();
+    NES_DEBUG("NodeEngine: start thread pool success=" << success)
+    return success;
 }
 
 bool NodeEngine::stop() {
-    NES_DEBUG("NodeEngine: stop thread pool");
-    for (QueryExecutionPlanPtr qep : qeps) {
-        NES_DEBUG("NodeEngine: deregister query " << qep)
-        Dispatcher::instance().deregisterQuery(qep);
+    //TODO: add check if still queries are running
+    if (!stoppedEngine) {
+        NES_DEBUG("NodeEngine:stop stop NodeEngine, undeploy " << queryStatusMap.size() << " queries");
+        for(auto entry : queryStatusMap)
+        {
+            if(entry.second == NodeEngineQueryStatus::started && !forceStop)
+            {
+                NES_ERROR("NodeEngine::stop: cannot stop as query " << entry.first << " still running")
+                return false;
+            }
+        }
+
+        std::vector<QueryExecutionPlanPtr> copyOfVec;
+        std::transform(queryStatusMap.begin(), queryStatusMap.end(), std::back_inserter(copyOfVec),
+                       [](std::pair<QueryExecutionPlanPtr, NodeEngineQueryStatus> const& dev) {
+                         return dev.first;
+                       });
+
+
+        for (QueryExecutionPlanPtr qep : copyOfVec) {
+            NES_DEBUG("QEP to del is =")
+            qep->print();
+            bool success = undeployQuery(qep);
+            if (success) {
+                NES_DEBUG("NodeEngine:stop undeployQuery query " << qep << " successfully")
+
+            } else {
+                NES_ERROR("NodeEngine:stop undeploy query " << qep << " failed")
+                return false;
+            }
+        }
+
+        NES_DEBUG("NodeEngine:stop undeploy successful")
+        NES::Dispatcher::instance().resetDispatcher();
+        copyOfVec.clear();
+        stoppedEngine = true;
+        bool success = ThreadPool::instance().stop();
+        NES_DEBUG("NodeEngine:stop stop threadpool with success=" << success)
+        return success;
+    } else {
+        NES_WARNING("NodeEngine::stop: engine already stopped")
+        return true;
     }
-    NES::Dispatcher::instance().resetDispatcher();
-    return ThreadPool::instance().stop();
 }
 
-bool NodeEngine::stopWithUndeploy() {
-    NES_DEBUG("NodeEngine: stop thread pool")
-    for (QueryExecutionPlanPtr qep : qeps) {
-        NES_DEBUG("NodeEngine: deregister query " << qep)
-        Dispatcher::instance().deregisterQuery(qep);
-    }
-    NES::Dispatcher::instance().resetDispatcher();
-    return ThreadPool::instance().stop();
-}
 
-void NodeEngine::applyConfig(Config &conf) {
+void NodeEngine::applyConfig(Config& conf) {
     if (conf.getNumberOfWorker() != ThreadPool::instance().getNumberOfThreads()) {
         NES_DEBUG(
-                "NodeEngine: changing numberOfWorker from " << ThreadPool::instance().getNumberOfThreads() << " to "
-                                                            << conf.getNumberOfWorker())
+            "NodeEngine: changing numberOfWorker from " << ThreadPool::instance().getNumberOfThreads() << " to "
+                                                        << conf.getNumberOfWorker())
         ThreadPool::instance().setNumberOfThreadsWithRestart(conf.getNumberOfWorker());
     }
     BufferManager::instance().configure(conf.getBufferSizeInByte(), conf.getBufferCount());
     NES_DEBUG("NodeEngine: config successuflly changed")
 }
 
-void NodeEngine::resetQEPs() {
-    for (QueryExecutionPlanPtr qep : qeps) {
-        NES_DEBUG("NodeEngine: deregister query " << qep)
-        Dispatcher::instance().deregisterQuery(qep);
-    }
-    NES_DEBUG("NodeEngine: clear qeps")
-    qeps.clear();
-}
-
-void NodeEngine::setDOPWithRestart(size_t dop) {
-    NES::ThreadPool::instance().setNumberOfThreadsWithRestart(dop);
-}
-void NodeEngine::setDOPWithoutRestart(size_t dop) {
-    NES::ThreadPool::instance().setNumberOfThreadsWithoutRestart(dop);
-}
-
-size_t NodeEngine::getDOP() {
-    return NES::ThreadPool::instance().getNumberOfThreads();
-}
 
 }
