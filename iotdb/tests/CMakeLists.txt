@@ -56,9 +56,9 @@ message( STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}" )
 #------------------------------- # Unit Test Suite --------------------------------
 
 ### Node Engine Tests ###
-add_executable(node-engine-test "UnitTests/NodeEngineTest.cpp")
-target_link_libraries(node-engine-test  iotdb ${GTEST_LIBRARIES})
-add_test(NAME node-engine-test COMMAND node-engine-test)
+#add_executable(node-engine-test "UnitTests/NodeEngineTest.cpp")
+#target_link_libraries(node-engine-test  iotdb ${GTEST_LIBRARIES})
+#add_test(NAME node-engine-test COMMAND node-engine-test)
 
 ### Code Generation Tests ###
 add_executable(code-generation-tests "UnitTests/CodeGenerationTest.cpp")
