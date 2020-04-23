@@ -22,6 +22,18 @@ const bool DataType::isUndefined() const {
     return false;
 }
 
+const bool DataType::isNumerical() const {
+    return false;
+}
+
+const DataTypePtr DataType::join(DataTypePtr other) const {
+    // if both types are equal, the join type is the same.
+    if (isEqual(other)) {
+        return other;
+    }
+    return createUndefinedDataType();
+}
+
 DataType::~DataType() {}
 
 } // namespace NES

@@ -1438,7 +1438,8 @@ TEST_F(LogicalOperatorNodeTest, inferOperatorTypes) {
     auto source = createSourceLogicalOperatorNode(sourceDescriptor);
     auto printSinkDescriptor = std::make_shared<PrintSinkDescriptor>(schema);
     auto sink = createSinkLogicalOperatorNode(printSinkDescriptor);
-    auto map = createMapLogicalOperatorNode(Attribute("f8") = 10*99+Attribute("f1"));
+
+    auto map = createMapLogicalOperatorNode(Attribute("f8") = 10*99 + Attribute("f2"));
     map->addChild(source);
 
     auto filter = createFilterLogicalOperatorNode(Attribute("f1") != 1);

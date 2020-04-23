@@ -62,6 +62,8 @@ class DataType {
     virtual const bool isArrayDataType() const = 0;
     virtual const bool isCharDataType() const = 0;
     virtual const bool isUndefined() const;
+    virtual const bool isNumerical() const;
+    virtual const DataTypePtr join(DataTypePtr other) const;
     virtual const CodeExpressionPtr getTypeDefinitionCode() const = 0;
     virtual const DataTypePtr copy() const = 0;
     virtual ~DataType();
