@@ -306,8 +306,7 @@ TEST_F(EngineTest, parallel_different_source_test) {
     delete ptr;
 }
 
-//TODO: enable once the single refactoring is done
-TEST_F(EngineTest, DISABLED_parallel_same_source_test) {
+TEST_F(EngineTest, parallel_same_source_test) {
     CompiledTestQueryExecutionPlanPtr qep1(new CompiledTestQueryExecutionPlan());
     DataSourcePtr source1 = createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
     SchemaPtr sch1 = Schema::create()->addField("sum", BasicType::UINT32);
