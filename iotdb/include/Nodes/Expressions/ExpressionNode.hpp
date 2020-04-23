@@ -14,25 +14,43 @@ typedef std::shared_ptr<Schema> SchemaPtr;
  * A stamp can be of a concrete type or invalid if the data type was not yet inferred.
  */
 class ExpressionNode : public Node {
+
   public:
     ExpressionNode(DataTypePtr stamp);
+
     ~ExpressionNode() = default;
+
     /**
      * @brief Indicates if this expression is a predicate -> if its result stamp is a boolean
      * @return
      */
     bool isPredicate();
 
+    /**
+     * @brief Infers the stamp of the expression given the current schema.
+     * @param schema
+     */
     virtual void inferStamp(SchemaPtr schema);
 
-    DataTypePtr getStamp();
+    /**
+     * @brief returns the stamp as the data type which is produced by this expression.
+     * @return Stamp
+     */
+    const DataTypePtr getStamp() const;
+
+    /**
+     * @brief sets the stamp of this expression.
+     * @param stamp
+     */
     void setStamp(DataTypePtr stamp);
+
   protected:
     /**
      * @brief declares the type of this expression.
      * todo replace the direct usage of data types with a stamp abstraction.
      */
     DataTypePtr stamp;
+
 };
 typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
 }
