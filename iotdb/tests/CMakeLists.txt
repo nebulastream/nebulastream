@@ -59,7 +59,7 @@ message( STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}" )
 add_executable(node-engine-test "UnitTests/NodeEngineTest.cpp")
 target_link_libraries(node-engine-test  iotdb ${GTEST_LIBRARIES})
 add_test(NAME node-engine-test COMMAND node-engine-test)
-set_tests_properties(node-engine-test PROPERTIES TIMEOUT 5)
+set_tests_properties(node-engine-test PROPERTIES TIMEOUT 60)
 
 ### Code Generation Tests ###
 add_executable(code-generation-tests "UnitTests/CodeGenerationTest.cpp")
