@@ -14,9 +14,10 @@ bool SubExpressionNode::equal(const NodePtr rhs) const {
             getRight()->equal(otherSubNode->getRight());
     }
     return false;
+
 }
 const std::string SubExpressionNode::toString() const {
-    return "SubNode("+stamp->toString()+")";
+    return "SubNode(" + stamp->toString() + ")";
 }
 
 }

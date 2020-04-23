@@ -16,7 +16,7 @@ bool DivExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 const std::string DivExpressionNode::toString() const {
-    return "DivNode("+stamp->toString()+")";
+    return "DivNode(" + stamp->toString() + ")";
 }
 
 }
