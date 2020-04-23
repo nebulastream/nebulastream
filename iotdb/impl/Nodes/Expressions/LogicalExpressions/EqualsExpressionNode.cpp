@@ -13,7 +13,9 @@ bool EqualsExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 const std::string EqualsExpressionNode::toString() const {
-    return "EqualsNode()";
+    return "EqualsNode("+stamp->toString()+")";
 }
+
+
 }
 

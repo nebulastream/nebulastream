@@ -44,7 +44,8 @@ enum BasicType {
     BOOLEAN,
     CHAR,
     DATE,
-    VOID_TYPE
+    VOID_TYPE,
+    UNDEFINED
 };
 
 class DataType {
@@ -60,6 +61,7 @@ class DataType {
     virtual const bool isEqual(DataTypePtr ptr) const = 0;
     virtual const bool isArrayDataType() const = 0;
     virtual const bool isCharDataType() const = 0;
+    virtual const bool isUndefined() const;
     virtual const CodeExpressionPtr getTypeDefinitionCode() const = 0;
     virtual const DataTypePtr copy() const = 0;
     virtual ~DataType();
@@ -82,6 +84,7 @@ const AttributeFieldPtr createField(const std::string name, uint32_t size);
 const AttributeFieldPtr createField(const std::string name, DataTypePtr type);
 
 const DataTypePtr createDataType(const BasicType&);
+const DataTypePtr createUndefinedDataType();
 const DataTypePtr createDataTypeVarChar(const uint32_t& max_length);
 const DataTypePtr createPointerDataType(const DataTypePtr& type);
 const DataTypePtr createPointerDataType(const BasicType& type);

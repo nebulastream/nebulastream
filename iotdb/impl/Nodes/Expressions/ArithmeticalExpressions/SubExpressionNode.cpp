@@ -16,7 +16,7 @@ bool SubExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 const std::string SubExpressionNode::toString() const {
-    return "SubNode()";
+    return "SubNode("+stamp->toString()+")";
 }
 
 }

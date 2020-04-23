@@ -16,7 +16,7 @@ bool MulExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 const std::string MulExpressionNode::toString() const {
-    return "MulNode()";
+    return "MulNode("+stamp->toString()+")";
 }
 
 }

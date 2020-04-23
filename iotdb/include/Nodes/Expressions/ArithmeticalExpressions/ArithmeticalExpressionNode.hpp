@@ -9,6 +9,8 @@ class ArithmeticalExpressionNode : public BinaryExpressionNode {
   protected:
     ArithmeticalExpressionNode(DataTypePtr stamp);
     ~ArithmeticalExpressionNode() = default;
+  public:
+    void inferStamp(SchemaPtr schema) override;
 };
 
 }

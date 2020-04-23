@@ -17,7 +17,19 @@ bool AndExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 const std::string AndExpressionNode::toString() const {
-    return "AndNode()";
+    return "AndNode("+stamp->toString()+")";
+}
+
+void AndExpressionNode::inferStamp(SchemaPtr schema) {
+    // delegate stamp inference of children
+    ExpressionNode::inferStamp(schema);
+    // check if children stamp is correct
+    if (!getLeft()->getStamp()->isEqual(createDataType(BOOLEAN))) {
+        NES_THROW_RUNTIME_ERROR("AND Expression Node: the stamp of left child must be boolean, but was: " + getLeft()->getStamp()->toString());
+    }
+    if(!getRight()->getStamp()->isEqual(createDataType(BOOLEAN))){
+        NES_THROW_RUNTIME_ERROR("AND Expression Node: the stamp of left child must be boolean, but was: " + getRight()->getStamp()->toString());
+    }
 }
 
 }

@@ -1,19 +1,17 @@
 
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
+#include <API/Schema.hpp>
 #include <utility>
 namespace NES {
 FieldAccessExpressionNode::FieldAccessExpressionNode(DataTypePtr stamp, std::string fieldName)
     : ExpressionNode(std::move(stamp)), fieldName(std::move(fieldName)) {};
 
-FieldAccessExpressionNode::FieldAccessExpressionNode(std::string fieldName)
-    : FieldAccessExpressionNode(nullptr, std::move(fieldName)) {};
-
 ExpressionNodePtr FieldAccessExpressionNode::create(DataTypePtr stamp, std::string fieldName) {
-    return std::make_shared<FieldAccessExpressionNode>(stamp, fieldName);
+    return std::make_shared<FieldAccessExpressionNode>(FieldAccessExpressionNode(stamp, fieldName));
 }
 
 ExpressionNodePtr FieldAccessExpressionNode::create(std::string fieldName) {
-    return create(nullptr, fieldName);
+    return create(createUndefinedDataType(), fieldName);
 }
 
 bool FieldAccessExpressionNode::equal(const NodePtr rhs) const {
@@ -29,7 +27,18 @@ const std::string FieldAccessExpressionNode::getFieldName() {
 }
 
 const std::string FieldAccessExpressionNode::toString() const {
-    return "FieldAccessNode(" + fieldName + ")";
+    return "FieldAccessNode(" + fieldName + ": " + stamp->toString()+")";
+}
+
+void FieldAccessExpressionNode::inferStamp(SchemaPtr schema) {
+    // check if the access field is defined in the schema.
+    if (!schema->has(fieldName)) {
+        NES_THROW_RUNTIME_ERROR(
+            "FieldAccessExpression: the field " + fieldName + " is not defined in the  schema " + schema->toString());
+    }
+    // assign the stamp of this field access with the type of this field.
+    auto field = schema->get(fieldName);
+    stamp = field->getDataType();
 }
 
 }

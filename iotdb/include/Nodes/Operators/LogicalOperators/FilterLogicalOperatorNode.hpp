@@ -28,6 +28,7 @@ class FilterLogicalOperatorNode : public LogicalOperatorNode {
      */
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
+    SchemaPtr getResultSchema() const override;
   private:
     ExpressionNodePtr predicate;
 

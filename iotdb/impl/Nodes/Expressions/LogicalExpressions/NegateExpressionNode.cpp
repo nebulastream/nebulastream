@@ -10,13 +10,23 @@ bool NegateExpressionNode::equal(const NodePtr rhs) const {
 }
 
 const std::string NegateExpressionNode::toString() const {
-    return "NegateNode()";
+    return "NegateNode("+stamp->toString()+")";
 }
 
 ExpressionNodePtr NegateExpressionNode::create(const ExpressionNodePtr child) {
     auto equals = std::make_shared<NegateExpressionNode>();
     equals->setChild(child);
     return equals;
+}
+
+void NegateExpressionNode::inferStamp(SchemaPtr schema) {
+    // delegate stamp inference of children
+    ExpressionNode::inferStamp(schema);
+    // check if children stamp is correct
+    if (!child()->getStamp()->isEqual(createDataType(BOOLEAN))) {
+        NES_THROW_RUNTIME_ERROR(
+            "Negate Expression Node: the stamp of child must be boolean, but was: " + child()->getStamp()->toString());
+    }
 }
 
 }

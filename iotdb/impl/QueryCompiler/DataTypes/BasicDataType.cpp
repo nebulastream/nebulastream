@@ -73,6 +73,7 @@ const std::string BasicDataType::toString() const  {
     case CHAR:return "CHAR";
     case DATE:return "DATE";
     case VOID_TYPE:return "VOID";
+    case UNDEFINED:return "UNDEFINED";
   }
   return "";
 }
@@ -150,10 +151,18 @@ bool BasicDataType::operator==(const DataType &_rhs) const {
   auto rhs = dynamic_cast<const NES::BasicDataType &>(_rhs);
   return type == rhs.type && dataSize == rhs.dataSize;
 }
+const bool BasicDataType::isUndefined() const {
+    return type == UNDEFINED;
+}
 
 const DataTypePtr createDataType(const BasicType &type) {
   DataTypePtr ptr = std::make_shared<BasicDataType>(type);
   return ptr;
+}
+
+const DataTypePtr createUndefinedDataType() {
+    DataTypePtr ptr = std::make_shared<BasicDataType>(UNDEFINED);
+    return ptr;
 }
 
 const DataTypePtr createVarDataType(const BasicType &type, uint32_t size) {

@@ -23,11 +23,13 @@ class BasicDataType : public DataType {
 
   const bool isCharDataType() const override;
 
+
+
   BasicType getType();
 
   uint32_t getSizeBytes() const override;
-
-  uint32_t getFixSizeBytes() const;
+    const bool isUndefined() const override;
+    uint32_t getFixSizeBytes() const;
   const std::string toString() const override;
   const std::string convertRawToString(void *data) const override;
   const CodeExpressionPtr getDeclCode(const std::string &identifier) const override;

@@ -16,6 +16,7 @@ class AndExpressionNode : public LogicalBinaryExpressionNode {
     static ExpressionNodePtr create(const ExpressionNodePtr left, const ExpressionNodePtr right);
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
+    void inferStamp(SchemaPtr schema) override;
 };
 }
 

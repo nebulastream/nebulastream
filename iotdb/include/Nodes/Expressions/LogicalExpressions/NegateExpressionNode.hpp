@@ -18,6 +18,7 @@ class NegateExpressionNode : public LogicalUnaryExpressionNode {
 
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
+    void inferStamp(SchemaPtr schema) override ;
 };
 }
 

@@ -19,6 +19,8 @@ class ConstantValueExpressionNode : public ExpressionNode {
      */
     ValueTypePtr getConstantValue() const;
 
+    void inferStamp(SchemaPtr schema) override;
+
     const std::string toString() const override;
     bool equal(const NodePtr rhs) const override;
   private:
