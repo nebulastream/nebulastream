@@ -1,30 +1,29 @@
-#ifndef NES_IMPL_OPTIMIZER_IMPL_MINIMUMRESOURCECONSUMPTION_HPP_
-#define NES_IMPL_OPTIMIZER_IMPL_MINIMUMRESOURCECONSUMPTION_HPP_
+#ifndef NES_IMPL_OPTIMIZER_IMPL_MINIMUMENERGYCONSUMPTION_HPP_
+#define NES_IMPL_OPTIMIZER_IMPL_MINIMUMENERGYCONSUMPTION_HPP_
 
-#include <Optimizer/BasePlacementStrategy.hpp>
+#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 namespace NES {
 
 /**
  * @brief This class is responsible for placing the operators on common path among the sources such that overall
- * resource consumption will reduce.
+ * energy consumption will reduce.
  */
-class MinimumResourceConsumptionStrategy : public BasePlacementStrategy {
+class MinimumEnergyConsumptionStrategy : public BasePlacementStrategy {
 
   public:
-    ~MinimumResourceConsumptionStrategy() = default;
+    ~MinimumEnergyConsumptionStrategy() = default;
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
-    static std::unique_ptr<MinimumResourceConsumptionStrategy> create(){
-        return std::make_unique<MinimumResourceConsumptionStrategy>(MinimumResourceConsumptionStrategy());
+    static std::unique_ptr<MinimumEnergyConsumptionStrategy> create(){
+        return std::make_unique<MinimumEnergyConsumptionStrategy>(MinimumEnergyConsumptionStrategy());
     }
 
   private:
 
-    MinimumResourceConsumptionStrategy() = default;
+    MinimumEnergyConsumptionStrategy() = default;
 
     void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
                         OperatorPtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes);
-
     /**
      * @brief Finds all the nodes that can be used for performing FWD operator
      * @param sourceNodes
@@ -36,4 +35,4 @@ class MinimumResourceConsumptionStrategy : public BasePlacementStrategy {
 };
 }
 
-#endif //NES_IMPL_OPTIMIZER_IMPL_MINIMUMRESOURCECONSUMPTION_HPP_
+#endif //NES_IMPL_OPTIMIZER_IMPL_MINIMUMENERGYCONSUMPTION_HPP_

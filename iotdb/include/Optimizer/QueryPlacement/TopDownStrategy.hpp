@@ -2,7 +2,7 @@
 #define TOPDOWN_HPP
 
 #include <stack>
-#include <Optimizer/BasePlacementStrategy.hpp>
+#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 
 namespace NES {
 
