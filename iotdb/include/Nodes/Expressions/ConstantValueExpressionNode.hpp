@@ -4,11 +4,11 @@
 #include <Nodes/Expressions/ExpressionNode.hpp>
 namespace NES {
 /**
- * @brief This expression node represents a constant value
+ * @brief This expression node represents a constant value and a fixed data type.
+ * Thus the samp of this expression is always fixed.
  */
 class ConstantValueExpressionNode : public ExpressionNode {
   public:
-    explicit ConstantValueExpressionNode(const ValueTypePtr constantValue);
     /**
      * @brief Factory method to create a ConstantValueExpressionNode.
      */
@@ -19,11 +19,27 @@ class ConstantValueExpressionNode : public ExpressionNode {
      */
     ValueTypePtr getConstantValue() const;
 
+    /**
+     * @brief On a constant value expression infer stamp has not to perform any action as its result type is always constant.
+     * @param schema
+     */
     void inferStamp(SchemaPtr schema) override;
 
+    /**
+     * @brief Creates a string of the value and the type.
+     * @return
+     */
     const std::string toString() const override;
-    bool equal(const NodePtr rhs) const override;
+
+    /**
+     * @brief Compares if another node is equal to this constant value expression.
+     * @param otherNode
+     * @return true if they are equal
+     */
+    bool equal(const NodePtr otherNode) const override;
   private:
+    explicit ConstantValueExpressionNode(const ValueTypePtr constantValue);
+    // Value of this expression
     ValueTypePtr constantValue;
 };
 
