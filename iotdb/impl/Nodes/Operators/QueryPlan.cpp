@@ -31,8 +31,7 @@ size_t QueryPlan::getNextOperatorId() {
 }
 
 void QueryPlan::appendOperator(OperatorNodePtr op) {
-    int operatorId = getNextOperatorId();
-    op->setId(operatorId);
+    op->setId(getNextOperatorId());
     rootOperator->addParent(op);
     rootOperator = op;
 }
