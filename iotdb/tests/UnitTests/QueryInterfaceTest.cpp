@@ -105,9 +105,9 @@ TEST_F(QueryInterfaceTest, testQueryString) {
 
   code << "Schema schema = Schema::create()->addField(\"test\",INT32);"
        << std::endl;
-  code << "Stream testStream = Stream(\"test-stream\",schema);" << std::endl;
+  code << "auto testStream = Stream(\"test-stream\",schema);" << std::endl;
   code
-      << "InputQuery::from(default_stream).map(default_stream[\"value\"],2).filter(default_stream[\"test\"]==5)"
+      << "InputQuery::from(default_stream).filter(default_stream[\"test\"]==5)"
       << std::endl << "" << std::endl << ";" << std::endl;
 
   try{
