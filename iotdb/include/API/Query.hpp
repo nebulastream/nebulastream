@@ -128,10 +128,12 @@ class Query {
 
     /**
      * @brief Gets the query plan from the input query.
+     * @return QueryPlanPtr
      */
     QueryPlanPtr getQueryPlan();
 
   private:
+    // creates a new query object
     Query(QueryPlanPtr queryPlan);
     // query plan containing the operators.
     QueryPlanPtr queryPlan;
