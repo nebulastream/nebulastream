@@ -24,10 +24,10 @@ void OrExpressionNode::inferStamp(SchemaPtr schema) {
     // delegate stamp inference of children
     ExpressionNode::inferStamp(schema);
     // check if children stamp is correct
-    if (!getLeft()->getStamp()->isEqual(createDataType(BOOLEAN))) {
+    if (!getLeft()->isPredicate()) {
         NES_THROW_RUNTIME_ERROR("OR Expression Node: the stamp of left child must be boolean, but was: " + getLeft()->getStamp()->toString());
     }
-    if(!getRight()->getStamp()->isEqual(createDataType(BOOLEAN))){
+    if(!getRight()->isPredicate()){
         NES_THROW_RUNTIME_ERROR("OR Expression Node: the stamp of left child must be boolean, but was: " + getRight()->getStamp()->toString());
     }
 }

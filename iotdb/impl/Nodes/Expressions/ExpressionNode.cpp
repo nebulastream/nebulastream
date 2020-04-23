@@ -8,7 +8,7 @@ bool ExpressionNode::isPredicate() {
     return stamp->isEqual(createDataType(BasicType::BOOLEAN));
 }
 
-DataTypePtr ExpressionNode::getStamp() {
+const DataTypePtr ExpressionNode::getStamp() const {
     return stamp;
 }
 

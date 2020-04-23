@@ -18,7 +18,12 @@ class NegateExpressionNode : public LogicalUnaryExpressionNode {
 
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
-    void inferStamp(SchemaPtr schema) override ;
+    /**
+     * @brief Infers the stamp of this logical negate expression node.
+     * We assume that the children of this expression is a predicate.
+     * @param schema the current schema.
+     */
+    void inferStamp(SchemaPtr schema) override;
 };
 }
 

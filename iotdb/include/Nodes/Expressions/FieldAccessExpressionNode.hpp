@@ -5,7 +5,6 @@ namespace NES {
 /**
  * @brief A FieldAccessExpression reads a specific field of the current record.
  * It can be created typed or untyped.
- * todo for untyped field accesses we have to infer the type later.
  */
 class FieldAccessExpressionNode : public ExpressionNode {
   public:

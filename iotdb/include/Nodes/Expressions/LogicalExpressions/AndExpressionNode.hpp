@@ -16,6 +16,11 @@ class AndExpressionNode : public LogicalBinaryExpressionNode {
     static ExpressionNodePtr create(const ExpressionNodePtr left, const ExpressionNodePtr right);
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
+    /**
+     * @brief Infers the stamp of this logical AND expression node.
+     * We assume that both children of an and expression are predicates.
+     * @param schema the current schema.
+     */
     void inferStamp(SchemaPtr schema) override;
 };
 }

@@ -16,6 +16,11 @@ class OrExpressionNode : public LogicalBinaryExpressionNode {
     static ExpressionNodePtr create(const ExpressionNodePtr left, const ExpressionNodePtr right);
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
+    /**
+     * @brief Infers the stamp of this logical OR expression node.
+     * We assume that both children of an OR expression are predicates.
+     * @param schema the current schema.
+     */
     void inferStamp(SchemaPtr schema) override;
 };
 }
