@@ -14,7 +14,7 @@ bool GreaterExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 const std::string GreaterExpressionNode::toString() const {
-    return "GreaterNode()";
+    return "GreaterNode("+stamp->toString()+")";
 }
 
 }

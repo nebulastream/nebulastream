@@ -4,6 +4,10 @@
 #include <Nodes/Node.hpp>
 #include <API/Types/DataTypes.hpp>
 namespace NES {
+
+class Schema;
+typedef std::shared_ptr<Schema> SchemaPtr;
+
 /**
  * @brief this indicates an expression, which is a parameter for a FilterOperator or a MapOperator.
  * Each expression declares a stamp, which expresses the data type of this expression.
@@ -19,7 +23,10 @@ class ExpressionNode : public Node {
      */
     bool isPredicate();
 
+    virtual void inferStamp(SchemaPtr schema);
+
     DataTypePtr getStamp();
+    void setStamp(DataTypePtr stamp);
   protected:
     /**
      * @brief declares the type of this expression.

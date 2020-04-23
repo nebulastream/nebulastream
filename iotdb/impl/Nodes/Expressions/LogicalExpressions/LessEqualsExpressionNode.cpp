@@ -14,7 +14,7 @@ bool LessEqualsExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 const std::string LessEqualsExpressionNode::toString() const {
-    return "LessThenNode()";
+    return "LessThenNode("+stamp->toString()+")";
 }
 
 }

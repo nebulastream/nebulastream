@@ -31,4 +31,13 @@ LogicalOperatorNodePtr createFilterLogicalOperatorNode(const ExpressionNodePtr p
     return std::make_shared<FilterLogicalOperatorNode>(predicate);
 }
 
+SchemaPtr FilterLogicalOperatorNode::getResultSchema() const {
+    auto schema = OperatorNode::getResultSchema();
+    predicate->inferStamp(schema);
+    if(!predicate->isPredicate()){
+        NES_THROW_RUNTIME_ERROR("FilterLogicalOperator: the filter expression is not a valid predicate");
+    }
+    return schema;
+}
+
 }

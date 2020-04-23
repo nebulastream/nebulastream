@@ -2,6 +2,8 @@
 #include <iostream>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
+#include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
@@ -21,9 +23,13 @@
 #include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
+#include <Nodes/Phases/TypeInferencePhase.hpp>
 #include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <SourceSink/SinkCreator.hpp>
+#include <API/Expressions/Expressions.hpp>
+#include <API/Expressions/ArithmeticalExpressions.hpp>
+#include <API/Expressions/LogicalExpressions.hpp>
 
 namespace NES {
 
@@ -1318,7 +1324,6 @@ TEST_F(LogicalOperatorNodeTest, splitWithMultiplePredecessors) {
     }
 }
 
-
 TEST_F(LogicalOperatorNodeTest, bfIterator) {
     /**
      * 1 -> 2 -> 5
@@ -1418,6 +1423,44 @@ TEST_F(LogicalOperatorNodeTest, translateToLagacyOperatorTree) {
     auto legacySource = legacyFilter->getChildren()[0];
     ASSERT_EQ(legacySource->getOperatorType(), SOURCE_OP);
 
+}
+
+TEST_F(LogicalOperatorNodeTest, inferOperatorTypes) {
+    /**
+     * Sink -> Map -> Source
+     * from(test).map(x=10)
+     */
+    auto schema = Schema::create();
+    schema->addField("f1", BasicType::INT32);
+    schema->addField("f2", BasicType::FLOAT64);
+
+    auto sourceDescriptor = std::make_shared<DefaultSourceDescriptor>(schema, 0, 0);
+    auto source = createSourceLogicalOperatorNode(sourceDescriptor);
+    auto printSinkDescriptor = std::make_shared<PrintSinkDescriptor>(schema);
+    auto sink = createSinkLogicalOperatorNode(printSinkDescriptor);
+    auto map = createMapLogicalOperatorNode(Attribute("f8") = 10*99+Attribute("f1"));
+    map->addChild(source);
+
+    auto filter = createFilterLogicalOperatorNode(Attribute("f1") != 1);
+    filter->addChild(map);
+
+    sink->addChild(filter);
+    ConsoleDumpHandler::create()->dump(filter->as<FilterLogicalOperatorNode>()->getPredicate(), std::cout);
+    std::cout << source->getResultSchema()->toString() << std::endl;
+    std::cout << map->getResultSchema()->toString() << std::endl;
+    std::cout << filter->getResultSchema()->toString() << std::endl;
+    std::cout << sink->getResultSchema()->toString() << std::endl;
+
+    ConsoleDumpHandler::create()->dump(sink, std::cout);
+    auto typeInferencePhase = TypeInferencePhase::create();
+    typeInferencePhase->transform(sink);
+    ConsoleDumpHandler::create()->dump(sink, std::cout);
+    ConsoleDumpHandler::create()->dump(filter->as<FilterLogicalOperatorNode>()->getPredicate(), std::cout);
+    ConsoleDumpHandler::create()->dump(map->as<MapLogicalOperatorNode>()->getMapExpression(), std::cout);
+
+    int64_t x = 10;
+    int64_t y = 11;
+    int32_t z = x + y;
 }
 
 } // namespace NES

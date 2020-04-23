@@ -15,7 +15,7 @@ bool ConstantValueExpressionNode::equal(const NodePtr rhs) const {
 }
 
 const std::string ConstantValueExpressionNode::toString() const {
-    return "ConstantValueNode()";
+    return "ConstantValueNode(" + constantValue->toString() + ")";
 }
 
 ExpressionNodePtr ConstantValueExpressionNode::create(const ValueTypePtr constantValue) {
@@ -24,6 +24,10 @@ ExpressionNodePtr ConstantValueExpressionNode::create(const ValueTypePtr constan
 
 ValueTypePtr ConstantValueExpressionNode::getConstantValue() const {
     return constantValue;
+}
+
+void ConstantValueExpressionNode::inferStamp(SchemaPtr schema) {
+    // the stamp of constant value expressions is always assigned correctly.
 }
 
 }

@@ -30,5 +30,8 @@ LogicalOperatorNodePtr createSourceLogicalOperatorNode(const SourceDescriptorPtr
 SourceDescriptorPtr SourceLogicalOperatorNode::getSourceDescriptor() {
     return sourceDescriptor;
 }
+SchemaPtr SourceLogicalOperatorNode::getResultSchema() const {
+    return sourceDescriptor->getSchema();
+}
 
 }

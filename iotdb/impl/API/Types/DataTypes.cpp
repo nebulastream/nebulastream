@@ -18,6 +18,10 @@ const StatementPtr DataType::getStmtCopyAssignment(const AssignmentStatment &aPa
       .copy();
 }
 
+const bool DataType::isUndefined() const {
+    return false;
+}
+
 DataType::~DataType() {}
 
 } // namespace NES

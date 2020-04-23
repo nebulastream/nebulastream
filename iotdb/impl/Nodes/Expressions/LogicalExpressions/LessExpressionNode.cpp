@@ -14,7 +14,7 @@ bool LessExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 const std::string LessExpressionNode::toString() const {
-    return "LessNode()";
+    return "LessNode("+stamp->toString()+")";
 }
 
 }

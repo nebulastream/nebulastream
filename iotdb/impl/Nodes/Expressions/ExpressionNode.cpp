@@ -11,4 +11,15 @@ bool ExpressionNode::isPredicate() {
 DataTypePtr ExpressionNode::getStamp() {
     return stamp;
 }
+
+void ExpressionNode::setStamp(DataTypePtr stamp) {
+    this->stamp = stamp;
+}
+
+void ExpressionNode::inferStamp(SchemaPtr schema) {
+    // infer stamp on all children nodes
+    for(const auto& node:children){
+        node->as<ExpressionNode>()->inferStamp(schema);
+    }
+}
 }

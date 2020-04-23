@@ -23,7 +23,10 @@ class ArrayValueType : public ValueType {
   const CodeExpressionPtr getCodeExpression() const override;
 
   const ValueTypePtr copy() const override;
-  const bool isArrayValueType() const override;
+
+    const std::string toString() const override;
+
+    const bool isArrayValueType() const override;
 
   virtual ~ArrayValueType() override;
 

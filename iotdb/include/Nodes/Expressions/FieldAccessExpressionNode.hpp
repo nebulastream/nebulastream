@@ -9,9 +9,6 @@ namespace NES {
  */
 class FieldAccessExpressionNode : public ExpressionNode {
   public:
-    FieldAccessExpressionNode(DataTypePtr stamp, std::string fieldName);
-    FieldAccessExpressionNode(std::string fieldName);
-
     /**
     * @brief Create typed field read.
     */
@@ -27,7 +24,10 @@ class FieldAccessExpressionNode : public ExpressionNode {
 
     const std::string getFieldName();
 
+    void inferStamp(SchemaPtr schema) override;
+
   private:
+    FieldAccessExpressionNode(DataTypePtr stamp, std::string fieldName);
     /**
      * @brief Name of the field want to access.
      */
