@@ -130,6 +130,7 @@ class Dispatcher {
     Dispatcher& operator=(const Dispatcher&);
     ~Dispatcher();
     void cleanup();
+    void cleanupUnsafe();
 
     std::deque<TaskPtr> task_queue;
 

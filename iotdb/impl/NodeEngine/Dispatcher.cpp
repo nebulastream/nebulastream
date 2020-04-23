@@ -205,22 +205,27 @@ TaskPtr Dispatcher::getWork(std::atomic<bool>& threadPool_running) {
         task_queue.pop_front();
     } else {
         NES_DEBUG("Dispatcher: Thread pool was shut down while waiting");
-        cleanup();
+        cleanupUnsafe();
         task = TaskPtr();
     }
     NES_DEBUG("Dispatcher:getWork return task");
     return task;
 }
 
+void Dispatcher::cleanupUnsafe() {
+    // Call this only if you are holding workMutex
+    if (task_queue.size()) {
+        NES_DEBUG("Dispatcher::cleanupUnsafe: Thread pool was shut down while waiting but data is queued.");
+        task_queue.clear();
+    }
+    NES_DEBUG("Dispatcher::cleanupUnsafe: finished");
+}
+
 void Dispatcher::cleanup() {
     NES_DEBUG("Dispatcher::cleanup: get lock");
     std::unique_lock<std::mutex> lock(workMutex);
     NES_DEBUG("Dispatcher::cleanup: got lock");
-
-    if (task_queue.size()) {
-        NES_DEBUG("Dispatcher: Thread pool was shut down while waiting but data is queued.");
-        task_queue.clear();
-    }
+    cleanupUnsafe();
     NES_DEBUG("Dispatcher::cleanup: finished");
 }
 
