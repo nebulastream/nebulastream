@@ -1,5 +1,5 @@
 #include "Optimizer/NESOptimizer.hpp"
-#include "Optimizer/BasePlacementStrategy.hpp"
+#include "Optimizer/QueryPlacement/BasePlacementStrategy.hpp"
 #include "Topology/NESTopologyPlan.hpp"
 
 using namespace NES;

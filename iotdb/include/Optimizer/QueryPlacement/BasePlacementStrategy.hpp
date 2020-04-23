@@ -5,7 +5,7 @@
 #include <Topology/NESTopologyManager.hpp>
 #include <Topology/NESTopologyPlan.hpp>
 #include <Catalogs/StreamCatalog.hpp>
-#include "NESExecutionPlan.hpp"
+#include "Optimizer/NESExecutionPlan.hpp"
 
 namespace NES {
 

@@ -1,7 +1,7 @@
 #ifndef NES_IMPL_OPTIMIZER_IMPL_LOWLINKLATENCY_HPP_
 #define NES_IMPL_OPTIMIZER_IMPL_LOWLINKLATENCY_HPP_
 
-#include <Optimizer/BasePlacementStrategy.hpp>
+#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 
 namespace NES {
 
