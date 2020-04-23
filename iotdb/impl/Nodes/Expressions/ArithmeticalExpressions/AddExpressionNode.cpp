@@ -16,7 +16,7 @@ bool AddExpressionNode::equal(const NodePtr rhs) const {
     return false;
 }
 const std::string AddExpressionNode::toString() const {
-    return "AddNode("+stamp->toString()+")";
+    return "AddNode(" + stamp->toString() + ")";
 }
 
 }
