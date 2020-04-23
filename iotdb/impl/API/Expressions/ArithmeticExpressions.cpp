@@ -31,22 +31,22 @@ ExpressionNodePtr operator*(ExpressionNodePtr leftExp, ExpressionNodePtr rightEx
 
 ExpressionNodePtr operator++(ExpressionNodePtr leftExp)
 {
-    return leftExp + ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT64, "1"));
+    return leftExp + ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "1"));
 }
 
 ExpressionNodePtr operator--(ExpressionNodePtr leftExp)
 {
-    return leftExp - ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT64, "1"));
+    return leftExp - ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "1"));
 }
 
 ExpressionNodePtr operator++(ExpressionNodePtr leftExp, int)
 {
-    return leftExp + ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT64, "1"));
+    return leftExp + ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "1"));
 }
 
 ExpressionNodePtr operator--(ExpressionNodePtr leftExp, int)
 {
-    return leftExp - ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT64, "1"));
+    return leftExp - ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "1"));
 }
 
 ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionNodePtr rightExp)
