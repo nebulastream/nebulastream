@@ -19,7 +19,7 @@ const std::string ConstantValueExpressionNode::toString() const {
 }
 
 ExpressionNodePtr ConstantValueExpressionNode::create(const ValueTypePtr constantValue) {
-    return std::make_shared<ConstantValueExpressionNode>(constantValue);
+    return std::make_shared<ConstantValueExpressionNode>(ConstantValueExpressionNode(constantValue));
 }
 
 ValueTypePtr ConstantValueExpressionNode::getConstantValue() const {
