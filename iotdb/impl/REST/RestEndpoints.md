@@ -34,7 +34,7 @@ Submitting user query for execution.
 Getting the execution plan for the user query.
  
 **API**: /query/execution-plan\
-**Verb**: POST\
+**Verb**: GET\
 **Response Code**: 200 OK
 
 **_Example_**: 
