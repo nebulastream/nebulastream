@@ -3,21 +3,23 @@
 #include <memory>
 namespace NES {
 
-class OperatorNode;
-typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+class QueryPlan;
+typedef std::shared_ptr<QueryPlan> QueryPlanPtr;
 
 class Node;
 typedef std::shared_ptr<Node> NodePtr;
 class TypeInferencePhase;
 typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
+class SourceDescriptor;
+typedef std::shared_ptr<SourceDescriptor> SourceDescriptorPtr;
 
 class TypeInferencePhase {
   public:
     static TypeInferencePhasePtr create();
-    OperatorNodePtr transform(OperatorNodePtr operatorNode);
+    QueryPlanPtr transform(QueryPlanPtr queryPlan);
   private:
+    SourceDescriptorPtr createSourceDescriptor(std::string streamName);
     TypeInferencePhase();
-    void inferOperatorType(NodePtr operatorNode);
 };
 }
 

@@ -64,6 +64,14 @@ class Schema {
     SchemaPtr addField(const std::string& name, uint32_t size);
 
     /**
+     * @brief Replaces a field, which is already part of the schema.
+     * @param name
+     * @param type
+     * @return
+     */
+    void replaceField(const std::string& name, DataTypePtr type);
+
+    /**
      * @brief Checks if attribute field name is defined in the schema
      * @param fieldName
      * @return bool

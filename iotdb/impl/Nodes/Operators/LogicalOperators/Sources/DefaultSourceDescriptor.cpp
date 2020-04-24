@@ -19,6 +19,14 @@ const uint32_t DefaultSourceDescriptor::getFrequency() const {
     return frequency;
 }
 
+SourceDescriptorPtr DefaultSourceDescriptor::create(SchemaPtr schema,
+                                                    uint64_t numbersOfBufferToProduce,
+                                                    uint32_t frequency) {
+    return std::make_shared<DefaultSourceDescriptor>(DefaultSourceDescriptor(schema,
+                                                                             numbersOfBufferToProduce,
+                                                                             frequency));
+}
+
 }
 
 

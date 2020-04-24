@@ -21,7 +21,7 @@ bool SinkLogicalOperatorNode::equal(const NodePtr rhs) const {
 
 const std::string SinkLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "SINK(" << sinkDescriptor->getType() << ")";
+    ss << "SINK(" << outputSchema->toString() << ")";
     return ss.str();
 }
 

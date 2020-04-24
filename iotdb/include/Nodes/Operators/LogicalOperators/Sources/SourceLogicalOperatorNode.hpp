@@ -16,13 +16,13 @@ public:
     const std::string toString() const override;
     bool equal(const NodePtr rhs) const override;
     SourceDescriptorPtr getSourceDescriptor();
+    void setSourceDescriptor(SourceDescriptorPtr sourceDescriptor);
     /**
      * @brief Returns the result schema of a source operator, which is defined by the source descriptor.
      * @return SchemaPtr
      */
-    SchemaPtr getResultSchema() const override;
+    bool inferSchema() override;
   private:
-
     SourceLogicalOperatorNode() = delete;
     SourceDescriptorPtr sourceDescriptor;
 };

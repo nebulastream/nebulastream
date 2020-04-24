@@ -11,8 +11,8 @@ namespace NES {
 class SenseSourceDescriptor : public SourceDescriptor {
 
   public:
+    static SourceDescriptorPtr create(SchemaPtr schema, std::string udfs);
 
-    SenseSourceDescriptor(SchemaPtr schema, std::string udfs);
 
     SourceDescriptorType getType() override;
 
@@ -22,7 +22,7 @@ class SenseSourceDescriptor : public SourceDescriptor {
     const std::string& getUdfs() const;
 
   private:
-
+    SenseSourceDescriptor(SchemaPtr schema, std::string udfs);
     SenseSourceDescriptor()=default;
 
     std::string udfs;

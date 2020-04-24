@@ -12,7 +12,7 @@ class MapLogicalOperatorNode : public LogicalOperatorNode {
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
     FieldAssignmentExpressionNodePtr getMapExpression();
-    SchemaPtr getResultSchema() const override;
+    bool inferSchema() override;
   private:
     FieldAssignmentExpressionNodePtr mapExpression;
 };

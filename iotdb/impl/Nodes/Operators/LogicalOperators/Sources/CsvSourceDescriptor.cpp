@@ -32,6 +32,13 @@ size_t CsvSourceDescriptor::getNumBuffersToProcess() const {
 size_t CsvSourceDescriptor::getFrequency() const {
     return frequency;
 }
+SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema,
+                                                std::string filePath,
+                                                std::string delimiter,
+                                                size_t numBuffersToProcess,
+                                                size_t frequency) {
+    return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(schema, filePath, delimiter, numBuffersToProcess, frequency));
+}
 
 }
 

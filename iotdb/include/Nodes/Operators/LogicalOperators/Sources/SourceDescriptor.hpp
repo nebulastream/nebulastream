@@ -9,7 +9,7 @@
 namespace NES {
 
 enum SourceDescriptorType {
-    ZmqSource, SenseSource, KafkaSource, CsvSource,  BinarySource, DefaultSource
+    ZmqSource, SenseSource, KafkaSource, CsvSource,  BinarySource, DefaultSource, LogicalStreamSource
 };
 
 class SourceDescriptor;

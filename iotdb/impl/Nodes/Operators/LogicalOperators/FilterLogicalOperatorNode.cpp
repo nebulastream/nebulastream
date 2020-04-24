@@ -23,7 +23,7 @@ bool FilterLogicalOperatorNode::equal(const NodePtr rhs) const {
 
 const std::string FilterLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "FILTER(" << predicate->toString() << ")";
+    ss << "FILTER(" << outputSchema->toString() << ")";
     return ss.str();
 }
 
@@ -31,13 +31,14 @@ LogicalOperatorNodePtr createFilterLogicalOperatorNode(const ExpressionNodePtr p
     return std::make_shared<FilterLogicalOperatorNode>(predicate);
 }
 
-SchemaPtr FilterLogicalOperatorNode::getResultSchema() const {
-    auto schema = OperatorNode::getResultSchema();
-    predicate->inferStamp(schema);
+bool FilterLogicalOperatorNode::inferSchema()  {
+    OperatorNode::inferSchema();
+    predicate->inferStamp(inputSchema);
     if(!predicate->isPredicate()){
         NES_THROW_RUNTIME_ERROR("FilterLogicalOperator: the filter expression is not a valid predicate");
+        return false;
     }
-    return schema;
+    return true;
 }
 
 }

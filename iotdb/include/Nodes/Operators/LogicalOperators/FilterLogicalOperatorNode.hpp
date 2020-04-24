@@ -10,6 +10,9 @@ namespace NES {
 class ExpressionNode;
 typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
 
+/**
+ * @brief Filter operator, which contains an expression as a predicate.
+ */
 class FilterLogicalOperatorNode : public LogicalOperatorNode {
   public:
     explicit FilterLogicalOperatorNode(const ExpressionNodePtr);
@@ -28,7 +31,7 @@ class FilterLogicalOperatorNode : public LogicalOperatorNode {
      */
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
-    SchemaPtr getResultSchema() const override;
+    bool inferSchema() override;
   private:
     ExpressionNodePtr predicate;
 

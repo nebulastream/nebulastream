@@ -1432,25 +1432,26 @@ TEST_F(LogicalOperatorNodeTest, inferOperatorTypes) {
      */
     auto schema = Schema::create();
     schema->addField("f1", BasicType::INT32);
-    schema->addField("f2", BasicType::FLOAT64);
+    schema->addField("f2", BasicType::INT8);
 
     auto sourceDescriptor = std::make_shared<DefaultSourceDescriptor>(schema, 0, 0);
     auto source = createSourceLogicalOperatorNode(sourceDescriptor);
     auto printSinkDescriptor = std::make_shared<PrintSinkDescriptor>(schema);
     auto sink = createSinkLogicalOperatorNode(printSinkDescriptor);
 
-    auto map = createMapLogicalOperatorNode(Attribute("f8") = 10*99 + Attribute("f2"));
+    auto map = createMapLogicalOperatorNode(Attribute("f8") = Attribute("f2")+int8_t(1));
     map->addChild(source);
 
     auto filter = createFilterLogicalOperatorNode(Attribute("f1") != 1);
     filter->addChild(map);
 
     sink->addChild(filter);
+    sink->inferSchema();
     ConsoleDumpHandler::create()->dump(filter->as<FilterLogicalOperatorNode>()->getPredicate(), std::cout);
-    std::cout << source->getResultSchema()->toString() << std::endl;
-    std::cout << map->getResultSchema()->toString() << std::endl;
-    std::cout << filter->getResultSchema()->toString() << std::endl;
-    std::cout << sink->getResultSchema()->toString() << std::endl;
+    std::cout << source->getOutputSchema()->toString() << std::endl;
+    std::cout << map->getOutputSchema()->toString() << std::endl;
+    std::cout << filter->getOutputSchema()->toString() << std::endl;
+    std::cout << sink->getOutputSchema()->toString() << std::endl;
 
     ConsoleDumpHandler::create()->dump(sink, std::cout);
     auto typeInferencePhase = TypeInferencePhase::create();
