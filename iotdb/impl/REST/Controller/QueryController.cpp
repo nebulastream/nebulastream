@@ -51,7 +51,7 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
                     return;
                 }
                 catch (...) {
-                    std::cout << "Exception occurred while building the query plan for user request.";
+                    NES_DEBUG("Exception occurred while building the query plan for user request.");
                     internalServerErrorImpl(message);
                     return;
                 }
@@ -77,7 +77,7 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
                             successMessageImpl(message, basePlan);
                             return;
                         } catch (...) {
-                            std::cout << "Exception occurred while building the query plan for user request.";
+                            NES_DEBUG("Exception occurred while building the query plan for user request.");
                             internalServerErrorImpl(message);
                             return;
                         }
@@ -139,7 +139,7 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
         resourceNotFoundImpl(message);
 
     } catch (const std::exception& ex) {
-        std::cout << "Exception occurred during post request.";
+        NES_DEBUG("Exception occurred during post request.");
         internalServerErrorImpl(message);
     } catch (...) {
         RuntimeUtils::printStackTrace();
