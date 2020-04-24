@@ -3,6 +3,7 @@
 #include <REST/Controller/QueryController.hpp>
 #include <Operators/OperatorJsonUtil.hpp>
 #include <Topology/TestTopology.hpp>
+#include <Util/Logger.hpp>
 
 using namespace web;
 using namespace http;
@@ -17,15 +18,46 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
         //Prepare the response
         successMessageImpl(message, nesTopology);
         return;
-    }
-    resourceNotFoundImpl(message);
-}
+    } else if (path[1] == "execution-plan") {
+        message.extract_string(true)
+            .then([this, message](utility::string_t body) {
+                try {
+                    // Prepare Input query from user string
+                    string userRequest(body.begin(), body.end());
 
-void QueryController::handlePost(vector<utility::string_t> path, http_request message) {
+                    json::value req = json::value::parse(userRequest);
 
-    try {
+                    string userQuery = req.at("userQuery").as_string();
+                    string optimizationStrategyName = req.at("strategyName").as_string();
 
-        if (path[1] == "query-plan") {
+                    // FIXME: setup example topology
+                    // TODO: do we really have to do this for each submitted query? Cannot we solve it somehow else
+                    createExampleTopology();
+
+                    // Call the service
+                    string queryId = coordinatorServicePtr->registerQuery(userQuery, optimizationStrategyName);
+
+                    NESExecutionPlanPtr executionPlan = coordinatorServicePtr->getRegisteredQuery(queryId);
+                    json::value executionGraphPlan = executionPlan->getExecutionGraphAsJson();
+
+                    json::value restResponse{};
+                    restResponse["queryId"] = json::value::string(queryId);
+                    restResponse["executionGraph"] = executionGraphPlan;
+                    restResponse["planComputeTime"] =
+                        json::value::string(std::to_string(executionPlan->getTotalComputeTimeInMillis()));
+
+                    // Prepare the response
+                    successMessageImpl(message, restResponse);
+                    return;
+                }
+                catch (...) {
+                    std::cout << "Exception occurred while building the query plan for user request.";
+                    internalServerErrorImpl(message);
+                    return;
+                }
+            })
+            .wait();
+    } else if (path[1] == "query-plan") {
 
             message.extract_string(true)
                 .then([this, message](utility::string_t body) {
@@ -52,68 +84,35 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                       }
                 )
                 .wait();
-        } else if (path[1] == "execution-plan") {
-            message.extract_string(true)
-                .then([this, message](utility::string_t body) {
-                        try {
-                            //Prepare Input query from user string
-                            string userRequest(body.begin(), body.end());
+        }
+    resourceNotFoundImpl(message);
+}
 
-                            json::value req = json::value::parse(userRequest);
+void QueryController::handlePost(vector<utility::string_t> path, http_request message) {
 
-                            string userQuery = req.at("userQuery").as_string();
-                            string optimizationStrategyName = req.at("strategyName").as_string();
+    try {
 
-                            //FIXME: setup example topology
-                            //TODO: do we really have to do this for each submitted query? Cannot we solve it somehow else
-                            createExampleTopology();
+         if (path[1] == "execute-query") {
 
-                            //Call the service
-                            string queryId = coordinatorServicePtr->registerQuery(userQuery, optimizationStrategyName);
-
-                            NESExecutionPlanPtr executionPlan = coordinatorServicePtr->getRegisteredQuery(queryId);
-                            json::value executionGraphPlan = executionPlan->getExecutionGraphAsJson();
-
-                            json::value restResponse{};
-                            restResponse["queryId"] = json::value::string(queryId);
-                            restResponse["executionGraph"] = executionGraphPlan;
-                            restResponse["planComputeTime"] =
-                                json::value::string(std::to_string(executionPlan->getTotalComputeTimeInMillis()));
-
-                            //Prepare the response
-                            successMessageImpl(message, restResponse);
-                            return;
-                        } catch (...) {
-                            std::cout << "Exception occurred while building the query plan for user request.";
-                            internalServerErrorImpl(message);
-                            return;
-                        }
-                      }
-                )
-                .wait();
-
-        } else if (path[1] == "execute-query") {
-
-            std::cout << "Trying to execute query: -> " << std::endl;
+            NES_DEBUG("Trying to execute query");
 
             message.extract_string(true)
                 .then([this, message](utility::string_t body) {
                         try {
                             //Prepare Input query from user string
                             string userRequest(body.begin(), body.end());
-                            std::cout << "Request body: " << userRequest << std::endl;
-                            std::cout << "try to parse query" << std::endl;
+                            NES_DEBUG("Request body: " << userRequest << "try to parse query");
                             json::value req = json::value::parse(userRequest);
-                            std::cout << "get user query" << std::endl;
+                            NES_DEBUG( "get user query" );
                             string userQuery = req.at("userQuery").as_string();
-                            std::cout << "query=" << userQuery << std::endl;
+                            NES_DEBUG( "query=" << userQuery );
 
-                            std::cout << "try to parse strategy name" << std::endl;
+                            NES_DEBUG( "try to parse strategy name" );
                             string optimizationStrategyName = req.at("strategyName").as_string();
-                            std::cout << "strategyName=" << optimizationStrategyName << std::endl;
+                            NES_DEBUG( "strategyName=" << optimizationStrategyName );
 
-                            std::cout << "Params: userQuery= " << userQuery << ", strategyName= "
-                                      << optimizationStrategyName << std::endl;
+                            NES_DEBUG( "Params: userQuery= " << userQuery << ", strategyName= "
+                                      << optimizationStrategyName );
 
                             abstract_actor* abstractActor = caf::actor_cast<abstract_actor*>(coordinatorActorHandle);
                             CoordinatorActor* crd = dynamic_cast<CoordinatorActor*>(abstractActor);
@@ -128,7 +127,7 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
                             return;
 
                         } catch (...) {
-                            std::cout << "Exception occurred while building the query plan for user request.";
+                            NES_DEBUG("Exception occurred while building the query plan for user request.");
                             internalServerErrorImpl(message);
                             return;
                         }
