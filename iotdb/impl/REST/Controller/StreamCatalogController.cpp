@@ -10,7 +10,6 @@ namespace NES {
 void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web::http::http_request message) {
 
     if (path[1] == "allLogicalStream") {
-
         const map<std::string, std::string>
             & allLogicalStreamAsString = streamCatalogServicePtr->getAllLogicalStreamAsString();
 
@@ -26,7 +25,6 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
         return;
 
     } else if (path[1] == "allPhysicalStream") {
-
         message.extract_string(true)
             .then([this, message](utility::string_t body) {
                     try {
@@ -54,7 +52,7 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
                         successMessageImpl(message, result);
                         return;
                     } catch (...) {
-                        std::cout << "Exception occurred while building the query plan for user request.";
+                        NES_DEBUG("Exception occurred while building the query plan for user request.");
                         internalServerErrorImpl(message);
                         return;
                     }
@@ -101,7 +99,6 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
             )
             .wait();
         } else if (path[1] == "updateLogicalStream") {
-
             NES_DEBUG("StreamCatalogController : REST received request to update Logical Stream " << message.to_string())
             message.extract_string(true)
                 .then([this, message](utility::string_t body) {
