@@ -1,4 +1,6 @@
 #include "REST/Controller/StreamCatalogController.hpp"
+#include <REST/runtime_utils.hpp>
+#include <Util/Logger.hpp>
 
 using namespace web;
 using namespace http;
@@ -66,41 +68,49 @@ void StreamCatalogController::handleGet(std::vector<utility::string_t> path, web
 
 void StreamCatalogController::handlePost(std::vector<utility::string_t> path, web::http::http_request message) {
 
-    if (path[1] == "addLogicalStream") {
-        message.extract_string(true)
-            .then([this, message](utility::string_t body) {
+    try {
+
+        if (path[1] == "addLogicalStream") {
+
+            NES_DEBUG("StreamCatalogController : REST received request to add new Logical Stream " << message.to_string())
+            message.extract_string(true)
+                .then([this, message](utility::string_t body) {
                     try {
+                        NES_DEBUG("StreamCatalogController : Start trying to add new logical stream")
                         //Prepare Input query from user string
-                        std::string payload(body.begin(), body.end());
-
+                        string payload(body.begin(), body.end());
+                        NES_DEBUG("StreamCatalogController : userRequest: " << payload)
                         json::value req = json::value::parse(payload);
-
+                        NES_DEBUG("StreamCatalogController : Json Parse Value: " << req)
                         string streamName = req.at("streamName").as_string();
                         string schema = req.at("schema").as_string();
-
+                        NES_DEBUG("StreamCatalogController : Try to add new Logical Stream " << streamName << " and" << schema)
                         bool added = streamCatalogServicePtr->addNewLogicalStream(streamName, schema);
-
+                        NES_DEBUG("StreamCatalogController : Successfully added new logical Stream ?" << added)
                         //Prepare the response
                         json::value result{};
                         result["Success"] = json::value::boolean(added);
                         successMessageImpl(message, result);
                         return;
                     } catch (...) {
-                        std::cout << "Exception occurred while building the query plan for user request.";
+                        NES_DEBUG( "StreamCatalogController : Exception occurred while trying to add new logical stream")
                         internalServerErrorImpl(message);
                         return;
                     }
-                  }
+                }
             )
             .wait();
-    } else if (path[1] == "updateLogicalStream") {
-        message.extract_string(true)
-            .then([this, message](utility::string_t body) {
-                    try {
-                        //Prepare Input query from user string
-                        std::string payload(body.begin(), body.end());
+        } else if (path[1] == "updateLogicalStream") {
 
-                        json::value req = json::value::parse(payload);
+            NES_DEBUG("StreamCatalogController : REST received request to update Logical Stream " << message.to_string())
+            message.extract_string(true)
+                .then([this, message](utility::string_t body) {
+                    try {
+                        NES_DEBUG("StreamCatalogController : Start trying to update logical stream")
+                        //Prepare Input query from user string
+                        string userRequest(body.begin(), body.end());
+                        NES_DEBUG("StreamCatalogController : userRequest: " << userRequest)
+                        json::value req = json::value::parse(userRequest);
 
                         string streamName = req.at("streamName").as_string();
                         string schema = req.at("schema").as_string();
@@ -114,16 +124,22 @@ void StreamCatalogController::handlePost(std::vector<utility::string_t> path, we
 
                         return;
                     } catch (...) {
-                        std::cout << "Exception occurred while building the query plan for user request.";
+                        NES_DEBUG(" StreamCatalogController : Exception occurred while updating Logical Stream.");
                         internalServerErrorImpl(message);
                         return;
                     }
-                  }
-            )
-            .wait();
-    }
+                })
+                .wait();
+        }
 
     resourceNotFoundImpl(message);
+    } catch (const std::exception& ex) {
+        NES_DEBUG("StreamCatalogController : Exception occurred during post request.")
+        internalServerErrorImpl(message);
+    } catch (...) {
+        RuntimeUtils::printStackTrace();
+        internalServerErrorImpl(message);
+    }
 }
 
 void StreamCatalogController::handleDelete(std::vector<utility::string_t> path, web::http::http_request message) {
@@ -148,7 +164,7 @@ void StreamCatalogController::handleDelete(std::vector<utility::string_t> path, 
 
                         return;
                     } catch (...) {
-                        std::cout << "Exception occurred while building the query plan for user request.";
+                        NES_DEBUG(" StreamCatalogController : Exception occurred while building the query plan for user request.");
                         internalServerErrorImpl(message);
                         return;
                     }
