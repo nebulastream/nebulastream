@@ -30,10 +30,6 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
                     string userQuery = req.at("userQuery").as_string();
                     string optimizationStrategyName = req.at("strategyName").as_string();
 
-                    // FIXME: setup example topology
-                    // TODO: do we really have to do this for each submitted query? Cannot we solve it somehow else
-                    createExampleTopology();
-
                     // Call the service
                     string queryId = coordinatorServicePtr->registerQuery(userQuery, optimizationStrategyName);
 
