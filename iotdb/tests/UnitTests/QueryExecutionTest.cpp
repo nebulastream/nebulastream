@@ -183,7 +183,7 @@ TEST_F(QueryExecutionTest, windowQuery) {
                                          Milliseconds(2));
     auto windowOperator = createWindowOperator(
         createWindowDefinition(testSchema->get("value"), aggregation, windowType));
-    Schema resultSchema = Schema().create()->addField(
+    Schema resultSchema = Schema::create()->addField(
         createField("sum", BasicType::INT64));
     SchemaPtr ptr = std::make_shared<Schema>(resultSchema);
     auto windowScan = createWindowScanOperator(ptr);

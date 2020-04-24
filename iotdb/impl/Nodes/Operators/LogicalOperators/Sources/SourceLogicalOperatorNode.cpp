@@ -19,7 +19,7 @@ bool SourceLogicalOperatorNode::equal(const NodePtr rhs) const {
 
 const std::string SourceLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "SOURCE(" << sourceDescriptor->getType() << ")";
+    ss << "SOURCE(" << outputSchema->toString() << ")";
     return ss.str();
 }
 
@@ -27,11 +27,17 @@ LogicalOperatorNodePtr createSourceLogicalOperatorNode(const SourceDescriptorPtr
     return std::make_shared<SourceLogicalOperatorNode>(sourceDescriptor);
 }
 
+
+
 SourceDescriptorPtr SourceLogicalOperatorNode::getSourceDescriptor() {
     return sourceDescriptor;
 }
-SchemaPtr SourceLogicalOperatorNode::getResultSchema() const {
-    return sourceDescriptor->getSchema();
+bool SourceLogicalOperatorNode::inferSchema() {
+    inputSchema = sourceDescriptor->getSchema();
+    outputSchema = sourceDescriptor->getSchema();
+}
+void SourceLogicalOperatorNode::setSourceDescriptor(SourceDescriptorPtr sourceDescriptor) {
+    this->sourceDescriptor = sourceDescriptor;
 }
 
 }

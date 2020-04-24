@@ -63,6 +63,15 @@ SchemaPtr Schema::addField(const std::string& name, DataTypePtr data) {
     return addField(createField(name, data));
 }
 
+void Schema::replaceField(const std::string& name, DataTypePtr type) {
+    for (auto i = 0; i < fields.size(); i++) {
+        if(fields[i]->name == name) {
+            fields[i] = createField(name, type);
+            return;
+        }
+    }
+}
+
 bool Schema::has(const std::string& fieldName) {
     for (auto& field : fields) {
         if (field->name == fieldName) {
@@ -114,9 +123,8 @@ bool Schema::equals(SchemaPtr schema, bool considerOrder) {
 const std::string Schema::toString() const {
     std::stringstream ss;
     for (auto& f : fields) {
-        ss << f->toString();
+        ss << f->toString() << " ";
     }
-    ss << std::endl;
     return ss.str();
 }
 }

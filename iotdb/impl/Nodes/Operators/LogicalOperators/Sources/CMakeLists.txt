@@ -6,4 +6,5 @@ add_source_iotdb(
         BinarySourceDescriptor.cpp
         CsvSourceDescriptor.cpp
         DefaultSourceDescriptor.cpp
+        LogicalStreamSourceDescriptor.cpp
 )

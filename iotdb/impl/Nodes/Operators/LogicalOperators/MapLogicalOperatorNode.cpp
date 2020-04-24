@@ -18,33 +18,31 @@ bool MapLogicalOperatorNode::equal(const NodePtr rhs) const {
     return false;
 };
 
-SchemaPtr MapLogicalOperatorNode::getResultSchema() const {
-    // infer result schema
-    auto resultSchema = OperatorNode::getResultSchema()->copy();
-    mapExpression->inferStamp(resultSchema);
+bool MapLogicalOperatorNode::inferSchema()  {
+    // infer the default input and output schema
+    OperatorNode::inferSchema();
+    // use the default input schema to calculate the out schema of this operator.
+    mapExpression->inferStamp(getInputSchema());
     auto assignedField = mapExpression->getField();
-    if (resultSchema->has(assignedField->getFieldName())) {
+    if (outputSchema->has(assignedField->getFieldName())) {
         // The assigned field is part of the current schema.
         // Thus we check if it has the correct type.
-        if (assignedField->getStamp()->isEqual(
-            resultSchema->get(assignedField->getFieldName())->getDataType())) {
-            NES_DEBUG(
-                "MAP Logical Operator: the field " << assignedField->getFieldName() << " is already of the schema");
-        } else {
-            NES_THROW_RUNTIME_ERROR("MAP Logical Operator: the field " + assignedField->getFieldName()
-                                                               + " is part of the schema, but the data type is not equal");
-        }
+        outputSchema->replaceField(assignedField->getFieldName(), assignedField->getStamp());
+        NES_DEBUG(
+            "MAP Logical Operator: the field " << assignedField->getFieldName() << " is already of the schema, so we updated its type.");
     } else {
-        // The assigned field is not part of the default schema.
+        // The assigned field is not part of the current schema.
         // Thus we extend the schema by the new attribute.
-        resultSchema->addField(assignedField->getFieldName(), assignedField->getStamp());
+        outputSchema->addField(assignedField->getFieldName(), assignedField->getStamp());
+        NES_DEBUG(
+            "MAP Logical Operator: the field " << assignedField->getFieldName() << " is not part of the schema, so we added it.");
     }
-    return resultSchema;
+    return true;
 }
 
 const std::string MapLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "MAP()";
+    ss << "MAP("<<outputSchema->toString()<<")";
     return ss.str();
 }
 

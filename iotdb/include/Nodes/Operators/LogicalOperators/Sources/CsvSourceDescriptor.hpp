@@ -12,11 +12,11 @@ class CsvSourceDescriptor : public SourceDescriptor {
 
   public:
 
-    CsvSourceDescriptor(SchemaPtr schema,
-                        std::string filePath,
-                        std::string delimiter,
-                        size_t numBuffersToProcess,
-                        size_t frequency);
+    static SourceDescriptorPtr create(SchemaPtr schema,
+                                      std::string filePath,
+                                      std::string delimiter,
+                                      size_t numBuffersToProcess,
+                                      size_t frequency);
 
     SourceDescriptorType getType() override;
 
@@ -41,7 +41,11 @@ class CsvSourceDescriptor : public SourceDescriptor {
     size_t getFrequency() const;
 
   private:
-
+    CsvSourceDescriptor(SchemaPtr schema,
+                        std::string filePath,
+                        std::string delimiter,
+                        size_t numBuffersToProcess,
+                        size_t frequency);
     std::string filePath;
     std::string delimiter;
     size_t numBuffersToProcess;

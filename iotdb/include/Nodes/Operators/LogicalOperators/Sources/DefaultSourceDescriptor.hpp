@@ -12,7 +12,7 @@ class DefaultSourceDescriptor : public SourceDescriptor {
 
   public:
 
-    DefaultSourceDescriptor(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint32_t frequency);
+    static SourceDescriptorPtr create(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint32_t frequency);
 
     SourceDescriptorType getType() override;
 
@@ -27,7 +27,7 @@ class DefaultSourceDescriptor : public SourceDescriptor {
     const uint32_t getFrequency() const;
 
   private:
-
+    DefaultSourceDescriptor(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint32_t frequency);
     const uint64_t numbersOfBufferToProduce;
     const uint32_t frequency;
 };
