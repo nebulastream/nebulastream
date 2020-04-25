@@ -108,7 +108,7 @@ TEST_F(BufferManagerTest, getBuffer_afterRelease) {
     std::promise<bool> promise0, promise1;
     auto f0 = promise0.get_future();
     // start a thread that is blocking waiting on the queue
-    std::thread t1([&promise0, &promise1, &buffMgnr]() {
+    std::thread t1([&promise0, &promise1, this]() {
       promise0.set_value(true);
       auto buf = buffMgnr->getBufferBlocking();
       buf.release();
@@ -130,7 +130,7 @@ TEST_F(BufferManagerTest, buffer_manager_mt_access) {
 
     std::vector<std::thread> threads;
     for (int i = 0; i < 4; i++) {
-        threads.emplace_back([buffMgnr]() {
+        threads.emplace_back([this]() {
           for (int i = 0; i < 50; ++i) {
               auto buf = buffMgnr->getBufferBlocking();
               std::this_thread::sleep_for(std::chrono::milliseconds(250));
@@ -159,7 +159,7 @@ TEST_F(BufferManagerTest, buffer_manager_mt_producer_consumer) {
     constexpr uint32_t consumer_threads = 4;
 
     for (int i = 0; i < producer_threads; i++) {
-        prod_threads.emplace_back([&workQueue, &mutex, &cvar, &buffMgnr]() {
+        prod_threads.emplace_back([&workQueue, &mutex, &cvar, this]() {
           for (int j = 0; j < max_buffer; ++j) {
               std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
               auto buf = buffMgnr->getBufferBlocking();
