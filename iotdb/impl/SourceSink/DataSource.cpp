@@ -57,7 +57,7 @@ bool DataSource::start(BufferManagerPtr buffMgnr) {
     running = true;
     type = getType();
     NES_DEBUG("DataSource " << this->getSourceId() << ": Spawn thread")
-    thread = std::make_shared<std::thread>([this, barrier]() {
+    thread = std::make_shared<std::thread>([this, barrier, buffMgnr]() {
       barrier->wait();
       running_routine(buffMgnr);
 
@@ -135,7 +135,7 @@ void DataSource::running_routine(BufferManagerPtr buffMgnr) {
                     && currentTime%gatheringInterval == 0)) {  //produce a buffer
                 lastGatheringTimeStamp = currentTime;
                 if (cnt < numBuffersToProcess) {
-                    auto optBuf = receiveData()buffMgnr;
+                    auto optBuf = receiveData(buffMgnr);
                     if (!!optBuf) {
                         auto& buf = optBuf.value();
                         NES_DEBUG(

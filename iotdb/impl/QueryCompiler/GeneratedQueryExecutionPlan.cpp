@@ -12,6 +12,7 @@ bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, Tuple
     auto outputBuffer = this->buffMgnr->getBufferBlocking();
     outputBuffer.setTupleSizeInBytes(inputBuffer.getTupleSizeInBytes());
     NES_DEBUG("inputBuffer->getTupleSizeInBytes()=" << inputBuffer.getTupleSizeInBytes());
+
     bool ret = stages[pipeline_stage_id]->execute(inputBuffer, outputBuffer);
     // only write data to the sink if the pipeline produced some output
     if (outputBuffer.getNumberOfTuples() > 0) {

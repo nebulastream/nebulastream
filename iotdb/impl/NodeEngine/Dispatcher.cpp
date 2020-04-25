@@ -49,12 +49,12 @@ bool Dispatcher::startThreadPool()
 {
     NES_DEBUG("startBufferManager: setup buffer manager")
     threadPool = std::make_shared<ThreadPool>();
-    return threadPool->
+    return threadPool->start();
 }
 
 bool Dispatcher::isBufferManagerReady()
 {
-    return ;
+    return buffMgnr->isReady();
 }
 
 Dispatcher::~Dispatcher() {
@@ -117,7 +117,7 @@ bool Dispatcher::startQuery(QueryExecutionPlanPtr qep) {
     for (const auto& source : sources) {
         NES_DEBUG("Dispatcher: start source " << source << " str=" << source->toString())
         //TODO: in the current setup we cannot distingush between a failure in starting the source and a already runing source
-        if (!source->start()) {
+        if (!source->start(buffMgnr)) {
             NES_WARNING("Dispatcher: source " << source << " could not started as it is already running");
         } else{
             NES_DEBUG("Dispatcher: source " << source << " started successfully");
