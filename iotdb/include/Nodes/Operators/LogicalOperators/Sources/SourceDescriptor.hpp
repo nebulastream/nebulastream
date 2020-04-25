@@ -21,16 +21,24 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor>{
 
     SourceDescriptor(SchemaPtr schema) : schema(schema) {};
 
+    /**
+     * @brief Returns the source descriptor type of this source descriptor.
+     * @return
+     */
     virtual SourceDescriptorType getType() = 0;
 
+    /**
+     * @brief Returns the schema, which is produced by this source descriptor
+     * @return SchemaPtr
+     */
     const SchemaPtr getSchema() const {
         return schema;
     }
 
     /**
-    * @brief Checks if the current node is of type SourceType
+    * @brief Checks if the source descriptor is of type SourceType
     * @tparam SourceType
-    * @return bool true if node is of SourceType
+    * @return bool true if source descriptor is of SourceType
     */
     template<class SourceType>
     const bool instanceOf() {
@@ -41,7 +49,7 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor>{
     };
 
     /**
-    * @brief Dynamically casts the node to a SourceType
+    * @brief Dynamically casts the source descriptor to a SourceType
     * @tparam SourceType
     * @return returns a shared pointer of the SourceType
     */
@@ -50,7 +58,7 @@ class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor>{
         if (instanceOf<SourceType>()) {
             return std::dynamic_pointer_cast<SourceType>(this->shared_from_this());
         } else {
-            NES_FATAL_ERROR("We performed an invalid cast");
+            NES_FATAL_ERROR("SourceDescriptor: We performed an invalid cast");
             throw std::bad_cast();
         }
     }

@@ -15,6 +15,20 @@ KafkaSourceDescriptor::KafkaSourceDescriptor(SchemaPtr schema,
       autoCommit(autoCommit),
       kafkaConnectTimeout(kafkaConnectTimeout) {}
 
+SourceDescriptorPtr KafkaSourceDescriptor::create(SchemaPtr schema,
+                                                  std::string brokers,
+                                                  std::string topic,
+                                                  std::string groupId,
+                                                  bool autoCommit,
+                                                  uint64_t kafkaConnectTimeout) {
+    return std::make_shared<KafkaSourceDescriptor>(KafkaSourceDescriptor(schema,
+                                                                         brokers,
+                                                                         topic,
+                                                                         groupId,
+                                                                         autoCommit,
+                                                                         kafkaConnectTimeout));
+}
+
 SourceDescriptorType KafkaSourceDescriptor::getType() {
     return KafkaSource;
 }
