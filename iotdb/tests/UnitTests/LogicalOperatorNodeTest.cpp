@@ -41,7 +41,7 @@ class LogicalOperatorNodeTest : public testing::Test {
 
         sPtr = StreamCatalog::instance().getStreamForLogicalStreamOrThrowException("default_logical");
         SchemaPtr schema = sPtr->getSchema();
-        DefaultSourceDescriptorPtr sourceDescriptor = std::make_shared<DefaultSourceDescriptor>(schema, 0, 0);
+        auto sourceDescriptor = DefaultSourceDescriptor::create(schema, 0, 0);
 
         pred1 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "1"));
         pred2 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "2"));
@@ -1434,7 +1434,7 @@ TEST_F(LogicalOperatorNodeTest, inferOperatorTypes) {
     schema->addField("f1", BasicType::INT32);
     schema->addField("f2", BasicType::INT8);
 
-    auto sourceDescriptor = std::make_shared<DefaultSourceDescriptor>(schema, 0, 0);
+    auto sourceDescriptor = DefaultSourceDescriptor::create(schema, 0, 0);
     auto source = createSourceLogicalOperatorNode(sourceDescriptor);
     auto printSinkDescriptor = std::make_shared<PrintSinkDescriptor>(schema);
     auto sink = createSinkLogicalOperatorNode(printSinkDescriptor);
@@ -1454,11 +1454,6 @@ TEST_F(LogicalOperatorNodeTest, inferOperatorTypes) {
     std::cout << sink->getOutputSchema()->toString() << std::endl;
 
     ConsoleDumpHandler::create()->dump(sink, std::cout);
-    auto typeInferencePhase = TypeInferencePhase::create();
-    typeInferencePhase->transform(sink);
-    ConsoleDumpHandler::create()->dump(sink, std::cout);
-    ConsoleDumpHandler::create()->dump(filter->as<FilterLogicalOperatorNode>()->getPredicate(), std::cout);
-    ConsoleDumpHandler::create()->dump(map->as<MapLogicalOperatorNode>()->getMapExpression(), std::cout);
 
     int64_t x = 10;
     int64_t y = 11;
