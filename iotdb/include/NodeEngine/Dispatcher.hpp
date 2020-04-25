@@ -13,10 +13,12 @@
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/Task.hpp>
 #include <SourceSink/DataSource.hpp>
+
 #include <NodeEngine/ThreadPool.hpp>
-#include <Windows/WindowHandler.hpp>
+//#include <Windows/WindowHandler.hpp>
 
 namespace NES {
+
 class TupleBuffer;
 /**
  * @brief the dispatcher is the central class to process queries.
@@ -31,10 +33,11 @@ class TupleBuffer;
 class Dispatcher {
     friend class ThreadPool;
   public:
+
     /**
-     * @brief Singleton implementation of dispatcher
+     * @brief Default constrcutor
      */
-    static Dispatcher& instance();
+    Dispatcher();
 
     /**
      * @brief register a query by extracting sources, windows and sink and add them to
@@ -131,10 +134,6 @@ class Dispatcher {
     bool stopThreadPool();
 
   private:
-    /* implement singleton semantics: no construction,
-     * copying or destruction of Dispatcher objects
-     * outside of the class */
-    Dispatcher();
     Dispatcher(const Dispatcher&);
     Dispatcher& operator=(const Dispatcher&);
     ~Dispatcher();
@@ -160,6 +159,8 @@ class Dispatcher {
     std::atomic<size_t> processedBuffers;
 };
 typedef std::shared_ptr<Dispatcher> DispatcherPtr;
+
+
 }
 
 #endif /* INCLUDE_DISPATCHER_H_ */

@@ -9,7 +9,7 @@
 #include <thread>
 #include <mutex>
 #include <NodeEngine/BufferManager.hpp>
-
+//#include <NodeEngine/Dispatcher.hpp>
 
 namespace NES {
 
@@ -44,7 +44,7 @@ class DataSource {
      * 1.) check if bool running is true, if true return if not start source
      * 2.) start new thread with running_routine
      */
-    bool start(BufferManagerPtr buffMgnr);
+    bool start(BufferManagerPtr buffMgnr, DispatcherPtr dispatcher);
 
     /**
      * @brief method to stop the source.
@@ -60,7 +60,7 @@ class DataSource {
      * 3.) If not call receiveData in a blocking fashion
      * 4.) If call returns and a buffer is there to process, add a task to the dispatcher
      */
-    void running_routine(BufferManagerPtr buffMgnr);
+    void running_routine(BufferManagerPtr buffMgnr, DispatcherPtr dispatcher);
 
     /**
      * @brief virtual function to receive a buffer

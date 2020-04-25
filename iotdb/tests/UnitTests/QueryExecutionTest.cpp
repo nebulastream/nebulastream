@@ -38,13 +38,11 @@ class QueryExecutionTest : public testing::Test {
     /* Will be called before a test is executed. */
     void TearDown() {
         NES_DEBUG("Tear down QueryCatalogTest test case.");
-        Dispatcher::instance().resetDispatcher();
     }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() {
         NES_DEBUG("Tear down QueryCatalogTest test class.");
-        Dispatcher::instance().resetDispatcher();
     }
 
     SchemaPtr testSchema;
@@ -195,7 +193,9 @@ TEST_F(QueryExecutionTest, windowQuery) {
     auto plan = compiler->compile(sink);
     plan->addDataSink(testSink);
     plan->addDataSource(testSource);
-    Dispatcher::instance().registerQuery(plan);
+
+    DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
+    dispatcher->registerQuery(plan);
 
     plan->setup();
     plan->start();

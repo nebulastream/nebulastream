@@ -4,8 +4,9 @@
 #include <iostream>
 #include <thread>
 #include <vector>
-namespace NES {
+#include <NodeEngine/Dispatcher.hpp>
 
+namespace NES {
 /**
  * @brief the tread pool handles the dynamic scheduling of tasks during runtime
  * @Limitations
@@ -48,7 +49,7 @@ class ThreadPool {
        * 3.) join all threads, i.e., wait till all threads return
        * @return indicate if stop succeed
        */
-    bool stop();
+    bool stop(DispatcherPtr dispatcher);
 
     /**
        * @brief running routine of threads, in this routine, threads repeatedly execute the following steps

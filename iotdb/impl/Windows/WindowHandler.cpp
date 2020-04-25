@@ -11,8 +11,8 @@
 BOOST_CLASS_EXPORT_IMPLEMENT(NES::WindowHandler)
 namespace NES {
 
-WindowHandler::WindowHandler(NES::WindowDefinitionPtr windowDefinitionPtr, BufferManagerPtr buffMgnr)
-    : windowDefinition(windowDefinitionPtr), buffMgnr(buffMgnr) {
+WindowHandler::WindowHandler(NES::WindowDefinitionPtr windowDefinitionPtr, BufferManagerPtr buffMgnr, DispatcherPtr dispatcher)
+    : windowDefinition(windowDefinitionPtr), buffMgnr(buffMgnr), dispatcher(dispatcher) {
     this->thread.reset();
 }
 
@@ -47,7 +47,7 @@ void WindowHandler::trigger() {
         // if produced tuple then send the tuple buffer to the next pipeline stage or sink
         if (tupleBuffer.getNumberOfTuples() > 0) {
             NES_DEBUG("WindowHandler: Dispatch output buffer with " << tupleBuffer.getNumberOfTuples() << " records");
-            Dispatcher::instance().addWorkForNextPipeline(
+            dispatcher.addWorkForNextPipeline(
                 tupleBuffer,
                 this->queryExecutionPlan,
                 this->pipelineStageId);
@@ -95,8 +95,8 @@ WindowHandler::~WindowHandler() {
     stop();
 }
 
-const WindowHandlerPtr createWindowHandler(WindowDefinitionPtr windowDefinition, BufferManagerPtr buffMgnr) {
-    return std::make_shared<WindowHandler>(windowDefinition, buffMgnr);
+const WindowHandlerPtr createWindowHandler(WindowDefinitionPtr windowDefinition, BufferManagerPtr buffMgnr, DispatcherPtr dispatcher) {
+    return std::make_shared<WindowHandler>(windowDefinition, buffMgnr, dispatcher);
 }
 
 } // namespace NES

@@ -4,7 +4,6 @@
 #include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Util/Logger.hpp>
-#include <log4cxx/appender.h>
 #include <gtest/gtest.h>
 #include <API/Types/DataTypes.hpp>
 #include <SourceSink/SourceCreator.hpp>
@@ -114,8 +113,8 @@ class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
 
         auto sink = getSinks()[0];
         NES_DEBUG("TEST: try to get buffer")
-        //  sink->getSchema().getSchemaSize();
-        auto outputBuffer = this->buffMgnr->getBufferBlocking();
+        TupleBuffer outputBuffer = inBuf;
+
         NES_DEBUG("TEST: got buffer")
         auto arr = outputBuffer.getBufferAs<uint32_t>();
         arr[0] = static_cast<uint32_t>(sum.load());
@@ -148,7 +147,7 @@ typedef std::shared_ptr<CompiledTestQueryExecutionPlan> CompiledTestQueryExecuti
  */
 class EngineTest : public testing::Test {
   public:
-    void setup() {
+    void SetUp() {
         NES::setupLogging("EngineTest.log", NES::LOG_DEBUG);
         remove(filePath.c_str());
         NES_INFO("Setup EngineTest test class.");

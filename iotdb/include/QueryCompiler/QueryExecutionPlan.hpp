@@ -5,9 +5,12 @@
 #include <Windows/WindowHandler.hpp>
 #include <SourceSink/DataSink.hpp>
 #include <SourceSink/DataSource.hpp>
+//#include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/Dispatcher.hpp>
 
 namespace NES {
 class QueryExecutionPlan;
+typedef std::shared_ptr<Dispatcher> DispatcherPtr;
 typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 
 class QueryExecutionPlan {
@@ -80,10 +83,9 @@ class QueryExecutionPlan {
         return stages.size();
     }
 
-    BufferManagerPtr getBufferManager()
-    {
-        return buffMgnr;
-    }
+    BufferManagerPtr getBufferManager();
+
+    DispatcherPtr getDispatcher();
 
     void print();
 
@@ -99,6 +101,7 @@ class QueryExecutionPlan {
     std::map<DataSource*, uint32_t> sourceToStage;
     std::map<uint32_t, uint32_t> stageToDest;
     BufferManagerPtr buffMgnr;
+    DispatcherPtr dispatcher;
 };
 
 }  // namespace NES

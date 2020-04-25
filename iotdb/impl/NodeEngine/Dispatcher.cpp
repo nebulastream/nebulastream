@@ -1,7 +1,7 @@
 #include <NodeEngine/Dispatcher.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
-
+#include <memory>
 #include <Windows/WindowHandler.hpp>
 
 namespace NES {
@@ -37,12 +37,14 @@ bool Dispatcher::startBufferManager()
 bool Dispatcher::stopBufferManager()
 {
     //TODO: what to do here?
+    NES_DEBUG("Dispatcher::stopBufferManager: stop")
     return true;
 }
 
 bool Dispatcher::stopThreadPool()
 {
-    return threadPool->stop();
+    NES_DEBUG("Dispatcher::stopThreadPool: stop")
+    return threadPool->stop(shared_from_this());
 }
 
 bool Dispatcher::startThreadPool()
@@ -300,11 +302,6 @@ void Dispatcher::completedWork(TaskPtr task) {
     processedTuple += task->getNumberOfTuples();
 
     task.reset();
-}
-
-Dispatcher& Dispatcher::instance() {
-    static Dispatcher instance;
-    return instance;
 }
 
 void Dispatcher::printGeneralStatistics() {

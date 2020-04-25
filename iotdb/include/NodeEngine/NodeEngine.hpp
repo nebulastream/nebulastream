@@ -96,15 +96,10 @@ class NodeEngine {
 
     NodeProperties* getNodeProperties();
 
+    DispatcherPtr dispatcher;
 
 
   private:
-    /**
-     * @brief initialize Dispatcher, BufferManager and ThreadPool
-     */
-    void init();
-
-
     NodePropertiesPtr props;
     std::map<QueryExecutionPlanPtr, NodeEngineQueryStatus> queryStatusMap;
     bool stoppedEngine;
