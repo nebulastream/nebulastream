@@ -1,17 +1,17 @@
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <iostream>
 #include <exception>
-#include <Optimizer/placement/BottomUpStrategy.hpp>
-#include <Optimizer/placement/TopDownStrategy.hpp>
-#include <Optimizer/placement/LowLatencyStrategy.hpp>
+#include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
+#include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
+#include <Optimizer/QueryPlacement/LowLatencyStrategy.hpp>
 #include <Operators/Operator.hpp>
 #include <SourceSink/SourceCreator.hpp>
 #include <SourceSink/SinkCreator.hpp>
-#include <Optimizer/utils/PathFinder.hpp>
-#include <Optimizer/placement/HighAvailabilityStrategy.hpp>
-#include <Optimizer/placement/HighThroughputStrategy.hpp>
-#include <Optimizer/placement/MinimumResourceConsumptionStrategy.hpp>
-#include <Optimizer/placement/MinimumEnergyConsumptionStrategy.hpp>
+#include <Optimizer/Utils/PathFinder.hpp>
+#include <Optimizer/QueryPlacement/HighAvailabilityStrategy.hpp>
+#include <Optimizer/QueryPlacement/HighThroughputStrategy.hpp>
+#include <Optimizer/QueryPlacement/MinimumResourceConsumptionStrategy.hpp>
+#include <Optimizer/QueryPlacement/MinimumEnergyConsumptionStrategy.hpp>
 #include <Util/Logger.hpp>
 #include <SourceSink/SenseSource.hpp>
 

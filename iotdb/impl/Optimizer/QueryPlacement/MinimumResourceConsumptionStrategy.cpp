@@ -2,9 +2,9 @@
 #include <Topology/NESTopologyPlan.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Util/Logger.hpp>
-#include <Optimizer/utils/PathFinder.hpp>
+#include <Optimizer/Utils/PathFinder.hpp>
 #include <Operators/Operator.hpp>
-#include <Optimizer/placement/MinimumResourceConsumptionStrategy.hpp>
+#include <Optimizer/QueryPlacement/MinimumResourceConsumptionStrategy.hpp>
 
 namespace NES {
 

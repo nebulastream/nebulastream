@@ -1,9 +1,9 @@
-#include <Optimizer/placement/BottomUpStrategy.hpp>
+#include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Operators/Operator.hpp>
 #include <iostream>
 #include <Util/Logger.hpp>
 #include <utility>
-#include <Optimizer/utils/PathFinder.hpp>
+#include <Optimizer/Utils/PathFinder.hpp>
 
 using namespace std;
 

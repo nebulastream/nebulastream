@@ -1,7 +1,7 @@
 #include <Util/Logger.hpp>
-#include <Optimizer/utils/PathFinder.hpp>
+#include "Optimizer/QueryPlacement/HighThroughputStrategy.hpp"
+#include <Optimizer/Utils/PathFinder.hpp>
 #include <Operators/Operator.hpp>
-#include "Optimizer/placement/HighThroughputStrategy.hpp"
 
 namespace NES {
 

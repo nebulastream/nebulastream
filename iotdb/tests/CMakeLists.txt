@@ -202,6 +202,11 @@ add_executable(type-inference-tests "UnitTests/TypeInferencePhaseTest.cpp")
 target_link_libraries(type-inference-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME type-inference-tests COMMAND type-inference-tests)
 
+# FilterPushDownTest
+add_executable(filter-push-down-test "UnitTests/Optimizer/QueryRewrite/FilterPushDownRuleTest.cpp")
+target_link_libraries(filter-push-down-test iotdb ${GTEST_LIBRARIES})
+add_test(NAME filter-push-down-test COMMAND filter-push-down-test)
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")
