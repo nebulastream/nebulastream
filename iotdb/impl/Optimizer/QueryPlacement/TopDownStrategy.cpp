@@ -1,7 +1,7 @@
-#include <Optimizer/placement/TopDownStrategy.hpp>
+#include <Optimizer/QueryPlacement/TopDownStrategy.hpp>
 #include <Operators/Operator.hpp>
 #include <Util/Logger.hpp>
-#include <Optimizer/utils/PathFinder.hpp>
+#include <Optimizer/Utils/PathFinder.hpp>
 
 namespace NES {
 

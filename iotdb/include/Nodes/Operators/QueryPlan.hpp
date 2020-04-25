@@ -64,6 +64,12 @@ class QueryPlan {
      */
     std::string toString();
 
+    /**
+     * @brief Get the root operator of the query graph
+     * @return
+     */
+    OperatorNodePtr getRootOperator() const;
+
   private:
     QueryPlan(OperatorNodePtr rootOperator, StreamPtr stream);
     OperatorNodePtr rootOperator;

@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include <Optimizer/utils/PathFinder.hpp>
+#include <Optimizer/Utils/PathFinder.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Topology/NESTopologyManager.hpp>
 #include <Util/Logger.hpp>

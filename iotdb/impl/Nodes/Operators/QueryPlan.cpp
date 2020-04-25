@@ -43,4 +43,8 @@ std::string QueryPlan::toString() {
     return ss.str();
 }
 
+OperatorNodePtr QueryPlan::getRootOperator() const {
+    return rootOperator;
+}
+
 }
