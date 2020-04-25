@@ -7,11 +7,6 @@
 #include <Util/ThreadBarrier.hpp>
 namespace NES {
 
-ThreadPool& ThreadPool::instance() {
-    static ThreadPool instance;
-    return instance;
-}
-
 ThreadPool::ThreadPool()
     : running(false),
       numThreads(1),

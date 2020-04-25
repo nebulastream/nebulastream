@@ -82,13 +82,6 @@ class NodeEngine {
     bool stopQuery(QueryExecutionPlanPtr qPtr);
 
     /**
-     * @brief change config of running node eninge
-     * @param config with params:
-     * numberOfThreads, numberOfBuffers, bufferSize
-     */
-    void applyConfig(Config& conf);
-
-    /**
      * @brief start thread pool
      */
     bool start();
@@ -105,11 +98,14 @@ class NodeEngine {
     NodeProperties* getNodeProperties();
 
 
+
   private:
     /**
      * @brief initialize Dispatcher, BufferManager and ThreadPool
      */
     void init();
+
+    ThreadPoolPtr threadPool;
 
     NodePropertiesPtr props;
     std::map<QueryExecutionPlanPtr, NodeEngineQueryStatus> queryStatusMap;

@@ -220,7 +220,7 @@ CompiledTestQueryExecutionPlanPtr setupQEP() {
 /**
  * Test methods
  */
-TEST_F(EngineTest, start_stop_engine_empty) {
+TEST_F(EngineTest, start_stop_engine_empty) { 
     NodeEngine* ptr = new NodeEngine();
     ASSERT_TRUE(ptr->start());
     ASSERT_TRUE(ptr->stop());

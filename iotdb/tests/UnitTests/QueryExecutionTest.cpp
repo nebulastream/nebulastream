@@ -27,7 +27,6 @@ class QueryExecutionTest : public testing::Test {
     /* Will be called before a test is executed. */
     void SetUp() {
         NES_DEBUG("Setup QueryCatalogTest test case.");
-        ThreadPool::instance().setNumberOfThreadsWithRestart(1);
         // create test input buffer
         testSchema = Schema::create()
             ->addField(createField("id", BasicType::INT64))
@@ -39,14 +38,12 @@ class QueryExecutionTest : public testing::Test {
     void TearDown() {
         NES_DEBUG("Tear down QueryCatalogTest test case.");
         Dispatcher::instance().resetDispatcher();
-        ThreadPool::instance().stop();
     }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() {
         NES_DEBUG("Tear down QueryCatalogTest test class.");
         Dispatcher::instance().resetDispatcher();
-        ThreadPool::instance().stop();
     }
 
     SchemaPtr testSchema;

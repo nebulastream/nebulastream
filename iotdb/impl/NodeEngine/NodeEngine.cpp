@@ -159,7 +159,8 @@ void NodeEngine::init() {
     if (!NES::BufferManager::instance().isReady()) {
         NES::BufferManager::instance().configure(DEFAULT_BUFFER_SIZE, DEFAULT_NUM_BUFFERS);
     }
-    NES::ThreadPool::instance();
+
+    threadPool = std::make_shared<ThreadPool>();
 }
 
 bool NodeEngine::start() {
@@ -167,7 +168,7 @@ bool NodeEngine::start() {
     NES::Dispatcher::instance().resetDispatcher();
 
     NES_DEBUG("NodeEngine: start thread pool")
-    bool success = ThreadPool::instance().start();
+    bool success = threadPool->start();
     NES_DEBUG("NodeEngine: start thread pool success=" << success)
     return success;
 }
@@ -209,25 +210,13 @@ bool NodeEngine::stop() {
         NES::Dispatcher::instance().resetDispatcher();
         copyOfVec.clear();
         stoppedEngine = true;
-        bool success = ThreadPool::instance().stop();
+        bool success = threadPool->stop();
         NES_DEBUG("NodeEngine:stop stop threadpool with success=" << success)
         return success;
     } else {
         NES_WARNING("NodeEngine::stop: engine already stopped")
         return true;
     }
-}
-
-
-void NodeEngine::applyConfig(Config& conf) {
-    if (conf.getNumberOfWorker() != ThreadPool::instance().getNumberOfThreads()) {
-        NES_DEBUG(
-            "NodeEngine: changing numberOfWorker from " << ThreadPool::instance().getNumberOfThreads() << " to "
-                                                        << conf.getNumberOfWorker())
-        ThreadPool::instance().setNumberOfThreadsWithRestart(conf.getNumberOfWorker());
-    }
-    BufferManager::instance().configure(conf.getBufferSizeInByte(), conf.getBufferCount());
-    NES_DEBUG("NodeEngine: config successuflly changed")
 }
 
 
