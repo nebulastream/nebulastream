@@ -23,7 +23,7 @@ class KafkaSource : public DataSource {
 
     SourceType getType() const override;
     ~KafkaSource() override;
-    std::optional<TupleBuffer> receiveData() override;
+    std::optional<TupleBuffer> receiveData(BufferManagerPtr buffMgnr) override;
 
     /**
      * @brief override the toString method for the kafka source

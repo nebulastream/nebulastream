@@ -4,7 +4,6 @@
 #include <NodeEngine/NodeProperties.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <API/Config.hpp>
-#include <NodeEngine/ThreadPool.hpp>
 #include <NodeEngine/Dispatcher.hpp>
 #include <iostream>
 #include <pthread.h>
@@ -105,7 +104,6 @@ class NodeEngine {
      */
     void init();
 
-    ThreadPoolPtr threadPool;
 
     NodePropertiesPtr props;
     std::map<QueryExecutionPlanPtr, NodeEngineQueryStatus> queryStatusMap;

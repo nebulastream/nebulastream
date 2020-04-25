@@ -14,93 +14,94 @@
 namespace NES {
 
 class SelectionDataGenFunctor {
- public:
-  SelectionDataGenFunctor() {
-  }
-
-  struct __attribute__((packed)) InputTuple {
-    uint32_t id;
-    uint32_t value;
-  };
-
-  TupleBuffer operator()() {
-    // 10 tuples of size one
-    auto buf = BufferManager::instance().getBufferNoBlocking();
-    uint64_t tupleCnt = buf->getNumberOfTuples();
-
-    assert(buf->getBuffer() != NULL);
-
-    InputTuple *tuples = (InputTuple*) buf->getBuffer();
-    for (uint32_t i = 0; i < tupleCnt; i++) {
-      tuples[i].id = i;
-      tuples[i].value = i * 2;
+  public:
+    SelectionDataGenFunctor() {
     }
-    buf->setTupleSizeInBytes(sizeof(InputTuple));
-    buf->setNumberOfTuples(tupleCnt);
-    return buf.value();
-  }
+
+    struct __attribute__((packed)) InputTuple {
+        uint32_t id;
+        uint32_t value;
+    };
+
+    TupleBuffer operator()() {
+        // 10 tuples of size one
+        BufferManagerPtr buffMgnr = std::make_shared<BufferManager>();
+
+        auto buf = buffMgnr->getBufferNoBlocking();
+        uint64_t tupleCnt = buf->getNumberOfTuples();
+
+        assert(buf->getBuffer() != NULL);
+
+        InputTuple* tuples = (InputTuple*) buf->getBuffer();
+        for (uint32_t i = 0; i < tupleCnt; i++) {
+            tuples[i].id = i;
+            tuples[i].value = i*2;
+        }
+        buf->setTupleSizeInBytes(sizeof(InputTuple));
+        buf->setNumberOfTuples(tupleCnt);
+        return buf.value();
+    }
 };
 
 class QueryInterfaceTest : public testing::Test {
- public:
+  public:
 
-  static void SetUpTestCase() {
-    NES::setupLogging("QueryInterfaceTest.log", NES::LOG_DEBUG);
-    NES_INFO("Setup QueryInterfaceTest test class.");
-  }
+    static void SetUpTestCase() {
+        NES::setupLogging("QueryInterfaceTest.log", NES::LOG_DEBUG);
+        NES_INFO("Setup QueryInterfaceTest test class.");
+    }
 
-  static void TearDownTestCase() {
-    std::cout << "Tear down QueryInterfaceTest test class." << std::endl;
-  }
+    static void TearDownTestCase() {
+        std::cout << "Tear down QueryInterfaceTest test class." << std::endl;
+    }
 
-  void TearDown() {
-  }
+    void TearDown() {
+    }
 };
 
 TEST_F(QueryInterfaceTest, testQueryFilter) {
-  // define config
-  Config config = Config::create();
+    // define config
+    Config config = Config::create();
 
-  Environment env = Environment::create(config);
+    Environment env = Environment::create(config);
 
-  SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
-      "value", BasicType::UINT64);
+    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
+        "value", BasicType::UINT64);
 
-  Stream def = Stream("default_logical", schema);
+    Stream def = Stream("default_logical", schema);
 
-  InputQuery &query = InputQuery::from(def).filter(def["value"] > 42)
-      .windowByKey(
-      def["value"].getAttributeField(),
-      TumblingWindow::of(TimeCharacteristic::ProcessingTime, Seconds(10)),
-      Sum::on(def["value"])).print(std::cout);
+    InputQuery& query = InputQuery::from(def).filter(def["value"] > 42)
+        .windowByKey(
+            def["value"].getAttributeField(),
+            TumblingWindow::of(TimeCharacteristic::ProcessingTime, Seconds(10)),
+            Sum::on(def["value"])).print(std::cout);
 
-  env.printInputQueryPlan(query);
-  env.executeQuery(query);
+    env.printInputQueryPlan(query);
+    env.executeQuery(query);
 }
 
 TEST_F(QueryInterfaceTest, testQueryMap) {
-  // define config
-  Config config = Config::create();
+    // define config
+    Config config = Config::create();
 
-  Environment env = Environment::create(config);
+    Environment env = Environment::create(config);
 
-//    Config::create().withParallelism(1).withPreloading().withBufferSize(1000).withNumberOfPassesOverInput(1);
-  SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
-      "value", BasicType::UINT64);
+    //    Config::create().withParallelism(1).withPreloading().withBufferSize(1000).withNumberOfPassesOverInput(1);
+    SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
+        "value", BasicType::UINT64);
 
-  Stream def = Stream("default", schema);
+    Stream def = Stream("default", schema);
 
-  AttributeField mappedField("id", BasicType::UINT64);
+    AttributeField mappedField("id", BasicType::UINT64);
 
-  InputQuery &query = InputQuery::from(def).map(*schema->get(0),
-                                                def["value"] + schema->get(1)).print(
-      std::cout);
-  env.printInputQueryPlan(query);
-  env.executeQuery(query);
+    InputQuery& query = InputQuery::from(def).map(*schema->get(0),
+                                                  def["value"] + schema->get(1)).print(
+        std::cout);
+    env.printInputQueryPlan(query);
+    env.executeQuery(query);
 }
 
 TEST_F(QueryInterfaceTest, testQueryString) {
-
   std::stringstream code;
 
   code << "auto schema = Schema::create()->addField(\"test\",INT32);"

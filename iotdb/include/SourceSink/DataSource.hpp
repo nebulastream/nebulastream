@@ -8,6 +8,8 @@
 #include <boost/serialization/vector.hpp>
 #include <thread>
 #include <mutex>
+#include <NodeEngine/BufferManager.hpp>
+
 
 namespace NES {
 
@@ -42,7 +44,7 @@ class DataSource {
      * 1.) check if bool running is true, if true return if not start source
      * 2.) start new thread with running_routine
      */
-    bool start();
+    bool start(BufferManagerPtr buffMgnr);
 
     /**
      * @brief method to stop the source.
@@ -58,14 +60,14 @@ class DataSource {
      * 3.) If not call receiveData in a blocking fashion
      * 4.) If call returns and a buffer is there to process, add a task to the dispatcher
      */
-    void running_routine();
+    void running_routine(BufferManagerPtr buffMgnr);
 
     /**
      * @brief virtual function to receive a buffer
      * @Note this function is overwritten by the particular data source
      * @return returns a tuple buffer
      */
-    virtual std::optional<TupleBuffer> receiveData() = 0;
+    virtual std::optional<TupleBuffer> receiveData(BufferManagerPtr buffMgnr) = 0;
 
     /**
      * @brief virtual function to get a string describing the particular source

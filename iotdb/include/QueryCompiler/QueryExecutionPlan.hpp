@@ -80,6 +80,11 @@ class QueryExecutionPlan {
         return stages.size();
     }
 
+    BufferManagerPtr getBufferManager()
+    {
+        return buffMgnr;
+    }
+
     void print();
 
   protected:
@@ -93,6 +98,7 @@ class QueryExecutionPlan {
     std::vector<PipelineStagePtr> stages;
     std::map<DataSource*, uint32_t> sourceToStage;
     std::map<uint32_t, uint32_t> stageToDest;
+    BufferManagerPtr buffMgnr;
 };
 
 }  // namespace NES

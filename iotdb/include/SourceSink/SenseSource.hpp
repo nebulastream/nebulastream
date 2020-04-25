@@ -26,7 +26,7 @@ class SenseSource : public DataSource {
    * @brief override the receiveData method for the source
    * @return returns a buffer if available
    */
-  std::optional<TupleBuffer> receiveData();
+  std::optional<TupleBuffer> receiveData(BufferManagerPtr buffMgnr) override;
 
   /**
    *  @brief method to fill the buffer with tuples

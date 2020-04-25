@@ -62,6 +62,8 @@ class BufferManager {
   public:
     BufferManager();
 
+    BufferManager(size_t bufferSize, size_t numOfBuffers);
+
     BufferManager(const BufferManager&) = delete;
     BufferManager& operator=(const BufferManager&) = delete;
     ~BufferManager();
@@ -100,7 +102,6 @@ class BufferManager {
      */
     std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize);
 
-
     /**
      * @return Configured size of the buffers
      */
@@ -120,8 +121,6 @@ class BufferManager {
      * @return Number of available buffers in the pool
      */
     size_t getAvailableBuffers();
-
-    static BufferManager& instance();
 
     void printStatistics();
 
@@ -148,6 +147,8 @@ class BufferManager {
 
     std::atomic<bool> isConfigured;
 };
+
+typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 
 }
 #endif

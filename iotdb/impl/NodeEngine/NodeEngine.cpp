@@ -6,8 +6,6 @@
 using namespace std;
 namespace NES {
 
-static constexpr size_t DEFAULT_BUFFER_SIZE = 4096;
-static constexpr size_t DEFAULT_NUM_BUFFERS = 1024;
 
 JSON NodeEngine::getNodePropertiesAsJSON() {
     props->readMemStats();
@@ -156,11 +154,11 @@ void NodeEngine::init() {
     NES_DEBUG("NodeEngine: init node engine")
     // TODO remove singleton and reconfigure
     NES::Dispatcher::instance();
-    if (!NES::BufferManager::instance().isReady()) {
-        NES::BufferManager::instance().configure(DEFAULT_BUFFER_SIZE, DEFAULT_NUM_BUFFERS);
-    }
 
-    threadPool = std::make_shared<ThreadPool>();
+    if (!Dispatcher::instance().isBufferManagerReady()) {
+        NES_ERROR("NodeEngine::init error while init buffer manager")
+        throw Exception("NodeEngine::init error");
+    }
 }
 
 bool NodeEngine::start() {
@@ -168,9 +166,14 @@ bool NodeEngine::start() {
     NES::Dispatcher::instance().resetDispatcher();
 
     NES_DEBUG("NodeEngine: start thread pool")
-    bool success = threadPool->start();
-    NES_DEBUG("NodeEngine: start thread pool success=" << success)
-    return success;
+    bool successTp = NES::Dispatcher::instance().startThreadPool();
+    NES_DEBUG("NodeEngine: start thread pool success=" << successTp)
+
+    NES_DEBUG("NodeEngine: start buffer manager")
+    bool successBm = NES::Dispatcher::instance().startBufferManager();
+    NES_DEBUG("NodeEngine: start buffer manager success=" << successBm)
+
+    return successTp && successBm;
 }
 
 bool NodeEngine::stop() {
@@ -210,9 +213,14 @@ bool NodeEngine::stop() {
         NES::Dispatcher::instance().resetDispatcher();
         copyOfVec.clear();
         stoppedEngine = true;
-        bool success = threadPool->stop();
-        NES_DEBUG("NodeEngine:stop stop threadpool with success=" << success)
-        return success;
+
+        bool successTp = Dispatcher::instance().stopThreadPool();
+        NES_DEBUG("NodeEngine:stop stop threadpool with success=" << successTp)
+
+        bool successBm = Dispatcher::instance().stopBufferManager();
+        NES_DEBUG("NodeEngine:stop stop buffer manager with success=" << successBm)
+
+        return successTp && successBm;
     } else {
         NES_WARNING("NodeEngine::stop: engine already stopped")
         return true;

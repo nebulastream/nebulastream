@@ -115,7 +115,7 @@ class CompiledTestQueryExecutionPlan : public HandCodedQueryExecutionPlan {
         auto sink = getSinks()[0];
         NES_DEBUG("TEST: try to get buffer")
         //  sink->getSchema().getSchemaSize();
-        auto outputBuffer = BufferManager::instance().getBufferBlocking();
+        auto outputBuffer = this->buffMgnr->getBufferBlocking();
         NES_DEBUG("TEST: got buffer")
         auto arr = outputBuffer.getBufferAs<uint32_t>();
         arr[0] = static_cast<uint32_t>(sum.load());
@@ -148,10 +148,9 @@ typedef std::shared_ptr<CompiledTestQueryExecutionPlan> CompiledTestQueryExecuti
  */
 class EngineTest : public testing::Test {
   public:
-    static void SetUpTestCase() {
+    void setup() {
         NES::setupLogging("EngineTest.log", NES::LOG_DEBUG);
         remove(filePath.c_str());
-        BufferManager::instance().configure(1024, 1024);
         NES_INFO("Setup EngineTest test class.");
     }
     static void TearDownTestCase() {

@@ -11,6 +11,12 @@ BufferManager::BufferManager() : bufferSize(0), numOfBuffers(0), isConfigured(fa
     // nop
 }
 
+BufferManager::BufferManager(size_t bufferSize, size_t numOfBuffers) : bufferSize(0), numOfBuffers(0), isConfigured(false)
+{
+    configure(bufferSize, numOfBuffers);
+}
+
+
 BufferManager::~BufferManager() {
     std::scoped_lock lock(availableBuffersMutex, unpooledBuffersMutex);
     auto success = true;
@@ -197,11 +203,6 @@ size_t BufferManager::getNumOfUnpooledBuffers() {
 size_t BufferManager::getAvailableBuffers() {
     std::unique_lock<std::mutex> lock(availableBuffersMutex);
     return availableBuffers.size();
-}
-
-BufferManager& BufferManager::instance() {
-    static BufferManager instance;
-    return instance;
 }
 
 void BufferManager::printStatistics() {
