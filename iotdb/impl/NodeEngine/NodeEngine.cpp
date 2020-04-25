@@ -31,7 +31,8 @@ NodeProperties* NodeEngine::getNodeProperties() {
 
 NodeEngine::NodeEngine() {
     props = std::make_shared<NodeProperties>();
-    init();
+    dispatcher = std::make_shared<Dispatcher>();
+
     stoppedEngine = false;
     forceStop = false;
 }
@@ -65,7 +66,7 @@ bool NodeEngine::registerQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("NodeEngine: registerQuery query " << qep)
 
     if (queryStatusMap.find(qep) == queryStatusMap.end()) {
-        if (Dispatcher::instance().registerQuery(qep)) {
+        if (dispatcher->registerQuery(qep)) {
             queryStatusMap.insert({qep, NodeEngineQueryStatus::registered});
             NES_DEBUG("NodeEngine: register of QEP " << qep << " succeeded")
             return true;
@@ -82,7 +83,7 @@ bool NodeEngine::registerQuery(QueryExecutionPlanPtr qep) {
 bool NodeEngine::startQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("NodeEngine: startQuery=" << qep)
     if (queryStatusMap.find(qep) != queryStatusMap.end()) {
-        if (Dispatcher::instance().startQuery(qep)) {
+        if (dispatcher->startQuery(qep)) {
             NES_DEBUG("NodeEngine: start of QEP " << qep << " succeeded")
             queryStatusMap[qep] = NodeEngineQueryStatus::started;
             return true;
@@ -119,7 +120,7 @@ bool NodeEngine::undeployQuery(QueryExecutionPlanPtr qep) {
 bool NodeEngine::unregisterQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("NodeEngine: unregisterQuery query=" << qep)
     if (queryStatusMap.find(qep) != queryStatusMap.end()) {
-        if (Dispatcher::instance().deregisterQuery(qep)) {
+        if (dispatcher->deregisterQuery(qep)) {
             size_t delCnt = queryStatusMap.erase(qep);
             NES_DEBUG("NodeEngine: unregister of QEP " << qep << " succeeded with cnt=" << delCnt)
             return true;
@@ -136,7 +137,7 @@ bool NodeEngine::unregisterQuery(QueryExecutionPlanPtr qep) {
 bool NodeEngine::stopQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("NodeEngine:stopQuery for qep" << qep)
     if (queryStatusMap.find(qep) != queryStatusMap.end()) {
-        if (Dispatcher::instance().stopQuery(qep)) {
+        if (dispatcher->stopQuery(qep)) {
             NES_DEBUG("NodeEngine: stop of QEP " << qep << " succeeded")
             queryStatusMap[qep] = NodeEngineQueryStatus::stopped;
             return true;
@@ -150,28 +151,22 @@ bool NodeEngine::stopQuery(QueryExecutionPlanPtr qep) {
     }
 }
 
-void NodeEngine::init() {
-    NES_DEBUG("NodeEngine: init node engine")
-    // TODO remove singleton and reconfigure
-    NES::Dispatcher::instance();
-
-    if (!Dispatcher::instance().isBufferManagerReady()) {
-        NES_ERROR("NodeEngine::init error while init buffer manager")
-        throw Exception("NodeEngine::init error");
-    }
-}
-
 bool NodeEngine::start() {
     NES_DEBUG("NodeEngine:start reset dispatcher")
-    NES::Dispatcher::instance().resetDispatcher();
+    NES::dispatcher->resetDispatcher();
 
     NES_DEBUG("NodeEngine: start thread pool")
-    bool successTp = NES::Dispatcher::instance().startThreadPool();
+    bool successTp = NES::dispatcher->startThreadPool();
     NES_DEBUG("NodeEngine: start thread pool success=" << successTp)
 
     NES_DEBUG("NodeEngine: start buffer manager")
-    bool successBm = NES::Dispatcher::instance().startBufferManager();
+    bool successBm = NES::dispatcher->startBufferManager();
     NES_DEBUG("NodeEngine: start buffer manager success=" << successBm)
+
+    if (!dispatcher->isBufferManagerReady()) {
+        NES_ERROR("NodeEngine::init error while init buffer manager")
+        throw Exception("NodeEngine::init error");
+    }
 
     return successTp && successBm;
 }
@@ -210,14 +205,14 @@ bool NodeEngine::stop() {
         }
 
         NES_DEBUG("NodeEngine:stop undeploy successful")
-        NES::Dispatcher::instance().resetDispatcher();
+        NES::dispatcher->resetDispatcher();
         copyOfVec.clear();
         stoppedEngine = true;
 
-        bool successTp = Dispatcher::instance().stopThreadPool();
+        bool successTp = dispatcher->stopThreadPool();
         NES_DEBUG("NodeEngine:stop stop threadpool with success=" << successTp)
 
-        bool successBm = Dispatcher::instance().stopBufferManager();
+        bool successBm = dispatcher->stopBufferManager();
         NES_DEBUG("NodeEngine:stop stop buffer manager with success=" << successBm)
 
         return successTp && successBm;

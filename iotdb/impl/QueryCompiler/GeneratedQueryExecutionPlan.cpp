@@ -9,7 +9,9 @@ GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan(const std::string& quer
 
 bool GeneratedQueryExecutionPlan::executeStage(uint32_t pipeline_stage_id, TupleBuffer& inputBuffer) {
     //TODO this should be changed such that we provide the outputbuffer too
+    NES_DEBUG("GeneratedQueryExecutionPlan::executeStage get buffer")
     auto outputBuffer = this->buffMgnr->getBufferBlocking();
+    NES_DEBUG("GeneratedQueryExecutionPlan::executeStage got buffer of size=" << outputBuffer.getBufferSize())
     outputBuffer.setTupleSizeInBytes(inputBuffer.getTupleSizeInBytes());
     NES_DEBUG("inputBuffer->getTupleSizeInBytes()=" << inputBuffer.getTupleSizeInBytes());
 

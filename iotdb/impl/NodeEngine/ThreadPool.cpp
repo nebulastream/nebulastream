@@ -62,14 +62,14 @@ bool ThreadPool::start() {
     return true;
 }
 
-bool ThreadPool::stop() {
+bool ThreadPool::stop(DispatcherPtr dispatcher) {
     std::unique_lock<std::mutex> lock(reconfigLock);
     NES_DEBUG("ThreadPool: stop thread pool while " << (running.load() ? "running" : "not running") << " with " << numThreads << " threads");
     running = false;
     /* wake up all threads in the dispatcher,
      * so they notice the change in the run variable */
     NES_DEBUG("Threadpool: Going to unblock " << numThreads << " threads")
-    Dispatcher::instance().unblockThreads();
+    dispatcher->unblockThreads();
     /* join all threads if possible */
     for (auto& thread : threads) {
         if (thread.joinable()) {
