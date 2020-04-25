@@ -14,11 +14,11 @@ DefaultSource::DefaultSource(SchemaPtr schema,
     this->gatheringInterval = frequency;
 }
 
-std::optional<TupleBuffer> DefaultSource::receiveData() {
+std::optional<TupleBuffer> DefaultSource::receiveData(BufferManagerPtr buffMgnr) {
     // 10 tuples of size one
     NES_DEBUG("Source:" << this << " requesting buffer")
 
-    auto buf = BufferManager::instance().getBufferBlocking();
+    auto buf = buffMgnr->getBufferBlocking();
     NES_DEBUG("Source:" << this << " got buffer")
     size_t tupleCnt = 10;
     auto layout = createRowLayout(std::make_shared<Schema>(schema));

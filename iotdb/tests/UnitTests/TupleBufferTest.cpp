@@ -14,10 +14,11 @@ namespace NES {
 
 class TupleBufferTest : public testing::Test {
   public:
+    BufferManagerPtr buffMgnr;
+
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         std::cout << "Setup TupleBufferTest test class." << std::endl;
-        BufferManager::instance().configure(1024, 1024);
     }
 
     /* Will be called before a test is executed. */
@@ -25,6 +26,8 @@ class TupleBufferTest : public testing::Test {
     {
         NES::setupLogging("TupleBufferTest.log", NES::LOG_DEBUG);
         std::cout << "Setup TupleBufferTest test case." << std::endl;
+        buffMgnr = std::make_shared<BufferManager>(1024, 1024);
+
     }
 
     /* Will be called before a test is executed. */
@@ -45,7 +48,7 @@ TEST_F(TupleBufferTest, testPrintingOfTupleBuffer)
         char s[12];
     };
 
-    auto optBuf = BufferManager::instance().getBufferNoBlocking();
+    auto optBuf = buffMgnr->getBufferNoBlocking();
     auto buf = *optBuf;
 //    MyTuple* my_array = (MyTuple*)malloc(5 * sizeof(MyTuple));
     auto my_array = buf.getBufferAs<MyTuple>();
@@ -112,7 +115,7 @@ TEST_F(TupleBufferTest, testEndianessOneItem)
     ts.v9 = 1.1;
     ts.v10 = 1.2;
 
-    auto optBuf = BufferManager::instance().getBufferNoBlocking();
+    auto optBuf = buffMgnr->getBufferNoBlocking();
     auto testBuf = *optBuf;
     SchemaPtr s = Schema::create()
                       ->addField("v1", UINT8)
@@ -160,7 +163,7 @@ TEST_F(TupleBufferTest, testEndianessTwoItems)
         double v10;
     };
 
-    auto testBuf = BufferManager::instance().getBufferNoBlocking().value();
+    auto testBuf = buffMgnr->getBufferNoBlocking().value();
 
     TestStruct* ts = testBuf.getBufferAs<TestStruct>();
 

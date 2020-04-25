@@ -40,7 +40,7 @@ ZmqSource::~ZmqSource() {
     NES_DEBUG("ZMQSOURCE  " << this << ": Destroy ZMQ Source")
 }
 
-std::optional<TupleBuffer> ZmqSource::receiveData() {
+std::optional<TupleBuffer> ZmqSource::receiveData(BufferManagerPtr buffMgnr) {
     NES_DEBUG("ZMQSource  " << this << ": receiveData ")
     if (connect()) { // was if (connect()) {
         try {
@@ -56,7 +56,7 @@ std::optional<TupleBuffer> ZmqSource::receiveData() {
             // Get some information about received data
             size_t tuple_size = schema->getSchemaSizeInBytes();
             // Create new TupleBuffer and copy data
-            auto buffer = BufferManager::instance().getBufferBlocking();
+            auto buffer = buffMgnr->getBufferBlocking();
             NES_DEBUG("ZMQSource  " << this << ": got buffer ")
 
             // TODO: If possible only copy the content not the empty part

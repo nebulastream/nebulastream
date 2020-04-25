@@ -48,7 +48,7 @@ DataSource::~DataSource() {
     NES_DEBUG("DataSource " << this->getSourceId() << ": Destroy Data Source.")
 }
 
-bool DataSource::start() {
+bool DataSource::start(BufferManagerPtr buffMgnr) {
     auto barrier = std::make_shared<ThreadBarrier>(2);
     std::unique_lock lock(startStopMutex);
     if (running) {
@@ -59,7 +59,7 @@ bool DataSource::start() {
     NES_DEBUG("DataSource " << this->getSourceId() << ": Spawn thread")
     thread = std::make_shared<std::thread>([this, barrier]() {
       barrier->wait();
-      running_routine();
+      running_routine(buffMgnr);
 
     });
     barrier->wait();
@@ -76,6 +76,7 @@ bool DataSource::stop() {
     }
     running = false;
     bool ret = false;
+
     try {
         if (thread) {
             NES_DEBUG("DataSource::stop try to join threads=" << thread->get_id())
@@ -122,7 +123,7 @@ void DataSource::setGatheringInterval(size_t interval) {
     this->gatheringInterval = interval;
 }
 
-void DataSource::running_routine() {
+void DataSource::running_routine(BufferManagerPtr buffMgnr) {
     if (!this->sourceId.empty()) {
         NES_DEBUG("DataSource " << this->getSourceId() << ": Running Data Source of type=" << getType())
         size_t cnt = 0;
@@ -134,7 +135,7 @@ void DataSource::running_routine() {
                     && currentTime%gatheringInterval == 0)) {  //produce a buffer
                 lastGatheringTimeStamp = currentTime;
                 if (cnt < numBuffersToProcess) {
-                    auto optBuf = receiveData();
+                    auto optBuf = receiveData()buffMgnr;
                     if (!!optBuf) {
                         auto& buf = optBuf.value();
                         NES_DEBUG(

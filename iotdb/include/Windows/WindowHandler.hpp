@@ -26,7 +26,7 @@ typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 class WindowHandler {
   public:
     WindowHandler() = default;
-    WindowHandler(WindowDefinitionPtr windowDefinition);
+    WindowHandler(WindowDefinitionPtr windowDefinition, BufferManagerPtr buffMgnr);
     ~WindowHandler();
 
     /**
@@ -134,11 +134,12 @@ class WindowHandler {
     std::mutex runningTriggerMutex;
     uint32_t pipelineStageId;
     QueryExecutionPlanPtr queryExecutionPlan;
+    BufferManagerPtr buffMgnr;
 };
 
 //just for test compability
 const WindowHandlerPtr createTestWindow(size_t campainCnt, size_t windowSizeInSec);
-const WindowHandlerPtr createWindowHandler(WindowDefinitionPtr windowDefinition);
+const WindowHandlerPtr createWindowHandler(WindowDefinitionPtr windowDefinition, BufferManagerPtr buffMgnr);
 
 } // namespace NES
 #endif /* INCLUDE_WINDOWS_WINDOW_HPP_ */

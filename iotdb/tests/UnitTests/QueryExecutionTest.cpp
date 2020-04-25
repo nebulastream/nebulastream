@@ -17,11 +17,12 @@ using namespace NES;
 
 class QueryExecutionTest : public testing::Test {
   public:
+    BufferManagerPtr buffMgnr;
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    void setUp() {
         NES::setupLogging("QueryExecutionTest.log", NES::LOG_DEBUG);
         NES_DEBUG("Setup QueryCatalogTest test class.");
-        NES::BufferManager::instance().configure(4096, 1024);
+        buffMgnr = std::make_shared<BufferManager>(4096, 1024);
     }
 
     /* Will be called before a test is executed. */
@@ -142,7 +143,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
 
     // The plan should have one pipeline
     EXPECT_EQ(plan->numberOfPipelineStages(), 1);
-    auto buffer = BufferManager::instance().getBufferBlocking();
+    auto buffer = buffMgnr->getBufferBlocking();
     auto memoryLayout = createRowLayout(testSchema);
     fillBuffer(buffer, memoryLayout);
     plan->executeStage(0, buffer);
@@ -203,7 +204,7 @@ TEST_F(QueryExecutionTest, windowQuery) {
     EXPECT_EQ(plan->numberOfPipelineStages(), 2);
     // TODO switch to event time if that is ready to remove sleep
     auto memoryLayout = createRowLayout(testSchema);
-    auto buffer = BufferManager::instance().getBufferBlocking();
+    auto buffer = buffMgnr->getBufferBlocking();
     fillBuffer(buffer, memoryLayout);
     // TODO do not rely on sleeps
     // ingest test data

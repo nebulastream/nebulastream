@@ -32,7 +32,7 @@ void QueryCompiler::compilePipelineStages(QueryExecutionPlanPtr queryExecutionPl
     }
     auto executablePipeline = codeGenerator->compile(CompilerArgs(), context->code);
     if (context->hasWindow()) {
-        auto windowHandler = createWindowHandler(context->getWindow());
+        auto windowHandler = createWindowHandler(context->getWindow(), queryExecutionPlan->getBufferManager());
         queryExecutionPlan->appendsPipelineStage(createPipelineStage(queryExecutionPlan->numberOfPipelineStages(),
                                                                      queryExecutionPlan,
                                                                      executablePipeline,

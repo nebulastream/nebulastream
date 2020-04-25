@@ -13,8 +13,9 @@
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/Task.hpp>
 #include <SourceSink/DataSource.hpp>
-
+#include <NodeEngine/ThreadPool.hpp>
 #include <Windows/WindowHandler.hpp>
+
 namespace NES {
 class TupleBuffer;
 /**
@@ -121,6 +122,14 @@ class Dispatcher {
      */
     void resetDispatcher();
 
+    bool isBufferManagerReady();
+
+    bool startBufferManager();
+    bool startThreadPool();
+
+    bool stopBufferManager();
+    bool stopThreadPool();
+
   private:
     /* implement singleton semantics: no construction,
      * copying or destruction of Dispatcher objects
@@ -133,6 +142,8 @@ class Dispatcher {
     void cleanupUnsafe();
 
     std::deque<TaskPtr> task_queue;
+    BufferManagerPtr buffMgnr;
+    ThreadPoolPtr threadPool;
 
     std::map<std::string, std::unordered_set<QueryExecutionPlanPtr>> sourceIdToQueryMap;
 

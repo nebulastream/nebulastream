@@ -31,7 +31,7 @@ class GeneratorSource : public DataSource {
    * @brief override function to create one buffer
    * @return pointer to a buffer containing the created tuples
    */
-  std::optional<TupleBuffer> receiveData() override = 0;
+  std::optional<TupleBuffer> receiveData(BufferManagerPtr buffMgnr) override;
 
     /**
      * @brief override the toString method for the generator source

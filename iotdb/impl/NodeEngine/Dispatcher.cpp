@@ -1,7 +1,3 @@
-/*
- * General considerations:
- *  - do we really need all mutex?
- */
 #include <NodeEngine/Dispatcher.hpp>
 #include <Util/Logger.hpp>
 #include <iostream>
@@ -10,6 +6,10 @@
 
 namespace NES {
 using std::string;
+
+static constexpr size_t DEFAULT_BUFFER_SIZE = 4096;
+static constexpr size_t DEFAULT_NUM_BUFFERS = 1024;
+
 
 Dispatcher::Dispatcher()
     : task_queue(),
@@ -21,7 +21,40 @@ Dispatcher::Dispatcher()
       processedTasks(0),
       processedTuple(0),
       processedBuffers(0) {
-    NES_DEBUG("Init Dispatcher")
+    NES_DEBUG("Init Dispatcher: setup buffer manager")
+
+    NES_DEBUG("Init Dispatcher: setup thread pool")
+
+}
+
+bool Dispatcher::startBufferManager()
+{
+    NES_DEBUG("startBufferManager: setup buffer manager")
+    buffMgnr = std::make_shared<BufferManager>(DEFAULT_BUFFER_SIZE, DEFAULT_NUM_BUFFERS);
+    return buffMgnr->isReady();
+}
+
+bool Dispatcher::stopBufferManager()
+{
+    //TODO: what to do here?
+    return true;
+}
+
+bool Dispatcher::stopThreadPool()
+{
+    return threadPool->stop();
+}
+
+bool Dispatcher::startThreadPool()
+{
+    NES_DEBUG("startBufferManager: setup buffer manager")
+    threadPool = std::make_shared<ThreadPool>();
+    return threadPool->
+}
+
+bool Dispatcher::isBufferManagerReady()
+{
+    return ;
 }
 
 Dispatcher::~Dispatcher() {
@@ -279,9 +312,6 @@ void Dispatcher::printGeneralStatistics() {
     NES_INFO("\t workerHitEmptyTaskQueue =" << workerHitEmptyTaskQueue)
     NES_INFO("\t processedTasks =" << processedTasks)
     NES_INFO("\t processedTuple =" << processedTuple)
-
-    BufferManager::instance().printStatistics();
-
 }
 
 void Dispatcher::printQEPStatistics(const QueryExecutionPlanPtr qep) {

@@ -22,11 +22,13 @@
 namespace NES {
 class WindowManagerTest : public testing::Test {
   public:
-    static void SetUpTestCase()
+    BufferManagerPtr buffMgnr;
+    void setUp()
     {
         NES::setupLogging("WindowManagerTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup WindowMangerTest test class.");
-        BufferManager::instance().configure(1024, 1024);
+        buffMgnr = std::make_shared<BufferManager>();
+
     }
 
     static void TearDownTestCase() { std::cout << "Tear down WindowManager test class." << std::endl; }
@@ -112,7 +114,7 @@ TEST_F(WindowManagerTest, window_trigger) {
 
     ASSERT_EQ(aggregates[sliceIndex], 1);
 
-    auto buf = BufferManager::instance().getBufferBlocking();
+    auto buf = buffMgnr->getBufferBlocking();
     w.aggregateWindows<int64_t, int64_t>(store, windowDef, buf);
 
     size_t tupleCnt = buf.getNumberOfTuples();
