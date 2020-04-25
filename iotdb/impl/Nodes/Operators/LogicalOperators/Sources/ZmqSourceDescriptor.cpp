@@ -2,6 +2,10 @@
 
 namespace NES {
 
+SourceDescriptorPtr ZmqSourceDescriptor::create(SchemaPtr schema, std::string host, uint16_t port) {
+    return std::make_shared<ZmqSourceDescriptor>(ZmqSourceDescriptor(schema, host, port))
+}
+
 ZmqSourceDescriptor::ZmqSourceDescriptor(SchemaPtr schema, std::string host, uint16_t port)
     : SourceDescriptor(schema), host(host), port(port) {}
 
