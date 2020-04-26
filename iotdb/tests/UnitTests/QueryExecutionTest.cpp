@@ -17,12 +17,11 @@ using namespace NES;
 
 class QueryExecutionTest : public testing::Test {
   public:
-    BufferManagerPtr buffMgnr;
+
     /* Will be called before any test in this class are executed. */
     void setUp() {
         NES::setupLogging("QueryExecutionTest.log", NES::LOG_DEBUG);
         NES_DEBUG("Setup QueryCatalogTest test class.");
-        buffMgnr = std::make_shared<BufferManager>(4096, 1024);
     }
 
     /* Will be called before a test is executed. */
@@ -120,6 +119,8 @@ void fillBuffer(TupleBuffer& buf, MemoryLayoutPtr memoryLayout) {
 }
 
 TEST_F(QueryExecutionTest, filterQuery) {
+    DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
+    dispatcher->startBufferManager(4096, 1024);
 
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema);
@@ -134,14 +135,14 @@ TEST_F(QueryExecutionTest, filterQuery) {
     sink->addChild(filter);
     filter->setParent(sink);
 
-    auto compiler = createDefaultQueryCompiler();
+    auto compiler = createDefaultQueryCompiler(dispatcher);
     auto plan = compiler->compile(sink);
     plan->addDataSink(testSink);
     plan->addDataSource(testSource);
 
     // The plan should have one pipeline
     EXPECT_EQ(plan->numberOfPipelineStages(), 1);
-    auto buffer = buffMgnr->getBufferBlocking();
+    auto buffer = dispatcher->getBufferManager()->getBufferBlocking();
     auto memoryLayout = createRowLayout(testSchema);
     fillBuffer(buffer, memoryLayout);
     plan->executeStage(0, buffer);
@@ -167,6 +168,10 @@ TEST_F(QueryExecutionTest, windowQuery) {
     // TODO in this test, it is not clear what we are testing
     // TODO 10 windows are fired -> 10 output buffers in the sink
     // TODO however, we check the 2nd buffer only
+    DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
+    dispatcher->startBufferManager(4096, 1024);
+    dispatcher->startThreadPool();
+
     // creating query plan
     auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema);
     auto source = createSourceOperator(testSource);
@@ -189,12 +194,11 @@ TEST_F(QueryExecutionTest, windowQuery) {
     sink->addChild(windowScan);
     windowScan->setParent(sink);
 
-    auto compiler = createDefaultQueryCompiler();
+    auto compiler = createDefaultQueryCompiler(dispatcher);
     auto plan = compiler->compile(sink);
     plan->addDataSink(testSink);
     plan->addDataSource(testSource);
 
-    DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
     dispatcher->registerQuery(plan);
 
     plan->setup();
@@ -204,7 +208,7 @@ TEST_F(QueryExecutionTest, windowQuery) {
     EXPECT_EQ(plan->numberOfPipelineStages(), 2);
     // TODO switch to event time if that is ready to remove sleep
     auto memoryLayout = createRowLayout(testSchema);
-    auto buffer = buffMgnr->getBufferBlocking();
+    auto buffer = dispatcher->getBufferManager()->getBufferBlocking();
     fillBuffer(buffer, memoryLayout);
     // TODO do not rely on sleeps
     // ingest test data

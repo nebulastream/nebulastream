@@ -19,11 +19,11 @@ WorkerService::WorkerService(string ip, uint16_t publish_port, uint16_t receive_
     this->ip = std::move(ip);
     this->publishPort = publish_port;
     this->receivePort = receive_port;
-    this->queryCompiler = createDefaultQueryCompiler();
     NES_DEBUG("WorkerService: create WorkerService with ip=" << this->ip << " publish_port=" << this->publishPort
                                                              << " receive_port=" << this->receivePort)
     physicalStreams.insert(std::make_pair("default_physical", PhysicalStreamConfig()));
     this->nodeEngine = std::make_shared<NodeEngine>();
+    this->queryCompiler = createDefaultQueryCompiler(nodeEngine->getDispatcher());
     this->nodeEngine->start();
 }
 

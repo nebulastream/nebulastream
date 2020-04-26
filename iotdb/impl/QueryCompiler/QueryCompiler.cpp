@@ -14,7 +14,15 @@ QueryCompilerPtr QueryCompiler::create() {
     return std::make_shared<QueryCompiler>(new QueryCompiler());
 }
 
-QueryExecutionPlanPtr QueryCompiler::compile(OperatorPtr queryPlan, DispatcherPtr dispatcher) {
+DispatcherPtr QueryCompiler::getDispatcher() {
+    return dispatcher;
+}
+
+void QueryCompiler::setDispatcher(DispatcherPtr dispatcher) {
+    this->dispatcher = dispatcher;
+}
+
+QueryExecutionPlanPtr QueryCompiler::compile(OperatorPtr queryPlan) {
 
     auto codeGenerator = createCodeGenerator();
     auto context = createPipelineContext();
@@ -46,8 +54,10 @@ void QueryCompiler::compilePipelineStages(QueryExecutionPlanPtr queryExecutionPl
 
 }
 
-QueryCompilerPtr createDefaultQueryCompiler() {
-    return QueryCompiler::create();
+QueryCompilerPtr createDefaultQueryCompiler(DispatcherPtr dispatcher) {
+    auto q = QueryCompiler::create();
+    q->setDispatcher(dispatcher);
+    return q;
 }
 
 }

@@ -151,6 +151,16 @@ bool NodeEngine::stopQuery(QueryExecutionPlanPtr qep) {
     }
 }
 
+DispatcherPtr NodeEngine::getDispatcher() {
+    return dispatcher;
+}
+
+void NodeEngine::setDispatcher(DispatcherPtr dispatcher) {
+    this->dispatcher = dispatcher;
+}
+
+
+
 bool NodeEngine::start() {
     NES_DEBUG("NodeEngine:start reset dispatcher")
     dispatcher->resetDispatcher();

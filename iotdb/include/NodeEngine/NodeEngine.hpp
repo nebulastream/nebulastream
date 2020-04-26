@@ -96,14 +96,17 @@ class NodeEngine {
 
     NodeProperties* getNodeProperties();
 
-    DispatcherPtr dispatcher;
 
+    DispatcherPtr getDispatcher();
+    void setDispatcher(DispatcherPtr dispatcher);
 
   private:
     NodePropertiesPtr props;
     std::map<QueryExecutionPlanPtr, NodeEngineQueryStatus> queryStatusMap;
     bool stoppedEngine;
     bool forceStop;
+    DispatcherPtr dispatcher;
+
 };
 
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
