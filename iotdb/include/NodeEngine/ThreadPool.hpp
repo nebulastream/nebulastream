@@ -22,7 +22,7 @@ class ThreadPool {
     /**
      * @brief default constructor
      */
-    ThreadPool();
+    ThreadPool(DispatcherPtr dispatcher);
 
     /**
      * @brief default destructor
@@ -49,7 +49,7 @@ class ThreadPool {
        * 3.) join all threads, i.e., wait till all threads return
        * @return indicate if stop succeed
        */
-    bool stop(DispatcherPtr dispatcher);
+    bool stop();
 
     /**
        * @brief running routine of threads, in this routine, threads repeatedly execute the following steps
@@ -90,12 +90,10 @@ class ThreadPool {
 
     //indicating if the thread pool is running, used for multi-thread execution
     std::atomic<bool> running;
-
     std::atomic<size_t> numThreads;
-
     std::vector<std::thread> threads;
-
     std::mutex reconfigLock;
+    DispatcherPtr dispatcher;
 };
 
 typedef std::shared_ptr<ThreadPool> ThreadPoolPtr;

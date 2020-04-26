@@ -153,14 +153,14 @@ bool NodeEngine::stopQuery(QueryExecutionPlanPtr qep) {
 
 bool NodeEngine::start() {
     NES_DEBUG("NodeEngine:start reset dispatcher")
-    NES::dispatcher->resetDispatcher();
+    dispatcher->resetDispatcher();
 
     NES_DEBUG("NodeEngine: start thread pool")
-    bool successTp = NES::dispatcher->startThreadPool();
+    bool successTp = dispatcher->startThreadPool();
     NES_DEBUG("NodeEngine: start thread pool success=" << successTp)
 
     NES_DEBUG("NodeEngine: start buffer manager")
-    bool successBm = NES::dispatcher->startBufferManager();
+    bool successBm = dispatcher->startBufferManager();
     NES_DEBUG("NodeEngine: start buffer manager success=" << successBm)
 
     if (!dispatcher->isBufferManagerReady()) {
@@ -205,7 +205,7 @@ bool NodeEngine::stop() {
         }
 
         NES_DEBUG("NodeEngine:stop undeploy successful")
-        NES::dispatcher->resetDispatcher();
+        dispatcher->resetDispatcher();
         copyOfVec.clear();
         stoppedEngine = true;
 

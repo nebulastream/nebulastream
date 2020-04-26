@@ -23,12 +23,14 @@
 #include <SourceSink/DefaultSource.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/Dispatcher.hpp>
 
 namespace NES {
 
 class CodeGenerationTest : public testing::Test {
   public:
-    BufferManagerPtr buffMgnr;
+    DispatcherPtr dispatcher;
+
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         std::cout << "Setup CodeGenerationTest test class." << std::endl;
@@ -38,8 +40,8 @@ class CodeGenerationTest : public testing::Test {
     void SetUp() {
         NES::setupLogging("BufferManagerTest.log", NES::LOG_DEBUG);
         std::cout << "Setup CodeGenerationTest test case." << std::endl;
-        BufferManagerPtr buffMgnr = std::make_shared<BufferManager>(4096, 1024);
-
+        dispatcher = std::make_shared<Dispatcher>();
+        dispatcher->startBufferManager(4096, 1024);
     }
 
     /* Will be called before a test is executed. */
@@ -68,9 +70,9 @@ class SelectionDataGenSource : public GeneratorSource {
 
     ~SelectionDataGenSource() = default;
 
-    std::optional<TupleBuffer> receiveData(BufferManagerPtr buffMgnr) override {
+    std::optional<TupleBuffer> receiveData(DispatcherPtr dispatcher) override {
         // 10 tuples of size one
-        TupleBuffer buf = buffMgnr->getBufferBlocking();
+        TupleBuffer buf = dispatcher->getBufferManager()->getBufferBlocking();
         uint64_t tupleCnt = buf.getBufferSize()/sizeof(InputTuple);
 
         assert(buf.getBuffer() != NULL);
@@ -128,9 +130,9 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
         char text[12];
     };
 
-    std::optional<TupleBuffer> receiveData(BufferManagerPtr buffMgnr) override {
+    std::optional<TupleBuffer> receiveData(DispatcherPtr dispatcher) override {
         // 10 tuples of size one
-        TupleBuffer buf = buffMgnr->getBufferBlocking();
+        TupleBuffer buf = dispatcher->getBufferManager()->getBufferBlocking();
         uint64_t tupleCnt = buf.getBufferSize()/sizeof(InputTuple);
 
         assert(buf.getBuffer() != NULL);
@@ -186,9 +188,9 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
         uint64_t value;
     };
 
-    std::optional<TupleBuffer> receiveData(BufferManagerPtr buffMgnr) override {
+    std::optional<TupleBuffer> receiveData(DispatcherPtr dispatcher) override {
         // 10 tuples of size one
-        TupleBuffer buf = buffMgnr->getBufferBlocking();
+        TupleBuffer buf = dispatcher->getBufferManager()->getBufferBlocking();
         uint64_t tupleCnt = 10;
 
         assert(buf.getBuffer() != NULL);
@@ -620,7 +622,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto stage = createCompiledExecutablePipeline(compiler.compile(file.code));
 
     /* setup input and output for test */
-    auto inputBuffer = buffMgnr->getBufferBlocking();
+    auto inputBuffer = dispatcher->getBufferManager()->getBufferBlocking();
     inputBuffer.setTupleSizeInBytes(8);
     auto recordSchema = Schema::create()->addField("id", BasicType::INT64);
     auto layout = createRowLayout(recordSchema);
@@ -630,7 +632,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     }
     inputBuffer.setNumberOfTuples(100);
 
-    auto outputBuffer = buffMgnr->getBufferBlocking();
+    auto outputBuffer = dispatcher->getBufferManager()->getBufferBlocking();
     outputBuffer.setTupleSizeInBytes(8);
     outputBuffer.setNumberOfTuples(1);
     /* execute code */
@@ -670,9 +672,9 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
 
     /* prepare input and output tuple buffer */
     auto schema = Schema::create()->addField("i64", UINT64);
-    auto buffer = source->receiveData(buffMgnr).value();
+    auto buffer = source->receiveData(dispatcher).value();
 
-    auto resultBuffer = buffMgnr->getBufferBlocking();
+    auto resultBuffer = dispatcher->getBufferManager()->getBufferBlocking();
     resultBuffer.setTupleSizeInBytes(sizeof(uint64_t));
 
     /* execute Stage */
@@ -716,11 +718,11 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
     auto stage = codeGenerator->compile(CompilerArgs(), context->code);
 
     /* prepare input tuple buffer */
-    auto inputBuffer = source->receiveData(buffMgnr).value();;
+    auto inputBuffer = source->receiveData(dispatcher).value();;
     NES_INFO("Processing " << inputBuffer.getNumberOfTuples() << " tuples: ");
 
     auto sizeOfTuple = (sizeof(uint32_t) + sizeof(uint32_t) + sizeof(char)*12);
-    auto resultBuffer = buffMgnr->getBufferBlocking();
+    auto resultBuffer = dispatcher->getBufferManager()->getBufferBlocking();
     resultBuffer.setTupleSizeInBytes(sizeOfTuple);
 
     /* execute Stage */
@@ -762,13 +764,13 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
     auto stage = codeGenerator->compile(CompilerArgs(), context->code);
 
     // init window handler
-    auto windowHandler = new WindowHandler(windowDefinition, buffMgnr);
+    auto windowHandler = new WindowHandler(windowDefinition, dispatcher);
     windowHandler->setup(nullptr, 0);
 
     /* prepare input tuple buffer */
-    auto inputBuffer = source->receiveData(buffMgnr).value();
+    auto inputBuffer = source->receiveData(dispatcher).value();
 
-    auto resultBuffer = buffMgnr->getBufferBlocking();
+    auto resultBuffer = dispatcher->getBufferManager()->getBufferBlocking();
 
     /* execute Stage */
     stage->execute(inputBuffer, windowHandler->getWindowState(),
@@ -812,11 +814,11 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
     auto stage = codeGenerator->compile(CompilerArgs(), context->code);
 
     /* prepare input tuple buffer */
-    auto optVal = source->receiveData(buffMgnr);
+    auto optVal = source->receiveData(dispatcher);
     assert(!!optVal);
     auto inputBuffer = *optVal;
 
-    auto resultBuffer = buffMgnr->getBufferBlocking();
+    auto resultBuffer = dispatcher->getBufferManager()->getBufferBlocking();
     resultBuffer.setTupleSizeInBytes(inputSchema->getSchemaSizeInBytes());
 
     /* execute Stage */
@@ -866,9 +868,9 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
     auto stage = codeGenerator->compile(CompilerArgs(), context->code);
 
     /* prepare input tuple buffer */
-    auto inputBuffer = source->receiveData(buffMgnr).value();
+    auto inputBuffer = source->receiveData(dispatcher).value();
 
-    auto resultBuffer = buffMgnr->getUnpooledBuffer(
+    auto resultBuffer = dispatcher->getBufferManager()->getUnpooledBuffer(
         inputBuffer.getNumberOfTuples()*outputSchema->getSchemaSizeInBytes()).value();
 
     /* execute Stage */

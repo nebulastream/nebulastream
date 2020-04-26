@@ -37,7 +37,7 @@ KafkaSource::KafkaSource(SchemaPtr schema,
 
 KafkaSource::~KafkaSource() {}
 
-std::optional<TupleBuffer> KafkaSource::receiveData(BufferManagerPtr buffMgnr) {
+std::optional<TupleBuffer> KafkaSource::receiveData(DispatcherPtr dispatcher) {
     NES_DEBUG("KAFKASOURCE tries to receive data...")
 
     cppkafka::Message msg = consumer->poll(kafkaConsumerTimeout);
@@ -49,7 +49,7 @@ std::optional<TupleBuffer> KafkaSource::receiveData(BufferManagerPtr buffMgnr) {
             }
             return std::nullopt;
         } else {
-            TupleBuffer buffer = buffMgnr->getBufferBlocking();
+            TupleBuffer buffer = dispatcher->getBufferManager()->getBufferBlocking();
 
             const size_t tupleSize = schema->getSchemaSizeInBytes();
             const size_t tupleCnt = msg.get_payload().get_size()/tupleSize;

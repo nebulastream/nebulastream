@@ -12,7 +12,7 @@ class DefaultSource : public GeneratorSource {
 
     SourceType getType() const override;
 
-    std::optional<TupleBuffer> receiveData(BufferManagerPtr buffMgnr) override;
+    std::optional<TupleBuffer> receiveData(DispatcherPtr dispatcher) override;
 
   private:
     friend class boost::serialization::access;

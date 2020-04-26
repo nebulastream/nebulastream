@@ -14,6 +14,8 @@
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
 
+#include <NodeEngine/Dispatcher.hpp>
+
 using namespace NES;
 
 #ifndef LOCAL_HOST
@@ -26,8 +28,7 @@ using namespace NES;
 
 class ZMQTest : public testing::Test {
 public:
-    BufferManagerPtr buffMgnr;
-
+    DispatcherPtr dispatcher;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES_DEBUG("Setup ZMQTest test class.");
@@ -47,9 +48,8 @@ public:
         //    test_data_size = 4096;
         test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE",
                                                                           UINT32);
-
-        buffMgnr = std::make_shared<BufferManager>(1024, 1024);
-        //    buffMgnr->setBufferSize(test_data_size);
+        dispatcher = std::make_shared<Dispatcher>();
+        dispatcher->startBufferManager(1024, 1024);
     }
 
     /* Will be called before a test is executed. */
@@ -84,7 +84,7 @@ TEST_F(ZMQTest, ZmqSourceReceiveData) {
     bool receiving_finished = false;
     auto receiving_thread = std::thread([&]() {
         // Receive data.
-        auto tuple_buffer = zmq_source->receiveData(buffMgnr);
+        auto tuple_buffer = zmq_source->receiveData(dispatcher);
 
         // Test received data.
         size_t sum = 0;

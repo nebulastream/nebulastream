@@ -7,10 +7,11 @@
 #include <Util/ThreadBarrier.hpp>
 namespace NES {
 
-ThreadPool::ThreadPool()
+ThreadPool::ThreadPool(DispatcherPtr dispatcher)
     : running(false),
       numThreads(1),
-      threads() {
+      threads(),
+      dispatcher(dispatcher){
 }
 
 ThreadPool::~ThreadPool() {
@@ -21,13 +22,12 @@ ThreadPool::~ThreadPool() {
 }
 
 void ThreadPool::runningRoutine() {
-    Dispatcher& dispatcher = Dispatcher::instance();
     while (running) {
-        TaskPtr task = dispatcher.getWork(running);
+        TaskPtr task = dispatcher->getWork(running);
         //TODO: check if TaskPtr() will really return a task that is skipped in if statement
         if (task) {
             task->execute();
-            dispatcher.completedWork(task);
+            dispatcher->completedWork(task);
             NES_DEBUG("Threadpool: finished task " << task)
         } else {
             NES_DEBUG("Threadpool: task invalid " << task)
@@ -35,7 +35,7 @@ void ThreadPool::runningRoutine() {
         }
     }
     NES_DEBUG("Threadpool: end running now cleanup")
-    dispatcher.cleanup();
+    dispatcher->cleanup();
     NES_DEBUG("Threadpool: end running end cleanup")
 }
 
@@ -62,7 +62,7 @@ bool ThreadPool::start() {
     return true;
 }
 
-bool ThreadPool::stop(DispatcherPtr dispatcher) {
+bool ThreadPool::stop() {
     std::unique_lock<std::mutex> lock(reconfigLock);
     NES_DEBUG("ThreadPool: stop thread pool while " << (running.load() ? "running" : "not running") << " with " << numThreads << " threads");
     running = false;
