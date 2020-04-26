@@ -63,6 +63,12 @@ class DataType {
     virtual const bool isCharDataType() const = 0;
     virtual const bool isUndefined() const;
     virtual const bool isNumerical() const;
+    /**
+     * @brief Calculates the joined data type between this data type and the other.
+     * If they have no possible joined data type, the coined type is Undefined.
+     * @param other data type
+     * @return DataTypePtr joined data type
+     */
     virtual const DataTypePtr join(DataTypePtr other) const;
     virtual const CodeExpressionPtr getTypeDefinitionCode() const = 0;
     virtual const DataTypePtr copy() const = 0;

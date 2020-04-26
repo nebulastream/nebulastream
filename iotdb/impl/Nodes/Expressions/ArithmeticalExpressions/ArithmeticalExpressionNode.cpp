@@ -5,11 +5,11 @@ namespace NES {
 ArithmeticalExpressionNode::ArithmeticalExpressionNode(DataTypePtr stamp) : BinaryExpressionNode(stamp) {}
 
 /**
- * @brief The current implementation of type inference for arithmetical expressions expects the following conditions:
- * - The operands of an arithmetical expression have to have numerical stamps.
- * - Both operands have to have the exact same stamp -> We currently do not support implicit type casting.
- * If this conditions are true -> the stamp of an arithmetical expression is equal to the type of its left children.
- * @param schema
+ * @brief The current implementation of type inference for arithmetical expressions expects that both
+ * operands of an arithmetical expression have numerical stamps.
+ * If this is valid we derived the joined stamp of the left and right operand.
+ * (e.g., left:int8, right:int32 -> int32)
+ * @param schema the current schema we use during type inference.
  */
 void ArithmeticalExpressionNode::inferStamp(SchemaPtr schema) {
     // infer the stamps of the left and right child
