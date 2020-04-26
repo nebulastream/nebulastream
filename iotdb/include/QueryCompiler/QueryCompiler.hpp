@@ -24,33 +24,39 @@ typedef std::shared_ptr<PipelineStage> PipelineStagePtr;
 class PipelineContext;
 typedef std::shared_ptr<PipelineContext> PipelineContextPtr;
 
-
 /**
  * @brief The query compiler compiles physical query plans to an executable query plan
  */
 class QueryCompiler {
- public:
-  QueryCompiler(QueryCompiler* queryCompiler);
-  ~QueryCompiler() = default;
-  /**
-   * Creates a new query compiler
-   * @param codeGenerator
-   * @return
-   */
-  static QueryCompilerPtr create();
-  /**
-   * @brief compiles a queryplan to a executable query plan
-   * @param queryPlan
-   * @return
-   */
-  QueryExecutionPlanPtr compile(OperatorPtr queryPlan, DispatcherPtr dispatcher);
+  public:
+    QueryCompiler(QueryCompiler* queryCompiler);
+    ~QueryCompiler() = default;
+    /**
+     * Creates a new query compiler
+     * @param codeGenerator
+     * @return
+     */
+    static QueryCompilerPtr create();
+    /**
+     * @brief compiles a queryplan to a executable query plan
+     * @param queryPlan
+     * @return
+     */
+    QueryExecutionPlanPtr compile(OperatorPtr queryPlan);
 
- private:
-  void compilePipelineStages(QueryExecutionPlanPtr queryExecutionPlan, CodeGeneratorPtr codeGenerator, PipelineContextPtr context);
-  QueryCompiler();
+    DispatcherPtr getDispatcher();
+    void setDispatcher(DispatcherPtr dispatcher);
+
+  private:
+    DispatcherPtr dispatcher;
+
+    void compilePipelineStages(QueryExecutionPlanPtr queryExecutionPlan,
+                               CodeGeneratorPtr codeGenerator,
+                               PipelineContextPtr context);
+    QueryCompiler();
 };
 
-QueryCompilerPtr createDefaultQueryCompiler();
+QueryCompilerPtr createDefaultQueryCompiler(DispatcherPtr dispatcher);
 
 }
 

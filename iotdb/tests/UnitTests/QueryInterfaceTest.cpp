@@ -8,7 +8,6 @@
 
 #include <API/InputQuery.hpp>
 #include <API/UserAPIExpression.hpp>
-#include <API/Environment.hpp>
 #include <API/Types/DataTypes.hpp>
 #include <Util/UtilityFunctions.hpp>
 namespace NES {
@@ -63,7 +62,7 @@ TEST_F(QueryInterfaceTest, testQueryFilter) {
     // define config
     Config config = Config::create();
 
-    Environment env = Environment::create(config);
+//    Environment env = Environment::create(config);
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
         "value", BasicType::UINT64);
@@ -76,15 +75,17 @@ TEST_F(QueryInterfaceTest, testQueryFilter) {
             TumblingWindow::of(TimeCharacteristic::ProcessingTime, Seconds(10)),
             Sum::on(def["value"])).print(std::cout);
 
-    env.printInputQueryPlan(query);
-    env.executeQuery(query);
+    query.print();
+
+//    env.printInputQueryPlan(query);
+//    env.executeQuery(query);
 }
 
 TEST_F(QueryInterfaceTest, testQueryMap) {
     // define config
     Config config = Config::create();
-
-    Environment env = Environment::create(config);
+    //TODO re-check if we really need this environment
+//    Environment env = Environment::create(config);
 
     //    Config::create().withParallelism(1).withPreloading().withBufferSize(1000).withNumberOfPassesOverInput(1);
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField(
@@ -97,8 +98,8 @@ TEST_F(QueryInterfaceTest, testQueryMap) {
     InputQuery& query = InputQuery::from(def).map(*schema->get(0),
                                                   def["value"] + schema->get(1)).print(
         std::cout);
-    env.printInputQueryPlan(query);
-    env.executeQuery(query);
+//    env.printInputQueryPlan(query);
+//    env.executeQuery(query);
 }
 
 TEST_F(QueryInterfaceTest, testQueryString) {
