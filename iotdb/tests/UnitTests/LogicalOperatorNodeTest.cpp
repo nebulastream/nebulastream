@@ -1401,7 +1401,7 @@ TEST_F(LogicalOperatorNodeTest, translateToLagacyOperatorTree) {
      */
     auto schema = Schema::create();
 
-    auto printSinkDescriptorPtr = std::make_shared<PrintSinkDescriptor>(schema);
+    auto printSinkDescriptorPtr = PrintSinkDescriptor::create(schema);
     auto sinkOperator = createSinkLogicalOperatorNode(printSinkDescriptorPtr);
     auto constValue = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "1"));
     auto fieldRead = FieldAccessExpressionNode::create(createDataType(BasicType::INT8), "FieldName");
@@ -1423,41 +1423,6 @@ TEST_F(LogicalOperatorNodeTest, translateToLagacyOperatorTree) {
     auto legacySource = legacyFilter->getChildren()[0];
     ASSERT_EQ(legacySource->getOperatorType(), SOURCE_OP);
 
-}
-
-TEST_F(LogicalOperatorNodeTest, inferOperatorTypes) {
-    /**
-     * Sink -> Map -> Source
-     * from(test).map(x=10)
-     */
-    auto schema = Schema::create();
-    schema->addField("f1", BasicType::INT32);
-    schema->addField("f2", BasicType::INT8);
-
-    auto sourceDescriptor = DefaultSourceDescriptor::create(schema, 0, 0);
-    auto source = createSourceLogicalOperatorNode(sourceDescriptor);
-    auto printSinkDescriptor = std::make_shared<PrintSinkDescriptor>(schema);
-    auto sink = createSinkLogicalOperatorNode(printSinkDescriptor);
-
-    auto map = createMapLogicalOperatorNode(Attribute("f8") = Attribute("f2")+int8_t(1));
-    map->addChild(source);
-
-    auto filter = createFilterLogicalOperatorNode(Attribute("f1") != 1);
-    filter->addChild(map);
-
-    sink->addChild(filter);
-    sink->inferSchema();
-    ConsoleDumpHandler::create()->dump(filter->as<FilterLogicalOperatorNode>()->getPredicate(), std::cout);
-    std::cout << source->getOutputSchema()->toString() << std::endl;
-    std::cout << map->getOutputSchema()->toString() << std::endl;
-    std::cout << filter->getOutputSchema()->toString() << std::endl;
-    std::cout << sink->getOutputSchema()->toString() << std::endl;
-
-    ConsoleDumpHandler::create()->dump(sink, std::cout);
-
-    int64_t x = 10;
-    int64_t y = 11;
-    int32_t z = x + y;
 }
 
 } // namespace NES

@@ -16,6 +16,9 @@ const std::string& ZmqSinkDescriptor::getHost() const {
 uint16_t ZmqSinkDescriptor::getPort() const {
     return port;
 }
+SinkDescriptorPtr ZmqSinkDescriptor::create(SchemaPtr schema, std::string host, uint16_t port) {
+    return std::make_shared<ZmqSinkDescriptor>(ZmqSinkDescriptor(schema, host, port));
+}
 
 }
 

@@ -11,8 +11,15 @@ namespace NES {
 class PrintSinkDescriptor : public SinkDescriptor {
 
   public:
-    PrintSinkDescriptor(SchemaPtr schema);
+    /**
+     * @brief Factory method to create a new prink sink descriptor
+     * @param schema
+     * @return
+     */
+    static SinkDescriptorPtr create(SchemaPtr schema);
     SinkDescriptorType getType() override;
+  private:
+    PrintSinkDescriptor(SchemaPtr schema);
 };
 
 typedef std::shared_ptr<PrintSinkDescriptor> PrintSinkDescriptorPtr;

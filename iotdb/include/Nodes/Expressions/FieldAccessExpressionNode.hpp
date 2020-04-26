@@ -23,6 +23,10 @@ class FieldAccessExpressionNode : public ExpressionNode {
 
     const std::string getFieldName();
 
+    /**
+    * @brief Infers the stamp of the expression given the current schema.
+    * @param SchemaPtr
+    */
     void inferStamp(SchemaPtr schema) override;
 
   private:

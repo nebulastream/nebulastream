@@ -28,7 +28,7 @@ class ExpressionNode : public Node {
 
     /**
      * @brief Infers the stamp of the expression given the current schema.
-     * @param schema
+     * @param SchemaPtr
      */
     virtual void inferStamp(SchemaPtr schema);
 

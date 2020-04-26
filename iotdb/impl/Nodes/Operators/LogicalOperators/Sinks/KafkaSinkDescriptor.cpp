@@ -20,5 +20,11 @@ const std::string& KafkaSinkDescriptor::getBrokers() const {
 uint64_t KafkaSinkDescriptor::getTimeout() const {
     return timeout;
 }
+SinkDescriptorPtr KafkaSinkDescriptor::create(SchemaPtr schema,
+                                              std::string topic,
+                                              std::string brokers,
+                                              uint64_t timeout) {
+    return std::make_shared<KafkaSinkDescriptor>(KafkaSinkDescriptor(schema, topic, brokers, timeout));
+}
 
 }
