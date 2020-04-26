@@ -102,7 +102,7 @@ namespace NES {
 
         map<std::string, SchemaPtr> allLogicalStream = StreamCatalog::instance()
                 .getAllLogicalStream();
-        string exp = "id:UINT32value:UINT64\n";
+        string exp = "id:UINT32 value:UINT64 ";
         EXPECT_EQ(allLogicalStream.size(), 2);
 
         SchemaPtr defaultSchema = allLogicalStream["default_logical"];

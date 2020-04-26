@@ -52,7 +52,7 @@ class FileOutputSink : public DataSink {
      * @param type of file to write
      * @param mode to write
      */
-    FileOutputSink(SchemaPtr schema, std::string filePath, FileOutPutType type, FileOutPutMode mode);
+    FileOutputSink(SchemaPtr schema, std::string filePath, FileOutputType type, FileOutputMode mode);
 
     /**
      * @brief method to override virtual setup function
@@ -87,8 +87,8 @@ class FileOutputSink : public DataSink {
 
     friend class boost::serialization::access;
 
-    FileOutPutType outputType;
-    FileOutPutMode outputMode;
+    FileOutputType outputType;
+    FileOutputMode outputMode;
 
     template<class Archive>
     void serialize(Archive& ar, unsigned) {
