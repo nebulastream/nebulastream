@@ -5,11 +5,11 @@
 
 namespace NES {
 
-enum FileOutPutType {
+enum FileOutputType {
     BINARY_TYPE, CSV_TYPE
 };
 
-enum FileOutPutMode {
+enum FileOutputMode {
     FILE_OVERWRITE, FILE_APPEND
 };
 
@@ -28,7 +28,7 @@ class FileSinkDescriptor : public SinkDescriptor {
      * @param fileOutputType the file output type (BINARY_TYPE, CSV_TYPE)
      * @return
      */
-    static SinkDescriptorPtr create(SchemaPtr schema, std::string filePath, FileOutPutMode fileOutputMode, FileOutPutType fileOutputType);
+    static SinkDescriptorPtr create(SchemaPtr schema, std::string filePath, FileOutputMode fileOutputMode, FileOutputType fileOutputType);
 
     SinkDescriptorType getType() override;
 
@@ -40,19 +40,19 @@ class FileSinkDescriptor : public SinkDescriptor {
     /**
      * @brief get the file output mode (Overwritten or Append)
      */
-    FileOutPutMode getFileOutPutMode() const;
+    FileOutputMode getFileOutputMode() const;
 
     /**
      * @brief get the file output type (CSV or Binary)
      */
-    FileOutPutType getFileOutPutType() const;
+    FileOutputType getFileOutputType() const;
 
   private:
-    FileSinkDescriptor(SchemaPtr schema, std::string fileName, FileOutPutMode fileOutputMode, FileOutPutType fileOutputType);
+    FileSinkDescriptor(SchemaPtr schema, std::string fileName, FileOutputMode fileOutputMode, FileOutputType fileOutputType);
 
     std::string fileName;
-    FileOutPutMode fileOutPutMode;
-    FileOutPutType fileOutPutType;
+    FileOutputMode fileOutputMode;
+    FileOutputType fileOutputType;
 };
 
 typedef std::shared_ptr<FileSinkDescriptor> FileSinkDescriptorPtr;

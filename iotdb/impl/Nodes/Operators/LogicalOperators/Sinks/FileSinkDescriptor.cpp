@@ -3,15 +3,15 @@
 
 namespace NES {
 
-SinkDescriptorPtr FileSinkDescriptor::create(SchemaPtr schema, std::string fileName, FileOutPutMode fileOutputMode, FileOutPutType fileOutputType) {
+SinkDescriptorPtr FileSinkDescriptor::create(SchemaPtr schema, std::string fileName, FileOutputMode fileOutputMode, FileOutputType fileOutputType) {
     return std::make_shared<FileSinkDescriptor>(FileSinkDescriptor(schema, fileName, fileOutputMode, fileOutputType));
 }
 
 FileSinkDescriptor::FileSinkDescriptor(SchemaPtr schema,
                                        std::string fileName,
-                                       FileOutPutMode fileOutputMode,
-                                       FileOutPutType fileOutputType)
-    : SinkDescriptor(schema), fileName(fileName), fileOutPutMode(fileOutputMode), fileOutPutType(fileOutPutType) {}
+                                       FileOutputMode fileOutputMode,
+                                       FileOutputType fileOutputType)
+    : SinkDescriptor(schema), fileName(fileName), fileOutputMode(fileOutputMode), fileOutputType(fileOutputType) {}
 
 SinkDescriptorType FileSinkDescriptor::getType() {
     return FileSinkDescriptorType;
@@ -20,11 +20,11 @@ SinkDescriptorType FileSinkDescriptor::getType() {
 const std::string& FileSinkDescriptor::getFileName() const {
     return fileName;
 }
-FileOutPutMode FileSinkDescriptor::getFileOutPutMode() const {
-    return fileOutPutMode;
+FileOutputMode FileSinkDescriptor::getFileOutputMode() const {
+    return fileOutputMode;
 }
-FileOutPutType FileSinkDescriptor::getFileOutPutType() const {
-    return fileOutPutType;
+FileOutputType FileSinkDescriptor::getFileOutputType() const {
+    return fileOutputType;
 }
 
 }

@@ -37,7 +37,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SinkDescriptorPtr sinkD
         case FileSinkDescriptorType: {
             NES_INFO("ConvertLogicalToPhysicalSink: Creating File sink")
             const FileSinkDescriptorPtr fileSinkDescriptor = sinkDescriptor->as<FileSinkDescriptor>();
-            FileOutPutType fileOutPutType = fileSinkDescriptor->getFileOutPutType();
+            FileOutputType fileOutPutType = fileSinkDescriptor->getFileOutputType();
             switch (fileOutPutType) {
                 case BINARY_TYPE: {
                     NES_INFO("ConvertLogicalToPhysicalSink: Creating Binary file sink")
@@ -46,11 +46,11 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(SinkDescriptorPtr sinkD
                 }
                 case CSV_TYPE:{
                     NES_INFO("ConvertLogicalToPhysicalSink: Creating CSV File sink")
-                    if (fileSinkDescriptor->getFileOutPutMode() == FILE_APPEND) {
+                    if (fileSinkDescriptor->getFileOutputMode() == FILE_APPEND) {
                         NES_INFO("ConvertLogicalToPhysicalSink: Creating CSV File sink in append mode")
                         return createCSVFileSinkWithSchemaAppend(fileSinkDescriptor->getSchema(),
                                                                  fileSinkDescriptor->getFileName());
-                    } else if (fileSinkDescriptor->getFileOutPutMode() == FILE_OVERWRITE) {
+                    } else if (fileSinkDescriptor->getFileOutputMode() == FILE_OVERWRITE) {
                         NES_INFO("ConvertLogicalToPhysicalSink: Creating CSV File sink in Overwrite mode")
                         return createCSVFileSinkWithSchemaOverwrite(fileSinkDescriptor->getSchema(),
                                                                     fileSinkDescriptor->getFileName());

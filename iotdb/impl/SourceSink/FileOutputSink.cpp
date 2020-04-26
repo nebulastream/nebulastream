@@ -37,7 +37,7 @@ FileOutputSink::FileOutputSink(SchemaPtr schema, std::string filePath)
 }
 
 FileOutputSink::FileOutputSink(SchemaPtr schema, const std::string filePath,
-                               FileOutPutType type, FileOutPutMode mode)
+                               FileOutputType type, FileOutputMode mode)
         :
         DataSink(schema) {
     this->filePath = filePath;
