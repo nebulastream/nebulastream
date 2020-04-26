@@ -31,6 +31,12 @@ class FilterLogicalOperatorNode : public LogicalOperatorNode {
      */
     bool equal(const NodePtr rhs) const override;
     const std::string toString() const override;
+
+    /**
+    * @brief infers the input and out schema of this operator depending on its child.
+    * @throws Exception the predicate expression has to return a boolean.
+    * @return true if schema was correctly inferred
+    */
     bool inferSchema() override;
   private:
     ExpressionNodePtr predicate;
