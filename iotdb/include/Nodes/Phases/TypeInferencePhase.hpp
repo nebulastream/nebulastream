@@ -19,9 +19,30 @@ typedef std::shared_ptr<SourceDescriptor> SourceDescriptorPtr;
  */
 class TypeInferencePhase {
   public:
+    /**
+     * @brief Factory method to create a type inference phase.
+     * @return TypeInferencePhasePtr
+     */
     static TypeInferencePhasePtr create();
+
+    /**
+     * @brief Performs type inference on the given query plan.
+     * This involves the following steps.
+     * 1. Replacing a logical stream source descriptor with the correct source descriptor form the stream catalog.
+     * 2. Propagate the input and output schemas from source operators to the sink operators.
+     * 3. If a operator contains expression, we infer the result stamp of this operators.
+     * @param QueryPlanPtr the query plan
+     * @throws RuntimeException if it was not possible to infer the data types of schemas and expression
+     * @return QueryPlanPtr
+     */
     QueryPlanPtr transform(QueryPlanPtr queryPlan);
+
   private:
+    /**
+     * @brief creates the corresponding source descriptor from a given stream name.
+     * @param logicalStreamName
+     * @return SourceDescriptorPtr
+     */
     SourceDescriptorPtr createSourceDescriptor(std::string streamName);
     TypeInferencePhase();
 };
