@@ -3,6 +3,10 @@
 
 namespace NES {
 
+SinkDescriptorPtr FileSinkDescriptor::create(SchemaPtr schema, std::string fileName, FileOutPutMode fileOutputMode, FileOutPutType fileOutputType) {
+    return std::make_shared<FileSinkDescriptor>(FileSinkDescriptor(schema, fileName, fileOutputMode, fileOutputType));
+}
+
 FileSinkDescriptor::FileSinkDescriptor(SchemaPtr schema,
                                        std::string fileName,
                                        FileOutPutMode fileOutputMode,

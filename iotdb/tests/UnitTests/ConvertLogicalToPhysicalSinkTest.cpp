@@ -27,7 +27,7 @@ class ConvertLogicalToPhysicalSinkTest : public testing::Test {
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingFileLogicalToPhysicalSink) {
 
     SchemaPtr schema = Schema::create();
-    SinkDescriptorPtr sinkDescriptor = std::make_shared<FileSinkDescriptor>(schema,
+    SinkDescriptorPtr sinkDescriptor = FileSinkDescriptor::create(schema,
                                                                             "file.log",
                                                                             FileOutPutMode::FILE_OVERWRITE,
                                                                             FileOutPutType::CSV_TYPE);
@@ -38,7 +38,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingFileLogicalToPhysicalSink
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingZMQLogicalToPhysicalSink) {
 
     SchemaPtr schema = Schema::create();
-    SinkDescriptorPtr sinkDescriptor = std::make_shared<ZmqSinkDescriptor>(schema, "loclahost", 2000);
+    SinkDescriptorPtr sinkDescriptor = ZmqSinkDescriptor::create(schema, "loclahost", 2000);
     DataSinkPtr zmqSink = ConvertLogicalToPhysicalSink::createDataSink(sinkDescriptor);
     EXPECT_EQ(zmqSink->getType(), ZMQ_SINK);
 }
@@ -46,7 +46,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingZMQLogicalToPhysicalSink)
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingKafkaLogicalToPhysicalSink) {
 
     SchemaPtr schema = Schema::create();
-    SinkDescriptorPtr sinkDescriptor = std::make_shared<KafkaSinkDescriptor>(schema, "test", "localhost:9092", 1000);
+    SinkDescriptorPtr sinkDescriptor = KafkaSinkDescriptor::create(schema, "test", "localhost:9092", 1000);
     DataSinkPtr kafkaSink = ConvertLogicalToPhysicalSink::createDataSink(sinkDescriptor);
     EXPECT_EQ(kafkaSink->getType(), KAFKA_SINK);
 }
@@ -54,7 +54,7 @@ TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingKafkaLogicalToPhysicalSin
 TEST_F(ConvertLogicalToPhysicalSinkTest, testConvertingPrintLogicalToPhysicalSink) {
 
     SchemaPtr schema = Schema::create();
-    SinkDescriptorPtr sinkDescriptor = std::make_shared<PrintSinkDescriptor>(schema);
+    SinkDescriptorPtr sinkDescriptor = PrintSinkDescriptor::create(schema);
     DataSinkPtr printSink = ConvertLogicalToPhysicalSink::createDataSink(sinkDescriptor);
     EXPECT_EQ(printSink->getType(), PRINT_SINK);
 }

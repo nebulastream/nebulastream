@@ -7,5 +7,8 @@ PrintSinkDescriptor::PrintSinkDescriptor(SchemaPtr schema): SinkDescriptor(schem
 SinkDescriptorType PrintSinkDescriptor::getType() {
     return PrintSinkDescriptorType;
 }
+SinkDescriptorPtr PrintSinkDescriptor::create(SchemaPtr schema) {
+    return std::make_shared<PrintSinkDescriptor>(PrintSinkDescriptor(schema));
+}
 
 }

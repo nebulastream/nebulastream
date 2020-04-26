@@ -12,7 +12,7 @@ class ZmqSinkDescriptor : public SinkDescriptor {
 
   public:
 
-    ZmqSinkDescriptor(SchemaPtr schema, std::string host, uint16_t port);
+    static SinkDescriptorPtr create(SchemaPtr schema, std::string host, uint16_t port);
 
     SinkDescriptorType getType() override;
 
@@ -26,8 +26,7 @@ class ZmqSinkDescriptor : public SinkDescriptor {
      */
     uint16_t getPort() const;
   private:
-
-    ZmqSinkDescriptor() = default;
+    explicit ZmqSinkDescriptor(SchemaPtr schema, std::string host, uint16_t port);
 
     std::string host;
     uint16_t port;

@@ -69,7 +69,7 @@ TEST_F(QueryTest, testQueryFilter) {
     auto constant = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT64, "10"));
     auto filterPredicate = LessEqualsExpressionNode::create(fieldRead, constant);
 
-    std::shared_ptr<PrintSinkDescriptor> printSinkDescriptor = std::make_shared<PrintSinkDescriptor>(schema);
+    auto printSinkDescriptor = PrintSinkDescriptor::create(schema);
     Query query = Query::from(def).filter(filterPredicate).sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators = plan->getSourceOperators();
