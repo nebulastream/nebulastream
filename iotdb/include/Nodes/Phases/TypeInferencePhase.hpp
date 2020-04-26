@@ -13,6 +13,10 @@ typedef std::shared_ptr<TypeInferencePhase> TypeInferencePhasePtr;
 class SourceDescriptor;
 typedef std::shared_ptr<SourceDescriptor> SourceDescriptorPtr;
 
+/**
+ * @brief The type inference phase receives and query plan and infers all input and output schemata for all operators.
+ * If this is not possible it throws an runtime exception.
+ */
 class TypeInferencePhase {
   public:
     static TypeInferencePhasePtr create();

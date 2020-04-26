@@ -76,7 +76,7 @@ TEST_F(QueryTest, testQueryFilter) {
     EXPECT_EQ(sourceOperators.size(), 1);
 
     SourceLogicalOperatorNodePtr srcOptr = sourceOperators[0];
-    EXPECT_EQ(srcOptr->getSourceDescriptor()->getType(), DefaultSource);
+    EXPECT_EQ(srcOptr->getSourceDescriptor()->getType(), LogicalStreamSource);
 
     const std::vector<SinkLogicalOperatorNodePtr>& sinkOperators = plan->getSinkOperators();
     EXPECT_EQ(sinkOperators.size(), 1);
