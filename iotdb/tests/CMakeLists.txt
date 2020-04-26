@@ -197,6 +197,11 @@ add_executable(convert-logical-to-physical-source-tests "UnitTests/ConvertLogica
 target_link_libraries(convert-logical-to-physical-source-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME convert-logical-to-physical-source-tests COMMAND convert-logical-to-physical-source-tests)
 
+# Type inference test
+add_executable(type-inference-tests "UnitTests/TypeInferencePhaseTest.cpp")
+target_link_libraries(type-inference-tests iotdb ${GTEST_LIBRARIES})
+add_test(NAME type-inference-tests COMMAND type-inference-tests)
+
 #------------------------------- # Integration Test Suite --------------------------------
 ### MultiWorkerTest ###
 add_executable(multi-worker-test "Integration/MultiWorkerTest.cpp")
