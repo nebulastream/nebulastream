@@ -11,8 +11,8 @@
 BOOST_CLASS_EXPORT_IMPLEMENT(NES::WindowHandler)
 namespace NES {
 
-WindowHandler::WindowHandler(NES::WindowDefinitionPtr windowDefinitionPtr, BufferManagerPtr buffMgnr, DispatcherPtr dispatcher)
-    : windowDefinition(windowDefinitionPtr), buffMgnr(buffMgnr), dispatcher(dispatcher) {
+WindowHandler::WindowHandler(NES::WindowDefinitionPtr windowDefinitionPtr, DispatcherPtr dispatcher)
+    : windowDefinition(windowDefinitionPtr), dispatcher(dispatcher) {
     this->thread.reset();
 }
 
@@ -36,7 +36,7 @@ void WindowHandler::trigger() {
         auto windowStateVariable = static_cast<StateVariable<int64_t, WindowSliceStore<int64_t>*>*>(this->windowState);
         // create the output tuple buffer
         // TODO can we make it get the buffer only once?
-        auto tupleBuffer = buffMgnr->getBufferBlocking();
+        auto tupleBuffer = dispatcher->getBufferManager()->getBufferBlocking();
         tupleBuffer.setTupleSizeInBytes(8);
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {
@@ -47,7 +47,7 @@ void WindowHandler::trigger() {
         // if produced tuple then send the tuple buffer to the next pipeline stage or sink
         if (tupleBuffer.getNumberOfTuples() > 0) {
             NES_DEBUG("WindowHandler: Dispatch output buffer with " << tupleBuffer.getNumberOfTuples() << " records");
-            dispatcher.addWorkForNextPipeline(
+            dispatcher->addWorkForNextPipeline(
                 tupleBuffer,
                 this->queryExecutionPlan,
                 this->pipelineStageId);
@@ -95,8 +95,8 @@ WindowHandler::~WindowHandler() {
     stop();
 }
 
-const WindowHandlerPtr createWindowHandler(WindowDefinitionPtr windowDefinition, BufferManagerPtr buffMgnr, DispatcherPtr dispatcher) {
-    return std::make_shared<WindowHandler>(windowDefinition, buffMgnr, dispatcher);
+const WindowHandlerPtr createWindowHandler(WindowDefinitionPtr windowDefinition, DispatcherPtr dispatcher) {
+    return std::make_shared<WindowHandler>(windowDefinition, dispatcher);
 }
 
 } // namespace NES

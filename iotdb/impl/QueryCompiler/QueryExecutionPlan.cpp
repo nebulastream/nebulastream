@@ -62,10 +62,6 @@ bool QueryExecutionPlan::start() {
     return true;
 }
 
-BufferManagerPtr QueryExecutionPlan::getBufferManager() {
-    return buffMgnr;
-}
-
 DispatcherPtr QueryExecutionPlan::getDispatcher() {
     return dispatcher;
 }

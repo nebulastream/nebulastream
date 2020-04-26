@@ -35,9 +35,9 @@ CSVSource::CSVSource(SchemaPtr schema, const std::string &_file_path,
       "CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval << " numBuff=" << this->numBuffersToProcess)
 }
 
-std::optional<TupleBuffer> CSVSource::receiveData(BufferManagerPtr buffMgnr) {
+std::optional<TupleBuffer> CSVSource::receiveData(DispatcherPtr dispatcher) {
     NES_DEBUG("CSVSource::receiveData called")
-    auto buf = buffMgnr->getBufferBlocking();
+    auto buf = dispatcher->getBufferManager()->getBufferBlocking();
     fillBuffer(buf);
     NES_DEBUG(
         "CSVSource::receiveData filled buffer with tuples=" << buf.getNumberOfTuples())

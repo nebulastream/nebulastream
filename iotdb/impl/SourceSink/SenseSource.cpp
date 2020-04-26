@@ -29,9 +29,9 @@ SenseSource::SenseSource(SchemaPtr schema , const std::string& udsf)
 
 }
 
-std::optional<TupleBuffer> SenseSource::receiveData(BufferManagerPtr buffMgnr) {
+std::optional<TupleBuffer> SenseSource::receiveData(DispatcherPtr dispatcher) {
     NES_DEBUG("SenseSource::receiveData called")
-    auto buf = buffMgnr->getBufferBlocking();
+    auto buf = dispatcher->getBufferManager()->getBufferBlocking();
     fillBuffer(buf);
     NES_DEBUG(
         "SenseSource::receiveData filled buffer with tuples=" << buf.getNumberOfTuples())

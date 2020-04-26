@@ -21,16 +21,20 @@ Dispatcher::Dispatcher()
       processedTasks(0),
       processedTuple(0),
       processedBuffers(0) {
-    NES_DEBUG("Init Dispatcher: setup buffer manager")
-
-    NES_DEBUG("Init Dispatcher: setup thread pool")
-
+    NES_DEBUG("Init Dispatcher::Dispatcher()")
 }
 
 bool Dispatcher::startBufferManager()
 {
     NES_DEBUG("startBufferManager: setup buffer manager")
     buffMgnr = std::make_shared<BufferManager>(DEFAULT_BUFFER_SIZE, DEFAULT_NUM_BUFFERS);
+    return buffMgnr->isReady();
+}
+
+bool Dispatcher::startBufferManager(size_t bufferSize, size_t numBuffers)
+{
+    NES_DEBUG("startBufferManager: setup buffer manager")
+    buffMgnr = std::make_shared<BufferManager>(bufferSize, numBuffers);
     return buffMgnr->isReady();
 }
 
@@ -44,13 +48,13 @@ bool Dispatcher::stopBufferManager()
 bool Dispatcher::stopThreadPool()
 {
     NES_DEBUG("Dispatcher::stopThreadPool: stop")
-    return threadPool->stop(shared_from_this());
+    return threadPool->stop();
 }
 
 bool Dispatcher::startThreadPool()
 {
     NES_DEBUG("startBufferManager: setup buffer manager")
-    threadPool = std::make_shared<ThreadPool>();
+    threadPool = std::make_shared<ThreadPool>(shared_from_this());
     return threadPool->start();
 }
 
@@ -119,7 +123,7 @@ bool Dispatcher::startQuery(QueryExecutionPlanPtr qep) {
     for (const auto& source : sources) {
         NES_DEBUG("Dispatcher: start source " << source << " str=" << source->toString())
         //TODO: in the current setup we cannot distingush between a failure in starting the source and a already runing source
-        if (!source->start(buffMgnr)) {
+        if (!source->start(shared_from_this())) {
             NES_WARNING("Dispatcher: source " << source << " could not started as it is already running");
         } else{
             NES_DEBUG("Dispatcher: source " << source << " started successfully");

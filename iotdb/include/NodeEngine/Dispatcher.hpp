@@ -11,11 +11,13 @@
 
 #include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/ThreadPool.hpp>
+
 #include <NodeEngine/Task.hpp>
 #include <SourceSink/DataSource.hpp>
+#include <Windows/WindowHandler.hpp>
 
-#include <NodeEngine/ThreadPool.hpp>
-//#include <Windows/WindowHandler.hpp>
+
 
 namespace NES {
 
@@ -30,8 +32,7 @@ class TupleBuffer;
  * @Limitations:
  *    - statistics do not cover intermediate buffers
  */
-class Dispatcher {
-    friend class ThreadPool;
+class Dispatcher : public std::enable_shared_from_this<Dispatcher> {
   public:
 
     /**
@@ -128,15 +129,32 @@ class Dispatcher {
     bool isBufferManagerReady();
 
     bool startBufferManager();
+    bool startBufferManager(size_t bufferSize, size_t numBuffers);
+
     bool startThreadPool();
 
     bool stopBufferManager();
     bool stopThreadPool();
 
+    BufferManagerPtr getBufferManager()
+    {
+        return buffMgnr;
+    }
+
+    ThreadPoolPtr getThreadPool()
+    {
+        return threadPool;
+    }
+
+    ~Dispatcher();
   private:
+    friend class ThreadPool;
+    friend class NodeEngine;
+    friend class QueryExecutionPlan;
+
     Dispatcher(const Dispatcher&);
     Dispatcher& operator=(const Dispatcher&);
-    ~Dispatcher();
+
     void cleanup();
     void cleanupUnsafe();
 

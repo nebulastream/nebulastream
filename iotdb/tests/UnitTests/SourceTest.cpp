@@ -51,12 +51,12 @@ typedef const DataSourcePtr (* createCSVSourceFuncPtr)(const SchemaPtr,
 
 class SourceTest : public testing::Test {
   public:
-    BufferManagerPtr buffMgnr;
+    DispatcherPtr dispatcher;
+
     void SetUp() {
         NES::setupLogging("SourceTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup SourceTest test class.");
-        BufferManagerPtr buffMgnr = std::make_shared<BufferManager>();
-
+        dispatcher = std::make_shared<Dispatcher>();
     }
 
     static void TearDownTestCase() {
@@ -86,7 +86,7 @@ TEST_F(SourceTest, testBinarySource) {
     const DataSourcePtr source = (*funcPtr)(schema, path_to_file);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
-        auto optBuf = source->receiveData(buffMgnr);
+        auto optBuf = source->receiveData(dispatcher);
         auto buf = *optBuf;
         size_t i = 0;
         while (i*tuple_size < buffer_size) {
@@ -129,7 +129,7 @@ TEST_F(SourceTest, testCSVSource) {
                                             frequency);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
-        auto optBuf = source->receiveData(buffMgnr);
+        auto optBuf = source->receiveData(dispatcher);
         size_t i = 0;
         while (i*tuple_size < buffer_size && !!optBuf) {
             ysbRecord record(

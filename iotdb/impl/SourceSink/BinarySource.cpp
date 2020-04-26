@@ -33,8 +33,8 @@ BinarySource::BinarySource(SchemaPtr schema, const std::string& _file_path)
   tuple_size = schema->getSchemaSizeInBytes();
 }
 
-std::optional<TupleBuffer> BinarySource::receiveData(BufferManagerPtr buffMgnr) {
-    auto buf = buffMgnr->getBufferBlocking();
+std::optional<TupleBuffer> BinarySource::receiveData(DispatcherPtr dispatcher) {
+    auto buf = dispatcher->getBufferManager()->getBufferBlocking();
     fillBuffer(buf);
     return buf;
 }

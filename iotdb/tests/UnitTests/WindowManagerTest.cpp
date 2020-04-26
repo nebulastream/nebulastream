@@ -5,6 +5,8 @@
 #include <API/Window/WindowDefinition.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
+#include <NodeEngine/Dispatcher.hpp>
+
 #include <QueryLib/WindowManagerLib.hpp>
 #include <Util/Logger.hpp>
 #include <cassert>
@@ -22,13 +24,13 @@
 namespace NES {
 class WindowManagerTest : public testing::Test {
   public:
-    BufferManagerPtr buffMgnr;
+    DispatcherPtr dispatcher;
+
     void setUp()
     {
         NES::setupLogging("WindowManagerTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup WindowMangerTest test class.");
-        buffMgnr = std::make_shared<BufferManager>();
-
+        dispatcher = std::make_shared<Dispatcher>();
     }
 
     static void TearDownTestCase() { std::cout << "Tear down WindowManager test class." << std::endl; }
@@ -90,7 +92,7 @@ TEST_F(WindowManagerTest, window_trigger) {
     auto windowDef = std::make_shared<WindowDefinition>(
         WindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::EventTime, Milliseconds(10))));
 
-    auto w = WindowHandler(windowDef, buffMgnr);
+    auto w = WindowHandler(windowDef, dispatcher);
     w.setup(nullptr, 0);
 
     auto windowState = (StateVariable<int64_t, WindowSliceStore<int64_t>*>*)w.getWindowState();
@@ -114,7 +116,7 @@ TEST_F(WindowManagerTest, window_trigger) {
 
     ASSERT_EQ(aggregates[sliceIndex], 1);
 
-    auto buf = buffMgnr->getBufferBlocking();
+    auto buf = dispatcher->getBufferManager()->getBufferBlocking();
     w.aggregateWindows<int64_t, int64_t>(store, windowDef, buf);
 
     size_t tupleCnt = buf.getNumberOfTuples();
