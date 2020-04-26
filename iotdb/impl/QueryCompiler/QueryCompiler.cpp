@@ -3,7 +3,7 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
-
+#include <NodeEngine/Dispatcher.hpp>
 namespace NES {
 
 QueryCompiler::QueryCompiler() {};
@@ -14,12 +14,13 @@ QueryCompilerPtr QueryCompiler::create() {
     return std::make_shared<QueryCompiler>(new QueryCompiler());
 }
 
-QueryExecutionPlanPtr QueryCompiler::compile(OperatorPtr queryPlan) {
+QueryExecutionPlanPtr QueryCompiler::compile(OperatorPtr queryPlan, DispatcherPtr dispatcher) {
 
     auto codeGenerator = createCodeGenerator();
     auto context = createPipelineContext();
     queryPlan->produce(codeGenerator, context, std::cout);
     QueryExecutionPlanPtr qep = std::make_shared<GeneratedQueryExecutionPlan>();
+    qep->setDispatcher(dispatcher);
     compilePipelineStages(qep, codeGenerator, context);
     return qep;
 }

@@ -24,16 +24,15 @@
 namespace NES {
 class WindowManagerTest : public testing::Test {
   public:
-    DispatcherPtr dispatcher;
-
-    void setUp()
+    void SetUp()
     {
         NES::setupLogging("WindowManagerTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup WindowMangerTest test class.");
-        dispatcher = std::make_shared<Dispatcher>();
     }
 
-    static void TearDownTestCase() { std::cout << "Tear down WindowManager test class." << std::endl; }
+    void TearDown() {
+        std::cout << "Tear down WindowManager test class." << std::endl;
+    }
 
     const size_t buffers_managed = 10;
     const size_t buffer_size = 4 * 1024;
@@ -85,6 +84,9 @@ TEST_F(WindowManagerTest, check_slice)
 
 TEST_F(WindowManagerTest, window_trigger) {
 
+    DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
+    dispatcher->startBufferManager();
+
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
     auto aggregation = Sum::on(schema->get("id"));
@@ -111,7 +113,7 @@ TEST_F(WindowManagerTest, window_trigger) {
     sliceIndex = store->getSliceIndexByTs(ts);
     aggregates = store->getPartialAggregates();
     aggregates[sliceIndex]++;
-    // std::cout << aggregates[sliceIndex] << std::endl;
+    std::cout << aggregates[sliceIndex] << std::endl;
     // ASSERT_EQ(buffers_count, buffers_managed);
 
     ASSERT_EQ(aggregates[sliceIndex], 1);

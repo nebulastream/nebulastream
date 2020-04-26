@@ -3,6 +3,8 @@
 #include <memory>
 #include <vector>
 namespace NES {
+class Dispatcher;
+typedef std::shared_ptr<Dispatcher> DispatcherPtr;
 
 class QueryExecutionPlan;
 typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
@@ -41,7 +43,7 @@ class QueryCompiler {
    * @param queryPlan
    * @return
    */
-  QueryExecutionPlanPtr compile(OperatorPtr queryPlan);
+  QueryExecutionPlanPtr compile(OperatorPtr queryPlan, DispatcherPtr dispatcher);
 
  private:
   void compilePipelineStages(QueryExecutionPlanPtr queryExecutionPlan, CodeGeneratorPtr codeGenerator, PipelineContextPtr context);

@@ -87,6 +87,7 @@ class QueryExecutionPlan {
     }
 
     DispatcherPtr getDispatcher();
+    void setDispatcher(DispatcherPtr dispatcher);
 
     void print();
 
