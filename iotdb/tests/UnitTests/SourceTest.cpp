@@ -51,12 +51,9 @@ typedef const DataSourcePtr (* createCSVSourceFuncPtr)(const SchemaPtr,
 
 class SourceTest : public testing::Test {
   public:
-    DispatcherPtr dispatcher;
-
     void SetUp() {
         NES::setupLogging("SourceTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup SourceTest test class.");
-        dispatcher = std::make_shared<Dispatcher>();
     }
 
     static void TearDownTestCase() {
@@ -68,6 +65,9 @@ class SourceTest : public testing::Test {
 };
 
 TEST_F(SourceTest, testBinarySource) {
+    DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
+    dispatcher->startBufferManager();
+
     std::string path_to_file =
         "../tests/test_data/ysb-tuples-100-campaign-100.bin";
     createFileSourceFuncPtr funcPtr = &createBinaryFileSource;
@@ -77,26 +77,27 @@ TEST_F(SourceTest, testBinarySource) {
                 "campaign_id", 16)->addField("ad_type", 9)->addField("event_type", 9)
             ->addField("current_ms", UINT64)->addField("ip", INT32);
 
-    uint64_t num_tuples_to_process = 1000;
-    size_t num_of_buffers = 1000;
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
-    uint64_t buffer_size = num_tuples_to_process*tuple_size/num_of_buffers;
+    uint64_t buffer_size = dispatcher->getBufferManager()->getBufferSize();
+    size_t num_of_buffers = 1;
+    uint64_t num_tuples_to_process = num_of_buffers * (buffer_size/tuple_size);
+
     assert(buffer_size > 0);
 
     const DataSourcePtr source = (*funcPtr)(schema, path_to_file);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData(dispatcher);
-        auto buf = *optBuf;
         size_t i = 0;
-        while (i*tuple_size < buffer_size) {
-            auto record = buf.getBufferAs<ysbRecord>() + i;
-            // std::cout << "record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type << std::endl;
-            EXPECT_STREQ(record->ad_type, "banner78");
+        while (i*tuple_size < buffer_size - tuple_size && !!optBuf ) {
+            ysbRecord record(
+                *((ysbRecord*) (optBuf->getBufferAs<char>() + i*tuple_size)));
+            std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type << std::endl;
+            EXPECT_STREQ(record.ad_type, "banner78");
             EXPECT_TRUE(
-                (!strcmp(record->event_type, "view")
-                    || !strcmp(record->event_type, "click")
-                    || !strcmp(record->event_type, "purchase")));
+                (!strcmp(record.event_type, "view")
+                    || !strcmp(record.event_type, "click")
+                    || !strcmp(record.event_type, "purchase")));
             i++;
         }
     }
@@ -107,6 +108,9 @@ TEST_F(SourceTest, testBinarySource) {
 }
 
 TEST_F(SourceTest, testCSVSource) {
+    DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
+    dispatcher->startBufferManager();
+
     std::string path_to_file =
         "../tests/test_data/ysb-tuples-100-campaign-100.csv";
     createCSVSourceFuncPtr funcPtr = &createCSVFileSource;
@@ -119,10 +123,13 @@ TEST_F(SourceTest, testCSVSource) {
                 "campaign_id", 16)->addField("ad_type", 9)->addField("event_type", 9)
             ->addField("current_ms", UINT64)->addField("ip", INT32);
 
-    uint64_t num_tuples_to_process = 1000;
-    size_t num_of_buffers = 1000;
+
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
-    uint64_t buffer_size = num_tuples_to_process*tuple_size/num_of_buffers;
+    uint64_t buffer_size = dispatcher->getBufferManager()->getBufferSize();
+    size_t num_of_buffers = 10;
+    uint64_t num_tuples_to_process = num_of_buffers * (buffer_size/tuple_size);
+
+    //    uint64_t buffer_size = num_tuples_to_process*tuple_size / num_of_buffers;
     assert(buffer_size > 0);
 
     const DataSourcePtr source = (*funcPtr)(schema, path_to_file, del, num,
@@ -131,10 +138,10 @@ TEST_F(SourceTest, testCSVSource) {
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData(dispatcher);
         size_t i = 0;
-        while (i*tuple_size < buffer_size && !!optBuf) {
+        while (i*tuple_size < buffer_size - tuple_size && !!optBuf) {
             ysbRecord record(
                 *((ysbRecord*) (optBuf->getBufferAs<char>() + i*tuple_size)));
-            // std::cout << "record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type << std::endl;
+            std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type << std::endl;
             EXPECT_STREQ(record.ad_type, "banner78");
             EXPECT_TRUE(
                 (!strcmp(record.event_type, "view")
@@ -150,7 +157,6 @@ TEST_F(SourceTest, testCSVSource) {
 }
 
 TEST_F(SourceTest, testSenseSource) {
-
     std::string testUDFS("...");
     createSenseSourceFuncPtr funcPtr = &createSenseSource;
 

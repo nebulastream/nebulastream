@@ -24,7 +24,7 @@ class ActorsCliTest : public testing::Test {
         NES_INFO("Setup ActorCoordinatorWorkerTest test class.");
     }
 
-    static void TearDownTestCase() {
+    void TearDown() {
         std::cout << "Tear down ActorsCli test class." << std::endl;
     }
 

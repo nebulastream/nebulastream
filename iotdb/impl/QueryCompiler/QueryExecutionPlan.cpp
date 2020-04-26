@@ -66,6 +66,10 @@ DispatcherPtr QueryExecutionPlan::getDispatcher() {
     return dispatcher;
 }
 
+void QueryExecutionPlan::setDispatcher(DispatcherPtr dispatcher) {
+    this->dispatcher = dispatcher;
+}
+
 void QueryExecutionPlan::addDataSource(DataSourcePtr source) {
     sources.push_back(source);
 }
