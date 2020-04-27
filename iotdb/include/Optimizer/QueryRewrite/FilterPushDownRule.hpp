@@ -5,6 +5,9 @@
 
 namespace NES {
 
+class Node;
+typedef std::shared_ptr<Node> NodePtr;
+
 class FilterLogicalOperatorNode;
 typedef std::shared_ptr<FilterLogicalOperatorNode> FilterLogicalOperatorNodePtr;
 
@@ -29,7 +32,22 @@ class FilterPushDownRule : public BaseRewriteRule {
      * @brief //FIXME: Define once impl done
      * @param filterOperator
      */
-    void swapAndPushFilter(FilterLogicalOperatorNodePtr filterOperator);
+    void pushDownFilter(FilterLogicalOperatorNodePtr filterOperator);
+
+    /**
+     * @brief Get the name of the field manipulated by the Map operator
+     * @param Operator pointer
+     * @return name of the field
+     */
+    std::string getFieldNameUsedByMapOperator(NodePtr node) const;
+
+    /**
+     * @brief Validate if the input field is used in the filter predicate of the operator
+     * @param filterOperator : filter operator whose predicate need to be checked
+     * @param fieldName :  name of the field to be checked
+     * @return true if field use in the filter predicate else false
+     */
+    bool isFieldUsedInFilterPredicate(FilterLogicalOperatorNodePtr filterOperator, const std::string fieldName) const;
 };
 
 }

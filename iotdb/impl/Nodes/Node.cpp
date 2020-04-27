@@ -24,7 +24,6 @@ bool Node::addChildWithEqual(const NodePtr newNode) {
     return true;
 }
 
-
 bool Node::addChild(const NodePtr newNode) {
     if (newNode.get() == this) {
         NES_DEBUG("Node: Added node to its self, ignore this operation.");
@@ -67,13 +66,13 @@ bool Node::removeChild(const NodePtr node) {
 
 bool Node::addParent(const NodePtr newNode) {
     if (newNode.get() == this) {
-        NES_DEBUG("Node: Added node to its self, so ignore this operation.");
+        NES_WARNING("Node: Added node to its self, so ignore this operation.");
         return false;
     }
 
     // checks if current new node is not part of parents
     if (contains(parents, newNode)) {
-        NES_DEBUG("Node: the node is already part of its parents so ignore it.");
+        NES_WARNING("Node: the node is already part of its parents so ignore it.");
         return false;
     }
     // add the node to the parents
@@ -82,6 +81,63 @@ bool Node::addParent(const NodePtr newNode) {
         newNode->children.push_back(shared_from_this());
     }
     return true;
+}
+
+bool Node::insertNodeBetweenParentAndThisNode(const NodePtr newNode) {
+    if (newNode.get() == this) {
+        NES_WARNING("Node: Added node to its self, so ignore this operation.");
+        return false;
+    }
+
+    if (contains(parents, newNode)) {
+        NES_WARNING("Node: the node is already part of its parents so ignore it.");
+        return false;
+    }
+
+    newNode->removeChildren();
+    newNode->removeAllParents();
+
+    std::vector<NodePtr> copyOfParents = parents;
+
+    removeAllParents();
+    addParent(newNode);
+
+    for (NodePtr parent : copyOfParents) {
+        newNode->addParent(parent);
+    }
+
+    return true;
+}
+
+void Node::removeAllParents() {
+    NES_INFO("Node: Removing all parents for current node")
+    for (auto nodeItr = parents.begin(); nodeItr != parents.end(); ++nodeItr) {
+        for (auto it = (*nodeItr)->children.begin(); it != (*nodeItr)->children.end(); it++) {
+            if ((*it).get() == this) {
+                (*nodeItr)->children.erase(it);
+                NES_INFO("Node: Removed this node as child of the parent")
+                break;
+            }
+        }
+        parents.erase(nodeItr);
+        NES_INFO("Node: Removed node as parent of this node")
+    }
+}
+
+void Node::removeChildren() {
+    NES_INFO("Node: Removing all children for current node")
+    for (auto nodeItr = children.begin(); nodeItr != children.end(); ++nodeItr) {
+        for (auto it = (*nodeItr)->parents.begin(); it != (*nodeItr)->parents.end(); it++) {
+            if ((*it).get() == this) {
+                (*nodeItr)->parents.erase(it);
+                NES_INFO("Node: Removed this node as parent of the child node")
+                break;
+            }
+        }
+        // remove nodeItr from children
+        children.erase(nodeItr);
+        NES_INFO("Node: Removed node as child of this node")
+    }
 }
 
 bool Node::removeParent(const NodePtr node) {
@@ -104,7 +160,7 @@ bool Node::removeParent(const NodePtr node) {
 
 bool Node::replace(NodePtr newNode, NodePtr oldNode) {
     if (oldNode->isIdentical(newNode)) {
-        NES_DEBUG("Node: the new node was the same so ignored the operation.");
+        NES_WARNING("Node: the new node was the same so ignored the operation.");
         return true;
     }
 

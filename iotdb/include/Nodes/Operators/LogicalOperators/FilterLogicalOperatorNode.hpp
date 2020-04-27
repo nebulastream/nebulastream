@@ -10,6 +10,9 @@ namespace NES {
 class ExpressionNode;
 typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
 
+class FilterLogicalOperatorNode;
+typedef std::shared_ptr<FilterLogicalOperatorNode> FilterLogicalOperatorNodePtr;
+
 /**
  * @brief Filter operator, which contains an expression as a predicate.
  */
@@ -38,11 +41,17 @@ class FilterLogicalOperatorNode : public LogicalOperatorNode {
     * @return true if schema was correctly inferred
     */
     bool inferSchema() override;
+
+    /**
+     * @brief Create copy of this operator
+     * @return copy of the filter operator
+     */
+    FilterLogicalOperatorNodePtr copy();
+
   private:
     ExpressionNodePtr predicate;
 
 };
-typedef std::shared_ptr<FilterLogicalOperatorNode> FilterLogicalOperatorNodePtr;
 
 }      // namespace NES
 #endif // FILTER_LOGICAL_OPERATOR_NODE_HPP

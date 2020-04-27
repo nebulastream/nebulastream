@@ -27,6 +27,23 @@ const std::string FilterLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
+FilterLogicalOperatorNodePtr FilterLogicalOperatorNode::copy() {
+
+    const FilterLogicalOperatorNodePtr copiedOptr = std::make_shared<FilterLogicalOperatorNode>(this->getPredicate());
+    copiedOptr->setId(this->getId());
+    
+    std::vector<NodePtr> parents = this->getParents();
+    for(auto parent : parents){
+        copiedOptr->addParent(parent);
+    }
+
+    std::vector<NodePtr> children = this->getChildren();
+    for (auto child: children) {
+        copiedOptr->addChild(child);
+    }
+    return copiedOptr;
+}
+
 LogicalOperatorNodePtr createFilterLogicalOperatorNode(const ExpressionNodePtr predicate) {
     return std::make_shared<FilterLogicalOperatorNode>(predicate);
 }

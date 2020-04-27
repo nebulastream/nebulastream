@@ -9,12 +9,13 @@
 
 namespace NES {
 
+class LogicalOperatorNode;
+typedef std::shared_ptr<LogicalOperatorNode> LogicalOperatorNodePtr;
+
 class LogicalOperatorNode : public OperatorNode {
   public:
     LogicalOperatorNode();
 };
-
-typedef std::shared_ptr<LogicalOperatorNode> LogicalOperatorNodePtr;
 
 class FieldAssignmentExpressionNode;
 typedef std::shared_ptr<FieldAssignmentExpressionNode> FieldAssignmentExpressionNodePtr;

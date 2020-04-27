@@ -9,7 +9,6 @@
 #include <Catalogs/StreamCatalog.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 #include <Nodes/Expressions/ConstantValueExpressionNode.hpp>
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Nodes/Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
@@ -65,12 +64,10 @@ TEST_F(QueryTest, testQueryFilter) {
 
     Stream def = Stream("default_logical", schema);
 
-    auto fieldRead = FieldAccessExpressionNode::create(createDataType(INT64), "field_1");
-    auto constant = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT64, "10"));
-    auto filterPredicate = LessEqualsExpressionNode::create(fieldRead, constant);
+    auto lessExpression = Attribute("field_1") <= 10;
 
     auto printSinkDescriptor = PrintSinkDescriptor::create(schema);
-    Query query = Query::from(def).filter(filterPredicate).sink(printSinkDescriptor);
+    Query query = Query::from(def).filter(lessExpression).sink(printSinkDescriptor);
     auto plan = query.getQueryPlan();
     const std::vector<SourceLogicalOperatorNodePtr>& sourceOperators = plan->getSourceOperators();
     EXPECT_EQ(sourceOperators.size(), 1);

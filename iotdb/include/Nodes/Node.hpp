@@ -53,6 +53,16 @@ class Node : public std::enable_shared_from_this<Node> {
     bool removeParent(const NodePtr node);
 
     /**
+     * @brief Remove all parents
+     */
+    void removeAllParents();
+
+    /**
+     * @brief Remove all children
+     */
+    void removeChildren();
+
+    /**
      * @brief replace an old node with new now
      * 1) old node is the child of current node, remove old node
      *    from current nodes's children and add new node to current noed's
@@ -203,6 +213,13 @@ class Node : public std::enable_shared_from_this<Node> {
      * @return vector of parents.
      */
     const std::vector<NodePtr>& getParents() const;
+
+    /**
+     * @brief Add input node as parent to the current node and move the parents of current node as parent to the input node.
+     * If the node is already exists as parent then skip the operation
+     * @return true if operation succeeded else false
+     */
+    bool insertNodeBetweenParentAndThisNode(const NodePtr newNode);
 
     virtual const std::string toString() const = 0;
 
