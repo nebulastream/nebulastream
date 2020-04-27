@@ -31,9 +31,9 @@ FilterLogicalOperatorNodePtr FilterLogicalOperatorNode::copy() {
 
     const FilterLogicalOperatorNodePtr copiedOptr = std::make_shared<FilterLogicalOperatorNode>(this->getPredicate());
     copiedOptr->setId(this->getId());
-    
+
     std::vector<NodePtr> parents = this->getParents();
-    for(auto parent : parents){
+    for (auto parent : parents) {
         copiedOptr->addParent(parent);
     }
 

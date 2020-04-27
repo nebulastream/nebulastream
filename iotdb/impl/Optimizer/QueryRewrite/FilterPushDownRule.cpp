@@ -10,6 +10,7 @@
 #include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Nodes/Node.hpp>
 #include <queue>
+#include <bits/stdc++.h>
 
 namespace NES {
 
@@ -17,17 +18,13 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlanPtr) {
 
     NES_INFO("FilterPushDownRule: Get all filter nodes in the graph")
     const auto rootOperator = queryPlanPtr->getRootOperator();
-    const auto filterOperators = rootOperator->getNodesByType<FilterLogicalOperatorNode>();
+    std::vector<FilterLogicalOperatorNodePtr> filterOperators = rootOperator->getNodesByType<FilterLogicalOperatorNode>();
 
-    //    struct less_than_key
-    //    {
-    //        inline bool operator() (const FilterLogicalOperatorNodePtr struct1, const FilterLogicalOperatorNode struct2)
-    //        {
-    //            return (struct1->getId() <= struct2.getId());
-    //        }
-    //    };
     NES_INFO("FilterPushDownRule: Sort all filter nodes in increasing order of the operator id")
-    //    std::sort(filterOperators.begin(), filterOperators.end(), less_than_key());
+
+    std::sort(filterOperators.begin(), filterOperators.end(), [](FilterLogicalOperatorNodePtr lhs, FilterLogicalOperatorNodePtr rhs){
+        return lhs->getId() < rhs->getId();
+    });
 
     for (auto filterOperator: filterOperators) {
         pushDownFilter(filterOperator);
