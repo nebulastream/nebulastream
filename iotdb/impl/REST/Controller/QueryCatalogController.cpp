@@ -1,4 +1,5 @@
 #include "REST/Controller/QueryCatalogController.hpp"
+#include <REST/runtime_utils.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
@@ -24,13 +25,15 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
 
                         successMessageImpl(message, result);
                         return;
-                    } catch (...) {
-                        NES_DEBUG("Exception occurred while building the query plan for user request.");
+                    } catch (const std::exception &exc) {
+                        NES_ERROR("QueryCatalogController: handleGet -queries: Exception occurred while building the query plan for user request:" << exc.what());
                         internalServerErrorImpl(message);
                         return;
+                    } catch (...) {
+                        RuntimeUtils::printStackTrace();
+                        internalServerErrorImpl(message);
                     }
-                  }
-            )
+                  })
             .wait();
 
     } else if (path[1] == "allRegisteredQueries") {
@@ -48,13 +51,15 @@ void QueryCatalogController::handleGet(std::vector<utility::string_t> path, web:
 
                         successMessageImpl(message, result);
                         return;
-                    } catch (...) {
-                        NES_DEBUG("Exception occurred while building the query plan for user request.");
+                    } catch (const std::exception &exc) {
+                        NES_ERROR("QueryCatalogController: handleGet -allRegisteredQueries: Exception occurred while building the query plan for user request:" << exc.what());
                         internalServerErrorImpl(message);
                         return;
+                    } catch (...) {
+                        RuntimeUtils::printStackTrace();
+                        internalServerErrorImpl(message);
                     }
-                  }
-            )
+                  })
             .wait();
     }
 
@@ -89,13 +94,15 @@ void QueryCatalogController::handleDelete(std::vector<utility::string_t> path, w
 
                         successMessageImpl(message, result);
                         return;
-                    } catch (...) {
-                        NES_DEBUG("Exception occurred while building the query plan for user request.");
+                    } catch (const std::exception &exc) {
+                        NES_ERROR("QueryCatalogController: handleDelete -query: Exception occurred while building the query plan for user request:" << exc.what());
                         internalServerErrorImpl(message);
                         return;
+                    } catch (...) {
+                        RuntimeUtils::printStackTrace();
+                        internalServerErrorImpl(message);
                     }
-                  }
-            )
+                  })
             .wait();
 
     }
