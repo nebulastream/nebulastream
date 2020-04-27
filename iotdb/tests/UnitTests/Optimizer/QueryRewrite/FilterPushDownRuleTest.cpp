@@ -1,9 +1,13 @@
 #include <gtest/gtest.h>
 #include <Util/Logger.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
 #include <API/Query.hpp>
 #include <Topology/NESTopologyManager.hpp>
+#include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Nodes/Operators/OperatorNode.hpp>
+#include <Nodes/Operators/QueryPlan.hpp>
+#include <Nodes/Node.hpp>
+#include <Nodes/Util/ConsoleDumpHandler.hpp>
 
 using namespace NES;
 
@@ -57,7 +61,18 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterBelowWindow) {
 
     Stream def = Stream("default_logical", schema);
     PrintSinkDescriptorPtr printSinkDescriptor = std::make_shared<PrintSinkDescriptor>(schema);
-    Query::from(def).sink(printSinkDescriptor);
+    Query query = Query::from(def).map(Attribute("value") = 40).filter(Attribute("id") < 45).sink(printSinkDescriptor);
+
+    const QueryPlanPtr queryPlan = query.getQueryPlan();
+
+    ConsoleDumpHandler::create()->dump(queryPlan->getRootOperator(), std::cout);
+
+    FilterPushDownRule filterPushDownRule;
+
+    const QueryPlanPtr updatedPlan = filterPushDownRule.apply(queryPlan);
+
+    ConsoleDumpHandler::create()->dump(updatedPlan->getRootOperator(), std::cout);
+
 
 }
 

@@ -33,7 +33,7 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlanPtr) {
         pushDownFilter(filterOperator);
     }
 
-    return QueryPlanPtr();
+    return queryPlanPtr;
 }
 
 RewriteRuleType FilterPushDownRule::getType() {
@@ -42,22 +42,33 @@ RewriteRuleType FilterPushDownRule::getType() {
 
 void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOperator) {
 
-    //Copy list of children into queue for further processing
-    std::vector<NodePtr> children = filterOperator->getChildren();
-    std::deque<NodePtr> nodesToProcess(children.begin(), children.end());
+    NES_INFO("FilterPushDownRule: Get children of current filter")
+    std::vector<NodePtr> childrenOfFilter = filterOperator->getChildren();
+    NES_INFO("FilterPushDownRule: Copy children to the queue for further processing")
+    std::deque<NodePtr> nodesToProcess(childrenOfFilter.begin(), childrenOfFilter.end());
 
     while (!nodesToProcess.empty()) {
 
-        // Remove the first node
+        NES_INFO("FilterPushDownRule: Get first operator for processing")
         NodePtr node = nodesToProcess.front();
         nodesToProcess.pop_front();
 
         if (node->instanceOf<SourceLogicalOperatorNode>() || node->instanceOf<WindowLogicalOperatorNode>()
             || node->instanceOf<FilterLogicalOperatorNode>()) {
 
+            NES_INFO("FilterPushDownRule: Filter can't be pushed below the current operator because current operator "
+                     "is one of the following type: Source, Window, or Filter")
+
             if (node != filterOperator) {
+
+                NES_INFO("FilterPushDownRule: Adding Filter operator between current operator and its parents")
                 FilterLogicalOperatorNodePtr copyOptr = filterOperator->copy();
-                node->insertNodeBetweenParentAndThisNode(copyOptr);
+                if (!(copyOptr->removeAndJoinParentAndChildren()
+                    && node->insertNodeBetweenThisNodeAndItsParent(copyOptr))) {
+
+                    NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule")
+                    throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");
+                }
                 continue;
             }
         } else if (node->instanceOf<MapLogicalOperatorNode>()) {
@@ -67,7 +78,12 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
 
             if (predicateFieldManipulated) {
                 FilterLogicalOperatorNodePtr copyOptr = filterOperator->copy();
-                node->insertNodeBetweenParentAndThisNode(copyOptr);
+                if (!(copyOptr->removeAndJoinParentAndChildren()
+                    && node->insertNodeBetweenThisNodeAndItsParent(copyOptr))) {
+
+                    NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule")
+                    throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");
+                }
                 continue;
             } else {
                 std::vector<NodePtr> children = node->getChildren();
@@ -76,6 +92,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
         }
     }
 
+    NES_INFO("FilterPushDownRule: Remove all parents can children of the filter operator")
     filterOperator->removeAllParents();
     filterOperator->removeChildren();
 }

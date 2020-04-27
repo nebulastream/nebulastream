@@ -92,11 +92,17 @@ class Node : public std::enable_shared_from_this<Node> {
     bool remove(const NodePtr node);
 
     /**
-     * @brief remove the given node and add its children as to the children of the current node
+     * @brief remove the given node and add its children to the children of the current node
      * @param node
      * @return bool true if successful
      */
     bool removeAndLevelUpChildren(const NodePtr node);
+
+    /**
+     * @brief Remove this node and join the parent and children
+     * @return bool true if successful
+     */
+    bool removeAndJoinParentAndChildren();
 
     /**
      * @brief clear all parents and children
@@ -219,7 +225,7 @@ class Node : public std::enable_shared_from_this<Node> {
      * If the node is already exists as parent then skip the operation
      * @return true if operation succeeded else false
      */
-    bool insertNodeBetweenParentAndThisNode(const NodePtr newNode);
+    bool insertNodeBetweenThisNodeAndItsParent(const NodePtr newNode);
 
     virtual const std::string toString() const = 0;
 

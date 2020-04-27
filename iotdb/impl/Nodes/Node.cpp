@@ -83,7 +83,8 @@ bool Node::addParent(const NodePtr newNode) {
     return true;
 }
 
-bool Node::insertNodeBetweenParentAndThisNode(const NodePtr newNode) {
+bool Node::insertNodeBetweenThisNodeAndItsParent(const NodePtr newNode) {
+
     if (newNode.get() == this) {
         NES_WARNING("Node: Added node to its self, so ignore this operation.");
         return false;
@@ -111,7 +112,8 @@ bool Node::insertNodeBetweenParentAndThisNode(const NodePtr newNode) {
 
 void Node::removeAllParents() {
     NES_INFO("Node: Removing all parents for current node")
-    for (auto nodeItr = parents.begin(); nodeItr != parents.end(); ++nodeItr) {
+    while (!parents.empty()) {
+        auto nodeItr = parents.begin();
         for (auto it = (*nodeItr)->children.begin(); it != (*nodeItr)->children.end(); it++) {
             if ((*it).get() == this) {
                 (*nodeItr)->children.erase(it);
@@ -121,12 +123,14 @@ void Node::removeAllParents() {
         }
         parents.erase(nodeItr);
         NES_INFO("Node: Removed node as parent of this node")
+        nodeItr++;
     }
 }
 
 void Node::removeChildren() {
     NES_INFO("Node: Removing all children for current node")
-    for (auto nodeItr = children.begin(); nodeItr != children.end(); ++nodeItr) {
+    while (!children.empty()) {
+        auto nodeItr = children.begin();
         for (auto it = (*nodeItr)->parents.begin(); it != (*nodeItr)->parents.end(); it++) {
             if ((*it).get() == this) {
                 (*nodeItr)->parents.erase(it);
@@ -134,9 +138,10 @@ void Node::removeChildren() {
                 break;
             }
         }
-        // remove nodeItr from children
+
         children.erase(nodeItr);
         NES_INFO("Node: Removed node as child of this node")
+        nodeItr++;
     }
 }
 
@@ -242,8 +247,7 @@ bool Node::removeAndLevelUpChildren(const NodePtr node) {
         }
     }
 
-    bool success = false;
-    success = removeChild(node);
+    bool success = removeChild(node);
     if (success) {
         for (auto&& n : node->children) {
             children.push_back(n);
@@ -251,6 +255,31 @@ bool Node::removeAndLevelUpChildren(const NodePtr node) {
         return true;
     }
     return false;
+}
+
+bool Node::removeAndJoinParentAndChildren() {
+
+    try {
+
+        NES_DEBUG("Node: Joining parents with children")
+
+        for (auto parent: parents) {
+            for (auto child: children) {
+
+                NES_DEBUG("Node: Add child of this node as child of this node's parent")
+                parent->addChild(child);
+
+                NES_DEBUG("Node: remove this node as parent of the child")
+                child->removeParent(shared_from_this());
+            }
+            parent->removeChild(shared_from_this());
+            NES_DEBUG("Node: remove this node as child of this node's parents")
+        }
+        return true;
+    } catch (...) {
+        NES_ERROR("Node: Error ocurred while joining this node's children and parents")
+        return false;
+    }
 }
 
 void Node::clear() {
