@@ -8,6 +8,9 @@ namespace NES {
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
 
+class OperatorNode;
+typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
+
 class OperatorNode : public Node {
   public:
     OperatorNode();
@@ -59,8 +62,6 @@ class OperatorNode : public Node {
     SchemaPtr inputSchema;
     SchemaPtr outputSchema;
 };
-
-typedef std::shared_ptr<OperatorNode> OperatorNodePtr;
 
 }
 

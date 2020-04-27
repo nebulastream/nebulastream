@@ -36,6 +36,9 @@ class MapLogicalOperatorNode : public LogicalOperatorNode {
   private:
     FieldAssignmentExpressionNodePtr mapExpression;
 };
+
+typedef std::shared_ptr<MapLogicalOperatorNode> MapLogicalOperatorNodePtr;
+
 }
 
 #endif  // MAP_LOGICAL_OPERATOR_NODE_HPP
