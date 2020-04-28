@@ -6,7 +6,10 @@ namespace NES {
 NegateExpressionNode::NegateExpressionNode() : LogicalUnaryExpressionNode() {}
 
 bool NegateExpressionNode::equal(const NodePtr rhs) const {
-    return true;
+    if (this->isIdentical(rhs)) {
+        return true;
+    }
+    return rhs->instanceOf<NegateExpressionNode>();
 }
 
 const std::string NegateExpressionNode::toString() const {

@@ -11,9 +11,11 @@ ExpressionNodePtr FilterLogicalOperatorNode::getPredicate() {
 }
 
 bool FilterLogicalOperatorNode::equal(const NodePtr rhs) const {
+
     if (this->isIdentical(rhs)) {
         return true;
     }
+
     if (rhs->instanceOf<FilterLogicalOperatorNode>()) {
         auto filterOperator = rhs->as<FilterLogicalOperatorNode>();
         return predicate->equal(filterOperator->predicate);
