@@ -15,6 +15,8 @@ class KafkaSource : public DataSource {
   public:
 
     KafkaSource(SchemaPtr schema,
+                BufferManagerPtr bufferManager,
+                DispatcherPtr dispatcher,
                 std::string brokers,
                 std::string topic,
                 std::string groupId,
@@ -23,7 +25,7 @@ class KafkaSource : public DataSource {
 
     SourceType getType() const override;
     ~KafkaSource() override;
-    std::optional<TupleBuffer> receiveData(DispatcherPtr dispatcher) override;
+    std::optional<TupleBuffer> receiveData() override;
 
     /**
      * @brief override the toString method for the kafka source

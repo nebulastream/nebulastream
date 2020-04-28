@@ -215,7 +215,8 @@ TEST_F(CoordinatorServiceTest, test_run_deregister_query) {
 TEST_F(CoordinatorServiceTest, test_compile_deployment) {
 
     DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
-    dispatcher->startBufferManager();
+    dispatcher->startThreadPool();
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
     string queryId = coordinatorServicePtr->registerQuery(queryString,
                                                           "BottomUp");
@@ -249,7 +250,7 @@ TEST_F(CoordinatorServiceTest, test_code_gen) {
     auto queryCompiler = createDefaultQueryCompiler(engine->getDispatcher());
     QueryExecutionPlanPtr qep = queryCompiler->compile(query.getRoot());
     // Create new Source and Sink
-    DataSourcePtr source = createDefaultDataSourceWithSchemaForOneBuffer(schema);
+    DataSourcePtr source = createDefaultDataSourceWithSchemaForOneBuffer(schema, engine->getBufferManager(), engine->getDispatcher());
     source->setNumBuffersToProcess(10);
     qep->addDataSource(source);
 

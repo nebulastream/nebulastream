@@ -20,13 +20,13 @@ class SenseSource : public DataSource {
    * @param schema of the source
    * @param udfs to apply
    */
-  SenseSource(SchemaPtr schema, const std::string& udfs);
+  SenseSource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher, const std::string& udfs);
 
   /**
    * @brief override the receiveData method for the source
    * @return returns a buffer if available
    */
-  std::optional<TupleBuffer> receiveData(DispatcherPtr dispatcher) override;
+  std::optional<TupleBuffer> receiveData() override;
 
   /**
    *  @brief method to fill the buffer with tuples

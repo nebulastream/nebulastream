@@ -15,55 +15,48 @@
 namespace NES {
 
 const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(
-    SchemaPtr schema) {
-    return std::make_shared<DefaultSource>(schema, /*bufferCnt*/ 1, /*frequency*/ 1);
+    SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher) {
+    return std::make_shared<DefaultSource>(schema, bufferManager, dispatcher, /*bufferCnt*/ 1, /*frequency*/ 1);
 }
 
 const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(
-    SchemaPtr schema, size_t numbersOfBufferToProduce, size_t frequency) {
-    return std::make_shared<DefaultSource>(schema, numbersOfBufferToProduce, frequency);
+    SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher, size_t numbersOfBufferToProduce, size_t frequency) {
+    return std::make_shared<DefaultSource>(schema, bufferManager, dispatcher, numbersOfBufferToProduce, frequency);
 }
 
-const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer() {
+const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(BufferManagerPtr bufferManager, DispatcherPtr dispatcher) {
     return std::make_shared<DefaultSource>(
-        Schema::create()->addField(createField("id", UINT64)), /**bufferCnt*/ 1, /*frequency*/ 1);
+        Schema::create()->addField(createField("id", UINT64)), bufferManager, dispatcher, /**bufferCnt*/ 1, /*frequency*/ 1);
 }
 
-const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForVarBuffers(
-    size_t numbersOfBufferToProduce, double frequency) {
-    return std::make_shared<DefaultSource>(
-        Schema::create()->addField(createField("id", UINT64)),
-        numbersOfBufferToProduce, frequency);
-}
-
-const DataSourcePtr createZmqSource(SchemaPtr schema,
+const DataSourcePtr createZmqSource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher,
                                     const std::string& host,
                                     const uint16_t port) {
-    return std::make_shared<ZmqSource>(schema, host, port);
+    return std::make_shared<ZmqSource>(schema, bufferManager, dispatcher, host, port);
 }
 
-const DataSourcePtr createBinaryFileSource(SchemaPtr schema,
+const DataSourcePtr createBinaryFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher,
                                            const std::string& pathToFile) {
-    return std::make_shared<BinarySource>(schema, pathToFile);
+    return std::make_shared<BinarySource>(schema, bufferManager, dispatcher, pathToFile);
 }
 
-const DataSourcePtr createSenseSource(SchemaPtr schema,
+const DataSourcePtr createSenseSource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher,
                                       const std::string& udfs) {
-    return std::make_shared<SenseSource>(schema, udfs);
+    return std::make_shared<SenseSource>(schema, bufferManager, dispatcher, udfs);
 }
 
-const DataSourcePtr createCSVFileSource(SchemaPtr schema,
+const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher,
                                         const std::string& pathToFile,
                                         const std::string& delimiter,
                                         size_t numbersOfBufferToProduce,
                                         size_t frequency) {
-    return std::make_shared<CSVSource>(schema, pathToFile, delimiter,
+    return std::make_shared<CSVSource>(schema, bufferManager, dispatcher, pathToFile, delimiter,
                                        numbersOfBufferToProduce, frequency);
 }
 
-const DataSourcePtr createKafkaSource(SchemaPtr schema, std::string brokers, std::string topic, std::string groupId,
+const DataSourcePtr createKafkaSource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher, std::string brokers, std::string topic, std::string groupId,
                                       bool autoCommit, uint64_t kafkaConsumerTimeout) {
-    return std::make_shared<KafkaSource>(schema, brokers, topic, groupId, autoCommit, kafkaConsumerTimeout);
+    return std::make_shared<KafkaSource>(schema, bufferManager, dispatcher, brokers, topic, groupId, autoCommit, kafkaConsumerTimeout);
 }
 
 }

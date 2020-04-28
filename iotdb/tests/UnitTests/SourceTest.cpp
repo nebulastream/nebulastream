@@ -39,12 +39,15 @@ struct __attribute__((packed)) ysbRecord {
 // size 78 bytes
 
 typedef const DataSourcePtr (* createFileSourceFuncPtr)(SchemaPtr,
+                                                        BufferManagerPtr bufferManager, DispatcherPtr dispatcher,
                                                         const std::string&);
 
 typedef const DataSourcePtr (* createSenseSourceFuncPtr)(SchemaPtr,
+                                                         BufferManagerPtr bufferManager, DispatcherPtr dispatcher,
                                                          const std::string&);
 
 typedef const DataSourcePtr (* createCSVSourceFuncPtr)(const SchemaPtr,
+                                                       BufferManagerPtr bufferManager, DispatcherPtr dispatcher,
                                                        const std::string&,
                                                        const std::string&,
                                                        size_t, size_t);
@@ -66,7 +69,9 @@ class SourceTest : public testing::Test {
 
 TEST_F(SourceTest, testBinarySource) {
     DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
-    dispatcher->startBufferManager();
+    dispatcher->startThreadPool();
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
+
 
     std::string path_to_file =
         "../tests/test_data/ysb-tuples-100-campaign-100.bin";
@@ -78,16 +83,16 @@ TEST_F(SourceTest, testBinarySource) {
             ->addField("current_ms", UINT64)->addField("ip", INT32);
 
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
-    uint64_t buffer_size = dispatcher->getBufferManager()->getBufferSize();
+    uint64_t buffer_size = bufferManager->getBufferSize();
     size_t num_of_buffers = 1;
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size/tuple_size);
 
     assert(buffer_size > 0);
 
-    const DataSourcePtr source = (*funcPtr)(schema, path_to_file);
+    const DataSourcePtr source = (*funcPtr)(schema, bufferManager, dispatcher, path_to_file);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
-        auto optBuf = source->receiveData(dispatcher);
+        auto optBuf = source->receiveData();
         size_t i = 0;
         while (i*tuple_size < buffer_size - tuple_size && !!optBuf ) {
             ysbRecord record(
@@ -109,7 +114,8 @@ TEST_F(SourceTest, testBinarySource) {
 
 TEST_F(SourceTest, testCSVSource) {
     DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
-    dispatcher->startBufferManager();
+    dispatcher->startThreadPool();
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
     std::string path_to_file =
         "../tests/test_data/ysb-tuples-100-campaign-100.csv";
@@ -125,18 +131,18 @@ TEST_F(SourceTest, testCSVSource) {
 
 
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
-    uint64_t buffer_size = dispatcher->getBufferManager()->getBufferSize();
+    uint64_t buffer_size = bufferManager->getBufferSize();
     size_t num_of_buffers = 10;
     uint64_t num_tuples_to_process = num_of_buffers * (buffer_size/tuple_size);
 
     //    uint64_t buffer_size = num_tuples_to_process*tuple_size / num_of_buffers;
     assert(buffer_size > 0);
 
-    const DataSourcePtr source = (*funcPtr)(schema, path_to_file, del, num,
+    const DataSourcePtr source = (*funcPtr)(schema, bufferManager, dispatcher, path_to_file, del, num,
                                             frequency);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
-        auto optBuf = source->receiveData(dispatcher);
+        auto optBuf = source->receiveData();
         size_t i = 0;
         while (i*tuple_size < buffer_size - tuple_size && !!optBuf) {
             ysbRecord record(
@@ -157,6 +163,11 @@ TEST_F(SourceTest, testCSVSource) {
 }
 
 TEST_F(SourceTest, testSenseSource) {
+    DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
+    dispatcher->startThreadPool();
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
+
+
     std::string testUDFS("...");
     createSenseSourceFuncPtr funcPtr = &createSenseSource;
 
@@ -171,7 +182,7 @@ TEST_F(SourceTest, testSenseSource) {
     uint64_t buffer_size = num_tuples_to_process*tuple_size/num_of_buffers;
     assert(buffer_size > 0);
 
-    const DataSourcePtr source = (*funcPtr)(schema, testUDFS);
+    const DataSourcePtr source = (*funcPtr)(schema,  bufferManager, dispatcher, testUDFS);
 
     //TODO: please add here to code to test the setup
     std::cout << "Success" << std::endl;

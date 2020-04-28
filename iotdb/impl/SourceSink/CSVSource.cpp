@@ -20,11 +20,11 @@ CSVSource::CSVSource()
     currentPosInFile(0) {
 }
 
-CSVSource::CSVSource(SchemaPtr schema, const std::string &_file_path,
+CSVSource::CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher, const std::string &_file_path,
                      const std::string &delimiter, size_t numBuffersToProcess,
                      size_t frequency)
     :
-    DataSource(schema),
+    DataSource(schema, bufferManager, dispatcher),
     filePath(_file_path),
     delimiter(delimiter),
     currentPosInFile(0) {
@@ -35,9 +35,9 @@ CSVSource::CSVSource(SchemaPtr schema, const std::string &_file_path,
       "CSVSource: tupleSize=" << tupleSize << " freq=" << this->gatheringInterval << " numBuff=" << this->numBuffersToProcess)
 }
 
-std::optional<TupleBuffer> CSVSource::receiveData(DispatcherPtr dispatcher) {
+std::optional<TupleBuffer> CSVSource::receiveData() {
     NES_DEBUG("CSVSource::receiveData called")
-    auto buf = dispatcher->getBufferManager()->getBufferBlocking();
+    auto buf = this->bufferManager->getBufferBlocking();
     fillBuffer(buf);
     NES_DEBUG(
         "CSVSource::receiveData filled buffer with tuples=" << buf.getNumberOfTuples())

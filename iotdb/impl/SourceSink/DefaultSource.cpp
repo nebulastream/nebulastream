@@ -5,20 +5,20 @@
 
 namespace NES {
 
-DefaultSource::DefaultSource(SchemaPtr schema,
+DefaultSource::DefaultSource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher,
                              const uint64_t numbersOfBufferToProduce,
                              size_t frequency)
     :
-    GeneratorSource(schema, numbersOfBufferToProduce) {
+    GeneratorSource(schema, bufferManager, dispatcher, numbersOfBufferToProduce) {
     NES_DEBUG("DefaultSource:" << this << " creating")
     this->gatheringInterval = frequency;
 }
 
-std::optional<TupleBuffer> DefaultSource::receiveData(DispatcherPtr dispatcher) {
+std::optional<TupleBuffer> DefaultSource::receiveData() {
     // 10 tuples of size one
     NES_DEBUG("Source:" << this << " requesting buffer")
 
-    auto buf = dispatcher->getBufferManager()->getBufferBlocking();
+    auto buf = this->bufferManager->getBufferBlocking();
     NES_DEBUG("Source:" << this << " got buffer")
     size_t tupleCnt = 10;
     auto layout = createRowLayout(std::make_shared<Schema>(schema));

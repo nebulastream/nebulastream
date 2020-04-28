@@ -1,21 +1,24 @@
 #ifndef INCLUDE_WINDOWS_WINDOW_HPP_
 #define INCLUDE_WINDOWS_WINDOW_HPP_
 
-#include <thread>
+#include <API/Window/WindowDefinition.hpp>
+#include <QueryLib/WindowManagerLib.hpp>
+#include <Util/Logger.hpp>
 #include <atomic>
 #include <iostream>
 #include <memory>
-#include <Util/Logger.hpp>
-#include <QueryLib/WindowManagerLib.hpp>
-#include <API/Window/WindowDefinition.hpp>
+#include <thread>
 
+#include <NodeEngine/TupleBuffer.hpp>
 #include <Util/Logger.hpp>
 #include <boost/serialization/export.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
 
 namespace NES {
 class Dispatcher;
 typedef std::shared_ptr<Dispatcher> DispatcherPtr;
+
+class BufferManager;
+typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 
 class WindowHandler;
 typedef std::shared_ptr<WindowHandler> WindowHandlerPtr;
@@ -29,8 +32,8 @@ typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 class WindowHandler {
   public:
     WindowHandler() = default;
-    WindowHandler(WindowDefinitionPtr windowDefinition, DispatcherPtr dispatcher);
-//    WindowHandler(WindowDefinitionPtr windowDefinition, BufferManagerPtr buffMgnr, DispatcherPtr dispatcher);
+    WindowHandler(WindowDefinitionPtr windowDefinition, DispatcherPtr dispatcher, BufferManagerPtr bufferManager);
+    //    WindowHandler(WindowDefinitionPtr windowDefinition, BufferManagerPtr bufferManager, DispatcherPtr dispatcher);
 
     ~WindowHandler();
 
@@ -67,10 +70,10 @@ class WindowHandler {
      * @param windowDefinition
      * @param tupleBuffer
      */
-    template<class FinalAggregateType, class PartialAggregateType>
-    void aggregateWindows(WindowSliceStore<PartialAggregateType>* store,
-                          WindowDefinitionPtr windowDefinition,
-                          TupleBuffer& tupleBuffer) {
+    template <class FinalAggregateType, class PartialAggregateType>
+    void aggregateWindows(WindowSliceStore<PartialAggregateType>* store, WindowDefinitionPtr windowDefinition,
+                          TupleBuffer& tupleBuffer)
+    {
 
         // For event time we use the maximal records ts as watermark.
         // For processing time we use the current wall clock as watermark.
@@ -94,16 +97,16 @@ class WindowHandler {
                 // A slice is contained in a window if the window starts before the slice and ends after the slice
                 if (window.getStartTs() <= slices[sliceId].getStartTs() &&
                     window.getEndTs() >= slices[sliceId].getEndTs()) {
-                    //TODO Because of this condition we currently only support SUM aggregations
+                    // TODO Because of this condition we currently only support SUM aggregations
                     if (Sum* sumAggregation = dynamic_cast<Sum*>(windowDefinition->windowAggregation.get())) {
                         if (partialFinalAggregates.size() <= windowId) {
                             // initial the partial aggregate
                             partialFinalAggregates[windowId] = partialAggregates[sliceId];
-                        } else {
+                        }
+                        else {
                             // update the partial aggregate
-                            partialFinalAggregates[windowId] =
-                                sumAggregation->combine<PartialAggregateType>(partialFinalAggregates[windowId],
-                                                                              partialAggregates[sliceId]);
+                            partialFinalAggregates[windowId] = sumAggregation->combine<PartialAggregateType>(
+                                partialFinalAggregates[windowId], partialAggregates[sliceId]);
                         }
                     }
                 }
@@ -112,7 +115,7 @@ class WindowHandler {
         // calculate the final aggregate
         auto intBuffer = tupleBuffer.getBufferAs<FinalAggregateType>();
         for (uint64_t i = 0; i < partialFinalAggregates.size(); i++) {
-            //TODO Because of this condition we currently only support SUM aggregations
+            // TODO Because of this condition we currently only support SUM aggregations
             if (Sum* sumAggregation = dynamic_cast<Sum*>(windowDefinition->windowAggregation.get())) {
                 intBuffer[tupleBuffer.getNumberOfTuples()] =
                     sumAggregation->lower<FinalAggregateType, PartialAggregateType>(partialFinalAggregates[i]);
@@ -123,12 +126,9 @@ class WindowHandler {
     }
 
     void* getWindowState();
-    WindowManagerPtr getWindowManager() {
-        return windowManager;
-    };
+    WindowManagerPtr getWindowManager() { return windowManager; };
 
-    template<class Archive>
-    void serialize(Archive& ar, const unsigned int version) {}
+    template <class Archive> void serialize(Archive& ar, const unsigned int version) {}
 
   private:
     std::atomic_bool running{false};
@@ -140,11 +140,13 @@ class WindowHandler {
     uint32_t pipelineStageId;
     QueryExecutionPlanPtr queryExecutionPlan;
     DispatcherPtr dispatcher;
+    BufferManagerPtr bufferManager;
 };
 
-//just for test compability
+// just for test compability
 const WindowHandlerPtr createTestWindow(size_t campainCnt, size_t windowSizeInSec);
-const WindowHandlerPtr createWindowHandler(WindowDefinitionPtr windowDefinition, DispatcherPtr dispatcher);
+const WindowHandlerPtr createWindowHandler(WindowDefinitionPtr windowDefinition, DispatcherPtr dispatcher,
+                                           BufferManagerPtr bufferManager);
 
 } // namespace NES
 #endif /* INCLUDE_WINDOWS_WINDOW_HPP_ */

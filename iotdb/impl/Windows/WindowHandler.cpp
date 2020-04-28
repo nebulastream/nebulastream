@@ -11,8 +11,8 @@
 BOOST_CLASS_EXPORT_IMPLEMENT(NES::WindowHandler)
 namespace NES {
 
-WindowHandler::WindowHandler(NES::WindowDefinitionPtr windowDefinitionPtr, DispatcherPtr dispatcher)
-    : windowDefinition(windowDefinitionPtr), dispatcher(dispatcher) {
+WindowHandler::WindowHandler(NES::WindowDefinitionPtr windowDefinitionPtr, DispatcherPtr dispatcher, BufferManagerPtr bufferManager)
+    : windowDefinition(windowDefinitionPtr), dispatcher(dispatcher), bufferManager(bufferManager) {
     this->thread.reset();
 }
 
@@ -36,7 +36,7 @@ void WindowHandler::trigger() {
         auto windowStateVariable = static_cast<StateVariable<int64_t, WindowSliceStore<int64_t>*>*>(this->windowState);
         // create the output tuple buffer
         // TODO can we make it get the buffer only once?
-        auto tupleBuffer = dispatcher->getBufferManager()->getBufferBlocking();
+        auto tupleBuffer = bufferManager->getBufferBlocking();
         tupleBuffer.setTupleSizeInBytes(8);
         // iterate over all keys in the window state
         for (auto& it : windowStateVariable->rangeAll()) {
@@ -95,8 +95,8 @@ WindowHandler::~WindowHandler() {
     stop();
 }
 
-const WindowHandlerPtr createWindowHandler(WindowDefinitionPtr windowDefinition, DispatcherPtr dispatcher) {
-    return std::make_shared<WindowHandler>(windowDefinition, dispatcher);
+const WindowHandlerPtr createWindowHandler(WindowDefinitionPtr windowDefinition, DispatcherPtr dispatcher, BufferManagerPtr bufferManager) {
+    return std::make_shared<WindowHandler>(windowDefinition, dispatcher, bufferManager);
 }
 
 } // namespace NES
