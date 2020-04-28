@@ -288,7 +288,13 @@ bool NodeEngine::stopDispatcher()
     }
     NES_DEBUG("stopDispatcher: stop dispatcher")
 
-    dispatcher->stopThreadPool();
+    bool success = dispatcher->stopThreadPool();
+    if(!success)
+    {
+        NES_ERROR("NodeEngine::stopDispatcher: could not stop thread pool")
+        throw Exception("Error while stopping thread pool");
+    }
+
     delete dispatcher.get();
     return true;
 }

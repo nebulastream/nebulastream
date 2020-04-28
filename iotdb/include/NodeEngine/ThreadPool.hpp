@@ -7,6 +7,9 @@
 #include <NodeEngine/Dispatcher.hpp>
 
 namespace NES {
+class Dispatcher;
+typedef std::shared_ptr<Dispatcher> DispatcherPtr;
+
 /**
  * @brief the tread pool handles the dynamic scheduling of tasks during runtime
  * @Limitations

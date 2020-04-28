@@ -61,7 +61,7 @@ bool DataSource::start() {
     NES_DEBUG("DataSource " << this->getSourceId() << ": Spawn thread")
     thread = std::make_shared<std::thread>([this, barrier]() {
       barrier->wait();
-      running_routine();
+      runningRoutine();
     });
     barrier->wait();
     return true;
@@ -124,7 +124,7 @@ void DataSource::setGatheringInterval(size_t interval) {
     this->gatheringInterval = interval;
 }
 
-void DataSource::running_routine() {
+void DataSource::runningRoutine() {
     if (!this->sourceId.empty()) {
         NES_DEBUG("DataSource " << this->getSourceId() << ": Running Data Source of type=" << getType())
         size_t cnt = 0;
@@ -157,7 +157,7 @@ void DataSource::running_routine() {
                     //TODO: maybe set running false
                 }
             } else {
-                NES_DEBUG("DataSource::running_routine sleep " << this)
+                NES_DEBUG("DataSource::runningRoutine sleep " << this)
                 sleep(gatheringInterval);
                 continue;
             }
@@ -171,7 +171,7 @@ void DataSource::running_routine() {
         throw std::logic_error(
             "DataSource: No ID assigned. Running_routine is not possible!");
     }
-    NES_DEBUG("DataSource::running_routine: exist routine " << this)
+    NES_DEBUG("DataSource::runningRoutine: exist routine " << this)
 }
 
 // debugging
