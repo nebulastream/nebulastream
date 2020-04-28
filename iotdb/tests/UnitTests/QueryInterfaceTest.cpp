@@ -24,9 +24,9 @@ class SelectionDataGenFunctor {
 
     TupleBuffer operator()() {
         // 10 tuples of size one
-        BufferManagerPtr buffMgnr = std::make_shared<BufferManager>();
+        BufferManagerPtr bufferManager = std::make_shared<BufferManager>();
 
-        auto buf = buffMgnr->getBufferNoBlocking();
+        auto buf = bufferManager->getBufferNoBlocking();
         uint64_t tupleCnt = buf->getNumberOfTuples();
 
         assert(buf->getBuffer() != NULL);

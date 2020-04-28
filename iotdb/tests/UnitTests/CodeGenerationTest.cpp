@@ -30,6 +30,7 @@ namespace NES {
 class CodeGenerationTest : public testing::Test {
   public:
     DispatcherPtr dispatcher;
+    BufferManagerPtr bufferManager;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -41,7 +42,9 @@ class CodeGenerationTest : public testing::Test {
         NES::setupLogging("BufferManagerTest.log", NES::LOG_DEBUG);
         std::cout << "Setup CodeGenerationTest test case." << std::endl;
         dispatcher = std::make_shared<Dispatcher>();
-        dispatcher->startBufferManager(4096, 1024);
+        dispatcher->startThreadPool();
+        bufferManager = std::make_shared<BufferManager>(4096, 1024);
+
     }
 
     /* Will be called before a test is executed. */
@@ -55,24 +58,25 @@ class CodeGenerationTest : public testing::Test {
     }
 };
 
-const DataSourcePtr createTestSourceCodeGen() {
+const DataSourcePtr createTestSourceCodeGen(BufferManagerPtr bPtr, DispatcherPtr dPtr) {
     return std::make_shared<DefaultSource>(
-        Schema::create()->addField(createField("campaign_id", UINT64)), 1, 1);
+        Schema::create()->addField(createField("campaign_id", UINT64)), bPtr, dPtr, 1, 1);
 }
 
 class SelectionDataGenSource : public GeneratorSource {
   public:
     SelectionDataGenSource(SchemaPtr schema,
+                           BufferManagerPtr bPtr, DispatcherPtr dPtr,
                            const uint64_t pNum_buffers_to_process)
         :
-        GeneratorSource(schema, pNum_buffers_to_process) {
+        GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process) {
     }
 
     ~SelectionDataGenSource() = default;
 
-    std::optional<TupleBuffer> receiveData(DispatcherPtr dispatcher) override {
+    std::optional<TupleBuffer> receiveData()  override {
         // 10 tuples of size one
-        TupleBuffer buf = dispatcher->getBufferManager()->getBufferBlocking();
+        TupleBuffer buf = bufferManager->getBufferBlocking();
         uint64_t tupleCnt = buf.getBufferSize()/sizeof(InputTuple);
 
         assert(buf.getBuffer() != NULL);
@@ -99,13 +103,14 @@ class SelectionDataGenSource : public GeneratorSource {
     };
 };
 
-const DataSourcePtr createTestSourceCodeGenFilter() {
+const DataSourcePtr createTestSourceCodeGenFilter(BufferManagerPtr bPtr, DispatcherPtr dPtr) {
     DataSourcePtr source(
         std::make_shared<SelectionDataGenSource>(
             Schema::create()
                 ->addField("id", BasicType::UINT32)
                 ->addField("value", BasicType::UINT32)
                 ->addField("text", createArrayDataType(BasicType::CHAR, 12)),
+            bPtr, dPtr,
             1));
 
     return source;
@@ -113,10 +118,10 @@ const DataSourcePtr createTestSourceCodeGenFilter() {
 
 class PredicateTestingDataGeneratorSource : public GeneratorSource {
   public:
-    PredicateTestingDataGeneratorSource(SchemaPtr schema,
+    PredicateTestingDataGeneratorSource(SchemaPtr schema, BufferManagerPtr bPtr, DispatcherPtr dPtr,
                                         const uint64_t pNum_buffers_to_process)
         :
-        GeneratorSource(schema, pNum_buffers_to_process) {
+        GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process) {
     }
 
     ~PredicateTestingDataGeneratorSource() = default;
@@ -130,9 +135,9 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
         char text[12];
     };
 
-    std::optional<TupleBuffer> receiveData(DispatcherPtr dispatcher) override {
+    std::optional<TupleBuffer> receiveData()  override {
         // 10 tuples of size one
-        TupleBuffer buf = dispatcher->getBufferManager()->getBufferBlocking();
+        TupleBuffer buf = bufferManager->getBufferBlocking();
         uint64_t tupleCnt = buf.getBufferSize()/sizeof(InputTuple);
 
         assert(buf.getBuffer() != NULL);
@@ -158,7 +163,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
     }
 };
 
-const DataSourcePtr createTestSourceCodeGenPredicate() {
+const DataSourcePtr createTestSourceCodeGenPredicate(BufferManagerPtr bPtr, DispatcherPtr dPtr) {
     DataSourcePtr source(
         std::make_shared<PredicateTestingDataGeneratorSource>(
             Schema::create()
@@ -168,6 +173,7 @@ const DataSourcePtr createTestSourceCodeGenPredicate() {
                 ->addField("valueDouble", BasicType::FLOAT64)
                 ->addField("valueChar", BasicType::CHAR)
                 ->addField("text", createArrayDataType(BasicType::CHAR, 12)),
+            bPtr, dPtr,
             1));
 
     return source;
@@ -175,10 +181,10 @@ const DataSourcePtr createTestSourceCodeGenPredicate() {
 
 class WindowTestingDataGeneratorSource : public GeneratorSource {
   public:
-    WindowTestingDataGeneratorSource(SchemaPtr schema,
+    WindowTestingDataGeneratorSource(SchemaPtr schema, BufferManagerPtr bPtr, DispatcherPtr dPtr,
                                      const uint64_t pNum_buffers_to_process)
         :
-        GeneratorSource(schema, pNum_buffers_to_process) {
+        GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process) {
     }
 
     ~WindowTestingDataGeneratorSource() = default;
@@ -188,9 +194,9 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
         uint64_t value;
     };
 
-    std::optional<TupleBuffer> receiveData(DispatcherPtr dispatcher) override {
+    std::optional<TupleBuffer> receiveData()  override {
         // 10 tuples of size one
-        TupleBuffer buf = dispatcher->getBufferManager()->getBufferBlocking();
+        TupleBuffer buf = bufferManager->getBufferBlocking();
         uint64_t tupleCnt = 10;
 
         assert(buf.getBuffer() != NULL);
@@ -208,12 +214,13 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
     }
 };
 
-const DataSourcePtr createWindowTestDataSource() {
+const DataSourcePtr createWindowTestDataSource(BufferManagerPtr bPtr, DispatcherPtr dPtr) {
     DataSourcePtr source(
         std::make_shared<WindowTestingDataGeneratorSource>(
             Schema::create()
                 ->addField("key", BasicType::UINT64)
                 ->addField("value", BasicType::UINT64),
+            bPtr, dPtr,
             10));
     return source;
 }
@@ -622,7 +629,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto stage = createCompiledExecutablePipeline(compiler.compile(file.code));
 
     /* setup input and output for test */
-    auto inputBuffer = dispatcher->getBufferManager()->getBufferBlocking();
+    auto inputBuffer = bufferManager->getBufferBlocking();
     inputBuffer.setTupleSizeInBytes(8);
     auto recordSchema = Schema::create()->addField("id", BasicType::INT64);
     auto layout = createRowLayout(recordSchema);
@@ -632,7 +639,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     }
     inputBuffer.setNumberOfTuples(100);
 
-    auto outputBuffer = dispatcher->getBufferManager()->getBufferBlocking();
+    auto outputBuffer = bufferManager->getBufferBlocking();
     outputBuffer.setTupleSizeInBytes(8);
     outputBuffer.setNumberOfTuples(1);
     /* execute code */
@@ -656,7 +663,11 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
  */
 TEST_F(CodeGenerationTest, codeGenerationCopy) {
     /* prepare objects for test */
-    auto source = createTestSourceCodeGen();
+    DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
+    dispatcher->startThreadPool();
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
+
+    auto source = createTestSourceCodeGen(bufferManager, dispatcher);
     auto codeGenerator = createCodeGenerator();
     auto context = createPipelineContext();
 
@@ -672,9 +683,9 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
 
     /* prepare input and output tuple buffer */
     auto schema = Schema::create()->addField("i64", UINT64);
-    auto buffer = source->receiveData(dispatcher).value();
+    auto buffer = source->receiveData().value();
 
-    auto resultBuffer = dispatcher->getBufferManager()->getBufferBlocking();
+    auto resultBuffer = bufferManager->getBufferBlocking();
     resultBuffer.setTupleSizeInBytes(sizeof(uint64_t));
 
     /* execute Stage */
@@ -694,7 +705,11 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
  */
 TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
     /* prepare objects for test */
-    auto source = createTestSourceCodeGenFilter();
+    DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
+    dispatcher->startThreadPool();
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
+
+    auto source = createTestSourceCodeGenFilter(bufferManager, dispatcher);
     auto codeGenerator = createCodeGenerator();
     auto context = createPipelineContext();
 
@@ -718,11 +733,11 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
     auto stage = codeGenerator->compile(CompilerArgs(), context->code);
 
     /* prepare input tuple buffer */
-    auto inputBuffer = source->receiveData(dispatcher).value();;
+    auto inputBuffer = source->receiveData().value();;
     NES_INFO("Processing " << inputBuffer.getNumberOfTuples() << " tuples: ");
 
     auto sizeOfTuple = (sizeof(uint32_t) + sizeof(uint32_t) + sizeof(char)*12);
-    auto resultBuffer = dispatcher->getBufferManager()->getBufferBlocking();
+    auto resultBuffer = bufferManager->getBufferBlocking();
     resultBuffer.setTupleSizeInBytes(sizeOfTuple);
 
     /* execute Stage */
@@ -745,7 +760,11 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
  */
 TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
     /* prepare objects for test */
-    auto source = createWindowTestDataSource();
+    DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
+    dispatcher->startThreadPool();
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
+
+    auto source = createWindowTestDataSource(bufferManager, dispatcher);
     auto codeGenerator = createCodeGenerator();
     auto context = createPipelineContext();
 
@@ -764,13 +783,13 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
     auto stage = codeGenerator->compile(CompilerArgs(), context->code);
 
     // init window handler
-    auto windowHandler = new WindowHandler(windowDefinition, dispatcher);
+    auto windowHandler = new WindowHandler(windowDefinition, dispatcher, bufferManager);
     windowHandler->setup(nullptr, 0);
 
     /* prepare input tuple buffer */
-    auto inputBuffer = source->receiveData(dispatcher).value();
+    auto inputBuffer = source->receiveData().value();
 
-    auto resultBuffer = dispatcher->getBufferManager()->getBufferBlocking();
+    auto resultBuffer = bufferManager->getBufferBlocking();
 
     /* execute Stage */
     stage->execute(inputBuffer, windowHandler->getWindowState(),
@@ -791,8 +810,12 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
  * @brief This test generates a predicate with string comparision
  */
 TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
+    DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
+    dispatcher->startThreadPool();
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
+
     /* prepare objects for test */
-    auto source = createTestSourceCodeGenPredicate();
+    auto source = createTestSourceCodeGenPredicate(bufferManager, dispatcher);
     auto codeGenerator = createCodeGenerator();
     auto context = createPipelineContext();
 
@@ -814,11 +837,11 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
     auto stage = codeGenerator->compile(CompilerArgs(), context->code);
 
     /* prepare input tuple buffer */
-    auto optVal = source->receiveData(dispatcher);
+    auto optVal = source->receiveData();
     assert(!!optVal);
     auto inputBuffer = *optVal;
 
-    auto resultBuffer = dispatcher->getBufferManager()->getBufferBlocking();
+    auto resultBuffer = bufferManager->getBufferBlocking();
     resultBuffer.setTupleSizeInBytes(inputSchema->getSchemaSizeInBytes());
 
     /* execute Stage */
@@ -834,9 +857,12 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
  * @brief This test generates a map predicate, which manipulates the input buffer content
  */
 TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
+    DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
+    dispatcher->startThreadPool();
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
     /* prepare objects for test */
-    auto source = createTestSourceCodeGenPredicate();
+    auto source = createTestSourceCodeGenPredicate(bufferManager, dispatcher);
     auto codeGenerator = createCodeGenerator();
     auto context = createPipelineContext();
 
@@ -868,9 +894,9 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
     auto stage = codeGenerator->compile(CompilerArgs(), context->code);
 
     /* prepare input tuple buffer */
-    auto inputBuffer = source->receiveData(dispatcher).value();
+    auto inputBuffer = source->receiveData().value();
 
-    auto resultBuffer = dispatcher->getBufferManager()->getUnpooledBuffer(
+    auto resultBuffer = bufferManager->getUnpooledBuffer(
         inputBuffer.getNumberOfTuples()*outputSchema->getSchemaSizeInBytes()).value();
 
     /* execute Stage */

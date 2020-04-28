@@ -11,9 +11,11 @@
 
 //#include <NodeEngine/Dispatcher.hpp>
 namespace NES {
+class BufferManager;
+typedef std::shared_ptr<BufferManager> BufferManagerPtr;
+
 class Dispatcher;
 typedef std::shared_ptr<Dispatcher> DispatcherPtr;
-
 
 class TupleBuffer;
 
@@ -39,14 +41,14 @@ class DataSource {
      * by some test to produce a deterministic behavior
      * @param schema of the data that this source produces
      */
-    DataSource(SchemaPtr schema);
+    DataSource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher);
 
     /**
      * @brief method to start the source.
      * 1.) check if bool running is true, if true return if not start source
      * 2.) start new thread with running_routine
      */
-    bool start(DispatcherPtr dispatcher);
+    bool start();
 
     /**
      * @brief method to stop the source.
@@ -62,14 +64,14 @@ class DataSource {
      * 3.) If not call receiveData in a blocking fashion
      * 4.) If call returns and a buffer is there to process, add a task to the dispatcher
      */
-    void running_routine(DispatcherPtr dispatcher);
+    void running_routine();
 
     /**
      * @brief virtual function to receive a buffer
      * @Note this function is overwritten by the particular data source
      * @return returns a tuple buffer
      */
-    virtual std::optional<TupleBuffer> receiveData(DispatcherPtr dispatcher) = 0;
+    virtual std::optional<TupleBuffer> receiveData() = 0;
 
     /**
      * @brief virtual function to get a string describing the particular source
@@ -149,7 +151,8 @@ class DataSource {
     size_t lastGatheringTimeStamp;
     std::string sourceId;
     SourceType type;
-
+    BufferManagerPtr bufferManager;
+    DispatcherPtr dispatcher;
   private:
     friend class boost::serialization::access;
     //bool indicating if the source is currently running'

@@ -89,7 +89,11 @@ class QueryExecutionPlan {
     DispatcherPtr getDispatcher();
     void setDispatcher(DispatcherPtr dispatcher);
 
-    void print();
+    BufferManagerPtr getBufferManager();
+    void setBufferManager(BufferManagerPtr bufferManager);
+
+
+        void print();
 
   protected:
     QueryExecutionPlan(std::vector<DataSourcePtr> sources,
@@ -103,6 +107,7 @@ class QueryExecutionPlan {
     std::map<DataSource*, uint32_t> sourceToStage;
     std::map<uint32_t, uint32_t> stageToDest;
     DispatcherPtr dispatcher;
+    BufferManagerPtr bufferManager;
 };
 
 }  // namespace NES

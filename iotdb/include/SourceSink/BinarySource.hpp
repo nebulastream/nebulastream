@@ -22,13 +22,13 @@ class BinarySource : public DataSource {
      * @param schema of the data source
      * @param file path
      */
-    BinarySource(SchemaPtr schema, const std::string& file_path);
+    BinarySource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher, const std::string& file_path);
 
     /**
      * @brief override the receiveData method for the binary source
      * @return returns a buffer if available
      */
-    std::optional<TupleBuffer> receiveData(DispatcherPtr dispatcher) override;
+    std::optional<TupleBuffer> receiveData() override;
 
     /**
      * @brief override the toString method for the binary source
@@ -41,6 +41,7 @@ class BinarySource : public DataSource {
      *  @param buffer to be filled
      */
     void fillBuffer(TupleBuffer&);
+
     SourceType getType() const override;
   private:
     //this one only required for serialization

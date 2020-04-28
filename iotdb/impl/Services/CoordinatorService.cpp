@@ -272,7 +272,12 @@ vector<DataSourcePtr> CoordinatorService::getSources(const string& queryId,
         // create local zmq source
         const NESTopologyEntryPtr kRootNode = NESTopologyManager::getInstance()
             .getRootNode();
-        source = createZmqSource(schema, kRootNode->getIp(), assign_port(queryId));
+
+        //TODO: this does not work this way
+        BufferManagerPtr bPtr;
+        DispatcherPtr disPtr;
+        source = createZmqSource(schema, bPtr, disPtr, kRootNode->getIp(), assign_port(queryId));
+        assert(0);
     }
     out.emplace_back(source);
     return out;

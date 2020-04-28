@@ -19,8 +19,8 @@ BinarySource::BinarySource()
       tuple_size(0) {
 }
 
-BinarySource::BinarySource(SchemaPtr schema, const std::string& _file_path)
-    : DataSource(schema),
+BinarySource::BinarySource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher, const std::string& _file_path)
+    : DataSource(schema, bufferManager, dispatcher),
       input(std::ifstream(_file_path.c_str())),
       file_path(_file_path) {
   input.seekg(0, input.end);
@@ -33,8 +33,8 @@ BinarySource::BinarySource(SchemaPtr schema, const std::string& _file_path)
   tuple_size = schema->getSchemaSizeInBytes();
 }
 
-std::optional<TupleBuffer> BinarySource::receiveData(DispatcherPtr dispatcher) {
-    auto buf = dispatcher->getBufferManager()->getBufferBlocking();
+std::optional<TupleBuffer> BinarySource::receiveData() {
+    auto buf = this->bufferManager->getBufferBlocking();
     fillBuffer(buf);
     return buf;
 }

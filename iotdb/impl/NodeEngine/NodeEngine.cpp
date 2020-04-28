@@ -6,6 +6,8 @@
 using namespace std;
 namespace NES {
 
+static constexpr size_t DEFAULT_BUFFER_SIZE = 4096;
+static constexpr size_t DEFAULT_NUM_BUFFERS = 1024;
 
 JSON NodeEngine::getNodePropertiesAsJSON() {
     props->readMemStats();
@@ -31,7 +33,6 @@ NodeProperties* NodeEngine::getNodeProperties() {
 
 NodeEngine::NodeEngine() {
     props = std::make_shared<NodeProperties>();
-    dispatcher = std::make_shared<Dispatcher>();
 
     stoppedEngine = false;
     forceStop = false;
@@ -155,10 +156,6 @@ DispatcherPtr NodeEngine::getDispatcher() {
     return dispatcher;
 }
 
-void NodeEngine::setDispatcher(DispatcherPtr dispatcher) {
-    this->dispatcher = dispatcher;
-}
-
 
 
 bool NodeEngine::start() {
@@ -166,17 +163,12 @@ bool NodeEngine::start() {
     dispatcher->resetDispatcher();
 
     NES_DEBUG("NodeEngine: start thread pool")
-    bool successTp = dispatcher->startThreadPool();
+    bool successTp = startDispatcher();
     NES_DEBUG("NodeEngine: start thread pool success=" << successTp)
 
     NES_DEBUG("NodeEngine: start buffer manager")
-    bool successBm = dispatcher->startBufferManager();
+    bool successBm = startBufferManager();
     NES_DEBUG("NodeEngine: start buffer manager success=" << successBm)
-
-    if (!dispatcher->isBufferManagerReady()) {
-        NES_ERROR("NodeEngine::init error while init buffer manager")
-        throw Exception("NodeEngine::init error");
-    }
 
     return successTp && successBm;
 }
@@ -219,10 +211,10 @@ bool NodeEngine::stop() {
         copyOfVec.clear();
         stoppedEngine = true;
 
-        bool successTp = dispatcher->stopThreadPool();
+        bool successTp = stopDispatcher();
         NES_DEBUG("NodeEngine:stop stop threadpool with success=" << successTp)
 
-        bool successBm = dispatcher->stopBufferManager();
+        bool successBm = stopBufferManager();
         NES_DEBUG("NodeEngine:stop stop buffer manager with success=" << successBm)
 
         return successTp && successBm;
@@ -231,6 +223,77 @@ bool NodeEngine::stop() {
         return true;
     }
 }
+
+BufferManagerPtr NodeEngine::getBufferManager()
+{
+    return bufferManager;
+}
+
+bool NodeEngine::startBufferManager()
+{
+    if(bufferManager)
+    {
+        NES_ERROR("NodeEngine::startBufferManager: buffer manager already exists")
+        throw Exception("Error while start buffer manager");
+    }
+    NES_DEBUG("startBufferManager: setup buffer manager")
+    bufferManager = std::make_shared<BufferManager>(DEFAULT_BUFFER_SIZE, DEFAULT_NUM_BUFFERS);
+    return bufferManager->isReady();
+}
+
+bool NodeEngine::startBufferManager(size_t bufferSize, size_t numBuffers)
+{
+    if(bufferManager)
+    {
+        NES_ERROR("NodeEngine::startBufferManager: buffer manager already exists")
+        throw Exception("Error while start buffer manager");
+    }
+
+    NES_DEBUG("startBufferManager: setup buffer manager")
+    bufferManager = std::make_shared<BufferManager>(bufferSize, numBuffers);
+    return bufferManager->isReady();
+}
+
+bool NodeEngine::stopBufferManager()
+{
+    if(!bufferManager)
+    {
+        NES_ERROR("NodeEngine::stopBufferManager buffer manager does not exists")
+        throw Exception("Error while stop buffer manager");
+    }
+    NES_DEBUG("Dispatcher::stopBufferManager: stop")
+    delete bufferManager.get();
+    return true;
+}
+
+bool NodeEngine::startDispatcher()
+{
+    NES_DEBUG("startDispatcher: setup buffer manager")
+    if(dispatcher)
+    {
+        NES_ERROR("NodeEngine::startDispatcher: dispatcher already exists")
+        throw Exception("Error while start dispatcher");
+    }
+    NES_DEBUG("startDispatcher: setup dispatcher")
+    dispatcher = std::make_shared<Dispatcher>();
+    return dispatcher->startThreadPool();
+}
+
+bool NodeEngine::stopDispatcher()
+{
+    if(!dispatcher)
+    {
+        NES_ERROR("NodeEngine::stopDispatcher dispatcher does not exists")
+        throw Exception("Error while stop dispatcher");
+    }
+    NES_DEBUG("stopDispatcher: stop dispatcher")
+
+    dispatcher->stopThreadPool();
+    delete dispatcher.get();
+    return true;
+}
+
+
 
 
 }

@@ -22,16 +22,16 @@ SenseSource::SenseSource()
     udsf("") {
 }
 
-SenseSource::SenseSource(SchemaPtr schema , const std::string& udsf)
+SenseSource::SenseSource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher, const std::string& udsf)
     :
-    DataSource(schema),
+    DataSource(schema, bufferManager, dispatcher),
     udsf(udsf) {
 
 }
 
-std::optional<TupleBuffer> SenseSource::receiveData(DispatcherPtr dispatcher) {
+std::optional<TupleBuffer> SenseSource::receiveData() {
     NES_DEBUG("SenseSource::receiveData called")
-    auto buf = dispatcher->getBufferManager()->getBufferBlocking();
+    auto buf = bufferManager->getBufferBlocking();
     fillBuffer(buf);
     NES_DEBUG(
         "SenseSource::receiveData filled buffer with tuples=" << buf.getNumberOfTuples())

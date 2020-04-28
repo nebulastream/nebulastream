@@ -126,25 +126,17 @@ class Dispatcher : public std::enable_shared_from_this<Dispatcher> {
      */
     void resetDispatcher();
 
-    bool isBufferManagerReady();
-
-    bool startBufferManager();
-    bool startBufferManager(size_t bufferSize, size_t numBuffers);
-
+    /**
+     * @brief method to start the thread pool
+     * @return bool indicating success
+     */
     bool startThreadPool();
 
-    bool stopBufferManager();
+    /**
+     * @brief method to stop thread pool
+     * @return bool indicating success
+     */
     bool stopThreadPool();
-
-    BufferManagerPtr getBufferManager()
-    {
-        return buffMgnr;
-    }
-
-    ThreadPoolPtr getThreadPool()
-    {
-        return threadPool;
-    }
 
     ~Dispatcher();
   private:
@@ -159,7 +151,6 @@ class Dispatcher : public std::enable_shared_from_this<Dispatcher> {
     void cleanupUnsafe();
 
     std::deque<TaskPtr> task_queue;
-    BufferManagerPtr buffMgnr;
     ThreadPoolPtr threadPool;
 
     std::map<std::string, std::unordered_set<QueryExecutionPlanPtr>> sourceIdToQueryMap;

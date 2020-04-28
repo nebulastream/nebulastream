@@ -23,15 +23,15 @@ class GeneratorSource : public DataSource {
    * @param number of buffer that should be processed
    * @param via template, the functor that determines what to do
    */
-  GeneratorSource(SchemaPtr schema, const uint64_t numbersOfBufferToProduce)
-      : DataSource(schema) {
+  GeneratorSource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher, const uint64_t numbersOfBufferToProduce)
+      : DataSource(schema, bufferManager, dispatcher) {
     this->numBuffersToProcess = numbersOfBufferToProduce;
   }
   /**
    * @brief override function to create one buffer
    * @return pointer to a buffer containing the created tuples
    */
-  virtual std::optional<TupleBuffer> receiveData(DispatcherPtr dispatcher) = 0;
+  virtual std::optional<TupleBuffer> receiveData() = 0;
 
     /**
      * @brief override the toString method for the generator source

@@ -120,10 +120,11 @@ void fillBuffer(TupleBuffer& buf, MemoryLayoutPtr memoryLayout) {
 
 TEST_F(QueryExecutionTest, filterQuery) {
     DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
-    dispatcher->startBufferManager(4096, 1024);
+    dispatcher->startThreadPool();
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
     // creating query plan
-    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema);
+    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, bufferManager, dispatcher);
     auto source = createSourceOperator(testSource);
     auto filter = createFilterOperator(
         createPredicate(Field(testSchema->get("id")) < 5));
@@ -142,7 +143,7 @@ TEST_F(QueryExecutionTest, filterQuery) {
 
     // The plan should have one pipeline
     EXPECT_EQ(plan->numberOfPipelineStages(), 1);
-    auto buffer = dispatcher->getBufferManager()->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto memoryLayout = createRowLayout(testSchema);
     fillBuffer(buffer, memoryLayout);
     plan->executeStage(0, buffer);
@@ -169,11 +170,11 @@ TEST_F(QueryExecutionTest, windowQuery) {
     // TODO 10 windows are fired -> 10 output buffers in the sink
     // TODO however, we check the 2nd buffer only
     DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
-    dispatcher->startBufferManager(4096, 1024);
     dispatcher->startThreadPool();
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
     // creating query plan
-    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema);
+    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, bufferManager, dispatcher);
     auto source = createSourceOperator(testSource);
     auto aggregation = Sum::on(testSchema->get("one"));
     auto windowType = TumblingWindow::of(TimeCharacteristic::ProcessingTime,
@@ -208,7 +209,7 @@ TEST_F(QueryExecutionTest, windowQuery) {
     EXPECT_EQ(plan->numberOfPipelineStages(), 2);
     // TODO switch to event time if that is ready to remove sleep
     auto memoryLayout = createRowLayout(testSchema);
-    auto buffer = dispatcher->getBufferManager()->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     fillBuffer(buffer, memoryLayout);
     // TODO do not rely on sleeps
     // ingest test data

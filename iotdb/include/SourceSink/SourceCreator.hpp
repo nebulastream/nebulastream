@@ -14,7 +14,7 @@ namespace NES {
  * @param schema of the data source
  * @return a const data source pointer
  */
-const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr schema);
+const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher);
 
 /**
  * @brief function to create a test source which produces 10 tuples with value one in N buffers of based on a schema
@@ -23,7 +23,7 @@ const DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(SchemaPtr sche
  * @param frequency when to gather the next buffer
  * @return a const data source pointer
  */
-const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr schema,
+const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher,
                                                                    size_t numbersOfBufferToProduce,
                                                                    size_t frequency);
 
@@ -31,22 +31,15 @@ const DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(SchemaPtr sch
  * @brief function to create a test source which produces 10 tuples with value one without a schema
  * @return a const data source pointer
  */
-const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer();
+const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(BufferManagerPtr bufferManager, DispatcherPtr dispatcher);
 
-/**
- * @brief function to create a test source which produces 10 tuples with value one in N buffers without a schema
- * @param number of buffers to produce
- * @return a const data source pointer
- */
-const DataSourcePtr createDefaultSourceWithoutSchemaForOneBufferForVarBuffers(size_t numbersOfBufferToProduce,
-                                                                              double frequency);
 
 /**
  * @brief function to create an empty zmq source
  * @param schema of data source
  * @return a const data source pointer
  */
-const DataSourcePtr createZmqSource(SchemaPtr schema, const std::string& host, const uint16_t port);
+const DataSourcePtr createZmqSource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher, const std::string& host, const uint16_t port);
 
 /**
  * @brief function to create a binary file source
@@ -54,7 +47,7 @@ const DataSourcePtr createZmqSource(SchemaPtr schema, const std::string& host, c
  * @param path to the file to reading
  * @return a const data source pointer
  */
-const DataSourcePtr createBinaryFileSource(SchemaPtr schema, const std::string& pathToFile);
+const DataSourcePtr createBinaryFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher, const std::string& pathToFile);
 
 /**
  * @brief function to create a sense source
@@ -62,14 +55,14 @@ const DataSourcePtr createBinaryFileSource(SchemaPtr schema, const std::string& 
  * @param udfs of the file
  * @return a const data source pointer
  */
-const DataSourcePtr createSenseSource(SchemaPtr schema, const std::string& udfs);
+const DataSourcePtr createSenseSource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher, const std::string& udfs);
 
 /**
  * @brief function to create a csvfile source
  * @param schema of data source
  * @return a const data source pointer
  */
-const DataSourcePtr createCSVFileSource(SchemaPtr schema,
+const DataSourcePtr createCSVFileSource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher,
                                         const std::string& path_to_file,
                                         const std::string& delimiter,
                                         size_t numBuffersToProcess,
@@ -85,7 +78,7 @@ const DataSourcePtr createCSVFileSource(SchemaPtr schema,
  * @param kafkaConsumerTimeout  kafka consumer timeout
  * @return
  */
-const DataSourcePtr createKafkaSource(SchemaPtr schema,
+const DataSourcePtr createKafkaSource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher,
                                       std::string brokers,
                                       std::string topic,
                                       std::string groupId,

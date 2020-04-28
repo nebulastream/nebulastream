@@ -24,14 +24,14 @@ class CSVSource : public DataSource {
    * @param delimiter inside the file, default ","
    * @param number of buffers to create
    */
-  CSVSource(SchemaPtr schema, const std::string& file_path,
+  CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher, const std::string& file_path,
             const std::string& delimiter, size_t numBuffersToProcess, size_t frequency);
 
     /**
      * @brief override the receiveData method for the csv source
      * @return returns a buffer if available
      */
-    std::optional<TupleBuffer> receiveData(DispatcherPtr dispatcher) override;
+    std::optional<TupleBuffer> receiveData() override;
 
     /**
      *  @brief method to fill the buffer with tuples

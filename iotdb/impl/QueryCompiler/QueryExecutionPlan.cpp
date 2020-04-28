@@ -70,6 +70,14 @@ void QueryExecutionPlan::setDispatcher(DispatcherPtr dispatcher) {
     this->dispatcher = dispatcher;
 }
 
+BufferManagerPtr QueryExecutionPlan::getBufferManager() {
+    return bufferManager;
+}
+
+void QueryExecutionPlan::setBufferManager(BufferManagerPtr bufferManager) {
+    this->bufferManager = bufferManager;
+}
+
 void QueryExecutionPlan::addDataSource(DataSourcePtr source) {
     sources.push_back(source);
 }

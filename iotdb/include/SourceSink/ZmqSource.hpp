@@ -24,7 +24,7 @@ class ZmqSource : public DataSource {
    * @param host name of the source queue
    * @param port of the source queue
    */
-  ZmqSource(SchemaPtr schema, const std::string &host, const uint16_t port);
+  ZmqSource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher, const std::string &host, const uint16_t port);
 
   /**
    * @brief destructor of zmq sink that disconnects the queue before deconstruction
@@ -36,7 +36,7 @@ class ZmqSource : public DataSource {
    * @brief blocking method to receive a buffer from the zmq source
    * @return TupleBufferPtr containing thre received buffer
    */
-  std::optional<TupleBuffer> receiveData(DispatcherPtr dispatcher) override;
+  std::optional<TupleBuffer> receiveData() override;
 
   /**
    * @brief override the toString method for the zmq source

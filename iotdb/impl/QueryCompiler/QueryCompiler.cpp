@@ -14,12 +14,12 @@ QueryCompilerPtr QueryCompiler::create() {
     return std::make_shared<QueryCompiler>(new QueryCompiler());
 }
 
-DispatcherPtr QueryCompiler::getDispatcher() {
-    return dispatcher;
-}
-
 void QueryCompiler::setDispatcher(DispatcherPtr dispatcher) {
     this->dispatcher = dispatcher;
+}
+void QueryCompiler::setBufferManager(BufferManagerPtr bufferManager)
+{
+    this->bufferManager = bufferManager;
 }
 
 QueryExecutionPlanPtr QueryCompiler::compile(OperatorPtr queryPlan) {
@@ -29,6 +29,7 @@ QueryExecutionPlanPtr QueryCompiler::compile(OperatorPtr queryPlan) {
     queryPlan->produce(codeGenerator, context, std::cout);
     QueryExecutionPlanPtr qep = std::make_shared<GeneratedQueryExecutionPlan>();
     qep->setDispatcher(dispatcher);
+    qep->setBufferManager(bufferManager);
     compilePipelineStages(qep, codeGenerator, context);
     return qep;
 }
@@ -41,7 +42,7 @@ void QueryCompiler::compilePipelineStages(QueryExecutionPlanPtr queryExecutionPl
     }
     auto executablePipeline = codeGenerator->compile(CompilerArgs(), context->code);
     if (context->hasWindow()) {
-        auto windowHandler = createWindowHandler(context->getWindow(), queryExecutionPlan->getDispatcher());
+        auto windowHandler = createWindowHandler(context->getWindow(), queryExecutionPlan->getDispatcher(), queryExecutionPlan->getBufferManager());
         queryExecutionPlan->appendsPipelineStage(createPipelineStage(queryExecutionPlan->numberOfPipelineStages(),
                                                                      queryExecutionPlan,
                                                                      executablePipeline,

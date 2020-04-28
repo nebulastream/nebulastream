@@ -85,7 +85,9 @@ TEST_F(WindowManagerTest, check_slice)
 TEST_F(WindowManagerTest, window_trigger) {
 
     DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
-    dispatcher->startBufferManager();
+    dispatcher->startThreadPool();
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
+
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
@@ -94,7 +96,7 @@ TEST_F(WindowManagerTest, window_trigger) {
     auto windowDef = std::make_shared<WindowDefinition>(
         WindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::EventTime, Milliseconds(10))));
 
-    auto w = WindowHandler(windowDef, dispatcher);
+    auto w = WindowHandler(windowDef, dispatcher, bufferManager);
     w.setup(nullptr, 0);
 
     auto windowState = (StateVariable<int64_t, WindowSliceStore<int64_t>*>*)w.getWindowState();
@@ -118,7 +120,7 @@ TEST_F(WindowManagerTest, window_trigger) {
 
     ASSERT_EQ(aggregates[sliceIndex], 1);
 
-    auto buf = dispatcher->getBufferManager()->getBufferBlocking();
+    auto buf = bufferManager->getBufferBlocking();
     w.aggregateWindows<int64_t, int64_t>(store, windowDef, buf);
 
     size_t tupleCnt = buf.getNumberOfTuples();

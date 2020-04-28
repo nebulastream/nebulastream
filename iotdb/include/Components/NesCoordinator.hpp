@@ -1,9 +1,9 @@
 #ifndef INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #define INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #include "REST/RestServer.hpp"
-#include <string>
-#include <Actors/WorkerActor.hpp>
 #include <Actors/Configurations/WorkerActorConfig.hpp>
+#include <Actors/WorkerActor.hpp>
+#include <string>
 
 namespace NES {
 
@@ -54,7 +54,6 @@ class NesCoordinator {
      */
     bool undeployQuery(const string& queryId);
 
-
     /**
      * @brief method to overwrite the default config for the rest server
      * @param host as string
@@ -90,5 +89,5 @@ class NesCoordinator {
 };
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
 
-}
+} // namespace NES
 #endif /* INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_ */

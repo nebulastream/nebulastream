@@ -88,11 +88,13 @@ InputQuery InputQuery::from(Stream& stream) {
 
     OperatorPtr op;
 
+    BufferManagerPtr bPtr;
+    DispatcherPtr dPtr;
     if (catalogEntry.size() == 0) {
         NES_WARNING(
                 "InputQuery::from stream does not exists this should only be used by tests " << stream.getName())
         op = createSourceOperator(
-                createDefaultDataSourceWithSchemaForOneBuffer(stream.getSchema()));
+                createDefaultDataSourceWithSchemaForOneBuffer(stream.getSchema(), bPtr, dPtr));
     } else {
 
         std::string name = catalogEntry[0]->getPhysicalName();
@@ -110,25 +112,26 @@ InputQuery InputQuery::from(Stream& stream) {
             if (numBuffers == 1) {
                 NES_DEBUG("InputQuery::from create default source for one buffer")
                 op = createSourceOperator(
-                        createDefaultDataSourceWithSchemaForOneBuffer(stream.getSchema()));
+                        createDefaultDataSourceWithSchemaForOneBuffer(stream.getSchema(), bPtr, dPtr));
             } else {
                 NES_DEBUG(
                         "InputQuery::from create default source for " << numBuffers << " buffers")
                 op = createSourceOperator(
                         createDefaultDataSourceWithSchemaForVarBuffers(stream.getSchema(),
+                            bPtr, dPtr,
                                                                        numBuffers,
                                                                        frequency));
             }
         } else if (type == "CSVSource") {
             NES_DEBUG("InputQuery::from create CSV source for " << conf << " buffers")
             op = createSourceOperator(
-                    createCSVFileSource(stream.getSchema(), /**fileName*/conf, ",",
+                    createCSVFileSource(stream.getSchema(), bPtr, dPtr,/**fileName*/conf, ",",
                             /**numberOfBufferToProduce*/numBuffers,
                                         frequency));
         } else if (type == "SenseSource") {
             NES_DEBUG("InputQuery::from create Sense source for udfs " << conf)
             op = createSourceOperator(
-                    createSenseSource(stream.getSchema(), /**udfs*/conf));
+                    createSenseSource(stream.getSchema(), bPtr, dPtr, /**udfs*/conf));
         } else {
             NES_DEBUG("InputQuery::from source type " << type << " not supported")
             NES_FATAL_ERROR("type not supported")

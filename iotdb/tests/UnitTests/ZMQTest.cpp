@@ -29,6 +29,8 @@ using namespace NES;
 class ZMQTest : public testing::Test {
 public:
     DispatcherPtr dispatcher;
+    BufferManagerPtr bufferManager;
+
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES_DEBUG("Setup ZMQTest test class.");
@@ -49,7 +51,8 @@ public:
         test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE",
                                                                           UINT32);
         dispatcher = std::make_shared<Dispatcher>();
-        dispatcher->startBufferManager(1024, 1024);
+        dispatcher->startThreadPool();
+        bufferManager = std::make_shared<BufferManager>(1024, 1024);
     }
 
     /* Will be called before a test is executed. */
@@ -76,15 +79,15 @@ TEST_F(ZMQTest, ZmqSourceReceiveData) {
     // Create ZeroMQ Data Source.
     auto test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE",
                                                                            UINT32);
-    auto zmq_source = createZmqSource(test_schema, LOCAL_HOST, LOCAL_PORT);
+    auto zmq_source = createZmqSource(test_schema, bufferManager, dispatcher, LOCAL_HOST, LOCAL_PORT);
     std::cout << zmq_source->toString() << std::endl;
-    // buffMgnr->resizeFixedBufferSize(test_data_size);
+    // bufferManager->resizeFixedBufferSize(test_data_size);
 
     // Start thread for receiving the data.
     bool receiving_finished = false;
     auto receiving_thread = std::thread([&]() {
         // Receive data.
-        auto tuple_buffer = zmq_source->receiveData(dispatcher);
+        auto tuple_buffer = zmq_source->receiveData();
 
         // Test received data.
         size_t sum = 0;
@@ -95,7 +98,7 @@ TEST_F(ZMQTest, ZmqSourceReceiveData) {
         size_t expected = 400;
         EXPECT_EQ(sum, expected);
 
-        // buffMgnr->releaseFixedSizeBuffer(tuple_buffer);
+        // bufferManager->releaseFixedSizeBuffer(tuple_buffer);
         receiving_finished = true;
     });
     size_t tupCnt = 8;
@@ -134,7 +137,7 @@ TEST_F(ZMQTest, ZmqSinkSendData) {
   // Put test data into a TupleBuffer vector.
   void *buffer = new char[test_data_size];
   //  auto tuple_buffer = TupleBuffer(buffer, test_data_size, sizeof(uint32_t) * 2, test_data.size() / 2);
-  auto tuple_buffer = buffMgnr->getFixedSizeBuffer();
+  auto tuple_buffer = bufferManager->getFixedSizeBuffer();
 
   std::memcpy(tuple_buffer->getBuffer(), &test_data, test_data_size);
   auto tuple_buffer_vec = std::vector<TupleBufferPtr>();
@@ -187,7 +190,7 @@ TEST_F(ZMQTest, ZmqSinkToSource) {
   // Put test data into a TupleBuffer vector.
   void *buffer = new char[test_data_size];
   //  auto tuple_buffer = TupleBuffer(buffer, test_data_size, sizeof(uint32_t) * 2, test_data.size() / 2);
-  auto tuple_buffer = buffMgnr->getFixedSizeBuffer();
+  auto tuple_buffer = bufferManager->getFixedSizeBuffer();
 
   std::memcpy(tuple_buffer->getBuffer(), &test_data, test_data_size);
   auto tuple_buffer_vec = std::vector<TupleBufferPtr>();
@@ -214,7 +217,7 @@ TEST_F(ZMQTest, ZmqSinkToSource) {
       size_t expected = 100 - i;
       EXPECT_EQ(*(tuple++), expected);
     }
-   // buffMgnr->releaseFixedSizeBuffer(new_data);
+   // bufferManager->releaseFixedSizeBuffer(new_data);
     receiving_finished = true;
   });
 

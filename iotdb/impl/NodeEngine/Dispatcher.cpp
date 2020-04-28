@@ -7,10 +7,6 @@
 namespace NES {
 using std::string;
 
-static constexpr size_t DEFAULT_BUFFER_SIZE = 4096;
-static constexpr size_t DEFAULT_NUM_BUFFERS = 1024;
-
-
 Dispatcher::Dispatcher()
     : task_queue(),
       sourceIdToQueryMap(),
@@ -24,27 +20,6 @@ Dispatcher::Dispatcher()
     NES_DEBUG("Init Dispatcher::Dispatcher()")
 }
 
-bool Dispatcher::startBufferManager()
-{
-    NES_DEBUG("startBufferManager: setup buffer manager")
-    buffMgnr = std::make_shared<BufferManager>(DEFAULT_BUFFER_SIZE, DEFAULT_NUM_BUFFERS);
-    return buffMgnr->isReady();
-}
-
-bool Dispatcher::startBufferManager(size_t bufferSize, size_t numBuffers)
-{
-    NES_DEBUG("startBufferManager: setup buffer manager")
-    buffMgnr = std::make_shared<BufferManager>(bufferSize, numBuffers);
-    return buffMgnr->isReady();
-}
-
-bool Dispatcher::stopBufferManager()
-{
-    //TODO: what to do here?
-    NES_DEBUG("Dispatcher::stopBufferManager: stop")
-    return true;
-}
-
 bool Dispatcher::stopThreadPool()
 {
     NES_DEBUG("Dispatcher::stopThreadPool: stop")
@@ -56,11 +31,6 @@ bool Dispatcher::startThreadPool()
     NES_DEBUG("startBufferManager: setup buffer manager")
     threadPool = std::make_shared<ThreadPool>(shared_from_this());
     return threadPool->start();
-}
-
-bool Dispatcher::isBufferManagerReady()
-{
-    return buffMgnr->isReady();
 }
 
 Dispatcher::~Dispatcher() {
@@ -123,7 +93,7 @@ bool Dispatcher::startQuery(QueryExecutionPlanPtr qep) {
     for (const auto& source : sources) {
         NES_DEBUG("Dispatcher: start source " << source << " str=" << source->toString())
         //TODO: in the current setup we cannot distingush between a failure in starting the source and a already runing source
-        if (!source->start(shared_from_this())) {
+        if (!source->start()) {
             NES_WARNING("Dispatcher: source " << source << " could not started as it is already running");
         } else{
             NES_DEBUG("Dispatcher: source " << source << " started successfully");
@@ -331,5 +301,6 @@ void Dispatcher::printQEPStatistics(const QueryExecutionPlanPtr qep) {
         NES_INFO("\t Generated Tuples=" << sink->getNumberOfSentTuples())
     }
 }
+
 
 }  // namespace NES
