@@ -5,9 +5,10 @@
 #include <Topology/NESTopologyManager.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
 #include <Nodes/Operators/QueryPlan.hpp>
-#include <Nodes/Node.hpp>
+#include <Nodes/Util/Iterators/DepthFirstNodeIterator.hpp>
 #include <Nodes/Util/ConsoleDumpHandler.hpp>
 
 using namespace NES;
