@@ -13,10 +13,13 @@ class ArithmeticalExpressionNode : public BinaryExpressionNode {
      * @param schema the current schema.
      */
     void inferStamp(SchemaPtr schema) override;
+
+    bool equal(NodePtr rhs) const override;
+    const std::string toString() const override;
+
   protected:
     ArithmeticalExpressionNode(DataTypePtr stamp);
     ~ArithmeticalExpressionNode() = default;
-
 };
 
 }

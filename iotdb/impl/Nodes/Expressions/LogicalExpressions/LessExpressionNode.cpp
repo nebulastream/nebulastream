@@ -11,8 +11,12 @@ ExpressionNodePtr LessExpressionNode::create(const ExpressionNodePtr left,
 }
 
 bool LessExpressionNode::equal(const NodePtr rhs) const {
-    return false;
+    if(this->isIdentical(rhs)) {
+        return true;
+    }
+    return rhs->instanceOf<LessExpressionNode>();
 }
+
 const std::string LessExpressionNode::toString() const {
     return "LessNode("+stamp->toString()+")";
 }

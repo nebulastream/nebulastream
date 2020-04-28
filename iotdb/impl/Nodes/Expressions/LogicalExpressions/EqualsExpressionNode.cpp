@@ -10,8 +10,12 @@ ExpressionNodePtr EqualsExpressionNode::create(const ExpressionNodePtr left, con
 EqualsExpressionNode::EqualsExpressionNode() : LogicalBinaryExpressionNode() {}
 
 bool EqualsExpressionNode::equal(const NodePtr rhs) const {
-    return false;
+    if (this->isIdentical(rhs)) {
+        return true;
+    }
+    return rhs->instanceOf<EqualsExpressionNode>();
 }
+
 const std::string EqualsExpressionNode::toString() const {
     return "EqualsNode("+stamp->toString()+")";
 }

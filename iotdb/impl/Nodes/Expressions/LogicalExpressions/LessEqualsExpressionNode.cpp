@@ -11,7 +11,11 @@ ExpressionNodePtr LessEqualsExpressionNode::create(const ExpressionNodePtr left,
 }
 
 bool LessEqualsExpressionNode::equal(const NodePtr rhs) const {
-    return false;
+    if(this->isIdentical(rhs)){
+        return true;
+    }
+
+    return rhs->instanceOf<LessEqualsExpressionNode>();
 }
 const std::string LessEqualsExpressionNode::toString() const {
     return "LessThenNode("+stamp->toString()+")";

@@ -69,25 +69,31 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMap) {
         .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    const OperatorNodePtr sinkOperator = queryPlan->getRootOperator();
-    const NodePtr filterOperator = sinkOperator->getChildren()[0];
-    const NodePtr mapOperator = filterOperator->getChildren()[0];
-    const NodePtr srcOperator = mapOperator->getChildren()[0];
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperator());
+    auto itr = queryPlanNodeIterator.begin();
 
-    std::stringstream expectedOutput;
-    expectedOutput << std::string(0, ' ') << sinkOperator->toString() << std::endl;
-    expectedOutput << std::string(2, ' ') << mapOperator->toString() << std::endl;
-    expectedOutput << std::string(4, ' ') << filterOperator->toString() << std::endl;
-    expectedOutput << std::string(6, ' ') << srcOperator->toString() << std::endl;
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperator = (*itr);
+    ++itr;
+    const NodePtr mapOperator = (*itr);
+    ++itr;
+    const NodePtr srcOperator = (*itr);
 
     // Execute
     FilterPushDownRule filterPushDownRule;
     const QueryPlanPtr updatedPlan = filterPushDownRule.apply(queryPlan);
 
     // Validate
-    std::stringstream actualOutput;
-    ConsoleDumpHandler::create()->dump(updatedPlan->getRootOperator(), actualOutput);
-    EXPECT_EQ(actualOutput.str(), expectedOutput.str());
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperator());
+    itr = queryPlanNodeIterator.begin();
+    EXPECT_TRUE(sinkOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(mapOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMapAndBeforeFilter) {
@@ -102,27 +108,35 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMapAndBeforeFilter) {
         .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    const OperatorNodePtr sinkOperator = queryPlan->getRootOperator();
-    const NodePtr filterOperator1 = sinkOperator->getChildren()[0];
-    const NodePtr mapOperator = filterOperator1->getChildren()[0];
-    const NodePtr filterOperator2 = mapOperator->getChildren()[0];
-    const NodePtr srcOperator = filterOperator2->getChildren()[0];
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperator());
+    auto itr = queryPlanNodeIterator.begin();
 
-    std::stringstream expectedOutput;
-    expectedOutput << std::string(0, ' ') << sinkOperator->toString() << std::endl;
-    expectedOutput << std::string(2, ' ') << mapOperator->toString() << std::endl;
-    expectedOutput << std::string(4, ' ') << filterOperator1->toString() << std::endl;
-    expectedOutput << std::string(6, ' ') << filterOperator2->toString() << std::endl;
-    expectedOutput << std::string(8, ' ') << srcOperator->toString() << std::endl;
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperator1 = (*itr);
+    ++itr;
+    const NodePtr mapOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperator2 = (*itr);
+    ++itr;
+    const NodePtr srcOperator = (*itr);
 
     // Execute
     FilterPushDownRule filterPushDownRule;
     const QueryPlanPtr updatedPlan = filterPushDownRule.apply(queryPlan);
 
     // Validate
-    std::stringstream actualOutput;
-    ConsoleDumpHandler::create()->dump(updatedPlan->getRootOperator(), actualOutput);
-    EXPECT_EQ(actualOutput.str(), expectedOutput.str());
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperator());
+    itr = queryPlanNodeIterator.begin();
+    EXPECT_TRUE(sinkOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(mapOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperator1->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperator2->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingFiltersBelowAllMapOperators) {
@@ -138,29 +152,39 @@ TEST_F(FilterPushDownRuleTest, testPushingFiltersBelowAllMapOperators) {
         .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    const OperatorNodePtr sinkOperator = queryPlan->getRootOperator();
-    const NodePtr filterOperator1 = sinkOperator->getChildren()[0];
-    const NodePtr mapOperator1 = filterOperator1->getChildren()[0];
-    const NodePtr filterOperator2 = mapOperator1->getChildren()[0];
-    const NodePtr mapOperator2 = filterOperator2->getChildren()[0];
-    const NodePtr srcOperator = mapOperator2->getChildren()[0];
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperator());
+    auto itr = queryPlanNodeIterator.begin();
 
-    std::stringstream expectedOutput;
-    expectedOutput << std::string(0, ' ') << sinkOperator->toString() << std::endl;
-    expectedOutput << std::string(2, ' ') << mapOperator1->toString() << std::endl;
-    expectedOutput << std::string(4, ' ') << mapOperator2->toString() << std::endl;
-    expectedOutput << std::string(6, ' ') << filterOperator1->toString() << std::endl;
-    expectedOutput << std::string(8, ' ') << filterOperator2->toString() << std::endl;
-    expectedOutput << std::string(10, ' ') << srcOperator->toString() << std::endl;
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperator1 = (*itr);
+    ++itr;
+    const NodePtr mapOperator1 = (*itr);
+    ++itr;
+    const NodePtr filterOperator2 = (*itr);
+    ++itr;
+    const NodePtr mapOperator2 = (*itr);
+    ++itr;
+    const NodePtr srcOperator = (*itr);
 
     // Execute
     FilterPushDownRule filterPushDownRule;
     const QueryPlanPtr updatedPlan = filterPushDownRule.apply(queryPlan);
 
     // Validate
-    std::stringstream actualOutput;
-    ConsoleDumpHandler::create()->dump(updatedPlan->getRootOperator(), actualOutput);
-    EXPECT_EQ(actualOutput.str(), expectedOutput.str());
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperator());
+    itr = queryPlanNodeIterator.begin();
+    EXPECT_TRUE(sinkOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(mapOperator1->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(mapOperator2->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperator1->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperator2->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingTwoFilterBelowMap) {
@@ -175,27 +199,35 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFilterBelowMap) {
         .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    const OperatorNodePtr sinkOperator = queryPlan->getRootOperator();
-    const NodePtr filterOperator1 = sinkOperator->getChildren()[0];
-    const NodePtr filterOperator2 = filterOperator1->getChildren()[0];
-    const NodePtr mapOperator = filterOperator2->getChildren()[0];
-    const NodePtr srcOperator = mapOperator->getChildren()[0];
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperator());
+    auto itr = queryPlanNodeIterator.begin();
 
-    std::stringstream expectedOutput;
-    expectedOutput << std::string(0, ' ') << sinkOperator->toString() << std::endl;
-    expectedOutput << std::string(2, ' ') << mapOperator->toString() << std::endl;
-    expectedOutput << std::string(4, ' ') << filterOperator1->toString() << std::endl;
-    expectedOutput << std::string(6, ' ') << filterOperator2->toString() << std::endl;
-    expectedOutput << std::string(8, ' ') << srcOperator->toString() << std::endl;
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperator1 = (*itr);
+    ++itr;
+    const NodePtr filterOperator2 = (*itr);
+    ++itr;
+    const NodePtr mapOperator = (*itr);
+    ++itr;
+    const NodePtr srcOperator = (*itr);
 
     // Execute
     FilterPushDownRule filterPushDownRule;
     const QueryPlanPtr updatedPlan = filterPushDownRule.apply(queryPlan);
 
     // Validate
-    std::stringstream actualOutput;
-    ConsoleDumpHandler::create()->dump(updatedPlan->getRootOperator(), actualOutput);
-    EXPECT_EQ(actualOutput.str(), expectedOutput.str());
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperator());
+    itr = queryPlanNodeIterator.begin();
+    EXPECT_TRUE(sinkOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(mapOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperator1->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperator2->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
 TEST_F(FilterPushDownRuleTest, testPushingFilterAlreadyAtBottom) {
@@ -209,23 +241,29 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterAlreadyAtBottom) {
         .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
-    const OperatorNodePtr sinkOperator = queryPlan->getRootOperator();
-    const NodePtr mapOperator = sinkOperator->getChildren()[0];
-    const NodePtr filterOperator = mapOperator->getChildren()[0];
-    const NodePtr srcOperator = filterOperator->getChildren()[0];
+    DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperator());
+    auto itr = queryPlanNodeIterator.begin();
 
-    std::stringstream expectedOutput;
-    expectedOutput << std::string(0, ' ') << sinkOperator->toString() << std::endl;
-    expectedOutput << std::string(2, ' ') << mapOperator->toString() << std::endl;
-    expectedOutput << std::string(4, ' ') << filterOperator->toString() << std::endl;
-    expectedOutput << std::string(6, ' ') << srcOperator->toString() << std::endl;
+    const NodePtr sinkOperator = (*itr);
+    ++itr;
+    const NodePtr mapOperator = (*itr);
+    ++itr;
+    const NodePtr filterOperator2 = (*itr);
+    ++itr;
+    const NodePtr srcOperator = (*itr);
 
     // Execute
     FilterPushDownRule filterPushDownRule;
     const QueryPlanPtr updatedPlan = filterPushDownRule.apply(queryPlan);
 
     // Validate
-    std::stringstream actualOutput;
-    ConsoleDumpHandler::create()->dump(updatedPlan->getRootOperator(), actualOutput);
-    EXPECT_EQ(actualOutput.str(), expectedOutput.str());
+    DepthFirstNodeIterator updatedQueryPlanNodeIterator(updatedPlan->getRootOperator());
+    itr = queryPlanNodeIterator.begin();
+    EXPECT_TRUE(sinkOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(mapOperator->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(filterOperator2->equal((*itr)));
+    ++itr;
+    EXPECT_TRUE(srcOperator->equal((*itr)));
 }

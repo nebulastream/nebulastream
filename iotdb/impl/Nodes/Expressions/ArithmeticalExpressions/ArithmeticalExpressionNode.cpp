@@ -39,4 +39,17 @@ void ArithmeticalExpressionNode::inferStamp(SchemaPtr schema) {
     NES_DEBUG("ArithmeticalExpressionNode: we assigned the following stamp: " << toString());
 }
 
+bool ArithmeticalExpressionNode::equal(NodePtr rhs) const {
+    if (rhs->instanceOf<ArithmeticalExpressionNode>()) {
+        auto otherAddNode = rhs->as<ArithmeticalExpressionNode>();
+        return getLeft()->equal(otherAddNode->getLeft()) &&
+            getRight()->equal(otherAddNode->getRight());
+    }
+    return false;
+}
+
+const std::string ArithmeticalExpressionNode::toString() const {
+    return "ArithmeticalExpression()";
+}
+
 }
