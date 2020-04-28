@@ -24,12 +24,11 @@ class FilterPushDownRule : public BaseRewriteRule {
 
   public:
     QueryPlanPtr apply(QueryPlanPtr queryPlanPtr) override;
-    RewriteRuleType getType() override;
 
   private:
 
     /**
-     * @brief //FIXME: Define once impl done
+     * @brief Push down given filter operator as close to the source operator as possible
      * @param filterOperator
      */
     void pushDownFilter(FilterLogicalOperatorNodePtr filterOperator);

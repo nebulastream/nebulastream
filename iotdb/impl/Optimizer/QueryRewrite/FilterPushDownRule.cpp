@@ -33,10 +33,6 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlanPtr) {
     return queryPlanPtr;
 }
 
-RewriteRuleType FilterPushDownRule::getType() {
-    return FILTER_PUSH_DOWN;
-}
-
 void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOperator) {
 
     NES_INFO("FilterPushDownRule: Get children of current filter")
