@@ -46,7 +46,7 @@ class DataSource {
     /**
      * @brief method to start the source.
      * 1.) check if bool running is true, if true return if not start source
-     * 2.) start new thread with running_routine
+     * 2.) start new thread with runningRoutine
      */
     bool start();
 
@@ -64,7 +64,7 @@ class DataSource {
      * 3.) If not call receiveData in a blocking fashion
      * 4.) If call returns and a buffer is there to process, add a task to the dispatcher
      */
-    void running_routine();
+    void runningRoutine();
 
     /**
      * @brief virtual function to receive a buffer

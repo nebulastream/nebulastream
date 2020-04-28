@@ -1,23 +1,21 @@
 #ifndef INCLUDE_DISPATCHER_H_
 #define INCLUDE_DISPATCHER_H_
 
+#include <chrono>
 #include <condition_variable>
+#include <deque>
 #include <map>
 #include <mutex>
 #include <thread>
-#include <deque>
-#include <chrono>
 #include <unordered_set>
 
-#include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/ThreadPool.hpp>
+#include <QueryCompiler/QueryExecutionPlan.hpp>
 
 #include <NodeEngine/Task.hpp>
 #include <SourceSink/DataSource.hpp>
 #include <Windows/WindowHandler.hpp>
-
-
 
 namespace NES {
 
@@ -34,7 +32,6 @@ class TupleBuffer;
  */
 class Dispatcher : public std::enable_shared_from_this<Dispatcher> {
   public:
-
     /**
      * @brief Default constrcutor
      */
@@ -78,9 +75,7 @@ class Dispatcher : public std::enable_shared_from_this<Dispatcher> {
      * @param Pointer to the tuple buffer containing the data
      * @param Pointer to the window which generated the tuplebuffer
      */
-    void addWorkForNextPipeline(TupleBuffer& buffer,
-                                QueryExecutionPlanPtr queryExecutionPlan,
-                                uint32_t pipelineId);
+    void addWorkForNextPipeline(TupleBuffer& buffer, QueryExecutionPlanPtr queryExecutionPlan, uint32_t pipelineId);
 
     /**
      * @brief finalize task execution by:
@@ -108,18 +103,16 @@ class Dispatcher : public std::enable_shared_from_this<Dispatcher> {
     bool startQuery(QueryExecutionPlanPtr qep);
 
     /**
-    * @brief method to start a query
-    * @param qep of the query to start
-    * @return bool indicating success
-    */
+     * @brief method to start a query
+     * @param qep of the query to start
+     * @return bool indicating success
+     */
     bool stopQuery(QueryExecutionPlanPtr qep);
 
     /**
      * @brief notify all waiting threads in getWork() to wake up and try again
      */
-    void unblockThreads() {
-        cv.notify_all();
-    }
+    void unblockThreads() { cv.notify_all(); }
 
     /**
      * @brief reset dispatcher to intial state
@@ -139,10 +132,9 @@ class Dispatcher : public std::enable_shared_from_this<Dispatcher> {
     bool stopThreadPool();
 
     ~Dispatcher();
+
   private:
     friend class ThreadPool;
-    friend class NodeEngine;
-    friend class QueryExecutionPlan;
 
     Dispatcher(const Dispatcher&);
     Dispatcher& operator=(const Dispatcher&);
@@ -167,9 +159,9 @@ class Dispatcher : public std::enable_shared_from_this<Dispatcher> {
     std::atomic<size_t> processedTuple;
     std::atomic<size_t> processedBuffers;
 };
+
 typedef std::shared_ptr<Dispatcher> DispatcherPtr;
 
-
-}
+} // namespace NES
 
 #endif /* INCLUDE_DISPATCHER_H_ */

@@ -3,12 +3,12 @@
 
 #include <atomic>
 #include <condition_variable>
+#include <deque>
 #include <map>
 #include <memory>
 #include <mutex>
-#include <deque>
-#include <vector>
 #include <optional>
+#include <vector>
 
 namespace NES {
 namespace detail {
@@ -19,7 +19,8 @@ class TupleBuffer;
 /**
  * @brief The BufferManager is responsible for:
  * 1. Pooled Buffers: preallocated fixed-size buffers of memory that must be reference counted
- * 2. Unpooled Buffers: variable sized buffers that are allocated on-the-fly. They are also subject to reference counting.
+ * 2. Unpooled Buffers: variable sized buffers that are allocated on-the-fly. They are also subject to reference
+ * counting.
  *
  * The reference counting mechanism of the TupleBuffer is explained in TupleBuffer.hpp
  *
@@ -38,6 +39,7 @@ class TupleBuffer;
 class BufferManager {
     friend class TupleBuffer;
     friend class detail::MemorySegment;
+
   private:
     class UnpooledBufferHolder {
       public:
@@ -53,10 +55,12 @@ class BufferManager {
 
         void markFree();
 
-        friend bool operator<(const UnpooledBufferHolder& lhs, const UnpooledBufferHolder& rhs) {
+        friend bool operator<(const UnpooledBufferHolder& lhs, const UnpooledBufferHolder& rhs)
+        {
             return lhs.size < rhs.size;
         }
     };
+
   public:
     BufferManager();
 
@@ -87,14 +91,16 @@ class BufferManager {
     std::optional<TupleBuffer> getBufferNoBlocking();
 
     /**
-     * @brief Returns a new Buffer wrapped in an optional or an invalid option if there is no buffer available within timeout_ms.
+     * @brief Returns a new Buffer wrapped in an optional or an invalid option if there is no buffer available within
+     * timeout_ms.
      * @param timeout_ms the amount of time to wait for a new buffer to be retuned
      * @return a new buffer
      */
     std::optional<TupleBuffer> getBufferTimeout(std::chrono::milliseconds timeout_ms);
 
     /**
-     * @brief Returns an unpooled buffer of size bufferSize wrapped in an optional or an invalid option if an error occurs.
+     * @brief Returns an unpooled buffer of size bufferSize wrapped in an optional or an invalid option if an error
+     * occurs.
      * @param bufferSize
      * @return a new buffer
      */
@@ -122,9 +128,7 @@ class BufferManager {
 
     void printStatistics();
 
-    bool isReady() const {
-        return isConfigured;
-    }
+    bool isReady() const { return isConfigured; }
 
   private:
     void recyclePooledBuffer(detail::MemorySegment* buffer);
@@ -148,5 +152,5 @@ class BufferManager {
 
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 
-}
+} // namespace NES
 #endif
