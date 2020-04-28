@@ -1,11 +1,10 @@
 #ifndef NESPLACEMENTOPTIMIZER_HPP
 #define NESPLACEMENTOPTIMIZER_HPP
 
-#include "Optimizer/NESExecutionPlan.hpp"
-#include <Catalogs/StreamCatalog.hpp>
-#include <Topology/NESTopologyManager.hpp>
-#include <Topology/NESTopologyPlan.hpp>
 #include <iostream>
+#include <memory>
+#include <map>
+#include <vector>
 
 namespace NES {
 
@@ -29,11 +28,32 @@ static std::map<std::string, NESPlacementStrategyType> stringToPlacementStrategy
     {"HighAvailability", HighAvailability},
 };
 
+class NESExecutionPlan;
+typedef std::shared_ptr<NESExecutionPlan> NESExecutionPlanPtr;
+
+class ExecutionNode;
+typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
+
+class Query;
+typedef std::shared_ptr<Query> QueryPtr;
+
+class NESTopologyPlan;
+typedef std::shared_ptr<NESTopologyPlan> NESTopologyPlanPtr;
+
+class Schema;
+typedef std::shared_ptr<Schema> SchemaPtr;
+
+class Operator;
+typedef std::shared_ptr<Operator> OperatorPtr;
+
+class NESTopologyEntry;
+typedef std::shared_ptr<NESTopologyEntry> NESTopologyEntryPtr;
+
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
  */
 class BasePlacementStrategy {
-
+    
   private:
     const char* NO_OPERATOR = "NO-OPERATOR";
 
@@ -46,8 +66,7 @@ class BasePlacementStrategy {
      * @param nesTopologyPlan
      * @return
      */
-    virtual NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery,
-                                                        NESTopologyPlanPtr nesTopologyPlan) = 0;
+    virtual NESExecutionPlanPtr initializeExecutionPlan(QueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan) = 0;
 
     /**
      * @brief This method will add system generated zmq source and sinks for each execution node.
@@ -76,7 +95,7 @@ class BasePlacementStrategy {
      * @brief this methods takes the user specified UDFS from the sample operator and add it to all Sense Operators
      * @param inputQuery
      */
-    void setUDFSFromSampleOperatorToSenseSources(InputQueryPtr inputQuery);
+    void setUDFSFromSampleOperatorToSenseSources(QueryPtr inputQuery);
 
     /**
      * @brief Factory method returning different kind of optimizer.
@@ -105,7 +124,8 @@ class BasePlacementStrategy {
      * @param candidateNodes vector of nodes where operators could be placed
      * @param nesExecutionPlanPtr Pointer to the execution plan
      */
-    void addForwardOperators(vector<NESTopologyEntryPtr> candidateNodes, NESExecutionPlanPtr nesExecutionPlanPtr);
+    void addForwardOperators(std::vector<NESTopologyEntryPtr> candidateNodes, NESExecutionPlanPtr nesExecutionPlanPtr);
+
 };
-}// namespace NES
-#endif//NESPLACEMENTOPTIMIZER_HPP
+}
+#endif //NESPLACEMENTOPTIMIZER_HPP
