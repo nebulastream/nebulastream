@@ -9,32 +9,27 @@ using std::string;
 
 Dispatcher::Dispatcher()
     : task_queue(), sourceIdToQueryMap(), bufferMutex(), queryMutex(), workMutex(), workerHitEmptyTaskQueue(0),
-      processedTasks(0), processedTuple(0), processedBuffers(0)
-{
+      processedTasks(0), processedTuple(0), processedBuffers(0) {
     NES_DEBUG("Init Dispatcher::Dispatcher()")
 }
 
-bool Dispatcher::stopThreadPool()
-{
+bool Dispatcher::stopThreadPool() {
     NES_DEBUG("Dispatcher::stopThreadPool: stop")
     return threadPool->stop();
 }
 
-bool Dispatcher::startThreadPool()
-{
-    NES_DEBUG("startBufferManager: setup buffer manager")
+bool Dispatcher::startThreadPool() {
+    NES_DEBUG("startThreadPool: setup buffer manager")
     threadPool = std::make_shared<ThreadPool>(shared_from_this());
     return threadPool->start();
 }
 
-Dispatcher::~Dispatcher()
-{
+Dispatcher::~Dispatcher() {
     NES_DEBUG("Reset Dispatcher")
     resetDispatcher();
 }
 
-void Dispatcher::resetDispatcher()
-{
+void Dispatcher::resetDispatcher() {
     std::scoped_lock locks(queryMutex, workMutex);
     NES_DEBUG("Dispatcher: Destroy Task Queue " << task_queue.size());
     task_queue.clear();
@@ -49,14 +44,15 @@ void Dispatcher::resetDispatcher()
     NES_DEBUG("Dispatcher::resetDispatcher finished");
 }
 
-bool Dispatcher::registerQuery(QueryExecutionPlanPtr qep)
-{
+bool Dispatcher::registerQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("Dispatcher::registerQuery: query" << qep)
     std::unique_lock<std::mutex> lock(queryMutex);
 
     // test if elements already exist
     NES_DEBUG("Dispatcher: resolving sources for query " << qep)
     for (const auto& source : qep->getSources()) {
+        source->setDispatcher(shared_from_this());
+        source->setBufferManger(qep->getBufferManager());
         if (sourceIdToQueryMap.find(source->getSourceId()) != sourceIdToQueryMap.end()) {
             // source already exists, add qep to source set if not there
             if (sourceIdToQueryMap[source->getSourceId()].find(qep) ==
@@ -64,13 +60,11 @@ bool Dispatcher::registerQuery(QueryExecutionPlanPtr qep)
                 // qep not found in list, add it
                 NES_DEBUG("Dispatcher: Inserting QEP " << qep << " to Source" << source->getSourceId())
                 sourceIdToQueryMap[source->getSourceId()].insert(qep);
-            }
-            else {
+            } else {
                 NES_DEBUG("Dispatcher: Source " << source->getSourceId() << " and QEP already exist.")
                 return false;
             }
-        }
-        else {
+        } else {
             // source does not exist, add source and unordered_set containing the qep
             NES_DEBUG("Dispatcher: Source " << source->getSourceId()
                                             << " not found. Creating new element with with qep " << qep)
@@ -81,8 +75,7 @@ bool Dispatcher::registerQuery(QueryExecutionPlanPtr qep)
     return true;
 }
 
-bool Dispatcher::startQuery(QueryExecutionPlanPtr qep)
-{
+bool Dispatcher::startQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("Dispatcher::startQuery: query" << qep)
     std::unique_lock<std::mutex> lock(queryMutex);
 
@@ -90,12 +83,9 @@ bool Dispatcher::startQuery(QueryExecutionPlanPtr qep)
     auto sources = qep->getSources();
     for (const auto& source : sources) {
         NES_DEBUG("Dispatcher: start source " << source << " str=" << source->toString())
-        // TODO: in the current setup we cannot distingush between a failure in starting the source and a already runing
-        // source
         if (!source->start()) {
             NES_WARNING("Dispatcher: source " << source << " could not started as it is already running");
-        }
-        else {
+        } else {
             NES_DEBUG("Dispatcher: source " << source << " started successfully");
         }
     }
@@ -113,8 +103,7 @@ bool Dispatcher::startQuery(QueryExecutionPlanPtr qep)
     return true;
 }
 
-bool Dispatcher::deregisterQuery(QueryExecutionPlanPtr qep)
-{
+bool Dispatcher::deregisterQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("Dispatcher::deregisterAndUndeployQuery: query" << qep)
 
     std::unique_lock<std::mutex> lock(queryMutex);
@@ -148,8 +137,7 @@ bool Dispatcher::deregisterQuery(QueryExecutionPlanPtr qep)
     return succeed;
 }
 
-bool Dispatcher::stopQuery(QueryExecutionPlanPtr qep)
-{
+bool Dispatcher::stopQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("Dispatcher::stopQuery: query" << qep)
     std::unique_lock<std::mutex> lock(queryMutex);
 
@@ -161,15 +149,13 @@ bool Dispatcher::stopQuery(QueryExecutionPlanPtr qep)
         if (sourceIdToQueryMap[source->getSourceId()].size() != 1) {
             NES_WARNING("Dispatcher: could not stop source " << source << " because other qeps are using it n="
                                                              << sourceIdToQueryMap[source->getSourceId()].size())
-        }
-        else {
+        } else {
             NES_DEBUG("Dispatcher: stop source " << source << " because only " << qep << " is using it")
             bool success = source->stop();
             if (!success) {
                 NES_ERROR("Dispatcher: could not stop source " << source)
                 return false;
-            }
-            else {
+            } else {
                 NES_DEBUG("Dispatcher: source " << source << " successfully stopped")
             }
         }
@@ -190,8 +176,7 @@ bool Dispatcher::stopQuery(QueryExecutionPlanPtr qep)
     return true;
 }
 
-TaskPtr Dispatcher::getWork(std::atomic<bool>& threadPool_running)
-{
+TaskPtr Dispatcher::getWork(std::atomic<bool>& threadPool_running) {
     NES_DEBUG("Dispatcher: Dispatcher::getWork wait get lock")
     std::unique_lock<std::mutex> lock(workMutex);
     NES_DEBUG("Dispatcher:getWork wait got lock")
@@ -213,8 +198,7 @@ TaskPtr Dispatcher::getWork(std::atomic<bool>& threadPool_running)
         task = task_queue.front();
         NES_DEBUG("Dispatcher: provide task" << task.get() << " to thread (getWork())")
         task_queue.pop_front();
-    }
-    else {
+    } else {
         NES_DEBUG("Dispatcher: Thread pool was shut down while waiting");
         cleanupUnsafe();
         task = TaskPtr();
@@ -223,8 +207,7 @@ TaskPtr Dispatcher::getWork(std::atomic<bool>& threadPool_running)
     return task;
 }
 
-void Dispatcher::cleanupUnsafe()
-{
+void Dispatcher::cleanupUnsafe() {
     // Call this only if you are holding workMutex
     if (task_queue.size()) {
         NES_DEBUG("Dispatcher::cleanupUnsafe: Thread pool was shut down while waiting but data is queued.");
@@ -233,8 +216,7 @@ void Dispatcher::cleanupUnsafe()
     NES_DEBUG("Dispatcher::cleanupUnsafe: finished");
 }
 
-void Dispatcher::cleanup()
-{
+void Dispatcher::cleanup() {
     NES_DEBUG("Dispatcher::cleanup: get lock");
     std::unique_lock<std::mutex> lock(workMutex);
     NES_DEBUG("Dispatcher::cleanup: got lock");
@@ -243,8 +225,7 @@ void Dispatcher::cleanup()
 }
 
 void Dispatcher::addWorkForNextPipeline(TupleBuffer& buffer, QueryExecutionPlanPtr queryExecutionPlan,
-                                        uint32_t pipelineId)
-{
+                                        uint32_t pipelineId) {
     std::unique_lock<std::mutex> lock(workMutex);
 
     // dispatch buffer as task
@@ -255,8 +236,7 @@ void Dispatcher::addWorkForNextPipeline(TupleBuffer& buffer, QueryExecutionPlanP
     cv.notify_all();
 }
 
-void Dispatcher::addWork(const string& sourceId, TupleBuffer& buf)
-{
+void Dispatcher::addWork(const string& sourceId, TupleBuffer& buf) {
     std::unique_lock<std::mutex> lock(workMutex);
     for (const auto& qep : sourceIdToQueryMap[sourceId]) {
         // for each respective source, create new task and put it into queue
@@ -269,8 +249,7 @@ void Dispatcher::addWork(const string& sourceId, TupleBuffer& buf)
     cv.notify_all();
 }
 
-void Dispatcher::completedWork(TaskPtr task)
-{
+void Dispatcher::completedWork(TaskPtr task) {
     std::unique_lock<std::mutex> lock(workMutex); // TODO is necessary?
     NES_INFO("Complete Work for task" << task)
 
@@ -281,16 +260,14 @@ void Dispatcher::completedWork(TaskPtr task)
     task.reset();
 }
 
-void Dispatcher::printGeneralStatistics()
-{
+void Dispatcher::printGeneralStatistics() {
     NES_INFO("Dispatcher Statistics:")
     NES_INFO("\t workerHitEmptyTaskQueue =" << workerHitEmptyTaskQueue)
     NES_INFO("\t processedTasks =" << processedTasks)
     NES_INFO("\t processedTuple =" << processedTuple)
 }
 
-void Dispatcher::printQEPStatistics(const QueryExecutionPlanPtr qep)
-{
+void Dispatcher::printQEPStatistics(const QueryExecutionPlanPtr qep) {
 
     NES_INFO("Source Statistics:")
     auto sources = qep->getSources();

@@ -108,6 +108,7 @@ TEST_F(E2eRestTest, _testExecutingValidUserQueryWithPrintOutput) {
     cout << "Killing coordinator process->PID: " << coordinatorPid << endl;
     coordinatorProc.terminate();
 }
+
 TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
     cout << " start coordinator" << endl;
     std::string outputFilePath = "ValidUserQueryWithFileOutputTestResult.txt";
@@ -198,19 +199,18 @@ TEST_F(E2eRestTest, testExecutingValidUserQueryWithFileOutput) {
     cout << "Killing coordinator process->PID: " << coordinatorPid << endl;
     coordinatorProc.terminate();
 }
-
 TEST_F(E2eRestTest, _testExecutingValidUserQueryWithFileOutputWithFilter) {
     cout << " start coordinator" << endl;
     std::string outputFilePath = "UserQueryWithFileOutputWithFilterTestResult.txt";
     remove(outputFilePath.c_str());
 
-    string path = "./nesCoordinator --actor_port=12346";
+    string path = "./nesCoordinator --actor_port=12267";
     bp::child coordinatorProc(path.c_str());
 
     cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
     sleep(2);
 
-    string path2 = "./nesWorker --actor_port=12346";
+    string path2 = "./nesWorker --actor_port=12267";
     bp::child workerProc(path2.c_str());
     cout << "started worker with pid = " << workerProc.id() << endl;
     size_t coordinatorPid = coordinatorProc.id();
@@ -270,13 +270,13 @@ TEST_F(E2eRestTest, _testExecutingValidUserQueryWithFileOutputTwoWorker) {
         "ValidUserQueryWithFileOutputTwoWorkerTestResult.txt";
     remove(outputFilePath.c_str());
 
-    string cmdCoord = "./nesCoordinator --actor_port=12346";
+    string cmdCoord = "./nesCoordinator --actor_port=12348";
     bp::child coordinatorProc(cmdCoord.c_str());
 
     cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
     sleep(2);
 
-    string cmdWrk = "./nesWorker --actor_port=12346";
+    string cmdWrk = "./nesWorker --actor_port=12348";
     bp::child workerProc1(cmdWrk.c_str());
     cout << "started worker 1 with pid = " << workerProc1.id() << endl;
 
@@ -379,14 +379,14 @@ TEST_F(E2eRestTest, _testExecutingValidUserQueryWithFileOutputAndRegisterPhyStre
         "ValidUserQueryWithFileOutputAndRegisterPhyStreamTestResult.txt";
     remove(outputFilePath.c_str());
 
-    string path = "./nesCoordinator --actor_port=12346";
+    string path = "./nesCoordinator --actor_port=12342";
     bp::child coordinatorProc(path.c_str());
 
     cout << "started coordinator with pid = " << coordinatorProc.id() << endl;
     sleep(2);
 
     string path2 =
-        "./nesWorker --actor_port=12346 --sourceType=DefaultSource --numberOfBuffersToProduce=2 --physicalStreamName=test_stream --logicalStreamName=default_logical";
+        "./nesWorker --actor_port=12342 --sourceType=DefaultSource --numberOfBuffersToProduce=2 --physicalStreamName=test_stream --logicalStreamName=default_logical";
     bp::child workerProc(path2.c_str());
     cout << "started worker with pid = " << workerProc.id() << endl;
     size_t coordinatorPid = coordinatorProc.id();

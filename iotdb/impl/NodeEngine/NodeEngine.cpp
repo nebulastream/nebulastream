@@ -45,7 +45,6 @@ NodeEngine::~NodeEngine() {
 
 bool NodeEngine::deployQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("NodeEngine: deployQuery query " << qep)
-
     bool successRegister = registerQuery(qep);
     if (!successRegister) {
         NES_ERROR("NodeEngine::deployQuery: failed to register query")
@@ -65,6 +64,7 @@ bool NodeEngine::deployQuery(QueryExecutionPlanPtr qep) {
 
 bool NodeEngine::registerQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("NodeEngine: registerQuery query " << qep)
+    qep->setBufferManager(bufferManager);
 
     if (queryStatusMap.find(qep) == queryStatusMap.end()) {
         if (dispatcher->registerQuery(qep)) {
@@ -156,19 +156,17 @@ DispatcherPtr NodeEngine::getDispatcher() {
     return dispatcher;
 }
 
-
-
 bool NodeEngine::start() {
-    NES_DEBUG("NodeEngine:start reset dispatcher")
-    dispatcher->resetDispatcher();
-
     NES_DEBUG("NodeEngine: start thread pool")
     bool successTp = startDispatcher();
     NES_DEBUG("NodeEngine: start thread pool success=" << successTp)
 
-    NES_DEBUG("NodeEngine: start buffer manager")
-    bool successBm = startBufferManager();
-    NES_DEBUG("NodeEngine: start buffer manager success=" << successBm)
+    NES_DEBUG("NodeEngine:start reset dispatcher")
+    dispatcher->resetDispatcher();
+
+    NES_DEBUG("NodeEngine: create buffer manager")
+    bool successBm = createBufferManager();
+    NES_DEBUG("NodeEngine: create buffer manager success=" << successBm)
 
     return successTp && successBm;
 }
@@ -177,10 +175,8 @@ bool NodeEngine::stop() {
     //TODO: add check if still queries are running
     if (!stoppedEngine) {
         NES_DEBUG("NodeEngine:stop stop NodeEngine, undeploy " << queryStatusMap.size() << " queries");
-        for(auto entry : queryStatusMap)
-        {
-            if(entry.second == NodeEngineQueryStatus::started && !forceStop)
-            {
+        for (auto entry : queryStatusMap) {
+            if (entry.second == NodeEngineQueryStatus::started && !forceStop) {
                 NES_ERROR("NodeEngine::stop: cannot stop as query " << entry.first << " still running")
                 return false;
             }
@@ -191,7 +187,6 @@ bool NodeEngine::stop() {
                        [](std::pair<QueryExecutionPlanPtr, NodeEngineQueryStatus> const& dev) {
                          return dev.first;
                        });
-
 
         for (QueryExecutionPlanPtr qep : copyOfVec) {
             NES_DEBUG("QEP to del is =")
@@ -224,40 +219,33 @@ bool NodeEngine::stop() {
     }
 }
 
-BufferManagerPtr NodeEngine::getBufferManager()
-{
+BufferManagerPtr NodeEngine::getBufferManager() {
     return bufferManager;
 }
 
-bool NodeEngine::startBufferManager()
-{
-    if(bufferManager)
-    {
-        NES_ERROR("NodeEngine::startBufferManager: buffer manager already exists")
-        throw Exception("Error while start buffer manager");
+bool NodeEngine::createBufferManager() {
+    if (bufferManager) {
+        NES_ERROR("NodeEngine::createBufferManager: buffer manager already exists")
+        throw Exception("Error while create buffer manager");
     }
-    NES_DEBUG("startBufferManager: setup buffer manager")
+    NES_DEBUG("createBufferManager: setup buffer manager")
     bufferManager = std::make_shared<BufferManager>(DEFAULT_BUFFER_SIZE, DEFAULT_NUM_BUFFERS);
     return bufferManager->isReady();
 }
 
-bool NodeEngine::startBufferManager(size_t bufferSize, size_t numBuffers)
-{
-    if(bufferManager)
-    {
-        NES_ERROR("NodeEngine::startBufferManager: buffer manager already exists")
-        throw Exception("Error while start buffer manager");
+bool NodeEngine::createBufferManager(size_t bufferSize, size_t numBuffers) {
+    if (bufferManager) {
+        NES_ERROR("NodeEngine::createBufferManager: buffer manager already exists")
+        throw Exception("Error while create buffer manager");
     }
 
-    NES_DEBUG("startBufferManager: setup buffer manager")
+    NES_DEBUG("createBufferManager: setup buffer manager")
     bufferManager = std::make_shared<BufferManager>(bufferSize, numBuffers);
     return bufferManager->isReady();
 }
 
-bool NodeEngine::stopBufferManager()
-{
-    if(!bufferManager)
-    {
+bool NodeEngine::stopBufferManager() {
+    if (!bufferManager) {
         NES_ERROR("NodeEngine::stopBufferManager buffer manager does not exists")
         throw Exception("Error while stop buffer manager");
     }
@@ -266,11 +254,9 @@ bool NodeEngine::stopBufferManager()
     return true;
 }
 
-bool NodeEngine::startDispatcher()
-{
+bool NodeEngine::startDispatcher() {
     NES_DEBUG("startDispatcher: setup buffer manager")
-    if(dispatcher)
-    {
+    if (dispatcher) {
         NES_ERROR("NodeEngine::startDispatcher: dispatcher already exists")
         throw Exception("Error while start dispatcher");
     }
@@ -279,18 +265,15 @@ bool NodeEngine::startDispatcher()
     return dispatcher->startThreadPool();
 }
 
-bool NodeEngine::stopDispatcher()
-{
-    if(!dispatcher)
-    {
+bool NodeEngine::stopDispatcher() {
+    if (!dispatcher) {
         NES_ERROR("NodeEngine::stopDispatcher dispatcher does not exists")
         throw Exception("Error while stop dispatcher");
     }
     NES_DEBUG("stopDispatcher: stop dispatcher")
 
     bool success = dispatcher->stopThreadPool();
-    if(!success)
-    {
+    if (!success) {
         NES_ERROR("NodeEngine::stopDispatcher: could not stop thread pool")
         throw Exception("Error while stopping thread pool");
     }
@@ -298,8 +281,5 @@ bool NodeEngine::stopDispatcher()
     delete dispatcher.get();
     return true;
 }
-
-
-
 
 }
