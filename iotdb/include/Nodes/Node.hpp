@@ -99,7 +99,8 @@ class Node : public std::enable_shared_from_this<Node> {
     bool removeAndLevelUpChildren(const NodePtr node);
 
     /**
-     * @brief Remove this node and join the parent and children
+     * @brief Remove this node as child to its parents and as parent to its children. Once done, the method joins the
+     * parent and children together.
      * @return bool true if successful
      */
     bool removeAndJoinParentAndChildren();
