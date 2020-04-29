@@ -30,8 +30,7 @@ void ArithmeticalExpressionNode::inferStamp(SchemaPtr schema) {
 
     // check if the common stamp is defined
     if (commonStamp->isUndefined()) {
-        // the common stamp was not valid.
-        stamp = createUndefinedDataType();
+        // the common stamp was not valid -> in this case the common stamp is undefined.
         NES_THROW_RUNTIME_ERROR(
             "ArithmeticalExpressionNode: " + commonStamp->toString() + " is not supported by arithmetical expressions");
     }
