@@ -226,7 +226,7 @@ class Node : public std::enable_shared_from_this<Node> {
      * If the node is already exists as parent then skip the operation
      * @return true if operation succeeded else false
      */
-    bool insertNodeBetweenThisNodeAndItsParent(const NodePtr newNode);
+    bool insertBetweenThisAndParentNodes(const NodePtr newNode);
 
     virtual const std::string toString() const = 0;
 
