@@ -23,7 +23,7 @@ class BinarySourceDescriptor : public SourceDescriptor {
     const std::string& getFilePath() const;
 
   private:
-    BinarySourceDescriptor(SchemaPtr schema, std::string filePath);
+    explicit BinarySourceDescriptor(SchemaPtr schema, std::string filePath);
 
     std::string filePath;
 };

@@ -41,7 +41,7 @@ class LogicalOperatorNodeTest : public testing::Test {
 
         sPtr = StreamCatalog::instance().getStreamForLogicalStreamOrThrowException("default_logical");
         SchemaPtr schema = sPtr->getSchema();
-        auto sourceDescriptor = DefaultSourceDescriptor::create(schema, 0, 0);
+        auto sourceDescriptor = DefaultSourceDescriptor::create(schema, /*number of buffers*/0, /*frequency*/0);
 
         pred1 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "1"));
         pred2 = ConstantValueExpressionNode::create(createBasicTypeValue(BasicType::INT8, "2"));

@@ -50,7 +50,7 @@ class KafkaSourceDescriptor : public SourceDescriptor {
     uint64_t getKafkaConnectTimeout() const;
 
   private:
-    KafkaSourceDescriptor(SchemaPtr schema,
+    explicit KafkaSourceDescriptor(SchemaPtr schema,
                           std::string brokers,
                           std::string topic,
                           std::string groupId,

@@ -41,7 +41,7 @@ class CsvSourceDescriptor : public SourceDescriptor {
     size_t getFrequency() const;
 
   private:
-    CsvSourceDescriptor(SchemaPtr schema,
+    explicit CsvSourceDescriptor(SchemaPtr schema,
                         std::string filePath,
                         std::string delimiter,
                         size_t numBuffersToProcess,

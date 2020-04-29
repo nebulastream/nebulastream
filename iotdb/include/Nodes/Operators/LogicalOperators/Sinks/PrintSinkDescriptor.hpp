@@ -19,7 +19,7 @@ class PrintSinkDescriptor : public SinkDescriptor {
     static SinkDescriptorPtr create(SchemaPtr schema);
     SinkDescriptorType getType() override;
   private:
-    PrintSinkDescriptor(SchemaPtr schema);
+    explicit PrintSinkDescriptor(SchemaPtr schema);
 };
 
 typedef std::shared_ptr<PrintSinkDescriptor> PrintSinkDescriptorPtr;
