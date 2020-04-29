@@ -140,6 +140,8 @@ TEST_F(QueryExecutionTest, filterQuery) {
     auto plan = compiler->compile(sink);
     plan->addDataSink(testSink);
     plan->addDataSource(testSource);
+    plan->setBufferManager(bufferManager);
+    plan->setDispatcher(dispatcher);
 
     // The plan should have one pipeline
     EXPECT_EQ(plan->numberOfPipelineStages(), 1);
@@ -196,12 +198,15 @@ TEST_F(QueryExecutionTest, windowQuery) {
     windowScan->setParent(sink);
 
     auto compiler = createDefaultQueryCompiler(dispatcher);
+    compiler->setDispatcher(dispatcher);
+    compiler->setBufferManager(bufferManager);
     auto plan = compiler->compile(sink);
     plan->addDataSink(testSink);
     plan->addDataSource(testSource);
+    plan->setBufferManager(bufferManager);
+    plan->setDispatcher(dispatcher);
 
     dispatcher->registerQuery(plan);
-
     plan->setup();
     plan->start();
 

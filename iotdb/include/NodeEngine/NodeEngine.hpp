@@ -139,10 +139,10 @@ class NodeEngine {
   private:
     NodePropertiesPtr props;
     std::map<QueryExecutionPlanPtr, NodeEngineQueryStatus> queryStatusMap;
-    bool stoppedEngine;
     bool forceStop;
     DispatcherPtr dispatcher;
     BufferManagerPtr bufferManager;
+    bool isRunning;
 };
 
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;

@@ -33,9 +33,9 @@ NodeProperties* NodeEngine::getNodeProperties() {
 
 NodeEngine::NodeEngine() {
     props = std::make_shared<NodeProperties>();
-
-    stoppedEngine = false;
+    isRunning = false;
     forceStop = false;
+
 }
 
 NodeEngine::~NodeEngine() {
@@ -157,23 +157,36 @@ DispatcherPtr NodeEngine::getDispatcher() {
 }
 
 bool NodeEngine::start() {
-    NES_DEBUG("NodeEngine: start thread pool")
-    bool successTp = startDispatcher();
-    NES_DEBUG("NodeEngine: start thread pool success=" << successTp)
+    if (!isRunning) {
+        NES_DEBUG("NodeEngine: start thread pool")
+        bool successTp = startDispatcher();
+        NES_DEBUG("NodeEngine: start thread pool success=" << successTp)
 
-    NES_DEBUG("NodeEngine:start reset dispatcher")
-    dispatcher->resetDispatcher();
+        NES_DEBUG("NodeEngine:start reset dispatcher")
+        dispatcher->resetDispatcher();
 
-    NES_DEBUG("NodeEngine: create buffer manager")
-    bool successBm = createBufferManager();
-    NES_DEBUG("NodeEngine: create buffer manager success=" << successBm)
+        NES_DEBUG("NodeEngine: create buffer manager")
+        bool successBm = createBufferManager();
+        NES_DEBUG("NodeEngine: create buffer manager success=" << successBm)
 
-    return successTp && successBm;
+        if(successTp && successBm)
+        {
+            isRunning = true;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    } else {
+        NES_WARNING("NodeEngine::start: is already running")
+        return true;
+    }
 }
 
 bool NodeEngine::stop() {
     //TODO: add check if still queries are running
-    if (!stoppedEngine) {
+    if (isRunning) {
         NES_DEBUG("NodeEngine:stop stop NodeEngine, undeploy " << queryStatusMap.size() << " queries");
         for (auto entry : queryStatusMap) {
             if (entry.second == NodeEngineQueryStatus::started && !forceStop) {
@@ -204,7 +217,7 @@ bool NodeEngine::stop() {
         NES_DEBUG("NodeEngine:stop undeploy successful")
         dispatcher->resetDispatcher();
         copyOfVec.clear();
-        stoppedEngine = true;
+        isRunning = false;
 
         bool successTp = stopDispatcher();
         NES_DEBUG("NodeEngine:stop stop threadpool with success=" << successTp)
@@ -226,7 +239,7 @@ BufferManagerPtr NodeEngine::getBufferManager() {
 bool NodeEngine::createBufferManager() {
     if (bufferManager) {
         NES_ERROR("NodeEngine::createBufferManager: buffer manager already exists")
-        throw Exception("Error while create buffer manager");
+        return true;
     }
     NES_DEBUG("createBufferManager: setup buffer manager")
     bufferManager = std::make_shared<BufferManager>(DEFAULT_BUFFER_SIZE, DEFAULT_NUM_BUFFERS);
@@ -236,7 +249,7 @@ bool NodeEngine::createBufferManager() {
 bool NodeEngine::createBufferManager(size_t bufferSize, size_t numBuffers) {
     if (bufferManager) {
         NES_ERROR("NodeEngine::createBufferManager: buffer manager already exists")
-        throw Exception("Error while create buffer manager");
+        return true;
     }
 
     NES_DEBUG("createBufferManager: setup buffer manager")
@@ -250,7 +263,6 @@ bool NodeEngine::stopBufferManager() {
         throw Exception("Error while stop buffer manager");
     }
     NES_DEBUG("Dispatcher::stopBufferManager: stop")
-    delete bufferManager.get();
     return true;
 }
 
@@ -258,7 +270,7 @@ bool NodeEngine::startDispatcher() {
     NES_DEBUG("startDispatcher: setup buffer manager")
     if (dispatcher) {
         NES_ERROR("NodeEngine::startDispatcher: dispatcher already exists")
-        throw Exception("Error while start dispatcher");
+        return true;
     }
     NES_DEBUG("startDispatcher: setup dispatcher")
     dispatcher = std::make_shared<Dispatcher>();
@@ -278,7 +290,6 @@ bool NodeEngine::stopDispatcher() {
         throw Exception("Error while stopping thread pool");
     }
 
-    delete dispatcher.get();
     return true;
 }
 

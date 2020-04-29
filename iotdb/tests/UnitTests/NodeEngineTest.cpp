@@ -421,6 +421,7 @@ TEST_F(EngineTest, start_stop_start_stop_test) {
     ASSERT_TRUE(ptr->start());
     ASSERT_TRUE(ptr->deployQuery(qep));
     qep->completedPromise.get_future().get();
+
     ASSERT_TRUE(ptr->undeployQuery(qep));
     ASSERT_TRUE(ptr->stop());
     ASSERT_TRUE(ptr->start());
