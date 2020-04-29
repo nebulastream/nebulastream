@@ -64,7 +64,7 @@ class DataSource {
      * 3.) If not call receiveData in a blocking fashion
      * 4.) If call returns and a buffer is there to process, add a task to the dispatcher
      */
-    void runningRoutine();
+    void runningRoutine(BufferManagerPtr bufferManager, DispatcherPtr dispatcher);
 
     /**
      * @brief virtual function to receive a buffer
@@ -136,6 +136,14 @@ class DataSource {
     virtual ~DataSource();
 
     const std::string& getSourceId() const;
+
+    /**
+     * @brief this methods are only for backward comp to the old query api and will be removed
+     * @todo remove if new query api is in place
+     * @param dispatcher
+     */
+    void setDispatcher(DispatcherPtr dispatcher);
+    void setBufferManger(BufferManagerPtr bufferManager);
 
   protected:
     /**

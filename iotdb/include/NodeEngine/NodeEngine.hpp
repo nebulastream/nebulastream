@@ -105,18 +105,18 @@ class NodeEngine {
     BufferManagerPtr getBufferManager();
 
     /**
-     * @brief method to start the buffer manager with defualt config
+     * @brief method to create the buffer manager with defualt config
      * @return bool indicating success
      */
-    bool startBufferManager();
+    bool createBufferManager();
 
     /**
-     * @brief method to start buffer manager with custom config
+     * @brief method to create buffer manager with custom config
      * @param bufferSize
      * @param numBuffers
      * @return bool indicating success
      */
-    bool startBufferManager(size_t bufferSize, size_t numBuffers);
+    bool createBufferManager(size_t bufferSize, size_t numBuffers);
 
     /**
      * @brief method to stop buffer manager
@@ -135,7 +135,6 @@ class NodeEngine {
      * @return bool indicating success
      */
     bool stopDispatcher();
-
 
   private:
     NodePropertiesPtr props;
