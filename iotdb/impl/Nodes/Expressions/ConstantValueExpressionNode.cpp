@@ -27,7 +27,8 @@ ValueTypePtr ConstantValueExpressionNode::getConstantValue() const {
 }
 
 void ConstantValueExpressionNode::inferStamp(SchemaPtr schema) {
-    // the stamp of constant value expressions is always assigned correctly.
+    // the stamp of constant value expressions is defined by the constant value type.
+    // thus ut is already assigned correctly when the expression node is created.
 }
 
 }

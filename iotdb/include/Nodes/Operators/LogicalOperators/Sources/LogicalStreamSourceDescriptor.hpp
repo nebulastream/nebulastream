@@ -11,12 +11,27 @@ namespace NES {
 class LogicalStreamSourceDescriptor : public SourceDescriptor {
 
   public:
+    /**
+     * @brief Factory method to create a new logical source stream descriptor.
+     * @param streamName Name of this stream
+     * @return SourceDescriptorPtr
+     */
     static SourceDescriptorPtr create(std::string streamName);
+
+    /**
+     * @brief Type of this descriptor
+     * @return SourceDescriptorType
+     */
     SourceDescriptorType getType() override;
+
+    /**
+     * @brief Name of the logical stream
+     * @return name
+     */
     const std::string& getStreamName() const;
 
   private:
-    LogicalStreamSourceDescriptor(std::string streamName);
+    explicit LogicalStreamSourceDescriptor(std::string streamName);
     std::string streamName;
 };
 

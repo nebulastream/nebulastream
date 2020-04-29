@@ -22,8 +22,7 @@ class SenseSourceDescriptor : public SourceDescriptor {
     const std::string& getUdfs() const;
 
   private:
-    SenseSourceDescriptor(SchemaPtr schema, std::string udfs);
-    SenseSourceDescriptor()=default;
+    explicit SenseSourceDescriptor(SchemaPtr schema, std::string udfs);
 
     std::string udfs;
 };

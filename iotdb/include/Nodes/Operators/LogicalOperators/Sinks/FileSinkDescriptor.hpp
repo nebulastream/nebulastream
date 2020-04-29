@@ -48,7 +48,7 @@ class FileSinkDescriptor : public SinkDescriptor {
     FileOutputType getFileOutputType() const;
 
   private:
-    FileSinkDescriptor(SchemaPtr schema, std::string fileName, FileOutputMode fileOutputMode, FileOutputType fileOutputType);
+    explicit FileSinkDescriptor(SchemaPtr schema, std::string fileName, FileOutputMode fileOutputMode, FileOutputType fileOutputType);
 
     std::string fileName;
     FileOutputMode fileOutputMode;

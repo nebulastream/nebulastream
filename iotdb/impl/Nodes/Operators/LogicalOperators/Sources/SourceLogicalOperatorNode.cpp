@@ -27,8 +27,6 @@ LogicalOperatorNodePtr createSourceLogicalOperatorNode(const SourceDescriptorPtr
     return std::make_shared<SourceLogicalOperatorNode>(sourceDescriptor);
 }
 
-
-
 SourceDescriptorPtr SourceLogicalOperatorNode::getSourceDescriptor() {
     return sourceDescriptor;
 }
