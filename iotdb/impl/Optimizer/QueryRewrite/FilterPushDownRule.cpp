@@ -57,7 +57,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
                 NES_INFO("FilterPushDownRule: Adding Filter operator between current operator and its parents")
                 FilterLogicalOperatorNodePtr copyOptr = filterOperator->copy();
                 if (!(copyOptr->removeAndJoinParentAndChildren()
-                    && node->insertNodeBetweenThisNodeAndItsParent(copyOptr))) {
+                    && node->insertBetweenThisAndParentNodes(copyOptr))) {
 
                     NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule")
                     throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");
@@ -72,7 +72,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
             if (predicateFieldManipulated) {
                 FilterLogicalOperatorNodePtr copyOptr = filterOperator->copy();
                 if (!(copyOptr->removeAndJoinParentAndChildren()
-                    && node->insertNodeBetweenThisNodeAndItsParent(copyOptr))) {
+                    && node->insertBetweenThisAndParentNodes(copyOptr))) {
 
                     NES_ERROR("FilterPushDownRule: Failure in applying filter push down rule")
                     throw std::logic_error("FilterPushDownRule: Failure in applying filter push down rule");

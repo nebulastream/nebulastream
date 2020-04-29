@@ -83,7 +83,7 @@ bool Node::addParent(const NodePtr newNode) {
     return true;
 }
 
-bool Node::insertNodeBetweenThisNodeAndItsParent(const NodePtr newNode) {
+bool Node::insertBetweenThisAndParentNodes(const NodePtr newNode) {
 
     if (newNode.get() == this) {
         NES_WARNING("Node: Added node to its self, so ignore this operation.");
