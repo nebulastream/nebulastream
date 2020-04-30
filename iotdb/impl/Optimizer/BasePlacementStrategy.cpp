@@ -38,8 +38,8 @@ static const int zmqDefaultPort = 5555;
 //FIXME: Currently the system is not designed for multiple children. Therefore, the logic is ignoring the fact
 // that there could be more than one child. Once the code generator able to deal with it this logic need to be
 // fixed.
-void BasePlacementStrategy::addSystemGeneratedSourceSinkOperators(
-    SchemaPtr schema, NESExecutionPlanPtr nesExecutionPlanPtr) {
+void BasePlacementStrategy::addSystemGeneratedSourceSinkOperators(SchemaPtr schema,
+                                                                  NESExecutionPlanPtr nesExecutionPlanPtr) {
 
     const std::shared_ptr<ExecutionGraph>& exeGraph = nesExecutionPlanPtr
         ->getExecutionGraph();
@@ -167,7 +167,7 @@ void BasePlacementStrategy::fillExecutionGraphWithTopologyInformation(NESExecuti
     }
 }
 
-void BasePlacementStrategy::setUDFSFromSampleOperatorToSenseSources(InputQueryPtr inputQuery) {
+void BasePlacementStrategy::setUDFSFromSampleOperatorToSenseSources(QueryPtr inputQuery) {
 
     //TODO: this is only the first try, it should be replaced by the new functions offered by the nbew log query plan
     const OperatorPtr sinkOperator = inputQuery->getRoot();
@@ -189,25 +189,6 @@ void BasePlacementStrategy::setUDFSFromSampleOperatorToSenseSources(InputQueryPt
         }
     }
 }
-
-OperatorPtr BasePlacementStrategy::getSourceOperator(OperatorPtr root) {
-
-    deque<OperatorPtr> operatorTraversQueue = {root};
-
-    while (!operatorTraversQueue.empty()) {
-        auto optr = operatorTraversQueue.front();
-        operatorTraversQueue.pop_front();
-
-        if (optr->getOperatorType() == OperatorType::SOURCE_OP) {
-            return optr;
-        }
-
-        vector<OperatorPtr> children = optr->getChildren();
-        copy(children.begin(), children.end(), back_inserter(operatorTraversQueue));
-    }
-
-    return nullptr;
-};
 
 void BasePlacementStrategy::addForwardOperators(vector<NESTopologyEntryPtr> candidateNodes,
                                                 NESExecutionPlanPtr nesExecutionPlanPtr) {

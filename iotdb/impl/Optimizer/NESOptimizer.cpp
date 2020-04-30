@@ -1,6 +1,6 @@
-#include "Optimizer/NESOptimizer.hpp"
-#include "Optimizer/QueryPlacement/BasePlacementStrategy.hpp"
-#include "Topology/NESTopologyPlan.hpp"
+#include <Optimizer/NESOptimizer.hpp>
+#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
+#include <Topology/NESTopologyPlan.hpp>
 
 using namespace NES;
 
@@ -8,6 +8,7 @@ NESExecutionPlanPtr NESOptimizer::prepareExecutionGraph(std::string strategy, In
                                                         NESTopologyPlanPtr nesTopologyPlan) {
 
     auto placementStrategyPtr = BasePlacementStrategy::getStrategy(strategy);
-    NESExecutionPlanPtr nesExecutionPlanPtr = placementStrategyPtr->initializeExecutionPlan(inputQuery, nesTopologyPlan);
+    QueryPtr query;
+    NESExecutionPlanPtr nesExecutionPlanPtr = placementStrategyPtr->initializeExecutionPlan(query, nesTopologyPlan);
     return nesExecutionPlanPtr;
 };

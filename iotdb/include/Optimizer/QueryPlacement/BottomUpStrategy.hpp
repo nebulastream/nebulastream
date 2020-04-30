@@ -1,13 +1,22 @@
 #ifndef BOTTOMUP_HPP
 #define BOTTOMUP_HPP
 
-#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 #include <iostream>
+#include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
 
 namespace NES {
 
+class NESTopologyGraph;
+typedef std::shared_ptr<NESTopologyGraph> NESTopologyGraphPtr;
+
 class Operator;
 typedef std::shared_ptr<Operator> OperatorPtr;
+
+class LogicalOperatorNode;
+typedef std::shared_ptr<LogicalOperatorNode> LogicalOperatorNodePtr;
+
+class Node;
+typedef std::shared_ptr<Node> NodePtr;
 
 using namespace std;
 
@@ -18,9 +27,9 @@ using namespace std;
  */
 class BottomUpStrategy : public BasePlacementStrategy {
   public:
-    ~BottomUpStrategy(){};
+    ~BottomUpStrategy() {};
 
-    NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
+    NESExecutionPlanPtr initializeExecutionPlan(QueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
     static std::unique_ptr<BottomUpStrategy> create() {
         return std::make_unique<BottomUpStrategy>(BottomUpStrategy());
@@ -29,40 +38,17 @@ class BottomUpStrategy : public BasePlacementStrategy {
   private:
     BottomUpStrategy() = default;
 
-    // This structure hold information about the current operator to place and previously placed parent operator.
-    // It helps in deciding if the operator is to be placed in the nes node where the parent operator was placed
-    // or on another suitable neighbouring node.
-    struct ProcessOperator {
-        ProcessOperator(OperatorPtr operatorPtr, ExecutionNodePtr executionNodePtr) {
-            this->operatorToProcess = operatorPtr;
-            this->parentExecutionNode = executionNodePtr;
-        }
-
-        OperatorPtr operatorToProcess;
-        ExecutionNodePtr parentExecutionNode;
-    };
-
     /**
      * This method is responsible for placing the operators to the nes nodes and generating ExecutionNodes.
      * @param executionPlanPtr : graph containing the information about the execution nodes.
      * @param nesTopologyGraphPtr : nes Topology graph used for extracting information about the nes topology.
-     * @param sourceNodePtr : sensor nodes which can act as source.
+     * @param sourceOperator : sensor nodes which act as the source source.
+     * @param sourceNodes : sensor nodes which act as the source source.
      *
      * @throws exception if the operator can't be placed anywhere.
      */
     void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
-                        OperatorPtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes);
-
-    /**
-     * @brief Finds a suitable for node for the operator to be placed.
-     * @param operatorToProcess
-     * @param nesTopologyGraphPtr
-     * @param sourceNodePtr
-     * @return
-     */
-    NESTopologyEntryPtr findSuitableNESNodeForOperatorPlacement(const ProcessOperator& operatorToProcess,
-                                                                NESTopologyGraphPtr nesTopologyGraphPtr,
-                                                                NESTopologyEntryPtr sourceNodePtr);
+                        LogicalOperatorNodePtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes);
 
     /**
      * @brief Finds all the nodes that can be used for performing FWD operator
@@ -70,9 +56,9 @@ class BottomUpStrategy : public BasePlacementStrategy {
      * @param rootNode
      * @return
      */
-    vector<NESTopologyEntryPtr> getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
-                                                                         const NESTopologyEntryPtr rootNode) const;
+    std::vector<NESTopologyEntryPtr> getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
+                                                                              const NESTopologyEntryPtr rootNode) const;
 };
-}// namespace NES
+}
 
-#endif//BOTTOMUP_HPP
+#endif //BOTTOMUP_HPP

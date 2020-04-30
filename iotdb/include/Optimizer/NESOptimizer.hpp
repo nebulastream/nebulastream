@@ -9,18 +9,38 @@
 #ifndef NESOPTIMIZER_HPP
 #define NESOPTIMIZER_HPP
 
-#include "../Topology/NESTopologyPlan.hpp"
-#include "NESExecutionPlan.hpp"
+#include <memory>
 
 namespace NES {
 
+class NESExecutionPlan;
+typedef std::shared_ptr<NESExecutionPlan> NESExecutionPlanPtr;
+
+class InputQuery;
+typedef std::shared_ptr<InputQuery> InputQueryPtr;
+
+class NESTopologyPlan;
+typedef std::shared_ptr<NESTopologyPlan> NESTopologyPlanPtr;
+
+/**
+ * @brief This class is responsible for creating the NES execution plan after performing query-rewrite, and
+ * query-placement.
+ */
 class NESOptimizer {
 
   public:
+
+    /**
+     * @brief This method prepares the execution graph for the input user query
+     * @param strategy : name of the placement strategy
+     * @param inputQuery : the input query for which execution plan is to be prepared
+     * @param nesTopologyPlan : The topology of the NEs infrastructure
+     * @return Execution plan for the input query
+     */
     NESExecutionPlanPtr prepareExecutionGraph(std::string strategy,
                                               InputQueryPtr inputQuery,
                                               NESTopologyPlanPtr nesTopologyPlan);
 };
-}// namespace NES
+}
 
-#endif//NESOPTIMIZER_HPP
+#endif //NESOPTIMIZER_HPP

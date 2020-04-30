@@ -1,10 +1,8 @@
 #include <Optimizer/NESExecutionPlan.hpp>
 
-#include <Operators/Operator.hpp>
-#include <Topology/NESTopologySensorNode.hpp>
+#include <Optimizer/ExecutionGraph.hpp>
 #include <Util/Logger.hpp>
-#include <cpprest/json.h>
-#include <set>
+#include <Topology/NESTopologySensorNode.hpp>
 
 using namespace NES;
 using namespace web;
@@ -18,16 +16,13 @@ ExecutionNodePtr NESExecutionPlan::getRootNode() const {
     return exeGraphPtr->getRoot();
 };
 
-ExecutionNodePtr NESExecutionPlan::createExecutionNode(
-    std::string operatorName, std::string nodeName, NESTopologyEntryPtr nesNode,
-    OperatorPtr executableOperator) {
+ExecutionNodePtr NESExecutionPlan::createExecutionNode(std::string operatorName, std::string nodeName,
+                                                       NESTopologyEntryPtr nesNode, NodePtr executableOperator) {
 
-    ExecutionNode executionNode(operatorName, nodeName, nesNode,
-                                executableOperator);
     NES_DEBUG(
-        "NESExecutionPlan::createExecutionNode operatorName=" << operatorName << " nodeName=" << nodeName << " nesNode=" << nesNode << " executableOperaor=" << executableOperator);
-    // create worker node
-    auto ptr = std::make_shared<ExecutionNode>(executionNode);
+        "NESExecutionPlan::createExecutionNode operatorName=" << operatorName << " nodeName=" << nodeName << " nesNode="
+                                                              << nesNode << " executableOperaor=" << executableOperator)
+    auto ptr = std::make_shared<ExecutionNode>(operatorName, nodeName, nesNode, executableOperator);
     exeGraphPtr->addVertex(ptr);
     return ptr;
 };
@@ -41,12 +36,12 @@ ExecutionNodePtr NESExecutionPlan::getExecutionNode(int searchId) {
 }
 
 json::value NESExecutionPlan::getExecutionGraphAsJson() const {
-    const ExecutionNodePtr& rootNode = getRootNode();
 
-    const shared_ptr<ExecutionGraph>& exeGraph = getExecutionGraph();
+    const ExecutionNodePtr rootNode = getRootNode();
+    const ExecutionGraphPtr exeGraph = getExecutionGraph();
 
-    const vector<ExecutionEdge>& allEdges = exeGraph->getAllEdges();
-    const vector<ExecutionVertex>& allVertex = exeGraph->getAllVertex();
+    const std::vector<ExecutionEdge>& allEdges = exeGraph->getAllEdges();
+    const std::vector<ExecutionVertex>& allVertex = exeGraph->getAllVertex();
 
     auto result = json::value::object();
     std::vector<json::value> edges{};
@@ -71,10 +66,9 @@ json::value NESExecutionPlan::getExecutionGraphAsJson() const {
         const ExecutionVertex& vertex = allVertex[i];
         auto vertexInfo = json::value::object();
         const ExecutionNodePtr& executionNodePtr = vertex.ptr;
-        const string id = "Node-" + std::to_string(executionNodePtr->getId());
-        const string& operatorName = executionNodePtr->getOperatorName();
-        const string nodeType =
-            executionNodePtr->getNESNode()->getEntryTypeString();
+        const std::string id = "Node-" + std::to_string(executionNodePtr->getId());
+        const std::string& operatorName = executionNodePtr->getOperatorName();
+        const std::string nodeType = executionNodePtr->getNESNode()->getEntryTypeString();
 
         int cpuCapacity = vertex.ptr->getNESNode()->getCpuCapacity();
         int remainingCapacity = vertex.ptr->getNESNode()->getRemainingCpuCapacity();
@@ -86,10 +80,8 @@ json::value NESExecutionPlan::getExecutionGraphAsJson() const {
         vertexInfo["operators"] = json::value::string(operatorName);
         vertexInfo["nodeType"] = json::value::string(nodeType);
         if (nodeType == "Sensor") {
-            NESTopologySensorNodePtr ptr = std::static_pointer_cast<
-                NESTopologySensorNode>(vertex.ptr->getNESNode());
-            vertexInfo["physicalStreamName"] = json::value::string(
-                ptr->getPhysicalStreamName());
+            NESTopologySensorNodePtr ptr = std::static_pointer_cast<NESTopologySensorNode>(vertex.ptr->getNESNode());
+            vertexInfo["physicalStreamName"] = json::value::string(ptr->getPhysicalStreamName());
         }
         vertices.push_back(vertexInfo);
     }
@@ -102,12 +94,11 @@ json::value NESExecutionPlan::getExecutionGraphAsJson() const {
 std::vector<json::value> NESExecutionPlan::getChildrenNode(
     ExecutionNodePtr executionParentNode) const {
 
-    const shared_ptr<ExecutionGraph>& exeGraph = getExecutionGraph();
+    const std::shared_ptr<ExecutionGraph>& exeGraph = getExecutionGraph();
 
-    const std::vector<ExecutionEdge>& edgesToNode = exeGraph->getAllEdgesToNode(
-        executionParentNode);
+    const std::vector<ExecutionEdge>& edgesToNode = exeGraph->getAllEdgesToNode(executionParentNode);
 
-    std::vector<json::value> children = {};
+    std::vector<json::value> children;
 
     if (edgesToNode.empty()) {
         return {};
@@ -137,9 +128,11 @@ ExecutionNodeLinkPtr NESExecutionPlan::createExecutionNodeLink(
 
     NES_DEBUG(
         "NESExecutionPlan::createExecutionNodeLink: create link id=" << id
-                                                                     << " sourceNodeId=" << sourceNode->getId() << " destinationNodeId="
-                                                                     << destinationNode->getId() << " linkcapacity=" << linkCapacity
-                                                                     << " linkLatency=" << linkLatency);
+                                                                     << " sourceNodeId=" << sourceNode->getId()
+                                                                     << " destinationNodeId="
+                                                                     << destinationNode->getId() << " linkcapacity="
+                                                                     << linkCapacity
+                                                                     << " linkLatency=" << linkLatency)
     // check if link already exists
     if (exeGraphPtr->hasLink(sourceNode, destinationNode)) {
         // return already existing link
@@ -163,12 +156,14 @@ void NESExecutionPlan::freeResources() {
         if (v.ptr->getRootOperator()) {
             // TODO: change that when proper placement is fixed
             NES_INFO(
-                "NESEXECUTIONPLAN: Capacity before-" << v.ptr->getNESNode()->getId() << "->" << v.ptr->getNESNode()->getRemainingCpuCapacity());
+                "NESEXECUTIONPLAN: Capacity before-" << v.ptr->getNESNode()->getId() << "->"
+                                                     << v.ptr->getNESNode()->getRemainingCpuCapacity())
             int usedCapacity = v.ptr->getNESNode()->getCpuCapacity()
                 - v.ptr->getNESNode()->getRemainingCpuCapacity();
             v.ptr->getNESNode()->increaseCpuCapacity(usedCapacity);
             NES_INFO(
-                "NESEXECUTIONPLAN: Capacity after-" << v.ptr->getNESNode()->getId() << "->" << v.ptr->getNESNode()->getRemainingCpuCapacity());
+                "NESEXECUTIONPLAN: Capacity after-" << v.ptr->getNESNode()->getId() << "->"
+                                                    << v.ptr->getNESNode()->getRemainingCpuCapacity())
         }
     }
 }
