@@ -112,13 +112,6 @@ class BasePlacementStrategy {
     void convertFwdOptr(SchemaPtr schema, ExecutionNodePtr executionNodePtr) const;
 
     /**
-     * @brief This method returns the source operator in the user input query
-     * @param root: the sink operator of the query
-     * @return source operator pointer
-     */
-    OperatorPtr getSourceOperator(OperatorPtr root);
-
-    /**
      * @brief This method will add the forward operator where ever necessary along the selected path.
      *
      * @param candidateNodes vector of nodes where operators could be placed
