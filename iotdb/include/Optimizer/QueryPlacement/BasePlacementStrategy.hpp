@@ -33,7 +33,9 @@ static std::map<std::string, NESPlacementStrategyType> stringToPlacementStrategy
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
  */
 class BasePlacementStrategy {
+    
   private:
+    const char* NO_OPERATOR = "NO-OPERATOR";
 
   public:
 
