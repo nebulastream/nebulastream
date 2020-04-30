@@ -87,7 +87,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
     }
 
     NES_INFO("FilterPushDownRule: Remove all parents can children of the filter operator")
-    filterOperator->removeAllParents();
+    filterOperator->removeAllParent();
     filterOperator->removeChildren();
 }
 

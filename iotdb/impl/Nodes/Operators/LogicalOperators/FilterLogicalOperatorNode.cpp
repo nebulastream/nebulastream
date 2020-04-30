@@ -39,13 +39,17 @@ FilterLogicalOperatorNodePtr FilterLogicalOperatorNode::makeACopy() {
     NES_INFO("FilterLogicalOperatorNode: copy all parents")
     std::vector<NodePtr> parents = this->getParents();
     for (auto parent : parents) {
-        copiedOptr->addParent(parent);
+        if (!copiedOptr->addParent(parent)) {
+            NES_THROW_RUNTIME_ERROR("FilterLogicalOperatorNode: Unable to add parent to copy");
+        }
     }
 
     NES_INFO("FilterLogicalOperatorNode: copy all children")
     std::vector<NodePtr> children = this->getChildren();
     for (auto child: children) {
-        copiedOptr->addChild(child);
+        if (!copiedOptr->addChild(child)) {
+            NES_THROW_RUNTIME_ERROR("FilterLogicalOperatorNode: Unable to add child to copy");
+        }
     }
     return copiedOptr;
 }
@@ -54,10 +58,10 @@ LogicalOperatorNodePtr createFilterLogicalOperatorNode(const ExpressionNodePtr p
     return std::make_shared<FilterLogicalOperatorNode>(predicate);
 }
 
-bool FilterLogicalOperatorNode::inferSchema()  {
+bool FilterLogicalOperatorNode::inferSchema() {
     OperatorNode::inferSchema();
     predicate->inferStamp(inputSchema);
-    if(!predicate->isPredicate()){
+    if (!predicate->isPredicate()) {
         NES_THROW_RUNTIME_ERROR("FilterLogicalOperator: the filter expression is not a valid predicate");
         return false;
     }
