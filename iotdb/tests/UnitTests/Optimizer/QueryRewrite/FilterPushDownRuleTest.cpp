@@ -62,7 +62,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMap) {
 
     // Prepare
     Stream def = Stream("default_logical", schema);
-    PrintSinkDescriptorPtr printSinkDescriptor = std::make_shared<PrintSinkDescriptor>(schema);
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create(schema);
     Query query = Query::from(def)
         .map(Attribute("value") = 40)
         .filter(Attribute("id") < 45)
@@ -100,7 +100,7 @@ TEST_F(FilterPushDownRuleTest, testPushingOneFilterBelowMapAndBeforeFilter) {
 
     // Prepare
     Stream def = Stream("default_logical", schema);
-    PrintSinkDescriptorPtr printSinkDescriptor = std::make_shared<PrintSinkDescriptor>(schema);
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create(schema);
     Query query = Query::from(def)
         .filter(Attribute("id") > 45)
         .map(Attribute("value") = 40)
@@ -143,7 +143,7 @@ TEST_F(FilterPushDownRuleTest, testPushingFiltersBelowAllMapOperators) {
 
     // Prepare
     Stream def = Stream("default_logical", schema);
-    PrintSinkDescriptorPtr printSinkDescriptor = std::make_shared<PrintSinkDescriptor>(schema);
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create(schema);
     Query query = Query::from(def)
         .map(Attribute("value") = 80)
         .filter(Attribute("id") > 45)
@@ -191,7 +191,7 @@ TEST_F(FilterPushDownRuleTest, testPushingTwoFilterBelowMap) {
 
     // Prepare
     Stream def = Stream("default_logical", schema);
-    PrintSinkDescriptorPtr printSinkDescriptor = std::make_shared<PrintSinkDescriptor>(schema);
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create(schema);
     Query query = Query::from(def)
         .map(Attribute("value") = 40)
         .filter(Attribute("id") > 45)
@@ -234,7 +234,7 @@ TEST_F(FilterPushDownRuleTest, testPushingFilterAlreadyAtBottom) {
 
     // Prepare
     Stream def = Stream("default_logical", schema);
-    PrintSinkDescriptorPtr printSinkDescriptor = std::make_shared<PrintSinkDescriptor>(schema);
+    SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create(schema);
     Query query = Query::from(def)
         .filter(Attribute("id") > 45)
         .map(Attribute("value") = 40)
