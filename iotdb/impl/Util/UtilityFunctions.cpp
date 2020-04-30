@@ -35,7 +35,6 @@ InputQueryPtr UtilityFunctions::createQueryFromCodeString(
     code << "#include <API/Schema.hpp>" << std::endl;
     code << "#include <SourceSink/DataSource.hpp>" << std::endl;
     code << "#include <API/InputQuery.hpp>" << std::endl;
-    code << "#include <API/Environment.hpp>" << std::endl;
     code << "#include <API/UserAPIExpression.hpp>" << std::endl;
     code << "#include <Catalogs/StreamCatalog.hpp>" << std::endl;
     code << "namespace NES{" << std::endl;
@@ -105,7 +104,6 @@ SchemaPtr UtilityFunctions::createSchemaFromCode(
     code << "#include <API/Schema.hpp>" << std::endl;
     code << "#include <SourceSink/DataSource.hpp>" << std::endl;
     code << "#include <API/InputQuery.hpp>" << std::endl;
-    code << "#include <API/Environment.hpp>" << std::endl;
     code << "#include <API/UserAPIExpression.hpp>" << std::endl;
     code << "#include <Catalogs/StreamCatalog.hpp>" << std::endl;
     code << "namespace NES{" << std::endl;
