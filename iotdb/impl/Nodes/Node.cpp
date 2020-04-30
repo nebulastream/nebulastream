@@ -13,7 +13,7 @@ Node::~Node() {
 
 bool Node::addChildWithEqual(const NodePtr newNode) {
     if (newNode.get() == this) {
-        NES_DEBUG("Node: Added node to its self, ignore this operation.");
+        NES_DEBUG("Node: Added node to its self so skip add child with equal operation.");
         return false;
     }
     // add the node to the children
@@ -26,19 +26,19 @@ bool Node::addChildWithEqual(const NodePtr newNode) {
 
 bool Node::addChild(const NodePtr newNode) {
     if (newNode.get() == this) {
-        NES_DEBUG("Node: Added node to its self, ignore this operation.");
+        NES_DEBUG("Node: Added node to its self so will skip add child operation.");
         return false;
     }
     // checks if current new node is not part of children
-    if (contains(children, newNode)) {
-        NES_DEBUG("Node: the node is already part of its children so ignore it.");
+    if (vectorContainsTheNode(children, newNode)) {
+        NES_DEBUG("Node: the node is already part of its children so skip add chld operation.");
         return false;
     }
     // add the node to the children
     children.push_back(newNode);
 
     // add the current node as a parents to the newNode
-    if (!contains(newNode->parents, shared_from_this())) {
+    if (!vectorContainsTheNode(newNode->parents, shared_from_this())) {
         newNode->parents.push_back(shared_from_this());
     }
     return true;
@@ -66,18 +66,18 @@ bool Node::removeChild(const NodePtr node) {
 
 bool Node::addParent(const NodePtr newNode) {
     if (newNode.get() == this) {
-        NES_WARNING("Node: Added node to its self, so ignore this operation.");
+        NES_WARNING("Node: Added node to its self so will skip add parent operation.");
         return false;
     }
 
     // checks if current new node is not part of parents
-    if (contains(parents, newNode)) {
-        NES_WARNING("Node: the node is already part of its parents so ignore it.");
+    if (vectorContainsTheNode(parents, newNode)) {
+        NES_WARNING("Node: the node is already part of its parents so ignore add parent operation.");
         return false;
     }
     // add the node to the parents
     parents.push_back(newNode);
-    if (!contains(newNode->children, shared_from_this())) {
+    if (!vectorContainsTheNode(newNode->children, shared_from_this())) {
         newNode->children.push_back(shared_from_this());
     }
     return true;
@@ -86,25 +86,37 @@ bool Node::addParent(const NodePtr newNode) {
 bool Node::insertBetweenThisAndParentNodes(const NodePtr newNode) {
 
     if (newNode.get() == this) {
-        NES_WARNING("Node: Added node to its self, so ignore this operation.");
+        NES_WARNING("Node:  Added node to its self so will skip insertBetweenThisAndParentNodes operation.");
         return false;
     }
 
-    if (contains(parents, newNode)) {
-        NES_WARNING("Node: the node is already part of its parents so ignore it.");
+    if (vectorContainsTheNode(parents, newNode)) {
+        NES_WARNING("Node: the node is already part of its parents so ignore insertBetweenThisAndParentNodes operation.");
         return false;
     }
 
+
+    NES_INFO("Node: Remove children and parents for the input node.");
     newNode->removeChildren();
     newNode->removeAllParents();
 
+    NES_INFO("Node: Create temporary copy of this nodes parents.");
     std::vector<NodePtr> copyOfParents = parents;
 
+    NES_INFO("Node: Remove all parents of this node.");
     removeAllParents();
-    addParent(newNode);
 
+    if(!addParent(newNode)) {
+        NES_ERROR("Node: Unable to add input node as parent to this node.");
+        return false;
+    }
+
+    NES_INFO("Node: Add copy of this nodes parent as parent to the input node.");
     for (NodePtr parent : copyOfParents) {
-        newNode->addParent(parent);
+        if(!newNode->addParent(parent)){
+            NES_ERROR("Node: Unable to add parent of this node as parent to input node.");
+            return false;
+        }
     }
 
     return true;
@@ -147,7 +159,7 @@ bool Node::removeParent(const NodePtr node) {
 
 bool Node::replace(NodePtr newNode, NodePtr oldNode) {
     if (oldNode->isIdentical(newNode)) {
-        NES_WARNING("Node: the new node was the same so ignored the operation.");
+        NES_WARNING("Node: the new node was the same so will skip replace operation.");
         return true;
     }
 
@@ -240,9 +252,7 @@ bool Node::removeAndLevelUpChildren(const NodePtr node) {
 }
 
 bool Node::removeAndJoinParentAndChildren() {
-
     try {
-
         NES_DEBUG("Node: Joining parents with children")
 
         for (auto parent: parents) {
@@ -277,7 +287,7 @@ const std::vector<NodePtr>& Node::getParents() const {
     return parents;
 }
 
-bool Node::contains(const std::vector<NodePtr>& nodes, const NES::NodePtr nodeToFind) {
+bool Node::vectorContainsTheNode(const std::vector<NodePtr>& nodes, const NES::NodePtr nodeToFind) {
     return find(nodes, nodeToFind) != nullptr;
 }
 
