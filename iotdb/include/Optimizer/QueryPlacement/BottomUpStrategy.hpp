@@ -6,18 +6,6 @@
 
 namespace NES {
 
-class NESTopologyGraph;
-typedef std::shared_ptr<NESTopologyGraph> NESTopologyGraphPtr;
-
-class Operator;
-typedef std::shared_ptr<Operator> OperatorPtr;
-
-class LogicalOperatorNode;
-typedef std::shared_ptr<LogicalOperatorNode> LogicalOperatorNodePtr;
-
-class Node;
-typedef std::shared_ptr<Node> NodePtr;
-
 using namespace std;
 
 /**\brief:
