@@ -13,7 +13,7 @@ Node::~Node() {
 
 bool Node::addChildWithEqual(const NodePtr newNode) {
     if (newNode.get() == this) {
-        NES_DEBUG("Node: Added node to its self so skip add child with equal operation.");
+        NES_DEBUG("Node: Adding node to its self so skip add child with equal operation.");
         return false;
     }
     // add the node to the children
@@ -26,7 +26,7 @@ bool Node::addChildWithEqual(const NodePtr newNode) {
 
 bool Node::addChild(const NodePtr newNode) {
     if (newNode.get() == this) {
-        NES_DEBUG("Node: Added node to its self so will skip add child operation.");
+        NES_DEBUG("Node: Adding node to its self so will skip add child operation.");
         return false;
     }
     // checks if current new node is not part of children
@@ -66,7 +66,7 @@ bool Node::removeChild(const NodePtr node) {
 
 bool Node::addParent(const NodePtr newNode) {
     if (newNode.get() == this) {
-        NES_WARNING("Node: Added node to its self so will skip add parent operation.");
+        NES_WARNING("Node: Adding node to its self so will skip add parent operation.");
         return false;
     }
 
@@ -86,7 +86,7 @@ bool Node::addParent(const NodePtr newNode) {
 bool Node::insertBetweenThisAndParentNodes(const NodePtr newNode) {
 
     if (newNode.get() == this) {
-        NES_WARNING("Node:  Added node to its self so will skip insertBetweenThisAndParentNodes operation.");
+        NES_WARNING("Node:  Adding node to its self so will skip insertBetweenThisAndParentNodes operation.");
         return false;
     }
 
@@ -98,13 +98,13 @@ bool Node::insertBetweenThisAndParentNodes(const NodePtr newNode) {
 
     NES_INFO("Node: Remove children and parents for the input node.");
     newNode->removeChildren();
-    newNode->removeAllParents();
+    newNode->removeAllParent();
 
     NES_INFO("Node: Create temporary copy of this nodes parents.");
     std::vector<NodePtr> copyOfParents = parents;
 
     NES_INFO("Node: Remove all parents of this node.");
-    removeAllParents();
+    removeAllParent();
 
     if(!addParent(newNode)) {
         NES_ERROR("Node: Unable to add input node as parent to this node.");
@@ -122,7 +122,7 @@ bool Node::insertBetweenThisAndParentNodes(const NodePtr newNode) {
     return true;
 }
 
-void Node::removeAllParents() {
+void Node::removeAllParent() {
     NES_INFO("Node: Removing all parents for current node")
     for(NodePtr parent : parents) {
         this->removeParent(parent);

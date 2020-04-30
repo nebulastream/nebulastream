@@ -16,7 +16,7 @@ typedef std::shared_ptr<FilterLogicalOperatorNode> FilterLogicalOperatorNodePtr;
  * Following are the exceptions:
  *  1.) The Leaf node in the query plan will always be source node. This means the filter can't be push below a source node.
  *  2.) If their exists a map/window operator that manipulates the field used in the predicate of the filter
- *      then, the filter can't be pushed down below the map/window/.
+ *      then, the filter can't be pushed down below the map/window.
  *  3.) If their exists another filter operator next to the target filter operator then it can't be pushed down below that
  *      specific filter operator.
  */

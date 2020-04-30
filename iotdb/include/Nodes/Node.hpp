@@ -55,7 +55,7 @@ class Node : public std::enable_shared_from_this<Node> {
     /**
      * @brief Remove all parents
      */
-    void removeAllParents();
+    void removeAllParent();
 
     /**
      * @brief Remove all children
