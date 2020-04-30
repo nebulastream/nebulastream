@@ -43,11 +43,14 @@ typedef std::shared_ptr<NESTopologyPlan> NESTopologyPlanPtr;
 class Schema;
 typedef std::shared_ptr<Schema> SchemaPtr;
 
-class Operator;
-typedef std::shared_ptr<Operator> OperatorPtr;
-
 class NESTopologyEntry;
 typedef std::shared_ptr<NESTopologyEntry> NESTopologyEntryPtr;
+
+class NESTopologyGraph;
+typedef std::shared_ptr<NESTopologyGraph> NESTopologyGraphPtr;
+
+class LogicalOperatorNode;
+typedef std::shared_ptr<LogicalOperatorNode> LogicalOperatorNodePtr;
 
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.

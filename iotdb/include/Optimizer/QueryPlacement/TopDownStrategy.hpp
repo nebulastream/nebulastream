@@ -6,9 +6,6 @@
 
 namespace NES {
 
-class Operator;
-typedef std::shared_ptr<Operator> OperatorPtr;
-
 using namespace std;
 
 class TopDownStrategy : public BasePlacementStrategy {
@@ -16,8 +13,7 @@ class TopDownStrategy : public BasePlacementStrategy {
   public:
     ~TopDownStrategy() = default;
 
-    NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery,
-                                                NESTopologyPlanPtr nesTopologyPlanPtr) override;
+    NESExecutionPlanPtr initializeExecutionPlan(QueryPtr query, NESTopologyPlanPtr nesTopologyPlanPtr) override;
 
     static std::unique_ptr<TopDownStrategy> create() {
         return std::make_unique<TopDownStrategy>(TopDownStrategy());
@@ -33,7 +29,7 @@ class TopDownStrategy : public BasePlacementStrategy {
      * @param nesSourceNodes : list of physical source nodes
      * @param nesTopologyGraphPtr :  nes topology graph
      */
-    void placeOperators(NESExecutionPlanPtr executionPlanPtr, OperatorPtr sinkOperator,
+    void placeOperators(NESExecutionPlanPtr executionPlanPtr, LogicalOperatorNodePtr sinkOperator,
                         vector<NESTopologyEntryPtr> nesSourceNodes, NESTopologyGraphPtr nesTopologyGraphPtr);
 
     /**
@@ -41,7 +37,7 @@ class TopDownStrategy : public BasePlacementStrategy {
      * @param operatorPtr : operator to add
      * @param executionNode : execution node to which operator need to be added
      */
-    void addOperatorToExistingNode(OperatorPtr operatorPtr, ExecutionNodePtr executionNode) const;
+    void addOperatorToExistingNode(LogicalOperatorNodePtr operatorPtr, ExecutionNodePtr executionNode) const;
 
     /**
      * @brief create new execution nesNode for the query operator.
@@ -49,7 +45,7 @@ class TopDownStrategy : public BasePlacementStrategy {
      * @param operatorPtr : operator to be added
      * @param nesNode : physical node used for creating the execution node
      */
-    void createNewExecutionNode(NESExecutionPlanPtr executionPlanPtr, OperatorPtr operatorPtr,
+    void createNewExecutionNode(NESExecutionPlanPtr executionPlanPtr, LogicalOperatorNodePtr operatorPtr,
                                 NESTopologyEntryPtr nesNode) const;
 
     /**
