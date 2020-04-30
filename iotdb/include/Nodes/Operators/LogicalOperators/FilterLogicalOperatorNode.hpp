@@ -43,10 +43,10 @@ class FilterLogicalOperatorNode : public LogicalOperatorNode {
     bool inferSchema() override;
 
     /**
-     * @brief Create copy of this operator
+     * @brief Create copy of this filter operator
      * @return copy of the filter operator
      */
-    FilterLogicalOperatorNodePtr copy();
+    FilterLogicalOperatorNodePtr makeACopy();
 
   private:
     ExpressionNodePtr predicate;

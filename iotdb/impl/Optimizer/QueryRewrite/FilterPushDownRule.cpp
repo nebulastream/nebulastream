@@ -23,13 +23,15 @@ QueryPlanPtr FilterPushDownRule::apply(QueryPlanPtr queryPlanPtr) {
     NES_INFO("FilterPushDownRule: Sort all filter nodes in increasing order of the operator id")
 
     std::sort(filterOperators.begin(), filterOperators.end(), [](FilterLogicalOperatorNodePtr lhs, FilterLogicalOperatorNodePtr rhs){
-        return lhs->getId() < rhs->getId();
+      return lhs->getId() < rhs->getId();
     });
 
+    NES_INFO("FilterPushDownRule: Iterate over all the filter operators to push them down in the query plan")
     for (auto filterOperator: filterOperators) {
         pushDownFilter(filterOperator);
     }
 
+    NES_INFO("FilterPushDownRule: Return the updated query plan")
     return queryPlanPtr;
 }
 
@@ -49,13 +51,12 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
         if (node->instanceOf<SourceLogicalOperatorNode>() || node->instanceOf<WindowLogicalOperatorNode>()
             || node->instanceOf<FilterLogicalOperatorNode>()) {
 
-            NES_INFO("FilterPushDownRule: Filter can't be pushed below the current operator because current operator "
-                     "is one of the following type: Source, Window, or Filter")
+            NES_INFO("FilterPushDownRule: Filter can't be pushed below the "+ node->toString() + " operator")
 
             if (node != filterOperator) {
 
                 NES_INFO("FilterPushDownRule: Adding Filter operator between current operator and its parents")
-                FilterLogicalOperatorNodePtr copyOptr = filterOperator->copy();
+                FilterLogicalOperatorNodePtr copyOptr = filterOperator->makeACopy();
                 if (!(copyOptr->removeAndJoinParentAndChildren()
                     && node->insertBetweenThisAndParentNodes(copyOptr))) {
 
@@ -70,7 +71,7 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
             bool predicateFieldManipulated = isFieldUsedInFilterPredicate(filterOperator, mapFieldName);
 
             if (predicateFieldManipulated) {
-                FilterLogicalOperatorNodePtr copyOptr = filterOperator->copy();
+                FilterLogicalOperatorNodePtr copyOptr = filterOperator->makeACopy();
                 if (!(copyOptr->removeAndJoinParentAndChildren()
                     && node->insertBetweenThisAndParentNodes(copyOptr))) {
 
@@ -93,15 +94,18 @@ void FilterPushDownRule::pushDownFilter(FilterLogicalOperatorNodePtr filterOpera
 bool FilterPushDownRule::isFieldUsedInFilterPredicate(FilterLogicalOperatorNodePtr filterOperator,
                                                       const std::string fieldName) const {
 
+    NES_INFO("FilterPushDownRule: Create an iterator for traversing the filter predicates")
     const ExpressionNodePtr filterPredicate = filterOperator->getPredicate();
     DepthFirstNodeIterator depthFirstNodeIterator(filterPredicate);
 
     for (auto itr = depthFirstNodeIterator.begin(); itr != depthFirstNodeIterator.end(); ++itr) {
 
+        NES_INFO("FilterPushDownRule: Iterate and find the predicate with FieldAccessExpression Node")
         if ((*itr)->instanceOf<FieldAccessExpressionNode>()) {
             const FieldAccessExpressionNodePtr
-                accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
+            accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
 
+            NES_INFO("FilterPushDownRule: Check if the input field name is same as the FieldAccessExpression field name")
             if (accessExpressionNode->getFieldName() == fieldName) {
                 return true;
             }
@@ -111,6 +115,7 @@ bool FilterPushDownRule::isFieldUsedInFilterPredicate(FilterLogicalOperatorNodeP
 }
 
 std::string FilterPushDownRule::getFieldNameUsedByMapOperator(NodePtr node) const {
+    NES_INFO("FilterPushDownRule: Find the field name used in map operator")
     MapLogicalOperatorNodePtr mapLogicalOperatorNodePtr = node->as<MapLogicalOperatorNode>();
     const FieldAssignmentExpressionNodePtr mapExpression = mapLogicalOperatorNodePtr->getMapExpression();
     const FieldAccessExpressionNodePtr field = mapExpression->getField();

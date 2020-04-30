@@ -1,4 +1,5 @@
 #include <Nodes/Operators/LogicalOperators/FilterLogicalOperatorNode.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 
@@ -29,16 +30,19 @@ const std::string FilterLogicalOperatorNode::toString() const {
     return ss.str();
 }
 
-FilterLogicalOperatorNodePtr FilterLogicalOperatorNode::copy() {
+FilterLogicalOperatorNodePtr FilterLogicalOperatorNode::makeACopy() {
 
+    NES_INFO("FilterLogicalOperatorNode: Create copy of the filter operator")
     const FilterLogicalOperatorNodePtr copiedOptr = std::make_shared<FilterLogicalOperatorNode>(this->getPredicate());
     copiedOptr->setId(this->getId());
 
+    NES_INFO("FilterLogicalOperatorNode: copy all parents")
     std::vector<NodePtr> parents = this->getParents();
     for (auto parent : parents) {
         copiedOptr->addParent(parent);
     }
 
+    NES_INFO("FilterLogicalOperatorNode: copy all children")
     std::vector<NodePtr> children = this->getChildren();
     for (auto child: children) {
         copiedOptr->addChild(child);
