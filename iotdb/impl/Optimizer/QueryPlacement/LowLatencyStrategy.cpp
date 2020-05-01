@@ -1,25 +1,35 @@
-#include <Operators/Operator.hpp>
+#include <API/Query.hpp>
 #include <Optimizer/QueryPlacement/LowLatencyStrategy.hpp>
 #include <Optimizer/Utils/PathFinder.hpp>
+#include <Optimizer/ExecutionGraph.hpp>
+#include <Optimizer/NESExecutionPlan.hpp>
+#include <Operators/Operator.hpp>
+#include <Nodes/Operators/QueryPlan.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Topology/NESTopologyPlan.hpp>
+#include <Topology/NESTopologyGraph.hpp>
 #include <Util/Logger.hpp>
+#include <Catalogs/StreamCatalog.hpp>
+#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
 
 namespace NES {
 
 NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(QueryPtr inputQuery,
                                                                 NESTopologyPlanPtr nesTopologyPlan) {
 
-    const OperatorPtr sinkOperator = inputQuery->getRoot();
+    const QueryPlanPtr queryPlan = inputQuery->getQueryPlan();
+    const SinkLogicalOperatorNodePtr sinkOperator = queryPlan->getSinkOperators()[0];
+    const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
     // FIXME: current implementation assumes that we have only one source stream and therefore only one source operator.
-    const string& streamName = inputQuery->getSourceStream()->getName();
-    const OperatorPtr sourceOperatorPtr = getSourceOperator(sinkOperator);
+    const std::string streamName = inputQuery->getSourceStream()->getName();
 
-    if (!sourceOperatorPtr) {
-        NES_ERROR("LowLatency: Unable to find the source operator.");
-        throw std::runtime_error("No source operator found in the query plan");
+    if (!sourceOperator) {
+        NES_THROW_RUNTIME_ERROR(    "LowLatency: Unable to find the source operator.");
     }
 
-    const vector<NESTopologyEntryPtr> sourceNodes = StreamCatalog::instance()
+    const std::vector<NESTopologyEntryPtr> sourceNodes = StreamCatalog::instance()
         .getSourceNodesForLogicalStream(streamName);
 
     if (sourceNodes.empty()) {
@@ -31,7 +41,7 @@ NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(QueryPtr inputQu
     const NESTopologyGraphPtr nesTopologyGraphPtr = nesTopologyPlan->getNESTopologyGraph();
 
     NES_INFO("LowLatency: Placing operators on the nes topology.");
-    placeOperators(nesExecutionPlanPtr, nesTopologyGraphPtr, sourceOperatorPtr, sourceNodes);
+    placeOperators(nesExecutionPlanPtr, nesTopologyGraphPtr, sourceOperator, sourceNodes);
 
     NESTopologyEntryPtr rootNode = nesTopologyGraphPtr->getRoot();
 
@@ -67,36 +77,41 @@ NESTopologyEntryPtr>& sourceNodes, const NESTopologyEntryPtr rootNode) const {
 }
 
 void LowLatencyStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
-                                        OperatorPtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes) {
+                                        LogicalOperatorNodePtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes) {
 
+    TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
     PathFinder pathFinder;
+
     const NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
     for (NESTopologyEntryPtr sourceNode: sourceNodes) {
 
-        OperatorPtr targetOperator = sourceOperator;
+        LogicalOperatorNodePtr targetOperator = sourceOperator;
         const vector<NESTopologyEntryPtr> targetPath = pathFinder.findPathWithMinLinkLatency(sourceNode, sinkNode);
 
         for (NESTopologyEntryPtr node : targetPath) {
             while (node->getRemainingCpuCapacity() > 0 && targetOperator) {
 
-                if (targetOperator->getOperatorType() == SINK_OP) {
+                NES_DEBUG("TopDown: Transforming New Operator into legacy operator")
+                OperatorPtr legacyOperator = translator->transform(targetOperator);
+
+                if (targetOperator->instanceOf<SinkLogicalOperatorNode>()) {
                     node = sinkNode;
                 }
 
                 if (!executionPlanPtr->hasVertex(node->getId())) {
                     NES_DEBUG("LowLatency: Create new execution node.")
                     stringstream operatorName;
-                    operatorName << operatorTypeToString[targetOperator->getOperatorType()] << "(OP-"
-                                 << std::to_string(targetOperator->getOperatorId()) << ")";
+                    operatorName << targetOperator->toString() << "(OP-"
+                                 << std::to_string(targetOperator->getId()) << ")";
                     const ExecutionNodePtr newExecutionNode =
                         executionPlanPtr->createExecutionNode(operatorName.str(), to_string(node->getId()), node,
-                                                              targetOperator->copy());
-                    newExecutionNode->addOperatorId(targetOperator->getOperatorId());
+                                                              legacyOperator->copy());
+                    newExecutionNode->addOperatorId(legacyOperator->getOperatorId());
                 } else {
 
                     const ExecutionNodePtr existingExecutionNode = executionPlanPtr
                         ->getExecutionNode(node->getId());
-                    size_t operatorId = targetOperator->getOperatorId();
+                    size_t operatorId = legacyOperator->getOperatorId();
                     vector<size_t>& residentOperatorIds = existingExecutionNode->getChildOperatorIds();
                     const auto exists = std::find(residentOperatorIds.begin(), residentOperatorIds.end(), operatorId);
                     if (exists != residentOperatorIds.end()) {
@@ -109,15 +124,15 @@ void LowLatencyStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NE
                         NES_DEBUG("LowLatency: adding target operator to already existing operator chain.");
                         stringstream operatorName;
                         operatorName << existingExecutionNode->getOperatorName() << "=>"
-                                     << operatorTypeToString[targetOperator->getOperatorType()]
-                                     << "(OP-" << std::to_string(targetOperator->getOperatorId()) << ")";
-                        existingExecutionNode->addOperator(targetOperator->copy());
+                                     << targetOperator->toString()
+                                     << "(OP-" << std::to_string(targetOperator->getId()) << ")";
+                        existingExecutionNode->addOperator(legacyOperator->copy());
                         existingExecutionNode->setOperatorName(operatorName.str());
-                        existingExecutionNode->addOperatorId(targetOperator->getOperatorId());
+                        existingExecutionNode->addOperatorId(legacyOperator->getOperatorId());
                     }
                 }
 
-                targetOperator = targetOperator->getParent();
+                targetOperator = targetOperator->getParents()[0]->as<LogicalOperatorNode>();
                 node->reduceCpuCapacity(1);
             }
 
