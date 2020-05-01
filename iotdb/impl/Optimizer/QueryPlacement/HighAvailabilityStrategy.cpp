@@ -129,7 +129,7 @@ void HighAvailabilityStrategy::placeOperators(NESExecutionPlanPtr nesExecutionPl
             vector<NESTopologyEntryPtr> commonPath = {sourceNode};
             NES_DEBUG(
                 "HighAvailabilityStrategy: Iterate over the computed map and identify the nodes with sufficient number of"
-                " occurance in other paths");
+                " occurrence in other paths");
             for (auto itr = nodeCountMap.rbegin(); itr != nodeCountMap.rend(); itr++) {
                 NES_DEBUG(
                     "HighAvailabilityStrategy: Check if the node on the path is shared by atleast " << linkRedundency
