@@ -26,10 +26,9 @@ NESExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(QueryPtr inputQuery
     const vector<NESTopologyEntryPtr>& sourceNodes = StreamCatalog::instance()
         .getSourceNodesForLogicalStream(streamName);
 
-  if (sourceNodes.empty()) {
-    NES_ERROR("Unable to find the source node to place the operator");
-    throw std::runtime_error("No available source node found in the network to place the operator");
-  }
+    if (sourceNodes.empty()) {
+        NES_THROW_RUNTIME_ERROR("Unable to find the source node to place the operator");
+    }
 
     const NESTopologyGraphPtr nesTopologyGraphPtr = nesTopologyPlanPtr->getNESTopologyGraph();
 
@@ -73,8 +72,8 @@ void TopDownStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr,
                                      vector<NESTopologyEntryPtr> nesSourceNodes,
                                      NESTopologyGraphPtr nesTopologyGraphPtr) {
 
-    TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
     PathFinder pathFinder;
+    TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
 
     for (NESTopologyEntryPtr nesSourceNode : nesSourceNodes) {
 
