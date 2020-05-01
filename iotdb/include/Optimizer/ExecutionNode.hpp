@@ -9,8 +9,8 @@ namespace NES {
 class NESTopologyEntry;
 typedef std::shared_ptr<NESTopologyEntry> NESTopologyEntryPtr;
 
-class Node;
-typedef std::shared_ptr<Node> NodePtr;
+class Operator;
+typedef std::shared_ptr<Operator> OperatorPtr;
 
 /**\brief:
  *          Contains information about the list of operators and the node where the operators are to be executed.
@@ -19,7 +19,7 @@ class ExecutionNode {
 
   public:
 
-    ExecutionNode(std::string operatorName, std::string nodeName, NESTopologyEntryPtr nesNode, NodePtr rootOperator);
+    ExecutionNode(std::string operatorName, std::string nodeName, NESTopologyEntryPtr nesNode, OperatorPtr rootOperator);
 
     int getId() { return this->id; };
 
@@ -35,15 +35,15 @@ class ExecutionNode {
         this->operatorName = operatorName;
     }
 
-    NESTopologyEntryPtr& getNESNode() {
+    NESTopologyEntryPtr getNESNode() {
         return nesNode;
     }
 
-    void setRootOperator(const NodePtr root) {
+    void setRootOperator(const OperatorPtr root) {
         this->rootOperator = root;
     }
 
-    NodePtr getRootOperator() {
+    OperatorPtr getRootOperator() {
         return rootOperator;
     }
 
@@ -56,14 +56,14 @@ class ExecutionNode {
      * Note: root is always the child operator.
      * @param operatorPtr  : operator to be added
      */
-    void addOperator(NodePtr operatorPtr);
+    void addOperator(OperatorPtr operatorPtr);
 
     /**
      * @brief Add the input operator as the child of the last operator in the chain
      * Note: root is always the child operator.
      * @param operatorPtr  : operator to be added
      */
-    void addChild(NodePtr operatorPtr) ;
+    void addChild(OperatorPtr operatorPtr) ;
 
     void addOperatorId(size_t childOperatorId) {
         this->operatorIds.push_back(childOperatorId);
@@ -73,7 +73,7 @@ class ExecutionNode {
     int id;
     std::string operatorName;
     std::string nodeName;
-    NodePtr rootOperator;
+    OperatorPtr rootOperator;
     NESTopologyEntryPtr nesNode;
     std::vector<size_t> operatorIds;
 };

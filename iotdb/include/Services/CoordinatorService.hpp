@@ -1,19 +1,20 @@
 #ifndef INCLUDE_ACTORS_COORDINATORSERVICE_HPP_
 #define INCLUDE_ACTORS_COORDINATORSERVICE_HPP_
 
-#include <API/InputQuery.hpp>
-#include <NodeEngine/NodeEngine.hpp>
 #include <SourceSink/DataSource.hpp>
+#include <Util/SerializationTools.hpp>
+#include <NodeEngine/NodeEngine.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
-#include <Util/SerializationTools.hpp>
+#include <API/InputQuery.hpp>
 
 #include <API/UserAPIExpression.hpp>
 
-#include <Actors/ExecutableTransferObject.hpp>
-#include <Operators/Impl/SinkOperator.hpp>
-#include <Operators/Impl/SourceOperator.hpp>
+#include <Util/UtilityFunctions.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
+#include <Operators/Impl/SourceOperator.hpp>
+#include <Operators/Impl/SinkOperator.hpp>
+#include <Actors/ExecutableTransferObject.hpp>
 #include <Services/OptimizerService.hpp>
 #include <Services/QueryService.hpp>
 #include <Util/UtilityFunctions.hpp>
@@ -209,5 +210,5 @@ class CoordinatorService {
     int assign_port(const string& queryId);
 };
 
-}// namespace NES
-#endif//INCLUDE_ACTORS_COORDINATORSERVICE_HPP_
+}
+#endif //INCLUDE_ACTORS_COORDINATORSERVICE_HPP_

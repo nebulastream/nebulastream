@@ -52,6 +52,9 @@ typedef std::shared_ptr<NESTopologyGraph> NESTopologyGraphPtr;
 class LogicalOperatorNode;
 typedef std::shared_ptr<LogicalOperatorNode> LogicalOperatorNodePtr;
 
+class Operator;
+typedef std::shared_ptr<Operator> OperatorPtr;
+
 /**
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
  */
@@ -93,12 +96,6 @@ class BasePlacementStrategy {
      */
     void fillExecutionGraphWithTopologyInformation(NESExecutionPlanPtr nesExecutionPlanPtr,
                                                    NESTopologyPlanPtr nesTopologyPtr);
-
-    /**
-     * @brief this methods takes the user specified UDFS from the sample operator and add it to all Sense Operators
-     * @param inputQuery
-     */
-    void setUDFSFromSampleOperatorToSenseSources(QueryPtr inputQuery);
 
     /**
      * @brief Factory method returning different kind of optimizer.
