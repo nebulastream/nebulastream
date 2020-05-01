@@ -12,7 +12,7 @@ class MinimumResourceConsumptionStrategy : public BasePlacementStrategy {
 
   public:
     ~MinimumResourceConsumptionStrategy() = default;
-    NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
+    NESExecutionPlanPtr initializeExecutionPlan(QueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
     static std::unique_ptr<MinimumResourceConsumptionStrategy> create() {
         return std::make_unique<MinimumResourceConsumptionStrategy>(MinimumResourceConsumptionStrategy());

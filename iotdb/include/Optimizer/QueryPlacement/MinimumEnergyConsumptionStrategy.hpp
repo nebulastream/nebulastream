@@ -2,6 +2,7 @@
 #define NES_IMPL_OPTIMIZER_IMPL_MINIMUMENERGYCONSUMPTION_HPP_
 
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
+
 namespace NES {
 
 /**
@@ -12,7 +13,7 @@ class MinimumEnergyConsumptionStrategy : public BasePlacementStrategy {
 
   public:
     ~MinimumEnergyConsumptionStrategy() = default;
-    NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
+    NESExecutionPlanPtr initializeExecutionPlan(QueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
     static std::unique_ptr<MinimumEnergyConsumptionStrategy> create() {
         return std::make_unique<MinimumEnergyConsumptionStrategy>(MinimumEnergyConsumptionStrategy());

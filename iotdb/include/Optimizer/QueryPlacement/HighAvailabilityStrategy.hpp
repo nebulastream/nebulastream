@@ -16,7 +16,7 @@ class HighAvailabilityStrategy : public BasePlacementStrategy {
 
   public:
     ~HighAvailabilityStrategy() = default;
-    NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
+    NESExecutionPlanPtr initializeExecutionPlan(QueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
     static std::unique_ptr<HighAvailabilityStrategy> create() {
         return std::make_unique<HighAvailabilityStrategy>(HighAvailabilityStrategy());
@@ -34,14 +34,14 @@ class HighAvailabilityStrategy : public BasePlacementStrategy {
      * @throws exception if the operator can't be placed anywhere.
      */
     void placeOperators(NESExecutionPlanPtr nesExecutionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
-                        OperatorPtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes);
+                        OperatorPtr sourceOperator, std::vector<NESTopologyEntryPtr> sourceNodes);
 
     /**
      * @brief Add forward operators between source and sink nodes.
      * @param rootNode : sink node
      * @param nesExecutionPlanPtr : nes execution plan
      */
-    void addForwardOperators(vector<NESTopologyEntryPtr> pathForPlacement,
+    void addForwardOperators(std::vector<NESTopologyEntryPtr> pathForPlacement,
                              NESExecutionPlanPtr nesExecutionPlanPtr) const;
 
     /**
@@ -50,8 +50,8 @@ class HighAvailabilityStrategy : public BasePlacementStrategy {
      * @param rootNode
      * @return
      */
-    vector<NESTopologyEntryPtr> getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
-                                                                         const NESTopologyEntryPtr rootNode) const;
+    std::vector<NESTopologyEntryPtr> getCandidateNodesForFwdOperatorPlacement(const std::vector<NESTopologyEntryPtr>& sourceNodes,
+                                                                              const NESTopologyEntryPtr rootNode) const;
 };
 
 }// namespace NES

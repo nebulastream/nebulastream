@@ -3,11 +3,14 @@
 #include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Nodes/Phases/TranslateToLegacyPlanPhase.hpp>
 #include <Optimizer/NESExecutionPlan.hpp>
 #include <Optimizer/QueryPlacement/BottomUpStrategy.hpp>
 #include <Optimizer/ExecutionGraph.hpp>
 #include <Optimizer/ExecutionNode.hpp>
 #include <Optimizer/Utils/PathFinder.hpp>
+#include <Operators/Operator.hpp>
 #include <Topology/NESTopologyGraph.hpp>
 #include <Topology/NESTopologyPlan.hpp>
 #include <Util/Logger.hpp>
@@ -37,7 +40,6 @@ NESExecutionPlanPtr BottomUpStrategy::initializeExecutionPlan(QueryPtr inputQuer
         NES_ERROR("BottomUp: Unable to find the target source: " << streamName);
         throw std::runtime_error("No source found in the topology for stream " + streamName);
     }
-    setUDFSFromSampleOperatorToSenseSources(inputQuery);
 
     NESExecutionPlanPtr nesExecutionPlanPtr = std::make_shared<NESExecutionPlan>();
     const NESTopologyGraphPtr nesTopologyGraphPtr = nesTopologyPlan->getNESTopologyGraph();
@@ -77,6 +79,7 @@ vector<NESTopologyEntryPtr> BottomUpStrategy::getCandidateNodesForFwdOperatorPla
 void BottomUpStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
                                       LogicalOperatorNodePtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes) {
 
+    TranslateToLegacyPlanPhasePtr translator = TranslateToLegacyPlanPhase::create();
     NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
     PathFinder pathFinder;
 
@@ -112,6 +115,9 @@ void BottomUpStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NEST
                 NES_THROW_RUNTIME_ERROR("BottomUp: No resource available for further placement of operators");
             }
 
+            NES_DEBUG("BottomUp: Transforming New Operator into legacy operator")
+            OperatorPtr legacyOperator = translator->transform(operatorToPlace);
+
             if (executionPlanPtr->hasVertex(nesNodeToPlaceOperator->getId())) {
 
                 NES_DEBUG(
@@ -136,7 +142,7 @@ void BottomUpStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NEST
                                  << operatorToPlace->toString()
                                  << "(OP-" << std::to_string(operatorToPlace->getId()) << ")";
                     existingExecutionNode->setOperatorName(operatorName.str());
-                    existingExecutionNode->addOperator(operatorToPlace);
+                    existingExecutionNode->addOperator(legacyOperator->copy());
                     existingExecutionNode->addOperatorId(operatorToPlace->getId());
                 }
             } else {
@@ -149,7 +155,7 @@ void BottomUpStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NEST
                                                                                                 to_string(
                                                                                                     nesNodeToPlaceOperator->getId()),
                                                                                                 nesNodeToPlaceOperator,
-                                                                                                operatorToPlace);
+                                                                                                legacyOperator->copy());
                 newExecutionNode->addOperatorId(operatorToPlace->getId());
             }
 

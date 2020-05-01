@@ -21,8 +21,8 @@ typedef std::shared_ptr<ExecutionGraph> ExecutionGraphPtr;
 class NESTopologyEntry;
 typedef std::shared_ptr<NESTopologyEntry> NESTopologyEntryPtr;
 
-class Node;
-typedef std::shared_ptr<Node> NodePtr;
+class Operator;
+typedef std::shared_ptr<Operator> OperatorPtr;
 
 using namespace web;
 
@@ -46,7 +46,7 @@ class NESExecutionPlan {
   ExecutionNodePtr createExecutionNode(std::string operatorName,
                                        std::string nodeName,
                                        NESTopologyEntryPtr nesNode,
-                                       NodePtr executableOperator);
+                                       OperatorPtr executableOperator);
 
   /**
    * @brief Create execution node link between sourceNode and destinationNode nodes

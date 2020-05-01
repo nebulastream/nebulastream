@@ -37,7 +37,7 @@ class TopDownStrategy : public BasePlacementStrategy {
      * @param operatorPtr : operator to add
      * @param executionNode : execution node to which operator need to be added
      */
-    void addOperatorToExistingNode(LogicalOperatorNodePtr operatorPtr, ExecutionNodePtr executionNode) const;
+    void addOperatorToExistingNode(OperatorPtr operatorPtr, ExecutionNodePtr executionNode) const;
 
     /**
      * @brief create new execution nesNode for the query operator.
@@ -45,7 +45,7 @@ class TopDownStrategy : public BasePlacementStrategy {
      * @param operatorPtr : operator to be added
      * @param nesNode : physical node used for creating the execution node
      */
-    void createNewExecutionNode(NESExecutionPlanPtr executionPlanPtr, LogicalOperatorNodePtr operatorPtr,
+    void createNewExecutionNode(NESExecutionPlanPtr executionPlanPtr, OperatorPtr operatorPtr,
                                 NESTopologyEntryPtr nesNode) const;
 
     /**
