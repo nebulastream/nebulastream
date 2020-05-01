@@ -22,7 +22,7 @@ class MinimumResourceConsumptionStrategy : public BasePlacementStrategy {
     MinimumResourceConsumptionStrategy() = default;
 
     void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
-                        OperatorPtr sourceOperator, vector<NESTopologyEntryPtr> sourceNodes);
+                        LogicalOperatorNodePtr sourceOperator, std::vector<NESTopologyEntryPtr> sourceNodes);
 
     /**
      * @brief Finds all the nodes that can be used for performing FWD operator
@@ -30,7 +30,7 @@ class MinimumResourceConsumptionStrategy : public BasePlacementStrategy {
      * @param rootNode
      * @return
      */
-    vector<NESTopologyEntryPtr> getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
+    std::vector<NESTopologyEntryPtr> getCandidateNodesForFwdOperatorPlacement(const std::vector<NESTopologyEntryPtr>& sourceNodes,
                                                                          const NESTopologyEntryPtr rootNode) const;
 };
 }// namespace NES
