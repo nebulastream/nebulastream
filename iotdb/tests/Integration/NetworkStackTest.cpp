@@ -20,7 +20,7 @@ public:
     }
 };
 
-TEST_F(NetworkStackTest, serverMustStartAndStop) {
+TEST_F(NetworkStackTest, DISABLED_serverMustStartAndStop) {
     try {
         ExchangeProtocol exchangeProtocol([](){}, [](){}, [](std::exception_ptr ex){});
         ZmqServer server("127.0.0.1", 31337, 4, exchangeProtocol);
