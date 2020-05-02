@@ -127,9 +127,6 @@ class WorkerService {
     std::map<std::string, PhysicalStreamConfig> physicalStreams;
 
     std::shared_ptr<NodeEngine> nodeEngine;
-
-    std::unordered_map<string, QueryExecutionPlanPtr> queryIdToQEPMap;
-    std::unordered_map<string, NodeQueryStatus> queryIdToStatusMap;
 };
 
 } // namespace NES

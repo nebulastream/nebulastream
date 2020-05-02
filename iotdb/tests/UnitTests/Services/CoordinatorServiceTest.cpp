@@ -255,10 +255,11 @@ TEST_F(CoordinatorServiceTest, test_code_gen) {
 
     DataSinkPtr sink = createPrintSinkWithSchema(schema, std::cout);
     qep->addDataSink(sink);
+    qep->setQueryId("1");
 
-    engine->deployQuery(qep);
+    engine->deployQueryInNodeEngine(qep);
     sleep(2);
-    engine->undeployQuery(qep);
+    engine->undeployQuery("1");
     engine->stop();
 }
 
@@ -280,15 +281,17 @@ TEST_F(CoordinatorServiceTest, DISABLED_test_local_distributed_deployment) {
         ExecutableTransferObject eto = x.second;
         QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(
             createDefaultQueryCompiler(engine->getQueryManager()));
+
         EXPECT_TRUE(qep);
-        engine->deployQuery(qep);
+        engine->deployQueryInNodeEngine(qep);
         qeps.push_back(qep);
     }
     EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
     EXPECT_TRUE(coordinatorServicePtr->getRunningQueries().size() == 1);
 
     for (const QueryExecutionPlanPtr qep : qeps) {
-        engine->undeployQuery(qep);
+        assert(0);//hAS TO BE FIXED once thest ist enabled
+//        engine->undeployQuery(qep);
     }
     engine->stop();
 
@@ -318,14 +321,15 @@ TEST_F(CoordinatorServiceTest, DISABLED_test_sequential_local_distributed_deploy
             QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(
                 createDefaultQueryCompiler(engine->getQueryManager()));
             EXPECT_TRUE(qep);
-            engine->deployQuery(qep);
+            engine->deployQueryInNodeEngine(qep);
             qeps.push_back(qep);
         }
         EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
         EXPECT_TRUE(coordinatorServicePtr->getRunningQueries().size() == 1);
 
         for (const QueryExecutionPlanPtr qep : qeps) {
-            engine->undeployQuery(qep);
+            assert(0);//hAS TO BE FIXED once thest ist enabled
+            //        engine->undeployQuery(qep);
         }
 
         coordinatorServicePtr->deleteQuery(queryId);

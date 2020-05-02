@@ -18,7 +18,7 @@ typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 
 class QueryExecutionPlan {
   public:
-    QueryExecutionPlan();
+    QueryExecutionPlan(std::string queryId);
     virtual ~QueryExecutionPlan();
 
     /**
@@ -94,8 +94,11 @@ class QueryExecutionPlan {
 
     void print();
 
+    void setQueryId(std::string queryId);
+    std::string getQueryId();
   protected:
-    QueryExecutionPlan(std::vector<DataSourcePtr> sources,
+    QueryExecutionPlan(std::string queryId,
+                       std::vector<DataSourcePtr> sources,
                        std::vector<PipelineStagePtr> stages,
                        std::map<DataSource*, uint32_t> sourceToStage,
                        std::map<uint32_t, uint32_t> stageToDest);
@@ -107,6 +110,7 @@ class QueryExecutionPlan {
     std::map<uint32_t, uint32_t> stageToDest;
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
+    std::string queryId;
 };
 
 }  // namespace NES

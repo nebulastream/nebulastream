@@ -43,32 +43,33 @@ NodeEngine::~NodeEngine() {
     stop();
 }
 
-bool NodeEngine::deployQuery(QueryExecutionPlanPtr qep) {
-    NES_DEBUG("NodeEngine: deployQuery query " << qep)
-    bool successRegister = registerQuery(qep);
+bool NodeEngine::deployQueryInNodeEngine(QueryExecutionPlanPtr qep) {
+    NES_DEBUG("NodeEngine: deployQueryInNodeEngine query " << qep)
+    bool successRegister = registerQueryInNodeEngine(qep);
     if (!successRegister) {
-        NES_ERROR("NodeEngine::deployQuery: failed to register query")
+        NES_ERROR("NodeEngine::deployQueryInNodeEngine: failed to register query")
         return false;
     } else {
-        NES_DEBUG("NodeEngine::deployQuery: successfully register query")
+        NES_DEBUG("NodeEngine::deployQueryInNodeEngine: successfully register query")
     }
-    bool successStart = startQuery(qep);
+    bool successStart = startQuery(qep->getQueryId());
     if (!successStart) {
-        NES_ERROR("NodeEngine::deployQuery: failed to start query")
+        NES_ERROR("NodeEngine::deployQueryInNodeEngine: failed to start query")
         return false;
     } else {
-        NES_DEBUG("NodeEngine::deployQuery: successfully start query")
+        NES_DEBUG("NodeEngine::deployQueryInNodeEngine: successfully start query")
     }
     return true;
 }
 
-bool NodeEngine::registerQuery(QueryExecutionPlanPtr qep) {
-    NES_DEBUG("NodeEngine: registerQuery query " << qep)
+bool NodeEngine::registerQueryInNodeEngine(QueryExecutionPlanPtr qep) {
+    NES_DEBUG("NodeEngine: registerQueryInNodeEngine query " << qep << " queryId=" << qep->getQueryId())
     qep->setBufferManager(bufferManager);
 
-    if (queryStatusMap.find(qep) == queryStatusMap.end()) {
+    if (queryIdToQepMap.find(qep->getQueryId()) == queryIdToQepMap.end()) {
         if (queryManager->registerQuery(qep)) {
-            queryStatusMap.insert({qep, NodeEngineQueryStatus::registered});
+            queryIdToQepMap.insert({qep->getQueryId(), qep});
+            qepToStatusMap.insert({qep, NodeEngineQueryStatus::registered});
             NES_DEBUG("NodeEngine: register of QEP " << qep << " succeeded")
             return true;
         } else {
@@ -81,26 +82,26 @@ bool NodeEngine::registerQuery(QueryExecutionPlanPtr qep) {
     }
 }
 
-bool NodeEngine::startQuery(QueryExecutionPlanPtr qep) {
-    NES_DEBUG("NodeEngine: startQuery=" << qep)
-    if (queryStatusMap.find(qep) != queryStatusMap.end()) {
-        if (queryManager->startQuery(qep)) {
-            NES_DEBUG("NodeEngine: start of QEP " << qep << " succeeded")
-            queryStatusMap[qep] = NodeEngineQueryStatus::started;
+bool NodeEngine::startQuery(std::string queryId) {
+    NES_DEBUG("NodeEngine: startQuery=" << queryId)
+    if (queryIdToQepMap.find(queryId) != queryIdToQepMap.end()) {
+        if (queryManager->startQuery(queryIdToQepMap[queryId])) {
+            NES_DEBUG("NodeEngine: start of QEP " << queryId << " succeeded")
+            qepToStatusMap[queryIdToQepMap[queryId]] = NodeEngineQueryStatus::started;
             return true;
         } else {
-            NES_DEBUG("NodeEngine: start of QEP " << qep << " failed")
+            NES_DEBUG("NodeEngine: start of QEP " << queryId << " failed")
             return false;
         }
     } else {
-        NES_DEBUG("NodeEngine: qep does not exists. start failed" << qep)
+        NES_DEBUG("NodeEngine: qep does not exists. start failed" << queryId)
         return false;
     }
 }
 
-bool NodeEngine::undeployQuery(QueryExecutionPlanPtr qep) {
-    NES_DEBUG("NodeEngine: undeployQuery query=" << qep)
-    bool successStop = stopQuery(qep);
+bool NodeEngine::undeployQuery(std::string queryId) {
+    NES_DEBUG("NodeEngine: undeployQuery query=" << queryId)
+    bool successStop = stopQuery(queryId);
     if (!successStop) {
         NES_ERROR("NodeEngine::undeployQuery: failed to stop query")
         return false;
@@ -108,7 +109,7 @@ bool NodeEngine::undeployQuery(QueryExecutionPlanPtr qep) {
         NES_DEBUG("NodeEngine::undeployQuery: successfully stop query")
     }
 
-    bool successUnregister = unregisterQuery(qep);
+    bool successUnregister = unregisterQuery(queryId);
     if (!successUnregister) {
         NES_ERROR("NodeEngine::undeployQuery: failed to unregister query")
         return false;
@@ -118,36 +119,45 @@ bool NodeEngine::undeployQuery(QueryExecutionPlanPtr qep) {
     }
 }
 
-bool NodeEngine::unregisterQuery(QueryExecutionPlanPtr qep) {
-    NES_DEBUG("NodeEngine: unregisterQuery query=" << qep)
-    if (queryStatusMap.find(qep) != queryStatusMap.end()) {
-        if (queryManager->deregisterQuery(qep)) {
-            size_t delCnt = queryStatusMap.erase(qep);
-            NES_DEBUG("NodeEngine: unregister of QEP " << qep << " succeeded with cnt=" << delCnt)
-            return true;
+bool NodeEngine::unregisterQuery(std::string queryId) {
+    NES_DEBUG("NodeEngine: unregisterQuery query=" << queryId)
+    if (queryIdToQepMap.find(queryId) != queryIdToQepMap.end()) {
+        if (queryManager->deregisterQuery(queryIdToQepMap[queryId])) {
+            size_t delCnt1 = qepToStatusMap.erase(queryIdToQepMap[queryId]);
+            NES_DEBUG("NodeEngine: unregister of QEP " << queryId << " succeeded with cnt=" << delCnt1)
+
+            size_t delCnt2 = queryIdToQepMap.erase(queryId);
+            NES_DEBUG("NodeEngine: unregister of query " << queryId << " succeeded with cnt=" << delCnt2)
+
+            if (delCnt1 == 1 &&  delCnt2 == 1) {
+                return true;
+            } else {
+                NES_ERROR("NodeEngine::unregisterQuery: error while unregister query")
+                return false;
+            }
         } else {
-            NES_ERROR("NodeEngine: unregister of QEP " << qep << " failed")
+            NES_ERROR("NodeEngine: unregister of QEP " << queryId << " failed")
             return false;
         }
     } else {
-        NES_DEBUG("NodeEngine: qep does not exists. unregister failed" << qep)
+        NES_DEBUG("NodeEngine: qep does not exists. unregister failed" << queryId)
         return false;
     }
 }
 
-bool NodeEngine::stopQuery(QueryExecutionPlanPtr qep) {
-    NES_DEBUG("NodeEngine:stopQuery for qep" << qep)
-    if (queryStatusMap.find(qep) != queryStatusMap.end()) {
-        if (queryManager->stopQuery(qep)) {
-            NES_DEBUG("NodeEngine: stop of QEP " << qep << " succeeded")
-            queryStatusMap[qep] = NodeEngineQueryStatus::stopped;
+bool NodeEngine::stopQuery(std::string queryId) {
+    NES_DEBUG("NodeEngine:stopQuery for qep" << queryId)
+    if (queryIdToQepMap.find(queryId) != queryIdToQepMap.end()) {
+        if (queryManager->stopQuery(queryIdToQepMap[queryId])) {
+            NES_DEBUG("NodeEngine: stop of QEP " << queryId << " succeeded")
+            qepToStatusMap[queryIdToQepMap[queryId]] = NodeEngineQueryStatus::stopped;
             return true;
         } else {
-            NES_DEBUG("NodeEngine: stop of QEP " << qep << " failed")
+            NES_DEBUG("NodeEngine: stop of QEP " << queryId << " failed")
             return false;
         }
     } else {
-        NES_DEBUG("NodeEngine: qep does not exists. stop failed" << qep)
+        NES_DEBUG("NodeEngine: qep does not exists. stop failed" << queryId)
         return false;
     }
 }
@@ -169,13 +179,10 @@ bool NodeEngine::start() {
         bool successBm = createBufferManager();
         NES_DEBUG("NodeEngine: create buffer manager success=" << successBm)
 
-        if(successTp && successBm)
-        {
+        if (successTp && successBm) {
             isRunning = true;
             return true;
-        }
-        else
-        {
+        } else {
             return false;
         }
     } else {
@@ -187,29 +194,28 @@ bool NodeEngine::start() {
 bool NodeEngine::stop() {
     //TODO: add check if still queries are running
     if (isRunning) {
-        NES_DEBUG("NodeEngine:stop stop NodeEngine, undeploy " << queryStatusMap.size() << " queries");
-        for (auto entry : queryStatusMap) {
+        NES_DEBUG("NodeEngine:stop stop NodeEngine, undeploy " << qepToStatusMap.size() << " queries");
+        for (auto entry : qepToStatusMap) {
             if (entry.second == NodeEngineQueryStatus::started && !forceStop) {
                 NES_ERROR("NodeEngine::stop: cannot stop as query " << entry.first << " still running")
                 return false;
             }
         }
 
-        std::vector<QueryExecutionPlanPtr> copyOfVec;
-        std::transform(queryStatusMap.begin(), queryStatusMap.end(), std::back_inserter(copyOfVec),
-                       [](std::pair<QueryExecutionPlanPtr, NodeEngineQueryStatus> const& dev) {
+        //extract key column from map
+        std::vector<std::string> copyOfVec;
+        std::transform(queryIdToQepMap.begin(), queryIdToQepMap.end(), std::back_inserter(copyOfVec),
+                       [](std::pair<std::string, QueryExecutionPlanPtr> const& dev) {
                          return dev.first;
                        });
 
-        for (QueryExecutionPlanPtr qep : copyOfVec) {
-            NES_DEBUG("QEP to del is =")
-            qep->print();
-            bool success = undeployQuery(qep);
+        for (std::string qId : copyOfVec) {
+            bool success = undeployQuery(qId);
             if (success) {
-                NES_DEBUG("NodeEngine:stop undeployQuery query " << qep << " successfully")
+                NES_DEBUG("NodeEngine:stop undeployQuery query " << qId << " successfully")
 
             } else {
-                NES_ERROR("NodeEngine:stop undeploy query " << qep << " failed")
+                NES_ERROR("NodeEngine:stop undeploy query " << qId << " failed")
                 return false;
             }
         }
@@ -274,24 +280,18 @@ bool NodeEngine::startQueryManager() {
     }
     NES_DEBUG("startQueryManager: setup query manager")
     queryManager = std::make_shared<QueryManager>();
-    if(queryManager)
-    {
+    if (queryManager) {
         NES_DEBUG("NodeEngine::startQueryManager(): successful")
         NES_DEBUG("QueryManager(): start thread pool")
         bool success = queryManager->startThreadPool();
-        if(!success)
-        {
+        if (!success) {
             NES_ERROR("QueryManager: error while start thread pool")
             throw Exception("Error while start thread pool");
-        }
-        else
-        {
+        } else {
             NES_DEBUG("QueryManager(): thread pool successfully started")
             return true;
         }
-    }
-    else
-    {
+    } else {
         NES_ERROR("NodeEngine::startQueryManager(): query manager could not be starterd")
         return false;
     }

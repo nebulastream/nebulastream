@@ -5,17 +5,30 @@
 
 namespace NES {
 
-QueryExecutionPlan::QueryExecutionPlan() : sources(), stages() {
+QueryExecutionPlan::QueryExecutionPlan(std::string queryId) : queryId(queryId), sources(), stages() {
 }
 
-QueryExecutionPlan::QueryExecutionPlan(std::vector<DataSourcePtr> sources,
+QueryExecutionPlan::QueryExecutionPlan(std::string queryId,
+                                       std::vector<DataSourcePtr> sources,
                                        std::vector<PipelineStagePtr> stages,
                                        std::map<DataSource*, uint32_t> sourceToStage,
                                        std::map<uint32_t, uint32_t> stageToDest)
-    : sources(std::move(sources)),
-      stages(std::move(stages)),
-      sourceToStage(std::move(sourceToStage)),
-      stageToDest(std::move(stageToDest)) {
+    :
+    queryId(queryId),
+    sources(std::move(sources)),
+    stages(std::move(stages)),
+    sourceToStage(std::move(sourceToStage)),
+    stageToDest(std::move(stageToDest)) {
+}
+
+void QueryExecutionPlan::setQueryId(std::string queryId)
+{
+    this->queryId = queryId;
+}
+
+std::string QueryExecutionPlan::getQueryId()
+{
+    return queryId;
 }
 
 QueryExecutionPlan::~QueryExecutionPlan() {
