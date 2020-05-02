@@ -213,9 +213,8 @@ TEST_F(CoordinatorServiceTest, test_run_deregister_query) {
 }
 
 TEST_F(CoordinatorServiceTest, test_compile_deployment) {
-
-    QueryManagerPtr queryManager = std::make_shared<QueryManager>();
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
+    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
+    nodeEngine->start();
 
     string queryId = coordinatorServicePtr->registerQuery(queryString,
                                                           "BottomUp");
@@ -227,7 +226,7 @@ TEST_F(CoordinatorServiceTest, test_compile_deployment) {
     for (auto& x : etos) {
         ExecutableTransferObject eto = x.second;
         QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(
-            createDefaultQueryCompiler(queryManager));
+            createDefaultQueryCompiler(nodeEngine->getQueryManager()));
         EXPECT_TRUE(qep);
     }
     EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);

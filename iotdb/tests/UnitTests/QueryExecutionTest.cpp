@@ -3,11 +3,8 @@
 #include <iostream>
 #include <future>
 
-#include <Catalogs/QueryCatalog.hpp>
-#include <API/InputQuery.hpp>
 #include <Services/CoordinatorService.hpp>
 
-#include <Topology/NESTopologyManager.hpp>
 #include <API/Schema.hpp>
 
 #include <Util/Logger.hpp>
@@ -119,11 +116,12 @@ void fillBuffer(TupleBuffer& buf, MemoryLayoutPtr memoryLayout) {
 }
 
 TEST_F(QueryExecutionTest, filterQuery) {
-    QueryManagerPtr queryManager = std::make_shared<QueryManager>();
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
+    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
+    nodeEngine->start();
+
 
     // creating query plan
-    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, bufferManager, queryManager);
+    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto source = createSourceOperator(testSource);
     auto filter = createFilterOperator(
         createPredicate(Field(testSchema->get("id")) < 5));
@@ -135,16 +133,16 @@ TEST_F(QueryExecutionTest, filterQuery) {
     sink->addChild(filter);
     filter->setParent(sink);
 
-    auto compiler = createDefaultQueryCompiler(queryManager);
+    auto compiler = createDefaultQueryCompiler(nodeEngine->getQueryManager());
     auto plan = compiler->compile(sink);
     plan->addDataSink(testSink);
     plan->addDataSource(testSource);
-    plan->setBufferManager(bufferManager);
-    plan->setQueryManager(queryManager);
+    plan->setBufferManager(nodeEngine->getBufferManager());
+    plan->setQueryManager(nodeEngine->getQueryManager());
 
     // The plan should have one pipeline
     EXPECT_EQ(plan->numberOfPipelineStages(), 1);
-    auto buffer = bufferManager->getBufferBlocking();
+    auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     auto memoryLayout = createRowLayout(testSchema);
     fillBuffer(buffer, memoryLayout);
     plan->executeStage(0, buffer);
@@ -170,11 +168,12 @@ TEST_F(QueryExecutionTest, windowQuery) {
     // TODO in this test, it is not clear what we are testing
     // TODO 10 windows are fired -> 10 output buffers in the sink
     // TODO however, we check the 2nd buffer only
-    QueryManagerPtr queryManager = std::make_shared<QueryManager>();
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
+    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
+    nodeEngine->start();
+
 
     // creating query plan
-    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, bufferManager, queryManager);
+    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto source = createSourceOperator(testSource);
     auto aggregation = Sum::on(testSchema->get("one"));
     auto windowType = TumblingWindow::of(TimeCharacteristic::ProcessingTime,
@@ -195,16 +194,16 @@ TEST_F(QueryExecutionTest, windowQuery) {
     sink->addChild(windowScan);
     windowScan->setParent(sink);
 
-    auto compiler = createDefaultQueryCompiler(queryManager);
-    compiler->setQueryManager(queryManager);
-    compiler->setBufferManager(bufferManager);
+    auto compiler = createDefaultQueryCompiler(nodeEngine->getQueryManager());
+    compiler->setQueryManager(nodeEngine->getQueryManager());
+    compiler->setBufferManager(nodeEngine->getBufferManager());
     auto plan = compiler->compile(sink);
     plan->addDataSink(testSink);
     plan->addDataSource(testSource);
-    plan->setBufferManager(bufferManager);
-    plan->setQueryManager(queryManager);
+    plan->setBufferManager(nodeEngine->getBufferManager());
+    plan->setQueryManager(nodeEngine->getQueryManager());
 
-    queryManager->registerQuery(plan);
+    nodeEngine->getQueryManager()->registerQuery(plan);
     plan->setup();
     plan->start();
 
@@ -212,7 +211,7 @@ TEST_F(QueryExecutionTest, windowQuery) {
     EXPECT_EQ(plan->numberOfPipelineStages(), 2);
     // TODO switch to event time if that is ready to remove sleep
     auto memoryLayout = createRowLayout(testSchema);
-    auto buffer = bufferManager->getBufferBlocking();
+    auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     fillBuffer(buffer, memoryLayout);
     // TODO do not rely on sleeps
     // ingest test data

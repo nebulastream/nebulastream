@@ -15,6 +15,7 @@
 #include <SourceSink/SourceCreator.hpp>
 
 #include <NodeEngine/QueryManager.hpp>
+#include <NodeEngine/NodeEngine.hpp>
 
 using namespace NES;
 
@@ -28,8 +29,6 @@ using namespace NES;
 
 class ZMQTest : public testing::Test {
 public:
-    QueryManagerPtr queryManager;
-    BufferManagerPtr bufferManager;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -50,8 +49,7 @@ public:
         //    test_data_size = 4096;
         test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE",
                                                                           UINT32);
-        queryManager = std::make_shared<QueryManager>();
-        bufferManager = std::make_shared<BufferManager>(1024, 1024);
+
     }
 
     /* Will be called before a test is executed. */
@@ -74,11 +72,13 @@ public:
 
 /* - ZeroMQ Data Source ---------------------------------------------------- */
 TEST_F(ZMQTest, ZmqSourceReceiveData) {
+    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
+    nodeEngine->start();
 
     // Create ZeroMQ Data Source.
     auto test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE",
                                                                            UINT32);
-    auto zmq_source = createZmqSource(test_schema, bufferManager, queryManager, LOCAL_HOST, LOCAL_PORT);
+    auto zmq_source = createZmqSource(test_schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), LOCAL_HOST, LOCAL_PORT);
     std::cout << zmq_source->toString() << std::endl;
     // bufferManager->resizeFixedBufferSize(test_data_size);
 

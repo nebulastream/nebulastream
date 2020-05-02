@@ -29,8 +29,6 @@ namespace NES {
 
 class CodeGenerationTest : public testing::Test {
   public:
-    QueryManagerPtr queryManager;
-    BufferManagerPtr bufferManager;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -41,9 +39,6 @@ class CodeGenerationTest : public testing::Test {
     void SetUp() {
         NES::setupLogging("BufferManagerTest.log", NES::LOG_DEBUG);
         std::cout << "Setup CodeGenerationTest test case." << std::endl;
-        queryManager = std::make_shared<QueryManager>();
-        bufferManager = std::make_shared<BufferManager>(4096, 1024);
-
     }
 
     /* Will be called before a test is executed. */
@@ -503,6 +498,8 @@ TEST_F(CodeGenerationTest, codeGenerationApiTest) {
  * @brief Simple test that generates code to process a input buffer and calculate a running sum.
  */
 TEST_F(CodeGenerationTest, codeGenRunningSum) {
+    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
+    nodeEngine->start();
 
     auto tupleBufferType = createAnonymUserDefinedType("NES::TupleBuffer");
     auto getNumberOfTupleBuffer = FunctionCallStatement("getNumberOfTuples");
@@ -628,7 +625,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     auto stage = createCompiledExecutablePipeline(compiler.compile(file.code));
 
     /* setup input and output for test */
-    auto inputBuffer = bufferManager->getBufferBlocking();
+    auto inputBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
     inputBuffer.setTupleSizeInBytes(8);
     auto recordSchema = Schema::create()->addField("id", BasicType::INT64);
     auto layout = createRowLayout(recordSchema);
@@ -638,7 +635,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     }
     inputBuffer.setNumberOfTuples(100);
 
-    auto outputBuffer = bufferManager->getBufferBlocking();
+    auto outputBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
     outputBuffer.setTupleSizeInBytes(8);
     outputBuffer.setNumberOfTuples(1);
     /* execute code */
@@ -662,11 +659,10 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
  */
 TEST_F(CodeGenerationTest, codeGenerationCopy) {
     /* prepare objects for test */
-    QueryManagerPtr queryManager = std::make_shared<QueryManager>();
-    
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
+    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
+    nodeEngine->start();
 
-    auto source = createTestSourceCodeGen(bufferManager, queryManager);
+    auto source = createTestSourceCodeGen(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = createCodeGenerator();
     auto context = createPipelineContext();
 
@@ -684,7 +680,7 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
     auto schema = Schema::create()->addField("i64", UINT64);
     auto buffer = source->receiveData().value();
 
-    auto resultBuffer = bufferManager->getBufferBlocking();
+    auto resultBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
     resultBuffer.setTupleSizeInBytes(sizeof(uint64_t));
 
     /* execute Stage */
@@ -704,11 +700,10 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
  */
 TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
     /* prepare objects for test */
-    QueryManagerPtr queryManager = std::make_shared<QueryManager>();
-    
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
+    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
+    nodeEngine->start();
 
-    auto source = createTestSourceCodeGenFilter(bufferManager, queryManager);
+    auto source = createTestSourceCodeGenFilter(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = createCodeGenerator();
     auto context = createPipelineContext();
 
@@ -736,7 +731,7 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
     NES_INFO("Processing " << inputBuffer.getNumberOfTuples() << " tuples: ");
 
     auto sizeOfTuple = (sizeof(uint32_t) + sizeof(uint32_t) + sizeof(char)*12);
-    auto resultBuffer = bufferManager->getBufferBlocking();
+    auto resultBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
     resultBuffer.setTupleSizeInBytes(sizeOfTuple);
 
     /* execute Stage */
@@ -759,11 +754,10 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
  */
 TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
     /* prepare objects for test */
-    QueryManagerPtr queryManager = std::make_shared<QueryManager>();
-    
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
+    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
+    nodeEngine->start();
 
-    auto source = createWindowTestDataSource(bufferManager, queryManager);
+    auto source = createWindowTestDataSource(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = createCodeGenerator();
     auto context = createPipelineContext();
 
@@ -782,13 +776,13 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
     auto stage = codeGenerator->compile(CompilerArgs(), context->code);
 
     // init window handler
-    auto windowHandler = new WindowHandler(windowDefinition, queryManager, bufferManager);
+    auto windowHandler = new WindowHandler(windowDefinition, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
     windowHandler->setup(nullptr, 0);
 
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData().value();
 
-    auto resultBuffer = bufferManager->getBufferBlocking();
+    auto resultBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
 
     /* execute Stage */
     stage->execute(inputBuffer, windowHandler->getWindowState(),
@@ -809,12 +803,11 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
  * @brief This test generates a predicate with string comparision
  */
 TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
-    QueryManagerPtr queryManager = std::make_shared<QueryManager>();
-    
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
+    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
+    nodeEngine->start();
 
     /* prepare objects for test */
-    auto source = createTestSourceCodeGenPredicate(bufferManager, queryManager);
+    auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = createCodeGenerator();
     auto context = createPipelineContext();
 
@@ -840,7 +833,7 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
     assert(!!optVal);
     auto inputBuffer = *optVal;
 
-    auto resultBuffer = bufferManager->getBufferBlocking();
+    auto resultBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
     resultBuffer.setTupleSizeInBytes(inputSchema->getSchemaSizeInBytes());
 
     /* execute Stage */
@@ -856,12 +849,11 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
  * @brief This test generates a map predicate, which manipulates the input buffer content
  */
 TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
-    QueryManagerPtr queryManager = std::make_shared<QueryManager>();
-    
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
+    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
+    nodeEngine->start();
 
     /* prepare objects for test */
-    auto source = createTestSourceCodeGenPredicate(bufferManager, queryManager);
+    auto source = createTestSourceCodeGenPredicate(nodeEngine->getBufferManager(), nodeEngine->getQueryManager());
     auto codeGenerator = createCodeGenerator();
     auto context = createPipelineContext();
 
@@ -895,7 +887,7 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData().value();
 
-    auto resultBuffer = bufferManager->getUnpooledBuffer(
+    auto resultBuffer = nodeEngine->getBufferManager()->getUnpooledBuffer(
         inputBuffer.getNumberOfTuples()*outputSchema->getSchemaSizeInBytes()).value();
 
     /* execute Stage */

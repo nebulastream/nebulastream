@@ -11,41 +11,18 @@ QueryManager::QueryManager()
     : task_queue(), sourceIdToQueryMap(), bufferMutex(), queryMutex(), workMutex(), workerHitEmptyTaskQueue(0),
       processedTasks(0), processedTuple(0), processedBuffers(0) {
     NES_DEBUG("Init QueryManager::QueryManager()")
-
-    NES_DEBUG("QueryManager(): start thread pool")
-    bool success = startThreadPool();
-    if(!success)
-    {
-        NES_ERROR("QueryManager: error while start thread pool")
-        throw Exception("Error while start thread pool");
-    }
-    else
-    {
-        NES_DEBUG("QueryManager(): thread pool successfully started")
-    }
-
 }
 
 QueryManager::~QueryManager() {
     NES_DEBUG("~QueryManager()")
     NES_DEBUG("QueryManager(): stop thread pool")
-    bool success = stopThreadPool();
-    if(!success)
-    {
-        NES_ERROR("QueryManager: error while stopping thread pool")
-        throw Exception("Error while stop thread pool");
-    }
-    else
-    {
-        NES_DEBUG("QueryManager(): thread pool successfully stopped")
-    }
-
     NES_DEBUG("ResetQueryManager")
     resetQueryManager();
 }
 
 bool QueryManager::startThreadPool() {
     NES_DEBUG("startThreadPool: setup thread pool ")
+    //Note: the shared_from_this prevents from starting this in the ctor because it expects one shared ptr from this
     threadPool = std::make_shared<ThreadPool>(shared_from_this());
     return threadPool->start();
 }
@@ -54,9 +31,6 @@ bool QueryManager::stopThreadPool() {
     NES_DEBUG("QueryManager::stopThreadPool: stop")
     return threadPool->stop();
 }
-
-
-
 
 void QueryManager::resetQueryManager() {
     std::scoped_lock locks(queryMutex, workMutex);
