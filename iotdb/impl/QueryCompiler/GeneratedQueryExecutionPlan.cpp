@@ -3,7 +3,7 @@
 #include <NodeEngine/QueryManager.hpp>
 namespace NES {
 
-GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan() : QueryExecutionPlan("") {assert(0);}
+GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan() : QueryExecutionPlan("") {   }
 
 GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan(const std::string& queryId) : QueryExecutionPlan(queryId) {
 }
