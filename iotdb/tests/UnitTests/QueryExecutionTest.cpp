@@ -120,7 +120,6 @@ void fillBuffer(TupleBuffer& buf, MemoryLayoutPtr memoryLayout) {
 
 TEST_F(QueryExecutionTest, filterQuery) {
     QueryManagerPtr queryManager = std::make_shared<QueryManager>();
-    queryManager->startThreadPool();
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
     // creating query plan
@@ -172,7 +171,6 @@ TEST_F(QueryExecutionTest, windowQuery) {
     // TODO 10 windows are fired -> 10 output buffers in the sink
     // TODO however, we check the 2nd buffer only
     QueryManagerPtr queryManager = std::make_shared<QueryManager>();
-    queryManager->startThreadPool();
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
     // creating query plan

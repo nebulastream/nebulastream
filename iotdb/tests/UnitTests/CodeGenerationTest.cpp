@@ -42,7 +42,6 @@ class CodeGenerationTest : public testing::Test {
         NES::setupLogging("BufferManagerTest.log", NES::LOG_DEBUG);
         std::cout << "Setup CodeGenerationTest test case." << std::endl;
         queryManager = std::make_shared<QueryManager>();
-        queryManager->startThreadPool();
         bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
     }
@@ -664,7 +663,7 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
 TEST_F(CodeGenerationTest, codeGenerationCopy) {
     /* prepare objects for test */
     QueryManagerPtr queryManager = std::make_shared<QueryManager>();
-    queryManager->startThreadPool();
+    
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
     auto source = createTestSourceCodeGen(bufferManager, queryManager);
@@ -706,7 +705,7 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
 TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
     /* prepare objects for test */
     QueryManagerPtr queryManager = std::make_shared<QueryManager>();
-    queryManager->startThreadPool();
+    
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
     auto source = createTestSourceCodeGenFilter(bufferManager, queryManager);
@@ -761,7 +760,7 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
 TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
     /* prepare objects for test */
     QueryManagerPtr queryManager = std::make_shared<QueryManager>();
-    queryManager->startThreadPool();
+    
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
     auto source = createWindowTestDataSource(bufferManager, queryManager);
@@ -811,7 +810,7 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
  */
 TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
     QueryManagerPtr queryManager = std::make_shared<QueryManager>();
-    queryManager->startThreadPool();
+    
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
     /* prepare objects for test */
@@ -858,7 +857,7 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
  */
 TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
     QueryManagerPtr queryManager = std::make_shared<QueryManager>();
-    queryManager->startThreadPool();
+    
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
     /* prepare objects for test */

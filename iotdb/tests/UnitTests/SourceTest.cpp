@@ -69,7 +69,6 @@ class SourceTest : public testing::Test {
 
 TEST_F(SourceTest, testBinarySource) {
     QueryManagerPtr queryManager = std::make_shared<QueryManager>();
-    queryManager->startThreadPool();
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
 
@@ -114,7 +113,6 @@ TEST_F(SourceTest, testBinarySource) {
 
 TEST_F(SourceTest, testCSVSource) {
     QueryManagerPtr queryManager = std::make_shared<QueryManager>();
-    queryManager->startThreadPool();
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
     std::string path_to_file =
@@ -164,7 +162,6 @@ TEST_F(SourceTest, testCSVSource) {
 
 TEST_F(SourceTest, testSenseSource) {
     QueryManagerPtr queryManager = std::make_shared<QueryManager>();
-    queryManager->startThreadPool();
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
 

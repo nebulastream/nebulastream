@@ -85,7 +85,6 @@ TEST_F(WindowManagerTest, check_slice)
 TEST_F(WindowManagerTest, window_trigger) {
 
     QueryManagerPtr queryManager = std::make_shared<QueryManager>();
-    queryManager->startThreadPool();
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
 

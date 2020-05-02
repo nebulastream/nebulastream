@@ -51,7 +51,6 @@ public:
         test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE",
                                                                           UINT32);
         queryManager = std::make_shared<QueryManager>();
-        queryManager->startThreadPool();
         bufferManager = std::make_shared<BufferManager>(1024, 1024);
     }
 
