@@ -59,7 +59,6 @@ message( STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}" )
 add_executable(node-engine-test "UnitTests/NodeEngineTest.cpp")
 target_link_libraries(node-engine-test  iotdb ${GTEST_LIBRARIES})
 add_test(NAME node-engine-test COMMAND node-engine-test)
-set_tests_properties(node-engine-test PROPERTIES TIMEOUT 60)
 
 ### Code Generation Tests ###
 add_executable(code-generation-tests "UnitTests/CodeGenerationTest.cpp")
@@ -249,6 +248,8 @@ add_executable(e2e-rest-test "E2e/E2eRestTest.cpp")
 target_link_libraries(e2e-rest-test iotdb ${GTEST_LIBRARIES})
 add_test(NAME e2e-rest-test COMMAND e2e-rest-test)
 set_tests_properties(e2e-rest-test PROPERTIES WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+
+set_tests_properties(${Tests} PROPERTIES TIMEOUT 60)
 
 # Custom test commands --------------------------------------------------------
 add_custom_target(test_debug COMMAND ${CMAKE_CTEST_COMMAND} -V DEPENDS ${UNITTESTS})

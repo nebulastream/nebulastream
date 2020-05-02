@@ -261,7 +261,7 @@ TEST_F(MultiWorkerTest, multi_worker_test) {
         cout << "stop worker" << i << endl;
         bool retConWrk = wPtrs[i]->stop();
         EXPECT_TRUE(retConWrk);
-        sleep(0.5);
+        sleep(1);
     }
 
     sleep(3);

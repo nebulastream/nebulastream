@@ -213,7 +213,7 @@ bool CoordinatorActor::deregisterNode(size_t workerId) {
     NES_DEBUG("CoordinatorActor: found sensor, try to delete it in toplogy")
     //remove from topology
     bool successTopology = coordinatorServicePtr->deregisterSensor(sensorNode);
-    NES_DEBUG("CoordinatorActor: success in topologyy is " << successTopology)
+    NES_DEBUG("CoordinatorActor: success in topology is " << successTopology)
 
     this->state.actorTopologyMap.erase(current_sender());
     this->state.topologyActorMap.erase(sensorNode);
