@@ -8,6 +8,8 @@
 #include <Util/Logger.hpp>
 #include <API/Types/DataTypes.hpp>
 #include <SourceSink/SourceCreator.hpp>
+#include <NodeEngine/NodeEngine.hpp>
+
 
 namespace NES {
 
@@ -68,9 +70,8 @@ class SourceTest : public testing::Test {
 };
 
 TEST_F(SourceTest, testBinarySource) {
-    QueryManagerPtr queryManager = std::make_shared<QueryManager>();
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
-
+    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
+    nodeEngine->start();
 
     std::string path_to_file =
         "../tests/test_data/ysb-tuples-100-campaign-100.bin";
@@ -82,21 +83,22 @@ TEST_F(SourceTest, testBinarySource) {
             ->addField("current_ms", UINT64)->addField("ip", INT32);
 
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
-    uint64_t buffer_size = bufferManager->getBufferSize();
+    uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
     size_t num_of_buffers = 1;
-    uint64_t num_tuples_to_process = num_of_buffers * (buffer_size/tuple_size);
+    uint64_t num_tuples_to_process = num_of_buffers*(buffer_size/tuple_size);
 
     assert(buffer_size > 0);
 
-    const DataSourcePtr source = (*funcPtr)(schema, bufferManager, queryManager, path_to_file);
+    const DataSourcePtr source = (*funcPtr)(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
         size_t i = 0;
-        while (i*tuple_size < buffer_size - tuple_size && !!optBuf ) {
+        while (i*tuple_size < buffer_size - tuple_size && !!optBuf) {
             ysbRecord record(
                 *((ysbRecord*) (optBuf->getBufferAs<char>() + i*tuple_size)));
-            std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type << std::endl;
+            std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: "
+                      << record.event_type << std::endl;
             EXPECT_STREQ(record.ad_type, "banner78");
             EXPECT_TRUE(
                 (!strcmp(record.event_type, "view")
@@ -112,8 +114,8 @@ TEST_F(SourceTest, testBinarySource) {
 }
 
 TEST_F(SourceTest, testCSVSource) {
-    QueryManagerPtr queryManager = std::make_shared<QueryManager>();
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
+    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
+    nodeEngine->start();
 
     std::string path_to_file =
         "../tests/test_data/ysb-tuples-100-campaign-100.csv";
@@ -127,16 +129,15 @@ TEST_F(SourceTest, testCSVSource) {
                 "campaign_id", 16)->addField("ad_type", 9)->addField("event_type", 9)
             ->addField("current_ms", UINT64)->addField("ip", INT32);
 
-
     uint64_t tuple_size = schema->getSchemaSizeInBytes();
-    uint64_t buffer_size = bufferManager->getBufferSize();
+    uint64_t buffer_size = nodeEngine->getBufferManager()->getBufferSize();
     size_t num_of_buffers = 10;
-    uint64_t num_tuples_to_process = num_of_buffers * (buffer_size/tuple_size);
+    uint64_t num_tuples_to_process = num_of_buffers*(buffer_size/tuple_size);
 
     //    uint64_t buffer_size = num_tuples_to_process*tuple_size / num_of_buffers;
     assert(buffer_size > 0);
 
-    const DataSourcePtr source = (*funcPtr)(schema, bufferManager, queryManager, path_to_file, del, num,
+    const DataSourcePtr source = (*funcPtr)(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), path_to_file, del, num,
                                             frequency);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
@@ -145,7 +146,8 @@ TEST_F(SourceTest, testCSVSource) {
         while (i*tuple_size < buffer_size - tuple_size && !!optBuf) {
             ysbRecord record(
                 *((ysbRecord*) (optBuf->getBufferAs<char>() + i*tuple_size)));
-            std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: " << record.event_type << std::endl;
+            std::cout << "i=" << i << " record.ad_type: " << record.ad_type << ", record.event_type: "
+                      << record.event_type << std::endl;
             EXPECT_STREQ(record.ad_type, "banner78");
             EXPECT_TRUE(
                 (!strcmp(record.event_type, "view")
@@ -161,9 +163,8 @@ TEST_F(SourceTest, testCSVSource) {
 }
 
 TEST_F(SourceTest, testSenseSource) {
-    QueryManagerPtr queryManager = std::make_shared<QueryManager>();
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
-
+    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
+    nodeEngine->start();
 
     std::string testUDFS("...");
     createSenseSourceFuncPtr funcPtr = &createSenseSource;
@@ -179,7 +180,7 @@ TEST_F(SourceTest, testSenseSource) {
     uint64_t buffer_size = num_tuples_to_process*tuple_size/num_of_buffers;
     assert(buffer_size > 0);
 
-    const DataSourcePtr source = (*funcPtr)(schema,  bufferManager, queryManager, testUDFS);
+    const DataSourcePtr source = (*funcPtr)(schema, nodeEngine->getBufferManager(), nodeEngine->getQueryManager(), testUDFS);
 
     //TODO: please add here to code to test the setup
     std::cout << "Success" << std::endl;

@@ -6,6 +6,7 @@
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
 #include <NodeEngine/QueryManager.hpp>
+#include <NodeEngine/NodeEngine.hpp>
 
 #include <QueryLib/WindowManagerLib.hpp>
 #include <Util/Logger.hpp>
@@ -83,10 +84,8 @@ TEST_F(WindowManagerTest, check_slice)
 }
 
 TEST_F(WindowManagerTest, window_trigger) {
-
-    QueryManagerPtr queryManager = std::make_shared<QueryManager>();
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
-
+    NodeEnginePtr nodeEngine = std::make_shared<NodeEngine>();
+    nodeEngine->start();
 
     SchemaPtr schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
 
@@ -95,7 +94,7 @@ TEST_F(WindowManagerTest, window_trigger) {
     auto windowDef = std::make_shared<WindowDefinition>(
         WindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::EventTime, Milliseconds(10))));
 
-    auto w = WindowHandler(windowDef, queryManager, bufferManager);
+    auto w = WindowHandler(windowDef, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
     w.setup(nullptr, 0);
 
     auto windowState = (StateVariable<int64_t, WindowSliceStore<int64_t>*>*)w.getWindowState();
@@ -119,7 +118,7 @@ TEST_F(WindowManagerTest, window_trigger) {
 
     ASSERT_EQ(aggregates[sliceIndex], 1);
 
-    auto buf = bufferManager->getBufferBlocking();
+    auto buf = nodeEngine->getBufferManager()->getBufferBlocking();
     w.aggregateWindows<int64_t, int64_t>(store, windowDef, buf);
 
     size_t tupleCnt = buf.getNumberOfTuples();

@@ -277,14 +277,24 @@ bool NodeEngine::startQueryManager() {
     if(queryManager)
     {
         NES_DEBUG("NodeEngine::startQueryManager(): successful")
-        return true;
+        NES_DEBUG("QueryManager(): start thread pool")
+        bool success = queryManager->startThreadPool();
+        if(!success)
+        {
+            NES_ERROR("QueryManager: error while start thread pool")
+            throw Exception("Error while start thread pool");
+        }
+        else
+        {
+            NES_DEBUG("QueryManager(): thread pool successfully started")
+            return true;
+        }
     }
     else
     {
         NES_ERROR("NodeEngine::startQueryManager(): query manager could not be starterd")
         return false;
     }
-
 }
 
 bool NodeEngine::stopQueryManager() {
