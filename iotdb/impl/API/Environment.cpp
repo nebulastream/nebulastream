@@ -20,7 +20,6 @@ Environment Environment::create(const Config& config)
 
 void Environment::executeQuery(const InputQuery& inputQuery) {
     queryManager = std::make_shared<QueryManager>();
-    queryManager->startThreadPool();
     bufferManager = std::make_shared<BufferManager>();
     auto queryCompiler = createDefaultQueryCompiler(queryManager);
     QueryExecutionPlanPtr qep = queryCompiler->compile(inputQuery.getRoot());

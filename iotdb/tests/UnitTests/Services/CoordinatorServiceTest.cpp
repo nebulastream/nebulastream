@@ -215,7 +215,6 @@ TEST_F(CoordinatorServiceTest, test_run_deregister_query) {
 TEST_F(CoordinatorServiceTest, test_compile_deployment) {
 
     QueryManagerPtr queryManager = std::make_shared<QueryManager>();
-    queryManager->startThreadPool();
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
     string queryId = coordinatorServicePtr->registerQuery(queryString,

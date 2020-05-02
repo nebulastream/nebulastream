@@ -119,10 +119,15 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
      */
     void resetQueryManager();
 
+    ~QueryManager();
+
+  private:
+    friend class ThreadPool;
+    friend class NodeEngine;
     /**
-     * @brief method to start the thread pool
-     * @return bool indicating success
-     */
+    * @brief method to start the thread pool
+    * @return bool indicating success
+    */
     bool startThreadPool();
 
     /**
@@ -131,10 +136,6 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
      */
     bool stopThreadPool();
 
-    ~QueryManager();
-
-  private:
-    friend class ThreadPool;
 
     QueryManager(const QueryManager&);
     QueryManager& operator=(const QueryManager&);

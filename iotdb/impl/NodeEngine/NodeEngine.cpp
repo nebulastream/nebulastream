@@ -274,7 +274,17 @@ bool NodeEngine::startQueryManager() {
     }
     NES_DEBUG("startQueryManager: setup query manager")
     queryManager = std::make_shared<QueryManager>();
-    return queryManager->startThreadPool();
+    if(queryManager)
+    {
+        NES_DEBUG("NodeEngine::startQueryManager(): successful")
+        return true;
+    }
+    else
+    {
+        NES_ERROR("NodeEngine::startQueryManager(): query manager could not be starterd")
+        return false;
+    }
+
 }
 
 bool NodeEngine::stopQueryManager() {
