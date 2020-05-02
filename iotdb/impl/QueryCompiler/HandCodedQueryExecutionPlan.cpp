@@ -14,7 +14,7 @@ BOOST_CLASS_EXPORT_IMPLEMENT(NES::HandCodedQueryExecutionPlan);
 
 namespace NES {
 
-HandCodedQueryExecutionPlan::HandCodedQueryExecutionPlan() : QueryExecutionPlan() {}
+HandCodedQueryExecutionPlan::HandCodedQueryExecutionPlan() : QueryExecutionPlan("") {}
 
 HandCodedQueryExecutionPlan::~HandCodedQueryExecutionPlan() {}
 } // namespace NES

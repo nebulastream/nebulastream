@@ -285,7 +285,7 @@ bool CoordinatorActor::shutdown() {
 }
 
 bool CoordinatorActor::deployQuery(size_t workerId, const string& queryId) {
-    NES_DEBUG("CoordinatorActor::deployQuery: workerId=" << workerId << " queryId=" << queryId)
+    NES_DEBUG("CoordinatorActor::deployQueryInNodeEngine: workerId=" << workerId << " queryId=" << queryId)
 
     map<NESTopologyEntryPtr, ExecutableTransferObject> deployments =
         coordinatorServicePtr->prepareExecutableTransferObject(queryId);
@@ -297,7 +297,7 @@ bool CoordinatorActor::deployQuery(size_t workerId, const string& queryId) {
 
     //    for (auto const& x : deployments)
     for (auto x = deployments.rbegin(); x != deployments.rend(); x++) {
-        NES_DEBUG("CoordinatorActor::registerQuery serialize " << x->first << " id=" << x->first->getId() << " eto="
+        NES_DEBUG("CoordinatorActor::registerQueryInNodeEngine serialize " << x->first << " id=" << x->first->getId() << " eto="
                                                                << x->second.toString())
         strong_actor_ptr curSender = this->state.topologyActorMap.at(x->first);
         auto handle = actor_cast<actor>(curSender);
@@ -326,17 +326,17 @@ bool CoordinatorActor::deployQuery(size_t workerId, const string& queryId) {
               throw new Exception("Error while register_query_atom deploy ");
             });
         bool success = prom.get_future().get();
-        NES_DEBUG("CoordinatorActor::deployQuery: first phase success=" << success)
+        NES_DEBUG("CoordinatorActor::deployQueryInNodeEngine: first phase success=" << success)
     }
 
     NES_DEBUG(
-        "CoordinatorActor::deployQuery second phase of start " << deployments.size() << " objects")
+        "CoordinatorActor::deployQueryInNodeEngine second phase of start " << deployments.size() << " objects")
     for (auto x = deployments.rbegin(); x != deployments.rend(); x++) {
-        NES_DEBUG("CoordinatorActor::deployQuery serialize " << x->first << " id=" << x->first->getId() << " eto="
+        NES_DEBUG("CoordinatorActor::deployQueryInNodeEngine serialize " << x->first << " id=" << x->first->getId() << " eto="
                                                              << x->second.toString())
         strong_actor_ptr curSender = this->state.topologyActorMap.at(x->first);
         auto handle = actor_cast<actor>(curSender);
-        NES_DEBUG("CoordinatorActor::deployQuery topology second phase before send "
+        NES_DEBUG("CoordinatorActor::deployQueryInNodeEngine topology second phase before send "
                       << NESTopologyManager::getInstance().getNESTopologyPlanString())
         NES_INFO(
             "CoordinatorActor:: Sending start query " << queryId << " to " << to_string(handle))
@@ -358,16 +358,16 @@ bool CoordinatorActor::deployQuery(size_t workerId, const string& queryId) {
               NES_ERROR(
                   "CoordinatorActor: Error during start_query_atom for " << to_string(handle) << "\n"
                                                                          << error_msg);
-              throw new Exception("Error while deployQuery start");
+              throw new Exception("Error while deployQueryInNodeEngine start");
             });
         bool success = prom.get_future().get();
-        NES_DEBUG("CoordinatorActor::deployQuery: second phase success=" << success)
+        NES_DEBUG("CoordinatorActor::deployQueryInNodeEngine: second phase success=" << success)
     }
 
-    NES_DEBUG("CoordinatorActor::deployQuery: mark query as read")
+    NES_DEBUG("CoordinatorActor::deployQueryInNodeEngine: mark query as read")
     QueryCatalog::instance().markQueryAs(queryId, QueryStatus::Running);
 
-    NES_DEBUG("CoordinatorActor::deployQuery: add execution nodes to query")
+    NES_DEBUG("CoordinatorActor::deployQueryInNodeEngine: add execution nodes to query")
     std::vector<NESTopologyEntryPtr> execNodes;
     std::transform(deployments.begin(), deployments.end(), std::back_inserter(execNodes),
                    [](std::pair<NESTopologyEntryPtr, ExecutableTransferObject> const& dev) {
@@ -423,7 +423,7 @@ bool CoordinatorActor::deregisterAndUndeployQuery(size_t workerId, const string&
               NES_ERROR(
                   "WorkerActor: Error during stop_query_atom for " << to_string(handle) << "\n"
                                                                    << error_msg);
-              throw new Exception("Error while deployQuery stop");
+              throw new Exception("Error while deployQueryInNodeEngine stop");
             });
         bool success = prom.get_future().get();
         NES_DEBUG("WorkerActor::deregisterAndUndeployQuery: stop success=" << success)
@@ -469,7 +469,7 @@ bool CoordinatorActor::deregisterAndUndeployQuery(size_t workerId, const string&
 
 string CoordinatorActor::registerQuery(size_t workerId, const string& queryString,
                                        const string& strategy) {
-    NES_DEBUG("CoordinatorActor::registerQuery workerId=" << workerId << " queryString=" << queryString << " strategy="
+    NES_DEBUG("CoordinatorActor::registerQueryInNodeEngine workerId=" << workerId << " queryString=" << queryString << " strategy="
                                                           << strategy)
     return coordinatorServicePtr->registerQuery(queryString, strategy);
 }

@@ -38,43 +38,43 @@ class NodeEngine {
      * @param new query plan
      * @return true if succeeded, else false
      */
-    bool deployQuery(QueryExecutionPlanPtr qep);
+    bool deployQueryInNodeEngine(QueryExecutionPlanPtr qep);
 
     /**
      * @brief undeploy stops and undeploy a query
-     * @param query plan to deploy
+     * @param queryId to undeploy
      * @return true if succeeded, else false
      */
-    bool undeployQuery(QueryExecutionPlanPtr qep);
+    bool undeployQuery(std::string queryId);
 
     /**
      * @brief gregisters a query
      * @param query plan to register
      * @return true if succeeded, else false
      */
-    bool registerQuery(QueryExecutionPlanPtr qep);
+    bool registerQueryInNodeEngine(QueryExecutionPlanPtr qep);
 
     /**
      * @brief ungregisters a query
-     * @param query plan to unregisterundeployQuery
+     * @param queryIdto unregister query
      * @return true if succeeded, else false
      */
-    bool unregisterQuery(QueryExecutionPlanPtr qep);
+    bool unregisterQuery(std::string queryId);
 
     /**
      * @brief method to start a already deployed query
      * @note if query is not deploy, false is returned
-     * @param qep to start
+     * @param queryId to start
      * @return bool indicating success
      */
-    bool startQuery(QueryExecutionPlanPtr qep);
+    bool startQuery(std::string queryId);
 
     /**
      * @brief method to stop a query
-     * @param qep to stop
+     * @param queryId to stop
      * @return bool indicating success
      */
-    bool stopQuery(QueryExecutionPlanPtr qPtr);
+    bool stopQuery(std::string queryId);
 
     /**
      * @brief start thread pool
@@ -138,7 +138,9 @@ class NodeEngine {
 
   private:
     NodePropertiesPtr props;
-    std::map<QueryExecutionPlanPtr, NodeEngineQueryStatus> queryStatusMap;
+    std::map<QueryExecutionPlanPtr, NodeEngineQueryStatus> qepToStatusMap;
+    std::map<std::string, QueryExecutionPlanPtr> queryIdToQepMap;
+
     bool forceStop;
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;

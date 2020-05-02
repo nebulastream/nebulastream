@@ -48,7 +48,7 @@ void QueryManager::resetQueryManager() {
 }
 
 bool QueryManager::registerQuery(QueryExecutionPlanPtr qep) {
-    NES_DEBUG("QueryManager::registerQuery: query" << qep)
+    NES_DEBUG("QueryManager::registerQueryInNodeEngine: query" << qep)
     std::unique_lock<std::mutex> lock(queryMutex);
 
     // test if elements already exist

@@ -16,6 +16,8 @@ using namespace std;
 #define DEBUG_OUTPUT
 namespace NES {
 
+std::string testQueryId = "123";
+
 std::string expectedOutput =
     "+----------------------------------------------------+\n"
     "|sum:UINT32|\n"
@@ -201,7 +203,7 @@ void testOutput(std::string path, std::string expectedOutput) {
     EXPECT_TRUE(response == 0);
 }
 
-CompiledTestQueryExecutionPlanPtr setupQEP(BufferManagerPtr bPtr, QueryManagerPtr dPtr) {
+CompiledTestQueryExecutionPlanPtr setupQEP(BufferManagerPtr bPtr, QueryManagerPtr dPtr, std::string queryId) {
     CompiledTestQueryExecutionPlanPtr qep(new CompiledTestQueryExecutionPlan());
     DataSourcePtr source =
         createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(bPtr, dPtr);
@@ -210,6 +212,7 @@ CompiledTestQueryExecutionPlanPtr setupQEP(BufferManagerPtr bPtr, QueryManagerPt
     DataSinkPtr sink = createBinaryFileSinkWithSchema(sch, filePath);
     qep->addDataSource(source);
     qep->addDataSink(sink);
+    qep->setQueryId(queryId);
     return qep;
 }
 
@@ -227,9 +230,9 @@ TEST_F(EngineTest, start_stop_engine_empty) {
 
 TEST_F(EngineTest, start_deploy_stop_test) {
     NodeEngine* ptr = new NodeEngine();
-    CompiledTestQueryExecutionPlanPtr qep = setupQEP(ptr->getBufferManager(), ptr->getQueryManager());
+    CompiledTestQueryExecutionPlanPtr qep = setupQEP(ptr->getBufferManager(), ptr->getQueryManager(), testQueryId);
     ASSERT_TRUE(ptr->start());
-    ASSERT_TRUE(ptr->deployQuery(qep));
+    ASSERT_TRUE(ptr->deployQueryInNodeEngine(qep));
     qep->completedPromise.get_future().get();
     ASSERT_TRUE(!ptr->stop());
 
@@ -239,11 +242,11 @@ TEST_F(EngineTest, start_deploy_stop_test) {
 
 TEST_F(EngineTest, start_deploy_undeploy_stop_test) {
     NodeEngine* ptr = new NodeEngine();
-    CompiledTestQueryExecutionPlanPtr qep = setupQEP(ptr->getBufferManager(), ptr->getQueryManager());
+    CompiledTestQueryExecutionPlanPtr qep = setupQEP(ptr->getBufferManager(), ptr->getQueryManager(), testQueryId);
     ASSERT_TRUE(ptr->start());
-    ASSERT_TRUE(ptr->deployQuery(qep));
+    ASSERT_TRUE(ptr->deployQueryInNodeEngine(qep));
     qep->completedPromise.get_future().get();
-    ASSERT_TRUE(ptr->undeployQuery(qep));
+    ASSERT_TRUE(ptr->undeployQuery(testQueryId));
     ASSERT_TRUE(ptr->stop());
 
     testOutput();
@@ -252,13 +255,13 @@ TEST_F(EngineTest, start_deploy_undeploy_stop_test) {
 
 TEST_F(EngineTest, start_register_start_stop_deregister_stop_test) {
     NodeEngine* ptr = new NodeEngine();
-    CompiledTestQueryExecutionPlanPtr qep = setupQEP(ptr->getBufferManager(), ptr->getQueryManager());
+    CompiledTestQueryExecutionPlanPtr qep = setupQEP(ptr->getBufferManager(), ptr->getQueryManager(), testQueryId);
     ASSERT_TRUE(ptr->start());
-    ASSERT_TRUE(ptr->registerQuery(qep));
-    ASSERT_TRUE(ptr->startQuery(qep));
+    ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep));
+    ASSERT_TRUE(ptr->startQuery(testQueryId));
     qep->completedPromise.get_future().get();
-    ASSERT_TRUE(ptr->stopQuery(qep));
-    ASSERT_TRUE(ptr->unregisterQuery(qep));
+    ASSERT_TRUE(ptr->stopQuery(testQueryId));
+    ASSERT_TRUE(ptr->unregisterQuery(testQueryId));
     ASSERT_TRUE(ptr->stop());
 
     testOutput();
@@ -274,6 +277,7 @@ TEST_F(EngineTest, parallel_different_source_test) {
     DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep1.txt");
     qep1->addDataSource(source1);
     qep1->addDataSink(sink1);
+    qep1->setQueryId("1");
 
     CompiledTestQueryExecutionPlanPtr qep2 = std::make_shared<CompiledTestQueryExecutionPlan>();
     DataSourcePtr source2 = createDefaultSourceWithoutSchemaForOneBufferForOneBuffer(ptr->getBufferManager(),
@@ -282,19 +286,20 @@ TEST_F(EngineTest, parallel_different_source_test) {
     DataSinkPtr sink2 = createBinaryFileSinkWithSchema(sch2, "qep2.txt");
     qep2->addDataSource(source2);
     qep2->addDataSink(sink2);
+    qep2->setQueryId("2");
 
 
     ASSERT_TRUE(ptr->start());
-    ASSERT_TRUE(ptr->registerQuery(qep1));
-    ASSERT_TRUE(ptr->registerQuery(qep2));
+    ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep1));
+    ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep2));
 
-    ASSERT_TRUE(ptr->startQuery(qep1));
-    ASSERT_TRUE(ptr->startQuery(qep2));
+    ASSERT_TRUE(ptr->startQuery("1"));
+    ASSERT_TRUE(ptr->startQuery("2"));
 
     qep1->completedPromise.get_future().get();
     qep2->completedPromise.get_future().get();
-    ASSERT_TRUE(ptr->undeployQuery(qep1));
-    ASSERT_TRUE(ptr->undeployQuery(qep2));
+    ASSERT_TRUE(ptr->undeployQuery("1"));
+    ASSERT_TRUE(ptr->undeployQuery("2"));
 
     ASSERT_TRUE(ptr->stop());
 
@@ -313,21 +318,23 @@ TEST_F(EngineTest, parallel_same_source_test) {
     DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep1.txt");
     qep1->addDataSource(source1);
     qep1->addDataSink(sink1);
+    qep1->setQueryId("1");
 
     CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
     DataSinkPtr sink2 = createBinaryFileSinkWithSchema(sch1, "qep2.txt");
     qep2->addDataSource(source1);
     qep2->addDataSink(sink2);
+    qep2->setQueryId("2");
 
 
     ASSERT_TRUE(ptr->start());
-    ASSERT_TRUE(ptr->registerQuery(qep1));
-    ASSERT_TRUE(ptr->registerQuery(qep2));
+    ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep1));
+    ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep2));
 
     cout << "start qep1" << endl;
-    ASSERT_TRUE(ptr->startQuery(qep1));
+    ASSERT_TRUE(ptr->startQuery("1"));
     cout << "start qep2" << endl;
-    ASSERT_TRUE(ptr->startQuery(qep2));
+    ASSERT_TRUE(ptr->startQuery("2"));
 
     cout << "wait prom q1" << endl;
     qep1->completedPromise.get_future().get();
@@ -337,9 +344,9 @@ TEST_F(EngineTest, parallel_same_source_test) {
 
     sleep(2);
     cout << "undeploy qep1" << endl;
-    ASSERT_TRUE(ptr->undeployQuery(qep1));
+    ASSERT_TRUE(ptr->undeployQuery("1"));
     cout << "undeploy qep2" << endl;
-    ASSERT_TRUE(ptr->undeployQuery(qep2));
+    ASSERT_TRUE(ptr->undeployQuery("2"));
 
     cout << "stop" << endl;
     ASSERT_TRUE(ptr->stop());
@@ -359,6 +366,8 @@ TEST_F(EngineTest, parallel_same_sink_test) {
     DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep12.txt");
     qep1->addDataSource(source1);
     qep1->addDataSink(sink1);
+    qep1->setQueryId("1");
+
 
     CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
     DataSourcePtr source2 =
@@ -366,19 +375,21 @@ TEST_F(EngineTest, parallel_same_sink_test) {
     SchemaPtr sch2 = Schema::create()->addField("sum", BasicType::UINT32);
     qep2->addDataSource(source2);
     qep2->addDataSink(sink1);
+    qep2->setQueryId("2");
+
 
     ASSERT_TRUE(ptr->start());
-    ASSERT_TRUE(ptr->registerQuery(qep1));
-    ASSERT_TRUE(ptr->registerQuery(qep2));
+    ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep1));
+    ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep2));
 
-    ASSERT_TRUE(ptr->startQuery(qep1));
-    ASSERT_TRUE(ptr->startQuery(qep2));
+    ASSERT_TRUE(ptr->startQuery("1"));
+    ASSERT_TRUE(ptr->startQuery("2"));
 
     qep1->completedPromise.get_future().get();
     qep2->completedPromise.get_future().get();
     sleep(1);
-    ASSERT_TRUE(ptr->undeployQuery(qep1));
-    ASSERT_TRUE(ptr->undeployQuery(qep2));
+    ASSERT_TRUE(ptr->undeployQuery("1"));
+    ASSERT_TRUE(ptr->undeployQuery("2"));
 
     ASSERT_TRUE(ptr->stop());
     testOutput("qep12.txt", joinedExpectedOutput);
@@ -394,20 +405,22 @@ TEST_F(EngineTest, parallel_same_source_and_sink_regstart_test) {
     DataSinkPtr sink1 = createBinaryFileSinkWithSchema(sch1, "qep3.txt");
     qep1->addDataSource(source1);
     qep1->addDataSink(sink1);
+    qep1->setQueryId("1");
 
     CompiledTestQueryExecutionPlanPtr qep2(new CompiledTestQueryExecutionPlan());
     qep2->addDataSource(source1);
     qep2->addDataSink(sink1);
+    qep2->setQueryId("2");
 
     ASSERT_TRUE(ptr->start());
-    ASSERT_TRUE(ptr->registerQuery(qep1));
-    ASSERT_TRUE(ptr->registerQuery(qep2));
+    ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep1));
+    ASSERT_TRUE(ptr->registerQueryInNodeEngine(qep2));
 
-    ASSERT_TRUE(ptr->startQuery(qep1));
-    ASSERT_TRUE(ptr->startQuery(qep2));
+    ASSERT_TRUE(ptr->startQuery("1"));
+    ASSERT_TRUE(ptr->startQuery("2"));
     sleep(1);
-    ASSERT_TRUE(ptr->undeployQuery(qep1));
-    ASSERT_TRUE(ptr->undeployQuery(qep2));
+    ASSERT_TRUE(ptr->undeployQuery("1"));
+    ASSERT_TRUE(ptr->undeployQuery("2"));
 
     qep1->completedPromise.get_future().get();
     qep2->completedPromise.get_future().get();
@@ -419,12 +432,12 @@ TEST_F(EngineTest, parallel_same_source_and_sink_regstart_test) {
 
 TEST_F(EngineTest, start_stop_start_stop_test) {
     NodeEngine* ptr = new NodeEngine();
-    CompiledTestQueryExecutionPlanPtr qep = setupQEP(ptr->getBufferManager(), ptr->getQueryManager());
+    CompiledTestQueryExecutionPlanPtr qep = setupQEP(ptr->getBufferManager(), ptr->getQueryManager(), testQueryId);
     ASSERT_TRUE(ptr->start());
-    ASSERT_TRUE(ptr->deployQuery(qep));
+    ASSERT_TRUE(ptr->deployQueryInNodeEngine(qep));
     qep->completedPromise.get_future().get();
 
-    ASSERT_TRUE(ptr->undeployQuery(qep));
+    ASSERT_TRUE(ptr->undeployQuery(testQueryId));
     ASSERT_TRUE(ptr->stop());
     ASSERT_TRUE(ptr->start());
     ASSERT_TRUE(ptr->stop());
