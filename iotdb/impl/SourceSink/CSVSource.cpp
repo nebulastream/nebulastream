@@ -1,5 +1,5 @@
 #include <SourceSink/CSVSource.hpp>
-#include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/QueryManager.hpp>
 #include <assert.h>
 #include <fstream>
 #include <sstream>
@@ -20,11 +20,11 @@ CSVSource::CSVSource()
     currentPosInFile(0) {
 }
 
-CSVSource::CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher, const std::string &_file_path,
+CSVSource::CSVSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string &_file_path,
                      const std::string &delimiter, size_t numBuffersToProcess,
                      size_t frequency)
     :
-    DataSource(schema, bufferManager, dispatcher),
+    DataSource(schema, bufferManager, queryManager),
     filePath(_file_path),
     delimiter(delimiter),
     currentPosInFile(0) {

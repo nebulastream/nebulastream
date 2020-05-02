@@ -2,7 +2,7 @@
 #define NODE_ENGINE_H
 
 #include <API/Config.hpp>
-#include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/NodeProperties.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <iostream>
@@ -27,7 +27,7 @@ class NodeEngine {
     enum NodeEngineQueryStatus { started, stopped, registered };
     /**
      * @brief Create a node engine and gather node information
-     * and initialize Dispatcher, BufferManager and ThreadPool
+     * and initialize QueryManager, BufferManager and ThreadPool
      */
     NodeEngine();
 
@@ -93,10 +93,10 @@ class NodeEngine {
     NodeProperties* getNodeProperties();
 
     /**
-     * @brief getter of dispatcher
-     * @return dispatcher
+     * @brief getter of query manager
+     * @return query manager
      */
-    DispatcherPtr getDispatcher();
+    QueryManagerPtr getQueryManager();
 
     /**
      * @brief getter of buffer manager
@@ -125,22 +125,22 @@ class NodeEngine {
     bool stopBufferManager();
 
     /**
-     * @brief method to start dispatcher
+     * @brief method to start query manager
      * @return bool indicating success
      */
-    bool startDispatcher();
+    bool startQueryManager();
 
     /**
-     * @brief method to stop dispatcher
+     * @brief method to stop query manager
      * @return bool indicating success
      */
-    bool stopDispatcher();
+    bool stopQueryManager();
 
   private:
     NodePropertiesPtr props;
     std::map<QueryExecutionPlanPtr, NodeEngineQueryStatus> queryStatusMap;
     bool forceStop;
-    DispatcherPtr dispatcher;
+    QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
     bool isRunning;
 };

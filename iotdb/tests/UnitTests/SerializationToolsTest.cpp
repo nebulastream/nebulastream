@@ -6,14 +6,14 @@
 #include <Util/SerializationTools.hpp>
 #include <gtest/gtest.h>
 #include <memory>
-#include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/QueryManager.hpp>
 
 using namespace NES;
 
 class SerializationToolsTest : public testing::Test {
   public:
     BufferManagerPtr bPtr;
-    DispatcherPtr dPtr;
+    QueryManagerPtr dPtr;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() { std::cout << "Setup SerializationToolsTest test class." << std::endl; }
@@ -27,7 +27,7 @@ class SerializationToolsTest : public testing::Test {
         stream = std::make_shared<Stream>("default", schema);
 
         bPtr = std::make_shared<BufferManager>(4096, 1024);
-        dPtr = std::make_shared<Dispatcher>();
+        dPtr = std::make_shared<QueryManager>();
     }
 
     /* Will be called before a test is executed. */

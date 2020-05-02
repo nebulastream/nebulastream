@@ -8,7 +8,7 @@
 #include <string>
 #include <zmq.hpp>
 
-#include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/QueryManager.hpp>
 #include <Util/Logger.hpp>
 
 #include <Util/Logger.hpp>

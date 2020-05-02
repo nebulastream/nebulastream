@@ -67,7 +67,7 @@ bool NodeEngine::registerQuery(QueryExecutionPlanPtr qep) {
     qep->setBufferManager(bufferManager);
 
     if (queryStatusMap.find(qep) == queryStatusMap.end()) {
-        if (dispatcher->registerQuery(qep)) {
+        if (queryManager->registerQuery(qep)) {
             queryStatusMap.insert({qep, NodeEngineQueryStatus::registered});
             NES_DEBUG("NodeEngine: register of QEP " << qep << " succeeded")
             return true;
@@ -84,7 +84,7 @@ bool NodeEngine::registerQuery(QueryExecutionPlanPtr qep) {
 bool NodeEngine::startQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("NodeEngine: startQuery=" << qep)
     if (queryStatusMap.find(qep) != queryStatusMap.end()) {
-        if (dispatcher->startQuery(qep)) {
+        if (queryManager->startQuery(qep)) {
             NES_DEBUG("NodeEngine: start of QEP " << qep << " succeeded")
             queryStatusMap[qep] = NodeEngineQueryStatus::started;
             return true;
@@ -121,7 +121,7 @@ bool NodeEngine::undeployQuery(QueryExecutionPlanPtr qep) {
 bool NodeEngine::unregisterQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("NodeEngine: unregisterQuery query=" << qep)
     if (queryStatusMap.find(qep) != queryStatusMap.end()) {
-        if (dispatcher->deregisterQuery(qep)) {
+        if (queryManager->deregisterQuery(qep)) {
             size_t delCnt = queryStatusMap.erase(qep);
             NES_DEBUG("NodeEngine: unregister of QEP " << qep << " succeeded with cnt=" << delCnt)
             return true;
@@ -138,7 +138,7 @@ bool NodeEngine::unregisterQuery(QueryExecutionPlanPtr qep) {
 bool NodeEngine::stopQuery(QueryExecutionPlanPtr qep) {
     NES_DEBUG("NodeEngine:stopQuery for qep" << qep)
     if (queryStatusMap.find(qep) != queryStatusMap.end()) {
-        if (dispatcher->stopQuery(qep)) {
+        if (queryManager->stopQuery(qep)) {
             NES_DEBUG("NodeEngine: stop of QEP " << qep << " succeeded")
             queryStatusMap[qep] = NodeEngineQueryStatus::stopped;
             return true;
@@ -152,18 +152,18 @@ bool NodeEngine::stopQuery(QueryExecutionPlanPtr qep) {
     }
 }
 
-DispatcherPtr NodeEngine::getDispatcher() {
-    return dispatcher;
+QueryManagerPtr NodeEngine::getQueryManager() {
+    return queryManager;
 }
 
 bool NodeEngine::start() {
     if (!isRunning) {
         NES_DEBUG("NodeEngine: start thread pool")
-        bool successTp = startDispatcher();
+        bool successTp = startQueryManager();
         NES_DEBUG("NodeEngine: start thread pool success=" << successTp)
 
-        NES_DEBUG("NodeEngine:start reset dispatcher")
-        dispatcher->resetDispatcher();
+        NES_DEBUG("NodeEngine:start reset query manager")
+        queryManager->resetQueryManager();
 
         NES_DEBUG("NodeEngine: create buffer manager")
         bool successBm = createBufferManager();
@@ -215,11 +215,11 @@ bool NodeEngine::stop() {
         }
 
         NES_DEBUG("NodeEngine:stop undeploy successful")
-        dispatcher->resetDispatcher();
+        queryManager->resetQueryManager();
         copyOfVec.clear();
         isRunning = false;
 
-        bool successTp = stopDispatcher();
+        bool successTp = stopQueryManager();
         NES_DEBUG("NodeEngine:stop stop threadpool with success=" << successTp)
 
         bool successBm = stopBufferManager();
@@ -262,31 +262,31 @@ bool NodeEngine::stopBufferManager() {
         NES_ERROR("NodeEngine::stopBufferManager buffer manager does not exists")
         throw Exception("Error while stop buffer manager");
     }
-    NES_DEBUG("Dispatcher::stopBufferManager: stop")
+    NES_DEBUG("QueryManager::stopBufferManager: stop")
     return true;
 }
 
-bool NodeEngine::startDispatcher() {
-    NES_DEBUG("startDispatcher: setup buffer manager")
-    if (dispatcher) {
-        NES_ERROR("NodeEngine::startDispatcher: dispatcher already exists")
+bool NodeEngine::startQueryManager() {
+    NES_DEBUG("startQueryManager: setup query manager")
+    if (queryManager) {
+        NES_ERROR("NodeEngine::startQueryManager: query manager already exists")
         return true;
     }
-    NES_DEBUG("startDispatcher: setup dispatcher")
-    dispatcher = std::make_shared<Dispatcher>();
-    return dispatcher->startThreadPool();
+    NES_DEBUG("startQueryManager: setup query manager")
+    queryManager = std::make_shared<QueryManager>();
+    return queryManager->startThreadPool();
 }
 
-bool NodeEngine::stopDispatcher() {
-    if (!dispatcher) {
-        NES_ERROR("NodeEngine::stopDispatcher dispatcher does not exists")
-        throw Exception("Error while stop dispatcher");
+bool NodeEngine::stopQueryManager() {
+    if (!queryManager) {
+        NES_ERROR("NodeEngine::stopQueryManager query manager does not exists")
+        throw Exception("Error while stop query manager");
     }
-    NES_DEBUG("stopDispatcher: stop dispatcher")
+    NES_DEBUG("stopQueryManager: stop query manager")
 
-    bool success = dispatcher->stopThreadPool();
+    bool success = queryManager->stopThreadPool();
     if (!success) {
-        NES_ERROR("NodeEngine::stopDispatcher: could not stop thread pool")
+        NES_ERROR("NodeEngine::stopQueryManager: could not stop thread pool")
         throw Exception("Error while stopping thread pool");
     }
 

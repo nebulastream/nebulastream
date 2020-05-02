@@ -4,11 +4,11 @@
 #include <iostream>
 #include <thread>
 #include <vector>
-#include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/QueryManager.hpp>
 
 namespace NES {
-class Dispatcher;
-typedef std::shared_ptr<Dispatcher> DispatcherPtr;
+class QueryManager;
+typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 
 /**
  * @brief the tread pool handles the dynamic scheduling of tasks during runtime
@@ -25,7 +25,7 @@ class ThreadPool {
     /**
      * @brief default constructor
      */
-    ThreadPool(DispatcherPtr dispatcher);
+    ThreadPool(QueryManagerPtr queryManager);
 
     /**
      * @brief default destructor
@@ -57,7 +57,7 @@ class ThreadPool {
     /**
        * @brief running routine of threads, in this routine, threads repeatedly execute the following steps
        * 1.) Check if running is still true
-       * 2.) If yes, request work from dispatcher (blocking until tasks get available)
+       * 2.) If yes, request work from query manager (blocking until tasks get available)
        * 3.) If task is valid, execute the task and completeWork
        * 4.) Repeat
        */
@@ -96,7 +96,7 @@ class ThreadPool {
     std::atomic<size_t> numThreads;
     std::vector<std::thread> threads;
     std::mutex reconfigLock;
-    DispatcherPtr dispatcher;
+    QueryManagerPtr queryManager;
 };
 
 typedef std::shared_ptr<ThreadPool> ThreadPoolPtr;

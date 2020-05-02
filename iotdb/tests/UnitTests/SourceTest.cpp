@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 #include <cstring>
-#include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/QueryManager.hpp>
 
 #include <Util/Logger.hpp>
 #include <API/Types/DataTypes.hpp>
@@ -39,15 +39,15 @@ struct __attribute__((packed)) ysbRecord {
 // size 78 bytes
 
 typedef const DataSourcePtr (* createFileSourceFuncPtr)(SchemaPtr,
-                                                        BufferManagerPtr bufferManager, DispatcherPtr dispatcher,
+                                                        BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                                                         const std::string&);
 
 typedef const DataSourcePtr (* createSenseSourceFuncPtr)(SchemaPtr,
-                                                         BufferManagerPtr bufferManager, DispatcherPtr dispatcher,
+                                                         BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                                                          const std::string&);
 
 typedef const DataSourcePtr (* createCSVSourceFuncPtr)(const SchemaPtr,
-                                                       BufferManagerPtr bufferManager, DispatcherPtr dispatcher,
+                                                       BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                                                        const std::string&,
                                                        const std::string&,
                                                        size_t, size_t);
@@ -68,8 +68,8 @@ class SourceTest : public testing::Test {
 };
 
 TEST_F(SourceTest, testBinarySource) {
-    DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
-    dispatcher->startThreadPool();
+    QueryManagerPtr queryManager = std::make_shared<QueryManager>();
+    queryManager->startThreadPool();
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
 
@@ -89,7 +89,7 @@ TEST_F(SourceTest, testBinarySource) {
 
     assert(buffer_size > 0);
 
-    const DataSourcePtr source = (*funcPtr)(schema, bufferManager, dispatcher, path_to_file);
+    const DataSourcePtr source = (*funcPtr)(schema, bufferManager, queryManager, path_to_file);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
         auto optBuf = source->receiveData();
@@ -113,8 +113,8 @@ TEST_F(SourceTest, testBinarySource) {
 }
 
 TEST_F(SourceTest, testCSVSource) {
-    DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
-    dispatcher->startThreadPool();
+    QueryManagerPtr queryManager = std::make_shared<QueryManager>();
+    queryManager->startThreadPool();
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
     std::string path_to_file =
@@ -138,7 +138,7 @@ TEST_F(SourceTest, testCSVSource) {
     //    uint64_t buffer_size = num_tuples_to_process*tuple_size / num_of_buffers;
     assert(buffer_size > 0);
 
-    const DataSourcePtr source = (*funcPtr)(schema, bufferManager, dispatcher, path_to_file, del, num,
+    const DataSourcePtr source = (*funcPtr)(schema, bufferManager, queryManager, path_to_file, del, num,
                                             frequency);
 
     while (source->getNumberOfGeneratedBuffers() < num_of_buffers) {
@@ -163,8 +163,8 @@ TEST_F(SourceTest, testCSVSource) {
 }
 
 TEST_F(SourceTest, testSenseSource) {
-    DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
-    dispatcher->startThreadPool();
+    QueryManagerPtr queryManager = std::make_shared<QueryManager>();
+    queryManager->startThreadPool();
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
 
@@ -182,7 +182,7 @@ TEST_F(SourceTest, testSenseSource) {
     uint64_t buffer_size = num_tuples_to_process*tuple_size/num_of_buffers;
     assert(buffer_size > 0);
 
-    const DataSourcePtr source = (*funcPtr)(schema,  bufferManager, dispatcher, testUDFS);
+    const DataSourcePtr source = (*funcPtr)(schema,  bufferManager, queryManager, testUDFS);
 
     //TODO: please add here to code to test the setup
     std::cout << "Success" << std::endl;

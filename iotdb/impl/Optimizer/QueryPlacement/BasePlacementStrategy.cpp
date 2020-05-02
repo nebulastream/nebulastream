@@ -61,7 +61,7 @@ void BasePlacementStrategy::addSystemGeneratedSourceSinkOperators(SchemaPtr sche
             // create sys introduced src operator
             // Note: the source zmq is always located at localhost
             BufferManagerPtr bPtr;
-            DispatcherPtr dPtr;
+            QueryManagerPtr dPtr;
             OperatorPtr
                 sysSrcOptr = createSourceOperator(createZmqSource(schema, bPtr, dPtr, "localhost", zmqDefaultPort));
 
@@ -112,7 +112,7 @@ void BasePlacementStrategy::convertFwdOptr(SchemaPtr schema, ExecutionNodePtr ex
     // create sys introduced src and sink operators
     // Note: src operator is using localhost because src zmq will run locally
     BufferManagerPtr bPtr;
-    DispatcherPtr dPtr;
+    QueryManagerPtr dPtr;
     const OperatorPtr
         sysSrcOptr = createSourceOperator(createZmqSource(schema, bPtr, dPtr, "localhost", zmqDefaultPort));
     const OperatorPtr sysSinkOptr = createSinkOperator(createZmqSink(schema, "localhost", zmqDefaultPort));

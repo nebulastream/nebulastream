@@ -16,7 +16,7 @@ class KafkaSource : public DataSource {
 
     KafkaSource(SchemaPtr schema,
                 BufferManagerPtr bufferManager,
-                DispatcherPtr dispatcher,
+                QueryManagerPtr queryManager,
                 std::string brokers,
                 std::string topic,
                 std::string groupId,

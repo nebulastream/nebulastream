@@ -1,7 +1,7 @@
 add_source_iotdb(
 	NodeEngine.cpp
 	NodeProperties.cpp
-	Dispatcher.cpp
+        QueryManager.cpp
 	BufferManager.cpp
 	ThreadPool.cpp
 	Task.cpp

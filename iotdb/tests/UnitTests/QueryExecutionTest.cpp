@@ -119,12 +119,12 @@ void fillBuffer(TupleBuffer& buf, MemoryLayoutPtr memoryLayout) {
 }
 
 TEST_F(QueryExecutionTest, filterQuery) {
-    DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
-    dispatcher->startThreadPool();
+    QueryManagerPtr queryManager = std::make_shared<QueryManager>();
+    queryManager->startThreadPool();
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
     // creating query plan
-    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, bufferManager, dispatcher);
+    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, bufferManager, queryManager);
     auto source = createSourceOperator(testSource);
     auto filter = createFilterOperator(
         createPredicate(Field(testSchema->get("id")) < 5));
@@ -136,12 +136,12 @@ TEST_F(QueryExecutionTest, filterQuery) {
     sink->addChild(filter);
     filter->setParent(sink);
 
-    auto compiler = createDefaultQueryCompiler(dispatcher);
+    auto compiler = createDefaultQueryCompiler(queryManager);
     auto plan = compiler->compile(sink);
     plan->addDataSink(testSink);
     plan->addDataSource(testSource);
     plan->setBufferManager(bufferManager);
-    plan->setDispatcher(dispatcher);
+    plan->setQueryManager(queryManager);
 
     // The plan should have one pipeline
     EXPECT_EQ(plan->numberOfPipelineStages(), 1);
@@ -171,12 +171,12 @@ TEST_F(QueryExecutionTest, windowQuery) {
     // TODO in this test, it is not clear what we are testing
     // TODO 10 windows are fired -> 10 output buffers in the sink
     // TODO however, we check the 2nd buffer only
-    DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
-    dispatcher->startThreadPool();
+    QueryManagerPtr queryManager = std::make_shared<QueryManager>();
+    queryManager->startThreadPool();
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
     // creating query plan
-    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, bufferManager, dispatcher);
+    auto testSource = createDefaultDataSourceWithSchemaForOneBuffer(testSchema, bufferManager, queryManager);
     auto source = createSourceOperator(testSource);
     auto aggregation = Sum::on(testSchema->get("one"));
     auto windowType = TumblingWindow::of(TimeCharacteristic::ProcessingTime,
@@ -197,16 +197,16 @@ TEST_F(QueryExecutionTest, windowQuery) {
     sink->addChild(windowScan);
     windowScan->setParent(sink);
 
-    auto compiler = createDefaultQueryCompiler(dispatcher);
-    compiler->setDispatcher(dispatcher);
+    auto compiler = createDefaultQueryCompiler(queryManager);
+    compiler->setQueryManager(queryManager);
     compiler->setBufferManager(bufferManager);
     auto plan = compiler->compile(sink);
     plan->addDataSink(testSink);
     plan->addDataSource(testSource);
     plan->setBufferManager(bufferManager);
-    plan->setDispatcher(dispatcher);
+    plan->setQueryManager(queryManager);
 
-    dispatcher->registerQuery(plan);
+    queryManager->registerQuery(plan);
     plan->setup();
     plan->start();
 

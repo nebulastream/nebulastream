@@ -1,7 +1,7 @@
 #include <SourceSink/KafkaSource.hpp>
 
 #include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/QueryManager.hpp>
 #include <cstdint>
 #include <cstring>
 #include <sstream>
@@ -12,10 +12,10 @@
 
 namespace NES {
 
-KafkaSource::KafkaSource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher, const std::string brokers,
+KafkaSource::KafkaSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string brokers,
                          const std::string topic, const std::string groupId, bool autoCommit,
                          uint64_t kafkaConsumerTimeout)
-    : DataSource(schema, bufferManager, dispatcher), brokers(brokers), topic(topic), groupId(groupId),
+    : DataSource(schema, bufferManager, queryManager), brokers(brokers), topic(topic), groupId(groupId),
       autoCommit(autoCommit), kafkaConsumerTimeout(std::move(std::chrono::milliseconds(kafkaConsumerTimeout)))
 {
 

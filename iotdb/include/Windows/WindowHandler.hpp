@@ -14,8 +14,8 @@
 #include <boost/serialization/export.hpp>
 
 namespace NES {
-class Dispatcher;
-typedef std::shared_ptr<Dispatcher> DispatcherPtr;
+class QueryManager;
+typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
@@ -32,8 +32,8 @@ typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 class WindowHandler {
   public:
     WindowHandler() = default;
-    WindowHandler(WindowDefinitionPtr windowDefinition, DispatcherPtr dispatcher, BufferManagerPtr bufferManager);
-    //    WindowHandler(WindowDefinitionPtr windowDefinition, BufferManagerPtr bufferManager, DispatcherPtr dispatcher);
+    WindowHandler(WindowDefinitionPtr windowDefinition, QueryManagerPtr queryManager, BufferManagerPtr bufferManager);
+    //    WindowHandler(WindowDefinitionPtr windowDefinition, BufferManagerPtr bufferManager, QueryManagerPtr queryManager);
 
     ~WindowHandler();
 
@@ -139,13 +139,13 @@ class WindowHandler {
     std::mutex runningTriggerMutex;
     uint32_t pipelineStageId;
     QueryExecutionPlanPtr queryExecutionPlan;
-    DispatcherPtr dispatcher;
+    QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
 };
 
 // just for test compability
 const WindowHandlerPtr createTestWindow(size_t campainCnt, size_t windowSizeInSec);
-const WindowHandlerPtr createWindowHandler(WindowDefinitionPtr windowDefinition, DispatcherPtr dispatcher,
+const WindowHandlerPtr createWindowHandler(WindowDefinitionPtr windowDefinition, QueryManagerPtr queryManager,
                                            BufferManagerPtr bufferManager);
 
 } // namespace NES

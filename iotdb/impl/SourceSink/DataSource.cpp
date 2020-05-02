@@ -3,7 +3,7 @@
 #include <iostream>
 #include <random>
 
-#include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/QueryManager.hpp>
 #include <Util/Logger.hpp>
 #include <Util/UtilityFunctions.hpp>
 
@@ -18,8 +18,8 @@ BOOST_CLASS_EXPORT_IMPLEMENT(NES::DataSource);
 
 namespace NES {
 
-DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher)
-    : running(false), thread(nullptr), schema(pSchema), bufferManager(bufferManager), dispatcher(dispatcher),
+DataSource::DataSource(const SchemaPtr pSchema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager)
+    : running(false), thread(nullptr), schema(pSchema), bufferManager(bufferManager),  queryManager(queryManager),
       generatedTuples(0), generatedBuffers(0), numBuffersToProcess(UINT64_MAX), gatheringInterval(0),
       lastGatheringTimeStamp(0), sourceId(UtilityFunctions::generateUuid())
                                      {NES_DEBUG(
@@ -53,7 +53,7 @@ bool DataSource::start()
     NES_DEBUG("DataSource " << this->getSourceId() << ": Spawn thread")
     thread = std::make_shared<std::thread>([this, barrier]() {
         barrier->wait();
-        runningRoutine(bufferManager, dispatcher);
+        runningRoutine(bufferManager, queryManager);
     });
     barrier->wait();
     return true;
@@ -113,13 +113,13 @@ bool DataSource::isRunning() { return running; }
 
 void DataSource::setGatheringInterval(size_t interval) { this->gatheringInterval = interval; }
 
-void DataSource::setDispatcher(DispatcherPtr dispatcher) { this->dispatcher = dispatcher; }
+void DataSource::setQueryManager(QueryManagerPtr queryManager) { this->queryManager = queryManager; }
 void DataSource::setBufferManger(BufferManagerPtr bufferManager) { this->bufferManager = bufferManager; }
 
-void DataSource::runningRoutine(BufferManagerPtr bufferManager, DispatcherPtr dispatcher)
+void DataSource::runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr queryManager)
 {
-    if (!dispatcher) {
-        NES_ERROR("dispatcher not set")
+    if (!queryManager) {
+        NES_ERROR("query Manager not set")
         assert(0);
     }
     if (!bufferManager) {
@@ -145,7 +145,7 @@ void DataSource::runningRoutine(BufferManagerPtr bufferManager, DispatcherPtr di
                                                 << ": Received Data: " << buf.getNumberOfTuples() << " tuples"
                                                 << " iteration=" << cnt)
 
-                        dispatcher->addWork(this->sourceId, buf);
+                        queryManager->addWork(this->sourceId, buf);
                         cnt++;
                     }
                 }

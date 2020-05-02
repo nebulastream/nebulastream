@@ -38,7 +38,7 @@ class Environment {
   private:
     Config config;
     Environment(const Config &config);
-    DispatcherPtr dispatcher;
+    QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
     void printInputQueryPlan(const OperatorPtr curr, int depth);
 };

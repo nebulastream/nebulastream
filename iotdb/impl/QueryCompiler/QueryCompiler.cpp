@@ -3,7 +3,7 @@
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
-#include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/QueryManager.hpp>
 namespace NES {
 
 QueryCompiler::QueryCompiler() {};
@@ -14,8 +14,8 @@ QueryCompilerPtr QueryCompiler::create() {
     return std::make_shared<QueryCompiler>(new QueryCompiler());
 }
 
-void QueryCompiler::setDispatcher(DispatcherPtr dispatcher) {
-    this->dispatcher = dispatcher;
+void QueryCompiler::setQueryManager(QueryManagerPtr queryManager) {
+    this->queryManager = queryManager;
 }
 void QueryCompiler::setBufferManager(BufferManagerPtr bufferManager)
 {
@@ -28,7 +28,7 @@ QueryExecutionPlanPtr QueryCompiler::compile(OperatorPtr queryPlan) {
     auto context = createPipelineContext();
     queryPlan->produce(codeGenerator, context, std::cout);
     QueryExecutionPlanPtr qep = std::make_shared<GeneratedQueryExecutionPlan>();
-    qep->setDispatcher(dispatcher);
+    qep->setQueryManager(queryManager);
     qep->setBufferManager(bufferManager);
     compilePipelineStages(qep, codeGenerator, context);
     return qep;
@@ -42,7 +42,8 @@ void QueryCompiler::compilePipelineStages(QueryExecutionPlanPtr queryExecutionPl
     }
     auto executablePipeline = codeGenerator->compile(CompilerArgs(), context->code);
     if (context->hasWindow()) {
-        auto windowHandler = createWindowHandler(context->getWindow(), queryExecutionPlan->getDispatcher(), queryExecutionPlan->getBufferManager());
+        auto windowHandler = createWindowHandler(context->getWindow(),
+                                                 queryExecutionPlan->getQueryManager(), queryExecutionPlan->getBufferManager());
         queryExecutionPlan->appendsPipelineStage(createPipelineStage(queryExecutionPlan->numberOfPipelineStages(),
                                                                      queryExecutionPlan,
                                                                      executablePipeline,
@@ -55,9 +56,9 @@ void QueryCompiler::compilePipelineStages(QueryExecutionPlanPtr queryExecutionPl
 
 }
 
-QueryCompilerPtr createDefaultQueryCompiler(DispatcherPtr dispatcher) {
+QueryCompilerPtr createDefaultQueryCompiler(QueryManagerPtr queryManager) {
     auto q = QueryCompiler::create();
-    q->setDispatcher(dispatcher);
+    q->setQueryManager(queryManager);
     return q;
 }
 

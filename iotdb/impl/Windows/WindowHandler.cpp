@@ -5,14 +5,14 @@
 #include <Util/Logger.hpp>
 #include <boost/serialization/export.hpp>
 #include <State/StateManager.hpp>
-#include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/QueryManager.hpp>
 #include <Windows/WindowHandler.hpp>
 
 BOOST_CLASS_EXPORT_IMPLEMENT(NES::WindowHandler)
 namespace NES {
 
-WindowHandler::WindowHandler(NES::WindowDefinitionPtr windowDefinitionPtr, DispatcherPtr dispatcher, BufferManagerPtr bufferManager)
-    : windowDefinition(windowDefinitionPtr), dispatcher(dispatcher), bufferManager(bufferManager) {
+WindowHandler::WindowHandler(NES::WindowDefinitionPtr windowDefinitionPtr, QueryManagerPtr queryManager, BufferManagerPtr bufferManager)
+    : windowDefinition(windowDefinitionPtr),  queryManager(queryManager), bufferManager(bufferManager) {
     this->thread.reset();
 }
 
@@ -47,7 +47,7 @@ void WindowHandler::trigger() {
         // if produced tuple then send the tuple buffer to the next pipeline stage or sink
         if (tupleBuffer.getNumberOfTuples() > 0) {
             NES_DEBUG("WindowHandler: Dispatch output buffer with " << tupleBuffer.getNumberOfTuples() << " records");
-            dispatcher->addWorkForNextPipeline(
+            queryManager->addWorkForNextPipeline(
                 tupleBuffer,
                 this->queryExecutionPlan,
                 this->pipelineStageId);
@@ -95,8 +95,8 @@ WindowHandler::~WindowHandler() {
     stop();
 }
 
-const WindowHandlerPtr createWindowHandler(WindowDefinitionPtr windowDefinition, DispatcherPtr dispatcher, BufferManagerPtr bufferManager) {
-    return std::make_shared<WindowHandler>(windowDefinition, dispatcher, bufferManager);
+const WindowHandlerPtr createWindowHandler(WindowDefinitionPtr windowDefinition, QueryManagerPtr queryManager, BufferManagerPtr bufferManager) {
+    return std::make_shared<WindowHandler>(windowDefinition, queryManager, bufferManager);
 }
 
 } // namespace NES

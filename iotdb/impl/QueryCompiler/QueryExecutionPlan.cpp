@@ -62,12 +62,12 @@ bool QueryExecutionPlan::start() {
     return true;
 }
 
-DispatcherPtr QueryExecutionPlan::getDispatcher() {
-    return dispatcher;
+QueryManagerPtr QueryExecutionPlan::getQueryManager() {
+    return queryManager;
 }
 
-void QueryExecutionPlan::setDispatcher(DispatcherPtr dispatcher) {
-    this->dispatcher = dispatcher;
+void QueryExecutionPlan::setQueryManager(QueryManagerPtr queryManager) {
+    this->queryManager = queryManager;
 }
 
 BufferManagerPtr QueryExecutionPlan::getBufferManager() {

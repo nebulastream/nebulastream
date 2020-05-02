@@ -1,6 +1,6 @@
 #include <sstream>
 #include <string>
-#include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/QueryManager.hpp>
 #include <SourceSink/KafkaSink.hpp>
 #include <Util/Logger.hpp>
 

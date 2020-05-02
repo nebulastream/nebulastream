@@ -5,7 +5,7 @@
 #include <API/Environment.hpp>
 #include <API/InputQuery.hpp>
 #include <Operators/Operator.hpp>
-#include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/QueryManager.hpp>
 #include <QueryCompiler/Compiler/Compiler.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
@@ -19,10 +19,10 @@ Environment Environment::create(const Config& config)
 }
 
 void Environment::executeQuery(const InputQuery& inputQuery) {
-    dispatcher = std::make_shared<Dispatcher>();
-    dispatcher->startThreadPool();
+    queryManager = std::make_shared<QueryManager>();
+    queryManager->startThreadPool();
     bufferManager = std::make_shared<BufferManager>();
-    auto queryCompiler = createDefaultQueryCompiler(dispatcher);
+    auto queryCompiler = createDefaultQueryCompiler(queryManager);
     QueryExecutionPlanPtr qep = queryCompiler->compile(inputQuery.getRoot());
 }
 
