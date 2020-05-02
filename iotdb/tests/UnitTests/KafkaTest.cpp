@@ -3,7 +3,7 @@
 #include <string>
 #include <cstring>
 #include <thread>
-#include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/BufferManager.hpp>
 
 #include <Util/Logger.hpp>
@@ -19,7 +19,7 @@ namespace NES {
 class KafkaTest : public testing::Test {
   public:
     BufferManagerPtr bufferManager;
-    DispatcherPtr dispatcher;
+    QueryManagerPtr queryManager;
     void SetUp() {
         NES::setupLogging("KafkaTest.log", NES::LOG_DEBUG);
 
@@ -36,7 +36,7 @@ class KafkaTest : public testing::Test {
         buffer_size = num_tuples_to_process*tuple_size/num_of_buffers;
 
         bufferManager = std::make_shared<BufferManager>();
-        dispatcher = std::make_shared<Dispatcher>();
+        queryManager = std::make_shared<QueryManager>();
 
         ASSERT_GT(buffer_size, 0);
 
@@ -74,7 +74,7 @@ TEST_F(KafkaTest, DISABLED_KafkaSinkSendDataInitByKafkaConfig) {
 
 TEST_F(KafkaTest, DISABLED_KafkaSinkSendDataInitByBroker) {
     /**
-   const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, bufferManager, dispatcher, brokers,
+   const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, bufferManager, queryManager, brokers,
                                                              topic);
 
    TupleBufferPtr buf = bufferManager->getFixedSizeBuffer();
@@ -85,7 +85,7 @@ TEST_F(KafkaTest, DISABLED_KafkaSinkSendDataInitByBroker) {
 
 TEST_F(KafkaTest, DISABLED_KafkaSinkSendNullPointer) {
     /**
-   const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, bufferManager, dispatcher, brokers,
+   const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, bufferManager, queryManager, brokers,
                                                              topic);
    EXPECT_FALSE(kafkaSink->writeData(nullptr));
      */
@@ -94,7 +94,7 @@ TEST_F(KafkaTest, DISABLED_KafkaSinkSendNullPointer) {
 TEST_F(KafkaTest, DISABLED_KafkaSinkSendNullData) {
     /**
    // NullData: tuple buffer's content is all zeros. we didn't check tuple buffer's content.
-   const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, bufferManager, dispatcher, brokers,
+   const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, bufferManager, queryManager, brokers,
                                                              topic);
    TupleBufferPtr buf = bufferManager->getFixedSizeBuffer();
    EXPECT_TRUE(kafkaSink->writeData(buf));
@@ -145,7 +145,7 @@ TEST_F(KafkaTest, DISABLED_KafkaSourceInitByKafkaConfig1) {
                                                   brokers.c_str()}, {"group.id", groupId},
                                                  {"enable.auto.commit", false}};
 
-   const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, bufferManager, dispatcher, brokers,
+   const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, bufferManager, queryManager, brokers,
                                                              topic);
    TupleBufferPtr buf1 = bufferManager->getFixedSizeBuffer();
    EXPECT_TRUE(kafkaSink->writeData(buf1));
@@ -171,7 +171,7 @@ TEST_F(KafkaTest, DISABLED_KafkaSourceInitByKafkaConfig2) {
    const cppkafka::Configuration sourceConfig = {{"metadata.broker.list",
                                                   brokers.c_str()}, {"group.id", groupId}};
 
-   const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, bufferManager, dispatcher, brokers,
+   const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, bufferManager, queryManager, brokers,
                                                              topic);
    TupleBuffer buf1 = bufferManager->getBufferNoBlocking()->getBuffer();
    EXPECT_TRUE(kafkaSink->writeData(buf1));
@@ -197,7 +197,7 @@ TEST_F(KafkaTest, DISABLED_KafkaSourceInitByBroker) {
    const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema,
                                                                    brokers,
                                                                    topic);
-   const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, bufferManager, dispatcher, brokers,
+   const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, bufferManager, queryManager, brokers,
                                                              topic);
 
    TupleBuffer buf1 = bufferManager->getBufferNoBlocking().value();
@@ -221,7 +221,7 @@ TEST_F(KafkaTest, DISABLED_KafkaSourceWithInvalidBroker) {
     /*
    TupleBuffer buf = bufferManager->getBufferNoBlocking().value();
 
-   const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, bufferManager, dispatcher, brokers,
+   const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, bufferManager, queryManager, brokers,
                                                              topic);
 
    EXPECT_TRUE(kafkaSink->writeData(buf));
@@ -253,7 +253,7 @@ TEST_F(KafkaTest, DISABLED_KafkaSinkToSource) {
    const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema,
                                                                    brokers,
                                                                    topic);
-   const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, bufferManager, dispatcher, brokers,
+   const DataSinkPtr kafkaSink = std::make_shared<KafkaSink>(schema, bufferManager, queryManager, brokers,
                                                              topic);
 
    while (fileSource->getNumberOfGeneratedBuffers() < num_of_buffers) {
@@ -276,14 +276,14 @@ TEST_F(KafkaTest, DISABLED_KafkaSinkToSource) {
 
 TEST_F(KafkaTest, KafkaSourceInit) {
 
-    const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema, bufferManager, dispatcher, brokers, topic, "group",true, 100);
+    const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema, bufferManager, queryManager, brokers, topic, "group",true, 100);
     SUCCEED();
 }
 
 TEST_F(KafkaTest, KafkaSourceInitWithoutGroupId) {
 
     try {
-        const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema, bufferManager, dispatcher, brokers, topic, "",true, 100);
+        const DataSourcePtr kafkaSource = std::make_shared<KafkaSource>(schema, bufferManager, queryManager, brokers, topic, "",true, 100);
         FAIL();
     } catch (...) {
         SUCCEED();
@@ -295,7 +295,7 @@ TEST_F(KafkaTest, KafkaSourceInitWithEmptyTopic) {
 
     try {
         const DataSourcePtr
-            kafkaSource = std::make_shared<KafkaSource>(schema, bufferManager, dispatcher, brokers, "", "group", true, 100);
+            kafkaSource = std::make_shared<KafkaSource>(schema, bufferManager, queryManager, brokers, "", "group", true, 100);
         FAIL();
     } catch (...) {
         SUCCEED();

@@ -8,7 +8,7 @@
 #include <zmq.hpp>
 
 #include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/QueryManager.hpp>
 
 #include <Util/Logger.hpp>
 #include <boost/archive/text_iarchive.hpp>
@@ -23,8 +23,8 @@ ZmqSource::ZmqSource()
 
 }
 
-ZmqSource::ZmqSource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher, const std::string& host, const uint16_t port)
-    : DataSource(schema, bufferManager, dispatcher), host(host), port(port), connected(false), context(zmq::context_t(1)),
+ZmqSource::ZmqSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& host, const uint16_t port)
+    : DataSource(schema, bufferManager, queryManager), host(host), port(port), connected(false), context(zmq::context_t(1)),
       socket(zmq::socket_t(context, ZMQ_PULL)) {
     NES_DEBUG("ZMQSOURCE  " << this << ": Init ZMQ ZMQSOURCE to " << host << ":" << port << "/")
 }

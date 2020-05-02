@@ -23,13 +23,13 @@
 #include <SourceSink/DefaultSource.hpp>
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/BufferManager.hpp>
-#include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/QueryManager.hpp>
 
 namespace NES {
 
 class CodeGenerationTest : public testing::Test {
   public:
-    DispatcherPtr dispatcher;
+    QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
 
     /* Will be called before any test in this class are executed. */
@@ -41,8 +41,8 @@ class CodeGenerationTest : public testing::Test {
     void SetUp() {
         NES::setupLogging("BufferManagerTest.log", NES::LOG_DEBUG);
         std::cout << "Setup CodeGenerationTest test case." << std::endl;
-        dispatcher = std::make_shared<Dispatcher>();
-        dispatcher->startThreadPool();
+        queryManager = std::make_shared<QueryManager>();
+        queryManager->startThreadPool();
         bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
     }
@@ -58,7 +58,7 @@ class CodeGenerationTest : public testing::Test {
     }
 };
 
-const DataSourcePtr createTestSourceCodeGen(BufferManagerPtr bPtr, DispatcherPtr dPtr) {
+const DataSourcePtr createTestSourceCodeGen(BufferManagerPtr bPtr, QueryManagerPtr dPtr) {
     return std::make_shared<DefaultSource>(
         Schema::create()->addField(createField("campaign_id", UINT64)), bPtr, dPtr, 1, 1);
 }
@@ -66,7 +66,7 @@ const DataSourcePtr createTestSourceCodeGen(BufferManagerPtr bPtr, DispatcherPtr
 class SelectionDataGenSource : public GeneratorSource {
   public:
     SelectionDataGenSource(SchemaPtr schema,
-                           BufferManagerPtr bPtr, DispatcherPtr dPtr,
+                           BufferManagerPtr bPtr, QueryManagerPtr dPtr,
                            const uint64_t pNum_buffers_to_process)
         :
         GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process) {
@@ -103,7 +103,7 @@ class SelectionDataGenSource : public GeneratorSource {
     };
 };
 
-const DataSourcePtr createTestSourceCodeGenFilter(BufferManagerPtr bPtr, DispatcherPtr dPtr) {
+const DataSourcePtr createTestSourceCodeGenFilter(BufferManagerPtr bPtr, QueryManagerPtr dPtr) {
     DataSourcePtr source(
         std::make_shared<SelectionDataGenSource>(
             Schema::create()
@@ -118,7 +118,7 @@ const DataSourcePtr createTestSourceCodeGenFilter(BufferManagerPtr bPtr, Dispatc
 
 class PredicateTestingDataGeneratorSource : public GeneratorSource {
   public:
-    PredicateTestingDataGeneratorSource(SchemaPtr schema, BufferManagerPtr bPtr, DispatcherPtr dPtr,
+    PredicateTestingDataGeneratorSource(SchemaPtr schema, BufferManagerPtr bPtr, QueryManagerPtr dPtr,
                                         const uint64_t pNum_buffers_to_process)
         :
         GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process) {
@@ -163,7 +163,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
     }
 };
 
-const DataSourcePtr createTestSourceCodeGenPredicate(BufferManagerPtr bPtr, DispatcherPtr dPtr) {
+const DataSourcePtr createTestSourceCodeGenPredicate(BufferManagerPtr bPtr, QueryManagerPtr dPtr) {
     DataSourcePtr source(
         std::make_shared<PredicateTestingDataGeneratorSource>(
             Schema::create()
@@ -181,7 +181,7 @@ const DataSourcePtr createTestSourceCodeGenPredicate(BufferManagerPtr bPtr, Disp
 
 class WindowTestingDataGeneratorSource : public GeneratorSource {
   public:
-    WindowTestingDataGeneratorSource(SchemaPtr schema, BufferManagerPtr bPtr, DispatcherPtr dPtr,
+    WindowTestingDataGeneratorSource(SchemaPtr schema, BufferManagerPtr bPtr, QueryManagerPtr dPtr,
                                      const uint64_t pNum_buffers_to_process)
         :
         GeneratorSource(schema, bPtr, dPtr, pNum_buffers_to_process) {
@@ -214,7 +214,7 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
     }
 };
 
-const DataSourcePtr createWindowTestDataSource(BufferManagerPtr bPtr, DispatcherPtr dPtr) {
+const DataSourcePtr createWindowTestDataSource(BufferManagerPtr bPtr, QueryManagerPtr dPtr) {
     DataSourcePtr source(
         std::make_shared<WindowTestingDataGeneratorSource>(
             Schema::create()
@@ -663,11 +663,11 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
  */
 TEST_F(CodeGenerationTest, codeGenerationCopy) {
     /* prepare objects for test */
-    DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
-    dispatcher->startThreadPool();
+    QueryManagerPtr queryManager = std::make_shared<QueryManager>();
+    queryManager->startThreadPool();
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
-    auto source = createTestSourceCodeGen(bufferManager, dispatcher);
+    auto source = createTestSourceCodeGen(bufferManager, queryManager);
     auto codeGenerator = createCodeGenerator();
     auto context = createPipelineContext();
 
@@ -705,11 +705,11 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
  */
 TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
     /* prepare objects for test */
-    DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
-    dispatcher->startThreadPool();
+    QueryManagerPtr queryManager = std::make_shared<QueryManager>();
+    queryManager->startThreadPool();
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
-    auto source = createTestSourceCodeGenFilter(bufferManager, dispatcher);
+    auto source = createTestSourceCodeGenFilter(bufferManager, queryManager);
     auto codeGenerator = createCodeGenerator();
     auto context = createPipelineContext();
 
@@ -760,11 +760,11 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
  */
 TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
     /* prepare objects for test */
-    DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
-    dispatcher->startThreadPool();
+    QueryManagerPtr queryManager = std::make_shared<QueryManager>();
+    queryManager->startThreadPool();
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
-    auto source = createWindowTestDataSource(bufferManager, dispatcher);
+    auto source = createWindowTestDataSource(bufferManager, queryManager);
     auto codeGenerator = createCodeGenerator();
     auto context = createPipelineContext();
 
@@ -783,7 +783,7 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
     auto stage = codeGenerator->compile(CompilerArgs(), context->code);
 
     // init window handler
-    auto windowHandler = new WindowHandler(windowDefinition, dispatcher, bufferManager);
+    auto windowHandler = new WindowHandler(windowDefinition, queryManager, bufferManager);
     windowHandler->setup(nullptr, 0);
 
     /* prepare input tuple buffer */
@@ -810,12 +810,12 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
  * @brief This test generates a predicate with string comparision
  */
 TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
-    DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
-    dispatcher->startThreadPool();
+    QueryManagerPtr queryManager = std::make_shared<QueryManager>();
+    queryManager->startThreadPool();
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
     /* prepare objects for test */
-    auto source = createTestSourceCodeGenPredicate(bufferManager, dispatcher);
+    auto source = createTestSourceCodeGenPredicate(bufferManager, queryManager);
     auto codeGenerator = createCodeGenerator();
     auto context = createPipelineContext();
 
@@ -857,12 +857,12 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
  * @brief This test generates a map predicate, which manipulates the input buffer content
  */
 TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
-    DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
-    dispatcher->startThreadPool();
+    QueryManagerPtr queryManager = std::make_shared<QueryManager>();
+    queryManager->startThreadPool();
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
     /* prepare objects for test */
-    auto source = createTestSourceCodeGenPredicate(bufferManager, dispatcher);
+    auto source = createTestSourceCodeGenPredicate(bufferManager, queryManager);
     auto codeGenerator = createCodeGenerator();
     auto context = createPipelineContext();
 

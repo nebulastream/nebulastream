@@ -1,7 +1,7 @@
 #include <SourceSink/PrintSink.hpp>
 #include <sstream>
 #include <string>
-#include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/QueryManager.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {

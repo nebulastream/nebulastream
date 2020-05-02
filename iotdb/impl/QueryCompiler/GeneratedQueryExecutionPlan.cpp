@@ -1,6 +1,6 @@
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <Util/Logger.hpp>
-#include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/QueryManager.hpp>
 namespace NES {
 
 GeneratedQueryExecutionPlan::GeneratedQueryExecutionPlan() : QueryExecutionPlan() {}

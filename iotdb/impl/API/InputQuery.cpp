@@ -89,7 +89,7 @@ InputQuery InputQuery::from(Stream& stream) {
     OperatorPtr op;
 
     BufferManagerPtr bPtr;
-    DispatcherPtr dPtr;
+    QueryManagerPtr dPtr;
     if (catalogEntry.size() == 0) {
         NES_WARNING(
                 "InputQuery::from stream does not exists this should only be used by tests " << stream.getName())

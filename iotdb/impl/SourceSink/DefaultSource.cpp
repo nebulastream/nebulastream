@@ -1,15 +1,15 @@
 #include <SourceSink/DefaultSource.hpp>
 #include <SourceSink/GeneratorSource.hpp>
-#include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/MemoryLayout/RowLayout.hpp>
 
 namespace NES {
 
-DefaultSource::DefaultSource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher,
+DefaultSource::DefaultSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager,
                              const uint64_t numbersOfBufferToProduce,
                              size_t frequency)
     :
-    GeneratorSource(schema, bufferManager, dispatcher, numbersOfBufferToProduce) {
+    GeneratorSource(schema, bufferManager, queryManager, numbersOfBufferToProduce) {
     NES_DEBUG("DefaultSource:" << this << " creating")
     this->gatheringInterval = frequency;
 }

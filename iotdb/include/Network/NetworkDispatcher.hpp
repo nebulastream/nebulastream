@@ -11,7 +11,7 @@
 
 namespace NES {
 
-class Dispatcher;
+class QueryManager;
 
 namespace Network {
 

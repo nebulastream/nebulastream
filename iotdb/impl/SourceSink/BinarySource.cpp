@@ -1,4 +1,4 @@
-#include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/QueryManager.hpp>
 #include <assert.h>
 #include <fstream>
 #include <sstream>
@@ -19,8 +19,8 @@ BinarySource::BinarySource()
       tuple_size(0) {
 }
 
-BinarySource::BinarySource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher, const std::string& _file_path)
-    : DataSource(schema, bufferManager, dispatcher),
+BinarySource::BinarySource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& _file_path)
+    : DataSource(schema, bufferManager, queryManager),
       input(std::ifstream(_file_path.c_str())),
       file_path(_file_path) {
   input.seekg(0, input.end);

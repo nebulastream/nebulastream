@@ -3,8 +3,8 @@
 #include <memory>
 #include <vector>
 namespace NES {
-class Dispatcher;
-typedef std::shared_ptr<Dispatcher> DispatcherPtr;
+class QueryManager;
+typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
@@ -48,11 +48,11 @@ class QueryCompiler {
      */
     QueryExecutionPlanPtr compile(OperatorPtr queryPlan);
 
-    void setDispatcher(DispatcherPtr dispatcher);
+    void setQueryManager(QueryManagerPtr queryManager);
     void setBufferManager(BufferManagerPtr bufferManager);
 
   private:
-    DispatcherPtr dispatcher;
+    QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
 
     void compilePipelineStages(QueryExecutionPlanPtr queryExecutionPlan,
@@ -61,7 +61,7 @@ class QueryCompiler {
     QueryCompiler();
 };
 
-QueryCompilerPtr createDefaultQueryCompiler(DispatcherPtr dispatcher);
+QueryCompilerPtr createDefaultQueryCompiler(QueryManagerPtr queryManager);
 
 }
 

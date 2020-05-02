@@ -8,7 +8,7 @@ using namespace http;
 namespace NES {
 
 /*!
- * Dispatcher class represents the basic interface for a
+ * QueryManager class represents the basic interface for a
  * web service handler.
  */
 class BaseController {

@@ -1,5 +1,5 @@
 #include <SourceSink/SenseSource.hpp>
-#include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/QueryManager.hpp>
 #include <assert.h>
 #include <fstream>
 #include <sstream>
@@ -22,9 +22,9 @@ SenseSource::SenseSource()
     udsf("") {
 }
 
-SenseSource::SenseSource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher, const std::string& udsf)
+SenseSource::SenseSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& udsf)
     :
-    DataSource(schema, bufferManager, dispatcher),
+    DataSource(schema, bufferManager, queryManager),
     udsf(udsf) {
 
 }

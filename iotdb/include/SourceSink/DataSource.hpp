@@ -9,13 +9,13 @@
 #include <thread>
 #include <mutex>
 
-//#include <NodeEngine/Dispatcher.hpp>
+//#include <NodeEngine/QueryManager.hpp>
 namespace NES {
 class BufferManager;
 typedef std::shared_ptr<BufferManager> BufferManagerPtr;
 
-class Dispatcher;
-typedef std::shared_ptr<Dispatcher> DispatcherPtr;
+class QueryManager;
+typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 
 class TupleBuffer;
 
@@ -41,7 +41,7 @@ class DataSource {
      * by some test to produce a deterministic behavior
      * @param schema of the data that this source produces
      */
-    DataSource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher);
+    DataSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager);
 
     /**
      * @brief method to start the source.
@@ -64,7 +64,7 @@ class DataSource {
      * 3.) If not call receiveData in a blocking fashion
      * 4.) If call returns and a buffer is there to process, add a task to the dispatcher
      */
-    void runningRoutine(BufferManagerPtr bufferManager, DispatcherPtr dispatcher);
+    void runningRoutine(BufferManagerPtr bufferManager, QueryManagerPtr queryManager);
 
     /**
      * @brief virtual function to receive a buffer
@@ -140,9 +140,9 @@ class DataSource {
     /**
      * @brief this methods are only for backward comp to the old query api and will be removed
      * @todo remove if new query api is in place
-     * @param dispatcher
+     * @param queryManager
      */
-    void setDispatcher(DispatcherPtr dispatcher);
+    void setQueryManager(QueryManagerPtr queryManager);
     void setBufferManger(BufferManagerPtr bufferManager);
 
   protected:
@@ -160,7 +160,7 @@ class DataSource {
     std::string sourceId;
     SourceType type;
     BufferManagerPtr bufferManager;
-    DispatcherPtr dispatcher;
+    QueryManagerPtr queryManager;
   private:
     friend class boost::serialization::access;
     //bool indicating if the source is currently running'

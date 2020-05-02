@@ -5,7 +5,7 @@
 #include <API/Window/WindowDefinition.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/TupleBuffer.hpp>
-#include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/QueryManager.hpp>
 
 #include <QueryLib/WindowManagerLib.hpp>
 #include <Util/Logger.hpp>
@@ -84,8 +84,8 @@ TEST_F(WindowManagerTest, check_slice)
 
 TEST_F(WindowManagerTest, window_trigger) {
 
-    DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
-    dispatcher->startThreadPool();
+    QueryManagerPtr queryManager = std::make_shared<QueryManager>();
+    queryManager->startThreadPool();
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
 
@@ -96,7 +96,7 @@ TEST_F(WindowManagerTest, window_trigger) {
     auto windowDef = std::make_shared<WindowDefinition>(
         WindowDefinition(aggregation, TumblingWindow::of(TimeCharacteristic::EventTime, Milliseconds(10))));
 
-    auto w = WindowHandler(windowDef, dispatcher, bufferManager);
+    auto w = WindowHandler(windowDef, queryManager, bufferManager);
     w.setup(nullptr, 0);
 
     auto windowState = (StateVariable<int64_t, WindowSliceStore<int64_t>*>*)w.getWindowState();

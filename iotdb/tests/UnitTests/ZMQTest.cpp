@@ -14,7 +14,7 @@
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
 
-#include <NodeEngine/Dispatcher.hpp>
+#include <NodeEngine/QueryManager.hpp>
 
 using namespace NES;
 
@@ -28,7 +28,7 @@ using namespace NES;
 
 class ZMQTest : public testing::Test {
 public:
-    DispatcherPtr dispatcher;
+    QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
 
     /* Will be called before any test in this class are executed. */
@@ -50,8 +50,8 @@ public:
         //    test_data_size = 4096;
         test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE",
                                                                           UINT32);
-        dispatcher = std::make_shared<Dispatcher>();
-        dispatcher->startThreadPool();
+        queryManager = std::make_shared<QueryManager>();
+        queryManager->startThreadPool();
         bufferManager = std::make_shared<BufferManager>(1024, 1024);
     }
 
@@ -79,7 +79,7 @@ TEST_F(ZMQTest, ZmqSourceReceiveData) {
     // Create ZeroMQ Data Source.
     auto test_schema = Schema::create()->addField("KEY", UINT32)->addField("VALUE",
                                                                            UINT32);
-    auto zmq_source = createZmqSource(test_schema, bufferManager, dispatcher, LOCAL_HOST, LOCAL_PORT);
+    auto zmq_source = createZmqSource(test_schema, bufferManager, queryManager, LOCAL_HOST, LOCAL_PORT);
     std::cout << zmq_source->toString() << std::endl;
     // bufferManager->resizeFixedBufferSize(test_data_size);
 

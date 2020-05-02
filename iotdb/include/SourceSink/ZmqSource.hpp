@@ -24,7 +24,7 @@ class ZmqSource : public DataSource {
    * @param host name of the source queue
    * @param port of the source queue
    */
-  ZmqSource(SchemaPtr schema, BufferManagerPtr bufferManager, DispatcherPtr dispatcher, const std::string &host, const uint16_t port);
+  ZmqSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string &host, const uint16_t port);
 
   /**
    * @brief destructor of zmq sink that disconnects the queue before deconstruction

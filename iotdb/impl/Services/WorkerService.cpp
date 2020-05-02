@@ -23,7 +23,7 @@ WorkerService::WorkerService(string ip, uint16_t publish_port, uint16_t receive_
                                                              << " receive_port=" << this->receivePort)
     physicalStreams.insert(std::make_pair("default_physical", PhysicalStreamConfig()));
     this->nodeEngine = std::make_shared<NodeEngine>();
-    this->queryCompiler = createDefaultQueryCompiler(nodeEngine->getDispatcher());
+    this->queryCompiler = createDefaultQueryCompiler(nodeEngine->getQueryManager());
     this->nodeEngine->start();
 }
 

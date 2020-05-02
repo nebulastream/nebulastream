@@ -214,8 +214,8 @@ TEST_F(CoordinatorServiceTest, test_run_deregister_query) {
 
 TEST_F(CoordinatorServiceTest, test_compile_deployment) {
 
-    DispatcherPtr dispatcher = std::make_shared<Dispatcher>();
-    dispatcher->startThreadPool();
+    QueryManagerPtr queryManager = std::make_shared<QueryManager>();
+    queryManager->startThreadPool();
     BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 1024);
 
     string queryId = coordinatorServicePtr->registerQuery(queryString,
@@ -228,7 +228,7 @@ TEST_F(CoordinatorServiceTest, test_compile_deployment) {
     for (auto& x : etos) {
         ExecutableTransferObject eto = x.second;
         QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(
-            createDefaultQueryCompiler(dispatcher));
+            createDefaultQueryCompiler(queryManager));
         EXPECT_TRUE(qep);
     }
     EXPECT_TRUE(coordinatorServicePtr->getRegisteredQueries().size() == 1);
@@ -247,10 +247,11 @@ TEST_F(CoordinatorServiceTest, test_code_gen) {
     InputQuery& query = InputQuery::from(def).filter(def["value"] > 42).print(
         std::cout);
 
-    auto queryCompiler = createDefaultQueryCompiler(engine->getDispatcher());
+    auto queryCompiler = createDefaultQueryCompiler(engine->getQueryManager());
     QueryExecutionPlanPtr qep = queryCompiler->compile(query.getRoot());
     // Create new Source and Sink
-    DataSourcePtr source = createDefaultDataSourceWithSchemaForOneBuffer(schema, engine->getBufferManager(), engine->getDispatcher());
+    DataSourcePtr source = createDefaultDataSourceWithSchemaForOneBuffer(schema, engine->getBufferManager(),
+                                                                         engine->getQueryManager());
     source->setNumBuffersToProcess(10);
     qep->addDataSource(source);
 
@@ -280,7 +281,7 @@ TEST_F(CoordinatorServiceTest, DISABLED_test_local_distributed_deployment) {
         cout << "Deploying QEP for " << v->getEntryTypeString() << endl;
         ExecutableTransferObject eto = x.second;
         QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(
-            createDefaultQueryCompiler(engine->getDispatcher()));
+            createDefaultQueryCompiler(engine->getQueryManager()));
         EXPECT_TRUE(qep);
         engine->deployQuery(qep);
         qeps.push_back(qep);
@@ -317,7 +318,7 @@ TEST_F(CoordinatorServiceTest, DISABLED_test_sequential_local_distributed_deploy
             cout << "Deploying QEP for " << v->getEntryTypeString() << endl;
             ExecutableTransferObject eto = x.second;
             QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(
-                createDefaultQueryCompiler(engine->getDispatcher()));
+                createDefaultQueryCompiler(engine->getQueryManager()));
             EXPECT_TRUE(qep);
             engine->deployQuery(qep);
             qeps.push_back(qep);

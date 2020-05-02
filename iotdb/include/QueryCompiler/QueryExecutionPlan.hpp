@@ -6,12 +6,12 @@
 #include <SourceSink/DataSink.hpp>
 #include <SourceSink/DataSource.hpp>
 
-//#include <NodeEngine/Dispatcher.hpp>
+//#include <NodeEngine/QueryManager.hpp>
 
 
 namespace NES {
-class Dispatcher;
-typedef std::shared_ptr<Dispatcher> DispatcherPtr;
+class QueryManager;
+typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 
 class QueryExecutionPlan;
 typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
@@ -86,14 +86,13 @@ class QueryExecutionPlan {
         return stages.size();
     }
 
-    DispatcherPtr getDispatcher();
-    void setDispatcher(DispatcherPtr dispatcher);
+    QueryManagerPtr getQueryManager();
+    void setQueryManager(QueryManagerPtr queryManager);
 
     BufferManagerPtr getBufferManager();
     void setBufferManager(BufferManagerPtr bufferManager);
 
-
-        void print();
+    void print();
 
   protected:
     QueryExecutionPlan(std::vector<DataSourcePtr> sources,
@@ -106,7 +105,7 @@ class QueryExecutionPlan {
     std::vector<PipelineStagePtr> stages;
     std::map<DataSource*, uint32_t> sourceToStage;
     std::map<uint32_t, uint32_t> stageToDest;
-    DispatcherPtr dispatcher;
+    QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
 };
 
