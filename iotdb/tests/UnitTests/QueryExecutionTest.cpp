@@ -14,16 +14,10 @@ using namespace NES;
 
 class QueryExecutionTest : public testing::Test {
   public:
-
-    /* Will be called before any test in this class are executed. */
-    void setUp() {
-        NES::setupLogging("QueryExecutionTest.log", NES::LOG_DEBUG);
-        NES_DEBUG("Setup QueryCatalogTest test class.");
-    }
-
     /* Will be called before a test is executed. */
     void SetUp() {
-        NES_DEBUG("Setup QueryCatalogTest test case.");
+        NES::setupLogging("QueryExecutionTest.log", NES::LOG_DEBUG);
+        NES_DEBUG("Setup QueryCatalogTest test class.");
         // create test input buffer
         testSchema = Schema::create()
             ->addField(createField("id", BasicType::INT64))
