@@ -20,7 +20,6 @@ const size_t buffer_size = 4*1024;
 
 class BufferManagerTest : public testing::Test {
   public:
-    BufferManagerPtr bufferManager;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         std::cout << "Setup BufferManagerTest test class." << std::endl;
@@ -30,13 +29,10 @@ class BufferManagerTest : public testing::Test {
     void SetUp() {
         NES::setupLogging("BufferManagerTest.log", NES::LOG_DEBUG);
         std::cout << "Setup BufferManagerTest test case." << std::endl;
-        bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
     }
 
     /* Will be called before a test is executed. */
     void TearDown() {
-        ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
-        ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
         std::cout << "Tear down BufferManagerTest test case." << std::endl;
     }
 
@@ -48,6 +44,7 @@ class BufferManagerTest : public testing::Test {
 };
 
 TEST_F(BufferManagerTest, initialized_buffer_manager) {
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
     size_t buffers_count = bufferManager->getNumOfPooledBuffers();
     size_t buffers_free = bufferManager->getAvailableBuffers();
     ASSERT_EQ(buffers_count, buffers_managed);
@@ -61,6 +58,8 @@ TEST_F(BufferManagerTest, test_buffer_manager_no_singleton) {
 }
 
 TEST_F(BufferManagerTest, single_threaded_buffer_recycling) {
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
+
     ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
     auto buffer0 = bufferManager->getBufferBlocking();
@@ -76,6 +75,8 @@ TEST_F(BufferManagerTest, single_threaded_buffer_recycling) {
 }
 
 TEST_F(BufferManagerTest, single_threaded_buffer_recycling_unpooled) {
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
+
     auto buffer0 = bufferManager->getUnpooledBuffer(16384);
     ASSERT_EQ(bufferManager->getNumOfUnpooledBuffers(), 1);
     {
@@ -86,16 +87,17 @@ TEST_F(BufferManagerTest, single_threaded_buffer_recycling_unpooled) {
 }
 
 TEST_F(BufferManagerTest, single_threaded_many_buffer_recycling_unpooled) {
-    auto pool = std::make_unique<BufferManager>();
-    pool->configure(1024, 1);
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(1024, 1);
     for (int i = 0; i < 500; i++) {
-        auto buffer0 = pool->getUnpooledBuffer(16384);
-        ASSERT_EQ(pool->getNumOfUnpooledBuffers(), 1);
+        auto buffer0 = bufferManager->getUnpooledBuffer(16384);
+        ASSERT_EQ(bufferManager->getNumOfUnpooledBuffers(), 1);
     }
-    ASSERT_EQ(pool->getNumOfUnpooledBuffers(), 1);
+    ASSERT_EQ(bufferManager->getNumOfUnpooledBuffers(), 1);
 }
 
 TEST_F(BufferManagerTest, getBuffer_afterRelease) {
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
+
     std::vector<TupleBuffer> buffers;
 
     ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
@@ -108,7 +110,7 @@ TEST_F(BufferManagerTest, getBuffer_afterRelease) {
     std::promise<bool> promise0, promise1;
     auto f0 = promise0.get_future();
     // start a thread that is blocking waiting on the queue
-    std::thread t1([&promise0, &promise1, this]() {
+    std::thread t1([&promise0, &promise1, this, &bufferManager]() {
       promise0.set_value(true);
       auto buf = bufferManager->getBufferBlocking();
       buf.release();
@@ -124,13 +126,15 @@ TEST_F(BufferManagerTest, getBuffer_afterRelease) {
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 }
 
-TEST_F(BufferManagerTest, buffer_manager_mt_access) {
+    TEST_F(BufferManagerTest, buffer_manager_mt_access) {
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
+
     ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 
     std::vector<std::thread> threads;
     for (int i = 0; i < 4; i++) {
-        threads.emplace_back([this]() {
+        threads.emplace_back([this, &bufferManager]() {
           for (int i = 0; i < 50; ++i) {
               auto buf = bufferManager->getBufferBlocking();
               std::this_thread::sleep_for(std::chrono::milliseconds(250));
@@ -145,6 +149,8 @@ TEST_F(BufferManagerTest, buffer_manager_mt_access) {
 }
 
 TEST_F(BufferManagerTest, buffer_manager_mt_producer_consumer) {
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
+
     ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
     ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 
@@ -159,7 +165,7 @@ TEST_F(BufferManagerTest, buffer_manager_mt_producer_consumer) {
     constexpr uint32_t consumer_threads = 4;
 
     for (int i = 0; i < producer_threads; i++) {
-        prod_threads.emplace_back([&workQueue, &mutex, &cvar, this]() {
+        prod_threads.emplace_back([&workQueue, &mutex, &cvar, this, &bufferManager]() {
           for (int j = 0; j < max_buffer; ++j) {
               std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
               auto buf = bufferManager->getBufferBlocking();
@@ -213,11 +219,10 @@ TEST_F(BufferManagerTest, buffer_manager_mt_producer_consumer) {
 }
 
 TEST_F(BufferManagerTest, buffer_manager_mt_producer_consumer_no_singleton) {
-    auto pool = std::make_shared<BufferManager>();
-    pool->configure(buffer_size, buffers_managed);
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
 
-    ASSERT_EQ(pool->getNumOfPooledBuffers(), buffers_managed);
-    ASSERT_EQ(pool->getAvailableBuffers(), buffers_managed);
+    ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
+    ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 
     std::vector<std::thread> prod_threads;
     std::vector<std::thread> con_threads;
@@ -230,10 +235,10 @@ TEST_F(BufferManagerTest, buffer_manager_mt_producer_consumer_no_singleton) {
     constexpr uint32_t consumer_threads = 4;
 
     for (int i = 0; i < producer_threads; i++) {
-        prod_threads.emplace_back([&workQueue, &mutex, &cvar, pool]() {
+        prod_threads.emplace_back([&workQueue, &mutex, &cvar, bufferManager]() {
           for (int j = 0; j < max_buffer; ++j) {
               std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
-              auto buf = pool->getBufferBlocking();
+              auto buf = bufferManager->getBufferBlocking();
               for (uint32_t k = 0; k < (buffer_size/sizeof(uint32_t) - 1); ++k) {
                   buf.getBufferAs<uint32_t>()[k] = k;
               }
@@ -270,7 +275,7 @@ TEST_F(BufferManagerTest, buffer_manager_mt_producer_consumer_no_singleton) {
     }
     for (int j = 0; j < consumer_threads; ++j) {
         std::unique_lock<std::mutex> lock(mutex);
-        auto buf = pool->getBufferBlocking();
+        auto buf = bufferManager->getBufferBlocking();
         buf.getBufferAs<uint32_t>()[buffer_size/sizeof(uint32_t) - 1] = max_buffer;
         workQueue.push_back(buf);
         cvar.notify_all();
@@ -279,8 +284,8 @@ TEST_F(BufferManagerTest, buffer_manager_mt_producer_consumer_no_singleton) {
         t.join();
     }
     workQueue.clear();
-    ASSERT_EQ(pool->getNumOfPooledBuffers(), buffers_managed);
-    ASSERT_EQ(pool->getAvailableBuffers(), buffers_managed);
+    ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
+    ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 }
 
 TupleBuffer getBufferTimeout(std::shared_ptr<BufferManager> bufferManager, std::chrono::milliseconds&& timeout) {
@@ -294,11 +299,10 @@ TupleBuffer getBufferTimeout(std::shared_ptr<BufferManager> bufferManager, std::
 
 TEST_F(BufferManagerTest, buffer_manager_mt_producer_consumer_timeout) {
     using namespace std::chrono_literals;
-    auto pool = std::make_shared<BufferManager>();
-    pool->configure(buffer_size, buffers_managed);
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
 
-    ASSERT_EQ(pool->getNumOfPooledBuffers(), buffers_managed);
-    ASSERT_EQ(pool->getAvailableBuffers(), buffers_managed);
+    ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
+    ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 
     std::vector<std::thread> prod_threads;
     std::vector<std::thread> con_threads;
@@ -311,10 +315,10 @@ TEST_F(BufferManagerTest, buffer_manager_mt_producer_consumer_timeout) {
     constexpr uint32_t consumer_threads = 4;
 
     for (int i = 0; i < producer_threads; i++) {
-        prod_threads.emplace_back([&workQueue, &mutex, &cvar, pool]() {
+        prod_threads.emplace_back([&workQueue, &mutex, &cvar, bufferManager]() {
           for (int j = 0; j < max_buffer; ++j) {
               std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
-              auto buf = getBufferTimeout(pool, 100ms);
+              auto buf = getBufferTimeout(bufferManager, 100ms);
               for (uint32_t k = 0; k < (buffer_size/sizeof(uint32_t) - 1); ++k) {
                   buf.getBufferAs<uint32_t>()[k] = k;
               }
@@ -352,7 +356,7 @@ TEST_F(BufferManagerTest, buffer_manager_mt_producer_consumer_timeout) {
     }
     for (int j = 0; j < consumer_threads; ++j) {
         std::unique_lock<std::mutex> lock(mutex);
-        auto buf = pool->getBufferBlocking();
+        auto buf = bufferManager->getBufferBlocking();
         buf.getBufferAs<uint32_t>()[buffer_size/sizeof(uint32_t) - 1] = max_buffer;
         workQueue.push_back(buf);
         cvar.notify_all();
@@ -361,8 +365,8 @@ TEST_F(BufferManagerTest, buffer_manager_mt_producer_consumer_timeout) {
         t.join();
     }
     workQueue.clear();
-    ASSERT_EQ(pool->getNumOfPooledBuffers(), buffers_managed);
-    ASSERT_EQ(pool->getAvailableBuffers(), buffers_managed);
+    ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
+    ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 }
 
 TupleBuffer getBufferNoBlocking(BufferManager& bufferManager) {
@@ -374,11 +378,10 @@ TupleBuffer getBufferNoBlocking(BufferManager& bufferManager) {
 }
 
 TEST_F(BufferManagerTest, buffer_manager_mt_producer_consumer_noblocking) {
-    auto pool = std::make_shared<BufferManager>();
-    pool->configure(buffer_size, buffers_managed);
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(buffer_size, buffers_managed);
 
-    ASSERT_EQ(pool->getNumOfPooledBuffers(), buffers_managed);
-    ASSERT_EQ(pool->getAvailableBuffers(), buffers_managed);
+    ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
+    ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 
     std::vector<std::thread> prod_threads;
     std::vector<std::thread> con_threads;
@@ -391,10 +394,10 @@ TEST_F(BufferManagerTest, buffer_manager_mt_producer_consumer_noblocking) {
     constexpr uint32_t consumer_threads = 4;
 
     for (int i = 0; i < producer_threads; i++) {
-        prod_threads.emplace_back([&workQueue, &mutex, &cvar, pool]() {
+        prod_threads.emplace_back([&workQueue, &mutex, &cvar, bufferManager]() {
           for (int j = 0; j < max_buffer; ++j) {
               std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
-              auto buf = getBufferNoBlocking(*pool);
+              auto buf = getBufferNoBlocking(*bufferManager);
               for (uint32_t k = 0; k < (buffer_size/sizeof(uint32_t) - 1); ++k) {
                   buf.getBufferAs<uint32_t>()[k] = k;
               }
@@ -431,7 +434,7 @@ TEST_F(BufferManagerTest, buffer_manager_mt_producer_consumer_noblocking) {
     }
     for (int j = 0; j < consumer_threads; ++j) {
         std::unique_lock<std::mutex> lock(mutex);
-        auto buf = pool->getBufferBlocking();
+        auto buf = bufferManager->getBufferBlocking();
         buf.getBufferAs<uint32_t>()[buffer_size/sizeof(uint32_t) - 1] = max_buffer;
         workQueue.push_back(buf);
         cvar.notify_all();
@@ -440,8 +443,8 @@ TEST_F(BufferManagerTest, buffer_manager_mt_producer_consumer_noblocking) {
         t.join();
     }
     workQueue.clear();
-    ASSERT_EQ(pool->getNumOfPooledBuffers(), buffers_managed);
-    ASSERT_EQ(pool->getAvailableBuffers(), buffers_managed);
+    ASSERT_EQ(bufferManager->getNumOfPooledBuffers(), buffers_managed);
+    ASSERT_EQ(bufferManager->getAvailableBuffers(), buffers_managed);
 }
 
 
