@@ -306,7 +306,7 @@ bool WorkerActor::disconnecting() {
           string error_msg = to_string(er);
           NES_ERROR(
               "WorkerActor: Error during disconnecting " << "\n" << error_msg);
-          throw new Exception("Error while disconnecting");
+          //throw new Exception("Error while disconnecting");
         });
     bool success = prom.get_future().get();
     NES_DEBUG("WorkerActor::disconnecting: success=" << success)
