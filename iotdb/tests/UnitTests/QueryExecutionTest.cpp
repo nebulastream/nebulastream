@@ -221,7 +221,7 @@ TEST_F(QueryExecutionTest, windowQuery) {
     }
     testSink->completed.get_future().get();
     plan->stop();
-    //    sleep(1);
+    sleep(1);
 
     auto& resultBuffer = testSink->get(2); // TODO why the 2nd buffer?
     // The output buffer should contain 5 tuple;
