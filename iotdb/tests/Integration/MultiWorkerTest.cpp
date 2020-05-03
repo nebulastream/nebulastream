@@ -237,6 +237,7 @@ TEST_F(MultiWorkerTest, multi_worker_test) {
         wPtrs.push_back(std::make_shared<NesWorker>());
         bool retStart = wPtrs[i]->start(/**blocking**/false, /**withConnect**/false,
                                                       port, "localhost");
+        sleep(1);
         EXPECT_TRUE(retStart);
 
     }
@@ -253,6 +254,7 @@ TEST_F(MultiWorkerTest, multi_worker_test) {
     for (size_t i = 0; i < numWorkers; i++) {
         cout << "disconnect worker" << i << endl;
         bool retConWrk = wPtrs[i]->disconnect();
+        sleep(1);
         EXPECT_TRUE(retConWrk);
     }
 
