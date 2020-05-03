@@ -4,6 +4,7 @@
 #include <boost/filesystem.hpp>
 #include <Util/Logger.hpp>
 #include <sstream>
+#include <Util/SerializationTools.hpp>
 
 namespace NES {
 WorkerActor::WorkerActor(actor_config& cfg, string ip, uint16_t publish_port,
@@ -11,9 +12,17 @@ WorkerActor::WorkerActor(actor_config& cfg, string ip, uint16_t publish_port,
     :
     stateful_actor(cfg),
     workerId(0) {
-    NES_DEBUG("")
-    this->state.workerPtr = std::make_unique<WorkerService>(
-        WorkerService(std::move(ip), publish_port, receive_port));
+    NES_DEBUG("WorkerActor(): ip" << ip << " pubPort=" << publish_port << " recPort=" << receive_port << " type=" << type)
+    this->state.nodeEngine = std::make_unique<NodeEngine>(ip, publish_port, receive_port);
+    bool success = this->state.nodeEngine->start();
+    if (!success) {
+        NES_ERROR("WorkerActor: node engine could not be started")
+        throw Exception("WorkerActor error while starting node engine");
+    } else {
+        NES_DEBUG("WorkerActor: Node engine started successfully")
+    }
+
+    this->queryCompiler = createDefaultQueryCompiler(this->state.nodeEngine->getQueryManager());
     this->type = type;
 }
 
@@ -73,7 +82,7 @@ behavior WorkerActor::unconnected() {
 
 bool WorkerActor::registerPhysicalStream(PhysicalStreamConfig conf) {
     NES_DEBUG("WorkerActor::registerPhysicalStream: got stream config=" << conf.toString())
-    this->state.workerPtr->addPhysicalStreamConfig(conf);
+    //    this->state.workerPtr->addPhysicalStreamConfig(conf);
 
     //send request to coordinator
     auto coordinator = actor_cast<actor>(this->state.current_server);
@@ -317,11 +326,11 @@ bool WorkerActor::registerNode(NESNodeType type) {
     std::promise<size_t> prom;
     auto coordinator = actor_cast<actor>(this->state.current_server);
     this->request(coordinator, task_timeout, register_node_atom::value,
-                  this->state.workerPtr->getIp(),
-                  this->state.workerPtr->getPublishPort(),
-                  this->state.workerPtr->getReceivePort(),
+                  this->state.nodeEngine->getIp(),
+                  this->state.nodeEngine->getPublishPort(),
+                  this->state.nodeEngine->getReceivePort(),
                   2,
-                  this->state.workerPtr->getNodeProperties(),
+                  this->state.nodeEngine->getNodePropertiesAsString(),
                   (int) type)
         .await(
             [=, &prom](const size_t& id) mutable {
@@ -381,7 +390,13 @@ bool WorkerActor::connecting(const std::string& host, uint16_t port) {
 
 bool WorkerActor::WorkerActor::shutdown() {
     NES_DEBUG("WorkerActor: shutdown");
-    this->state.workerPtr->shutDown();
+    bool success = this->state.nodeEngine->stop();
+    if (!success) {
+        NES_ERROR("WorkerActor:shutdown node engine stop not successful")
+        throw Exception("WorkerActor error while stopping node engine");
+    } else {
+        NES_DEBUG("WorkerActor: Node engine stopped successfully")
+    }
     return true;
 }
 
@@ -396,32 +411,52 @@ behavior WorkerActor::running() {
         [=](deploy_query_atom, const string& queryId, string& executableTransferObject) {
           NES_DEBUG("WorkerActor: got request for deploy_query_atom queryId=" << queryId << " eto="
                                                                               << executableTransferObject)
-          return this->state.workerPtr->deployQuery(queryId, executableTransferObject);
+          ExecutableTransferObject eto = SerializationTools::parse_eto(
+              executableTransferObject);
+          NES_DEBUG(
+              "WorkerActor::running() eto after parse=" << eto.toString())
+          QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(this->queryCompiler);
+          NES_DEBUG("WorkerActor::running()  add query to queries map")
+
+          bool success = state.nodeEngine->deployQueryInNodeEngine(qep);
+          NES_DEBUG("WorkerActor::running() deploy query success=" << success)
+          return success;
         },
         // internal rpc to undeploy a query, undeploy combines unregister and stop
         [=](undeploy_query_atom, const string& queryId) {
           NES_DEBUG("WorkerActor: got request for undeploy_query_atom queryId=" << queryId)
-          return this->state.workerPtr->undeployQuery(queryId);
+          return this->state.nodeEngine->undeployQuery(queryId);
         },
         // internal rpc to register a query on a worker
         [=](register_query_atom, const string& queryId, string& executableTransferObject) {
-            NES_DEBUG("WorkerActor: got request for register_query_atom queryId=" << queryId)
-            return this->state.workerPtr->registerQuery(queryId, executableTransferObject);
+          NES_DEBUG("WorkerActor: got request for register_query_atom queryId=" << queryId)
+
+          ExecutableTransferObject eto = SerializationTools::parse_eto(
+              executableTransferObject);
+          NES_DEBUG(
+              "WorkerActor::running() eto after parse=" << eto.toString())
+          QueryExecutionPlanPtr qep = eto.toQueryExecutionPlan(this->queryCompiler);
+          qep->setQueryId(queryId);
+          NES_DEBUG("WorkerActor::running() add query to queries map")
+
+          bool success = state.nodeEngine->registerQueryInNodeEngine(qep);
+          NES_DEBUG("WorkerActor::running() deploy query success=" << success)
+          return success;
         },
         // internal rpc to unregister a query on a worker
         [=](unregister_query_atom, const string& queryId) {
-            NES_DEBUG("WorkerActor: got request for unregister_query_atom queryId=" << queryId)
-            return this->state.workerPtr->unregisterQuery(queryId);
+          NES_DEBUG("WorkerActor: got request for unregister_query_atom queryId=" << queryId)
+          return this->state.nodeEngine->unregisterQuery(queryId);
         },
         // internal rpc to start a query on a worker
         [=](start_query_atom, const string& queryId) {
           NES_DEBUG("WorkerActor: got request for start_query_atom queryId=" << queryId)
-          return this->state.workerPtr->startQuery(queryId);
+          return this->state.nodeEngine->startQuery(queryId);
         },
         // internal rpc to stop a query on a worker
         [=](stop_query_atom, const string& queryId) {
           NES_DEBUG("WorkerActor: got request for stop_query_atom queryId=" << queryId)
-          return this->state.workerPtr->stopQuery(queryId);
+          return this->state.nodeEngine->stopQuery(queryId);
         }
     };
     NES_DEBUG("WorkerActor::running end running")

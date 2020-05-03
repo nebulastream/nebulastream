@@ -3,12 +3,13 @@
 #include <Topology/NESTopologyEntry.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Operators/Operator.hpp>
-#include <Services/WorkerService.hpp>
 #include <caf/all.hpp>
 #include <caf/io/all.hpp>
 #include <utility>
 #include <caf/blocking_actor.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
+
 
 using namespace caf;
 using std::string;
@@ -20,7 +21,7 @@ namespace NES {
 // the client queues pending tasks
 struct WorkerState {
     strong_actor_ptr current_server;
-    std::unique_ptr<WorkerService> workerPtr;
+    std::unique_ptr<NodeEngine> nodeEngine;
 };
 
 /**
@@ -136,6 +137,8 @@ class WorkerActor : public stateful_actor<WorkerState> {
 
     NESNodeType type;
     size_t workerId;
+    QueryCompilerPtr queryCompiler;
+
 };
 
 }
