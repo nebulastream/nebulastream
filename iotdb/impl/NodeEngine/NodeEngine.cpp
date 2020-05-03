@@ -32,10 +32,23 @@ NodeProperties* NodeEngine::getNodeProperties() {
 }
 
 NodeEngine::NodeEngine() {
+    NES_DEBUG("NodeEngine()")
     props = std::make_shared<NodeProperties>();
     isRunning = false;
     forceStop = false;
+}
 
+NodeEngine::NodeEngine(string ip, uint16_t publish_port, uint16_t receive_port) {
+    NES_DEBUG("NodeEngine(): create NodeEngine with ip=" << this->ip << " publish_port=" << this->publishPort
+                                                             << " receive_port=" << this->receivePort)
+
+    this->ip = std::move(ip);
+    this->publishPort = publish_port;
+    this->receivePort = receive_port;
+
+    props = std::make_shared<NodeProperties>();
+    isRunning = false;
+    forceStop = false;
 }
 
 NodeEngine::~NodeEngine() {
@@ -129,7 +142,7 @@ bool NodeEngine::unregisterQuery(std::string queryId) {
             size_t delCnt2 = queryIdToQepMap.erase(queryId);
             NES_DEBUG("NodeEngine: unregister of query " << queryId << " succeeded with cnt=" << delCnt2)
 
-            if (delCnt1 == 1 &&  delCnt2 == 1) {
+            if (delCnt1 == 1 && delCnt2 == 1) {
                 return true;
             } else {
                 NES_ERROR("NodeEngine::unregisterQuery: error while unregister query")
@@ -311,6 +324,27 @@ bool NodeEngine::stopQueryManager() {
     }
 
     return true;
+}
+
+string& NodeEngine::getIp() {
+    return ip;
+}
+
+void NodeEngine::setIp(const string& ip) {
+    this->ip = ip;
+}
+
+uint16_t NodeEngine::getPublishPort() const {
+    return publishPort;
+}
+void NodeEngine::setPublishPort(uint16_t publish_port) {
+    publishPort = publish_port;
+}
+uint16_t NodeEngine::getReceivePort() const {
+    return receivePort;
+}
+void NodeEngine::setReceivePort(uint16_t receive_port) {
+    receivePort = receive_port;
 }
 
 }

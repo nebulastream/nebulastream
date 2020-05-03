@@ -1,4 +1,3 @@
-
 #include <QueryCompiler/QueryCompiler.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>

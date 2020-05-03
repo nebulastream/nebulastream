@@ -7,7 +7,6 @@
 #include <Services/CoordinatorService.hpp>
 #include <Services/StreamCatalogService.hpp>
 #include <Services/QueryCatalogService.hpp>
-#include <Services/WorkerService.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Actors/Configurations/CoordinatorActorConfig.hpp>
 #include <Topology/NESTopologyEntry.hpp>
