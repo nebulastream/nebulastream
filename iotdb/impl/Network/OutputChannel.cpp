@@ -10,7 +10,7 @@ namespace Network {
 
 void OutputChannel::init(const std::string& socketAddr) {
     int linger = -1;
-    uint32_t identity[] = {queryId, operatorId, partitionId, subpartitionId}; // 16 bytes
+    uint64_t identity[] = {queryId, operatorId, partitionId, subpartitionId}; // 32 bytes
     try {
         zmqSocket.setsockopt(ZMQ_LINGER, &linger, sizeof(int));
         zmqSocket.setsockopt(ZMQ_IDENTITY, &identity, sizeof(identity));

@@ -93,6 +93,7 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& start
             // handle
             if (zmqError.num() == ETERM) {
                 shutdownComplete = true;
+                NES_INFO("ZmqServer: Shutdown completed!")
             } else {
                 NES_ERROR("ZmqServer: " << zmqError.what());
                 errorPromise.set_exception(eptr);
@@ -160,8 +161,8 @@ void ZmqServer::handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier) {
                     auto bufferHeader = bufferHeaderMsg.data<Messages::DataBufferMessage>();
 
                     // parse identity
-                    uint32_t* id;
-                    id = (u_int32_t*) identityEnvelope.data();
+                    uint64_t* id;
+                    id = (uint64_t*) identityEnvelope.data();
 
 
                     // receive buffer content
@@ -199,9 +200,9 @@ void ZmqServer::handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier) {
         if (err.num() == ETERM) {
             NES_DEBUG("Context closed on server " << hostname << ":" << port);
         } else {
-            NES_ERROR("ZmqServer: event loop got " << err.what());
             errorPromise.set_exception(std::current_exception());
-            NES_ERROR("ZmqServer: not supported yet");
+            NES_ERROR("ZmqServer: event loop got " << err.what());
+            throw err;
         }
     }
 }
