@@ -1,15 +1,24 @@
+#include <Network/NetworkManager.hpp>
+#include <Network/OutputChannel.hpp>
+#include <Network/ZmqServer.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
-#include <Network/ZmqServer.hpp>
-#include <Network/NetworkDispatcher.hpp>
-#include <Network/OutputChannel.hpp>
+
+#include <Components/NesCoordinator.hpp>
+#include <Components/NesWorker.hpp>
+#include <NodeEngine/BufferManager.hpp>
 
 using namespace std;
 
 namespace NES {
+const size_t buffersManaged = 10;
+const size_t bufferSize = 4*1024;
+
 namespace Network {
 class NetworkStackTest : public testing::Test {
-public:
+  public:
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(bufferSize, buffersManaged);
+
     static void SetUpTestCase() {
         NES::setupLogging("NetworkStackTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup NetworkStackTest test class.");
@@ -22,10 +31,10 @@ public:
 
 TEST_F(NetworkStackTest, serverMustStartAndStop) {
     try {
-        ExchangeProtocol exchangeProtocol([](){}, [](){}, [](std::exception_ptr ex){});
-        ZmqServer server("127.0.0.1", 31337, 4, exchangeProtocol);
+        ExchangeProtocol exchangeProtocol([](uint32_t* id, TupleBuffer buf) {}, []() {}, [](std::exception_ptr ex) {});
+        ZmqServer server("127.0.0.1", 31337, 4, exchangeProtocol, bufferManager);
         server.start();
-        ASSERT_EQ(server.isRunning(), true);
+        ASSERT_EQ(server.getIsRunning(), true);
     } catch (...) {
         // shutdown failed
         ASSERT_EQ(true, false);
@@ -35,8 +44,15 @@ TEST_F(NetworkStackTest, serverMustStartAndStop) {
 
 TEST_F(NetworkStackTest, dispatcherMustStartAndStop) {
     try {
-        NetworkDispatcher netDispatcher("127.0.0.1", 31337, [](){}, [](){}, [](std::exception_ptr ex){});
-    } catch (...) {
+        NetworkManager netManager(
+            "127.0.0.1",
+            31337,
+            [](uint32_t* id, TupleBuffer buf) {},
+            []() {},
+            [](std::exception_ptr ex) {},
+            bufferManager);
+    }
+    catch (...) {
         ASSERT_EQ(true, false);
     }
     ASSERT_EQ(true, true);
@@ -46,28 +62,68 @@ TEST_F(NetworkStackTest, startCloseChannel) {
     try {
         // start zmqServer
         std::promise<bool> completed;
-        auto onBuffer = [](){};
-        auto onError = [&completed](std::exception_ptr ex){
-           completed.set_exception(ex);
+        auto onBuffer = [](uint32_t* id, TupleBuffer buf) {};
+        auto onError = [&completed](std::exception_ptr ex) {
+          completed.set_exception(ex);
         };
-        auto onEndOfStream = [&completed](){
+        auto onEndOfStream = [&completed]() {
           completed.set_value(true);
         };
 
-        NetworkDispatcher netDispatcher("127.0.0.1", 31337, onBuffer, onEndOfStream, onError);
+        NetworkManager netManager("127.0.0.1", 31337, onBuffer, onEndOfStream, onError, bufferManager);
 
-        std::thread t ([&netDispatcher, &completed] {
-            // register the incoming channel
-            netDispatcher.registerSubpartitionConsumer(0, 0, 0, 0);
-            auto v = completed.get_future().get();
-            ASSERT_EQ(v, true);
+        std::thread t([&netManager, &completed] {
+          // register the incoming channel
+          netManager.registerSubpartitionConsumer(0, 0, 0, 0);
+          auto v = completed.get_future().get();
+          ASSERT_EQ(v, true);
         });
 
         NodeLocation nodeLocation(0, "127.0.0.1", 31337);
-        auto senderChannel = netDispatcher.registerSubpartitionProducer(nodeLocation, 0, 0, 0, 0);
+        auto senderChannel = netManager.registerSubpartitionProducer(nodeLocation, 0, 0, 0, 0);
 
         senderChannel.close();
 
+        t.join();
+    }
+    catch (...) {
+        ASSERT_EQ(true, false);
+    }
+    ASSERT_EQ(true, true);
+}
+
+TEST_F(NetworkStackTest, testSendData) {
+    try {
+        // start zmqServer
+        std::promise<bool> completed;
+        auto onBuffer = [](uint32_t* id, TupleBuffer buf) {
+          ASSERT_EQ(buf.getBufferSize(), 16384);
+          ASSERT_EQ(id[0], 1);
+          ASSERT_EQ(id[1], 22);
+          ASSERT_EQ(id[2], 333);
+          ASSERT_EQ(id[3], 444);
+        };
+
+        auto onError = [&completed](std::exception_ptr ex) { completed.set_exception(ex); };
+        auto onEndOfStream = [&completed]() { completed.set_value(true); };
+
+        NetworkManager netManager("127.0.0.1", 31337, onBuffer, onEndOfStream, onError, bufferManager);
+
+        std::thread t([&netManager, &completed] {
+          // register the incoming channel
+          netManager.registerSubpartitionConsumer(1, 22, 333, 444);
+          auto v = completed.get_future().get();
+          ASSERT_EQ(v, true);
+        });
+
+        NodeLocation nodeLocation(0, "127.0.0.1", 31337);
+        auto senderChannel = netManager.registerSubpartitionProducer(nodeLocation, 1, 22, 333, 444);
+
+        // create testbuffer
+        auto buffer = bufferManager->getUnpooledBuffer(16384);
+        senderChannel.sendBuffer(buffer.value());
+
+        senderChannel.close();
         t.join();
 
     } catch (...) {
@@ -76,6 +132,30 @@ TEST_F(NetworkStackTest, startCloseChannel) {
     ASSERT_EQ(true, true);
 }
 
+TEST_F(NetworkStackTest, DISABLED_registerChannelWithActors) {
+    cout << "start coordinator" << endl;
+    NesCoordinatorPtr crd = std::make_shared<NesCoordinator>();
+    size_t port = crd->startCoordinator(/**blocking**/ false);
+    EXPECT_NE(port, 0);
+    cout << "coordinator started successfully" << endl;
 
+    cout << "start worker 1" << endl;
+    NesWorkerPtr wrk1 = std::make_shared<NesWorker>();
+    bool retStart1 = wrk1->start(/**blocking**/ false, /**withConnect**/ true, port, "localhost");
+    EXPECT_TRUE(retStart1);
+    cout << "worker1 started successfully" << endl;
+
+    string query = "InputQuery::from(default_logical).print(std::cout);";
+
+    crd->deployQuery(query, "BottomUp");
+    sleep(2);
+
+    bool retStopWrk1 = wrk1->stop();
+    EXPECT_TRUE(retStopWrk1);
+
+    bool retStopCord = crd->stopCoordinator();
+    EXPECT_TRUE(retStopCord);
 }
-}
+
+} // namespace Network
+} // namespace NES

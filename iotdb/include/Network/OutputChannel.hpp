@@ -4,6 +4,7 @@
 #include <boost/core/noncopyable.hpp>
 #include <memory>
 #include <Network/NetworkMessage.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
 #include <iostream>
 
 namespace NES {
@@ -39,7 +40,7 @@ class OutputChannel : public boost::noncopyable {
     void init(const std::string& socketAddr);
 
   public:
-    void sendBuffer(/** tuple buffer, num of records **/);
+    void sendBuffer(TupleBuffer& inputBuffer);
 
     void onError(/** error info **/);
 
