@@ -10,11 +10,11 @@ namespace Network {
 
 static constexpr uint16_t DEFAULT_NUM_SERVER_THREADS = 3;
 
-using NodeId = uint32_t;
-using SubpartitionId = uint32_t;
-using PartitionId = uint32_t;
-using OperatorId = uint32_t;
-using QueryId = uint32_t;
+using NodeId = uint64_t;
+using SubpartitionId = uint64_t;
+using PartitionId = uint64_t;
+using OperatorId = uint64_t;
+using QueryId = uint64_t;
 
 class NodeLocation {
   private:

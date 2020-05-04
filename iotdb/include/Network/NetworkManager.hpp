@@ -23,7 +23,7 @@ class OutputChannel;
 class NetworkManager : public boost::noncopyable {
   public:
     explicit NetworkManager(const std::string& hostname, uint16_t port,
-                            std::function<void(uint32_t*, TupleBuffer)>&& onDataBuffer,
+                            std::function<void(uint64_t*, TupleBuffer)>&& onDataBuffer,
                             std::function<void()>&& onEndOfStream, std::function<void(std::exception_ptr)>&& onError,
                             BufferManagerPtr bufferManager, uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
 

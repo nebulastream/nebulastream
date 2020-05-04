@@ -8,7 +8,7 @@ namespace NES {
 namespace Network {
 
 NetworkManager::NetworkManager(const std::string& hostname, uint16_t port,
-                               std::function<void(uint32_t*, TupleBuffer)>&& onDataBuffer,
+                               std::function<void(uint64_t*, TupleBuffer)>&& onDataBuffer,
                                std::function<void()>&& onEndOfStream, std::function<void(std::exception_ptr)>&& onError,
                                BufferManagerPtr bufferManager, uint16_t numServerThread)
     : exchangeProtocol(std::move(onDataBuffer), std::move(onEndOfStream), std::move(onError)),

@@ -9,7 +9,7 @@ namespace NES {
 namespace Network {
 class ExchangeProtocol {
   public:
-    explicit ExchangeProtocol(std::function<void(uint32_t*, TupleBuffer)>&& onDataBuffer,
+    explicit ExchangeProtocol(std::function<void(uint64_t*, TupleBuffer)>&& onDataBuffer,
                               std::function<void()>&& onEndOfStream,
                               std::function<void(std::exception_ptr)>&& onException) :
         onDataBufferCb(std::move(onDataBuffer)),
@@ -35,7 +35,7 @@ class ExchangeProtocol {
     /**
      *
      */
-    void onBuffer(uint32_t* id, TupleBuffer buffer) {
+    void onBuffer(uint64_t* id, TupleBuffer buffer) {
         onDataBufferCb(id, buffer);
     }
 
@@ -55,7 +55,7 @@ class ExchangeProtocol {
     }
 
   private:
-    std::function<void(uint32_t*, TupleBuffer)> onDataBufferCb;
+    std::function<void(uint64_t*, TupleBuffer)> onDataBufferCb;
     std::function<void()> onEndOfStreamCb;
     std::function<void(std::exception_ptr)> onExceptionCb;
 };

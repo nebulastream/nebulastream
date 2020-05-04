@@ -42,7 +42,7 @@ class NetworkStackTest : public testing::Test {
 
 TEST_F(NetworkStackTest, serverMustStartAndStop) {
     try {
-        ExchangeProtocol exchangeProtocol([](uint32_t* id, TupleBuffer buf) {}, []() {}, [](std::exception_ptr ex) {});
+        ExchangeProtocol exchangeProtocol([](uint64_t* id, TupleBuffer buf) {}, []() {}, [](std::exception_ptr ex) {});
         ZmqServer server("127.0.0.1", 31337, 4, exchangeProtocol, bufferManager);
         server.start();
         ASSERT_EQ(server.getIsRunning(), true);
@@ -58,7 +58,7 @@ TEST_F(NetworkStackTest, dispatcherMustStartAndStop) {
         NetworkManager netManager(
             "127.0.0.1",
             31337,
-            [](uint32_t* id, TupleBuffer buf) {},
+            [](uint64_t* id, TupleBuffer buf) {},
             []() {},
             [](std::exception_ptr ex) {},
             bufferManager);
@@ -73,7 +73,7 @@ TEST_F(NetworkStackTest, startCloseChannel) {
     try {
         // start zmqServer
         std::promise<bool> completed;
-        auto onBuffer = [](uint32_t* id, TupleBuffer buf) {};
+        auto onBuffer = [](uint64_t* id, TupleBuffer buf) {};
         auto onError = [&completed](std::exception_ptr ex) {
           completed.set_exception(ex);
         };
@@ -107,7 +107,7 @@ TEST_F(NetworkStackTest, testSendData) {
     try {
         // start zmqServer
         std::promise<bool> completed;
-        auto onBuffer = [](uint32_t* id, TupleBuffer buf) {
+        auto onBuffer = [](uint64_t* id, TupleBuffer buf) {
           ASSERT_EQ(buf.getBufferSize(), bufferSize);
           ASSERT_EQ(id[0], 1);
           ASSERT_EQ(id[1], 22);
