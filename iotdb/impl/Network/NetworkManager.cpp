@@ -13,7 +13,13 @@ NetworkManager::NetworkManager(const std::string& hostname, uint16_t port,
                                BufferManagerPtr bufferManager, uint16_t numServerThread)
     : exchangeProtocol(std::move(onDataBuffer), std::move(onEndOfStream), std::move(onError)),
       server(std::make_shared<ZmqServer>(hostname, port, numServerThread, exchangeProtocol, bufferManager)) {
-    server->start();
+    bool success = server->start();
+    if (success) {
+        NES_INFO("NetworkManager: Server started successfully")
+    }
+    else {
+        NES_FATAL_ERROR("NetworkManager: Server failed to start")
+    }
 }
 
 void NetworkManager::registerSubpartitionConsumer(QueryId queryId, OperatorId operatorId, PartitionId partitionId,

@@ -16,19 +16,19 @@ ZmqServer::ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNet
     : hostname(hostname), port(port), numNetworkThreads(numNetworkThreads), isRunning(false), keepRunning(true),
       exchangeProtocol(exchangeProtocol), bufferManager(bufferManager) {
     if (numNetworkThreads >= DEFAULT_NUM_SERVER_THREADS) {
-        NES_FATAL_ERROR("[ZmqServer] numNetworkThreads is greater than DEFAULT_NUM_SERVER_THREADS")
+        NES_FATAL_ERROR("ZmqServer: numNetworkThreads is greater than DEFAULT_NUM_SERVER_THREADS")
     }
 }
 
-void ZmqServer::start() {
+bool ZmqServer::start() {
     std::promise<bool> start_promise;
     uint16_t numZmqThreads = (numNetworkThreads - 1)/2;
     uint16_t numHandlerThreads = numNetworkThreads/2;
     zmqContext = std::make_shared<zmq::context_t>(numZmqThreads);
     frontendThread = std::make_unique<std::thread>([this, numHandlerThreads, &start_promise]() {
-      frontendLoop(numHandlerThreads, start_promise);
+      routerLoop(numHandlerThreads, start_promise);
     });
-    start_promise.get_future().get();
+    return start_promise.get_future().get();
 }
 
 ZmqServer::~ZmqServer() {
@@ -45,13 +45,13 @@ ZmqServer::~ZmqServer() {
         try {
             future.get();
         } catch (std::exception& e) {
-            NES_ERROR("[ZmqServer] Destructor " << e.what());
+            NES_ERROR("ZmqServer: Destructor " << e.what());
             throw e;
         }
     }
 }
 
-void ZmqServer::frontendLoop(uint16_t numHandlerThreads, std::promise<bool>& startPromise) {
+void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& startPromise) {
     // option of linger time until port is closed
     int linger = 100;
     zmq::socket_t frontendSocket(*zmqContext, zmq::socket_type::router);
@@ -94,11 +94,11 @@ void ZmqServer::frontendLoop(uint16_t numHandlerThreads, std::promise<bool>& sta
             if (zmqError.num() == ETERM) {
                 shutdownComplete = true;
             } else {
-                NES_ERROR("[ZmqServer] " << zmqError.what());
+                NES_ERROR("ZmqServer: " << zmqError.what());
                 errorPromise.set_exception(eptr);
             }
         } catch (std::exception& error) {
-            NES_ERROR("[ZmqServer] " << error.what());
+            NES_ERROR("ZmqServer: " << error.what());
             errorPromise.set_exception(eptr);
         }
     }
@@ -129,7 +129,7 @@ void ZmqServer::handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier) {
             auto msgHeader = headerEnvelope.data<Messages::MessageHeader>();
             if (msgHeader->getMagicNumber() != Messages::NES_NETWORK_MAGIC_NUMBER) {
                 // TODO handle error -- need to discuss how we handle errors on the node engine
-                NES_ERROR("[ZmqServer] stream is corrupted");
+                NES_ERROR("ZmqServer: stream is corrupted");
             }
             switch (msgHeader->getMsgType()) {
                 case Messages::ClientAnnouncement: {
@@ -141,7 +141,7 @@ void ZmqServer::handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier) {
                     // react after announcement is received
                     auto serverReadyMsg = exchangeProtocol.onClientAnnouncement(
                         clientAnnouncementEnvelope.data<Messages::ClientAnnounceMessage>());
-                    NES_INFO("[ZmqServer] ClientAnnouncement received for "
+                    NES_INFO("ZmqServer: ClientAnnouncement received for "
                                  << serverReadyMsg.getOperatorId() << "::" << serverReadyMsg.getPartitionId()
                                  << "::" << serverReadyMsg.getSubpartitionId() << "::" << serverReadyMsg.getQueryId());
 
@@ -172,7 +172,7 @@ void ZmqServer::handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier) {
                     // create a string for logging of the identity which corresponds to the
                     // queryId::operatorId::partitionId::subpartitionId
                     NES_INFO(
-                        "[ZmqServer] DataBuffer received from "
+                        "ZmqServer: DataBuffer received from "
                             << std::to_string(id[0]) + "::" + std::to_string(id[1]) + "::" + std::to_string(id[2]) +
                                 "::" + std::to_string(id[3]) << " with " << bufferHeader->getNumOfRecords()
                             << "/" << bufferHeader->getPayloadSize());
@@ -181,17 +181,17 @@ void ZmqServer::handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier) {
                 }
                 case Messages::ErrorMessage: {
                     // if server receives a message that an error occured
-                    NES_FATAL_ERROR("[ZmqServer] ErrorMessage not supported yet");
+                    NES_FATAL_ERROR("ZmqServer: ErrorMessage not supported yet");
                     break;
                 }
                 case Messages::EndOfStream: {
                     // if server receives a message that the stream did terminate
-                    NES_INFO("[ZmqServer] EndOfStream message received")
+                    NES_INFO("ZmqServer: EndOfStream message received")
                     exchangeProtocol.onEndOfStream();
                     break;
                 }
                 default: {
-                    NES_ERROR("[ZmqServer] received unknown message type");
+                    NES_ERROR("ZmqServer: received unknown message type");
                 }
             }
         }
@@ -199,9 +199,9 @@ void ZmqServer::handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier) {
         if (err.num() == ETERM) {
             NES_DEBUG("Context closed on server " << hostname << ":" << port);
         } else {
-            NES_ERROR("[ZmqServer] event loop got " << err.what());
+            NES_ERROR("ZmqServer: event loop got " << err.what());
             errorPromise.set_exception(std::current_exception());
-            NES_ERROR("[ZmqServer] not supported yet");
+            NES_ERROR("ZmqServer: not supported yet");
         }
     }
 }

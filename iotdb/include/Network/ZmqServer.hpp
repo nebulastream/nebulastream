@@ -35,7 +35,7 @@ class ZmqServer : public boost::noncopyable {
     /**
      * Start the server. It throws exceptions if the starting fails.
      */
-    void start();
+    bool start();
 
     /**
      * Get the global zmq context
@@ -58,7 +58,7 @@ class ZmqServer : public boost::noncopyable {
      * @param numHandlerThreads number of HandlerThreads
      * @param startPromise the promise that is passed to the thread
      */
-    void frontendLoop(uint16_t numHandlerThreads, std::promise<bool>& startPromise);
+    void routerLoop(uint16_t numHandlerThreads, std::promise<bool>& startPromise);
 
     /**
      * @brief handler thread where threads are passed from the frontend loop
