@@ -15,8 +15,8 @@ ZmqServer::ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNet
                      ExchangeProtocol& exchangeProtocol, BufferManagerPtr bufferManager)
     : hostname(hostname), port(port), numNetworkThreads(numNetworkThreads), isRunning(false), keepRunning(true),
       exchangeProtocol(exchangeProtocol), bufferManager(bufferManager) {
-    if (numNetworkThreads >= DEFAULT_NUM_SERVER_THREADS) {
-        NES_FATAL_ERROR("ZmqServer: numNetworkThreads is greater than DEFAULT_NUM_SERVER_THREADS")
+    if (numNetworkThreads < DEFAULT_NUM_SERVER_THREADS) {
+        NES_THROW_RUNTIME_ERROR("ZmqServer: numNetworkThreads is greater than DEFAULT_NUM_SERVER_THREADS");
     }
 }
 
