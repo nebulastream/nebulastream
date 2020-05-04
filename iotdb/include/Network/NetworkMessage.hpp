@@ -49,18 +49,35 @@ class ClientAnnounceMessage {
           operatorId(operatorId),
           partitionId(partitionId),
           subpartitionId(subpartitionId) {}
+
+    /**
+     * @brief getter for the queryId
+     * @return the queryId
+     */
     QueryId getQueryId() const {
         return queryId;
     }
 
+    /**
+     * @brief getter for the operatorId
+     * @return the operatorId
+     */
     OperatorId getOperatorId() const {
         return operatorId;
     }
 
+    /**
+     * @brief getter for the partitionId
+     * @return the partitionId
+     */
     PartitionId getPartitionId() const {
         return partitionId;
     }
 
+    /**
+     * @brief getter for the getSubpartitionId
+     * @return the subpartitionId
+     */
     SubpartitionId getSubpartitionId() const {
         return subpartitionId;
     }
@@ -86,18 +103,34 @@ class ServerReadyMessage {
           partitionId(partitionId),
           subpartitionId(subpartitionId) {}
 
+    /**
+     * @brief getter for the queryId
+     * @return the queryId
+     */
     QueryId getQueryId() const {
         return queryId;
     }
 
+    /**
+     * @brief getter for the operatorId
+     * @return the operatorId
+     */
     OperatorId getOperatorId() const {
         return operatorId;
     }
 
+    /**
+     * @brief getter for the partitionId
+     * @return the partitionId
+     */
     PartitionId getPartitionId() const {
         return partitionId;
     }
 
+    /**
+     * @brief getter for the getSubpartitionId
+     * @return the subpartitionId
+     */
     SubpartitionId getSubpartitionId() const {
         return subpartitionId;
     }
@@ -118,10 +151,18 @@ class DataBufferMessage {
 
     }
 
+    /**
+     * @brief get the payloadSize of the BufferMessage
+     * @return the payloadSize
+     */
     const uint32_t getPayloadSize() const {
         return payloadSize;
     }
 
+    /**
+     * @brief get the number of records within the current BufferMessage
+     * @return the number of records
+     */
     const uint32_t getNumOfRecords() const {
         return numOfRecords;
     }
