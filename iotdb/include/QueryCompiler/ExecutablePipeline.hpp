@@ -12,6 +12,12 @@ typedef std::shared_ptr<WindowManager> WindowManagerPtr;
 class ExecutablePipeline;
 typedef std::shared_ptr<ExecutablePipeline> ExecutablePipelinePtr;
 
+class BufferManager;
+typedef std::shared_ptr<BufferManager> BufferManagerPtr;
+
+class PipelineExecutionContext;
+typedef std::unique_ptr<PipelineExecutionContext> QueryExecutionContextPtr;
+
 class ExecutablePipeline {
   public:
     virtual ~ExecutablePipeline() = default;
@@ -29,7 +35,7 @@ class ExecutablePipeline {
     virtual uint32_t execute(TupleBuffer& input_buffers,
                              void* state,
                              WindowManagerPtr window_manager,
-                             TupleBuffer& result_buf) = 0;
+                             PipelineExecutionContext& context) = 0;
 };
 
 }// namespace NES

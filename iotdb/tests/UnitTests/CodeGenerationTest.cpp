@@ -17,6 +17,7 @@
 #include <QueryCompiler/CCodeGenerator/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/Compiler/CompiledExecutablePipeline.hpp>
 #include <QueryCompiler/Compiler/SystemCompilerCompiledCode.hpp>
+#include <QueryCompiler/PipelineExecutionContext.hpp>
 #include <Windows/WindowHandler.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/GeneratorSource.hpp>
@@ -24,6 +25,7 @@
 #include <NodeEngine/MemoryLayout/MemoryLayout.hpp>
 #include <NodeEngine/BufferManager.hpp>
 #include <NodeEngine/QueryManager.hpp>
+#include <utility>
 
 namespace NES {
 
@@ -52,6 +54,18 @@ class CodeGenerationTest : public testing::Test {
     }
 };
 
+class TestPipelineExecutionContext : public PipelineExecutionContext{
+  public:
+    TestPipelineExecutionContext(BufferManagerPtr bufferManager):
+        PipelineExecutionContext(std::move(bufferManager), [this](TupleBuffer& buffer) { this->buffers.push_back(buffer.retain());}){};
+    ~TestPipelineExecutionContext(){
+        for(auto buffer:buffers){
+            buffer.release();
+        }
+    }
+    std::vector<TupleBuffer> buffers;
+};
+
 const DataSourcePtr createTestSourceCodeGen(BufferManagerPtr bPtr, QueryManagerPtr dPtr) {
     return std::make_shared<DefaultSource>(
         Schema::create()->addField(createField("campaign_id", UINT64)), bPtr, dPtr, 1, 1);
@@ -68,7 +82,7 @@ class SelectionDataGenSource : public GeneratorSource {
 
     ~SelectionDataGenSource() = default;
 
-    std::optional<TupleBuffer> receiveData()  override {
+    std::optional<TupleBuffer> receiveData() override {
         // 10 tuples of size one
         TupleBuffer buf = bufferManager->getBufferBlocking();
         uint64_t tupleCnt = buf.getBufferSize()/sizeof(InputTuple);
@@ -129,7 +143,7 @@ class PredicateTestingDataGeneratorSource : public GeneratorSource {
         char text[12];
     };
 
-    std::optional<TupleBuffer> receiveData()  override {
+    std::optional<TupleBuffer> receiveData() override {
         // 10 tuples of size one
         TupleBuffer buf = bufferManager->getBufferBlocking();
         uint64_t tupleCnt = buf.getBufferSize()/sizeof(InputTuple);
@@ -188,7 +202,7 @@ class WindowTestingDataGeneratorSource : public GeneratorSource {
         uint64_t value;
     };
 
-    std::optional<TupleBuffer> receiveData()  override {
+    std::optional<TupleBuffer> receiveData() override {
         // 10 tuples of size one
         TupleBuffer buf = bufferManager->getBufferBlocking();
         uint64_t tupleCnt = 10;
@@ -502,7 +516,10 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     nodeEngine->start();
 
     auto tupleBufferType = createAnonymUserDefinedType("NES::TupleBuffer");
+    auto pipelineExecutionContextType = createAnonymUserDefinedType("NES::PipelineExecutionContext");
     auto getNumberOfTupleBuffer = FunctionCallStatement("getNumberOfTuples");
+    auto allocateTupleBuffer = FunctionCallStatement("allocateTupleBuffer");
+
     auto getBufferOfTupleBuffer = FunctionCallStatement("getBuffer");
 
     /* struct definition for input tuples */
@@ -519,8 +536,9 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     /* === declarations === */
     auto varDeclTupleBuffers = VariableDeclaration::create(createReferenceDataType(tupleBufferType),
                                                            "input_buffer");
-    auto varDeclTupleBufferOutput = VariableDeclaration::create(createReferenceDataType(tupleBufferType),
-                                                                "output_tuple_buffer");
+    auto varDeclPipelineExecutionContext =
+        VariableDeclaration::create(createReferenceDataType(pipelineExecutionContextType),
+                                    "pipelineExecutionContext");
     auto varDeclWindow = VariableDeclaration::create(
         createPointerDataType(createAnonymUserDefinedType("void")), "stateVar");
     VariableDeclaration varDeclWindowManager = VariableDeclaration::create(
@@ -568,10 +586,15 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
                 createPointerDataType(createUserDefinedType(structDeclTuple)))));
 
     /* result_tuples = (ResultTuple *)output_tuple_buffer->data;*/
+    auto resultTupleBufferDeclaration = VariableDeclaration::create(tupleBufferType, "resultTupleBuffer");
+    BinaryOperatorStatement initResultTupleBufferPtr
+        (VarDeclStatement(resultTupleBufferDeclaration).assign(VarRef(varDeclPipelineExecutionContext).accessRef(
+            allocateTupleBuffer)));
+
     BinaryOperatorStatement initResultTuplePtr(
         VarRef(varDeclResultTuple).assign(
             TypeCast(
-                VarRef(varDeclTupleBufferOutput).accessRef(getBufferOfTupleBuffer),
+                VarRef(resultTupleBufferDeclaration).accessRef(getBufferOfTupleBuffer),
                 createPointerDataType(
                     createUserDefinedType(structDeclResultTuple)))));
 
@@ -589,28 +612,34 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
                 + VarRef(varDeclTuple)[VarRef(varDeclId)].accessRef(
                     VarRef(declFieldCampaignId))).copy());
 
+
+
     /* function signature:
      * typedef uint32_t (*SharedCLibPipelineQueryPtr)(TupleBuffer**, WindowState*, TupleBuffer*);
      */
-
+    auto emitTupleBuffer = FunctionCallStatement("emitBuffer");
+    emitTupleBuffer.addParameter(VarRef(resultTupleBufferDeclaration));
     auto mainFunction = FunctionBuilder::create("compiled_query").returns(
             createDataType(BasicType(UINT32)))
         .addParameter(varDeclTupleBuffers)
         .addParameter(varDeclWindow)
         .addParameter(varDeclWindowManager)
-        .addParameter(varDeclTupleBufferOutput)
+        .addParameter(varDeclPipelineExecutionContext)
         .addVariableDeclaration(varDeclReturn)
         .addVariableDeclaration(varDeclTuple)
         .addVariableDeclaration(varDeclResultTuple)
         .addVariableDeclaration(varDeclSum)
         .addStatement(initTuplePtr.copy())
-        .addStatement(initResultTuplePtr.copy()).addStatement(
-            StatementPtr(new ForLoopStatement(loopStmt))).addStatement(
+        .addStatement(initResultTupleBufferPtr.copy())
+        .addStatement(initResultTuplePtr.copy()).addStatement(StatementPtr(new ForLoopStatement(loopStmt)))
+        .addStatement(
             /*   result_tuples[0].sum = sum; */
             VarRef(varDeclResultTuple)[Constant(INT32, "0")].accessRef(
                     VarRef(varDeclFieldResultTupleSum)).assign(VarRef(varDeclSum))
                 .copy())
+                .addStatement(VarRef(varDeclPipelineExecutionContext).accessRef(emitTupleBuffer).copy())
             /* return ret; */
+
         .addStatement(
             StatementPtr(new ReturnStatement(VarRefStatement(varDeclReturn))))
         .build();
@@ -635,14 +664,12 @@ TEST_F(CodeGenerationTest, codeGenRunningSum) {
     }
     inputBuffer.setNumberOfTuples(100);
 
-    auto outputBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    outputBuffer.setTupleSizeInBytes(8);
-    outputBuffer.setNumberOfTuples(1);
     /* execute code */
-    if (!stage->execute(inputBuffer, nullptr, nullptr, outputBuffer)) {
+    auto context = TestPipelineExecutionContext(nodeEngine->getBufferManager());
+    if (!stage->execute(inputBuffer, nullptr, nullptr, context)) {
         std::cout << "Error!" << std::endl;
     }
-
+    auto outputBuffer = context.buffers[0];
     NES_INFO(toString(outputBuffer, recordSchema));
 
     /* check result for correctness */
@@ -680,13 +707,11 @@ TEST_F(CodeGenerationTest, codeGenerationCopy) {
     auto schema = Schema::create()->addField("i64", UINT64);
     auto buffer = source->receiveData().value();
 
-    auto resultBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    resultBuffer.setTupleSizeInBytes(sizeof(uint64_t));
-
     /* execute Stage */
     NES_INFO("Processing " << buffer.getNumberOfTuples() << " tuples: ");
-    stage->execute(buffer, nullptr, nullptr, resultBuffer);
-
+    auto queryContext = TestPipelineExecutionContext(nodeEngine->getBufferManager());
+    stage->execute(buffer, nullptr, nullptr, queryContext);
+    auto resultBuffer = queryContext.buffers[0];
     /* check for correctness, input source produces uint64_t tuples and stores a 1 in each tuple */
     EXPECT_EQ(buffer.getNumberOfTuples(), resultBuffer.getNumberOfTuples());
     auto layout = createRowLayout(schema);
@@ -731,12 +756,11 @@ TEST_F(CodeGenerationTest, codeGenerationFilterPredicate) {
     NES_INFO("Processing " << inputBuffer.getNumberOfTuples() << " tuples: ");
 
     auto sizeOfTuple = (sizeof(uint32_t) + sizeof(uint32_t) + sizeof(char)*12);
-    auto resultBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    resultBuffer.setTupleSizeInBytes(sizeOfTuple);
 
     /* execute Stage */
-    stage->execute(inputBuffer, nullptr, NULL, resultBuffer);
-
+    auto queryContext = TestPipelineExecutionContext(nodeEngine->getBufferManager());
+    stage->execute(inputBuffer, nullptr, NULL, queryContext);
+    auto resultBuffer = queryContext.buffers[0];
     /* check for correctness, input source produces tuples consisting of two uint32_t values, 5 values will match the predicate */
     NES_INFO(
         "Number of generated output tuples: " << resultBuffer.getNumberOfTuples());
@@ -776,17 +800,18 @@ TEST_F(CodeGenerationTest, codeGenerationWindowAssigner) {
     auto stage = codeGenerator->compile(CompilerArgs(), context->code);
 
     // init window handler
-    auto windowHandler = new WindowHandler(windowDefinition, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
+    auto windowHandler =
+        new WindowHandler(windowDefinition, nodeEngine->getQueryManager(), nodeEngine->getBufferManager());
     windowHandler->setup(nullptr, 0);
 
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData().value();
 
-    auto resultBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
-
     /* execute Stage */
+    auto queryContext = TestPipelineExecutionContext(nodeEngine->getBufferManager());
     stage->execute(inputBuffer, windowHandler->getWindowState(),
-                   windowHandler->getWindowManager(), resultBuffer);
+                   windowHandler->getWindowManager(), queryContext);
+    auto resultBuffer = queryContext.buffers[0];
 
     /* check for correctness, after a window assigner no tuple should be produced*/
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 0);
@@ -833,11 +858,12 @@ TEST_F(CodeGenerationTest, codeGenerationStringComparePredicateTest) {
     assert(!!optVal);
     auto inputBuffer = *optVal;
 
-    auto resultBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    resultBuffer.setTupleSizeInBytes(inputSchema->getSchemaSizeInBytes());
-
     /* execute Stage */
-    stage->execute(inputBuffer, nullptr, nullptr, resultBuffer);
+
+    auto queryContext = TestPipelineExecutionContext(nodeEngine->getBufferManager());
+    stage->execute(inputBuffer, nullptr, nullptr, queryContext);
+
+    auto resultBuffer = queryContext.buffers[0];
 
     /* check for correctness, input source produces tuples consisting of two uint32_t values, 3 values will match the predicate */
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 3);
@@ -887,11 +913,11 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
     /* prepare input tuple buffer */
     auto inputBuffer = source->receiveData().value();
 
-    auto resultBuffer = nodeEngine->getBufferManager()->getUnpooledBuffer(
-        inputBuffer.getNumberOfTuples()*outputSchema->getSchemaSizeInBytes()).value();
-
     /* execute Stage */
-    stage->execute(inputBuffer, nullptr, nullptr, resultBuffer);
+    auto queryContext = TestPipelineExecutionContext(nodeEngine->getBufferManager());
+    stage->execute(inputBuffer, nullptr, nullptr, queryContext);
+
+    auto resultBuffer = queryContext.buffers[0];
 
     /* check for correctness, the number of produced tuple should be equal between input and output buffer */
     EXPECT_EQ(resultBuffer.getNumberOfTuples(),

@@ -22,6 +22,9 @@ typedef std::shared_ptr<QueryExecutionPlan> QueryExecutionPlanPtr;
 
 class WindowManager;
 
+class PipelineExecutionContext;
+typedef std::unique_ptr<PipelineExecutionContext> QueryExecutionContextPtr;
+
 class PipelineStage {
   public:
     PipelineStage(
@@ -32,7 +35,7 @@ class PipelineStage {
     explicit PipelineStage(uint32_t pipelineStageId,
                            QueryExecutionPlanPtr queryExecutionPlan, ExecutablePipelinePtr executablePipeline);
     bool execute(TupleBuffer& inputBuffer,
-                 TupleBuffer& outputBuffer);
+                 PipelineExecutionContext& context);
 
     /**
    * @brief Initialises a pipeline stage
