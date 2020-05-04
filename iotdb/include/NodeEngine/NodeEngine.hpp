@@ -161,6 +161,20 @@ class NodeEngine {
     uint16_t getReceivePort() const;
     void setReceivePort(uint16_t receive_port);
 
+    /**
+     * @brief method to return statistics to the user
+     * @return
+     */
+    std::string getStatistics();
+
+
+    /**
+     * @brief method to get the number of buffers processed up to now
+     * @param queryId
+     * @return number of buffers
+     */
+    size_t getNumberOfProcessedBuffer(std::string queryId);
+
   private:
     NodePropertiesPtr props;
     std::map<QueryExecutionPlanPtr, NodeEngineQueryStatus> qepToStatusMap;

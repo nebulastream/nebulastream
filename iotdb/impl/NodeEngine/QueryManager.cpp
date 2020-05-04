@@ -8,8 +8,7 @@ namespace NES {
 using std::string;
 
 QueryManager::QueryManager()
-    : task_queue(), sourceIdToQueryMap(), bufferMutex(), queryMutex(), workMutex(), workerHitEmptyTaskQueue(0),
-      processedTasks(0), processedTuple(0), processedBuffers(0) {
+    : task_queue(), sourceIdToQueryMap(), bufferMutex(), queryMutex(), workMutex() {
     NES_DEBUG("Init QueryManager::QueryManager()")
 }
 
@@ -39,11 +38,8 @@ void QueryManager::resetQueryManager() {
     NES_DEBUG("QueryManager: Destroy queryId_to_query_map " << sourceIdToQueryMap.size());
 
     sourceIdToQueryMap.clear();
+    queryToStatisticsMap.clear();
 
-    workerHitEmptyTaskQueue = 0;
-    processedTasks = 0;
-    processedTuple = 0;
-    processedBuffers = 0;
     NES_DEBUG("QueryManager::resetQueryManager finished");
 }
 
@@ -70,9 +66,11 @@ bool QueryManager::registerQuery(QueryExecutionPlanPtr qep) {
         } else {
             // source does not exist, add source and unordered_set containing the qep
             NES_DEBUG("QueryManager: Source " << source->getSourceId()
-                                            << " not found. Creating new element with with qep " << qep)
+                                              << " not found. Creating new element with with qep " << qep)
             std::unordered_set<QueryExecutionPlanPtr> qepSet = {qep};
             sourceIdToQueryMap.insert({source->getSourceId(), qepSet});
+            QueryStatisticsPtr stats = std::make_shared<QueryStatistics>();
+            queryToStatisticsMap.insert({qep, stats});
         }
     }
     return true;
@@ -121,16 +119,20 @@ bool QueryManager::deregisterQuery(QueryExecutionPlanPtr qep) {
                 sourceIdToQueryMap[source->getSourceId()].end()) {
                 // qep found, remove it
                 NES_DEBUG("QueryManager: Removing QEP " << qep << " from Source" << source->getSourceId())
+                if (queryToStatisticsMap.erase(qep) == 0) {
+                    NES_FATAL_ERROR("QueryManager: Removing QEP " << qep << " for stats failed")
+                    succeed = false;
+                }
                 if (sourceIdToQueryMap[source->getSourceId()].erase(qep) == 0) {
                     NES_FATAL_ERROR("QueryManager: Removing QEP " << qep << " for source " << source->getSourceId()
-                                                                << " failed!")
+                                                                  << " failed")
                     succeed = false;
                 }
 
                 // if source has no qeps remove the source from map
                 if (sourceIdToQueryMap[source->getSourceId()].empty()) {
                     if (sourceIdToQueryMap.erase(source->getSourceId()) == 0) {
-                        NES_FATAL_ERROR("QueryManager: Removing source " << source->getSourceId() << " failed!")
+                        NES_FATAL_ERROR("QueryManager: Removing source " << source->getSourceId() << " failed")
                         succeed = false;
                     }
                 }
@@ -151,7 +153,7 @@ bool QueryManager::stopQuery(QueryExecutionPlanPtr qep) {
 
         if (sourceIdToQueryMap[source->getSourceId()].size() != 1) {
             NES_WARNING("QueryManager: could not stop source " << source << " because other qeps are using it n="
-                                                             << sourceIdToQueryMap[source->getSourceId()].size())
+                                                               << sourceIdToQueryMap[source->getSourceId()].size())
         } else {
             NES_DEBUG("QueryManager: stop source " << source << " because only " << qep << " is using it")
             bool success = source->stop();
@@ -186,7 +188,6 @@ TaskPtr QueryManager::getWork(std::atomic<bool>& threadPool_running) {
     // wait while queue is empty but thread pool is running
     while (task_queue.empty() && threadPool_running) {
         NES_DEBUG("QueryManager::getWork wait for work as queue is emtpy")
-        workerHitEmptyTaskQueue++;
         cv.wait(lock);
         if (!threadPool_running) {
             // return empty task if thread pool was shut down
@@ -234,7 +235,8 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, QueryExecutionPla
     // dispatch buffer as task
     TaskPtr task = std::make_shared<Task>(queryExecutionPlan, pipelineId + 1, buffer);
     task_queue.push_back(task);
-    NES_DEBUG("QueryManager: added Task " << task.get() << " for QEP " << queryExecutionPlan << " inputBuffer " << buffer)
+    NES_DEBUG(
+        "QueryManager: added Task " << task.get() << " for QEP " << queryExecutionPlan << " inputBuffer " << buffer)
 
     cv.notify_all();
 }
@@ -247,7 +249,7 @@ void QueryManager::addWork(const string& sourceId, TupleBuffer& buf) {
         TaskPtr task = std::make_shared<Task>(qep, 0, buf);
         task_queue.push_back(task);
         NES_DEBUG("QueryManager: added Task " << task.get() << " for query " << sourceId << " for QEP " << qep
-                                            << " inputBuffer " << buf)
+                                              << " inputBuffer " << buf)
     }
     cv.notify_all();
 }
@@ -256,35 +258,45 @@ void QueryManager::completedWork(TaskPtr task) {
     std::unique_lock<std::mutex> lock(workMutex); // TODO is necessary?
     NES_INFO("Complete Work for task" << task)
 
-    processedTasks++;
-    processedBuffers++;
-    processedTuple += task->getNumberOfTuples();
+    queryToStatisticsMap[task->getQep()]->processedTasks++;
+    queryToStatisticsMap[task->getQep()]->processedBuffers++;
+    queryToStatisticsMap[task->getQep()]->processedTuple += task->getNumberOfTuples();
 
     task.reset();
 }
 
-void QueryManager::printGeneralStatistics() {
-    NES_INFO("QueryManager Statistics:")
-    NES_INFO("\t workerHitEmptyTaskQueue =" << workerHitEmptyTaskQueue)
-    NES_INFO("\t processedTasks =" << processedTasks)
-    NES_INFO("\t processedTuple =" << processedTuple)
+size_t QueryManager::getNumberOfProcessedBuffer(QueryExecutionPlanPtr qep)
+{
+    NES_DEBUG("QueryManager::getNumberOfProcessedBuffer: check buffer proc cnt for qep=" << qep)
+    size_t cnt = queryToStatisticsMap[qep]->processedBuffers;
+    NES_DEBUG("QueryManager::getNumberOfProcessedBuffer: count is=" << cnt)
+    return cnt;
 }
 
-void QueryManager::printQEPStatistics(const QueryExecutionPlanPtr qep) {
+std::string QueryManager::getQueryManagerStatistics() {
+    std::stringstream ss;
+    ss << "QueryManager Statistics:";
+    for (auto& qep : queryToStatisticsMap)
+    {
+        ss << "Query=" << qep.first;
+        ss << "\t processedTasks =" << qep.second->processedTasks;
+        ss << "\t processedTuple =" << qep.second->processedTuple;
+        ss << "\t processedBuffers =" << qep.second->processedBuffers;
 
-    NES_INFO("Source Statistics:")
-    auto sources = qep->getSources();
-    for (auto source : sources) {
-        NES_INFO("Source:" << source)
-        NES_INFO("\t Generated Buffers=" << source->getNumberOfGeneratedBuffers())
-        NES_INFO("\t Generated Tuples=" << source->getNumberOfGeneratedTuples())
+        ss << "Source Statistics:";
+        auto sources = qep.first->getSources();
+        for (auto source : sources) {
+            ss << "Source:" << source;
+            ss << "\t Generated Buffers=" << source->getNumberOfGeneratedBuffers();
+            ss << "\t Generated Tuples=" << source->getNumberOfGeneratedTuples();
+        }
+        auto sinks = qep.first->getSinks();
+        for (auto sink : sinks) {
+            ss << "Sink:" << sink;
+            ss << "\t Generated Buffers=" << sink->getNumberOfSentBuffers();
+            ss << "\t Generated Tuples=" << sink->getNumberOfSentTuples();
+        }
     }
-    auto sinks = qep->getSinks();
-    for (auto sink : sinks) {
-        NES_INFO("Sink:" << sink)
-        NES_INFO("\t Generated Buffers=" << sink->getNumberOfSentBuffers())
-        NES_INFO("\t Generated Tuples=" << sink->getNumberOfSentTuples())
-    }
+    return ss.str();
 }
-
 } // namespace NES

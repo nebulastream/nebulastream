@@ -37,6 +37,11 @@ class Task {
      */
     size_t getNumberOfTuples();
 
+    /**
+     * @brief method to return the qep of a task
+     * @return
+     */
+    QueryExecutionPlanPtr getQep();
   private:
     QueryExecutionPlanPtr qep;
     uint32_t pipeline_stage_id;
