@@ -1,32 +1,28 @@
 #ifndef NES_NETWORKDISPATCHER_HPP
 #define NES_NETWORKDISPATCHER_HPP
 
-#include <cstdint>
-#include <string>
-#include <memory>
-#include <Network/NetworkCommon.hpp>
-#include <boost/core/noncopyable.hpp>
-#include <functional>
 #include "ExchangeProtocol.hpp"
+#include <Network/NetworkCommon.hpp>
+#include <NodeEngine/BufferManager.hpp>
+#include <boost/core/noncopyable.hpp>
+#include <cstdint>
+#include <functional>
+#include <memory>
+#include <string>
 
 namespace NES {
-
-class QueryManager;
 
 namespace Network {
 
 class ZmqServer;
 class OutputChannel;
 
-class NetworkDispatcher : public boost::noncopyable {
+class NetworkManager : public boost::noncopyable {
   public:
-
-    explicit NetworkDispatcher(const std::string& hostname,
-                               uint16_t port,
-                               std::function<void()>&& onDataBuffer,
-                               std::function<void()>&& onEndOfStream,
-                               std::function<void(std::exception_ptr)>&& onError,
-                               uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
+    explicit NetworkManager(const std::string& hostname, uint16_t port,
+                            std::function<void(uint32_t*, TupleBuffer)>&& onDataBuffer,
+                            std::function<void()>&& onEndOfStream, std::function<void(std::exception_ptr)>&& onError,
+                            BufferManagerPtr bufferManager, uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS);
 
     void registerSubpartitionConsumer(QueryId queryId,
                                       OperatorId operatorId,
@@ -43,7 +39,7 @@ class NetworkDispatcher : public boost::noncopyable {
     std::shared_ptr<ZmqServer> server;
     ExchangeProtocol exchangeProtocol;
 };
-}
-}
+} // namespace Network
+} // namespace NES
 
 #endif //NES_NETWORKDISPATCHER_HPP

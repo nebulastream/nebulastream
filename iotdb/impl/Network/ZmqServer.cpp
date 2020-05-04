@@ -1,32 +1,23 @@
-#include <Network/ZmqServer.hpp>
 #include <Network/NetworkMessage.hpp>
-#include <Util/Logger.hpp>
+#include <Network/ZmqServer.hpp>
 #include <Network/ZmqUtils.hpp>
-#include <Util/ThreadBarrier.hpp>
 #include <NodeEngine/BufferManager.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
+#include <Util/Logger.hpp>
+#include <Util/ThreadBarrier.hpp>
 
 #define TO_RAW_ZMQ_SOCKET static_cast<void*>
 
 namespace NES {
 namespace Network {
 
-namespace detail {
-
-void release_buffer_callback(void* buffer, void* pool) {
-
-}
-}
-
-ZmqServer::ZmqServer(const std::string& hostname,
-                     uint16_t port,
-                     uint16_t numNetworkThreads,
-                     ExchangeProtocol& exchangeProtocol) : hostname(hostname),
-                                                           port(port),
-                                                           numNetworkThreads(numNetworkThreads),
-                                                           _isRunning(false),
-                                                           keepRunning(true),
-                                                           exchangeProtocol(exchangeProtocol) {
-    assert(numNetworkThreads >= DEFAULT_NUM_SERVER_THREADS);
+ZmqServer::ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNetworkThreads,
+                     ExchangeProtocol& exchangeProtocol, BufferManagerPtr bufferManager)
+    : hostname(hostname), port(port), numNetworkThreads(numNetworkThreads), isRunning(false), keepRunning(true),
+      exchangeProtocol(exchangeProtocol), bufferManager(bufferManager) {
+    if (numNetworkThreads >= DEFAULT_NUM_SERVER_THREADS) {
+        NES_FATAL_ERROR("[ZmqServer] numNetworkThreads is greater than DEFAULT_NUM_SERVER_THREADS")
+    }
 }
 
 void ZmqServer::start() {
@@ -54,12 +45,14 @@ ZmqServer::~ZmqServer() {
         try {
             future.get();
         } catch (std::exception& e) {
+            NES_ERROR("[ZmqServer] Destructor " << e.what());
             throw e;
         }
     }
 }
 
-void ZmqServer::frontendLoop(uint16_t numHandlerThreads, std::promise<bool>& start_promise) {
+void ZmqServer::frontendLoop(uint16_t numHandlerThreads, std::promise<bool>& startPromise) {
+    // option of linger time until port is closed
     int linger = 100;
     zmq::socket_t frontendSocket(*zmqContext, zmq::socket_type::router);
     zmq::socket_t dispatcherSocket(*zmqContext, zmq::socket_type::dealer);
@@ -75,12 +68,15 @@ void ZmqServer::frontendLoop(uint16_t numHandlerThreads, std::promise<bool>& sta
               handlerEventLoop(barrier);
             }));
         }
-    } catch (...) {
-        start_promise.set_exception(std::current_exception());
     }
-    barrier->wait(); // wait for the handlers to start
-    start_promise.set_value(true); // unblock the thread that started the server
-    _isRunning = true;
+    catch (...) {
+        startPromise.set_exception(std::current_exception());
+    }
+    // wait for the handlers to start
+    barrier->wait();
+    // unblock the thread that started the server
+    startPromise.set_value(true);
+    isRunning = true;
     bool shutdownComplete = false;
 
     try {
@@ -98,9 +94,11 @@ void ZmqServer::frontendLoop(uint16_t numHandlerThreads, std::promise<bool>& sta
             if (zmqError.num() == ETERM) {
                 shutdownComplete = true;
             } else {
+                NES_ERROR("[ZmqServer] " << zmqError.what());
                 errorPromise.set_exception(eptr);
             }
         } catch (std::exception& error) {
+            NES_ERROR("[ZmqServer] " << error.what());
             errorPromise.set_exception(eptr);
         }
     }
@@ -134,36 +132,65 @@ void ZmqServer::handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier) {
                 NES_ERROR("[ZmqServer] stream is corrupted");
             }
             switch (msgHeader->getMsgType()) {
-                case Messages::kClientAnnouncement: {
+                case Messages::ClientAnnouncement: {
+                    // if server receives announcement, that a client wants to send buffers
                     zmq::message_t outIdentityEnvelope;
                     zmq::message_t clientAnnouncementEnvelope;
                     dispatcherSocket.recv(&clientAnnouncementEnvelope);
-                    auto serverReadyMsg =
-                        exchangeProtocol.onClientAnnoucement(clientAnnouncementEnvelope.data<Messages::ClientAnnounceMessage>());
+
+                    // react after announcement is received
+                    auto serverReadyMsg = exchangeProtocol.onClientAnnouncement(
+                        clientAnnouncementEnvelope.data<Messages::ClientAnnounceMessage>());
+                    NES_INFO("[ZmqServer] ClientAnnouncement received for "
+                                 << serverReadyMsg.getOperatorId() << "::" << serverReadyMsg.getPartitionId()
+                                 << "::" << serverReadyMsg.getSubpartitionId() << "::" << serverReadyMsg.getQueryId());
+
+                    // send response back to the client based on the identity
                     outIdentityEnvelope.copy(&identityEnvelope);
                     sendMessageWithIdentity<Messages::ServerReadyMessage>(dispatcherSocket,
                                                                           outIdentityEnvelope,
                                                                           serverReadyMsg);
                     break;
                 }
-                case Messages::kDataBuffer : {
-                    NES_ERROR("[ZmqServer] not supported yet");
-                    assert(false);
+                case Messages::DataBuffer: {
+                    // if server receives a tuple buffer
+                    zmq::message_t bufferHeaderMsg;
+                    dispatcherSocket.recv(&bufferHeaderMsg);
+                    // parse buffer header
+                    auto bufferHeader = bufferHeaderMsg.data<Messages::DataBufferMessage>();
+
+                    // parse identity
+                    uint32_t* id;
+                    id = (u_int32_t*) identityEnvelope.data();
+                    // create a string for logging of the identity which corresponds to the
+                    // queryId::operatorId::partitionId::subpartitionId
+                    auto strId = std::to_string(id[0]) + "::" + std::to_string(id[1]) + "::" + std::to_string(id[2]) +
+                        "::" + std::to_string(id[3]);
+
+                    // receive buffer content
+                    TupleBuffer buffer = bufferManager->getUnpooledBuffer(bufferHeader->getPayloadSize()).value();
+                    dispatcherSocket.recv(buffer.getBuffer(), bufferHeader->getPayloadSize(), 0);
+                    buffer.setNumberOfTuples(bufferHeader->getNumOfRecords());
+
+                    NES_INFO(
+                        "[ZmqServer] DataBuffer received from " << strId << " with " << bufferHeader->getNumOfRecords()
+                                                                << "/" << bufferHeader->getPayloadSize());
+                    exchangeProtocol.onBuffer(id, buffer);
                     break;
                 }
-                case Messages::kErrorMessage: {
-                    NES_ERROR("[ZmqServer] not supported yet");
-                    assert(false);
+                case Messages::ErrorMessage: {
+                    // if server receives a message that an error occured
+                    NES_FATAL_ERROR("[ZmqServer] ErrorMessage not supported yet");
                     break;
                 }
-                case Messages::kEndOfStream: {
+                case Messages::EndOfStream: {
+                    // if server receives a message that the stream did terminate
+                    NES_INFO("[ZmqServer] EndOfStream message received")
                     exchangeProtocol.onEndOfStream();
                     break;
                 }
                 default: {
                     NES_ERROR("[ZmqServer] received unknown message type");
-                    // TODO propagate error maybe?
-                    assert(false);
                 }
             }
         }
@@ -174,11 +201,9 @@ void ZmqServer::handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier) {
             NES_ERROR("[ZmqServer] event loop got " << err.what());
             errorPromise.set_exception(std::current_exception());
             NES_ERROR("[ZmqServer] not supported yet");
-            assert(false);
         }
     }
 }
 
-}
-}
-
+} // namespace Network
+} // namespace NES

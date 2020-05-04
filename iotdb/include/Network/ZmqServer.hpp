@@ -1,32 +1,34 @@
 #ifndef NES_ZMQSERVER_HPP
 #define NES_ZMQSERVER_HPP
 
-#include "NetworkCommon.hpp"
-#include "ExchangeProtocol.hpp"
-#include <zmq.hpp>
-#include <thread>
-#include <memory>
+#include <Network/ExchangeProtocol.hpp>
+#include <Network/NetworkCommon.hpp>
+#include <NodeEngine/BufferManager.hpp>
 #include <atomic>
-#include <future>
 #include <boost/core/noncopyable.hpp>
+#include <future>
+#include <memory>
+#include <thread>
+#include <zmq.hpp>
 
 namespace NES {
 class ThreadBarrier;
 namespace Network {
 
-
 class ZmqServer : public boost::noncopyable {
-private:
+  private:
     static constexpr const char* dispatcherPipe = "inproc://dispatcher";
-public:
+  public:
     /**
-     * Create a ZMQ server on hostname:port with numNetworkThreads i/o threads and a set of callbacks in exchangeProtocol
+     * Create a ZMQ server on hostname:port with numNetworkThreads i/o threads and a set of callbacks in
+     * exchangeProtocol
      * @param hostname
      * @param port
      * @param numNetworkThreads
      * @param exchangeProtocol
      */
-    explicit ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNetworkThreads, ExchangeProtocol& exchangeProtocol);
+    explicit ZmqServer(const std::string& hostname, uint16_t port, uint16_t numNetworkThreads,
+                       ExchangeProtocol& exchangeProtocol, BufferManagerPtr bufferManager);
 
     ~ZmqServer();
 
@@ -47,16 +49,24 @@ public:
      * Checks if the server is running
      * @return
      */
-    bool isRunning() const {
-        return _isRunning;
-    }
+    bool getIsRunning() { return isRunning; }
 
-private:
+  private:
+    /**
+     * @brief the receiving thread where clients send their messages to the server, here messages are forwarded to the
+     * handlerEventLoop by the proxy
+     * @param numHandlerThreads number of HandlerThreads
+     * @param startPromise the promise that is passed to the thread
+     */
+    void frontendLoop(uint16_t numHandlerThreads, std::promise<bool>& startPromise);
 
-    void frontendLoop(uint16_t numHandlerThreads, std::promise<bool>& promise);
+    /**
+     * @brief handler thread where threads are passed from the frontend loop
+     * @param the threadBarrier to enable synchronization
+     */
     void handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier);
 
-private:
+  private:
 
     const std::string hostname;
     const uint16_t port;
@@ -66,15 +76,16 @@ private:
     std::unique_ptr<std::thread> frontendThread;
     std::vector<std::unique_ptr<std::thread>> handlerThreads;
 
-    std::atomic_bool _isRunning;
+    std::atomic_bool isRunning;
     std::atomic_bool keepRunning;
 
     ExchangeProtocol& exchangeProtocol;
+    BufferManagerPtr bufferManager;
 
     // error management
     std::promise<bool> errorPromise;
 };
 
-}
-}
+} // namespace Network
+} // namespace NES
 #endif //NES_ZMQSERVER_HPP

@@ -3,12 +3,13 @@
 
 #include <functional>
 #include <Network/NetworkMessage.hpp>
+#include <NodeEngine/TupleBuffer.hpp>
 
 namespace NES {
 namespace Network {
 class ExchangeProtocol {
   public:
-    explicit ExchangeProtocol(std::function<void()>&& onDataBuffer,
+    explicit ExchangeProtocol(std::function<void(uint32_t*, TupleBuffer)>&& onDataBuffer,
                               std::function<void()>&& onEndOfStream,
                               std::function<void(std::exception_ptr)>&& onException) :
         onDataBufferCb(std::move(onDataBuffer)),
@@ -21,7 +22,7 @@ class ExchangeProtocol {
      * @param clientAnnounceMessage
      * @return
      */
-    Messages::ServerReadyMessage onClientAnnoucement(Messages::ClientAnnounceMessage* clientAnnounceMessage) {
+    Messages::ServerReadyMessage onClientAnnouncement(Messages::ClientAnnounceMessage* clientAnnounceMessage) {
         // check if the partition is registered via the partition manager or wait until this is not done
 
         // if all good, send message back
@@ -34,8 +35,8 @@ class ExchangeProtocol {
     /**
      *
      */
-    void onBuffer() {
-        onDataBufferCb();
+    void onBuffer(uint32_t* id, TupleBuffer buffer) {
+        onDataBufferCb(id, buffer);
     }
 
     /**
@@ -54,7 +55,7 @@ class ExchangeProtocol {
     }
 
   private:
-    std::function<void()> onDataBufferCb;
+    std::function<void(uint32_t*, TupleBuffer)> onDataBufferCb;
     std::function<void()> onEndOfStreamCb;
     std::function<void(std::exception_ptr)> onExceptionCb;
 };
