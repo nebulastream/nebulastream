@@ -162,19 +162,20 @@ void ZmqServer::handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier) {
                     // parse identity
                     uint32_t* id;
                     id = (u_int32_t*) identityEnvelope.data();
-                    // create a string for logging of the identity which corresponds to the
-                    // queryId::operatorId::partitionId::subpartitionId
-                    auto strId = std::to_string(id[0]) + "::" + std::to_string(id[1]) + "::" + std::to_string(id[2]) +
-                        "::" + std::to_string(id[3]);
+
 
                     // receive buffer content
-                    TupleBuffer buffer = bufferManager->getUnpooledBuffer(bufferHeader->getPayloadSize()).value();
+                    TupleBuffer buffer = bufferManager->getBufferBlocking();
                     dispatcherSocket.recv(buffer.getBuffer(), bufferHeader->getPayloadSize(), 0);
                     buffer.setNumberOfTuples(bufferHeader->getNumOfRecords());
 
+                    // create a string for logging of the identity which corresponds to the
+                    // queryId::operatorId::partitionId::subpartitionId
                     NES_INFO(
-                        "[ZmqServer] DataBuffer received from " << strId << " with " << bufferHeader->getNumOfRecords()
-                                                                << "/" << bufferHeader->getPayloadSize());
+                        "[ZmqServer] DataBuffer received from "
+                            << std::to_string(id[0]) + "::" + std::to_string(id[1]) + "::" + std::to_string(id[2]) +
+                                "::" + std::to_string(id[3]) << " with " << bufferHeader->getNumOfRecords()
+                            << "/" << bufferHeader->getPayloadSize());
                     exchangeProtocol.onBuffer(id, buffer);
                     break;
                 }

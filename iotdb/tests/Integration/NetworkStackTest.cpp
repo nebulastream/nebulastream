@@ -17,7 +17,7 @@ const size_t bufferSize = 4*1024;
 namespace Network {
 class NetworkStackTest : public testing::Test {
   public:
-    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(bufferSize, buffersManaged);
+    BufferManagerPtr bufferManager;
 
     static void SetUpTestCase() {
         NES::setupLogging("NetworkStackTest.log", NES::LOG_DEBUG);
@@ -26,6 +26,17 @@ class NetworkStackTest : public testing::Test {
 
     static void TearDownTestCase() {
         std::cout << "Tear down NetworkStackTest class." << std::endl;
+    }
+
+    /* Will be called before a  test is executed. */
+    void SetUp() {
+        std::cout << "Setup BufferManagerTest test case." << std::endl;
+        bufferManager = std::make_shared<BufferManager>(bufferSize, buffersManaged);
+    }
+
+    /* Will be called before a test is executed. */
+    void TearDown() {
+        std::cout << "Tear down BufferManagerTest test case." << std::endl;
     }
 };
 
@@ -97,7 +108,7 @@ TEST_F(NetworkStackTest, testSendData) {
         // start zmqServer
         std::promise<bool> completed;
         auto onBuffer = [](uint32_t* id, TupleBuffer buf) {
-          ASSERT_EQ(buf.getBufferSize(), 16384);
+          ASSERT_EQ(buf.getBufferSize(), bufferSize);
           ASSERT_EQ(id[0], 1);
           ASSERT_EQ(id[1], 22);
           ASSERT_EQ(id[2], 333);
@@ -120,8 +131,8 @@ TEST_F(NetworkStackTest, testSendData) {
         auto senderChannel = netManager.registerSubpartitionProducer(nodeLocation, 1, 22, 333, 444);
 
         // create testbuffer
-        auto buffer = bufferManager->getUnpooledBuffer(16384);
-        senderChannel.sendBuffer(buffer.value());
+        auto buffer = bufferManager->getBufferBlocking();
+        senderChannel.sendBuffer(buffer);
 
         senderChannel.close();
         t.join();
