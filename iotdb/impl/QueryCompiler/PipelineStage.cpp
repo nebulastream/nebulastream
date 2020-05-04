@@ -1,5 +1,6 @@
 #include <QueryCompiler/ExecutablePipeline.hpp>
-#include <QueryCompiler/PipelineStage.hpp>
+#include <QueryCompiler/QueryExecutionPlan.hpp>
+#include <Windows/WindowHandler.hpp>
 #include <Util/Logger.hpp>
 #include <Windows/WindowHandler.hpp>
 #include <utility>
@@ -23,12 +24,13 @@ PipelineStage::PipelineStage(uint32_t pipelineStageId,
 }
 
 bool PipelineStage::execute(TupleBuffer& inputBuffer,
-                            TupleBuffer& outputBuffer) {
+                            PipelineExecutionContext& context) {
     NES_DEBUG("Execute Pipeline Stage!");
     // only get the window manager and state if the pipeline has a window handler.
     auto windowStage = hasWindowHandler() ? windowHandler->getWindowState() : nullptr;
     auto windowManager = hasWindowHandler() ? windowHandler->getWindowManager() : WindowManagerPtr();
-    auto result = executablePipeline->execute(inputBuffer, windowStage, windowManager, outputBuffer);
+    auto bufferManager = queryExecutionPlan->getBufferManager();
+    auto result = executablePipeline->execute(inputBuffer, windowStage, windowManager, context);
     if (result) {
         NES_ERROR("Execution of PipelineStage Failed!");
     }

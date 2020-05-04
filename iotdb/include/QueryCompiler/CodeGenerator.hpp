@@ -76,23 +76,24 @@ class GeneratedCode {
    * important when multiple levels of nesting occur
    * due to loops (for(){ <cursor> }) or
    * if statements (if(..){ <cursor>}) */
-    CompoundStatementPtr currentCodeInsertionPoint;
-    std::vector<StatementPtr> cleanupStmts;
-    StatementPtr returnStmt;
-    std::shared_ptr<VariableDeclaration> varDeclarationRecordIndex;
-    std::shared_ptr<VariableDeclaration> varDeclarationReturnValue;
-    StructDeclaration structDeclaratonInputTuple;
-    StructDeclaration structDeclarationResultTuple;
-    VariableDeclaration varDeclarationInputBuffer;
-    VariableDeclaration varDeclarationWindowManager;
-    VariableDeclaration varDeclarationResultBuffer;
-    VariableDeclaration varDeclarationState;
-    FunctionCallStatement tupleBufferGetNumberOfTupleCall;
-    FunctionCallStatement tupleBufferGetBufferCall;
-    VariableDeclaration varDeclarationInputTuples;
-    VariableDeclaration varDeclarationNumberOfResultTuples;
-    std::vector<StructDeclaration> typeDeclarations;
-    std::vector<DeclarationPtr> override_fields;
+  CompoundStatementPtr currentCodeInsertionPoint;
+  std::vector<StatementPtr> cleanupStmts;
+  StatementPtr returnStmt;
+  std::shared_ptr<VariableDeclaration> varDeclarationRecordIndex;
+  std::shared_ptr<VariableDeclaration> varDeclarationReturnValue;
+  StructDeclaration structDeclaratonInputTuple;
+  StructDeclaration structDeclarationResultTuple;
+  VariableDeclaration varDeclarationInputBuffer;
+  VariableDeclaration varDeclarationWindowManager;
+  VariableDeclaration varDeclarationResultBuffer;
+  VariableDeclaration varDeclarationExecutionContext;
+  VariableDeclaration varDeclarationState;
+  FunctionCallStatement tupleBufferGetNumberOfTupleCall;
+  FunctionCallStatement tupleBufferGetBufferCall;
+  VariableDeclaration varDeclarationInputTuples;
+  VariableDeclaration varDeclarationNumberOfResultTuples;
+  std::vector<StructDeclaration> typeDeclarations;
+  std::vector<DeclarationPtr> override_fields;
 };
 
 typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
