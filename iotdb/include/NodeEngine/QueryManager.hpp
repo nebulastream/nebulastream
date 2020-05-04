@@ -19,6 +19,19 @@
 
 namespace NES {
 
+struct QueryStatistics
+{
+    QueryStatistics() : processedTasks(0),
+                        processedTuple(0),
+                        processedBuffers(0)
+    {};
+
+    std::atomic<size_t> processedTasks;
+    std::atomic<size_t> processedTuple;
+    std::atomic<size_t> processedBuffers;
+};
+typedef std::shared_ptr<QueryStatistics> QueryStatisticsPtr;
+
 class TupleBuffer;
 /**
  * @brief the query manager is the central class to process queries.
@@ -86,14 +99,9 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
     void completedWork(TaskPtr task);
 
     /**
-     * @brief print general statistics of QueryManager and Buffer Manager
+     * @brief get general statistics of QueryManager and Buffer Manager
      */
-    void printGeneralStatistics();
-
-    /**
-     * @brief print QEP statistics of QueryManager and buffer Manager
-     */
-    void printQEPStatistics(QueryExecutionPlanPtr qep);
+    std::string getQueryManagerStatistics();
 
     /**
      * @brief method to start a query
@@ -121,6 +129,8 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
 
     ~QueryManager();
 
+    size_t getNumberOfProcessedBuffer(QueryExecutionPlanPtr qep);
+
   private:
     friend class ThreadPool;
     friend class NodeEngine;
@@ -136,7 +146,6 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
      */
     bool stopThreadPool();
 
-
     QueryManager(const QueryManager&);
     QueryManager& operator=(const QueryManager&);
 
@@ -147,6 +156,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
     ThreadPoolPtr threadPool;
 
     std::map<std::string, std::unordered_set<QueryExecutionPlanPtr>> sourceIdToQueryMap;
+    std::map<QueryExecutionPlanPtr, QueryStatisticsPtr> queryToStatisticsMap;
 
     std::mutex bufferMutex;
     std::mutex queryMutex;
@@ -154,11 +164,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
 
     std::condition_variable cv;
 
-    // statistics:
-    std::atomic<size_t> workerHitEmptyTaskQueue;
-    std::atomic<size_t> processedTasks;
-    std::atomic<size_t> processedTuple;
-    std::atomic<size_t> processedBuffers;
+
 };
 
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;

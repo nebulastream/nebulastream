@@ -220,6 +220,7 @@ CompiledTestQueryExecutionPlanPtr setupQEP(BufferManagerPtr bPtr, QueryManagerPt
 
 /**
  * Test methods
+ *     cout << "Stats=" << ptr->getStatistics() << endl;
  */
 TEST_F(EngineTest, start_stop_engine_empty) { 
     NodeEngine* ptr = new NodeEngine();
@@ -234,6 +235,7 @@ TEST_F(EngineTest, start_deploy_stop_test) {
     ASSERT_TRUE(ptr->start());
     ASSERT_TRUE(ptr->deployQueryInNodeEngine(qep));
     qep->completedPromise.get_future().get();
+    assert(ptr->getNumberOfProcessedBuffer(testQueryId) == 1);
     ASSERT_TRUE(!ptr->stop());
 
     testOutput();

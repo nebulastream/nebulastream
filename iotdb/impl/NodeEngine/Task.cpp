@@ -18,4 +18,9 @@ size_t Task::getNumberOfTuples() {
     return buf.getNumberOfTuples();
 }
 
+QueryExecutionPlanPtr Task::getQep()
+{
+    return qep;
+}
+
 }  // namespace NES
