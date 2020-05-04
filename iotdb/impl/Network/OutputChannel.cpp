@@ -73,6 +73,7 @@ void OutputChannel::sendBuffer(TupleBuffer& inputBuffer) {
     zmq::message_t sendBufferHeader(&bufferHeader, sizeof(Messages::DataBufferMessage));
 
     // create the message with the buffer payload
+    // TODO: in future change that buffer is sent without copying
     zmq::message_t sendBuffer(inputBuffer.getBuffer(), inputBuffer.getBufferSize());
 
     // send all messages in one shot
