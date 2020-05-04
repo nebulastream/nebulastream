@@ -65,11 +65,6 @@ add_executable(code-generation-tests "UnitTests/CodeGenerationTest.cpp")
 target_link_libraries(code-generation-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME code-generation-tests COMMAND code-generation-tests)
 
-### Query Interface Tests ###
-add_executable(query-interface-tests "UnitTests/QueryInterfaceTest.cpp")
-target_link_libraries(query-interface-tests iotdb ${GTEST_LIBRARIES})
-add_test(NAME query-interface-tests COMMAND query-interface-tests)
-
 ### NES Topology Tests ###
 add_executable(nes-topology-manager-tests "UnitTests/NESTopologyManagerTest.cpp")
 target_link_libraries(nes-topology-manager-tests iotdb ${GTEST_LIBRARIES})
