@@ -130,6 +130,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
     ~QueryManager();
 
     size_t getNumberOfProcessedBuffer(QueryExecutionPlanPtr qep);
+    size_t getNumberOfProcessedTasks(QueryExecutionPlanPtr qep);
 
   private:
     friend class ThreadPool;

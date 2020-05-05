@@ -59,6 +59,8 @@ bool QueryManager::registerQuery(QueryExecutionPlanPtr qep) {
                 // qep not found in list, add it
                 NES_DEBUG("QueryManager: Inserting QEP " << qep << " to Source" << source->getSourceId())
                 sourceIdToQueryMap[source->getSourceId()].insert(qep);
+                QueryStatisticsPtr stats = std::make_shared<QueryStatistics>();
+                queryToStatisticsMap.insert({qep, stats});
             } else {
                 NES_DEBUG("QueryManager: Source " << source->getSourceId() << " and QEP already exist.")
                 return false;
@@ -257,7 +259,10 @@ void QueryManager::addWork(const string& sourceId, TupleBuffer& buf) {
 void QueryManager::completedWork(TaskPtr task) {
     std::unique_lock<std::mutex> lock(workMutex); // TODO is necessary?
     NES_INFO("Complete Work for task" << task)
-
+    if(queryToStatisticsMap.count(task->getQep()) == 0)
+    {
+        assert(0);
+    }
     queryToStatisticsMap[task->getQep()]->processedTasks++;
     queryToStatisticsMap[task->getQep()]->processedBuffers++;
     queryToStatisticsMap[task->getQep()]->processedTuple += task->getNumberOfTuples();
@@ -272,6 +277,17 @@ size_t QueryManager::getNumberOfProcessedBuffer(QueryExecutionPlanPtr qep)
     NES_DEBUG("QueryManager::getNumberOfProcessedBuffer: count is=" << cnt)
     return cnt;
 }
+
+size_t QueryManager::getNumberOfProcessedTasks(QueryExecutionPlanPtr qep)
+{
+    NES_DEBUG("QueryManager::getNumberOfProcessedTasks: check buffer proc cnt for qep=" << qep)
+    size_t cnt = queryToStatisticsMap[qep]->processedTasks;
+    NES_DEBUG("QueryManager::getNumberOfProcessedTasks: count is=" << cnt)
+    return cnt;
+}
+
+
+
 
 std::string QueryManager::getQueryManagerStatistics() {
     std::stringstream ss;

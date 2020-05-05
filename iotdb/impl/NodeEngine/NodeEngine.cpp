@@ -365,6 +365,16 @@ size_t NodeEngine::getNumberOfProcessedBuffer(std::string queryId)
     return queryManager->getNumberOfProcessedBuffer(qep);
 }
 
+size_t NodeEngine::getNumberOfProcessedTasks(std::string queryId)
+{
+    QueryExecutionPlanPtr qep = queryIdToQepMap[queryId];
+    if(!qep)
+    {
+        NES_ERROR("QueryManager::getNumberOfProcessedTasks: query does not exists");
+        throw Exception("Query does not exists");
+    }
+    return queryManager->getNumberOfProcessedTasks(qep);
+}
 
 
 }
