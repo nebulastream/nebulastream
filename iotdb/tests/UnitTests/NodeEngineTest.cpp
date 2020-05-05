@@ -370,7 +370,6 @@ TEST_F(EngineTest, parallel_same_source_test) {
     ASSERT_TRUE(checkCompleteOrTimeout(ptr, "1", 1));
     ASSERT_TRUE(checkCompleteOrTimeout(ptr, "2", 1));
 
-    sleep(2);
     cout << "undeploy qep1" << endl;
     ASSERT_TRUE(ptr->undeployQuery("1"));
     cout << "undeploy qep2" << endl;
