@@ -13,11 +13,11 @@ namespace NES {
 
 class WorkerCoordinatorStarterTest : public testing::Test {
   public:
-    static void SetUpTestCase() {
+    void SetUp() {
         NES::setupLogging("WorkerCoordinatorStarterTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup WorkerCoordinatorStarterTest test class.");
     }
-    static void TearDownTestCase() {
+    void TearDown() {
         std::cout << "Tear down WorkerCoordinatorStarterTest class." << std::endl;
     }
 };
