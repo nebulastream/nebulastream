@@ -293,9 +293,6 @@ bool CoordinatorActor::deployQuery(size_t workerId, const string& queryId) {
     NES_DEBUG(
         "CoordinatorActor::register first phase of deploy " << deployments.size() << " objects topology before"
                                                             << NESTopologyManager::getInstance().getNESTopologyPlanString())
-
-
-    //    for (auto const& x : deployments)
     for (auto x = deployments.rbegin(); x != deployments.rend(); x++) {
         NES_DEBUG("CoordinatorActor::registerQueryInNodeEngine serialize " << x->first << " id=" << x->first->getId() << " eto="
                                                                << x->second.toString())

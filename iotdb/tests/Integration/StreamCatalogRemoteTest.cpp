@@ -28,15 +28,12 @@ namespace NES {
         size_t port = crd->startCoordinator(/**blocking**/false);
         EXPECT_NE(port, 0);
         cout << "coordinator started successfully" << endl;
-        sleep(1);
 
         cout << "start worker" << endl;
         NesWorkerPtr wrk = std::make_shared<NesWorker>();
         bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true, port, "localhost");
         EXPECT_TRUE(retStart);
         cout << "worker started successfully" << endl;
-
-        sleep(2);
 
         //create test schema
         std::string testSchema =
@@ -55,11 +52,11 @@ namespace NES {
         EXPECT_NE(sPtr, nullptr);
 
         cout << "stopping worker" << endl;
-        bool retStopWrk = wrk->stop();
+        bool retStopWrk = wrk->stop(false);
         EXPECT_TRUE(retStopWrk);
 
         cout << "stopping coordinator" << endl;
-        bool retStopCord = crd->stopCoordinator();
+        bool retStopCord = crd->stopCoordinator(false);
         EXPECT_TRUE(retStopCord);
     }
 
@@ -68,15 +65,12 @@ namespace NES {
         size_t port = crd->startCoordinator(/**blocking**/false);
         EXPECT_NE(port, 0);
         cout << "coordinator started successfully" << endl;
-        sleep(1);
 
         cout << "start worker" << endl;
         NesWorkerPtr wrk = std::make_shared<NesWorker>();
         bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true, port, "localhost");
         EXPECT_TRUE(retStart);
         cout << "worker started successfully" << endl;
-
-        sleep(2);
 
         //create test schema
         std::string testSchema =
@@ -109,11 +103,11 @@ namespace NES {
         EXPECT_EQ(exp, defaultSchema->toString());
 
         cout << "stopping worker" << endl;
-        bool retStopWrk = wrk->stop();
+        bool retStopWrk = wrk->stop(false);
         EXPECT_TRUE(retStopWrk);
 
         cout << "stopping coordinator" << endl;
-        bool retStopCord = crd->stopCoordinator();
+        bool retStopCord = crd->stopCoordinator(false);
         EXPECT_TRUE(retStopCord);
     }
 
@@ -122,15 +116,12 @@ namespace NES {
         size_t port = crd->startCoordinator(/**blocking**/false);
         EXPECT_NE(port, 0);
         cout << "coordinator started successfully" << endl;
-        sleep(1);
 
         cout << "start worker" << endl;
         NesWorkerPtr wrk = std::make_shared<NesWorker>();
         bool retStart = wrk->start(/**blocking**/false, /**withConnect**/true, port, "localhost");
         EXPECT_TRUE(retStart);
         cout << "worker started successfully" << endl;
-
-        sleep(2);
 
         //create test schema
         std::string testSchema =
@@ -158,11 +149,11 @@ namespace NES {
         EXPECT_EQ(sPtr2, nullptr);
 
         cout << "stopping worker" << endl;
-        bool retStopWrk = wrk->stop();
+        bool retStopWrk = wrk->stop(false);
         EXPECT_TRUE(retStopWrk);
 
         cout << "stopping coordinator" << endl;
-        bool retStopCord = crd->stopCoordinator();
+        bool retStopCord = crd->stopCoordinator(false);
         EXPECT_TRUE(retStopCord);
     }
 
@@ -171,7 +162,6 @@ namespace NES {
         size_t port = crd->startCoordinator(/**blocking**/false);
         EXPECT_NE(port, 0);
         cout << "coordinator started successfully" << endl;
-        sleep(1);
 
         cout << "start worker" << endl;
         NesWorkerPtr wrk = std::make_shared<NesWorker>();
@@ -187,11 +177,11 @@ namespace NES {
         EXPECT_NE(sPtr, nullptr);
 
         cout << "stopping worker" << endl;
-        bool retStopWrk = wrk->stop();
+        bool retStopWrk = wrk->stop(false);
         EXPECT_TRUE(retStopWrk);
 
         cout << "stopping coordinator" << endl;
-        bool retStopCord = crd->stopCoordinator();
+        bool retStopCord = crd->stopCoordinator(false);
         EXPECT_TRUE(retStopCord);
     }
 
@@ -200,7 +190,6 @@ namespace NES {
         size_t port = crd->startCoordinator(/**blocking**/false);
         EXPECT_NE(port, 0);
         cout << "coordinator started successfully" << endl;
-        sleep(1);
 
         cout << "start worker" << endl;
         NesWorkerPtr wrk = std::make_shared<NesWorker>();
@@ -227,11 +216,11 @@ namespace NES {
         EXPECT_EQ(phys[1]->getPhysicalName(), "physical_test");
 
         cout << "stopping worker" << endl;
-        bool retStopWrk = wrk->stop();
+        bool retStopWrk = wrk->stop(false);
         EXPECT_TRUE(retStopWrk);
 
         cout << "stopping coordinator" << endl;
-        bool retStopCord = crd->stopCoordinator();
+        bool retStopCord = crd->stopCoordinator(false);
         EXPECT_TRUE(retStopCord);
     }
 
@@ -240,7 +229,6 @@ namespace NES {
         size_t port = crd->startCoordinator(/**blocking**/false);
         EXPECT_NE(port, 0);
         cout << "coordinator started successfully" << endl;
-        sleep(1);
 
         cout << "start worker" << endl;
         NesWorkerPtr wrk = std::make_shared<NesWorker>();
@@ -278,11 +266,11 @@ namespace NES {
         EXPECT_EQ(phys[0]->getPhysicalName(), "physical_test");
 
         cout << "stopping worker" << endl;
-        bool retStopWrk = wrk->stop();
+        bool retStopWrk = wrk->stop(false);
         EXPECT_TRUE(retStopWrk);
 
         cout << "stopping coordinator" << endl;
-        bool retStopCord = crd->stopCoordinator();
+        bool retStopCord = crd->stopCoordinator(false);
         EXPECT_TRUE(retStopCord);
     }
 
@@ -291,7 +279,6 @@ namespace NES {
         size_t port = crd->startCoordinator(/**blocking**/false);
         EXPECT_NE(port, 0);
         cout << "coordinator started successfully" << endl;
-        sleep(1);
 
         cout << "start worker" << endl;
         NesWorkerPtr wrk = std::make_shared<NesWorker>();
@@ -308,14 +295,13 @@ namespace NES {
                 .getPhysicalStreams("default_logical");
 
         EXPECT_EQ(phys.size(), 0);
-        std::this_thread::sleep_for(std::chrono::seconds(1));
 
         cout << "stopping worker" << endl;
-        bool retStopWrk = wrk->stop();
+        bool retStopWrk = wrk->stop(false);
         EXPECT_TRUE(retStopWrk);
 
         cout << "stopping coordinator" << endl;
-        bool retStopCord = crd->stopCoordinator();
+        bool retStopCord = crd->stopCoordinator(false);
         EXPECT_TRUE(retStopCord);
     }
 
@@ -324,7 +310,6 @@ namespace NES {
         size_t port = crd->startCoordinator(/**blocking**/false);
         EXPECT_NE(port, 0);
         cout << "coordinator started successfully" << endl;
-        sleep(1);
 
         cout << "start worker" << endl;
         NesWorkerPtr wrk = std::make_shared<NesWorker>();
@@ -345,14 +330,13 @@ namespace NES {
                 .getPhysicalStreams("default_logical");
 
         EXPECT_EQ(phys.size(), 1);
-        std::this_thread::sleep_for(std::chrono::seconds(1));
 
         cout << "stopping worker" << endl;
-        bool retStopWrk = wrk->stop();
+        bool retStopWrk = wrk->stop(false);
         EXPECT_TRUE(retStopWrk);
 
         cout << "stopping coordinator" << endl;
-        bool retStopCord = crd->stopCoordinator();
+        bool retStopCord = crd->stopCoordinator(false);
         EXPECT_TRUE(retStopCord);
     }
 }

@@ -19,6 +19,11 @@ class NesWorker {
     NesWorker();
 
     /**
+     * @brief default dtor
+     */
+    ~NesWorker();
+
+    /**
      * @brief default constructor with option for sensor or worker node
      * @note this will create the worker actor using the default worker config
      */
@@ -51,9 +56,10 @@ class NesWorker {
 
     /**
      * @brief stop the worker
+     * @param force to stop with stopping all queries
      * @return bool indicating success
      */
-    bool stop();
+    bool stop(bool force);
 
     /**
      * @brief connect to coordinator using the default worker config
@@ -110,6 +116,20 @@ class NesWorker {
     */
     bool removeParent(std::string parentId);
 
+    /**
+    * @brief method to get the number of buffers processed up to now
+    * @param queryId
+    * @return number of buffers
+    */
+    size_t getNumberOfProcessedBuffer(std::string queryId);
+
+    /**
+    * @brief method to get the number of tasks processed up to now
+    * @param queryId
+    * @return number of tasks
+      */
+    size_t getNumberOfProcessedTasks(std::string queryId);
+
   private:
     WorkerActor* wrk;
     bool connected;
@@ -124,6 +144,8 @@ class NesWorker {
     uint16_t coordinatorPort;
 
     NESNodeType type;
+
+    bool stopped;
 };
 typedef std::shared_ptr<NesWorker> NesWorkerPtr;
 

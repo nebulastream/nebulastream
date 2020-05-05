@@ -12,7 +12,8 @@ WorkerActor::WorkerActor(actor_config& cfg, string ip, uint16_t publish_port,
     :
     stateful_actor(cfg),
     workerId(0) {
-    NES_DEBUG("WorkerActor(): ip" << ip << " pubPort=" << publish_port << " recPort=" << receive_port << " type=" << type)
+    NES_DEBUG(
+        "WorkerActor(): ip" << ip << " pubPort=" << publish_port << " recPort=" << receive_port << " type=" << type)
     this->state.nodeEngine = std::make_unique<NodeEngine>(ip, publish_port, receive_port);
     bool success = this->state.nodeEngine->start();
     if (!success) {
@@ -73,7 +74,7 @@ behavior WorkerActor::unconnected() {
         },
         [=](terminate_atom) {
           NES_DEBUG("WorkerActor::running() shutdown")
-          return shutdown();
+          return shutdown(true);
         }
     };
 }
@@ -386,12 +387,12 @@ bool WorkerActor::connecting(const std::string& host, uint16_t port) {
     return true;
 }
 
-bool WorkerActor::WorkerActor::shutdown() {
-    NES_DEBUG("WorkerActor: shutdown");
-    bool success = this->state.nodeEngine->stop();
+bool WorkerActor::WorkerActor::shutdown(bool force) {
+    NES_DEBUG("WorkerActor: shutdown with force=" << force);
+    bool success = this->state.nodeEngine->stop(force);
     if (!success) {
         NES_ERROR("WorkerActor:shutdown node engine stop not successful")
-        throw Exception("WorkerActor error while stopping node engine");
+        return false;
     } else {
         NES_DEBUG("WorkerActor: Node engine stopped successfully")
     }
@@ -459,4 +460,13 @@ behavior WorkerActor::running() {
     };
     NES_DEBUG("WorkerActor::running end running")
 }
+
+size_t WorkerActor::getNumberOfProcessedBuffer(std::string queryId) {
+    return this->state.nodeEngine->getNumberOfProcessedBuffer(queryId);
+}
+
+size_t WorkerActor::getNumberOfProcessedTasks(std::string queryId) {
+    return this->state.nodeEngine->getNumberOfProcessedTasks(queryId);
+}
+
 }

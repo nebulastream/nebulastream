@@ -10,7 +10,6 @@
 #include <Catalogs/PhysicalStreamConfig.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
 
-
 using namespace caf;
 using std::string;
 using std::tuple;
@@ -125,9 +124,24 @@ class WorkerActor : public stateful_actor<WorkerState> {
 
     /**
      * @brief method to shutdown the worker actor
+     * @param if force == true all queries will be stopped, if not false will returned in that case
      * @return bool indicating success
      */
-    bool shutdown();
+    bool shutdown(bool force);
+
+    /**
+     * @brief method to get the number of buffers processed up to now
+    * @param queryId
+    * @return number of buffers
+    */
+    size_t getNumberOfProcessedBuffer(std::string queryId);
+
+    /**
+    * @brief method to get the number of tasks processed up to now
+    * @param queryId
+    * @return number of tasks
+    */
+    size_t getNumberOfProcessedTasks(std::string queryId);
 
   private:
     //states of the actor

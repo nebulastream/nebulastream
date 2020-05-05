@@ -88,11 +88,11 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourceWriteToCSV
 
   EXPECT_EQ(content, expectedContent);
 
-  bool retStopWrk = wrk->stop();
+  bool retStopWrk = wrk->stop(false);
   EXPECT_TRUE(retStopWrk);
 
   sleep(1);
-  bool retStopCord = crd->stopCoordinator();
+  bool retStopCord = crd->stopCoordinator(false);
   EXPECT_TRUE(retStopCord);
 }
 
@@ -138,11 +138,11 @@ TEST_F(ContiniousSourceTest, testMultipleOutputBufferFromDefaultSourcePrint) {
   EXPECT_NE(id, "");
 
   sleep(2);
-  bool retStopWrk = wrk->stop();
+  bool retStopWrk = wrk->stop(false);
   EXPECT_TRUE(retStopWrk);
 
   sleep(1);
-  bool retStopCord = crd->stopCoordinator();
+  bool retStopCord = crd->stopCoordinator(false);
   EXPECT_TRUE(retStopCord);
 }
 
@@ -254,11 +254,11 @@ TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromDefaultSourceW
   //  EXPECT_TRUE(response == 0);
 
   sleep(2);
-  bool retStopWrk = wrk->stop();
+  bool retStopWrk = wrk->stop(false);
   EXPECT_TRUE(retStopWrk);
 
   sleep(1);
-  bool retStopCord = crd->stopCoordinator();
+  bool retStopCord = crd->stopCoordinator(false);
   EXPECT_TRUE(retStopCord);
 }
 
@@ -315,11 +315,11 @@ TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromCSVSourcePrint
   EXPECT_NE(id, "");
 
   sleep(2);
-  bool retStopWrk = wrk->stop();
+  bool retStopWrk = wrk->stop(false);
   EXPECT_TRUE(retStopWrk);
 
   sleep(1);
-  bool retStopCord = crd->stopCoordinator();
+  bool retStopCord = crd->stopCoordinator(false);
   EXPECT_TRUE(retStopCord);
 }
 
@@ -915,11 +915,11 @@ TEST_F(ContiniousSourceTest, DISABLED_testMultipleOutputBufferFromCSVSourceWrite
   //  int response = remove(outputFilePath.c_str());
   //  EXPECT_TRUE(response == 0);
 
-  bool retStopWrk = wrk->stop();
+  bool retStopWrk = wrk->stop(false);
   EXPECT_TRUE(retStopWrk);
 
   sleep(1);
-  bool retStopCord = crd->stopCoordinator();
+  bool retStopCord = crd->stopCoordinator(false);
   EXPECT_TRUE(retStopCord);
 }
 
@@ -1133,11 +1133,11 @@ TEST_F(ContiniousSourceTest, DISABLED_testExdraUseCaseWithOutput) {
   //  EXPECT_TRUE(response == 0);
 
   sleep(2);
-  bool retStopWrk = wrk->stop();
+  bool retStopWrk = wrk->stop(false);
   EXPECT_TRUE(retStopWrk);
 
   sleep(1);
-  bool retStopCord = crd->stopCoordinator();
+  bool retStopCord = crd->stopCoordinator(false);
   EXPECT_TRUE(retStopCord);
 }
 
