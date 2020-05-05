@@ -3,7 +3,6 @@
 #include "Actors/WorkerActor.hpp"
 #include <Topology/NESTopologyEntry.hpp>
 
-
 #include <signal.h> //  our new library
 #include <caf/actor_cast.hpp>
 
@@ -14,7 +13,6 @@ void termFunc(int sig) {
 }
 
 namespace NES {
-
 
 NesWorker::NesWorker() {
     connected = false;
@@ -35,11 +33,14 @@ NesWorker::NesWorker(NESNodeType type) {
     coordinatorPort = 0;
     this->type = type;
     NES_DEBUG("NesWorker: constructed")
-
+    stopped = false;
     // Register signals
     signal(SIGINT, termFunc);
 }
-
+NesWorker::~NesWorker() {
+    NES_DEBUG("NesWorker::~NesWorker()")
+    stop(true);
+}
 bool NesWorker::setWitRegister(PhysicalStreamConfig pConf) {
     withRegisterStream = true;
     conf = pConf;
@@ -62,8 +63,8 @@ bool NesWorker::start(bool blocking, bool withConnect, uint16_t port, std::strin
     actorSystem = new actor_system{workerCfg};
 
     size_t ts = time(0);
-    workerCfg.publish_port = workerCfg.publish_port + ts % 10000;
-    workerCfg.receive_port = workerCfg.receive_port + ts % 10000;
+    workerCfg.publish_port = workerCfg.publish_port + ts%10000;
+    workerCfg.receive_port = workerCfg.receive_port + ts%10000;
     workerHandle = actorSystem->spawn<NES::WorkerActor>(workerCfg.ip,
                                                         workerCfg.publish_port,
                                                         workerCfg.receive_port,
@@ -76,7 +77,6 @@ bool NesWorker::start(bool blocking, bool withConnect, uint16_t port, std::strin
                                     true);
     NES_DEBUG("spawn handle with id=" << workerHandle.id() << " port=" << expectedPort)
 
-    sleep(1);
     if (withConnect) {
         NES_DEBUG("NesWorker: start with connect")
         connect();
@@ -90,6 +90,7 @@ bool NesWorker::start(bool blocking, bool withConnect, uint16_t port, std::strin
         addParent(parentId);
     }
 
+    stopped = false;
     if (blocking) {
         NES_DEBUG("NesWorker: started, join now and waiting for work")
         while (true) {
@@ -110,12 +111,22 @@ bool NesWorker::start(bool blocking, bool withConnect, uint16_t port, std::strin
     }
 }
 
-bool NesWorker::stop() {
+bool NesWorker::stop(bool force) {
     NES_DEBUG("NesWorker: stop")
-    bool success = wrk->shutdown();
-    anon_send(workerHandle, exit_reason::user_shutdown);
-    NES_DEBUG("NesWorker::stop success=" << success)
-    return success;
+    if (!stopped) {
+
+        bool success = wrk->shutdown(force);
+        if (success) {
+            anon_send(workerHandle, exit_reason::user_shutdown);
+        }
+        NES_DEBUG("NesWorker::stop success=" << success)
+        return success;
+    }
+    else
+    {
+        NES_WARNING("NesWorker::stop: already stopped")
+        return true;
+    }
 }
 
 bool NesWorker::connect() {
@@ -164,6 +175,14 @@ bool NesWorker::removeParent(std::string parentId) {
     bool success = wrk->removeParentFromSensorNode(parentId);
     NES_DEBUG("NesWorker::removeLink(parent only) success=" << success)
     return success;
+}
+
+size_t NesWorker::getNumberOfProcessedBuffer(std::string queryId) {
+    return wrk->getNumberOfProcessedBuffer(queryId);
+}
+
+size_t NesWorker::getNumberOfProcessedTasks(std::string queryId) {
+    return wrk->getNumberOfProcessedTasks(queryId);
 }
 
 

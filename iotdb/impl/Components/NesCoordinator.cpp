@@ -12,6 +12,12 @@ NesCoordinator::NesCoordinator() {
     restHost = "localhost";
     actorPort = 0;
     serverIp = "localhost";
+    stopped = false;
+}
+
+NesCoordinator::~NesCoordinator() {
+    NES_DEBUG("NesCoordinator::~NesCoordinator()")
+    stopCoordinator(true);
 }
 
 infer_handle_from_class_t<CoordinatorActor> NesCoordinator::getActorHandle() {
@@ -26,50 +32,57 @@ void startRestServer(infer_handle_from_class_t<CoordinatorActor> handle,
     NES_DEBUG("NesCoordinator: startRestServer thread terminates")
 }
 
-string NesCoordinator::deployQuery(const string& queryString, const string& strategy)
-{
+string NesCoordinator::deployQuery(const string& queryString, const string& strategy) {
     NES_DEBUG("NesCoordinator:registerAndDeployQuery queryString=" << queryString << " strategy=" << strategy)
     return crdPtr->registerAndDeployQuery(0, queryString, strategy);
 }
 
-bool NesCoordinator::undeployQuery(const string& queryId)
-{
+bool NesCoordinator::undeployQuery(const string& queryId) {
     NES_DEBUG("NesCoordinator:unddeployQuery queryId=" << queryId)
     return crdPtr->deregisterAndUndeployQuery(0, queryId);
 }
 
-bool NesCoordinator::stopCoordinator() {
-    NES_DEBUG("NesCoordinator: stop")
+bool NesCoordinator::stopCoordinator(bool force) {
+    if (!stopped) {
 
-    NES_DEBUG("NesCoordinator: stopping worker actor")
-    bool successStopWorkerActor = wrkPtr->shutdown();
-    if (!successStopWorkerActor) {
-        NES_ERROR("NesCoordinator::stopCoordinator: error while stopping worker actor")
-        throw new Exception("Error while stopping NesCoordinator");
+        NES_DEBUG("NesCoordinator: stop")
+
+        NES_DEBUG("NesCoordinator: stopping worker actor")
+        bool successStopWorkerActor = wrkPtr->shutdown(force);
+        if (!successStopWorkerActor) {
+            NES_ERROR("NesCoordinator::stopCoordinator: error while stopping worker actor")
+            throw new Exception("Error while stopping NesCoordinator");
+        }
+        anon_send(workerActorHandle, exit_reason::user_shutdown);
+        NES_DEBUG("NesCoordinator::stopCoordinator worker actor success=" << successStopWorkerActor)
+
+        NES_DEBUG("NesCoordinator: stopping coordinator actor")
+        bool successStopCoordinatorActor = crdPtr->shutdown();
+        if (!successStopCoordinatorActor) {
+            NES_ERROR("NesCoordinator::stopCoordinator: error while stopping coordinator actor")
+            throw new Exception("Error while stopping NesCoordinator");
+        }
+        anon_send(coordinatorActorHandle, exit_reason::user_shutdown);
+        NES_DEBUG("NesCoordinator::stopCoordinator coordinator actor success=" << successStopCoordinatorActor)
+
+        NES_DEBUG("NesCoordinator: stopping rest server")
+        bool successStopRest = restServer->stop();
+        if (!successStopRest) {
+            NES_ERROR("NesCoordinator::stopCoordinator: error while stopping restServer")
+            throw new Exception("Error while stopping NesCoordinator");
+        }
+        NES_DEBUG("NesCoordinator: rest server stopped " << successStopRest)
+
+        restThread.join();
+        NES_DEBUG("NesCoordinator: thread joined")
+        stopped = true;
+        return true;
     }
-    anon_send(workerActorHandle, exit_reason::user_shutdown);
-    NES_DEBUG("NesCoordinator::stopCoordinator worker actor success=" << successStopWorkerActor)
-
-    NES_DEBUG("NesCoordinator: stopping coordinator actor")
-    bool successStopCoordinatorActor = crdPtr->shutdown();
-    if (!successStopCoordinatorActor) {
-        NES_ERROR("NesCoordinator::stopCoordinator: error while stopping coordinator actor")
-        throw new Exception("Error while stopping NesCoordinator");
+    else
+    {
+        NES_DEBUG("NesCoordinator: already stoppend")
+        return true;
     }
-    anon_send(coordinatorActorHandle, exit_reason::user_shutdown);
-    NES_DEBUG("NesCoordinator::stopCoordinator coordinator actor success=" << successStopCoordinatorActor)
-
-    NES_DEBUG("NesCoordinator: stopping rest server")
-    bool successStopRest = restServer->stop();
-    if (!successStopRest) {
-        NES_ERROR("NesCoordinator::stopCoordinator: error while stopping restServer")
-        throw new Exception("Error while stopping NesCoordinator");
-    }
-    NES_DEBUG("NesCoordinator: rest server stopped " << successStopRest)
-
-    restThread.join();
-    NES_DEBUG("NesCoordinator: thread joined")
-    return true;
 }
 
 void NesCoordinator::startCoordinator(bool blocking, uint16_t port) {
@@ -110,8 +123,8 @@ uint16_t NesCoordinator::startCoordinator(bool blocking) {
     workerCfg.host = "localhost";
     size_t ts = time(0);
 
-    workerCfg.publish_port = workerCfg.publish_port - 10 + ts * 123  % 10000;;
-    workerCfg.receive_port = workerCfg.receive_port - 12 + ts * 321  % 10000;;
+    workerCfg.publish_port = workerCfg.publish_port - 10 + ts*123%10000;;
+    workerCfg.receive_port = workerCfg.receive_port - 12 + ts*321%10000;;
     workerCfg.printCfg();
 
     actorSystemWorker = new actor_system{workerCfg};
@@ -149,6 +162,7 @@ uint16_t NesCoordinator::startCoordinator(bool blocking) {
                     restHost, restPort, &actorPort);
     restThread = std::move(th0);
 
+    stopped = false;
     if (blocking) {
         NES_DEBUG("NesCoordinator started, join now and waiting for work")
         restThread.join();
@@ -167,5 +181,14 @@ void NesCoordinator::setRestConfiguration(std::string host, uint16_t port) {
 void NesCoordinator::setServerIp(std::string serverIp) {
     this->serverIp = serverIp;
 }
+
+size_t NesCoordinator::getNumberOfProcessedBuffer(std::string queryId) {
+    return wrkPtr->getNumberOfProcessedBuffer(queryId);
+}
+
+size_t NesCoordinator::getNumberOfProcessedTasks(std::string queryId) {
+    return wrkPtr->getNumberOfProcessedTasks(queryId);
+}
+
 
 }

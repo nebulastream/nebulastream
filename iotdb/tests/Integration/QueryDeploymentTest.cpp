@@ -5,6 +5,7 @@
 #include <API/Types/DataTypes.hpp>
 #include <Components/NesWorker.hpp>
 #include <Components/NesCoordinator.hpp>
+#include <Util/TestUtils.hpp>
 
 using namespace std;
 
@@ -40,14 +41,15 @@ TEST_F(QueryDeploymentTest, test_deploy_one_worker_print) {
 
     string queryId = crd->deployQuery(query, "BottomUp");
 
-    sleep(2);
-    crd->undeployQuery(queryId);
-    sleep(2);
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 1));
 
-    bool retStopWrk1 = wrk1->stop();
+    crd->undeployQuery(queryId);
+
+    bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
 
-    bool retStopCord = crd->stopCoordinator();
+    bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
 
@@ -75,16 +77,20 @@ TEST_F(QueryDeploymentTest, test_deploy_two_worker_print) {
     string query = "InputQuery::from(default_logical).print(std::cout);";
 
     std::string queryId = crd->deployQuery(query, "BottomUp");
-    sleep(2);
+
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 2));
+
     crd->undeployQuery(queryId);
 
-    bool retStopWrk1 = wrk1->stop();
+    bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
 
-    bool retStopWrk2 = wrk2->stop();
+    bool retStopWrk2 = wrk2->stop(false);
     EXPECT_TRUE(retStopWrk2);
 
-    bool retStopCord = crd->stopCoordinator();
+    bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
 
@@ -107,7 +113,10 @@ TEST_F(QueryDeploymentTest, test_deploy_one_worker_file_output) {
     string query = "InputQuery::from(default_logical).writeToFile(\"test.out\");";
 
     std::string queryId = crd->deployQuery(query, "BottomUp");
-    sleep(2);
+
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 1));
+
     ifstream my_file("test.out");
     EXPECT_TRUE(my_file.good());
 
@@ -135,10 +144,10 @@ TEST_F(QueryDeploymentTest, test_deploy_one_worker_file_output) {
     EXPECT_EQ(content, expectedContent);
 
     crd->undeployQuery(queryId);
-    bool retStopWrk1 = wrk1->stop();
+    bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
 
-    bool retStopCord = crd->stopCoordinator();
+    bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 
     int response = remove("test.out");
@@ -164,24 +173,25 @@ TEST_F(QueryDeploymentTest, test_deploy_undeploy_one_worker_file_output) {
 
     string query = "InputQuery::from(default_logical).writeToFile(\"test.out\");";
 
-    string id = crd->deployQuery(query, "BottomUp");
-    ASSERT_NE(id, "");
+    string queryId = crd->deployQuery(query, "BottomUp");
+    ASSERT_NE(queryId, "");
 
-    sleep(2);
-    bool successUndeploy = crd->undeployQuery(id);
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 1));
+    bool successUndeploy = crd->undeployQuery(queryId);
     ASSERT_TRUE(successUndeploy);
 
-    bool retStopWrk1 = wrk1->stop();
+    bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
 
-    bool retStopCord = crd->stopCoordinator();
+    bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 
     int response = remove("test.out");
     EXPECT_TRUE(response == 0);
 }
 
-TEST_F(QueryDeploymentTest, DISABLED_test_deploy_two_worker_file_output) {
+TEST_F(QueryDeploymentTest, test_deploy_two_worker_file_output_with_exceptions) {
     remove("test.out");
 
     cout << "start coordinator" << endl;
@@ -205,9 +215,14 @@ TEST_F(QueryDeploymentTest, DISABLED_test_deploy_two_worker_file_output) {
     cout << "worker2 started successfully" << endl;
 
     string query = "InputQuery::from(default_logical).writeToFile(\"test.out\");";
-    string id = crd->deployQuery(query, "BottomUp");
-    ASSERT_NE(id, "");
-    sleep(2);
+    string queryId = crd->deployQuery(query, "BottomUp");
+    ASSERT_NE(queryId, "");
+
+
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 2));
+
     cout << "Test read content now" << endl;
     ifstream my_file("test.out");
     EXPECT_TRUE(my_file.good());
@@ -248,22 +263,53 @@ TEST_F(QueryDeploymentTest, DISABLED_test_deploy_two_worker_file_output) {
     cout << "expContent=" << expectedContent << endl;
     EXPECT_EQ(content, expectedContent);
 
-    cout << "Test stop now" << endl;
-    bool retStopWrk1 = wrk1->stop();
+    //could not be stopped because query is still running
+    try {
+        cout << "Test stop wrk1" << endl;
+        bool retStopWrk1 = wrk1->stop(false);
+        EXPECT_TRUE(!retStopWrk1);
+    }
+    catch (...) {
+        SUCCEED();
+    }
+
+    try {
+        cout << "Test stop wrk2" << endl;
+        bool retStopWrk2 = wrk2->stop(false);
+        EXPECT_TRUE(!retStopWrk2);
+    }
+    catch (...) {
+        SUCCEED();
+    }
+
+    try {
+        cout << "Test stop crd" << endl;
+        bool retStopCord = crd->stopCoordinator(false);
+        EXPECT_TRUE(!retStopCord);
+    }
+    catch (...) {
+        SUCCEED();
+    }
+
+    cout << "Test stop wrk1 forcefully" << endl;
+    bool retStopWrk1 = wrk1->stop(true);
     EXPECT_TRUE(retStopWrk1);
 
-    bool retStopWrk2 = wrk2->stop();
+    cout << "Test stop wrk2 forcefully" << endl;
+    bool retStopWrk2 = wrk2->stop(true);
     EXPECT_TRUE(retStopWrk2);
 
-    bool retStopCord = crd->stopCoordinator();
+    cout << "shut down coordinator forcefully" << endl;
+    bool retStopCord = crd->stopCoordinator(true);
     EXPECT_TRUE(retStopCord);
 
+    cout << " remove file" << endl;
     int response = remove("test.out");
     EXPECT_TRUE(response == 0);
 }
 
 
-TEST_F(QueryDeploymentTest, DISABLED_test_deploy_and_undeploy_two_worker_file_output) {
+TEST_F(QueryDeploymentTest, test_deploy_and_undeploy_two_worker_file_output) {
     remove("test.out");
 
     cout << "start coordinator" << endl;
@@ -288,19 +334,23 @@ TEST_F(QueryDeploymentTest, DISABLED_test_deploy_and_undeploy_two_worker_file_ou
 
     string query = "InputQuery::from(default_logical).writeToFile(\"test.out\");";
 
-    string id = crd->deployQuery(query, "BottomUp");
-    ASSERT_NE(id, "");
-    sleep(2);
-    bool successUndeploy = crd->undeployQuery(id);
+    string queryId = crd->deployQuery(query, "BottomUp");
+    ASSERT_NE(queryId, "");
+
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk1, queryId, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(wrk2, queryId, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(crd, queryId, 2));
+
+    bool successUndeploy = crd->undeployQuery(queryId);
     ASSERT_TRUE(successUndeploy);
 
-    bool retStopWrk1 = wrk1->stop();
+    bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
 
-    bool retStopWrk2 = wrk2->stop();
+    bool retStopWrk2 = wrk2->stop(false);
     EXPECT_TRUE(retStopWrk2);
 
-    bool retStopCord = crd->stopCoordinator();
+    bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 
     int response = remove("test.out");

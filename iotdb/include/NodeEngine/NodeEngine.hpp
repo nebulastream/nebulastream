@@ -86,8 +86,9 @@ class NodeEngine {
 
     /**
      * @brief stop thread pool
+     * @param force
      */
-    bool stop();
+    bool stop(bool force);
 
     JSON getNodePropertiesAsJSON();
 
@@ -185,7 +186,6 @@ class NodeEngine {
     std::map<QueryExecutionPlanPtr, NodeEngineQueryStatus> qepToStatusMap;
     std::map<std::string, QueryExecutionPlanPtr> queryIdToQepMap;
 
-    bool forceStop;
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
     bool isRunning;

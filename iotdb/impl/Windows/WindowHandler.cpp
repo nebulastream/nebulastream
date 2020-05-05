@@ -31,7 +31,6 @@ void WindowHandler::trigger() {
     while (running) {
         // we currently assume processing time and only want to check for new window results every 1 second
         // todo change this when we support event time.
-        sleep(1);
         NES_DEBUG("WindowHandler: check widow trigger");
         auto windowStateVariable = static_cast<StateVariable<int64_t, WindowSliceStore<int64_t>*>*>(this->windowState);
         // create the output tuple buffer

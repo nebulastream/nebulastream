@@ -220,11 +220,9 @@ TEST_F(QueryExecutionTest, DISABLED_windowQuery) {
 //        plan->executeStage(0, buffer);
 //        size_t proc = plan->getQueryManager()->getNumberOfProcessedBuffer(plan);
 //        cout << " proc=" << proc << endl;
-//        //        sleep(1);
 //    }
 //    testSink->completed.get_future().get();
 //    plan->stop();
-    //    sleep(1);
 
     auto& resultBuffer = testSink->get(2); // TODO why the 2nd buffer?
     // The output buffer should contain 5 tuple;

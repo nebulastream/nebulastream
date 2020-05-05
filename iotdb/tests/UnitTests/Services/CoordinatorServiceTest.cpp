@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <Util/TestUtils.hpp>
 #include <SourceSink/PrintSink.hpp>
 #include <Services/CoordinatorService.hpp>
 #include <SourceSink/ZmqSource.hpp>
@@ -6,6 +7,7 @@
 #include <QueryCompiler/GeneratedQueryExecutionPlan.hpp>
 #include <QueryCompiler/QueryCompiler.hpp>
 #include <Util/Logger.hpp>
+
 
 using namespace NES;
 
@@ -233,7 +235,7 @@ TEST_F(CoordinatorServiceTest, test_compile_deployment) {
 }
 
 TEST_F(CoordinatorServiceTest, test_code_gen) {
-    auto engine = std::make_unique<NodeEngine>();
+    NodeEnginePtr engine = std::make_shared<NodeEngine>();
     engine->start();
 
     SchemaPtr schema = Schema::create()
@@ -252,15 +254,16 @@ TEST_F(CoordinatorServiceTest, test_code_gen) {
                                                                          engine->getQueryManager());
     source->setNumBuffersToProcess(10);
     qep->addDataSource(source);
-
+    qep->setQueryId("1");
     DataSinkPtr sink = createPrintSinkWithSchema(schema, std::cout);
     qep->addDataSink(sink);
-    qep->setQueryId("1");
 
     engine->deployQueryInNodeEngine(qep);
-    sleep(2);
+    bool success = TestUtils::checkCompleteOrTimeout(engine, "1", 1);
+    EXPECT_TRUE(success);
+
     engine->undeployQuery("1");
-    engine->stop();
+    engine->stop(false);
 }
 
 //FIXME: this test times out
@@ -293,7 +296,7 @@ TEST_F(CoordinatorServiceTest, DISABLED_test_local_distributed_deployment) {
         assert(0);//hAS TO BE FIXED once thest ist enabled
 //        engine->undeployQuery(qep);
     }
-    engine->stop();
+    engine->stop(false);
 
     coordinatorServicePtr->deleteQuery(queryId);
     EXPECT_TRUE(
@@ -335,7 +338,7 @@ TEST_F(CoordinatorServiceTest, DISABLED_test_sequential_local_distributed_deploy
         coordinatorServicePtr->deleteQuery(queryId);
         std::this_thread::sleep_for(std::chrono::seconds(1));
     }
-    engine->stop();
+    engine->stop(false);
     EXPECT_TRUE(
         coordinatorServicePtr->getRegisteredQueries().empty()
             && coordinatorServicePtr->getRunningQueries().empty());

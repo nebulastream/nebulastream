@@ -18,6 +18,12 @@ class NesCoordinator {
     NesCoordinator();
 
     /**
+     * @brief dtor
+     * @return
+     */
+    ~NesCoordinator();
+
+    /**
      * @brief start actor: rest server, caf server, coordinator actor
      * @note this will start the server at a random port
      * @param bool if the method should block
@@ -34,9 +40,10 @@ class NesCoordinator {
 
     /**
      * @brief method to stop coordinator
+     * @param force the shutdown even when queries are running
      * @return bool indicating success
      */
-    bool stopCoordinator();
+    bool stopCoordinator(bool force);
 
     /**
      * @brief method to register, deploy, and start a query
@@ -69,6 +76,20 @@ class NesCoordinator {
 
     void setServerIp(std::string serverIp);
 
+    /**
+    * @brief method to get the number of buffers processed up to now
+    * @param queryId
+    * @return number of buffers
+    */
+    size_t getNumberOfProcessedBuffer(std::string queryId);
+
+    /**
+    * @brief method to get the number of tasks processed up to now
+    * @param queryId
+    * @return number of tasks
+      */
+    size_t getNumberOfProcessedTasks(std::string queryId);
+
   private:
     CoordinatorActor* crdPtr;
     CoordinatorActorConfig coordinatorCfg;
@@ -86,6 +107,8 @@ class NesCoordinator {
     uint16_t restPort;
     uint16_t actorPort;
     std::thread restThread;
+
+    bool stopped;
 };
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
 

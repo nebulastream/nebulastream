@@ -228,7 +228,7 @@ target_link_libraries(update-topology-remote-test iotdb ${GTEST_LIBRARIES})
 add_test(NAME update-topology-remote-test COMMAND update-topology-remote-test)
 
 # NetworkStackTest
-add_executable(network-stack-test "Integration/NetworkStackTest.cpp")
+add_executable(network-stack-test "UnitTests/NetworkStackTest.cpp")
 target_link_libraries(network-stack-test iotdb ${GTEST_LIBRARIES})
 add_test(NAME network-stack-test COMMAND network-stack-test)
 

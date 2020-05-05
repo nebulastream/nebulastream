@@ -9,8 +9,9 @@
 #include <SourceSink/SourceCreator.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/DefaultSource.hpp>
-#include <sstream>
 #include <future>
+#include <Util/TestUtils.hpp>
+
 using namespace std;
 
 #define DEBUG_OUTPUT
@@ -203,24 +204,8 @@ void testOutput(std::string path, std::string expectedOutput) {
     EXPECT_TRUE(response == 0);
 }
 
-bool checkCompleteOrTimeout(NodeEnginePtr ptr, std::string queryId, size_t expectedResult)
-{
-    size_t timeoutInSec = 3;
-    size_t now = time(0);
 
-    while(time(0) < now + timeoutInSec)
-    {
-        cout << "check result" << endl;
-        if(ptr->getNumberOfProcessedBuffer(queryId) == expectedResult && ptr->getNumberOfProcessedTasks(queryId) == expectedResult)
-        {
-            cout << "results are correct" << endl;
-            return true;
-        }
-    }
 
-    cout << "expected results are not reached after timeout" << endl;
-    return false;
-}
 CompiledTestQueryExecutionPlanPtr setupQEP(BufferManagerPtr bPtr, QueryManagerPtr dPtr, std::string queryId) {
     CompiledTestQueryExecutionPlanPtr qep(new CompiledTestQueryExecutionPlan());
     DataSourcePtr source =
@@ -243,7 +228,7 @@ CompiledTestQueryExecutionPlanPtr setupQEP(BufferManagerPtr bPtr, QueryManagerPt
 TEST_F(EngineTest, start_stop_engine_empty) { 
     NodeEnginePtr ptr = std::make_shared<NodeEngine>();
     ASSERT_TRUE(ptr->start());
-    ASSERT_TRUE(ptr->stop());
+    ASSERT_TRUE(ptr->stop(false));
 }
 
 TEST_F(EngineTest, start_deploy_stop_test) {
@@ -252,8 +237,8 @@ TEST_F(EngineTest, start_deploy_stop_test) {
     ASSERT_TRUE(ptr->start());
     ASSERT_TRUE(ptr->deployQueryInNodeEngine(qep));
     qep->completedPromise.get_future().get();
-    ASSERT_TRUE(checkCompleteOrTimeout(ptr, testQueryId, 1));
-    ASSERT_TRUE(!ptr->stop());
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, testQueryId, 1));
+    ASSERT_TRUE(!ptr->stop(false));
 
     testOutput();
 }
@@ -264,9 +249,9 @@ TEST_F(EngineTest, start_deploy_undeploy_stop_test) {
     ASSERT_TRUE(ptr->start());
     ASSERT_TRUE(ptr->deployQueryInNodeEngine(qep));
     qep->completedPromise.get_future().get();
-    ASSERT_TRUE(checkCompleteOrTimeout(ptr, testQueryId, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, testQueryId, 1));
     ASSERT_TRUE(ptr->undeployQuery(testQueryId));
-    ASSERT_TRUE(ptr->stop());
+    ASSERT_TRUE(ptr->stop(false));
 
     testOutput();
 }
@@ -279,14 +264,14 @@ TEST_F(EngineTest, start_register_start_stop_deregister_stop_test) {
     ASSERT_TRUE(ptr->startQuery(testQueryId));
     qep->completedPromise.get_future().get();
 
-    ASSERT_TRUE(checkCompleteOrTimeout(ptr, testQueryId, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, testQueryId, 1));
 
     ASSERT_TRUE(ptr->stopQuery(testQueryId));
 
-    ASSERT_TRUE(checkCompleteOrTimeout(ptr, testQueryId, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, testQueryId, 1));
 
     ASSERT_TRUE(ptr->unregisterQuery(testQueryId));
-    ASSERT_TRUE(ptr->stop());
+    ASSERT_TRUE(ptr->stop(false));
 
     testOutput();
 }
@@ -321,13 +306,13 @@ TEST_F(EngineTest, parallel_different_source_test) {
     qep1->completedPromise.get_future().get();
     qep2->completedPromise.get_future().get();
 
-    ASSERT_TRUE(checkCompleteOrTimeout(ptr, "1", 1));
-    ASSERT_TRUE(checkCompleteOrTimeout(ptr, "2", 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, "1", 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, "2", 1));
 
     ASSERT_TRUE(ptr->undeployQuery("1"));
     ASSERT_TRUE(ptr->undeployQuery("2"));
 
-    ASSERT_TRUE(ptr->stop());
+    ASSERT_TRUE(ptr->stop(false));
 
     testOutput("qep1.txt");
     testOutput("qep2.txt");
@@ -367,8 +352,8 @@ TEST_F(EngineTest, parallel_same_source_test) {
     cout << "wait prom q2" << endl;
     qep2->completedPromise.get_future().get();
 
-    ASSERT_TRUE(checkCompleteOrTimeout(ptr, "1", 1));
-    ASSERT_TRUE(checkCompleteOrTimeout(ptr, "2", 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, "1", 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, "2", 1));
 
     cout << "undeploy qep1" << endl;
     ASSERT_TRUE(ptr->undeployQuery("1"));
@@ -376,7 +361,7 @@ TEST_F(EngineTest, parallel_same_source_test) {
     ASSERT_TRUE(ptr->undeployQuery("2"));
 
     cout << "stop" << endl;
-    ASSERT_TRUE(ptr->stop());
+    ASSERT_TRUE(ptr->stop(false));
 
     testOutput("qep1.txt");
     testOutput("qep2.txt");
@@ -413,13 +398,13 @@ TEST_F(EngineTest, parallel_same_sink_test) {
     qep1->completedPromise.get_future().get();
     qep2->completedPromise.get_future().get();
 
-    ASSERT_TRUE(checkCompleteOrTimeout(ptr, "1", 1));
-    ASSERT_TRUE(checkCompleteOrTimeout(ptr, "2", 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, "1", 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, "2", 1));
 
     ASSERT_TRUE(ptr->undeployQuery("1"));
     ASSERT_TRUE(ptr->undeployQuery("2"));
 
-    ASSERT_TRUE(ptr->stop());
+    ASSERT_TRUE(ptr->stop(false));
     testOutput("qep12.txt", joinedExpectedOutput);
 }
 
@@ -449,13 +434,13 @@ TEST_F(EngineTest, parallel_same_source_and_sink_regstart_test) {
     qep1->completedPromise.get_future().get();
     qep2->completedPromise.get_future().get();
 
-    ASSERT_TRUE(checkCompleteOrTimeout(ptr, "1", 1));
-    ASSERT_TRUE(checkCompleteOrTimeout(ptr, "2", 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, "1", 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, "2", 1));
 
     ASSERT_TRUE(ptr->undeployQuery("1"));
     ASSERT_TRUE(ptr->undeployQuery("2"));
 
-    ASSERT_TRUE(ptr->stop());
+    ASSERT_TRUE(ptr->stop(false));
 
     testOutput("qep3.txt", joinedExpectedOutput);
 }
@@ -467,12 +452,12 @@ TEST_F(EngineTest, start_stop_start_stop_test) {
     ASSERT_TRUE(ptr->deployQueryInNodeEngine(qep));
     qep->completedPromise.get_future().get();
 
-    ASSERT_TRUE(checkCompleteOrTimeout(ptr, testQueryId, 1));
+    ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(ptr, testQueryId, 1));
 
     ASSERT_TRUE(ptr->undeployQuery(testQueryId));
-    ASSERT_TRUE(ptr->stop());
+    ASSERT_TRUE(ptr->stop(false));
     ASSERT_TRUE(ptr->start());
-    ASSERT_TRUE(ptr->stop());
+    ASSERT_TRUE(ptr->stop(false));
     testOutput();
 }
 }

@@ -1,13 +1,8 @@
-#include <cassert>
 #include <iostream>
 
-#include <QueryCompiler/HandCodedQueryExecutionPlan.hpp>
 #include <Util/Logger.hpp>
 #include <gtest/gtest.h>
 #include <API/Types/DataTypes.hpp>
-#include <SourceSink/SourceCreator.hpp>
-#include <SourceSink/SinkCreator.hpp>
-#include <sstream>
 #include <Components/NesWorker.hpp>
 #include <Components/NesCoordinator.hpp>
 
@@ -33,7 +28,6 @@ TEST_F(WorkerCoordinatorStarterTest, start_stop_worker_coordinator) {
     size_t port = crd->startCoordinator(/**blocking**/false);
     EXPECT_NE(port, 0);
     cout << "coordinator started successfully" << endl;
-    sleep(1);
 
     cout << "start worker" << endl;
     NesWorkerPtr wrk = std::make_shared<NesWorker>();
@@ -41,15 +35,14 @@ TEST_F(WorkerCoordinatorStarterTest, start_stop_worker_coordinator) {
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
-    sleep(2);
     cout << "wakeup" << endl;
 
     cout << "stopping worker" << endl;
-    bool retStopWrk = wrk->stop();
+    bool retStopWrk = wrk->stop(false);
     EXPECT_TRUE(retStopWrk);
 
     cout << "stopping coordinator" << endl;
-    bool retStopCord = crd->stopCoordinator();
+    bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
 
@@ -59,7 +52,6 @@ TEST_F(WorkerCoordinatorStarterTest, start_stop_coordinator_worker) {
     size_t port = crd->startCoordinator(/**blocking**/false);
     EXPECT_NE(port, 0);
     cout << "coordinator started successfully" << endl;
-    sleep(1);
 
     cout << "start worker" << endl;
     NesWorkerPtr wrk = std::make_shared<NesWorker>();
@@ -67,15 +59,14 @@ TEST_F(WorkerCoordinatorStarterTest, start_stop_coordinator_worker) {
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
-    sleep(2);
     cout << "wakeup" << endl;
 
     cout << "stopping coordinator" << endl;
-    bool retStopCord = crd->stopCoordinator();
+    bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 
     cout << "stopping worker" << endl;
-    bool retStopWrk = wrk->stop();
+    bool retStopWrk = wrk->stop(false);
     EXPECT_TRUE(retStopWrk);
 }
 
@@ -92,16 +83,14 @@ TEST_F(WorkerCoordinatorStarterTest, start_connect_stop_worker_coordinator) {
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
-    sleep(1);
     bool retConWrk = wrk->connect();
     EXPECT_TRUE(retConWrk);
     cout << "worker started connected " << endl;
 
-    bool retStopWrk = wrk->stop();
+    bool retStopWrk = wrk->stop(false);
     EXPECT_TRUE(retStopWrk);
 
-    sleep(1);
-    bool retStopCord = crd->stopCoordinator();
+    bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
 
@@ -118,16 +107,14 @@ TEST_F(WorkerCoordinatorStarterTest, start_connect_stop_without_disconnect_worke
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
-    sleep(1);
     bool retConWrk = wrk->connect();
     EXPECT_TRUE(retConWrk);
     cout << "worker started connected " << endl;
 
-    sleep(1);
-    bool retStopCord = crd->stopCoordinator();
+    bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 
-    bool retStopWrk = wrk->stop();
+    bool retStopWrk = wrk->stop(false);
     EXPECT_TRUE(retStopWrk);
 }
 
@@ -144,21 +131,18 @@ TEST_F(WorkerCoordinatorStarterTest, start_connect_disconnect_stop_worker_coordi
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
-    sleep(1);
     bool retConWrk = wrk->connect();
     EXPECT_TRUE(retConWrk);
     cout << "worker started connected " << endl;
 
-    sleep(1);
     bool retDisWrk = wrk->disconnect();
     EXPECT_TRUE(retDisWrk);
     cout << "worker started connected " << endl;
 
-    bool retStopWrk = wrk->stop();
+    bool retStopWrk = wrk->stop(false);
     EXPECT_TRUE(retStopWrk);
 
-    sleep(2);
-    bool retStopCord = crd->stopCoordinator();
+    bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
 
@@ -175,31 +159,25 @@ TEST_F(WorkerCoordinatorStarterTest, start_reconnect_stop_worker_coordinator) {
     EXPECT_TRUE(retStart);
     cout << "worker started successfully" << endl;
 
-    sleep(1);
     bool retConWrk = wrk->connect();
     EXPECT_TRUE(retConWrk);
     cout << "worker started connected " << endl;
 
-    sleep(1);
     bool retDisWrk = wrk->disconnect();
     EXPECT_TRUE(retDisWrk);
     cout << "worker started connected " << endl;
 
-    sleep(1);
     bool retConWrk2 = wrk->connect();
     EXPECT_TRUE(retConWrk2);
     cout << "worker started connected " << endl;
 
-    sleep(1);
     bool retDisWrk2 = wrk->disconnect();
     EXPECT_TRUE(retDisWrk2);
-    sleep(1);
     cout << "worker started connected " << endl;
-    bool retStopWrk = wrk->stop();
+    bool retStopWrk = wrk->stop(false);
     EXPECT_TRUE(retStopWrk);
 
-    sleep(2);
-    bool retStopCord = crd->stopCoordinator();
+    bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
 

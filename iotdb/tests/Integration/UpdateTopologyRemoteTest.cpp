@@ -89,15 +89,15 @@ TEST_F(UpdateTopologyRemoteTest, add_and_remove_path_with_own_id) {
     ASSERT_TRUE(retString3.find("1--2 [label=\"2\"]") == std::string::npos);
 
     cout << "stopping worker" << endl;
-    bool retStopWrk = wrk->stop();
+    bool retStopWrk = wrk->stop(false);
     EXPECT_TRUE(retStopWrk);
 
     cout << "stopping worker 2" << endl;
-    bool retStopWrk2 = wrk2->stop();
+    bool retStopWrk2 = wrk2->stop(false);
     EXPECT_TRUE(retStopWrk2);
 
     cout << "stopping coordinator" << endl;
-    bool retStopCord = crd->stopCoordinator();
+    bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
 
@@ -154,15 +154,15 @@ TEST_F(UpdateTopologyRemoteTest, add_and_remove_path_with_own_id_and_self) {
     ASSERT_TRUE(retString3.find("2--1 [label=\"2\"]") == std::string::npos);
 
     cout << "stopping worker" << endl;
-    bool retStopWrk = wrk->stop();
+    bool retStopWrk = wrk->stop(false);
     EXPECT_TRUE(retStopWrk);
 
     cout << "stopping worker 2" << endl;
-    bool retStopWrk2 = wrk2->stop();
+    bool retStopWrk2 = wrk2->stop(false);
     EXPECT_TRUE(retStopWrk2);
 
     cout << "stopping coordinator" << endl;
-    bool retStopCord = crd->stopCoordinator();
+    bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
 

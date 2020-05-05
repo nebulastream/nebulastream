@@ -35,7 +35,6 @@ NodeEngine::NodeEngine() {
     NES_DEBUG("NodeEngine()")
     props = std::make_shared<NodeProperties>();
     isRunning = false;
-    forceStop = false;
 }
 
 NodeEngine::NodeEngine(string ip, uint16_t publish_port, uint16_t receive_port) {
@@ -48,12 +47,10 @@ NodeEngine::NodeEngine(string ip, uint16_t publish_port, uint16_t receive_port) 
 
     props = std::make_shared<NodeProperties>();
     isRunning = false;
-    forceStop = false;
 }
 
 NodeEngine::~NodeEngine() {
-    forceStop = true;
-    stop();
+    stop(true);
 }
 
 bool NodeEngine::deployQueryInNodeEngine(QueryExecutionPlanPtr qep) {
@@ -204,7 +201,7 @@ bool NodeEngine::start() {
     }
 }
 
-bool NodeEngine::stop() {
+bool NodeEngine::stop(bool forceStop) {
     //TODO: add check if still queries are running
     if (isRunning) {
         NES_DEBUG("NodeEngine:stop stop NodeEngine, undeploy " << qepToStatusMap.size() << " queries");

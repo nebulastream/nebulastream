@@ -37,11 +37,11 @@ TEST_F(MultiWorkerTest, start_stop_worker_coordinator_single) {
     cout << "worker1 started successfully" << endl;
 
     cout << "stopping worker" << endl;
-    bool retStopWrk1 = wrk1->stop();
+    bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
 
     cout << "stopping coordinator" << endl;
-    bool retStopCord = crd->stopCoordinator();
+    bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
 
@@ -67,15 +67,15 @@ TEST_F(MultiWorkerTest, start_stop_worker_coordinator) {
     cout << "worker2 started successfully" << endl;
 
     cout << "stopping worker" << endl;
-    bool retStopWrk1 = wrk1->stop();
+    bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
 
     cout << "stopping worker" << endl;
-    bool retStopWrk2 = wrk2->stop();
+    bool retStopWrk2 = wrk2->stop(false);
     EXPECT_TRUE(retStopWrk2);
 
     cout << "stopping coordinator" << endl;
-    bool retStopCord = crd->stopCoordinator();
+    bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
 
@@ -101,15 +101,15 @@ TEST_F(MultiWorkerTest, start_stop_coordinator_worker) {
     cout << "worker2 started successfully" << endl;
 
     cout << "stopping coordinator" << endl;
-    bool retStopCord = crd->stopCoordinator();
+    bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 
     cout << "stopping worker 1" << endl;
-    bool retStopWrk1 = wrk1->stop();
+    bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
 
     cout << "stopping worker 2" << endl;
-    bool retStopWrk2 = wrk2->stop();
+    bool retStopWrk2 = wrk2->stop(false);
     EXPECT_TRUE(retStopWrk2);
 }
 
@@ -142,13 +142,13 @@ TEST_F(MultiWorkerTest, start_connect_stop_worker_coordinator) {
     EXPECT_TRUE(retConWrk2);
     cout << "worker 2 connected " << endl;
 
-    bool retStopWrk1 = wrk1->stop();
+    bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
 
-    bool retStopWrk2 = wrk2->stop();
+    bool retStopWrk2 = wrk2->stop(false);
     EXPECT_TRUE(retStopWrk2);
 
-    bool retStopCord = crd->stopCoordinator();
+    bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
 
@@ -173,13 +173,13 @@ TEST_F(MultiWorkerTest, start_with_connect_stop_worker_coordinator) {
     EXPECT_TRUE(retStart2);
     cout << "worker2 started successfully" << endl;
 
-    bool retStopWrk1 = wrk1->stop();
+    bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
 
-    bool retStopWrk2 = wrk2->stop();
+    bool retStopWrk2 = wrk2->stop(false);
     EXPECT_TRUE(retStopWrk2);
 
-    bool retStopCord = crd->stopCoordinator();
+    bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
 
@@ -212,13 +212,13 @@ TEST_F(MultiWorkerTest, start_connect_stop_without_disconnect_worker_coordinator
     EXPECT_TRUE(retConWrk2);
     cout << "worker 2 started connected " << endl;
 
-    bool retStopCord = crd->stopCoordinator();
+    bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 
-    bool retStopWrk1 = wrk1->stop();
+    bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
 
-    bool retStopWrk2 = wrk2->stop();
+    bool retStopWrk2 = wrk2->stop(false);
     EXPECT_TRUE(retStopWrk2);
 }
 
@@ -237,7 +237,6 @@ TEST_F(MultiWorkerTest, multi_worker_test) {
         wPtrs.push_back(std::make_shared<NesWorker>());
         bool retStart = wPtrs[i]->start(/**blocking**/false, /**withConnect**/false,
                                                       port, "localhost");
-        sleep(1);
         EXPECT_TRUE(retStart);
 
     }
@@ -245,7 +244,6 @@ TEST_F(MultiWorkerTest, multi_worker_test) {
     //connect 10 worker
     for (size_t i = 0; i < numWorkers; i++) {
         cout << "connect worker" << i << endl;
-
         bool retConWrk = wPtrs[i]->connect();
         EXPECT_TRUE(retConWrk);
     }
@@ -254,20 +252,17 @@ TEST_F(MultiWorkerTest, multi_worker_test) {
     for (size_t i = 0; i < numWorkers; i++) {
         cout << "disconnect worker" << i << endl;
         bool retConWrk = wPtrs[i]->disconnect();
-        sleep(1);
         EXPECT_TRUE(retConWrk);
     }
 
     //stop 10 worker
     for (size_t i = 0; i < numWorkers; i++) {
         cout << "stop worker" << i << endl;
-        bool retConWrk = wPtrs[i]->stop();
+        bool retConWrk = wPtrs[i]->stop(false);
         EXPECT_TRUE(retConWrk);
-        sleep(1);
     }
 
-    sleep(3);
-    bool retStopCord = crd->stopCoordinator();
+    bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
 

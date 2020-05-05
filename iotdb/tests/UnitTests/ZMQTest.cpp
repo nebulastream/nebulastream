@@ -6,15 +6,9 @@
 #include <zmq.hpp>
 
 #include <API/Schema.hpp>
-#include <NodeEngine/BufferManager.hpp>
 #include <Util/Logger.hpp>
-#include <SourceSink/DataSink.hpp>
-#include <SourceSink/DataSource.hpp>
-#include <NodeEngine/TupleBuffer.hpp>
-#include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
 
-#include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 
 using namespace NES;
