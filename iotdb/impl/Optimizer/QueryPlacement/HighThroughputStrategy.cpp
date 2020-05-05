@@ -22,7 +22,7 @@ NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(QueryPtr inp
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
     // FIXME: current implementation assumes that we have only one source stream and therefore only one source operator.
-    const string streamName = inputQuery->getSourceStream()->getName();
+    const string streamName = queryPlan->getSourceStream()->getName();
 
     if (!sourceOperator) {
         NES_ERROR("HighThroughput: Unable to find the source operator.");
@@ -55,7 +55,7 @@ NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(QueryPtr inp
     fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr, nesTopologyPlan);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.
-    SchemaPtr schema = inputQuery->getSourceStream()->getSchema();
+    SchemaPtr schema = queryPlan->getSourceStream()->getSchema();
     addSystemGeneratedSourceSinkOperators(schema, nesExecutionPlanPtr);
 
     return nesExecutionPlanPtr;

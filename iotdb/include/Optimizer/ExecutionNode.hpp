@@ -70,7 +70,7 @@ class ExecutionNode {
     }
 
   private:
-    int id;
+    uint64_t id;
     std::string operatorName;
     std::string nodeName;
     OperatorPtr rootOperator;

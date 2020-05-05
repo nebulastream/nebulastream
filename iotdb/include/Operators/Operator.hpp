@@ -57,6 +57,20 @@ enum OperatorType {
     SAMPLE_OP
 };
 
+static std::map<OperatorType, std::string> operatorTypeToString{
+    {SOURCE_OP, "SOURCE"},
+    {FILTER_OP, "FILTER"},
+    {AGGREGATION_OP, "AGGREGATION"},
+    {SORT_OP, "SORT"},
+    {JOIN_OP, "JOIN"},
+    {SET_OP, "SET"},
+    {WINDOW_OP, "WINDOW"},
+    {KEYBY_OP, "KEYBY"},
+    {MAP_OP, "MAP"},
+    {SINK_OP, "SINK"},
+    {SAMPLE_OP, "SAMPLE"},
+};
+
 /**
  * @brief Keeping information if an operator is blocking or not.
  * This information is used during the placement operation.
