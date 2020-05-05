@@ -13,12 +13,12 @@ namespace NES {
 
 class QueryDeploymentTest : public testing::Test {
   public:
-    static void SetUpTestCase() {
+    void SetUp() {
         NES::setupLogging("QueryDeploymentTest.log", NES::LOG_DEBUG);
         NES_INFO("Setup QueryDeploymentTest test class.");
     }
 
-    static void TearDownTestCase() {
+    void TearDown() {
         std::cout << "Tear down QueryDeploymentTest class." << std::endl;
     }
 };
