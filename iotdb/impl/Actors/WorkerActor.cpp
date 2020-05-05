@@ -58,9 +58,7 @@ behavior WorkerActor::init() {
       }
       catch (const std::exception& e) {
           NES_ERROR("WorkerActor => error thrown in error handler:" << e.what())
-          assert(0);
-      }
-      assert(0);
+       }
     });
 
     return unconnected();
