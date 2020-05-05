@@ -22,7 +22,7 @@ NESExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(QueryPtr inputQuery
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
     //find the source Node
-    string streamName = inputQuery->getSourceStream()->getName();
+    string streamName = queryPlan->getSourceStream()->getName();
     const vector<NESTopologyEntryPtr>& sourceNodes = StreamCatalog::instance()
         .getSourceNodesForLogicalStream(streamName);
 
@@ -50,7 +50,7 @@ NESExecutionPlanPtr TopDownStrategy::initializeExecutionPlan(QueryPtr inputQuery
     fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr, nesTopologyPlanPtr);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.
-    SchemaPtr schema = inputQuery->getSourceStream()->getSchema();
+    SchemaPtr schema = queryPlan->getSourceStream()->getSchema();
     addSystemGeneratedSourceSinkOperators(schema, nesExecutionPlanPtr);
 
     return nesExecutionPlanPtr;

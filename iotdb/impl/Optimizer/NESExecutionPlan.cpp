@@ -1,5 +1,4 @@
 #include <Optimizer/NESExecutionPlan.hpp>
-
 #include <Optimizer/ExecutionGraph.hpp>
 #include <Util/Logger.hpp>
 #include <Topology/NESTopologySensorNode.hpp>
@@ -17,7 +16,7 @@ ExecutionNodePtr NESExecutionPlan::getRootNode() const {
 };
 
 ExecutionNodePtr NESExecutionPlan::createExecutionNode(std::string operatorName, std::string nodeName,
-                                                       NESTopologyEntryPtr nesNode, NodePtr executableOperator) {
+                                                       NESTopologyEntryPtr nesNode, OperatorPtr executableOperator) {
 
     NES_DEBUG(
         "NESExecutionPlan::createExecutionNode operatorName=" << operatorName << " nodeName=" << nodeName << " nesNode="

@@ -23,7 +23,7 @@ NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(QueryPtr inputQu
     const SourceLogicalOperatorNodePtr sourceOperator = queryPlan->getSourceOperators()[0];
 
     // FIXME: current implementation assumes that we have only one source stream and therefore only one source operator.
-    const std::string streamName = inputQuery->getSourceStream()->getName();
+    const std::string streamName = queryPlan->getSourceStream()->getName();
 
     if (!sourceOperator) {
         NES_THROW_RUNTIME_ERROR(    "LowLatency: Unable to find the source operator.");
@@ -55,7 +55,7 @@ NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(QueryPtr inputQu
     fillExecutionGraphWithTopologyInformation(nesExecutionPlanPtr, nesTopologyPlan);
 
     //FIXME: We are assuming that throughout the pipeline the schema would not change.
-    SchemaPtr schema = inputQuery->getSourceStream()->getSchema();
+    SchemaPtr schema = queryPlan->getSourceStream()->getSchema();
     addSystemGeneratedSourceSinkOperators(schema, nesExecutionPlanPtr);
 
     return nesExecutionPlanPtr;

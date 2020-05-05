@@ -44,9 +44,9 @@ bool ExecutionGraph::addVertex(ExecutionNodePtr ptr) {
     return true;
 };
 
-vector<ExecutionVertex> ExecutionGraph::getAllVertex() const {
+std::vector<ExecutionVertex> ExecutionGraph::getAllVertex() const {
 
-    vector<ExecutionVertex> result = {};
+    std::vector<ExecutionVertex> result;
 
     executionVertex_iterator vertex, vertex_end, next_vertex;
     boost::tie(vertex, vertex_end) = vertices(graph);
@@ -159,9 +159,9 @@ const ExecutionEdge* ExecutionGraph::getEdge(int search_id) const {
     return nullptr;
 };
 
-vector<ExecutionEdge> ExecutionGraph::getAllEdges() const {
+std::vector<ExecutionEdge> ExecutionGraph::getAllEdges() const {
 
-    vector<ExecutionEdge> result = {};
+    std::vector<ExecutionEdge> result;
 
     executionEdge_iterator edge, edge_end, next_edge;
     boost::tie(edge, edge_end) = edges(graph);
@@ -227,7 +227,7 @@ const std::vector<ExecutionEdge> ExecutionGraph::getAllEdgesToNode(ExecutionNode
     return result;
 }
 
-const vector<ExecutionEdge> ExecutionGraph::getAllEdgesFromNode(NES::ExecutionNodePtr srcNode) const {
+const std::vector<ExecutionEdge> ExecutionGraph::getAllEdgesFromNode(NES::ExecutionNodePtr srcNode) const {
     std::vector<ExecutionEdge> result = {};
 
     executionEdge_iterator edge, edge_end, next_edge;
