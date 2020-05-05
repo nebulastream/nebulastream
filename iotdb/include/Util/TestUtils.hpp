@@ -16,12 +16,13 @@ class TestUtils {
         size_t now = time(0);
 
         while (time(0) < now + timeoutInSec) {
-            cout << "check result" << endl;
+            cout << "check result NodeEnginePtr" << endl;
             if (ptr->getNumberOfProcessedBuffer(queryId) == expectedResult
                 && ptr->getNumberOfProcessedTasks(queryId) == expectedResult) {
                 cout << "results are correct" << endl;
                 return true;
             }
+            sleep(1);
         }
         cout << "expected results are not reached after timeout" << endl;
         return false;
@@ -32,12 +33,13 @@ class TestUtils {
         size_t now = time(0);
 
         while (time(0) < now + timeoutInSec) {
-            cout << "check result" << endl;
+            cout << "check result NesWorkerPtr" << endl;
             if (ptr->getNumberOfProcessedBuffer(queryId) == expectedResult
                 && ptr->getNumberOfProcessedTasks(queryId) == expectedResult) {
                 cout << "results are correct" << endl;
                 return true;
             }
+            sleep(1);
         }
         cout << "expected results are not reached after timeout" << endl;
         return false;
@@ -48,12 +50,13 @@ class TestUtils {
         size_t now = time(0);
 
         while (time(0) < now + timeoutInSec) {
-            cout << "check result" << endl;
+            cout << "check result NesCoordinatorPtr" << endl;
             if (ptr->getNumberOfProcessedBuffer(queryId) == expectedResult
                 && ptr->getNumberOfProcessedTasks(queryId) == expectedResult) {
                 cout << "results are correct" << endl;
                 return true;
             }
+            sleep(1);
         }
         cout << "expected results are not reached after timeout" << endl;
         return false;

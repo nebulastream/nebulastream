@@ -208,9 +208,9 @@ target_link_libraries(query-deployment-test iotdb ${GTEST_LIBRARIES})
 add_test(NAME query-deployment-test COMMAND query-deployment-test)
 
 ### ContiniousSourceTest ###
-#add_executable(continious-source-test "Integration/ContiniousSourceTest.cpp")
-#target_link_libraries(continious-source-test iotdb ${GTEST_LIBRARIES})
-#add_test(NAME continious-source-test COMMAND continious-source-test)
+add_executable(continious-source-test "Integration/ContiniousSourceTest.cpp")
+target_link_libraries(continious-source-test iotdb ${GTEST_LIBRARIES})
+add_test(NAME continious-source-test COMMAND continious-source-test)
 
 ### Catalog Remote Tests ###
 add_executable(stream-catalog-remote-test "Integration/StreamCatalogRemoteTest.cpp")
