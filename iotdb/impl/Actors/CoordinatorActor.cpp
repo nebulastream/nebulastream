@@ -76,10 +76,8 @@ behavior CoordinatorActor::init() {
           if (err) { std::rethrow_exception(err); }
       }
       catch (const std::exception& e) {
-          NES_ERROR("CoordinatorActor => error thrown in error handler:" << e.what())
-          assert(0);
+          NES_ERROR("CoordinatorActor => error thrown in set_exception_handler:" << e.what())
       }
-      assert(0);
     });
 
     return running();

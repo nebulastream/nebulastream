@@ -44,7 +44,6 @@ bool NesCoordinator::undeployQuery(const string& queryId) {
 
 bool NesCoordinator::stopCoordinator(bool force) {
     if (!stopped) {
-
         NES_DEBUG("NesCoordinator: stop")
 
         NES_DEBUG("NesCoordinator: stopping worker actor")
@@ -80,7 +79,7 @@ bool NesCoordinator::stopCoordinator(bool force) {
     }
     else
     {
-        NES_DEBUG("NesCoordinator: already stoppend")
+        NES_DEBUG("NesCoordinator: already stopped")
         return true;
     }
 }
@@ -123,8 +122,8 @@ uint16_t NesCoordinator::startCoordinator(bool blocking) {
     workerCfg.host = "localhost";
     size_t ts = time(0);
 
-    workerCfg.publish_port = workerCfg.publish_port - 10 + ts*123%10000;;
-    workerCfg.receive_port = workerCfg.receive_port - 12 + ts*321%10000;;
+    workerCfg.publish_port = workerCfg.publish_port - 10 + ts*123 * rand() %10000;;
+    workerCfg.receive_port = workerCfg.receive_port - 12 + ts*321 * rand() %10000;;
     workerCfg.printCfg();
 
     actorSystemWorker = new actor_system{workerCfg};
