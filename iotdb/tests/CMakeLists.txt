@@ -126,11 +126,6 @@ add_executable(coordinator-service-tests "UnitTests/Services/CoordinatorServiceT
 target_link_libraries(coordinator-service-tests iotdb ${GTEST_LIBRARIES})
 add_test(NAME coordinator-service-tests COMMAND coordinator-service-tests)
 
-### Actors Tests ### TODO will be reworked in another change
-#add_executable(actors-cli-tests "UnitTests/ActorsCliTest.cpp")
-#target_link_libraries(actors-cli-tests iotdb ${GTEST_LIBRARIES})
-#add_test(NAME actors-cli-tests COMMAND actors-cli-tests)
-
 ### Stream Catalog Tests ###
 add_executable(stream-catalog-test "UnitTests/StreamCatalogTest.cpp")
 target_link_libraries(stream-catalog-test iotdb ${GTEST_LIBRARIES})
