@@ -344,13 +344,6 @@ void NodeEngine::setReceivePort(uint16_t receive_port) {
     receivePort = receive_port;
 }
 
-std::string NodeEngine::getStatisticsAsString()
-{
-    stringstream ss;
-    ss << queryManager->getQueryManagerStatistics();
-    return ss.str();
-}
-
 QueryStatisticsPtr NodeEngine::getQueryStatistics(std::string queryId)
 {
     QueryExecutionPlanPtr qep = queryIdToQepMap[queryId];
