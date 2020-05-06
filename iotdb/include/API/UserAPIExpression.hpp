@@ -49,12 +49,11 @@ typedef std::shared_ptr<Field> FieldPtr;
 
 class UserAPIExpression {
   public:
-    virtual ~UserAPIExpression(){};
+    virtual ~UserAPIExpression() {};
     virtual const ExpressionStatmentPtr generateCode(GeneratedCodePtr& code) const = 0;
     virtual const std::string toString() const = 0;
     virtual UserAPIExpressionPtr copy() const = 0;
     virtual bool equals(const UserAPIExpression& rhs) const = 0;
-
   private:
     friend class boost::serialization::access;
 
@@ -79,7 +78,7 @@ class Predicate : public UserAPIExpression {
     virtual const std::string toString() const override;
     virtual UserAPIExpressionPtr copy() const override;
     bool equals(const UserAPIExpression& rhs) const override;
-
+    BinaryOperatorType getOperatorType() const;
   private:
     Predicate() = default;
     BinaryOperatorType _op;
@@ -90,15 +89,15 @@ class Predicate : public UserAPIExpression {
 
     friend class boost::serialization::access;
 
-    template<class Archive>
-    void serialize(Archive& ar, unsigned) {
-        ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(UserAPIExpression)
-            & BOOST_SERIALIZATION_NVP(_op)
-            & BOOST_SERIALIZATION_NVP(_left)
-            & BOOST_SERIALIZATION_NVP(_right)
-            & BOOST_SERIALIZATION_NVP(_bracket)
-            & BOOST_SERIALIZATION_NVP(_functionCallOverload);
-    }
+  template<class Archive>
+  void serialize(Archive &ar, unsigned) {
+    ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(UserAPIExpression)
+        & BOOST_SERIALIZATION_NVP(_op)
+        & BOOST_SERIALIZATION_NVP(_left)
+        & BOOST_SERIALIZATION_NVP(_right)
+        & BOOST_SERIALIZATION_NVP(_bracket)
+        & BOOST_SERIALIZATION_NVP(_functionCallOverload);
+  }
 };
 
 class PredicateItem : public UserAPIExpression {
@@ -131,7 +130,6 @@ class PredicateItem : public UserAPIExpression {
     AttributeFieldPtr getAttributeField() {
         return this->_attribute;
     };
-
   private:
     PredicateItem() = default;
     PredicateItemMutation _mutation;
@@ -152,7 +150,6 @@ class PredicateItem : public UserAPIExpression {
 class Field : public PredicateItem {
   public:
     Field(AttributeFieldPtr name);
-
   private:
     std::string _name;
 };

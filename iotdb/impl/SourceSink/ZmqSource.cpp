@@ -134,8 +134,17 @@ bool ZmqSource::disconnect() {
     }
     return !connected;
 }
+
 SourceType ZmqSource::getType() const { return ZMQ_SOURCE; }
 
-}// namespace NES
+const std::string& ZmqSource::getHost() const {
+    return host;
+}
+
+uint16_t ZmqSource::getPort() const {
+    return port;
+}
+
+} // namespace NES
 
 BOOST_CLASS_EXPORT(NES::ZmqSource);

@@ -32,6 +32,14 @@ class KafkaSource : public DataSource {
      */
     const std::string toString() const override;
 
+    const std::string& getBrokers() const;
+    const std::string& getTopic() const;
+    const std::string& getGroupId() const;
+    bool isAutoCommit() const;
+    const cppkafka::Configuration& getConfig() const;
+    const std::chrono::milliseconds& getKafkaConsumerTimeout() const;
+    const std::unique_ptr<cppkafka::Consumer>& getConsumer() const;
+
   private:
     KafkaSource() = default;
 
@@ -55,6 +63,8 @@ class KafkaSource : public DataSource {
     std::chrono::milliseconds kafkaConsumerTimeout;
     std::unique_ptr<cppkafka::Consumer> consumer;
 };
-}// namespace NES
+
+typedef std::shared_ptr<KafkaSource> KafkaSourcePtr;
+} // namespace NES
 
 #endif// KAFKASOURCE_HPP

@@ -104,6 +104,9 @@ bool Predicate::equals(const UserAPIExpression& _rhs) const {
 
 PredicateItem::PredicateItem(AttributeFieldPtr attribute) : _mutation(PredicateItemMutation::ATTRIBUTE),
                                                             _attribute(attribute) {}
+BinaryOperatorType Predicate::getOperatorType() const {
+    return _op;
+}
 
 PredicateItem::PredicateItem(ValueTypePtr value) : _mutation(PredicateItemMutation::VALUE),
                                                    _value(value) {}

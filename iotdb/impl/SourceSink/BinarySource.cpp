@@ -68,4 +68,8 @@ void BinarySource::fillBuffer(TupleBuffer& buf) {
 SourceType BinarySource::getType() const {
     return BINARY_SOURCE;
 }
-}// namespace NES
+
+const std::string& BinarySource::getFilePath() const {
+    return file_path;
+}
+}  // namespace NES

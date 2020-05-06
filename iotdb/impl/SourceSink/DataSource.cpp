@@ -169,4 +169,12 @@ std::string DataSource::getSourceSchemaAsString() { return schema->toString(); }
 
 const std::string& DataSource::getSourceId() const { return this->sourceId; }
 
-}// namespace NES
+size_t DataSource::getNumBuffersToProcess() const {
+    return numBuffersToProcess;
+}
+
+size_t DataSource::getGatheringInterval() const {
+    return gatheringInterval;
+}
+
+} // namespace NES
