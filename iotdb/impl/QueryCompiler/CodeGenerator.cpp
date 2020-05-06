@@ -153,8 +153,8 @@ std::string toString(TupleBuffer& buffer, SchemaPtr schema) {
     str << "+----------------------------------------------------+" << std::endl;
 
     auto buf = buffer.getBufferAs<char>();
-    for (uint32_t i = 0; i < buffer.getNumberOfTuples() * buffer.getTupleSizeInBytes();
-         i += buffer.getTupleSizeInBytes()) {
+    for (uint32_t i = 0; i < buffer.getNumberOfTuples()*schema->getSchemaSizeInBytes();
+         i += schema->getSchemaSizeInBytes()) {
         str << "|";
         for (uint32_t s = 0; s < offsets.size(); ++s) {
             void* value = &buf[i + offsets[s]];
