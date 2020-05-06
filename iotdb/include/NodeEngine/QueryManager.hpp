@@ -146,7 +146,7 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
     void cleanup();
     void cleanupUnsafe();
 
-    std::deque<TaskPtr> task_queue;
+    std::deque<TaskPtr> taskQueue;
     ThreadPoolPtr threadPool;
 
     std::map<std::string, std::unordered_set<QueryExecutionPlanPtr>> sourceIdToQueryMap;

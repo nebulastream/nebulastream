@@ -124,6 +124,9 @@ class NesWorker {
     QueryStatisticsPtr getQueryStatistics(std::string queryId);
 
   private:
+
+    size_t getRandomPort(size_t base);
+
     WorkerActor* wrk;
     bool connected;
     bool withRegisterStream;
@@ -137,7 +140,6 @@ class NesWorker {
     uint16_t coordinatorPort;
 
     NESNodeType type;
-
     bool stopped;
 };
 typedef std::shared_ptr<NesWorker> NesWorkerPtr;
