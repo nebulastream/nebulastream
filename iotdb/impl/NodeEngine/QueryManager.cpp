@@ -261,32 +261,20 @@ void QueryManager::completedWork(TaskPtr task) {
     NES_INFO("Complete Work for task" << task)
     if(queryToStatisticsMap.count(task->getQep()) == 0)
     {
-        assert(0);
+        NES_THROW_RUNTIME_ERROR("QueryManager::completedWork tries to update statistics for a non existing query");
     }
-    queryToStatisticsMap[task->getQep()]->processedTasks++;
-    queryToStatisticsMap[task->getQep()]->processedBuffers++;
-    queryToStatisticsMap[task->getQep()]->processedTuple += task->getNumberOfTuples();
+    queryToStatisticsMap[task->getQep()]->incProcessedTasks();
+    queryToStatisticsMap[task->getQep()]->incProcessedBuffers();
+    queryToStatisticsMap[task->getQep()]->incProcessedTuple(task->getNumberOfTuples());
 
     task.reset();
 }
 
-size_t QueryManager::getNumberOfProcessedBuffer(QueryExecutionPlanPtr qep)
+QueryStatisticsPtr QueryManager::getQueryStatistics(QueryExecutionPlanPtr qep)
 {
-    NES_DEBUG("QueryManager::getNumberOfProcessedBuffer: check buffer proc cnt for qep=" << qep)
-    size_t cnt = queryToStatisticsMap[qep]->processedBuffers;
-    NES_DEBUG("QueryManager::getNumberOfProcessedBuffer: count is=" << cnt)
-    return cnt;
+    NES_DEBUG("QueryManager::getQueryStatistics: for qep=" << qep)
+    return queryToStatisticsMap[qep];
 }
-
-size_t QueryManager::getNumberOfProcessedTasks(QueryExecutionPlanPtr qep)
-{
-    NES_DEBUG("QueryManager::getNumberOfProcessedTasks: check buffer proc cnt for qep=" << qep)
-    size_t cnt = queryToStatisticsMap[qep]->processedTasks;
-    NES_DEBUG("QueryManager::getNumberOfProcessedTasks: count is=" << cnt)
-    return cnt;
-}
-
-
 
 
 std::string QueryManager::getQueryManagerStatistics() {
@@ -295,9 +283,9 @@ std::string QueryManager::getQueryManagerStatistics() {
     for (auto& qep : queryToStatisticsMap)
     {
         ss << "Query=" << qep.first;
-        ss << "\t processedTasks =" << qep.second->processedTasks;
-        ss << "\t processedTuple =" << qep.second->processedTuple;
-        ss << "\t processedBuffers =" << qep.second->processedBuffers;
+        ss << "\t processedTasks =" << qep.second->getProcessedTasks();
+        ss << "\t processedTuple =" << qep.second->getProcessedTuple();
+        ss << "\t processedBuffers =" << qep.second->getProcessedBuffers();
 
         ss << "Source Statistics:";
         auto sources = qep.first->getSources();

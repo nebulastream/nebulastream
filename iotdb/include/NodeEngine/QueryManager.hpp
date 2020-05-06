@@ -17,20 +17,9 @@
 #include <SourceSink/DataSource.hpp>
 #include <Windows/WindowHandler.hpp>
 
+#include <NodeEngine/QueryStatistics.hpp>
 namespace NES {
 
-struct QueryStatistics
-{
-    QueryStatistics() : processedTasks(0),
-                        processedTuple(0),
-                        processedBuffers(0)
-    {};
-
-    std::atomic<size_t> processedTasks;
-    std::atomic<size_t> processedTuple;
-    std::atomic<size_t> processedBuffers;
-};
-typedef std::shared_ptr<QueryStatistics> QueryStatisticsPtr;
 
 class TupleBuffer;
 /**
@@ -129,8 +118,12 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
 
     ~QueryManager();
 
-    size_t getNumberOfProcessedBuffer(QueryExecutionPlanPtr qep);
-    size_t getNumberOfProcessedTasks(QueryExecutionPlanPtr qep);
+    /**
+     * @brief method to return the query statistics
+     * @param qep of the particular query
+     * @return
+     */
+    QueryStatisticsPtr getQueryStatistics(QueryExecutionPlanPtr qep);
 
   private:
     friend class ThreadPool;

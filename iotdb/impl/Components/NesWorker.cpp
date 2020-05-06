@@ -177,13 +177,8 @@ bool NesWorker::removeParent(std::string parentId) {
     return success;
 }
 
-size_t NesWorker::getNumberOfProcessedBuffer(std::string queryId) {
-    return wrk->getNumberOfProcessedBuffer(queryId);
+QueryStatisticsPtr NesWorker::getQueryStatistics(std::string queryId) {
+    return wrk->getQueryStatistics(queryId);
 }
-
-size_t NesWorker::getNumberOfProcessedTasks(std::string queryId) {
-    return wrk->getNumberOfProcessedTasks(queryId);
-}
-
 
 }

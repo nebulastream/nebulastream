@@ -203,26 +203,6 @@ TEST_F(QueryExecutionTest, DISABLED_windowQuery) {
 
     nodeEngine->registerQueryInNodeEngine(plan);
     nodeEngine->startQuery("1");
-    //TODO: please fix me
-//    nodeEngine->getQueryManager()->registerQuery(plan);
-//    plan->setup();
-//    plan->start();
-
-    // The plan should have one pipeline
-//    EXPECT_EQ(plan->numberOfPipelineStages(), 2);
-//    // TODO switch to event time if that is ready to remove sleep
-//    auto memoryLayout = createRowLayout(testSchema);
-//    auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-//    fillBuffer(buffer, memoryLayout);
-//    // TODO do not rely on sleeps
-//    // ingest test data
-//    for (int i = 0; i < 10; i++) {
-//        plan->executeStage(0, buffer);
-//        size_t proc = plan->getQueryManager()->getNumberOfProcessedBuffer(plan);
-//        cout << " proc=" << proc << endl;
-//    }
-//    testSink->completed.get_future().get();
-//    plan->stop();
 
     auto& resultBuffer = testSink->get(2); // TODO why the 2nd buffer?
     // The output buffer should contain 5 tuple;

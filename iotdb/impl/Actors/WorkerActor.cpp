@@ -461,12 +461,8 @@ behavior WorkerActor::running() {
     NES_DEBUG("WorkerActor::running end running")
 }
 
-size_t WorkerActor::getNumberOfProcessedBuffer(std::string queryId) {
-    return this->state.nodeEngine->getNumberOfProcessedBuffer(queryId);
+QueryStatisticsPtr WorkerActor::getQueryStatistics(std::string queryId)
+{
+    return this->state.nodeEngine->getQueryStatistics(queryId);
 }
-
-size_t WorkerActor::getNumberOfProcessedTasks(std::string queryId) {
-    return this->state.nodeEngine->getNumberOfProcessedTasks(queryId);
-}
-
 }

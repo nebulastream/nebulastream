@@ -20,7 +20,7 @@ namespace NES {
 // the client queues pending tasks
 struct WorkerState {
     strong_actor_ptr current_server;
-    std::unique_ptr<NodeEngine> nodeEngine;
+    std::shared_ptr<NodeEngine> nodeEngine;
 };
 
 /**
@@ -129,19 +129,13 @@ class WorkerActor : public stateful_actor<WorkerState> {
      */
     bool shutdown(bool force);
 
-    /**
-     * @brief method to get the number of buffers processed up to now
-    * @param queryId
-    * @return number of buffers
-    */
-    size_t getNumberOfProcessedBuffer(std::string queryId);
 
     /**
-    * @brief method to get the number of tasks processed up to now
-    * @param queryId
-    * @return number of tasks
+    * @brief method to return the query statistics
+    * @param id of the query
+    * @return queryStatistics
     */
-    size_t getNumberOfProcessedTasks(std::string queryId);
+    QueryStatisticsPtr getQueryStatistics(std::string queryId);
 
   private:
     //states of the actor
