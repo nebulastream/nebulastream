@@ -47,4 +47,9 @@ void SenseSource::fillBuffer(TupleBuffer& buf) {
 SourceType SenseSource::getType() const {
     return SENSE_SOURCE;
 }
-}// namespace NES
+
+const string& SenseSource::getUdsf() const {
+    return udsf;
+}
+
+}  // namespace NES

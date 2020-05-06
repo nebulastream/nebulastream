@@ -145,6 +145,9 @@ class DataSource {
     void setQueryManager(QueryManagerPtr queryManager);
     void setBufferManger(BufferManagerPtr bufferManager);
 
+    size_t getNumBuffersToProcess() const;
+    size_t getGatheringInterval() const;
+
   protected:
     /**
      * @brief Internal protected constructor without schema

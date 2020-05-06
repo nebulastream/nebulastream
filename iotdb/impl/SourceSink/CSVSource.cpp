@@ -114,4 +114,12 @@ void CSVSource::fillBuffer(TupleBuffer& buf) {
 SourceType CSVSource::getType() const {
     return CSV_SOURCE;
 }
-}// namespace NES
+
+const std::string& CSVSource::getFilePath() const {
+    return filePath;
+}
+
+const std::string& CSVSource::getDelimiter() const {
+    return delimiter;
+}
+}  // namespace NES

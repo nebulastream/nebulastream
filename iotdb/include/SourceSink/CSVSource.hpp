@@ -44,7 +44,12 @@ class CSVSource : public DataSource {
      * @return returns string describing the binary source
      */
     const std::string toString() const;
+
     SourceType getType() const override;
+
+    const std::string& getFilePath() const;
+
+    const std::string& getDelimiter() const;
 
   private:
     CSVSource();
@@ -69,7 +74,9 @@ class CSVSource : public DataSource {
         ar& generatedBuffers;
     }
 };
-}// namespace NES
+
+typedef std::shared_ptr<CSVSource> CSVSourcePtr;
+}  // namespace NES
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>

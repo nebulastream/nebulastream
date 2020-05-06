@@ -43,6 +43,8 @@ class BinarySource : public DataSource {
 
     SourceType getType() const override;
 
+    const std::string& getFilePath() const;
+
   private:
     //this one only required for serialization
     BinarySource();
@@ -68,7 +70,10 @@ class BinarySource : public DataSource {
         ar& generatedBuffers;
     }
 };
-}// namespace NES
+
+typedef std::shared_ptr<BinarySource> BinarySourcePtr;
+
+}  // namespace NES
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>

@@ -20,7 +20,10 @@ class SenseSource : public DataSource {
    * @param schema of the source
    * @param udfs to apply
    */
-    SenseSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& udfs);
+    SenseSource(SchemaPtr schema,
+                BufferManagerPtr bufferManager,
+                QueryManagerPtr queryManager,
+                const std::string& udfs);
 
     /**
    * @brief override the receiveData method for the source
@@ -35,31 +38,34 @@ class SenseSource : public DataSource {
     void fillBuffer(TupleBuffer&);
 
     /**
-   * @brief override the toString method for the csv source
-   * @return returns string describing the binary source
-   */
+     * @brief override the toString method for the csv source
+     * @return returns string describing the binary source
+     */
     const std::string toString() const;
+
     SourceType getType() const override;
 
-    void setUdsf(std::string udsf);
-
+    const std::string& getUdsf() const;
   private:
     SenseSource();
 
     std::string udsf;
     /**
-   * @brief method for serialization, all listed variable below are added to the
-   * serialization/deserialization process
-   */
+     * @brief method for serialization, all listed variable below are added to the
+     * serialization/deserialization process
+     */
     friend class boost::serialization::access;
     template<class Archive>
     void serialize(Archive& ar,
                    const unsigned int version) {
-        ar& boost::serialization::base_object<DataSource>(*this);
-        ar& udsf;
+        ar & boost::serialization::base_object<DataSource>(*this);
+        ar & udsf;
     }
 };
-}// namespace NES
+
+typedef std::shared_ptr<SenseSource> SenseSourcePtr;
+
+}  // namespace NES
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>

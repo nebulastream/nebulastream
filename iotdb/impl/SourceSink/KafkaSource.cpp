@@ -97,5 +97,33 @@ void KafkaSource::_connect() {
 
 SourceType KafkaSource::getType() const { return KAFKA_SOURCE; }
 
-}// namespace NES
+const std::string& KafkaSource::getBrokers() const {
+    return brokers;
+}
+
+const std::string& KafkaSource::getTopic() const {
+    return topic;
+}
+
+const std::string& KafkaSource::getGroupId() const {
+    return groupId;
+}
+
+bool KafkaSource::isAutoCommit() const {
+    return autoCommit;
+}
+
+const cppkafka::Configuration& KafkaSource::getConfig() const {
+    return config;
+}
+
+const std::chrono::milliseconds& KafkaSource::getKafkaConsumerTimeout() const {
+    return kafkaConsumerTimeout;
+}
+
+const std::unique_ptr<cppkafka::Consumer>& KafkaSource::getConsumer() const {
+    return consumer;
+}
+
+} // namespace NES
 BOOST_CLASS_EXPORT(NES::KafkaSource);
