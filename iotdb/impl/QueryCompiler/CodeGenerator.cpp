@@ -354,19 +354,49 @@ bool CCodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContext
         // var_decls.push_back(*var_decl);
         // write_result_tuples.push_back(VarRef(var_decl_result_tuple)[VarRef(*(context->code->var_decl_id))].assign(VarRef(var_decl_result_tuple)[VarRef(*(context->code->var_decl_id))]).copy());
     }
-    // increase number of result tuples in loop body.
-    context->code->currentCodeInsertionPoint->addStatement((++VarRef(context->code->varDeclarationNumberOfResultTuples)).copy());
     auto setNumberOfTupleFunctionCall = FunctionCallStatement("setNumberOfTuples");
     setNumberOfTupleFunctionCall.addParameter(VarRef(context->code->varDeclarationNumberOfResultTuples));
-
     /* set number of output tuples to result buffer */
     context->code->cleanupStmts.push_back(
         VarRef(context->code->varDeclarationResultBuffer).accessRef(setNumberOfTupleFunctionCall).copy());
-
     auto emitTupleBuffer = FunctionCallStatement("emitBuffer");
     emitTupleBuffer.addParameter(VarRef(context->code->varDeclarationResultBuffer));
     context->code->cleanupStmts.push_back(
         VarRef(context->code->varDeclarationExecutionContext).accessRef(emitTupleBuffer).copy());
+
+    // increase number of result tuples in loop body.
+
+
+
+    auto getBufferSizeFunctionCall = FunctionCallStatement("getBufferSize");
+    auto bufferSizeDeclaration = VariableDeclaration::create(createDataType(INT64),"bufferSize");
+    context->code->currentCodeInsertionPoint->addStatement((VarDeclStatement(bufferSizeDeclaration).assign(VarRef(context->code->varDeclarationResultBuffer).accessRef(getBufferSizeFunctionCall))).copy());
+    auto resultTupleSize = context->getResultSchema()->getSchemaSizeInBytes();
+    auto maxTupleDeclaration = VariableDeclaration::create(createDataType(INT64),"maxTuple");
+    context->code->currentCodeInsertionPoint->addStatement((VarDeclStatement(maxTupleDeclaration).assign(VarRef(bufferSizeDeclaration) / Constant(createBasicTypeValue(INT64, std::to_string(resultTupleSize))))).copy());
+    auto ifStatement = IF(VarRef(maxTupleDeclaration)<(VarRef(context->code->varDeclarationNumberOfResultTuples)+Constant(createBasicTypeValue(INT8,"1"))));
+    auto thenStatement = ifStatement.getCompoundStatement();
+    thenStatement->addStatement(
+        VarRef(context->code->varDeclarationResultBuffer).accessRef(setNumberOfTupleFunctionCall).copy());
+    thenStatement->addStatement(VarRef(context->code->varDeclarationExecutionContext).accessRef(emitTupleBuffer).copy());
+    context->code->currentCodeInsertionPoint->addStatement(ifStatement.createCopy());
+
+    auto allocateTupleBuffer = FunctionCallStatement("allocateTupleBuffer");
+    /*  tuples = (InputTuple *)input_buffer.getBuffer()*/
+
+    thenStatement->addStatement(
+        VarRef(context->code->varDeclarationResultBuffer).assign(VarRef(context->code->varDeclarationExecutionContext).accessRef(
+            allocateTupleBuffer)).copy());
+    thenStatement->addStatement(
+        VarRef(context->code->varDeclarationNumberOfResultTuples).assign(Constant(createBasicTypeValue(INT64, "0"))).copy());
+
+    thenStatement->addStatement(
+        VarRef(varDeclResultTuple)
+            .assign(TypeCast(
+                VarRefStatement(context->code->varDeclarationResultBuffer).accessRef(context->code->tupleBufferGetBufferCall),
+                createPointerDataType(createUserDefinedType(structDeclarationResultTuple))))
+            .copy());
+    context->code->currentCodeInsertionPoint->addStatement((++VarRef(context->code->varDeclarationNumberOfResultTuples)).copy());
     return true;
 }
 
