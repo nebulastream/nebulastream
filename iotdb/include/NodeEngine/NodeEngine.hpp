@@ -165,21 +165,14 @@ class NodeEngine {
      * @brief method to return statistics to the user
      * @return
      */
-    std::string getStatistics();
+    std::string getStatisticsAsString();
 
     /**
-     * @brief method to get the number of buffers processed up to now
-     * @param queryId
-     * @return number of buffers
-     */
-    size_t getNumberOfProcessedBuffer(std::string queryId);
-
-    /**
-  * @brief method to get the number of tasks processed up to now
-  * @param queryId
-  * @return number of tasks
-  */
-    size_t getNumberOfProcessedTasks(std::string queryId);
+    * @brief method to return the query statistics
+    * @param id of the query
+    * @return queryStatistics
+    */
+    QueryStatisticsPtr getQueryStatistics(std::string queryId);
 
   private:
     NodePropertiesPtr props;

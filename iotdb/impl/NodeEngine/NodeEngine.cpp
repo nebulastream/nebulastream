@@ -344,14 +344,14 @@ void NodeEngine::setReceivePort(uint16_t receive_port) {
     receivePort = receive_port;
 }
 
-std::string NodeEngine::getStatistics()
+std::string NodeEngine::getStatisticsAsString()
 {
     stringstream ss;
     ss << queryManager->getQueryManagerStatistics();
     return ss.str();
 }
 
-size_t NodeEngine::getNumberOfProcessedBuffer(std::string queryId)
+QueryStatisticsPtr NodeEngine::getQueryStatistics(std::string queryId)
 {
     QueryExecutionPlanPtr qep = queryIdToQepMap[queryId];
     if(!qep)
@@ -359,19 +359,9 @@ size_t NodeEngine::getNumberOfProcessedBuffer(std::string queryId)
         NES_ERROR("QueryManager::getNumberOfProcessedBuffer: query does not exists");
         throw Exception("Query does not exists");
     }
-    return queryManager->getNumberOfProcessedBuffer(qep);
+    return queryManager->getQueryStatistics(qep);
 }
 
-size_t NodeEngine::getNumberOfProcessedTasks(std::string queryId)
-{
-    QueryExecutionPlanPtr qep = queryIdToQepMap[queryId];
-    if(!qep)
-    {
-        NES_ERROR("QueryManager::getNumberOfProcessedTasks: query does not exists");
-        throw Exception("Query does not exists");
-    }
-    return queryManager->getNumberOfProcessedTasks(qep);
-}
 
 
 }

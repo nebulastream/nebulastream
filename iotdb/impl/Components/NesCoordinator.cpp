@@ -89,6 +89,11 @@ void NesCoordinator::startCoordinator(bool blocking, uint16_t port) {
     startCoordinator(blocking);
 }
 
+size_t NesCoordinator::getRandomPort(size_t base)
+{
+    //TODO will be removed once the new network stack is in place
+    return base - 12 + time(0) *321 * rand() %10000;
+}
 uint16_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator start")
 
@@ -120,10 +125,10 @@ uint16_t NesCoordinator::startCoordinator(bool blocking) {
     NES_DEBUG("NesCoordinator starting worker actor")
     workerCfg.load<io::middleman>();
     workerCfg.host = "localhost";
-    size_t ts = time(0);
 
-    workerCfg.publish_port = workerCfg.publish_port - 10 + ts*123 * rand() %10000;;
-    workerCfg.receive_port = workerCfg.receive_port - 12 + ts*321 * rand() %10000;;
+    workerCfg.publish_port = getRandomPort(workerCfg.publish_port);
+    workerCfg.receive_port = getRandomPort(workerCfg.receive_port);
+
     workerCfg.printCfg();
 
     actorSystemWorker = new actor_system{workerCfg};
@@ -181,13 +186,8 @@ void NesCoordinator::setServerIp(std::string serverIp) {
     this->serverIp = serverIp;
 }
 
-size_t NesCoordinator::getNumberOfProcessedBuffer(std::string queryId) {
-    return wrkPtr->getNumberOfProcessedBuffer(queryId);
+QueryStatisticsPtr NesCoordinator::getQueryStatistics(std::string queryId) {
+    return wrkPtr->getQueryStatistics(queryId);
 }
-
-size_t NesCoordinator::getNumberOfProcessedTasks(std::string queryId) {
-    return wrkPtr->getNumberOfProcessedTasks(queryId);
-}
-
 
 }

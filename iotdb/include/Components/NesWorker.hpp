@@ -117,18 +117,11 @@ class NesWorker {
     bool removeParent(std::string parentId);
 
     /**
-    * @brief method to get the number of buffers processed up to now
-    * @param queryId
-    * @return number of buffers
+    * @brief method to return the query statistics
+    * @param id of the query
+    * @return queryStatistics
     */
-    size_t getNumberOfProcessedBuffer(std::string queryId);
-
-    /**
-    * @brief method to get the number of tasks processed up to now
-    * @param queryId
-    * @return number of tasks
-      */
-    size_t getNumberOfProcessedTasks(std::string queryId);
+    QueryStatisticsPtr getQueryStatistics(std::string queryId);
 
   private:
     WorkerActor* wrk;
