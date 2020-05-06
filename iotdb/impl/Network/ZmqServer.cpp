@@ -53,7 +53,7 @@ ZmqServer::~ZmqServer() {
 
 void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& startPromise) {
     // option of linger time until port is closed
-    int linger = 100;
+    int linger = 0;
     zmq::socket_t frontendSocket(*zmqContext, zmq::socket_type::router);
     zmq::socket_t dispatcherSocket(*zmqContext, zmq::socket_type::dealer);
     auto barrier = std::make_shared<ThreadBarrier>(1 + numHandlerThreads);
@@ -62,21 +62,21 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& start
         frontendSocket.setsockopt(ZMQ_LINGER, &linger, sizeof(int));
         frontendSocket.bind("tcp://" + hostname + ":" + std::to_string(port));
         dispatcherSocket.bind(dispatcherPipe);
-
-        for (uint16_t i = 0; i < numHandlerThreads; ++i) {
-            handlerThreads.emplace_back(std::make_unique<std::thread>([this, &barrier]() {
-              handlerEventLoop(barrier);
+        NES_DEBUG("Created Zmq Server socket on " << hostname << ":" << port);
+        for (int i = 0; i < numHandlerThreads; ++i) {
+            handlerThreads.emplace_back(std::make_unique<std::thread>([this, &barrier, i]() {
+              handlerEventLoop(barrier, i);
             }));
         }
     }
     catch (...) {
         startPromise.set_exception(std::current_exception());
     }
+    isRunning = true;
     // wait for the handlers to start
     barrier->wait();
     // unblock the thread that started the server
     startPromise.set_value(true);
-    isRunning = true;
     bool shutdownComplete = false;
 
     try {
@@ -117,11 +117,12 @@ void ZmqServer::routerLoop(uint16_t numHandlerThreads, std::promise<bool>& start
     }
 }
 
-void ZmqServer::handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier) {
+void ZmqServer::handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier, int index) {
     zmq::socket_t dispatcherSocket(*zmqContext, zmq::socket_type::dealer);
     try {
         dispatcherSocket.connect(dispatcherPipe);
         barrier->wait();
+        NES_DEBUG("Created Zmq Handler Thread #" << index << " on " << hostname << ":" << port);
         while (keepRunning) {
             zmq::message_t identityEnvelope;
             zmq::message_t headerEnvelope;
@@ -198,10 +199,10 @@ void ZmqServer::handlerEventLoop(std::shared_ptr<ThreadBarrier> barrier) {
         }
     } catch (zmq::error_t& err) {
         if (err.num() == ETERM) {
-            NES_DEBUG("Context closed on server " << hostname << ":" << port);
+            NES_DEBUG("Zmq Handler #" << index << " closed on server " << hostname << ":" << port);
         } else {
             errorPromise.set_exception(std::current_exception());
-            NES_ERROR("ZmqServer: event loop got " << err.what());
+            NES_ERROR("ZmqServer: event loop " << index << " got " << err.what());
             throw err;
         }
     }
