@@ -11,5 +11,5 @@ class HandCodedQueryExecutionPlan : public QueryExecutionPlan {
     virtual ~HandCodedQueryExecutionPlan();
     virtual bool executeStage(uint32_t pipeline_stage_id, TupleBuffer& buf) = 0;
 };
-}
+}// namespace NES
 #endif /* INCLUDE_HANDCODEDQUERYEXECUTIONPLAN_H_ */

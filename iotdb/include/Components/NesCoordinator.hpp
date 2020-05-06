@@ -107,5 +107,5 @@ class NesCoordinator {
 };
 typedef std::shared_ptr<NesCoordinator> NesCoordinatorPtr;
 
-} // namespace NES
+}// namespace NES
 #endif /* INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_ */

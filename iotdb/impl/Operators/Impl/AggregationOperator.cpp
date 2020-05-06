@@ -9,16 +9,13 @@
 namespace NES {
 
 AggregationOperator::AggregationOperator(const AggregationSpec& aggr_spec)
-    : Operator(), aggr_spec_(NES::copy(aggr_spec))
-{
+    : Operator(), aggr_spec_(NES::copy(aggr_spec)) {
 }
 
-AggregationOperator::AggregationOperator(const AggregationOperator& other) : aggr_spec_(NES::copy(other.aggr_spec_))
-{
+AggregationOperator::AggregationOperator(const AggregationOperator& other) : aggr_spec_(NES::copy(other.aggr_spec_)) {
 }
 
-AggregationOperator& AggregationOperator::operator=(const AggregationOperator& other)
-{
+AggregationOperator& AggregationOperator::operator=(const AggregationOperator& other) {
     if (this != &other) {
         aggr_spec_ = NES::copy(other.aggr_spec_);
     }
@@ -34,8 +31,7 @@ const OperatorPtr AggregationOperator::copy() const {
     return copy;
 }
 
-const std::string AggregationOperator::toString() const
-{
+const std::string AggregationOperator::toString() const {
     std::stringstream ss;
     ss << "AGGREGATE(" << NES::toString(aggr_spec_) << ")";
     return ss.str();
@@ -45,9 +41,8 @@ OperatorType AggregationOperator::getOperatorType() const { return AGGREGATION_O
 
 AggregationOperator::~AggregationOperator() {}
 
-const OperatorPtr createAggregationOperator(const AggregationSpec& aggr_spec)
-{
+const OperatorPtr createAggregationOperator(const AggregationSpec& aggr_spec) {
     return std::make_shared<AggregationOperator>(aggr_spec);
 }
 
-} // namespace NES
+}// namespace NES

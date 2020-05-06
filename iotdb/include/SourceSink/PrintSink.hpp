@@ -6,8 +6,8 @@
 #include <sstream>
 #include <string>
 
-#include <iostream>
 #include <SourceSink/DataSink.hpp>
+#include <iostream>
 
 namespace NES {
 
@@ -16,7 +16,6 @@ namespace NES {
  */
 class PrintSink : public DataSink {
   public:
-
     /**
      * @brief Default constructor
      * @Note the default output will be written to cout
@@ -70,9 +69,9 @@ class PrintSink : public DataSink {
 
     template<class Archive>
     void serialize(Archive& ar, unsigned) {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataSink);
+        ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataSink);
     }
 };
-}  // namespace NES
+}// namespace NES
 
-#endif // PRINTSINK_HPP
+#endif// PRINTSINK_HPP

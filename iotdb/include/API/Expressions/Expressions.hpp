@@ -1,15 +1,14 @@
 #ifndef NES_INCLUDE_API_EXPRESSIONS_HPP
 #define NES_INCLUDE_API_EXPRESSIONS_HPP
 
-#include <string>
-#include <memory>
 #include <API/Types/DataTypes.hpp>
+#include <memory>
+#include <string>
 
 namespace NES {
 /**
  * @brief This file contains the user facing api to create expression nodes in a fluent and easy way.
  */
-
 
 class ExpressionNode;
 typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
@@ -24,7 +23,7 @@ typedef std::shared_ptr<FieldAssignmentExpressionNode> FieldAssignmentExpression
  * @brief A expression item represents the leaf in an expression tree.
  * It is converted to an constant value expression or a field access expression.
  */
-class ExpressionItem{
+class ExpressionItem {
   public:
     ExpressionItem(int8_t value);
     ExpressionItem(uint8_t value);
@@ -70,5 +69,5 @@ ExpressionItem Attribute(std::string name);
  */
 ExpressionItem Attribute(std::string name, BasicType type);
 
-} //end of namespace NES
-#endif 
+}//end of namespace NES
+#endif

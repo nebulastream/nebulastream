@@ -33,8 +33,8 @@ class Config {
 
   private:
     friend class boost::serialization::access;
-    template <class Archive> void serialize(Archive& ar, const unsigned int version)
-    {
+    template<class Archive>
+    void serialize(Archive& ar, const unsigned int version) {
         ar& numberOfWorker;
         ar& bufferCount;
         ar& bufferSizeInByte;
@@ -43,11 +43,9 @@ class Config {
     size_t numberOfWorker;
     size_t bufferCount;
     size_t bufferSizeInByte;
-
 };
-} // namespace NES
+}// namespace NES
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
 BOOST_CLASS_EXPORT_KEY(NES::Config)
-

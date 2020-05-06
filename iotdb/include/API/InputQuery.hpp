@@ -6,9 +6,9 @@
 #include <API/Schema.hpp>
 #include <API/Stream.hpp>
 
-#include <string>
 #include <SourceSink/DataSource.hpp>
 #include <cppkafka/configuration.h>
+#include <string>
 
 namespace NES {
 
@@ -29,7 +29,6 @@ typedef std::shared_ptr<WindowAggregation> WindowAggregationPtr;
  */
 class InputQuery {
   public:
-
     InputQuery& operator=(const InputQuery& query);
 
     InputQuery(const InputQuery&);
@@ -182,11 +181,10 @@ class InputQuery {
     OperatorPtr root;
     StreamPtr sourceStream;
     std::string udfs;
-
 };
 
 typedef std::shared_ptr<InputQuery> InputQueryPtr;
 
-}  // namespace NES
+}// namespace NES
 
 #endif

@@ -1,7 +1,7 @@
+#include <Operators/OperatorJsonUtil.hpp>
+#include <REST/Controller/QueryController.hpp>
 #include <REST/runtime_utils.hpp>
 #include <REST/std_service.hpp>
-#include <REST/Controller/QueryController.hpp>
-#include <Operators/OperatorJsonUtil.hpp>
 #include <Topology/TestTopology.hpp>
 #include <Util/Logger.hpp>
 
@@ -45,8 +45,7 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
                     // Prepare the response
                     successMessageImpl(message, restResponse);
                     return;
-                }
-                catch (const std::exception &exc) {
+                } catch (const std::exception& exc) {
                     NES_ERROR(" QueryController: handleGet -execution-plan: Exception occurred while building the query plan for user request:" << exc.what());
                     internalServerErrorImpl(message);
                     return;
@@ -58,35 +57,35 @@ void QueryController::handleGet(vector<utility::string_t> path, http_request mes
             .wait();
     } else if (path[1] == "query-plan") {
 
-            message.extract_string(true)
-                .then([this, message](utility::string_t body) {
-                        try {
-                            //Prepare Input query from user string
-                            string userRequest(body.begin(), body.end());
+        message.extract_string(true)
+            .then([this, message](utility::string_t body) {
+                try {
+                    //Prepare Input query from user string
+                    string userRequest(body.begin(), body.end());
 
-                            json::value req = json::value::parse(userRequest);
+                    json::value req = json::value::parse(userRequest);
 
-                            string userQuery = req.at("userQuery").as_string();
+                    string userQuery = req.at("userQuery").as_string();
 
-                            //Call the service
-                            const auto& basePlan = queryServicePtr->generateBaseQueryPlanFromQueryString(
-                                userQuery);
+                    //Call the service
+                    const auto& basePlan = queryServicePtr->generateBaseQueryPlanFromQueryString(
+                        userQuery);
 
-                            //Prepare the response
-                            successMessageImpl(message, basePlan);
-                            return;
-                        } catch (const std::exception &exc) {
-                            NES_ERROR("QueryController: handleGet -query-plan: Exception occurred while building the query plan for user request:"
-                                      << exc.what());
-                            internalServerErrorImpl(message);
-                            return;
-                        } catch (...) {
-                                RuntimeUtils::printStackTrace();
-                                internalServerErrorImpl(message);
-                        }
-                      })
-                .wait();
-        }
+                    //Prepare the response
+                    successMessageImpl(message, basePlan);
+                    return;
+                } catch (const std::exception& exc) {
+                    NES_ERROR("QueryController: handleGet -query-plan: Exception occurred while building the query plan for user request:"
+                              << exc.what());
+                    internalServerErrorImpl(message);
+                    return;
+                } catch (...) {
+                    RuntimeUtils::printStackTrace();
+                    internalServerErrorImpl(message);
+                }
+            })
+            .wait();
+    }
     resourceNotFoundImpl(message);
 }
 
@@ -94,57 +93,56 @@ void QueryController::handlePost(vector<utility::string_t> path, http_request me
 
     try {
 
-         if (path[1] == "execute-query") {
+        if (path[1] == "execute-query") {
 
             NES_DEBUG(" QueryController: Trying to execute query");
 
             message.extract_string(true)
                 .then([this, message](utility::string_t body) {
-                        try {
-                            //Prepare Input query from user string
-                            string userRequest(body.begin(), body.end());
-                            NES_DEBUG("QueryController: handlePost -execute-query: Request body: " << userRequest << "try to parse query");
-                            json::value req = json::value::parse(userRequest);
-                            NES_DEBUG( "QueryController: handlePost -execute-query: get user query" );
-                            string userQuery = req.at("userQuery").as_string();
-                            NES_DEBUG( "QueryController: handlePost -execute-query: query=" << userQuery );
+                    try {
+                        //Prepare Input query from user string
+                        string userRequest(body.begin(), body.end());
+                        NES_DEBUG("QueryController: handlePost -execute-query: Request body: " << userRequest << "try to parse query");
+                        json::value req = json::value::parse(userRequest);
+                        NES_DEBUG("QueryController: handlePost -execute-query: get user query");
+                        string userQuery = req.at("userQuery").as_string();
+                        NES_DEBUG("QueryController: handlePost -execute-query: query=" << userQuery);
 
-                            NES_DEBUG( "QueryController: handlePost -execute-query: try to parse strategy name" );
-                            string optimizationStrategyName = req.at("strategyName").as_string();
-                            NES_DEBUG( "QueryController: handlePost -execute-query: strategyName=" << optimizationStrategyName );
+                        NES_DEBUG("QueryController: handlePost -execute-query: try to parse strategy name");
+                        string optimizationStrategyName = req.at("strategyName").as_string();
+                        NES_DEBUG("QueryController: handlePost -execute-query: strategyName=" << optimizationStrategyName);
 
-                            NES_DEBUG( "QueryController: handlePost -execute-query: Params: userQuery= " << userQuery << ", strategyName= "
-                                      << optimizationStrategyName );
+                        NES_DEBUG("QueryController: handlePost -execute-query: Params: userQuery= " << userQuery << ", strategyName= "
+                                                                                                    << optimizationStrategyName);
 
-                            abstract_actor* abstractActor = caf::actor_cast<abstract_actor*>(coordinatorActorHandle);
-                            CoordinatorActor* crd = dynamic_cast<CoordinatorActor*>(abstractActor);
-                            string queryId = crd->registerAndDeployQuery(0, userQuery,
-                                                                         optimizationStrategyName);
+                        abstract_actor* abstractActor = caf::actor_cast<abstract_actor*>(coordinatorActorHandle);
+                        CoordinatorActor* crd = dynamic_cast<CoordinatorActor*>(abstractActor);
+                        string queryId = crd->registerAndDeployQuery(0, userQuery,
+                                                                     optimizationStrategyName);
 
-                            json::value restResponse{};
-                            restResponse["queryId"] = json::value::string(queryId);
+                        json::value restResponse{};
+                        restResponse["queryId"] = json::value::string(queryId);
 
-                            //Prepare the response
-                            successMessageImpl(message, restResponse);
-                            return;
+                        //Prepare the response
+                        successMessageImpl(message, restResponse);
+                        return;
 
-                        } catch (const std::exception &exc) {
-                            NES_ERROR("QueryController: handlePost -execute-query: Exception occurred while building the query plan for user request:" << exc.what());
-                            internalServerErrorImpl(message);
-                            return;
-                        }
-                        catch (...) {
+                    } catch (const std::exception& exc) {
+                        NES_ERROR("QueryController: handlePost -execute-query: Exception occurred while building the query plan for user request:" << exc.what());
+                        internalServerErrorImpl(message);
+                        return;
+                    } catch (...) {
                         RuntimeUtils::printStackTrace();
                         internalServerErrorImpl(message);
-                        }
-                      })
+                    }
+                })
                 .wait();
         }
 
         resourceNotFoundImpl(message);
 
     } catch (const std::exception& ex) {
-        NES_ERROR("QueryController: handlePost: Exception occurred during post request:"  << ex.what());
+        NES_ERROR("QueryController: handlePost: Exception occurred during post request:" << ex.what());
         internalServerErrorImpl(message);
     } catch (...) {
         RuntimeUtils::printStackTrace();
@@ -156,4 +154,4 @@ void QueryController::setCoordinatorActorHandle(infer_handle_from_class_t<Coordi
     this->coordinatorActorHandle = coordinatorActorHandle;
 }
 
-}
+}// namespace NES

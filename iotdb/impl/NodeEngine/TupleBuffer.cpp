@@ -4,7 +4,7 @@
 
 namespace NES {
 
-TupleBuffer::TupleBuffer() noexcept: ptr(nullptr), size(0), controlBlock(nullptr) {
+TupleBuffer::TupleBuffer() noexcept : ptr(nullptr), size(0), controlBlock(nullptr) {
     //nop
 }
 
@@ -13,8 +13,8 @@ TupleBuffer::TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr,
     // nop
 }
 
-TupleBuffer::TupleBuffer(const TupleBuffer& other) noexcept: controlBlock(other.controlBlock), ptr(other.ptr),
-                                                             size(other.size) {
+TupleBuffer::TupleBuffer(const TupleBuffer& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr),
+                                                              size(other.size) {
     if (controlBlock) {
         controlBlock->retain();
     }
@@ -108,4 +108,4 @@ void TupleBuffer::revertEndianness(SchemaPtr schema) {
     detail::revertEndianness(*this, schema);
 }
 
-}
+}// namespace NES

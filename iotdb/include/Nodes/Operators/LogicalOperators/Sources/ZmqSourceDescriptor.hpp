@@ -30,11 +30,10 @@ class ZmqSourceDescriptor : public SourceDescriptor {
 
     std::string host;
     uint16_t port;
-
 };
 
 typedef std::shared_ptr<ZmqSourceDescriptor> ZmqSourceDescriptorPtr;
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_ZMQSOURCEDESCRIPTOR_HPP_
+#endif//NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_ZMQSOURCEDESCRIPTOR_HPP_

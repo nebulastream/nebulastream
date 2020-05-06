@@ -1,6 +1,6 @@
+#include <Nodes/Node.hpp>
 #include <queue>
 #include <unordered_set>
-#include <Nodes/Node.hpp>
 
 namespace NES {
 
@@ -8,7 +8,6 @@ Node::Node() : visited(false), recStack(false) {
 }
 
 Node::~Node() {
-
 }
 
 bool Node::addChildWithEqual(const NodePtr newNode) {
@@ -95,7 +94,6 @@ bool Node::insertBetweenThisAndParentNodes(const NodePtr newNode) {
         return false;
     }
 
-
     NES_INFO("Node: Remove children and parents for the input node.");
     newNode->removeChildren();
     newNode->removeAllParent();
@@ -106,14 +104,14 @@ bool Node::insertBetweenThisAndParentNodes(const NodePtr newNode) {
     NES_INFO("Node: Remove all parents of this node.");
     removeAllParent();
 
-    if(!addParent(newNode)) {
+    if (!addParent(newNode)) {
         NES_ERROR("Node: Unable to add input node as parent to this node.");
         return false;
     }
 
     NES_INFO("Node: Add copy of this nodes parent as parent to the input node.");
     for (NodePtr parent : copyOfParents) {
-        if(!newNode->addParent(parent)){
+        if (!newNode->addParent(parent)) {
             NES_ERROR("Node: Unable to add parent of this node as parent to input node.");
             return false;
         }
@@ -123,19 +121,19 @@ bool Node::insertBetweenThisAndParentNodes(const NodePtr newNode) {
 }
 
 void Node::removeAllParent() {
-    NES_INFO("Node: Removing all parents for current node")
-    for(NodePtr parent : parents) {
+    NES_INFO("Node: Removing all parents for current node");
+    for (NodePtr parent : parents) {
         this->removeParent(parent);
-        NES_INFO("Node: Removed node as parent of this node")
+        NES_INFO("Node: Removed node as parent of this node");
     }
 }
 
 void Node::removeChildren() {
-    NES_INFO("Node: Removing all children for current node")
+    NES_INFO("Node: Removing all children for current node");
 
-    for(NodePtr child : children) {
+    for (NodePtr child : children) {
         this->removeChild(child);
-        NES_INFO("Node: Removed node as child of this node")
+        NES_INFO("Node: Removed node as child of this node");
     }
 }
 
@@ -165,8 +163,7 @@ bool Node::replace(NodePtr newNode, NodePtr oldNode) {
 
     if (!oldNode->equal(newNode)) {
         // newNode is already inside children or parents and it's not oldNode
-        if (find(children, newNode) ||
-            find(parents, newNode)) {
+        if (find(children, newNode) || find(parents, newNode)) {
             NES_DEBUG("Node: the new node is already part of the children or predessessors of the current node.");
             return false;
         }
@@ -253,23 +250,23 @@ bool Node::removeAndLevelUpChildren(const NodePtr node) {
 
 bool Node::removeAndJoinParentAndChildren() {
     try {
-        NES_DEBUG("Node: Joining parents with children")
+        NES_DEBUG("Node: Joining parents with children");
 
-        for (auto parent: parents) {
-            for (auto child: children) {
+        for (auto parent : parents) {
+            for (auto child : children) {
 
-                NES_DEBUG("Node: Add child of this node as child of this node's parent")
+                NES_DEBUG("Node: Add child of this node as child of this node's parent");
                 parent->addChild(child);
 
-                NES_DEBUG("Node: remove this node as parent of the child")
+                NES_DEBUG("Node: remove this node as parent of the child");
                 child->removeParent(shared_from_this());
             }
             parent->removeChild(shared_from_this());
-            NES_DEBUG("Node: remove this node as child of this node's parents")
+            NES_DEBUG("Node: remove this node as child of this node's parents");
         }
         return true;
     } catch (...) {
-        NES_ERROR("Node: Error ocurred while joining this node's children and parents")
+        NES_ERROR("Node: Error ocurred while joining this node's children and parents");
         return false;
     }
 }
@@ -387,7 +384,7 @@ std::vector<NodePtr> Node::split(const NodePtr splitNode) {
     std::vector<NodePtr> result{};
     auto node = findRecursively(shared_from_this(), splitNode);
     if (!node) {
-        NES_DEBUG("Node: operator is not in graph so dont split.")
+        NES_DEBUG("Node: operator is not in graph so dont split.");
         result.push_back(shared_from_this());
         return result;
     }
@@ -416,8 +413,7 @@ void Node::getAndFlattenAllChildrenHelper(const NodePtr node,
 
     // todo this implementation may be slow
     for (auto&& currentNode : node->children) {
-        if (!find(allChildren, currentNode) &&
-            (currentNode != excludednode)) {
+        if (!find(allChildren, currentNode) && (currentNode != excludednode)) {
             allChildren.push_back(currentNode);
             getAndFlattenAllChildrenHelper(currentNode, allChildren, excludednode);
         }
@@ -446,7 +442,6 @@ bool Node::isCyclic() {
             }
             return true;
         }
-
     }
     for (auto&& node : allChildren) {
         node->visited = false;
@@ -470,4 +465,4 @@ bool Node::isCyclicHelper(Node& node) {
     return false;
 }
 
-}
+}// namespace NES

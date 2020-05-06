@@ -22,4 +22,4 @@ ExpressionNodePtr BinaryExpressionNode::getRight() const {
     return children[1]->as<ExpressionNode>();
 }
 
-}
+}// namespace NES

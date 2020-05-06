@@ -1,8 +1,8 @@
 #ifndef NES_INCLUDE_NODES_EXPRESSIONS_EXPRESSION_HPP_
 #define NES_INCLUDE_NODES_EXPRESSIONS_EXPRESSION_HPP_
-#include <memory>
-#include <Nodes/Node.hpp>
 #include <API/Types/DataTypes.hpp>
+#include <Nodes/Node.hpp>
+#include <memory>
 namespace NES {
 
 class Schema;
@@ -52,5 +52,5 @@ class ExpressionNode : public Node {
     DataTypePtr stamp;
 };
 typedef std::shared_ptr<ExpressionNode> ExpressionNodePtr;
-}
-#endif //NES_INCLUDE_NODES_EXPRESSIONS_EXPRESSION_HPP_
+}// namespace NES
+#endif//NES_INCLUDE_NODES_EXPRESSIONS_EXPRESSION_HPP_

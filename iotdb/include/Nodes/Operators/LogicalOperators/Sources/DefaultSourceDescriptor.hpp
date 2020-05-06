@@ -11,7 +11,6 @@ namespace NES {
 class DefaultSourceDescriptor : public SourceDescriptor {
 
   public:
-
     static SourceDescriptorPtr create(SchemaPtr schema, uint64_t numbersOfBufferToProduce, uint32_t frequency);
 
     SourceDescriptorType getType() override;
@@ -34,6 +33,6 @@ class DefaultSourceDescriptor : public SourceDescriptor {
 
 typedef std::shared_ptr<DefaultSourceDescriptor> DefaultSourceDescriptorPtr;
 
-}
+}// namespace NES
 
-#endif //NES_IMPL_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_DEFAULTSOURCEDESCRIPTOR_HPP_
+#endif//NES_IMPL_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_DEFAULTSOURCEDESCRIPTOR_HPP_

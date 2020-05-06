@@ -3,16 +3,16 @@
 #if defined(__APPLE__) || defined(__MACH__)
 #include <xlocale.h>
 #endif
-#include "Actors/CoordinatorActor.hpp"
 #include "Actors/Configurations/CoordinatorActorConfig.hpp"
-#include <string>
-#include <cpprest/http_listener.h>
-#include <cpprest/details/http_server.h>
-#include <pplx/pplxtasks.h>
-#include <REST/Controller/QueryCatalogController.hpp>
+#include "Actors/CoordinatorActor.hpp"
 #include "REST/Controller/BaseController.hpp"
 #include "REST/Controller/QueryController.hpp"
 #include "REST/Controller/StreamCatalogController.hpp"
+#include <REST/Controller/QueryCatalogController.hpp>
+#include <cpprest/details/http_server.h>
+#include <cpprest/http_listener.h>
+#include <pplx/pplxtasks.h>
+#include <string>
 
 using namespace web;
 using namespace http;
@@ -21,7 +21,7 @@ using namespace http::experimental::listener;
 namespace NES {
 class RestEngine : public BaseController {
   protected:
-    http_listener _listener; // main micro service network endpoint
+    http_listener _listener;// main micro service network endpoint
 
   private:
     QueryController queryController;
@@ -29,8 +29,8 @@ class RestEngine : public BaseController {
     QueryCatalogController queryCatalogController;
 
   public:
-    RestEngine() {};
-    ~RestEngine() {};
+    RestEngine(){};
+    ~RestEngine(){};
 
     void handleGet(http_request message);
     void handlePost(http_request message);
@@ -43,10 +43,10 @@ class RestEngine : public BaseController {
 
     void setCoordinatorActorHandle(infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle);
     void initRestOpHandlers();
-    void setEndpoint(const std::string &value);
+    void setEndpoint(const std::string& value);
     std::string endpoint() const;
     pplx::task<void> accept();
     pplx::task<void> shutdown();
     std::vector<utility::string_t> splitPath(utility::string_t path);
 };
-}
+}// namespace NES

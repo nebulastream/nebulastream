@@ -1,11 +1,11 @@
 #ifndef NES_INCLUDE_UTIL_TESTUTILS_HPP_
 #define NES_INCLUDE_UTIL_TESTUTILS_HPP_
+#include <Components/NesCoordinator.hpp>
+#include <Components/NesWorker.hpp>
+#include <NodeEngine/NodeEngine.hpp>
+#include <chrono>
 #include <iostream>
 #include <memory>
-#include <NodeEngine/NodeEngine.hpp>
-#include <Components/NesWorker.hpp>
-#include <Components/NesCoordinator.hpp>
-#include <chrono>
 using Seconds = std::chrono::seconds;
 using Clock = std::chrono::high_resolution_clock;
 using namespace std;
@@ -30,16 +30,16 @@ class TestUtils {
         auto start_timestamp = std::chrono::system_clock::now();
         auto now = start_timestamp;
         while ((now = std::chrono::system_clock::now()) < start_timestamp + timeoutInSec) {
-            NES_DEBUG("checkCompleteOrTimeout: check result NodeEnginePtr")
+            NES_DEBUG("checkCompleteOrTimeout: check result NodeEnginePtr");
             if (ptr->getQueryStatistics(queryId)->getProcessedBuffers() == expectedResult
                 && ptr->getQueryStatistics(queryId)->getProcessedTasks() == expectedResult) {
-                NES_DEBUG("checkCompleteOrTimeout: results are correct")
+                NES_DEBUG("checkCompleteOrTimeout: results are correct");
                 return true;
             }
-            NES_DEBUG("checkCompleteOrTimeout: sleep because val=" << ptr->getQueryStatistics(queryId)->getProcessedTuple() << " < " << expectedResult)
+            NES_DEBUG("checkCompleteOrTimeout: sleep because val=" << ptr->getQueryStatistics(queryId)->getProcessedTuple() << " < " << expectedResult);
             sleep(1);
         }
-        NES_DEBUG("checkCompleteOrTimeout: expected results are not reached after timeout")
+        NES_DEBUG("checkCompleteOrTimeout: expected results are not reached after timeout");
         return false;
     }
     /**
@@ -54,16 +54,16 @@ class TestUtils {
         auto start_timestamp = std::chrono::system_clock::now();
         auto now = start_timestamp;
         while ((now = std::chrono::system_clock::now()) < start_timestamp + timeoutInSec) {
-            NES_DEBUG("checkCompleteOrTimeout: check result NesWorkerPtr")
+            NES_DEBUG("checkCompleteOrTimeout: check result NesWorkerPtr");
             if (ptr->getQueryStatistics(queryId)->getProcessedBuffers() == expectedResult
                 && ptr->getQueryStatistics(queryId)->getProcessedTasks() == expectedResult) {
-                NES_DEBUG("checkCompleteOrTimeout: results are correct")
+                NES_DEBUG("checkCompleteOrTimeout: results are correct");
                 return true;
             }
-            NES_DEBUG("checkCompleteOrTimeout: sleep because val=" << ptr->getQueryStatistics(queryId)->getProcessedTuple() << " < " << expectedResult)
+            NES_DEBUG("checkCompleteOrTimeout: sleep because val=" << ptr->getQueryStatistics(queryId)->getProcessedTuple() << " < " << expectedResult);
             sleep(1);
         }
-        NES_DEBUG("checkCompleteOrTimeout: expected results are not reached after timeout")
+        NES_DEBUG("checkCompleteOrTimeout: expected results are not reached after timeout");
         return false;
     }
 
@@ -79,18 +79,18 @@ class TestUtils {
         auto start_timestamp = std::chrono::system_clock::now();
         auto now = start_timestamp;
         while ((now = std::chrono::system_clock::now()) < start_timestamp + timeoutInSec) {
-            NES_DEBUG("checkCompleteOrTimeout: check result NesCoordinatorPtr")
+            NES_DEBUG("checkCompleteOrTimeout: check result NesCoordinatorPtr");
             if (ptr->getQueryStatistics(queryId)->getProcessedBuffers() == expectedResult
                 && ptr->getQueryStatistics(queryId)->getProcessedTasks() == expectedResult) {
-                NES_DEBUG("checkCompleteOrTimeout: results are correct")
+                NES_DEBUG("checkCompleteOrTimeout: results are correct");
                 return true;
             }
-            NES_DEBUG("checkCompleteOrTimeout: sleep because val=" << ptr->getQueryStatistics(queryId)->getProcessedTuple() << " < " << expectedResult)
+            NES_DEBUG("checkCompleteOrTimeout: sleep because val=" << ptr->getQueryStatistics(queryId)->getProcessedTuple() << " < " << expectedResult);
             sleep(1);
         }
-        NES_DEBUG("checkCompleteOrTimeout: expected results are not reached after timeout")
+        NES_DEBUG("checkCompleteOrTimeout: expected results are not reached after timeout");
         return false;
     }
 };
-}
-#endif //NES_INCLUDE_UTIL_TESTUTILS_HPP_
+}// namespace NES
+#endif//NES_INCLUDE_UTIL_TESTUTILS_HPP_

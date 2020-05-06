@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_SUBEXPRESSIONNODE_HPP_
 #define NES_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_SUBEXPRESSIONNODE_HPP_
 #include <Nodes/Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
-namespace NES{
+namespace NES {
 
 /**
  * @brief This node represents a subtraction expression.
@@ -19,6 +19,6 @@ class SubExpressionNode : public ArithmeticalExpressionNode {
     const std::string toString() const override;
 };
 
-}
+}// namespace NES
 
-#endif // NES_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_SUBEXPRESSIONNODE_HPP_
+#endif// NES_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_SUBEXPRESSIONNODE_HPP_

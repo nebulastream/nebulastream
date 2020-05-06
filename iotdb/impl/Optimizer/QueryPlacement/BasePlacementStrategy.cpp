@@ -24,13 +24,13 @@ std::unique_ptr<BasePlacementStrategy> BasePlacementStrategy::getStrategy(std::s
     }
 
     switch (stringToPlacementStrategyType[placementStrategyName]) {
-        case TopDown:return TopDownStrategy::create();
-        case BottomUp:return BottomUpStrategy::create();
-        case LowLatency:return LowLatencyStrategy::create();
-        case HighThroughput:return HighThroughputStrategy::create();
-        case MinimumResourceConsumption:return MinimumResourceConsumptionStrategy::create();
-        case MinimumEnergyConsumption:return MinimumEnergyConsumptionStrategy::create();
-        case HighAvailability:return HighAvailabilityStrategy::create();
+        case TopDown: return TopDownStrategy::create();
+        case BottomUp: return BottomUpStrategy::create();
+        case LowLatency: return LowLatencyStrategy::create();
+        case HighThroughput: return HighThroughputStrategy::create();
+        case MinimumResourceConsumption: return MinimumResourceConsumptionStrategy::create();
+        case MinimumEnergyConsumption: return MinimumEnergyConsumptionStrategy::create();
+        case HighAvailability: return HighAvailabilityStrategy::create();
     }
 }
 
@@ -127,10 +127,10 @@ void BasePlacementStrategy::convertFwdOptr(SchemaPtr schema, ExecutionNodePtr ex
 void BasePlacementStrategy::fillExecutionGraphWithTopologyInformation(NESExecutionPlanPtr nesExecutionPlanPtr,
                                                                       NESTopologyPlanPtr nesTopologyPtr) {
 
-    NES_DEBUG("BasePlacementStrategy: Filling the execution graph with topology information.")
+    NES_DEBUG("BasePlacementStrategy: Filling the execution graph with topology information.");
     const vector<NESTopologyLinkPtr>& allEdges = nesTopologyPtr->getNESTopologyGraph()->getAllEdges();
     NES_DEBUG("BasePlacementStrategy: Get all edges in the Topology and iterate over all edges to identify the nodes"
-              " that are not part of the execution graph.")
+              " that are not part of the execution graph.");
 
     for (NESTopologyLinkPtr nesLink : allEdges) {
 
@@ -142,8 +142,8 @@ void BasePlacementStrategy::fillExecutionGraphWithTopologyInformation(NESExecuti
 
         ExecutionNodePtr srcExecutionNode, destExecutionNode;
 
-        NES_DEBUG("BasePlacementStrategy: If sourceNode present in the execution graph then use it, else create "
-                  "an empty execution node with no operator.")
+        NES_DEBUG("BasePlacementStrategy: If sourceNode present in the execution graph then use it, else create"
+                  "an empty execution node with no operator.");
         if (nesExecutionPlanPtr->hasVertex(srcId)) {
             srcExecutionNode = nesExecutionPlanPtr->getExecutionNode(srcId);
         } else {
@@ -151,8 +151,8 @@ void BasePlacementStrategy::fillExecutionGraphWithTopologyInformation(NESExecuti
                                                                         nesLink->getSourceNode(), nullptr);
         }
 
-        NES_DEBUG("BasePlacementStrategy: If destinationNode present in the execution graph then use it, else create "
-                  "an empty execution node with no operator.")
+        NES_DEBUG("BasePlacementStrategy: If destinationNode present in the execution graph then use it, else create"
+                  "an empty execution node with no operator.");
         if (nesExecutionPlanPtr->hasVertex(destId)) {
             destExecutionNode = nesExecutionPlanPtr->getExecutionNode(destId);
         } else {
@@ -160,7 +160,7 @@ void BasePlacementStrategy::fillExecutionGraphWithTopologyInformation(NESExecuti
                                                                          nesLink->getDestNode(), nullptr);
         }
 
-        NES_DEBUG("BasePlacementStrategy: create the execution node link.")
+        NES_DEBUG("BasePlacementStrategy: create the execution node link.");
         nesExecutionPlanPtr->createExecutionNodeLink(linkId, srcExecutionNode, destExecutionNode, linkCapacity,
                                                      linkLatency);
     }
@@ -177,12 +177,12 @@ void BasePlacementStrategy::setUDFSFromSampleOperatorToSenseSources(InputQueryPt
 
     string udfs = inputQuery->getUdsf();
     if (udfs != "") {
-        NES_DEBUG("BasePlacementStrategy::setUDFSFromSampleOperatorToSenseSources: a sample operator is provided")
+        NES_DEBUG("BasePlacementStrategy::setUDFSFromSampleOperatorToSenseSources: a sample operator is provided");
         if (dynamic_cast<SenseSource*>(sourceOperatorPtr.get())) {
             SenseSource* node = dynamic_cast<SenseSource*>(sourceOperatorPtr.get());
             node->setUdsf(udfs);
         } else {
-            NES_ERROR("BasePlacementStrategy: cast to sample node failed")
+            NES_ERROR("BasePlacementStrategy: cast to sample node failed");
             throw new Exception("BasePlacementStrategy cast to sample op failed");
         }
     }
@@ -215,10 +215,10 @@ void BasePlacementStrategy::addForwardOperators(vector<NESTopologyEntryPtr> cand
     for (NESTopologyEntryPtr candidateNode : candidateNodes) {
         if (candidateNode->getCpuCapacity() == candidateNode->getRemainingCpuCapacity()) {
             nesExecutionPlanPtr->createExecutionNode("FWD", to_string(candidateNode->getId()), candidateNode,
-                /**executableOperator**/ nullptr);
+                                                     /**executableOperator**/ nullptr);
             candidateNode->reduceCpuCapacity(1);
         }
     }
 }
 
-} // namespace NES
+}// namespace NES

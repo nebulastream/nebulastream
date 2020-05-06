@@ -133,7 +133,9 @@ std::vector<NESTopologyEntryPtr> PathFinder::findPathBetween(NES::NESTopologyEnt
 }
 
 std::map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>> PathFinder::findUniquePathBetween(std::vector<
-    NESTopologyEntryPtr> sources, NESTopologyEntryPtr destination) {
+                                                                                                      NESTopologyEntryPtr>
+                                                                                                      sources,
+                                                                                                  NESTopologyEntryPtr destination) {
 
     std::map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>> result;
 
@@ -295,8 +297,7 @@ std::vector<std::vector<NESTopologyLinkPtr>> PathFinder::findAllPathLinksBetween
                 traversedPath = backTrackTraversedPathTill(traversedPath, candidateLinks.front()->getSourceNode());
             }
         } else {
-            const vector<NESTopologyLinkPtr>
-                & nextCandidateLinks = nesGraphPtr->getAllEdgesFromNode(link->getDestNode());
+            const vector<NESTopologyLinkPtr>& nextCandidateLinks = nesGraphPtr->getAllEdgesFromNode(link->getDestNode());
             copy(nextCandidateLinks.begin(), nextCandidateLinks.end(), front_inserter(candidateLinks));
         }
     }
@@ -333,4 +334,4 @@ std::vector<NESTopologyLinkPtr> PathFinder::backTrackTraversedPathTill(std::vect
     return path;
 }
 
-}
+}// namespace NES

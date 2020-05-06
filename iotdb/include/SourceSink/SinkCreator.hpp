@@ -78,5 +78,5 @@ const DataSinkPtr createYSBPrintSink();
 const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string& brokers, const std::string& topic,
                                             const size_t kafkaProducerTimeout);
 
-}
+}// namespace NES
 #endif /* INCLUDE_SOURCESINK_SINKCREATOR_HPP_ */

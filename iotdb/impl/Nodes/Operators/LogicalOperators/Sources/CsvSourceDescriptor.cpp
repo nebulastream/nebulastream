@@ -40,5 +40,4 @@ SourceDescriptorPtr CsvSourceDescriptor::create(SchemaPtr schema,
     return std::make_shared<CsvSourceDescriptor>(CsvSourceDescriptor(schema, filePath, delimiter, numBuffersToProcess, frequency));
 }
 
-}
-
+}// namespace NES

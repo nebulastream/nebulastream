@@ -1,10 +1,15 @@
 #ifndef INCLUDE_ACTORS_ATOMUTILS_HPP_
 #define INCLUDE_ACTORS_ATOMUTILS_HPP_
 
+#undef U
+#include <caf/all.hpp>
+#include <caf/io/all.hpp>
+#include <chrono>
+#include <iostream>
 #include <string>
 
-using std::cout;
 using std::cerr;
+using std::cout;
 using std::endl;
 using std::string;
 
@@ -39,7 +44,6 @@ using stop_query_atom = atom_constant<atom("stop_q")>;
 using register_query_atom = atom_constant<atom("req_q")>;
 using unregister_query_atom = atom_constant<atom("unreq_q")>;
 
-}
+}// namespace NES
 
-#endif //INCLUDE_ACTORS_ATOMUTILS_HPP_
-
+#endif//INCLUDE_ACTORS_ATOMUTILS_HPP_

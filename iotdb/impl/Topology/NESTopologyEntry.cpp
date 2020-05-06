@@ -3,10 +3,10 @@
 namespace NES {
 
 void NESTopologyEntry::setNodeProperty(std::string nodeProperties) {
-  if (nodeProperties != "")
-    this->nodeProperties = std::make_shared<NodeProperties>(nodeProperties);
-  else
-    this->nodeProperties = std::make_shared<NodeProperties>();
+    if (nodeProperties != "")
+        this->nodeProperties = std::make_shared<NodeProperties>(nodeProperties);
+    else
+        this->nodeProperties = std::make_shared<NodeProperties>();
 }
 
 /**
@@ -14,52 +14,52 @@ void NESTopologyEntry::setNodeProperty(std::string nodeProperties) {
  * @return serialized json of the node properties object
  */
 std::string NESTopologyEntry::getNodeProperty() {
-  return this->nodeProperties->dump();
+    return this->nodeProperties->dump();
 }
 
 std::string NESTopologyEntry::toString() {
-  return "id=" + std::to_string(getId()) + " type=" + getEntryTypeString();
+    return "id=" + std::to_string(getId()) + " type=" + getEntryTypeString();
 }
 
 NodePropertiesPtr NESTopologyEntry::getNodeProperties() {
-  return nodeProperties;
+    return nodeProperties;
 }
 
 void NESTopologyEntry::setId(size_t id) {
-  this->id = id;
+    this->id = id;
 }
 
 size_t NESTopologyEntry::getId() {
-  return id;
+    return id;
 }
 
 void NESTopologyEntry::setIp(std::string ip) {
-  this->ipAddress = ip;
+    this->ipAddress = ip;
 }
 
 std::string NESTopologyEntry::getIp() {
-  return this->ipAddress;
+    return this->ipAddress;
 }
 
 uint16_t NESTopologyEntry::getPublishPort() {
-  return publish_port;
+    return publish_port;
 }
 
 void NESTopologyEntry::setPublishPort(uint16_t publishPort) {
-  publish_port = publishPort;
+    publish_port = publishPort;
 }
 
 uint16_t NESTopologyEntry::getReceivePort() {
-  return receive_port;
+    return receive_port;
 }
 
 uint16_t NESTopologyEntry::getNextFreeReceivePort() {
-  receive_port++;
-  return receive_port;
+    receive_port++;
+    return receive_port;
 }
 
 void NESTopologyEntry::setReceivePort(uint16_t receivePort) {
-  receive_port = receivePort;
+    receive_port = receivePort;
 }
 
-}
+}// namespace NES

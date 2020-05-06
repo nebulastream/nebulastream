@@ -1,16 +1,16 @@
 #ifndef NES_IMPL_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_
 #define NES_IMPL_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_
 
+#include "BaseController.hpp"
 #include <Actors/CoordinatorActor.hpp>
 #include <Services/QueryCatalogService.hpp>
-#include "BaseController.hpp"
 
 namespace NES {
 
-class QueryCatalogController: public BaseController {
+class QueryCatalogController : public BaseController {
 
   public:
-    QueryCatalogController(){
+    QueryCatalogController() {
         queryCatalogServicePtr = QueryCatalogService::getInstance();
     }
 
@@ -23,5 +23,5 @@ class QueryCatalogController: public BaseController {
     QueryCatalogServicePtr queryCatalogServicePtr;
 };
 
-}
-#endif //NES_IMPL_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_
+}// namespace NES
+#endif//NES_IMPL_REST_CONTROLLER_QUERYCATALOGCONTROLLER_HPP_

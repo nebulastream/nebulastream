@@ -1,31 +1,31 @@
 #ifndef INCLUDE_ACTORS_COORDINATORSERVICE_HPP_
 #define INCLUDE_ACTORS_COORDINATORSERVICE_HPP_
 
-#include <SourceSink/DataSource.hpp>
-#include <Util/SerializationTools.hpp>
+#include <API/InputQuery.hpp>
 #include <NodeEngine/NodeEngine.hpp>
+#include <SourceSink/DataSource.hpp>
 #include <SourceSink/SinkCreator.hpp>
 #include <SourceSink/SourceCreator.hpp>
-#include <API/InputQuery.hpp>
+#include <Util/SerializationTools.hpp>
 
 #include <API/UserAPIExpression.hpp>
 
-#include <Util/UtilityFunctions.hpp>
-#include <QueryCompiler/CodeGenerator.hpp>
-#include <Operators/Impl/SourceOperator.hpp>
-#include <Operators/Impl/SinkOperator.hpp>
 #include <Actors/ExecutableTransferObject.hpp>
+#include <Operators/Impl/SinkOperator.hpp>
+#include <Operators/Impl/SourceOperator.hpp>
+#include <QueryCompiler/CodeGenerator.hpp>
 #include <Services/OptimizerService.hpp>
 #include <Services/QueryService.hpp>
+#include <Util/UtilityFunctions.hpp>
 
+#include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Catalogs/QueryCatalog.hpp>
+#include <Catalogs/StreamCatalog.hpp>
+#include <Optimizer/NESOptimizer.hpp>
+#include <SourceSink/CSVSource.hpp>
+#include <Topology/NESTopologyManager.hpp>
 #include <cstdint>
 #include <string>
-#include <Optimizer/NESOptimizer.hpp>
-#include <Topology/NESTopologyManager.hpp>
-#include <Catalogs/PhysicalStreamConfig.hpp>
-#include <Catalogs/StreamCatalog.hpp>
-#include <SourceSink/CSVSource.hpp>
-#include <Catalogs/QueryCatalog.hpp>
 
 using std::string;
 
@@ -37,7 +37,6 @@ typedef std::shared_ptr<CoordinatorService> CoordinatorServicePtr;
 class CoordinatorService {
 
   public:
-
     static CoordinatorServicePtr getInstance() {
         static CoordinatorServicePtr instance{new CoordinatorService};
         return instance;
@@ -155,8 +154,7 @@ class CoordinatorService {
     const map<string, QueryCatalogEntryPtr> getRunningQueries();
 
   private:
-
-    CoordinatorService() = default; //do not implement
+    CoordinatorService() = default;//do not implement
 
     unordered_map<string, int> queryToPort;
     shared_ptr<NESTopologyManager> topologyManagerPtr;
@@ -211,5 +209,5 @@ class CoordinatorService {
     int assign_port(const string& queryId);
 };
 
-}
-#endif //INCLUDE_ACTORS_COORDINATORSERVICE_HPP_
+}// namespace NES
+#endif//INCLUDE_ACTORS_COORDINATORSERVICE_HPP_

@@ -26,4 +26,4 @@ class AggregationOperator : public Operator {
     AggregationSpec aggr_spec_;
 };
 
-} // namespace NES
+}// namespace NES

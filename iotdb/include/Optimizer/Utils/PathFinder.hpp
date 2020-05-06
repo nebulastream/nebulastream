@@ -2,9 +2,9 @@
 #define NES_INCLUDE_OPTIMIZER_UTILS_PATHFINDER_HPP_
 
 #include <iostream>
+#include <map>
 #include <memory>
 #include <vector>
-#include <map>
 
 namespace NES {
 
@@ -20,7 +20,6 @@ typedef std::shared_ptr<NESTopologyLink> NESTopologyLinkPtr;
 class PathFinder {
 
   public:
-
     /**
      * @brief Find a set of paths between given set of sources and a common destination such that their are maximum
      * intersection.
@@ -47,8 +46,8 @@ class PathFinder {
      * @return a map of source node to the vector of nodes in the path identified for the
      */
     std::map<NESTopologyEntryPtr, std::vector<NESTopologyEntryPtr>> findUniquePathBetween(std::vector<NESTopologyEntryPtr> sources,
-                                                     NESTopologyEntryPtr destination);
-    
+                                                                                          NESTopologyEntryPtr destination);
+
     /**
      * @brief Find a path between given source and destination
      * @param source : source node
@@ -56,7 +55,7 @@ class PathFinder {
      * @return vector containing nodes
      */
     std::vector<NESTopologyEntryPtr> findPathBetween(NESTopologyEntryPtr source,
-                                                              NESTopologyEntryPtr destination);
+                                                     NESTopologyEntryPtr destination);
 
     /**
      * @brief Find a path with maximum bandwidth between given source destination
@@ -74,7 +73,7 @@ class PathFinder {
      * @return vector containing nodes
      */
     std::vector<NESTopologyEntryPtr> findPathWithMinLinkLatency(NESTopologyEntryPtr source,
-                                                              NESTopologyEntryPtr destination);
+                                                                NESTopologyEntryPtr destination);
 
     /**
      * @brief Find all paths between given source destination
@@ -85,7 +84,6 @@ class PathFinder {
     std::vector<std::vector<NESTopologyEntryPtr>> findAllPathsBetween(NESTopologyEntryPtr source, NESTopologyEntryPtr destination);
 
   private:
-
     /**
      * @brief Backtrack the path to the point where nesNode was the destination
      * @param path : the path
@@ -112,6 +110,6 @@ class PathFinder {
     std::vector<NESTopologyEntryPtr> convertLinkPathIntoNodePath(const NESTopologyEntryPtr source,
                                                                  const std::vector<NESTopologyLinkPtr>& selectedPath);
 };
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_OPTIMIZER_UTILS_PATHFINDER_HPP_
+#endif//NES_INCLUDE_OPTIMIZER_UTILS_PATHFINDER_HPP_

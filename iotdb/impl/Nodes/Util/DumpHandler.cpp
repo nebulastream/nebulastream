@@ -1,5 +1,5 @@
 
 #include <Nodes/Util/DumpHandler.hpp>
-namespace NES{
+namespace NES {
 
 }

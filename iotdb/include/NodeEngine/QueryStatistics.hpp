@@ -8,7 +8,7 @@ class QueryStatistics {
   public:
     QueryStatistics() : processedTasks(0),
                         processedTuple(0),
-                        processedBuffers(0) {};
+                        processedBuffers(0){};
 
     /**
      * @brief getter for processedTasks
@@ -79,8 +79,7 @@ class QueryStatistics {
         this->processedBuffers = processedBuffers.load();
     }
 
-    std::string getQueryStatisticsAsString()
-    {
+    std::string getQueryStatisticsAsString() {
         std::stringstream ss;
         ss << "processedTasks=" << processedTasks;
         ss << " processedTuple=" << processedTuple;
@@ -95,6 +94,6 @@ class QueryStatistics {
 };
 typedef std::shared_ptr<QueryStatistics> QueryStatisticsPtr;
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_NODEENGINE_QUERYSTATISTICS_HPP_
+#endif//NES_INCLUDE_NODEENGINE_QUERYSTATISTICS_HPP_

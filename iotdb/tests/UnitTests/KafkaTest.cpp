@@ -40,10 +40,10 @@ class KafkaTest : public testing::Test {
 
         ASSERT_GT(buffer_size, 0);
 
-        NES_DEBUG("Setup KafkaTest")
+        NES_DEBUG("Setup KafkaTest");
     }
     void TearDown() {
-        NES_DEBUG("Tear down KafkaTest")
+        NES_DEBUG("Tear down KafkaTest");
     }
 
   protected:

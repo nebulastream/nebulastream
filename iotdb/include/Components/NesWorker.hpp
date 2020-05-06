@@ -1,10 +1,10 @@
 #ifndef INCLUDE_COMPONENTS_NESWORKER_HPP_
 #define INCLUDE_COMPONENTS_NESWORKER_HPP_
-#include <Actors/WorkerActor.hpp>
+#include <Actors/AtomUtils.hpp>
 #include <Actors/Configurations/WorkerActorConfig.hpp>
+#include <Actors/WorkerActor.hpp>
 #include <Util/Logger.hpp>
 #include <caf/io/all.hpp>
-#include <Actors/AtomUtils.hpp>
 
 using namespace std;
 
@@ -124,7 +124,6 @@ class NesWorker {
     QueryStatisticsPtr getQueryStatistics(std::string queryId);
 
   private:
-
     size_t getRandomPort(size_t base);
 
     WorkerActor* wrk;
@@ -144,5 +143,5 @@ class NesWorker {
 };
 typedef std::shared_ptr<NesWorker> NesWorkerPtr;
 
-}
+}// namespace NES
 #endif /* INCLUDE_COMPONENTS_NESWORKER_HPP_ */

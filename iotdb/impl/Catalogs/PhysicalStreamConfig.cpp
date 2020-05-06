@@ -4,14 +4,13 @@
 namespace NES {
 
 PhysicalStreamConfig::PhysicalStreamConfig() {
-  sourceType = "DefaultSource";
-  sourceConfig = "1";
-  sourceFrequency = 0;
-  numberOfBuffersToProduce = 1;
-  physicalStreamName = "default_physical";
-  logicalStreamName = "default_logical";
-}
-;
+    sourceType = "DefaultSource";
+    sourceConfig = "1";
+    sourceFrequency = 0;
+    numberOfBuffersToProduce = 1;
+    physicalStreamName = "default_physical";
+    logicalStreamName = "default_logical";
+};
 
 PhysicalStreamConfig::PhysicalStreamConfig(std::string sourceType,
                                            std::string sourceConfig,
@@ -19,22 +18,19 @@ PhysicalStreamConfig::PhysicalStreamConfig(std::string sourceType,
                                            size_t numberOfBuffersToProduce,
                                            std::string physicalStreamName,
                                            std::string logicalStreamName)
-    :
-    sourceType(sourceType),
-    sourceConfig(sourceConfig),
-    sourceFrequency(sourceFrequency),
-    numberOfBuffersToProduce(numberOfBuffersToProduce),
-    physicalStreamName(physicalStreamName),
-    logicalStreamName(logicalStreamName) {
-}
-;
+    : sourceType(sourceType),
+      sourceConfig(sourceConfig),
+      sourceFrequency(sourceFrequency),
+      numberOfBuffersToProduce(numberOfBuffersToProduce),
+      physicalStreamName(physicalStreamName),
+      logicalStreamName(logicalStreamName){};
 
 std::string PhysicalStreamConfig::toString() {
-  std::stringstream ss;
-  ss << "sourceType=" << sourceType << " sourceConfig=" << sourceConfig
-     << " sourceFrequency=" << sourceFrequency << " numberOfBuffersToProduce="
-     << numberOfBuffersToProduce << " physicalStreamName=" << physicalStreamName
-     << " logicalStreamName=" << logicalStreamName;
-  return ss.str();
+    std::stringstream ss;
+    ss << "sourceType=" << sourceType << " sourceConfig=" << sourceConfig
+       << " sourceFrequency=" << sourceFrequency << " numberOfBuffersToProduce="
+       << numberOfBuffersToProduce << " physicalStreamName=" << physicalStreamName
+       << " logicalStreamName=" << logicalStreamName;
+    return ss.str();
 }
-}
+}// namespace NES

@@ -1,11 +1,11 @@
 #ifndef LOGICAL_OPERATOR_NODE_HPP
 #define LOGICAL_OPERATOR_NODE_HPP
 
+#include <API/ParameterTypes.hpp>
 #include <Nodes/Expressions/ExpressionNode.hpp>
-#include <Nodes/Operators/OperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <API/ParameterTypes.hpp>
+#include <Nodes/Operators/OperatorNode.hpp>
 
 namespace NES {
 
@@ -28,6 +28,6 @@ LogicalOperatorNodePtr createSinkLogicalOperatorNode(const SinkDescriptorPtr sin
 LogicalOperatorNodePtr createMapLogicalOperatorNode(const FieldAssignmentExpressionNodePtr mapExpression);
 LogicalOperatorNodePtr createSourceLogicalOperatorNode(const SourceDescriptorPtr sourceDescriptor);
 LogicalOperatorNodePtr createWindowLogicalOperatorNode(const WindowDefinitionPtr windowDefinition);
-}
+}// namespace NES
 
-#endif  // LOGICAL_OPERATOR_NODE_HPP
+#endif// LOGICAL_OPERATOR_NODE_HPP

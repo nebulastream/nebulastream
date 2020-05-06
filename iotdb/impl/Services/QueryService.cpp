@@ -1,5 +1,5 @@
-#include <Operators/OperatorJsonUtil.hpp>
 #include "Services/QueryService.hpp"
+#include <Operators/OperatorJsonUtil.hpp>
 #include <Util/UtilityFunctions.hpp>
 
 using namespace NES;
@@ -11,11 +11,11 @@ json::value QueryService::generateBaseQueryPlanFromQueryString(std::string userQ
 
     //build the query plan
     OperatorJsonUtil queryPlanBuilder;
-    const json::value &basePlan = queryPlanBuilder.getBasePlan(inputQuery);
+    const json::value& basePlan = queryPlanBuilder.getBasePlan(inputQuery);
 
     return basePlan;
 }
 
 InputQueryPtr QueryService::getInputQueryFromQueryString(std::string userQuery) {
-  return UtilityFunctions::createQueryFromCodeString(userQuery);
+    return UtilityFunctions::createQueryFromCodeString(userQuery);
 }

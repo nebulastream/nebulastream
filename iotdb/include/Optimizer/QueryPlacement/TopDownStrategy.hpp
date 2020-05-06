@@ -1,8 +1,8 @@
 #ifndef TOPDOWN_HPP
 #define TOPDOWN_HPP
 
-#include <stack>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
+#include <stack>
 
 namespace NES {
 
@@ -19,12 +19,11 @@ class TopDownStrategy : public BasePlacementStrategy {
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery,
                                                 NESTopologyPlanPtr nesTopologyPlanPtr) override;
 
-    static std::unique_ptr<TopDownStrategy> create(){
+    static std::unique_ptr<TopDownStrategy> create() {
         return std::make_unique<TopDownStrategy>(TopDownStrategy());
     }
 
   private:
-
     TopDownStrategy() = default;
 
     /**
@@ -63,5 +62,5 @@ class TopDownStrategy : public BasePlacementStrategy {
                                                                          const NESTopologyEntryPtr rootNode) const;
 };
 
-}
-#endif //TOPDOWN_HPP
+}// namespace NES
+#endif//TOPDOWN_HPP

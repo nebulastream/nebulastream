@@ -30,7 +30,7 @@ class TypeInferencePhaseTest : public testing::Test {
     }
 
     void TearDown() {
-        NES_DEBUG("Tear down TypeInferencePhase Test.")
+        NES_DEBUG("Tear down TypeInferencePhase Test.");
     }
 
   protected:

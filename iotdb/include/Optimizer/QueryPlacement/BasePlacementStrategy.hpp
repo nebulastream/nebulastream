@@ -1,11 +1,11 @@
 #ifndef NESPLACEMENTOPTIMIZER_HPP
 #define NESPLACEMENTOPTIMIZER_HPP
 
-#include <iostream>
+#include "Optimizer/NESExecutionPlan.hpp"
+#include <Catalogs/StreamCatalog.hpp>
 #include <Topology/NESTopologyManager.hpp>
 #include <Topology/NESTopologyPlan.hpp>
-#include <Catalogs/StreamCatalog.hpp>
-#include "Optimizer/NESExecutionPlan.hpp"
+#include <iostream>
 
 namespace NES {
 
@@ -33,13 +33,12 @@ static std::map<std::string, NESPlacementStrategyType> stringToPlacementStrategy
  * @brief: This is the interface for base optimizer that needed to be implemented by any new query optimizer.
  */
 class BasePlacementStrategy {
-    
+
   private:
     const char* NO_OPERATOR = "NO-OPERATOR";
 
   public:
-
-    BasePlacementStrategy() {};
+    BasePlacementStrategy(){};
 
     /**
      * @brief Returns an execution graph based on the input query and nes topology.
@@ -107,7 +106,6 @@ class BasePlacementStrategy {
      * @param nesExecutionPlanPtr Pointer to the execution plan
      */
     void addForwardOperators(vector<NESTopologyEntryPtr> candidateNodes, NESExecutionPlanPtr nesExecutionPlanPtr);
-
 };
-}
-#endif //NESPLACEMENTOPTIMIZER_HPP
+}// namespace NES
+#endif//NESPLACEMENTOPTIMIZER_HPP

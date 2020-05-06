@@ -3,9 +3,9 @@
 #include <memory>
 #include <string>
 
+#include <API/Types/DataTypes.hpp>
 #include <QueryCompiler/CCodeGenerator/Declaration.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
-#include <API/Types/DataTypes.hpp>
 #include <QueryCompiler/DataTypes/ValueType.hpp>
 #include <utility>
 
@@ -25,7 +25,8 @@ enum StatementType {
     COMPOUND_STMT
 };
 
-enum BracketMode { NO_BRACKETS, BRACKETS };
+enum BracketMode { NO_BRACKETS,
+                   BRACKETS };
 
 class Statement;
 typedef std::shared_ptr<Statement> StatementPtr;
@@ -289,7 +290,8 @@ class FunctionCallStatement : public ExpressionStatment {
         CodeExpressionPtr code;
         code = combine(std::make_shared<CodeExpression>(functionname_), std::make_shared<CodeExpression>("("));
         for (i = 0; i < expr_.size(); i++) {
-            if (i != 0) code = combine(code, std::make_shared<CodeExpression>(", "));
+            if (i != 0)
+                code = combine(code, std::make_shared<CodeExpression>(", "));
             code = combine(code, expr_.at(i)->getCode());
         }
         code = combine(code, std::make_shared<CodeExpression>(")"));
@@ -337,7 +339,8 @@ class AnonymUserDefinedDataType : public DataType {
     }
     const bool isEqual(DataTypePtr ptr) const override {
         std::shared_ptr<AnonymUserDefinedDataType> temp = std::dynamic_pointer_cast<AnonymUserDefinedDataType>(ptr);
-        if (temp) return isEqual(temp);
+        if (temp)
+            return isEqual(temp);
         return false;
     }
 
@@ -350,8 +353,7 @@ class AnonymUserDefinedDataType : public DataType {
         try {
             auto rhs = dynamic_cast<const NES::AnonymUserDefinedDataType&>(_rhs);
             return name == rhs.name;
-        }
-        catch (...) {
+        } catch (...) {
             return false;
         }
     }
@@ -385,7 +387,8 @@ class UserDefinedDataType : public DataType {
     }
     const bool isEqual(DataTypePtr ptr) const override {
         std::shared_ptr<UserDefinedDataType> temp = std::dynamic_pointer_cast<UserDefinedDataType>(ptr);
-        if (temp) return isEqual(temp);
+        if (temp)
+            return isEqual(temp);
         return false;
     }
 
@@ -416,4 +419,4 @@ struct AssignmentStatment {
 const DataTypePtr createUserDefinedType(const StructDeclaration& decl);
 const DataTypePtr createAnonymUserDefinedType(const std::string name);
 
-} // namespace NES
+}// namespace NES

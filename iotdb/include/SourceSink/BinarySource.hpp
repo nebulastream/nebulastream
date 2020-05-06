@@ -1,9 +1,9 @@
 #ifndef INCLUDE_BINARYSOURCE_H_
 #define INCLUDE_BINARYSOURCE_H_
 
-#include <fstream>
 #include <SourceSink/DataSource.hpp>
 #include <boost/archive/text_oarchive.hpp>
+#include <fstream>
 
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/shared_ptr.hpp>
@@ -16,7 +16,6 @@ namespace NES {
  */
 class BinarySource : public DataSource {
   public:
-
     /**
      * @brief constructor for binary source
      * @param schema of the data source
@@ -43,6 +42,7 @@ class BinarySource : public DataSource {
     void fillBuffer(TupleBuffer&);
 
     SourceType getType() const override;
+
   private:
     //this one only required for serialization
     BinarySource();
@@ -60,15 +60,15 @@ class BinarySource : public DataSource {
     template<class Archive>
     void serialize(Archive& ar,
                    const unsigned int version) {
-        ar & boost::serialization::base_object<DataSource>(*this);
-        ar & file_path;
-        ar & file_size;
-        ar & tuple_size;
-        ar & generatedTuples;
-        ar & generatedBuffers;
+        ar& boost::serialization::base_object<DataSource>(*this);
+        ar& file_path;
+        ar& file_size;
+        ar& tuple_size;
+        ar& generatedTuples;
+        ar& generatedBuffers;
     }
 };
-}  // namespace NES
+}// namespace NES
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>

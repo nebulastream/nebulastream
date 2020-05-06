@@ -1,5 +1,5 @@
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <API/InputQuery.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 
 namespace NES {
 
@@ -38,4 +38,4 @@ void SourceLogicalOperatorNode::setSourceDescriptor(SourceDescriptorPtr sourceDe
     this->sourceDescriptor = sourceDescriptor;
 }
 
-}
+}// namespace NES

@@ -1,14 +1,14 @@
 #ifndef INCLUDE_ACTORS_WORKERACTOR_HPP_
 #define INCLUDE_ACTORS_WORKERACTOR_HPP_
-#include <Topology/NESTopologyEntry.hpp>
+#include <Catalogs/PhysicalStreamConfig.hpp>
 #include <NodeEngine/NodeEngine.hpp>
 #include <Operators/Operator.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
+#include <Topology/NESTopologyEntry.hpp>
 #include <caf/all.hpp>
+#include <caf/blocking_actor.hpp>
 #include <caf/io/all.hpp>
 #include <utility>
-#include <caf/blocking_actor.hpp>
-#include <Catalogs/PhysicalStreamConfig.hpp>
-#include <QueryCompiler/QueryCompiler.hpp>
 
 using namespace caf;
 using std::string;
@@ -31,7 +31,6 @@ struct WorkerState {
  */
 class WorkerActor : public stateful_actor<WorkerState> {
   public:
-
     /**
      * @brief the constructor to  of the worker to initialize the default objects
      * @param actor config
@@ -129,7 +128,6 @@ class WorkerActor : public stateful_actor<WorkerState> {
      */
     bool shutdown(bool force);
 
-
     /**
     * @brief method to return the query statistics
     * @param id of the query
@@ -146,9 +144,8 @@ class WorkerActor : public stateful_actor<WorkerState> {
     NESNodeType type;
     size_t workerId;
     QueryCompilerPtr queryCompiler;
-
 };
 
-}
+}// namespace NES
 
-#endif //INCLUDE_ACTORS_WORKERACTOR_HPP_
+#endif//INCLUDE_ACTORS_WORKERACTOR_HPP_

@@ -27,4 +27,4 @@ class FileBuilder {
     CodeFile build();
 };
 
-} // namespace NES
+}// namespace NES

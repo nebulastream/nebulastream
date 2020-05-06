@@ -1,5 +1,5 @@
-#include <Nodes/Util/DumpHandler.hpp>
 #include <Nodes/Util/DumpContext.hpp>
+#include <Nodes/Util/DumpHandler.hpp>
 
 namespace NES {
 
@@ -12,8 +12,8 @@ void DumpContext::registerDumpHandler(DebugDumpHandlerPtr debugDumpHandler) {
 }
 
 void DumpContext::dump(const NodePtr node, std::ostream& out) {
-    for (auto& handler:dumpHandlers) {
+    for (auto& handler : dumpHandlers) {
         handler->dump(node, out);
     }
 }
-}
+}// namespace NES

@@ -1,10 +1,10 @@
 #ifndef INCLUDE_NODEENGINE_PHYSICALLAYOUT_HPP_
 #define INCLUDE_NODEENGINE_PHYSICALLAYOUT_HPP_
-#include <memory>
-#include <NodeEngine/MemoryLayout/PhysicalField.hpp>
-#include <NodeEngine/MemoryLayout/BasicPhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/ArrayPhysicalField.hpp>
+#include <NodeEngine/MemoryLayout/BasicPhysicalField.hpp>
+#include <NodeEngine/MemoryLayout/PhysicalField.hpp>
 #include <NodeEngine/MemoryLayout/PhysicalSchema.hpp>
+#include <memory>
 namespace NES {
 
 class TupleBuffer;
@@ -26,7 +26,6 @@ class ArrayPhysicalField;
  */
 class MemoryLayout {
   public:
-
     virtual MemoryLayoutPtr copy() const = 0;
 
     /**
@@ -60,7 +59,7 @@ class MemoryLayout {
      * @return ValueType* typed pointer
      */
     template<class ValueType>
-    ValueType* getFieldPointer(TupleBuffer& buffer, uint64_t recordIndex, uint64_t fieldIndex){
+    ValueType* getFieldPointer(TupleBuffer& buffer, uint64_t recordIndex, uint64_t fieldIndex) {
         auto fieldOffset = getFieldOffset(recordIndex, fieldIndex);
         auto byteBuffer = buffer.getBufferAs<int8_t>();
         // interpret the target address as value type and read value from tuple buffer
@@ -81,8 +80,6 @@ class MemoryLayout {
         return *field->asArrayField();
     }
 
-
-
   protected:
     explicit MemoryLayout(PhysicalSchemaPtr physicalSchema);
     PhysicalSchemaPtr physicalSchema;
@@ -95,6 +92,6 @@ class MemoryLayout {
  */
 MemoryLayoutPtr createRowLayout(SchemaPtr schema);
 
-}
+}// namespace NES
 
-#endif //INCLUDE_NODEENGINE_PHYSICALLAYOUT_HPP_
+#endif//INCLUDE_NODEENGINE_PHYSICALLAYOUT_HPP_

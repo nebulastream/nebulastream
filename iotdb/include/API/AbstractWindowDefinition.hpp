@@ -11,6 +11,7 @@ class WindowState {
   private:
     uint64_t start;
     uint64_t end;
+
   public:
     uint64_t getStartTs() const;
     uint64_t getEndTs() const;
@@ -71,7 +72,6 @@ class WindowDefinition {
     const WindowAggregationPtr windowAggregation;
     const WindowTypePtr windowType;
     const AttributeFieldPtr onKey;
-
 };
 
 typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
@@ -94,6 +94,6 @@ WindowDefinitionPtr createWindowDefinition(const WindowAggregationPtr windowAggr
 WindowDefinitionPtr createWindowDefinition(const AttributeFieldPtr onKey,
                                            const WindowAggregationPtr windowAggregation,
                                            const WindowTypePtr windowType);
-}
+}// namespace NES
 
-#endif //INCLUDE_QUERYLIB_ABSTRACTWINDOWDEFINITION_HPP_
+#endif//INCLUDE_QUERYLIB_ABSTRACTWINDOWDEFINITION_HPP_

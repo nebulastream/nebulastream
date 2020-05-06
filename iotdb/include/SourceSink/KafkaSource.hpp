@@ -5,15 +5,14 @@
 #include <memory>
 #include <string>
 
-#include <cppkafka/cppkafka.h>
 #include <SourceSink/DataSource.hpp>
+#include <cppkafka/cppkafka.h>
 
 namespace NES {
 
 class KafkaSource : public DataSource {
 
   public:
-
     KafkaSource(SchemaPtr schema,
                 BufferManagerPtr bufferManager,
                 QueryManagerPtr queryManager,
@@ -34,7 +33,6 @@ class KafkaSource : public DataSource {
     const std::string toString() const override;
 
   private:
-
     KafkaSource() = default;
 
     void _connect();
@@ -57,6 +55,6 @@ class KafkaSource : public DataSource {
     std::chrono::milliseconds kafkaConsumerTimeout;
     std::unique_ptr<cppkafka::Consumer> consumer;
 };
-} // namespace NES
+}// namespace NES
 
-#endif // KAFKASOURCE_HPP
+#endif// KAFKASOURCE_HPP

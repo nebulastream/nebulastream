@@ -9,7 +9,7 @@ WindowLogicalOperatorNode::WindowLogicalOperatorNode(const WindowDefinitionPtr& 
 
 const std::string WindowLogicalOperatorNode::toString() const {
     std::stringstream ss;
-    ss << "WINDOW("<<outputSchema->toString()<<")";
+    ss << "WINDOW(" << outputSchema->toString() << ")";
     return ss.str();
 }
 
@@ -18,7 +18,7 @@ const WindowDefinitionPtr& WindowLogicalOperatorNode::getWindowDefinition() cons
 }
 
 bool WindowLogicalOperatorNode::equal(const NodePtr rhs) const {
-    if(this->isIdentical(rhs)) {
+    if (this->isIdentical(rhs)) {
         return true;
     }
     if (rhs->instanceOf<WindowLogicalOperatorNode>()) {
@@ -33,4 +33,4 @@ LogicalOperatorNodePtr createWindowLogicalOperatorNode(const WindowDefinitionPtr
     return std::make_shared<WindowLogicalOperatorNode>(windowDefinitionPtr);
 }
 
-} // namespace NES
+}// namespace NES

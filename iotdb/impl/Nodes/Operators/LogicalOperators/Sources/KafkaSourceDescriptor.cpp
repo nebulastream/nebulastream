@@ -53,4 +53,4 @@ const std::string& KafkaSourceDescriptor::getGroupId() const {
     return groupId;
 }
 
-}
+}// namespace NES

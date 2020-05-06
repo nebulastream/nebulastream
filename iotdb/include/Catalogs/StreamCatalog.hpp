@@ -1,13 +1,13 @@
 #ifndef INCLUDE_CATALOGS_STREAMCATALOG_HPP_
 #define INCLUDE_CATALOGS_STREAMCATALOG_HPP_
 
-#include <string>
-#include <vector>
-#include <map>
-#include <deque>
-#include <SourceSink/DataSource.hpp>
 #include <API/Schema.hpp>
 #include <API/Stream.hpp>
+#include <SourceSink/DataSource.hpp>
+#include <deque>
+#include <map>
+#include <string>
+#include <vector>
 //#include <Topology/NESTopologyEntry.hpp>
 #include <Catalogs/StreamCatalogEntry.hpp>
 using namespace std;
@@ -21,47 +21,47 @@ namespace NES {
  *    - TODO: delete methods only delete catalog entries not the entries in the topology
  */
 class StreamCatalog {
- public:
-  /**
+  public:
+    /**
    * @brief Singleton implementation of stream catalog
    */
-  static StreamCatalog& instance();
+    static StreamCatalog& instance();
 
-  /**
+    /**
    * @brief method to add a logical stream
    * @param logical stream name
    * @param schema of logical stream
    * TODO: what to do if logical stream exists but the new one has a different schema
    * @return bool indicating if insert was successful
    */
-  bool addLogicalStream(std::string logicalStreamName, SchemaPtr schemaPtr);
+    bool addLogicalStream(std::string logicalStreamName, SchemaPtr schemaPtr);
 
-  /**
+    /**
    * @brief method to delete a logical stream
    * @caution this method only remove the entry from the catalog not from the topology
    * @param name of logical stream to delete
    * @param bool indicating the success of the removal
    */
-  bool removeLogicalStream(std::string logicalStreamName);
+    bool removeLogicalStream(std::string logicalStreamName);
 
-  /**
+    /**
    * @brief method to add a physical stream
    * @caution combination of node and name has to be unique
    * @return bool indicating success of insert stream
    */
-  bool addPhysicalStream(std::string logicalStreamName,
-                         StreamCatalogEntryPtr entry);
+    bool addPhysicalStream(std::string logicalStreamName,
+                           StreamCatalogEntryPtr entry);
 
-  /**
+    /**
    * @brief method to remove a physical stream
    * @caution this will not update the topology
    * @param logical stream where this physical stream reports to
    * @param structure describing the entry in the catalog
    * @return bool indicating success of remove stream
    */
-  bool removePhysicalStream(string logicalStreamName, string physicalStreamName, std::size_t hashId);
+    bool removePhysicalStream(string logicalStreamName, string physicalStreamName, std::size_t hashId);
 
-  /**
+    /**
    * @brief method to remove a physical stream from its logical streams
    * @param name of the logical stream
    * @param name of the physical stream
@@ -69,7 +69,7 @@ class StreamCatalog {
    * @return bool indicating success of remove stream
    */
 
-  bool removePhysicalStreamByHashId(size_t hashId);
+    bool removePhysicalStreamByHashId(size_t hashId);
 
     /**
      * @brief method to remove a physical stream from its logical streams
@@ -77,92 +77,91 @@ class StreamCatalog {
      * @return bool indicating success of remove of physical stream
      */
 
-  bool removeAllPhysicalStreams(std::string physicalStreamName);
+    bool removeAllPhysicalStreams(std::string physicalStreamName);
 
-  /**
+    /**
    * @brief method to remove a physical stream from all logical streams
    * @param param of the node to be deleted
    * @return bool indicating success of remove stream
    */
 
-  SchemaPtr getSchemaForLogicalStream(std::string logicalStreamName);
+    SchemaPtr getSchemaForLogicalStream(std::string logicalStreamName);
 
-  /**
+    /**
    * @brief method to return the stream for an existing logical stream
    * @param name of logical stream
    * @return smart pointer to a newly created stream
    * @note the stream will also contain the schema
    */
-  StreamPtr getStreamForLogicalStream(std::string logicalStreamName);
+    StreamPtr getStreamForLogicalStream(std::string logicalStreamName);
 
-  /**
+    /**
    * @brief method to return the stream for an existing logical stream or throw exception
    * @param name of logical stream
    * @return smart pointer to a newly created stream
    * @note the stream will also contain the schema
    */
-  StreamPtr getStreamForLogicalStreamOrThrowException(
-      std::string logicalStreamName);
+    StreamPtr getStreamForLogicalStreamOrThrowException(
+        std::string logicalStreamName);
 
-  /**
+    /**
    * @brief test if logical stream with this name exists in the log to schema mapping
    * @param name of the logical stream to test
    * @return bool indicating if stream exists
    */
-  bool testIfLogicalStreamExistsInSchemaMapping(std::string logicalStreamName);
+    bool testIfLogicalStreamExistsInSchemaMapping(std::string logicalStreamName);
 
-  /**
+    /**
    * @brief test if logical stream with this name exists in the log to phy mapping
    * @param name of the logical stream to test
    * @return bool indicating if stream exists
    */
-  bool testIfLogicalStreamExistsInLogicalToPhysicalMapping(
-      std::string logicalStreamName);
+    bool testIfLogicalStreamExistsInLogicalToPhysicalMapping(
+        std::string logicalStreamName);
 
-  /**
+    /**
    * @brief return all physical nodes that contribute to this logical stream
    * @param name of logical stream
    * @return list of physical nodes as pointers into the topology
    */
-  vector<NESTopologyEntryPtr> getSourceNodesForLogicalStream(
-      std::string logicalStreamName);
+    vector<NESTopologyEntryPtr> getSourceNodesForLogicalStream(
+        std::string logicalStreamName);
 
-  /**
+    /**
    * @brief reset the catalog and recreate the default_logical stream
    * @return bool indicating success
    */
-  bool reset();
+    bool reset();
 
-  /**
+    /**
    * @brief Return a list of logical stream names registered at catalog
    * @return map containing stream name as key and schema object as value
    */
-  std::map<std::string, SchemaPtr> getAllLogicalStream();
+    std::map<std::string, SchemaPtr> getAllLogicalStream();
 
-  /**
+    /**
    * @brief method to return the physical stream and the associated schemas
    * @return string containing the content of the catalog
    */
-  std::string getPhysicalStreamAndSchemaAsString();
+    std::string getPhysicalStreamAndSchemaAsString();
 
-  std::vector<StreamCatalogEntryPtr> getPhysicalStreams(
-      std::string logicalStreamName);
- private:
-  /* implement singleton semantics: no construction,
+    std::vector<StreamCatalogEntryPtr> getPhysicalStreams(
+        std::string logicalStreamName);
+
+  private:
+    /* implement singleton semantics: no construction,
    * copying or destruction of stream catalog objects
    * outside of the class
    * Default thread count is 1
    */
-  StreamCatalog();
-  ~StreamCatalog();
+    StreamCatalog();
+    ~StreamCatalog();
 
-  //map logical stream to schema
-  std::map<std::string, SchemaPtr> logicalStreamToSchemaMapping;
+    //map logical stream to schema
+    std::map<std::string, SchemaPtr> logicalStreamToSchemaMapping;
 
-  //map logical stream to physical source
-  std::map<std::string, std::vector<StreamCatalogEntryPtr>> logicalToPhysicalStreamMapping;
-
-
+    //map logical stream to physical source
+    std::map<std::string, std::vector<StreamCatalogEntryPtr>> logicalToPhysicalStreamMapping;
 };
-}
+}// namespace NES
 #endif /* INCLUDE_CATALOGS_STREAMCATALOG_HPP_ */

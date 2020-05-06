@@ -20,7 +20,6 @@
 #include <NodeEngine/QueryStatistics.hpp>
 namespace NES {
 
-
 class TupleBuffer;
 /**
  * @brief the query manager is the central class to process queries.
@@ -157,12 +156,10 @@ class QueryManager : public std::enable_shared_from_this<QueryManager> {
     std::mutex workMutex;
 
     std::condition_variable cv;
-
-
 };
 
 typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 
-} // namespace NES
+}// namespace NES
 
 #endif /* INCLUDE_query manager_H_ */

@@ -2,8 +2,8 @@
 #define NODE_ENGINE_H
 
 #include <API/Config.hpp>
-#include <NodeEngine/QueryManager.hpp>
 #include <NodeEngine/NodeProperties.hpp>
+#include <NodeEngine/QueryManager.hpp>
 #include <QueryCompiler/QueryExecutionPlan.hpp>
 #include <iostream>
 #include <pthread.h>
@@ -25,7 +25,9 @@ using JSON = nlohmann::json;
  */
 class NodeEngine {
   public:
-    enum NodeEngineQueryStatus { started, stopped, registered };
+    enum NodeEngineQueryStatus { started,
+                                 stopped,
+                                 registered };
     /**
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool
@@ -180,10 +182,9 @@ class NodeEngine {
     std::string ip;
     uint16_t publishPort;
     uint16_t receivePort;
-
 };
 
 typedef std::shared_ptr<NodeEngine> NodeEnginePtr;
 
-} // namespace NES
-#endif // NODE_ENGINE_H
+}// namespace NES
+#endif// NODE_ENGINE_H

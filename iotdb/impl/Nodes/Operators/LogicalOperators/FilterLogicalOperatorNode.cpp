@@ -32,11 +32,11 @@ const std::string FilterLogicalOperatorNode::toString() const {
 
 FilterLogicalOperatorNodePtr FilterLogicalOperatorNode::makeACopy() {
 
-    NES_INFO("FilterLogicalOperatorNode: Create copy of the filter operator")
+    NES_INFO("FilterLogicalOperatorNode: Create copy of the filter operator");
     const FilterLogicalOperatorNodePtr copiedOptr = std::make_shared<FilterLogicalOperatorNode>(this->getPredicate());
     copiedOptr->setId(this->getId());
 
-    NES_INFO("FilterLogicalOperatorNode: copy all parents")
+    NES_INFO("FilterLogicalOperatorNode: copy all parents");
     std::vector<NodePtr> parents = this->getParents();
     for (auto parent : parents) {
         if (!copiedOptr->addParent(parent)) {
@@ -44,9 +44,9 @@ FilterLogicalOperatorNodePtr FilterLogicalOperatorNode::makeACopy() {
         }
     }
 
-    NES_INFO("FilterLogicalOperatorNode: copy all children")
+    NES_INFO("FilterLogicalOperatorNode: copy all children");
     std::vector<NodePtr> children = this->getChildren();
-    for (auto child: children) {
+    for (auto child : children) {
         if (!copiedOptr->addChild(child)) {
             NES_THROW_RUNTIME_ERROR("FilterLogicalOperatorNode: Unable to add child to copy");
         }
@@ -68,4 +68,4 @@ bool FilterLogicalOperatorNode::inferSchema() {
     return true;
 }
 
-}
+}// namespace NES

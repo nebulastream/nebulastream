@@ -9,10 +9,9 @@ namespace NES {
 /**
  * @brief Descriptor defining properties used for creating physical kafka sink
  */
-class KafkaSinkDescriptor: public SinkDescriptor {
+class KafkaSinkDescriptor : public SinkDescriptor {
 
   public:
-
     /**
      * @brief Factory method to create a new Kafka sink.
      * @param schema
@@ -47,7 +46,7 @@ class KafkaSinkDescriptor: public SinkDescriptor {
     uint64_t timeout;
 };
 
-typedef std::shared_ptr<KafkaSinkDescriptor> KafkaSinkDescriptorPtr ;
-}
+typedef std::shared_ptr<KafkaSinkDescriptor> KafkaSinkDescriptorPtr;
+}// namespace NES
 
-#endif //NES_IMPL_NODES_OPERATORS_LOGICALOPERATORS_SINKS_KAFKASINKDESCRIPTOR_HPP_
+#endif//NES_IMPL_NODES_OPERATORS_LOGICALOPERATORS_SINKS_KAFKASINKDESCRIPTOR_HPP_

@@ -16,40 +16,37 @@ KafkaSource::KafkaSource(SchemaPtr schema, BufferManagerPtr bufferManager, Query
                          const std::string topic, const std::string groupId, bool autoCommit,
                          uint64_t kafkaConsumerTimeout)
     : DataSource(schema, bufferManager, queryManager), brokers(brokers), topic(topic), groupId(groupId),
-      autoCommit(autoCommit), kafkaConsumerTimeout(std::move(std::chrono::milliseconds(kafkaConsumerTimeout)))
-{
+      autoCommit(autoCommit), kafkaConsumerTimeout(std::move(std::chrono::milliseconds(kafkaConsumerTimeout))) {
 
     config = {{"metadata.broker.list", brokers.c_str()},
               {"group.id", groupId},
               {"enable.auto.commit", autoCommit},
               {"auto.offset.reset", "latest"}};
     _connect();
-    NES_INFO("KAFKASOURCE " << this << ": Init KAFKA SOURCE to brokers " << brokers << ", topic " << topic)
+    NES_INFO("KAFKASOURCE " << this << ": Init KAFKA SOURCE to brokers " << brokers << ", topic " << topic);
 }
 
 KafkaSource::~KafkaSource() {}
 
-std::optional<TupleBuffer> KafkaSource::receiveData()
-{
-    NES_DEBUG("KAFKASOURCE tries to receive data...")
+std::optional<TupleBuffer> KafkaSource::receiveData() {
+    NES_DEBUG("KAFKASOURCE tries to receive data...");
 
     cppkafka::Message msg = consumer->poll(kafkaConsumerTimeout);
 
     if (msg) {
         if (msg.get_error()) {
             if (!msg.is_eof()) {
-                NES_WARNING("KAFKASOURCE received error notification: " << msg.get_error())
+                NES_WARNING("KAFKASOURCE received error notification: " << msg.get_error());
             }
             return std::nullopt;
-        }
-        else {
+        } else {
             TupleBuffer buffer = bufferManager->getBufferBlocking();
 
             const size_t tupleSize = schema->getSchemaSizeInBytes();
             const size_t tupleCnt = msg.get_payload().get_size() / tupleSize;
 
             NES_DEBUG("KAFKASOURCE recv #tups: " << tupleCnt << ", tupleSize: " << tupleSize
-                                                 << ", msg: " << msg.get_payload())
+                                                 << ", msg: " << msg.get_payload());
 
             std::memcpy(buffer.getBuffer(), msg.get_payload().get_data(), msg.get_payload().get_size());
             buffer.setNumberOfTuples(tupleCnt);
@@ -65,8 +62,7 @@ std::optional<TupleBuffer> KafkaSource::receiveData()
     return std::nullopt;
 }
 
-const std::string KafkaSource::toString() const
-{
+const std::string KafkaSource::toString() const {
     std::stringstream ss;
     ss << "KAFKA_SOURCE(";
     ss << "SCHEMA(" << schema->toString() << "), ";
@@ -75,26 +71,25 @@ const std::string KafkaSource::toString() const
     return ss.str();
 }
 
-void KafkaSource::_connect()
-{
+void KafkaSource::_connect() {
     consumer = std::make_unique<cppkafka::Consumer>(config);
     // set the assignment callback
     consumer->set_assignment_callback([&](cppkafka::TopicPartitionList& topicPartitions) {
         for (auto&& tpp : topicPartitions) {
             if (tpp.get_offset() == cppkafka::TopicPartition::Offset::OFFSET_INVALID) {
                 NES_WARNING("topic " << tpp.get_topic() << ", partition " << tpp.get_partition()
-                                     << " get invalid offset " << tpp.get_offset())
+                                     << " get invalid offset " << tpp.get_offset());
                 // TODO: enforce to set offset to -1 or abort ?
                 auto tuple = consumer->query_offsets(tpp);
                 size_t high = std::get<1>(tuple);
                 tpp.set_offset(high - 1);
             }
         }
-        NES_DEBUG("Got assigned " << topicPartitions.size() << " partitions")
+        NES_DEBUG("Got assigned " << topicPartitions.size() << " partitions");
     });
     // set the revocation callback
     consumer->set_revocation_callback([&](const cppkafka::TopicPartitionList& topicPartitions) {
-        NES_DEBUG(topicPartitions.size() << " partitions revoked")
+        NES_DEBUG(topicPartitions.size() << " partitions revoked");
     });
 
     consumer->subscribe({topic});
@@ -102,5 +97,5 @@ void KafkaSource::_connect()
 
 SourceType KafkaSource::getType() const { return KAFKA_SOURCE; }
 
-} // namespace NES
+}// namespace NES
 BOOST_CLASS_EXPORT(NES::KafkaSource);

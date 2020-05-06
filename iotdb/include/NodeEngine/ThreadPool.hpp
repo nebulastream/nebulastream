@@ -1,10 +1,10 @@
 #ifndef THREADPOOL_H_
 #define THREADPOOL_H_
 
+#include <NodeEngine/QueryManager.hpp>
 #include <iostream>
 #include <thread>
 #include <vector>
-#include <NodeEngine/QueryManager.hpp>
 
 namespace NES {
 class QueryManager;
@@ -21,7 +21,6 @@ typedef std::shared_ptr<QueryManager> QueryManagerPtr;
 
 class ThreadPool {
   public:
-
     /**
      * @brief default constructor
      */
@@ -89,8 +88,6 @@ class ThreadPool {
     void restart();
 
   private:
-
-
     //indicating if the thread pool is running, used for multi-thread execution
     std::atomic<bool> running;
     std::atomic<size_t> numThreads;
@@ -101,6 +98,6 @@ class ThreadPool {
 
 typedef std::shared_ptr<ThreadPool> ThreadPoolPtr;
 
-}  // namespace NES
+}// namespace NES
 
 #endif /* THREADPOOL_H_ */

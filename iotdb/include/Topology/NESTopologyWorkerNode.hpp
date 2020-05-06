@@ -3,11 +3,11 @@
 
 #include <API/InputQuery.hpp>
 
+#include "NESTopologyEntry.hpp"
+#include <Util/CPUCapacity.hpp>
 #include <memory>
 #include <utility>
 #include <vector>
-#include <Util/CPUCapacity.hpp>
-#include "NESTopologyEntry.hpp"
 
 namespace NES {
 
@@ -24,84 +24,84 @@ namespace NES {
  */
 class NESTopologyWorkerNode : public NESTopologyEntry {
 
- public:
-  NESTopologyWorkerNode(size_t id, std::string ip_addr) {
-    this->id = id;
-    this->ipAddress = std::move(ip_addr);
-    isASink = false;
-    cpuCapacity = 0;
-    remainingCPUCapacity = 0;
-  }
-  ~NESTopologyWorkerNode() = default;
+  public:
+    NESTopologyWorkerNode(size_t id, std::string ip_addr) {
+        this->id = id;
+        this->ipAddress = std::move(ip_addr);
+        isASink = false;
+        cpuCapacity = 0;
+        remainingCPUCapacity = 0;
+    }
+    ~NESTopologyWorkerNode() = default;
 
-  /**
+    /**
    * @brief method to get the overall cpu capacity of the node
    * @return size_t cpu capacity
    */
-  size_t getCpuCapacity();
+    size_t getCpuCapacity();
 
-  /**
+    /**
    * @brief method to set CPU capacity
    * @param CPUCapacity class describing the node capacity
    */
-  void setCpuCapacity(CPUCapacity cpuCapacity);
+    void setCpuCapacity(CPUCapacity cpuCapacity);
 
-  /**
+    /**
    * @brief method to reduce the cpu capacity of the node
    * @param size_t of the value that has to be subtracted
    * TODO: this should check if the value becomes less than 0
    */
-  void reduceCpuCapacity(size_t usedCapacity);
+    void reduceCpuCapacity(size_t usedCapacity);
 
-  /**
+    /**
    * @brief method to increase CPU capacity
    * @param size_t of the vlaue that has to be added
    */
-  void increaseCpuCapacity(size_t freedCapacity);
+    void increaseCpuCapacity(size_t freedCapacity);
 
-  /**
+    /**
    * @brief method to get the actual cpu capacity
    * @param size_t of the current capacity
    */
-  size_t getRemainingCpuCapacity();
+    size_t getRemainingCpuCapacity();
 
-  /**
+    /**
    * @brief method to make this node a sink node
    * @param bool ifSinkNode
    */
-  void setSinkNode(bool isASink);
+    void setSinkNode(bool isASink);
 
-  /**
+    /**
    * @brief method to get the info if this node is a sink node
    * @return true if this is a sink node otherwise false
    */
-  bool getIsASinkNode();
+    bool getIsASinkNode();
 
-  /**
+    /**
    * @brief method to return the type of this entry
    * @return Coordinator as a parameter
    */
-  NESNodeType getEntryType();
+    NESNodeType getEntryType();
 
-  /**
+    /**
    * @brief method to return the entry type as a string
    * @return if this is a sink then sink else Coordinator"
    */
-  std::string getEntryTypeString();
+    std::string getEntryTypeString();
 
-  /**
+    /**
    * @brief method to deploy a query here
    * @param InputQueryPtr to the query for this node
    */
-  void setQuery(InputQueryPtr pQuery);
+    void setQuery(InputQueryPtr pQuery);
 
- private:
-  size_t cpuCapacity;
-  size_t remainingCPUCapacity;
-  bool isASink;
-  InputQueryPtr query;
+  private:
+    size_t cpuCapacity;
+    size_t remainingCPUCapacity;
+    bool isASink;
+    InputQueryPtr query;
 };
 
 typedef std::shared_ptr<NESTopologyWorkerNode> NESTopologyWorkerNodePtr;
-}  // namespace NES
+}// namespace NES
 #endif /* INCLUDE_TOPOLOGY_NESTOPOLOGYWORKERNODE_HPP_ */

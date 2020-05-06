@@ -4,11 +4,11 @@
 namespace NES {
 
 class PhysicalOperatorNode : public BaseOperatorNode {
-public:
+  public:
     void produce();
     void consume();
-private:
 
+  private:
 };
-}
-#endif  // PHYSICAL_OPERATOR_NODE_HPP
+}// namespace NES
+#endif// PHYSICAL_OPERATOR_NODE_HPP

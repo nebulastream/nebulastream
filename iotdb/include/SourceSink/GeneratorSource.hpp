@@ -16,22 +16,22 @@ namespace NES {
  *    - This class can currently not be serialized/deserialized mostly due to the templates
  */
 class GeneratorSource : public DataSource {
- public:
-  /**
+  public:
+    /**
    * @brief constructor to create a generator source
    * @param schema of the source
    * @param number of buffer that should be processed
    * @param via template, the functor that determines what to do
    */
-  GeneratorSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce)
-      : DataSource(schema, bufferManager, queryManager) {
-    this->numBuffersToProcess = numbersOfBufferToProduce;
-  }
-  /**
+    GeneratorSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const uint64_t numbersOfBufferToProduce)
+        : DataSource(schema, bufferManager, queryManager) {
+        this->numBuffersToProcess = numbersOfBufferToProduce;
+    }
+    /**
    * @brief override function to create one buffer
    * @return pointer to a buffer containing the created tuples
    */
-  virtual std::optional<TupleBuffer> receiveData() = 0;
+    virtual std::optional<TupleBuffer> receiveData() = 0;
 
     /**
      * @brief override the toString method for the generator source
@@ -39,15 +39,17 @@ class GeneratorSource : public DataSource {
      */
     const std::string toString() const override;
     SourceType getType() const override;
+
   protected:
     GeneratorSource() = default;
+
   private:
     friend class boost::serialization::access;
     template<class Archive>
     void serialize(Archive& ar, const unsigned int version) {
-        ar & boost::serialization::base_object<DataSource>(*this);
+        ar& boost::serialization::base_object<DataSource>(*this);
     }
 };
 
-}
+}// namespace NES
 #endif /* INCLUDE_GENERATORSOURCE_H_ */

@@ -2,8 +2,8 @@
 #include <sstream>
 #include <vector>
 
-#include <QueryCompiler/CodeGenerator.hpp>
 #include <Operators/Impl/SourceOperator.hpp>
+#include <QueryCompiler/CodeGenerator.hpp>
 
 namespace NES {
 
@@ -11,23 +11,20 @@ SourceOperator::SourceOperator(const DataSourcePtr source) : Operator(), source(
 
 SourceOperator::SourceOperator(const SourceOperator& other) : source(other.source) {}
 
-SourceOperator& SourceOperator::operator=(const SourceOperator& other)
-{
+SourceOperator& SourceOperator::operator=(const SourceOperator& other) {
     if (this != &other) {
         source = other.source;
     }
     return *this;
 }
 
-void SourceOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out)
-{
+void SourceOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
     this->consume(codegen, context, out);
 }
 
-void SourceOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out)
-{
+void SourceOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
     codegen->generateCode(source->getSchema(), context, out);
-    getParent()->consume(codegen,context,out);
+    getParent()->consume(codegen, context, out);
 }
 
 const OperatorPtr SourceOperator::copy() const {
@@ -36,8 +33,7 @@ const OperatorPtr SourceOperator::copy() const {
     return copy;
 }
 
-const std::string SourceOperator::toString() const
-{
+const std::string SourceOperator::toString() const {
     std::stringstream ss;
     ss << "SOURCE(" << NES::toString(source) << ")";
     return ss.str();
@@ -56,5 +52,5 @@ SourceOperator::SourceOperator() {
 
 const OperatorPtr createSourceOperator(const DataSourcePtr source) { return std::make_shared<SourceOperator>(source); }
 
-} // namespace NES
+}// namespace NES
 BOOST_CLASS_EXPORT(NES::SourceOperator);

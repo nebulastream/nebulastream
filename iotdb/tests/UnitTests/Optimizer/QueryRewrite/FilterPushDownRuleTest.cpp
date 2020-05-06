@@ -49,12 +49,12 @@ class FilterPushDownRuleTest : public testing::Test {
 
     /* Will be called before a test is executed. */
     void TearDown() {
-        NES_INFO("Setup FilterPushDownRuleTest test case.")
+        NES_INFO("Setup FilterPushDownRuleTest test case.");
     }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() {
-        NES_INFO("Tear down FilterPushDownRuleTest test class.")
+        NES_INFO("Tear down FilterPushDownRuleTest test class.");
     }
 };
 

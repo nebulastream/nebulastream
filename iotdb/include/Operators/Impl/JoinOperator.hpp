@@ -26,4 +26,4 @@ class JoinOperator : public Operator {
     JoinPredicatePtr join_spec_;
 };
 
-} // namespace NES
+}// namespace NES

@@ -21,8 +21,7 @@ void ArithmeticalExpressionNode::inferStamp(SchemaPtr schema) {
     // both sub expressions have to be numerical
     if (!left->getStamp()->isNumerical() || !right->getStamp()->isNumerical()) {
         NES_THROW_RUNTIME_ERROR(
-            "ArithmeticalExpressionNode: Error during stamp inference. Types need to be Numerical but Left was:" +
-                left->getStamp()->toString() + " Right was: " + right->getStamp()->toString());
+            "ArithmeticalExpressionNode: Error during stamp inference. Types need to be Numerical but Left was:" + left->getStamp()->toString() + " Right was: " + right->getStamp()->toString());
     }
 
     // calculate the common stamp by joining the left and right stamp
@@ -42,8 +41,7 @@ void ArithmeticalExpressionNode::inferStamp(SchemaPtr schema) {
 bool ArithmeticalExpressionNode::equal(NodePtr rhs) const {
     if (rhs->instanceOf<ArithmeticalExpressionNode>()) {
         auto otherAddNode = rhs->as<ArithmeticalExpressionNode>();
-        return getLeft()->equal(otherAddNode->getLeft()) &&
-            getRight()->equal(otherAddNode->getRight());
+        return getLeft()->equal(otherAddNode->getLeft()) && getRight()->equal(otherAddNode->getRight());
     }
     return false;
 }
@@ -52,4 +50,4 @@ const std::string ArithmeticalExpressionNode::toString() const {
     return "ArithmeticalExpression()";
 }
 
-}
+}// namespace NES

@@ -103,7 +103,7 @@ const std::vector<NESVertex> NESTopologyGraph::getAllVertex() const {
 bool NESTopologyGraph::addVertex(NESTopologyEntryPtr ptr) {
     // does graph already contain vertex?
     if (hasVertex(ptr->getId())) {
-        NES_DEBUG("NESTopologyGraph: addVertex error id already exists " << ptr->getId())
+        NES_DEBUG("NESTopologyGraph: addVertex error id already exists " << ptr->getId());
         return false;
     }
 
@@ -270,19 +270,19 @@ bool NESTopologyGraph::addEdge(NESTopologyLinkPtr ptr) {
 
     // link id is already in graph
     if (hasEdge(ptr->getId())) {
-      NES_ERROR("NESTopologyGraph::addEdge: link id is already in graph=" << ptr->getId())
+        NES_ERROR("NESTopologyGraph::addEdge: link id is already in graph=" << ptr->getId());
         return false;
     }
 
     // there is already a link between those two vertices
     if (hasLink(ptr->getSourceNode(), ptr->getDestNode())) {
-        NES_ERROR("NESTopologyGraph::addEdge: there is already a link between nodes")
+        NES_ERROR("NESTopologyGraph::addEdge: there is already a link between nodes");
         return false;
     }
 
     // check if vertices are in graph
     if (!hasVertex(ptr->getSourceNodeId()) || !hasVertex(ptr->getDestNodeId())) {
-        NES_ERROR("NESTopologyGraph::addEdge: one of the vertices is not in the graph")
+        NES_ERROR("NESTopologyGraph::addEdge: one of the vertices is not in the graph");
         return false;
     }
 
@@ -322,14 +322,14 @@ std::string NESTopologyGraph::getGraphString() const {
         ss,
         graph,
         [&](auto& out, auto v) {
-          out << "[label=\"" << graph[v].id << " type="
-              << graph[v].ptr->getEntryTypeString() << "\"]";
+            out << "[label=\"" << graph[v].id << " type="
+                << graph[v].ptr->getEntryTypeString() << "\"]";
         },
         [&](auto& out, auto e) {
-          out << "[label=\"" << graph[e].id << "\"]";
+            out << "[label=\"" << graph[e].id << "\"]";
         });
     ss << std::flush;
     return ss.str();
 }
 
-}
+}// namespace NES

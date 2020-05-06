@@ -20,7 +20,7 @@ class ExpressionNodeTest : public testing::Test {
     }
 
     void TearDown() {
-        NES_DEBUG("Tear down ExpressionNodeTest Test.")
+        NES_DEBUG("Tear down ExpressionNodeTest Test.");
     }
 
   protected:

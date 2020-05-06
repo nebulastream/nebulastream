@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 
-#include <QueryCompiler/CodeExpression.hpp>
 #include "API/Types/DataTypes.hpp"
+#include <QueryCompiler/CodeExpression.hpp>
 
 namespace NES {
 
@@ -114,4 +114,4 @@ class FunctionDeclaration : public Declaration {
     const DeclarationPtr copy() const override;
 };
 
-} // namespace NES
+}// namespace NES

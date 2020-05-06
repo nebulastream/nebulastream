@@ -37,6 +37,6 @@ class LogicalStreamSourceDescriptor : public SourceDescriptor {
 
 typedef std::shared_ptr<LogicalStreamSourceDescriptor> LogicalStreamSourceDescriptorPtr;
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_SREAMSOURCEDESCRIPTOR_HPP_
+#endif//NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_SREAMSOURCEDESCRIPTOR_HPP_

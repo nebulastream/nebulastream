@@ -60,7 +60,9 @@ void BufferManager::configure(size_t bufferSize, size_t numOfBuffers) {
             NES_THROW_RUNTIME_ERROR("[BufferManager] memory allocation failed");
         }
         allBuffers.emplace_back(ptr, bufferSize,
-                                [this](detail::MemorySegment* segment) { recyclePooledBuffer(segment); });
+                                [this](detail::MemorySegment* segment) {
+                                    recyclePooledBuffer(segment);
+                                });
         availableBuffers.emplace_back(&allBuffers.back());
     }
     isConfigured = true;
@@ -96,7 +98,9 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking() {
 
 std::optional<TupleBuffer> BufferManager::getBufferTimeout(std::chrono::milliseconds timeout_ms) {
     std::unique_lock<std::mutex> lock(availableBuffersMutex);
-    auto pred = [=]() { return !availableBuffers.empty(); };
+    auto pred = [=]() {
+        return !availableBuffers.empty();
+    };
     if (!availableBuffersCvar.wait_for(lock, timeout_ms, std::move(pred))) {
         return std::nullopt;
     }
@@ -137,7 +141,9 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize) {
         NES_THROW_RUNTIME_ERROR("BufferManager: unpooled memory allocation failed");
     }
     auto memSegment = std::make_unique<detail::MemorySegment>(
-        ptr, bufferSize, [this](detail::MemorySegment* segment) { recycleUnpooledBuffer(segment); });
+        ptr, bufferSize, [this](detail::MemorySegment* segment) {
+            recycleUnpooledBuffer(segment);
+        });
     auto leakedMemSegment = memSegment.get();
     unpooledBuffers.emplace_back(std::move(memSegment), bufferSize);
     if (leakedMemSegment->controlBlock.prepare()) {
@@ -196,7 +202,9 @@ size_t BufferManager::getAvailableBuffers() {
     return availableBuffers.size();
 }
 
-void BufferManager::printStatistics() {NES_INFO("BufferManager Statistics:")}
+void BufferManager::printStatistics() {
+    NES_INFO("BufferManager Statistics:");
+}
 
 BufferManager::UnpooledBufferHolder::UnpooledBufferHolder()
     : size(0), free(false) {
@@ -214,4 +222,4 @@ BufferManager::UnpooledBufferHolder::UnpooledBufferHolder(std::unique_ptr<detail
 
 void BufferManager::UnpooledBufferHolder::markFree() { free = true; }
 
-} // namespace NES
+}// namespace NES

@@ -63,5 +63,4 @@ utility::string_t BaseController::getPath(http_request& message) {
     return web::uri::decode(message.relative_uri().path());
 }
 
-}
-
+}// namespace NES

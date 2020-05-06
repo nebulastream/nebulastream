@@ -15,7 +15,6 @@ class StreamCatalogService {
     StreamCatalogService() = default;
 
   public:
-
     ~StreamCatalogService() = default;
 
     static StreamCatalogServicePtr getInstance() {
@@ -54,9 +53,8 @@ class StreamCatalogService {
      * @return
      */
     std::map<std::string, std::string> getAllLogicalStreamAsString();
-
 };
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_SERVICES_STREAMCATALOGSERVICE_HPP_
+#endif//NES_INCLUDE_SERVICES_STREAMCATALOGSERVICE_HPP_

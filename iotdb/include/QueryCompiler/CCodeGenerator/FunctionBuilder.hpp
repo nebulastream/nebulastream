@@ -32,4 +32,4 @@ class FunctionBuilder {
     FunctionDeclaration build();
 };
 
-} // namespace NES
+}// namespace NES

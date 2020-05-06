@@ -27,6 +27,6 @@ class WorkerActorConfig : public actor_system_config {
     }
 };
 
-}
+}// namespace NES
 
-#endif //INCLUDE_ACTORS_CONFIGURATIONS_ACTORWORKERCONFIG_H_
+#endif//INCLUDE_ACTORS_CONFIGURATIONS_ACTORWORKERCONFIG_H_

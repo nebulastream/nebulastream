@@ -29,7 +29,7 @@ LinkType NESTopologyLink::getLinkType() {
     } else if (sourceNode->getEntryType() == Sensor && destNode->getEntryType() == Worker) {
         return SensorToNode;
     } else if (sourceNode->getEntryType() == Worker
-        && destNode->getEntryType() == Sensor) {
+               && destNode->getEntryType() == Sensor) {
         return NodeToSensor;
     }
     NES_FATAL_ERROR("Unrecognized LinkType!");
@@ -37,9 +37,9 @@ LinkType NESTopologyLink::getLinkType() {
 
 std::string NESTopologyLink::getLinkTypeString() {
     switch (getLinkType()) {
-        case NodeToNode:return "NodeToNode";
-        case SensorToNode:return "SensorToNode";
-        case NodeToSensor:return "NodeToSensor";
+        case NodeToNode: return "NodeToNode";
+        case SensorToNode: return "SensorToNode";
+        case NodeToSensor: return "NodeToSensor";
     }
     NES_FATAL_ERROR("String for LinkType not found!");
 }
@@ -60,4 +60,4 @@ size_t NESTopologyLink::getLinkCapacity() const {
     return linkCapacity;
 }
 
-}
+}// namespace NES

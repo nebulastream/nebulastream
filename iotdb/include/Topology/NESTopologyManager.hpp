@@ -9,10 +9,10 @@
 #if defined(__APPLE__) || defined(__MACH__)
 #include <xlocale.h>
 #endif
-#include <cpprest/json.h>
 #include "Util/CPUCapacity.hpp"
 #include <Catalogs/StreamCatalog.hpp>
 #include <Topology/NESTopologyGraph.hpp>
+#include <cpprest/json.h>
 /**
  * TODO: add return of create
  */
@@ -24,14 +24,13 @@ using namespace web;
 class NESTopologyManager {
   public:
     static NESTopologyManager& getInstance() {
-        static NESTopologyManager instance;  // Guaranteed to be destroyed.
+        static NESTopologyManager instance;// Guaranteed to be destroyed.
         // Instantiated on first use.
         return instance;
     }
 
-    NESTopologyManager(NESTopologyManager const&);  // Don't Implement
-    void operator=(NESTopologyManager const&);     // Don't implement
-
+    NESTopologyManager(NESTopologyManager const&);// Don't Implement
+    void operator=(NESTopologyManager const&);    // Don't implement
 
     /**
      * @brief create a nes coordinator node
@@ -151,5 +150,5 @@ class NESTopologyManager {
 
     NESTopologyPlanPtr currentPlan;
 };
-}  // namespace NES
+}// namespace NES
 #endif /* INCLUDE_TOPOLOGY_NESTOPOLOGYMANAGER_HPP_ */

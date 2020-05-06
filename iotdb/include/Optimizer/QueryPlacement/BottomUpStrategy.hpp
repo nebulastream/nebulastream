@@ -1,8 +1,8 @@
 #ifndef BOTTOMUP_HPP
 #define BOTTOMUP_HPP
 
-#include <iostream>
 #include <Optimizer/QueryPlacement/BasePlacementStrategy.hpp>
+#include <iostream>
 
 namespace NES {
 
@@ -18,16 +18,15 @@ using namespace std;
  */
 class BottomUpStrategy : public BasePlacementStrategy {
   public:
-    ~BottomUpStrategy() {};
+    ~BottomUpStrategy(){};
 
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
-    static std::unique_ptr<BottomUpStrategy> create(){
+    static std::unique_ptr<BottomUpStrategy> create() {
         return std::make_unique<BottomUpStrategy>(BottomUpStrategy());
     }
 
   private:
-
     BottomUpStrategy() = default;
 
     // This structure hold information about the current operator to place and previously placed parent operator.
@@ -74,6 +73,6 @@ class BottomUpStrategy : public BasePlacementStrategy {
     vector<NESTopologyEntryPtr> getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
                                                                          const NESTopologyEntryPtr rootNode) const;
 };
-}
+}// namespace NES
 
-#endif //BOTTOMUP_HPP
+#endif//BOTTOMUP_HPP

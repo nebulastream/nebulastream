@@ -1,7 +1,7 @@
-#include <Optimizer/QueryPlacement/LowLatencyStrategy.hpp>
-#include <Util/Logger.hpp>
-#include <Optimizer/Utils/PathFinder.hpp>
 #include <Operators/Operator.hpp>
+#include <Optimizer/QueryPlacement/LowLatencyStrategy.hpp>
+#include <Optimizer/Utils/PathFinder.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 
@@ -20,7 +20,7 @@ NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(NES::InputQueryP
     }
 
     const vector<NESTopologyEntryPtr> sourceNodes = StreamCatalog::instance()
-        .getSourceNodesForLogicalStream(streamName);
+                                                        .getSourceNodesForLogicalStream(streamName);
 
     if (sourceNodes.empty()) {
         NES_ERROR("LowLatency: Unable to find the target source: " << streamName);
@@ -52,11 +52,12 @@ NESExecutionPlanPtr LowLatencyStrategy::initializeExecutionPlan(NES::InputQueryP
 }
 
 vector<NESTopologyEntryPtr> LowLatencyStrategy::getCandidateNodesForFwdOperatorPlacement(const vector<
-    NESTopologyEntryPtr>& sourceNodes, const NESTopologyEntryPtr rootNode) const {
+                                                                                             NESTopologyEntryPtr>& sourceNodes,
+                                                                                         const NESTopologyEntryPtr rootNode) const {
 
     PathFinder pathFinder;
     vector<NESTopologyEntryPtr> candidateNodes;
-    for (NESTopologyEntryPtr targetSource: sourceNodes) {
+    for (NESTopologyEntryPtr targetSource : sourceNodes) {
         //Find the list of nodes connecting the source and destination nodes
         std::vector<NESTopologyEntryPtr>
             nodesOnPath = pathFinder.findPathWithMinLinkLatency(targetSource, rootNode);
@@ -71,7 +72,7 @@ void LowLatencyStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NE
 
     PathFinder pathFinder;
     const NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
-    for (NESTopologyEntryPtr sourceNode: sourceNodes) {
+    for (NESTopologyEntryPtr sourceNode : sourceNodes) {
 
         OperatorPtr targetOperator = sourceOperator;
         const vector<NESTopologyEntryPtr> targetPath = pathFinder.findPathWithMinLinkLatency(sourceNode, sinkNode);
@@ -84,7 +85,7 @@ void LowLatencyStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NE
                 }
 
                 if (!executionPlanPtr->hasVertex(node->getId())) {
-                    NES_DEBUG("LowLatency: Create new execution node.")
+                    NES_DEBUG("LowLatency: Create new execution node.");
                     stringstream operatorName;
                     operatorName << operatorTypeToString[targetOperator->getOperatorType()] << "(OP-"
                                  << std::to_string(targetOperator->getOperatorId()) << ")";
@@ -95,7 +96,7 @@ void LowLatencyStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NE
                 } else {
 
                     const ExecutionNodePtr existingExecutionNode = executionPlanPtr
-                        ->getExecutionNode(node->getId());
+                                                                       ->getExecutionNode(node->getId());
                     size_t operatorId = targetOperator->getOperatorId();
                     vector<size_t>& residentOperatorIds = existingExecutionNode->getChildOperatorIds();
                     const auto exists = std::find(residentOperatorIds.begin(), residentOperatorIds.end(), operatorId);
@@ -128,8 +129,4 @@ void LowLatencyStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr, NE
     }
 }
 
-}
-
-
-
-
+}// namespace NES

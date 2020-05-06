@@ -11,7 +11,6 @@ namespace NES {
 class CsvSourceDescriptor : public SourceDescriptor {
 
   public:
-
     static SourceDescriptorPtr create(SchemaPtr schema,
                                       std::string filePath,
                                       std::string delimiter,
@@ -42,10 +41,10 @@ class CsvSourceDescriptor : public SourceDescriptor {
 
   private:
     explicit CsvSourceDescriptor(SchemaPtr schema,
-                        std::string filePath,
-                        std::string delimiter,
-                        size_t numBuffersToProcess,
-                        size_t frequency);
+                                 std::string filePath,
+                                 std::string delimiter,
+                                 size_t numBuffersToProcess,
+                                 size_t frequency);
     std::string filePath;
     std::string delimiter;
     size_t numBuffersToProcess;
@@ -54,6 +53,6 @@ class CsvSourceDescriptor : public SourceDescriptor {
 
 typedef std::shared_ptr<CsvSourceDescriptor> CsvSourceDescriptorPtr;
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_CSVSOURCEDESCRIPTOR_HPP_
+#endif//NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_CSVSOURCEDESCRIPTOR_HPP_

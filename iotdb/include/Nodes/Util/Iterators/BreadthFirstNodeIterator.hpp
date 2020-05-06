@@ -1,7 +1,7 @@
 #ifndef NES_INCLUDE_NODES_UTIL_BSFITERATOR_HPP_
 #define NES_INCLUDE_NODES_UTIL_BSFITERATOR_HPP_
-#include <queue>
 #include <memory>
+#include <queue>
 namespace NES {
 
 class Node;
@@ -17,6 +17,7 @@ class BreadthFirstNodeIterator {
 
     class iterator : public std::iterator<std::forward_iterator_tag, NodePtr, NodePtr, NodePtr*, NodePtr&> {
         friend class BreadthFirstNodeIterator;
+
       public:
         /**
          * @brief Moves the iterator to the next node.
@@ -40,7 +41,6 @@ class BreadthFirstNodeIterator {
         explicit iterator(NodePtr current);
         explicit iterator();
         std::queue<NodePtr> workQueue;
-
     };
 
     /**
@@ -48,15 +48,16 @@ class BreadthFirstNodeIterator {
      * @return iterator
      */
     iterator begin();
-    
+
     /**
     * @brief The end of this iterator has an empty work stack.
     * @return iterator
     */
     iterator end();
+
   private:
     NodePtr start;
 };
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_NODES_UTIL_BSFITERATOR_HPP_
+#endif//NES_INCLUDE_NODES_UTIL_BSFITERATOR_HPP_

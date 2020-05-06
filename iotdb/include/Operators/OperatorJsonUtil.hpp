@@ -13,14 +13,14 @@ namespace NES {
 
 class OperatorJsonUtil {
 
- public:
-  OperatorJsonUtil();
-  ~OperatorJsonUtil();
-  json::value getBasePlan(InputQueryPtr inputQuery);
+  public:
+    OperatorJsonUtil();
+    ~OperatorJsonUtil();
+    json::value getBasePlan(InputQueryPtr inputQuery);
 
- private:
-  void getChildren(const OperatorPtr &root, std::vector<json::value> &nodes, std::vector<json::value> &edges);
+  private:
+    void getChildren(const OperatorPtr& root, std::vector<json::value>& nodes, std::vector<json::value>& edges);
 };
-}
+}// namespace NES
 
-#endif //QUERYPLANBUILDER_HPP
+#endif//QUERYPLANBUILDER_HPP

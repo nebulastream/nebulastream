@@ -8,15 +8,14 @@ namespace NES {
  * @brief Rowlayout every field of a tuple is stores sequentially.
  */
 class RowLayout : public MemoryLayout {
- public:
-  RowLayout(PhysicalSchemaPtr physicalSchema);
+  public:
+    RowLayout(PhysicalSchemaPtr physicalSchema);
 
-  uint64_t getFieldOffset(uint64_t recordIndex, uint64_t fieldIndex) override;
+    uint64_t getFieldOffset(uint64_t recordIndex, uint64_t fieldIndex) override;
 
-  MemoryLayoutPtr copy() const override;
+    MemoryLayoutPtr copy() const override;
 };
 
+}// namespace NES
 
-}
-
-#endif //INCLUDE_NODEENGINE_MEMORYLAYOUT_ROWLAYOUT_HPP_
+#endif//INCLUDE_NODEENGINE_MEMORYLAYOUT_ROWLAYOUT_HPP_

@@ -42,7 +42,7 @@ class NetworkManager : public boost::noncopyable {
     std::shared_ptr<ZmqServer> server;
     ExchangeProtocol exchangeProtocol;
 };
-} // namespace Network
-} // namespace NES
+}// namespace Network
+}// namespace NES
 
-#endif //NES_NETWORKDISPATCHER_HPP
+#endif//NES_NETWORKDISPATCHER_HPP

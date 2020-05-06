@@ -1,8 +1,8 @@
-#include <utility>
-#include <memory>
-#include <vector>
 #include <API/AbstractWindowDefinition.hpp>
 #include <State/StateVariable.hpp>
+#include <memory>
+#include <utility>
+#include <vector>
 
 #ifndef WINDOWMANAGERLIB_HPP
 #define WINDOWMANAGERLIB_HPP
@@ -14,7 +14,6 @@ namespace NES {
 */
 class SliceMetaData {
   public:
-
     SliceMetaData(uint64_t start_ts, uint64_t end_ts) : start_ts(start_ts), end_ts(end_ts) {}
 
     /**
@@ -47,11 +46,9 @@ inline uint64_t getTsFromClock() {
 template<class PartialAggregateType>
 class WindowSliceStore {
   public:
-
-    WindowSliceStore(PartialAggregateType value) :
-        defaultValue(value),
-        sliceMetaData(std::vector<SliceMetaData>()),
-        partialAggregates(std::vector<PartialAggregateType>()) {
+    WindowSliceStore(PartialAggregateType value) : defaultValue(value),
+                                                   sliceMetaData(std::vector<SliceMetaData>()),
+                                                   partialAggregates(std::vector<PartialAggregateType>()) {
     }
 
     /**
@@ -113,12 +110,12 @@ class WindowSliceStore {
 
     const PartialAggregateType defaultValue;
     uint64_t nextEdge = 0;
+
   private:
     std::vector<SliceMetaData> sliceMetaData;
     std::vector<PartialAggregateType> partialAggregates;
     uint64_t lastWatermark = 0;
     uint64_t maxTs = 0;
-
 };
 
 class WindowManager {
@@ -163,6 +160,7 @@ class WindowManager {
 
   private:
     WindowDefinitionPtr windowDefinition;
+
   public:
     const WindowDefinitionPtr& GetWindowDefinition() const {
         return windowDefinition;
@@ -170,11 +168,11 @@ class WindowManager {
     const uint64_t GetAllowedLateness() const {
         return allowedLateness;
     }
+
   private:
     const uint64_t allowedLateness;
-
 };
 
 typedef std::shared_ptr<WindowManager> WindowManagerPtr;
-}
-#endif //WINDOWMANAGERLIB_HPP
+}// namespace NES
+#endif//WINDOWMANAGERLIB_HPP

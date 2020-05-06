@@ -1,8 +1,8 @@
 #ifndef NES_INCLUDE_NODES_UTIL_DUMPCONTEXT_HPP_
 #define NES_INCLUDE_NODES_UTIL_DUMPCONTEXT_HPP_
 
-#include <vector>
 #include <memory>
+#include <vector>
 namespace NES {
 
 class Node;
@@ -20,7 +20,6 @@ typedef std::shared_ptr<DumpContext> DumpContextPtr;
  */
 class DumpContext {
   public:
-
     static DumpContextPtr create();
 
     /**
@@ -33,10 +32,11 @@ class DumpContext {
      * @param node
      */
     void dump(const NodePtr node, std::ostream& out);
+
   private:
     std::vector<DebugDumpHandlerPtr> dumpHandlers;
 };
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_NODES_UTIL_DUMPCONTEXT_HPP_
+#endif//NES_INCLUDE_NODES_UTIL_DUMPCONTEXT_HPP_

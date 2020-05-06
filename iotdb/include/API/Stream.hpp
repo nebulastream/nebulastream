@@ -1,30 +1,30 @@
 #ifndef STREAM_HPP
 #define STREAM_HPP
 
-#include <iostream>
-#include <string>
 #include <API/ParameterTypes.hpp>
 #include <API/Schema.hpp>
 #include <API/Stream.hpp>
+#include <iostream>
+#include <string>
 
 namespace NES {
 
 class Stream {
- public:
-  Stream(std::string name, SchemaPtr schema);
+  public:
+    Stream(std::string name, SchemaPtr schema);
 
-  Field operator[](const std::string fieldName);
+    Field operator[](const std::string fieldName);
 
-  Field getField(const std::string fieldName);
-  std::string getName() { return name; }
+    Field getField(const std::string fieldName);
+    std::string getName() { return name; }
 
-  SchemaPtr getSchema();
+    SchemaPtr getSchema();
 
- private:
-  std::string name;
-  SchemaPtr schema;
+  private:
+    std::string name;
+    SchemaPtr schema;
 };
 
 typedef std::shared_ptr<Stream> StreamPtr;
-}
-#endif //STREAM_HPP
+}// namespace NES
+#endif//STREAM_HPP

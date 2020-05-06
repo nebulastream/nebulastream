@@ -5,8 +5,8 @@ using namespace NES;
 
 json::value NESTopologyService::getNESTopologyAsJson() {
 
-  NESTopologyManager &fogTopologyManager = NESTopologyManager::getInstance();
-  //TODO:fix the cyclic dependency
-//  createExampleTopology();
-  return fogTopologyManager.getNESTopologyGraphAsJson();
+    NESTopologyManager& fogTopologyManager = NESTopologyManager::getInstance();
+    //TODO:fix the cyclic dependency
+    //  createExampleTopology();
+    return fogTopologyManager.getNESTopologyGraphAsJson();
 }

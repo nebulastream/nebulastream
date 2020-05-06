@@ -6,8 +6,8 @@
 #include <string>
 
 #include <API/ParameterTypes.hpp>
-#include <Operators/Operator.hpp>
 #include <API/UserAPIExpression.hpp>
+#include <Operators/Operator.hpp>
 
 namespace NES {
 
@@ -22,9 +22,10 @@ class MapOperator : public Operator {
     const std::string toString() const override;
     OperatorType getOperatorType() const override;
     ~MapOperator() override;
+
   private:
     PredicatePtr predicate_;
     AttributeFieldPtr field_;
 };
 
-} // namespace NES
+}// namespace NES

@@ -12,8 +12,7 @@ JoinOperator::JoinOperator(const JoinPredicatePtr join_spec) : Operator(), join_
 
 JoinOperator::JoinOperator(const JoinOperator& other) : join_spec_(NES::copy(other.join_spec_)) {}
 
-JoinOperator& JoinOperator::operator=(const JoinOperator& other)
-{
+JoinOperator& JoinOperator::operator=(const JoinOperator& other) {
     if (this != &other) {
         join_spec_ = NES::copy(other.join_spec_);
     }
@@ -29,8 +28,7 @@ const OperatorPtr JoinOperator::copy() const {
     return copy;
 }
 
-const std::string JoinOperator::toString() const
-{
+const std::string JoinOperator::toString() const {
     std::stringstream ss;
     ss << "JOIN(" << NES::toString(join_spec_) << ")";
     return ss.str();
@@ -40,9 +38,8 @@ OperatorType JoinOperator::getOperatorType() const { return JOIN_OP; }
 
 JoinOperator::~JoinOperator() {}
 
-const OperatorPtr createJoinOperator(const JoinPredicatePtr join_spec)
-{
+const OperatorPtr createJoinOperator(const JoinPredicatePtr join_spec) {
     return std::make_shared<JoinOperator>(join_spec);
 }
 
-} // namespace NES
+}// namespace NES

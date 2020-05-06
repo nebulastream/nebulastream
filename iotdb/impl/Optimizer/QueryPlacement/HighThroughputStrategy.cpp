@@ -1,7 +1,7 @@
-#include <Util/Logger.hpp>
 #include "Optimizer/QueryPlacement/HighThroughputStrategy.hpp"
-#include <Optimizer/Utils/PathFinder.hpp>
 #include <Operators/Operator.hpp>
+#include <Optimizer/Utils/PathFinder.hpp>
+#include <Util/Logger.hpp>
 
 namespace NES {
 
@@ -20,7 +20,7 @@ NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(InputQueryPt
     }
 
     const vector<NESTopologyEntryPtr> sourceNodes = StreamCatalog::instance()
-        .getSourceNodesForLogicalStream(streamName);
+                                                        .getSourceNodesForLogicalStream(streamName);
 
     if (sourceNodes.empty()) {
         NES_ERROR("HighThroughput: Unable to find the target source: " << streamName);
@@ -52,11 +52,12 @@ NESExecutionPlanPtr HighThroughputStrategy::initializeExecutionPlan(InputQueryPt
 }
 
 vector<NESTopologyEntryPtr> HighThroughputStrategy::getCandidateNodesForFwdOperatorPlacement(const vector<
-    NESTopologyEntryPtr>& sourceNodes, const NES::NESTopologyEntryPtr rootNode) const {
+                                                                                                 NESTopologyEntryPtr>& sourceNodes,
+                                                                                             const NES::NESTopologyEntryPtr rootNode) const {
 
     PathFinder pathFinder;
     vector<NESTopologyEntryPtr> candidateNodes;
-    for (NESTopologyEntryPtr targetSource: sourceNodes) {
+    for (NESTopologyEntryPtr targetSource : sourceNodes) {
         //Find the list of nodes connecting the source and destination nodes
         std::vector<NESTopologyEntryPtr>
             nodesOnPath = pathFinder.findPathWithMaxBandwidth(targetSource, rootNode);
@@ -73,7 +74,7 @@ void HighThroughputStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr
 
     PathFinder pathFinder;
     const NESTopologyEntryPtr sinkNode = nesTopologyGraphPtr->getRoot();
-    for (NESTopologyEntryPtr sourceNode: sourceNodes) {
+    for (NESTopologyEntryPtr sourceNode : sourceNodes) {
 
         OperatorPtr targetOperator = sourceOperator;
         const vector<NESTopologyEntryPtr> targetPath = pathFinder.findPathWithMaxBandwidth(sourceNode, sinkNode);
@@ -86,7 +87,7 @@ void HighThroughputStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr
                 }
 
                 if (!executionPlanPtr->hasVertex(node->getId())) {
-                    NES_DEBUG("HighThroughput: Create new execution node.")
+                    NES_DEBUG("HighThroughput: Create new execution node.");
                     stringstream operatorName;
                     operatorName << operatorTypeToString[targetOperator->getOperatorType()] << "(OP-"
                                  << std::to_string(targetOperator->getOperatorId()) << ")";
@@ -97,7 +98,7 @@ void HighThroughputStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr
                 } else {
 
                     const ExecutionNodePtr existingExecutionNode = executionPlanPtr
-                        ->getExecutionNode(node->getId());
+                                                                       ->getExecutionNode(node->getId());
                     size_t operatorId = targetOperator->getOperatorId();
                     vector<size_t>& residentOperatorIds = existingExecutionNode->getChildOperatorIds();
                     const auto exists = std::find(residentOperatorIds.begin(), residentOperatorIds.end(), operatorId);
@@ -130,5 +131,4 @@ void HighThroughputStrategy::placeOperators(NESExecutionPlanPtr executionPlanPtr
     }
 }
 
-}
-
+}// namespace NES

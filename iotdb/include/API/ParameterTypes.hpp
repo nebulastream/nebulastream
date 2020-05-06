@@ -24,13 +24,11 @@ typedef std::shared_ptr<JoinPredicate> JoinPredicatePtr;
 class Aggregation;
 typedef std::shared_ptr<Aggregation> AggregationPtr;
 
-
 struct AggregationSpec {
     Aggregation& grouping_fields;
     AggregationPtr aggr_spec;
     AggregationSpec& operator=(const AggregationSpec&);
 };
-
 
 class Mapper;
 typedef std::shared_ptr<Mapper> MapperPtr;
@@ -43,7 +41,8 @@ struct Attributes {
     std::vector<AttributeFieldPtr> attrs;
 };
 
-enum SortOrder { ASCENDING, DESCENDING };
+enum SortOrder { ASCENDING,
+                 DESCENDING };
 
 struct SortAttr {
 
@@ -83,4 +82,4 @@ const std::string toString(const MapperPtr);
 const std::string toString(const AggregationSpec&);
 const std::string toString(const JoinPredicatePtr);
 
-} // namespace NES
+}// namespace NES

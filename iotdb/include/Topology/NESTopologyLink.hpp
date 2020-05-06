@@ -23,7 +23,6 @@ enum LinkType {
 class NESTopologyLink {
 
   public:
-
     explicit NESTopologyLink(size_t pLinkId, NESTopologyEntryPtr pSourceNode, NESTopologyEntryPtr pDestNode,
                              size_t pLinkCapacity, size_t pLinkLatency) {
         linkId = pLinkId;
@@ -100,7 +99,6 @@ class NESTopologyLink {
     void updateLinkCapacity(size_t linkCapacity);
 
   private:
-
     /**
      * @brief unique identifier of the link.
      */
@@ -128,5 +126,5 @@ class NESTopologyLink {
 };
 
 typedef std::shared_ptr<NESTopologyLink> NESTopologyLinkPtr;
-}  // namespace NES
+}// namespace NES
 #endif /* INCLUDE_TOPOLOGY_NESTOPOLOGYLINK_HPP_ */

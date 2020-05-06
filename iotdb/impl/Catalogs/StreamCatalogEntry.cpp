@@ -5,49 +5,46 @@ namespace NES {
 
 StreamCatalogEntry::StreamCatalogEntry(PhysicalStreamConfig streamConf,
                                        NESTopologyEntryPtr node)
-    :
-    streamConf(streamConf),
-    node(node) {
-}
-;
+    : streamConf(streamConf),
+      node(node){};
 
 std::string StreamCatalogEntry::getSourceType() {
-  return streamConf.sourceType;
+    return streamConf.sourceType;
 }
 
 std::string StreamCatalogEntry::getSourceConfig() {
-  return streamConf.sourceConfig;
+    return streamConf.sourceConfig;
 }
 
 NESTopologyEntryPtr StreamCatalogEntry::getNode() {
-  return node;
+    return node;
 }
 
 std::string StreamCatalogEntry::getPhysicalName() {
-  return streamConf.physicalStreamName;
+    return streamConf.physicalStreamName;
 }
 
 std::string StreamCatalogEntry::getLogicalName() {
-  return streamConf.logicalStreamName;
+    return streamConf.logicalStreamName;
 }
 
 double StreamCatalogEntry::getSourceFrequency() {
-  return streamConf.sourceFrequency;
+    return streamConf.sourceFrequency;
 }
 
 size_t StreamCatalogEntry::getNumberOfBuffersToProduce() {
-  return streamConf.numberOfBuffersToProduce;
+    return streamConf.numberOfBuffersToProduce;
 }
 
 std::string StreamCatalogEntry::toString() {
-  std::stringstream ss;
-  ss << "physicalName=" << streamConf.physicalStreamName
-      << " logicalStreamName=" << streamConf.logicalStreamName << " sourceType="
-      << streamConf.sourceType << " sourceConfig=" << streamConf.sourceConfig
-      << " sourceFrequency=" << streamConf.sourceFrequency
-      << " numberOfBuffersToProduce=" << streamConf.numberOfBuffersToProduce
-      << " on node=" + std::to_string(node->getId());
-  return ss.str();
+    std::stringstream ss;
+    ss << "physicalName=" << streamConf.physicalStreamName
+       << " logicalStreamName=" << streamConf.logicalStreamName << " sourceType="
+       << streamConf.sourceType << " sourceConfig=" << streamConf.sourceConfig
+       << " sourceFrequency=" << streamConf.sourceFrequency
+       << " numberOfBuffersToProduce=" << streamConf.numberOfBuffersToProduce
+       << " on node=" + std::to_string(node->getId());
+    return ss.str();
 }
 
-}
+}// namespace NES

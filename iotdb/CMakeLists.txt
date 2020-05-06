@@ -186,8 +186,6 @@ add_subdirectory(tests)
 configure_file(include/QueryLib/WindowManagerLib.hpp  ${CMAKE_CURRENT_BINARY_DIR}/tests)
 configure_file(include/QueryLib/WindowManagerLib.hpp  ${CMAKE_CURRENT_BINARY_DIR})
 
-project_enable_clang_format()
-
 install(TARGETS nesCoordinator nesWorker iotdb
         COMPONENT NebulaStream
         RUNTIME DESTINATION "/opt/local/nebula-stream"
@@ -208,3 +206,6 @@ set(CPACK_PACKAGE_VENDOR "Team NebulaStream")
 set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_PACKAGE_RELEASE}.${CMAKE_SYSTEM_PROCESSOR}")
 INCLUDE(CPack)
+
+project_enable_clang_format()
+

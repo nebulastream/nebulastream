@@ -3,10 +3,10 @@
 #include <string>
 #include <vector>
 
+#include <API/Types/DataTypes.hpp>
 #include <QueryCompiler/CCodeGenerator/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
-#include <API/Types/DataTypes.hpp>
 
 namespace NES {
 
@@ -26,13 +26,11 @@ FunctionBuilder::FunctionBuilder(const std::string& function_name) : name(functi
 
 FunctionBuilder FunctionBuilder::create(const std::string& function_name) { return FunctionBuilder(function_name); }
 
-FunctionDeclaration FunctionBuilder::build()
-{
+FunctionDeclaration FunctionBuilder::build() {
     std::stringstream function;
     if (!returnType) {
         function << "void";
-    }
-    else {
+    } else {
         function << returnType->getCode()->code_;
     }
     function << " " << name << "(";
@@ -43,11 +41,13 @@ FunctionDeclaration FunctionBuilder::build()
     }
     function << "){";
 
-    function << std::endl << "/* variable declarations */" << std::endl;
+    function << std::endl
+             << "/* variable declarations */" << std::endl;
     for (size_t i = 0; i < variable_declarations.size(); ++i) {
         function << variable_declarations[i].getCode() << ";";
     }
-    function << std::endl << "/* statements section */" << std::endl;
+    function << std::endl
+             << "/* statements section */" << std::endl;
     for (size_t i = 0; i < statements.size(); ++i) {
         function << statements[i]->getCode()->code_ << ";";
     }
@@ -56,28 +56,24 @@ FunctionDeclaration FunctionBuilder::build()
     return FunctionDeclaration(function.str());
 }
 
-FunctionBuilder& FunctionBuilder::returns(DataTypePtr type)
-{
+FunctionBuilder& FunctionBuilder::returns(DataTypePtr type) {
     returnType = type;
     return *this;
 }
 
-FunctionBuilder& FunctionBuilder::addParameter(VariableDeclaration var_decl)
-{
+FunctionBuilder& FunctionBuilder::addParameter(VariableDeclaration var_decl) {
     parameters.push_back(var_decl);
     return *this;
 }
-FunctionBuilder& FunctionBuilder::addStatement(StatementPtr statement)
-{
+FunctionBuilder& FunctionBuilder::addStatement(StatementPtr statement) {
     if (statement)
         statements.push_back(statement);
     return *this;
 }
 
-FunctionBuilder& FunctionBuilder::addVariableDeclaration(VariableDeclaration vardecl)
-{
+FunctionBuilder& FunctionBuilder::addVariableDeclaration(VariableDeclaration vardecl) {
     variable_declarations.push_back(vardecl);
     return *this;
 }
 
-} // namespace NES
+}// namespace NES

@@ -1,8 +1,8 @@
-#include <sstream>
-#include <string>
 #include <NodeEngine/QueryManager.hpp>
 #include <SourceSink/KafkaSink.hpp>
 #include <Util/Logger.hpp>
+#include <sstream>
+#include <string>
 
 #include <chrono>
 using namespace std::chrono_literals;
@@ -21,33 +21,30 @@ KafkaSink::KafkaSink(SchemaPtr schema,
       kafkaProducerTimeout(std::move(std::chrono::milliseconds(kafkaProducerTimeout))) {
 
     config = {
-        {"metadata.broker.list", brokers.c_str()}
-    };
+        {"metadata.broker.list", brokers.c_str()}};
 
     _connect();
     NES_DEBUG("KAFKASINK  " << this << ": Init KAFKA SINK to brokers " << brokers
-                            << ", topic " << topic << ", partition " << partition)
+                            << ", topic " << topic << ", partition " << partition);
 }
 
 KafkaSink::~KafkaSink() {}
 
 bool KafkaSink::writeData(TupleBuffer& input_buffer) {
-    NES_DEBUG("KAFKASINK " << this << ": writes buffer " << input_buffer)
+    NES_DEBUG("KAFKASINK " << this << ": writes buffer " << input_buffer);
     try {
         cppkafka::Buffer buffer(input_buffer.getBuffer(),
                                 input_buffer.getBufferSize());
         msgBuilder->payload(buffer);
 
-        NES_DEBUG("KAFKASINK buffer to send " << buffer.get_size() << " bytes, content: " << msgBuilder->payload())
+        NES_DEBUG("KAFKASINK buffer to send " << buffer.get_size() << " bytes, content: " << msgBuilder->payload());
         producer->produce(*msgBuilder);
         producer->flush(kafkaProducerTimeout);
-        NES_DEBUG("KAFKASINK " << this << ": send successfully")
-    }
-    catch (const cppkafka::HandleException& ex) {
+        NES_DEBUG("KAFKASINK " << this << ": send successfully");
+    } catch (const cppkafka::HandleException& ex) {
         throw ex;
-    }
-    catch (...) {
-        NES_ERROR("KAFKASINK Unknown error occurs")
+    } catch (...) {
+        NES_ERROR("KAFKASINK Unknown error occurs");
         return false;
     }
 
@@ -55,13 +52,13 @@ bool KafkaSink::writeData(TupleBuffer& input_buffer) {
 }
 
 const std::string KafkaSink::toString() const {
-  std::stringstream ss;
-  ss << "KAFKA_SINK(";
-  ss << "SCHEMA(" << schema->toString() << "), ";
-  ss << "BROKER(" << brokers << "), ";
-  ss << "TOPIC(" << topic << "), ";
-  ss << "PARTITION(" << partition << ").";
-  return ss.str();
+    std::stringstream ss;
+    ss << "KAFKA_SINK(";
+    ss << "SCHEMA(" << schema->toString() << "), ";
+    ss << "BROKER(" << brokers << "), ";
+    ss << "TOPIC(" << topic << "), ";
+    ss << "PARTITION(" << partition << ").";
+    return ss.str();
 }
 
 void KafkaSink::setup() {
@@ -74,7 +71,7 @@ void KafkaSink::shutdown() {
 
 void KafkaSink::_connect() {
 
-    NES_DEBUG("KAFKASINK connecting...")
+    NES_DEBUG("KAFKASINK connecting...");
     producer = std::make_unique<cppkafka::Producer>(config);
     msgBuilder = std::make_unique<cppkafka::MessageBuilder>(topic);
     // FIXME: should we provide user to access partition ?
@@ -87,6 +84,6 @@ SinkType KafkaSink::getType() const {
     return KAFKA_SINK;
 }
 
-}  // namespace NES
+}// namespace NES
 
 BOOST_CLASS_EXPORT(NES::KafkaSink);

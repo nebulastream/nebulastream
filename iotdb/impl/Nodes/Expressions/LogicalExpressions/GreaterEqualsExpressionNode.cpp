@@ -1,8 +1,7 @@
 
 #include <Nodes/Expressions/LogicalExpressions/GreaterEqualsExpressionNode.hpp>
 namespace NES {
-GreaterEqualsExpressionNode::GreaterEqualsExpressionNode() :
-    LogicalBinaryExpressionNode() {};
+GreaterEqualsExpressionNode::GreaterEqualsExpressionNode() : LogicalBinaryExpressionNode(){};
 ExpressionNodePtr GreaterEqualsExpressionNode::create(const ExpressionNodePtr left,
                                                       const ExpressionNodePtr right) {
     auto greaterThen = std::make_shared<GreaterEqualsExpressionNode>();
@@ -11,7 +10,7 @@ ExpressionNodePtr GreaterEqualsExpressionNode::create(const ExpressionNodePtr le
 }
 
 bool GreaterEqualsExpressionNode::equal(const NodePtr rhs) const {
-    if(this->isIdentical(rhs)) {
+    if (this->isIdentical(rhs)) {
         return true;
     }
 
@@ -21,4 +20,4 @@ const std::string GreaterEqualsExpressionNode::toString() const {
     return "GreaterThenNode(" + stamp->toString() + ")";
 }
 
-}
+}// namespace NES

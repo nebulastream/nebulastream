@@ -121,8 +121,7 @@ ExecutionNodeLinkPtr ExecutionGraph::getLink(ExecutionNodePtr sourceNode, Execut
 
         // check, if link does match
         auto current_link = graph[*edge].ptr;
-        if (current_link->getSource()->getId() == sourceNode->getId() &&
-            current_link->getDestination()->getId() == destNode->getId()) {
+        if (current_link->getSource()->getId() == sourceNode->getId() && current_link->getDestination()->getId() == destNode->getId()) {
             return current_link;
         }
     }
@@ -247,14 +246,17 @@ const vector<ExecutionEdge> ExecutionGraph::getAllEdgesFromNode(NES::ExecutionNo
 
 std::string ExecutionGraph::getGraphString() {
     std::stringstream ss;
-    boost::write_graphviz(ss, graph,
-                          [&](auto& out, auto v) {
-                            out << "[label=\"" << graph[v].id << " operatorName="
-                                << graph[v].ptr->getOperatorName() << " nodeName="
-                                << graph[v].ptr->getNodeName()
-                                << "\"]";
-                          },
-                          [&](auto& out, auto e) { out << "[label=\"" << graph[e].id << "\"]"; });
+    boost::write_graphviz(
+        ss, graph,
+        [&](auto& out, auto v) {
+            out << "[label=\"" << graph[v].id << " operatorName="
+                << graph[v].ptr->getOperatorName() << " nodeName="
+                << graph[v].ptr->getNodeName()
+                << "\"]";
+        },
+        [&](auto& out, auto e) {
+            out << "[label=\"" << graph[e].id << "\"]";
+        });
     ss << std::flush;
     return ss.str();
 }

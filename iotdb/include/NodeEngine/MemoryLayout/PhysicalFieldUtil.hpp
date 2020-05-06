@@ -22,6 +22,6 @@ class PhysicalFieldUtil {
      */
     static PhysicalFieldPtr createPhysicalField(const DataTypePtr dataType, uint64_t bufferOffset);
 };
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELDUTIL_HPP_
+#endif//NES_INCLUDE_NODEENGINE_MEMORYLAYOUT_PHYSICALFIELDUTIL_HPP_

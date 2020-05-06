@@ -47,10 +47,10 @@ class BasicDataType : public DataType {
 
     template<class Archive>
     void serialize(Archive& ar, unsigned) {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataType)
+        ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataType)
             & BOOST_SERIALIZATION_NVP(type)
             & BOOST_SERIALIZATION_NVP(dataSize);
     }
 };
-}
-#endif //INCLUDE_BASICDATATYPE_HPP_
+}// namespace NES
+#endif//INCLUDE_BASICDATATYPE_HPP_

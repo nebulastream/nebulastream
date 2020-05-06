@@ -13,7 +13,6 @@ namespace NES {
  */
 class BaseController {
   public:
-
     /**
      * @brief Handle the get request from the user
      * @param path : the resource path the user wanted to get
@@ -82,4 +81,4 @@ class BaseController {
     void resourceNotFoundImpl(const web::http::http_request& message) const;
     utility::string_t getPath(http_request& message);
 };
-}
+}// namespace NES

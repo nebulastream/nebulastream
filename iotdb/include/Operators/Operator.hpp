@@ -4,9 +4,9 @@
 #include <API/InputQuery.hpp>
 #include <iostream>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
-#include <set>
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
@@ -14,10 +14,10 @@
 #include <boost/ptr_container/ptr_vector.hpp>
 #include <boost/ptr_container/serialize_ptr_vector.hpp>
 
-#include <boost/serialization/serialization.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>
+#include <boost/serialization/serialization.hpp>
 #include <boost/serialization/string.hpp>
 #include <boost/serialization/vector.hpp>
 
@@ -121,7 +121,7 @@ class Operator {
 
     template<class Archive>
     void serialize(Archive& ar, unsigned) {
-        ar & BOOST_SERIALIZATION_NVP(cost)
+        ar& BOOST_SERIALIZATION_NVP(cost)
             & BOOST_SERIALIZATION_NVP(operatorId)
             & BOOST_SERIALIZATION_NVP(children)
             & BOOST_SERIALIZATION_NVP(parent);
@@ -140,6 +140,6 @@ const OperatorPtr createWindowOperator(const WindowDefinitionPtr window_definiti
 const OperatorPtr createWindowScanOperator(const SchemaPtr schema);
 const OperatorPtr createSampleOperator(const std::string& udfs);
 
-} // namespace NES
+}// namespace NES
 
-#endif // OPERATOR_OPERATOR_H
+#endif// OPERATOR_OPERATOR_H

@@ -1,12 +1,12 @@
 #ifndef INCLUDE_TUPLEBUFFER_H_
 #define INCLUDE_TUPLEBUFFER_H_
 
-#include <cstdint>
-#include <memory>
-#include <functional>
-#include <atomic>
 #include <API/Schema.hpp>
 #include <NodeEngine/detail/TupleBufferImpl.hpp>
+#include <atomic>
+#include <cstdint>
+#include <functional>
+#include <memory>
 
 namespace NES {
 class BufferManager;
@@ -57,7 +57,7 @@ class TupleBuffer {
     /**
     * @return the content of the buffer as pointer to unsigned char
     */
-    template <typename T = uint8_t>
+    template<typename T = uint8_t>
     T* getBuffer() {
         return reinterpret_cast<T*>(ptr);
     }
@@ -104,7 +104,6 @@ class TupleBuffer {
 
     void setNumberOfTuples(size_t numberOfTuples);
 
-
     void setTupleSizeInBytes(size_t tupleSizeInBytes);
 
     friend std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) {
@@ -131,5 +130,5 @@ class TupleBuffer {
 
 std::string toString(TupleBuffer& buffer, SchemaPtr schema);
 
-}  // namespace NES
+}// namespace NES
 #endif /* INCLUDE_TUPLEBUFFER_H_ */

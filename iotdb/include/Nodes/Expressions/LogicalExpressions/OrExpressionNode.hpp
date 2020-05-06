@@ -23,6 +23,6 @@ class OrExpressionNode : public LogicalBinaryExpressionNode {
      */
     void inferStamp(SchemaPtr schema) override;
 };
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_NODES_EXPRESSIONS_BINARYEXPRESSIONS_OREXPRESSIONNODE_HPP_
+#endif//NES_INCLUDE_NODES_EXPRESSIONS_BINARYEXPRESSIONS_OREXPRESSIONNODE_HPP_

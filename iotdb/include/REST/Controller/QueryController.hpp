@@ -1,17 +1,16 @@
 #pragma once
 
-#include <Actors/CoordinatorActor.hpp>
-#include <Actors/Configurations/CoordinatorActorConfig.hpp>
-#include <Services/QueryService.hpp>
-#include <Services/NESTopologyService.hpp>
-#include <cpprest/http_msg.h>
 #include "BaseController.hpp"
+#include <Actors/Configurations/CoordinatorActorConfig.hpp>
+#include <Actors/CoordinatorActor.hpp>
+#include <Services/NESTopologyService.hpp>
+#include <Services/QueryService.hpp>
+#include <cpprest/http_msg.h>
 
 namespace NES {
 
-class QueryController: public BaseController {
+class QueryController : public BaseController {
   public:
-
     QueryController() {
         coordinatorServicePtr = CoordinatorService::getInstance();
         queryServicePtr = QueryService::getInstance();
@@ -23,13 +22,12 @@ class QueryController: public BaseController {
     void setCoordinatorActorHandle(infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle);
     void handleGet(std::vector<utility::string_t> path, web::http::http_request message);
     void handlePost(std::vector<utility::string_t> path, web::http::http_request message);
-  private:
 
+  private:
     QueryServicePtr queryServicePtr;
     NESTopologyServicePtr nesTopologyServicePtr;
     CoordinatorServicePtr coordinatorServicePtr;
     infer_handle_from_class_t<CoordinatorActor> coordinatorActorHandle;
 };
 
-}
-
+}// namespace NES

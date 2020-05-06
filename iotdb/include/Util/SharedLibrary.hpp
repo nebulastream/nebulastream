@@ -20,8 +20,8 @@ class SharedLibrary {
     static SharedLibraryPtr load(const std::string& file_path);
     void* getSymbol(const std::string& mangeled_symbol_name) const;
 
-    template <typename Function> Function getFunction(const std::string& mangeled_symbol_name) const
-    {
+    template<typename Function>
+    Function getFunction(const std::string& mangeled_symbol_name) const {
         return reinterpret_cast<Function>(getSymbol(mangeled_symbol_name));
     }
 
@@ -30,7 +30,7 @@ class SharedLibrary {
     void* shared_lib_;
 };
 
-} // namespace NES
+}// namespace NES
 
 #pragma GCC diagnostic pop
 

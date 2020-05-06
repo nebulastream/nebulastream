@@ -42,9 +42,9 @@ class ReferenceDataType : public DataType {
 
     template<class Archive>
     void serialize(Archive& ar, unsigned) {
-        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataType)
+        ar& BOOST_SERIALIZATION_BASE_OBJECT_NVP(DataType)
             & BOOST_SERIALIZATION_NVP(base_type_);
     }
 };
-}
-#endif //INCLUDE_REFEREMCEDATATYPE_HPP_
+}// namespace NES
+#endif//INCLUDE_REFEREMCEDATATYPE_HPP_

@@ -49,7 +49,6 @@ class OperatorNode : public Node {
     void setId(u_int64_t id);
 
   protected:
-
     /**
      * @brief Unique Identifier of the operator within a query.
      */
@@ -63,6 +62,6 @@ class OperatorNode : public Node {
     SchemaPtr outputSchema;
 };
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_NODES_OPERATORS_OPERATORNODE_HPP_
+#endif//NES_INCLUDE_NODES_OPERATORS_OPERATORNODE_HPP_

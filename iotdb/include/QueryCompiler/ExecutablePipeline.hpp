@@ -1,8 +1,8 @@
 #ifndef NES_INCLUDE_QUERYCOMPILER_EXECUTABLEPIPELINE_HPP_
 #define NES_INCLUDE_QUERYCOMPILER_EXECUTABLEPIPELINE_HPP_
 
-#include <string>
 #include <memory>
+#include <string>
 namespace NES {
 
 class TupleBuffer;
@@ -32,5 +32,5 @@ class ExecutablePipeline {
                              TupleBuffer& result_buf) = 0;
 };
 
-}
-#endif //NES_INCLUDE_QUERYCOMPILER_EXECUTABLEPIPELINE_HPP_
+}// namespace NES
+#endif//NES_INCLUDE_QUERYCOMPILER_EXECUTABLEPIPELINE_HPP_

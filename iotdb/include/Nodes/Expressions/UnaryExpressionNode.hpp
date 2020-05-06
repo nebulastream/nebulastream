@@ -21,6 +21,6 @@ class UnaryExpressionNode : public ExpressionNode {
      */
     ExpressionNodePtr child() const;
 };
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_NODES_EXPRESSIONS_UNARYEXPRESSIONNODE_HPP_
+#endif//NES_INCLUDE_NODES_EXPRESSIONS_UNARYEXPRESSIONNODE_HPP_

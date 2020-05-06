@@ -4,17 +4,17 @@
 #include <memory>
 
 #include <API/Schema.hpp>
+#include <API/Types/DataTypes.hpp>
 #include <API/Window/WindowDefinition.hpp>
 #include <QueryCompiler/CCodeGenerator/BinaryOperatorStatement.hpp>
-#include <QueryCompiler/Compiler/Compiler.hpp>
 #include <QueryCompiler/CCodeGenerator/Declaration.hpp>
 #include <QueryCompiler/CCodeGenerator/FileBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/FunctionBuilder.hpp>
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
 #include <QueryCompiler/CCodeGenerator/UnaryOperatorStatement.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
+#include <QueryCompiler/Compiler/Compiler.hpp>
 #include <SourceSink/DataSink.hpp>
-#include <API/Types/DataTypes.hpp>
 
 namespace NES {
 
@@ -43,24 +43,22 @@ class CodeGenArgs {
 };
 
 class CodeGenerator {
- public:
-  CodeGenerator(const CodeGenArgs &args);
-  // virtual bool addOperator(OperatorPtr) = 0;
-  virtual bool generateCode(SchemaPtr schema, const PipelineContextPtr &context, std::ostream &out) = 0;
-  virtual bool generateCode(const PredicatePtr &pred, const PipelineContextPtr &context, std::ostream &out) = 0;
-  virtual bool generateCode(const AttributeFieldPtr field,
-                            const PredicatePtr &pred,
-                            const NES::PipelineContextPtr &context,
-                            std::ostream &out) = 0;
-  virtual bool generateCode(const DataSinkPtr &sink, const PipelineContextPtr &context, std::ostream &out) = 0;
-  virtual bool generateCode(const WindowDefinitionPtr &window, const PipelineContextPtr &context, std::ostream &out) = 0;
-  virtual ExecutablePipelinePtr compile(const CompilerArgs &, const GeneratedCodePtr &code) = 0;
-  virtual ~CodeGenerator();
+  public:
+    CodeGenerator(const CodeGenArgs& args);
+    // virtual bool addOperator(OperatorPtr) = 0;
+    virtual bool generateCode(SchemaPtr schema, const PipelineContextPtr& context, std::ostream& out) = 0;
+    virtual bool generateCode(const PredicatePtr& pred, const PipelineContextPtr& context, std::ostream& out) = 0;
+    virtual bool generateCode(const AttributeFieldPtr field,
+                              const PredicatePtr& pred,
+                              const NES::PipelineContextPtr& context,
+                              std::ostream& out) = 0;
+    virtual bool generateCode(const DataSinkPtr& sink, const PipelineContextPtr& context, std::ostream& out) = 0;
+    virtual bool generateCode(const WindowDefinitionPtr& window, const PipelineContextPtr& context, std::ostream& out) = 0;
+    virtual ExecutablePipelinePtr compile(const CompilerArgs&, const GeneratedCodePtr& code) = 0;
+    virtual ~CodeGenerator();
 
-  CodeGenArgs args;
+    CodeGenArgs args;
 };
-
-
 
 /** \brief factory method for creating a code generator */
 CodeGeneratorPtr createCodeGenerator();
@@ -68,33 +66,33 @@ CodeGeneratorPtr createCodeGenerator();
 const PipelineContextPtr createPipelineContext();
 
 class GeneratedCode {
- public:
-  GeneratedCode();
-  std::vector<VariableDeclaration> variableDeclarations;
-  std::vector<StatementPtr> variableInitStmts;
-  std::shared_ptr<FOR> forLoopStmt;
-  /* points to the current scope (compound statement)
+  public:
+    GeneratedCode();
+    std::vector<VariableDeclaration> variableDeclarations;
+    std::vector<StatementPtr> variableInitStmts;
+    std::shared_ptr<FOR> forLoopStmt;
+    /* points to the current scope (compound statement)
    * to insert the code of the next operation,
    * important when multiple levels of nesting occur
    * due to loops (for(){ <cursor> }) or
    * if statements (if(..){ <cursor>}) */
-  CompoundStatementPtr currentCodeInsertionPoint;
-  std::vector<StatementPtr> cleanupStmts;
-  StatementPtr returnStmt;
-  std::shared_ptr<VariableDeclaration> varDeclarationRecordIndex;
-  std::shared_ptr<VariableDeclaration> varDeclarationReturnValue;
-  StructDeclaration structDeclaratonInputTuple;
-  StructDeclaration structDeclarationResultTuple;
-  VariableDeclaration varDeclarationInputBuffer;
-  VariableDeclaration varDeclarationWindowManager;
-  VariableDeclaration varDeclarationResultBuffer;
-  VariableDeclaration varDeclarationState;
-  FunctionCallStatement tupleBufferGetNumberOfTupleCall;
-  FunctionCallStatement tupleBufferGetBufferCall;
-  VariableDeclaration varDeclarationInputTuples;
-  VariableDeclaration varDeclarationNumberOfResultTuples;
-  std::vector<StructDeclaration> typeDeclarations;
-  std::vector<DeclarationPtr> override_fields;
+    CompoundStatementPtr currentCodeInsertionPoint;
+    std::vector<StatementPtr> cleanupStmts;
+    StatementPtr returnStmt;
+    std::shared_ptr<VariableDeclaration> varDeclarationRecordIndex;
+    std::shared_ptr<VariableDeclaration> varDeclarationReturnValue;
+    StructDeclaration structDeclaratonInputTuple;
+    StructDeclaration structDeclarationResultTuple;
+    VariableDeclaration varDeclarationInputBuffer;
+    VariableDeclaration varDeclarationWindowManager;
+    VariableDeclaration varDeclarationResultBuffer;
+    VariableDeclaration varDeclarationState;
+    FunctionCallStatement tupleBufferGetNumberOfTupleCall;
+    FunctionCallStatement tupleBufferGetBufferCall;
+    VariableDeclaration varDeclarationInputTuples;
+    VariableDeclaration varDeclarationNumberOfResultTuples;
+    std::vector<StructDeclaration> typeDeclarations;
+    std::vector<DeclarationPtr> override_fields;
 };
 
 typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
@@ -104,5 +102,4 @@ typedef std::shared_ptr<GeneratedCode> GeneratedCodePtr;
 //const StructDeclaration getStructDeclarationTupleBuffer();
 //const StructDeclaration getStructDeclarationWindowState();
 const StructDeclaration getStructDeclarationFromSchema(const std::string struct_name, SchemaPtr schema);
-} // namespace NES
-
+}// namespace NES

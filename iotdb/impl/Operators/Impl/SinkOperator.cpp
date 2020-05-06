@@ -3,32 +3,30 @@
 #include <sstream>
 #include <vector>
 
+#include <Operators/Impl/SinkOperator.hpp>
 #include <QueryCompiler/CodeGenerator.hpp>
 #include <QueryCompiler/PipelineContext.hpp>
-#include <Operators/Impl/SinkOperator.hpp>
 #include <SourceSink/DataSink.hpp>
 
 namespace NES {
 
 SinkOperator::SinkOperator(const DataSinkPtr sink) : Operator(), sink_(NES::copy(sink)) {}
 
-SinkOperator::SinkOperator(const SinkOperator &other) : sink_(NES::copy(other.sink_)) {}
+SinkOperator::SinkOperator(const SinkOperator& other) : sink_(NES::copy(other.sink_)) {}
 
-SinkOperator &SinkOperator::operator=(const SinkOperator &other) {
-  if (this != &other) {
-    sink_ = NES::copy(other.sink_);
-  }
-  return *this;
+SinkOperator& SinkOperator::operator=(const SinkOperator& other) {
+    if (this != &other) {
+        sink_ = NES::copy(other.sink_);
+    }
+    return *this;
 }
 
-void SinkOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream &out) {
-  assert(!getChildren().empty());
-  getChildren()[0]->produce(codegen, context, out);
+void SinkOperator::produce(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
+    assert(!getChildren().empty());
+    getChildren()[0]->produce(codegen, context, out);
 }
 
-
-void SinkOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out)
-{
+void SinkOperator::consume(CodeGeneratorPtr codegen, PipelineContextPtr context, std::ostream& out) {
     sink_->setSchema(context->getResultSchema());
     codegen->generateCode(sink_, context, out);
     /* no call to compileLiftCombine of parent, ends code generation */
@@ -41,9 +39,9 @@ const OperatorPtr SinkOperator::copy() const {
 }
 
 const std::string SinkOperator::toString() const {
-  std::stringstream ss;
-  ss << "SINK(" << NES::toString(sink_) << ")";
-  return ss.str();
+    std::stringstream ss;
+    ss << "SINK(" << NES::toString(sink_) << ")";
+    return ss.str();
 }
 
 OperatorType SinkOperator::getOperatorType() const { return SINK_OP; }
@@ -56,5 +54,5 @@ SinkOperator::SinkOperator() = default;
 
 const OperatorPtr createSinkOperator(const DataSinkPtr sink) { return std::make_shared<SinkOperator>(sink); }
 
-} // namespace NES
+}// namespace NES
 BOOST_CLASS_EXPORT(NES::SinkOperator);

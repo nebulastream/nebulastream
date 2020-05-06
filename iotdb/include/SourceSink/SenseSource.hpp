@@ -1,8 +1,8 @@
 #pragma once
 
+#include <SourceSink/DataSource.hpp>
 #include <fstream>
 #include <string>
-#include <SourceSink/DataSource.hpp>
 
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/shared_ptr.hpp>
@@ -14,51 +14,52 @@ class TupleBuffer;
  * @brief this class implement the CSV as an input source
  */
 class SenseSource : public DataSource {
- public:
-  /**
+  public:
+    /**
    * @brief constructor of sense sou1rce
    * @param schema of the source
    * @param udfs to apply
    */
-  SenseSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& udfs);
+    SenseSource(SchemaPtr schema, BufferManagerPtr bufferManager, QueryManagerPtr queryManager, const std::string& udfs);
 
-  /**
+    /**
    * @brief override the receiveData method for the source
    * @return returns a buffer if available
    */
-  std::optional<TupleBuffer> receiveData() override;
+    std::optional<TupleBuffer> receiveData() override;
 
-  /**
+    /**
    *  @brief method to fill the buffer with tuples
    *  @param buffer to be filled
    */
-  void fillBuffer(TupleBuffer&);
+    void fillBuffer(TupleBuffer&);
 
-  /**
+    /**
    * @brief override the toString method for the csv source
    * @return returns string describing the binary source
    */
-  const std::string toString() const;
-  SourceType getType() const override;
+    const std::string toString() const;
+    SourceType getType() const override;
 
-  void setUdsf(std::string udsf);
+    void setUdsf(std::string udsf);
 
   private:
-  SenseSource();
+    SenseSource();
 
-  std::string udsf;
-  /**
+    std::string udsf;
+    /**
    * @brief method for serialization, all listed variable below are added to the
    * serialization/deserialization process
    */
-  friend class boost::serialization::access;
-  template<class Archive> void serialize(Archive& ar,
-                                         const unsigned int version) {
-    ar & boost::serialization::base_object<DataSource>(*this);
-    ar & udsf;
-  }
+    friend class boost::serialization::access;
+    template<class Archive>
+    void serialize(Archive& ar,
+                   const unsigned int version) {
+        ar& boost::serialization::base_object<DataSource>(*this);
+        ar& udsf;
+    }
 };
-}  // namespace NES
+}// namespace NES
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>

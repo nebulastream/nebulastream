@@ -1,6 +1,5 @@
-#include <iostream>
 #include <API/Window/WindowMeasure.hpp>
-
+#include <iostream>
 
 namespace NES {
 
@@ -16,4 +15,4 @@ Minutes::Minutes(uint64_t minutes) : Seconds(minutes * 60) {}
 
 Hours::Hours(uint64_t hours) : Minutes(hours * 60) {}
 
-}
+}// namespace NES

@@ -1,16 +1,16 @@
 
-#include <Nodes/Phases/TypeInferencePhase.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
+#include <Catalogs/StreamCatalog.hpp>
 #include <Nodes/Operators/LogicalOperators/MapLogicalOperatorNode.hpp>
-#include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
+#include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
 #include <Nodes/Operators/OperatorNode.hpp>
 #include <Nodes/Operators/QueryPlan.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
-#include <Catalogs/StreamCatalog.hpp>
-#include <Nodes/Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
+#include <Nodes/Phases/TypeInferencePhase.hpp>
+#include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 namespace NES {
 
 TypeInferencePhase::TypeInferencePhase() {}
@@ -22,7 +22,7 @@ TypeInferencePhasePtr TypeInferencePhase::create() {
 QueryPlanPtr TypeInferencePhase::transform(QueryPlanPtr queryPlan) {
     // first we have to check if all source operators have a correct source descriptors
     auto sources = queryPlan->getSourceOperators();
-    for (auto source: sources) {
+    for (auto source : sources) {
         auto sourceDescriptor = source->getSourceDescriptor();
         // if the source descriptor is only a logical stream source we have to replace it with the correct
         // source descriptor form the catalog.
@@ -37,7 +37,7 @@ QueryPlanPtr TypeInferencePhase::transform(QueryPlanPtr queryPlan) {
     // now we have to infer the input and output schemas for the whole query.
     // to this end we call at each sink the infer method to propagate the schemata across the whole query.
     auto sinks = queryPlan->getSinkOperators();
-    for (auto sink:sinks) {
+    for (auto sink : sinks) {
         sink->inferSchema();
     }
     NES_DEBUG("TypeInferencePhase: we inferred all schemas");
@@ -73,18 +73,17 @@ SourceDescriptorPtr TypeInferencePhase::createSourceDescriptor(std::string strea
     } else if (type == "CSVSource") {
         NES_DEBUG("TypeInferencePhase: create CSV source for " << conf << " buffers");
         return CsvSourceDescriptor::create(schema, /**filePath*/
-                                           conf, /**delimiter*/
+                                           conf,   /**delimiter*/
                                            ",",
                                            numBuffers,
                                            frequency);
     } else if (type == "SenseSource") {
-        NES_DEBUG("TypeInferencePhase: create Sense source for udfs " << conf)
+        NES_DEBUG("TypeInferencePhase: create Sense source for udfs " << conf);
         return SenseSourceDescriptor::create(schema, /**udfs*/ conf);
     } else {
-        NES_ERROR("TypeInferencePhase:: source type " << type << " not supported")
-        NES_FATAL_ERROR("type not supported")
+        NES_ERROR("TypeInferencePhase:: source type " << type << " not supported");
+        NES_FATAL_ERROR("type not supported");
     }
-
 }
 
-}
+}// namespace NES

@@ -1,9 +1,9 @@
 #ifndef FILTER_LOGICAL_OPERATOR_NODE_HPP
 #define FILTER_LOGICAL_OPERATOR_NODE_HPP
 
-#include <memory>
 #include <API/UserAPIExpression.hpp>
 #include <Nodes/Operators/LogicalOperators/LogicalOperatorNode.hpp>
+#include <memory>
 
 namespace NES {
 
@@ -50,8 +50,7 @@ class FilterLogicalOperatorNode : public LogicalOperatorNode {
 
   private:
     ExpressionNodePtr predicate;
-
 };
 
-}      // namespace NES
-#endif // FILTER_LOGICAL_OPERATOR_NODE_HPP
+}// namespace NES
+#endif// FILTER_LOGICAL_OPERATOR_NODE_HPP

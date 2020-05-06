@@ -5,8 +5,8 @@
 #ifndef EXECUTIONNODE_HPP
 #define EXECUTIONNODE_HPP
 
-#include <Topology/NESTopologyEntry.hpp>
 #include <Operators/Operator.hpp>
+#include <Topology/NESTopologyEntry.hpp>
 
 using namespace std;
 
@@ -14,59 +14,59 @@ namespace NES {
 
 class ExecutionNode {
 
- public:
-  ExecutionNode(std::string operatorName, std::string nodeName, NESTopologyEntryPtr nesNode,
-                OperatorPtr rootOperator) {
-    this->id = nesNode->getId();
-    this->operatorName = operatorName;
-    this->nodeName = nodeName;
-    this->nesNode = nesNode;
-    this->rootOperator = rootOperator;
-  };
+  public:
+    ExecutionNode(std::string operatorName, std::string nodeName, NESTopologyEntryPtr nesNode,
+                  OperatorPtr rootOperator) {
+        this->id = nesNode->getId();
+        this->operatorName = operatorName;
+        this->nodeName = nodeName;
+        this->nesNode = nesNode;
+        this->rootOperator = rootOperator;
+    };
 
-  int getId() { return this->id; };
+    int getId() { return this->id; };
 
-  std::string getOperatorName() {
-    return this->operatorName;
-  }
+    std::string getOperatorName() {
+        return this->operatorName;
+    }
 
-  std::string getNodeName() {
-    return this->nodeName;
-  }
+    std::string getNodeName() {
+        return this->nodeName;
+    }
 
-  void setOperatorName(const string &operatorName) {
-    this->operatorName = operatorName;
-  }
+    void setOperatorName(const string& operatorName) {
+        this->operatorName = operatorName;
+    }
 
-  NESTopologyEntryPtr &getNESNode() {
-    return nesNode;
-  }
+    NESTopologyEntryPtr& getNESNode() {
+        return nesNode;
+    }
 
-  void setRootOperator(const OperatorPtr root) {
-    this->rootOperator = root;
-  }
+    void setRootOperator(const OperatorPtr root) {
+        this->rootOperator = root;
+    }
 
-  OperatorPtr &getRootOperator() {
-    return rootOperator;
-  }
+    OperatorPtr& getRootOperator() {
+        return rootOperator;
+    }
 
-  vector<size_t> &getChildOperatorIds() {
-    return operatorIds;
-  }
+    vector<size_t>& getChildOperatorIds() {
+        return operatorIds;
+    }
 
-  /**
+    /**
    * @brief Add the input operator as the parent of the last operator in the chain
    * Note: root is always the child operator.
    * @param operatorPtr  : operator to be added
    */
-  void addOperator(OperatorPtr operatorPtr) {
-      OperatorPtr root = rootOperator;
-      while(root->getParent() != nullptr){
-          root = root->getParent();
-      }
-      operatorPtr->setChildren({root});
-      root->setParent(operatorPtr);
-  }
+    void addOperator(OperatorPtr operatorPtr) {
+        OperatorPtr root = rootOperator;
+        while (root->getParent() != nullptr) {
+            root = root->getParent();
+        }
+        operatorPtr->setChildren({root});
+        root->setParent(operatorPtr);
+    }
 
     /**
      * @brief Add the input operator as the child of the last operator in the chain
@@ -80,20 +80,20 @@ class ExecutionNode {
         rootOperator = operatorPtr;
     }
 
-  void addOperatorId(size_t childOperatorId) {
-    this->operatorIds.push_back(childOperatorId);
-  }
+    void addOperatorId(size_t childOperatorId) {
+        this->operatorIds.push_back(childOperatorId);
+    }
 
- private:
-  int id;
-  string operatorName;
-  string nodeName;
-  OperatorPtr rootOperator;
-  NESTopologyEntryPtr nesNode;
-  vector<size_t> operatorIds{};
+  private:
+    int id;
+    string operatorName;
+    string nodeName;
+    OperatorPtr rootOperator;
+    NESTopologyEntryPtr nesNode;
+    vector<size_t> operatorIds{};
 };
 
 typedef std::shared_ptr<ExecutionNode> ExecutionNodePtr;
-}
+}// namespace NES
 
-#endif //EXECUTIONNODE_HPP
+#endif//EXECUTIONNODE_HPP

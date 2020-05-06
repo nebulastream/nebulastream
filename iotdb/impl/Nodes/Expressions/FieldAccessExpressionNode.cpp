@@ -1,10 +1,10 @@
 
-#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <API/Schema.hpp>
+#include <Nodes/Expressions/FieldAccessExpressionNode.hpp>
 #include <utility>
 namespace NES {
 FieldAccessExpressionNode::FieldAccessExpressionNode(DataTypePtr stamp, std::string fieldName)
-    : ExpressionNode(std::move(stamp)), fieldName(std::move(fieldName)) {};
+    : ExpressionNode(std::move(stamp)), fieldName(std::move(fieldName)){};
 
 ExpressionNodePtr FieldAccessExpressionNode::create(DataTypePtr stamp, std::string fieldName) {
     return std::make_shared<FieldAccessExpressionNode>(FieldAccessExpressionNode(stamp, fieldName));
@@ -27,7 +27,7 @@ const std::string FieldAccessExpressionNode::getFieldName() {
 }
 
 const std::string FieldAccessExpressionNode::toString() const {
-    return "FieldAccessNode(" + fieldName + ": " + stamp->toString()+")";
+    return "FieldAccessNode(" + fieldName + ": " + stamp->toString() + ")";
 }
 
 void FieldAccessExpressionNode::inferStamp(SchemaPtr schema) {
@@ -41,4 +41,4 @@ void FieldAccessExpressionNode::inferStamp(SchemaPtr schema) {
     stamp = field->getDataType();
 }
 
-}
+}// namespace NES

@@ -10,8 +10,7 @@ class LogicalBinaryExpressionNode : public BinaryExpressionNode, public LogicalE
   protected:
     LogicalBinaryExpressionNode();
     ~LogicalBinaryExpressionNode() = default;
-
 };
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_NODES_EXPRESSIONS_BINARYEXPRESSIONS_LOGICALBINARYEXPRESSIONNODE_HPP_
+#endif//NES_INCLUDE_NODES_EXPRESSIONS_BINARYEXPRESSIONS_LOGICALBINARYEXPRESSIONNODE_HPP_

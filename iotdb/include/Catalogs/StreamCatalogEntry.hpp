@@ -1,10 +1,10 @@
 #ifndef INCLUDE_CATALOGS_STREAMCATALOGENTRY_HPP_
 #define INCLUDE_CATALOGS_STREAMCATALOGENTRY_HPP_
 
-#include <string>
-#include <Topology/NESTopologyEntry.hpp>
 #include <Catalogs/PhysicalStreamConfig.hpp>
+#include <Topology/NESTopologyEntry.hpp>
 #include <sstream>
+#include <string>
 
 namespace NES {
 /**
@@ -18,31 +18,31 @@ namespace NES {
  */
 class StreamCatalogEntry {
 
- public:
-  StreamCatalogEntry(PhysicalStreamConfig streamConf, NESTopologyEntryPtr node);
+  public:
+    StreamCatalogEntry(PhysicalStreamConfig streamConf, NESTopologyEntryPtr node);
 
-  std::string getSourceType();
+    std::string getSourceType();
 
-  std::string getSourceConfig();
+    std::string getSourceConfig();
 
-  NESTopologyEntryPtr getNode();
+    NESTopologyEntryPtr getNode();
 
-  std::string getPhysicalName();
+    std::string getPhysicalName();
 
-  std::string getLogicalName();
+    std::string getLogicalName();
 
-  double getSourceFrequency();
+    double getSourceFrequency();
 
-  size_t getNumberOfBuffersToProduce();
+    size_t getNumberOfBuffersToProduce();
 
-  std::string toString();
+    std::string toString();
 
- private:
-  PhysicalStreamConfig streamConf;
-  NESTopologyEntryPtr node;
+  private:
+    PhysicalStreamConfig streamConf;
+    NESTopologyEntryPtr node;
 };
 typedef std::shared_ptr<StreamCatalogEntry> StreamCatalogEntryPtr;
 
-}
+}// namespace NES
 
 #endif /* INCLUDE_CATALOGS_STREAMCATALOGENTRY_HPP_ */

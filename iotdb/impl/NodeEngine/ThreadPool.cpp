@@ -2,9 +2,9 @@
 #include <NodeEngine/Task.hpp>
 #include <NodeEngine/ThreadPool.hpp>
 #include <Util/Logger.hpp>
+#include <Util/ThreadBarrier.hpp>
 #include <functional>
 #include <string.h>
-#include <Util/ThreadBarrier.hpp>
 namespace NES {
 
 ThreadPool::ThreadPool(QueryManagerPtr queryManager)
@@ -15,9 +15,9 @@ ThreadPool::ThreadPool(QueryManagerPtr queryManager)
 }
 
 ThreadPool::~ThreadPool() {
-    NES_DEBUG("Threadpool: Destroying Thread Pool")
+    NES_DEBUG("Threadpool: Destroying Thread Pool");
     stop();
-    NES_DEBUG("QueryManager: Destroy threads Queue")
+    NES_DEBUG("QueryManager: Destroy threads Queue");
     threads.clear();
 }
 
@@ -28,36 +28,36 @@ void ThreadPool::runningRoutine() {
         if (task) {
             task->execute();
             queryManager->completedWork(task);
-            NES_DEBUG("Threadpool: finished task " << task)
+            NES_DEBUG("Threadpool: finished task " << task);
         } else {
-            NES_DEBUG("Threadpool: task invalid " << task)
+            NES_DEBUG("Threadpool: task invalid " << task);
             running = false;
         }
     }
-    NES_DEBUG("Threadpool: end running now cleanup")
+    NES_DEBUG("Threadpool: end running now cleanup");
     queryManager->cleanup();
-    NES_DEBUG("Threadpool: end running end cleanup")
+    NES_DEBUG("Threadpool: end running end cleanup");
 }
 
 bool ThreadPool::start() {
     auto barrier = std::make_shared<ThreadBarrier>(numThreads + 1);
     std::unique_lock<std::mutex> lock(reconfigLock);
     if (running) {
-        NES_DEBUG("Threadpool:start already running, return false")
+        NES_DEBUG("Threadpool:start already running, return false");
         return false;
     }
 
     running = true;
     /* spawn threads */
-    NES_DEBUG("Threadpool: Spawning " << numThreads << " threads")
+    NES_DEBUG("Threadpool: Spawning " << numThreads << " threads");
     for (uint64_t i = 0; i < numThreads; ++i) {
         threads.emplace_back([this, barrier]() {
-          barrier->wait();
-          runningRoutine();
+            barrier->wait();
+            runningRoutine();
         });
     }
     barrier->wait();
-    NES_DEBUG("Threadpool:start return from start")
+    NES_DEBUG("Threadpool:start return from start");
     return true;
 }
 
@@ -69,7 +69,7 @@ bool ThreadPool::stop() {
     running = false;
     /* wake up all threads in the query manager,
      * so they notice the change in the run variable */
-    NES_DEBUG("Threadpool: Going to unblock " << numThreads << " threads")
+    NES_DEBUG("Threadpool: Going to unblock " << numThreads << " threads");
     queryManager->unblockThreads();
     /* join all threads if possible */
     for (auto& thread : threads) {
@@ -78,7 +78,7 @@ bool ThreadPool::stop() {
         }
     }
     threads.clear();
-    NES_DEBUG("Threadpool: stop finished")
+    NES_DEBUG("Threadpool: stop finished");
     return true;
 }
 
@@ -100,4 +100,4 @@ size_t ThreadPool::getNumberOfThreads() {
     return numThreads;
 }
 
-}  // namespace NES
+}// namespace NES

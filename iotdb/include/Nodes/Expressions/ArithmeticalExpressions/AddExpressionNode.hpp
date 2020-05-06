@@ -17,6 +17,6 @@ class AddExpressionNode : public ArithmeticalExpressionNode {
     const std::string toString() const override;
 };
 
-} // namespace NES
+}// namespace NES
 
-#endif // NES_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ADDEXPRESSIONNODE_HPP_
+#endif// NES_INCLUDE_NODES_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ADDEXPRESSIONNODE_HPP_

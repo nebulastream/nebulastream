@@ -16,7 +16,6 @@ namespace NES {
 class ExecutionNodeLink {
 
   public:
-
     ExecutionNodeLink(size_t linkId, ExecutionNodePtr src, ExecutionNodePtr dest, size_t linkCapacity, size_t linkLatency) {
         this->linkId = linkId;
         this->src = src;
@@ -32,7 +31,6 @@ class ExecutionNodeLink {
     size_t getLinkCapacity() { return linkCapacity; }
 
   private:
-
     /**
      * @brief unique link identifier.
      */
@@ -60,6 +58,6 @@ class ExecutionNodeLink {
 };
 
 typedef std::shared_ptr<ExecutionNodeLink> ExecutionNodeLinkPtr;
-}
+}// namespace NES
 
-#endif //EXECUTIONNODELINK_HPP
+#endif//EXECUTIONNODELINK_HPP

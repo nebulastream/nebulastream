@@ -1,6 +1,6 @@
-#include <Services/OptimizerService.hpp>
 #include <Operators/OperatorJsonUtil.hpp>
 #include <Optimizer/NESOptimizer.hpp>
+#include <Services/OptimizerService.hpp>
 #include <Topology/NESTopologyManager.hpp>
 #include <Util/Logger.hpp>
 #include <chrono>
@@ -18,14 +18,14 @@ NESExecutionPlanPtr OptimizerService::getExecutionPlan(InputQueryPtr inputQuery,
 
     NESTopologyManager& nesTopologyManager = NESTopologyManager::getInstance();
     const NESTopologyPlanPtr& topologyPlan = nesTopologyManager.getNESTopologyPlan();
-    NES_DEBUG("OptimizerService: topology=" << topologyPlan->getTopologyPlanString())
+    NES_DEBUG("OptimizerService: topology=" << topologyPlan->getTopologyPlanString());
 
     NESOptimizer queryOptimizer;
 
     OperatorJsonUtil operatorJsonUtil;
     const json::value& basePlan = operatorJsonUtil.getBasePlan(inputQuery);
 
-    NES_DEBUG("OptimizerService: query plan=" << basePlan)
+    NES_DEBUG("OptimizerService: query plan=" << basePlan);
 
     auto start = high_resolution_clock::now();
 

@@ -1,22 +1,22 @@
 #ifndef INCLUDE_ACTORS_COORDINATORACTOR_HPP_
 #define INCLUDE_ACTORS_COORDINATORACTOR_HPP_
 
-#include <caf/io/all.hpp>
-#include <caf/all.hpp>
+#include <API/Schema.hpp>
 #include <Actors/AtomUtils.hpp>
-#include <Services/CoordinatorService.hpp>
-#include <Services/StreamCatalogService.hpp>
-#include <Services/QueryCatalogService.hpp>
-#include <NodeEngine/NodeEngine.hpp>
 #include <Actors/Configurations/CoordinatorActorConfig.hpp>
+#include <Catalogs/PhysicalStreamConfig.hpp>
+#include <NodeEngine/NodeEngine.hpp>
+#include <Services/CoordinatorService.hpp>
+#include <Services/QueryCatalogService.hpp>
+#include <Services/StreamCatalogService.hpp>
 #include <Topology/NESTopologyEntry.hpp>
 #include <Topology/NESTopologyManager.hpp>
-#include <Catalogs/PhysicalStreamConfig.hpp>
-#include <API/Schema.hpp>
 #include <Util/Logger.hpp>
+#include <caf/all.hpp>
+#include <caf/io/all.hpp>
 
-using std::cout;
 using std::cerr;
+using std::cout;
 using std::endl;
 using std::string;
 using std::unordered_map;
@@ -42,6 +42,7 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
     explicit CoordinatorActor(caf::actor_config& cfg, std::string ip);
 
     ~CoordinatorActor();
+
   private:
     behavior_type make_behavior() override {
         return init();
@@ -104,10 +105,10 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
    * @return id of the node, 0 if a failure occurs
    */
     size_t registerNode(const string& ip, uint16_t publish_port,
-                      uint16_t receive_port, int cpu,
-                      const string& nodeProperties,
-                      PhysicalStreamConfig streamConf,
-                      NESNodeType type);
+                        uint16_t receive_port, int cpu,
+                        const string& nodeProperties,
+                        PhysicalStreamConfig streamConf,
+                        NESNodeType type);
 
     /**
      * @brief: remove a sensor node from topology and catalog
@@ -160,6 +161,6 @@ class CoordinatorActor : public caf::stateful_actor<CoordinatorState> {
     CoordinatorActorConfig actorCoordinatorConfig;
     CoordinatorServicePtr coordinatorServicePtr;
 };
-}
+}// namespace NES
 
-#endif //INCLUDE_ACTORS_COORDINATORACTOR_HPP_
+#endif//INCLUDE_ACTORS_COORDINATORACTOR_HPP_

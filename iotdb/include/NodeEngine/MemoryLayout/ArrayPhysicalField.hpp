@@ -21,9 +21,10 @@ class ArrayPhysicalField : public PhysicalField {
      * @return std::shared_ptr<PhysicalField>
      */
     std::shared_ptr<PhysicalField> operator[](uint64_t arrayIndex);
+
   private:
     DataTypePtr componentField;
 };
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_NODEENGINE_MEMORYLAYOUT_ARRAYPHYSICALFIELD_HPP_
+#endif//NES_INCLUDE_NODEENGINE_MEMORYLAYOUT_ARRAYPHYSICALFIELD_HPP_

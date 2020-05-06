@@ -20,5 +20,4 @@ SinkDescriptorPtr ZmqSinkDescriptor::create(SchemaPtr schema, std::string host, 
     return std::make_shared<ZmqSinkDescriptor>(ZmqSinkDescriptor(schema, host, port));
 }
 
-}
-
+}// namespace NES

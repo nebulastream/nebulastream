@@ -1,16 +1,16 @@
-#include <SourceSink/FileOutputSink.hpp>
-#include <SourceSink/PrintSink.hpp>
-#include <SourceSink/ZmqSink.hpp>
 #include <SourceSink/DataSink.hpp>
-#include <SourceSink/SinkCreator.hpp>
+#include <SourceSink/FileOutputSink.hpp>
 #include <SourceSink/KafkaSink.hpp>
+#include <SourceSink/PrintSink.hpp>
+#include <SourceSink/SinkCreator.hpp>
+#include <SourceSink/ZmqSink.hpp>
 #include <Util/Logger.hpp>
 
 namespace NES {
 
 const DataSinkPtr createTestSink() {
     NES_ERROR("Called unimplemented Function");
-    NES_NOT_IMPLEMENTED
+    NES_NOT_IMPLEMENTED();
 }
 
 const DataSinkPtr createBinaryFileSinkWithSchema(SchemaPtr schema,
@@ -50,4 +50,4 @@ const DataSinkPtr createKafkaSinkWithSchema(SchemaPtr schema, const std::string&
     return std::make_shared<KafkaSink>(schema, brokers, topic, kafkaProducerTimeout);
 }
 
-}
+}// namespace NES

@@ -9,4 +9,4 @@ namespace NES {
 
 }
 
-#endif //WINDOWDEFINITION_HPP
+#endif//WINDOWDEFINITION_HPP

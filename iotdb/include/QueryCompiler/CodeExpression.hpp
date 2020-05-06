@@ -18,4 +18,4 @@ class CodeExpression {
 
 const CodeExpressionPtr combine(const CodeExpressionPtr lhs, const CodeExpressionPtr rhs);
 
-} // namespace NES
+}// namespace NES

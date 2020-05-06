@@ -25,7 +25,6 @@ typedef std::shared_ptr<SinkLogicalOperatorNode> SinkLogicalOperatorNodePtr;
  */
 class QueryPlan {
   public:
-
     /**
      * @brief Creates a new query plan with a root operator and a specific stream.
      * @param rootOperator The root operator usually a source operator.
@@ -45,7 +44,6 @@ class QueryPlan {
      * @return vector of logical sink operators
      */
     std::vector<SinkLogicalOperatorNodePtr> getSinkOperators();
-
 
     /**
      * @brief Appends an operator to the query plan. This updates the operator id of the query.
@@ -80,5 +78,5 @@ class QueryPlan {
      */
     uint64_t getNextOperatorId();
 };
-}
-#endif //NES_INCLUDE_NODES_GRAPH_HPP_
+}// namespace NES
+#endif//NES_INCLUDE_NODES_GRAPH_HPP_

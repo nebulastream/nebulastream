@@ -1,10 +1,10 @@
-#include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Node.hpp>
+#include <Nodes/Util/Iterators/BreadthFirstNodeIterator.hpp>
 #include <utility>
 
 namespace NES {
 
-BreadthFirstNodeIterator::BreadthFirstNodeIterator(NodePtr start) : start(std::move(start)) {};
+BreadthFirstNodeIterator::BreadthFirstNodeIterator(NodePtr start) : start(std::move(start)){};
 
 BreadthFirstNodeIterator::iterator BreadthFirstNodeIterator::begin() { return iterator(start); }
 
@@ -18,7 +18,7 @@ BreadthFirstNodeIterator::iterator::iterator() = default;
 
 bool BreadthFirstNodeIterator::iterator::operator!=(const iterator& other) const {
     // todo currently we only check if we reached the end of the iterator.
-    if(workQueue.empty() && other.workQueue.empty()){
+    if (workQueue.empty() && other.workQueue.empty()) {
         return false;
     };
     return true;
@@ -38,5 +38,4 @@ BreadthFirstNodeIterator::iterator& BreadthFirstNodeIterator::iterator::operator
     }
     return *this;
 }
-}
-
+}// namespace NES

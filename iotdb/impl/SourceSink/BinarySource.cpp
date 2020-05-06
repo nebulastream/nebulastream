@@ -1,10 +1,10 @@
 #include <NodeEngine/QueryManager.hpp>
 #include <assert.h>
-#include <fstream>
-#include <sstream>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/serialization/export.hpp>
+#include <fstream>
+#include <sstream>
 
 #include <SourceSink/BinarySource.hpp>
 #include <SourceSink/DataSource.hpp>
@@ -23,14 +23,14 @@ BinarySource::BinarySource(SchemaPtr schema, BufferManagerPtr bufferManager, Que
     : DataSource(schema, bufferManager, queryManager),
       input(std::ifstream(_file_path.c_str())),
       file_path(_file_path) {
-  input.seekg(0, input.end);
-  file_size = input.tellg();
-  if (file_size == -1) {
-    NES_ERROR("ERROR: File " << _file_path << " is corrupted");
-    assert(0);
-  }
-  input.seekg(0, input.beg);
-  tuple_size = schema->getSchemaSizeInBytes();
+    input.seekg(0, input.end);
+    file_size = input.tellg();
+    if (file_size == -1) {
+        NES_ERROR("ERROR: File " << _file_path << " is corrupted");
+        assert(0);
+    }
+    input.seekg(0, input.beg);
+    tuple_size = schema->getSchemaSizeInBytes();
 }
 
 std::optional<TupleBuffer> BinarySource::receiveData() {
@@ -40,10 +40,10 @@ std::optional<TupleBuffer> BinarySource::receiveData() {
 }
 
 const std::string BinarySource::toString() const {
-  std::stringstream ss;
-  ss << "BINARY_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << file_path
-     << ")";
-  return ss.str();
+    std::stringstream ss;
+    ss << "BINARY_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << file_path
+       << ")";
+    return ss.str();
 }
 
 void BinarySource::fillBuffer(TupleBuffer& buf) {
@@ -58,7 +58,7 @@ void BinarySource::fillBuffer(TupleBuffer& buf) {
     size_t size_to_read =
         buf.getBufferSize() < (uint64_t) file_size ? buf.getBufferSize() : file_size;
     input.read(buf.getBufferAs<char>(), size_to_read);
-    uint64_t generated_tuples_this_pass = size_to_read/tuple_size;
+    uint64_t generated_tuples_this_pass = size_to_read / tuple_size;
     buf.setTupleSizeInBytes(tuple_size);
     buf.setNumberOfTuples(generated_tuples_this_pass);
 
@@ -68,4 +68,4 @@ void BinarySource::fillBuffer(TupleBuffer& buf) {
 SourceType BinarySource::getType() const {
     return BINARY_SOURCE;
 }
-}  // namespace NES
+}// namespace NES

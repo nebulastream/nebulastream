@@ -1,9 +1,9 @@
 #include <API/Query.hpp>
 #include <Catalogs/StreamCatalog.hpp>
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/LogicalStreamSourceDescriptor.hpp>
+#include <Nodes/Operators/QueryPlan.hpp>
 #include <Util/Logger.hpp>
 #include <cstddef>
 #include <iostream>
@@ -40,15 +40,15 @@ Query& Query::map(const FieldAssignmentExpressionNodePtr mapExpression) {
     return *this;
 }
 
-Query& Query::combine(const Query& subQuery) {NES_NOT_IMPLEMENTED }
+Query& Query::combine(const Query& subQuery) { NES_NOT_IMPLEMENTED(); }
 
-Query& Query::join(const Query& subQuery, const JoinPredicatePtr joinPred) {NES_NOT_IMPLEMENTED }
+Query& Query::join(const Query& subQuery, const JoinPredicatePtr joinPred) { NES_NOT_IMPLEMENTED(); }
 
-Query& Query::windowByKey() {NES_NOT_IMPLEMENTED }
+Query& Query::windowByKey() { NES_NOT_IMPLEMENTED(); }
 
-Query& Query::window() {NES_NOT_IMPLEMENTED }
+Query& Query::window() { NES_NOT_IMPLEMENTED(); }
 
-Query& Query::to(const std::string& name) {NES_NOT_IMPLEMENTED }
+Query& Query::to(const std::string& name) { NES_NOT_IMPLEMENTED(); }
 
 Query& Query::sink(const SinkDescriptorPtr sinkDescriptor) {
     OperatorNodePtr op = createSinkLogicalOperatorNode(sinkDescriptor);
@@ -66,4 +66,4 @@ std::string Query::toString() {
     return ss.str();
 }
 
-} // namespace NES
+}// namespace NES

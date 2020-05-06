@@ -21,5 +21,5 @@ class SinkLogicalOperatorNode : public LogicalOperatorNode {
   private:
     SinkDescriptorPtr sinkDescriptor;
 };
-}
-#endif  // SINK_LOGICAL_OPERATOR_NODE_HPP
+}// namespace NES
+#endif// SINK_LOGICAL_OPERATOR_NODE_HPP

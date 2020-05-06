@@ -14,12 +14,11 @@ class MinimumEnergyConsumptionStrategy : public BasePlacementStrategy {
     ~MinimumEnergyConsumptionStrategy() = default;
     NESExecutionPlanPtr initializeExecutionPlan(InputQueryPtr inputQuery, NESTopologyPlanPtr nesTopologyPlan);
 
-    static std::unique_ptr<MinimumEnergyConsumptionStrategy> create(){
+    static std::unique_ptr<MinimumEnergyConsumptionStrategy> create() {
         return std::make_unique<MinimumEnergyConsumptionStrategy>(MinimumEnergyConsumptionStrategy());
     }
 
   private:
-
     MinimumEnergyConsumptionStrategy() = default;
 
     void placeOperators(NESExecutionPlanPtr executionPlanPtr, NESTopologyGraphPtr nesTopologyGraphPtr,
@@ -33,6 +32,6 @@ class MinimumEnergyConsumptionStrategy : public BasePlacementStrategy {
     vector<NESTopologyEntryPtr> getCandidateNodesForFwdOperatorPlacement(const vector<NESTopologyEntryPtr>& sourceNodes,
                                                                          const NESTopologyEntryPtr rootNode) const;
 };
-}
+}// namespace NES
 
-#endif //NES_IMPL_OPTIMIZER_IMPL_MINIMUMENERGYCONSUMPTION_HPP_
+#endif//NES_IMPL_OPTIMIZER_IMPL_MINIMUMENERGYCONSUMPTION_HPP_

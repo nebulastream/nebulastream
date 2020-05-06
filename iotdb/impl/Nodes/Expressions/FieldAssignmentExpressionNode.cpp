@@ -1,10 +1,10 @@
 
 #include <Nodes/Expressions/FieldAssignmentExpressionNode.hpp>
-#include <utility>
 #include <memory>
+#include <utility>
 namespace NES {
 FieldAssignmentExpressionNode::FieldAssignmentExpressionNode(DataTypePtr stamp)
-    : BinaryExpressionNode(std::move(stamp)) {};
+    : BinaryExpressionNode(std::move(stamp)){};
 
 FieldAssignmentExpressionNodePtr FieldAssignmentExpressionNode::create(FieldAccessExpressionNodePtr fieldAccess,
                                                                        ExpressionNodePtr expressionNodePtr) {
@@ -47,7 +47,6 @@ void FieldAssignmentExpressionNode::inferStamp(SchemaPtr schema) {
         // the field already has a type, check if it is compatible with the assignment
         field->getStamp()->isEqual(getAssignment()->getStamp());
     }
-
 }
 
-}
+}// namespace NES

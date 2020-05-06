@@ -2,7 +2,7 @@
 #define NES_INCLUDE_API_EXPRESSIONS_LOGICALEXPRESSIONS_HPP_
 
 #include <memory>
-namespace NES{
+namespace NES {
 
 class ExpressionNode;
 
@@ -59,5 +59,5 @@ ExpressionNodePtr operator<(ExpressionItem leftExp, ExpressionItem rightExp);
 ExpressionNodePtr operator>(ExpressionItem leftExp, ExpressionItem rightExp);
 ExpressionNodePtr operator!(ExpressionItem exp);
 
-}
-#endif // NES_INCLUDE_API_EXPRESSIONS_LOGICALEXPRESSIONS_HPP_
+}// namespace NES
+#endif// NES_INCLUDE_API_EXPRESSIONS_LOGICALEXPRESSIONS_HPP_

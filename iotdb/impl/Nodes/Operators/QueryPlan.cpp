@@ -1,9 +1,9 @@
-#include <Nodes/Operators/QueryPlan.hpp>
-#include <Nodes/Operators/OperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sinks/SinkLogicalOperatorNode.hpp>
 #include <Nodes/Operators/LogicalOperators/Sources/SourceLogicalOperatorNode.hpp>
-#include <iostream>
+#include <Nodes/Operators/OperatorNode.hpp>
+#include <Nodes/Operators/QueryPlan.hpp>
 #include <Nodes/Util/DumpContext.hpp>
+#include <iostream>
 namespace NES {
 
 QueryPlanPtr QueryPlan::create(OperatorNodePtr rootOperator, StreamPtr stream) {
@@ -47,4 +47,4 @@ OperatorNodePtr QueryPlan::getRootOperator() const {
     return rootOperator;
 }
 
-}
+}// namespace NES

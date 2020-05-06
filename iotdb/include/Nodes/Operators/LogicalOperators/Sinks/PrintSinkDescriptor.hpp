@@ -18,12 +18,13 @@ class PrintSinkDescriptor : public SinkDescriptor {
      */
     static SinkDescriptorPtr create(SchemaPtr schema);
     SinkDescriptorType getType() override;
+
   private:
     explicit PrintSinkDescriptor(SchemaPtr schema);
 };
 
 typedef std::shared_ptr<PrintSinkDescriptor> PrintSinkDescriptorPtr;
 
-}
+}// namespace NES
 
-#endif //NES_IMPL_NODES_OPERATORS_LOGICALOPERATORS_SINKS_PRINTSINKDESCRIPTOR_HPP_
+#endif//NES_IMPL_NODES_OPERATORS_LOGICALOPERATORS_SINKS_PRINTSINKDESCRIPTOR_HPP_

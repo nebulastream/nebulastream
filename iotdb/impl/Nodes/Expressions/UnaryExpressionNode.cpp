@@ -9,4 +9,4 @@ void UnaryExpressionNode::setChild(NES::ExpressionNodePtr child) {
 ExpressionNodePtr UnaryExpressionNode::child() const {
     return children[0]->as<ExpressionNode>();
 }
-}
+}// namespace NES

@@ -1,10 +1,10 @@
 #ifndef API_SCHEMA_H
 #define API_SCHEMA_H
 
+#include <API/Types/AttributeField.hpp>
 #include <memory>
 #include <string>
 #include <vector>
-#include <API/Types/AttributeField.hpp>
 
 namespace NES {
 class Schema;
@@ -118,9 +118,9 @@ class Schema {
     friend class boost::serialization::access;
     template<class Archive>
     void serialize(Archive& ar, const unsigned int version) {
-        ar & fields;
+        ar& fields;
     }
 };
 
-}  // namespace NES
-#endif // API_SCHEMA_H
+}// namespace NES
+#endif// API_SCHEMA_H

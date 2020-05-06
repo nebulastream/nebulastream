@@ -12,7 +12,6 @@ namespace NES {
 class KafkaSourceDescriptor : public SourceDescriptor {
 
   public:
-
     static SourceDescriptorPtr create(SchemaPtr schema,
                                       std::string brokers,
                                       std::string topic,
@@ -51,21 +50,20 @@ class KafkaSourceDescriptor : public SourceDescriptor {
 
   private:
     explicit KafkaSourceDescriptor(SchemaPtr schema,
-                          std::string brokers,
-                          std::string topic,
-                          std::string groupId,
-                          bool autoCommit,
-                          uint64_t kafkaConnectTimeout);
+                                   std::string brokers,
+                                   std::string topic,
+                                   std::string groupId,
+                                   bool autoCommit,
+                                   uint64_t kafkaConnectTimeout);
     std::string brokers;
     std::string topic;
     std::string groupId;
     bool autoCommit;
     uint64_t kafkaConnectTimeout;
-
 };
 
 typedef std::shared_ptr<KafkaSourceDescriptor> KafkaSourceDescriptorPtr;
 
-}
+}// namespace NES
 
-#endif //NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_KAFKASOURCEDESCRIPTOR_HPP_
+#endif//NES_INCLUDE_NODES_OPERATORS_LOGICALOPERATORS_SOURCES_KAFKASOURCEDESCRIPTOR_HPP_

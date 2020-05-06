@@ -4,10 +4,10 @@
 #include <memory>
 #include <string>
 
+#include <API/Types/DataTypes.hpp>
+#include <Operators/OperatorTypes.hpp>
 #include <QueryCompiler/CCodeGenerator/Statement.hpp>
 #include <QueryCompiler/CodeExpression.hpp>
-#include <Operators/OperatorTypes.hpp>
-#include <API/Types/DataTypes.hpp>
 
 namespace NES {
 
@@ -82,4 +82,4 @@ BinaryOperatorStatement operator<<(const ExpressionStatment& lhs, const Expressi
 
 BinaryOperatorStatement operator>>(const ExpressionStatment& lhs, const ExpressionStatment& rhs);
 
-} // namespace NES
+}// namespace NES
