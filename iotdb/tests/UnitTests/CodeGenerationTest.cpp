@@ -899,6 +899,7 @@ TEST_F(CodeGenerationTest, codeGenerationMapPredicateTest) {
         ->addField("valueChar", BasicType::CHAR)->addField(
             "text", createArrayDataType(BasicType::CHAR, 12));
 
+    auto schemaSize = outputSchema->getSchemaSizeInBytes();
     /* generate code for writing result tuples to output buffer */
     codeGenerator->generateCode(
         createPrintSinkWithSchema(outputSchema, std::cout), context, std::cout);

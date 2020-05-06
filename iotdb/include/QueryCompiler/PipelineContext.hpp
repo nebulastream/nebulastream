@@ -20,12 +20,10 @@ typedef std::shared_ptr<WindowDefinition> WindowDefinitionPtr;
  * todo it requires a refactoring if we redesign the compiler.
  */
 class PipelineContext {
-  public:
-    PipelineContext();
-    void addTypeDeclaration(const Declaration&);
-    void addVariableDeclaration(const Declaration&);
-    std::vector<DeclarationPtr> type_declarations;
-    std::vector<DeclarationPtr> variable_declarations;
+ public:
+  PipelineContext();
+  void addVariableDeclaration(const Declaration &);
+  std::vector<DeclarationPtr> variable_declarations;
 
     SchemaPtr getInputSchema() const;
     SchemaPtr getResultSchema() const;
