@@ -162,12 +162,6 @@ class NodeEngine {
     void setReceivePort(uint16_t receive_port);
 
     /**
-     * @brief method to return statistics to the user
-     * @return
-     */
-    std::string getStatisticsAsString();
-
-    /**
     * @brief method to return the query statistics
     * @param id of the query
     * @return queryStatistics

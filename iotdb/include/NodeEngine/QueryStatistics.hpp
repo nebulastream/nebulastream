@@ -1,5 +1,6 @@
 #ifndef NES_INCLUDE_NODEENGINE_QUERYSTATISTICS_HPP_
 #define NES_INCLUDE_NODEENGINE_QUERYSTATISTICS_HPP_
+#include <string>
 
 namespace NES {
 
@@ -76,6 +77,15 @@ class QueryStatistics {
   */
     void setProcessedBuffers(const std::atomic<size_t>& processedBuffers) {
         this->processedBuffers = processedBuffers.load();
+    }
+
+    std::string getQueryStatisticsAsString()
+    {
+        std::stringstream ss;
+        ss << "processedTasks=" << processedTasks;
+        ss << " processedTuple=" << processedTuple;
+        ss << " processedBuffers=" << processedBuffers;
+        return ss.str();
     }
 
   private:
