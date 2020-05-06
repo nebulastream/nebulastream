@@ -89,7 +89,6 @@ class GeneratedCode {
   VariableDeclaration varDeclarationExecutionContext;
   VariableDeclaration varDeclarationState;
   FunctionCallStatement tupleBufferGetNumberOfTupleCall;
-  FunctionCallStatement tupleBufferGetBufferCall;
   VariableDeclaration varDeclarationInputTuples;
   VariableDeclaration varDeclarationNumberOfResultTuples;
   std::vector<StructDeclaration> typeDeclarations;

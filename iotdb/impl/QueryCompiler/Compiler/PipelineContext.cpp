@@ -9,7 +9,6 @@ namespace NES {
 PipelineContext::PipelineContext() {
     this->code = std::make_shared<GeneratedCode>();
 }
-void PipelineContext::addTypeDeclaration(const Declaration& decl) { type_declarations.push_back(decl.copy()); }
 void PipelineContext::addVariableDeclaration(const Declaration& decl) { variable_declarations.push_back(decl.copy()); }
 
 void PipelineContext::setWindow(WindowDefinitionPtr window) {

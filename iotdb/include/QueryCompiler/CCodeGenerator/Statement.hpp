@@ -90,6 +90,7 @@ class ConstantExprStatement : public ExpressionStatment {
     ConstantExprStatement(const ValueTypePtr& val) : val_(val) {}
 
     ConstantExprStatement(const BasicType& type, const std::string& value) : val_(createBasicTypeValue(type, value)) {}
+    ConstantExprStatement(int32_t value) : ConstantExprStatement(INT32, std::to_string(value)){}
 
     virtual ~ConstantExprStatement();
 };

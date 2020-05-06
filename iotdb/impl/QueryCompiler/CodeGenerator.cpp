@@ -37,10 +37,9 @@ GeneratedCode::GeneratedCode()
       varDeclarationExecutionContext(VariableDeclaration::create(createDataType(INT32), "output_buffer")),
       varDeclarationState(VariableDeclaration::create(createDataType(INT32), "state")),
       tupleBufferGetNumberOfTupleCall(FunctionCallStatement("getNumberOfTuples")),
-      tupleBufferGetBufferCall(FunctionCallStatement("getBuffer")),
       varDeclarationInputTuples(VariableDeclaration::create(createDataType(INT32), "inputTuples")),
       varDeclarationNumberOfResultTuples(VariableDeclaration::create(
-          createDataType(BasicType(UINT64)), "numberOfResultTuples", createBasicTypeValue(BasicType(INT64), "0"))),
+          createDataType(UINT64), "numberOfResultTuples", createBasicTypeValue(INT64, "0"))),
       typeDeclarations() {
 }
 
@@ -68,6 +67,19 @@ class CCodeGenerator : public CodeGenerator {
                               std::ostream& out) override;
     ExecutablePipelinePtr compile(const CompilerArgs&, const GeneratedCodePtr& code) override;
     ~CCodeGenerator() override;
+
+  private:
+    BinaryOperatorStatement getBuffer(VariableDeclaration tupleBufferVariable);
+    TypeCastExprStatement getTypedBuffer(VariableDeclaration tupleBufferVariable, StructDeclaration structDeclaraton);
+    BinaryOperatorStatement getBufferSize(VariableDeclaration tupleBufferVariable);
+    BinaryOperatorStatement setNumberOfTuples(VariableDeclaration tupleBufferVariable,
+                                              VariableDeclaration numberOfResultTuples);
+    BinaryOperatorStatement allocateTupleBuffer(VariableDeclaration pipelineContext);
+    BinaryOperatorStatement emitTupleBuffer(VariableDeclaration pipelineContext,
+                                            VariableDeclaration tupleBufferVariable);
+    void generateTupleBufferSpaceCheck(const PipelineContextPtr& context,
+                                       VariableDeclaration varDeclResultTuple,
+                                       StructDeclaration structDeclarationResultTuple);
 };
 
 CCodeGenerator::CCodeGenerator(const CodeGenArgs& args) : CodeGenerator(args) {}
@@ -78,13 +90,13 @@ const StructDeclaration getStructDeclarationFromSchema(const std::string structN
     /* disable padding of bytes to generate compact structs, required for input and output tuple formats */
     structDeclarationTuple.makeStructCompact();
 
-    std::cout << "Converting Schema: " << schema->toString() << std::endl;
-    std::cout << "Define Struct : " << structName << std::endl;
+    NES_DEBUG("Converting Schema: " << schema->toString());
+    NES_DEBUG("Define Struct : " << structName);
 
     for (size_t i = 0; i < schema->getSize(); ++i) {
-        structDeclarationTuple.addField(VariableDeclaration::create(schema->get(i)->getDataType(), schema->get(i)->name));
-        std::cout << "Field " << i << ": " << schema->get(i)->getDataType()->toString() << " " << schema->get(i)->name
-                  << std::endl;
+        structDeclarationTuple.addField(VariableDeclaration::create(schema->get(i)->getDataType(),
+                                                                    schema->get(i)->name));
+        NES_DEBUG("Field " << i << ": " << schema->get(i)->getDataType()->toString() << " " << schema->get(i)->name);
     }
     return structDeclarationTuple;
 }
@@ -158,14 +170,12 @@ std::string toString(TupleBuffer& buffer, SchemaPtr schema) {
 bool CCodeGenerator::generateCode(SchemaPtr schema, const PipelineContextPtr& context, std::ostream& out) {
 
     context->inputSchema = schema->copy();
-
-    context->code->structDeclaratonInputTuple = getStructDeclarationInputTuple(context->inputSchema);
-    context->addTypeDeclaration(context->code->structDeclaratonInputTuple);
+    auto code = context->code;
+    code->structDeclaratonInputTuple = getStructDeclarationInputTuple(context->inputSchema);
 
     /** === set the result tuple depending on the input tuple===*/
     context->resultSchema = context->inputSchema;
-    context->code->structDeclarationResultTuple = getStructDeclarationResultTuple(context->resultSchema);
-    context->addTypeDeclaration(context->code->structDeclarationResultTuple);
+    code->structDeclarationResultTuple = getStructDeclarationResultTuple(context->resultSchema);
 
     /* === declarations === */
     auto tupleBufferType = createAnonymUserDefinedType("NES::TupleBuffer");
@@ -180,56 +190,52 @@ bool CCodeGenerator::generateCode(SchemaPtr schema, const PipelineContextPtr& co
         VariableDeclaration::create(createPointerDataType(createAnonymUserDefinedType("NES::WindowManager")),
                                     "windowManager");
     auto varDeclarationResultBuffer = VariableDeclaration::create(tupleBufferType, "resultTupleBuffer");
-    context->code->varDeclarationInputBuffer = varDeclarationInputBuffer;
-    context->code->varDeclarationExecutionContext = varDeclarationPipelineExecutionContext;
-    context->code->varDeclarationResultBuffer = varDeclarationResultBuffer;
-    context->code->varDeclarationState = varDeclarationState;
-    context->code->varDeclarationWindowManager = varDeclarationWindowManager;
+    code->varDeclarationInputBuffer = varDeclarationInputBuffer;
+    code->varDeclarationExecutionContext = varDeclarationPipelineExecutionContext;
+    code->varDeclarationResultBuffer = varDeclarationResultBuffer;
+    code->varDeclarationState = varDeclarationState;
+    code->varDeclarationWindowManager = varDeclarationWindowManager;
 
-    VariableDeclaration varDeclarationInputTuples =
-        VariableDeclaration::create(createPointerDataType(createUserDefinedType(context->code->structDeclaratonInputTuple)),
-                                    "inputTuples");
+
     /* declaration of record index; */
-    context->code->varDeclarationRecordIndex = std::dynamic_pointer_cast<VariableDeclaration>(
+    code->varDeclarationRecordIndex = std::dynamic_pointer_cast<VariableDeclaration>(
         VariableDeclaration::create(createDataType(BasicType(UINT64)), "recordIndex",
                                     createBasicTypeValue(BasicType(INT32), "0"))
             .copy());
     /* int32_t ret = 0; */
-    context->code->varDeclarationReturnValue = std::dynamic_pointer_cast<VariableDeclaration>(
+    code->varDeclarationReturnValue = std::dynamic_pointer_cast<VariableDeclaration>(
         VariableDeclaration::create(createDataType(BasicType(INT32)), "ret",
                                     createBasicTypeValue(BasicType(INT32), "0"))
             .copy());
 
-    context->code->varDeclarationInputTuples = varDeclarationInputTuples;
-    context->code->variableDeclarations.push_back(varDeclarationInputTuples);
-    context->code->variableDeclarations.push_back(*(context->code->varDeclarationReturnValue.get()));
+    code->varDeclarationInputTuples = VariableDeclaration::create(
+        createPointerDataType(
+            createUserDefinedType(code->structDeclaratonInputTuple)),
+        "inputTuples");;
 
-    /** init statements before for loop */
-    auto allocateTupleBuffer = FunctionCallStatement("allocateTupleBuffer");
+    code->variableDeclarations.push_back(*(context->code->varDeclarationReturnValue.get()));
+
     /*  tuples = (InputTuple *)input_buffer.getBuffer()*/
-    context->code->variableInitStmts.push_back(
-        VarDeclStatement(varDeclarationResultBuffer).assign(VarRef(varDeclarationPipelineExecutionContext).accessRef(
-            allocateTupleBuffer)).copy());
+    code->variableInitStmts.push_back(
+        VarDeclStatement(varDeclarationResultBuffer).assign(allocateTupleBuffer(varDeclarationPipelineExecutionContext)).copy());
 
-    context->code->variableInitStmts.push_back(
-        VarRef(varDeclarationInputTuples)
-            .assign(TypeCast(
-                VarRefStatement(varDeclarationInputBuffer).accessRef(context->code->tupleBufferGetBufferCall),
-                createPointerDataType(createUserDefinedType(context->code->structDeclaratonInputTuple))))
+    code->variableInitStmts.push_back(
+        VarDeclStatement(code->varDeclarationInputTuples)
+            .assign(getTypedBuffer(code->varDeclarationInputBuffer, code->structDeclaratonInputTuple))
             .copy());
 
     /* for (uint64_t recordIndex = 0; recordIndex < tuple_buffer_1->num_tuples; ++id) */
     // input_buffer.getNumberOfTuples()
     auto numberOfRecords = VarRef(varDeclarationInputBuffer).accessRef(context->code->tupleBufferGetNumberOfTupleCall);
-    context->code->forLoopStmt = std::make_shared<FOR>(
-        context->code->varDeclarationRecordIndex,
-        (VarRef(context->code->varDeclarationRecordIndex) < (numberOfRecords)).copy(),
-        (++VarRef(context->code->varDeclarationRecordIndex)).copy());
+    code->forLoopStmt = std::make_shared<FOR>(
+        code->varDeclarationRecordIndex,
+        (VarRef(code->varDeclarationRecordIndex) <
+            (numberOfRecords)).copy(),
+        (++VarRef(code->varDeclarationRecordIndex)).copy());
 
-    context->code->currentCodeInsertionPoint = context->code->forLoopStmt->getCompoundStatement();
+    code->currentCodeInsertionPoint = code->forLoopStmt->getCompoundStatement();
 
-    context->code->returnStmt =
-        std::make_shared<ReturnStatement>(VarRefStatement(*context->code->varDeclarationReturnValue));
+    code->returnStmt = ReturnStatement(VarRefStatement(*code->varDeclarationReturnValue)).createCopy();
 
     return true;
 }
@@ -243,13 +249,13 @@ bool CCodeGenerator::generateCode(SchemaPtr schema, const PipelineContextPtr& co
  */
 bool CCodeGenerator::generateCode(const PredicatePtr& pred, const PipelineContextPtr& context, std::ostream& out) {
 
-    ExpressionStatmentPtr expr = pred->generateCode(context->code);
-
-    std::shared_ptr<IF> ifStmt = std::make_shared<IF>(*expr);
-    CompoundStatementPtr compoundStmt = ifStmt->getCompoundStatement();
-    /* update current compound_stmt*/
-    context->code->currentCodeInsertionPoint->addStatement(ifStmt);
-    context->code->currentCodeInsertionPoint = compoundStmt;
+    // create predicate expression from filter predicate
+    auto predicateExpression = pred->generateCode(context->code);
+    // create if statement
+    auto ifStatement = IF(*predicateExpression);
+    // update current compound_stmt
+    context->code->currentCodeInsertionPoint->addStatement(ifStatement.createCopy());
+    context->code->currentCodeInsertionPoint = ifStatement.getCompoundStatement();
 
     return true;
 }
@@ -267,137 +273,153 @@ bool CCodeGenerator::generateCode(const AttributeFieldPtr field,
                                   const NES::PipelineContextPtr& context,
                                   std::ostream& out) {
 
-    VariableDeclaration varDeclarationResultTuples = VariableDeclaration::create(
-        createPointerDataType(createUserDefinedType(context->code->structDeclarationResultTuple)), "resultTuples");
+    auto code = context->code;
+    auto varDeclarationResultTuples = VariableDeclaration::create(
+        createPointerDataType(createUserDefinedType(code->structDeclarationResultTuple)), "resultTuples");
 
-    DeclarationPtr declaredMapVar = getVariableDeclarationForField(context->code->structDeclarationResultTuple, field);
+    auto declaredMapVar = getVariableDeclarationForField(code->structDeclarationResultTuple, field);
     if (!declaredMapVar) {
         context->resultSchema->addField(field);
-        context->code->structDeclarationResultTuple.addField(VariableDeclaration::create(field->data_type, field->name));
-        declaredMapVar = getVariableDeclarationForField(context->code->structDeclarationResultTuple, field);
+        context->code->structDeclarationResultTuple.addField(VariableDeclaration::create(field->data_type,
+                                                                                         field->name));
+        declaredMapVar = getVariableDeclarationForField(code->structDeclarationResultTuple, field);
     }
-    context->code->override_fields.push_back(declaredMapVar);
-    VariableDeclaration var_map_i = context->code->structDeclarationResultTuple.getVariableDeclaration(field->name);
-
-    BinaryOperatorStatement
-        callVar =
-            VarRef(varDeclarationResultTuples)[VarRef(context->code->varDeclarationNumberOfResultTuples)].accessRef(VarRef(
-                var_map_i));
-    ExpressionStatmentPtr expr = pred->generateCode(context->code);
-    BinaryOperatorStatement assignedMap = (callVar).assign(*expr);
-    context->code->currentCodeInsertionPoint->addStatement(assignedMap.copy());
+    code->override_fields.push_back(declaredMapVar);
+    auto varMapI = code->structDeclarationResultTuple.getVariableDeclaration(field->name);
+    auto callVar = VarRef(varDeclarationResultTuples)[VarRef(code->varDeclarationNumberOfResultTuples)]
+        .accessRef(VarRef(varMapI));
+    auto expr = pred->generateCode(code);
+    auto assignedMap = (callVar).assign(*expr);
+    code->currentCodeInsertionPoint->addStatement(assignedMap.copy());
 
     return true;
 }
 
 bool CCodeGenerator::generateCode(const DataSinkPtr& sink, const PipelineContextPtr& context, std::ostream& out) {
+    NES_DEBUG("CCodeGenerator: Generate code for Sink.")
+    auto code = context->code;
+    // set result schema to context
+    // todo replace to result schema of last operator instead of sink
     context->resultSchema = sink->getSchema();
+    // generate result tuple struct
+    auto structDeclarationResultTuple = getStructDeclarationResultTuple(context->resultSchema);
+    // add type declaration for the result tuple
+    code->typeDeclarations.push_back(structDeclarationResultTuple);
 
-    StructDeclaration structDeclarationResultTuple = getStructDeclarationResultTuple(context->resultSchema);
-    context->addTypeDeclaration(structDeclarationResultTuple);
-    context->code->typeDeclarations.push_back(structDeclarationResultTuple);
-    VariableDeclaration varDeclResultTuple = VariableDeclaration::create(
-        createPointerDataType(createUserDefinedType(structDeclarationResultTuple)), "resultTuples");
-    context->code->variableDeclarations.push_back(varDeclResultTuple);
+    auto varDeclResultTuple =
+        VariableDeclaration::create(createPointerDataType(createUserDefinedType(structDeclarationResultTuple)),
+                                    "resultTuples");
 
-    context->code->variableDeclarations.push_back(context->code->varDeclarationNumberOfResultTuples);
-
-    /* result_tuples = (ResultTuple *)output_tuple_buffer->data;*/
-    context->code->variableInitStmts.push_back(
-        VarRef(varDeclResultTuple)
-            .assign(TypeCast(
-                VarRefStatement(context->code->varDeclarationResultBuffer).accessRef(context->code->tupleBufferGetBufferCall),
-                createPointerDataType(createUserDefinedType(structDeclarationResultTuple))))
+    /* ResultTuple* resultTuples = (ResultTuple*)resultTupleBuffer.getBuffer();*/
+    code->variableInitStmts.push_back(
+        VarDeclStatement(varDeclResultTuple)
+            .assign(getTypedBuffer(code->varDeclarationResultBuffer, structDeclarationResultTuple))
             .copy());
 
+    /**
+     * @brief TODO the following code is black magic it need to be refactored in a larger issue.
+     */
     std::vector<VariableDeclaration> var_decls;
     std::vector<StatementPtr> write_result_tuples;
     for (size_t i = 0; i < context->resultSchema->getSize(); ++i) {
-        auto variableDeclaration = getVariableDeclarationForField(structDeclarationResultTuple, context->resultSchema->get(i));
+        auto resultField = context->resultSchema->get(i);
+        auto variableDeclaration = getVariableDeclarationForField(structDeclarationResultTuple, resultField);
         if (!variableDeclaration) {
-            NES_ERROR("CodeGenerator: Could not extract field " << context->resultSchema->get(i)->toString() << " from struct "
+            NES_ERROR("CodeGenerator: Could not extract field " << resultField->toString()
+                                                                << " from struct "
                                                                 << structDeclarationResultTuple.getTypeName());
             NES_DEBUG("CodeGenerator: W>");
         }
-        auto varDeclarationInput = getVariableDeclarationForField(context->code->structDeclarationResultTuple, context->resultSchema->get(i));
+        auto varDeclarationInput = getVariableDeclarationForField(code->structDeclarationResultTuple, resultField);
         if (varDeclarationInput) {
             bool override = false;
-            for (size_t j = 0; j < context->code->override_fields.size(); j++) {
-                if (context->code->override_fields.at(j)->getIdentifierName().compare(varDeclarationInput->getIdentifierName())
+            for (size_t j = 0; j < code->override_fields.size(); j++) {
+                if (code->override_fields.at(j)->getIdentifierName().compare(varDeclarationInput->getIdentifierName())
                     == 0) {
                     override = true;
                     break;
                 }
             }
             if (!override) {
-                VariableDeclarationPtr
-                    varDeclarationField =
-                        getVariableDeclarationForField(structDeclarationResultTuple, context->resultSchema->get(i));
+                auto varDeclarationField =
+                    getVariableDeclarationForField(structDeclarationResultTuple, resultField);
                 if (!varDeclarationField) {
-                    NES_ERROR("Could not extract field " << context->resultSchema->get(i)->toString() << " from struct "
+                    NES_ERROR("Could not extract field " << resultField->toString() << " from struct "
                                                          << structDeclarationResultTuple.getTypeName());
                     NES_DEBUG("W>");
                 }
                 //context->code->variableDeclarations.push_back(*varDeclarationField);
                 AssignmentStatment as = {varDeclResultTuple,
                                          *(varDeclarationField),
-                                         context->code->varDeclarationNumberOfResultTuples,
-                                         context->code->varDeclarationInputTuples,
+                                         code->varDeclarationNumberOfResultTuples,
+                                         code->varDeclarationInputTuples,
                                          *(varDeclarationField),
-                                         *(context->code->varDeclarationRecordIndex)};
-                StatementPtr stmt = varDeclarationField->getDataType()->getStmtCopyAssignment(as);
-                context->code->currentCodeInsertionPoint->addStatement(stmt);
+                                         *(code->varDeclarationRecordIndex)};
+                auto copyFieldStatement = varDeclarationField->getDataType()->getStmtCopyAssignment(as);
+                code->currentCodeInsertionPoint->addStatement(copyFieldStatement);
             }
         }
-        /* */
-
-        // var_decls.push_back(*var_decl);
-        // write_result_tuples.push_back(VarRef(var_decl_result_tuple)[VarRef(*(context->code->var_decl_id))].assign(VarRef(var_decl_result_tuple)[VarRef(*(context->code->var_decl_id))]).copy());
     }
-    auto setNumberOfTupleFunctionCall = FunctionCallStatement("setNumberOfTuples");
-    setNumberOfTupleFunctionCall.addParameter(VarRef(context->code->varDeclarationNumberOfResultTuples));
-    /* set number of output tuples to result buffer */
-    context->code->cleanupStmts.push_back(
-        VarRef(context->code->varDeclarationResultBuffer).accessRef(setNumberOfTupleFunctionCall).copy());
-    auto emitTupleBuffer = FunctionCallStatement("emitBuffer");
-    emitTupleBuffer.addParameter(VarRef(context->code->varDeclarationResultBuffer));
-    context->code->cleanupStmts.push_back(
-        VarRef(context->code->varDeclarationExecutionContext).accessRef(emitTupleBuffer).copy());
 
-    // increase number of result tuples in loop body.
+    // generate logic to check if tuple buffer is already full. If so we emit the current one and pass it to the runtime.
+    generateTupleBufferSpaceCheck(context, varDeclResultTuple, structDeclarationResultTuple);
 
+    // increment number of tuples in buffer -> ++numberOfResultTuples;
+    code->currentCodeInsertionPoint->addStatement((++VarRef(code->varDeclarationNumberOfResultTuples)).copy());
 
+    // Generate final logic to emit the last buffer to the runtime
+    // 1. set the number of tuples to the buffer
+    code->cleanupStmts.push_back(setNumberOfTuples(code->varDeclarationResultBuffer,
+                                                   code->varDeclarationNumberOfResultTuples).copy());
+    // 2. emit the buffer to the runtime.
+    code->cleanupStmts.push_back(emitTupleBuffer(code->varDeclarationExecutionContext,
+                                                 code->varDeclarationResultBuffer).copy());
 
-    auto getBufferSizeFunctionCall = FunctionCallStatement("getBufferSize");
-    auto bufferSizeDeclaration = VariableDeclaration::create(createDataType(INT64),"bufferSize");
-    context->code->currentCodeInsertionPoint->addStatement((VarDeclStatement(bufferSizeDeclaration).assign(VarRef(context->code->varDeclarationResultBuffer).accessRef(getBufferSizeFunctionCall))).copy());
-    auto resultTupleSize = context->getResultSchema()->getSchemaSizeInBytes();
-    auto maxTupleDeclaration = VariableDeclaration::create(createDataType(INT64),"maxTuple");
-    context->code->currentCodeInsertionPoint->addStatement((VarDeclStatement(maxTupleDeclaration).assign(VarRef(bufferSizeDeclaration) / Constant(createBasicTypeValue(INT64, std::to_string(resultTupleSize))))).copy());
-    auto ifStatement = IF(VarRef(maxTupleDeclaration)<(VarRef(context->code->varDeclarationNumberOfResultTuples)+Constant(createBasicTypeValue(INT8,"1"))));
-    auto thenStatement = ifStatement.getCompoundStatement();
-    thenStatement->addStatement(
-        VarRef(context->code->varDeclarationResultBuffer).accessRef(setNumberOfTupleFunctionCall).copy());
-    thenStatement->addStatement(VarRef(context->code->varDeclarationExecutionContext).accessRef(emitTupleBuffer).copy());
-    context->code->currentCodeInsertionPoint->addStatement(ifStatement.createCopy());
-
-    auto allocateTupleBuffer = FunctionCallStatement("allocateTupleBuffer");
-    /*  tuples = (InputTuple *)input_buffer.getBuffer()*/
-
-    thenStatement->addStatement(
-        VarRef(context->code->varDeclarationResultBuffer).assign(VarRef(context->code->varDeclarationExecutionContext).accessRef(
-            allocateTupleBuffer)).copy());
-    thenStatement->addStatement(
-        VarRef(context->code->varDeclarationNumberOfResultTuples).assign(Constant(createBasicTypeValue(INT64, "0"))).copy());
-
-    thenStatement->addStatement(
-        VarRef(varDeclResultTuple)
-            .assign(TypeCast(
-                VarRefStatement(context->code->varDeclarationResultBuffer).accessRef(context->code->tupleBufferGetBufferCall),
-                createPointerDataType(createUserDefinedType(structDeclarationResultTuple))))
-            .copy());
-    context->code->currentCodeInsertionPoint->addStatement((++VarRef(context->code->varDeclarationNumberOfResultTuples)).copy());
     return true;
+}
+
+void CCodeGenerator::generateTupleBufferSpaceCheck(const PipelineContextPtr& context,
+                                                   VariableDeclaration varDeclResultTuple,
+                                                   StructDeclaration structDeclarationResultTuple) {
+    NES_DEBUG("CCodeGenerator: Generate code for tuple buffer check.")
+
+    auto code = context->code;
+
+    // calculate of the maximal number of tuples per buffer -> (buffer size / tuple size) - 1
+    // int64_t maxTuple = (resultTupleBuffer.getBufferSize() / 39) - 1;
+    // 1. get the size of one result tuple
+    auto resultTupleSize = context->getResultSchema()->getSchemaSizeInBytes();
+    // 2. initialize max tuple
+    auto maxTupleDeclaration = VariableDeclaration::create(createDataType(INT64), "maxTuple");
+    // 3. create calculation statement
+    auto calculateMaxTupleStatement =
+        getBufferSize(code->varDeclarationResultBuffer)/Constant(resultTupleSize) - Constant(1);
+    auto calculateMaxTupleAssignment = VarDeclStatement(maxTupleDeclaration).assign(calculateMaxTupleStatement);
+    // 4. add statement
+    code->currentCodeInsertionPoint->addStatement(calculateMaxTupleAssignment.copy());
+
+
+    // Check if maxTuple is reached. -> maxTuple <= numberOfResultTuples
+    auto ifStatement = IF((VarRef(maxTupleDeclaration)) <= (VarRef(code->varDeclarationNumberOfResultTuples)));
+    // add if statement to current code block
+    code->currentCodeInsertionPoint->addStatement(ifStatement.createCopy());
+    // add tuple emit logic to then statement, which is executed if the condition is met.
+    // In this case we 1. emit the buffer and 2. allocate a new buffer.
+    auto thenStatement = ifStatement.getCompoundStatement();
+    // 1.1 set the number of tuples to the output buffer -> resultTupleBuffer.setNumberOfTuples(numberOfResultTuples);
+    thenStatement->addStatement(
+        setNumberOfTuples(code->varDeclarationResultBuffer,
+                          code->varDeclarationNumberOfResultTuples).copy());
+    // 1.2 emit the output buffers to the runtime -> pipelineExecutionContext.emitBuffer(resultTupleBuffer);
+    thenStatement->addStatement(emitTupleBuffer(code->varDeclarationExecutionContext,
+                                                code->varDeclarationResultBuffer).copy());
+    // 2.1 reset the numberOfResultTuples to 0 -> numberOfResultTuples = 0;
+    thenStatement->addStatement(VarRef(code->varDeclarationNumberOfResultTuples).assign(Constant(0)).copy());
+    // 2.2 allocate a new buffer -> resultTupleBuffer = pipelineExecutionContext.allocateTupleBuffer();
+    thenStatement->addStatement(VarRef(code->varDeclarationResultBuffer).assign(allocateTupleBuffer(code->varDeclarationExecutionContext)).copy());
+    // 2.2 get typed result buffer from resultTupleBuffer -> resultTuples = (ResultTuple*)resultTupleBuffer.getBuffer();
+    thenStatement->addStatement(VarRef(varDeclResultTuple).assign(getTypedBuffer(code->varDeclarationResultBuffer,
+                                                                                 structDeclarationResultTuple)).copy());
 }
 
 /**
@@ -425,12 +447,14 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr& window,
 
     // Read key value from record
     auto keyVariableDeclaration = VariableDeclaration::create(createDataType(BasicType::INT64), "key");
-    auto keyVariableAttributeDeclaration = context->code->structDeclaratonInputTuple.getVariableDeclaration(window->onKey->name);
+    auto keyVariableAttributeDeclaration =
+        context->code->structDeclaratonInputTuple.getVariableDeclaration(window->onKey->name);
     auto keyVariableAttributeStatement = VarDeclStatement(keyVariableDeclaration)
-                                             .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
-                                                 VarRef(
-                                                     keyVariableAttributeDeclaration)));
-    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(keyVariableAttributeStatement));
+        .assign(VarRef(context->code->varDeclarationInputTuples)[VarRef(context->code->varDeclarationRecordIndex)].accessRef(
+            VarRef(
+                keyVariableAttributeDeclaration)));
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
+        keyVariableAttributeStatement));
 
     // get key handle for current key
     auto keyHandlerVariableDeclaration = VariableDeclaration::create(
@@ -438,8 +462,9 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr& window,
     auto getKeyStateVariable = FunctionCallStatement("get");
     getKeyStateVariable.addParameter(VarRef(keyVariableDeclaration));
     auto keyHandlerVariableStatement = VarDeclStatement(keyHandlerVariableDeclaration)
-                                           .assign(VarRef(stateVariableDeclaration).accessPtr(getKeyStateVariable));
-    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(keyHandlerVariableStatement));
+        .assign(VarRef(stateVariableDeclaration).accessPtr(getKeyStateVariable));
+    context->code->currentCodeInsertionPoint->addStatement(std::make_shared<BinaryOperatorStatement>(
+        keyHandlerVariableStatement));
 
     // access window slice state from state variable via key
     auto windowStateVariableDeclaration = VariableDeclaration::create(
@@ -498,10 +523,9 @@ bool CCodeGenerator::generateCode(const WindowDefinitionPtr& window,
         context->code->structDeclaratonInputTuple,
         VarRef(context->code->varDeclarationInputTuples)[VarRefStatement(VarRef(*(context->code->varDeclarationRecordIndex)))]
     );
-    auto emitTupleBuffer = FunctionCallStatement("emitBuffer");
-    emitTupleBuffer.addParameter(VarRef(context->code->varDeclarationResultBuffer));
-    context->code->cleanupStmts.push_back(
-        VarRef(context->code->varDeclarationExecutionContext).accessRef(emitTupleBuffer).copy());
+
+    context->code->cleanupStmts.push_back(emitTupleBuffer(context->code->varDeclarationExecutionContext,
+                                                          context->code->varDeclarationResultBuffer).copy());
     return true;
 }
 
@@ -518,7 +542,7 @@ ExecutablePipelinePtr CCodeGenerator::compile(const CompilerArgs&, const Generat
         .addParameter(code->varDeclarationState)
         .addParameter(code->varDeclarationWindowManager)
         .addParameter(code->varDeclarationExecutionContext);
-
+    code->variableDeclarations.push_back(code->varDeclarationNumberOfResultTuples);
     for (auto& variableDeclaration : code->variableDeclarations) {
         functionBuilder.addVariableDeclaration(variableDeclaration);
     }
@@ -551,7 +575,41 @@ ExecutablePipelinePtr CCodeGenerator::compile(const CompilerArgs&, const Generat
     return createCompiledExecutablePipeline(compiledCode);
 }
 
-CCodeGenerator::~CCodeGenerator() {}
+BinaryOperatorStatement CCodeGenerator::allocateTupleBuffer(VariableDeclaration pipelineContext) {
+    auto allocateTupleBuffer = FunctionCallStatement("allocateTupleBuffer");
+    return VarRef(pipelineContext).accessRef(allocateTupleBuffer);
+}
+
+BinaryOperatorStatement CCodeGenerator::getBufferSize(VariableDeclaration tupleBufferVariable) {
+    auto getBufferSizeFunctionCall = FunctionCallStatement("getBufferSize");
+    return VarRef(tupleBufferVariable).accessRef(getBufferSizeFunctionCall);
+}
+
+BinaryOperatorStatement CCodeGenerator::setNumberOfTuples(VariableDeclaration tupleBufferVariable,
+                                                          VariableDeclaration numberOfResultTuples) {
+    auto setNumberOfTupleFunctionCall = FunctionCallStatement("setNumberOfTuples");
+    setNumberOfTupleFunctionCall.addParameter(VarRef(numberOfResultTuples));
+    /* set number of output tuples to result buffer */
+    return VarRef(tupleBufferVariable).accessRef(setNumberOfTupleFunctionCall);
+}
+
+CCodeGenerator::~CCodeGenerator() {};
+
+BinaryOperatorStatement CCodeGenerator::emitTupleBuffer(VariableDeclaration pipelineContext,
+                                                        VariableDeclaration tupleBufferVariable) {
+    auto emitTupleBuffer = FunctionCallStatement("emitBuffer");
+    emitTupleBuffer.addParameter(VarRef(tupleBufferVariable));
+    return VarRef(pipelineContext).accessRef(emitTupleBuffer);
+
+}
+BinaryOperatorStatement CCodeGenerator::getBuffer(VariableDeclaration tupleBufferVariable) {
+    auto getBufferFunctionCall = FunctionCallStatement("getBuffer");
+    return VarRef(tupleBufferVariable).accessRef(getBufferFunctionCall);
+}
+TypeCastExprStatement CCodeGenerator::getTypedBuffer(VariableDeclaration tupleBufferVariable,
+                                                     StructDeclaration structDeclaraton) {
+    return TypeCast(getBuffer(tupleBufferVariable), createPointerDataType(createUserDefinedType(structDeclaraton)));
+}
 
 CodeGeneratorPtr createCodeGenerator() { return std::make_shared<CCodeGenerator>(CodeGenArgs()); }
 
